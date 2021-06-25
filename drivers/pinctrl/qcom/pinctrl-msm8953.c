@@ -1,27 +1,26 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2020, The Linux Foundation. All rights reserved.
 
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pinctrl/pinctrl.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/pinctrl/pinctrl.h>
 
-#समावेश "pinctrl-msm.h"
+#include "pinctrl-msm.h"
 
-#घोषणा FUNCTION(fname)					\
-	[msm_mux_##fname] = अणु				\
+#define FUNCTION(fname)					\
+	[msm_mux_##fname] = {				\
 		.name = #fname,				\
 		.groups = fname##_groups,               \
 		.ngroups = ARRAY_SIZE(fname##_groups),	\
-	पूर्ण
+	}
 
-#घोषणा PINGROUP(id, f1, f2, f3, f4, f5, f6, f7, f8, f9)	\
-	अणु							\
+#define PINGROUP(id, f1, f2, f3, f4, f5, f6, f7, f8, f9)	\
+	{							\
 		.name = "gpio" #id,				\
 		.pins = gpio##id##_pins,			\
 		.npins = ARRAY_SIZE(gpio##id##_pins),		\
-		.funcs = (पूर्णांक[])अणु				\
+		.funcs = (int[]){				\
 			msm_mux_gpio, /* gpio mode */		\
 			msm_mux_##f1,				\
 			msm_mux_##f2,				\
@@ -32,55 +31,55 @@
 			msm_mux_##f7,				\
 			msm_mux_##f8,				\
 			msm_mux_##f9				\
-		पूर्ण,						\
+		},						\
 		.nfuncs = 10,					\
 		.ctl_reg = 0x1000 * id,				\
 		.io_reg = 0x4 + 0x1000 * id,			\
-		.पूर्णांकr_cfg_reg = 0x8 + 0x1000 * id,		\
-		.पूर्णांकr_status_reg = 0xc + 0x1000 * id,		\
-		.पूर्णांकr_target_reg = 0x8 + 0x1000 * id,		\
+		.intr_cfg_reg = 0x8 + 0x1000 * id,		\
+		.intr_status_reg = 0xc + 0x1000 * id,		\
+		.intr_target_reg = 0x8 + 0x1000 * id,		\
 		.mux_bit = 2,					\
 		.pull_bit = 0,					\
 		.drv_bit = 6,					\
 		.oe_bit = 9,					\
 		.in_bit = 0,					\
 		.out_bit = 1,					\
-		.पूर्णांकr_enable_bit = 0,				\
-		.पूर्णांकr_status_bit = 0,				\
-		.पूर्णांकr_target_bit = 5,				\
-		.पूर्णांकr_target_kpss_val = 4,			\
-		.पूर्णांकr_raw_status_bit = 4,			\
-		.पूर्णांकr_polarity_bit = 1,				\
-		.पूर्णांकr_detection_bit = 2,			\
-		.पूर्णांकr_detection_width = 2,			\
-	पूर्ण
+		.intr_enable_bit = 0,				\
+		.intr_status_bit = 0,				\
+		.intr_target_bit = 5,				\
+		.intr_target_kpss_val = 4,			\
+		.intr_raw_status_bit = 4,			\
+		.intr_polarity_bit = 1,				\
+		.intr_detection_bit = 2,			\
+		.intr_detection_width = 2,			\
+	}
 
-#घोषणा SDC_QDSD_PINGROUP(pg_name, ctl, pull, drv)	\
-	अणु					        \
+#define SDC_QDSD_PINGROUP(pg_name, ctl, pull, drv)	\
+	{					        \
 		.name = #pg_name,			\
 		.pins = pg_name##_pins,			\
 		.npins = ARRAY_SIZE(pg_name##_pins),	\
 		.ctl_reg = ctl,				\
 		.io_reg = 0,				\
-		.पूर्णांकr_cfg_reg = 0,			\
-		.पूर्णांकr_status_reg = 0,			\
-		.पूर्णांकr_target_reg = 0,			\
+		.intr_cfg_reg = 0,			\
+		.intr_status_reg = 0,			\
+		.intr_target_reg = 0,			\
 		.mux_bit = -1,				\
 		.pull_bit = pull,			\
 		.drv_bit = drv,				\
 		.oe_bit = -1,				\
 		.in_bit = -1,				\
 		.out_bit = -1,				\
-		.पूर्णांकr_enable_bit = -1,			\
-		.पूर्णांकr_status_bit = -1,			\
-		.पूर्णांकr_target_bit = -1,			\
-		.पूर्णांकr_raw_status_bit = -1,		\
-		.पूर्णांकr_polarity_bit = -1,		\
-		.पूर्णांकr_detection_bit = -1,		\
-		.पूर्णांकr_detection_width = -1,		\
-	पूर्ण
+		.intr_enable_bit = -1,			\
+		.intr_status_bit = -1,			\
+		.intr_target_bit = -1,			\
+		.intr_raw_status_bit = -1,		\
+		.intr_polarity_bit = -1,		\
+		.intr_detection_bit = -1,		\
+		.intr_detection_width = -1,		\
+	}
 
-अटल स्थिर काष्ठा pinctrl_pin_desc msm8953_pins[] = अणु
+static const struct pinctrl_pin_desc msm8953_pins[] = {
 	PINCTRL_PIN(0, "GPIO_0"),
 	PINCTRL_PIN(1, "GPIO_1"),
 	PINCTRL_PIN(2, "GPIO_2"),
@@ -236,10 +235,10 @@
 	PINCTRL_PIN(152, "QDSD_DATA1"),
 	PINCTRL_PIN(153, "QDSD_DATA2"),
 	PINCTRL_PIN(154, "QDSD_DATA3"),
-पूर्ण;
+};
 
-#घोषणा DECLARE_MSM_GPIO_PINS(pin) \
-	अटल स्थिर अचिन्हित पूर्णांक gpio##pin##_pins[] = अणु pin पूर्ण
+#define DECLARE_MSM_GPIO_PINS(pin) \
+	static const unsigned int gpio##pin##_pins[] = { pin }
 DECLARE_MSM_GPIO_PINS(0);
 DECLARE_MSM_GPIO_PINS(1);
 DECLARE_MSM_GPIO_PINS(2);
@@ -383,31 +382,31 @@ DECLARE_MSM_GPIO_PINS(139);
 DECLARE_MSM_GPIO_PINS(140);
 DECLARE_MSM_GPIO_PINS(141);
 
-अटल स्थिर अचिन्हित पूर्णांक qdsd_clk_pins[] = अणु 142 पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक qdsd_cmd_pins[] = अणु 143 पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक qdsd_data0_pins[] = अणु 144 पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक qdsd_data1_pins[] = अणु 145 पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक qdsd_data2_pins[] = अणु 146 पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक qdsd_data3_pins[] = अणु 147 पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक sdc1_clk_pins[] = अणु 148 पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक sdc1_cmd_pins[] = अणु 149 पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक sdc1_data_pins[] = अणु 150 पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक sdc1_rclk_pins[] = अणु 151 पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक sdc2_clk_pins[] = अणु 152 पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक sdc2_cmd_pins[] = अणु 153 पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक sdc2_data_pins[] = अणु 154 पूर्ण;
+static const unsigned int qdsd_clk_pins[] = { 142 };
+static const unsigned int qdsd_cmd_pins[] = { 143 };
+static const unsigned int qdsd_data0_pins[] = { 144 };
+static const unsigned int qdsd_data1_pins[] = { 145 };
+static const unsigned int qdsd_data2_pins[] = { 146 };
+static const unsigned int qdsd_data3_pins[] = { 147 };
+static const unsigned int sdc1_clk_pins[] = { 148 };
+static const unsigned int sdc1_cmd_pins[] = { 149 };
+static const unsigned int sdc1_data_pins[] = { 150 };
+static const unsigned int sdc1_rclk_pins[] = { 151 };
+static const unsigned int sdc2_clk_pins[] = { 152 };
+static const unsigned int sdc2_cmd_pins[] = { 153 };
+static const unsigned int sdc2_data_pins[] = { 154 };
 
-क्रमागत msm8953_functions अणु
-	msm_mux_accel_पूर्णांक,
+enum msm8953_functions {
+	msm_mux_accel_int,
 	msm_mux_adsp_ext,
-	msm_mux_alsp_पूर्णांक,
+	msm_mux_alsp_int,
 	msm_mux_atest_bbrx0,
 	msm_mux_atest_bbrx1,
-	msm_mux_atest_अक्षर,
-	msm_mux_atest_अक्षर0,
-	msm_mux_atest_अक्षर1,
-	msm_mux_atest_अक्षर2,
-	msm_mux_atest_अक्षर3,
+	msm_mux_atest_char,
+	msm_mux_atest_char0,
+	msm_mux_atest_char1,
+	msm_mux_atest_char2,
+	msm_mux_atest_char3,
 	msm_mux_atest_gpsadc_dtest0_native,
 	msm_mux_atest_gpsadc_dtest1_native,
 	msm_mux_atest_tsens,
@@ -439,8 +438,8 @@ DECLARE_MSM_GPIO_PINS(141);
 	msm_mux_blsp_uart4,
 	msm_mux_blsp_uart5,
 	msm_mux_blsp_uart6,
-	msm_mux_cam0_lकरो,
-	msm_mux_cam1_lकरो,
+	msm_mux_cam0_ldo,
+	msm_mux_cam1_ldo,
 	msm_mux_cam1_rst,
 	msm_mux_cam1_standby,
 	msm_mux_cam2_rst,
@@ -449,17 +448,17 @@ DECLARE_MSM_GPIO_PINS(141);
 	msm_mux_cam3_standby,
 	msm_mux_cam_irq,
 	msm_mux_cam_mclk,
-	msm_mux_cap_पूर्णांक,
+	msm_mux_cap_int,
 	msm_mux_cci_async,
 	msm_mux_cci_i2c,
-	msm_mux_cci_समयr0,
-	msm_mux_cci_समयr1,
-	msm_mux_cci_समयr2,
-	msm_mux_cci_समयr3,
-	msm_mux_cci_समयr4,
+	msm_mux_cci_timer0,
+	msm_mux_cci_timer1,
+	msm_mux_cci_timer2,
+	msm_mux_cci_timer3,
+	msm_mux_cci_timer4,
 	msm_mux_cdc_pdm0,
-	msm_mux_codec_पूर्णांक1,
-	msm_mux_codec_पूर्णांक2,
+	msm_mux_codec_int1,
+	msm_mux_codec_int2,
 	msm_mux_codec_reset,
 	msm_mux_cri_trng,
 	msm_mux_cri_trng0,
@@ -498,7 +497,7 @@ DECLARE_MSM_GPIO_PINS(141);
 	msm_mux_ebi_ch0,
 	msm_mux_ext_lpass,
 	msm_mux_flash_strobe,
-	msm_mux_fp_पूर्णांक,
+	msm_mux_fp_int,
 	msm_mux_gcc_gp1_clk_a,
 	msm_mux_gcc_gp1_clk_b,
 	msm_mux_gcc_gp2_clk_a,
@@ -510,20 +509,20 @@ DECLARE_MSM_GPIO_PINS(141);
 	msm_mux_gpio,
 	msm_mux_gsm0_tx,
 	msm_mux_gsm1_tx,
-	msm_mux_gyro_पूर्णांक,
-	msm_mux_hall_पूर्णांक,
-	msm_mux_hdmi_पूर्णांक,
+	msm_mux_gyro_int,
+	msm_mux_hall_int,
+	msm_mux_hdmi_int,
 	msm_mux_key_focus,
 	msm_mux_key_home,
 	msm_mux_key_snapshot,
 	msm_mux_key_volp,
-	msm_mux_lकरो_en,
-	msm_mux_lकरो_update,
+	msm_mux_ldo_en,
+	msm_mux_ldo_update,
 	msm_mux_lpass_slimbus,
 	msm_mux_lpass_slimbus0,
 	msm_mux_lpass_slimbus1,
 	msm_mux_m_voc,
-	msm_mux_mag_पूर्णांक,
+	msm_mux_mag_int,
 	msm_mux_mdp_vsync,
 	msm_mux_mipi_dsi0,
 	msm_mux_modem_tsync,
@@ -540,7 +539,7 @@ DECLARE_MSM_GPIO_PINS(141);
 	msm_mux_pbs0,
 	msm_mux_pbs1,
 	msm_mux_pbs2,
-	msm_mux_pressure_पूर्णांक,
+	msm_mux_pressure_int,
 	msm_mux_pri_mi2s,
 	msm_mux_pri_mi2s_mclk_a,
 	msm_mux_pri_mi2s_mclk_b,
@@ -548,7 +547,7 @@ DECLARE_MSM_GPIO_PINS(141);
 	msm_mux_prng_rosc,
 	msm_mux_pwr_crypto_enabled_a,
 	msm_mux_pwr_crypto_enabled_b,
-	msm_mux_pwr_करोwn,
+	msm_mux_pwr_down,
 	msm_mux_pwr_modem_enabled_a,
 	msm_mux_pwr_modem_enabled_b,
 	msm_mux_pwr_nav_enabled_a,
@@ -567,13 +566,13 @@ DECLARE_MSM_GPIO_PINS(141);
 	msm_mux_qdss_tracectl_b,
 	msm_mux_qdss_tracedata_a,
 	msm_mux_qdss_tracedata_b,
-	msm_mux_sd_ग_लिखो,
+	msm_mux_sd_write,
 	msm_mux_sdcard_det,
 	msm_mux_sec_mi2s,
 	msm_mux_sec_mi2s_mclk_a,
 	msm_mux_sec_mi2s_mclk_b,
-	msm_mux_smb_पूर्णांक,
-	msm_mux_ss_चयन,
+	msm_mux_smb_int,
+	msm_mux_ss_switch,
 	msm_mux_ssbi_wtr1,
 	msm_mux_ts_resout,
 	msm_mux_ts_sample,
@@ -600,446 +599,446 @@ DECLARE_MSM_GPIO_PINS(141);
 	msm_mux_wsa_io,
 	msm_mux_wsa_irq,
 	msm_mux__,
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर accel_पूर्णांक_groups[] = अणु
+static const char * const accel_int_groups[] = {
 	"gpio42",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर adsp_ext_groups[] = अणु
+static const char * const adsp_ext_groups[] = {
 	"gpio1",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर alsp_पूर्णांक_groups[] = अणु
+static const char * const alsp_int_groups[] = {
 	"gpio43",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर atest_bbrx0_groups[] = अणु
+static const char * const atest_bbrx0_groups[] = {
 	"gpio17",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर atest_bbrx1_groups[] = अणु
+static const char * const atest_bbrx1_groups[] = {
 	"gpio16",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर atest_अक्षर0_groups[] = अणु
+static const char * const atest_char0_groups[] = {
 	"gpio68",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर atest_अक्षर1_groups[] = अणु
+static const char * const atest_char1_groups[] = {
 	"gpio67",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर atest_अक्षर2_groups[] = अणु
+static const char * const atest_char2_groups[] = {
 	"gpio75",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर atest_अक्षर3_groups[] = अणु
+static const char * const atest_char3_groups[] = {
 	"gpio63",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर atest_अक्षर_groups[] = अणु
+static const char * const atest_char_groups[] = {
 	"gpio120",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर atest_gpsadc_dtest0_native_groups[] = अणु
+static const char * const atest_gpsadc_dtest0_native_groups[] = {
 	"gpio7",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर atest_gpsadc_dtest1_native_groups[] = अणु
+static const char * const atest_gpsadc_dtest1_native_groups[] = {
 	"gpio18",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर atest_tsens_groups[] = अणु
+static const char * const atest_tsens_groups[] = {
 	"gpio120",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर atest_wlan0_groups[] = अणु
+static const char * const atest_wlan0_groups[] = {
 	"gpio22",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर atest_wlan1_groups[] = अणु
+static const char * const atest_wlan1_groups[] = {
 	"gpio23",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर bimc_dte0_groups[] = अणु
+static const char * const bimc_dte0_groups[] = {
 	"gpio63", "gpio65",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर bimc_dte1_groups[] = अणु
+static const char * const bimc_dte1_groups[] = {
 	"gpio121", "gpio122",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर blsp1_spi_groups[] = अणु
+static const char * const blsp1_spi_groups[] = {
 	"gpio35", "gpio36",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर blsp3_spi_groups[] = अणु
+static const char * const blsp3_spi_groups[] = {
 	"gpio41", "gpio50",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर blsp6_spi_groups[] = अणु
+static const char * const blsp6_spi_groups[] = {
 	"gpio47", "gpio48",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर blsp7_spi_groups[] = अणु
+static const char * const blsp7_spi_groups[] = {
 	"gpio89", "gpio90",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर blsp_i2c1_groups[] = अणु
+static const char * const blsp_i2c1_groups[] = {
 	"gpio2", "gpio3",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर blsp_i2c2_groups[] = अणु
+static const char * const blsp_i2c2_groups[] = {
 	"gpio6", "gpio7",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर blsp_i2c3_groups[] = अणु
+static const char * const blsp_i2c3_groups[] = {
 	"gpio10", "gpio11",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर blsp_i2c4_groups[] = अणु
+static const char * const blsp_i2c4_groups[] = {
 	"gpio14", "gpio15",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर blsp_i2c5_groups[] = अणु
+static const char * const blsp_i2c5_groups[] = {
 	"gpio18", "gpio19",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर blsp_i2c6_groups[] = अणु
+static const char * const blsp_i2c6_groups[] = {
 	"gpio22", "gpio23",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर blsp_i2c7_groups[] = अणु
+static const char * const blsp_i2c7_groups[] = {
 	"gpio135", "gpio136",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर blsp_i2c8_groups[] = अणु
+static const char * const blsp_i2c8_groups[] = {
 	"gpio98", "gpio99",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर blsp_spi1_groups[] = अणु
+static const char * const blsp_spi1_groups[] = {
 	"gpio0", "gpio1", "gpio2", "gpio3",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर blsp_spi2_groups[] = अणु
+static const char * const blsp_spi2_groups[] = {
 	"gpio4", "gpio5", "gpio6", "gpio7",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर blsp_spi3_groups[] = अणु
+static const char * const blsp_spi3_groups[] = {
 	"gpio8", "gpio9", "gpio10", "gpio11",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर blsp_spi4_groups[] = अणु
+static const char * const blsp_spi4_groups[] = {
 	"gpio12", "gpio13", "gpio14", "gpio15",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर blsp_spi5_groups[] = अणु
+static const char * const blsp_spi5_groups[] = {
 	"gpio16", "gpio17", "gpio18", "gpio19",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर blsp_spi6_groups[] = अणु
+static const char * const blsp_spi6_groups[] = {
 	"gpio20", "gpio21", "gpio22", "gpio23",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर blsp_spi7_groups[] = अणु
+static const char * const blsp_spi7_groups[] = {
 	"gpio135", "gpio136", "gpio137", "gpio138",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर blsp_spi8_groups[] = अणु
+static const char * const blsp_spi8_groups[] = {
 	"gpio96", "gpio97", "gpio98", "gpio99",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर blsp_uart2_groups[] = अणु
+static const char * const blsp_uart2_groups[] = {
 	"gpio4", "gpio5", "gpio6", "gpio7",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर blsp_uart4_groups[] = अणु
+static const char * const blsp_uart4_groups[] = {
 	"gpio12", "gpio13", "gpio14", "gpio15",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर blsp_uart5_groups[] = अणु
+static const char * const blsp_uart5_groups[] = {
 	"gpio16", "gpio17", "gpio18", "gpio19",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर blsp_uart6_groups[] = अणु
+static const char * const blsp_uart6_groups[] = {
 	"gpio20", "gpio21", "gpio22", "gpio23",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर cam0_lकरो_groups[] = अणु
+static const char * const cam0_ldo_groups[] = {
 	"gpio50",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर cam1_lकरो_groups[] = अणु
+static const char * const cam1_ldo_groups[] = {
 	"gpio134",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर cam1_rst_groups[] = अणु
+static const char * const cam1_rst_groups[] = {
 	"gpio40",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर cam1_standby_groups[] = अणु
+static const char * const cam1_standby_groups[] = {
 	"gpio39",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर cam2_rst_groups[] = अणु
+static const char * const cam2_rst_groups[] = {
 	"gpio129",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर cam2_standby_groups[] = अणु
+static const char * const cam2_standby_groups[] = {
 	"gpio130",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर cam3_rst_groups[] = अणु
+static const char * const cam3_rst_groups[] = {
 	"gpio131",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर cam3_standby_groups[] = अणु
+static const char * const cam3_standby_groups[] = {
 	"gpio132",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर cam_irq_groups[] = अणु
+static const char * const cam_irq_groups[] = {
 	"gpio35",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर cam_mclk_groups[] = अणु
+static const char * const cam_mclk_groups[] = {
 	"gpio26", "gpio27", "gpio28", "gpio128",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर cap_पूर्णांक_groups[] = अणु
+static const char * const cap_int_groups[] = {
 	"gpio13",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर cci_async_groups[] = अणु
+static const char * const cci_async_groups[] = {
 	"gpio38",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर cci_i2c_groups[] = अणु
+static const char * const cci_i2c_groups[] = {
 	"gpio29", "gpio30", "gpio31", "gpio32",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर cci_समयr0_groups[] = अणु
+static const char * const cci_timer0_groups[] = {
 	"gpio33",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर cci_समयr1_groups[] = अणु
+static const char * const cci_timer1_groups[] = {
 	"gpio34",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर cci_समयr2_groups[] = अणु
+static const char * const cci_timer2_groups[] = {
 	"gpio35",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर cci_समयr3_groups[] = अणु
+static const char * const cci_timer3_groups[] = {
 	"gpio36",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर cci_समयr4_groups[] = अणु
+static const char * const cci_timer4_groups[] = {
 	"gpio41",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर cdc_pdm0_groups[] = अणु
+static const char * const cdc_pdm0_groups[] = {
 	"gpio67", "gpio68", "gpio69", "gpio70", "gpio71", "gpio72", "gpio73",
 	"gpio74",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर codec_पूर्णांक1_groups[] = अणु
+static const char * const codec_int1_groups[] = {
 	"gpio73",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर codec_पूर्णांक2_groups[] = अणु
+static const char * const codec_int2_groups[] = {
 	"gpio74",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर codec_reset_groups[] = अणु
+static const char * const codec_reset_groups[] = {
 	"gpio67",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर cri_trng0_groups[] = अणु
+static const char * const cri_trng0_groups[] = {
 	"gpio85",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर cri_trng1_groups[] = अणु
+static const char * const cri_trng1_groups[] = {
 	"gpio86",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर cri_trng_groups[] = अणु
+static const char * const cri_trng_groups[] = {
 	"gpio87",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर dac_calib0_groups[] = अणु
+static const char * const dac_calib0_groups[] = {
 	"gpio4",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर dac_calib1_groups[] = अणु
+static const char * const dac_calib1_groups[] = {
 	"gpio12",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर dac_calib2_groups[] = अणु
+static const char * const dac_calib2_groups[] = {
 	"gpio13",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर dac_calib3_groups[] = अणु
+static const char * const dac_calib3_groups[] = {
 	"gpio28",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर dac_calib4_groups[] = अणु
+static const char * const dac_calib4_groups[] = {
 	"gpio29",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर dac_calib5_groups[] = अणु
+static const char * const dac_calib5_groups[] = {
 	"gpio39",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर dac_calib6_groups[] = अणु
+static const char * const dac_calib6_groups[] = {
 	"gpio40",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर dac_calib7_groups[] = अणु
+static const char * const dac_calib7_groups[] = {
 	"gpio41",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर dac_calib8_groups[] = अणु
+static const char * const dac_calib8_groups[] = {
 	"gpio42",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर dac_calib9_groups[] = अणु
+static const char * const dac_calib9_groups[] = {
 	"gpio43",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर dac_calib10_groups[] = अणु
+static const char * const dac_calib10_groups[] = {
 	"gpio44",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर dac_calib11_groups[] = अणु
+static const char * const dac_calib11_groups[] = {
 	"gpio45",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर dac_calib12_groups[] = अणु
+static const char * const dac_calib12_groups[] = {
 	"gpio46",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर dac_calib13_groups[] = अणु
+static const char * const dac_calib13_groups[] = {
 	"gpio47",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर dac_calib14_groups[] = अणु
+static const char * const dac_calib14_groups[] = {
 	"gpio48",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर dac_calib15_groups[] = अणु
+static const char * const dac_calib15_groups[] = {
 	"gpio20",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर dac_calib16_groups[] = अणु
+static const char * const dac_calib16_groups[] = {
 	"gpio21",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर dac_calib17_groups[] = अणु
+static const char * const dac_calib17_groups[] = {
 	"gpio67",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर dac_calib18_groups[] = अणु
+static const char * const dac_calib18_groups[] = {
 	"gpio115",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर dac_calib19_groups[] = अणु
+static const char * const dac_calib19_groups[] = {
 	"gpio30",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर dac_calib20_groups[] = अणु
+static const char * const dac_calib20_groups[] = {
 	"gpio128",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर dac_calib21_groups[] = अणु
+static const char * const dac_calib21_groups[] = {
 	"gpio129",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर dac_calib22_groups[] = अणु
+static const char * const dac_calib22_groups[] = {
 	"gpio130",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर dac_calib23_groups[] = अणु
+static const char * const dac_calib23_groups[] = {
 	"gpio131",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर dac_calib24_groups[] = अणु
+static const char * const dac_calib24_groups[] = {
 	"gpio132",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर dac_calib25_groups[] = अणु
+static const char * const dac_calib25_groups[] = {
 	"gpio133",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर dbg_out_groups[] = अणु
+static const char * const dbg_out_groups[] = {
 	"gpio63",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर ddr_bist_groups[] = अणु
+static const char * const ddr_bist_groups[] = {
 	"gpio129", "gpio130", "gpio131", "gpio132",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर dmic0_clk_groups[] = अणु
+static const char * const dmic0_clk_groups[] = {
 	"gpio89",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर dmic0_data_groups[] = अणु
+static const char * const dmic0_data_groups[] = {
 	"gpio90",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर ebi_cdc_groups[] = अणु
+static const char * const ebi_cdc_groups[] = {
 	"gpio67", "gpio69", "gpio118", "gpio119", "gpio120", "gpio123",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर ebi_ch0_groups[] = अणु
+static const char * const ebi_ch0_groups[] = {
 	"gpio75",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर ext_lpass_groups[] = अणु
+static const char * const ext_lpass_groups[] = {
 	"gpio81",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर flash_strobe_groups[] = अणु
+static const char * const flash_strobe_groups[] = {
 	"gpio33", "gpio34",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर fp_पूर्णांक_groups[] = अणु
+static const char * const fp_int_groups[] = {
 	"gpio48",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर gcc_gp1_clk_a_groups[] = अणु
+static const char * const gcc_gp1_clk_a_groups[] = {
 	"gpio42",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर gcc_gp1_clk_b_groups[] = अणु
+static const char * const gcc_gp1_clk_b_groups[] = {
 	"gpio6", "gpio41",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर gcc_gp2_clk_a_groups[] = अणु
+static const char * const gcc_gp2_clk_a_groups[] = {
 	"gpio43",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर gcc_gp2_clk_b_groups[] = अणु
+static const char * const gcc_gp2_clk_b_groups[] = {
 	"gpio10",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर gcc_gp3_clk_a_groups[] = अणु
+static const char * const gcc_gp3_clk_a_groups[] = {
 	"gpio44",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर gcc_gp3_clk_b_groups[] = अणु
+static const char * const gcc_gp3_clk_b_groups[] = {
 	"gpio11",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर gcc_plltest_groups[] = अणु
+static const char * const gcc_plltest_groups[] = {
 	"gpio98", "gpio99",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर gcc_tlmm_groups[] = अणु
+static const char * const gcc_tlmm_groups[] = {
 	"gpio87",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर gpio_groups[] = अणु
+static const char * const gpio_groups[] = {
 	"gpio0", "gpio1", "gpio2", "gpio3", "gpio4", "gpio5", "gpio6", "gpio7",
 	"gpio8", "gpio9", "gpio10", "gpio11", "gpio12", "gpio13", "gpio14",
 	"gpio15", "gpio16", "gpio17", "gpio18", "gpio19", "gpio20", "gpio21",
@@ -1062,387 +1061,387 @@ DECLARE_MSM_GPIO_PINS(141);
 	"gpio129", "gpio130", "gpio131", "gpio132", "gpio133", "gpio134",
 	"gpio135", "gpio136", "gpio137", "gpio138", "gpio139", "gpio140",
 	"gpio141",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर gsm0_tx_groups[] = अणु
+static const char * const gsm0_tx_groups[] = {
 	"gpio117",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर gsm1_tx_groups[] = अणु
+static const char * const gsm1_tx_groups[] = {
 	"gpio115",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर gyro_पूर्णांक_groups[] = अणु
+static const char * const gyro_int_groups[] = {
 	"gpio45",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर hall_पूर्णांक_groups[] = अणु
+static const char * const hall_int_groups[] = {
 	"gpio12",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर hdmi_पूर्णांक_groups[] = अणु
+static const char * const hdmi_int_groups[] = {
 	"gpio90",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर key_focus_groups[] = अणु
+static const char * const key_focus_groups[] = {
 	"gpio87",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर key_home_groups[] = अणु
+static const char * const key_home_groups[] = {
 	"gpio88",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर key_snapshot_groups[] = अणु
+static const char * const key_snapshot_groups[] = {
 	"gpio86",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर key_volp_groups[] = अणु
+static const char * const key_volp_groups[] = {
 	"gpio85",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर lकरो_en_groups[] = अणु
+static const char * const ldo_en_groups[] = {
 	"gpio5",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर lकरो_update_groups[] = अणु
+static const char * const ldo_update_groups[] = {
 	"gpio4",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर lpass_slimbus0_groups[] = अणु
+static const char * const lpass_slimbus0_groups[] = {
 	"gpio71",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर lpass_slimbus1_groups[] = अणु
+static const char * const lpass_slimbus1_groups[] = {
 	"gpio72",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर lpass_slimbus_groups[] = अणु
+static const char * const lpass_slimbus_groups[] = {
 	"gpio70",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर m_voc_groups[] = अणु
+static const char * const m_voc_groups[] = {
 	"gpio17", "gpio21",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर mag_पूर्णांक_groups[] = अणु
+static const char * const mag_int_groups[] = {
 	"gpio44",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर mdp_vsync_groups[] = अणु
+static const char * const mdp_vsync_groups[] = {
 	"gpio24", "gpio25",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर mipi_dsi0_groups[] = अणु
+static const char * const mipi_dsi0_groups[] = {
 	"gpio61",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर modem_tsync_groups[] = अणु
+static const char * const modem_tsync_groups[] = {
 	"gpio113",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर mss_lte_groups[] = अणु
+static const char * const mss_lte_groups[] = {
 	"gpio82", "gpio83",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर nav_pps_groups[] = अणु
+static const char * const nav_pps_groups[] = {
 	"gpio113",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर nav_pps_in_a_groups[] = अणु
+static const char * const nav_pps_in_a_groups[] = {
 	"gpio111",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर nav_pps_in_b_groups[] = अणु
+static const char * const nav_pps_in_b_groups[] = {
 	"gpio113",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर nav_tsync_groups[] = अणु
+static const char * const nav_tsync_groups[] = {
 	"gpio113",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर nfc_disable_groups[] = अणु
+static const char * const nfc_disable_groups[] = {
 	"gpio16",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर nfc_dwl_groups[] = अणु
+static const char * const nfc_dwl_groups[] = {
 	"gpio62",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर nfc_irq_groups[] = अणु
+static const char * const nfc_irq_groups[] = {
 	"gpio17",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर ois_sync_groups[] = अणु
+static const char * const ois_sync_groups[] = {
 	"gpio36",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर pa_indicator_groups[] = अणु
+static const char * const pa_indicator_groups[] = {
 	"gpio112",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर pbs0_groups[] = अणु
+static const char * const pbs0_groups[] = {
 	"gpio85",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर pbs1_groups[] = अणु
+static const char * const pbs1_groups[] = {
 	"gpio86",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर pbs2_groups[] = अणु
+static const char * const pbs2_groups[] = {
 	"gpio87",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर pressure_पूर्णांक_groups[] = अणु
+static const char * const pressure_int_groups[] = {
 	"gpio46",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर pri_mi2s_groups[] = अणु
+static const char * const pri_mi2s_groups[] = {
 	"gpio66", "gpio88", "gpio91", "gpio93", "gpio94", "gpio95",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर pri_mi2s_mclk_a_groups[] = अणु
+static const char * const pri_mi2s_mclk_a_groups[] = {
 	"gpio25",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर pri_mi2s_mclk_b_groups[] = अणु
+static const char * const pri_mi2s_mclk_b_groups[] = {
 	"gpio69",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर pri_mi2s_ws_groups[] = अणु
+static const char * const pri_mi2s_ws_groups[] = {
 	"gpio92",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर prng_rosc_groups[] = अणु
+static const char * const prng_rosc_groups[] = {
 	"gpio2",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर pwr_crypto_enabled_a_groups[] = अणु
+static const char * const pwr_crypto_enabled_a_groups[] = {
 	"gpio36",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर pwr_crypto_enabled_b_groups[] = अणु
+static const char * const pwr_crypto_enabled_b_groups[] = {
 	"gpio13",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर pwr_करोwn_groups[] = अणु
+static const char * const pwr_down_groups[] = {
 	"gpio89",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर pwr_modem_enabled_a_groups[] = अणु
+static const char * const pwr_modem_enabled_a_groups[] = {
 	"gpio29",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर pwr_modem_enabled_b_groups[] = अणु
+static const char * const pwr_modem_enabled_b_groups[] = {
 	"gpio9",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर pwr_nav_enabled_a_groups[] = अणु
+static const char * const pwr_nav_enabled_a_groups[] = {
 	"gpio35",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर pwr_nav_enabled_b_groups[] = अणु
+static const char * const pwr_nav_enabled_b_groups[] = {
 	"gpio12",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर qdss_cti_trig_in_a0_groups[] = अणु
+static const char * const qdss_cti_trig_in_a0_groups[] = {
 	"gpio17",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर qdss_cti_trig_in_a1_groups[] = अणु
+static const char * const qdss_cti_trig_in_a1_groups[] = {
 	"gpio91",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर qdss_cti_trig_in_b0_groups[] = अणु
+static const char * const qdss_cti_trig_in_b0_groups[] = {
 	"gpio21",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर qdss_cti_trig_in_b1_groups[] = अणु
+static const char * const qdss_cti_trig_in_b1_groups[] = {
 	"gpio48",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर qdss_cti_trig_out_a0_groups[] = अणु
+static const char * const qdss_cti_trig_out_a0_groups[] = {
 	"gpio41",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर qdss_cti_trig_out_a1_groups[] = अणु
+static const char * const qdss_cti_trig_out_a1_groups[] = {
 	"gpio3",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर qdss_cti_trig_out_b0_groups[] = अणु
+static const char * const qdss_cti_trig_out_b0_groups[] = {
 	"gpio2",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर qdss_cti_trig_out_b1_groups[] = अणु
+static const char * const qdss_cti_trig_out_b1_groups[] = {
 	"gpio25",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर qdss_traceclk_a_groups[] = अणु
+static const char * const qdss_traceclk_a_groups[] = {
 	"gpio16",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर qdss_traceclk_b_groups[] = अणु
+static const char * const qdss_traceclk_b_groups[] = {
 	"gpio22",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर qdss_tracectl_a_groups[] = अणु
+static const char * const qdss_tracectl_a_groups[] = {
 	"gpio18",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर qdss_tracectl_b_groups[] = अणु
+static const char * const qdss_tracectl_b_groups[] = {
 	"gpio20",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर qdss_tracedata_a_groups[] = अणु
+static const char * const qdss_tracedata_a_groups[] = {
 	"gpio19", "gpio26", "gpio27", "gpio28", "gpio29", "gpio30", "gpio31",
 	"gpio32", "gpio33", "gpio34", "gpio35", "gpio36", "gpio38", "gpio39",
 	"gpio40", "gpio50",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर qdss_tracedata_b_groups[] = अणु
+static const char * const qdss_tracedata_b_groups[] = {
 	"gpio8", "gpio9", "gpio12", "gpio13", "gpio23", "gpio42", "gpio43",
 	"gpio44", "gpio45", "gpio46", "gpio47", "gpio66", "gpio86", "gpio87",
 	"gpio88", "gpio92",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर sd_ग_लिखो_groups[] = अणु
+static const char * const sd_write_groups[] = {
 	"gpio50",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर sdcard_det_groups[] = अणु
+static const char * const sdcard_det_groups[] = {
 	"gpio133",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर sec_mi2s_groups[] = अणु
+static const char * const sec_mi2s_groups[] = {
 	"gpio135", "gpio136", "gpio137", "gpio138",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर sec_mi2s_mclk_a_groups[] = अणु
+static const char * const sec_mi2s_mclk_a_groups[] = {
 	"gpio25",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर sec_mi2s_mclk_b_groups[] = अणु
+static const char * const sec_mi2s_mclk_b_groups[] = {
 	"gpio66",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर smb_पूर्णांक_groups[] = अणु
+static const char * const smb_int_groups[] = {
 	"gpio1",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर ss_चयन_groups[] = अणु
+static const char * const ss_switch_groups[] = {
 	"gpio139",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर ssbi_wtr1_groups[] = अणु
+static const char * const ssbi_wtr1_groups[] = {
 	"gpio114", "gpio123",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर ts_resout_groups[] = अणु
+static const char * const ts_resout_groups[] = {
 	"gpio64",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर ts_sample_groups[] = अणु
+static const char * const ts_sample_groups[] = {
 	"gpio65",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर ts_xvdd_groups[] = अणु
+static const char * const ts_xvdd_groups[] = {
 	"gpio60",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर tsens_max_groups[] = अणु
+static const char * const tsens_max_groups[] = {
 	"gpio139",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर uim1_clk_groups[] = अणु
+static const char * const uim1_clk_groups[] = {
 	"gpio52",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर uim1_data_groups[] = अणु
+static const char * const uim1_data_groups[] = {
 	"gpio51",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर uim1_present_groups[] = अणु
+static const char * const uim1_present_groups[] = {
 	"gpio54",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर uim1_reset_groups[] = अणु
+static const char * const uim1_reset_groups[] = {
 	"gpio53",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर uim2_clk_groups[] = अणु
+static const char * const uim2_clk_groups[] = {
 	"gpio56",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर uim2_data_groups[] = अणु
+static const char * const uim2_data_groups[] = {
 	"gpio55",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर uim2_present_groups[] = अणु
+static const char * const uim2_present_groups[] = {
 	"gpio58",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर uim2_reset_groups[] = अणु
+static const char * const uim2_reset_groups[] = {
 	"gpio57",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर uim_batt_groups[] = अणु
+static const char * const uim_batt_groups[] = {
 	"gpio49",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर us_emitter_groups[] = अणु
+static const char * const us_emitter_groups[] = {
 	"gpio68",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर us_euro_groups[] = अणु
+static const char * const us_euro_groups[] = {
 	"gpio63",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर wcss_bt_groups[] = अणु
+static const char * const wcss_bt_groups[] = {
 	"gpio75", "gpio83", "gpio84",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर wcss_fm_groups[] = अणु
+static const char * const wcss_fm_groups[] = {
 	"gpio81", "gpio82",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर wcss_wlan0_groups[] = अणु
+static const char * const wcss_wlan0_groups[] = {
 	"gpio78",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर wcss_wlan1_groups[] = अणु
+static const char * const wcss_wlan1_groups[] = {
 	"gpio77",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर wcss_wlan2_groups[] = अणु
+static const char * const wcss_wlan2_groups[] = {
 	"gpio76",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर wcss_wlan_groups[] = अणु
+static const char * const wcss_wlan_groups[] = {
 	"gpio79", "gpio80",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर wsa_en_groups[] = अणु
+static const char * const wsa_en_groups[] = {
 	"gpio96",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर wsa_io_groups[] = अणु
+static const char * const wsa_io_groups[] = {
 	"gpio94", "gpio95",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर wsa_irq_groups[] = अणु
+static const char * const wsa_irq_groups[] = {
 	"gpio97",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा msm_function msm8953_functions[] = अणु
-	FUNCTION(accel_पूर्णांक),
+static const struct msm_function msm8953_functions[] = {
+	FUNCTION(accel_int),
 	FUNCTION(adsp_ext),
-	FUNCTION(alsp_पूर्णांक),
+	FUNCTION(alsp_int),
 	FUNCTION(atest_bbrx0),
 	FUNCTION(atest_bbrx1),
-	FUNCTION(atest_अक्षर),
-	FUNCTION(atest_अक्षर0),
-	FUNCTION(atest_अक्षर1),
-	FUNCTION(atest_अक्षर2),
-	FUNCTION(atest_अक्षर3),
+	FUNCTION(atest_char),
+	FUNCTION(atest_char0),
+	FUNCTION(atest_char1),
+	FUNCTION(atest_char2),
+	FUNCTION(atest_char3),
 	FUNCTION(atest_gpsadc_dtest0_native),
 	FUNCTION(atest_gpsadc_dtest1_native),
 	FUNCTION(atest_tsens),
@@ -1474,8 +1473,8 @@ DECLARE_MSM_GPIO_PINS(141);
 	FUNCTION(blsp_uart4),
 	FUNCTION(blsp_uart5),
 	FUNCTION(blsp_uart6),
-	FUNCTION(cam0_lकरो),
-	FUNCTION(cam1_lकरो),
+	FUNCTION(cam0_ldo),
+	FUNCTION(cam1_ldo),
 	FUNCTION(cam1_rst),
 	FUNCTION(cam1_standby),
 	FUNCTION(cam2_rst),
@@ -1484,17 +1483,17 @@ DECLARE_MSM_GPIO_PINS(141);
 	FUNCTION(cam3_standby),
 	FUNCTION(cam_irq),
 	FUNCTION(cam_mclk),
-	FUNCTION(cap_पूर्णांक),
+	FUNCTION(cap_int),
 	FUNCTION(cci_async),
 	FUNCTION(cci_i2c),
-	FUNCTION(cci_समयr0),
-	FUNCTION(cci_समयr1),
-	FUNCTION(cci_समयr2),
-	FUNCTION(cci_समयr3),
-	FUNCTION(cci_समयr4),
+	FUNCTION(cci_timer0),
+	FUNCTION(cci_timer1),
+	FUNCTION(cci_timer2),
+	FUNCTION(cci_timer3),
+	FUNCTION(cci_timer4),
 	FUNCTION(cdc_pdm0),
-	FUNCTION(codec_पूर्णांक1),
-	FUNCTION(codec_पूर्णांक2),
+	FUNCTION(codec_int1),
+	FUNCTION(codec_int2),
 	FUNCTION(codec_reset),
 	FUNCTION(cri_trng),
 	FUNCTION(cri_trng0),
@@ -1533,7 +1532,7 @@ DECLARE_MSM_GPIO_PINS(141);
 	FUNCTION(ebi_ch0),
 	FUNCTION(ext_lpass),
 	FUNCTION(flash_strobe),
-	FUNCTION(fp_पूर्णांक),
+	FUNCTION(fp_int),
 	FUNCTION(gcc_gp1_clk_a),
 	FUNCTION(gcc_gp1_clk_b),
 	FUNCTION(gcc_gp2_clk_a),
@@ -1545,20 +1544,20 @@ DECLARE_MSM_GPIO_PINS(141);
 	FUNCTION(gpio),
 	FUNCTION(gsm0_tx),
 	FUNCTION(gsm1_tx),
-	FUNCTION(gyro_पूर्णांक),
-	FUNCTION(hall_पूर्णांक),
-	FUNCTION(hdmi_पूर्णांक),
+	FUNCTION(gyro_int),
+	FUNCTION(hall_int),
+	FUNCTION(hdmi_int),
 	FUNCTION(key_focus),
 	FUNCTION(key_home),
 	FUNCTION(key_snapshot),
 	FUNCTION(key_volp),
-	FUNCTION(lकरो_en),
-	FUNCTION(lकरो_update),
+	FUNCTION(ldo_en),
+	FUNCTION(ldo_update),
 	FUNCTION(lpass_slimbus),
 	FUNCTION(lpass_slimbus0),
 	FUNCTION(lpass_slimbus1),
 	FUNCTION(m_voc),
-	FUNCTION(mag_पूर्णांक),
+	FUNCTION(mag_int),
 	FUNCTION(mdp_vsync),
 	FUNCTION(mipi_dsi0),
 	FUNCTION(modem_tsync),
@@ -1575,7 +1574,7 @@ DECLARE_MSM_GPIO_PINS(141);
 	FUNCTION(pbs0),
 	FUNCTION(pbs1),
 	FUNCTION(pbs2),
-	FUNCTION(pressure_पूर्णांक),
+	FUNCTION(pressure_int),
 	FUNCTION(pri_mi2s),
 	FUNCTION(pri_mi2s_mclk_a),
 	FUNCTION(pri_mi2s_mclk_b),
@@ -1583,7 +1582,7 @@ DECLARE_MSM_GPIO_PINS(141);
 	FUNCTION(prng_rosc),
 	FUNCTION(pwr_crypto_enabled_a),
 	FUNCTION(pwr_crypto_enabled_b),
-	FUNCTION(pwr_करोwn),
+	FUNCTION(pwr_down),
 	FUNCTION(pwr_modem_enabled_a),
 	FUNCTION(pwr_modem_enabled_b),
 	FUNCTION(pwr_nav_enabled_a),
@@ -1602,13 +1601,13 @@ DECLARE_MSM_GPIO_PINS(141);
 	FUNCTION(qdss_tracectl_b),
 	FUNCTION(qdss_tracedata_a),
 	FUNCTION(qdss_tracedata_b),
-	FUNCTION(sd_ग_लिखो),
+	FUNCTION(sd_write),
 	FUNCTION(sdcard_det),
 	FUNCTION(sec_mi2s),
 	FUNCTION(sec_mi2s_mclk_a),
 	FUNCTION(sec_mi2s_mclk_b),
-	FUNCTION(smb_पूर्णांक),
-	FUNCTION(ss_चयन),
+	FUNCTION(smb_int),
+	FUNCTION(ss_switch),
 	FUNCTION(ssbi_wtr1),
 	FUNCTION(ts_resout),
 	FUNCTION(ts_sample),
@@ -1634,15 +1633,15 @@ DECLARE_MSM_GPIO_PINS(141);
 	FUNCTION(wsa_en),
 	FUNCTION(wsa_io),
 	FUNCTION(wsa_irq),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा msm_pingroup msm8953_groups[] = अणु
+static const struct msm_pingroup msm8953_groups[] = {
 	PINGROUP(0, blsp_spi1, _, _, _, _, _, _, _, _),
 	PINGROUP(1, blsp_spi1, adsp_ext, _, _, _, _, _, _, _),
 	PINGROUP(2, blsp_spi1, blsp_i2c1, prng_rosc, _, _, _, qdss_cti_trig_out_b0, _, _),
 	PINGROUP(3, blsp_spi1, blsp_i2c1, _, _, _, qdss_cti_trig_out_a1, _, _, _),
-	PINGROUP(4, blsp_spi2, blsp_uart2, lकरो_update, _, dac_calib0, _, _, _, _),
-	PINGROUP(5, blsp_spi2, blsp_uart2, lकरो_en, _, _, _, _, _, _),
+	PINGROUP(4, blsp_spi2, blsp_uart2, ldo_update, _, dac_calib0, _, _, _, _),
+	PINGROUP(5, blsp_spi2, blsp_uart2, ldo_en, _, _, _, _, _, _),
 	PINGROUP(6, blsp_spi2, blsp_uart2, blsp_i2c2, gcc_gp1_clk_b, _, _, _, _, _),
 	PINGROUP(7, blsp_spi2, blsp_uart2, blsp_i2c2, _, atest_gpsadc_dtest0_native, _, _, _, _),
 	PINGROUP(8, blsp_spi3, _, _, qdss_tracedata_b, _, _, _, _, _),
@@ -1674,15 +1673,15 @@ DECLARE_MSM_GPIO_PINS(141);
 	PINGROUP(30, cci_i2c, _, _, _, qdss_tracedata_a, _, dac_calib19, _, _),
 	PINGROUP(31, cci_i2c, _, _, _, qdss_tracedata_a, _, _, _, _),
 	PINGROUP(32, cci_i2c, _, _, _, qdss_tracedata_a, _, _, _, _),
-	PINGROUP(33, cci_समयr0, _, _, _, _, qdss_tracedata_a, _, _, _),
-	PINGROUP(34, cci_समयr1, _, _, _, _, qdss_tracedata_a, _, _, _),
-	PINGROUP(35, cci_समयr2, blsp1_spi, pwr_nav_enabled_a, _, _, _, qdss_tracedata_a, _, _),
-	PINGROUP(36, cci_समयr3, blsp1_spi, _, pwr_crypto_enabled_a, _, _, _, qdss_tracedata_a, _),
+	PINGROUP(33, cci_timer0, _, _, _, _, qdss_tracedata_a, _, _, _),
+	PINGROUP(34, cci_timer1, _, _, _, _, qdss_tracedata_a, _, _, _),
+	PINGROUP(35, cci_timer2, blsp1_spi, pwr_nav_enabled_a, _, _, _, qdss_tracedata_a, _, _),
+	PINGROUP(36, cci_timer3, blsp1_spi, _, pwr_crypto_enabled_a, _, _, _, qdss_tracedata_a, _),
 	PINGROUP(37, _, _, _, _, _, _, _, _, _),
 	PINGROUP(38, cci_async, _, qdss_tracedata_a, _, _, _, _, _, _),
 	PINGROUP(39, _, _, _, qdss_tracedata_a, _, dac_calib5, _, _, _),
 	PINGROUP(40, _, _, qdss_tracedata_a, _, dac_calib6, _, _, _, _),
-	PINGROUP(41, cci_समयr4, blsp3_spi, gcc_gp1_clk_b, _, _,
+	PINGROUP(41, cci_timer4, blsp3_spi, gcc_gp1_clk_b, _, _,
 		 qdss_cti_trig_out_a0, _, dac_calib7, _),
 	PINGROUP(42, gcc_gp1_clk_a, qdss_tracedata_b, _, dac_calib8, _, _, _, _, _),
 	PINGROUP(43, gcc_gp2_clk_a, qdss_tracedata_b, _, dac_calib9, _, _, _, _, _),
@@ -1692,7 +1691,7 @@ DECLARE_MSM_GPIO_PINS(141);
 	PINGROUP(47, blsp6_spi, qdss_tracedata_b, _, dac_calib13, _, _, _, _, _),
 	PINGROUP(48, blsp6_spi, _, qdss_cti_trig_in_b1, _, dac_calib14, _, _, _, _),
 	PINGROUP(49, uim_batt, _, _, _, _, _, _, _, _),
-	PINGROUP(50, blsp3_spi, sd_ग_लिखो, _, _, _, qdss_tracedata_a, _, _, _),
+	PINGROUP(50, blsp3_spi, sd_write, _, _, _, qdss_tracedata_a, _, _, _),
 	PINGROUP(51, uim1_data, _, _, _, _, _, _, _, _),
 	PINGROUP(52, uim1_clk, _, _, _, _, _, _, _, _),
 	PINGROUP(53, uim1_reset, _, _, _, _, _, _, _, _),
@@ -1705,19 +1704,19 @@ DECLARE_MSM_GPIO_PINS(141);
 	PINGROUP(60, _, _, _, _, _, _, _, _, _),
 	PINGROUP(61, _, _, _, _, _, _, _, _, _),
 	PINGROUP(62, _, _, _, _, _, _, _, _, _),
-	PINGROUP(63, atest_अक्षर3, dbg_out, bimc_dte0, _, _, _, _, _, _),
+	PINGROUP(63, atest_char3, dbg_out, bimc_dte0, _, _, _, _, _, _),
 	PINGROUP(64, _, _, _, _, _, _, _, _, _),
 	PINGROUP(65, bimc_dte0, _, _, _, _, _, _, _, _),
 	PINGROUP(66, sec_mi2s_mclk_b, pri_mi2s, _, qdss_tracedata_b, _, _, _, _, _),
-	PINGROUP(67, cdc_pdm0, atest_अक्षर1, ebi_cdc, _, dac_calib17, _, _, _, _),
-	PINGROUP(68, cdc_pdm0, atest_अक्षर0, _, _, _, _, _, _, _),
+	PINGROUP(67, cdc_pdm0, atest_char1, ebi_cdc, _, dac_calib17, _, _, _, _),
+	PINGROUP(68, cdc_pdm0, atest_char0, _, _, _, _, _, _, _),
 	PINGROUP(69, cdc_pdm0, pri_mi2s_mclk_b, ebi_cdc, _, _, _, _, _, _),
 	PINGROUP(70, lpass_slimbus, cdc_pdm0, _, _, _, _, _, _, _),
 	PINGROUP(71, lpass_slimbus0, cdc_pdm0, _, _, _, _, _, _, _),
 	PINGROUP(72, lpass_slimbus1, cdc_pdm0, _, _, _, _, _, _, _),
 	PINGROUP(73, cdc_pdm0, _, _, _, _, _, _, _, _),
 	PINGROUP(74, cdc_pdm0, _, _, _, _, _, _, _, _),
-	PINGROUP(75, wcss_bt, atest_अक्षर2, _, ebi_ch0, _, _, _, _, _),
+	PINGROUP(75, wcss_bt, atest_char2, _, ebi_ch0, _, _, _, _, _),
 	PINGROUP(76, wcss_wlan2, _, _, _, _, _, _, _, _),
 	PINGROUP(77, wcss_wlan1, _, _, _, _, _, _, _, _),
 	PINGROUP(78, wcss_wlan0, _, _, _, _, _, _, _, _),
@@ -1762,7 +1761,7 @@ DECLARE_MSM_GPIO_PINS(141);
 	PINGROUP(117, gsm0_tx, _, _, _, _, _, _, _, _),
 	PINGROUP(118, _, ebi_cdc, _, _, _, _, _, _, _),
 	PINGROUP(119, _, ebi_cdc, _, _, _, _, _, _, _),
-	PINGROUP(120, _, atest_अक्षर, ebi_cdc, _, atest_tsens, _, _, _, _),
+	PINGROUP(120, _, atest_char, ebi_cdc, _, atest_tsens, _, _, _, _),
 	PINGROUP(121, _, _, _, bimc_dte1, _, _, _, _, _),
 	PINGROUP(122, _, _, _, bimc_dte1, _, _, _, _, _),
 	PINGROUP(123, _, ssbi_wtr1, ebi_cdc, _, _, _, _, _, _),
@@ -1797,9 +1796,9 @@ DECLARE_MSM_GPIO_PINS(141);
 	SDC_QDSD_PINGROUP(sdc2_clk, 0x109000, 14, 6),
 	SDC_QDSD_PINGROUP(sdc2_cmd, 0x109000, 11, 3),
 	SDC_QDSD_PINGROUP(sdc2_data, 0x109000, 9, 0),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा msm_pinctrl_soc_data msm8953_pinctrl = अणु
+static const struct msm_pinctrl_soc_data msm8953_pinctrl = {
 	.pins = msm8953_pins,
 	.npins = ARRAY_SIZE(msm8953_pins),
 	.functions = msm8953_functions,
@@ -1807,38 +1806,38 @@ DECLARE_MSM_GPIO_PINS(141);
 	.groups = msm8953_groups,
 	.ngroups = ARRAY_SIZE(msm8953_groups),
 	.ngpios = 142,
-पूर्ण;
+};
 
-अटल पूर्णांक msm8953_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस msm_pinctrl_probe(pdev, &msm8953_pinctrl);
-पूर्ण
+static int msm8953_pinctrl_probe(struct platform_device *pdev)
+{
+	return msm_pinctrl_probe(pdev, &msm8953_pinctrl);
+}
 
-अटल स्थिर काष्ठा of_device_id msm8953_pinctrl_of_match[] = अणु
-	अणु .compatible = "qcom,msm8953-pinctrl", पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id msm8953_pinctrl_of_match[] = {
+	{ .compatible = "qcom,msm8953-pinctrl", },
+	{ },
+};
 
-अटल काष्ठा platक्रमm_driver msm8953_pinctrl_driver = अणु
-	.driver = अणु
+static struct platform_driver msm8953_pinctrl_driver = {
+	.driver = {
 		.name = "msm8953-pinctrl",
 		.of_match_table = msm8953_pinctrl_of_match,
-	पूर्ण,
+	},
 	.probe = msm8953_pinctrl_probe,
-	.हटाओ = msm_pinctrl_हटाओ,
-पूर्ण;
+	.remove = msm_pinctrl_remove,
+};
 
-अटल पूर्णांक __init msm8953_pinctrl_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&msm8953_pinctrl_driver);
-पूर्ण
+static int __init msm8953_pinctrl_init(void)
+{
+	return platform_driver_register(&msm8953_pinctrl_driver);
+}
 arch_initcall(msm8953_pinctrl_init);
 
-अटल व्योम __निकास msm8953_pinctrl_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&msm8953_pinctrl_driver);
-पूर्ण
-module_निकास(msm8953_pinctrl_निकास);
+static void __exit msm8953_pinctrl_exit(void)
+{
+	platform_driver_unregister(&msm8953_pinctrl_driver);
+}
+module_exit(msm8953_pinctrl_exit);
 
 MODULE_DESCRIPTION("QTI msm8953 pinctrl driver");
 MODULE_LICENSE("GPL v2");

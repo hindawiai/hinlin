@@ -1,150 +1,149 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*********************************************************************
  *
  * 2002/06/30 Karsten Wiese:
- *	हटाओd kernel-version dependencies.
+ *	removed kernel-version dependencies.
  *	ripped from linux kernel 2.4.18 (OSS Implementation) by me.
  *	In the OSS Version, this file is compiled to a separate MODULE,
  *	that is used by the pinnacle and the classic driver.
- *	since there is no classic driver क्रम alsa yet (i करोnt have a classic
- *	& writing one blindfold is dअगरficult) this file's object is अटलally
- *	linked पूर्णांकo the pinnacle-driver-module क्रम now.	look क्रम the string
+ *	since there is no classic driver for alsa yet (i dont have a classic
+ *	& writing one blindfold is difficult) this file's object is statically
+ *	linked into the pinnacle-driver-module for now.	look for the string
  *		"uncomment this to make this a module again"
- *	to करो guess what.
+ *	to do guess what.
  *
  * the following is a copy of the 2.4.18 OSS FREE file-heading comment:
  *
  * msnd.c - Driver Base
  *
- * Turtle Beach MultiSound Sound Card Driver क्रम Linux
+ * Turtle Beach MultiSound Sound Card Driver for Linux
  *
  * Copyright (C) 1998 Andrew Veliath
  *
  ********************************************************************/
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/types.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/fs.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/sched/signal.h>
+#include <linux/types.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/fs.h>
+#include <linux/delay.h>
+#include <linux/module.h>
 
-#समावेश <sound/core.h>
-#समावेश <sound/initval.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/pcm_params.h>
+#include <sound/core.h>
+#include <sound/initval.h>
+#include <sound/pcm.h>
+#include <sound/pcm_params.h>
 
-#समावेश "msnd.h"
+#include "msnd.h"
 
-#घोषणा LOGNAME			"msnd"
+#define LOGNAME			"msnd"
 
 
-व्योम snd_msnd_init_queue(व्योम __iomem *base, पूर्णांक start, पूर्णांक size)
-अणु
-	ग_लिखोw(PCTODSP_BASED(start), base + JQS_wStart);
-	ग_लिखोw(PCTODSP_OFFSET(size) - 1, base + JQS_wSize);
-	ग_लिखोw(0, base + JQS_wHead);
-	ग_लिखोw(0, base + JQS_wTail);
-पूर्ण
+void snd_msnd_init_queue(void __iomem *base, int start, int size)
+{
+	writew(PCTODSP_BASED(start), base + JQS_wStart);
+	writew(PCTODSP_OFFSET(size) - 1, base + JQS_wSize);
+	writew(0, base + JQS_wHead);
+	writew(0, base + JQS_wTail);
+}
 EXPORT_SYMBOL(snd_msnd_init_queue);
 
-अटल पूर्णांक snd_msnd_रुको_TXDE(काष्ठा snd_msnd *dev)
-अणु
-	अचिन्हित पूर्णांक io = dev->io;
-	पूर्णांक समयout = 1000;
+static int snd_msnd_wait_TXDE(struct snd_msnd *dev)
+{
+	unsigned int io = dev->io;
+	int timeout = 1000;
 
-	जबतक (समयout-- > 0)
-		अगर (inb(io + HP_ISR) & HPISR_TXDE)
-			वापस 0;
+	while (timeout-- > 0)
+		if (inb(io + HP_ISR) & HPISR_TXDE)
+			return 0;
 
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
-अटल पूर्णांक snd_msnd_रुको_HC0(काष्ठा snd_msnd *dev)
-अणु
-	अचिन्हित पूर्णांक io = dev->io;
-	पूर्णांक समयout = 1000;
+static int snd_msnd_wait_HC0(struct snd_msnd *dev)
+{
+	unsigned int io = dev->io;
+	int timeout = 1000;
 
-	जबतक (समयout-- > 0)
-		अगर (!(inb(io + HP_CVR) & HPCVR_HC))
-			वापस 0;
+	while (timeout-- > 0)
+		if (!(inb(io + HP_CVR) & HPCVR_HC))
+			return 0;
 
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
-पूर्णांक snd_msnd_send_dsp_cmd(काष्ठा snd_msnd *dev, u8 cmd)
-अणु
-	अचिन्हित दीर्घ flags;
+int snd_msnd_send_dsp_cmd(struct snd_msnd *dev, u8 cmd)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&dev->lock, flags);
-	अगर (snd_msnd_रुको_HC0(dev) == 0) अणु
+	if (snd_msnd_wait_HC0(dev) == 0) {
 		outb(cmd, dev->io + HP_CVR);
 		spin_unlock_irqrestore(&dev->lock, flags);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	spin_unlock_irqrestore(&dev->lock, flags);
 
-	snd_prपूर्णांकd(KERN_ERR LOGNAME ": Send DSP command timeout\n");
+	snd_printd(KERN_ERR LOGNAME ": Send DSP command timeout\n");
 
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 EXPORT_SYMBOL(snd_msnd_send_dsp_cmd);
 
-पूर्णांक snd_msnd_send_word(काष्ठा snd_msnd *dev, अचिन्हित अक्षर high,
-		   अचिन्हित अक्षर mid, अचिन्हित अक्षर low)
-अणु
-	अचिन्हित पूर्णांक io = dev->io;
+int snd_msnd_send_word(struct snd_msnd *dev, unsigned char high,
+		   unsigned char mid, unsigned char low)
+{
+	unsigned int io = dev->io;
 
-	अगर (snd_msnd_रुको_TXDE(dev) == 0) अणु
+	if (snd_msnd_wait_TXDE(dev) == 0) {
 		outb(high, io + HP_TXH);
 		outb(mid, io + HP_TXM);
 		outb(low, io + HP_TXL);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	snd_prपूर्णांकd(KERN_ERR LOGNAME ": Send host word timeout\n");
+	snd_printd(KERN_ERR LOGNAME ": Send host word timeout\n");
 
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 EXPORT_SYMBOL(snd_msnd_send_word);
 
-पूर्णांक snd_msnd_upload_host(काष्ठा snd_msnd *dev, स्थिर u8 *bin, पूर्णांक len)
-अणु
-	पूर्णांक i;
+int snd_msnd_upload_host(struct snd_msnd *dev, const u8 *bin, int len)
+{
+	int i;
 
-	अगर (len % 3 != 0) अणु
-		snd_prपूर्णांकk(KERN_ERR LOGNAME
+	if (len % 3 != 0) {
+		snd_printk(KERN_ERR LOGNAME
 			   ": Upload host data not multiple of 3!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	क्रम (i = 0; i < len; i += 3)
-		अगर (snd_msnd_send_word(dev, bin[i], bin[i + 1], bin[i + 2]))
-			वापस -EIO;
+	for (i = 0; i < len; i += 3)
+		if (snd_msnd_send_word(dev, bin[i], bin[i + 1], bin[i + 2]))
+			return -EIO;
 
 	inb(dev->io + HP_RXL);
 	inb(dev->io + HP_CVR);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(snd_msnd_upload_host);
 
-पूर्णांक snd_msnd_enable_irq(काष्ठा snd_msnd *dev)
-अणु
-	अचिन्हित दीर्घ flags;
+int snd_msnd_enable_irq(struct snd_msnd *dev)
+{
+	unsigned long flags;
 
-	अगर (dev->irq_ref++)
-		वापस 0;
+	if (dev->irq_ref++)
+		return 0;
 
-	snd_prपूर्णांकdd(LOGNAME ": Enabling IRQ\n");
+	snd_printdd(LOGNAME ": Enabling IRQ\n");
 
 	spin_lock_irqsave(&dev->lock, flags);
-	अगर (snd_msnd_रुको_TXDE(dev) == 0) अणु
+	if (snd_msnd_wait_TXDE(dev) == 0) {
 		outb(inb(dev->io + HP_ICR) | HPICR_TREQ, dev->io + HP_ICR);
-		अगर (dev->type == msndClassic)
+		if (dev->type == msndClassic)
 			outb(dev->irqid, dev->io + HP_IRQM);
 
 		outb(inb(dev->io + HP_ICR) & ~HPICR_TREQ, dev->io + HP_ICR);
@@ -153,284 +152,284 @@ EXPORT_SYMBOL(snd_msnd_upload_host);
 		snd_msnd_init_queue(dev->DSPQ, dev->dspq_data_buff,
 				    dev->dspq_buff_size);
 		spin_unlock_irqrestore(&dev->lock, flags);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	spin_unlock_irqrestore(&dev->lock, flags);
 
-	snd_prपूर्णांकd(KERN_ERR LOGNAME ": Enable IRQ failed\n");
+	snd_printd(KERN_ERR LOGNAME ": Enable IRQ failed\n");
 
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 EXPORT_SYMBOL(snd_msnd_enable_irq);
 
-पूर्णांक snd_msnd_disable_irq(काष्ठा snd_msnd *dev)
-अणु
-	अचिन्हित दीर्घ flags;
+int snd_msnd_disable_irq(struct snd_msnd *dev)
+{
+	unsigned long flags;
 
-	अगर (--dev->irq_ref > 0)
-		वापस 0;
+	if (--dev->irq_ref > 0)
+		return 0;
 
-	अगर (dev->irq_ref < 0)
-		snd_prपूर्णांकd(KERN_WARNING LOGNAME ": IRQ ref count is %d\n",
+	if (dev->irq_ref < 0)
+		snd_printd(KERN_WARNING LOGNAME ": IRQ ref count is %d\n",
 			   dev->irq_ref);
 
-	snd_prपूर्णांकdd(LOGNAME ": Disabling IRQ\n");
+	snd_printdd(LOGNAME ": Disabling IRQ\n");
 
 	spin_lock_irqsave(&dev->lock, flags);
-	अगर (snd_msnd_रुको_TXDE(dev) == 0) अणु
+	if (snd_msnd_wait_TXDE(dev) == 0) {
 		outb(inb(dev->io + HP_ICR) & ~HPICR_RREQ, dev->io + HP_ICR);
-		अगर (dev->type == msndClassic)
+		if (dev->type == msndClassic)
 			outb(HPIRQ_NONE, dev->io + HP_IRQM);
 		disable_irq(dev->irq);
 		spin_unlock_irqrestore(&dev->lock, flags);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	spin_unlock_irqrestore(&dev->lock, flags);
 
-	snd_prपूर्णांकd(KERN_ERR LOGNAME ": Disable IRQ failed\n");
+	snd_printd(KERN_ERR LOGNAME ": Disable IRQ failed\n");
 
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 EXPORT_SYMBOL(snd_msnd_disable_irq);
 
-अटल अंतरभूत दीर्घ get_play_delay_jअगरfies(काष्ठा snd_msnd *chip, दीर्घ size)
-अणु
-	दीर्घ पंचांगp = (size * HZ * chip->play_sample_size) / 8;
-	वापस पंचांगp / (chip->play_sample_rate * chip->play_channels);
-पूर्ण
+static inline long get_play_delay_jiffies(struct snd_msnd *chip, long size)
+{
+	long tmp = (size * HZ * chip->play_sample_size) / 8;
+	return tmp / (chip->play_sample_rate * chip->play_channels);
+}
 
-अटल व्योम snd_msnd_dsp_ग_लिखो_flush(काष्ठा snd_msnd *chip)
-अणु
-	अगर (!(chip->mode & FMODE_WRITE) || !test_bit(F_WRITING, &chip->flags))
-		वापस;
+static void snd_msnd_dsp_write_flush(struct snd_msnd *chip)
+{
+	if (!(chip->mode & FMODE_WRITE) || !test_bit(F_WRITING, &chip->flags))
+		return;
 	set_bit(F_WRITEFLUSH, &chip->flags);
-/*	पूर्णांकerruptible_sleep_on_समयout(
-		&chip->ग_लिखोflush,
-		get_play_delay_jअगरfies(&chip, chip->DAPF.len));*/
+/*	interruptible_sleep_on_timeout(
+		&chip->writeflush,
+		get_play_delay_jiffies(&chip, chip->DAPF.len));*/
 	clear_bit(F_WRITEFLUSH, &chip->flags);
-	अगर (!संकेत_pending(current))
-		schedule_समयout_पूर्णांकerruptible(
-			get_play_delay_jअगरfies(chip, chip->play_period_bytes));
+	if (!signal_pending(current))
+		schedule_timeout_interruptible(
+			get_play_delay_jiffies(chip, chip->play_period_bytes));
 	clear_bit(F_WRITING, &chip->flags);
-पूर्ण
+}
 
-व्योम snd_msnd_dsp_halt(काष्ठा snd_msnd *chip, काष्ठा file *file)
-अणु
-	अगर ((file ? file->f_mode : chip->mode) & FMODE_READ) अणु
+void snd_msnd_dsp_halt(struct snd_msnd *chip, struct file *file)
+{
+	if ((file ? file->f_mode : chip->mode) & FMODE_READ) {
 		clear_bit(F_READING, &chip->flags);
 		snd_msnd_send_dsp_cmd(chip, HDEX_RECORD_STOP);
 		snd_msnd_disable_irq(chip);
-		अगर (file) अणु
-			snd_prपूर्णांकd(KERN_INFO LOGNAME
+		if (file) {
+			snd_printd(KERN_INFO LOGNAME
 				   ": Stopping read for %p\n", file);
 			chip->mode &= ~FMODE_READ;
-		पूर्ण
+		}
 		clear_bit(F_AUDIO_READ_INUSE, &chip->flags);
-	पूर्ण
-	अगर ((file ? file->f_mode : chip->mode) & FMODE_WRITE) अणु
-		अगर (test_bit(F_WRITING, &chip->flags)) अणु
-			snd_msnd_dsp_ग_लिखो_flush(chip);
+	}
+	if ((file ? file->f_mode : chip->mode) & FMODE_WRITE) {
+		if (test_bit(F_WRITING, &chip->flags)) {
+			snd_msnd_dsp_write_flush(chip);
 			snd_msnd_send_dsp_cmd(chip, HDEX_PLAY_STOP);
-		पूर्ण
+		}
 		snd_msnd_disable_irq(chip);
-		अगर (file) अणु
-			snd_prपूर्णांकd(KERN_INFO
+		if (file) {
+			snd_printd(KERN_INFO
 				   LOGNAME ": Stopping write for %p\n", file);
 			chip->mode &= ~FMODE_WRITE;
-		पूर्ण
+		}
 		clear_bit(F_AUDIO_WRITE_INUSE, &chip->flags);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL(snd_msnd_dsp_halt);
 
 
-पूर्णांक snd_msnd_DARQ(काष्ठा snd_msnd *chip, पूर्णांक bank)
-अणु
-	पूर्णांक /*size, n,*/ समयout = 3;
+int snd_msnd_DARQ(struct snd_msnd *chip, int bank)
+{
+	int /*size, n,*/ timeout = 3;
 	u16 wTmp;
-	/* व्योम *DAQD; */
+	/* void *DAQD; */
 
-	/* Increment the tail and check क्रम queue wrap */
-	wTmp = पढ़ोw(chip->DARQ + JQS_wTail) + PCTODSP_OFFSET(DAQDS__size);
-	अगर (wTmp > पढ़ोw(chip->DARQ + JQS_wSize))
+	/* Increment the tail and check for queue wrap */
+	wTmp = readw(chip->DARQ + JQS_wTail) + PCTODSP_OFFSET(DAQDS__size);
+	if (wTmp > readw(chip->DARQ + JQS_wSize))
 		wTmp = 0;
-	जबतक (wTmp == पढ़ोw(chip->DARQ + JQS_wHead) && समयout--)
+	while (wTmp == readw(chip->DARQ + JQS_wHead) && timeout--)
 		udelay(1);
 
-	अगर (chip->capturePeriods == 2) अणु
-		व्योम __iomem *pDAQ = chip->mappedbase + DARQ_DATA_BUFF +
+	if (chip->capturePeriods == 2) {
+		void __iomem *pDAQ = chip->mappedbase + DARQ_DATA_BUFF +
 			     bank * DAQDS__size + DAQDS_wStart;
-		अचिन्हित लघु offset = 0x3000 + chip->capturePeriodBytes;
+		unsigned short offset = 0x3000 + chip->capturePeriodBytes;
 
-		अगर (पढ़ोw(pDAQ) != PCTODSP_BASED(0x3000))
+		if (readw(pDAQ) != PCTODSP_BASED(0x3000))
 			offset = 0x3000;
-		ग_लिखोw(PCTODSP_BASED(offset), pDAQ);
-	पूर्ण
+		writew(PCTODSP_BASED(offset), pDAQ);
+	}
 
-	ग_लिखोw(wTmp, chip->DARQ + JQS_wTail);
+	writew(wTmp, chip->DARQ + JQS_wTail);
 
-#अगर 0
-	/* Get our digital audio queue काष्ठा */
+#if 0
+	/* Get our digital audio queue struct */
 	DAQD = bank * DAQDS__size + chip->mappedbase + DARQ_DATA_BUFF;
 
 	/* Get length of data */
-	size = पढ़ोw(DAQD + DAQDS_wSize);
+	size = readw(DAQD + DAQDS_wSize);
 
-	/* Read data from the head (unरक्षित bank 1 access okay
-	   since this is only called inside an पूर्णांकerrupt) */
+	/* Read data from the head (unprotected bank 1 access okay
+	   since this is only called inside an interrupt) */
 	outb(HPBLKSEL_1, chip->io + HP_BLKS);
-	n = msnd_fअगरo_ग_लिखो(&chip->DARF,
-			    (अक्षर *)(chip->base + bank * DAR_BUFF_SIZE),
+	n = msnd_fifo_write(&chip->DARF,
+			    (char *)(chip->base + bank * DAR_BUFF_SIZE),
 			    size, 0);
-	अगर (n <= 0) अणु
+	if (n <= 0) {
 		outb(HPBLKSEL_0, chip->io + HP_BLKS);
-		वापस n;
-	पूर्ण
+		return n;
+	}
 	outb(HPBLKSEL_0, chip->io + HP_BLKS);
-#पूर्ण_अगर
+#endif
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 EXPORT_SYMBOL(snd_msnd_DARQ);
 
-पूर्णांक snd_msnd_DAPQ(काष्ठा snd_msnd *chip, पूर्णांक start)
-अणु
+int snd_msnd_DAPQ(struct snd_msnd *chip, int start)
+{
 	u16	DAPQ_tail;
-	पूर्णांक	protect = start, nbanks = 0;
-	व्योम	__iomem *DAQD;
-	अटल पूर्णांक play_banks_submitted;
-	/* अचिन्हित दीर्घ flags;
+	int	protect = start, nbanks = 0;
+	void	__iomem *DAQD;
+	static int play_banks_submitted;
+	/* unsigned long flags;
 	spin_lock_irqsave(&chip->lock, flags); not necessary */
 
-	DAPQ_tail = पढ़ोw(chip->DAPQ + JQS_wTail);
-	जबतक (DAPQ_tail != पढ़ोw(chip->DAPQ + JQS_wHead) || start) अणु
-		पूर्णांक bank_num = DAPQ_tail / PCTODSP_OFFSET(DAQDS__size);
+	DAPQ_tail = readw(chip->DAPQ + JQS_wTail);
+	while (DAPQ_tail != readw(chip->DAPQ + JQS_wHead) || start) {
+		int bank_num = DAPQ_tail / PCTODSP_OFFSET(DAQDS__size);
 
-		अगर (start) अणु
+		if (start) {
 			start = 0;
 			play_banks_submitted = 0;
-		पूर्ण
+		}
 
-		/* Get our digital audio queue काष्ठा */
+		/* Get our digital audio queue struct */
 		DAQD = bank_num * DAQDS__size + chip->mappedbase +
 			DAPQ_DATA_BUFF;
 
 		/* Write size of this bank */
-		ग_लिखोw(chip->play_period_bytes, DAQD + DAQDS_wSize);
-		अगर (play_banks_submitted < 3)
+		writew(chip->play_period_bytes, DAQD + DAQDS_wSize);
+		if (play_banks_submitted < 3)
 			++play_banks_submitted;
-		अन्यथा अगर (chip->playPeriods == 2) अणु
-			अचिन्हित लघु offset = chip->play_period_bytes;
+		else if (chip->playPeriods == 2) {
+			unsigned short offset = chip->play_period_bytes;
 
-			अगर (पढ़ोw(DAQD + DAQDS_wStart) != PCTODSP_BASED(0x0))
+			if (readw(DAQD + DAQDS_wStart) != PCTODSP_BASED(0x0))
 				offset = 0;
 
-			ग_लिखोw(PCTODSP_BASED(offset), DAQD + DAQDS_wStart);
-		पूर्ण
+			writew(PCTODSP_BASED(offset), DAQD + DAQDS_wStart);
+		}
 		++nbanks;
 
 		/* Then advance the tail */
 		/*
-		अगर (protect)
-			snd_prपूर्णांकd(KERN_INFO "B %X %lX\n",
-				   bank_num, xसमय.tv_usec);
+		if (protect)
+			snd_printd(KERN_INFO "B %X %lX\n",
+				   bank_num, xtime.tv_usec);
 		*/
 
 		DAPQ_tail = (++bank_num % 3) * PCTODSP_OFFSET(DAQDS__size);
-		ग_लिखोw(DAPQ_tail, chip->DAPQ + JQS_wTail);
+		writew(DAPQ_tail, chip->DAPQ + JQS_wTail);
 		/* Tell the DSP to play the bank */
 		snd_msnd_send_dsp_cmd(chip, HDEX_PLAY_START);
-		अगर (protect)
-			अगर (2 == bank_num)
-				अवरोध;
-	पूर्ण
+		if (protect)
+			if (2 == bank_num)
+				break;
+	}
 	/*
-	अगर (protect)
-		snd_prपूर्णांकd(KERN_INFO "%lX\n", xसमय.tv_usec);
+	if (protect)
+		snd_printd(KERN_INFO "%lX\n", xtime.tv_usec);
 	*/
 	/* spin_unlock_irqrestore(&chip->lock, flags); not necessary */
-	वापस nbanks;
-पूर्ण
+	return nbanks;
+}
 EXPORT_SYMBOL(snd_msnd_DAPQ);
 
-अटल व्योम snd_msnd_play_reset_queue(काष्ठा snd_msnd *chip,
-				      अचिन्हित पूर्णांक pcm_periods,
-				      अचिन्हित पूर्णांक pcm_count)
-अणु
-	पूर्णांक	n;
-	व्योम	__iomem *pDAQ = chip->mappedbase + DAPQ_DATA_BUFF;
+static void snd_msnd_play_reset_queue(struct snd_msnd *chip,
+				      unsigned int pcm_periods,
+				      unsigned int pcm_count)
+{
+	int	n;
+	void	__iomem *pDAQ = chip->mappedbase + DAPQ_DATA_BUFF;
 
 	chip->last_playbank = -1;
 	chip->playLimit = pcm_count * (pcm_periods - 1);
 	chip->playPeriods = pcm_periods;
-	ग_लिखोw(PCTODSP_OFFSET(0 * DAQDS__size), chip->DAPQ + JQS_wHead);
-	ग_लिखोw(PCTODSP_OFFSET(0 * DAQDS__size), chip->DAPQ + JQS_wTail);
+	writew(PCTODSP_OFFSET(0 * DAQDS__size), chip->DAPQ + JQS_wHead);
+	writew(PCTODSP_OFFSET(0 * DAQDS__size), chip->DAPQ + JQS_wTail);
 
 	chip->play_period_bytes = pcm_count;
 
-	क्रम (n = 0; n < pcm_periods; ++n, pDAQ += DAQDS__size) अणु
-		ग_लिखोw(PCTODSP_BASED((u32)(pcm_count * n)),
+	for (n = 0; n < pcm_periods; ++n, pDAQ += DAQDS__size) {
+		writew(PCTODSP_BASED((u32)(pcm_count * n)),
 			pDAQ + DAQDS_wStart);
-		ग_लिखोw(0, pDAQ + DAQDS_wSize);
-		ग_लिखोw(1, pDAQ + DAQDS_wFormat);
-		ग_लिखोw(chip->play_sample_size, pDAQ + DAQDS_wSampleSize);
-		ग_लिखोw(chip->play_channels, pDAQ + DAQDS_wChannels);
-		ग_लिखोw(chip->play_sample_rate, pDAQ + DAQDS_wSampleRate);
-		ग_लिखोw(HIMT_PLAY_DONE * 0x100 + n, pDAQ + DAQDS_wIntMsg);
-		ग_लिखोw(n, pDAQ + DAQDS_wFlags);
-	पूर्ण
-पूर्ण
+		writew(0, pDAQ + DAQDS_wSize);
+		writew(1, pDAQ + DAQDS_wFormat);
+		writew(chip->play_sample_size, pDAQ + DAQDS_wSampleSize);
+		writew(chip->play_channels, pDAQ + DAQDS_wChannels);
+		writew(chip->play_sample_rate, pDAQ + DAQDS_wSampleRate);
+		writew(HIMT_PLAY_DONE * 0x100 + n, pDAQ + DAQDS_wIntMsg);
+		writew(n, pDAQ + DAQDS_wFlags);
+	}
+}
 
-अटल व्योम snd_msnd_capture_reset_queue(काष्ठा snd_msnd *chip,
-					 अचिन्हित पूर्णांक pcm_periods,
-					 अचिन्हित पूर्णांक pcm_count)
-अणु
-	पूर्णांक		n;
-	व्योम		__iomem *pDAQ;
-	/* अचिन्हित दीर्घ	flags; */
+static void snd_msnd_capture_reset_queue(struct snd_msnd *chip,
+					 unsigned int pcm_periods,
+					 unsigned int pcm_count)
+{
+	int		n;
+	void		__iomem *pDAQ;
+	/* unsigned long	flags; */
 
 	/* snd_msnd_init_queue(chip->DARQ, DARQ_DATA_BUFF, DARQ_BUFF_SIZE); */
 
 	chip->last_recbank = 2;
 	chip->captureLimit = pcm_count * (pcm_periods - 1);
 	chip->capturePeriods = pcm_periods;
-	ग_लिखोw(PCTODSP_OFFSET(0 * DAQDS__size), chip->DARQ + JQS_wHead);
-	ग_लिखोw(PCTODSP_OFFSET(chip->last_recbank * DAQDS__size),
+	writew(PCTODSP_OFFSET(0 * DAQDS__size), chip->DARQ + JQS_wHead);
+	writew(PCTODSP_OFFSET(chip->last_recbank * DAQDS__size),
 		chip->DARQ + JQS_wTail);
 
-#अगर 0 /* Critical section: bank 1 access. this is how the OSS driver करोes it:*/
+#if 0 /* Critical section: bank 1 access. this is how the OSS driver does it:*/
 	spin_lock_irqsave(&chip->lock, flags);
 	outb(HPBLKSEL_1, chip->io + HP_BLKS);
-	स_रखो_io(chip->mappedbase, 0, DAR_BUFF_SIZE * 3);
+	memset_io(chip->mappedbase, 0, DAR_BUFF_SIZE * 3);
 	outb(HPBLKSEL_0, chip->io + HP_BLKS);
 	spin_unlock_irqrestore(&chip->lock, flags);
-#पूर्ण_अगर
+#endif
 
 	chip->capturePeriodBytes = pcm_count;
-	snd_prपूर्णांकdd("snd_msnd_capture_reset_queue() %i\n", pcm_count);
+	snd_printdd("snd_msnd_capture_reset_queue() %i\n", pcm_count);
 
 	pDAQ = chip->mappedbase + DARQ_DATA_BUFF;
 
-	क्रम (n = 0; n < pcm_periods; ++n, pDAQ += DAQDS__size) अणु
-		u32 पंचांगp = pcm_count * n;
+	for (n = 0; n < pcm_periods; ++n, pDAQ += DAQDS__size) {
+		u32 tmp = pcm_count * n;
 
-		ग_लिखोw(PCTODSP_BASED(पंचांगp + 0x3000), pDAQ + DAQDS_wStart);
-		ग_लिखोw(pcm_count, pDAQ + DAQDS_wSize);
-		ग_लिखोw(1, pDAQ + DAQDS_wFormat);
-		ग_लिखोw(chip->capture_sample_size, pDAQ + DAQDS_wSampleSize);
-		ग_लिखोw(chip->capture_channels, pDAQ + DAQDS_wChannels);
-		ग_लिखोw(chip->capture_sample_rate, pDAQ + DAQDS_wSampleRate);
-		ग_लिखोw(HIMT_RECORD_DONE * 0x100 + n, pDAQ + DAQDS_wIntMsg);
-		ग_लिखोw(n, pDAQ + DAQDS_wFlags);
-	पूर्ण
-पूर्ण
+		writew(PCTODSP_BASED(tmp + 0x3000), pDAQ + DAQDS_wStart);
+		writew(pcm_count, pDAQ + DAQDS_wSize);
+		writew(1, pDAQ + DAQDS_wFormat);
+		writew(chip->capture_sample_size, pDAQ + DAQDS_wSampleSize);
+		writew(chip->capture_channels, pDAQ + DAQDS_wChannels);
+		writew(chip->capture_sample_rate, pDAQ + DAQDS_wSampleRate);
+		writew(HIMT_RECORD_DONE * 0x100 + n, pDAQ + DAQDS_wIntMsg);
+		writew(n, pDAQ + DAQDS_wFlags);
+	}
+}
 
-अटल स्थिर काष्ठा snd_pcm_hardware snd_msnd_playback = अणु
+static const struct snd_pcm_hardware snd_msnd_playback = {
 	.info =			SNDRV_PCM_INFO_MMAP |
 				SNDRV_PCM_INFO_INTERLEAVED |
 				SNDRV_PCM_INFO_MMAP_VALID |
 				SNDRV_PCM_INFO_BATCH,
-	.क्रमmats =		SNDRV_PCM_FMTBIT_U8 | SNDRV_PCM_FMTBIT_S16_LE,
+	.formats =		SNDRV_PCM_FMTBIT_U8 | SNDRV_PCM_FMTBIT_S16_LE,
 	.rates =		SNDRV_PCM_RATE_8000_48000,
 	.rate_min =		8000,
 	.rate_max =		48000,
@@ -441,15 +440,15 @@ EXPORT_SYMBOL(snd_msnd_DAPQ);
 	.period_bytes_max =	0x1800,
 	.periods_min =		2,
 	.periods_max =		3,
-	.fअगरo_size =		0,
-पूर्ण;
+	.fifo_size =		0,
+};
 
-अटल स्थिर काष्ठा snd_pcm_hardware snd_msnd_capture = अणु
+static const struct snd_pcm_hardware snd_msnd_capture = {
 	.info =			SNDRV_PCM_INFO_MMAP |
 				SNDRV_PCM_INFO_INTERLEAVED |
 				SNDRV_PCM_INFO_MMAP_VALID |
 				SNDRV_PCM_INFO_BATCH,
-	.क्रमmats =		SNDRV_PCM_FMTBIT_U8 | SNDRV_PCM_FMTBIT_S16_LE,
+	.formats =		SNDRV_PCM_FMTBIT_U8 | SNDRV_PCM_FMTBIT_S16_LE,
 	.rates =		SNDRV_PCM_RATE_8000_48000,
 	.rate_min =		8000,
 	.rate_max =		48000,
@@ -460,230 +459,230 @@ EXPORT_SYMBOL(snd_msnd_DAPQ);
 	.period_bytes_max =	0x1800,
 	.periods_min =		2,
 	.periods_max =		3,
-	.fअगरo_size =		0,
-पूर्ण;
+	.fifo_size =		0,
+};
 
 
-अटल पूर्णांक snd_msnd_playback_खोलो(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा snd_msnd *chip = snd_pcm_substream_chip(substream);
+static int snd_msnd_playback_open(struct snd_pcm_substream *substream)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct snd_msnd *chip = snd_pcm_substream_chip(substream);
 
 	set_bit(F_AUDIO_WRITE_INUSE, &chip->flags);
 	clear_bit(F_WRITING, &chip->flags);
 	snd_msnd_enable_irq(chip);
 
-	runसमय->dma_area = (__क्रमce व्योम *)chip->mappedbase;
-	runसमय->dma_bytes = 0x3000;
+	runtime->dma_area = (__force void *)chip->mappedbase;
+	runtime->dma_bytes = 0x3000;
 
 	chip->playback_substream = substream;
-	runसमय->hw = snd_msnd_playback;
-	वापस 0;
-पूर्ण
+	runtime->hw = snd_msnd_playback;
+	return 0;
+}
 
-अटल पूर्णांक snd_msnd_playback_बंद(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_msnd *chip = snd_pcm_substream_chip(substream);
+static int snd_msnd_playback_close(struct snd_pcm_substream *substream)
+{
+	struct snd_msnd *chip = snd_pcm_substream_chip(substream);
 
 	snd_msnd_disable_irq(chip);
 	clear_bit(F_AUDIO_WRITE_INUSE, &chip->flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक snd_msnd_playback_hw_params(काष्ठा snd_pcm_substream *substream,
-					काष्ठा snd_pcm_hw_params *params)
-अणु
-	पूर्णांक	i;
-	काष्ठा snd_msnd *chip = snd_pcm_substream_chip(substream);
-	व्योम	__iomem *pDAQ =	chip->mappedbase + DAPQ_DATA_BUFF;
+static int snd_msnd_playback_hw_params(struct snd_pcm_substream *substream,
+					struct snd_pcm_hw_params *params)
+{
+	int	i;
+	struct snd_msnd *chip = snd_pcm_substream_chip(substream);
+	void	__iomem *pDAQ =	chip->mappedbase + DAPQ_DATA_BUFF;
 
-	chip->play_sample_size = snd_pcm_क्रमmat_width(params_क्रमmat(params));
+	chip->play_sample_size = snd_pcm_format_width(params_format(params));
 	chip->play_channels = params_channels(params);
 	chip->play_sample_rate = params_rate(params);
 
-	क्रम (i = 0; i < 3; ++i, pDAQ += DAQDS__size) अणु
-		ग_लिखोw(chip->play_sample_size, pDAQ + DAQDS_wSampleSize);
-		ग_लिखोw(chip->play_channels, pDAQ + DAQDS_wChannels);
-		ग_लिखोw(chip->play_sample_rate, pDAQ + DAQDS_wSampleRate);
-	पूर्ण
-	/* करोnt करो this here:
+	for (i = 0; i < 3; ++i, pDAQ += DAQDS__size) {
+		writew(chip->play_sample_size, pDAQ + DAQDS_wSampleSize);
+		writew(chip->play_channels, pDAQ + DAQDS_wChannels);
+		writew(chip->play_sample_rate, pDAQ + DAQDS_wSampleRate);
+	}
+	/* dont do this here:
 	 * snd_msnd_calibrate_adc(chip->play_sample_rate);
 	 */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_msnd_playback_prepare(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_msnd *chip = snd_pcm_substream_chip(substream);
-	अचिन्हित पूर्णांक pcm_size = snd_pcm_lib_buffer_bytes(substream);
-	अचिन्हित पूर्णांक pcm_count = snd_pcm_lib_period_bytes(substream);
-	अचिन्हित पूर्णांक pcm_periods = pcm_size / pcm_count;
+static int snd_msnd_playback_prepare(struct snd_pcm_substream *substream)
+{
+	struct snd_msnd *chip = snd_pcm_substream_chip(substream);
+	unsigned int pcm_size = snd_pcm_lib_buffer_bytes(substream);
+	unsigned int pcm_count = snd_pcm_lib_period_bytes(substream);
+	unsigned int pcm_periods = pcm_size / pcm_count;
 
 	snd_msnd_play_reset_queue(chip, pcm_periods, pcm_count);
 	chip->playDMAPos = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_msnd_playback_trigger(काष्ठा snd_pcm_substream *substream,
-				     पूर्णांक cmd)
-अणु
-	काष्ठा snd_msnd *chip = snd_pcm_substream_chip(substream);
-	पूर्णांक	result = 0;
+static int snd_msnd_playback_trigger(struct snd_pcm_substream *substream,
+				     int cmd)
+{
+	struct snd_msnd *chip = snd_pcm_substream_chip(substream);
+	int	result = 0;
 
-	अगर (cmd == SNDRV_PCM_TRIGGER_START) अणु
-		snd_prपूर्णांकdd("snd_msnd_playback_trigger(START)\n");
+	if (cmd == SNDRV_PCM_TRIGGER_START) {
+		snd_printdd("snd_msnd_playback_trigger(START)\n");
 		chip->banksPlayed = 0;
 		set_bit(F_WRITING, &chip->flags);
 		snd_msnd_DAPQ(chip, 1);
-	पूर्ण अन्यथा अगर (cmd == SNDRV_PCM_TRIGGER_STOP) अणु
-		snd_prपूर्णांकdd("snd_msnd_playback_trigger(STop)\n");
-		/* पूर्णांकerrupt diagnostic, comment this out later */
+	} else if (cmd == SNDRV_PCM_TRIGGER_STOP) {
+		snd_printdd("snd_msnd_playback_trigger(STop)\n");
+		/* interrupt diagnostic, comment this out later */
 		clear_bit(F_WRITING, &chip->flags);
 		snd_msnd_send_dsp_cmd(chip, HDEX_PLAY_STOP);
-	पूर्ण अन्यथा अणु
-		snd_prपूर्णांकd(KERN_ERR "snd_msnd_playback_trigger(?????)\n");
+	} else {
+		snd_printd(KERN_ERR "snd_msnd_playback_trigger(?????)\n");
 		result = -EINVAL;
-	पूर्ण
+	}
 
-	snd_prपूर्णांकdd("snd_msnd_playback_trigger() ENDE\n");
-	वापस result;
-पूर्ण
+	snd_printdd("snd_msnd_playback_trigger() ENDE\n");
+	return result;
+}
 
-अटल snd_pcm_uframes_t
-snd_msnd_playback_poपूर्णांकer(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_msnd *chip = snd_pcm_substream_chip(substream);
+static snd_pcm_uframes_t
+snd_msnd_playback_pointer(struct snd_pcm_substream *substream)
+{
+	struct snd_msnd *chip = snd_pcm_substream_chip(substream);
 
-	वापस bytes_to_frames(substream->runसमय, chip->playDMAPos);
-पूर्ण
+	return bytes_to_frames(substream->runtime, chip->playDMAPos);
+}
 
 
-अटल स्थिर काष्ठा snd_pcm_ops snd_msnd_playback_ops = अणु
-	.खोलो =		snd_msnd_playback_खोलो,
-	.बंद =	snd_msnd_playback_बंद,
+static const struct snd_pcm_ops snd_msnd_playback_ops = {
+	.open =		snd_msnd_playback_open,
+	.close =	snd_msnd_playback_close,
 	.hw_params =	snd_msnd_playback_hw_params,
 	.prepare =	snd_msnd_playback_prepare,
 	.trigger =	snd_msnd_playback_trigger,
-	.poपूर्णांकer =	snd_msnd_playback_poपूर्णांकer,
-पूर्ण;
+	.pointer =	snd_msnd_playback_pointer,
+};
 
-अटल पूर्णांक snd_msnd_capture_खोलो(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा snd_msnd *chip = snd_pcm_substream_chip(substream);
+static int snd_msnd_capture_open(struct snd_pcm_substream *substream)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct snd_msnd *chip = snd_pcm_substream_chip(substream);
 
 	set_bit(F_AUDIO_READ_INUSE, &chip->flags);
 	snd_msnd_enable_irq(chip);
-	runसमय->dma_area = (__क्रमce व्योम *)chip->mappedbase + 0x3000;
-	runसमय->dma_bytes = 0x3000;
-	स_रखो(runसमय->dma_area, 0, runसमय->dma_bytes);
+	runtime->dma_area = (__force void *)chip->mappedbase + 0x3000;
+	runtime->dma_bytes = 0x3000;
+	memset(runtime->dma_area, 0, runtime->dma_bytes);
 	chip->capture_substream = substream;
-	runसमय->hw = snd_msnd_capture;
-	वापस 0;
-पूर्ण
+	runtime->hw = snd_msnd_capture;
+	return 0;
+}
 
-अटल पूर्णांक snd_msnd_capture_बंद(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_msnd *chip = snd_pcm_substream_chip(substream);
+static int snd_msnd_capture_close(struct snd_pcm_substream *substream)
+{
+	struct snd_msnd *chip = snd_pcm_substream_chip(substream);
 
 	snd_msnd_disable_irq(chip);
 	clear_bit(F_AUDIO_READ_INUSE, &chip->flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_msnd_capture_prepare(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_msnd *chip = snd_pcm_substream_chip(substream);
-	अचिन्हित पूर्णांक pcm_size = snd_pcm_lib_buffer_bytes(substream);
-	अचिन्हित पूर्णांक pcm_count = snd_pcm_lib_period_bytes(substream);
-	अचिन्हित पूर्णांक pcm_periods = pcm_size / pcm_count;
+static int snd_msnd_capture_prepare(struct snd_pcm_substream *substream)
+{
+	struct snd_msnd *chip = snd_pcm_substream_chip(substream);
+	unsigned int pcm_size = snd_pcm_lib_buffer_bytes(substream);
+	unsigned int pcm_count = snd_pcm_lib_period_bytes(substream);
+	unsigned int pcm_periods = pcm_size / pcm_count;
 
 	snd_msnd_capture_reset_queue(chip, pcm_periods, pcm_count);
 	chip->captureDMAPos = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_msnd_capture_trigger(काष्ठा snd_pcm_substream *substream,
-				    पूर्णांक cmd)
-अणु
-	काष्ठा snd_msnd *chip = snd_pcm_substream_chip(substream);
+static int snd_msnd_capture_trigger(struct snd_pcm_substream *substream,
+				    int cmd)
+{
+	struct snd_msnd *chip = snd_pcm_substream_chip(substream);
 
-	अगर (cmd == SNDRV_PCM_TRIGGER_START) अणु
+	if (cmd == SNDRV_PCM_TRIGGER_START) {
 		chip->last_recbank = -1;
 		set_bit(F_READING, &chip->flags);
-		अगर (snd_msnd_send_dsp_cmd(chip, HDEX_RECORD_START) == 0)
-			वापस 0;
+		if (snd_msnd_send_dsp_cmd(chip, HDEX_RECORD_START) == 0)
+			return 0;
 
 		clear_bit(F_READING, &chip->flags);
-	पूर्ण अन्यथा अगर (cmd == SNDRV_PCM_TRIGGER_STOP) अणु
+	} else if (cmd == SNDRV_PCM_TRIGGER_STOP) {
 		clear_bit(F_READING, &chip->flags);
 		snd_msnd_send_dsp_cmd(chip, HDEX_RECORD_STOP);
-		वापस 0;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+		return 0;
+	}
+	return -EINVAL;
+}
 
 
-अटल snd_pcm_uframes_t
-snd_msnd_capture_poपूर्णांकer(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा snd_msnd *chip = snd_pcm_substream_chip(substream);
+static snd_pcm_uframes_t
+snd_msnd_capture_pointer(struct snd_pcm_substream *substream)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct snd_msnd *chip = snd_pcm_substream_chip(substream);
 
-	वापस bytes_to_frames(runसमय, chip->captureDMAPos);
-पूर्ण
+	return bytes_to_frames(runtime, chip->captureDMAPos);
+}
 
 
-अटल पूर्णांक snd_msnd_capture_hw_params(काष्ठा snd_pcm_substream *substream,
-					काष्ठा snd_pcm_hw_params *params)
-अणु
-	पूर्णांक		i;
-	काष्ठा snd_msnd *chip = snd_pcm_substream_chip(substream);
-	व्योम		__iomem *pDAQ = chip->mappedbase + DARQ_DATA_BUFF;
+static int snd_msnd_capture_hw_params(struct snd_pcm_substream *substream,
+					struct snd_pcm_hw_params *params)
+{
+	int		i;
+	struct snd_msnd *chip = snd_pcm_substream_chip(substream);
+	void		__iomem *pDAQ = chip->mappedbase + DARQ_DATA_BUFF;
 
-	chip->capture_sample_size = snd_pcm_क्रमmat_width(params_क्रमmat(params));
+	chip->capture_sample_size = snd_pcm_format_width(params_format(params));
 	chip->capture_channels = params_channels(params);
 	chip->capture_sample_rate = params_rate(params);
 
-	क्रम (i = 0; i < 3; ++i, pDAQ += DAQDS__size) अणु
-		ग_लिखोw(chip->capture_sample_size, pDAQ + DAQDS_wSampleSize);
-		ग_लिखोw(chip->capture_channels, pDAQ + DAQDS_wChannels);
-		ग_लिखोw(chip->capture_sample_rate, pDAQ + DAQDS_wSampleRate);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	for (i = 0; i < 3; ++i, pDAQ += DAQDS__size) {
+		writew(chip->capture_sample_size, pDAQ + DAQDS_wSampleSize);
+		writew(chip->capture_channels, pDAQ + DAQDS_wChannels);
+		writew(chip->capture_sample_rate, pDAQ + DAQDS_wSampleRate);
+	}
+	return 0;
+}
 
 
-अटल स्थिर काष्ठा snd_pcm_ops snd_msnd_capture_ops = अणु
-	.खोलो =		snd_msnd_capture_खोलो,
-	.बंद =	snd_msnd_capture_बंद,
+static const struct snd_pcm_ops snd_msnd_capture_ops = {
+	.open =		snd_msnd_capture_open,
+	.close =	snd_msnd_capture_close,
 	.hw_params =	snd_msnd_capture_hw_params,
 	.prepare =	snd_msnd_capture_prepare,
 	.trigger =	snd_msnd_capture_trigger,
-	.poपूर्णांकer =	snd_msnd_capture_poपूर्णांकer,
-पूर्ण;
+	.pointer =	snd_msnd_capture_pointer,
+};
 
 
-पूर्णांक snd_msnd_pcm(काष्ठा snd_card *card, पूर्णांक device)
-अणु
-	काष्ठा snd_msnd *chip = card->निजी_data;
-	काष्ठा snd_pcm	*pcm;
-	पूर्णांक err;
+int snd_msnd_pcm(struct snd_card *card, int device)
+{
+	struct snd_msnd *chip = card->private_data;
+	struct snd_pcm	*pcm;
+	int err;
 
 	err = snd_pcm_new(card, "MSNDPINNACLE", device, 1, 1, &pcm);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_PLAYBACK, &snd_msnd_playback_ops);
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_CAPTURE, &snd_msnd_capture_ops);
 
-	pcm->निजी_data = chip;
-	म_नकल(pcm->name, "Hurricane");
+	pcm->private_data = chip;
+	strcpy(pcm->name, "Hurricane");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(snd_msnd_pcm);
 
 MODULE_DESCRIPTION("Common routines for Turtle Beach Multisound drivers");

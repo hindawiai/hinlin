@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*******************************************************************************
  * SCSI RDMA Protocol lib functions
  *
@@ -8,104 +7,104 @@
  *
  ***********************************************************************/
 
-#घोषणा pr_fmt(fmt)	"libsrp: " fmt
+#define pr_fmt(fmt)	"libsrp: " fmt
 
-#समावेश <linux/prपूर्णांकk.h>
-#समावेश <linux/err.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/kfअगरo.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/module.h>
-#समावेश <scsi/srp.h>
-#समावेश <target/target_core_base.h>
-#समावेश "libsrp.h"
-#समावेश "ibmvscsi_tgt.h"
+#include <linux/printk.h>
+#include <linux/err.h>
+#include <linux/slab.h>
+#include <linux/kfifo.h>
+#include <linux/scatterlist.h>
+#include <linux/dma-mapping.h>
+#include <linux/module.h>
+#include <scsi/srp.h>
+#include <target/target_core_base.h>
+#include "libsrp.h"
+#include "ibmvscsi_tgt.h"
 
-अटल पूर्णांक srp_iu_pool_alloc(काष्ठा srp_queue *q, माप_प्रकार max,
-			     काष्ठा srp_buf **ring)
-अणु
-	काष्ठा iu_entry *iue;
-	पूर्णांक i;
+static int srp_iu_pool_alloc(struct srp_queue *q, size_t max,
+			     struct srp_buf **ring)
+{
+	struct iu_entry *iue;
+	int i;
 
-	q->pool = kसुस्मृति(max, माप(काष्ठा iu_entry *), GFP_KERNEL);
-	अगर (!q->pool)
-		वापस -ENOMEM;
-	q->items = kसुस्मृति(max, माप(काष्ठा iu_entry), GFP_KERNEL);
-	अगर (!q->items)
-		जाओ मुक्त_pool;
+	q->pool = kcalloc(max, sizeof(struct iu_entry *), GFP_KERNEL);
+	if (!q->pool)
+		return -ENOMEM;
+	q->items = kcalloc(max, sizeof(struct iu_entry), GFP_KERNEL);
+	if (!q->items)
+		goto free_pool;
 
 	spin_lock_init(&q->lock);
-	kfअगरo_init(&q->queue, (व्योम *)q->pool, max * माप(व्योम *));
+	kfifo_init(&q->queue, (void *)q->pool, max * sizeof(void *));
 
-	क्रम (i = 0, iue = q->items; i < max; i++) अणु
-		kfअगरo_in(&q->queue, (व्योम *)&iue, माप(व्योम *));
+	for (i = 0, iue = q->items; i < max; i++) {
+		kfifo_in(&q->queue, (void *)&iue, sizeof(void *));
 		iue->sbuf = ring[i];
 		iue++;
-	पूर्ण
-	वापस 0;
+	}
+	return 0;
 
-मुक्त_pool:
-	kमुक्त(q->pool);
-	वापस -ENOMEM;
-पूर्ण
+free_pool:
+	kfree(q->pool);
+	return -ENOMEM;
+}
 
-अटल व्योम srp_iu_pool_मुक्त(काष्ठा srp_queue *q)
-अणु
-	kमुक्त(q->items);
-	kमुक्त(q->pool);
-पूर्ण
+static void srp_iu_pool_free(struct srp_queue *q)
+{
+	kfree(q->items);
+	kfree(q->pool);
+}
 
-अटल काष्ठा srp_buf **srp_ring_alloc(काष्ठा device *dev,
-				       माप_प्रकार max, माप_प्रकार size)
-अणु
-	काष्ठा srp_buf **ring;
-	पूर्णांक i;
+static struct srp_buf **srp_ring_alloc(struct device *dev,
+				       size_t max, size_t size)
+{
+	struct srp_buf **ring;
+	int i;
 
-	ring = kसुस्मृति(max, माप(काष्ठा srp_buf *), GFP_KERNEL);
-	अगर (!ring)
-		वापस शून्य;
+	ring = kcalloc(max, sizeof(struct srp_buf *), GFP_KERNEL);
+	if (!ring)
+		return NULL;
 
-	क्रम (i = 0; i < max; i++) अणु
-		ring[i] = kzalloc(माप(*ring[i]), GFP_KERNEL);
-		अगर (!ring[i])
-			जाओ out;
+	for (i = 0; i < max; i++) {
+		ring[i] = kzalloc(sizeof(*ring[i]), GFP_KERNEL);
+		if (!ring[i])
+			goto out;
 		ring[i]->buf = dma_alloc_coherent(dev, size, &ring[i]->dma,
 						  GFP_KERNEL);
-		अगर (!ring[i]->buf)
-			जाओ out;
-	पूर्ण
-	वापस ring;
+		if (!ring[i]->buf)
+			goto out;
+	}
+	return ring;
 
 out:
-	क्रम (i = 0; i < max && ring[i]; i++) अणु
-		अगर (ring[i]->buf) अणु
-			dma_मुक्त_coherent(dev, size, ring[i]->buf,
+	for (i = 0; i < max && ring[i]; i++) {
+		if (ring[i]->buf) {
+			dma_free_coherent(dev, size, ring[i]->buf,
 					  ring[i]->dma);
-		पूर्ण
-		kमुक्त(ring[i]);
-	पूर्ण
-	kमुक्त(ring);
+		}
+		kfree(ring[i]);
+	}
+	kfree(ring);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम srp_ring_मुक्त(काष्ठा device *dev, काष्ठा srp_buf **ring,
-			  माप_प्रकार max, माप_प्रकार size)
-अणु
-	पूर्णांक i;
+static void srp_ring_free(struct device *dev, struct srp_buf **ring,
+			  size_t max, size_t size)
+{
+	int i;
 
-	क्रम (i = 0; i < max; i++) अणु
-		dma_मुक्त_coherent(dev, size, ring[i]->buf, ring[i]->dma);
-		kमुक्त(ring[i]);
-	पूर्ण
-	kमुक्त(ring);
-पूर्ण
+	for (i = 0; i < max; i++) {
+		dma_free_coherent(dev, size, ring[i]->buf, ring[i]->dma);
+		kfree(ring[i]);
+	}
+	kfree(ring);
+}
 
-पूर्णांक srp_target_alloc(काष्ठा srp_target *target, काष्ठा device *dev,
-		     माप_प्रकार nr, माप_प्रकार iu_size)
-अणु
-	पूर्णांक err;
+int srp_target_alloc(struct srp_target *target, struct device *dev,
+		     size_t nr, size_t iu_size)
+{
+	int err;
 
 	spin_lock_init(&target->lock);
 
@@ -114,273 +113,273 @@ out:
 	target->srp_iu_size = iu_size;
 	target->rx_ring_size = nr;
 	target->rx_ring = srp_ring_alloc(target->dev, nr, iu_size);
-	अगर (!target->rx_ring)
-		वापस -ENOMEM;
+	if (!target->rx_ring)
+		return -ENOMEM;
 	err = srp_iu_pool_alloc(&target->iu_queue, nr, target->rx_ring);
-	अगर (err)
-		जाओ मुक्त_ring;
+	if (err)
+		goto free_ring;
 
 	dev_set_drvdata(target->dev, target);
-	वापस 0;
+	return 0;
 
-मुक्त_ring:
-	srp_ring_मुक्त(target->dev, target->rx_ring, nr, iu_size);
-	वापस -ENOMEM;
-पूर्ण
+free_ring:
+	srp_ring_free(target->dev, target->rx_ring, nr, iu_size);
+	return -ENOMEM;
+}
 
-व्योम srp_target_मुक्त(काष्ठा srp_target *target)
-अणु
-	dev_set_drvdata(target->dev, शून्य);
-	srp_ring_मुक्त(target->dev, target->rx_ring, target->rx_ring_size,
+void srp_target_free(struct srp_target *target)
+{
+	dev_set_drvdata(target->dev, NULL);
+	srp_ring_free(target->dev, target->rx_ring, target->rx_ring_size,
 		      target->srp_iu_size);
-	srp_iu_pool_मुक्त(&target->iu_queue);
-पूर्ण
+	srp_iu_pool_free(&target->iu_queue);
+}
 
-काष्ठा iu_entry *srp_iu_get(काष्ठा srp_target *target)
-अणु
-	काष्ठा iu_entry *iue = शून्य;
+struct iu_entry *srp_iu_get(struct srp_target *target)
+{
+	struct iu_entry *iue = NULL;
 
-	अगर (kfअगरo_out_locked(&target->iu_queue.queue, (व्योम *)&iue,
-			     माप(व्योम *),
-			     &target->iu_queue.lock) != माप(व्योम *)) अणु
+	if (kfifo_out_locked(&target->iu_queue.queue, (void *)&iue,
+			     sizeof(void *),
+			     &target->iu_queue.lock) != sizeof(void *)) {
 		WARN_ONCE(1, "unexpected fifo state");
-		वापस शून्य;
-	पूर्ण
-	अगर (!iue)
-		वापस iue;
+		return NULL;
+	}
+	if (!iue)
+		return iue;
 	iue->target = target;
 	iue->flags = 0;
-	वापस iue;
-पूर्ण
+	return iue;
+}
 
-व्योम srp_iu_put(काष्ठा iu_entry *iue)
-अणु
-	kfअगरo_in_locked(&iue->target->iu_queue.queue, (व्योम *)&iue,
-			माप(व्योम *), &iue->target->iu_queue.lock);
-पूर्ण
+void srp_iu_put(struct iu_entry *iue)
+{
+	kfifo_in_locked(&iue->target->iu_queue.queue, (void *)&iue,
+			sizeof(void *), &iue->target->iu_queue.lock);
+}
 
-अटल पूर्णांक srp_direct_data(काष्ठा ibmvscsis_cmd *cmd, काष्ठा srp_direct_buf *md,
-			   क्रमागत dma_data_direction dir, srp_rdma_t rdma_io,
-			   पूर्णांक dma_map, पूर्णांक ext_desc)
-अणु
-	काष्ठा iu_entry *iue = शून्य;
-	काष्ठा scatterlist *sg = शून्य;
-	पूर्णांक err, nsg = 0, len;
+static int srp_direct_data(struct ibmvscsis_cmd *cmd, struct srp_direct_buf *md,
+			   enum dma_data_direction dir, srp_rdma_t rdma_io,
+			   int dma_map, int ext_desc)
+{
+	struct iu_entry *iue = NULL;
+	struct scatterlist *sg = NULL;
+	int err, nsg = 0, len;
 
-	अगर (dma_map) अणु
+	if (dma_map) {
 		iue = cmd->iue;
 		sg = cmd->se_cmd.t_data_sg;
 		nsg = dma_map_sg(iue->target->dev, sg, cmd->se_cmd.t_data_nents,
-				 DMA_BIसूचीECTIONAL);
-		अगर (!nsg) अणु
+				 DMA_BIDIRECTIONAL);
+		if (!nsg) {
 			pr_err("fail to map %p %d\n", iue,
 			       cmd->se_cmd.t_data_nents);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		len = min(cmd->se_cmd.data_length, be32_to_cpu(md->len));
-	पूर्ण अन्यथा अणु
+	} else {
 		len = be32_to_cpu(md->len);
-	पूर्ण
+	}
 
 	err = rdma_io(cmd, sg, nsg, md, 1, dir, len);
 
-	अगर (dma_map)
-		dma_unmap_sg(iue->target->dev, sg, nsg, DMA_BIसूचीECTIONAL);
+	if (dma_map)
+		dma_unmap_sg(iue->target->dev, sg, nsg, DMA_BIDIRECTIONAL);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक srp_indirect_data(काष्ठा ibmvscsis_cmd *cmd, काष्ठा srp_cmd *srp_cmd,
-			     काष्ठा srp_indirect_buf *id,
-			     क्रमागत dma_data_direction dir, srp_rdma_t rdma_io,
-			     पूर्णांक dma_map, पूर्णांक ext_desc)
-अणु
-	काष्ठा iu_entry *iue = शून्य;
-	काष्ठा srp_direct_buf *md = शून्य;
-	काष्ठा scatterlist dummy, *sg = शून्य;
+static int srp_indirect_data(struct ibmvscsis_cmd *cmd, struct srp_cmd *srp_cmd,
+			     struct srp_indirect_buf *id,
+			     enum dma_data_direction dir, srp_rdma_t rdma_io,
+			     int dma_map, int ext_desc)
+{
+	struct iu_entry *iue = NULL;
+	struct srp_direct_buf *md = NULL;
+	struct scatterlist dummy, *sg = NULL;
 	dma_addr_t token = 0;
-	पूर्णांक err = 0;
-	पूर्णांक nmd, nsg = 0, len;
+	int err = 0;
+	int nmd, nsg = 0, len;
 
-	अगर (dma_map || ext_desc) अणु
+	if (dma_map || ext_desc) {
 		iue = cmd->iue;
 		sg = cmd->se_cmd.t_data_sg;
-	पूर्ण
+	}
 
-	nmd = be32_to_cpu(id->table_desc.len) / माप(काष्ठा srp_direct_buf);
+	nmd = be32_to_cpu(id->table_desc.len) / sizeof(struct srp_direct_buf);
 
-	अगर ((dir == DMA_FROM_DEVICE && nmd == srp_cmd->data_in_desc_cnt) ||
-	    (dir == DMA_TO_DEVICE && nmd == srp_cmd->data_out_desc_cnt)) अणु
+	if ((dir == DMA_FROM_DEVICE && nmd == srp_cmd->data_in_desc_cnt) ||
+	    (dir == DMA_TO_DEVICE && nmd == srp_cmd->data_out_desc_cnt)) {
 		md = &id->desc_list[0];
-		जाओ rdma;
-	पूर्ण
+		goto rdma;
+	}
 
-	अगर (ext_desc && dma_map) अणु
+	if (ext_desc && dma_map) {
 		md = dma_alloc_coherent(iue->target->dev,
 					be32_to_cpu(id->table_desc.len),
 					&token, GFP_KERNEL);
-		अगर (!md) अणु
+		if (!md) {
 			pr_err("Can't get dma memory %u\n",
 			       be32_to_cpu(id->table_desc.len));
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 
 		sg_init_one(&dummy, md, be32_to_cpu(id->table_desc.len));
 		sg_dma_address(&dummy) = token;
 		sg_dma_len(&dummy) = be32_to_cpu(id->table_desc.len);
 		err = rdma_io(cmd, &dummy, 1, &id->table_desc, 1, DMA_TO_DEVICE,
 			      be32_to_cpu(id->table_desc.len));
-		अगर (err) अणु
+		if (err) {
 			pr_err("Error copying indirect table %d\n", err);
-			जाओ मुक्त_mem;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			goto free_mem;
+		}
+	} else {
 		pr_err("This command uses external indirect buffer\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 rdma:
-	अगर (dma_map) अणु
+	if (dma_map) {
 		nsg = dma_map_sg(iue->target->dev, sg, cmd->se_cmd.t_data_nents,
-				 DMA_BIसूचीECTIONAL);
-		अगर (!nsg) अणु
+				 DMA_BIDIRECTIONAL);
+		if (!nsg) {
 			pr_err("fail to map %p %d\n", iue,
 			       cmd->se_cmd.t_data_nents);
 			err = -EIO;
-			जाओ मुक्त_mem;
-		पूर्ण
+			goto free_mem;
+		}
 		len = min(cmd->se_cmd.data_length, be32_to_cpu(id->len));
-	पूर्ण अन्यथा अणु
+	} else {
 		len = be32_to_cpu(id->len);
-	पूर्ण
+	}
 
 	err = rdma_io(cmd, sg, nsg, md, nmd, dir, len);
 
-	अगर (dma_map)
-		dma_unmap_sg(iue->target->dev, sg, nsg, DMA_BIसूचीECTIONAL);
+	if (dma_map)
+		dma_unmap_sg(iue->target->dev, sg, nsg, DMA_BIDIRECTIONAL);
 
-मुक्त_mem:
-	अगर (token && dma_map) अणु
-		dma_मुक्त_coherent(iue->target->dev,
+free_mem:
+	if (token && dma_map) {
+		dma_free_coherent(iue->target->dev,
 				  be32_to_cpu(id->table_desc.len), md, token);
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-अटल पूर्णांक data_out_desc_size(काष्ठा srp_cmd *cmd)
-अणु
-	पूर्णांक size = 0;
+static int data_out_desc_size(struct srp_cmd *cmd)
+{
+	int size = 0;
 	u8 fmt = cmd->buf_fmt >> 4;
 
-	चयन (fmt) अणु
-	हाल SRP_NO_DATA_DESC:
-		अवरोध;
-	हाल SRP_DATA_DESC_सूचीECT:
-		size = माप(काष्ठा srp_direct_buf);
-		अवरोध;
-	हाल SRP_DATA_DESC_INसूचीECT:
-		size = माप(काष्ठा srp_indirect_buf) +
-			माप(काष्ठा srp_direct_buf) * cmd->data_out_desc_cnt;
-		अवरोध;
-	शेष:
+	switch (fmt) {
+	case SRP_NO_DATA_DESC:
+		break;
+	case SRP_DATA_DESC_DIRECT:
+		size = sizeof(struct srp_direct_buf);
+		break;
+	case SRP_DATA_DESC_INDIRECT:
+		size = sizeof(struct srp_indirect_buf) +
+			sizeof(struct srp_direct_buf) * cmd->data_out_desc_cnt;
+		break;
+	default:
 		pr_err("client error. Invalid data_out_format %x\n", fmt);
-		अवरोध;
-	पूर्ण
-	वापस size;
-पूर्ण
+		break;
+	}
+	return size;
+}
 
 /*
- * TODO: this can be called multiple बार क्रम a single command अगर it
- * has very दीर्घ data.
+ * TODO: this can be called multiple times for a single command if it
+ * has very long data.
  */
-पूर्णांक srp_transfer_data(काष्ठा ibmvscsis_cmd *cmd, काष्ठा srp_cmd *srp_cmd,
-		      srp_rdma_t rdma_io, पूर्णांक dma_map, पूर्णांक ext_desc)
-अणु
-	काष्ठा srp_direct_buf *md;
-	काष्ठा srp_indirect_buf *id;
-	क्रमागत dma_data_direction dir;
-	पूर्णांक offset, err = 0;
-	u8 क्रमmat;
+int srp_transfer_data(struct ibmvscsis_cmd *cmd, struct srp_cmd *srp_cmd,
+		      srp_rdma_t rdma_io, int dma_map, int ext_desc)
+{
+	struct srp_direct_buf *md;
+	struct srp_indirect_buf *id;
+	enum dma_data_direction dir;
+	int offset, err = 0;
+	u8 format;
 
-	अगर (!cmd->se_cmd.t_data_nents)
-		वापस 0;
+	if (!cmd->se_cmd.t_data_nents)
+		return 0;
 
 	offset = srp_cmd->add_cdb_len & ~3;
 
 	dir = srp_cmd_direction(srp_cmd);
-	अगर (dir == DMA_FROM_DEVICE)
+	if (dir == DMA_FROM_DEVICE)
 		offset += data_out_desc_size(srp_cmd);
 
-	अगर (dir == DMA_TO_DEVICE)
-		क्रमmat = srp_cmd->buf_fmt >> 4;
-	अन्यथा
-		क्रमmat = srp_cmd->buf_fmt & ((1U << 4) - 1);
+	if (dir == DMA_TO_DEVICE)
+		format = srp_cmd->buf_fmt >> 4;
+	else
+		format = srp_cmd->buf_fmt & ((1U << 4) - 1);
 
-	चयन (क्रमmat) अणु
-	हाल SRP_NO_DATA_DESC:
-		अवरोध;
-	हाल SRP_DATA_DESC_सूचीECT:
-		md = (काष्ठा srp_direct_buf *)(srp_cmd->add_data + offset);
+	switch (format) {
+	case SRP_NO_DATA_DESC:
+		break;
+	case SRP_DATA_DESC_DIRECT:
+		md = (struct srp_direct_buf *)(srp_cmd->add_data + offset);
 		err = srp_direct_data(cmd, md, dir, rdma_io, dma_map, ext_desc);
-		अवरोध;
-	हाल SRP_DATA_DESC_INसूचीECT:
-		id = (काष्ठा srp_indirect_buf *)(srp_cmd->add_data + offset);
+		break;
+	case SRP_DATA_DESC_INDIRECT:
+		id = (struct srp_indirect_buf *)(srp_cmd->add_data + offset);
 		err = srp_indirect_data(cmd, srp_cmd, id, dir, rdma_io, dma_map,
 					ext_desc);
-		अवरोध;
-	शेष:
-		pr_err("Unknown format %d %x\n", dir, क्रमmat);
+		break;
+	default:
+		pr_err("Unknown format %d %x\n", dir, format);
 		err = -EINVAL;
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-u64 srp_data_length(काष्ठा srp_cmd *cmd, क्रमागत dma_data_direction dir)
-अणु
-	काष्ठा srp_direct_buf *md;
-	काष्ठा srp_indirect_buf *id;
+u64 srp_data_length(struct srp_cmd *cmd, enum dma_data_direction dir)
+{
+	struct srp_direct_buf *md;
+	struct srp_indirect_buf *id;
 	u64 len = 0;
-	uपूर्णांक offset = cmd->add_cdb_len & ~3;
+	uint offset = cmd->add_cdb_len & ~3;
 	u8 fmt;
 
-	अगर (dir == DMA_TO_DEVICE) अणु
+	if (dir == DMA_TO_DEVICE) {
 		fmt = cmd->buf_fmt >> 4;
-	पूर्ण अन्यथा अणु
+	} else {
 		fmt = cmd->buf_fmt & ((1U << 4) - 1);
 		offset += data_out_desc_size(cmd);
-	पूर्ण
+	}
 
-	चयन (fmt) अणु
-	हाल SRP_NO_DATA_DESC:
-		अवरोध;
-	हाल SRP_DATA_DESC_सूचीECT:
-		md = (काष्ठा srp_direct_buf *)(cmd->add_data + offset);
+	switch (fmt) {
+	case SRP_NO_DATA_DESC:
+		break;
+	case SRP_DATA_DESC_DIRECT:
+		md = (struct srp_direct_buf *)(cmd->add_data + offset);
 		len = be32_to_cpu(md->len);
-		अवरोध;
-	हाल SRP_DATA_DESC_INसूचीECT:
-		id = (काष्ठा srp_indirect_buf *)(cmd->add_data + offset);
+		break;
+	case SRP_DATA_DESC_INDIRECT:
+		id = (struct srp_indirect_buf *)(cmd->add_data + offset);
 		len = be32_to_cpu(id->len);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		pr_err("invalid data format %x\n", fmt);
-		अवरोध;
-	पूर्ण
-	वापस len;
-पूर्ण
+		break;
+	}
+	return len;
+}
 
-पूर्णांक srp_get_desc_table(काष्ठा srp_cmd *srp_cmd, क्रमागत dma_data_direction *dir,
+int srp_get_desc_table(struct srp_cmd *srp_cmd, enum dma_data_direction *dir,
 		       u64 *data_len)
-अणु
-	काष्ठा srp_indirect_buf *idb;
-	काष्ठा srp_direct_buf *db;
-	uपूर्णांक add_cdb_offset;
-	पूर्णांक rc;
+{
+	struct srp_indirect_buf *idb;
+	struct srp_direct_buf *db;
+	uint add_cdb_offset;
+	int rc;
 
 	/*
-	 * The poपूर्णांकer computations below will only be compiled correctly
-	 * अगर srp_cmd::add_data is declared as s8*, u8*, s8[] or u8[], so check
-	 * whether srp_cmd::add_data has been declared as a byte poपूर्णांकer.
+	 * The pointer computations below will only be compiled correctly
+	 * if srp_cmd::add_data is declared as s8*, u8*, s8[] or u8[], so check
+	 * whether srp_cmd::add_data has been declared as a byte pointer.
 	 */
 	BUILD_BUG_ON(!__same_type(srp_cmd->add_data[0], (s8)0)
 		     && !__same_type(srp_cmd->add_data[0], (u8)0));
@@ -393,26 +392,26 @@ u64 srp_data_length(काष्ठा srp_cmd *cmd, क्रमागत dma_d
 
 	*dir = DMA_NONE;
 
-	अगर (srp_cmd->buf_fmt & 0xf)
+	if (srp_cmd->buf_fmt & 0xf)
 		*dir = DMA_FROM_DEVICE;
-	अन्यथा अगर (srp_cmd->buf_fmt >> 4)
+	else if (srp_cmd->buf_fmt >> 4)
 		*dir = DMA_TO_DEVICE;
 
 	add_cdb_offset = srp_cmd->add_cdb_len & ~3;
-	अगर (((srp_cmd->buf_fmt & 0xf) == SRP_DATA_DESC_सूचीECT) ||
-	    ((srp_cmd->buf_fmt >> 4) == SRP_DATA_DESC_सूचीECT)) अणु
-		db = (काष्ठा srp_direct_buf *)(srp_cmd->add_data
+	if (((srp_cmd->buf_fmt & 0xf) == SRP_DATA_DESC_DIRECT) ||
+	    ((srp_cmd->buf_fmt >> 4) == SRP_DATA_DESC_DIRECT)) {
+		db = (struct srp_direct_buf *)(srp_cmd->add_data
 					       + add_cdb_offset);
 		*data_len = be32_to_cpu(db->len);
-	पूर्ण अन्यथा अगर (((srp_cmd->buf_fmt & 0xf) == SRP_DATA_DESC_INसूचीECT) ||
-		   ((srp_cmd->buf_fmt >> 4) == SRP_DATA_DESC_INसूचीECT)) अणु
-		idb = (काष्ठा srp_indirect_buf *)(srp_cmd->add_data
+	} else if (((srp_cmd->buf_fmt & 0xf) == SRP_DATA_DESC_INDIRECT) ||
+		   ((srp_cmd->buf_fmt >> 4) == SRP_DATA_DESC_INDIRECT)) {
+		idb = (struct srp_indirect_buf *)(srp_cmd->add_data
 						  + add_cdb_offset);
 
 		*data_len = be32_to_cpu(idb->len);
-	पूर्ण
-	वापस rc;
-पूर्ण
+	}
+	return rc;
+}
 
 MODULE_DESCRIPTION("SCSI RDMA Protocol lib functions");
 MODULE_AUTHOR("FUJITA Tomonori");

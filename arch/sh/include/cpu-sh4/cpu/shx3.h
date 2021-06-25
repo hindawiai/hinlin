@@ -1,9 +1,8 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __CPU_SHX3_H
-#घोषणा __CPU_SHX3_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __CPU_SHX3_H
+#define __CPU_SHX3_H
 
-क्रमागत अणु
+enum {
 	/* PA */
 	GPIO_PA7, GPIO_PA6, GPIO_PA5, GPIO_PA4,
 	GPIO_PA3, GPIO_PA2, GPIO_PA1, GPIO_PA0,
@@ -61,6 +60,6 @@
 	GPIO_FN_IRQ3, GPIO_FN_IRQ2, GPIO_FN_IRQ1, GPIO_FN_IRQ0,
 	GPIO_FN_IRL3, GPIO_FN_IRL2, GPIO_FN_IRL1, GPIO_FN_IRL0,
 	GPIO_FN_IRQOUT, GPIO_FN_STATUS1, GPIO_FN_STATUS0,
-पूर्ण;
+};
 
-#पूर्ण_अगर /* __CPU_SHX3_H */
+#endif /* __CPU_SHX3_H */

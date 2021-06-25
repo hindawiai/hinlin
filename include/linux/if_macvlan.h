@@ -1,110 +1,109 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_IF_MACVLAN_H
-#घोषणा _LINUX_IF_MACVLAN_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_IF_MACVLAN_H
+#define _LINUX_IF_MACVLAN_H
 
-#समावेश <linux/अगर_link.h>
-#समावेश <linux/अगर_vlan.h>
-#समावेश <linux/list.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/netlink.h>
-#समावेश <net/netlink.h>
-#समावेश <linux/u64_stats_sync.h>
+#include <linux/if_link.h>
+#include <linux/if_vlan.h>
+#include <linux/list.h>
+#include <linux/netdevice.h>
+#include <linux/netlink.h>
+#include <net/netlink.h>
+#include <linux/u64_stats_sync.h>
 
-काष्ठा macvlan_port;
+struct macvlan_port;
 
-#घोषणा MACVLAN_MC_FILTER_BITS	8
-#घोषणा MACVLAN_MC_FILTER_SZ	(1 << MACVLAN_MC_FILTER_BITS)
+#define MACVLAN_MC_FILTER_BITS	8
+#define MACVLAN_MC_FILTER_SZ	(1 << MACVLAN_MC_FILTER_BITS)
 
-काष्ठा macvlan_dev अणु
-	काष्ठा net_device	*dev;
-	काष्ठा list_head	list;
-	काष्ठा hlist_node	hlist;
-	काष्ठा macvlan_port	*port;
-	काष्ठा net_device	*lowerdev;
-	व्योम			*accel_priv;
-	काष्ठा vlan_pcpu_stats __percpu *pcpu_stats;
+struct macvlan_dev {
+	struct net_device	*dev;
+	struct list_head	list;
+	struct hlist_node	hlist;
+	struct macvlan_port	*port;
+	struct net_device	*lowerdev;
+	void			*accel_priv;
+	struct vlan_pcpu_stats __percpu *pcpu_stats;
 
 	DECLARE_BITMAP(mc_filter, MACVLAN_MC_FILTER_SZ);
 
 	netdev_features_t	set_features;
-	क्रमागत macvlan_mode	mode;
+	enum macvlan_mode	mode;
 	u16			flags;
-	अचिन्हित पूर्णांक		macaddr_count;
+	unsigned int		macaddr_count;
 	u32			bc_queue_len_req;
-#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
-	काष्ठा netpoll		*netpoll;
-#पूर्ण_अगर
-पूर्ण;
+#ifdef CONFIG_NET_POLL_CONTROLLER
+	struct netpoll		*netpoll;
+#endif
+};
 
-अटल अंतरभूत व्योम macvlan_count_rx(स्थिर काष्ठा macvlan_dev *vlan,
-				    अचिन्हित पूर्णांक len, bool success,
+static inline void macvlan_count_rx(const struct macvlan_dev *vlan,
+				    unsigned int len, bool success,
 				    bool multicast)
-अणु
-	अगर (likely(success)) अणु
-		काष्ठा vlan_pcpu_stats *pcpu_stats;
+{
+	if (likely(success)) {
+		struct vlan_pcpu_stats *pcpu_stats;
 
 		pcpu_stats = get_cpu_ptr(vlan->pcpu_stats);
 		u64_stats_update_begin(&pcpu_stats->syncp);
 		pcpu_stats->rx_packets++;
 		pcpu_stats->rx_bytes += len;
-		अगर (multicast)
+		if (multicast)
 			pcpu_stats->rx_multicast++;
 		u64_stats_update_end(&pcpu_stats->syncp);
 		put_cpu_ptr(vlan->pcpu_stats);
-	पूर्ण अन्यथा अणु
+	} else {
 		this_cpu_inc(vlan->pcpu_stats->rx_errors);
-	पूर्ण
-पूर्ण
+	}
+}
 
-बाह्य व्योम macvlan_common_setup(काष्ठा net_device *dev);
+extern void macvlan_common_setup(struct net_device *dev);
 
-बाह्य पूर्णांक macvlan_common_newlink(काष्ठा net *src_net, काष्ठा net_device *dev,
-				  काष्ठा nlattr *tb[], काष्ठा nlattr *data[],
-				  काष्ठा netlink_ext_ack *extack);
+extern int macvlan_common_newlink(struct net *src_net, struct net_device *dev,
+				  struct nlattr *tb[], struct nlattr *data[],
+				  struct netlink_ext_ack *extack);
 
-बाह्य व्योम macvlan_dellink(काष्ठा net_device *dev, काष्ठा list_head *head);
+extern void macvlan_dellink(struct net_device *dev, struct list_head *head);
 
-बाह्य पूर्णांक macvlan_link_रेजिस्टर(काष्ठा rtnl_link_ops *ops);
+extern int macvlan_link_register(struct rtnl_link_ops *ops);
 
-#अगर IS_ENABLED(CONFIG_MACVLAN)
-अटल अंतरभूत काष्ठा net_device *
-macvlan_dev_real_dev(स्थिर काष्ठा net_device *dev)
-अणु
-	काष्ठा macvlan_dev *macvlan = netdev_priv(dev);
+#if IS_ENABLED(CONFIG_MACVLAN)
+static inline struct net_device *
+macvlan_dev_real_dev(const struct net_device *dev)
+{
+	struct macvlan_dev *macvlan = netdev_priv(dev);
 
-	वापस macvlan->lowerdev;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत काष्ठा net_device *
-macvlan_dev_real_dev(स्थिर काष्ठा net_device *dev)
-अणु
+	return macvlan->lowerdev;
+}
+#else
+static inline struct net_device *
+macvlan_dev_real_dev(const struct net_device *dev)
+{
 	BUG();
-	वापस शून्य;
-पूर्ण
-#पूर्ण_अगर
+	return NULL;
+}
+#endif
 
-अटल अंतरभूत व्योम *macvlan_accel_priv(काष्ठा net_device *dev)
-अणु
-	काष्ठा macvlan_dev *macvlan = netdev_priv(dev);
+static inline void *macvlan_accel_priv(struct net_device *dev)
+{
+	struct macvlan_dev *macvlan = netdev_priv(dev);
 
-	वापस macvlan->accel_priv;
-पूर्ण
+	return macvlan->accel_priv;
+}
 
-अटल अंतरभूत bool macvlan_supports_dest_filter(काष्ठा net_device *dev)
-अणु
-	काष्ठा macvlan_dev *macvlan = netdev_priv(dev);
+static inline bool macvlan_supports_dest_filter(struct net_device *dev)
+{
+	struct macvlan_dev *macvlan = netdev_priv(dev);
 
-	वापस macvlan->mode == MACVLAN_MODE_PRIVATE ||
+	return macvlan->mode == MACVLAN_MODE_PRIVATE ||
 	       macvlan->mode == MACVLAN_MODE_VEPA ||
 	       macvlan->mode == MACVLAN_MODE_BRIDGE;
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक macvlan_release_l2fw_offload(काष्ठा net_device *dev)
-अणु
-	काष्ठा macvlan_dev *macvlan = netdev_priv(dev);
+static inline int macvlan_release_l2fw_offload(struct net_device *dev)
+{
+	struct macvlan_dev *macvlan = netdev_priv(dev);
 
-	macvlan->accel_priv = शून्य;
-	वापस dev_uc_add(macvlan->lowerdev, dev->dev_addr);
-पूर्ण
-#पूर्ण_अगर /* _LINUX_IF_MACVLAN_H */
+	macvlan->accel_priv = NULL;
+	return dev_uc_add(macvlan->lowerdev, dev->dev_addr);
+}
+#endif /* _LINUX_IF_MACVLAN_H */

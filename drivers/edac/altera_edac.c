@@ -1,39 +1,38 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  Copyright (C) 2017-2018, Intel Corporation. All rights reserved
  *  Copyright Altera Corporation (C) 2014-2016. All rights reserved.
  *  Copyright 2011-2012 Calxeda, Inc.
  */
 
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/delay.h>
-#समावेश <linux/edac.h>
-#समावेश <linux/firmware/पूर्णांकel/stratix10-smc.h>
-#समावेश <linux/genभाग.स>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irqchip/chained_irq.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mfd/altera-sysmgr.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/types.h>
-#समावेश <linux/uaccess.h>
+#include <asm/cacheflush.h>
+#include <linux/ctype.h>
+#include <linux/delay.h>
+#include <linux/edac.h>
+#include <linux/firmware/intel/stratix10-smc.h>
+#include <linux/genalloc.h>
+#include <linux/interrupt.h>
+#include <linux/irqchip/chained_irq.h>
+#include <linux/kernel.h>
+#include <linux/mfd/altera-sysmgr.h>
+#include <linux/mfd/syscon.h>
+#include <linux/notifier.h>
+#include <linux/of_address.h>
+#include <linux/of_irq.h>
+#include <linux/of_platform.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
+#include <linux/types.h>
+#include <linux/uaccess.h>
 
-#समावेश "altera_edac.h"
-#समावेश "edac_module.h"
+#include "altera_edac.h"
+#include "edac_module.h"
 
-#घोषणा EDAC_MOD_STR		"altera_edac"
-#घोषणा EDAC_DEVICE		"Altera"
+#define EDAC_MOD_STR		"altera_edac"
+#define EDAC_DEVICE		"Altera"
 
-#अगर_घोषित CONFIG_EDAC_ALTERA_SDRAM
-अटल स्थिर काष्ठा altr_sdram_prv_data c5_data = अणु
+#ifdef CONFIG_EDAC_ALTERA_SDRAM
+static const struct altr_sdram_prv_data c5_data = {
 	.ecc_ctrl_offset    = CV_CTLCFG_OFST,
 	.ecc_ctl_en_mask    = CV_CTLCFG_ECC_AUTO_EN,
 	.ecc_stat_offset    = CV_DRAMSTS_OFST,
@@ -52,9 +51,9 @@
 	.ce_ue_trgr_offset  = CV_CTLCFG_OFST,
 	.ce_set_mask        = CV_CTLCFG_GEN_SB_ERR,
 	.ue_set_mask        = CV_CTLCFG_GEN_DB_ERR,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा altr_sdram_prv_data a10_data = अणु
+static const struct altr_sdram_prv_data a10_data = {
 	.ecc_ctrl_offset    = A10_ECCCTRL1_OFST,
 	.ecc_ctl_en_mask    = A10_ECCCTRL1_ECC_EN,
 	.ecc_stat_offset    = A10_INTSTAT_OFST,
@@ -71,290 +70,290 @@
 	.ce_ue_trgr_offset  = A10_DIAGINTTEST_OFST,
 	.ce_set_mask        = A10_DIAGINT_TSERRA_MASK,
 	.ue_set_mask        = A10_DIAGINT_TDERRA_MASK,
-पूर्ण;
+};
 
 /*********************** EDAC Memory Controller Functions ****************/
 
 /* The SDRAM controller uses the EDAC Memory Controller framework.       */
 
-अटल irqवापस_t altr_sdram_mc_err_handler(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा mem_ctl_info *mci = dev_id;
-	काष्ठा altr_sdram_mc_data *drvdata = mci->pvt_info;
-	स्थिर काष्ठा altr_sdram_prv_data *priv = drvdata->data;
+static irqreturn_t altr_sdram_mc_err_handler(int irq, void *dev_id)
+{
+	struct mem_ctl_info *mci = dev_id;
+	struct altr_sdram_mc_data *drvdata = mci->pvt_info;
+	const struct altr_sdram_prv_data *priv = drvdata->data;
 	u32 status, err_count = 1, err_addr;
 
-	regmap_पढ़ो(drvdata->mc_vbase, priv->ecc_stat_offset, &status);
+	regmap_read(drvdata->mc_vbase, priv->ecc_stat_offset, &status);
 
-	अगर (status & priv->ecc_stat_ue_mask) अणु
-		regmap_पढ़ो(drvdata->mc_vbase, priv->ecc_daddr_offset,
+	if (status & priv->ecc_stat_ue_mask) {
+		regmap_read(drvdata->mc_vbase, priv->ecc_daddr_offset,
 			    &err_addr);
-		अगर (priv->ecc_uecnt_offset)
-			regmap_पढ़ो(drvdata->mc_vbase, priv->ecc_uecnt_offset,
+		if (priv->ecc_uecnt_offset)
+			regmap_read(drvdata->mc_vbase, priv->ecc_uecnt_offset,
 				    &err_count);
 		panic("\nEDAC: [%d Uncorrectable errors @ 0x%08X]\n",
 		      err_count, err_addr);
-	पूर्ण
-	अगर (status & priv->ecc_stat_ce_mask) अणु
-		regmap_पढ़ो(drvdata->mc_vbase, priv->ecc_saddr_offset,
+	}
+	if (status & priv->ecc_stat_ce_mask) {
+		regmap_read(drvdata->mc_vbase, priv->ecc_saddr_offset,
 			    &err_addr);
-		अगर (priv->ecc_uecnt_offset)
-			regmap_पढ़ो(drvdata->mc_vbase,  priv->ecc_cecnt_offset,
+		if (priv->ecc_uecnt_offset)
+			regmap_read(drvdata->mc_vbase,  priv->ecc_cecnt_offset,
 				    &err_count);
 		edac_mc_handle_error(HW_EVENT_ERR_CORRECTED, mci, err_count,
 				     err_addr >> PAGE_SHIFT,
 				     err_addr & ~PAGE_MASK, 0,
 				     0, 0, -1, mci->ctl_name, "");
 		/* Clear IRQ to resume */
-		regmap_ग_लिखो(drvdata->mc_vbase,	priv->ecc_irq_clr_offset,
+		regmap_write(drvdata->mc_vbase,	priv->ecc_irq_clr_offset,
 			     priv->ecc_irq_clr_mask);
 
-		वापस IRQ_HANDLED;
-	पूर्ण
-	वापस IRQ_NONE;
-पूर्ण
+		return IRQ_HANDLED;
+	}
+	return IRQ_NONE;
+}
 
-अटल sमाप_प्रकार altr_sdr_mc_err_inject_ग_लिखो(काष्ठा file *file,
-					    स्थिर अक्षर __user *data,
-					    माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा mem_ctl_info *mci = file->निजी_data;
-	काष्ठा altr_sdram_mc_data *drvdata = mci->pvt_info;
-	स्थिर काष्ठा altr_sdram_prv_data *priv = drvdata->data;
+static ssize_t altr_sdr_mc_err_inject_write(struct file *file,
+					    const char __user *data,
+					    size_t count, loff_t *ppos)
+{
+	struct mem_ctl_info *mci = file->private_data;
+	struct altr_sdram_mc_data *drvdata = mci->pvt_info;
+	const struct altr_sdram_prv_data *priv = drvdata->data;
 	u32 *ptemp;
 	dma_addr_t dma_handle;
-	u32 reg, पढ़ो_reg;
+	u32 reg, read_reg;
 
 	ptemp = dma_alloc_coherent(mci->pdev, 16, &dma_handle, GFP_KERNEL);
-	अगर (!ptemp) अणु
-		dma_मुक्त_coherent(mci->pdev, 16, ptemp, dma_handle);
-		edac_prपूर्णांकk(KERN_ERR, EDAC_MC,
+	if (!ptemp) {
+		dma_free_coherent(mci->pdev, 16, ptemp, dma_handle);
+		edac_printk(KERN_ERR, EDAC_MC,
 			    "Inject: Buffer Allocation error\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	regmap_पढ़ो(drvdata->mc_vbase, priv->ce_ue_trgr_offset,
-		    &पढ़ो_reg);
-	पढ़ो_reg &= ~(priv->ce_set_mask | priv->ue_set_mask);
+	regmap_read(drvdata->mc_vbase, priv->ce_ue_trgr_offset,
+		    &read_reg);
+	read_reg &= ~(priv->ce_set_mask | priv->ue_set_mask);
 
-	/* Error are injected by writing a word जबतक the SBE or DBE
-	 * bit in the CTLCFG रेजिस्टर is set. Reading the word will
+	/* Error are injected by writing a word while the SBE or DBE
+	 * bit in the CTLCFG register is set. Reading the word will
 	 * trigger the SBE or DBE error and the corresponding IRQ.
 	 */
-	अगर (count == 3) अणु
-		edac_prपूर्णांकk(KERN_ALERT, EDAC_MC,
+	if (count == 3) {
+		edac_printk(KERN_ALERT, EDAC_MC,
 			    "Inject Double bit error\n");
 		local_irq_disable();
-		regmap_ग_लिखो(drvdata->mc_vbase, priv->ce_ue_trgr_offset,
-			     (पढ़ो_reg | priv->ue_set_mask));
+		regmap_write(drvdata->mc_vbase, priv->ce_ue_trgr_offset,
+			     (read_reg | priv->ue_set_mask));
 		local_irq_enable();
-	पूर्ण अन्यथा अणु
-		edac_prपूर्णांकk(KERN_ALERT, EDAC_MC,
+	} else {
+		edac_printk(KERN_ALERT, EDAC_MC,
 			    "Inject Single bit error\n");
 		local_irq_disable();
-		regmap_ग_लिखो(drvdata->mc_vbase,	priv->ce_ue_trgr_offset,
-			     (पढ़ो_reg | priv->ce_set_mask));
+		regmap_write(drvdata->mc_vbase,	priv->ce_ue_trgr_offset,
+			     (read_reg | priv->ce_set_mask));
 		local_irq_enable();
-	पूर्ण
+	}
 
 	ptemp[0] = 0x5A5A5A5A;
 	ptemp[1] = 0xA5A5A5A5;
 
 	/* Clear the error injection bits */
-	regmap_ग_लिखो(drvdata->mc_vbase,	priv->ce_ue_trgr_offset, पढ़ो_reg);
+	regmap_write(drvdata->mc_vbase,	priv->ce_ue_trgr_offset, read_reg);
 	/* Ensure it has been written out */
 	wmb();
 
 	/*
-	 * To trigger the error, we need to पढ़ो the data back
+	 * To trigger the error, we need to read the data back
 	 * (the data was written with errors above).
-	 * The READ_ONCE macros and prपूर्णांकk are used to prevent the
-	 * the compiler optimizing these पढ़ोs out.
+	 * The READ_ONCE macros and printk are used to prevent the
+	 * the compiler optimizing these reads out.
 	 */
 	reg = READ_ONCE(ptemp[0]);
-	पढ़ो_reg = READ_ONCE(ptemp[1]);
+	read_reg = READ_ONCE(ptemp[1]);
 	/* Force Read */
 	rmb();
 
-	edac_prपूर्णांकk(KERN_ALERT, EDAC_MC, "Read Data [0x%X, 0x%X]\n",
-		    reg, पढ़ो_reg);
+	edac_printk(KERN_ALERT, EDAC_MC, "Read Data [0x%X, 0x%X]\n",
+		    reg, read_reg);
 
-	dma_मुक्त_coherent(mci->pdev, 16, ptemp, dma_handle);
+	dma_free_coherent(mci->pdev, 16, ptemp, dma_handle);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा file_operations altr_sdr_mc_debug_inject_fops = अणु
-	.खोलो = simple_खोलो,
-	.ग_लिखो = altr_sdr_mc_err_inject_ग_लिखो,
+static const struct file_operations altr_sdr_mc_debug_inject_fops = {
+	.open = simple_open,
+	.write = altr_sdr_mc_err_inject_write,
 	.llseek = generic_file_llseek,
-पूर्ण;
+};
 
-अटल व्योम altr_sdr_mc_create_debugfs_nodes(काष्ठा mem_ctl_info *mci)
-अणु
-	अगर (!IS_ENABLED(CONFIG_EDAC_DEBUG))
-		वापस;
+static void altr_sdr_mc_create_debugfs_nodes(struct mem_ctl_info *mci)
+{
+	if (!IS_ENABLED(CONFIG_EDAC_DEBUG))
+		return;
 
-	अगर (!mci->debugfs)
-		वापस;
+	if (!mci->debugfs)
+		return;
 
 	edac_debugfs_create_file("altr_trigger", S_IWUSR, mci->debugfs, mci,
 				 &altr_sdr_mc_debug_inject_fops);
-पूर्ण
+}
 
 /* Get total memory size from Open Firmware DTB */
-अटल अचिन्हित दीर्घ get_total_mem(व्योम)
-अणु
-	काष्ठा device_node *np = शून्य;
-	काष्ठा resource res;
-	पूर्णांक ret;
-	अचिन्हित दीर्घ total_mem = 0;
+static unsigned long get_total_mem(void)
+{
+	struct device_node *np = NULL;
+	struct resource res;
+	int ret;
+	unsigned long total_mem = 0;
 
-	क्रम_each_node_by_type(np, "memory") अणु
+	for_each_node_by_type(np, "memory") {
 		ret = of_address_to_resource(np, 0, &res);
-		अगर (ret)
-			जारी;
+		if (ret)
+			continue;
 
 		total_mem += resource_size(&res);
-	पूर्ण
+	}
 	edac_dbg(0, "total_mem 0x%lx\n", total_mem);
-	वापस total_mem;
-पूर्ण
+	return total_mem;
+}
 
-अटल स्थिर काष्ठा of_device_id altr_sdram_ctrl_of_match[] = अणु
-	अणु .compatible = "altr,sdram-edac", .data = &c5_dataपूर्ण,
-	अणु .compatible = "altr,sdram-edac-a10", .data = &a10_dataपूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id altr_sdram_ctrl_of_match[] = {
+	{ .compatible = "altr,sdram-edac", .data = &c5_data},
+	{ .compatible = "altr,sdram-edac-a10", .data = &a10_data},
+	{},
+};
 MODULE_DEVICE_TABLE(of, altr_sdram_ctrl_of_match);
 
-अटल पूर्णांक a10_init(काष्ठा regmap *mc_vbase)
-अणु
-	अगर (regmap_update_bits(mc_vbase, A10_INTMODE_OFST,
-			       A10_INTMODE_SB_INT, A10_INTMODE_SB_INT)) अणु
-		edac_prपूर्णांकk(KERN_ERR, EDAC_MC,
+static int a10_init(struct regmap *mc_vbase)
+{
+	if (regmap_update_bits(mc_vbase, A10_INTMODE_OFST,
+			       A10_INTMODE_SB_INT, A10_INTMODE_SB_INT)) {
+		edac_printk(KERN_ERR, EDAC_MC,
 			    "Error setting SB IRQ mode\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (regmap_ग_लिखो(mc_vbase, A10_SERRCNTREG_OFST, 1)) अणु
-		edac_prपूर्णांकk(KERN_ERR, EDAC_MC,
+	if (regmap_write(mc_vbase, A10_SERRCNTREG_OFST, 1)) {
+		edac_printk(KERN_ERR, EDAC_MC,
 			    "Error setting trigger count\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक a10_unmask_irq(काष्ठा platक्रमm_device *pdev, u32 mask)
-अणु
-	व्योम __iomem  *sm_base;
-	पूर्णांक  ret = 0;
+static int a10_unmask_irq(struct platform_device *pdev, u32 mask)
+{
+	void __iomem  *sm_base;
+	int  ret = 0;
 
-	अगर (!request_mem_region(A10_SYMAN_INTMASK_CLR, माप(u32),
-				dev_name(&pdev->dev))) अणु
-		edac_prपूर्णांकk(KERN_ERR, EDAC_MC,
+	if (!request_mem_region(A10_SYMAN_INTMASK_CLR, sizeof(u32),
+				dev_name(&pdev->dev))) {
+		edac_printk(KERN_ERR, EDAC_MC,
 			    "Unable to request mem region\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	sm_base = ioremap(A10_SYMAN_INTMASK_CLR, माप(u32));
-	अगर (!sm_base) अणु
-		edac_prपूर्णांकk(KERN_ERR, EDAC_MC,
+	sm_base = ioremap(A10_SYMAN_INTMASK_CLR, sizeof(u32));
+	if (!sm_base) {
+		edac_printk(KERN_ERR, EDAC_MC,
 			    "Unable to ioremap device\n");
 
 		ret = -ENOMEM;
-		जाओ release;
-	पूर्ण
+		goto release;
+	}
 
-	ioग_लिखो32(mask, sm_base);
+	iowrite32(mask, sm_base);
 
 	iounmap(sm_base);
 
 release:
-	release_mem_region(A10_SYMAN_INTMASK_CLR, माप(u32));
+	release_mem_region(A10_SYMAN_INTMASK_CLR, sizeof(u32));
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक altr_sdram_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	स्थिर काष्ठा of_device_id *id;
-	काष्ठा edac_mc_layer layers[2];
-	काष्ठा mem_ctl_info *mci;
-	काष्ठा altr_sdram_mc_data *drvdata;
-	स्थिर काष्ठा altr_sdram_prv_data *priv;
-	काष्ठा regmap *mc_vbase;
-	काष्ठा dimm_info *dimm;
-	u32 पढ़ो_reg;
-	पूर्णांक irq, irq2, res = 0;
-	अचिन्हित दीर्घ mem_size, irqflags = 0;
+static int altr_sdram_probe(struct platform_device *pdev)
+{
+	const struct of_device_id *id;
+	struct edac_mc_layer layers[2];
+	struct mem_ctl_info *mci;
+	struct altr_sdram_mc_data *drvdata;
+	const struct altr_sdram_prv_data *priv;
+	struct regmap *mc_vbase;
+	struct dimm_info *dimm;
+	u32 read_reg;
+	int irq, irq2, res = 0;
+	unsigned long mem_size, irqflags = 0;
 
 	id = of_match_device(altr_sdram_ctrl_of_match, &pdev->dev);
-	अगर (!id)
-		वापस -ENODEV;
+	if (!id)
+		return -ENODEV;
 
-	/* Grab the रेजिस्टर range from the sdr controller in device tree */
+	/* Grab the register range from the sdr controller in device tree */
 	mc_vbase = syscon_regmap_lookup_by_phandle(pdev->dev.of_node,
 						   "altr,sdr-syscon");
-	अगर (IS_ERR(mc_vbase)) अणु
-		edac_prपूर्णांकk(KERN_ERR, EDAC_MC,
+	if (IS_ERR(mc_vbase)) {
+		edac_printk(KERN_ERR, EDAC_MC,
 			    "regmap for altr,sdr-syscon lookup failed.\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	/* Check specअगरic dependencies क्रम the module */
+	/* Check specific dependencies for the module */
 	priv = of_match_node(altr_sdram_ctrl_of_match,
 			     pdev->dev.of_node)->data;
 
 	/* Validate the SDRAM controller has ECC enabled */
-	अगर (regmap_पढ़ो(mc_vbase, priv->ecc_ctrl_offset, &पढ़ो_reg) ||
-	    ((पढ़ो_reg & priv->ecc_ctl_en_mask) != priv->ecc_ctl_en_mask)) अणु
-		edac_prपूर्णांकk(KERN_ERR, EDAC_MC,
-			    "No ECC/ECC disabled [0x%08X]\n", पढ़ो_reg);
-		वापस -ENODEV;
-	पूर्ण
+	if (regmap_read(mc_vbase, priv->ecc_ctrl_offset, &read_reg) ||
+	    ((read_reg & priv->ecc_ctl_en_mask) != priv->ecc_ctl_en_mask)) {
+		edac_printk(KERN_ERR, EDAC_MC,
+			    "No ECC/ECC disabled [0x%08X]\n", read_reg);
+		return -ENODEV;
+	}
 
 	/* Grab memory size from device tree. */
 	mem_size = get_total_mem();
-	अगर (!mem_size) अणु
-		edac_prपूर्णांकk(KERN_ERR, EDAC_MC, "Unable to calculate memory size\n");
-		वापस -ENODEV;
-	पूर्ण
+	if (!mem_size) {
+		edac_printk(KERN_ERR, EDAC_MC, "Unable to calculate memory size\n");
+		return -ENODEV;
+	}
 
 	/* Ensure the SDRAM Interrupt is disabled */
-	अगर (regmap_update_bits(mc_vbase, priv->ecc_irq_en_offset,
-			       priv->ecc_irq_en_mask, 0)) अणु
-		edac_prपूर्णांकk(KERN_ERR, EDAC_MC,
+	if (regmap_update_bits(mc_vbase, priv->ecc_irq_en_offset,
+			       priv->ecc_irq_en_mask, 0)) {
+		edac_printk(KERN_ERR, EDAC_MC,
 			    "Error disabling SDRAM ECC IRQ\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	/* Toggle to clear the SDRAM Error count */
-	अगर (regmap_update_bits(mc_vbase, priv->ecc_cnt_rst_offset,
+	if (regmap_update_bits(mc_vbase, priv->ecc_cnt_rst_offset,
 			       priv->ecc_cnt_rst_mask,
-			       priv->ecc_cnt_rst_mask)) अणु
-		edac_prपूर्णांकk(KERN_ERR, EDAC_MC,
+			       priv->ecc_cnt_rst_mask)) {
+		edac_printk(KERN_ERR, EDAC_MC,
 			    "Error clearing SDRAM ECC count\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (regmap_update_bits(mc_vbase, priv->ecc_cnt_rst_offset,
-			       priv->ecc_cnt_rst_mask, 0)) अणु
-		edac_prपूर्णांकk(KERN_ERR, EDAC_MC,
+	if (regmap_update_bits(mc_vbase, priv->ecc_cnt_rst_offset,
+			       priv->ecc_cnt_rst_mask, 0)) {
+		edac_printk(KERN_ERR, EDAC_MC,
 			    "Error clearing SDRAM ECC count\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0) अणु
-		edac_prपूर्णांकk(KERN_ERR, EDAC_MC,
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0) {
+		edac_printk(KERN_ERR, EDAC_MC,
 			    "No irq %d in DT\n", irq);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	/* Arria10 has a 2nd IRQ */
-	irq2 = platक्रमm_get_irq(pdev, 1);
+	irq2 = platform_get_irq(pdev, 1);
 
 	layers[0].type = EDAC_MC_LAYER_CHIP_SELECT;
 	layers[0].size = 1;
@@ -363,22 +362,22 @@ release:
 	layers[1].size = 1;
 	layers[1].is_virt_csrow = false;
 	mci = edac_mc_alloc(0, ARRAY_SIZE(layers), layers,
-			    माप(काष्ठा altr_sdram_mc_data));
-	अगर (!mci)
-		वापस -ENOMEM;
+			    sizeof(struct altr_sdram_mc_data));
+	if (!mci)
+		return -ENOMEM;
 
 	mci->pdev = &pdev->dev;
 	drvdata = mci->pvt_info;
 	drvdata->mc_vbase = mc_vbase;
 	drvdata->data = priv;
-	platक्रमm_set_drvdata(pdev, mci);
+	platform_set_drvdata(pdev, mci);
 
-	अगर (!devres_खोलो_group(&pdev->dev, शून्य, GFP_KERNEL)) अणु
-		edac_prपूर्णांकk(KERN_ERR, EDAC_MC,
+	if (!devres_open_group(&pdev->dev, NULL, GFP_KERNEL)) {
+		edac_printk(KERN_ERR, EDAC_MC,
 			    "Unable to get managed device resource\n");
 		res = -ENOMEM;
-		जाओ मुक्त;
-	पूर्ण
+		goto free;
+	}
 
 	mci->mtype_cap = MEM_FLAG_DDR3;
 	mci->edac_ctl_cap = EDAC_FLAG_NONE | EDAC_FLAG_SECDED;
@@ -396,138 +395,138 @@ release:
 	dimm->edac_mode = EDAC_SECDED;
 
 	res = edac_mc_add_mc(mci);
-	अगर (res < 0)
-		जाओ err;
+	if (res < 0)
+		goto err;
 
 	/* Only the Arria10 has separate IRQs */
-	अगर (of_machine_is_compatible("altr,socfpga-arria10")) अणु
-		/* Arria10 specअगरic initialization */
+	if (of_machine_is_compatible("altr,socfpga-arria10")) {
+		/* Arria10 specific initialization */
 		res = a10_init(mc_vbase);
-		अगर (res < 0)
-			जाओ err2;
+		if (res < 0)
+			goto err2;
 
 		res = devm_request_irq(&pdev->dev, irq2,
 				       altr_sdram_mc_err_handler,
 				       IRQF_SHARED, dev_name(&pdev->dev), mci);
-		अगर (res < 0) अणु
-			edac_mc_prपूर्णांकk(mci, KERN_ERR,
+		if (res < 0) {
+			edac_mc_printk(mci, KERN_ERR,
 				       "Unable to request irq %d\n", irq2);
 			res = -ENODEV;
-			जाओ err2;
-		पूर्ण
+			goto err2;
+		}
 
 		res = a10_unmask_irq(pdev, A10_DDR0_IRQ_MASK);
-		अगर (res < 0)
-			जाओ err2;
+		if (res < 0)
+			goto err2;
 
 		irqflags = IRQF_SHARED;
-	पूर्ण
+	}
 
 	res = devm_request_irq(&pdev->dev, irq, altr_sdram_mc_err_handler,
 			       irqflags, dev_name(&pdev->dev), mci);
-	अगर (res < 0) अणु
-		edac_mc_prपूर्णांकk(mci, KERN_ERR,
+	if (res < 0) {
+		edac_mc_printk(mci, KERN_ERR,
 			       "Unable to request irq %d\n", irq);
 		res = -ENODEV;
-		जाओ err2;
-	पूर्ण
+		goto err2;
+	}
 
-	/* Infraकाष्ठाure पढ़ोy - enable the IRQ */
-	अगर (regmap_update_bits(drvdata->mc_vbase, priv->ecc_irq_en_offset,
-			       priv->ecc_irq_en_mask, priv->ecc_irq_en_mask)) अणु
-		edac_mc_prपूर्णांकk(mci, KERN_ERR,
+	/* Infrastructure ready - enable the IRQ */
+	if (regmap_update_bits(drvdata->mc_vbase, priv->ecc_irq_en_offset,
+			       priv->ecc_irq_en_mask, priv->ecc_irq_en_mask)) {
+		edac_mc_printk(mci, KERN_ERR,
 			       "Error enabling SDRAM ECC IRQ\n");
 		res = -ENODEV;
-		जाओ err2;
-	पूर्ण
+		goto err2;
+	}
 
 	altr_sdr_mc_create_debugfs_nodes(mci);
 
-	devres_बंद_group(&pdev->dev, शून्य);
+	devres_close_group(&pdev->dev, NULL);
 
-	वापस 0;
+	return 0;
 
 err2:
 	edac_mc_del_mc(&pdev->dev);
 err:
-	devres_release_group(&pdev->dev, शून्य);
-मुक्त:
-	edac_mc_मुक्त(mci);
-	edac_prपूर्णांकk(KERN_ERR, EDAC_MC,
+	devres_release_group(&pdev->dev, NULL);
+free:
+	edac_mc_free(mci);
+	edac_printk(KERN_ERR, EDAC_MC,
 		    "EDAC Probe Failed; Error %d\n", res);
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल पूर्णांक altr_sdram_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा mem_ctl_info *mci = platक्रमm_get_drvdata(pdev);
+static int altr_sdram_remove(struct platform_device *pdev)
+{
+	struct mem_ctl_info *mci = platform_get_drvdata(pdev);
 
 	edac_mc_del_mc(&pdev->dev);
-	edac_mc_मुक्त(mci);
-	platक्रमm_set_drvdata(pdev, शून्य);
+	edac_mc_free(mci);
+	platform_set_drvdata(pdev, NULL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * If you want to suspend, need to disable EDAC by removing it
  * from the device tree or defconfig.
  */
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक altr_sdram_prepare(काष्ठा device *dev)
-अणु
+#ifdef CONFIG_PM
+static int altr_sdram_prepare(struct device *dev)
+{
 	pr_err("Suspend not allowed when EDAC is enabled.\n");
 
-	वापस -EPERM;
-पूर्ण
+	return -EPERM;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops altr_sdram_pm_ops = अणु
+static const struct dev_pm_ops altr_sdram_pm_ops = {
 	.prepare = altr_sdram_prepare,
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-अटल काष्ठा platक्रमm_driver altr_sdram_edac_driver = अणु
+static struct platform_driver altr_sdram_edac_driver = {
 	.probe = altr_sdram_probe,
-	.हटाओ = altr_sdram_हटाओ,
-	.driver = अणु
+	.remove = altr_sdram_remove,
+	.driver = {
 		.name = "altr_sdram_edac",
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 		.pm = &altr_sdram_pm_ops,
-#पूर्ण_अगर
+#endif
 		.of_match_table = altr_sdram_ctrl_of_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(altr_sdram_edac_driver);
+module_platform_driver(altr_sdram_edac_driver);
 
-#पूर्ण_अगर	/* CONFIG_EDAC_ALTERA_SDRAM */
+#endif	/* CONFIG_EDAC_ALTERA_SDRAM */
 
 /************************* EDAC Parent Probe *************************/
 
-अटल स्थिर काष्ठा of_device_id altr_edac_device_of_match[];
+static const struct of_device_id altr_edac_device_of_match[];
 
-अटल स्थिर काष्ठा of_device_id altr_edac_of_match[] = अणु
-	अणु .compatible = "altr,socfpga-ecc-manager" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id altr_edac_of_match[] = {
+	{ .compatible = "altr,socfpga-ecc-manager" },
+	{},
+};
 MODULE_DEVICE_TABLE(of, altr_edac_of_match);
 
-अटल पूर्णांक altr_edac_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	of_platक्रमm_populate(pdev->dev.of_node, altr_edac_device_of_match,
-			     शून्य, &pdev->dev);
-	वापस 0;
-पूर्ण
+static int altr_edac_probe(struct platform_device *pdev)
+{
+	of_platform_populate(pdev->dev.of_node, altr_edac_device_of_match,
+			     NULL, &pdev->dev);
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver altr_edac_driver = अणु
+static struct platform_driver altr_edac_driver = {
 	.probe =  altr_edac_probe,
-	.driver = अणु
+	.driver = {
 		.name = "socfpga_ecc_manager",
 		.of_match_table = altr_edac_of_match,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(altr_edac_driver);
+	},
+};
+module_platform_driver(altr_edac_driver);
 
 /************************* EDAC Device Functions *************************/
 
@@ -535,429 +534,429 @@ module_platक्रमm_driver(altr_edac_driver);
  * EDAC Device Functions (shared between various IPs).
  * The discrete memories use the EDAC Device framework. The probe
  * and error handling functions are very similar between memories
- * so they are shared. The memory allocation and मुक्तing क्रम EDAC
- * trigger testing are dअगरferent क्रम each memory.
+ * so they are shared. The memory allocation and freeing for EDAC
+ * trigger testing are different for each memory.
  */
 
-अटल स्थिर काष्ठा edac_device_prv_data ocramecc_data;
-अटल स्थिर काष्ठा edac_device_prv_data l2ecc_data;
-अटल स्थिर काष्ठा edac_device_prv_data a10_ocramecc_data;
-अटल स्थिर काष्ठा edac_device_prv_data a10_l2ecc_data;
+static const struct edac_device_prv_data ocramecc_data;
+static const struct edac_device_prv_data l2ecc_data;
+static const struct edac_device_prv_data a10_ocramecc_data;
+static const struct edac_device_prv_data a10_l2ecc_data;
 
-अटल irqवापस_t altr_edac_device_handler(पूर्णांक irq, व्योम *dev_id)
-अणु
-	irqवापस_t ret_value = IRQ_NONE;
-	काष्ठा edac_device_ctl_info *dci = dev_id;
-	काष्ठा altr_edac_device_dev *drvdata = dci->pvt_info;
-	स्थिर काष्ठा edac_device_prv_data *priv = drvdata->data;
+static irqreturn_t altr_edac_device_handler(int irq, void *dev_id)
+{
+	irqreturn_t ret_value = IRQ_NONE;
+	struct edac_device_ctl_info *dci = dev_id;
+	struct altr_edac_device_dev *drvdata = dci->pvt_info;
+	const struct edac_device_prv_data *priv = drvdata->data;
 
-	अगर (irq == drvdata->sb_irq) अणु
-		अगर (priv->ce_clear_mask)
-			ग_लिखोl(priv->ce_clear_mask, drvdata->base);
+	if (irq == drvdata->sb_irq) {
+		if (priv->ce_clear_mask)
+			writel(priv->ce_clear_mask, drvdata->base);
 		edac_device_handle_ce(dci, 0, 0, drvdata->edac_dev_name);
 		ret_value = IRQ_HANDLED;
-	पूर्ण अन्यथा अगर (irq == drvdata->db_irq) अणु
-		अगर (priv->ue_clear_mask)
-			ग_लिखोl(priv->ue_clear_mask, drvdata->base);
+	} else if (irq == drvdata->db_irq) {
+		if (priv->ue_clear_mask)
+			writel(priv->ue_clear_mask, drvdata->base);
 		edac_device_handle_ue(dci, 0, 0, drvdata->edac_dev_name);
 		panic("\nEDAC:ECC_DEVICE[Uncorrectable errors]\n");
 		ret_value = IRQ_HANDLED;
-	पूर्ण अन्यथा अणु
+	} else {
 		WARN_ON(1);
-	पूर्ण
+	}
 
-	वापस ret_value;
-पूर्ण
+	return ret_value;
+}
 
-अटल sमाप_प्रकार altr_edac_device_trig(काष्ठा file *file,
-				     स्थिर अक्षर __user *user_buf,
-				     माप_प्रकार count, loff_t *ppos)
+static ssize_t altr_edac_device_trig(struct file *file,
+				     const char __user *user_buf,
+				     size_t count, loff_t *ppos)
 
-अणु
+{
 	u32 *ptemp, i, error_mask;
-	पूर्णांक result = 0;
+	int result = 0;
 	u8 trig_type;
-	अचिन्हित दीर्घ flags;
-	काष्ठा edac_device_ctl_info *edac_dci = file->निजी_data;
-	काष्ठा altr_edac_device_dev *drvdata = edac_dci->pvt_info;
-	स्थिर काष्ठा edac_device_prv_data *priv = drvdata->data;
-	व्योम *generic_ptr = edac_dci->dev;
+	unsigned long flags;
+	struct edac_device_ctl_info *edac_dci = file->private_data;
+	struct altr_edac_device_dev *drvdata = edac_dci->pvt_info;
+	const struct edac_device_prv_data *priv = drvdata->data;
+	void *generic_ptr = edac_dci->dev;
 
-	अगर (!user_buf || get_user(trig_type, user_buf))
-		वापस -EFAULT;
+	if (!user_buf || get_user(trig_type, user_buf))
+		return -EFAULT;
 
-	अगर (!priv->alloc_mem)
-		वापस -ENOMEM;
+	if (!priv->alloc_mem)
+		return -ENOMEM;
 
 	/*
 	 * Note that generic_ptr is initialized to the device * but in
-	 * some alloc_functions, this is overridden and वापसs data.
+	 * some alloc_functions, this is overridden and returns data.
 	 */
 	ptemp = priv->alloc_mem(priv->trig_alloc_sz, &generic_ptr);
-	अगर (!ptemp) अणु
-		edac_prपूर्णांकk(KERN_ERR, EDAC_DEVICE,
+	if (!ptemp) {
+		edac_printk(KERN_ERR, EDAC_DEVICE,
 			    "Inject: Buffer Allocation error\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	अगर (trig_type == ALTR_UE_TRIGGER_CHAR)
+	if (trig_type == ALTR_UE_TRIGGER_CHAR)
 		error_mask = priv->ue_set_mask;
-	अन्यथा
+	else
 		error_mask = priv->ce_set_mask;
 
-	edac_prपूर्णांकk(KERN_ALERT, EDAC_DEVICE,
+	edac_printk(KERN_ALERT, EDAC_DEVICE,
 		    "Trigger Error Mask (0x%X)\n", error_mask);
 
 	local_irq_save(flags);
-	/* ग_लिखो ECC corrupted data out. */
-	क्रम (i = 0; i < (priv->trig_alloc_sz / माप(*ptemp)); i++) अणु
+	/* write ECC corrupted data out. */
+	for (i = 0; i < (priv->trig_alloc_sz / sizeof(*ptemp)); i++) {
 		/* Read data so we're in the correct state */
 		rmb();
-		अगर (READ_ONCE(ptemp[i]))
+		if (READ_ONCE(ptemp[i]))
 			result = -1;
 		/* Toggle Error bit (it is latched), leave ECC enabled */
-		ग_लिखोl(error_mask, (drvdata->base + priv->set_err_ofst));
-		ग_लिखोl(priv->ecc_enable_mask, (drvdata->base +
+		writel(error_mask, (drvdata->base + priv->set_err_ofst));
+		writel(priv->ecc_enable_mask, (drvdata->base +
 					       priv->set_err_ofst));
 		ptemp[i] = i;
-	पूर्ण
+	}
 	/* Ensure it has been written out */
 	wmb();
 	local_irq_restore(flags);
 
-	अगर (result)
-		edac_prपूर्णांकk(KERN_ERR, EDAC_DEVICE, "Mem Not Cleared\n");
+	if (result)
+		edac_printk(KERN_ERR, EDAC_DEVICE, "Mem Not Cleared\n");
 
 	/* Read out written data. ECC error caused here */
-	क्रम (i = 0; i < ALTR_TRIGGER_READ_WRD_CNT; i++)
-		अगर (READ_ONCE(ptemp[i]) != i)
-			edac_prपूर्णांकk(KERN_ERR, EDAC_DEVICE,
+	for (i = 0; i < ALTR_TRIGGER_READ_WRD_CNT; i++)
+		if (READ_ONCE(ptemp[i]) != i)
+			edac_printk(KERN_ERR, EDAC_DEVICE,
 				    "Read doesn't match written data\n");
 
-	अगर (priv->मुक्त_mem)
-		priv->मुक्त_mem(ptemp, priv->trig_alloc_sz, generic_ptr);
+	if (priv->free_mem)
+		priv->free_mem(ptemp, priv->trig_alloc_sz, generic_ptr);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा file_operations altr_edac_device_inject_fops = अणु
-	.खोलो = simple_खोलो,
-	.ग_लिखो = altr_edac_device_trig,
+static const struct file_operations altr_edac_device_inject_fops = {
+	.open = simple_open,
+	.write = altr_edac_device_trig,
 	.llseek = generic_file_llseek,
-पूर्ण;
+};
 
-अटल sमाप_प्रकार altr_edac_a10_device_trig(काष्ठा file *file,
-					 स्थिर अक्षर __user *user_buf,
-					 माप_प्रकार count, loff_t *ppos);
+static ssize_t altr_edac_a10_device_trig(struct file *file,
+					 const char __user *user_buf,
+					 size_t count, loff_t *ppos);
 
-अटल स्थिर काष्ठा file_operations altr_edac_a10_device_inject_fops = अणु
-	.खोलो = simple_खोलो,
-	.ग_लिखो = altr_edac_a10_device_trig,
+static const struct file_operations altr_edac_a10_device_inject_fops = {
+	.open = simple_open,
+	.write = altr_edac_a10_device_trig,
 	.llseek = generic_file_llseek,
-पूर्ण;
+};
 
-अटल sमाप_प्रकार altr_edac_a10_device_trig2(काष्ठा file *file,
-					  स्थिर अक्षर __user *user_buf,
-					  माप_प्रकार count, loff_t *ppos);
+static ssize_t altr_edac_a10_device_trig2(struct file *file,
+					  const char __user *user_buf,
+					  size_t count, loff_t *ppos);
 
-अटल स्थिर काष्ठा file_operations altr_edac_a10_device_inject2_fops = अणु
-	.खोलो = simple_खोलो,
-	.ग_लिखो = altr_edac_a10_device_trig2,
+static const struct file_operations altr_edac_a10_device_inject2_fops = {
+	.open = simple_open,
+	.write = altr_edac_a10_device_trig2,
 	.llseek = generic_file_llseek,
-पूर्ण;
+};
 
-अटल व्योम altr_create_edacdev_dbgfs(काष्ठा edac_device_ctl_info *edac_dci,
-				      स्थिर काष्ठा edac_device_prv_data *priv)
-अणु
-	काष्ठा altr_edac_device_dev *drvdata = edac_dci->pvt_info;
+static void altr_create_edacdev_dbgfs(struct edac_device_ctl_info *edac_dci,
+				      const struct edac_device_prv_data *priv)
+{
+	struct altr_edac_device_dev *drvdata = edac_dci->pvt_info;
 
-	अगर (!IS_ENABLED(CONFIG_EDAC_DEBUG))
-		वापस;
+	if (!IS_ENABLED(CONFIG_EDAC_DEBUG))
+		return;
 
 	drvdata->debugfs_dir = edac_debugfs_create_dir(drvdata->edac_dev_name);
-	अगर (!drvdata->debugfs_dir)
-		वापस;
+	if (!drvdata->debugfs_dir)
+		return;
 
-	अगर (!edac_debugfs_create_file("altr_trigger", S_IWUSR,
+	if (!edac_debugfs_create_file("altr_trigger", S_IWUSR,
 				      drvdata->debugfs_dir, edac_dci,
 				      priv->inject_fops))
-		debugfs_हटाओ_recursive(drvdata->debugfs_dir);
-पूर्ण
+		debugfs_remove_recursive(drvdata->debugfs_dir);
+}
 
-अटल स्थिर काष्ठा of_device_id altr_edac_device_of_match[] = अणु
-#अगर_घोषित CONFIG_EDAC_ALTERA_L2C
-	अणु .compatible = "altr,socfpga-l2-ecc", .data = &l2ecc_data पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_EDAC_ALTERA_OCRAM
-	अणु .compatible = "altr,socfpga-ocram-ecc", .data = &ocramecc_data पूर्ण,
-#पूर्ण_अगर
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id altr_edac_device_of_match[] = {
+#ifdef CONFIG_EDAC_ALTERA_L2C
+	{ .compatible = "altr,socfpga-l2-ecc", .data = &l2ecc_data },
+#endif
+#ifdef CONFIG_EDAC_ALTERA_OCRAM
+	{ .compatible = "altr,socfpga-ocram-ecc", .data = &ocramecc_data },
+#endif
+	{},
+};
 MODULE_DEVICE_TABLE(of, altr_edac_device_of_match);
 
 /*
  * altr_edac_device_probe()
  *	This is a generic EDAC device driver that will support
  *	various Altera memory devices such as the L2 cache ECC and
- *	OCRAM ECC as well as the memories क्रम other peripherals.
- *	Module specअगरic initialization is करोne by passing the
+ *	OCRAM ECC as well as the memories for other peripherals.
+ *	Module specific initialization is done by passing the
  *	function index in the device tree.
  */
-अटल पूर्णांक altr_edac_device_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा edac_device_ctl_info *dci;
-	काष्ठा altr_edac_device_dev *drvdata;
-	काष्ठा resource *r;
-	पूर्णांक res = 0;
-	काष्ठा device_node *np = pdev->dev.of_node;
-	अक्षर *ecc_name = (अक्षर *)np->name;
-	अटल पूर्णांक dev_instance;
+static int altr_edac_device_probe(struct platform_device *pdev)
+{
+	struct edac_device_ctl_info *dci;
+	struct altr_edac_device_dev *drvdata;
+	struct resource *r;
+	int res = 0;
+	struct device_node *np = pdev->dev.of_node;
+	char *ecc_name = (char *)np->name;
+	static int dev_instance;
 
-	अगर (!devres_खोलो_group(&pdev->dev, शून्य, GFP_KERNEL)) अणु
-		edac_prपूर्णांकk(KERN_ERR, EDAC_DEVICE,
+	if (!devres_open_group(&pdev->dev, NULL, GFP_KERNEL)) {
+		edac_printk(KERN_ERR, EDAC_DEVICE,
 			    "Unable to open devm\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	r = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!r) अणु
-		edac_prपूर्णांकk(KERN_ERR, EDAC_DEVICE,
+	r = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!r) {
+		edac_printk(KERN_ERR, EDAC_DEVICE,
 			    "Unable to get mem resource\n");
 		res = -ENODEV;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	अगर (!devm_request_mem_region(&pdev->dev, r->start, resource_size(r),
-				     dev_name(&pdev->dev))) अणु
-		edac_prपूर्णांकk(KERN_ERR, EDAC_DEVICE,
+	if (!devm_request_mem_region(&pdev->dev, r->start, resource_size(r),
+				     dev_name(&pdev->dev))) {
+		edac_printk(KERN_ERR, EDAC_DEVICE,
 			    "%s:Error requesting mem region\n", ecc_name);
 		res = -EBUSY;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	dci = edac_device_alloc_ctl_info(माप(*drvdata), ecc_name,
-					 1, ecc_name, 1, 0, शून्य, 0,
+	dci = edac_device_alloc_ctl_info(sizeof(*drvdata), ecc_name,
+					 1, ecc_name, 1, 0, NULL, 0,
 					 dev_instance++);
 
-	अगर (!dci) अणु
-		edac_prपूर्णांकk(KERN_ERR, EDAC_DEVICE,
+	if (!dci) {
+		edac_printk(KERN_ERR, EDAC_DEVICE,
 			    "%s: Unable to allocate EDAC device\n", ecc_name);
 		res = -ENOMEM;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	drvdata = dci->pvt_info;
 	dci->dev = &pdev->dev;
-	platक्रमm_set_drvdata(pdev, dci);
+	platform_set_drvdata(pdev, dci);
 	drvdata->edac_dev_name = ecc_name;
 
 	drvdata->base = devm_ioremap(&pdev->dev, r->start, resource_size(r));
-	अगर (!drvdata->base) अणु
+	if (!drvdata->base) {
 		res = -ENOMEM;
-		जाओ fail1;
-	पूर्ण
+		goto fail1;
+	}
 
-	/* Get driver specअगरic data क्रम this EDAC device */
+	/* Get driver specific data for this EDAC device */
 	drvdata->data = of_match_node(altr_edac_device_of_match, np)->data;
 
-	/* Check specअगरic dependencies क्रम the module */
-	अगर (drvdata->data->setup) अणु
+	/* Check specific dependencies for the module */
+	if (drvdata->data->setup) {
 		res = drvdata->data->setup(drvdata);
-		अगर (res)
-			जाओ fail1;
-	पूर्ण
+		if (res)
+			goto fail1;
+	}
 
-	drvdata->sb_irq = platक्रमm_get_irq(pdev, 0);
+	drvdata->sb_irq = platform_get_irq(pdev, 0);
 	res = devm_request_irq(&pdev->dev, drvdata->sb_irq,
 			       altr_edac_device_handler,
 			       0, dev_name(&pdev->dev), dci);
-	अगर (res)
-		जाओ fail1;
+	if (res)
+		goto fail1;
 
-	drvdata->db_irq = platक्रमm_get_irq(pdev, 1);
+	drvdata->db_irq = platform_get_irq(pdev, 1);
 	res = devm_request_irq(&pdev->dev, drvdata->db_irq,
 			       altr_edac_device_handler,
 			       0, dev_name(&pdev->dev), dci);
-	अगर (res)
-		जाओ fail1;
+	if (res)
+		goto fail1;
 
 	dci->mod_name = "Altera ECC Manager";
 	dci->dev_name = drvdata->edac_dev_name;
 
 	res = edac_device_add_device(dci);
-	अगर (res)
-		जाओ fail1;
+	if (res)
+		goto fail1;
 
 	altr_create_edacdev_dbgfs(dci, drvdata->data);
 
-	devres_बंद_group(&pdev->dev, शून्य);
+	devres_close_group(&pdev->dev, NULL);
 
-	वापस 0;
+	return 0;
 
 fail1:
-	edac_device_मुक्त_ctl_info(dci);
+	edac_device_free_ctl_info(dci);
 fail:
-	devres_release_group(&pdev->dev, शून्य);
-	edac_prपूर्णांकk(KERN_ERR, EDAC_DEVICE,
+	devres_release_group(&pdev->dev, NULL);
+	edac_printk(KERN_ERR, EDAC_DEVICE,
 		    "%s:Error setting up EDAC device: %d\n", ecc_name, res);
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल पूर्णांक altr_edac_device_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा edac_device_ctl_info *dci = platक्रमm_get_drvdata(pdev);
-	काष्ठा altr_edac_device_dev *drvdata = dci->pvt_info;
+static int altr_edac_device_remove(struct platform_device *pdev)
+{
+	struct edac_device_ctl_info *dci = platform_get_drvdata(pdev);
+	struct altr_edac_device_dev *drvdata = dci->pvt_info;
 
-	debugfs_हटाओ_recursive(drvdata->debugfs_dir);
+	debugfs_remove_recursive(drvdata->debugfs_dir);
 	edac_device_del_device(&pdev->dev);
-	edac_device_मुक्त_ctl_info(dci);
+	edac_device_free_ctl_info(dci);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver altr_edac_device_driver = अणु
+static struct platform_driver altr_edac_device_driver = {
 	.probe =  altr_edac_device_probe,
-	.हटाओ = altr_edac_device_हटाओ,
-	.driver = अणु
+	.remove = altr_edac_device_remove,
+	.driver = {
 		.name = "altr_edac_device",
 		.of_match_table = altr_edac_device_of_match,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(altr_edac_device_driver);
+	},
+};
+module_platform_driver(altr_edac_device_driver);
 
 /******************* Arria10 Device ECC Shared Functions *****************/
 
 /*
- *  Test क्रम memory's ECC dependencies upon entry because platक्रमm specअगरic
+ *  Test for memory's ECC dependencies upon entry because platform specific
  *  startup should have initialized the memory and enabled the ECC.
  *  Can't turn on ECC here because accessing un-initialized memory will
  *  cause CE/UE errors possibly causing an ABORT.
  */
-अटल पूर्णांक __maybe_unused
-altr_check_ecc_deps(काष्ठा altr_edac_device_dev *device)
-अणु
-	व्योम __iomem  *base = device->base;
-	स्थिर काष्ठा edac_device_prv_data *prv = device->data;
+static int __maybe_unused
+altr_check_ecc_deps(struct altr_edac_device_dev *device)
+{
+	void __iomem  *base = device->base;
+	const struct edac_device_prv_data *prv = device->data;
 
-	अगर (पढ़ोl(base + prv->ecc_en_ofst) & prv->ecc_enable_mask)
-		वापस 0;
+	if (readl(base + prv->ecc_en_ofst) & prv->ecc_enable_mask)
+		return 0;
 
-	edac_prपूर्णांकk(KERN_ERR, EDAC_DEVICE,
+	edac_printk(KERN_ERR, EDAC_DEVICE,
 		    "%s: No ECC present or ECC disabled.\n",
 		    device->edac_dev_name);
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}
 
-अटल irqवापस_t __maybe_unused altr_edac_a10_ecc_irq(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा altr_edac_device_dev *dci = dev_id;
-	व्योम __iomem  *base = dci->base;
+static irqreturn_t __maybe_unused altr_edac_a10_ecc_irq(int irq, void *dev_id)
+{
+	struct altr_edac_device_dev *dci = dev_id;
+	void __iomem  *base = dci->base;
 
-	अगर (irq == dci->sb_irq) अणु
-		ग_लिखोl(ALTR_A10_ECC_SERRPENA,
+	if (irq == dci->sb_irq) {
+		writel(ALTR_A10_ECC_SERRPENA,
 		       base + ALTR_A10_ECC_INTSTAT_OFST);
 		edac_device_handle_ce(dci->edac_dev, 0, 0, dci->edac_dev_name);
 
-		वापस IRQ_HANDLED;
-	पूर्ण अन्यथा अगर (irq == dci->db_irq) अणु
-		ग_लिखोl(ALTR_A10_ECC_DERRPENA,
+		return IRQ_HANDLED;
+	} else if (irq == dci->db_irq) {
+		writel(ALTR_A10_ECC_DERRPENA,
 		       base + ALTR_A10_ECC_INTSTAT_OFST);
 		edac_device_handle_ue(dci->edac_dev, 0, 0, dci->edac_dev_name);
-		अगर (dci->data->panic)
+		if (dci->data->panic)
 			panic("\nEDAC:ECC_DEVICE[Uncorrectable errors]\n");
 
-		वापस IRQ_HANDLED;
-	पूर्ण
+		return IRQ_HANDLED;
+	}
 
 	WARN_ON(1);
 
-	वापस IRQ_NONE;
-पूर्ण
+	return IRQ_NONE;
+}
 
 /******************* Arria10 Memory Buffer Functions *********************/
 
-अटल अंतरभूत पूर्णांक a10_get_irq_mask(काष्ठा device_node *np)
-अणु
-	पूर्णांक irq;
-	स्थिर u32 *handle = of_get_property(np, "interrupts", शून्य);
+static inline int a10_get_irq_mask(struct device_node *np)
+{
+	int irq;
+	const u32 *handle = of_get_property(np, "interrupts", NULL);
 
-	अगर (!handle)
-		वापस -ENODEV;
+	if (!handle)
+		return -ENODEV;
 	irq = be32_to_cpup(handle);
-	वापस irq;
-पूर्ण
+	return irq;
+}
 
-अटल अंतरभूत व्योम ecc_set_bits(u32 bit_mask, व्योम __iomem *ioaddr)
-अणु
-	u32 value = पढ़ोl(ioaddr);
+static inline void ecc_set_bits(u32 bit_mask, void __iomem *ioaddr)
+{
+	u32 value = readl(ioaddr);
 
 	value |= bit_mask;
-	ग_लिखोl(value, ioaddr);
-पूर्ण
+	writel(value, ioaddr);
+}
 
-अटल अंतरभूत व्योम ecc_clear_bits(u32 bit_mask, व्योम __iomem *ioaddr)
-अणु
-	u32 value = पढ़ोl(ioaddr);
+static inline void ecc_clear_bits(u32 bit_mask, void __iomem *ioaddr)
+{
+	u32 value = readl(ioaddr);
 
 	value &= ~bit_mask;
-	ग_लिखोl(value, ioaddr);
-पूर्ण
+	writel(value, ioaddr);
+}
 
-अटल अंतरभूत पूर्णांक ecc_test_bits(u32 bit_mask, व्योम __iomem *ioaddr)
-अणु
-	u32 value = पढ़ोl(ioaddr);
+static inline int ecc_test_bits(u32 bit_mask, void __iomem *ioaddr)
+{
+	u32 value = readl(ioaddr);
 
-	वापस (value & bit_mask) ? 1 : 0;
-पूर्ण
+	return (value & bit_mask) ? 1 : 0;
+}
 
 /*
  * This function uses the memory initialization block in the Arria10 ECC
  * controller to initialize/clear the entire memory data and ECC data.
  */
-अटल पूर्णांक __maybe_unused altr_init_memory_port(व्योम __iomem *ioaddr, पूर्णांक port)
-अणु
-	पूर्णांक limit = ALTR_A10_ECC_INIT_WATCHDOG_10US;
+static int __maybe_unused altr_init_memory_port(void __iomem *ioaddr, int port)
+{
+	int limit = ALTR_A10_ECC_INIT_WATCHDOG_10US;
 	u32 init_mask, stat_mask, clear_mask;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	अगर (port) अणु
+	if (port) {
 		init_mask = ALTR_A10_ECC_INITB;
 		stat_mask = ALTR_A10_ECC_INITCOMPLETEB;
 		clear_mask = ALTR_A10_ECC_ERRPENB_MASK;
-	पूर्ण अन्यथा अणु
+	} else {
 		init_mask = ALTR_A10_ECC_INITA;
 		stat_mask = ALTR_A10_ECC_INITCOMPLETEA;
 		clear_mask = ALTR_A10_ECC_ERRPENA_MASK;
-	पूर्ण
+	}
 
 	ecc_set_bits(init_mask, (ioaddr + ALTR_A10_ECC_CTRL_OFST));
-	जबतक (limit--) अणु
-		अगर (ecc_test_bits(stat_mask,
+	while (limit--) {
+		if (ecc_test_bits(stat_mask,
 				  (ioaddr + ALTR_A10_ECC_INITSTAT_OFST)))
-			अवरोध;
+			break;
 		udelay(1);
-	पूर्ण
-	अगर (limit < 0)
+	}
+	if (limit < 0)
 		ret = -EBUSY;
 
-	/* Clear any pending ECC पूर्णांकerrupts */
-	ग_लिखोl(clear_mask, (ioaddr + ALTR_A10_ECC_INTSTAT_OFST));
+	/* Clear any pending ECC interrupts */
+	writel(clear_mask, (ioaddr + ALTR_A10_ECC_INTSTAT_OFST));
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल __init पूर्णांक __maybe_unused
-altr_init_a10_ecc_block(काष्ठा device_node *np, u32 irq_mask,
+static __init int __maybe_unused
+altr_init_a10_ecc_block(struct device_node *np, u32 irq_mask,
 			u32 ecc_ctrl_en_mask, bool dual_port)
-अणु
-	पूर्णांक ret = 0;
-	व्योम __iomem *ecc_block_base;
-	काष्ठा regmap *ecc_mgr_map;
-	अक्षर *ecc_name;
-	काष्ठा device_node *np_eccmgr;
+{
+	int ret = 0;
+	void __iomem *ecc_block_base;
+	struct regmap *ecc_mgr_map;
+	char *ecc_name;
+	struct device_node *np_eccmgr;
 
-	ecc_name = (अक्षर *)np->name;
+	ecc_name = (char *)np->name;
 
 	/* Get the ECC Manager - parent of the device EDACs */
 	np_eccmgr = of_get_parent(np);
@@ -967,115 +966,115 @@ altr_init_a10_ecc_block(काष्ठा device_node *np, u32 irq_mask,
 						     "altr,sysmgr-syscon");
 
 	of_node_put(np_eccmgr);
-	अगर (IS_ERR(ecc_mgr_map)) अणु
-		edac_prपूर्णांकk(KERN_ERR, EDAC_DEVICE,
+	if (IS_ERR(ecc_mgr_map)) {
+		edac_printk(KERN_ERR, EDAC_DEVICE,
 			    "Unable to get syscon altr,sysmgr-syscon\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	/* Map the ECC Block */
 	ecc_block_base = of_iomap(np, 0);
-	अगर (!ecc_block_base) अणु
-		edac_prपूर्णांकk(KERN_ERR, EDAC_DEVICE,
+	if (!ecc_block_base) {
+		edac_printk(KERN_ERR, EDAC_DEVICE,
 			    "Unable to map %s ECC block\n", ecc_name);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	/* Disable ECC */
-	regmap_ग_लिखो(ecc_mgr_map, A10_SYSMGR_ECC_INTMASK_SET_OFST, irq_mask);
-	ग_लिखोl(ALTR_A10_ECC_SERRINTEN,
+	regmap_write(ecc_mgr_map, A10_SYSMGR_ECC_INTMASK_SET_OFST, irq_mask);
+	writel(ALTR_A10_ECC_SERRINTEN,
 	       (ecc_block_base + ALTR_A10_ECC_ERRINTENR_OFST));
 	ecc_clear_bits(ecc_ctrl_en_mask,
 		       (ecc_block_base + ALTR_A10_ECC_CTRL_OFST));
-	/* Ensure all ग_लिखोs complete */
+	/* Ensure all writes complete */
 	wmb();
-	/* Use HW initialization block to initialize memory क्रम ECC */
+	/* Use HW initialization block to initialize memory for ECC */
 	ret = altr_init_memory_port(ecc_block_base, 0);
-	अगर (ret) अणु
-		edac_prपूर्णांकk(KERN_ERR, EDAC_DEVICE,
+	if (ret) {
+		edac_printk(KERN_ERR, EDAC_DEVICE,
 			    "ECC: cannot init %s PORTA memory\n", ecc_name);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (dual_port) अणु
+	if (dual_port) {
 		ret = altr_init_memory_port(ecc_block_base, 1);
-		अगर (ret) अणु
-			edac_prपूर्णांकk(KERN_ERR, EDAC_DEVICE,
+		if (ret) {
+			edac_printk(KERN_ERR, EDAC_DEVICE,
 				    "ECC: cannot init %s PORTB memory\n",
 				    ecc_name);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	/* Interrupt mode set to every SBERR */
-	regmap_ग_लिखो(ecc_mgr_map, ALTR_A10_ECC_INTMODE_OFST,
+	regmap_write(ecc_mgr_map, ALTR_A10_ECC_INTMODE_OFST,
 		     ALTR_A10_ECC_INTMODE);
 	/* Enable ECC */
 	ecc_set_bits(ecc_ctrl_en_mask, (ecc_block_base +
 					ALTR_A10_ECC_CTRL_OFST));
-	ग_लिखोl(ALTR_A10_ECC_SERRINTEN,
+	writel(ALTR_A10_ECC_SERRINTEN,
 	       (ecc_block_base + ALTR_A10_ECC_ERRINTENS_OFST));
-	regmap_ग_लिखो(ecc_mgr_map, A10_SYSMGR_ECC_INTMASK_CLR_OFST, irq_mask);
-	/* Ensure all ग_लिखोs complete */
+	regmap_write(ecc_mgr_map, A10_SYSMGR_ECC_INTMASK_CLR_OFST, irq_mask);
+	/* Ensure all writes complete */
 	wmb();
 out:
 	iounmap(ecc_block_base);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक validate_parent_available(काष्ठा device_node *np);
-अटल स्थिर काष्ठा of_device_id altr_edac_a10_device_of_match[];
-अटल पूर्णांक __init __maybe_unused altr_init_a10_ecc_device_type(अक्षर *compat)
-अणु
-	पूर्णांक irq;
-	काष्ठा device_node *child, *np;
+static int validate_parent_available(struct device_node *np);
+static const struct of_device_id altr_edac_a10_device_of_match[];
+static int __init __maybe_unused altr_init_a10_ecc_device_type(char *compat)
+{
+	int irq;
+	struct device_node *child, *np;
 
-	np = of_find_compatible_node(शून्य, शून्य,
+	np = of_find_compatible_node(NULL, NULL,
 				     "altr,socfpga-a10-ecc-manager");
-	अगर (!np) अणु
-		edac_prपूर्णांकk(KERN_ERR, EDAC_DEVICE, "ECC Manager not found\n");
-		वापस -ENODEV;
-	पूर्ण
+	if (!np) {
+		edac_printk(KERN_ERR, EDAC_DEVICE, "ECC Manager not found\n");
+		return -ENODEV;
+	}
 
-	क्रम_each_child_of_node(np, child) अणु
-		स्थिर काष्ठा of_device_id *pdev_id;
-		स्थिर काष्ठा edac_device_prv_data *prv;
+	for_each_child_of_node(np, child) {
+		const struct of_device_id *pdev_id;
+		const struct edac_device_prv_data *prv;
 
-		अगर (!of_device_is_available(child))
-			जारी;
-		अगर (!of_device_is_compatible(child, compat))
-			जारी;
+		if (!of_device_is_available(child))
+			continue;
+		if (!of_device_is_compatible(child, compat))
+			continue;
 
-		अगर (validate_parent_available(child))
-			जारी;
+		if (validate_parent_available(child))
+			continue;
 
 		irq = a10_get_irq_mask(child);
-		अगर (irq < 0)
-			जारी;
+		if (irq < 0)
+			continue;
 
-		/* Get matching node and check क्रम valid result */
+		/* Get matching node and check for valid result */
 		pdev_id = of_match_node(altr_edac_a10_device_of_match, child);
-		अगर (IS_ERR_OR_शून्य(pdev_id))
-			जारी;
+		if (IS_ERR_OR_NULL(pdev_id))
+			continue;
 
-		/* Validate निजी data poपूर्णांकer beक्रमe dereferencing */
+		/* Validate private data pointer before dereferencing */
 		prv = pdev_id->data;
-		अगर (!prv)
-			जारी;
+		if (!prv)
+			continue;
 
 		altr_init_a10_ecc_block(child, BIT(irq),
 					prv->ecc_enable_mask, 0);
-	पूर्ण
+	}
 
 	of_node_put(np);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*********************** SDRAM EDAC Device Functions *********************/
 
-#अगर_घोषित CONFIG_EDAC_ALTERA_SDRAM
+#ifdef CONFIG_EDAC_ALTERA_SDRAM
 
-अटल स्थिर काष्ठा edac_device_prv_data s10_sdramecc_data = अणु
+static const struct edac_device_prv_data s10_sdramecc_data = {
 	.setup = altr_check_ecc_deps,
 	.ce_clear_mask = ALTR_S10_ECC_SERRPENA,
 	.ue_clear_mask = ALTR_S10_ECC_DERRPENA,
@@ -1086,53 +1085,53 @@ out:
 	.set_err_ofst = ALTR_S10_ECC_INTTEST_OFST,
 	.ecc_irq_handler = altr_edac_a10_ecc_irq,
 	.inject_fops = &altr_edac_a10_device_inject_fops,
-पूर्ण;
-#पूर्ण_अगर /* CONFIG_EDAC_ALTERA_SDRAM */
+};
+#endif /* CONFIG_EDAC_ALTERA_SDRAM */
 
 /*********************** OCRAM EDAC Device Functions *********************/
 
-#अगर_घोषित CONFIG_EDAC_ALTERA_OCRAM
+#ifdef CONFIG_EDAC_ALTERA_OCRAM
 
-अटल व्योम *ocram_alloc_mem(माप_प्रकार size, व्योम **other)
-अणु
-	काष्ठा device_node *np;
-	काष्ठा gen_pool *gp;
-	व्योम *sram_addr;
+static void *ocram_alloc_mem(size_t size, void **other)
+{
+	struct device_node *np;
+	struct gen_pool *gp;
+	void *sram_addr;
 
-	np = of_find_compatible_node(शून्य, शून्य, "altr,socfpga-ocram-ecc");
-	अगर (!np)
-		वापस शून्य;
+	np = of_find_compatible_node(NULL, NULL, "altr,socfpga-ocram-ecc");
+	if (!np)
+		return NULL;
 
 	gp = of_gen_pool_get(np, "iram", 0);
 	of_node_put(np);
-	अगर (!gp)
-		वापस शून्य;
+	if (!gp)
+		return NULL;
 
-	sram_addr = (व्योम *)gen_pool_alloc(gp, size);
-	अगर (!sram_addr)
-		वापस शून्य;
+	sram_addr = (void *)gen_pool_alloc(gp, size);
+	if (!sram_addr)
+		return NULL;
 
-	स_रखो(sram_addr, 0, size);
+	memset(sram_addr, 0, size);
 	/* Ensure data is written out */
 	wmb();
 
-	/* Remember this handle क्रम मुक्तing  later */
+	/* Remember this handle for freeing  later */
 	*other = gp;
 
-	वापस sram_addr;
-पूर्ण
+	return sram_addr;
+}
 
-अटल व्योम ocram_मुक्त_mem(व्योम *p, माप_प्रकार size, व्योम *other)
-अणु
-	gen_pool_मुक्त((काष्ठा gen_pool *)other, (अचिन्हित दीर्घ)p, size);
-पूर्ण
+static void ocram_free_mem(void *p, size_t size, void *other)
+{
+	gen_pool_free((struct gen_pool *)other, (unsigned long)p, size);
+}
 
-अटल स्थिर काष्ठा edac_device_prv_data ocramecc_data = अणु
+static const struct edac_device_prv_data ocramecc_data = {
 	.setup = altr_check_ecc_deps,
 	.ce_clear_mask = (ALTR_OCR_ECC_EN | ALTR_OCR_ECC_SERR),
 	.ue_clear_mask = (ALTR_OCR_ECC_EN | ALTR_OCR_ECC_DERR),
 	.alloc_mem = ocram_alloc_mem,
-	.मुक्त_mem = ocram_मुक्त_mem,
+	.free_mem = ocram_free_mem,
 	.ecc_enable_mask = ALTR_OCR_ECC_EN,
 	.ecc_en_ofst = ALTR_OCR_ECC_REG_OFFSET,
 	.ce_set_mask = (ALTR_OCR_ECC_EN | ALTR_OCR_ECC_INJS),
@@ -1140,32 +1139,32 @@ out:
 	.set_err_ofst = ALTR_OCR_ECC_REG_OFFSET,
 	.trig_alloc_sz = ALTR_TRIG_OCRAM_BYTE_SIZE,
 	.inject_fops = &altr_edac_device_inject_fops,
-पूर्ण;
+};
 
-अटल पूर्णांक __maybe_unused
-altr_check_ocram_deps_init(काष्ठा altr_edac_device_dev *device)
-अणु
-	व्योम __iomem  *base = device->base;
-	पूर्णांक ret;
+static int __maybe_unused
+altr_check_ocram_deps_init(struct altr_edac_device_dev *device)
+{
+	void __iomem  *base = device->base;
+	int ret;
 
 	ret = altr_check_ecc_deps(device);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* Verअगरy OCRAM has been initialized */
-	अगर (!ecc_test_bits(ALTR_A10_ECC_INITCOMPLETEA,
+	/* Verify OCRAM has been initialized */
+	if (!ecc_test_bits(ALTR_A10_ECC_INITCOMPLETEA,
 			   (base + ALTR_A10_ECC_INITSTAT_OFST)))
-		वापस -ENODEV;
+		return -ENODEV;
 
 	/* Enable IRQ on Single Bit Error */
-	ग_लिखोl(ALTR_A10_ECC_SERRINTEN, (base + ALTR_A10_ECC_ERRINTENS_OFST));
-	/* Ensure all ग_लिखोs complete */
+	writel(ALTR_A10_ECC_SERRINTEN, (base + ALTR_A10_ECC_ERRINTENS_OFST));
+	/* Ensure all writes complete */
 	wmb();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा edac_device_prv_data a10_ocramecc_data = अणु
+static const struct edac_device_prv_data a10_ocramecc_data = {
 	.setup = altr_check_ocram_deps_init,
 	.ce_clear_mask = ALTR_A10_ECC_SERRPENA,
 	.ue_clear_mask = ALTR_A10_ECC_DERRPENA,
@@ -1183,112 +1182,112 @@ altr_check_ocram_deps_init(काष्ठा altr_edac_device_dev *device)
 	 * a kernel panic over executing/loading corrupted data.
 	 */
 	.panic = true,
-पूर्ण;
+};
 
-#पूर्ण_अगर	/* CONFIG_EDAC_ALTERA_OCRAM */
+#endif	/* CONFIG_EDAC_ALTERA_OCRAM */
 
 /********************* L2 Cache EDAC Device Functions ********************/
 
-#अगर_घोषित CONFIG_EDAC_ALTERA_L2C
+#ifdef CONFIG_EDAC_ALTERA_L2C
 
-अटल व्योम *l2_alloc_mem(माप_प्रकार size, व्योम **other)
-अणु
-	काष्ठा device *dev = *other;
-	व्योम *ptemp = devm_kzalloc(dev, size, GFP_KERNEL);
+static void *l2_alloc_mem(size_t size, void **other)
+{
+	struct device *dev = *other;
+	void *ptemp = devm_kzalloc(dev, size, GFP_KERNEL);
 
-	अगर (!ptemp)
-		वापस शून्य;
+	if (!ptemp)
+		return NULL;
 
 	/* Make sure everything is written out */
 	wmb();
 
 	/*
 	 * Clean all cache levels up to LoC (includes L2)
-	 * This ensures the corrupted data is written पूर्णांकo
-	 * L2 cache क्रम पढ़ोback test (which causes ECC error).
+	 * This ensures the corrupted data is written into
+	 * L2 cache for readback test (which causes ECC error).
 	 */
 	flush_cache_all();
 
-	वापस ptemp;
-पूर्ण
+	return ptemp;
+}
 
-अटल व्योम l2_मुक्त_mem(व्योम *p, माप_प्रकार size, व्योम *other)
-अणु
-	काष्ठा device *dev = other;
+static void l2_free_mem(void *p, size_t size, void *other)
+{
+	struct device *dev = other;
 
-	अगर (dev && p)
-		devm_kमुक्त(dev, p);
-पूर्ण
+	if (dev && p)
+		devm_kfree(dev, p);
+}
 
 /*
  * altr_l2_check_deps()
- *	Test क्रम L2 cache ECC dependencies upon entry because
- *	platक्रमm specअगरic startup should have initialized the L2
+ *	Test for L2 cache ECC dependencies upon entry because
+ *	platform specific startup should have initialized the L2
  *	memory and enabled the ECC.
- *	Bail अगर ECC is not enabled.
- *	Note that L2 Cache Enable is क्रमced at build समय.
+ *	Bail if ECC is not enabled.
+ *	Note that L2 Cache Enable is forced at build time.
  */
-अटल पूर्णांक altr_l2_check_deps(काष्ठा altr_edac_device_dev *device)
-अणु
-	व्योम __iomem *base = device->base;
-	स्थिर काष्ठा edac_device_prv_data *prv = device->data;
+static int altr_l2_check_deps(struct altr_edac_device_dev *device)
+{
+	void __iomem *base = device->base;
+	const struct edac_device_prv_data *prv = device->data;
 
-	अगर ((पढ़ोl(base) & prv->ecc_enable_mask) ==
+	if ((readl(base) & prv->ecc_enable_mask) ==
 	     prv->ecc_enable_mask)
-		वापस 0;
+		return 0;
 
-	edac_prपूर्णांकk(KERN_ERR, EDAC_DEVICE,
+	edac_printk(KERN_ERR, EDAC_DEVICE,
 		    "L2: No ECC present, or ECC disabled\n");
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}
 
-अटल irqवापस_t altr_edac_a10_l2_irq(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा altr_edac_device_dev *dci = dev_id;
+static irqreturn_t altr_edac_a10_l2_irq(int irq, void *dev_id)
+{
+	struct altr_edac_device_dev *dci = dev_id;
 
-	अगर (irq == dci->sb_irq) अणु
-		regmap_ग_लिखो(dci->edac->ecc_mgr_map,
+	if (irq == dci->sb_irq) {
+		regmap_write(dci->edac->ecc_mgr_map,
 			     A10_SYSGMR_MPU_CLEAR_L2_ECC_OFST,
 			     A10_SYSGMR_MPU_CLEAR_L2_ECC_SB);
 		edac_device_handle_ce(dci->edac_dev, 0, 0, dci->edac_dev_name);
 
-		वापस IRQ_HANDLED;
-	पूर्ण अन्यथा अगर (irq == dci->db_irq) अणु
-		regmap_ग_लिखो(dci->edac->ecc_mgr_map,
+		return IRQ_HANDLED;
+	} else if (irq == dci->db_irq) {
+		regmap_write(dci->edac->ecc_mgr_map,
 			     A10_SYSGMR_MPU_CLEAR_L2_ECC_OFST,
 			     A10_SYSGMR_MPU_CLEAR_L2_ECC_MB);
 		edac_device_handle_ue(dci->edac_dev, 0, 0, dci->edac_dev_name);
 		panic("\nEDAC:ECC_DEVICE[Uncorrectable errors]\n");
 
-		वापस IRQ_HANDLED;
-	पूर्ण
+		return IRQ_HANDLED;
+	}
 
 	WARN_ON(1);
 
-	वापस IRQ_NONE;
-पूर्ण
+	return IRQ_NONE;
+}
 
-अटल स्थिर काष्ठा edac_device_prv_data l2ecc_data = अणु
+static const struct edac_device_prv_data l2ecc_data = {
 	.setup = altr_l2_check_deps,
 	.ce_clear_mask = 0,
 	.ue_clear_mask = 0,
 	.alloc_mem = l2_alloc_mem,
-	.मुक्त_mem = l2_मुक्त_mem,
+	.free_mem = l2_free_mem,
 	.ecc_enable_mask = ALTR_L2_ECC_EN,
 	.ce_set_mask = (ALTR_L2_ECC_EN | ALTR_L2_ECC_INJS),
 	.ue_set_mask = (ALTR_L2_ECC_EN | ALTR_L2_ECC_INJD),
 	.set_err_ofst = ALTR_L2_ECC_REG_OFFSET,
 	.trig_alloc_sz = ALTR_TRIG_L2C_BYTE_SIZE,
 	.inject_fops = &altr_edac_device_inject_fops,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा edac_device_prv_data a10_l2ecc_data = अणु
+static const struct edac_device_prv_data a10_l2ecc_data = {
 	.setup = altr_l2_check_deps,
 	.ce_clear_mask = ALTR_A10_L2_ECC_SERR_CLR,
 	.ue_clear_mask = ALTR_A10_L2_ECC_MERR_CLR,
 	.irq_status_mask = A10_SYSMGR_ECC_INTSTAT_L2,
 	.alloc_mem = l2_alloc_mem,
-	.मुक्त_mem = l2_मुक्त_mem,
+	.free_mem = l2_free_mem,
 	.ecc_enable_mask = ALTR_A10_L2_ECC_EN_CTL,
 	.ce_set_mask = ALTR_A10_L2_ECC_CE_INJ_MASK,
 	.ue_set_mask = ALTR_A10_L2_ECC_UE_INJ_MASK,
@@ -1296,26 +1295,26 @@ altr_check_ocram_deps_init(काष्ठा altr_edac_device_dev *device)
 	.ecc_irq_handler = altr_edac_a10_l2_irq,
 	.trig_alloc_sz = ALTR_TRIG_L2C_BYTE_SIZE,
 	.inject_fops = &altr_edac_device_inject_fops,
-पूर्ण;
+};
 
-#पूर्ण_अगर	/* CONFIG_EDAC_ALTERA_L2C */
+#endif	/* CONFIG_EDAC_ALTERA_L2C */
 
 /********************* Ethernet Device Functions ********************/
 
-#अगर_घोषित CONFIG_EDAC_ALTERA_ETHERNET
+#ifdef CONFIG_EDAC_ALTERA_ETHERNET
 
-अटल पूर्णांक __init socfpga_init_ethernet_ecc(काष्ठा altr_edac_device_dev *dev)
-अणु
-	पूर्णांक ret;
+static int __init socfpga_init_ethernet_ecc(struct altr_edac_device_dev *dev)
+{
+	int ret;
 
 	ret = altr_init_a10_ecc_device_type("altr,socfpga-eth-mac-ecc");
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस altr_check_ecc_deps(dev);
-पूर्ण
+	return altr_check_ecc_deps(dev);
+}
 
-अटल स्थिर काष्ठा edac_device_prv_data a10_enetecc_data = अणु
+static const struct edac_device_prv_data a10_enetecc_data = {
 	.setup = socfpga_init_ethernet_ecc,
 	.ce_clear_mask = ALTR_A10_ECC_SERRPENA,
 	.ue_clear_mask = ALTR_A10_ECC_DERRPENA,
@@ -1326,26 +1325,26 @@ altr_check_ocram_deps_init(काष्ठा altr_edac_device_dev *device)
 	.set_err_ofst = ALTR_A10_ECC_INTTEST_OFST,
 	.ecc_irq_handler = altr_edac_a10_ecc_irq,
 	.inject_fops = &altr_edac_a10_device_inject2_fops,
-पूर्ण;
+};
 
-#पूर्ण_अगर	/* CONFIG_EDAC_ALTERA_ETHERNET */
+#endif	/* CONFIG_EDAC_ALTERA_ETHERNET */
 
-/********************** न_अंकD Device Functions **********************/
+/********************** NAND Device Functions **********************/
 
-#अगर_घोषित CONFIG_EDAC_ALTERA_न_अंकD
+#ifdef CONFIG_EDAC_ALTERA_NAND
 
-अटल पूर्णांक __init socfpga_init_nand_ecc(काष्ठा altr_edac_device_dev *device)
-अणु
-	पूर्णांक ret;
+static int __init socfpga_init_nand_ecc(struct altr_edac_device_dev *device)
+{
+	int ret;
 
 	ret = altr_init_a10_ecc_device_type("altr,socfpga-nand-ecc");
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस altr_check_ecc_deps(device);
-पूर्ण
+	return altr_check_ecc_deps(device);
+}
 
-अटल स्थिर काष्ठा edac_device_prv_data a10_nandecc_data = अणु
+static const struct edac_device_prv_data a10_nandecc_data = {
 	.setup = socfpga_init_nand_ecc,
 	.ce_clear_mask = ALTR_A10_ECC_SERRPENA,
 	.ue_clear_mask = ALTR_A10_ECC_DERRPENA,
@@ -1356,26 +1355,26 @@ altr_check_ocram_deps_init(काष्ठा altr_edac_device_dev *device)
 	.set_err_ofst = ALTR_A10_ECC_INTTEST_OFST,
 	.ecc_irq_handler = altr_edac_a10_ecc_irq,
 	.inject_fops = &altr_edac_a10_device_inject_fops,
-पूर्ण;
+};
 
-#पूर्ण_अगर	/* CONFIG_EDAC_ALTERA_न_अंकD */
+#endif	/* CONFIG_EDAC_ALTERA_NAND */
 
 /********************** DMA Device Functions **********************/
 
-#अगर_घोषित CONFIG_EDAC_ALTERA_DMA
+#ifdef CONFIG_EDAC_ALTERA_DMA
 
-अटल पूर्णांक __init socfpga_init_dma_ecc(काष्ठा altr_edac_device_dev *device)
-अणु
-	पूर्णांक ret;
+static int __init socfpga_init_dma_ecc(struct altr_edac_device_dev *device)
+{
+	int ret;
 
 	ret = altr_init_a10_ecc_device_type("altr,socfpga-dma-ecc");
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस altr_check_ecc_deps(device);
-पूर्ण
+	return altr_check_ecc_deps(device);
+}
 
-अटल स्थिर काष्ठा edac_device_prv_data a10_dmaecc_data = अणु
+static const struct edac_device_prv_data a10_dmaecc_data = {
 	.setup = socfpga_init_dma_ecc,
 	.ce_clear_mask = ALTR_A10_ECC_SERRPENA,
 	.ue_clear_mask = ALTR_A10_ECC_DERRPENA,
@@ -1386,26 +1385,26 @@ altr_check_ocram_deps_init(काष्ठा altr_edac_device_dev *device)
 	.set_err_ofst = ALTR_A10_ECC_INTTEST_OFST,
 	.ecc_irq_handler = altr_edac_a10_ecc_irq,
 	.inject_fops = &altr_edac_a10_device_inject_fops,
-पूर्ण;
+};
 
-#पूर्ण_अगर	/* CONFIG_EDAC_ALTERA_DMA */
+#endif	/* CONFIG_EDAC_ALTERA_DMA */
 
 /********************** USB Device Functions **********************/
 
-#अगर_घोषित CONFIG_EDAC_ALTERA_USB
+#ifdef CONFIG_EDAC_ALTERA_USB
 
-अटल पूर्णांक __init socfpga_init_usb_ecc(काष्ठा altr_edac_device_dev *device)
-अणु
-	पूर्णांक ret;
+static int __init socfpga_init_usb_ecc(struct altr_edac_device_dev *device)
+{
+	int ret;
 
 	ret = altr_init_a10_ecc_device_type("altr,socfpga-usb-ecc");
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस altr_check_ecc_deps(device);
-पूर्ण
+	return altr_check_ecc_deps(device);
+}
 
-अटल स्थिर काष्ठा edac_device_prv_data a10_usbecc_data = अणु
+static const struct edac_device_prv_data a10_usbecc_data = {
 	.setup = socfpga_init_usb_ecc,
 	.ce_clear_mask = ALTR_A10_ECC_SERRPENA,
 	.ue_clear_mask = ALTR_A10_ECC_DERRPENA,
@@ -1416,26 +1415,26 @@ altr_check_ocram_deps_init(काष्ठा altr_edac_device_dev *device)
 	.set_err_ofst = ALTR_A10_ECC_INTTEST_OFST,
 	.ecc_irq_handler = altr_edac_a10_ecc_irq,
 	.inject_fops = &altr_edac_a10_device_inject2_fops,
-पूर्ण;
+};
 
-#पूर्ण_अगर	/* CONFIG_EDAC_ALTERA_USB */
+#endif	/* CONFIG_EDAC_ALTERA_USB */
 
 /********************** QSPI Device Functions **********************/
 
-#अगर_घोषित CONFIG_EDAC_ALTERA_QSPI
+#ifdef CONFIG_EDAC_ALTERA_QSPI
 
-अटल पूर्णांक __init socfpga_init_qspi_ecc(काष्ठा altr_edac_device_dev *device)
-अणु
-	पूर्णांक ret;
+static int __init socfpga_init_qspi_ecc(struct altr_edac_device_dev *device)
+{
+	int ret;
 
 	ret = altr_init_a10_ecc_device_type("altr,socfpga-qspi-ecc");
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस altr_check_ecc_deps(device);
-पूर्ण
+	return altr_check_ecc_deps(device);
+}
 
-अटल स्थिर काष्ठा edac_device_prv_data a10_qspiecc_data = अणु
+static const struct edac_device_prv_data a10_qspiecc_data = {
 	.setup = socfpga_init_qspi_ecc,
 	.ce_clear_mask = ALTR_A10_ECC_SERRPENA,
 	.ue_clear_mask = ALTR_A10_ECC_DERRPENA,
@@ -1446,53 +1445,53 @@ altr_check_ocram_deps_init(काष्ठा altr_edac_device_dev *device)
 	.set_err_ofst = ALTR_A10_ECC_INTTEST_OFST,
 	.ecc_irq_handler = altr_edac_a10_ecc_irq,
 	.inject_fops = &altr_edac_a10_device_inject_fops,
-पूर्ण;
+};
 
-#पूर्ण_अगर	/* CONFIG_EDAC_ALTERA_QSPI */
+#endif	/* CONFIG_EDAC_ALTERA_QSPI */
 
 /********************* SDMMC Device Functions **********************/
 
-#अगर_घोषित CONFIG_EDAC_ALTERA_SDMMC
+#ifdef CONFIG_EDAC_ALTERA_SDMMC
 
-अटल स्थिर काष्ठा edac_device_prv_data a10_sdmmceccb_data;
-अटल पूर्णांक altr_portb_setup(काष्ठा altr_edac_device_dev *device)
-अणु
-	काष्ठा edac_device_ctl_info *dci;
-	काष्ठा altr_edac_device_dev *altdev;
-	अक्षर *ecc_name = "sdmmcb-ecc";
-	पूर्णांक edac_idx, rc;
-	काष्ठा device_node *np;
-	स्थिर काष्ठा edac_device_prv_data *prv = &a10_sdmmceccb_data;
+static const struct edac_device_prv_data a10_sdmmceccb_data;
+static int altr_portb_setup(struct altr_edac_device_dev *device)
+{
+	struct edac_device_ctl_info *dci;
+	struct altr_edac_device_dev *altdev;
+	char *ecc_name = "sdmmcb-ecc";
+	int edac_idx, rc;
+	struct device_node *np;
+	const struct edac_device_prv_data *prv = &a10_sdmmceccb_data;
 
 	rc = altr_check_ecc_deps(device);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	np = of_find_compatible_node(शून्य, शून्य, "altr,socfpga-sdmmc-ecc");
-	अगर (!np) अणु
-		edac_prपूर्णांकk(KERN_WARNING, EDAC_DEVICE, "SDMMC node not found\n");
-		वापस -ENODEV;
-	पूर्ण
+	np = of_find_compatible_node(NULL, NULL, "altr,socfpga-sdmmc-ecc");
+	if (!np) {
+		edac_printk(KERN_WARNING, EDAC_DEVICE, "SDMMC node not found\n");
+		return -ENODEV;
+	}
 
 	/* Create the PortB EDAC device */
 	edac_idx = edac_device_alloc_index();
-	dci = edac_device_alloc_ctl_info(माप(*altdev), ecc_name, 1,
-					 ecc_name, 1, 0, शून्य, 0, edac_idx);
-	अगर (!dci) अणु
-		edac_prपूर्णांकk(KERN_ERR, EDAC_DEVICE,
+	dci = edac_device_alloc_ctl_info(sizeof(*altdev), ecc_name, 1,
+					 ecc_name, 1, 0, NULL, 0, edac_idx);
+	if (!dci) {
+		edac_printk(KERN_ERR, EDAC_DEVICE,
 			    "%s: Unable to allocate PortB EDAC device\n",
 			    ecc_name);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	/* Initialize the PortB EDAC device काष्ठाure from PortA काष्ठाure */
+	/* Initialize the PortB EDAC device structure from PortA structure */
 	altdev = dci->pvt_info;
 	*altdev = *device;
 
-	अगर (!devres_खोलो_group(&altdev->ddev, altr_portb_setup, GFP_KERNEL))
-		वापस -ENOMEM;
+	if (!devres_open_group(&altdev->ddev, altr_portb_setup, GFP_KERNEL))
+		return -ENOMEM;
 
-	/* Update PortB specअगरic values */
+	/* Update PortB specific values */
 	altdev->edac_dev_name = ecc_name;
 	altdev->edac_idx = edac_idx;
 	altdev->edac_dev = dci;
@@ -1505,129 +1504,129 @@ altr_check_ocram_deps_init(काष्ठा altr_edac_device_dev *device)
 	/*
 	 * Update the PortB IRQs - A10 has 4, S10 has 2, Index accordingly
 	 *
-	 * FIXME: Instead of अगरdefs with dअगरferent architectures the driver
+	 * FIXME: Instead of ifdefs with different architectures the driver
 	 *        should properly use compatibles.
 	 */
-#अगर_घोषित CONFIG_64BIT
+#ifdef CONFIG_64BIT
 	altdev->sb_irq = irq_of_parse_and_map(np, 1);
-#अन्यथा
+#else
 	altdev->sb_irq = irq_of_parse_and_map(np, 2);
-#पूर्ण_अगर
-	अगर (!altdev->sb_irq) अणु
-		edac_prपूर्णांकk(KERN_ERR, EDAC_DEVICE, "Error PortB SBIRQ alloc\n");
+#endif
+	if (!altdev->sb_irq) {
+		edac_printk(KERN_ERR, EDAC_DEVICE, "Error PortB SBIRQ alloc\n");
 		rc = -ENODEV;
-		जाओ err_release_group_1;
-	पूर्ण
+		goto err_release_group_1;
+	}
 	rc = devm_request_irq(&altdev->ddev, altdev->sb_irq,
 			      prv->ecc_irq_handler,
 			      IRQF_ONESHOT | IRQF_TRIGGER_HIGH,
 			      ecc_name, altdev);
-	अगर (rc) अणु
-		edac_prपूर्णांकk(KERN_ERR, EDAC_DEVICE, "PortB SBERR IRQ error\n");
-		जाओ err_release_group_1;
-	पूर्ण
+	if (rc) {
+		edac_printk(KERN_ERR, EDAC_DEVICE, "PortB SBERR IRQ error\n");
+		goto err_release_group_1;
+	}
 
-#अगर_घोषित CONFIG_64BIT
+#ifdef CONFIG_64BIT
 	/* Use IRQ to determine SError origin instead of assigning IRQ */
-	rc = of_property_पढ़ो_u32_index(np, "interrupts", 1, &altdev->db_irq);
-	अगर (rc) अणु
-		edac_prपूर्णांकk(KERN_ERR, EDAC_DEVICE,
+	rc = of_property_read_u32_index(np, "interrupts", 1, &altdev->db_irq);
+	if (rc) {
+		edac_printk(KERN_ERR, EDAC_DEVICE,
 			    "Error PortB DBIRQ alloc\n");
-		जाओ err_release_group_1;
-	पूर्ण
-#अन्यथा
+		goto err_release_group_1;
+	}
+#else
 	altdev->db_irq = irq_of_parse_and_map(np, 3);
-	अगर (!altdev->db_irq) अणु
-		edac_prपूर्णांकk(KERN_ERR, EDAC_DEVICE, "Error PortB DBIRQ alloc\n");
+	if (!altdev->db_irq) {
+		edac_printk(KERN_ERR, EDAC_DEVICE, "Error PortB DBIRQ alloc\n");
 		rc = -ENODEV;
-		जाओ err_release_group_1;
-	पूर्ण
+		goto err_release_group_1;
+	}
 	rc = devm_request_irq(&altdev->ddev, altdev->db_irq,
 			      prv->ecc_irq_handler,
 			      IRQF_ONESHOT | IRQF_TRIGGER_HIGH,
 			      ecc_name, altdev);
-	अगर (rc) अणु
-		edac_prपूर्णांकk(KERN_ERR, EDAC_DEVICE, "PortB DBERR IRQ error\n");
-		जाओ err_release_group_1;
-	पूर्ण
-#पूर्ण_अगर
+	if (rc) {
+		edac_printk(KERN_ERR, EDAC_DEVICE, "PortB DBERR IRQ error\n");
+		goto err_release_group_1;
+	}
+#endif
 
 	rc = edac_device_add_device(dci);
-	अगर (rc) अणु
-		edac_prपूर्णांकk(KERN_ERR, EDAC_DEVICE,
+	if (rc) {
+		edac_printk(KERN_ERR, EDAC_DEVICE,
 			    "edac_device_add_device portB failed\n");
 		rc = -ENOMEM;
-		जाओ err_release_group_1;
-	पूर्ण
+		goto err_release_group_1;
+	}
 	altr_create_edacdev_dbgfs(dci, prv);
 
 	list_add(&altdev->next, &altdev->edac->a10_ecc_devices);
 
-	devres_हटाओ_group(&altdev->ddev, altr_portb_setup);
+	devres_remove_group(&altdev->ddev, altr_portb_setup);
 
-	वापस 0;
+	return 0;
 
 err_release_group_1:
-	edac_device_मुक्त_ctl_info(dci);
+	edac_device_free_ctl_info(dci);
 	devres_release_group(&altdev->ddev, altr_portb_setup);
-	edac_prपूर्णांकk(KERN_ERR, EDAC_DEVICE,
+	edac_printk(KERN_ERR, EDAC_DEVICE,
 		    "%s:Error setting up EDAC device: %d\n", ecc_name, rc);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक __init socfpga_init_sdmmc_ecc(काष्ठा altr_edac_device_dev *device)
-अणु
-	पूर्णांक rc = -ENODEV;
-	काष्ठा device_node *child;
+static int __init socfpga_init_sdmmc_ecc(struct altr_edac_device_dev *device)
+{
+	int rc = -ENODEV;
+	struct device_node *child;
 
-	child = of_find_compatible_node(शून्य, शून्य, "altr,socfpga-sdmmc-ecc");
-	अगर (!child)
-		वापस -ENODEV;
+	child = of_find_compatible_node(NULL, NULL, "altr,socfpga-sdmmc-ecc");
+	if (!child)
+		return -ENODEV;
 
-	अगर (!of_device_is_available(child))
-		जाओ निकास;
+	if (!of_device_is_available(child))
+		goto exit;
 
-	अगर (validate_parent_available(child))
-		जाओ निकास;
+	if (validate_parent_available(child))
+		goto exit;
 
 	/* Init portB */
 	rc = altr_init_a10_ecc_block(child, ALTR_A10_SDMMC_IRQ_MASK,
 				     a10_sdmmceccb_data.ecc_enable_mask, 1);
-	अगर (rc)
-		जाओ निकास;
+	if (rc)
+		goto exit;
 
 	/* Setup portB */
-	वापस altr_portb_setup(device);
+	return altr_portb_setup(device);
 
-निकास:
+exit:
 	of_node_put(child);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल irqवापस_t altr_edac_a10_ecc_irq_portb(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा altr_edac_device_dev *ad = dev_id;
-	व्योम __iomem  *base = ad->base;
-	स्थिर काष्ठा edac_device_prv_data *priv = ad->data;
+static irqreturn_t altr_edac_a10_ecc_irq_portb(int irq, void *dev_id)
+{
+	struct altr_edac_device_dev *ad = dev_id;
+	void __iomem  *base = ad->base;
+	const struct edac_device_prv_data *priv = ad->data;
 
-	अगर (irq == ad->sb_irq) अणु
-		ग_लिखोl(priv->ce_clear_mask,
+	if (irq == ad->sb_irq) {
+		writel(priv->ce_clear_mask,
 		       base + ALTR_A10_ECC_INTSTAT_OFST);
 		edac_device_handle_ce(ad->edac_dev, 0, 0, ad->edac_dev_name);
-		वापस IRQ_HANDLED;
-	पूर्ण अन्यथा अगर (irq == ad->db_irq) अणु
-		ग_लिखोl(priv->ue_clear_mask,
+		return IRQ_HANDLED;
+	} else if (irq == ad->db_irq) {
+		writel(priv->ue_clear_mask,
 		       base + ALTR_A10_ECC_INTSTAT_OFST);
 		edac_device_handle_ue(ad->edac_dev, 0, 0, ad->edac_dev_name);
-		वापस IRQ_HANDLED;
-	पूर्ण
+		return IRQ_HANDLED;
+	}
 
 	WARN_ONCE(1, "Unhandled IRQ%d on Port B.", irq);
 
-	वापस IRQ_NONE;
-पूर्ण
+	return IRQ_NONE;
+}
 
-अटल स्थिर काष्ठा edac_device_prv_data a10_sdmmcecca_data = अणु
+static const struct edac_device_prv_data a10_sdmmcecca_data = {
 	.setup = socfpga_init_sdmmc_ecc,
 	.ce_clear_mask = ALTR_A10_ECC_SERRPENA,
 	.ue_clear_mask = ALTR_A10_ECC_DERRPENA,
@@ -1638,9 +1637,9 @@ err_release_group_1:
 	.set_err_ofst = ALTR_A10_ECC_INTTEST_OFST,
 	.ecc_irq_handler = altr_edac_a10_ecc_irq,
 	.inject_fops = &altr_edac_a10_device_inject_fops,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा edac_device_prv_data a10_sdmmceccb_data = अणु
+static const struct edac_device_prv_data a10_sdmmceccb_data = {
 	.setup = socfpga_init_sdmmc_ecc,
 	.ce_clear_mask = ALTR_A10_ECC_SERRPENB,
 	.ue_clear_mask = ALTR_A10_ECC_DERRPENB,
@@ -1651,149 +1650,149 @@ err_release_group_1:
 	.set_err_ofst = ALTR_A10_ECC_INTTEST_OFST,
 	.ecc_irq_handler = altr_edac_a10_ecc_irq_portb,
 	.inject_fops = &altr_edac_a10_device_inject_fops,
-पूर्ण;
+};
 
-#पूर्ण_अगर	/* CONFIG_EDAC_ALTERA_SDMMC */
+#endif	/* CONFIG_EDAC_ALTERA_SDMMC */
 
 /********************* Arria10 EDAC Device Functions *************************/
-अटल स्थिर काष्ठा of_device_id altr_edac_a10_device_of_match[] = अणु
-#अगर_घोषित CONFIG_EDAC_ALTERA_L2C
-	अणु .compatible = "altr,socfpga-a10-l2-ecc", .data = &a10_l2ecc_data पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_EDAC_ALTERA_OCRAM
-	अणु .compatible = "altr,socfpga-a10-ocram-ecc",
-	  .data = &a10_ocramecc_data पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_EDAC_ALTERA_ETHERNET
-	अणु .compatible = "altr,socfpga-eth-mac-ecc",
-	  .data = &a10_enetecc_data पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_EDAC_ALTERA_न_अंकD
-	अणु .compatible = "altr,socfpga-nand-ecc", .data = &a10_nandecc_data पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_EDAC_ALTERA_DMA
-	अणु .compatible = "altr,socfpga-dma-ecc", .data = &a10_dmaecc_data पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_EDAC_ALTERA_USB
-	अणु .compatible = "altr,socfpga-usb-ecc", .data = &a10_usbecc_data पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_EDAC_ALTERA_QSPI
-	अणु .compatible = "altr,socfpga-qspi-ecc", .data = &a10_qspiecc_data पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_EDAC_ALTERA_SDMMC
-	अणु .compatible = "altr,socfpga-sdmmc-ecc", .data = &a10_sdmmcecca_data पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_EDAC_ALTERA_SDRAM
-	अणु .compatible = "altr,sdram-edac-s10", .data = &s10_sdramecc_data पूर्ण,
-#पूर्ण_अगर
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id altr_edac_a10_device_of_match[] = {
+#ifdef CONFIG_EDAC_ALTERA_L2C
+	{ .compatible = "altr,socfpga-a10-l2-ecc", .data = &a10_l2ecc_data },
+#endif
+#ifdef CONFIG_EDAC_ALTERA_OCRAM
+	{ .compatible = "altr,socfpga-a10-ocram-ecc",
+	  .data = &a10_ocramecc_data },
+#endif
+#ifdef CONFIG_EDAC_ALTERA_ETHERNET
+	{ .compatible = "altr,socfpga-eth-mac-ecc",
+	  .data = &a10_enetecc_data },
+#endif
+#ifdef CONFIG_EDAC_ALTERA_NAND
+	{ .compatible = "altr,socfpga-nand-ecc", .data = &a10_nandecc_data },
+#endif
+#ifdef CONFIG_EDAC_ALTERA_DMA
+	{ .compatible = "altr,socfpga-dma-ecc", .data = &a10_dmaecc_data },
+#endif
+#ifdef CONFIG_EDAC_ALTERA_USB
+	{ .compatible = "altr,socfpga-usb-ecc", .data = &a10_usbecc_data },
+#endif
+#ifdef CONFIG_EDAC_ALTERA_QSPI
+	{ .compatible = "altr,socfpga-qspi-ecc", .data = &a10_qspiecc_data },
+#endif
+#ifdef CONFIG_EDAC_ALTERA_SDMMC
+	{ .compatible = "altr,socfpga-sdmmc-ecc", .data = &a10_sdmmcecca_data },
+#endif
+#ifdef CONFIG_EDAC_ALTERA_SDRAM
+	{ .compatible = "altr,sdram-edac-s10", .data = &s10_sdramecc_data },
+#endif
+	{},
+};
 MODULE_DEVICE_TABLE(of, altr_edac_a10_device_of_match);
 
 /*
- * The Arria10 EDAC Device Functions dअगरfer from the Cyclone5/Arria5
+ * The Arria10 EDAC Device Functions differ from the Cyclone5/Arria5
  * because 2 IRQs are shared among the all ECC peripherals. The ECC
  * manager manages the IRQs and the children.
  * Based on xgene_edac.c peripheral code.
  */
 
-अटल sमाप_प्रकार altr_edac_a10_device_trig(काष्ठा file *file,
-					 स्थिर अक्षर __user *user_buf,
-					 माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा edac_device_ctl_info *edac_dci = file->निजी_data;
-	काष्ठा altr_edac_device_dev *drvdata = edac_dci->pvt_info;
-	स्थिर काष्ठा edac_device_prv_data *priv = drvdata->data;
-	व्योम __iomem *set_addr = (drvdata->base + priv->set_err_ofst);
-	अचिन्हित दीर्घ flags;
+static ssize_t altr_edac_a10_device_trig(struct file *file,
+					 const char __user *user_buf,
+					 size_t count, loff_t *ppos)
+{
+	struct edac_device_ctl_info *edac_dci = file->private_data;
+	struct altr_edac_device_dev *drvdata = edac_dci->pvt_info;
+	const struct edac_device_prv_data *priv = drvdata->data;
+	void __iomem *set_addr = (drvdata->base + priv->set_err_ofst);
+	unsigned long flags;
 	u8 trig_type;
 
-	अगर (!user_buf || get_user(trig_type, user_buf))
-		वापस -EFAULT;
+	if (!user_buf || get_user(trig_type, user_buf))
+		return -EFAULT;
 
 	local_irq_save(flags);
-	अगर (trig_type == ALTR_UE_TRIGGER_CHAR)
-		ग_लिखोl(priv->ue_set_mask, set_addr);
-	अन्यथा
-		ग_लिखोl(priv->ce_set_mask, set_addr);
+	if (trig_type == ALTR_UE_TRIGGER_CHAR)
+		writel(priv->ue_set_mask, set_addr);
+	else
+		writel(priv->ce_set_mask, set_addr);
 
-	/* Ensure the पूर्णांकerrupt test bits are set */
+	/* Ensure the interrupt test bits are set */
 	wmb();
 	local_irq_restore(flags);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
 /*
- * The Stratix10 EDAC Error Injection Functions dअगरfer from Arria10
+ * The Stratix10 EDAC Error Injection Functions differ from Arria10
  * slightly. A few Arria10 peripherals can use this injection function.
- * Inject the error पूर्णांकo the memory and then पढ़ोback to trigger the IRQ.
+ * Inject the error into the memory and then readback to trigger the IRQ.
  */
-अटल sमाप_प्रकार altr_edac_a10_device_trig2(काष्ठा file *file,
-					  स्थिर अक्षर __user *user_buf,
-					  माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा edac_device_ctl_info *edac_dci = file->निजी_data;
-	काष्ठा altr_edac_device_dev *drvdata = edac_dci->pvt_info;
-	स्थिर काष्ठा edac_device_prv_data *priv = drvdata->data;
-	व्योम __iomem *set_addr = (drvdata->base + priv->set_err_ofst);
-	अचिन्हित दीर्घ flags;
+static ssize_t altr_edac_a10_device_trig2(struct file *file,
+					  const char __user *user_buf,
+					  size_t count, loff_t *ppos)
+{
+	struct edac_device_ctl_info *edac_dci = file->private_data;
+	struct altr_edac_device_dev *drvdata = edac_dci->pvt_info;
+	const struct edac_device_prv_data *priv = drvdata->data;
+	void __iomem *set_addr = (drvdata->base + priv->set_err_ofst);
+	unsigned long flags;
 	u8 trig_type;
 
-	अगर (!user_buf || get_user(trig_type, user_buf))
-		वापस -EFAULT;
+	if (!user_buf || get_user(trig_type, user_buf))
+		return -EFAULT;
 
 	local_irq_save(flags);
-	अगर (trig_type == ALTR_UE_TRIGGER_CHAR) अणु
-		ग_लिखोl(priv->ue_set_mask, set_addr);
-	पूर्ण अन्यथा अणु
-		/* Setup पढ़ो/ग_लिखो of 4 bytes */
-		ग_लिखोl(ECC_WORD_WRITE, drvdata->base + ECC_BLK_DBYTECTRL_OFST);
+	if (trig_type == ALTR_UE_TRIGGER_CHAR) {
+		writel(priv->ue_set_mask, set_addr);
+	} else {
+		/* Setup read/write of 4 bytes */
+		writel(ECC_WORD_WRITE, drvdata->base + ECC_BLK_DBYTECTRL_OFST);
 		/* Setup Address to 0 */
-		ग_लिखोl(0, drvdata->base + ECC_BLK_ADDRESS_OFST);
-		/* Setup accctrl to पढ़ो & ecc & data override */
-		ग_लिखोl(ECC_READ_EDOVR, drvdata->base + ECC_BLK_ACCCTRL_OFST);
+		writel(0, drvdata->base + ECC_BLK_ADDRESS_OFST);
+		/* Setup accctrl to read & ecc & data override */
+		writel(ECC_READ_EDOVR, drvdata->base + ECC_BLK_ACCCTRL_OFST);
 		/* Kick it. */
-		ग_लिखोl(ECC_XACT_KICK, drvdata->base + ECC_BLK_STARTACC_OFST);
-		/* Setup ग_लिखो क्रम single bit change */
-		ग_लिखोl(पढ़ोl(drvdata->base + ECC_BLK_RDATA0_OFST) ^ 0x1,
+		writel(ECC_XACT_KICK, drvdata->base + ECC_BLK_STARTACC_OFST);
+		/* Setup write for single bit change */
+		writel(readl(drvdata->base + ECC_BLK_RDATA0_OFST) ^ 0x1,
 		       drvdata->base + ECC_BLK_WDATA0_OFST);
-		ग_लिखोl(पढ़ोl(drvdata->base + ECC_BLK_RDATA1_OFST),
+		writel(readl(drvdata->base + ECC_BLK_RDATA1_OFST),
 		       drvdata->base + ECC_BLK_WDATA1_OFST);
-		ग_लिखोl(पढ़ोl(drvdata->base + ECC_BLK_RDATA2_OFST),
+		writel(readl(drvdata->base + ECC_BLK_RDATA2_OFST),
 		       drvdata->base + ECC_BLK_WDATA2_OFST);
-		ग_लिखोl(पढ़ोl(drvdata->base + ECC_BLK_RDATA3_OFST),
+		writel(readl(drvdata->base + ECC_BLK_RDATA3_OFST),
 		       drvdata->base + ECC_BLK_WDATA3_OFST);
 
 		/* Copy Read ECC to Write ECC */
-		ग_लिखोl(पढ़ोl(drvdata->base + ECC_BLK_RECC0_OFST),
+		writel(readl(drvdata->base + ECC_BLK_RECC0_OFST),
 		       drvdata->base + ECC_BLK_WECC0_OFST);
-		ग_लिखोl(पढ़ोl(drvdata->base + ECC_BLK_RECC1_OFST),
+		writel(readl(drvdata->base + ECC_BLK_RECC1_OFST),
 		       drvdata->base + ECC_BLK_WECC1_OFST);
-		/* Setup accctrl to ग_लिखो & ecc override & data override */
-		ग_लिखोl(ECC_WRITE_EDOVR, drvdata->base + ECC_BLK_ACCCTRL_OFST);
+		/* Setup accctrl to write & ecc override & data override */
+		writel(ECC_WRITE_EDOVR, drvdata->base + ECC_BLK_ACCCTRL_OFST);
 		/* Kick it. */
-		ग_लिखोl(ECC_XACT_KICK, drvdata->base + ECC_BLK_STARTACC_OFST);
-		/* Setup accctrl to पढ़ो & ecc overग_लिखो & data overग_लिखो */
-		ग_लिखोl(ECC_READ_EDOVR, drvdata->base + ECC_BLK_ACCCTRL_OFST);
+		writel(ECC_XACT_KICK, drvdata->base + ECC_BLK_STARTACC_OFST);
+		/* Setup accctrl to read & ecc overwrite & data overwrite */
+		writel(ECC_READ_EDOVR, drvdata->base + ECC_BLK_ACCCTRL_OFST);
 		/* Kick it. */
-		ग_लिखोl(ECC_XACT_KICK, drvdata->base + ECC_BLK_STARTACC_OFST);
-	पूर्ण
+		writel(ECC_XACT_KICK, drvdata->base + ECC_BLK_STARTACC_OFST);
+	}
 
-	/* Ensure the पूर्णांकerrupt test bits are set */
+	/* Ensure the interrupt test bits are set */
 	wmb();
 	local_irq_restore(flags);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल व्योम altr_edac_a10_irq_handler(काष्ठा irq_desc *desc)
-अणु
-	पूर्णांक dberr, bit, sm_offset, irq_status;
-	काष्ठा altr_arria10_edac *edac = irq_desc_get_handler_data(desc);
-	काष्ठा irq_chip *chip = irq_desc_get_chip(desc);
-	पूर्णांक irq = irq_desc_get_irq(desc);
-	अचिन्हित दीर्घ bits;
+static void altr_edac_a10_irq_handler(struct irq_desc *desc)
+{
+	int dberr, bit, sm_offset, irq_status;
+	struct altr_arria10_edac *edac = irq_desc_get_handler_data(desc);
+	struct irq_chip *chip = irq_desc_get_chip(desc);
+	int irq = irq_desc_get_irq(desc);
+	unsigned long bits;
 
 	dberr = (irq == edac->db_irq) ? 1 : 0;
 	sm_offset = dberr ? A10_SYSMGR_ECC_INTSTAT_DERR_OFST :
@@ -1801,101 +1800,101 @@ MODULE_DEVICE_TABLE(of, altr_edac_a10_device_of_match);
 
 	chained_irq_enter(chip, desc);
 
-	regmap_पढ़ो(edac->ecc_mgr_map, sm_offset, &irq_status);
+	regmap_read(edac->ecc_mgr_map, sm_offset, &irq_status);
 
 	bits = irq_status;
-	क्रम_each_set_bit(bit, &bits, 32) अणु
-		irq = irq_linear_revmap(edac->करोमुख्य, dberr * 32 + bit);
-		अगर (irq)
+	for_each_set_bit(bit, &bits, 32) {
+		irq = irq_linear_revmap(edac->domain, dberr * 32 + bit);
+		if (irq)
 			generic_handle_irq(irq);
-	पूर्ण
+	}
 
-	chained_irq_निकास(chip, desc);
-पूर्ण
+	chained_irq_exit(chip, desc);
+}
 
-अटल पूर्णांक validate_parent_available(काष्ठा device_node *np)
-अणु
-	काष्ठा device_node *parent;
-	पूर्णांक ret = 0;
+static int validate_parent_available(struct device_node *np)
+{
+	struct device_node *parent;
+	int ret = 0;
 
-	/* SDRAM must be present क्रम Linux (implied parent) */
-	अगर (of_device_is_compatible(np, "altr,sdram-edac-s10"))
-		वापस 0;
+	/* SDRAM must be present for Linux (implied parent) */
+	if (of_device_is_compatible(np, "altr,sdram-edac-s10"))
+		return 0;
 
-	/* Ensure parent device is enabled अगर parent node exists */
+	/* Ensure parent device is enabled if parent node exists */
 	parent = of_parse_phandle(np, "altr,ecc-parent", 0);
-	अगर (parent && !of_device_is_available(parent))
+	if (parent && !of_device_is_available(parent))
 		ret = -ENODEV;
 
 	of_node_put(parent);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक get_s10_sdram_edac_resource(काष्ठा device_node *np,
-				       काष्ठा resource *res)
-अणु
-	काष्ठा device_node *parent;
-	पूर्णांक ret;
+static int get_s10_sdram_edac_resource(struct device_node *np,
+				       struct resource *res)
+{
+	struct device_node *parent;
+	int ret;
 
 	parent = of_parse_phandle(np, "altr,sdr-syscon", 0);
-	अगर (!parent)
-		वापस -ENODEV;
+	if (!parent)
+		return -ENODEV;
 
 	ret = of_address_to_resource(parent, 0, res);
 	of_node_put(parent);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक altr_edac_a10_device_add(काष्ठा altr_arria10_edac *edac,
-				    काष्ठा device_node *np)
-अणु
-	काष्ठा edac_device_ctl_info *dci;
-	काष्ठा altr_edac_device_dev *altdev;
-	अक्षर *ecc_name = (अक्षर *)np->name;
-	काष्ठा resource res;
-	पूर्णांक edac_idx;
-	पूर्णांक rc = 0;
-	स्थिर काष्ठा edac_device_prv_data *prv;
-	/* Get matching node and check क्रम valid result */
-	स्थिर काष्ठा of_device_id *pdev_id =
+static int altr_edac_a10_device_add(struct altr_arria10_edac *edac,
+				    struct device_node *np)
+{
+	struct edac_device_ctl_info *dci;
+	struct altr_edac_device_dev *altdev;
+	char *ecc_name = (char *)np->name;
+	struct resource res;
+	int edac_idx;
+	int rc = 0;
+	const struct edac_device_prv_data *prv;
+	/* Get matching node and check for valid result */
+	const struct of_device_id *pdev_id =
 		of_match_node(altr_edac_a10_device_of_match, np);
-	अगर (IS_ERR_OR_शून्य(pdev_id))
-		वापस -ENODEV;
+	if (IS_ERR_OR_NULL(pdev_id))
+		return -ENODEV;
 
-	/* Get driver specअगरic data क्रम this EDAC device */
+	/* Get driver specific data for this EDAC device */
 	prv = pdev_id->data;
-	अगर (IS_ERR_OR_शून्य(prv))
-		वापस -ENODEV;
+	if (IS_ERR_OR_NULL(prv))
+		return -ENODEV;
 
-	अगर (validate_parent_available(np))
-		वापस -ENODEV;
+	if (validate_parent_available(np))
+		return -ENODEV;
 
-	अगर (!devres_खोलो_group(edac->dev, altr_edac_a10_device_add, GFP_KERNEL))
-		वापस -ENOMEM;
+	if (!devres_open_group(edac->dev, altr_edac_a10_device_add, GFP_KERNEL))
+		return -ENOMEM;
 
-	अगर (of_device_is_compatible(np, "altr,sdram-edac-s10"))
+	if (of_device_is_compatible(np, "altr,sdram-edac-s10"))
 		rc = get_s10_sdram_edac_resource(np, &res);
-	अन्यथा
+	else
 		rc = of_address_to_resource(np, 0, &res);
 
-	अगर (rc < 0) अणु
-		edac_prपूर्णांकk(KERN_ERR, EDAC_DEVICE,
+	if (rc < 0) {
+		edac_printk(KERN_ERR, EDAC_DEVICE,
 			    "%s: no resource address\n", ecc_name);
-		जाओ err_release_group;
-	पूर्ण
+		goto err_release_group;
+	}
 
 	edac_idx = edac_device_alloc_index();
-	dci = edac_device_alloc_ctl_info(माप(*altdev), ecc_name,
-					 1, ecc_name, 1, 0, शून्य, 0,
+	dci = edac_device_alloc_ctl_info(sizeof(*altdev), ecc_name,
+					 1, ecc_name, 1, 0, NULL, 0,
 					 edac_idx);
 
-	अगर (!dci) अणु
-		edac_prपूर्णांकk(KERN_ERR, EDAC_DEVICE,
+	if (!dci) {
+		edac_printk(KERN_ERR, EDAC_DEVICE,
 			    "%s: Unable to allocate EDAC device\n", ecc_name);
 		rc = -ENOMEM;
-		जाओ err_release_group;
-	पूर्ण
+		goto err_release_group;
+	}
 
 	altdev = dci->pvt_info;
 	dci->dev = edac->dev;
@@ -1911,277 +1910,277 @@ MODULE_DEVICE_TABLE(of, altr_edac_a10_device_of_match);
 	dci->dev_name = ecc_name;
 
 	altdev->base = devm_ioremap_resource(edac->dev, &res);
-	अगर (IS_ERR(altdev->base)) अणु
+	if (IS_ERR(altdev->base)) {
 		rc = PTR_ERR(altdev->base);
-		जाओ err_release_group1;
-	पूर्ण
+		goto err_release_group1;
+	}
 
-	/* Check specअगरic dependencies क्रम the module */
-	अगर (altdev->data->setup) अणु
+	/* Check specific dependencies for the module */
+	if (altdev->data->setup) {
 		rc = altdev->data->setup(altdev);
-		अगर (rc)
-			जाओ err_release_group1;
-	पूर्ण
+		if (rc)
+			goto err_release_group1;
+	}
 
 	altdev->sb_irq = irq_of_parse_and_map(np, 0);
-	अगर (!altdev->sb_irq) अणु
-		edac_prपूर्णांकk(KERN_ERR, EDAC_DEVICE, "Error allocating SBIRQ\n");
+	if (!altdev->sb_irq) {
+		edac_printk(KERN_ERR, EDAC_DEVICE, "Error allocating SBIRQ\n");
 		rc = -ENODEV;
-		जाओ err_release_group1;
-	पूर्ण
+		goto err_release_group1;
+	}
 	rc = devm_request_irq(edac->dev, altdev->sb_irq, prv->ecc_irq_handler,
 			      IRQF_ONESHOT | IRQF_TRIGGER_HIGH,
 			      ecc_name, altdev);
-	अगर (rc) अणु
-		edac_prपूर्णांकk(KERN_ERR, EDAC_DEVICE, "No SBERR IRQ resource\n");
-		जाओ err_release_group1;
-	पूर्ण
+	if (rc) {
+		edac_printk(KERN_ERR, EDAC_DEVICE, "No SBERR IRQ resource\n");
+		goto err_release_group1;
+	}
 
-#अगर_घोषित CONFIG_64BIT
+#ifdef CONFIG_64BIT
 	/* Use IRQ to determine SError origin instead of assigning IRQ */
-	rc = of_property_पढ़ो_u32_index(np, "interrupts", 0, &altdev->db_irq);
-	अगर (rc) अणु
-		edac_prपूर्णांकk(KERN_ERR, EDAC_DEVICE,
+	rc = of_property_read_u32_index(np, "interrupts", 0, &altdev->db_irq);
+	if (rc) {
+		edac_printk(KERN_ERR, EDAC_DEVICE,
 			    "Unable to parse DB IRQ index\n");
-		जाओ err_release_group1;
-	पूर्ण
-#अन्यथा
+		goto err_release_group1;
+	}
+#else
 	altdev->db_irq = irq_of_parse_and_map(np, 1);
-	अगर (!altdev->db_irq) अणु
-		edac_prपूर्णांकk(KERN_ERR, EDAC_DEVICE, "Error allocating DBIRQ\n");
+	if (!altdev->db_irq) {
+		edac_printk(KERN_ERR, EDAC_DEVICE, "Error allocating DBIRQ\n");
 		rc = -ENODEV;
-		जाओ err_release_group1;
-	पूर्ण
+		goto err_release_group1;
+	}
 	rc = devm_request_irq(edac->dev, altdev->db_irq, prv->ecc_irq_handler,
 			      IRQF_ONESHOT | IRQF_TRIGGER_HIGH,
 			      ecc_name, altdev);
-	अगर (rc) अणु
-		edac_prपूर्णांकk(KERN_ERR, EDAC_DEVICE, "No DBERR IRQ resource\n");
-		जाओ err_release_group1;
-	पूर्ण
-#पूर्ण_अगर
+	if (rc) {
+		edac_printk(KERN_ERR, EDAC_DEVICE, "No DBERR IRQ resource\n");
+		goto err_release_group1;
+	}
+#endif
 
 	rc = edac_device_add_device(dci);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(edac->dev, "edac_device_add_device failed\n");
 		rc = -ENOMEM;
-		जाओ err_release_group1;
-	पूर्ण
+		goto err_release_group1;
+	}
 
 	altr_create_edacdev_dbgfs(dci, prv);
 
 	list_add(&altdev->next, &edac->a10_ecc_devices);
 
-	devres_हटाओ_group(edac->dev, altr_edac_a10_device_add);
+	devres_remove_group(edac->dev, altr_edac_a10_device_add);
 
-	वापस 0;
+	return 0;
 
 err_release_group1:
-	edac_device_मुक्त_ctl_info(dci);
+	edac_device_free_ctl_info(dci);
 err_release_group:
-	devres_release_group(edac->dev, शून्य);
-	edac_prपूर्णांकk(KERN_ERR, EDAC_DEVICE,
+	devres_release_group(edac->dev, NULL);
+	edac_printk(KERN_ERR, EDAC_DEVICE,
 		    "%s:Error setting up EDAC device: %d\n", ecc_name, rc);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम a10_eccmgr_irq_mask(काष्ठा irq_data *d)
-अणु
-	काष्ठा altr_arria10_edac *edac = irq_data_get_irq_chip_data(d);
+static void a10_eccmgr_irq_mask(struct irq_data *d)
+{
+	struct altr_arria10_edac *edac = irq_data_get_irq_chip_data(d);
 
-	regmap_ग_लिखो(edac->ecc_mgr_map,	A10_SYSMGR_ECC_INTMASK_SET_OFST,
+	regmap_write(edac->ecc_mgr_map,	A10_SYSMGR_ECC_INTMASK_SET_OFST,
 		     BIT(d->hwirq));
-पूर्ण
+}
 
-अटल व्योम a10_eccmgr_irq_unmask(काष्ठा irq_data *d)
-अणु
-	काष्ठा altr_arria10_edac *edac = irq_data_get_irq_chip_data(d);
+static void a10_eccmgr_irq_unmask(struct irq_data *d)
+{
+	struct altr_arria10_edac *edac = irq_data_get_irq_chip_data(d);
 
-	regmap_ग_लिखो(edac->ecc_mgr_map,	A10_SYSMGR_ECC_INTMASK_CLR_OFST,
+	regmap_write(edac->ecc_mgr_map,	A10_SYSMGR_ECC_INTMASK_CLR_OFST,
 		     BIT(d->hwirq));
-पूर्ण
+}
 
-अटल पूर्णांक a10_eccmgr_irqकरोमुख्य_map(काष्ठा irq_करोमुख्य *d, अचिन्हित पूर्णांक irq,
+static int a10_eccmgr_irqdomain_map(struct irq_domain *d, unsigned int irq,
 				    irq_hw_number_t hwirq)
-अणु
-	काष्ठा altr_arria10_edac *edac = d->host_data;
+{
+	struct altr_arria10_edac *edac = d->host_data;
 
 	irq_set_chip_and_handler(irq, &edac->irq_chip, handle_simple_irq);
 	irq_set_chip_data(irq, edac);
 	irq_set_noprobe(irq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा irq_करोमुख्य_ops a10_eccmgr_ic_ops = अणु
-	.map = a10_eccmgr_irqकरोमुख्य_map,
-	.xlate = irq_करोमुख्य_xlate_twocell,
-पूर्ण;
+static const struct irq_domain_ops a10_eccmgr_ic_ops = {
+	.map = a10_eccmgr_irqdomain_map,
+	.xlate = irq_domain_xlate_twocell,
+};
 
 /************** Stratix 10 EDAC Double Bit Error Handler ************/
-#घोषणा to_a10edac(p, m) container_of(p, काष्ठा altr_arria10_edac, m)
+#define to_a10edac(p, m) container_of(p, struct altr_arria10_edac, m)
 
-#अगर_घोषित CONFIG_64BIT
-/* panic routine issues reboot on non-zero panic_समयout */
-बाह्य पूर्णांक panic_समयout;
+#ifdef CONFIG_64BIT
+/* panic routine issues reboot on non-zero panic_timeout */
+extern int panic_timeout;
 
 /*
- * The द्विगुन bit error is handled through SError which is fatal. This is
- * called as a panic notअगरier to prपूर्णांकout ECC error info as part of the panic.
+ * The double bit error is handled through SError which is fatal. This is
+ * called as a panic notifier to printout ECC error info as part of the panic.
  */
-अटल पूर्णांक s10_edac_dberr_handler(काष्ठा notअगरier_block *this,
-				  अचिन्हित दीर्घ event, व्योम *ptr)
-अणु
-	काष्ठा altr_arria10_edac *edac = to_a10edac(this, panic_notअगरier);
-	पूर्णांक err_addr, dberror;
+static int s10_edac_dberr_handler(struct notifier_block *this,
+				  unsigned long event, void *ptr)
+{
+	struct altr_arria10_edac *edac = to_a10edac(this, panic_notifier);
+	int err_addr, dberror;
 
-	regmap_पढ़ो(edac->ecc_mgr_map, S10_SYSMGR_ECC_INTSTAT_DERR_OFST,
+	regmap_read(edac->ecc_mgr_map, S10_SYSMGR_ECC_INTSTAT_DERR_OFST,
 		    &dberror);
-	regmap_ग_लिखो(edac->ecc_mgr_map, S10_SYSMGR_UE_VAL_OFST, dberror);
-	अगर (dberror & S10_DBE_IRQ_MASK) अणु
-		काष्ठा list_head *position;
-		काष्ठा altr_edac_device_dev *ed;
-		काष्ठा arm_smccc_res result;
+	regmap_write(edac->ecc_mgr_map, S10_SYSMGR_UE_VAL_OFST, dberror);
+	if (dberror & S10_DBE_IRQ_MASK) {
+		struct list_head *position;
+		struct altr_edac_device_dev *ed;
+		struct arm_smccc_res result;
 
 		/* Find the matching DBE in the list of devices */
-		list_क्रम_each(position, &edac->a10_ecc_devices) अणु
-			ed = list_entry(position, काष्ठा altr_edac_device_dev,
+		list_for_each(position, &edac->a10_ecc_devices) {
+			ed = list_entry(position, struct altr_edac_device_dev,
 					next);
-			अगर (!(BIT(ed->db_irq) & dberror))
-				जारी;
+			if (!(BIT(ed->db_irq) & dberror))
+				continue;
 
-			ग_लिखोl(ALTR_A10_ECC_DERRPENA,
+			writel(ALTR_A10_ECC_DERRPENA,
 			       ed->base + ALTR_A10_ECC_INTSTAT_OFST);
-			err_addr = पढ़ोl(ed->base + ALTR_S10_DERR_ADDRA_OFST);
-			regmap_ग_लिखो(edac->ecc_mgr_map,
+			err_addr = readl(ed->base + ALTR_S10_DERR_ADDRA_OFST);
+			regmap_write(edac->ecc_mgr_map,
 				     S10_SYSMGR_UE_ADDR_OFST, err_addr);
-			edac_prपूर्णांकk(KERN_ERR, EDAC_DEVICE,
+			edac_printk(KERN_ERR, EDAC_DEVICE,
 				    "EDAC: [Fatal DBE on %s @ 0x%08X]\n",
 				    ed->edac_dev_name, err_addr);
-			अवरोध;
-		पूर्ण
-		/* Notअगरy the System through SMC. Reboot delay = 1 second */
-		panic_समयout = 1;
+			break;
+		}
+		/* Notify the System through SMC. Reboot delay = 1 second */
+		panic_timeout = 1;
 		arm_smccc_smc(INTEL_SIP_SMC_ECC_DBE, dberror, 0, 0, 0, 0,
 			      0, 0, &result);
-	पूर्ण
+	}
 
-	वापस NOTIFY_DONE;
-पूर्ण
-#पूर्ण_अगर
+	return NOTIFY_DONE;
+}
+#endif
 
 /****************** Arria 10 EDAC Probe Function *********************/
-अटल पूर्णांक altr_edac_a10_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा altr_arria10_edac *edac;
-	काष्ठा device_node *child;
+static int altr_edac_a10_probe(struct platform_device *pdev)
+{
+	struct altr_arria10_edac *edac;
+	struct device_node *child;
 
-	edac = devm_kzalloc(&pdev->dev, माप(*edac), GFP_KERNEL);
-	अगर (!edac)
-		वापस -ENOMEM;
+	edac = devm_kzalloc(&pdev->dev, sizeof(*edac), GFP_KERNEL);
+	if (!edac)
+		return -ENOMEM;
 
 	edac->dev = &pdev->dev;
-	platक्रमm_set_drvdata(pdev, edac);
+	platform_set_drvdata(pdev, edac);
 	INIT_LIST_HEAD(&edac->a10_ecc_devices);
 
 	edac->ecc_mgr_map =
 		altr_sysmgr_regmap_lookup_by_phandle(pdev->dev.of_node,
 						     "altr,sysmgr-syscon");
 
-	अगर (IS_ERR(edac->ecc_mgr_map)) अणु
-		edac_prपूर्णांकk(KERN_ERR, EDAC_DEVICE,
+	if (IS_ERR(edac->ecc_mgr_map)) {
+		edac_printk(KERN_ERR, EDAC_DEVICE,
 			    "Unable to get syscon altr,sysmgr-syscon\n");
-		वापस PTR_ERR(edac->ecc_mgr_map);
-	पूर्ण
+		return PTR_ERR(edac->ecc_mgr_map);
+	}
 
 	edac->irq_chip.name = pdev->dev.of_node->name;
 	edac->irq_chip.irq_mask = a10_eccmgr_irq_mask;
 	edac->irq_chip.irq_unmask = a10_eccmgr_irq_unmask;
-	edac->करोमुख्य = irq_करोमुख्य_add_linear(pdev->dev.of_node, 64,
+	edac->domain = irq_domain_add_linear(pdev->dev.of_node, 64,
 					     &a10_eccmgr_ic_ops, edac);
-	अगर (!edac->करोमुख्य) अणु
+	if (!edac->domain) {
 		dev_err(&pdev->dev, "Error adding IRQ domain\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	edac->sb_irq = platक्रमm_get_irq(pdev, 0);
-	अगर (edac->sb_irq < 0) अणु
+	edac->sb_irq = platform_get_irq(pdev, 0);
+	if (edac->sb_irq < 0) {
 		dev_err(&pdev->dev, "No SBERR IRQ resource\n");
-		वापस edac->sb_irq;
-	पूर्ण
+		return edac->sb_irq;
+	}
 
 	irq_set_chained_handler_and_data(edac->sb_irq,
 					 altr_edac_a10_irq_handler,
 					 edac);
 
-#अगर_घोषित CONFIG_64BIT
-	अणु
-		पूर्णांक dberror, err_addr;
+#ifdef CONFIG_64BIT
+	{
+		int dberror, err_addr;
 
-		edac->panic_notअगरier.notअगरier_call = s10_edac_dberr_handler;
-		atomic_notअगरier_chain_रेजिस्टर(&panic_notअगरier_list,
-					       &edac->panic_notअगरier);
+		edac->panic_notifier.notifier_call = s10_edac_dberr_handler;
+		atomic_notifier_chain_register(&panic_notifier_list,
+					       &edac->panic_notifier);
 
-		/* Prपूर्णांकout a message अगर uncorrectable error previously. */
-		regmap_पढ़ो(edac->ecc_mgr_map, S10_SYSMGR_UE_VAL_OFST,
+		/* Printout a message if uncorrectable error previously. */
+		regmap_read(edac->ecc_mgr_map, S10_SYSMGR_UE_VAL_OFST,
 			    &dberror);
-		अगर (dberror) अणु
-			regmap_पढ़ो(edac->ecc_mgr_map, S10_SYSMGR_UE_ADDR_OFST,
+		if (dberror) {
+			regmap_read(edac->ecc_mgr_map, S10_SYSMGR_UE_ADDR_OFST,
 				    &err_addr);
-			edac_prपूर्णांकk(KERN_ERR, EDAC_DEVICE,
+			edac_printk(KERN_ERR, EDAC_DEVICE,
 				    "Previous Boot UE detected[0x%X] @ 0x%X\n",
 				    dberror, err_addr);
-			/* Reset the sticky रेजिस्टरs */
-			regmap_ग_लिखो(edac->ecc_mgr_map,
+			/* Reset the sticky registers */
+			regmap_write(edac->ecc_mgr_map,
 				     S10_SYSMGR_UE_VAL_OFST, 0);
-			regmap_ग_लिखो(edac->ecc_mgr_map,
+			regmap_write(edac->ecc_mgr_map,
 				     S10_SYSMGR_UE_ADDR_OFST, 0);
-		पूर्ण
-	पूर्ण
-#अन्यथा
-	edac->db_irq = platक्रमm_get_irq(pdev, 1);
-	अगर (edac->db_irq < 0) अणु
+		}
+	}
+#else
+	edac->db_irq = platform_get_irq(pdev, 1);
+	if (edac->db_irq < 0) {
 		dev_err(&pdev->dev, "No DBERR IRQ resource\n");
-		वापस edac->db_irq;
-	पूर्ण
+		return edac->db_irq;
+	}
 	irq_set_chained_handler_and_data(edac->db_irq,
 					 altr_edac_a10_irq_handler, edac);
-#पूर्ण_अगर
+#endif
 
-	क्रम_each_child_of_node(pdev->dev.of_node, child) अणु
-		अगर (!of_device_is_available(child))
-			जारी;
+	for_each_child_of_node(pdev->dev.of_node, child) {
+		if (!of_device_is_available(child))
+			continue;
 
-		अगर (of_match_node(altr_edac_a10_device_of_match, child))
+		if (of_match_node(altr_edac_a10_device_of_match, child))
 			altr_edac_a10_device_add(edac, child);
 
-#अगर_घोषित CONFIG_EDAC_ALTERA_SDRAM
-		अन्यथा अगर (of_device_is_compatible(child, "altr,sdram-edac-a10"))
-			of_platक्रमm_populate(pdev->dev.of_node,
+#ifdef CONFIG_EDAC_ALTERA_SDRAM
+		else if (of_device_is_compatible(child, "altr,sdram-edac-a10"))
+			of_platform_populate(pdev->dev.of_node,
 					     altr_sdram_ctrl_of_match,
-					     शून्य, &pdev->dev);
-#पूर्ण_अगर
-	पूर्ण
+					     NULL, &pdev->dev);
+#endif
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id altr_edac_a10_of_match[] = अणु
-	अणु .compatible = "altr,socfpga-a10-ecc-manager" पूर्ण,
-	अणु .compatible = "altr,socfpga-s10-ecc-manager" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id altr_edac_a10_of_match[] = {
+	{ .compatible = "altr,socfpga-a10-ecc-manager" },
+	{ .compatible = "altr,socfpga-s10-ecc-manager" },
+	{},
+};
 MODULE_DEVICE_TABLE(of, altr_edac_a10_of_match);
 
-अटल काष्ठा platक्रमm_driver altr_edac_a10_driver = अणु
+static struct platform_driver altr_edac_a10_driver = {
 	.probe =  altr_edac_a10_probe,
-	.driver = अणु
+	.driver = {
 		.name = "socfpga_a10_ecc_manager",
 		.of_match_table = altr_edac_a10_of_match,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(altr_edac_a10_driver);
+	},
+};
+module_platform_driver(altr_edac_a10_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Thor Thayer");

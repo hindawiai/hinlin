@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Virtio vhost-user driver
  *
@@ -8,1069 +7,1069 @@
  * This driver allows virtio devices to be used over a vhost-user socket.
  *
  * Guest devices can be instantiated by kernel module or command line
- * parameters. One device will be created क्रम each parameter. Syntax:
+ * parameters. One device will be created for each parameter. Syntax:
  *
- *		virtio_uml.device=<socket>:<virtio_id>[:<platक्रमm_id>]
+ *		virtio_uml.device=<socket>:<virtio_id>[:<platform_id>]
  * where:
  *		<socket>	:= vhost-user socket path to connect
  *		<virtio_id>	:= virtio device id (as in virtio_ids.h)
- *		<platक्रमm_id>	:= (optional) platक्रमm device id
+ *		<platform_id>	:= (optional) platform device id
  *
  * example:
  *		virtio_uml.device=/var/uml.socket:1
  *
  * Based on Virtio MMIO driver by Pawel Moll, copyright 2011-2014, ARM Ltd.
  */
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/virtपन.स>
-#समावेश <linux/virtio_config.h>
-#समावेश <linux/virtio_ring.h>
-#समावेश <linux/समय-पूर्णांकernal.h>
-#समावेश <shared/as-layout.h>
-#समावेश <irq_kern.h>
-#समावेश <init.h>
-#समावेश <os.h>
-#समावेश "vhost_user.h"
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
+#include <linux/virtio.h>
+#include <linux/virtio_config.h>
+#include <linux/virtio_ring.h>
+#include <linux/time-internal.h>
+#include <shared/as-layout.h>
+#include <irq_kern.h>
+#include <init.h>
+#include <os.h>
+#include "vhost_user.h"
 
-#घोषणा MAX_SUPPORTED_QUEUE_SIZE	256
+#define MAX_SUPPORTED_QUEUE_SIZE	256
 
-#घोषणा to_virtio_uml_device(_vdev) \
-	container_of(_vdev, काष्ठा virtio_uml_device, vdev)
+#define to_virtio_uml_device(_vdev) \
+	container_of(_vdev, struct virtio_uml_device, vdev)
 
-काष्ठा virtio_uml_platक्रमm_data अणु
+struct virtio_uml_platform_data {
 	u32 virtio_device_id;
-	स्थिर अक्षर *socket_path;
-	काष्ठा work_काष्ठा conn_broken_wk;
-	काष्ठा platक्रमm_device *pdev;
-पूर्ण;
+	const char *socket_path;
+	struct work_struct conn_broken_wk;
+	struct platform_device *pdev;
+};
 
-काष्ठा virtio_uml_device अणु
-	काष्ठा virtio_device vdev;
-	काष्ठा platक्रमm_device *pdev;
+struct virtio_uml_device {
+	struct virtio_device vdev;
+	struct platform_device *pdev;
 
 	spinlock_t sock_lock;
-	पूर्णांक sock, req_fd, irq;
+	int sock, req_fd, irq;
 	u64 features;
 	u64 protocol_features;
 	u8 status;
-	u8 रेजिस्टरed:1;
+	u8 registered:1;
 	u8 suspended:1;
 
 	u8 config_changed_irq:1;
-	uपूर्णांक64_t vq_irq_vq_map;
-पूर्ण;
+	uint64_t vq_irq_vq_map;
+};
 
-काष्ठा virtio_uml_vq_info अणु
-	पूर्णांक kick_fd, call_fd;
-	अक्षर name[32];
+struct virtio_uml_vq_info {
+	int kick_fd, call_fd;
+	char name[32];
 	bool suspended;
-पूर्ण;
+};
 
-बाह्य अचिन्हित दीर्घ दीर्घ physmem_size, highmem;
+extern unsigned long long physmem_size, highmem;
 
-#घोषणा vu_err(vu_dev, ...)	dev_err(&(vu_dev)->pdev->dev, ##__VA_ARGS__)
+#define vu_err(vu_dev, ...)	dev_err(&(vu_dev)->pdev->dev, ##__VA_ARGS__)
 
 /* Vhost-user protocol */
 
-अटल पूर्णांक full_sendmsg_fds(पूर्णांक fd, स्थिर व्योम *buf, अचिन्हित पूर्णांक len,
-			    स्थिर पूर्णांक *fds, अचिन्हित पूर्णांक fds_num)
-अणु
-	पूर्णांक rc;
+static int full_sendmsg_fds(int fd, const void *buf, unsigned int len,
+			    const int *fds, unsigned int fds_num)
+{
+	int rc;
 
-	करो अणु
+	do {
 		rc = os_sendmsg_fds(fd, buf, len, fds, fds_num);
-		अगर (rc > 0) अणु
+		if (rc > 0) {
 			buf += rc;
 			len -= rc;
-			fds = शून्य;
+			fds = NULL;
 			fds_num = 0;
-		पूर्ण
-	पूर्ण जबतक (len && (rc >= 0 || rc == -EINTR));
+		}
+	} while (len && (rc >= 0 || rc == -EINTR));
 
-	अगर (rc < 0)
-		वापस rc;
-	वापस 0;
-पूर्ण
+	if (rc < 0)
+		return rc;
+	return 0;
+}
 
-अटल पूर्णांक full_पढ़ो(पूर्णांक fd, व्योम *buf, पूर्णांक len, bool पातable)
-अणु
-	पूर्णांक rc;
+static int full_read(int fd, void *buf, int len, bool abortable)
+{
+	int rc;
 
-	अगर (!len)
-		वापस 0;
+	if (!len)
+		return 0;
 
-	करो अणु
-		rc = os_पढ़ो_file(fd, buf, len);
-		अगर (rc > 0) अणु
+	do {
+		rc = os_read_file(fd, buf, len);
+		if (rc > 0) {
 			buf += rc;
 			len -= rc;
-		पूर्ण
-	पूर्ण जबतक (len && (rc > 0 || rc == -EINTR || (!पातable && rc == -EAGAIN)));
+		}
+	} while (len && (rc > 0 || rc == -EINTR || (!abortable && rc == -EAGAIN)));
 
-	अगर (rc < 0)
-		वापस rc;
-	अगर (rc == 0)
-		वापस -ECONNRESET;
-	वापस 0;
-पूर्ण
+	if (rc < 0)
+		return rc;
+	if (rc == 0)
+		return -ECONNRESET;
+	return 0;
+}
 
-अटल पूर्णांक vhost_user_recv_header(पूर्णांक fd, काष्ठा vhost_user_msg *msg)
-अणु
-	वापस full_पढ़ो(fd, msg, माप(msg->header), true);
-पूर्ण
+static int vhost_user_recv_header(int fd, struct vhost_user_msg *msg)
+{
+	return full_read(fd, msg, sizeof(msg->header), true);
+}
 
-अटल पूर्णांक vhost_user_recv(काष्ठा virtio_uml_device *vu_dev,
-			   पूर्णांक fd, काष्ठा vhost_user_msg *msg,
-			   माप_प्रकार max_payload_size, bool रुको)
-अणु
-	माप_प्रकार size;
-	पूर्णांक rc;
+static int vhost_user_recv(struct virtio_uml_device *vu_dev,
+			   int fd, struct vhost_user_msg *msg,
+			   size_t max_payload_size, bool wait)
+{
+	size_t size;
+	int rc;
 
 	/*
-	 * In virtio समय-travel mode, we're handling all the vhost-user
+	 * In virtio time-travel mode, we're handling all the vhost-user
 	 * FDs by polling them whenever appropriate. However, we may get
-	 * पूर्णांकo a situation where we're sending out an पूर्णांकerrupt message
+	 * into a situation where we're sending out an interrupt message
 	 * to a device (e.g. a net device) and need to handle a simulation
-	 * समय message जबतक करोing so, e.g. one that tells us to update
-	 * our idea of how दीर्घ we can run without scheduling.
+	 * time message while doing so, e.g. one that tells us to update
+	 * our idea of how long we can run without scheduling.
 	 *
-	 * Thus, we need to not just पढ़ो() from the given fd, but need
-	 * to also handle messages क्रम the simulation समय - this function
-	 * करोes that क्रम us जबतक रुकोing क्रम the given fd to be पढ़ोable.
+	 * Thus, we need to not just read() from the given fd, but need
+	 * to also handle messages for the simulation time - this function
+	 * does that for us while waiting for the given fd to be readable.
 	 */
-	अगर (रुको)
-		समय_प्रकारravel_रुको_पढ़ोable(fd);
+	if (wait)
+		time_travel_wait_readable(fd);
 
 	rc = vhost_user_recv_header(fd, msg);
 
-	अगर (rc == -ECONNRESET && vu_dev->रेजिस्टरed) अणु
-		काष्ठा virtio_uml_platक्रमm_data *pdata;
+	if (rc == -ECONNRESET && vu_dev->registered) {
+		struct virtio_uml_platform_data *pdata;
 
-		pdata = vu_dev->pdev->dev.platक्रमm_data;
+		pdata = vu_dev->pdev->dev.platform_data;
 
-		virtio_अवरोध_device(&vu_dev->vdev);
+		virtio_break_device(&vu_dev->vdev);
 		schedule_work(&pdata->conn_broken_wk);
-	पूर्ण
-	अगर (rc)
-		वापस rc;
+	}
+	if (rc)
+		return rc;
 	size = msg->header.size;
-	अगर (size > max_payload_size)
-		वापस -EPROTO;
-	वापस full_पढ़ो(fd, &msg->payload, size, false);
-पूर्ण
+	if (size > max_payload_size)
+		return -EPROTO;
+	return full_read(fd, &msg->payload, size, false);
+}
 
-अटल पूर्णांक vhost_user_recv_resp(काष्ठा virtio_uml_device *vu_dev,
-				काष्ठा vhost_user_msg *msg,
-				माप_प्रकार max_payload_size)
-अणु
-	पूर्णांक rc = vhost_user_recv(vu_dev, vu_dev->sock, msg,
+static int vhost_user_recv_resp(struct virtio_uml_device *vu_dev,
+				struct vhost_user_msg *msg,
+				size_t max_payload_size)
+{
+	int rc = vhost_user_recv(vu_dev, vu_dev->sock, msg,
 				 max_payload_size, true);
 
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	अगर (msg->header.flags != (VHOST_USER_FLAG_REPLY | VHOST_USER_VERSION))
-		वापस -EPROTO;
+	if (msg->header.flags != (VHOST_USER_FLAG_REPLY | VHOST_USER_VERSION))
+		return -EPROTO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vhost_user_recv_u64(काष्ठा virtio_uml_device *vu_dev,
+static int vhost_user_recv_u64(struct virtio_uml_device *vu_dev,
 			       u64 *value)
-अणु
-	काष्ठा vhost_user_msg msg;
-	पूर्णांक rc = vhost_user_recv_resp(vu_dev, &msg,
-				      माप(msg.payload.पूर्णांकeger));
+{
+	struct vhost_user_msg msg;
+	int rc = vhost_user_recv_resp(vu_dev, &msg,
+				      sizeof(msg.payload.integer));
 
-	अगर (rc)
-		वापस rc;
-	अगर (msg.header.size != माप(msg.payload.पूर्णांकeger))
-		वापस -EPROTO;
-	*value = msg.payload.पूर्णांकeger;
-	वापस 0;
-पूर्ण
+	if (rc)
+		return rc;
+	if (msg.header.size != sizeof(msg.payload.integer))
+		return -EPROTO;
+	*value = msg.payload.integer;
+	return 0;
+}
 
-अटल पूर्णांक vhost_user_recv_req(काष्ठा virtio_uml_device *vu_dev,
-			       काष्ठा vhost_user_msg *msg,
-			       माप_प्रकार max_payload_size)
-अणु
-	पूर्णांक rc = vhost_user_recv(vu_dev, vu_dev->req_fd, msg,
+static int vhost_user_recv_req(struct virtio_uml_device *vu_dev,
+			       struct vhost_user_msg *msg,
+			       size_t max_payload_size)
+{
+	int rc = vhost_user_recv(vu_dev, vu_dev->req_fd, msg,
 				 max_payload_size, false);
 
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	अगर ((msg->header.flags & ~VHOST_USER_FLAG_NEED_REPLY) !=
+	if ((msg->header.flags & ~VHOST_USER_FLAG_NEED_REPLY) !=
 			VHOST_USER_VERSION)
-		वापस -EPROTO;
+		return -EPROTO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vhost_user_send(काष्ठा virtio_uml_device *vu_dev,
-			   bool need_response, काष्ठा vhost_user_msg *msg,
-			   पूर्णांक *fds, माप_प्रकार num_fds)
-अणु
-	माप_प्रकार size = माप(msg->header) + msg->header.size;
-	अचिन्हित दीर्घ flags;
+static int vhost_user_send(struct virtio_uml_device *vu_dev,
+			   bool need_response, struct vhost_user_msg *msg,
+			   int *fds, size_t num_fds)
+{
+	size_t size = sizeof(msg->header) + msg->header.size;
+	unsigned long flags;
 	bool request_ack;
-	पूर्णांक rc;
+	int rc;
 
 	msg->header.flags |= VHOST_USER_VERSION;
 
 	/*
-	 * The need_response flag indicates that we alपढ़ोy need a response,
-	 * e.g. to पढ़ो the features. In these हालs, करोn't request an ACK as
-	 * it is meaningless. Also request an ACK only अगर supported.
+	 * The need_response flag indicates that we already need a response,
+	 * e.g. to read the features. In these cases, don't request an ACK as
+	 * it is meaningless. Also request an ACK only if supported.
 	 */
 	request_ack = !need_response;
-	अगर (!(vu_dev->protocol_features &
+	if (!(vu_dev->protocol_features &
 			BIT_ULL(VHOST_USER_PROTOCOL_F_REPLY_ACK)))
 		request_ack = false;
 
-	अगर (request_ack)
+	if (request_ack)
 		msg->header.flags |= VHOST_USER_FLAG_NEED_REPLY;
 
 	spin_lock_irqsave(&vu_dev->sock_lock, flags);
 	rc = full_sendmsg_fds(vu_dev->sock, msg, size, fds, num_fds);
-	अगर (rc < 0)
-		जाओ out;
+	if (rc < 0)
+		goto out;
 
-	अगर (request_ack) अणु
-		uपूर्णांक64_t status;
+	if (request_ack) {
+		uint64_t status;
 
 		rc = vhost_user_recv_u64(vu_dev, &status);
-		अगर (rc)
-			जाओ out;
+		if (rc)
+			goto out;
 
-		अगर (status) अणु
+		if (status) {
 			vu_err(vu_dev, "slave reports error: %llu\n", status);
 			rc = -EIO;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 out:
 	spin_unlock_irqrestore(&vu_dev->sock_lock, flags);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक vhost_user_send_no_payload(काष्ठा virtio_uml_device *vu_dev,
+static int vhost_user_send_no_payload(struct virtio_uml_device *vu_dev,
 				      bool need_response, u32 request)
-अणु
-	काष्ठा vhost_user_msg msg = अणु
+{
+	struct vhost_user_msg msg = {
 		.header.request = request,
-	पूर्ण;
+	};
 
-	वापस vhost_user_send(vu_dev, need_response, &msg, शून्य, 0);
-पूर्ण
+	return vhost_user_send(vu_dev, need_response, &msg, NULL, 0);
+}
 
-अटल पूर्णांक vhost_user_send_no_payload_fd(काष्ठा virtio_uml_device *vu_dev,
-					 u32 request, पूर्णांक fd)
-अणु
-	काष्ठा vhost_user_msg msg = अणु
+static int vhost_user_send_no_payload_fd(struct virtio_uml_device *vu_dev,
+					 u32 request, int fd)
+{
+	struct vhost_user_msg msg = {
 		.header.request = request,
-	पूर्ण;
+	};
 
-	वापस vhost_user_send(vu_dev, false, &msg, &fd, 1);
-पूर्ण
+	return vhost_user_send(vu_dev, false, &msg, &fd, 1);
+}
 
-अटल पूर्णांक vhost_user_send_u64(काष्ठा virtio_uml_device *vu_dev,
+static int vhost_user_send_u64(struct virtio_uml_device *vu_dev,
 			       u32 request, u64 value)
-अणु
-	काष्ठा vhost_user_msg msg = अणु
+{
+	struct vhost_user_msg msg = {
 		.header.request = request,
-		.header.size = माप(msg.payload.पूर्णांकeger),
-		.payload.पूर्णांकeger = value,
-	पूर्ण;
+		.header.size = sizeof(msg.payload.integer),
+		.payload.integer = value,
+	};
 
-	वापस vhost_user_send(vu_dev, false, &msg, शून्य, 0);
-पूर्ण
+	return vhost_user_send(vu_dev, false, &msg, NULL, 0);
+}
 
-अटल पूर्णांक vhost_user_set_owner(काष्ठा virtio_uml_device *vu_dev)
-अणु
-	वापस vhost_user_send_no_payload(vu_dev, false, VHOST_USER_SET_OWNER);
-पूर्ण
+static int vhost_user_set_owner(struct virtio_uml_device *vu_dev)
+{
+	return vhost_user_send_no_payload(vu_dev, false, VHOST_USER_SET_OWNER);
+}
 
-अटल पूर्णांक vhost_user_get_features(काष्ठा virtio_uml_device *vu_dev,
+static int vhost_user_get_features(struct virtio_uml_device *vu_dev,
 				   u64 *features)
-अणु
-	पूर्णांक rc = vhost_user_send_no_payload(vu_dev, true,
+{
+	int rc = vhost_user_send_no_payload(vu_dev, true,
 					    VHOST_USER_GET_FEATURES);
 
-	अगर (rc)
-		वापस rc;
-	वापस vhost_user_recv_u64(vu_dev, features);
-पूर्ण
+	if (rc)
+		return rc;
+	return vhost_user_recv_u64(vu_dev, features);
+}
 
-अटल पूर्णांक vhost_user_set_features(काष्ठा virtio_uml_device *vu_dev,
+static int vhost_user_set_features(struct virtio_uml_device *vu_dev,
 				   u64 features)
-अणु
-	वापस vhost_user_send_u64(vu_dev, VHOST_USER_SET_FEATURES, features);
-पूर्ण
+{
+	return vhost_user_send_u64(vu_dev, VHOST_USER_SET_FEATURES, features);
+}
 
-अटल पूर्णांक vhost_user_get_protocol_features(काष्ठा virtio_uml_device *vu_dev,
+static int vhost_user_get_protocol_features(struct virtio_uml_device *vu_dev,
 					    u64 *protocol_features)
-अणु
-	पूर्णांक rc = vhost_user_send_no_payload(vu_dev, true,
+{
+	int rc = vhost_user_send_no_payload(vu_dev, true,
 			VHOST_USER_GET_PROTOCOL_FEATURES);
 
-	अगर (rc)
-		वापस rc;
-	वापस vhost_user_recv_u64(vu_dev, protocol_features);
-पूर्ण
+	if (rc)
+		return rc;
+	return vhost_user_recv_u64(vu_dev, protocol_features);
+}
 
-अटल पूर्णांक vhost_user_set_protocol_features(काष्ठा virtio_uml_device *vu_dev,
+static int vhost_user_set_protocol_features(struct virtio_uml_device *vu_dev,
 					    u64 protocol_features)
-अणु
-	वापस vhost_user_send_u64(vu_dev, VHOST_USER_SET_PROTOCOL_FEATURES,
+{
+	return vhost_user_send_u64(vu_dev, VHOST_USER_SET_PROTOCOL_FEATURES,
 				   protocol_features);
-पूर्ण
+}
 
-अटल व्योम vhost_user_reply(काष्ठा virtio_uml_device *vu_dev,
-			     काष्ठा vhost_user_msg *msg, पूर्णांक response)
-अणु
-	काष्ठा vhost_user_msg reply = अणु
-		.payload.पूर्णांकeger = response,
-	पूर्ण;
-	माप_प्रकार size = माप(reply.header) + माप(reply.payload.पूर्णांकeger);
-	पूर्णांक rc;
+static void vhost_user_reply(struct virtio_uml_device *vu_dev,
+			     struct vhost_user_msg *msg, int response)
+{
+	struct vhost_user_msg reply = {
+		.payload.integer = response,
+	};
+	size_t size = sizeof(reply.header) + sizeof(reply.payload.integer);
+	int rc;
 
 	reply.header = msg->header;
 	reply.header.flags &= ~VHOST_USER_FLAG_NEED_REPLY;
 	reply.header.flags |= VHOST_USER_FLAG_REPLY;
-	reply.header.size = माप(reply.payload.पूर्णांकeger);
+	reply.header.size = sizeof(reply.payload.integer);
 
-	rc = full_sendmsg_fds(vu_dev->req_fd, &reply, size, शून्य, 0);
+	rc = full_sendmsg_fds(vu_dev->req_fd, &reply, size, NULL, 0);
 
-	अगर (rc)
+	if (rc)
 		vu_err(vu_dev,
 		       "sending reply to slave request failed: %d (size %zu)\n",
 		       rc, size);
-पूर्ण
+}
 
-अटल irqवापस_t vu_req_पढ़ो_message(काष्ठा virtio_uml_device *vu_dev,
-				       काष्ठा समय_प्रकारravel_event *ev)
-अणु
-	काष्ठा virtqueue *vq;
-	पूर्णांक response = 1;
-	काष्ठा अणु
-		काष्ठा vhost_user_msg msg;
+static irqreturn_t vu_req_read_message(struct virtio_uml_device *vu_dev,
+				       struct time_travel_event *ev)
+{
+	struct virtqueue *vq;
+	int response = 1;
+	struct {
+		struct vhost_user_msg msg;
 		u8 extra_payload[512];
-	पूर्ण msg;
-	पूर्णांक rc;
+	} msg;
+	int rc;
 
 	rc = vhost_user_recv_req(vu_dev, &msg.msg,
-				 माप(msg.msg.payload) +
-				 माप(msg.extra_payload));
+				 sizeof(msg.msg.payload) +
+				 sizeof(msg.extra_payload));
 
-	अगर (rc)
-		वापस IRQ_NONE;
+	if (rc)
+		return IRQ_NONE;
 
-	चयन (msg.msg.header.request) अणु
-	हाल VHOST_USER_SLAVE_CONFIG_CHANGE_MSG:
+	switch (msg.msg.header.request) {
+	case VHOST_USER_SLAVE_CONFIG_CHANGE_MSG:
 		vu_dev->config_changed_irq = true;
 		response = 0;
-		अवरोध;
-	हाल VHOST_USER_SLAVE_VRING_CALL:
-		virtio_device_क्रम_each_vq((&vu_dev->vdev), vq) अणु
-			अगर (vq->index == msg.msg.payload.vring_state.index) अणु
+		break;
+	case VHOST_USER_SLAVE_VRING_CALL:
+		virtio_device_for_each_vq((&vu_dev->vdev), vq) {
+			if (vq->index == msg.msg.payload.vring_state.index) {
 				response = 0;
 				vu_dev->vq_irq_vq_map |= BIT_ULL(vq->index);
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		अवरोध;
-	हाल VHOST_USER_SLAVE_IOTLB_MSG:
+				break;
+			}
+		}
+		break;
+	case VHOST_USER_SLAVE_IOTLB_MSG:
 		/* not supported - VIRTIO_F_ACCESS_PLATFORM */
-	हाल VHOST_USER_SLAVE_VRING_HOST_NOTIFIER_MSG:
+	case VHOST_USER_SLAVE_VRING_HOST_NOTIFIER_MSG:
 		/* not supported - VHOST_USER_PROTOCOL_F_HOST_NOTIFIER */
-	शेष:
+	default:
 		vu_err(vu_dev, "unexpected slave request %d\n",
 		       msg.msg.header.request);
-	पूर्ण
+	}
 
-	अगर (ev && !vu_dev->suspended)
-		समय_प्रकारravel_add_irq_event(ev);
+	if (ev && !vu_dev->suspended)
+		time_travel_add_irq_event(ev);
 
-	अगर (msg.msg.header.flags & VHOST_USER_FLAG_NEED_REPLY)
+	if (msg.msg.header.flags & VHOST_USER_FLAG_NEED_REPLY)
 		vhost_user_reply(vu_dev, &msg.msg, response);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t vu_req_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा virtio_uml_device *vu_dev = data;
-	irqवापस_t ret = IRQ_HANDLED;
+static irqreturn_t vu_req_interrupt(int irq, void *data)
+{
+	struct virtio_uml_device *vu_dev = data;
+	irqreturn_t ret = IRQ_HANDLED;
 
-	अगर (!um_irq_समयtravel_handler_used())
-		ret = vu_req_पढ़ो_message(vu_dev, शून्य);
+	if (!um_irq_timetravel_handler_used())
+		ret = vu_req_read_message(vu_dev, NULL);
 
-	अगर (vu_dev->vq_irq_vq_map) अणु
-		काष्ठा virtqueue *vq;
+	if (vu_dev->vq_irq_vq_map) {
+		struct virtqueue *vq;
 
-		virtio_device_क्रम_each_vq((&vu_dev->vdev), vq) अणु
-			अगर (vu_dev->vq_irq_vq_map & BIT_ULL(vq->index))
-				vring_पूर्णांकerrupt(0 /* ignored */, vq);
-		पूर्ण
+		virtio_device_for_each_vq((&vu_dev->vdev), vq) {
+			if (vu_dev->vq_irq_vq_map & BIT_ULL(vq->index))
+				vring_interrupt(0 /* ignored */, vq);
+		}
 		vu_dev->vq_irq_vq_map = 0;
-	पूर्ण अन्यथा अगर (vu_dev->config_changed_irq) अणु
+	} else if (vu_dev->config_changed_irq) {
 		virtio_config_changed(&vu_dev->vdev);
 		vu_dev->config_changed_irq = false;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम vu_req_पूर्णांकerrupt_comm_handler(पूर्णांक irq, पूर्णांक fd, व्योम *data,
-					  काष्ठा समय_प्रकारravel_event *ev)
-अणु
-	vu_req_पढ़ो_message(data, ev);
-पूर्ण
+static void vu_req_interrupt_comm_handler(int irq, int fd, void *data,
+					  struct time_travel_event *ev)
+{
+	vu_req_read_message(data, ev);
+}
 
-अटल पूर्णांक vhost_user_init_slave_req(काष्ठा virtio_uml_device *vu_dev)
-अणु
-	पूर्णांक rc, req_fds[2];
+static int vhost_user_init_slave_req(struct virtio_uml_device *vu_dev)
+{
+	int rc, req_fds[2];
 
-	/* Use a pipe क्रम slave req fd, SIGIO is not supported क्रम eventfd */
+	/* Use a pipe for slave req fd, SIGIO is not supported for eventfd */
 	rc = os_pipe(req_fds, true, true);
-	अगर (rc < 0)
-		वापस rc;
+	if (rc < 0)
+		return rc;
 	vu_dev->req_fd = req_fds[0];
 
 	rc = um_request_irq_tt(UM_IRQ_ALLOC, vu_dev->req_fd, IRQ_READ,
-			       vu_req_पूर्णांकerrupt, IRQF_SHARED,
+			       vu_req_interrupt, IRQF_SHARED,
 			       vu_dev->pdev->name, vu_dev,
-			       vu_req_पूर्णांकerrupt_comm_handler);
-	अगर (rc < 0)
-		जाओ err_बंद;
+			       vu_req_interrupt_comm_handler);
+	if (rc < 0)
+		goto err_close;
 
 	vu_dev->irq = rc;
 
 	rc = vhost_user_send_no_payload_fd(vu_dev, VHOST_USER_SET_SLAVE_REQ_FD,
 					   req_fds[1]);
-	अगर (rc)
-		जाओ err_मुक्त_irq;
+	if (rc)
+		goto err_free_irq;
 
-	जाओ out;
+	goto out;
 
-err_मुक्त_irq:
-	um_मुक्त_irq(vu_dev->irq, vu_dev);
-err_बंद:
-	os_बंद_file(req_fds[0]);
+err_free_irq:
+	um_free_irq(vu_dev->irq, vu_dev);
+err_close:
+	os_close_file(req_fds[0]);
 out:
-	/* Close unused ग_लिखो end of request fds */
-	os_बंद_file(req_fds[1]);
-	वापस rc;
-पूर्ण
+	/* Close unused write end of request fds */
+	os_close_file(req_fds[1]);
+	return rc;
+}
 
-अटल पूर्णांक vhost_user_init(काष्ठा virtio_uml_device *vu_dev)
-अणु
-	पूर्णांक rc = vhost_user_set_owner(vu_dev);
+static int vhost_user_init(struct virtio_uml_device *vu_dev)
+{
+	int rc = vhost_user_set_owner(vu_dev);
 
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 	rc = vhost_user_get_features(vu_dev, &vu_dev->features);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	अगर (vu_dev->features & BIT_ULL(VHOST_USER_F_PROTOCOL_FEATURES)) अणु
+	if (vu_dev->features & BIT_ULL(VHOST_USER_F_PROTOCOL_FEATURES)) {
 		rc = vhost_user_get_protocol_features(vu_dev,
 				&vu_dev->protocol_features);
-		अगर (rc)
-			वापस rc;
+		if (rc)
+			return rc;
 		vu_dev->protocol_features &= VHOST_USER_SUPPORTED_PROTOCOL_F;
 		rc = vhost_user_set_protocol_features(vu_dev,
 				vu_dev->protocol_features);
-		अगर (rc)
-			वापस rc;
-	पूर्ण
+		if (rc)
+			return rc;
+	}
 
-	अगर (vu_dev->protocol_features &
-			BIT_ULL(VHOST_USER_PROTOCOL_F_SLAVE_REQ)) अणु
+	if (vu_dev->protocol_features &
+			BIT_ULL(VHOST_USER_PROTOCOL_F_SLAVE_REQ)) {
 		rc = vhost_user_init_slave_req(vu_dev);
-		अगर (rc)
-			वापस rc;
-	पूर्ण
+		if (rc)
+			return rc;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम vhost_user_get_config(काष्ठा virtio_uml_device *vu_dev,
-				  u32 offset, व्योम *buf, u32 len)
-अणु
+static void vhost_user_get_config(struct virtio_uml_device *vu_dev,
+				  u32 offset, void *buf, u32 len)
+{
 	u32 cfg_size = offset + len;
-	काष्ठा vhost_user_msg *msg;
-	माप_प्रकार payload_size = माप(msg->payload.config) + cfg_size;
-	माप_प्रकार msg_size = माप(msg->header) + payload_size;
-	पूर्णांक rc;
+	struct vhost_user_msg *msg;
+	size_t payload_size = sizeof(msg->payload.config) + cfg_size;
+	size_t msg_size = sizeof(msg->header) + payload_size;
+	int rc;
 
-	अगर (!(vu_dev->protocol_features &
+	if (!(vu_dev->protocol_features &
 	      BIT_ULL(VHOST_USER_PROTOCOL_F_CONFIG)))
-		वापस;
+		return;
 
 	msg = kzalloc(msg_size, GFP_KERNEL);
-	अगर (!msg)
-		वापस;
+	if (!msg)
+		return;
 	msg->header.request = VHOST_USER_GET_CONFIG;
 	msg->header.size = payload_size;
 	msg->payload.config.offset = 0;
 	msg->payload.config.size = cfg_size;
 
-	rc = vhost_user_send(vu_dev, true, msg, शून्य, 0);
-	अगर (rc) अणु
+	rc = vhost_user_send(vu_dev, true, msg, NULL, 0);
+	if (rc) {
 		vu_err(vu_dev, "sending VHOST_USER_GET_CONFIG failed: %d\n",
 		       rc);
-		जाओ मुक्त;
-	पूर्ण
+		goto free;
+	}
 
 	rc = vhost_user_recv_resp(vu_dev, msg, msg_size);
-	अगर (rc) अणु
+	if (rc) {
 		vu_err(vu_dev,
 		       "receiving VHOST_USER_GET_CONFIG response failed: %d\n",
 		       rc);
-		जाओ मुक्त;
-	पूर्ण
+		goto free;
+	}
 
-	अगर (msg->header.size != payload_size ||
-	    msg->payload.config.size != cfg_size) अणु
+	if (msg->header.size != payload_size ||
+	    msg->payload.config.size != cfg_size) {
 		rc = -EPROTO;
 		vu_err(vu_dev,
 		       "Invalid VHOST_USER_GET_CONFIG sizes (payload %d expected %zu, config %u expected %u)\n",
 		       msg->header.size, payload_size,
 		       msg->payload.config.size, cfg_size);
-		जाओ मुक्त;
-	पूर्ण
-	स_नकल(buf, msg->payload.config.payload + offset, len);
+		goto free;
+	}
+	memcpy(buf, msg->payload.config.payload + offset, len);
 
-मुक्त:
-	kमुक्त(msg);
-पूर्ण
+free:
+	kfree(msg);
+}
 
-अटल व्योम vhost_user_set_config(काष्ठा virtio_uml_device *vu_dev,
-				  u32 offset, स्थिर व्योम *buf, u32 len)
-अणु
-	काष्ठा vhost_user_msg *msg;
-	माप_प्रकार payload_size = माप(msg->payload.config) + len;
-	माप_प्रकार msg_size = माप(msg->header) + payload_size;
-	पूर्णांक rc;
+static void vhost_user_set_config(struct virtio_uml_device *vu_dev,
+				  u32 offset, const void *buf, u32 len)
+{
+	struct vhost_user_msg *msg;
+	size_t payload_size = sizeof(msg->payload.config) + len;
+	size_t msg_size = sizeof(msg->header) + payload_size;
+	int rc;
 
-	अगर (!(vu_dev->protocol_features &
+	if (!(vu_dev->protocol_features &
 	      BIT_ULL(VHOST_USER_PROTOCOL_F_CONFIG)))
-		वापस;
+		return;
 
 	msg = kzalloc(msg_size, GFP_KERNEL);
-	अगर (!msg)
-		वापस;
+	if (!msg)
+		return;
 	msg->header.request = VHOST_USER_SET_CONFIG;
 	msg->header.size = payload_size;
 	msg->payload.config.offset = offset;
 	msg->payload.config.size = len;
-	स_नकल(msg->payload.config.payload, buf, len);
+	memcpy(msg->payload.config.payload, buf, len);
 
-	rc = vhost_user_send(vu_dev, false, msg, शून्य, 0);
-	अगर (rc)
+	rc = vhost_user_send(vu_dev, false, msg, NULL, 0);
+	if (rc)
 		vu_err(vu_dev, "sending VHOST_USER_SET_CONFIG failed: %d\n",
 		       rc);
 
-	kमुक्त(msg);
-पूर्ण
+	kfree(msg);
+}
 
-अटल पूर्णांक vhost_user_init_mem_region(u64 addr, u64 size, पूर्णांक *fd_out,
-				      काष्ठा vhost_user_mem_region *region_out)
-अणु
-	अचिन्हित दीर्घ दीर्घ mem_offset;
-	पूर्णांक rc = phys_mapping(addr, &mem_offset);
+static int vhost_user_init_mem_region(u64 addr, u64 size, int *fd_out,
+				      struct vhost_user_mem_region *region_out)
+{
+	unsigned long long mem_offset;
+	int rc = phys_mapping(addr, &mem_offset);
 
-	अगर (WARN(rc < 0, "phys_mapping of 0x%llx returned %d\n", addr, rc))
-		वापस -EFAULT;
+	if (WARN(rc < 0, "phys_mapping of 0x%llx returned %d\n", addr, rc))
+		return -EFAULT;
 	*fd_out = rc;
 	region_out->guest_addr = addr;
 	region_out->user_addr = addr;
 	region_out->size = size;
 	region_out->mmap_offset = mem_offset;
 
-	/* Ensure mapping is valid क्रम the entire region */
+	/* Ensure mapping is valid for the entire region */
 	rc = phys_mapping(addr + size - 1, &mem_offset);
-	अगर (WARN(rc != *fd_out, "phys_mapping of 0x%llx failed: %d != %d\n",
+	if (WARN(rc != *fd_out, "phys_mapping of 0x%llx failed: %d != %d\n",
 		 addr + size - 1, rc, *fd_out))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+		return -EFAULT;
+	return 0;
+}
 
-अटल पूर्णांक vhost_user_set_mem_table(काष्ठा virtio_uml_device *vu_dev)
-अणु
-	काष्ठा vhost_user_msg msg = अणु
+static int vhost_user_set_mem_table(struct virtio_uml_device *vu_dev)
+{
+	struct vhost_user_msg msg = {
 		.header.request = VHOST_USER_SET_MEM_TABLE,
-		.header.size = माप(msg.payload.mem_regions),
+		.header.size = sizeof(msg.payload.mem_regions),
 		.payload.mem_regions.num = 1,
-	पूर्ण;
-	अचिन्हित दीर्घ reserved = uml_reserved - uml_physmem;
-	पूर्णांक fds[2];
-	पूर्णांक rc;
+	};
+	unsigned long reserved = uml_reserved - uml_physmem;
+	int fds[2];
+	int rc;
 
 	/*
 	 * This is a bit tricky, see also the comment with setup_physmem().
 	 *
 	 * Essentially, setup_physmem() uses a file to mmap() our physmem,
-	 * but the code and data we *alपढ़ोy* have is omitted. To us, this
-	 * is no dअगरference, since they both become part of our address
+	 * but the code and data we *already* have is omitted. To us, this
+	 * is no difference, since they both become part of our address
 	 * space and memory consumption. To somebody looking in from the
-	 * outside, however, it is dअगरferent because the part of our memory
-	 * consumption that's alपढ़ोy part of the binary (code/data) is not
+	 * outside, however, it is different because the part of our memory
+	 * consumption that's already part of the binary (code/data) is not
 	 * mapped from the file, so it's not visible to another mmap from
 	 * the file descriptor.
 	 *
-	 * Thus, करोn't advertise this space to the vhost-user slave. This
-	 * means that the slave will likely पात or similar when we give
+	 * Thus, don't advertise this space to the vhost-user slave. This
+	 * means that the slave will likely abort or similar when we give
 	 * it an address from the hidden range, since it's not marked as
 	 * a valid address, but at least that way we detect the issue and
-	 * करोn't just have the slave पढ़ो an all-zeroes buffer from the
-	 * shared memory file, or ग_लिखो something there that we can never
+	 * don't just have the slave read an all-zeroes buffer from the
+	 * shared memory file, or write something there that we can never
 	 * see (depending on the direction of the virtqueue traffic.)
 	 *
-	 * Since we usually करोn't want to use .text क्रम virtio buffers,
+	 * Since we usually don't want to use .text for virtio buffers,
 	 * this effectively means that you cannot use
 	 *  1) global variables, which are in the .bss and not in the shm
 	 *     file-backed memory
 	 *  2) the stack in some processes, depending on where they have
-	 *     their stack (or maybe only no पूर्णांकerrupt stack?)
+	 *     their stack (or maybe only no interrupt stack?)
 	 *
-	 * The stack is alपढ़ोy not typically valid क्रम DMA, so this isn't
+	 * The stack is already not typically valid for DMA, so this isn't
 	 * much of a restriction, but global variables might be encountered.
 	 *
 	 * It might be possible to fix it by copying around the data that's
 	 * between bss_start and where we map the file now, but it's not
 	 * something that you typically encounter with virtio drivers, so
-	 * it didn't seem worthजबतक.
+	 * it didn't seem worthwhile.
 	 */
 	rc = vhost_user_init_mem_region(reserved, physmem_size - reserved,
 					&fds[0],
 					&msg.payload.mem_regions.regions[0]);
 
-	अगर (rc < 0)
-		वापस rc;
-	अगर (highmem) अणु
+	if (rc < 0)
+		return rc;
+	if (highmem) {
 		msg.payload.mem_regions.num++;
 		rc = vhost_user_init_mem_region(__pa(end_iomem), highmem,
 				&fds[1], &msg.payload.mem_regions.regions[1]);
-		अगर (rc < 0)
-			वापस rc;
-	पूर्ण
+		if (rc < 0)
+			return rc;
+	}
 
-	वापस vhost_user_send(vu_dev, false, &msg, fds,
+	return vhost_user_send(vu_dev, false, &msg, fds,
 			       msg.payload.mem_regions.num);
-पूर्ण
+}
 
-अटल पूर्णांक vhost_user_set_vring_state(काष्ठा virtio_uml_device *vu_dev,
+static int vhost_user_set_vring_state(struct virtio_uml_device *vu_dev,
 				      u32 request, u32 index, u32 num)
-अणु
-	काष्ठा vhost_user_msg msg = अणु
+{
+	struct vhost_user_msg msg = {
 		.header.request = request,
-		.header.size = माप(msg.payload.vring_state),
+		.header.size = sizeof(msg.payload.vring_state),
 		.payload.vring_state.index = index,
 		.payload.vring_state.num = num,
-	पूर्ण;
+	};
 
-	वापस vhost_user_send(vu_dev, false, &msg, शून्य, 0);
-पूर्ण
+	return vhost_user_send(vu_dev, false, &msg, NULL, 0);
+}
 
-अटल पूर्णांक vhost_user_set_vring_num(काष्ठा virtio_uml_device *vu_dev,
+static int vhost_user_set_vring_num(struct virtio_uml_device *vu_dev,
 				    u32 index, u32 num)
-अणु
-	वापस vhost_user_set_vring_state(vu_dev, VHOST_USER_SET_VRING_NUM,
+{
+	return vhost_user_set_vring_state(vu_dev, VHOST_USER_SET_VRING_NUM,
 					  index, num);
-पूर्ण
+}
 
-अटल पूर्णांक vhost_user_set_vring_base(काष्ठा virtio_uml_device *vu_dev,
+static int vhost_user_set_vring_base(struct virtio_uml_device *vu_dev,
 				     u32 index, u32 offset)
-अणु
-	वापस vhost_user_set_vring_state(vu_dev, VHOST_USER_SET_VRING_BASE,
+{
+	return vhost_user_set_vring_state(vu_dev, VHOST_USER_SET_VRING_BASE,
 					  index, offset);
-पूर्ण
+}
 
-अटल पूर्णांक vhost_user_set_vring_addr(काष्ठा virtio_uml_device *vu_dev,
+static int vhost_user_set_vring_addr(struct virtio_uml_device *vu_dev,
 				     u32 index, u64 desc, u64 used, u64 avail,
 				     u64 log)
-अणु
-	काष्ठा vhost_user_msg msg = अणु
+{
+	struct vhost_user_msg msg = {
 		.header.request = VHOST_USER_SET_VRING_ADDR,
-		.header.size = माप(msg.payload.vring_addr),
+		.header.size = sizeof(msg.payload.vring_addr),
 		.payload.vring_addr.index = index,
 		.payload.vring_addr.desc = desc,
 		.payload.vring_addr.used = used,
 		.payload.vring_addr.avail = avail,
 		.payload.vring_addr.log = log,
-	पूर्ण;
+	};
 
-	वापस vhost_user_send(vu_dev, false, &msg, शून्य, 0);
-पूर्ण
+	return vhost_user_send(vu_dev, false, &msg, NULL, 0);
+}
 
-अटल पूर्णांक vhost_user_set_vring_fd(काष्ठा virtio_uml_device *vu_dev,
-				   u32 request, पूर्णांक index, पूर्णांक fd)
-अणु
-	काष्ठा vhost_user_msg msg = अणु
+static int vhost_user_set_vring_fd(struct virtio_uml_device *vu_dev,
+				   u32 request, int index, int fd)
+{
+	struct vhost_user_msg msg = {
 		.header.request = request,
-		.header.size = माप(msg.payload.पूर्णांकeger),
-		.payload.पूर्णांकeger = index,
-	पूर्ण;
+		.header.size = sizeof(msg.payload.integer),
+		.payload.integer = index,
+	};
 
-	अगर (index & ~VHOST_USER_VRING_INDEX_MASK)
-		वापस -EINVAL;
-	अगर (fd < 0) अणु
-		msg.payload.पूर्णांकeger |= VHOST_USER_VRING_POLL_MASK;
-		वापस vhost_user_send(vu_dev, false, &msg, शून्य, 0);
-	पूर्ण
-	वापस vhost_user_send(vu_dev, false, &msg, &fd, 1);
-पूर्ण
+	if (index & ~VHOST_USER_VRING_INDEX_MASK)
+		return -EINVAL;
+	if (fd < 0) {
+		msg.payload.integer |= VHOST_USER_VRING_POLL_MASK;
+		return vhost_user_send(vu_dev, false, &msg, NULL, 0);
+	}
+	return vhost_user_send(vu_dev, false, &msg, &fd, 1);
+}
 
-अटल पूर्णांक vhost_user_set_vring_call(काष्ठा virtio_uml_device *vu_dev,
-				     पूर्णांक index, पूर्णांक fd)
-अणु
-	वापस vhost_user_set_vring_fd(vu_dev, VHOST_USER_SET_VRING_CALL,
+static int vhost_user_set_vring_call(struct virtio_uml_device *vu_dev,
+				     int index, int fd)
+{
+	return vhost_user_set_vring_fd(vu_dev, VHOST_USER_SET_VRING_CALL,
 				       index, fd);
-पूर्ण
+}
 
-अटल पूर्णांक vhost_user_set_vring_kick(काष्ठा virtio_uml_device *vu_dev,
-				     पूर्णांक index, पूर्णांक fd)
-अणु
-	वापस vhost_user_set_vring_fd(vu_dev, VHOST_USER_SET_VRING_KICK,
+static int vhost_user_set_vring_kick(struct virtio_uml_device *vu_dev,
+				     int index, int fd)
+{
+	return vhost_user_set_vring_fd(vu_dev, VHOST_USER_SET_VRING_KICK,
 				       index, fd);
-पूर्ण
+}
 
-अटल पूर्णांक vhost_user_set_vring_enable(काष्ठा virtio_uml_device *vu_dev,
+static int vhost_user_set_vring_enable(struct virtio_uml_device *vu_dev,
 				       u32 index, bool enable)
-अणु
-	अगर (!(vu_dev->features & BIT_ULL(VHOST_USER_F_PROTOCOL_FEATURES)))
-		वापस 0;
+{
+	if (!(vu_dev->features & BIT_ULL(VHOST_USER_F_PROTOCOL_FEATURES)))
+		return 0;
 
-	वापस vhost_user_set_vring_state(vu_dev, VHOST_USER_SET_VRING_ENABLE,
+	return vhost_user_set_vring_state(vu_dev, VHOST_USER_SET_VRING_ENABLE,
 					  index, enable);
-पूर्ण
+}
 
 
-/* Virtio पूर्णांकerface */
+/* Virtio interface */
 
-अटल bool vu_notअगरy(काष्ठा virtqueue *vq)
-अणु
-	काष्ठा virtio_uml_vq_info *info = vq->priv;
-	स्थिर uपूर्णांक64_t n = 1;
-	पूर्णांक rc;
+static bool vu_notify(struct virtqueue *vq)
+{
+	struct virtio_uml_vq_info *info = vq->priv;
+	const uint64_t n = 1;
+	int rc;
 
-	अगर (info->suspended)
-		वापस true;
+	if (info->suspended)
+		return true;
 
-	समय_प्रकारravel_propagate_समय();
+	time_travel_propagate_time();
 
-	अगर (info->kick_fd < 0) अणु
-		काष्ठा virtio_uml_device *vu_dev;
+	if (info->kick_fd < 0) {
+		struct virtio_uml_device *vu_dev;
 
 		vu_dev = to_virtio_uml_device(vq->vdev);
 
-		वापस vhost_user_set_vring_state(vu_dev, VHOST_USER_VRING_KICK,
+		return vhost_user_set_vring_state(vu_dev, VHOST_USER_VRING_KICK,
 						  vq->index, 0) == 0;
-	पूर्ण
+	}
 
-	करो अणु
-		rc = os_ग_लिखो_file(info->kick_fd, &n, माप(n));
-	पूर्ण जबतक (rc == -EINTR);
-	वापस !WARN(rc != माप(n), "write returned %d\n", rc);
-पूर्ण
+	do {
+		rc = os_write_file(info->kick_fd, &n, sizeof(n));
+	} while (rc == -EINTR);
+	return !WARN(rc != sizeof(n), "write returned %d\n", rc);
+}
 
-अटल irqवापस_t vu_पूर्णांकerrupt(पूर्णांक irq, व्योम *opaque)
-अणु
-	काष्ठा virtqueue *vq = opaque;
-	काष्ठा virtio_uml_vq_info *info = vq->priv;
-	uपूर्णांक64_t n;
-	पूर्णांक rc;
-	irqवापस_t ret = IRQ_NONE;
+static irqreturn_t vu_interrupt(int irq, void *opaque)
+{
+	struct virtqueue *vq = opaque;
+	struct virtio_uml_vq_info *info = vq->priv;
+	uint64_t n;
+	int rc;
+	irqreturn_t ret = IRQ_NONE;
 
-	करो अणु
-		rc = os_पढ़ो_file(info->call_fd, &n, माप(n));
-		अगर (rc == माप(n))
-			ret |= vring_पूर्णांकerrupt(irq, vq);
-	पूर्ण जबतक (rc == माप(n) || rc == -EINTR);
+	do {
+		rc = os_read_file(info->call_fd, &n, sizeof(n));
+		if (rc == sizeof(n))
+			ret |= vring_interrupt(irq, vq);
+	} while (rc == sizeof(n) || rc == -EINTR);
 	WARN(rc != -EAGAIN, "read returned %d\n", rc);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
-अटल व्योम vu_get(काष्ठा virtio_device *vdev, अचिन्हित offset,
-		   व्योम *buf, अचिन्हित len)
-अणु
-	काष्ठा virtio_uml_device *vu_dev = to_virtio_uml_device(vdev);
+static void vu_get(struct virtio_device *vdev, unsigned offset,
+		   void *buf, unsigned len)
+{
+	struct virtio_uml_device *vu_dev = to_virtio_uml_device(vdev);
 
 	vhost_user_get_config(vu_dev, offset, buf, len);
-पूर्ण
+}
 
-अटल व्योम vu_set(काष्ठा virtio_device *vdev, अचिन्हित offset,
-		   स्थिर व्योम *buf, अचिन्हित len)
-अणु
-	काष्ठा virtio_uml_device *vu_dev = to_virtio_uml_device(vdev);
+static void vu_set(struct virtio_device *vdev, unsigned offset,
+		   const void *buf, unsigned len)
+{
+	struct virtio_uml_device *vu_dev = to_virtio_uml_device(vdev);
 
 	vhost_user_set_config(vu_dev, offset, buf, len);
-पूर्ण
+}
 
-अटल u8 vu_get_status(काष्ठा virtio_device *vdev)
-अणु
-	काष्ठा virtio_uml_device *vu_dev = to_virtio_uml_device(vdev);
+static u8 vu_get_status(struct virtio_device *vdev)
+{
+	struct virtio_uml_device *vu_dev = to_virtio_uml_device(vdev);
 
-	वापस vu_dev->status;
-पूर्ण
+	return vu_dev->status;
+}
 
-अटल व्योम vu_set_status(काष्ठा virtio_device *vdev, u8 status)
-अणु
-	काष्ठा virtio_uml_device *vu_dev = to_virtio_uml_device(vdev);
+static void vu_set_status(struct virtio_device *vdev, u8 status)
+{
+	struct virtio_uml_device *vu_dev = to_virtio_uml_device(vdev);
 
 	vu_dev->status = status;
-पूर्ण
+}
 
-अटल व्योम vu_reset(काष्ठा virtio_device *vdev)
-अणु
-	काष्ठा virtio_uml_device *vu_dev = to_virtio_uml_device(vdev);
+static void vu_reset(struct virtio_device *vdev)
+{
+	struct virtio_uml_device *vu_dev = to_virtio_uml_device(vdev);
 
 	vu_dev->status = 0;
-पूर्ण
+}
 
-अटल व्योम vu_del_vq(काष्ठा virtqueue *vq)
-अणु
-	काष्ठा virtio_uml_vq_info *info = vq->priv;
+static void vu_del_vq(struct virtqueue *vq)
+{
+	struct virtio_uml_vq_info *info = vq->priv;
 
-	अगर (info->call_fd >= 0) अणु
-		काष्ठा virtio_uml_device *vu_dev;
+	if (info->call_fd >= 0) {
+		struct virtio_uml_device *vu_dev;
 
 		vu_dev = to_virtio_uml_device(vq->vdev);
 
-		um_मुक्त_irq(vu_dev->irq, vq);
-		os_बंद_file(info->call_fd);
-	पूर्ण
+		um_free_irq(vu_dev->irq, vq);
+		os_close_file(info->call_fd);
+	}
 
-	अगर (info->kick_fd >= 0)
-		os_बंद_file(info->kick_fd);
+	if (info->kick_fd >= 0)
+		os_close_file(info->kick_fd);
 
 	vring_del_virtqueue(vq);
-	kमुक्त(info);
-पूर्ण
+	kfree(info);
+}
 
-अटल व्योम vu_del_vqs(काष्ठा virtio_device *vdev)
-अणु
-	काष्ठा virtio_uml_device *vu_dev = to_virtio_uml_device(vdev);
-	काष्ठा virtqueue *vq, *n;
+static void vu_del_vqs(struct virtio_device *vdev)
+{
+	struct virtio_uml_device *vu_dev = to_virtio_uml_device(vdev);
+	struct virtqueue *vq, *n;
 	u64 features;
 
 	/* Note: reverse order as a workaround to a decoding bug in snabb */
-	list_क्रम_each_entry_reverse(vq, &vdev->vqs, list)
+	list_for_each_entry_reverse(vq, &vdev->vqs, list)
 		WARN_ON(vhost_user_set_vring_enable(vu_dev, vq->index, false));
 
 	/* Ensure previous messages have been processed */
 	WARN_ON(vhost_user_get_features(vu_dev, &features));
 
-	list_क्रम_each_entry_safe(vq, n, &vdev->vqs, list)
+	list_for_each_entry_safe(vq, n, &vdev->vqs, list)
 		vu_del_vq(vq);
-पूर्ण
+}
 
-अटल पूर्णांक vu_setup_vq_call_fd(काष्ठा virtio_uml_device *vu_dev,
-			       काष्ठा virtqueue *vq)
-अणु
-	काष्ठा virtio_uml_vq_info *info = vq->priv;
-	पूर्णांक call_fds[2];
-	पूर्णांक rc;
+static int vu_setup_vq_call_fd(struct virtio_uml_device *vu_dev,
+			       struct virtqueue *vq)
+{
+	struct virtio_uml_vq_info *info = vq->priv;
+	int call_fds[2];
+	int rc;
 
-	/* no call FD needed/desired in this हाल */
-	अगर (vu_dev->protocol_features &
+	/* no call FD needed/desired in this case */
+	if (vu_dev->protocol_features &
 			BIT_ULL(VHOST_USER_PROTOCOL_F_INBAND_NOTIFICATIONS) &&
 	    vu_dev->protocol_features &
-			BIT_ULL(VHOST_USER_PROTOCOL_F_SLAVE_REQ)) अणु
+			BIT_ULL(VHOST_USER_PROTOCOL_F_SLAVE_REQ)) {
 		info->call_fd = -1;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* Use a pipe क्रम call fd, since SIGIO is not supported क्रम eventfd */
+	/* Use a pipe for call fd, since SIGIO is not supported for eventfd */
 	rc = os_pipe(call_fds, true, true);
-	अगर (rc < 0)
-		वापस rc;
+	if (rc < 0)
+		return rc;
 
 	info->call_fd = call_fds[0];
 	rc = um_request_irq(vu_dev->irq, info->call_fd, IRQ_READ,
-			    vu_पूर्णांकerrupt, IRQF_SHARED, info->name, vq);
-	अगर (rc < 0)
-		जाओ बंद_both;
+			    vu_interrupt, IRQF_SHARED, info->name, vq);
+	if (rc < 0)
+		goto close_both;
 
 	rc = vhost_user_set_vring_call(vu_dev, vq->index, call_fds[1]);
-	अगर (rc)
-		जाओ release_irq;
+	if (rc)
+		goto release_irq;
 
-	जाओ out;
+	goto out;
 
 release_irq:
-	um_मुक्त_irq(vu_dev->irq, vq);
-बंद_both:
-	os_बंद_file(call_fds[0]);
+	um_free_irq(vu_dev->irq, vq);
+close_both:
+	os_close_file(call_fds[0]);
 out:
-	/* Close (unused) ग_लिखो end of call fds */
-	os_बंद_file(call_fds[1]);
+	/* Close (unused) write end of call fds */
+	os_close_file(call_fds[1]);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल काष्ठा virtqueue *vu_setup_vq(काष्ठा virtio_device *vdev,
-				     अचिन्हित index, vq_callback_t *callback,
-				     स्थिर अक्षर *name, bool ctx)
-अणु
-	काष्ठा virtio_uml_device *vu_dev = to_virtio_uml_device(vdev);
-	काष्ठा platक्रमm_device *pdev = vu_dev->pdev;
-	काष्ठा virtio_uml_vq_info *info;
-	काष्ठा virtqueue *vq;
-	पूर्णांक num = MAX_SUPPORTED_QUEUE_SIZE;
-	पूर्णांक rc;
+static struct virtqueue *vu_setup_vq(struct virtio_device *vdev,
+				     unsigned index, vq_callback_t *callback,
+				     const char *name, bool ctx)
+{
+	struct virtio_uml_device *vu_dev = to_virtio_uml_device(vdev);
+	struct platform_device *pdev = vu_dev->pdev;
+	struct virtio_uml_vq_info *info;
+	struct virtqueue *vq;
+	int num = MAX_SUPPORTED_QUEUE_SIZE;
+	int rc;
 
-	info = kzalloc(माप(*info), GFP_KERNEL);
-	अगर (!info) अणु
+	info = kzalloc(sizeof(*info), GFP_KERNEL);
+	if (!info) {
 		rc = -ENOMEM;
-		जाओ error_kzalloc;
-	पूर्ण
-	snम_लिखो(info->name, माप(info->name), "%s.%d-%s", pdev->name,
+		goto error_kzalloc;
+	}
+	snprintf(info->name, sizeof(info->name), "%s.%d-%s", pdev->name,
 		 pdev->id, name);
 
 	vq = vring_create_virtqueue(index, num, PAGE_SIZE, vdev, true, true,
-				    ctx, vu_notअगरy, callback, info->name);
-	अगर (!vq) अणु
+				    ctx, vu_notify, callback, info->name);
+	if (!vq) {
 		rc = -ENOMEM;
-		जाओ error_create;
-	पूर्ण
+		goto error_create;
+	}
 	vq->priv = info;
 	num = virtqueue_get_vring_size(vq);
 
-	अगर (vu_dev->protocol_features &
-			BIT_ULL(VHOST_USER_PROTOCOL_F_INBAND_NOTIFICATIONS)) अणु
+	if (vu_dev->protocol_features &
+			BIT_ULL(VHOST_USER_PROTOCOL_F_INBAND_NOTIFICATIONS)) {
 		info->kick_fd = -1;
-	पूर्ण अन्यथा अणु
+	} else {
 		rc = os_eventfd(0, 0);
-		अगर (rc < 0)
-			जाओ error_kick;
+		if (rc < 0)
+			goto error_kick;
 		info->kick_fd = rc;
-	पूर्ण
+	}
 
 	rc = vu_setup_vq_call_fd(vu_dev, vq);
-	अगर (rc)
-		जाओ error_call;
+	if (rc)
+		goto error_call;
 
 	rc = vhost_user_set_vring_num(vu_dev, index, num);
-	अगर (rc)
-		जाओ error_setup;
+	if (rc)
+		goto error_setup;
 
 	rc = vhost_user_set_vring_base(vu_dev, index, 0);
-	अगर (rc)
-		जाओ error_setup;
+	if (rc)
+		goto error_setup;
 
 	rc = vhost_user_set_vring_addr(vu_dev, index,
 				       virtqueue_get_desc_addr(vq),
 				       virtqueue_get_used_addr(vq),
 				       virtqueue_get_avail_addr(vq),
 				       (u64) -1);
-	अगर (rc)
-		जाओ error_setup;
+	if (rc)
+		goto error_setup;
 
-	वापस vq;
+	return vq;
 
 error_setup:
-	अगर (info->call_fd >= 0) अणु
-		um_मुक्त_irq(vu_dev->irq, vq);
-		os_बंद_file(info->call_fd);
-	पूर्ण
+	if (info->call_fd >= 0) {
+		um_free_irq(vu_dev->irq, vq);
+		os_close_file(info->call_fd);
+	}
 error_call:
-	अगर (info->kick_fd >= 0)
-		os_बंद_file(info->kick_fd);
+	if (info->kick_fd >= 0)
+		os_close_file(info->kick_fd);
 error_kick:
 	vring_del_virtqueue(vq);
 error_create:
-	kमुक्त(info);
+	kfree(info);
 error_kzalloc:
-	वापस ERR_PTR(rc);
-पूर्ण
+	return ERR_PTR(rc);
+}
 
-अटल पूर्णांक vu_find_vqs(काष्ठा virtio_device *vdev, अचिन्हित nvqs,
-		       काष्ठा virtqueue *vqs[], vq_callback_t *callbacks[],
-		       स्थिर अक्षर * स्थिर names[], स्थिर bool *ctx,
-		       काष्ठा irq_affinity *desc)
-अणु
-	काष्ठा virtio_uml_device *vu_dev = to_virtio_uml_device(vdev);
-	पूर्णांक i, queue_idx = 0, rc;
-	काष्ठा virtqueue *vq;
+static int vu_find_vqs(struct virtio_device *vdev, unsigned nvqs,
+		       struct virtqueue *vqs[], vq_callback_t *callbacks[],
+		       const char * const names[], const bool *ctx,
+		       struct irq_affinity *desc)
+{
+	struct virtio_uml_device *vu_dev = to_virtio_uml_device(vdev);
+	int i, queue_idx = 0, rc;
+	struct virtqueue *vq;
 
-	/* not supported क्रम now */
-	अगर (WARN_ON(nvqs > 64))
-		वापस -EINVAL;
+	/* not supported for now */
+	if (WARN_ON(nvqs > 64))
+		return -EINVAL;
 
 	rc = vhost_user_set_mem_table(vu_dev);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	क्रम (i = 0; i < nvqs; ++i) अणु
-		अगर (!names[i]) अणु
-			vqs[i] = शून्य;
-			जारी;
-		पूर्ण
+	for (i = 0; i < nvqs; ++i) {
+		if (!names[i]) {
+			vqs[i] = NULL;
+			continue;
+		}
 
 		vqs[i] = vu_setup_vq(vdev, queue_idx++, callbacks[i], names[i],
 				     ctx ? ctx[i] : false);
-		अगर (IS_ERR(vqs[i])) अणु
+		if (IS_ERR(vqs[i])) {
 			rc = PTR_ERR(vqs[i]);
-			जाओ error_setup;
-		पूर्ण
-	पूर्ण
+			goto error_setup;
+		}
+	}
 
-	list_क्रम_each_entry(vq, &vdev->vqs, list) अणु
-		काष्ठा virtio_uml_vq_info *info = vq->priv;
+	list_for_each_entry(vq, &vdev->vqs, list) {
+		struct virtio_uml_vq_info *info = vq->priv;
 
-		अगर (info->kick_fd >= 0) अणु
+		if (info->kick_fd >= 0) {
 			rc = vhost_user_set_vring_kick(vu_dev, vq->index,
 						       info->kick_fd);
-			अगर (rc)
-				जाओ error_setup;
-		पूर्ण
+			if (rc)
+				goto error_setup;
+		}
 
 		rc = vhost_user_set_vring_enable(vu_dev, vq->index, true);
-		अगर (rc)
-			जाओ error_setup;
-	पूर्ण
+		if (rc)
+			goto error_setup;
+	}
 
-	वापस 0;
+	return 0;
 
 error_setup:
 	vu_del_vqs(vdev);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल u64 vu_get_features(काष्ठा virtio_device *vdev)
-अणु
-	काष्ठा virtio_uml_device *vu_dev = to_virtio_uml_device(vdev);
+static u64 vu_get_features(struct virtio_device *vdev)
+{
+	struct virtio_uml_device *vu_dev = to_virtio_uml_device(vdev);
 
-	वापस vu_dev->features;
-पूर्ण
+	return vu_dev->features;
+}
 
-अटल पूर्णांक vu_finalize_features(काष्ठा virtio_device *vdev)
-अणु
-	काष्ठा virtio_uml_device *vu_dev = to_virtio_uml_device(vdev);
+static int vu_finalize_features(struct virtio_device *vdev)
+{
+	struct virtio_uml_device *vu_dev = to_virtio_uml_device(vdev);
 	u64 supported = vdev->features & VHOST_USER_SUPPORTED_F;
 
 	vring_transport_features(vdev);
 	vu_dev->features = vdev->features | supported;
 
-	वापस vhost_user_set_features(vu_dev, vu_dev->features);
-पूर्ण
+	return vhost_user_set_features(vu_dev, vu_dev->features);
+}
 
-अटल स्थिर अक्षर *vu_bus_name(काष्ठा virtio_device *vdev)
-अणु
-	काष्ठा virtio_uml_device *vu_dev = to_virtio_uml_device(vdev);
+static const char *vu_bus_name(struct virtio_device *vdev)
+{
+	struct virtio_uml_device *vu_dev = to_virtio_uml_device(vdev);
 
-	वापस vu_dev->pdev->name;
-पूर्ण
+	return vu_dev->pdev->name;
+}
 
-अटल स्थिर काष्ठा virtio_config_ops virtio_uml_config_ops = अणु
+static const struct virtio_config_ops virtio_uml_config_ops = {
 	.get = vu_get,
 	.set = vu_set,
 	.get_status = vu_get_status,
@@ -1081,147 +1080,147 @@ error_setup:
 	.get_features = vu_get_features,
 	.finalize_features = vu_finalize_features,
 	.bus_name = vu_bus_name,
-पूर्ण;
+};
 
-अटल व्योम virtio_uml_release_dev(काष्ठा device *d)
-अणु
-	काष्ठा virtio_device *vdev =
-			container_of(d, काष्ठा virtio_device, dev);
-	काष्ठा virtio_uml_device *vu_dev = to_virtio_uml_device(vdev);
+static void virtio_uml_release_dev(struct device *d)
+{
+	struct virtio_device *vdev =
+			container_of(d, struct virtio_device, dev);
+	struct virtio_uml_device *vu_dev = to_virtio_uml_device(vdev);
 
-	/* might not have been खोलोed due to not negotiating the feature */
-	अगर (vu_dev->req_fd >= 0) अणु
-		um_मुक्त_irq(vu_dev->irq, vu_dev);
-		os_बंद_file(vu_dev->req_fd);
-	पूर्ण
+	/* might not have been opened due to not negotiating the feature */
+	if (vu_dev->req_fd >= 0) {
+		um_free_irq(vu_dev->irq, vu_dev);
+		os_close_file(vu_dev->req_fd);
+	}
 
-	os_बंद_file(vu_dev->sock);
-	kमुक्त(vu_dev);
-पूर्ण
+	os_close_file(vu_dev->sock);
+	kfree(vu_dev);
+}
 
-/* Platक्रमm device */
+/* Platform device */
 
-अटल पूर्णांक virtio_uml_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा virtio_uml_platक्रमm_data *pdata = pdev->dev.platक्रमm_data;
-	काष्ठा virtio_uml_device *vu_dev;
-	पूर्णांक rc;
+static int virtio_uml_probe(struct platform_device *pdev)
+{
+	struct virtio_uml_platform_data *pdata = pdev->dev.platform_data;
+	struct virtio_uml_device *vu_dev;
+	int rc;
 
-	अगर (!pdata)
-		वापस -EINVAL;
+	if (!pdata)
+		return -EINVAL;
 
-	vu_dev = kzalloc(माप(*vu_dev), GFP_KERNEL);
-	अगर (!vu_dev)
-		वापस -ENOMEM;
+	vu_dev = kzalloc(sizeof(*vu_dev), GFP_KERNEL);
+	if (!vu_dev)
+		return -ENOMEM;
 
 	vu_dev->vdev.dev.parent = &pdev->dev;
 	vu_dev->vdev.dev.release = virtio_uml_release_dev;
 	vu_dev->vdev.config = &virtio_uml_config_ops;
 	vu_dev->vdev.id.device = pdata->virtio_device_id;
-	vu_dev->vdev.id.venकरोr = VIRTIO_DEV_ANY_ID;
+	vu_dev->vdev.id.vendor = VIRTIO_DEV_ANY_ID;
 	vu_dev->pdev = pdev;
 	vu_dev->req_fd = -1;
 
-	करो अणु
+	do {
 		rc = os_connect_socket(pdata->socket_path);
-	पूर्ण जबतक (rc == -EINTR);
-	अगर (rc < 0)
-		वापस rc;
+	} while (rc == -EINTR);
+	if (rc < 0)
+		return rc;
 	vu_dev->sock = rc;
 
 	spin_lock_init(&vu_dev->sock_lock);
 
 	rc = vhost_user_init(vu_dev);
-	अगर (rc)
-		जाओ error_init;
+	if (rc)
+		goto error_init;
 
-	platक्रमm_set_drvdata(pdev, vu_dev);
+	platform_set_drvdata(pdev, vu_dev);
 
 	device_set_wakeup_capable(&vu_dev->vdev.dev, true);
 
-	rc = रेजिस्टर_virtio_device(&vu_dev->vdev);
-	अगर (rc)
+	rc = register_virtio_device(&vu_dev->vdev);
+	if (rc)
 		put_device(&vu_dev->vdev.dev);
-	vu_dev->रेजिस्टरed = 1;
-	वापस rc;
+	vu_dev->registered = 1;
+	return rc;
 
 error_init:
-	os_बंद_file(vu_dev->sock);
-	वापस rc;
-पूर्ण
+	os_close_file(vu_dev->sock);
+	return rc;
+}
 
-अटल पूर्णांक virtio_uml_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा virtio_uml_device *vu_dev = platक्रमm_get_drvdata(pdev);
+static int virtio_uml_remove(struct platform_device *pdev)
+{
+	struct virtio_uml_device *vu_dev = platform_get_drvdata(pdev);
 
-	unरेजिस्टर_virtio_device(&vu_dev->vdev);
-	वापस 0;
-पूर्ण
+	unregister_virtio_device(&vu_dev->vdev);
+	return 0;
+}
 
 /* Command line device list */
 
-अटल व्योम vu_cmdline_release_dev(काष्ठा device *d)
-अणु
-पूर्ण
+static void vu_cmdline_release_dev(struct device *d)
+{
+}
 
-अटल काष्ठा device vu_cmdline_parent = अणु
+static struct device vu_cmdline_parent = {
 	.init_name = "virtio-uml-cmdline",
 	.release = vu_cmdline_release_dev,
-पूर्ण;
+};
 
-अटल bool vu_cmdline_parent_रेजिस्टरed;
-अटल पूर्णांक vu_cmdline_id;
+static bool vu_cmdline_parent_registered;
+static int vu_cmdline_id;
 
-अटल पूर्णांक vu_unरेजिस्टर_cmdline_device(काष्ठा device *dev, व्योम *data)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	काष्ठा virtio_uml_platक्रमm_data *pdata = pdev->dev.platक्रमm_data;
+static int vu_unregister_cmdline_device(struct device *dev, void *data)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct virtio_uml_platform_data *pdata = pdev->dev.platform_data;
 
-	kमुक्त(pdata->socket_path);
-	platक्रमm_device_unरेजिस्टर(pdev);
-	वापस 0;
-पूर्ण
+	kfree(pdata->socket_path);
+	platform_device_unregister(pdev);
+	return 0;
+}
 
-अटल व्योम vu_conn_broken(काष्ठा work_काष्ठा *wk)
-अणु
-	काष्ठा virtio_uml_platक्रमm_data *pdata;
+static void vu_conn_broken(struct work_struct *wk)
+{
+	struct virtio_uml_platform_data *pdata;
 
-	pdata = container_of(wk, काष्ठा virtio_uml_platक्रमm_data, conn_broken_wk);
-	vu_unरेजिस्टर_cmdline_device(&pdata->pdev->dev, शून्य);
-पूर्ण
+	pdata = container_of(wk, struct virtio_uml_platform_data, conn_broken_wk);
+	vu_unregister_cmdline_device(&pdata->pdev->dev, NULL);
+}
 
-अटल पूर्णांक vu_cmdline_set(स्थिर अक्षर *device, स्थिर काष्ठा kernel_param *kp)
-अणु
-	स्थिर अक्षर *ids = म_अक्षर(device, ':');
-	अचिन्हित पूर्णांक virtio_device_id;
-	पूर्णांक processed, consumed, err;
-	अक्षर *socket_path;
-	काष्ठा virtio_uml_platक्रमm_data pdata, *ppdata;
-	काष्ठा platक्रमm_device *pdev;
+static int vu_cmdline_set(const char *device, const struct kernel_param *kp)
+{
+	const char *ids = strchr(device, ':');
+	unsigned int virtio_device_id;
+	int processed, consumed, err;
+	char *socket_path;
+	struct virtio_uml_platform_data pdata, *ppdata;
+	struct platform_device *pdev;
 
-	अगर (!ids || ids == device)
-		वापस -EINVAL;
+	if (!ids || ids == device)
+		return -EINVAL;
 
-	processed = माला_पूछो(ids, ":%u%n:%d%n",
+	processed = sscanf(ids, ":%u%n:%d%n",
 			   &virtio_device_id, &consumed,
 			   &vu_cmdline_id, &consumed);
 
-	अगर (processed < 1 || ids[consumed])
-		वापस -EINVAL;
+	if (processed < 1 || ids[consumed])
+		return -EINVAL;
 
-	अगर (!vu_cmdline_parent_रेजिस्टरed) अणु
-		err = device_रेजिस्टर(&vu_cmdline_parent);
-		अगर (err) अणु
+	if (!vu_cmdline_parent_registered) {
+		err = device_register(&vu_cmdline_parent);
+		if (err) {
 			pr_err("Failed to register parent device!\n");
 			put_device(&vu_cmdline_parent);
-			वापस err;
-		पूर्ण
-		vu_cmdline_parent_रेजिस्टरed = true;
-	पूर्ण
+			return err;
+		}
+		vu_cmdline_parent_registered = true;
+	}
 
 	socket_path = kmemdup_nul(device, ids - device, GFP_KERNEL);
-	अगर (!socket_path)
-		वापस -ENOMEM;
+	if (!socket_path)
+		return -ENOMEM;
 
 	pdata.virtio_device_id = (u32) virtio_device_id;
 	pdata.socket_path = socket_path;
@@ -1229,51 +1228,51 @@ error_init:
 	pr_info("Registering device virtio-uml.%d id=%d at %s\n",
 		vu_cmdline_id, virtio_device_id, socket_path);
 
-	pdev = platक्रमm_device_रेजिस्टर_data(&vu_cmdline_parent, "virtio-uml",
+	pdev = platform_device_register_data(&vu_cmdline_parent, "virtio-uml",
 					     vu_cmdline_id++, &pdata,
-					     माप(pdata));
+					     sizeof(pdata));
 	err = PTR_ERR_OR_ZERO(pdev);
-	अगर (err)
-		जाओ मुक्त;
+	if (err)
+		goto free;
 
-	ppdata = pdev->dev.platक्रमm_data;
+	ppdata = pdev->dev.platform_data;
 	ppdata->pdev = pdev;
 	INIT_WORK(&ppdata->conn_broken_wk, vu_conn_broken);
 
-	वापस 0;
+	return 0;
 
-मुक्त:
-	kमुक्त(socket_path);
-	वापस err;
-पूर्ण
+free:
+	kfree(socket_path);
+	return err;
+}
 
-अटल पूर्णांक vu_cmdline_get_device(काष्ठा device *dev, व्योम *data)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	काष्ठा virtio_uml_platक्रमm_data *pdata = pdev->dev.platक्रमm_data;
-	अक्षर *buffer = data;
-	अचिन्हित पूर्णांक len = म_माप(buffer);
+static int vu_cmdline_get_device(struct device *dev, void *data)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct virtio_uml_platform_data *pdata = pdev->dev.platform_data;
+	char *buffer = data;
+	unsigned int len = strlen(buffer);
 
-	snम_लिखो(buffer + len, PAGE_SIZE - len, "%s:%d:%d\n",
+	snprintf(buffer + len, PAGE_SIZE - len, "%s:%d:%d\n",
 		 pdata->socket_path, pdata->virtio_device_id, pdev->id);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vu_cmdline_get(अक्षर *buffer, स्थिर काष्ठा kernel_param *kp)
-अणु
+static int vu_cmdline_get(char *buffer, const struct kernel_param *kp)
+{
 	buffer[0] = '\0';
-	अगर (vu_cmdline_parent_रेजिस्टरed)
-		device_क्रम_each_child(&vu_cmdline_parent, buffer,
+	if (vu_cmdline_parent_registered)
+		device_for_each_child(&vu_cmdline_parent, buffer,
 				      vu_cmdline_get_device);
-	वापस म_माप(buffer) + 1;
-पूर्ण
+	return strlen(buffer) + 1;
+}
 
-अटल स्थिर काष्ठा kernel_param_ops vu_cmdline_param_ops = अणु
+static const struct kernel_param_ops vu_cmdline_param_ops = {
 	.set = vu_cmdline_set,
 	.get = vu_cmdline_get,
-पूर्ण;
+};
 
-device_param_cb(device, &vu_cmdline_param_ops, शून्य, S_IRUSR);
+device_param_cb(device, &vu_cmdline_param_ops, NULL, S_IRUSR);
 __uml_help(vu_cmdline_param_ops,
 "virtio_uml.device=<socket>:<virtio_id>[:<platform_id>]\n"
 "    Configure a virtio device over a vhost-user socket.\n"
@@ -1282,89 +1281,89 @@ __uml_help(vu_cmdline_param_ops,
 );
 
 
-अटल व्योम vu_unरेजिस्टर_cmdline_devices(व्योम)
-अणु
-	अगर (vu_cmdline_parent_रेजिस्टरed) अणु
-		device_क्रम_each_child(&vu_cmdline_parent, शून्य,
-				      vu_unरेजिस्टर_cmdline_device);
-		device_unरेजिस्टर(&vu_cmdline_parent);
-		vu_cmdline_parent_रेजिस्टरed = false;
-	पूर्ण
-पूर्ण
+static void vu_unregister_cmdline_devices(void)
+{
+	if (vu_cmdline_parent_registered) {
+		device_for_each_child(&vu_cmdline_parent, NULL,
+				      vu_unregister_cmdline_device);
+		device_unregister(&vu_cmdline_parent);
+		vu_cmdline_parent_registered = false;
+	}
+}
 
-/* Platक्रमm driver */
+/* Platform driver */
 
-अटल स्थिर काष्ठा of_device_id virtio_uml_match[] = अणु
-	अणु .compatible = "virtio,uml", पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id virtio_uml_match[] = {
+	{ .compatible = "virtio,uml", },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, virtio_uml_match);
 
-अटल पूर्णांक virtio_uml_suspend(काष्ठा platक्रमm_device *pdev, pm_message_t state)
-अणु
-	काष्ठा virtio_uml_device *vu_dev = platक्रमm_get_drvdata(pdev);
-	काष्ठा virtqueue *vq;
+static int virtio_uml_suspend(struct platform_device *pdev, pm_message_t state)
+{
+	struct virtio_uml_device *vu_dev = platform_get_drvdata(pdev);
+	struct virtqueue *vq;
 
-	virtio_device_क्रम_each_vq((&vu_dev->vdev), vq) अणु
-		काष्ठा virtio_uml_vq_info *info = vq->priv;
+	virtio_device_for_each_vq((&vu_dev->vdev), vq) {
+		struct virtio_uml_vq_info *info = vq->priv;
 
 		info->suspended = true;
 		vhost_user_set_vring_enable(vu_dev, vq->index, false);
-	पूर्ण
+	}
 
-	अगर (!device_may_wakeup(&vu_dev->vdev.dev)) अणु
+	if (!device_may_wakeup(&vu_dev->vdev.dev)) {
 		vu_dev->suspended = true;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस irq_set_irq_wake(vu_dev->irq, 1);
-पूर्ण
+	return irq_set_irq_wake(vu_dev->irq, 1);
+}
 
-अटल पूर्णांक virtio_uml_resume(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा virtio_uml_device *vu_dev = platक्रमm_get_drvdata(pdev);
-	काष्ठा virtqueue *vq;
+static int virtio_uml_resume(struct platform_device *pdev)
+{
+	struct virtio_uml_device *vu_dev = platform_get_drvdata(pdev);
+	struct virtqueue *vq;
 
-	virtio_device_क्रम_each_vq((&vu_dev->vdev), vq) अणु
-		काष्ठा virtio_uml_vq_info *info = vq->priv;
+	virtio_device_for_each_vq((&vu_dev->vdev), vq) {
+		struct virtio_uml_vq_info *info = vq->priv;
 
 		info->suspended = false;
 		vhost_user_set_vring_enable(vu_dev, vq->index, true);
-	पूर्ण
+	}
 
 	vu_dev->suspended = false;
 
-	अगर (!device_may_wakeup(&vu_dev->vdev.dev))
-		वापस 0;
+	if (!device_may_wakeup(&vu_dev->vdev.dev))
+		return 0;
 
-	वापस irq_set_irq_wake(vu_dev->irq, 0);
-पूर्ण
+	return irq_set_irq_wake(vu_dev->irq, 0);
+}
 
-अटल काष्ठा platक्रमm_driver virtio_uml_driver = अणु
+static struct platform_driver virtio_uml_driver = {
 	.probe = virtio_uml_probe,
-	.हटाओ = virtio_uml_हटाओ,
-	.driver = अणु
+	.remove = virtio_uml_remove,
+	.driver = {
 		.name = "virtio-uml",
 		.of_match_table = virtio_uml_match,
-	पूर्ण,
+	},
 	.suspend = virtio_uml_suspend,
 	.resume = virtio_uml_resume,
-पूर्ण;
+};
 
-अटल पूर्णांक __init virtio_uml_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&virtio_uml_driver);
-पूर्ण
+static int __init virtio_uml_init(void)
+{
+	return platform_driver_register(&virtio_uml_driver);
+}
 
-अटल व्योम __निकास virtio_uml_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&virtio_uml_driver);
-	vu_unरेजिस्टर_cmdline_devices();
-पूर्ण
+static void __exit virtio_uml_exit(void)
+{
+	platform_driver_unregister(&virtio_uml_driver);
+	vu_unregister_cmdline_devices();
+}
 
 module_init(virtio_uml_init);
-module_निकास(virtio_uml_निकास);
-__uml_निकासcall(virtio_uml_निकास);
+module_exit(virtio_uml_exit);
+__uml_exitcall(virtio_uml_exit);
 
 MODULE_DESCRIPTION("UML driver for vhost-user virtio devices");
 MODULE_LICENSE("GPL");

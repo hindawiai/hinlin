@@ -1,138 +1,137 @@
-<शैली गुरु>
 /*
- *  Device operations क्रम the pnfs client.
+ *  Device operations for the pnfs client.
  *
  *  Copyright (c) 2002
  *  The Regents of the University of Michigan
  *  All Rights Reserved
  *
- *  Dean Hildebअक्रम <dhildebz@umich.edu>
+ *  Dean Hildebrand <dhildebz@umich.edu>
  *  Garth Goodson   <Garth.Goodson@netapp.com>
  *
  *  Permission is granted to use, copy, create derivative works, and
- *  redistribute this software and such derivative works क्रम any purpose,
- *  so दीर्घ as the name of the University of Michigan is not used in
- *  any advertising or खुलाity pertaining to the use or distribution
- *  of this software without specअगरic, written prior authorization. If
- *  the above copyright notice or any other identअगरication of the
+ *  redistribute this software and such derivative works for any purpose,
+ *  so long as the name of the University of Michigan is not used in
+ *  any advertising or publicity pertaining to the use or distribution
+ *  of this software without specific, written prior authorization. If
+ *  the above copyright notice or any other identification of the
  *  University of Michigan is included in any copy of any portion of
  *  this software, then the disclaimer below must also be included.
  *
  *  This software is provided as is, without representation or warranty
  *  of any kind either express or implied, including without limitation
- *  the implied warranties of merchantability, fitness क्रम a particular
+ *  the implied warranties of merchantability, fitness for a particular
  *  purpose, or noninfringement.  The Regents of the University of
- *  Michigan shall not be liable क्रम any damages, including special,
+ *  Michigan shall not be liable for any damages, including special,
  *  indirect, incidental, or consequential damages, with respect to any
  *  claim arising out of or in connection with the use of the software,
- *  even अगर it has been or is hereafter advised of the possibility of
+ *  even if it has been or is hereafter advised of the possibility of
  *  such damages.
  */
 
-#समावेश <linux/export.h>
-#समावेश <linux/nfs_fs.h>
-#समावेश "nfs4session.h"
-#समावेश "internal.h"
-#समावेश "pnfs.h"
+#include <linux/export.h>
+#include <linux/nfs_fs.h>
+#include "nfs4session.h"
+#include "internal.h"
+#include "pnfs.h"
 
-#समावेश "nfs4trace.h"
+#include "nfs4trace.h"
 
-#घोषणा NFSDBG_FACILITY		NFSDBG_PNFS
+#define NFSDBG_FACILITY		NFSDBG_PNFS
 
 /*
  * Device ID RCU cache. A device ID is unique per server and layout type.
  */
-#घोषणा NFS4_DEVICE_ID_HASH_BITS	5
-#घोषणा NFS4_DEVICE_ID_HASH_SIZE	(1 << NFS4_DEVICE_ID_HASH_BITS)
-#घोषणा NFS4_DEVICE_ID_HASH_MASK	(NFS4_DEVICE_ID_HASH_SIZE - 1)
+#define NFS4_DEVICE_ID_HASH_BITS	5
+#define NFS4_DEVICE_ID_HASH_SIZE	(1 << NFS4_DEVICE_ID_HASH_BITS)
+#define NFS4_DEVICE_ID_HASH_MASK	(NFS4_DEVICE_ID_HASH_SIZE - 1)
 
 
-अटल काष्ठा hlist_head nfs4_deviceid_cache[NFS4_DEVICE_ID_HASH_SIZE];
-अटल DEFINE_SPINLOCK(nfs4_deviceid_lock);
+static struct hlist_head nfs4_deviceid_cache[NFS4_DEVICE_ID_HASH_SIZE];
+static DEFINE_SPINLOCK(nfs4_deviceid_lock);
 
-#अगर_घोषित NFS_DEBUG
-व्योम
-nfs4_prपूर्णांक_deviceid(स्थिर काष्ठा nfs4_deviceid *id)
-अणु
+#ifdef NFS_DEBUG
+void
+nfs4_print_deviceid(const struct nfs4_deviceid *id)
+{
 	u32 *p = (u32 *)id;
 
-	dprपूर्णांकk("%s: device id= [%x%x%x%x]\n", __func__,
+	dprintk("%s: device id= [%x%x%x%x]\n", __func__,
 		p[0], p[1], p[2], p[3]);
-पूर्ण
-EXPORT_SYMBOL_GPL(nfs4_prपूर्णांक_deviceid);
-#पूर्ण_अगर
+}
+EXPORT_SYMBOL_GPL(nfs4_print_deviceid);
+#endif
 
-अटल अंतरभूत u32
-nfs4_deviceid_hash(स्थिर काष्ठा nfs4_deviceid *id)
-अणु
-	अचिन्हित अक्षर *cptr = (अचिन्हित अक्षर *)id->data;
-	अचिन्हित पूर्णांक nbytes = NFS4_DEVICEID4_SIZE;
+static inline u32
+nfs4_deviceid_hash(const struct nfs4_deviceid *id)
+{
+	unsigned char *cptr = (unsigned char *)id->data;
+	unsigned int nbytes = NFS4_DEVICEID4_SIZE;
 	u32 x = 0;
 
-	जबतक (nbytes--) अणु
+	while (nbytes--) {
 		x *= 37;
 		x += *cptr++;
-	पूर्ण
-	वापस x & NFS4_DEVICE_ID_HASH_MASK;
-पूर्ण
+	}
+	return x & NFS4_DEVICE_ID_HASH_MASK;
+}
 
-अटल काष्ठा nfs4_deviceid_node *
-_lookup_deviceid(स्थिर काष्ठा pnfs_layoutdriver_type *ld,
-		 स्थिर काष्ठा nfs_client *clp, स्थिर काष्ठा nfs4_deviceid *id,
-		 दीर्घ hash)
-अणु
-	काष्ठा nfs4_deviceid_node *d;
+static struct nfs4_deviceid_node *
+_lookup_deviceid(const struct pnfs_layoutdriver_type *ld,
+		 const struct nfs_client *clp, const struct nfs4_deviceid *id,
+		 long hash)
+{
+	struct nfs4_deviceid_node *d;
 
-	hlist_क्रम_each_entry_rcu(d, &nfs4_deviceid_cache[hash], node)
-		अगर (d->ld == ld && d->nfs_client == clp &&
-		    !स_भेद(&d->deviceid, id, माप(*id))) अणु
-			अगर (atomic_पढ़ो(&d->ref))
-				वापस d;
-			अन्यथा
-				जारी;
-		पूर्ण
-	वापस शून्य;
-पूर्ण
+	hlist_for_each_entry_rcu(d, &nfs4_deviceid_cache[hash], node)
+		if (d->ld == ld && d->nfs_client == clp &&
+		    !memcmp(&d->deviceid, id, sizeof(*id))) {
+			if (atomic_read(&d->ref))
+				return d;
+			else
+				continue;
+		}
+	return NULL;
+}
 
-अटल काष्ठा nfs4_deviceid_node *
-nfs4_get_device_info(काष्ठा nfs_server *server,
-		स्थिर काष्ठा nfs4_deviceid *dev_id,
-		स्थिर काष्ठा cred *cred, gfp_t gfp_flags)
-अणु
-	काष्ठा nfs4_deviceid_node *d = शून्य;
-	काष्ठा pnfs_device *pdev = शून्य;
-	काष्ठा page **pages = शून्य;
+static struct nfs4_deviceid_node *
+nfs4_get_device_info(struct nfs_server *server,
+		const struct nfs4_deviceid *dev_id,
+		const struct cred *cred, gfp_t gfp_flags)
+{
+	struct nfs4_deviceid_node *d = NULL;
+	struct pnfs_device *pdev = NULL;
+	struct page **pages = NULL;
 	u32 max_resp_sz;
-	पूर्णांक max_pages;
-	पूर्णांक rc, i;
+	int max_pages;
+	int rc, i;
 
 	/*
-	 * Use the session max response size as the basis क्रम setting
+	 * Use the session max response size as the basis for setting
 	 * GETDEVICEINFO's maxcount
 	 */
 	max_resp_sz = server->nfs_client->cl_session->fc_attrs.max_resp_sz;
-	अगर (server->pnfs_curr_ld->max_deviceinfo_size &&
+	if (server->pnfs_curr_ld->max_deviceinfo_size &&
 	    server->pnfs_curr_ld->max_deviceinfo_size < max_resp_sz)
 		max_resp_sz = server->pnfs_curr_ld->max_deviceinfo_size;
 	max_pages = nfs_page_array_len(0, max_resp_sz);
-	dprपूर्णांकk("%s: server %p max_resp_sz %u max_pages %d\n",
+	dprintk("%s: server %p max_resp_sz %u max_pages %d\n",
 		__func__, server, max_resp_sz, max_pages);
 
-	pdev = kzalloc(माप(*pdev), gfp_flags);
-	अगर (!pdev)
-		वापस शून्य;
+	pdev = kzalloc(sizeof(*pdev), gfp_flags);
+	if (!pdev)
+		return NULL;
 
-	pages = kसुस्मृति(max_pages, माप(काष्ठा page *), gfp_flags);
-	अगर (!pages)
-		जाओ out_मुक्त_pdev;
+	pages = kcalloc(max_pages, sizeof(struct page *), gfp_flags);
+	if (!pages)
+		goto out_free_pdev;
 
-	क्रम (i = 0; i < max_pages; i++) अणु
+	for (i = 0; i < max_pages; i++) {
 		pages[i] = alloc_page(gfp_flags);
-		अगर (!pages[i])
-			जाओ out_मुक्त_pages;
-	पूर्ण
+		if (!pages[i])
+			goto out_free_pages;
+	}
 
-	स_नकल(&pdev->dev_id, dev_id, माप(*dev_id));
+	memcpy(&pdev->dev_id, dev_id, sizeof(*dev_id));
 	pdev->layout_type = server->pnfs_curr_ld->id;
 	pdev->pages = pages;
 	pdev->pgbase = 0;
@@ -141,83 +140,83 @@ nfs4_get_device_info(काष्ठा nfs_server *server,
 	pdev->maxcount = max_resp_sz - nfs41_maxgetdevinfo_overhead;
 
 	rc = nfs4_proc_getdeviceinfo(server, pdev, cred);
-	dprपूर्णांकk("%s getdevice info returns %d\n", __func__, rc);
-	अगर (rc)
-		जाओ out_मुक्त_pages;
+	dprintk("%s getdevice info returns %d\n", __func__, rc);
+	if (rc)
+		goto out_free_pages;
 
 	/*
 	 * Found new device, need to decode it and then add it to the
-	 * list of known devices क्रम this mountpoपूर्णांक.
+	 * list of known devices for this mountpoint.
 	 */
 	d = server->pnfs_curr_ld->alloc_deviceid_node(server, pdev,
 			gfp_flags);
-	अगर (d && pdev->nocache)
+	if (d && pdev->nocache)
 		set_bit(NFS_DEVICEID_NOCACHE, &d->flags);
 
-out_मुक्त_pages:
-	क्रम (i = 0; i < max_pages; i++)
-		__मुक्त_page(pages[i]);
-	kमुक्त(pages);
-out_मुक्त_pdev:
-	kमुक्त(pdev);
-	dprपूर्णांकk("<-- %s d %p\n", __func__, d);
-	वापस d;
-पूर्ण
+out_free_pages:
+	for (i = 0; i < max_pages; i++)
+		__free_page(pages[i]);
+	kfree(pages);
+out_free_pdev:
+	kfree(pdev);
+	dprintk("<-- %s d %p\n", __func__, d);
+	return d;
+}
 
 /*
- * Lookup a deviceid in cache and get a reference count on it अगर found
+ * Lookup a deviceid in cache and get a reference count on it if found
  *
  * @clp nfs_client associated with deviceid
  * @id deviceid to look up
  */
-अटल काष्ठा nfs4_deviceid_node *
-__nfs4_find_get_deviceid(काष्ठा nfs_server *server,
-		स्थिर काष्ठा nfs4_deviceid *id, दीर्घ hash)
-अणु
-	काष्ठा nfs4_deviceid_node *d;
+static struct nfs4_deviceid_node *
+__nfs4_find_get_deviceid(struct nfs_server *server,
+		const struct nfs4_deviceid *id, long hash)
+{
+	struct nfs4_deviceid_node *d;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	d = _lookup_deviceid(server->pnfs_curr_ld, server->nfs_client, id,
 			hash);
-	अगर (d != शून्य && !atomic_inc_not_zero(&d->ref))
-		d = शून्य;
-	rcu_पढ़ो_unlock();
-	वापस d;
-पूर्ण
+	if (d != NULL && !atomic_inc_not_zero(&d->ref))
+		d = NULL;
+	rcu_read_unlock();
+	return d;
+}
 
-काष्ठा nfs4_deviceid_node *
-nfs4_find_get_deviceid(काष्ठा nfs_server *server,
-		स्थिर काष्ठा nfs4_deviceid *id, स्थिर काष्ठा cred *cred,
+struct nfs4_deviceid_node *
+nfs4_find_get_deviceid(struct nfs_server *server,
+		const struct nfs4_deviceid *id, const struct cred *cred,
 		gfp_t gfp_mask)
-अणु
-	दीर्घ hash = nfs4_deviceid_hash(id);
-	काष्ठा nfs4_deviceid_node *d, *new;
+{
+	long hash = nfs4_deviceid_hash(id);
+	struct nfs4_deviceid_node *d, *new;
 
 	d = __nfs4_find_get_deviceid(server, id, hash);
-	अगर (d)
-		जाओ found;
+	if (d)
+		goto found;
 
 	new = nfs4_get_device_info(server, id, cred, gfp_mask);
-	अगर (!new) अणु
+	if (!new) {
 		trace_nfs4_find_deviceid(server, id, -ENOENT);
-		वापस new;
-	पूर्ण
+		return new;
+	}
 
 	spin_lock(&nfs4_deviceid_lock);
 	d = __nfs4_find_get_deviceid(server, id, hash);
-	अगर (d) अणु
+	if (d) {
 		spin_unlock(&nfs4_deviceid_lock);
-		server->pnfs_curr_ld->मुक्त_deviceid_node(new);
-	पूर्ण अन्यथा अणु
+		server->pnfs_curr_ld->free_deviceid_node(new);
+	} else {
 		atomic_inc(&new->ref);
 		hlist_add_head_rcu(&new->node, &nfs4_deviceid_cache[hash]);
 		spin_unlock(&nfs4_deviceid_lock);
 		d = new;
-	पूर्ण
+	}
 found:
 	trace_nfs4_find_deviceid(server, id, 0);
-	वापस d;
-पूर्ण
+	return d;
+}
 EXPORT_SYMBOL_GPL(nfs4_find_get_deviceid);
 
 /*
@@ -226,43 +225,43 @@ EXPORT_SYMBOL_GPL(nfs4_find_get_deviceid);
  * @clp nfs_client associated with deviceid
  * @id the deviceid to unhash
  *
- * @ret the unhashed node, अगर found and dereferenced to zero, शून्य otherwise.
+ * @ret the unhashed node, if found and dereferenced to zero, NULL otherwise.
  */
-व्योम
-nfs4_delete_deviceid(स्थिर काष्ठा pnfs_layoutdriver_type *ld,
-			 स्थिर काष्ठा nfs_client *clp, स्थिर काष्ठा nfs4_deviceid *id)
-अणु
-	काष्ठा nfs4_deviceid_node *d;
+void
+nfs4_delete_deviceid(const struct pnfs_layoutdriver_type *ld,
+			 const struct nfs_client *clp, const struct nfs4_deviceid *id)
+{
+	struct nfs4_deviceid_node *d;
 
 	spin_lock(&nfs4_deviceid_lock);
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	d = _lookup_deviceid(ld, clp, id, nfs4_deviceid_hash(id));
-	rcu_पढ़ो_unlock();
-	अगर (!d) अणु
+	rcu_read_unlock();
+	if (!d) {
 		spin_unlock(&nfs4_deviceid_lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 	hlist_del_init_rcu(&d->node);
 	clear_bit(NFS_DEVICEID_NOCACHE, &d->flags);
 	spin_unlock(&nfs4_deviceid_lock);
 
 	/* balance the initial ref set in pnfs_insert_deviceid */
 	nfs4_put_deviceid_node(d);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(nfs4_delete_deviceid);
 
-व्योम
-nfs4_init_deviceid_node(काष्ठा nfs4_deviceid_node *d, काष्ठा nfs_server *server,
-			स्थिर काष्ठा nfs4_deviceid *id)
-अणु
+void
+nfs4_init_deviceid_node(struct nfs4_deviceid_node *d, struct nfs_server *server,
+			const struct nfs4_deviceid *id)
+{
 	INIT_HLIST_NODE(&d->node);
-	INIT_HLIST_NODE(&d->पंचांगpnode);
+	INIT_HLIST_NODE(&d->tmpnode);
 	d->ld = server->pnfs_curr_ld;
 	d->nfs_client = server->nfs_client;
 	d->flags = 0;
 	d->deviceid = *id;
 	atomic_set(&d->ref, 1);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(nfs4_init_deviceid_node);
 
 /*
@@ -271,115 +270,115 @@ EXPORT_SYMBOL_GPL(nfs4_init_deviceid_node);
  *
  * @d deviceid node to put
  *
- * वापस true अगरf the node was deleted
- * Note that since the test क्रम d->ref == 0 is sufficient to establish
- * that the node is no दीर्घer hashed in the global device id cache.
+ * return true iff the node was deleted
+ * Note that since the test for d->ref == 0 is sufficient to establish
+ * that the node is no longer hashed in the global device id cache.
  */
 bool
-nfs4_put_deviceid_node(काष्ठा nfs4_deviceid_node *d)
-अणु
-	अगर (test_bit(NFS_DEVICEID_NOCACHE, &d->flags)) अणु
-		अगर (atomic_add_unless(&d->ref, -1, 2))
-			वापस false;
+nfs4_put_deviceid_node(struct nfs4_deviceid_node *d)
+{
+	if (test_bit(NFS_DEVICEID_NOCACHE, &d->flags)) {
+		if (atomic_add_unless(&d->ref, -1, 2))
+			return false;
 		nfs4_delete_deviceid(d->ld, d->nfs_client, &d->deviceid);
-	पूर्ण
-	अगर (!atomic_dec_and_test(&d->ref))
-		वापस false;
-	trace_nfs4_deviceid_मुक्त(d->nfs_client, &d->deviceid);
-	d->ld->मुक्त_deviceid_node(d);
-	वापस true;
-पूर्ण
+	}
+	if (!atomic_dec_and_test(&d->ref))
+		return false;
+	trace_nfs4_deviceid_free(d->nfs_client, &d->deviceid);
+	d->ld->free_deviceid_node(d);
+	return true;
+}
 EXPORT_SYMBOL_GPL(nfs4_put_deviceid_node);
 
-व्योम
-nfs4_mark_deviceid_available(काष्ठा nfs4_deviceid_node *node)
-अणु
-	अगर (test_bit(NFS_DEVICEID_UNAVAILABLE, &node->flags)) अणु
+void
+nfs4_mark_deviceid_available(struct nfs4_deviceid_node *node)
+{
+	if (test_bit(NFS_DEVICEID_UNAVAILABLE, &node->flags)) {
 		clear_bit(NFS_DEVICEID_UNAVAILABLE, &node->flags);
 		smp_mb__after_atomic();
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(nfs4_mark_deviceid_available);
 
-व्योम
-nfs4_mark_deviceid_unavailable(काष्ठा nfs4_deviceid_node *node)
-अणु
-	node->बारtamp_unavailable = jअगरfies;
-	smp_mb__beक्रमe_atomic();
+void
+nfs4_mark_deviceid_unavailable(struct nfs4_deviceid_node *node)
+{
+	node->timestamp_unavailable = jiffies;
+	smp_mb__before_atomic();
 	set_bit(NFS_DEVICEID_UNAVAILABLE, &node->flags);
 	smp_mb__after_atomic();
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(nfs4_mark_deviceid_unavailable);
 
 bool
-nfs4_test_deviceid_unavailable(काष्ठा nfs4_deviceid_node *node)
-अणु
-	अगर (test_bit(NFS_DEVICEID_UNAVAILABLE, &node->flags)) अणु
-		अचिन्हित दीर्घ start, end;
+nfs4_test_deviceid_unavailable(struct nfs4_deviceid_node *node)
+{
+	if (test_bit(NFS_DEVICEID_UNAVAILABLE, &node->flags)) {
+		unsigned long start, end;
 
-		end = jअगरfies;
+		end = jiffies;
 		start = end - PNFS_DEVICE_RETRY_TIMEOUT;
-		अगर (समय_in_range(node->बारtamp_unavailable, start, end))
-			वापस true;
+		if (time_in_range(node->timestamp_unavailable, start, end))
+			return true;
 		clear_bit(NFS_DEVICEID_UNAVAILABLE, &node->flags);
 		smp_mb__after_atomic();
-	पूर्ण
-	वापस false;
-पूर्ण
+	}
+	return false;
+}
 EXPORT_SYMBOL_GPL(nfs4_test_deviceid_unavailable);
 
-अटल व्योम
-_deviceid_purge_client(स्थिर काष्ठा nfs_client *clp, दीर्घ hash)
-अणु
-	काष्ठा nfs4_deviceid_node *d;
-	HLIST_HEAD(पंचांगp);
+static void
+_deviceid_purge_client(const struct nfs_client *clp, long hash)
+{
+	struct nfs4_deviceid_node *d;
+	HLIST_HEAD(tmp);
 
 	spin_lock(&nfs4_deviceid_lock);
-	rcu_पढ़ो_lock();
-	hlist_क्रम_each_entry_rcu(d, &nfs4_deviceid_cache[hash], node)
-		अगर (d->nfs_client == clp && atomic_पढ़ो(&d->ref)) अणु
+	rcu_read_lock();
+	hlist_for_each_entry_rcu(d, &nfs4_deviceid_cache[hash], node)
+		if (d->nfs_client == clp && atomic_read(&d->ref)) {
 			hlist_del_init_rcu(&d->node);
-			hlist_add_head(&d->पंचांगpnode, &पंचांगp);
+			hlist_add_head(&d->tmpnode, &tmp);
 			clear_bit(NFS_DEVICEID_NOCACHE, &d->flags);
-		पूर्ण
-	rcu_पढ़ो_unlock();
+		}
+	rcu_read_unlock();
 	spin_unlock(&nfs4_deviceid_lock);
 
-	अगर (hlist_empty(&पंचांगp))
-		वापस;
+	if (hlist_empty(&tmp))
+		return;
 
-	जबतक (!hlist_empty(&पंचांगp)) अणु
-		d = hlist_entry(पंचांगp.first, काष्ठा nfs4_deviceid_node, पंचांगpnode);
-		hlist_del(&d->पंचांगpnode);
+	while (!hlist_empty(&tmp)) {
+		d = hlist_entry(tmp.first, struct nfs4_deviceid_node, tmpnode);
+		hlist_del(&d->tmpnode);
 		nfs4_put_deviceid_node(d);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम
-nfs4_deviceid_purge_client(स्थिर काष्ठा nfs_client *clp)
-अणु
-	दीर्घ h;
+void
+nfs4_deviceid_purge_client(const struct nfs_client *clp)
+{
+	long h;
 
-	अगर (!(clp->cl_exchange_flags & EXCHGID4_FLAG_USE_PNFS_MDS))
-		वापस;
-	क्रम (h = 0; h < NFS4_DEVICE_ID_HASH_SIZE; h++)
+	if (!(clp->cl_exchange_flags & EXCHGID4_FLAG_USE_PNFS_MDS))
+		return;
+	for (h = 0; h < NFS4_DEVICE_ID_HASH_SIZE; h++)
 		_deviceid_purge_client(clp, h);
-पूर्ण
+}
 
 /*
  * Stop use of all deviceids associated with an nfs_client
  */
-व्योम
-nfs4_deviceid_mark_client_invalid(काष्ठा nfs_client *clp)
-अणु
-	काष्ठा nfs4_deviceid_node *d;
-	पूर्णांक i;
+void
+nfs4_deviceid_mark_client_invalid(struct nfs_client *clp)
+{
+	struct nfs4_deviceid_node *d;
+	int i;
 
-	rcu_पढ़ो_lock();
-	क्रम (i = 0; i < NFS4_DEVICE_ID_HASH_SIZE; i ++)अणु
-		hlist_क्रम_each_entry_rcu(d, &nfs4_deviceid_cache[i], node)
-			अगर (d->nfs_client == clp)
+	rcu_read_lock();
+	for (i = 0; i < NFS4_DEVICE_ID_HASH_SIZE; i ++){
+		hlist_for_each_entry_rcu(d, &nfs4_deviceid_cache[i], node)
+			if (d->nfs_client == clp)
 				set_bit(NFS_DEVICEID_INVALID, &d->flags);
-	पूर्ण
-	rcu_पढ़ो_unlock();
-पूर्ण
+	}
+	rcu_read_unlock();
+}

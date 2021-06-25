@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * arch/sh/boards/mach-landisk/irq.c
  *
@@ -12,27 +11,27 @@
  * Based largely on io_se.c.
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <mach-landisk/mach/iodata_landisk.h>
+#include <linux/init.h>
+#include <linux/irq.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <mach-landisk/mach/iodata_landisk.h>
 
-क्रमागत अणु
+enum {
 	UNUSED = 0,
 
-	PCI_INTA, /* PCI पूर्णांक A */
-	PCI_INTB, /* PCI पूर्णांक B */
-	PCI_INTC, /* PCI पूर्णांक C */
-	PCI_INTD, /* PCI पूर्णांक D */
+	PCI_INTA, /* PCI int A */
+	PCI_INTB, /* PCI int B */
+	PCI_INTC, /* PCI int C */
+	PCI_INTD, /* PCI int D */
 	ATA,	  /* ATA */
 	FATA,	  /* CF */
 	POWER,	  /* Power swtich */
 	BUTTON,	  /* Button swtich */
-पूर्ण;
+};
 
-/* Vectors क्रम LANDISK */
-अटल काष्ठा पूर्णांकc_vect vectors_landisk[] __initdata = अणु
+/* Vectors for LANDISK */
+static struct intc_vect vectors_landisk[] __initdata = {
 	INTC_IRQ(PCI_INTA, IRQ_PCIINTA),
 	INTC_IRQ(PCI_INTB, IRQ_PCIINTB),
 	INTC_IRQ(PCI_INTC, IRQ_PCIINTC),
@@ -41,24 +40,24 @@
 	INTC_IRQ(FATA, IRQ_FATA),
 	INTC_IRQ(POWER, IRQ_POWER),
 	INTC_IRQ(BUTTON, IRQ_BUTTON),
-पूर्ण;
+};
 
-/* IRLMSK mask रेजिस्टर layout क्रम LANDISK */
-अटल काष्ठा पूर्णांकc_mask_reg mask_रेजिस्टरs_landisk[] __initdata = अणु
-	अणु PA_IMASK, 0, 8, /* IRLMSK */
-	  अणु  BUTTON, POWER, FATA, ATA,
+/* IRLMSK mask register layout for LANDISK */
+static struct intc_mask_reg mask_registers_landisk[] __initdata = {
+	{ PA_IMASK, 0, 8, /* IRLMSK */
+	  {  BUTTON, POWER, FATA, ATA,
 	     PCI_INTD, PCI_INTC, PCI_INTB, PCI_INTA,
-	  पूर्ण
-	पूर्ण,
-पूर्ण;
+	  }
+	},
+};
 
-अटल DECLARE_INTC_DESC(पूर्णांकc_desc_landisk, "landisk", vectors_landisk, शून्य,
-			mask_रेजिस्टरs_landisk, शून्य, शून्य);
+static DECLARE_INTC_DESC(intc_desc_landisk, "landisk", vectors_landisk, NULL,
+			mask_registers_landisk, NULL, NULL);
 /*
  * Initialize IRQ setting
  */
-व्योम __init init_landisk_IRQ(व्योम)
-अणु
-	रेजिस्टर_पूर्णांकc_controller(&पूर्णांकc_desc_landisk);
-	__raw_ग_लिखोb(0x00, PA_PWRINT_CLR);
-पूर्ण
+void __init init_landisk_IRQ(void)
+{
+	register_intc_controller(&intc_desc_landisk);
+	__raw_writeb(0x00, PA_PWRINT_CLR);
+}

@@ -1,33 +1,32 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *
- * h3600 aपंचांगel micro companion support, key subdevice
+ * h3600 atmel micro companion support, key subdevice
  * based on previous kernel 2.4 version
  * Author : Alessandro Gardich <gremlin@gremlin.it>
  * Author : Linus Walleij <linus.walleij@linaro.org>
  */
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/sysctl.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/input.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/mfd/ipaq-micro.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/fs.h>
+#include <linux/interrupt.h>
+#include <linux/sched.h>
+#include <linux/pm.h>
+#include <linux/sysctl.h>
+#include <linux/proc_fs.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/input.h>
+#include <linux/platform_device.h>
+#include <linux/mfd/ipaq-micro.h>
 
-काष्ठा ipaq_micro_keys अणु
-	काष्ठा ipaq_micro *micro;
-	काष्ठा input_dev *input;
+struct ipaq_micro_keys {
+	struct ipaq_micro *micro;
+	struct input_dev *input;
 	u16 *codes;
-पूर्ण;
+};
 
-अटल स्थिर u16 micro_keycodes[] = अणु
+static const u16 micro_keycodes[] = {
 	KEY_RECORD,		/* 1:  Record button			*/
 	KEY_CALENDAR,		/* 2:  Calendar				*/
 	KEY_ADDRESSBOOK,	/* 3:  Contacts (looks like Outlook)	*/
@@ -37,71 +36,71 @@
 	KEY_RIGHT,		/* 7:  Right				*/
 	KEY_LEFT,		/* 8:  Left				*/
 	KEY_DOWN,		/* 9:  Down				*/
-पूर्ण;
+};
 
-अटल व्योम micro_key_receive(व्योम *data, पूर्णांक len, अचिन्हित अक्षर *msg)
-अणु
-	काष्ठा ipaq_micro_keys *keys = data;
-	पूर्णांक key, करोwn;
+static void micro_key_receive(void *data, int len, unsigned char *msg)
+{
+	struct ipaq_micro_keys *keys = data;
+	int key, down;
 
-	करोwn = 0x80 & msg[0];
+	down = 0x80 & msg[0];
 	key  = 0x7f & msg[0];
 
-	अगर (key < ARRAY_SIZE(micro_keycodes)) अणु
-		input_report_key(keys->input, keys->codes[key], करोwn);
+	if (key < ARRAY_SIZE(micro_keycodes)) {
+		input_report_key(keys->input, keys->codes[key], down);
 		input_sync(keys->input);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम micro_key_start(काष्ठा ipaq_micro_keys *keys)
-अणु
+static void micro_key_start(struct ipaq_micro_keys *keys)
+{
 	spin_lock(&keys->micro->lock);
 	keys->micro->key = micro_key_receive;
 	keys->micro->key_data = keys;
 	spin_unlock(&keys->micro->lock);
-पूर्ण
+}
 
-अटल व्योम micro_key_stop(काष्ठा ipaq_micro_keys *keys)
-अणु
+static void micro_key_stop(struct ipaq_micro_keys *keys)
+{
 	spin_lock(&keys->micro->lock);
-	keys->micro->key = शून्य;
-	keys->micro->key_data = शून्य;
+	keys->micro->key = NULL;
+	keys->micro->key_data = NULL;
 	spin_unlock(&keys->micro->lock);
-पूर्ण
+}
 
-अटल पूर्णांक micro_key_खोलो(काष्ठा input_dev *input)
-अणु
-	काष्ठा ipaq_micro_keys *keys = input_get_drvdata(input);
+static int micro_key_open(struct input_dev *input)
+{
+	struct ipaq_micro_keys *keys = input_get_drvdata(input);
 
 	micro_key_start(keys);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम micro_key_बंद(काष्ठा input_dev *input)
-अणु
-	काष्ठा ipaq_micro_keys *keys = input_get_drvdata(input);
+static void micro_key_close(struct input_dev *input)
+{
+	struct ipaq_micro_keys *keys = input_get_drvdata(input);
 
 	micro_key_stop(keys);
-पूर्ण
+}
 
-अटल पूर्णांक micro_key_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा ipaq_micro_keys *keys;
-	पूर्णांक error;
-	पूर्णांक i;
+static int micro_key_probe(struct platform_device *pdev)
+{
+	struct ipaq_micro_keys *keys;
+	int error;
+	int i;
 
-	keys = devm_kzalloc(&pdev->dev, माप(*keys), GFP_KERNEL);
-	अगर (!keys)
-		वापस -ENOMEM;
+	keys = devm_kzalloc(&pdev->dev, sizeof(*keys), GFP_KERNEL);
+	if (!keys)
+		return -ENOMEM;
 
 	keys->micro = dev_get_drvdata(pdev->dev.parent);
 
 	keys->input = devm_input_allocate_device(&pdev->dev);
-	अगर (!keys->input)
-		वापस -ENOMEM;
+	if (!keys->input)
+		return -ENOMEM;
 
-	keys->input->keycodesize = माप(micro_keycodes[0]);
+	keys->input->keycodesize = sizeof(micro_keycodes[0]);
 	keys->input->keycodemax = ARRAY_SIZE(micro_keycodes);
 	keys->codes = devm_kmemdup(&pdev->dev, micro_keycodes,
 			   keys->input->keycodesize * keys->input->keycodemax,
@@ -109,57 +108,57 @@
 	keys->input->keycode = keys->codes;
 
 	__set_bit(EV_KEY, keys->input->evbit);
-	क्रम (i = 0; i < ARRAY_SIZE(micro_keycodes); i++)
+	for (i = 0; i < ARRAY_SIZE(micro_keycodes); i++)
 		__set_bit(micro_keycodes[i], keys->input->keybit);
 
 	keys->input->name = "h3600 micro keys";
-	keys->input->खोलो = micro_key_खोलो;
-	keys->input->बंद = micro_key_बंद;
+	keys->input->open = micro_key_open;
+	keys->input->close = micro_key_close;
 	input_set_drvdata(keys->input, keys);
 
-	error = input_रेजिस्टर_device(keys->input);
-	अगर (error)
-		वापस error;
+	error = input_register_device(keys->input);
+	if (error)
+		return error;
 
-	platक्रमm_set_drvdata(pdev, keys);
-	वापस 0;
-पूर्ण
+	platform_set_drvdata(pdev, keys);
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused micro_key_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा ipaq_micro_keys *keys = dev_get_drvdata(dev);
+static int __maybe_unused micro_key_suspend(struct device *dev)
+{
+	struct ipaq_micro_keys *keys = dev_get_drvdata(dev);
 
 	micro_key_stop(keys);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused micro_key_resume(काष्ठा device *dev)
-अणु
-	काष्ठा ipaq_micro_keys *keys = dev_get_drvdata(dev);
-	काष्ठा input_dev *input = keys->input;
+static int __maybe_unused micro_key_resume(struct device *dev)
+{
+	struct ipaq_micro_keys *keys = dev_get_drvdata(dev);
+	struct input_dev *input = keys->input;
 
 	mutex_lock(&input->mutex);
 
-	अगर (input_device_enabled(input))
+	if (input_device_enabled(input))
 		micro_key_start(keys);
 
 	mutex_unlock(&input->mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल SIMPLE_DEV_PM_OPS(micro_key_dev_pm_ops,
+static SIMPLE_DEV_PM_OPS(micro_key_dev_pm_ops,
 			 micro_key_suspend, micro_key_resume);
 
-अटल काष्ठा platक्रमm_driver micro_key_device_driver = अणु
-	.driver = अणु
+static struct platform_driver micro_key_device_driver = {
+	.driver = {
 		.name    = "ipaq-micro-keys",
 		.pm	= &micro_key_dev_pm_ops,
-	पूर्ण,
+	},
 	.probe   = micro_key_probe,
-पूर्ण;
-module_platक्रमm_driver(micro_key_device_driver);
+};
+module_platform_driver(micro_key_device_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("driver for iPAQ Atmel micro keys");

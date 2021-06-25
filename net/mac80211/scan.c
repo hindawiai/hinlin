@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Scanning implementation
  *
@@ -13,374 +12,374 @@
  * Copyright (C) 2018-2020 Intel Corporation
  */
 
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश <net/sch_generic.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/export.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <net/mac80211.h>
+#include <linux/if_arp.h>
+#include <linux/etherdevice.h>
+#include <linux/rtnetlink.h>
+#include <net/sch_generic.h>
+#include <linux/slab.h>
+#include <linux/export.h>
+#include <linux/random.h>
+#include <net/mac80211.h>
 
-#समावेश "ieee80211_i.h"
-#समावेश "driver-ops.h"
-#समावेश "mesh.h"
+#include "ieee80211_i.h"
+#include "driver-ops.h"
+#include "mesh.h"
 
-#घोषणा IEEE80211_PROBE_DELAY (HZ / 33)
-#घोषणा IEEE80211_CHANNEL_TIME (HZ / 33)
-#घोषणा IEEE80211_PASSIVE_CHANNEL_TIME (HZ / 9)
+#define IEEE80211_PROBE_DELAY (HZ / 33)
+#define IEEE80211_CHANNEL_TIME (HZ / 33)
+#define IEEE80211_PASSIVE_CHANNEL_TIME (HZ / 9)
 
-व्योम ieee80211_rx_bss_put(काष्ठा ieee80211_local *local,
-			  काष्ठा ieee80211_bss *bss)
-अणु
-	अगर (!bss)
-		वापस;
+void ieee80211_rx_bss_put(struct ieee80211_local *local,
+			  struct ieee80211_bss *bss)
+{
+	if (!bss)
+		return;
 	cfg80211_put_bss(local->hw.wiphy,
-			 container_of((व्योम *)bss, काष्ठा cfg80211_bss, priv));
-पूर्ण
+			 container_of((void *)bss, struct cfg80211_bss, priv));
+}
 
-अटल bool is_uapsd_supported(काष्ठा ieee802_11_elems *elems)
-अणु
+static bool is_uapsd_supported(struct ieee802_11_elems *elems)
+{
 	u8 qos_info;
 
-	अगर (elems->wmm_info && elems->wmm_info_len == 7
+	if (elems->wmm_info && elems->wmm_info_len == 7
 	    && elems->wmm_info[5] == 1)
 		qos_info = elems->wmm_info[6];
-	अन्यथा अगर (elems->wmm_param && elems->wmm_param_len == 24
+	else if (elems->wmm_param && elems->wmm_param_len == 24
 		 && elems->wmm_param[5] == 1)
 		qos_info = elems->wmm_param[6];
-	अन्यथा
-		/* no valid wmm inक्रमmation or parameter element found */
-		वापस false;
+	else
+		/* no valid wmm information or parameter element found */
+		return false;
 
-	वापस qos_info & IEEE80211_WMM_IE_AP_QOSINFO_UAPSD;
-पूर्ण
+	return qos_info & IEEE80211_WMM_IE_AP_QOSINFO_UAPSD;
+}
 
-अटल व्योम
-ieee80211_update_bss_from_elems(काष्ठा ieee80211_local *local,
-				काष्ठा ieee80211_bss *bss,
-				काष्ठा ieee802_11_elems *elems,
-				काष्ठा ieee80211_rx_status *rx_status,
+static void
+ieee80211_update_bss_from_elems(struct ieee80211_local *local,
+				struct ieee80211_bss *bss,
+				struct ieee802_11_elems *elems,
+				struct ieee80211_rx_status *rx_status,
 				bool beacon)
-अणु
-	पूर्णांक clen, srlen;
+{
+	int clen, srlen;
 
-	अगर (beacon)
-		bss->device_ts_beacon = rx_status->device_बारtamp;
-	अन्यथा
-		bss->device_ts_presp = rx_status->device_बारtamp;
+	if (beacon)
+		bss->device_ts_beacon = rx_status->device_timestamp;
+	else
+		bss->device_ts_presp = rx_status->device_timestamp;
 
-	अगर (elems->parse_error) अणु
-		अगर (beacon)
+	if (elems->parse_error) {
+		if (beacon)
 			bss->corrupt_data |= IEEE80211_BSS_CORRUPT_BEACON;
-		अन्यथा
+		else
 			bss->corrupt_data |= IEEE80211_BSS_CORRUPT_PROBE_RESP;
-	पूर्ण अन्यथा अणु
-		अगर (beacon)
+	} else {
+		if (beacon)
 			bss->corrupt_data &= ~IEEE80211_BSS_CORRUPT_BEACON;
-		अन्यथा
+		else
 			bss->corrupt_data &= ~IEEE80211_BSS_CORRUPT_PROBE_RESP;
-	पूर्ण
+	}
 
-	/* save the ERP value so that it is available at association समय */
-	अगर (elems->erp_info && (!elems->parse_error ||
-				!(bss->valid_data & IEEE80211_BSS_VALID_ERP))) अणु
+	/* save the ERP value so that it is available at association time */
+	if (elems->erp_info && (!elems->parse_error ||
+				!(bss->valid_data & IEEE80211_BSS_VALID_ERP))) {
 		bss->erp_value = elems->erp_info[0];
 		bss->has_erp_value = true;
-		अगर (!elems->parse_error)
+		if (!elems->parse_error)
 			bss->valid_data |= IEEE80211_BSS_VALID_ERP;
-	पूर्ण
+	}
 
-	/* replace old supported rates अगर we get new values */
-	अगर (!elems->parse_error ||
-	    !(bss->valid_data & IEEE80211_BSS_VALID_RATES)) अणु
+	/* replace old supported rates if we get new values */
+	if (!elems->parse_error ||
+	    !(bss->valid_data & IEEE80211_BSS_VALID_RATES)) {
 		srlen = 0;
-		अगर (elems->supp_rates) अणु
+		if (elems->supp_rates) {
 			clen = IEEE80211_MAX_SUPP_RATES;
-			अगर (clen > elems->supp_rates_len)
+			if (clen > elems->supp_rates_len)
 				clen = elems->supp_rates_len;
-			स_नकल(bss->supp_rates, elems->supp_rates, clen);
+			memcpy(bss->supp_rates, elems->supp_rates, clen);
 			srlen += clen;
-		पूर्ण
-		अगर (elems->ext_supp_rates) अणु
+		}
+		if (elems->ext_supp_rates) {
 			clen = IEEE80211_MAX_SUPP_RATES - srlen;
-			अगर (clen > elems->ext_supp_rates_len)
+			if (clen > elems->ext_supp_rates_len)
 				clen = elems->ext_supp_rates_len;
-			स_नकल(bss->supp_rates + srlen, elems->ext_supp_rates,
+			memcpy(bss->supp_rates + srlen, elems->ext_supp_rates,
 			       clen);
 			srlen += clen;
-		पूर्ण
-		अगर (srlen) अणु
+		}
+		if (srlen) {
 			bss->supp_rates_len = srlen;
-			अगर (!elems->parse_error)
+			if (!elems->parse_error)
 				bss->valid_data |= IEEE80211_BSS_VALID_RATES;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!elems->parse_error ||
-	    !(bss->valid_data & IEEE80211_BSS_VALID_WMM)) अणु
+	if (!elems->parse_error ||
+	    !(bss->valid_data & IEEE80211_BSS_VALID_WMM)) {
 		bss->wmm_used = elems->wmm_param || elems->wmm_info;
 		bss->uapsd_supported = is_uapsd_supported(elems);
-		अगर (!elems->parse_error)
+		if (!elems->parse_error)
 			bss->valid_data |= IEEE80211_BSS_VALID_WMM;
-	पूर्ण
+	}
 
-	अगर (beacon) अणु
-		काष्ठा ieee80211_supported_band *sband =
+	if (beacon) {
+		struct ieee80211_supported_band *sband =
 			local->hw.wiphy->bands[rx_status->band];
-		अगर (!(rx_status->encoding == RX_ENC_HT) &&
+		if (!(rx_status->encoding == RX_ENC_HT) &&
 		    !(rx_status->encoding == RX_ENC_VHT))
 			bss->beacon_rate =
 				&sband->bitrates[rx_status->rate_idx];
-	पूर्ण
+	}
 
-	अगर (elems->vht_cap_elem)
+	if (elems->vht_cap_elem)
 		bss->vht_cap_info =
 			le32_to_cpu(elems->vht_cap_elem->vht_cap_info);
-	अन्यथा
+	else
 		bss->vht_cap_info = 0;
-पूर्ण
+}
 
-काष्ठा ieee80211_bss *
-ieee80211_bss_info_update(काष्ठा ieee80211_local *local,
-			  काष्ठा ieee80211_rx_status *rx_status,
-			  काष्ठा ieee80211_mgmt *mgmt, माप_प्रकार len,
-			  काष्ठा ieee80211_channel *channel)
-अणु
+struct ieee80211_bss *
+ieee80211_bss_info_update(struct ieee80211_local *local,
+			  struct ieee80211_rx_status *rx_status,
+			  struct ieee80211_mgmt *mgmt, size_t len,
+			  struct ieee80211_channel *channel)
+{
 	bool beacon = ieee80211_is_beacon(mgmt->frame_control) ||
 		      ieee80211_is_s1g_beacon(mgmt->frame_control);
-	काष्ठा cfg80211_bss *cbss, *non_tx_cbss;
-	काष्ठा ieee80211_bss *bss, *non_tx_bss;
-	काष्ठा cfg80211_inक्रमm_bss bss_meta = अणु
-		.bootसमय_ns = rx_status->bootसमय_ns,
-	पूर्ण;
-	bool संकेत_valid;
-	काष्ठा ieee80211_sub_अगर_data *scan_sdata;
-	काष्ठा ieee802_11_elems elems;
-	माप_प्रकार baselen;
+	struct cfg80211_bss *cbss, *non_tx_cbss;
+	struct ieee80211_bss *bss, *non_tx_bss;
+	struct cfg80211_inform_bss bss_meta = {
+		.boottime_ns = rx_status->boottime_ns,
+	};
+	bool signal_valid;
+	struct ieee80211_sub_if_data *scan_sdata;
+	struct ieee802_11_elems elems;
+	size_t baselen;
 	u8 *elements;
 
-	अगर (rx_status->flag & RX_FLAG_NO_SIGNAL_VAL)
-		bss_meta.संकेत = 0; /* invalid संकेत indication */
-	अन्यथा अगर (ieee80211_hw_check(&local->hw, SIGNAL_DBM))
-		bss_meta.संकेत = rx_status->संकेत * 100;
-	अन्यथा अगर (ieee80211_hw_check(&local->hw, SIGNAL_UNSPEC))
-		bss_meta.संकेत = (rx_status->संकेत * 100) / local->hw.max_संकेत;
+	if (rx_status->flag & RX_FLAG_NO_SIGNAL_VAL)
+		bss_meta.signal = 0; /* invalid signal indication */
+	else if (ieee80211_hw_check(&local->hw, SIGNAL_DBM))
+		bss_meta.signal = rx_status->signal * 100;
+	else if (ieee80211_hw_check(&local->hw, SIGNAL_UNSPEC))
+		bss_meta.signal = (rx_status->signal * 100) / local->hw.max_signal;
 
 	bss_meta.scan_width = NL80211_BSS_CHAN_WIDTH_20;
-	अगर (rx_status->bw == RATE_INFO_BW_5)
+	if (rx_status->bw == RATE_INFO_BW_5)
 		bss_meta.scan_width = NL80211_BSS_CHAN_WIDTH_5;
-	अन्यथा अगर (rx_status->bw == RATE_INFO_BW_10)
+	else if (rx_status->bw == RATE_INFO_BW_10)
 		bss_meta.scan_width = NL80211_BSS_CHAN_WIDTH_10;
 
 	bss_meta.chan = channel;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	scan_sdata = rcu_dereference(local->scan_sdata);
-	अगर (scan_sdata && scan_sdata->vअगर.type == NL80211_IFTYPE_STATION &&
-	    scan_sdata->vअगर.bss_conf.assoc &&
-	    ieee80211_have_rx_बारtamp(rx_status)) अणु
+	if (scan_sdata && scan_sdata->vif.type == NL80211_IFTYPE_STATION &&
+	    scan_sdata->vif.bss_conf.assoc &&
+	    ieee80211_have_rx_timestamp(rx_status)) {
 		bss_meta.parent_tsf =
-			ieee80211_calculate_rx_बारtamp(local, rx_status,
+			ieee80211_calculate_rx_timestamp(local, rx_status,
 							 len + FCS_LEN, 24);
 		ether_addr_copy(bss_meta.parent_bssid,
-				scan_sdata->vअगर.bss_conf.bssid);
-	पूर्ण
-	rcu_पढ़ो_unlock();
+				scan_sdata->vif.bss_conf.bssid);
+	}
+	rcu_read_unlock();
 
-	cbss = cfg80211_inक्रमm_bss_frame_data(local->hw.wiphy, &bss_meta,
+	cbss = cfg80211_inform_bss_frame_data(local->hw.wiphy, &bss_meta,
 					      mgmt, len, GFP_ATOMIC);
-	अगर (!cbss)
-		वापस शून्य;
+	if (!cbss)
+		return NULL;
 
-	अगर (ieee80211_is_probe_resp(mgmt->frame_control)) अणु
+	if (ieee80211_is_probe_resp(mgmt->frame_control)) {
 		elements = mgmt->u.probe_resp.variable;
-		baselen = दुरत्व(काष्ठा ieee80211_mgmt,
+		baselen = offsetof(struct ieee80211_mgmt,
 				   u.probe_resp.variable);
-	पूर्ण अन्यथा अगर (ieee80211_is_s1g_beacon(mgmt->frame_control)) अणु
-		काष्ठा ieee80211_ext *ext = (व्योम *) mgmt;
+	} else if (ieee80211_is_s1g_beacon(mgmt->frame_control)) {
+		struct ieee80211_ext *ext = (void *) mgmt;
 
-		baselen = दुरत्व(काष्ठा ieee80211_ext, u.s1g_beacon.variable);
+		baselen = offsetof(struct ieee80211_ext, u.s1g_beacon.variable);
 		elements = ext->u.s1g_beacon.variable;
-	पूर्ण अन्यथा अणु
-		baselen = दुरत्व(काष्ठा ieee80211_mgmt, u.beacon.variable);
+	} else {
+		baselen = offsetof(struct ieee80211_mgmt, u.beacon.variable);
 		elements = mgmt->u.beacon.variable;
-	पूर्ण
+	}
 
-	अगर (baselen > len)
-		वापस शून्य;
+	if (baselen > len)
+		return NULL;
 
 	ieee802_11_parse_elems(elements, len - baselen, false, &elems,
 			       mgmt->bssid, cbss->bssid);
 
-	/* In हाल the संकेत is invalid update the status */
-	संकेत_valid = channel == cbss->channel;
-	अगर (!संकेत_valid)
+	/* In case the signal is invalid update the status */
+	signal_valid = channel == cbss->channel;
+	if (!signal_valid)
 		rx_status->flag |= RX_FLAG_NO_SIGNAL_VAL;
 
-	bss = (व्योम *)cbss->priv;
+	bss = (void *)cbss->priv;
 	ieee80211_update_bss_from_elems(local, bss, &elems, rx_status, beacon);
 
-	list_क्रम_each_entry(non_tx_cbss, &cbss->nontrans_list, nontrans_list) अणु
-		non_tx_bss = (व्योम *)non_tx_cbss->priv;
+	list_for_each_entry(non_tx_cbss, &cbss->nontrans_list, nontrans_list) {
+		non_tx_bss = (void *)non_tx_cbss->priv;
 
 		ieee80211_update_bss_from_elems(local, non_tx_bss, &elems,
 						rx_status, beacon);
-	पूर्ण
+	}
 
-	वापस bss;
-पूर्ण
+	return bss;
+}
 
-अटल bool ieee80211_scan_accept_presp(काष्ठा ieee80211_sub_अगर_data *sdata,
-					u32 scan_flags, स्थिर u8 *da)
-अणु
-	अगर (!sdata)
-		वापस false;
-	/* accept broadcast क्रम OCE */
-	अगर (scan_flags & NL80211_SCAN_FLAG_ACCEPT_BCAST_PROBE_RESP &&
+static bool ieee80211_scan_accept_presp(struct ieee80211_sub_if_data *sdata,
+					u32 scan_flags, const u8 *da)
+{
+	if (!sdata)
+		return false;
+	/* accept broadcast for OCE */
+	if (scan_flags & NL80211_SCAN_FLAG_ACCEPT_BCAST_PROBE_RESP &&
 	    is_broadcast_ether_addr(da))
-		वापस true;
-	अगर (scan_flags & NL80211_SCAN_FLAG_RANDOM_ADDR)
-		वापस true;
-	वापस ether_addr_equal(da, sdata->vअगर.addr);
-पूर्ण
+		return true;
+	if (scan_flags & NL80211_SCAN_FLAG_RANDOM_ADDR)
+		return true;
+	return ether_addr_equal(da, sdata->vif.addr);
+}
 
-व्योम ieee80211_scan_rx(काष्ठा ieee80211_local *local, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा ieee80211_rx_status *rx_status = IEEE80211_SKB_RXCB(skb);
-	काष्ठा ieee80211_sub_अगर_data *sdata1, *sdata2;
-	काष्ठा ieee80211_mgmt *mgmt = (व्योम *)skb->data;
-	काष्ठा ieee80211_bss *bss;
-	काष्ठा ieee80211_channel *channel;
-	माप_प्रकार min_hdr_len = दुरत्व(काष्ठा ieee80211_mgmt,
+void ieee80211_scan_rx(struct ieee80211_local *local, struct sk_buff *skb)
+{
+	struct ieee80211_rx_status *rx_status = IEEE80211_SKB_RXCB(skb);
+	struct ieee80211_sub_if_data *sdata1, *sdata2;
+	struct ieee80211_mgmt *mgmt = (void *)skb->data;
+	struct ieee80211_bss *bss;
+	struct ieee80211_channel *channel;
+	size_t min_hdr_len = offsetof(struct ieee80211_mgmt,
 				      u.probe_resp.variable);
 
-	अगर (!ieee80211_is_probe_resp(mgmt->frame_control) &&
+	if (!ieee80211_is_probe_resp(mgmt->frame_control) &&
 	    !ieee80211_is_beacon(mgmt->frame_control) &&
 	    !ieee80211_is_s1g_beacon(mgmt->frame_control))
-		वापस;
+		return;
 
-	अगर (ieee80211_is_s1g_beacon(mgmt->frame_control)) अणु
-		अगर (ieee80211_is_s1g_लघु_beacon(mgmt->frame_control))
-			min_hdr_len = दुरत्व(काष्ठा ieee80211_ext,
-					       u.s1g_लघु_beacon.variable);
-		अन्यथा
-			min_hdr_len = दुरत्व(काष्ठा ieee80211_ext,
+	if (ieee80211_is_s1g_beacon(mgmt->frame_control)) {
+		if (ieee80211_is_s1g_short_beacon(mgmt->frame_control))
+			min_hdr_len = offsetof(struct ieee80211_ext,
+					       u.s1g_short_beacon.variable);
+		else
+			min_hdr_len = offsetof(struct ieee80211_ext,
 					       u.s1g_beacon);
-	पूर्ण
+	}
 
-	अगर (skb->len < min_hdr_len)
-		वापस;
+	if (skb->len < min_hdr_len)
+		return;
 
 	sdata1 = rcu_dereference(local->scan_sdata);
 	sdata2 = rcu_dereference(local->sched_scan_sdata);
 
-	अगर (likely(!sdata1 && !sdata2))
-		वापस;
+	if (likely(!sdata1 && !sdata2))
+		return;
 
-	अगर (ieee80211_is_probe_resp(mgmt->frame_control)) अणु
-		काष्ठा cfg80211_scan_request *scan_req;
-		काष्ठा cfg80211_sched_scan_request *sched_scan_req;
+	if (ieee80211_is_probe_resp(mgmt->frame_control)) {
+		struct cfg80211_scan_request *scan_req;
+		struct cfg80211_sched_scan_request *sched_scan_req;
 		u32 scan_req_flags = 0, sched_scan_req_flags = 0;
 
 		scan_req = rcu_dereference(local->scan_req);
 		sched_scan_req = rcu_dereference(local->sched_scan_req);
 
-		अगर (scan_req)
+		if (scan_req)
 			scan_req_flags = scan_req->flags;
 
-		अगर (sched_scan_req)
+		if (sched_scan_req)
 			sched_scan_req_flags = sched_scan_req->flags;
 
-		/* ignore ProbeResp to क्रमeign address or non-bcast (OCE)
-		 * unless scanning with अक्रमomised address
+		/* ignore ProbeResp to foreign address or non-bcast (OCE)
+		 * unless scanning with randomised address
 		 */
-		अगर (!ieee80211_scan_accept_presp(sdata1, scan_req_flags,
+		if (!ieee80211_scan_accept_presp(sdata1, scan_req_flags,
 						 mgmt->da) &&
 		    !ieee80211_scan_accept_presp(sdata2, sched_scan_req_flags,
 						 mgmt->da))
-			वापस;
-	पूर्ण
+			return;
+	}
 
 	channel = ieee80211_get_channel_khz(local->hw.wiphy,
 					ieee80211_rx_status_to_khz(rx_status));
 
-	अगर (!channel || channel->flags & IEEE80211_CHAN_DISABLED)
-		वापस;
+	if (!channel || channel->flags & IEEE80211_CHAN_DISABLED)
+		return;
 
 	bss = ieee80211_bss_info_update(local, rx_status,
 					mgmt, skb->len,
 					channel);
-	अगर (bss)
+	if (bss)
 		ieee80211_rx_bss_put(local, bss);
-पूर्ण
+}
 
-अटल व्योम
-ieee80211_prepare_scan_chandef(काष्ठा cfg80211_chan_def *chandef,
-			       क्रमागत nl80211_bss_scan_width scan_width)
-अणु
-	स_रखो(chandef, 0, माप(*chandef));
-	चयन (scan_width) अणु
-	हाल NL80211_BSS_CHAN_WIDTH_5:
+static void
+ieee80211_prepare_scan_chandef(struct cfg80211_chan_def *chandef,
+			       enum nl80211_bss_scan_width scan_width)
+{
+	memset(chandef, 0, sizeof(*chandef));
+	switch (scan_width) {
+	case NL80211_BSS_CHAN_WIDTH_5:
 		chandef->width = NL80211_CHAN_WIDTH_5;
-		अवरोध;
-	हाल NL80211_BSS_CHAN_WIDTH_10:
+		break;
+	case NL80211_BSS_CHAN_WIDTH_10:
 		chandef->width = NL80211_CHAN_WIDTH_10;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		chandef->width = NL80211_CHAN_WIDTH_20_NOHT;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-/* वापस false अगर no more work */
-अटल bool ieee80211_prep_hw_scan(काष्ठा ieee80211_sub_अगर_data *sdata)
-अणु
-	काष्ठा ieee80211_local *local = sdata->local;
-	काष्ठा cfg80211_scan_request *req;
-	काष्ठा cfg80211_chan_def chandef;
+/* return false if no more work */
+static bool ieee80211_prep_hw_scan(struct ieee80211_sub_if_data *sdata)
+{
+	struct ieee80211_local *local = sdata->local;
+	struct cfg80211_scan_request *req;
+	struct cfg80211_chan_def chandef;
 	u8 bands_used = 0;
-	पूर्णांक i, ielen, n_chans;
+	int i, ielen, n_chans;
 	u32 flags = 0;
 
-	req = rcu_dereference_रक्षित(local->scan_req,
+	req = rcu_dereference_protected(local->scan_req,
 					lockdep_is_held(&local->mtx));
 
-	अगर (test_bit(SCAN_HW_CANCELLED, &local->scanning))
-		वापस false;
+	if (test_bit(SCAN_HW_CANCELLED, &local->scanning))
+		return false;
 
-	अगर (ieee80211_hw_check(&local->hw, SINGLE_SCAN_ON_ALL_BANDS)) अणु
-		क्रम (i = 0; i < req->n_channels; i++) अणु
+	if (ieee80211_hw_check(&local->hw, SINGLE_SCAN_ON_ALL_BANDS)) {
+		for (i = 0; i < req->n_channels; i++) {
 			local->hw_scan_req->req.channels[i] = req->channels[i];
 			bands_used |= BIT(req->channels[i]->band);
-		पूर्ण
+		}
 
 		n_chans = req->n_channels;
-	पूर्ण अन्यथा अणु
-		करो अणु
-			अगर (local->hw_scan_band == NUM_NL80211_BANDS)
-				वापस false;
+	} else {
+		do {
+			if (local->hw_scan_band == NUM_NL80211_BANDS)
+				return false;
 
 			n_chans = 0;
 
-			क्रम (i = 0; i < req->n_channels; i++) अणु
-				अगर (req->channels[i]->band !=
+			for (i = 0; i < req->n_channels; i++) {
+				if (req->channels[i]->band !=
 				    local->hw_scan_band)
-					जारी;
+					continue;
 				local->hw_scan_req->req.channels[n_chans] =
 							req->channels[i];
 				n_chans++;
 				bands_used |= BIT(req->channels[i]->band);
-			पूर्ण
+			}
 
 			local->hw_scan_band++;
-		पूर्ण जबतक (!n_chans);
-	पूर्ण
+		} while (!n_chans);
+	}
 
 	local->hw_scan_req->req.n_channels = n_chans;
 	ieee80211_prepare_scan_chandef(&chandef, req->scan_width);
 
-	अगर (req->flags & NL80211_SCAN_FLAG_MIN_PREQ_CONTENT)
+	if (req->flags & NL80211_SCAN_FLAG_MIN_PREQ_CONTENT)
 		flags |= IEEE80211_PROBE_FLAG_MIN_CONTENT;
 
 	ielen = ieee80211_build_preq_ies(sdata,
@@ -397,265 +396,265 @@ ieee80211_prepare_scan_chandef(काष्ठा cfg80211_chan_def *chandef,
 			req->mac_addr_mask);
 	ether_addr_copy(local->hw_scan_req->req.bssid, req->bssid);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम __ieee80211_scan_completed(काष्ठा ieee80211_hw *hw, bool पातed)
-अणु
-	काष्ठा ieee80211_local *local = hw_to_local(hw);
+static void __ieee80211_scan_completed(struct ieee80211_hw *hw, bool aborted)
+{
+	struct ieee80211_local *local = hw_to_local(hw);
 	bool hw_scan = test_bit(SCAN_HW_SCANNING, &local->scanning);
 	bool was_scanning = local->scanning;
-	काष्ठा cfg80211_scan_request *scan_req;
-	काष्ठा ieee80211_sub_अगर_data *scan_sdata;
-	काष्ठा ieee80211_sub_अगर_data *sdata;
+	struct cfg80211_scan_request *scan_req;
+	struct ieee80211_sub_if_data *scan_sdata;
+	struct ieee80211_sub_if_data *sdata;
 
-	lockdep_निश्चित_held(&local->mtx);
+	lockdep_assert_held(&local->mtx);
 
 	/*
-	 * It's ok to पात a not-yet-running scan (that
-	 * we have one at all will be verअगरied by checking
+	 * It's ok to abort a not-yet-running scan (that
+	 * we have one at all will be verified by checking
 	 * local->scan_req next), but not to complete it
 	 * successfully.
 	 */
-	अगर (WARN_ON(!local->scanning && !पातed))
-		पातed = true;
+	if (WARN_ON(!local->scanning && !aborted))
+		aborted = true;
 
-	अगर (WARN_ON(!local->scan_req))
-		वापस;
+	if (WARN_ON(!local->scan_req))
+		return;
 
-	scan_sdata = rcu_dereference_रक्षित(local->scan_sdata,
+	scan_sdata = rcu_dereference_protected(local->scan_sdata,
 					       lockdep_is_held(&local->mtx));
 
-	अगर (hw_scan && !पातed &&
+	if (hw_scan && !aborted &&
 	    !ieee80211_hw_check(&local->hw, SINGLE_SCAN_ON_ALL_BANDS) &&
-	    ieee80211_prep_hw_scan(scan_sdata)) अणु
-		पूर्णांक rc;
+	    ieee80211_prep_hw_scan(scan_sdata)) {
+		int rc;
 
 		rc = drv_hw_scan(local,
-			rcu_dereference_रक्षित(local->scan_sdata,
+			rcu_dereference_protected(local->scan_sdata,
 						  lockdep_is_held(&local->mtx)),
 			local->hw_scan_req);
 
-		अगर (rc == 0)
-			वापस;
+		if (rc == 0)
+			return;
 
-		/* HW scan failed and is going to be reported as पातed,
+		/* HW scan failed and is going to be reported as aborted,
 		 * so clear old scan info.
 		 */
-		स_रखो(&local->scan_info, 0, माप(local->scan_info));
-		पातed = true;
-	पूर्ण
+		memset(&local->scan_info, 0, sizeof(local->scan_info));
+		aborted = true;
+	}
 
-	kमुक्त(local->hw_scan_req);
-	local->hw_scan_req = शून्य;
+	kfree(local->hw_scan_req);
+	local->hw_scan_req = NULL;
 
-	scan_req = rcu_dereference_रक्षित(local->scan_req,
+	scan_req = rcu_dereference_protected(local->scan_req,
 					     lockdep_is_held(&local->mtx));
 
-	अगर (scan_req != local->पूर्णांक_scan_req) अणु
-		local->scan_info.पातed = पातed;
-		cfg80211_scan_करोne(scan_req, &local->scan_info);
-	पूर्ण
-	RCU_INIT_POINTER(local->scan_req, शून्य);
-	RCU_INIT_POINTER(local->scan_sdata, शून्य);
+	if (scan_req != local->int_scan_req) {
+		local->scan_info.aborted = aborted;
+		cfg80211_scan_done(scan_req, &local->scan_info);
+	}
+	RCU_INIT_POINTER(local->scan_req, NULL);
+	RCU_INIT_POINTER(local->scan_sdata, NULL);
 
 	local->scanning = 0;
-	local->scan_chandef.chan = शून्य;
+	local->scan_chandef.chan = NULL;
 
-	/* Set घातer back to normal operating levels. */
+	/* Set power back to normal operating levels. */
 	ieee80211_hw_config(local, 0);
 
-	अगर (!hw_scan) अणु
+	if (!hw_scan) {
 		ieee80211_configure_filter(local);
 		drv_sw_scan_complete(local, scan_sdata);
-		ieee80211_offchannel_वापस(local);
-	पूर्ण
+		ieee80211_offchannel_return(local);
+	}
 
 	ieee80211_recalc_idle(local);
 
-	ieee80211_mlme_notअगरy_scan_completed(local);
-	ieee80211_ibss_notअगरy_scan_completed(local);
+	ieee80211_mlme_notify_scan_completed(local);
+	ieee80211_ibss_notify_scan_completed(local);
 
-	/* Requeue all the work that might have been ignored जबतक
-	 * the scan was in progress; अगर there was none this will
-	 * just be a no-op क्रम the particular पूर्णांकerface.
+	/* Requeue all the work that might have been ignored while
+	 * the scan was in progress; if there was none this will
+	 * just be a no-op for the particular interface.
 	 */
-	list_क्रम_each_entry_rcu(sdata, &local->पूर्णांकerfaces, list) अणु
-		अगर (ieee80211_sdata_running(sdata))
+	list_for_each_entry_rcu(sdata, &local->interfaces, list) {
+		if (ieee80211_sdata_running(sdata))
 			ieee80211_queue_work(&sdata->local->hw, &sdata->work);
-	पूर्ण
+	}
 
-	अगर (was_scanning)
+	if (was_scanning)
 		ieee80211_start_next_roc(local);
-पूर्ण
+}
 
-व्योम ieee80211_scan_completed(काष्ठा ieee80211_hw *hw,
-			      काष्ठा cfg80211_scan_info *info)
-अणु
-	काष्ठा ieee80211_local *local = hw_to_local(hw);
+void ieee80211_scan_completed(struct ieee80211_hw *hw,
+			      struct cfg80211_scan_info *info)
+{
+	struct ieee80211_local *local = hw_to_local(hw);
 
-	trace_api_scan_completed(local, info->पातed);
+	trace_api_scan_completed(local, info->aborted);
 
 	set_bit(SCAN_COMPLETED, &local->scanning);
-	अगर (info->पातed)
+	if (info->aborted)
 		set_bit(SCAN_ABORTED, &local->scanning);
 
-	स_नकल(&local->scan_info, info, माप(*info));
+	memcpy(&local->scan_info, info, sizeof(*info));
 
 	ieee80211_queue_delayed_work(&local->hw, &local->scan_work, 0);
-पूर्ण
+}
 EXPORT_SYMBOL(ieee80211_scan_completed);
 
-अटल पूर्णांक ieee80211_start_sw_scan(काष्ठा ieee80211_local *local,
-				   काष्ठा ieee80211_sub_अगर_data *sdata)
-अणु
-	/* Software scan is not supported in multi-channel हालs */
-	अगर (local->use_chanctx)
-		वापस -EOPNOTSUPP;
+static int ieee80211_start_sw_scan(struct ieee80211_local *local,
+				   struct ieee80211_sub_if_data *sdata)
+{
+	/* Software scan is not supported in multi-channel cases */
+	if (local->use_chanctx)
+		return -EOPNOTSUPP;
 
 	/*
-	 * Hardware/driver करोesn't support hw_scan, so use software
-	 * scanning instead. First send a nullfunc frame with घातer save
-	 * bit on so that AP will buffer the frames क्रम us जबतक we are not
-	 * listening, then send probe requests to each channel and रुको क्रम
+	 * Hardware/driver doesn't support hw_scan, so use software
+	 * scanning instead. First send a nullfunc frame with power save
+	 * bit on so that AP will buffer the frames for us while we are not
+	 * listening, then send probe requests to each channel and wait for
 	 * the responses. After all channels are scanned, tune back to the
-	 * original channel and send a nullfunc frame with घातer save bit
+	 * original channel and send a nullfunc frame with power save bit
 	 * off to trigger the AP to send us all the buffered frames.
 	 *
-	 * Note that जबतक local->sw_scanning is true everything अन्यथा but
+	 * Note that while local->sw_scanning is true everything else but
 	 * nullfunc frames and probe requests will be dropped in
 	 * ieee80211_tx_h_check_assoc().
 	 */
 	drv_sw_scan_start(local, sdata, local->scan_addr);
 
-	local->leave_oper_channel_समय = jअगरfies;
+	local->leave_oper_channel_time = jiffies;
 	local->next_scan_state = SCAN_DECISION;
 	local->scan_channel_idx = 0;
 
-	ieee80211_offchannel_stop_vअगरs(local);
+	ieee80211_offchannel_stop_vifs(local);
 
-	/* ensure nullfunc is transmitted beक्रमe leaving operating channel */
-	ieee80211_flush_queues(local, शून्य, false);
+	/* ensure nullfunc is transmitted before leaving operating channel */
+	ieee80211_flush_queues(local, NULL, false);
 
 	ieee80211_configure_filter(local);
 
-	/* We need to set घातer level at maximum rate क्रम scanning. */
+	/* We need to set power level at maximum rate for scanning. */
 	ieee80211_hw_config(local, 0);
 
 	ieee80211_queue_delayed_work(&local->hw,
 				     &local->scan_work, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool __ieee80211_can_leave_ch(काष्ठा ieee80211_sub_अगर_data *sdata)
-अणु
-	काष्ठा ieee80211_local *local = sdata->local;
-	काष्ठा ieee80211_sub_अगर_data *sdata_iter;
+static bool __ieee80211_can_leave_ch(struct ieee80211_sub_if_data *sdata)
+{
+	struct ieee80211_local *local = sdata->local;
+	struct ieee80211_sub_if_data *sdata_iter;
 
-	अगर (!ieee80211_is_radar_required(local))
-		वापस true;
+	if (!ieee80211_is_radar_required(local))
+		return true;
 
-	अगर (!regulatory_pre_cac_allowed(local->hw.wiphy))
-		वापस false;
+	if (!regulatory_pre_cac_allowed(local->hw.wiphy))
+		return false;
 
-	mutex_lock(&local->अगरlist_mtx);
-	list_क्रम_each_entry(sdata_iter, &local->पूर्णांकerfaces, list) अणु
-		अगर (sdata_iter->wdev.cac_started) अणु
-			mutex_unlock(&local->अगरlist_mtx);
-			वापस false;
-		पूर्ण
-	पूर्ण
-	mutex_unlock(&local->अगरlist_mtx);
+	mutex_lock(&local->iflist_mtx);
+	list_for_each_entry(sdata_iter, &local->interfaces, list) {
+		if (sdata_iter->wdev.cac_started) {
+			mutex_unlock(&local->iflist_mtx);
+			return false;
+		}
+	}
+	mutex_unlock(&local->iflist_mtx);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool ieee80211_can_scan(काष्ठा ieee80211_local *local,
-			       काष्ठा ieee80211_sub_अगर_data *sdata)
-अणु
-	अगर (!__ieee80211_can_leave_ch(sdata))
-		वापस false;
+static bool ieee80211_can_scan(struct ieee80211_local *local,
+			       struct ieee80211_sub_if_data *sdata)
+{
+	if (!__ieee80211_can_leave_ch(sdata))
+		return false;
 
-	अगर (!list_empty(&local->roc_list))
-		वापस false;
+	if (!list_empty(&local->roc_list))
+		return false;
 
-	अगर (sdata->vअगर.type == NL80211_IFTYPE_STATION &&
+	if (sdata->vif.type == NL80211_IFTYPE_STATION &&
 	    sdata->u.mgd.flags & IEEE80211_STA_CONNECTION_POLL)
-		वापस false;
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-व्योम ieee80211_run_deferred_scan(काष्ठा ieee80211_local *local)
-अणु
-	lockdep_निश्चित_held(&local->mtx);
+void ieee80211_run_deferred_scan(struct ieee80211_local *local)
+{
+	lockdep_assert_held(&local->mtx);
 
-	अगर (!local->scan_req || local->scanning)
-		वापस;
+	if (!local->scan_req || local->scanning)
+		return;
 
-	अगर (!ieee80211_can_scan(local,
-				rcu_dereference_रक्षित(
+	if (!ieee80211_can_scan(local,
+				rcu_dereference_protected(
 					local->scan_sdata,
 					lockdep_is_held(&local->mtx))))
-		वापस;
+		return;
 
 	ieee80211_queue_delayed_work(&local->hw, &local->scan_work,
-				     round_jअगरfies_relative(0));
-पूर्ण
+				     round_jiffies_relative(0));
+}
 
-अटल व्योम ieee80211_send_scan_probe_req(काष्ठा ieee80211_sub_अगर_data *sdata,
-					  स्थिर u8 *src, स्थिर u8 *dst,
-					  स्थिर u8 *ssid, माप_प्रकार ssid_len,
-					  स्थिर u8 *ie, माप_प्रकार ie_len,
+static void ieee80211_send_scan_probe_req(struct ieee80211_sub_if_data *sdata,
+					  const u8 *src, const u8 *dst,
+					  const u8 *ssid, size_t ssid_len,
+					  const u8 *ie, size_t ie_len,
 					  u32 ratemask, u32 flags, u32 tx_flags,
-					  काष्ठा ieee80211_channel *channel)
-अणु
-	काष्ठा sk_buff *skb;
+					  struct ieee80211_channel *channel)
+{
+	struct sk_buff *skb;
 
 	skb = ieee80211_build_probe_req(sdata, src, dst, ratemask, channel,
 					ssid, ssid_len,
 					ie, ie_len, flags);
 
-	अगर (skb) अणु
-		अगर (flags & IEEE80211_PROBE_FLAG_RANDOM_SN) अणु
-			काष्ठा ieee80211_hdr *hdr = (व्योम *)skb->data;
-			काष्ठा ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
-			u16 sn = get_अक्रमom_u32();
+	if (skb) {
+		if (flags & IEEE80211_PROBE_FLAG_RANDOM_SN) {
+			struct ieee80211_hdr *hdr = (void *)skb->data;
+			struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
+			u16 sn = get_random_u32();
 
 			info->control.flags |= IEEE80211_TX_CTRL_NO_SEQNO;
 			hdr->seq_ctrl =
 				cpu_to_le16(IEEE80211_SN_TO_SEQ(sn));
-		पूर्ण
+		}
 		IEEE80211_SKB_CB(skb)->flags |= tx_flags;
 		ieee80211_tx_skb_tid_band(sdata, skb, 7, channel->band);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम ieee80211_scan_state_send_probe(काष्ठा ieee80211_local *local,
-					    अचिन्हित दीर्घ *next_delay)
-अणु
-	पूर्णांक i;
-	काष्ठा ieee80211_sub_अगर_data *sdata;
-	काष्ठा cfg80211_scan_request *scan_req;
-	क्रमागत nl80211_band band = local->hw.conf.chandef.chan->band;
+static void ieee80211_scan_state_send_probe(struct ieee80211_local *local,
+					    unsigned long *next_delay)
+{
+	int i;
+	struct ieee80211_sub_if_data *sdata;
+	struct cfg80211_scan_request *scan_req;
+	enum nl80211_band band = local->hw.conf.chandef.chan->band;
 	u32 flags = 0, tx_flags;
 
-	scan_req = rcu_dereference_रक्षित(local->scan_req,
+	scan_req = rcu_dereference_protected(local->scan_req,
 					     lockdep_is_held(&local->mtx));
 
 	tx_flags = IEEE80211_TX_INTFL_OFFCHAN_TX_OK;
-	अगर (scan_req->no_cck)
+	if (scan_req->no_cck)
 		tx_flags |= IEEE80211_TX_CTL_NO_CCK_RATE;
-	अगर (scan_req->flags & NL80211_SCAN_FLAG_MIN_PREQ_CONTENT)
+	if (scan_req->flags & NL80211_SCAN_FLAG_MIN_PREQ_CONTENT)
 		flags |= IEEE80211_PROBE_FLAG_MIN_CONTENT;
-	अगर (scan_req->flags & NL80211_SCAN_FLAG_RANDOM_SN)
+	if (scan_req->flags & NL80211_SCAN_FLAG_RANDOM_SN)
 		flags |= IEEE80211_PROBE_FLAG_RANDOM_SN;
 
-	sdata = rcu_dereference_रक्षित(local->scan_sdata,
+	sdata = rcu_dereference_protected(local->scan_sdata,
 					  lockdep_is_held(&local->mtx));
 
-	क्रम (i = 0; i < scan_req->n_ssids; i++)
+	for (i = 0; i < scan_req->n_ssids; i++)
 		ieee80211_send_scan_probe_req(
 			sdata, local->scan_addr, scan_req->bssid,
 			scan_req->ssids[i].ssid, scan_req->ssids[i].ssid_len,
@@ -664,67 +663,67 @@ EXPORT_SYMBOL(ieee80211_scan_completed);
 			tx_flags, local->hw.conf.chandef.chan);
 
 	/*
-	 * After sending probe requests, रुको क्रम probe responses
+	 * After sending probe requests, wait for probe responses
 	 * on the channel.
 	 */
 	*next_delay = IEEE80211_CHANNEL_TIME;
 	local->next_scan_state = SCAN_DECISION;
-पूर्ण
+}
 
-अटल पूर्णांक __ieee80211_start_scan(काष्ठा ieee80211_sub_अगर_data *sdata,
-				  काष्ठा cfg80211_scan_request *req)
-अणु
-	काष्ठा ieee80211_local *local = sdata->local;
+static int __ieee80211_start_scan(struct ieee80211_sub_if_data *sdata,
+				  struct cfg80211_scan_request *req)
+{
+	struct ieee80211_local *local = sdata->local;
 	bool hw_scan = local->ops->hw_scan;
-	पूर्णांक rc;
+	int rc;
 
-	lockdep_निश्चित_held(&local->mtx);
+	lockdep_assert_held(&local->mtx);
 
-	अगर (local->scan_req)
-		वापस -EBUSY;
+	if (local->scan_req)
+		return -EBUSY;
 
-	अगर (!__ieee80211_can_leave_ch(sdata))
-		वापस -EBUSY;
+	if (!__ieee80211_can_leave_ch(sdata))
+		return -EBUSY;
 
-	अगर (!ieee80211_can_scan(local, sdata)) अणु
-		/* रुको क्रम the work to finish/समय out */
-		rcu_assign_poपूर्णांकer(local->scan_req, req);
-		rcu_assign_poपूर्णांकer(local->scan_sdata, sdata);
-		वापस 0;
-	पूर्ण
+	if (!ieee80211_can_scan(local, sdata)) {
+		/* wait for the work to finish/time out */
+		rcu_assign_pointer(local->scan_req, req);
+		rcu_assign_pointer(local->scan_sdata, sdata);
+		return 0;
+	}
 
  again:
-	अगर (hw_scan) अणु
+	if (hw_scan) {
 		u8 *ies;
 
 		local->hw_scan_ies_bufsize = local->scan_ies_len + req->ie_len;
 
-		अगर (ieee80211_hw_check(&local->hw, SINGLE_SCAN_ON_ALL_BANDS)) अणु
-			पूर्णांक i, n_bands = 0;
+		if (ieee80211_hw_check(&local->hw, SINGLE_SCAN_ON_ALL_BANDS)) {
+			int i, n_bands = 0;
 			u8 bands_counted = 0;
 
-			क्रम (i = 0; i < req->n_channels; i++) अणु
-				अगर (bands_counted & BIT(req->channels[i]->band))
-					जारी;
+			for (i = 0; i < req->n_channels; i++) {
+				if (bands_counted & BIT(req->channels[i]->band))
+					continue;
 				bands_counted |= BIT(req->channels[i]->band);
 				n_bands++;
-			पूर्ण
+			}
 
 			local->hw_scan_ies_bufsize *= n_bands;
-		पूर्ण
+		}
 
-		local->hw_scan_req = kदो_स्मृति(
-				माप(*local->hw_scan_req) +
-				req->n_channels * माप(req->channels[0]) +
+		local->hw_scan_req = kmalloc(
+				sizeof(*local->hw_scan_req) +
+				req->n_channels * sizeof(req->channels[0]) +
 				local->hw_scan_ies_bufsize, GFP_KERNEL);
-		अगर (!local->hw_scan_req)
-			वापस -ENOMEM;
+		if (!local->hw_scan_req)
+			return -ENOMEM;
 
 		local->hw_scan_req->req.ssids = req->ssids;
 		local->hw_scan_req->req.n_ssids = req->n_ssids;
 		ies = (u8 *)local->hw_scan_req +
-			माप(*local->hw_scan_req) +
-			req->n_channels * माप(req->channels[0]);
+			sizeof(*local->hw_scan_req) +
+			req->n_channels * sizeof(req->channels[0]);
 		local->hw_scan_req->req.ie = ies;
 		local->hw_scan_req->req.flags = req->flags;
 		eth_broadcast_addr(local->hw_scan_req->req.bssid);
@@ -745,182 +744,182 @@ EXPORT_SYMBOL(ieee80211_scan_completed);
 		 * this function early must not go after this
 		 * allocation.
 		 */
-	पूर्ण
+	}
 
-	rcu_assign_poपूर्णांकer(local->scan_req, req);
-	rcu_assign_poपूर्णांकer(local->scan_sdata, sdata);
+	rcu_assign_pointer(local->scan_req, req);
+	rcu_assign_pointer(local->scan_sdata, sdata);
 
-	अगर (req->flags & NL80211_SCAN_FLAG_RANDOM_ADDR)
-		get_अक्रमom_mask_addr(local->scan_addr,
+	if (req->flags & NL80211_SCAN_FLAG_RANDOM_ADDR)
+		get_random_mask_addr(local->scan_addr,
 				     req->mac_addr,
 				     req->mac_addr_mask);
-	अन्यथा
-		स_नकल(local->scan_addr, sdata->vअगर.addr, ETH_ALEN);
+	else
+		memcpy(local->scan_addr, sdata->vif.addr, ETH_ALEN);
 
-	अगर (hw_scan) अणु
+	if (hw_scan) {
 		__set_bit(SCAN_HW_SCANNING, &local->scanning);
-	पूर्ण अन्यथा अगर ((req->n_channels == 1) &&
-		   (req->channels[0] == local->_oper_chandef.chan)) अणु
+	} else if ((req->n_channels == 1) &&
+		   (req->channels[0] == local->_oper_chandef.chan)) {
 		/*
 		 * If we are scanning only on the operating channel
-		 * then we करो not need to stop normal activities
+		 * then we do not need to stop normal activities
 		 */
-		अचिन्हित दीर्घ next_delay;
+		unsigned long next_delay;
 
 		__set_bit(SCAN_ONCHANNEL_SCANNING, &local->scanning);
 
 		ieee80211_recalc_idle(local);
 
-		/* Notअगरy driver scan is starting, keep order of operations
-		 * same as normal software scan, in हाल that matters. */
+		/* Notify driver scan is starting, keep order of operations
+		 * same as normal software scan, in case that matters. */
 		drv_sw_scan_start(local, sdata, local->scan_addr);
 
 		ieee80211_configure_filter(local); /* accept probe-responses */
 
-		/* We need to ensure घातer level is at max क्रम scanning. */
+		/* We need to ensure power level is at max for scanning. */
 		ieee80211_hw_config(local, 0);
 
-		अगर ((req->channels[0]->flags & (IEEE80211_CHAN_NO_IR |
+		if ((req->channels[0]->flags & (IEEE80211_CHAN_NO_IR |
 						IEEE80211_CHAN_RADAR)) ||
-		    !req->n_ssids) अणु
+		    !req->n_ssids) {
 			next_delay = IEEE80211_PASSIVE_CHANNEL_TIME;
-		पूर्ण अन्यथा अणु
+		} else {
 			ieee80211_scan_state_send_probe(local, &next_delay);
 			next_delay = IEEE80211_CHANNEL_TIME;
-		पूर्ण
+		}
 
-		/* Now, just रुको a bit and we are all करोne! */
+		/* Now, just wait a bit and we are all done! */
 		ieee80211_queue_delayed_work(&local->hw, &local->scan_work,
 					     next_delay);
-		वापस 0;
-	पूर्ण अन्यथा अणु
+		return 0;
+	} else {
 		/* Do normal software scan */
 		__set_bit(SCAN_SW_SCANNING, &local->scanning);
-	पूर्ण
+	}
 
 	ieee80211_recalc_idle(local);
 
-	अगर (hw_scan) अणु
+	if (hw_scan) {
 		WARN_ON(!ieee80211_prep_hw_scan(sdata));
 		rc = drv_hw_scan(local, sdata, local->hw_scan_req);
-	पूर्ण अन्यथा अणु
+	} else {
 		rc = ieee80211_start_sw_scan(local, sdata);
-	पूर्ण
+	}
 
-	अगर (rc) अणु
-		kमुक्त(local->hw_scan_req);
-		local->hw_scan_req = शून्य;
+	if (rc) {
+		kfree(local->hw_scan_req);
+		local->hw_scan_req = NULL;
 		local->scanning = 0;
 
 		ieee80211_recalc_idle(local);
 
-		local->scan_req = शून्य;
-		RCU_INIT_POINTER(local->scan_sdata, शून्य);
-	पूर्ण
+		local->scan_req = NULL;
+		RCU_INIT_POINTER(local->scan_sdata, NULL);
+	}
 
-	अगर (hw_scan && rc == 1) अणु
+	if (hw_scan && rc == 1) {
 		/*
-		 * we can't fall back to software क्रम P2P-GO
+		 * we can't fall back to software for P2P-GO
 		 * as it must update NoA etc.
 		 */
-		अगर (ieee80211_vअगर_type_p2p(&sdata->vअगर) ==
+		if (ieee80211_vif_type_p2p(&sdata->vif) ==
 				NL80211_IFTYPE_P2P_GO)
-			वापस -EOPNOTSUPP;
+			return -EOPNOTSUPP;
 		hw_scan = false;
-		जाओ again;
-	पूर्ण
+		goto again;
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल अचिन्हित दीर्घ
-ieee80211_scan_get_channel_समय(काष्ठा ieee80211_channel *chan)
-अणु
+static unsigned long
+ieee80211_scan_get_channel_time(struct ieee80211_channel *chan)
+{
 	/*
-	 * TODO: channel चयनing also consumes quite some समय,
+	 * TODO: channel switching also consumes quite some time,
 	 * add that delay as well to get a better estimation
 	 */
-	अगर (chan->flags & (IEEE80211_CHAN_NO_IR | IEEE80211_CHAN_RADAR))
-		वापस IEEE80211_PASSIVE_CHANNEL_TIME;
-	वापस IEEE80211_PROBE_DELAY + IEEE80211_CHANNEL_TIME;
-पूर्ण
+	if (chan->flags & (IEEE80211_CHAN_NO_IR | IEEE80211_CHAN_RADAR))
+		return IEEE80211_PASSIVE_CHANNEL_TIME;
+	return IEEE80211_PROBE_DELAY + IEEE80211_CHANNEL_TIME;
+}
 
-अटल व्योम ieee80211_scan_state_decision(काष्ठा ieee80211_local *local,
-					  अचिन्हित दीर्घ *next_delay)
-अणु
+static void ieee80211_scan_state_decision(struct ieee80211_local *local,
+					  unsigned long *next_delay)
+{
 	bool associated = false;
 	bool tx_empty = true;
 	bool bad_latency;
-	काष्ठा ieee80211_sub_अगर_data *sdata;
-	काष्ठा ieee80211_channel *next_chan;
-	क्रमागत mac80211_scan_state next_scan_state;
-	काष्ठा cfg80211_scan_request *scan_req;
+	struct ieee80211_sub_if_data *sdata;
+	struct ieee80211_channel *next_chan;
+	enum mac80211_scan_state next_scan_state;
+	struct cfg80211_scan_request *scan_req;
 
 	/*
-	 * check अगर at least one STA पूर्णांकerface is associated,
-	 * check अगर at least one STA पूर्णांकerface has pending tx frames
-	 * and grab the lowest used beacon पूर्णांकerval
+	 * check if at least one STA interface is associated,
+	 * check if at least one STA interface has pending tx frames
+	 * and grab the lowest used beacon interval
 	 */
-	mutex_lock(&local->अगरlist_mtx);
-	list_क्रम_each_entry(sdata, &local->पूर्णांकerfaces, list) अणु
-		अगर (!ieee80211_sdata_running(sdata))
-			जारी;
+	mutex_lock(&local->iflist_mtx);
+	list_for_each_entry(sdata, &local->interfaces, list) {
+		if (!ieee80211_sdata_running(sdata))
+			continue;
 
-		अगर (sdata->vअगर.type == NL80211_IFTYPE_STATION) अणु
-			अगर (sdata->u.mgd.associated) अणु
+		if (sdata->vif.type == NL80211_IFTYPE_STATION) {
+			if (sdata->u.mgd.associated) {
 				associated = true;
 
-				अगर (!qdisc_all_tx_empty(sdata->dev)) अणु
+				if (!qdisc_all_tx_empty(sdata->dev)) {
 					tx_empty = false;
-					अवरोध;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	mutex_unlock(&local->अगरlist_mtx);
+					break;
+				}
+			}
+		}
+	}
+	mutex_unlock(&local->iflist_mtx);
 
-	scan_req = rcu_dereference_रक्षित(local->scan_req,
+	scan_req = rcu_dereference_protected(local->scan_req,
 					     lockdep_is_held(&local->mtx));
 
 	next_chan = scan_req->channels[local->scan_channel_idx];
 
 	/*
 	 * we're currently scanning a different channel, let's
-	 * see अगर we can scan another channel without पूर्णांकerfering
+	 * see if we can scan another channel without interfering
 	 * with the current traffic situation.
 	 *
-	 * Keep good latency, करो not stay off-channel more than 125 ms.
+	 * Keep good latency, do not stay off-channel more than 125 ms.
 	 */
 
-	bad_latency = समय_after(jअगरfies +
-				 ieee80211_scan_get_channel_समय(next_chan),
-				 local->leave_oper_channel_समय + HZ / 8);
+	bad_latency = time_after(jiffies +
+				 ieee80211_scan_get_channel_time(next_chan),
+				 local->leave_oper_channel_time + HZ / 8);
 
-	अगर (associated && !tx_empty) अणु
-		अगर (scan_req->flags & NL80211_SCAN_FLAG_LOW_PRIORITY)
+	if (associated && !tx_empty) {
+		if (scan_req->flags & NL80211_SCAN_FLAG_LOW_PRIORITY)
 			next_scan_state = SCAN_ABORT;
-		अन्यथा
+		else
 			next_scan_state = SCAN_SUSPEND;
-	पूर्ण अन्यथा अगर (associated && bad_latency) अणु
+	} else if (associated && bad_latency) {
 		next_scan_state = SCAN_SUSPEND;
-	पूर्ण अन्यथा अणु
+	} else {
 		next_scan_state = SCAN_SET_CHANNEL;
-	पूर्ण
+	}
 
 	local->next_scan_state = next_scan_state;
 
 	*next_delay = 0;
-पूर्ण
+}
 
-अटल व्योम ieee80211_scan_state_set_channel(काष्ठा ieee80211_local *local,
-					     अचिन्हित दीर्घ *next_delay)
-अणु
-	पूर्णांक skip;
-	काष्ठा ieee80211_channel *chan;
-	क्रमागत nl80211_bss_scan_width oper_scan_width;
-	काष्ठा cfg80211_scan_request *scan_req;
+static void ieee80211_scan_state_set_channel(struct ieee80211_local *local,
+					     unsigned long *next_delay)
+{
+	int skip;
+	struct ieee80211_channel *chan;
+	enum nl80211_bss_scan_width oper_scan_width;
+	struct cfg80211_scan_request *scan_req;
 
-	scan_req = rcu_dereference_रक्षित(local->scan_req,
+	scan_req = rcu_dereference_protected(local->scan_req,
 					     lockdep_is_held(&local->mtx));
 
 	skip = 0;
@@ -931,296 +930,296 @@ ieee80211_scan_get_channel_समय(काष्ठा ieee80211_channel *chan)
 	local->scan_chandef.freq1_offset = chan->freq_offset;
 	local->scan_chandef.center_freq2 = 0;
 
-	/* For scanning on the S1G band, ignore scan_width (which is स्थिरant
-	 * across all channels) क्रम now since channel width is specअगरic to each
+	/* For scanning on the S1G band, ignore scan_width (which is constant
+	 * across all channels) for now since channel width is specific to each
 	 * channel. Detect the required channel width here and likely revisit
 	 * later. Maybe scan_width could be used to build the channel scan list?
 	 */
-	अगर (chan->band == NL80211_BAND_S1GHZ) अणु
+	if (chan->band == NL80211_BAND_S1GHZ) {
 		local->scan_chandef.width = ieee80211_s1g_channel_width(chan);
-		जाओ set_channel;
-	पूर्ण
+		goto set_channel;
+	}
 
-	चयन (scan_req->scan_width) अणु
-	हाल NL80211_BSS_CHAN_WIDTH_5:
+	switch (scan_req->scan_width) {
+	case NL80211_BSS_CHAN_WIDTH_5:
 		local->scan_chandef.width = NL80211_CHAN_WIDTH_5;
-		अवरोध;
-	हाल NL80211_BSS_CHAN_WIDTH_10:
+		break;
+	case NL80211_BSS_CHAN_WIDTH_10:
 		local->scan_chandef.width = NL80211_CHAN_WIDTH_10;
-		अवरोध;
-	शेष:
-	हाल NL80211_BSS_CHAN_WIDTH_20:
+		break;
+	default:
+	case NL80211_BSS_CHAN_WIDTH_20:
 		/* If scanning on oper channel, use whatever channel-type
 		 * is currently in use.
 		 */
 		oper_scan_width = cfg80211_chandef_to_scan_width(
 					&local->_oper_chandef);
-		अगर (chan == local->_oper_chandef.chan &&
+		if (chan == local->_oper_chandef.chan &&
 		    oper_scan_width == scan_req->scan_width)
 			local->scan_chandef = local->_oper_chandef;
-		अन्यथा
+		else
 			local->scan_chandef.width = NL80211_CHAN_WIDTH_20_NOHT;
-		अवरोध;
-	हाल NL80211_BSS_CHAN_WIDTH_1:
-	हाल NL80211_BSS_CHAN_WIDTH_2:
+		break;
+	case NL80211_BSS_CHAN_WIDTH_1:
+	case NL80211_BSS_CHAN_WIDTH_2:
 		/* shouldn't get here, S1G handled above */
 		WARN_ON(1);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 set_channel:
-	अगर (ieee80211_hw_config(local, IEEE80211_CONF_CHANGE_CHANNEL))
+	if (ieee80211_hw_config(local, IEEE80211_CONF_CHANGE_CHANNEL))
 		skip = 1;
 
 	/* advance state machine to next channel/band */
 	local->scan_channel_idx++;
 
-	अगर (skip) अणु
-		/* अगर we skip this channel वापस to the decision state */
+	if (skip) {
+		/* if we skip this channel return to the decision state */
 		local->next_scan_state = SCAN_DECISION;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
 	 * Probe delay is used to update the NAV, cf. 11.1.3.2.2
-	 * (which unक्रमtunately करोesn't say _why_ step a) is करोne,
-	 * but it रुकोs क्रम the probe delay or until a frame is
+	 * (which unfortunately doesn't say _why_ step a) is done,
+	 * but it waits for the probe delay or until a frame is
 	 * received - and the received frame would update the NAV).
-	 * For now, we करो not support रुकोing until a frame is
+	 * For now, we do not support waiting until a frame is
 	 * received.
 	 *
-	 * In any हाल, it is not necessary क्रम a passive scan.
+	 * In any case, it is not necessary for a passive scan.
 	 */
-	अगर ((chan->flags & (IEEE80211_CHAN_NO_IR | IEEE80211_CHAN_RADAR)) ||
-	    !scan_req->n_ssids) अणु
+	if ((chan->flags & (IEEE80211_CHAN_NO_IR | IEEE80211_CHAN_RADAR)) ||
+	    !scan_req->n_ssids) {
 		*next_delay = IEEE80211_PASSIVE_CHANNEL_TIME;
 		local->next_scan_state = SCAN_DECISION;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* active scan, send probes */
 	*next_delay = IEEE80211_PROBE_DELAY;
 	local->next_scan_state = SCAN_SEND_PROBE;
-पूर्ण
+}
 
-अटल व्योम ieee80211_scan_state_suspend(काष्ठा ieee80211_local *local,
-					 अचिन्हित दीर्घ *next_delay)
-अणु
-	/* चयन back to the operating channel */
-	local->scan_chandef.chan = शून्य;
+static void ieee80211_scan_state_suspend(struct ieee80211_local *local,
+					 unsigned long *next_delay)
+{
+	/* switch back to the operating channel */
+	local->scan_chandef.chan = NULL;
 	ieee80211_hw_config(local, IEEE80211_CONF_CHANGE_CHANNEL);
 
 	/* disable PS */
-	ieee80211_offchannel_वापस(local);
+	ieee80211_offchannel_return(local);
 
 	*next_delay = HZ / 5;
 	/* afterwards, resume scan & go to next channel */
 	local->next_scan_state = SCAN_RESUME;
-पूर्ण
+}
 
-अटल व्योम ieee80211_scan_state_resume(काष्ठा ieee80211_local *local,
-					अचिन्हित दीर्घ *next_delay)
-अणु
-	ieee80211_offchannel_stop_vअगरs(local);
+static void ieee80211_scan_state_resume(struct ieee80211_local *local,
+					unsigned long *next_delay)
+{
+	ieee80211_offchannel_stop_vifs(local);
 
-	अगर (local->ops->flush) अणु
-		ieee80211_flush_queues(local, शून्य, false);
+	if (local->ops->flush) {
+		ieee80211_flush_queues(local, NULL, false);
 		*next_delay = 0;
-	पूर्ण अन्यथा
+	} else
 		*next_delay = HZ / 10;
 
 	/* remember when we left the operating channel */
-	local->leave_oper_channel_समय = jअगरfies;
+	local->leave_oper_channel_time = jiffies;
 
 	/* advance to the next channel to be scanned */
 	local->next_scan_state = SCAN_SET_CHANNEL;
-पूर्ण
+}
 
-व्योम ieee80211_scan_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ieee80211_local *local =
-		container_of(work, काष्ठा ieee80211_local, scan_work.work);
-	काष्ठा ieee80211_sub_अगर_data *sdata;
-	काष्ठा cfg80211_scan_request *scan_req;
-	अचिन्हित दीर्घ next_delay = 0;
-	bool पातed;
+void ieee80211_scan_work(struct work_struct *work)
+{
+	struct ieee80211_local *local =
+		container_of(work, struct ieee80211_local, scan_work.work);
+	struct ieee80211_sub_if_data *sdata;
+	struct cfg80211_scan_request *scan_req;
+	unsigned long next_delay = 0;
+	bool aborted;
 
 	mutex_lock(&local->mtx);
 
-	अगर (!ieee80211_can_run_worker(local)) अणु
-		पातed = true;
-		जाओ out_complete;
-	पूर्ण
+	if (!ieee80211_can_run_worker(local)) {
+		aborted = true;
+		goto out_complete;
+	}
 
-	sdata = rcu_dereference_रक्षित(local->scan_sdata,
+	sdata = rcu_dereference_protected(local->scan_sdata,
 					  lockdep_is_held(&local->mtx));
-	scan_req = rcu_dereference_रक्षित(local->scan_req,
+	scan_req = rcu_dereference_protected(local->scan_req,
 					     lockdep_is_held(&local->mtx));
 
 	/* When scanning on-channel, the first-callback means completed. */
-	अगर (test_bit(SCAN_ONCHANNEL_SCANNING, &local->scanning)) अणु
-		पातed = test_and_clear_bit(SCAN_ABORTED, &local->scanning);
-		जाओ out_complete;
-	पूर्ण
+	if (test_bit(SCAN_ONCHANNEL_SCANNING, &local->scanning)) {
+		aborted = test_and_clear_bit(SCAN_ABORTED, &local->scanning);
+		goto out_complete;
+	}
 
-	अगर (test_and_clear_bit(SCAN_COMPLETED, &local->scanning)) अणु
-		पातed = test_and_clear_bit(SCAN_ABORTED, &local->scanning);
-		जाओ out_complete;
-	पूर्ण
+	if (test_and_clear_bit(SCAN_COMPLETED, &local->scanning)) {
+		aborted = test_and_clear_bit(SCAN_ABORTED, &local->scanning);
+		goto out_complete;
+	}
 
-	अगर (!sdata || !scan_req)
-		जाओ out;
+	if (!sdata || !scan_req)
+		goto out;
 
-	अगर (!local->scanning) अणु
-		पूर्णांक rc;
+	if (!local->scanning) {
+		int rc;
 
-		RCU_INIT_POINTER(local->scan_req, शून्य);
-		RCU_INIT_POINTER(local->scan_sdata, शून्य);
+		RCU_INIT_POINTER(local->scan_req, NULL);
+		RCU_INIT_POINTER(local->scan_sdata, NULL);
 
 		rc = __ieee80211_start_scan(sdata, scan_req);
-		अगर (rc) अणु
+		if (rc) {
 			/* need to complete scan in cfg80211 */
-			rcu_assign_poपूर्णांकer(local->scan_req, scan_req);
-			पातed = true;
-			जाओ out_complete;
-		पूर्ण अन्यथा
-			जाओ out;
-	पूर्ण
+			rcu_assign_pointer(local->scan_req, scan_req);
+			aborted = true;
+			goto out_complete;
+		} else
+			goto out;
+	}
 
 	/*
-	 * as दीर्घ as no delay is required advance immediately
+	 * as long as no delay is required advance immediately
 	 * without scheduling a new work
 	 */
-	करो अणु
-		अगर (!ieee80211_sdata_running(sdata)) अणु
-			पातed = true;
-			जाओ out_complete;
-		पूर्ण
+	do {
+		if (!ieee80211_sdata_running(sdata)) {
+			aborted = true;
+			goto out_complete;
+		}
 
-		चयन (local->next_scan_state) अणु
-		हाल SCAN_DECISION:
-			/* अगर no more bands/channels left, complete scan */
-			अगर (local->scan_channel_idx >= scan_req->n_channels) अणु
-				पातed = false;
-				जाओ out_complete;
-			पूर्ण
+		switch (local->next_scan_state) {
+		case SCAN_DECISION:
+			/* if no more bands/channels left, complete scan */
+			if (local->scan_channel_idx >= scan_req->n_channels) {
+				aborted = false;
+				goto out_complete;
+			}
 			ieee80211_scan_state_decision(local, &next_delay);
-			अवरोध;
-		हाल SCAN_SET_CHANNEL:
+			break;
+		case SCAN_SET_CHANNEL:
 			ieee80211_scan_state_set_channel(local, &next_delay);
-			अवरोध;
-		हाल SCAN_SEND_PROBE:
+			break;
+		case SCAN_SEND_PROBE:
 			ieee80211_scan_state_send_probe(local, &next_delay);
-			अवरोध;
-		हाल SCAN_SUSPEND:
+			break;
+		case SCAN_SUSPEND:
 			ieee80211_scan_state_suspend(local, &next_delay);
-			अवरोध;
-		हाल SCAN_RESUME:
+			break;
+		case SCAN_RESUME:
 			ieee80211_scan_state_resume(local, &next_delay);
-			अवरोध;
-		हाल SCAN_ABORT:
-			पातed = true;
-			जाओ out_complete;
-		पूर्ण
-	पूर्ण जबतक (next_delay == 0);
+			break;
+		case SCAN_ABORT:
+			aborted = true;
+			goto out_complete;
+		}
+	} while (next_delay == 0);
 
 	ieee80211_queue_delayed_work(&local->hw, &local->scan_work, next_delay);
-	जाओ out;
+	goto out;
 
 out_complete:
-	__ieee80211_scan_completed(&local->hw, पातed);
+	__ieee80211_scan_completed(&local->hw, aborted);
 out:
 	mutex_unlock(&local->mtx);
-पूर्ण
+}
 
-पूर्णांक ieee80211_request_scan(काष्ठा ieee80211_sub_अगर_data *sdata,
-			   काष्ठा cfg80211_scan_request *req)
-अणु
-	पूर्णांक res;
+int ieee80211_request_scan(struct ieee80211_sub_if_data *sdata,
+			   struct cfg80211_scan_request *req)
+{
+	int res;
 
 	mutex_lock(&sdata->local->mtx);
 	res = __ieee80211_start_scan(sdata, req);
 	mutex_unlock(&sdata->local->mtx);
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-पूर्णांक ieee80211_request_ibss_scan(काष्ठा ieee80211_sub_अगर_data *sdata,
-				स्थिर u8 *ssid, u8 ssid_len,
-				काष्ठा ieee80211_channel **channels,
-				अचिन्हित पूर्णांक n_channels,
-				क्रमागत nl80211_bss_scan_width scan_width)
-अणु
-	काष्ठा ieee80211_local *local = sdata->local;
-	पूर्णांक ret = -EBUSY, i, n_ch = 0;
-	क्रमागत nl80211_band band;
+int ieee80211_request_ibss_scan(struct ieee80211_sub_if_data *sdata,
+				const u8 *ssid, u8 ssid_len,
+				struct ieee80211_channel **channels,
+				unsigned int n_channels,
+				enum nl80211_bss_scan_width scan_width)
+{
+	struct ieee80211_local *local = sdata->local;
+	int ret = -EBUSY, i, n_ch = 0;
+	enum nl80211_band band;
 
 	mutex_lock(&local->mtx);
 
 	/* busy scanning */
-	अगर (local->scan_req)
-		जाओ unlock;
+	if (local->scan_req)
+		goto unlock;
 
-	/* fill पूर्णांकernal scan request */
-	अगर (!channels) अणु
-		पूर्णांक max_n;
+	/* fill internal scan request */
+	if (!channels) {
+		int max_n;
 
-		क्रम (band = 0; band < NUM_NL80211_BANDS; band++) अणु
-			अगर (!local->hw.wiphy->bands[band] ||
+		for (band = 0; band < NUM_NL80211_BANDS; band++) {
+			if (!local->hw.wiphy->bands[band] ||
 			    band == NL80211_BAND_6GHZ)
-				जारी;
+				continue;
 
 			max_n = local->hw.wiphy->bands[band]->n_channels;
-			क्रम (i = 0; i < max_n; i++) अणु
-				काष्ठा ieee80211_channel *पंचांगp_ch =
+			for (i = 0; i < max_n; i++) {
+				struct ieee80211_channel *tmp_ch =
 				    &local->hw.wiphy->bands[band]->channels[i];
 
-				अगर (पंचांगp_ch->flags & (IEEE80211_CHAN_NO_IR |
+				if (tmp_ch->flags & (IEEE80211_CHAN_NO_IR |
 						     IEEE80211_CHAN_DISABLED))
-					जारी;
+					continue;
 
-				local->पूर्णांक_scan_req->channels[n_ch] = पंचांगp_ch;
+				local->int_scan_req->channels[n_ch] = tmp_ch;
 				n_ch++;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (WARN_ON_ONCE(n_ch == 0))
-			जाओ unlock;
+		if (WARN_ON_ONCE(n_ch == 0))
+			goto unlock;
 
-		local->पूर्णांक_scan_req->n_channels = n_ch;
-	पूर्ण अन्यथा अणु
-		क्रम (i = 0; i < n_channels; i++) अणु
-			अगर (channels[i]->flags & (IEEE80211_CHAN_NO_IR |
+		local->int_scan_req->n_channels = n_ch;
+	} else {
+		for (i = 0; i < n_channels; i++) {
+			if (channels[i]->flags & (IEEE80211_CHAN_NO_IR |
 						  IEEE80211_CHAN_DISABLED))
-				जारी;
+				continue;
 
-			local->पूर्णांक_scan_req->channels[n_ch] = channels[i];
+			local->int_scan_req->channels[n_ch] = channels[i];
 			n_ch++;
-		पूर्ण
+		}
 
-		अगर (WARN_ON_ONCE(n_ch == 0))
-			जाओ unlock;
+		if (WARN_ON_ONCE(n_ch == 0))
+			goto unlock;
 
-		local->पूर्णांक_scan_req->n_channels = n_ch;
-	पूर्ण
+		local->int_scan_req->n_channels = n_ch;
+	}
 
-	local->पूर्णांक_scan_req->ssids = &local->scan_ssid;
-	local->पूर्णांक_scan_req->n_ssids = 1;
-	local->पूर्णांक_scan_req->scan_width = scan_width;
-	स_नकल(local->पूर्णांक_scan_req->ssids[0].ssid, ssid, IEEE80211_MAX_SSID_LEN);
-	local->पूर्णांक_scan_req->ssids[0].ssid_len = ssid_len;
+	local->int_scan_req->ssids = &local->scan_ssid;
+	local->int_scan_req->n_ssids = 1;
+	local->int_scan_req->scan_width = scan_width;
+	memcpy(local->int_scan_req->ssids[0].ssid, ssid, IEEE80211_MAX_SSID_LEN);
+	local->int_scan_req->ssids[0].ssid_len = ssid_len;
 
-	ret = __ieee80211_start_scan(sdata, sdata->local->पूर्णांक_scan_req);
+	ret = __ieee80211_start_scan(sdata, sdata->local->int_scan_req);
  unlock:
 	mutex_unlock(&local->mtx);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Only call this function when a scan can't be queued -- under RTNL.
  */
-व्योम ieee80211_scan_cancel(काष्ठा ieee80211_local *local)
-अणु
+void ieee80211_scan_cancel(struct ieee80211_local *local)
+{
 	/*
 	 * We are canceling software scan, or deferred scan that was not
 	 * yet really started (see __ieee80211_start_scan ).
@@ -1235,86 +1234,86 @@ out:
 	 *   by ieee80211_scan_completed(..., true) to finish scan
 	 *
 	 * Hence we only call the cancel_hw_scan() callback, but the low-level
-	 * driver is still responsible क्रम calling ieee80211_scan_completed()
-	 * after the scan was completed/पातed.
+	 * driver is still responsible for calling ieee80211_scan_completed()
+	 * after the scan was completed/aborted.
 	 */
 
 	mutex_lock(&local->mtx);
-	अगर (!local->scan_req)
-		जाओ out;
+	if (!local->scan_req)
+		goto out;
 
 	/*
-	 * We have a scan running and the driver alपढ़ोy reported completion,
+	 * We have a scan running and the driver already reported completion,
 	 * but the worker hasn't run yet or is stuck on the mutex - mark it as
 	 * cancelled.
 	 */
-	अगर (test_bit(SCAN_HW_SCANNING, &local->scanning) &&
-	    test_bit(SCAN_COMPLETED, &local->scanning)) अणु
+	if (test_bit(SCAN_HW_SCANNING, &local->scanning) &&
+	    test_bit(SCAN_COMPLETED, &local->scanning)) {
 		set_bit(SCAN_HW_CANCELLED, &local->scanning);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (test_bit(SCAN_HW_SCANNING, &local->scanning)) अणु
+	if (test_bit(SCAN_HW_SCANNING, &local->scanning)) {
 		/*
-		 * Make sure that __ieee80211_scan_completed करोesn't trigger a
+		 * Make sure that __ieee80211_scan_completed doesn't trigger a
 		 * scan on another band.
 		 */
 		set_bit(SCAN_HW_CANCELLED, &local->scanning);
-		अगर (local->ops->cancel_hw_scan)
+		if (local->ops->cancel_hw_scan)
 			drv_cancel_hw_scan(local,
-				rcu_dereference_रक्षित(local->scan_sdata,
+				rcu_dereference_protected(local->scan_sdata,
 						lockdep_is_held(&local->mtx)));
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
 	 * If the work is currently running, it must be blocked on
 	 * the mutex, but we'll set scan_sdata = NULL and it'll
-	 * simply निकास once it acquires the mutex.
+	 * simply exit once it acquires the mutex.
 	 */
 	cancel_delayed_work(&local->scan_work);
 	/* and clean up */
-	स_रखो(&local->scan_info, 0, माप(local->scan_info));
+	memset(&local->scan_info, 0, sizeof(local->scan_info));
 	__ieee80211_scan_completed(&local->hw, true);
 out:
 	mutex_unlock(&local->mtx);
-पूर्ण
+}
 
-पूर्णांक __ieee80211_request_sched_scan_start(काष्ठा ieee80211_sub_अगर_data *sdata,
-					काष्ठा cfg80211_sched_scan_request *req)
-अणु
-	काष्ठा ieee80211_local *local = sdata->local;
-	काष्ठा ieee80211_scan_ies sched_scan_ies = अणुपूर्ण;
-	काष्ठा cfg80211_chan_def chandef;
-	पूर्णांक ret, i, iebufsz, num_bands = 0;
-	u32 rate_masks[NUM_NL80211_BANDS] = अणुपूर्ण;
+int __ieee80211_request_sched_scan_start(struct ieee80211_sub_if_data *sdata,
+					struct cfg80211_sched_scan_request *req)
+{
+	struct ieee80211_local *local = sdata->local;
+	struct ieee80211_scan_ies sched_scan_ies = {};
+	struct cfg80211_chan_def chandef;
+	int ret, i, iebufsz, num_bands = 0;
+	u32 rate_masks[NUM_NL80211_BANDS] = {};
 	u8 bands_used = 0;
 	u8 *ie;
 	u32 flags = 0;
 
 	iebufsz = local->scan_ies_len + req->ie_len;
 
-	lockdep_निश्चित_held(&local->mtx);
+	lockdep_assert_held(&local->mtx);
 
-	अगर (!local->ops->sched_scan_start)
-		वापस -ENOTSUPP;
+	if (!local->ops->sched_scan_start)
+		return -ENOTSUPP;
 
-	क्रम (i = 0; i < NUM_NL80211_BANDS; i++) अणु
-		अगर (local->hw.wiphy->bands[i]) अणु
+	for (i = 0; i < NUM_NL80211_BANDS; i++) {
+		if (local->hw.wiphy->bands[i]) {
 			bands_used |= BIT(i);
 			rate_masks[i] = (u32) -1;
 			num_bands++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (req->flags & NL80211_SCAN_FLAG_MIN_PREQ_CONTENT)
+	if (req->flags & NL80211_SCAN_FLAG_MIN_PREQ_CONTENT)
 		flags |= IEEE80211_PROBE_FLAG_MIN_CONTENT;
 
-	ie = kसुस्मृति(iebufsz, num_bands, GFP_KERNEL);
-	अगर (!ie) अणु
+	ie = kcalloc(iebufsz, num_bands, GFP_KERNEL);
+	if (!ie) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ieee80211_prepare_scan_chandef(&chandef, req->scan_width);
 
@@ -1324,122 +1323,122 @@ out:
 				 flags);
 
 	ret = drv_sched_scan_start(local, sdata, req, &sched_scan_ies);
-	अगर (ret == 0) अणु
-		rcu_assign_poपूर्णांकer(local->sched_scan_sdata, sdata);
-		rcu_assign_poपूर्णांकer(local->sched_scan_req, req);
-	पूर्ण
+	if (ret == 0) {
+		rcu_assign_pointer(local->sched_scan_sdata, sdata);
+		rcu_assign_pointer(local->sched_scan_req, req);
+	}
 
-	kमुक्त(ie);
+	kfree(ie);
 
 out:
-	अगर (ret) अणु
-		/* Clean in हाल of failure after HW restart or upon resume. */
-		RCU_INIT_POINTER(local->sched_scan_sdata, शून्य);
-		RCU_INIT_POINTER(local->sched_scan_req, शून्य);
-	पूर्ण
+	if (ret) {
+		/* Clean in case of failure after HW restart or upon resume. */
+		RCU_INIT_POINTER(local->sched_scan_sdata, NULL);
+		RCU_INIT_POINTER(local->sched_scan_req, NULL);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक ieee80211_request_sched_scan_start(काष्ठा ieee80211_sub_अगर_data *sdata,
-				       काष्ठा cfg80211_sched_scan_request *req)
-अणु
-	काष्ठा ieee80211_local *local = sdata->local;
-	पूर्णांक ret;
+int ieee80211_request_sched_scan_start(struct ieee80211_sub_if_data *sdata,
+				       struct cfg80211_sched_scan_request *req)
+{
+	struct ieee80211_local *local = sdata->local;
+	int ret;
 
 	mutex_lock(&local->mtx);
 
-	अगर (rcu_access_poपूर्णांकer(local->sched_scan_sdata)) अणु
+	if (rcu_access_pointer(local->sched_scan_sdata)) {
 		mutex_unlock(&local->mtx);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	ret = __ieee80211_request_sched_scan_start(sdata, req);
 
 	mutex_unlock(&local->mtx);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक ieee80211_request_sched_scan_stop(काष्ठा ieee80211_local *local)
-अणु
-	काष्ठा ieee80211_sub_अगर_data *sched_scan_sdata;
-	पूर्णांक ret = -ENOENT;
+int ieee80211_request_sched_scan_stop(struct ieee80211_local *local)
+{
+	struct ieee80211_sub_if_data *sched_scan_sdata;
+	int ret = -ENOENT;
 
 	mutex_lock(&local->mtx);
 
-	अगर (!local->ops->sched_scan_stop) अणु
+	if (!local->ops->sched_scan_stop) {
 		ret = -ENOTSUPP;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* We करोn't want to restart sched scan anymore. */
-	RCU_INIT_POINTER(local->sched_scan_req, शून्य);
+	/* We don't want to restart sched scan anymore. */
+	RCU_INIT_POINTER(local->sched_scan_req, NULL);
 
-	sched_scan_sdata = rcu_dereference_रक्षित(local->sched_scan_sdata,
+	sched_scan_sdata = rcu_dereference_protected(local->sched_scan_sdata,
 						lockdep_is_held(&local->mtx));
-	अगर (sched_scan_sdata) अणु
+	if (sched_scan_sdata) {
 		ret = drv_sched_scan_stop(local, sched_scan_sdata);
-		अगर (!ret)
-			RCU_INIT_POINTER(local->sched_scan_sdata, शून्य);
-	पूर्ण
+		if (!ret)
+			RCU_INIT_POINTER(local->sched_scan_sdata, NULL);
+	}
 out:
 	mutex_unlock(&local->mtx);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम ieee80211_sched_scan_results(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा ieee80211_local *local = hw_to_local(hw);
+void ieee80211_sched_scan_results(struct ieee80211_hw *hw)
+{
+	struct ieee80211_local *local = hw_to_local(hw);
 
 	trace_api_sched_scan_results(local);
 
 	cfg80211_sched_scan_results(hw->wiphy, 0);
-पूर्ण
+}
 EXPORT_SYMBOL(ieee80211_sched_scan_results);
 
-व्योम ieee80211_sched_scan_end(काष्ठा ieee80211_local *local)
-अणु
+void ieee80211_sched_scan_end(struct ieee80211_local *local)
+{
 	mutex_lock(&local->mtx);
 
-	अगर (!rcu_access_poपूर्णांकer(local->sched_scan_sdata)) अणु
+	if (!rcu_access_pointer(local->sched_scan_sdata)) {
 		mutex_unlock(&local->mtx);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	RCU_INIT_POINTER(local->sched_scan_sdata, शून्य);
+	RCU_INIT_POINTER(local->sched_scan_sdata, NULL);
 
-	/* If sched scan was पातed by the driver. */
-	RCU_INIT_POINTER(local->sched_scan_req, शून्य);
+	/* If sched scan was aborted by the driver. */
+	RCU_INIT_POINTER(local->sched_scan_req, NULL);
 
 	mutex_unlock(&local->mtx);
 
 	cfg80211_sched_scan_stopped(local->hw.wiphy, 0);
-पूर्ण
+}
 
-व्योम ieee80211_sched_scan_stopped_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ieee80211_local *local =
-		container_of(work, काष्ठा ieee80211_local,
+void ieee80211_sched_scan_stopped_work(struct work_struct *work)
+{
+	struct ieee80211_local *local =
+		container_of(work, struct ieee80211_local,
 			     sched_scan_stopped_work);
 
 	ieee80211_sched_scan_end(local);
-पूर्ण
+}
 
-व्योम ieee80211_sched_scan_stopped(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा ieee80211_local *local = hw_to_local(hw);
+void ieee80211_sched_scan_stopped(struct ieee80211_hw *hw)
+{
+	struct ieee80211_local *local = hw_to_local(hw);
 
 	trace_api_sched_scan_stopped(local);
 
 	/*
-	 * this shouldn't really happen, so क्रम simplicity
+	 * this shouldn't really happen, so for simplicity
 	 * simply ignore it, and let mac80211 reconfigure
 	 * the sched scan later on.
 	 */
-	अगर (local->in_reconfig)
-		वापस;
+	if (local->in_reconfig)
+		return;
 
 	schedule_work(&local->sched_scan_stopped_work);
-पूर्ण
+}
 EXPORT_SYMBOL(ieee80211_sched_scan_stopped);

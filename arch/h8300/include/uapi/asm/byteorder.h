@@ -1,8 +1,7 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _H8300_BYTEORDER_H
-#घोषणा _H8300_BYTEORDER_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _H8300_BYTEORDER_H
+#define _H8300_BYTEORDER_H
 
-#समावेश <linux/byteorder/big_endian.h>
+#include <linux/byteorder/big_endian.h>
 
-#पूर्ण_अगर /* _H8300_BYTEORDER_H */
+#endif /* _H8300_BYTEORDER_H */

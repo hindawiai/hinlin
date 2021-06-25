@@ -1,131 +1,130 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * PlanetCore configuration data support functions
  *
- * Author: Scott Wood <scottwood@मुक्तscale.com>
+ * Author: Scott Wood <scottwood@freescale.com>
  *
  * Copyright (c) 2007 Freescale Semiconductor, Inc.
  */
 
-#समावेश "stdio.h"
-#समावेश "stdlib.h"
-#समावेश "ops.h"
-#समावेश "planetcore.h"
-#समावेश "io.h"
+#include "stdio.h"
+#include "stdlib.h"
+#include "ops.h"
+#include "planetcore.h"
+#include "io.h"
 
-/* PlanetCore passes inक्रमmation to the OS in the क्रमm of
+/* PlanetCore passes information to the OS in the form of
  * a table of key=value strings, separated by newlines.
  *
  * The list is terminated by an empty string (i.e. two
  * consecutive newlines).
  *
  * To make it easier to parse, we first convert all the
- * newlines पूर्णांकo null bytes.
+ * newlines into null bytes.
  */
 
-व्योम planetcore_prepare_table(अक्षर *table)
-अणु
-	करो अणु
-		अगर (*table == '\n')
+void planetcore_prepare_table(char *table)
+{
+	do {
+		if (*table == '\n')
 			*table = 0;
 
 		table++;
-	पूर्ण जबतक (*(table - 1) || *table != '\n');
+	} while (*(table - 1) || *table != '\n');
 
 	*table = 0;
-पूर्ण
+}
 
-स्थिर अक्षर *planetcore_get_key(स्थिर अक्षर *table, स्थिर अक्षर *key)
-अणु
-	पूर्णांक keylen = म_माप(key);
+const char *planetcore_get_key(const char *table, const char *key)
+{
+	int keylen = strlen(key);
 
-	करो अणु
-		अगर (!म_भेदन(table, key, keylen) && table[keylen] == '=')
-			वापस table + keylen + 1;
+	do {
+		if (!strncmp(table, key, keylen) && table[keylen] == '=')
+			return table + keylen + 1;
 
-		table += म_माप(table) + 1;
-	पूर्ण जबतक (म_माप(table) != 0);
+		table += strlen(table) + 1;
+	} while (strlen(table) != 0);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-पूर्णांक planetcore_get_decimal(स्थिर अक्षर *table, स्थिर अक्षर *key, u64 *val)
-अणु
-	स्थिर अक्षर *str = planetcore_get_key(table, key);
-	अगर (!str)
-		वापस 0;
+int planetcore_get_decimal(const char *table, const char *key, u64 *val)
+{
+	const char *str = planetcore_get_key(table, key);
+	if (!str)
+		return 0;
 
-	*val = म_से_अदीर्घl(str, शून्य, 10);
-	वापस 1;
-पूर्ण
+	*val = strtoull(str, NULL, 10);
+	return 1;
+}
 
-पूर्णांक planetcore_get_hex(स्थिर अक्षर *table, स्थिर अक्षर *key, u64 *val)
-अणु
-	स्थिर अक्षर *str = planetcore_get_key(table, key);
-	अगर (!str)
-		वापस 0;
+int planetcore_get_hex(const char *table, const char *key, u64 *val)
+{
+	const char *str = planetcore_get_key(table, key);
+	if (!str)
+		return 0;
 
-	*val = म_से_अदीर्घl(str, शून्य, 16);
-	वापस 1;
-पूर्ण
+	*val = strtoull(str, NULL, 16);
+	return 1;
+}
 
-अटल u64 mac_table[4] = अणु
+static u64 mac_table[4] = {
 	0x000000000000,
 	0x000000800000,
 	0x000000400000,
 	0x000000c00000,
-पूर्ण;
+};
 
-व्योम planetcore_set_mac_addrs(स्थिर अक्षर *table)
-अणु
+void planetcore_set_mac_addrs(const char *table)
+{
 	u8 addr[4][6];
-	u64 पूर्णांक_addr;
+	u64 int_addr;
 	u32 i;
-	पूर्णांक j;
+	int j;
 
-	अगर (!planetcore_get_hex(table, PLANETCORE_KEY_MAC_ADDR, &पूर्णांक_addr))
-		वापस;
+	if (!planetcore_get_hex(table, PLANETCORE_KEY_MAC_ADDR, &int_addr))
+		return;
 
-	क्रम (i = 0; i < 4; i++) अणु
-		u64 this_dev_addr = (पूर्णांक_addr & ~0x000000c00000) |
+	for (i = 0; i < 4; i++) {
+		u64 this_dev_addr = (int_addr & ~0x000000c00000) |
 		                    mac_table[i];
 
-		क्रम (j = 5; j >= 0; j--) अणु
+		for (j = 5; j >= 0; j--) {
 			addr[i][j] = this_dev_addr & 0xff;
 			this_dev_addr >>= 8;
-		पूर्ण
+		}
 
 		dt_fixup_mac_address(i, addr[i]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अक्षर prop_buf[MAX_PROP_LEN];
+static char prop_buf[MAX_PROP_LEN];
 
-व्योम planetcore_set_मानक_निकास_path(स्थिर अक्षर *table)
-अणु
-	अक्षर *path;
-	स्थिर अक्षर *label;
-	व्योम *node, *chosen;
+void planetcore_set_stdout_path(const char *table)
+{
+	char *path;
+	const char *label;
+	void *node, *chosen;
 
 	label = planetcore_get_key(table, PLANETCORE_KEY_SERIAL_PORT);
-	अगर (!label)
-		वापस;
+	if (!label)
+		return;
 
-	node = find_node_by_prop_value_str(शून्य, "linux,planetcore-label",
+	node = find_node_by_prop_value_str(NULL, "linux,planetcore-label",
 	                                   label);
-	अगर (!node)
-		वापस;
+	if (!node)
+		return;
 
 	path = get_path(node, prop_buf, MAX_PROP_LEN);
-	अगर (!path)
-		वापस;
+	if (!path)
+		return;
 
 	chosen = finddevice("/chosen");
-	अगर (!chosen)
-		chosen = create_node(शून्य, "chosen");
-	अगर (!chosen)
-		वापस;
+	if (!chosen)
+		chosen = create_node(NULL, "chosen");
+	if (!chosen)
+		return;
 
 	setprop_str(chosen, "linux,stdout-path", path);
-पूर्ण
+}

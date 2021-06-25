@@ -1,21 +1,20 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /******************************************************************************
  * rtl8712_led.c
  *
  * Copyright(c) 2007 - 2010  Realtek Corporation. All rights reserved.
- * Linux device driver क्रम RTL8192SU
+ * Linux device driver for RTL8192SU
  *
- * Modअगरications क्रम inclusion पूर्णांकo the Linux staging tree are
+ * Modifications for inclusion into the Linux staging tree are
  * Copyright(c) 2010 Larry Finger. All rights reserved.
  *
- * Contact inक्रमmation:
+ * Contact information:
  * WLAN FAE <wlanfae@realtek.com>
  * Larry Finger <Larry.Finger@lwfinger.net>
  *
  ******************************************************************************/
 
-#समावेश "drv_types.h"
+#include "drv_types.h"
 
 /*===========================================================================
  *	Constant.
@@ -24,21 +23,21 @@
  *
  * Default LED behavior.
  */
-#घोषणा LED_BLINK_NORMAL_INTERVAL	100
-#घोषणा LED_BLINK_SLOWLY_INTERVAL	200
-#घोषणा LED_BLINK_LONG_INTERVAL	400
+#define LED_BLINK_NORMAL_INTERVAL	100
+#define LED_BLINK_SLOWLY_INTERVAL	200
+#define LED_BLINK_LONG_INTERVAL	400
 
-#घोषणा LED_BLINK_NO_LINK_INTERVAL_ALPHA	1000
-#घोषणा LED_BLINK_LINK_INTERVAL_ALPHA		500
-#घोषणा LED_BLINK_SCAN_INTERVAL_ALPHA		180
-#घोषणा LED_BLINK_FASTER_INTERVAL_ALPHA		50
-#घोषणा LED_BLINK_WPS_SUCCESS_INTERVAL_ALPHA	5000
+#define LED_BLINK_NO_LINK_INTERVAL_ALPHA	1000
+#define LED_BLINK_LINK_INTERVAL_ALPHA		500
+#define LED_BLINK_SCAN_INTERVAL_ALPHA		180
+#define LED_BLINK_FASTER_INTERVAL_ALPHA		50
+#define LED_BLINK_WPS_SUCCESS_INTERVAL_ALPHA	5000
 
 /*===========================================================================
  * LED object.
  *===========================================================================
  */
-क्रमागत _LED_STATE_871x अणु
+enum _LED_STATE_871x {
 	LED_UNKNOWN = 0,
 	LED_STATE_ON = 1,
 	LED_STATE_OFF = 2,
@@ -46,26 +45,26 @@
 	LED_BLINK_SLOWLY = 4,
 	LED_POWER_ON_BLINK = 5,
 	LED_SCAN_BLINK = 6, /* LED is blinking during scanning period,
-			     * the # of बार to blink is depend on समय
-			     * क्रम scanning.
+			     * the # of times to blink is depend on time
+			     * for scanning.
 			     */
 	LED_NO_LINK_BLINK = 7, /* LED is blinking during no link state. */
-	LED_BLINK_StartToBlink = 8,/* Customized क्रम Sercomm Prपूर्णांकer
-				    * Server हाल
+	LED_BLINK_StartToBlink = 8,/* Customized for Sercomm Printer
+				    * Server case
 				    */
 	LED_BLINK_WPS = 9,	/* LED is blinkg during WPS communication */
 	LED_TXRX_BLINK = 10,
-	LED_BLINK_WPS_STOP = 11,	/*क्रम ALPHA */
-	LED_BLINK_WPS_STOP_OVERLAP = 12,	/*क्रम BELKIN */
-पूर्ण;
+	LED_BLINK_WPS_STOP = 11,	/*for ALPHA */
+	LED_BLINK_WPS_STOP_OVERLAP = 12,	/*for BELKIN */
+};
 
 /*===========================================================================
- *	Prototype of रक्षित function.
+ *	Prototype of protected function.
  *===========================================================================
  */
-अटल व्योम BlinkTimerCallback(काष्ठा समयr_list *t);
+static void BlinkTimerCallback(struct timer_list *t);
 
-अटल व्योम BlinkWorkItemCallback(काष्ठा work_काष्ठा *work);
+static void BlinkWorkItemCallback(struct work_struct *work);
 /*===========================================================================
  * LED_819xUsb routines.
  *===========================================================================
@@ -75,9 +74,9 @@
  *	Description:
  *		Initialize an LED_871x object.
  */
-अटल व्योम InitLed871x(काष्ठा _adapter *padapter, काष्ठा LED_871x *pLed,
-			क्रमागत LED_PIN_871x	LedPin)
-अणु
+static void InitLed871x(struct _adapter *padapter, struct LED_871x *pLed,
+			enum LED_PIN_871x	LedPin)
+{
 	pLed->padapter = padapter;
 	pLed->LedPin = LedPin;
 	pLed->CurrLedState = LED_STATE_OFF;
@@ -85,78 +84,78 @@
 	pLed->bLedBlinkInProgress = false;
 	pLed->BlinkTimes = 0;
 	pLed->BlinkingLedState = LED_UNKNOWN;
-	समयr_setup(&pLed->BlinkTimer, BlinkTimerCallback, 0);
+	timer_setup(&pLed->BlinkTimer, BlinkTimerCallback, 0);
 	INIT_WORK(&pLed->BlinkWorkItem, BlinkWorkItemCallback);
-पूर्ण
+}
 
 /*
  *	Description:
  *		DeInitialize an LED_871x object.
  */
-अटल व्योम DeInitLed871x(काष्ठा LED_871x *pLed)
-अणु
-	del_समयr_sync(&pLed->BlinkTimer);
-	/* We should reset bLedBlinkInProgress अगर we cancel
+static void DeInitLed871x(struct LED_871x *pLed)
+{
+	del_timer_sync(&pLed->BlinkTimer);
+	/* We should reset bLedBlinkInProgress if we cancel
 	 * the LedControlTimer,
 	 */
 	pLed->bLedBlinkInProgress = false;
-पूर्ण
+}
 
 /*
  *	Description:
- *		Turn on LED according to LedPin specअगरied.
+ *		Turn on LED according to LedPin specified.
  */
-अटल व्योम SwLedOn(काष्ठा _adapter *padapter, काष्ठा LED_871x *pLed)
-अणु
+static void SwLedOn(struct _adapter *padapter, struct LED_871x *pLed)
+{
 	u8	LedCfg;
 
-	अगर (padapter->surprise_हटाओd || padapter->driver_stopped)
-		वापस;
-	LedCfg = r8712_पढ़ो8(padapter, LEDCFG);
-	चयन (pLed->LedPin) अणु
-	हाल LED_PIN_GPIO0:
-		अवरोध;
-	हाल LED_PIN_LED0:
+	if (padapter->surprise_removed || padapter->driver_stopped)
+		return;
+	LedCfg = r8712_read8(padapter, LEDCFG);
+	switch (pLed->LedPin) {
+	case LED_PIN_GPIO0:
+		break;
+	case LED_PIN_LED0:
 		/* SW control led0 on.*/
-		r8712_ग_लिखो8(padapter, LEDCFG, LedCfg & 0xf0);
-		अवरोध;
-	हाल LED_PIN_LED1:
+		r8712_write8(padapter, LEDCFG, LedCfg & 0xf0);
+		break;
+	case LED_PIN_LED1:
 		/* SW control led1 on.*/
-		r8712_ग_लिखो8(padapter, LEDCFG, LedCfg & 0x0f);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		r8712_write8(padapter, LEDCFG, LedCfg & 0x0f);
+		break;
+	default:
+		break;
+	}
 	pLed->bLedOn = true;
-पूर्ण
+}
 
 /*
  *	Description:
- *		Turn off LED according to LedPin specअगरied.
+ *		Turn off LED according to LedPin specified.
  */
-अटल व्योम SwLedOff(काष्ठा _adapter *padapter, काष्ठा LED_871x *pLed)
-अणु
+static void SwLedOff(struct _adapter *padapter, struct LED_871x *pLed)
+{
 	u8	LedCfg;
 
-	अगर (padapter->surprise_हटाओd || padapter->driver_stopped)
-		वापस;
-	LedCfg = r8712_पढ़ो8(padapter, LEDCFG);
-	चयन (pLed->LedPin) अणु
-	हाल LED_PIN_GPIO0:
-		अवरोध;
-	हाल LED_PIN_LED0:
+	if (padapter->surprise_removed || padapter->driver_stopped)
+		return;
+	LedCfg = r8712_read8(padapter, LEDCFG);
+	switch (pLed->LedPin) {
+	case LED_PIN_GPIO0:
+		break;
+	case LED_PIN_LED0:
 		LedCfg &= 0xf0; /* Set to software control.*/
-		r8712_ग_लिखो8(padapter, LEDCFG, (LedCfg | BIT(3)));
-		अवरोध;
-	हाल LED_PIN_LED1:
+		r8712_write8(padapter, LEDCFG, (LedCfg | BIT(3)));
+		break;
+	case LED_PIN_LED1:
 		LedCfg &= 0x0f; /* Set to software control.*/
-		r8712_ग_लिखो8(padapter, LEDCFG, (LedCfg | BIT(7)));
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		r8712_write8(padapter, LEDCFG, (LedCfg | BIT(7)));
+		break;
+	default:
+		break;
+	}
 	pLed->bLedOn = false;
-पूर्ण
+}
 
 /*===========================================================================
  * Interface to manipulate LED objects.
@@ -165,1659 +164,1659 @@
  *	Description:
  *		Initialize all LED_871x objects.
  */
-व्योम r8712_InitSwLeds(काष्ठा _adapter *padapter)
-अणु
-	काष्ठा led_priv	*pledpriv = &padapter->ledpriv;
+void r8712_InitSwLeds(struct _adapter *padapter)
+{
+	struct led_priv	*pledpriv = &padapter->ledpriv;
 
 	pledpriv->LedControlHandler = LedControl871x;
 	InitLed871x(padapter, &pledpriv->SwLed0, LED_PIN_LED0);
 	InitLed871x(padapter, &pledpriv->SwLed1, LED_PIN_LED1);
-पूर्ण
+}
 
 /*	Description:
  *		DeInitialize all LED_819xUsb objects.
  */
-व्योम r8712_DeInitSwLeds(काष्ठा _adapter *padapter)
-अणु
-	काष्ठा led_priv	*ledpriv = &padapter->ledpriv;
+void r8712_DeInitSwLeds(struct _adapter *padapter)
+{
+	struct led_priv	*ledpriv = &padapter->ledpriv;
 
 	DeInitLed871x(&ledpriv->SwLed0);
 	DeInitLed871x(&ledpriv->SwLed1);
-पूर्ण
+}
 
 /*	Description:
  *		Implementation of LED blinking behavior.
- *		It toggle off LED and schedule corresponding समयr अगर necessary.
+ *		It toggle off LED and schedule corresponding timer if necessary.
  */
-अटल व्योम SwLedBlink(काष्ठा LED_871x *pLed)
-अणु
-	काष्ठा _adapter *padapter = pLed->padapter;
-	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
+static void SwLedBlink(struct LED_871x *pLed)
+{
+	struct _adapter *padapter = pLed->padapter;
+	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
 	u8 bStopBlinking = false;
 
-	/* Change LED according to BlinkingLedState specअगरied. */
-	अगर (pLed->BlinkingLedState == LED_STATE_ON)
+	/* Change LED according to BlinkingLedState specified. */
+	if (pLed->BlinkingLedState == LED_STATE_ON)
 		SwLedOn(padapter, pLed);
-	अन्यथा
+	else
 		SwLedOff(padapter, pLed);
-	/* Determine अगर we shall change LED state again. */
+	/* Determine if we shall change LED state again. */
 	pLed->BlinkTimes--;
-	चयन (pLed->CurrLedState) अणु
-	हाल LED_BLINK_NORMAL:
-		अगर (pLed->BlinkTimes == 0)
+	switch (pLed->CurrLedState) {
+	case LED_BLINK_NORMAL:
+		if (pLed->BlinkTimes == 0)
 			bStopBlinking = true;
-		अवरोध;
-	हाल LED_BLINK_StartToBlink:
-		अगर (check_fwstate(pmlmepriv, _FW_LINKED) &&
+		break;
+	case LED_BLINK_StartToBlink:
+		if (check_fwstate(pmlmepriv, _FW_LINKED) &&
 		    (pmlmepriv->fw_state & WIFI_STATION_STATE))
 			bStopBlinking = true;
-		अगर (check_fwstate(pmlmepriv, _FW_LINKED) &&
+		if (check_fwstate(pmlmepriv, _FW_LINKED) &&
 		    ((pmlmepriv->fw_state & WIFI_ADHOC_STATE) ||
 		    (pmlmepriv->fw_state & WIFI_ADHOC_MASTER_STATE)))
 			bStopBlinking = true;
-		अन्यथा अगर (pLed->BlinkTimes == 0)
+		else if (pLed->BlinkTimes == 0)
 			bStopBlinking = true;
-		अवरोध;
-	हाल LED_BLINK_WPS:
-		अगर (pLed->BlinkTimes == 0)
+		break;
+	case LED_BLINK_WPS:
+		if (pLed->BlinkTimes == 0)
 			bStopBlinking = true;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		bStopBlinking = true;
-		अवरोध;
-	पूर्ण
-	अगर (bStopBlinking) अणु
-		अगर (check_fwstate(pmlmepriv, _FW_LINKED) &&
+		break;
+	}
+	if (bStopBlinking) {
+		if (check_fwstate(pmlmepriv, _FW_LINKED) &&
 		    !pLed->bLedOn)
 			SwLedOn(padapter, pLed);
-		अन्यथा अगर (check_fwstate(pmlmepriv, _FW_LINKED) &&  pLed->bLedOn)
+		else if (check_fwstate(pmlmepriv, _FW_LINKED) &&  pLed->bLedOn)
 			SwLedOff(padapter, pLed);
 		pLed->BlinkTimes = 0;
 		pLed->bLedBlinkInProgress = false;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Assign LED state to toggle. */
-		अगर (pLed->BlinkingLedState == LED_STATE_ON)
+		if (pLed->BlinkingLedState == LED_STATE_ON)
 			pLed->BlinkingLedState = LED_STATE_OFF;
-		अन्यथा
+		else
 			pLed->BlinkingLedState = LED_STATE_ON;
 
-		/* Schedule a समयr to toggle LED state. */
-		चयन (pLed->CurrLedState) अणु
-		हाल LED_BLINK_NORMAL:
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_NORMAL_INTERVAL));
-			अवरोध;
-		हाल LED_BLINK_SLOWLY:
-		हाल LED_BLINK_StartToBlink:
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_SLOWLY_INTERVAL));
-			अवरोध;
-		हाल LED_BLINK_WPS:
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_LONG_INTERVAL));
-			अवरोध;
-		शेष:
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_SLOWLY_INTERVAL));
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		/* Schedule a timer to toggle LED state. */
+		switch (pLed->CurrLedState) {
+		case LED_BLINK_NORMAL:
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_NORMAL_INTERVAL));
+			break;
+		case LED_BLINK_SLOWLY:
+		case LED_BLINK_StartToBlink:
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_SLOWLY_INTERVAL));
+			break;
+		case LED_BLINK_WPS:
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_LONG_INTERVAL));
+			break;
+		default:
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_SLOWLY_INTERVAL));
+			break;
+		}
+	}
+}
 
-अटल व्योम SwLedBlink1(काष्ठा LED_871x *pLed)
-अणु
-	काष्ठा _adapter *padapter = pLed->padapter;
-	काष्ठा led_priv *ledpriv = &padapter->ledpriv;
-	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	काष्ठा eeprom_priv *peeprompriv = &padapter->eeprompriv;
-	काष्ठा LED_871x *pLed1 = &ledpriv->SwLed1;
+static void SwLedBlink1(struct LED_871x *pLed)
+{
+	struct _adapter *padapter = pLed->padapter;
+	struct led_priv *ledpriv = &padapter->ledpriv;
+	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	struct eeprom_priv *peeprompriv = &padapter->eeprompriv;
+	struct LED_871x *pLed1 = &ledpriv->SwLed1;
 	u8 bStopBlinking = false;
 
-	अगर (peeprompriv->CustomerID == RT_CID_819x_CAMEO)
+	if (peeprompriv->CustomerID == RT_CID_819x_CAMEO)
 		pLed = &ledpriv->SwLed1;
-	/* Change LED according to BlinkingLedState specअगरied. */
-	अगर (pLed->BlinkingLedState == LED_STATE_ON)
+	/* Change LED according to BlinkingLedState specified. */
+	if (pLed->BlinkingLedState == LED_STATE_ON)
 		SwLedOn(padapter, pLed);
-	अन्यथा
+	else
 		SwLedOff(padapter, pLed);
-	अगर (peeprompriv->CustomerID == RT_CID_DEFAULT) अणु
-		अगर (check_fwstate(pmlmepriv, _FW_LINKED)) अणु
-			अगर (!pLed1->bSWLedCtrl) अणु
+	if (peeprompriv->CustomerID == RT_CID_DEFAULT) {
+		if (check_fwstate(pmlmepriv, _FW_LINKED)) {
+			if (!pLed1->bSWLedCtrl) {
 				SwLedOn(padapter, pLed1);
 				pLed1->bSWLedCtrl = true;
-			पूर्ण अन्यथा अगर (!pLed1->bLedOn) अणु
+			} else if (!pLed1->bLedOn) {
 				SwLedOn(padapter, pLed1);
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (!pLed1->bSWLedCtrl) अणु
+			}
+		} else {
+			if (!pLed1->bSWLedCtrl) {
 				SwLedOff(padapter, pLed1);
 				pLed1->bSWLedCtrl = true;
-			पूर्ण अन्यथा अगर (pLed1->bLedOn) अणु
+			} else if (pLed1->bLedOn) {
 				SwLedOff(padapter, pLed1);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	चयन (pLed->CurrLedState) अणु
-	हाल LED_BLINK_SLOWLY:
-		अगर (pLed->bLedOn)
+			}
+		}
+	}
+	switch (pLed->CurrLedState) {
+	case LED_BLINK_SLOWLY:
+		if (pLed->bLedOn)
 			pLed->BlinkingLedState = LED_STATE_OFF;
-		अन्यथा
+		else
 			pLed->BlinkingLedState = LED_STATE_ON;
-		mod_समयr(&pLed->BlinkTimer, jअगरfies +
-			  msecs_to_jअगरfies(LED_BLINK_NO_LINK_INTERVAL_ALPHA));
-		अवरोध;
-	हाल LED_BLINK_NORMAL:
-		अगर (pLed->bLedOn)
+		mod_timer(&pLed->BlinkTimer, jiffies +
+			  msecs_to_jiffies(LED_BLINK_NO_LINK_INTERVAL_ALPHA));
+		break;
+	case LED_BLINK_NORMAL:
+		if (pLed->bLedOn)
 			pLed->BlinkingLedState = LED_STATE_OFF;
-		अन्यथा
+		else
 			pLed->BlinkingLedState = LED_STATE_ON;
-		mod_समयr(&pLed->BlinkTimer, jअगरfies +
-			  msecs_to_jअगरfies(LED_BLINK_LINK_INTERVAL_ALPHA));
-		अवरोध;
-	हाल LED_SCAN_BLINK:
+		mod_timer(&pLed->BlinkTimer, jiffies +
+			  msecs_to_jiffies(LED_BLINK_LINK_INTERVAL_ALPHA));
+		break;
+	case LED_SCAN_BLINK:
 		pLed->BlinkTimes--;
-		अगर (pLed->BlinkTimes == 0)
+		if (pLed->BlinkTimes == 0)
 			bStopBlinking = true;
-		अगर (bStopBlinking) अणु
-			अगर (check_fwstate(pmlmepriv, _FW_LINKED)) अणु
+		if (bStopBlinking) {
+			if (check_fwstate(pmlmepriv, _FW_LINKED)) {
 				pLed->bLedLinkBlinkInProgress = true;
 				pLed->CurrLedState = LED_BLINK_NORMAL;
-				अगर (pLed->bLedOn)
+				if (pLed->bLedOn)
 					pLed->BlinkingLedState = LED_STATE_OFF;
-				अन्यथा
+				else
 					pLed->BlinkingLedState = LED_STATE_ON;
-				mod_समयr(&pLed->BlinkTimer, jअगरfies +
-					  msecs_to_jअगरfies(LED_BLINK_LINK_INTERVAL_ALPHA));
-			पूर्ण अन्यथा अगर (!check_fwstate(pmlmepriv, _FW_LINKED)) अणु
+				mod_timer(&pLed->BlinkTimer, jiffies +
+					  msecs_to_jiffies(LED_BLINK_LINK_INTERVAL_ALPHA));
+			} else if (!check_fwstate(pmlmepriv, _FW_LINKED)) {
 				pLed->bLedNoLinkBlinkInProgress = true;
 				pLed->CurrLedState = LED_BLINK_SLOWLY;
-				अगर (pLed->bLedOn)
+				if (pLed->bLedOn)
 					pLed->BlinkingLedState = LED_STATE_OFF;
-				अन्यथा
+				else
 					pLed->BlinkingLedState = LED_STATE_ON;
-				mod_समयr(&pLed->BlinkTimer, jअगरfies +
-					  msecs_to_jअगरfies(LED_BLINK_NO_LINK_INTERVAL_ALPHA));
-			पूर्ण
+				mod_timer(&pLed->BlinkTimer, jiffies +
+					  msecs_to_jiffies(LED_BLINK_NO_LINK_INTERVAL_ALPHA));
+			}
 			pLed->bLedScanBlinkInProgress = false;
-		पूर्ण अन्यथा अणु
-			अगर (pLed->bLedOn)
+		} else {
+			if (pLed->bLedOn)
 				pLed->BlinkingLedState = LED_STATE_OFF;
-			अन्यथा
+			else
 				pLed->BlinkingLedState = LED_STATE_ON;
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_SCAN_INTERVAL_ALPHA));
-		पूर्ण
-		अवरोध;
-	हाल LED_TXRX_BLINK:
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_SCAN_INTERVAL_ALPHA));
+		}
+		break;
+	case LED_TXRX_BLINK:
 		pLed->BlinkTimes--;
-		अगर (pLed->BlinkTimes == 0)
+		if (pLed->BlinkTimes == 0)
 			bStopBlinking = true;
-		अगर (bStopBlinking) अणु
-			अगर (check_fwstate(pmlmepriv, _FW_LINKED)) अणु
+		if (bStopBlinking) {
+			if (check_fwstate(pmlmepriv, _FW_LINKED)) {
 				pLed->bLedLinkBlinkInProgress = true;
 				pLed->CurrLedState = LED_BLINK_NORMAL;
-				अगर (pLed->bLedOn)
+				if (pLed->bLedOn)
 					pLed->BlinkingLedState = LED_STATE_OFF;
-				अन्यथा
+				else
 					pLed->BlinkingLedState = LED_STATE_ON;
-				mod_समयr(&pLed->BlinkTimer, jअगरfies +
-					  msecs_to_jअगरfies(LED_BLINK_LINK_INTERVAL_ALPHA));
-			पूर्ण अन्यथा अगर (!check_fwstate(pmlmepriv, _FW_LINKED)) अणु
+				mod_timer(&pLed->BlinkTimer, jiffies +
+					  msecs_to_jiffies(LED_BLINK_LINK_INTERVAL_ALPHA));
+			} else if (!check_fwstate(pmlmepriv, _FW_LINKED)) {
 				pLed->bLedNoLinkBlinkInProgress = true;
 				pLed->CurrLedState = LED_BLINK_SLOWLY;
-				अगर (pLed->bLedOn)
+				if (pLed->bLedOn)
 					pLed->BlinkingLedState = LED_STATE_OFF;
-				अन्यथा
+				else
 					pLed->BlinkingLedState = LED_STATE_ON;
-				mod_समयr(&pLed->BlinkTimer, jअगरfies +
-					  msecs_to_jअगरfies(LED_BLINK_NO_LINK_INTERVAL_ALPHA));
-			पूर्ण
+				mod_timer(&pLed->BlinkTimer, jiffies +
+					  msecs_to_jiffies(LED_BLINK_NO_LINK_INTERVAL_ALPHA));
+			}
 			pLed->BlinkTimes = 0;
 			pLed->bLedBlinkInProgress = false;
-		पूर्ण अन्यथा अणु
-			अगर (pLed->bLedOn)
+		} else {
+			if (pLed->bLedOn)
 				pLed->BlinkingLedState = LED_STATE_OFF;
-			अन्यथा
+			else
 				pLed->BlinkingLedState = LED_STATE_ON;
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_FASTER_INTERVAL_ALPHA));
-		पूर्ण
-		अवरोध;
-	हाल LED_BLINK_WPS:
-		अगर (pLed->bLedOn)
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_FASTER_INTERVAL_ALPHA));
+		}
+		break;
+	case LED_BLINK_WPS:
+		if (pLed->bLedOn)
 			pLed->BlinkingLedState = LED_STATE_OFF;
-		अन्यथा
+		else
 			pLed->BlinkingLedState = LED_STATE_ON;
-		mod_समयr(&pLed->BlinkTimer, jअगरfies +
-			  msecs_to_jअगरfies(LED_BLINK_SCAN_INTERVAL_ALPHA));
-		अवरोध;
-	हाल LED_BLINK_WPS_STOP:	/* WPS success */
-		अगर (pLed->BlinkingLedState == LED_STATE_ON) अणु
+		mod_timer(&pLed->BlinkTimer, jiffies +
+			  msecs_to_jiffies(LED_BLINK_SCAN_INTERVAL_ALPHA));
+		break;
+	case LED_BLINK_WPS_STOP:	/* WPS success */
+		if (pLed->BlinkingLedState == LED_STATE_ON) {
 			pLed->BlinkingLedState = LED_STATE_OFF;
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_WPS_SUCCESS_INTERVAL_ALPHA));
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_WPS_SUCCESS_INTERVAL_ALPHA));
 			bStopBlinking = false;
-		पूर्ण अन्यथा अणु
+		} else {
 			bStopBlinking = true;
-		पूर्ण
-		अगर (bStopBlinking) अणु
+		}
+		if (bStopBlinking) {
 			pLed->bLedLinkBlinkInProgress = true;
 			pLed->CurrLedState = LED_BLINK_NORMAL;
-			अगर (pLed->bLedOn)
+			if (pLed->bLedOn)
 				pLed->BlinkingLedState = LED_STATE_OFF;
-			अन्यथा
+			else
 				pLed->BlinkingLedState = LED_STATE_ON;
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_LINK_INTERVAL_ALPHA));
-		पूर्ण
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_LINK_INTERVAL_ALPHA));
+		}
 		pLed->bLedWPSBlinkInProgress = false;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-अटल व्योम SwLedBlink2(काष्ठा LED_871x *pLed)
-अणु
-	काष्ठा _adapter *padapter = pLed->padapter;
-	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
+static void SwLedBlink2(struct LED_871x *pLed)
+{
+	struct _adapter *padapter = pLed->padapter;
+	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
 	u8 bStopBlinking = false;
 
-	/* Change LED according to BlinkingLedState specअगरied. */
-	अगर (pLed->BlinkingLedState == LED_STATE_ON)
+	/* Change LED according to BlinkingLedState specified. */
+	if (pLed->BlinkingLedState == LED_STATE_ON)
 		SwLedOn(padapter, pLed);
-	अन्यथा
+	else
 		SwLedOff(padapter, pLed);
-	चयन (pLed->CurrLedState) अणु
-	हाल LED_SCAN_BLINK:
+	switch (pLed->CurrLedState) {
+	case LED_SCAN_BLINK:
 		pLed->BlinkTimes--;
-		अगर (pLed->BlinkTimes == 0)
+		if (pLed->BlinkTimes == 0)
 			bStopBlinking = true;
-		अगर (bStopBlinking) अणु
-			अगर (check_fwstate(pmlmepriv, _FW_LINKED)) अणु
+		if (bStopBlinking) {
+			if (check_fwstate(pmlmepriv, _FW_LINKED)) {
 				pLed->CurrLedState = LED_STATE_ON;
 				pLed->BlinkingLedState = LED_STATE_ON;
 				SwLedOn(padapter, pLed);
-			पूर्ण अन्यथा अगर (!check_fwstate(pmlmepriv, _FW_LINKED)) अणु
+			} else if (!check_fwstate(pmlmepriv, _FW_LINKED)) {
 				pLed->CurrLedState = LED_STATE_OFF;
 				pLed->BlinkingLedState = LED_STATE_OFF;
 				SwLedOff(padapter, pLed);
-			पूर्ण
+			}
 			pLed->bLedScanBlinkInProgress = false;
-		पूर्ण अन्यथा अणु
-			अगर (pLed->bLedOn)
+		} else {
+			if (pLed->bLedOn)
 				pLed->BlinkingLedState = LED_STATE_OFF;
-			अन्यथा
+			else
 				pLed->BlinkingLedState = LED_STATE_ON;
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_SCAN_INTERVAL_ALPHA));
-		पूर्ण
-		अवरोध;
-	हाल LED_TXRX_BLINK:
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_SCAN_INTERVAL_ALPHA));
+		}
+		break;
+	case LED_TXRX_BLINK:
 		pLed->BlinkTimes--;
-		अगर (pLed->BlinkTimes == 0)
+		if (pLed->BlinkTimes == 0)
 			bStopBlinking = true;
-		अगर (bStopBlinking) अणु
-			अगर (check_fwstate(pmlmepriv, _FW_LINKED)) अणु
+		if (bStopBlinking) {
+			if (check_fwstate(pmlmepriv, _FW_LINKED)) {
 				pLed->CurrLedState = LED_STATE_ON;
 				pLed->BlinkingLedState = LED_STATE_ON;
 				SwLedOn(padapter, pLed);
-			पूर्ण अन्यथा अगर (!check_fwstate(pmlmepriv, _FW_LINKED)) अणु
+			} else if (!check_fwstate(pmlmepriv, _FW_LINKED)) {
 				pLed->CurrLedState = LED_STATE_OFF;
 				pLed->BlinkingLedState = LED_STATE_OFF;
 				SwLedOff(padapter, pLed);
-			पूर्ण
+			}
 			pLed->bLedBlinkInProgress = false;
-		पूर्ण अन्यथा अणु
-			अगर (pLed->bLedOn)
+		} else {
+			if (pLed->bLedOn)
 				pLed->BlinkingLedState = LED_STATE_OFF;
-			अन्यथा
+			else
 				pLed->BlinkingLedState = LED_STATE_ON;
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_FASTER_INTERVAL_ALPHA));
-		पूर्ण
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_FASTER_INTERVAL_ALPHA));
+		}
+		break;
+	default:
+		break;
+	}
+}
 
-अटल व्योम SwLedBlink3(काष्ठा LED_871x *pLed)
-अणु
-	काष्ठा _adapter *padapter = pLed->padapter;
-	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
+static void SwLedBlink3(struct LED_871x *pLed)
+{
+	struct _adapter *padapter = pLed->padapter;
+	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
 	u8 bStopBlinking = false;
 
-	/* Change LED according to BlinkingLedState specअगरied. */
-	अगर (pLed->BlinkingLedState == LED_STATE_ON)
+	/* Change LED according to BlinkingLedState specified. */
+	if (pLed->BlinkingLedState == LED_STATE_ON)
 		SwLedOn(padapter, pLed);
-	अन्यथा
-		अगर (pLed->CurrLedState != LED_BLINK_WPS_STOP)
+	else
+		if (pLed->CurrLedState != LED_BLINK_WPS_STOP)
 			SwLedOff(padapter, pLed);
-	चयन (pLed->CurrLedState) अणु
-	हाल LED_SCAN_BLINK:
+	switch (pLed->CurrLedState) {
+	case LED_SCAN_BLINK:
 		pLed->BlinkTimes--;
-		अगर (pLed->BlinkTimes == 0)
+		if (pLed->BlinkTimes == 0)
 			bStopBlinking = true;
-		अगर (bStopBlinking) अणु
-			अगर (check_fwstate(pmlmepriv, _FW_LINKED)) अणु
+		if (bStopBlinking) {
+			if (check_fwstate(pmlmepriv, _FW_LINKED)) {
 				pLed->CurrLedState = LED_STATE_ON;
 				pLed->BlinkingLedState = LED_STATE_ON;
-				अगर (!pLed->bLedOn)
+				if (!pLed->bLedOn)
 					SwLedOn(padapter, pLed);
-			पूर्ण अन्यथा अगर (!check_fwstate(pmlmepriv, _FW_LINKED)) अणु
+			} else if (!check_fwstate(pmlmepriv, _FW_LINKED)) {
 				pLed->CurrLedState = LED_STATE_OFF;
 				pLed->BlinkingLedState = LED_STATE_OFF;
-				अगर (pLed->bLedOn)
+				if (pLed->bLedOn)
 					SwLedOff(padapter, pLed);
-			पूर्ण
+			}
 			pLed->bLedScanBlinkInProgress = false;
-		पूर्ण अन्यथा अणु
-			अगर (pLed->bLedOn)
+		} else {
+			if (pLed->bLedOn)
 				pLed->BlinkingLedState = LED_STATE_OFF;
-			अन्यथा
+			else
 				pLed->BlinkingLedState = LED_STATE_ON;
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_SCAN_INTERVAL_ALPHA));
-		पूर्ण
-		अवरोध;
-	हाल LED_TXRX_BLINK:
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_SCAN_INTERVAL_ALPHA));
+		}
+		break;
+	case LED_TXRX_BLINK:
 		pLed->BlinkTimes--;
-		अगर (pLed->BlinkTimes == 0)
+		if (pLed->BlinkTimes == 0)
 			bStopBlinking = true;
-		अगर (bStopBlinking) अणु
-			अगर (check_fwstate(pmlmepriv, _FW_LINKED)) अणु
+		if (bStopBlinking) {
+			if (check_fwstate(pmlmepriv, _FW_LINKED)) {
 				pLed->CurrLedState = LED_STATE_ON;
 				pLed->BlinkingLedState = LED_STATE_ON;
-				अगर (!pLed->bLedOn)
+				if (!pLed->bLedOn)
 					SwLedOn(padapter, pLed);
-			पूर्ण अन्यथा अगर (!check_fwstate(pmlmepriv, _FW_LINKED)) अणु
+			} else if (!check_fwstate(pmlmepriv, _FW_LINKED)) {
 				pLed->CurrLedState = LED_STATE_OFF;
 				pLed->BlinkingLedState = LED_STATE_OFF;
-				अगर (pLed->bLedOn)
+				if (pLed->bLedOn)
 					SwLedOff(padapter, pLed);
-			पूर्ण
+			}
 			pLed->bLedBlinkInProgress = false;
-		पूर्ण अन्यथा अणु
-			अगर (pLed->bLedOn)
+		} else {
+			if (pLed->bLedOn)
 				pLed->BlinkingLedState = LED_STATE_OFF;
-			अन्यथा
+			else
 				pLed->BlinkingLedState = LED_STATE_ON;
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_FASTER_INTERVAL_ALPHA));
-		पूर्ण
-		अवरोध;
-	हाल LED_BLINK_WPS:
-		अगर (pLed->bLedOn)
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_FASTER_INTERVAL_ALPHA));
+		}
+		break;
+	case LED_BLINK_WPS:
+		if (pLed->bLedOn)
 			pLed->BlinkingLedState = LED_STATE_OFF;
-		अन्यथा
+		else
 			pLed->BlinkingLedState = LED_STATE_ON;
-		mod_समयr(&pLed->BlinkTimer, jअगरfies +
-			  msecs_to_jअगरfies(LED_BLINK_SCAN_INTERVAL_ALPHA));
-		अवरोध;
-	हाल LED_BLINK_WPS_STOP:	/*WPS success*/
-		अगर (pLed->BlinkingLedState == LED_STATE_ON) अणु
+		mod_timer(&pLed->BlinkTimer, jiffies +
+			  msecs_to_jiffies(LED_BLINK_SCAN_INTERVAL_ALPHA));
+		break;
+	case LED_BLINK_WPS_STOP:	/*WPS success*/
+		if (pLed->BlinkingLedState == LED_STATE_ON) {
 			pLed->BlinkingLedState = LED_STATE_OFF;
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_WPS_SUCCESS_INTERVAL_ALPHA));
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_WPS_SUCCESS_INTERVAL_ALPHA));
 			bStopBlinking = false;
-		पूर्ण अन्यथा अणु
+		} else {
 			bStopBlinking = true;
-		पूर्ण
-		अगर (bStopBlinking) अणु
+		}
+		if (bStopBlinking) {
 			pLed->CurrLedState = LED_STATE_ON;
 			pLed->BlinkingLedState = LED_STATE_ON;
 			SwLedOn(padapter, pLed);
 			pLed->bLedWPSBlinkInProgress = false;
-		पूर्ण
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		}
+		break;
+	default:
+		break;
+	}
+}
 
-अटल व्योम SwLedBlink4(काष्ठा LED_871x *pLed)
-अणु
-	काष्ठा _adapter *padapter = pLed->padapter;
-	काष्ठा led_priv	*ledpriv = &padapter->ledpriv;
-	काष्ठा LED_871x *pLed1 = &ledpriv->SwLed1;
+static void SwLedBlink4(struct LED_871x *pLed)
+{
+	struct _adapter *padapter = pLed->padapter;
+	struct led_priv	*ledpriv = &padapter->ledpriv;
+	struct LED_871x *pLed1 = &ledpriv->SwLed1;
 	u8 bStopBlinking = false;
 
-	/* Change LED according to BlinkingLedState specअगरied. */
-	अगर (pLed->BlinkingLedState == LED_STATE_ON)
+	/* Change LED according to BlinkingLedState specified. */
+	if (pLed->BlinkingLedState == LED_STATE_ON)
 		SwLedOn(padapter, pLed);
-	अन्यथा
+	else
 		SwLedOff(padapter, pLed);
-	अगर (!pLed1->bLedWPSBlinkInProgress &&
-	    pLed1->BlinkingLedState == LED_UNKNOWN) अणु
+	if (!pLed1->bLedWPSBlinkInProgress &&
+	    pLed1->BlinkingLedState == LED_UNKNOWN) {
 		pLed1->BlinkingLedState = LED_STATE_OFF;
 		pLed1->CurrLedState = LED_STATE_OFF;
 		SwLedOff(padapter, pLed1);
-	पूर्ण
-	चयन (pLed->CurrLedState) अणु
-	हाल LED_BLINK_SLOWLY:
-		अगर (pLed->bLedOn)
+	}
+	switch (pLed->CurrLedState) {
+	case LED_BLINK_SLOWLY:
+		if (pLed->bLedOn)
 			pLed->BlinkingLedState = LED_STATE_OFF;
-		अन्यथा
+		else
 			pLed->BlinkingLedState = LED_STATE_ON;
-		mod_समयr(&pLed->BlinkTimer, jअगरfies +
-			  msecs_to_jअगरfies(LED_BLINK_NO_LINK_INTERVAL_ALPHA));
-		अवरोध;
-	हाल LED_BLINK_StartToBlink:
-		अगर (pLed->bLedOn) अणु
+		mod_timer(&pLed->BlinkTimer, jiffies +
+			  msecs_to_jiffies(LED_BLINK_NO_LINK_INTERVAL_ALPHA));
+		break;
+	case LED_BLINK_StartToBlink:
+		if (pLed->bLedOn) {
 			pLed->BlinkingLedState = LED_STATE_OFF;
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_SLOWLY_INTERVAL));
-		पूर्ण अन्यथा अणु
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_SLOWLY_INTERVAL));
+		} else {
 			pLed->BlinkingLedState = LED_STATE_ON;
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_NORMAL_INTERVAL));
-		पूर्ण
-		अवरोध;
-	हाल LED_SCAN_BLINK:
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_NORMAL_INTERVAL));
+		}
+		break;
+	case LED_SCAN_BLINK:
 		pLed->BlinkTimes--;
-		अगर (pLed->BlinkTimes == 0)
+		if (pLed->BlinkTimes == 0)
 			bStopBlinking = true;
-		अगर (bStopBlinking) अणु
+		if (bStopBlinking) {
 			pLed->bLedNoLinkBlinkInProgress = true;
 			pLed->CurrLedState = LED_BLINK_SLOWLY;
-			अगर (pLed->bLedOn)
+			if (pLed->bLedOn)
 				pLed->BlinkingLedState = LED_STATE_OFF;
-			अन्यथा
+			else
 				pLed->BlinkingLedState = LED_STATE_ON;
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_NO_LINK_INTERVAL_ALPHA));
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_NO_LINK_INTERVAL_ALPHA));
 			pLed->bLedScanBlinkInProgress = false;
-		पूर्ण अन्यथा अणु
-			अगर (pLed->bLedOn)
+		} else {
+			if (pLed->bLedOn)
 				pLed->BlinkingLedState = LED_STATE_OFF;
-			अन्यथा
+			else
 				pLed->BlinkingLedState = LED_STATE_ON;
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_SCAN_INTERVAL_ALPHA));
-		पूर्ण
-		अवरोध;
-	हाल LED_TXRX_BLINK:
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_SCAN_INTERVAL_ALPHA));
+		}
+		break;
+	case LED_TXRX_BLINK:
 		pLed->BlinkTimes--;
-		अगर (pLed->BlinkTimes == 0)
+		if (pLed->BlinkTimes == 0)
 			bStopBlinking = true;
-		अगर (bStopBlinking) अणु
+		if (bStopBlinking) {
 			pLed->bLedNoLinkBlinkInProgress = true;
 			pLed->CurrLedState = LED_BLINK_SLOWLY;
-			अगर (pLed->bLedOn)
+			if (pLed->bLedOn)
 				pLed->BlinkingLedState = LED_STATE_OFF;
-			अन्यथा
+			else
 				pLed->BlinkingLedState = LED_STATE_ON;
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_NO_LINK_INTERVAL_ALPHA));
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_NO_LINK_INTERVAL_ALPHA));
 			pLed->bLedBlinkInProgress = false;
-		पूर्ण अन्यथा अणु
-			अगर (pLed->bLedOn)
+		} else {
+			if (pLed->bLedOn)
 				pLed->BlinkingLedState = LED_STATE_OFF;
-			अन्यथा
+			else
 				pLed->BlinkingLedState = LED_STATE_ON;
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_FASTER_INTERVAL_ALPHA));
-		पूर्ण
-		अवरोध;
-	हाल LED_BLINK_WPS:
-		अगर (pLed->bLedOn) अणु
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_FASTER_INTERVAL_ALPHA));
+		}
+		break;
+	case LED_BLINK_WPS:
+		if (pLed->bLedOn) {
 			pLed->BlinkingLedState = LED_STATE_OFF;
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_SLOWLY_INTERVAL));
-		पूर्ण अन्यथा अणु
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_SLOWLY_INTERVAL));
+		} else {
 			pLed->BlinkingLedState = LED_STATE_ON;
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_NORMAL_INTERVAL));
-		पूर्ण
-		अवरोध;
-	हाल LED_BLINK_WPS_STOP:	/*WPS authentication fail*/
-		अगर (pLed->bLedOn)
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_NORMAL_INTERVAL));
+		}
+		break;
+	case LED_BLINK_WPS_STOP:	/*WPS authentication fail*/
+		if (pLed->bLedOn)
 			pLed->BlinkingLedState = LED_STATE_OFF;
-		अन्यथा
+		else
 			pLed->BlinkingLedState = LED_STATE_ON;
-		mod_समयr(&pLed->BlinkTimer, jअगरfies +
-			  msecs_to_jअगरfies(LED_BLINK_NORMAL_INTERVAL));
-		अवरोध;
-	हाल LED_BLINK_WPS_STOP_OVERLAP:	/*WPS session overlap */
+		mod_timer(&pLed->BlinkTimer, jiffies +
+			  msecs_to_jiffies(LED_BLINK_NORMAL_INTERVAL));
+		break;
+	case LED_BLINK_WPS_STOP_OVERLAP:	/*WPS session overlap */
 		pLed->BlinkTimes--;
-		अगर (pLed->BlinkTimes == 0) अणु
-			अगर (pLed->bLedOn)
+		if (pLed->BlinkTimes == 0) {
+			if (pLed->bLedOn)
 				pLed->BlinkTimes = 1;
-			अन्यथा
+			else
 				bStopBlinking = true;
-		पूर्ण
-		अगर (bStopBlinking) अणु
+		}
+		if (bStopBlinking) {
 			pLed->BlinkTimes = 10;
 			pLed->BlinkingLedState = LED_STATE_ON;
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_LINK_INTERVAL_ALPHA));
-		पूर्ण अन्यथा अणु
-			अगर (pLed->bLedOn)
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_LINK_INTERVAL_ALPHA));
+		} else {
+			if (pLed->bLedOn)
 				pLed->BlinkingLedState = LED_STATE_OFF;
-			अन्यथा
+			else
 				pLed->BlinkingLedState = LED_STATE_ON;
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_NORMAL_INTERVAL));
-		पूर्ण
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_NORMAL_INTERVAL));
+		}
+		break;
+	default:
+		break;
+	}
+}
 
-अटल व्योम SwLedBlink5(काष्ठा LED_871x *pLed)
-अणु
-	काष्ठा _adapter *padapter = pLed->padapter;
+static void SwLedBlink5(struct LED_871x *pLed)
+{
+	struct _adapter *padapter = pLed->padapter;
 	u8 bStopBlinking = false;
 
-	/* Change LED according to BlinkingLedState specअगरied. */
-	अगर (pLed->BlinkingLedState == LED_STATE_ON)
+	/* Change LED according to BlinkingLedState specified. */
+	if (pLed->BlinkingLedState == LED_STATE_ON)
 		SwLedOn(padapter, pLed);
-	अन्यथा
+	else
 		SwLedOff(padapter, pLed);
-	चयन (pLed->CurrLedState) अणु
-	हाल LED_SCAN_BLINK:
+	switch (pLed->CurrLedState) {
+	case LED_SCAN_BLINK:
 		pLed->BlinkTimes--;
-		अगर (pLed->BlinkTimes == 0)
+		if (pLed->BlinkTimes == 0)
 			bStopBlinking = true;
-		अगर (bStopBlinking) अणु
+		if (bStopBlinking) {
 			pLed->CurrLedState = LED_STATE_ON;
 			pLed->BlinkingLedState = LED_STATE_ON;
-			अगर (!pLed->bLedOn)
-				mod_समयr(&pLed->BlinkTimer, jअगरfies +
-					  msecs_to_jअगरfies(LED_BLINK_FASTER_INTERVAL_ALPHA));
+			if (!pLed->bLedOn)
+				mod_timer(&pLed->BlinkTimer, jiffies +
+					  msecs_to_jiffies(LED_BLINK_FASTER_INTERVAL_ALPHA));
 			pLed->bLedScanBlinkInProgress = false;
-		पूर्ण अन्यथा अणु
-			अगर (pLed->bLedOn)
+		} else {
+			if (pLed->bLedOn)
 				pLed->BlinkingLedState = LED_STATE_OFF;
-			अन्यथा
+			else
 				pLed->BlinkingLedState = LED_STATE_ON;
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_SCAN_INTERVAL_ALPHA));
-		पूर्ण
-		अवरोध;
-	हाल LED_TXRX_BLINK:
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_SCAN_INTERVAL_ALPHA));
+		}
+		break;
+	case LED_TXRX_BLINK:
 		pLed->BlinkTimes--;
-		अगर (pLed->BlinkTimes == 0)
+		if (pLed->BlinkTimes == 0)
 			bStopBlinking = true;
-		अगर (bStopBlinking) अणु
+		if (bStopBlinking) {
 			pLed->CurrLedState = LED_STATE_ON;
 			pLed->BlinkingLedState = LED_STATE_ON;
-			अगर (!pLed->bLedOn)
-				mod_समयr(&pLed->BlinkTimer, jअगरfies +
-					  msecs_to_jअगरfies(LED_BLINK_FASTER_INTERVAL_ALPHA));
+			if (!pLed->bLedOn)
+				mod_timer(&pLed->BlinkTimer, jiffies +
+					  msecs_to_jiffies(LED_BLINK_FASTER_INTERVAL_ALPHA));
 			pLed->bLedBlinkInProgress = false;
-		पूर्ण अन्यथा अणु
-			अगर (pLed->bLedOn)
+		} else {
+			if (pLed->bLedOn)
 				pLed->BlinkingLedState = LED_STATE_OFF;
-			अन्यथा
+			else
 				pLed->BlinkingLedState = LED_STATE_ON;
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_FASTER_INTERVAL_ALPHA));
-		पूर्ण
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_FASTER_INTERVAL_ALPHA));
+		}
+		break;
+	default:
+		break;
+	}
+}
 
-अटल व्योम SwLedBlink6(काष्ठा LED_871x *pLed)
-अणु
-	काष्ठा _adapter *padapter = pLed->padapter;
+static void SwLedBlink6(struct LED_871x *pLed)
+{
+	struct _adapter *padapter = pLed->padapter;
 	u8 bStopBlinking = false;
 
-	/* Change LED according to BlinkingLedState specअगरied. */
-	अगर (pLed->BlinkingLedState == LED_STATE_ON)
+	/* Change LED according to BlinkingLedState specified. */
+	if (pLed->BlinkingLedState == LED_STATE_ON)
 		SwLedOn(padapter, pLed);
-	अन्यथा
+	else
 		SwLedOff(padapter, pLed);
-	चयन (pLed->CurrLedState) अणु
-	हाल LED_TXRX_BLINK:
+	switch (pLed->CurrLedState) {
+	case LED_TXRX_BLINK:
 		pLed->BlinkTimes--;
-		अगर (pLed->BlinkTimes == 0)
+		if (pLed->BlinkTimes == 0)
 			bStopBlinking = true;
-		अगर (bStopBlinking) अणु
+		if (bStopBlinking) {
 			pLed->CurrLedState = LED_STATE_ON;
 			pLed->BlinkingLedState = LED_STATE_ON;
-			अगर (!pLed->bLedOn)
+			if (!pLed->bLedOn)
 				SwLedOn(padapter, pLed);
 			pLed->bLedBlinkInProgress = false;
-		पूर्ण अन्यथा अणु
-			अगर (pLed->bLedOn)
+		} else {
+			if (pLed->bLedOn)
 				pLed->BlinkingLedState = LED_STATE_OFF;
-			अन्यथा
+			else
 				pLed->BlinkingLedState = LED_STATE_ON;
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_FASTER_INTERVAL_ALPHA));
-		पूर्ण
-		अवरोध;
-	हाल LED_BLINK_WPS:
-		अगर (pLed->bLedOn)
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_FASTER_INTERVAL_ALPHA));
+		}
+		break;
+	case LED_BLINK_WPS:
+		if (pLed->bLedOn)
 			pLed->BlinkingLedState = LED_STATE_OFF;
-		अन्यथा
+		else
 			pLed->BlinkingLedState = LED_STATE_ON;
-		mod_समयr(&pLed->BlinkTimer, jअगरfies +
-			  msecs_to_jअगरfies(LED_BLINK_SCAN_INTERVAL_ALPHA));
-		अवरोध;
+		mod_timer(&pLed->BlinkTimer, jiffies +
+			  msecs_to_jiffies(LED_BLINK_SCAN_INTERVAL_ALPHA));
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+	default:
+		break;
+	}
+}
 
 /*	Description:
  *		Callback function of LED BlinkTimer,
  *		it just schedules to corresponding BlinkWorkItem.
  */
-अटल व्योम BlinkTimerCallback(काष्ठा समयr_list *t)
-अणु
-	काष्ठा LED_871x  *pLed = from_समयr(pLed, t, BlinkTimer);
+static void BlinkTimerCallback(struct timer_list *t)
+{
+	struct LED_871x  *pLed = from_timer(pLed, t, BlinkTimer);
 
-	/* This fixed the crash problem on Feकरोra 12 when trying to करो the
-	 * insmod;अगरconfig up;rmmod commands.
+	/* This fixed the crash problem on Fedora 12 when trying to do the
+	 * insmod;ifconfig up;rmmod commands.
 	 */
-	अगर (pLed->padapter->surprise_हटाओd || pLed->padapter->driver_stopped)
-		वापस;
+	if (pLed->padapter->surprise_removed || pLed->padapter->driver_stopped)
+		return;
 	schedule_work(&pLed->BlinkWorkItem);
-पूर्ण
+}
 
 /*	Description:
  *		Callback function of LED BlinkWorkItem.
  *		We dispatch actual LED blink action according to LedStrategy.
  */
-अटल व्योम BlinkWorkItemCallback(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा LED_871x *pLed = container_of(work, काष्ठा LED_871x,
+static void BlinkWorkItemCallback(struct work_struct *work)
+{
+	struct LED_871x *pLed = container_of(work, struct LED_871x,
 				BlinkWorkItem);
-	काष्ठा led_priv	*ledpriv = &pLed->padapter->ledpriv;
+	struct led_priv	*ledpriv = &pLed->padapter->ledpriv;
 
-	चयन (ledpriv->LedStrategy) अणु
-	हाल SW_LED_MODE0:
+	switch (ledpriv->LedStrategy) {
+	case SW_LED_MODE0:
 		SwLedBlink(pLed);
-		अवरोध;
-	हाल SW_LED_MODE1:
+		break;
+	case SW_LED_MODE1:
 		SwLedBlink1(pLed);
-		अवरोध;
-	हाल SW_LED_MODE2:
+		break;
+	case SW_LED_MODE2:
 		SwLedBlink2(pLed);
-		अवरोध;
-	हाल SW_LED_MODE3:
+		break;
+	case SW_LED_MODE3:
 		SwLedBlink3(pLed);
-		अवरोध;
-	हाल SW_LED_MODE4:
+		break;
+	case SW_LED_MODE4:
 		SwLedBlink4(pLed);
-		अवरोध;
-	हाल SW_LED_MODE5:
+		break;
+	case SW_LED_MODE5:
 		SwLedBlink5(pLed);
-		अवरोध;
-	हाल SW_LED_MODE6:
+		break;
+	case SW_LED_MODE6:
 		SwLedBlink6(pLed);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		SwLedBlink(pLed);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
 /*============================================================================
  * Default LED behavior.
  *============================================================================
  *
  *	Description:
- *		Implement each led action क्रम SW_LED_MODE0.
- *		This is शेष strategy.
+ *		Implement each led action for SW_LED_MODE0.
+ *		This is default strategy.
  */
 
-अटल व्योम SwLedControlMode1(काष्ठा _adapter *padapter,
-			      क्रमागत LED_CTL_MODE LedAction)
-अणु
-	काष्ठा led_priv *ledpriv = &padapter->ledpriv;
-	काष्ठा LED_871x *pLed = &ledpriv->SwLed0;
-	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	काष्ठा sitesurvey_ctrl *psitesurveyctrl = &pmlmepriv->sitesurveyctrl;
+static void SwLedControlMode1(struct _adapter *padapter,
+			      enum LED_CTL_MODE LedAction)
+{
+	struct led_priv *ledpriv = &padapter->ledpriv;
+	struct LED_871x *pLed = &ledpriv->SwLed0;
+	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	struct sitesurvey_ctrl *psitesurveyctrl = &pmlmepriv->sitesurveyctrl;
 
-	अगर (padapter->eeprompriv.CustomerID == RT_CID_819x_CAMEO)
+	if (padapter->eeprompriv.CustomerID == RT_CID_819x_CAMEO)
 		pLed = &ledpriv->SwLed1;
-	चयन (LedAction) अणु
-	हाल LED_CTL_START_TO_LINK:
-	हाल LED_CTL_NO_LINK:
-		अगर (!pLed->bLedNoLinkBlinkInProgress) अणु
-			अगर (pLed->CurrLedState == LED_SCAN_BLINK ||
+	switch (LedAction) {
+	case LED_CTL_START_TO_LINK:
+	case LED_CTL_NO_LINK:
+		if (!pLed->bLedNoLinkBlinkInProgress) {
+			if (pLed->CurrLedState == LED_SCAN_BLINK ||
 			    IS_LED_WPS_BLINKING(pLed))
-				वापस;
-			अगर (pLed->bLedLinkBlinkInProgress) अणु
-				del_समयr(&pLed->BlinkTimer);
+				return;
+			if (pLed->bLedLinkBlinkInProgress) {
+				del_timer(&pLed->BlinkTimer);
 				pLed->bLedLinkBlinkInProgress = false;
-			पूर्ण
-			अगर (pLed->bLedBlinkInProgress) अणु
-				del_समयr(&pLed->BlinkTimer);
+			}
+			if (pLed->bLedBlinkInProgress) {
+				del_timer(&pLed->BlinkTimer);
 				pLed->bLedBlinkInProgress = false;
-			पूर्ण
+			}
 			pLed->bLedNoLinkBlinkInProgress = true;
 			pLed->CurrLedState = LED_BLINK_SLOWLY;
-			अगर (pLed->bLedOn)
+			if (pLed->bLedOn)
 				pLed->BlinkingLedState = LED_STATE_OFF;
-			अन्यथा
+			else
 				pLed->BlinkingLedState = LED_STATE_ON;
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_NO_LINK_INTERVAL_ALPHA));
-		पूर्ण
-		अवरोध;
-	हाल LED_CTL_LINK:
-		अगर (!pLed->bLedLinkBlinkInProgress) अणु
-			अगर (pLed->CurrLedState == LED_SCAN_BLINK ||
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_NO_LINK_INTERVAL_ALPHA));
+		}
+		break;
+	case LED_CTL_LINK:
+		if (!pLed->bLedLinkBlinkInProgress) {
+			if (pLed->CurrLedState == LED_SCAN_BLINK ||
 			    IS_LED_WPS_BLINKING(pLed))
-				वापस;
-			अगर (pLed->bLedNoLinkBlinkInProgress) अणु
-				del_समयr(&pLed->BlinkTimer);
+				return;
+			if (pLed->bLedNoLinkBlinkInProgress) {
+				del_timer(&pLed->BlinkTimer);
 				pLed->bLedNoLinkBlinkInProgress = false;
-			पूर्ण
-			अगर (pLed->bLedBlinkInProgress) अणु
-				del_समयr(&pLed->BlinkTimer);
+			}
+			if (pLed->bLedBlinkInProgress) {
+				del_timer(&pLed->BlinkTimer);
 				pLed->bLedBlinkInProgress = false;
-			पूर्ण
+			}
 			pLed->bLedLinkBlinkInProgress = true;
 			pLed->CurrLedState = LED_BLINK_NORMAL;
-			अगर (pLed->bLedOn)
+			if (pLed->bLedOn)
 				pLed->BlinkingLedState = LED_STATE_OFF;
-			अन्यथा
+			else
 				pLed->BlinkingLedState = LED_STATE_ON;
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_LINK_INTERVAL_ALPHA));
-		पूर्ण
-		अवरोध;
-	हाल LED_CTL_SITE_SURVEY:
-		अगर (psitesurveyctrl->traffic_busy &&
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_LINK_INTERVAL_ALPHA));
+		}
+		break;
+	case LED_CTL_SITE_SURVEY:
+		if (psitesurveyctrl->traffic_busy &&
 		    check_fwstate(pmlmepriv, _FW_LINKED))
 			; /* dummy branch */
-		अन्यथा अगर (!pLed->bLedScanBlinkInProgress) अणु
-			अगर (IS_LED_WPS_BLINKING(pLed))
-				वापस;
-			अगर (pLed->bLedNoLinkBlinkInProgress) अणु
-				del_समयr(&pLed->BlinkTimer);
+		else if (!pLed->bLedScanBlinkInProgress) {
+			if (IS_LED_WPS_BLINKING(pLed))
+				return;
+			if (pLed->bLedNoLinkBlinkInProgress) {
+				del_timer(&pLed->BlinkTimer);
 				pLed->bLedNoLinkBlinkInProgress = false;
-			पूर्ण
-			अगर (pLed->bLedLinkBlinkInProgress) अणु
-				del_समयr(&pLed->BlinkTimer);
+			}
+			if (pLed->bLedLinkBlinkInProgress) {
+				del_timer(&pLed->BlinkTimer);
 				pLed->bLedLinkBlinkInProgress = false;
-			पूर्ण
-			अगर (pLed->bLedBlinkInProgress) अणु
-				del_समयr(&pLed->BlinkTimer);
+			}
+			if (pLed->bLedBlinkInProgress) {
+				del_timer(&pLed->BlinkTimer);
 				pLed->bLedBlinkInProgress = false;
-			पूर्ण
+			}
 			pLed->bLedScanBlinkInProgress = true;
 			pLed->CurrLedState = LED_SCAN_BLINK;
 			pLed->BlinkTimes = 24;
-			अगर (pLed->bLedOn)
+			if (pLed->bLedOn)
 				pLed->BlinkingLedState = LED_STATE_OFF;
-			अन्यथा
+			else
 				pLed->BlinkingLedState = LED_STATE_ON;
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_SCAN_INTERVAL_ALPHA));
-		पूर्ण
-		अवरोध;
-	हाल LED_CTL_TX:
-	हाल LED_CTL_RX:
-		अगर (!pLed->bLedBlinkInProgress) अणु
-			अगर (pLed->CurrLedState == LED_SCAN_BLINK ||
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_SCAN_INTERVAL_ALPHA));
+		}
+		break;
+	case LED_CTL_TX:
+	case LED_CTL_RX:
+		if (!pLed->bLedBlinkInProgress) {
+			if (pLed->CurrLedState == LED_SCAN_BLINK ||
 			    IS_LED_WPS_BLINKING(pLed))
-				वापस;
-			अगर (pLed->bLedNoLinkBlinkInProgress) अणु
-				del_समयr(&pLed->BlinkTimer);
+				return;
+			if (pLed->bLedNoLinkBlinkInProgress) {
+				del_timer(&pLed->BlinkTimer);
 				pLed->bLedNoLinkBlinkInProgress = false;
-			पूर्ण
-			अगर (pLed->bLedLinkBlinkInProgress) अणु
-				del_समयr(&pLed->BlinkTimer);
+			}
+			if (pLed->bLedLinkBlinkInProgress) {
+				del_timer(&pLed->BlinkTimer);
 				pLed->bLedLinkBlinkInProgress = false;
-			पूर्ण
+			}
 			pLed->bLedBlinkInProgress = true;
 			pLed->CurrLedState = LED_TXRX_BLINK;
 			pLed->BlinkTimes = 2;
-			अगर (pLed->bLedOn)
+			if (pLed->bLedOn)
 				pLed->BlinkingLedState = LED_STATE_OFF;
-			अन्यथा
+			else
 				pLed->BlinkingLedState = LED_STATE_ON;
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_FASTER_INTERVAL_ALPHA));
-		पूर्ण
-		अवरोध;
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_FASTER_INTERVAL_ALPHA));
+		}
+		break;
 
-	हाल LED_CTL_START_WPS: /*रुको until xinpin finish */
-	हाल LED_CTL_START_WPS_BOTTON:
-		अगर (!pLed->bLedWPSBlinkInProgress) अणु
-			अगर (pLed->bLedNoLinkBlinkInProgress) अणु
-				del_समयr(&pLed->BlinkTimer);
+	case LED_CTL_START_WPS: /*wait until xinpin finish */
+	case LED_CTL_START_WPS_BOTTON:
+		if (!pLed->bLedWPSBlinkInProgress) {
+			if (pLed->bLedNoLinkBlinkInProgress) {
+				del_timer(&pLed->BlinkTimer);
 				pLed->bLedNoLinkBlinkInProgress = false;
-			पूर्ण
-			अगर (pLed->bLedLinkBlinkInProgress) अणु
-				del_समयr(&pLed->BlinkTimer);
+			}
+			if (pLed->bLedLinkBlinkInProgress) {
+				del_timer(&pLed->BlinkTimer);
 				pLed->bLedLinkBlinkInProgress = false;
-			पूर्ण
-			अगर (pLed->bLedBlinkInProgress) अणु
-				del_समयr(&pLed->BlinkTimer);
+			}
+			if (pLed->bLedBlinkInProgress) {
+				del_timer(&pLed->BlinkTimer);
 				pLed->bLedBlinkInProgress = false;
-			पूर्ण
-			अगर (pLed->bLedScanBlinkInProgress) अणु
-				del_समयr(&pLed->BlinkTimer);
+			}
+			if (pLed->bLedScanBlinkInProgress) {
+				del_timer(&pLed->BlinkTimer);
 				pLed->bLedScanBlinkInProgress = false;
-			पूर्ण
+			}
 			pLed->bLedWPSBlinkInProgress = true;
 			pLed->CurrLedState = LED_BLINK_WPS;
-			अगर (pLed->bLedOn)
+			if (pLed->bLedOn)
 				pLed->BlinkingLedState = LED_STATE_OFF;
-			अन्यथा
+			else
 				pLed->BlinkingLedState = LED_STATE_ON;
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_SCAN_INTERVAL_ALPHA));
-		पूर्ण
-		अवरोध;
-	हाल LED_CTL_STOP_WPS:
-		अगर (pLed->bLedNoLinkBlinkInProgress) अणु
-			del_समयr(&pLed->BlinkTimer);
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_SCAN_INTERVAL_ALPHA));
+		}
+		break;
+	case LED_CTL_STOP_WPS:
+		if (pLed->bLedNoLinkBlinkInProgress) {
+			del_timer(&pLed->BlinkTimer);
 			pLed->bLedNoLinkBlinkInProgress = false;
-		पूर्ण
-		अगर (pLed->bLedLinkBlinkInProgress) अणु
-			del_समयr(&pLed->BlinkTimer);
+		}
+		if (pLed->bLedLinkBlinkInProgress) {
+			del_timer(&pLed->BlinkTimer);
 			pLed->bLedLinkBlinkInProgress = false;
-		पूर्ण
-		अगर (pLed->bLedBlinkInProgress) अणु
-			del_समयr(&pLed->BlinkTimer);
+		}
+		if (pLed->bLedBlinkInProgress) {
+			del_timer(&pLed->BlinkTimer);
 			pLed->bLedBlinkInProgress = false;
-		पूर्ण
-		अगर (pLed->bLedScanBlinkInProgress) अणु
-			del_समयr(&pLed->BlinkTimer);
+		}
+		if (pLed->bLedScanBlinkInProgress) {
+			del_timer(&pLed->BlinkTimer);
 			pLed->bLedScanBlinkInProgress = false;
-		पूर्ण
-		अगर (pLed->bLedWPSBlinkInProgress)
-			del_समयr(&pLed->BlinkTimer);
-		अन्यथा
+		}
+		if (pLed->bLedWPSBlinkInProgress)
+			del_timer(&pLed->BlinkTimer);
+		else
 			pLed->bLedWPSBlinkInProgress = true;
 		pLed->CurrLedState = LED_BLINK_WPS_STOP;
-		अगर (pLed->bLedOn) अणु
+		if (pLed->bLedOn) {
 			pLed->BlinkingLedState = LED_STATE_OFF;
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_WPS_SUCCESS_INTERVAL_ALPHA));
-		पूर्ण अन्यथा अणु
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_WPS_SUCCESS_INTERVAL_ALPHA));
+		} else {
 			pLed->BlinkingLedState = LED_STATE_ON;
-			mod_समयr(&pLed->BlinkTimer,
-				  jअगरfies + msecs_to_jअगरfies(0));
-		पूर्ण
-		अवरोध;
-	हाल LED_CTL_STOP_WPS_FAIL:
-		अगर (pLed->bLedWPSBlinkInProgress) अणु
-			del_समयr(&pLed->BlinkTimer);
+			mod_timer(&pLed->BlinkTimer,
+				  jiffies + msecs_to_jiffies(0));
+		}
+		break;
+	case LED_CTL_STOP_WPS_FAIL:
+		if (pLed->bLedWPSBlinkInProgress) {
+			del_timer(&pLed->BlinkTimer);
 			pLed->bLedWPSBlinkInProgress = false;
-		पूर्ण
+		}
 		pLed->bLedNoLinkBlinkInProgress = true;
 		pLed->CurrLedState = LED_BLINK_SLOWLY;
-		अगर (pLed->bLedOn)
+		if (pLed->bLedOn)
 			pLed->BlinkingLedState = LED_STATE_OFF;
-		अन्यथा
+		else
 			pLed->BlinkingLedState = LED_STATE_ON;
-		mod_समयr(&pLed->BlinkTimer, jअगरfies +
-			  msecs_to_jअगरfies(LED_BLINK_NO_LINK_INTERVAL_ALPHA));
-		अवरोध;
-	हाल LED_CTL_POWER_OFF:
+		mod_timer(&pLed->BlinkTimer, jiffies +
+			  msecs_to_jiffies(LED_BLINK_NO_LINK_INTERVAL_ALPHA));
+		break;
+	case LED_CTL_POWER_OFF:
 		pLed->CurrLedState = LED_STATE_OFF;
 		pLed->BlinkingLedState = LED_STATE_OFF;
-		अगर (pLed->bLedNoLinkBlinkInProgress) अणु
-			del_समयr(&pLed->BlinkTimer);
+		if (pLed->bLedNoLinkBlinkInProgress) {
+			del_timer(&pLed->BlinkTimer);
 			pLed->bLedNoLinkBlinkInProgress = false;
-		पूर्ण
-		अगर (pLed->bLedLinkBlinkInProgress) अणु
-			del_समयr(&pLed->BlinkTimer);
+		}
+		if (pLed->bLedLinkBlinkInProgress) {
+			del_timer(&pLed->BlinkTimer);
 			pLed->bLedLinkBlinkInProgress = false;
-		पूर्ण
-		अगर (pLed->bLedBlinkInProgress) अणु
-			del_समयr(&pLed->BlinkTimer);
+		}
+		if (pLed->bLedBlinkInProgress) {
+			del_timer(&pLed->BlinkTimer);
 			pLed->bLedBlinkInProgress = false;
-		पूर्ण
-		अगर (pLed->bLedWPSBlinkInProgress) अणु
-			del_समयr(&pLed->BlinkTimer);
+		}
+		if (pLed->bLedWPSBlinkInProgress) {
+			del_timer(&pLed->BlinkTimer);
 			pLed->bLedWPSBlinkInProgress = false;
-		पूर्ण
-		अगर (pLed->bLedScanBlinkInProgress) अणु
-			del_समयr(&pLed->BlinkTimer);
+		}
+		if (pLed->bLedScanBlinkInProgress) {
+			del_timer(&pLed->BlinkTimer);
 			pLed->bLedScanBlinkInProgress = false;
-		पूर्ण
-		mod_समयr(&pLed->BlinkTimer,
-			  jअगरfies + msecs_to_jअगरfies(0));
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		}
+		mod_timer(&pLed->BlinkTimer,
+			  jiffies + msecs_to_jiffies(0));
+		break;
+	default:
+		break;
+	}
+}
 
-अटल व्योम SwLedControlMode2(काष्ठा _adapter *padapter,
-			      क्रमागत LED_CTL_MODE LedAction)
-अणु
-	काष्ठा led_priv	 *ledpriv = &padapter->ledpriv;
-	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	काष्ठा LED_871x *pLed = &ledpriv->SwLed0;
+static void SwLedControlMode2(struct _adapter *padapter,
+			      enum LED_CTL_MODE LedAction)
+{
+	struct led_priv	 *ledpriv = &padapter->ledpriv;
+	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	struct LED_871x *pLed = &ledpriv->SwLed0;
 
-	चयन (LedAction) अणु
-	हाल LED_CTL_SITE_SURVEY:
-		अगर (pmlmepriv->sitesurveyctrl.traffic_busy)
+	switch (LedAction) {
+	case LED_CTL_SITE_SURVEY:
+		if (pmlmepriv->sitesurveyctrl.traffic_busy)
 			; /* dummy branch */
-		अन्यथा अगर (!pLed->bLedScanBlinkInProgress) अणु
-			अगर (IS_LED_WPS_BLINKING(pLed))
-				वापस;
+		else if (!pLed->bLedScanBlinkInProgress) {
+			if (IS_LED_WPS_BLINKING(pLed))
+				return;
 
-			अगर (pLed->bLedBlinkInProgress) अणु
-				del_समयr(&pLed->BlinkTimer);
+			if (pLed->bLedBlinkInProgress) {
+				del_timer(&pLed->BlinkTimer);
 				pLed->bLedBlinkInProgress = false;
-			पूर्ण
+			}
 			pLed->bLedScanBlinkInProgress = true;
 			pLed->CurrLedState = LED_SCAN_BLINK;
 			pLed->BlinkTimes = 24;
-			अगर (pLed->bLedOn)
+			if (pLed->bLedOn)
 				pLed->BlinkingLedState = LED_STATE_OFF;
-			अन्यथा
+			else
 				pLed->BlinkingLedState = LED_STATE_ON;
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_SCAN_INTERVAL_ALPHA));
-		पूर्ण
-		अवरोध;
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_SCAN_INTERVAL_ALPHA));
+		}
+		break;
 
-	हाल LED_CTL_TX:
-	हाल LED_CTL_RX:
-		अगर (!pLed->bLedBlinkInProgress &&
-		    check_fwstate(pmlmepriv, _FW_LINKED)) अणु
-			अगर (pLed->CurrLedState == LED_SCAN_BLINK ||
+	case LED_CTL_TX:
+	case LED_CTL_RX:
+		if (!pLed->bLedBlinkInProgress &&
+		    check_fwstate(pmlmepriv, _FW_LINKED)) {
+			if (pLed->CurrLedState == LED_SCAN_BLINK ||
 			    IS_LED_WPS_BLINKING(pLed))
-				वापस;
+				return;
 			pLed->bLedBlinkInProgress = true;
 			pLed->CurrLedState = LED_TXRX_BLINK;
 			pLed->BlinkTimes = 2;
-			अगर (pLed->bLedOn)
+			if (pLed->bLedOn)
 				pLed->BlinkingLedState = LED_STATE_OFF;
-			अन्यथा
+			else
 				pLed->BlinkingLedState = LED_STATE_ON;
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_FASTER_INTERVAL_ALPHA));
-		पूर्ण
-		अवरोध;
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_FASTER_INTERVAL_ALPHA));
+		}
+		break;
 
-	हाल LED_CTL_LINK:
+	case LED_CTL_LINK:
 		pLed->CurrLedState = LED_STATE_ON;
 		pLed->BlinkingLedState = LED_STATE_ON;
-		अगर (pLed->bLedBlinkInProgress) अणु
-			del_समयr(&pLed->BlinkTimer);
+		if (pLed->bLedBlinkInProgress) {
+			del_timer(&pLed->BlinkTimer);
 			pLed->bLedBlinkInProgress = false;
-		पूर्ण
-		अगर (pLed->bLedScanBlinkInProgress) अणु
-			del_समयr(&pLed->BlinkTimer);
+		}
+		if (pLed->bLedScanBlinkInProgress) {
+			del_timer(&pLed->BlinkTimer);
 			pLed->bLedScanBlinkInProgress = false;
-		पूर्ण
+		}
 
-		mod_समयr(&pLed->BlinkTimer,
-			  jअगरfies + msecs_to_jअगरfies(0));
-		अवरोध;
+		mod_timer(&pLed->BlinkTimer,
+			  jiffies + msecs_to_jiffies(0));
+		break;
 
-	हाल LED_CTL_START_WPS: /*रुको until xinpin finish*/
-	हाल LED_CTL_START_WPS_BOTTON:
-		अगर (!pLed->bLedWPSBlinkInProgress) अणु
-			अगर (pLed->bLedBlinkInProgress) अणु
-				del_समयr(&pLed->BlinkTimer);
+	case LED_CTL_START_WPS: /*wait until xinpin finish*/
+	case LED_CTL_START_WPS_BOTTON:
+		if (!pLed->bLedWPSBlinkInProgress) {
+			if (pLed->bLedBlinkInProgress) {
+				del_timer(&pLed->BlinkTimer);
 				pLed->bLedBlinkInProgress = false;
-			पूर्ण
-			अगर (pLed->bLedScanBlinkInProgress) अणु
-				del_समयr(&pLed->BlinkTimer);
+			}
+			if (pLed->bLedScanBlinkInProgress) {
+				del_timer(&pLed->BlinkTimer);
 				pLed->bLedScanBlinkInProgress = false;
-			पूर्ण
+			}
 			pLed->bLedWPSBlinkInProgress = true;
 			pLed->CurrLedState = LED_STATE_ON;
 			pLed->BlinkingLedState = LED_STATE_ON;
-			mod_समयr(&pLed->BlinkTimer,
-				  jअगरfies + msecs_to_jअगरfies(0));
-		पूर्ण
-		अवरोध;
+			mod_timer(&pLed->BlinkTimer,
+				  jiffies + msecs_to_jiffies(0));
+		}
+		break;
 
-	हाल LED_CTL_STOP_WPS:
+	case LED_CTL_STOP_WPS:
 		pLed->bLedWPSBlinkInProgress = false;
 		pLed->CurrLedState = LED_STATE_ON;
 		pLed->BlinkingLedState = LED_STATE_ON;
-		mod_समयr(&pLed->BlinkTimer,
-			  jअगरfies + msecs_to_jअगरfies(0));
-		अवरोध;
+		mod_timer(&pLed->BlinkTimer,
+			  jiffies + msecs_to_jiffies(0));
+		break;
 
-	हाल LED_CTL_STOP_WPS_FAIL:
+	case LED_CTL_STOP_WPS_FAIL:
 		pLed->bLedWPSBlinkInProgress = false;
 		pLed->CurrLedState = LED_STATE_OFF;
 		pLed->BlinkingLedState = LED_STATE_OFF;
-		mod_समयr(&pLed->BlinkTimer,
-			  jअगरfies + msecs_to_jअगरfies(0));
-		अवरोध;
+		mod_timer(&pLed->BlinkTimer,
+			  jiffies + msecs_to_jiffies(0));
+		break;
 
-	हाल LED_CTL_START_TO_LINK:
-	हाल LED_CTL_NO_LINK:
-		अगर (!IS_LED_BLINKING(pLed)) अणु
+	case LED_CTL_START_TO_LINK:
+	case LED_CTL_NO_LINK:
+		if (!IS_LED_BLINKING(pLed)) {
 			pLed->CurrLedState = LED_STATE_OFF;
 			pLed->BlinkingLedState = LED_STATE_OFF;
-			mod_समयr(&pLed->BlinkTimer,
-				  jअगरfies + msecs_to_jअगरfies(0));
-		पूर्ण
-		अवरोध;
-	हाल LED_CTL_POWER_OFF:
+			mod_timer(&pLed->BlinkTimer,
+				  jiffies + msecs_to_jiffies(0));
+		}
+		break;
+	case LED_CTL_POWER_OFF:
 		pLed->CurrLedState = LED_STATE_OFF;
 		pLed->BlinkingLedState = LED_STATE_OFF;
-		अगर (pLed->bLedBlinkInProgress) अणु
-			del_समयr(&pLed->BlinkTimer);
+		if (pLed->bLedBlinkInProgress) {
+			del_timer(&pLed->BlinkTimer);
 			pLed->bLedBlinkInProgress = false;
-		पूर्ण
-		अगर (pLed->bLedScanBlinkInProgress) अणु
-			del_समयr(&pLed->BlinkTimer);
+		}
+		if (pLed->bLedScanBlinkInProgress) {
+			del_timer(&pLed->BlinkTimer);
 			pLed->bLedScanBlinkInProgress = false;
-		पूर्ण
-		अगर (pLed->bLedWPSBlinkInProgress) अणु
-			del_समयr(&pLed->BlinkTimer);
+		}
+		if (pLed->bLedWPSBlinkInProgress) {
+			del_timer(&pLed->BlinkTimer);
 			pLed->bLedWPSBlinkInProgress = false;
-		पूर्ण
-		mod_समयr(&pLed->BlinkTimer,
-			  jअगरfies + msecs_to_jअगरfies(0));
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		}
+		mod_timer(&pLed->BlinkTimer,
+			  jiffies + msecs_to_jiffies(0));
+		break;
+	default:
+		break;
+	}
+}
 
-अटल व्योम SwLedControlMode3(काष्ठा _adapter *padapter,
-			      क्रमागत LED_CTL_MODE LedAction)
-अणु
-	काष्ठा led_priv	*ledpriv = &padapter->ledpriv;
-	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	काष्ठा LED_871x *pLed = &ledpriv->SwLed0;
+static void SwLedControlMode3(struct _adapter *padapter,
+			      enum LED_CTL_MODE LedAction)
+{
+	struct led_priv	*ledpriv = &padapter->ledpriv;
+	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	struct LED_871x *pLed = &ledpriv->SwLed0;
 
-	चयन (LedAction) अणु
-	हाल LED_CTL_SITE_SURVEY:
-		अगर (pmlmepriv->sitesurveyctrl.traffic_busy)
+	switch (LedAction) {
+	case LED_CTL_SITE_SURVEY:
+		if (pmlmepriv->sitesurveyctrl.traffic_busy)
 			; /* dummy branch */
-		अन्यथा अगर (!pLed->bLedScanBlinkInProgress) अणु
-			अगर (IS_LED_WPS_BLINKING(pLed))
-				वापस;
-			अगर (pLed->bLedBlinkInProgress) अणु
-				del_समयr(&pLed->BlinkTimer);
+		else if (!pLed->bLedScanBlinkInProgress) {
+			if (IS_LED_WPS_BLINKING(pLed))
+				return;
+			if (pLed->bLedBlinkInProgress) {
+				del_timer(&pLed->BlinkTimer);
 				pLed->bLedBlinkInProgress = false;
-			पूर्ण
+			}
 			pLed->bLedScanBlinkInProgress = true;
 			pLed->CurrLedState = LED_SCAN_BLINK;
 			pLed->BlinkTimes = 24;
-			अगर (pLed->bLedOn)
+			if (pLed->bLedOn)
 				pLed->BlinkingLedState = LED_STATE_OFF;
-			अन्यथा
+			else
 				pLed->BlinkingLedState = LED_STATE_ON;
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_SCAN_INTERVAL_ALPHA));
-		पूर्ण
-		अवरोध;
-	हाल LED_CTL_TX:
-	हाल LED_CTL_RX:
-		अगर (!pLed->bLedBlinkInProgress &&
-		    check_fwstate(pmlmepriv, _FW_LINKED)) अणु
-			अगर (pLed->CurrLedState == LED_SCAN_BLINK ||
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_SCAN_INTERVAL_ALPHA));
+		}
+		break;
+	case LED_CTL_TX:
+	case LED_CTL_RX:
+		if (!pLed->bLedBlinkInProgress &&
+		    check_fwstate(pmlmepriv, _FW_LINKED)) {
+			if (pLed->CurrLedState == LED_SCAN_BLINK ||
 			    IS_LED_WPS_BLINKING(pLed))
-				वापस;
+				return;
 			pLed->bLedBlinkInProgress = true;
 			pLed->CurrLedState = LED_TXRX_BLINK;
 			pLed->BlinkTimes = 2;
-			अगर (pLed->bLedOn)
+			if (pLed->bLedOn)
 				pLed->BlinkingLedState = LED_STATE_OFF;
-			अन्यथा
+			else
 				pLed->BlinkingLedState = LED_STATE_ON;
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_FASTER_INTERVAL_ALPHA));
-		पूर्ण
-		अवरोध;
-	हाल LED_CTL_LINK:
-		अगर (IS_LED_WPS_BLINKING(pLed))
-			वापस;
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_FASTER_INTERVAL_ALPHA));
+		}
+		break;
+	case LED_CTL_LINK:
+		if (IS_LED_WPS_BLINKING(pLed))
+			return;
 		pLed->CurrLedState = LED_STATE_ON;
 		pLed->BlinkingLedState = LED_STATE_ON;
-		अगर (pLed->bLedBlinkInProgress) अणु
-			del_समयr(&pLed->BlinkTimer);
+		if (pLed->bLedBlinkInProgress) {
+			del_timer(&pLed->BlinkTimer);
 			pLed->bLedBlinkInProgress = false;
-		पूर्ण
-		अगर (pLed->bLedScanBlinkInProgress) अणु
-			del_समयr(&pLed->BlinkTimer);
+		}
+		if (pLed->bLedScanBlinkInProgress) {
+			del_timer(&pLed->BlinkTimer);
 			pLed->bLedScanBlinkInProgress = false;
-		पूर्ण
-		mod_समयr(&pLed->BlinkTimer,
-			  jअगरfies + msecs_to_jअगरfies(0));
-		अवरोध;
-	हाल LED_CTL_START_WPS: /* रुको until xinpin finish */
-	हाल LED_CTL_START_WPS_BOTTON:
-		अगर (!pLed->bLedWPSBlinkInProgress) अणु
-			अगर (pLed->bLedBlinkInProgress) अणु
-				del_समयr(&pLed->BlinkTimer);
+		}
+		mod_timer(&pLed->BlinkTimer,
+			  jiffies + msecs_to_jiffies(0));
+		break;
+	case LED_CTL_START_WPS: /* wait until xinpin finish */
+	case LED_CTL_START_WPS_BOTTON:
+		if (!pLed->bLedWPSBlinkInProgress) {
+			if (pLed->bLedBlinkInProgress) {
+				del_timer(&pLed->BlinkTimer);
 				pLed->bLedBlinkInProgress = false;
-			पूर्ण
-			अगर (pLed->bLedScanBlinkInProgress) अणु
-				del_समयr(&pLed->BlinkTimer);
+			}
+			if (pLed->bLedScanBlinkInProgress) {
+				del_timer(&pLed->BlinkTimer);
 				pLed->bLedScanBlinkInProgress = false;
-			पूर्ण
+			}
 			pLed->bLedWPSBlinkInProgress = true;
 			pLed->CurrLedState = LED_BLINK_WPS;
-			अगर (pLed->bLedOn)
+			if (pLed->bLedOn)
 				pLed->BlinkingLedState = LED_STATE_OFF;
-			अन्यथा
+			else
 				pLed->BlinkingLedState = LED_STATE_ON;
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_SCAN_INTERVAL_ALPHA));
-		पूर्ण
-		अवरोध;
-	हाल LED_CTL_STOP_WPS:
-		अगर (pLed->bLedWPSBlinkInProgress) अणु
-			del_समयr(&pLed->BlinkTimer);
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_SCAN_INTERVAL_ALPHA));
+		}
+		break;
+	case LED_CTL_STOP_WPS:
+		if (pLed->bLedWPSBlinkInProgress) {
+			del_timer(&pLed->BlinkTimer);
 			pLed->bLedWPSBlinkInProgress = false;
-		पूर्ण अन्यथा अणु
+		} else {
 			pLed->bLedWPSBlinkInProgress = true;
-		पूर्ण
+		}
 		pLed->CurrLedState = LED_BLINK_WPS_STOP;
-		अगर (pLed->bLedOn) अणु
+		if (pLed->bLedOn) {
 			pLed->BlinkingLedState = LED_STATE_OFF;
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_WPS_SUCCESS_INTERVAL_ALPHA));
-		पूर्ण अन्यथा अणु
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_WPS_SUCCESS_INTERVAL_ALPHA));
+		} else {
 			pLed->BlinkingLedState = LED_STATE_ON;
-			mod_समयr(&pLed->BlinkTimer,
-				  jअगरfies + msecs_to_jअगरfies(0));
-		पूर्ण
-		अवरोध;
-	हाल LED_CTL_STOP_WPS_FAIL:
-		अगर (pLed->bLedWPSBlinkInProgress) अणु
-			del_समयr(&pLed->BlinkTimer);
+			mod_timer(&pLed->BlinkTimer,
+				  jiffies + msecs_to_jiffies(0));
+		}
+		break;
+	case LED_CTL_STOP_WPS_FAIL:
+		if (pLed->bLedWPSBlinkInProgress) {
+			del_timer(&pLed->BlinkTimer);
 			pLed->bLedWPSBlinkInProgress = false;
-		पूर्ण
+		}
 		pLed->CurrLedState = LED_STATE_OFF;
 		pLed->BlinkingLedState = LED_STATE_OFF;
-		mod_समयr(&pLed->BlinkTimer,
-			  jअगरfies + msecs_to_jअगरfies(0));
-		अवरोध;
-	हाल LED_CTL_START_TO_LINK:
-	हाल LED_CTL_NO_LINK:
-		अगर (!IS_LED_BLINKING(pLed)) अणु
+		mod_timer(&pLed->BlinkTimer,
+			  jiffies + msecs_to_jiffies(0));
+		break;
+	case LED_CTL_START_TO_LINK:
+	case LED_CTL_NO_LINK:
+		if (!IS_LED_BLINKING(pLed)) {
 			pLed->CurrLedState = LED_STATE_OFF;
 			pLed->BlinkingLedState = LED_STATE_OFF;
-			mod_समयr(&pLed->BlinkTimer,
-				  jअगरfies + msecs_to_jअगरfies(0));
-		पूर्ण
-		अवरोध;
-	हाल LED_CTL_POWER_OFF:
+			mod_timer(&pLed->BlinkTimer,
+				  jiffies + msecs_to_jiffies(0));
+		}
+		break;
+	case LED_CTL_POWER_OFF:
 		pLed->CurrLedState = LED_STATE_OFF;
 		pLed->BlinkingLedState = LED_STATE_OFF;
-		अगर (pLed->bLedBlinkInProgress) अणु
-			del_समयr(&pLed->BlinkTimer);
+		if (pLed->bLedBlinkInProgress) {
+			del_timer(&pLed->BlinkTimer);
 			pLed->bLedBlinkInProgress = false;
-		पूर्ण
-		अगर (pLed->bLedScanBlinkInProgress) अणु
-			del_समयr(&pLed->BlinkTimer);
+		}
+		if (pLed->bLedScanBlinkInProgress) {
+			del_timer(&pLed->BlinkTimer);
 			pLed->bLedScanBlinkInProgress = false;
-		पूर्ण
-		अगर (pLed->bLedWPSBlinkInProgress) अणु
-			del_समयr(&pLed->BlinkTimer);
+		}
+		if (pLed->bLedWPSBlinkInProgress) {
+			del_timer(&pLed->BlinkTimer);
 			pLed->bLedWPSBlinkInProgress = false;
-		पूर्ण
-		mod_समयr(&pLed->BlinkTimer,
-			  jअगरfies + msecs_to_jअगरfies(0));
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		}
+		mod_timer(&pLed->BlinkTimer,
+			  jiffies + msecs_to_jiffies(0));
+		break;
+	default:
+		break;
+	}
+}
 
-अटल व्योम SwLedControlMode4(काष्ठा _adapter *padapter,
-			      क्रमागत LED_CTL_MODE LedAction)
-अणु
-	काष्ठा led_priv	*ledpriv = &padapter->ledpriv;
-	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	काष्ठा LED_871x *pLed = &ledpriv->SwLed0;
-	काष्ठा LED_871x *pLed1 = &ledpriv->SwLed1;
+static void SwLedControlMode4(struct _adapter *padapter,
+			      enum LED_CTL_MODE LedAction)
+{
+	struct led_priv	*ledpriv = &padapter->ledpriv;
+	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	struct LED_871x *pLed = &ledpriv->SwLed0;
+	struct LED_871x *pLed1 = &ledpriv->SwLed1;
 
-	चयन (LedAction) अणु
-	हाल LED_CTL_START_TO_LINK:
-		अगर (pLed1->bLedWPSBlinkInProgress) अणु
+	switch (LedAction) {
+	case LED_CTL_START_TO_LINK:
+		if (pLed1->bLedWPSBlinkInProgress) {
 			pLed1->bLedWPSBlinkInProgress = false;
-			del_समयr(&pLed1->BlinkTimer);
+			del_timer(&pLed1->BlinkTimer);
 			pLed1->BlinkingLedState = LED_STATE_OFF;
 			pLed1->CurrLedState = LED_STATE_OFF;
-			अगर (pLed1->bLedOn)
-				mod_समयr(&pLed->BlinkTimer,
-					  jअगरfies + msecs_to_jअगरfies(0));
-		पूर्ण
-		अगर (!pLed->bLedStartToLinkBlinkInProgress) अणु
-			अगर (pLed->CurrLedState == LED_SCAN_BLINK ||
+			if (pLed1->bLedOn)
+				mod_timer(&pLed->BlinkTimer,
+					  jiffies + msecs_to_jiffies(0));
+		}
+		if (!pLed->bLedStartToLinkBlinkInProgress) {
+			if (pLed->CurrLedState == LED_SCAN_BLINK ||
 			    IS_LED_WPS_BLINKING(pLed))
-				वापस;
-			अगर (pLed->bLedBlinkInProgress) अणु
-				del_समयr(&pLed->BlinkTimer);
+				return;
+			if (pLed->bLedBlinkInProgress) {
+				del_timer(&pLed->BlinkTimer);
 				pLed->bLedBlinkInProgress = false;
-			पूर्ण
-			अगर (pLed->bLedNoLinkBlinkInProgress) अणु
-				del_समयr(&pLed->BlinkTimer);
+			}
+			if (pLed->bLedNoLinkBlinkInProgress) {
+				del_timer(&pLed->BlinkTimer);
 				pLed->bLedNoLinkBlinkInProgress = false;
-			पूर्ण
+			}
 			pLed->bLedStartToLinkBlinkInProgress = true;
 			pLed->CurrLedState = LED_BLINK_StartToBlink;
-			अगर (pLed->bLedOn) अणु
+			if (pLed->bLedOn) {
 				pLed->BlinkingLedState = LED_STATE_OFF;
-				mod_समयr(&pLed->BlinkTimer, jअगरfies +
-					  msecs_to_jअगरfies(LED_BLINK_SLOWLY_INTERVAL));
-			पूर्ण अन्यथा अणु
+				mod_timer(&pLed->BlinkTimer, jiffies +
+					  msecs_to_jiffies(LED_BLINK_SLOWLY_INTERVAL));
+			} else {
 				pLed->BlinkingLedState = LED_STATE_ON;
-				mod_समयr(&pLed->BlinkTimer, jअगरfies +
-					  msecs_to_jअगरfies(LED_BLINK_NORMAL_INTERVAL));
-			पूर्ण
-		पूर्ण
-		अवरोध;
-	हाल LED_CTL_LINK:
-	हाल LED_CTL_NO_LINK:
+				mod_timer(&pLed->BlinkTimer, jiffies +
+					  msecs_to_jiffies(LED_BLINK_NORMAL_INTERVAL));
+			}
+		}
+		break;
+	case LED_CTL_LINK:
+	case LED_CTL_NO_LINK:
 		/*LED1 settings*/
-		अगर (LedAction == LED_CTL_LINK) अणु
-			अगर (pLed1->bLedWPSBlinkInProgress) अणु
+		if (LedAction == LED_CTL_LINK) {
+			if (pLed1->bLedWPSBlinkInProgress) {
 				pLed1->bLedWPSBlinkInProgress = false;
-				del_समयr(&pLed1->BlinkTimer);
+				del_timer(&pLed1->BlinkTimer);
 				pLed1->BlinkingLedState = LED_STATE_OFF;
 				pLed1->CurrLedState = LED_STATE_OFF;
-				अगर (pLed1->bLedOn)
-					mod_समयr(&pLed->BlinkTimer,
-						  jअगरfies + msecs_to_jअगरfies(0));
-			पूर्ण
-		पूर्ण
-		अगर (!pLed->bLedNoLinkBlinkInProgress) अणु
-			अगर (pLed->CurrLedState == LED_SCAN_BLINK ||
+				if (pLed1->bLedOn)
+					mod_timer(&pLed->BlinkTimer,
+						  jiffies + msecs_to_jiffies(0));
+			}
+		}
+		if (!pLed->bLedNoLinkBlinkInProgress) {
+			if (pLed->CurrLedState == LED_SCAN_BLINK ||
 			    IS_LED_WPS_BLINKING(pLed))
-				वापस;
-			अगर (pLed->bLedBlinkInProgress) अणु
-				del_समयr(&pLed->BlinkTimer);
+				return;
+			if (pLed->bLedBlinkInProgress) {
+				del_timer(&pLed->BlinkTimer);
 				pLed->bLedBlinkInProgress = false;
-			पूर्ण
+			}
 			pLed->bLedNoLinkBlinkInProgress = true;
 			pLed->CurrLedState = LED_BLINK_SLOWLY;
-			अगर (pLed->bLedOn)
+			if (pLed->bLedOn)
 				pLed->BlinkingLedState = LED_STATE_OFF;
-			अन्यथा
+			else
 				pLed->BlinkingLedState = LED_STATE_ON;
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_NO_LINK_INTERVAL_ALPHA));
-		पूर्ण
-		अवरोध;
-	हाल LED_CTL_SITE_SURVEY:
-		अगर (pmlmepriv->sitesurveyctrl.traffic_busy &&
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_NO_LINK_INTERVAL_ALPHA));
+		}
+		break;
+	case LED_CTL_SITE_SURVEY:
+		if (pmlmepriv->sitesurveyctrl.traffic_busy &&
 		    check_fwstate(pmlmepriv, _FW_LINKED))
 			;
-		अन्यथा अगर (!pLed->bLedScanBlinkInProgress) अणु
-			अगर (IS_LED_WPS_BLINKING(pLed))
-				वापस;
-			अगर (pLed->bLedNoLinkBlinkInProgress) अणु
-				del_समयr(&pLed->BlinkTimer);
+		else if (!pLed->bLedScanBlinkInProgress) {
+			if (IS_LED_WPS_BLINKING(pLed))
+				return;
+			if (pLed->bLedNoLinkBlinkInProgress) {
+				del_timer(&pLed->BlinkTimer);
 				pLed->bLedNoLinkBlinkInProgress = false;
-			पूर्ण
-			अगर (pLed->bLedBlinkInProgress) अणु
-				del_समयr(&pLed->BlinkTimer);
+			}
+			if (pLed->bLedBlinkInProgress) {
+				del_timer(&pLed->BlinkTimer);
 				pLed->bLedBlinkInProgress = false;
-			पूर्ण
+			}
 			pLed->bLedScanBlinkInProgress = true;
 			pLed->CurrLedState = LED_SCAN_BLINK;
 			pLed->BlinkTimes = 24;
-			अगर (pLed->bLedOn)
+			if (pLed->bLedOn)
 				pLed->BlinkingLedState = LED_STATE_OFF;
-			अन्यथा
+			else
 				pLed->BlinkingLedState = LED_STATE_ON;
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_SCAN_INTERVAL_ALPHA));
-		पूर्ण
-		अवरोध;
-	हाल LED_CTL_TX:
-	हाल LED_CTL_RX:
-		अगर (!pLed->bLedBlinkInProgress) अणु
-			अगर (pLed->CurrLedState == LED_SCAN_BLINK ||
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_SCAN_INTERVAL_ALPHA));
+		}
+		break;
+	case LED_CTL_TX:
+	case LED_CTL_RX:
+		if (!pLed->bLedBlinkInProgress) {
+			if (pLed->CurrLedState == LED_SCAN_BLINK ||
 			    IS_LED_WPS_BLINKING(pLed))
-				वापस;
-			अगर (pLed->bLedNoLinkBlinkInProgress) अणु
-				del_समयr(&pLed->BlinkTimer);
+				return;
+			if (pLed->bLedNoLinkBlinkInProgress) {
+				del_timer(&pLed->BlinkTimer);
 				pLed->bLedNoLinkBlinkInProgress = false;
-			पूर्ण
+			}
 			pLed->bLedBlinkInProgress = true;
 			pLed->CurrLedState = LED_TXRX_BLINK;
 			pLed->BlinkTimes = 2;
-			अगर (pLed->bLedOn)
+			if (pLed->bLedOn)
 				pLed->BlinkingLedState = LED_STATE_OFF;
-			अन्यथा
+			else
 				pLed->BlinkingLedState = LED_STATE_ON;
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_FASTER_INTERVAL_ALPHA));
-		पूर्ण
-		अवरोध;
-	हाल LED_CTL_START_WPS: /*रुको until xinpin finish*/
-	हाल LED_CTL_START_WPS_BOTTON:
-		अगर (pLed1->bLedWPSBlinkInProgress) अणु
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_FASTER_INTERVAL_ALPHA));
+		}
+		break;
+	case LED_CTL_START_WPS: /*wait until xinpin finish*/
+	case LED_CTL_START_WPS_BOTTON:
+		if (pLed1->bLedWPSBlinkInProgress) {
 			pLed1->bLedWPSBlinkInProgress = false;
-			del_समयr(&pLed1->BlinkTimer);
+			del_timer(&pLed1->BlinkTimer);
 			pLed1->BlinkingLedState = LED_STATE_OFF;
 			pLed1->CurrLedState = LED_STATE_OFF;
-			अगर (pLed1->bLedOn)
-				mod_समयr(&pLed->BlinkTimer,
-					  jअगरfies + msecs_to_jअगरfies(0));
-		पूर्ण
-		अगर (!pLed->bLedWPSBlinkInProgress) अणु
-			अगर (pLed->bLedNoLinkBlinkInProgress) अणु
-				del_समयr(&pLed->BlinkTimer);
+			if (pLed1->bLedOn)
+				mod_timer(&pLed->BlinkTimer,
+					  jiffies + msecs_to_jiffies(0));
+		}
+		if (!pLed->bLedWPSBlinkInProgress) {
+			if (pLed->bLedNoLinkBlinkInProgress) {
+				del_timer(&pLed->BlinkTimer);
 				pLed->bLedNoLinkBlinkInProgress = false;
-			पूर्ण
-			अगर (pLed->bLedBlinkInProgress) अणु
-				del_समयr(&pLed->BlinkTimer);
+			}
+			if (pLed->bLedBlinkInProgress) {
+				del_timer(&pLed->BlinkTimer);
 				pLed->bLedBlinkInProgress = false;
-			पूर्ण
-			अगर (pLed->bLedScanBlinkInProgress) अणु
-				del_समयr(&pLed->BlinkTimer);
+			}
+			if (pLed->bLedScanBlinkInProgress) {
+				del_timer(&pLed->BlinkTimer);
 				pLed->bLedScanBlinkInProgress = false;
-			पूर्ण
+			}
 			pLed->bLedWPSBlinkInProgress = true;
 			pLed->CurrLedState = LED_BLINK_WPS;
-			अगर (pLed->bLedOn) अणु
+			if (pLed->bLedOn) {
 				pLed->BlinkingLedState = LED_STATE_OFF;
-				mod_समयr(&pLed->BlinkTimer, jअगरfies +
-					  msecs_to_jअगरfies(LED_BLINK_SLOWLY_INTERVAL));
-			पूर्ण अन्यथा अणु
+				mod_timer(&pLed->BlinkTimer, jiffies +
+					  msecs_to_jiffies(LED_BLINK_SLOWLY_INTERVAL));
+			} else {
 				pLed->BlinkingLedState = LED_STATE_ON;
-				mod_समयr(&pLed->BlinkTimer, jअगरfies +
-					  msecs_to_jअगरfies(LED_BLINK_NORMAL_INTERVAL));
-			पूर्ण
-		पूर्ण
-		अवरोध;
-	हाल LED_CTL_STOP_WPS:	/*WPS connect success*/
-		अगर (pLed->bLedWPSBlinkInProgress) अणु
-			del_समयr(&pLed->BlinkTimer);
+				mod_timer(&pLed->BlinkTimer, jiffies +
+					  msecs_to_jiffies(LED_BLINK_NORMAL_INTERVAL));
+			}
+		}
+		break;
+	case LED_CTL_STOP_WPS:	/*WPS connect success*/
+		if (pLed->bLedWPSBlinkInProgress) {
+			del_timer(&pLed->BlinkTimer);
 			pLed->bLedWPSBlinkInProgress = false;
-		पूर्ण
+		}
 		pLed->bLedNoLinkBlinkInProgress = true;
 		pLed->CurrLedState = LED_BLINK_SLOWLY;
-		अगर (pLed->bLedOn)
+		if (pLed->bLedOn)
 			pLed->BlinkingLedState = LED_STATE_OFF;
-		अन्यथा
+		else
 			pLed->BlinkingLedState = LED_STATE_ON;
-		mod_समयr(&pLed->BlinkTimer, jअगरfies +
-			  msecs_to_jअगरfies(LED_BLINK_NO_LINK_INTERVAL_ALPHA));
-		अवरोध;
-	हाल LED_CTL_STOP_WPS_FAIL:	/*WPS authentication fail*/
-		अगर (pLed->bLedWPSBlinkInProgress) अणु
-			del_समयr(&pLed->BlinkTimer);
+		mod_timer(&pLed->BlinkTimer, jiffies +
+			  msecs_to_jiffies(LED_BLINK_NO_LINK_INTERVAL_ALPHA));
+		break;
+	case LED_CTL_STOP_WPS_FAIL:	/*WPS authentication fail*/
+		if (pLed->bLedWPSBlinkInProgress) {
+			del_timer(&pLed->BlinkTimer);
 			pLed->bLedWPSBlinkInProgress = false;
-		पूर्ण
+		}
 		pLed->bLedNoLinkBlinkInProgress = true;
 		pLed->CurrLedState = LED_BLINK_SLOWLY;
-		अगर (pLed->bLedOn)
+		if (pLed->bLedOn)
 			pLed->BlinkingLedState = LED_STATE_OFF;
-		अन्यथा
+		else
 			pLed->BlinkingLedState = LED_STATE_ON;
-		mod_समयr(&pLed->BlinkTimer, jअगरfies +
-			  msecs_to_jअगरfies(LED_BLINK_NO_LINK_INTERVAL_ALPHA));
+		mod_timer(&pLed->BlinkTimer, jiffies +
+			  msecs_to_jiffies(LED_BLINK_NO_LINK_INTERVAL_ALPHA));
 		/*LED1 settings*/
-		अगर (pLed1->bLedWPSBlinkInProgress)
-			del_समयr(&pLed1->BlinkTimer);
-		अन्यथा
+		if (pLed1->bLedWPSBlinkInProgress)
+			del_timer(&pLed1->BlinkTimer);
+		else
 			pLed1->bLedWPSBlinkInProgress = true;
 		pLed1->CurrLedState = LED_BLINK_WPS_STOP;
-		अगर (pLed1->bLedOn)
+		if (pLed1->bLedOn)
 			pLed1->BlinkingLedState = LED_STATE_OFF;
-		अन्यथा
+		else
 			pLed1->BlinkingLedState = LED_STATE_ON;
-		mod_समयr(&pLed->BlinkTimer, jअगरfies +
-			  msecs_to_jअगरfies(LED_BLINK_NORMAL_INTERVAL));
-		अवरोध;
-	हाल LED_CTL_STOP_WPS_FAIL_OVERLAP:	/*WPS session overlap*/
-		अगर (pLed->bLedWPSBlinkInProgress) अणु
-			del_समयr(&pLed->BlinkTimer);
+		mod_timer(&pLed->BlinkTimer, jiffies +
+			  msecs_to_jiffies(LED_BLINK_NORMAL_INTERVAL));
+		break;
+	case LED_CTL_STOP_WPS_FAIL_OVERLAP:	/*WPS session overlap*/
+		if (pLed->bLedWPSBlinkInProgress) {
+			del_timer(&pLed->BlinkTimer);
 			pLed->bLedWPSBlinkInProgress = false;
-		पूर्ण
+		}
 		pLed->bLedNoLinkBlinkInProgress = true;
 		pLed->CurrLedState = LED_BLINK_SLOWLY;
-		अगर (pLed->bLedOn)
+		if (pLed->bLedOn)
 			pLed->BlinkingLedState = LED_STATE_OFF;
-		अन्यथा
+		else
 			pLed->BlinkingLedState = LED_STATE_ON;
-		mod_समयr(&pLed->BlinkTimer, jअगरfies +
-			  msecs_to_jअगरfies(LED_BLINK_NO_LINK_INTERVAL_ALPHA));
+		mod_timer(&pLed->BlinkTimer, jiffies +
+			  msecs_to_jiffies(LED_BLINK_NO_LINK_INTERVAL_ALPHA));
 		/*LED1 settings*/
-		अगर (pLed1->bLedWPSBlinkInProgress)
-			del_समयr(&pLed1->BlinkTimer);
-		अन्यथा
+		if (pLed1->bLedWPSBlinkInProgress)
+			del_timer(&pLed1->BlinkTimer);
+		else
 			pLed1->bLedWPSBlinkInProgress = true;
 		pLed1->CurrLedState = LED_BLINK_WPS_STOP_OVERLAP;
 		pLed1->BlinkTimes = 10;
-		अगर (pLed1->bLedOn)
+		if (pLed1->bLedOn)
 			pLed1->BlinkingLedState = LED_STATE_OFF;
-		अन्यथा
+		else
 			pLed1->BlinkingLedState = LED_STATE_ON;
-		mod_समयr(&pLed->BlinkTimer, jअगरfies +
-			  msecs_to_jअगरfies(LED_BLINK_NORMAL_INTERVAL));
-		अवरोध;
-	हाल LED_CTL_POWER_OFF:
+		mod_timer(&pLed->BlinkTimer, jiffies +
+			  msecs_to_jiffies(LED_BLINK_NORMAL_INTERVAL));
+		break;
+	case LED_CTL_POWER_OFF:
 		pLed->CurrLedState = LED_STATE_OFF;
 		pLed->BlinkingLedState = LED_STATE_OFF;
-		अगर (pLed->bLedNoLinkBlinkInProgress) अणु
-			del_समयr(&pLed->BlinkTimer);
+		if (pLed->bLedNoLinkBlinkInProgress) {
+			del_timer(&pLed->BlinkTimer);
 			pLed->bLedNoLinkBlinkInProgress = false;
-		पूर्ण
-		अगर (pLed->bLedLinkBlinkInProgress) अणु
-			del_समयr(&pLed->BlinkTimer);
+		}
+		if (pLed->bLedLinkBlinkInProgress) {
+			del_timer(&pLed->BlinkTimer);
 			pLed->bLedLinkBlinkInProgress = false;
-		पूर्ण
-		अगर (pLed->bLedBlinkInProgress) अणु
-			del_समयr(&pLed->BlinkTimer);
+		}
+		if (pLed->bLedBlinkInProgress) {
+			del_timer(&pLed->BlinkTimer);
 			pLed->bLedBlinkInProgress = false;
-		पूर्ण
-		अगर (pLed->bLedWPSBlinkInProgress) अणु
-			del_समयr(&pLed->BlinkTimer);
+		}
+		if (pLed->bLedWPSBlinkInProgress) {
+			del_timer(&pLed->BlinkTimer);
 			pLed->bLedWPSBlinkInProgress = false;
-		पूर्ण
-		अगर (pLed->bLedScanBlinkInProgress) अणु
-			del_समयr(&pLed->BlinkTimer);
+		}
+		if (pLed->bLedScanBlinkInProgress) {
+			del_timer(&pLed->BlinkTimer);
 			pLed->bLedScanBlinkInProgress = false;
-		पूर्ण
-		अगर (pLed->bLedStartToLinkBlinkInProgress) अणु
-			del_समयr(&pLed->BlinkTimer);
+		}
+		if (pLed->bLedStartToLinkBlinkInProgress) {
+			del_timer(&pLed->BlinkTimer);
 			pLed->bLedStartToLinkBlinkInProgress = false;
-		पूर्ण
-		अगर (pLed1->bLedWPSBlinkInProgress) अणु
-			del_समयr(&pLed1->BlinkTimer);
+		}
+		if (pLed1->bLedWPSBlinkInProgress) {
+			del_timer(&pLed1->BlinkTimer);
 			pLed1->bLedWPSBlinkInProgress = false;
-		पूर्ण
+		}
 		pLed1->BlinkingLedState = LED_UNKNOWN;
 		SwLedOff(padapter, pLed);
 		SwLedOff(padapter, pLed1);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-अटल व्योम SwLedControlMode5(काष्ठा _adapter *padapter,
-			      क्रमागत LED_CTL_MODE LedAction)
-अणु
-	काष्ठा led_priv	*ledpriv = &padapter->ledpriv;
-	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	काष्ठा LED_871x *pLed = &ledpriv->SwLed0;
+static void SwLedControlMode5(struct _adapter *padapter,
+			      enum LED_CTL_MODE LedAction)
+{
+	struct led_priv	*ledpriv = &padapter->ledpriv;
+	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	struct LED_871x *pLed = &ledpriv->SwLed0;
 
-	अगर (padapter->eeprompriv.CustomerID == RT_CID_819x_CAMEO)
+	if (padapter->eeprompriv.CustomerID == RT_CID_819x_CAMEO)
 		pLed = &ledpriv->SwLed1;
 
-	चयन (LedAction) अणु
-	हाल LED_CTL_POWER_ON:
-	हाल LED_CTL_NO_LINK:
-	हाल LED_CTL_LINK:	/* solid blue */
-		अगर (pLed->CurrLedState == LED_SCAN_BLINK)
-			वापस;
+	switch (LedAction) {
+	case LED_CTL_POWER_ON:
+	case LED_CTL_NO_LINK:
+	case LED_CTL_LINK:	/* solid blue */
+		if (pLed->CurrLedState == LED_SCAN_BLINK)
+			return;
 		pLed->CurrLedState = LED_STATE_ON;
 		pLed->BlinkingLedState = LED_STATE_ON;
 		pLed->bLedBlinkInProgress = false;
-		mod_समयr(&pLed->BlinkTimer,
-			  jअगरfies + msecs_to_jअगरfies(0));
-		अवरोध;
-	हाल LED_CTL_SITE_SURVEY:
-		अगर (pmlmepriv->sitesurveyctrl.traffic_busy &&
+		mod_timer(&pLed->BlinkTimer,
+			  jiffies + msecs_to_jiffies(0));
+		break;
+	case LED_CTL_SITE_SURVEY:
+		if (pmlmepriv->sitesurveyctrl.traffic_busy &&
 		    check_fwstate(pmlmepriv, _FW_LINKED))
 			; /* dummy branch */
-		अन्यथा अगर (!pLed->bLedScanBlinkInProgress) अणु
-			अगर (pLed->bLedBlinkInProgress) अणु
-				del_समयr(&pLed->BlinkTimer);
+		else if (!pLed->bLedScanBlinkInProgress) {
+			if (pLed->bLedBlinkInProgress) {
+				del_timer(&pLed->BlinkTimer);
 				pLed->bLedBlinkInProgress = false;
-			पूर्ण
+			}
 			pLed->bLedScanBlinkInProgress = true;
 			pLed->CurrLedState = LED_SCAN_BLINK;
 			pLed->BlinkTimes = 24;
-			अगर (pLed->bLedOn)
+			if (pLed->bLedOn)
 				pLed->BlinkingLedState = LED_STATE_OFF;
-			अन्यथा
+			else
 				pLed->BlinkingLedState = LED_STATE_ON;
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_SCAN_INTERVAL_ALPHA));
-		पूर्ण
-		अवरोध;
-	हाल LED_CTL_TX:
-	हाल LED_CTL_RX:
-		अगर (!pLed->bLedBlinkInProgress) अणु
-			अगर (pLed->CurrLedState == LED_SCAN_BLINK)
-				वापस;
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_SCAN_INTERVAL_ALPHA));
+		}
+		break;
+	case LED_CTL_TX:
+	case LED_CTL_RX:
+		if (!pLed->bLedBlinkInProgress) {
+			if (pLed->CurrLedState == LED_SCAN_BLINK)
+				return;
 			pLed->bLedBlinkInProgress = true;
 			pLed->CurrLedState = LED_TXRX_BLINK;
 			pLed->BlinkTimes = 2;
-			अगर (pLed->bLedOn)
+			if (pLed->bLedOn)
 				pLed->BlinkingLedState = LED_STATE_OFF;
-			अन्यथा
+			else
 				pLed->BlinkingLedState = LED_STATE_ON;
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_FASTER_INTERVAL_ALPHA));
-		पूर्ण
-		अवरोध;
-	हाल LED_CTL_POWER_OFF:
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_FASTER_INTERVAL_ALPHA));
+		}
+		break;
+	case LED_CTL_POWER_OFF:
 		pLed->CurrLedState = LED_STATE_OFF;
 		pLed->BlinkingLedState = LED_STATE_OFF;
-		अगर (pLed->bLedBlinkInProgress) अणु
-			del_समयr(&pLed->BlinkTimer);
+		if (pLed->bLedBlinkInProgress) {
+			del_timer(&pLed->BlinkTimer);
 			pLed->bLedBlinkInProgress = false;
-		पूर्ण
+		}
 		SwLedOff(padapter, pLed);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-अटल व्योम SwLedControlMode6(काष्ठा _adapter *padapter,
-			      क्रमागत LED_CTL_MODE LedAction)
-अणु
-	काष्ठा led_priv	*ledpriv = &padapter->ledpriv;
-	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	काष्ठा LED_871x *pLed = &ledpriv->SwLed0;
+static void SwLedControlMode6(struct _adapter *padapter,
+			      enum LED_CTL_MODE LedAction)
+{
+	struct led_priv	*ledpriv = &padapter->ledpriv;
+	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	struct LED_871x *pLed = &ledpriv->SwLed0;
 
-	चयन (LedAction) अणु
-	हाल LED_CTL_POWER_ON:
-	हाल LED_CTL_NO_LINK:
-	हाल LED_CTL_LINK:	/*solid blue*/
-	हाल LED_CTL_SITE_SURVEY:
-		अगर (IS_LED_WPS_BLINKING(pLed))
-			वापस;
+	switch (LedAction) {
+	case LED_CTL_POWER_ON:
+	case LED_CTL_NO_LINK:
+	case LED_CTL_LINK:	/*solid blue*/
+	case LED_CTL_SITE_SURVEY:
+		if (IS_LED_WPS_BLINKING(pLed))
+			return;
 		pLed->CurrLedState = LED_STATE_ON;
 		pLed->BlinkingLedState = LED_STATE_ON;
 		pLed->bLedBlinkInProgress = false;
-		mod_समयr(&pLed->BlinkTimer, jअगरfies + msecs_to_jअगरfies(0));
-		अवरोध;
-	हाल LED_CTL_TX:
-	हाल LED_CTL_RX:
-		अगर (!pLed->bLedBlinkInProgress &&
-		    check_fwstate(pmlmepriv, _FW_LINKED)) अणु
-			अगर (IS_LED_WPS_BLINKING(pLed))
-				वापस;
+		mod_timer(&pLed->BlinkTimer, jiffies + msecs_to_jiffies(0));
+		break;
+	case LED_CTL_TX:
+	case LED_CTL_RX:
+		if (!pLed->bLedBlinkInProgress &&
+		    check_fwstate(pmlmepriv, _FW_LINKED)) {
+			if (IS_LED_WPS_BLINKING(pLed))
+				return;
 			pLed->bLedBlinkInProgress = true;
 			pLed->CurrLedState = LED_TXRX_BLINK;
 			pLed->BlinkTimes = 2;
-			अगर (pLed->bLedOn)
+			if (pLed->bLedOn)
 				pLed->BlinkingLedState = LED_STATE_OFF;
-			अन्यथा
+			else
 				pLed->BlinkingLedState = LED_STATE_ON;
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_FASTER_INTERVAL_ALPHA));
-		पूर्ण
-		अवरोध;
-	हाल LED_CTL_START_WPS: /*रुको until xinpin finish*/
-	हाल LED_CTL_START_WPS_BOTTON:
-		अगर (!pLed->bLedWPSBlinkInProgress) अणु
-			अगर (pLed->bLedBlinkInProgress) अणु
-				del_समयr(&pLed->BlinkTimer);
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_FASTER_INTERVAL_ALPHA));
+		}
+		break;
+	case LED_CTL_START_WPS: /*wait until xinpin finish*/
+	case LED_CTL_START_WPS_BOTTON:
+		if (!pLed->bLedWPSBlinkInProgress) {
+			if (pLed->bLedBlinkInProgress) {
+				del_timer(&pLed->BlinkTimer);
 				pLed->bLedBlinkInProgress = false;
-			पूर्ण
+			}
 			pLed->bLedWPSBlinkInProgress = true;
 			pLed->CurrLedState = LED_BLINK_WPS;
-			अगर (pLed->bLedOn)
+			if (pLed->bLedOn)
 				pLed->BlinkingLedState = LED_STATE_OFF;
-			अन्यथा
+			else
 				pLed->BlinkingLedState = LED_STATE_ON;
-			mod_समयr(&pLed->BlinkTimer, jअगरfies +
-				  msecs_to_jअगरfies(LED_BLINK_SCAN_INTERVAL_ALPHA));
-		पूर्ण
-		अवरोध;
-	हाल LED_CTL_STOP_WPS_FAIL:
-	हाल LED_CTL_STOP_WPS:
-		अगर (pLed->bLedWPSBlinkInProgress) अणु
-			del_समयr(&pLed->BlinkTimer);
+			mod_timer(&pLed->BlinkTimer, jiffies +
+				  msecs_to_jiffies(LED_BLINK_SCAN_INTERVAL_ALPHA));
+		}
+		break;
+	case LED_CTL_STOP_WPS_FAIL:
+	case LED_CTL_STOP_WPS:
+		if (pLed->bLedWPSBlinkInProgress) {
+			del_timer(&pLed->BlinkTimer);
 			pLed->bLedWPSBlinkInProgress = false;
-		पूर्ण
+		}
 		pLed->CurrLedState = LED_STATE_ON;
 		pLed->BlinkingLedState = LED_STATE_ON;
-		mod_समयr(&pLed->BlinkTimer,
-			  jअगरfies + msecs_to_jअगरfies(0));
-		अवरोध;
-	हाल LED_CTL_POWER_OFF:
+		mod_timer(&pLed->BlinkTimer,
+			  jiffies + msecs_to_jiffies(0));
+		break;
+	case LED_CTL_POWER_OFF:
 		pLed->CurrLedState = LED_STATE_OFF;
 		pLed->BlinkingLedState = LED_STATE_OFF;
-		अगर (pLed->bLedBlinkInProgress) अणु
-			del_समयr(&pLed->BlinkTimer);
+		if (pLed->bLedBlinkInProgress) {
+			del_timer(&pLed->BlinkTimer);
 			pLed->bLedBlinkInProgress = false;
-		पूर्ण
-		अगर (pLed->bLedWPSBlinkInProgress) अणु
-			del_समयr(&pLed->BlinkTimer);
+		}
+		if (pLed->bLedWPSBlinkInProgress) {
+			del_timer(&pLed->BlinkTimer);
 			pLed->bLedWPSBlinkInProgress = false;
-		पूर्ण
+		}
 		SwLedOff(padapter, pLed);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
 /*	Description:
  *		Dispatch LED action according to pHalData->LedStrategy.
  */
-व्योम LedControl871x(काष्ठा _adapter *padapter, क्रमागत LED_CTL_MODE LedAction)
-अणु
-	काष्ठा led_priv	*ledpriv = &padapter->ledpriv;
+void LedControl871x(struct _adapter *padapter, enum LED_CTL_MODE LedAction)
+{
+	struct led_priv	*ledpriv = &padapter->ledpriv;
 
-	अगर (!ledpriv->bRegUseLed)
-		वापस;
-	चयन (ledpriv->LedStrategy) अणु
-	हाल SW_LED_MODE0:
-		अवरोध;
-	हाल SW_LED_MODE1:
+	if (!ledpriv->bRegUseLed)
+		return;
+	switch (ledpriv->LedStrategy) {
+	case SW_LED_MODE0:
+		break;
+	case SW_LED_MODE1:
 		SwLedControlMode1(padapter, LedAction);
-		अवरोध;
-	हाल SW_LED_MODE2:
+		break;
+	case SW_LED_MODE2:
 		SwLedControlMode2(padapter, LedAction);
-		अवरोध;
-	हाल SW_LED_MODE3:
+		break;
+	case SW_LED_MODE3:
 		SwLedControlMode3(padapter, LedAction);
-		अवरोध;
-	हाल SW_LED_MODE4:
+		break;
+	case SW_LED_MODE4:
 		SwLedControlMode4(padapter, LedAction);
-		अवरोध;
-	हाल SW_LED_MODE5:
+		break;
+	case SW_LED_MODE5:
 		SwLedControlMode5(padapter, LedAction);
-		अवरोध;
-	हाल SW_LED_MODE6:
+		break;
+	case SW_LED_MODE6:
 		SwLedControlMode6(padapter, LedAction);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}

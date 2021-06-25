@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * DT idle states parsing code.
  *
@@ -7,137 +6,137 @@
  * Author: Lorenzo Pieralisi <lorenzo.pieralisi@arm.com>
  */
 
-#घोषणा pr_fmt(fmt) "DT idle-states: " fmt
+#define pr_fmt(fmt) "DT idle-states: " fmt
 
-#समावेश <linux/cpuidle.h>
-#समावेश <linux/cpumask.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
+#include <linux/cpuidle.h>
+#include <linux/cpumask.h>
+#include <linux/errno.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
 
-#समावेश "dt_idle_states.h"
+#include "dt_idle_states.h"
 
-अटल पूर्णांक init_state_node(काष्ठा cpuidle_state *idle_state,
-			   स्थिर काष्ठा of_device_id *match_id,
-			   काष्ठा device_node *state_node)
-अणु
-	पूर्णांक err;
-	स्थिर अक्षर *desc;
+static int init_state_node(struct cpuidle_state *idle_state,
+			   const struct of_device_id *match_id,
+			   struct device_node *state_node)
+{
+	int err;
+	const char *desc;
 
 	/*
-	 * CPUidle drivers are expected to initialize the स्थिर व्योम *data
-	 * poपूर्णांकer of the passed in काष्ठा of_device_id array to the idle
+	 * CPUidle drivers are expected to initialize the const void *data
+	 * pointer of the passed in struct of_device_id array to the idle
 	 * state enter function.
 	 */
 	idle_state->enter = match_id->data;
 	/*
-	 * Since this is not a "coupled" state, it's safe to assume पूर्णांकerrupts
-	 * won't be enabled when it निकासs allowing the tick to be frozen
+	 * Since this is not a "coupled" state, it's safe to assume interrupts
+	 * won't be enabled when it exits allowing the tick to be frozen
 	 * safely. So enter() can be also enter_s2idle() callback.
 	 */
 	idle_state->enter_s2idle = match_id->data;
 
-	err = of_property_पढ़ो_u32(state_node, "wakeup-latency-us",
-				   &idle_state->निकास_latency);
-	अगर (err) अणु
-		u32 entry_latency, निकास_latency;
+	err = of_property_read_u32(state_node, "wakeup-latency-us",
+				   &idle_state->exit_latency);
+	if (err) {
+		u32 entry_latency, exit_latency;
 
-		err = of_property_पढ़ो_u32(state_node, "entry-latency-us",
+		err = of_property_read_u32(state_node, "entry-latency-us",
 					   &entry_latency);
-		अगर (err) अणु
+		if (err) {
 			pr_debug(" * %pOF missing entry-latency-us property\n",
 				 state_node);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		err = of_property_पढ़ो_u32(state_node, "exit-latency-us",
-					   &निकास_latency);
-		अगर (err) अणु
+		err = of_property_read_u32(state_node, "exit-latency-us",
+					   &exit_latency);
+		if (err) {
 			pr_debug(" * %pOF missing exit-latency-us property\n",
 				 state_node);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		/*
-		 * If wakeup-latency-us is missing, शेष to entry+निकास
+		 * If wakeup-latency-us is missing, default to entry+exit
 		 * latencies as defined in idle states bindings
 		 */
-		idle_state->निकास_latency = entry_latency + निकास_latency;
-	पूर्ण
+		idle_state->exit_latency = entry_latency + exit_latency;
+	}
 
-	err = of_property_पढ़ो_u32(state_node, "min-residency-us",
+	err = of_property_read_u32(state_node, "min-residency-us",
 				   &idle_state->target_residency);
-	अगर (err) अणु
+	if (err) {
 		pr_debug(" * %pOF missing min-residency-us property\n",
 			     state_node);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	err = of_property_पढ़ो_string(state_node, "idle-state-name", &desc);
-	अगर (err)
+	err = of_property_read_string(state_node, "idle-state-name", &desc);
+	if (err)
 		desc = state_node->name;
 
 	idle_state->flags = 0;
-	अगर (of_property_पढ़ो_bool(state_node, "local-timer-stop"))
+	if (of_property_read_bool(state_node, "local-timer-stop"))
 		idle_state->flags |= CPUIDLE_FLAG_TIMER_STOP;
 	/*
 	 * TODO:
-	 *	replace with kstrdup and poपूर्णांकer assignment when name
-	 *	and desc become string poपूर्णांकers
+	 *	replace with kstrdup and pointer assignment when name
+	 *	and desc become string pointers
 	 */
-	म_नकलन(idle_state->name, state_node->name, CPUIDLE_NAME_LEN - 1);
-	म_नकलन(idle_state->desc, desc, CPUIDLE_DESC_LEN - 1);
-	वापस 0;
-पूर्ण
+	strncpy(idle_state->name, state_node->name, CPUIDLE_NAME_LEN - 1);
+	strncpy(idle_state->desc, desc, CPUIDLE_DESC_LEN - 1);
+	return 0;
+}
 
 /*
- * Check that the idle state is unअगरorm across all CPUs in the CPUidle driver
+ * Check that the idle state is uniform across all CPUs in the CPUidle driver
  * cpumask
  */
-अटल bool idle_state_valid(काष्ठा device_node *state_node, अचिन्हित पूर्णांक idx,
-			     स्थिर cpumask_t *cpumask)
-अणु
-	पूर्णांक cpu;
-	काष्ठा device_node *cpu_node, *curr_state_node;
+static bool idle_state_valid(struct device_node *state_node, unsigned int idx,
+			     const cpumask_t *cpumask)
+{
+	int cpu;
+	struct device_node *cpu_node, *curr_state_node;
 	bool valid = true;
 
 	/*
-	 * Compare idle state phandles क्रम index idx on all CPUs in the
+	 * Compare idle state phandles for index idx on all CPUs in the
 	 * CPUidle driver cpumask. Start from next logical cpu following
 	 * cpumask_first(cpumask) since that's the CPU state_node was
 	 * retrieved from. If a mismatch is found bail out straight
 	 * away since we certainly hit a firmware misconfiguration.
 	 */
-	क्रम (cpu = cpumask_next(cpumask_first(cpumask), cpumask);
-	     cpu < nr_cpu_ids; cpu = cpumask_next(cpu, cpumask)) अणु
+	for (cpu = cpumask_next(cpumask_first(cpumask), cpumask);
+	     cpu < nr_cpu_ids; cpu = cpumask_next(cpu, cpumask)) {
 		cpu_node = of_cpu_device_node_get(cpu);
 		curr_state_node = of_get_cpu_state_node(cpu_node, idx);
-		अगर (state_node != curr_state_node)
+		if (state_node != curr_state_node)
 			valid = false;
 
 		of_node_put(curr_state_node);
 		of_node_put(cpu_node);
-		अगर (!valid)
-			अवरोध;
-	पूर्ण
+		if (!valid)
+			break;
+	}
 
-	वापस valid;
-पूर्ण
+	return valid;
+}
 
 /**
  * dt_init_idle_driver() - Parse the DT idle states and initialize the
  *			   idle driver states array
- * @drv:	  Poपूर्णांकer to CPU idle driver to be initialized
- * @matches:	  Array of of_device_id match काष्ठाures to search in क्रम
- *		  compatible idle state nodes. The data poपूर्णांकer क्रम each valid
- *		  काष्ठा of_device_id entry in the matches array must poपूर्णांक to
+ * @drv:	  Pointer to CPU idle driver to be initialized
+ * @matches:	  Array of of_device_id match structures to search in for
+ *		  compatible idle state nodes. The data pointer for each valid
+ *		  struct of_device_id entry in the matches array must point to
  *		  a function with the following signature, that corresponds to
  *		  the CPUidle state enter function signature:
  *
- *		  पूर्णांक (*)(काष्ठा cpuidle_device *dev,
- *			  काष्ठा cpuidle_driver *drv,
- *			  पूर्णांक index);
+ *		  int (*)(struct cpuidle_device *dev,
+ *			  struct cpuidle_driver *drv,
+ *			  int index);
  *
  * @start_idx:    First idle state index to be initialized
  *
@@ -147,83 +146,83 @@
  *
  * Return: number of valid DT idle states parsed, <0 on failure
  */
-पूर्णांक dt_init_idle_driver(काष्ठा cpuidle_driver *drv,
-			स्थिर काष्ठा of_device_id *matches,
-			अचिन्हित पूर्णांक start_idx)
-अणु
-	काष्ठा cpuidle_state *idle_state;
-	काष्ठा device_node *state_node, *cpu_node;
-	स्थिर काष्ठा of_device_id *match_id;
-	पूर्णांक i, err = 0;
-	स्थिर cpumask_t *cpumask;
-	अचिन्हित पूर्णांक state_idx = start_idx;
+int dt_init_idle_driver(struct cpuidle_driver *drv,
+			const struct of_device_id *matches,
+			unsigned int start_idx)
+{
+	struct cpuidle_state *idle_state;
+	struct device_node *state_node, *cpu_node;
+	const struct of_device_id *match_id;
+	int i, err = 0;
+	const cpumask_t *cpumask;
+	unsigned int state_idx = start_idx;
 
-	अगर (state_idx >= CPUIDLE_STATE_MAX)
-		वापस -EINVAL;
+	if (state_idx >= CPUIDLE_STATE_MAX)
+		return -EINVAL;
 	/*
-	 * We get the idle states क्रम the first logical cpu in the
-	 * driver mask (or cpu_possible_mask अगर the driver cpumask is not set)
-	 * and we check through idle_state_valid() अगर they are unअगरorm
+	 * We get the idle states for the first logical cpu in the
+	 * driver mask (or cpu_possible_mask if the driver cpumask is not set)
+	 * and we check through idle_state_valid() if they are uniform
 	 * across CPUs, otherwise we hit a firmware misconfiguration.
 	 */
 	cpumask = drv->cpumask ? : cpu_possible_mask;
 	cpu_node = of_cpu_device_node_get(cpumask_first(cpumask));
 
-	क्रम (i = 0; ; i++) अणु
+	for (i = 0; ; i++) {
 		state_node = of_get_cpu_state_node(cpu_node, i);
-		अगर (!state_node)
-			अवरोध;
+		if (!state_node)
+			break;
 
 		match_id = of_match_node(matches, state_node);
-		अगर (!match_id) अणु
+		if (!match_id) {
 			err = -ENODEV;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (!of_device_is_available(state_node)) अणु
+		if (!of_device_is_available(state_node)) {
 			of_node_put(state_node);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (!idle_state_valid(state_node, i, cpumask)) अणु
+		if (!idle_state_valid(state_node, i, cpumask)) {
 			pr_warn("%pOF idle state not valid, bailing out\n",
 				state_node);
 			err = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (state_idx == CPUIDLE_STATE_MAX) अणु
+		if (state_idx == CPUIDLE_STATE_MAX) {
 			pr_warn("State index reached static CPU idle driver states array size\n");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		idle_state = &drv->states[state_idx++];
 		err = init_state_node(idle_state, match_id, state_node);
-		अगर (err) अणु
+		if (err) {
 			pr_err("Parsing idle state node %pOF failed with err %d\n",
 			       state_node, err);
 			err = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		of_node_put(state_node);
-	पूर्ण
+	}
 
 	of_node_put(state_node);
 	of_node_put(cpu_node);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 	/*
-	 * Update the driver state count only अगर some valid DT idle states
+	 * Update the driver state count only if some valid DT idle states
 	 * were detected
 	 */
-	अगर (i)
+	if (i)
 		drv->state_count = state_idx;
 
 	/*
 	 * Return the number of present and valid DT idle states, which can
-	 * also be 0 on platक्रमms with missing DT idle states or legacy DT
+	 * also be 0 on platforms with missing DT idle states or legacy DT
 	 * configuration predating the DT idle states bindings.
 	 */
-	वापस i;
-पूर्ण
+	return i;
+}
 EXPORT_SYMBOL_GPL(dt_init_idle_driver);

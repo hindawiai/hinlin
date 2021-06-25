@@ -1,22 +1,21 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- *	m5441x.c -- support क्रम Coldfire m5441x processors
+ *	m5441x.c -- support for Coldfire m5441x processors
  *
  *	(C) Copyright Steven King <sfking@fdwdc.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/param.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/clk.h>
-#समावेश <यंत्र/machdep.h>
-#समावेश <यंत्र/coldfire.h>
-#समावेश <यंत्र/mcfsim.h>
-#समावेश <यंत्र/mcfuart.h>
-#समावेश <यंत्र/mcfdma.h>
-#समावेश <यंत्र/mcfclk.h>
+#include <linux/kernel.h>
+#include <linux/param.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/clk.h>
+#include <asm/machdep.h>
+#include <asm/coldfire.h>
+#include <asm/mcfsim.h>
+#include <asm/mcfuart.h>
+#include <asm/mcfdma.h>
+#include <asm/mcfclk.h>
 
 DEFINE_CLK(0, "flexbus", 2, MCF_CLK);
 DEFINE_CLK(0, "mcfcan.0", 8, MCF_CLK);
@@ -79,7 +78,7 @@ DEFINE_CLK(2, "ipg.0", 0, MCF_CLK);
 DEFINE_CLK(2, "ahb.0", 1, MCF_CLK);
 DEFINE_CLK(2, "per.0", 2, MCF_CLK);
 
-काष्ठा clk *mcf_clks[] = अणु
+struct clk *mcf_clks[] = {
 	&__clk_0_2,
 	&__clk_0_8,
 	&__clk_0_9,
@@ -141,17 +140,17 @@ DEFINE_CLK(2, "per.0", 2, MCF_CLK);
 	&__clk_2_1,
 	&__clk_2_2,
 
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
 
-अटल काष्ठा clk * स्थिर enable_clks[] __initस्थिर = अणु
-	/* make sure these घड़ीs are enabled */
+static struct clk * const enable_clks[] __initconst = {
+	/* make sure these clocks are enabled */
 	&__clk_0_15, /* dspi.1 */
 	&__clk_0_17, /* eDMA */
-	&__clk_0_18, /* पूर्णांकc0 */
-	&__clk_0_19, /* पूर्णांकc0 */
-	&__clk_0_20, /* पूर्णांकc0 */
+	&__clk_0_18, /* intc0 */
+	&__clk_0_19, /* intc0 */
+	&__clk_0_20, /* intc0 */
 	&__clk_0_23, /* dspi.0 */
 	&__clk_0_24, /* uart0 */
 	&__clk_0_25, /* uart1 */
@@ -165,17 +164,17 @@ DEFINE_CLK(2, "per.0", 2, MCF_CLK);
 
 	&__clk_1_36, /* CCM/reset module/Power management */
 	&__clk_1_37, /* gpio */
-पूर्ण;
-अटल काष्ठा clk * स्थिर disable_clks[] __initस्थिर = अणु
+};
+static struct clk * const disable_clks[] __initconst = {
 	&__clk_0_8, /* can.0 */
 	&__clk_0_9, /* can.1 */
 	&__clk_0_14, /* i2c.1 */
 	&__clk_0_22, /* i2c.0 */
 	&__clk_0_23, /* dspi.0 */
-	&__clk_0_28, /* पंचांगr.1 */
-	&__clk_0_29, /* पंचांगr.2 */
-	&__clk_0_30, /* पंचांगr.2 */
-	&__clk_0_31, /* पंचांगr.3 */
+	&__clk_0_28, /* tmr.1 */
+	&__clk_0_29, /* tmr.2 */
+	&__clk_0_30, /* tmr.2 */
+	&__clk_0_31, /* tmr.3 */
 	&__clk_0_32, /* pit.0 */
 	&__clk_0_34, /* pit.2 */
 	&__clk_0_35, /* pit.3 */
@@ -189,8 +188,8 @@ DEFINE_CLK(2, "per.0", 2, MCF_CLK);
 	&__clk_0_51, /* eSDHC */
 	&__clk_0_53, /* enet-fec */
 	&__clk_0_54, /* enet-fec */
-	&__clk_0_55, /* चयन.0 */
-	&__clk_0_56, /* चयन.1 */
+	&__clk_0_55, /* switch.0 */
+	&__clk_0_56, /* switch.1 */
 
 	&__clk_1_2, /* 1-wire */
 	&__clk_1_4, /* i2c.2 */
@@ -203,50 +202,50 @@ DEFINE_CLK(2, "per.0", 2, MCF_CLK);
 	&__clk_1_27, /* uart 7 */
 	&__clk_1_28, /* uart 8 */
 	&__clk_1_29, /* uart 9 */
-पूर्ण;
+};
 
-अटल व्योम __clk_enable2(काष्ठा clk *clk)
-अणु
-	__raw_ग_लिखोl(__raw_पढ़ोl(MCFSDHC_CLK) | (1 << clk->slot), MCFSDHC_CLK);
-पूर्ण
+static void __clk_enable2(struct clk *clk)
+{
+	__raw_writel(__raw_readl(MCFSDHC_CLK) | (1 << clk->slot), MCFSDHC_CLK);
+}
 
-अटल व्योम __clk_disable2(काष्ठा clk *clk)
-अणु
-	__raw_ग_लिखोl(__raw_पढ़ोl(MCFSDHC_CLK) & ~(1 << clk->slot), MCFSDHC_CLK);
-पूर्ण
+static void __clk_disable2(struct clk *clk)
+{
+	__raw_writel(__raw_readl(MCFSDHC_CLK) & ~(1 << clk->slot), MCFSDHC_CLK);
+}
 
-काष्ठा clk_ops clk_ops2 = अणु
+struct clk_ops clk_ops2 = {
 	.enable		= __clk_enable2,
 	.disable	= __clk_disable2,
-पूर्ण;
+};
 
-अटल व्योम __init m5441x_clk_init(व्योम)
-अणु
-	अचिन्हित i;
+static void __init m5441x_clk_init(void)
+{
+	unsigned i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(enable_clks); ++i)
+	for (i = 0; i < ARRAY_SIZE(enable_clks); ++i)
 		__clk_init_enabled(enable_clks[i]);
-	/* make sure these घड़ीs are disabled */
-	क्रम (i = 0; i < ARRAY_SIZE(disable_clks); ++i)
+	/* make sure these clocks are disabled */
+	for (i = 0; i < ARRAY_SIZE(disable_clks); ++i)
 		__clk_init_disabled(disable_clks[i]);
-पूर्ण
+}
 
-अटल व्योम __init m5441x_uarts_init(व्योम)
-अणु
-	__raw_ग_लिखोb(0x0f, MCFGPIO_PAR_UART0);
-	__raw_ग_लिखोb(0x00, MCFGPIO_PAR_UART1);
-	__raw_ग_लिखोb(0x00, MCFGPIO_PAR_UART2);
-पूर्ण
+static void __init m5441x_uarts_init(void)
+{
+	__raw_writeb(0x0f, MCFGPIO_PAR_UART0);
+	__raw_writeb(0x00, MCFGPIO_PAR_UART1);
+	__raw_writeb(0x00, MCFGPIO_PAR_UART2);
+}
 
-अटल व्योम __init m5441x_fec_init(व्योम)
-अणु
-	__raw_ग_लिखोb(0x03, MCFGPIO_PAR_FEC);
-पूर्ण
+static void __init m5441x_fec_init(void)
+{
+	__raw_writeb(0x03, MCFGPIO_PAR_FEC);
+}
 
-व्योम __init config_BSP(अक्षर *commandp, पूर्णांक size)
-अणु
+void __init config_BSP(char *commandp, int size)
+{
 	m5441x_clk_init();
-	mach_sched_init = hw_समयr_init;
+	mach_sched_init = hw_timer_init;
 	m5441x_uarts_init();
 	m5441x_fec_init();
-पूर्ण
+}

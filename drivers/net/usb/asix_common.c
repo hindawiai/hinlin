@@ -1,470 +1,469 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * ASIX AX8817X based USB 2.0 Ethernet Devices
  * Copyright (C) 2003-2006 David Hollis <dhollis@davehollis.com>
  * Copyright (C) 2005 Phil Chang <pchang23@sbcglobal.net>
- * Copyright (C) 2006 James Paपूर्णांकer <jamie.paपूर्णांकer@iname.com>
+ * Copyright (C) 2006 James Painter <jamie.painter@iname.com>
  * Copyright (c) 2002-2003 TiVo Inc.
  */
 
-#समावेश "asix.h"
+#include "asix.h"
 
-पूर्णांक asix_पढ़ो_cmd(काष्ठा usbnet *dev, u8 cmd, u16 value, u16 index,
-		  u16 size, व्योम *data, पूर्णांक in_pm)
-अणु
-	पूर्णांक ret;
-	पूर्णांक (*fn)(काष्ठा usbnet *, u8, u8, u16, u16, व्योम *, u16);
+int asix_read_cmd(struct usbnet *dev, u8 cmd, u16 value, u16 index,
+		  u16 size, void *data, int in_pm)
+{
+	int ret;
+	int (*fn)(struct usbnet *, u8, u8, u16, u16, void *, u16);
 
 	BUG_ON(!dev);
 
-	अगर (!in_pm)
-		fn = usbnet_पढ़ो_cmd;
-	अन्यथा
-		fn = usbnet_पढ़ो_cmd_nopm;
+	if (!in_pm)
+		fn = usbnet_read_cmd;
+	else
+		fn = usbnet_read_cmd_nopm;
 
-	ret = fn(dev, cmd, USB_सूची_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
+	ret = fn(dev, cmd, USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
 		 value, index, data, size);
 
-	अगर (unlikely(ret < 0))
+	if (unlikely(ret < 0))
 		netdev_warn(dev->net, "Failed to read reg index 0x%04x: %d\n",
 			    index, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक asix_ग_लिखो_cmd(काष्ठा usbnet *dev, u8 cmd, u16 value, u16 index,
-		   u16 size, व्योम *data, पूर्णांक in_pm)
-अणु
-	पूर्णांक ret;
-	पूर्णांक (*fn)(काष्ठा usbnet *, u8, u8, u16, u16, स्थिर व्योम *, u16);
+int asix_write_cmd(struct usbnet *dev, u8 cmd, u16 value, u16 index,
+		   u16 size, void *data, int in_pm)
+{
+	int ret;
+	int (*fn)(struct usbnet *, u8, u8, u16, u16, const void *, u16);
 
 	BUG_ON(!dev);
 
-	अगर (!in_pm)
-		fn = usbnet_ग_लिखो_cmd;
-	अन्यथा
-		fn = usbnet_ग_लिखो_cmd_nopm;
+	if (!in_pm)
+		fn = usbnet_write_cmd;
+	else
+		fn = usbnet_write_cmd_nopm;
 
-	ret = fn(dev, cmd, USB_सूची_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
+	ret = fn(dev, cmd, USB_DIR_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
 		 value, index, data, size);
 
-	अगर (unlikely(ret < 0))
+	if (unlikely(ret < 0))
 		netdev_warn(dev->net, "Failed to write reg index 0x%04x: %d\n",
 			    index, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम asix_ग_लिखो_cmd_async(काष्ठा usbnet *dev, u8 cmd, u16 value, u16 index,
-			  u16 size, व्योम *data)
-अणु
-	usbnet_ग_लिखो_cmd_async(dev, cmd,
-			       USB_सूची_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
+void asix_write_cmd_async(struct usbnet *dev, u8 cmd, u16 value, u16 index,
+			  u16 size, void *data)
+{
+	usbnet_write_cmd_async(dev, cmd,
+			       USB_DIR_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
 			       value, index, data, size);
-पूर्ण
+}
 
-अटल व्योम reset_asix_rx_fixup_info(काष्ठा asix_rx_fixup_info *rx)
-अणु
-	/* Reset the variables that have a lअगरeसमय outside of
-	 * asix_rx_fixup_पूर्णांकernal() so that future processing starts from a
+static void reset_asix_rx_fixup_info(struct asix_rx_fixup_info *rx)
+{
+	/* Reset the variables that have a lifetime outside of
+	 * asix_rx_fixup_internal() so that future processing starts from a
 	 * known set of initial conditions.
 	 */
 
-	अगर (rx->ax_skb) अणु
+	if (rx->ax_skb) {
 		/* Discard any incomplete Ethernet frame in the netdev buffer */
-		kमुक्त_skb(rx->ax_skb);
-		rx->ax_skb = शून्य;
-	पूर्ण
+		kfree_skb(rx->ax_skb);
+		rx->ax_skb = NULL;
+	}
 
 	/* Assume the Data header 32-bit word is at the start of the current
 	 * or next URB socket buffer so reset all the state variables.
 	 */
-	rx->reमुख्यing = 0;
+	rx->remaining = 0;
 	rx->split_head = false;
 	rx->header = 0;
-पूर्ण
+}
 
-पूर्णांक asix_rx_fixup_पूर्णांकernal(काष्ठा usbnet *dev, काष्ठा sk_buff *skb,
-			   काष्ठा asix_rx_fixup_info *rx)
-अणु
-	पूर्णांक offset = 0;
+int asix_rx_fixup_internal(struct usbnet *dev, struct sk_buff *skb,
+			   struct asix_rx_fixup_info *rx)
+{
+	int offset = 0;
 	u16 size;
 
 	/* When an Ethernet frame spans multiple URB socket buffers,
-	 * करो a sanity test क्रम the Data header synchronisation.
+	 * do a sanity test for the Data header synchronisation.
 	 * Attempt to detect the situation of the previous socket buffer having
 	 * been truncated or a socket buffer was missing. These situations
-	 * cause a discontinuity in the data stream and thereक्रमe need to aव्योम
+	 * cause a discontinuity in the data stream and therefore need to avoid
 	 * appending bad data to the end of the current netdev socket buffer.
-	 * Also aव्योम unnecessarily discarding a good current netdev socket
+	 * Also avoid unnecessarily discarding a good current netdev socket
 	 * buffer.
 	 */
-	अगर (rx->reमुख्यing && (rx->reमुख्यing + माप(u32) <= skb->len)) अणु
-		offset = ((rx->reमुख्यing + 1) & 0xfffe);
+	if (rx->remaining && (rx->remaining + sizeof(u32) <= skb->len)) {
+		offset = ((rx->remaining + 1) & 0xfffe);
 		rx->header = get_unaligned_le32(skb->data + offset);
 		offset = 0;
 
 		size = (u16)(rx->header & 0x7ff);
-		अगर (size != ((~rx->header >> 16) & 0x7ff)) अणु
+		if (size != ((~rx->header >> 16) & 0x7ff)) {
 			netdev_err(dev->net, "asix_rx_fixup() Data Header synchronisation was lost, remaining %d\n",
-				   rx->reमुख्यing);
+				   rx->remaining);
 			reset_asix_rx_fixup_info(rx);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	जबतक (offset + माप(u16) <= skb->len) अणु
+	while (offset + sizeof(u16) <= skb->len) {
 		u16 copy_length;
 
-		अगर (!rx->reमुख्यing) अणु
-			अगर (skb->len - offset == माप(u16)) अणु
+		if (!rx->remaining) {
+			if (skb->len - offset == sizeof(u16)) {
 				rx->header = get_unaligned_le16(
 						skb->data + offset);
 				rx->split_head = true;
-				offset += माप(u16);
-				अवरोध;
-			पूर्ण
+				offset += sizeof(u16);
+				break;
+			}
 
-			अगर (rx->split_head == true) अणु
+			if (rx->split_head == true) {
 				rx->header |= (get_unaligned_le16(
 						skb->data + offset) << 16);
 				rx->split_head = false;
-				offset += माप(u16);
-			पूर्ण अन्यथा अणु
+				offset += sizeof(u16);
+			} else {
 				rx->header = get_unaligned_le32(skb->data +
 								offset);
-				offset += माप(u32);
-			पूर्ण
+				offset += sizeof(u32);
+			}
 
 			/* take frame length from Data header 32-bit word */
 			size = (u16)(rx->header & 0x7ff);
-			अगर (size != ((~rx->header >> 16) & 0x7ff)) अणु
+			if (size != ((~rx->header >> 16) & 0x7ff)) {
 				netdev_err(dev->net, "asix_rx_fixup() Bad Header Length 0x%x, offset %d\n",
 					   rx->header, offset);
 				reset_asix_rx_fixup_info(rx);
-				वापस 0;
-			पूर्ण
-			अगर (size > dev->net->mtu + ETH_HLEN + VLAN_HLEN) अणु
+				return 0;
+			}
+			if (size > dev->net->mtu + ETH_HLEN + VLAN_HLEN) {
 				netdev_dbg(dev->net, "asix_rx_fixup() Bad RX Length %d\n",
 					   size);
 				reset_asix_rx_fixup_info(rx);
-				वापस 0;
-			पूर्ण
+				return 0;
+			}
 
-			/* Someबार may fail to get a netdev socket buffer but
-			 * जारी to process the URB socket buffer so that
+			/* Sometimes may fail to get a netdev socket buffer but
+			 * continue to process the URB socket buffer so that
 			 * synchronisation of the Ethernet frame Data header
-			 * word is मुख्यtained.
+			 * word is maintained.
 			 */
 			rx->ax_skb = netdev_alloc_skb_ip_align(dev->net, size);
 
-			rx->reमुख्यing = size;
-		पूर्ण
+			rx->remaining = size;
+		}
 
-		अगर (rx->reमुख्यing > skb->len - offset) अणु
+		if (rx->remaining > skb->len - offset) {
 			copy_length = skb->len - offset;
-			rx->reमुख्यing -= copy_length;
-		पूर्ण अन्यथा अणु
-			copy_length = rx->reमुख्यing;
-			rx->reमुख्यing = 0;
-		पूर्ण
+			rx->remaining -= copy_length;
+		} else {
+			copy_length = rx->remaining;
+			rx->remaining = 0;
+		}
 
-		अगर (rx->ax_skb) अणु
+		if (rx->ax_skb) {
 			skb_put_data(rx->ax_skb, skb->data + offset,
 				     copy_length);
-			अगर (!rx->reमुख्यing) अणु
-				usbnet_skb_वापस(dev, rx->ax_skb);
-				rx->ax_skb = शून्य;
-			पूर्ण
-		पूर्ण
+			if (!rx->remaining) {
+				usbnet_skb_return(dev, rx->ax_skb);
+				rx->ax_skb = NULL;
+			}
+		}
 
 		offset += (copy_length + 1) & 0xfffe;
-	पूर्ण
+	}
 
-	अगर (skb->len != offset) अणु
+	if (skb->len != offset) {
 		netdev_err(dev->net, "asix_rx_fixup() Bad SKB Length %d, %d\n",
 			   skb->len, offset);
 		reset_asix_rx_fixup_info(rx);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-पूर्णांक asix_rx_fixup_common(काष्ठा usbnet *dev, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा asix_common_निजी *dp = dev->driver_priv;
-	काष्ठा asix_rx_fixup_info *rx = &dp->rx_fixup_info;
+int asix_rx_fixup_common(struct usbnet *dev, struct sk_buff *skb)
+{
+	struct asix_common_private *dp = dev->driver_priv;
+	struct asix_rx_fixup_info *rx = &dp->rx_fixup_info;
 
-	वापस asix_rx_fixup_पूर्णांकernal(dev, skb, rx);
-पूर्ण
+	return asix_rx_fixup_internal(dev, skb, rx);
+}
 
-व्योम asix_rx_fixup_common_मुक्त(काष्ठा asix_common_निजी *dp)
-अणु
-	काष्ठा asix_rx_fixup_info *rx;
+void asix_rx_fixup_common_free(struct asix_common_private *dp)
+{
+	struct asix_rx_fixup_info *rx;
 
-	अगर (!dp)
-		वापस;
+	if (!dp)
+		return;
 
 	rx = &dp->rx_fixup_info;
 
-	अगर (rx->ax_skb) अणु
-		kमुक्त_skb(rx->ax_skb);
-		rx->ax_skb = शून्य;
-	पूर्ण
-पूर्ण
+	if (rx->ax_skb) {
+		kfree_skb(rx->ax_skb);
+		rx->ax_skb = NULL;
+	}
+}
 
-काष्ठा sk_buff *asix_tx_fixup(काष्ठा usbnet *dev, काष्ठा sk_buff *skb,
+struct sk_buff *asix_tx_fixup(struct usbnet *dev, struct sk_buff *skb,
 			      gfp_t flags)
-अणु
-	पूर्णांक padlen;
-	पूर्णांक headroom = skb_headroom(skb);
-	पूर्णांक tailroom = skb_tailroom(skb);
+{
+	int padlen;
+	int headroom = skb_headroom(skb);
+	int tailroom = skb_tailroom(skb);
 	u32 packet_len;
 	u32 padbytes = 0xffff0000;
-	व्योम *ptr;
+	void *ptr;
 
 	padlen = ((skb->len + 4) & (dev->maxpacket - 1)) ? 0 : 4;
 
 	/* We need to push 4 bytes in front of frame (packet_len)
-	 * and maybe add 4 bytes after the end (अगर padlen is 4)
+	 * and maybe add 4 bytes after the end (if padlen is 4)
 	 *
-	 * Aव्योम skb_copy_expand() expensive call, using following rules :
-	 * - We are allowed to push 4 bytes in headroom अगर skb_header_cloned()
-	 *   is false (and अगर we have 4 bytes of headroom)
-	 * - We are allowed to put 4 bytes at tail अगर skb_cloned()
-	 *   is false (and अगर we have 4 bytes of tailroom)
+	 * Avoid skb_copy_expand() expensive call, using following rules :
+	 * - We are allowed to push 4 bytes in headroom if skb_header_cloned()
+	 *   is false (and if we have 4 bytes of headroom)
+	 * - We are allowed to put 4 bytes at tail if skb_cloned()
+	 *   is false (and if we have 4 bytes of tailroom)
 	 *
-	 * TCP packets क्रम example are cloned, but __skb_header_release()
-	 * was called in tcp stack, allowing us to use headroom क्रम our needs.
+	 * TCP packets for example are cloned, but __skb_header_release()
+	 * was called in tcp stack, allowing us to use headroom for our needs.
 	 */
-	अगर (!skb_header_cloned(skb) &&
+	if (!skb_header_cloned(skb) &&
 	    !(padlen && skb_cloned(skb)) &&
-	    headroom + tailroom >= 4 + padlen) अणु
+	    headroom + tailroom >= 4 + padlen) {
 		/* following should not happen, but better be safe */
-		अगर (headroom < 4 ||
-		    tailroom < padlen) अणु
-			skb->data = स_हटाओ(skb->head + 4, skb->data, skb->len);
-			skb_set_tail_poपूर्णांकer(skb, skb->len);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		काष्ठा sk_buff *skb2;
+		if (headroom < 4 ||
+		    tailroom < padlen) {
+			skb->data = memmove(skb->head + 4, skb->data, skb->len);
+			skb_set_tail_pointer(skb, skb->len);
+		}
+	} else {
+		struct sk_buff *skb2;
 
 		skb2 = skb_copy_expand(skb, 4, padlen, flags);
-		dev_kमुक्त_skb_any(skb);
+		dev_kfree_skb_any(skb);
 		skb = skb2;
-		अगर (!skb)
-			वापस शून्य;
-	पूर्ण
+		if (!skb)
+			return NULL;
+	}
 
 	packet_len = ((skb->len ^ 0x0000ffff) << 16) + skb->len;
 	ptr = skb_push(skb, 4);
 	put_unaligned_le32(packet_len, ptr);
 
-	अगर (padlen) अणु
-		put_unaligned_le32(padbytes, skb_tail_poपूर्णांकer(skb));
-		skb_put(skb, माप(padbytes));
-	पूर्ण
+	if (padlen) {
+		put_unaligned_le32(padbytes, skb_tail_pointer(skb));
+		skb_put(skb, sizeof(padbytes));
+	}
 
 	usbnet_set_skb_tx_stats(skb, 1, 0);
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-पूर्णांक asix_set_sw_mii(काष्ठा usbnet *dev, पूर्णांक in_pm)
-अणु
-	पूर्णांक ret;
-	ret = asix_ग_लिखो_cmd(dev, AX_CMD_SET_SW_MII, 0x0000, 0, 0, शून्य, in_pm);
+int asix_set_sw_mii(struct usbnet *dev, int in_pm)
+{
+	int ret;
+	ret = asix_write_cmd(dev, AX_CMD_SET_SW_MII, 0x0000, 0, 0, NULL, in_pm);
 
-	अगर (ret < 0)
+	if (ret < 0)
 		netdev_err(dev->net, "Failed to enable software MII access\n");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक asix_set_hw_mii(काष्ठा usbnet *dev, पूर्णांक in_pm)
-अणु
-	पूर्णांक ret;
-	ret = asix_ग_लिखो_cmd(dev, AX_CMD_SET_HW_MII, 0x0000, 0, 0, शून्य, in_pm);
-	अगर (ret < 0)
+int asix_set_hw_mii(struct usbnet *dev, int in_pm)
+{
+	int ret;
+	ret = asix_write_cmd(dev, AX_CMD_SET_HW_MII, 0x0000, 0, 0, NULL, in_pm);
+	if (ret < 0)
 		netdev_err(dev->net, "Failed to enable hardware MII access\n");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक asix_पढ़ो_phy_addr(काष्ठा usbnet *dev, पूर्णांक पूर्णांकernal)
-अणु
-	पूर्णांक offset = (पूर्णांकernal ? 1 : 0);
+int asix_read_phy_addr(struct usbnet *dev, int internal)
+{
+	int offset = (internal ? 1 : 0);
 	u8 buf[2];
-	पूर्णांक ret = asix_पढ़ो_cmd(dev, AX_CMD_READ_PHY_ID, 0, 0, 2, buf, 0);
+	int ret = asix_read_cmd(dev, AX_CMD_READ_PHY_ID, 0, 0, 2, buf, 0);
 
 	netdev_dbg(dev->net, "asix_get_phy_addr()\n");
 
-	अगर (ret < 2) अणु
+	if (ret < 2) {
 		netdev_err(dev->net, "Error reading PHYID register: %02x\n", ret);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	netdev_dbg(dev->net, "asix_get_phy_addr() returning 0x%04x\n",
 		   *((__le16 *)buf));
 	ret = buf[offset];
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक asix_get_phy_addr(काष्ठा usbnet *dev)
-अणु
-	/* वापस the address of the पूर्णांकernal phy */
-	वापस asix_पढ़ो_phy_addr(dev, 1);
-पूर्ण
+int asix_get_phy_addr(struct usbnet *dev)
+{
+	/* return the address of the internal phy */
+	return asix_read_phy_addr(dev, 1);
+}
 
 
-पूर्णांक asix_sw_reset(काष्ठा usbnet *dev, u8 flags, पूर्णांक in_pm)
-अणु
-	पूर्णांक ret;
+int asix_sw_reset(struct usbnet *dev, u8 flags, int in_pm)
+{
+	int ret;
 
-	ret = asix_ग_लिखो_cmd(dev, AX_CMD_SW_RESET, flags, 0, 0, शून्य, in_pm);
-	अगर (ret < 0)
+	ret = asix_write_cmd(dev, AX_CMD_SW_RESET, flags, 0, 0, NULL, in_pm);
+	if (ret < 0)
 		netdev_err(dev->net, "Failed to send software reset: %02x\n", ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-u16 asix_पढ़ो_rx_ctl(काष्ठा usbnet *dev, पूर्णांक in_pm)
-अणु
+u16 asix_read_rx_ctl(struct usbnet *dev, int in_pm)
+{
 	__le16 v;
-	पूर्णांक ret = asix_पढ़ो_cmd(dev, AX_CMD_READ_RX_CTL, 0, 0, 2, &v, in_pm);
+	int ret = asix_read_cmd(dev, AX_CMD_READ_RX_CTL, 0, 0, 2, &v, in_pm);
 
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		netdev_err(dev->net, "Error reading RX_CTL register: %02x\n", ret);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	ret = le16_to_cpu(v);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक asix_ग_लिखो_rx_ctl(काष्ठा usbnet *dev, u16 mode, पूर्णांक in_pm)
-अणु
-	पूर्णांक ret;
+int asix_write_rx_ctl(struct usbnet *dev, u16 mode, int in_pm)
+{
+	int ret;
 
 	netdev_dbg(dev->net, "asix_write_rx_ctl() - mode = 0x%04x\n", mode);
-	ret = asix_ग_लिखो_cmd(dev, AX_CMD_WRITE_RX_CTL, mode, 0, 0, शून्य, in_pm);
-	अगर (ret < 0)
+	ret = asix_write_cmd(dev, AX_CMD_WRITE_RX_CTL, mode, 0, 0, NULL, in_pm);
+	if (ret < 0)
 		netdev_err(dev->net, "Failed to write RX_CTL mode to 0x%04x: %02x\n",
 			   mode, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-u16 asix_पढ़ो_medium_status(काष्ठा usbnet *dev, पूर्णांक in_pm)
-अणु
+u16 asix_read_medium_status(struct usbnet *dev, int in_pm)
+{
 	__le16 v;
-	पूर्णांक ret = asix_पढ़ो_cmd(dev, AX_CMD_READ_MEDIUM_STATUS,
+	int ret = asix_read_cmd(dev, AX_CMD_READ_MEDIUM_STATUS,
 				0, 0, 2, &v, in_pm);
 
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		netdev_err(dev->net, "Error reading Medium Status register: %02x\n",
 			   ret);
-		वापस ret;	/* TODO: callers not checking क्रम error ret */
-	पूर्ण
+		return ret;	/* TODO: callers not checking for error ret */
+	}
 
-	वापस le16_to_cpu(v);
+	return le16_to_cpu(v);
 
-पूर्ण
+}
 
-पूर्णांक asix_ग_लिखो_medium_mode(काष्ठा usbnet *dev, u16 mode, पूर्णांक in_pm)
-अणु
-	पूर्णांक ret;
+int asix_write_medium_mode(struct usbnet *dev, u16 mode, int in_pm)
+{
+	int ret;
 
 	netdev_dbg(dev->net, "asix_write_medium_mode() - mode = 0x%04x\n", mode);
-	ret = asix_ग_लिखो_cmd(dev, AX_CMD_WRITE_MEDIUM_MODE,
-			     mode, 0, 0, शून्य, in_pm);
-	अगर (ret < 0)
+	ret = asix_write_cmd(dev, AX_CMD_WRITE_MEDIUM_MODE,
+			     mode, 0, 0, NULL, in_pm);
+	if (ret < 0)
 		netdev_err(dev->net, "Failed to write Medium Mode mode to 0x%04x: %02x\n",
 			   mode, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक asix_ग_लिखो_gpio(काष्ठा usbnet *dev, u16 value, पूर्णांक sleep, पूर्णांक in_pm)
-अणु
-	पूर्णांक ret;
+int asix_write_gpio(struct usbnet *dev, u16 value, int sleep, int in_pm)
+{
+	int ret;
 
 	netdev_dbg(dev->net, "asix_write_gpio() - value = 0x%04x\n", value);
-	ret = asix_ग_लिखो_cmd(dev, AX_CMD_WRITE_GPIOS, value, 0, 0, शून्य, in_pm);
-	अगर (ret < 0)
+	ret = asix_write_cmd(dev, AX_CMD_WRITE_GPIOS, value, 0, 0, NULL, in_pm);
+	if (ret < 0)
 		netdev_err(dev->net, "Failed to write GPIO value 0x%04x: %02x\n",
 			   value, ret);
 
-	अगर (sleep)
+	if (sleep)
 		msleep(sleep);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * AX88772 & AX88178 have a 16-bit RX_CTL value
  */
-व्योम asix_set_multicast(काष्ठा net_device *net)
-अणु
-	काष्ठा usbnet *dev = netdev_priv(net);
-	काष्ठा asix_data *data = (काष्ठा asix_data *)&dev->data;
+void asix_set_multicast(struct net_device *net)
+{
+	struct usbnet *dev = netdev_priv(net);
+	struct asix_data *data = (struct asix_data *)&dev->data;
 	u16 rx_ctl = AX_DEFAULT_RX_CTL;
 
-	अगर (net->flags & IFF_PROMISC) अणु
+	if (net->flags & IFF_PROMISC) {
 		rx_ctl |= AX_RX_CTL_PRO;
-	पूर्ण अन्यथा अगर (net->flags & IFF_ALLMULTI ||
-		   netdev_mc_count(net) > AX_MAX_MCAST) अणु
+	} else if (net->flags & IFF_ALLMULTI ||
+		   netdev_mc_count(net) > AX_MAX_MCAST) {
 		rx_ctl |= AX_RX_CTL_AMALL;
-	पूर्ण अन्यथा अगर (netdev_mc_empty(net)) अणु
+	} else if (netdev_mc_empty(net)) {
 		/* just broadcast and directed */
-	पूर्ण अन्यथा अणु
+	} else {
 		/* We use the 20 byte dev->data
-		 * क्रम our 8 byte filter buffer
-		 * to aव्योम allocating memory that
-		 * is tricky to मुक्त later */
-		काष्ठा netdev_hw_addr *ha;
+		 * for our 8 byte filter buffer
+		 * to avoid allocating memory that
+		 * is tricky to free later */
+		struct netdev_hw_addr *ha;
 		u32 crc_bits;
 
-		स_रखो(data->multi_filter, 0, AX_MCAST_FILTER_SIZE);
+		memset(data->multi_filter, 0, AX_MCAST_FILTER_SIZE);
 
 		/* Build the multicast hash filter. */
-		netdev_क्रम_each_mc_addr(ha, net) अणु
+		netdev_for_each_mc_addr(ha, net) {
 			crc_bits = ether_crc(ETH_ALEN, ha->addr) >> 26;
 			data->multi_filter[crc_bits >> 3] |=
 			    1 << (crc_bits & 7);
-		पूर्ण
+		}
 
-		asix_ग_लिखो_cmd_async(dev, AX_CMD_WRITE_MULTI_FILTER, 0, 0,
+		asix_write_cmd_async(dev, AX_CMD_WRITE_MULTI_FILTER, 0, 0,
 				   AX_MCAST_FILTER_SIZE, data->multi_filter);
 
 		rx_ctl |= AX_RX_CTL_AM;
-	पूर्ण
+	}
 
-	asix_ग_लिखो_cmd_async(dev, AX_CMD_WRITE_RX_CTL, rx_ctl, 0, 0, शून्य);
-पूर्ण
+	asix_write_cmd_async(dev, AX_CMD_WRITE_RX_CTL, rx_ctl, 0, 0, NULL);
+}
 
-पूर्णांक asix_mdio_पढ़ो(काष्ठा net_device *netdev, पूर्णांक phy_id, पूर्णांक loc)
-अणु
-	काष्ठा usbnet *dev = netdev_priv(netdev);
+int asix_mdio_read(struct net_device *netdev, int phy_id, int loc)
+{
+	struct usbnet *dev = netdev_priv(netdev);
 	__le16 res;
 	u8 smsr;
-	पूर्णांक i = 0;
-	पूर्णांक ret;
+	int i = 0;
+	int ret;
 
 	mutex_lock(&dev->phy_mutex);
-	करो अणु
+	do {
 		ret = asix_set_sw_mii(dev, 0);
-		अगर (ret == -ENODEV || ret == -ETIMEDOUT)
-			अवरोध;
+		if (ret == -ENODEV || ret == -ETIMEDOUT)
+			break;
 		usleep_range(1000, 1100);
-		ret = asix_पढ़ो_cmd(dev, AX_CMD_STATMNGSTS_REG,
+		ret = asix_read_cmd(dev, AX_CMD_STATMNGSTS_REG,
 				    0, 0, 1, &smsr, 0);
-	पूर्ण जबतक (!(smsr & AX_HOST_EN) && (i++ < 30) && (ret != -ENODEV));
-	अगर (ret == -ENODEV || ret == -ETIMEDOUT) अणु
+	} while (!(smsr & AX_HOST_EN) && (i++ < 30) && (ret != -ENODEV));
+	if (ret == -ENODEV || ret == -ETIMEDOUT) {
 		mutex_unlock(&dev->phy_mutex);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	asix_पढ़ो_cmd(dev, AX_CMD_READ_MII_REG, phy_id,
+	asix_read_cmd(dev, AX_CMD_READ_MII_REG, phy_id,
 				(__u16)loc, 2, &res, 0);
 	asix_set_hw_mii(dev, 0);
 	mutex_unlock(&dev->phy_mutex);
@@ -472,63 +471,63 @@ u16 asix_पढ़ो_medium_status(काष्ठा usbnet *dev, पूर्
 	netdev_dbg(dev->net, "asix_mdio_read() phy_id=0x%02x, loc=0x%02x, returns=0x%04x\n",
 			phy_id, loc, le16_to_cpu(res));
 
-	वापस le16_to_cpu(res);
-पूर्ण
+	return le16_to_cpu(res);
+}
 
-व्योम asix_mdio_ग_लिखो(काष्ठा net_device *netdev, पूर्णांक phy_id, पूर्णांक loc, पूर्णांक val)
-अणु
-	काष्ठा usbnet *dev = netdev_priv(netdev);
+void asix_mdio_write(struct net_device *netdev, int phy_id, int loc, int val)
+{
+	struct usbnet *dev = netdev_priv(netdev);
 	__le16 res = cpu_to_le16(val);
 	u8 smsr;
-	पूर्णांक i = 0;
-	पूर्णांक ret;
+	int i = 0;
+	int ret;
 
 	netdev_dbg(dev->net, "asix_mdio_write() phy_id=0x%02x, loc=0x%02x, val=0x%04x\n",
 			phy_id, loc, val);
 
 	mutex_lock(&dev->phy_mutex);
-	करो अणु
+	do {
 		ret = asix_set_sw_mii(dev, 0);
-		अगर (ret == -ENODEV)
-			अवरोध;
+		if (ret == -ENODEV)
+			break;
 		usleep_range(1000, 1100);
-		ret = asix_पढ़ो_cmd(dev, AX_CMD_STATMNGSTS_REG,
+		ret = asix_read_cmd(dev, AX_CMD_STATMNGSTS_REG,
 				    0, 0, 1, &smsr, 0);
-	पूर्ण जबतक (!(smsr & AX_HOST_EN) && (i++ < 30) && (ret != -ENODEV));
-	अगर (ret == -ENODEV) अणु
+	} while (!(smsr & AX_HOST_EN) && (i++ < 30) && (ret != -ENODEV));
+	if (ret == -ENODEV) {
 		mutex_unlock(&dev->phy_mutex);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	asix_ग_लिखो_cmd(dev, AX_CMD_WRITE_MII_REG, phy_id,
+	asix_write_cmd(dev, AX_CMD_WRITE_MII_REG, phy_id,
 		       (__u16)loc, 2, &res, 0);
 	asix_set_hw_mii(dev, 0);
 	mutex_unlock(&dev->phy_mutex);
-पूर्ण
+}
 
-पूर्णांक asix_mdio_पढ़ो_nopm(काष्ठा net_device *netdev, पूर्णांक phy_id, पूर्णांक loc)
-अणु
-	काष्ठा usbnet *dev = netdev_priv(netdev);
+int asix_mdio_read_nopm(struct net_device *netdev, int phy_id, int loc)
+{
+	struct usbnet *dev = netdev_priv(netdev);
 	__le16 res;
 	u8 smsr;
-	पूर्णांक i = 0;
-	पूर्णांक ret;
+	int i = 0;
+	int ret;
 
 	mutex_lock(&dev->phy_mutex);
-	करो अणु
+	do {
 		ret = asix_set_sw_mii(dev, 1);
-		अगर (ret == -ENODEV || ret == -ETIMEDOUT)
-			अवरोध;
+		if (ret == -ENODEV || ret == -ETIMEDOUT)
+			break;
 		usleep_range(1000, 1100);
-		ret = asix_पढ़ो_cmd(dev, AX_CMD_STATMNGSTS_REG,
+		ret = asix_read_cmd(dev, AX_CMD_STATMNGSTS_REG,
 				    0, 0, 1, &smsr, 1);
-	पूर्ण जबतक (!(smsr & AX_HOST_EN) && (i++ < 30) && (ret != -ENODEV));
-	अगर (ret == -ENODEV || ret == -ETIMEDOUT) अणु
+	} while (!(smsr & AX_HOST_EN) && (i++ < 30) && (ret != -ENODEV));
+	if (ret == -ENODEV || ret == -ETIMEDOUT) {
 		mutex_unlock(&dev->phy_mutex);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	asix_पढ़ो_cmd(dev, AX_CMD_READ_MII_REG, phy_id,
+	asix_read_cmd(dev, AX_CMD_READ_MII_REG, phy_id,
 		      (__u16)loc, 2, &res, 1);
 	asix_set_hw_mii(dev, 1);
 	mutex_unlock(&dev->phy_mutex);
@@ -536,229 +535,229 @@ u16 asix_पढ़ो_medium_status(काष्ठा usbnet *dev, पूर्
 	netdev_dbg(dev->net, "asix_mdio_read_nopm() phy_id=0x%02x, loc=0x%02x, returns=0x%04x\n",
 			phy_id, loc, le16_to_cpu(res));
 
-	वापस le16_to_cpu(res);
-पूर्ण
+	return le16_to_cpu(res);
+}
 
-व्योम
-asix_mdio_ग_लिखो_nopm(काष्ठा net_device *netdev, पूर्णांक phy_id, पूर्णांक loc, पूर्णांक val)
-अणु
-	काष्ठा usbnet *dev = netdev_priv(netdev);
+void
+asix_mdio_write_nopm(struct net_device *netdev, int phy_id, int loc, int val)
+{
+	struct usbnet *dev = netdev_priv(netdev);
 	__le16 res = cpu_to_le16(val);
 	u8 smsr;
-	पूर्णांक i = 0;
-	पूर्णांक ret;
+	int i = 0;
+	int ret;
 
 	netdev_dbg(dev->net, "asix_mdio_write() phy_id=0x%02x, loc=0x%02x, val=0x%04x\n",
 			phy_id, loc, val);
 
 	mutex_lock(&dev->phy_mutex);
-	करो अणु
+	do {
 		ret = asix_set_sw_mii(dev, 1);
-		अगर (ret == -ENODEV)
-			अवरोध;
+		if (ret == -ENODEV)
+			break;
 		usleep_range(1000, 1100);
-		ret = asix_पढ़ो_cmd(dev, AX_CMD_STATMNGSTS_REG,
+		ret = asix_read_cmd(dev, AX_CMD_STATMNGSTS_REG,
 				    0, 0, 1, &smsr, 1);
-	पूर्ण जबतक (!(smsr & AX_HOST_EN) && (i++ < 30) && (ret != -ENODEV));
-	अगर (ret == -ENODEV) अणु
+	} while (!(smsr & AX_HOST_EN) && (i++ < 30) && (ret != -ENODEV));
+	if (ret == -ENODEV) {
 		mutex_unlock(&dev->phy_mutex);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	asix_ग_लिखो_cmd(dev, AX_CMD_WRITE_MII_REG, phy_id,
+	asix_write_cmd(dev, AX_CMD_WRITE_MII_REG, phy_id,
 		       (__u16)loc, 2, &res, 1);
 	asix_set_hw_mii(dev, 1);
 	mutex_unlock(&dev->phy_mutex);
-पूर्ण
+}
 
-व्योम asix_get_wol(काष्ठा net_device *net, काष्ठा ethtool_wolinfo *wolinfo)
-अणु
-	काष्ठा usbnet *dev = netdev_priv(net);
+void asix_get_wol(struct net_device *net, struct ethtool_wolinfo *wolinfo)
+{
+	struct usbnet *dev = netdev_priv(net);
 	u8 opt;
 
-	अगर (asix_पढ़ो_cmd(dev, AX_CMD_READ_MONITOR_MODE,
-			  0, 0, 1, &opt, 0) < 0) अणु
+	if (asix_read_cmd(dev, AX_CMD_READ_MONITOR_MODE,
+			  0, 0, 1, &opt, 0) < 0) {
 		wolinfo->supported = 0;
 		wolinfo->wolopts = 0;
-		वापस;
-	पूर्ण
+		return;
+	}
 	wolinfo->supported = WAKE_PHY | WAKE_MAGIC;
 	wolinfo->wolopts = 0;
-	अगर (opt & AX_MONITOR_LINK)
+	if (opt & AX_MONITOR_LINK)
 		wolinfo->wolopts |= WAKE_PHY;
-	अगर (opt & AX_MONITOR_MAGIC)
+	if (opt & AX_MONITOR_MAGIC)
 		wolinfo->wolopts |= WAKE_MAGIC;
-पूर्ण
+}
 
-पूर्णांक asix_set_wol(काष्ठा net_device *net, काष्ठा ethtool_wolinfo *wolinfo)
-अणु
-	काष्ठा usbnet *dev = netdev_priv(net);
+int asix_set_wol(struct net_device *net, struct ethtool_wolinfo *wolinfo)
+{
+	struct usbnet *dev = netdev_priv(net);
 	u8 opt = 0;
 
-	अगर (wolinfo->wolopts & ~(WAKE_PHY | WAKE_MAGIC))
-		वापस -EINVAL;
+	if (wolinfo->wolopts & ~(WAKE_PHY | WAKE_MAGIC))
+		return -EINVAL;
 
-	अगर (wolinfo->wolopts & WAKE_PHY)
+	if (wolinfo->wolopts & WAKE_PHY)
 		opt |= AX_MONITOR_LINK;
-	अगर (wolinfo->wolopts & WAKE_MAGIC)
+	if (wolinfo->wolopts & WAKE_MAGIC)
 		opt |= AX_MONITOR_MAGIC;
 
-	अगर (asix_ग_लिखो_cmd(dev, AX_CMD_WRITE_MONITOR_MODE,
-			      opt, 0, 0, शून्य, 0) < 0)
-		वापस -EINVAL;
+	if (asix_write_cmd(dev, AX_CMD_WRITE_MONITOR_MODE,
+			      opt, 0, 0, NULL, 0) < 0)
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक asix_get_eeprom_len(काष्ठा net_device *net)
-अणु
-	वापस AX_EEPROM_LEN;
-पूर्ण
+int asix_get_eeprom_len(struct net_device *net)
+{
+	return AX_EEPROM_LEN;
+}
 
-पूर्णांक asix_get_eeprom(काष्ठा net_device *net, काष्ठा ethtool_eeprom *eeprom,
+int asix_get_eeprom(struct net_device *net, struct ethtool_eeprom *eeprom,
 		    u8 *data)
-अणु
-	काष्ठा usbnet *dev = netdev_priv(net);
+{
+	struct usbnet *dev = netdev_priv(net);
 	u16 *eeprom_buff;
-	पूर्णांक first_word, last_word;
-	पूर्णांक i;
+	int first_word, last_word;
+	int i;
 
-	अगर (eeprom->len == 0)
-		वापस -EINVAL;
+	if (eeprom->len == 0)
+		return -EINVAL;
 
 	eeprom->magic = AX_EEPROM_MAGIC;
 
 	first_word = eeprom->offset >> 1;
 	last_word = (eeprom->offset + eeprom->len - 1) >> 1;
 
-	eeprom_buff = kदो_स्मृति_array(last_word - first_word + 1, माप(u16),
+	eeprom_buff = kmalloc_array(last_word - first_word + 1, sizeof(u16),
 				    GFP_KERNEL);
-	अगर (!eeprom_buff)
-		वापस -ENOMEM;
+	if (!eeprom_buff)
+		return -ENOMEM;
 
-	/* ax8817x वापसs 2 bytes from eeprom on पढ़ो */
-	क्रम (i = first_word; i <= last_word; i++) अणु
-		अगर (asix_पढ़ो_cmd(dev, AX_CMD_READ_EEPROM, i, 0, 2,
-				  &eeprom_buff[i - first_word], 0) < 0) अणु
-			kमुक्त(eeprom_buff);
-			वापस -EIO;
-		पूर्ण
-	पूर्ण
+	/* ax8817x returns 2 bytes from eeprom on read */
+	for (i = first_word; i <= last_word; i++) {
+		if (asix_read_cmd(dev, AX_CMD_READ_EEPROM, i, 0, 2,
+				  &eeprom_buff[i - first_word], 0) < 0) {
+			kfree(eeprom_buff);
+			return -EIO;
+		}
+	}
 
-	स_नकल(data, (u8 *)eeprom_buff + (eeprom->offset & 1), eeprom->len);
-	kमुक्त(eeprom_buff);
-	वापस 0;
-पूर्ण
+	memcpy(data, (u8 *)eeprom_buff + (eeprom->offset & 1), eeprom->len);
+	kfree(eeprom_buff);
+	return 0;
+}
 
-पूर्णांक asix_set_eeprom(काष्ठा net_device *net, काष्ठा ethtool_eeprom *eeprom,
+int asix_set_eeprom(struct net_device *net, struct ethtool_eeprom *eeprom,
 		    u8 *data)
-अणु
-	काष्ठा usbnet *dev = netdev_priv(net);
+{
+	struct usbnet *dev = netdev_priv(net);
 	u16 *eeprom_buff;
-	पूर्णांक first_word, last_word;
-	पूर्णांक i;
-	पूर्णांक ret;
+	int first_word, last_word;
+	int i;
+	int ret;
 
 	netdev_dbg(net, "write EEPROM len %d, offset %d, magic 0x%x\n",
 		   eeprom->len, eeprom->offset, eeprom->magic);
 
-	अगर (eeprom->len == 0)
-		वापस -EINVAL;
+	if (eeprom->len == 0)
+		return -EINVAL;
 
-	अगर (eeprom->magic != AX_EEPROM_MAGIC)
-		वापस -EINVAL;
+	if (eeprom->magic != AX_EEPROM_MAGIC)
+		return -EINVAL;
 
 	first_word = eeprom->offset >> 1;
 	last_word = (eeprom->offset + eeprom->len - 1) >> 1;
 
-	eeprom_buff = kदो_स्मृति_array(last_word - first_word + 1, माप(u16),
+	eeprom_buff = kmalloc_array(last_word - first_word + 1, sizeof(u16),
 				    GFP_KERNEL);
-	अगर (!eeprom_buff)
-		वापस -ENOMEM;
+	if (!eeprom_buff)
+		return -ENOMEM;
 
-	/* align data to 16 bit boundaries, पढ़ो the missing data from
+	/* align data to 16 bit boundaries, read the missing data from
 	   the EEPROM */
-	अगर (eeprom->offset & 1) अणु
-		ret = asix_पढ़ो_cmd(dev, AX_CMD_READ_EEPROM, first_word, 0, 2,
+	if (eeprom->offset & 1) {
+		ret = asix_read_cmd(dev, AX_CMD_READ_EEPROM, first_word, 0, 2,
 				    &eeprom_buff[0], 0);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			netdev_err(net, "Failed to read EEPROM at offset 0x%02x.\n", first_word);
-			जाओ मुक्त;
-		पूर्ण
-	पूर्ण
+			goto free;
+		}
+	}
 
-	अगर ((eeprom->offset + eeprom->len) & 1) अणु
-		ret = asix_पढ़ो_cmd(dev, AX_CMD_READ_EEPROM, last_word, 0, 2,
+	if ((eeprom->offset + eeprom->len) & 1) {
+		ret = asix_read_cmd(dev, AX_CMD_READ_EEPROM, last_word, 0, 2,
 				    &eeprom_buff[last_word - first_word], 0);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			netdev_err(net, "Failed to read EEPROM at offset 0x%02x.\n", last_word);
-			जाओ मुक्त;
-		पूर्ण
-	पूर्ण
+			goto free;
+		}
+	}
 
-	स_नकल((u8 *)eeprom_buff + (eeprom->offset & 1), data, eeprom->len);
+	memcpy((u8 *)eeprom_buff + (eeprom->offset & 1), data, eeprom->len);
 
-	/* ग_लिखो data to EEPROM */
-	ret = asix_ग_लिखो_cmd(dev, AX_CMD_WRITE_ENABLE, 0x0000, 0, 0, शून्य, 0);
-	अगर (ret < 0) अणु
+	/* write data to EEPROM */
+	ret = asix_write_cmd(dev, AX_CMD_WRITE_ENABLE, 0x0000, 0, 0, NULL, 0);
+	if (ret < 0) {
 		netdev_err(net, "Failed to enable EEPROM write\n");
-		जाओ मुक्त;
-	पूर्ण
+		goto free;
+	}
 	msleep(20);
 
-	क्रम (i = first_word; i <= last_word; i++) अणु
+	for (i = first_word; i <= last_word; i++) {
 		netdev_dbg(net, "write to EEPROM at offset 0x%02x, data 0x%04x\n",
 			   i, eeprom_buff[i - first_word]);
-		ret = asix_ग_लिखो_cmd(dev, AX_CMD_WRITE_EEPROM, i,
-				     eeprom_buff[i - first_word], 0, शून्य, 0);
-		अगर (ret < 0) अणु
+		ret = asix_write_cmd(dev, AX_CMD_WRITE_EEPROM, i,
+				     eeprom_buff[i - first_word], 0, NULL, 0);
+		if (ret < 0) {
 			netdev_err(net, "Failed to write EEPROM at offset 0x%02x.\n",
 				   i);
-			जाओ मुक्त;
-		पूर्ण
+			goto free;
+		}
 		msleep(20);
-	पूर्ण
+	}
 
-	ret = asix_ग_लिखो_cmd(dev, AX_CMD_WRITE_DISABLE, 0x0000, 0, 0, शून्य, 0);
-	अगर (ret < 0) अणु
+	ret = asix_write_cmd(dev, AX_CMD_WRITE_DISABLE, 0x0000, 0, 0, NULL, 0);
+	if (ret < 0) {
 		netdev_err(net, "Failed to disable EEPROM write\n");
-		जाओ मुक्त;
-	पूर्ण
+		goto free;
+	}
 
 	ret = 0;
-मुक्त:
-	kमुक्त(eeprom_buff);
-	वापस ret;
-पूर्ण
+free:
+	kfree(eeprom_buff);
+	return ret;
+}
 
-व्योम asix_get_drvinfo(काष्ठा net_device *net, काष्ठा ethtool_drvinfo *info)
-अणु
+void asix_get_drvinfo(struct net_device *net, struct ethtool_drvinfo *info)
+{
 	/* Inherit standard device info */
 	usbnet_get_drvinfo(net, info);
-	strlcpy(info->driver, DRIVER_NAME, माप(info->driver));
-	strlcpy(info->version, DRIVER_VERSION, माप(info->version));
-पूर्ण
+	strlcpy(info->driver, DRIVER_NAME, sizeof(info->driver));
+	strlcpy(info->version, DRIVER_VERSION, sizeof(info->version));
+}
 
-पूर्णांक asix_set_mac_address(काष्ठा net_device *net, व्योम *p)
-अणु
-	काष्ठा usbnet *dev = netdev_priv(net);
-	काष्ठा asix_data *data = (काष्ठा asix_data *)&dev->data;
-	काष्ठा sockaddr *addr = p;
+int asix_set_mac_address(struct net_device *net, void *p)
+{
+	struct usbnet *dev = netdev_priv(net);
+	struct asix_data *data = (struct asix_data *)&dev->data;
+	struct sockaddr *addr = p;
 
-	अगर (netअगर_running(net))
-		वापस -EBUSY;
-	अगर (!is_valid_ether_addr(addr->sa_data))
-		वापस -EADDRNOTAVAIL;
+	if (netif_running(net))
+		return -EBUSY;
+	if (!is_valid_ether_addr(addr->sa_data))
+		return -EADDRNOTAVAIL;
 
-	स_नकल(net->dev_addr, addr->sa_data, ETH_ALEN);
+	memcpy(net->dev_addr, addr->sa_data, ETH_ALEN);
 
 	/* We use the 20 byte dev->data
-	 * क्रम our 6 byte mac buffer
-	 * to aव्योम allocating memory that
-	 * is tricky to मुक्त later */
-	स_नकल(data->mac_addr, addr->sa_data, ETH_ALEN);
-	asix_ग_लिखो_cmd_async(dev, AX_CMD_WRITE_NODE_ID, 0, 0, ETH_ALEN,
+	 * for our 6 byte mac buffer
+	 * to avoid allocating memory that
+	 * is tricky to free later */
+	memcpy(data->mac_addr, addr->sa_data, ETH_ALEN);
+	asix_write_cmd_async(dev, AX_CMD_WRITE_NODE_ID, 0, 0, ETH_ALEN,
 							data->mac_addr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

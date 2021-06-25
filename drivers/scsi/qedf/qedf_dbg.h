@@ -1,157 +1,156 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  *  QLogic FCoE Offload Driver
  *  Copyright (c) 2016-2018 Cavium Inc.
  */
-#अगर_अघोषित _QEDF_DBG_H_
-#घोषणा _QEDF_DBG_H_
+#ifndef _QEDF_DBG_H_
+#define _QEDF_DBG_H_
 
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/compiler.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/pci.h>
-#समावेश <linux/delay.h>
-#समावेश <scsi/scsi_transport.h>
-#समावेश <linux/fs.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/compiler.h>
+#include <linux/string.h>
+#include <linux/pci.h>
+#include <linux/delay.h>
+#include <scsi/scsi_transport.h>
+#include <linux/fs.h>
 
-#समावेश <linux/qed/common_hsi.h>
-#समावेश <linux/qed/qed_अगर.h>
+#include <linux/qed/common_hsi.h>
+#include <linux/qed/qed_if.h>
 
-बाह्य uपूर्णांक qedf_debug;
+extern uint qedf_debug;
 
-/* Debug prपूर्णांक level definitions */
-#घोषणा QEDF_LOG_DEFAULT	0x1		/* Set शेष logging mask */
-#घोषणा QEDF_LOG_INFO		0x2		/*
-						 * Inक्रमmational logs,
+/* Debug print level definitions */
+#define QEDF_LOG_DEFAULT	0x1		/* Set default logging mask */
+#define QEDF_LOG_INFO		0x2		/*
+						 * Informational logs,
 						 * MAC address, WWPN, WWNN
 						 */
-#घोषणा QEDF_LOG_DISC		0x4		/* Init, discovery, rport */
-#घोषणा QEDF_LOG_LL2		0x8		/* LL2, VLAN logs */
-#घोषणा QEDF_LOG_CONN		0x10		/* Connection setup, cleanup */
-#घोषणा QEDF_LOG_EVT		0x20		/* Events, link, mtu */
-#घोषणा QEDF_LOG_TIMER		0x40		/* Timer events */
-#घोषणा QEDF_LOG_MP_REQ	0x80		/* Middle Path (MP) logs */
-#घोषणा QEDF_LOG_SCSI_TM	0x100		/* SCSI Aborts, Task Mgmt */
-#घोषणा QEDF_LOG_UNSOL		0x200		/* unsolicited event logs */
-#घोषणा QEDF_LOG_IO		0x400		/* scsi cmd, completion */
-#घोषणा QEDF_LOG_MQ		0x800		/* Multi Queue logs */
-#घोषणा QEDF_LOG_BSG		0x1000		/* BSG logs */
-#घोषणा QEDF_LOG_DEBUGFS	0x2000		/* debugFS logs */
-#घोषणा QEDF_LOG_LPORT		0x4000		/* lport logs */
-#घोषणा QEDF_LOG_ELS		0x8000		/* ELS logs */
-#घोषणा QEDF_LOG_NPIV		0x10000		/* NPIV logs */
-#घोषणा QEDF_LOG_SESS		0x20000		/* Connection setup, cleanup */
-#घोषणा QEDF_LOG_TID		0x80000         /*
+#define QEDF_LOG_DISC		0x4		/* Init, discovery, rport */
+#define QEDF_LOG_LL2		0x8		/* LL2, VLAN logs */
+#define QEDF_LOG_CONN		0x10		/* Connection setup, cleanup */
+#define QEDF_LOG_EVT		0x20		/* Events, link, mtu */
+#define QEDF_LOG_TIMER		0x40		/* Timer events */
+#define QEDF_LOG_MP_REQ	0x80		/* Middle Path (MP) logs */
+#define QEDF_LOG_SCSI_TM	0x100		/* SCSI Aborts, Task Mgmt */
+#define QEDF_LOG_UNSOL		0x200		/* unsolicited event logs */
+#define QEDF_LOG_IO		0x400		/* scsi cmd, completion */
+#define QEDF_LOG_MQ		0x800		/* Multi Queue logs */
+#define QEDF_LOG_BSG		0x1000		/* BSG logs */
+#define QEDF_LOG_DEBUGFS	0x2000		/* debugFS logs */
+#define QEDF_LOG_LPORT		0x4000		/* lport logs */
+#define QEDF_LOG_ELS		0x8000		/* ELS logs */
+#define QEDF_LOG_NPIV		0x10000		/* NPIV logs */
+#define QEDF_LOG_SESS		0x20000		/* Connection setup, cleanup */
+#define QEDF_LOG_TID		0x80000         /*
 						 * FW TID context acquire
-						 * मुक्त
+						 * free
 						 */
-#घोषणा QEDF_TRACK_TID		0x100000        /*
+#define QEDF_TRACK_TID		0x100000        /*
 						 * Track TID state. To be
 						 * enabled only at module load
-						 * and not run-समय.
+						 * and not run-time.
 						 */
-#घोषणा QEDF_TRACK_CMD_LIST    0x300000        /*
+#define QEDF_TRACK_CMD_LIST    0x300000        /*
 						* Track active cmd list nodes,
-						* करोne with reference to TID,
+						* done with reference to TID,
 						* hence TRACK_TID also enabled.
 						*/
-#घोषणा QEDF_LOG_NOTICE	0x40000000	/* Notice logs */
-#घोषणा QEDF_LOG_WARN		0x80000000	/* Warning logs */
+#define QEDF_LOG_NOTICE	0x40000000	/* Notice logs */
+#define QEDF_LOG_WARN		0x80000000	/* Warning logs */
 
-/* Debug context काष्ठाure */
-काष्ठा qedf_dbg_ctx अणु
-	अचिन्हित पूर्णांक host_no;
-	काष्ठा pci_dev *pdev;
-#अगर_घोषित CONFIG_DEBUG_FS
-	काष्ठा dentry *bdf_dentry;
-#पूर्ण_अगर
-पूर्ण;
+/* Debug context structure */
+struct qedf_dbg_ctx {
+	unsigned int host_no;
+	struct pci_dev *pdev;
+#ifdef CONFIG_DEBUG_FS
+	struct dentry *bdf_dentry;
+#endif
+};
 
-#घोषणा QEDF_ERR(pdev, fmt, ...)	\
+#define QEDF_ERR(pdev, fmt, ...)	\
 		qedf_dbg_err(pdev, __func__, __LINE__, fmt, ## __VA_ARGS__)
-#घोषणा QEDF_WARN(pdev, fmt, ...)	\
+#define QEDF_WARN(pdev, fmt, ...)	\
 		qedf_dbg_warn(pdev, __func__, __LINE__, fmt, ## __VA_ARGS__)
-#घोषणा QEDF_NOTICE(pdev, fmt, ...)	\
+#define QEDF_NOTICE(pdev, fmt, ...)	\
 		qedf_dbg_notice(pdev, __func__, __LINE__, fmt, ## __VA_ARGS__)
-#घोषणा QEDF_INFO(pdev, level, fmt, ...)	\
+#define QEDF_INFO(pdev, level, fmt, ...)	\
 		qedf_dbg_info(pdev, __func__, __LINE__, level, fmt,	\
 			      ## __VA_ARGS__)
-__म_लिखो(4, 5)
-व्योम qedf_dbg_err(काष्ठा qedf_dbg_ctx *qedf, स्थिर अक्षर *func, u32 line,
-			  स्थिर अक्षर *fmt, ...);
-__म_लिखो(4, 5)
-व्योम qedf_dbg_warn(काष्ठा qedf_dbg_ctx *qedf, स्थिर अक्षर *func, u32 line,
-			   स्थिर अक्षर *, ...);
-__म_लिखो(4, 5)
-व्योम qedf_dbg_notice(काष्ठा qedf_dbg_ctx *qedf, स्थिर अक्षर *func,
-			    u32 line, स्थिर अक्षर *, ...);
-__म_लिखो(5, 6)
-व्योम qedf_dbg_info(काष्ठा qedf_dbg_ctx *qedf, स्थिर अक्षर *func, u32 line,
-			  u32 info, स्थिर अक्षर *fmt, ...);
+__printf(4, 5)
+void qedf_dbg_err(struct qedf_dbg_ctx *qedf, const char *func, u32 line,
+			  const char *fmt, ...);
+__printf(4, 5)
+void qedf_dbg_warn(struct qedf_dbg_ctx *qedf, const char *func, u32 line,
+			   const char *, ...);
+__printf(4, 5)
+void qedf_dbg_notice(struct qedf_dbg_ctx *qedf, const char *func,
+			    u32 line, const char *, ...);
+__printf(5, 6)
+void qedf_dbg_info(struct qedf_dbg_ctx *qedf, const char *func, u32 line,
+			  u32 info, const char *fmt, ...);
 
 /* GRC Dump related defines */
 
-काष्ठा Scsi_Host;
+struct Scsi_Host;
 
-#घोषणा QEDF_UEVENT_CODE_GRCDUMP 0
+#define QEDF_UEVENT_CODE_GRCDUMP 0
 
-काष्ठा sysfs_bin_attrs अणु
-	अक्षर *name;
-	काष्ठा bin_attribute *attr;
-पूर्ण;
+struct sysfs_bin_attrs {
+	char *name;
+	struct bin_attribute *attr;
+};
 
-बाह्य पूर्णांक qedf_alloc_grc_dump_buf(uपूर्णांक8_t **buf, uपूर्णांक32_t len);
-बाह्य व्योम qedf_मुक्त_grc_dump_buf(uपूर्णांक8_t **buf);
-बाह्य पूर्णांक qedf_get_grc_dump(काष्ठा qed_dev *cdev,
-			     स्थिर काष्ठा qed_common_ops *common, uपूर्णांक8_t **buf,
-			     uपूर्णांक32_t *grcsize);
-बाह्य व्योम qedf_uevent_emit(काष्ठा Scsi_Host *shost, u32 code, अक्षर *msg);
-बाह्य पूर्णांक qedf_create_sysfs_attr(काष्ठा Scsi_Host *shost,
-				   काष्ठा sysfs_bin_attrs *iter);
-बाह्य व्योम qedf_हटाओ_sysfs_attr(काष्ठा Scsi_Host *shost,
-				    काष्ठा sysfs_bin_attrs *iter);
+extern int qedf_alloc_grc_dump_buf(uint8_t **buf, uint32_t len);
+extern void qedf_free_grc_dump_buf(uint8_t **buf);
+extern int qedf_get_grc_dump(struct qed_dev *cdev,
+			     const struct qed_common_ops *common, uint8_t **buf,
+			     uint32_t *grcsize);
+extern void qedf_uevent_emit(struct Scsi_Host *shost, u32 code, char *msg);
+extern int qedf_create_sysfs_attr(struct Scsi_Host *shost,
+				   struct sysfs_bin_attrs *iter);
+extern void qedf_remove_sysfs_attr(struct Scsi_Host *shost,
+				    struct sysfs_bin_attrs *iter);
 
-काष्ठा qedf_debugfs_ops अणु
-	अक्षर *name;
-	काष्ठा qedf_list_of_funcs *qedf_funcs;
-पूर्ण;
+struct qedf_debugfs_ops {
+	char *name;
+	struct qedf_list_of_funcs *qedf_funcs;
+};
 
-बाह्य स्थिर काष्ठा qedf_debugfs_ops qedf_debugfs_ops[];
-बाह्य स्थिर काष्ठा file_operations qedf_dbg_fops[];
+extern const struct qedf_debugfs_ops qedf_debugfs_ops[];
+extern const struct file_operations qedf_dbg_fops[];
 
-#अगर_घोषित CONFIG_DEBUG_FS
+#ifdef CONFIG_DEBUG_FS
 /* DebugFS related code */
-काष्ठा qedf_list_of_funcs अणु
-	अक्षर *oper_str;
-	sमाप_प्रकार (*oper_func)(काष्ठा qedf_dbg_ctx *qedf);
-पूर्ण;
+struct qedf_list_of_funcs {
+	char *oper_str;
+	ssize_t (*oper_func)(struct qedf_dbg_ctx *qedf);
+};
 
-#घोषणा qedf_dbg_fileops(drv, ops) \
-अणु \
+#define qedf_dbg_fileops(drv, ops) \
+{ \
 	.owner  = THIS_MODULE, \
-	.खोलो   = simple_खोलो, \
-	.पढ़ो   = drv##_dbg_##ops##_cmd_पढ़ो, \
-	.ग_लिखो  = drv##_dbg_##ops##_cmd_ग_लिखो \
-पूर्ण
+	.open   = simple_open, \
+	.read   = drv##_dbg_##ops##_cmd_read, \
+	.write  = drv##_dbg_##ops##_cmd_write \
+}
 
-/* Used क्रम debugfs sequential files */
-#घोषणा qedf_dbg_fileops_seq(drv, ops) \
-अणु \
+/* Used for debugfs sequential files */
+#define qedf_dbg_fileops_seq(drv, ops) \
+{ \
 	.owner = THIS_MODULE, \
-	.खोलो = drv##_dbg_##ops##_खोलो, \
-	.पढ़ो = seq_पढ़ो, \
+	.open = drv##_dbg_##ops##_open, \
+	.read = seq_read, \
 	.llseek = seq_lseek, \
 	.release = single_release, \
-पूर्ण
+}
 
-बाह्य व्योम qedf_dbg_host_init(काष्ठा qedf_dbg_ctx *qedf,
-				स्थिर काष्ठा qedf_debugfs_ops *करोps,
-				स्थिर काष्ठा file_operations *fops);
-बाह्य व्योम qedf_dbg_host_निकास(काष्ठा qedf_dbg_ctx *qedf);
-बाह्य व्योम qedf_dbg_init(अक्षर *drv_name);
-बाह्य व्योम qedf_dbg_निकास(व्योम);
-#पूर्ण_अगर /* CONFIG_DEBUG_FS */
+extern void qedf_dbg_host_init(struct qedf_dbg_ctx *qedf,
+				const struct qedf_debugfs_ops *dops,
+				const struct file_operations *fops);
+extern void qedf_dbg_host_exit(struct qedf_dbg_ctx *qedf);
+extern void qedf_dbg_init(char *drv_name);
+extern void qedf_dbg_exit(void);
+#endif /* CONFIG_DEBUG_FS */
 
-#पूर्ण_अगर /* _QEDF_DBG_H_ */
+#endif /* _QEDF_DBG_H_ */

@@ -1,34 +1,33 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Support क्रम Intel Camera Imaging ISP subप्रणाली.
+ * Support for Intel Camera Imaging ISP subsystem.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
 
-#अगर_अघोषित __IA_CSS_CONVERSION_TYPES_H
-#घोषणा __IA_CSS_CONVERSION_TYPES_H
+#ifndef __IA_CSS_CONVERSION_TYPES_H
+#define __IA_CSS_CONVERSION_TYPES_H
 
 /**
  *  Conversion Kernel parameters.
- *  Deपूर्णांकerleave bayer quad पूर्णांकo isys क्रमmat
+ *  Deinterleave bayer quad into isys format
  *
  *  ISP block: CONVERSION
  *
  */
-काष्ठा ia_css_conversion_config अणु
+struct ia_css_conversion_config {
 	u32 en;     /** en parameter */
 	u32 dummy0; /** dummy0 dummy parameter 0 */
 	u32 dummy1; /** dummy1 dummy parameter 1 */
 	u32 dummy2; /** dummy2 dummy parameter 2 */
-पूर्ण;
+};
 
-#पूर्ण_अगर /* __IA_CSS_CONVERSION_TYPES_H */
+#endif /* __IA_CSS_CONVERSION_TYPES_H */

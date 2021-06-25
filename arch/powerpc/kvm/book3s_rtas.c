@@ -1,228 +1,227 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright 2012 Michael Ellerman, IBM Corporation.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/kvm_host.h>
-#समावेश <linux/kvm.h>
-#समावेश <linux/err.h>
+#include <linux/kernel.h>
+#include <linux/kvm_host.h>
+#include <linux/kvm.h>
+#include <linux/err.h>
 
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/kvm_book3s.h>
-#समावेश <यंत्र/kvm_ppc.h>
-#समावेश <यंत्र/hvcall.h>
-#समावेश <यंत्र/rtas.h>
-#समावेश <यंत्र/xive.h>
+#include <linux/uaccess.h>
+#include <asm/kvm_book3s.h>
+#include <asm/kvm_ppc.h>
+#include <asm/hvcall.h>
+#include <asm/rtas.h>
+#include <asm/xive.h>
 
-#अगर_घोषित CONFIG_KVM_XICS
-अटल व्योम kvm_rtas_set_xive(काष्ठा kvm_vcpu *vcpu, काष्ठा rtas_args *args)
-अणु
+#ifdef CONFIG_KVM_XICS
+static void kvm_rtas_set_xive(struct kvm_vcpu *vcpu, struct rtas_args *args)
+{
 	u32 irq, server, priority;
-	पूर्णांक rc;
+	int rc;
 
-	अगर (be32_to_cpu(args->nargs) != 3 || be32_to_cpu(args->nret) != 1) अणु
+	if (be32_to_cpu(args->nargs) != 3 || be32_to_cpu(args->nret) != 1) {
 		rc = -3;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	irq = be32_to_cpu(args->args[0]);
 	server = be32_to_cpu(args->args[1]);
 	priority = be32_to_cpu(args->args[2]);
 
-	अगर (xics_on_xive())
+	if (xics_on_xive())
 		rc = kvmppc_xive_set_xive(vcpu->kvm, irq, server, priority);
-	अन्यथा
+	else
 		rc = kvmppc_xics_set_xive(vcpu->kvm, irq, server, priority);
-	अगर (rc)
+	if (rc)
 		rc = -3;
 out:
 	args->rets[0] = cpu_to_be32(rc);
-पूर्ण
+}
 
-अटल व्योम kvm_rtas_get_xive(काष्ठा kvm_vcpu *vcpu, काष्ठा rtas_args *args)
-अणु
+static void kvm_rtas_get_xive(struct kvm_vcpu *vcpu, struct rtas_args *args)
+{
 	u32 irq, server, priority;
-	पूर्णांक rc;
+	int rc;
 
-	अगर (be32_to_cpu(args->nargs) != 1 || be32_to_cpu(args->nret) != 3) अणु
+	if (be32_to_cpu(args->nargs) != 1 || be32_to_cpu(args->nret) != 3) {
 		rc = -3;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	irq = be32_to_cpu(args->args[0]);
 
 	server = priority = 0;
-	अगर (xics_on_xive())
+	if (xics_on_xive())
 		rc = kvmppc_xive_get_xive(vcpu->kvm, irq, &server, &priority);
-	अन्यथा
+	else
 		rc = kvmppc_xics_get_xive(vcpu->kvm, irq, &server, &priority);
-	अगर (rc) अणु
+	if (rc) {
 		rc = -3;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	args->rets[1] = cpu_to_be32(server);
 	args->rets[2] = cpu_to_be32(priority);
 out:
 	args->rets[0] = cpu_to_be32(rc);
-पूर्ण
+}
 
-अटल व्योम kvm_rtas_पूर्णांक_off(काष्ठा kvm_vcpu *vcpu, काष्ठा rtas_args *args)
-अणु
+static void kvm_rtas_int_off(struct kvm_vcpu *vcpu, struct rtas_args *args)
+{
 	u32 irq;
-	पूर्णांक rc;
+	int rc;
 
-	अगर (be32_to_cpu(args->nargs) != 1 || be32_to_cpu(args->nret) != 1) अणु
+	if (be32_to_cpu(args->nargs) != 1 || be32_to_cpu(args->nret) != 1) {
 		rc = -3;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	irq = be32_to_cpu(args->args[0]);
 
-	अगर (xics_on_xive())
-		rc = kvmppc_xive_पूर्णांक_off(vcpu->kvm, irq);
-	अन्यथा
-		rc = kvmppc_xics_पूर्णांक_off(vcpu->kvm, irq);
-	अगर (rc)
+	if (xics_on_xive())
+		rc = kvmppc_xive_int_off(vcpu->kvm, irq);
+	else
+		rc = kvmppc_xics_int_off(vcpu->kvm, irq);
+	if (rc)
 		rc = -3;
 out:
 	args->rets[0] = cpu_to_be32(rc);
-पूर्ण
+}
 
-अटल व्योम kvm_rtas_पूर्णांक_on(काष्ठा kvm_vcpu *vcpu, काष्ठा rtas_args *args)
-अणु
+static void kvm_rtas_int_on(struct kvm_vcpu *vcpu, struct rtas_args *args)
+{
 	u32 irq;
-	पूर्णांक rc;
+	int rc;
 
-	अगर (be32_to_cpu(args->nargs) != 1 || be32_to_cpu(args->nret) != 1) अणु
+	if (be32_to_cpu(args->nargs) != 1 || be32_to_cpu(args->nret) != 1) {
 		rc = -3;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	irq = be32_to_cpu(args->args[0]);
 
-	अगर (xics_on_xive())
-		rc = kvmppc_xive_पूर्णांक_on(vcpu->kvm, irq);
-	अन्यथा
-		rc = kvmppc_xics_पूर्णांक_on(vcpu->kvm, irq);
-	अगर (rc)
+	if (xics_on_xive())
+		rc = kvmppc_xive_int_on(vcpu->kvm, irq);
+	else
+		rc = kvmppc_xics_int_on(vcpu->kvm, irq);
+	if (rc)
 		rc = -3;
 out:
 	args->rets[0] = cpu_to_be32(rc);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_KVM_XICS */
+}
+#endif /* CONFIG_KVM_XICS */
 
-काष्ठा rtas_handler अणु
-	व्योम (*handler)(काष्ठा kvm_vcpu *vcpu, काष्ठा rtas_args *args);
-	अक्षर *name;
-पूर्ण;
+struct rtas_handler {
+	void (*handler)(struct kvm_vcpu *vcpu, struct rtas_args *args);
+	char *name;
+};
 
-अटल काष्ठा rtas_handler rtas_handlers[] = अणु
-#अगर_घोषित CONFIG_KVM_XICS
-	अणु .name = "ibm,set-xive", .handler = kvm_rtas_set_xive पूर्ण,
-	अणु .name = "ibm,get-xive", .handler = kvm_rtas_get_xive पूर्ण,
-	अणु .name = "ibm,int-off",  .handler = kvm_rtas_पूर्णांक_off पूर्ण,
-	अणु .name = "ibm,int-on",   .handler = kvm_rtas_पूर्णांक_on पूर्ण,
-#पूर्ण_अगर
-पूर्ण;
+static struct rtas_handler rtas_handlers[] = {
+#ifdef CONFIG_KVM_XICS
+	{ .name = "ibm,set-xive", .handler = kvm_rtas_set_xive },
+	{ .name = "ibm,get-xive", .handler = kvm_rtas_get_xive },
+	{ .name = "ibm,int-off",  .handler = kvm_rtas_int_off },
+	{ .name = "ibm,int-on",   .handler = kvm_rtas_int_on },
+#endif
+};
 
-काष्ठा rtas_token_definition अणु
-	काष्ठा list_head list;
-	काष्ठा rtas_handler *handler;
+struct rtas_token_definition {
+	struct list_head list;
+	struct rtas_handler *handler;
 	u64 token;
-पूर्ण;
+};
 
-अटल पूर्णांक rtas_name_matches(अक्षर *s1, अक्षर *s2)
-अणु
-	काष्ठा kvm_rtas_token_args args;
-	वापस !म_भेदन(s1, s2, माप(args.name));
-पूर्ण
+static int rtas_name_matches(char *s1, char *s2)
+{
+	struct kvm_rtas_token_args args;
+	return !strncmp(s1, s2, sizeof(args.name));
+}
 
-अटल पूर्णांक rtas_token_undefine(काष्ठा kvm *kvm, अक्षर *name)
-अणु
-	काष्ठा rtas_token_definition *d, *पंचांगp;
+static int rtas_token_undefine(struct kvm *kvm, char *name)
+{
+	struct rtas_token_definition *d, *tmp;
 
-	lockdep_निश्चित_held(&kvm->arch.rtas_token_lock);
+	lockdep_assert_held(&kvm->arch.rtas_token_lock);
 
-	list_क्रम_each_entry_safe(d, पंचांगp, &kvm->arch.rtas_tokens, list) अणु
-		अगर (rtas_name_matches(d->handler->name, name)) अणु
+	list_for_each_entry_safe(d, tmp, &kvm->arch.rtas_tokens, list) {
+		if (rtas_name_matches(d->handler->name, name)) {
 			list_del(&d->list);
-			kमुक्त(d);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			kfree(d);
+			return 0;
+		}
+	}
 
 	/* It's not an error to undefine an undefined token */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rtas_token_define(काष्ठा kvm *kvm, अक्षर *name, u64 token)
-अणु
-	काष्ठा rtas_token_definition *d;
-	काष्ठा rtas_handler *h = शून्य;
+static int rtas_token_define(struct kvm *kvm, char *name, u64 token)
+{
+	struct rtas_token_definition *d;
+	struct rtas_handler *h = NULL;
 	bool found;
-	पूर्णांक i;
+	int i;
 
-	lockdep_निश्चित_held(&kvm->arch.rtas_token_lock);
+	lockdep_assert_held(&kvm->arch.rtas_token_lock);
 
-	list_क्रम_each_entry(d, &kvm->arch.rtas_tokens, list) अणु
-		अगर (d->token == token)
-			वापस -EEXIST;
-	पूर्ण
+	list_for_each_entry(d, &kvm->arch.rtas_tokens, list) {
+		if (d->token == token)
+			return -EEXIST;
+	}
 
 	found = false;
-	क्रम (i = 0; i < ARRAY_SIZE(rtas_handlers); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(rtas_handlers); i++) {
 		h = &rtas_handlers[i];
-		अगर (rtas_name_matches(h->name, name)) अणु
+		if (rtas_name_matches(h->name, name)) {
 			found = true;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (!found)
-		वापस -ENOENT;
+	if (!found)
+		return -ENOENT;
 
-	d = kzalloc(माप(*d), GFP_KERNEL);
-	अगर (!d)
-		वापस -ENOMEM;
+	d = kzalloc(sizeof(*d), GFP_KERNEL);
+	if (!d)
+		return -ENOMEM;
 
 	d->handler = h;
 	d->token = token;
 
 	list_add_tail(&d->list, &kvm->arch.rtas_tokens);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक kvm_vm_ioctl_rtas_define_token(काष्ठा kvm *kvm, व्योम __user *argp)
-अणु
-	काष्ठा kvm_rtas_token_args args;
-	पूर्णांक rc;
+int kvm_vm_ioctl_rtas_define_token(struct kvm *kvm, void __user *argp)
+{
+	struct kvm_rtas_token_args args;
+	int rc;
 
-	अगर (copy_from_user(&args, argp, माप(args)))
-		वापस -EFAULT;
+	if (copy_from_user(&args, argp, sizeof(args)))
+		return -EFAULT;
 
 	mutex_lock(&kvm->arch.rtas_token_lock);
 
-	अगर (args.token)
+	if (args.token)
 		rc = rtas_token_define(kvm, args.name, args.token);
-	अन्यथा
+	else
 		rc = rtas_token_undefine(kvm, args.name);
 
 	mutex_unlock(&kvm->arch.rtas_token_lock);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक kvmppc_rtas_hcall(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा rtas_token_definition *d;
-	काष्ठा rtas_args args;
+int kvmppc_rtas_hcall(struct kvm_vcpu *vcpu)
+{
+	struct rtas_token_definition *d;
+	struct rtas_args args;
 	rtas_arg_t *orig_rets;
 	gpa_t args_phys;
-	पूर्णांक rc;
+	int rc;
 
 	/*
 	 * r4 contains the guest physical address of the RTAS args
@@ -230,15 +229,15 @@ out:
 	 */
 	args_phys = kvmppc_get_gpr(vcpu, 4) & KVM_PAM;
 
-	vcpu->srcu_idx = srcu_पढ़ो_lock(&vcpu->kvm->srcu);
-	rc = kvm_पढ़ो_guest(vcpu->kvm, args_phys, &args, माप(args));
-	srcu_पढ़ो_unlock(&vcpu->kvm->srcu, vcpu->srcu_idx);
-	अगर (rc)
-		जाओ fail;
+	vcpu->srcu_idx = srcu_read_lock(&vcpu->kvm->srcu);
+	rc = kvm_read_guest(vcpu->kvm, args_phys, &args, sizeof(args));
+	srcu_read_unlock(&vcpu->kvm->srcu, vcpu->srcu_idx);
+	if (rc)
+		goto fail;
 
 	/*
-	 * args->rets is a poपूर्णांकer पूर्णांकo args->args. Now that we've
-	 * copied args we need to fix it up to poपूर्णांक पूर्णांकo our copy,
+	 * args->rets is a pointer into args->args. Now that we've
+	 * copied args we need to fix it up to point into our copy,
 	 * not the guest args. We also need to save the original
 	 * value so we can restore it on the way out.
 	 */
@@ -248,42 +247,42 @@ out:
 	mutex_lock(&vcpu->kvm->arch.rtas_token_lock);
 
 	rc = -ENOENT;
-	list_क्रम_each_entry(d, &vcpu->kvm->arch.rtas_tokens, list) अणु
-		अगर (d->token == be32_to_cpu(args.token)) अणु
+	list_for_each_entry(d, &vcpu->kvm->arch.rtas_tokens, list) {
+		if (d->token == be32_to_cpu(args.token)) {
 			d->handler->handler(vcpu, &args);
 			rc = 0;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	mutex_unlock(&vcpu->kvm->arch.rtas_token_lock);
 
-	अगर (rc == 0) अणु
+	if (rc == 0) {
 		args.rets = orig_rets;
-		rc = kvm_ग_लिखो_guest(vcpu->kvm, args_phys, &args, माप(args));
-		अगर (rc)
-			जाओ fail;
-	पूर्ण
+		rc = kvm_write_guest(vcpu->kvm, args_phys, &args, sizeof(args));
+		if (rc)
+			goto fail;
+	}
 
-	वापस rc;
+	return rc;
 
 fail:
 	/*
-	 * We only get here अगर the guest has called RTAS with a bogus
-	 * args poपूर्णांकer. That means we can't get to the args, and so we
+	 * We only get here if the guest has called RTAS with a bogus
+	 * args pointer. That means we can't get to the args, and so we
 	 * can't fail the RTAS call. So fail right out to userspace,
-	 * which should समाप्त the guest.
+	 * which should kill the guest.
 	 */
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL_GPL(kvmppc_rtas_hcall);
 
-व्योम kvmppc_rtas_tokens_मुक्त(काष्ठा kvm *kvm)
-अणु
-	काष्ठा rtas_token_definition *d, *पंचांगp;
+void kvmppc_rtas_tokens_free(struct kvm *kvm)
+{
+	struct rtas_token_definition *d, *tmp;
 
-	list_क्रम_each_entry_safe(d, पंचांगp, &kvm->arch.rtas_tokens, list) अणु
+	list_for_each_entry_safe(d, tmp, &kvm->arch.rtas_tokens, list) {
 		list_del(&d->list);
-		kमुक्त(d);
-	पूर्ण
-पूर्ण
+		kfree(d);
+	}
+}

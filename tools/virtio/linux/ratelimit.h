@@ -1,5 +1,4 @@
-<शैली गुरु>
-#घोषणा DEFINE_RATELIMIT_STATE(name, पूर्णांकerval_init, burst_init)	पूर्णांक name = 0
+#define DEFINE_RATELIMIT_STATE(name, interval_init, burst_init)	int name = 0
 
-#घोषणा __ratelimit(x) (*(x))
+#define __ratelimit(x) (*(x))
 

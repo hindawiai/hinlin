@@ -1,38 +1,37 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * at91_udc -- driver क्रम at91-series USB peripheral controller
+ * at91_udc -- driver for at91-series USB peripheral controller
  *
  * Copyright (C) 2004 by Thomas Rathbone
- * Copyright (C) 2005 by HP Lअसल
+ * Copyright (C) 2005 by HP Labs
  * Copyright (C) 2005 by David Brownell
  */
 
-#अघोषित	VERBOSE_DEBUG
-#अघोषित	PACKET_TRACE
+#undef	VERBOSE_DEBUG
+#undef	PACKET_TRACE
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/list.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/prefetch.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/usb/ch9.h>
-#समावेश <linux/usb/gadget.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_gpपन.स>
-#समावेश <linux/platक्रमm_data/aपंचांगel.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/mfd/syscon/aपंचांगel-matrix.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/delay.h>
+#include <linux/ioport.h>
+#include <linux/slab.h>
+#include <linux/errno.h>
+#include <linux/list.h>
+#include <linux/interrupt.h>
+#include <linux/proc_fs.h>
+#include <linux/prefetch.h>
+#include <linux/clk.h>
+#include <linux/usb/ch9.h>
+#include <linux/usb/gadget.h>
+#include <linux/of.h>
+#include <linux/of_gpio.h>
+#include <linux/platform_data/atmel.h>
+#include <linux/regmap.h>
+#include <linux/mfd/syscon.h>
+#include <linux/mfd/syscon/atmel-matrix.h>
 
-#समावेश "at91_udc.h"
+#include "at91_udc.h"
 
 
 /*
@@ -42,101 +41,101 @@
  *
  * This driver expects the board has been wired with two GPIOs supporting
  * a VBUS sensing IRQ, and a D+ pullup.  (They may be omitted, but the
- * testing hasn't covered such हालs.)
+ * testing hasn't covered such cases.)
  *
- * The pullup is most important (so it's पूर्णांकegrated on sam926x parts).  It
- * provides software control over whether the host क्रमागतerates the device.
+ * The pullup is most important (so it's integrated on sam926x parts).  It
+ * provides software control over whether the host enumerates the device.
  *
- * The VBUS sensing helps during क्रमागतeration, and allows both USB घड़ीs
+ * The VBUS sensing helps during enumeration, and allows both USB clocks
  * (and the transceiver) to stay gated off until they're necessary, saving
- * घातer.  During USB suspend, the 48 MHz घड़ी is gated off in hardware;
+ * power.  During USB suspend, the 48 MHz clock is gated off in hardware;
  * it may also be gated off by software during some Linux sleep states.
  */
 
-#घोषणा	DRIVER_VERSION	"3 May 2006"
+#define	DRIVER_VERSION	"3 May 2006"
 
-अटल स्थिर अक्षर driver_name [] = "at91_udc";
+static const char driver_name [] = "at91_udc";
 
-अटल स्थिर काष्ठा अणु
-	स्थिर अक्षर *name;
-	स्थिर काष्ठा usb_ep_caps caps;
-पूर्ण ep_info[] = अणु
-#घोषणा EP_INFO(_name, _caps) \
-	अणु \
+static const struct {
+	const char *name;
+	const struct usb_ep_caps caps;
+} ep_info[] = {
+#define EP_INFO(_name, _caps) \
+	{ \
 		.name = _name, \
 		.caps = _caps, \
-	पूर्ण
+	}
 
 	EP_INFO("ep0",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_CONTROL, USB_EP_CAPS_सूची_ALL)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_CONTROL, USB_EP_CAPS_DIR_ALL)),
 	EP_INFO("ep1",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_ALL, USB_EP_CAPS_सूची_ALL)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_ALL, USB_EP_CAPS_DIR_ALL)),
 	EP_INFO("ep2",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_ALL, USB_EP_CAPS_सूची_ALL)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_ALL, USB_EP_CAPS_DIR_ALL)),
 	EP_INFO("ep3-int",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_INT, USB_EP_CAPS_सूची_ALL)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_INT, USB_EP_CAPS_DIR_ALL)),
 	EP_INFO("ep4",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_ALL, USB_EP_CAPS_सूची_ALL)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_ALL, USB_EP_CAPS_DIR_ALL)),
 	EP_INFO("ep5",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_ALL, USB_EP_CAPS_सूची_ALL)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_ALL, USB_EP_CAPS_DIR_ALL)),
 
-#अघोषित EP_INFO
-पूर्ण;
+#undef EP_INFO
+};
 
-#घोषणा ep0name		ep_info[0].name
+#define ep0name		ep_info[0].name
 
-#घोषणा VBUS_POLL_TIMEOUT	msecs_to_jअगरfies(1000)
+#define VBUS_POLL_TIMEOUT	msecs_to_jiffies(1000)
 
-#घोषणा at91_udp_पढ़ो(udc, reg) \
-	__raw_पढ़ोl((udc)->udp_baseaddr + (reg))
-#घोषणा at91_udp_ग_लिखो(udc, reg, val) \
-	__raw_ग_लिखोl((val), (udc)->udp_baseaddr + (reg))
+#define at91_udp_read(udc, reg) \
+	__raw_readl((udc)->udp_baseaddr + (reg))
+#define at91_udp_write(udc, reg, val) \
+	__raw_writel((val), (udc)->udp_baseaddr + (reg))
 
 /*-------------------------------------------------------------------------*/
 
-#अगर_घोषित CONFIG_USB_GADGET_DEBUG_खाताS
+#ifdef CONFIG_USB_GADGET_DEBUG_FILES
 
-#समावेश <linux/seq_file.h>
+#include <linux/seq_file.h>
 
-अटल स्थिर अक्षर debug_filename[] = "driver/udc";
+static const char debug_filename[] = "driver/udc";
 
-#घोषणा FOURBITS "%s%s%s%s"
-#घोषणा EIGHTBITS FOURBITS FOURBITS
+#define FOURBITS "%s%s%s%s"
+#define EIGHTBITS FOURBITS FOURBITS
 
-अटल व्योम proc_ep_show(काष्ठा seq_file *s, काष्ठा at91_ep *ep)
-अणु
-	अटल अक्षर		*types[] = अणु
+static void proc_ep_show(struct seq_file *s, struct at91_ep *ep)
+{
+	static char		*types[] = {
 		"control", "out-iso", "out-bulk", "out-int",
-		"BOGUS",   "in-iso",  "in-bulk",  "in-int"पूर्ण;
+		"BOGUS",   "in-iso",  "in-bulk",  "in-int"};
 
 	u32			csr;
-	काष्ठा at91_request	*req;
-	अचिन्हित दीर्घ	flags;
-	काष्ठा at91_udc	*udc = ep->udc;
+	struct at91_request	*req;
+	unsigned long	flags;
+	struct at91_udc	*udc = ep->udc;
 
 	spin_lock_irqsave(&udc->lock, flags);
 
-	csr = __raw_पढ़ोl(ep->creg);
+	csr = __raw_readl(ep->creg);
 
-	/* NOTE:  not collecting per-endpoपूर्णांक irq statistics... */
+	/* NOTE:  not collecting per-endpoint irq statistics... */
 
-	seq_म_लिखो(s, "\n");
-	seq_म_लिखो(s, "%s, maxpacket %d %s%s %s%s\n",
+	seq_printf(s, "\n");
+	seq_printf(s, "%s, maxpacket %d %s%s %s%s\n",
 			ep->ep.name, ep->ep.maxpacket,
 			ep->is_in ? "in" : "out",
 			ep->is_iso ? " iso" : "",
 			ep->is_pingpong
-				? (ep->fअगरo_bank ? "pong" : "ping")
+				? (ep->fifo_bank ? "pong" : "ping")
 				: "",
 			ep->stopped ? " stopped" : "");
-	seq_म_लिखो(s, "csr %08x rxbytes=%d %s %s %s" EIGHTBITS "\n",
+	seq_printf(s, "csr %08x rxbytes=%d %s %s %s" EIGHTBITS "\n",
 		csr,
 		(csr & 0x07ff0000) >> 16,
 		(csr & (1 << 15)) ? "enabled" : "disabled",
 		(csr & (1 << 11)) ? "DATA1" : "DATA0",
 		types[(csr & 0x700) >> 8],
 
-		/* अगरf type is control then prपूर्णांक current direction */
+		/* iff type is control then print current direction */
 		(!(csr & 0x700))
 			? ((csr & (1 << 7)) ? " IN" : " OUT")
 			: "",
@@ -148,24 +147,24 @@
 		(csr & (1 << 2)) ? " rxsetup" : "",
 		(csr & (1 << 1)) ? " rxdatabk0" : "",
 		(csr & (1 << 0)) ? " txcomp" : "");
-	अगर (list_empty (&ep->queue))
-		seq_म_लिखो(s, "\t(queue empty)\n");
+	if (list_empty (&ep->queue))
+		seq_printf(s, "\t(queue empty)\n");
 
-	अन्यथा list_क्रम_each_entry (req, &ep->queue, queue) अणु
-		अचिन्हित	length = req->req.actual;
+	else list_for_each_entry (req, &ep->queue, queue) {
+		unsigned	length = req->req.actual;
 
-		seq_म_लिखो(s, "\treq %p len %d/%d buf %p\n",
+		seq_printf(s, "\treq %p len %d/%d buf %p\n",
 				&req->req, length,
 				req->req.length, req->req.buf);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&udc->lock, flags);
-पूर्ण
+}
 
-अटल व्योम proc_irq_show(काष्ठा seq_file *s, स्थिर अक्षर *label, u32 mask)
-अणु
-	पूर्णांक i;
+static void proc_irq_show(struct seq_file *s, const char *label, u32 mask)
+{
+	int i;
 
-	seq_म_लिखो(s, "%s %04x:%s%s" FOURBITS, label, mask,
+	seq_printf(s, "%s %04x:%s%s" FOURBITS, label, mask,
 		(mask & (1 << 13)) ? " wakeup" : "",
 		(mask & (1 << 12)) ? " endbusres" : "",
 
@@ -173,101 +172,101 @@
 		(mask & (1 << 10)) ? " extrsm" : "",
 		(mask & (1 << 9)) ? " rxrsm" : "",
 		(mask & (1 << 8)) ? " rxsusp" : "");
-	क्रम (i = 0; i < 8; i++) अणु
-		अगर (mask & (1 << i))
-			seq_म_लिखो(s, " ep%d", i);
-	पूर्ण
-	seq_म_लिखो(s, "\n");
-पूर्ण
+	for (i = 0; i < 8; i++) {
+		if (mask & (1 << i))
+			seq_printf(s, " ep%d", i);
+	}
+	seq_printf(s, "\n");
+}
 
-अटल पूर्णांक proc_udc_show(काष्ठा seq_file *s, व्योम *unused)
-अणु
-	काष्ठा at91_udc	*udc = s->निजी;
-	काष्ठा at91_ep	*ep;
-	u32		पंचांगp;
+static int proc_udc_show(struct seq_file *s, void *unused)
+{
+	struct at91_udc	*udc = s->private;
+	struct at91_ep	*ep;
+	u32		tmp;
 
-	seq_म_लिखो(s, "%s: version %s\n", driver_name, DRIVER_VERSION);
+	seq_printf(s, "%s: version %s\n", driver_name, DRIVER_VERSION);
 
-	seq_म_लिखो(s, "vbus %s, pullup %s, %s powered%s, gadget %s\n\n",
+	seq_printf(s, "vbus %s, pullup %s, %s powered%s, gadget %s\n\n",
 		udc->vbus ? "present" : "off",
 		udc->enabled
 			? (udc->vbus ? "active" : "enabled")
 			: "disabled",
-		udc->gadget.is_selfघातered ? "self" : "VBUS",
+		udc->gadget.is_selfpowered ? "self" : "VBUS",
 		udc->suspended ? ", suspended" : "",
 		udc->driver ? udc->driver->driver.name : "(none)");
 
-	/* करोn't access registers when interface isn't घड़ीed */
-	अगर (!udc->घड़ीed) अणु
-		seq_म_लिखो(s, "(not clocked)\n");
-		वापस 0;
-	पूर्ण
+	/* don't access registers when interface isn't clocked */
+	if (!udc->clocked) {
+		seq_printf(s, "(not clocked)\n");
+		return 0;
+	}
 
-	पंचांगp = at91_udp_पढ़ो(udc, AT91_UDP_FRM_NUM);
-	seq_म_लिखो(s, "frame %05x:%s%s frame=%d\n", पंचांगp,
-		(पंचांगp & AT91_UDP_FRM_OK) ? " ok" : "",
-		(पंचांगp & AT91_UDP_FRM_ERR) ? " err" : "",
-		(पंचांगp & AT91_UDP_NUM));
+	tmp = at91_udp_read(udc, AT91_UDP_FRM_NUM);
+	seq_printf(s, "frame %05x:%s%s frame=%d\n", tmp,
+		(tmp & AT91_UDP_FRM_OK) ? " ok" : "",
+		(tmp & AT91_UDP_FRM_ERR) ? " err" : "",
+		(tmp & AT91_UDP_NUM));
 
-	पंचांगp = at91_udp_पढ़ो(udc, AT91_UDP_GLB_STAT);
-	seq_म_लिखो(s, "glbstate %02x:%s" FOURBITS "\n", पंचांगp,
-		(पंचांगp & AT91_UDP_RMWUPE) ? " rmwupe" : "",
-		(पंचांगp & AT91_UDP_RSMINPR) ? " rsminpr" : "",
-		(पंचांगp & AT91_UDP_ESR) ? " esr" : "",
-		(पंचांगp & AT91_UDP_CONFG) ? " confg" : "",
-		(पंचांगp & AT91_UDP_FADDEN) ? " fadden" : "");
+	tmp = at91_udp_read(udc, AT91_UDP_GLB_STAT);
+	seq_printf(s, "glbstate %02x:%s" FOURBITS "\n", tmp,
+		(tmp & AT91_UDP_RMWUPE) ? " rmwupe" : "",
+		(tmp & AT91_UDP_RSMINPR) ? " rsminpr" : "",
+		(tmp & AT91_UDP_ESR) ? " esr" : "",
+		(tmp & AT91_UDP_CONFG) ? " confg" : "",
+		(tmp & AT91_UDP_FADDEN) ? " fadden" : "");
 
-	पंचांगp = at91_udp_पढ़ो(udc, AT91_UDP_FADDR);
-	seq_म_लिखो(s, "faddr   %03x:%s fadd=%d\n", पंचांगp,
-		(पंचांगp & AT91_UDP_FEN) ? " fen" : "",
-		(पंचांगp & AT91_UDP_FADD));
+	tmp = at91_udp_read(udc, AT91_UDP_FADDR);
+	seq_printf(s, "faddr   %03x:%s fadd=%d\n", tmp,
+		(tmp & AT91_UDP_FEN) ? " fen" : "",
+		(tmp & AT91_UDP_FADD));
 
-	proc_irq_show(s, "imr   ", at91_udp_पढ़ो(udc, AT91_UDP_IMR));
-	proc_irq_show(s, "isr   ", at91_udp_पढ़ो(udc, AT91_UDP_ISR));
+	proc_irq_show(s, "imr   ", at91_udp_read(udc, AT91_UDP_IMR));
+	proc_irq_show(s, "isr   ", at91_udp_read(udc, AT91_UDP_ISR));
 
-	अगर (udc->enabled && udc->vbus) अणु
+	if (udc->enabled && udc->vbus) {
 		proc_ep_show(s, &udc->ep[0]);
-		list_क्रम_each_entry (ep, &udc->gadget.ep_list, ep.ep_list) अणु
-			अगर (ep->ep.desc)
+		list_for_each_entry (ep, &udc->gadget.ep_list, ep.ep_list) {
+			if (ep->ep.desc)
 				proc_ep_show(s, ep);
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+	}
+	return 0;
+}
 
-अटल व्योम create_debug_file(काष्ठा at91_udc *udc)
-अणु
-	udc->pde = proc_create_single_data(debug_filename, 0, शून्य,
+static void create_debug_file(struct at91_udc *udc)
+{
+	udc->pde = proc_create_single_data(debug_filename, 0, NULL,
 			proc_udc_show, udc);
-पूर्ण
+}
 
-अटल व्योम हटाओ_debug_file(काष्ठा at91_udc *udc)
-अणु
-	अगर (udc->pde)
-		हटाओ_proc_entry(debug_filename, शून्य);
-पूर्ण
+static void remove_debug_file(struct at91_udc *udc)
+{
+	if (udc->pde)
+		remove_proc_entry(debug_filename, NULL);
+}
 
-#अन्यथा
+#else
 
-अटल अंतरभूत व्योम create_debug_file(काष्ठा at91_udc *udc) अणुपूर्ण
-अटल अंतरभूत व्योम हटाओ_debug_file(काष्ठा at91_udc *udc) अणुपूर्ण
+static inline void create_debug_file(struct at91_udc *udc) {}
+static inline void remove_debug_file(struct at91_udc *udc) {}
 
-#पूर्ण_अगर
+#endif
 
 
 /*-------------------------------------------------------------------------*/
 
-अटल व्योम करोne(काष्ठा at91_ep *ep, काष्ठा at91_request *req, पूर्णांक status)
-अणु
-	अचिन्हित	stopped = ep->stopped;
-	काष्ठा at91_udc	*udc = ep->udc;
+static void done(struct at91_ep *ep, struct at91_request *req, int status)
+{
+	unsigned	stopped = ep->stopped;
+	struct at91_udc	*udc = ep->udc;
 
 	list_del_init(&req->queue);
-	अगर (req->req.status == -EINPROGRESS)
+	if (req->req.status == -EINPROGRESS)
 		req->req.status = status;
-	अन्यथा
+	else
 		status = req->req.status;
-	अगर (status && status != -ESHUTDOWN)
+	if (status && status != -ESHUTDOWN)
 		VDBG("%s done %p, status %d\n", ep->ep.name, req, status);
 
 	ep->stopped = 1;
@@ -276,361 +275,361 @@
 	spin_lock(&udc->lock);
 	ep->stopped = stopped;
 
-	/* ep0 is always पढ़ोy; other endpoपूर्णांकs need a non-empty queue */
-	अगर (list_empty(&ep->queue) && ep->पूर्णांक_mask != (1 << 0))
-		at91_udp_ग_लिखो(udc, AT91_UDP_IDR, ep->पूर्णांक_mask);
-पूर्ण
+	/* ep0 is always ready; other endpoints need a non-empty queue */
+	if (list_empty(&ep->queue) && ep->int_mask != (1 << 0))
+		at91_udp_write(udc, AT91_UDP_IDR, ep->int_mask);
+}
 
 /*-------------------------------------------------------------------------*/
 
-/* bits indicating OUT fअगरo has data पढ़ोy */
-#घोषणा	RX_DATA_READY	(AT91_UDP_RX_DATA_BK0 | AT91_UDP_RX_DATA_BK1)
+/* bits indicating OUT fifo has data ready */
+#define	RX_DATA_READY	(AT91_UDP_RX_DATA_BK0 | AT91_UDP_RX_DATA_BK1)
 
 /*
- * Endpoपूर्णांक FIFO CSR bits have a mix of bits, making it unsafe to just ग_लिखो
- * back most of the value you just पढ़ो (because of side effects, including
- * bits that may change after पढ़ोing and beक्रमe writing).
+ * Endpoint FIFO CSR bits have a mix of bits, making it unsafe to just write
+ * back most of the value you just read (because of side effects, including
+ * bits that may change after reading and before writing).
  *
- * Except when changing a specअगरic bit, always ग_लिखो values which:
+ * Except when changing a specific bit, always write values which:
  *  - clear SET_FX bits (setting them could change something)
  *  - set CLR_FX bits (clearing them could change something)
  *
- * There are also state bits like FORCESTALL, EPEDS, सूची, and EPTYPE
+ * There are also state bits like FORCESTALL, EPEDS, DIR, and EPTYPE
  * that shouldn't normally be changed.
  *
- * NOTE at91sam9260 करोcs mention synch between UDPCK and MCK घड़ी करोमुख्यs,
- * implying a need to रुको क्रम one ग_लिखो to complete (test relevant bits)
- * beक्रमe starting the next ग_लिखो.  This shouldn't be an issue given how
- * infrequently we ग_लिखो, except maybe क्रम ग_लिखो-then-पढ़ो idioms.
+ * NOTE at91sam9260 docs mention synch between UDPCK and MCK clock domains,
+ * implying a need to wait for one write to complete (test relevant bits)
+ * before starting the next write.  This shouldn't be an issue given how
+ * infrequently we write, except maybe for write-then-read idioms.
  */
-#घोषणा	SET_FX	(AT91_UDP_TXPKTRDY)
-#घोषणा	CLR_FX	(RX_DATA_READY | AT91_UDP_RXSETUP \
+#define	SET_FX	(AT91_UDP_TXPKTRDY)
+#define	CLR_FX	(RX_DATA_READY | AT91_UDP_RXSETUP \
 		| AT91_UDP_STALLSENT | AT91_UDP_TXCOMP)
 
-/* pull OUT packet data from the endpoपूर्णांक's fअगरo */
-अटल पूर्णांक पढ़ो_fअगरo (काष्ठा at91_ep *ep, काष्ठा at91_request *req)
-अणु
+/* pull OUT packet data from the endpoint's fifo */
+static int read_fifo (struct at91_ep *ep, struct at91_request *req)
+{
 	u32 __iomem	*creg = ep->creg;
 	u8 __iomem	*dreg = ep->creg + (AT91_UDP_FDR(0) - AT91_UDP_CSR(0));
 	u32		csr;
 	u8		*buf;
-	अचिन्हित पूर्णांक	count, bufferspace, is_करोne;
+	unsigned int	count, bufferspace, is_done;
 
 	buf = req->req.buf + req->req.actual;
 	bufferspace = req->req.length - req->req.actual;
 
 	/*
-	 * there might be nothing to पढ़ो अगर ep_queue() calls us,
-	 * or अगर we alपढ़ोy emptied both pingpong buffers
+	 * there might be nothing to read if ep_queue() calls us,
+	 * or if we already emptied both pingpong buffers
 	 */
 rescan:
-	csr = __raw_पढ़ोl(creg);
-	अगर ((csr & RX_DATA_READY) == 0)
-		वापस 0;
+	csr = __raw_readl(creg);
+	if ((csr & RX_DATA_READY) == 0)
+		return 0;
 
 	count = (csr & AT91_UDP_RXBYTECNT) >> 16;
-	अगर (count > ep->ep.maxpacket)
+	if (count > ep->ep.maxpacket)
 		count = ep->ep.maxpacket;
-	अगर (count > bufferspace) अणु
+	if (count > bufferspace) {
 		DBG("%s buffer overflow\n", ep->ep.name);
 		req->req.status = -EOVERFLOW;
 		count = bufferspace;
-	पूर्ण
-	__raw_पढ़ोsb(dreg, buf, count);
+	}
+	__raw_readsb(dreg, buf, count);
 
 	/* release and swap pingpong mem bank */
 	csr |= CLR_FX;
-	अगर (ep->is_pingpong) अणु
-		अगर (ep->fअगरo_bank == 0) अणु
+	if (ep->is_pingpong) {
+		if (ep->fifo_bank == 0) {
 			csr &= ~(SET_FX | AT91_UDP_RX_DATA_BK0);
-			ep->fअगरo_bank = 1;
-		पूर्ण अन्यथा अणु
+			ep->fifo_bank = 1;
+		} else {
 			csr &= ~(SET_FX | AT91_UDP_RX_DATA_BK1);
-			ep->fअगरo_bank = 0;
-		पूर्ण
-	पूर्ण अन्यथा
+			ep->fifo_bank = 0;
+		}
+	} else
 		csr &= ~(SET_FX | AT91_UDP_RX_DATA_BK0);
-	__raw_ग_लिखोl(csr, creg);
+	__raw_writel(csr, creg);
 
 	req->req.actual += count;
-	is_करोne = (count < ep->ep.maxpacket);
-	अगर (count == bufferspace)
-		is_करोne = 1;
+	is_done = (count < ep->ep.maxpacket);
+	if (count == bufferspace)
+		is_done = 1;
 
 	PACKET("%s %p out/%d%s\n", ep->ep.name, &req->req, count,
-			is_करोne ? " (done)" : "");
+			is_done ? " (done)" : "");
 
 	/*
-	 * aव्योम extra trips through IRQ logic क्रम packets alपढ़ोy in
-	 * the fअगरo ... maybe preventing an extra (expensive) OUT-NAK
+	 * avoid extra trips through IRQ logic for packets already in
+	 * the fifo ... maybe preventing an extra (expensive) OUT-NAK
 	 */
-	अगर (is_करोne)
-		करोne(ep, req, 0);
-	अन्यथा अगर (ep->is_pingpong) अणु
+	if (is_done)
+		done(ep, req, 0);
+	else if (ep->is_pingpong) {
 		/*
-		 * One dummy पढ़ो to delay the code because of a HW glitch:
-		 * CSR वापसs bad RXCOUNT when पढ़ो too soon after updating
+		 * One dummy read to delay the code because of a HW glitch:
+		 * CSR returns bad RXCOUNT when read too soon after updating
 		 * RX_DATA_BK flags.
 		 */
-		csr = __raw_पढ़ोl(creg);
+		csr = __raw_readl(creg);
 
 		bufferspace -= count;
 		buf += count;
-		जाओ rescan;
-	पूर्ण
+		goto rescan;
+	}
 
-	वापस is_करोne;
-पूर्ण
+	return is_done;
+}
 
-/* load fअगरo क्रम an IN packet */
-अटल पूर्णांक ग_लिखो_fअगरo(काष्ठा at91_ep *ep, काष्ठा at91_request *req)
-अणु
+/* load fifo for an IN packet */
+static int write_fifo(struct at91_ep *ep, struct at91_request *req)
+{
 	u32 __iomem	*creg = ep->creg;
-	u32		csr = __raw_पढ़ोl(creg);
+	u32		csr = __raw_readl(creg);
 	u8 __iomem	*dreg = ep->creg + (AT91_UDP_FDR(0) - AT91_UDP_CSR(0));
-	अचिन्हित	total, count, is_last;
+	unsigned	total, count, is_last;
 	u8		*buf;
 
 	/*
-	 * TODO: allow क्रम writing two packets to the fअगरo ... that'll
+	 * TODO: allow for writing two packets to the fifo ... that'll
 	 * reduce the amount of IN-NAKing, but probably won't affect
 	 * throughput much.  (Unlike preventing OUT-NAKing!)
 	 */
 
 	/*
 	 * If ep_queue() calls us, the queue is empty and possibly in
-	 * odd states like TXCOMP not yet cleared (we करो it, saving at
-	 * least one IRQ) or the fअगरo not yet being मुक्त.  Those aren't
+	 * odd states like TXCOMP not yet cleared (we do it, saving at
+	 * least one IRQ) or the fifo not yet being free.  Those aren't
 	 * issues normally (IRQ handler fast path).
 	 */
-	अगर (unlikely(csr & (AT91_UDP_TXCOMP | AT91_UDP_TXPKTRDY))) अणु
-		अगर (csr & AT91_UDP_TXCOMP) अणु
+	if (unlikely(csr & (AT91_UDP_TXCOMP | AT91_UDP_TXPKTRDY))) {
+		if (csr & AT91_UDP_TXCOMP) {
 			csr |= CLR_FX;
 			csr &= ~(SET_FX | AT91_UDP_TXCOMP);
-			__raw_ग_लिखोl(csr, creg);
-			csr = __raw_पढ़ोl(creg);
-		पूर्ण
-		अगर (csr & AT91_UDP_TXPKTRDY)
-			वापस 0;
-	पूर्ण
+			__raw_writel(csr, creg);
+			csr = __raw_readl(creg);
+		}
+		if (csr & AT91_UDP_TXPKTRDY)
+			return 0;
+	}
 
 	buf = req->req.buf + req->req.actual;
 	prefetch(buf);
 	total = req->req.length - req->req.actual;
-	अगर (ep->ep.maxpacket < total) अणु
+	if (ep->ep.maxpacket < total) {
 		count = ep->ep.maxpacket;
 		is_last = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		count = total;
 		is_last = (count < ep->ep.maxpacket) || !req->req.zero;
-	पूर्ण
+	}
 
 	/*
 	 * Write the packet, maybe it's a ZLP.
 	 *
-	 * NOTE:  incrementing req->actual beक्रमe we receive the ACK means
-	 * gadget driver IN bytecounts can be wrong in fault हालs.  That's
+	 * NOTE:  incrementing req->actual before we receive the ACK means
+	 * gadget driver IN bytecounts can be wrong in fault cases.  That's
 	 * fixable with PIO drivers like this one (save "count" here, and
-	 * करो the increment later on TX irq), but not क्रम most DMA hardware.
+	 * do the increment later on TX irq), but not for most DMA hardware.
 	 *
 	 * So all gadget drivers must accept that potential error.  Some
-	 * hardware supports precise fअगरo status reporting, letting them
-	 * recover when the actual bytecount matters (e.g. क्रम USB Test
+	 * hardware supports precise fifo status reporting, letting them
+	 * recover when the actual bytecount matters (e.g. for USB Test
 	 * and Measurement Class devices).
 	 */
-	__raw_ग_लिखोsb(dreg, buf, count);
+	__raw_writesb(dreg, buf, count);
 	csr &= ~SET_FX;
 	csr |= CLR_FX | AT91_UDP_TXPKTRDY;
-	__raw_ग_लिखोl(csr, creg);
+	__raw_writel(csr, creg);
 	req->req.actual += count;
 
 	PACKET("%s %p in/%d%s\n", ep->ep.name, &req->req, count,
 			is_last ? " (done)" : "");
-	अगर (is_last)
-		करोne(ep, req, 0);
-	वापस is_last;
-पूर्ण
+	if (is_last)
+		done(ep, req, 0);
+	return is_last;
+}
 
-अटल व्योम nuke(काष्ठा at91_ep *ep, पूर्णांक status)
-अणु
-	काष्ठा at91_request *req;
+static void nuke(struct at91_ep *ep, int status)
+{
+	struct at91_request *req;
 
 	/* terminate any request in the queue */
 	ep->stopped = 1;
-	अगर (list_empty(&ep->queue))
-		वापस;
+	if (list_empty(&ep->queue))
+		return;
 
 	VDBG("%s %s\n", __func__, ep->ep.name);
-	जबतक (!list_empty(&ep->queue)) अणु
-		req = list_entry(ep->queue.next, काष्ठा at91_request, queue);
-		करोne(ep, req, status);
-	पूर्ण
-पूर्ण
+	while (!list_empty(&ep->queue)) {
+		req = list_entry(ep->queue.next, struct at91_request, queue);
+		done(ep, req, status);
+	}
+}
 
 /*-------------------------------------------------------------------------*/
 
-अटल पूर्णांक at91_ep_enable(काष्ठा usb_ep *_ep,
-				स्थिर काष्ठा usb_endpoपूर्णांक_descriptor *desc)
-अणु
-	काष्ठा at91_ep	*ep = container_of(_ep, काष्ठा at91_ep, ep);
-	काष्ठा at91_udc *udc;
+static int at91_ep_enable(struct usb_ep *_ep,
+				const struct usb_endpoint_descriptor *desc)
+{
+	struct at91_ep	*ep = container_of(_ep, struct at91_ep, ep);
+	struct at91_udc *udc;
 	u16		maxpacket;
-	u32		पंचांगp;
-	अचिन्हित दीर्घ	flags;
+	u32		tmp;
+	unsigned long	flags;
 
-	अगर (!_ep || !ep
+	if (!_ep || !ep
 			|| !desc || _ep->name == ep0name
 			|| desc->bDescriptorType != USB_DT_ENDPOINT
-			|| (maxpacket = usb_endpoपूर्णांक_maxp(desc)) == 0
-			|| maxpacket > ep->maxpacket) अणु
+			|| (maxpacket = usb_endpoint_maxp(desc)) == 0
+			|| maxpacket > ep->maxpacket) {
 		DBG("bad ep or descriptor\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	udc = ep->udc;
-	अगर (!udc->driver || udc->gadget.speed == USB_SPEED_UNKNOWN) अणु
+	if (!udc->driver || udc->gadget.speed == USB_SPEED_UNKNOWN) {
 		DBG("bogus device state\n");
-		वापस -ESHUTDOWN;
-	पूर्ण
+		return -ESHUTDOWN;
+	}
 
-	पंचांगp = usb_endpoपूर्णांक_type(desc);
-	चयन (पंचांगp) अणु
-	हाल USB_ENDPOINT_XFER_CONTROL:
+	tmp = usb_endpoint_type(desc);
+	switch (tmp) {
+	case USB_ENDPOINT_XFER_CONTROL:
 		DBG("only one control endpoint\n");
-		वापस -EINVAL;
-	हाल USB_ENDPOINT_XFER_INT:
-		अगर (maxpacket > 64)
-			जाओ bogus_max;
-		अवरोध;
-	हाल USB_ENDPOINT_XFER_BULK:
-		चयन (maxpacket) अणु
-		हाल 8:
-		हाल 16:
-		हाल 32:
-		हाल 64:
-			जाओ ok;
-		पूर्ण
+		return -EINVAL;
+	case USB_ENDPOINT_XFER_INT:
+		if (maxpacket > 64)
+			goto bogus_max;
+		break;
+	case USB_ENDPOINT_XFER_BULK:
+		switch (maxpacket) {
+		case 8:
+		case 16:
+		case 32:
+		case 64:
+			goto ok;
+		}
 bogus_max:
 		DBG("bogus maxpacket %d\n", maxpacket);
-		वापस -EINVAL;
-	हाल USB_ENDPOINT_XFER_ISOC:
-		अगर (!ep->is_pingpong) अणु
+		return -EINVAL;
+	case USB_ENDPOINT_XFER_ISOC:
+		if (!ep->is_pingpong) {
 			DBG("iso requires double buffering\n");
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+			return -EINVAL;
+		}
+		break;
+	}
 
 ok:
 	spin_lock_irqsave(&udc->lock, flags);
 
-	/* initialize endpoपूर्णांक to match this descriptor */
-	ep->is_in = usb_endpoपूर्णांक_dir_in(desc);
-	ep->is_iso = (पंचांगp == USB_ENDPOINT_XFER_ISOC);
+	/* initialize endpoint to match this descriptor */
+	ep->is_in = usb_endpoint_dir_in(desc);
+	ep->is_iso = (tmp == USB_ENDPOINT_XFER_ISOC);
 	ep->stopped = 0;
-	अगर (ep->is_in)
-		पंचांगp |= 0x04;
-	पंचांगp <<= 8;
-	पंचांगp |= AT91_UDP_EPEDS;
-	__raw_ग_लिखोl(पंचांगp, ep->creg);
+	if (ep->is_in)
+		tmp |= 0x04;
+	tmp <<= 8;
+	tmp |= AT91_UDP_EPEDS;
+	__raw_writel(tmp, ep->creg);
 
 	ep->ep.maxpacket = maxpacket;
 
 	/*
-	 * reset/init endpoपूर्णांक fअगरo.  NOTE:  leaves fअगरo_bank alone,
-	 * since endpoपूर्णांक resets करोn't reset hw pingpong state.
+	 * reset/init endpoint fifo.  NOTE:  leaves fifo_bank alone,
+	 * since endpoint resets don't reset hw pingpong state.
 	 */
-	at91_udp_ग_लिखो(udc, AT91_UDP_RST_EP, ep->पूर्णांक_mask);
-	at91_udp_ग_लिखो(udc, AT91_UDP_RST_EP, 0);
+	at91_udp_write(udc, AT91_UDP_RST_EP, ep->int_mask);
+	at91_udp_write(udc, AT91_UDP_RST_EP, 0);
 
 	spin_unlock_irqrestore(&udc->lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक at91_ep_disable (काष्ठा usb_ep * _ep)
-अणु
-	काष्ठा at91_ep	*ep = container_of(_ep, काष्ठा at91_ep, ep);
-	काष्ठा at91_udc	*udc = ep->udc;
-	अचिन्हित दीर्घ	flags;
+static int at91_ep_disable (struct usb_ep * _ep)
+{
+	struct at91_ep	*ep = container_of(_ep, struct at91_ep, ep);
+	struct at91_udc	*udc = ep->udc;
+	unsigned long	flags;
 
-	अगर (ep == &ep->udc->ep[0])
-		वापस -EINVAL;
+	if (ep == &ep->udc->ep[0])
+		return -EINVAL;
 
 	spin_lock_irqsave(&udc->lock, flags);
 
 	nuke(ep, -ESHUTDOWN);
 
-	/* restore the endpoपूर्णांक's pristine config */
-	ep->ep.desc = शून्य;
+	/* restore the endpoint's pristine config */
+	ep->ep.desc = NULL;
 	ep->ep.maxpacket = ep->maxpacket;
 
-	/* reset fअगरos and endpoपूर्णांक */
-	अगर (ep->udc->घड़ीed) अणु
-		at91_udp_ग_लिखो(udc, AT91_UDP_RST_EP, ep->पूर्णांक_mask);
-		at91_udp_ग_लिखो(udc, AT91_UDP_RST_EP, 0);
-		__raw_ग_लिखोl(0, ep->creg);
-	पूर्ण
+	/* reset fifos and endpoint */
+	if (ep->udc->clocked) {
+		at91_udp_write(udc, AT91_UDP_RST_EP, ep->int_mask);
+		at91_udp_write(udc, AT91_UDP_RST_EP, 0);
+		__raw_writel(0, ep->creg);
+	}
 
 	spin_unlock_irqrestore(&udc->lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * this is a PIO-only driver, so there's nothing
- * पूर्णांकeresting क्रम request or buffer allocation.
+ * interesting for request or buffer allocation.
  */
 
-अटल काष्ठा usb_request *
-at91_ep_alloc_request(काष्ठा usb_ep *_ep, gfp_t gfp_flags)
-अणु
-	काष्ठा at91_request *req;
+static struct usb_request *
+at91_ep_alloc_request(struct usb_ep *_ep, gfp_t gfp_flags)
+{
+	struct at91_request *req;
 
-	req = kzalloc(माप (काष्ठा at91_request), gfp_flags);
-	अगर (!req)
-		वापस शून्य;
+	req = kzalloc(sizeof (struct at91_request), gfp_flags);
+	if (!req)
+		return NULL;
 
 	INIT_LIST_HEAD(&req->queue);
-	वापस &req->req;
-पूर्ण
+	return &req->req;
+}
 
-अटल व्योम at91_ep_मुक्त_request(काष्ठा usb_ep *_ep, काष्ठा usb_request *_req)
-अणु
-	काष्ठा at91_request *req;
+static void at91_ep_free_request(struct usb_ep *_ep, struct usb_request *_req)
+{
+	struct at91_request *req;
 
-	req = container_of(_req, काष्ठा at91_request, req);
+	req = container_of(_req, struct at91_request, req);
 	BUG_ON(!list_empty(&req->queue));
-	kमुक्त(req);
-पूर्ण
+	kfree(req);
+}
 
-अटल पूर्णांक at91_ep_queue(काष्ठा usb_ep *_ep,
-			काष्ठा usb_request *_req, gfp_t gfp_flags)
-अणु
-	काष्ठा at91_request	*req;
-	काष्ठा at91_ep		*ep;
-	काष्ठा at91_udc		*udc;
-	पूर्णांक			status;
-	अचिन्हित दीर्घ		flags;
+static int at91_ep_queue(struct usb_ep *_ep,
+			struct usb_request *_req, gfp_t gfp_flags)
+{
+	struct at91_request	*req;
+	struct at91_ep		*ep;
+	struct at91_udc		*udc;
+	int			status;
+	unsigned long		flags;
 
-	req = container_of(_req, काष्ठा at91_request, req);
-	ep = container_of(_ep, काष्ठा at91_ep, ep);
+	req = container_of(_req, struct at91_request, req);
+	ep = container_of(_ep, struct at91_ep, ep);
 
-	अगर (!_req || !_req->complete
-			|| !_req->buf || !list_empty(&req->queue)) अणु
+	if (!_req || !_req->complete
+			|| !_req->buf || !list_empty(&req->queue)) {
 		DBG("invalid request\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!_ep || (!ep->ep.desc && ep->ep.name != ep0name)) अणु
+	if (!_ep || (!ep->ep.desc && ep->ep.name != ep0name)) {
 		DBG("invalid ep\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	udc = ep->udc;
 
-	अगर (!udc || !udc->driver || udc->gadget.speed == USB_SPEED_UNKNOWN) अणु
+	if (!udc || !udc->driver || udc->gadget.speed == USB_SPEED_UNKNOWN) {
 		DBG("invalid device\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	_req->status = -EINPROGRESS;
 	_req->actual = 0;
@@ -638,8 +637,8 @@ at91_ep_alloc_request(काष्ठा usb_ep *_ep, gfp_t gfp_flags)
 	spin_lock_irqsave(&udc->lock, flags);
 
 	/* try to kickstart any empty and idle queue */
-	अगर (list_empty(&ep->queue) && !ep->stopped) अणु
-		पूर्णांक	is_ep0;
+	if (list_empty(&ep->queue) && !ep->stopped) {
+		int	is_ep0;
 
 		/*
 		 * If this control request has a non-empty DATA stage, this
@@ -650,437 +649,437 @@ at91_ep_alloc_request(काष्ठा usb_ep *_ep, gfp_t gfp_flags)
 		 * IN/STATUS stage.  (Unsuccessful ones use set_halt.)
 		 */
 		is_ep0 = (ep->ep.name == ep0name);
-		अगर (is_ep0) अणु
-			u32	पंचांगp;
+		if (is_ep0) {
+			u32	tmp;
 
-			अगर (!udc->req_pending) अणु
+			if (!udc->req_pending) {
 				status = -EINVAL;
-				जाओ करोne;
-			पूर्ण
+				goto done;
+			}
 
 			/*
 			 * defer changing CONFG until after the gadget driver
-			 * reconfigures the endpoपूर्णांकs.
+			 * reconfigures the endpoints.
 			 */
-			अगर (udc->रुको_क्रम_config_ack) अणु
-				पंचांगp = at91_udp_पढ़ो(udc, AT91_UDP_GLB_STAT);
-				पंचांगp ^= AT91_UDP_CONFG;
+			if (udc->wait_for_config_ack) {
+				tmp = at91_udp_read(udc, AT91_UDP_GLB_STAT);
+				tmp ^= AT91_UDP_CONFG;
 				VDBG("toggle config\n");
-				at91_udp_ग_लिखो(udc, AT91_UDP_GLB_STAT, पंचांगp);
-			पूर्ण
-			अगर (req->req.length == 0) अणु
+				at91_udp_write(udc, AT91_UDP_GLB_STAT, tmp);
+			}
+			if (req->req.length == 0) {
 ep0_in_status:
 				PACKET("ep0 in/status\n");
 				status = 0;
-				पंचांगp = __raw_पढ़ोl(ep->creg);
-				पंचांगp &= ~SET_FX;
-				पंचांगp |= CLR_FX | AT91_UDP_TXPKTRDY;
-				__raw_ग_लिखोl(पंचांगp, ep->creg);
+				tmp = __raw_readl(ep->creg);
+				tmp &= ~SET_FX;
+				tmp |= CLR_FX | AT91_UDP_TXPKTRDY;
+				__raw_writel(tmp, ep->creg);
 				udc->req_pending = 0;
-				जाओ करोne;
-			पूर्ण
-		पूर्ण
+				goto done;
+			}
+		}
 
-		अगर (ep->is_in)
-			status = ग_लिखो_fअगरo(ep, req);
-		अन्यथा अणु
-			status = पढ़ो_fअगरo(ep, req);
+		if (ep->is_in)
+			status = write_fifo(ep, req);
+		else {
+			status = read_fifo(ep, req);
 
 			/* IN/STATUS stage is otherwise triggered by irq */
-			अगर (status && is_ep0)
-				जाओ ep0_in_status;
-		पूर्ण
-	पूर्ण अन्यथा
+			if (status && is_ep0)
+				goto ep0_in_status;
+		}
+	} else
 		status = 0;
 
-	अगर (req && !status) अणु
+	if (req && !status) {
 		list_add_tail (&req->queue, &ep->queue);
-		at91_udp_ग_लिखो(udc, AT91_UDP_IER, ep->पूर्णांक_mask);
-	पूर्ण
-करोne:
+		at91_udp_write(udc, AT91_UDP_IER, ep->int_mask);
+	}
+done:
 	spin_unlock_irqrestore(&udc->lock, flags);
-	वापस (status < 0) ? status : 0;
-पूर्ण
+	return (status < 0) ? status : 0;
+}
 
-अटल पूर्णांक at91_ep_dequeue(काष्ठा usb_ep *_ep, काष्ठा usb_request *_req)
-अणु
-	काष्ठा at91_ep		*ep;
-	काष्ठा at91_request	*req;
-	अचिन्हित दीर्घ		flags;
-	काष्ठा at91_udc		*udc;
+static int at91_ep_dequeue(struct usb_ep *_ep, struct usb_request *_req)
+{
+	struct at91_ep		*ep;
+	struct at91_request	*req;
+	unsigned long		flags;
+	struct at91_udc		*udc;
 
-	ep = container_of(_ep, काष्ठा at91_ep, ep);
-	अगर (!_ep || ep->ep.name == ep0name)
-		वापस -EINVAL;
+	ep = container_of(_ep, struct at91_ep, ep);
+	if (!_ep || ep->ep.name == ep0name)
+		return -EINVAL;
 
 	udc = ep->udc;
 
 	spin_lock_irqsave(&udc->lock, flags);
 
-	/* make sure it's actually queued on this endpoपूर्णांक */
-	list_क्रम_each_entry (req, &ep->queue, queue) अणु
-		अगर (&req->req == _req)
-			अवरोध;
-	पूर्ण
-	अगर (&req->req != _req) अणु
+	/* make sure it's actually queued on this endpoint */
+	list_for_each_entry (req, &ep->queue, queue) {
+		if (&req->req == _req)
+			break;
+	}
+	if (&req->req != _req) {
 		spin_unlock_irqrestore(&udc->lock, flags);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	करोne(ep, req, -ECONNRESET);
+	done(ep, req, -ECONNRESET);
 	spin_unlock_irqrestore(&udc->lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक at91_ep_set_halt(काष्ठा usb_ep *_ep, पूर्णांक value)
-अणु
-	काष्ठा at91_ep	*ep = container_of(_ep, काष्ठा at91_ep, ep);
-	काष्ठा at91_udc	*udc = ep->udc;
+static int at91_ep_set_halt(struct usb_ep *_ep, int value)
+{
+	struct at91_ep	*ep = container_of(_ep, struct at91_ep, ep);
+	struct at91_udc	*udc = ep->udc;
 	u32 __iomem	*creg;
 	u32		csr;
-	अचिन्हित दीर्घ	flags;
-	पूर्णांक		status = 0;
+	unsigned long	flags;
+	int		status = 0;
 
-	अगर (!_ep || ep->is_iso || !ep->udc->घड़ीed)
-		वापस -EINVAL;
+	if (!_ep || ep->is_iso || !ep->udc->clocked)
+		return -EINVAL;
 
 	creg = ep->creg;
 	spin_lock_irqsave(&udc->lock, flags);
 
-	csr = __raw_पढ़ोl(creg);
+	csr = __raw_readl(creg);
 
 	/*
-	 * fail with still-busy IN endpoपूर्णांकs, ensuring correct sequencing
-	 * of data tx then stall.  note that the fअगरo rx bytecount isn't
+	 * fail with still-busy IN endpoints, ensuring correct sequencing
+	 * of data tx then stall.  note that the fifo rx bytecount isn't
 	 * completely accurate as a tx bytecount.
 	 */
-	अगर (ep->is_in && (!list_empty(&ep->queue) || (csr >> 16) != 0))
+	if (ep->is_in && (!list_empty(&ep->queue) || (csr >> 16) != 0))
 		status = -EAGAIN;
-	अन्यथा अणु
+	else {
 		csr |= CLR_FX;
 		csr &= ~SET_FX;
-		अगर (value) अणु
+		if (value) {
 			csr |= AT91_UDP_FORCESTALL;
 			VDBG("halt %s\n", ep->ep.name);
-		पूर्ण अन्यथा अणु
-			at91_udp_ग_लिखो(udc, AT91_UDP_RST_EP, ep->पूर्णांक_mask);
-			at91_udp_ग_लिखो(udc, AT91_UDP_RST_EP, 0);
+		} else {
+			at91_udp_write(udc, AT91_UDP_RST_EP, ep->int_mask);
+			at91_udp_write(udc, AT91_UDP_RST_EP, 0);
 			csr &= ~AT91_UDP_FORCESTALL;
-		पूर्ण
-		__raw_ग_लिखोl(csr, creg);
-	पूर्ण
+		}
+		__raw_writel(csr, creg);
+	}
 
 	spin_unlock_irqrestore(&udc->lock, flags);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल स्थिर काष्ठा usb_ep_ops at91_ep_ops = अणु
+static const struct usb_ep_ops at91_ep_ops = {
 	.enable		= at91_ep_enable,
 	.disable	= at91_ep_disable,
 	.alloc_request	= at91_ep_alloc_request,
-	.मुक्त_request	= at91_ep_मुक्त_request,
+	.free_request	= at91_ep_free_request,
 	.queue		= at91_ep_queue,
 	.dequeue	= at91_ep_dequeue,
 	.set_halt	= at91_ep_set_halt,
-	/* there's only imprecise fअगरo status reporting */
-पूर्ण;
+	/* there's only imprecise fifo status reporting */
+};
 
 /*-------------------------------------------------------------------------*/
 
-अटल पूर्णांक at91_get_frame(काष्ठा usb_gadget *gadget)
-अणु
-	काष्ठा at91_udc *udc = to_udc(gadget);
+static int at91_get_frame(struct usb_gadget *gadget)
+{
+	struct at91_udc *udc = to_udc(gadget);
 
-	अगर (!to_udc(gadget)->घड़ीed)
-		वापस -EINVAL;
-	वापस at91_udp_पढ़ो(udc, AT91_UDP_FRM_NUM) & AT91_UDP_NUM;
-पूर्ण
+	if (!to_udc(gadget)->clocked)
+		return -EINVAL;
+	return at91_udp_read(udc, AT91_UDP_FRM_NUM) & AT91_UDP_NUM;
+}
 
-अटल पूर्णांक at91_wakeup(काष्ठा usb_gadget *gadget)
-अणु
-	काष्ठा at91_udc	*udc = to_udc(gadget);
+static int at91_wakeup(struct usb_gadget *gadget)
+{
+	struct at91_udc	*udc = to_udc(gadget);
 	u32		glbstate;
-	अचिन्हित दीर्घ	flags;
+	unsigned long	flags;
 
 	DBG("%s\n", __func__ );
 	spin_lock_irqsave(&udc->lock, flags);
 
-	अगर (!udc->घड़ीed || !udc->suspended)
-		जाओ करोne;
+	if (!udc->clocked || !udc->suspended)
+		goto done;
 
-	/* NOTE:  some "early versions" handle ESR dअगरferently ... */
+	/* NOTE:  some "early versions" handle ESR differently ... */
 
-	glbstate = at91_udp_पढ़ो(udc, AT91_UDP_GLB_STAT);
-	अगर (!(glbstate & AT91_UDP_ESR))
-		जाओ करोne;
+	glbstate = at91_udp_read(udc, AT91_UDP_GLB_STAT);
+	if (!(glbstate & AT91_UDP_ESR))
+		goto done;
 	glbstate |= AT91_UDP_ESR;
-	at91_udp_ग_लिखो(udc, AT91_UDP_GLB_STAT, glbstate);
+	at91_udp_write(udc, AT91_UDP_GLB_STAT, glbstate);
 
-करोne:
+done:
 	spin_unlock_irqrestore(&udc->lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* reinit == restore initial software state */
-अटल व्योम udc_reinit(काष्ठा at91_udc *udc)
-अणु
+static void udc_reinit(struct at91_udc *udc)
+{
 	u32 i;
 
 	INIT_LIST_HEAD(&udc->gadget.ep_list);
 	INIT_LIST_HEAD(&udc->gadget.ep0->ep_list);
 	udc->gadget.quirk_stall_not_supp = 1;
 
-	क्रम (i = 0; i < NUM_ENDPOINTS; i++) अणु
-		काष्ठा at91_ep *ep = &udc->ep[i];
+	for (i = 0; i < NUM_ENDPOINTS; i++) {
+		struct at91_ep *ep = &udc->ep[i];
 
-		अगर (i != 0)
+		if (i != 0)
 			list_add_tail(&ep->ep.ep_list, &udc->gadget.ep_list);
-		ep->ep.desc = शून्य;
+		ep->ep.desc = NULL;
 		ep->stopped = 0;
-		ep->fअगरo_bank = 0;
+		ep->fifo_bank = 0;
 		usb_ep_set_maxpacket_limit(&ep->ep, ep->maxpacket);
-		ep->creg = (व्योम __iomem *) udc->udp_baseaddr + AT91_UDP_CSR(i);
-		/* initialize one queue per endpoपूर्णांक */
+		ep->creg = (void __iomem *) udc->udp_baseaddr + AT91_UDP_CSR(i);
+		/* initialize one queue per endpoint */
 		INIT_LIST_HEAD(&ep->queue);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम reset_gadget(काष्ठा at91_udc *udc)
-अणु
-	काष्ठा usb_gadget_driver *driver = udc->driver;
-	पूर्णांक i;
+static void reset_gadget(struct at91_udc *udc)
+{
+	struct usb_gadget_driver *driver = udc->driver;
+	int i;
 
-	अगर (udc->gadget.speed == USB_SPEED_UNKNOWN)
-		driver = शून्य;
+	if (udc->gadget.speed == USB_SPEED_UNKNOWN)
+		driver = NULL;
 	udc->gadget.speed = USB_SPEED_UNKNOWN;
 	udc->suspended = 0;
 
-	क्रम (i = 0; i < NUM_ENDPOINTS; i++) अणु
-		काष्ठा at91_ep *ep = &udc->ep[i];
+	for (i = 0; i < NUM_ENDPOINTS; i++) {
+		struct at91_ep *ep = &udc->ep[i];
 
 		ep->stopped = 1;
 		nuke(ep, -ESHUTDOWN);
-	पूर्ण
-	अगर (driver) अणु
+	}
+	if (driver) {
 		spin_unlock(&udc->lock);
 		usb_gadget_udc_reset(&udc->gadget, driver);
 		spin_lock(&udc->lock);
-	पूर्ण
+	}
 
 	udc_reinit(udc);
-पूर्ण
+}
 
-अटल व्योम stop_activity(काष्ठा at91_udc *udc)
-अणु
-	काष्ठा usb_gadget_driver *driver = udc->driver;
-	पूर्णांक i;
+static void stop_activity(struct at91_udc *udc)
+{
+	struct usb_gadget_driver *driver = udc->driver;
+	int i;
 
-	अगर (udc->gadget.speed == USB_SPEED_UNKNOWN)
-		driver = शून्य;
+	if (udc->gadget.speed == USB_SPEED_UNKNOWN)
+		driver = NULL;
 	udc->gadget.speed = USB_SPEED_UNKNOWN;
 	udc->suspended = 0;
 
-	क्रम (i = 0; i < NUM_ENDPOINTS; i++) अणु
-		काष्ठा at91_ep *ep = &udc->ep[i];
+	for (i = 0; i < NUM_ENDPOINTS; i++) {
+		struct at91_ep *ep = &udc->ep[i];
 		ep->stopped = 1;
 		nuke(ep, -ESHUTDOWN);
-	पूर्ण
-	अगर (driver) अणु
+	}
+	if (driver) {
 		spin_unlock(&udc->lock);
 		driver->disconnect(&udc->gadget);
 		spin_lock(&udc->lock);
-	पूर्ण
+	}
 
 	udc_reinit(udc);
-पूर्ण
+}
 
-अटल व्योम clk_on(काष्ठा at91_udc *udc)
-अणु
-	अगर (udc->घड़ीed)
-		वापस;
-	udc->घड़ीed = 1;
+static void clk_on(struct at91_udc *udc)
+{
+	if (udc->clocked)
+		return;
+	udc->clocked = 1;
 
 	clk_enable(udc->iclk);
 	clk_enable(udc->fclk);
-पूर्ण
+}
 
-अटल व्योम clk_off(काष्ठा at91_udc *udc)
-अणु
-	अगर (!udc->घड़ीed)
-		वापस;
-	udc->घड़ीed = 0;
+static void clk_off(struct at91_udc *udc)
+{
+	if (!udc->clocked)
+		return;
+	udc->clocked = 0;
 	udc->gadget.speed = USB_SPEED_UNKNOWN;
 	clk_disable(udc->fclk);
 	clk_disable(udc->iclk);
-पूर्ण
+}
 
 /*
- * activate/deactivate link with host; minimize घातer usage क्रम
- * inactive links by cutting घड़ीs and transceiver घातer.
+ * activate/deactivate link with host; minimize power usage for
+ * inactive links by cutting clocks and transceiver power.
  */
-अटल व्योम pullup(काष्ठा at91_udc *udc, पूर्णांक is_on)
-अणु
-	अगर (!udc->enabled || !udc->vbus)
+static void pullup(struct at91_udc *udc, int is_on)
+{
+	if (!udc->enabled || !udc->vbus)
 		is_on = 0;
 	DBG("%sactive\n", is_on ? "" : "in");
 
-	अगर (is_on) अणु
+	if (is_on) {
 		clk_on(udc);
-		at91_udp_ग_लिखो(udc, AT91_UDP_ICR, AT91_UDP_RXRSM);
-		at91_udp_ग_लिखो(udc, AT91_UDP_TXVC, 0);
-	पूर्ण अन्यथा अणु
+		at91_udp_write(udc, AT91_UDP_ICR, AT91_UDP_RXRSM);
+		at91_udp_write(udc, AT91_UDP_TXVC, 0);
+	} else {
 		stop_activity(udc);
-		at91_udp_ग_लिखो(udc, AT91_UDP_IDR, AT91_UDP_RXRSM);
-		at91_udp_ग_लिखो(udc, AT91_UDP_TXVC, AT91_UDP_TXVC_TXVDIS);
+		at91_udp_write(udc, AT91_UDP_IDR, AT91_UDP_RXRSM);
+		at91_udp_write(udc, AT91_UDP_TXVC, AT91_UDP_TXVC_TXVDIS);
 		clk_off(udc);
-	पूर्ण
+	}
 
-	अगर (udc->caps && udc->caps->pullup)
+	if (udc->caps && udc->caps->pullup)
 		udc->caps->pullup(udc, is_on);
-पूर्ण
+}
 
-/* vbus is here!  turn everything on that's पढ़ोy */
-अटल पूर्णांक at91_vbus_session(काष्ठा usb_gadget *gadget, पूर्णांक is_active)
-अणु
-	काष्ठा at91_udc	*udc = to_udc(gadget);
-	अचिन्हित दीर्घ	flags;
+/* vbus is here!  turn everything on that's ready */
+static int at91_vbus_session(struct usb_gadget *gadget, int is_active)
+{
+	struct at91_udc	*udc = to_udc(gadget);
+	unsigned long	flags;
 
 	/* VDBG("vbus %s\n", is_active ? "on" : "off"); */
 	spin_lock_irqsave(&udc->lock, flags);
 	udc->vbus = (is_active != 0);
-	अगर (udc->driver)
+	if (udc->driver)
 		pullup(udc, is_active);
-	अन्यथा
+	else
 		pullup(udc, 0);
 	spin_unlock_irqrestore(&udc->lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक at91_pullup(काष्ठा usb_gadget *gadget, पूर्णांक is_on)
-अणु
-	काष्ठा at91_udc	*udc = to_udc(gadget);
-	अचिन्हित दीर्घ	flags;
+static int at91_pullup(struct usb_gadget *gadget, int is_on)
+{
+	struct at91_udc	*udc = to_udc(gadget);
+	unsigned long	flags;
 
 	spin_lock_irqsave(&udc->lock, flags);
 	udc->enabled = is_on = !!is_on;
 	pullup(udc, is_on);
 	spin_unlock_irqrestore(&udc->lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक at91_set_selfघातered(काष्ठा usb_gadget *gadget, पूर्णांक is_on)
-अणु
-	काष्ठा at91_udc	*udc = to_udc(gadget);
-	अचिन्हित दीर्घ	flags;
+static int at91_set_selfpowered(struct usb_gadget *gadget, int is_on)
+{
+	struct at91_udc	*udc = to_udc(gadget);
+	unsigned long	flags;
 
 	spin_lock_irqsave(&udc->lock, flags);
-	gadget->is_selfघातered = (is_on != 0);
+	gadget->is_selfpowered = (is_on != 0);
 	spin_unlock_irqrestore(&udc->lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक at91_start(काष्ठा usb_gadget *gadget,
-		काष्ठा usb_gadget_driver *driver);
-अटल पूर्णांक at91_stop(काष्ठा usb_gadget *gadget);
+static int at91_start(struct usb_gadget *gadget,
+		struct usb_gadget_driver *driver);
+static int at91_stop(struct usb_gadget *gadget);
 
-अटल स्थिर काष्ठा usb_gadget_ops at91_udc_ops = अणु
+static const struct usb_gadget_ops at91_udc_ops = {
 	.get_frame		= at91_get_frame,
 	.wakeup			= at91_wakeup,
-	.set_selfघातered	= at91_set_selfघातered,
+	.set_selfpowered	= at91_set_selfpowered,
 	.vbus_session		= at91_vbus_session,
 	.pullup			= at91_pullup,
 	.udc_start		= at91_start,
 	.udc_stop		= at91_stop,
 
 	/*
-	 * VBUS-घातered devices may also also want to support bigger
-	 * घातer budमाला_लो after an appropriate SET_CONFIGURATION.
+	 * VBUS-powered devices may also also want to support bigger
+	 * power budgets after an appropriate SET_CONFIGURATION.
 	 */
-	/* .vbus_घातer		= at91_vbus_घातer, */
-पूर्ण;
+	/* .vbus_power		= at91_vbus_power, */
+};
 
 /*-------------------------------------------------------------------------*/
 
-अटल पूर्णांक handle_ep(काष्ठा at91_ep *ep)
-अणु
-	काष्ठा at91_request	*req;
+static int handle_ep(struct at91_ep *ep)
+{
+	struct at91_request	*req;
 	u32 __iomem		*creg = ep->creg;
-	u32			csr = __raw_पढ़ोl(creg);
+	u32			csr = __raw_readl(creg);
 
-	अगर (!list_empty(&ep->queue))
+	if (!list_empty(&ep->queue))
 		req = list_entry(ep->queue.next,
-			काष्ठा at91_request, queue);
-	अन्यथा
-		req = शून्य;
+			struct at91_request, queue);
+	else
+		req = NULL;
 
-	अगर (ep->is_in) अणु
-		अगर (csr & (AT91_UDP_STALLSENT | AT91_UDP_TXCOMP)) अणु
+	if (ep->is_in) {
+		if (csr & (AT91_UDP_STALLSENT | AT91_UDP_TXCOMP)) {
 			csr |= CLR_FX;
 			csr &= ~(SET_FX | AT91_UDP_STALLSENT | AT91_UDP_TXCOMP);
-			__raw_ग_लिखोl(csr, creg);
-		पूर्ण
-		अगर (req)
-			वापस ग_लिखो_fअगरo(ep, req);
+			__raw_writel(csr, creg);
+		}
+		if (req)
+			return write_fifo(ep, req);
 
-	पूर्ण अन्यथा अणु
-		अगर (csr & AT91_UDP_STALLSENT) अणु
+	} else {
+		if (csr & AT91_UDP_STALLSENT) {
 			/* STALLSENT bit == ISOERR */
-			अगर (ep->is_iso && req)
+			if (ep->is_iso && req)
 				req->req.status = -EILSEQ;
 			csr |= CLR_FX;
 			csr &= ~(SET_FX | AT91_UDP_STALLSENT);
-			__raw_ग_लिखोl(csr, creg);
-			csr = __raw_पढ़ोl(creg);
-		पूर्ण
-		अगर (req && (csr & RX_DATA_READY))
-			वापस पढ़ो_fअगरo(ep, req);
-	पूर्ण
-	वापस 0;
-पूर्ण
+			__raw_writel(csr, creg);
+			csr = __raw_readl(creg);
+		}
+		if (req && (csr & RX_DATA_READY))
+			return read_fifo(ep, req);
+	}
+	return 0;
+}
 
-जोड़ setup अणु
+union setup {
 	u8			raw[8];
-	काष्ठा usb_ctrlrequest	r;
-पूर्ण;
+	struct usb_ctrlrequest	r;
+};
 
-अटल व्योम handle_setup(काष्ठा at91_udc *udc, काष्ठा at91_ep *ep, u32 csr)
-अणु
+static void handle_setup(struct at91_udc *udc, struct at91_ep *ep, u32 csr)
+{
 	u32 __iomem	*creg = ep->creg;
 	u8 __iomem	*dreg = ep->creg + (AT91_UDP_FDR(0) - AT91_UDP_CSR(0));
-	अचिन्हित	rxcount, i = 0;
-	u32		पंचांगp;
-	जोड़ setup	pkt;
-	पूर्णांक		status = 0;
+	unsigned	rxcount, i = 0;
+	u32		tmp;
+	union setup	pkt;
+	int		status = 0;
 
-	/* पढ़ो and ack SETUP; hard-fail क्रम bogus packets */
+	/* read and ack SETUP; hard-fail for bogus packets */
 	rxcount = (csr & AT91_UDP_RXBYTECNT) >> 16;
-	अगर (likely(rxcount == 8)) अणु
-		जबतक (rxcount--)
-			pkt.raw[i++] = __raw_पढ़ोb(dreg);
-		अगर (pkt.r.bRequestType & USB_सूची_IN) अणु
-			csr |= AT91_UDP_सूची;
+	if (likely(rxcount == 8)) {
+		while (rxcount--)
+			pkt.raw[i++] = __raw_readb(dreg);
+		if (pkt.r.bRequestType & USB_DIR_IN) {
+			csr |= AT91_UDP_DIR;
 			ep->is_in = 1;
-		पूर्ण अन्यथा अणु
-			csr &= ~AT91_UDP_सूची;
+		} else {
+			csr &= ~AT91_UDP_DIR;
 			ep->is_in = 0;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		/* REVISIT this happens someबार under load; why?? */
+		}
+	} else {
+		/* REVISIT this happens sometimes under load; why?? */
 		ERR("SETUP len %d, csr %08x\n", rxcount, csr);
 		status = -EINVAL;
-	पूर्ण
+	}
 	csr |= CLR_FX;
 	csr &= ~(SET_FX | AT91_UDP_RXSETUP);
-	__raw_ग_लिखोl(csr, creg);
-	udc->रुको_क्रम_addr_ack = 0;
-	udc->रुको_क्रम_config_ack = 0;
+	__raw_writel(csr, creg);
+	udc->wait_for_addr_ack = 0;
+	udc->wait_for_config_ack = 0;
 	ep->stopped = 0;
-	अगर (unlikely(status != 0))
-		जाओ stall;
+	if (unlikely(status != 0))
+		goto stall;
 
-#घोषणा w_index		le16_to_cpu(pkt.r.wIndex)
-#घोषणा w_value		le16_to_cpu(pkt.r.wValue)
-#घोषणा w_length	le16_to_cpu(pkt.r.wLength)
+#define w_index		le16_to_cpu(pkt.r.wIndex)
+#define w_value		le16_to_cpu(pkt.r.wValue)
+#define w_length	le16_to_cpu(pkt.r.wLength)
 
 	VDBG("SETUP %02x.%02x v%04x i%04x l%04x\n",
 			pkt.r.bRequestType, pkt.r.bRequest,
@@ -1088,706 +1087,706 @@ ep0_in_status:
 
 	/*
 	 * A few standard requests get handled here, ones that touch
-	 * hardware ... notably क्रम device and endpoपूर्णांक features.
+	 * hardware ... notably for device and endpoint features.
 	 */
 	udc->req_pending = 1;
-	csr = __raw_पढ़ोl(creg);
+	csr = __raw_readl(creg);
 	csr |= CLR_FX;
 	csr &= ~SET_FX;
-	चयन ((pkt.r.bRequestType << 8) | pkt.r.bRequest) अणु
+	switch ((pkt.r.bRequestType << 8) | pkt.r.bRequest) {
 
-	हाल ((USB_TYPE_STANDARD|USB_RECIP_DEVICE) << 8)
+	case ((USB_TYPE_STANDARD|USB_RECIP_DEVICE) << 8)
 			| USB_REQ_SET_ADDRESS:
-		__raw_ग_लिखोl(csr | AT91_UDP_TXPKTRDY, creg);
+		__raw_writel(csr | AT91_UDP_TXPKTRDY, creg);
 		udc->addr = w_value;
-		udc->रुको_क्रम_addr_ack = 1;
+		udc->wait_for_addr_ack = 1;
 		udc->req_pending = 0;
 		/* FADDR is set later, when we ack host STATUS */
-		वापस;
+		return;
 
-	हाल ((USB_TYPE_STANDARD|USB_RECIP_DEVICE) << 8)
+	case ((USB_TYPE_STANDARD|USB_RECIP_DEVICE) << 8)
 			| USB_REQ_SET_CONFIGURATION:
-		पंचांगp = at91_udp_पढ़ो(udc, AT91_UDP_GLB_STAT) & AT91_UDP_CONFG;
-		अगर (pkt.r.wValue)
-			udc->रुको_क्रम_config_ack = (पंचांगp == 0);
-		अन्यथा
-			udc->रुको_क्रम_config_ack = (पंचांगp != 0);
-		अगर (udc->रुको_क्रम_config_ack)
+		tmp = at91_udp_read(udc, AT91_UDP_GLB_STAT) & AT91_UDP_CONFG;
+		if (pkt.r.wValue)
+			udc->wait_for_config_ack = (tmp == 0);
+		else
+			udc->wait_for_config_ack = (tmp != 0);
+		if (udc->wait_for_config_ack)
 			VDBG("wait for config\n");
-		/* CONFG is toggled later, अगर gadget driver succeeds */
-		अवरोध;
+		/* CONFG is toggled later, if gadget driver succeeds */
+		break;
 
 	/*
 	 * Hosts may set or clear remote wakeup status, and
-	 * devices may report they're VBUS घातered.
+	 * devices may report they're VBUS powered.
 	 */
-	हाल ((USB_सूची_IN|USB_TYPE_STANDARD|USB_RECIP_DEVICE) << 8)
+	case ((USB_DIR_IN|USB_TYPE_STANDARD|USB_RECIP_DEVICE) << 8)
 			| USB_REQ_GET_STATUS:
-		पंचांगp = (udc->gadget.is_selfघातered << USB_DEVICE_SELF_POWERED);
-		अगर (at91_udp_पढ़ो(udc, AT91_UDP_GLB_STAT) & AT91_UDP_ESR)
-			पंचांगp |= (1 << USB_DEVICE_REMOTE_WAKEUP);
+		tmp = (udc->gadget.is_selfpowered << USB_DEVICE_SELF_POWERED);
+		if (at91_udp_read(udc, AT91_UDP_GLB_STAT) & AT91_UDP_ESR)
+			tmp |= (1 << USB_DEVICE_REMOTE_WAKEUP);
 		PACKET("get device status\n");
-		__raw_ग_लिखोb(पंचांगp, dreg);
-		__raw_ग_लिखोb(0, dreg);
-		जाओ ग_लिखो_in;
-		/* then STATUS starts later, स्वतःmatically */
-	हाल ((USB_TYPE_STANDARD|USB_RECIP_DEVICE) << 8)
+		__raw_writeb(tmp, dreg);
+		__raw_writeb(0, dreg);
+		goto write_in;
+		/* then STATUS starts later, automatically */
+	case ((USB_TYPE_STANDARD|USB_RECIP_DEVICE) << 8)
 			| USB_REQ_SET_FEATURE:
-		अगर (w_value != USB_DEVICE_REMOTE_WAKEUP)
-			जाओ stall;
-		पंचांगp = at91_udp_पढ़ो(udc, AT91_UDP_GLB_STAT);
-		पंचांगp |= AT91_UDP_ESR;
-		at91_udp_ग_लिखो(udc, AT91_UDP_GLB_STAT, पंचांगp);
-		जाओ succeed;
-	हाल ((USB_TYPE_STANDARD|USB_RECIP_DEVICE) << 8)
+		if (w_value != USB_DEVICE_REMOTE_WAKEUP)
+			goto stall;
+		tmp = at91_udp_read(udc, AT91_UDP_GLB_STAT);
+		tmp |= AT91_UDP_ESR;
+		at91_udp_write(udc, AT91_UDP_GLB_STAT, tmp);
+		goto succeed;
+	case ((USB_TYPE_STANDARD|USB_RECIP_DEVICE) << 8)
 			| USB_REQ_CLEAR_FEATURE:
-		अगर (w_value != USB_DEVICE_REMOTE_WAKEUP)
-			जाओ stall;
-		पंचांगp = at91_udp_पढ़ो(udc, AT91_UDP_GLB_STAT);
-		पंचांगp &= ~AT91_UDP_ESR;
-		at91_udp_ग_लिखो(udc, AT91_UDP_GLB_STAT, पंचांगp);
-		जाओ succeed;
+		if (w_value != USB_DEVICE_REMOTE_WAKEUP)
+			goto stall;
+		tmp = at91_udp_read(udc, AT91_UDP_GLB_STAT);
+		tmp &= ~AT91_UDP_ESR;
+		at91_udp_write(udc, AT91_UDP_GLB_STAT, tmp);
+		goto succeed;
 
 	/*
 	 * Interfaces have no feature settings; this is pretty useless.
-	 * we won't even insist the पूर्णांकerface exists...
+	 * we won't even insist the interface exists...
 	 */
-	हाल ((USB_सूची_IN|USB_TYPE_STANDARD|USB_RECIP_INTERFACE) << 8)
+	case ((USB_DIR_IN|USB_TYPE_STANDARD|USB_RECIP_INTERFACE) << 8)
 			| USB_REQ_GET_STATUS:
 		PACKET("get interface status\n");
-		__raw_ग_लिखोb(0, dreg);
-		__raw_ग_लिखोb(0, dreg);
-		जाओ ग_लिखो_in;
-		/* then STATUS starts later, स्वतःmatically */
-	हाल ((USB_TYPE_STANDARD|USB_RECIP_INTERFACE) << 8)
+		__raw_writeb(0, dreg);
+		__raw_writeb(0, dreg);
+		goto write_in;
+		/* then STATUS starts later, automatically */
+	case ((USB_TYPE_STANDARD|USB_RECIP_INTERFACE) << 8)
 			| USB_REQ_SET_FEATURE:
-	हाल ((USB_TYPE_STANDARD|USB_RECIP_INTERFACE) << 8)
+	case ((USB_TYPE_STANDARD|USB_RECIP_INTERFACE) << 8)
 			| USB_REQ_CLEAR_FEATURE:
-		जाओ stall;
+		goto stall;
 
 	/*
-	 * Hosts may clear bulk/पूर्णांकr endpoपूर्णांक halt after the gadget
-	 * driver sets it (not widely used); or set it (क्रम testing)
+	 * Hosts may clear bulk/intr endpoint halt after the gadget
+	 * driver sets it (not widely used); or set it (for testing)
 	 */
-	हाल ((USB_सूची_IN|USB_TYPE_STANDARD|USB_RECIP_ENDPOINT) << 8)
+	case ((USB_DIR_IN|USB_TYPE_STANDARD|USB_RECIP_ENDPOINT) << 8)
 			| USB_REQ_GET_STATUS:
-		पंचांगp = w_index & USB_ENDPOINT_NUMBER_MASK;
-		ep = &udc->ep[पंचांगp];
-		अगर (पंचांगp >= NUM_ENDPOINTS || (पंचांगp && !ep->ep.desc))
-			जाओ stall;
+		tmp = w_index & USB_ENDPOINT_NUMBER_MASK;
+		ep = &udc->ep[tmp];
+		if (tmp >= NUM_ENDPOINTS || (tmp && !ep->ep.desc))
+			goto stall;
 
-		अगर (पंचांगp) अणु
-			अगर ((w_index & USB_सूची_IN)) अणु
-				अगर (!ep->is_in)
-					जाओ stall;
-			पूर्ण अन्यथा अगर (ep->is_in)
-				जाओ stall;
-		पूर्ण
+		if (tmp) {
+			if ((w_index & USB_DIR_IN)) {
+				if (!ep->is_in)
+					goto stall;
+			} else if (ep->is_in)
+				goto stall;
+		}
 		PACKET("get %s status\n", ep->ep.name);
-		अगर (__raw_पढ़ोl(ep->creg) & AT91_UDP_FORCESTALL)
-			पंचांगp = (1 << USB_ENDPOINT_HALT);
-		अन्यथा
-			पंचांगp = 0;
-		__raw_ग_लिखोb(पंचांगp, dreg);
-		__raw_ग_लिखोb(0, dreg);
-		जाओ ग_लिखो_in;
-		/* then STATUS starts later, स्वतःmatically */
-	हाल ((USB_TYPE_STANDARD|USB_RECIP_ENDPOINT) << 8)
+		if (__raw_readl(ep->creg) & AT91_UDP_FORCESTALL)
+			tmp = (1 << USB_ENDPOINT_HALT);
+		else
+			tmp = 0;
+		__raw_writeb(tmp, dreg);
+		__raw_writeb(0, dreg);
+		goto write_in;
+		/* then STATUS starts later, automatically */
+	case ((USB_TYPE_STANDARD|USB_RECIP_ENDPOINT) << 8)
 			| USB_REQ_SET_FEATURE:
-		पंचांगp = w_index & USB_ENDPOINT_NUMBER_MASK;
-		ep = &udc->ep[पंचांगp];
-		अगर (w_value != USB_ENDPOINT_HALT || पंचांगp >= NUM_ENDPOINTS)
-			जाओ stall;
-		अगर (!ep->ep.desc || ep->is_iso)
-			जाओ stall;
-		अगर ((w_index & USB_सूची_IN)) अणु
-			अगर (!ep->is_in)
-				जाओ stall;
-		पूर्ण अन्यथा अगर (ep->is_in)
-			जाओ stall;
+		tmp = w_index & USB_ENDPOINT_NUMBER_MASK;
+		ep = &udc->ep[tmp];
+		if (w_value != USB_ENDPOINT_HALT || tmp >= NUM_ENDPOINTS)
+			goto stall;
+		if (!ep->ep.desc || ep->is_iso)
+			goto stall;
+		if ((w_index & USB_DIR_IN)) {
+			if (!ep->is_in)
+				goto stall;
+		} else if (ep->is_in)
+			goto stall;
 
-		पंचांगp = __raw_पढ़ोl(ep->creg);
-		पंचांगp &= ~SET_FX;
-		पंचांगp |= CLR_FX | AT91_UDP_FORCESTALL;
-		__raw_ग_लिखोl(पंचांगp, ep->creg);
-		जाओ succeed;
-	हाल ((USB_TYPE_STANDARD|USB_RECIP_ENDPOINT) << 8)
+		tmp = __raw_readl(ep->creg);
+		tmp &= ~SET_FX;
+		tmp |= CLR_FX | AT91_UDP_FORCESTALL;
+		__raw_writel(tmp, ep->creg);
+		goto succeed;
+	case ((USB_TYPE_STANDARD|USB_RECIP_ENDPOINT) << 8)
 			| USB_REQ_CLEAR_FEATURE:
-		पंचांगp = w_index & USB_ENDPOINT_NUMBER_MASK;
-		ep = &udc->ep[पंचांगp];
-		अगर (w_value != USB_ENDPOINT_HALT || पंचांगp >= NUM_ENDPOINTS)
-			जाओ stall;
-		अगर (पंचांगp == 0)
-			जाओ succeed;
-		अगर (!ep->ep.desc || ep->is_iso)
-			जाओ stall;
-		अगर ((w_index & USB_सूची_IN)) अणु
-			अगर (!ep->is_in)
-				जाओ stall;
-		पूर्ण अन्यथा अगर (ep->is_in)
-			जाओ stall;
+		tmp = w_index & USB_ENDPOINT_NUMBER_MASK;
+		ep = &udc->ep[tmp];
+		if (w_value != USB_ENDPOINT_HALT || tmp >= NUM_ENDPOINTS)
+			goto stall;
+		if (tmp == 0)
+			goto succeed;
+		if (!ep->ep.desc || ep->is_iso)
+			goto stall;
+		if ((w_index & USB_DIR_IN)) {
+			if (!ep->is_in)
+				goto stall;
+		} else if (ep->is_in)
+			goto stall;
 
-		at91_udp_ग_लिखो(udc, AT91_UDP_RST_EP, ep->पूर्णांक_mask);
-		at91_udp_ग_लिखो(udc, AT91_UDP_RST_EP, 0);
-		पंचांगp = __raw_पढ़ोl(ep->creg);
-		पंचांगp |= CLR_FX;
-		पंचांगp &= ~(SET_FX | AT91_UDP_FORCESTALL);
-		__raw_ग_लिखोl(पंचांगp, ep->creg);
-		अगर (!list_empty(&ep->queue))
+		at91_udp_write(udc, AT91_UDP_RST_EP, ep->int_mask);
+		at91_udp_write(udc, AT91_UDP_RST_EP, 0);
+		tmp = __raw_readl(ep->creg);
+		tmp |= CLR_FX;
+		tmp &= ~(SET_FX | AT91_UDP_FORCESTALL);
+		__raw_writel(tmp, ep->creg);
+		if (!list_empty(&ep->queue))
 			handle_ep(ep);
-		जाओ succeed;
-	पूर्ण
+		goto succeed;
+	}
 
-#अघोषित w_value
-#अघोषित w_index
-#अघोषित w_length
+#undef w_value
+#undef w_index
+#undef w_length
 
 	/* pass request up to the gadget driver */
-	अगर (udc->driver) अणु
+	if (udc->driver) {
 		spin_unlock(&udc->lock);
 		status = udc->driver->setup(&udc->gadget, &pkt.r);
 		spin_lock(&udc->lock);
-	पूर्ण
-	अन्यथा
+	}
+	else
 		status = -ENODEV;
-	अगर (status < 0) अणु
+	if (status < 0) {
 stall:
 		VDBG("req %02x.%02x protocol STALL; stat %d\n",
 				pkt.r.bRequestType, pkt.r.bRequest, status);
 		csr |= AT91_UDP_FORCESTALL;
-		__raw_ग_लिखोl(csr, creg);
+		__raw_writel(csr, creg);
 		udc->req_pending = 0;
-	पूर्ण
-	वापस;
+	}
+	return;
 
 succeed:
 	/* immediate successful (IN) STATUS after zero length DATA */
 	PACKET("ep0 in/status\n");
-ग_लिखो_in:
+write_in:
 	csr |= AT91_UDP_TXPKTRDY;
-	__raw_ग_लिखोl(csr, creg);
+	__raw_writel(csr, creg);
 	udc->req_pending = 0;
-पूर्ण
+}
 
-अटल व्योम handle_ep0(काष्ठा at91_udc *udc)
-अणु
-	काष्ठा at91_ep		*ep0 = &udc->ep[0];
+static void handle_ep0(struct at91_udc *udc)
+{
+	struct at91_ep		*ep0 = &udc->ep[0];
 	u32 __iomem		*creg = ep0->creg;
-	u32			csr = __raw_पढ़ोl(creg);
-	काष्ठा at91_request	*req;
+	u32			csr = __raw_readl(creg);
+	struct at91_request	*req;
 
-	अगर (unlikely(csr & AT91_UDP_STALLSENT)) अणु
+	if (unlikely(csr & AT91_UDP_STALLSENT)) {
 		nuke(ep0, -EPROTO);
 		udc->req_pending = 0;
 		csr |= CLR_FX;
 		csr &= ~(SET_FX | AT91_UDP_STALLSENT | AT91_UDP_FORCESTALL);
-		__raw_ग_लिखोl(csr, creg);
+		__raw_writel(csr, creg);
 		VDBG("ep0 stalled\n");
-		csr = __raw_पढ़ोl(creg);
-	पूर्ण
-	अगर (csr & AT91_UDP_RXSETUP) अणु
+		csr = __raw_readl(creg);
+	}
+	if (csr & AT91_UDP_RXSETUP) {
 		nuke(ep0, 0);
 		udc->req_pending = 0;
 		handle_setup(udc, ep0, csr);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (list_empty(&ep0->queue))
-		req = शून्य;
-	अन्यथा
-		req = list_entry(ep0->queue.next, काष्ठा at91_request, queue);
+	if (list_empty(&ep0->queue))
+		req = NULL;
+	else
+		req = list_entry(ep0->queue.next, struct at91_request, queue);
 
 	/* host ACKed an IN packet that we sent */
-	अगर (csr & AT91_UDP_TXCOMP) अणु
+	if (csr & AT91_UDP_TXCOMP) {
 		csr |= CLR_FX;
 		csr &= ~(SET_FX | AT91_UDP_TXCOMP);
 
-		/* ग_लिखो more IN DATA? */
-		अगर (req && ep0->is_in) अणु
-			अगर (handle_ep(ep0))
+		/* write more IN DATA? */
+		if (req && ep0->is_in) {
+			if (handle_ep(ep0))
 				udc->req_pending = 0;
 
 		/*
 		 * Ack after:
 		 *  - last IN DATA packet (including GET_STATUS)
-		 *  - IN/STATUS क्रम OUT DATA
-		 *  - IN/STATUS क्रम any zero-length DATA stage
-		 * except क्रम the IN DATA हाल, the host should send
+		 *  - IN/STATUS for OUT DATA
+		 *  - IN/STATUS for any zero-length DATA stage
+		 * except for the IN DATA case, the host should send
 		 * an OUT status later, which we'll ack.
 		 */
-		पूर्ण अन्यथा अणु
+		} else {
 			udc->req_pending = 0;
-			__raw_ग_लिखोl(csr, creg);
+			__raw_writel(csr, creg);
 
 			/*
 			 * SET_ADDRESS takes effect only after the STATUS
-			 * (to the original address) माला_लो acked.
+			 * (to the original address) gets acked.
 			 */
-			अगर (udc->रुको_क्रम_addr_ack) अणु
-				u32	पंचांगp;
+			if (udc->wait_for_addr_ack) {
+				u32	tmp;
 
-				at91_udp_ग_लिखो(udc, AT91_UDP_FADDR,
+				at91_udp_write(udc, AT91_UDP_FADDR,
 						AT91_UDP_FEN | udc->addr);
-				पंचांगp = at91_udp_पढ़ो(udc, AT91_UDP_GLB_STAT);
-				पंचांगp &= ~AT91_UDP_FADDEN;
-				अगर (udc->addr)
-					पंचांगp |= AT91_UDP_FADDEN;
-				at91_udp_ग_लिखो(udc, AT91_UDP_GLB_STAT, पंचांगp);
+				tmp = at91_udp_read(udc, AT91_UDP_GLB_STAT);
+				tmp &= ~AT91_UDP_FADDEN;
+				if (udc->addr)
+					tmp |= AT91_UDP_FADDEN;
+				at91_udp_write(udc, AT91_UDP_GLB_STAT, tmp);
 
-				udc->रुको_क्रम_addr_ack = 0;
+				udc->wait_for_addr_ack = 0;
 				VDBG("address %d\n", udc->addr);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	/* OUT packet arrived ... */
-	अन्यथा अगर (csr & AT91_UDP_RX_DATA_BK0) अणु
+	else if (csr & AT91_UDP_RX_DATA_BK0) {
 		csr |= CLR_FX;
 		csr &= ~(SET_FX | AT91_UDP_RX_DATA_BK0);
 
 		/* OUT DATA stage */
-		अगर (!ep0->is_in) अणु
-			अगर (req) अणु
-				अगर (handle_ep(ep0)) अणु
+		if (!ep0->is_in) {
+			if (req) {
+				if (handle_ep(ep0)) {
 					/* send IN/STATUS */
 					PACKET("ep0 in/status\n");
-					csr = __raw_पढ़ोl(creg);
+					csr = __raw_readl(creg);
 					csr &= ~SET_FX;
 					csr |= CLR_FX | AT91_UDP_TXPKTRDY;
-					__raw_ग_लिखोl(csr, creg);
+					__raw_writel(csr, creg);
 					udc->req_pending = 0;
-				पूर्ण
-			पूर्ण अन्यथा अगर (udc->req_pending) अणु
+				}
+			} else if (udc->req_pending) {
 				/*
-				 * AT91 hardware has a hard समय with this
-				 * "deferred response" mode क्रम control-OUT
+				 * AT91 hardware has a hard time with this
+				 * "deferred response" mode for control-OUT
 				 * transfers.  (For control-IN it's fine.)
 				 *
 				 * The normal solution leaves OUT data in the
-				 * fअगरo until the gadget driver is पढ़ोy.
-				 * We couldn't करो that here without disabling
+				 * fifo until the gadget driver is ready.
+				 * We couldn't do that here without disabling
 				 * the IRQ that tells about SETUP packets,
-				 * e.g. when the host माला_लो impatient...
+				 * e.g. when the host gets impatient...
 				 *
-				 * Working around it by copying पूर्णांकo a buffer
+				 * Working around it by copying into a buffer
 				 * would almost be a non-deferred response,
 				 * except that it wouldn't permit reliable
 				 * stalling of the request.  Instead, demand
 				 * that gadget drivers not use this mode.
 				 */
 				DBG("no control-OUT deferred responses!\n");
-				__raw_ग_लिखोl(csr | AT91_UDP_FORCESTALL, creg);
+				__raw_writel(csr | AT91_UDP_FORCESTALL, creg);
 				udc->req_pending = 0;
-			पूर्ण
+			}
 
-		/* STATUS stage क्रम control-IN; ack.  */
-		पूर्ण अन्यथा अणु
+		/* STATUS stage for control-IN; ack.  */
+		} else {
 			PACKET("ep0 out/status ACK\n");
-			__raw_ग_लिखोl(csr, creg);
+			__raw_writel(csr, creg);
 
 			/* "early" status stage */
-			अगर (req)
-				करोne(ep0, req, 0);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			if (req)
+				done(ep0, req, 0);
+		}
+	}
+}
 
-अटल irqवापस_t at91_udc_irq (पूर्णांक irq, व्योम *_udc)
-अणु
-	काष्ठा at91_udc		*udc = _udc;
+static irqreturn_t at91_udc_irq (int irq, void *_udc)
+{
+	struct at91_udc		*udc = _udc;
 	u32			rescans = 5;
-	पूर्णांक			disable_घड़ी = 0;
-	अचिन्हित दीर्घ		flags;
+	int			disable_clock = 0;
+	unsigned long		flags;
 
 	spin_lock_irqsave(&udc->lock, flags);
 
-	अगर (!udc->घड़ीed) अणु
+	if (!udc->clocked) {
 		clk_on(udc);
-		disable_घड़ी = 1;
-	पूर्ण
+		disable_clock = 1;
+	}
 
-	जबतक (rescans--) अणु
+	while (rescans--) {
 		u32 status;
 
-		status = at91_udp_पढ़ो(udc, AT91_UDP_ISR)
-			& at91_udp_पढ़ो(udc, AT91_UDP_IMR);
-		अगर (!status)
-			अवरोध;
+		status = at91_udp_read(udc, AT91_UDP_ISR)
+			& at91_udp_read(udc, AT91_UDP_IMR);
+		if (!status)
+			break;
 
 		/* USB reset irq:  not maskable */
-		अगर (status & AT91_UDP_ENDBUSRES) अणु
-			at91_udp_ग_लिखो(udc, AT91_UDP_IDR, ~MINIMUS_INTERRUPTUS);
-			at91_udp_ग_लिखो(udc, AT91_UDP_IER, MINIMUS_INTERRUPTUS);
-			/* Aपंचांगel code clears this irq twice */
-			at91_udp_ग_लिखो(udc, AT91_UDP_ICR, AT91_UDP_ENDBUSRES);
-			at91_udp_ग_लिखो(udc, AT91_UDP_ICR, AT91_UDP_ENDBUSRES);
+		if (status & AT91_UDP_ENDBUSRES) {
+			at91_udp_write(udc, AT91_UDP_IDR, ~MINIMUS_INTERRUPTUS);
+			at91_udp_write(udc, AT91_UDP_IER, MINIMUS_INTERRUPTUS);
+			/* Atmel code clears this irq twice */
+			at91_udp_write(udc, AT91_UDP_ICR, AT91_UDP_ENDBUSRES);
+			at91_udp_write(udc, AT91_UDP_ICR, AT91_UDP_ENDBUSRES);
 			VDBG("end bus reset\n");
 			udc->addr = 0;
 			reset_gadget(udc);
 
 			/* enable ep0 */
-			at91_udp_ग_लिखो(udc, AT91_UDP_CSR(0),
+			at91_udp_write(udc, AT91_UDP_CSR(0),
 					AT91_UDP_EPEDS | AT91_UDP_EPTYPE_CTRL);
 			udc->gadget.speed = USB_SPEED_FULL;
 			udc->suspended = 0;
-			at91_udp_ग_लिखो(udc, AT91_UDP_IER, AT91_UDP_EP(0));
+			at91_udp_write(udc, AT91_UDP_IER, AT91_UDP_EP(0));
 
 			/*
-			 * NOTE:  this driver keeps घड़ीs off unless the
-			 * USB host is present.  That saves घातer, but क्रम
-			 * boards that करोn't support VBUS detection, both
-			 * घड़ीs need to be active most of the समय.
+			 * NOTE:  this driver keeps clocks off unless the
+			 * USB host is present.  That saves power, but for
+			 * boards that don't support VBUS detection, both
+			 * clocks need to be active most of the time.
 			 */
 
 		/* host initiated suspend (3+ms bus idle) */
-		पूर्ण अन्यथा अगर (status & AT91_UDP_RXSUSP) अणु
-			at91_udp_ग_लिखो(udc, AT91_UDP_IDR, AT91_UDP_RXSUSP);
-			at91_udp_ग_लिखो(udc, AT91_UDP_IER, AT91_UDP_RXRSM);
-			at91_udp_ग_लिखो(udc, AT91_UDP_ICR, AT91_UDP_RXSUSP);
+		} else if (status & AT91_UDP_RXSUSP) {
+			at91_udp_write(udc, AT91_UDP_IDR, AT91_UDP_RXSUSP);
+			at91_udp_write(udc, AT91_UDP_IER, AT91_UDP_RXRSM);
+			at91_udp_write(udc, AT91_UDP_ICR, AT91_UDP_RXSUSP);
 			/* VDBG("bus suspend\n"); */
-			अगर (udc->suspended)
-				जारी;
+			if (udc->suspended)
+				continue;
 			udc->suspended = 1;
 
 			/*
-			 * NOTE:  when suspending a VBUS-घातered device, the
-			 * gadget driver should चयन पूर्णांकo slow घड़ी mode
-			 * and then पूर्णांकo standby to aव्योम drawing more than
-			 * 500uA घातer (2500uA क्रम some high-घातer configs).
+			 * NOTE:  when suspending a VBUS-powered device, the
+			 * gadget driver should switch into slow clock mode
+			 * and then into standby to avoid drawing more than
+			 * 500uA power (2500uA for some high-power configs).
 			 */
-			अगर (udc->driver && udc->driver->suspend) अणु
+			if (udc->driver && udc->driver->suspend) {
 				spin_unlock(&udc->lock);
 				udc->driver->suspend(&udc->gadget);
 				spin_lock(&udc->lock);
-			पूर्ण
+			}
 
 		/* host initiated resume */
-		पूर्ण अन्यथा अगर (status & AT91_UDP_RXRSM) अणु
-			at91_udp_ग_लिखो(udc, AT91_UDP_IDR, AT91_UDP_RXRSM);
-			at91_udp_ग_लिखो(udc, AT91_UDP_IER, AT91_UDP_RXSUSP);
-			at91_udp_ग_लिखो(udc, AT91_UDP_ICR, AT91_UDP_RXRSM);
+		} else if (status & AT91_UDP_RXRSM) {
+			at91_udp_write(udc, AT91_UDP_IDR, AT91_UDP_RXRSM);
+			at91_udp_write(udc, AT91_UDP_IER, AT91_UDP_RXSUSP);
+			at91_udp_write(udc, AT91_UDP_ICR, AT91_UDP_RXRSM);
 			/* VDBG("bus resume\n"); */
-			अगर (!udc->suspended)
-				जारी;
+			if (!udc->suspended)
+				continue;
 			udc->suspended = 0;
 
 			/*
-			 * NOTE:  क्रम a VBUS-घातered device, the gadget driver
-			 * would normally want to चयन out of slow घड़ी
-			 * mode पूर्णांकo normal mode.
+			 * NOTE:  for a VBUS-powered device, the gadget driver
+			 * would normally want to switch out of slow clock
+			 * mode into normal mode.
 			 */
-			अगर (udc->driver && udc->driver->resume) अणु
+			if (udc->driver && udc->driver->resume) {
 				spin_unlock(&udc->lock);
 				udc->driver->resume(&udc->gadget);
 				spin_lock(&udc->lock);
-			पूर्ण
+			}
 
-		/* endpoपूर्णांक IRQs are cleared by handling them */
-		पूर्ण अन्यथा अणु
-			पूर्णांक		i;
-			अचिन्हित	mask = 1;
-			काष्ठा at91_ep	*ep = &udc->ep[1];
+		/* endpoint IRQs are cleared by handling them */
+		} else {
+			int		i;
+			unsigned	mask = 1;
+			struct at91_ep	*ep = &udc->ep[1];
 
-			अगर (status & mask)
+			if (status & mask)
 				handle_ep0(udc);
-			क्रम (i = 1; i < NUM_ENDPOINTS; i++) अणु
+			for (i = 1; i < NUM_ENDPOINTS; i++) {
 				mask <<= 1;
-				अगर (status & mask)
+				if (status & mask)
 					handle_ep(ep);
 				ep++;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	अगर (disable_घड़ी)
+	if (disable_clock)
 		clk_off(udc);
 
 	spin_unlock_irqrestore(&udc->lock, flags);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /*-------------------------------------------------------------------------*/
 
-अटल व्योम at91_vbus_update(काष्ठा at91_udc *udc, अचिन्हित value)
-अणु
+static void at91_vbus_update(struct at91_udc *udc, unsigned value)
+{
 	value ^= udc->board.vbus_active_low;
-	अगर (value != udc->vbus)
+	if (value != udc->vbus)
 		at91_vbus_session(&udc->gadget, value);
-पूर्ण
+}
 
-अटल irqवापस_t at91_vbus_irq(पूर्णांक irq, व्योम *_udc)
-अणु
-	काष्ठा at91_udc	*udc = _udc;
+static irqreturn_t at91_vbus_irq(int irq, void *_udc)
+{
+	struct at91_udc	*udc = _udc;
 
 	/* vbus needs at least brief debouncing */
 	udelay(10);
 	at91_vbus_update(udc, gpio_get_value(udc->board.vbus_pin));
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम at91_vbus_समयr_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा at91_udc *udc = container_of(work, काष्ठा at91_udc,
-					    vbus_समयr_work);
+static void at91_vbus_timer_work(struct work_struct *work)
+{
+	struct at91_udc *udc = container_of(work, struct at91_udc,
+					    vbus_timer_work);
 
 	at91_vbus_update(udc, gpio_get_value_cansleep(udc->board.vbus_pin));
 
-	अगर (!समयr_pending(&udc->vbus_समयr))
-		mod_समयr(&udc->vbus_समयr, jअगरfies + VBUS_POLL_TIMEOUT);
-पूर्ण
+	if (!timer_pending(&udc->vbus_timer))
+		mod_timer(&udc->vbus_timer, jiffies + VBUS_POLL_TIMEOUT);
+}
 
-अटल व्योम at91_vbus_समयr(काष्ठा समयr_list *t)
-अणु
-	काष्ठा at91_udc *udc = from_समयr(udc, t, vbus_समयr);
+static void at91_vbus_timer(struct timer_list *t)
+{
+	struct at91_udc *udc = from_timer(udc, t, vbus_timer);
 
 	/*
 	 * If we are polling vbus it is likely that the gpio is on an
 	 * bus such as i2c or spi which may sleep, so schedule some work
-	 * to पढ़ो the vbus gpio
+	 * to read the vbus gpio
 	 */
-	schedule_work(&udc->vbus_समयr_work);
-पूर्ण
+	schedule_work(&udc->vbus_timer_work);
+}
 
-अटल पूर्णांक at91_start(काष्ठा usb_gadget *gadget,
-		काष्ठा usb_gadget_driver *driver)
-अणु
-	काष्ठा at91_udc	*udc;
+static int at91_start(struct usb_gadget *gadget,
+		struct usb_gadget_driver *driver)
+{
+	struct at91_udc	*udc;
 
-	udc = container_of(gadget, काष्ठा at91_udc, gadget);
+	udc = container_of(gadget, struct at91_udc, gadget);
 	udc->driver = driver;
 	udc->gadget.dev.of_node = udc->pdev->dev.of_node;
 	udc->enabled = 1;
-	udc->gadget.is_selfघातered = 1;
+	udc->gadget.is_selfpowered = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक at91_stop(काष्ठा usb_gadget *gadget)
-अणु
-	काष्ठा at91_udc *udc;
-	अचिन्हित दीर्घ	flags;
+static int at91_stop(struct usb_gadget *gadget)
+{
+	struct at91_udc *udc;
+	unsigned long	flags;
 
-	udc = container_of(gadget, काष्ठा at91_udc, gadget);
+	udc = container_of(gadget, struct at91_udc, gadget);
 	spin_lock_irqsave(&udc->lock, flags);
 	udc->enabled = 0;
-	at91_udp_ग_लिखो(udc, AT91_UDP_IDR, ~0);
+	at91_udp_write(udc, AT91_UDP_IDR, ~0);
 	spin_unlock_irqrestore(&udc->lock, flags);
 
-	udc->driver = शून्य;
+	udc->driver = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*-------------------------------------------------------------------------*/
 
-अटल व्योम at91udc_shutकरोwn(काष्ठा platक्रमm_device *dev)
-अणु
-	काष्ठा at91_udc *udc = platक्रमm_get_drvdata(dev);
-	अचिन्हित दीर्घ	flags;
+static void at91udc_shutdown(struct platform_device *dev)
+{
+	struct at91_udc *udc = platform_get_drvdata(dev);
+	unsigned long	flags;
 
-	/* क्रमce disconnect on reboot */
+	/* force disconnect on reboot */
 	spin_lock_irqsave(&udc->lock, flags);
-	pullup(platक्रमm_get_drvdata(dev), 0);
+	pullup(platform_get_drvdata(dev), 0);
 	spin_unlock_irqrestore(&udc->lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक at91rm9200_udc_init(काष्ठा at91_udc *udc)
-अणु
-	काष्ठा at91_ep *ep;
-	पूर्णांक ret;
-	पूर्णांक i;
+static int at91rm9200_udc_init(struct at91_udc *udc)
+{
+	struct at91_ep *ep;
+	int ret;
+	int i;
 
-	क्रम (i = 0; i < NUM_ENDPOINTS; i++) अणु
+	for (i = 0; i < NUM_ENDPOINTS; i++) {
 		ep = &udc->ep[i];
 
-		चयन (i) अणु
-		हाल 0:
-		हाल 3:
+		switch (i) {
+		case 0:
+		case 3:
 			ep->maxpacket = 8;
-			अवरोध;
-		हाल 1 ... 2:
+			break;
+		case 1 ... 2:
 			ep->maxpacket = 64;
-			अवरोध;
-		हाल 4 ... 5:
+			break;
+		case 4 ... 5:
 			ep->maxpacket = 256;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (!gpio_is_valid(udc->board.pullup_pin)) अणु
+	if (!gpio_is_valid(udc->board.pullup_pin)) {
 		DBG("no D+ pullup?\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	ret = devm_gpio_request(&udc->pdev->dev, udc->board.pullup_pin,
 				"udc_pullup");
-	अगर (ret) अणु
+	if (ret) {
 		DBG("D+ pullup is busy\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	gpio_direction_output(udc->board.pullup_pin,
 			      udc->board.pullup_active_low);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम at91rm9200_udc_pullup(काष्ठा at91_udc *udc, पूर्णांक is_on)
-अणु
-	पूर्णांक active = !udc->board.pullup_active_low;
+static void at91rm9200_udc_pullup(struct at91_udc *udc, int is_on)
+{
+	int active = !udc->board.pullup_active_low;
 
-	अगर (is_on)
+	if (is_on)
 		gpio_set_value(udc->board.pullup_pin, active);
-	अन्यथा
+	else
 		gpio_set_value(udc->board.pullup_pin, !active);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा at91_udc_caps at91rm9200_udc_caps = अणु
+static const struct at91_udc_caps at91rm9200_udc_caps = {
 	.init = at91rm9200_udc_init,
 	.pullup = at91rm9200_udc_pullup,
-पूर्ण;
+};
 
-अटल पूर्णांक at91sam9260_udc_init(काष्ठा at91_udc *udc)
-अणु
-	काष्ठा at91_ep *ep;
-	पूर्णांक i;
+static int at91sam9260_udc_init(struct at91_udc *udc)
+{
+	struct at91_ep *ep;
+	int i;
 
-	क्रम (i = 0; i < NUM_ENDPOINTS; i++) अणु
+	for (i = 0; i < NUM_ENDPOINTS; i++) {
 		ep = &udc->ep[i];
 
-		चयन (i) अणु
-		हाल 0 ... 3:
+		switch (i) {
+		case 0 ... 3:
 			ep->maxpacket = 64;
-			अवरोध;
-		हाल 4 ... 5:
+			break;
+		case 4 ... 5:
 			ep->maxpacket = 512;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम at91sam9260_udc_pullup(काष्ठा at91_udc *udc, पूर्णांक is_on)
-अणु
-	u32 txvc = at91_udp_पढ़ो(udc, AT91_UDP_TXVC);
+static void at91sam9260_udc_pullup(struct at91_udc *udc, int is_on)
+{
+	u32 txvc = at91_udp_read(udc, AT91_UDP_TXVC);
 
-	अगर (is_on)
+	if (is_on)
 		txvc |= AT91_UDP_TXVC_PUON;
-	अन्यथा
+	else
 		txvc &= ~AT91_UDP_TXVC_PUON;
 
-	at91_udp_ग_लिखो(udc, AT91_UDP_TXVC, txvc);
-पूर्ण
+	at91_udp_write(udc, AT91_UDP_TXVC, txvc);
+}
 
-अटल स्थिर काष्ठा at91_udc_caps at91sam9260_udc_caps = अणु
+static const struct at91_udc_caps at91sam9260_udc_caps = {
 	.init = at91sam9260_udc_init,
 	.pullup = at91sam9260_udc_pullup,
-पूर्ण;
+};
 
-अटल पूर्णांक at91sam9261_udc_init(काष्ठा at91_udc *udc)
-अणु
-	काष्ठा at91_ep *ep;
-	पूर्णांक i;
+static int at91sam9261_udc_init(struct at91_udc *udc)
+{
+	struct at91_ep *ep;
+	int i;
 
-	क्रम (i = 0; i < NUM_ENDPOINTS; i++) अणु
+	for (i = 0; i < NUM_ENDPOINTS; i++) {
 		ep = &udc->ep[i];
 
-		चयन (i) अणु
-		हाल 0:
+		switch (i) {
+		case 0:
 			ep->maxpacket = 8;
-			अवरोध;
-		हाल 1 ... 3:
+			break;
+		case 1 ... 3:
 			ep->maxpacket = 64;
-			अवरोध;
-		हाल 4 ... 5:
+			break;
+		case 4 ... 5:
 			ep->maxpacket = 256;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	udc->matrix = syscon_regmap_lookup_by_phandle(udc->pdev->dev.of_node,
 						      "atmel,matrix");
-	वापस PTR_ERR_OR_ZERO(udc->matrix);
-पूर्ण
+	return PTR_ERR_OR_ZERO(udc->matrix);
+}
 
-अटल व्योम at91sam9261_udc_pullup(काष्ठा at91_udc *udc, पूर्णांक is_on)
-अणु
+static void at91sam9261_udc_pullup(struct at91_udc *udc, int is_on)
+{
 	u32 usbpucr = 0;
 
-	अगर (is_on)
+	if (is_on)
 		usbpucr = AT91_MATRIX_USBPUCR_PUON;
 
 	regmap_update_bits(udc->matrix, AT91SAM9261_MATRIX_USBPUCR,
 			   AT91_MATRIX_USBPUCR_PUON, usbpucr);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा at91_udc_caps at91sam9261_udc_caps = अणु
+static const struct at91_udc_caps at91sam9261_udc_caps = {
 	.init = at91sam9261_udc_init,
 	.pullup = at91sam9261_udc_pullup,
-पूर्ण;
+};
 
-अटल पूर्णांक at91sam9263_udc_init(काष्ठा at91_udc *udc)
-अणु
-	काष्ठा at91_ep *ep;
-	पूर्णांक i;
+static int at91sam9263_udc_init(struct at91_udc *udc)
+{
+	struct at91_ep *ep;
+	int i;
 
-	क्रम (i = 0; i < NUM_ENDPOINTS; i++) अणु
+	for (i = 0; i < NUM_ENDPOINTS; i++) {
 		ep = &udc->ep[i];
 
-		चयन (i) अणु
-		हाल 0:
-		हाल 1:
-		हाल 2:
-		हाल 3:
+		switch (i) {
+		case 0:
+		case 1:
+		case 2:
+		case 3:
 			ep->maxpacket = 64;
-			अवरोध;
-		हाल 4:
-		हाल 5:
+			break;
+		case 4:
+		case 5:
 			ep->maxpacket = 256;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा at91_udc_caps at91sam9263_udc_caps = अणु
+static const struct at91_udc_caps at91sam9263_udc_caps = {
 	.init = at91sam9263_udc_init,
 	.pullup = at91sam9260_udc_pullup,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id at91_udc_dt_ids[] = अणु
-	अणु
+static const struct of_device_id at91_udc_dt_ids[] = {
+	{
 		.compatible = "atmel,at91rm9200-udc",
 		.data = &at91rm9200_udc_caps,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "atmel,at91sam9260-udc",
 		.data = &at91sam9260_udc_caps,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "atmel,at91sam9261-udc",
 		.data = &at91sam9261_udc_caps,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "atmel,at91sam9263-udc",
 		.data = &at91sam9263_udc_caps,
-	पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+	},
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, at91_udc_dt_ids);
 
-अटल व्योम at91udc_of_init(काष्ठा at91_udc *udc, काष्ठा device_node *np)
-अणु
-	काष्ठा at91_udc_data *board = &udc->board;
-	स्थिर काष्ठा of_device_id *match;
-	क्रमागत of_gpio_flags flags;
+static void at91udc_of_init(struct at91_udc *udc, struct device_node *np)
+{
+	struct at91_udc_data *board = &udc->board;
+	const struct of_device_id *match;
+	enum of_gpio_flags flags;
 	u32 val;
 
-	अगर (of_property_पढ़ो_u32(np, "atmel,vbus-polled", &val) == 0)
+	if (of_property_read_u32(np, "atmel,vbus-polled", &val) == 0)
 		board->vbus_polled = 1;
 
 	board->vbus_pin = of_get_named_gpio_flags(np, "atmel,vbus-gpio", 0,
@@ -1800,21 +1799,21 @@ MODULE_DEVICE_TABLE(of, at91_udc_dt_ids);
 	board->pullup_active_low = (flags & OF_GPIO_ACTIVE_LOW) ? 1 : 0;
 
 	match = of_match_node(at91_udc_dt_ids, np);
-	अगर (match)
+	if (match)
 		udc->caps = match->data;
-पूर्ण
+}
 
-अटल पूर्णांक at91udc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device	*dev = &pdev->dev;
-	काष्ठा at91_udc	*udc;
-	पूर्णांक		retval;
-	काष्ठा at91_ep	*ep;
-	पूर्णांक		i;
+static int at91udc_probe(struct platform_device *pdev)
+{
+	struct device	*dev = &pdev->dev;
+	struct at91_udc	*udc;
+	int		retval;
+	struct at91_ep	*ep;
+	int		i;
 
-	udc = devm_kzalloc(dev, माप(*udc), GFP_KERNEL);
-	अगर (!udc)
-		वापस -ENOMEM;
+	udc = devm_kzalloc(dev, sizeof(*udc), GFP_KERNEL);
+	if (!udc)
+		return -ENOMEM;
 
 	/* init software state */
 	udc->gadget.dev.parent = dev;
@@ -1828,108 +1827,108 @@ MODULE_DEVICE_TABLE(of, at91_udc_dt_ids);
 	udc->gadget.name = driver_name;
 	udc->gadget.dev.init_name = "gadget";
 
-	क्रम (i = 0; i < NUM_ENDPOINTS; i++) अणु
+	for (i = 0; i < NUM_ENDPOINTS; i++) {
 		ep = &udc->ep[i];
 		ep->ep.name = ep_info[i].name;
 		ep->ep.caps = ep_info[i].caps;
 		ep->ep.ops = &at91_ep_ops;
 		ep->udc = udc;
-		ep->पूर्णांक_mask = BIT(i);
-		अगर (i != 0 && i != 3)
+		ep->int_mask = BIT(i);
+		if (i != 0 && i != 3)
 			ep->is_pingpong = 1;
-	पूर्ण
+	}
 
-	udc->udp_baseaddr = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(udc->udp_baseaddr))
-		वापस PTR_ERR(udc->udp_baseaddr);
+	udc->udp_baseaddr = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(udc->udp_baseaddr))
+		return PTR_ERR(udc->udp_baseaddr);
 
-	अगर (udc->caps && udc->caps->init) अणु
+	if (udc->caps && udc->caps->init) {
 		retval = udc->caps->init(udc);
-		अगर (retval)
-			वापस retval;
-	पूर्ण
+		if (retval)
+			return retval;
+	}
 
 	udc_reinit(udc);
 
-	/* get पूर्णांकerface and function घड़ीs */
+	/* get interface and function clocks */
 	udc->iclk = devm_clk_get(dev, "pclk");
-	अगर (IS_ERR(udc->iclk))
-		वापस PTR_ERR(udc->iclk);
+	if (IS_ERR(udc->iclk))
+		return PTR_ERR(udc->iclk);
 
 	udc->fclk = devm_clk_get(dev, "hclk");
-	अगर (IS_ERR(udc->fclk))
-		वापस PTR_ERR(udc->fclk);
+	if (IS_ERR(udc->fclk))
+		return PTR_ERR(udc->fclk);
 
-	/* करोn't करो anything until we have both gadget driver and VBUS */
+	/* don't do anything until we have both gadget driver and VBUS */
 	clk_set_rate(udc->fclk, 48000000);
 	retval = clk_prepare(udc->fclk);
-	अगर (retval)
-		वापस retval;
+	if (retval)
+		return retval;
 
 	retval = clk_prepare_enable(udc->iclk);
-	अगर (retval)
-		जाओ err_unprepare_fclk;
+	if (retval)
+		goto err_unprepare_fclk;
 
-	at91_udp_ग_लिखो(udc, AT91_UDP_TXVC, AT91_UDP_TXVC_TXVDIS);
-	at91_udp_ग_लिखो(udc, AT91_UDP_IDR, 0xffffffff);
-	/* Clear all pending पूर्णांकerrupts - UDP may be used by bootloader. */
-	at91_udp_ग_लिखो(udc, AT91_UDP_ICR, 0xffffffff);
+	at91_udp_write(udc, AT91_UDP_TXVC, AT91_UDP_TXVC_TXVDIS);
+	at91_udp_write(udc, AT91_UDP_IDR, 0xffffffff);
+	/* Clear all pending interrupts - UDP may be used by bootloader. */
+	at91_udp_write(udc, AT91_UDP_ICR, 0xffffffff);
 	clk_disable(udc->iclk);
 
 	/* request UDC and maybe VBUS irqs */
-	udc->udp_irq = platक्रमm_get_irq(pdev, 0);
+	udc->udp_irq = platform_get_irq(pdev, 0);
 	retval = devm_request_irq(dev, udc->udp_irq, at91_udc_irq, 0,
 				  driver_name, udc);
-	अगर (retval) अणु
+	if (retval) {
 		DBG("request irq %d failed\n", udc->udp_irq);
-		जाओ err_unprepare_iclk;
-	पूर्ण
+		goto err_unprepare_iclk;
+	}
 
-	अगर (gpio_is_valid(udc->board.vbus_pin)) अणु
+	if (gpio_is_valid(udc->board.vbus_pin)) {
 		retval = devm_gpio_request(dev, udc->board.vbus_pin,
 					   "udc_vbus");
-		अगर (retval) अणु
+		if (retval) {
 			DBG("request vbus pin failed\n");
-			जाओ err_unprepare_iclk;
-		पूर्ण
+			goto err_unprepare_iclk;
+		}
 
 		gpio_direction_input(udc->board.vbus_pin);
 
 		/*
 		 * Get the initial state of VBUS - we cannot expect
-		 * a pending पूर्णांकerrupt.
+		 * a pending interrupt.
 		 */
 		udc->vbus = gpio_get_value_cansleep(udc->board.vbus_pin) ^
 			udc->board.vbus_active_low;
 
-		अगर (udc->board.vbus_polled) अणु
-			INIT_WORK(&udc->vbus_समयr_work, at91_vbus_समयr_work);
-			समयr_setup(&udc->vbus_समयr, at91_vbus_समयr, 0);
-			mod_समयr(&udc->vbus_समयr,
-				  jअगरfies + VBUS_POLL_TIMEOUT);
-		पूर्ण अन्यथा अणु
+		if (udc->board.vbus_polled) {
+			INIT_WORK(&udc->vbus_timer_work, at91_vbus_timer_work);
+			timer_setup(&udc->vbus_timer, at91_vbus_timer, 0);
+			mod_timer(&udc->vbus_timer,
+				  jiffies + VBUS_POLL_TIMEOUT);
+		} else {
 			retval = devm_request_irq(dev,
 					gpio_to_irq(udc->board.vbus_pin),
 					at91_vbus_irq, 0, driver_name, udc);
-			अगर (retval) अणु
+			if (retval) {
 				DBG("request vbus irq %d failed\n",
 				    udc->board.vbus_pin);
-				जाओ err_unprepare_iclk;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
+				goto err_unprepare_iclk;
+			}
+		}
+	} else {
 		DBG("no VBUS detection, assuming always-on\n");
 		udc->vbus = 1;
-	पूर्ण
+	}
 	retval = usb_add_gadget_udc(dev, &udc->gadget);
-	अगर (retval)
-		जाओ err_unprepare_iclk;
+	if (retval)
+		goto err_unprepare_iclk;
 	dev_set_drvdata(dev, udc);
 	device_init_wakeup(dev, 1);
 	create_debug_file(udc);
 
 	INFO("%s version %s\n", driver_name, DRIVER_VERSION);
-	वापस 0;
+	return 0;
 
 err_unprepare_iclk:
 	clk_unprepare(udc->iclk);
@@ -1938,96 +1937,96 @@ err_unprepare_fclk:
 
 	DBG("%s probe failed, %d\n", driver_name, retval);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक at91udc_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा at91_udc *udc = platक्रमm_get_drvdata(pdev);
-	अचिन्हित दीर्घ	flags;
+static int at91udc_remove(struct platform_device *pdev)
+{
+	struct at91_udc *udc = platform_get_drvdata(pdev);
+	unsigned long	flags;
 
 	DBG("remove\n");
 
 	usb_del_gadget_udc(&udc->gadget);
-	अगर (udc->driver)
-		वापस -EBUSY;
+	if (udc->driver)
+		return -EBUSY;
 
 	spin_lock_irqsave(&udc->lock, flags);
 	pullup(udc, 0);
 	spin_unlock_irqrestore(&udc->lock, flags);
 
 	device_init_wakeup(&pdev->dev, 0);
-	हटाओ_debug_file(udc);
+	remove_debug_file(udc);
 	clk_unprepare(udc->fclk);
 	clk_unprepare(udc->iclk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक at91udc_suspend(काष्ठा platक्रमm_device *pdev, pm_message_t mesg)
-अणु
-	काष्ठा at91_udc *udc = platक्रमm_get_drvdata(pdev);
-	पूर्णांक		wake = udc->driver && device_may_wakeup(&pdev->dev);
-	अचिन्हित दीर्घ	flags;
+#ifdef CONFIG_PM
+static int at91udc_suspend(struct platform_device *pdev, pm_message_t mesg)
+{
+	struct at91_udc *udc = platform_get_drvdata(pdev);
+	int		wake = udc->driver && device_may_wakeup(&pdev->dev);
+	unsigned long	flags;
 
 	/* Unless we can act normally to the host (letting it wake us up
-	 * whenever it has work क्रम us) क्रमce disconnect.  Wakeup requires
-	 * PLLB क्रम USB events (संकेतing क्रम reset, wakeup, or incoming
-	 * tokens) and VBUS irqs (on प्रणालीs which support them).
+	 * whenever it has work for us) force disconnect.  Wakeup requires
+	 * PLLB for USB events (signaling for reset, wakeup, or incoming
+	 * tokens) and VBUS irqs (on systems which support them).
 	 */
-	अगर ((!udc->suspended && udc->addr)
+	if ((!udc->suspended && udc->addr)
 			|| !wake
-			|| at91_suspend_entering_slow_घड़ी()) अणु
+			|| at91_suspend_entering_slow_clock()) {
 		spin_lock_irqsave(&udc->lock, flags);
 		pullup(udc, 0);
 		wake = 0;
 		spin_unlock_irqrestore(&udc->lock, flags);
-	पूर्ण अन्यथा
+	} else
 		enable_irq_wake(udc->udp_irq);
 
 	udc->active_suspend = wake;
-	अगर (gpio_is_valid(udc->board.vbus_pin) && !udc->board.vbus_polled && wake)
+	if (gpio_is_valid(udc->board.vbus_pin) && !udc->board.vbus_polled && wake)
 		enable_irq_wake(udc->board.vbus_pin);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक at91udc_resume(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा at91_udc *udc = platक्रमm_get_drvdata(pdev);
-	अचिन्हित दीर्घ	flags;
+static int at91udc_resume(struct platform_device *pdev)
+{
+	struct at91_udc *udc = platform_get_drvdata(pdev);
+	unsigned long	flags;
 
-	अगर (gpio_is_valid(udc->board.vbus_pin) && !udc->board.vbus_polled &&
+	if (gpio_is_valid(udc->board.vbus_pin) && !udc->board.vbus_polled &&
 	    udc->active_suspend)
 		disable_irq_wake(udc->board.vbus_pin);
 
-	/* maybe reconnect to host; अगर so, घड़ीs on */
-	अगर (udc->active_suspend)
+	/* maybe reconnect to host; if so, clocks on */
+	if (udc->active_suspend)
 		disable_irq_wake(udc->udp_irq);
-	अन्यथा अणु
+	else {
 		spin_lock_irqsave(&udc->lock, flags);
 		pullup(udc, 1);
 		spin_unlock_irqrestore(&udc->lock, flags);
-	पूर्ण
-	वापस 0;
-पूर्ण
-#अन्यथा
-#घोषणा	at91udc_suspend	शून्य
-#घोषणा	at91udc_resume	शून्य
-#पूर्ण_अगर
+	}
+	return 0;
+}
+#else
+#define	at91udc_suspend	NULL
+#define	at91udc_resume	NULL
+#endif
 
-अटल काष्ठा platक्रमm_driver at91_udc_driver = अणु
-	.हटाओ		= at91udc_हटाओ,
-	.shutकरोwn	= at91udc_shutकरोwn,
+static struct platform_driver at91_udc_driver = {
+	.remove		= at91udc_remove,
+	.shutdown	= at91udc_shutdown,
 	.suspend	= at91udc_suspend,
 	.resume		= at91udc_resume,
-	.driver		= अणु
+	.driver		= {
 		.name	= driver_name,
 		.of_match_table	= at91_udc_dt_ids,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver_probe(at91_udc_driver, at91udc_probe);
+module_platform_driver_probe(at91_udc_driver, at91udc_probe);
 
 MODULE_DESCRIPTION("AT91 udc driver");
 MODULE_AUTHOR("Thomas Rathbone, David Brownell");

@@ -1,120 +1,119 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2016 IBM Corp.
  */
 
-#अगर_अघोषित PINCTRL_ASPEED
-#घोषणा PINCTRL_ASPEED
+#ifndef PINCTRL_ASPEED
+#define PINCTRL_ASPEED
 
-#समावेश <linux/pinctrl/pinctrl.h>
-#समावेश <linux/pinctrl/pinmux.h>
-#समावेश <linux/pinctrl/pinconf.h>
-#समावेश <linux/pinctrl/pinconf-generic.h>
-#समावेश <linux/regmap.h>
+#include <linux/pinctrl/pinctrl.h>
+#include <linux/pinctrl/pinmux.h>
+#include <linux/pinctrl/pinconf.h>
+#include <linux/pinctrl/pinconf-generic.h>
+#include <linux/regmap.h>
 
-#समावेश "pinmux-aspeed.h"
+#include "pinmux-aspeed.h"
 
 /**
  * @param The pinconf parameter type
- * @pins The pin range this config काष्ठा covers, [low, high]
- * @reg The रेजिस्टर housing the configuration bits
- * @mask The mask to select the bits of पूर्णांकerest in @reg
+ * @pins The pin range this config struct covers, [low, high]
+ * @reg The register housing the configuration bits
+ * @mask The mask to select the bits of interest in @reg
  */
-काष्ठा aspeed_pin_config अणु
-	क्रमागत pin_config_param param;
-	अचिन्हित पूर्णांक pins[2];
-	अचिन्हित पूर्णांक reg;
+struct aspeed_pin_config {
+	enum pin_config_param param;
+	unsigned int pins[2];
+	unsigned int reg;
 	u32 mask;
-पूर्ण;
+};
 
-#घोषणा ASPEED_PINCTRL_PIN(name_) \
-	[name_] = अणु \
+#define ASPEED_PINCTRL_PIN(name_) \
+	[name_] = { \
 		.number = name_, \
 		.name = #name_, \
-		.drv_data = (व्योम *) &(PIN_SYM(name_)) \
-	पूर्ण
+		.drv_data = (void *) &(PIN_SYM(name_)) \
+	}
 
-#घोषणा ASPEED_SB_PINCONF(param_, pin0_, pin1_, reg_, bit_) अणु \
+#define ASPEED_SB_PINCONF(param_, pin0_, pin1_, reg_, bit_) { \
 	.param = param_, \
-	.pins = अणुpin0_, pin1_पूर्ण, \
+	.pins = {pin0_, pin1_}, \
 	.reg = reg_, \
 	.mask = BIT_MASK(bit_) \
-पूर्ण
+}
 
-#घोषणा ASPEED_PULL_DOWN_PINCONF(pin_, reg_, bit_) \
+#define ASPEED_PULL_DOWN_PINCONF(pin_, reg_, bit_) \
 	ASPEED_SB_PINCONF(PIN_CONFIG_BIAS_PULL_DOWN, pin_, pin_, reg_, bit_), \
 	ASPEED_SB_PINCONF(PIN_CONFIG_BIAS_DISABLE,   pin_, pin_, reg_, bit_)
 
-#घोषणा ASPEED_PULL_UP_PINCONF(pin_, reg_, bit_) \
+#define ASPEED_PULL_UP_PINCONF(pin_, reg_, bit_) \
 	ASPEED_SB_PINCONF(PIN_CONFIG_BIAS_PULL_UP, pin_, pin_, reg_, bit_), \
 	ASPEED_SB_PINCONF(PIN_CONFIG_BIAS_DISABLE, pin_, pin_, reg_, bit_)
 /*
  * Aspeed pin configuration description.
  *
  * @param: pinconf configuration parameter
- * @arg: The supported argument क्रम @param, or -1 अगर any value is supported
- * @val: The रेजिस्टर value to ग_लिखो to configure @arg क्रम @param
- * @mask: The bitfield mask क्रम @val
+ * @arg: The supported argument for @param, or -1 if any value is supported
+ * @val: The register value to write to configure @arg for @param
+ * @mask: The bitfield mask for @val
  *
  * The map is to be used in conjunction with the configuration array supplied
  * by the driver implementation.
  */
-काष्ठा aspeed_pin_config_map अणु
-	क्रमागत pin_config_param param;
+struct aspeed_pin_config_map {
+	enum pin_config_param param;
 	s32 arg;
 	u32 val;
 	u32 mask;
-पूर्ण;
+};
 
-काष्ठा aspeed_pinctrl_data अणु
-	काष्ठा regmap *scu;
+struct aspeed_pinctrl_data {
+	struct regmap *scu;
 
-	स्थिर काष्ठा pinctrl_pin_desc *pins;
-	स्थिर अचिन्हित पूर्णांक npins;
+	const struct pinctrl_pin_desc *pins;
+	const unsigned int npins;
 
-	स्थिर काष्ठा aspeed_pin_config *configs;
-	स्थिर अचिन्हित पूर्णांक nconfigs;
+	const struct aspeed_pin_config *configs;
+	const unsigned int nconfigs;
 
-	काष्ठा aspeed_pinmux_data pinmux;
+	struct aspeed_pinmux_data pinmux;
 
-	स्थिर काष्ठा aspeed_pin_config_map *confmaps;
-	स्थिर अचिन्हित पूर्णांक nconfmaps;
-पूर्ण;
+	const struct aspeed_pin_config_map *confmaps;
+	const unsigned int nconfmaps;
+};
 
 /* Aspeed pinctrl helpers */
-पूर्णांक aspeed_pinctrl_get_groups_count(काष्ठा pinctrl_dev *pctldev);
-स्थिर अक्षर *aspeed_pinctrl_get_group_name(काष्ठा pinctrl_dev *pctldev,
-		अचिन्हित पूर्णांक group);
-पूर्णांक aspeed_pinctrl_get_group_pins(काष्ठा pinctrl_dev *pctldev,
-		अचिन्हित पूर्णांक group, स्थिर अचिन्हित पूर्णांक **pins,
-		अचिन्हित पूर्णांक *npins);
-व्योम aspeed_pinctrl_pin_dbg_show(काष्ठा pinctrl_dev *pctldev,
-		काष्ठा seq_file *s, अचिन्हित पूर्णांक offset);
-पूर्णांक aspeed_pinmux_get_fn_count(काष्ठा pinctrl_dev *pctldev);
-स्थिर अक्षर *aspeed_pinmux_get_fn_name(काष्ठा pinctrl_dev *pctldev,
-		अचिन्हित पूर्णांक function);
-पूर्णांक aspeed_pinmux_get_fn_groups(काष्ठा pinctrl_dev *pctldev,
-		अचिन्हित पूर्णांक function, स्थिर अक्षर * स्थिर **groups,
-		अचिन्हित पूर्णांक * स्थिर num_groups);
-पूर्णांक aspeed_pinmux_set_mux(काष्ठा pinctrl_dev *pctldev, अचिन्हित पूर्णांक function,
-		अचिन्हित पूर्णांक group);
-पूर्णांक aspeed_gpio_request_enable(काष्ठा pinctrl_dev *pctldev,
-		काष्ठा pinctrl_gpio_range *range,
-		अचिन्हित पूर्णांक offset);
-पूर्णांक aspeed_pinctrl_probe(काष्ठा platक्रमm_device *pdev,
-		काष्ठा pinctrl_desc *pdesc,
-		काष्ठा aspeed_pinctrl_data *pdata);
-पूर्णांक aspeed_pin_config_get(काष्ठा pinctrl_dev *pctldev, अचिन्हित पूर्णांक offset,
-		अचिन्हित दीर्घ *config);
-पूर्णांक aspeed_pin_config_set(काष्ठा pinctrl_dev *pctldev, अचिन्हित पूर्णांक offset,
-		अचिन्हित दीर्घ *configs, अचिन्हित पूर्णांक num_configs);
-पूर्णांक aspeed_pin_config_group_get(काष्ठा pinctrl_dev *pctldev,
-		अचिन्हित पूर्णांक selector,
-		अचिन्हित दीर्घ *config);
-पूर्णांक aspeed_pin_config_group_set(काष्ठा pinctrl_dev *pctldev,
-		अचिन्हित पूर्णांक selector,
-		अचिन्हित दीर्घ *configs,
-		अचिन्हित पूर्णांक num_configs);
+int aspeed_pinctrl_get_groups_count(struct pinctrl_dev *pctldev);
+const char *aspeed_pinctrl_get_group_name(struct pinctrl_dev *pctldev,
+		unsigned int group);
+int aspeed_pinctrl_get_group_pins(struct pinctrl_dev *pctldev,
+		unsigned int group, const unsigned int **pins,
+		unsigned int *npins);
+void aspeed_pinctrl_pin_dbg_show(struct pinctrl_dev *pctldev,
+		struct seq_file *s, unsigned int offset);
+int aspeed_pinmux_get_fn_count(struct pinctrl_dev *pctldev);
+const char *aspeed_pinmux_get_fn_name(struct pinctrl_dev *pctldev,
+		unsigned int function);
+int aspeed_pinmux_get_fn_groups(struct pinctrl_dev *pctldev,
+		unsigned int function, const char * const **groups,
+		unsigned int * const num_groups);
+int aspeed_pinmux_set_mux(struct pinctrl_dev *pctldev, unsigned int function,
+		unsigned int group);
+int aspeed_gpio_request_enable(struct pinctrl_dev *pctldev,
+		struct pinctrl_gpio_range *range,
+		unsigned int offset);
+int aspeed_pinctrl_probe(struct platform_device *pdev,
+		struct pinctrl_desc *pdesc,
+		struct aspeed_pinctrl_data *pdata);
+int aspeed_pin_config_get(struct pinctrl_dev *pctldev, unsigned int offset,
+		unsigned long *config);
+int aspeed_pin_config_set(struct pinctrl_dev *pctldev, unsigned int offset,
+		unsigned long *configs, unsigned int num_configs);
+int aspeed_pin_config_group_get(struct pinctrl_dev *pctldev,
+		unsigned int selector,
+		unsigned long *config);
+int aspeed_pin_config_group_set(struct pinctrl_dev *pctldev,
+		unsigned int selector,
+		unsigned long *configs,
+		unsigned int num_configs);
 
-#पूर्ण_अगर /* PINCTRL_ASPEED */
+#endif /* PINCTRL_ASPEED */

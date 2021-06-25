@@ -1,23 +1,22 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_X86_CURRENT_H
-#घोषणा _ASM_X86_CURRENT_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_X86_CURRENT_H
+#define _ASM_X86_CURRENT_H
 
-#समावेश <linux/compiler.h>
-#समावेश <यंत्र/percpu.h>
+#include <linux/compiler.h>
+#include <asm/percpu.h>
 
-#अगर_अघोषित __ASSEMBLY__
-काष्ठा task_काष्ठा;
+#ifndef __ASSEMBLY__
+struct task_struct;
 
-DECLARE_PER_CPU(काष्ठा task_काष्ठा *, current_task);
+DECLARE_PER_CPU(struct task_struct *, current_task);
 
-अटल __always_अंतरभूत काष्ठा task_काष्ठा *get_current(व्योम)
-अणु
-	वापस this_cpu_पढ़ो_stable(current_task);
-पूर्ण
+static __always_inline struct task_struct *get_current(void)
+{
+	return this_cpu_read_stable(current_task);
+}
 
-#घोषणा current get_current()
+#define current get_current()
 
-#पूर्ण_अगर /* __ASSEMBLY__ */
+#endif /* __ASSEMBLY__ */
 
-#पूर्ण_अगर /* _ASM_X86_CURRENT_H */
+#endif /* _ASM_X86_CURRENT_H */

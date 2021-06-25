@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * AMD Cryptographic Coprocessor (CCP) driver
  *
@@ -9,273 +8,273 @@
  * Author: Gary R Hook <gary.hook@amd.com>
  */
 
-#अगर_अघोषित __CCP_DEV_H__
-#घोषणा __CCP_DEV_H__
+#ifndef __CCP_DEV_H__
+#define __CCP_DEV_H__
 
-#समावेश <linux/device.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/list.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/dma-direction.h>
-#समावेश <linux/dmapool.h>
-#समावेश <linux/hw_अक्रमom.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irqवापस.h>
-#समावेश <linux/dmaengine.h>
+#include <linux/device.h>
+#include <linux/spinlock.h>
+#include <linux/mutex.h>
+#include <linux/list.h>
+#include <linux/wait.h>
+#include <linux/dma-direction.h>
+#include <linux/dmapool.h>
+#include <linux/hw_random.h>
+#include <linux/bitops.h>
+#include <linux/interrupt.h>
+#include <linux/irqreturn.h>
+#include <linux/dmaengine.h>
 
-#समावेश "sp-dev.h"
+#include "sp-dev.h"
 
-#घोषणा MAX_CCP_NAME_LEN		16
-#घोषणा MAX_DMAPOOL_NAME_LEN		32
+#define MAX_CCP_NAME_LEN		16
+#define MAX_DMAPOOL_NAME_LEN		32
 
-#घोषणा MAX_HW_QUEUES			5
-#घोषणा MAX_CMD_QLEN			100
+#define MAX_HW_QUEUES			5
+#define MAX_CMD_QLEN			100
 
-#घोषणा TRNG_RETRIES			10
+#define TRNG_RETRIES			10
 
-#घोषणा CACHE_NONE			0x00
-#घोषणा CACHE_WB_NO_ALLOC		0xb7
+#define CACHE_NONE			0x00
+#define CACHE_WB_NO_ALLOC		0xb7
 
 /****** Register Mappings ******/
-#घोषणा Q_MASK_REG			0x000
-#घोषणा TRNG_OUT_REG			0x00c
-#घोषणा IRQ_MASK_REG			0x040
-#घोषणा IRQ_STATUS_REG			0x200
+#define Q_MASK_REG			0x000
+#define TRNG_OUT_REG			0x00c
+#define IRQ_MASK_REG			0x040
+#define IRQ_STATUS_REG			0x200
 
-#घोषणा DEL_CMD_Q_JOB			0x124
-#घोषणा DEL_Q_ACTIVE			0x00000200
-#घोषणा DEL_Q_ID_SHIFT			6
+#define DEL_CMD_Q_JOB			0x124
+#define DEL_Q_ACTIVE			0x00000200
+#define DEL_Q_ID_SHIFT			6
 
-#घोषणा CMD_REQ0			0x180
-#घोषणा CMD_REQ_INCR			0x04
+#define CMD_REQ0			0x180
+#define CMD_REQ_INCR			0x04
 
-#घोषणा CMD_Q_STATUS_BASE		0x210
-#घोषणा CMD_Q_INT_STATUS_BASE		0x214
-#घोषणा CMD_Q_STATUS_INCR		0x20
+#define CMD_Q_STATUS_BASE		0x210
+#define CMD_Q_INT_STATUS_BASE		0x214
+#define CMD_Q_STATUS_INCR		0x20
 
-#घोषणा CMD_Q_CACHE_BASE		0x228
-#घोषणा CMD_Q_CACHE_INC			0x20
+#define CMD_Q_CACHE_BASE		0x228
+#define CMD_Q_CACHE_INC			0x20
 
-#घोषणा CMD_Q_ERROR(__qs)		((__qs) & 0x0000003f)
-#घोषणा CMD_Q_DEPTH(__qs)		(((__qs) >> 12) & 0x0000000f)
+#define CMD_Q_ERROR(__qs)		((__qs) & 0x0000003f)
+#define CMD_Q_DEPTH(__qs)		(((__qs) >> 12) & 0x0000000f)
 
-/* ------------------------ CCP Version 5 Specअगरics ------------------------ */
-#घोषणा CMD5_QUEUE_MASK_OFFSET		0x00
-#घोषणा	CMD5_QUEUE_PRIO_OFFSET		0x04
-#घोषणा CMD5_REQID_CONFIG_OFFSET	0x08
-#घोषणा	CMD5_CMD_TIMEOUT_OFFSET		0x10
-#घोषणा LSB_PUBLIC_MASK_LO_OFFSET	0x18
-#घोषणा LSB_PUBLIC_MASK_HI_OFFSET	0x1C
-#घोषणा LSB_PRIVATE_MASK_LO_OFFSET	0x20
-#घोषणा LSB_PRIVATE_MASK_HI_OFFSET	0x24
-#घोषणा CMD5_PSP_CCP_VERSION		0x100
+/* ------------------------ CCP Version 5 Specifics ------------------------ */
+#define CMD5_QUEUE_MASK_OFFSET		0x00
+#define	CMD5_QUEUE_PRIO_OFFSET		0x04
+#define CMD5_REQID_CONFIG_OFFSET	0x08
+#define	CMD5_CMD_TIMEOUT_OFFSET		0x10
+#define LSB_PUBLIC_MASK_LO_OFFSET	0x18
+#define LSB_PUBLIC_MASK_HI_OFFSET	0x1C
+#define LSB_PRIVATE_MASK_LO_OFFSET	0x20
+#define LSB_PRIVATE_MASK_HI_OFFSET	0x24
+#define CMD5_PSP_CCP_VERSION		0x100
 
-#घोषणा CMD5_Q_CONTROL_BASE		0x0000
-#घोषणा CMD5_Q_TAIL_LO_BASE		0x0004
-#घोषणा CMD5_Q_HEAD_LO_BASE		0x0008
-#घोषणा CMD5_Q_INT_ENABLE_BASE		0x000C
-#घोषणा CMD5_Q_INTERRUPT_STATUS_BASE	0x0010
+#define CMD5_Q_CONTROL_BASE		0x0000
+#define CMD5_Q_TAIL_LO_BASE		0x0004
+#define CMD5_Q_HEAD_LO_BASE		0x0008
+#define CMD5_Q_INT_ENABLE_BASE		0x000C
+#define CMD5_Q_INTERRUPT_STATUS_BASE	0x0010
 
-#घोषणा CMD5_Q_STATUS_BASE		0x0100
-#घोषणा CMD5_Q_INT_STATUS_BASE		0x0104
-#घोषणा CMD5_Q_DMA_STATUS_BASE		0x0108
-#घोषणा CMD5_Q_DMA_READ_STATUS_BASE	0x010C
-#घोषणा CMD5_Q_DMA_WRITE_STATUS_BASE	0x0110
-#घोषणा CMD5_Q_ABORT_BASE		0x0114
-#घोषणा CMD5_Q_AX_CACHE_BASE		0x0118
+#define CMD5_Q_STATUS_BASE		0x0100
+#define CMD5_Q_INT_STATUS_BASE		0x0104
+#define CMD5_Q_DMA_STATUS_BASE		0x0108
+#define CMD5_Q_DMA_READ_STATUS_BASE	0x010C
+#define CMD5_Q_DMA_WRITE_STATUS_BASE	0x0110
+#define CMD5_Q_ABORT_BASE		0x0114
+#define CMD5_Q_AX_CACHE_BASE		0x0118
 
-#घोषणा	CMD5_CONFIG_0_OFFSET		0x6000
-#घोषणा	CMD5_TRNG_CTL_OFFSET		0x6008
-#घोषणा	CMD5_AES_MASK_OFFSET		0x6010
-#घोषणा	CMD5_CLK_GATE_CTL_OFFSET	0x603C
+#define	CMD5_CONFIG_0_OFFSET		0x6000
+#define	CMD5_TRNG_CTL_OFFSET		0x6008
+#define	CMD5_AES_MASK_OFFSET		0x6010
+#define	CMD5_CLK_GATE_CTL_OFFSET	0x603C
 
-/* Address offset between two भव queue रेजिस्टरs */
-#घोषणा CMD5_Q_STATUS_INCR		0x1000
+/* Address offset between two virtual queue registers */
+#define CMD5_Q_STATUS_INCR		0x1000
 
 /* Bit masks */
-#घोषणा CMD5_Q_RUN			0x1
-#घोषणा CMD5_Q_HALT			0x2
-#घोषणा CMD5_Q_MEM_LOCATION		0x4
-#घोषणा CMD5_Q_SIZE			0x1F
-#घोषणा CMD5_Q_SHIFT			3
-#घोषणा COMMANDS_PER_QUEUE		16
-#घोषणा QUEUE_SIZE_VAL			((ffs(COMMANDS_PER_QUEUE) - 2) & \
+#define CMD5_Q_RUN			0x1
+#define CMD5_Q_HALT			0x2
+#define CMD5_Q_MEM_LOCATION		0x4
+#define CMD5_Q_SIZE			0x1F
+#define CMD5_Q_SHIFT			3
+#define COMMANDS_PER_QUEUE		16
+#define QUEUE_SIZE_VAL			((ffs(COMMANDS_PER_QUEUE) - 2) & \
 					  CMD5_Q_SIZE)
-#घोषणा Q_PTR_MASK			(2 << (QUEUE_SIZE_VAL + 5) - 1)
-#घोषणा Q_DESC_SIZE			माप(काष्ठा ccp5_desc)
-#घोषणा Q_SIZE(n)			(COMMANDS_PER_QUEUE*(n))
+#define Q_PTR_MASK			(2 << (QUEUE_SIZE_VAL + 5) - 1)
+#define Q_DESC_SIZE			sizeof(struct ccp5_desc)
+#define Q_SIZE(n)			(COMMANDS_PER_QUEUE*(n))
 
-#घोषणा INT_COMPLETION			0x1
-#घोषणा INT_ERROR			0x2
-#घोषणा INT_QUEUE_STOPPED		0x4
-#घोषणा	INT_EMPTY_QUEUE			0x8
-#घोषणा SUPPORTED_INTERRUPTS		(INT_COMPLETION | INT_ERROR)
+#define INT_COMPLETION			0x1
+#define INT_ERROR			0x2
+#define INT_QUEUE_STOPPED		0x4
+#define	INT_EMPTY_QUEUE			0x8
+#define SUPPORTED_INTERRUPTS		(INT_COMPLETION | INT_ERROR)
 
-#घोषणा LSB_REGION_WIDTH		5
-#घोषणा MAX_LSB_CNT			8
+#define LSB_REGION_WIDTH		5
+#define MAX_LSB_CNT			8
 
-#घोषणा LSB_SIZE			16
-#घोषणा LSB_ITEM_SIZE			32
-#घोषणा PLSB_MAP_SIZE			(LSB_SIZE)
-#घोषणा SLSB_MAP_SIZE			(MAX_LSB_CNT * LSB_SIZE)
+#define LSB_SIZE			16
+#define LSB_ITEM_SIZE			32
+#define PLSB_MAP_SIZE			(LSB_SIZE)
+#define SLSB_MAP_SIZE			(MAX_LSB_CNT * LSB_SIZE)
 
-#घोषणा LSB_ENTRY_NUMBER(LSB_ADDR)	(LSB_ADDR / LSB_ITEM_SIZE)
+#define LSB_ENTRY_NUMBER(LSB_ADDR)	(LSB_ADDR / LSB_ITEM_SIZE)
 
-/* ------------------------ CCP Version 3 Specअगरics ------------------------ */
-#घोषणा REQ0_WAIT_FOR_WRITE		0x00000004
-#घोषणा REQ0_INT_ON_COMPLETE		0x00000002
-#घोषणा REQ0_STOP_ON_COMPLETE		0x00000001
+/* ------------------------ CCP Version 3 Specifics ------------------------ */
+#define REQ0_WAIT_FOR_WRITE		0x00000004
+#define REQ0_INT_ON_COMPLETE		0x00000002
+#define REQ0_STOP_ON_COMPLETE		0x00000001
 
-#घोषणा REQ0_CMD_Q_SHIFT		9
-#घोषणा REQ0_JOBID_SHIFT		3
+#define REQ0_CMD_Q_SHIFT		9
+#define REQ0_JOBID_SHIFT		3
 
 /****** REQ1 Related Values ******/
-#घोषणा REQ1_PROTECT_SHIFT		27
-#घोषणा REQ1_ENGINE_SHIFT		23
-#घोषणा REQ1_KEY_KSB_SHIFT		2
+#define REQ1_PROTECT_SHIFT		27
+#define REQ1_ENGINE_SHIFT		23
+#define REQ1_KEY_KSB_SHIFT		2
 
-#घोषणा REQ1_EOM			0x00000002
-#घोषणा REQ1_INIT			0x00000001
+#define REQ1_EOM			0x00000002
+#define REQ1_INIT			0x00000001
 
 /* AES Related Values */
-#घोषणा REQ1_AES_TYPE_SHIFT		21
-#घोषणा REQ1_AES_MODE_SHIFT		18
-#घोषणा REQ1_AES_ACTION_SHIFT		17
-#घोषणा REQ1_AES_CFB_SIZE_SHIFT		10
+#define REQ1_AES_TYPE_SHIFT		21
+#define REQ1_AES_MODE_SHIFT		18
+#define REQ1_AES_ACTION_SHIFT		17
+#define REQ1_AES_CFB_SIZE_SHIFT		10
 
 /* XTS-AES Related Values */
-#घोषणा REQ1_XTS_AES_SIZE_SHIFT		10
+#define REQ1_XTS_AES_SIZE_SHIFT		10
 
 /* SHA Related Values */
-#घोषणा REQ1_SHA_TYPE_SHIFT		21
+#define REQ1_SHA_TYPE_SHIFT		21
 
 /* RSA Related Values */
-#घोषणा REQ1_RSA_MOD_SIZE_SHIFT		10
+#define REQ1_RSA_MOD_SIZE_SHIFT		10
 
 /* Pass-Through Related Values */
-#घोषणा REQ1_PT_BW_SHIFT		12
-#घोषणा REQ1_PT_BS_SHIFT		10
+#define REQ1_PT_BW_SHIFT		12
+#define REQ1_PT_BS_SHIFT		10
 
 /* ECC Related Values */
-#घोषणा REQ1_ECC_AFFINE_CONVERT		0x00200000
-#घोषणा REQ1_ECC_FUNCTION_SHIFT		18
+#define REQ1_ECC_AFFINE_CONVERT		0x00200000
+#define REQ1_ECC_FUNCTION_SHIFT		18
 
 /****** REQ4 Related Values ******/
-#घोषणा REQ4_KSB_SHIFT			18
-#घोषणा REQ4_MEMTYPE_SHIFT		16
+#define REQ4_KSB_SHIFT			18
+#define REQ4_MEMTYPE_SHIFT		16
 
 /****** REQ6 Related Values ******/
-#घोषणा REQ6_MEMTYPE_SHIFT		16
+#define REQ6_MEMTYPE_SHIFT		16
 
 /****** Key Storage Block ******/
-#घोषणा KSB_START			77
-#घोषणा KSB_END				127
-#घोषणा KSB_COUNT			(KSB_END - KSB_START + 1)
-#घोषणा CCP_SB_BITS			256
+#define KSB_START			77
+#define KSB_END				127
+#define KSB_COUNT			(KSB_END - KSB_START + 1)
+#define CCP_SB_BITS			256
 
-#घोषणा CCP_JOBID_MASK			0x0000003f
+#define CCP_JOBID_MASK			0x0000003f
 
 /* ------------------------ General CCP Defines ------------------------ */
 
-#घोषणा	CCP_DMA_DFLT			0x0
-#घोषणा	CCP_DMA_PRIV			0x1
-#घोषणा	CCP_DMA_PUB			0x2
+#define	CCP_DMA_DFLT			0x0
+#define	CCP_DMA_PRIV			0x1
+#define	CCP_DMA_PUB			0x2
 
-#घोषणा CCP_DMAPOOL_MAX_SIZE		64
-#घोषणा CCP_DMAPOOL_ALIGN		BIT(5)
+#define CCP_DMAPOOL_MAX_SIZE		64
+#define CCP_DMAPOOL_ALIGN		BIT(5)
 
-#घोषणा CCP_REVERSE_BUF_SIZE		64
+#define CCP_REVERSE_BUF_SIZE		64
 
-#घोषणा CCP_AES_KEY_SB_COUNT		1
-#घोषणा CCP_AES_CTX_SB_COUNT		1
+#define CCP_AES_KEY_SB_COUNT		1
+#define CCP_AES_CTX_SB_COUNT		1
 
-#घोषणा CCP_XTS_AES_KEY_SB_COUNT	1
-#घोषणा CCP5_XTS_AES_KEY_SB_COUNT	2
-#घोषणा CCP_XTS_AES_CTX_SB_COUNT	1
+#define CCP_XTS_AES_KEY_SB_COUNT	1
+#define CCP5_XTS_AES_KEY_SB_COUNT	2
+#define CCP_XTS_AES_CTX_SB_COUNT	1
 
-#घोषणा CCP_DES3_KEY_SB_COUNT		1
-#घोषणा CCP_DES3_CTX_SB_COUNT		1
+#define CCP_DES3_KEY_SB_COUNT		1
+#define CCP_DES3_CTX_SB_COUNT		1
 
-#घोषणा CCP_SHA_SB_COUNT		1
+#define CCP_SHA_SB_COUNT		1
 
-#घोषणा CCP_RSA_MAX_WIDTH		4096
-#घोषणा CCP5_RSA_MAX_WIDTH		16384
+#define CCP_RSA_MAX_WIDTH		4096
+#define CCP5_RSA_MAX_WIDTH		16384
 
-#घोषणा CCP_PASSTHRU_BLOCKSIZE		256
-#घोषणा CCP_PASSTHRU_MASKSIZE		32
-#घोषणा CCP_PASSTHRU_SB_COUNT		1
+#define CCP_PASSTHRU_BLOCKSIZE		256
+#define CCP_PASSTHRU_MASKSIZE		32
+#define CCP_PASSTHRU_SB_COUNT		1
 
-#घोषणा CCP_ECC_MODULUS_BYTES		48      /* 384-bits */
-#घोषणा CCP_ECC_MAX_OPERANDS		6
-#घोषणा CCP_ECC_MAX_OUTPUTS		3
-#घोषणा CCP_ECC_SRC_BUF_SIZE		448
-#घोषणा CCP_ECC_DST_BUF_SIZE		192
-#घोषणा CCP_ECC_OPERAND_SIZE		64
-#घोषणा CCP_ECC_OUTPUT_SIZE		64
-#घोषणा CCP_ECC_RESULT_OFFSET		60
-#घोषणा CCP_ECC_RESULT_SUCCESS		0x0001
+#define CCP_ECC_MODULUS_BYTES		48      /* 384-bits */
+#define CCP_ECC_MAX_OPERANDS		6
+#define CCP_ECC_MAX_OUTPUTS		3
+#define CCP_ECC_SRC_BUF_SIZE		448
+#define CCP_ECC_DST_BUF_SIZE		192
+#define CCP_ECC_OPERAND_SIZE		64
+#define CCP_ECC_OUTPUT_SIZE		64
+#define CCP_ECC_RESULT_OFFSET		60
+#define CCP_ECC_RESULT_SUCCESS		0x0001
 
-#घोषणा CCP_SB_BYTES			32
+#define CCP_SB_BYTES			32
 
-काष्ठा ccp_op;
-काष्ठा ccp_device;
-काष्ठा ccp_cmd;
-काष्ठा ccp_fns;
+struct ccp_op;
+struct ccp_device;
+struct ccp_cmd;
+struct ccp_fns;
 
-काष्ठा ccp_dma_cmd अणु
-	काष्ठा list_head entry;
+struct ccp_dma_cmd {
+	struct list_head entry;
 
-	काष्ठा ccp_cmd ccp_cmd;
-पूर्ण;
+	struct ccp_cmd ccp_cmd;
+};
 
-काष्ठा ccp_dma_desc अणु
-	काष्ठा list_head entry;
+struct ccp_dma_desc {
+	struct list_head entry;
 
-	काष्ठा ccp_device *ccp;
+	struct ccp_device *ccp;
 
-	काष्ठा list_head pending;
-	काष्ठा list_head active;
+	struct list_head pending;
+	struct list_head active;
 
-	क्रमागत dma_status status;
-	काष्ठा dma_async_tx_descriptor tx_desc;
-	माप_प्रकार len;
-पूर्ण;
+	enum dma_status status;
+	struct dma_async_tx_descriptor tx_desc;
+	size_t len;
+};
 
-काष्ठा ccp_dma_chan अणु
-	काष्ठा ccp_device *ccp;
+struct ccp_dma_chan {
+	struct ccp_device *ccp;
 
 	spinlock_t lock;
-	काष्ठा list_head created;
-	काष्ठा list_head pending;
-	काष्ठा list_head active;
-	काष्ठा list_head complete;
+	struct list_head created;
+	struct list_head pending;
+	struct list_head active;
+	struct list_head complete;
 
-	काष्ठा tasklet_काष्ठा cleanup_tasklet;
+	struct tasklet_struct cleanup_tasklet;
 
-	क्रमागत dma_status status;
-	काष्ठा dma_chan dma_chan;
-पूर्ण;
+	enum dma_status status;
+	struct dma_chan dma_chan;
+};
 
-काष्ठा ccp_cmd_queue अणु
-	काष्ठा ccp_device *ccp;
+struct ccp_cmd_queue {
+	struct ccp_device *ccp;
 
-	/* Queue identअगरier */
+	/* Queue identifier */
 	u32 id;
 
 	/* Queue dma pool */
-	काष्ठा dma_pool *dma_pool;
+	struct dma_pool *dma_pool;
 
 	/* Queue base address (not neccessarily aligned)*/
-	काष्ठा ccp5_desc *qbase;
+	struct ccp5_desc *qbase;
 
 	/* Aligned queue start address (per requirement) */
-	काष्ठा mutex q_mutex ____cacheline_aligned;
-	अचिन्हित पूर्णांक qidx;
+	struct mutex q_mutex ____cacheline_aligned;
+	unsigned int qidx;
 
-	/* Version 5 has dअगरferent requirements क्रम queue memory */
-	अचिन्हित पूर्णांक qsize;
+	/* Version 5 has different requirements for queue memory */
+	unsigned int qsize;
 	dma_addr_t qbase_dma;
 	dma_addr_t qdma_tail;
 
@@ -283,254 +282,254 @@
 	u32 sb_key;
 	u32 sb_ctx;
 
-	/* Biपंचांगap of LSBs that can be accessed by this queue */
+	/* Bitmap of LSBs that can be accessed by this queue */
 	DECLARE_BITMAP(lsbmask, MAX_LSB_CNT);
-	/* Private LSB that is asचिन्हित to this queue, or -1 अगर none.
-	 * Biपंचांगap क्रम my निजी LSB, unused otherwise
+	/* Private LSB that is assigned to this queue, or -1 if none.
+	 * Bitmap for my private LSB, unused otherwise
 	 */
-	पूर्णांक lsb;
+	int lsb;
 	DECLARE_BITMAP(lsbmap, PLSB_MAP_SIZE);
 
-	/* Queue processing thपढ़ो */
-	काष्ठा task_काष्ठा *kthपढ़ो;
-	अचिन्हित पूर्णांक active;
-	अचिन्हित पूर्णांक suspended;
+	/* Queue processing thread */
+	struct task_struct *kthread;
+	unsigned int active;
+	unsigned int suspended;
 
-	/* Number of मुक्त command slots available */
-	अचिन्हित पूर्णांक मुक्त_slots;
+	/* Number of free command slots available */
+	unsigned int free_slots;
 
 	/* Interrupt masks */
-	u32 पूर्णांक_ok;
-	u32 पूर्णांक_err;
+	u32 int_ok;
+	u32 int_err;
 
-	/* Register addresses क्रम queue */
-	व्योम __iomem *reg_control;
-	व्योम __iomem *reg_tail_lo;
-	व्योम __iomem *reg_head_lo;
-	व्योम __iomem *reg_पूर्णांक_enable;
-	व्योम __iomem *reg_पूर्णांकerrupt_status;
-	व्योम __iomem *reg_status;
-	व्योम __iomem *reg_पूर्णांक_status;
-	व्योम __iomem *reg_dma_status;
-	व्योम __iomem *reg_dma_पढ़ो_status;
-	व्योम __iomem *reg_dma_ग_लिखो_status;
-	u32 qcontrol; /* Cached control रेजिस्टर */
+	/* Register addresses for queue */
+	void __iomem *reg_control;
+	void __iomem *reg_tail_lo;
+	void __iomem *reg_head_lo;
+	void __iomem *reg_int_enable;
+	void __iomem *reg_interrupt_status;
+	void __iomem *reg_status;
+	void __iomem *reg_int_status;
+	void __iomem *reg_dma_status;
+	void __iomem *reg_dma_read_status;
+	void __iomem *reg_dma_write_status;
+	u32 qcontrol; /* Cached control register */
 
 	/* Status values from job */
-	u32 पूर्णांक_status;
+	u32 int_status;
 	u32 q_status;
-	u32 q_पूर्णांक_status;
+	u32 q_int_status;
 	u32 cmd_error;
 
-	/* Interrupt रुको queue */
-	रुको_queue_head_t पूर्णांक_queue;
-	अचिन्हित पूर्णांक पूर्णांक_rcvd;
+	/* Interrupt wait queue */
+	wait_queue_head_t int_queue;
+	unsigned int int_rcvd;
 
 	/* Per-queue Statistics */
-	अचिन्हित दीर्घ total_ops;
-	अचिन्हित दीर्घ total_aes_ops;
-	अचिन्हित दीर्घ total_xts_aes_ops;
-	अचिन्हित दीर्घ total_3des_ops;
-	अचिन्हित दीर्घ total_sha_ops;
-	अचिन्हित दीर्घ total_rsa_ops;
-	अचिन्हित दीर्घ total_pt_ops;
-	अचिन्हित दीर्घ total_ecc_ops;
-पूर्ण ____cacheline_aligned;
+	unsigned long total_ops;
+	unsigned long total_aes_ops;
+	unsigned long total_xts_aes_ops;
+	unsigned long total_3des_ops;
+	unsigned long total_sha_ops;
+	unsigned long total_rsa_ops;
+	unsigned long total_pt_ops;
+	unsigned long total_ecc_ops;
+} ____cacheline_aligned;
 
-काष्ठा ccp_device अणु
-	काष्ठा list_head entry;
+struct ccp_device {
+	struct list_head entry;
 
-	काष्ठा ccp_vdata *vdata;
-	अचिन्हित पूर्णांक ord;
-	अक्षर name[MAX_CCP_NAME_LEN];
-	अक्षर rngname[MAX_CCP_NAME_LEN];
+	struct ccp_vdata *vdata;
+	unsigned int ord;
+	char name[MAX_CCP_NAME_LEN];
+	char rngname[MAX_CCP_NAME_LEN];
 
-	काष्ठा device *dev;
-	काष्ठा sp_device *sp;
+	struct device *dev;
+	struct sp_device *sp;
 
-	/* Bus specअगरic device inक्रमmation
+	/* Bus specific device information
 	 */
-	व्योम *dev_specअगरic;
-	अचिन्हित पूर्णांक qim;
-	अचिन्हित पूर्णांक irq;
+	void *dev_specific;
+	unsigned int qim;
+	unsigned int irq;
 	bool use_tasklet;
-	काष्ठा tasklet_काष्ठा irq_tasklet;
+	struct tasklet_struct irq_tasklet;
 
-	/* I/O area used क्रम device communication. The रेजिस्टर mapping
-	 * starts at an offset पूर्णांकo the mapped bar.
-	 *   The CMD_REQx रेजिस्टरs and the Delete_Cmd_Queue_Job रेजिस्टर
-	 *   need to be रक्षित जबतक a command queue thपढ़ो is accessing
+	/* I/O area used for device communication. The register mapping
+	 * starts at an offset into the mapped bar.
+	 *   The CMD_REQx registers and the Delete_Cmd_Queue_Job register
+	 *   need to be protected while a command queue thread is accessing
 	 *   them.
 	 */
-	काष्ठा mutex req_mutex ____cacheline_aligned;
-	व्योम __iomem *io_regs;
+	struct mutex req_mutex ____cacheline_aligned;
+	void __iomem *io_regs;
 
 	/* Master lists that all cmds are queued on. Because there can be
 	 * more than one CCP command queue that can process a cmd a separate
 	 * backlog list is neeeded so that the backlog completion call
-	 * completes beक्रमe the cmd is available क्रम execution.
+	 * completes before the cmd is available for execution.
 	 */
 	spinlock_t cmd_lock ____cacheline_aligned;
-	अचिन्हित पूर्णांक cmd_count;
-	काष्ठा list_head cmd;
-	काष्ठा list_head backlog;
+	unsigned int cmd_count;
+	struct list_head cmd;
+	struct list_head backlog;
 
 	/* The command queues. These represent the queues available on the
-	 * CCP that are available क्रम processing cmds
+	 * CCP that are available for processing cmds
 	 */
-	काष्ठा ccp_cmd_queue cmd_q[MAX_HW_QUEUES];
-	अचिन्हित पूर्णांक cmd_q_count;
-	अचिन्हित पूर्णांक max_q_count;
+	struct ccp_cmd_queue cmd_q[MAX_HW_QUEUES];
+	unsigned int cmd_q_count;
+	unsigned int max_q_count;
 
-	/* Support क्रम the CCP True RNG
+	/* Support for the CCP True RNG
 	 */
-	काष्ठा hwrng hwrng;
-	अचिन्हित पूर्णांक hwrng_retries;
+	struct hwrng hwrng;
+	unsigned int hwrng_retries;
 
-	/* Support क्रम the CCP DMA capabilities
+	/* Support for the CCP DMA capabilities
 	 */
-	काष्ठा dma_device dma_dev;
-	काष्ठा ccp_dma_chan *ccp_dma_chan;
-	काष्ठा kmem_cache *dma_cmd_cache;
-	काष्ठा kmem_cache *dma_desc_cache;
+	struct dma_device dma_dev;
+	struct ccp_dma_chan *ccp_dma_chan;
+	struct kmem_cache *dma_cmd_cache;
+	struct kmem_cache *dma_desc_cache;
 
-	/* A counter used to generate job-ids क्रम cmds submitted to the CCP
+	/* A counter used to generate job-ids for cmds submitted to the CCP
 	 */
 	atomic_t current_id ____cacheline_aligned;
 
-	/* The v3 CCP uses key storage blocks (SB) to मुख्यtain context क्रम
+	/* The v3 CCP uses key storage blocks (SB) to maintain context for
 	 * certain operations. To prevent multiple cmds from using the same
-	 * SB range a command queue reserves an SB range क्रम the duration of
-	 * the cmd. Each queue, will however, reserve 2 SB blocks क्रम
+	 * SB range a command queue reserves an SB range for the duration of
+	 * the cmd. Each queue, will however, reserve 2 SB blocks for
 	 * operations that only require single SB entries (eg. AES context/iv
-	 * and key) in order to aव्योम allocation contention.  This will reserve
-	 * at most 10 SB entries, leaving 40 SB entries available क्रम dynamic
+	 * and key) in order to avoid allocation contention.  This will reserve
+	 * at most 10 SB entries, leaving 40 SB entries available for dynamic
 	 * allocation.
 	 *
-	 * The v5 CCP Local Storage Block (LSB) is broken up पूर्णांकo 8
-	 * memrory ranges, each of which can be enabled क्रम access by one
-	 * or more queues. Device initialization takes this पूर्णांकo account,
-	 * and attempts to assign one region क्रम exclusive use by each
+	 * The v5 CCP Local Storage Block (LSB) is broken up into 8
+	 * memrory ranges, each of which can be enabled for access by one
+	 * or more queues. Device initialization takes this into account,
+	 * and attempts to assign one region for exclusive use by each
 	 * available queue; the rest are then aggregated as "public" use.
 	 * If there are fewer regions than queues, all regions are shared
 	 * amongst all queues.
 	 */
-	काष्ठा mutex sb_mutex ____cacheline_aligned;
+	struct mutex sb_mutex ____cacheline_aligned;
 	DECLARE_BITMAP(sb, KSB_COUNT);
-	रुको_queue_head_t sb_queue;
-	अचिन्हित पूर्णांक sb_avail;
-	अचिन्हित पूर्णांक sb_count;
+	wait_queue_head_t sb_queue;
+	unsigned int sb_avail;
+	unsigned int sb_count;
 	u32 sb_start;
 
-	/* Biपंचांगap of shared LSBs, अगर any */
+	/* Bitmap of shared LSBs, if any */
 	DECLARE_BITMAP(lsbmap, SLSB_MAP_SIZE);
 
 	/* Suspend support */
-	अचिन्हित पूर्णांक suspending;
-	रुको_queue_head_t suspend_queue;
+	unsigned int suspending;
+	wait_queue_head_t suspend_queue;
 
 	/* DMA caching attribute support */
-	अचिन्हित पूर्णांक axcache;
+	unsigned int axcache;
 
 	/* Device Statistics */
-	अचिन्हित दीर्घ total_पूर्णांकerrupts;
+	unsigned long total_interrupts;
 
 	/* DebugFS info */
-	काष्ठा dentry *debugfs_instance;
-पूर्ण;
+	struct dentry *debugfs_instance;
+};
 
-क्रमागत ccp_memtype अणु
+enum ccp_memtype {
 	CCP_MEMTYPE_SYSTEM = 0,
 	CCP_MEMTYPE_SB,
 	CCP_MEMTYPE_LOCAL,
 	CCP_MEMTYPE__LAST,
-पूर्ण;
-#घोषणा	CCP_MEMTYPE_LSB	CCP_MEMTYPE_KSB
+};
+#define	CCP_MEMTYPE_LSB	CCP_MEMTYPE_KSB
 
 
-काष्ठा ccp_dma_info अणु
+struct ccp_dma_info {
 	dma_addr_t address;
-	अचिन्हित पूर्णांक offset;
-	अचिन्हित पूर्णांक length;
-	क्रमागत dma_data_direction dir;
-पूर्ण __packed __aligned(4);
+	unsigned int offset;
+	unsigned int length;
+	enum dma_data_direction dir;
+} __packed __aligned(4);
 
-काष्ठा ccp_dm_workarea अणु
-	काष्ठा device *dev;
-	काष्ठा dma_pool *dma_pool;
+struct ccp_dm_workarea {
+	struct device *dev;
+	struct dma_pool *dma_pool;
 
 	u8 *address;
-	काष्ठा ccp_dma_info dma;
-	अचिन्हित पूर्णांक length;
-पूर्ण;
+	struct ccp_dma_info dma;
+	unsigned int length;
+};
 
-काष्ठा ccp_sg_workarea अणु
-	काष्ठा scatterlist *sg;
-	पूर्णांक nents;
-	अचिन्हित पूर्णांक sg_used;
+struct ccp_sg_workarea {
+	struct scatterlist *sg;
+	int nents;
+	unsigned int sg_used;
 
-	काष्ठा scatterlist *dma_sg;
-	काष्ठा scatterlist *dma_sg_head;
-	काष्ठा device *dma_dev;
-	अचिन्हित पूर्णांक dma_count;
-	क्रमागत dma_data_direction dma_dir;
+	struct scatterlist *dma_sg;
+	struct scatterlist *dma_sg_head;
+	struct device *dma_dev;
+	unsigned int dma_count;
+	enum dma_data_direction dma_dir;
 
 	u64 bytes_left;
-पूर्ण;
+};
 
-काष्ठा ccp_data अणु
-	काष्ठा ccp_sg_workarea sg_wa;
-	काष्ठा ccp_dm_workarea dm_wa;
-पूर्ण;
+struct ccp_data {
+	struct ccp_sg_workarea sg_wa;
+	struct ccp_dm_workarea dm_wa;
+};
 
-काष्ठा ccp_mem अणु
-	क्रमागत ccp_memtype type;
-	जोड़ अणु
-		काष्ठा ccp_dma_info dma;
+struct ccp_mem {
+	enum ccp_memtype type;
+	union {
+		struct ccp_dma_info dma;
 		u32 sb;
-	पूर्ण u;
-पूर्ण;
+	} u;
+};
 
-काष्ठा ccp_aes_op अणु
-	क्रमागत ccp_aes_type type;
-	क्रमागत ccp_aes_mode mode;
-	क्रमागत ccp_aes_action action;
-	अचिन्हित पूर्णांक size;
-पूर्ण;
+struct ccp_aes_op {
+	enum ccp_aes_type type;
+	enum ccp_aes_mode mode;
+	enum ccp_aes_action action;
+	unsigned int size;
+};
 
-काष्ठा ccp_xts_aes_op अणु
-	क्रमागत ccp_aes_type type;
-	क्रमागत ccp_aes_action action;
-	क्रमागत ccp_xts_aes_unit_size unit_size;
-पूर्ण;
+struct ccp_xts_aes_op {
+	enum ccp_aes_type type;
+	enum ccp_aes_action action;
+	enum ccp_xts_aes_unit_size unit_size;
+};
 
-काष्ठा ccp_des3_op अणु
-	क्रमागत ccp_des3_type type;
-	क्रमागत ccp_des3_mode mode;
-	क्रमागत ccp_des3_action action;
-पूर्ण;
+struct ccp_des3_op {
+	enum ccp_des3_type type;
+	enum ccp_des3_mode mode;
+	enum ccp_des3_action action;
+};
 
-काष्ठा ccp_sha_op अणु
-	क्रमागत ccp_sha_type type;
+struct ccp_sha_op {
+	enum ccp_sha_type type;
 	u64 msg_bits;
-पूर्ण;
+};
 
-काष्ठा ccp_rsa_op अणु
+struct ccp_rsa_op {
 	u32 mod_size;
 	u32 input_len;
-पूर्ण;
+};
 
-काष्ठा ccp_passthru_op अणु
-	क्रमागत ccp_passthru_bitwise bit_mod;
-	क्रमागत ccp_passthru_byteswap byte_swap;
-पूर्ण;
+struct ccp_passthru_op {
+	enum ccp_passthru_bitwise bit_mod;
+	enum ccp_passthru_byteswap byte_swap;
+};
 
-काष्ठा ccp_ecc_op अणु
-	क्रमागत ccp_ecc_function function;
-पूर्ण;
+struct ccp_ecc_op {
+	enum ccp_ecc_function function;
+};
 
-काष्ठा ccp_op अणु
-	काष्ठा ccp_cmd_queue *cmd_q;
+struct ccp_op {
+	struct ccp_cmd_queue *cmd_q;
 
 	u32 jobid;
 	u32 ioc;
@@ -540,135 +539,135 @@
 	u32 init;
 	u32 eom;
 
-	काष्ठा ccp_mem src;
-	काष्ठा ccp_mem dst;
-	काष्ठा ccp_mem exp;
+	struct ccp_mem src;
+	struct ccp_mem dst;
+	struct ccp_mem exp;
 
-	जोड़ अणु
-		काष्ठा ccp_aes_op aes;
-		काष्ठा ccp_xts_aes_op xts;
-		काष्ठा ccp_des3_op des3;
-		काष्ठा ccp_sha_op sha;
-		काष्ठा ccp_rsa_op rsa;
-		काष्ठा ccp_passthru_op passthru;
-		काष्ठा ccp_ecc_op ecc;
-	पूर्ण u;
-पूर्ण;
+	union {
+		struct ccp_aes_op aes;
+		struct ccp_xts_aes_op xts;
+		struct ccp_des3_op des3;
+		struct ccp_sha_op sha;
+		struct ccp_rsa_op rsa;
+		struct ccp_passthru_op passthru;
+		struct ccp_ecc_op ecc;
+	} u;
+};
 
-अटल अंतरभूत u32 ccp_addr_lo(काष्ठा ccp_dma_info *info)
-अणु
-	वापस lower_32_bits(info->address + info->offset);
-पूर्ण
+static inline u32 ccp_addr_lo(struct ccp_dma_info *info)
+{
+	return lower_32_bits(info->address + info->offset);
+}
 
-अटल अंतरभूत u32 ccp_addr_hi(काष्ठा ccp_dma_info *info)
-अणु
-	वापस upper_32_bits(info->address + info->offset) & 0x0000ffff;
-पूर्ण
+static inline u32 ccp_addr_hi(struct ccp_dma_info *info)
+{
+	return upper_32_bits(info->address + info->offset) & 0x0000ffff;
+}
 
 /**
- * descriptor क्रम version 5 CPP commands
+ * descriptor for version 5 CPP commands
  * 8 32-bit words:
  * word 0: function; engine; control bits
  * word 1: length of source data
- * word 2: low 32 bits of source poपूर्णांकer
- * word 3: upper 16 bits of source poपूर्णांकer; source memory type
- * word 4: low 32 bits of destination poपूर्णांकer
- * word 5: upper 16 bits of destination poपूर्णांकer; destination memory type
- * word 6: low 32 bits of key poपूर्णांकer
- * word 7: upper 16 bits of key poपूर्णांकer; key memory type
+ * word 2: low 32 bits of source pointer
+ * word 3: upper 16 bits of source pointer; source memory type
+ * word 4: low 32 bits of destination pointer
+ * word 5: upper 16 bits of destination pointer; destination memory type
+ * word 6: low 32 bits of key pointer
+ * word 7: upper 16 bits of key pointer; key memory type
  */
-काष्ठा dword0 अणु
-	अचिन्हित पूर्णांक soc:1;
-	अचिन्हित पूर्णांक ioc:1;
-	अचिन्हित पूर्णांक rsvd1:1;
-	अचिन्हित पूर्णांक init:1;
-	अचिन्हित पूर्णांक eom:1;		/* AES/SHA only */
-	अचिन्हित पूर्णांक function:15;
-	अचिन्हित पूर्णांक engine:4;
-	अचिन्हित पूर्णांक prot:1;
-	अचिन्हित पूर्णांक rsvd2:7;
-पूर्ण;
+struct dword0 {
+	unsigned int soc:1;
+	unsigned int ioc:1;
+	unsigned int rsvd1:1;
+	unsigned int init:1;
+	unsigned int eom:1;		/* AES/SHA only */
+	unsigned int function:15;
+	unsigned int engine:4;
+	unsigned int prot:1;
+	unsigned int rsvd2:7;
+};
 
-काष्ठा dword3 अणु
-	अचिन्हित पूर्णांक  src_hi:16;
-	अचिन्हित पूर्णांक  src_mem:2;
-	अचिन्हित पूर्णांक  lsb_cxt_id:8;
-	अचिन्हित पूर्णांक  rsvd1:5;
-	अचिन्हित पूर्णांक  fixed:1;
-पूर्ण;
+struct dword3 {
+	unsigned int  src_hi:16;
+	unsigned int  src_mem:2;
+	unsigned int  lsb_cxt_id:8;
+	unsigned int  rsvd1:5;
+	unsigned int  fixed:1;
+};
 
-जोड़ dword4 अणु
+union dword4 {
 	u32 dst_lo;		/* NON-SHA	*/
 	u32 sha_len_lo;		/* SHA		*/
-पूर्ण;
+};
 
-जोड़ dword5 अणु
-	काष्ठा अणु
-		अचिन्हित पूर्णांक  dst_hi:16;
-		अचिन्हित पूर्णांक  dst_mem:2;
-		अचिन्हित पूर्णांक  rsvd1:13;
-		अचिन्हित पूर्णांक  fixed:1;
-	पूर्ण fields;
+union dword5 {
+	struct {
+		unsigned int  dst_hi:16;
+		unsigned int  dst_mem:2;
+		unsigned int  rsvd1:13;
+		unsigned int  fixed:1;
+	} fields;
 	u32 sha_len_hi;
-पूर्ण;
+};
 
-काष्ठा dword7 अणु
-	अचिन्हित पूर्णांक  key_hi:16;
-	अचिन्हित पूर्णांक  key_mem:2;
-	अचिन्हित पूर्णांक  rsvd1:14;
-पूर्ण;
+struct dword7 {
+	unsigned int  key_hi:16;
+	unsigned int  key_mem:2;
+	unsigned int  rsvd1:14;
+};
 
-काष्ठा ccp5_desc अणु
-	काष्ठा dword0 dw0;
+struct ccp5_desc {
+	struct dword0 dw0;
 	u32 length;
 	u32 src_lo;
-	काष्ठा dword3 dw3;
-	जोड़ dword4 dw4;
-	जोड़ dword5 dw5;
+	struct dword3 dw3;
+	union dword4 dw4;
+	union dword5 dw5;
 	u32 key_lo;
-	काष्ठा dword7 dw7;
-पूर्ण;
+	struct dword7 dw7;
+};
 
-व्योम ccp_add_device(काष्ठा ccp_device *ccp);
-व्योम ccp_del_device(काष्ठा ccp_device *ccp);
+void ccp_add_device(struct ccp_device *ccp);
+void ccp_del_device(struct ccp_device *ccp);
 
-बाह्य व्योम ccp_log_error(काष्ठा ccp_device *, अचिन्हित पूर्णांक);
+extern void ccp_log_error(struct ccp_device *, unsigned int);
 
-काष्ठा ccp_device *ccp_alloc_काष्ठा(काष्ठा sp_device *sp);
-bool ccp_queues_suspended(काष्ठा ccp_device *ccp);
-पूर्णांक ccp_cmd_queue_thपढ़ो(व्योम *data);
-पूर्णांक ccp_trng_पढ़ो(काष्ठा hwrng *rng, व्योम *data, माप_प्रकार max, bool रुको);
+struct ccp_device *ccp_alloc_struct(struct sp_device *sp);
+bool ccp_queues_suspended(struct ccp_device *ccp);
+int ccp_cmd_queue_thread(void *data);
+int ccp_trng_read(struct hwrng *rng, void *data, size_t max, bool wait);
 
-पूर्णांक ccp_run_cmd(काष्ठा ccp_cmd_queue *cmd_q, काष्ठा ccp_cmd *cmd);
+int ccp_run_cmd(struct ccp_cmd_queue *cmd_q, struct ccp_cmd *cmd);
 
-पूर्णांक ccp_रेजिस्टर_rng(काष्ठा ccp_device *ccp);
-व्योम ccp_unरेजिस्टर_rng(काष्ठा ccp_device *ccp);
-पूर्णांक ccp_dmaengine_रेजिस्टर(काष्ठा ccp_device *ccp);
-व्योम ccp_dmaengine_unरेजिस्टर(काष्ठा ccp_device *ccp);
+int ccp_register_rng(struct ccp_device *ccp);
+void ccp_unregister_rng(struct ccp_device *ccp);
+int ccp_dmaengine_register(struct ccp_device *ccp);
+void ccp_dmaengine_unregister(struct ccp_device *ccp);
 
-व्योम ccp5_debugfs_setup(काष्ठा ccp_device *ccp);
-व्योम ccp5_debugfs_destroy(व्योम);
+void ccp5_debugfs_setup(struct ccp_device *ccp);
+void ccp5_debugfs_destroy(void);
 
-/* Structure क्रम computation functions that are device-specअगरic */
-काष्ठा ccp_actions अणु
-	पूर्णांक (*aes)(काष्ठा ccp_op *);
-	पूर्णांक (*xts_aes)(काष्ठा ccp_op *);
-	पूर्णांक (*des3)(काष्ठा ccp_op *);
-	पूर्णांक (*sha)(काष्ठा ccp_op *);
-	पूर्णांक (*rsa)(काष्ठा ccp_op *);
-	पूर्णांक (*passthru)(काष्ठा ccp_op *);
-	पूर्णांक (*ecc)(काष्ठा ccp_op *);
-	u32 (*sballoc)(काष्ठा ccp_cmd_queue *, अचिन्हित पूर्णांक);
-	व्योम (*sbमुक्त)(काष्ठा ccp_cmd_queue *, अचिन्हित पूर्णांक, अचिन्हित पूर्णांक);
-	अचिन्हित पूर्णांक (*get_मुक्त_slots)(काष्ठा ccp_cmd_queue *);
-	पूर्णांक (*init)(काष्ठा ccp_device *);
-	व्योम (*destroy)(काष्ठा ccp_device *);
-	irqवापस_t (*irqhandler)(पूर्णांक, व्योम *);
-पूर्ण;
+/* Structure for computation functions that are device-specific */
+struct ccp_actions {
+	int (*aes)(struct ccp_op *);
+	int (*xts_aes)(struct ccp_op *);
+	int (*des3)(struct ccp_op *);
+	int (*sha)(struct ccp_op *);
+	int (*rsa)(struct ccp_op *);
+	int (*passthru)(struct ccp_op *);
+	int (*ecc)(struct ccp_op *);
+	u32 (*sballoc)(struct ccp_cmd_queue *, unsigned int);
+	void (*sbfree)(struct ccp_cmd_queue *, unsigned int, unsigned int);
+	unsigned int (*get_free_slots)(struct ccp_cmd_queue *);
+	int (*init)(struct ccp_device *);
+	void (*destroy)(struct ccp_device *);
+	irqreturn_t (*irqhandler)(int, void *);
+};
 
-बाह्य स्थिर काष्ठा ccp_vdata ccpv3_platक्रमm;
-बाह्य स्थिर काष्ठा ccp_vdata ccpv3;
-बाह्य स्थिर काष्ठा ccp_vdata ccpv5a;
-बाह्य स्थिर काष्ठा ccp_vdata ccpv5b;
+extern const struct ccp_vdata ccpv3_platform;
+extern const struct ccp_vdata ccpv3;
+extern const struct ccp_vdata ccpv5a;
+extern const struct ccp_vdata ccpv5b;
 
-#पूर्ण_अगर
+#endif

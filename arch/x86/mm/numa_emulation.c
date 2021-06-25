@@ -1,346 +1,345 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * NUMA emulation
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/topology.h>
-#समावेश <linux/memblock.h>
-#समावेश <यंत्र/dma.h>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/topology.h>
+#include <linux/memblock.h>
+#include <asm/dma.h>
 
-#समावेश "numa_internal.h"
+#include "numa_internal.h"
 
-अटल पूर्णांक emu_nid_to_phys[MAX_NUMNODES];
-अटल अक्षर *emu_cmdline __initdata;
+static int emu_nid_to_phys[MAX_NUMNODES];
+static char *emu_cmdline __initdata;
 
-पूर्णांक __init numa_emu_cmdline(अक्षर *str)
-अणु
+int __init numa_emu_cmdline(char *str)
+{
 	emu_cmdline = str;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init emu_find_memblk_by_nid(पूर्णांक nid, स्थिर काष्ठा numa_meminfo *mi)
-अणु
-	पूर्णांक i;
+static int __init emu_find_memblk_by_nid(int nid, const struct numa_meminfo *mi)
+{
+	int i;
 
-	क्रम (i = 0; i < mi->nr_blks; i++)
-		अगर (mi->blk[i].nid == nid)
-			वापस i;
-	वापस -ENOENT;
-पूर्ण
+	for (i = 0; i < mi->nr_blks; i++)
+		if (mi->blk[i].nid == nid)
+			return i;
+	return -ENOENT;
+}
 
-अटल u64 __init mem_hole_size(u64 start, u64 end)
-अणु
-	अचिन्हित दीर्घ start_pfn = PFN_UP(start);
-	अचिन्हित दीर्घ end_pfn = PFN_DOWN(end);
+static u64 __init mem_hole_size(u64 start, u64 end)
+{
+	unsigned long start_pfn = PFN_UP(start);
+	unsigned long end_pfn = PFN_DOWN(end);
 
-	अगर (start_pfn < end_pfn)
-		वापस PFN_PHYS(असलent_pages_in_range(start_pfn, end_pfn));
-	वापस 0;
-पूर्ण
+	if (start_pfn < end_pfn)
+		return PFN_PHYS(absent_pages_in_range(start_pfn, end_pfn));
+	return 0;
+}
 
 /*
- * Sets up nid to range from @start to @end.  The वापस value is -त्रुटि_सं अगर
+ * Sets up nid to range from @start to @end.  The return value is -errno if
  * something went wrong, 0 otherwise.
  */
-अटल पूर्णांक __init emu_setup_memblk(काष्ठा numa_meminfo *ei,
-				   काष्ठा numa_meminfo *pi,
-				   पूर्णांक nid, पूर्णांक phys_blk, u64 size)
-अणु
-	काष्ठा numa_memblk *eb = &ei->blk[ei->nr_blks];
-	काष्ठा numa_memblk *pb = &pi->blk[phys_blk];
+static int __init emu_setup_memblk(struct numa_meminfo *ei,
+				   struct numa_meminfo *pi,
+				   int nid, int phys_blk, u64 size)
+{
+	struct numa_memblk *eb = &ei->blk[ei->nr_blks];
+	struct numa_memblk *pb = &pi->blk[phys_blk];
 
-	अगर (ei->nr_blks >= NR_NODE_MEMBLKS) अणु
+	if (ei->nr_blks >= NR_NODE_MEMBLKS) {
 		pr_err("NUMA: Too many emulated memblks, failing emulation\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ei->nr_blks++;
 	eb->start = pb->start;
 	eb->end = pb->start + size;
 	eb->nid = nid;
 
-	अगर (emu_nid_to_phys[nid] == NUMA_NO_NODE)
+	if (emu_nid_to_phys[nid] == NUMA_NO_NODE)
 		emu_nid_to_phys[nid] = pb->nid;
 
 	pb->start += size;
-	अगर (pb->start >= pb->end) अणु
+	if (pb->start >= pb->end) {
 		WARN_ON_ONCE(pb->start > pb->end);
-		numa_हटाओ_memblk_from(phys_blk, pi);
-	पूर्ण
+		numa_remove_memblk_from(phys_blk, pi);
+	}
 
-	prपूर्णांकk(KERN_INFO "Faking node %d at [mem %#018Lx-%#018Lx] (%LuMB)\n",
+	printk(KERN_INFO "Faking node %d at [mem %#018Lx-%#018Lx] (%LuMB)\n",
 	       nid, eb->start, eb->end - 1, (eb->end - eb->start) >> 20);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Sets up nr_nodes fake nodes पूर्णांकerleaved over physical nodes ranging from addr
+ * Sets up nr_nodes fake nodes interleaved over physical nodes ranging from addr
  * to max_addr.
  *
  * Returns zero on success or negative on error.
  */
-अटल पूर्णांक __init split_nodes_पूर्णांकerleave(काष्ठा numa_meminfo *ei,
-					 काष्ठा numa_meminfo *pi,
-					 u64 addr, u64 max_addr, पूर्णांक nr_nodes)
-अणु
+static int __init split_nodes_interleave(struct numa_meminfo *ei,
+					 struct numa_meminfo *pi,
+					 u64 addr, u64 max_addr, int nr_nodes)
+{
 	nodemask_t physnode_mask = numa_nodes_parsed;
 	u64 size;
-	पूर्णांक big;
-	पूर्णांक nid = 0;
-	पूर्णांक i, ret;
+	int big;
+	int nid = 0;
+	int i, ret;
 
-	अगर (nr_nodes <= 0)
-		वापस -1;
-	अगर (nr_nodes > MAX_NUMNODES) अणु
+	if (nr_nodes <= 0)
+		return -1;
+	if (nr_nodes > MAX_NUMNODES) {
 		pr_info("numa=fake=%d too large, reducing to %d\n",
 			nr_nodes, MAX_NUMNODES);
 		nr_nodes = MAX_NUMNODES;
-	पूर्ण
+	}
 
 	/*
-	 * Calculate target node size.  x86_32 freaks on __uभागdi3() so करो
-	 * the भागision in uदीर्घ number of pages and convert back.
+	 * Calculate target node size.  x86_32 freaks on __udivdi3() so do
+	 * the division in ulong number of pages and convert back.
 	 */
 	size = max_addr - addr - mem_hole_size(addr, max_addr);
-	size = PFN_PHYS((अचिन्हित दीर्घ)(size >> PAGE_SHIFT) / nr_nodes);
+	size = PFN_PHYS((unsigned long)(size >> PAGE_SHIFT) / nr_nodes);
 
 	/*
 	 * Calculate the number of big nodes that can be allocated as a result
-	 * of consolidating the reमुख्यder.
+	 * of consolidating the remainder.
 	 */
 	big = ((size & ~FAKE_NODE_MIN_HASH_MASK) * nr_nodes) /
 		FAKE_NODE_MIN_SIZE;
 
 	size &= FAKE_NODE_MIN_HASH_MASK;
-	अगर (!size) अणु
+	if (!size) {
 		pr_err("Not enough memory for each node.  "
 			"NUMA emulation disabled.\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	/*
 	 * Continue to fill physical nodes with fake nodes until there is no
 	 * memory left on any of them.
 	 */
-	जबतक (nodes_weight(physnode_mask)) अणु
-		क्रम_each_node_mask(i, physnode_mask) अणु
+	while (nodes_weight(physnode_mask)) {
+		for_each_node_mask(i, physnode_mask) {
 			u64 dma32_end = PFN_PHYS(MAX_DMA32_PFN);
 			u64 start, limit, end;
-			पूर्णांक phys_blk;
+			int phys_blk;
 
 			phys_blk = emu_find_memblk_by_nid(i, pi);
-			अगर (phys_blk < 0) अणु
+			if (phys_blk < 0) {
 				node_clear(i, physnode_mask);
-				जारी;
-			पूर्ण
+				continue;
+			}
 			start = pi->blk[phys_blk].start;
 			limit = pi->blk[phys_blk].end;
 			end = start + size;
 
-			अगर (nid < big)
+			if (nid < big)
 				end += FAKE_NODE_MIN_SIZE;
 
 			/*
-			 * Continue to add memory to this fake node अगर its
+			 * Continue to add memory to this fake node if its
 			 * non-reserved memory is less than the per-node size.
 			 */
-			जबतक (end - start - mem_hole_size(start, end) < size) अणु
+			while (end - start - mem_hole_size(start, end) < size) {
 				end += FAKE_NODE_MIN_SIZE;
-				अगर (end > limit) अणु
+				if (end > limit) {
 					end = limit;
-					अवरोध;
-				पूर्ण
-			पूर्ण
+					break;
+				}
+			}
 
 			/*
 			 * If there won't be at least FAKE_NODE_MIN_SIZE of
-			 * non-reserved memory in ZONE_DMA32 क्रम the next node,
+			 * non-reserved memory in ZONE_DMA32 for the next node,
 			 * this one must extend to the boundary.
 			 */
-			अगर (end < dma32_end && dma32_end - end -
+			if (end < dma32_end && dma32_end - end -
 			    mem_hole_size(end, dma32_end) < FAKE_NODE_MIN_SIZE)
 				end = dma32_end;
 
 			/*
-			 * If there won't be enough non-reserved memory क्रम the
+			 * If there won't be enough non-reserved memory for the
 			 * next node, this one must extend to the end of the
 			 * physical node.
 			 */
-			अगर (limit - end - mem_hole_size(end, limit) < size)
+			if (limit - end - mem_hole_size(end, limit) < size)
 				end = limit;
 
 			ret = emu_setup_memblk(ei, pi, nid++ % nr_nodes,
 					       phys_blk,
 					       min(end, limit) - start);
-			अगर (ret < 0)
-				वापस ret;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			if (ret < 0)
+				return ret;
+		}
+	}
+	return 0;
+}
 
 /*
  * Returns the end address of a node so that there is at least `size' amount of
  * non-reserved memory or `max_addr' is reached.
  */
-अटल u64 __init find_end_of_node(u64 start, u64 max_addr, u64 size)
-अणु
+static u64 __init find_end_of_node(u64 start, u64 max_addr, u64 size)
+{
 	u64 end = start + size;
 
-	जबतक (end - start - mem_hole_size(start, end) < size) अणु
+	while (end - start - mem_hole_size(start, end) < size) {
 		end += FAKE_NODE_MIN_SIZE;
-		अगर (end > max_addr) अणु
+		if (end > max_addr) {
 			end = max_addr;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस end;
-पूर्ण
+			break;
+		}
+	}
+	return end;
+}
 
-अटल u64 unअगरorm_size(u64 max_addr, u64 base, u64 hole, पूर्णांक nr_nodes)
-अणु
-	अचिन्हित दीर्घ max_pfn = PHYS_PFN(max_addr);
-	अचिन्हित दीर्घ base_pfn = PHYS_PFN(base);
-	अचिन्हित दीर्घ hole_pfns = PHYS_PFN(hole);
+static u64 uniform_size(u64 max_addr, u64 base, u64 hole, int nr_nodes)
+{
+	unsigned long max_pfn = PHYS_PFN(max_addr);
+	unsigned long base_pfn = PHYS_PFN(base);
+	unsigned long hole_pfns = PHYS_PFN(hole);
 
-	वापस PFN_PHYS((max_pfn - base_pfn - hole_pfns) / nr_nodes);
-पूर्ण
+	return PFN_PHYS((max_pfn - base_pfn - hole_pfns) / nr_nodes);
+}
 
 /*
- * Sets up fake nodes of `size' पूर्णांकerleaved over physical nodes ranging from
+ * Sets up fake nodes of `size' interleaved over physical nodes ranging from
  * `addr' to `max_addr'.
  *
  * Returns zero on success or negative on error.
  */
-अटल पूर्णांक __init split_nodes_size_पूर्णांकerleave_unअगरorm(काष्ठा numa_meminfo *ei,
-					      काष्ठा numa_meminfo *pi,
+static int __init split_nodes_size_interleave_uniform(struct numa_meminfo *ei,
+					      struct numa_meminfo *pi,
 					      u64 addr, u64 max_addr, u64 size,
-					      पूर्णांक nr_nodes, काष्ठा numa_memblk *pblk,
-					      पूर्णांक nid)
-अणु
+					      int nr_nodes, struct numa_memblk *pblk,
+					      int nid)
+{
 	nodemask_t physnode_mask = numa_nodes_parsed;
-	पूर्णांक i, ret, unअगरorm = 0;
+	int i, ret, uniform = 0;
 	u64 min_size;
 
-	अगर ((!size && !nr_nodes) || (nr_nodes && !pblk))
-		वापस -1;
+	if ((!size && !nr_nodes) || (nr_nodes && !pblk))
+		return -1;
 
 	/*
-	 * In the 'uniform' हाल split the passed in physical node by
-	 * nr_nodes, in the non-unअगरorm हाल, ignore the passed in
+	 * In the 'uniform' case split the passed in physical node by
+	 * nr_nodes, in the non-uniform case, ignore the passed in
 	 * physical block and try to create nodes of at least size
 	 * @size.
 	 *
-	 * In the unअगरorm हाल, split the nodes strictly by physical
-	 * capacity, i.e. ignore holes. In the non-unअगरorm हाल account
-	 * क्रम holes and treat @size as a minimum न्यूनमान.
+	 * In the uniform case, split the nodes strictly by physical
+	 * capacity, i.e. ignore holes. In the non-uniform case account
+	 * for holes and treat @size as a minimum floor.
 	 */
-	अगर (!nr_nodes)
+	if (!nr_nodes)
 		nr_nodes = MAX_NUMNODES;
-	अन्यथा अणु
+	else {
 		nodes_clear(physnode_mask);
 		node_set(pblk->nid, physnode_mask);
-		unअगरorm = 1;
-	पूर्ण
+		uniform = 1;
+	}
 
-	अगर (unअगरorm) अणु
-		min_size = unअगरorm_size(max_addr, addr, 0, nr_nodes);
+	if (uniform) {
+		min_size = uniform_size(max_addr, addr, 0, nr_nodes);
 		size = min_size;
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
 		 * The limit on emulated nodes is MAX_NUMNODES, so the
-		 * size per node is increased accordingly अगर the
-		 * requested size is too small.  This creates a unअगरorm
+		 * size per node is increased accordingly if the
+		 * requested size is too small.  This creates a uniform
 		 * distribution of node sizes across the entire machine
 		 * (but not necessarily over physical nodes).
 		 */
-		min_size = unअगरorm_size(max_addr, addr,
+		min_size = uniform_size(max_addr, addr,
 				mem_hole_size(addr, max_addr), nr_nodes);
-	पूर्ण
+	}
 	min_size = ALIGN(max(min_size, FAKE_NODE_MIN_SIZE), FAKE_NODE_MIN_SIZE);
-	अगर (size < min_size) अणु
+	if (size < min_size) {
 		pr_err("Fake node size %LuMB too small, increasing to %LuMB\n",
 			size >> 20, min_size >> 20);
 		size = min_size;
-	पूर्ण
+	}
 	size = ALIGN_DOWN(size, FAKE_NODE_MIN_SIZE);
 
 	/*
 	 * Fill physical nodes with fake nodes of size until there is no memory
 	 * left on any of them.
 	 */
-	जबतक (nodes_weight(physnode_mask)) अणु
-		क्रम_each_node_mask(i, physnode_mask) अणु
+	while (nodes_weight(physnode_mask)) {
+		for_each_node_mask(i, physnode_mask) {
 			u64 dma32_end = PFN_PHYS(MAX_DMA32_PFN);
 			u64 start, limit, end;
-			पूर्णांक phys_blk;
+			int phys_blk;
 
 			phys_blk = emu_find_memblk_by_nid(i, pi);
-			अगर (phys_blk < 0) अणु
+			if (phys_blk < 0) {
 				node_clear(i, physnode_mask);
-				जारी;
-			पूर्ण
+				continue;
+			}
 
 			start = pi->blk[phys_blk].start;
 			limit = pi->blk[phys_blk].end;
 
-			अगर (unअगरorm)
+			if (uniform)
 				end = start + size;
-			अन्यथा
+			else
 				end = find_end_of_node(start, limit, size);
 			/*
 			 * If there won't be at least FAKE_NODE_MIN_SIZE of
-			 * non-reserved memory in ZONE_DMA32 क्रम the next node,
+			 * non-reserved memory in ZONE_DMA32 for the next node,
 			 * this one must extend to the boundary.
 			 */
-			अगर (end < dma32_end && dma32_end - end -
+			if (end < dma32_end && dma32_end - end -
 			    mem_hole_size(end, dma32_end) < FAKE_NODE_MIN_SIZE)
 				end = dma32_end;
 
 			/*
-			 * If there won't be enough non-reserved memory क्रम the
+			 * If there won't be enough non-reserved memory for the
 			 * next node, this one must extend to the end of the
 			 * physical node.
 			 */
-			अगर ((limit - end - mem_hole_size(end, limit) < size)
-					&& !unअगरorm)
+			if ((limit - end - mem_hole_size(end, limit) < size)
+					&& !uniform)
 				end = limit;
 
 			ret = emu_setup_memblk(ei, pi, nid++ % MAX_NUMNODES,
 					       phys_blk,
 					       min(end, limit) - start);
-			अगर (ret < 0)
-				वापस ret;
-		पूर्ण
-	पूर्ण
-	वापस nid;
-पूर्ण
+			if (ret < 0)
+				return ret;
+		}
+	}
+	return nid;
+}
 
-अटल पूर्णांक __init split_nodes_size_पूर्णांकerleave(काष्ठा numa_meminfo *ei,
-					      काष्ठा numa_meminfo *pi,
+static int __init split_nodes_size_interleave(struct numa_meminfo *ei,
+					      struct numa_meminfo *pi,
 					      u64 addr, u64 max_addr, u64 size)
-अणु
-	वापस split_nodes_size_पूर्णांकerleave_unअगरorm(ei, pi, addr, max_addr, size,
-			0, शून्य, 0);
-पूर्ण
+{
+	return split_nodes_size_interleave_uniform(ei, pi, addr, max_addr, size,
+			0, NULL, 0);
+}
 
-अटल पूर्णांक __init setup_emu2phys_nid(पूर्णांक *dfl_phys_nid)
-अणु
-	पूर्णांक i, max_emu_nid = 0;
+static int __init setup_emu2phys_nid(int *dfl_phys_nid)
+{
+	int i, max_emu_nid = 0;
 
 	*dfl_phys_nid = NUMA_NO_NODE;
-	क्रम (i = 0; i < ARRAY_SIZE(emu_nid_to_phys); i++) अणु
-		अगर (emu_nid_to_phys[i] != NUMA_NO_NODE) अणु
+	for (i = 0; i < ARRAY_SIZE(emu_nid_to_phys); i++) {
+		if (emu_nid_to_phys[i] != NUMA_NO_NODE) {
 			max_emu_nid = i;
-			अगर (*dfl_phys_nid == NUMA_NO_NODE)
+			if (*dfl_phys_nid == NUMA_NO_NODE)
 				*dfl_phys_nid = emu_nid_to_phys[i];
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस max_emu_nid;
-पूर्ण
+	return max_emu_nid;
+}
 
 /**
  * numa_emulation - Emulate NUMA nodes
@@ -348,11 +347,11 @@
  * @numa_dist_cnt: The size of the physical NUMA distance table
  *
  * Emulate NUMA nodes according to the numa=fake kernel parameter.
- * @numa_meminfo contains the physical memory configuration and is modअगरied
+ * @numa_meminfo contains the physical memory configuration and is modified
  * to reflect the emulated configuration on success.  @numa_dist_cnt is
  * used to determine the size of the physical distance table.
  *
- * On success, the following modअगरications are made.
+ * On success, the following modifications are made.
  *
  * - @numa_meminfo is updated to reflect the emulated nodes.
  *
@@ -364,108 +363,108 @@
  *   are mapped to physical nodes and match the actual distances.
  *
  * - emu_nid_to_phys[] reflects how emulated nodes are mapped to physical
- *   nodes.  This is used by numa_add_cpu() and numa_हटाओ_cpu().
+ *   nodes.  This is used by numa_add_cpu() and numa_remove_cpu().
  *
  * If emulation is not enabled or fails, emu_nid_to_phys[] is filled with
- * identity mapping and no other modअगरication is made.
+ * identity mapping and no other modification is made.
  */
-व्योम __init numa_emulation(काष्ठा numa_meminfo *numa_meminfo, पूर्णांक numa_dist_cnt)
-अणु
-	अटल काष्ठा numa_meminfo ei __initdata;
-	अटल काष्ठा numa_meminfo pi __initdata;
-	स्थिर u64 max_addr = PFN_PHYS(max_pfn);
-	u8 *phys_dist = शून्य;
-	माप_प्रकार phys_size = numa_dist_cnt * numa_dist_cnt * माप(phys_dist[0]);
-	पूर्णांक max_emu_nid, dfl_phys_nid;
-	पूर्णांक i, j, ret;
+void __init numa_emulation(struct numa_meminfo *numa_meminfo, int numa_dist_cnt)
+{
+	static struct numa_meminfo ei __initdata;
+	static struct numa_meminfo pi __initdata;
+	const u64 max_addr = PFN_PHYS(max_pfn);
+	u8 *phys_dist = NULL;
+	size_t phys_size = numa_dist_cnt * numa_dist_cnt * sizeof(phys_dist[0]);
+	int max_emu_nid, dfl_phys_nid;
+	int i, j, ret;
 
-	अगर (!emu_cmdline)
-		जाओ no_emu;
+	if (!emu_cmdline)
+		goto no_emu;
 
-	स_रखो(&ei, 0, माप(ei));
+	memset(&ei, 0, sizeof(ei));
 	pi = *numa_meminfo;
 
-	क्रम (i = 0; i < MAX_NUMNODES; i++)
+	for (i = 0; i < MAX_NUMNODES; i++)
 		emu_nid_to_phys[i] = NUMA_NO_NODE;
 
 	/*
 	 * If the numa=fake command-line contains a 'M' or 'G', it represents
-	 * the fixed node size.  Otherwise, अगर it is just a single number N,
-	 * split the प्रणाली RAM पूर्णांकo N fake nodes.
+	 * the fixed node size.  Otherwise, if it is just a single number N,
+	 * split the system RAM into N fake nodes.
 	 */
-	अगर (म_अक्षर(emu_cmdline, 'U')) अणु
+	if (strchr(emu_cmdline, 'U')) {
 		nodemask_t physnode_mask = numa_nodes_parsed;
-		अचिन्हित दीर्घ n;
-		पूर्णांक nid = 0;
+		unsigned long n;
+		int nid = 0;
 
-		n = simple_म_से_अदीर्घ(emu_cmdline, &emu_cmdline, 0);
+		n = simple_strtoul(emu_cmdline, &emu_cmdline, 0);
 		ret = -1;
-		क्रम_each_node_mask(i, physnode_mask) अणु
+		for_each_node_mask(i, physnode_mask) {
 			/*
 			 * The reason we pass in blk[0] is due to
-			 * numa_हटाओ_memblk_from() called by
+			 * numa_remove_memblk_from() called by
 			 * emu_setup_memblk() will delete entry 0
-			 * and then move everything अन्यथा up in the pi.blk
-			 * array. Thereक्रमe we should always be looking
+			 * and then move everything else up in the pi.blk
+			 * array. Therefore we should always be looking
 			 * at blk[0].
 			 */
-			ret = split_nodes_size_पूर्णांकerleave_unअगरorm(&ei, &pi,
+			ret = split_nodes_size_interleave_uniform(&ei, &pi,
 					pi.blk[0].start, pi.blk[0].end, 0,
 					n, &pi.blk[0], nid);
-			अगर (ret < 0)
-				अवरोध;
-			अगर (ret < n) अणु
+			if (ret < 0)
+				break;
+			if (ret < n) {
 				pr_info("%s: phys: %d only got %d of %ld nodes, failing\n",
 						__func__, i, ret, n);
 				ret = -1;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			nid = ret;
-		पूर्ण
-	पूर्ण अन्यथा अगर (म_अक्षर(emu_cmdline, 'M') || strchr(emu_cmdline, 'G')) अणु
+		}
+	} else if (strchr(emu_cmdline, 'M') || strchr(emu_cmdline, 'G')) {
 		u64 size;
 
 		size = memparse(emu_cmdline, &emu_cmdline);
-		ret = split_nodes_size_पूर्णांकerleave(&ei, &pi, 0, max_addr, size);
-	पूर्ण अन्यथा अणु
-		अचिन्हित दीर्घ n;
+		ret = split_nodes_size_interleave(&ei, &pi, 0, max_addr, size);
+	} else {
+		unsigned long n;
 
-		n = simple_म_से_अदीर्घ(emu_cmdline, &emu_cmdline, 0);
-		ret = split_nodes_पूर्णांकerleave(&ei, &pi, 0, max_addr, n);
-	पूर्ण
-	अगर (*emu_cmdline == ':')
+		n = simple_strtoul(emu_cmdline, &emu_cmdline, 0);
+		ret = split_nodes_interleave(&ei, &pi, 0, max_addr, n);
+	}
+	if (*emu_cmdline == ':')
 		emu_cmdline++;
 
-	अगर (ret < 0)
-		जाओ no_emu;
+	if (ret < 0)
+		goto no_emu;
 
-	अगर (numa_cleanup_meminfo(&ei) < 0) अणु
+	if (numa_cleanup_meminfo(&ei) < 0) {
 		pr_warn("NUMA: Warning: constructed meminfo invalid, disabling emulation\n");
-		जाओ no_emu;
-	पूर्ण
+		goto no_emu;
+	}
 
 	/* copy the physical distance table */
-	अगर (numa_dist_cnt) अणु
+	if (numa_dist_cnt) {
 		u64 phys;
 
 		phys = memblock_find_in_range(0, PFN_PHYS(max_pfn_mapped),
 					      phys_size, PAGE_SIZE);
-		अगर (!phys) अणु
+		if (!phys) {
 			pr_warn("NUMA: Warning: can't allocate copy of distance table, disabling emulation\n");
-			जाओ no_emu;
-		पूर्ण
+			goto no_emu;
+		}
 		memblock_reserve(phys, phys_size);
 		phys_dist = __va(phys);
 
-		क्रम (i = 0; i < numa_dist_cnt; i++)
-			क्रम (j = 0; j < numa_dist_cnt; j++)
+		for (i = 0; i < numa_dist_cnt; i++)
+			for (j = 0; j < numa_dist_cnt; j++)
 				phys_dist[i * numa_dist_cnt + j] =
 					node_distance(i, j);
-	पूर्ण
+	}
 
 	/*
-	 * Determine the max emulated nid and the शेष phys nid to use
-	 * क्रम unmapped nodes.
+	 * Determine the max emulated nid and the default phys nid to use
+	 * for unmapped nodes.
 	 */
 	max_emu_nid = setup_emu2phys_nid(&dfl_phys_nid);
 
@@ -474,65 +473,65 @@
 
 	/* Make sure numa_nodes_parsed only contains emulated nodes */
 	nodes_clear(numa_nodes_parsed);
-	क्रम (i = 0; i < ARRAY_SIZE(ei.blk); i++)
-		अगर (ei.blk[i].start != ei.blk[i].end &&
+	for (i = 0; i < ARRAY_SIZE(ei.blk); i++)
+		if (ei.blk[i].start != ei.blk[i].end &&
 		    ei.blk[i].nid != NUMA_NO_NODE)
 			node_set(ei.blk[i].nid, numa_nodes_parsed);
 
 	/*
-	 * Transक्रमm __apicid_to_node table to use emulated nids by
+	 * Transform __apicid_to_node table to use emulated nids by
 	 * reverse-mapping phys_nid.  The maps should always exist but fall
-	 * back to zero just in हाल.
+	 * back to zero just in case.
 	 */
-	क्रम (i = 0; i < ARRAY_SIZE(__apicid_to_node); i++) अणु
-		अगर (__apicid_to_node[i] == NUMA_NO_NODE)
-			जारी;
-		क्रम (j = 0; j < ARRAY_SIZE(emu_nid_to_phys); j++)
-			अगर (__apicid_to_node[i] == emu_nid_to_phys[j])
-				अवरोध;
+	for (i = 0; i < ARRAY_SIZE(__apicid_to_node); i++) {
+		if (__apicid_to_node[i] == NUMA_NO_NODE)
+			continue;
+		for (j = 0; j < ARRAY_SIZE(emu_nid_to_phys); j++)
+			if (__apicid_to_node[i] == emu_nid_to_phys[j])
+				break;
 		__apicid_to_node[i] = j < ARRAY_SIZE(emu_nid_to_phys) ? j : 0;
-	पूर्ण
+	}
 
 	/* make sure all emulated nodes are mapped to a physical node */
-	क्रम (i = 0; i < ARRAY_SIZE(emu_nid_to_phys); i++)
-		अगर (emu_nid_to_phys[i] == NUMA_NO_NODE)
+	for (i = 0; i < ARRAY_SIZE(emu_nid_to_phys); i++)
+		if (emu_nid_to_phys[i] == NUMA_NO_NODE)
 			emu_nid_to_phys[i] = dfl_phys_nid;
 
-	/* transक्रमm distance table */
+	/* transform distance table */
 	numa_reset_distance();
-	क्रम (i = 0; i < max_emu_nid + 1; i++) अणु
-		क्रम (j = 0; j < max_emu_nid + 1; j++) अणु
-			पूर्णांक physi = emu_nid_to_phys[i];
-			पूर्णांक physj = emu_nid_to_phys[j];
-			पूर्णांक dist;
+	for (i = 0; i < max_emu_nid + 1; i++) {
+		for (j = 0; j < max_emu_nid + 1; j++) {
+			int physi = emu_nid_to_phys[i];
+			int physj = emu_nid_to_phys[j];
+			int dist;
 
-			अगर (get_option(&emu_cmdline, &dist) == 2)
+			if (get_option(&emu_cmdline, &dist) == 2)
 				;
-			अन्यथा अगर (physi >= numa_dist_cnt || physj >= numa_dist_cnt)
+			else if (physi >= numa_dist_cnt || physj >= numa_dist_cnt)
 				dist = physi == physj ?
 					LOCAL_DISTANCE : REMOTE_DISTANCE;
-			अन्यथा
+			else
 				dist = phys_dist[physi * numa_dist_cnt + physj];
 
 			numa_set_distance(i, j, dist);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* मुक्त the copied physical distance table */
-	अगर (phys_dist)
-		memblock_मुक्त(__pa(phys_dist), phys_size);
-	वापस;
+	/* free the copied physical distance table */
+	if (phys_dist)
+		memblock_free(__pa(phys_dist), phys_size);
+	return;
 
 no_emu:
-	/* No emulation.  Build identity emu_nid_to_phys[] क्रम numa_add_cpu() */
-	क्रम (i = 0; i < ARRAY_SIZE(emu_nid_to_phys); i++)
+	/* No emulation.  Build identity emu_nid_to_phys[] for numa_add_cpu() */
+	for (i = 0; i < ARRAY_SIZE(emu_nid_to_phys); i++)
 		emu_nid_to_phys[i] = i;
-पूर्ण
+}
 
-#अगर_अघोषित CONFIG_DEBUG_PER_CPU_MAPS
-व्योम numa_add_cpu(पूर्णांक cpu)
-अणु
-	पूर्णांक physnid, nid;
+#ifndef CONFIG_DEBUG_PER_CPU_MAPS
+void numa_add_cpu(int cpu)
+{
+	int physnid, nid;
 
 	nid = early_cpu_to_node(cpu);
 	BUG_ON(nid == NUMA_NO_NODE || !node_online(nid));
@@ -543,46 +542,46 @@ no_emu:
 	 * Map the cpu to each emulated node that is allocated on the physical
 	 * node of the cpu's apic id.
 	 */
-	क्रम_each_online_node(nid)
-		अगर (emu_nid_to_phys[nid] == physnid)
+	for_each_online_node(nid)
+		if (emu_nid_to_phys[nid] == physnid)
 			cpumask_set_cpu(cpu, node_to_cpumask_map[nid]);
-पूर्ण
+}
 
-व्योम numa_हटाओ_cpu(पूर्णांक cpu)
-अणु
-	पूर्णांक i;
+void numa_remove_cpu(int cpu)
+{
+	int i;
 
-	क्रम_each_online_node(i)
+	for_each_online_node(i)
 		cpumask_clear_cpu(cpu, node_to_cpumask_map[i]);
-पूर्ण
-#अन्यथा	/* !CONFIG_DEBUG_PER_CPU_MAPS */
-अटल व्योम numa_set_cpumask(पूर्णांक cpu, bool enable)
-अणु
-	पूर्णांक nid, physnid;
+}
+#else	/* !CONFIG_DEBUG_PER_CPU_MAPS */
+static void numa_set_cpumask(int cpu, bool enable)
+{
+	int nid, physnid;
 
 	nid = early_cpu_to_node(cpu);
-	अगर (nid == NUMA_NO_NODE) अणु
-		/* early_cpu_to_node() alपढ़ोy emits a warning and trace */
-		वापस;
-	पूर्ण
+	if (nid == NUMA_NO_NODE) {
+		/* early_cpu_to_node() already emits a warning and trace */
+		return;
+	}
 
 	physnid = emu_nid_to_phys[nid];
 
-	क्रम_each_online_node(nid) अणु
-		अगर (emu_nid_to_phys[nid] != physnid)
-			जारी;
+	for_each_online_node(nid) {
+		if (emu_nid_to_phys[nid] != physnid)
+			continue;
 
 		debug_cpumask_set_cpu(cpu, nid, enable);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम numa_add_cpu(पूर्णांक cpu)
-अणु
+void numa_add_cpu(int cpu)
+{
 	numa_set_cpumask(cpu, true);
-पूर्ण
+}
 
-व्योम numa_हटाओ_cpu(पूर्णांक cpu)
-अणु
+void numa_remove_cpu(int cpu)
+{
 	numa_set_cpumask(cpu, false);
-पूर्ण
-#पूर्ण_अगर	/* !CONFIG_DEBUG_PER_CPU_MAPS */
+}
+#endif	/* !CONFIG_DEBUG_PER_CPU_MAPS */

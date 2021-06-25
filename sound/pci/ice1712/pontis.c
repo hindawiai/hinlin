@@ -1,330 +1,329 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *   ALSA driver क्रम ICEnsemble VT1724 (Envy24HT)
+ *   ALSA driver for ICEnsemble VT1724 (Envy24HT)
  *
- *   Lowlevel functions क्रम Pontis MS300
+ *   Lowlevel functions for Pontis MS300
  *
  *	Copyright (c) 2004 Takashi Iwai <tiwai@suse.de>
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/mutex.h>
+#include <linux/delay.h>
+#include <linux/interrupt.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/mutex.h>
 
-#समावेश <sound/core.h>
-#समावेश <sound/info.h>
-#समावेश <sound/tlv.h>
+#include <sound/core.h>
+#include <sound/info.h>
+#include <sound/tlv.h>
 
-#समावेश "ice1712.h"
-#समावेश "envy24ht.h"
-#समावेश "pontis.h"
+#include "ice1712.h"
+#include "envy24ht.h"
+#include "pontis.h"
 
 /* I2C addresses */
-#घोषणा WM_DEV		0x34
-#घोषणा CS_DEV		0x20
+#define WM_DEV		0x34
+#define CS_DEV		0x20
 
-/* WM8776 रेजिस्टरs */
-#घोषणा WM_HP_ATTEN_L		0x00	/* headphone left attenuation */
-#घोषणा WM_HP_ATTEN_R		0x01	/* headphone left attenuation */
-#घोषणा WM_HP_MASTER		0x02	/* headphone master (both channels) */
+/* WM8776 registers */
+#define WM_HP_ATTEN_L		0x00	/* headphone left attenuation */
+#define WM_HP_ATTEN_R		0x01	/* headphone left attenuation */
+#define WM_HP_MASTER		0x02	/* headphone master (both channels) */
 					/* override LLR */
-#घोषणा WM_DAC_ATTEN_L		0x03	/* digital left attenuation */
-#घोषणा WM_DAC_ATTEN_R		0x04
-#घोषणा WM_DAC_MASTER		0x05
-#घोषणा WM_PHASE_SWAP		0x06	/* DAC phase swap */
-#घोषणा WM_DAC_CTRL1		0x07
-#घोषणा WM_DAC_MUTE		0x08
-#घोषणा WM_DAC_CTRL2		0x09
-#घोषणा WM_DAC_INT		0x0a
-#घोषणा WM_ADC_INT		0x0b
-#घोषणा WM_MASTER_CTRL		0x0c
-#घोषणा WM_POWERDOWN		0x0d
-#घोषणा WM_ADC_ATTEN_L		0x0e
-#घोषणा WM_ADC_ATTEN_R		0x0f
-#घोषणा WM_ALC_CTRL1		0x10
-#घोषणा WM_ALC_CTRL2		0x11
-#घोषणा WM_ALC_CTRL3		0x12
-#घोषणा WM_NOISE_GATE		0x13
-#घोषणा WM_LIMITER		0x14
-#घोषणा WM_ADC_MUX		0x15
-#घोषणा WM_OUT_MUX		0x16
-#घोषणा WM_RESET		0x17
+#define WM_DAC_ATTEN_L		0x03	/* digital left attenuation */
+#define WM_DAC_ATTEN_R		0x04
+#define WM_DAC_MASTER		0x05
+#define WM_PHASE_SWAP		0x06	/* DAC phase swap */
+#define WM_DAC_CTRL1		0x07
+#define WM_DAC_MUTE		0x08
+#define WM_DAC_CTRL2		0x09
+#define WM_DAC_INT		0x0a
+#define WM_ADC_INT		0x0b
+#define WM_MASTER_CTRL		0x0c
+#define WM_POWERDOWN		0x0d
+#define WM_ADC_ATTEN_L		0x0e
+#define WM_ADC_ATTEN_R		0x0f
+#define WM_ALC_CTRL1		0x10
+#define WM_ALC_CTRL2		0x11
+#define WM_ALC_CTRL3		0x12
+#define WM_NOISE_GATE		0x13
+#define WM_LIMITER		0x14
+#define WM_ADC_MUX		0x15
+#define WM_OUT_MUX		0x16
+#define WM_RESET		0x17
 
 /*
  * GPIO
  */
-#घोषणा PONTIS_CS_CS		(1<<4)	/* CS */
-#घोषणा PONTIS_CS_CLK		(1<<5)	/* CLK */
-#घोषणा PONTIS_CS_RDATA		(1<<6)	/* CS8416 -> VT1720 */
-#घोषणा PONTIS_CS_WDATA		(1<<7)	/* VT1720 -> CS8416 */
+#define PONTIS_CS_CS		(1<<4)	/* CS */
+#define PONTIS_CS_CLK		(1<<5)	/* CLK */
+#define PONTIS_CS_RDATA		(1<<6)	/* CS8416 -> VT1720 */
+#define PONTIS_CS_WDATA		(1<<7)	/* VT1720 -> CS8416 */
 
 
 /*
- * get the current रेजिस्टर value of WM codec
+ * get the current register value of WM codec
  */
-अटल अचिन्हित लघु wm_get(काष्ठा snd_ice1712 *ice, पूर्णांक reg)
-अणु
+static unsigned short wm_get(struct snd_ice1712 *ice, int reg)
+{
 	reg <<= 1;
-	वापस ((अचिन्हित लघु)ice->akm[0].images[reg] << 8) |
+	return ((unsigned short)ice->akm[0].images[reg] << 8) |
 		ice->akm[0].images[reg + 1];
-पूर्ण
+}
 
 /*
- * set the रेजिस्टर value of WM codec and remember it
+ * set the register value of WM codec and remember it
  */
-अटल व्योम wm_put_nocache(काष्ठा snd_ice1712 *ice, पूर्णांक reg, अचिन्हित लघु val)
-अणु
-	अचिन्हित लघु cval;
+static void wm_put_nocache(struct snd_ice1712 *ice, int reg, unsigned short val)
+{
+	unsigned short cval;
 	cval = (reg << 9) | val;
-	snd_vt1724_ग_लिखो_i2c(ice, WM_DEV, cval >> 8, cval & 0xff);
-पूर्ण
+	snd_vt1724_write_i2c(ice, WM_DEV, cval >> 8, cval & 0xff);
+}
 
-अटल व्योम wm_put(काष्ठा snd_ice1712 *ice, पूर्णांक reg, अचिन्हित लघु val)
-अणु
+static void wm_put(struct snd_ice1712 *ice, int reg, unsigned short val)
+{
 	wm_put_nocache(ice, reg, val);
 	reg <<= 1;
 	ice->akm[0].images[reg] = val >> 8;
 	ice->akm[0].images[reg + 1] = val;
-पूर्ण
+}
 
 /*
  * DAC volume attenuation mixer control (-64dB to 0dB)
  */
 
-#घोषणा DAC_0dB	0xff
-#घोषणा DAC_RES	128
-#घोषणा DAC_MIN	(DAC_0dB - DAC_RES)
+#define DAC_0dB	0xff
+#define DAC_RES	128
+#define DAC_MIN	(DAC_0dB - DAC_RES)
 
-अटल पूर्णांक wm_dac_vol_info(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int wm_dac_vol_info(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 2;
-	uinfo->value.पूर्णांकeger.min = 0;	/* mute */
-	uinfo->value.पूर्णांकeger.max = DAC_RES;	/* 0dB, 0.5dB step */
-	वापस 0;
-पूर्ण
+	uinfo->value.integer.min = 0;	/* mute */
+	uinfo->value.integer.max = DAC_RES;	/* 0dB, 0.5dB step */
+	return 0;
+}
 
-अटल पूर्णांक wm_dac_vol_get(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_ice1712 *ice = snd_kcontrol_chip(kcontrol);
-	अचिन्हित लघु val;
-	पूर्णांक i;
+static int wm_dac_vol_get(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_ice1712 *ice = snd_kcontrol_chip(kcontrol);
+	unsigned short val;
+	int i;
 
 	mutex_lock(&ice->gpio_mutex);
-	क्रम (i = 0; i < 2; i++) अणु
+	for (i = 0; i < 2; i++) {
 		val = wm_get(ice, WM_DAC_ATTEN_L + i) & 0xff;
 		val = val > DAC_MIN ? (val - DAC_MIN) : 0;
-		ucontrol->value.पूर्णांकeger.value[i] = val;
-	पूर्ण
+		ucontrol->value.integer.value[i] = val;
+	}
 	mutex_unlock(&ice->gpio_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wm_dac_vol_put(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_ice1712 *ice = snd_kcontrol_chip(kcontrol);
-	अचिन्हित लघु oval, nval;
-	पूर्णांक i, idx, change = 0;
+static int wm_dac_vol_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_ice1712 *ice = snd_kcontrol_chip(kcontrol);
+	unsigned short oval, nval;
+	int i, idx, change = 0;
 
 	mutex_lock(&ice->gpio_mutex);
-	क्रम (i = 0; i < 2; i++) अणु
-		nval = ucontrol->value.पूर्णांकeger.value[i];
+	for (i = 0; i < 2; i++) {
+		nval = ucontrol->value.integer.value[i];
 		nval = (nval ? (nval + DAC_MIN) : 0) & 0xff;
 		idx = WM_DAC_ATTEN_L + i;
 		oval = wm_get(ice, idx) & 0xff;
-		अगर (oval != nval) अणु
+		if (oval != nval) {
 			wm_put(ice, idx, nval);
 			wm_put_nocache(ice, idx, nval | 0x100);
 			change = 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	mutex_unlock(&ice->gpio_mutex);
-	वापस change;
-पूर्ण
+	return change;
+}
 
 /*
  * ADC gain mixer control (-64dB to 0dB)
  */
 
-#घोषणा ADC_0dB	0xcf
-#घोषणा ADC_RES	128
-#घोषणा ADC_MIN	(ADC_0dB - ADC_RES)
+#define ADC_0dB	0xcf
+#define ADC_RES	128
+#define ADC_MIN	(ADC_0dB - ADC_RES)
 
-अटल पूर्णांक wm_adc_vol_info(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int wm_adc_vol_info(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 2;
-	uinfo->value.पूर्णांकeger.min = 0;	/* mute (-64dB) */
-	uinfo->value.पूर्णांकeger.max = ADC_RES;	/* 0dB, 0.5dB step */
-	वापस 0;
-पूर्ण
+	uinfo->value.integer.min = 0;	/* mute (-64dB) */
+	uinfo->value.integer.max = ADC_RES;	/* 0dB, 0.5dB step */
+	return 0;
+}
 
-अटल पूर्णांक wm_adc_vol_get(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_ice1712 *ice = snd_kcontrol_chip(kcontrol);
-	अचिन्हित लघु val;
-	पूर्णांक i;
+static int wm_adc_vol_get(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_ice1712 *ice = snd_kcontrol_chip(kcontrol);
+	unsigned short val;
+	int i;
 
 	mutex_lock(&ice->gpio_mutex);
-	क्रम (i = 0; i < 2; i++) अणु
+	for (i = 0; i < 2; i++) {
 		val = wm_get(ice, WM_ADC_ATTEN_L + i) & 0xff;
 		val = val > ADC_MIN ? (val - ADC_MIN) : 0;
-		ucontrol->value.पूर्णांकeger.value[i] = val;
-	पूर्ण
+		ucontrol->value.integer.value[i] = val;
+	}
 	mutex_unlock(&ice->gpio_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wm_adc_vol_put(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_ice1712 *ice = snd_kcontrol_chip(kcontrol);
-	अचिन्हित लघु ovol, nvol;
-	पूर्णांक i, idx, change = 0;
+static int wm_adc_vol_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_ice1712 *ice = snd_kcontrol_chip(kcontrol);
+	unsigned short ovol, nvol;
+	int i, idx, change = 0;
 
 	mutex_lock(&ice->gpio_mutex);
-	क्रम (i = 0; i < 2; i++) अणु
-		nvol = ucontrol->value.पूर्णांकeger.value[i];
+	for (i = 0; i < 2; i++) {
+		nvol = ucontrol->value.integer.value[i];
 		nvol = nvol ? (nvol + ADC_MIN) : 0;
 		idx  = WM_ADC_ATTEN_L + i;
 		ovol = wm_get(ice, idx) & 0xff;
-		अगर (ovol != nvol) अणु
+		if (ovol != nvol) {
 			wm_put(ice, idx, nvol);
 			change = 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	mutex_unlock(&ice->gpio_mutex);
-	वापस change;
-पूर्ण
+	return change;
+}
 
 /*
  * ADC input mux mixer control
  */
-#घोषणा wm_adc_mux_info		snd_ctl_boolean_mono_info
+#define wm_adc_mux_info		snd_ctl_boolean_mono_info
 
-अटल पूर्णांक wm_adc_mux_get(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_ice1712 *ice = snd_kcontrol_chip(kcontrol);
-	पूर्णांक bit = kcontrol->निजी_value;
+static int wm_adc_mux_get(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_ice1712 *ice = snd_kcontrol_chip(kcontrol);
+	int bit = kcontrol->private_value;
 
 	mutex_lock(&ice->gpio_mutex);
-	ucontrol->value.पूर्णांकeger.value[0] = (wm_get(ice, WM_ADC_MUX) & (1 << bit)) ? 1 : 0;
+	ucontrol->value.integer.value[0] = (wm_get(ice, WM_ADC_MUX) & (1 << bit)) ? 1 : 0;
 	mutex_unlock(&ice->gpio_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wm_adc_mux_put(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_ice1712 *ice = snd_kcontrol_chip(kcontrol);
-	पूर्णांक bit = kcontrol->निजी_value;
-	अचिन्हित लघु oval, nval;
-	पूर्णांक change;
+static int wm_adc_mux_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_ice1712 *ice = snd_kcontrol_chip(kcontrol);
+	int bit = kcontrol->private_value;
+	unsigned short oval, nval;
+	int change;
 
 	mutex_lock(&ice->gpio_mutex);
 	nval = oval = wm_get(ice, WM_ADC_MUX);
-	अगर (ucontrol->value.पूर्णांकeger.value[0])
+	if (ucontrol->value.integer.value[0])
 		nval |= (1 << bit);
-	अन्यथा
+	else
 		nval &= ~(1 << bit);
 	change = nval != oval;
-	अगर (change) अणु
+	if (change) {
 		wm_put(ice, WM_ADC_MUX, nval);
-	पूर्ण
+	}
 	mutex_unlock(&ice->gpio_mutex);
-	वापस change;
-पूर्ण
+	return change;
+}
 
 /*
  * Analog bypass (In -> Out)
  */
-#घोषणा wm_bypass_info		snd_ctl_boolean_mono_info
+#define wm_bypass_info		snd_ctl_boolean_mono_info
 
-अटल पूर्णांक wm_bypass_get(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_ice1712 *ice = snd_kcontrol_chip(kcontrol);
+static int wm_bypass_get(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_ice1712 *ice = snd_kcontrol_chip(kcontrol);
 
 	mutex_lock(&ice->gpio_mutex);
-	ucontrol->value.पूर्णांकeger.value[0] = (wm_get(ice, WM_OUT_MUX) & 0x04) ? 1 : 0;
+	ucontrol->value.integer.value[0] = (wm_get(ice, WM_OUT_MUX) & 0x04) ? 1 : 0;
 	mutex_unlock(&ice->gpio_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wm_bypass_put(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_ice1712 *ice = snd_kcontrol_chip(kcontrol);
-	अचिन्हित लघु val, oval;
-	पूर्णांक change = 0;
+static int wm_bypass_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_ice1712 *ice = snd_kcontrol_chip(kcontrol);
+	unsigned short val, oval;
+	int change = 0;
 
 	mutex_lock(&ice->gpio_mutex);
 	val = oval = wm_get(ice, WM_OUT_MUX);
-	अगर (ucontrol->value.पूर्णांकeger.value[0])
+	if (ucontrol->value.integer.value[0])
 		val |= 0x04;
-	अन्यथा
+	else
 		val &= ~0x04;
-	अगर (val != oval) अणु
+	if (val != oval) {
 		wm_put(ice, WM_OUT_MUX, val);
 		change = 1;
-	पूर्ण
+	}
 	mutex_unlock(&ice->gpio_mutex);
-	वापस change;
-पूर्ण
+	return change;
+}
 
 /*
  * Left/Right swap
  */
-#घोषणा wm_chswap_info		snd_ctl_boolean_mono_info
+#define wm_chswap_info		snd_ctl_boolean_mono_info
 
-अटल पूर्णांक wm_chswap_get(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_ice1712 *ice = snd_kcontrol_chip(kcontrol);
+static int wm_chswap_get(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_ice1712 *ice = snd_kcontrol_chip(kcontrol);
 
 	mutex_lock(&ice->gpio_mutex);
-	ucontrol->value.पूर्णांकeger.value[0] = (wm_get(ice, WM_DAC_CTRL1) & 0xf0) != 0x90;
+	ucontrol->value.integer.value[0] = (wm_get(ice, WM_DAC_CTRL1) & 0xf0) != 0x90;
 	mutex_unlock(&ice->gpio_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wm_chswap_put(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_ice1712 *ice = snd_kcontrol_chip(kcontrol);
-	अचिन्हित लघु val, oval;
-	पूर्णांक change = 0;
+static int wm_chswap_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_ice1712 *ice = snd_kcontrol_chip(kcontrol);
+	unsigned short val, oval;
+	int change = 0;
 
 	mutex_lock(&ice->gpio_mutex);
 	oval = wm_get(ice, WM_DAC_CTRL1);
 	val = oval & 0x0f;
-	अगर (ucontrol->value.पूर्णांकeger.value[0])
+	if (ucontrol->value.integer.value[0])
 		val |= 0x60;
-	अन्यथा
+	else
 		val |= 0x90;
-	अगर (val != oval) अणु
+	if (val != oval) {
 		wm_put(ice, WM_DAC_CTRL1, val);
 		wm_put_nocache(ice, WM_DAC_CTRL1, val);
 		change = 1;
-	पूर्ण
+	}
 	mutex_unlock(&ice->gpio_mutex);
-	वापस change;
-पूर्ण
+	return change;
+}
 
 /*
- * ग_लिखो data in the SPI mode
+ * write data in the SPI mode
  */
-अटल व्योम set_gpio_bit(काष्ठा snd_ice1712 *ice, अचिन्हित पूर्णांक bit, पूर्णांक val)
-अणु
-	अचिन्हित पूर्णांक पंचांगp = snd_ice1712_gpio_पढ़ो(ice);
-	अगर (val)
-		पंचांगp |= bit;
-	अन्यथा
-		पंचांगp &= ~bit;
-	snd_ice1712_gpio_ग_लिखो(ice, पंचांगp);
-पूर्ण
+static void set_gpio_bit(struct snd_ice1712 *ice, unsigned int bit, int val)
+{
+	unsigned int tmp = snd_ice1712_gpio_read(ice);
+	if (val)
+		tmp |= bit;
+	else
+		tmp &= ~bit;
+	snd_ice1712_gpio_write(ice, tmp);
+}
 
-अटल व्योम spi_send_byte(काष्ठा snd_ice1712 *ice, अचिन्हित अक्षर data)
-अणु
-	पूर्णांक i;
-	क्रम (i = 0; i < 8; i++) अणु
+static void spi_send_byte(struct snd_ice1712 *ice, unsigned char data)
+{
+	int i;
+	for (i = 0; i < 8; i++) {
 		set_gpio_bit(ice, PONTIS_CS_CLK, 0);
 		udelay(1);
 		set_gpio_bit(ice, PONTIS_CS_WDATA, data & 0x80);
@@ -332,30 +331,30 @@
 		set_gpio_bit(ice, PONTIS_CS_CLK, 1);
 		udelay(1);
 		data <<= 1;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अचिन्हित पूर्णांक spi_पढ़ो_byte(काष्ठा snd_ice1712 *ice)
-अणु
-	पूर्णांक i;
-	अचिन्हित पूर्णांक val = 0;
+static unsigned int spi_read_byte(struct snd_ice1712 *ice)
+{
+	int i;
+	unsigned int val = 0;
 
-	क्रम (i = 0; i < 8; i++) अणु
+	for (i = 0; i < 8; i++) {
 		val <<= 1;
 		set_gpio_bit(ice, PONTIS_CS_CLK, 0);
 		udelay(1);
-		अगर (snd_ice1712_gpio_पढ़ो(ice) & PONTIS_CS_RDATA)
+		if (snd_ice1712_gpio_read(ice) & PONTIS_CS_RDATA)
 			val |= 1;
 		udelay(1);
 		set_gpio_bit(ice, PONTIS_CS_CLK, 1);
 		udelay(1);
-	पूर्ण
-	वापस val;
-पूर्ण
+	}
+	return val;
+}
 
 
-अटल व्योम spi_ग_लिखो(काष्ठा snd_ice1712 *ice, अचिन्हित पूर्णांक dev, अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक data)
-अणु
+static void spi_write(struct snd_ice1712 *ice, unsigned int dev, unsigned int reg, unsigned int data)
+{
 	snd_ice1712_gpio_set_dir(ice, PONTIS_CS_CS|PONTIS_CS_WDATA|PONTIS_CS_CLK);
 	snd_ice1712_gpio_set_mask(ice, ~(PONTIS_CS_CS|PONTIS_CS_WDATA|PONTIS_CS_CLK));
 	set_gpio_bit(ice, PONTIS_CS_CS, 0);
@@ -366,13 +365,13 @@
 	set_gpio_bit(ice, PONTIS_CS_CS, 1);
 	udelay(1);
 	/* restore */
-	snd_ice1712_gpio_set_mask(ice, ice->gpio.ग_लिखो_mask);
+	snd_ice1712_gpio_set_mask(ice, ice->gpio.write_mask);
 	snd_ice1712_gpio_set_dir(ice, ice->gpio.direction);
-पूर्ण
+}
 
-अटल अचिन्हित पूर्णांक spi_पढ़ो(काष्ठा snd_ice1712 *ice, अचिन्हित पूर्णांक dev, अचिन्हित पूर्णांक reg)
-अणु
-	अचिन्हित पूर्णांक val;
+static unsigned int spi_read(struct snd_ice1712 *ice, unsigned int dev, unsigned int reg)
+{
+	unsigned int val;
 	snd_ice1712_gpio_set_dir(ice, PONTIS_CS_CS|PONTIS_CS_WDATA|PONTIS_CS_CLK);
 	snd_ice1712_gpio_set_mask(ice, ~(PONTIS_CS_CS|PONTIS_CS_WDATA|PONTIS_CS_CLK));
 	set_gpio_bit(ice, PONTIS_CS_CS, 0);
@@ -383,327 +382,327 @@
 	udelay(1);
 	set_gpio_bit(ice, PONTIS_CS_CS, 0);
 	spi_send_byte(ice, dev | 1); /* READ */
-	val = spi_पढ़ो_byte(ice);
+	val = spi_read_byte(ice);
 	/* trigger */
 	set_gpio_bit(ice, PONTIS_CS_CS, 1);
 	udelay(1);
 	/* restore */
-	snd_ice1712_gpio_set_mask(ice, ice->gpio.ग_लिखो_mask);
+	snd_ice1712_gpio_set_mask(ice, ice->gpio.write_mask);
 	snd_ice1712_gpio_set_dir(ice, ice->gpio.direction);
-	वापस val;
-पूर्ण
+	return val;
+}
 
 
 /*
  * SPDIF input source
  */
-अटल पूर्णांक cs_source_info(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	अटल स्थिर अक्षर * स्थिर texts[] = अणु
+static int cs_source_info(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
+{
+	static const char * const texts[] = {
 		"Coax",		/* RXP0 */
 		"Optical",	/* RXP1 */
 		"CD",		/* RXP2 */
-	पूर्ण;
-	वापस snd_ctl_क्रमागत_info(uinfo, 1, 3, texts);
-पूर्ण
+	};
+	return snd_ctl_enum_info(uinfo, 1, 3, texts);
+}
 
-अटल पूर्णांक cs_source_get(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_ice1712 *ice = snd_kcontrol_chip(kcontrol);
+static int cs_source_get(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_ice1712 *ice = snd_kcontrol_chip(kcontrol);
 
 	mutex_lock(&ice->gpio_mutex);
-	ucontrol->value.क्रमागतerated.item[0] = ice->gpio.saved[0];
+	ucontrol->value.enumerated.item[0] = ice->gpio.saved[0];
 	mutex_unlock(&ice->gpio_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cs_source_put(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_ice1712 *ice = snd_kcontrol_chip(kcontrol);
-	अचिन्हित अक्षर val;
-	पूर्णांक change = 0;
+static int cs_source_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_ice1712 *ice = snd_kcontrol_chip(kcontrol);
+	unsigned char val;
+	int change = 0;
 
 	mutex_lock(&ice->gpio_mutex);
-	अगर (ucontrol->value.क्रमागतerated.item[0] != ice->gpio.saved[0]) अणु
-		ice->gpio.saved[0] = ucontrol->value.क्रमागतerated.item[0] & 3;
+	if (ucontrol->value.enumerated.item[0] != ice->gpio.saved[0]) {
+		ice->gpio.saved[0] = ucontrol->value.enumerated.item[0] & 3;
 		val = 0x80 | (ice->gpio.saved[0] << 3);
-		spi_ग_लिखो(ice, CS_DEV, 0x04, val);
+		spi_write(ice, CS_DEV, 0x04, val);
 		change = 1;
-	पूर्ण
+	}
 	mutex_unlock(&ice->gpio_mutex);
-	वापस change;
-पूर्ण
+	return change;
+}
 
 
 /*
  * GPIO controls
  */
-अटल पूर्णांक pontis_gpio_mask_info(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int pontis_gpio_mask_info(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 1;
-	uinfo->value.पूर्णांकeger.min = 0;
-	uinfo->value.पूर्णांकeger.max = 0xffff; /* 16bit */
-	वापस 0;
-पूर्ण
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = 0xffff; /* 16bit */
+	return 0;
+}
 
-अटल पूर्णांक pontis_gpio_mask_get(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_ice1712 *ice = snd_kcontrol_chip(kcontrol);
+static int pontis_gpio_mask_get(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_ice1712 *ice = snd_kcontrol_chip(kcontrol);
 	mutex_lock(&ice->gpio_mutex);
 	/* 4-7 reserved */
-	ucontrol->value.पूर्णांकeger.value[0] = (~ice->gpio.ग_लिखो_mask & 0xffff) | 0x00f0;
+	ucontrol->value.integer.value[0] = (~ice->gpio.write_mask & 0xffff) | 0x00f0;
 	mutex_unlock(&ice->gpio_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 	
-अटल पूर्णांक pontis_gpio_mask_put(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_ice1712 *ice = snd_kcontrol_chip(kcontrol);
-	अचिन्हित पूर्णांक val;
-	पूर्णांक changed;
+static int pontis_gpio_mask_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_ice1712 *ice = snd_kcontrol_chip(kcontrol);
+	unsigned int val;
+	int changed;
 	mutex_lock(&ice->gpio_mutex);
 	/* 4-7 reserved */
-	val = (~ucontrol->value.पूर्णांकeger.value[0] & 0xffff) | 0x00f0;
-	changed = val != ice->gpio.ग_लिखो_mask;
-	ice->gpio.ग_लिखो_mask = val;
+	val = (~ucontrol->value.integer.value[0] & 0xffff) | 0x00f0;
+	changed = val != ice->gpio.write_mask;
+	ice->gpio.write_mask = val;
 	mutex_unlock(&ice->gpio_mutex);
-	वापस changed;
-पूर्ण
+	return changed;
+}
 
-अटल पूर्णांक pontis_gpio_dir_get(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_ice1712 *ice = snd_kcontrol_chip(kcontrol);
+static int pontis_gpio_dir_get(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_ice1712 *ice = snd_kcontrol_chip(kcontrol);
 	mutex_lock(&ice->gpio_mutex);
 	/* 4-7 reserved */
-	ucontrol->value.पूर्णांकeger.value[0] = ice->gpio.direction & 0xff0f;
+	ucontrol->value.integer.value[0] = ice->gpio.direction & 0xff0f;
 	mutex_unlock(&ice->gpio_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 	
-अटल पूर्णांक pontis_gpio_dir_put(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_ice1712 *ice = snd_kcontrol_chip(kcontrol);
-	अचिन्हित पूर्णांक val;
-	पूर्णांक changed;
+static int pontis_gpio_dir_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_ice1712 *ice = snd_kcontrol_chip(kcontrol);
+	unsigned int val;
+	int changed;
 	mutex_lock(&ice->gpio_mutex);
 	/* 4-7 reserved */
-	val = ucontrol->value.पूर्णांकeger.value[0] & 0xff0f;
+	val = ucontrol->value.integer.value[0] & 0xff0f;
 	changed = (val != ice->gpio.direction);
 	ice->gpio.direction = val;
 	mutex_unlock(&ice->gpio_mutex);
-	वापस changed;
-पूर्ण
+	return changed;
+}
 
-अटल पूर्णांक pontis_gpio_data_get(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_ice1712 *ice = snd_kcontrol_chip(kcontrol);
+static int pontis_gpio_data_get(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_ice1712 *ice = snd_kcontrol_chip(kcontrol);
 	mutex_lock(&ice->gpio_mutex);
 	snd_ice1712_gpio_set_dir(ice, ice->gpio.direction);
-	snd_ice1712_gpio_set_mask(ice, ice->gpio.ग_लिखो_mask);
-	ucontrol->value.पूर्णांकeger.value[0] = snd_ice1712_gpio_पढ़ो(ice) & 0xffff;
+	snd_ice1712_gpio_set_mask(ice, ice->gpio.write_mask);
+	ucontrol->value.integer.value[0] = snd_ice1712_gpio_read(ice) & 0xffff;
 	mutex_unlock(&ice->gpio_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pontis_gpio_data_put(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_ice1712 *ice = snd_kcontrol_chip(kcontrol);
-	अचिन्हित पूर्णांक val, nval;
-	पूर्णांक changed = 0;
+static int pontis_gpio_data_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_ice1712 *ice = snd_kcontrol_chip(kcontrol);
+	unsigned int val, nval;
+	int changed = 0;
 	mutex_lock(&ice->gpio_mutex);
 	snd_ice1712_gpio_set_dir(ice, ice->gpio.direction);
-	snd_ice1712_gpio_set_mask(ice, ice->gpio.ग_लिखो_mask);
-	val = snd_ice1712_gpio_पढ़ो(ice) & 0xffff;
-	nval = ucontrol->value.पूर्णांकeger.value[0] & 0xffff;
-	अगर (val != nval) अणु
-		snd_ice1712_gpio_ग_लिखो(ice, nval);
+	snd_ice1712_gpio_set_mask(ice, ice->gpio.write_mask);
+	val = snd_ice1712_gpio_read(ice) & 0xffff;
+	nval = ucontrol->value.integer.value[0] & 0xffff;
+	if (val != nval) {
+		snd_ice1712_gpio_write(ice, nval);
 		changed = 1;
-	पूर्ण
+	}
 	mutex_unlock(&ice->gpio_mutex);
-	वापस changed;
-पूर्ण
+	return changed;
+}
 
-अटल स्थिर DECLARE_TLV_DB_SCALE(db_scale_volume, -6400, 50, 1);
+static const DECLARE_TLV_DB_SCALE(db_scale_volume, -6400, 50, 1);
 
 /*
  * mixers
  */
 
-अटल स्थिर काष्ठा snd_kcontrol_new pontis_controls[] = अणु
-	अणु
-		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+static const struct snd_kcontrol_new pontis_controls[] = {
+	{
+		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.access = (SNDRV_CTL_ELEM_ACCESS_READWRITE |
 			   SNDRV_CTL_ELEM_ACCESS_TLV_READ),
 		.name = "PCM Playback Volume",
 		.info = wm_dac_vol_info,
 		.get = wm_dac_vol_get,
 		.put = wm_dac_vol_put,
-		.tlv = अणु .p = db_scale_volume पूर्ण,
-	पूर्ण,
-	अणु
-		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+		.tlv = { .p = db_scale_volume },
+	},
+	{
+		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.access = (SNDRV_CTL_ELEM_ACCESS_READWRITE |
 			   SNDRV_CTL_ELEM_ACCESS_TLV_READ),
 		.name = "Capture Volume",
 		.info = wm_adc_vol_info,
 		.get = wm_adc_vol_get,
 		.put = wm_adc_vol_put,
-		.tlv = अणु .p = db_scale_volume पूर्ण,
-	पूर्ण,
-	अणु
-		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+		.tlv = { .p = db_scale_volume },
+	},
+	{
+		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name = "CD Capture Switch",
 		.info = wm_adc_mux_info,
 		.get = wm_adc_mux_get,
 		.put = wm_adc_mux_put,
-		.निजी_value = 0,
-	पूर्ण,
-	अणु
-		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+		.private_value = 0,
+	},
+	{
+		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name = "Line Capture Switch",
 		.info = wm_adc_mux_info,
 		.get = wm_adc_mux_get,
 		.put = wm_adc_mux_put,
-		.निजी_value = 1,
-	पूर्ण,
-	अणु
-		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+		.private_value = 1,
+	},
+	{
+		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name = "Analog Bypass Switch",
 		.info = wm_bypass_info,
 		.get = wm_bypass_get,
 		.put = wm_bypass_put,
-	पूर्ण,
-	अणु
-		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+	},
+	{
+		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name = "Swap Output Channels",
 		.info = wm_chswap_info,
 		.get = wm_chswap_get,
 		.put = wm_chswap_put,
-	पूर्ण,
-	अणु
-		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+	},
+	{
+		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name = "IEC958 Input Source",
 		.info = cs_source_info,
 		.get = cs_source_get,
 		.put = cs_source_put,
-	पूर्ण,
-	/* FIXME: which पूर्णांकerface? */
-	अणु
-		.अगरace = SNDRV_CTL_ELEM_IFACE_CARD,
+	},
+	/* FIXME: which interface? */
+	{
+		.iface = SNDRV_CTL_ELEM_IFACE_CARD,
 		.name = "GPIO Mask",
 		.info = pontis_gpio_mask_info,
 		.get = pontis_gpio_mask_get,
 		.put = pontis_gpio_mask_put,
-	पूर्ण,
-	अणु
-		.अगरace = SNDRV_CTL_ELEM_IFACE_CARD,
+	},
+	{
+		.iface = SNDRV_CTL_ELEM_IFACE_CARD,
 		.name = "GPIO Direction",
 		.info = pontis_gpio_mask_info,
 		.get = pontis_gpio_dir_get,
 		.put = pontis_gpio_dir_put,
-	पूर्ण,
-	अणु
-		.अगरace = SNDRV_CTL_ELEM_IFACE_CARD,
+	},
+	{
+		.iface = SNDRV_CTL_ELEM_IFACE_CARD,
 		.name = "GPIO Data",
 		.info = pontis_gpio_mask_info,
 		.get = pontis_gpio_data_get,
 		.put = pontis_gpio_data_put,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 
 /*
- * WM codec रेजिस्टरs
+ * WM codec registers
  */
-अटल व्योम wm_proc_regs_ग_लिखो(काष्ठा snd_info_entry *entry, काष्ठा snd_info_buffer *buffer)
-अणु
-	काष्ठा snd_ice1712 *ice = entry->निजी_data;
-	अक्षर line[64];
-	अचिन्हित पूर्णांक reg, val;
+static void wm_proc_regs_write(struct snd_info_entry *entry, struct snd_info_buffer *buffer)
+{
+	struct snd_ice1712 *ice = entry->private_data;
+	char line[64];
+	unsigned int reg, val;
 	mutex_lock(&ice->gpio_mutex);
-	जबतक (!snd_info_get_line(buffer, line, माप(line))) अणु
-		अगर (माला_पूछो(line, "%x %x", &reg, &val) != 2)
-			जारी;
-		अगर (reg <= 0x17 && val <= 0xffff)
+	while (!snd_info_get_line(buffer, line, sizeof(line))) {
+		if (sscanf(line, "%x %x", &reg, &val) != 2)
+			continue;
+		if (reg <= 0x17 && val <= 0xffff)
 			wm_put(ice, reg, val);
-	पूर्ण
+	}
 	mutex_unlock(&ice->gpio_mutex);
-पूर्ण
+}
 
-अटल व्योम wm_proc_regs_पढ़ो(काष्ठा snd_info_entry *entry, काष्ठा snd_info_buffer *buffer)
-अणु
-	काष्ठा snd_ice1712 *ice = entry->निजी_data;
-	पूर्णांक reg, val;
+static void wm_proc_regs_read(struct snd_info_entry *entry, struct snd_info_buffer *buffer)
+{
+	struct snd_ice1712 *ice = entry->private_data;
+	int reg, val;
 
 	mutex_lock(&ice->gpio_mutex);
-	क्रम (reg = 0; reg <= 0x17; reg++) अणु
+	for (reg = 0; reg <= 0x17; reg++) {
 		val = wm_get(ice, reg);
-		snd_iम_लिखो(buffer, "%02x = %04x\n", reg, val);
-	पूर्ण
+		snd_iprintf(buffer, "%02x = %04x\n", reg, val);
+	}
 	mutex_unlock(&ice->gpio_mutex);
-पूर्ण
+}
 
-अटल व्योम wm_proc_init(काष्ठा snd_ice1712 *ice)
-अणु
-	snd_card_rw_proc_new(ice->card, "wm_codec", ice, wm_proc_regs_पढ़ो,
-			     wm_proc_regs_ग_लिखो);
-पूर्ण
+static void wm_proc_init(struct snd_ice1712 *ice)
+{
+	snd_card_rw_proc_new(ice->card, "wm_codec", ice, wm_proc_regs_read,
+			     wm_proc_regs_write);
+}
 
-अटल व्योम cs_proc_regs_पढ़ो(काष्ठा snd_info_entry *entry, काष्ठा snd_info_buffer *buffer)
-अणु
-	काष्ठा snd_ice1712 *ice = entry->निजी_data;
-	पूर्णांक reg, val;
+static void cs_proc_regs_read(struct snd_info_entry *entry, struct snd_info_buffer *buffer)
+{
+	struct snd_ice1712 *ice = entry->private_data;
+	int reg, val;
 
 	mutex_lock(&ice->gpio_mutex);
-	क्रम (reg = 0; reg <= 0x26; reg++) अणु
-		val = spi_पढ़ो(ice, CS_DEV, reg);
-		snd_iम_लिखो(buffer, "%02x = %02x\n", reg, val);
-	पूर्ण
-	val = spi_पढ़ो(ice, CS_DEV, 0x7f);
-	snd_iम_लिखो(buffer, "%02x = %02x\n", 0x7f, val);
+	for (reg = 0; reg <= 0x26; reg++) {
+		val = spi_read(ice, CS_DEV, reg);
+		snd_iprintf(buffer, "%02x = %02x\n", reg, val);
+	}
+	val = spi_read(ice, CS_DEV, 0x7f);
+	snd_iprintf(buffer, "%02x = %02x\n", 0x7f, val);
 	mutex_unlock(&ice->gpio_mutex);
-पूर्ण
+}
 
-अटल व्योम cs_proc_init(काष्ठा snd_ice1712 *ice)
-अणु
-	snd_card_ro_proc_new(ice->card, "cs_codec", ice, cs_proc_regs_पढ़ो);
-पूर्ण
+static void cs_proc_init(struct snd_ice1712 *ice)
+{
+	snd_card_ro_proc_new(ice->card, "cs_codec", ice, cs_proc_regs_read);
+}
 
 
-अटल पूर्णांक pontis_add_controls(काष्ठा snd_ice1712 *ice)
-अणु
-	अचिन्हित पूर्णांक i;
-	पूर्णांक err;
+static int pontis_add_controls(struct snd_ice1712 *ice)
+{
+	unsigned int i;
+	int err;
 
-	क्रम (i = 0; i < ARRAY_SIZE(pontis_controls); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(pontis_controls); i++) {
 		err = snd_ctl_add(ice->card, snd_ctl_new1(&pontis_controls[i], ice));
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+		if (err < 0)
+			return err;
+	}
 
 	wm_proc_init(ice);
 	cs_proc_init(ice);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /*
  * initialize the chip
  */
-अटल पूर्णांक pontis_init(काष्ठा snd_ice1712 *ice)
-अणु
-	अटल स्थिर अचिन्हित लघु wm_inits[] = अणु
+static int pontis_init(struct snd_ice1712 *ice)
+{
+	static const unsigned short wm_inits[] = {
 		/* These come first to reduce init pop noise */
 		WM_ADC_MUX,	0x00c0,	/* ADC mute */
-		WM_DAC_MUTE,	0x0001,	/* DAC sofपंचांगute */
+		WM_DAC_MUTE,	0x0001,	/* DAC softmute */
 		WM_DAC_CTRL1,	0x0000,	/* DAC mute */
 
-		WM_POWERDOWN,	0x0008,	/* All घातer-up except HP */
+		WM_POWERDOWN,	0x0008,	/* All power-up except HP */
 		WM_RESET,	0x0000,	/* reset */
-	पूर्ण;
-	अटल स्थिर अचिन्हित लघु wm_inits2[] = अणु
+	};
+	static const unsigned short wm_inits2[] = {
 		WM_MASTER_CTRL,	0x0022,	/* 256fs, slave mode */
 		WM_DAC_INT,	0x0022,	/* I2S, normal polarity, 24bit */
 		WM_ADC_INT,	0x0022,	/* I2S, normal polarity, 24bit */
@@ -720,91 +719,91 @@
 		WM_DAC_CTRL2,	0x0000,	/* no deemphasis, no ZFLG */
 		WM_ADC_ATTEN_L,	0x0000,	/* ADC muted */
 		WM_ADC_ATTEN_R,	0x0000,	/* ADC muted */
-#अगर 0
+#if 0
 		WM_ALC_CTRL1,	0x007b,	/* */
 		WM_ALC_CTRL2,	0x0000,	/* */
 		WM_ALC_CTRL3,	0x0000,	/* */
 		WM_NOISE_GATE,	0x0000,	/* */
-#पूर्ण_अगर
+#endif
 		WM_DAC_MUTE,	0x0000,	/* DAC unmute */
 		WM_ADC_MUX,	0x0003,	/* ADC unmute, both CD/Line On */
-	पूर्ण;
-	अटल स्थिर अचिन्हित अक्षर cs_inits[] = अणु
+	};
+	static const unsigned char cs_inits[] = {
 		0x04,	0x80,	/* RUN, RXP0 */
 		0x05,	0x05,	/* slave, 24bit */
 		0x01,	0x00,
 		0x02,	0x00,
 		0x03,	0x00,
-	पूर्ण;
-	अचिन्हित पूर्णांक i;
+	};
+	unsigned int i;
 
 	ice->vt1720 = 1;
 	ice->num_total_dacs = 2;
 	ice->num_total_adcs = 2;
 
-	/* to remember the रेजिस्टर values */
-	ice->akm = kzalloc(माप(काष्ठा snd_akm4xxx), GFP_KERNEL);
-	अगर (! ice->akm)
-		वापस -ENOMEM;
+	/* to remember the register values */
+	ice->akm = kzalloc(sizeof(struct snd_akm4xxx), GFP_KERNEL);
+	if (! ice->akm)
+		return -ENOMEM;
 	ice->akm_codecs = 1;
 
 	/* HACK - use this as the SPDIF source.
-	 * करोn't call snd_ice1712_gpio_get/put(), otherwise it's overwritten
+	 * don't call snd_ice1712_gpio_get/put(), otherwise it's overwritten
 	 */
 	ice->gpio.saved[0] = 0;
 
 	/* initialize WM8776 codec */
-	क्रम (i = 0; i < ARRAY_SIZE(wm_inits); i += 2)
+	for (i = 0; i < ARRAY_SIZE(wm_inits); i += 2)
 		wm_put(ice, wm_inits[i], wm_inits[i+1]);
-	schedule_समयout_unपूर्णांकerruptible(1);
-	क्रम (i = 0; i < ARRAY_SIZE(wm_inits2); i += 2)
+	schedule_timeout_uninterruptible(1);
+	for (i = 0; i < ARRAY_SIZE(wm_inits2); i += 2)
 		wm_put(ice, wm_inits2[i], wm_inits2[i+1]);
 
 	/* initialize CS8416 codec */
-	/* निश्चित PRST#; MT05 bit 7 */
+	/* assert PRST#; MT05 bit 7 */
 	outb(inb(ICEMT1724(ice, AC97_CMD)) | 0x80, ICEMT1724(ice, AC97_CMD));
 	mdelay(5);
-	/* deनिश्चित PRST# */
+	/* deassert PRST# */
 	outb(inb(ICEMT1724(ice, AC97_CMD)) & ~0x80, ICEMT1724(ice, AC97_CMD));
 
-	क्रम (i = 0; i < ARRAY_SIZE(cs_inits); i += 2)
-		spi_ग_लिखो(ice, CS_DEV, cs_inits[i], cs_inits[i+1]);
+	for (i = 0; i < ARRAY_SIZE(cs_inits); i += 2)
+		spi_write(ice, CS_DEV, cs_inits[i], cs_inits[i+1]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /*
- * Pontis boards करोn't provide the EEPROM data at all.
+ * Pontis boards don't provide the EEPROM data at all.
  * hence the driver needs to sets up it properly.
  */
 
-अटल स्थिर अचिन्हित अक्षर pontis_eeprom[] = अणु
-	[ICE_EEP2_SYSCONF]     = 0x08,	/* घड़ी 256, mpu401, spdअगर-in/ADC, 1DAC */
+static const unsigned char pontis_eeprom[] = {
+	[ICE_EEP2_SYSCONF]     = 0x08,	/* clock 256, mpu401, spdif-in/ADC, 1DAC */
 	[ICE_EEP2_ACLINK]      = 0x80,	/* I2S */
 	[ICE_EEP2_I2S]         = 0xf8,	/* vol, 96k, 24bit, 192k */
-	[ICE_EEP2_SPDIF]       = 0xc3,	/* out-en, out-पूर्णांक, spdअगर-in */
-	[ICE_EEP2_GPIO_सूची]    = 0x07,
-	[ICE_EEP2_GPIO_सूची1]   = 0x00,
-	[ICE_EEP2_GPIO_सूची2]   = 0x00,	/* ignored */
-	[ICE_EEP2_GPIO_MASK]   = 0x0f,	/* 4-7 reserved क्रम CS8416 */
+	[ICE_EEP2_SPDIF]       = 0xc3,	/* out-en, out-int, spdif-in */
+	[ICE_EEP2_GPIO_DIR]    = 0x07,
+	[ICE_EEP2_GPIO_DIR1]   = 0x00,
+	[ICE_EEP2_GPIO_DIR2]   = 0x00,	/* ignored */
+	[ICE_EEP2_GPIO_MASK]   = 0x0f,	/* 4-7 reserved for CS8416 */
 	[ICE_EEP2_GPIO_MASK1]  = 0xff,
 	[ICE_EEP2_GPIO_MASK2]  = 0x00,	/* ignored */
 	[ICE_EEP2_GPIO_STATE]  = 0x06,	/* 0-low, 1-high, 2-high */
 	[ICE_EEP2_GPIO_STATE1] = 0x00,
 	[ICE_EEP2_GPIO_STATE2] = 0x00,	/* ignored */
-पूर्ण;
+};
 
-/* entry poपूर्णांक */
-काष्ठा snd_ice1712_card_info snd_vt1720_pontis_cards[] = अणु
-	अणु
-		.subvenकरोr = VT1720_SUBDEVICE_PONTIS_MS300,
+/* entry point */
+struct snd_ice1712_card_info snd_vt1720_pontis_cards[] = {
+	{
+		.subvendor = VT1720_SUBDEVICE_PONTIS_MS300,
 		.name = "Pontis MS300",
 		.model = "ms300",
 		.chip_init = pontis_init,
 		.build_controls = pontis_add_controls,
-		.eeprom_size = माप(pontis_eeprom),
+		.eeprom_size = sizeof(pontis_eeprom),
 		.eeprom_data = pontis_eeprom,
-	पूर्ण,
-	अणु पूर्ण /* terminator */
-पूर्ण;
+	},
+	{ } /* terminator */
+};

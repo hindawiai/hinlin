@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 OR MIT */
+/* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
  * All Rights Reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modअगरy, merge, publish,
+ * without limitation the rights to use, copy, modify, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to करो so, subject to
+ * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -27,119 +26,119 @@
  *
  **************************************************************************/
 /*
- * Authors: Thomas Hellstrom <thellstrom-at-vmware-करोt-com>
+ * Authors: Thomas Hellstrom <thellstrom-at-vmware-dot-com>
  *          Keith Packard.
  */
 
-#घोषणा pr_fmt(fmt) "[TTM] " fmt
+#define pr_fmt(fmt) "[TTM] " fmt
 
-#समावेश <drm/tपंचांग/tपंचांग_bo_driver.h>
-#समावेश <drm/tपंचांग/tपंचांग_placement.h>
-#समावेश <linux/agp_backend.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/पन.स>
-#समावेश <यंत्र/agp.h>
+#include <drm/ttm/ttm_bo_driver.h>
+#include <drm/ttm/ttm_placement.h>
+#include <linux/agp_backend.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/io.h>
+#include <asm/agp.h>
 
-काष्ठा tपंचांग_agp_backend अणु
-	काष्ठा tपंचांग_tt tपंचांग;
-	काष्ठा agp_memory *mem;
-	काष्ठा agp_bridge_data *bridge;
-पूर्ण;
+struct ttm_agp_backend {
+	struct ttm_tt ttm;
+	struct agp_memory *mem;
+	struct agp_bridge_data *bridge;
+};
 
-पूर्णांक tपंचांग_agp_bind(काष्ठा tपंचांग_tt *tपंचांग, काष्ठा tपंचांग_resource *bo_mem)
-अणु
-	काष्ठा tपंचांग_agp_backend *agp_be = container_of(tपंचांग, काष्ठा tपंचांग_agp_backend, tपंचांग);
-	काष्ठा page *dummy_पढ़ो_page = tपंचांग_glob.dummy_पढ़ो_page;
-	काष्ठा drm_mm_node *node = bo_mem->mm_node;
-	काष्ठा agp_memory *mem;
-	पूर्णांक ret, cached = tपंचांग->caching == tपंचांग_cached;
-	अचिन्हित i;
+int ttm_agp_bind(struct ttm_tt *ttm, struct ttm_resource *bo_mem)
+{
+	struct ttm_agp_backend *agp_be = container_of(ttm, struct ttm_agp_backend, ttm);
+	struct page *dummy_read_page = ttm_glob.dummy_read_page;
+	struct drm_mm_node *node = bo_mem->mm_node;
+	struct agp_memory *mem;
+	int ret, cached = ttm->caching == ttm_cached;
+	unsigned i;
 
-	अगर (agp_be->mem)
-		वापस 0;
+	if (agp_be->mem)
+		return 0;
 
-	mem = agp_allocate_memory(agp_be->bridge, tपंचांग->num_pages, AGP_USER_MEMORY);
-	अगर (unlikely(mem == शून्य))
-		वापस -ENOMEM;
+	mem = agp_allocate_memory(agp_be->bridge, ttm->num_pages, AGP_USER_MEMORY);
+	if (unlikely(mem == NULL))
+		return -ENOMEM;
 
 	mem->page_count = 0;
-	क्रम (i = 0; i < tपंचांग->num_pages; i++) अणु
-		काष्ठा page *page = tपंचांग->pages[i];
+	for (i = 0; i < ttm->num_pages; i++) {
+		struct page *page = ttm->pages[i];
 
-		अगर (!page)
-			page = dummy_पढ़ो_page;
+		if (!page)
+			page = dummy_read_page;
 
 		mem->pages[mem->page_count++] = page;
-	पूर्ण
+	}
 	agp_be->mem = mem;
 
 	mem->is_flushed = 1;
 	mem->type = (cached) ? AGP_USER_CACHED_MEMORY : AGP_USER_MEMORY;
 
 	ret = agp_bind_memory(mem, node->start);
-	अगर (ret)
+	if (ret)
 		pr_err("AGP Bind memory failed\n");
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(tपंचांग_agp_bind);
+	return ret;
+}
+EXPORT_SYMBOL(ttm_agp_bind);
 
-व्योम tपंचांग_agp_unbind(काष्ठा tपंचांग_tt *tपंचांग)
-अणु
-	काष्ठा tपंचांग_agp_backend *agp_be = container_of(tपंचांग, काष्ठा tपंचांग_agp_backend, tपंचांग);
+void ttm_agp_unbind(struct ttm_tt *ttm)
+{
+	struct ttm_agp_backend *agp_be = container_of(ttm, struct ttm_agp_backend, ttm);
 
-	अगर (agp_be->mem) अणु
-		अगर (agp_be->mem->is_bound) अणु
+	if (agp_be->mem) {
+		if (agp_be->mem->is_bound) {
 			agp_unbind_memory(agp_be->mem);
-			वापस;
-		पूर्ण
-		agp_मुक्त_memory(agp_be->mem);
-		agp_be->mem = शून्य;
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL(tपंचांग_agp_unbind);
+			return;
+		}
+		agp_free_memory(agp_be->mem);
+		agp_be->mem = NULL;
+	}
+}
+EXPORT_SYMBOL(ttm_agp_unbind);
 
-bool tपंचांग_agp_is_bound(काष्ठा tपंचांग_tt *tपंचांग)
-अणु
-	काष्ठा tपंचांग_agp_backend *agp_be = container_of(tपंचांग, काष्ठा tपंचांग_agp_backend, tपंचांग);
+bool ttm_agp_is_bound(struct ttm_tt *ttm)
+{
+	struct ttm_agp_backend *agp_be = container_of(ttm, struct ttm_agp_backend, ttm);
 
-	अगर (!tपंचांग)
-		वापस false;
+	if (!ttm)
+		return false;
 
-	वापस (agp_be->mem != शून्य);
-पूर्ण
-EXPORT_SYMBOL(tपंचांग_agp_is_bound);
+	return (agp_be->mem != NULL);
+}
+EXPORT_SYMBOL(ttm_agp_is_bound);
 
-व्योम tपंचांग_agp_destroy(काष्ठा tपंचांग_tt *tपंचांग)
-अणु
-	काष्ठा tपंचांग_agp_backend *agp_be = container_of(tपंचांग, काष्ठा tपंचांग_agp_backend, tपंचांग);
+void ttm_agp_destroy(struct ttm_tt *ttm)
+{
+	struct ttm_agp_backend *agp_be = container_of(ttm, struct ttm_agp_backend, ttm);
 
-	अगर (agp_be->mem)
-		tपंचांग_agp_unbind(tपंचांग);
-	tपंचांग_tt_fini(tपंचांग);
-	kमुक्त(agp_be);
-पूर्ण
-EXPORT_SYMBOL(tपंचांग_agp_destroy);
+	if (agp_be->mem)
+		ttm_agp_unbind(ttm);
+	ttm_tt_fini(ttm);
+	kfree(agp_be);
+}
+EXPORT_SYMBOL(ttm_agp_destroy);
 
-काष्ठा tपंचांग_tt *tपंचांग_agp_tt_create(काष्ठा tपंचांग_buffer_object *bo,
-				 काष्ठा agp_bridge_data *bridge,
-				 uपूर्णांक32_t page_flags)
-अणु
-	काष्ठा tपंचांग_agp_backend *agp_be;
+struct ttm_tt *ttm_agp_tt_create(struct ttm_buffer_object *bo,
+				 struct agp_bridge_data *bridge,
+				 uint32_t page_flags)
+{
+	struct ttm_agp_backend *agp_be;
 
-	agp_be = kदो_स्मृति(माप(*agp_be), GFP_KERNEL);
-	अगर (!agp_be)
-		वापस शून्य;
+	agp_be = kmalloc(sizeof(*agp_be), GFP_KERNEL);
+	if (!agp_be)
+		return NULL;
 
-	agp_be->mem = शून्य;
+	agp_be->mem = NULL;
 	agp_be->bridge = bridge;
 
-	अगर (tपंचांग_tt_init(&agp_be->tपंचांग, bo, page_flags, tपंचांग_ग_लिखो_combined)) अणु
-		kमुक्त(agp_be);
-		वापस शून्य;
-	पूर्ण
+	if (ttm_tt_init(&agp_be->ttm, bo, page_flags, ttm_write_combined)) {
+		kfree(agp_be);
+		return NULL;
+	}
 
-	वापस &agp_be->tपंचांग;
-पूर्ण
-EXPORT_SYMBOL(tपंचांग_agp_tt_create);
+	return &agp_be->ttm;
+}
+EXPORT_SYMBOL(ttm_agp_tt_create);

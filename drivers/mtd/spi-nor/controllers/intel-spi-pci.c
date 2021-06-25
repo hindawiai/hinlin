@@ -1,98 +1,97 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Intel PCH/PCU SPI flash PCI driver.
  *
  * Copyright (C) 2016, Intel Corporation
- * Author: Mika Westerberg <mika.westerberg@linux.पूर्णांकel.com>
+ * Author: Mika Westerberg <mika.westerberg@linux.intel.com>
  */
 
-#समावेश <linux/ioport.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
+#include <linux/ioport.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/pci.h>
 
-#समावेश "intel-spi.h"
+#include "intel-spi.h"
 
-#घोषणा BCR		0xdc
-#घोषणा BCR_WPD		BIT(0)
+#define BCR		0xdc
+#define BCR_WPD		BIT(0)
 
-अटल स्थिर काष्ठा पूर्णांकel_spi_boardinfo bxt_info = अणु
+static const struct intel_spi_boardinfo bxt_info = {
 	.type = INTEL_SPI_BXT,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा पूर्णांकel_spi_boardinfo cnl_info = अणु
+static const struct intel_spi_boardinfo cnl_info = {
 	.type = INTEL_SPI_CNL,
-पूर्ण;
+};
 
-अटल पूर्णांक पूर्णांकel_spi_pci_probe(काष्ठा pci_dev *pdev,
-			       स्थिर काष्ठा pci_device_id *id)
-अणु
-	काष्ठा पूर्णांकel_spi_boardinfo *info;
-	काष्ठा पूर्णांकel_spi *ispi;
+static int intel_spi_pci_probe(struct pci_dev *pdev,
+			       const struct pci_device_id *id)
+{
+	struct intel_spi_boardinfo *info;
+	struct intel_spi *ispi;
 	u32 bcr;
-	पूर्णांक ret;
+	int ret;
 
 	ret = pcim_enable_device(pdev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	info = devm_kmemdup(&pdev->dev, (व्योम *)id->driver_data, माप(*info),
+	info = devm_kmemdup(&pdev->dev, (void *)id->driver_data, sizeof(*info),
 			    GFP_KERNEL);
-	अगर (!info)
-		वापस -ENOMEM;
+	if (!info)
+		return -ENOMEM;
 
-	/* Try to make the chip पढ़ो/ग_लिखो */
-	pci_पढ़ो_config_dword(pdev, BCR, &bcr);
-	अगर (!(bcr & BCR_WPD)) अणु
+	/* Try to make the chip read/write */
+	pci_read_config_dword(pdev, BCR, &bcr);
+	if (!(bcr & BCR_WPD)) {
 		bcr |= BCR_WPD;
-		pci_ग_लिखो_config_dword(pdev, BCR, bcr);
-		pci_पढ़ो_config_dword(pdev, BCR, &bcr);
-	पूर्ण
-	info->ग_लिखोable = !!(bcr & BCR_WPD);
+		pci_write_config_dword(pdev, BCR, bcr);
+		pci_read_config_dword(pdev, BCR, &bcr);
+	}
+	info->writeable = !!(bcr & BCR_WPD);
 
-	ispi = पूर्णांकel_spi_probe(&pdev->dev, &pdev->resource[0], info);
-	अगर (IS_ERR(ispi))
-		वापस PTR_ERR(ispi);
+	ispi = intel_spi_probe(&pdev->dev, &pdev->resource[0], info);
+	if (IS_ERR(ispi))
+		return PTR_ERR(ispi);
 
 	pci_set_drvdata(pdev, ispi);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम पूर्णांकel_spi_pci_हटाओ(काष्ठा pci_dev *pdev)
-अणु
-	पूर्णांकel_spi_हटाओ(pci_get_drvdata(pdev));
-पूर्ण
+static void intel_spi_pci_remove(struct pci_dev *pdev)
+{
+	intel_spi_remove(pci_get_drvdata(pdev));
+}
 
-अटल स्थिर काष्ठा pci_device_id पूर्णांकel_spi_pci_ids[] = अणु
-	अणु PCI_VDEVICE(INTEL, 0x02a4), (अचिन्हित दीर्घ)&bxt_info पूर्ण,
-	अणु PCI_VDEVICE(INTEL, 0x06a4), (अचिन्हित दीर्घ)&bxt_info पूर्ण,
-	अणु PCI_VDEVICE(INTEL, 0x18e0), (अचिन्हित दीर्घ)&bxt_info पूर्ण,
-	अणु PCI_VDEVICE(INTEL, 0x19e0), (अचिन्हित दीर्घ)&bxt_info पूर्ण,
-	अणु PCI_VDEVICE(INTEL, 0x1bca), (अचिन्हित दीर्घ)&bxt_info पूर्ण,
-	अणु PCI_VDEVICE(INTEL, 0x34a4), (अचिन्हित दीर्घ)&bxt_info पूर्ण,
-	अणु PCI_VDEVICE(INTEL, 0x43a4), (अचिन्हित दीर्घ)&cnl_info पूर्ण,
-	अणु PCI_VDEVICE(INTEL, 0x4b24), (अचिन्हित दीर्घ)&bxt_info पूर्ण,
-	अणु PCI_VDEVICE(INTEL, 0x4da4), (अचिन्हित दीर्घ)&bxt_info पूर्ण,
-	अणु PCI_VDEVICE(INTEL, 0x51a4), (अचिन्हित दीर्घ)&cnl_info पूर्ण,
-	अणु PCI_VDEVICE(INTEL, 0x7aa4), (अचिन्हित दीर्घ)&cnl_info पूर्ण,
-	अणु PCI_VDEVICE(INTEL, 0xa0a4), (अचिन्हित दीर्घ)&bxt_info पूर्ण,
-	अणु PCI_VDEVICE(INTEL, 0xa1a4), (अचिन्हित दीर्घ)&bxt_info पूर्ण,
-	अणु PCI_VDEVICE(INTEL, 0xa224), (अचिन्हित दीर्घ)&bxt_info पूर्ण,
-	अणु PCI_VDEVICE(INTEL, 0xa324), (अचिन्हित दीर्घ)&cnl_info पूर्ण,
-	अणु PCI_VDEVICE(INTEL, 0xa3a4), (अचिन्हित दीर्घ)&bxt_info पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
-MODULE_DEVICE_TABLE(pci, पूर्णांकel_spi_pci_ids);
+static const struct pci_device_id intel_spi_pci_ids[] = {
+	{ PCI_VDEVICE(INTEL, 0x02a4), (unsigned long)&bxt_info },
+	{ PCI_VDEVICE(INTEL, 0x06a4), (unsigned long)&bxt_info },
+	{ PCI_VDEVICE(INTEL, 0x18e0), (unsigned long)&bxt_info },
+	{ PCI_VDEVICE(INTEL, 0x19e0), (unsigned long)&bxt_info },
+	{ PCI_VDEVICE(INTEL, 0x1bca), (unsigned long)&bxt_info },
+	{ PCI_VDEVICE(INTEL, 0x34a4), (unsigned long)&bxt_info },
+	{ PCI_VDEVICE(INTEL, 0x43a4), (unsigned long)&cnl_info },
+	{ PCI_VDEVICE(INTEL, 0x4b24), (unsigned long)&bxt_info },
+	{ PCI_VDEVICE(INTEL, 0x4da4), (unsigned long)&bxt_info },
+	{ PCI_VDEVICE(INTEL, 0x51a4), (unsigned long)&cnl_info },
+	{ PCI_VDEVICE(INTEL, 0x7aa4), (unsigned long)&cnl_info },
+	{ PCI_VDEVICE(INTEL, 0xa0a4), (unsigned long)&bxt_info },
+	{ PCI_VDEVICE(INTEL, 0xa1a4), (unsigned long)&bxt_info },
+	{ PCI_VDEVICE(INTEL, 0xa224), (unsigned long)&bxt_info },
+	{ PCI_VDEVICE(INTEL, 0xa324), (unsigned long)&cnl_info },
+	{ PCI_VDEVICE(INTEL, 0xa3a4), (unsigned long)&bxt_info },
+	{ },
+};
+MODULE_DEVICE_TABLE(pci, intel_spi_pci_ids);
 
-अटल काष्ठा pci_driver पूर्णांकel_spi_pci_driver = अणु
+static struct pci_driver intel_spi_pci_driver = {
 	.name = "intel-spi",
-	.id_table = पूर्णांकel_spi_pci_ids,
-	.probe = पूर्णांकel_spi_pci_probe,
-	.हटाओ = पूर्णांकel_spi_pci_हटाओ,
-पूर्ण;
+	.id_table = intel_spi_pci_ids,
+	.probe = intel_spi_pci_probe,
+	.remove = intel_spi_pci_remove,
+};
 
-module_pci_driver(पूर्णांकel_spi_pci_driver);
+module_pci_driver(intel_spi_pci_driver);
 
 MODULE_DESCRIPTION("Intel PCH/PCU SPI flash PCI driver");
 MODULE_AUTHOR("Mika Westerberg <mika.westerberg@linux.intel.com>");

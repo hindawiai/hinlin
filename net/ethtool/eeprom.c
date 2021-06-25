@@ -1,167 +1,166 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 
-#समावेश <linux/ethtool.h>
-#समावेश <linux/sfp.h>
-#समावेश "netlink.h"
-#समावेश "common.h"
+#include <linux/ethtool.h>
+#include <linux/sfp.h>
+#include "netlink.h"
+#include "common.h"
 
-काष्ठा eeprom_req_info अणु
-	काष्ठा ethnl_req_info	base;
+struct eeprom_req_info {
+	struct ethnl_req_info	base;
 	u32			offset;
 	u32			length;
 	u8			page;
 	u8			bank;
 	u8			i2c_address;
-पूर्ण;
+};
 
-काष्ठा eeprom_reply_data अणु
-	काष्ठा ethnl_reply_data base;
+struct eeprom_reply_data {
+	struct ethnl_reply_data base;
 	u32			length;
 	u8			*data;
-पूर्ण;
+};
 
-#घोषणा MODULE_EEPROM_REQINFO(__req_base) \
-	container_of(__req_base, काष्ठा eeprom_req_info, base)
+#define MODULE_EEPROM_REQINFO(__req_base) \
+	container_of(__req_base, struct eeprom_req_info, base)
 
-#घोषणा MODULE_EEPROM_REPDATA(__reply_base) \
-	container_of(__reply_base, काष्ठा eeprom_reply_data, base)
+#define MODULE_EEPROM_REPDATA(__reply_base) \
+	container_of(__reply_base, struct eeprom_reply_data, base)
 
-अटल पूर्णांक fallback_set_params(काष्ठा eeprom_req_info *request,
-			       काष्ठा ethtool_modinfo *modinfo,
-			       काष्ठा ethtool_eeprom *eeprom)
-अणु
+static int fallback_set_params(struct eeprom_req_info *request,
+			       struct ethtool_modinfo *modinfo,
+			       struct ethtool_eeprom *eeprom)
+{
 	u32 offset = request->offset;
 	u32 length = request->length;
 
-	अगर (request->page)
+	if (request->page)
 		offset = request->page * ETH_MODULE_EEPROM_PAGE_LEN + offset;
 
-	अगर (modinfo->type == ETH_MODULE_SFF_8079 &&
+	if (modinfo->type == ETH_MODULE_SFF_8079 &&
 	    request->i2c_address == 0x51)
 		offset += ETH_MODULE_EEPROM_PAGE_LEN * 2;
 
-	अगर (offset >= modinfo->eeprom_len)
-		वापस -EINVAL;
+	if (offset >= modinfo->eeprom_len)
+		return -EINVAL;
 
 	eeprom->cmd = ETHTOOL_GMODULEEEPROM;
 	eeprom->len = length;
 	eeprom->offset = offset;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक eeprom_fallback(काष्ठा eeprom_req_info *request,
-			   काष्ठा eeprom_reply_data *reply,
-			   काष्ठा genl_info *info)
-अणु
-	काष्ठा net_device *dev = reply->base.dev;
-	काष्ठा ethtool_modinfo modinfo = अणु0पूर्ण;
-	काष्ठा ethtool_eeprom eeprom = अणु0पूर्ण;
+static int eeprom_fallback(struct eeprom_req_info *request,
+			   struct eeprom_reply_data *reply,
+			   struct genl_info *info)
+{
+	struct net_device *dev = reply->base.dev;
+	struct ethtool_modinfo modinfo = {0};
+	struct ethtool_eeprom eeprom = {0};
 	u8 *data;
-	पूर्णांक err;
+	int err;
 
 	modinfo.cmd = ETHTOOL_GMODULEINFO;
 	err = ethtool_get_module_info_call(dev, &modinfo);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	err = fallback_set_params(request, &modinfo, &eeprom);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	data = kदो_स्मृति(eeprom.len, GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = kmalloc(eeprom.len, GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 	err = ethtool_get_module_eeprom_call(dev, &eeprom, data);
-	अगर (err < 0)
-		जाओ err_out;
+	if (err < 0)
+		goto err_out;
 
 	reply->data = data;
 	reply->length = eeprom.len;
 
-	वापस 0;
+	return 0;
 
 err_out:
-	kमुक्त(data);
-	वापस err;
-पूर्ण
+	kfree(data);
+	return err;
+}
 
-अटल पूर्णांक get_module_eeprom_by_page(काष्ठा net_device *dev,
-				     काष्ठा ethtool_module_eeprom *page_data,
-				     काष्ठा netlink_ext_ack *extack)
-अणु
-	स्थिर काष्ठा ethtool_ops *ops = dev->ethtool_ops;
+static int get_module_eeprom_by_page(struct net_device *dev,
+				     struct ethtool_module_eeprom *page_data,
+				     struct netlink_ext_ack *extack)
+{
+	const struct ethtool_ops *ops = dev->ethtool_ops;
 
-	अगर (dev->sfp_bus)
-		वापस sfp_get_module_eeprom_by_page(dev->sfp_bus, page_data, extack);
+	if (dev->sfp_bus)
+		return sfp_get_module_eeprom_by_page(dev->sfp_bus, page_data, extack);
 
-	अगर (ops->get_module_eeprom_by_page)
-		वापस ops->get_module_eeprom_by_page(dev, page_data, extack);
+	if (ops->get_module_eeprom_by_page)
+		return ops->get_module_eeprom_by_page(dev, page_data, extack);
 
-	वापस -EOPNOTSUPP;
-पूर्ण
+	return -EOPNOTSUPP;
+}
 
-अटल पूर्णांक eeprom_prepare_data(स्थिर काष्ठा ethnl_req_info *req_base,
-			       काष्ठा ethnl_reply_data *reply_base,
-			       काष्ठा genl_info *info)
-अणु
-	काष्ठा eeprom_reply_data *reply = MODULE_EEPROM_REPDATA(reply_base);
-	काष्ठा eeprom_req_info *request = MODULE_EEPROM_REQINFO(req_base);
-	काष्ठा ethtool_module_eeprom page_data = अणु0पूर्ण;
-	काष्ठा net_device *dev = reply_base->dev;
-	पूर्णांक ret;
+static int eeprom_prepare_data(const struct ethnl_req_info *req_base,
+			       struct ethnl_reply_data *reply_base,
+			       struct genl_info *info)
+{
+	struct eeprom_reply_data *reply = MODULE_EEPROM_REPDATA(reply_base);
+	struct eeprom_req_info *request = MODULE_EEPROM_REQINFO(req_base);
+	struct ethtool_module_eeprom page_data = {0};
+	struct net_device *dev = reply_base->dev;
+	int ret;
 
 	page_data.offset = request->offset;
 	page_data.length = request->length;
 	page_data.i2c_address = request->i2c_address;
 	page_data.page = request->page;
 	page_data.bank = request->bank;
-	page_data.data = kदो_स्मृति(page_data.length, GFP_KERNEL);
-	अगर (!page_data.data)
-		वापस -ENOMEM;
+	page_data.data = kmalloc(page_data.length, GFP_KERNEL);
+	if (!page_data.data)
+		return -ENOMEM;
 
 	ret = ethnl_ops_begin(dev);
-	अगर (ret)
-		जाओ err_मुक्त;
+	if (ret)
+		goto err_free;
 
 	ret = get_module_eeprom_by_page(dev, &page_data, info->extack);
-	अगर (ret < 0)
-		जाओ err_ops;
+	if (ret < 0)
+		goto err_ops;
 
 	reply->length = ret;
 	reply->data = page_data.data;
 
 	ethnl_ops_complete(dev);
-	वापस 0;
+	return 0;
 
 err_ops:
 	ethnl_ops_complete(dev);
-err_मुक्त:
-	kमुक्त(page_data.data);
+err_free:
+	kfree(page_data.data);
 
-	अगर (ret == -EOPNOTSUPP)
-		वापस eeprom_fallback(request, reply, info);
-	वापस ret;
-पूर्ण
+	if (ret == -EOPNOTSUPP)
+		return eeprom_fallback(request, reply, info);
+	return ret;
+}
 
-अटल पूर्णांक eeprom_parse_request(काष्ठा ethnl_req_info *req_info, काष्ठा nlattr **tb,
-				काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा eeprom_req_info *request = MODULE_EEPROM_REQINFO(req_info);
+static int eeprom_parse_request(struct ethnl_req_info *req_info, struct nlattr **tb,
+				struct netlink_ext_ack *extack)
+{
+	struct eeprom_req_info *request = MODULE_EEPROM_REQINFO(req_info);
 
-	अगर (!tb[ETHTOOL_A_MODULE_EEPROM_OFFSET] ||
+	if (!tb[ETHTOOL_A_MODULE_EEPROM_OFFSET] ||
 	    !tb[ETHTOOL_A_MODULE_EEPROM_LENGTH] ||
 	    !tb[ETHTOOL_A_MODULE_EEPROM_PAGE] ||
 	    !tb[ETHTOOL_A_MODULE_EEPROM_I2C_ADDRESS])
-		वापस -EINVAL;
+		return -EINVAL;
 
 	request->i2c_address = nla_get_u8(tb[ETHTOOL_A_MODULE_EEPROM_I2C_ADDRESS]);
 	request->offset = nla_get_u32(tb[ETHTOOL_A_MODULE_EEPROM_OFFSET]);
 	request->length = nla_get_u32(tb[ETHTOOL_A_MODULE_EEPROM_LENGTH]);
 
-	अगर (!request->length)
-		वापस -EINVAL;
+	if (!request->length)
+		return -EINVAL;
 
 	/* The following set of conditions limit the API to only dump 1/2
 	 * EEPROM page without crossing low page boundary located at offset 128.
@@ -170,78 +169,78 @@ err_मुक्त:
 	 * For pages higher than 0 only high 128 bytes are accessible.
 	 */
 	request->page = nla_get_u8(tb[ETHTOOL_A_MODULE_EEPROM_PAGE]);
-	अगर (request->page && request->offset < ETH_MODULE_EEPROM_PAGE_LEN) अणु
+	if (request->page && request->offset < ETH_MODULE_EEPROM_PAGE_LEN) {
 		NL_SET_ERR_MSG_ATTR(extack, tb[ETHTOOL_A_MODULE_EEPROM_PAGE],
 				    "reading from lower half page is allowed for page 0 only");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (request->offset < ETH_MODULE_EEPROM_PAGE_LEN &&
-	    request->offset + request->length > ETH_MODULE_EEPROM_PAGE_LEN) अणु
+	if (request->offset < ETH_MODULE_EEPROM_PAGE_LEN &&
+	    request->offset + request->length > ETH_MODULE_EEPROM_PAGE_LEN) {
 		NL_SET_ERR_MSG_ATTR(extack, tb[ETHTOOL_A_MODULE_EEPROM_LENGTH],
 				    "reading cross half page boundary is illegal");
-		वापस -EINVAL;
-	पूर्ण अन्यथा अगर (request->offset >= ETH_MODULE_EEPROM_PAGE_LEN * 2) अणु
+		return -EINVAL;
+	} else if (request->offset >= ETH_MODULE_EEPROM_PAGE_LEN * 2) {
 		NL_SET_ERR_MSG_ATTR(extack, tb[ETHTOOL_A_MODULE_EEPROM_OFFSET],
 				    "offset is out of bounds");
-		वापस -EINVAL;
-	पूर्ण अन्यथा अगर (request->offset + request->length > ETH_MODULE_EEPROM_PAGE_LEN * 2) अणु
+		return -EINVAL;
+	} else if (request->offset + request->length > ETH_MODULE_EEPROM_PAGE_LEN * 2) {
 		NL_SET_ERR_MSG_ATTR(extack, tb[ETHTOOL_A_MODULE_EEPROM_LENGTH],
 				    "reading cross page boundary is illegal");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (tb[ETHTOOL_A_MODULE_EEPROM_BANK])
+	if (tb[ETHTOOL_A_MODULE_EEPROM_BANK])
 		request->bank = nla_get_u8(tb[ETHTOOL_A_MODULE_EEPROM_BANK]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक eeprom_reply_size(स्थिर काष्ठा ethnl_req_info *req_base,
-			     स्थिर काष्ठा ethnl_reply_data *reply_base)
-अणु
-	स्थिर काष्ठा eeprom_req_info *request = MODULE_EEPROM_REQINFO(req_base);
+static int eeprom_reply_size(const struct ethnl_req_info *req_base,
+			     const struct ethnl_reply_data *reply_base)
+{
+	const struct eeprom_req_info *request = MODULE_EEPROM_REQINFO(req_base);
 
-	वापस nla_total_size(माप(u8) * request->length); /* _EEPROM_DATA */
-पूर्ण
+	return nla_total_size(sizeof(u8) * request->length); /* _EEPROM_DATA */
+}
 
-अटल पूर्णांक eeprom_fill_reply(काष्ठा sk_buff *skb,
-			     स्थिर काष्ठा ethnl_req_info *req_base,
-			     स्थिर काष्ठा ethnl_reply_data *reply_base)
-अणु
-	काष्ठा eeprom_reply_data *reply = MODULE_EEPROM_REPDATA(reply_base);
+static int eeprom_fill_reply(struct sk_buff *skb,
+			     const struct ethnl_req_info *req_base,
+			     const struct ethnl_reply_data *reply_base)
+{
+	struct eeprom_reply_data *reply = MODULE_EEPROM_REPDATA(reply_base);
 
-	वापस nla_put(skb, ETHTOOL_A_MODULE_EEPROM_DATA, reply->length, reply->data);
-पूर्ण
+	return nla_put(skb, ETHTOOL_A_MODULE_EEPROM_DATA, reply->length, reply->data);
+}
 
-अटल व्योम eeprom_cleanup_data(काष्ठा ethnl_reply_data *reply_base)
-अणु
-	काष्ठा eeprom_reply_data *reply = MODULE_EEPROM_REPDATA(reply_base);
+static void eeprom_cleanup_data(struct ethnl_reply_data *reply_base)
+{
+	struct eeprom_reply_data *reply = MODULE_EEPROM_REPDATA(reply_base);
 
-	kमुक्त(reply->data);
-पूर्ण
+	kfree(reply->data);
+}
 
-स्थिर काष्ठा ethnl_request_ops ethnl_module_eeprom_request_ops = अणु
+const struct ethnl_request_ops ethnl_module_eeprom_request_ops = {
 	.request_cmd		= ETHTOOL_MSG_MODULE_EEPROM_GET,
 	.reply_cmd		= ETHTOOL_MSG_MODULE_EEPROM_GET_REPLY,
 	.hdr_attr		= ETHTOOL_A_MODULE_EEPROM_HEADER,
-	.req_info_size		= माप(काष्ठा eeprom_req_info),
-	.reply_data_size	= माप(काष्ठा eeprom_reply_data),
+	.req_info_size		= sizeof(struct eeprom_req_info),
+	.reply_data_size	= sizeof(struct eeprom_reply_data),
 
 	.parse_request		= eeprom_parse_request,
 	.prepare_data		= eeprom_prepare_data,
 	.reply_size		= eeprom_reply_size,
 	.fill_reply		= eeprom_fill_reply,
 	.cleanup_data		= eeprom_cleanup_data,
-पूर्ण;
+};
 
-स्थिर काष्ठा nla_policy ethnl_module_eeprom_get_policy[] = अणु
+const struct nla_policy ethnl_module_eeprom_get_policy[] = {
 	[ETHTOOL_A_MODULE_EEPROM_HEADER]	= NLA_POLICY_NESTED(ethnl_header_policy),
-	[ETHTOOL_A_MODULE_EEPROM_OFFSET]	= अणु .type = NLA_U32 पूर्ण,
-	[ETHTOOL_A_MODULE_EEPROM_LENGTH]	= अणु .type = NLA_U32 पूर्ण,
-	[ETHTOOL_A_MODULE_EEPROM_PAGE]		= अणु .type = NLA_U8 पूर्ण,
-	[ETHTOOL_A_MODULE_EEPROM_BANK]		= अणु .type = NLA_U8 पूर्ण,
+	[ETHTOOL_A_MODULE_EEPROM_OFFSET]	= { .type = NLA_U32 },
+	[ETHTOOL_A_MODULE_EEPROM_LENGTH]	= { .type = NLA_U32 },
+	[ETHTOOL_A_MODULE_EEPROM_PAGE]		= { .type = NLA_U8 },
+	[ETHTOOL_A_MODULE_EEPROM_BANK]		= { .type = NLA_U8 },
 	[ETHTOOL_A_MODULE_EEPROM_I2C_ADDRESS]	=
 		NLA_POLICY_RANGE(NLA_U8, 0, ETH_MODULE_MAX_I2C_ADDRESS),
-पूर्ण;
+};
 

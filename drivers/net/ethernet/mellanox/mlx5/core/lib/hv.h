@@ -1,23 +1,22 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB */
+/* SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB */
 /* Copyright (c) 2019 Mellanox Technologies. */
 
-#अगर_अघोषित __LIB_HV_H__
-#घोषणा __LIB_HV_H__
+#ifndef __LIB_HV_H__
+#define __LIB_HV_H__
 
-#अगर IS_ENABLED(CONFIG_PCI_HYPERV_INTERFACE)
+#if IS_ENABLED(CONFIG_PCI_HYPERV_INTERFACE)
 
-#समावेश <linux/hyperv.h>
-#समावेश <linux/mlx5/driver.h>
+#include <linux/hyperv.h>
+#include <linux/mlx5/driver.h>
 
-पूर्णांक mlx5_hv_पढ़ो_config(काष्ठा mlx5_core_dev *dev, व्योम *buf, पूर्णांक len,
-			पूर्णांक offset);
-पूर्णांक mlx5_hv_ग_लिखो_config(काष्ठा mlx5_core_dev *dev, व्योम *buf, पूर्णांक len,
-			 पूर्णांक offset);
-पूर्णांक mlx5_hv_रेजिस्टर_invalidate(काष्ठा mlx5_core_dev *dev, व्योम *context,
-				व्योम (*block_invalidate)(व्योम *context,
+int mlx5_hv_read_config(struct mlx5_core_dev *dev, void *buf, int len,
+			int offset);
+int mlx5_hv_write_config(struct mlx5_core_dev *dev, void *buf, int len,
+			 int offset);
+int mlx5_hv_register_invalidate(struct mlx5_core_dev *dev, void *context,
+				void (*block_invalidate)(void *context,
 							 u64 block_mask));
-व्योम mlx5_hv_unरेजिस्टर_invalidate(काष्ठा mlx5_core_dev *dev);
-#पूर्ण_अगर
+void mlx5_hv_unregister_invalidate(struct mlx5_core_dev *dev);
+#endif
 
-#पूर्ण_अगर /* __LIB_HV_H__ */
+#endif /* __LIB_HV_H__ */

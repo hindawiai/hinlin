@@ -1,46 +1,45 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /*******************************************************************************
  *
  * Module Name: hwpci - Obtain PCI bus, device, and function numbers
  *
  ******************************************************************************/
 
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
 
-#घोषणा _COMPONENT          ACPI_NAMESPACE
+#define _COMPONENT          ACPI_NAMESPACE
 ACPI_MODULE_NAME("hwpci")
 
 /* PCI configuration space values */
-#घोषणा PCI_CFG_HEADER_TYPE_REG             0x0E
-#घोषणा PCI_CFG_PRIMARY_BUS_NUMBER_REG      0x18
-#घोषणा PCI_CFG_SECONDARY_BUS_NUMBER_REG    0x19
+#define PCI_CFG_HEADER_TYPE_REG             0x0E
+#define PCI_CFG_PRIMARY_BUS_NUMBER_REG      0x18
+#define PCI_CFG_SECONDARY_BUS_NUMBER_REG    0x19
 /* PCI header values */
-#घोषणा PCI_HEADER_TYPE_MASK                0x7F
-#घोषणा PCI_TYPE_BRIDGE                     0x01
-#घोषणा PCI_TYPE_CARDBUS_BRIDGE             0x02
-प्रकार काष्ठा acpi_pci_device अणु
+#define PCI_HEADER_TYPE_MASK                0x7F
+#define PCI_TYPE_BRIDGE                     0x01
+#define PCI_TYPE_CARDBUS_BRIDGE             0x02
+typedef struct acpi_pci_device {
 	acpi_handle device;
-	काष्ठा acpi_pci_device *next;
+	struct acpi_pci_device *next;
 
-पूर्ण acpi_pci_device;
+} acpi_pci_device;
 
 /* Local prototypes */
 
-अटल acpi_status
+static acpi_status
 acpi_hw_build_pci_list(acpi_handle root_pci_device,
 		       acpi_handle pci_region,
-		       काष्ठा acpi_pci_device **वापस_list_head);
+		       struct acpi_pci_device **return_list_head);
 
-अटल acpi_status
-acpi_hw_process_pci_list(काष्ठा acpi_pci_id *pci_id,
-			 काष्ठा acpi_pci_device *list_head);
+static acpi_status
+acpi_hw_process_pci_list(struct acpi_pci_id *pci_id,
+			 struct acpi_pci_device *list_head);
 
-अटल व्योम acpi_hw_delete_pci_list(काष्ठा acpi_pci_device *list_head);
+static void acpi_hw_delete_pci_list(struct acpi_pci_device *list_head);
 
-अटल acpi_status
-acpi_hw_get_pci_device_info(काष्ठा acpi_pci_id *pci_id,
+static acpi_status
+acpi_hw_get_pci_device_info(struct acpi_pci_id *pci_id,
 			    acpi_handle pci_device,
 			    u16 *bus_number, u8 *is_bridge);
 
@@ -48,8 +47,8 @@ acpi_hw_get_pci_device_info(काष्ठा acpi_pci_id *pci_id,
  *
  * FUNCTION:    acpi_hw_derive_pci_id
  *
- * PARAMETERS:  pci_id              - Initial values क्रम the PCI ID. May be
- *                                    modअगरied by this function.
+ * PARAMETERS:  pci_id              - Initial values for the PCI ID. May be
+ *                                    modified by this function.
  *              root_pci_device     - A handle to a PCI device object. This
  *                                    object must be a PCI Root Bridge having a
  *                                    _HID value of either PNP0A03 or PNP0A08
@@ -58,49 +57,49 @@ acpi_hw_get_pci_device_info(काष्ठा acpi_pci_id *pci_id,
  *
  * RETURN:      Status
  *
- * DESCRIPTION: This function derives a full PCI ID क्रम a PCI device,
+ * DESCRIPTION: This function derives a full PCI ID for a PCI device,
  *              consisting of a Segment number, Bus number, Device number,
  *              and function code.
  *
  *              The PCI hardware dynamically configures PCI bus numbers
- *              depending on the bus topology discovered during प्रणाली
+ *              depending on the bus topology discovered during system
  *              initialization. This function is invoked during configuration
  *              of a PCI_Config Operation Region in order to (possibly) update
  *              the Bus/Device/Function numbers in the pci_id with the actual
- *              values as determined by the hardware and operating प्रणाली
+ *              values as determined by the hardware and operating system
  *              configuration.
  *
  *              The pci_id parameter is initially populated during the Operation
  *              Region initialization. This function is then called, and is
- *              will make any necessary modअगरications to the Bus, Device, or
- *              Function number PCI ID subfields as appropriate क्रम the
+ *              will make any necessary modifications to the Bus, Device, or
+ *              Function number PCI ID subfields as appropriate for the
  *              current hardware and OS configuration.
  *
  * NOTE:        Created 08/2010. Replaces the previous OSL acpi_os_derive_pci_id
- *              पूर्णांकerface since this feature is OS-independent. This module
- *              specअगरically aव्योमs any use of recursion by building a local
+ *              interface since this feature is OS-independent. This module
+ *              specifically avoids any use of recursion by building a local
  *              temporary device list.
  *
  ******************************************************************************/
 
 acpi_status
-acpi_hw_derive_pci_id(काष्ठा acpi_pci_id *pci_id,
+acpi_hw_derive_pci_id(struct acpi_pci_id *pci_id,
 		      acpi_handle root_pci_device, acpi_handle pci_region)
-अणु
+{
 	acpi_status status;
-	काष्ठा acpi_pci_device *list_head;
+	struct acpi_pci_device *list_head;
 
 	ACPI_FUNCTION_TRACE(hw_derive_pci_id);
 
-	अगर (!pci_id) अणु
-		वापस_ACPI_STATUS(AE_BAD_PARAMETER);
-	पूर्ण
+	if (!pci_id) {
+		return_ACPI_STATUS(AE_BAD_PARAMETER);
+	}
 
 	/* Build a list of PCI devices, from pci_region up to root_pci_device */
 
 	status =
 	    acpi_hw_build_pci_list(root_pci_device, pci_region, &list_head);
-	अगर (ACPI_SUCCESS(status)) अणु
+	if (ACPI_SUCCESS(status)) {
 
 		/* Walk the list, updating the PCI device/function/bus numbers */
 
@@ -109,10 +108,10 @@ acpi_hw_derive_pci_id(काष्ठा acpi_pci_id *pci_id,
 		/* Delete the list */
 
 		acpi_hw_delete_pci_list(list_head);
-	पूर्ण
+	}
 
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	return_ACPI_STATUS(status);
+}
 
 /*******************************************************************************
  *
@@ -124,90 +123,90 @@ acpi_hw_derive_pci_id(काष्ठा acpi_pci_id *pci_id,
  *                                    PNP0A03 or PNP0A08
  *              pci_region          - A handle to the PCI configuration space
  *                                    Operation Region
- *              वापस_list_head    - Where the PCI device list is वापसed
+ *              return_list_head    - Where the PCI device list is returned
  *
  * RETURN:      Status
  *
  * DESCRIPTION: Builds a list of devices from the input PCI region up to the
- *              Root PCI device क्रम this namespace subtree.
+ *              Root PCI device for this namespace subtree.
  *
  ******************************************************************************/
 
-अटल acpi_status
+static acpi_status
 acpi_hw_build_pci_list(acpi_handle root_pci_device,
 		       acpi_handle pci_region,
-		       काष्ठा acpi_pci_device **वापस_list_head)
-अणु
+		       struct acpi_pci_device **return_list_head)
+{
 	acpi_handle current_device;
 	acpi_handle parent_device;
 	acpi_status status;
-	काष्ठा acpi_pci_device *list_element;
+	struct acpi_pci_device *list_element;
 
 	/*
 	 * Ascend namespace branch until the root_pci_device is reached, building
-	 * a list of device nodes. Loop will निकास when either the PCI device is
+	 * a list of device nodes. Loop will exit when either the PCI device is
 	 * found, or the root of the namespace is reached.
 	 */
-	*वापस_list_head = शून्य;
+	*return_list_head = NULL;
 	current_device = pci_region;
-	जबतक (1) अणु
+	while (1) {
 		status = acpi_get_parent(current_device, &parent_device);
-		अगर (ACPI_FAILURE(status)) अणु
+		if (ACPI_FAILURE(status)) {
 
-			/* Must delete the list beक्रमe निकास */
+			/* Must delete the list before exit */
 
-			acpi_hw_delete_pci_list(*वापस_list_head);
-			वापस (status);
-		पूर्ण
+			acpi_hw_delete_pci_list(*return_list_head);
+			return (status);
+		}
 
 		/* Finished when we reach the PCI root device (PNP0A03 or PNP0A08) */
 
-		अगर (parent_device == root_pci_device) अणु
-			वापस (AE_OK);
-		पूर्ण
+		if (parent_device == root_pci_device) {
+			return (AE_OK);
+		}
 
-		list_element = ACPI_ALLOCATE(माप(काष्ठा acpi_pci_device));
-		अगर (!list_element) अणु
+		list_element = ACPI_ALLOCATE(sizeof(struct acpi_pci_device));
+		if (!list_element) {
 
-			/* Must delete the list beक्रमe निकास */
+			/* Must delete the list before exit */
 
-			acpi_hw_delete_pci_list(*वापस_list_head);
-			वापस (AE_NO_MEMORY);
-		पूर्ण
+			acpi_hw_delete_pci_list(*return_list_head);
+			return (AE_NO_MEMORY);
+		}
 
 		/* Put new element at the head of the list */
 
-		list_element->next = *वापस_list_head;
+		list_element->next = *return_list_head;
 		list_element->device = parent_device;
-		*वापस_list_head = list_element;
+		*return_list_head = list_element;
 
 		current_device = parent_device;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_hw_process_pci_list
  *
- * PARAMETERS:  pci_id              - Initial values क्रम the PCI ID. May be
- *                                    modअगरied by this function.
+ * PARAMETERS:  pci_id              - Initial values for the PCI ID. May be
+ *                                    modified by this function.
  *              list_head           - Device list created by
  *                                    acpi_hw_build_pci_list
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Walk करोwnward through the PCI device list, getting the device
- *              info क्रम each, via the PCI configuration space and updating
+ * DESCRIPTION: Walk downward through the PCI device list, getting the device
+ *              info for each, via the PCI configuration space and updating
  *              the PCI ID as necessary. Deletes the list during traversal.
  *
  ******************************************************************************/
 
-अटल acpi_status
-acpi_hw_process_pci_list(काष्ठा acpi_pci_id *pci_id,
-			 काष्ठा acpi_pci_device *list_head)
-अणु
+static acpi_status
+acpi_hw_process_pci_list(struct acpi_pci_id *pci_id,
+			 struct acpi_pci_device *list_head)
+{
 	acpi_status status = AE_OK;
-	काष्ठा acpi_pci_device *info;
+	struct acpi_pci_device *info;
 	u16 bus_number;
 	u8 is_bridge = TRUE;
 
@@ -221,22 +220,22 @@ acpi_hw_process_pci_list(काष्ठा acpi_pci_id *pci_id,
 	bus_number = pci_id->bus;
 
 	/*
-	 * Descend करोwn the namespace tree, collecting PCI device, function,
-	 * and bus numbers. bus_number is only important क्रम PCI bridges.
+	 * Descend down the namespace tree, collecting PCI device, function,
+	 * and bus numbers. bus_number is only important for PCI bridges.
 	 * Algorithm: As we descend the tree, use the last valid PCI device,
 	 * function, and bus numbers that are discovered, and assign them
-	 * to the PCI ID क्रम the target device.
+	 * to the PCI ID for the target device.
 	 */
 	info = list_head;
-	जबतक (info) अणु
+	while (info) {
 		status = acpi_hw_get_pci_device_info(pci_id, info->device,
 						     &bus_number, &is_bridge);
-		अगर (ACPI_FAILURE(status)) अणु
-			वापस (status);
-		पूर्ण
+		if (ACPI_FAILURE(status)) {
+			return (status);
+		}
 
 		info = info->next;
-	पूर्ण
+	}
 
 	ACPI_DEBUG_PRINT((ACPI_DB_OPREGION,
 			  "Output PciId: Seg %4.4X Bus %4.4X Dev %4.4X Func %4.4X "
@@ -244,8 +243,8 @@ acpi_hw_process_pci_list(काष्ठा acpi_pci_id *pci_id,
 			  pci_id->segment, pci_id->bus, pci_id->device,
 			  pci_id->function, status, bus_number, is_bridge));
 
-	वापस (AE_OK);
-पूर्ण
+	return (AE_OK);
+}
 
 /*******************************************************************************
  *
@@ -260,82 +259,82 @@ acpi_hw_process_pci_list(काष्ठा acpi_pci_id *pci_id,
  *
  ******************************************************************************/
 
-अटल व्योम acpi_hw_delete_pci_list(काष्ठा acpi_pci_device *list_head)
-अणु
-	काष्ठा acpi_pci_device *next;
-	काष्ठा acpi_pci_device *previous;
+static void acpi_hw_delete_pci_list(struct acpi_pci_device *list_head)
+{
+	struct acpi_pci_device *next;
+	struct acpi_pci_device *previous;
 
 	next = list_head;
-	जबतक (next) अणु
+	while (next) {
 		previous = next;
 		next = previous->next;
 		ACPI_FREE(previous);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_hw_get_pci_device_info
  *
- * PARAMETERS:  pci_id              - Initial values क्रम the PCI ID. May be
- *                                    modअगरied by this function.
- *              pci_device          - Handle क्रम the PCI device object
- *              bus_number          - Where a PCI bridge bus number is वापसed
- *              is_bridge           - Return value, indicates अगर this PCI
+ * PARAMETERS:  pci_id              - Initial values for the PCI ID. May be
+ *                                    modified by this function.
+ *              pci_device          - Handle for the PCI device object
+ *              bus_number          - Where a PCI bridge bus number is returned
+ *              is_bridge           - Return value, indicates if this PCI
  *                                    device is a PCI bridge
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Get the device info क्रम a single PCI device object. Get the
- *              _ADR (contains PCI device and function numbers), and क्रम PCI
+ * DESCRIPTION: Get the device info for a single PCI device object. Get the
+ *              _ADR (contains PCI device and function numbers), and for PCI
  *              bridge devices, get the bus number from PCI configuration
  *              space.
  *
  ******************************************************************************/
 
-अटल acpi_status
-acpi_hw_get_pci_device_info(काष्ठा acpi_pci_id *pci_id,
+static acpi_status
+acpi_hw_get_pci_device_info(struct acpi_pci_id *pci_id,
 			    acpi_handle pci_device,
 			    u16 *bus_number, u8 *is_bridge)
-अणु
+{
 	acpi_status status;
 	acpi_object_type object_type;
-	u64 वापस_value;
+	u64 return_value;
 	u64 pci_value;
 
 	/* We only care about objects of type Device */
 
 	status = acpi_get_type(pci_device, &object_type);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस (status);
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		return (status);
+	}
 
-	अगर (object_type != ACPI_TYPE_DEVICE) अणु
-		वापस (AE_OK);
-	पूर्ण
+	if (object_type != ACPI_TYPE_DEVICE) {
+		return (AE_OK);
+	}
 
-	/* We need an _ADR. Ignore device अगर not present */
+	/* We need an _ADR. Ignore device if not present */
 
 	status = acpi_ut_evaluate_numeric_object(METHOD_NAME__ADR,
-						 pci_device, &वापस_value);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस (AE_OK);
-	पूर्ण
+						 pci_device, &return_value);
+	if (ACPI_FAILURE(status)) {
+		return (AE_OK);
+	}
 
 	/*
 	 * From _ADR, get the PCI Device and Function and
 	 * update the PCI ID.
 	 */
-	pci_id->device = ACPI_HIWORD(ACPI_LODWORD(वापस_value));
-	pci_id->function = ACPI_LOWORD(ACPI_LODWORD(वापस_value));
+	pci_id->device = ACPI_HIWORD(ACPI_LODWORD(return_value));
+	pci_id->function = ACPI_LOWORD(ACPI_LODWORD(return_value));
 
 	/*
 	 * If the previous device was a bridge, use the previous
 	 * device bus number
 	 */
-	अगर (*is_bridge) अणु
+	if (*is_bridge) {
 		pci_id->bus = *bus_number;
-	पूर्ण
+	}
 
 	/*
 	 * Get the bus numbers from PCI Config space:
@@ -343,43 +342,43 @@ acpi_hw_get_pci_device_info(काष्ठा acpi_pci_id *pci_id,
 	 * First, get the PCI header_type
 	 */
 	*is_bridge = FALSE;
-	status = acpi_os_पढ़ो_pci_configuration(pci_id,
+	status = acpi_os_read_pci_configuration(pci_id,
 						PCI_CFG_HEADER_TYPE_REG,
 						&pci_value, 8);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस (status);
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		return (status);
+	}
 
 	/* We only care about bridges (1=pci_bridge, 2=card_bus_bridge) */
 
 	pci_value &= PCI_HEADER_TYPE_MASK;
 
-	अगर ((pci_value != PCI_TYPE_BRIDGE) &&
-	    (pci_value != PCI_TYPE_CARDBUS_BRIDGE)) अणु
-		वापस (AE_OK);
-	पूर्ण
+	if ((pci_value != PCI_TYPE_BRIDGE) &&
+	    (pci_value != PCI_TYPE_CARDBUS_BRIDGE)) {
+		return (AE_OK);
+	}
 
 	/* Bridge: Get the Primary bus_number */
 
-	status = acpi_os_पढ़ो_pci_configuration(pci_id,
+	status = acpi_os_read_pci_configuration(pci_id,
 						PCI_CFG_PRIMARY_BUS_NUMBER_REG,
 						&pci_value, 8);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस (status);
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		return (status);
+	}
 
 	*is_bridge = TRUE;
 	pci_id->bus = (u16)pci_value;
 
 	/* Bridge: Get the Secondary bus_number */
 
-	status = acpi_os_पढ़ो_pci_configuration(pci_id,
+	status = acpi_os_read_pci_configuration(pci_id,
 						PCI_CFG_SECONDARY_BUS_NUMBER_REG,
 						&pci_value, 8);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस (status);
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		return (status);
+	}
 
 	*bus_number = (u16)pci_value;
-	वापस (AE_OK);
-पूर्ण
+	return (AE_OK);
+}

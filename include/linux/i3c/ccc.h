@@ -1,303 +1,302 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2018 Cadence Design Systems Inc.
  *
  * Author: Boris Brezillon <boris.brezillon@bootlin.com>
  */
 
-#अगर_अघोषित I3C_CCC_H
-#घोषणा I3C_CCC_H
+#ifndef I3C_CCC_H
+#define I3C_CCC_H
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/i3c/device.h>
+#include <linux/bitops.h>
+#include <linux/i3c/device.h>
 
 /* I3C CCC (Common Command Codes) related definitions */
-#घोषणा I3C_CCC_सूचीECT			BIT(7)
+#define I3C_CCC_DIRECT			BIT(7)
 
-#घोषणा I3C_CCC_ID(id, broadcast)	\
-	((id) | ((broadcast) ? 0 : I3C_CCC_सूचीECT))
+#define I3C_CCC_ID(id, broadcast)	\
+	((id) | ((broadcast) ? 0 : I3C_CCC_DIRECT))
 
 /* Commands valid in both broadcast and unicast modes */
-#घोषणा I3C_CCC_ENEC(broadcast)		I3C_CCC_ID(0x0, broadcast)
-#घोषणा I3C_CCC_DISEC(broadcast)	I3C_CCC_ID(0x1, broadcast)
-#घोषणा I3C_CCC_ENTAS(as, broadcast)	I3C_CCC_ID(0x2 + (as), broadcast)
-#घोषणा I3C_CCC_RSTDAA(broadcast)	I3C_CCC_ID(0x6, broadcast)
-#घोषणा I3C_CCC_SETMWL(broadcast)	I3C_CCC_ID(0x9, broadcast)
-#घोषणा I3C_CCC_SETMRL(broadcast)	I3C_CCC_ID(0xa, broadcast)
-#घोषणा I3C_CCC_SETXTIME(broadcast)	((broadcast) ? 0x28 : 0x98)
-#घोषणा I3C_CCC_VENDOR(id, broadcast)	((id) + ((broadcast) ? 0x61 : 0xe0))
+#define I3C_CCC_ENEC(broadcast)		I3C_CCC_ID(0x0, broadcast)
+#define I3C_CCC_DISEC(broadcast)	I3C_CCC_ID(0x1, broadcast)
+#define I3C_CCC_ENTAS(as, broadcast)	I3C_CCC_ID(0x2 + (as), broadcast)
+#define I3C_CCC_RSTDAA(broadcast)	I3C_CCC_ID(0x6, broadcast)
+#define I3C_CCC_SETMWL(broadcast)	I3C_CCC_ID(0x9, broadcast)
+#define I3C_CCC_SETMRL(broadcast)	I3C_CCC_ID(0xa, broadcast)
+#define I3C_CCC_SETXTIME(broadcast)	((broadcast) ? 0x28 : 0x98)
+#define I3C_CCC_VENDOR(id, broadcast)	((id) + ((broadcast) ? 0x61 : 0xe0))
 
 /* Broadcast-only commands */
-#घोषणा I3C_CCC_ENTDAA			I3C_CCC_ID(0x7, true)
-#घोषणा I3C_CCC_DEFSLVS			I3C_CCC_ID(0x8, true)
-#घोषणा I3C_CCC_ENTTM			I3C_CCC_ID(0xb, true)
-#घोषणा I3C_CCC_ENTHDR(x)		I3C_CCC_ID(0x20 + (x), true)
+#define I3C_CCC_ENTDAA			I3C_CCC_ID(0x7, true)
+#define I3C_CCC_DEFSLVS			I3C_CCC_ID(0x8, true)
+#define I3C_CCC_ENTTM			I3C_CCC_ID(0xb, true)
+#define I3C_CCC_ENTHDR(x)		I3C_CCC_ID(0x20 + (x), true)
 
 /* Unicast-only commands */
-#घोषणा I3C_CCC_SETDASA			I3C_CCC_ID(0x7, false)
-#घोषणा I3C_CCC_SETNEWDA		I3C_CCC_ID(0x8, false)
-#घोषणा I3C_CCC_GETMWL			I3C_CCC_ID(0xb, false)
-#घोषणा I3C_CCC_GETMRL			I3C_CCC_ID(0xc, false)
-#घोषणा I3C_CCC_GETPID			I3C_CCC_ID(0xd, false)
-#घोषणा I3C_CCC_GETBCR			I3C_CCC_ID(0xe, false)
-#घोषणा I3C_CCC_GETDCR			I3C_CCC_ID(0xf, false)
-#घोषणा I3C_CCC_GETSTATUS		I3C_CCC_ID(0x10, false)
-#घोषणा I3C_CCC_GETACCMST		I3C_CCC_ID(0x11, false)
-#घोषणा I3C_CCC_SETBRGTGT		I3C_CCC_ID(0x13, false)
-#घोषणा I3C_CCC_GETMXDS			I3C_CCC_ID(0x14, false)
-#घोषणा I3C_CCC_GETHDRCAP		I3C_CCC_ID(0x15, false)
-#घोषणा I3C_CCC_GETXTIME		I3C_CCC_ID(0x19, false)
+#define I3C_CCC_SETDASA			I3C_CCC_ID(0x7, false)
+#define I3C_CCC_SETNEWDA		I3C_CCC_ID(0x8, false)
+#define I3C_CCC_GETMWL			I3C_CCC_ID(0xb, false)
+#define I3C_CCC_GETMRL			I3C_CCC_ID(0xc, false)
+#define I3C_CCC_GETPID			I3C_CCC_ID(0xd, false)
+#define I3C_CCC_GETBCR			I3C_CCC_ID(0xe, false)
+#define I3C_CCC_GETDCR			I3C_CCC_ID(0xf, false)
+#define I3C_CCC_GETSTATUS		I3C_CCC_ID(0x10, false)
+#define I3C_CCC_GETACCMST		I3C_CCC_ID(0x11, false)
+#define I3C_CCC_SETBRGTGT		I3C_CCC_ID(0x13, false)
+#define I3C_CCC_GETMXDS			I3C_CCC_ID(0x14, false)
+#define I3C_CCC_GETHDRCAP		I3C_CCC_ID(0x15, false)
+#define I3C_CCC_GETXTIME		I3C_CCC_ID(0x19, false)
 
-#घोषणा I3C_CCC_EVENT_SIR		BIT(0)
-#घोषणा I3C_CCC_EVENT_MR		BIT(1)
-#घोषणा I3C_CCC_EVENT_HJ		BIT(3)
+#define I3C_CCC_EVENT_SIR		BIT(0)
+#define I3C_CCC_EVENT_MR		BIT(1)
+#define I3C_CCC_EVENT_HJ		BIT(3)
 
 /**
- * काष्ठा i3c_ccc_events - payload passed to ENEC/DISEC CCC
+ * struct i3c_ccc_events - payload passed to ENEC/DISEC CCC
  *
- * @events: biपंचांगask of I3C_CCC_EVENT_xxx events.
+ * @events: bitmask of I3C_CCC_EVENT_xxx events.
  *
- * Depending on the CCC command, the specअगरic events coming from all devices
- * (broadcast version) or a specअगरic device (unicast version) will be
+ * Depending on the CCC command, the specific events coming from all devices
+ * (broadcast version) or a specific device (unicast version) will be
  * enabled (ENEC) or disabled (DISEC).
  */
-काष्ठा i3c_ccc_events अणु
+struct i3c_ccc_events {
 	u8 events;
-पूर्ण;
+};
 
 /**
- * काष्ठा i3c_ccc_mwl - payload passed to SETMWL/GETMWL CCC
+ * struct i3c_ccc_mwl - payload passed to SETMWL/GETMWL CCC
  *
- * @len: maximum ग_लिखो length in bytes
+ * @len: maximum write length in bytes
  *
- * The maximum ग_लिखो length is only applicable to SDR निजी messages or
+ * The maximum write length is only applicable to SDR private messages or
  * extended Write CCCs (like SETXTIME).
  */
-काष्ठा i3c_ccc_mwl अणु
+struct i3c_ccc_mwl {
 	__be16 len;
-पूर्ण;
+};
 
 /**
- * काष्ठा i3c_ccc_mrl - payload passed to SETMRL/GETMRL CCC
+ * struct i3c_ccc_mrl - payload passed to SETMRL/GETMRL CCC
  *
- * @len: maximum पढ़ो length in bytes
+ * @len: maximum read length in bytes
  * @ibi_len: maximum IBI payload length
  *
- * The maximum पढ़ो length is only applicable to SDR निजी messages or
+ * The maximum read length is only applicable to SDR private messages or
  * extended Read CCCs (like GETXTIME).
- * The IBI length is only valid अगर the I3C slave is IBI capable
+ * The IBI length is only valid if the I3C slave is IBI capable
  * (%I3C_BCR_IBI_REQ_CAP is set).
  */
-काष्ठा i3c_ccc_mrl अणु
-	__be16 पढ़ो_len;
+struct i3c_ccc_mrl {
+	__be16 read_len;
 	u8 ibi_len;
-पूर्ण __packed;
+} __packed;
 
 /**
- * काष्ठा i3c_ccc_dev_desc - I3C/I2C device descriptor used क्रम DEFSLVS
+ * struct i3c_ccc_dev_desc - I3C/I2C device descriptor used for DEFSLVS
  *
- * @dyn_addr: dynamic address asचिन्हित to the I3C slave or 0 अगर the entry is
+ * @dyn_addr: dynamic address assigned to the I3C slave or 0 if the entry is
  *	      describing an I2C slave.
  * @dcr: DCR value (not applicable to entries describing I2C devices)
  * @lvr: LVR value (not applicable to entries describing I3C devices)
- * @bcr: BCR value or 0 अगर this entry is describing an I2C slave
- * @अटल_addr: अटल address or 0 अगर the device करोes not have a अटल
+ * @bcr: BCR value or 0 if this entry is describing an I2C slave
+ * @static_addr: static address or 0 if the device does not have a static
  *		 address
  *
  * The DEFSLVS command should be passed an array of i3c_ccc_dev_desc
  * descriptors (one entry per I3C/I2C dev controlled by the master).
  */
-काष्ठा i3c_ccc_dev_desc अणु
+struct i3c_ccc_dev_desc {
 	u8 dyn_addr;
-	जोड़ अणु
+	union {
 		u8 dcr;
 		u8 lvr;
-	पूर्ण;
+	};
 	u8 bcr;
-	u8 अटल_addr;
-पूर्ण;
+	u8 static_addr;
+};
 
 /**
- * काष्ठा i3c_ccc_defslvs - payload passed to DEFSLVS CCC
+ * struct i3c_ccc_defslvs - payload passed to DEFSLVS CCC
  *
  * @count: number of dev descriptors
  * @master: descriptor describing the current master
  * @slaves: array of descriptors describing slaves controlled by the
  *	    current master
  *
- * Inक्रमmation passed to the broadcast DEFSLVS to propagate device
- * inक्रमmation to all masters currently acting as slaves on the bus.
- * This is only meaningful अगर you have more than one master.
+ * Information passed to the broadcast DEFSLVS to propagate device
+ * information to all masters currently acting as slaves on the bus.
+ * This is only meaningful if you have more than one master.
  */
-काष्ठा i3c_ccc_defslvs अणु
+struct i3c_ccc_defslvs {
 	u8 count;
-	काष्ठा i3c_ccc_dev_desc master;
-	काष्ठा i3c_ccc_dev_desc slaves[0];
-पूर्ण __packed;
+	struct i3c_ccc_dev_desc master;
+	struct i3c_ccc_dev_desc slaves[0];
+} __packed;
 
 /**
- * क्रमागत i3c_ccc_test_mode - क्रमागत listing all available test modes
+ * enum i3c_ccc_test_mode - enum listing all available test modes
  *
- * @I3C_CCC_EXIT_TEST_MODE: निकास test mode
- * @I3C_CCC_VENDOR_TEST_MODE: enter venकरोr test mode
+ * @I3C_CCC_EXIT_TEST_MODE: exit test mode
+ * @I3C_CCC_VENDOR_TEST_MODE: enter vendor test mode
  */
-क्रमागत i3c_ccc_test_mode अणु
+enum i3c_ccc_test_mode {
 	I3C_CCC_EXIT_TEST_MODE,
 	I3C_CCC_VENDOR_TEST_MODE,
-पूर्ण;
+};
 
 /**
- * काष्ठा i3c_ccc_entपंचांग - payload passed to ENTTM CCC
+ * struct i3c_ccc_enttm - payload passed to ENTTM CCC
  *
- * @mode: one of the &क्रमागत i3c_ccc_test_mode modes
+ * @mode: one of the &enum i3c_ccc_test_mode modes
  *
- * Inक्रमmation passed to the ENTTM CCC to inकाष्ठा an I3C device to enter a
- * specअगरic test mode.
+ * Information passed to the ENTTM CCC to instruct an I3C device to enter a
+ * specific test mode.
  */
-काष्ठा i3c_ccc_entपंचांग अणु
+struct i3c_ccc_enttm {
 	u8 mode;
-पूर्ण;
+};
 
 /**
- * काष्ठा i3c_ccc_setda - payload passed to SETNEWDA and SETDASA CCCs
+ * struct i3c_ccc_setda - payload passed to SETNEWDA and SETDASA CCCs
  *
  * @addr: dynamic address to assign to an I3C device
  *
- * Inक्रमmation passed to the SETNEWDA and SETDASA CCCs to assign/change the
+ * Information passed to the SETNEWDA and SETDASA CCCs to assign/change the
  * dynamic address of an I3C device.
  */
-काष्ठा i3c_ccc_setda अणु
+struct i3c_ccc_setda {
 	u8 addr;
-पूर्ण;
+};
 
 /**
- * काष्ठा i3c_ccc_getpid - payload passed to GETPID CCC
+ * struct i3c_ccc_getpid - payload passed to GETPID CCC
  *
  * @pid: 48 bits PID in big endian
  */
-काष्ठा i3c_ccc_getpid अणु
+struct i3c_ccc_getpid {
 	u8 pid[6];
-पूर्ण;
+};
 
 /**
- * काष्ठा i3c_ccc_getbcr - payload passed to GETBCR CCC
+ * struct i3c_ccc_getbcr - payload passed to GETBCR CCC
  *
  * @bcr: BCR (Bus Characteristic Register) value
  */
-काष्ठा i3c_ccc_getbcr अणु
+struct i3c_ccc_getbcr {
 	u8 bcr;
-पूर्ण;
+};
 
 /**
- * काष्ठा i3c_ccc_getdcr - payload passed to GETDCR CCC
+ * struct i3c_ccc_getdcr - payload passed to GETDCR CCC
  *
  * @dcr: DCR (Device Characteristic Register) value
  */
-काष्ठा i3c_ccc_getdcr अणु
+struct i3c_ccc_getdcr {
 	u8 dcr;
-पूर्ण;
+};
 
-#घोषणा I3C_CCC_STATUS_PENDING_INT(status)	((status) & GENMASK(3, 0))
-#घोषणा I3C_CCC_STATUS_PROTOCOL_ERROR		BIT(5)
-#घोषणा I3C_CCC_STATUS_ACTIVITY_MODE(status)	\
+#define I3C_CCC_STATUS_PENDING_INT(status)	((status) & GENMASK(3, 0))
+#define I3C_CCC_STATUS_PROTOCOL_ERROR		BIT(5)
+#define I3C_CCC_STATUS_ACTIVITY_MODE(status)	\
 	(((status) & GENMASK(7, 6)) >> 6)
 
 /**
- * काष्ठा i3c_ccc_माला_लोtatus - payload passed to GETSTATUS CCC
+ * struct i3c_ccc_getstatus - payload passed to GETSTATUS CCC
  *
- * @status: status of the I3C slave (see I3C_CCC_STATUS_xxx macros क्रम more
- *	    inक्रमmation).
+ * @status: status of the I3C slave (see I3C_CCC_STATUS_xxx macros for more
+ *	    information).
  */
-काष्ठा i3c_ccc_माला_लोtatus अणु
+struct i3c_ccc_getstatus {
 	__be16 status;
-पूर्ण;
+};
 
 /**
- * काष्ठा i3c_ccc_getaccmst - payload passed to GETACCMST CCC
+ * struct i3c_ccc_getaccmst - payload passed to GETACCMST CCC
  *
  * @newmaster: address of the master taking bus ownership
  */
-काष्ठा i3c_ccc_getaccmst अणु
+struct i3c_ccc_getaccmst {
 	u8 newmaster;
-पूर्ण;
+};
 
 /**
- * काष्ठा i3c_ccc_bridged_slave_desc - bridged slave descriptor
+ * struct i3c_ccc_bridged_slave_desc - bridged slave descriptor
  *
  * @addr: dynamic address of the bridged device
  * @id: ID of the slave device behind the bridge
  */
-काष्ठा i3c_ccc_bridged_slave_desc अणु
+struct i3c_ccc_bridged_slave_desc {
 	u8 addr;
 	__be16 id;
-पूर्ण __packed;
+} __packed;
 
 /**
- * काष्ठा i3c_ccc_setbrgtgt - payload passed to SETBRGTGT CCC
+ * struct i3c_ccc_setbrgtgt - payload passed to SETBRGTGT CCC
  *
  * @count: number of bridged slaves
  * @bslaves: bridged slave descriptors
  */
-काष्ठा i3c_ccc_setbrgtgt अणु
+struct i3c_ccc_setbrgtgt {
 	u8 count;
-	काष्ठा i3c_ccc_bridged_slave_desc bslaves[0];
-पूर्ण __packed;
+	struct i3c_ccc_bridged_slave_desc bslaves[0];
+} __packed;
 
 /**
- * क्रमागत i3c_sdr_max_data_rate - max data rate values क्रम निजी SDR transfers
+ * enum i3c_sdr_max_data_rate - max data rate values for private SDR transfers
  */
-क्रमागत i3c_sdr_max_data_rate अणु
+enum i3c_sdr_max_data_rate {
 	I3C_SDR0_FSCL_MAX,
 	I3C_SDR1_FSCL_8MHZ,
 	I3C_SDR2_FSCL_6MHZ,
 	I3C_SDR3_FSCL_4MHZ,
 	I3C_SDR4_FSCL_2MHZ,
-पूर्ण;
+};
 
 /**
- * क्रमागत i3c_tsco - घड़ी to data turn-around
+ * enum i3c_tsco - clock to data turn-around
  */
-क्रमागत i3c_tsco अणु
+enum i3c_tsco {
 	I3C_TSCO_8NS,
 	I3C_TSCO_9NS,
 	I3C_TSCO_10NS,
 	I3C_TSCO_11NS,
 	I3C_TSCO_12NS,
-पूर्ण;
+};
 
-#घोषणा I3C_CCC_MAX_SDR_FSCL_MASK	GENMASK(2, 0)
-#घोषणा I3C_CCC_MAX_SDR_FSCL(x)		((x) & I3C_CCC_MAX_SDR_FSCL_MASK)
+#define I3C_CCC_MAX_SDR_FSCL_MASK	GENMASK(2, 0)
+#define I3C_CCC_MAX_SDR_FSCL(x)		((x) & I3C_CCC_MAX_SDR_FSCL_MASK)
 
 /**
- * काष्ठा i3c_ccc_geपंचांगxds - payload passed to GETMXDS CCC
+ * struct i3c_ccc_getmxds - payload passed to GETMXDS CCC
  *
- * @maxwr: ग_लिखो limitations
- * @maxrd: पढ़ो limitations
- * @maxrdturn: maximum पढ़ो turn-around expressed micro-seconds and
- *	       little-endian क्रमmatted
+ * @maxwr: write limitations
+ * @maxrd: read limitations
+ * @maxrdturn: maximum read turn-around expressed micro-seconds and
+ *	       little-endian formatted
  */
-काष्ठा i3c_ccc_geपंचांगxds अणु
+struct i3c_ccc_getmxds {
 	u8 maxwr;
 	u8 maxrd;
 	u8 maxrdturn[3];
-पूर्ण __packed;
+} __packed;
 
-#घोषणा I3C_CCC_HDR_MODE(mode)		BIT(mode)
+#define I3C_CCC_HDR_MODE(mode)		BIT(mode)
 
 /**
- * काष्ठा i3c_ccc_gethdrcap - payload passed to GETHDRCAP CCC
+ * struct i3c_ccc_gethdrcap - payload passed to GETHDRCAP CCC
  *
- * @modes: biपंचांगap of supported HDR modes
+ * @modes: bitmap of supported HDR modes
  */
-काष्ठा i3c_ccc_gethdrcap अणु
+struct i3c_ccc_gethdrcap {
 	u8 modes;
-पूर्ण __packed;
+} __packed;
 
 /**
- * क्रमागत i3c_ccc_setxसमय_subcmd - SETXTIME sub-commands
+ * enum i3c_ccc_setxtime_subcmd - SETXTIME sub-commands
  */
-क्रमागत i3c_ccc_setxसमय_subcmd अणु
+enum i3c_ccc_setxtime_subcmd {
 	I3C_CCC_SETXTIME_ST = 0x7f,
 	I3C_CCC_SETXTIME_DT = 0xbf,
 	I3C_CCC_SETXTIME_ENTER_ASYNC_MODE0 = 0xdf,
@@ -308,79 +307,79 @@
 	I3C_CCC_SETXTIME_TPH = 0x3f,
 	I3C_CCC_SETXTIME_TU = 0x9f,
 	I3C_CCC_SETXTIME_ODR = 0x8f,
-पूर्ण;
+};
 
 /**
- * काष्ठा i3c_ccc_setxसमय - payload passed to SETXTIME CCC
+ * struct i3c_ccc_setxtime - payload passed to SETXTIME CCC
  *
- * @subcmd: one of the sub-commands ddefined in &क्रमागत i3c_ccc_setxसमय_subcmd
+ * @subcmd: one of the sub-commands ddefined in &enum i3c_ccc_setxtime_subcmd
  * @data: sub-command payload. Amount of data is determined by
- *	  &i3c_ccc_setxसमय->subcmd
+ *	  &i3c_ccc_setxtime->subcmd
  */
-काष्ठा i3c_ccc_setxसमय अणु
+struct i3c_ccc_setxtime {
 	u8 subcmd;
 	u8 data[0];
-पूर्ण __packed;
+} __packed;
 
-#घोषणा I3C_CCC_GETXTIME_SYNC_MODE	BIT(0)
-#घोषणा I3C_CCC_GETXTIME_ASYNC_MODE(x)	BIT((x) + 1)
-#घोषणा I3C_CCC_GETXTIME_OVERFLOW	BIT(7)
+#define I3C_CCC_GETXTIME_SYNC_MODE	BIT(0)
+#define I3C_CCC_GETXTIME_ASYNC_MODE(x)	BIT((x) + 1)
+#define I3C_CCC_GETXTIME_OVERFLOW	BIT(7)
 
 /**
- * काष्ठा i3c_ccc_getxसमय - payload retrieved from GETXTIME CCC
+ * struct i3c_ccc_getxtime - payload retrieved from GETXTIME CCC
  *
- * @supported_modes: biपंचांगap describing supported XTIME modes
+ * @supported_modes: bitmap describing supported XTIME modes
  * @state: current status (enabled mode and overflow status)
- * @frequency: slave's पूर्णांकernal oscillator frequency in 500KHz steps
- * @inaccuracy: slave's पूर्णांकernal oscillator inaccuracy in 0.1% steps
+ * @frequency: slave's internal oscillator frequency in 500KHz steps
+ * @inaccuracy: slave's internal oscillator inaccuracy in 0.1% steps
  */
-काष्ठा i3c_ccc_getxसमय अणु
+struct i3c_ccc_getxtime {
 	u8 supported_modes;
 	u8 state;
 	u8 frequency;
 	u8 inaccuracy;
-पूर्ण __packed;
+} __packed;
 
 /**
- * काष्ठा i3c_ccc_cmd_payload - CCC payload
+ * struct i3c_ccc_cmd_payload - CCC payload
  *
  * @len: payload length
  * @data: payload data. This buffer must be DMA-able
  */
-काष्ठा i3c_ccc_cmd_payload अणु
+struct i3c_ccc_cmd_payload {
 	u16 len;
-	व्योम *data;
-पूर्ण;
+	void *data;
+};
 
 /**
- * काष्ठा i3c_ccc_cmd_dest - CCC command destination
+ * struct i3c_ccc_cmd_dest - CCC command destination
  *
- * @addr: can be an I3C device address or the broadcast address अगर this is a
+ * @addr: can be an I3C device address or the broadcast address if this is a
  *	  broadcast CCC
  * @payload: payload to be sent to this device or broadcasted
  */
-काष्ठा i3c_ccc_cmd_dest अणु
+struct i3c_ccc_cmd_dest {
 	u8 addr;
-	काष्ठा i3c_ccc_cmd_payload payload;
-पूर्ण;
+	struct i3c_ccc_cmd_payload payload;
+};
 
 /**
- * काष्ठा i3c_ccc_cmd - CCC command
+ * struct i3c_ccc_cmd - CCC command
  *
- * @rnw: true अगर the CCC should retrieve data from the device. Only valid क्रम
+ * @rnw: true if the CCC should retrieve data from the device. Only valid for
  *	 unicast commands
  * @id: CCC command id
- * @ndests: number of destinations. Should always be one क्रम broadcast commands
- * @dests: array of destinations and associated payload क्रम this CCC. Most of
- *	   the समय, only one destination is provided
+ * @ndests: number of destinations. Should always be one for broadcast commands
+ * @dests: array of destinations and associated payload for this CCC. Most of
+ *	   the time, only one destination is provided
  * @err: I3C error code
  */
-काष्ठा i3c_ccc_cmd अणु
+struct i3c_ccc_cmd {
 	u8 rnw;
 	u8 id;
-	अचिन्हित पूर्णांक ndests;
-	काष्ठा i3c_ccc_cmd_dest *dests;
-	क्रमागत i3c_error_code err;
-पूर्ण;
+	unsigned int ndests;
+	struct i3c_ccc_cmd_dest *dests;
+	enum i3c_error_code err;
+};
 
-#पूर्ण_अगर /* I3C_CCC_H */
+#endif /* I3C_CCC_H */

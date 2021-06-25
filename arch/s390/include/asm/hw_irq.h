@@ -1,12 +1,11 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _HW_IRQ_H
-#घोषणा _HW_IRQ_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _HW_IRQ_H
+#define _HW_IRQ_H
 
-#समावेश <linux/msi.h>
-#समावेश <linux/pci.h>
+#include <linux/msi.h>
+#include <linux/pci.h>
 
-व्योम __init init_airq_पूर्णांकerrupts(व्योम);
-व्योम __init init_cio_पूर्णांकerrupts(व्योम);
+void __init init_airq_interrupts(void);
+void __init init_cio_interrupts(void);
 
-#पूर्ण_अगर
+#endif

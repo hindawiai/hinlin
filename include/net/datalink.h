@@ -1,22 +1,21 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _NET_INET_DATALINK_H_
-#घोषणा _NET_INET_DATALINK_H_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _NET_INET_DATALINK_H_
+#define _NET_INET_DATALINK_H_
 
-काष्ठा datalink_proto अणु
-        अचिन्हित अक्षर   type[8];
+struct datalink_proto {
+        unsigned char   type[8];
 
-	काष्ठा llc_sap   *sap;
+	struct llc_sap   *sap;
 
-        अचिन्हित लघु  header_length;
+        unsigned short  header_length;
 
-        पूर्णांक     (*rcvfunc)(काष्ठा sk_buff *, काष्ठा net_device *,
-                                काष्ठा packet_type *, काष्ठा net_device *);
-	पूर्णांक     (*request)(काष्ठा datalink_proto *, काष्ठा sk_buff *,
-                                        अचिन्हित अक्षर *);
-	काष्ठा list_head node;
-पूर्ण;
+        int     (*rcvfunc)(struct sk_buff *, struct net_device *,
+                                struct packet_type *, struct net_device *);
+	int     (*request)(struct datalink_proto *, struct sk_buff *,
+                                        unsigned char *);
+	struct list_head node;
+};
 
-काष्ठा datalink_proto *make_EII_client(व्योम);
-व्योम destroy_EII_client(काष्ठा datalink_proto *dl);
-#पूर्ण_अगर
+struct datalink_proto *make_EII_client(void);
+void destroy_EII_client(struct datalink_proto *dl);
+#endif

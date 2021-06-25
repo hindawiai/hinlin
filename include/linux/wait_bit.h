@@ -1,339 +1,338 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_WAIT_BIT_H
-#घोषणा _LINUX_WAIT_BIT_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_WAIT_BIT_H
+#define _LINUX_WAIT_BIT_H
 
 /*
- * Linux रुको-bit related types and methods:
+ * Linux wait-bit related types and methods:
  */
-#समावेश <linux/रुको.h>
+#include <linux/wait.h>
 
-काष्ठा रुको_bit_key अणु
-	व्योम			*flags;
-	पूर्णांक			bit_nr;
-	अचिन्हित दीर्घ		समयout;
-पूर्ण;
+struct wait_bit_key {
+	void			*flags;
+	int			bit_nr;
+	unsigned long		timeout;
+};
 
-काष्ठा रुको_bit_queue_entry अणु
-	काष्ठा रुको_bit_key	key;
-	काष्ठा रुको_queue_entry	wq_entry;
-पूर्ण;
+struct wait_bit_queue_entry {
+	struct wait_bit_key	key;
+	struct wait_queue_entry	wq_entry;
+};
 
-#घोषणा __WAIT_BIT_KEY_INITIALIZER(word, bit)					\
-	अणु .flags = word, .bit_nr = bit, पूर्ण
+#define __WAIT_BIT_KEY_INITIALIZER(word, bit)					\
+	{ .flags = word, .bit_nr = bit, }
 
-प्रकार पूर्णांक रुको_bit_action_f(काष्ठा रुको_bit_key *key, पूर्णांक mode);
+typedef int wait_bit_action_f(struct wait_bit_key *key, int mode);
 
-व्योम __wake_up_bit(काष्ठा रुको_queue_head *wq_head, व्योम *word, पूर्णांक bit);
-पूर्णांक __रुको_on_bit(काष्ठा रुको_queue_head *wq_head, काष्ठा रुको_bit_queue_entry *wbq_entry, रुको_bit_action_f *action, अचिन्हित पूर्णांक mode);
-पूर्णांक __रुको_on_bit_lock(काष्ठा रुको_queue_head *wq_head, काष्ठा रुको_bit_queue_entry *wbq_entry, रुको_bit_action_f *action, अचिन्हित पूर्णांक mode);
-व्योम wake_up_bit(व्योम *word, पूर्णांक bit);
-पूर्णांक out_of_line_रुको_on_bit(व्योम *word, पूर्णांक, रुको_bit_action_f *action, अचिन्हित पूर्णांक mode);
-पूर्णांक out_of_line_रुको_on_bit_समयout(व्योम *word, पूर्णांक, रुको_bit_action_f *action, अचिन्हित पूर्णांक mode, अचिन्हित दीर्घ समयout);
-पूर्णांक out_of_line_रुको_on_bit_lock(व्योम *word, पूर्णांक, रुको_bit_action_f *action, अचिन्हित पूर्णांक mode);
-काष्ठा रुको_queue_head *bit_रुकोqueue(व्योम *word, पूर्णांक bit);
-बाह्य व्योम __init रुको_bit_init(व्योम);
+void __wake_up_bit(struct wait_queue_head *wq_head, void *word, int bit);
+int __wait_on_bit(struct wait_queue_head *wq_head, struct wait_bit_queue_entry *wbq_entry, wait_bit_action_f *action, unsigned int mode);
+int __wait_on_bit_lock(struct wait_queue_head *wq_head, struct wait_bit_queue_entry *wbq_entry, wait_bit_action_f *action, unsigned int mode);
+void wake_up_bit(void *word, int bit);
+int out_of_line_wait_on_bit(void *word, int, wait_bit_action_f *action, unsigned int mode);
+int out_of_line_wait_on_bit_timeout(void *word, int, wait_bit_action_f *action, unsigned int mode, unsigned long timeout);
+int out_of_line_wait_on_bit_lock(void *word, int, wait_bit_action_f *action, unsigned int mode);
+struct wait_queue_head *bit_waitqueue(void *word, int bit);
+extern void __init wait_bit_init(void);
 
-पूर्णांक wake_bit_function(काष्ठा रुको_queue_entry *wq_entry, अचिन्हित mode, पूर्णांक sync, व्योम *key);
+int wake_bit_function(struct wait_queue_entry *wq_entry, unsigned mode, int sync, void *key);
 
-#घोषणा DEFINE_WAIT_BIT(name, word, bit)					\
-	काष्ठा रुको_bit_queue_entry name = अणु					\
+#define DEFINE_WAIT_BIT(name, word, bit)					\
+	struct wait_bit_queue_entry name = {					\
 		.key = __WAIT_BIT_KEY_INITIALIZER(word, bit),			\
-		.wq_entry = अणु							\
-			.निजी	= current,				\
+		.wq_entry = {							\
+			.private	= current,				\
 			.func		= wake_bit_function,			\
 			.entry		=					\
 				LIST_HEAD_INIT((name).wq_entry.entry),		\
-		पूर्ण,								\
-	पूर्ण
+		},								\
+	}
 
-बाह्य पूर्णांक bit_रुको(काष्ठा रुको_bit_key *key, पूर्णांक mode);
-बाह्य पूर्णांक bit_रुको_io(काष्ठा रुको_bit_key *key, पूर्णांक mode);
-बाह्य पूर्णांक bit_रुको_समयout(काष्ठा रुको_bit_key *key, पूर्णांक mode);
-बाह्य पूर्णांक bit_रुको_io_समयout(काष्ठा रुको_bit_key *key, पूर्णांक mode);
+extern int bit_wait(struct wait_bit_key *key, int mode);
+extern int bit_wait_io(struct wait_bit_key *key, int mode);
+extern int bit_wait_timeout(struct wait_bit_key *key, int mode);
+extern int bit_wait_io_timeout(struct wait_bit_key *key, int mode);
 
 /**
- * रुको_on_bit - रुको क्रम a bit to be cleared
- * @word: the word being रुकोed on, a kernel भव address
- * @bit: the bit of the word being रुकोed on
+ * wait_on_bit - wait for a bit to be cleared
+ * @word: the word being waited on, a kernel virtual address
+ * @bit: the bit of the word being waited on
  * @mode: the task state to sleep in
  *
- * There is a standard hashed रुकोqueue table क्रम generic use. This
- * is the part of the hashtable's accessor API that रुकोs on a bit.
- * For instance, अगर one were to have रुकोers on a bitflag, one would
- * call रुको_on_bit() in thपढ़ोs रुकोing क्रम the bit to clear.
- * One uses रुको_on_bit() where one is रुकोing क्रम the bit to clear,
- * but has no पूर्णांकention of setting it.
- * Returned value will be zero अगर the bit was cleared, or non-zero
- * अगर the process received a संकेत and the mode permitted wakeup
- * on that संकेत.
+ * There is a standard hashed waitqueue table for generic use. This
+ * is the part of the hashtable's accessor API that waits on a bit.
+ * For instance, if one were to have waiters on a bitflag, one would
+ * call wait_on_bit() in threads waiting for the bit to clear.
+ * One uses wait_on_bit() where one is waiting for the bit to clear,
+ * but has no intention of setting it.
+ * Returned value will be zero if the bit was cleared, or non-zero
+ * if the process received a signal and the mode permitted wakeup
+ * on that signal.
  */
-अटल अंतरभूत पूर्णांक
-रुको_on_bit(अचिन्हित दीर्घ *word, पूर्णांक bit, अचिन्हित mode)
-अणु
+static inline int
+wait_on_bit(unsigned long *word, int bit, unsigned mode)
+{
 	might_sleep();
-	अगर (!test_bit(bit, word))
-		वापस 0;
-	वापस out_of_line_रुको_on_bit(word, bit,
-				       bit_रुको,
+	if (!test_bit(bit, word))
+		return 0;
+	return out_of_line_wait_on_bit(word, bit,
+				       bit_wait,
 				       mode);
-पूर्ण
+}
 
 /**
- * रुको_on_bit_io - रुको क्रम a bit to be cleared
- * @word: the word being रुकोed on, a kernel भव address
- * @bit: the bit of the word being रुकोed on
+ * wait_on_bit_io - wait for a bit to be cleared
+ * @word: the word being waited on, a kernel virtual address
+ * @bit: the bit of the word being waited on
  * @mode: the task state to sleep in
  *
- * Use the standard hashed रुकोqueue table to रुको क्रम a bit
- * to be cleared.  This is similar to रुको_on_bit(), but calls
- * io_schedule() instead of schedule() क्रम the actual रुकोing.
+ * Use the standard hashed waitqueue table to wait for a bit
+ * to be cleared.  This is similar to wait_on_bit(), but calls
+ * io_schedule() instead of schedule() for the actual waiting.
  *
- * Returned value will be zero अगर the bit was cleared, or non-zero
- * अगर the process received a संकेत and the mode permitted wakeup
- * on that संकेत.
+ * Returned value will be zero if the bit was cleared, or non-zero
+ * if the process received a signal and the mode permitted wakeup
+ * on that signal.
  */
-अटल अंतरभूत पूर्णांक
-रुको_on_bit_io(अचिन्हित दीर्घ *word, पूर्णांक bit, अचिन्हित mode)
-अणु
+static inline int
+wait_on_bit_io(unsigned long *word, int bit, unsigned mode)
+{
 	might_sleep();
-	अगर (!test_bit(bit, word))
-		वापस 0;
-	वापस out_of_line_रुको_on_bit(word, bit,
-				       bit_रुको_io,
+	if (!test_bit(bit, word))
+		return 0;
+	return out_of_line_wait_on_bit(word, bit,
+				       bit_wait_io,
 				       mode);
-पूर्ण
+}
 
 /**
- * रुको_on_bit_समयout - रुको क्रम a bit to be cleared or a समयout elapses
- * @word: the word being रुकोed on, a kernel भव address
- * @bit: the bit of the word being रुकोed on
+ * wait_on_bit_timeout - wait for a bit to be cleared or a timeout elapses
+ * @word: the word being waited on, a kernel virtual address
+ * @bit: the bit of the word being waited on
  * @mode: the task state to sleep in
- * @समयout: समयout, in jअगरfies
+ * @timeout: timeout, in jiffies
  *
- * Use the standard hashed रुकोqueue table to रुको क्रम a bit
- * to be cleared. This is similar to रुको_on_bit(), except also takes a
- * समयout parameter.
+ * Use the standard hashed waitqueue table to wait for a bit
+ * to be cleared. This is similar to wait_on_bit(), except also takes a
+ * timeout parameter.
  *
- * Returned value will be zero अगर the bit was cleared beक्रमe the
- * @समयout elapsed, or non-zero अगर the @समयout elapsed or process
- * received a संकेत and the mode permitted wakeup on that संकेत.
+ * Returned value will be zero if the bit was cleared before the
+ * @timeout elapsed, or non-zero if the @timeout elapsed or process
+ * received a signal and the mode permitted wakeup on that signal.
  */
-अटल अंतरभूत पूर्णांक
-रुको_on_bit_समयout(अचिन्हित दीर्घ *word, पूर्णांक bit, अचिन्हित mode,
-		    अचिन्हित दीर्घ समयout)
-अणु
+static inline int
+wait_on_bit_timeout(unsigned long *word, int bit, unsigned mode,
+		    unsigned long timeout)
+{
 	might_sleep();
-	अगर (!test_bit(bit, word))
-		वापस 0;
-	वापस out_of_line_रुको_on_bit_समयout(word, bit,
-					       bit_रुको_समयout,
-					       mode, समयout);
-पूर्ण
+	if (!test_bit(bit, word))
+		return 0;
+	return out_of_line_wait_on_bit_timeout(word, bit,
+					       bit_wait_timeout,
+					       mode, timeout);
+}
 
 /**
- * रुको_on_bit_action - रुको क्रम a bit to be cleared
- * @word: the word being रुकोed on, a kernel भव address
- * @bit: the bit of the word being रुकोed on
+ * wait_on_bit_action - wait for a bit to be cleared
+ * @word: the word being waited on, a kernel virtual address
+ * @bit: the bit of the word being waited on
  * @action: the function used to sleep, which may take special actions
  * @mode: the task state to sleep in
  *
- * Use the standard hashed रुकोqueue table to रुको क्रम a bit
- * to be cleared, and allow the रुकोing action to be specअगरied.
- * This is like रुको_on_bit() but allows fine control of how the रुकोing
- * is करोne.
+ * Use the standard hashed waitqueue table to wait for a bit
+ * to be cleared, and allow the waiting action to be specified.
+ * This is like wait_on_bit() but allows fine control of how the waiting
+ * is done.
  *
- * Returned value will be zero अगर the bit was cleared, or non-zero
- * अगर the process received a संकेत and the mode permitted wakeup
- * on that संकेत.
+ * Returned value will be zero if the bit was cleared, or non-zero
+ * if the process received a signal and the mode permitted wakeup
+ * on that signal.
  */
-अटल अंतरभूत पूर्णांक
-रुको_on_bit_action(अचिन्हित दीर्घ *word, पूर्णांक bit, रुको_bit_action_f *action,
-		   अचिन्हित mode)
-अणु
+static inline int
+wait_on_bit_action(unsigned long *word, int bit, wait_bit_action_f *action,
+		   unsigned mode)
+{
 	might_sleep();
-	अगर (!test_bit(bit, word))
-		वापस 0;
-	वापस out_of_line_रुको_on_bit(word, bit, action, mode);
-पूर्ण
+	if (!test_bit(bit, word))
+		return 0;
+	return out_of_line_wait_on_bit(word, bit, action, mode);
+}
 
 /**
- * रुको_on_bit_lock - रुको क्रम a bit to be cleared, when wanting to set it
- * @word: the word being रुकोed on, a kernel भव address
- * @bit: the bit of the word being रुकोed on
+ * wait_on_bit_lock - wait for a bit to be cleared, when wanting to set it
+ * @word: the word being waited on, a kernel virtual address
+ * @bit: the bit of the word being waited on
  * @mode: the task state to sleep in
  *
- * There is a standard hashed रुकोqueue table क्रम generic use. This
- * is the part of the hashtable's accessor API that रुकोs on a bit
- * when one पूर्णांकends to set it, क्रम instance, trying to lock bitflags.
- * For instance, अगर one were to have रुकोers trying to set bitflag
- * and रुकोing क्रम it to clear beक्रमe setting it, one would call
- * रुको_on_bit() in thपढ़ोs रुकोing to be able to set the bit.
- * One uses रुको_on_bit_lock() where one is रुकोing क्रम the bit to
- * clear with the पूर्णांकention of setting it, and when करोne, clearing it.
+ * There is a standard hashed waitqueue table for generic use. This
+ * is the part of the hashtable's accessor API that waits on a bit
+ * when one intends to set it, for instance, trying to lock bitflags.
+ * For instance, if one were to have waiters trying to set bitflag
+ * and waiting for it to clear before setting it, one would call
+ * wait_on_bit() in threads waiting to be able to set the bit.
+ * One uses wait_on_bit_lock() where one is waiting for the bit to
+ * clear with the intention of setting it, and when done, clearing it.
  *
- * Returns zero अगर the bit was (eventually) found to be clear and was
- * set.  Returns non-zero अगर a संकेत was delivered to the process and
- * the @mode allows that संकेत to wake the process.
+ * Returns zero if the bit was (eventually) found to be clear and was
+ * set.  Returns non-zero if a signal was delivered to the process and
+ * the @mode allows that signal to wake the process.
  */
-अटल अंतरभूत पूर्णांक
-रुको_on_bit_lock(अचिन्हित दीर्घ *word, पूर्णांक bit, अचिन्हित mode)
-अणु
+static inline int
+wait_on_bit_lock(unsigned long *word, int bit, unsigned mode)
+{
 	might_sleep();
-	अगर (!test_and_set_bit(bit, word))
-		वापस 0;
-	वापस out_of_line_रुको_on_bit_lock(word, bit, bit_रुको, mode);
-पूर्ण
+	if (!test_and_set_bit(bit, word))
+		return 0;
+	return out_of_line_wait_on_bit_lock(word, bit, bit_wait, mode);
+}
 
 /**
- * रुको_on_bit_lock_io - रुको क्रम a bit to be cleared, when wanting to set it
- * @word: the word being रुकोed on, a kernel भव address
- * @bit: the bit of the word being रुकोed on
+ * wait_on_bit_lock_io - wait for a bit to be cleared, when wanting to set it
+ * @word: the word being waited on, a kernel virtual address
+ * @bit: the bit of the word being waited on
  * @mode: the task state to sleep in
  *
- * Use the standard hashed रुकोqueue table to रुको क्रम a bit
+ * Use the standard hashed waitqueue table to wait for a bit
  * to be cleared and then to atomically set it.  This is similar
- * to रुको_on_bit(), but calls io_schedule() instead of schedule()
- * क्रम the actual रुकोing.
+ * to wait_on_bit(), but calls io_schedule() instead of schedule()
+ * for the actual waiting.
  *
- * Returns zero अगर the bit was (eventually) found to be clear and was
- * set.  Returns non-zero अगर a संकेत was delivered to the process and
- * the @mode allows that संकेत to wake the process.
+ * Returns zero if the bit was (eventually) found to be clear and was
+ * set.  Returns non-zero if a signal was delivered to the process and
+ * the @mode allows that signal to wake the process.
  */
-अटल अंतरभूत पूर्णांक
-रुको_on_bit_lock_io(अचिन्हित दीर्घ *word, पूर्णांक bit, अचिन्हित mode)
-अणु
+static inline int
+wait_on_bit_lock_io(unsigned long *word, int bit, unsigned mode)
+{
 	might_sleep();
-	अगर (!test_and_set_bit(bit, word))
-		वापस 0;
-	वापस out_of_line_रुको_on_bit_lock(word, bit, bit_रुको_io, mode);
-पूर्ण
+	if (!test_and_set_bit(bit, word))
+		return 0;
+	return out_of_line_wait_on_bit_lock(word, bit, bit_wait_io, mode);
+}
 
 /**
- * रुको_on_bit_lock_action - रुको क्रम a bit to be cleared, when wanting to set it
- * @word: the word being रुकोed on, a kernel भव address
- * @bit: the bit of the word being रुकोed on
+ * wait_on_bit_lock_action - wait for a bit to be cleared, when wanting to set it
+ * @word: the word being waited on, a kernel virtual address
+ * @bit: the bit of the word being waited on
  * @action: the function used to sleep, which may take special actions
  * @mode: the task state to sleep in
  *
- * Use the standard hashed रुकोqueue table to रुको क्रम a bit
- * to be cleared and then to set it, and allow the रुकोing action
- * to be specअगरied.
- * This is like रुको_on_bit() but allows fine control of how the रुकोing
- * is करोne.
+ * Use the standard hashed waitqueue table to wait for a bit
+ * to be cleared and then to set it, and allow the waiting action
+ * to be specified.
+ * This is like wait_on_bit() but allows fine control of how the waiting
+ * is done.
  *
- * Returns zero अगर the bit was (eventually) found to be clear and was
- * set.  Returns non-zero अगर a संकेत was delivered to the process and
- * the @mode allows that संकेत to wake the process.
+ * Returns zero if the bit was (eventually) found to be clear and was
+ * set.  Returns non-zero if a signal was delivered to the process and
+ * the @mode allows that signal to wake the process.
  */
-अटल अंतरभूत पूर्णांक
-रुको_on_bit_lock_action(अचिन्हित दीर्घ *word, पूर्णांक bit, रुको_bit_action_f *action,
-			अचिन्हित mode)
-अणु
+static inline int
+wait_on_bit_lock_action(unsigned long *word, int bit, wait_bit_action_f *action,
+			unsigned mode)
+{
 	might_sleep();
-	अगर (!test_and_set_bit(bit, word))
-		वापस 0;
-	वापस out_of_line_रुको_on_bit_lock(word, bit, action, mode);
-पूर्ण
+	if (!test_and_set_bit(bit, word))
+		return 0;
+	return out_of_line_wait_on_bit_lock(word, bit, action, mode);
+}
 
-बाह्य व्योम init_रुको_var_entry(काष्ठा रुको_bit_queue_entry *wbq_entry, व्योम *var, पूर्णांक flags);
-बाह्य व्योम wake_up_var(व्योम *var);
-बाह्य रुको_queue_head_t *__var_रुकोqueue(व्योम *p);
+extern void init_wait_var_entry(struct wait_bit_queue_entry *wbq_entry, void *var, int flags);
+extern void wake_up_var(void *var);
+extern wait_queue_head_t *__var_waitqueue(void *p);
 
-#घोषणा ___रुको_var_event(var, condition, state, exclusive, ret, cmd)	\
-(अणु									\
+#define ___wait_var_event(var, condition, state, exclusive, ret, cmd)	\
+({									\
 	__label__ __out;						\
-	काष्ठा रुको_queue_head *__wq_head = __var_रुकोqueue(var);	\
-	काष्ठा रुको_bit_queue_entry __wbq_entry;			\
-	दीर्घ __ret = ret; /* explicit shaकरोw */				\
+	struct wait_queue_head *__wq_head = __var_waitqueue(var);	\
+	struct wait_bit_queue_entry __wbq_entry;			\
+	long __ret = ret; /* explicit shadow */				\
 									\
-	init_रुको_var_entry(&__wbq_entry, var,				\
+	init_wait_var_entry(&__wbq_entry, var,				\
 			    exclusive ? WQ_FLAG_EXCLUSIVE : 0);		\
-	क्रम (;;) अणु							\
-		दीर्घ __पूर्णांक = prepare_to_रुको_event(__wq_head,		\
+	for (;;) {							\
+		long __int = prepare_to_wait_event(__wq_head,		\
 						   &__wbq_entry.wq_entry, \
 						   state);		\
-		अगर (condition)						\
-			अवरोध;						\
+		if (condition)						\
+			break;						\
 									\
-		अगर (___रुको_is_पूर्णांकerruptible(state) && __पूर्णांक) अणु		\
-			__ret = __पूर्णांक;					\
-			जाओ __out;					\
-		पूर्ण							\
+		if (___wait_is_interruptible(state) && __int) {		\
+			__ret = __int;					\
+			goto __out;					\
+		}							\
 									\
 		cmd;							\
-	पूर्ण								\
-	finish_रुको(__wq_head, &__wbq_entry.wq_entry);			\
+	}								\
+	finish_wait(__wq_head, &__wbq_entry.wq_entry);			\
 __out:	__ret;								\
-पूर्ण)
+})
 
-#घोषणा __रुको_var_event(var, condition)				\
-	___रुको_var_event(var, condition, TASK_UNINTERRUPTIBLE, 0, 0,	\
+#define __wait_var_event(var, condition)				\
+	___wait_var_event(var, condition, TASK_UNINTERRUPTIBLE, 0, 0,	\
 			  schedule())
 
-#घोषणा रुको_var_event(var, condition)					\
-करो अणु									\
+#define wait_var_event(var, condition)					\
+do {									\
 	might_sleep();							\
-	अगर (condition)							\
-		अवरोध;							\
-	__रुको_var_event(var, condition);				\
-पूर्ण जबतक (0)
+	if (condition)							\
+		break;							\
+	__wait_var_event(var, condition);				\
+} while (0)
 
-#घोषणा __रुको_var_event_समाप्तable(var, condition)			\
-	___रुको_var_event(var, condition, TASK_KILLABLE, 0, 0,		\
+#define __wait_var_event_killable(var, condition)			\
+	___wait_var_event(var, condition, TASK_KILLABLE, 0, 0,		\
 			  schedule())
 
-#घोषणा रुको_var_event_समाप्तable(var, condition)				\
-(अणु									\
-	पूर्णांक __ret = 0;							\
+#define wait_var_event_killable(var, condition)				\
+({									\
+	int __ret = 0;							\
 	might_sleep();							\
-	अगर (!(condition))						\
-		__ret = __रुको_var_event_समाप्तable(var, condition);	\
+	if (!(condition))						\
+		__ret = __wait_var_event_killable(var, condition);	\
 	__ret;								\
-पूर्ण)
+})
 
-#घोषणा __रुको_var_event_समयout(var, condition, समयout)		\
-	___रुको_var_event(var, ___रुको_cond_समयout(condition),		\
-			  TASK_UNINTERRUPTIBLE, 0, समयout,		\
-			  __ret = schedule_समयout(__ret))
+#define __wait_var_event_timeout(var, condition, timeout)		\
+	___wait_var_event(var, ___wait_cond_timeout(condition),		\
+			  TASK_UNINTERRUPTIBLE, 0, timeout,		\
+			  __ret = schedule_timeout(__ret))
 
-#घोषणा रुको_var_event_समयout(var, condition, समयout)			\
-(अणु									\
-	दीर्घ __ret = समयout;						\
+#define wait_var_event_timeout(var, condition, timeout)			\
+({									\
+	long __ret = timeout;						\
 	might_sleep();							\
-	अगर (!___रुको_cond_समयout(condition))				\
-		__ret = __रुको_var_event_समयout(var, condition, समयout); \
+	if (!___wait_cond_timeout(condition))				\
+		__ret = __wait_var_event_timeout(var, condition, timeout); \
 	__ret;								\
-पूर्ण)
+})
 
-#घोषणा __रुको_var_event_पूर्णांकerruptible(var, condition)			\
-	___रुको_var_event(var, condition, TASK_INTERRUPTIBLE, 0, 0,	\
+#define __wait_var_event_interruptible(var, condition)			\
+	___wait_var_event(var, condition, TASK_INTERRUPTIBLE, 0, 0,	\
 			  schedule())
 
-#घोषणा रुको_var_event_पूर्णांकerruptible(var, condition)			\
-(अणु									\
-	पूर्णांक __ret = 0;							\
+#define wait_var_event_interruptible(var, condition)			\
+({									\
+	int __ret = 0;							\
 	might_sleep();							\
-	अगर (!(condition))						\
-		__ret = __रुको_var_event_पूर्णांकerruptible(var, condition);	\
+	if (!(condition))						\
+		__ret = __wait_var_event_interruptible(var, condition);	\
 	__ret;								\
-पूर्ण)
+})
 
 /**
- * clear_and_wake_up_bit - clear a bit and wake up anyone रुकोing on that bit
+ * clear_and_wake_up_bit - clear a bit and wake up anyone waiting on that bit
  *
- * @bit: the bit of the word being रुकोed on
- * @word: the word being रुकोed on, a kernel भव address
+ * @bit: the bit of the word being waited on
+ * @word: the word being waited on, a kernel virtual address
  *
- * You can use this helper अगर bitflags are manipulated atomically rather than
+ * You can use this helper if bitflags are manipulated atomically rather than
  * non-atomically under a lock.
  */
-अटल अंतरभूत व्योम clear_and_wake_up_bit(पूर्णांक bit, व्योम *word)
-अणु
+static inline void clear_and_wake_up_bit(int bit, void *word)
+{
 	clear_bit_unlock(bit, word);
-	/* See wake_up_bit() क्रम which memory barrier you need to use. */
+	/* See wake_up_bit() for which memory barrier you need to use. */
 	smp_mb__after_atomic();
 	wake_up_bit(word, bit);
-पूर्ण
+}
 
-#पूर्ण_अगर /* _LINUX_WAIT_BIT_H */
+#endif /* _LINUX_WAIT_BIT_H */

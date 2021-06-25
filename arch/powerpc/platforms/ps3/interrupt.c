@@ -1,437 +1,436 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- *  PS3 पूर्णांकerrupt routines.
+ *  PS3 interrupt routines.
  *
  *  Copyright (C) 2006 Sony Computer Entertainment Inc.
  *  Copyright 2006 Sony Corp.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/export.h>
-#समावेश <linux/irq.h>
+#include <linux/kernel.h>
+#include <linux/export.h>
+#include <linux/irq.h>
 
-#समावेश <यंत्र/machdep.h>
-#समावेश <यंत्र/udbg.h>
-#समावेश <यंत्र/lv1call.h>
-#समावेश <यंत्र/smp.h>
+#include <asm/machdep.h>
+#include <asm/udbg.h>
+#include <asm/lv1call.h>
+#include <asm/smp.h>
 
-#समावेश "platform.h"
+#include "platform.h"
 
-#अगर defined(DEBUG)
-#घोषणा DBG udbg_म_लिखो
-#घोषणा FAIL udbg_म_लिखो
-#अन्यथा
-#घोषणा DBG pr_devel
-#घोषणा FAIL pr_debug
-#पूर्ण_अगर
+#if defined(DEBUG)
+#define DBG udbg_printf
+#define FAIL udbg_printf
+#else
+#define DBG pr_devel
+#define FAIL pr_debug
+#endif
 
 /**
- * काष्ठा ps3_bmp - a per cpu irq status and mask biपंचांगap काष्ठाure
- * @status: 256 bit status biपंचांगap indexed by plug
+ * struct ps3_bmp - a per cpu irq status and mask bitmap structure
+ * @status: 256 bit status bitmap indexed by plug
  * @unused_1: Alignment
- * @mask: 256 bit mask biपंचांगap indexed by plug
+ * @mask: 256 bit mask bitmap indexed by plug
  * @unused_2: Alignment
  *
- * The HV मुख्यtains per SMT thपढ़ो mappings of HV outlet to HV plug on
+ * The HV maintains per SMT thread mappings of HV outlet to HV plug on
  * behalf of the guest.  These mappings are implemented as 256 bit guest
- * supplied biपंचांगaps indexed by plug number.  The addresses of the biपंचांगaps
- * are रेजिस्टरed with the HV through lv1_configure_irq_state_biपंचांगap().
+ * supplied bitmaps indexed by plug number.  The addresses of the bitmaps
+ * are registered with the HV through lv1_configure_irq_state_bitmap().
  * The HV requires that the 512 bits of status + mask not cross a page
  * boundary.  PS3_BMP_MINALIGN is used to define this minimal 64 byte
  * alignment.
  *
- * The HV supports 256 plugs per thपढ़ो, asचिन्हित as अणु0..255पूर्ण, क्रम a total
- * of 512 plugs supported on a processor.  To simplअगरy the logic this
- * implementation equates HV plug value to Linux virq value, स्थिरrains each
- * पूर्णांकerrupt to have a प्रणाली wide unique plug number, and limits the range
- * of the plug values to map पूर्णांकo the first dword of the biपंचांगaps.  This
- * gives a usable range of plug values of  अणुNUM_ISA_INTERRUPTS..63पूर्ण.  Note
- * that there is no स्थिरraपूर्णांक on how many in this set an inभागidual thपढ़ो
+ * The HV supports 256 plugs per thread, assigned as {0..255}, for a total
+ * of 512 plugs supported on a processor.  To simplify the logic this
+ * implementation equates HV plug value to Linux virq value, constrains each
+ * interrupt to have a system wide unique plug number, and limits the range
+ * of the plug values to map into the first dword of the bitmaps.  This
+ * gives a usable range of plug values of  {NUM_ISA_INTERRUPTS..63}.  Note
+ * that there is no constraint on how many in this set an individual thread
  * can acquire.
  *
- * The mask is declared as अचिन्हित दीर्घ so we can use set/clear_bit on it.
+ * The mask is declared as unsigned long so we can use set/clear_bit on it.
  */
 
-#घोषणा PS3_BMP_MINALIGN 64
+#define PS3_BMP_MINALIGN 64
 
-काष्ठा ps3_bmp अणु
-	काष्ठा अणु
+struct ps3_bmp {
+	struct {
 		u64 status;
 		u64 unused_1[3];
-		अचिन्हित दीर्घ mask;
+		unsigned long mask;
 		u64 unused_2[3];
-	पूर्ण;
-पूर्ण;
+	};
+};
 
 /**
- * काष्ठा ps3_निजी - a per cpu data काष्ठाure
- * @bmp: ps3_bmp काष्ठाure
+ * struct ps3_private - a per cpu data structure
+ * @bmp: ps3_bmp structure
  * @bmp_lock: Synchronize access to bmp.
- * @ipi_debug_brk_mask: Mask क्रम debug अवरोध IPIs
+ * @ipi_debug_brk_mask: Mask for debug break IPIs
  * @ppe_id: HV logical_ppe_id
- * @thपढ़ो_id: HV thपढ़ो_id
+ * @thread_id: HV thread_id
  * @ipi_mask: Mask of IPI virqs
  */
 
-काष्ठा ps3_निजी अणु
-	काष्ठा ps3_bmp bmp __attribute__ ((aligned (PS3_BMP_MINALIGN)));
+struct ps3_private {
+	struct ps3_bmp bmp __attribute__ ((aligned (PS3_BMP_MINALIGN)));
 	spinlock_t bmp_lock;
 	u64 ppe_id;
-	u64 thपढ़ो_id;
-	अचिन्हित दीर्घ ipi_debug_brk_mask;
-	अचिन्हित दीर्घ ipi_mask;
-पूर्ण;
+	u64 thread_id;
+	unsigned long ipi_debug_brk_mask;
+	unsigned long ipi_mask;
+};
 
-अटल DEFINE_PER_CPU(काष्ठा ps3_निजी, ps3_निजी);
+static DEFINE_PER_CPU(struct ps3_private, ps3_private);
 
 /**
- * ps3_chip_mask - Set an पूर्णांकerrupt mask bit in ps3_bmp.
- * @virq: The asचिन्हित Linux virq.
+ * ps3_chip_mask - Set an interrupt mask bit in ps3_bmp.
+ * @virq: The assigned Linux virq.
  *
- * Sets ps3_bmp.mask and calls lv1_did_update_पूर्णांकerrupt_mask().
+ * Sets ps3_bmp.mask and calls lv1_did_update_interrupt_mask().
  */
 
-अटल व्योम ps3_chip_mask(काष्ठा irq_data *d)
-अणु
-	काष्ठा ps3_निजी *pd = irq_data_get_irq_chip_data(d);
-	अचिन्हित दीर्घ flags;
+static void ps3_chip_mask(struct irq_data *d)
+{
+	struct ps3_private *pd = irq_data_get_irq_chip_data(d);
+	unsigned long flags;
 
 	DBG("%s:%d: thread_id %llu, virq %d\n", __func__, __LINE__,
-		pd->thपढ़ो_id, d->irq);
+		pd->thread_id, d->irq);
 
 	local_irq_save(flags);
 	clear_bit(63 - d->irq, &pd->bmp.mask);
-	lv1_did_update_पूर्णांकerrupt_mask(pd->ppe_id, pd->thपढ़ो_id);
+	lv1_did_update_interrupt_mask(pd->ppe_id, pd->thread_id);
 	local_irq_restore(flags);
-पूर्ण
+}
 
 /**
- * ps3_chip_unmask - Clear an पूर्णांकerrupt mask bit in ps3_bmp.
- * @virq: The asचिन्हित Linux virq.
+ * ps3_chip_unmask - Clear an interrupt mask bit in ps3_bmp.
+ * @virq: The assigned Linux virq.
  *
- * Clears ps3_bmp.mask and calls lv1_did_update_पूर्णांकerrupt_mask().
+ * Clears ps3_bmp.mask and calls lv1_did_update_interrupt_mask().
  */
 
-अटल व्योम ps3_chip_unmask(काष्ठा irq_data *d)
-अणु
-	काष्ठा ps3_निजी *pd = irq_data_get_irq_chip_data(d);
-	अचिन्हित दीर्घ flags;
+static void ps3_chip_unmask(struct irq_data *d)
+{
+	struct ps3_private *pd = irq_data_get_irq_chip_data(d);
+	unsigned long flags;
 
 	DBG("%s:%d: thread_id %llu, virq %d\n", __func__, __LINE__,
-		pd->thपढ़ो_id, d->irq);
+		pd->thread_id, d->irq);
 
 	local_irq_save(flags);
 	set_bit(63 - d->irq, &pd->bmp.mask);
-	lv1_did_update_पूर्णांकerrupt_mask(pd->ppe_id, pd->thपढ़ो_id);
+	lv1_did_update_interrupt_mask(pd->ppe_id, pd->thread_id);
 	local_irq_restore(flags);
-पूर्ण
+}
 
 /**
- * ps3_chip_eoi - HV end-of-पूर्णांकerrupt.
- * @virq: The asचिन्हित Linux virq.
+ * ps3_chip_eoi - HV end-of-interrupt.
+ * @virq: The assigned Linux virq.
  *
- * Calls lv1_end_of_पूर्णांकerrupt_ext().
+ * Calls lv1_end_of_interrupt_ext().
  */
 
-अटल व्योम ps3_chip_eoi(काष्ठा irq_data *d)
-अणु
-	स्थिर काष्ठा ps3_निजी *pd = irq_data_get_irq_chip_data(d);
+static void ps3_chip_eoi(struct irq_data *d)
+{
+	const struct ps3_private *pd = irq_data_get_irq_chip_data(d);
 
 	/* non-IPIs are EOIed here. */
 
-	अगर (!test_bit(63 - d->irq, &pd->ipi_mask))
-		lv1_end_of_पूर्णांकerrupt_ext(pd->ppe_id, pd->thपढ़ो_id, d->irq);
-पूर्ण
+	if (!test_bit(63 - d->irq, &pd->ipi_mask))
+		lv1_end_of_interrupt_ext(pd->ppe_id, pd->thread_id, d->irq);
+}
 
 /**
- * ps3_irq_chip - Represents the ps3_bmp as a Linux काष्ठा irq_chip.
+ * ps3_irq_chip - Represents the ps3_bmp as a Linux struct irq_chip.
  */
 
-अटल काष्ठा irq_chip ps3_irq_chip = अणु
+static struct irq_chip ps3_irq_chip = {
 	.name = "ps3",
 	.irq_mask = ps3_chip_mask,
 	.irq_unmask = ps3_chip_unmask,
 	.irq_eoi = ps3_chip_eoi,
-पूर्ण;
+};
 
 /**
  * ps3_virq_setup - virq related setup.
- * @cpu: क्रमागत ps3_cpu_binding indicating the cpu the पूर्णांकerrupt should be
+ * @cpu: enum ps3_cpu_binding indicating the cpu the interrupt should be
  * serviced on.
  * @outlet: The HV outlet from the various create outlet routines.
- * @virq: The asचिन्हित Linux virq.
+ * @virq: The assigned Linux virq.
  *
  * Calls irq_create_mapping() to get a virq and sets the chip data to
- * ps3_निजी data.
+ * ps3_private data.
  */
 
-अटल पूर्णांक ps3_virq_setup(क्रमागत ps3_cpu_binding cpu, अचिन्हित दीर्घ outlet,
-			  अचिन्हित पूर्णांक *virq)
-अणु
-	पूर्णांक result;
-	काष्ठा ps3_निजी *pd;
+static int ps3_virq_setup(enum ps3_cpu_binding cpu, unsigned long outlet,
+			  unsigned int *virq)
+{
+	int result;
+	struct ps3_private *pd;
 
-	/* This defines the शेष पूर्णांकerrupt distribution policy. */
+	/* This defines the default interrupt distribution policy. */
 
-	अगर (cpu == PS3_BINDING_CPU_ANY)
+	if (cpu == PS3_BINDING_CPU_ANY)
 		cpu = 0;
 
-	pd = &per_cpu(ps3_निजी, cpu);
+	pd = &per_cpu(ps3_private, cpu);
 
-	*virq = irq_create_mapping(शून्य, outlet);
+	*virq = irq_create_mapping(NULL, outlet);
 
-	अगर (!*virq) अणु
+	if (!*virq) {
 		FAIL("%s:%d: irq_create_mapping failed: outlet %lu\n",
 			__func__, __LINE__, outlet);
 		result = -ENOMEM;
-		जाओ fail_create;
-	पूर्ण
+		goto fail_create;
+	}
 
 	DBG("%s:%d: outlet %lu => cpu %u, virq %u\n", __func__, __LINE__,
 		outlet, cpu, *virq);
 
 	result = irq_set_chip_data(*virq, pd);
 
-	अगर (result) अणु
+	if (result) {
 		FAIL("%s:%d: irq_set_chip_data failed\n",
 			__func__, __LINE__);
-		जाओ fail_set;
-	पूर्ण
+		goto fail_set;
+	}
 
 	ps3_chip_mask(irq_get_irq_data(*virq));
 
-	वापस result;
+	return result;
 
 fail_set:
 	irq_dispose_mapping(*virq);
 fail_create:
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /**
- * ps3_virq_destroy - virq related tearकरोwn.
- * @virq: The asचिन्हित Linux virq.
+ * ps3_virq_destroy - virq related teardown.
+ * @virq: The assigned Linux virq.
  *
- * Clears chip data and calls irq_dispose_mapping() क्रम the virq.
+ * Clears chip data and calls irq_dispose_mapping() for the virq.
  */
 
-अटल पूर्णांक ps3_virq_destroy(अचिन्हित पूर्णांक virq)
-अणु
-	स्थिर काष्ठा ps3_निजी *pd = irq_get_chip_data(virq);
+static int ps3_virq_destroy(unsigned int virq)
+{
+	const struct ps3_private *pd = irq_get_chip_data(virq);
 
 	DBG("%s:%d: ppe_id %llu, thread_id %llu, virq %u\n", __func__,
-		__LINE__, pd->ppe_id, pd->thपढ़ो_id, virq);
+		__LINE__, pd->ppe_id, pd->thread_id, virq);
 
-	irq_set_chip_data(virq, शून्य);
+	irq_set_chip_data(virq, NULL);
 	irq_dispose_mapping(virq);
 
 	DBG("%s:%d <-\n", __func__, __LINE__);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * ps3_irq_plug_setup - Generic outlet and virq related setup.
- * @cpu: क्रमागत ps3_cpu_binding indicating the cpu the पूर्णांकerrupt should be
+ * @cpu: enum ps3_cpu_binding indicating the cpu the interrupt should be
  * serviced on.
  * @outlet: The HV outlet from the various create outlet routines.
- * @virq: The asचिन्हित Linux virq.
+ * @virq: The assigned Linux virq.
  *
  * Sets up virq and connects the irq plug.
  */
 
-पूर्णांक ps3_irq_plug_setup(क्रमागत ps3_cpu_binding cpu, अचिन्हित दीर्घ outlet,
-	अचिन्हित पूर्णांक *virq)
-अणु
-	पूर्णांक result;
-	काष्ठा ps3_निजी *pd;
+int ps3_irq_plug_setup(enum ps3_cpu_binding cpu, unsigned long outlet,
+	unsigned int *virq)
+{
+	int result;
+	struct ps3_private *pd;
 
 	result = ps3_virq_setup(cpu, outlet, virq);
 
-	अगर (result) अणु
+	if (result) {
 		FAIL("%s:%d: ps3_virq_setup failed\n", __func__, __LINE__);
-		जाओ fail_setup;
-	पूर्ण
+		goto fail_setup;
+	}
 
 	pd = irq_get_chip_data(*virq);
 
 	/* Binds outlet to cpu + virq. */
 
-	result = lv1_connect_irq_plug_ext(pd->ppe_id, pd->thपढ़ो_id, *virq,
+	result = lv1_connect_irq_plug_ext(pd->ppe_id, pd->thread_id, *virq,
 		outlet, 0);
 
-	अगर (result) अणु
+	if (result) {
 		FAIL("%s:%d: lv1_connect_irq_plug_ext failed: %s\n",
 		__func__, __LINE__, ps3_result(result));
 		result = -EPERM;
-		जाओ fail_connect;
-	पूर्ण
+		goto fail_connect;
+	}
 
-	वापस result;
+	return result;
 
 fail_connect:
 	ps3_virq_destroy(*virq);
 fail_setup:
-	वापस result;
-पूर्ण
+	return result;
+}
 EXPORT_SYMBOL_GPL(ps3_irq_plug_setup);
 
 /**
- * ps3_irq_plug_destroy - Generic outlet and virq related tearकरोwn.
- * @virq: The asचिन्हित Linux virq.
+ * ps3_irq_plug_destroy - Generic outlet and virq related teardown.
+ * @virq: The assigned Linux virq.
  *
- * Disconnects the irq plug and tears करोwn virq.
- * Do not call क्रम प्रणाली bus event पूर्णांकerrupts setup with
+ * Disconnects the irq plug and tears down virq.
+ * Do not call for system bus event interrupts setup with
  * ps3_sb_event_receive_port_setup().
  */
 
-पूर्णांक ps3_irq_plug_destroy(अचिन्हित पूर्णांक virq)
-अणु
-	पूर्णांक result;
-	स्थिर काष्ठा ps3_निजी *pd = irq_get_chip_data(virq);
+int ps3_irq_plug_destroy(unsigned int virq)
+{
+	int result;
+	const struct ps3_private *pd = irq_get_chip_data(virq);
 
 	DBG("%s:%d: ppe_id %llu, thread_id %llu, virq %u\n", __func__,
-		__LINE__, pd->ppe_id, pd->thपढ़ो_id, virq);
+		__LINE__, pd->ppe_id, pd->thread_id, virq);
 
 	ps3_chip_mask(irq_get_irq_data(virq));
 
-	result = lv1_disconnect_irq_plug_ext(pd->ppe_id, pd->thपढ़ो_id, virq);
+	result = lv1_disconnect_irq_plug_ext(pd->ppe_id, pd->thread_id, virq);
 
-	अगर (result)
+	if (result)
 		FAIL("%s:%d: lv1_disconnect_irq_plug_ext failed: %s\n",
 		__func__, __LINE__, ps3_result(result));
 
 	ps3_virq_destroy(virq);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 EXPORT_SYMBOL_GPL(ps3_irq_plug_destroy);
 
 /**
  * ps3_event_receive_port_setup - Setup an event receive port.
- * @cpu: क्रमागत ps3_cpu_binding indicating the cpu the पूर्णांकerrupt should be
+ * @cpu: enum ps3_cpu_binding indicating the cpu the interrupt should be
  * serviced on.
- * @virq: The asचिन्हित Linux virq.
+ * @virq: The assigned Linux virq.
  *
- * The virq can be used with lv1_connect_पूर्णांकerrupt_event_receive_port() to
- * arrange to receive पूर्णांकerrupts from प्रणाली-bus devices, or with
- * ps3_send_event_locally() to संकेत events.
+ * The virq can be used with lv1_connect_interrupt_event_receive_port() to
+ * arrange to receive interrupts from system-bus devices, or with
+ * ps3_send_event_locally() to signal events.
  */
 
-पूर्णांक ps3_event_receive_port_setup(क्रमागत ps3_cpu_binding cpu, अचिन्हित पूर्णांक *virq)
-अणु
-	पूर्णांक result;
+int ps3_event_receive_port_setup(enum ps3_cpu_binding cpu, unsigned int *virq)
+{
+	int result;
 	u64 outlet;
 
-	result = lv1_स्थिरruct_event_receive_port(&outlet);
+	result = lv1_construct_event_receive_port(&outlet);
 
-	अगर (result) अणु
+	if (result) {
 		FAIL("%s:%d: lv1_construct_event_receive_port failed: %s\n",
 			__func__, __LINE__, ps3_result(result));
 		*virq = 0;
-		वापस result;
-	पूर्ण
+		return result;
+	}
 
 	result = ps3_irq_plug_setup(cpu, outlet, virq);
 	BUG_ON(result);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 EXPORT_SYMBOL_GPL(ps3_event_receive_port_setup);
 
 /**
  * ps3_event_receive_port_destroy - Destroy an event receive port.
- * @virq: The asचिन्हित Linux virq.
+ * @virq: The assigned Linux virq.
  *
  * Since ps3_event_receive_port_destroy destroys the receive port outlet,
- * SB devices need to call disconnect_पूर्णांकerrupt_event_receive_port() beक्रमe
+ * SB devices need to call disconnect_interrupt_event_receive_port() before
  * this.
  */
 
-पूर्णांक ps3_event_receive_port_destroy(अचिन्हित पूर्णांक virq)
-अणु
-	पूर्णांक result;
+int ps3_event_receive_port_destroy(unsigned int virq)
+{
+	int result;
 
 	DBG(" -> %s:%d virq %u\n", __func__, __LINE__, virq);
 
 	ps3_chip_mask(irq_get_irq_data(virq));
 
-	result = lv1_deकाष्ठा_event_receive_port(virq_to_hw(virq));
+	result = lv1_destruct_event_receive_port(virq_to_hw(virq));
 
-	अगर (result)
+	if (result)
 		FAIL("%s:%d: lv1_destruct_event_receive_port failed: %s\n",
 			__func__, __LINE__, ps3_result(result));
 
 	/*
 	 * Don't call ps3_virq_destroy() here since ps3_smp_cleanup_cpu()
-	 * calls from पूर्णांकerrupt context (smp_call_function) when kexecing.
+	 * calls from interrupt context (smp_call_function) when kexecing.
 	 */
 
 	DBG(" <- %s:%d\n", __func__, __LINE__);
-	वापस result;
-पूर्ण
+	return result;
+}
 
-पूर्णांक ps3_send_event_locally(अचिन्हित पूर्णांक virq)
-अणु
-	वापस lv1_send_event_locally(virq_to_hw(virq));
-पूर्ण
+int ps3_send_event_locally(unsigned int virq)
+{
+	return lv1_send_event_locally(virq_to_hw(virq));
+}
 
 /**
- * ps3_sb_event_receive_port_setup - Setup a प्रणाली bus event receive port.
- * @cpu: क्रमागत ps3_cpu_binding indicating the cpu the पूर्णांकerrupt should be
+ * ps3_sb_event_receive_port_setup - Setup a system bus event receive port.
+ * @cpu: enum ps3_cpu_binding indicating the cpu the interrupt should be
  * serviced on.
- * @dev: The प्रणाली bus device instance.
- * @virq: The asचिन्हित Linux virq.
+ * @dev: The system bus device instance.
+ * @virq: The assigned Linux virq.
  *
- * An event irq represents a भव device पूर्णांकerrupt.  The पूर्णांकerrupt_id
- * coresponds to the software पूर्णांकerrupt number.
+ * An event irq represents a virtual device interrupt.  The interrupt_id
+ * coresponds to the software interrupt number.
  */
 
-पूर्णांक ps3_sb_event_receive_port_setup(काष्ठा ps3_प्रणाली_bus_device *dev,
-	क्रमागत ps3_cpu_binding cpu, अचिन्हित पूर्णांक *virq)
-अणु
-	/* this should go in प्रणाली-bus.c */
+int ps3_sb_event_receive_port_setup(struct ps3_system_bus_device *dev,
+	enum ps3_cpu_binding cpu, unsigned int *virq)
+{
+	/* this should go in system-bus.c */
 
-	पूर्णांक result;
+	int result;
 
 	result = ps3_event_receive_port_setup(cpu, virq);
 
-	अगर (result)
-		वापस result;
+	if (result)
+		return result;
 
-	result = lv1_connect_पूर्णांकerrupt_event_receive_port(dev->bus_id,
-		dev->dev_id, virq_to_hw(*virq), dev->पूर्णांकerrupt_id);
+	result = lv1_connect_interrupt_event_receive_port(dev->bus_id,
+		dev->dev_id, virq_to_hw(*virq), dev->interrupt_id);
 
-	अगर (result) अणु
+	if (result) {
 		FAIL("%s:%d: lv1_connect_interrupt_event_receive_port"
 			" failed: %s\n", __func__, __LINE__,
 			ps3_result(result));
 		ps3_event_receive_port_destroy(*virq);
 		*virq = 0;
-		वापस result;
-	पूर्ण
+		return result;
+	}
 
 	DBG("%s:%d: interrupt_id %u, virq %u\n", __func__, __LINE__,
-		dev->पूर्णांकerrupt_id, *virq);
+		dev->interrupt_id, *virq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(ps3_sb_event_receive_port_setup);
 
-पूर्णांक ps3_sb_event_receive_port_destroy(काष्ठा ps3_प्रणाली_bus_device *dev,
-	अचिन्हित पूर्णांक virq)
-अणु
-	/* this should go in प्रणाली-bus.c */
+int ps3_sb_event_receive_port_destroy(struct ps3_system_bus_device *dev,
+	unsigned int virq)
+{
+	/* this should go in system-bus.c */
 
-	पूर्णांक result;
+	int result;
 
 	DBG(" -> %s:%d: interrupt_id %u, virq %u\n", __func__, __LINE__,
-		dev->पूर्णांकerrupt_id, virq);
+		dev->interrupt_id, virq);
 
-	result = lv1_disconnect_पूर्णांकerrupt_event_receive_port(dev->bus_id,
-		dev->dev_id, virq_to_hw(virq), dev->पूर्णांकerrupt_id);
+	result = lv1_disconnect_interrupt_event_receive_port(dev->bus_id,
+		dev->dev_id, virq_to_hw(virq), dev->interrupt_id);
 
-	अगर (result)
+	if (result)
 		FAIL("%s:%d: lv1_disconnect_interrupt_event_receive_port"
 			" failed: %s\n", __func__, __LINE__,
 			ps3_result(result));
@@ -441,89 +440,89 @@ EXPORT_SYMBOL(ps3_sb_event_receive_port_setup);
 
 	/*
 	 * ps3_event_receive_port_destroy() destroys the IRQ plug,
-	 * so करोn't call ps3_irq_plug_destroy() here.
+	 * so don't call ps3_irq_plug_destroy() here.
 	 */
 
 	result = ps3_virq_destroy(virq);
 	BUG_ON(result);
 
 	DBG(" <- %s:%d\n", __func__, __LINE__);
-	वापस result;
-पूर्ण
+	return result;
+}
 EXPORT_SYMBOL(ps3_sb_event_receive_port_destroy);
 
 /**
- * ps3_io_irq_setup - Setup a प्रणाली bus io irq.
- * @cpu: क्रमागत ps3_cpu_binding indicating the cpu the पूर्णांकerrupt should be
+ * ps3_io_irq_setup - Setup a system bus io irq.
+ * @cpu: enum ps3_cpu_binding indicating the cpu the interrupt should be
  * serviced on.
- * @पूर्णांकerrupt_id: The device पूर्णांकerrupt id पढ़ो from the प्रणाली repository.
- * @virq: The asचिन्हित Linux virq.
+ * @interrupt_id: The device interrupt id read from the system repository.
+ * @virq: The assigned Linux virq.
  *
- * An io irq represents a non-भवized device पूर्णांकerrupt.  पूर्णांकerrupt_id
- * coresponds to the पूर्णांकerrupt number of the पूर्णांकerrupt controller.
+ * An io irq represents a non-virtualized device interrupt.  interrupt_id
+ * coresponds to the interrupt number of the interrupt controller.
  */
 
-पूर्णांक ps3_io_irq_setup(क्रमागत ps3_cpu_binding cpu, अचिन्हित पूर्णांक पूर्णांकerrupt_id,
-	अचिन्हित पूर्णांक *virq)
-अणु
-	पूर्णांक result;
+int ps3_io_irq_setup(enum ps3_cpu_binding cpu, unsigned int interrupt_id,
+	unsigned int *virq)
+{
+	int result;
 	u64 outlet;
 
-	result = lv1_स्थिरruct_io_irq_outlet(पूर्णांकerrupt_id, &outlet);
+	result = lv1_construct_io_irq_outlet(interrupt_id, &outlet);
 
-	अगर (result) अणु
+	if (result) {
 		FAIL("%s:%d: lv1_construct_io_irq_outlet failed: %s\n",
 			__func__, __LINE__, ps3_result(result));
-		वापस result;
-	पूर्ण
+		return result;
+	}
 
 	result = ps3_irq_plug_setup(cpu, outlet, virq);
 	BUG_ON(result);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 EXPORT_SYMBOL_GPL(ps3_io_irq_setup);
 
-पूर्णांक ps3_io_irq_destroy(अचिन्हित पूर्णांक virq)
-अणु
-	पूर्णांक result;
-	अचिन्हित दीर्घ outlet = virq_to_hw(virq);
+int ps3_io_irq_destroy(unsigned int virq)
+{
+	int result;
+	unsigned long outlet = virq_to_hw(virq);
 
 	ps3_chip_mask(irq_get_irq_data(virq));
 
 	/*
-	 * lv1_deकाष्ठा_io_irq_outlet() will destroy the IRQ plug,
+	 * lv1_destruct_io_irq_outlet() will destroy the IRQ plug,
 	 * so call ps3_irq_plug_destroy() first.
 	 */
 
 	result = ps3_irq_plug_destroy(virq);
 	BUG_ON(result);
 
-	result = lv1_deकाष्ठा_io_irq_outlet(outlet);
+	result = lv1_destruct_io_irq_outlet(outlet);
 
-	अगर (result)
+	if (result)
 		FAIL("%s:%d: lv1_destruct_io_irq_outlet failed: %s\n",
 			__func__, __LINE__, ps3_result(result));
 
-	वापस result;
-पूर्ण
+	return result;
+}
 EXPORT_SYMBOL_GPL(ps3_io_irq_destroy);
 
 /**
- * ps3_vuart_irq_setup - Setup the प्रणाली भव uart virq.
- * @cpu: क्रमागत ps3_cpu_binding indicating the cpu the पूर्णांकerrupt should be
+ * ps3_vuart_irq_setup - Setup the system virtual uart virq.
+ * @cpu: enum ps3_cpu_binding indicating the cpu the interrupt should be
  * serviced on.
- * @virt_addr_bmp: The caller supplied भव uart पूर्णांकerrupt biपंचांगap.
- * @virq: The asचिन्हित Linux virq.
+ * @virt_addr_bmp: The caller supplied virtual uart interrupt bitmap.
+ * @virq: The assigned Linux virq.
  *
- * The प्रणाली supports only a single भव uart, so multiple calls without
- * मुक्तing the पूर्णांकerrupt will वापस a wrong state error.
+ * The system supports only a single virtual uart, so multiple calls without
+ * freeing the interrupt will return a wrong state error.
  */
 
-पूर्णांक ps3_vuart_irq_setup(क्रमागत ps3_cpu_binding cpu, व्योम* virt_addr_bmp,
-	अचिन्हित पूर्णांक *virq)
-अणु
-	पूर्णांक result;
+int ps3_vuart_irq_setup(enum ps3_cpu_binding cpu, void* virt_addr_bmp,
+	unsigned int *virq)
+{
+	int result;
 	u64 outlet;
 	u64 lpar_addr;
 
@@ -531,253 +530,253 @@ EXPORT_SYMBOL_GPL(ps3_io_irq_destroy);
 
 	lpar_addr = ps3_mm_phys_to_lpar(__pa(virt_addr_bmp));
 
-	result = lv1_configure_भव_uart_irq(lpar_addr, &outlet);
+	result = lv1_configure_virtual_uart_irq(lpar_addr, &outlet);
 
-	अगर (result) अणु
+	if (result) {
 		FAIL("%s:%d: lv1_configure_virtual_uart_irq failed: %s\n",
 			__func__, __LINE__, ps3_result(result));
-		वापस result;
-	पूर्ण
+		return result;
+	}
 
 	result = ps3_irq_plug_setup(cpu, outlet, virq);
 	BUG_ON(result);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 EXPORT_SYMBOL_GPL(ps3_vuart_irq_setup);
 
-पूर्णांक ps3_vuart_irq_destroy(अचिन्हित पूर्णांक virq)
-अणु
-	पूर्णांक result;
+int ps3_vuart_irq_destroy(unsigned int virq)
+{
+	int result;
 
 	ps3_chip_mask(irq_get_irq_data(virq));
-	result = lv1_deconfigure_भव_uart_irq();
+	result = lv1_deconfigure_virtual_uart_irq();
 
-	अगर (result) अणु
+	if (result) {
 		FAIL("%s:%d: lv1_configure_virtual_uart_irq failed: %s\n",
 			__func__, __LINE__, ps3_result(result));
-		वापस result;
-	पूर्ण
+		return result;
+	}
 
 	result = ps3_irq_plug_destroy(virq);
 	BUG_ON(result);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 EXPORT_SYMBOL_GPL(ps3_vuart_irq_destroy);
 
 /**
  * ps3_spe_irq_setup - Setup an spe virq.
- * @cpu: क्रमागत ps3_cpu_binding indicating the cpu the पूर्णांकerrupt should be
+ * @cpu: enum ps3_cpu_binding indicating the cpu the interrupt should be
  * serviced on.
- * @spe_id: The spe_id वापसed from lv1_स्थिरruct_logical_spe().
- * @class: The spe पूर्णांकerrupt class अणु0,1,2पूर्ण.
- * @virq: The asचिन्हित Linux virq.
+ * @spe_id: The spe_id returned from lv1_construct_logical_spe().
+ * @class: The spe interrupt class {0,1,2}.
+ * @virq: The assigned Linux virq.
  *
  */
 
-पूर्णांक ps3_spe_irq_setup(क्रमागत ps3_cpu_binding cpu, अचिन्हित दीर्घ spe_id,
-	अचिन्हित पूर्णांक class, अचिन्हित पूर्णांक *virq)
-अणु
-	पूर्णांक result;
+int ps3_spe_irq_setup(enum ps3_cpu_binding cpu, unsigned long spe_id,
+	unsigned int class, unsigned int *virq)
+{
+	int result;
 	u64 outlet;
 
 	BUG_ON(class > 2);
 
 	result = lv1_get_spe_irq_outlet(spe_id, class, &outlet);
 
-	अगर (result) अणु
+	if (result) {
 		FAIL("%s:%d: lv1_get_spe_irq_outlet failed: %s\n",
 			__func__, __LINE__, ps3_result(result));
-		वापस result;
-	पूर्ण
+		return result;
+	}
 
 	result = ps3_irq_plug_setup(cpu, outlet, virq);
 	BUG_ON(result);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-पूर्णांक ps3_spe_irq_destroy(अचिन्हित पूर्णांक virq)
-अणु
-	पूर्णांक result;
+int ps3_spe_irq_destroy(unsigned int virq)
+{
+	int result;
 
 	ps3_chip_mask(irq_get_irq_data(virq));
 
 	result = ps3_irq_plug_destroy(virq);
 	BUG_ON(result);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 
-#घोषणा PS3_INVALID_OUTLET ((irq_hw_number_t)-1)
-#घोषणा PS3_PLUG_MAX 63
+#define PS3_INVALID_OUTLET ((irq_hw_number_t)-1)
+#define PS3_PLUG_MAX 63
 
-#अगर defined(DEBUG)
-अटल व्योम _dump_64_bmp(स्थिर अक्षर *header, स्थिर u64 *p, अचिन्हित cpu,
-	स्थिर अक्षर* func, पूर्णांक line)
-अणु
+#if defined(DEBUG)
+static void _dump_64_bmp(const char *header, const u64 *p, unsigned cpu,
+	const char* func, int line)
+{
 	pr_debug("%s:%d: %s %u {%04llx_%04llx_%04llx_%04llx}\n",
 		func, line, header, cpu,
 		*p >> 48, (*p >> 32) & 0xffff, (*p >> 16) & 0xffff,
 		*p & 0xffff);
-पूर्ण
+}
 
-अटल व्योम __maybe_unused _dump_256_bmp(स्थिर अक्षर *header,
-	स्थिर u64 *p, अचिन्हित cpu, स्थिर अक्षर* func, पूर्णांक line)
-अणु
+static void __maybe_unused _dump_256_bmp(const char *header,
+	const u64 *p, unsigned cpu, const char* func, int line)
+{
 	pr_debug("%s:%d: %s %u {%016llx:%016llx:%016llx:%016llx}\n",
 		func, line, header, cpu, p[0], p[1], p[2], p[3]);
-पूर्ण
+}
 
-#घोषणा dump_bmp(_x) _dump_bmp(_x, __func__, __LINE__)
-अटल व्योम _dump_bmp(काष्ठा ps3_निजी* pd, स्थिर अक्षर* func, पूर्णांक line)
-अणु
-	अचिन्हित दीर्घ flags;
-
-	spin_lock_irqsave(&pd->bmp_lock, flags);
-	_dump_64_bmp("stat", &pd->bmp.status, pd->thपढ़ो_id, func, line);
-	_dump_64_bmp("mask", (u64*)&pd->bmp.mask, pd->thपढ़ो_id, func, line);
-	spin_unlock_irqrestore(&pd->bmp_lock, flags);
-पूर्ण
-
-#घोषणा dump_mask(_x) _dump_mask(_x, __func__, __LINE__)
-अटल व्योम __maybe_unused _dump_mask(काष्ठा ps3_निजी *pd,
-	स्थिर अक्षर* func, पूर्णांक line)
-अणु
-	अचिन्हित दीर्घ flags;
+#define dump_bmp(_x) _dump_bmp(_x, __func__, __LINE__)
+static void _dump_bmp(struct ps3_private* pd, const char* func, int line)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&pd->bmp_lock, flags);
-	_dump_64_bmp("mask", (u64*)&pd->bmp.mask, pd->thपढ़ो_id, func, line);
+	_dump_64_bmp("stat", &pd->bmp.status, pd->thread_id, func, line);
+	_dump_64_bmp("mask", (u64*)&pd->bmp.mask, pd->thread_id, func, line);
 	spin_unlock_irqrestore(&pd->bmp_lock, flags);
-पूर्ण
-#अन्यथा
-अटल व्योम dump_bmp(काष्ठा ps3_निजी* pd) अणुपूर्ण;
-#पूर्ण_अगर /* defined(DEBUG) */
+}
 
-अटल पूर्णांक ps3_host_map(काष्ठा irq_करोमुख्य *h, अचिन्हित पूर्णांक virq,
+#define dump_mask(_x) _dump_mask(_x, __func__, __LINE__)
+static void __maybe_unused _dump_mask(struct ps3_private *pd,
+	const char* func, int line)
+{
+	unsigned long flags;
+
+	spin_lock_irqsave(&pd->bmp_lock, flags);
+	_dump_64_bmp("mask", (u64*)&pd->bmp.mask, pd->thread_id, func, line);
+	spin_unlock_irqrestore(&pd->bmp_lock, flags);
+}
+#else
+static void dump_bmp(struct ps3_private* pd) {};
+#endif /* defined(DEBUG) */
+
+static int ps3_host_map(struct irq_domain *h, unsigned int virq,
 	irq_hw_number_t hwirq)
-अणु
+{
 	DBG("%s:%d: hwirq %lu, virq %u\n", __func__, __LINE__, hwirq,
 		virq);
 
 	irq_set_chip_and_handler(virq, &ps3_irq_chip, handle_fasteoi_irq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ps3_host_match(काष्ठा irq_करोमुख्य *h, काष्ठा device_node *np,
-			  क्रमागत irq_करोमुख्य_bus_token bus_token)
-अणु
+static int ps3_host_match(struct irq_domain *h, struct device_node *np,
+			  enum irq_domain_bus_token bus_token)
+{
 	/* Match all */
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल स्थिर काष्ठा irq_करोमुख्य_ops ps3_host_ops = अणु
+static const struct irq_domain_ops ps3_host_ops = {
 	.map = ps3_host_map,
 	.match = ps3_host_match,
-पूर्ण;
+};
 
-व्योम __init ps3_रेजिस्टर_ipi_debug_brk(अचिन्हित पूर्णांक cpu, अचिन्हित पूर्णांक virq)
-अणु
-	काष्ठा ps3_निजी *pd = &per_cpu(ps3_निजी, cpu);
+void __init ps3_register_ipi_debug_brk(unsigned int cpu, unsigned int virq)
+{
+	struct ps3_private *pd = &per_cpu(ps3_private, cpu);
 
 	set_bit(63 - virq, &pd->ipi_debug_brk_mask);
 
 	DBG("%s:%d: cpu %u, virq %u, mask %lxh\n", __func__, __LINE__,
 		cpu, virq, pd->ipi_debug_brk_mask);
-पूर्ण
+}
 
-व्योम __init ps3_रेजिस्टर_ipi_irq(अचिन्हित पूर्णांक cpu, अचिन्हित पूर्णांक virq)
-अणु
-	काष्ठा ps3_निजी *pd = &per_cpu(ps3_निजी, cpu);
+void __init ps3_register_ipi_irq(unsigned int cpu, unsigned int virq)
+{
+	struct ps3_private *pd = &per_cpu(ps3_private, cpu);
 
 	set_bit(63 - virq, &pd->ipi_mask);
 
 	DBG("%s:%d: cpu %u, virq %u, ipi_mask %lxh\n", __func__, __LINE__,
 		cpu, virq, pd->ipi_mask);
-पूर्ण
+}
 
-अटल अचिन्हित पूर्णांक ps3_get_irq(व्योम)
-अणु
-	काष्ठा ps3_निजी *pd = this_cpu_ptr(&ps3_निजी);
+static unsigned int ps3_get_irq(void)
+{
+	struct ps3_private *pd = this_cpu_ptr(&ps3_private);
 	u64 x = (pd->bmp.status & pd->bmp.mask);
-	अचिन्हित पूर्णांक plug;
+	unsigned int plug;
 
-	/* check क्रम ipi अवरोध first to stop this cpu ASAP */
+	/* check for ipi break first to stop this cpu ASAP */
 
-	अगर (x & pd->ipi_debug_brk_mask)
+	if (x & pd->ipi_debug_brk_mask)
 		x &= pd->ipi_debug_brk_mask;
 
-	यंत्र अस्थिर("cntlzd %0,%1" : "=r" (plug) : "r" (x));
+	asm volatile("cntlzd %0,%1" : "=r" (plug) : "r" (x));
 	plug &= 0x3f;
 
-	अगर (unlikely(!plug)) अणु
+	if (unlikely(!plug)) {
 		DBG("%s:%d: no plug found: thread_id %llu\n", __func__,
-			__LINE__, pd->thपढ़ो_id);
-		dump_bmp(&per_cpu(ps3_निजी, 0));
-		dump_bmp(&per_cpu(ps3_निजी, 1));
-		वापस 0;
-	पूर्ण
+			__LINE__, pd->thread_id);
+		dump_bmp(&per_cpu(ps3_private, 0));
+		dump_bmp(&per_cpu(ps3_private, 1));
+		return 0;
+	}
 
-#अगर defined(DEBUG)
-	अगर (unlikely(plug < NUM_ISA_INTERRUPTS || plug > PS3_PLUG_MAX)) अणु
-		dump_bmp(&per_cpu(ps3_निजी, 0));
-		dump_bmp(&per_cpu(ps3_निजी, 1));
+#if defined(DEBUG)
+	if (unlikely(plug < NUM_ISA_INTERRUPTS || plug > PS3_PLUG_MAX)) {
+		dump_bmp(&per_cpu(ps3_private, 0));
+		dump_bmp(&per_cpu(ps3_private, 1));
 		BUG();
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
 	/* IPIs are EOIed here. */
 
-	अगर (test_bit(63 - plug, &pd->ipi_mask))
-		lv1_end_of_पूर्णांकerrupt_ext(pd->ppe_id, pd->thपढ़ो_id, plug);
+	if (test_bit(63 - plug, &pd->ipi_mask))
+		lv1_end_of_interrupt_ext(pd->ppe_id, pd->thread_id, plug);
 
-	वापस plug;
-पूर्ण
+	return plug;
+}
 
-व्योम __init ps3_init_IRQ(व्योम)
-अणु
-	पूर्णांक result;
-	अचिन्हित cpu;
-	काष्ठा irq_करोमुख्य *host;
+void __init ps3_init_IRQ(void)
+{
+	int result;
+	unsigned cpu;
+	struct irq_domain *host;
 
-	host = irq_करोमुख्य_add_nomap(शून्य, PS3_PLUG_MAX + 1, &ps3_host_ops, शून्य);
-	irq_set_शेष_host(host);
+	host = irq_domain_add_nomap(NULL, PS3_PLUG_MAX + 1, &ps3_host_ops, NULL);
+	irq_set_default_host(host);
 
-	क्रम_each_possible_cpu(cpu) अणु
-		काष्ठा ps3_निजी *pd = &per_cpu(ps3_निजी, cpu);
+	for_each_possible_cpu(cpu) {
+		struct ps3_private *pd = &per_cpu(ps3_private, cpu);
 
 		lv1_get_logical_ppe_id(&pd->ppe_id);
-		pd->thपढ़ो_id = get_hard_smp_processor_id(cpu);
+		pd->thread_id = get_hard_smp_processor_id(cpu);
 		spin_lock_init(&pd->bmp_lock);
 
 		DBG("%s:%d: ppe_id %llu, thread_id %llu, bmp %lxh\n",
-			__func__, __LINE__, pd->ppe_id, pd->thपढ़ो_id,
+			__func__, __LINE__, pd->ppe_id, pd->thread_id,
 			ps3_mm_phys_to_lpar(__pa(&pd->bmp)));
 
-		result = lv1_configure_irq_state_biपंचांगap(pd->ppe_id,
-			pd->thपढ़ो_id, ps3_mm_phys_to_lpar(__pa(&pd->bmp)));
+		result = lv1_configure_irq_state_bitmap(pd->ppe_id,
+			pd->thread_id, ps3_mm_phys_to_lpar(__pa(&pd->bmp)));
 
-		अगर (result)
+		if (result)
 			FAIL("%s:%d: lv1_configure_irq_state_bitmap failed:"
 				" %s\n", __func__, __LINE__,
 				ps3_result(result));
-	पूर्ण
+	}
 
 	ppc_md.get_irq = ps3_get_irq;
-पूर्ण
+}
 
-व्योम ps3_shutकरोwn_IRQ(पूर्णांक cpu)
-अणु
-	पूर्णांक result;
+void ps3_shutdown_IRQ(int cpu)
+{
+	int result;
 	u64 ppe_id;
-	u64 thपढ़ो_id = get_hard_smp_processor_id(cpu);
+	u64 thread_id = get_hard_smp_processor_id(cpu);
 
 	lv1_get_logical_ppe_id(&ppe_id);
-	result = lv1_configure_irq_state_biपंचांगap(ppe_id, thपढ़ो_id, 0);
+	result = lv1_configure_irq_state_bitmap(ppe_id, thread_id, 0);
 
 	DBG("%s:%d: lv1_configure_irq_state_bitmap (%llu:%llu/%d) %s\n", __func__,
-		__LINE__, ppe_id, thपढ़ो_id, cpu, ps3_result(result));
-पूर्ण
+		__LINE__, ppe_id, thread_id, cpu, ps3_result(result));
+}

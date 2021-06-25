@@ -1,61 +1,60 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 
-#समावेश <linux/regset.h>
+#include <linux/regset.h>
 
-#समावेश <यंत्र/चयन_to.h>
+#include <asm/switch_to.h>
 
-#समावेश "ptrace-decl.h"
+#include "ptrace-decl.h"
 
 /*
  * For get_evrregs/set_evrregs functions 'data' has the following layout:
  *
- * काष्ठा अणु
+ * struct {
  *   u32 evr[32];
  *   u64 acc;
  *   u32 spefscr;
- * पूर्ण
+ * }
  */
 
-पूर्णांक evr_active(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset)
-अणु
-	flush_spe_to_thपढ़ो(target);
-	वापस target->thपढ़ो.used_spe ? regset->n : 0;
-पूर्ण
+int evr_active(struct task_struct *target, const struct user_regset *regset)
+{
+	flush_spe_to_thread(target);
+	return target->thread.used_spe ? regset->n : 0;
+}
 
-पूर्णांक evr_get(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
-	    काष्ठा membuf to)
-अणु
-	flush_spe_to_thपढ़ो(target);
+int evr_get(struct task_struct *target, const struct user_regset *regset,
+	    struct membuf to)
+{
+	flush_spe_to_thread(target);
 
-	membuf_ग_लिखो(&to, &target->thपढ़ो.evr, माप(target->thपढ़ो.evr));
+	membuf_write(&to, &target->thread.evr, sizeof(target->thread.evr));
 
-	BUILD_BUG_ON(दुरत्व(काष्ठा thपढ़ो_काष्ठा, acc) + माप(u64) !=
-		     दुरत्व(काष्ठा thपढ़ो_काष्ठा, spefscr));
+	BUILD_BUG_ON(offsetof(struct thread_struct, acc) + sizeof(u64) !=
+		     offsetof(struct thread_struct, spefscr));
 
-	वापस membuf_ग_लिखो(&to, &target->thपढ़ो.acc,
-				माप(u64) + माप(u32));
-पूर्ण
+	return membuf_write(&to, &target->thread.acc,
+				sizeof(u64) + sizeof(u32));
+}
 
-पूर्णांक evr_set(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
-	    अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
-	    स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf)
-अणु
-	पूर्णांक ret;
+int evr_set(struct task_struct *target, const struct user_regset *regset,
+	    unsigned int pos, unsigned int count,
+	    const void *kbuf, const void __user *ubuf)
+{
+	int ret;
 
-	flush_spe_to_thपढ़ो(target);
+	flush_spe_to_thread(target);
 
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-				 &target->thपढ़ो.evr,
-				 0, माप(target->thपढ़ो.evr));
+				 &target->thread.evr,
+				 0, sizeof(target->thread.evr));
 
-	BUILD_BUG_ON(दुरत्व(काष्ठा thपढ़ो_काष्ठा, acc) + माप(u64) !=
-		     दुरत्व(काष्ठा thपढ़ो_काष्ठा, spefscr));
+	BUILD_BUG_ON(offsetof(struct thread_struct, acc) + sizeof(u64) !=
+		     offsetof(struct thread_struct, spefscr));
 
-	अगर (!ret)
+	if (!ret)
 		ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-					 &target->thपढ़ो.acc,
-					 माप(target->thपढ़ो.evr), -1);
+					 &target->thread.acc,
+					 sizeof(target->thread.evr), -1);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

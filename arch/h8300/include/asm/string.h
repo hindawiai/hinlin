@@ -1,19 +1,18 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _H8300_STRING_H_
-#घोषणा _H8300_STRING_H_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _H8300_STRING_H_
+#define _H8300_STRING_H_
 
-#अगर_घोषित __KERNEL__ /* only set these up क्रम kernel code */
+#ifdef __KERNEL__ /* only set these up for kernel code */
 
-#समावेश <यंत्र/setup.h>
-#समावेश <यंत्र/page.h>
+#include <asm/setup.h>
+#include <asm/page.h>
 
-#घोषणा __HAVE_ARCH_MEMSET
-बाह्य व्योम *स_रखो(व्योम *s, पूर्णांक c, माप_प्रकार count);
+#define __HAVE_ARCH_MEMSET
+extern void *memset(void *s, int c, size_t count);
 
-#घोषणा __HAVE_ARCH_MEMCPY
-बाह्य व्योम *स_नकल(व्योम *d, स्थिर व्योम *s, माप_प्रकार count);
+#define __HAVE_ARCH_MEMCPY
+extern void *memcpy(void *d, const void *s, size_t count);
 
-#पूर्ण_अगर /* KERNEL */
+#endif /* KERNEL */
 
-#पूर्ण_अगर
+#endif

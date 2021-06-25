@@ -1,33 +1,32 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * xsave/xrstor support.
  *
- * Author: Suresh Siddha <suresh.b.siddha@पूर्णांकel.com>
+ * Author: Suresh Siddha <suresh.b.siddha@intel.com>
  */
-#समावेश <linux/compat.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/mman.h>
-#समावेश <linux/pkeys.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/proc_fs.h>
+#include <linux/compat.h>
+#include <linux/cpu.h>
+#include <linux/mman.h>
+#include <linux/pkeys.h>
+#include <linux/seq_file.h>
+#include <linux/proc_fs.h>
 
-#समावेश <यंत्र/fpu/api.h>
-#समावेश <यंत्र/fpu/पूर्णांकernal.h>
-#समावेश <यंत्र/fpu/संकेत.स>
-#समावेश <यंत्र/fpu/regset.h>
-#समावेश <यंत्र/fpu/xstate.h>
+#include <asm/fpu/api.h>
+#include <asm/fpu/internal.h>
+#include <asm/fpu/signal.h>
+#include <asm/fpu/regset.h>
+#include <asm/fpu/xstate.h>
 
-#समावेश <यंत्र/tlbflush.h>
-#समावेश <यंत्र/cpufeature.h>
+#include <asm/tlbflush.h>
+#include <asm/cpufeature.h>
 
 /*
  * Although we spell it out in here, the Processor Trace
  * xfeature is completely unused.  We use other mechanisms
  * to save/restore PT state in Linux.
  */
-अटल स्थिर अक्षर *xfeature_names[] =
-अणु
+static const char *xfeature_names[] =
+{
 	"x87 floating point registers"	,
 	"SSE registers"			,
 	"AVX registers"			,
@@ -40,9 +39,9 @@
 	"Protection Keys User registers",
 	"PASID state",
 	"unknown xstate feature"	,
-पूर्ण;
+};
 
-अटल लघु xsave_cpuid_features[] __initdata = अणु
+static short xsave_cpuid_features[] __initdata = {
 	X86_FEATURE_FPU,
 	X86_FEATURE_XMM,
 	X86_FEATURE_AVX,
@@ -54,166 +53,166 @@
 	X86_FEATURE_INTEL_PT,
 	X86_FEATURE_PKU,
 	X86_FEATURE_ENQCMD,
-पूर्ण;
+};
 
 /*
  * This represents the full set of bits that should ever be set in a kernel
  * XSAVE buffer, both supervisor and user xstates.
  */
-u64 xfeatures_mask_all __पढ़ो_mostly;
+u64 xfeatures_mask_all __read_mostly;
 
-अटल अचिन्हित पूर्णांक xstate_offsets[XFEATURE_MAX] = अणु [ 0 ... XFEATURE_MAX - 1] = -1पूर्ण;
-अटल अचिन्हित पूर्णांक xstate_sizes[XFEATURE_MAX]   = अणु [ 0 ... XFEATURE_MAX - 1] = -1पूर्ण;
-अटल अचिन्हित पूर्णांक xstate_comp_offsets[XFEATURE_MAX] = अणु [ 0 ... XFEATURE_MAX - 1] = -1पूर्ण;
-अटल अचिन्हित पूर्णांक xstate_supervisor_only_offsets[XFEATURE_MAX] = अणु [ 0 ... XFEATURE_MAX - 1] = -1पूर्ण;
+static unsigned int xstate_offsets[XFEATURE_MAX] = { [ 0 ... XFEATURE_MAX - 1] = -1};
+static unsigned int xstate_sizes[XFEATURE_MAX]   = { [ 0 ... XFEATURE_MAX - 1] = -1};
+static unsigned int xstate_comp_offsets[XFEATURE_MAX] = { [ 0 ... XFEATURE_MAX - 1] = -1};
+static unsigned int xstate_supervisor_only_offsets[XFEATURE_MAX] = { [ 0 ... XFEATURE_MAX - 1] = -1};
 
 /*
- * The XSAVE area of kernel can be in standard or compacted क्रमmat;
- * it is always in standard क्रमmat क्रम user mode. This is the user
- * mode standard क्रमmat size used क्रम संकेत and ptrace frames.
+ * The XSAVE area of kernel can be in standard or compacted format;
+ * it is always in standard format for user mode. This is the user
+ * mode standard format size used for signal and ptrace frames.
  */
-अचिन्हित पूर्णांक fpu_user_xstate_size;
+unsigned int fpu_user_xstate_size;
 
 /*
- * Return whether the प्रणाली supports a given xfeature.
+ * Return whether the system supports a given xfeature.
  *
- * Also वापस the name of the (most advanced) feature that the caller requested:
+ * Also return the name of the (most advanced) feature that the caller requested:
  */
-पूर्णांक cpu_has_xfeatures(u64 xfeatures_needed, स्थिर अक्षर **feature_name)
-अणु
+int cpu_has_xfeatures(u64 xfeatures_needed, const char **feature_name)
+{
 	u64 xfeatures_missing = xfeatures_needed & ~xfeatures_mask_all;
 
-	अगर (unlikely(feature_name)) अणु
-		दीर्घ xfeature_idx, max_idx;
-		u64 xfeatures_prपूर्णांक;
+	if (unlikely(feature_name)) {
+		long xfeature_idx, max_idx;
+		u64 xfeatures_print;
 		/*
-		 * So we use FLS here to be able to prपूर्णांक the most advanced
-		 * feature that was requested but is missing. So अगर a driver
-		 * asks about "XFEATURE_MASK_SSE | XFEATURE_MASK_YMM" we'll prपूर्णांक the
-		 * missing AVX feature - this is the most inक्रमmative message
+		 * So we use FLS here to be able to print the most advanced
+		 * feature that was requested but is missing. So if a driver
+		 * asks about "XFEATURE_MASK_SSE | XFEATURE_MASK_YMM" we'll print the
+		 * missing AVX feature - this is the most informative message
 		 * to users:
 		 */
-		अगर (xfeatures_missing)
-			xfeatures_prपूर्णांक = xfeatures_missing;
-		अन्यथा
-			xfeatures_prपूर्णांक = xfeatures_needed;
+		if (xfeatures_missing)
+			xfeatures_print = xfeatures_missing;
+		else
+			xfeatures_print = xfeatures_needed;
 
-		xfeature_idx = fls64(xfeatures_prपूर्णांक)-1;
+		xfeature_idx = fls64(xfeatures_print)-1;
 		max_idx = ARRAY_SIZE(xfeature_names)-1;
 		xfeature_idx = min(xfeature_idx, max_idx);
 
 		*feature_name = xfeature_names[xfeature_idx];
-	पूर्ण
+	}
 
-	अगर (xfeatures_missing)
-		वापस 0;
+	if (xfeatures_missing)
+		return 0;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 EXPORT_SYMBOL_GPL(cpu_has_xfeatures);
 
-अटल bool xfeature_is_supervisor(पूर्णांक xfeature_nr)
-अणु
+static bool xfeature_is_supervisor(int xfeature_nr)
+{
 	/*
 	 * Extended State Enumeration Sub-leaves (EAX = 0DH, ECX = n, n > 1)
-	 * वापसs ECX[0] set to (1) क्रम a supervisor state, and cleared (0)
-	 * क्रम a user state.
+	 * returns ECX[0] set to (1) for a supervisor state, and cleared (0)
+	 * for a user state.
 	 */
 	u32 eax, ebx, ecx, edx;
 
 	cpuid_count(XSTATE_CPUID, xfeature_nr, &eax, &ebx, &ecx, &edx);
-	वापस ecx & 1;
-पूर्ण
+	return ecx & 1;
+}
 
 /*
- * When executing XSAVEOPT (or other optimized XSAVE inकाष्ठाions), अगर
+ * When executing XSAVEOPT (or other optimized XSAVE instructions), if
  * a processor implementation detects that an FPU state component is still
  * (or is again) in its initialized state, it may clear the corresponding
- * bit in the header.xfeatures field, and can skip the ग_लिखोout of रेजिस्टरs
+ * bit in the header.xfeatures field, and can skip the writeout of registers
  * to the corresponding memory layout.
  *
  * This means that when the bit is zero, the state component might still contain
- * some previous - non-initialized रेजिस्टर state.
+ * some previous - non-initialized register state.
  *
- * Beक्रमe writing xstate inक्रमmation to user-space we sanitize those components,
+ * Before writing xstate information to user-space we sanitize those components,
  * to always ensure that the memory layout of a feature will be in the init state
- * अगर the corresponding header bit is zero. This is to ensure that user-space करोesn't
- * see some stale state in the memory layout during संकेत handling, debugging etc.
+ * if the corresponding header bit is zero. This is to ensure that user-space doesn't
+ * see some stale state in the memory layout during signal handling, debugging etc.
  */
-व्योम fpstate_sanitize_xstate(काष्ठा fpu *fpu)
-अणु
-	काष्ठा fxregs_state *fx = &fpu->state.fxsave;
-	पूर्णांक feature_bit;
+void fpstate_sanitize_xstate(struct fpu *fpu)
+{
+	struct fxregs_state *fx = &fpu->state.fxsave;
+	int feature_bit;
 	u64 xfeatures;
 
-	अगर (!use_xsaveopt())
-		वापस;
+	if (!use_xsaveopt())
+		return;
 
 	xfeatures = fpu->state.xsave.header.xfeatures;
 
 	/*
-	 * None of the feature bits are in init state. So nothing अन्यथा
-	 * to करो क्रम us, as the memory layout is up to date.
+	 * None of the feature bits are in init state. So nothing else
+	 * to do for us, as the memory layout is up to date.
 	 */
-	अगर ((xfeatures & xfeatures_mask_all) == xfeatures_mask_all)
-		वापस;
+	if ((xfeatures & xfeatures_mask_all) == xfeatures_mask_all)
+		return;
 
 	/*
 	 * FP is in init state
 	 */
-	अगर (!(xfeatures & XFEATURE_MASK_FP)) अणु
+	if (!(xfeatures & XFEATURE_MASK_FP)) {
 		fx->cwd = 0x37f;
 		fx->swd = 0;
 		fx->twd = 0;
 		fx->fop = 0;
 		fx->rip = 0;
 		fx->rdp = 0;
-		स_रखो(fx->st_space, 0, माप(fx->st_space));
-	पूर्ण
+		memset(fx->st_space, 0, sizeof(fx->st_space));
+	}
 
 	/*
 	 * SSE is in init state
 	 */
-	अगर (!(xfeatures & XFEATURE_MASK_SSE))
-		स_रखो(fx->xmm_space, 0, माप(fx->xmm_space));
+	if (!(xfeatures & XFEATURE_MASK_SSE))
+		memset(fx->xmm_space, 0, sizeof(fx->xmm_space));
 
 	/*
 	 * First two features are FPU and SSE, which above we handled
-	 * in a special way alपढ़ोy:
+	 * in a special way already:
 	 */
 	feature_bit = 0x2;
 	xfeatures = (xfeatures_mask_user() & ~xfeatures) >> 2;
 
 	/*
-	 * Update all the reमुख्यing memory layouts according to their
-	 * standard xstate layout, अगर their header bit is in the init
+	 * Update all the remaining memory layouts according to their
+	 * standard xstate layout, if their header bit is in the init
 	 * state:
 	 */
-	जबतक (xfeatures) अणु
-		अगर (xfeatures & 0x1) अणु
-			पूर्णांक offset = xstate_comp_offsets[feature_bit];
-			पूर्णांक size = xstate_sizes[feature_bit];
+	while (xfeatures) {
+		if (xfeatures & 0x1) {
+			int offset = xstate_comp_offsets[feature_bit];
+			int size = xstate_sizes[feature_bit];
 
-			स_नकल((व्योम *)fx + offset,
-			       (व्योम *)&init_fpstate.xsave + offset,
+			memcpy((void *)fx + offset,
+			       (void *)&init_fpstate.xsave + offset,
 			       size);
-		पूर्ण
+		}
 
 		xfeatures >>= 1;
 		feature_bit++;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Enable the extended processor state save/restore feature.
  * Called once per CPU onlining.
  */
-व्योम fpu__init_cpu_xstate(व्योम)
-अणु
+void fpu__init_cpu_xstate(void)
+{
 	u64 unsup_bits;
 
-	अगर (!boot_cpu_has(X86_FEATURE_XSAVE) || !xfeatures_mask_all)
-		वापस;
+	if (!boot_cpu_has(X86_FEATURE_XSAVE) || !xfeatures_mask_all)
+		return;
 	/*
 	 * Unsupported supervisor xstates should not be found in
 	 * the xfeatures mask.
@@ -228,7 +227,7 @@ EXPORT_SYMBOL_GPL(cpu_has_xfeatures);
 
 	/*
 	 * XCR_XFEATURE_ENABLED_MASK (aka. XCR0) sets user features
-	 * managed by XSAVEअणुC, OPT, Sपूर्ण and XRSTORअणुSपूर्ण.  Only XSAVE user
+	 * managed by XSAVE{C, OPT, S} and XRSTOR{S}.  Only XSAVE user
 	 * states can be set here.
 	 */
 	xsetbv(XCR_XFEATURE_ENABLED_MASK, xfeatures_mask_user());
@@ -236,43 +235,43 @@ EXPORT_SYMBOL_GPL(cpu_has_xfeatures);
 	/*
 	 * MSR_IA32_XSS sets supervisor states managed by XSAVES.
 	 */
-	अगर (boot_cpu_has(X86_FEATURE_XSAVES)) अणु
+	if (boot_cpu_has(X86_FEATURE_XSAVES)) {
 		wrmsrl(MSR_IA32_XSS, xfeatures_mask_supervisor() |
 				     xfeatures_mask_dynamic());
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल bool xfeature_enabled(क्रमागत xfeature xfeature)
-अणु
-	वापस xfeatures_mask_all & BIT_ULL(xfeature);
-पूर्ण
+static bool xfeature_enabled(enum xfeature xfeature)
+{
+	return xfeatures_mask_all & BIT_ULL(xfeature);
+}
 
 /*
  * Record the offsets and sizes of various xstates contained
  * in the XSAVE state memory layout.
  */
-अटल व्योम __init setup_xstate_features(व्योम)
-अणु
+static void __init setup_xstate_features(void)
+{
 	u32 eax, ebx, ecx, edx, i;
 	/* start at the beginning of the "extended state" */
-	अचिन्हित पूर्णांक last_good_offset = दुरत्व(काष्ठा xregs_state,
+	unsigned int last_good_offset = offsetof(struct xregs_state,
 						 extended_state_area);
 	/*
 	 * The FP xstates and SSE xstates are legacy states. They are always
-	 * in the fixed offsets in the xsave area in either compacted क्रमm
-	 * or standard क्रमm.
+	 * in the fixed offsets in the xsave area in either compacted form
+	 * or standard form.
 	 */
 	xstate_offsets[XFEATURE_FP]	= 0;
-	xstate_sizes[XFEATURE_FP]	= दुरत्व(काष्ठा fxregs_state,
+	xstate_sizes[XFEATURE_FP]	= offsetof(struct fxregs_state,
 						   xmm_space);
 
 	xstate_offsets[XFEATURE_SSE]	= xstate_sizes[XFEATURE_FP];
-	xstate_sizes[XFEATURE_SSE]	= माप_field(काष्ठा fxregs_state,
+	xstate_sizes[XFEATURE_SSE]	= sizeof_field(struct fxregs_state,
 						       xmm_space);
 
-	क्रम (i = FIRST_EXTENDED_XFEATURE; i < XFEATURE_MAX; i++) अणु
-		अगर (!xfeature_enabled(i))
-			जारी;
+	for (i = FIRST_EXTENDED_XFEATURE; i < XFEATURE_MAX; i++) {
+		if (!xfeature_enabled(i))
+			continue;
 
 		cpuid_count(XSTATE_CPUID, i, &eax, &ebx, &ecx, &edx);
 
@@ -282,182 +281,182 @@ EXPORT_SYMBOL_GPL(cpu_has_xfeatures);
 		 * If an xfeature is supervisor state, the offset in EBX is
 		 * invalid, leave it to -1.
 		 */
-		अगर (xfeature_is_supervisor(i))
-			जारी;
+		if (xfeature_is_supervisor(i))
+			continue;
 
 		xstate_offsets[i] = ebx;
 
 		/*
 		 * In our xstate size checks, we assume that the highest-numbered
 		 * xstate feature has the highest offset in the buffer.  Ensure
-		 * it करोes.
+		 * it does.
 		 */
 		WARN_ONCE(last_good_offset > xstate_offsets[i],
 			  "x86/fpu: misordered xstate at %d\n", last_good_offset);
 
 		last_good_offset = xstate_offsets[i];
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम __init prपूर्णांक_xstate_feature(u64 xstate_mask)
-अणु
-	स्थिर अक्षर *feature_name;
+static void __init print_xstate_feature(u64 xstate_mask)
+{
+	const char *feature_name;
 
-	अगर (cpu_has_xfeatures(xstate_mask, &feature_name))
+	if (cpu_has_xfeatures(xstate_mask, &feature_name))
 		pr_info("x86/fpu: Supporting XSAVE feature 0x%03Lx: '%s'\n", xstate_mask, feature_name);
-पूर्ण
+}
 
 /*
- * Prपूर्णांक out all the supported xstate features:
+ * Print out all the supported xstate features:
  */
-अटल व्योम __init prपूर्णांक_xstate_features(व्योम)
-अणु
-	prपूर्णांक_xstate_feature(XFEATURE_MASK_FP);
-	prपूर्णांक_xstate_feature(XFEATURE_MASK_SSE);
-	prपूर्णांक_xstate_feature(XFEATURE_MASK_YMM);
-	prपूर्णांक_xstate_feature(XFEATURE_MASK_BNDREGS);
-	prपूर्णांक_xstate_feature(XFEATURE_MASK_BNDCSR);
-	prपूर्णांक_xstate_feature(XFEATURE_MASK_OPMASK);
-	prपूर्णांक_xstate_feature(XFEATURE_MASK_ZMM_Hi256);
-	prपूर्णांक_xstate_feature(XFEATURE_MASK_Hi16_ZMM);
-	prपूर्णांक_xstate_feature(XFEATURE_MASK_PKRU);
-	prपूर्णांक_xstate_feature(XFEATURE_MASK_PASID);
-पूर्ण
+static void __init print_xstate_features(void)
+{
+	print_xstate_feature(XFEATURE_MASK_FP);
+	print_xstate_feature(XFEATURE_MASK_SSE);
+	print_xstate_feature(XFEATURE_MASK_YMM);
+	print_xstate_feature(XFEATURE_MASK_BNDREGS);
+	print_xstate_feature(XFEATURE_MASK_BNDCSR);
+	print_xstate_feature(XFEATURE_MASK_OPMASK);
+	print_xstate_feature(XFEATURE_MASK_ZMM_Hi256);
+	print_xstate_feature(XFEATURE_MASK_Hi16_ZMM);
+	print_xstate_feature(XFEATURE_MASK_PKRU);
+	print_xstate_feature(XFEATURE_MASK_PASID);
+}
 
 /*
  * This check is important because it is easy to get XSTATE_*
  * confused with XSTATE_BIT_*.
  */
-#घोषणा CHECK_XFEATURE(nr) करो अणु		\
+#define CHECK_XFEATURE(nr) do {		\
 	WARN_ON(nr < FIRST_EXTENDED_XFEATURE);	\
 	WARN_ON(nr >= XFEATURE_MAX);	\
-पूर्ण जबतक (0)
+} while (0)
 
 /*
  * We could cache this like xstate_size[], but we only use
  * it here, so it would be a waste of space.
  */
-अटल पूर्णांक xfeature_is_aligned(पूर्णांक xfeature_nr)
-अणु
+static int xfeature_is_aligned(int xfeature_nr)
+{
 	u32 eax, ebx, ecx, edx;
 
 	CHECK_XFEATURE(xfeature_nr);
 
-	अगर (!xfeature_enabled(xfeature_nr)) अणु
+	if (!xfeature_enabled(xfeature_nr)) {
 		WARN_ONCE(1, "Checking alignment of disabled xfeature %d\n",
 			  xfeature_nr);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	cpuid_count(XSTATE_CPUID, xfeature_nr, &eax, &ebx, &ecx, &edx);
 	/*
-	 * The value वापसed by ECX[1] indicates the alignment
-	 * of state component 'i' when the compacted क्रमmat
+	 * The value returned by ECX[1] indicates the alignment
+	 * of state component 'i' when the compacted format
 	 * of the extended region of an XSAVE area is used:
 	 */
-	वापस !!(ecx & 2);
-पूर्ण
+	return !!(ecx & 2);
+}
 
 /*
  * This function sets up offsets and sizes of all extended states in
- * xsave area. This supports both standard क्रमmat and compacted क्रमmat
+ * xsave area. This supports both standard format and compacted format
  * of the xsave area.
  */
-अटल व्योम __init setup_xstate_comp_offsets(व्योम)
-अणु
-	अचिन्हित पूर्णांक next_offset;
-	पूर्णांक i;
+static void __init setup_xstate_comp_offsets(void)
+{
+	unsigned int next_offset;
+	int i;
 
 	/*
 	 * The FP xstates and SSE xstates are legacy states. They are always
-	 * in the fixed offsets in the xsave area in either compacted क्रमm
-	 * or standard क्रमm.
+	 * in the fixed offsets in the xsave area in either compacted form
+	 * or standard form.
 	 */
 	xstate_comp_offsets[XFEATURE_FP] = 0;
-	xstate_comp_offsets[XFEATURE_SSE] = दुरत्व(काष्ठा fxregs_state,
+	xstate_comp_offsets[XFEATURE_SSE] = offsetof(struct fxregs_state,
 						     xmm_space);
 
-	अगर (!boot_cpu_has(X86_FEATURE_XSAVES)) अणु
-		क्रम (i = FIRST_EXTENDED_XFEATURE; i < XFEATURE_MAX; i++) अणु
-			अगर (xfeature_enabled(i))
+	if (!boot_cpu_has(X86_FEATURE_XSAVES)) {
+		for (i = FIRST_EXTENDED_XFEATURE; i < XFEATURE_MAX; i++) {
+			if (xfeature_enabled(i))
 				xstate_comp_offsets[i] = xstate_offsets[i];
-		पूर्ण
-		वापस;
-	पूर्ण
+		}
+		return;
+	}
 
 	next_offset = FXSAVE_SIZE + XSAVE_HDR_SIZE;
 
-	क्रम (i = FIRST_EXTENDED_XFEATURE; i < XFEATURE_MAX; i++) अणु
-		अगर (!xfeature_enabled(i))
-			जारी;
+	for (i = FIRST_EXTENDED_XFEATURE; i < XFEATURE_MAX; i++) {
+		if (!xfeature_enabled(i))
+			continue;
 
-		अगर (xfeature_is_aligned(i))
+		if (xfeature_is_aligned(i))
 			next_offset = ALIGN(next_offset, 64);
 
 		xstate_comp_offsets[i] = next_offset;
 		next_offset += xstate_sizes[i];
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Setup offsets of a supervisor-state-only XSAVES buffer:
  *
- * The offsets stored in xstate_comp_offsets[] only work क्रम one specअगरic
- * value of the Requested Feature BitMap (RFBM).  In हालs where a dअगरferent
- * RFBM value is used, a dअगरferent set of offsets is required.  This set of
- * offsets is क्रम when RFBM=xfeatures_mask_supervisor().
+ * The offsets stored in xstate_comp_offsets[] only work for one specific
+ * value of the Requested Feature BitMap (RFBM).  In cases where a different
+ * RFBM value is used, a different set of offsets is required.  This set of
+ * offsets is for when RFBM=xfeatures_mask_supervisor().
  */
-अटल व्योम __init setup_supervisor_only_offsets(व्योम)
-अणु
-	अचिन्हित पूर्णांक next_offset;
-	पूर्णांक i;
+static void __init setup_supervisor_only_offsets(void)
+{
+	unsigned int next_offset;
+	int i;
 
 	next_offset = FXSAVE_SIZE + XSAVE_HDR_SIZE;
 
-	क्रम (i = FIRST_EXTENDED_XFEATURE; i < XFEATURE_MAX; i++) अणु
-		अगर (!xfeature_enabled(i) || !xfeature_is_supervisor(i))
-			जारी;
+	for (i = FIRST_EXTENDED_XFEATURE; i < XFEATURE_MAX; i++) {
+		if (!xfeature_enabled(i) || !xfeature_is_supervisor(i))
+			continue;
 
-		अगर (xfeature_is_aligned(i))
+		if (xfeature_is_aligned(i))
 			next_offset = ALIGN(next_offset, 64);
 
 		xstate_supervisor_only_offsets[i] = next_offset;
 		next_offset += xstate_sizes[i];
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Prपूर्णांक out xstate component offsets and sizes
+ * Print out xstate component offsets and sizes
  */
-अटल व्योम __init prपूर्णांक_xstate_offset_size(व्योम)
-अणु
-	पूर्णांक i;
+static void __init print_xstate_offset_size(void)
+{
+	int i;
 
-	क्रम (i = FIRST_EXTENDED_XFEATURE; i < XFEATURE_MAX; i++) अणु
-		अगर (!xfeature_enabled(i))
-			जारी;
+	for (i = FIRST_EXTENDED_XFEATURE; i < XFEATURE_MAX; i++) {
+		if (!xfeature_enabled(i))
+			continue;
 		pr_info("x86/fpu: xstate_offset[%d]: %4d, xstate_sizes[%d]: %4d\n",
 			 i, xstate_comp_offsets[i], i, xstate_sizes[i]);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * setup the xstate image representing the init state
  */
-अटल व्योम __init setup_init_fpu_buf(व्योम)
-अणु
-	अटल पूर्णांक on_boot_cpu __initdata = 1;
+static void __init setup_init_fpu_buf(void)
+{
+	static int on_boot_cpu __initdata = 1;
 
 	WARN_ON_FPU(!on_boot_cpu);
 	on_boot_cpu = 0;
 
-	अगर (!boot_cpu_has(X86_FEATURE_XSAVE))
-		वापस;
+	if (!boot_cpu_has(X86_FEATURE_XSAVE))
+		return;
 
 	setup_xstate_features();
-	prपूर्णांक_xstate_features();
+	print_xstate_features();
 
-	अगर (boot_cpu_has(X86_FEATURE_XSAVES))
+	if (boot_cpu_has(X86_FEATURE_XSAVES))
 		init_fpstate.xsave.header.xcomp_bv = XCOMP_BV_COMPACTED_FORMAT |
 						     xfeatures_mask_all;
 
@@ -467,347 +466,347 @@ EXPORT_SYMBOL_GPL(cpu_has_xfeatures);
 	copy_kernel_to_xregs_booting(&init_fpstate.xsave);
 
 	/*
-	 * Dump the init state again. This is to identअगरy the init state
+	 * Dump the init state again. This is to identify the init state
 	 * of any feature which is not represented by all zero's.
 	 */
 	copy_xregs_to_kernel_booting(&init_fpstate.xsave);
-पूर्ण
+}
 
-अटल पूर्णांक xfeature_uncompacted_offset(पूर्णांक xfeature_nr)
-अणु
+static int xfeature_uncompacted_offset(int xfeature_nr)
+{
 	u32 eax, ebx, ecx, edx;
 
 	/*
 	 * Only XSAVES supports supervisor states and it uses compacted
-	 * क्रमmat. Checking a supervisor state's uncompacted offset is
+	 * format. Checking a supervisor state's uncompacted offset is
 	 * an error.
 	 */
-	अगर (XFEATURE_MASK_SUPERVISOR_ALL & BIT_ULL(xfeature_nr)) अणु
+	if (XFEATURE_MASK_SUPERVISOR_ALL & BIT_ULL(xfeature_nr)) {
 		WARN_ONCE(1, "No fixed offset for xstate %d\n", xfeature_nr);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	CHECK_XFEATURE(xfeature_nr);
 	cpuid_count(XSTATE_CPUID, xfeature_nr, &eax, &ebx, &ecx, &edx);
-	वापस ebx;
-पूर्ण
+	return ebx;
+}
 
-पूर्णांक xfeature_size(पूर्णांक xfeature_nr)
-अणु
+int xfeature_size(int xfeature_nr)
+{
 	u32 eax, ebx, ecx, edx;
 
 	CHECK_XFEATURE(xfeature_nr);
 	cpuid_count(XSTATE_CPUID, xfeature_nr, &eax, &ebx, &ecx, &edx);
-	वापस eax;
-पूर्ण
+	return eax;
+}
 
 /*
- * 'XSAVES' implies two dअगरferent things:
- * 1. saving of supervisor/प्रणाली state
- * 2. using the compacted क्रमmat
+ * 'XSAVES' implies two different things:
+ * 1. saving of supervisor/system state
+ * 2. using the compacted format
  *
- * Use this function when dealing with the compacted क्रमmat so
+ * Use this function when dealing with the compacted format so
  * that it is obvious which aspect of 'XSAVES' is being handled
  * by the calling code.
  */
-पूर्णांक using_compacted_क्रमmat(व्योम)
-अणु
-	वापस boot_cpu_has(X86_FEATURE_XSAVES);
-पूर्ण
+int using_compacted_format(void)
+{
+	return boot_cpu_has(X86_FEATURE_XSAVES);
+}
 
-/* Validate an xstate header supplied by userspace (ptrace or sigवापस) */
-पूर्णांक validate_user_xstate_header(स्थिर काष्ठा xstate_header *hdr)
-अणु
+/* Validate an xstate header supplied by userspace (ptrace or sigreturn) */
+int validate_user_xstate_header(const struct xstate_header *hdr)
+{
 	/* No unknown or supervisor features may be set */
-	अगर (hdr->xfeatures & ~xfeatures_mask_user())
-		वापस -EINVAL;
+	if (hdr->xfeatures & ~xfeatures_mask_user())
+		return -EINVAL;
 
-	/* Userspace must use the uncompacted क्रमmat */
-	अगर (hdr->xcomp_bv)
-		वापस -EINVAL;
+	/* Userspace must use the uncompacted format */
+	if (hdr->xcomp_bv)
+		return -EINVAL;
 
 	/*
 	 * If 'reserved' is shrunken to add a new field, make sure to validate
 	 * that new field here!
 	 */
-	BUILD_BUG_ON(माप(hdr->reserved) != 48);
+	BUILD_BUG_ON(sizeof(hdr->reserved) != 48);
 
 	/* No reserved bits may be set */
-	अगर (स_प्रथम_inv(hdr->reserved, 0, माप(hdr->reserved)))
-		वापस -EINVAL;
+	if (memchr_inv(hdr->reserved, 0, sizeof(hdr->reserved)))
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __xstate_dump_leaves(व्योम)
-अणु
-	पूर्णांक i;
+static void __xstate_dump_leaves(void)
+{
+	int i;
 	u32 eax, ebx, ecx, edx;
-	अटल पूर्णांक should_dump = 1;
+	static int should_dump = 1;
 
-	अगर (!should_dump)
-		वापस;
+	if (!should_dump)
+		return;
 	should_dump = 0;
 	/*
 	 * Dump out a few leaves past the ones that we support
-	 * just in हाल there are some goodies up there
+	 * just in case there are some goodies up there
 	 */
-	क्रम (i = 0; i < XFEATURE_MAX + 10; i++) अणु
+	for (i = 0; i < XFEATURE_MAX + 10; i++) {
 		cpuid_count(XSTATE_CPUID, i, &eax, &ebx, &ecx, &edx);
 		pr_warn("CPUID[%02x, %02x]: eax=%08x ebx=%08x ecx=%08x edx=%08x\n",
 			XSTATE_CPUID, i, eax, ebx, ecx, edx);
-	पूर्ण
-पूर्ण
+	}
+}
 
-#घोषणा XSTATE_WARN_ON(x) करो अणु							\
-	अगर (WARN_ONCE(x, "XSAVE consistency problem, dumping leaves")) अणु	\
+#define XSTATE_WARN_ON(x) do {							\
+	if (WARN_ONCE(x, "XSAVE consistency problem, dumping leaves")) {	\
 		__xstate_dump_leaves();						\
-	पूर्ण									\
-पूर्ण जबतक (0)
+	}									\
+} while (0)
 
-#घोषणा XCHECK_SZ(sz, nr, nr_macro, __काष्ठा) करो अणु			\
-	अगर ((nr == nr_macro) &&						\
-	    WARN_ONCE(sz != माप(__काष्ठा),				\
+#define XCHECK_SZ(sz, nr, nr_macro, __struct) do {			\
+	if ((nr == nr_macro) &&						\
+	    WARN_ONCE(sz != sizeof(__struct),				\
 		"%s: struct is %zu bytes, cpu state %d bytes\n",	\
-		__stringअगरy(nr_macro), माप(__काष्ठा), sz)) अणु		\
+		__stringify(nr_macro), sizeof(__struct), sz)) {		\
 		__xstate_dump_leaves();					\
-	पूर्ण								\
-पूर्ण जबतक (0)
+	}								\
+} while (0)
 
 /*
- * We have a C काष्ठा क्रम each 'xstate'.  We need to ensure
+ * We have a C struct for each 'xstate'.  We need to ensure
  * that our software representation matches what the CPU
  * tells us about the state's size.
  */
-अटल व्योम check_xstate_against_काष्ठा(पूर्णांक nr)
-अणु
+static void check_xstate_against_struct(int nr)
+{
 	/*
-	 * Ask the CPU क्रम the size of the state.
+	 * Ask the CPU for the size of the state.
 	 */
-	पूर्णांक sz = xfeature_size(nr);
+	int sz = xfeature_size(nr);
 	/*
 	 * Match each CPU state with the corresponding software
-	 * काष्ठाure.
+	 * structure.
 	 */
-	XCHECK_SZ(sz, nr, XFEATURE_YMM,       काष्ठा ymmh_काष्ठा);
-	XCHECK_SZ(sz, nr, XFEATURE_BNDREGS,   काष्ठा mpx_bndreg_state);
-	XCHECK_SZ(sz, nr, XFEATURE_BNDCSR,    काष्ठा mpx_bndcsr_state);
-	XCHECK_SZ(sz, nr, XFEATURE_OPMASK,    काष्ठा avx_512_opmask_state);
-	XCHECK_SZ(sz, nr, XFEATURE_ZMM_Hi256, काष्ठा avx_512_zmm_uppers_state);
-	XCHECK_SZ(sz, nr, XFEATURE_Hi16_ZMM,  काष्ठा avx_512_hi16_state);
-	XCHECK_SZ(sz, nr, XFEATURE_PKRU,      काष्ठा pkru_state);
-	XCHECK_SZ(sz, nr, XFEATURE_PASID,     काष्ठा ia32_pasid_state);
+	XCHECK_SZ(sz, nr, XFEATURE_YMM,       struct ymmh_struct);
+	XCHECK_SZ(sz, nr, XFEATURE_BNDREGS,   struct mpx_bndreg_state);
+	XCHECK_SZ(sz, nr, XFEATURE_BNDCSR,    struct mpx_bndcsr_state);
+	XCHECK_SZ(sz, nr, XFEATURE_OPMASK,    struct avx_512_opmask_state);
+	XCHECK_SZ(sz, nr, XFEATURE_ZMM_Hi256, struct avx_512_zmm_uppers_state);
+	XCHECK_SZ(sz, nr, XFEATURE_Hi16_ZMM,  struct avx_512_hi16_state);
+	XCHECK_SZ(sz, nr, XFEATURE_PKRU,      struct pkru_state);
+	XCHECK_SZ(sz, nr, XFEATURE_PASID,     struct ia32_pasid_state);
 
 	/*
-	 * Make *SURE* to add any feature numbers in below अगर
+	 * Make *SURE* to add any feature numbers in below if
 	 * there are "holes" in the xsave state component
 	 * numbers.
 	 */
-	अगर ((nr < XFEATURE_YMM) ||
+	if ((nr < XFEATURE_YMM) ||
 	    (nr >= XFEATURE_MAX) ||
 	    (nr == XFEATURE_PT_UNIMPLEMENTED_SO_FAR) ||
-	    ((nr >= XFEATURE_RSRVD_COMP_11) && (nr <= XFEATURE_LBR))) अणु
+	    ((nr >= XFEATURE_RSRVD_COMP_11) && (nr <= XFEATURE_LBR))) {
 		WARN_ONCE(1, "no structure for xstate: %d\n", nr);
 		XSTATE_WARN_ON(1);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * This essentially द्विगुन-checks what the cpu told us about
+ * This essentially double-checks what the cpu told us about
  * how large the XSAVE buffer needs to be.  We are recalculating
  * it to be safe.
  *
  * Dynamic XSAVE features allocate their own buffers and are not
- * covered by these checks. Only the size of the buffer क्रम task->fpu
+ * covered by these checks. Only the size of the buffer for task->fpu
  * is checked here.
  */
-अटल व्योम करो_extra_xstate_size_checks(व्योम)
-अणु
-	पूर्णांक paranoid_xstate_size = FXSAVE_SIZE + XSAVE_HDR_SIZE;
-	पूर्णांक i;
+static void do_extra_xstate_size_checks(void)
+{
+	int paranoid_xstate_size = FXSAVE_SIZE + XSAVE_HDR_SIZE;
+	int i;
 
-	क्रम (i = FIRST_EXTENDED_XFEATURE; i < XFEATURE_MAX; i++) अणु
-		अगर (!xfeature_enabled(i))
-			जारी;
+	for (i = FIRST_EXTENDED_XFEATURE; i < XFEATURE_MAX; i++) {
+		if (!xfeature_enabled(i))
+			continue;
 
-		check_xstate_against_काष्ठा(i);
+		check_xstate_against_struct(i);
 		/*
 		 * Supervisor state components can be managed only by
-		 * XSAVES, which is compacted-क्रमmat only.
+		 * XSAVES, which is compacted-format only.
 		 */
-		अगर (!using_compacted_क्रमmat())
+		if (!using_compacted_format())
 			XSTATE_WARN_ON(xfeature_is_supervisor(i));
 
 		/* Align from the end of the previous feature */
-		अगर (xfeature_is_aligned(i))
+		if (xfeature_is_aligned(i))
 			paranoid_xstate_size = ALIGN(paranoid_xstate_size, 64);
 		/*
 		 * The offset of a given state in the non-compacted
-		 * क्रमmat is given to us in a CPUID leaf.  We check
-		 * them क्रम being ordered (increasing offsets) in
+		 * format is given to us in a CPUID leaf.  We check
+		 * them for being ordered (increasing offsets) in
 		 * setup_xstate_features().
 		 */
-		अगर (!using_compacted_क्रमmat())
+		if (!using_compacted_format())
 			paranoid_xstate_size = xfeature_uncompacted_offset(i);
 		/*
-		 * The compacted-क्रमmat offset always depends on where
+		 * The compacted-format offset always depends on where
 		 * the previous state ended.
 		 */
 		paranoid_xstate_size += xfeature_size(i);
-	पूर्ण
+	}
 	XSTATE_WARN_ON(paranoid_xstate_size != fpu_kernel_xstate_size);
-पूर्ण
+}
 
 
 /*
  * Get total size of enabled xstates in XCR0 | IA32_XSS.
  *
- * Note the SDM's wording here.  "sub-function 0" only क्रमागतerates
+ * Note the SDM's wording here.  "sub-function 0" only enumerates
  * the size of the *user* states.  If we use it to size a buffer
  * that we use 'XSAVES' on, we could potentially overflow the
- * buffer because 'XSAVES' saves प्रणाली states too.
+ * buffer because 'XSAVES' saves system states too.
  */
-अटल अचिन्हित पूर्णांक __init get_xsaves_size(व्योम)
-अणु
-	अचिन्हित पूर्णांक eax, ebx, ecx, edx;
+static unsigned int __init get_xsaves_size(void)
+{
+	unsigned int eax, ebx, ecx, edx;
 	/*
 	 * - CPUID function 0DH, sub-function 1:
-	 *    EBX क्रमागतerates the size (in bytes) required by
-	 *    the XSAVES inकाष्ठाion क्रम an XSAVE area
+	 *    EBX enumerates the size (in bytes) required by
+	 *    the XSAVES instruction for an XSAVE area
 	 *    containing all the state components
 	 *    corresponding to bits currently set in
 	 *    XCR0 | IA32_XSS.
 	 */
 	cpuid_count(XSTATE_CPUID, 1, &eax, &ebx, &ecx, &edx);
-	वापस ebx;
-पूर्ण
+	return ebx;
+}
 
 /*
  * Get the total size of the enabled xstates without the dynamic supervisor
  * features.
  */
-अटल अचिन्हित पूर्णांक __init get_xsaves_size_no_dynamic(व्योम)
-अणु
+static unsigned int __init get_xsaves_size_no_dynamic(void)
+{
 	u64 mask = xfeatures_mask_dynamic();
-	अचिन्हित पूर्णांक size;
+	unsigned int size;
 
-	अगर (!mask)
-		वापस get_xsaves_size();
+	if (!mask)
+		return get_xsaves_size();
 
 	/* Disable dynamic features. */
 	wrmsrl(MSR_IA32_XSS, xfeatures_mask_supervisor());
 
 	/*
 	 * Ask the hardware what size is required of the buffer.
-	 * This is the size required क्रम the task->fpu buffer.
+	 * This is the size required for the task->fpu buffer.
 	 */
 	size = get_xsaves_size();
 
 	/* Re-enable dynamic features so XSAVES will work on them again. */
 	wrmsrl(MSR_IA32_XSS, xfeatures_mask_supervisor() | mask);
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल अचिन्हित पूर्णांक __init get_xsave_size(व्योम)
-अणु
-	अचिन्हित पूर्णांक eax, ebx, ecx, edx;
+static unsigned int __init get_xsave_size(void)
+{
+	unsigned int eax, ebx, ecx, edx;
 	/*
 	 * - CPUID function 0DH, sub-function 0:
-	 *    EBX क्रमागतerates the size (in bytes) required by
-	 *    the XSAVE inकाष्ठाion क्रम an XSAVE area
+	 *    EBX enumerates the size (in bytes) required by
+	 *    the XSAVE instruction for an XSAVE area
 	 *    containing all the *user* state components
 	 *    corresponding to bits currently set in XCR0.
 	 */
 	cpuid_count(XSTATE_CPUID, 0, &eax, &ebx, &ecx, &edx);
-	वापस ebx;
-पूर्ण
+	return ebx;
+}
 
 /*
- * Will the runसमय-क्रमागतerated 'xstate_size' fit in the init
- * task's अटलally-allocated buffer?
+ * Will the runtime-enumerated 'xstate_size' fit in the init
+ * task's statically-allocated buffer?
  */
-अटल bool is_supported_xstate_size(अचिन्हित पूर्णांक test_xstate_size)
-अणु
-	अगर (test_xstate_size <= माप(जोड़ fpregs_state))
-		वापस true;
+static bool is_supported_xstate_size(unsigned int test_xstate_size)
+{
+	if (test_xstate_size <= sizeof(union fpregs_state))
+		return true;
 
 	pr_warn("x86/fpu: xstate buffer too small (%zu < %d), disabling xsave\n",
-			माप(जोड़ fpregs_state), test_xstate_size);
-	वापस false;
-पूर्ण
+			sizeof(union fpregs_state), test_xstate_size);
+	return false;
+}
 
-अटल पूर्णांक __init init_xstate_size(व्योम)
-अणु
-	/* Recompute the context size क्रम enabled features: */
-	अचिन्हित पूर्णांक possible_xstate_size;
-	अचिन्हित पूर्णांक xsave_size;
+static int __init init_xstate_size(void)
+{
+	/* Recompute the context size for enabled features: */
+	unsigned int possible_xstate_size;
+	unsigned int xsave_size;
 
 	xsave_size = get_xsave_size();
 
-	अगर (boot_cpu_has(X86_FEATURE_XSAVES))
+	if (boot_cpu_has(X86_FEATURE_XSAVES))
 		possible_xstate_size = get_xsaves_size_no_dynamic();
-	अन्यथा
+	else
 		possible_xstate_size = xsave_size;
 
 	/* Ensure we have the space to store all enabled: */
-	अगर (!is_supported_xstate_size(possible_xstate_size))
-		वापस -EINVAL;
+	if (!is_supported_xstate_size(possible_xstate_size))
+		return -EINVAL;
 
 	/*
 	 * The size is OK, we are definitely going to use xsave,
 	 * make it known to the world that we need more space.
 	 */
 	fpu_kernel_xstate_size = possible_xstate_size;
-	करो_extra_xstate_size_checks();
+	do_extra_xstate_size_checks();
 
 	/*
-	 * User space is always in standard क्रमmat.
+	 * User space is always in standard format.
 	 */
 	fpu_user_xstate_size = xsave_size;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * We enabled the XSAVE hardware, but something went wrong and
  * we can not use it.  Disable it.
  */
-अटल व्योम fpu__init_disable_प्रणाली_xstate(व्योम)
-अणु
+static void fpu__init_disable_system_xstate(void)
+{
 	xfeatures_mask_all = 0;
 	cr4_clear_bits(X86_CR4_OSXSAVE);
 	setup_clear_cpu_cap(X86_FEATURE_XSAVE);
-पूर्ण
+}
 
 /*
  * Enable and initialize the xsave feature.
- * Called once per प्रणाली bootup.
+ * Called once per system bootup.
  */
-व्योम __init fpu__init_प्रणाली_xstate(व्योम)
-अणु
-	अचिन्हित पूर्णांक eax, ebx, ecx, edx;
-	अटल पूर्णांक on_boot_cpu __initdata = 1;
-	पूर्णांक err;
-	पूर्णांक i;
+void __init fpu__init_system_xstate(void)
+{
+	unsigned int eax, ebx, ecx, edx;
+	static int on_boot_cpu __initdata = 1;
+	int err;
+	int i;
 
 	WARN_ON_FPU(!on_boot_cpu);
 	on_boot_cpu = 0;
 
-	अगर (!boot_cpu_has(X86_FEATURE_FPU)) अणु
+	if (!boot_cpu_has(X86_FEATURE_FPU)) {
 		pr_info("x86/fpu: No FPU detected\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!boot_cpu_has(X86_FEATURE_XSAVE)) अणु
+	if (!boot_cpu_has(X86_FEATURE_XSAVE)) {
 		pr_info("x86/fpu: x87 FPU will use %s\n",
 			boot_cpu_has(X86_FEATURE_FXSR) ? "FXSAVE" : "FSAVE");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (boot_cpu_data.cpuid_level < XSTATE_CPUID) अणु
+	if (boot_cpu_data.cpuid_level < XSTATE_CPUID) {
 		WARN_ON_FPU(1);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
 	 * Find user xstates supported by the processor.
@@ -821,35 +820,35 @@ EXPORT_SYMBOL_GPL(cpu_has_xfeatures);
 	cpuid_count(XSTATE_CPUID, 1, &eax, &ebx, &ecx, &edx);
 	xfeatures_mask_all |= ecx + ((u64)edx << 32);
 
-	अगर ((xfeatures_mask_user() & XFEATURE_MASK_FPSSE) != XFEATURE_MASK_FPSSE) अणु
+	if ((xfeatures_mask_user() & XFEATURE_MASK_FPSSE) != XFEATURE_MASK_FPSSE) {
 		/*
 		 * This indicates that something really unexpected happened
-		 * with the क्रमागतeration.  Disable XSAVE and try to जारी
+		 * with the enumeration.  Disable XSAVE and try to continue
 		 * booting without it.  This is too early to BUG().
 		 */
 		pr_err("x86/fpu: FP/SSE not present amongst the CPU's xstate features: 0x%llx.\n",
 		       xfeatures_mask_all);
-		जाओ out_disable;
-	पूर्ण
+		goto out_disable;
+	}
 
 	/*
 	 * Clear XSAVE features that are disabled in the normal CPUID.
 	 */
-	क्रम (i = 0; i < ARRAY_SIZE(xsave_cpuid_features); i++) अणु
-		अगर (!boot_cpu_has(xsave_cpuid_features[i]))
+	for (i = 0; i < ARRAY_SIZE(xsave_cpuid_features); i++) {
+		if (!boot_cpu_has(xsave_cpuid_features[i]))
 			xfeatures_mask_all &= ~BIT_ULL(i);
-	पूर्ण
+	}
 
 	xfeatures_mask_all &= fpu__get_supported_xfeatures_mask();
 
-	/* Enable xstate inकाष्ठाions to be able to जारी with initialization: */
+	/* Enable xstate instructions to be able to continue with initialization: */
 	fpu__init_cpu_xstate();
 	err = init_xstate_size();
-	अगर (err)
-		जाओ out_disable;
+	if (err)
+		goto out_disable;
 
 	/*
-	 * Update info used क्रम ptrace frames; use standard-क्रमmat size and no
+	 * Update info used for ptrace frames; use standard-format size and no
 	 * supervisor xstates:
 	 */
 	update_regset_xstate_info(fpu_user_xstate_size, xfeatures_mask_user());
@@ -858,79 +857,79 @@ EXPORT_SYMBOL_GPL(cpu_has_xfeatures);
 	setup_init_fpu_buf();
 	setup_xstate_comp_offsets();
 	setup_supervisor_only_offsets();
-	prपूर्णांक_xstate_offset_size();
+	print_xstate_offset_size();
 
 	pr_info("x86/fpu: Enabled xstate features 0x%llx, context size is %d bytes, using '%s' format.\n",
 		xfeatures_mask_all,
 		fpu_kernel_xstate_size,
 		boot_cpu_has(X86_FEATURE_XSAVES) ? "compacted" : "standard");
-	वापस;
+	return;
 
 out_disable:
 	/* something went wrong, try to boot without any XSAVE support */
-	fpu__init_disable_प्रणाली_xstate();
-पूर्ण
+	fpu__init_disable_system_xstate();
+}
 
 /*
  * Restore minimal FPU state after suspend:
  */
-व्योम fpu__resume_cpu(व्योम)
-अणु
+void fpu__resume_cpu(void)
+{
 	/*
 	 * Restore XCR0 on xsave capable CPUs:
 	 */
-	अगर (boot_cpu_has(X86_FEATURE_XSAVE))
+	if (boot_cpu_has(X86_FEATURE_XSAVE))
 		xsetbv(XCR_XFEATURE_ENABLED_MASK, xfeatures_mask_user());
 
 	/*
-	 * Restore IA32_XSS. The same CPUID bit क्रमागतerates support
+	 * Restore IA32_XSS. The same CPUID bit enumerates support
 	 * of XSAVES and MSR_IA32_XSS.
 	 */
-	अगर (boot_cpu_has(X86_FEATURE_XSAVES)) अणु
+	if (boot_cpu_has(X86_FEATURE_XSAVES)) {
 		wrmsrl(MSR_IA32_XSS, xfeatures_mask_supervisor()  |
 				     xfeatures_mask_dynamic());
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Given an xstate feature nr, calculate where in the xsave
  * buffer the state is.  Callers should ensure that the buffer
  * is valid.
  */
-अटल व्योम *__raw_xsave_addr(काष्ठा xregs_state *xsave, पूर्णांक xfeature_nr)
-अणु
-	अगर (!xfeature_enabled(xfeature_nr)) अणु
+static void *__raw_xsave_addr(struct xregs_state *xsave, int xfeature_nr)
+{
+	if (!xfeature_enabled(xfeature_nr)) {
 		WARN_ON_FPU(1);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	वापस (व्योम *)xsave + xstate_comp_offsets[xfeature_nr];
-पूर्ण
+	return (void *)xsave + xstate_comp_offsets[xfeature_nr];
+}
 /*
- * Given the xsave area and a state inside, this function वापसs the
+ * Given the xsave area and a state inside, this function returns the
  * address of the state.
  *
  * This is the API that is called to get xstate address in either
- * standard क्रमmat or compacted क्रमmat of xsave area.
+ * standard format or compacted format of xsave area.
  *
- * Note that अगर there is no data क्रम the field in the xsave buffer
- * this will वापस शून्य.
+ * Note that if there is no data for the field in the xsave buffer
+ * this will return NULL.
  *
- * Inमाला_दो:
- *	xstate: the thपढ़ो's storage area क्रम all FPU data
+ * Inputs:
+ *	xstate: the thread's storage area for all FPU data
  *	xfeature_nr: state which is defined in xsave.h (e.g. XFEATURE_FP,
  *	XFEATURE_SSE, etc...)
  * Output:
- *	address of the state in the xsave area, or शून्य अगर the
+ *	address of the state in the xsave area, or NULL if the
  *	field is not present in the xsave buffer.
  */
-व्योम *get_xsave_addr(काष्ठा xregs_state *xsave, पूर्णांक xfeature_nr)
-अणु
+void *get_xsave_addr(struct xregs_state *xsave, int xfeature_nr)
+{
 	/*
 	 * Do we even *have* xsave state?
 	 */
-	अगर (!boot_cpu_has(X86_FEATURE_XSAVE))
-		वापस शून्य;
+	if (!boot_cpu_has(X86_FEATURE_XSAVE))
+		return NULL;
 
 	/*
 	 * We should not ever be requesting features that we
@@ -939,7 +938,7 @@ out_disable:
 	WARN_ONCE(!(xfeatures_mask_all & BIT_ULL(xfeature_nr)),
 		  "get of unsupported state");
 	/*
-	 * This assumes the last 'xsave*' inकाष्ठाion to
+	 * This assumes the last 'xsave*' instruction to
 	 * have requested that 'xfeature_nr' be saved.
 	 * If it did not, we might be seeing and old value
 	 * of the field in the buffer.
@@ -949,11 +948,11 @@ out_disable:
 	 * or because the "init optimization" caused it
 	 * to not be saved.
 	 */
-	अगर (!(xsave->header.xfeatures & BIT_ULL(xfeature_nr)))
-		वापस शून्य;
+	if (!(xsave->header.xfeatures & BIT_ULL(xfeature_nr)))
+		return NULL;
 
-	वापस __raw_xsave_addr(xsave, xfeature_nr);
-पूर्ण
+	return __raw_xsave_addr(xsave, xfeature_nr);
+}
 EXPORT_SYMBOL_GPL(get_xsave_addr);
 
 /*
@@ -966,201 +965,201 @@ EXPORT_SYMBOL_GPL(get_xsave_addr);
  *
  * Note that this only works on the current task.
  *
- * Inमाला_दो:
+ * Inputs:
  *	@xfeature_nr: state which is defined in xsave.h (e.g. XFEATURE_FP,
  *	XFEATURE_SSE, etc...)
  * Output:
- *	address of the state in the xsave area or शून्य अगर the state
+ *	address of the state in the xsave area or NULL if the state
  *	is not present or is in its 'init state'.
  */
-स्थिर व्योम *get_xsave_field_ptr(पूर्णांक xfeature_nr)
-अणु
-	काष्ठा fpu *fpu = &current->thपढ़ो.fpu;
+const void *get_xsave_field_ptr(int xfeature_nr)
+{
+	struct fpu *fpu = &current->thread.fpu;
 
 	/*
-	 * fpu__save() takes the CPU's xstate रेजिस्टरs
+	 * fpu__save() takes the CPU's xstate registers
 	 * and saves them off to the 'fpu memory buffer.
 	 */
 	fpu__save(fpu);
 
-	वापस get_xsave_addr(&fpu->state.xsave, xfeature_nr);
-पूर्ण
+	return get_xsave_addr(&fpu->state.xsave, xfeature_nr);
+}
 
-#अगर_घोषित CONFIG_ARCH_HAS_PKEYS
+#ifdef CONFIG_ARCH_HAS_PKEYS
 
 /*
- * This will go out and modअगरy PKRU रेजिस्टर to set the access
- * rights क्रम @pkey to @init_val.
+ * This will go out and modify PKRU register to set the access
+ * rights for @pkey to @init_val.
  */
-पूर्णांक arch_set_user_pkey_access(काष्ठा task_काष्ठा *tsk, पूर्णांक pkey,
-		अचिन्हित दीर्घ init_val)
-अणु
+int arch_set_user_pkey_access(struct task_struct *tsk, int pkey,
+		unsigned long init_val)
+{
 	u32 old_pkru;
-	पूर्णांक pkey_shअगरt = (pkey * PKRU_BITS_PER_PKEY);
+	int pkey_shift = (pkey * PKRU_BITS_PER_PKEY);
 	u32 new_pkru_bits = 0;
 
 	/*
-	 * This check implies XSAVE support.  OSPKE only माला_लो
-	 * set अगर we enable XSAVE and we enable PKU in XCR0.
+	 * This check implies XSAVE support.  OSPKE only gets
+	 * set if we enable XSAVE and we enable PKU in XCR0.
 	 */
-	अगर (!boot_cpu_has(X86_FEATURE_OSPKE))
-		वापस -EINVAL;
+	if (!boot_cpu_has(X86_FEATURE_OSPKE))
+		return -EINVAL;
 
 	/*
 	 * This code should only be called with valid 'pkey'
 	 * values originating from in-kernel users.  Complain
-	 * अगर a bad value is observed.
+	 * if a bad value is observed.
 	 */
 	WARN_ON_ONCE(pkey >= arch_max_pkey());
 
 	/* Set the bits we need in PKRU:  */
-	अगर (init_val & PKEY_DISABLE_ACCESS)
+	if (init_val & PKEY_DISABLE_ACCESS)
 		new_pkru_bits |= PKRU_AD_BIT;
-	अगर (init_val & PKEY_DISABLE_WRITE)
+	if (init_val & PKEY_DISABLE_WRITE)
 		new_pkru_bits |= PKRU_WD_BIT;
 
-	/* Shअगरt the bits in to the correct place in PKRU क्रम pkey: */
-	new_pkru_bits <<= pkey_shअगरt;
+	/* Shift the bits in to the correct place in PKRU for pkey: */
+	new_pkru_bits <<= pkey_shift;
 
 	/* Get old PKRU and mask off any old bits in place: */
-	old_pkru = पढ़ो_pkru();
-	old_pkru &= ~((PKRU_AD_BIT|PKRU_WD_BIT) << pkey_shअगरt);
+	old_pkru = read_pkru();
+	old_pkru &= ~((PKRU_AD_BIT|PKRU_WD_BIT) << pkey_shift);
 
-	/* Write old part aदीर्घ with new part: */
-	ग_लिखो_pkru(old_pkru | new_pkru_bits);
+	/* Write old part along with new part: */
+	write_pkru(old_pkru | new_pkru_bits);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* ! CONFIG_ARCH_HAS_PKEYS */
+	return 0;
+}
+#endif /* ! CONFIG_ARCH_HAS_PKEYS */
 
 /*
- * Weird legacy quirk: SSE and YMM states store inक्रमmation in the
- * MXCSR and MXCSR_FLAGS fields of the FP area. That means अगर the FP
+ * Weird legacy quirk: SSE and YMM states store information in the
+ * MXCSR and MXCSR_FLAGS fields of the FP area. That means if the FP
  * area is marked as unused in the xfeatures header, we need to copy
- * MXCSR and MXCSR_FLAGS अगर either SSE or YMM are in use.
+ * MXCSR and MXCSR_FLAGS if either SSE or YMM are in use.
  */
-अटल अंतरभूत bool xfeatures_mxcsr_quirk(u64 xfeatures)
-अणु
-	अगर (!(xfeatures & (XFEATURE_MASK_SSE|XFEATURE_MASK_YMM)))
-		वापस false;
+static inline bool xfeatures_mxcsr_quirk(u64 xfeatures)
+{
+	if (!(xfeatures & (XFEATURE_MASK_SSE|XFEATURE_MASK_YMM)))
+		return false;
 
-	अगर (xfeatures & XFEATURE_MASK_FP)
-		वापस false;
+	if (xfeatures & XFEATURE_MASK_FP)
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम fill_gap(काष्ठा membuf *to, अचिन्हित *last, अचिन्हित offset)
-अणु
-	अगर (*last >= offset)
-		वापस;
-	membuf_ग_लिखो(to, (व्योम *)&init_fpstate.xsave + *last, offset - *last);
+static void fill_gap(struct membuf *to, unsigned *last, unsigned offset)
+{
+	if (*last >= offset)
+		return;
+	membuf_write(to, (void *)&init_fpstate.xsave + *last, offset - *last);
 	*last = offset;
-पूर्ण
+}
 
-अटल व्योम copy_part(काष्ठा membuf *to, अचिन्हित *last, अचिन्हित offset,
-		      अचिन्हित size, व्योम *from)
-अणु
+static void copy_part(struct membuf *to, unsigned *last, unsigned offset,
+		      unsigned size, void *from)
+{
 	fill_gap(to, last, offset);
-	membuf_ग_लिखो(to, from, size);
+	membuf_write(to, from, size);
 	*last = offset + size;
-पूर्ण
+}
 
 /*
- * Convert from kernel XSAVES compacted क्रमmat to standard क्रमmat and copy
+ * Convert from kernel XSAVES compacted format to standard format and copy
  * to a kernel-space ptrace buffer.
  *
  * It supports partial copy but pos always starts from zero. This is called
  * from xstateregs_get() and there we check the CPU has XSAVES.
  */
-व्योम copy_xstate_to_kernel(काष्ठा membuf to, काष्ठा xregs_state *xsave)
-अणु
-	काष्ठा xstate_header header;
-	स्थिर अचिन्हित off_mxcsr = दुरत्व(काष्ठा fxregs_state, mxcsr);
-	अचिन्हित size = to.left;
-	अचिन्हित last = 0;
-	पूर्णांक i;
+void copy_xstate_to_kernel(struct membuf to, struct xregs_state *xsave)
+{
+	struct xstate_header header;
+	const unsigned off_mxcsr = offsetof(struct fxregs_state, mxcsr);
+	unsigned size = to.left;
+	unsigned last = 0;
+	int i;
 
 	/*
 	 * The destination is a ptrace buffer; we put in only user xstates:
 	 */
-	स_रखो(&header, 0, माप(header));
+	memset(&header, 0, sizeof(header));
 	header.xfeatures = xsave->header.xfeatures;
 	header.xfeatures &= xfeatures_mask_user();
 
-	अगर (header.xfeatures & XFEATURE_MASK_FP)
+	if (header.xfeatures & XFEATURE_MASK_FP)
 		copy_part(&to, &last, 0, off_mxcsr, &xsave->i387);
-	अगर (header.xfeatures & (XFEATURE_MASK_SSE | XFEATURE_MASK_YMM))
+	if (header.xfeatures & (XFEATURE_MASK_SSE | XFEATURE_MASK_YMM))
 		copy_part(&to, &last, off_mxcsr,
 			  MXCSR_AND_FLAGS_SIZE, &xsave->i387.mxcsr);
-	अगर (header.xfeatures & XFEATURE_MASK_FP)
-		copy_part(&to, &last, दुरत्व(काष्ठा fxregs_state, st_space),
+	if (header.xfeatures & XFEATURE_MASK_FP)
+		copy_part(&to, &last, offsetof(struct fxregs_state, st_space),
 			  128, &xsave->i387.st_space);
-	अगर (header.xfeatures & XFEATURE_MASK_SSE)
+	if (header.xfeatures & XFEATURE_MASK_SSE)
 		copy_part(&to, &last, xstate_offsets[XFEATURE_SSE],
 			  256, &xsave->i387.xmm_space);
 	/*
-	 * Fill xsave->i387.sw_reserved value क्रम ptrace frame:
+	 * Fill xsave->i387.sw_reserved value for ptrace frame:
 	 */
-	copy_part(&to, &last, दुरत्व(काष्ठा fxregs_state, sw_reserved),
+	copy_part(&to, &last, offsetof(struct fxregs_state, sw_reserved),
 		  48, xstate_fx_sw_bytes);
 	/*
 	 * Copy xregs_state->header:
 	 */
-	copy_part(&to, &last, दुरत्व(काष्ठा xregs_state, header),
-		  माप(header), &header);
+	copy_part(&to, &last, offsetof(struct xregs_state, header),
+		  sizeof(header), &header);
 
-	क्रम (i = FIRST_EXTENDED_XFEATURE; i < XFEATURE_MAX; i++) अणु
+	for (i = FIRST_EXTENDED_XFEATURE; i < XFEATURE_MAX; i++) {
 		/*
 		 * Copy only in-use xstates:
 		 */
-		अगर ((header.xfeatures >> i) & 1) अणु
-			व्योम *src = __raw_xsave_addr(xsave, i);
+		if ((header.xfeatures >> i) & 1) {
+			void *src = __raw_xsave_addr(xsave, i);
 
 			copy_part(&to, &last, xstate_offsets[i],
 				  xstate_sizes[i], src);
-		पूर्ण
+		}
 
-	पूर्ण
+	}
 	fill_gap(&to, &last, size);
-पूर्ण
+}
 
 /*
- * Convert from a ptrace standard-क्रमmat kernel buffer to kernel XSAVES क्रमmat
- * and copy to the target thपढ़ो. This is called from xstateregs_set().
+ * Convert from a ptrace standard-format kernel buffer to kernel XSAVES format
+ * and copy to the target thread. This is called from xstateregs_set().
  */
-पूर्णांक copy_kernel_to_xstate(काष्ठा xregs_state *xsave, स्थिर व्योम *kbuf)
-अणु
-	अचिन्हित पूर्णांक offset, size;
-	पूर्णांक i;
-	काष्ठा xstate_header hdr;
+int copy_kernel_to_xstate(struct xregs_state *xsave, const void *kbuf)
+{
+	unsigned int offset, size;
+	int i;
+	struct xstate_header hdr;
 
-	offset = दुरत्व(काष्ठा xregs_state, header);
-	size = माप(hdr);
+	offset = offsetof(struct xregs_state, header);
+	size = sizeof(hdr);
 
-	स_नकल(&hdr, kbuf + offset, size);
+	memcpy(&hdr, kbuf + offset, size);
 
-	अगर (validate_user_xstate_header(&hdr))
-		वापस -EINVAL;
+	if (validate_user_xstate_header(&hdr))
+		return -EINVAL;
 
-	क्रम (i = 0; i < XFEATURE_MAX; i++) अणु
+	for (i = 0; i < XFEATURE_MAX; i++) {
 		u64 mask = ((u64)1 << i);
 
-		अगर (hdr.xfeatures & mask) अणु
-			व्योम *dst = __raw_xsave_addr(xsave, i);
+		if (hdr.xfeatures & mask) {
+			void *dst = __raw_xsave_addr(xsave, i);
 
 			offset = xstate_offsets[i];
 			size = xstate_sizes[i];
 
-			स_नकल(dst, kbuf + offset, size);
-		पूर्ण
-	पूर्ण
+			memcpy(dst, kbuf + offset, size);
+		}
+	}
 
-	अगर (xfeatures_mxcsr_quirk(hdr.xfeatures)) अणु
-		offset = दुरत्व(काष्ठा fxregs_state, mxcsr);
+	if (xfeatures_mxcsr_quirk(hdr.xfeatures)) {
+		offset = offsetof(struct fxregs_state, mxcsr);
 		size = MXCSR_AND_FLAGS_SIZE;
-		स_नकल(&xsave->i387.mxcsr, kbuf + offset, size);
-	पूर्ण
+		memcpy(&xsave->i387.mxcsr, kbuf + offset, size);
+	}
 
 	/*
 	 * The state that came in from userspace was user-state only.
@@ -1173,50 +1172,50 @@ EXPORT_SYMBOL_GPL(get_xsave_addr);
 	 */
 	xsave->header.xfeatures |= hdr.xfeatures;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Convert from a ptrace or sigवापस standard-क्रमmat user-space buffer to
- * kernel XSAVES क्रमmat and copy to the target thपढ़ो. This is called from
- * xstateregs_set(), as well as potentially from the sigवापस() and
- * rt_sigवापस() प्रणाली calls.
+ * Convert from a ptrace or sigreturn standard-format user-space buffer to
+ * kernel XSAVES format and copy to the target thread. This is called from
+ * xstateregs_set(), as well as potentially from the sigreturn() and
+ * rt_sigreturn() system calls.
  */
-पूर्णांक copy_user_to_xstate(काष्ठा xregs_state *xsave, स्थिर व्योम __user *ubuf)
-अणु
-	अचिन्हित पूर्णांक offset, size;
-	पूर्णांक i;
-	काष्ठा xstate_header hdr;
+int copy_user_to_xstate(struct xregs_state *xsave, const void __user *ubuf)
+{
+	unsigned int offset, size;
+	int i;
+	struct xstate_header hdr;
 
-	offset = दुरत्व(काष्ठा xregs_state, header);
-	size = माप(hdr);
+	offset = offsetof(struct xregs_state, header);
+	size = sizeof(hdr);
 
-	अगर (__copy_from_user(&hdr, ubuf + offset, size))
-		वापस -EFAULT;
+	if (__copy_from_user(&hdr, ubuf + offset, size))
+		return -EFAULT;
 
-	अगर (validate_user_xstate_header(&hdr))
-		वापस -EINVAL;
+	if (validate_user_xstate_header(&hdr))
+		return -EINVAL;
 
-	क्रम (i = 0; i < XFEATURE_MAX; i++) अणु
+	for (i = 0; i < XFEATURE_MAX; i++) {
 		u64 mask = ((u64)1 << i);
 
-		अगर (hdr.xfeatures & mask) अणु
-			व्योम *dst = __raw_xsave_addr(xsave, i);
+		if (hdr.xfeatures & mask) {
+			void *dst = __raw_xsave_addr(xsave, i);
 
 			offset = xstate_offsets[i];
 			size = xstate_sizes[i];
 
-			अगर (__copy_from_user(dst, ubuf + offset, size))
-				वापस -EFAULT;
-		पूर्ण
-	पूर्ण
+			if (__copy_from_user(dst, ubuf + offset, size))
+				return -EFAULT;
+		}
+	}
 
-	अगर (xfeatures_mxcsr_quirk(hdr.xfeatures)) अणु
-		offset = दुरत्व(काष्ठा fxregs_state, mxcsr);
+	if (xfeatures_mxcsr_quirk(hdr.xfeatures)) {
+		offset = offsetof(struct fxregs_state, mxcsr);
 		size = MXCSR_AND_FLAGS_SIZE;
-		अगर (__copy_from_user(&xsave->i387.mxcsr, ubuf + offset, size))
-			वापस -EFAULT;
-	पूर्ण
+		if (__copy_from_user(&xsave->i387.mxcsr, ubuf + offset, size))
+			return -EFAULT;
+	}
 
 	/*
 	 * The state that came in from userspace was user-state only.
@@ -1229,26 +1228,26 @@ EXPORT_SYMBOL_GPL(get_xsave_addr);
 	 */
 	xsave->header.xfeatures |= hdr.xfeatures;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Save only supervisor states to the kernel buffer.  This blows away all
- * old states, and is पूर्णांकended to be used only in __fpu__restore_sig(), where
+ * old states, and is intended to be used only in __fpu__restore_sig(), where
  * user states are restored from the user buffer.
  */
-व्योम copy_supervisor_to_kernel(काष्ठा xregs_state *xstate)
-अणु
-	काष्ठा xstate_header *header;
+void copy_supervisor_to_kernel(struct xregs_state *xstate)
+{
+	struct xstate_header *header;
 	u64 max_bit, min_bit;
 	u32 lmask, hmask;
-	पूर्णांक err, i;
+	int err, i;
 
-	अगर (WARN_ON(!boot_cpu_has(X86_FEATURE_XSAVES)))
-		वापस;
+	if (WARN_ON(!boot_cpu_has(X86_FEATURE_XSAVES)))
+		return;
 
-	अगर (!xfeatures_mask_supervisor())
-		वापस;
+	if (!xfeatures_mask_supervisor())
+		return;
 
 	max_bit = __fls(xfeatures_mask_supervisor());
 	min_bit = __ffs(xfeatures_mask_supervisor());
@@ -1258,12 +1257,12 @@ EXPORT_SYMBOL_GPL(get_xsave_addr);
 	XSTATE_OP(XSAVES, xstate, lmask, hmask, err);
 
 	/* We should never fault when copying to a kernel buffer: */
-	अगर (WARN_ON_FPU(err))
-		वापस;
+	if (WARN_ON_FPU(err))
+		return;
 
 	/*
-	 * At this poपूर्णांक, the buffer has only supervisor states and must be
-	 * converted back to normal kernel क्रमmat.
+	 * At this point, the buffer has only supervisor states and must be
+	 * converted back to normal kernel format.
 	 */
 	header = &xstate->header;
 	header->xcomp_bv |= xfeatures_mask_all;
@@ -1272,47 +1271,47 @@ EXPORT_SYMBOL_GPL(get_xsave_addr);
 	 * This only moves states up in the buffer.  Start with
 	 * the last state and move backwards so that states are
 	 * not overwritten until after they are moved.  Note:
-	 * स_हटाओ() allows overlapping src/dst buffers.
+	 * memmove() allows overlapping src/dst buffers.
 	 */
-	क्रम (i = max_bit; i >= min_bit; i--) अणु
+	for (i = max_bit; i >= min_bit; i--) {
 		u8 *xbuf = (u8 *)xstate;
 
-		अगर (!((header->xfeatures >> i) & 1))
-			जारी;
+		if (!((header->xfeatures >> i) & 1))
+			continue;
 
-		/* Move xfeature 'i' पूर्णांकo its normal location */
-		स_हटाओ(xbuf + xstate_comp_offsets[i],
+		/* Move xfeature 'i' into its normal location */
+		memmove(xbuf + xstate_comp_offsets[i],
 			xbuf + xstate_supervisor_only_offsets[i],
 			xstate_sizes[i]);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * copy_dynamic_supervisor_to_kernel() - Save dynamic supervisor states to
  *                                       an xsave area
- * @xstate: A poपूर्णांकer to an xsave area
- * @mask: Represent the dynamic supervisor features saved पूर्णांकo the xsave area
+ * @xstate: A pointer to an xsave area
+ * @mask: Represent the dynamic supervisor features saved into the xsave area
  *
- * Only the dynamic supervisor states sets in the mask are saved पूर्णांकo the xsave
- * area (See the comment in XFEATURE_MASK_DYNAMIC क्रम the details of dynamic
+ * Only the dynamic supervisor states sets in the mask are saved into the xsave
+ * area (See the comment in XFEATURE_MASK_DYNAMIC for the details of dynamic
  * supervisor feature). Besides the dynamic supervisor states, the legacy
- * region and XSAVE header are also saved पूर्णांकo the xsave area. The supervisor
+ * region and XSAVE header are also saved into the xsave area. The supervisor
  * features in the XFEATURE_MASK_SUPERVISOR_SUPPORTED and
  * XFEATURE_MASK_SUPERVISOR_UNSUPPORTED are not saved.
  *
  * The xsave area must be 64-bytes aligned.
  */
-व्योम copy_dynamic_supervisor_to_kernel(काष्ठा xregs_state *xstate, u64 mask)
-अणु
+void copy_dynamic_supervisor_to_kernel(struct xregs_state *xstate, u64 mask)
+{
 	u64 dynamic_mask = xfeatures_mask_dynamic() & mask;
 	u32 lmask, hmask;
-	पूर्णांक err;
+	int err;
 
-	अगर (WARN_ON_FPU(!boot_cpu_has(X86_FEATURE_XSAVES)))
-		वापस;
+	if (WARN_ON_FPU(!boot_cpu_has(X86_FEATURE_XSAVES)))
+		return;
 
-	अगर (WARN_ON_FPU(!dynamic_mask))
-		वापस;
+	if (WARN_ON_FPU(!dynamic_mask))
+		return;
 
 	lmask = dynamic_mask;
 	hmask = dynamic_mask >> 32;
@@ -1321,16 +1320,16 @@ EXPORT_SYMBOL_GPL(get_xsave_addr);
 
 	/* Should never fault when copying to a kernel buffer */
 	WARN_ON_FPU(err);
-पूर्ण
+}
 
 /**
  * copy_kernel_to_dynamic_supervisor() - Restore dynamic supervisor states from
  *                                       an xsave area
- * @xstate: A poपूर्णांकer to an xsave area
+ * @xstate: A pointer to an xsave area
  * @mask: Represent the dynamic supervisor features restored from the xsave area
  *
  * Only the dynamic supervisor states sets in the mask are restored from the
- * xsave area (See the comment in XFEATURE_MASK_DYNAMIC क्रम the details of
+ * xsave area (See the comment in XFEATURE_MASK_DYNAMIC for the details of
  * dynamic supervisor feature). Besides the dynamic supervisor states, the
  * legacy region and XSAVE header are also restored from the xsave area. The
  * supervisor features in the XFEATURE_MASK_SUPERVISOR_SUPPORTED and
@@ -1338,17 +1337,17 @@ EXPORT_SYMBOL_GPL(get_xsave_addr);
  *
  * The xsave area must be 64-bytes aligned.
  */
-व्योम copy_kernel_to_dynamic_supervisor(काष्ठा xregs_state *xstate, u64 mask)
-अणु
+void copy_kernel_to_dynamic_supervisor(struct xregs_state *xstate, u64 mask)
+{
 	u64 dynamic_mask = xfeatures_mask_dynamic() & mask;
 	u32 lmask, hmask;
-	पूर्णांक err;
+	int err;
 
-	अगर (WARN_ON_FPU(!boot_cpu_has(X86_FEATURE_XSAVES)))
-		वापस;
+	if (WARN_ON_FPU(!boot_cpu_has(X86_FEATURE_XSAVES)))
+		return;
 
-	अगर (WARN_ON_FPU(!dynamic_mask))
-		वापस;
+	if (WARN_ON_FPU(!dynamic_mask))
+		return;
 
 	lmask = dynamic_mask;
 	hmask = dynamic_mask >> 32;
@@ -1357,49 +1356,49 @@ EXPORT_SYMBOL_GPL(get_xsave_addr);
 
 	/* Should never fault when copying from a kernel buffer */
 	WARN_ON_FPU(err);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_PROC_PID_ARCH_STATUS
+#ifdef CONFIG_PROC_PID_ARCH_STATUS
 /*
- * Report the amount of समय elapsed in millisecond since last AVX512
+ * Report the amount of time elapsed in millisecond since last AVX512
  * use in the task.
  */
-अटल व्योम avx512_status(काष्ठा seq_file *m, काष्ठा task_काष्ठा *task)
-अणु
-	अचिन्हित दीर्घ बारtamp = READ_ONCE(task->thपढ़ो.fpu.avx512_बारtamp);
-	दीर्घ delta;
+static void avx512_status(struct seq_file *m, struct task_struct *task)
+{
+	unsigned long timestamp = READ_ONCE(task->thread.fpu.avx512_timestamp);
+	long delta;
 
-	अगर (!बारtamp) अणु
+	if (!timestamp) {
 		/*
-		 * Report -1 अगर no AVX512 usage
+		 * Report -1 if no AVX512 usage
 		 */
 		delta = -1;
-	पूर्ण अन्यथा अणु
-		delta = (दीर्घ)(jअगरfies - बारtamp);
+	} else {
+		delta = (long)(jiffies - timestamp);
 		/*
-		 * Cap to दीर्घ_उच्च अगर समय dअगरference > दीर्घ_उच्च
+		 * Cap to LONG_MAX if time difference > LONG_MAX
 		 */
-		अगर (delta < 0)
-			delta = दीर्घ_उच्च;
-		delta = jअगरfies_to_msecs(delta);
-	पूर्ण
+		if (delta < 0)
+			delta = LONG_MAX;
+		delta = jiffies_to_msecs(delta);
+	}
 
 	seq_put_decimal_ll(m, "AVX512_elapsed_ms:\t", delta);
-	seq_अ_दो(m, '\n');
-पूर्ण
+	seq_putc(m, '\n');
+}
 
 /*
- * Report architecture specअगरic inक्रमmation
+ * Report architecture specific information
  */
-पूर्णांक proc_pid_arch_status(काष्ठा seq_file *m, काष्ठा pid_namespace *ns,
-			काष्ठा pid *pid, काष्ठा task_काष्ठा *task)
-अणु
+int proc_pid_arch_status(struct seq_file *m, struct pid_namespace *ns,
+			struct pid *pid, struct task_struct *task)
+{
 	/*
-	 * Report AVX512 state अगर the processor and build option supported.
+	 * Report AVX512 state if the processor and build option supported.
 	 */
-	अगर (cpu_feature_enabled(X86_FEATURE_AVX512F))
+	if (cpu_feature_enabled(X86_FEATURE_AVX512F))
 		avx512_status(m, task);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PROC_PID_ARCH_STATUS */
+	return 0;
+}
+#endif /* CONFIG_PROC_PID_ARCH_STATUS */

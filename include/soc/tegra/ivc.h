@@ -1,102 +1,101 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2016, NVIDIA CORPORATION.  All rights reserved.
  */
 
-#अगर_अघोषित __TEGRA_IVC_H
+#ifndef __TEGRA_IVC_H
 
-#समावेश <linux/device.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/types.h>
+#include <linux/device.h>
+#include <linux/dma-mapping.h>
+#include <linux/types.h>
 
-काष्ठा tegra_ivc_header;
+struct tegra_ivc_header;
 
-काष्ठा tegra_ivc अणु
-	काष्ठा device *peer;
+struct tegra_ivc {
+	struct device *peer;
 
-	काष्ठा अणु
-		काष्ठा tegra_ivc_header *channel;
-		अचिन्हित पूर्णांक position;
+	struct {
+		struct tegra_ivc_header *channel;
+		unsigned int position;
 		dma_addr_t phys;
-	पूर्ण rx, tx;
+	} rx, tx;
 
-	व्योम (*notअगरy)(काष्ठा tegra_ivc *ivc, व्योम *data);
-	व्योम *notअगरy_data;
+	void (*notify)(struct tegra_ivc *ivc, void *data);
+	void *notify_data;
 
-	अचिन्हित पूर्णांक num_frames;
-	माप_प्रकार frame_size;
-पूर्ण;
+	unsigned int num_frames;
+	size_t frame_size;
+};
 
 /**
- * tegra_ivc_पढ़ो_get_next_frame - Peek at the next frame to receive
- * @ivc		poपूर्णांकer of the IVC channel
+ * tegra_ivc_read_get_next_frame - Peek at the next frame to receive
+ * @ivc		pointer of the IVC channel
  *
  * Peek at the next frame to be received, without removing it from
  * the queue.
  *
- * Returns a poपूर्णांकer to the frame, or an error encoded poपूर्णांकer.
+ * Returns a pointer to the frame, or an error encoded pointer.
  */
-व्योम *tegra_ivc_पढ़ो_get_next_frame(काष्ठा tegra_ivc *ivc);
+void *tegra_ivc_read_get_next_frame(struct tegra_ivc *ivc);
 
 /**
- * tegra_ivc_पढ़ो_advance - Advance the पढ़ो queue
- * @ivc		poपूर्णांकer of the IVC channel
+ * tegra_ivc_read_advance - Advance the read queue
+ * @ivc		pointer of the IVC channel
  *
- * Advance the पढ़ो queue
+ * Advance the read queue
  *
- * Returns 0, or a negative error value अगर failed.
+ * Returns 0, or a negative error value if failed.
  */
-पूर्णांक tegra_ivc_पढ़ो_advance(काष्ठा tegra_ivc *ivc);
+int tegra_ivc_read_advance(struct tegra_ivc *ivc);
 
 /**
- * tegra_ivc_ग_लिखो_get_next_frame - Poke at the next frame to transmit
- * @ivc		poपूर्णांकer of the IVC channel
+ * tegra_ivc_write_get_next_frame - Poke at the next frame to transmit
+ * @ivc		pointer of the IVC channel
  *
  * Get access to the next frame.
  *
- * Returns a poपूर्णांकer to the frame, or an error encoded poपूर्णांकer.
+ * Returns a pointer to the frame, or an error encoded pointer.
  */
-व्योम *tegra_ivc_ग_लिखो_get_next_frame(काष्ठा tegra_ivc *ivc);
+void *tegra_ivc_write_get_next_frame(struct tegra_ivc *ivc);
 
 /**
- * tegra_ivc_ग_लिखो_advance - Advance the ग_लिखो queue
- * @ivc		poपूर्णांकer of the IVC channel
+ * tegra_ivc_write_advance - Advance the write queue
+ * @ivc		pointer of the IVC channel
  *
- * Advance the ग_लिखो queue
+ * Advance the write queue
  *
- * Returns 0, or a negative error value अगर failed.
+ * Returns 0, or a negative error value if failed.
  */
-पूर्णांक tegra_ivc_ग_लिखो_advance(काष्ठा tegra_ivc *ivc);
+int tegra_ivc_write_advance(struct tegra_ivc *ivc);
 
 /**
- * tegra_ivc_notअगरied - handle पूर्णांकernal messages
- * @ivc		poपूर्णांकer of the IVC channel
+ * tegra_ivc_notified - handle internal messages
+ * @ivc		pointer of the IVC channel
  *
- * This function must be called following every notअगरication.
+ * This function must be called following every notification.
  *
- * Returns 0 अगर the channel is पढ़ोy क्रम communication, or -EAGAIN अगर a channel
+ * Returns 0 if the channel is ready for communication, or -EAGAIN if a channel
  * reset is in progress.
  */
-पूर्णांक tegra_ivc_notअगरied(काष्ठा tegra_ivc *ivc);
+int tegra_ivc_notified(struct tegra_ivc *ivc);
 
 /**
  * tegra_ivc_reset - initiates a reset of the shared memory state
- * @ivc		poपूर्णांकer of the IVC channel
+ * @ivc		pointer of the IVC channel
  *
- * This function must be called after a channel is reserved beक्रमe it is used
- * क्रम communication. The channel will be पढ़ोy क्रम use when a subsequent call
- * to notअगरy the remote of the channel reset.
+ * This function must be called after a channel is reserved before it is used
+ * for communication. The channel will be ready for use when a subsequent call
+ * to notify the remote of the channel reset.
  */
-व्योम tegra_ivc_reset(काष्ठा tegra_ivc *ivc);
+void tegra_ivc_reset(struct tegra_ivc *ivc);
 
-माप_प्रकार tegra_ivc_align(माप_प्रकार size);
-अचिन्हित tegra_ivc_total_queue_size(अचिन्हित queue_size);
-पूर्णांक tegra_ivc_init(काष्ठा tegra_ivc *ivc, काष्ठा device *peer, व्योम *rx,
-		   dma_addr_t rx_phys, व्योम *tx, dma_addr_t tx_phys,
-		   अचिन्हित पूर्णांक num_frames, माप_प्रकार frame_size,
-		   व्योम (*notअगरy)(काष्ठा tegra_ivc *ivc, व्योम *data),
-		   व्योम *data);
-व्योम tegra_ivc_cleanup(काष्ठा tegra_ivc *ivc);
+size_t tegra_ivc_align(size_t size);
+unsigned tegra_ivc_total_queue_size(unsigned queue_size);
+int tegra_ivc_init(struct tegra_ivc *ivc, struct device *peer, void *rx,
+		   dma_addr_t rx_phys, void *tx, dma_addr_t tx_phys,
+		   unsigned int num_frames, size_t frame_size,
+		   void (*notify)(struct tegra_ivc *ivc, void *data),
+		   void *data);
+void tegra_ivc_cleanup(struct tegra_ivc *ivc);
 
-#पूर्ण_अगर /* __TEGRA_IVC_H */
+#endif /* __TEGRA_IVC_H */

@@ -1,128 +1,127 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _NF_CONNTRACK_TIMEOUT_H
-#घोषणा _NF_CONNTRACK_TIMEOUT_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _NF_CONNTRACK_TIMEOUT_H
+#define _NF_CONNTRACK_TIMEOUT_H
 
-#समावेश <net/net_namespace.h>
-#समावेश <linux/netfilter/nf_conntrack_common.h>
-#समावेश <linux/netfilter/nf_conntrack_tuple_common.h>
-#समावेश <linux/refcount.h>
-#समावेश <net/netfilter/nf_conntrack.h>
-#समावेश <net/netfilter/nf_conntrack_extend.h>
+#include <net/net_namespace.h>
+#include <linux/netfilter/nf_conntrack_common.h>
+#include <linux/netfilter/nf_conntrack_tuple_common.h>
+#include <linux/refcount.h>
+#include <net/netfilter/nf_conntrack.h>
+#include <net/netfilter/nf_conntrack_extend.h>
 
-#घोषणा CTNL_TIMEOUT_NAME_MAX	32
+#define CTNL_TIMEOUT_NAME_MAX	32
 
-काष्ठा nf_ct_समयout अणु
+struct nf_ct_timeout {
 	__u16			l3num;
-	स्थिर काष्ठा nf_conntrack_l4proto *l4proto;
-	अक्षर			data[];
-पूर्ण;
+	const struct nf_conntrack_l4proto *l4proto;
+	char			data[];
+};
 
-काष्ठा ctnl_समयout अणु
-	काष्ठा list_head	head;
-	काष्ठा rcu_head		rcu_head;
+struct ctnl_timeout {
+	struct list_head	head;
+	struct rcu_head		rcu_head;
 	refcount_t		refcnt;
-	अक्षर			name[CTNL_TIMEOUT_NAME_MAX];
-	काष्ठा nf_ct_समयout	समयout;
-पूर्ण;
+	char			name[CTNL_TIMEOUT_NAME_MAX];
+	struct nf_ct_timeout	timeout;
+};
 
-काष्ठा nf_conn_समयout अणु
-	काष्ठा nf_ct_समयout __rcu *समयout;
-पूर्ण;
+struct nf_conn_timeout {
+	struct nf_ct_timeout __rcu *timeout;
+};
 
-अटल अंतरभूत अचिन्हित पूर्णांक *
-nf_ct_समयout_data(स्थिर काष्ठा nf_conn_समयout *t)
-अणु
-#अगर_घोषित CONFIG_NF_CONNTRACK_TIMEOUT
-	काष्ठा nf_ct_समयout *समयout;
+static inline unsigned int *
+nf_ct_timeout_data(const struct nf_conn_timeout *t)
+{
+#ifdef CONFIG_NF_CONNTRACK_TIMEOUT
+	struct nf_ct_timeout *timeout;
 
-	समयout = rcu_dereference(t->समयout);
-	अगर (समयout == शून्य)
-		वापस शून्य;
+	timeout = rcu_dereference(t->timeout);
+	if (timeout == NULL)
+		return NULL;
 
-	वापस (अचिन्हित पूर्णांक *)समयout->data;
-#अन्यथा
-	वापस शून्य;
-#पूर्ण_अगर
-पूर्ण
+	return (unsigned int *)timeout->data;
+#else
+	return NULL;
+#endif
+}
 
-अटल अंतरभूत
-काष्ठा nf_conn_समयout *nf_ct_समयout_find(स्थिर काष्ठा nf_conn *ct)
-अणु
-#अगर_घोषित CONFIG_NF_CONNTRACK_TIMEOUT
-	वापस nf_ct_ext_find(ct, NF_CT_EXT_TIMEOUT);
-#अन्यथा
-	वापस शून्य;
-#पूर्ण_अगर
-पूर्ण
+static inline
+struct nf_conn_timeout *nf_ct_timeout_find(const struct nf_conn *ct)
+{
+#ifdef CONFIG_NF_CONNTRACK_TIMEOUT
+	return nf_ct_ext_find(ct, NF_CT_EXT_TIMEOUT);
+#else
+	return NULL;
+#endif
+}
 
-अटल अंतरभूत
-काष्ठा nf_conn_समयout *nf_ct_समयout_ext_add(काष्ठा nf_conn *ct,
-					      काष्ठा nf_ct_समयout *समयout,
+static inline
+struct nf_conn_timeout *nf_ct_timeout_ext_add(struct nf_conn *ct,
+					      struct nf_ct_timeout *timeout,
 					      gfp_t gfp)
-अणु
-#अगर_घोषित CONFIG_NF_CONNTRACK_TIMEOUT
-	काष्ठा nf_conn_समयout *समयout_ext;
+{
+#ifdef CONFIG_NF_CONNTRACK_TIMEOUT
+	struct nf_conn_timeout *timeout_ext;
 
-	समयout_ext = nf_ct_ext_add(ct, NF_CT_EXT_TIMEOUT, gfp);
-	अगर (समयout_ext == शून्य)
-		वापस शून्य;
+	timeout_ext = nf_ct_ext_add(ct, NF_CT_EXT_TIMEOUT, gfp);
+	if (timeout_ext == NULL)
+		return NULL;
 
-	rcu_assign_poपूर्णांकer(समयout_ext->समयout, समयout);
+	rcu_assign_pointer(timeout_ext->timeout, timeout);
 
-	वापस समयout_ext;
-#अन्यथा
-	वापस शून्य;
-#पूर्ण_अगर
-पूर्ण;
+	return timeout_ext;
+#else
+	return NULL;
+#endif
+};
 
-अटल अंतरभूत अचिन्हित पूर्णांक *nf_ct_समयout_lookup(स्थिर काष्ठा nf_conn *ct)
-अणु
-	अचिन्हित पूर्णांक *समयouts = शून्य;
-#अगर_घोषित CONFIG_NF_CONNTRACK_TIMEOUT
-	काष्ठा nf_conn_समयout *समयout_ext;
+static inline unsigned int *nf_ct_timeout_lookup(const struct nf_conn *ct)
+{
+	unsigned int *timeouts = NULL;
+#ifdef CONFIG_NF_CONNTRACK_TIMEOUT
+	struct nf_conn_timeout *timeout_ext;
 
-	समयout_ext = nf_ct_समयout_find(ct);
-	अगर (समयout_ext)
-		समयouts = nf_ct_समयout_data(समयout_ext);
-#पूर्ण_अगर
-	वापस समयouts;
-पूर्ण
+	timeout_ext = nf_ct_timeout_find(ct);
+	if (timeout_ext)
+		timeouts = nf_ct_timeout_data(timeout_ext);
+#endif
+	return timeouts;
+}
 
-#अगर_घोषित CONFIG_NF_CONNTRACK_TIMEOUT
-पूर्णांक nf_conntrack_समयout_init(व्योम);
-व्योम nf_conntrack_समयout_fini(व्योम);
-व्योम nf_ct_unसमयout(काष्ठा net *net, काष्ठा nf_ct_समयout *समयout);
-पूर्णांक nf_ct_set_समयout(काष्ठा net *net, काष्ठा nf_conn *ct, u8 l3num, u8 l4num,
-		      स्थिर अक्षर *समयout_name);
-व्योम nf_ct_destroy_समयout(काष्ठा nf_conn *ct);
-#अन्यथा
-अटल अंतरभूत पूर्णांक nf_conntrack_समयout_init(व्योम)
-अणु
-        वापस 0;
-पूर्ण
+#ifdef CONFIG_NF_CONNTRACK_TIMEOUT
+int nf_conntrack_timeout_init(void);
+void nf_conntrack_timeout_fini(void);
+void nf_ct_untimeout(struct net *net, struct nf_ct_timeout *timeout);
+int nf_ct_set_timeout(struct net *net, struct nf_conn *ct, u8 l3num, u8 l4num,
+		      const char *timeout_name);
+void nf_ct_destroy_timeout(struct nf_conn *ct);
+#else
+static inline int nf_conntrack_timeout_init(void)
+{
+        return 0;
+}
 
-अटल अंतरभूत व्योम nf_conntrack_समयout_fini(व्योम)
-अणु
-        वापस;
-पूर्ण
+static inline void nf_conntrack_timeout_fini(void)
+{
+        return;
+}
 
-अटल अंतरभूत पूर्णांक nf_ct_set_समयout(काष्ठा net *net, काष्ठा nf_conn *ct,
+static inline int nf_ct_set_timeout(struct net *net, struct nf_conn *ct,
 				    u8 l3num, u8 l4num,
-				    स्थिर अक्षर *समयout_name)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+				    const char *timeout_name)
+{
+	return -EOPNOTSUPP;
+}
 
-अटल अंतरभूत व्योम nf_ct_destroy_समयout(काष्ठा nf_conn *ct)
-अणु
-	वापस;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_NF_CONNTRACK_TIMEOUT */
+static inline void nf_ct_destroy_timeout(struct nf_conn *ct)
+{
+	return;
+}
+#endif /* CONFIG_NF_CONNTRACK_TIMEOUT */
 
-#अगर_घोषित CONFIG_NF_CONNTRACK_TIMEOUT
-बाह्य काष्ठा nf_ct_समयout *(*nf_ct_समयout_find_get_hook)(काष्ठा net *net, स्थिर अक्षर *name);
-बाह्य व्योम (*nf_ct_समयout_put_hook)(काष्ठा nf_ct_समयout *समयout);
-#पूर्ण_अगर
+#ifdef CONFIG_NF_CONNTRACK_TIMEOUT
+extern struct nf_ct_timeout *(*nf_ct_timeout_find_get_hook)(struct net *net, const char *name);
+extern void (*nf_ct_timeout_put_hook)(struct nf_ct_timeout *timeout);
+#endif
 
-#पूर्ण_अगर /* _NF_CONNTRACK_TIMEOUT_H */
+#endif /* _NF_CONNTRACK_TIMEOUT_H */

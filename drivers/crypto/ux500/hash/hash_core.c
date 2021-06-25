@@ -1,154 +1,153 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Cryptographic API.
- * Support क्रम Nomadik hardware crypto engine.
+ * Support for Nomadik hardware crypto engine.
 
  * Copyright (C) ST-Ericsson SA 2010
- * Author: Shujuan Chen <shujuan.chen@stericsson.com> क्रम ST-Ericsson
- * Author: Joakim Bech <joakim.xx.bech@stericsson.com> क्रम ST-Ericsson
- * Author: Berne Hebark <berne.herbark@stericsson.com> क्रम ST-Ericsson.
- * Author: Niklas Hernaeus <niklas.hernaeus@stericsson.com> क्रम ST-Ericsson.
- * Author: Andreas Westin <andreas.westin@stericsson.com> क्रम ST-Ericsson.
+ * Author: Shujuan Chen <shujuan.chen@stericsson.com> for ST-Ericsson
+ * Author: Joakim Bech <joakim.xx.bech@stericsson.com> for ST-Ericsson
+ * Author: Berne Hebark <berne.herbark@stericsson.com> for ST-Ericsson.
+ * Author: Niklas Hernaeus <niklas.hernaeus@stericsson.com> for ST-Ericsson.
+ * Author: Andreas Westin <andreas.westin@stericsson.com> for ST-Ericsson.
  */
 
-#घोषणा pr_fmt(fmt) "hashX hashX: " fmt
+#define pr_fmt(fmt) "hashX hashX: " fmt
 
-#समावेश <linux/clk.h>
-#समावेश <linux/device.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/err.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/klist.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/crypto.h>
+#include <linux/clk.h>
+#include <linux/device.h>
+#include <linux/dma-mapping.h>
+#include <linux/err.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/klist.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/mod_devicetable.h>
+#include <linux/platform_device.h>
+#include <linux/crypto.h>
 
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/bitops.h>
+#include <linux/regulator/consumer.h>
+#include <linux/dmaengine.h>
+#include <linux/bitops.h>
 
-#समावेश <crypto/पूर्णांकernal/hash.h>
-#समावेश <crypto/sha1.h>
-#समावेश <crypto/sha2.h>
-#समावेश <crypto/scatterwalk.h>
-#समावेश <crypto/algapi.h>
+#include <crypto/internal/hash.h>
+#include <crypto/sha1.h>
+#include <crypto/sha2.h>
+#include <crypto/scatterwalk.h>
+#include <crypto/algapi.h>
 
-#समावेश <linux/platक्रमm_data/crypto-ux500.h>
+#include <linux/platform_data/crypto-ux500.h>
 
-#समावेश "hash_alg.h"
+#include "hash_alg.h"
 
-अटल पूर्णांक hash_mode;
-module_param(hash_mode, पूर्णांक, 0);
+static int hash_mode;
+module_param(hash_mode, int, 0);
 MODULE_PARM_DESC(hash_mode, "CPU or DMA mode. CPU = 0 (default), DMA = 1");
 
 /* HMAC-SHA1, no key */
-अटल स्थिर u8 zero_message_hmac_sha1[SHA1_DIGEST_SIZE] = अणु
+static const u8 zero_message_hmac_sha1[SHA1_DIGEST_SIZE] = {
 	0xfb, 0xdb, 0x1d, 0x1b, 0x18, 0xaa, 0x6c, 0x08,
 	0x32, 0x4b, 0x7d, 0x64, 0xb7, 0x1f, 0xb7, 0x63,
 	0x70, 0x69, 0x0e, 0x1d
-पूर्ण;
+};
 
 /* HMAC-SHA256, no key */
-अटल स्थिर u8 zero_message_hmac_sha256[SHA256_DIGEST_SIZE] = अणु
+static const u8 zero_message_hmac_sha256[SHA256_DIGEST_SIZE] = {
 	0xb6, 0x13, 0x67, 0x9a, 0x08, 0x14, 0xd9, 0xec,
 	0x77, 0x2f, 0x95, 0xd7, 0x78, 0xc3, 0x5f, 0xc5,
 	0xff, 0x16, 0x97, 0xc4, 0x93, 0x71, 0x56, 0x53,
 	0xc6, 0xc7, 0x12, 0x14, 0x42, 0x92, 0xc5, 0xad
-पूर्ण;
+};
 
 /**
- * काष्ठा hash_driver_data - data specअगरic to the driver.
+ * struct hash_driver_data - data specific to the driver.
  *
- * @device_list:	A list of रेजिस्टरed devices to choose from.
+ * @device_list:	A list of registered devices to choose from.
  * @device_allocation:	A semaphore initialized with number of devices.
  */
-काष्ठा hash_driver_data अणु
-	काष्ठा klist		device_list;
-	काष्ठा semaphore	device_allocation;
-पूर्ण;
+struct hash_driver_data {
+	struct klist		device_list;
+	struct semaphore	device_allocation;
+};
 
-अटल काष्ठा hash_driver_data	driver_data;
+static struct hash_driver_data	driver_data;
 
 /* Declaration of functions */
 /**
- * hash_messagepad - Pads a message and ग_लिखो the nblw bits.
- * @device_data:	Structure क्रम the hash device.
+ * hash_messagepad - Pads a message and write the nblw bits.
+ * @device_data:	Structure for the hash device.
  * @message:		Last word of a message
  * @index_bytes:	The number of bytes in the last message
  *
  * This function manages the final part of the digest calculation, when less
- * than 512 bits (64 bytes) reमुख्य in message. This means index_bytes < 64.
+ * than 512 bits (64 bytes) remain in message. This means index_bytes < 64.
  *
  */
-अटल व्योम hash_messagepad(काष्ठा hash_device_data *device_data,
-			    स्थिर u32 *message, u8 index_bytes);
+static void hash_messagepad(struct hash_device_data *device_data,
+			    const u32 *message, u8 index_bytes);
 
 /**
  * release_hash_device - Releases a previously allocated hash device.
- * @device_data:	Structure क्रम the hash device.
+ * @device_data:	Structure for the hash device.
  *
  */
-अटल व्योम release_hash_device(काष्ठा hash_device_data *device_data)
-अणु
+static void release_hash_device(struct hash_device_data *device_data)
+{
 	spin_lock(&device_data->ctx_lock);
-	device_data->current_ctx->device = शून्य;
-	device_data->current_ctx = शून्य;
+	device_data->current_ctx->device = NULL;
+	device_data->current_ctx = NULL;
 	spin_unlock(&device_data->ctx_lock);
 
 	/*
-	 * The करोwn_पूर्णांकerruptible part क्रम this semaphore is called in
+	 * The down_interruptible part for this semaphore is called in
 	 * cryp_get_device_data.
 	 */
 	up(&driver_data.device_allocation);
-पूर्ण
+}
 
-अटल व्योम hash_dma_setup_channel(काष्ठा hash_device_data *device_data,
-				   काष्ठा device *dev)
-अणु
-	काष्ठा hash_platक्रमm_data *platक्रमm_data = dev->platक्रमm_data;
-	काष्ठा dma_slave_config conf = अणु
+static void hash_dma_setup_channel(struct hash_device_data *device_data,
+				   struct device *dev)
+{
+	struct hash_platform_data *platform_data = dev->platform_data;
+	struct dma_slave_config conf = {
 		.direction = DMA_MEM_TO_DEV,
 		.dst_addr = device_data->phybase + HASH_DMA_FIFO,
 		.dst_addr_width = DMA_SLAVE_BUSWIDTH_2_BYTES,
 		.dst_maxburst = 16,
-	पूर्ण;
+	};
 
 	dma_cap_zero(device_data->dma.mask);
 	dma_cap_set(DMA_SLAVE, device_data->dma.mask);
 
-	device_data->dma.cfg_mem2hash = platक्रमm_data->mem_to_engine;
+	device_data->dma.cfg_mem2hash = platform_data->mem_to_engine;
 	device_data->dma.chan_mem2hash =
 		dma_request_channel(device_data->dma.mask,
-				    platक्रमm_data->dma_filter,
+				    platform_data->dma_filter,
 				    device_data->dma.cfg_mem2hash);
 
 	dmaengine_slave_config(device_data->dma.chan_mem2hash, &conf);
 
 	init_completion(&device_data->dma.complete);
-पूर्ण
+}
 
-अटल व्योम hash_dma_callback(व्योम *data)
-अणु
-	काष्ठा hash_ctx *ctx = data;
+static void hash_dma_callback(void *data)
+{
+	struct hash_ctx *ctx = data;
 
 	complete(&ctx->device->dma.complete);
-पूर्ण
+}
 
-अटल पूर्णांक hash_set_dma_transfer(काष्ठा hash_ctx *ctx, काष्ठा scatterlist *sg,
-				 पूर्णांक len, क्रमागत dma_data_direction direction)
-अणु
-	काष्ठा dma_async_tx_descriptor *desc = शून्य;
-	काष्ठा dma_chan *channel = शून्य;
+static int hash_set_dma_transfer(struct hash_ctx *ctx, struct scatterlist *sg,
+				 int len, enum dma_data_direction direction)
+{
+	struct dma_async_tx_descriptor *desc = NULL;
+	struct dma_chan *channel = NULL;
 
-	अगर (direction != DMA_TO_DEVICE) अणु
+	if (direction != DMA_TO_DEVICE) {
 		dev_err(ctx->device->dev, "%s: Invalid DMA direction\n",
 			__func__);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
 	sg->length = ALIGN(sg->length, HASH_DMA_ALIGN_SIZE);
 
@@ -158,22 +157,22 @@ MODULE_PARM_DESC(hash_mode, "CPU or DMA mode. CPU = 0 (default), DMA = 1");
 			ctx->device->dma.sg, ctx->device->dma.nents,
 			direction);
 
-	अगर (!ctx->device->dma.sg_len) अणु
+	if (!ctx->device->dma.sg_len) {
 		dev_err(ctx->device->dev, "%s: Could not map the sg list (TO_DEVICE)\n",
 			__func__);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
 	dev_dbg(ctx->device->dev, "%s: Setting up DMA for buffer (TO_DEVICE)\n",
 		__func__);
 	desc = dmaengine_prep_slave_sg(channel,
 			ctx->device->dma.sg, ctx->device->dma.sg_len,
 			DMA_MEM_TO_DEV, DMA_CTRL_ACK | DMA_PREP_INTERRUPT);
-	अगर (!desc) अणु
+	if (!desc) {
 		dev_err(ctx->device->dev,
 			"%s: dmaengine_prep_slave_sg() failed!\n", __func__);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
 	desc->callback = hash_dma_callback;
 	desc->callback_param = ctx;
@@ -181,573 +180,573 @@ MODULE_PARM_DESC(hash_mode, "CPU or DMA mode. CPU = 0 (default), DMA = 1");
 	dmaengine_submit(desc);
 	dma_async_issue_pending(channel);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम hash_dma_करोne(काष्ठा hash_ctx *ctx)
-अणु
-	काष्ठा dma_chan *chan;
+static void hash_dma_done(struct hash_ctx *ctx)
+{
+	struct dma_chan *chan;
 
 	chan = ctx->device->dma.chan_mem2hash;
 	dmaengine_terminate_all(chan);
 	dma_unmap_sg(chan->device->dev, ctx->device->dma.sg,
 		     ctx->device->dma.nents, DMA_TO_DEVICE);
-पूर्ण
+}
 
-अटल पूर्णांक hash_dma_ग_लिखो(काष्ठा hash_ctx *ctx,
-			  काष्ठा scatterlist *sg, पूर्णांक len)
-अणु
-	पूर्णांक error = hash_set_dma_transfer(ctx, sg, len, DMA_TO_DEVICE);
-	अगर (error) अणु
+static int hash_dma_write(struct hash_ctx *ctx,
+			  struct scatterlist *sg, int len)
+{
+	int error = hash_set_dma_transfer(ctx, sg, len, DMA_TO_DEVICE);
+	if (error) {
 		dev_dbg(ctx->device->dev,
 			"%s: hash_set_dma_transfer() failed\n", __func__);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
 /**
- * get_empty_message_digest - Returns a pre-calculated digest क्रम
+ * get_empty_message_digest - Returns a pre-calculated digest for
  * the empty message.
- * @device_data:	Structure क्रम the hash device.
- * @zero_hash:		Buffer to वापस the empty message digest.
+ * @device_data:	Structure for the hash device.
+ * @zero_hash:		Buffer to return the empty message digest.
  * @zero_hash_size:	Hash size of the empty message digest.
- * @zero_digest:	True अगर zero_digest वापसed.
+ * @zero_digest:	True if zero_digest returned.
  */
-अटल पूर्णांक get_empty_message_digest(
-		काष्ठा hash_device_data *device_data,
+static int get_empty_message_digest(
+		struct hash_device_data *device_data,
 		u8 *zero_hash, u32 *zero_hash_size, bool *zero_digest)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा hash_ctx *ctx = device_data->current_ctx;
+{
+	int ret = 0;
+	struct hash_ctx *ctx = device_data->current_ctx;
 	*zero_digest = false;
 
 	/**
-	 * Caller responsible क्रम ctx != शून्य.
+	 * Caller responsible for ctx != NULL.
 	 */
 
-	अगर (HASH_OPER_MODE_HASH == ctx->config.oper_mode) अणु
-		अगर (HASH_ALGO_SHA1 == ctx->config.algorithm) अणु
-			स_नकल(zero_hash, &sha1_zero_message_hash[0],
+	if (HASH_OPER_MODE_HASH == ctx->config.oper_mode) {
+		if (HASH_ALGO_SHA1 == ctx->config.algorithm) {
+			memcpy(zero_hash, &sha1_zero_message_hash[0],
 			       SHA1_DIGEST_SIZE);
 			*zero_hash_size = SHA1_DIGEST_SIZE;
 			*zero_digest = true;
-		पूर्ण अन्यथा अगर (HASH_ALGO_SHA256 ==
-				ctx->config.algorithm) अणु
-			स_नकल(zero_hash, &sha256_zero_message_hash[0],
+		} else if (HASH_ALGO_SHA256 ==
+				ctx->config.algorithm) {
+			memcpy(zero_hash, &sha256_zero_message_hash[0],
 			       SHA256_DIGEST_SIZE);
 			*zero_hash_size = SHA256_DIGEST_SIZE;
 			*zero_digest = true;
-		पूर्ण अन्यथा अणु
+		} else {
 			dev_err(device_data->dev, "%s: Incorrect algorithm!\n",
 				__func__);
 			ret = -EINVAL;
-			जाओ out;
-		पूर्ण
-	पूर्ण अन्यथा अगर (HASH_OPER_MODE_HMAC == ctx->config.oper_mode) अणु
-		अगर (!ctx->keylen) अणु
-			अगर (HASH_ALGO_SHA1 == ctx->config.algorithm) अणु
-				स_नकल(zero_hash, &zero_message_hmac_sha1[0],
+			goto out;
+		}
+	} else if (HASH_OPER_MODE_HMAC == ctx->config.oper_mode) {
+		if (!ctx->keylen) {
+			if (HASH_ALGO_SHA1 == ctx->config.algorithm) {
+				memcpy(zero_hash, &zero_message_hmac_sha1[0],
 				       SHA1_DIGEST_SIZE);
 				*zero_hash_size = SHA1_DIGEST_SIZE;
 				*zero_digest = true;
-			पूर्ण अन्यथा अगर (HASH_ALGO_SHA256 == ctx->config.algorithm) अणु
-				स_नकल(zero_hash, &zero_message_hmac_sha256[0],
+			} else if (HASH_ALGO_SHA256 == ctx->config.algorithm) {
+				memcpy(zero_hash, &zero_message_hmac_sha256[0],
 				       SHA256_DIGEST_SIZE);
 				*zero_hash_size = SHA256_DIGEST_SIZE;
 				*zero_digest = true;
-			पूर्ण अन्यथा अणु
+			} else {
 				dev_err(device_data->dev, "%s: Incorrect algorithm!\n",
 					__func__);
 				ret = -EINVAL;
-				जाओ out;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				goto out;
+			}
+		} else {
 			dev_dbg(device_data->dev,
 				"%s: Continue hash calculation, since hmac key available\n",
 				__func__);
-		पूर्ण
-	पूर्ण
+		}
+	}
 out:
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * hash_disable_घातer - Request to disable घातer and घड़ी.
- * @device_data:	Structure क्रम the hash device.
+ * hash_disable_power - Request to disable power and clock.
+ * @device_data:	Structure for the hash device.
  * @save_device_state:	If true, saves the current hw state.
  *
- * This function request क्रम disabling घातer (regulator) and घड़ी,
+ * This function request for disabling power (regulator) and clock,
  * and could also save current hw state.
  */
-अटल पूर्णांक hash_disable_घातer(काष्ठा hash_device_data *device_data,
+static int hash_disable_power(struct hash_device_data *device_data,
 			      bool save_device_state)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा device *dev = device_data->dev;
+{
+	int ret = 0;
+	struct device *dev = device_data->dev;
 
-	spin_lock(&device_data->घातer_state_lock);
-	अगर (!device_data->घातer_state)
-		जाओ out;
+	spin_lock(&device_data->power_state_lock);
+	if (!device_data->power_state)
+		goto out;
 
-	अगर (save_device_state) अणु
+	if (save_device_state) {
 		hash_save_state(device_data,
 				&device_data->state);
 		device_data->restore_dev_state = true;
-	पूर्ण
+	}
 
 	clk_disable(device_data->clk);
 	ret = regulator_disable(device_data->regulator);
-	अगर (ret)
+	if (ret)
 		dev_err(dev, "%s: regulator_disable() failed!\n", __func__);
 
-	device_data->घातer_state = false;
+	device_data->power_state = false;
 
 out:
-	spin_unlock(&device_data->घातer_state_lock);
+	spin_unlock(&device_data->power_state_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * hash_enable_घातer - Request to enable घातer and घड़ी.
- * @device_data:		Structure क्रम the hash device.
+ * hash_enable_power - Request to enable power and clock.
+ * @device_data:		Structure for the hash device.
  * @restore_device_state:	If true, restores a previous saved hw state.
  *
- * This function request क्रम enabling घातer (regulator) and घड़ी,
+ * This function request for enabling power (regulator) and clock,
  * and could also restore a previously saved hw state.
  */
-अटल पूर्णांक hash_enable_घातer(काष्ठा hash_device_data *device_data,
+static int hash_enable_power(struct hash_device_data *device_data,
 			     bool restore_device_state)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा device *dev = device_data->dev;
+{
+	int ret = 0;
+	struct device *dev = device_data->dev;
 
-	spin_lock(&device_data->घातer_state_lock);
-	अगर (!device_data->घातer_state) अणु
+	spin_lock(&device_data->power_state_lock);
+	if (!device_data->power_state) {
 		ret = regulator_enable(device_data->regulator);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "%s: regulator_enable() failed!\n",
 				__func__);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		ret = clk_enable(device_data->clk);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "%s: clk_enable() failed!\n", __func__);
 			ret = regulator_disable(
 					device_data->regulator);
-			जाओ out;
-		पूर्ण
-		device_data->घातer_state = true;
-	पूर्ण
+			goto out;
+		}
+		device_data->power_state = true;
+	}
 
-	अगर (device_data->restore_dev_state) अणु
-		अगर (restore_device_state) अणु
+	if (device_data->restore_dev_state) {
+		if (restore_device_state) {
 			device_data->restore_dev_state = false;
 			hash_resume_state(device_data, &device_data->state);
-		पूर्ण
-	पूर्ण
+		}
+	}
 out:
-	spin_unlock(&device_data->घातer_state_lock);
+	spin_unlock(&device_data->power_state_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * hash_get_device_data - Checks क्रम an available hash device and वापस it.
- * @ctx:		Structure क्रम the hash context.
- * @device_data:	Structure क्रम the hash device.
+ * hash_get_device_data - Checks for an available hash device and return it.
+ * @ctx:		Structure for the hash context.
+ * @device_data:	Structure for the hash device.
  *
- * This function check क्रम an available hash device and वापस it to
+ * This function check for an available hash device and return it to
  * the caller.
  * Note! Caller need to release the device, calling up().
  */
-अटल पूर्णांक hash_get_device_data(काष्ठा hash_ctx *ctx,
-				काष्ठा hash_device_data **device_data)
-अणु
-	पूर्णांक			ret;
-	काष्ठा klist_iter	device_iterator;
-	काष्ठा klist_node	*device_node;
-	काष्ठा hash_device_data *local_device_data = शून्य;
+static int hash_get_device_data(struct hash_ctx *ctx,
+				struct hash_device_data **device_data)
+{
+	int			ret;
+	struct klist_iter	device_iterator;
+	struct klist_node	*device_node;
+	struct hash_device_data *local_device_data = NULL;
 
 	/* Wait until a device is available */
-	ret = करोwn_पूर्णांकerruptible(&driver_data.device_allocation);
-	अगर (ret)
-		वापस ret;  /* Interrupted */
+	ret = down_interruptible(&driver_data.device_allocation);
+	if (ret)
+		return ret;  /* Interrupted */
 
 	/* Select a device */
 	klist_iter_init(&driver_data.device_list, &device_iterator);
 	device_node = klist_next(&device_iterator);
-	जबतक (device_node) अणु
+	while (device_node) {
 		local_device_data = container_of(device_node,
-					   काष्ठा hash_device_data, list_node);
+					   struct hash_device_data, list_node);
 		spin_lock(&local_device_data->ctx_lock);
-		/* current_ctx allocates a device, शून्य = unallocated */
-		अगर (local_device_data->current_ctx) अणु
+		/* current_ctx allocates a device, NULL = unallocated */
+		if (local_device_data->current_ctx) {
 			device_node = klist_next(&device_iterator);
-		पूर्ण अन्यथा अणु
+		} else {
 			local_device_data->current_ctx = ctx;
 			ctx->device = local_device_data;
 			spin_unlock(&local_device_data->ctx_lock);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		spin_unlock(&local_device_data->ctx_lock);
-	पूर्ण
-	klist_iter_निकास(&device_iterator);
+	}
+	klist_iter_exit(&device_iterator);
 
-	अगर (!device_node) अणु
+	if (!device_node) {
 		/**
-		 * No मुक्त device found.
-		 * Since we allocated a device with करोwn_पूर्णांकerruptible, this
+		 * No free device found.
+		 * Since we allocated a device with down_interruptible, this
 		 * should not be able to happen.
 		 * Number of available devices, which are contained in
-		 * device_allocation, is thereक्रमe decremented by not करोing
+		 * device_allocation, is therefore decremented by not doing
 		 * an up(device_allocation).
 		 */
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	*device_data = local_device_data;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * hash_hw_ग_लिखो_key - Writes the key to the hardware registries.
+ * hash_hw_write_key - Writes the key to the hardware registries.
  *
- * @device_data:	Structure क्रम the hash device.
+ * @device_data:	Structure for the hash device.
  * @key:		Key to be written.
  * @keylen:		The lengt of the key.
  *
- * Note! This function DOES NOT ग_लिखो to the NBLW registry, even though
- * specअगरied in the the hw design spec. Either due to incorrect info in the
+ * Note! This function DOES NOT write to the NBLW registry, even though
+ * specified in the the hw design spec. Either due to incorrect info in the
  * spec or due to a bug in the hw.
  */
-अटल व्योम hash_hw_ग_लिखो_key(काष्ठा hash_device_data *device_data,
-			      स्थिर u8 *key, अचिन्हित पूर्णांक keylen)
-अणु
+static void hash_hw_write_key(struct hash_device_data *device_data,
+			      const u8 *key, unsigned int keylen)
+{
 	u32 word = 0;
-	पूर्णांक nwords = 1;
+	int nwords = 1;
 
 	HASH_CLEAR_BITS(&device_data->base->str, HASH_STR_NBLW_MASK);
 
-	जबतक (keylen >= 4) अणु
+	while (keylen >= 4) {
 		u32 *key_word = (u32 *)key;
 
 		HASH_SET_DIN(key_word, nwords);
 		keylen -= 4;
 		key += 4;
-	पूर्ण
+	}
 
-	/* Take care of the reमुख्यing bytes in the last word */
-	अगर (keylen) अणु
+	/* Take care of the remaining bytes in the last word */
+	if (keylen) {
 		word = 0;
-		जबतक (keylen) अणु
+		while (keylen) {
 			word |= (key[keylen - 1] << (8 * (keylen - 1)));
 			keylen--;
-		पूर्ण
+		}
 
 		HASH_SET_DIN(&word, nwords);
-	पूर्ण
+	}
 
-	जबतक (पढ़ोl(&device_data->base->str) & HASH_STR_DCAL_MASK)
+	while (readl(&device_data->base->str) & HASH_STR_DCAL_MASK)
 		cpu_relax();
 
 	HASH_SET_DCAL;
 
-	जबतक (पढ़ोl(&device_data->base->str) & HASH_STR_DCAL_MASK)
+	while (readl(&device_data->base->str) & HASH_STR_DCAL_MASK)
 		cpu_relax();
-पूर्ण
+}
 
 /**
- * init_hash_hw - Initialise the hash hardware क्रम a new calculation.
- * @device_data:	Structure क्रम the hash device.
+ * init_hash_hw - Initialise the hash hardware for a new calculation.
+ * @device_data:	Structure for the hash device.
  * @ctx:		The hash context.
  *
  * This function will enable the bits needed to clear and start a new
  * calculation.
  */
-अटल पूर्णांक init_hash_hw(काष्ठा hash_device_data *device_data,
-			काष्ठा hash_ctx *ctx)
-अणु
-	पूर्णांक ret = 0;
+static int init_hash_hw(struct hash_device_data *device_data,
+			struct hash_ctx *ctx)
+{
+	int ret = 0;
 
 	ret = hash_setconfiguration(device_data, &ctx->config);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(device_data->dev, "%s: hash_setconfiguration() failed!\n",
 			__func__);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	hash_begin(device_data, ctx);
 
-	अगर (ctx->config.oper_mode == HASH_OPER_MODE_HMAC)
-		hash_hw_ग_लिखो_key(device_data, ctx->key, ctx->keylen);
+	if (ctx->config.oper_mode == HASH_OPER_MODE_HMAC)
+		hash_hw_write_key(device_data, ctx->key, ctx->keylen);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * hash_get_nents - Return number of entries (nents) in scatterlist (sg).
  *
  * @sg:		Scatterlist.
  * @size:	Size in bytes.
- * @aligned:	True अगर sg data aligned to work in DMA mode.
+ * @aligned:	True if sg data aligned to work in DMA mode.
  *
  */
-अटल पूर्णांक hash_get_nents(काष्ठा scatterlist *sg, पूर्णांक size, bool *aligned)
-अणु
-	पूर्णांक nents = 0;
+static int hash_get_nents(struct scatterlist *sg, int size, bool *aligned)
+{
+	int nents = 0;
 	bool aligned_data = true;
 
-	जबतक (size > 0 && sg) अणु
+	while (size > 0 && sg) {
 		nents++;
 		size -= sg->length;
 
 		/* hash_set_dma_transfer will align last nent */
-		अगर ((aligned && !IS_ALIGNED(sg->offset, HASH_DMA_ALIGN_SIZE)) ||
+		if ((aligned && !IS_ALIGNED(sg->offset, HASH_DMA_ALIGN_SIZE)) ||
 		    (!IS_ALIGNED(sg->length, HASH_DMA_ALIGN_SIZE) && size > 0))
 			aligned_data = false;
 
 		sg = sg_next(sg);
-	पूर्ण
+	}
 
-	अगर (aligned)
+	if (aligned)
 		*aligned = aligned_data;
 
-	अगर (size != 0)
-		वापस -EFAULT;
+	if (size != 0)
+		return -EFAULT;
 
-	वापस nents;
-पूर्ण
+	return nents;
+}
 
 /**
- * hash_dma_valid_data - checks क्रम dma valid sg data.
+ * hash_dma_valid_data - checks for dma valid sg data.
  * @sg:		Scatterlist.
  * @datasize:	Datasize in bytes.
  *
- * NOTE! This function checks क्रम dma valid sg data, since dma
+ * NOTE! This function checks for dma valid sg data, since dma
  * only accept datasizes of even wordsize.
  */
-अटल bool hash_dma_valid_data(काष्ठा scatterlist *sg, पूर्णांक datasize)
-अणु
+static bool hash_dma_valid_data(struct scatterlist *sg, int datasize)
+{
 	bool aligned;
 
-	/* Need to include at least one nent, अन्यथा error */
-	अगर (hash_get_nents(sg, datasize, &aligned) < 1)
-		वापस false;
+	/* Need to include at least one nent, else error */
+	if (hash_get_nents(sg, datasize, &aligned) < 1)
+		return false;
 
-	वापस aligned;
-पूर्ण
+	return aligned;
+}
 
 /**
- * ux500_hash_init - Common hash init function क्रम SHA1/SHA2 (SHA256).
- * @req: The hash request क्रम the job.
+ * ux500_hash_init - Common hash init function for SHA1/SHA2 (SHA256).
+ * @req: The hash request for the job.
  *
- * Initialize काष्ठाures.
+ * Initialize structures.
  */
-अटल पूर्णांक ux500_hash_init(काष्ठा ahash_request *req)
-अणु
-	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	काष्ठा hash_ctx *ctx = crypto_ahash_ctx(tfm);
-	काष्ठा hash_req_ctx *req_ctx = ahash_request_ctx(req);
+static int ux500_hash_init(struct ahash_request *req)
+{
+	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	struct hash_ctx *ctx = crypto_ahash_ctx(tfm);
+	struct hash_req_ctx *req_ctx = ahash_request_ctx(req);
 
-	अगर (!ctx->key)
+	if (!ctx->key)
 		ctx->keylen = 0;
 
-	स_रखो(&req_ctx->state, 0, माप(काष्ठा hash_state));
+	memset(&req_ctx->state, 0, sizeof(struct hash_state));
 	req_ctx->updated = 0;
-	अगर (hash_mode == HASH_MODE_DMA) अणु
-		अगर (req->nbytes < HASH_DMA_ALIGN_SIZE) अणु
+	if (hash_mode == HASH_MODE_DMA) {
+		if (req->nbytes < HASH_DMA_ALIGN_SIZE) {
 			req_ctx->dma_mode = false; /* Don't use DMA */
 
 			pr_debug("%s: DMA mode, but direct to CPU mode for data size < %d\n",
 				 __func__, HASH_DMA_ALIGN_SIZE);
-		पूर्ण अन्यथा अणु
-			अगर (req->nbytes >= HASH_DMA_PERFORMANCE_MIN_SIZE &&
-			    hash_dma_valid_data(req->src, req->nbytes)) अणु
+		} else {
+			if (req->nbytes >= HASH_DMA_PERFORMANCE_MIN_SIZE &&
+			    hash_dma_valid_data(req->src, req->nbytes)) {
 				req_ctx->dma_mode = true;
-			पूर्ण अन्यथा अणु
+			} else {
 				req_ctx->dma_mode = false;
 				pr_debug("%s: DMA mode, but use CPU mode for datalength < %d or non-aligned data, except in last nent\n",
 					 __func__,
 					 HASH_DMA_PERFORMANCE_MIN_SIZE);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			}
+		}
+	}
+	return 0;
+}
 
 /**
  * hash_processblock - This function processes a single block of 512 bits (64
  *                     bytes), word aligned, starting at message.
- * @device_data:	Structure क्रम the hash device.
+ * @device_data:	Structure for the hash device.
  * @message:		Block (512 bits) of message to be written to
  *			the HASH hardware.
  * @length:		Message length
  *
  */
-अटल व्योम hash_processblock(काष्ठा hash_device_data *device_data,
-			      स्थिर u32 *message, पूर्णांक length)
-अणु
-	पूर्णांक len = length / HASH_BYTES_PER_WORD;
+static void hash_processblock(struct hash_device_data *device_data,
+			      const u32 *message, int length)
+{
+	int len = length / HASH_BYTES_PER_WORD;
 	/*
 	 * NBLW bits. Reset the number of bits in last word (NBLW).
 	 */
 	HASH_CLEAR_BITS(&device_data->base->str, HASH_STR_NBLW_MASK);
 
 	/*
-	 * Write message data to the HASH_DIN रेजिस्टर.
+	 * Write message data to the HASH_DIN register.
 	 */
 	HASH_SET_DIN(message, len);
-पूर्ण
+}
 
 /**
- * hash_messagepad - Pads a message and ग_लिखो the nblw bits.
- * @device_data:	Structure क्रम the hash device.
+ * hash_messagepad - Pads a message and write the nblw bits.
+ * @device_data:	Structure for the hash device.
  * @message:		Last word of a message.
  * @index_bytes:	The number of bytes in the last message.
  *
  * This function manages the final part of the digest calculation, when less
- * than 512 bits (64 bytes) reमुख्य in message. This means index_bytes < 64.
+ * than 512 bits (64 bytes) remain in message. This means index_bytes < 64.
  *
  */
-अटल व्योम hash_messagepad(काष्ठा hash_device_data *device_data,
-			    स्थिर u32 *message, u8 index_bytes)
-अणु
-	पूर्णांक nwords = 1;
+static void hash_messagepad(struct hash_device_data *device_data,
+			    const u32 *message, u8 index_bytes)
+{
+	int nwords = 1;
 
 	/*
-	 * Clear hash str रेजिस्टर, only clear NBLW
+	 * Clear hash str register, only clear NBLW
 	 * since DCAL will be reset by hardware.
 	 */
 	HASH_CLEAR_BITS(&device_data->base->str, HASH_STR_NBLW_MASK);
 
 	/* Main loop */
-	जबतक (index_bytes >= 4) अणु
+	while (index_bytes >= 4) {
 		HASH_SET_DIN(message, nwords);
 		index_bytes -= 4;
 		message++;
-	पूर्ण
+	}
 
-	अगर (index_bytes)
+	if (index_bytes)
 		HASH_SET_DIN(message, nwords);
 
-	जबतक (पढ़ोl(&device_data->base->str) & HASH_STR_DCAL_MASK)
+	while (readl(&device_data->base->str) & HASH_STR_DCAL_MASK)
 		cpu_relax();
 
 	/* num_of_bytes == 0 => NBLW <- 0 (32 bits valid in DATAIN) */
 	HASH_SET_NBLW(index_bytes * 8);
 	dev_dbg(device_data->dev, "%s: DIN=0x%08x NBLW=%lu\n",
-		__func__, पढ़ोl_relaxed(&device_data->base->din),
-		पढ़ोl_relaxed(&device_data->base->str) & HASH_STR_NBLW_MASK);
+		__func__, readl_relaxed(&device_data->base->din),
+		readl_relaxed(&device_data->base->str) & HASH_STR_NBLW_MASK);
 	HASH_SET_DCAL;
 	dev_dbg(device_data->dev, "%s: after dcal -> DIN=0x%08x NBLW=%lu\n",
-		__func__, पढ़ोl_relaxed(&device_data->base->din),
-		पढ़ोl_relaxed(&device_data->base->str) & HASH_STR_NBLW_MASK);
+		__func__, readl_relaxed(&device_data->base->din),
+		readl_relaxed(&device_data->base->str) & HASH_STR_NBLW_MASK);
 
-	जबतक (पढ़ोl(&device_data->base->str) & HASH_STR_DCAL_MASK)
+	while (readl(&device_data->base->str) & HASH_STR_DCAL_MASK)
 		cpu_relax();
-पूर्ण
+}
 
 /**
  * hash_incrementlength - Increments the length of the current message.
  * @ctx: Hash context
- * @incr: Length of message processed alपढ़ोy
+ * @incr: Length of message processed already
  *
- * Overflow cannot occur, because conditions क्रम overflow are checked in
+ * Overflow cannot occur, because conditions for overflow are checked in
  * hash_hw_update.
  */
-अटल व्योम hash_incrementlength(काष्ठा hash_req_ctx *ctx, u32 incr)
-अणु
+static void hash_incrementlength(struct hash_req_ctx *ctx, u32 incr)
+{
 	ctx->state.length.low_word += incr;
 
-	/* Check क्रम wrap-around */
-	अगर (ctx->state.length.low_word < incr)
+	/* Check for wrap-around */
+	if (ctx->state.length.low_word < incr)
 		ctx->state.length.high_word++;
-पूर्ण
+}
 
 /**
- * hash_setconfiguration - Sets the required configuration क्रम the hash
+ * hash_setconfiguration - Sets the required configuration for the hash
  *                         hardware.
- * @device_data:	Structure क्रम the hash device.
- * @config:		Poपूर्णांकer to a configuration काष्ठाure.
+ * @device_data:	Structure for the hash device.
+ * @config:		Pointer to a configuration structure.
  */
-पूर्णांक hash_setconfiguration(काष्ठा hash_device_data *device_data,
-			  काष्ठा hash_config *config)
-अणु
-	पूर्णांक ret = 0;
+int hash_setconfiguration(struct hash_device_data *device_data,
+			  struct hash_config *config)
+{
+	int ret = 0;
 
-	अगर (config->algorithm != HASH_ALGO_SHA1 &&
+	if (config->algorithm != HASH_ALGO_SHA1 &&
 	    config->algorithm != HASH_ALGO_SHA256)
-		वापस -EPERM;
+		return -EPERM;
 
 	/*
 	 * DATAFORM bits. Set the DATAFORM bits to 0b11, which means the data
 	 * to be written to HASH_DIN is considered as 32 bits.
 	 */
-	HASH_SET_DATA_FORMAT(config->data_क्रमmat);
+	HASH_SET_DATA_FORMAT(config->data_format);
 
 	/*
-	 * ALGO bit. Set to 0b1 क्रम SHA-1 and 0b0 क्रम SHA-256
+	 * ALGO bit. Set to 0b1 for SHA-1 and 0b0 for SHA-256
 	 */
-	चयन (config->algorithm) अणु
-	हाल HASH_ALGO_SHA1:
+	switch (config->algorithm) {
+	case HASH_ALGO_SHA1:
 		HASH_SET_BITS(&device_data->base->cr, HASH_CR_ALGO_MASK);
-		अवरोध;
+		break;
 
-	हाल HASH_ALGO_SHA256:
+	case HASH_ALGO_SHA256:
 		HASH_CLEAR_BITS(&device_data->base->cr, HASH_CR_ALGO_MASK);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		dev_err(device_data->dev, "%s: Incorrect algorithm\n",
 			__func__);
-		वापस -EPERM;
-	पूर्ण
+		return -EPERM;
+	}
 
 	/*
-	 * MODE bit. This bit selects between HASH or HMAC mode क्रम the
+	 * MODE bit. This bit selects between HASH or HMAC mode for the
 	 * selected algorithm. 0b0 = HASH and 0b1 = HMAC.
 	 */
-	अगर (HASH_OPER_MODE_HASH == config->oper_mode)
+	if (HASH_OPER_MODE_HASH == config->oper_mode)
 		HASH_CLEAR_BITS(&device_data->base->cr,
 				HASH_CR_MODE_MASK);
-	अन्यथा अगर (HASH_OPER_MODE_HMAC == config->oper_mode) अणु
+	else if (HASH_OPER_MODE_HMAC == config->oper_mode) {
 		HASH_SET_BITS(&device_data->base->cr, HASH_CR_MODE_MASK);
-		अगर (device_data->current_ctx->keylen > HASH_BLOCK_SIZE) अणु
+		if (device_data->current_ctx->keylen > HASH_BLOCK_SIZE) {
 			/* Truncate key to blocksize */
 			dev_dbg(device_data->dev, "%s: LKEY set\n", __func__);
 			HASH_SET_BITS(&device_data->base->cr,
 				      HASH_CR_LKEY_MASK);
-		पूर्ण अन्यथा अणु
+		} else {
 			dev_dbg(device_data->dev, "%s: LKEY cleared\n",
 				__func__);
 			HASH_CLEAR_BITS(&device_data->base->cr,
 					HASH_CR_LKEY_MASK);
-		पूर्ण
-	पूर्ण अन्यथा अणु	/* Wrong hash mode */
+		}
+	} else {	/* Wrong hash mode */
 		ret = -EPERM;
 		dev_err(device_data->dev, "%s: HASH_INVALID_PARAMETER!\n",
 			__func__);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
 /**
  * hash_begin - This routine resets some globals and initializes the hash
  *              hardware.
- * @device_data:	Structure क्रम the hash device.
+ * @device_data:	Structure for the hash device.
  * @ctx:		Hash context.
  */
-व्योम hash_begin(काष्ठा hash_device_data *device_data, काष्ठा hash_ctx *ctx)
-अणु
+void hash_begin(struct hash_device_data *device_data, struct hash_ctx *ctx)
+{
 	/* HW and SW initializations */
 	/* Note: there is no need to initialize buffer and digest members */
 
-	जबतक (पढ़ोl(&device_data->base->str) & HASH_STR_DCAL_MASK)
+	while (readl(&device_data->base->str) & HASH_STR_DCAL_MASK)
 		cpu_relax();
 
 	/*
@@ -761,70 +760,70 @@ out:
 	 * NBLW bits. Reset the number of bits in last word (NBLW).
 	 */
 	HASH_CLEAR_BITS(&device_data->base->str, HASH_STR_NBLW_MASK);
-पूर्ण
+}
 
-अटल पूर्णांक hash_process_data(काष्ठा hash_device_data *device_data,
-			     काष्ठा hash_ctx *ctx, काष्ठा hash_req_ctx *req_ctx,
-			     पूर्णांक msg_length, u8 *data_buffer, u8 *buffer,
+static int hash_process_data(struct hash_device_data *device_data,
+			     struct hash_ctx *ctx, struct hash_req_ctx *req_ctx,
+			     int msg_length, u8 *data_buffer, u8 *buffer,
 			     u8 *index)
-अणु
-	पूर्णांक ret = 0;
+{
+	int ret = 0;
 	u32 count;
 
-	करो अणु
-		अगर ((*index + msg_length) < HASH_BLOCK_SIZE) अणु
-			क्रम (count = 0; count < msg_length; count++) अणु
+	do {
+		if ((*index + msg_length) < HASH_BLOCK_SIZE) {
+			for (count = 0; count < msg_length; count++) {
 				buffer[*index + count] =
 					*(data_buffer + count);
-			पूर्ण
+			}
 			*index += msg_length;
 			msg_length = 0;
-		पूर्ण अन्यथा अणु
-			अगर (req_ctx->updated) अणु
+		} else {
+			if (req_ctx->updated) {
 				ret = hash_resume_state(device_data,
 						&device_data->state);
-				स_हटाओ(req_ctx->state.buffer,
+				memmove(req_ctx->state.buffer,
 					device_data->state.buffer,
 					HASH_BLOCK_SIZE);
-				अगर (ret) अणु
+				if (ret) {
 					dev_err(device_data->dev,
 						"%s: hash_resume_state() failed!\n",
 						__func__);
-					जाओ out;
-				पूर्ण
-			पूर्ण अन्यथा अणु
+					goto out;
+				}
+			} else {
 				ret = init_hash_hw(device_data, ctx);
-				अगर (ret) अणु
+				if (ret) {
 					dev_err(device_data->dev,
 						"%s: init_hash_hw() failed!\n",
 						__func__);
-					जाओ out;
-				पूर्ण
+					goto out;
+				}
 				req_ctx->updated = 1;
-			पूर्ण
+			}
 			/*
 			 * If 'data_buffer' is four byte aligned and
-			 * local buffer करोes not have any data, we can
-			 * ग_लिखो data directly from 'data_buffer' to
+			 * local buffer does not have any data, we can
+			 * write data directly from 'data_buffer' to
 			 * HW peripheral, otherwise we first copy data
 			 * to a local buffer
 			 */
-			अगर (IS_ALIGNED((अचिन्हित दीर्घ)data_buffer, 4) &&
+			if (IS_ALIGNED((unsigned long)data_buffer, 4) &&
 			    (0 == *index))
 				hash_processblock(device_data,
-						  (स्थिर u32 *)data_buffer,
+						  (const u32 *)data_buffer,
 						  HASH_BLOCK_SIZE);
-			अन्यथा अणु
-				क्रम (count = 0;
+			else {
+				for (count = 0;
 				     count < (u32)(HASH_BLOCK_SIZE - *index);
-				     count++) अणु
+				     count++) {
 					buffer[*index + count] =
 						*(data_buffer + count);
-				पूर्ण
+				}
 				hash_processblock(device_data,
-						  (स्थिर u32 *)buffer,
+						  (const u32 *)buffer,
 						  HASH_BLOCK_SIZE);
-			पूर्ण
+			}
 			hash_incrementlength(req_ctx, HASH_BLOCK_SIZE);
 			data_buffer += (HASH_BLOCK_SIZE - *index);
 
@@ -834,116 +833,116 @@ out:
 			ret = hash_save_state(device_data,
 					&device_data->state);
 
-			स_हटाओ(device_data->state.buffer,
+			memmove(device_data->state.buffer,
 				req_ctx->state.buffer,
 				HASH_BLOCK_SIZE);
-			अगर (ret) अणु
+			if (ret) {
 				dev_err(device_data->dev, "%s: hash_save_state() failed!\n",
 					__func__);
-				जाओ out;
-			पूर्ण
-		पूर्ण
-	पूर्ण जबतक (msg_length != 0);
+				goto out;
+			}
+		}
+	} while (msg_length != 0);
 out:
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * hash_dma_final - The hash dma final function क्रम SHA1/SHA256.
- * @req:	The hash request क्रम the job.
+ * hash_dma_final - The hash dma final function for SHA1/SHA256.
+ * @req:	The hash request for the job.
  */
-अटल पूर्णांक hash_dma_final(काष्ठा ahash_request *req)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	काष्ठा hash_ctx *ctx = crypto_ahash_ctx(tfm);
-	काष्ठा hash_req_ctx *req_ctx = ahash_request_ctx(req);
-	काष्ठा hash_device_data *device_data;
+static int hash_dma_final(struct ahash_request *req)
+{
+	int ret = 0;
+	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	struct hash_ctx *ctx = crypto_ahash_ctx(tfm);
+	struct hash_req_ctx *req_ctx = ahash_request_ctx(req);
+	struct hash_device_data *device_data;
 	u8 digest[SHA256_DIGEST_SIZE];
-	पूर्णांक bytes_written = 0;
+	int bytes_written = 0;
 
 	ret = hash_get_device_data(ctx, &device_data);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	dev_dbg(device_data->dev, "%s: (ctx=0x%lx)!\n", __func__,
-		(अचिन्हित दीर्घ)ctx);
+		(unsigned long)ctx);
 
-	अगर (req_ctx->updated) अणु
+	if (req_ctx->updated) {
 		ret = hash_resume_state(device_data, &device_data->state);
 
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(device_data->dev, "%s: hash_resume_state() failed!\n",
 				__func__);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	अगर (!req_ctx->updated) अणु
+	if (!req_ctx->updated) {
 		ret = hash_setconfiguration(device_data, &ctx->config);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(device_data->dev,
 				"%s: hash_setconfiguration() failed!\n",
 				__func__);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		/* Enable DMA input */
-		अगर (hash_mode != HASH_MODE_DMA || !req_ctx->dma_mode) अणु
+		if (hash_mode != HASH_MODE_DMA || !req_ctx->dma_mode) {
 			HASH_CLEAR_BITS(&device_data->base->cr,
 					HASH_CR_DMAE_MASK);
-		पूर्ण अन्यथा अणु
+		} else {
 			HASH_SET_BITS(&device_data->base->cr,
 				      HASH_CR_DMAE_MASK);
 			HASH_SET_BITS(&device_data->base->cr,
 				      HASH_CR_PRIVN_MASK);
-		पूर्ण
+		}
 
 		HASH_INITIALIZE;
 
-		अगर (ctx->config.oper_mode == HASH_OPER_MODE_HMAC)
-			hash_hw_ग_लिखो_key(device_data, ctx->key, ctx->keylen);
+		if (ctx->config.oper_mode == HASH_OPER_MODE_HMAC)
+			hash_hw_write_key(device_data, ctx->key, ctx->keylen);
 
 		/* Number of bits in last word = (nbytes * 8) % 32 */
 		HASH_SET_NBLW((req->nbytes * 8) % 32);
 		req_ctx->updated = 1;
-	पूर्ण
+	}
 
-	/* Store the nents in the dma काष्ठा. */
-	ctx->device->dma.nents = hash_get_nents(req->src, req->nbytes, शून्य);
-	अगर (!ctx->device->dma.nents) अणु
+	/* Store the nents in the dma struct. */
+	ctx->device->dma.nents = hash_get_nents(req->src, req->nbytes, NULL);
+	if (!ctx->device->dma.nents) {
 		dev_err(device_data->dev, "%s: ctx->device->dma.nents = 0\n",
 			__func__);
 		ret = ctx->device->dma.nents;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	bytes_written = hash_dma_ग_लिखो(ctx, req->src, req->nbytes);
-	अगर (bytes_written != req->nbytes) अणु
+	bytes_written = hash_dma_write(ctx, req->src, req->nbytes);
+	if (bytes_written != req->nbytes) {
 		dev_err(device_data->dev, "%s: hash_dma_write() failed!\n",
 			__func__);
 		ret = bytes_written;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	रुको_क्रम_completion(&ctx->device->dma.complete);
-	hash_dma_करोne(ctx);
+	wait_for_completion(&ctx->device->dma.complete);
+	hash_dma_done(ctx);
 
-	जबतक (पढ़ोl(&device_data->base->str) & HASH_STR_DCAL_MASK)
+	while (readl(&device_data->base->str) & HASH_STR_DCAL_MASK)
 		cpu_relax();
 
-	अगर (ctx->config.oper_mode == HASH_OPER_MODE_HMAC && ctx->key) अणु
-		अचिन्हित पूर्णांक keylen = ctx->keylen;
+	if (ctx->config.oper_mode == HASH_OPER_MODE_HMAC && ctx->key) {
+		unsigned int keylen = ctx->keylen;
 		u8 *key = ctx->key;
 
 		dev_dbg(device_data->dev, "%s: keylen: %d\n",
 			__func__, ctx->keylen);
-		hash_hw_ग_लिखो_key(device_data, key, keylen);
-	पूर्ण
+		hash_hw_write_key(device_data, key, keylen);
+	}
 
 	hash_get_digest(device_data, digest, ctx->config.algorithm);
-	स_नकल(req->result, digest, ctx->digestsize);
+	memcpy(req->result, digest, ctx->digestsize);
 
 out:
 	release_hash_device(device_data);
@@ -951,101 +950,101 @@ out:
 	/**
 	 * Allocated in setkey, and only used in HMAC.
 	 */
-	kमुक्त(ctx->key);
+	kfree(ctx->key);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * hash_hw_final - The final hash calculation function
- * @req:	The hash request क्रम the job.
+ * @req:	The hash request for the job.
  */
-अटल पूर्णांक hash_hw_final(काष्ठा ahash_request *req)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	काष्ठा hash_ctx *ctx = crypto_ahash_ctx(tfm);
-	काष्ठा hash_req_ctx *req_ctx = ahash_request_ctx(req);
-	काष्ठा hash_device_data *device_data;
+static int hash_hw_final(struct ahash_request *req)
+{
+	int ret = 0;
+	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	struct hash_ctx *ctx = crypto_ahash_ctx(tfm);
+	struct hash_req_ctx *req_ctx = ahash_request_ctx(req);
+	struct hash_device_data *device_data;
 	u8 digest[SHA256_DIGEST_SIZE];
 
 	ret = hash_get_device_data(ctx, &device_data);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	dev_dbg(device_data->dev, "%s: (ctx=0x%lx)!\n", __func__,
-		(अचिन्हित दीर्घ)ctx);
+		(unsigned long)ctx);
 
-	अगर (req_ctx->updated) अणु
+	if (req_ctx->updated) {
 		ret = hash_resume_state(device_data, &device_data->state);
 
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(device_data->dev,
 				"%s: hash_resume_state() failed!\n", __func__);
-			जाओ out;
-		पूर्ण
-	पूर्ण अन्यथा अगर (req->nbytes == 0 && ctx->keylen == 0) अणु
+			goto out;
+		}
+	} else if (req->nbytes == 0 && ctx->keylen == 0) {
 		u8 zero_hash[SHA256_DIGEST_SIZE];
 		u32 zero_hash_size = 0;
 		bool zero_digest = false;
 		/**
 		 * Use a pre-calculated empty message digest
-		 * (workaround since hw वापस zeroes, hw bug!?)
+		 * (workaround since hw return zeroes, hw bug!?)
 		 */
 		ret = get_empty_message_digest(device_data, &zero_hash[0],
 				&zero_hash_size, &zero_digest);
-		अगर (!ret && likely(zero_hash_size == ctx->digestsize) &&
-		    zero_digest) अणु
-			स_नकल(req->result, &zero_hash[0], ctx->digestsize);
-			जाओ out;
-		पूर्ण अन्यथा अगर (!ret && !zero_digest) अणु
+		if (!ret && likely(zero_hash_size == ctx->digestsize) &&
+		    zero_digest) {
+			memcpy(req->result, &zero_hash[0], ctx->digestsize);
+			goto out;
+		} else if (!ret && !zero_digest) {
 			dev_dbg(device_data->dev,
 				"%s: HMAC zero msg with key, continue...\n",
 				__func__);
-		पूर्ण अन्यथा अणु
+		} else {
 			dev_err(device_data->dev,
 				"%s: ret=%d, or wrong digest size? %s\n",
 				__func__, ret,
 				zero_hash_size == ctx->digestsize ?
 				"true" : "false");
 			/* Return error */
-			जाओ out;
-		पूर्ण
-	पूर्ण अन्यथा अगर (req->nbytes == 0 && ctx->keylen > 0) अणु
+			goto out;
+		}
+	} else if (req->nbytes == 0 && ctx->keylen > 0) {
 		dev_err(device_data->dev, "%s: Empty message with keylength > 0, NOT supported\n",
 			__func__);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!req_ctx->updated) अणु
+	if (!req_ctx->updated) {
 		ret = init_hash_hw(device_data, ctx);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(device_data->dev,
 				"%s: init_hash_hw() failed!\n", __func__);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	अगर (req_ctx->state.index) अणु
+	if (req_ctx->state.index) {
 		hash_messagepad(device_data, req_ctx->state.buffer,
 				req_ctx->state.index);
-	पूर्ण अन्यथा अणु
+	} else {
 		HASH_SET_DCAL;
-		जबतक (पढ़ोl(&device_data->base->str) & HASH_STR_DCAL_MASK)
+		while (readl(&device_data->base->str) & HASH_STR_DCAL_MASK)
 			cpu_relax();
-	पूर्ण
+	}
 
-	अगर (ctx->config.oper_mode == HASH_OPER_MODE_HMAC && ctx->key) अणु
-		अचिन्हित पूर्णांक keylen = ctx->keylen;
+	if (ctx->config.oper_mode == HASH_OPER_MODE_HMAC && ctx->key) {
+		unsigned int keylen = ctx->keylen;
 		u8 *key = ctx->key;
 
 		dev_dbg(device_data->dev, "%s: keylen: %d\n",
 			__func__, ctx->keylen);
-		hash_hw_ग_लिखो_key(device_data, key, keylen);
-	पूर्ण
+		hash_hw_write_key(device_data, key, keylen);
+	}
 
 	hash_get_digest(device_data, digest, ctx->config.algorithm);
-	स_नकल(req->result, digest, ctx->digestsize);
+	memcpy(req->result, digest, ctx->digestsize);
 
 out:
 	release_hash_device(device_data);
@@ -1053,10 +1052,10 @@ out:
 	/**
 	 * Allocated in setkey, and only used in HMAC.
 	 */
-	kमुक्त(ctx->key);
+	kfree(ctx->key);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * hash_hw_update - Updates current HASH computation hashing another part of
@@ -1064,58 +1063,58 @@ out:
  * @req:	Byte array containing the message to be hashed (caller
  *		allocated).
  */
-पूर्णांक hash_hw_update(काष्ठा ahash_request *req)
-अणु
-	पूर्णांक ret = 0;
+int hash_hw_update(struct ahash_request *req)
+{
+	int ret = 0;
 	u8 index = 0;
 	u8 *buffer;
-	काष्ठा hash_device_data *device_data;
+	struct hash_device_data *device_data;
 	u8 *data_buffer;
-	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	काष्ठा hash_ctx *ctx = crypto_ahash_ctx(tfm);
-	काष्ठा hash_req_ctx *req_ctx = ahash_request_ctx(req);
-	काष्ठा crypto_hash_walk walk;
-	पूर्णांक msg_length;
+	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	struct hash_ctx *ctx = crypto_ahash_ctx(tfm);
+	struct hash_req_ctx *req_ctx = ahash_request_ctx(req);
+	struct crypto_hash_walk walk;
+	int msg_length;
 
 	index = req_ctx->state.index;
 	buffer = (u8 *)req_ctx->state.buffer;
 
 	ret = hash_get_device_data(ctx, &device_data);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	msg_length = crypto_hash_walk_first(req, &walk);
 
 	/* Empty message ("") is correct indata */
-	अगर (msg_length == 0) अणु
+	if (msg_length == 0) {
 		ret = 0;
-		जाओ release_dev;
-	पूर्ण
+		goto release_dev;
+	}
 
-	/* Check अगर ctx->state.length + msg_length
+	/* Check if ctx->state.length + msg_length
 	   overflows */
-	अगर (msg_length > (req_ctx->state.length.low_word + msg_length) &&
-	    HASH_HIGH_WORD_MAX_VAL == req_ctx->state.length.high_word) अणु
+	if (msg_length > (req_ctx->state.length.low_word + msg_length) &&
+	    HASH_HIGH_WORD_MAX_VAL == req_ctx->state.length.high_word) {
 		pr_err("%s: HASH_MSG_LENGTH_OVERFLOW!\n", __func__);
-		ret = crypto_hash_walk_करोne(&walk, -EPERM);
-		जाओ release_dev;
-	पूर्ण
+		ret = crypto_hash_walk_done(&walk, -EPERM);
+		goto release_dev;
+	}
 
 	/* Main loop */
-	जबतक (0 != msg_length) अणु
+	while (0 != msg_length) {
 		data_buffer = walk.data;
 		ret = hash_process_data(device_data, ctx, req_ctx, msg_length,
 				data_buffer, buffer, &index);
 
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(device_data->dev, "%s: hash_internal_hw_update() failed!\n",
 				__func__);
-			crypto_hash_walk_करोne(&walk, ret);
-			जाओ release_dev;
-		पूर्ण
+			crypto_hash_walk_done(&walk, ret);
+			goto release_dev;
+		}
 
-		msg_length = crypto_hash_walk_करोne(&walk, 0);
-	पूर्ण
+		msg_length = crypto_hash_walk_done(&walk, 0);
+	}
 
 	req_ctx->state.index = index;
 	dev_dbg(device_data->dev, "%s: indata length=%d, bin=%d\n",
@@ -1124,34 +1123,34 @@ out:
 release_dev:
 	release_hash_device(device_data);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * hash_resume_state - Function that resumes the state of an calculation.
- * @device_data:	Poपूर्णांकer to the device काष्ठाure.
+ * @device_data:	Pointer to the device structure.
  * @device_state:	The state to be restored in the hash hardware
  */
-पूर्णांक hash_resume_state(काष्ठा hash_device_data *device_data,
-		      स्थिर काष्ठा hash_state *device_state)
-अणु
+int hash_resume_state(struct hash_device_data *device_data,
+		      const struct hash_state *device_state)
+{
 	u32 temp_cr;
 	s32 count;
-	पूर्णांक hash_mode = HASH_OPER_MODE_HASH;
+	int hash_mode = HASH_OPER_MODE_HASH;
 
-	अगर (शून्य == device_state) अणु
+	if (NULL == device_state) {
 		dev_err(device_data->dev, "%s: HASH_INVALID_PARAMETER!\n",
 			__func__);
-		वापस -EPERM;
-	पूर्ण
+		return -EPERM;
+	}
 
 	/* Check correctness of index and length members */
-	अगर (device_state->index > HASH_BLOCK_SIZE ||
-	    (device_state->length.low_word % HASH_BLOCK_SIZE) != 0) अणु
+	if (device_state->index > HASH_BLOCK_SIZE ||
+	    (device_state->length.low_word % HASH_BLOCK_SIZE) != 0) {
 		dev_err(device_data->dev, "%s: HASH_INVALID_PARAMETER!\n",
 			__func__);
-		वापस -EPERM;
-	पूर्ण
+		return -EPERM;
+	}
 
 	/*
 	 * INIT bit. Set this bit to 0b1 to reset the HASH processor core and
@@ -1161,370 +1160,370 @@ release_dev:
 	HASH_INITIALIZE;
 
 	temp_cr = device_state->temp_cr;
-	ग_लिखोl_relaxed(temp_cr & HASH_CR_RESUME_MASK, &device_data->base->cr);
+	writel_relaxed(temp_cr & HASH_CR_RESUME_MASK, &device_data->base->cr);
 
-	अगर (पढ़ोl(&device_data->base->cr) & HASH_CR_MODE_MASK)
+	if (readl(&device_data->base->cr) & HASH_CR_MODE_MASK)
 		hash_mode = HASH_OPER_MODE_HMAC;
-	अन्यथा
+	else
 		hash_mode = HASH_OPER_MODE_HASH;
 
-	क्रम (count = 0; count < HASH_CSR_COUNT; count++) अणु
-		अगर ((count >= 36) && (hash_mode == HASH_OPER_MODE_HASH))
-			अवरोध;
+	for (count = 0; count < HASH_CSR_COUNT; count++) {
+		if ((count >= 36) && (hash_mode == HASH_OPER_MODE_HASH))
+			break;
 
-		ग_लिखोl_relaxed(device_state->csr[count],
+		writel_relaxed(device_state->csr[count],
 			       &device_data->base->csrx[count]);
-	पूर्ण
+	}
 
-	ग_लिखोl_relaxed(device_state->csfull, &device_data->base->csfull);
-	ग_लिखोl_relaxed(device_state->csdatain, &device_data->base->csdatain);
+	writel_relaxed(device_state->csfull, &device_data->base->csfull);
+	writel_relaxed(device_state->csdatain, &device_data->base->csdatain);
 
-	ग_लिखोl_relaxed(device_state->str_reg, &device_data->base->str);
-	ग_लिखोl_relaxed(temp_cr, &device_data->base->cr);
+	writel_relaxed(device_state->str_reg, &device_data->base->str);
+	writel_relaxed(temp_cr, &device_data->base->cr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * hash_save_state - Function that saves the state of hardware.
- * @device_data:	Poपूर्णांकer to the device काष्ठाure.
+ * @device_data:	Pointer to the device structure.
  * @device_state:	The strucure where the hardware state should be saved.
  */
-पूर्णांक hash_save_state(काष्ठा hash_device_data *device_data,
-		    काष्ठा hash_state *device_state)
-अणु
+int hash_save_state(struct hash_device_data *device_data,
+		    struct hash_state *device_state)
+{
 	u32 temp_cr;
 	u32 count;
-	पूर्णांक hash_mode = HASH_OPER_MODE_HASH;
+	int hash_mode = HASH_OPER_MODE_HASH;
 
-	अगर (शून्य == device_state) अणु
+	if (NULL == device_state) {
 		dev_err(device_data->dev, "%s: HASH_INVALID_PARAMETER!\n",
 			__func__);
-		वापस -ENOTSUPP;
-	पूर्ण
+		return -ENOTSUPP;
+	}
 
-	/* Write dummy value to क्रमce digest पूर्णांकermediate calculation. This
+	/* Write dummy value to force digest intermediate calculation. This
 	 * actually makes sure that there isn't any ongoing calculation in the
 	 * hardware.
 	 */
-	जबतक (पढ़ोl(&device_data->base->str) & HASH_STR_DCAL_MASK)
+	while (readl(&device_data->base->str) & HASH_STR_DCAL_MASK)
 		cpu_relax();
 
-	temp_cr = पढ़ोl_relaxed(&device_data->base->cr);
+	temp_cr = readl_relaxed(&device_data->base->cr);
 
-	device_state->str_reg = पढ़ोl_relaxed(&device_data->base->str);
+	device_state->str_reg = readl_relaxed(&device_data->base->str);
 
-	device_state->din_reg = पढ़ोl_relaxed(&device_data->base->din);
+	device_state->din_reg = readl_relaxed(&device_data->base->din);
 
-	अगर (पढ़ोl(&device_data->base->cr) & HASH_CR_MODE_MASK)
+	if (readl(&device_data->base->cr) & HASH_CR_MODE_MASK)
 		hash_mode = HASH_OPER_MODE_HMAC;
-	अन्यथा
+	else
 		hash_mode = HASH_OPER_MODE_HASH;
 
-	क्रम (count = 0; count < HASH_CSR_COUNT; count++) अणु
-		अगर ((count >= 36) && (hash_mode == HASH_OPER_MODE_HASH))
-			अवरोध;
+	for (count = 0; count < HASH_CSR_COUNT; count++) {
+		if ((count >= 36) && (hash_mode == HASH_OPER_MODE_HASH))
+			break;
 
 		device_state->csr[count] =
-			पढ़ोl_relaxed(&device_data->base->csrx[count]);
-	पूर्ण
+			readl_relaxed(&device_data->base->csrx[count]);
+	}
 
-	device_state->csfull = पढ़ोl_relaxed(&device_data->base->csfull);
-	device_state->csdatain = पढ़ोl_relaxed(&device_data->base->csdatain);
+	device_state->csfull = readl_relaxed(&device_data->base->csfull);
+	device_state->csdatain = readl_relaxed(&device_data->base->csdatain);
 
 	device_state->temp_cr = temp_cr;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * hash_check_hw - This routine checks क्रम peripheral Ids and PCell Ids.
+ * hash_check_hw - This routine checks for peripheral Ids and PCell Ids.
  * @device_data:
  *
  */
-पूर्णांक hash_check_hw(काष्ठा hash_device_data *device_data)
-अणु
+int hash_check_hw(struct hash_device_data *device_data)
+{
 	/* Checking Peripheral Ids  */
-	अगर (HASH_P_ID0 == पढ़ोl_relaxed(&device_data->base->periphid0) &&
-	    HASH_P_ID1 == पढ़ोl_relaxed(&device_data->base->periphid1) &&
-	    HASH_P_ID2 == पढ़ोl_relaxed(&device_data->base->periphid2) &&
-	    HASH_P_ID3 == पढ़ोl_relaxed(&device_data->base->periphid3) &&
-	    HASH_CELL_ID0 == पढ़ोl_relaxed(&device_data->base->cellid0) &&
-	    HASH_CELL_ID1 == पढ़ोl_relaxed(&device_data->base->cellid1) &&
-	    HASH_CELL_ID2 == पढ़ोl_relaxed(&device_data->base->cellid2) &&
-	    HASH_CELL_ID3 == पढ़ोl_relaxed(&device_data->base->cellid3)) अणु
-		वापस 0;
-	पूर्ण
+	if (HASH_P_ID0 == readl_relaxed(&device_data->base->periphid0) &&
+	    HASH_P_ID1 == readl_relaxed(&device_data->base->periphid1) &&
+	    HASH_P_ID2 == readl_relaxed(&device_data->base->periphid2) &&
+	    HASH_P_ID3 == readl_relaxed(&device_data->base->periphid3) &&
+	    HASH_CELL_ID0 == readl_relaxed(&device_data->base->cellid0) &&
+	    HASH_CELL_ID1 == readl_relaxed(&device_data->base->cellid1) &&
+	    HASH_CELL_ID2 == readl_relaxed(&device_data->base->cellid2) &&
+	    HASH_CELL_ID3 == readl_relaxed(&device_data->base->cellid3)) {
+		return 0;
+	}
 
 	dev_err(device_data->dev, "%s: HASH_UNSUPPORTED_HW!\n", __func__);
-	वापस -ENOTSUPP;
-पूर्ण
+	return -ENOTSUPP;
+}
 
 /**
  * hash_get_digest - Gets the digest.
- * @device_data:	Poपूर्णांकer to the device काष्ठाure.
- * @digest:		User allocated byte array क्रम the calculated digest.
+ * @device_data:	Pointer to the device structure.
+ * @digest:		User allocated byte array for the calculated digest.
  * @algorithm:		The algorithm in use.
  */
-व्योम hash_get_digest(काष्ठा hash_device_data *device_data,
-		     u8 *digest, पूर्णांक algorithm)
-अणु
+void hash_get_digest(struct hash_device_data *device_data,
+		     u8 *digest, int algorithm)
+{
 	u32 temp_hx_val, count;
-	पूर्णांक loop_ctr;
+	int loop_ctr;
 
-	अगर (algorithm != HASH_ALGO_SHA1 && algorithm != HASH_ALGO_SHA256) अणु
+	if (algorithm != HASH_ALGO_SHA1 && algorithm != HASH_ALGO_SHA256) {
 		dev_err(device_data->dev, "%s: Incorrect algorithm %d\n",
 			__func__, algorithm);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (algorithm == HASH_ALGO_SHA1)
-		loop_ctr = SHA1_DIGEST_SIZE / माप(u32);
-	अन्यथा
-		loop_ctr = SHA256_DIGEST_SIZE / माप(u32);
+	if (algorithm == HASH_ALGO_SHA1)
+		loop_ctr = SHA1_DIGEST_SIZE / sizeof(u32);
+	else
+		loop_ctr = SHA256_DIGEST_SIZE / sizeof(u32);
 
 	dev_dbg(device_data->dev, "%s: digest array:(0x%lx)\n",
-		__func__, (अचिन्हित दीर्घ)digest);
+		__func__, (unsigned long)digest);
 
-	/* Copy result पूर्णांकo digest array */
-	क्रम (count = 0; count < loop_ctr; count++) अणु
-		temp_hx_val = पढ़ोl_relaxed(&device_data->base->hx[count]);
+	/* Copy result into digest array */
+	for (count = 0; count < loop_ctr; count++) {
+		temp_hx_val = readl_relaxed(&device_data->base->hx[count]);
 		digest[count * 4] = (u8) ((temp_hx_val >> 24) & 0xFF);
 		digest[count * 4 + 1] = (u8) ((temp_hx_val >> 16) & 0xFF);
 		digest[count * 4 + 2] = (u8) ((temp_hx_val >> 8) & 0xFF);
 		digest[count * 4 + 3] = (u8) ((temp_hx_val >> 0) & 0xFF);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * ahash_update - The hash update function क्रम SHA1/SHA2 (SHA256).
- * @req: The hash request क्रम the job.
+ * ahash_update - The hash update function for SHA1/SHA2 (SHA256).
+ * @req: The hash request for the job.
  */
-अटल पूर्णांक ahash_update(काष्ठा ahash_request *req)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा hash_req_ctx *req_ctx = ahash_request_ctx(req);
+static int ahash_update(struct ahash_request *req)
+{
+	int ret = 0;
+	struct hash_req_ctx *req_ctx = ahash_request_ctx(req);
 
-	अगर (hash_mode != HASH_MODE_DMA || !req_ctx->dma_mode)
+	if (hash_mode != HASH_MODE_DMA || !req_ctx->dma_mode)
 		ret = hash_hw_update(req);
-	/* Skip update क्रम DMA, all data will be passed to DMA in final */
+	/* Skip update for DMA, all data will be passed to DMA in final */
 
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("%s: hash_hw_update() failed!\n", __func__);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * ahash_final - The hash final function क्रम SHA1/SHA2 (SHA256).
- * @req:	The hash request क्रम the job.
+ * ahash_final - The hash final function for SHA1/SHA2 (SHA256).
+ * @req:	The hash request for the job.
  */
-अटल पूर्णांक ahash_final(काष्ठा ahash_request *req)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा hash_req_ctx *req_ctx = ahash_request_ctx(req);
+static int ahash_final(struct ahash_request *req)
+{
+	int ret = 0;
+	struct hash_req_ctx *req_ctx = ahash_request_ctx(req);
 
 	pr_debug("%s: data size: %d\n", __func__, req->nbytes);
 
-	अगर ((hash_mode == HASH_MODE_DMA) && req_ctx->dma_mode)
+	if ((hash_mode == HASH_MODE_DMA) && req_ctx->dma_mode)
 		ret = hash_dma_final(req);
-	अन्यथा
+	else
 		ret = hash_hw_final(req);
 
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("%s: hash_hw/dma_final() failed\n", __func__);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक hash_setkey(काष्ठा crypto_ahash *tfm,
-		       स्थिर u8 *key, अचिन्हित पूर्णांक keylen, पूर्णांक alg)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा hash_ctx *ctx = crypto_ahash_ctx(tfm);
+static int hash_setkey(struct crypto_ahash *tfm,
+		       const u8 *key, unsigned int keylen, int alg)
+{
+	int ret = 0;
+	struct hash_ctx *ctx = crypto_ahash_ctx(tfm);
 
 	/**
 	 * Freed in final.
 	 */
 	ctx->key = kmemdup(key, keylen, GFP_KERNEL);
-	अगर (!ctx->key) अणु
+	if (!ctx->key) {
 		pr_err("%s: Failed to allocate ctx->key for %d\n",
 		       __func__, alg);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	ctx->keylen = keylen;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ahash_sha1_init(काष्ठा ahash_request *req)
-अणु
-	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	काष्ठा hash_ctx *ctx = crypto_ahash_ctx(tfm);
+static int ahash_sha1_init(struct ahash_request *req)
+{
+	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	struct hash_ctx *ctx = crypto_ahash_ctx(tfm);
 
-	ctx->config.data_क्रमmat = HASH_DATA_8_BITS;
+	ctx->config.data_format = HASH_DATA_8_BITS;
 	ctx->config.algorithm = HASH_ALGO_SHA1;
 	ctx->config.oper_mode = HASH_OPER_MODE_HASH;
 	ctx->digestsize = SHA1_DIGEST_SIZE;
 
-	वापस ux500_hash_init(req);
-पूर्ण
+	return ux500_hash_init(req);
+}
 
-अटल पूर्णांक ahash_sha256_init(काष्ठा ahash_request *req)
-अणु
-	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	काष्ठा hash_ctx *ctx = crypto_ahash_ctx(tfm);
+static int ahash_sha256_init(struct ahash_request *req)
+{
+	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	struct hash_ctx *ctx = crypto_ahash_ctx(tfm);
 
-	ctx->config.data_क्रमmat = HASH_DATA_8_BITS;
+	ctx->config.data_format = HASH_DATA_8_BITS;
 	ctx->config.algorithm = HASH_ALGO_SHA256;
 	ctx->config.oper_mode = HASH_OPER_MODE_HASH;
 	ctx->digestsize = SHA256_DIGEST_SIZE;
 
-	वापस ux500_hash_init(req);
-पूर्ण
+	return ux500_hash_init(req);
+}
 
-अटल पूर्णांक ahash_sha1_digest(काष्ठा ahash_request *req)
-अणु
-	पूर्णांक ret2, ret1;
+static int ahash_sha1_digest(struct ahash_request *req)
+{
+	int ret2, ret1;
 
 	ret1 = ahash_sha1_init(req);
-	अगर (ret1)
-		जाओ out;
+	if (ret1)
+		goto out;
 
 	ret1 = ahash_update(req);
 	ret2 = ahash_final(req);
 
 out:
-	वापस ret1 ? ret1 : ret2;
-पूर्ण
+	return ret1 ? ret1 : ret2;
+}
 
-अटल पूर्णांक ahash_sha256_digest(काष्ठा ahash_request *req)
-अणु
-	पूर्णांक ret2, ret1;
+static int ahash_sha256_digest(struct ahash_request *req)
+{
+	int ret2, ret1;
 
 	ret1 = ahash_sha256_init(req);
-	अगर (ret1)
-		जाओ out;
+	if (ret1)
+		goto out;
 
 	ret1 = ahash_update(req);
 	ret2 = ahash_final(req);
 
 out:
-	वापस ret1 ? ret1 : ret2;
-पूर्ण
+	return ret1 ? ret1 : ret2;
+}
 
-अटल पूर्णांक ahash_noimport(काष्ठा ahash_request *req, स्थिर व्योम *in)
-अणु
-	वापस -ENOSYS;
-पूर्ण
+static int ahash_noimport(struct ahash_request *req, const void *in)
+{
+	return -ENOSYS;
+}
 
-अटल पूर्णांक ahash_noexport(काष्ठा ahash_request *req, व्योम *out)
-अणु
-	वापस -ENOSYS;
-पूर्ण
+static int ahash_noexport(struct ahash_request *req, void *out)
+{
+	return -ENOSYS;
+}
 
-अटल पूर्णांक hmac_sha1_init(काष्ठा ahash_request *req)
-अणु
-	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	काष्ठा hash_ctx *ctx = crypto_ahash_ctx(tfm);
+static int hmac_sha1_init(struct ahash_request *req)
+{
+	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	struct hash_ctx *ctx = crypto_ahash_ctx(tfm);
 
-	ctx->config.data_क्रमmat	= HASH_DATA_8_BITS;
+	ctx->config.data_format	= HASH_DATA_8_BITS;
 	ctx->config.algorithm	= HASH_ALGO_SHA1;
 	ctx->config.oper_mode	= HASH_OPER_MODE_HMAC;
 	ctx->digestsize		= SHA1_DIGEST_SIZE;
 
-	वापस ux500_hash_init(req);
-पूर्ण
+	return ux500_hash_init(req);
+}
 
-अटल पूर्णांक hmac_sha256_init(काष्ठा ahash_request *req)
-अणु
-	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	काष्ठा hash_ctx *ctx = crypto_ahash_ctx(tfm);
+static int hmac_sha256_init(struct ahash_request *req)
+{
+	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	struct hash_ctx *ctx = crypto_ahash_ctx(tfm);
 
-	ctx->config.data_क्रमmat	= HASH_DATA_8_BITS;
+	ctx->config.data_format	= HASH_DATA_8_BITS;
 	ctx->config.algorithm	= HASH_ALGO_SHA256;
 	ctx->config.oper_mode	= HASH_OPER_MODE_HMAC;
 	ctx->digestsize		= SHA256_DIGEST_SIZE;
 
-	वापस ux500_hash_init(req);
-पूर्ण
+	return ux500_hash_init(req);
+}
 
-अटल पूर्णांक hmac_sha1_digest(काष्ठा ahash_request *req)
-अणु
-	पूर्णांक ret2, ret1;
+static int hmac_sha1_digest(struct ahash_request *req)
+{
+	int ret2, ret1;
 
 	ret1 = hmac_sha1_init(req);
-	अगर (ret1)
-		जाओ out;
+	if (ret1)
+		goto out;
 
 	ret1 = ahash_update(req);
 	ret2 = ahash_final(req);
 
 out:
-	वापस ret1 ? ret1 : ret2;
-पूर्ण
+	return ret1 ? ret1 : ret2;
+}
 
-अटल पूर्णांक hmac_sha256_digest(काष्ठा ahash_request *req)
-अणु
-	पूर्णांक ret2, ret1;
+static int hmac_sha256_digest(struct ahash_request *req)
+{
+	int ret2, ret1;
 
 	ret1 = hmac_sha256_init(req);
-	अगर (ret1)
-		जाओ out;
+	if (ret1)
+		goto out;
 
 	ret1 = ahash_update(req);
 	ret2 = ahash_final(req);
 
 out:
-	वापस ret1 ? ret1 : ret2;
-पूर्ण
+	return ret1 ? ret1 : ret2;
+}
 
-अटल पूर्णांक hmac_sha1_setkey(काष्ठा crypto_ahash *tfm,
-			    स्थिर u8 *key, अचिन्हित पूर्णांक keylen)
-अणु
-	वापस hash_setkey(tfm, key, keylen, HASH_ALGO_SHA1);
-पूर्ण
+static int hmac_sha1_setkey(struct crypto_ahash *tfm,
+			    const u8 *key, unsigned int keylen)
+{
+	return hash_setkey(tfm, key, keylen, HASH_ALGO_SHA1);
+}
 
-अटल पूर्णांक hmac_sha256_setkey(काष्ठा crypto_ahash *tfm,
-			      स्थिर u8 *key, अचिन्हित पूर्णांक keylen)
-अणु
-	वापस hash_setkey(tfm, key, keylen, HASH_ALGO_SHA256);
-पूर्ण
+static int hmac_sha256_setkey(struct crypto_ahash *tfm,
+			      const u8 *key, unsigned int keylen)
+{
+	return hash_setkey(tfm, key, keylen, HASH_ALGO_SHA256);
+}
 
-काष्ठा hash_algo_ढाँचा अणु
-	काष्ठा hash_config conf;
-	काष्ठा ahash_alg hash;
-पूर्ण;
+struct hash_algo_template {
+	struct hash_config conf;
+	struct ahash_alg hash;
+};
 
-अटल पूर्णांक hash_cra_init(काष्ठा crypto_tfm *tfm)
-अणु
-	काष्ठा hash_ctx *ctx = crypto_tfm_ctx(tfm);
-	काष्ठा crypto_alg *alg = tfm->__crt_alg;
-	काष्ठा hash_algo_ढाँचा *hash_alg;
+static int hash_cra_init(struct crypto_tfm *tfm)
+{
+	struct hash_ctx *ctx = crypto_tfm_ctx(tfm);
+	struct crypto_alg *alg = tfm->__crt_alg;
+	struct hash_algo_template *hash_alg;
 
 	hash_alg = container_of(__crypto_ahash_alg(alg),
-			काष्ठा hash_algo_ढाँचा,
+			struct hash_algo_template,
 			hash);
 
 	crypto_ahash_set_reqsize(__crypto_ahash_cast(tfm),
-				 माप(काष्ठा hash_req_ctx));
+				 sizeof(struct hash_req_ctx));
 
-	ctx->config.data_क्रमmat = HASH_DATA_8_BITS;
+	ctx->config.data_format = HASH_DATA_8_BITS;
 	ctx->config.algorithm = hash_alg->conf.algorithm;
 	ctx->config.oper_mode = hash_alg->conf.oper_mode;
 
 	ctx->digestsize = hash_alg->hash.halg.digestsize;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा hash_algo_ढाँचा hash_algs[] = अणु
-	अणु
+static struct hash_algo_template hash_algs[] = {
+	{
 		.conf.algorithm = HASH_ALGO_SHA1,
 		.conf.oper_mode = HASH_OPER_MODE_HASH,
-		.hash = अणु
+		.hash = {
 			.init = ux500_hash_init,
 			.update = ahash_update,
 			.final = ahash_final,
@@ -1532,22 +1531,22 @@ out:
 			.export = ahash_noexport,
 			.import = ahash_noimport,
 			.halg.digestsize = SHA1_DIGEST_SIZE,
-			.halg.statesize = माप(काष्ठा hash_ctx),
-			.halg.base = अणु
+			.halg.statesize = sizeof(struct hash_ctx),
+			.halg.base = {
 				.cra_name = "sha1",
 				.cra_driver_name = "sha1-ux500",
 				.cra_flags = CRYPTO_ALG_ASYNC,
 				.cra_blocksize = SHA1_BLOCK_SIZE,
-				.cra_ctxsize = माप(काष्ठा hash_ctx),
+				.cra_ctxsize = sizeof(struct hash_ctx),
 				.cra_init = hash_cra_init,
 				.cra_module = THIS_MODULE,
-			पूर्ण
-		पूर्ण
-	पूर्ण,
-	अणु
+			}
+		}
+	},
+	{
 		.conf.algorithm	= HASH_ALGO_SHA256,
 		.conf.oper_mode	= HASH_OPER_MODE_HASH,
-		.hash = अणु
+		.hash = {
 			.init = ux500_hash_init,
 			.update	= ahash_update,
 			.final = ahash_final,
@@ -1555,22 +1554,22 @@ out:
 			.export = ahash_noexport,
 			.import = ahash_noimport,
 			.halg.digestsize = SHA256_DIGEST_SIZE,
-			.halg.statesize = माप(काष्ठा hash_ctx),
-			.halg.base = अणु
+			.halg.statesize = sizeof(struct hash_ctx),
+			.halg.base = {
 				.cra_name = "sha256",
 				.cra_driver_name = "sha256-ux500",
 				.cra_flags = CRYPTO_ALG_ASYNC,
 				.cra_blocksize = SHA256_BLOCK_SIZE,
-				.cra_ctxsize = माप(काष्ठा hash_ctx),
+				.cra_ctxsize = sizeof(struct hash_ctx),
 				.cra_init = hash_cra_init,
 				.cra_module = THIS_MODULE,
-			पूर्ण
-		पूर्ण
-	पूर्ण,
-	अणु
+			}
+		}
+	},
+	{
 		.conf.algorithm = HASH_ALGO_SHA1,
 		.conf.oper_mode = HASH_OPER_MODE_HMAC,
-			.hash = अणु
+			.hash = {
 			.init = ux500_hash_init,
 			.update = ahash_update,
 			.final = ahash_final,
@@ -1579,22 +1578,22 @@ out:
 			.export = ahash_noexport,
 			.import = ahash_noimport,
 			.halg.digestsize = SHA1_DIGEST_SIZE,
-			.halg.statesize = माप(काष्ठा hash_ctx),
-			.halg.base = अणु
+			.halg.statesize = sizeof(struct hash_ctx),
+			.halg.base = {
 				.cra_name = "hmac(sha1)",
 				.cra_driver_name = "hmac-sha1-ux500",
 				.cra_flags = CRYPTO_ALG_ASYNC,
 				.cra_blocksize = SHA1_BLOCK_SIZE,
-				.cra_ctxsize = माप(काष्ठा hash_ctx),
+				.cra_ctxsize = sizeof(struct hash_ctx),
 				.cra_init = hash_cra_init,
 				.cra_module = THIS_MODULE,
-			पूर्ण
-		पूर्ण
-	पूर्ण,
-	अणु
+			}
+		}
+	},
+	{
 		.conf.algorithm = HASH_ALGO_SHA256,
 		.conf.oper_mode = HASH_OPER_MODE_HMAC,
-		.hash = अणु
+		.hash = {
 			.init = ux500_hash_init,
 			.update = ahash_update,
 			.final = ahash_final,
@@ -1603,144 +1602,144 @@ out:
 			.export = ahash_noexport,
 			.import = ahash_noimport,
 			.halg.digestsize = SHA256_DIGEST_SIZE,
-			.halg.statesize = माप(काष्ठा hash_ctx),
-			.halg.base = अणु
+			.halg.statesize = sizeof(struct hash_ctx),
+			.halg.base = {
 				.cra_name = "hmac(sha256)",
 				.cra_driver_name = "hmac-sha256-ux500",
 				.cra_flags = CRYPTO_ALG_ASYNC,
 				.cra_blocksize = SHA256_BLOCK_SIZE,
-				.cra_ctxsize = माप(काष्ठा hash_ctx),
+				.cra_ctxsize = sizeof(struct hash_ctx),
 				.cra_init = hash_cra_init,
 				.cra_module = THIS_MODULE,
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण;
+			}
+		}
+	}
+};
 
-अटल पूर्णांक ahash_algs_रेजिस्टर_all(काष्ठा hash_device_data *device_data)
-अणु
-	पूर्णांक ret;
-	पूर्णांक i;
-	पूर्णांक count;
+static int ahash_algs_register_all(struct hash_device_data *device_data)
+{
+	int ret;
+	int i;
+	int count;
 
-	क्रम (i = 0; i < ARRAY_SIZE(hash_algs); i++) अणु
-		ret = crypto_रेजिस्टर_ahash(&hash_algs[i].hash);
-		अगर (ret) अणु
+	for (i = 0; i < ARRAY_SIZE(hash_algs); i++) {
+		ret = crypto_register_ahash(&hash_algs[i].hash);
+		if (ret) {
 			count = i;
 			dev_err(device_data->dev, "%s: alg registration failed\n",
 				hash_algs[i].hash.halg.base.cra_driver_name);
-			जाओ unreg;
-		पूर्ण
-	पूर्ण
-	वापस 0;
+			goto unreg;
+		}
+	}
+	return 0;
 unreg:
-	क्रम (i = 0; i < count; i++)
-		crypto_unरेजिस्टर_ahash(&hash_algs[i].hash);
-	वापस ret;
-पूर्ण
+	for (i = 0; i < count; i++)
+		crypto_unregister_ahash(&hash_algs[i].hash);
+	return ret;
+}
 
-अटल व्योम ahash_algs_unरेजिस्टर_all(काष्ठा hash_device_data *device_data)
-अणु
-	पूर्णांक i;
+static void ahash_algs_unregister_all(struct hash_device_data *device_data)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(hash_algs); i++)
-		crypto_unरेजिस्टर_ahash(&hash_algs[i].hash);
-पूर्ण
+	for (i = 0; i < ARRAY_SIZE(hash_algs); i++)
+		crypto_unregister_ahash(&hash_algs[i].hash);
+}
 
 /**
  * ux500_hash_probe - Function that probes the hash hardware.
- * @pdev: The platक्रमm device.
+ * @pdev: The platform device.
  */
-अटल पूर्णांक ux500_hash_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक			ret = 0;
-	काष्ठा resource		*res = शून्य;
-	काष्ठा hash_device_data *device_data;
-	काष्ठा device		*dev = &pdev->dev;
+static int ux500_hash_probe(struct platform_device *pdev)
+{
+	int			ret = 0;
+	struct resource		*res = NULL;
+	struct hash_device_data *device_data;
+	struct device		*dev = &pdev->dev;
 
-	device_data = devm_kzalloc(dev, माप(*device_data), GFP_ATOMIC);
-	अगर (!device_data) अणु
+	device_data = devm_kzalloc(dev, sizeof(*device_data), GFP_ATOMIC);
+	if (!device_data) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	device_data->dev = dev;
-	device_data->current_ctx = शून्य;
+	device_data->current_ctx = NULL;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!res) अणु
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!res) {
 		dev_dbg(dev, "%s: platform_get_resource() failed!\n", __func__);
 		ret = -ENODEV;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	device_data->phybase = res->start;
 	device_data->base = devm_ioremap_resource(dev, res);
-	अगर (IS_ERR(device_data->base)) अणु
+	if (IS_ERR(device_data->base)) {
 		ret = PTR_ERR(device_data->base);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	spin_lock_init(&device_data->ctx_lock);
-	spin_lock_init(&device_data->घातer_state_lock);
+	spin_lock_init(&device_data->power_state_lock);
 
-	/* Enable घातer क्रम HASH1 hardware block */
+	/* Enable power for HASH1 hardware block */
 	device_data->regulator = regulator_get(dev, "v-ape");
-	अगर (IS_ERR(device_data->regulator)) अणु
+	if (IS_ERR(device_data->regulator)) {
 		dev_err(dev, "%s: regulator_get() failed!\n", __func__);
 		ret = PTR_ERR(device_data->regulator);
-		device_data->regulator = शून्य;
-		जाओ out;
-	पूर्ण
+		device_data->regulator = NULL;
+		goto out;
+	}
 
-	/* Enable the घड़ी क्रम HASH1 hardware block */
-	device_data->clk = devm_clk_get(dev, शून्य);
-	अगर (IS_ERR(device_data->clk)) अणु
+	/* Enable the clock for HASH1 hardware block */
+	device_data->clk = devm_clk_get(dev, NULL);
+	if (IS_ERR(device_data->clk)) {
 		dev_err(dev, "%s: clk_get() failed!\n", __func__);
 		ret = PTR_ERR(device_data->clk);
-		जाओ out_regulator;
-	पूर्ण
+		goto out_regulator;
+	}
 
 	ret = clk_prepare(device_data->clk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "%s: clk_prepare() failed!\n", __func__);
-		जाओ out_regulator;
-	पूर्ण
+		goto out_regulator;
+	}
 
-	/* Enable device घातer (and घड़ी) */
-	ret = hash_enable_घातer(device_data, false);
-	अगर (ret) अणु
+	/* Enable device power (and clock) */
+	ret = hash_enable_power(device_data, false);
+	if (ret) {
 		dev_err(dev, "%s: hash_enable_power() failed!\n", __func__);
-		जाओ out_clk_unprepare;
-	पूर्ण
+		goto out_clk_unprepare;
+	}
 
 	ret = hash_check_hw(device_data);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "%s: hash_check_hw() failed!\n", __func__);
-		जाओ out_घातer;
-	पूर्ण
+		goto out_power;
+	}
 
-	अगर (hash_mode == HASH_MODE_DMA)
+	if (hash_mode == HASH_MODE_DMA)
 		hash_dma_setup_channel(device_data, dev);
 
-	platक्रमm_set_drvdata(pdev, device_data);
+	platform_set_drvdata(pdev, device_data);
 
-	/* Put the new device पूर्णांकo the device list... */
+	/* Put the new device into the device list... */
 	klist_add_tail(&device_data->list_node, &driver_data.device_list);
-	/* ... and संकेत that a new device is available. */
+	/* ... and signal that a new device is available. */
 	up(&driver_data.device_allocation);
 
-	ret = ahash_algs_रेजिस्टर_all(device_data);
-	अगर (ret) अणु
+	ret = ahash_algs_register_all(device_data);
+	if (ret) {
 		dev_err(dev, "%s: ahash_algs_register_all() failed!\n",
 			__func__);
-		जाओ out_घातer;
-	पूर्ण
+		goto out_power;
+	}
 
 	dev_info(dev, "successfully registered\n");
-	वापस 0;
+	return 0;
 
-out_घातer:
-	hash_disable_घातer(device_data, false);
+out_power:
+	hash_disable_power(device_data, false);
 
 out_clk_unprepare:
 	clk_unprepare(device_data->clk);
@@ -1749,215 +1748,215 @@ out_regulator:
 	regulator_put(device_data->regulator);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * ux500_hash_हटाओ - Function that हटाओs the hash device from the platक्रमm.
- * @pdev: The platक्रमm device.
+ * ux500_hash_remove - Function that removes the hash device from the platform.
+ * @pdev: The platform device.
  */
-अटल पूर्णांक ux500_hash_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा hash_device_data *device_data;
-	काष्ठा device		*dev = &pdev->dev;
+static int ux500_hash_remove(struct platform_device *pdev)
+{
+	struct hash_device_data *device_data;
+	struct device		*dev = &pdev->dev;
 
-	device_data = platक्रमm_get_drvdata(pdev);
-	अगर (!device_data) अणु
+	device_data = platform_get_drvdata(pdev);
+	if (!device_data) {
 		dev_err(dev, "%s: platform_get_drvdata() failed!\n", __func__);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	/* Try to decrease the number of available devices. */
-	अगर (करोwn_trylock(&driver_data.device_allocation))
-		वापस -EBUSY;
+	if (down_trylock(&driver_data.device_allocation))
+		return -EBUSY;
 
-	/* Check that the device is मुक्त */
+	/* Check that the device is free */
 	spin_lock(&device_data->ctx_lock);
-	/* current_ctx allocates a device, शून्य = unallocated */
-	अगर (device_data->current_ctx) अणु
+	/* current_ctx allocates a device, NULL = unallocated */
+	if (device_data->current_ctx) {
 		/* The device is busy */
 		spin_unlock(&device_data->ctx_lock);
 		/* Return the device to the pool. */
 		up(&driver_data.device_allocation);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	spin_unlock(&device_data->ctx_lock);
 
 	/* Remove the device from the list */
-	अगर (klist_node_attached(&device_data->list_node))
-		klist_हटाओ(&device_data->list_node);
+	if (klist_node_attached(&device_data->list_node))
+		klist_remove(&device_data->list_node);
 
-	/* If this was the last device, हटाओ the services */
-	अगर (list_empty(&driver_data.device_list.k_list))
-		ahash_algs_unरेजिस्टर_all(device_data);
+	/* If this was the last device, remove the services */
+	if (list_empty(&driver_data.device_list.k_list))
+		ahash_algs_unregister_all(device_data);
 
-	अगर (hash_disable_घातer(device_data, false))
+	if (hash_disable_power(device_data, false))
 		dev_err(dev, "%s: hash_disable_power() failed\n",
 			__func__);
 
 	clk_unprepare(device_data->clk);
 	regulator_put(device_data->regulator);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * ux500_hash_shutकरोwn - Function that shutकरोwn the hash device.
- * @pdev: The platक्रमm device
+ * ux500_hash_shutdown - Function that shutdown the hash device.
+ * @pdev: The platform device
  */
-अटल व्योम ux500_hash_shutकरोwn(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा hash_device_data *device_data;
+static void ux500_hash_shutdown(struct platform_device *pdev)
+{
+	struct hash_device_data *device_data;
 
-	device_data = platक्रमm_get_drvdata(pdev);
-	अगर (!device_data) अणु
+	device_data = platform_get_drvdata(pdev);
+	if (!device_data) {
 		dev_err(&pdev->dev, "%s: platform_get_drvdata() failed!\n",
 			__func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* Check that the device is मुक्त */
+	/* Check that the device is free */
 	spin_lock(&device_data->ctx_lock);
-	/* current_ctx allocates a device, शून्य = unallocated */
-	अगर (!device_data->current_ctx) अणु
-		अगर (करोwn_trylock(&driver_data.device_allocation))
+	/* current_ctx allocates a device, NULL = unallocated */
+	if (!device_data->current_ctx) {
+		if (down_trylock(&driver_data.device_allocation))
 			dev_dbg(&pdev->dev, "%s: Cryp still in use! Shutting down anyway...\n",
 				__func__);
 		/**
 		 * (Allocate the device)
 		 * Need to set this to non-null (dummy) value,
-		 * to aव्योम usage अगर context चयनing.
+		 * to avoid usage if context switching.
 		 */
 		device_data->current_ctx++;
-	पूर्ण
+	}
 	spin_unlock(&device_data->ctx_lock);
 
 	/* Remove the device from the list */
-	अगर (klist_node_attached(&device_data->list_node))
-		klist_हटाओ(&device_data->list_node);
+	if (klist_node_attached(&device_data->list_node))
+		klist_remove(&device_data->list_node);
 
-	/* If this was the last device, हटाओ the services */
-	अगर (list_empty(&driver_data.device_list.k_list))
-		ahash_algs_unरेजिस्टर_all(device_data);
+	/* If this was the last device, remove the services */
+	if (list_empty(&driver_data.device_list.k_list))
+		ahash_algs_unregister_all(device_data);
 
-	अगर (hash_disable_घातer(device_data, false))
+	if (hash_disable_power(device_data, false))
 		dev_err(&pdev->dev, "%s: hash_disable_power() failed\n",
 			__func__);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
+#ifdef CONFIG_PM_SLEEP
 /**
  * ux500_hash_suspend - Function that suspends the hash device.
  * @dev:	Device to suspend.
  */
-अटल पूर्णांक ux500_hash_suspend(काष्ठा device *dev)
-अणु
-	पूर्णांक ret;
-	काष्ठा hash_device_data *device_data;
-	काष्ठा hash_ctx *temp_ctx = शून्य;
+static int ux500_hash_suspend(struct device *dev)
+{
+	int ret;
+	struct hash_device_data *device_data;
+	struct hash_ctx *temp_ctx = NULL;
 
 	device_data = dev_get_drvdata(dev);
-	अगर (!device_data) अणु
+	if (!device_data) {
 		dev_err(dev, "%s: platform_get_drvdata() failed!\n", __func__);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	spin_lock(&device_data->ctx_lock);
-	अगर (!device_data->current_ctx)
+	if (!device_data->current_ctx)
 		device_data->current_ctx++;
 	spin_unlock(&device_data->ctx_lock);
 
-	अगर (device_data->current_ctx == ++temp_ctx) अणु
-		अगर (करोwn_पूर्णांकerruptible(&driver_data.device_allocation))
+	if (device_data->current_ctx == ++temp_ctx) {
+		if (down_interruptible(&driver_data.device_allocation))
 			dev_dbg(dev, "%s: down_interruptible() failed\n",
 				__func__);
-		ret = hash_disable_घातer(device_data, false);
+		ret = hash_disable_power(device_data, false);
 
-	पूर्ण अन्यथा अणु
-		ret = hash_disable_घातer(device_data, true);
-	पूर्ण
+	} else {
+		ret = hash_disable_power(device_data, true);
+	}
 
-	अगर (ret)
+	if (ret)
 		dev_err(dev, "%s: hash_disable_power()\n", __func__);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * ux500_hash_resume - Function that resume the hash device.
  * @dev:	Device to resume.
  */
-अटल पूर्णांक ux500_hash_resume(काष्ठा device *dev)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा hash_device_data *device_data;
-	काष्ठा hash_ctx *temp_ctx = शून्य;
+static int ux500_hash_resume(struct device *dev)
+{
+	int ret = 0;
+	struct hash_device_data *device_data;
+	struct hash_ctx *temp_ctx = NULL;
 
 	device_data = dev_get_drvdata(dev);
-	अगर (!device_data) अणु
+	if (!device_data) {
 		dev_err(dev, "%s: platform_get_drvdata() failed!\n", __func__);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	spin_lock(&device_data->ctx_lock);
-	अगर (device_data->current_ctx == ++temp_ctx)
-		device_data->current_ctx = शून्य;
+	if (device_data->current_ctx == ++temp_ctx)
+		device_data->current_ctx = NULL;
 	spin_unlock(&device_data->ctx_lock);
 
-	अगर (!device_data->current_ctx)
+	if (!device_data->current_ctx)
 		up(&driver_data.device_allocation);
-	अन्यथा
-		ret = hash_enable_घातer(device_data, true);
+	else
+		ret = hash_enable_power(device_data, true);
 
-	अगर (ret)
+	if (ret)
 		dev_err(dev, "%s: hash_enable_power() failed!\n", __func__);
 
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर
+	return ret;
+}
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(ux500_hash_pm, ux500_hash_suspend, ux500_hash_resume);
+static SIMPLE_DEV_PM_OPS(ux500_hash_pm, ux500_hash_suspend, ux500_hash_resume);
 
-अटल स्थिर काष्ठा of_device_id ux500_hash_match[] = अणु
-	अणु .compatible = "stericsson,ux500-hash" पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id ux500_hash_match[] = {
+	{ .compatible = "stericsson,ux500-hash" },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, ux500_hash_match);
 
-अटल काष्ठा platक्रमm_driver hash_driver = अणु
+static struct platform_driver hash_driver = {
 	.probe  = ux500_hash_probe,
-	.हटाओ = ux500_hash_हटाओ,
-	.shutकरोwn = ux500_hash_shutकरोwn,
-	.driver = अणु
+	.remove = ux500_hash_remove,
+	.shutdown = ux500_hash_shutdown,
+	.driver = {
 		.name  = "hash1",
 		.of_match_table = ux500_hash_match,
 		.pm    = &ux500_hash_pm,
-	पूर्ण
-पूर्ण;
+	}
+};
 
 /**
  * ux500_hash_mod_init - The kernel module init function.
  */
-अटल पूर्णांक __init ux500_hash_mod_init(व्योम)
-अणु
-	klist_init(&driver_data.device_list, शून्य, शून्य);
+static int __init ux500_hash_mod_init(void)
+{
+	klist_init(&driver_data.device_list, NULL, NULL);
 	/* Initialize the semaphore to 0 devices (locked state) */
 	sema_init(&driver_data.device_allocation, 0);
 
-	वापस platक्रमm_driver_रेजिस्टर(&hash_driver);
-पूर्ण
+	return platform_driver_register(&hash_driver);
+}
 
 /**
- * ux500_hash_mod_fini - The kernel module निकास function.
+ * ux500_hash_mod_fini - The kernel module exit function.
  */
-अटल व्योम __निकास ux500_hash_mod_fini(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&hash_driver);
-पूर्ण
+static void __exit ux500_hash_mod_fini(void)
+{
+	platform_driver_unregister(&hash_driver);
+}
 
 module_init(ux500_hash_mod_init);
-module_निकास(ux500_hash_mod_fini);
+module_exit(ux500_hash_mod_fini);
 
 MODULE_DESCRIPTION("Driver for ST-Ericsson UX500 HASH engine.");
 MODULE_LICENSE("GPL");

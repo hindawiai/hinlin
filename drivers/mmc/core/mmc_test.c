@@ -1,70 +1,69 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  Copyright 2007-2008 Pierre Ossman
  */
 
-#समावेश <linux/mmc/core.h>
-#समावेश <linux/mmc/card.h>
-#समावेश <linux/mmc/host.h>
-#समावेश <linux/mmc/mmc.h>
-#समावेश <linux/slab.h>
+#include <linux/mmc/core.h>
+#include <linux/mmc/card.h>
+#include <linux/mmc/host.h>
+#include <linux/mmc/mmc.h>
+#include <linux/slab.h>
 
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/swap.h>		/* For nr_मुक्त_buffer_pages() */
-#समावेश <linux/list.h>
+#include <linux/scatterlist.h>
+#include <linux/swap.h>		/* For nr_free_buffer_pages() */
+#include <linux/list.h>
 
-#समावेश <linux/debugfs.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/module.h>
+#include <linux/debugfs.h>
+#include <linux/uaccess.h>
+#include <linux/seq_file.h>
+#include <linux/module.h>
 
-#समावेश "core.h"
-#समावेश "card.h"
-#समावेश "host.h"
-#समावेश "bus.h"
-#समावेश "mmc_ops.h"
+#include "core.h"
+#include "card.h"
+#include "host.h"
+#include "bus.h"
+#include "mmc_ops.h"
 
-#घोषणा RESULT_OK		0
-#घोषणा RESULT_FAIL		1
-#घोषणा RESULT_UNSUP_HOST	2
-#घोषणा RESULT_UNSUP_CARD	3
+#define RESULT_OK		0
+#define RESULT_FAIL		1
+#define RESULT_UNSUP_HOST	2
+#define RESULT_UNSUP_CARD	3
 
-#घोषणा BUFFER_ORDER		2
-#घोषणा BUFFER_SIZE		(PAGE_SIZE << BUFFER_ORDER)
+#define BUFFER_ORDER		2
+#define BUFFER_SIZE		(PAGE_SIZE << BUFFER_ORDER)
 
-#घोषणा TEST_ALIGN_END		8
+#define TEST_ALIGN_END		8
 
 /*
  * Limit the test area size to the maximum MMC HC erase group size.  Note that
  * the maximum SD allocation unit size is just 4MiB.
  */
-#घोषणा TEST_AREA_MAX_SIZE (128 * 1024 * 1024)
+#define TEST_AREA_MAX_SIZE (128 * 1024 * 1024)
 
 /**
- * काष्ठा mmc_test_pages - pages allocated by 'alloc_pages()'.
+ * struct mmc_test_pages - pages allocated by 'alloc_pages()'.
  * @page: first page in the allocation
  * @order: order of the number of pages allocated
  */
-काष्ठा mmc_test_pages अणु
-	काष्ठा page *page;
-	अचिन्हित पूर्णांक order;
-पूर्ण;
+struct mmc_test_pages {
+	struct page *page;
+	unsigned int order;
+};
 
 /**
- * काष्ठा mmc_test_mem - allocated memory.
+ * struct mmc_test_mem - allocated memory.
  * @arr: array of allocations
  * @cnt: number of allocations
  */
-काष्ठा mmc_test_mem अणु
-	काष्ठा mmc_test_pages *arr;
-	अचिन्हित पूर्णांक cnt;
-पूर्ण;
+struct mmc_test_mem {
+	struct mmc_test_pages *arr;
+	unsigned int cnt;
+};
 
 /**
- * काष्ठा mmc_test_area - inक्रमmation क्रम perक्रमmance tests.
+ * struct mmc_test_area - information for performance tests.
  * @max_sz: test area size (in bytes)
- * @dev_addr: address on card at which to करो perक्रमmance tests
+ * @dev_addr: address on card at which to do performance tests
  * @max_tfr: maximum transfer size allowed by driver (in bytes)
  * @max_segs: maximum segments allowed by driver in scatterlist @sg
  * @max_seg_sz: maximum segment size allowed by driver
@@ -72,103 +71,103 @@
  * @sg_len: length of currently mapped scatterlist @sg
  * @mem: allocated memory
  * @sg: scatterlist
- * @sg_areq: scatterlist क्रम non-blocking request
+ * @sg_areq: scatterlist for non-blocking request
  */
-काष्ठा mmc_test_area अणु
-	अचिन्हित दीर्घ max_sz;
-	अचिन्हित पूर्णांक dev_addr;
-	अचिन्हित पूर्णांक max_tfr;
-	अचिन्हित पूर्णांक max_segs;
-	अचिन्हित पूर्णांक max_seg_sz;
-	अचिन्हित पूर्णांक blocks;
-	अचिन्हित पूर्णांक sg_len;
-	काष्ठा mmc_test_mem *mem;
-	काष्ठा scatterlist *sg;
-	काष्ठा scatterlist *sg_areq;
-पूर्ण;
+struct mmc_test_area {
+	unsigned long max_sz;
+	unsigned int dev_addr;
+	unsigned int max_tfr;
+	unsigned int max_segs;
+	unsigned int max_seg_sz;
+	unsigned int blocks;
+	unsigned int sg_len;
+	struct mmc_test_mem *mem;
+	struct scatterlist *sg;
+	struct scatterlist *sg_areq;
+};
 
 /**
- * काष्ठा mmc_test_transfer_result - transfer results क्रम perक्रमmance tests.
- * @link: द्विगुन-linked list
+ * struct mmc_test_transfer_result - transfer results for performance tests.
+ * @link: double-linked list
  * @count: amount of group of sectors to check
  * @sectors: amount of sectors to check in one group
- * @ts: समय values of transfer
+ * @ts: time values of transfer
  * @rate: calculated transfer rate
- * @iops: I/O operations per second (बार 100)
+ * @iops: I/O operations per second (times 100)
  */
-काष्ठा mmc_test_transfer_result अणु
-	काष्ठा list_head link;
-	अचिन्हित पूर्णांक count;
-	अचिन्हित पूर्णांक sectors;
-	काष्ठा बारpec64 ts;
-	अचिन्हित पूर्णांक rate;
-	अचिन्हित पूर्णांक iops;
-पूर्ण;
+struct mmc_test_transfer_result {
+	struct list_head link;
+	unsigned int count;
+	unsigned int sectors;
+	struct timespec64 ts;
+	unsigned int rate;
+	unsigned int iops;
+};
 
 /**
- * काष्ठा mmc_test_general_result - results क्रम tests.
- * @link: द्विगुन-linked list
+ * struct mmc_test_general_result - results for tests.
+ * @link: double-linked list
  * @card: card under test
- * @testहाल: number of test हाल
+ * @testcase: number of test case
  * @result: result of test run
- * @tr_lst: transfer measurements अगर any as mmc_test_transfer_result
+ * @tr_lst: transfer measurements if any as mmc_test_transfer_result
  */
-काष्ठा mmc_test_general_result अणु
-	काष्ठा list_head link;
-	काष्ठा mmc_card *card;
-	पूर्णांक testहाल;
-	पूर्णांक result;
-	काष्ठा list_head tr_lst;
-पूर्ण;
+struct mmc_test_general_result {
+	struct list_head link;
+	struct mmc_card *card;
+	int testcase;
+	int result;
+	struct list_head tr_lst;
+};
 
 /**
- * काष्ठा mmc_test_dbgfs_file - debugfs related file.
- * @link: द्विगुन-linked list
+ * struct mmc_test_dbgfs_file - debugfs related file.
+ * @link: double-linked list
  * @card: card under test
  * @file: file created under debugfs
  */
-काष्ठा mmc_test_dbgfs_file अणु
-	काष्ठा list_head link;
-	काष्ठा mmc_card *card;
-	काष्ठा dentry *file;
-पूर्ण;
+struct mmc_test_dbgfs_file {
+	struct list_head link;
+	struct mmc_card *card;
+	struct dentry *file;
+};
 
 /**
- * काष्ठा mmc_test_card - test inक्रमmation.
+ * struct mmc_test_card - test information.
  * @card: card under test
  * @scratch: transfer buffer
  * @buffer: transfer buffer
- * @highmem: buffer क्रम highmem tests
- * @area: inक्रमmation क्रम perक्रमmance tests
- * @gr: poपूर्णांकer to results of current testहाल
+ * @highmem: buffer for highmem tests
+ * @area: information for performance tests
+ * @gr: pointer to results of current testcase
  */
-काष्ठा mmc_test_card अणु
-	काष्ठा mmc_card	*card;
+struct mmc_test_card {
+	struct mmc_card	*card;
 
 	u8		scratch[BUFFER_SIZE];
 	u8		*buffer;
-#अगर_घोषित CONFIG_HIGHMEM
-	काष्ठा page	*highmem;
-#पूर्ण_अगर
-	काष्ठा mmc_test_area		area;
-	काष्ठा mmc_test_general_result	*gr;
-पूर्ण;
+#ifdef CONFIG_HIGHMEM
+	struct page	*highmem;
+#endif
+	struct mmc_test_area		area;
+	struct mmc_test_general_result	*gr;
+};
 
-क्रमागत mmc_test_prep_media अणु
+enum mmc_test_prep_media {
 	MMC_TEST_PREP_NONE = 0,
 	MMC_TEST_PREP_WRITE_FULL = 1 << 0,
 	MMC_TEST_PREP_ERASE = 1 << 1,
-पूर्ण;
+};
 
-काष्ठा mmc_test_multiple_rw अणु
-	अचिन्हित पूर्णांक *sg_len;
-	अचिन्हित पूर्णांक *bs;
-	अचिन्हित पूर्णांक len;
-	अचिन्हित पूर्णांक size;
-	bool करो_ग_लिखो;
-	bool करो_nonblock_req;
-	क्रमागत mmc_test_prep_media prepare;
-पूर्ण;
+struct mmc_test_multiple_rw {
+	unsigned int *sg_len;
+	unsigned int *bs;
+	unsigned int len;
+	unsigned int size;
+	bool do_write;
+	bool do_nonblock_req;
+	enum mmc_test_prep_media prepare;
+};
 
 /*******************************************************************/
 /*  General helper functions                                       */
@@ -177,126 +176,126 @@
 /*
  * Configure correct block size in card
  */
-अटल पूर्णांक mmc_test_set_blksize(काष्ठा mmc_test_card *test, अचिन्हित size)
-अणु
-	वापस mmc_set_blocklen(test->card, size);
-पूर्ण
+static int mmc_test_set_blksize(struct mmc_test_card *test, unsigned size)
+{
+	return mmc_set_blocklen(test->card, size);
+}
 
-अटल bool mmc_test_card_cmd23(काष्ठा mmc_card *card)
-अणु
-	वापस mmc_card_mmc(card) ||
+static bool mmc_test_card_cmd23(struct mmc_card *card)
+{
+	return mmc_card_mmc(card) ||
 	       (mmc_card_sd(card) && card->scr.cmds & SD_SCR_CMD23_SUPPORT);
-पूर्ण
+}
 
-अटल व्योम mmc_test_prepare_sbc(काष्ठा mmc_test_card *test,
-				 काष्ठा mmc_request *mrq, अचिन्हित पूर्णांक blocks)
-अणु
-	काष्ठा mmc_card *card = test->card;
+static void mmc_test_prepare_sbc(struct mmc_test_card *test,
+				 struct mmc_request *mrq, unsigned int blocks)
+{
+	struct mmc_card *card = test->card;
 
-	अगर (!mrq->sbc || !mmc_host_cmd23(card->host) ||
+	if (!mrq->sbc || !mmc_host_cmd23(card->host) ||
 	    !mmc_test_card_cmd23(card) || !mmc_op_multi(mrq->cmd->opcode) ||
-	    (card->quirks & MMC_QUIRK_BLK_NO_CMD23)) अणु
-		mrq->sbc = शून्य;
-		वापस;
-	पूर्ण
+	    (card->quirks & MMC_QUIRK_BLK_NO_CMD23)) {
+		mrq->sbc = NULL;
+		return;
+	}
 
 	mrq->sbc->opcode = MMC_SET_BLOCK_COUNT;
 	mrq->sbc->arg = blocks;
 	mrq->sbc->flags = MMC_RSP_R1 | MMC_CMD_AC;
-पूर्ण
+}
 
 /*
- * Fill in the mmc_request काष्ठाure given a set of transfer parameters.
+ * Fill in the mmc_request structure given a set of transfer parameters.
  */
-अटल व्योम mmc_test_prepare_mrq(काष्ठा mmc_test_card *test,
-	काष्ठा mmc_request *mrq, काष्ठा scatterlist *sg, अचिन्हित sg_len,
-	अचिन्हित dev_addr, अचिन्हित blocks, अचिन्हित blksz, पूर्णांक ग_लिखो)
-अणु
-	अगर (WARN_ON(!mrq || !mrq->cmd || !mrq->data || !mrq->stop))
-		वापस;
+static void mmc_test_prepare_mrq(struct mmc_test_card *test,
+	struct mmc_request *mrq, struct scatterlist *sg, unsigned sg_len,
+	unsigned dev_addr, unsigned blocks, unsigned blksz, int write)
+{
+	if (WARN_ON(!mrq || !mrq->cmd || !mrq->data || !mrq->stop))
+		return;
 
-	अगर (blocks > 1) अणु
-		mrq->cmd->opcode = ग_लिखो ?
+	if (blocks > 1) {
+		mrq->cmd->opcode = write ?
 			MMC_WRITE_MULTIPLE_BLOCK : MMC_READ_MULTIPLE_BLOCK;
-	पूर्ण अन्यथा अणु
-		mrq->cmd->opcode = ग_लिखो ?
+	} else {
+		mrq->cmd->opcode = write ?
 			MMC_WRITE_BLOCK : MMC_READ_SINGLE_BLOCK;
-	पूर्ण
+	}
 
 	mrq->cmd->arg = dev_addr;
-	अगर (!mmc_card_blockaddr(test->card))
+	if (!mmc_card_blockaddr(test->card))
 		mrq->cmd->arg <<= 9;
 
 	mrq->cmd->flags = MMC_RSP_R1 | MMC_CMD_ADTC;
 
-	अगर (blocks == 1)
-		mrq->stop = शून्य;
-	अन्यथा अणु
+	if (blocks == 1)
+		mrq->stop = NULL;
+	else {
 		mrq->stop->opcode = MMC_STOP_TRANSMISSION;
 		mrq->stop->arg = 0;
 		mrq->stop->flags = MMC_RSP_R1B | MMC_CMD_AC;
-	पूर्ण
+	}
 
 	mrq->data->blksz = blksz;
 	mrq->data->blocks = blocks;
-	mrq->data->flags = ग_लिखो ? MMC_DATA_WRITE : MMC_DATA_READ;
+	mrq->data->flags = write ? MMC_DATA_WRITE : MMC_DATA_READ;
 	mrq->data->sg = sg;
 	mrq->data->sg_len = sg_len;
 
 	mmc_test_prepare_sbc(test, mrq, blocks);
 
-	mmc_set_data_समयout(mrq->data, test->card);
-पूर्ण
+	mmc_set_data_timeout(mrq->data, test->card);
+}
 
-अटल पूर्णांक mmc_test_busy(काष्ठा mmc_command *cmd)
-अणु
-	वापस !(cmd->resp[0] & R1_READY_FOR_DATA) ||
+static int mmc_test_busy(struct mmc_command *cmd)
+{
+	return !(cmd->resp[0] & R1_READY_FOR_DATA) ||
 		(R1_CURRENT_STATE(cmd->resp[0]) == R1_STATE_PRG);
-पूर्ण
+}
 
 /*
- * Wait क्रम the card to finish the busy state
+ * Wait for the card to finish the busy state
  */
-अटल पूर्णांक mmc_test_रुको_busy(काष्ठा mmc_test_card *test)
-अणु
-	पूर्णांक ret, busy;
-	काष्ठा mmc_command cmd = अणुपूर्ण;
+static int mmc_test_wait_busy(struct mmc_test_card *test)
+{
+	int ret, busy;
+	struct mmc_command cmd = {};
 
 	busy = 0;
-	करो अणु
-		स_रखो(&cmd, 0, माप(काष्ठा mmc_command));
+	do {
+		memset(&cmd, 0, sizeof(struct mmc_command));
 
 		cmd.opcode = MMC_SEND_STATUS;
 		cmd.arg = test->card->rca << 16;
 		cmd.flags = MMC_RSP_R1 | MMC_CMD_AC;
 
-		ret = mmc_रुको_क्रम_cmd(test->card->host, &cmd, 0);
-		अगर (ret)
-			अवरोध;
+		ret = mmc_wait_for_cmd(test->card->host, &cmd, 0);
+		if (ret)
+			break;
 
-		अगर (!busy && mmc_test_busy(&cmd)) अणु
+		if (!busy && mmc_test_busy(&cmd)) {
 			busy = 1;
-			अगर (test->card->host->caps & MMC_CAP_WAIT_WHILE_BUSY)
+			if (test->card->host->caps & MMC_CAP_WAIT_WHILE_BUSY)
 				pr_info("%s: Warning: Host did not wait for busy state to end.\n",
 					mmc_hostname(test->card->host));
-		पूर्ण
-	पूर्ण जबतक (mmc_test_busy(&cmd));
+		}
+	} while (mmc_test_busy(&cmd));
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Transfer a single sector of kernel addressable data
  */
-अटल पूर्णांक mmc_test_buffer_transfer(काष्ठा mmc_test_card *test,
-	u8 *buffer, अचिन्हित addr, अचिन्हित blksz, पूर्णांक ग_लिखो)
-अणु
-	काष्ठा mmc_request mrq = अणुपूर्ण;
-	काष्ठा mmc_command cmd = अणुपूर्ण;
-	काष्ठा mmc_command stop = अणुपूर्ण;
-	काष्ठा mmc_data data = अणुपूर्ण;
+static int mmc_test_buffer_transfer(struct mmc_test_card *test,
+	u8 *buffer, unsigned addr, unsigned blksz, int write)
+{
+	struct mmc_request mrq = {};
+	struct mmc_command cmd = {};
+	struct mmc_command stop = {};
+	struct mmc_data data = {};
 
-	काष्ठा scatterlist sg;
+	struct scatterlist sg;
 
 	mrq.cmd = &cmd;
 	mrq.data = &data;
@@ -304,246 +303,246 @@
 
 	sg_init_one(&sg, buffer, blksz);
 
-	mmc_test_prepare_mrq(test, &mrq, &sg, 1, addr, 1, blksz, ग_लिखो);
+	mmc_test_prepare_mrq(test, &mrq, &sg, 1, addr, 1, blksz, write);
 
-	mmc_रुको_क्रम_req(test->card->host, &mrq);
+	mmc_wait_for_req(test->card->host, &mrq);
 
-	अगर (cmd.error)
-		वापस cmd.error;
-	अगर (data.error)
-		वापस data.error;
+	if (cmd.error)
+		return cmd.error;
+	if (data.error)
+		return data.error;
 
-	वापस mmc_test_रुको_busy(test);
-पूर्ण
+	return mmc_test_wait_busy(test);
+}
 
-अटल व्योम mmc_test_मुक्त_mem(काष्ठा mmc_test_mem *mem)
-अणु
-	अगर (!mem)
-		वापस;
-	जबतक (mem->cnt--)
-		__मुक्त_pages(mem->arr[mem->cnt].page,
+static void mmc_test_free_mem(struct mmc_test_mem *mem)
+{
+	if (!mem)
+		return;
+	while (mem->cnt--)
+		__free_pages(mem->arr[mem->cnt].page,
 			     mem->arr[mem->cnt].order);
-	kमुक्त(mem->arr);
-	kमुक्त(mem);
-पूर्ण
+	kfree(mem->arr);
+	kfree(mem);
+}
 
 /*
- * Allocate a lot of memory, preferably max_sz but at least min_sz.  In हाल
- * there isn't much memory करो not exceed 1/16th total lowmem pages.  Also करो
+ * Allocate a lot of memory, preferably max_sz but at least min_sz.  In case
+ * there isn't much memory do not exceed 1/16th total lowmem pages.  Also do
  * not exceed a maximum number of segments and try not to make segments much
  * bigger than maximum segment size.
  */
-अटल काष्ठा mmc_test_mem *mmc_test_alloc_mem(अचिन्हित दीर्घ min_sz,
-					       अचिन्हित दीर्घ max_sz,
-					       अचिन्हित पूर्णांक max_segs,
-					       अचिन्हित पूर्णांक max_seg_sz)
-अणु
-	अचिन्हित दीर्घ max_page_cnt = DIV_ROUND_UP(max_sz, PAGE_SIZE);
-	अचिन्हित दीर्घ min_page_cnt = DIV_ROUND_UP(min_sz, PAGE_SIZE);
-	अचिन्हित दीर्घ max_seg_page_cnt = DIV_ROUND_UP(max_seg_sz, PAGE_SIZE);
-	अचिन्हित दीर्घ page_cnt = 0;
-	अचिन्हित दीर्घ limit = nr_मुक्त_buffer_pages() >> 4;
-	काष्ठा mmc_test_mem *mem;
+static struct mmc_test_mem *mmc_test_alloc_mem(unsigned long min_sz,
+					       unsigned long max_sz,
+					       unsigned int max_segs,
+					       unsigned int max_seg_sz)
+{
+	unsigned long max_page_cnt = DIV_ROUND_UP(max_sz, PAGE_SIZE);
+	unsigned long min_page_cnt = DIV_ROUND_UP(min_sz, PAGE_SIZE);
+	unsigned long max_seg_page_cnt = DIV_ROUND_UP(max_seg_sz, PAGE_SIZE);
+	unsigned long page_cnt = 0;
+	unsigned long limit = nr_free_buffer_pages() >> 4;
+	struct mmc_test_mem *mem;
 
-	अगर (max_page_cnt > limit)
+	if (max_page_cnt > limit)
 		max_page_cnt = limit;
-	अगर (min_page_cnt > max_page_cnt)
+	if (min_page_cnt > max_page_cnt)
 		min_page_cnt = max_page_cnt;
 
-	अगर (max_seg_page_cnt > max_page_cnt)
+	if (max_seg_page_cnt > max_page_cnt)
 		max_seg_page_cnt = max_page_cnt;
 
-	अगर (max_segs > max_page_cnt)
+	if (max_segs > max_page_cnt)
 		max_segs = max_page_cnt;
 
-	mem = kzalloc(माप(*mem), GFP_KERNEL);
-	अगर (!mem)
-		वापस शून्य;
+	mem = kzalloc(sizeof(*mem), GFP_KERNEL);
+	if (!mem)
+		return NULL;
 
-	mem->arr = kसुस्मृति(max_segs, माप(*mem->arr), GFP_KERNEL);
-	अगर (!mem->arr)
-		जाओ out_मुक्त;
+	mem->arr = kcalloc(max_segs, sizeof(*mem->arr), GFP_KERNEL);
+	if (!mem->arr)
+		goto out_free;
 
-	जबतक (max_page_cnt) अणु
-		काष्ठा page *page;
-		अचिन्हित पूर्णांक order;
+	while (max_page_cnt) {
+		struct page *page;
+		unsigned int order;
 		gfp_t flags = GFP_KERNEL | GFP_DMA | __GFP_NOWARN |
 				__GFP_NORETRY;
 
 		order = get_order(max_seg_page_cnt << PAGE_SHIFT);
-		जबतक (1) अणु
+		while (1) {
 			page = alloc_pages(flags, order);
-			अगर (page || !order)
-				अवरोध;
+			if (page || !order)
+				break;
 			order -= 1;
-		पूर्ण
-		अगर (!page) अणु
-			अगर (page_cnt < min_page_cnt)
-				जाओ out_मुक्त;
-			अवरोध;
-		पूर्ण
+		}
+		if (!page) {
+			if (page_cnt < min_page_cnt)
+				goto out_free;
+			break;
+		}
 		mem->arr[mem->cnt].page = page;
 		mem->arr[mem->cnt].order = order;
 		mem->cnt += 1;
-		अगर (max_page_cnt <= (1UL << order))
-			अवरोध;
+		if (max_page_cnt <= (1UL << order))
+			break;
 		max_page_cnt -= 1UL << order;
 		page_cnt += 1UL << order;
-		अगर (mem->cnt >= max_segs) अणु
-			अगर (page_cnt < min_page_cnt)
-				जाओ out_मुक्त;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+		if (mem->cnt >= max_segs) {
+			if (page_cnt < min_page_cnt)
+				goto out_free;
+			break;
+		}
+	}
 
-	वापस mem;
+	return mem;
 
-out_मुक्त:
-	mmc_test_मुक्त_mem(mem);
-	वापस शून्य;
-पूर्ण
+out_free:
+	mmc_test_free_mem(mem);
+	return NULL;
+}
 
 /*
- * Map memory पूर्णांकo a scatterlist.  Optionally allow the same memory to be
+ * Map memory into a scatterlist.  Optionally allow the same memory to be
  * mapped more than once.
  */
-अटल पूर्णांक mmc_test_map_sg(काष्ठा mmc_test_mem *mem, अचिन्हित दीर्घ size,
-			   काष्ठा scatterlist *sglist, पूर्णांक repeat,
-			   अचिन्हित पूर्णांक max_segs, अचिन्हित पूर्णांक max_seg_sz,
-			   अचिन्हित पूर्णांक *sg_len, पूर्णांक min_sg_len)
-अणु
-	काष्ठा scatterlist *sg = शून्य;
-	अचिन्हित पूर्णांक i;
-	अचिन्हित दीर्घ sz = size;
+static int mmc_test_map_sg(struct mmc_test_mem *mem, unsigned long size,
+			   struct scatterlist *sglist, int repeat,
+			   unsigned int max_segs, unsigned int max_seg_sz,
+			   unsigned int *sg_len, int min_sg_len)
+{
+	struct scatterlist *sg = NULL;
+	unsigned int i;
+	unsigned long sz = size;
 
 	sg_init_table(sglist, max_segs);
-	अगर (min_sg_len > max_segs)
+	if (min_sg_len > max_segs)
 		min_sg_len = max_segs;
 
 	*sg_len = 0;
-	करो अणु
-		क्रम (i = 0; i < mem->cnt; i++) अणु
-			अचिन्हित दीर्घ len = PAGE_SIZE << mem->arr[i].order;
+	do {
+		for (i = 0; i < mem->cnt; i++) {
+			unsigned long len = PAGE_SIZE << mem->arr[i].order;
 
-			अगर (min_sg_len && (size / min_sg_len < len))
+			if (min_sg_len && (size / min_sg_len < len))
 				len = ALIGN(size / min_sg_len, 512);
-			अगर (len > sz)
+			if (len > sz)
 				len = sz;
-			अगर (len > max_seg_sz)
+			if (len > max_seg_sz)
 				len = max_seg_sz;
-			अगर (sg)
+			if (sg)
 				sg = sg_next(sg);
-			अन्यथा
+			else
 				sg = sglist;
-			अगर (!sg)
-				वापस -EINVAL;
+			if (!sg)
+				return -EINVAL;
 			sg_set_page(sg, mem->arr[i].page, len, 0);
 			sz -= len;
 			*sg_len += 1;
-			अगर (!sz)
-				अवरोध;
-		पूर्ण
-	पूर्ण जबतक (sz && repeat);
+			if (!sz)
+				break;
+		}
+	} while (sz && repeat);
 
-	अगर (sz)
-		वापस -EINVAL;
+	if (sz)
+		return -EINVAL;
 
-	अगर (sg)
+	if (sg)
 		sg_mark_end(sg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Map memory पूर्णांकo a scatterlist so that no pages are contiguous.  Allow the
+ * Map memory into a scatterlist so that no pages are contiguous.  Allow the
  * same memory to be mapped more than once.
  */
-अटल पूर्णांक mmc_test_map_sg_max_scatter(काष्ठा mmc_test_mem *mem,
-				       अचिन्हित दीर्घ sz,
-				       काष्ठा scatterlist *sglist,
-				       अचिन्हित पूर्णांक max_segs,
-				       अचिन्हित पूर्णांक max_seg_sz,
-				       अचिन्हित पूर्णांक *sg_len)
-अणु
-	काष्ठा scatterlist *sg = शून्य;
-	अचिन्हित पूर्णांक i = mem->cnt, cnt;
-	अचिन्हित दीर्घ len;
-	व्योम *base, *addr, *last_addr = शून्य;
+static int mmc_test_map_sg_max_scatter(struct mmc_test_mem *mem,
+				       unsigned long sz,
+				       struct scatterlist *sglist,
+				       unsigned int max_segs,
+				       unsigned int max_seg_sz,
+				       unsigned int *sg_len)
+{
+	struct scatterlist *sg = NULL;
+	unsigned int i = mem->cnt, cnt;
+	unsigned long len;
+	void *base, *addr, *last_addr = NULL;
 
 	sg_init_table(sglist, max_segs);
 
 	*sg_len = 0;
-	जबतक (sz) अणु
+	while (sz) {
 		base = page_address(mem->arr[--i].page);
 		cnt = 1 << mem->arr[i].order;
-		जबतक (sz && cnt) अणु
+		while (sz && cnt) {
 			addr = base + PAGE_SIZE * --cnt;
-			अगर (last_addr && last_addr + PAGE_SIZE == addr)
-				जारी;
+			if (last_addr && last_addr + PAGE_SIZE == addr)
+				continue;
 			last_addr = addr;
 			len = PAGE_SIZE;
-			अगर (len > max_seg_sz)
+			if (len > max_seg_sz)
 				len = max_seg_sz;
-			अगर (len > sz)
+			if (len > sz)
 				len = sz;
-			अगर (sg)
+			if (sg)
 				sg = sg_next(sg);
-			अन्यथा
+			else
 				sg = sglist;
-			अगर (!sg)
-				वापस -EINVAL;
+			if (!sg)
+				return -EINVAL;
 			sg_set_page(sg, virt_to_page(addr), len, 0);
 			sz -= len;
 			*sg_len += 1;
-		पूर्ण
-		अगर (i == 0)
+		}
+		if (i == 0)
 			i = mem->cnt;
-	पूर्ण
+	}
 
-	अगर (sg)
+	if (sg)
 		sg_mark_end(sg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Calculate transfer rate in bytes per second.
  */
-अटल अचिन्हित पूर्णांक mmc_test_rate(uपूर्णांक64_t bytes, काष्ठा बारpec64 *ts)
-अणु
-	uपूर्णांक64_t ns;
+static unsigned int mmc_test_rate(uint64_t bytes, struct timespec64 *ts)
+{
+	uint64_t ns;
 
-	ns = बारpec64_to_ns(ts);
+	ns = timespec64_to_ns(ts);
 	bytes *= 1000000000;
 
-	जबतक (ns > अच_पूर्णांक_उच्च) अणु
+	while (ns > UINT_MAX) {
 		bytes >>= 1;
 		ns >>= 1;
-	पूर्ण
+	}
 
-	अगर (!ns)
-		वापस 0;
+	if (!ns)
+		return 0;
 
-	करो_भाग(bytes, (uपूर्णांक32_t)ns);
+	do_div(bytes, (uint32_t)ns);
 
-	वापस bytes;
-पूर्ण
+	return bytes;
+}
 
 /*
- * Save transfer results क्रम future usage
+ * Save transfer results for future usage
  */
-अटल व्योम mmc_test_save_transfer_result(काष्ठा mmc_test_card *test,
-	अचिन्हित पूर्णांक count, अचिन्हित पूर्णांक sectors, काष्ठा बारpec64 ts,
-	अचिन्हित पूर्णांक rate, अचिन्हित पूर्णांक iops)
-अणु
-	काष्ठा mmc_test_transfer_result *tr;
+static void mmc_test_save_transfer_result(struct mmc_test_card *test,
+	unsigned int count, unsigned int sectors, struct timespec64 ts,
+	unsigned int rate, unsigned int iops)
+{
+	struct mmc_test_transfer_result *tr;
 
-	अगर (!test->gr)
-		वापस;
+	if (!test->gr)
+		return;
 
-	tr = kदो_स्मृति(माप(*tr), GFP_KERNEL);
-	अगर (!tr)
-		वापस;
+	tr = kmalloc(sizeof(*tr), GFP_KERNEL);
+	if (!tr)
+		return;
 
 	tr->count = count;
 	tr->sectors = sectors;
@@ -552,18 +551,18 @@ out_मुक्त:
 	tr->iops = iops;
 
 	list_add_tail(&tr->link, &test->gr->tr_lst);
-पूर्ण
+}
 
 /*
- * Prपूर्णांक the transfer rate.
+ * Print the transfer rate.
  */
-अटल व्योम mmc_test_prपूर्णांक_rate(काष्ठा mmc_test_card *test, uपूर्णांक64_t bytes,
-				काष्ठा बारpec64 *ts1, काष्ठा बारpec64 *ts2)
-अणु
-	अचिन्हित पूर्णांक rate, iops, sectors = bytes >> 9;
-	काष्ठा बारpec64 ts;
+static void mmc_test_print_rate(struct mmc_test_card *test, uint64_t bytes,
+				struct timespec64 *ts1, struct timespec64 *ts2)
+{
+	unsigned int rate, iops, sectors = bytes >> 9;
+	struct timespec64 ts;
 
-	ts = बारpec64_sub(*ts2, *ts1);
+	ts = timespec64_sub(*ts2, *ts1);
 
 	rate = mmc_test_rate(bytes, &ts);
 	iops = mmc_test_rate(100, &ts); /* I/O ops per sec x 100 */
@@ -576,20 +575,20 @@ out_मुक्त:
 			 iops / 100, iops % 100);
 
 	mmc_test_save_transfer_result(test, 1, sectors, ts, rate, iops);
-पूर्ण
+}
 
 /*
- * Prपूर्णांक the average transfer rate.
+ * Print the average transfer rate.
  */
-अटल व्योम mmc_test_prपूर्णांक_avg_rate(काष्ठा mmc_test_card *test, uपूर्णांक64_t bytes,
-				    अचिन्हित पूर्णांक count, काष्ठा बारpec64 *ts1,
-				    काष्ठा बारpec64 *ts2)
-अणु
-	अचिन्हित पूर्णांक rate, iops, sectors = bytes >> 9;
-	uपूर्णांक64_t tot = bytes * count;
-	काष्ठा बारpec64 ts;
+static void mmc_test_print_avg_rate(struct mmc_test_card *test, uint64_t bytes,
+				    unsigned int count, struct timespec64 *ts1,
+				    struct timespec64 *ts2)
+{
+	unsigned int rate, iops, sectors = bytes >> 9;
+	uint64_t tot = bytes * count;
+	struct timespec64 ts;
 
-	ts = बारpec64_sub(*ts2, *ts1);
+	ts = timespec64_sub(*ts2, *ts1);
 
 	rate = mmc_test_rate(tot, &ts);
 	iops = mmc_test_rate(count * 100, &ts); /* I/O ops per sec x 100 */
@@ -604,18 +603,18 @@ out_मुक्त:
 			 test->area.sg_len);
 
 	mmc_test_save_transfer_result(test, count, sectors, ts, rate, iops);
-पूर्ण
+}
 
 /*
  * Return the card size in sectors.
  */
-अटल अचिन्हित पूर्णांक mmc_test_capacity(काष्ठा mmc_card *card)
-अणु
-	अगर (!mmc_card_sd(card) && mmc_card_blockaddr(card))
-		वापस card->ext_csd.sectors;
-	अन्यथा
-		वापस card->csd.capacity << (card->csd.पढ़ो_blkbits - 9);
-पूर्ण
+static unsigned int mmc_test_capacity(struct mmc_card *card)
+{
+	if (!mmc_card_sd(card) && mmc_card_blockaddr(card))
+		return card->ext_csd.sectors;
+	else
+		return card->csd.capacity << (card->csd.read_blkbits - 9);
+}
 
 /*******************************************************************/
 /*  Test preparation and cleanup                                   */
@@ -623,290 +622,290 @@ out_मुक्त:
 
 /*
  * Fill the first couple of sectors of the card with known data
- * so that bad पढ़ोs/ग_लिखोs can be detected
+ * so that bad reads/writes can be detected
  */
-अटल पूर्णांक __mmc_test_prepare(काष्ठा mmc_test_card *test, पूर्णांक ग_लिखो, पूर्णांक val)
-अणु
-	पूर्णांक ret, i;
+static int __mmc_test_prepare(struct mmc_test_card *test, int write, int val)
+{
+	int ret, i;
 
 	ret = mmc_test_set_blksize(test, 512);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (ग_लिखो)
-		स_रखो(test->buffer, val, 512);
-	अन्यथा अणु
-		क्रम (i = 0; i < 512; i++)
+	if (write)
+		memset(test->buffer, val, 512);
+	else {
+		for (i = 0; i < 512; i++)
 			test->buffer[i] = i;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < BUFFER_SIZE / 512; i++) अणु
+	for (i = 0; i < BUFFER_SIZE / 512; i++) {
 		ret = mmc_test_buffer_transfer(test, test->buffer, i, 512, 1);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mmc_test_prepare_ग_लिखो(काष्ठा mmc_test_card *test)
-अणु
-	वापस __mmc_test_prepare(test, 1, 0xDF);
-पूर्ण
+static int mmc_test_prepare_write(struct mmc_test_card *test)
+{
+	return __mmc_test_prepare(test, 1, 0xDF);
+}
 
-अटल पूर्णांक mmc_test_prepare_पढ़ो(काष्ठा mmc_test_card *test)
-अणु
-	वापस __mmc_test_prepare(test, 0, 0);
-पूर्ण
+static int mmc_test_prepare_read(struct mmc_test_card *test)
+{
+	return __mmc_test_prepare(test, 0, 0);
+}
 
-अटल पूर्णांक mmc_test_cleanup(काष्ठा mmc_test_card *test)
-अणु
-	वापस __mmc_test_prepare(test, 1, 0);
-पूर्ण
+static int mmc_test_cleanup(struct mmc_test_card *test)
+{
+	return __mmc_test_prepare(test, 1, 0);
+}
 
 /*******************************************************************/
 /*  Test execution helpers                                         */
 /*******************************************************************/
 
 /*
- * Modअगरies the mmc_request to perक्रमm the "short transfer" tests
+ * Modifies the mmc_request to perform the "short transfer" tests
  */
-अटल व्योम mmc_test_prepare_broken_mrq(काष्ठा mmc_test_card *test,
-	काष्ठा mmc_request *mrq, पूर्णांक ग_लिखो)
-अणु
-	अगर (WARN_ON(!mrq || !mrq->cmd || !mrq->data))
-		वापस;
+static void mmc_test_prepare_broken_mrq(struct mmc_test_card *test,
+	struct mmc_request *mrq, int write)
+{
+	if (WARN_ON(!mrq || !mrq->cmd || !mrq->data))
+		return;
 
-	अगर (mrq->data->blocks > 1) अणु
-		mrq->cmd->opcode = ग_लिखो ?
+	if (mrq->data->blocks > 1) {
+		mrq->cmd->opcode = write ?
 			MMC_WRITE_BLOCK : MMC_READ_SINGLE_BLOCK;
-		mrq->stop = शून्य;
-	पूर्ण अन्यथा अणु
+		mrq->stop = NULL;
+	} else {
 		mrq->cmd->opcode = MMC_SEND_STATUS;
 		mrq->cmd->arg = test->card->rca << 16;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Checks that a normal transfer didn't have any errors
  */
-अटल पूर्णांक mmc_test_check_result(काष्ठा mmc_test_card *test,
-				 काष्ठा mmc_request *mrq)
-अणु
-	पूर्णांक ret;
+static int mmc_test_check_result(struct mmc_test_card *test,
+				 struct mmc_request *mrq)
+{
+	int ret;
 
-	अगर (WARN_ON(!mrq || !mrq->cmd || !mrq->data))
-		वापस -EINVAL;
+	if (WARN_ON(!mrq || !mrq->cmd || !mrq->data))
+		return -EINVAL;
 
 	ret = 0;
 
-	अगर (mrq->sbc && mrq->sbc->error)
+	if (mrq->sbc && mrq->sbc->error)
 		ret = mrq->sbc->error;
-	अगर (!ret && mrq->cmd->error)
+	if (!ret && mrq->cmd->error)
 		ret = mrq->cmd->error;
-	अगर (!ret && mrq->data->error)
+	if (!ret && mrq->data->error)
 		ret = mrq->data->error;
-	अगर (!ret && mrq->stop && mrq->stop->error)
+	if (!ret && mrq->stop && mrq->stop->error)
 		ret = mrq->stop->error;
-	अगर (!ret && mrq->data->bytes_xfered !=
+	if (!ret && mrq->data->bytes_xfered !=
 		mrq->data->blocks * mrq->data->blksz)
 		ret = RESULT_FAIL;
 
-	अगर (ret == -EINVAL)
+	if (ret == -EINVAL)
 		ret = RESULT_UNSUP_HOST;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Checks that a "short transfer" behaved as expected
  */
-अटल पूर्णांक mmc_test_check_broken_result(काष्ठा mmc_test_card *test,
-	काष्ठा mmc_request *mrq)
-अणु
-	पूर्णांक ret;
+static int mmc_test_check_broken_result(struct mmc_test_card *test,
+	struct mmc_request *mrq)
+{
+	int ret;
 
-	अगर (WARN_ON(!mrq || !mrq->cmd || !mrq->data))
-		वापस -EINVAL;
+	if (WARN_ON(!mrq || !mrq->cmd || !mrq->data))
+		return -EINVAL;
 
 	ret = 0;
 
-	अगर (!ret && mrq->cmd->error)
+	if (!ret && mrq->cmd->error)
 		ret = mrq->cmd->error;
-	अगर (!ret && mrq->data->error == 0)
+	if (!ret && mrq->data->error == 0)
 		ret = RESULT_FAIL;
-	अगर (!ret && mrq->data->error != -ETIMEDOUT)
+	if (!ret && mrq->data->error != -ETIMEDOUT)
 		ret = mrq->data->error;
-	अगर (!ret && mrq->stop && mrq->stop->error)
+	if (!ret && mrq->stop && mrq->stop->error)
 		ret = mrq->stop->error;
-	अगर (mrq->data->blocks > 1) अणु
-		अगर (!ret && mrq->data->bytes_xfered > mrq->data->blksz)
+	if (mrq->data->blocks > 1) {
+		if (!ret && mrq->data->bytes_xfered > mrq->data->blksz)
 			ret = RESULT_FAIL;
-	पूर्ण अन्यथा अणु
-		अगर (!ret && mrq->data->bytes_xfered > 0)
+	} else {
+		if (!ret && mrq->data->bytes_xfered > 0)
 			ret = RESULT_FAIL;
-	पूर्ण
+	}
 
-	अगर (ret == -EINVAL)
+	if (ret == -EINVAL)
 		ret = RESULT_UNSUP_HOST;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-काष्ठा mmc_test_req अणु
-	काष्ठा mmc_request mrq;
-	काष्ठा mmc_command sbc;
-	काष्ठा mmc_command cmd;
-	काष्ठा mmc_command stop;
-	काष्ठा mmc_command status;
-	काष्ठा mmc_data data;
-पूर्ण;
+struct mmc_test_req {
+	struct mmc_request mrq;
+	struct mmc_command sbc;
+	struct mmc_command cmd;
+	struct mmc_command stop;
+	struct mmc_command status;
+	struct mmc_data data;
+};
 
 /*
  * Tests nonblock transfer with certain parameters
  */
-अटल व्योम mmc_test_req_reset(काष्ठा mmc_test_req *rq)
-अणु
-	स_रखो(rq, 0, माप(काष्ठा mmc_test_req));
+static void mmc_test_req_reset(struct mmc_test_req *rq)
+{
+	memset(rq, 0, sizeof(struct mmc_test_req));
 
 	rq->mrq.cmd = &rq->cmd;
 	rq->mrq.data = &rq->data;
 	rq->mrq.stop = &rq->stop;
-पूर्ण
+}
 
-अटल काष्ठा mmc_test_req *mmc_test_req_alloc(व्योम)
-अणु
-	काष्ठा mmc_test_req *rq = kदो_स्मृति(माप(*rq), GFP_KERNEL);
+static struct mmc_test_req *mmc_test_req_alloc(void)
+{
+	struct mmc_test_req *rq = kmalloc(sizeof(*rq), GFP_KERNEL);
 
-	अगर (rq)
+	if (rq)
 		mmc_test_req_reset(rq);
 
-	वापस rq;
-पूर्ण
+	return rq;
+}
 
-अटल व्योम mmc_test_रुको_करोne(काष्ठा mmc_request *mrq)
-अणु
+static void mmc_test_wait_done(struct mmc_request *mrq)
+{
 	complete(&mrq->completion);
-पूर्ण
+}
 
-अटल पूर्णांक mmc_test_start_areq(काष्ठा mmc_test_card *test,
-			       काष्ठा mmc_request *mrq,
-			       काष्ठा mmc_request *prev_mrq)
-अणु
-	काष्ठा mmc_host *host = test->card->host;
-	पूर्णांक err = 0;
+static int mmc_test_start_areq(struct mmc_test_card *test,
+			       struct mmc_request *mrq,
+			       struct mmc_request *prev_mrq)
+{
+	struct mmc_host *host = test->card->host;
+	int err = 0;
 
-	अगर (mrq) अणु
+	if (mrq) {
 		init_completion(&mrq->completion);
-		mrq->करोne = mmc_test_रुको_करोne;
+		mrq->done = mmc_test_wait_done;
 		mmc_pre_req(host, mrq);
-	पूर्ण
+	}
 
-	अगर (prev_mrq) अणु
-		रुको_क्रम_completion(&prev_mrq->completion);
-		err = mmc_test_रुको_busy(test);
-		अगर (!err)
+	if (prev_mrq) {
+		wait_for_completion(&prev_mrq->completion);
+		err = mmc_test_wait_busy(test);
+		if (!err)
 			err = mmc_test_check_result(test, prev_mrq);
-	पूर्ण
+	}
 
-	अगर (!err && mrq) अणु
+	if (!err && mrq) {
 		err = mmc_start_request(host, mrq);
-		अगर (err)
+		if (err)
 			mmc_retune_release(host);
-	पूर्ण
+	}
 
-	अगर (prev_mrq)
+	if (prev_mrq)
 		mmc_post_req(host, prev_mrq, 0);
 
-	अगर (err && mrq)
+	if (err && mrq)
 		mmc_post_req(host, mrq, err);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक mmc_test_nonblock_transfer(काष्ठा mmc_test_card *test,
-				      अचिन्हित पूर्णांक dev_addr, पूर्णांक ग_लिखो,
-				      पूर्णांक count)
-अणु
-	काष्ठा mmc_test_req *rq1, *rq2;
-	काष्ठा mmc_request *mrq, *prev_mrq;
-	पूर्णांक i;
-	पूर्णांक ret = RESULT_OK;
-	काष्ठा mmc_test_area *t = &test->area;
-	काष्ठा scatterlist *sg = t->sg;
-	काष्ठा scatterlist *sg_areq = t->sg_areq;
+static int mmc_test_nonblock_transfer(struct mmc_test_card *test,
+				      unsigned int dev_addr, int write,
+				      int count)
+{
+	struct mmc_test_req *rq1, *rq2;
+	struct mmc_request *mrq, *prev_mrq;
+	int i;
+	int ret = RESULT_OK;
+	struct mmc_test_area *t = &test->area;
+	struct scatterlist *sg = t->sg;
+	struct scatterlist *sg_areq = t->sg_areq;
 
 	rq1 = mmc_test_req_alloc();
 	rq2 = mmc_test_req_alloc();
-	अगर (!rq1 || !rq2) अणु
+	if (!rq1 || !rq2) {
 		ret = RESULT_FAIL;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	mrq = &rq1->mrq;
-	prev_mrq = शून्य;
+	prev_mrq = NULL;
 
-	क्रम (i = 0; i < count; i++) अणु
-		mmc_test_req_reset(container_of(mrq, काष्ठा mmc_test_req, mrq));
+	for (i = 0; i < count; i++) {
+		mmc_test_req_reset(container_of(mrq, struct mmc_test_req, mrq));
 		mmc_test_prepare_mrq(test, mrq, sg, t->sg_len, dev_addr,
-				     t->blocks, 512, ग_लिखो);
+				     t->blocks, 512, write);
 		ret = mmc_test_start_areq(test, mrq, prev_mrq);
-		अगर (ret)
-			जाओ err;
+		if (ret)
+			goto err;
 
-		अगर (!prev_mrq)
+		if (!prev_mrq)
 			prev_mrq = &rq2->mrq;
 
 		swap(mrq, prev_mrq);
 		swap(sg, sg_areq);
 		dev_addr += t->blocks;
-	पूर्ण
+	}
 
-	ret = mmc_test_start_areq(test, शून्य, prev_mrq);
+	ret = mmc_test_start_areq(test, NULL, prev_mrq);
 err:
-	kमुक्त(rq1);
-	kमुक्त(rq2);
-	वापस ret;
-पूर्ण
+	kfree(rq1);
+	kfree(rq2);
+	return ret;
+}
 
 /*
  * Tests a basic transfer with certain parameters
  */
-अटल पूर्णांक mmc_test_simple_transfer(काष्ठा mmc_test_card *test,
-	काष्ठा scatterlist *sg, अचिन्हित sg_len, अचिन्हित dev_addr,
-	अचिन्हित blocks, अचिन्हित blksz, पूर्णांक ग_लिखो)
-अणु
-	काष्ठा mmc_request mrq = अणुपूर्ण;
-	काष्ठा mmc_command cmd = अणुपूर्ण;
-	काष्ठा mmc_command stop = अणुपूर्ण;
-	काष्ठा mmc_data data = अणुपूर्ण;
+static int mmc_test_simple_transfer(struct mmc_test_card *test,
+	struct scatterlist *sg, unsigned sg_len, unsigned dev_addr,
+	unsigned blocks, unsigned blksz, int write)
+{
+	struct mmc_request mrq = {};
+	struct mmc_command cmd = {};
+	struct mmc_command stop = {};
+	struct mmc_data data = {};
 
 	mrq.cmd = &cmd;
 	mrq.data = &data;
 	mrq.stop = &stop;
 
 	mmc_test_prepare_mrq(test, &mrq, sg, sg_len, dev_addr,
-		blocks, blksz, ग_लिखो);
+		blocks, blksz, write);
 
-	mmc_रुको_क्रम_req(test->card->host, &mrq);
+	mmc_wait_for_req(test->card->host, &mrq);
 
-	mmc_test_रुको_busy(test);
+	mmc_test_wait_busy(test);
 
-	वापस mmc_test_check_result(test, &mrq);
-पूर्ण
+	return mmc_test_check_result(test, &mrq);
+}
 
 /*
  * Tests a transfer where the card will fail completely or partly
  */
-अटल पूर्णांक mmc_test_broken_transfer(काष्ठा mmc_test_card *test,
-	अचिन्हित blocks, अचिन्हित blksz, पूर्णांक ग_लिखो)
-अणु
-	काष्ठा mmc_request mrq = अणुपूर्ण;
-	काष्ठा mmc_command cmd = अणुपूर्ण;
-	काष्ठा mmc_command stop = अणुपूर्ण;
-	काष्ठा mmc_data data = अणुपूर्ण;
+static int mmc_test_broken_transfer(struct mmc_test_card *test,
+	unsigned blocks, unsigned blksz, int write)
+{
+	struct mmc_request mrq = {};
+	struct mmc_command cmd = {};
+	struct mmc_command stop = {};
+	struct mmc_data data = {};
 
-	काष्ठा scatterlist sg;
+	struct scatterlist sg;
 
 	mrq.cmd = &cmd;
 	mrq.data = &data;
@@ -914,653 +913,653 @@ err:
 
 	sg_init_one(&sg, test->buffer, blocks * blksz);
 
-	mmc_test_prepare_mrq(test, &mrq, &sg, 1, 0, blocks, blksz, ग_लिखो);
-	mmc_test_prepare_broken_mrq(test, &mrq, ग_लिखो);
+	mmc_test_prepare_mrq(test, &mrq, &sg, 1, 0, blocks, blksz, write);
+	mmc_test_prepare_broken_mrq(test, &mrq, write);
 
-	mmc_रुको_क्रम_req(test->card->host, &mrq);
+	mmc_wait_for_req(test->card->host, &mrq);
 
-	mmc_test_रुको_busy(test);
+	mmc_test_wait_busy(test);
 
-	वापस mmc_test_check_broken_result(test, &mrq);
-पूर्ण
+	return mmc_test_check_broken_result(test, &mrq);
+}
 
 /*
  * Does a complete transfer test where data is also validated
  *
- * Note: mmc_test_prepare() must have been करोne beक्रमe this call
+ * Note: mmc_test_prepare() must have been done before this call
  */
-अटल पूर्णांक mmc_test_transfer(काष्ठा mmc_test_card *test,
-	काष्ठा scatterlist *sg, अचिन्हित sg_len, अचिन्हित dev_addr,
-	अचिन्हित blocks, अचिन्हित blksz, पूर्णांक ग_लिखो)
-अणु
-	पूर्णांक ret, i;
-	अचिन्हित दीर्घ flags;
+static int mmc_test_transfer(struct mmc_test_card *test,
+	struct scatterlist *sg, unsigned sg_len, unsigned dev_addr,
+	unsigned blocks, unsigned blksz, int write)
+{
+	int ret, i;
+	unsigned long flags;
 
-	अगर (ग_लिखो) अणु
-		क्रम (i = 0; i < blocks * blksz; i++)
+	if (write) {
+		for (i = 0; i < blocks * blksz; i++)
 			test->scratch[i] = i;
-	पूर्ण अन्यथा अणु
-		स_रखो(test->scratch, 0, BUFFER_SIZE);
-	पूर्ण
+	} else {
+		memset(test->scratch, 0, BUFFER_SIZE);
+	}
 	local_irq_save(flags);
 	sg_copy_from_buffer(sg, sg_len, test->scratch, BUFFER_SIZE);
 	local_irq_restore(flags);
 
 	ret = mmc_test_set_blksize(test, blksz);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = mmc_test_simple_transfer(test, sg, sg_len, dev_addr,
-		blocks, blksz, ग_लिखो);
-	अगर (ret)
-		वापस ret;
+		blocks, blksz, write);
+	if (ret)
+		return ret;
 
-	अगर (ग_लिखो) अणु
-		पूर्णांक sectors;
+	if (write) {
+		int sectors;
 
 		ret = mmc_test_set_blksize(test, 512);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		sectors = (blocks * blksz + 511) / 512;
-		अगर ((sectors * 512) == (blocks * blksz))
+		if ((sectors * 512) == (blocks * blksz))
 			sectors++;
 
-		अगर ((sectors * 512) > BUFFER_SIZE)
-			वापस -EINVAL;
+		if ((sectors * 512) > BUFFER_SIZE)
+			return -EINVAL;
 
-		स_रखो(test->buffer, 0, sectors * 512);
+		memset(test->buffer, 0, sectors * 512);
 
-		क्रम (i = 0; i < sectors; i++) अणु
+		for (i = 0; i < sectors; i++) {
 			ret = mmc_test_buffer_transfer(test,
 				test->buffer + i * 512,
 				dev_addr + i, 512, 0);
-			अगर (ret)
-				वापस ret;
-		पूर्ण
+			if (ret)
+				return ret;
+		}
 
-		क्रम (i = 0; i < blocks * blksz; i++) अणु
-			अगर (test->buffer[i] != (u8)i)
-				वापस RESULT_FAIL;
-		पूर्ण
+		for (i = 0; i < blocks * blksz; i++) {
+			if (test->buffer[i] != (u8)i)
+				return RESULT_FAIL;
+		}
 
-		क्रम (; i < sectors * 512; i++) अणु
-			अगर (test->buffer[i] != 0xDF)
-				वापस RESULT_FAIL;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		for (; i < sectors * 512; i++) {
+			if (test->buffer[i] != 0xDF)
+				return RESULT_FAIL;
+		}
+	} else {
 		local_irq_save(flags);
 		sg_copy_to_buffer(sg, sg_len, test->scratch, BUFFER_SIZE);
 		local_irq_restore(flags);
-		क्रम (i = 0; i < blocks * blksz; i++) अणु
-			अगर (test->scratch[i] != (u8)i)
-				वापस RESULT_FAIL;
-		पूर्ण
-	पूर्ण
+		for (i = 0; i < blocks * blksz; i++) {
+			if (test->scratch[i] != (u8)i)
+				return RESULT_FAIL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*******************************************************************/
 /*  Tests                                                          */
 /*******************************************************************/
 
-काष्ठा mmc_test_हाल अणु
-	स्थिर अक्षर *name;
+struct mmc_test_case {
+	const char *name;
 
-	पूर्णांक (*prepare)(काष्ठा mmc_test_card *);
-	पूर्णांक (*run)(काष्ठा mmc_test_card *);
-	पूर्णांक (*cleanup)(काष्ठा mmc_test_card *);
-पूर्ण;
+	int (*prepare)(struct mmc_test_card *);
+	int (*run)(struct mmc_test_card *);
+	int (*cleanup)(struct mmc_test_card *);
+};
 
-अटल पूर्णांक mmc_test_basic_ग_लिखो(काष्ठा mmc_test_card *test)
-अणु
-	पूर्णांक ret;
-	काष्ठा scatterlist sg;
-
-	ret = mmc_test_set_blksize(test, 512);
-	अगर (ret)
-		वापस ret;
-
-	sg_init_one(&sg, test->buffer, 512);
-
-	वापस mmc_test_simple_transfer(test, &sg, 1, 0, 1, 512, 1);
-पूर्ण
-
-अटल पूर्णांक mmc_test_basic_पढ़ो(काष्ठा mmc_test_card *test)
-अणु
-	पूर्णांक ret;
-	काष्ठा scatterlist sg;
+static int mmc_test_basic_write(struct mmc_test_card *test)
+{
+	int ret;
+	struct scatterlist sg;
 
 	ret = mmc_test_set_blksize(test, 512);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	sg_init_one(&sg, test->buffer, 512);
 
-	वापस mmc_test_simple_transfer(test, &sg, 1, 0, 1, 512, 0);
-पूर्ण
+	return mmc_test_simple_transfer(test, &sg, 1, 0, 1, 512, 1);
+}
 
-अटल पूर्णांक mmc_test_verअगरy_ग_लिखो(काष्ठा mmc_test_card *test)
-अणु
-	काष्ठा scatterlist sg;
+static int mmc_test_basic_read(struct mmc_test_card *test)
+{
+	int ret;
+	struct scatterlist sg;
 
-	sg_init_one(&sg, test->buffer, 512);
-
-	वापस mmc_test_transfer(test, &sg, 1, 0, 1, 512, 1);
-पूर्ण
-
-अटल पूर्णांक mmc_test_verअगरy_पढ़ो(काष्ठा mmc_test_card *test)
-अणु
-	काष्ठा scatterlist sg;
+	ret = mmc_test_set_blksize(test, 512);
+	if (ret)
+		return ret;
 
 	sg_init_one(&sg, test->buffer, 512);
 
-	वापस mmc_test_transfer(test, &sg, 1, 0, 1, 512, 0);
-पूर्ण
+	return mmc_test_simple_transfer(test, &sg, 1, 0, 1, 512, 0);
+}
 
-अटल पूर्णांक mmc_test_multi_ग_लिखो(काष्ठा mmc_test_card *test)
-अणु
-	अचिन्हित पूर्णांक size;
-	काष्ठा scatterlist sg;
+static int mmc_test_verify_write(struct mmc_test_card *test)
+{
+	struct scatterlist sg;
 
-	अगर (test->card->host->max_blk_count == 1)
-		वापस RESULT_UNSUP_HOST;
+	sg_init_one(&sg, test->buffer, 512);
+
+	return mmc_test_transfer(test, &sg, 1, 0, 1, 512, 1);
+}
+
+static int mmc_test_verify_read(struct mmc_test_card *test)
+{
+	struct scatterlist sg;
+
+	sg_init_one(&sg, test->buffer, 512);
+
+	return mmc_test_transfer(test, &sg, 1, 0, 1, 512, 0);
+}
+
+static int mmc_test_multi_write(struct mmc_test_card *test)
+{
+	unsigned int size;
+	struct scatterlist sg;
+
+	if (test->card->host->max_blk_count == 1)
+		return RESULT_UNSUP_HOST;
 
 	size = PAGE_SIZE * 2;
 	size = min(size, test->card->host->max_req_size);
 	size = min(size, test->card->host->max_seg_size);
 	size = min(size, test->card->host->max_blk_count * 512);
 
-	अगर (size < 1024)
-		वापस RESULT_UNSUP_HOST;
+	if (size < 1024)
+		return RESULT_UNSUP_HOST;
 
 	sg_init_one(&sg, test->buffer, size);
 
-	वापस mmc_test_transfer(test, &sg, 1, 0, size / 512, 512, 1);
-पूर्ण
+	return mmc_test_transfer(test, &sg, 1, 0, size / 512, 512, 1);
+}
 
-अटल पूर्णांक mmc_test_multi_पढ़ो(काष्ठा mmc_test_card *test)
-अणु
-	अचिन्हित पूर्णांक size;
-	काष्ठा scatterlist sg;
+static int mmc_test_multi_read(struct mmc_test_card *test)
+{
+	unsigned int size;
+	struct scatterlist sg;
 
-	अगर (test->card->host->max_blk_count == 1)
-		वापस RESULT_UNSUP_HOST;
+	if (test->card->host->max_blk_count == 1)
+		return RESULT_UNSUP_HOST;
 
 	size = PAGE_SIZE * 2;
 	size = min(size, test->card->host->max_req_size);
 	size = min(size, test->card->host->max_seg_size);
 	size = min(size, test->card->host->max_blk_count * 512);
 
-	अगर (size < 1024)
-		वापस RESULT_UNSUP_HOST;
+	if (size < 1024)
+		return RESULT_UNSUP_HOST;
 
 	sg_init_one(&sg, test->buffer, size);
 
-	वापस mmc_test_transfer(test, &sg, 1, 0, size / 512, 512, 0);
-पूर्ण
+	return mmc_test_transfer(test, &sg, 1, 0, size / 512, 512, 0);
+}
 
-अटल पूर्णांक mmc_test_घात2_ग_लिखो(काष्ठा mmc_test_card *test)
-अणु
-	पूर्णांक ret, i;
-	काष्ठा scatterlist sg;
+static int mmc_test_pow2_write(struct mmc_test_card *test)
+{
+	int ret, i;
+	struct scatterlist sg;
 
-	अगर (!test->card->csd.ग_लिखो_partial)
-		वापस RESULT_UNSUP_CARD;
+	if (!test->card->csd.write_partial)
+		return RESULT_UNSUP_CARD;
 
-	क्रम (i = 1; i < 512; i <<= 1) अणु
+	for (i = 1; i < 512; i <<= 1) {
 		sg_init_one(&sg, test->buffer, i);
 		ret = mmc_test_transfer(test, &sg, 1, 0, 1, i, 1);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mmc_test_घात2_पढ़ो(काष्ठा mmc_test_card *test)
-अणु
-	पूर्णांक ret, i;
-	काष्ठा scatterlist sg;
+static int mmc_test_pow2_read(struct mmc_test_card *test)
+{
+	int ret, i;
+	struct scatterlist sg;
 
-	अगर (!test->card->csd.पढ़ो_partial)
-		वापस RESULT_UNSUP_CARD;
+	if (!test->card->csd.read_partial)
+		return RESULT_UNSUP_CARD;
 
-	क्रम (i = 1; i < 512; i <<= 1) अणु
+	for (i = 1; i < 512; i <<= 1) {
 		sg_init_one(&sg, test->buffer, i);
 		ret = mmc_test_transfer(test, &sg, 1, 0, 1, i, 0);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mmc_test_weird_ग_लिखो(काष्ठा mmc_test_card *test)
-अणु
-	पूर्णांक ret, i;
-	काष्ठा scatterlist sg;
+static int mmc_test_weird_write(struct mmc_test_card *test)
+{
+	int ret, i;
+	struct scatterlist sg;
 
-	अगर (!test->card->csd.ग_लिखो_partial)
-		वापस RESULT_UNSUP_CARD;
+	if (!test->card->csd.write_partial)
+		return RESULT_UNSUP_CARD;
 
-	क्रम (i = 3; i < 512; i += 7) अणु
+	for (i = 3; i < 512; i += 7) {
 		sg_init_one(&sg, test->buffer, i);
 		ret = mmc_test_transfer(test, &sg, 1, 0, 1, i, 1);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mmc_test_weird_पढ़ो(काष्ठा mmc_test_card *test)
-अणु
-	पूर्णांक ret, i;
-	काष्ठा scatterlist sg;
+static int mmc_test_weird_read(struct mmc_test_card *test)
+{
+	int ret, i;
+	struct scatterlist sg;
 
-	अगर (!test->card->csd.पढ़ो_partial)
-		वापस RESULT_UNSUP_CARD;
+	if (!test->card->csd.read_partial)
+		return RESULT_UNSUP_CARD;
 
-	क्रम (i = 3; i < 512; i += 7) अणु
+	for (i = 3; i < 512; i += 7) {
 		sg_init_one(&sg, test->buffer, i);
 		ret = mmc_test_transfer(test, &sg, 1, 0, 1, i, 0);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mmc_test_align_ग_लिखो(काष्ठा mmc_test_card *test)
-अणु
-	पूर्णांक ret, i;
-	काष्ठा scatterlist sg;
+static int mmc_test_align_write(struct mmc_test_card *test)
+{
+	int ret, i;
+	struct scatterlist sg;
 
-	क्रम (i = 1; i < TEST_ALIGN_END; i++) अणु
+	for (i = 1; i < TEST_ALIGN_END; i++) {
 		sg_init_one(&sg, test->buffer + i, 512);
 		ret = mmc_test_transfer(test, &sg, 1, 0, 1, 512, 1);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mmc_test_align_पढ़ो(काष्ठा mmc_test_card *test)
-अणु
-	पूर्णांक ret, i;
-	काष्ठा scatterlist sg;
+static int mmc_test_align_read(struct mmc_test_card *test)
+{
+	int ret, i;
+	struct scatterlist sg;
 
-	क्रम (i = 1; i < TEST_ALIGN_END; i++) अणु
+	for (i = 1; i < TEST_ALIGN_END; i++) {
 		sg_init_one(&sg, test->buffer + i, 512);
 		ret = mmc_test_transfer(test, &sg, 1, 0, 1, 512, 0);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mmc_test_align_multi_ग_लिखो(काष्ठा mmc_test_card *test)
-अणु
-	पूर्णांक ret, i;
-	अचिन्हित पूर्णांक size;
-	काष्ठा scatterlist sg;
+static int mmc_test_align_multi_write(struct mmc_test_card *test)
+{
+	int ret, i;
+	unsigned int size;
+	struct scatterlist sg;
 
-	अगर (test->card->host->max_blk_count == 1)
-		वापस RESULT_UNSUP_HOST;
+	if (test->card->host->max_blk_count == 1)
+		return RESULT_UNSUP_HOST;
 
 	size = PAGE_SIZE * 2;
 	size = min(size, test->card->host->max_req_size);
 	size = min(size, test->card->host->max_seg_size);
 	size = min(size, test->card->host->max_blk_count * 512);
 
-	अगर (size < 1024)
-		वापस RESULT_UNSUP_HOST;
+	if (size < 1024)
+		return RESULT_UNSUP_HOST;
 
-	क्रम (i = 1; i < TEST_ALIGN_END; i++) अणु
+	for (i = 1; i < TEST_ALIGN_END; i++) {
 		sg_init_one(&sg, test->buffer + i, size);
 		ret = mmc_test_transfer(test, &sg, 1, 0, size / 512, 512, 1);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mmc_test_align_multi_पढ़ो(काष्ठा mmc_test_card *test)
-अणु
-	पूर्णांक ret, i;
-	अचिन्हित पूर्णांक size;
-	काष्ठा scatterlist sg;
+static int mmc_test_align_multi_read(struct mmc_test_card *test)
+{
+	int ret, i;
+	unsigned int size;
+	struct scatterlist sg;
 
-	अगर (test->card->host->max_blk_count == 1)
-		वापस RESULT_UNSUP_HOST;
+	if (test->card->host->max_blk_count == 1)
+		return RESULT_UNSUP_HOST;
 
 	size = PAGE_SIZE * 2;
 	size = min(size, test->card->host->max_req_size);
 	size = min(size, test->card->host->max_seg_size);
 	size = min(size, test->card->host->max_blk_count * 512);
 
-	अगर (size < 1024)
-		वापस RESULT_UNSUP_HOST;
+	if (size < 1024)
+		return RESULT_UNSUP_HOST;
 
-	क्रम (i = 1; i < TEST_ALIGN_END; i++) अणु
+	for (i = 1; i < TEST_ALIGN_END; i++) {
 		sg_init_one(&sg, test->buffer + i, size);
 		ret = mmc_test_transfer(test, &sg, 1, 0, size / 512, 512, 0);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mmc_test_xfersize_ग_लिखो(काष्ठा mmc_test_card *test)
-अणु
-	पूर्णांक ret;
-
-	ret = mmc_test_set_blksize(test, 512);
-	अगर (ret)
-		वापस ret;
-
-	वापस mmc_test_broken_transfer(test, 1, 512, 1);
-पूर्ण
-
-अटल पूर्णांक mmc_test_xfersize_पढ़ो(काष्ठा mmc_test_card *test)
-अणु
-	पूर्णांक ret;
+static int mmc_test_xfersize_write(struct mmc_test_card *test)
+{
+	int ret;
 
 	ret = mmc_test_set_blksize(test, 512);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस mmc_test_broken_transfer(test, 1, 512, 0);
-पूर्ण
+	return mmc_test_broken_transfer(test, 1, 512, 1);
+}
 
-अटल पूर्णांक mmc_test_multi_xfersize_ग_लिखो(काष्ठा mmc_test_card *test)
-अणु
-	पूर्णांक ret;
-
-	अगर (test->card->host->max_blk_count == 1)
-		वापस RESULT_UNSUP_HOST;
+static int mmc_test_xfersize_read(struct mmc_test_card *test)
+{
+	int ret;
 
 	ret = mmc_test_set_blksize(test, 512);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस mmc_test_broken_transfer(test, 2, 512, 1);
-पूर्ण
+	return mmc_test_broken_transfer(test, 1, 512, 0);
+}
 
-अटल पूर्णांक mmc_test_multi_xfersize_पढ़ो(काष्ठा mmc_test_card *test)
-अणु
-	पूर्णांक ret;
+static int mmc_test_multi_xfersize_write(struct mmc_test_card *test)
+{
+	int ret;
 
-	अगर (test->card->host->max_blk_count == 1)
-		वापस RESULT_UNSUP_HOST;
+	if (test->card->host->max_blk_count == 1)
+		return RESULT_UNSUP_HOST;
 
 	ret = mmc_test_set_blksize(test, 512);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस mmc_test_broken_transfer(test, 2, 512, 0);
-पूर्ण
+	return mmc_test_broken_transfer(test, 2, 512, 1);
+}
 
-#अगर_घोषित CONFIG_HIGHMEM
+static int mmc_test_multi_xfersize_read(struct mmc_test_card *test)
+{
+	int ret;
 
-अटल पूर्णांक mmc_test_ग_लिखो_high(काष्ठा mmc_test_card *test)
-अणु
-	काष्ठा scatterlist sg;
+	if (test->card->host->max_blk_count == 1)
+		return RESULT_UNSUP_HOST;
+
+	ret = mmc_test_set_blksize(test, 512);
+	if (ret)
+		return ret;
+
+	return mmc_test_broken_transfer(test, 2, 512, 0);
+}
+
+#ifdef CONFIG_HIGHMEM
+
+static int mmc_test_write_high(struct mmc_test_card *test)
+{
+	struct scatterlist sg;
 
 	sg_init_table(&sg, 1);
 	sg_set_page(&sg, test->highmem, 512, 0);
 
-	वापस mmc_test_transfer(test, &sg, 1, 0, 1, 512, 1);
-पूर्ण
+	return mmc_test_transfer(test, &sg, 1, 0, 1, 512, 1);
+}
 
-अटल पूर्णांक mmc_test_पढ़ो_high(काष्ठा mmc_test_card *test)
-अणु
-	काष्ठा scatterlist sg;
+static int mmc_test_read_high(struct mmc_test_card *test)
+{
+	struct scatterlist sg;
 
 	sg_init_table(&sg, 1);
 	sg_set_page(&sg, test->highmem, 512, 0);
 
-	वापस mmc_test_transfer(test, &sg, 1, 0, 1, 512, 0);
-पूर्ण
+	return mmc_test_transfer(test, &sg, 1, 0, 1, 512, 0);
+}
 
-अटल पूर्णांक mmc_test_multi_ग_लिखो_high(काष्ठा mmc_test_card *test)
-अणु
-	अचिन्हित पूर्णांक size;
-	काष्ठा scatterlist sg;
+static int mmc_test_multi_write_high(struct mmc_test_card *test)
+{
+	unsigned int size;
+	struct scatterlist sg;
 
-	अगर (test->card->host->max_blk_count == 1)
-		वापस RESULT_UNSUP_HOST;
+	if (test->card->host->max_blk_count == 1)
+		return RESULT_UNSUP_HOST;
 
 	size = PAGE_SIZE * 2;
 	size = min(size, test->card->host->max_req_size);
 	size = min(size, test->card->host->max_seg_size);
 	size = min(size, test->card->host->max_blk_count * 512);
 
-	अगर (size < 1024)
-		वापस RESULT_UNSUP_HOST;
+	if (size < 1024)
+		return RESULT_UNSUP_HOST;
 
 	sg_init_table(&sg, 1);
 	sg_set_page(&sg, test->highmem, size, 0);
 
-	वापस mmc_test_transfer(test, &sg, 1, 0, size / 512, 512, 1);
-पूर्ण
+	return mmc_test_transfer(test, &sg, 1, 0, size / 512, 512, 1);
+}
 
-अटल पूर्णांक mmc_test_multi_पढ़ो_high(काष्ठा mmc_test_card *test)
-अणु
-	अचिन्हित पूर्णांक size;
-	काष्ठा scatterlist sg;
+static int mmc_test_multi_read_high(struct mmc_test_card *test)
+{
+	unsigned int size;
+	struct scatterlist sg;
 
-	अगर (test->card->host->max_blk_count == 1)
-		वापस RESULT_UNSUP_HOST;
+	if (test->card->host->max_blk_count == 1)
+		return RESULT_UNSUP_HOST;
 
 	size = PAGE_SIZE * 2;
 	size = min(size, test->card->host->max_req_size);
 	size = min(size, test->card->host->max_seg_size);
 	size = min(size, test->card->host->max_blk_count * 512);
 
-	अगर (size < 1024)
-		वापस RESULT_UNSUP_HOST;
+	if (size < 1024)
+		return RESULT_UNSUP_HOST;
 
 	sg_init_table(&sg, 1);
 	sg_set_page(&sg, test->highmem, size, 0);
 
-	वापस mmc_test_transfer(test, &sg, 1, 0, size / 512, 512, 0);
-पूर्ण
+	return mmc_test_transfer(test, &sg, 1, 0, size / 512, 512, 0);
+}
 
-#अन्यथा
+#else
 
-अटल पूर्णांक mmc_test_no_highmem(काष्ठा mmc_test_card *test)
-अणु
+static int mmc_test_no_highmem(struct mmc_test_card *test)
+{
 	pr_info("%s: Highmem not configured - test skipped\n",
 	       mmc_hostname(test->card->host));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#पूर्ण_अगर /* CONFIG_HIGHMEM */
+#endif /* CONFIG_HIGHMEM */
 
 /*
  * Map sz bytes so that it can be transferred.
  */
-अटल पूर्णांक mmc_test_area_map(काष्ठा mmc_test_card *test, अचिन्हित दीर्घ sz,
-			     पूर्णांक max_scatter, पूर्णांक min_sg_len, bool nonblock)
-अणु
-	काष्ठा mmc_test_area *t = &test->area;
-	पूर्णांक err;
-	अचिन्हित पूर्णांक sg_len = 0;
+static int mmc_test_area_map(struct mmc_test_card *test, unsigned long sz,
+			     int max_scatter, int min_sg_len, bool nonblock)
+{
+	struct mmc_test_area *t = &test->area;
+	int err;
+	unsigned int sg_len = 0;
 
 	t->blocks = sz >> 9;
 
-	अगर (max_scatter) अणु
+	if (max_scatter) {
 		err = mmc_test_map_sg_max_scatter(t->mem, sz, t->sg,
 						  t->max_segs, t->max_seg_sz,
 				       &t->sg_len);
-	पूर्ण अन्यथा अणु
+	} else {
 		err = mmc_test_map_sg(t->mem, sz, t->sg, 1, t->max_segs,
 				      t->max_seg_sz, &t->sg_len, min_sg_len);
-	पूर्ण
+	}
 
-	अगर (err || !nonblock)
-		जाओ err;
+	if (err || !nonblock)
+		goto err;
 
-	अगर (max_scatter) अणु
+	if (max_scatter) {
 		err = mmc_test_map_sg_max_scatter(t->mem, sz, t->sg_areq,
 						  t->max_segs, t->max_seg_sz,
 						  &sg_len);
-	पूर्ण अन्यथा अणु
+	} else {
 		err = mmc_test_map_sg(t->mem, sz, t->sg_areq, 1, t->max_segs,
 				      t->max_seg_sz, &sg_len, min_sg_len);
-	पूर्ण
-	अगर (!err && sg_len != t->sg_len)
+	}
+	if (!err && sg_len != t->sg_len)
 		err = -EINVAL;
 
 err:
-	अगर (err)
+	if (err)
 		pr_info("%s: Failed to map sg list\n",
 		       mmc_hostname(test->card->host));
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
  * Transfer bytes mapped by mmc_test_area_map().
  */
-अटल पूर्णांक mmc_test_area_transfer(काष्ठा mmc_test_card *test,
-				  अचिन्हित पूर्णांक dev_addr, पूर्णांक ग_लिखो)
-अणु
-	काष्ठा mmc_test_area *t = &test->area;
+static int mmc_test_area_transfer(struct mmc_test_card *test,
+				  unsigned int dev_addr, int write)
+{
+	struct mmc_test_area *t = &test->area;
 
-	वापस mmc_test_simple_transfer(test, t->sg, t->sg_len, dev_addr,
-					t->blocks, 512, ग_लिखो);
-पूर्ण
+	return mmc_test_simple_transfer(test, t->sg, t->sg_len, dev_addr,
+					t->blocks, 512, write);
+}
 
 /*
- * Map and transfer bytes क्रम multiple transfers.
+ * Map and transfer bytes for multiple transfers.
  */
-अटल पूर्णांक mmc_test_area_io_seq(काष्ठा mmc_test_card *test, अचिन्हित दीर्घ sz,
-				अचिन्हित पूर्णांक dev_addr, पूर्णांक ग_लिखो,
-				पूर्णांक max_scatter, पूर्णांक समयd, पूर्णांक count,
-				bool nonblock, पूर्णांक min_sg_len)
-अणु
-	काष्ठा बारpec64 ts1, ts2;
-	पूर्णांक ret = 0;
-	पूर्णांक i;
+static int mmc_test_area_io_seq(struct mmc_test_card *test, unsigned long sz,
+				unsigned int dev_addr, int write,
+				int max_scatter, int timed, int count,
+				bool nonblock, int min_sg_len)
+{
+	struct timespec64 ts1, ts2;
+	int ret = 0;
+	int i;
 
 	/*
-	 * In the हाल of a maximally scattered transfer, the maximum transfer
+	 * In the case of a maximally scattered transfer, the maximum transfer
 	 * size is further limited by using PAGE_SIZE segments.
 	 */
-	अगर (max_scatter) अणु
-		काष्ठा mmc_test_area *t = &test->area;
-		अचिन्हित दीर्घ max_tfr;
+	if (max_scatter) {
+		struct mmc_test_area *t = &test->area;
+		unsigned long max_tfr;
 
-		अगर (t->max_seg_sz >= PAGE_SIZE)
+		if (t->max_seg_sz >= PAGE_SIZE)
 			max_tfr = t->max_segs * PAGE_SIZE;
-		अन्यथा
+		else
 			max_tfr = t->max_segs * t->max_seg_sz;
-		अगर (sz > max_tfr)
+		if (sz > max_tfr)
 			sz = max_tfr;
-	पूर्ण
+	}
 
 	ret = mmc_test_area_map(test, sz, max_scatter, min_sg_len, nonblock);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (समयd)
-		kसमय_get_ts64(&ts1);
-	अगर (nonblock)
-		ret = mmc_test_nonblock_transfer(test, dev_addr, ग_लिखो, count);
-	अन्यथा
-		क्रम (i = 0; i < count && ret == 0; i++) अणु
-			ret = mmc_test_area_transfer(test, dev_addr, ग_लिखो);
+	if (timed)
+		ktime_get_ts64(&ts1);
+	if (nonblock)
+		ret = mmc_test_nonblock_transfer(test, dev_addr, write, count);
+	else
+		for (i = 0; i < count && ret == 0; i++) {
+			ret = mmc_test_area_transfer(test, dev_addr, write);
 			dev_addr += sz >> 9;
-		पूर्ण
+		}
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (समयd)
-		kसमय_get_ts64(&ts2);
+	if (timed)
+		ktime_get_ts64(&ts2);
 
-	अगर (समयd)
-		mmc_test_prपूर्णांक_avg_rate(test, sz, count, &ts1, &ts2);
+	if (timed)
+		mmc_test_print_avg_rate(test, sz, count, &ts1, &ts2);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mmc_test_area_io(काष्ठा mmc_test_card *test, अचिन्हित दीर्घ sz,
-			    अचिन्हित पूर्णांक dev_addr, पूर्णांक ग_लिखो, पूर्णांक max_scatter,
-			    पूर्णांक समयd)
-अणु
-	वापस mmc_test_area_io_seq(test, sz, dev_addr, ग_लिखो, max_scatter,
-				    समयd, 1, false, 0);
-पूर्ण
+static int mmc_test_area_io(struct mmc_test_card *test, unsigned long sz,
+			    unsigned int dev_addr, int write, int max_scatter,
+			    int timed)
+{
+	return mmc_test_area_io_seq(test, sz, dev_addr, write, max_scatter,
+				    timed, 1, false, 0);
+}
 
 /*
  * Write the test area entirely.
  */
-अटल पूर्णांक mmc_test_area_fill(काष्ठा mmc_test_card *test)
-अणु
-	काष्ठा mmc_test_area *t = &test->area;
+static int mmc_test_area_fill(struct mmc_test_card *test)
+{
+	struct mmc_test_area *t = &test->area;
 
-	वापस mmc_test_area_io(test, t->max_tfr, t->dev_addr, 1, 0, 0);
-पूर्ण
+	return mmc_test_area_io(test, t->max_tfr, t->dev_addr, 1, 0, 0);
+}
 
 /*
  * Erase the test area entirely.
  */
-अटल पूर्णांक mmc_test_area_erase(काष्ठा mmc_test_card *test)
-अणु
-	काष्ठा mmc_test_area *t = &test->area;
+static int mmc_test_area_erase(struct mmc_test_card *test)
+{
+	struct mmc_test_area *t = &test->area;
 
-	अगर (!mmc_can_erase(test->card))
-		वापस 0;
+	if (!mmc_can_erase(test->card))
+		return 0;
 
-	वापस mmc_erase(test->card, t->dev_addr, t->max_sz >> 9,
+	return mmc_erase(test->card, t->dev_addr, t->max_sz >> 9,
 			 MMC_ERASE_ARG);
-पूर्ण
+}
 
 /*
- * Cleanup काष्ठा mmc_test_area.
+ * Cleanup struct mmc_test_area.
  */
-अटल पूर्णांक mmc_test_area_cleanup(काष्ठा mmc_test_card *test)
-अणु
-	काष्ठा mmc_test_area *t = &test->area;
+static int mmc_test_area_cleanup(struct mmc_test_card *test)
+{
+	struct mmc_test_area *t = &test->area;
 
-	kमुक्त(t->sg);
-	kमुक्त(t->sg_areq);
-	mmc_test_मुक्त_mem(t->mem);
+	kfree(t->sg);
+	kfree(t->sg_areq);
+	mmc_test_free_mem(t->mem);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Initialize an area क्रम testing large transfers.  The test area is set to the
- * middle of the card because cards may have dअगरferent अक्षरacteristics at the
- * front (क्रम FAT file प्रणाली optimization).  Optionally, the area is erased
- * (अगर the card supports it) which may improve ग_लिखो perक्रमmance.  Optionally,
- * the area is filled with data क्रम subsequent पढ़ो tests.
+ * Initialize an area for testing large transfers.  The test area is set to the
+ * middle of the card because cards may have different characteristics at the
+ * front (for FAT file system optimization).  Optionally, the area is erased
+ * (if the card supports it) which may improve write performance.  Optionally,
+ * the area is filled with data for subsequent read tests.
  */
-अटल पूर्णांक mmc_test_area_init(काष्ठा mmc_test_card *test, पूर्णांक erase, पूर्णांक fill)
-अणु
-	काष्ठा mmc_test_area *t = &test->area;
-	अचिन्हित दीर्घ min_sz = 64 * 1024, sz;
-	पूर्णांक ret;
+static int mmc_test_area_init(struct mmc_test_card *test, int erase, int fill)
+{
+	struct mmc_test_area *t = &test->area;
+	unsigned long min_sz = 64 * 1024, sz;
+	int ret;
 
 	ret = mmc_test_set_blksize(test, 512);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* Make the test area size about 4MiB */
-	sz = (अचिन्हित दीर्घ)test->card->pref_erase << 9;
+	sz = (unsigned long)test->card->pref_erase << 9;
 	t->max_sz = sz;
-	जबतक (t->max_sz < 4 * 1024 * 1024)
+	while (t->max_sz < 4 * 1024 * 1024)
 		t->max_sz += sz;
-	जबतक (t->max_sz > TEST_AREA_MAX_SIZE && t->max_sz > sz)
+	while (t->max_sz > TEST_AREA_MAX_SIZE && t->max_sz > sz)
 		t->max_sz -= sz;
 
 	t->max_segs = test->card->host->max_segs;
@@ -1568,355 +1567,355 @@ err:
 	t->max_seg_sz -= t->max_seg_sz % 512;
 
 	t->max_tfr = t->max_sz;
-	अगर (t->max_tfr >> 9 > test->card->host->max_blk_count)
+	if (t->max_tfr >> 9 > test->card->host->max_blk_count)
 		t->max_tfr = test->card->host->max_blk_count << 9;
-	अगर (t->max_tfr > test->card->host->max_req_size)
+	if (t->max_tfr > test->card->host->max_req_size)
 		t->max_tfr = test->card->host->max_req_size;
-	अगर (t->max_tfr / t->max_seg_sz > t->max_segs)
+	if (t->max_tfr / t->max_seg_sz > t->max_segs)
 		t->max_tfr = t->max_segs * t->max_seg_sz;
 
 	/*
-	 * Try to allocate enough memory क्रम a max. sized transfer.  Less is OK
-	 * because the same memory can be mapped पूर्णांकo the scatterlist more than
-	 * once.  Also, take पूर्णांकo account the limits imposed on scatterlist
+	 * Try to allocate enough memory for a max. sized transfer.  Less is OK
+	 * because the same memory can be mapped into the scatterlist more than
+	 * once.  Also, take into account the limits imposed on scatterlist
 	 * segments by the host driver.
 	 */
 	t->mem = mmc_test_alloc_mem(min_sz, t->max_tfr, t->max_segs,
 				    t->max_seg_sz);
-	अगर (!t->mem)
-		वापस -ENOMEM;
+	if (!t->mem)
+		return -ENOMEM;
 
-	t->sg = kदो_स्मृति_array(t->max_segs, माप(*t->sg), GFP_KERNEL);
-	अगर (!t->sg) अणु
+	t->sg = kmalloc_array(t->max_segs, sizeof(*t->sg), GFP_KERNEL);
+	if (!t->sg) {
 		ret = -ENOMEM;
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-	t->sg_areq = kदो_स्मृति_array(t->max_segs, माप(*t->sg_areq),
+	t->sg_areq = kmalloc_array(t->max_segs, sizeof(*t->sg_areq),
 				   GFP_KERNEL);
-	अगर (!t->sg_areq) अणु
+	if (!t->sg_areq) {
 		ret = -ENOMEM;
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
 	t->dev_addr = mmc_test_capacity(test->card) / 2;
 	t->dev_addr -= t->dev_addr % (t->max_sz >> 9);
 
-	अगर (erase) अणु
+	if (erase) {
 		ret = mmc_test_area_erase(test);
-		अगर (ret)
-			जाओ out_मुक्त;
-	पूर्ण
+		if (ret)
+			goto out_free;
+	}
 
-	अगर (fill) अणु
+	if (fill) {
 		ret = mmc_test_area_fill(test);
-		अगर (ret)
-			जाओ out_मुक्त;
-	पूर्ण
+		if (ret)
+			goto out_free;
+	}
 
-	वापस 0;
+	return 0;
 
-out_मुक्त:
+out_free:
 	mmc_test_area_cleanup(test);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Prepare क्रम large transfers.  Do not erase the test area.
+ * Prepare for large transfers.  Do not erase the test area.
  */
-अटल पूर्णांक mmc_test_area_prepare(काष्ठा mmc_test_card *test)
-अणु
-	वापस mmc_test_area_init(test, 0, 0);
-पूर्ण
+static int mmc_test_area_prepare(struct mmc_test_card *test)
+{
+	return mmc_test_area_init(test, 0, 0);
+}
 
 /*
- * Prepare क्रम large transfers.  Do erase the test area.
+ * Prepare for large transfers.  Do erase the test area.
  */
-अटल पूर्णांक mmc_test_area_prepare_erase(काष्ठा mmc_test_card *test)
-अणु
-	वापस mmc_test_area_init(test, 1, 0);
-पूर्ण
+static int mmc_test_area_prepare_erase(struct mmc_test_card *test)
+{
+	return mmc_test_area_init(test, 1, 0);
+}
 
 /*
- * Prepare क्रम large transfers.  Erase and fill the test area.
+ * Prepare for large transfers.  Erase and fill the test area.
  */
-अटल पूर्णांक mmc_test_area_prepare_fill(काष्ठा mmc_test_card *test)
-अणु
-	वापस mmc_test_area_init(test, 1, 1);
-पूर्ण
+static int mmc_test_area_prepare_fill(struct mmc_test_card *test)
+{
+	return mmc_test_area_init(test, 1, 1);
+}
 
 /*
- * Test best-हाल perक्रमmance.  Best-हाल perक्रमmance is expected from
+ * Test best-case performance.  Best-case performance is expected from
  * a single large transfer.
  *
  * An additional option (max_scatter) allows the measurement of the same
  * transfer but with no contiguous pages in the scatter list.  This tests
  * the efficiency of DMA to handle scattered pages.
  */
-अटल पूर्णांक mmc_test_best_perक्रमmance(काष्ठा mmc_test_card *test, पूर्णांक ग_लिखो,
-				     पूर्णांक max_scatter)
-अणु
-	काष्ठा mmc_test_area *t = &test->area;
+static int mmc_test_best_performance(struct mmc_test_card *test, int write,
+				     int max_scatter)
+{
+	struct mmc_test_area *t = &test->area;
 
-	वापस mmc_test_area_io(test, t->max_tfr, t->dev_addr, ग_लिखो,
+	return mmc_test_area_io(test, t->max_tfr, t->dev_addr, write,
 				max_scatter, 1);
-पूर्ण
+}
 
 /*
- * Best-हाल पढ़ो perक्रमmance.
+ * Best-case read performance.
  */
-अटल पूर्णांक mmc_test_best_पढ़ो_perक्रमmance(काष्ठा mmc_test_card *test)
-अणु
-	वापस mmc_test_best_perक्रमmance(test, 0, 0);
-पूर्ण
+static int mmc_test_best_read_performance(struct mmc_test_card *test)
+{
+	return mmc_test_best_performance(test, 0, 0);
+}
 
 /*
- * Best-हाल ग_लिखो perक्रमmance.
+ * Best-case write performance.
  */
-अटल पूर्णांक mmc_test_best_ग_लिखो_perक्रमmance(काष्ठा mmc_test_card *test)
-अणु
-	वापस mmc_test_best_perक्रमmance(test, 1, 0);
-पूर्ण
+static int mmc_test_best_write_performance(struct mmc_test_card *test)
+{
+	return mmc_test_best_performance(test, 1, 0);
+}
 
 /*
- * Best-हाल पढ़ो perक्रमmance पूर्णांकo scattered pages.
+ * Best-case read performance into scattered pages.
  */
-अटल पूर्णांक mmc_test_best_पढ़ो_perf_max_scatter(काष्ठा mmc_test_card *test)
-अणु
-	वापस mmc_test_best_perक्रमmance(test, 0, 1);
-पूर्ण
+static int mmc_test_best_read_perf_max_scatter(struct mmc_test_card *test)
+{
+	return mmc_test_best_performance(test, 0, 1);
+}
 
 /*
- * Best-हाल ग_लिखो perक्रमmance from scattered pages.
+ * Best-case write performance from scattered pages.
  */
-अटल पूर्णांक mmc_test_best_ग_लिखो_perf_max_scatter(काष्ठा mmc_test_card *test)
-अणु
-	वापस mmc_test_best_perक्रमmance(test, 1, 1);
-पूर्ण
+static int mmc_test_best_write_perf_max_scatter(struct mmc_test_card *test)
+{
+	return mmc_test_best_performance(test, 1, 1);
+}
 
 /*
- * Single पढ़ो perक्रमmance by transfer size.
+ * Single read performance by transfer size.
  */
-अटल पूर्णांक mmc_test_profile_पढ़ो_perf(काष्ठा mmc_test_card *test)
-अणु
-	काष्ठा mmc_test_area *t = &test->area;
-	अचिन्हित दीर्घ sz;
-	अचिन्हित पूर्णांक dev_addr;
-	पूर्णांक ret;
+static int mmc_test_profile_read_perf(struct mmc_test_card *test)
+{
+	struct mmc_test_area *t = &test->area;
+	unsigned long sz;
+	unsigned int dev_addr;
+	int ret;
 
-	क्रम (sz = 512; sz < t->max_tfr; sz <<= 1) अणु
+	for (sz = 512; sz < t->max_tfr; sz <<= 1) {
 		dev_addr = t->dev_addr + (sz >> 9);
 		ret = mmc_test_area_io(test, sz, dev_addr, 0, 0, 1);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 	sz = t->max_tfr;
 	dev_addr = t->dev_addr;
-	वापस mmc_test_area_io(test, sz, dev_addr, 0, 0, 1);
-पूर्ण
+	return mmc_test_area_io(test, sz, dev_addr, 0, 0, 1);
+}
 
 /*
- * Single ग_लिखो perक्रमmance by transfer size.
+ * Single write performance by transfer size.
  */
-अटल पूर्णांक mmc_test_profile_ग_लिखो_perf(काष्ठा mmc_test_card *test)
-अणु
-	काष्ठा mmc_test_area *t = &test->area;
-	अचिन्हित दीर्घ sz;
-	अचिन्हित पूर्णांक dev_addr;
-	पूर्णांक ret;
+static int mmc_test_profile_write_perf(struct mmc_test_card *test)
+{
+	struct mmc_test_area *t = &test->area;
+	unsigned long sz;
+	unsigned int dev_addr;
+	int ret;
 
 	ret = mmc_test_area_erase(test);
-	अगर (ret)
-		वापस ret;
-	क्रम (sz = 512; sz < t->max_tfr; sz <<= 1) अणु
+	if (ret)
+		return ret;
+	for (sz = 512; sz < t->max_tfr; sz <<= 1) {
 		dev_addr = t->dev_addr + (sz >> 9);
 		ret = mmc_test_area_io(test, sz, dev_addr, 1, 0, 1);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 	ret = mmc_test_area_erase(test);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	sz = t->max_tfr;
 	dev_addr = t->dev_addr;
-	वापस mmc_test_area_io(test, sz, dev_addr, 1, 0, 1);
-पूर्ण
+	return mmc_test_area_io(test, sz, dev_addr, 1, 0, 1);
+}
 
 /*
- * Single trim perक्रमmance by transfer size.
+ * Single trim performance by transfer size.
  */
-अटल पूर्णांक mmc_test_profile_trim_perf(काष्ठा mmc_test_card *test)
-अणु
-	काष्ठा mmc_test_area *t = &test->area;
-	अचिन्हित दीर्घ sz;
-	अचिन्हित पूर्णांक dev_addr;
-	काष्ठा बारpec64 ts1, ts2;
-	पूर्णांक ret;
+static int mmc_test_profile_trim_perf(struct mmc_test_card *test)
+{
+	struct mmc_test_area *t = &test->area;
+	unsigned long sz;
+	unsigned int dev_addr;
+	struct timespec64 ts1, ts2;
+	int ret;
 
-	अगर (!mmc_can_trim(test->card))
-		वापस RESULT_UNSUP_CARD;
+	if (!mmc_can_trim(test->card))
+		return RESULT_UNSUP_CARD;
 
-	अगर (!mmc_can_erase(test->card))
-		वापस RESULT_UNSUP_HOST;
+	if (!mmc_can_erase(test->card))
+		return RESULT_UNSUP_HOST;
 
-	क्रम (sz = 512; sz < t->max_sz; sz <<= 1) अणु
+	for (sz = 512; sz < t->max_sz; sz <<= 1) {
 		dev_addr = t->dev_addr + (sz >> 9);
-		kसमय_get_ts64(&ts1);
+		ktime_get_ts64(&ts1);
 		ret = mmc_erase(test->card, dev_addr, sz >> 9, MMC_TRIM_ARG);
-		अगर (ret)
-			वापस ret;
-		kसमय_get_ts64(&ts2);
-		mmc_test_prपूर्णांक_rate(test, sz, &ts1, &ts2);
-	पूर्ण
+		if (ret)
+			return ret;
+		ktime_get_ts64(&ts2);
+		mmc_test_print_rate(test, sz, &ts1, &ts2);
+	}
 	dev_addr = t->dev_addr;
-	kसमय_get_ts64(&ts1);
+	ktime_get_ts64(&ts1);
 	ret = mmc_erase(test->card, dev_addr, sz >> 9, MMC_TRIM_ARG);
-	अगर (ret)
-		वापस ret;
-	kसमय_get_ts64(&ts2);
-	mmc_test_prपूर्णांक_rate(test, sz, &ts1, &ts2);
-	वापस 0;
-पूर्ण
+	if (ret)
+		return ret;
+	ktime_get_ts64(&ts2);
+	mmc_test_print_rate(test, sz, &ts1, &ts2);
+	return 0;
+}
 
-अटल पूर्णांक mmc_test_seq_पढ़ो_perf(काष्ठा mmc_test_card *test, अचिन्हित दीर्घ sz)
-अणु
-	काष्ठा mmc_test_area *t = &test->area;
-	अचिन्हित पूर्णांक dev_addr, i, cnt;
-	काष्ठा बारpec64 ts1, ts2;
-	पूर्णांक ret;
+static int mmc_test_seq_read_perf(struct mmc_test_card *test, unsigned long sz)
+{
+	struct mmc_test_area *t = &test->area;
+	unsigned int dev_addr, i, cnt;
+	struct timespec64 ts1, ts2;
+	int ret;
 
 	cnt = t->max_sz / sz;
 	dev_addr = t->dev_addr;
-	kसमय_get_ts64(&ts1);
-	क्रम (i = 0; i < cnt; i++) अणु
+	ktime_get_ts64(&ts1);
+	for (i = 0; i < cnt; i++) {
 		ret = mmc_test_area_io(test, sz, dev_addr, 0, 0, 0);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 		dev_addr += (sz >> 9);
-	पूर्ण
-	kसमय_get_ts64(&ts2);
-	mmc_test_prपूर्णांक_avg_rate(test, sz, cnt, &ts1, &ts2);
-	वापस 0;
-पूर्ण
+	}
+	ktime_get_ts64(&ts2);
+	mmc_test_print_avg_rate(test, sz, cnt, &ts1, &ts2);
+	return 0;
+}
 
 /*
- * Consecutive पढ़ो perक्रमmance by transfer size.
+ * Consecutive read performance by transfer size.
  */
-अटल पूर्णांक mmc_test_profile_seq_पढ़ो_perf(काष्ठा mmc_test_card *test)
-अणु
-	काष्ठा mmc_test_area *t = &test->area;
-	अचिन्हित दीर्घ sz;
-	पूर्णांक ret;
+static int mmc_test_profile_seq_read_perf(struct mmc_test_card *test)
+{
+	struct mmc_test_area *t = &test->area;
+	unsigned long sz;
+	int ret;
 
-	क्रम (sz = 512; sz < t->max_tfr; sz <<= 1) अणु
-		ret = mmc_test_seq_पढ़ो_perf(test, sz);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	for (sz = 512; sz < t->max_tfr; sz <<= 1) {
+		ret = mmc_test_seq_read_perf(test, sz);
+		if (ret)
+			return ret;
+	}
 	sz = t->max_tfr;
-	वापस mmc_test_seq_पढ़ो_perf(test, sz);
-पूर्ण
+	return mmc_test_seq_read_perf(test, sz);
+}
 
-अटल पूर्णांक mmc_test_seq_ग_लिखो_perf(काष्ठा mmc_test_card *test, अचिन्हित दीर्घ sz)
-अणु
-	काष्ठा mmc_test_area *t = &test->area;
-	अचिन्हित पूर्णांक dev_addr, i, cnt;
-	काष्ठा बारpec64 ts1, ts2;
-	पूर्णांक ret;
+static int mmc_test_seq_write_perf(struct mmc_test_card *test, unsigned long sz)
+{
+	struct mmc_test_area *t = &test->area;
+	unsigned int dev_addr, i, cnt;
+	struct timespec64 ts1, ts2;
+	int ret;
 
 	ret = mmc_test_area_erase(test);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	cnt = t->max_sz / sz;
 	dev_addr = t->dev_addr;
-	kसमय_get_ts64(&ts1);
-	क्रम (i = 0; i < cnt; i++) अणु
+	ktime_get_ts64(&ts1);
+	for (i = 0; i < cnt; i++) {
 		ret = mmc_test_area_io(test, sz, dev_addr, 1, 0, 0);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 		dev_addr += (sz >> 9);
-	पूर्ण
-	kसमय_get_ts64(&ts2);
-	mmc_test_prपूर्णांक_avg_rate(test, sz, cnt, &ts1, &ts2);
-	वापस 0;
-पूर्ण
+	}
+	ktime_get_ts64(&ts2);
+	mmc_test_print_avg_rate(test, sz, cnt, &ts1, &ts2);
+	return 0;
+}
 
 /*
- * Consecutive ग_लिखो perक्रमmance by transfer size.
+ * Consecutive write performance by transfer size.
  */
-अटल पूर्णांक mmc_test_profile_seq_ग_लिखो_perf(काष्ठा mmc_test_card *test)
-अणु
-	काष्ठा mmc_test_area *t = &test->area;
-	अचिन्हित दीर्घ sz;
-	पूर्णांक ret;
+static int mmc_test_profile_seq_write_perf(struct mmc_test_card *test)
+{
+	struct mmc_test_area *t = &test->area;
+	unsigned long sz;
+	int ret;
 
-	क्रम (sz = 512; sz < t->max_tfr; sz <<= 1) अणु
-		ret = mmc_test_seq_ग_लिखो_perf(test, sz);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	for (sz = 512; sz < t->max_tfr; sz <<= 1) {
+		ret = mmc_test_seq_write_perf(test, sz);
+		if (ret)
+			return ret;
+	}
 	sz = t->max_tfr;
-	वापस mmc_test_seq_ग_लिखो_perf(test, sz);
-पूर्ण
+	return mmc_test_seq_write_perf(test, sz);
+}
 
 /*
- * Consecutive trim perक्रमmance by transfer size.
+ * Consecutive trim performance by transfer size.
  */
-अटल पूर्णांक mmc_test_profile_seq_trim_perf(काष्ठा mmc_test_card *test)
-अणु
-	काष्ठा mmc_test_area *t = &test->area;
-	अचिन्हित दीर्घ sz;
-	अचिन्हित पूर्णांक dev_addr, i, cnt;
-	काष्ठा बारpec64 ts1, ts2;
-	पूर्णांक ret;
+static int mmc_test_profile_seq_trim_perf(struct mmc_test_card *test)
+{
+	struct mmc_test_area *t = &test->area;
+	unsigned long sz;
+	unsigned int dev_addr, i, cnt;
+	struct timespec64 ts1, ts2;
+	int ret;
 
-	अगर (!mmc_can_trim(test->card))
-		वापस RESULT_UNSUP_CARD;
+	if (!mmc_can_trim(test->card))
+		return RESULT_UNSUP_CARD;
 
-	अगर (!mmc_can_erase(test->card))
-		वापस RESULT_UNSUP_HOST;
+	if (!mmc_can_erase(test->card))
+		return RESULT_UNSUP_HOST;
 
-	क्रम (sz = 512; sz <= t->max_sz; sz <<= 1) अणु
+	for (sz = 512; sz <= t->max_sz; sz <<= 1) {
 		ret = mmc_test_area_erase(test);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 		ret = mmc_test_area_fill(test);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 		cnt = t->max_sz / sz;
 		dev_addr = t->dev_addr;
-		kसमय_get_ts64(&ts1);
-		क्रम (i = 0; i < cnt; i++) अणु
+		ktime_get_ts64(&ts1);
+		for (i = 0; i < cnt; i++) {
 			ret = mmc_erase(test->card, dev_addr, sz >> 9,
 					MMC_TRIM_ARG);
-			अगर (ret)
-				वापस ret;
+			if (ret)
+				return ret;
 			dev_addr += (sz >> 9);
-		पूर्ण
-		kसमय_get_ts64(&ts2);
-		mmc_test_prपूर्णांक_avg_rate(test, sz, cnt, &ts1, &ts2);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+		ktime_get_ts64(&ts2);
+		mmc_test_print_avg_rate(test, sz, cnt, &ts1, &ts2);
+	}
+	return 0;
+}
 
-अटल अचिन्हित पूर्णांक rnd_next = 1;
+static unsigned int rnd_next = 1;
 
-अटल अचिन्हित पूर्णांक mmc_test_rnd_num(अचिन्हित पूर्णांक rnd_cnt)
-अणु
-	uपूर्णांक64_t r;
+static unsigned int mmc_test_rnd_num(unsigned int rnd_cnt)
+{
+	uint64_t r;
 
 	rnd_next = rnd_next * 1103515245 + 12345;
 	r = (rnd_next >> 16) & 0x7fff;
-	वापस (r * rnd_cnt) >> 15;
-पूर्ण
+	return (r * rnd_cnt) >> 15;
+}
 
-अटल पूर्णांक mmc_test_rnd_perf(काष्ठा mmc_test_card *test, पूर्णांक ग_लिखो, पूर्णांक prपूर्णांक,
-			     अचिन्हित दीर्घ sz)
-अणु
-	अचिन्हित पूर्णांक dev_addr, cnt, rnd_addr, range1, range2, last_ea = 0, ea;
-	अचिन्हित पूर्णांक ssz;
-	काष्ठा बारpec64 ts1, ts2, ts;
-	पूर्णांक ret;
+static int mmc_test_rnd_perf(struct mmc_test_card *test, int write, int print,
+			     unsigned long sz)
+{
+	unsigned int dev_addr, cnt, rnd_addr, range1, range2, last_ea = 0, ea;
+	unsigned int ssz;
+	struct timespec64 ts1, ts2, ts;
+	int ret;
 
 	ssz = sz >> 9;
 
@@ -1924,1360 +1923,1360 @@ out_मुक्त:
 	range1 = rnd_addr / test->card->pref_erase;
 	range2 = range1 / ssz;
 
-	kसमय_get_ts64(&ts1);
-	क्रम (cnt = 0; cnt < अच_पूर्णांक_उच्च; cnt++) अणु
-		kसमय_get_ts64(&ts2);
-		ts = बारpec64_sub(ts2, ts1);
-		अगर (ts.tv_sec >= 10)
-			अवरोध;
+	ktime_get_ts64(&ts1);
+	for (cnt = 0; cnt < UINT_MAX; cnt++) {
+		ktime_get_ts64(&ts2);
+		ts = timespec64_sub(ts2, ts1);
+		if (ts.tv_sec >= 10)
+			break;
 		ea = mmc_test_rnd_num(range1);
-		अगर (ea == last_ea)
+		if (ea == last_ea)
 			ea -= 1;
 		last_ea = ea;
 		dev_addr = rnd_addr + test->card->pref_erase * ea +
 			   ssz * mmc_test_rnd_num(range2);
-		ret = mmc_test_area_io(test, sz, dev_addr, ग_लिखो, 0, 0);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
-	अगर (prपूर्णांक)
-		mmc_test_prपूर्णांक_avg_rate(test, sz, cnt, &ts1, &ts2);
-	वापस 0;
-पूर्ण
+		ret = mmc_test_area_io(test, sz, dev_addr, write, 0, 0);
+		if (ret)
+			return ret;
+	}
+	if (print)
+		mmc_test_print_avg_rate(test, sz, cnt, &ts1, &ts2);
+	return 0;
+}
 
-अटल पूर्णांक mmc_test_अक्रमom_perf(काष्ठा mmc_test_card *test, पूर्णांक ग_लिखो)
-अणु
-	काष्ठा mmc_test_area *t = &test->area;
-	अचिन्हित पूर्णांक next;
-	अचिन्हित दीर्घ sz;
-	पूर्णांक ret;
+static int mmc_test_random_perf(struct mmc_test_card *test, int write)
+{
+	struct mmc_test_area *t = &test->area;
+	unsigned int next;
+	unsigned long sz;
+	int ret;
 
-	क्रम (sz = 512; sz < t->max_tfr; sz <<= 1) अणु
+	for (sz = 512; sz < t->max_tfr; sz <<= 1) {
 		/*
 		 * When writing, try to get more consistent results by running
 		 * the test twice with exactly the same I/O but outputting the
-		 * results only क्रम the 2nd run.
+		 * results only for the 2nd run.
 		 */
-		अगर (ग_लिखो) अणु
+		if (write) {
 			next = rnd_next;
-			ret = mmc_test_rnd_perf(test, ग_लिखो, 0, sz);
-			अगर (ret)
-				वापस ret;
+			ret = mmc_test_rnd_perf(test, write, 0, sz);
+			if (ret)
+				return ret;
 			rnd_next = next;
-		पूर्ण
-		ret = mmc_test_rnd_perf(test, ग_लिखो, 1, sz);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		}
+		ret = mmc_test_rnd_perf(test, write, 1, sz);
+		if (ret)
+			return ret;
+	}
 	sz = t->max_tfr;
-	अगर (ग_लिखो) अणु
+	if (write) {
 		next = rnd_next;
-		ret = mmc_test_rnd_perf(test, ग_लिखो, 0, sz);
-		अगर (ret)
-			वापस ret;
+		ret = mmc_test_rnd_perf(test, write, 0, sz);
+		if (ret)
+			return ret;
 		rnd_next = next;
-	पूर्ण
-	वापस mmc_test_rnd_perf(test, ग_लिखो, 1, sz);
-पूर्ण
+	}
+	return mmc_test_rnd_perf(test, write, 1, sz);
+}
 
 /*
- * Ranकरोm पढ़ो perक्रमmance by transfer size.
+ * Random read performance by transfer size.
  */
-अटल पूर्णांक mmc_test_अक्रमom_पढ़ो_perf(काष्ठा mmc_test_card *test)
-अणु
-	वापस mmc_test_अक्रमom_perf(test, 0);
-पूर्ण
+static int mmc_test_random_read_perf(struct mmc_test_card *test)
+{
+	return mmc_test_random_perf(test, 0);
+}
 
 /*
- * Ranकरोm ग_लिखो perक्रमmance by transfer size.
+ * Random write performance by transfer size.
  */
-अटल पूर्णांक mmc_test_अक्रमom_ग_लिखो_perf(काष्ठा mmc_test_card *test)
-अणु
-	वापस mmc_test_अक्रमom_perf(test, 1);
-पूर्ण
+static int mmc_test_random_write_perf(struct mmc_test_card *test)
+{
+	return mmc_test_random_perf(test, 1);
+}
 
-अटल पूर्णांक mmc_test_seq_perf(काष्ठा mmc_test_card *test, पूर्णांक ग_लिखो,
-			     अचिन्हित पूर्णांक tot_sz, पूर्णांक max_scatter)
-अणु
-	काष्ठा mmc_test_area *t = &test->area;
-	अचिन्हित पूर्णांक dev_addr, i, cnt, sz, ssz;
-	काष्ठा बारpec64 ts1, ts2;
-	पूर्णांक ret;
+static int mmc_test_seq_perf(struct mmc_test_card *test, int write,
+			     unsigned int tot_sz, int max_scatter)
+{
+	struct mmc_test_area *t = &test->area;
+	unsigned int dev_addr, i, cnt, sz, ssz;
+	struct timespec64 ts1, ts2;
+	int ret;
 
 	sz = t->max_tfr;
 
 	/*
-	 * In the हाल of a maximally scattered transfer, the maximum transfer
+	 * In the case of a maximally scattered transfer, the maximum transfer
 	 * size is further limited by using PAGE_SIZE segments.
 	 */
-	अगर (max_scatter) अणु
-		अचिन्हित दीर्घ max_tfr;
+	if (max_scatter) {
+		unsigned long max_tfr;
 
-		अगर (t->max_seg_sz >= PAGE_SIZE)
+		if (t->max_seg_sz >= PAGE_SIZE)
 			max_tfr = t->max_segs * PAGE_SIZE;
-		अन्यथा
+		else
 			max_tfr = t->max_segs * t->max_seg_sz;
-		अगर (sz > max_tfr)
+		if (sz > max_tfr)
 			sz = max_tfr;
-	पूर्ण
+	}
 
 	ssz = sz >> 9;
 	dev_addr = mmc_test_capacity(test->card) / 4;
-	अगर (tot_sz > dev_addr << 9)
+	if (tot_sz > dev_addr << 9)
 		tot_sz = dev_addr << 9;
 	cnt = tot_sz / sz;
 	dev_addr &= 0xffff0000; /* Round to 64MiB boundary */
 
-	kसमय_get_ts64(&ts1);
-	क्रम (i = 0; i < cnt; i++) अणु
-		ret = mmc_test_area_io(test, sz, dev_addr, ग_लिखो,
+	ktime_get_ts64(&ts1);
+	for (i = 0; i < cnt; i++) {
+		ret = mmc_test_area_io(test, sz, dev_addr, write,
 				       max_scatter, 0);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 		dev_addr += ssz;
-	पूर्ण
-	kसमय_get_ts64(&ts2);
+	}
+	ktime_get_ts64(&ts2);
 
-	mmc_test_prपूर्णांक_avg_rate(test, sz, cnt, &ts1, &ts2);
+	mmc_test_print_avg_rate(test, sz, cnt, &ts1, &ts2);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mmc_test_large_seq_perf(काष्ठा mmc_test_card *test, पूर्णांक ग_लिखो)
-अणु
-	पूर्णांक ret, i;
+static int mmc_test_large_seq_perf(struct mmc_test_card *test, int write)
+{
+	int ret, i;
 
-	क्रम (i = 0; i < 10; i++) अणु
-		ret = mmc_test_seq_perf(test, ग_लिखो, 10 * 1024 * 1024, 1);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
-	क्रम (i = 0; i < 5; i++) अणु
-		ret = mmc_test_seq_perf(test, ग_लिखो, 100 * 1024 * 1024, 1);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
-	क्रम (i = 0; i < 3; i++) अणु
-		ret = mmc_test_seq_perf(test, ग_लिखो, 1000 * 1024 * 1024, 1);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	for (i = 0; i < 10; i++) {
+		ret = mmc_test_seq_perf(test, write, 10 * 1024 * 1024, 1);
+		if (ret)
+			return ret;
+	}
+	for (i = 0; i < 5; i++) {
+		ret = mmc_test_seq_perf(test, write, 100 * 1024 * 1024, 1);
+		if (ret)
+			return ret;
+	}
+	for (i = 0; i < 3; i++) {
+		ret = mmc_test_seq_perf(test, write, 1000 * 1024 * 1024, 1);
+		if (ret)
+			return ret;
+	}
 
-	वापस ret;
-पूर्ण
-
-/*
- * Large sequential पढ़ो perक्रमmance.
- */
-अटल पूर्णांक mmc_test_large_seq_पढ़ो_perf(काष्ठा mmc_test_card *test)
-अणु
-	वापस mmc_test_large_seq_perf(test, 0);
-पूर्ण
+	return ret;
+}
 
 /*
- * Large sequential ग_लिखो perक्रमmance.
+ * Large sequential read performance.
  */
-अटल पूर्णांक mmc_test_large_seq_ग_लिखो_perf(काष्ठा mmc_test_card *test)
-अणु
-	वापस mmc_test_large_seq_perf(test, 1);
-पूर्ण
+static int mmc_test_large_seq_read_perf(struct mmc_test_card *test)
+{
+	return mmc_test_large_seq_perf(test, 0);
+}
 
-अटल पूर्णांक mmc_test_rw_multiple(काष्ठा mmc_test_card *test,
-				काष्ठा mmc_test_multiple_rw *tdata,
-				अचिन्हित पूर्णांक reqsize, अचिन्हित पूर्णांक size,
-				पूर्णांक min_sg_len)
-अणु
-	अचिन्हित पूर्णांक dev_addr;
-	काष्ठा mmc_test_area *t = &test->area;
-	पूर्णांक ret = 0;
+/*
+ * Large sequential write performance.
+ */
+static int mmc_test_large_seq_write_perf(struct mmc_test_card *test)
+{
+	return mmc_test_large_seq_perf(test, 1);
+}
+
+static int mmc_test_rw_multiple(struct mmc_test_card *test,
+				struct mmc_test_multiple_rw *tdata,
+				unsigned int reqsize, unsigned int size,
+				int min_sg_len)
+{
+	unsigned int dev_addr;
+	struct mmc_test_area *t = &test->area;
+	int ret = 0;
 
 	/* Set up test area */
-	अगर (size > mmc_test_capacity(test->card) / 2 * 512)
+	if (size > mmc_test_capacity(test->card) / 2 * 512)
 		size = mmc_test_capacity(test->card) / 2 * 512;
-	अगर (reqsize > t->max_tfr)
+	if (reqsize > t->max_tfr)
 		reqsize = t->max_tfr;
 	dev_addr = mmc_test_capacity(test->card) / 4;
-	अगर ((dev_addr & 0xffff0000))
+	if ((dev_addr & 0xffff0000))
 		dev_addr &= 0xffff0000; /* Round to 64MiB boundary */
-	अन्यथा
+	else
 		dev_addr &= 0xfffff800; /* Round to 1MiB boundary */
-	अगर (!dev_addr)
-		जाओ err;
+	if (!dev_addr)
+		goto err;
 
-	अगर (reqsize > size)
-		वापस 0;
+	if (reqsize > size)
+		return 0;
 
 	/* prepare test area */
-	अगर (mmc_can_erase(test->card) &&
-	    tdata->prepare & MMC_TEST_PREP_ERASE) अणु
+	if (mmc_can_erase(test->card) &&
+	    tdata->prepare & MMC_TEST_PREP_ERASE) {
 		ret = mmc_erase(test->card, dev_addr,
 				size / 512, test->card->erase_arg);
-		अगर (ret)
+		if (ret)
 			ret = mmc_erase(test->card, dev_addr,
 					size / 512, MMC_ERASE_ARG);
-		अगर (ret)
-			जाओ err;
-	पूर्ण
+		if (ret)
+			goto err;
+	}
 
 	/* Run test */
 	ret = mmc_test_area_io_seq(test, reqsize, dev_addr,
-				   tdata->करो_ग_लिखो, 0, 1, size / reqsize,
-				   tdata->करो_nonblock_req, min_sg_len);
-	अगर (ret)
-		जाओ err;
+				   tdata->do_write, 0, 1, size / reqsize,
+				   tdata->do_nonblock_req, min_sg_len);
+	if (ret)
+		goto err;
 
-	वापस ret;
+	return ret;
  err:
 	pr_info("[%s] error\n", __func__);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mmc_test_rw_multiple_size(काष्ठा mmc_test_card *test,
-				     काष्ठा mmc_test_multiple_rw *rw)
-अणु
-	पूर्णांक ret = 0;
-	पूर्णांक i;
-	व्योम *pre_req = test->card->host->ops->pre_req;
-	व्योम *post_req = test->card->host->ops->post_req;
+static int mmc_test_rw_multiple_size(struct mmc_test_card *test,
+				     struct mmc_test_multiple_rw *rw)
+{
+	int ret = 0;
+	int i;
+	void *pre_req = test->card->host->ops->pre_req;
+	void *post_req = test->card->host->ops->post_req;
 
-	अगर (rw->करो_nonblock_req &&
-	    ((!pre_req && post_req) || (pre_req && !post_req))) अणु
+	if (rw->do_nonblock_req &&
+	    ((!pre_req && post_req) || (pre_req && !post_req))) {
 		pr_info("error: only one of pre/post is defined\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	क्रम (i = 0 ; i < rw->len && ret == 0; i++) अणु
+	for (i = 0 ; i < rw->len && ret == 0; i++) {
 		ret = mmc_test_rw_multiple(test, rw, rw->bs[i], rw->size, 0);
-		अगर (ret)
-			अवरोध;
-	पूर्ण
-	वापस ret;
-पूर्ण
+		if (ret)
+			break;
+	}
+	return ret;
+}
 
-अटल पूर्णांक mmc_test_rw_multiple_sg_len(काष्ठा mmc_test_card *test,
-				       काष्ठा mmc_test_multiple_rw *rw)
-अणु
-	पूर्णांक ret = 0;
-	पूर्णांक i;
+static int mmc_test_rw_multiple_sg_len(struct mmc_test_card *test,
+				       struct mmc_test_multiple_rw *rw)
+{
+	int ret = 0;
+	int i;
 
-	क्रम (i = 0 ; i < rw->len && ret == 0; i++) अणु
+	for (i = 0 ; i < rw->len && ret == 0; i++) {
 		ret = mmc_test_rw_multiple(test, rw, 512 * 1024, rw->size,
 					   rw->sg_len[i]);
-		अगर (ret)
-			अवरोध;
-	पूर्ण
-	वापस ret;
-पूर्ण
+		if (ret)
+			break;
+	}
+	return ret;
+}
 
 /*
- * Multiple blocking ग_लिखो 4k to 4 MB chunks
+ * Multiple blocking write 4k to 4 MB chunks
  */
-अटल पूर्णांक mmc_test_profile_mult_ग_लिखो_blocking_perf(काष्ठा mmc_test_card *test)
-अणु
-	अचिन्हित पूर्णांक bs[] = अणु1 << 12, 1 << 13, 1 << 14, 1 << 15, 1 << 16,
-			     1 << 17, 1 << 18, 1 << 19, 1 << 20, 1 << 22पूर्ण;
-	काष्ठा mmc_test_multiple_rw test_data = अणु
+static int mmc_test_profile_mult_write_blocking_perf(struct mmc_test_card *test)
+{
+	unsigned int bs[] = {1 << 12, 1 << 13, 1 << 14, 1 << 15, 1 << 16,
+			     1 << 17, 1 << 18, 1 << 19, 1 << 20, 1 << 22};
+	struct mmc_test_multiple_rw test_data = {
 		.bs = bs,
 		.size = TEST_AREA_MAX_SIZE,
 		.len = ARRAY_SIZE(bs),
-		.करो_ग_लिखो = true,
-		.करो_nonblock_req = false,
+		.do_write = true,
+		.do_nonblock_req = false,
 		.prepare = MMC_TEST_PREP_ERASE,
-	पूर्ण;
+	};
 
-	वापस mmc_test_rw_multiple_size(test, &test_data);
-पूर्ण;
+	return mmc_test_rw_multiple_size(test, &test_data);
+};
 
 /*
- * Multiple non-blocking ग_लिखो 4k to 4 MB chunks
+ * Multiple non-blocking write 4k to 4 MB chunks
  */
-अटल पूर्णांक mmc_test_profile_mult_ग_लिखो_nonblock_perf(काष्ठा mmc_test_card *test)
-अणु
-	अचिन्हित पूर्णांक bs[] = अणु1 << 12, 1 << 13, 1 << 14, 1 << 15, 1 << 16,
-			     1 << 17, 1 << 18, 1 << 19, 1 << 20, 1 << 22पूर्ण;
-	काष्ठा mmc_test_multiple_rw test_data = अणु
+static int mmc_test_profile_mult_write_nonblock_perf(struct mmc_test_card *test)
+{
+	unsigned int bs[] = {1 << 12, 1 << 13, 1 << 14, 1 << 15, 1 << 16,
+			     1 << 17, 1 << 18, 1 << 19, 1 << 20, 1 << 22};
+	struct mmc_test_multiple_rw test_data = {
 		.bs = bs,
 		.size = TEST_AREA_MAX_SIZE,
 		.len = ARRAY_SIZE(bs),
-		.करो_ग_लिखो = true,
-		.करो_nonblock_req = true,
+		.do_write = true,
+		.do_nonblock_req = true,
 		.prepare = MMC_TEST_PREP_ERASE,
-	पूर्ण;
+	};
 
-	वापस mmc_test_rw_multiple_size(test, &test_data);
-पूर्ण
+	return mmc_test_rw_multiple_size(test, &test_data);
+}
 
 /*
- * Multiple blocking पढ़ो 4k to 4 MB chunks
+ * Multiple blocking read 4k to 4 MB chunks
  */
-अटल पूर्णांक mmc_test_profile_mult_पढ़ो_blocking_perf(काष्ठा mmc_test_card *test)
-अणु
-	अचिन्हित पूर्णांक bs[] = अणु1 << 12, 1 << 13, 1 << 14, 1 << 15, 1 << 16,
-			     1 << 17, 1 << 18, 1 << 19, 1 << 20, 1 << 22पूर्ण;
-	काष्ठा mmc_test_multiple_rw test_data = अणु
+static int mmc_test_profile_mult_read_blocking_perf(struct mmc_test_card *test)
+{
+	unsigned int bs[] = {1 << 12, 1 << 13, 1 << 14, 1 << 15, 1 << 16,
+			     1 << 17, 1 << 18, 1 << 19, 1 << 20, 1 << 22};
+	struct mmc_test_multiple_rw test_data = {
 		.bs = bs,
 		.size = TEST_AREA_MAX_SIZE,
 		.len = ARRAY_SIZE(bs),
-		.करो_ग_लिखो = false,
-		.करो_nonblock_req = false,
+		.do_write = false,
+		.do_nonblock_req = false,
 		.prepare = MMC_TEST_PREP_NONE,
-	पूर्ण;
+	};
 
-	वापस mmc_test_rw_multiple_size(test, &test_data);
-पूर्ण
+	return mmc_test_rw_multiple_size(test, &test_data);
+}
 
 /*
- * Multiple non-blocking पढ़ो 4k to 4 MB chunks
+ * Multiple non-blocking read 4k to 4 MB chunks
  */
-अटल पूर्णांक mmc_test_profile_mult_पढ़ो_nonblock_perf(काष्ठा mmc_test_card *test)
-अणु
-	अचिन्हित पूर्णांक bs[] = अणु1 << 12, 1 << 13, 1 << 14, 1 << 15, 1 << 16,
-			     1 << 17, 1 << 18, 1 << 19, 1 << 20, 1 << 22पूर्ण;
-	काष्ठा mmc_test_multiple_rw test_data = अणु
+static int mmc_test_profile_mult_read_nonblock_perf(struct mmc_test_card *test)
+{
+	unsigned int bs[] = {1 << 12, 1 << 13, 1 << 14, 1 << 15, 1 << 16,
+			     1 << 17, 1 << 18, 1 << 19, 1 << 20, 1 << 22};
+	struct mmc_test_multiple_rw test_data = {
 		.bs = bs,
 		.size = TEST_AREA_MAX_SIZE,
 		.len = ARRAY_SIZE(bs),
-		.करो_ग_लिखो = false,
-		.करो_nonblock_req = true,
+		.do_write = false,
+		.do_nonblock_req = true,
 		.prepare = MMC_TEST_PREP_NONE,
-	पूर्ण;
+	};
 
-	वापस mmc_test_rw_multiple_size(test, &test_data);
-पूर्ण
+	return mmc_test_rw_multiple_size(test, &test_data);
+}
 
 /*
- * Multiple blocking ग_लिखो 1 to 512 sg elements
+ * Multiple blocking write 1 to 512 sg elements
  */
-अटल पूर्णांक mmc_test_profile_sglen_wr_blocking_perf(काष्ठा mmc_test_card *test)
-अणु
-	अचिन्हित पूर्णांक sg_len[] = अणु1, 1 << 3, 1 << 4, 1 << 5, 1 << 6,
-				 1 << 7, 1 << 8, 1 << 9पूर्ण;
-	काष्ठा mmc_test_multiple_rw test_data = अणु
+static int mmc_test_profile_sglen_wr_blocking_perf(struct mmc_test_card *test)
+{
+	unsigned int sg_len[] = {1, 1 << 3, 1 << 4, 1 << 5, 1 << 6,
+				 1 << 7, 1 << 8, 1 << 9};
+	struct mmc_test_multiple_rw test_data = {
 		.sg_len = sg_len,
 		.size = TEST_AREA_MAX_SIZE,
 		.len = ARRAY_SIZE(sg_len),
-		.करो_ग_लिखो = true,
-		.करो_nonblock_req = false,
+		.do_write = true,
+		.do_nonblock_req = false,
 		.prepare = MMC_TEST_PREP_ERASE,
-	पूर्ण;
+	};
 
-	वापस mmc_test_rw_multiple_sg_len(test, &test_data);
-पूर्ण;
+	return mmc_test_rw_multiple_sg_len(test, &test_data);
+};
 
 /*
- * Multiple non-blocking ग_लिखो 1 to 512 sg elements
+ * Multiple non-blocking write 1 to 512 sg elements
  */
-अटल पूर्णांक mmc_test_profile_sglen_wr_nonblock_perf(काष्ठा mmc_test_card *test)
-अणु
-	अचिन्हित पूर्णांक sg_len[] = अणु1, 1 << 3, 1 << 4, 1 << 5, 1 << 6,
-				 1 << 7, 1 << 8, 1 << 9पूर्ण;
-	काष्ठा mmc_test_multiple_rw test_data = अणु
+static int mmc_test_profile_sglen_wr_nonblock_perf(struct mmc_test_card *test)
+{
+	unsigned int sg_len[] = {1, 1 << 3, 1 << 4, 1 << 5, 1 << 6,
+				 1 << 7, 1 << 8, 1 << 9};
+	struct mmc_test_multiple_rw test_data = {
 		.sg_len = sg_len,
 		.size = TEST_AREA_MAX_SIZE,
 		.len = ARRAY_SIZE(sg_len),
-		.करो_ग_लिखो = true,
-		.करो_nonblock_req = true,
+		.do_write = true,
+		.do_nonblock_req = true,
 		.prepare = MMC_TEST_PREP_ERASE,
-	पूर्ण;
+	};
 
-	वापस mmc_test_rw_multiple_sg_len(test, &test_data);
-पूर्ण
+	return mmc_test_rw_multiple_sg_len(test, &test_data);
+}
 
 /*
- * Multiple blocking पढ़ो 1 to 512 sg elements
+ * Multiple blocking read 1 to 512 sg elements
  */
-अटल पूर्णांक mmc_test_profile_sglen_r_blocking_perf(काष्ठा mmc_test_card *test)
-अणु
-	अचिन्हित पूर्णांक sg_len[] = अणु1, 1 << 3, 1 << 4, 1 << 5, 1 << 6,
-				 1 << 7, 1 << 8, 1 << 9पूर्ण;
-	काष्ठा mmc_test_multiple_rw test_data = अणु
+static int mmc_test_profile_sglen_r_blocking_perf(struct mmc_test_card *test)
+{
+	unsigned int sg_len[] = {1, 1 << 3, 1 << 4, 1 << 5, 1 << 6,
+				 1 << 7, 1 << 8, 1 << 9};
+	struct mmc_test_multiple_rw test_data = {
 		.sg_len = sg_len,
 		.size = TEST_AREA_MAX_SIZE,
 		.len = ARRAY_SIZE(sg_len),
-		.करो_ग_लिखो = false,
-		.करो_nonblock_req = false,
+		.do_write = false,
+		.do_nonblock_req = false,
 		.prepare = MMC_TEST_PREP_NONE,
-	पूर्ण;
+	};
 
-	वापस mmc_test_rw_multiple_sg_len(test, &test_data);
-पूर्ण
+	return mmc_test_rw_multiple_sg_len(test, &test_data);
+}
 
 /*
- * Multiple non-blocking पढ़ो 1 to 512 sg elements
+ * Multiple non-blocking read 1 to 512 sg elements
  */
-अटल पूर्णांक mmc_test_profile_sglen_r_nonblock_perf(काष्ठा mmc_test_card *test)
-अणु
-	अचिन्हित पूर्णांक sg_len[] = अणु1, 1 << 3, 1 << 4, 1 << 5, 1 << 6,
-				 1 << 7, 1 << 8, 1 << 9पूर्ण;
-	काष्ठा mmc_test_multiple_rw test_data = अणु
+static int mmc_test_profile_sglen_r_nonblock_perf(struct mmc_test_card *test)
+{
+	unsigned int sg_len[] = {1, 1 << 3, 1 << 4, 1 << 5, 1 << 6,
+				 1 << 7, 1 << 8, 1 << 9};
+	struct mmc_test_multiple_rw test_data = {
 		.sg_len = sg_len,
 		.size = TEST_AREA_MAX_SIZE,
 		.len = ARRAY_SIZE(sg_len),
-		.करो_ग_लिखो = false,
-		.करो_nonblock_req = true,
+		.do_write = false,
+		.do_nonblock_req = true,
 		.prepare = MMC_TEST_PREP_NONE,
-	पूर्ण;
+	};
 
-	वापस mmc_test_rw_multiple_sg_len(test, &test_data);
-पूर्ण
+	return mmc_test_rw_multiple_sg_len(test, &test_data);
+}
 
 /*
  * eMMC hardware reset.
  */
-अटल पूर्णांक mmc_test_reset(काष्ठा mmc_test_card *test)
-अणु
-	काष्ठा mmc_card *card = test->card;
-	काष्ठा mmc_host *host = card->host;
-	पूर्णांक err;
+static int mmc_test_reset(struct mmc_test_card *test)
+{
+	struct mmc_card *card = test->card;
+	struct mmc_host *host = card->host;
+	int err;
 
 	err = mmc_hw_reset(host);
-	अगर (!err) अणु
+	if (!err) {
 		/*
 		 * Reset will re-enable the card's command queue, but tests
 		 * expect it to be disabled.
 		 */
-		अगर (card->ext_csd.cmdq_en)
+		if (card->ext_csd.cmdq_en)
 			mmc_cmdq_disable(card);
-		वापस RESULT_OK;
-	पूर्ण अन्यथा अगर (err == -EOPNOTSUPP) अणु
-		वापस RESULT_UNSUP_HOST;
-	पूर्ण
+		return RESULT_OK;
+	} else if (err == -EOPNOTSUPP) {
+		return RESULT_UNSUP_HOST;
+	}
 
-	वापस RESULT_FAIL;
-पूर्ण
+	return RESULT_FAIL;
+}
 
-अटल पूर्णांक mmc_test_send_status(काष्ठा mmc_test_card *test,
-				काष्ठा mmc_command *cmd)
-अणु
-	स_रखो(cmd, 0, माप(*cmd));
+static int mmc_test_send_status(struct mmc_test_card *test,
+				struct mmc_command *cmd)
+{
+	memset(cmd, 0, sizeof(*cmd));
 
 	cmd->opcode = MMC_SEND_STATUS;
-	अगर (!mmc_host_is_spi(test->card->host))
+	if (!mmc_host_is_spi(test->card->host))
 		cmd->arg = test->card->rca << 16;
 	cmd->flags = MMC_RSP_SPI_R2 | MMC_RSP_R1 | MMC_CMD_AC;
 
-	वापस mmc_रुको_क्रम_cmd(test->card->host, cmd, 0);
-पूर्ण
+	return mmc_wait_for_cmd(test->card->host, cmd, 0);
+}
 
-अटल पूर्णांक mmc_test_ongoing_transfer(काष्ठा mmc_test_card *test,
-				     अचिन्हित पूर्णांक dev_addr, पूर्णांक use_sbc,
-				     पूर्णांक repeat_cmd, पूर्णांक ग_लिखो, पूर्णांक use_areq)
-अणु
-	काष्ठा mmc_test_req *rq = mmc_test_req_alloc();
-	काष्ठा mmc_host *host = test->card->host;
-	काष्ठा mmc_test_area *t = &test->area;
-	काष्ठा mmc_request *mrq;
-	अचिन्हित दीर्घ समयout;
+static int mmc_test_ongoing_transfer(struct mmc_test_card *test,
+				     unsigned int dev_addr, int use_sbc,
+				     int repeat_cmd, int write, int use_areq)
+{
+	struct mmc_test_req *rq = mmc_test_req_alloc();
+	struct mmc_host *host = test->card->host;
+	struct mmc_test_area *t = &test->area;
+	struct mmc_request *mrq;
+	unsigned long timeout;
 	bool expired = false;
-	पूर्णांक ret = 0, cmd_ret;
+	int ret = 0, cmd_ret;
 	u32 status = 0;
-	पूर्णांक count = 0;
+	int count = 0;
 
-	अगर (!rq)
-		वापस -ENOMEM;
+	if (!rq)
+		return -ENOMEM;
 
 	mrq = &rq->mrq;
-	अगर (use_sbc)
+	if (use_sbc)
 		mrq->sbc = &rq->sbc;
 	mrq->cap_cmd_during_tfr = true;
 
 	mmc_test_prepare_mrq(test, mrq, t->sg, t->sg_len, dev_addr, t->blocks,
-			     512, ग_लिखो);
+			     512, write);
 
-	अगर (use_sbc && t->blocks > 1 && !mrq->sbc) अणु
+	if (use_sbc && t->blocks > 1 && !mrq->sbc) {
 		ret =  mmc_host_cmd23(host) ?
 		       RESULT_UNSUP_CARD :
 		       RESULT_UNSUP_HOST;
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
 	/* Start ongoing data request */
-	अगर (use_areq) अणु
-		ret = mmc_test_start_areq(test, mrq, शून्य);
-		अगर (ret)
-			जाओ out_मुक्त;
-	पूर्ण अन्यथा अणु
-		mmc_रुको_क्रम_req(host, mrq);
-	पूर्ण
+	if (use_areq) {
+		ret = mmc_test_start_areq(test, mrq, NULL);
+		if (ret)
+			goto out_free;
+	} else {
+		mmc_wait_for_req(host, mrq);
+	}
 
-	समयout = jअगरfies + msecs_to_jअगरfies(3000);
-	करो अणु
+	timeout = jiffies + msecs_to_jiffies(3000);
+	do {
 		count += 1;
 
-		/* Send status command जबतक data transfer in progress */
+		/* Send status command while data transfer in progress */
 		cmd_ret = mmc_test_send_status(test, &rq->status);
-		अगर (cmd_ret)
-			अवरोध;
+		if (cmd_ret)
+			break;
 
 		status = rq->status.resp[0];
-		अगर (status & R1_ERROR) अणु
+		if (status & R1_ERROR) {
 			cmd_ret = -EIO;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (mmc_is_req_करोne(host, mrq))
-			अवरोध;
+		if (mmc_is_req_done(host, mrq))
+			break;
 
-		expired = समय_after(jअगरfies, समयout);
-		अगर (expired) अणु
+		expired = time_after(jiffies, timeout);
+		if (expired) {
 			pr_info("%s: timeout waiting for Tran state status %#x\n",
 				mmc_hostname(host), status);
 			cmd_ret = -ETIMEDOUT;
-			अवरोध;
-		पूर्ण
-	पूर्ण जबतक (repeat_cmd && R1_CURRENT_STATE(status) != R1_STATE_TRAN);
+			break;
+		}
+	} while (repeat_cmd && R1_CURRENT_STATE(status) != R1_STATE_TRAN);
 
-	/* Wait क्रम data request to complete */
-	अगर (use_areq) अणु
-		ret = mmc_test_start_areq(test, शून्य, mrq);
-	पूर्ण अन्यथा अणु
-		mmc_रुको_क्रम_req_करोne(test->card->host, mrq);
-	पूर्ण
+	/* Wait for data request to complete */
+	if (use_areq) {
+		ret = mmc_test_start_areq(test, NULL, mrq);
+	} else {
+		mmc_wait_for_req_done(test->card->host, mrq);
+	}
 
 	/*
-	 * For cap_cmd_during_tfr request, upper layer must send stop अगर
+	 * For cap_cmd_during_tfr request, upper layer must send stop if
 	 * required.
 	 */
-	अगर (mrq->data->stop && (mrq->data->error || !mrq->sbc)) अणु
-		अगर (ret)
-			mmc_रुको_क्रम_cmd(host, mrq->data->stop, 0);
-		अन्यथा
-			ret = mmc_रुको_क्रम_cmd(host, mrq->data->stop, 0);
-	पूर्ण
+	if (mrq->data->stop && (mrq->data->error || !mrq->sbc)) {
+		if (ret)
+			mmc_wait_for_cmd(host, mrq->data->stop, 0);
+		else
+			ret = mmc_wait_for_cmd(host, mrq->data->stop, 0);
+	}
 
-	अगर (ret)
-		जाओ out_मुक्त;
+	if (ret)
+		goto out_free;
 
-	अगर (cmd_ret) अणु
+	if (cmd_ret) {
 		pr_info("%s: Send Status failed: status %#x, error %d\n",
 			mmc_hostname(test->card->host), status, cmd_ret);
-	पूर्ण
+	}
 
 	ret = mmc_test_check_result(test, mrq);
-	अगर (ret)
-		जाओ out_मुक्त;
+	if (ret)
+		goto out_free;
 
-	ret = mmc_test_रुको_busy(test);
-	अगर (ret)
-		जाओ out_मुक्त;
+	ret = mmc_test_wait_busy(test);
+	if (ret)
+		goto out_free;
 
-	अगर (repeat_cmd && (t->blocks + 1) << 9 > t->max_tfr)
+	if (repeat_cmd && (t->blocks + 1) << 9 > t->max_tfr)
 		pr_info("%s: %d commands completed during transfer of %u blocks\n",
 			mmc_hostname(test->card->host), count, t->blocks);
 
-	अगर (cmd_ret)
+	if (cmd_ret)
 		ret = cmd_ret;
-out_मुक्त:
-	kमुक्त(rq);
+out_free:
+	kfree(rq);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __mmc_test_cmds_during_tfr(काष्ठा mmc_test_card *test,
-				      अचिन्हित दीर्घ sz, पूर्णांक use_sbc, पूर्णांक ग_लिखो,
-				      पूर्णांक use_areq)
-अणु
-	काष्ठा mmc_test_area *t = &test->area;
-	पूर्णांक ret;
+static int __mmc_test_cmds_during_tfr(struct mmc_test_card *test,
+				      unsigned long sz, int use_sbc, int write,
+				      int use_areq)
+{
+	struct mmc_test_area *t = &test->area;
+	int ret;
 
-	अगर (!(test->card->host->caps & MMC_CAP_CMD_DURING_TFR))
-		वापस RESULT_UNSUP_HOST;
+	if (!(test->card->host->caps & MMC_CAP_CMD_DURING_TFR))
+		return RESULT_UNSUP_HOST;
 
 	ret = mmc_test_area_map(test, sz, 0, 0, use_areq);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = mmc_test_ongoing_transfer(test, t->dev_addr, use_sbc, 0, ग_लिखो,
+	ret = mmc_test_ongoing_transfer(test, t->dev_addr, use_sbc, 0, write,
 					use_areq);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस mmc_test_ongoing_transfer(test, t->dev_addr, use_sbc, 1, ग_लिखो,
+	return mmc_test_ongoing_transfer(test, t->dev_addr, use_sbc, 1, write,
 					 use_areq);
-पूर्ण
+}
 
-अटल पूर्णांक mmc_test_cmds_during_tfr(काष्ठा mmc_test_card *test, पूर्णांक use_sbc,
-				    पूर्णांक ग_लिखो, पूर्णांक use_areq)
-अणु
-	काष्ठा mmc_test_area *t = &test->area;
-	अचिन्हित दीर्घ sz;
-	पूर्णांक ret;
+static int mmc_test_cmds_during_tfr(struct mmc_test_card *test, int use_sbc,
+				    int write, int use_areq)
+{
+	struct mmc_test_area *t = &test->area;
+	unsigned long sz;
+	int ret;
 
-	क्रम (sz = 512; sz <= t->max_tfr; sz += 512) अणु
-		ret = __mmc_test_cmds_during_tfr(test, sz, use_sbc, ग_लिखो,
+	for (sz = 512; sz <= t->max_tfr; sz += 512) {
+		ret = __mmc_test_cmds_during_tfr(test, sz, use_sbc, write,
 						 use_areq);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (ret)
+			return ret;
+	}
+	return 0;
+}
 
 /*
- * Commands during पढ़ो - no Set Block Count (CMD23).
+ * Commands during read - no Set Block Count (CMD23).
  */
-अटल पूर्णांक mmc_test_cmds_during_पढ़ो(काष्ठा mmc_test_card *test)
-अणु
-	वापस mmc_test_cmds_during_tfr(test, 0, 0, 0);
-पूर्ण
+static int mmc_test_cmds_during_read(struct mmc_test_card *test)
+{
+	return mmc_test_cmds_during_tfr(test, 0, 0, 0);
+}
 
 /*
- * Commands during ग_लिखो - no Set Block Count (CMD23).
+ * Commands during write - no Set Block Count (CMD23).
  */
-अटल पूर्णांक mmc_test_cmds_during_ग_लिखो(काष्ठा mmc_test_card *test)
-अणु
-	वापस mmc_test_cmds_during_tfr(test, 0, 1, 0);
-पूर्ण
+static int mmc_test_cmds_during_write(struct mmc_test_card *test)
+{
+	return mmc_test_cmds_during_tfr(test, 0, 1, 0);
+}
 
 /*
- * Commands during पढ़ो - use Set Block Count (CMD23).
+ * Commands during read - use Set Block Count (CMD23).
  */
-अटल पूर्णांक mmc_test_cmds_during_पढ़ो_cmd23(काष्ठा mmc_test_card *test)
-अणु
-	वापस mmc_test_cmds_during_tfr(test, 1, 0, 0);
-पूर्ण
+static int mmc_test_cmds_during_read_cmd23(struct mmc_test_card *test)
+{
+	return mmc_test_cmds_during_tfr(test, 1, 0, 0);
+}
 
 /*
- * Commands during ग_लिखो - use Set Block Count (CMD23).
+ * Commands during write - use Set Block Count (CMD23).
  */
-अटल पूर्णांक mmc_test_cmds_during_ग_लिखो_cmd23(काष्ठा mmc_test_card *test)
-अणु
-	वापस mmc_test_cmds_during_tfr(test, 1, 1, 0);
-पूर्ण
+static int mmc_test_cmds_during_write_cmd23(struct mmc_test_card *test)
+{
+	return mmc_test_cmds_during_tfr(test, 1, 1, 0);
+}
 
 /*
- * Commands during non-blocking पढ़ो - use Set Block Count (CMD23).
+ * Commands during non-blocking read - use Set Block Count (CMD23).
  */
-अटल पूर्णांक mmc_test_cmds_during_पढ़ो_cmd23_nonblock(काष्ठा mmc_test_card *test)
-अणु
-	वापस mmc_test_cmds_during_tfr(test, 1, 0, 1);
-पूर्ण
+static int mmc_test_cmds_during_read_cmd23_nonblock(struct mmc_test_card *test)
+{
+	return mmc_test_cmds_during_tfr(test, 1, 0, 1);
+}
 
 /*
- * Commands during non-blocking ग_लिखो - use Set Block Count (CMD23).
+ * Commands during non-blocking write - use Set Block Count (CMD23).
  */
-अटल पूर्णांक mmc_test_cmds_during_ग_लिखो_cmd23_nonblock(काष्ठा mmc_test_card *test)
-अणु
-	वापस mmc_test_cmds_during_tfr(test, 1, 1, 1);
-पूर्ण
+static int mmc_test_cmds_during_write_cmd23_nonblock(struct mmc_test_card *test)
+{
+	return mmc_test_cmds_during_tfr(test, 1, 1, 1);
+}
 
-अटल स्थिर काष्ठा mmc_test_हाल mmc_test_हालs[] = अणु
-	अणु
+static const struct mmc_test_case mmc_test_cases[] = {
+	{
 		.name = "Basic write (no data verification)",
-		.run = mmc_test_basic_ग_लिखो,
-	पूर्ण,
+		.run = mmc_test_basic_write,
+	},
 
-	अणु
+	{
 		.name = "Basic read (no data verification)",
-		.run = mmc_test_basic_पढ़ो,
-	पूर्ण,
+		.run = mmc_test_basic_read,
+	},
 
-	अणु
+	{
 		.name = "Basic write (with data verification)",
-		.prepare = mmc_test_prepare_ग_लिखो,
-		.run = mmc_test_verअगरy_ग_लिखो,
+		.prepare = mmc_test_prepare_write,
+		.run = mmc_test_verify_write,
 		.cleanup = mmc_test_cleanup,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Basic read (with data verification)",
-		.prepare = mmc_test_prepare_पढ़ो,
-		.run = mmc_test_verअगरy_पढ़ो,
+		.prepare = mmc_test_prepare_read,
+		.run = mmc_test_verify_read,
 		.cleanup = mmc_test_cleanup,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Multi-block write",
-		.prepare = mmc_test_prepare_ग_लिखो,
-		.run = mmc_test_multi_ग_लिखो,
+		.prepare = mmc_test_prepare_write,
+		.run = mmc_test_multi_write,
 		.cleanup = mmc_test_cleanup,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Multi-block read",
-		.prepare = mmc_test_prepare_पढ़ो,
-		.run = mmc_test_multi_पढ़ो,
+		.prepare = mmc_test_prepare_read,
+		.run = mmc_test_multi_read,
 		.cleanup = mmc_test_cleanup,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Power of two block writes",
-		.prepare = mmc_test_prepare_ग_लिखो,
-		.run = mmc_test_घात2_ग_लिखो,
+		.prepare = mmc_test_prepare_write,
+		.run = mmc_test_pow2_write,
 		.cleanup = mmc_test_cleanup,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Power of two block reads",
-		.prepare = mmc_test_prepare_पढ़ो,
-		.run = mmc_test_घात2_पढ़ो,
+		.prepare = mmc_test_prepare_read,
+		.run = mmc_test_pow2_read,
 		.cleanup = mmc_test_cleanup,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Weird sized block writes",
-		.prepare = mmc_test_prepare_ग_लिखो,
-		.run = mmc_test_weird_ग_लिखो,
+		.prepare = mmc_test_prepare_write,
+		.run = mmc_test_weird_write,
 		.cleanup = mmc_test_cleanup,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Weird sized block reads",
-		.prepare = mmc_test_prepare_पढ़ो,
-		.run = mmc_test_weird_पढ़ो,
+		.prepare = mmc_test_prepare_read,
+		.run = mmc_test_weird_read,
 		.cleanup = mmc_test_cleanup,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Badly aligned write",
-		.prepare = mmc_test_prepare_ग_लिखो,
-		.run = mmc_test_align_ग_लिखो,
+		.prepare = mmc_test_prepare_write,
+		.run = mmc_test_align_write,
 		.cleanup = mmc_test_cleanup,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Badly aligned read",
-		.prepare = mmc_test_prepare_पढ़ो,
-		.run = mmc_test_align_पढ़ो,
+		.prepare = mmc_test_prepare_read,
+		.run = mmc_test_align_read,
 		.cleanup = mmc_test_cleanup,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Badly aligned multi-block write",
-		.prepare = mmc_test_prepare_ग_लिखो,
-		.run = mmc_test_align_multi_ग_लिखो,
+		.prepare = mmc_test_prepare_write,
+		.run = mmc_test_align_multi_write,
 		.cleanup = mmc_test_cleanup,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Badly aligned multi-block read",
-		.prepare = mmc_test_prepare_पढ़ो,
-		.run = mmc_test_align_multi_पढ़ो,
+		.prepare = mmc_test_prepare_read,
+		.run = mmc_test_align_multi_read,
 		.cleanup = mmc_test_cleanup,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Proper xfer_size at write (start failure)",
-		.run = mmc_test_xfersize_ग_लिखो,
-	पूर्ण,
+		.run = mmc_test_xfersize_write,
+	},
 
-	अणु
+	{
 		.name = "Proper xfer_size at read (start failure)",
-		.run = mmc_test_xfersize_पढ़ो,
-	पूर्ण,
+		.run = mmc_test_xfersize_read,
+	},
 
-	अणु
+	{
 		.name = "Proper xfer_size at write (midway failure)",
-		.run = mmc_test_multi_xfersize_ग_लिखो,
-	पूर्ण,
+		.run = mmc_test_multi_xfersize_write,
+	},
 
-	अणु
+	{
 		.name = "Proper xfer_size at read (midway failure)",
-		.run = mmc_test_multi_xfersize_पढ़ो,
-	पूर्ण,
+		.run = mmc_test_multi_xfersize_read,
+	},
 
-#अगर_घोषित CONFIG_HIGHMEM
+#ifdef CONFIG_HIGHMEM
 
-	अणु
+	{
 		.name = "Highmem write",
-		.prepare = mmc_test_prepare_ग_लिखो,
-		.run = mmc_test_ग_लिखो_high,
+		.prepare = mmc_test_prepare_write,
+		.run = mmc_test_write_high,
 		.cleanup = mmc_test_cleanup,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Highmem read",
-		.prepare = mmc_test_prepare_पढ़ो,
-		.run = mmc_test_पढ़ो_high,
+		.prepare = mmc_test_prepare_read,
+		.run = mmc_test_read_high,
 		.cleanup = mmc_test_cleanup,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Multi-block highmem write",
-		.prepare = mmc_test_prepare_ग_लिखो,
-		.run = mmc_test_multi_ग_लिखो_high,
+		.prepare = mmc_test_prepare_write,
+		.run = mmc_test_multi_write_high,
 		.cleanup = mmc_test_cleanup,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Multi-block highmem read",
-		.prepare = mmc_test_prepare_पढ़ो,
-		.run = mmc_test_multi_पढ़ो_high,
+		.prepare = mmc_test_prepare_read,
+		.run = mmc_test_multi_read_high,
 		.cleanup = mmc_test_cleanup,
-	पूर्ण,
+	},
 
-#अन्यथा
+#else
 
-	अणु
+	{
 		.name = "Highmem write",
 		.run = mmc_test_no_highmem,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Highmem read",
 		.run = mmc_test_no_highmem,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Multi-block highmem write",
 		.run = mmc_test_no_highmem,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Multi-block highmem read",
 		.run = mmc_test_no_highmem,
-	पूर्ण,
+	},
 
-#पूर्ण_अगर /* CONFIG_HIGHMEM */
+#endif /* CONFIG_HIGHMEM */
 
-	अणु
+	{
 		.name = "Best-case read performance",
 		.prepare = mmc_test_area_prepare_fill,
-		.run = mmc_test_best_पढ़ो_perक्रमmance,
+		.run = mmc_test_best_read_performance,
 		.cleanup = mmc_test_area_cleanup,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Best-case write performance",
 		.prepare = mmc_test_area_prepare_erase,
-		.run = mmc_test_best_ग_लिखो_perक्रमmance,
+		.run = mmc_test_best_write_performance,
 		.cleanup = mmc_test_area_cleanup,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Best-case read performance into scattered pages",
 		.prepare = mmc_test_area_prepare_fill,
-		.run = mmc_test_best_पढ़ो_perf_max_scatter,
+		.run = mmc_test_best_read_perf_max_scatter,
 		.cleanup = mmc_test_area_cleanup,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Best-case write performance from scattered pages",
 		.prepare = mmc_test_area_prepare_erase,
-		.run = mmc_test_best_ग_लिखो_perf_max_scatter,
+		.run = mmc_test_best_write_perf_max_scatter,
 		.cleanup = mmc_test_area_cleanup,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Single read performance by transfer size",
 		.prepare = mmc_test_area_prepare_fill,
-		.run = mmc_test_profile_पढ़ो_perf,
+		.run = mmc_test_profile_read_perf,
 		.cleanup = mmc_test_area_cleanup,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Single write performance by transfer size",
 		.prepare = mmc_test_area_prepare,
-		.run = mmc_test_profile_ग_लिखो_perf,
+		.run = mmc_test_profile_write_perf,
 		.cleanup = mmc_test_area_cleanup,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Single trim performance by transfer size",
 		.prepare = mmc_test_area_prepare_fill,
 		.run = mmc_test_profile_trim_perf,
 		.cleanup = mmc_test_area_cleanup,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Consecutive read performance by transfer size",
 		.prepare = mmc_test_area_prepare_fill,
-		.run = mmc_test_profile_seq_पढ़ो_perf,
+		.run = mmc_test_profile_seq_read_perf,
 		.cleanup = mmc_test_area_cleanup,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Consecutive write performance by transfer size",
 		.prepare = mmc_test_area_prepare,
-		.run = mmc_test_profile_seq_ग_लिखो_perf,
+		.run = mmc_test_profile_seq_write_perf,
 		.cleanup = mmc_test_area_cleanup,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Consecutive trim performance by transfer size",
 		.prepare = mmc_test_area_prepare,
 		.run = mmc_test_profile_seq_trim_perf,
 		.cleanup = mmc_test_area_cleanup,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Random read performance by transfer size",
 		.prepare = mmc_test_area_prepare,
-		.run = mmc_test_अक्रमom_पढ़ो_perf,
+		.run = mmc_test_random_read_perf,
 		.cleanup = mmc_test_area_cleanup,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Random write performance by transfer size",
 		.prepare = mmc_test_area_prepare,
-		.run = mmc_test_अक्रमom_ग_लिखो_perf,
+		.run = mmc_test_random_write_perf,
 		.cleanup = mmc_test_area_cleanup,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Large sequential read into scattered pages",
 		.prepare = mmc_test_area_prepare,
-		.run = mmc_test_large_seq_पढ़ो_perf,
+		.run = mmc_test_large_seq_read_perf,
 		.cleanup = mmc_test_area_cleanup,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Large sequential write from scattered pages",
 		.prepare = mmc_test_area_prepare,
-		.run = mmc_test_large_seq_ग_लिखो_perf,
+		.run = mmc_test_large_seq_write_perf,
 		.cleanup = mmc_test_area_cleanup,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Write performance with blocking req 4k to 4MB",
 		.prepare = mmc_test_area_prepare,
-		.run = mmc_test_profile_mult_ग_लिखो_blocking_perf,
+		.run = mmc_test_profile_mult_write_blocking_perf,
 		.cleanup = mmc_test_area_cleanup,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Write performance with non-blocking req 4k to 4MB",
 		.prepare = mmc_test_area_prepare,
-		.run = mmc_test_profile_mult_ग_लिखो_nonblock_perf,
+		.run = mmc_test_profile_mult_write_nonblock_perf,
 		.cleanup = mmc_test_area_cleanup,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Read performance with blocking req 4k to 4MB",
 		.prepare = mmc_test_area_prepare,
-		.run = mmc_test_profile_mult_पढ़ो_blocking_perf,
+		.run = mmc_test_profile_mult_read_blocking_perf,
 		.cleanup = mmc_test_area_cleanup,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Read performance with non-blocking req 4k to 4MB",
 		.prepare = mmc_test_area_prepare,
-		.run = mmc_test_profile_mult_पढ़ो_nonblock_perf,
+		.run = mmc_test_profile_mult_read_nonblock_perf,
 		.cleanup = mmc_test_area_cleanup,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Write performance blocking req 1 to 512 sg elems",
 		.prepare = mmc_test_area_prepare,
 		.run = mmc_test_profile_sglen_wr_blocking_perf,
 		.cleanup = mmc_test_area_cleanup,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Write performance non-blocking req 1 to 512 sg elems",
 		.prepare = mmc_test_area_prepare,
 		.run = mmc_test_profile_sglen_wr_nonblock_perf,
 		.cleanup = mmc_test_area_cleanup,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Read performance blocking req 1 to 512 sg elems",
 		.prepare = mmc_test_area_prepare,
 		.run = mmc_test_profile_sglen_r_blocking_perf,
 		.cleanup = mmc_test_area_cleanup,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Read performance non-blocking req 1 to 512 sg elems",
 		.prepare = mmc_test_area_prepare,
 		.run = mmc_test_profile_sglen_r_nonblock_perf,
 		.cleanup = mmc_test_area_cleanup,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Reset test",
 		.run = mmc_test_reset,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Commands during read - no Set Block Count (CMD23)",
 		.prepare = mmc_test_area_prepare,
-		.run = mmc_test_cmds_during_पढ़ो,
+		.run = mmc_test_cmds_during_read,
 		.cleanup = mmc_test_area_cleanup,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Commands during write - no Set Block Count (CMD23)",
 		.prepare = mmc_test_area_prepare,
-		.run = mmc_test_cmds_during_ग_लिखो,
+		.run = mmc_test_cmds_during_write,
 		.cleanup = mmc_test_area_cleanup,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Commands during read - use Set Block Count (CMD23)",
 		.prepare = mmc_test_area_prepare,
-		.run = mmc_test_cmds_during_पढ़ो_cmd23,
+		.run = mmc_test_cmds_during_read_cmd23,
 		.cleanup = mmc_test_area_cleanup,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Commands during write - use Set Block Count (CMD23)",
 		.prepare = mmc_test_area_prepare,
-		.run = mmc_test_cmds_during_ग_लिखो_cmd23,
+		.run = mmc_test_cmds_during_write_cmd23,
 		.cleanup = mmc_test_area_cleanup,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Commands during non-blocking read - use Set Block Count (CMD23)",
 		.prepare = mmc_test_area_prepare,
-		.run = mmc_test_cmds_during_पढ़ो_cmd23_nonblock,
+		.run = mmc_test_cmds_during_read_cmd23_nonblock,
 		.cleanup = mmc_test_area_cleanup,
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.name = "Commands during non-blocking write - use Set Block Count (CMD23)",
 		.prepare = mmc_test_area_prepare,
-		.run = mmc_test_cmds_during_ग_लिखो_cmd23_nonblock,
+		.run = mmc_test_cmds_during_write_cmd23_nonblock,
 		.cleanup = mmc_test_area_cleanup,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल DEFINE_MUTEX(mmc_test_lock);
+static DEFINE_MUTEX(mmc_test_lock);
 
-अटल LIST_HEAD(mmc_test_result);
+static LIST_HEAD(mmc_test_result);
 
-अटल व्योम mmc_test_run(काष्ठा mmc_test_card *test, पूर्णांक testहाल)
-अणु
-	पूर्णांक i, ret;
+static void mmc_test_run(struct mmc_test_card *test, int testcase)
+{
+	int i, ret;
 
 	pr_info("%s: Starting tests of card %s...\n",
 		mmc_hostname(test->card->host), mmc_card_id(test->card));
 
 	mmc_claim_host(test->card->host);
 
-	क्रम (i = 0; i < ARRAY_SIZE(mmc_test_हालs); i++) अणु
-		काष्ठा mmc_test_general_result *gr;
+	for (i = 0; i < ARRAY_SIZE(mmc_test_cases); i++) {
+		struct mmc_test_general_result *gr;
 
-		अगर (testहाल && ((i + 1) != testहाल))
-			जारी;
+		if (testcase && ((i + 1) != testcase))
+			continue;
 
 		pr_info("%s: Test case %d. %s...\n",
 			mmc_hostname(test->card->host), i + 1,
-			mmc_test_हालs[i].name);
+			mmc_test_cases[i].name);
 
-		अगर (mmc_test_हालs[i].prepare) अणु
-			ret = mmc_test_हालs[i].prepare(test);
-			अगर (ret) अणु
+		if (mmc_test_cases[i].prepare) {
+			ret = mmc_test_cases[i].prepare(test);
+			if (ret) {
 				pr_info("%s: Result: Prepare stage failed! (%d)\n",
 					mmc_hostname(test->card->host),
 					ret);
-				जारी;
-			पूर्ण
-		पूर्ण
+				continue;
+			}
+		}
 
-		gr = kzalloc(माप(*gr), GFP_KERNEL);
-		अगर (gr) अणु
+		gr = kzalloc(sizeof(*gr), GFP_KERNEL);
+		if (gr) {
 			INIT_LIST_HEAD(&gr->tr_lst);
 
-			/* Assign data what we know alपढ़ोy */
+			/* Assign data what we know already */
 			gr->card = test->card;
-			gr->testहाल = i;
+			gr->testcase = i;
 
 			/* Append container to global one */
 			list_add_tail(&gr->link, &mmc_test_result);
 
 			/*
-			 * Save the poपूर्णांकer to created container in our निजी
-			 * काष्ठाure.
+			 * Save the pointer to created container in our private
+			 * structure.
 			 */
 			test->gr = gr;
-		पूर्ण
+		}
 
-		ret = mmc_test_हालs[i].run(test);
-		चयन (ret) अणु
-		हाल RESULT_OK:
+		ret = mmc_test_cases[i].run(test);
+		switch (ret) {
+		case RESULT_OK:
 			pr_info("%s: Result: OK\n",
 				mmc_hostname(test->card->host));
-			अवरोध;
-		हाल RESULT_FAIL:
+			break;
+		case RESULT_FAIL:
 			pr_info("%s: Result: FAILED\n",
 				mmc_hostname(test->card->host));
-			अवरोध;
-		हाल RESULT_UNSUP_HOST:
+			break;
+		case RESULT_UNSUP_HOST:
 			pr_info("%s: Result: UNSUPPORTED (by host)\n",
 				mmc_hostname(test->card->host));
-			अवरोध;
-		हाल RESULT_UNSUP_CARD:
+			break;
+		case RESULT_UNSUP_CARD:
 			pr_info("%s: Result: UNSUPPORTED (by card)\n",
 				mmc_hostname(test->card->host));
-			अवरोध;
-		शेष:
+			break;
+		default:
 			pr_info("%s: Result: ERROR (%d)\n",
 				mmc_hostname(test->card->host), ret);
-		पूर्ण
+		}
 
 		/* Save the result */
-		अगर (gr)
+		if (gr)
 			gr->result = ret;
 
-		अगर (mmc_test_हालs[i].cleanup) अणु
-			ret = mmc_test_हालs[i].cleanup(test);
-			अगर (ret) अणु
+		if (mmc_test_cases[i].cleanup) {
+			ret = mmc_test_cases[i].cleanup(test);
+			if (ret) {
 				pr_info("%s: Warning: Cleanup stage failed! (%d)\n",
 					mmc_hostname(test->card->host),
 					ret);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	mmc_release_host(test->card->host);
 
 	pr_info("%s: Tests completed.\n",
 		mmc_hostname(test->card->host));
-पूर्ण
+}
 
-अटल व्योम mmc_test_मुक्त_result(काष्ठा mmc_card *card)
-अणु
-	काष्ठा mmc_test_general_result *gr, *grs;
+static void mmc_test_free_result(struct mmc_card *card)
+{
+	struct mmc_test_general_result *gr, *grs;
 
 	mutex_lock(&mmc_test_lock);
 
-	list_क्रम_each_entry_safe(gr, grs, &mmc_test_result, link) अणु
-		काष्ठा mmc_test_transfer_result *tr, *trs;
+	list_for_each_entry_safe(gr, grs, &mmc_test_result, link) {
+		struct mmc_test_transfer_result *tr, *trs;
 
-		अगर (card && gr->card != card)
-			जारी;
+		if (card && gr->card != card)
+			continue;
 
-		list_क्रम_each_entry_safe(tr, trs, &gr->tr_lst, link) अणु
+		list_for_each_entry_safe(tr, trs, &gr->tr_lst, link) {
 			list_del(&tr->link);
-			kमुक्त(tr);
-		पूर्ण
+			kfree(tr);
+		}
 
 		list_del(&gr->link);
-		kमुक्त(gr);
-	पूर्ण
+		kfree(gr);
+	}
 
 	mutex_unlock(&mmc_test_lock);
-पूर्ण
+}
 
-अटल LIST_HEAD(mmc_test_file_test);
+static LIST_HEAD(mmc_test_file_test);
 
-अटल पूर्णांक mtf_test_show(काष्ठा seq_file *sf, व्योम *data)
-अणु
-	काष्ठा mmc_card *card = (काष्ठा mmc_card *)sf->निजी;
-	काष्ठा mmc_test_general_result *gr;
+static int mtf_test_show(struct seq_file *sf, void *data)
+{
+	struct mmc_card *card = (struct mmc_card *)sf->private;
+	struct mmc_test_general_result *gr;
 
 	mutex_lock(&mmc_test_lock);
 
-	list_क्रम_each_entry(gr, &mmc_test_result, link) अणु
-		काष्ठा mmc_test_transfer_result *tr;
+	list_for_each_entry(gr, &mmc_test_result, link) {
+		struct mmc_test_transfer_result *tr;
 
-		अगर (gr->card != card)
-			जारी;
+		if (gr->card != card)
+			continue;
 
-		seq_म_लिखो(sf, "Test %d: %d\n", gr->testहाल + 1, gr->result);
+		seq_printf(sf, "Test %d: %d\n", gr->testcase + 1, gr->result);
 
-		list_क्रम_each_entry(tr, &gr->tr_lst, link) अणु
-			seq_म_लिखो(sf, "%u %d %llu.%09u %u %u.%02u\n",
+		list_for_each_entry(tr, &gr->tr_lst, link) {
+			seq_printf(sf, "%u %d %llu.%09u %u %u.%02u\n",
 				tr->count, tr->sectors,
 				(u64)tr->ts.tv_sec, (u32)tr->ts.tv_nsec,
 				tr->rate, tr->iops / 100, tr->iops % 100);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	mutex_unlock(&mmc_test_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mtf_test_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस single_खोलो(file, mtf_test_show, inode->i_निजी);
-पूर्ण
+static int mtf_test_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, mtf_test_show, inode->i_private);
+}
 
-अटल sमाप_प्रकार mtf_test_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
-	माप_प्रकार count, loff_t *pos)
-अणु
-	काष्ठा seq_file *sf = (काष्ठा seq_file *)file->निजी_data;
-	काष्ठा mmc_card *card = (काष्ठा mmc_card *)sf->निजी;
-	काष्ठा mmc_test_card *test;
-	दीर्घ testहाल;
-	पूर्णांक ret;
+static ssize_t mtf_test_write(struct file *file, const char __user *buf,
+	size_t count, loff_t *pos)
+{
+	struct seq_file *sf = (struct seq_file *)file->private_data;
+	struct mmc_card *card = (struct mmc_card *)sf->private;
+	struct mmc_test_card *test;
+	long testcase;
+	int ret;
 
-	ret = kम_से_दीर्घ_from_user(buf, count, 10, &testहाल);
-	अगर (ret)
-		वापस ret;
+	ret = kstrtol_from_user(buf, count, 10, &testcase);
+	if (ret)
+		return ret;
 
-	test = kzalloc(माप(*test), GFP_KERNEL);
-	अगर (!test)
-		वापस -ENOMEM;
+	test = kzalloc(sizeof(*test), GFP_KERNEL);
+	if (!test)
+		return -ENOMEM;
 
 	/*
-	 * Remove all test हालs associated with given card. Thus we have only
+	 * Remove all test cases associated with given card. Thus we have only
 	 * actual data of the last run.
 	 */
-	mmc_test_मुक्त_result(card);
+	mmc_test_free_result(card);
 
 	test->card = card;
 
 	test->buffer = kzalloc(BUFFER_SIZE, GFP_KERNEL);
-#अगर_घोषित CONFIG_HIGHMEM
+#ifdef CONFIG_HIGHMEM
 	test->highmem = alloc_pages(GFP_KERNEL | __GFP_HIGHMEM, BUFFER_ORDER);
-#पूर्ण_अगर
+#endif
 
-#अगर_घोषित CONFIG_HIGHMEM
-	अगर (test->buffer && test->highmem) अणु
-#अन्यथा
-	अगर (test->buffer) अणु
-#पूर्ण_अगर
+#ifdef CONFIG_HIGHMEM
+	if (test->buffer && test->highmem) {
+#else
+	if (test->buffer) {
+#endif
 		mutex_lock(&mmc_test_lock);
-		mmc_test_run(test, testहाल);
+		mmc_test_run(test, testcase);
 		mutex_unlock(&mmc_test_lock);
-	पूर्ण
+	}
 
-#अगर_घोषित CONFIG_HIGHMEM
-	__मुक्त_pages(test->highmem, BUFFER_ORDER);
-#पूर्ण_अगर
-	kमुक्त(test->buffer);
-	kमुक्त(test);
+#ifdef CONFIG_HIGHMEM
+	__free_pages(test->highmem, BUFFER_ORDER);
+#endif
+	kfree(test->buffer);
+	kfree(test);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा file_operations mmc_test_fops_test = अणु
-	.खोलो		= mtf_test_खोलो,
-	.पढ़ो		= seq_पढ़ो,
-	.ग_लिखो		= mtf_test_ग_लिखो,
+static const struct file_operations mmc_test_fops_test = {
+	.open		= mtf_test_open,
+	.read		= seq_read,
+	.write		= mtf_test_write,
 	.llseek		= seq_lseek,
 	.release	= single_release,
-पूर्ण;
+};
 
-अटल पूर्णांक mtf_testlist_show(काष्ठा seq_file *sf, व्योम *data)
-अणु
-	पूर्णांक i;
+static int mtf_testlist_show(struct seq_file *sf, void *data)
+{
+	int i;
 
 	mutex_lock(&mmc_test_lock);
 
-	seq_माला_दो(sf, "0:\tRun all tests\n");
-	क्रम (i = 0; i < ARRAY_SIZE(mmc_test_हालs); i++)
-		seq_म_लिखो(sf, "%d:\t%s\n", i + 1, mmc_test_हालs[i].name);
+	seq_puts(sf, "0:\tRun all tests\n");
+	for (i = 0; i < ARRAY_SIZE(mmc_test_cases); i++)
+		seq_printf(sf, "%d:\t%s\n", i + 1, mmc_test_cases[i].name);
 
 	mutex_unlock(&mmc_test_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 DEFINE_SHOW_ATTRIBUTE(mtf_testlist);
 
-अटल व्योम mmc_test_मुक्त_dbgfs_file(काष्ठा mmc_card *card)
-अणु
-	काष्ठा mmc_test_dbgfs_file *df, *dfs;
+static void mmc_test_free_dbgfs_file(struct mmc_card *card)
+{
+	struct mmc_test_dbgfs_file *df, *dfs;
 
 	mutex_lock(&mmc_test_lock);
 
-	list_क्रम_each_entry_safe(df, dfs, &mmc_test_file_test, link) अणु
-		अगर (card && df->card != card)
-			जारी;
-		debugfs_हटाओ(df->file);
+	list_for_each_entry_safe(df, dfs, &mmc_test_file_test, link) {
+		if (card && df->card != card)
+			continue;
+		debugfs_remove(df->file);
 		list_del(&df->link);
-		kमुक्त(df);
-	पूर्ण
+		kfree(df);
+	}
 
 	mutex_unlock(&mmc_test_lock);
-पूर्ण
+}
 
-अटल पूर्णांक __mmc_test_रेजिस्टर_dbgfs_file(काष्ठा mmc_card *card,
-	स्थिर अक्षर *name, umode_t mode, स्थिर काष्ठा file_operations *fops)
-अणु
-	काष्ठा dentry *file = शून्य;
-	काष्ठा mmc_test_dbgfs_file *df;
+static int __mmc_test_register_dbgfs_file(struct mmc_card *card,
+	const char *name, umode_t mode, const struct file_operations *fops)
+{
+	struct dentry *file = NULL;
+	struct mmc_test_dbgfs_file *df;
 
-	अगर (card->debugfs_root)
+	if (card->debugfs_root)
 		debugfs_create_file(name, mode, card->debugfs_root, card, fops);
 
-	df = kदो_स्मृति(माप(*df), GFP_KERNEL);
-	अगर (!df) अणु
-		debugfs_हटाओ(file);
-		वापस -ENOMEM;
-	पूर्ण
+	df = kmalloc(sizeof(*df), GFP_KERNEL);
+	if (!df) {
+		debugfs_remove(file);
+		return -ENOMEM;
+	}
 
 	df->card = card;
 	df->file = file;
 
 	list_add(&df->link, &mmc_test_file_test);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mmc_test_रेजिस्टर_dbgfs_file(काष्ठा mmc_card *card)
-अणु
-	पूर्णांक ret;
+static int mmc_test_register_dbgfs_file(struct mmc_card *card)
+{
+	int ret;
 
 	mutex_lock(&mmc_test_lock);
 
-	ret = __mmc_test_रेजिस्टर_dbgfs_file(card, "test", S_IWUSR | S_IRUGO,
+	ret = __mmc_test_register_dbgfs_file(card, "test", S_IWUSR | S_IRUGO,
 		&mmc_test_fops_test);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
-	ret = __mmc_test_रेजिस्टर_dbgfs_file(card, "testlist", S_IRUGO,
+	ret = __mmc_test_register_dbgfs_file(card, "testlist", S_IRUGO,
 		&mtf_testlist_fops);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 err:
 	mutex_unlock(&mmc_test_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mmc_test_probe(काष्ठा mmc_card *card)
-अणु
-	पूर्णांक ret;
+static int mmc_test_probe(struct mmc_card *card)
+{
+	int ret;
 
-	अगर (!mmc_card_mmc(card) && !mmc_card_sd(card))
-		वापस -ENODEV;
+	if (!mmc_card_mmc(card) && !mmc_card_sd(card))
+		return -ENODEV;
 
-	ret = mmc_test_रेजिस्टर_dbgfs_file(card);
-	अगर (ret)
-		वापस ret;
+	ret = mmc_test_register_dbgfs_file(card);
+	if (ret)
+		return ret;
 
-	अगर (card->ext_csd.cmdq_en) अणु
+	if (card->ext_csd.cmdq_en) {
 		mmc_claim_host(card->host);
 		ret = mmc_cmdq_disable(card);
 		mmc_release_host(card->host);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	dev_info(&card->dev, "Card claimed for testing.\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mmc_test_हटाओ(काष्ठा mmc_card *card)
-अणु
-	अगर (card->reenable_cmdq) अणु
+static void mmc_test_remove(struct mmc_card *card)
+{
+	if (card->reenable_cmdq) {
 		mmc_claim_host(card->host);
 		mmc_cmdq_enable(card);
 		mmc_release_host(card->host);
-	पूर्ण
-	mmc_test_मुक्त_result(card);
-	mmc_test_मुक्त_dbgfs_file(card);
-पूर्ण
+	}
+	mmc_test_free_result(card);
+	mmc_test_free_dbgfs_file(card);
+}
 
-अटल काष्ठा mmc_driver mmc_driver = अणु
-	.drv		= अणु
+static struct mmc_driver mmc_driver = {
+	.drv		= {
 		.name	= "mmc_test",
-	पूर्ण,
+	},
 	.probe		= mmc_test_probe,
-	.हटाओ		= mmc_test_हटाओ,
-पूर्ण;
+	.remove		= mmc_test_remove,
+};
 
-अटल पूर्णांक __init mmc_test_init(व्योम)
-अणु
-	वापस mmc_रेजिस्टर_driver(&mmc_driver);
-पूर्ण
+static int __init mmc_test_init(void)
+{
+	return mmc_register_driver(&mmc_driver);
+}
 
-अटल व्योम __निकास mmc_test_निकास(व्योम)
-अणु
-	/* Clear stalled data अगर card is still plugged */
-	mmc_test_मुक्त_result(शून्य);
-	mmc_test_मुक्त_dbgfs_file(शून्य);
+static void __exit mmc_test_exit(void)
+{
+	/* Clear stalled data if card is still plugged */
+	mmc_test_free_result(NULL);
+	mmc_test_free_dbgfs_file(NULL);
 
-	mmc_unरेजिस्टर_driver(&mmc_driver);
-पूर्ण
+	mmc_unregister_driver(&mmc_driver);
+}
 
 module_init(mmc_test_init);
-module_निकास(mmc_test_निकास);
+module_exit(mmc_test_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Multimedia Card (MMC) host test driver");

@@ -1,6 +1,5 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
-/* ppc-dis.c -- Disassemble PowerPC inकाष्ठाions
+// SPDX-License-Identifier: GPL-2.0-or-later
+/* ppc-dis.c -- Disassemble PowerPC instructions
    Copyright (C) 1994-2016 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support
 
@@ -8,279 +7,279 @@ This file is part of GDB, GAS, and the GNU binutils.
 
  */
 
-#समावेश <यंत्र/cputable.h>
-#समावेश <यंत्र/cpu_has_feature.h>
-#समावेश "nonstdio.h"
-#समावेश "ansidecl.h"
-#समावेश "ppc.h"
-#समावेश "dis-asm.h"
+#include <asm/cputable.h>
+#include <asm/cpu_has_feature.h>
+#include "nonstdio.h"
+#include "ansidecl.h"
+#include "ppc.h"
+#include "dis-asm.h"
 
 /* This file provides several disassembler functions, all of which use
-   the disassembler पूर्णांकerface defined in dis-यंत्र.h.  Several functions
-   are provided because this file handles disassembly क्रम the PowerPC
-   in both big and little endian mode and also क्रम the POWER (RS/6000)
+   the disassembler interface defined in dis-asm.h.  Several functions
+   are provided because this file handles disassembly for the PowerPC
+   in both big and little endian mode and also for the POWER (RS/6000)
    chip.  */
 
-/* Extract the opeअक्रम value from the PowerPC or POWER inकाष्ठाion.  */
+/* Extract the operand value from the PowerPC or POWER instruction.  */
 
-अटल दीर्घ
-opeअक्रम_value_घातerpc (स्थिर काष्ठा घातerpc_opeअक्रम *opeअक्रम,
-		       अचिन्हित दीर्घ insn, ppc_cpu_t dialect)
-अणु
-  दीर्घ value;
-  पूर्णांक invalid;
-  /* Extract the value from the inकाष्ठाion.  */
-  अगर (opeअक्रम->extract)
-    value = (*opeअक्रम->extract) (insn, dialect, &invalid);
-  अन्यथा
-    अणु
-      अगर (opeअक्रम->shअगरt >= 0)
-	value = (insn >> opeअक्रम->shअगरt) & opeअक्रम->biपंचांग;
-      अन्यथा
-	value = (insn << -opeअक्रम->shअगरt) & opeअक्रम->biपंचांग;
-      अगर ((opeअक्रम->flags & PPC_OPERAND_SIGNED) != 0)
-	अणु
+static long
+operand_value_powerpc (const struct powerpc_operand *operand,
+		       unsigned long insn, ppc_cpu_t dialect)
+{
+  long value;
+  int invalid;
+  /* Extract the value from the instruction.  */
+  if (operand->extract)
+    value = (*operand->extract) (insn, dialect, &invalid);
+  else
+    {
+      if (operand->shift >= 0)
+	value = (insn >> operand->shift) & operand->bitm;
+      else
+	value = (insn << -operand->shift) & operand->bitm;
+      if ((operand->flags & PPC_OPERAND_SIGNED) != 0)
+	{
 	  /* BITM is always some number of zeros followed by some
 	     number of ones, followed by some number of zeros.  */
-	  अचिन्हित दीर्घ top = opeअक्रम->biपंचांग;
-	  /* top & -top gives the righपंचांगost 1 bit, so this
+	  unsigned long top = operand->bitm;
+	  /* top & -top gives the rightmost 1 bit, so this
 	     fills in any trailing zeros.  */
 	  top |= (top & -top) - 1;
 	  top &= ~(top >> 1);
 	  value = (value ^ top) - top;
-	पूर्ण
-    पूर्ण
+	}
+    }
 
-  वापस value;
-पूर्ण
+  return value;
+}
 
-/* Determine whether the optional opeअक्रम(s) should be prपूर्णांकed.  */
+/* Determine whether the optional operand(s) should be printed.  */
 
-अटल पूर्णांक
-skip_optional_opeअक्रमs (स्थिर अचिन्हित अक्षर *opindex,
-			अचिन्हित दीर्घ insn, ppc_cpu_t dialect)
-अणु
-  स्थिर काष्ठा घातerpc_opeअक्रम *opeअक्रम;
+static int
+skip_optional_operands (const unsigned char *opindex,
+			unsigned long insn, ppc_cpu_t dialect)
+{
+  const struct powerpc_operand *operand;
 
-  क्रम (; *opindex != 0; opindex++)
-    अणु
-      opeअक्रम = &घातerpc_opeअक्रमs[*opindex];
-      अगर ((opeअक्रम->flags & PPC_OPERAND_NEXT) != 0
-	  || ((opeअक्रम->flags & PPC_OPERAND_OPTIONAL) != 0
-	      && opeअक्रम_value_घातerpc (opeअक्रम, insn, dialect) !=
-		 ppc_optional_opeअक्रम_value (opeअक्रम)))
-	वापस 0;
-    पूर्ण
+  for (; *opindex != 0; opindex++)
+    {
+      operand = &powerpc_operands[*opindex];
+      if ((operand->flags & PPC_OPERAND_NEXT) != 0
+	  || ((operand->flags & PPC_OPERAND_OPTIONAL) != 0
+	      && operand_value_powerpc (operand, insn, dialect) !=
+		 ppc_optional_operand_value (operand)))
+	return 0;
+    }
 
-  वापस 1;
-पूर्ण
+  return 1;
+}
 
-/* Find a match क्रम INSN in the opcode table, given machine DIALECT.
+/* Find a match for INSN in the opcode table, given machine DIALECT.
    A DIALECT of -1 is special, matching all machine opcode variations.  */
 
-अटल स्थिर काष्ठा घातerpc_opcode *
-lookup_घातerpc (अचिन्हित दीर्घ insn, ppc_cpu_t dialect)
-अणु
-  स्थिर काष्ठा घातerpc_opcode *opcode;
-  स्थिर काष्ठा घातerpc_opcode *opcode_end;
+static const struct powerpc_opcode *
+lookup_powerpc (unsigned long insn, ppc_cpu_t dialect)
+{
+  const struct powerpc_opcode *opcode;
+  const struct powerpc_opcode *opcode_end;
 
-  opcode_end = घातerpc_opcodes + घातerpc_num_opcodes;
-  /* Find the first match in the opcode table क्रम this major opcode.  */
-  क्रम (opcode = घातerpc_opcodes; opcode < opcode_end; ++opcode)
-    अणु
-      स्थिर अचिन्हित अक्षर *opindex;
-      स्थिर काष्ठा घातerpc_opeअक्रम *opeअक्रम;
-      पूर्णांक invalid;
+  opcode_end = powerpc_opcodes + powerpc_num_opcodes;
+  /* Find the first match in the opcode table for this major opcode.  */
+  for (opcode = powerpc_opcodes; opcode < opcode_end; ++opcode)
+    {
+      const unsigned char *opindex;
+      const struct powerpc_operand *operand;
+      int invalid;
 
-      अगर ((insn & opcode->mask) != opcode->opcode
+      if ((insn & opcode->mask) != opcode->opcode
 	  || (dialect != (ppc_cpu_t) -1
 	      && ((opcode->flags & dialect) == 0
 		  || (opcode->deprecated & dialect) != 0)))
-	जारी;
+	continue;
 
-      /* Check validity of opeअक्रमs.  */
+      /* Check validity of operands.  */
       invalid = 0;
-      क्रम (opindex = opcode->opeअक्रमs; *opindex != 0; opindex++)
-	अणु
-	  opeअक्रम = घातerpc_opeअक्रमs + *opindex;
-	  अगर (opeअक्रम->extract)
-	    (*opeअक्रम->extract) (insn, dialect, &invalid);
-	पूर्ण
-      अगर (invalid)
-	जारी;
+      for (opindex = opcode->operands; *opindex != 0; opindex++)
+	{
+	  operand = powerpc_operands + *opindex;
+	  if (operand->extract)
+	    (*operand->extract) (insn, dialect, &invalid);
+	}
+      if (invalid)
+	continue;
 
-      वापस opcode;
-    पूर्ण
+      return opcode;
+    }
 
-  वापस शून्य;
-पूर्ण
+  return NULL;
+}
 
-/* Prपूर्णांक a PowerPC or POWER inकाष्ठाion.  */
+/* Print a PowerPC or POWER instruction.  */
 
-पूर्णांक prपूर्णांक_insn_घातerpc (अचिन्हित दीर्घ insn, अचिन्हित दीर्घ memaddr)
-अणु
-  स्थिर काष्ठा घातerpc_opcode *opcode;
-  bool insn_is_लघु;
+int print_insn_powerpc (unsigned long insn, unsigned long memaddr)
+{
+  const struct powerpc_opcode *opcode;
+  bool insn_is_short;
   ppc_cpu_t dialect;
 
   dialect = PPC_OPCODE_PPC | PPC_OPCODE_COMMON
             | PPC_OPCODE_64 | PPC_OPCODE_POWER4 | PPC_OPCODE_ALTIVEC;
 
-  अगर (cpu_has_feature(CPU_FTRS_POWER5))
+  if (cpu_has_feature(CPU_FTRS_POWER5))
     dialect |= PPC_OPCODE_POWER5;
 
-  अगर (cpu_has_feature(CPU_FTRS_CELL))
+  if (cpu_has_feature(CPU_FTRS_CELL))
     dialect |= (PPC_OPCODE_CELL | PPC_OPCODE_ALTIVEC);
 
-  अगर (cpu_has_feature(CPU_FTRS_POWER6))
+  if (cpu_has_feature(CPU_FTRS_POWER6))
     dialect |= (PPC_OPCODE_POWER5 | PPC_OPCODE_POWER6 | PPC_OPCODE_ALTIVEC);
 
-  अगर (cpu_has_feature(CPU_FTRS_POWER7))
+  if (cpu_has_feature(CPU_FTRS_POWER7))
     dialect |= (PPC_OPCODE_POWER5 | PPC_OPCODE_POWER6 | PPC_OPCODE_POWER7
                 | PPC_OPCODE_ALTIVEC | PPC_OPCODE_VSX);
 
-  अगर (cpu_has_feature(CPU_FTRS_POWER8))
+  if (cpu_has_feature(CPU_FTRS_POWER8))
     dialect |= (PPC_OPCODE_POWER5 | PPC_OPCODE_POWER6 | PPC_OPCODE_POWER7
 		| PPC_OPCODE_POWER8 | PPC_OPCODE_HTM
 		| PPC_OPCODE_ALTIVEC | PPC_OPCODE_ALTIVEC2 | PPC_OPCODE_VSX);
 
-  अगर (cpu_has_feature(CPU_FTRS_POWER9))
+  if (cpu_has_feature(CPU_FTRS_POWER9))
     dialect |= (PPC_OPCODE_POWER5 | PPC_OPCODE_POWER6 | PPC_OPCODE_POWER7
 		| PPC_OPCODE_POWER8 | PPC_OPCODE_POWER9 | PPC_OPCODE_HTM
 		| PPC_OPCODE_ALTIVEC | PPC_OPCODE_ALTIVEC2
 		| PPC_OPCODE_VSX | PPC_OPCODE_VSX3);
 
   /* Get the major opcode of the insn.  */
-  opcode = शून्य;
-  insn_is_लघु = false;
+  opcode = NULL;
+  insn_is_short = false;
 
-  अगर (opcode == शून्य)
-    opcode = lookup_घातerpc (insn, dialect);
-  अगर (opcode == शून्य && (dialect & PPC_OPCODE_ANY) != 0)
-    opcode = lookup_घातerpc (insn, (ppc_cpu_t) -1);
+  if (opcode == NULL)
+    opcode = lookup_powerpc (insn, dialect);
+  if (opcode == NULL && (dialect & PPC_OPCODE_ANY) != 0)
+    opcode = lookup_powerpc (insn, (ppc_cpu_t) -1);
 
-  अगर (opcode != शून्य)
-    अणु
-      स्थिर अचिन्हित अक्षर *opindex;
-      स्थिर काष्ठा घातerpc_opeअक्रम *opeअक्रम;
-      पूर्णांक need_comma;
-      पूर्णांक need_paren;
-      पूर्णांक skip_optional;
+  if (opcode != NULL)
+    {
+      const unsigned char *opindex;
+      const struct powerpc_operand *operand;
+      int need_comma;
+      int need_paren;
+      int skip_optional;
 
-      अगर (opcode->opeअक्रमs[0] != 0)
-	म_लिखो("%-7s ", opcode->name);
-      अन्यथा
-	म_लिखो("%s", opcode->name);
+      if (opcode->operands[0] != 0)
+	printf("%-7s ", opcode->name);
+      else
+	printf("%s", opcode->name);
 
-      अगर (insn_is_लघु)
-        /* The opeअक्रमs will be fetched out of the 16-bit inकाष्ठाion.  */
+      if (insn_is_short)
+        /* The operands will be fetched out of the 16-bit instruction.  */
         insn >>= 16;
 
-      /* Now extract and prपूर्णांक the opeअक्रमs.  */
+      /* Now extract and print the operands.  */
       need_comma = 0;
       need_paren = 0;
       skip_optional = -1;
-      क्रम (opindex = opcode->opeअक्रमs; *opindex != 0; opindex++)
-	अणु
-	  दीर्घ value;
+      for (opindex = opcode->operands; *opindex != 0; opindex++)
+	{
+	  long value;
 
-	  opeअक्रम = घातerpc_opeअक्रमs + *opindex;
+	  operand = powerpc_operands + *opindex;
 
-	  /* Opeअक्रमs that are marked FAKE are simply ignored.  We
-	     alपढ़ोy made sure that the extract function considered
-	     the inकाष्ठाion to be valid.  */
-	  अगर ((opeअक्रम->flags & PPC_OPERAND_FAKE) != 0)
-	    जारी;
+	  /* Operands that are marked FAKE are simply ignored.  We
+	     already made sure that the extract function considered
+	     the instruction to be valid.  */
+	  if ((operand->flags & PPC_OPERAND_FAKE) != 0)
+	    continue;
 
-	  /* If all of the optional opeअक्रमs have the value zero,
-	     then करोn't prपूर्णांक any of them.  */
-	  अगर ((opeअक्रम->flags & PPC_OPERAND_OPTIONAL) != 0)
-	    अणु
-	      अगर (skip_optional < 0)
-		skip_optional = skip_optional_opeअक्रमs (opindex, insn,
+	  /* If all of the optional operands have the value zero,
+	     then don't print any of them.  */
+	  if ((operand->flags & PPC_OPERAND_OPTIONAL) != 0)
+	    {
+	      if (skip_optional < 0)
+		skip_optional = skip_optional_operands (opindex, insn,
 							dialect);
-	      अगर (skip_optional)
-		जारी;
-	    पूर्ण
+	      if (skip_optional)
+		continue;
+	    }
 
-	  value = opeअक्रम_value_घातerpc (opeअक्रम, insn, dialect);
+	  value = operand_value_powerpc (operand, insn, dialect);
 
-	  अगर (need_comma)
-	    अणु
-	      म_लिखो(",");
+	  if (need_comma)
+	    {
+	      printf(",");
 	      need_comma = 0;
-	    पूर्ण
+	    }
 
-	  /* Prपूर्णांक the opeअक्रम as directed by the flags.  */
-	  अगर ((opeअक्रम->flags & PPC_OPERAND_GPR) != 0
-	      || ((opeअक्रम->flags & PPC_OPERAND_GPR_0) != 0 && value != 0))
-	    म_लिखो("r%ld", value);
-	  अन्यथा अगर ((opeअक्रम->flags & PPC_OPERAND_FPR) != 0)
-	    म_लिखो("f%ld", value);
-	  अन्यथा अगर ((opeअक्रम->flags & PPC_OPERAND_VR) != 0)
-	    म_लिखो("v%ld", value);
-	  अन्यथा अगर ((opeअक्रम->flags & PPC_OPERAND_VSR) != 0)
-	    म_लिखो("vs%ld", value);
-	  अन्यथा अगर ((opeअक्रम->flags & PPC_OPERAND_RELATIVE) != 0)
-	    prपूर्णांक_address(memaddr + value);
-	  अन्यथा अगर ((opeअक्रम->flags & PPC_OPERAND_ABSOLUTE) != 0)
-	    prपूर्णांक_address(value & 0xffffffff);
-	  अन्यथा अगर ((opeअक्रम->flags & PPC_OPERAND_FSL) != 0)
-	    म_लिखो("fsl%ld", value);
-	  अन्यथा अगर ((opeअक्रम->flags & PPC_OPERAND_FCR) != 0)
-	    म_लिखो("fcr%ld", value);
-	  अन्यथा अगर ((opeअक्रम->flags & PPC_OPERAND_UDI) != 0)
-	    म_लिखो("%ld", value);
-	  अन्यथा अगर ((opeअक्रम->flags & PPC_OPERAND_CR_REG) != 0
+	  /* Print the operand as directed by the flags.  */
+	  if ((operand->flags & PPC_OPERAND_GPR) != 0
+	      || ((operand->flags & PPC_OPERAND_GPR_0) != 0 && value != 0))
+	    printf("r%ld", value);
+	  else if ((operand->flags & PPC_OPERAND_FPR) != 0)
+	    printf("f%ld", value);
+	  else if ((operand->flags & PPC_OPERAND_VR) != 0)
+	    printf("v%ld", value);
+	  else if ((operand->flags & PPC_OPERAND_VSR) != 0)
+	    printf("vs%ld", value);
+	  else if ((operand->flags & PPC_OPERAND_RELATIVE) != 0)
+	    print_address(memaddr + value);
+	  else if ((operand->flags & PPC_OPERAND_ABSOLUTE) != 0)
+	    print_address(value & 0xffffffff);
+	  else if ((operand->flags & PPC_OPERAND_FSL) != 0)
+	    printf("fsl%ld", value);
+	  else if ((operand->flags & PPC_OPERAND_FCR) != 0)
+	    printf("fcr%ld", value);
+	  else if ((operand->flags & PPC_OPERAND_UDI) != 0)
+	    printf("%ld", value);
+	  else if ((operand->flags & PPC_OPERAND_CR_REG) != 0
 		   && (((dialect & PPC_OPCODE_PPC) != 0)
 		       || ((dialect & PPC_OPCODE_VLE) != 0)))
-	    म_लिखो("cr%ld", value);
-	  अन्यथा अगर (((opeअक्रम->flags & PPC_OPERAND_CR_BIT) != 0)
+	    printf("cr%ld", value);
+	  else if (((operand->flags & PPC_OPERAND_CR_BIT) != 0)
 		   && (((dialect & PPC_OPCODE_PPC) != 0)
 		       || ((dialect & PPC_OPCODE_VLE) != 0)))
-	    अणु
-	      अटल स्थिर अक्षर *cbnames[4] = अणु "lt", "gt", "eq", "so" पूर्ण;
-	      पूर्णांक cr;
-	      पूर्णांक cc;
+	    {
+	      static const char *cbnames[4] = { "lt", "gt", "eq", "so" };
+	      int cr;
+	      int cc;
 
 	      cr = value >> 2;
-	      अगर (cr != 0)
-		म_लिखो("4*cr%d+", cr);
+	      if (cr != 0)
+		printf("4*cr%d+", cr);
 	      cc = value & 3;
-	      म_लिखो("%s", cbnames[cc]);
-	    पूर्ण
-	  अन्यथा
-	    म_लिखो("%d", (पूर्णांक) value);
+	      printf("%s", cbnames[cc]);
+	    }
+	  else
+	    printf("%d", (int) value);
 
-	  अगर (need_paren)
-	    अणु
-	      म_लिखो(")");
+	  if (need_paren)
+	    {
+	      printf(")");
 	      need_paren = 0;
-	    पूर्ण
+	    }
 
-	  अगर ((opeअक्रम->flags & PPC_OPERAND_PARENS) == 0)
+	  if ((operand->flags & PPC_OPERAND_PARENS) == 0)
 	    need_comma = 1;
-	  अन्यथा
-	    अणु
-	      म_लिखो("(");
+	  else
+	    {
+	      printf("(");
 	      need_paren = 1;
-	    पूर्ण
-	पूर्ण
+	    }
+	}
 
-      /* We have found and prपूर्णांकed an inकाष्ठाion.
-         If it was a लघु VLE inकाष्ठाion we have more to करो.  */
-      अगर (insn_is_लघु)
-        अणु
+      /* We have found and printed an instruction.
+         If it was a short VLE instruction we have more to do.  */
+      if (insn_is_short)
+        {
           memaddr += 2;
-          वापस 2;
-        पूर्ण
-      अन्यथा
-        /* Otherwise, वापस.  */
-        वापस 4;
-    पूर्ण
+          return 2;
+        }
+      else
+        /* Otherwise, return.  */
+        return 4;
+    }
 
   /* We could not find a match.  */
-  म_लिखो(".long 0x%lx", insn);
+  printf(".long 0x%lx", insn);
 
-  वापस 4;
-पूर्ण
+  return 4;
+}

@@ -1,118 +1,117 @@
-<शैली गुरु>
 /*
- * Big Endian PROM code क्रम SNI RM machines
+ * Big Endian PROM code for SNI RM machines
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 2005-2006 Florian Lohoff (flo@rfc822.org)
- * Copyright (C) 2005-2006 Thomas Bogenकरोerfer (tsbogend@alpha.franken.de)
+ * Copyright (C) 2005-2006 Thomas Bogendoerfer (tsbogend@alpha.franken.de)
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/memblock.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/console.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/memblock.h>
+#include <linux/string.h>
+#include <linux/console.h>
 
-#समावेश <यंत्र/addrspace.h>
-#समावेश <यंत्र/sni.h>
-#समावेश <यंत्र/mipsprom.h>
-#समावेश <यंत्र/mipsregs.h>
-#समावेश <यंत्र/bootinfo.h>
-#समावेश <यंत्र/setup.h>
+#include <asm/addrspace.h>
+#include <asm/sni.h>
+#include <asm/mipsprom.h>
+#include <asm/mipsregs.h>
+#include <asm/bootinfo.h>
+#include <asm/setup.h>
 
 /* special SNI prom calls */
 /*
- * This करोes not exist in all proms - SINIX compares
+ * This does not exist in all proms - SINIX compares
  * the prom env variable "version" against "2.0008"
- * or greater. If lesser it tries to probe पूर्णांकeresting
- * रेजिस्टरs
+ * or greater. If lesser it tries to probe interesting
+ * registers
  */
-#घोषणा PROM_GET_MEMCONF	58
-#घोषणा PROM_GET_HWCONF		61
+#define PROM_GET_MEMCONF	58
+#define PROM_GET_HWCONF		61
 
-#घोषणा PROM_VEC		(u64 *)CKSEG1ADDR(0x1fc00000)
-#घोषणा PROM_ENTRY(x)		(PROM_VEC + (x))
+#define PROM_VEC		(u64 *)CKSEG1ADDR(0x1fc00000)
+#define PROM_ENTRY(x)		(PROM_VEC + (x))
 
-#घोषणा ___prom_अक्षर_दो		((पूर्णांक *(*)(पूर्णांक))PROM_ENTRY(PROM_PUTCHAR))
-#घोषणा ___prom_दो_पर्या		((अक्षर *(*)(अक्षर *))PROM_ENTRY(PROM_GETENV))
-#घोषणा ___prom_get_memconf	((व्योम (*)(व्योम *))PROM_ENTRY(PROM_GET_MEMCONF))
-#घोषणा ___prom_get_hwconf	((u32 (*)(व्योम))PROM_ENTRY(PROM_GET_HWCONF))
+#define ___prom_putchar		((int *(*)(int))PROM_ENTRY(PROM_PUTCHAR))
+#define ___prom_getenv		((char *(*)(char *))PROM_ENTRY(PROM_GETENV))
+#define ___prom_get_memconf	((void (*)(void *))PROM_ENTRY(PROM_GET_MEMCONF))
+#define ___prom_get_hwconf	((u32 (*)(void))PROM_ENTRY(PROM_GET_HWCONF))
 
-#अगर_घोषित CONFIG_64BIT
+#ifdef CONFIG_64BIT
 
 /* O32 stack has to be 8-byte aligned. */
-अटल u64 o32_stk[4096];
-#घोषणा O32_STK	  (&o32_stk[ARRAY_SIZE(o32_stk)])
+static u64 o32_stk[4096];
+#define O32_STK	  (&o32_stk[ARRAY_SIZE(o32_stk)])
 
-#घोषणा __PROM_O32(fun, arg) fun arg __यंत्र__(#fun); \
-				     __यंत्र__(#fun " = call_o32")
+#define __PROM_O32(fun, arg) fun arg __asm__(#fun); \
+				     __asm__(#fun " = call_o32")
 
-पूर्णांक   __PROM_O32(__prom_अक्षर_दो, (पूर्णांक *(*)(पूर्णांक), व्योम *, पूर्णांक));
-अक्षर *__PROM_O32(__prom_दो_पर्या, (अक्षर *(*)(अक्षर *), व्योम *, अक्षर *));
-व्योम  __PROM_O32(__prom_get_memconf, (व्योम (*)(व्योम *), व्योम *, व्योम *));
-u32   __PROM_O32(__prom_get_hwconf, (u32 (*)(व्योम), व्योम *));
+int   __PROM_O32(__prom_putchar, (int *(*)(int), void *, int));
+char *__PROM_O32(__prom_getenv, (char *(*)(char *), void *, char *));
+void  __PROM_O32(__prom_get_memconf, (void (*)(void *), void *, void *));
+u32   __PROM_O32(__prom_get_hwconf, (u32 (*)(void), void *));
 
-#घोषणा _prom_अक्षर_दो(x)     __prom_अक्षर_दो(___prom_अक्षर_दो, O32_STK, x)
-#घोषणा _prom_दो_पर्या(x)	     __prom_दो_पर्या(___prom_दो_पर्या, O32_STK, x)
-#घोषणा _prom_get_memconf(x) __prom_get_memconf(___prom_get_memconf, O32_STK, x)
-#घोषणा _prom_get_hwconf()   __prom_get_hwconf(___prom_get_hwconf, O32_STK)
+#define _prom_putchar(x)     __prom_putchar(___prom_putchar, O32_STK, x)
+#define _prom_getenv(x)	     __prom_getenv(___prom_getenv, O32_STK, x)
+#define _prom_get_memconf(x) __prom_get_memconf(___prom_get_memconf, O32_STK, x)
+#define _prom_get_hwconf()   __prom_get_hwconf(___prom_get_hwconf, O32_STK)
 
-#अन्यथा
-#घोषणा _prom_अक्षर_दो(x)     ___prom_अक्षर_दो(x)
-#घोषणा _prom_दो_पर्या(x)	     ___prom_दो_पर्या(x)
-#घोषणा _prom_get_memconf(x) ___prom_get_memconf(x)
-#घोषणा _prom_get_hwconf(x)  ___prom_get_hwconf(x)
-#पूर्ण_अगर
+#else
+#define _prom_putchar(x)     ___prom_putchar(x)
+#define _prom_getenv(x)	     ___prom_getenv(x)
+#define _prom_get_memconf(x) ___prom_get_memconf(x)
+#define _prom_get_hwconf(x)  ___prom_get_hwconf(x)
+#endif
 
-व्योम prom_अक्षर_दो(अक्षर c)
-अणु
-	_prom_अक्षर_दो(c);
-पूर्ण
+void prom_putchar(char c)
+{
+	_prom_putchar(c);
+}
 
 
-अक्षर *prom_दो_पर्या(अक्षर *s)
-अणु
-	वापस _prom_दो_पर्या(s);
-पूर्ण
+char *prom_getenv(char *s)
+{
+	return _prom_getenv(s);
+}
 
-व्योम *prom_get_hwconf(व्योम)
-अणु
+void *prom_get_hwconf(void)
+{
 	u32 hwconf = _prom_get_hwconf();
 
-	अगर (hwconf == 0xffffffff)
-		वापस शून्य;
+	if (hwconf == 0xffffffff)
+		return NULL;
 
-	वापस (व्योम *)CKSEG1ADDR(hwconf);
-पूर्ण
+	return (void *)CKSEG1ADDR(hwconf);
+}
 
 /*
- * /proc/cpuinfo प्रणाली type
+ * /proc/cpuinfo system type
  *
  */
-अक्षर *प्रणाली_type = "Unknown";
-स्थिर अक्षर *get_प्रणाली_type(व्योम)
-अणु
-	वापस प्रणाली_type;
-पूर्ण
+char *system_type = "Unknown";
+const char *get_system_type(void)
+{
+	return system_type;
+}
 
-अटल व्योम __init sni_mem_init(व्योम)
-अणु
-	पूर्णांक i, memsize;
-	काष्ठा membank अणु
+static void __init sni_mem_init(void)
+{
+	int i, memsize;
+	struct membank {
 		u32		size;
 		u32		base;
 		u32		size2;
 		u32		pad1;
 		u32		pad2;
-	पूर्ण memconf[8];
-	पूर्णांक brd_type = *(अचिन्हित अक्षर *)SNI_IDPROM_BRDTYPE;
+	} memconf[8];
+	int brd_type = *(unsigned char *)SNI_IDPROM_BRDTYPE;
 
 
 	/* MemSIZE from prom in 16MByte chunks */
-	memsize = *((अचिन्हित अक्षर *) SNI_IDPROM_MEMSIZE) * 16;
+	memsize = *((unsigned char *) SNI_IDPROM_MEMSIZE) * 16;
 
 	pr_debug("IDProm memsize: %u MByte\n", memsize);
 
@@ -120,31 +119,31 @@ u32   __PROM_O32(__prom_get_hwconf, (u32 (*)(व्योम), व्योम *
 	_prom_get_memconf(&memconf);
 
 	pr_debug("prom_get_mem_conf memory configuration:\n");
-	क्रम (i = 0; i < 8 && memconf[i].size; i++) अणु
-		अगर (brd_type == SNI_BRD_PCI_TOWER ||
-		    brd_type == SNI_BRD_PCI_TOWER_CPLUS) अणु
-			अगर (memconf[i].base >= 0x20000000 &&
+	for (i = 0; i < 8 && memconf[i].size; i++) {
+		if (brd_type == SNI_BRD_PCI_TOWER ||
+		    brd_type == SNI_BRD_PCI_TOWER_CPLUS) {
+			if (memconf[i].base >= 0x20000000 &&
 			    memconf[i].base <  0x30000000)
 				memconf[i].base -= 0x20000000;
-		पूर्ण
+		}
 		pr_debug("Bank%d: %08x @ %08x\n", i,
 			memconf[i].size, memconf[i].base);
 		memblock_add(memconf[i].base, memconf[i].size);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम __init prom_init(व्योम)
-अणु
-	पूर्णांक argc = fw_arg0;
+void __init prom_init(void)
+{
+	int argc = fw_arg0;
 	u32 *argv = (u32 *)CKSEG0ADDR(fw_arg1);
-	पूर्णांक i;
+	int i;
 
 	sni_mem_init();
 
 	/* copy prom cmdline parameters to kernel cmdline */
-	क्रम (i = 1; i < argc; i++) अणु
-		म_जोड़ो(arcs_cmdline, (अक्षर *)CKSEG0ADDR(argv[i]));
-		अगर (i < (argc - 1))
-			म_जोड़ो(arcs_cmdline, " ");
-	पूर्ण
-पूर्ण
+	for (i = 1; i < argc; i++) {
+		strcat(arcs_cmdline, (char *)CKSEG0ADDR(argv[i]));
+		if (i < (argc - 1))
+			strcat(arcs_cmdline, " ");
+	}
+}

@@ -1,185 +1,184 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2012 Red Hat, Inc.
  * Copyright (C) 2012 Jeremy Kerr <jeremy.kerr@canonical.com>
  */
 
-#समावेश <linux/efi.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/kmemleak.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/uuid.h>
-#समावेश <linux/fileattr.h>
+#include <linux/efi.h>
+#include <linux/fs.h>
+#include <linux/ctype.h>
+#include <linux/kmemleak.h>
+#include <linux/slab.h>
+#include <linux/uuid.h>
+#include <linux/fileattr.h>
 
-#समावेश "internal.h"
+#include "internal.h"
 
-अटल स्थिर काष्ठा inode_operations efivarfs_file_inode_operations;
+static const struct inode_operations efivarfs_file_inode_operations;
 
-काष्ठा inode *efivarfs_get_inode(काष्ठा super_block *sb,
-				स्थिर काष्ठा inode *dir, पूर्णांक mode,
+struct inode *efivarfs_get_inode(struct super_block *sb,
+				const struct inode *dir, int mode,
 				dev_t dev, bool is_removable)
-अणु
-	काष्ठा inode *inode = new_inode(sb);
+{
+	struct inode *inode = new_inode(sb);
 
-	अगर (inode) अणु
+	if (inode) {
 		inode->i_ino = get_next_ino();
 		inode->i_mode = mode;
-		inode->i_aसमय = inode->i_mसमय = inode->i_स_समय = current_समय(inode);
+		inode->i_atime = inode->i_mtime = inode->i_ctime = current_time(inode);
 		inode->i_flags = is_removable ? 0 : S_IMMUTABLE;
-		चयन (mode & S_IFMT) अणु
-		हाल S_IFREG:
+		switch (mode & S_IFMT) {
+		case S_IFREG:
 			inode->i_op = &efivarfs_file_inode_operations;
 			inode->i_fop = &efivarfs_file_operations;
-			अवरोध;
-		हाल S_IFसूची:
+			break;
+		case S_IFDIR:
 			inode->i_op = &efivarfs_dir_inode_operations;
 			inode->i_fop = &simple_dir_operations;
 			inc_nlink(inode);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस inode;
-पूर्ण
+			break;
+		}
+	}
+	return inode;
+}
 
 /*
- * Return true अगर 'str' is a valid efivarfs filename of the क्रमm,
+ * Return true if 'str' is a valid efivarfs filename of the form,
  *
  *	VariableName-12345678-1234-1234-1234-1234567891bc
  */
-bool efivarfs_valid_name(स्थिर अक्षर *str, पूर्णांक len)
-अणु
-	स्थिर अक्षर *s = str + len - EFI_VARIABLE_GUID_LEN;
+bool efivarfs_valid_name(const char *str, int len)
+{
+	const char *s = str + len - EFI_VARIABLE_GUID_LEN;
 
 	/*
-	 * We need a GUID, plus at least one letter क्रम the variable name,
+	 * We need a GUID, plus at least one letter for the variable name,
 	 * plus the '-' separator
 	 */
-	अगर (len < EFI_VARIABLE_GUID_LEN + 2)
-		वापस false;
+	if (len < EFI_VARIABLE_GUID_LEN + 2)
+		return false;
 
 	/* GUID must be preceded by a '-' */
-	अगर (*(s - 1) != '-')
-		वापस false;
+	if (*(s - 1) != '-')
+		return false;
 
 	/*
-	 * Validate that 's' is of the correct क्रमmat, e.g.
+	 * Validate that 's' is of the correct format, e.g.
 	 *
 	 *	12345678-1234-1234-1234-123456789abc
 	 */
-	वापस uuid_is_valid(s);
-पूर्ण
+	return uuid_is_valid(s);
+}
 
-अटल पूर्णांक efivarfs_create(काष्ठा user_namespace *mnt_userns, काष्ठा inode *dir,
-			   काष्ठा dentry *dentry, umode_t mode, bool excl)
-अणु
-	काष्ठा inode *inode = शून्य;
-	काष्ठा efivar_entry *var;
-	पूर्णांक namelen, i = 0, err = 0;
+static int efivarfs_create(struct user_namespace *mnt_userns, struct inode *dir,
+			   struct dentry *dentry, umode_t mode, bool excl)
+{
+	struct inode *inode = NULL;
+	struct efivar_entry *var;
+	int namelen, i = 0, err = 0;
 	bool is_removable = false;
 
-	अगर (!efivarfs_valid_name(dentry->d_name.name, dentry->d_name.len))
-		वापस -EINVAL;
+	if (!efivarfs_valid_name(dentry->d_name.name, dentry->d_name.len))
+		return -EINVAL;
 
-	var = kzalloc(माप(काष्ठा efivar_entry), GFP_KERNEL);
-	अगर (!var)
-		वापस -ENOMEM;
+	var = kzalloc(sizeof(struct efivar_entry), GFP_KERNEL);
+	if (!var)
+		return -ENOMEM;
 
-	/* length of the variable name itself: हटाओ GUID and separator */
+	/* length of the variable name itself: remove GUID and separator */
 	namelen = dentry->d_name.len - EFI_VARIABLE_GUID_LEN - 1;
 
-	err = guid_parse(dentry->d_name.name + namelen + 1, &var->var.VenकरोrGuid);
-	अगर (err)
-		जाओ out;
+	err = guid_parse(dentry->d_name.name + namelen + 1, &var->var.VendorGuid);
+	if (err)
+		goto out;
 
-	अगर (efivar_variable_is_removable(var->var.VenकरोrGuid,
+	if (efivar_variable_is_removable(var->var.VendorGuid,
 					 dentry->d_name.name, namelen))
 		is_removable = true;
 
 	inode = efivarfs_get_inode(dir->i_sb, dir, mode, 0, is_removable);
-	अगर (!inode) अणु
+	if (!inode) {
 		err = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	क्रम (i = 0; i < namelen; i++)
+	for (i = 0; i < namelen; i++)
 		var->var.VariableName[i] = dentry->d_name.name[i];
 
 	var->var.VariableName[i] = '\0';
 
-	inode->i_निजी = var;
+	inode->i_private = var;
 	kmemleak_ignore(var);
 
 	err = efivar_entry_add(var, &efivarfs_list);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	d_instantiate(dentry, inode);
 	dget(dentry);
 out:
-	अगर (err) अणु
-		kमुक्त(var);
-		अगर (inode)
+	if (err) {
+		kfree(var);
+		if (inode)
 			iput(inode);
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-अटल पूर्णांक efivarfs_unlink(काष्ठा inode *dir, काष्ठा dentry *dentry)
-अणु
-	काष्ठा efivar_entry *var = d_inode(dentry)->i_निजी;
+static int efivarfs_unlink(struct inode *dir, struct dentry *dentry)
+{
+	struct efivar_entry *var = d_inode(dentry)->i_private;
 
-	अगर (efivar_entry_delete(var))
-		वापस -EINVAL;
+	if (efivar_entry_delete(var))
+		return -EINVAL;
 
 	drop_nlink(d_inode(dentry));
 	dput(dentry);
-	वापस 0;
-पूर्ण;
+	return 0;
+};
 
-स्थिर काष्ठा inode_operations efivarfs_dir_inode_operations = अणु
+const struct inode_operations efivarfs_dir_inode_operations = {
 	.lookup = simple_lookup,
 	.unlink = efivarfs_unlink,
 	.create = efivarfs_create,
-पूर्ण;
+};
 
-अटल पूर्णांक
-efivarfs_fileattr_get(काष्ठा dentry *dentry, काष्ठा fileattr *fa)
-अणु
-	अचिन्हित पूर्णांक i_flags;
-	अचिन्हित पूर्णांक flags = 0;
+static int
+efivarfs_fileattr_get(struct dentry *dentry, struct fileattr *fa)
+{
+	unsigned int i_flags;
+	unsigned int flags = 0;
 
 	i_flags = d_inode(dentry)->i_flags;
-	अगर (i_flags & S_IMMUTABLE)
+	if (i_flags & S_IMMUTABLE)
 		flags |= FS_IMMUTABLE_FL;
 
 	fileattr_fill_flags(fa, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-efivarfs_fileattr_set(काष्ठा user_namespace *mnt_userns,
-		      काष्ठा dentry *dentry, काष्ठा fileattr *fa)
-अणु
-	अचिन्हित पूर्णांक i_flags = 0;
+static int
+efivarfs_fileattr_set(struct user_namespace *mnt_userns,
+		      struct dentry *dentry, struct fileattr *fa)
+{
+	unsigned int i_flags = 0;
 
-	अगर (fileattr_has_fsx(fa))
-		वापस -EOPNOTSUPP;
+	if (fileattr_has_fsx(fa))
+		return -EOPNOTSUPP;
 
-	अगर (fa->flags & ~FS_IMMUTABLE_FL)
-		वापस -EOPNOTSUPP;
+	if (fa->flags & ~FS_IMMUTABLE_FL)
+		return -EOPNOTSUPP;
 
-	अगर (fa->flags & FS_IMMUTABLE_FL)
+	if (fa->flags & FS_IMMUTABLE_FL)
 		i_flags |= S_IMMUTABLE;
 
 	inode_set_flags(d_inode(dentry), i_flags, S_IMMUTABLE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा inode_operations efivarfs_file_inode_operations = अणु
+static const struct inode_operations efivarfs_file_inode_operations = {
 	.fileattr_get = efivarfs_fileattr_get,
 	.fileattr_set = efivarfs_fileattr_set,
-पूर्ण;
+};

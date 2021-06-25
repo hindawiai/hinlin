@@ -1,78 +1,77 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/mm.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/sched/task_stack.h>
-#समावेश <linux/export.h>
-#समावेश <linux/stackprotector.h>
-#समावेश <यंत्र/fpu.h>
-#समावेश <यंत्र/ptrace.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/mm.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/sched/signal.h>
+#include <linux/sched/task_stack.h>
+#include <linux/export.h>
+#include <linux/stackprotector.h>
+#include <asm/fpu.h>
+#include <asm/ptrace.h>
 
-काष्ठा kmem_cache *task_xstate_cachep = शून्य;
-अचिन्हित पूर्णांक xstate_size;
+struct kmem_cache *task_xstate_cachep = NULL;
+unsigned int xstate_size;
 
-#अगर_घोषित CONFIG_STACKPROTECTOR
-अचिन्हित दीर्घ __stack_chk_guard __पढ़ो_mostly;
+#ifdef CONFIG_STACKPROTECTOR
+unsigned long __stack_chk_guard __read_mostly;
 EXPORT_SYMBOL(__stack_chk_guard);
-#पूर्ण_अगर
+#endif
 
 /*
- * this माला_लो called so that we can store lazy state पूर्णांकo memory and copy the
- * current task पूर्णांकo the new thपढ़ो.
+ * this gets called so that we can store lazy state into memory and copy the
+ * current task into the new thread.
  */
-पूर्णांक arch_dup_task_काष्ठा(काष्ठा task_काष्ठा *dst, काष्ठा task_काष्ठा *src)
-अणु
+int arch_dup_task_struct(struct task_struct *dst, struct task_struct *src)
+{
 	unlazy_fpu(src, task_pt_regs(src));
 	*dst = *src;
 
-	अगर (src->thपढ़ो.xstate) अणु
-		dst->thपढ़ो.xstate = kmem_cache_alloc(task_xstate_cachep,
+	if (src->thread.xstate) {
+		dst->thread.xstate = kmem_cache_alloc(task_xstate_cachep,
 						      GFP_KERNEL);
-		अगर (!dst->thपढ़ो.xstate)
-			वापस -ENOMEM;
-		स_नकल(dst->thपढ़ो.xstate, src->thपढ़ो.xstate, xstate_size);
-	पूर्ण
+		if (!dst->thread.xstate)
+			return -ENOMEM;
+		memcpy(dst->thread.xstate, src->thread.xstate, xstate_size);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम मुक्त_thपढ़ो_xstate(काष्ठा task_काष्ठा *tsk)
-अणु
-	अगर (tsk->thपढ़ो.xstate) अणु
-		kmem_cache_मुक्त(task_xstate_cachep, tsk->thपढ़ो.xstate);
-		tsk->thपढ़ो.xstate = शून्य;
-	पूर्ण
-पूर्ण
+void free_thread_xstate(struct task_struct *tsk)
+{
+	if (tsk->thread.xstate) {
+		kmem_cache_free(task_xstate_cachep, tsk->thread.xstate);
+		tsk->thread.xstate = NULL;
+	}
+}
 
-व्योम arch_release_task_काष्ठा(काष्ठा task_काष्ठा *tsk)
-अणु
-	मुक्त_thपढ़ो_xstate(tsk);
-पूर्ण
+void arch_release_task_struct(struct task_struct *tsk)
+{
+	free_thread_xstate(tsk);
+}
 
-व्योम arch_task_cache_init(व्योम)
-अणु
-	अगर (!xstate_size)
-		वापस;
+void arch_task_cache_init(void)
+{
+	if (!xstate_size)
+		return;
 
 	task_xstate_cachep = kmem_cache_create("task_xstate", xstate_size,
-					       __alignof__(जोड़ thपढ़ो_xstate),
-					       SLAB_PANIC, शून्य);
-पूर्ण
+					       __alignof__(union thread_xstate),
+					       SLAB_PANIC, NULL);
+}
 
-#अगर_घोषित CONFIG_SH_FPU_EMU
+#ifdef CONFIG_SH_FPU_EMU
 # define HAVE_SOFTFP	1
-#अन्यथा
+#else
 # define HAVE_SOFTFP	0
-#पूर्ण_अगर
+#endif
 
-व्योम init_thपढ़ो_xstate(व्योम)
-अणु
-	अगर (boot_cpu_data.flags & CPU_HAS_FPU)
-		xstate_size = माप(काष्ठा sh_fpu_hard_काष्ठा);
-	अन्यथा अगर (HAVE_SOFTFP)
-		xstate_size = माप(काष्ठा sh_fpu_soft_काष्ठा);
-	अन्यथा
+void init_thread_xstate(void)
+{
+	if (boot_cpu_data.flags & CPU_HAS_FPU)
+		xstate_size = sizeof(struct sh_fpu_hard_struct);
+	else if (HAVE_SOFTFP)
+		xstate_size = sizeof(struct sh_fpu_soft_struct);
+	else
 		xstate_size = 0;
-पूर्ण
+}

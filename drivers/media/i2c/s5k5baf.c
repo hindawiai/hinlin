@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Driver क्रम Samsung S5K5BAF UXGA 1/5" 2M CMOS Image Sensor
+ * Driver for Samsung S5K5BAF UXGA 1/5" 2M CMOS Image Sensor
  * with embedded SoC ISP.
  *
  * Copyright (C) 2013, Samsung Electronics Co., Ltd.
@@ -11,426 +10,426 @@
  * Copyright (C) 2013, Samsung Electronics Co., Ltd.
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/firmware.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/i2c.h>
-#समावेश <linux/media.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_gpपन.स>
-#समावेश <linux/of_graph.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/slab.h>
+#include <linux/clk.h>
+#include <linux/delay.h>
+#include <linux/firmware.h>
+#include <linux/gpio.h>
+#include <linux/i2c.h>
+#include <linux/media.h>
+#include <linux/module.h>
+#include <linux/of_gpio.h>
+#include <linux/of_graph.h>
+#include <linux/regulator/consumer.h>
+#include <linux/slab.h>
 
-#समावेश <media/media-entity.h>
-#समावेश <media/v4l2-ctrls.h>
-#समावेश <media/v4l2-device.h>
-#समावेश <media/v4l2-subdev.h>
-#समावेश <media/v4l2-mediabus.h>
-#समावेश <media/v4l2-fwnode.h>
+#include <media/media-entity.h>
+#include <media/v4l2-ctrls.h>
+#include <media/v4l2-device.h>
+#include <media/v4l2-subdev.h>
+#include <media/v4l2-mediabus.h>
+#include <media/v4l2-fwnode.h>
 
-अटल पूर्णांक debug;
-module_param(debug, पूर्णांक, 0644);
+static int debug;
+module_param(debug, int, 0644);
 
-#घोषणा S5K5BAF_DRIVER_NAME		"s5k5baf"
-#घोषणा S5K5BAF_DEFAULT_MCLK_FREQ	24000000U
-#घोषणा S5K5BAF_CLK_NAME		"mclk"
+#define S5K5BAF_DRIVER_NAME		"s5k5baf"
+#define S5K5BAF_DEFAULT_MCLK_FREQ	24000000U
+#define S5K5BAF_CLK_NAME		"mclk"
 
-#घोषणा S5K5BAF_FW_खाताNAME		"s5k5baf-cfg.bin"
-#घोषणा S5K5BAF_FW_TAG			"SF00"
-#घोषणा S5K5BAG_FW_TAG_LEN		2
-#घोषणा S5K5BAG_FW_MAX_COUNT		16
+#define S5K5BAF_FW_FILENAME		"s5k5baf-cfg.bin"
+#define S5K5BAF_FW_TAG			"SF00"
+#define S5K5BAG_FW_TAG_LEN		2
+#define S5K5BAG_FW_MAX_COUNT		16
 
-#घोषणा S5K5BAF_CIS_WIDTH		1600
-#घोषणा S5K5BAF_CIS_HEIGHT		1200
-#घोषणा S5K5BAF_WIN_WIDTH_MIN		8
-#घोषणा S5K5BAF_WIN_HEIGHT_MIN		8
-#घोषणा S5K5BAF_GAIN_RED_DEF		127
-#घोषणा S5K5BAF_GAIN_GREEN_DEF		95
-#घोषणा S5K5BAF_GAIN_BLUE_DEF		180
+#define S5K5BAF_CIS_WIDTH		1600
+#define S5K5BAF_CIS_HEIGHT		1200
+#define S5K5BAF_WIN_WIDTH_MIN		8
+#define S5K5BAF_WIN_HEIGHT_MIN		8
+#define S5K5BAF_GAIN_RED_DEF		127
+#define S5K5BAF_GAIN_GREEN_DEF		95
+#define S5K5BAF_GAIN_BLUE_DEF		180
 /* Default number of MIPI CSI-2 data lanes used */
-#घोषणा S5K5BAF_DEF_NUM_LANES		1
+#define S5K5BAF_DEF_NUM_LANES		1
 
-#घोषणा AHB_MSB_ADDR_PTR		0xfcfc
-
-/*
- * Register पूर्णांकerface pages (the most signअगरicant word of the address)
- */
-#घोषणा PAGE_IF_HW			0xd000
-#घोषणा PAGE_IF_SW			0x7000
+#define AHB_MSB_ADDR_PTR		0xfcfc
 
 /*
- * H/W रेजिस्टर Interface (PAGE_IF_HW)
+ * Register interface pages (the most significant word of the address)
  */
-#घोषणा REG_SW_LOAD_COMPLETE		0x0014
-#घोषणा REG_CMDWR_PAGE			0x0028
-#घोषणा REG_CMDWR_ADDR			0x002a
-#घोषणा REG_CMDRD_PAGE			0x002c
-#घोषणा REG_CMDRD_ADDR			0x002e
-#घोषणा REG_CMD_BUF			0x0f12
-#घोषणा REG_SET_HOST_INT		0x1000
-#घोषणा REG_CLEAR_HOST_INT		0x1030
-#घोषणा REG_PATTERN_SET			0x3100
-#घोषणा REG_PATTERN_WIDTH		0x3118
-#घोषणा REG_PATTERN_HEIGHT		0x311a
-#घोषणा REG_PATTERN_PARAM		0x311c
+#define PAGE_IF_HW			0xd000
+#define PAGE_IF_SW			0x7000
 
 /*
- * S/W रेजिस्टर पूर्णांकerface (PAGE_IF_SW)
+ * H/W register Interface (PAGE_IF_HW)
+ */
+#define REG_SW_LOAD_COMPLETE		0x0014
+#define REG_CMDWR_PAGE			0x0028
+#define REG_CMDWR_ADDR			0x002a
+#define REG_CMDRD_PAGE			0x002c
+#define REG_CMDRD_ADDR			0x002e
+#define REG_CMD_BUF			0x0f12
+#define REG_SET_HOST_INT		0x1000
+#define REG_CLEAR_HOST_INT		0x1030
+#define REG_PATTERN_SET			0x3100
+#define REG_PATTERN_WIDTH		0x3118
+#define REG_PATTERN_HEIGHT		0x311a
+#define REG_PATTERN_PARAM		0x311c
+
+/*
+ * S/W register interface (PAGE_IF_SW)
  */
 
-/* Firmware revision inक्रमmation */
-#घोषणा REG_FW_APIVER			0x012e
-#घोषणा  S5K5BAF_FW_APIVER		0x0001
-#घोषणा REG_FW_REVISION			0x0130
-#घोषणा REG_FW_SENSOR_ID		0x0152
+/* Firmware revision information */
+#define REG_FW_APIVER			0x012e
+#define  S5K5BAF_FW_APIVER		0x0001
+#define REG_FW_REVISION			0x0130
+#define REG_FW_SENSOR_ID		0x0152
 
 /* Initialization parameters */
-/* Master घड़ी frequency in KHz */
-#घोषणा REG_I_INCLK_FREQ_L		0x01b8
-#घोषणा REG_I_INCLK_FREQ_H		0x01ba
-#घोषणा  MIN_MCLK_FREQ_KHZ		6000U
-#घोषणा  MAX_MCLK_FREQ_KHZ		48000U
-#घोषणा REG_I_USE_NPVI_CLOCKS		0x01c6
-#घोषणा  NPVI_CLOCKS			1
-#घोषणा REG_I_USE_NMIPI_CLOCKS		0x01c8
-#घोषणा  NMIPI_CLOCKS			1
-#घोषणा REG_I_BLOCK_INTERNAL_PLL_CALC	0x01ca
+/* Master clock frequency in KHz */
+#define REG_I_INCLK_FREQ_L		0x01b8
+#define REG_I_INCLK_FREQ_H		0x01ba
+#define  MIN_MCLK_FREQ_KHZ		6000U
+#define  MAX_MCLK_FREQ_KHZ		48000U
+#define REG_I_USE_NPVI_CLOCKS		0x01c6
+#define  NPVI_CLOCKS			1
+#define REG_I_USE_NMIPI_CLOCKS		0x01c8
+#define  NMIPI_CLOCKS			1
+#define REG_I_BLOCK_INTERNAL_PLL_CALC	0x01ca
 
 /* Clock configurations, n = 0..2. REG_I_* frequency unit is 4 kHz. */
-#घोषणा REG_I_OPCLK_4KHZ(n)		((n) * 6 + 0x01cc)
-#घोषणा REG_I_MIN_OUTRATE_4KHZ(n)	((n) * 6 + 0x01ce)
-#घोषणा REG_I_MAX_OUTRATE_4KHZ(n)	((n) * 6 + 0x01d0)
-#घोषणा  SCLK_PVI_FREQ			24000
-#घोषणा  SCLK_MIPI_FREQ			48000
-#घोषणा  PCLK_MIN_FREQ			6000
-#घोषणा  PCLK_MAX_FREQ			48000
-#घोषणा REG_I_USE_REGS_API		0x01de
-#घोषणा REG_I_INIT_PARAMS_UPDATED	0x01e0
-#घोषणा REG_I_ERROR_INFO		0x01e2
+#define REG_I_OPCLK_4KHZ(n)		((n) * 6 + 0x01cc)
+#define REG_I_MIN_OUTRATE_4KHZ(n)	((n) * 6 + 0x01ce)
+#define REG_I_MAX_OUTRATE_4KHZ(n)	((n) * 6 + 0x01d0)
+#define  SCLK_PVI_FREQ			24000
+#define  SCLK_MIPI_FREQ			48000
+#define  PCLK_MIN_FREQ			6000
+#define  PCLK_MAX_FREQ			48000
+#define REG_I_USE_REGS_API		0x01de
+#define REG_I_INIT_PARAMS_UPDATED	0x01e0
+#define REG_I_ERROR_INFO		0x01e2
 
 /* General purpose parameters */
-#घोषणा REG_USER_BRIGHTNESS		0x01e4
-#घोषणा REG_USER_CONTRAST		0x01e6
-#घोषणा REG_USER_SATURATION		0x01e8
-#घोषणा REG_USER_SHARPBLUR		0x01ea
+#define REG_USER_BRIGHTNESS		0x01e4
+#define REG_USER_CONTRAST		0x01e6
+#define REG_USER_SATURATION		0x01e8
+#define REG_USER_SHARPBLUR		0x01ea
 
-#घोषणा REG_G_SPEC_EFFECTS		0x01ee
-#घोषणा REG_G_ENABLE_PREV		0x01f0
-#घोषणा REG_G_ENABLE_PREV_CHG		0x01f2
-#घोषणा REG_G_NEW_CFG_SYNC		0x01f8
-#घोषणा REG_G_PREVREQ_IN_WIDTH		0x01fa
-#घोषणा REG_G_PREVREQ_IN_HEIGHT		0x01fc
-#घोषणा REG_G_PREVREQ_IN_XOFFS		0x01fe
-#घोषणा REG_G_PREVREQ_IN_YOFFS		0x0200
-#घोषणा REG_G_PREVZOOM_IN_WIDTH		0x020a
-#घोषणा REG_G_PREVZOOM_IN_HEIGHT	0x020c
-#घोषणा REG_G_PREVZOOM_IN_XOFFS		0x020e
-#घोषणा REG_G_PREVZOOM_IN_YOFFS		0x0210
-#घोषणा REG_G_INPUTS_CHANGE_REQ		0x021a
-#घोषणा REG_G_ACTIVE_PREV_CFG		0x021c
-#घोषणा REG_G_PREV_CFG_CHG		0x021e
-#घोषणा REG_G_PREV_OPEN_AFTER_CH	0x0220
-#घोषणा REG_G_PREV_CFG_ERROR		0x0222
-#घोषणा  CFG_ERROR_RANGE		0x0b
-#घोषणा REG_G_PREV_CFG_BYPASS_CHANGED	0x022a
-#घोषणा REG_G_ACTUAL_P_FR_TIME		0x023a
-#घोषणा REG_G_ACTUAL_P_OUT_RATE		0x023c
-#घोषणा REG_G_ACTUAL_C_FR_TIME		0x023e
-#घोषणा REG_G_ACTUAL_C_OUT_RATE		0x0240
+#define REG_G_SPEC_EFFECTS		0x01ee
+#define REG_G_ENABLE_PREV		0x01f0
+#define REG_G_ENABLE_PREV_CHG		0x01f2
+#define REG_G_NEW_CFG_SYNC		0x01f8
+#define REG_G_PREVREQ_IN_WIDTH		0x01fa
+#define REG_G_PREVREQ_IN_HEIGHT		0x01fc
+#define REG_G_PREVREQ_IN_XOFFS		0x01fe
+#define REG_G_PREVREQ_IN_YOFFS		0x0200
+#define REG_G_PREVZOOM_IN_WIDTH		0x020a
+#define REG_G_PREVZOOM_IN_HEIGHT	0x020c
+#define REG_G_PREVZOOM_IN_XOFFS		0x020e
+#define REG_G_PREVZOOM_IN_YOFFS		0x0210
+#define REG_G_INPUTS_CHANGE_REQ		0x021a
+#define REG_G_ACTIVE_PREV_CFG		0x021c
+#define REG_G_PREV_CFG_CHG		0x021e
+#define REG_G_PREV_OPEN_AFTER_CH	0x0220
+#define REG_G_PREV_CFG_ERROR		0x0222
+#define  CFG_ERROR_RANGE		0x0b
+#define REG_G_PREV_CFG_BYPASS_CHANGED	0x022a
+#define REG_G_ACTUAL_P_FR_TIME		0x023a
+#define REG_G_ACTUAL_P_OUT_RATE		0x023c
+#define REG_G_ACTUAL_C_FR_TIME		0x023e
+#define REG_G_ACTUAL_C_OUT_RATE		0x0240
 
 /* Preview control section. n = 0...4. */
-#घोषणा PREG(n, x)			((n) * 0x26 + x)
-#घोषणा REG_P_OUT_WIDTH(n)		PREG(n, 0x0242)
-#घोषणा REG_P_OUT_HEIGHT(n)		PREG(n, 0x0244)
-#घोषणा REG_P_FMT(n)			PREG(n, 0x0246)
-#घोषणा REG_P_MAX_OUT_RATE(n)		PREG(n, 0x0248)
-#घोषणा REG_P_MIN_OUT_RATE(n)		PREG(n, 0x024a)
-#घोषणा REG_P_PVI_MASK(n)		PREG(n, 0x024c)
-#घोषणा  PVI_MASK_MIPI			0x52
-#घोषणा REG_P_CLK_INDEX(n)		PREG(n, 0x024e)
-#घोषणा  CLK_PVI_INDEX			0
-#घोषणा  CLK_MIPI_INDEX			NPVI_CLOCKS
-#घोषणा REG_P_FR_RATE_TYPE(n)		PREG(n, 0x0250)
-#घोषणा  FR_RATE_DYNAMIC		0
-#घोषणा  FR_RATE_FIXED			1
-#घोषणा  FR_RATE_FIXED_ACCURATE		2
-#घोषणा REG_P_FR_RATE_Q_TYPE(n)		PREG(n, 0x0252)
-#घोषणा  FR_RATE_Q_DYNAMIC		0
-#घोषणा  FR_RATE_Q_BEST_FRRATE		1 /* Binning enabled */
-#घोषणा  FR_RATE_Q_BEST_QUALITY		2 /* Binning disabled */
+#define PREG(n, x)			((n) * 0x26 + x)
+#define REG_P_OUT_WIDTH(n)		PREG(n, 0x0242)
+#define REG_P_OUT_HEIGHT(n)		PREG(n, 0x0244)
+#define REG_P_FMT(n)			PREG(n, 0x0246)
+#define REG_P_MAX_OUT_RATE(n)		PREG(n, 0x0248)
+#define REG_P_MIN_OUT_RATE(n)		PREG(n, 0x024a)
+#define REG_P_PVI_MASK(n)		PREG(n, 0x024c)
+#define  PVI_MASK_MIPI			0x52
+#define REG_P_CLK_INDEX(n)		PREG(n, 0x024e)
+#define  CLK_PVI_INDEX			0
+#define  CLK_MIPI_INDEX			NPVI_CLOCKS
+#define REG_P_FR_RATE_TYPE(n)		PREG(n, 0x0250)
+#define  FR_RATE_DYNAMIC		0
+#define  FR_RATE_FIXED			1
+#define  FR_RATE_FIXED_ACCURATE		2
+#define REG_P_FR_RATE_Q_TYPE(n)		PREG(n, 0x0252)
+#define  FR_RATE_Q_DYNAMIC		0
+#define  FR_RATE_Q_BEST_FRRATE		1 /* Binning enabled */
+#define  FR_RATE_Q_BEST_QUALITY		2 /* Binning disabled */
 /* Frame period in 0.1 ms units */
-#घोषणा REG_P_MAX_FR_TIME(n)		PREG(n, 0x0254)
-#घोषणा REG_P_MIN_FR_TIME(n)		PREG(n, 0x0256)
-#घोषणा  S5K5BAF_MIN_FR_TIME		333  /* x100 us */
-#घोषणा  S5K5BAF_MAX_FR_TIME		6500 /* x100 us */
-/* The below 5 रेजिस्टरs are क्रम "device correction" values */
-#घोषणा REG_P_SATURATION(n)		PREG(n, 0x0258)
-#घोषणा REG_P_SHARP_BLUR(n)		PREG(n, 0x025a)
-#घोषणा REG_P_GLAMOUR(n)		PREG(n, 0x025c)
-#घोषणा REG_P_COLORTEMP(n)		PREG(n, 0x025e)
-#घोषणा REG_P_GAMMA_INDEX(n)		PREG(n, 0x0260)
-#घोषणा REG_P_PREV_MIRROR(n)		PREG(n, 0x0262)
-#घोषणा REG_P_CAP_MIRROR(n)		PREG(n, 0x0264)
-#घोषणा REG_P_CAP_ROTATION(n)		PREG(n, 0x0266)
+#define REG_P_MAX_FR_TIME(n)		PREG(n, 0x0254)
+#define REG_P_MIN_FR_TIME(n)		PREG(n, 0x0256)
+#define  S5K5BAF_MIN_FR_TIME		333  /* x100 us */
+#define  S5K5BAF_MAX_FR_TIME		6500 /* x100 us */
+/* The below 5 registers are for "device correction" values */
+#define REG_P_SATURATION(n)		PREG(n, 0x0258)
+#define REG_P_SHARP_BLUR(n)		PREG(n, 0x025a)
+#define REG_P_GLAMOUR(n)		PREG(n, 0x025c)
+#define REG_P_COLORTEMP(n)		PREG(n, 0x025e)
+#define REG_P_GAMMA_INDEX(n)		PREG(n, 0x0260)
+#define REG_P_PREV_MIRROR(n)		PREG(n, 0x0262)
+#define REG_P_CAP_MIRROR(n)		PREG(n, 0x0264)
+#define REG_P_CAP_ROTATION(n)		PREG(n, 0x0266)
 
 /* Extended image property controls */
-/* Exposure समय in 10 us units */
-#घोषणा REG_SF_USR_EXPOSURE_L		0x03bc
-#घोषणा REG_SF_USR_EXPOSURE_H		0x03be
-#घोषणा REG_SF_USR_EXPOSURE_CHG		0x03c0
-#घोषणा REG_SF_USR_TOT_GAIN		0x03c2
-#घोषणा REG_SF_USR_TOT_GAIN_CHG		0x03c4
-#घोषणा REG_SF_RGAIN			0x03c6
-#घोषणा REG_SF_RGAIN_CHG		0x03c8
-#घोषणा REG_SF_GGAIN			0x03ca
-#घोषणा REG_SF_GGAIN_CHG		0x03cc
-#घोषणा REG_SF_BGAIN			0x03ce
-#घोषणा REG_SF_BGAIN_CHG		0x03d0
-#घोषणा REG_SF_WBGAIN_CHG		0x03d2
-#घोषणा REG_SF_FLICKER_QUANT		0x03d4
-#घोषणा REG_SF_FLICKER_QUANT_CHG	0x03d6
+/* Exposure time in 10 us units */
+#define REG_SF_USR_EXPOSURE_L		0x03bc
+#define REG_SF_USR_EXPOSURE_H		0x03be
+#define REG_SF_USR_EXPOSURE_CHG		0x03c0
+#define REG_SF_USR_TOT_GAIN		0x03c2
+#define REG_SF_USR_TOT_GAIN_CHG		0x03c4
+#define REG_SF_RGAIN			0x03c6
+#define REG_SF_RGAIN_CHG		0x03c8
+#define REG_SF_GGAIN			0x03ca
+#define REG_SF_GGAIN_CHG		0x03cc
+#define REG_SF_BGAIN			0x03ce
+#define REG_SF_BGAIN_CHG		0x03d0
+#define REG_SF_WBGAIN_CHG		0x03d2
+#define REG_SF_FLICKER_QUANT		0x03d4
+#define REG_SF_FLICKER_QUANT_CHG	0x03d6
 
-/* Output पूर्णांकerface (parallel/MIPI) setup */
-#घोषणा REG_OIF_EN_MIPI_LANES		0x03f2
-#घोषणा REG_OIF_EN_PACKETS		0x03f4
-#घोषणा  EN_PACKETS_CSI2		0xc3
-#घोषणा REG_OIF_CFG_CHG			0x03f6
+/* Output interface (parallel/MIPI) setup */
+#define REG_OIF_EN_MIPI_LANES		0x03f2
+#define REG_OIF_EN_PACKETS		0x03f4
+#define  EN_PACKETS_CSI2		0xc3
+#define REG_OIF_CFG_CHG			0x03f6
 
 /* Auto-algorithms enable mask */
-#घोषणा REG_DBG_AUTOALG_EN		0x03f8
-#घोषणा  AALG_ALL_EN			BIT(0)
-#घोषणा  AALG_AE_EN			BIT(1)
-#घोषणा  AALG_DIVLEI_EN			BIT(2)
-#घोषणा  AALG_WB_EN			BIT(3)
-#घोषणा  AALG_USE_WB_FOR_ISP		BIT(4)
-#घोषणा  AALG_FLICKER_EN		BIT(5)
-#घोषणा  AALG_FIT_EN			BIT(6)
-#घोषणा  AALG_WRHW_EN			BIT(7)
+#define REG_DBG_AUTOALG_EN		0x03f8
+#define  AALG_ALL_EN			BIT(0)
+#define  AALG_AE_EN			BIT(1)
+#define  AALG_DIVLEI_EN			BIT(2)
+#define  AALG_WB_EN			BIT(3)
+#define  AALG_USE_WB_FOR_ISP		BIT(4)
+#define  AALG_FLICKER_EN		BIT(5)
+#define  AALG_FIT_EN			BIT(6)
+#define  AALG_WRHW_EN			BIT(7)
 
-/* Poपूर्णांकers to color correction matrices */
-#घोषणा REG_PTR_CCM_HORIZON		0x06d0
-#घोषणा REG_PTR_CCM_INCANDESCENT	0x06d4
-#घोषणा REG_PTR_CCM_WARM_WHITE		0x06d8
-#घोषणा REG_PTR_CCM_COOL_WHITE		0x06dc
-#घोषणा REG_PTR_CCM_DL50		0x06e0
-#घोषणा REG_PTR_CCM_DL65		0x06e4
-#घोषणा REG_PTR_CCM_OUTDOOR		0x06ec
+/* Pointers to color correction matrices */
+#define REG_PTR_CCM_HORIZON		0x06d0
+#define REG_PTR_CCM_INCANDESCENT	0x06d4
+#define REG_PTR_CCM_WARM_WHITE		0x06d8
+#define REG_PTR_CCM_COOL_WHITE		0x06dc
+#define REG_PTR_CCM_DL50		0x06e0
+#define REG_PTR_CCM_DL65		0x06e4
+#define REG_PTR_CCM_OUTDOOR		0x06ec
 
-#घोषणा REG_ARR_CCM(n)			(0x2800 + 36 * (n))
+#define REG_ARR_CCM(n)			(0x2800 + 36 * (n))
 
-अटल स्थिर अक्षर * स्थिर s5k5baf_supply_names[] = अणु
-	"vdda",		/* Analog घातer supply 2.8V (2.6V to 3.0V) */
-	"vddreg",	/* Regulator input घातer supply 1.8V (1.7V to 1.9V)
+static const char * const s5k5baf_supply_names[] = {
+	"vdda",		/* Analog power supply 2.8V (2.6V to 3.0V) */
+	"vddreg",	/* Regulator input power supply 1.8V (1.7V to 1.9V)
 			   or 2.8V (2.6V to 3.0) */
-	"vddio",	/* I/O घातer supply 1.8V (1.65V to 1.95V)
+	"vddio",	/* I/O power supply 1.8V (1.65V to 1.95V)
 			   or 2.8V (2.5V to 3.1V) */
-पूर्ण;
-#घोषणा S5K5BAF_NUM_SUPPLIES ARRAY_SIZE(s5k5baf_supply_names)
+};
+#define S5K5BAF_NUM_SUPPLIES ARRAY_SIZE(s5k5baf_supply_names)
 
-काष्ठा s5k5baf_gpio अणु
-	पूर्णांक gpio;
-	पूर्णांक level;
-पूर्ण;
+struct s5k5baf_gpio {
+	int gpio;
+	int level;
+};
 
-क्रमागत s5k5baf_gpio_id अणु
+enum s5k5baf_gpio_id {
 	STBY,
 	RST,
 	NUM_GPIOS,
-पूर्ण;
+};
 
-#घोषणा PAD_CIS 0
-#घोषणा PAD_OUT 1
-#घोषणा NUM_CIS_PADS 1
-#घोषणा NUM_ISP_PADS 2
+#define PAD_CIS 0
+#define PAD_OUT 1
+#define NUM_CIS_PADS 1
+#define NUM_ISP_PADS 2
 
-काष्ठा s5k5baf_pixfmt अणु
+struct s5k5baf_pixfmt {
 	u32 code;
 	u32 colorspace;
-	/* REG_P_FMT(x) रेजिस्टर value */
+	/* REG_P_FMT(x) register value */
 	u16 reg_p_fmt;
-पूर्ण;
+};
 
-काष्ठा s5k5baf_ctrls अणु
-	काष्ठा v4l2_ctrl_handler handler;
-	काष्ठा अणु /* Auto / manual white balance cluster */
-		काष्ठा v4l2_ctrl *awb;
-		काष्ठा v4l2_ctrl *gain_red;
-		काष्ठा v4l2_ctrl *gain_blue;
-	पूर्ण;
-	काष्ठा अणु /* Mirror cluster */
-		काष्ठा v4l2_ctrl *hflip;
-		काष्ठा v4l2_ctrl *vflip;
-	पूर्ण;
-	काष्ठा अणु /* Auto exposure / manual exposure and gain cluster */
-		काष्ठा v4l2_ctrl *स्वतः_exp;
-		काष्ठा v4l2_ctrl *exposure;
-		काष्ठा v4l2_ctrl *gain;
-	पूर्ण;
-पूर्ण;
+struct s5k5baf_ctrls {
+	struct v4l2_ctrl_handler handler;
+	struct { /* Auto / manual white balance cluster */
+		struct v4l2_ctrl *awb;
+		struct v4l2_ctrl *gain_red;
+		struct v4l2_ctrl *gain_blue;
+	};
+	struct { /* Mirror cluster */
+		struct v4l2_ctrl *hflip;
+		struct v4l2_ctrl *vflip;
+	};
+	struct { /* Auto exposure / manual exposure and gain cluster */
+		struct v4l2_ctrl *auto_exp;
+		struct v4l2_ctrl *exposure;
+		struct v4l2_ctrl *gain;
+	};
+};
 
-क्रमागत अणु
+enum {
 	S5K5BAF_FW_ID_PATCH,
 	S5K5BAF_FW_ID_CCM,
 	S5K5BAF_FW_ID_CIS,
-पूर्ण;
+};
 
-काष्ठा s5k5baf_fw अणु
+struct s5k5baf_fw {
 	u16 count;
-	काष्ठा अणु
+	struct {
 		u16 id;
 		u16 offset;
-	पूर्ण seq[];
-पूर्ण;
+	} seq[];
+};
 
-काष्ठा s5k5baf अणु
-	काष्ठा s5k5baf_gpio gpios[NUM_GPIOS];
-	क्रमागत v4l2_mbus_type bus_type;
+struct s5k5baf {
+	struct s5k5baf_gpio gpios[NUM_GPIOS];
+	enum v4l2_mbus_type bus_type;
 	u8 nlanes;
-	काष्ठा regulator_bulk_data supplies[S5K5BAF_NUM_SUPPLIES];
+	struct regulator_bulk_data supplies[S5K5BAF_NUM_SUPPLIES];
 
-	काष्ठा clk *घड़ी;
+	struct clk *clock;
 	u32 mclk_frequency;
 
-	काष्ठा s5k5baf_fw *fw;
+	struct s5k5baf_fw *fw;
 
-	काष्ठा v4l2_subdev cis_sd;
-	काष्ठा media_pad cis_pad;
+	struct v4l2_subdev cis_sd;
+	struct media_pad cis_pad;
 
-	काष्ठा v4l2_subdev sd;
-	काष्ठा media_pad pads[NUM_ISP_PADS];
+	struct v4l2_subdev sd;
+	struct media_pad pads[NUM_ISP_PADS];
 
-	/* protects the काष्ठा members below */
-	काष्ठा mutex lock;
+	/* protects the struct members below */
+	struct mutex lock;
 
-	पूर्णांक error;
+	int error;
 
-	काष्ठा v4l2_rect crop_sink;
-	काष्ठा v4l2_rect compose;
-	काष्ठा v4l2_rect crop_source;
-	/* index to s5k5baf_क्रमmats array */
-	पूर्णांक pixfmt;
-	/* actual frame पूर्णांकerval in 100us */
+	struct v4l2_rect crop_sink;
+	struct v4l2_rect compose;
+	struct v4l2_rect crop_source;
+	/* index to s5k5baf_formats array */
+	int pixfmt;
+	/* actual frame interval in 100us */
 	u16 fiv;
-	/* requested frame पूर्णांकerval in 100us */
+	/* requested frame interval in 100us */
 	u16 req_fiv;
-	/* cache क्रम REG_DBG_AUTOALG_EN रेजिस्टर */
-	u16 स्वतः_alg;
+	/* cache for REG_DBG_AUTOALG_EN register */
+	u16 auto_alg;
 
-	काष्ठा s5k5baf_ctrls ctrls;
+	struct s5k5baf_ctrls ctrls;
 
-	अचिन्हित पूर्णांक streaming:1;
-	अचिन्हित पूर्णांक apply_cfg:1;
-	अचिन्हित पूर्णांक apply_crop:1;
-	अचिन्हित पूर्णांक valid_स्वतः_alg:1;
-	अचिन्हित पूर्णांक घातer;
-पूर्ण;
+	unsigned int streaming:1;
+	unsigned int apply_cfg:1;
+	unsigned int apply_crop:1;
+	unsigned int valid_auto_alg:1;
+	unsigned int power;
+};
 
-अटल स्थिर काष्ठा s5k5baf_pixfmt s5k5baf_क्रमmats[] = अणु
-	अणु MEDIA_BUS_FMT_VYUY8_2X8,	V4L2_COLORSPACE_JPEG,	5 पूर्ण,
+static const struct s5k5baf_pixfmt s5k5baf_formats[] = {
+	{ MEDIA_BUS_FMT_VYUY8_2X8,	V4L2_COLORSPACE_JPEG,	5 },
 	/* range 16-240 */
-	अणु MEDIA_BUS_FMT_VYUY8_2X8,	V4L2_COLORSPACE_REC709,	6 पूर्ण,
-	अणु MEDIA_BUS_FMT_RGB565_2X8_BE,	V4L2_COLORSPACE_JPEG,	0 पूर्ण,
-पूर्ण;
+	{ MEDIA_BUS_FMT_VYUY8_2X8,	V4L2_COLORSPACE_REC709,	6 },
+	{ MEDIA_BUS_FMT_RGB565_2X8_BE,	V4L2_COLORSPACE_JPEG,	0 },
+};
 
-अटल काष्ठा v4l2_rect s5k5baf_cis_rect = अणु
+static struct v4l2_rect s5k5baf_cis_rect = {
 	0, 0, S5K5BAF_CIS_WIDTH, S5K5BAF_CIS_HEIGHT
-पूर्ण;
+};
 
 /* Setfile contains set of I2C command sequences. Each sequence has its ID.
- * setfile क्रमmat:
+ * setfile format:
  *	u8 magic[4];
  *	u16 count;		number of sequences
- *	काष्ठा अणु
+ *	struct {
  *		u16 id;		sequence id
  *		u16 offset;	sequence offset in data array
- *	पूर्ण seq[count];
+ *	} seq[count];
  *	u16 data[*];		array containing sequences
  *
  */
-अटल पूर्णांक s5k5baf_fw_parse(काष्ठा device *dev, काष्ठा s5k5baf_fw **fw,
-			    माप_प्रकार count, स्थिर __le16 *data)
-अणु
-	काष्ठा s5k5baf_fw *f;
+static int s5k5baf_fw_parse(struct device *dev, struct s5k5baf_fw **fw,
+			    size_t count, const __le16 *data)
+{
+	struct s5k5baf_fw *f;
 	u16 *d, i, *end;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (count < S5K5BAG_FW_TAG_LEN + 1) अणु
+	if (count < S5K5BAG_FW_TAG_LEN + 1) {
 		dev_err(dev, "firmware file too short (%zu)\n", count);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ret = स_भेद(data, S5K5BAF_FW_TAG, S5K5BAG_FW_TAG_LEN * माप(u16));
-	अगर (ret != 0) अणु
+	ret = memcmp(data, S5K5BAF_FW_TAG, S5K5BAG_FW_TAG_LEN * sizeof(u16));
+	if (ret != 0) {
 		dev_err(dev, "invalid firmware magic number\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	data += S5K5BAG_FW_TAG_LEN;
 	count -= S5K5BAG_FW_TAG_LEN;
 
-	d = devm_kसुस्मृति(dev, count, माप(u16), GFP_KERNEL);
-	अगर (!d)
-		वापस -ENOMEM;
+	d = devm_kcalloc(dev, count, sizeof(u16), GFP_KERNEL);
+	if (!d)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < count; ++i)
+	for (i = 0; i < count; ++i)
 		d[i] = le16_to_cpu(data[i]);
 
-	f = (काष्ठा s5k5baf_fw *)d;
-	अगर (count < 1 + 2 * f->count) अणु
+	f = (struct s5k5baf_fw *)d;
+	if (count < 1 + 2 * f->count) {
 		dev_err(dev, "invalid firmware header (count=%d size=%zu)\n",
 			f->count, 2 * (count + S5K5BAG_FW_TAG_LEN));
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	end = d + count;
 	d += 1 + 2 * f->count;
 
-	क्रम (i = 0; i < f->count; ++i) अणु
-		अगर (f->seq[i].offset + d <= end)
-			जारी;
+	for (i = 0; i < f->count; ++i) {
+		if (f->seq[i].offset + d <= end)
+			continue;
 		dev_err(dev, "invalid firmware header (seq=%d)\n", i);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	*fw = f;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत काष्ठा v4l2_subdev *ctrl_to_sd(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	वापस &container_of(ctrl->handler, काष्ठा s5k5baf, ctrls.handler)->sd;
-पूर्ण
+static inline struct v4l2_subdev *ctrl_to_sd(struct v4l2_ctrl *ctrl)
+{
+	return &container_of(ctrl->handler, struct s5k5baf, ctrls.handler)->sd;
+}
 
-अटल अंतरभूत bool s5k5baf_is_cis_subdev(काष्ठा v4l2_subdev *sd)
-अणु
-	वापस sd->entity.function == MEDIA_ENT_F_CAM_SENSOR;
-पूर्ण
+static inline bool s5k5baf_is_cis_subdev(struct v4l2_subdev *sd)
+{
+	return sd->entity.function == MEDIA_ENT_F_CAM_SENSOR;
+}
 
-अटल अंतरभूत काष्ठा s5k5baf *to_s5k5baf(काष्ठा v4l2_subdev *sd)
-अणु
-	अगर (s5k5baf_is_cis_subdev(sd))
-		वापस container_of(sd, काष्ठा s5k5baf, cis_sd);
-	अन्यथा
-		वापस container_of(sd, काष्ठा s5k5baf, sd);
-पूर्ण
+static inline struct s5k5baf *to_s5k5baf(struct v4l2_subdev *sd)
+{
+	if (s5k5baf_is_cis_subdev(sd))
+		return container_of(sd, struct s5k5baf, cis_sd);
+	else
+		return container_of(sd, struct s5k5baf, sd);
+}
 
-अटल u16 s5k5baf_i2c_पढ़ो(काष्ठा s5k5baf *state, u16 addr)
-अणु
-	काष्ठा i2c_client *c = v4l2_get_subdevdata(&state->sd);
+static u16 s5k5baf_i2c_read(struct s5k5baf *state, u16 addr)
+{
+	struct i2c_client *c = v4l2_get_subdevdata(&state->sd);
 	__be16 w, r;
 	u16 res;
-	काष्ठा i2c_msg msg[] = अणु
-		अणु .addr = c->addr, .flags = 0,
-		  .len = 2, .buf = (u8 *)&w पूर्ण,
-		अणु .addr = c->addr, .flags = I2C_M_RD,
-		  .len = 2, .buf = (u8 *)&r पूर्ण,
-	पूर्ण;
-	पूर्णांक ret;
+	struct i2c_msg msg[] = {
+		{ .addr = c->addr, .flags = 0,
+		  .len = 2, .buf = (u8 *)&w },
+		{ .addr = c->addr, .flags = I2C_M_RD,
+		  .len = 2, .buf = (u8 *)&r },
+	};
+	int ret;
 
-	अगर (state->error)
-		वापस 0;
+	if (state->error)
+		return 0;
 
 	w = cpu_to_be16(addr);
 	ret = i2c_transfer(c->adapter, msg, 2);
@@ -438,485 +437,485 @@ module_param(debug, पूर्णांक, 0644);
 
 	v4l2_dbg(3, debug, c, "i2c_read: 0x%04x : 0x%04x\n", addr, res);
 
-	अगर (ret != 2) अणु
+	if (ret != 2) {
 		v4l2_err(c, "i2c_read: error during transfer (%d)\n", ret);
 		state->error = ret;
-	पूर्ण
-	वापस res;
-पूर्ण
+	}
+	return res;
+}
 
-अटल व्योम s5k5baf_i2c_ग_लिखो(काष्ठा s5k5baf *state, u16 addr, u16 val)
-अणु
-	u8 buf[4] = अणु addr >> 8, addr & 0xFF, val >> 8, val & 0xFF पूर्ण;
-	काष्ठा i2c_client *c = v4l2_get_subdevdata(&state->sd);
-	पूर्णांक ret;
+static void s5k5baf_i2c_write(struct s5k5baf *state, u16 addr, u16 val)
+{
+	u8 buf[4] = { addr >> 8, addr & 0xFF, val >> 8, val & 0xFF };
+	struct i2c_client *c = v4l2_get_subdevdata(&state->sd);
+	int ret;
 
-	अगर (state->error)
-		वापस;
+	if (state->error)
+		return;
 
 	ret = i2c_master_send(c, buf, 4);
 	v4l2_dbg(3, debug, c, "i2c_write: 0x%04x : 0x%04x\n", addr, val);
 
-	अगर (ret != 4) अणु
+	if (ret != 4) {
 		v4l2_err(c, "i2c_write: error during transfer (%d)\n", ret);
 		state->error = ret;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल u16 s5k5baf_पढ़ो(काष्ठा s5k5baf *state, u16 addr)
-अणु
-	s5k5baf_i2c_ग_लिखो(state, REG_CMDRD_ADDR, addr);
-	वापस s5k5baf_i2c_पढ़ो(state, REG_CMD_BUF);
-पूर्ण
+static u16 s5k5baf_read(struct s5k5baf *state, u16 addr)
+{
+	s5k5baf_i2c_write(state, REG_CMDRD_ADDR, addr);
+	return s5k5baf_i2c_read(state, REG_CMD_BUF);
+}
 
-अटल व्योम s5k5baf_ग_लिखो(काष्ठा s5k5baf *state, u16 addr, u16 val)
-अणु
-	s5k5baf_i2c_ग_लिखो(state, REG_CMDWR_ADDR, addr);
-	s5k5baf_i2c_ग_लिखो(state, REG_CMD_BUF, val);
-पूर्ण
+static void s5k5baf_write(struct s5k5baf *state, u16 addr, u16 val)
+{
+	s5k5baf_i2c_write(state, REG_CMDWR_ADDR, addr);
+	s5k5baf_i2c_write(state, REG_CMD_BUF, val);
+}
 
-अटल व्योम s5k5baf_ग_लिखो_arr_seq(काष्ठा s5k5baf *state, u16 addr,
-				  u16 count, स्थिर u16 *seq)
-अणु
-	काष्ठा i2c_client *c = v4l2_get_subdevdata(&state->sd);
+static void s5k5baf_write_arr_seq(struct s5k5baf *state, u16 addr,
+				  u16 count, const u16 *seq)
+{
+	struct i2c_client *c = v4l2_get_subdevdata(&state->sd);
 	__be16 buf[65];
 
-	s5k5baf_i2c_ग_लिखो(state, REG_CMDWR_ADDR, addr);
-	अगर (state->error)
-		वापस;
+	s5k5baf_i2c_write(state, REG_CMDWR_ADDR, addr);
+	if (state->error)
+		return;
 
 	v4l2_dbg(3, debug, c, "i2c_write_seq(count=%d): %*ph\n", count,
 		 min(2 * count, 64), seq);
 
 	buf[0] = cpu_to_be16(REG_CMD_BUF);
 
-	जबतक (count > 0) अणु
-		पूर्णांक n = min_t(पूर्णांक, count, ARRAY_SIZE(buf) - 1);
-		पूर्णांक ret, i;
+	while (count > 0) {
+		int n = min_t(int, count, ARRAY_SIZE(buf) - 1);
+		int ret, i;
 
-		क्रम (i = 1; i <= n; ++i)
+		for (i = 1; i <= n; ++i)
 			buf[i] = cpu_to_be16(*seq++);
 
 		i *= 2;
-		ret = i2c_master_send(c, (अक्षर *)buf, i);
-		अगर (ret != i) अणु
+		ret = i2c_master_send(c, (char *)buf, i);
+		if (ret != i) {
 			v4l2_err(c, "i2c_write_seq: error during transfer (%d)\n", ret);
 			state->error = ret;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		count -= n;
-	पूर्ण
-पूर्ण
+	}
+}
 
-#घोषणा s5k5baf_ग_लिखो_seq(state, addr, seq...) \
-	s5k5baf_ग_लिखो_arr_seq(state, addr, माप((अक्षर[])अणु seq पूर्ण), \
-			      (स्थिर u16 [])अणु seq पूर्ण)
+#define s5k5baf_write_seq(state, addr, seq...) \
+	s5k5baf_write_arr_seq(state, addr, sizeof((char[]){ seq }), \
+			      (const u16 []){ seq })
 
 /* add items count at the beginning of the list */
-#घोषणा NSEQ(seq...) माप((अक्षर[])अणु seq पूर्ण), seq
+#define NSEQ(seq...) sizeof((char[]){ seq }), seq
 
 /*
- * s5k5baf_ग_लिखो_nseq() - Writes sequences of values to sensor memory via i2c
- * @nseq: sequence of u16 words in क्रमmat:
+ * s5k5baf_write_nseq() - Writes sequences of values to sensor memory via i2c
+ * @nseq: sequence of u16 words in format:
  *	(N, address, value[1]...value[N-1])*,0
  * Ex.:
- *	u16 seq[] = अणु NSEQ(0x4000, 1, 1), NSEQ(0x4010, 640, 480), 0 पूर्ण;
- *	ret = s5k5baf_ग_लिखो_nseq(c, seq);
+ *	u16 seq[] = { NSEQ(0x4000, 1, 1), NSEQ(0x4010, 640, 480), 0 };
+ *	ret = s5k5baf_write_nseq(c, seq);
  */
-अटल व्योम s5k5baf_ग_लिखो_nseq(काष्ठा s5k5baf *state, स्थिर u16 *nseq)
-अणु
-	पूर्णांक count;
+static void s5k5baf_write_nseq(struct s5k5baf *state, const u16 *nseq)
+{
+	int count;
 
-	जबतक ((count = *nseq++)) अणु
+	while ((count = *nseq++)) {
 		u16 addr = *nseq++;
 		--count;
 
-		s5k5baf_ग_लिखो_arr_seq(state, addr, count, nseq);
+		s5k5baf_write_arr_seq(state, addr, count, nseq);
 		nseq += count;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम s5k5baf_synchronize(काष्ठा s5k5baf *state, पूर्णांक समयout, u16 addr)
-अणु
-	अचिन्हित दीर्घ end = jअगरfies + msecs_to_jअगरfies(समयout);
+static void s5k5baf_synchronize(struct s5k5baf *state, int timeout, u16 addr)
+{
+	unsigned long end = jiffies + msecs_to_jiffies(timeout);
 	u16 reg;
 
-	s5k5baf_ग_लिखो(state, addr, 1);
-	करो अणु
-		reg = s5k5baf_पढ़ो(state, addr);
-		अगर (state->error || !reg)
-			वापस;
+	s5k5baf_write(state, addr, 1);
+	do {
+		reg = s5k5baf_read(state, addr);
+		if (state->error || !reg)
+			return;
 		usleep_range(5000, 10000);
-	पूर्ण जबतक (समय_is_after_jअगरfies(end));
+	} while (time_is_after_jiffies(end));
 
 	v4l2_err(&state->sd, "timeout on register synchronize (%#x)\n", addr);
 	state->error = -ETIMEDOUT;
-पूर्ण
+}
 
-अटल u16 *s5k5baf_fw_get_seq(काष्ठा s5k5baf *state, u16 seq_id)
-अणु
-	काष्ठा s5k5baf_fw *fw = state->fw;
+static u16 *s5k5baf_fw_get_seq(struct s5k5baf *state, u16 seq_id)
+{
+	struct s5k5baf_fw *fw = state->fw;
 	u16 *data;
-	पूर्णांक i;
+	int i;
 
-	अगर (fw == शून्य)
-		वापस शून्य;
+	if (fw == NULL)
+		return NULL;
 
 	data = &fw->seq[0].id + 2 * fw->count;
 
-	क्रम (i = 0; i < fw->count; ++i) अणु
-		अगर (fw->seq[i].id == seq_id)
-			वापस data + fw->seq[i].offset;
-	पूर्ण
+	for (i = 0; i < fw->count; ++i) {
+		if (fw->seq[i].id == seq_id)
+			return data + fw->seq[i].offset;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम s5k5baf_hw_patch(काष्ठा s5k5baf *state)
-अणु
+static void s5k5baf_hw_patch(struct s5k5baf *state)
+{
 	u16 *seq = s5k5baf_fw_get_seq(state, S5K5BAF_FW_ID_PATCH);
 
-	अगर (seq)
-		s5k5baf_ग_लिखो_nseq(state, seq);
-पूर्ण
+	if (seq)
+		s5k5baf_write_nseq(state, seq);
+}
 
-अटल व्योम s5k5baf_hw_set_घड़ीs(काष्ठा s5k5baf *state)
-अणु
-	अचिन्हित दीर्घ mclk = state->mclk_frequency / 1000;
+static void s5k5baf_hw_set_clocks(struct s5k5baf *state)
+{
+	unsigned long mclk = state->mclk_frequency / 1000;
 	u16 status;
-	अटल स्थिर u16 nseq_clk_cfg[] = अणु
+	static const u16 nseq_clk_cfg[] = {
 		NSEQ(REG_I_USE_NPVI_CLOCKS,
 		  NPVI_CLOCKS, NMIPI_CLOCKS, 0,
 		  SCLK_PVI_FREQ / 4, PCLK_MIN_FREQ / 4, PCLK_MAX_FREQ / 4,
 		  SCLK_MIPI_FREQ / 4, PCLK_MIN_FREQ / 4, PCLK_MAX_FREQ / 4),
 		NSEQ(REG_I_USE_REGS_API, 1),
 		0
-	पूर्ण;
+	};
 
-	s5k5baf_ग_लिखो_seq(state, REG_I_INCLK_FREQ_L, mclk & 0xffff, mclk >> 16);
-	s5k5baf_ग_लिखो_nseq(state, nseq_clk_cfg);
+	s5k5baf_write_seq(state, REG_I_INCLK_FREQ_L, mclk & 0xffff, mclk >> 16);
+	s5k5baf_write_nseq(state, nseq_clk_cfg);
 
 	s5k5baf_synchronize(state, 250, REG_I_INIT_PARAMS_UPDATED);
-	status = s5k5baf_पढ़ो(state, REG_I_ERROR_INFO);
-	अगर (!state->error && status) अणु
+	status = s5k5baf_read(state, REG_I_ERROR_INFO);
+	if (!state->error && status) {
 		v4l2_err(&state->sd, "error configuring PLL (%d)\n", status);
 		state->error = -EINVAL;
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* set custom color correction matrices क्रम various illuminations */
-अटल व्योम s5k5baf_hw_set_ccm(काष्ठा s5k5baf *state)
-अणु
+/* set custom color correction matrices for various illuminations */
+static void s5k5baf_hw_set_ccm(struct s5k5baf *state)
+{
 	u16 *seq = s5k5baf_fw_get_seq(state, S5K5BAF_FW_ID_CCM);
 
-	अगर (seq)
-		s5k5baf_ग_लिखो_nseq(state, seq);
-पूर्ण
+	if (seq)
+		s5k5baf_write_nseq(state, seq);
+}
 
-/* CIS sensor tuning, based on unकरोcumented android driver code */
-अटल व्योम s5k5baf_hw_set_cis(काष्ठा s5k5baf *state)
-अणु
+/* CIS sensor tuning, based on undocumented android driver code */
+static void s5k5baf_hw_set_cis(struct s5k5baf *state)
+{
 	u16 *seq = s5k5baf_fw_get_seq(state, S5K5BAF_FW_ID_CIS);
 
-	अगर (!seq)
-		वापस;
+	if (!seq)
+		return;
 
-	s5k5baf_i2c_ग_लिखो(state, REG_CMDWR_PAGE, PAGE_IF_HW);
-	s5k5baf_ग_लिखो_nseq(state, seq);
-	s5k5baf_i2c_ग_लिखो(state, REG_CMDWR_PAGE, PAGE_IF_SW);
-पूर्ण
+	s5k5baf_i2c_write(state, REG_CMDWR_PAGE, PAGE_IF_HW);
+	s5k5baf_write_nseq(state, seq);
+	s5k5baf_i2c_write(state, REG_CMDWR_PAGE, PAGE_IF_SW);
+}
 
-अटल व्योम s5k5baf_hw_sync_cfg(काष्ठा s5k5baf *state)
-अणु
-	s5k5baf_ग_लिखो(state, REG_G_PREV_CFG_CHG, 1);
-	अगर (state->apply_crop) अणु
-		s5k5baf_ग_लिखो(state, REG_G_INPUTS_CHANGE_REQ, 1);
-		s5k5baf_ग_लिखो(state, REG_G_PREV_CFG_BYPASS_CHANGED, 1);
-	पूर्ण
+static void s5k5baf_hw_sync_cfg(struct s5k5baf *state)
+{
+	s5k5baf_write(state, REG_G_PREV_CFG_CHG, 1);
+	if (state->apply_crop) {
+		s5k5baf_write(state, REG_G_INPUTS_CHANGE_REQ, 1);
+		s5k5baf_write(state, REG_G_PREV_CFG_BYPASS_CHANGED, 1);
+	}
 	s5k5baf_synchronize(state, 500, REG_G_NEW_CFG_SYNC);
-पूर्ण
+}
 /* Set horizontal and vertical image flipping */
-अटल व्योम s5k5baf_hw_set_mirror(काष्ठा s5k5baf *state)
-अणु
+static void s5k5baf_hw_set_mirror(struct s5k5baf *state)
+{
 	u16 flip = state->ctrls.vflip->val | (state->ctrls.vflip->val << 1);
 
-	s5k5baf_ग_लिखो(state, REG_P_PREV_MIRROR(0), flip);
-	अगर (state->streaming)
+	s5k5baf_write(state, REG_P_PREV_MIRROR(0), flip);
+	if (state->streaming)
 		s5k5baf_hw_sync_cfg(state);
-पूर्ण
+}
 
-अटल व्योम s5k5baf_hw_set_alg(काष्ठा s5k5baf *state, u16 alg, bool enable)
-अणु
+static void s5k5baf_hw_set_alg(struct s5k5baf *state, u16 alg, bool enable)
+{
 	u16 cur_alg, new_alg;
 
-	अगर (!state->valid_स्वतः_alg)
-		cur_alg = s5k5baf_पढ़ो(state, REG_DBG_AUTOALG_EN);
-	अन्यथा
-		cur_alg = state->स्वतः_alg;
+	if (!state->valid_auto_alg)
+		cur_alg = s5k5baf_read(state, REG_DBG_AUTOALG_EN);
+	else
+		cur_alg = state->auto_alg;
 
 	new_alg = enable ? (cur_alg | alg) : (cur_alg & ~alg);
 
-	अगर (new_alg != cur_alg)
-		s5k5baf_ग_लिखो(state, REG_DBG_AUTOALG_EN, new_alg);
+	if (new_alg != cur_alg)
+		s5k5baf_write(state, REG_DBG_AUTOALG_EN, new_alg);
 
-	अगर (state->error)
-		वापस;
+	if (state->error)
+		return;
 
-	state->valid_स्वतः_alg = 1;
-	state->स्वतः_alg = new_alg;
-पूर्ण
+	state->valid_auto_alg = 1;
+	state->auto_alg = new_alg;
+}
 
-/* Configure स्वतः/manual white balance and R/G/B gains */
-अटल व्योम s5k5baf_hw_set_awb(काष्ठा s5k5baf *state, पूर्णांक awb)
-अणु
-	काष्ठा s5k5baf_ctrls *ctrls = &state->ctrls;
+/* Configure auto/manual white balance and R/G/B gains */
+static void s5k5baf_hw_set_awb(struct s5k5baf *state, int awb)
+{
+	struct s5k5baf_ctrls *ctrls = &state->ctrls;
 
-	अगर (!awb)
-		s5k5baf_ग_लिखो_seq(state, REG_SF_RGAIN,
+	if (!awb)
+		s5k5baf_write_seq(state, REG_SF_RGAIN,
 				  ctrls->gain_red->val, 1,
 				  S5K5BAF_GAIN_GREEN_DEF, 1,
 				  ctrls->gain_blue->val, 1,
 				  1);
 
 	s5k5baf_hw_set_alg(state, AALG_WB_EN, awb);
-पूर्ण
+}
 
-/* Program FW with exposure समय, 'exposure' in us units */
-अटल व्योम s5k5baf_hw_set_user_exposure(काष्ठा s5k5baf *state, पूर्णांक exposure)
-अणु
-	अचिन्हित पूर्णांक समय = exposure / 10;
+/* Program FW with exposure time, 'exposure' in us units */
+static void s5k5baf_hw_set_user_exposure(struct s5k5baf *state, int exposure)
+{
+	unsigned int time = exposure / 10;
 
-	s5k5baf_ग_लिखो_seq(state, REG_SF_USR_EXPOSURE_L,
-			  समय & 0xffff, समय >> 16, 1);
-पूर्ण
+	s5k5baf_write_seq(state, REG_SF_USR_EXPOSURE_L,
+			  time & 0xffff, time >> 16, 1);
+}
 
-अटल व्योम s5k5baf_hw_set_user_gain(काष्ठा s5k5baf *state, पूर्णांक gain)
-अणु
-	s5k5baf_ग_लिखो_seq(state, REG_SF_USR_TOT_GAIN, gain, 1);
-पूर्ण
+static void s5k5baf_hw_set_user_gain(struct s5k5baf *state, int gain)
+{
+	s5k5baf_write_seq(state, REG_SF_USR_TOT_GAIN, gain, 1);
+}
 
-/* Set स्वतः/manual exposure and total gain */
-अटल व्योम s5k5baf_hw_set_स्वतः_exposure(काष्ठा s5k5baf *state, पूर्णांक value)
-अणु
-	अगर (value == V4L2_EXPOSURE_AUTO) अणु
+/* Set auto/manual exposure and total gain */
+static void s5k5baf_hw_set_auto_exposure(struct s5k5baf *state, int value)
+{
+	if (value == V4L2_EXPOSURE_AUTO) {
 		s5k5baf_hw_set_alg(state, AALG_AE_EN | AALG_DIVLEI_EN, true);
-	पूर्ण अन्यथा अणु
-		अचिन्हित पूर्णांक exp_समय = state->ctrls.exposure->val;
+	} else {
+		unsigned int exp_time = state->ctrls.exposure->val;
 
-		s5k5baf_hw_set_user_exposure(state, exp_समय);
+		s5k5baf_hw_set_user_exposure(state, exp_time);
 		s5k5baf_hw_set_user_gain(state, state->ctrls.gain->val);
 		s5k5baf_hw_set_alg(state, AALG_AE_EN | AALG_DIVLEI_EN, false);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम s5k5baf_hw_set_anti_flicker(काष्ठा s5k5baf *state, पूर्णांक v)
-अणु
-	अगर (v == V4L2_CID_POWER_LINE_FREQUENCY_AUTO) अणु
+static void s5k5baf_hw_set_anti_flicker(struct s5k5baf *state, int v)
+{
+	if (v == V4L2_CID_POWER_LINE_FREQUENCY_AUTO) {
 		s5k5baf_hw_set_alg(state, AALG_FLICKER_EN, true);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* The V4L2_CID_LINE_FREQUENCY control values match
-		 * the रेजिस्टर values */
-		s5k5baf_ग_लिखो_seq(state, REG_SF_FLICKER_QUANT, v, 1);
+		 * the register values */
+		s5k5baf_write_seq(state, REG_SF_FLICKER_QUANT, v, 1);
 		s5k5baf_hw_set_alg(state, AALG_FLICKER_EN, false);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम s5k5baf_hw_set_colorfx(काष्ठा s5k5baf *state, पूर्णांक val)
-अणु
-	अटल स्थिर u16 colorfx[] = अणु
+static void s5k5baf_hw_set_colorfx(struct s5k5baf *state, int val)
+{
+	static const u16 colorfx[] = {
 		[V4L2_COLORFX_NONE] = 0,
 		[V4L2_COLORFX_BW] = 1,
 		[V4L2_COLORFX_NEGATIVE] = 2,
 		[V4L2_COLORFX_SEPIA] = 3,
 		[V4L2_COLORFX_SKY_BLUE] = 4,
 		[V4L2_COLORFX_SKETCH] = 5,
-	पूर्ण;
+	};
 
-	s5k5baf_ग_लिखो(state, REG_G_SPEC_EFFECTS, colorfx[val]);
-पूर्ण
+	s5k5baf_write(state, REG_G_SPEC_EFFECTS, colorfx[val]);
+}
 
-अटल पूर्णांक s5k5baf_find_pixfmt(काष्ठा v4l2_mbus_framefmt *mf)
-अणु
-	पूर्णांक i, c = -1;
+static int s5k5baf_find_pixfmt(struct v4l2_mbus_framefmt *mf)
+{
+	int i, c = -1;
 
-	क्रम (i = 0; i < ARRAY_SIZE(s5k5baf_क्रमmats); i++) अणु
-		अगर (mf->colorspace != s5k5baf_क्रमmats[i].colorspace)
-			जारी;
-		अगर (mf->code == s5k5baf_क्रमmats[i].code)
-			वापस i;
-		अगर (c < 0)
+	for (i = 0; i < ARRAY_SIZE(s5k5baf_formats); i++) {
+		if (mf->colorspace != s5k5baf_formats[i].colorspace)
+			continue;
+		if (mf->code == s5k5baf_formats[i].code)
+			return i;
+		if (c < 0)
 			c = i;
-	पूर्ण
-	वापस (c < 0) ? 0 : c;
-पूर्ण
+	}
+	return (c < 0) ? 0 : c;
+}
 
-अटल पूर्णांक s5k5baf_clear_error(काष्ठा s5k5baf *state)
-अणु
-	पूर्णांक ret = state->error;
+static int s5k5baf_clear_error(struct s5k5baf *state)
+{
+	int ret = state->error;
 
 	state->error = 0;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक s5k5baf_hw_set_video_bus(काष्ठा s5k5baf *state)
-अणु
+static int s5k5baf_hw_set_video_bus(struct s5k5baf *state)
+{
 	u16 en_pkts;
 
-	अगर (state->bus_type == V4L2_MBUS_CSI2_DPHY)
+	if (state->bus_type == V4L2_MBUS_CSI2_DPHY)
 		en_pkts = EN_PACKETS_CSI2;
-	अन्यथा
+	else
 		en_pkts = 0;
 
-	s5k5baf_ग_लिखो_seq(state, REG_OIF_EN_MIPI_LANES,
+	s5k5baf_write_seq(state, REG_OIF_EN_MIPI_LANES,
 			  state->nlanes, en_pkts, 1);
 
-	वापस s5k5baf_clear_error(state);
-पूर्ण
+	return s5k5baf_clear_error(state);
+}
 
-अटल u16 s5k5baf_get_cfg_error(काष्ठा s5k5baf *state)
-अणु
-	u16 err = s5k5baf_पढ़ो(state, REG_G_PREV_CFG_ERROR);
-	अगर (err)
-		s5k5baf_ग_लिखो(state, REG_G_PREV_CFG_ERROR, 0);
-	वापस err;
-पूर्ण
+static u16 s5k5baf_get_cfg_error(struct s5k5baf *state)
+{
+	u16 err = s5k5baf_read(state, REG_G_PREV_CFG_ERROR);
+	if (err)
+		s5k5baf_write(state, REG_G_PREV_CFG_ERROR, 0);
+	return err;
+}
 
-अटल व्योम s5k5baf_hw_set_fiv(काष्ठा s5k5baf *state, u16 fiv)
-अणु
-	s5k5baf_ग_लिखो(state, REG_P_MAX_FR_TIME(0), fiv);
+static void s5k5baf_hw_set_fiv(struct s5k5baf *state, u16 fiv)
+{
+	s5k5baf_write(state, REG_P_MAX_FR_TIME(0), fiv);
 	s5k5baf_hw_sync_cfg(state);
-पूर्ण
+}
 
-अटल व्योम s5k5baf_hw_find_min_fiv(काष्ठा s5k5baf *state)
-अणु
+static void s5k5baf_hw_find_min_fiv(struct s5k5baf *state)
+{
 	u16 err, fiv;
-	पूर्णांक n;
+	int n;
 
-	fiv = s5k5baf_पढ़ो(state,  REG_G_ACTUAL_P_FR_TIME);
-	अगर (state->error)
-		वापस;
+	fiv = s5k5baf_read(state,  REG_G_ACTUAL_P_FR_TIME);
+	if (state->error)
+		return;
 
-	क्रम (n = 5; n > 0; --n) अणु
+	for (n = 5; n > 0; --n) {
 		s5k5baf_hw_set_fiv(state, fiv);
 		err = s5k5baf_get_cfg_error(state);
-		अगर (state->error)
-			वापस;
-		चयन (err) अणु
-		हाल CFG_ERROR_RANGE:
+		if (state->error)
+			return;
+		switch (err) {
+		case CFG_ERROR_RANGE:
 			++fiv;
-			अवरोध;
-		हाल 0:
+			break;
+		case 0:
 			state->fiv = fiv;
 			v4l2_info(&state->sd,
 				  "found valid frame interval: %d00us\n", fiv);
-			वापस;
-		शेष:
+			return;
+		default:
 			v4l2_err(&state->sd,
 				 "error setting frame interval: %d\n", err);
 			state->error = -EINVAL;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	v4l2_err(&state->sd, "cannot find correct frame interval\n");
-	state->error = -दुस्फल;
-पूर्ण
+	state->error = -ERANGE;
+}
 
-अटल व्योम s5k5baf_hw_validate_cfg(काष्ठा s5k5baf *state)
-अणु
+static void s5k5baf_hw_validate_cfg(struct s5k5baf *state)
+{
 	u16 err;
 
 	err = s5k5baf_get_cfg_error(state);
-	अगर (state->error)
-		वापस;
+	if (state->error)
+		return;
 
-	चयन (err) अणु
-	हाल 0:
+	switch (err) {
+	case 0:
 		state->apply_cfg = 1;
-		वापस;
-	हाल CFG_ERROR_RANGE:
+		return;
+	case CFG_ERROR_RANGE:
 		s5k5baf_hw_find_min_fiv(state);
-		अगर (!state->error)
+		if (!state->error)
 			state->apply_cfg = 1;
-		वापस;
-	शेष:
+		return;
+	default:
 		v4l2_err(&state->sd,
 			 "error setting format: %d\n", err);
 		state->error = -EINVAL;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम s5k5baf_rescale(काष्ठा v4l2_rect *r, स्थिर काष्ठा v4l2_rect *v,
-			    स्थिर काष्ठा v4l2_rect *n,
-			    स्थिर काष्ठा v4l2_rect *d)
-अणु
+static void s5k5baf_rescale(struct v4l2_rect *r, const struct v4l2_rect *v,
+			    const struct v4l2_rect *n,
+			    const struct v4l2_rect *d)
+{
 	r->left = v->left * n->width / d->width;
 	r->top = v->top * n->height / d->height;
 	r->width = v->width * n->width / d->width;
 	r->height = v->height * n->height / d->height;
-पूर्ण
+}
 
-अटल पूर्णांक s5k5baf_hw_set_crop_rects(काष्ठा s5k5baf *state)
-अणु
-	काष्ठा v4l2_rect *p, r;
+static int s5k5baf_hw_set_crop_rects(struct s5k5baf *state)
+{
+	struct v4l2_rect *p, r;
 	u16 err;
-	पूर्णांक ret;
+	int ret;
 
 	p = &state->crop_sink;
-	s5k5baf_ग_लिखो_seq(state, REG_G_PREVREQ_IN_WIDTH, p->width, p->height,
+	s5k5baf_write_seq(state, REG_G_PREVREQ_IN_WIDTH, p->width, p->height,
 			  p->left, p->top);
 
 	s5k5baf_rescale(&r, &state->crop_source, &state->crop_sink,
 			&state->compose);
-	s5k5baf_ग_लिखो_seq(state, REG_G_PREVZOOM_IN_WIDTH, r.width, r.height,
+	s5k5baf_write_seq(state, REG_G_PREVZOOM_IN_WIDTH, r.width, r.height,
 			  r.left, r.top);
 
 	s5k5baf_synchronize(state, 500, REG_G_INPUTS_CHANGE_REQ);
 	s5k5baf_synchronize(state, 500, REG_G_PREV_CFG_BYPASS_CHANGED);
 	err = s5k5baf_get_cfg_error(state);
 	ret = s5k5baf_clear_error(state);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	चयन (err) अणु
-	हाल 0:
-		अवरोध;
-	हाल CFG_ERROR_RANGE:
-		/* retry crop with frame पूर्णांकerval set to max */
+	switch (err) {
+	case 0:
+		break;
+	case CFG_ERROR_RANGE:
+		/* retry crop with frame interval set to max */
 		s5k5baf_hw_set_fiv(state, S5K5BAF_MAX_FR_TIME);
 		err = s5k5baf_get_cfg_error(state);
 		ret = s5k5baf_clear_error(state);
-		अगर (ret < 0)
-			वापस ret;
-		अगर (err) अणु
+		if (ret < 0)
+			return ret;
+		if (err) {
 			v4l2_err(&state->sd,
 				 "crop error on max frame interval: %d\n", err);
 			state->error = -EINVAL;
-		पूर्ण
+		}
 		s5k5baf_hw_set_fiv(state, state->req_fiv);
 		s5k5baf_hw_validate_cfg(state);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		v4l2_err(&state->sd, "crop error: %d\n", err);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!state->apply_cfg)
-		वापस 0;
+	if (!state->apply_cfg)
+		return 0;
 
 	p = &state->crop_source;
-	s5k5baf_ग_लिखो_seq(state, REG_P_OUT_WIDTH(0), p->width, p->height);
+	s5k5baf_write_seq(state, REG_P_OUT_WIDTH(0), p->width, p->height);
 	s5k5baf_hw_set_fiv(state, state->req_fiv);
 	s5k5baf_hw_validate_cfg(state);
 
-	वापस s5k5baf_clear_error(state);
-पूर्ण
+	return s5k5baf_clear_error(state);
+}
 
-अटल व्योम s5k5baf_hw_set_config(काष्ठा s5k5baf *state)
-अणु
-	u16 reg_fmt = s5k5baf_क्रमmats[state->pixfmt].reg_p_fmt;
-	काष्ठा v4l2_rect *r = &state->crop_source;
+static void s5k5baf_hw_set_config(struct s5k5baf *state)
+{
+	u16 reg_fmt = s5k5baf_formats[state->pixfmt].reg_p_fmt;
+	struct v4l2_rect *r = &state->crop_source;
 
-	s5k5baf_ग_लिखो_seq(state, REG_P_OUT_WIDTH(0),
+	s5k5baf_write_seq(state, REG_P_OUT_WIDTH(0),
 			  r->width, r->height, reg_fmt,
 			  PCLK_MAX_FREQ >> 2, PCLK_MIN_FREQ >> 2,
 			  PVI_MASK_MIPI, CLK_MIPI_INDEX,
@@ -924,342 +923,342 @@ module_param(debug, पूर्णांक, 0644);
 			  state->req_fiv, S5K5BAF_MIN_FR_TIME);
 	s5k5baf_hw_sync_cfg(state);
 	s5k5baf_hw_validate_cfg(state);
-पूर्ण
+}
 
 
-अटल व्योम s5k5baf_hw_set_test_pattern(काष्ठा s5k5baf *state, पूर्णांक id)
-अणु
-	s5k5baf_i2c_ग_लिखो(state, REG_PATTERN_WIDTH, 800);
-	s5k5baf_i2c_ग_लिखो(state, REG_PATTERN_HEIGHT, 511);
-	s5k5baf_i2c_ग_लिखो(state, REG_PATTERN_PARAM, 0);
-	s5k5baf_i2c_ग_लिखो(state, REG_PATTERN_SET, id);
-पूर्ण
+static void s5k5baf_hw_set_test_pattern(struct s5k5baf *state, int id)
+{
+	s5k5baf_i2c_write(state, REG_PATTERN_WIDTH, 800);
+	s5k5baf_i2c_write(state, REG_PATTERN_HEIGHT, 511);
+	s5k5baf_i2c_write(state, REG_PATTERN_PARAM, 0);
+	s5k5baf_i2c_write(state, REG_PATTERN_SET, id);
+}
 
-अटल व्योम s5k5baf_gpio_निश्चित(काष्ठा s5k5baf *state, पूर्णांक id)
-अणु
-	काष्ठा s5k5baf_gpio *gpio = &state->gpios[id];
+static void s5k5baf_gpio_assert(struct s5k5baf *state, int id)
+{
+	struct s5k5baf_gpio *gpio = &state->gpios[id];
 
 	gpio_set_value(gpio->gpio, gpio->level);
-पूर्ण
+}
 
-अटल व्योम s5k5baf_gpio_deनिश्चित(काष्ठा s5k5baf *state, पूर्णांक id)
-अणु
-	काष्ठा s5k5baf_gpio *gpio = &state->gpios[id];
+static void s5k5baf_gpio_deassert(struct s5k5baf *state, int id)
+{
+	struct s5k5baf_gpio *gpio = &state->gpios[id];
 
 	gpio_set_value(gpio->gpio, !gpio->level);
-पूर्ण
+}
 
-अटल पूर्णांक s5k5baf_घातer_on(काष्ठा s5k5baf *state)
-अणु
-	पूर्णांक ret;
+static int s5k5baf_power_on(struct s5k5baf *state)
+{
+	int ret;
 
 	ret = regulator_bulk_enable(S5K5BAF_NUM_SUPPLIES, state->supplies);
-	अगर (ret < 0)
-		जाओ err;
+	if (ret < 0)
+		goto err;
 
-	ret = clk_set_rate(state->घड़ी, state->mclk_frequency);
-	अगर (ret < 0)
-		जाओ err_reg_dis;
+	ret = clk_set_rate(state->clock, state->mclk_frequency);
+	if (ret < 0)
+		goto err_reg_dis;
 
-	ret = clk_prepare_enable(state->घड़ी);
-	अगर (ret < 0)
-		जाओ err_reg_dis;
+	ret = clk_prepare_enable(state->clock);
+	if (ret < 0)
+		goto err_reg_dis;
 
 	v4l2_dbg(1, debug, &state->sd, "clock frequency: %ld\n",
-		 clk_get_rate(state->घड़ी));
+		 clk_get_rate(state->clock));
 
-	s5k5baf_gpio_deनिश्चित(state, STBY);
+	s5k5baf_gpio_deassert(state, STBY);
 	usleep_range(50, 100);
-	s5k5baf_gpio_deनिश्चित(state, RST);
-	वापस 0;
+	s5k5baf_gpio_deassert(state, RST);
+	return 0;
 
 err_reg_dis:
 	regulator_bulk_disable(S5K5BAF_NUM_SUPPLIES, state->supplies);
 err:
 	v4l2_err(&state->sd, "%s() failed (%d)\n", __func__, ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक s5k5baf_घातer_off(काष्ठा s5k5baf *state)
-अणु
-	पूर्णांक ret;
+static int s5k5baf_power_off(struct s5k5baf *state)
+{
+	int ret;
 
 	state->streaming = 0;
 	state->apply_cfg = 0;
 	state->apply_crop = 0;
 
-	s5k5baf_gpio_निश्चित(state, RST);
-	s5k5baf_gpio_निश्चित(state, STBY);
+	s5k5baf_gpio_assert(state, RST);
+	s5k5baf_gpio_assert(state, STBY);
 
-	अगर (!IS_ERR(state->घड़ी))
-		clk_disable_unprepare(state->घड़ी);
+	if (!IS_ERR(state->clock))
+		clk_disable_unprepare(state->clock);
 
 	ret = regulator_bulk_disable(S5K5BAF_NUM_SUPPLIES,
 					state->supplies);
-	अगर (ret < 0)
+	if (ret < 0)
 		v4l2_err(&state->sd, "failed to disable regulators\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम s5k5baf_hw_init(काष्ठा s5k5baf *state)
-अणु
-	s5k5baf_i2c_ग_लिखो(state, AHB_MSB_ADDR_PTR, PAGE_IF_HW);
-	s5k5baf_i2c_ग_लिखो(state, REG_CLEAR_HOST_INT, 0);
-	s5k5baf_i2c_ग_लिखो(state, REG_SW_LOAD_COMPLETE, 1);
-	s5k5baf_i2c_ग_लिखो(state, REG_CMDRD_PAGE, PAGE_IF_SW);
-	s5k5baf_i2c_ग_लिखो(state, REG_CMDWR_PAGE, PAGE_IF_SW);
-पूर्ण
+static void s5k5baf_hw_init(struct s5k5baf *state)
+{
+	s5k5baf_i2c_write(state, AHB_MSB_ADDR_PTR, PAGE_IF_HW);
+	s5k5baf_i2c_write(state, REG_CLEAR_HOST_INT, 0);
+	s5k5baf_i2c_write(state, REG_SW_LOAD_COMPLETE, 1);
+	s5k5baf_i2c_write(state, REG_CMDRD_PAGE, PAGE_IF_SW);
+	s5k5baf_i2c_write(state, REG_CMDWR_PAGE, PAGE_IF_SW);
+}
 
 /*
  * V4L2 subdev core and video operations
  */
 
-अटल व्योम s5k5baf_initialize_data(काष्ठा s5k5baf *state)
-अणु
+static void s5k5baf_initialize_data(struct s5k5baf *state)
+{
 	state->pixfmt = 0;
 	state->req_fiv = 10000 / 15;
 	state->fiv = state->req_fiv;
-	state->valid_स्वतः_alg = 0;
-पूर्ण
+	state->valid_auto_alg = 0;
+}
 
-अटल पूर्णांक s5k5baf_load_setfile(काष्ठा s5k5baf *state)
-अणु
-	काष्ठा i2c_client *c = v4l2_get_subdevdata(&state->sd);
-	स्थिर काष्ठा firmware *fw;
-	पूर्णांक ret;
+static int s5k5baf_load_setfile(struct s5k5baf *state)
+{
+	struct i2c_client *c = v4l2_get_subdevdata(&state->sd);
+	const struct firmware *fw;
+	int ret;
 
-	ret = request_firmware(&fw, S5K5BAF_FW_खाताNAME, &c->dev);
-	अगर (ret < 0) अणु
+	ret = request_firmware(&fw, S5K5BAF_FW_FILENAME, &c->dev);
+	if (ret < 0) {
 		dev_warn(&c->dev, "firmware file (%s) not loaded\n",
-			 S5K5BAF_FW_खाताNAME);
-		वापस ret;
-	पूर्ण
+			 S5K5BAF_FW_FILENAME);
+		return ret;
+	}
 
 	ret = s5k5baf_fw_parse(&c->dev, &state->fw, fw->size / 2,
 			       (__le16 *)fw->data);
 
 	release_firmware(fw);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक s5k5baf_set_घातer(काष्ठा v4l2_subdev *sd, पूर्णांक on)
-अणु
-	काष्ठा s5k5baf *state = to_s5k5baf(sd);
-	पूर्णांक ret = 0;
+static int s5k5baf_set_power(struct v4l2_subdev *sd, int on)
+{
+	struct s5k5baf *state = to_s5k5baf(sd);
+	int ret = 0;
 
 	mutex_lock(&state->lock);
 
-	अगर (state->घातer != !on)
-		जाओ out;
+	if (state->power != !on)
+		goto out;
 
-	अगर (on) अणु
-		अगर (state->fw == शून्य)
+	if (on) {
+		if (state->fw == NULL)
 			s5k5baf_load_setfile(state);
 
 		s5k5baf_initialize_data(state);
-		ret = s5k5baf_घातer_on(state);
-		अगर (ret < 0)
-			जाओ out;
+		ret = s5k5baf_power_on(state);
+		if (ret < 0)
+			goto out;
 
 		s5k5baf_hw_init(state);
 		s5k5baf_hw_patch(state);
-		s5k5baf_i2c_ग_लिखो(state, REG_SET_HOST_INT, 1);
-		s5k5baf_hw_set_घड़ीs(state);
+		s5k5baf_i2c_write(state, REG_SET_HOST_INT, 1);
+		s5k5baf_hw_set_clocks(state);
 
 		ret = s5k5baf_hw_set_video_bus(state);
-		अगर (ret < 0)
-			जाओ out;
+		if (ret < 0)
+			goto out;
 
 		s5k5baf_hw_set_cis(state);
 		s5k5baf_hw_set_ccm(state);
 
 		ret = s5k5baf_clear_error(state);
-		अगर (!ret)
-			state->घातer++;
-	पूर्ण अन्यथा अणु
-		s5k5baf_घातer_off(state);
-		state->घातer--;
-	पूर्ण
+		if (!ret)
+			state->power++;
+	} else {
+		s5k5baf_power_off(state);
+		state->power--;
+	}
 
 out:
 	mutex_unlock(&state->lock);
 
-	अगर (!ret && on)
+	if (!ret && on)
 		ret = v4l2_ctrl_handler_setup(&state->ctrls.handler);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम s5k5baf_hw_set_stream(काष्ठा s5k5baf *state, पूर्णांक enable)
-अणु
-	s5k5baf_ग_लिखो_seq(state, REG_G_ENABLE_PREV, enable, 1);
-पूर्ण
+static void s5k5baf_hw_set_stream(struct s5k5baf *state, int enable)
+{
+	s5k5baf_write_seq(state, REG_G_ENABLE_PREV, enable, 1);
+}
 
-अटल पूर्णांक s5k5baf_s_stream(काष्ठा v4l2_subdev *sd, पूर्णांक on)
-अणु
-	काष्ठा s5k5baf *state = to_s5k5baf(sd);
-	पूर्णांक ret;
+static int s5k5baf_s_stream(struct v4l2_subdev *sd, int on)
+{
+	struct s5k5baf *state = to_s5k5baf(sd);
+	int ret;
 
 	mutex_lock(&state->lock);
 
-	अगर (state->streaming == !!on) अणु
+	if (state->streaming == !!on) {
 		ret = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (on) अणु
+	if (on) {
 		s5k5baf_hw_set_config(state);
 		ret = s5k5baf_hw_set_crop_rects(state);
-		अगर (ret < 0)
-			जाओ out;
+		if (ret < 0)
+			goto out;
 		s5k5baf_hw_set_stream(state, 1);
-		s5k5baf_i2c_ग_लिखो(state, 0xb0cc, 0x000b);
-	पूर्ण अन्यथा अणु
+		s5k5baf_i2c_write(state, 0xb0cc, 0x000b);
+	} else {
 		s5k5baf_hw_set_stream(state, 0);
-	पूर्ण
+	}
 	ret = s5k5baf_clear_error(state);
-	अगर (!ret)
+	if (!ret)
 		state->streaming = !state->streaming;
 
 out:
 	mutex_unlock(&state->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक s5k5baf_g_frame_पूर्णांकerval(काष्ठा v4l2_subdev *sd,
-				   काष्ठा v4l2_subdev_frame_पूर्णांकerval *fi)
-अणु
-	काष्ठा s5k5baf *state = to_s5k5baf(sd);
+static int s5k5baf_g_frame_interval(struct v4l2_subdev *sd,
+				   struct v4l2_subdev_frame_interval *fi)
+{
+	struct s5k5baf *state = to_s5k5baf(sd);
 
 	mutex_lock(&state->lock);
-	fi->पूर्णांकerval.numerator = state->fiv;
-	fi->पूर्णांकerval.denominator = 10000;
+	fi->interval.numerator = state->fiv;
+	fi->interval.denominator = 10000;
 	mutex_unlock(&state->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम s5k5baf_set_frame_पूर्णांकerval(काष्ठा s5k5baf *state,
-				       काष्ठा v4l2_subdev_frame_पूर्णांकerval *fi)
-अणु
-	काष्ठा v4l2_fract *i = &fi->पूर्णांकerval;
+static void s5k5baf_set_frame_interval(struct s5k5baf *state,
+				       struct v4l2_subdev_frame_interval *fi)
+{
+	struct v4l2_fract *i = &fi->interval;
 
-	अगर (fi->पूर्णांकerval.denominator == 0)
+	if (fi->interval.denominator == 0)
 		state->req_fiv = S5K5BAF_MAX_FR_TIME;
-	अन्यथा
+	else
 		state->req_fiv = clamp_t(u32,
 					 i->numerator * 10000 / i->denominator,
 					 S5K5BAF_MIN_FR_TIME,
 					 S5K5BAF_MAX_FR_TIME);
 
 	state->fiv = state->req_fiv;
-	अगर (state->apply_cfg) अणु
+	if (state->apply_cfg) {
 		s5k5baf_hw_set_fiv(state, state->req_fiv);
 		s5k5baf_hw_validate_cfg(state);
-	पूर्ण
-	*i = (काष्ठा v4l2_fract)अणु state->fiv, 10000 पूर्ण;
-	अगर (state->fiv == state->req_fiv)
+	}
+	*i = (struct v4l2_fract){ state->fiv, 10000 };
+	if (state->fiv == state->req_fiv)
 		v4l2_info(&state->sd, "frame interval changed to %d00us\n",
 			  state->fiv);
-पूर्ण
+}
 
-अटल पूर्णांक s5k5baf_s_frame_पूर्णांकerval(काष्ठा v4l2_subdev *sd,
-				   काष्ठा v4l2_subdev_frame_पूर्णांकerval *fi)
-अणु
-	काष्ठा s5k5baf *state = to_s5k5baf(sd);
+static int s5k5baf_s_frame_interval(struct v4l2_subdev *sd,
+				   struct v4l2_subdev_frame_interval *fi)
+{
+	struct s5k5baf *state = to_s5k5baf(sd);
 
 	mutex_lock(&state->lock);
-	s5k5baf_set_frame_पूर्णांकerval(state, fi);
+	s5k5baf_set_frame_interval(state, fi);
 	mutex_unlock(&state->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * V4L2 subdev pad level and video operations
  */
-अटल पूर्णांक s5k5baf_क्रमागत_frame_पूर्णांकerval(काष्ठा v4l2_subdev *sd,
-			      काष्ठा v4l2_subdev_pad_config *cfg,
-			      काष्ठा v4l2_subdev_frame_पूर्णांकerval_क्रमागत *fie)
-अणु
-	अगर (fie->index > S5K5BAF_MAX_FR_TIME - S5K5BAF_MIN_FR_TIME ||
+static int s5k5baf_enum_frame_interval(struct v4l2_subdev *sd,
+			      struct v4l2_subdev_pad_config *cfg,
+			      struct v4l2_subdev_frame_interval_enum *fie)
+{
+	if (fie->index > S5K5BAF_MAX_FR_TIME - S5K5BAF_MIN_FR_TIME ||
 	    fie->pad != PAD_CIS)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	v4l_bound_align_image(&fie->width, S5K5BAF_WIN_WIDTH_MIN,
 			      S5K5BAF_CIS_WIDTH, 1,
 			      &fie->height, S5K5BAF_WIN_HEIGHT_MIN,
 			      S5K5BAF_CIS_HEIGHT, 1, 0);
 
-	fie->पूर्णांकerval.numerator = S5K5BAF_MIN_FR_TIME + fie->index;
-	fie->पूर्णांकerval.denominator = 10000;
+	fie->interval.numerator = S5K5BAF_MIN_FR_TIME + fie->index;
+	fie->interval.denominator = 10000;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक s5k5baf_क्रमागत_mbus_code(काष्ठा v4l2_subdev *sd,
-				 काष्ठा v4l2_subdev_pad_config *cfg,
-				 काष्ठा v4l2_subdev_mbus_code_क्रमागत *code)
-अणु
-	अगर (code->pad == PAD_CIS) अणु
-		अगर (code->index > 0)
-			वापस -EINVAL;
+static int s5k5baf_enum_mbus_code(struct v4l2_subdev *sd,
+				 struct v4l2_subdev_pad_config *cfg,
+				 struct v4l2_subdev_mbus_code_enum *code)
+{
+	if (code->pad == PAD_CIS) {
+		if (code->index > 0)
+			return -EINVAL;
 		code->code = MEDIA_BUS_FMT_FIXED;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (code->index >= ARRAY_SIZE(s5k5baf_क्रमmats))
-		वापस -EINVAL;
+	if (code->index >= ARRAY_SIZE(s5k5baf_formats))
+		return -EINVAL;
 
-	code->code = s5k5baf_क्रमmats[code->index].code;
-	वापस 0;
-पूर्ण
+	code->code = s5k5baf_formats[code->index].code;
+	return 0;
+}
 
-अटल पूर्णांक s5k5baf_क्रमागत_frame_size(काष्ठा v4l2_subdev *sd,
-				  काष्ठा v4l2_subdev_pad_config *cfg,
-				  काष्ठा v4l2_subdev_frame_size_क्रमागत *fse)
-अणु
-	पूर्णांक i;
+static int s5k5baf_enum_frame_size(struct v4l2_subdev *sd,
+				  struct v4l2_subdev_pad_config *cfg,
+				  struct v4l2_subdev_frame_size_enum *fse)
+{
+	int i;
 
-	अगर (fse->index > 0)
-		वापस -EINVAL;
+	if (fse->index > 0)
+		return -EINVAL;
 
-	अगर (fse->pad == PAD_CIS) अणु
+	if (fse->pad == PAD_CIS) {
 		fse->code = MEDIA_BUS_FMT_FIXED;
 		fse->min_width = S5K5BAF_CIS_WIDTH;
 		fse->max_width = S5K5BAF_CIS_WIDTH;
 		fse->min_height = S5K5BAF_CIS_HEIGHT;
 		fse->max_height = S5K5BAF_CIS_HEIGHT;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	i = ARRAY_SIZE(s5k5baf_क्रमmats);
-	जबतक (--i)
-		अगर (fse->code == s5k5baf_क्रमmats[i].code)
-			अवरोध;
-	fse->code = s5k5baf_क्रमmats[i].code;
+	i = ARRAY_SIZE(s5k5baf_formats);
+	while (--i)
+		if (fse->code == s5k5baf_formats[i].code)
+			break;
+	fse->code = s5k5baf_formats[i].code;
 	fse->min_width = S5K5BAF_WIN_WIDTH_MIN;
 	fse->max_width = S5K5BAF_CIS_WIDTH;
 	fse->max_height = S5K5BAF_WIN_HEIGHT_MIN;
 	fse->min_height = S5K5BAF_CIS_HEIGHT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम s5k5baf_try_cis_क्रमmat(काष्ठा v4l2_mbus_framefmt *mf)
-अणु
+static void s5k5baf_try_cis_format(struct v4l2_mbus_framefmt *mf)
+{
 	mf->width = S5K5BAF_CIS_WIDTH;
 	mf->height = S5K5BAF_CIS_HEIGHT;
 	mf->code = MEDIA_BUS_FMT_FIXED;
 	mf->colorspace = V4L2_COLORSPACE_JPEG;
 	mf->field = V4L2_FIELD_NONE;
-पूर्ण
+}
 
-अटल पूर्णांक s5k5baf_try_isp_क्रमmat(काष्ठा v4l2_mbus_framefmt *mf)
-अणु
-	पूर्णांक pixfmt;
+static int s5k5baf_try_isp_format(struct v4l2_mbus_framefmt *mf)
+{
+	int pixfmt;
 
 	v4l_bound_align_image(&mf->width, S5K5BAF_WIN_WIDTH_MIN,
 			      S5K5BAF_CIS_WIDTH, 1,
@@ -1268,354 +1267,354 @@ out:
 
 	pixfmt = s5k5baf_find_pixfmt(mf);
 
-	mf->colorspace = s5k5baf_क्रमmats[pixfmt].colorspace;
-	mf->code = s5k5baf_क्रमmats[pixfmt].code;
+	mf->colorspace = s5k5baf_formats[pixfmt].colorspace;
+	mf->code = s5k5baf_formats[pixfmt].code;
 	mf->field = V4L2_FIELD_NONE;
 
-	वापस pixfmt;
-पूर्ण
+	return pixfmt;
+}
 
-अटल पूर्णांक s5k5baf_get_fmt(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_subdev_pad_config *cfg,
-			  काष्ठा v4l2_subdev_क्रमmat *fmt)
-अणु
-	काष्ठा s5k5baf *state = to_s5k5baf(sd);
-	स्थिर काष्ठा s5k5baf_pixfmt *pixfmt;
-	काष्ठा v4l2_mbus_framefmt *mf;
+static int s5k5baf_get_fmt(struct v4l2_subdev *sd, struct v4l2_subdev_pad_config *cfg,
+			  struct v4l2_subdev_format *fmt)
+{
+	struct s5k5baf *state = to_s5k5baf(sd);
+	const struct s5k5baf_pixfmt *pixfmt;
+	struct v4l2_mbus_framefmt *mf;
 
-	अगर (fmt->which == V4L2_SUBDEV_FORMAT_TRY) अणु
-		mf = v4l2_subdev_get_try_क्रमmat(sd, cfg, fmt->pad);
-		fmt->क्रमmat = *mf;
-		वापस 0;
-	पूर्ण
+	if (fmt->which == V4L2_SUBDEV_FORMAT_TRY) {
+		mf = v4l2_subdev_get_try_format(sd, cfg, fmt->pad);
+		fmt->format = *mf;
+		return 0;
+	}
 
-	mf = &fmt->क्रमmat;
-	अगर (fmt->pad == PAD_CIS) अणु
-		s5k5baf_try_cis_क्रमmat(mf);
-		वापस 0;
-	पूर्ण
+	mf = &fmt->format;
+	if (fmt->pad == PAD_CIS) {
+		s5k5baf_try_cis_format(mf);
+		return 0;
+	}
 	mf->field = V4L2_FIELD_NONE;
 	mutex_lock(&state->lock);
-	pixfmt = &s5k5baf_क्रमmats[state->pixfmt];
+	pixfmt = &s5k5baf_formats[state->pixfmt];
 	mf->width = state->crop_source.width;
 	mf->height = state->crop_source.height;
 	mf->code = pixfmt->code;
 	mf->colorspace = pixfmt->colorspace;
 	mutex_unlock(&state->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक s5k5baf_set_fmt(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_subdev_pad_config *cfg,
-			  काष्ठा v4l2_subdev_क्रमmat *fmt)
-अणु
-	काष्ठा v4l2_mbus_framefmt *mf = &fmt->क्रमmat;
-	काष्ठा s5k5baf *state = to_s5k5baf(sd);
-	स्थिर काष्ठा s5k5baf_pixfmt *pixfmt;
-	पूर्णांक ret = 0;
+static int s5k5baf_set_fmt(struct v4l2_subdev *sd, struct v4l2_subdev_pad_config *cfg,
+			  struct v4l2_subdev_format *fmt)
+{
+	struct v4l2_mbus_framefmt *mf = &fmt->format;
+	struct s5k5baf *state = to_s5k5baf(sd);
+	const struct s5k5baf_pixfmt *pixfmt;
+	int ret = 0;
 
 	mf->field = V4L2_FIELD_NONE;
 
-	अगर (fmt->which == V4L2_SUBDEV_FORMAT_TRY) अणु
-		*v4l2_subdev_get_try_क्रमmat(sd, cfg, fmt->pad) = *mf;
-		वापस 0;
-	पूर्ण
+	if (fmt->which == V4L2_SUBDEV_FORMAT_TRY) {
+		*v4l2_subdev_get_try_format(sd, cfg, fmt->pad) = *mf;
+		return 0;
+	}
 
-	अगर (fmt->pad == PAD_CIS) अणु
-		s5k5baf_try_cis_क्रमmat(mf);
-		वापस 0;
-	पूर्ण
+	if (fmt->pad == PAD_CIS) {
+		s5k5baf_try_cis_format(mf);
+		return 0;
+	}
 
 	mutex_lock(&state->lock);
 
-	अगर (state->streaming) अणु
+	if (state->streaming) {
 		mutex_unlock(&state->lock);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	state->pixfmt = s5k5baf_try_isp_क्रमmat(mf);
-	pixfmt = &s5k5baf_क्रमmats[state->pixfmt];
+	state->pixfmt = s5k5baf_try_isp_format(mf);
+	pixfmt = &s5k5baf_formats[state->pixfmt];
 	mf->code = pixfmt->code;
 	mf->colorspace = pixfmt->colorspace;
 	mf->width = state->crop_source.width;
 	mf->height = state->crop_source.height;
 
 	mutex_unlock(&state->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-क्रमागत selection_rect अणु R_CIS, R_CROP_SINK, R_COMPOSE, R_CROP_SOURCE, R_INVALID पूर्ण;
+enum selection_rect { R_CIS, R_CROP_SINK, R_COMPOSE, R_CROP_SOURCE, R_INVALID };
 
-अटल क्रमागत selection_rect s5k5baf_get_sel_rect(u32 pad, u32 target)
-अणु
-	चयन (target) अणु
-	हाल V4L2_SEL_TGT_CROP_BOUNDS:
-		वापस pad ? R_COMPOSE : R_CIS;
-	हाल V4L2_SEL_TGT_CROP:
-		वापस pad ? R_CROP_SOURCE : R_CROP_SINK;
-	हाल V4L2_SEL_TGT_COMPOSE_BOUNDS:
-		वापस pad ? R_INVALID : R_CROP_SINK;
-	हाल V4L2_SEL_TGT_COMPOSE:
-		वापस pad ? R_INVALID : R_COMPOSE;
-	शेष:
-		वापस R_INVALID;
-	पूर्ण
-पूर्ण
+static enum selection_rect s5k5baf_get_sel_rect(u32 pad, u32 target)
+{
+	switch (target) {
+	case V4L2_SEL_TGT_CROP_BOUNDS:
+		return pad ? R_COMPOSE : R_CIS;
+	case V4L2_SEL_TGT_CROP:
+		return pad ? R_CROP_SOURCE : R_CROP_SINK;
+	case V4L2_SEL_TGT_COMPOSE_BOUNDS:
+		return pad ? R_INVALID : R_CROP_SINK;
+	case V4L2_SEL_TGT_COMPOSE:
+		return pad ? R_INVALID : R_COMPOSE;
+	default:
+		return R_INVALID;
+	}
+}
 
-अटल पूर्णांक s5k5baf_is_bound_target(u32 target)
-अणु
-	वापस target == V4L2_SEL_TGT_CROP_BOUNDS ||
+static int s5k5baf_is_bound_target(u32 target)
+{
+	return target == V4L2_SEL_TGT_CROP_BOUNDS ||
 		target == V4L2_SEL_TGT_COMPOSE_BOUNDS;
-पूर्ण
+}
 
-अटल पूर्णांक s5k5baf_get_selection(काष्ठा v4l2_subdev *sd,
-				 काष्ठा v4l2_subdev_pad_config *cfg,
-				 काष्ठा v4l2_subdev_selection *sel)
-अणु
-	क्रमागत selection_rect rtype;
-	काष्ठा s5k5baf *state = to_s5k5baf(sd);
+static int s5k5baf_get_selection(struct v4l2_subdev *sd,
+				 struct v4l2_subdev_pad_config *cfg,
+				 struct v4l2_subdev_selection *sel)
+{
+	enum selection_rect rtype;
+	struct s5k5baf *state = to_s5k5baf(sd);
 
 	rtype = s5k5baf_get_sel_rect(sel->pad, sel->target);
 
-	चयन (rtype) अणु
-	हाल R_INVALID:
-		वापस -EINVAL;
-	हाल R_CIS:
+	switch (rtype) {
+	case R_INVALID:
+		return -EINVAL;
+	case R_CIS:
 		sel->r = s5k5baf_cis_rect;
-		वापस 0;
-	शेष:
-		अवरोध;
-	पूर्ण
+		return 0;
+	default:
+		break;
+	}
 
-	अगर (sel->which == V4L2_SUBDEV_FORMAT_TRY) अणु
-		अगर (rtype == R_COMPOSE)
+	if (sel->which == V4L2_SUBDEV_FORMAT_TRY) {
+		if (rtype == R_COMPOSE)
 			sel->r = *v4l2_subdev_get_try_compose(sd, cfg, sel->pad);
-		अन्यथा
+		else
 			sel->r = *v4l2_subdev_get_try_crop(sd, cfg, sel->pad);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	mutex_lock(&state->lock);
-	चयन (rtype) अणु
-	हाल R_CROP_SINK:
+	switch (rtype) {
+	case R_CROP_SINK:
 		sel->r = state->crop_sink;
-		अवरोध;
-	हाल R_COMPOSE:
+		break;
+	case R_COMPOSE:
 		sel->r = state->compose;
-		अवरोध;
-	हाल R_CROP_SOURCE:
+		break;
+	case R_CROP_SOURCE:
 		sel->r = state->crop_source;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-	अगर (s5k5baf_is_bound_target(sel->target)) अणु
+		break;
+	default:
+		break;
+	}
+	if (s5k5baf_is_bound_target(sel->target)) {
 		sel->r.left = 0;
 		sel->r.top = 0;
-	पूर्ण
+	}
 	mutex_unlock(&state->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* bounds range [start, start+len) to [0, max) and aligns to 2 */
-अटल व्योम s5k5baf_bound_range(u32 *start, u32 *len, u32 max)
-अणु
-	अगर (*len > max)
+static void s5k5baf_bound_range(u32 *start, u32 *len, u32 max)
+{
+	if (*len > max)
 		*len = max;
-	अगर (*start + *len > max)
+	if (*start + *len > max)
 		*start = max - *len;
 	*start &= ~1;
 	*len &= ~1;
-	अगर (*len < S5K5BAF_WIN_WIDTH_MIN)
+	if (*len < S5K5BAF_WIN_WIDTH_MIN)
 		*len = S5K5BAF_WIN_WIDTH_MIN;
-पूर्ण
+}
 
-अटल व्योम s5k5baf_bound_rect(काष्ठा v4l2_rect *r, u32 width, u32 height)
-अणु
+static void s5k5baf_bound_rect(struct v4l2_rect *r, u32 width, u32 height)
+{
 	s5k5baf_bound_range(&r->left, &r->width, width);
 	s5k5baf_bound_range(&r->top, &r->height, height);
-पूर्ण
+}
 
-अटल व्योम s5k5baf_set_rect_and_adjust(काष्ठा v4l2_rect **rects,
-					क्रमागत selection_rect first,
-					काष्ठा v4l2_rect *v)
-अणु
-	काष्ठा v4l2_rect *r, *br;
-	क्रमागत selection_rect i = first;
+static void s5k5baf_set_rect_and_adjust(struct v4l2_rect **rects,
+					enum selection_rect first,
+					struct v4l2_rect *v)
+{
+	struct v4l2_rect *r, *br;
+	enum selection_rect i = first;
 
 	*rects[first] = *v;
-	करो अणु
+	do {
 		r = rects[i];
 		br = rects[i - 1];
 		s5k5baf_bound_rect(r, br->width, br->height);
-	पूर्ण जबतक (++i != R_INVALID);
+	} while (++i != R_INVALID);
 	*v = *rects[first];
-पूर्ण
+}
 
-अटल bool s5k5baf_cmp_rect(स्थिर काष्ठा v4l2_rect *r1,
-			     स्थिर काष्ठा v4l2_rect *r2)
-अणु
-	वापस !स_भेद(r1, r2, माप(*r1));
-पूर्ण
+static bool s5k5baf_cmp_rect(const struct v4l2_rect *r1,
+			     const struct v4l2_rect *r2)
+{
+	return !memcmp(r1, r2, sizeof(*r1));
+}
 
-अटल पूर्णांक s5k5baf_set_selection(काष्ठा v4l2_subdev *sd,
-				 काष्ठा v4l2_subdev_pad_config *cfg,
-				 काष्ठा v4l2_subdev_selection *sel)
-अणु
-	अटल क्रमागत selection_rect rtype;
-	काष्ठा s5k5baf *state = to_s5k5baf(sd);
-	काष्ठा v4l2_rect **rects;
-	पूर्णांक ret = 0;
+static int s5k5baf_set_selection(struct v4l2_subdev *sd,
+				 struct v4l2_subdev_pad_config *cfg,
+				 struct v4l2_subdev_selection *sel)
+{
+	static enum selection_rect rtype;
+	struct s5k5baf *state = to_s5k5baf(sd);
+	struct v4l2_rect **rects;
+	int ret = 0;
 
 	rtype = s5k5baf_get_sel_rect(sel->pad, sel->target);
-	अगर (rtype == R_INVALID || s5k5baf_is_bound_target(sel->target))
-		वापस -EINVAL;
+	if (rtype == R_INVALID || s5k5baf_is_bound_target(sel->target))
+		return -EINVAL;
 
 	/* allow only scaling on compose */
-	अगर (rtype == R_COMPOSE) अणु
+	if (rtype == R_COMPOSE) {
 		sel->r.left = 0;
 		sel->r.top = 0;
-	पूर्ण
+	}
 
-	अगर (sel->which == V4L2_SUBDEV_FORMAT_TRY) अणु
-		rects = (काष्ठा v4l2_rect * []) अणु
+	if (sel->which == V4L2_SUBDEV_FORMAT_TRY) {
+		rects = (struct v4l2_rect * []) {
 				&s5k5baf_cis_rect,
 				v4l2_subdev_get_try_crop(sd, cfg, PAD_CIS),
 				v4l2_subdev_get_try_compose(sd, cfg, PAD_CIS),
 				v4l2_subdev_get_try_crop(sd, cfg, PAD_OUT)
-			पूर्ण;
+			};
 		s5k5baf_set_rect_and_adjust(rects, rtype, &sel->r);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	rects = (काष्ठा v4l2_rect * []) अणु
+	rects = (struct v4l2_rect * []) {
 			&s5k5baf_cis_rect,
 			&state->crop_sink,
 			&state->compose,
 			&state->crop_source
-		पूर्ण;
+		};
 	mutex_lock(&state->lock);
-	अगर (state->streaming) अणु
-		/* adjust sel->r to aव्योम output resolution change */
-		अगर (rtype < R_CROP_SOURCE) अणु
-			अगर (sel->r.width < state->crop_source.width)
+	if (state->streaming) {
+		/* adjust sel->r to avoid output resolution change */
+		if (rtype < R_CROP_SOURCE) {
+			if (sel->r.width < state->crop_source.width)
 				sel->r.width = state->crop_source.width;
-			अगर (sel->r.height < state->crop_source.height)
+			if (sel->r.height < state->crop_source.height)
 				sel->r.height = state->crop_source.height;
-		पूर्ण अन्यथा अणु
+		} else {
 			sel->r.width = state->crop_source.width;
 			sel->r.height = state->crop_source.height;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	s5k5baf_set_rect_and_adjust(rects, rtype, &sel->r);
-	अगर (!s5k5baf_cmp_rect(&state->crop_sink, &s5k5baf_cis_rect) ||
+	if (!s5k5baf_cmp_rect(&state->crop_sink, &s5k5baf_cis_rect) ||
 	    !s5k5baf_cmp_rect(&state->compose, &s5k5baf_cis_rect))
 		state->apply_crop = 1;
-	अगर (state->streaming)
+	if (state->streaming)
 		ret = s5k5baf_hw_set_crop_rects(state);
 	mutex_unlock(&state->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा v4l2_subdev_pad_ops s5k5baf_cis_pad_ops = अणु
-	.क्रमागत_mbus_code		= s5k5baf_क्रमागत_mbus_code,
-	.क्रमागत_frame_size	= s5k5baf_क्रमागत_frame_size,
+static const struct v4l2_subdev_pad_ops s5k5baf_cis_pad_ops = {
+	.enum_mbus_code		= s5k5baf_enum_mbus_code,
+	.enum_frame_size	= s5k5baf_enum_frame_size,
 	.get_fmt		= s5k5baf_get_fmt,
 	.set_fmt		= s5k5baf_set_fmt,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_pad_ops s5k5baf_pad_ops = अणु
-	.क्रमागत_mbus_code		= s5k5baf_क्रमागत_mbus_code,
-	.क्रमागत_frame_size	= s5k5baf_क्रमागत_frame_size,
-	.क्रमागत_frame_पूर्णांकerval	= s5k5baf_क्रमागत_frame_पूर्णांकerval,
+static const struct v4l2_subdev_pad_ops s5k5baf_pad_ops = {
+	.enum_mbus_code		= s5k5baf_enum_mbus_code,
+	.enum_frame_size	= s5k5baf_enum_frame_size,
+	.enum_frame_interval	= s5k5baf_enum_frame_interval,
 	.get_fmt		= s5k5baf_get_fmt,
 	.set_fmt		= s5k5baf_set_fmt,
 	.get_selection		= s5k5baf_get_selection,
 	.set_selection		= s5k5baf_set_selection,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_video_ops s5k5baf_video_ops = अणु
-	.g_frame_पूर्णांकerval	= s5k5baf_g_frame_पूर्णांकerval,
-	.s_frame_पूर्णांकerval	= s5k5baf_s_frame_पूर्णांकerval,
+static const struct v4l2_subdev_video_ops s5k5baf_video_ops = {
+	.g_frame_interval	= s5k5baf_g_frame_interval,
+	.s_frame_interval	= s5k5baf_s_frame_interval,
 	.s_stream		= s5k5baf_s_stream,
-पूर्ण;
+};
 
 /*
  * V4L2 subdev controls
  */
 
-अटल पूर्णांक s5k5baf_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	काष्ठा v4l2_subdev *sd = ctrl_to_sd(ctrl);
-	काष्ठा s5k5baf *state = to_s5k5baf(sd);
-	पूर्णांक ret;
+static int s5k5baf_s_ctrl(struct v4l2_ctrl *ctrl)
+{
+	struct v4l2_subdev *sd = ctrl_to_sd(ctrl);
+	struct s5k5baf *state = to_s5k5baf(sd);
+	int ret;
 
 	v4l2_dbg(1, debug, sd, "ctrl: %s, value: %d\n", ctrl->name, ctrl->val);
 
 	mutex_lock(&state->lock);
 
-	अगर (state->घातer == 0)
-		जाओ unlock;
+	if (state->power == 0)
+		goto unlock;
 
-	चयन (ctrl->id) अणु
-	हाल V4L2_CID_AUTO_WHITE_BALANCE:
+	switch (ctrl->id) {
+	case V4L2_CID_AUTO_WHITE_BALANCE:
 		s5k5baf_hw_set_awb(state, ctrl->val);
-		अवरोध;
+		break;
 
-	हाल V4L2_CID_BRIGHTNESS:
-		s5k5baf_ग_लिखो(state, REG_USER_BRIGHTNESS, ctrl->val);
-		अवरोध;
+	case V4L2_CID_BRIGHTNESS:
+		s5k5baf_write(state, REG_USER_BRIGHTNESS, ctrl->val);
+		break;
 
-	हाल V4L2_CID_COLORFX:
+	case V4L2_CID_COLORFX:
 		s5k5baf_hw_set_colorfx(state, ctrl->val);
-		अवरोध;
+		break;
 
-	हाल V4L2_CID_CONTRAST:
-		s5k5baf_ग_लिखो(state, REG_USER_CONTRAST, ctrl->val);
-		अवरोध;
+	case V4L2_CID_CONTRAST:
+		s5k5baf_write(state, REG_USER_CONTRAST, ctrl->val);
+		break;
 
-	हाल V4L2_CID_EXPOSURE_AUTO:
-		s5k5baf_hw_set_स्वतः_exposure(state, ctrl->val);
-		अवरोध;
+	case V4L2_CID_EXPOSURE_AUTO:
+		s5k5baf_hw_set_auto_exposure(state, ctrl->val);
+		break;
 
-	हाल V4L2_CID_HFLIP:
+	case V4L2_CID_HFLIP:
 		s5k5baf_hw_set_mirror(state);
-		अवरोध;
+		break;
 
-	हाल V4L2_CID_POWER_LINE_FREQUENCY:
+	case V4L2_CID_POWER_LINE_FREQUENCY:
 		s5k5baf_hw_set_anti_flicker(state, ctrl->val);
-		अवरोध;
+		break;
 
-	हाल V4L2_CID_SATURATION:
-		s5k5baf_ग_लिखो(state, REG_USER_SATURATION, ctrl->val);
-		अवरोध;
+	case V4L2_CID_SATURATION:
+		s5k5baf_write(state, REG_USER_SATURATION, ctrl->val);
+		break;
 
-	हाल V4L2_CID_SHARPNESS:
-		s5k5baf_ग_लिखो(state, REG_USER_SHARPBLUR, ctrl->val);
-		अवरोध;
+	case V4L2_CID_SHARPNESS:
+		s5k5baf_write(state, REG_USER_SHARPBLUR, ctrl->val);
+		break;
 
-	हाल V4L2_CID_WHITE_BALANCE_TEMPERATURE:
-		s5k5baf_ग_लिखो(state, REG_P_COLORTEMP(0), ctrl->val);
-		अगर (state->apply_cfg)
+	case V4L2_CID_WHITE_BALANCE_TEMPERATURE:
+		s5k5baf_write(state, REG_P_COLORTEMP(0), ctrl->val);
+		if (state->apply_cfg)
 			s5k5baf_hw_sync_cfg(state);
-		अवरोध;
+		break;
 
-	हाल V4L2_CID_TEST_PATTERN:
+	case V4L2_CID_TEST_PATTERN:
 		s5k5baf_hw_set_test_pattern(state, ctrl->val);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 unlock:
 	ret = s5k5baf_clear_error(state);
 	mutex_unlock(&state->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा v4l2_ctrl_ops s5k5baf_ctrl_ops = अणु
+static const struct v4l2_ctrl_ops s5k5baf_ctrl_ops = {
 	.s_ctrl	= s5k5baf_s_ctrl,
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर s5k5baf_test_pattern_menu[] = अणु
+static const char * const s5k5baf_test_pattern_menu[] = {
 	"Disabled",
 	"Blank",
 	"Bars",
@@ -1623,20 +1622,20 @@ unlock:
 	"Textile",
 	"Textile2",
 	"Squares"
-पूर्ण;
+};
 
-अटल पूर्णांक s5k5baf_initialize_ctrls(काष्ठा s5k5baf *state)
-अणु
-	स्थिर काष्ठा v4l2_ctrl_ops *ops = &s5k5baf_ctrl_ops;
-	काष्ठा s5k5baf_ctrls *ctrls = &state->ctrls;
-	काष्ठा v4l2_ctrl_handler *hdl = &ctrls->handler;
-	पूर्णांक ret;
+static int s5k5baf_initialize_ctrls(struct s5k5baf *state)
+{
+	const struct v4l2_ctrl_ops *ops = &s5k5baf_ctrl_ops;
+	struct s5k5baf_ctrls *ctrls = &state->ctrls;
+	struct v4l2_ctrl_handler *hdl = &ctrls->handler;
+	int ret;
 
 	ret = v4l2_ctrl_handler_init(hdl, 16);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		v4l2_err(&state->sd, "cannot init ctrl handler (%d)\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* Auto white balance cluster */
 	ctrls->awb = v4l2_ctrl_new_std(hdl, ops, V4L2_CID_AUTO_WHITE_BALANCE,
@@ -1645,22 +1644,22 @@ unlock:
 					    0, 255, 1, S5K5BAF_GAIN_RED_DEF);
 	ctrls->gain_blue = v4l2_ctrl_new_std(hdl, ops, V4L2_CID_BLUE_BALANCE,
 					     0, 255, 1, S5K5BAF_GAIN_BLUE_DEF);
-	v4l2_ctrl_स्वतः_cluster(3, &ctrls->awb, 0, false);
+	v4l2_ctrl_auto_cluster(3, &ctrls->awb, 0, false);
 
 	ctrls->hflip = v4l2_ctrl_new_std(hdl, ops, V4L2_CID_HFLIP, 0, 1, 1, 0);
 	ctrls->vflip = v4l2_ctrl_new_std(hdl, ops, V4L2_CID_VFLIP, 0, 1, 1, 0);
 	v4l2_ctrl_cluster(2, &ctrls->hflip);
 
-	ctrls->स्वतः_exp = v4l2_ctrl_new_std_menu(hdl, ops,
+	ctrls->auto_exp = v4l2_ctrl_new_std_menu(hdl, ops,
 				V4L2_CID_EXPOSURE_AUTO,
 				V4L2_EXPOSURE_MANUAL, 0, V4L2_EXPOSURE_AUTO);
-	/* Exposure समय: x 1 us */
+	/* Exposure time: x 1 us */
 	ctrls->exposure = v4l2_ctrl_new_std(hdl, ops, V4L2_CID_EXPOSURE,
 					    0, 6000000U, 1, 100000U);
 	/* Total gain: 256 <=> 1x */
 	ctrls->gain = v4l2_ctrl_new_std(hdl, ops, V4L2_CID_GAIN,
 					0, 256, 1, 256);
-	v4l2_ctrl_स्वतः_cluster(3, &ctrls->स्वतः_exp, 0, false);
+	v4l2_ctrl_auto_cluster(3, &ctrls->auto_exp, 0, false);
 
 	v4l2_ctrl_new_std_menu(hdl, ops, V4L2_CID_POWER_LINE_FREQUENCY,
 			       V4L2_CID_POWER_LINE_FREQUENCY_AUTO, 0,
@@ -1681,34 +1680,34 @@ unlock:
 				     ARRAY_SIZE(s5k5baf_test_pattern_menu) - 1,
 				     0, 0, s5k5baf_test_pattern_menu);
 
-	अगर (hdl->error) अणु
+	if (hdl->error) {
 		v4l2_err(&state->sd, "error creating controls (%d)\n",
 			 hdl->error);
 		ret = hdl->error;
-		v4l2_ctrl_handler_मुक्त(hdl);
-		वापस ret;
-	पूर्ण
+		v4l2_ctrl_handler_free(hdl);
+		return ret;
+	}
 
 	state->sd.ctrl_handler = hdl;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * V4L2 subdev पूर्णांकernal operations
+ * V4L2 subdev internal operations
  */
-अटल पूर्णांक s5k5baf_खोलो(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_subdev_fh *fh)
-अणु
-	काष्ठा v4l2_mbus_framefmt *mf;
+static int s5k5baf_open(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
+{
+	struct v4l2_mbus_framefmt *mf;
 
-	mf = v4l2_subdev_get_try_क्रमmat(sd, fh->pad, PAD_CIS);
-	s5k5baf_try_cis_क्रमmat(mf);
+	mf = v4l2_subdev_get_try_format(sd, fh->pad, PAD_CIS);
+	s5k5baf_try_cis_format(mf);
 
-	अगर (s5k5baf_is_cis_subdev(sd))
-		वापस 0;
+	if (s5k5baf_is_cis_subdev(sd))
+		return 0;
 
-	mf = v4l2_subdev_get_try_क्रमmat(sd, fh->pad, PAD_OUT);
-	mf->colorspace = s5k5baf_क्रमmats[0].colorspace;
-	mf->code = s5k5baf_क्रमmats[0].code;
+	mf = v4l2_subdev_get_try_format(sd, fh->pad, PAD_OUT);
+	mf->colorspace = s5k5baf_formats[0].colorspace;
+	mf->code = s5k5baf_formats[0].code;
 	mf->width = s5k5baf_cis_rect.width;
 	mf->height = s5k5baf_cis_rect.height;
 	mf->field = V4L2_FIELD_NONE;
@@ -1717,203 +1716,203 @@ unlock:
 	*v4l2_subdev_get_try_compose(sd, fh->pad, PAD_CIS) = s5k5baf_cis_rect;
 	*v4l2_subdev_get_try_crop(sd, fh->pad, PAD_OUT) = s5k5baf_cis_rect;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक s5k5baf_check_fw_revision(काष्ठा s5k5baf *state)
-अणु
+static int s5k5baf_check_fw_revision(struct s5k5baf *state)
+{
 	u16 api_ver = 0, fw_rev = 0, s_id = 0;
-	पूर्णांक ret;
+	int ret;
 
-	api_ver = s5k5baf_पढ़ो(state, REG_FW_APIVER);
-	fw_rev = s5k5baf_पढ़ो(state, REG_FW_REVISION) & 0xff;
-	s_id = s5k5baf_पढ़ो(state, REG_FW_SENSOR_ID);
+	api_ver = s5k5baf_read(state, REG_FW_APIVER);
+	fw_rev = s5k5baf_read(state, REG_FW_REVISION) & 0xff;
+	s_id = s5k5baf_read(state, REG_FW_SENSOR_ID);
 	ret = s5k5baf_clear_error(state);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	v4l2_info(&state->sd, "FW API=%#x, revision=%#x sensor_id=%#x\n",
 		  api_ver, fw_rev, s_id);
 
-	अगर (api_ver != S5K5BAF_FW_APIVER) अणु
+	if (api_ver != S5K5BAF_FW_APIVER) {
 		v4l2_err(&state->sd, "FW API version not supported\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक s5k5baf_रेजिस्टरed(काष्ठा v4l2_subdev *sd)
-अणु
-	काष्ठा s5k5baf *state = to_s5k5baf(sd);
-	पूर्णांक ret;
+static int s5k5baf_registered(struct v4l2_subdev *sd)
+{
+	struct s5k5baf *state = to_s5k5baf(sd);
+	int ret;
 
-	ret = v4l2_device_रेजिस्टर_subdev(sd->v4l2_dev, &state->cis_sd);
-	अगर (ret < 0)
+	ret = v4l2_device_register_subdev(sd->v4l2_dev, &state->cis_sd);
+	if (ret < 0)
 		v4l2_err(sd, "failed to register subdev %s\n",
 			 state->cis_sd.name);
-	अन्यथा
+	else
 		ret = media_create_pad_link(&state->cis_sd.entity, PAD_CIS,
 					       &state->sd.entity, PAD_CIS,
 					       MEDIA_LNK_FL_IMMUTABLE |
 					       MEDIA_LNK_FL_ENABLED);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम s5k5baf_unरेजिस्टरed(काष्ठा v4l2_subdev *sd)
-अणु
-	काष्ठा s5k5baf *state = to_s5k5baf(sd);
-	v4l2_device_unरेजिस्टर_subdev(&state->cis_sd);
-पूर्ण
+static void s5k5baf_unregistered(struct v4l2_subdev *sd)
+{
+	struct s5k5baf *state = to_s5k5baf(sd);
+	v4l2_device_unregister_subdev(&state->cis_sd);
+}
 
-अटल स्थिर काष्ठा v4l2_subdev_ops s5k5baf_cis_subdev_ops = अणु
+static const struct v4l2_subdev_ops s5k5baf_cis_subdev_ops = {
 	.pad	= &s5k5baf_cis_pad_ops,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_पूर्णांकernal_ops s5k5baf_cis_subdev_पूर्णांकernal_ops = अणु
-	.खोलो = s5k5baf_खोलो,
-पूर्ण;
+static const struct v4l2_subdev_internal_ops s5k5baf_cis_subdev_internal_ops = {
+	.open = s5k5baf_open,
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_पूर्णांकernal_ops s5k5baf_subdev_पूर्णांकernal_ops = अणु
-	.रेजिस्टरed = s5k5baf_रेजिस्टरed,
-	.unरेजिस्टरed = s5k5baf_unरेजिस्टरed,
-	.खोलो = s5k5baf_खोलो,
-पूर्ण;
+static const struct v4l2_subdev_internal_ops s5k5baf_subdev_internal_ops = {
+	.registered = s5k5baf_registered,
+	.unregistered = s5k5baf_unregistered,
+	.open = s5k5baf_open,
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_core_ops s5k5baf_core_ops = अणु
-	.s_घातer = s5k5baf_set_घातer,
+static const struct v4l2_subdev_core_ops s5k5baf_core_ops = {
+	.s_power = s5k5baf_set_power,
 	.log_status = v4l2_ctrl_subdev_log_status,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_ops s5k5baf_subdev_ops = अणु
+static const struct v4l2_subdev_ops s5k5baf_subdev_ops = {
 	.core = &s5k5baf_core_ops,
 	.pad = &s5k5baf_pad_ops,
 	.video = &s5k5baf_video_ops,
-पूर्ण;
+};
 
-अटल पूर्णांक s5k5baf_configure_gpios(काष्ठा s5k5baf *state)
-अणु
-	अटल स्थिर अक्षर * स्थिर name[] = अणु "S5K5BAF_STBY", "S5K5BAF_RST" पूर्ण;
-	काष्ठा i2c_client *c = v4l2_get_subdevdata(&state->sd);
-	काष्ठा s5k5baf_gpio *g = state->gpios;
-	पूर्णांक ret, i;
+static int s5k5baf_configure_gpios(struct s5k5baf *state)
+{
+	static const char * const name[] = { "S5K5BAF_STBY", "S5K5BAF_RST" };
+	struct i2c_client *c = v4l2_get_subdevdata(&state->sd);
+	struct s5k5baf_gpio *g = state->gpios;
+	int ret, i;
 
-	क्रम (i = 0; i < NUM_GPIOS; ++i) अणु
-		पूर्णांक flags = GPIOF_सूची_OUT;
-		अगर (g[i].level)
+	for (i = 0; i < NUM_GPIOS; ++i) {
+		int flags = GPIOF_DIR_OUT;
+		if (g[i].level)
 			flags |= GPIOF_INIT_HIGH;
 		ret = devm_gpio_request_one(&c->dev, g[i].gpio, flags, name[i]);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			v4l2_err(c, "failed to request gpio %s\n", name[i]);
-			वापस ret;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return ret;
+		}
+	}
+	return 0;
+}
 
-अटल पूर्णांक s5k5baf_parse_gpios(काष्ठा s5k5baf_gpio *gpios, काष्ठा device *dev)
-अणु
-	अटल स्थिर अक्षर * स्थिर names[] = अणु
+static int s5k5baf_parse_gpios(struct s5k5baf_gpio *gpios, struct device *dev)
+{
+	static const char * const names[] = {
 		"stbyn-gpios",
 		"rstn-gpios",
-	पूर्ण;
-	काष्ठा device_node *node = dev->of_node;
-	क्रमागत of_gpio_flags flags;
-	पूर्णांक ret, i;
+	};
+	struct device_node *node = dev->of_node;
+	enum of_gpio_flags flags;
+	int ret, i;
 
-	क्रम (i = 0; i < NUM_GPIOS; ++i) अणु
+	for (i = 0; i < NUM_GPIOS; ++i) {
 		ret = of_get_named_gpio_flags(node, names[i], 0, &flags);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(dev, "no %s GPIO pin provided\n", names[i]);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		gpios[i].gpio = ret;
 		gpios[i].level = !(flags & OF_GPIO_ACTIVE_LOW);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक s5k5baf_parse_device_node(काष्ठा s5k5baf *state, काष्ठा device *dev)
-अणु
-	काष्ठा device_node *node = dev->of_node;
-	काष्ठा device_node *node_ep;
-	काष्ठा v4l2_fwnode_endpoपूर्णांक ep = अणु .bus_type = 0 पूर्ण;
-	पूर्णांक ret;
+static int s5k5baf_parse_device_node(struct s5k5baf *state, struct device *dev)
+{
+	struct device_node *node = dev->of_node;
+	struct device_node *node_ep;
+	struct v4l2_fwnode_endpoint ep = { .bus_type = 0 };
+	int ret;
 
-	अगर (!node) अणु
+	if (!node) {
 		dev_err(dev, "no device-tree node provided\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ret = of_property_पढ़ो_u32(node, "clock-frequency",
+	ret = of_property_read_u32(node, "clock-frequency",
 				   &state->mclk_frequency);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		state->mclk_frequency = S5K5BAF_DEFAULT_MCLK_FREQ;
 		dev_info(dev, "using default %u Hz clock frequency\n",
 			 state->mclk_frequency);
-	पूर्ण
+	}
 
 	ret = s5k5baf_parse_gpios(state->gpios, dev);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	node_ep = of_graph_get_next_endpoपूर्णांक(node, शून्य);
-	अगर (!node_ep) अणु
+	node_ep = of_graph_get_next_endpoint(node, NULL);
+	if (!node_ep) {
 		dev_err(dev, "no endpoint defined at node %pOF\n", node);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ret = v4l2_fwnode_endpoपूर्णांक_parse(of_fwnode_handle(node_ep), &ep);
+	ret = v4l2_fwnode_endpoint_parse(of_fwnode_handle(node_ep), &ep);
 	of_node_put(node_ep);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	state->bus_type = ep.bus_type;
 
-	चयन (state->bus_type) अणु
-	हाल V4L2_MBUS_CSI2_DPHY:
+	switch (state->bus_type) {
+	case V4L2_MBUS_CSI2_DPHY:
 		state->nlanes = ep.bus.mipi_csi2.num_data_lanes;
-		अवरोध;
-	हाल V4L2_MBUS_PARALLEL:
-		अवरोध;
-	शेष:
+		break;
+	case V4L2_MBUS_PARALLEL:
+		break;
+	default:
 		dev_err(dev, "unsupported bus in endpoint defined at node %pOF\n",
 			node);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक s5k5baf_configure_subdevs(काष्ठा s5k5baf *state,
-				     काष्ठा i2c_client *c)
-अणु
-	काष्ठा v4l2_subdev *sd;
-	पूर्णांक ret;
+static int s5k5baf_configure_subdevs(struct s5k5baf *state,
+				     struct i2c_client *c)
+{
+	struct v4l2_subdev *sd;
+	int ret;
 
 	sd = &state->cis_sd;
 	v4l2_subdev_init(sd, &s5k5baf_cis_subdev_ops);
 	sd->owner = THIS_MODULE;
 	v4l2_set_subdevdata(sd, state);
-	snम_लिखो(sd->name, माप(sd->name), "S5K5BAF-CIS %d-%04x",
+	snprintf(sd->name, sizeof(sd->name), "S5K5BAF-CIS %d-%04x",
 		 i2c_adapter_id(c->adapter), c->addr);
 
-	sd->पूर्णांकernal_ops = &s5k5baf_cis_subdev_पूर्णांकernal_ops;
+	sd->internal_ops = &s5k5baf_cis_subdev_internal_ops;
 	sd->flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;
 
 	state->cis_pad.flags = MEDIA_PAD_FL_SOURCE;
 	sd->entity.function = MEDIA_ENT_F_CAM_SENSOR;
 	ret = media_entity_pads_init(&sd->entity, NUM_CIS_PADS, &state->cis_pad);
-	अगर (ret < 0)
-		जाओ err;
+	if (ret < 0)
+		goto err;
 
 	sd = &state->sd;
 	v4l2_i2c_subdev_init(sd, c, &s5k5baf_subdev_ops);
-	snम_लिखो(sd->name, माप(sd->name), "S5K5BAF-ISP %d-%04x",
+	snprintf(sd->name, sizeof(sd->name), "S5K5BAF-ISP %d-%04x",
 		 i2c_adapter_id(c->adapter), c->addr);
 
-	sd->पूर्णांकernal_ops = &s5k5baf_subdev_पूर्णांकernal_ops;
+	sd->internal_ops = &s5k5baf_subdev_internal_ops;
 	sd->flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;
 
 	state->pads[PAD_CIS].flags = MEDIA_PAD_FL_SINK;
@@ -1921,39 +1920,39 @@ unlock:
 	sd->entity.function = MEDIA_ENT_F_V4L2_SUBDEV_UNKNOWN;
 	ret = media_entity_pads_init(&sd->entity, NUM_ISP_PADS, state->pads);
 
-	अगर (!ret)
-		वापस 0;
+	if (!ret)
+		return 0;
 
 	media_entity_cleanup(&state->cis_sd.entity);
 err:
 	dev_err(&c->dev, "cannot init media entity %s\n", sd->name);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक s5k5baf_configure_regulators(काष्ठा s5k5baf *state)
-अणु
-	काष्ठा i2c_client *c = v4l2_get_subdevdata(&state->sd);
-	पूर्णांक ret;
-	पूर्णांक i;
+static int s5k5baf_configure_regulators(struct s5k5baf *state)
+{
+	struct i2c_client *c = v4l2_get_subdevdata(&state->sd);
+	int ret;
+	int i;
 
-	क्रम (i = 0; i < S5K5BAF_NUM_SUPPLIES; i++)
+	for (i = 0; i < S5K5BAF_NUM_SUPPLIES; i++)
 		state->supplies[i].supply = s5k5baf_supply_names[i];
 
 	ret = devm_regulator_bulk_get(&c->dev, S5K5BAF_NUM_SUPPLIES,
 				      state->supplies);
-	अगर (ret < 0)
+	if (ret < 0)
 		v4l2_err(c, "failed to get regulators\n");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक s5k5baf_probe(काष्ठा i2c_client *c)
-अणु
-	काष्ठा s5k5baf *state;
-	पूर्णांक ret;
+static int s5k5baf_probe(struct i2c_client *c)
+{
+	struct s5k5baf *state;
+	int ret;
 
-	state = devm_kzalloc(&c->dev, माप(*state), GFP_KERNEL);
-	अगर (!state)
-		वापस -ENOMEM;
+	state = devm_kzalloc(&c->dev, sizeof(*state), GFP_KERNEL);
+	if (!state)
+		return -ENOMEM;
 
 	mutex_init(&state->lock);
 	state->crop_sink = s5k5baf_cis_rect;
@@ -1961,94 +1960,94 @@ err:
 	state->crop_source = s5k5baf_cis_rect;
 
 	ret = s5k5baf_parse_device_node(state, &c->dev);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	ret = s5k5baf_configure_subdevs(state, c);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	ret = s5k5baf_configure_gpios(state);
-	अगर (ret < 0)
-		जाओ err_me;
+	if (ret < 0)
+		goto err_me;
 
 	ret = s5k5baf_configure_regulators(state);
-	अगर (ret < 0)
-		जाओ err_me;
+	if (ret < 0)
+		goto err_me;
 
-	state->घड़ी = devm_clk_get(state->sd.dev, S5K5BAF_CLK_NAME);
-	अगर (IS_ERR(state->घड़ी)) अणु
+	state->clock = devm_clk_get(state->sd.dev, S5K5BAF_CLK_NAME);
+	if (IS_ERR(state->clock)) {
 		ret = -EPROBE_DEFER;
-		जाओ err_me;
-	पूर्ण
+		goto err_me;
+	}
 
-	ret = s5k5baf_घातer_on(state);
-	अगर (ret < 0) अणु
+	ret = s5k5baf_power_on(state);
+	if (ret < 0) {
 		ret = -EPROBE_DEFER;
-		जाओ err_me;
-	पूर्ण
+		goto err_me;
+	}
 	s5k5baf_hw_init(state);
 	ret = s5k5baf_check_fw_revision(state);
 
-	s5k5baf_घातer_off(state);
-	अगर (ret < 0)
-		जाओ err_me;
+	s5k5baf_power_off(state);
+	if (ret < 0)
+		goto err_me;
 
 	ret = s5k5baf_initialize_ctrls(state);
-	अगर (ret < 0)
-		जाओ err_me;
+	if (ret < 0)
+		goto err_me;
 
-	ret = v4l2_async_रेजिस्टर_subdev(&state->sd);
-	अगर (ret < 0)
-		जाओ err_ctrl;
+	ret = v4l2_async_register_subdev(&state->sd);
+	if (ret < 0)
+		goto err_ctrl;
 
-	वापस 0;
+	return 0;
 
 err_ctrl:
-	v4l2_ctrl_handler_मुक्त(state->sd.ctrl_handler);
+	v4l2_ctrl_handler_free(state->sd.ctrl_handler);
 err_me:
 	media_entity_cleanup(&state->sd.entity);
 	media_entity_cleanup(&state->cis_sd.entity);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक s5k5baf_हटाओ(काष्ठा i2c_client *c)
-अणु
-	काष्ठा v4l2_subdev *sd = i2c_get_clientdata(c);
-	काष्ठा s5k5baf *state = to_s5k5baf(sd);
+static int s5k5baf_remove(struct i2c_client *c)
+{
+	struct v4l2_subdev *sd = i2c_get_clientdata(c);
+	struct s5k5baf *state = to_s5k5baf(sd);
 
-	v4l2_async_unरेजिस्टर_subdev(sd);
-	v4l2_ctrl_handler_मुक्त(sd->ctrl_handler);
+	v4l2_async_unregister_subdev(sd);
+	v4l2_ctrl_handler_free(sd->ctrl_handler);
 	media_entity_cleanup(&sd->entity);
 
 	sd = &state->cis_sd;
-	v4l2_device_unरेजिस्टर_subdev(sd);
+	v4l2_device_unregister_subdev(sd);
 	media_entity_cleanup(&sd->entity);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id s5k5baf_id[] = अणु
-	अणु S5K5BAF_DRIVER_NAME, 0 पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct i2c_device_id s5k5baf_id[] = {
+	{ S5K5BAF_DRIVER_NAME, 0 },
+	{ },
+};
 MODULE_DEVICE_TABLE(i2c, s5k5baf_id);
 
-अटल स्थिर काष्ठा of_device_id s5k5baf_of_match[] = अणु
-	अणु .compatible = "samsung,s5k5baf" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id s5k5baf_of_match[] = {
+	{ .compatible = "samsung,s5k5baf" },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, s5k5baf_of_match);
 
-अटल काष्ठा i2c_driver s5k5baf_i2c_driver = अणु
-	.driver = अणु
+static struct i2c_driver s5k5baf_i2c_driver = {
+	.driver = {
 		.of_match_table = s5k5baf_of_match,
 		.name = S5K5BAF_DRIVER_NAME
-	पूर्ण,
+	},
 	.probe_new	= s5k5baf_probe,
-	.हटाओ		= s5k5baf_हटाओ,
+	.remove		= s5k5baf_remove,
 	.id_table	= s5k5baf_id,
-पूर्ण;
+};
 
 module_i2c_driver(s5k5baf_i2c_driver);
 

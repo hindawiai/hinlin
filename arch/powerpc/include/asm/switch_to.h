@@ -1,118 +1,117 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 1999 Cort Dougan <cort@cs.nmt.edu>
  */
-#अगर_अघोषित _ASM_POWERPC_SWITCH_TO_H
-#घोषणा _ASM_POWERPC_SWITCH_TO_H
+#ifndef _ASM_POWERPC_SWITCH_TO_H
+#define _ASM_POWERPC_SWITCH_TO_H
 
-#समावेश <linux/sched.h>
-#समावेश <यंत्र/reg.h>
+#include <linux/sched.h>
+#include <asm/reg.h>
 
-काष्ठा thपढ़ो_काष्ठा;
-काष्ठा task_काष्ठा;
-काष्ठा pt_regs;
+struct thread_struct;
+struct task_struct;
+struct pt_regs;
 
-बाह्य काष्ठा task_काष्ठा *__चयन_to(काष्ठा task_काष्ठा *,
-	काष्ठा task_काष्ठा *);
-#घोषणा चयन_to(prev, next, last)	((last) = __चयन_to((prev), (next)))
+extern struct task_struct *__switch_to(struct task_struct *,
+	struct task_struct *);
+#define switch_to(prev, next, last)	((last) = __switch_to((prev), (next)))
 
-बाह्य काष्ठा task_काष्ठा *_चयन(काष्ठा thपढ़ो_काष्ठा *prev,
-				   काष्ठा thपढ़ो_काष्ठा *next);
+extern struct task_struct *_switch(struct thread_struct *prev,
+				   struct thread_struct *next);
 
-बाह्य व्योम चयन_booke_debug_regs(काष्ठा debug_reg *new_debug);
+extern void switch_booke_debug_regs(struct debug_reg *new_debug);
 
-बाह्य पूर्णांक emulate_altivec(काष्ठा pt_regs *);
+extern int emulate_altivec(struct pt_regs *);
 
-#अगर_घोषित CONFIG_PPC_BOOK3S_64
-व्योम restore_math(काष्ठा pt_regs *regs);
-#अन्यथा
-अटल अंतरभूत व्योम restore_math(काष्ठा pt_regs *regs)
-अणु
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_PPC_BOOK3S_64
+void restore_math(struct pt_regs *regs);
+#else
+static inline void restore_math(struct pt_regs *regs)
+{
+}
+#endif
 
-व्योम restore_पंचांग_state(काष्ठा pt_regs *regs);
+void restore_tm_state(struct pt_regs *regs);
 
-बाह्य व्योम flush_all_to_thपढ़ो(काष्ठा task_काष्ठा *);
-बाह्य व्योम giveup_all(काष्ठा task_काष्ठा *);
+extern void flush_all_to_thread(struct task_struct *);
+extern void giveup_all(struct task_struct *);
 
-#अगर_घोषित CONFIG_PPC_FPU
-बाह्य व्योम enable_kernel_fp(व्योम);
-बाह्य व्योम flush_fp_to_thपढ़ो(काष्ठा task_काष्ठा *);
-बाह्य व्योम giveup_fpu(काष्ठा task_काष्ठा *);
-बाह्य व्योम save_fpu(काष्ठा task_काष्ठा *);
-अटल अंतरभूत व्योम disable_kernel_fp(व्योम)
-अणु
+#ifdef CONFIG_PPC_FPU
+extern void enable_kernel_fp(void);
+extern void flush_fp_to_thread(struct task_struct *);
+extern void giveup_fpu(struct task_struct *);
+extern void save_fpu(struct task_struct *);
+static inline void disable_kernel_fp(void)
+{
 	msr_check_and_clear(MSR_FP);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम save_fpu(काष्ठा task_काष्ठा *t) अणु पूर्ण
-अटल अंतरभूत व्योम flush_fp_to_thपढ़ो(काष्ठा task_काष्ठा *t) अणु पूर्ण
-#पूर्ण_अगर
+}
+#else
+static inline void save_fpu(struct task_struct *t) { }
+static inline void flush_fp_to_thread(struct task_struct *t) { }
+#endif
 
-#अगर_घोषित CONFIG_ALTIVEC
-बाह्य व्योम enable_kernel_altivec(व्योम);
-बाह्य व्योम flush_altivec_to_thपढ़ो(काष्ठा task_काष्ठा *);
-बाह्य व्योम giveup_altivec(काष्ठा task_काष्ठा *);
-बाह्य व्योम save_altivec(काष्ठा task_काष्ठा *);
-अटल अंतरभूत व्योम disable_kernel_altivec(व्योम)
-अणु
+#ifdef CONFIG_ALTIVEC
+extern void enable_kernel_altivec(void);
+extern void flush_altivec_to_thread(struct task_struct *);
+extern void giveup_altivec(struct task_struct *);
+extern void save_altivec(struct task_struct *);
+static inline void disable_kernel_altivec(void)
+{
 	msr_check_and_clear(MSR_VEC);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम save_altivec(काष्ठा task_काष्ठा *t) अणु पूर्ण
-अटल अंतरभूत व्योम __giveup_altivec(काष्ठा task_काष्ठा *t) अणु पूर्ण
-#पूर्ण_अगर
+}
+#else
+static inline void save_altivec(struct task_struct *t) { }
+static inline void __giveup_altivec(struct task_struct *t) { }
+#endif
 
-#अगर_घोषित CONFIG_VSX
-बाह्य व्योम enable_kernel_vsx(व्योम);
-बाह्य व्योम flush_vsx_to_thपढ़ो(काष्ठा task_काष्ठा *);
-अटल अंतरभूत व्योम disable_kernel_vsx(व्योम)
-अणु
+#ifdef CONFIG_VSX
+extern void enable_kernel_vsx(void);
+extern void flush_vsx_to_thread(struct task_struct *);
+static inline void disable_kernel_vsx(void)
+{
 	msr_check_and_clear(MSR_FP|MSR_VEC|MSR_VSX);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम enable_kernel_vsx(व्योम)
-अणु
+}
+#else
+static inline void enable_kernel_vsx(void)
+{
 	BUILD_BUG();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम disable_kernel_vsx(व्योम)
-अणु
+static inline void disable_kernel_vsx(void)
+{
 	BUILD_BUG();
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-#अगर_घोषित CONFIG_SPE
-बाह्य व्योम enable_kernel_spe(व्योम);
-बाह्य व्योम flush_spe_to_thपढ़ो(काष्ठा task_काष्ठा *);
-बाह्य व्योम giveup_spe(काष्ठा task_काष्ठा *);
-बाह्य व्योम __giveup_spe(काष्ठा task_काष्ठा *);
-अटल अंतरभूत व्योम disable_kernel_spe(व्योम)
-अणु
+#ifdef CONFIG_SPE
+extern void enable_kernel_spe(void);
+extern void flush_spe_to_thread(struct task_struct *);
+extern void giveup_spe(struct task_struct *);
+extern void __giveup_spe(struct task_struct *);
+static inline void disable_kernel_spe(void)
+{
 	msr_check_and_clear(MSR_SPE);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम __giveup_spe(काष्ठा task_काष्ठा *t) अणु पूर्ण
-#पूर्ण_अगर
+}
+#else
+static inline void __giveup_spe(struct task_struct *t) { }
+#endif
 
-अटल अंतरभूत व्योम clear_task_ebb(काष्ठा task_काष्ठा *t)
-अणु
-#अगर_घोषित CONFIG_PPC_BOOK3S_64
+static inline void clear_task_ebb(struct task_struct *t)
+{
+#ifdef CONFIG_PPC_BOOK3S_64
     /* EBB perf events are not inherited, so clear all EBB state. */
-    t->thपढ़ो.ebbrr = 0;
-    t->thपढ़ो.ebbhr = 0;
-    t->thपढ़ो.bescr = 0;
-    t->thपढ़ो.mmcr2 = 0;
-    t->thपढ़ो.mmcr0 = 0;
-    t->thपढ़ो.siar = 0;
-    t->thपढ़ो.sdar = 0;
-    t->thपढ़ो.sier = 0;
-    t->thपढ़ो.used_ebb = 0;
-#पूर्ण_अगर
-पूर्ण
+    t->thread.ebbrr = 0;
+    t->thread.ebbhr = 0;
+    t->thread.bescr = 0;
+    t->thread.mmcr2 = 0;
+    t->thread.mmcr0 = 0;
+    t->thread.siar = 0;
+    t->thread.sdar = 0;
+    t->thread.sier = 0;
+    t->thread.used_ebb = 0;
+#endif
+}
 
-बाह्य पूर्णांक set_thपढ़ो_tidr(काष्ठा task_काष्ठा *t);
+extern int set_thread_tidr(struct task_struct *t);
 
-#पूर्ण_अगर /* _ASM_POWERPC_SWITCH_TO_H */
+#endif /* _ASM_POWERPC_SWITCH_TO_H */

@@ -1,29 +1,28 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Regression1
  * Description:
  * Salman Qazi describes the following radix-tree bug:
  *
- * In the following हाल, we get can get a deadlock:
+ * In the following case, we get can get a deadlock:
  *
  * 0.  The radix tree contains two items, one has the index 0.
- * 1.  The पढ़ोer (in this हाल find_get_pages) takes the rcu_पढ़ो_lock.
- * 2.  The पढ़ोer acquires slot(s) क्रम item(s) including the index 0 item.
+ * 1.  The reader (in this case find_get_pages) takes the rcu_read_lock.
+ * 2.  The reader acquires slot(s) for item(s) including the index 0 item.
  * 3.  The non-zero index item is deleted, and as a consequence the other item
  *     is moved to the root of the tree. The place where it used to be is queued
- *     क्रम deletion after the पढ़ोers finish.
- * 3b. The zero item is deleted, removing it from the direct slot, it reमुख्यs in
+ *     for deletion after the readers finish.
+ * 3b. The zero item is deleted, removing it from the direct slot, it remains in
  *     the rcu-delayed indirect node.
- * 4.  The पढ़ोer looks at the index 0 slot, and finds that the page has 0 ref
+ * 4.  The reader looks at the index 0 slot, and finds that the page has 0 ref
  *     count
- * 5.  The पढ़ोer looks at it again, hoping that the item will either be मुक्तd
+ * 5.  The reader looks at it again, hoping that the item will either be freed
  *     or the ref count will increase. This never happens, as the slot it is
  *     looking at will never be updated. Also, this slot can never be reclaimed
- *     because the पढ़ोer is holding rcu_पढ़ो_lock and is in an infinite loop.
+ *     because the reader is holding rcu_read_lock and is in an infinite loop.
  *
- * The fix is to re-use the same "indirect" poपूर्णांकer हाल that requires a slot
- * lookup retry पूर्णांकo a general "retry the lookup" bit.
+ * The fix is to re-use the same "indirect" pointer case that requires a slot
+ * lookup retry into a general "retry the lookup" bit.
  *
  * Running:
  * This test should run to completion in a few seconds. The above bug would
@@ -32,98 +31,98 @@
  * Upstream commit:
  * Not yet
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/radix-tree.h>
-#समावेश <linux/rcupdate.h>
-#समावेश <मानककोष.स>
-#समावेश <pthपढ़ो.h>
-#समावेश <मानकपन.स>
-#समावेश <निश्चित.स>
+#include <linux/kernel.h>
+#include <linux/gfp.h>
+#include <linux/slab.h>
+#include <linux/radix-tree.h>
+#include <linux/rcupdate.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <stdio.h>
+#include <assert.h>
 
-#समावेश "regression.h"
+#include "regression.h"
 
-अटल RADIX_TREE(mt_tree, GFP_KERNEL);
+static RADIX_TREE(mt_tree, GFP_KERNEL);
 
-काष्ठा page अणु
-	pthपढ़ो_mutex_t lock;
-	काष्ठा rcu_head rcu;
-	पूर्णांक count;
-	अचिन्हित दीर्घ index;
-पूर्ण;
+struct page {
+	pthread_mutex_t lock;
+	struct rcu_head rcu;
+	int count;
+	unsigned long index;
+};
 
-अटल काष्ठा page *page_alloc(पूर्णांक index)
-अणु
-	काष्ठा page *p;
-	p = दो_स्मृति(माप(काष्ठा page));
+static struct page *page_alloc(int index)
+{
+	struct page *p;
+	p = malloc(sizeof(struct page));
 	p->count = 1;
 	p->index = index;
-	pthपढ़ो_mutex_init(&p->lock, शून्य);
+	pthread_mutex_init(&p->lock, NULL);
 
-	वापस p;
-पूर्ण
+	return p;
+}
 
-अटल व्योम page_rcu_मुक्त(काष्ठा rcu_head *rcu)
-अणु
-	काष्ठा page *p = container_of(rcu, काष्ठा page, rcu);
-	निश्चित(!p->count);
-	pthपढ़ो_mutex_destroy(&p->lock);
-	मुक्त(p);
-पूर्ण
+static void page_rcu_free(struct rcu_head *rcu)
+{
+	struct page *p = container_of(rcu, struct page, rcu);
+	assert(!p->count);
+	pthread_mutex_destroy(&p->lock);
+	free(p);
+}
 
-अटल व्योम page_मुक्त(काष्ठा page *p)
-अणु
-	call_rcu(&p->rcu, page_rcu_मुक्त);
-पूर्ण
+static void page_free(struct page *p)
+{
+	call_rcu(&p->rcu, page_rcu_free);
+}
 
-अटल अचिन्हित find_get_pages(अचिन्हित दीर्घ start,
-			    अचिन्हित पूर्णांक nr_pages, काष्ठा page **pages)
-अणु
+static unsigned find_get_pages(unsigned long start,
+			    unsigned int nr_pages, struct page **pages)
+{
 	XA_STATE(xas, &mt_tree, start);
-	काष्ठा page *page;
-	अचिन्हित पूर्णांक ret = 0;
+	struct page *page;
+	unsigned int ret = 0;
 
-	rcu_पढ़ो_lock();
-	xas_क्रम_each(&xas, page, अच_दीर्घ_उच्च) अणु
-		अगर (xas_retry(&xas, page))
-			जारी;
+	rcu_read_lock();
+	xas_for_each(&xas, page, ULONG_MAX) {
+		if (xas_retry(&xas, page))
+			continue;
 
-		pthपढ़ो_mutex_lock(&page->lock);
-		अगर (!page->count)
-			जाओ unlock;
+		pthread_mutex_lock(&page->lock);
+		if (!page->count)
+			goto unlock;
 
-		/* करोn't actually update page refcount */
-		pthपढ़ो_mutex_unlock(&page->lock);
+		/* don't actually update page refcount */
+		pthread_mutex_unlock(&page->lock);
 
 		/* Has the page moved? */
-		अगर (unlikely(page != xas_reload(&xas)))
-			जाओ put_page;
+		if (unlikely(page != xas_reload(&xas)))
+			goto put_page;
 
 		pages[ret] = page;
 		ret++;
-		जारी;
+		continue;
 unlock:
-		pthपढ़ो_mutex_unlock(&page->lock);
+		pthread_mutex_unlock(&page->lock);
 put_page:
 		xas_reset(&xas);
-	पूर्ण
-	rcu_पढ़ो_unlock();
-	वापस ret;
-पूर्ण
+	}
+	rcu_read_unlock();
+	return ret;
+}
 
-अटल pthपढ़ो_barrier_t worker_barrier;
+static pthread_barrier_t worker_barrier;
 
-अटल व्योम *regression1_fn(व्योम *arg)
-अणु
-	rcu_रेजिस्टर_thपढ़ो();
+static void *regression1_fn(void *arg)
+{
+	rcu_register_thread();
 
-	अगर (pthपढ़ो_barrier_रुको(&worker_barrier) ==
-			PTHREAD_BARRIER_SERIAL_THREAD) अणु
-		पूर्णांक j;
+	if (pthread_barrier_wait(&worker_barrier) ==
+			PTHREAD_BARRIER_SERIAL_THREAD) {
+		int j;
 
-		क्रम (j = 0; j < 1000000; j++) अणु
-			काष्ठा page *p;
+		for (j = 0; j < 1000000; j++) {
+			struct page *p;
 
 			p = page_alloc(0);
 			xa_lock(&mt_tree);
@@ -137,65 +136,65 @@ put_page:
 
 			xa_lock(&mt_tree);
 			p = radix_tree_delete(&mt_tree, 1);
-			pthपढ़ो_mutex_lock(&p->lock);
+			pthread_mutex_lock(&p->lock);
 			p->count--;
-			pthपढ़ो_mutex_unlock(&p->lock);
+			pthread_mutex_unlock(&p->lock);
 			xa_unlock(&mt_tree);
-			page_मुक्त(p);
+			page_free(p);
 
 			xa_lock(&mt_tree);
 			p = radix_tree_delete(&mt_tree, 0);
-			pthपढ़ो_mutex_lock(&p->lock);
+			pthread_mutex_lock(&p->lock);
 			p->count--;
-			pthपढ़ो_mutex_unlock(&p->lock);
+			pthread_mutex_unlock(&p->lock);
 			xa_unlock(&mt_tree);
-			page_मुक्त(p);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		पूर्णांक j;
+			page_free(p);
+		}
+	} else {
+		int j;
 
-		क्रम (j = 0; j < 100000000; j++) अणु
-			काष्ठा page *pages[10];
+		for (j = 0; j < 100000000; j++) {
+			struct page *pages[10];
 
 			find_get_pages(0, 10, pages);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	rcu_unरेजिस्टर_thपढ़ो();
+	rcu_unregister_thread();
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल pthपढ़ो_t *thपढ़ोs;
-व्योम regression1_test(व्योम)
-अणु
-	पूर्णांक nr_thपढ़ोs;
-	पूर्णांक i;
-	दीर्घ arg;
+static pthread_t *threads;
+void regression1_test(void)
+{
+	int nr_threads;
+	int i;
+	long arg;
 
 	/* Regression #1 */
-	prपूर्णांकv(1, "running regression test 1, should finish in under a minute\n");
-	nr_thपढ़ोs = 2;
-	pthपढ़ो_barrier_init(&worker_barrier, शून्य, nr_thपढ़ोs);
+	printv(1, "running regression test 1, should finish in under a minute\n");
+	nr_threads = 2;
+	pthread_barrier_init(&worker_barrier, NULL, nr_threads);
 
-	thपढ़ोs = दो_स्मृति(nr_thपढ़ोs * माप(pthपढ़ो_t *));
+	threads = malloc(nr_threads * sizeof(pthread_t *));
 
-	क्रम (i = 0; i < nr_thपढ़ोs; i++) अणु
+	for (i = 0; i < nr_threads; i++) {
 		arg = i;
-		अगर (pthपढ़ो_create(&thपढ़ोs[i], शून्य, regression1_fn, (व्योम *)arg)) अणु
-			लिखो_त्रुटि("pthread_create");
-			निकास(1);
-		पूर्ण
-	पूर्ण
+		if (pthread_create(&threads[i], NULL, regression1_fn, (void *)arg)) {
+			perror("pthread_create");
+			exit(1);
+		}
+	}
 
-	क्रम (i = 0; i < nr_thपढ़ोs; i++) अणु
-		अगर (pthपढ़ो_join(thपढ़ोs[i], शून्य)) अणु
-			लिखो_त्रुटि("pthread_join");
-			निकास(1);
-		पूर्ण
-	पूर्ण
+	for (i = 0; i < nr_threads; i++) {
+		if (pthread_join(threads[i], NULL)) {
+			perror("pthread_join");
+			exit(1);
+		}
+	}
 
-	मुक्त(thपढ़ोs);
+	free(threads);
 
-	prपूर्णांकv(1, "regression test 1, done\n");
-पूर्ण
+	printv(1, "regression test 1, done\n");
+}

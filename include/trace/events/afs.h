@@ -1,38 +1,37 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
-/* AFS tracepoपूर्णांकs
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+/* AFS tracepoints
  *
  * Copyright (C) 2016 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_SYSTEM afs
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM afs
 
-#अगर !defined(_TRACE_AFS_H) || defined(TRACE_HEADER_MULTI_READ)
-#घोषणा _TRACE_AFS_H
+#if !defined(_TRACE_AFS_H) || defined(TRACE_HEADER_MULTI_READ)
+#define _TRACE_AFS_H
 
-#समावेश <linux/tracepoपूर्णांक.h>
+#include <linux/tracepoint.h>
 
 /*
- * Define क्रमागतs क्रम tracing inक्रमmation.
+ * Define enums for tracing information.
  */
-#अगर_अघोषित __AFS_DECLARE_TRACE_ENUMS_ONCE_ONLY
-#घोषणा __AFS_DECLARE_TRACE_ENUMS_ONCE_ONLY
+#ifndef __AFS_DECLARE_TRACE_ENUMS_ONCE_ONLY
+#define __AFS_DECLARE_TRACE_ENUMS_ONCE_ONLY
 
-क्रमागत afs_call_trace अणु
+enum afs_call_trace {
 	afs_call_trace_alloc,
-	afs_call_trace_मुक्त,
+	afs_call_trace_free,
 	afs_call_trace_get,
 	afs_call_trace_put,
 	afs_call_trace_wake,
 	afs_call_trace_work,
-पूर्ण;
+};
 
-क्रमागत afs_server_trace अणु
+enum afs_server_trace {
 	afs_server_trace_alloc,
 	afs_server_trace_callback,
 	afs_server_trace_destroy,
-	afs_server_trace_मुक्त,
+	afs_server_trace_free,
 	afs_server_trace_gc,
 	afs_server_trace_get_by_addr,
 	afs_server_trace_get_by_uuid,
@@ -50,12 +49,12 @@
 	afs_server_trace_put_slist_isort,
 	afs_server_trace_put_uuid_rsq,
 	afs_server_trace_update,
-पूर्ण;
+};
 
 
-क्रमागत afs_volume_trace अणु
+enum afs_volume_trace {
 	afs_volume_trace_alloc,
-	afs_volume_trace_मुक्त,
+	afs_volume_trace_free,
 	afs_volume_trace_get_alloc_sbi,
 	afs_volume_trace_get_cell_insert,
 	afs_volume_trace_get_new_op,
@@ -63,16 +62,16 @@
 	afs_volume_trace_put_cell_dup,
 	afs_volume_trace_put_cell_root,
 	afs_volume_trace_put_destroy_sbi,
-	afs_volume_trace_put_मुक्त_fc,
+	afs_volume_trace_put_free_fc,
 	afs_volume_trace_put_put_op,
 	afs_volume_trace_put_query_alias,
 	afs_volume_trace_put_validate_fc,
-	afs_volume_trace_हटाओ,
-पूर्ण;
+	afs_volume_trace_remove,
+};
 
-क्रमागत afs_cell_trace अणु
+enum afs_cell_trace {
 	afs_cell_trace_alloc,
-	afs_cell_trace_मुक्त,
+	afs_cell_trace_free,
 	afs_cell_trace_get_queue_dns,
 	afs_cell_trace_get_queue_manage,
 	afs_cell_trace_get_queue_new,
@@ -107,10 +106,10 @@
 	afs_cell_trace_use_pin,
 	afs_cell_trace_use_probe,
 	afs_cell_trace_use_sbi,
-	afs_cell_trace_रुको,
-पूर्ण;
+	afs_cell_trace_wait,
+};
 
-क्रमागत afs_fs_operation अणु
+enum afs_fs_operation {
 	afs_FS_FetchData		= 130,	/* AFS Fetch file data */
 	afs_FS_FetchACL			= 131,	/* AFS Fetch file ACL */
 	afs_FS_FetchStatus		= 132,	/* AFS Fetch file status */
@@ -124,8 +123,8 @@
 	afs_FS_Link			= 140,	/* AFS Create a hard link */
 	afs_FS_MakeDir			= 141,	/* AFS Create a directory */
 	afs_FS_RemoveDir		= 142,	/* AFS Remove a directory */
-	afs_FS_GetVolumeInfo		= 148,	/* AFS Get inक्रमmation about a volume */
-	afs_FS_GetVolumeStatus		= 149,	/* AFS Get volume status inक्रमmation */
+	afs_FS_GetVolumeInfo		= 148,	/* AFS Get information about a volume */
+	afs_FS_GetVolumeStatus		= 149,	/* AFS Get volume status information */
 	afs_FS_GetRootVolume		= 151,	/* AFS Get root volume name */
 	afs_FS_SetLock			= 156,	/* AFS Request a file lock */
 	afs_FS_ExtendLock		= 157,	/* AFS Extend a file lock */
@@ -149,8 +148,8 @@
 	yfs_FS_Link			= 64140, /* YFS Create a hard link */
 	yfs_FS_MakeDir			= 64141, /* YFS Create a directory */
 	yfs_FS_RemoveDir		= 64142, /* YFS Remove a directory */
-	yfs_FS_GetVolumeStatus		= 64149, /* YFS Get volume status inक्रमmation */
-	yfs_FS_SetVolumeStatus		= 64150, /* YFS Set volume status inक्रमmation */
+	yfs_FS_GetVolumeStatus		= 64149, /* YFS Get volume status information */
+	yfs_FS_SetVolumeStatus		= 64150, /* YFS Set volume status information */
 	yfs_FS_SetLock			= 64156, /* YFS Request a file lock */
 	yfs_FS_ExtendLock		= 64157, /* YFS Extend a file lock */
 	yfs_FS_ReleaseLock		= 64158, /* YFS Release a file lock */
@@ -165,17 +164,17 @@
 	yfs_FS_FetchData64		= 64537, /* YFS Fetch file data */
 	yfs_FS_StoreData64		= 64538, /* YFS Store file data */
 	yfs_FS_UpdateSymlink		= 64540,
-पूर्ण;
+};
 
-क्रमागत afs_vl_operation अणु
+enum afs_vl_operation {
 	afs_VL_GetEntryByNameU	= 527,		/* AFS Get Vol Entry By Name operation ID */
 	afs_VL_GetAddrsU	= 533,		/* AFS Get FS server addresses */
-	afs_YFSVL_GetEndpoपूर्णांकs	= 64002,	/* YFS Get FS & Vol server addresses */
+	afs_YFSVL_GetEndpoints	= 64002,	/* YFS Get FS & Vol server addresses */
 	afs_YFSVL_GetCellName	= 64014,	/* YFS Get actual cell name */
 	afs_VL_GetCapabilities	= 65537,	/* AFS Get VL server capabilities */
-पूर्ण;
+};
 
-क्रमागत afs_edit_dir_op अणु
+enum afs_edit_dir_op {
 	afs_edit_dir_create,
 	afs_edit_dir_create_error,
 	afs_edit_dir_create_inval,
@@ -184,23 +183,23 @@
 	afs_edit_dir_delete_error,
 	afs_edit_dir_delete_inval,
 	afs_edit_dir_delete_noent,
-पूर्ण;
+};
 
-क्रमागत afs_edit_dir_reason अणु
-	afs_edit_dir_क्रम_create,
-	afs_edit_dir_क्रम_link,
-	afs_edit_dir_क्रम_सूची_गढ़ो,
-	afs_edit_dir_क्रम_नाम_0,
-	afs_edit_dir_क्रम_नाम_1,
-	afs_edit_dir_क्रम_नाम_2,
-	afs_edit_dir_क्रम_सूची_हटाओ,
-	afs_edit_dir_क्रम_silly_0,
-	afs_edit_dir_क्रम_silly_1,
-	afs_edit_dir_क्रम_symlink,
-	afs_edit_dir_क्रम_unlink,
-पूर्ण;
+enum afs_edit_dir_reason {
+	afs_edit_dir_for_create,
+	afs_edit_dir_for_link,
+	afs_edit_dir_for_mkdir,
+	afs_edit_dir_for_rename_0,
+	afs_edit_dir_for_rename_1,
+	afs_edit_dir_for_rename_2,
+	afs_edit_dir_for_rmdir,
+	afs_edit_dir_for_silly_0,
+	afs_edit_dir_for_silly_1,
+	afs_edit_dir_for_symlink,
+	afs_edit_dir_for_unlink,
+};
 
-क्रमागत afs_eproto_cause अणु
+enum afs_eproto_cause {
 	afs_eproto_bad_status,
 	afs_eproto_cb_count,
 	afs_eproto_cb_fid_count,
@@ -218,31 +217,31 @@
 	afs_eproto_yvl_vlendpt4_len,
 	afs_eproto_yvl_vlendpt6_len,
 	afs_eproto_yvl_vlendpt_type,
-पूर्ण;
+};
 
-क्रमागत afs_io_error अणु
+enum afs_io_error {
 	afs_io_error_cm_reply,
 	afs_io_error_extract,
 	afs_io_error_fs_probe_fail,
 	afs_io_error_vl_lookup_fail,
 	afs_io_error_vl_probe_fail,
-पूर्ण;
+};
 
-क्रमागत afs_file_error अणु
+enum afs_file_error {
 	afs_file_error_dir_bad_magic,
 	afs_file_error_dir_big,
 	afs_file_error_dir_missing_page,
-	afs_file_error_dir_name_too_दीर्घ,
+	afs_file_error_dir_name_too_long,
 	afs_file_error_dir_over_end,
 	afs_file_error_dir_small,
 	afs_file_error_dir_unmarked_ext,
 	afs_file_error_mntpt,
-	afs_file_error_ग_लिखोback_fail,
-पूर्ण;
+	afs_file_error_writeback_fail,
+};
 
-क्रमागत afs_flock_event अणु
+enum afs_flock_event {
 	afs_flock_acquired,
-	afs_flock_callback_अवरोध,
+	afs_flock_callback_break,
 	afs_flock_defer_unlock,
 	afs_flock_extend_fail,
 	afs_flock_fail_other,
@@ -250,62 +249,62 @@
 	afs_flock_no_lockers,
 	afs_flock_release_fail,
 	afs_flock_silly_delete,
-	afs_flock_बारtamp,
+	afs_flock_timestamp,
 	afs_flock_try_to_lock,
 	afs_flock_vfs_lock,
 	afs_flock_vfs_locking,
-	afs_flock_रुकोed,
-	afs_flock_रुकोing,
+	afs_flock_waited,
+	afs_flock_waiting,
 	afs_flock_work_extending,
 	afs_flock_work_retry,
 	afs_flock_work_unlocking,
 	afs_flock_would_block,
-पूर्ण;
+};
 
-क्रमागत afs_flock_operation अणु
+enum afs_flock_operation {
 	afs_flock_op_copy_lock,
 	afs_flock_op_flock,
 	afs_flock_op_grant,
 	afs_flock_op_lock,
 	afs_flock_op_release_lock,
-	afs_flock_op_वापस_ok,
-	afs_flock_op_वापस_eagain,
-	afs_flock_op_वापस_edeadlk,
-	afs_flock_op_वापस_error,
+	afs_flock_op_return_ok,
+	afs_flock_op_return_eagain,
+	afs_flock_op_return_edeadlk,
+	afs_flock_op_return_error,
 	afs_flock_op_set_lock,
 	afs_flock_op_unlock,
 	afs_flock_op_wake,
-पूर्ण;
+};
 
-क्रमागत afs_cb_अवरोध_reason अणु
-	afs_cb_अवरोध_no_अवरोध,
-	afs_cb_अवरोध_क्रम_callback,
-	afs_cb_अवरोध_क्रम_deleted,
-	afs_cb_अवरोध_क्रम_lapsed,
-	afs_cb_अवरोध_क्रम_unlink,
-	afs_cb_अवरोध_क्रम_vsअवरोध,
-	afs_cb_अवरोध_क्रम_volume_callback,
-	afs_cb_अवरोध_क्रम_zap,
-पूर्ण;
+enum afs_cb_break_reason {
+	afs_cb_break_no_break,
+	afs_cb_break_for_callback,
+	afs_cb_break_for_deleted,
+	afs_cb_break_for_lapsed,
+	afs_cb_break_for_unlink,
+	afs_cb_break_for_vsbreak,
+	afs_cb_break_for_volume_callback,
+	afs_cb_break_for_zap,
+};
 
-#पूर्ण_अगर /* end __AFS_DECLARE_TRACE_ENUMS_ONCE_ONLY */
+#endif /* end __AFS_DECLARE_TRACE_ENUMS_ONCE_ONLY */
 
 /*
- * Declare tracing inक्रमmation क्रमागतs and their string mappings क्रम display.
+ * Declare tracing information enums and their string mappings for display.
  */
-#घोषणा afs_call_traces \
+#define afs_call_traces \
 	EM(afs_call_trace_alloc,		"ALLOC") \
-	EM(afs_call_trace_मुक्त,			"FREE ") \
+	EM(afs_call_trace_free,			"FREE ") \
 	EM(afs_call_trace_get,			"GET  ") \
 	EM(afs_call_trace_put,			"PUT  ") \
 	EM(afs_call_trace_wake,			"WAKE ") \
 	E_(afs_call_trace_work,			"QUEUE")
 
-#घोषणा afs_server_traces \
+#define afs_server_traces \
 	EM(afs_server_trace_alloc,		"ALLOC    ") \
 	EM(afs_server_trace_callback,		"CALLBACK ") \
 	EM(afs_server_trace_destroy,		"DESTROY  ") \
-	EM(afs_server_trace_मुक्त,		"FREE     ") \
+	EM(afs_server_trace_free,		"FREE     ") \
 	EM(afs_server_trace_gc,			"GC       ") \
 	EM(afs_server_trace_get_by_addr,	"GET addr ") \
 	EM(afs_server_trace_get_by_uuid,	"GET uuid ") \
@@ -324,9 +323,9 @@
 	EM(afs_server_trace_put_uuid_rsq,	"PUT u-req") \
 	E_(afs_server_trace_update,		"UPDATE")
 
-#घोषणा afs_volume_traces \
+#define afs_volume_traces \
 	EM(afs_volume_trace_alloc,		"ALLOC         ") \
-	EM(afs_volume_trace_मुक्त,		"FREE          ") \
+	EM(afs_volume_trace_free,		"FREE          ") \
 	EM(afs_volume_trace_get_alloc_sbi,	"GET sbi-alloc ") \
 	EM(afs_volume_trace_get_cell_insert,	"GET cell-insrt") \
 	EM(afs_volume_trace_get_new_op,		"GET op-new    ") \
@@ -334,15 +333,15 @@
 	EM(afs_volume_trace_put_cell_dup,	"PUT cell-dup  ") \
 	EM(afs_volume_trace_put_cell_root,	"PUT cell-root ") \
 	EM(afs_volume_trace_put_destroy_sbi,	"PUT sbi-destry") \
-	EM(afs_volume_trace_put_मुक्त_fc,	"PUT fc-free   ") \
+	EM(afs_volume_trace_put_free_fc,	"PUT fc-free   ") \
 	EM(afs_volume_trace_put_put_op,		"PUT op-put    ") \
 	EM(afs_volume_trace_put_query_alias,	"PUT cell-alias") \
 	EM(afs_volume_trace_put_validate_fc,	"PUT fc-validat") \
-	E_(afs_volume_trace_हटाओ,		"REMOVE        ")
+	E_(afs_volume_trace_remove,		"REMOVE        ")
 
-#घोषणा afs_cell_traces \
+#define afs_cell_traces \
 	EM(afs_cell_trace_alloc,		"ALLOC     ") \
-	EM(afs_cell_trace_मुक्त,			"FREE      ") \
+	EM(afs_cell_trace_free,			"FREE      ") \
 	EM(afs_cell_trace_get_queue_dns,	"GET q-dns ") \
 	EM(afs_cell_trace_get_queue_manage,	"GET q-mng ") \
 	EM(afs_cell_trace_get_queue_new,	"GET q-new ") \
@@ -376,9 +375,9 @@
 	EM(afs_cell_trace_use_pin,		"USE pin   ") \
 	EM(afs_cell_trace_use_probe,		"USE probe ") \
 	EM(afs_cell_trace_use_sbi,		"USE sbi   ") \
-	E_(afs_cell_trace_रुको,			"WAIT      ")
+	E_(afs_cell_trace_wait,			"WAIT      ")
 
-#घोषणा afs_fs_operations \
+#define afs_fs_operations \
 	EM(afs_FS_FetchData,			"FS.FetchData") \
 	EM(afs_FS_FetchStatus,			"FS.FetchStatus") \
 	EM(afs_FS_StoreData,			"FS.StoreData") \
@@ -430,14 +429,14 @@
 	EM(yfs_FS_StoreData64,			"YFS.StoreData64") \
 	E_(yfs_FS_UpdateSymlink,		"YFS.UpdateSymlink")
 
-#घोषणा afs_vl_operations \
+#define afs_vl_operations \
 	EM(afs_VL_GetEntryByNameU,		"VL.GetEntryByNameU") \
 	EM(afs_VL_GetAddrsU,			"VL.GetAddrsU") \
-	EM(afs_YFSVL_GetEndpoपूर्णांकs,		"YFSVL.GetEndpoints") \
+	EM(afs_YFSVL_GetEndpoints,		"YFSVL.GetEndpoints") \
 	EM(afs_YFSVL_GetCellName,		"YFSVL.GetCellName") \
 	E_(afs_VL_GetCapabilities,		"VL.GetCapabilities")
 
-#घोषणा afs_edit_dir_ops				  \
+#define afs_edit_dir_ops				  \
 	EM(afs_edit_dir_create,			"create") \
 	EM(afs_edit_dir_create_error,		"c_fail") \
 	EM(afs_edit_dir_create_inval,		"c_invl") \
@@ -447,20 +446,20 @@
 	EM(afs_edit_dir_delete_inval,		"d_invl") \
 	E_(afs_edit_dir_delete_noent,		"d_nent")
 
-#घोषणा afs_edit_dir_reasons				  \
-	EM(afs_edit_dir_क्रम_create,		"Create") \
-	EM(afs_edit_dir_क्रम_link,		"Link  ") \
-	EM(afs_edit_dir_क्रम_सूची_गढ़ो,		"MkDir ") \
-	EM(afs_edit_dir_क्रम_नाम_0,		"Renam0") \
-	EM(afs_edit_dir_क्रम_नाम_1,		"Renam1") \
-	EM(afs_edit_dir_क्रम_नाम_2,		"Renam2") \
-	EM(afs_edit_dir_क्रम_सूची_हटाओ,		"RmDir ") \
-	EM(afs_edit_dir_क्रम_silly_0,		"S_Ren0") \
-	EM(afs_edit_dir_क्रम_silly_1,		"S_Ren1") \
-	EM(afs_edit_dir_क्रम_symlink,		"Symlnk") \
-	E_(afs_edit_dir_क्रम_unlink,		"Unlink")
+#define afs_edit_dir_reasons				  \
+	EM(afs_edit_dir_for_create,		"Create") \
+	EM(afs_edit_dir_for_link,		"Link  ") \
+	EM(afs_edit_dir_for_mkdir,		"MkDir ") \
+	EM(afs_edit_dir_for_rename_0,		"Renam0") \
+	EM(afs_edit_dir_for_rename_1,		"Renam1") \
+	EM(afs_edit_dir_for_rename_2,		"Renam2") \
+	EM(afs_edit_dir_for_rmdir,		"RmDir ") \
+	EM(afs_edit_dir_for_silly_0,		"S_Ren0") \
+	EM(afs_edit_dir_for_silly_1,		"S_Ren1") \
+	EM(afs_edit_dir_for_symlink,		"Symlnk") \
+	E_(afs_edit_dir_for_unlink,		"Unlink")
 
-#घोषणा afs_eproto_causes			\
+#define afs_eproto_causes			\
 	EM(afs_eproto_bad_status,	"BadStatus") \
 	EM(afs_eproto_cb_count,		"CbCount") \
 	EM(afs_eproto_cb_fid_count,	"CbFidCount") \
@@ -479,30 +478,30 @@
 	EM(afs_eproto_yvl_vlendpt6_len,	"YVL.VlEnd6Len") \
 	E_(afs_eproto_yvl_vlendpt_type,	"YVL.VlEndType")
 
-#घोषणा afs_io_errors							\
+#define afs_io_errors							\
 	EM(afs_io_error_cm_reply,		"CM_REPLY")		\
 	EM(afs_io_error_extract,		"EXTRACT")		\
 	EM(afs_io_error_fs_probe_fail,		"FS_PROBE_FAIL")	\
 	EM(afs_io_error_vl_lookup_fail,		"VL_LOOKUP_FAIL")	\
 	E_(afs_io_error_vl_probe_fail,		"VL_PROBE_FAIL")
 
-#घोषणा afs_file_errors							\
+#define afs_file_errors							\
 	EM(afs_file_error_dir_bad_magic,	"DIR_BAD_MAGIC")	\
 	EM(afs_file_error_dir_big,		"DIR_BIG")		\
 	EM(afs_file_error_dir_missing_page,	"DIR_MISSING_PAGE")	\
-	EM(afs_file_error_dir_name_too_दीर्घ,	"DIR_NAME_TOO_LONG")	\
+	EM(afs_file_error_dir_name_too_long,	"DIR_NAME_TOO_LONG")	\
 	EM(afs_file_error_dir_over_end,		"DIR_ENT_OVER_END")	\
 	EM(afs_file_error_dir_small,		"DIR_SMALL")		\
 	EM(afs_file_error_dir_unmarked_ext,	"DIR_UNMARKED_EXT")	\
 	EM(afs_file_error_mntpt,		"MNTPT_READ_FAILED")	\
-	E_(afs_file_error_ग_लिखोback_fail,	"WRITEBACK_FAILED")
+	E_(afs_file_error_writeback_fail,	"WRITEBACK_FAILED")
 
-#घोषणा afs_flock_types							\
+#define afs_flock_types							\
 	EM(F_RDLCK,				"RDLCK")		\
 	EM(F_WRLCK,				"WRLCK")		\
 	E_(F_UNLCK,				"UNLCK")
 
-#घोषणा afs_flock_states						\
+#define afs_flock_states						\
 	EM(AFS_VNODE_LOCK_NONE,			"NONE")			\
 	EM(AFS_VNODE_LOCK_WAITING_FOR_CB,	"WAIT_FOR_CB")		\
 	EM(AFS_VNODE_LOCK_SETTING,		"SETTING")		\
@@ -512,9 +511,9 @@
 	EM(AFS_VNODE_LOCK_UNLOCKING,		"UNLOCKING")		\
 	E_(AFS_VNODE_LOCK_DELETED,		"DELETED")
 
-#घोषणा afs_flock_events						\
+#define afs_flock_events						\
 	EM(afs_flock_acquired,			"Acquired")		\
-	EM(afs_flock_callback_अवरोध,		"Callback")		\
+	EM(afs_flock_callback_break,		"Callback")		\
 	EM(afs_flock_defer_unlock,		"D-Unlock")		\
 	EM(afs_flock_extend_fail,		"Ext_Fail")		\
 	EM(afs_flock_fail_other,		"ErrOther")		\
@@ -522,48 +521,48 @@
 	EM(afs_flock_no_lockers,		"NoLocker")		\
 	EM(afs_flock_release_fail,		"Rel_Fail")		\
 	EM(afs_flock_silly_delete,		"SillyDel")		\
-	EM(afs_flock_बारtamp,			"Timestmp")		\
+	EM(afs_flock_timestamp,			"Timestmp")		\
 	EM(afs_flock_try_to_lock,		"TryToLck")		\
 	EM(afs_flock_vfs_lock,			"VFSLock ")		\
 	EM(afs_flock_vfs_locking,		"VFSLking")		\
-	EM(afs_flock_रुकोed,			"Waited  ")		\
-	EM(afs_flock_रुकोing,			"Waiting ")		\
+	EM(afs_flock_waited,			"Waited  ")		\
+	EM(afs_flock_waiting,			"Waiting ")		\
 	EM(afs_flock_work_extending,		"Extendng")		\
 	EM(afs_flock_work_retry,		"Retry   ")		\
 	EM(afs_flock_work_unlocking,		"Unlcking")		\
 	E_(afs_flock_would_block,		"EWOULDBL")
 
-#घोषणा afs_flock_operations						\
+#define afs_flock_operations						\
 	EM(afs_flock_op_copy_lock,		"COPY    ")		\
 	EM(afs_flock_op_flock,			"->flock ")		\
 	EM(afs_flock_op_grant,			"GRANT   ")		\
 	EM(afs_flock_op_lock,			"->lock  ")		\
 	EM(afs_flock_op_release_lock,		"RELEASE ")		\
-	EM(afs_flock_op_वापस_ok,		"<-OK    ")		\
-	EM(afs_flock_op_वापस_edeadlk,		"<-EDEADL")		\
-	EM(afs_flock_op_वापस_eagain,		"<-EAGAIN")		\
-	EM(afs_flock_op_वापस_error,		"<-ERROR ")		\
+	EM(afs_flock_op_return_ok,		"<-OK    ")		\
+	EM(afs_flock_op_return_edeadlk,		"<-EDEADL")		\
+	EM(afs_flock_op_return_eagain,		"<-EAGAIN")		\
+	EM(afs_flock_op_return_error,		"<-ERROR ")		\
 	EM(afs_flock_op_set_lock,		"SET     ")		\
 	EM(afs_flock_op_unlock,			"UNLOCK  ")		\
 	E_(afs_flock_op_wake,			"WAKE    ")
 
-#घोषणा afs_cb_अवरोध_reasons						\
-	EM(afs_cb_अवरोध_no_अवरोध,		"no-break")		\
-	EM(afs_cb_अवरोध_क्रम_callback,		"break-cb")		\
-	EM(afs_cb_अवरोध_क्रम_deleted,		"break-del")		\
-	EM(afs_cb_अवरोध_क्रम_lapsed,		"break-lapsed")		\
-	EM(afs_cb_अवरोध_क्रम_unlink,		"break-unlink")		\
-	EM(afs_cb_अवरोध_क्रम_vsअवरोध,		"break-vs")		\
-	EM(afs_cb_अवरोध_क्रम_volume_callback,	"break-v-cb")		\
-	E_(afs_cb_अवरोध_क्रम_zap,		"break-zap")
+#define afs_cb_break_reasons						\
+	EM(afs_cb_break_no_break,		"no-break")		\
+	EM(afs_cb_break_for_callback,		"break-cb")		\
+	EM(afs_cb_break_for_deleted,		"break-del")		\
+	EM(afs_cb_break_for_lapsed,		"break-lapsed")		\
+	EM(afs_cb_break_for_unlink,		"break-unlink")		\
+	EM(afs_cb_break_for_vsbreak,		"break-vs")		\
+	EM(afs_cb_break_for_volume_callback,	"break-v-cb")		\
+	E_(afs_cb_break_for_zap,		"break-zap")
 
 /*
- * Export क्रमागत symbols via userspace.
+ * Export enum symbols via userspace.
  */
-#अघोषित EM
-#अघोषित E_
-#घोषणा EM(a, b) TRACE_DEFINE_ENUM(a);
-#घोषणा E_(a, b) TRACE_DEFINE_ENUM(a);
+#undef EM
+#undef E_
+#define EM(a, b) TRACE_DEFINE_ENUM(a);
+#define E_(a, b) TRACE_DEFINE_ENUM(a);
 
 afs_call_traces;
 afs_server_traces;
@@ -577,59 +576,59 @@ afs_io_errors;
 afs_file_errors;
 afs_flock_types;
 afs_flock_operations;
-afs_cb_अवरोध_reasons;
+afs_cb_break_reasons;
 
 /*
- * Now redefine the EM() and E_() macros to map the क्रमागतs to the strings that
- * will be prपूर्णांकed in the output.
+ * Now redefine the EM() and E_() macros to map the enums to the strings that
+ * will be printed in the output.
  */
-#अघोषित EM
-#अघोषित E_
-#घोषणा EM(a, b)	अणु a, b पूर्ण,
-#घोषणा E_(a, b)	अणु a, b पूर्ण
+#undef EM
+#undef E_
+#define EM(a, b)	{ a, b },
+#define E_(a, b)	{ a, b }
 
 TRACE_EVENT(afs_receive_data,
-	    TP_PROTO(काष्ठा afs_call *call, काष्ठा iov_iter *iter,
-		     bool want_more, पूर्णांक ret),
+	    TP_PROTO(struct afs_call *call, struct iov_iter *iter,
+		     bool want_more, int ret),
 
 	    TP_ARGS(call, iter, want_more, ret),
 
 	    TP_STRUCT__entry(
-		    __field(loff_t,			reमुख्य		)
-		    __field(अचिन्हित पूर्णांक,		call		)
-		    __field(क्रमागत afs_call_state,	state		)
-		    __field(अचिन्हित लघु,		unmarshall	)
+		    __field(loff_t,			remain		)
+		    __field(unsigned int,		call		)
+		    __field(enum afs_call_state,	state		)
+		    __field(unsigned short,		unmarshall	)
 		    __field(bool,			want_more	)
-		    __field(पूर्णांक,			ret		)
+		    __field(int,			ret		)
 			     ),
 
 	    TP_fast_assign(
 		    __entry->call	= call->debug_id;
 		    __entry->state	= call->state;
 		    __entry->unmarshall	= call->unmarshall;
-		    __entry->reमुख्य	= iov_iter_count(iter);
+		    __entry->remain	= iov_iter_count(iter);
 		    __entry->want_more	= want_more;
 		    __entry->ret	= ret;
 			   ),
 
-	    TP_prपूर्णांकk("c=%08x r=%llu u=%u w=%u s=%u ret=%d",
+	    TP_printk("c=%08x r=%llu u=%u w=%u s=%u ret=%d",
 		      __entry->call,
-		      __entry->reमुख्य,
+		      __entry->remain,
 		      __entry->unmarshall,
 		      __entry->want_more,
 		      __entry->state,
 		      __entry->ret)
 	    );
 
-TRACE_EVENT(afs_notअगरy_call,
-	    TP_PROTO(काष्ठा rxrpc_call *rxcall, काष्ठा afs_call *call),
+TRACE_EVENT(afs_notify_call,
+	    TP_PROTO(struct rxrpc_call *rxcall, struct afs_call *call),
 
 	    TP_ARGS(rxcall, call),
 
 	    TP_STRUCT__entry(
-		    __field(अचिन्हित पूर्णांक,		call		)
-		    __field(क्रमागत afs_call_state,	state		)
-		    __field(अचिन्हित लघु,		unmarshall	)
+		    __field(unsigned int,		call		)
+		    __field(enum afs_call_state,	state		)
+		    __field(unsigned short,		unmarshall	)
 			     ),
 
 	    TP_fast_assign(
@@ -638,19 +637,19 @@ TRACE_EVENT(afs_notअगरy_call,
 		    __entry->unmarshall	= call->unmarshall;
 			   ),
 
-	    TP_prपूर्णांकk("c=%08x s=%u u=%u",
+	    TP_printk("c=%08x s=%u u=%u",
 		      __entry->call,
 		      __entry->state, __entry->unmarshall)
 	    );
 
 TRACE_EVENT(afs_cb_call,
-	    TP_PROTO(काष्ठा afs_call *call),
+	    TP_PROTO(struct afs_call *call),
 
 	    TP_ARGS(call),
 
 	    TP_STRUCT__entry(
-		    __field(अचिन्हित पूर्णांक,		call		)
-		    __field(स्थिर अक्षर *,		name		)
+		    __field(unsigned int,		call		)
+		    __field(const char *,		name		)
 		    __field(u32,			op		)
 			     ),
 
@@ -660,24 +659,24 @@ TRACE_EVENT(afs_cb_call,
 		    __entry->op		= call->operation_ID;
 			   ),
 
-	    TP_prपूर्णांकk("c=%08x %s o=%u",
+	    TP_printk("c=%08x %s o=%u",
 		      __entry->call,
 		      __entry->name,
 		      __entry->op)
 	    );
 
 TRACE_EVENT(afs_call,
-	    TP_PROTO(काष्ठा afs_call *call, क्रमागत afs_call_trace op,
-		     पूर्णांक usage, पूर्णांक outstanding, स्थिर व्योम *where),
+	    TP_PROTO(struct afs_call *call, enum afs_call_trace op,
+		     int usage, int outstanding, const void *where),
 
 	    TP_ARGS(call, op, usage, outstanding, where),
 
 	    TP_STRUCT__entry(
-		    __field(अचिन्हित पूर्णांक,		call		)
-		    __field(पूर्णांक,			op		)
-		    __field(पूर्णांक,			usage		)
-		    __field(पूर्णांक,			outstanding	)
-		    __field(स्थिर व्योम *,		where		)
+		    __field(unsigned int,		call		)
+		    __field(int,			op		)
+		    __field(int,			usage		)
+		    __field(int,			outstanding	)
+		    __field(const void *,		where		)
 			     ),
 
 	    TP_fast_assign(
@@ -688,167 +687,167 @@ TRACE_EVENT(afs_call,
 		    __entry->where = where;
 			   ),
 
-	    TP_prपूर्णांकk("c=%08x %s u=%d o=%d sp=%pSR",
+	    TP_printk("c=%08x %s u=%d o=%d sp=%pSR",
 		      __entry->call,
-		      __prपूर्णांक_symbolic(__entry->op, afs_call_traces),
+		      __print_symbolic(__entry->op, afs_call_traces),
 		      __entry->usage,
 		      __entry->outstanding,
 		      __entry->where)
 	    );
 
 TRACE_EVENT(afs_make_fs_call,
-	    TP_PROTO(काष्ठा afs_call *call, स्थिर काष्ठा afs_fid *fid),
+	    TP_PROTO(struct afs_call *call, const struct afs_fid *fid),
 
 	    TP_ARGS(call, fid),
 
 	    TP_STRUCT__entry(
-		    __field(अचिन्हित पूर्णांक,		call		)
-		    __field(क्रमागत afs_fs_operation,	op		)
-		    __field_काष्ठा(काष्ठा afs_fid,	fid		)
+		    __field(unsigned int,		call		)
+		    __field(enum afs_fs_operation,	op		)
+		    __field_struct(struct afs_fid,	fid		)
 			     ),
 
 	    TP_fast_assign(
 		    __entry->call = call->debug_id;
 		    __entry->op = call->operation_ID;
-		    अगर (fid) अणु
+		    if (fid) {
 			    __entry->fid = *fid;
-		    पूर्ण अन्यथा अणु
+		    } else {
 			    __entry->fid.vid = 0;
 			    __entry->fid.vnode = 0;
 			    __entry->fid.unique = 0;
-		    पूर्ण
+		    }
 			   ),
 
-	    TP_prपूर्णांकk("c=%08x %06llx:%06llx:%06x %s",
+	    TP_printk("c=%08x %06llx:%06llx:%06x %s",
 		      __entry->call,
 		      __entry->fid.vid,
 		      __entry->fid.vnode,
 		      __entry->fid.unique,
-		      __prपूर्णांक_symbolic(__entry->op, afs_fs_operations))
+		      __print_symbolic(__entry->op, afs_fs_operations))
 	    );
 
 TRACE_EVENT(afs_make_fs_calli,
-	    TP_PROTO(काष्ठा afs_call *call, स्थिर काष्ठा afs_fid *fid,
-		     अचिन्हित पूर्णांक i),
+	    TP_PROTO(struct afs_call *call, const struct afs_fid *fid,
+		     unsigned int i),
 
 	    TP_ARGS(call, fid, i),
 
 	    TP_STRUCT__entry(
-		    __field(अचिन्हित पूर्णांक,		call		)
-		    __field(अचिन्हित पूर्णांक,		i		)
-		    __field(क्रमागत afs_fs_operation,	op		)
-		    __field_काष्ठा(काष्ठा afs_fid,	fid		)
+		    __field(unsigned int,		call		)
+		    __field(unsigned int,		i		)
+		    __field(enum afs_fs_operation,	op		)
+		    __field_struct(struct afs_fid,	fid		)
 			     ),
 
 	    TP_fast_assign(
 		    __entry->call = call->debug_id;
 		    __entry->i = i;
 		    __entry->op = call->operation_ID;
-		    अगर (fid) अणु
+		    if (fid) {
 			    __entry->fid = *fid;
-		    पूर्ण अन्यथा अणु
+		    } else {
 			    __entry->fid.vid = 0;
 			    __entry->fid.vnode = 0;
 			    __entry->fid.unique = 0;
-		    पूर्ण
+		    }
 			   ),
 
-	    TP_prपूर्णांकk("c=%08x %06llx:%06llx:%06x %s i=%u",
+	    TP_printk("c=%08x %06llx:%06llx:%06x %s i=%u",
 		      __entry->call,
 		      __entry->fid.vid,
 		      __entry->fid.vnode,
 		      __entry->fid.unique,
-		      __prपूर्णांक_symbolic(__entry->op, afs_fs_operations),
+		      __print_symbolic(__entry->op, afs_fs_operations),
 		      __entry->i)
 	    );
 
 TRACE_EVENT(afs_make_fs_call1,
-	    TP_PROTO(काष्ठा afs_call *call, स्थिर काष्ठा afs_fid *fid,
-		     स्थिर काष्ठा qstr *name),
+	    TP_PROTO(struct afs_call *call, const struct afs_fid *fid,
+		     const struct qstr *name),
 
 	    TP_ARGS(call, fid, name),
 
 	    TP_STRUCT__entry(
-		    __field(अचिन्हित पूर्णांक,		call		)
-		    __field(क्रमागत afs_fs_operation,	op		)
-		    __field_काष्ठा(काष्ठा afs_fid,	fid		)
-		    __array(अक्षर,			name, 24	)
+		    __field(unsigned int,		call		)
+		    __field(enum afs_fs_operation,	op		)
+		    __field_struct(struct afs_fid,	fid		)
+		    __array(char,			name, 24	)
 			     ),
 
 	    TP_fast_assign(
-		    अचिन्हित पूर्णांक __len = min_t(अचिन्हित पूर्णांक, name->len, 23);
+		    unsigned int __len = min_t(unsigned int, name->len, 23);
 		    __entry->call = call->debug_id;
 		    __entry->op = call->operation_ID;
-		    अगर (fid) अणु
+		    if (fid) {
 			    __entry->fid = *fid;
-		    पूर्ण अन्यथा अणु
+		    } else {
 			    __entry->fid.vid = 0;
 			    __entry->fid.vnode = 0;
 			    __entry->fid.unique = 0;
-		    पूर्ण
-		    स_नकल(__entry->name, name->name, __len);
+		    }
+		    memcpy(__entry->name, name->name, __len);
 		    __entry->name[__len] = 0;
 			   ),
 
-	    TP_prपूर्णांकk("c=%08x %06llx:%06llx:%06x %s \"%s\"",
+	    TP_printk("c=%08x %06llx:%06llx:%06x %s \"%s\"",
 		      __entry->call,
 		      __entry->fid.vid,
 		      __entry->fid.vnode,
 		      __entry->fid.unique,
-		      __prपूर्णांक_symbolic(__entry->op, afs_fs_operations),
+		      __print_symbolic(__entry->op, afs_fs_operations),
 		      __entry->name)
 	    );
 
 TRACE_EVENT(afs_make_fs_call2,
-	    TP_PROTO(काष्ठा afs_call *call, स्थिर काष्ठा afs_fid *fid,
-		     स्थिर काष्ठा qstr *name, स्थिर काष्ठा qstr *name2),
+	    TP_PROTO(struct afs_call *call, const struct afs_fid *fid,
+		     const struct qstr *name, const struct qstr *name2),
 
 	    TP_ARGS(call, fid, name, name2),
 
 	    TP_STRUCT__entry(
-		    __field(अचिन्हित पूर्णांक,		call		)
-		    __field(क्रमागत afs_fs_operation,	op		)
-		    __field_काष्ठा(काष्ठा afs_fid,	fid		)
-		    __array(अक्षर,			name, 24	)
-		    __array(अक्षर,			name2, 24	)
+		    __field(unsigned int,		call		)
+		    __field(enum afs_fs_operation,	op		)
+		    __field_struct(struct afs_fid,	fid		)
+		    __array(char,			name, 24	)
+		    __array(char,			name2, 24	)
 			     ),
 
 	    TP_fast_assign(
-		    अचिन्हित पूर्णांक __len = min_t(अचिन्हित पूर्णांक, name->len, 23);
-		    अचिन्हित पूर्णांक __len2 = min_t(अचिन्हित पूर्णांक, name2->len, 23);
+		    unsigned int __len = min_t(unsigned int, name->len, 23);
+		    unsigned int __len2 = min_t(unsigned int, name2->len, 23);
 		    __entry->call = call->debug_id;
 		    __entry->op = call->operation_ID;
-		    अगर (fid) अणु
+		    if (fid) {
 			    __entry->fid = *fid;
-		    पूर्ण अन्यथा अणु
+		    } else {
 			    __entry->fid.vid = 0;
 			    __entry->fid.vnode = 0;
 			    __entry->fid.unique = 0;
-		    पूर्ण
-		    स_नकल(__entry->name, name->name, __len);
+		    }
+		    memcpy(__entry->name, name->name, __len);
 		    __entry->name[__len] = 0;
-		    स_नकल(__entry->name2, name2->name, __len2);
+		    memcpy(__entry->name2, name2->name, __len2);
 		    __entry->name2[__len2] = 0;
 			   ),
 
-	    TP_prपूर्णांकk("c=%08x %06llx:%06llx:%06x %s \"%s\" \"%s\"",
+	    TP_printk("c=%08x %06llx:%06llx:%06x %s \"%s\" \"%s\"",
 		      __entry->call,
 		      __entry->fid.vid,
 		      __entry->fid.vnode,
 		      __entry->fid.unique,
-		      __prपूर्णांक_symbolic(__entry->op, afs_fs_operations),
+		      __print_symbolic(__entry->op, afs_fs_operations),
 		      __entry->name,
 		      __entry->name2)
 	    );
 
 TRACE_EVENT(afs_make_vl_call,
-	    TP_PROTO(काष्ठा afs_call *call),
+	    TP_PROTO(struct afs_call *call),
 
 	    TP_ARGS(call),
 
 	    TP_STRUCT__entry(
-		    __field(अचिन्हित पूर्णांक,		call		)
-		    __field(क्रमागत afs_vl_operation,	op		)
+		    __field(unsigned int,		call		)
+		    __field(enum afs_vl_operation,	op		)
 			     ),
 
 	    TP_fast_assign(
@@ -856,45 +855,45 @@ TRACE_EVENT(afs_make_vl_call,
 		    __entry->op = call->operation_ID;
 			   ),
 
-	    TP_prपूर्णांकk("c=%08x %s",
+	    TP_printk("c=%08x %s",
 		      __entry->call,
-		      __prपूर्णांक_symbolic(__entry->op, afs_vl_operations))
+		      __print_symbolic(__entry->op, afs_vl_operations))
 	    );
 
-TRACE_EVENT(afs_call_करोne,
-	    TP_PROTO(काष्ठा afs_call *call),
+TRACE_EVENT(afs_call_done,
+	    TP_PROTO(struct afs_call *call),
 
 	    TP_ARGS(call),
 
 	    TP_STRUCT__entry(
-		    __field(अचिन्हित पूर्णांक,		call		)
-		    __field(काष्ठा rxrpc_call *,	rx_call		)
-		    __field(पूर्णांक,			ret		)
-		    __field(u32,			पात_code	)
+		    __field(unsigned int,		call		)
+		    __field(struct rxrpc_call *,	rx_call		)
+		    __field(int,			ret		)
+		    __field(u32,			abort_code	)
 			     ),
 
 	    TP_fast_assign(
 		    __entry->call = call->debug_id;
 		    __entry->rx_call = call->rxcall;
 		    __entry->ret = call->error;
-		    __entry->पात_code = call->पात_code;
+		    __entry->abort_code = call->abort_code;
 			   ),
 
-	    TP_prपूर्णांकk("   c=%08x ret=%d ab=%d [%p]",
+	    TP_printk("   c=%08x ret=%d ab=%d [%p]",
 		      __entry->call,
 		      __entry->ret,
-		      __entry->पात_code,
+		      __entry->abort_code,
 		      __entry->rx_call)
 	    );
 
 TRACE_EVENT(afs_send_data,
-	    TP_PROTO(काष्ठा afs_call *call, काष्ठा msghdr *msg),
+	    TP_PROTO(struct afs_call *call, struct msghdr *msg),
 
 	    TP_ARGS(call, msg),
 
 	    TP_STRUCT__entry(
-		    __field(अचिन्हित पूर्णांक,		call		)
-		    __field(अचिन्हित पूर्णांक,		flags		)
+		    __field(unsigned int,		call		)
+		    __field(unsigned int,		flags		)
 		    __field(loff_t,			offset		)
 		    __field(loff_t,			count		)
 			     ),
@@ -906,19 +905,19 @@ TRACE_EVENT(afs_send_data,
 		    __entry->count = iov_iter_count(&msg->msg_iter);
 			   ),
 
-	    TP_prपूर्णांकk(" c=%08x o=%llx n=%llx f=%x",
+	    TP_printk(" c=%08x o=%llx n=%llx f=%x",
 		      __entry->call, __entry->offset, __entry->count,
 		      __entry->flags)
 	    );
 
 TRACE_EVENT(afs_sent_data,
-	    TP_PROTO(काष्ठा afs_call *call, काष्ठा msghdr *msg, पूर्णांक ret),
+	    TP_PROTO(struct afs_call *call, struct msghdr *msg, int ret),
 
 	    TP_ARGS(call, msg, ret),
 
 	    TP_STRUCT__entry(
-		    __field(अचिन्हित पूर्णांक,		call		)
-		    __field(पूर्णांक,			ret		)
+		    __field(unsigned int,		call		)
+		    __field(int,			ret		)
 		    __field(loff_t,			offset		)
 		    __field(loff_t,			count		)
 			     ),
@@ -930,18 +929,18 @@ TRACE_EVENT(afs_sent_data,
 		    __entry->count = iov_iter_count(&msg->msg_iter);
 			   ),
 
-	    TP_prपूर्णांकk(" c=%08x o=%llx n=%llx r=%x",
+	    TP_printk(" c=%08x o=%llx n=%llx r=%x",
 		      __entry->call, __entry->offset, __entry->count,
 		      __entry->ret)
 	    );
 
 TRACE_EVENT(afs_dir_check_failed,
-	    TP_PROTO(काष्ठा afs_vnode *vnode, loff_t off, loff_t i_size),
+	    TP_PROTO(struct afs_vnode *vnode, loff_t off, loff_t i_size),
 
 	    TP_ARGS(vnode, off, i_size),
 
 	    TP_STRUCT__entry(
-		    __field(काष्ठा afs_vnode *,		vnode		)
+		    __field(struct afs_vnode *,		vnode		)
 		    __field(loff_t,			off		)
 		    __field(loff_t,			i_size		)
 			     ),
@@ -952,34 +951,34 @@ TRACE_EVENT(afs_dir_check_failed,
 		    __entry->i_size = i_size;
 			   ),
 
-	    TP_prपूर्णांकk("vn=%p %llx/%llx",
+	    TP_printk("vn=%p %llx/%llx",
 		      __entry->vnode, __entry->off, __entry->i_size)
 	    );
 
 TRACE_EVENT(afs_page_dirty,
-	    TP_PROTO(काष्ठा afs_vnode *vnode, स्थिर अक्षर *where, काष्ठा page *page),
+	    TP_PROTO(struct afs_vnode *vnode, const char *where, struct page *page),
 
 	    TP_ARGS(vnode, where, page),
 
 	    TP_STRUCT__entry(
-		    __field(काष्ठा afs_vnode *,		vnode		)
-		    __field(स्थिर अक्षर *,		where		)
+		    __field(struct afs_vnode *,		vnode		)
+		    __field(const char *,		where		)
 		    __field(pgoff_t,			page		)
-		    __field(अचिन्हित दीर्घ,		from		)
-		    __field(अचिन्हित दीर्घ,		to		)
+		    __field(unsigned long,		from		)
+		    __field(unsigned long,		to		)
 			     ),
 
 	    TP_fast_assign(
 		    __entry->vnode = vnode;
 		    __entry->where = where;
 		    __entry->page = page->index;
-		    __entry->from = afs_page_dirty_from(page, page->निजी);
-		    __entry->to = afs_page_dirty_to(page, page->निजी);
-		    __entry->to |= (afs_is_page_dirty_mmapped(page->निजी) ?
+		    __entry->from = afs_page_dirty_from(page, page->private);
+		    __entry->to = afs_page_dirty_to(page, page->private);
+		    __entry->to |= (afs_is_page_dirty_mmapped(page->private) ?
 				    (1UL << (BITS_PER_LONG - 1)) : 0);
 			   ),
 
-	    TP_prपूर्णांकk("vn=%p %lx %s %lx-%lx%s",
+	    TP_printk("vn=%p %lx %s %lx-%lx%s",
 		      __entry->vnode, __entry->page, __entry->where,
 		      __entry->from,
 		      __entry->to & ~(1UL << (BITS_PER_LONG - 1)),
@@ -987,19 +986,19 @@ TRACE_EVENT(afs_page_dirty,
 	    );
 
 TRACE_EVENT(afs_call_state,
-	    TP_PROTO(काष्ठा afs_call *call,
-		     क्रमागत afs_call_state from,
-		     क्रमागत afs_call_state to,
-		     पूर्णांक ret, u32 remote_पात),
+	    TP_PROTO(struct afs_call *call,
+		     enum afs_call_state from,
+		     enum afs_call_state to,
+		     int ret, u32 remote_abort),
 
-	    TP_ARGS(call, from, to, ret, remote_पात),
+	    TP_ARGS(call, from, to, ret, remote_abort),
 
 	    TP_STRUCT__entry(
-		    __field(अचिन्हित पूर्णांक,		call		)
-		    __field(क्रमागत afs_call_state,	from		)
-		    __field(क्रमागत afs_call_state,	to		)
-		    __field(पूर्णांक,			ret		)
-		    __field(u32,			पात		)
+		    __field(unsigned int,		call		)
+		    __field(enum afs_call_state,	from		)
+		    __field(enum afs_call_state,	to		)
+		    __field(int,			ret		)
+		    __field(u32,			abort		)
 			     ),
 
 	    TP_fast_assign(
@@ -1007,67 +1006,67 @@ TRACE_EVENT(afs_call_state,
 		    __entry->from = from;
 		    __entry->to = to;
 		    __entry->ret = ret;
-		    __entry->पात = remote_पात;
+		    __entry->abort = remote_abort;
 			   ),
 
-	    TP_prपूर्णांकk("c=%08x %u->%u r=%d ab=%d",
+	    TP_printk("c=%08x %u->%u r=%d ab=%d",
 		      __entry->call,
 		      __entry->from, __entry->to,
-		      __entry->ret, __entry->पात)
+		      __entry->ret, __entry->abort)
 	    );
 
 TRACE_EVENT(afs_lookup,
-	    TP_PROTO(काष्ठा afs_vnode *dvnode, स्थिर काष्ठा qstr *name,
-		     काष्ठा afs_fid *fid),
+	    TP_PROTO(struct afs_vnode *dvnode, const struct qstr *name,
+		     struct afs_fid *fid),
 
 	    TP_ARGS(dvnode, name, fid),
 
 	    TP_STRUCT__entry(
-		    __field_काष्ठा(काष्ठा afs_fid,	dfid		)
-		    __field_काष्ठा(काष्ठा afs_fid,	fid		)
-		    __array(अक्षर,			name, 24	)
+		    __field_struct(struct afs_fid,	dfid		)
+		    __field_struct(struct afs_fid,	fid		)
+		    __array(char,			name, 24	)
 			     ),
 
 	    TP_fast_assign(
-		    पूर्णांक __len = min_t(पूर्णांक, name->len, 23);
+		    int __len = min_t(int, name->len, 23);
 		    __entry->dfid = dvnode->fid;
 		    __entry->fid = *fid;
-		    स_नकल(__entry->name, name->name, __len);
+		    memcpy(__entry->name, name->name, __len);
 		    __entry->name[__len] = 0;
 			   ),
 
-	    TP_prपूर्णांकk("d=%llx:%llx:%x \"%s\" f=%llx:%x",
+	    TP_printk("d=%llx:%llx:%x \"%s\" f=%llx:%x",
 		      __entry->dfid.vid, __entry->dfid.vnode, __entry->dfid.unique,
 		      __entry->name,
 		      __entry->fid.vnode, __entry->fid.unique)
 	    );
 
 TRACE_EVENT(afs_edit_dir,
-	    TP_PROTO(काष्ठा afs_vnode *dvnode,
-		     क्रमागत afs_edit_dir_reason why,
-		     क्रमागत afs_edit_dir_op op,
-		     अचिन्हित पूर्णांक block,
-		     अचिन्हित पूर्णांक slot,
-		     अचिन्हित पूर्णांक f_vnode,
-		     अचिन्हित पूर्णांक f_unique,
-		     स्थिर अक्षर *name),
+	    TP_PROTO(struct afs_vnode *dvnode,
+		     enum afs_edit_dir_reason why,
+		     enum afs_edit_dir_op op,
+		     unsigned int block,
+		     unsigned int slot,
+		     unsigned int f_vnode,
+		     unsigned int f_unique,
+		     const char *name),
 
 	    TP_ARGS(dvnode, why, op, block, slot, f_vnode, f_unique, name),
 
 	    TP_STRUCT__entry(
-		    __field(अचिन्हित पूर्णांक,		vnode		)
-		    __field(अचिन्हित पूर्णांक,		unique		)
-		    __field(क्रमागत afs_edit_dir_reason,	why		)
-		    __field(क्रमागत afs_edit_dir_op,	op		)
-		    __field(अचिन्हित पूर्णांक,		block		)
-		    __field(अचिन्हित लघु,		slot		)
-		    __field(अचिन्हित पूर्णांक,		f_vnode		)
-		    __field(अचिन्हित पूर्णांक,		f_unique	)
-		    __array(अक्षर,			name, 24	)
+		    __field(unsigned int,		vnode		)
+		    __field(unsigned int,		unique		)
+		    __field(enum afs_edit_dir_reason,	why		)
+		    __field(enum afs_edit_dir_op,	op		)
+		    __field(unsigned int,		block		)
+		    __field(unsigned short,		slot		)
+		    __field(unsigned int,		f_vnode		)
+		    __field(unsigned int,		f_unique	)
+		    __array(char,			name, 24	)
 			     ),
 
 	    TP_fast_assign(
-		    पूर्णांक __len = म_माप(name);
+		    int __len = strlen(name);
 		    __len = min(__len, 23);
 		    __entry->vnode	= dvnode->fid.vnode;
 		    __entry->unique	= dvnode->fid.unique;
@@ -1077,27 +1076,27 @@ TRACE_EVENT(afs_edit_dir,
 		    __entry->slot	= slot;
 		    __entry->f_vnode	= f_vnode;
 		    __entry->f_unique	= f_unique;
-		    स_नकल(__entry->name, name, __len);
+		    memcpy(__entry->name, name, __len);
 		    __entry->name[__len] = 0;
 			   ),
 
-	    TP_prपूर्णांकk("d=%x:%x %s %s %u[%u] f=%x:%x \"%s\"",
+	    TP_printk("d=%x:%x %s %s %u[%u] f=%x:%x \"%s\"",
 		      __entry->vnode, __entry->unique,
-		      __prपूर्णांक_symbolic(__entry->why, afs_edit_dir_reasons),
-		      __prपूर्णांक_symbolic(__entry->op, afs_edit_dir_ops),
+		      __print_symbolic(__entry->why, afs_edit_dir_reasons),
+		      __print_symbolic(__entry->op, afs_edit_dir_ops),
 		      __entry->block, __entry->slot,
 		      __entry->f_vnode, __entry->f_unique,
 		      __entry->name)
 	    );
 
 TRACE_EVENT(afs_protocol_error,
-	    TP_PROTO(काष्ठा afs_call *call, क्रमागत afs_eproto_cause cause),
+	    TP_PROTO(struct afs_call *call, enum afs_eproto_cause cause),
 
 	    TP_ARGS(call, cause),
 
 	    TP_STRUCT__entry(
-		    __field(अचिन्हित पूर्णांक,		call		)
-		    __field(क्रमागत afs_eproto_cause,	cause		)
+		    __field(unsigned int,		call		)
+		    __field(enum afs_eproto_cause,	cause		)
 			     ),
 
 	    TP_fast_assign(
@@ -1105,20 +1104,20 @@ TRACE_EVENT(afs_protocol_error,
 		    __entry->cause = cause;
 			   ),
 
-	    TP_prपूर्णांकk("c=%08x %s",
+	    TP_printk("c=%08x %s",
 		      __entry->call,
-		      __prपूर्णांक_symbolic(__entry->cause, afs_eproto_causes))
+		      __print_symbolic(__entry->cause, afs_eproto_causes))
 	    );
 
 TRACE_EVENT(afs_io_error,
-	    TP_PROTO(अचिन्हित पूर्णांक call, पूर्णांक error, क्रमागत afs_io_error where),
+	    TP_PROTO(unsigned int call, int error, enum afs_io_error where),
 
 	    TP_ARGS(call, error, where),
 
 	    TP_STRUCT__entry(
-		    __field(अचिन्हित पूर्णांक,	call		)
-		    __field(पूर्णांक,		error		)
-		    __field(क्रमागत afs_io_error,	where		)
+		    __field(unsigned int,	call		)
+		    __field(int,		error		)
+		    __field(enum afs_io_error,	where		)
 			     ),
 
 	    TP_fast_assign(
@@ -1127,20 +1126,20 @@ TRACE_EVENT(afs_io_error,
 		    __entry->where = where;
 			   ),
 
-	    TP_prपूर्णांकk("c=%08x r=%d %s",
+	    TP_printk("c=%08x r=%d %s",
 		      __entry->call, __entry->error,
-		      __prपूर्णांक_symbolic(__entry->where, afs_io_errors))
+		      __print_symbolic(__entry->where, afs_io_errors))
 	    );
 
 TRACE_EVENT(afs_file_error,
-	    TP_PROTO(काष्ठा afs_vnode *vnode, पूर्णांक error, क्रमागत afs_file_error where),
+	    TP_PROTO(struct afs_vnode *vnode, int error, enum afs_file_error where),
 
 	    TP_ARGS(vnode, error, where),
 
 	    TP_STRUCT__entry(
-		    __field_काष्ठा(काष्ठा afs_fid,	fid		)
-		    __field(पूर्णांक,			error		)
-		    __field(क्रमागत afs_file_error,	where		)
+		    __field_struct(struct afs_fid,	fid		)
+		    __field(int,			error		)
+		    __field(enum afs_file_error,	where		)
 			     ),
 
 	    TP_fast_assign(
@@ -1149,66 +1148,66 @@ TRACE_EVENT(afs_file_error,
 		    __entry->where = where;
 			   ),
 
-	    TP_prपूर्णांकk("%llx:%llx:%x r=%d %s",
+	    TP_printk("%llx:%llx:%x r=%d %s",
 		      __entry->fid.vid, __entry->fid.vnode, __entry->fid.unique,
 		      __entry->error,
-		      __prपूर्णांक_symbolic(__entry->where, afs_file_errors))
+		      __print_symbolic(__entry->where, afs_file_errors))
 	    );
 
 TRACE_EVENT(afs_cm_no_server,
-	    TP_PROTO(काष्ठा afs_call *call, काष्ठा sockaddr_rxrpc *srx),
+	    TP_PROTO(struct afs_call *call, struct sockaddr_rxrpc *srx),
 
 	    TP_ARGS(call, srx),
 
 	    TP_STRUCT__entry(
-		    __field(अचिन्हित पूर्णांक,			call	)
-		    __field(अचिन्हित पूर्णांक,			op_id	)
-		    __field_काष्ठा(काष्ठा sockaddr_rxrpc,	srx	)
+		    __field(unsigned int,			call	)
+		    __field(unsigned int,			op_id	)
+		    __field_struct(struct sockaddr_rxrpc,	srx	)
 			     ),
 
 	    TP_fast_assign(
 		    __entry->call = call->debug_id;
 		    __entry->op_id = call->operation_ID;
-		    स_नकल(&__entry->srx, srx, माप(__entry->srx));
+		    memcpy(&__entry->srx, srx, sizeof(__entry->srx));
 			   ),
 
-	    TP_prपूर्णांकk("c=%08x op=%u %pISpc",
+	    TP_printk("c=%08x op=%u %pISpc",
 		      __entry->call, __entry->op_id, &__entry->srx.transport)
 	    );
 
 TRACE_EVENT(afs_cm_no_server_u,
-	    TP_PROTO(काष्ठा afs_call *call, स्थिर uuid_t *uuid),
+	    TP_PROTO(struct afs_call *call, const uuid_t *uuid),
 
 	    TP_ARGS(call, uuid),
 
 	    TP_STRUCT__entry(
-		    __field(अचिन्हित पूर्णांक,			call	)
-		    __field(अचिन्हित पूर्णांक,			op_id	)
-		    __field_काष्ठा(uuid_t,			uuid	)
+		    __field(unsigned int,			call	)
+		    __field(unsigned int,			op_id	)
+		    __field_struct(uuid_t,			uuid	)
 			     ),
 
 	    TP_fast_assign(
 		    __entry->call = call->debug_id;
 		    __entry->op_id = call->operation_ID;
-		    स_नकल(&__entry->uuid, uuid, माप(__entry->uuid));
+		    memcpy(&__entry->uuid, uuid, sizeof(__entry->uuid));
 			   ),
 
-	    TP_prपूर्णांकk("c=%08x op=%u %pU",
+	    TP_printk("c=%08x op=%u %pU",
 		      __entry->call, __entry->op_id, &__entry->uuid)
 	    );
 
 TRACE_EVENT(afs_flock_ev,
-	    TP_PROTO(काष्ठा afs_vnode *vnode, काष्ठा file_lock *fl,
-		     क्रमागत afs_flock_event event, पूर्णांक error),
+	    TP_PROTO(struct afs_vnode *vnode, struct file_lock *fl,
+		     enum afs_flock_event event, int error),
 
 	    TP_ARGS(vnode, fl, event, error),
 
 	    TP_STRUCT__entry(
-		    __field_काष्ठा(काष्ठा afs_fid,	fid		)
-		    __field(क्रमागत afs_flock_event,	event		)
-		    __field(क्रमागत afs_lock_state,	state		)
-		    __field(पूर्णांक,			error		)
-		    __field(अचिन्हित पूर्णांक,		debug_id	)
+		    __field_struct(struct afs_fid,	fid		)
+		    __field(enum afs_flock_event,	event		)
+		    __field(enum afs_lock_state,	state		)
+		    __field(int,			error		)
+		    __field(unsigned int,		debug_id	)
 			     ),
 
 	    TP_fast_assign(
@@ -1219,28 +1218,28 @@ TRACE_EVENT(afs_flock_ev,
 		    __entry->debug_id = fl ? fl->fl_u.afs.debug_id : 0;
 			   ),
 
-	    TP_prपूर्णांकk("%llx:%llx:%x %04x %s s=%s e=%d",
+	    TP_printk("%llx:%llx:%x %04x %s s=%s e=%d",
 		      __entry->fid.vid, __entry->fid.vnode, __entry->fid.unique,
 		      __entry->debug_id,
-		      __prपूर्णांक_symbolic(__entry->event, afs_flock_events),
-		      __prपूर्णांक_symbolic(__entry->state, afs_flock_states),
+		      __print_symbolic(__entry->event, afs_flock_events),
+		      __print_symbolic(__entry->state, afs_flock_states),
 		      __entry->error)
 	    );
 
 TRACE_EVENT(afs_flock_op,
-	    TP_PROTO(काष्ठा afs_vnode *vnode, काष्ठा file_lock *fl,
-		     क्रमागत afs_flock_operation op),
+	    TP_PROTO(struct afs_vnode *vnode, struct file_lock *fl,
+		     enum afs_flock_operation op),
 
 	    TP_ARGS(vnode, fl, op),
 
 	    TP_STRUCT__entry(
-		    __field_काष्ठा(काष्ठा afs_fid,	fid		)
+		    __field_struct(struct afs_fid,	fid		)
 		    __field(loff_t,			from		)
 		    __field(loff_t,			len		)
-		    __field(क्रमागत afs_flock_operation,	op		)
-		    __field(अचिन्हित अक्षर,		type		)
-		    __field(अचिन्हित पूर्णांक,		flags		)
-		    __field(अचिन्हित पूर्णांक,		debug_id	)
+		    __field(enum afs_flock_operation,	op		)
+		    __field(unsigned char,		type		)
+		    __field(unsigned int,		flags		)
+		    __field(unsigned int,		debug_id	)
 			     ),
 
 	    TP_fast_assign(
@@ -1253,112 +1252,112 @@ TRACE_EVENT(afs_flock_op,
 		    __entry->debug_id = fl->fl_u.afs.debug_id;
 			   ),
 
-	    TP_prपूर्णांकk("%llx:%llx:%x %04x %s t=%s R=%llx/%llx f=%x",
+	    TP_printk("%llx:%llx:%x %04x %s t=%s R=%llx/%llx f=%x",
 		      __entry->fid.vid, __entry->fid.vnode, __entry->fid.unique,
 		      __entry->debug_id,
-		      __prपूर्णांक_symbolic(__entry->op, afs_flock_operations),
-		      __prपूर्णांक_symbolic(__entry->type, afs_flock_types),
+		      __print_symbolic(__entry->op, afs_flock_operations),
+		      __print_symbolic(__entry->type, afs_flock_types),
 		      __entry->from, __entry->len, __entry->flags)
 	    );
 
 TRACE_EVENT(afs_reload_dir,
-	    TP_PROTO(काष्ठा afs_vnode *vnode),
+	    TP_PROTO(struct afs_vnode *vnode),
 
 	    TP_ARGS(vnode),
 
 	    TP_STRUCT__entry(
-		    __field_काष्ठा(काष्ठा afs_fid,	fid		)
+		    __field_struct(struct afs_fid,	fid		)
 			     ),
 
 	    TP_fast_assign(
 		    __entry->fid = vnode->fid;
 			   ),
 
-	    TP_prपूर्णांकk("%llx:%llx:%x",
+	    TP_printk("%llx:%llx:%x",
 		      __entry->fid.vid, __entry->fid.vnode, __entry->fid.unique)
 	    );
 
-TRACE_EVENT(afs_silly_नाम,
-	    TP_PROTO(काष्ठा afs_vnode *vnode, bool करोne),
+TRACE_EVENT(afs_silly_rename,
+	    TP_PROTO(struct afs_vnode *vnode, bool done),
 
-	    TP_ARGS(vnode, करोne),
+	    TP_ARGS(vnode, done),
 
 	    TP_STRUCT__entry(
-		    __field_काष्ठा(काष्ठा afs_fid,	fid		)
-		    __field(bool,			करोne		)
+		    __field_struct(struct afs_fid,	fid		)
+		    __field(bool,			done		)
 			     ),
 
 	    TP_fast_assign(
 		    __entry->fid = vnode->fid;
-		    __entry->करोne = करोne;
+		    __entry->done = done;
 			   ),
 
-	    TP_prपूर्णांकk("%llx:%llx:%x done=%u",
+	    TP_printk("%llx:%llx:%x done=%u",
 		      __entry->fid.vid, __entry->fid.vnode, __entry->fid.unique,
-		      __entry->करोne)
+		      __entry->done)
 	    );
 
 TRACE_EVENT(afs_get_tree,
-	    TP_PROTO(काष्ठा afs_cell *cell, काष्ठा afs_volume *volume),
+	    TP_PROTO(struct afs_cell *cell, struct afs_volume *volume),
 
 	    TP_ARGS(cell, volume),
 
 	    TP_STRUCT__entry(
 		    __field(u64,			vid		)
-		    __array(अक्षर,			cell, 24	)
-		    __array(अक्षर,			volume, 24	)
+		    __array(char,			cell, 24	)
+		    __array(char,			volume, 24	)
 			     ),
 
 	    TP_fast_assign(
-		    पूर्णांक __len;
+		    int __len;
 		    __entry->vid = volume->vid;
-		    __len = min_t(पूर्णांक, cell->name_len, 23);
-		    स_नकल(__entry->cell, cell->name, __len);
+		    __len = min_t(int, cell->name_len, 23);
+		    memcpy(__entry->cell, cell->name, __len);
 		    __entry->cell[__len] = 0;
-		    __len = min_t(पूर्णांक, volume->name_len, 23);
-		    स_नकल(__entry->volume, volume->name, __len);
+		    __len = min_t(int, volume->name_len, 23);
+		    memcpy(__entry->volume, volume->name, __len);
 		    __entry->volume[__len] = 0;
 			   ),
 
-	    TP_prपूर्णांकk("--- MOUNT %s:%s %llx",
+	    TP_printk("--- MOUNT %s:%s %llx",
 		      __entry->cell, __entry->volume, __entry->vid)
 	    );
 
-TRACE_EVENT(afs_cb_अवरोध,
-	    TP_PROTO(काष्ठा afs_fid *fid, अचिन्हित पूर्णांक cb_अवरोध,
-		     क्रमागत afs_cb_अवरोध_reason reason, bool skipped),
+TRACE_EVENT(afs_cb_break,
+	    TP_PROTO(struct afs_fid *fid, unsigned int cb_break,
+		     enum afs_cb_break_reason reason, bool skipped),
 
-	    TP_ARGS(fid, cb_अवरोध, reason, skipped),
+	    TP_ARGS(fid, cb_break, reason, skipped),
 
 	    TP_STRUCT__entry(
-		    __field_काष्ठा(काष्ठा afs_fid,	fid		)
-		    __field(अचिन्हित पूर्णांक,		cb_अवरोध	)
-		    __field(क्रमागत afs_cb_अवरोध_reason,	reason		)
+		    __field_struct(struct afs_fid,	fid		)
+		    __field(unsigned int,		cb_break	)
+		    __field(enum afs_cb_break_reason,	reason		)
 		    __field(bool,			skipped		)
 			     ),
 
 	    TP_fast_assign(
 		    __entry->fid	= *fid;
-		    __entry->cb_अवरोध	= cb_अवरोध;
+		    __entry->cb_break	= cb_break;
 		    __entry->reason	= reason;
 		    __entry->skipped	= skipped;
 			   ),
 
-	    TP_prपूर्णांकk("%llx:%llx:%x b=%x s=%u %s",
+	    TP_printk("%llx:%llx:%x b=%x s=%u %s",
 		      __entry->fid.vid, __entry->fid.vnode, __entry->fid.unique,
-		      __entry->cb_अवरोध,
+		      __entry->cb_break,
 		      __entry->skipped,
-		      __prपूर्णांक_symbolic(__entry->reason, afs_cb_अवरोध_reasons))
+		      __print_symbolic(__entry->reason, afs_cb_break_reasons))
 	    );
 
 TRACE_EVENT(afs_cb_miss,
-	    TP_PROTO(काष्ठा afs_fid *fid, क्रमागत afs_cb_अवरोध_reason reason),
+	    TP_PROTO(struct afs_fid *fid, enum afs_cb_break_reason reason),
 
 	    TP_ARGS(fid, reason),
 
 	    TP_STRUCT__entry(
-		    __field_काष्ठा(काष्ठा afs_fid,	fid		)
-		    __field(क्रमागत afs_cb_अवरोध_reason,	reason		)
+		    __field_struct(struct afs_fid,	fid		)
+		    __field(enum afs_cb_break_reason,	reason		)
 			     ),
 
 	    TP_fast_assign(
@@ -1366,22 +1365,22 @@ TRACE_EVENT(afs_cb_miss,
 		    __entry->reason	= reason;
 			   ),
 
-	    TP_prपूर्णांकk(" %llx:%llx:%x %s",
+	    TP_printk(" %llx:%llx:%x %s",
 		      __entry->fid.vid, __entry->fid.vnode, __entry->fid.unique,
-		      __prपूर्णांक_symbolic(__entry->reason, afs_cb_अवरोध_reasons))
+		      __print_symbolic(__entry->reason, afs_cb_break_reasons))
 	    );
 
 TRACE_EVENT(afs_server,
-	    TP_PROTO(काष्ठा afs_server *server, पूर्णांक ref, पूर्णांक active,
-		     क्रमागत afs_server_trace reason),
+	    TP_PROTO(struct afs_server *server, int ref, int active,
+		     enum afs_server_trace reason),
 
 	    TP_ARGS(server, ref, active, reason),
 
 	    TP_STRUCT__entry(
-		    __field(अचिन्हित पूर्णांक,		server		)
-		    __field(पूर्णांक,			ref		)
-		    __field(पूर्णांक,			active		)
-		    __field(पूर्णांक,			reason		)
+		    __field(unsigned int,		server		)
+		    __field(int,			ref		)
+		    __field(int,			active		)
+		    __field(int,			reason		)
 			     ),
 
 	    TP_fast_assign(
@@ -1391,22 +1390,22 @@ TRACE_EVENT(afs_server,
 		    __entry->reason = reason;
 			   ),
 
-	    TP_prपूर्णांकk("s=%08x %s u=%d a=%d",
+	    TP_printk("s=%08x %s u=%d a=%d",
 		      __entry->server,
-		      __prपूर्णांक_symbolic(__entry->reason, afs_server_traces),
+		      __print_symbolic(__entry->reason, afs_server_traces),
 		      __entry->ref,
 		      __entry->active)
 	    );
 
 TRACE_EVENT(afs_volume,
-	    TP_PROTO(afs_volid_t vid, पूर्णांक ref, क्रमागत afs_volume_trace reason),
+	    TP_PROTO(afs_volid_t vid, int ref, enum afs_volume_trace reason),
 
 	    TP_ARGS(vid, ref, reason),
 
 	    TP_STRUCT__entry(
 		    __field(afs_volid_t,		vid		)
-		    __field(पूर्णांक,			ref		)
-		    __field(क्रमागत afs_volume_trace,	reason		)
+		    __field(int,			ref		)
+		    __field(enum afs_volume_trace,	reason		)
 			     ),
 
 	    TP_fast_assign(
@@ -1415,23 +1414,23 @@ TRACE_EVENT(afs_volume,
 		    __entry->reason = reason;
 			   ),
 
-	    TP_prपूर्णांकk("V=%llx %s u=%d",
+	    TP_printk("V=%llx %s u=%d",
 		      __entry->vid,
-		      __prपूर्णांक_symbolic(__entry->reason, afs_volume_traces),
+		      __print_symbolic(__entry->reason, afs_volume_traces),
 		      __entry->ref)
 	    );
 
 TRACE_EVENT(afs_cell,
-	    TP_PROTO(अचिन्हित पूर्णांक cell_debug_id, पूर्णांक usage, पूर्णांक active,
-		     क्रमागत afs_cell_trace reason),
+	    TP_PROTO(unsigned int cell_debug_id, int usage, int active,
+		     enum afs_cell_trace reason),
 
 	    TP_ARGS(cell_debug_id, usage, active, reason),
 
 	    TP_STRUCT__entry(
-		    __field(अचिन्हित पूर्णांक,		cell		)
-		    __field(पूर्णांक,			usage		)
-		    __field(पूर्णांक,			active		)
-		    __field(पूर्णांक,			reason		)
+		    __field(unsigned int,		cell		)
+		    __field(int,			usage		)
+		    __field(int,			active		)
+		    __field(int,			reason		)
 			     ),
 
 	    TP_fast_assign(
@@ -1441,14 +1440,14 @@ TRACE_EVENT(afs_cell,
 		    __entry->reason = reason;
 			   ),
 
-	    TP_prपूर्णांकk("L=%08x %s u=%d a=%d",
+	    TP_printk("L=%08x %s u=%d a=%d",
 		      __entry->cell,
-		      __prपूर्णांक_symbolic(__entry->reason, afs_cell_traces),
+		      __print_symbolic(__entry->reason, afs_cell_traces),
 		      __entry->usage,
 		      __entry->active)
 	    );
 
-#पूर्ण_अगर /* _TRACE_AFS_H */
+#endif /* _TRACE_AFS_H */
 
 /* This part must be outside protection */
-#समावेश <trace/define_trace.h>
+#include <trace/define_trace.h>

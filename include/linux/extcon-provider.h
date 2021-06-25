@@ -1,135 +1,134 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * External Connector (extcon) framework
- * - linux/include/linux/extcon-provider.h क्रम extcon provider device driver.
+ * - linux/include/linux/extcon-provider.h for extcon provider device driver.
  *
  * Copyright (C) 2017 Samsung Electronics
  * Author: Chanwoo Choi <cw00.choi@samsung.com>
  */
 
-#अगर_अघोषित __LINUX_EXTCON_PROVIDER_H__
-#घोषणा __LINUX_EXTCON_PROVIDER_H__
+#ifndef __LINUX_EXTCON_PROVIDER_H__
+#define __LINUX_EXTCON_PROVIDER_H__
 
-#समावेश <linux/extcon.h>
+#include <linux/extcon.h>
 
-काष्ठा extcon_dev;
+struct extcon_dev;
 
-#अगर IS_ENABLED(CONFIG_EXTCON)
+#if IS_ENABLED(CONFIG_EXTCON)
 
-/* Following APIs रेजिस्टर/unरेजिस्टर the extcon device. */
-पूर्णांक extcon_dev_रेजिस्टर(काष्ठा extcon_dev *edev);
-व्योम extcon_dev_unरेजिस्टर(काष्ठा extcon_dev *edev);
-पूर्णांक devm_extcon_dev_रेजिस्टर(काष्ठा device *dev,
-				काष्ठा extcon_dev *edev);
-व्योम devm_extcon_dev_unरेजिस्टर(काष्ठा device *dev,
-				काष्ठा extcon_dev *edev);
+/* Following APIs register/unregister the extcon device. */
+int extcon_dev_register(struct extcon_dev *edev);
+void extcon_dev_unregister(struct extcon_dev *edev);
+int devm_extcon_dev_register(struct device *dev,
+				struct extcon_dev *edev);
+void devm_extcon_dev_unregister(struct device *dev,
+				struct extcon_dev *edev);
 
-/* Following APIs allocate/मुक्त the memory of the extcon device. */
-काष्ठा extcon_dev *extcon_dev_allocate(स्थिर अचिन्हित पूर्णांक *cable);
-व्योम extcon_dev_मुक्त(काष्ठा extcon_dev *edev);
-काष्ठा extcon_dev *devm_extcon_dev_allocate(काष्ठा device *dev,
-				स्थिर अचिन्हित पूर्णांक *cable);
-व्योम devm_extcon_dev_मुक्त(काष्ठा device *dev, काष्ठा extcon_dev *edev);
+/* Following APIs allocate/free the memory of the extcon device. */
+struct extcon_dev *extcon_dev_allocate(const unsigned int *cable);
+void extcon_dev_free(struct extcon_dev *edev);
+struct extcon_dev *devm_extcon_dev_allocate(struct device *dev,
+				const unsigned int *cable);
+void devm_extcon_dev_free(struct device *dev, struct extcon_dev *edev);
 
-/* Synchronize the state and property value क्रम each बाह्यal connector. */
-पूर्णांक extcon_sync(काष्ठा extcon_dev *edev, अचिन्हित पूर्णांक id);
+/* Synchronize the state and property value for each external connector. */
+int extcon_sync(struct extcon_dev *edev, unsigned int id);
 
 /*
- * Following APIs set the connected state of each बाह्यal connector.
- * The 'id' argument indicates the defined बाह्यal connector.
+ * Following APIs set the connected state of each external connector.
+ * The 'id' argument indicates the defined external connector.
  */
-पूर्णांक extcon_set_state(काष्ठा extcon_dev *edev, अचिन्हित पूर्णांक id,
+int extcon_set_state(struct extcon_dev *edev, unsigned int id,
 				bool state);
-पूर्णांक extcon_set_state_sync(काष्ठा extcon_dev *edev, अचिन्हित पूर्णांक id,
+int extcon_set_state_sync(struct extcon_dev *edev, unsigned int id,
 				bool state);
 
 /*
- * Following APIs set the property of each बाह्यal connector.
- * The 'id' argument indicates the defined बाह्यal connector
+ * Following APIs set the property of each external connector.
+ * The 'id' argument indicates the defined external connector
  * and the 'prop' indicates the extcon property.
  *
  * And extcon_set_property_capability() set the capability of the property
- * क्रम each बाह्यal connector. They are used to set the capability of the
- * property of each बाह्यal connector based on the id and property.
+ * for each external connector. They are used to set the capability of the
+ * property of each external connector based on the id and property.
  */
-पूर्णांक extcon_set_property(काष्ठा extcon_dev *edev, अचिन्हित पूर्णांक id,
-				अचिन्हित पूर्णांक prop,
-				जोड़ extcon_property_value prop_val);
-पूर्णांक extcon_set_property_sync(काष्ठा extcon_dev *edev, अचिन्हित पूर्णांक id,
-				अचिन्हित पूर्णांक prop,
-				जोड़ extcon_property_value prop_val);
-पूर्णांक extcon_set_property_capability(काष्ठा extcon_dev *edev,
-				अचिन्हित पूर्णांक id, अचिन्हित पूर्णांक prop);
+int extcon_set_property(struct extcon_dev *edev, unsigned int id,
+				unsigned int prop,
+				union extcon_property_value prop_val);
+int extcon_set_property_sync(struct extcon_dev *edev, unsigned int id,
+				unsigned int prop,
+				union extcon_property_value prop_val);
+int extcon_set_property_capability(struct extcon_dev *edev,
+				unsigned int id, unsigned int prop);
 
-#अन्यथा /* CONFIG_EXTCON */
-अटल अंतरभूत पूर्णांक extcon_dev_रेजिस्टर(काष्ठा extcon_dev *edev)
-अणु
-	वापस 0;
-पूर्ण
+#else /* CONFIG_EXTCON */
+static inline int extcon_dev_register(struct extcon_dev *edev)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम extcon_dev_unरेजिस्टर(काष्ठा extcon_dev *edev) अणु पूर्ण
+static inline void extcon_dev_unregister(struct extcon_dev *edev) { }
 
-अटल अंतरभूत पूर्णांक devm_extcon_dev_रेजिस्टर(काष्ठा device *dev,
-				काष्ठा extcon_dev *edev)
-अणु
-	वापस -EINVAL;
-पूर्ण
+static inline int devm_extcon_dev_register(struct device *dev,
+				struct extcon_dev *edev)
+{
+	return -EINVAL;
+}
 
-अटल अंतरभूत व्योम devm_extcon_dev_unरेजिस्टर(काष्ठा device *dev,
-				काष्ठा extcon_dev *edev) अणु पूर्ण
+static inline void devm_extcon_dev_unregister(struct device *dev,
+				struct extcon_dev *edev) { }
 
-अटल अंतरभूत काष्ठा extcon_dev *extcon_dev_allocate(स्थिर अचिन्हित पूर्णांक *cable)
-अणु
-	वापस ERR_PTR(-ENOSYS);
-पूर्ण
+static inline struct extcon_dev *extcon_dev_allocate(const unsigned int *cable)
+{
+	return ERR_PTR(-ENOSYS);
+}
 
-अटल अंतरभूत व्योम extcon_dev_मुक्त(काष्ठा extcon_dev *edev) अणु पूर्ण
+static inline void extcon_dev_free(struct extcon_dev *edev) { }
 
-अटल अंतरभूत काष्ठा extcon_dev *devm_extcon_dev_allocate(काष्ठा device *dev,
-				स्थिर अचिन्हित पूर्णांक *cable)
-अणु
-	वापस ERR_PTR(-ENOSYS);
-पूर्ण
+static inline struct extcon_dev *devm_extcon_dev_allocate(struct device *dev,
+				const unsigned int *cable)
+{
+	return ERR_PTR(-ENOSYS);
+}
 
-अटल अंतरभूत व्योम devm_extcon_dev_मुक्त(काष्ठा extcon_dev *edev) अणु पूर्ण
+static inline void devm_extcon_dev_free(struct extcon_dev *edev) { }
 
 
-अटल अंतरभूत पूर्णांक extcon_set_state(काष्ठा extcon_dev *edev, अचिन्हित पूर्णांक id,
+static inline int extcon_set_state(struct extcon_dev *edev, unsigned int id,
 				bool state)
-अणु
-	वापस 0;
-पूर्ण
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक extcon_set_state_sync(काष्ठा extcon_dev *edev, अचिन्हित पूर्णांक id,
+static inline int extcon_set_state_sync(struct extcon_dev *edev, unsigned int id,
 				bool state)
-अणु
-	वापस 0;
-पूर्ण
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक extcon_sync(काष्ठा extcon_dev *edev, अचिन्हित पूर्णांक id)
-अणु
-	वापस 0;
-पूर्ण
+static inline int extcon_sync(struct extcon_dev *edev, unsigned int id)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक extcon_set_property(काष्ठा extcon_dev *edev, अचिन्हित पूर्णांक id,
-				अचिन्हित पूर्णांक prop,
-				जोड़ extcon_property_value prop_val)
-अणु
-	वापस 0;
-पूर्ण
+static inline int extcon_set_property(struct extcon_dev *edev, unsigned int id,
+				unsigned int prop,
+				union extcon_property_value prop_val)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक extcon_set_property_sync(काष्ठा extcon_dev *edev,
-				अचिन्हित पूर्णांक id, अचिन्हित पूर्णांक prop,
-				जोड़ extcon_property_value prop_val)
-अणु
-	वापस 0;
-पूर्ण
+static inline int extcon_set_property_sync(struct extcon_dev *edev,
+				unsigned int id, unsigned int prop,
+				union extcon_property_value prop_val)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक extcon_set_property_capability(काष्ठा extcon_dev *edev,
-				अचिन्हित पूर्णांक id, अचिन्हित पूर्णांक prop)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_EXTCON */
-#पूर्ण_अगर /* __LINUX_EXTCON_PROVIDER_H__ */
+static inline int extcon_set_property_capability(struct extcon_dev *edev,
+				unsigned int id, unsigned int prop)
+{
+	return 0;
+}
+#endif /* CONFIG_EXTCON */
+#endif /* __LINUX_EXTCON_PROVIDER_H__ */

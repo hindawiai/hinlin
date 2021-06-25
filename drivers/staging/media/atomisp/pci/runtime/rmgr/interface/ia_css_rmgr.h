@@ -1,74 +1,73 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Support क्रम Intel Camera Imaging ISP subप्रणाली.
+ * Support for Intel Camera Imaging ISP subsystem.
  * Copyright (c) 2010 - 2015, Intel Corporation.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
 
-#अगर_अघोषित _IA_CSS_RMGR_H
-#घोषणा _IA_CSS_RMGR_H
+#ifndef _IA_CSS_RMGR_H
+#define _IA_CSS_RMGR_H
 
-#समावेश <ia_css_err.h>
+#include <ia_css_err.h>
 
-#अगर_अघोषित __INLINE_RMGR__
-#घोषणा STORAGE_CLASS_RMGR_H बाह्य
-#घोषणा STORAGE_CLASS_RMGR_C
-#अन्यथा				/* __INLINE_RMGR__ */
-#घोषणा STORAGE_CLASS_RMGR_H अटल अंतरभूत
-#घोषणा STORAGE_CLASS_RMGR_C अटल अंतरभूत
-#पूर्ण_अगर				/* __INLINE_RMGR__ */
+#ifndef __INLINE_RMGR__
+#define STORAGE_CLASS_RMGR_H extern
+#define STORAGE_CLASS_RMGR_C
+#else				/* __INLINE_RMGR__ */
+#define STORAGE_CLASS_RMGR_H static inline
+#define STORAGE_CLASS_RMGR_C static inline
+#endif				/* __INLINE_RMGR__ */
 
 /**
  * @brief Initialize resource manager (host/common)
  */
-पूर्णांक ia_css_rmgr_init(व्योम);
+int ia_css_rmgr_init(void);
 
 /**
  * @brief Uninitialize resource manager (host/common)
  */
-व्योम ia_css_rmgr_uninit(व्योम);
+void ia_css_rmgr_uninit(void);
 
 /*****************************************************************
  * Interface definition - resource type (host/common)
  *****************************************************************
  *
- * काष्ठा ia_css_rmgr_<type>_pool;
- * काष्ठा ia_css_rmgr_<type>_handle;
+ * struct ia_css_rmgr_<type>_pool;
+ * struct ia_css_rmgr_<type>_handle;
  *
- * STORAGE_CLASS_RMGR_H व्योम ia_css_rmgr_init_<type>(
- *	काष्ठा ia_css_rmgr_<type>_pool *pool);
+ * STORAGE_CLASS_RMGR_H void ia_css_rmgr_init_<type>(
+ *	struct ia_css_rmgr_<type>_pool *pool);
  *
- * STORAGE_CLASS_RMGR_H व्योम ia_css_rmgr_uninit_<type>(
- *	काष्ठा ia_css_rmgr_<type>_pool *pool);
+ * STORAGE_CLASS_RMGR_H void ia_css_rmgr_uninit_<type>(
+ *	struct ia_css_rmgr_<type>_pool *pool);
  *
- * STORAGE_CLASS_RMGR_H व्योम ia_css_rmgr_acq_<type>(
- *	काष्ठा ia_css_rmgr_<type>_pool *pool,
- *	काष्ठा ia_css_rmgr_<type>_handle **handle);
+ * STORAGE_CLASS_RMGR_H void ia_css_rmgr_acq_<type>(
+ *	struct ia_css_rmgr_<type>_pool *pool,
+ *	struct ia_css_rmgr_<type>_handle **handle);
  *
- * STORAGE_CLASS_RMGR_H व्योम ia_css_rmgr_rel_<type>(
- *	काष्ठा ia_css_rmgr_<type>_pool *pool,
- *	काष्ठा ia_css_rmgr_<type>_handle **handle);
+ * STORAGE_CLASS_RMGR_H void ia_css_rmgr_rel_<type>(
+ *	struct ia_css_rmgr_<type>_pool *pool,
+ *	struct ia_css_rmgr_<type>_handle **handle);
  *
  *****************************************************************
  * Interface definition - refcounting (host/common)
  *****************************************************************
  *
- * व्योम ia_css_rmgr_refcount_retain_<type>(
- *	काष्ठा ia_css_rmgr_<type>_handle **handle);
+ * void ia_css_rmgr_refcount_retain_<type>(
+ *	struct ia_css_rmgr_<type>_handle **handle);
  *
- * व्योम ia_css_rmgr_refcount_release_<type>(
- *	काष्ठा ia_css_rmgr_<type>_handle **handle);
+ * void ia_css_rmgr_refcount_release_<type>(
+ *	struct ia_css_rmgr_<type>_handle **handle);
  */
 
-#समावेश "ia_css_rmgr_vbuf.h"
+#include "ia_css_rmgr_vbuf.h"
 
-#पूर्ण_अगर	/* _IA_CSS_RMGR_H */
+#endif	/* _IA_CSS_RMGR_H */

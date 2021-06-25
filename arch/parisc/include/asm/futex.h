@@ -1,124 +1,123 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_PARISC_FUTEX_H
-#घोषणा _ASM_PARISC_FUTEX_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_PARISC_FUTEX_H
+#define _ASM_PARISC_FUTEX_H
 
-#अगर_घोषित __KERNEL__
+#ifdef __KERNEL__
 
-#समावेश <linux/futex.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/atomic.h>
-#समावेश <यंत्र/त्रुटिसं.स>
+#include <linux/futex.h>
+#include <linux/uaccess.h>
+#include <asm/atomic.h>
+#include <asm/errno.h>
 
 /* The following has to match the LWS code in syscall.S.  We have
    sixteen four-word locks. */
 
-अटल अंतरभूत व्योम
-_futex_spin_lock_irqsave(u32 __user *uaddr, अचिन्हित दीर्घ पूर्णांक *flags)
-अणु
-	बाह्य u32 lws_lock_start[];
-	दीर्घ index = ((दीर्घ)uaddr & 0x3f8) >> 1;
+static inline void
+_futex_spin_lock_irqsave(u32 __user *uaddr, unsigned long int *flags)
+{
+	extern u32 lws_lock_start[];
+	long index = ((long)uaddr & 0x3f8) >> 1;
 	arch_spinlock_t *s = (arch_spinlock_t *)&lws_lock_start[index];
 	local_irq_save(*flags);
 	arch_spin_lock(s);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-_futex_spin_unlock_irqrestore(u32 __user *uaddr, अचिन्हित दीर्घ पूर्णांक *flags)
-अणु
-	बाह्य u32 lws_lock_start[];
-	दीर्घ index = ((दीर्घ)uaddr & 0x3f8) >> 1;
+static inline void
+_futex_spin_unlock_irqrestore(u32 __user *uaddr, unsigned long int *flags)
+{
+	extern u32 lws_lock_start[];
+	long index = ((long)uaddr & 0x3f8) >> 1;
 	arch_spinlock_t *s = (arch_spinlock_t *)&lws_lock_start[index];
 	arch_spin_unlock(s);
 	local_irq_restore(*flags);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक
-arch_futex_atomic_op_inuser(पूर्णांक op, पूर्णांक oparg, पूर्णांक *oval, u32 __user *uaddr)
-अणु
-	अचिन्हित दीर्घ पूर्णांक flags;
-	पूर्णांक oldval, ret;
-	u32 पंचांगp;
+static inline int
+arch_futex_atomic_op_inuser(int op, int oparg, int *oval, u32 __user *uaddr)
+{
+	unsigned long int flags;
+	int oldval, ret;
+	u32 tmp;
 
 	_futex_spin_lock_irqsave(uaddr, &flags);
 
 	ret = -EFAULT;
-	अगर (unlikely(get_user(oldval, uaddr) != 0))
-		जाओ out_pagefault_enable;
+	if (unlikely(get_user(oldval, uaddr) != 0))
+		goto out_pagefault_enable;
 
 	ret = 0;
-	पंचांगp = oldval;
+	tmp = oldval;
 
-	चयन (op) अणु
-	हाल FUTEX_OP_SET:
-		पंचांगp = oparg;
-		अवरोध;
-	हाल FUTEX_OP_ADD:
-		पंचांगp += oparg;
-		अवरोध;
-	हाल FUTEX_OP_OR:
-		पंचांगp |= oparg;
-		अवरोध;
-	हाल FUTEX_OP_ANDN:
-		पंचांगp &= ~oparg;
-		अवरोध;
-	हाल FUTEX_OP_XOR:
-		पंचांगp ^= oparg;
-		अवरोध;
-	शेष:
+	switch (op) {
+	case FUTEX_OP_SET:
+		tmp = oparg;
+		break;
+	case FUTEX_OP_ADD:
+		tmp += oparg;
+		break;
+	case FUTEX_OP_OR:
+		tmp |= oparg;
+		break;
+	case FUTEX_OP_ANDN:
+		tmp &= ~oparg;
+		break;
+	case FUTEX_OP_XOR:
+		tmp ^= oparg;
+		break;
+	default:
 		ret = -ENOSYS;
-	पूर्ण
+	}
 
-	अगर (ret == 0 && unlikely(put_user(पंचांगp, uaddr) != 0))
+	if (ret == 0 && unlikely(put_user(tmp, uaddr) != 0))
 		ret = -EFAULT;
 
 out_pagefault_enable:
 	_futex_spin_unlock_irqrestore(uaddr, &flags);
 
-	अगर (!ret)
+	if (!ret)
 		*oval = oldval;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत पूर्णांक
+static inline int
 futex_atomic_cmpxchg_inatomic(u32 *uval, u32 __user *uaddr,
 			      u32 oldval, u32 newval)
-अणु
+{
 	u32 val;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
-	/* futex.c wants to करो a cmpxchg_inatomic on kernel शून्य, which is
+	/* futex.c wants to do a cmpxchg_inatomic on kernel NULL, which is
 	 * our gateway page, and causes no end of trouble...
 	 */
-	अगर (uaccess_kernel() && !uaddr)
-		वापस -EFAULT;
+	if (uaccess_kernel() && !uaddr)
+		return -EFAULT;
 
-	अगर (!access_ok(uaddr, माप(u32)))
-		वापस -EFAULT;
+	if (!access_ok(uaddr, sizeof(u32)))
+		return -EFAULT;
 
-	/* HPPA has no cmpxchg in hardware and thereक्रमe the
-	 * best we can करो here is use an array of locks. The
+	/* HPPA has no cmpxchg in hardware and therefore the
+	 * best we can do here is use an array of locks. The
 	 * lock selected is based on a hash of the userspace
 	 * address. This should scale to a couple of CPUs.
 	 */
 
 	_futex_spin_lock_irqsave(uaddr, &flags);
-	अगर (unlikely(get_user(val, uaddr) != 0)) अणु
+	if (unlikely(get_user(val, uaddr) != 0)) {
 		_futex_spin_unlock_irqrestore(uaddr, &flags);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
-	अगर (val == oldval && unlikely(put_user(newval, uaddr) != 0)) अणु
+	if (val == oldval && unlikely(put_user(newval, uaddr) != 0)) {
 		_futex_spin_unlock_irqrestore(uaddr, &flags);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
 	*uval = val;
 	_futex_spin_unlock_irqrestore(uaddr, &flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#पूर्ण_अगर /*__KERNEL__*/
-#पूर्ण_अगर /*_ASM_PARISC_FUTEX_H*/
+#endif /*__KERNEL__*/
+#endif /*_ASM_PARISC_FUTEX_H*/

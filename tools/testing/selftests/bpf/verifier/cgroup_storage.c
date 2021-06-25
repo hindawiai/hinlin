@@ -1,7 +1,6 @@
-<शैली गुरु>
-अणु
+{
 	"valid cgroup storage access",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_2, 0),
 	BPF_LD_MAP_FD(BPF_REG_1, 0),
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_local_storage),
@@ -9,14 +8,14 @@
 	BPF_MOV64_REG(BPF_REG_0, BPF_REG_1),
 	BPF_ALU64_IMM(BPF_AND, BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_cgroup_storage = अणु 1 पूर्ण,
+	},
+	.fixup_cgroup_storage = { 1 },
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_CGROUP_SKB,
-पूर्ण,
-अणु
+},
+{
 	"invalid cgroup storage access 1",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_2, 0),
 	BPF_LD_MAP_FD(BPF_REG_1, 0),
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_local_storage),
@@ -24,28 +23,28 @@
 	BPF_MOV64_REG(BPF_REG_0, BPF_REG_1),
 	BPF_ALU64_IMM(BPF_AND, BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 1 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 1 },
 	.result = REJECT,
 	.errstr = "cannot pass map_type 1 into func bpf_get_local_storage",
 	.prog_type = BPF_PROG_TYPE_CGROUP_SKB,
-पूर्ण,
-अणु
+},
+{
 	"invalid cgroup storage access 2",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_2, 0),
 	BPF_LD_MAP_FD(BPF_REG_1, 1),
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_local_storage),
 	BPF_ALU64_IMM(BPF_AND, BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = REJECT,
 	.errstr = "fd 1 is not pointing to valid bpf_map",
 	.prog_type = BPF_PROG_TYPE_CGROUP_SKB,
-पूर्ण,
-अणु
+},
+{
 	"invalid cgroup storage access 3",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_2, 0),
 	BPF_LD_MAP_FD(BPF_REG_1, 0),
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_local_storage),
@@ -53,15 +52,15 @@
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, 1),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_cgroup_storage = अणु 1 पूर्ण,
+	},
+	.fixup_cgroup_storage = { 1 },
 	.result = REJECT,
 	.errstr = "invalid access to map value, value_size=64 off=256 size=4",
 	.prog_type = BPF_PROG_TYPE_CGROUP_SKB,
-पूर्ण,
-अणु
+},
+{
 	"invalid cgroup storage access 4",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_2, 0),
 	BPF_LD_MAP_FD(BPF_REG_1, 0),
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_local_storage),
@@ -69,16 +68,16 @@
 	BPF_MOV64_REG(BPF_REG_0, BPF_REG_1),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_cgroup_storage = अणु 1 पूर्ण,
+	},
+	.fixup_cgroup_storage = { 1 },
 	.result = REJECT,
 	.errstr = "invalid access to map value, value_size=64 off=-2 size=4",
 	.prog_type = BPF_PROG_TYPE_CGROUP_SKB,
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-अणु
+},
+{
 	"invalid cgroup storage access 5",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_2, 7),
 	BPF_LD_MAP_FD(BPF_REG_1, 0),
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_local_storage),
@@ -86,15 +85,15 @@
 	BPF_MOV64_REG(BPF_REG_0, BPF_REG_1),
 	BPF_ALU64_IMM(BPF_AND, BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_cgroup_storage = अणु 1 पूर्ण,
+	},
+	.fixup_cgroup_storage = { 1 },
 	.result = REJECT,
 	.errstr = "get_local_storage() doesn't support non-zero flags",
 	.prog_type = BPF_PROG_TYPE_CGROUP_SKB,
-पूर्ण,
-अणु
+},
+{
 	"invalid cgroup storage access 6",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_1),
 	BPF_LD_MAP_FD(BPF_REG_1, 0),
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_local_storage),
@@ -102,16 +101,16 @@
 	BPF_MOV64_REG(BPF_REG_0, BPF_REG_1),
 	BPF_ALU64_IMM(BPF_AND, BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_cgroup_storage = अणु 1 पूर्ण,
+	},
+	.fixup_cgroup_storage = { 1 },
 	.result = REJECT,
 	.errstr = "get_local_storage() doesn't support non-zero flags",
 	.errstr_unpriv = "R2 leaks addr into helper function",
 	.prog_type = BPF_PROG_TYPE_CGROUP_SKB,
-पूर्ण,
-अणु
+},
+{
 	"valid per-cpu cgroup storage access",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_2, 0),
 	BPF_LD_MAP_FD(BPF_REG_1, 0),
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_local_storage),
@@ -119,14 +118,14 @@
 	BPF_MOV64_REG(BPF_REG_0, BPF_REG_1),
 	BPF_ALU64_IMM(BPF_AND, BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_percpu_cgroup_storage = अणु 1 पूर्ण,
+	},
+	.fixup_percpu_cgroup_storage = { 1 },
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_CGROUP_SKB,
-पूर्ण,
-अणु
+},
+{
 	"invalid per-cpu cgroup storage access 1",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_2, 0),
 	BPF_LD_MAP_FD(BPF_REG_1, 0),
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_local_storage),
@@ -134,28 +133,28 @@
 	BPF_MOV64_REG(BPF_REG_0, BPF_REG_1),
 	BPF_ALU64_IMM(BPF_AND, BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 1 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 1 },
 	.result = REJECT,
 	.errstr = "cannot pass map_type 1 into func bpf_get_local_storage",
 	.prog_type = BPF_PROG_TYPE_CGROUP_SKB,
-पूर्ण,
-अणु
+},
+{
 	"invalid per-cpu cgroup storage access 2",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_2, 0),
 	BPF_LD_MAP_FD(BPF_REG_1, 1),
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_local_storage),
 	BPF_ALU64_IMM(BPF_AND, BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = REJECT,
 	.errstr = "fd 1 is not pointing to valid bpf_map",
 	.prog_type = BPF_PROG_TYPE_CGROUP_SKB,
-पूर्ण,
-अणु
+},
+{
 	"invalid per-cpu cgroup storage access 3",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_2, 0),
 	BPF_LD_MAP_FD(BPF_REG_1, 0),
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_local_storage),
@@ -163,15 +162,15 @@
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, 1),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_percpu_cgroup_storage = अणु 1 पूर्ण,
+	},
+	.fixup_percpu_cgroup_storage = { 1 },
 	.result = REJECT,
 	.errstr = "invalid access to map value, value_size=64 off=256 size=4",
 	.prog_type = BPF_PROG_TYPE_CGROUP_SKB,
-पूर्ण,
-अणु
+},
+{
 	"invalid per-cpu cgroup storage access 4",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_2, 0),
 	BPF_LD_MAP_FD(BPF_REG_1, 0),
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_local_storage),
@@ -179,16 +178,16 @@
 	BPF_MOV64_REG(BPF_REG_0, BPF_REG_1),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_cgroup_storage = अणु 1 पूर्ण,
+	},
+	.fixup_cgroup_storage = { 1 },
 	.result = REJECT,
 	.errstr = "invalid access to map value, value_size=64 off=-2 size=4",
 	.prog_type = BPF_PROG_TYPE_CGROUP_SKB,
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-अणु
+},
+{
 	"invalid per-cpu cgroup storage access 5",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_2, 7),
 	BPF_LD_MAP_FD(BPF_REG_1, 0),
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_local_storage),
@@ -196,15 +195,15 @@
 	BPF_MOV64_REG(BPF_REG_0, BPF_REG_1),
 	BPF_ALU64_IMM(BPF_AND, BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_percpu_cgroup_storage = अणु 1 पूर्ण,
+	},
+	.fixup_percpu_cgroup_storage = { 1 },
 	.result = REJECT,
 	.errstr = "get_local_storage() doesn't support non-zero flags",
 	.prog_type = BPF_PROG_TYPE_CGROUP_SKB,
-पूर्ण,
-अणु
+},
+{
 	"invalid per-cpu cgroup storage access 6",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_1),
 	BPF_LD_MAP_FD(BPF_REG_1, 0),
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_local_storage),
@@ -212,10 +211,10 @@
 	BPF_MOV64_REG(BPF_REG_0, BPF_REG_1),
 	BPF_ALU64_IMM(BPF_AND, BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_percpu_cgroup_storage = अणु 1 पूर्ण,
+	},
+	.fixup_percpu_cgroup_storage = { 1 },
 	.result = REJECT,
 	.errstr = "get_local_storage() doesn't support non-zero flags",
 	.errstr_unpriv = "R2 leaks addr into helper function",
 	.prog_type = BPF_PROG_TYPE_CGROUP_SKB,
-पूर्ण,
+},

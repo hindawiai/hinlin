@@ -1,91 +1,90 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_PROJID_H
-#घोषणा _LINUX_PROJID_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_PROJID_H
+#define _LINUX_PROJID_H
 
 /*
- * A set of types क्रम the पूर्णांकernal kernel types representing project ids.
+ * A set of types for the internal kernel types representing project ids.
  *
  * The types defined in this header allow distinguishing which project ids in
  * the kernel are values used by userspace and which project id values are
- * the पूर्णांकernal kernel values.  With the addition of user namespaces the values
- * can be dअगरferent.  Using the type प्रणाली makes it possible क्रम the compiler
- * to detect when we overlook these dअगरferences.
+ * the internal kernel values.  With the addition of user namespaces the values
+ * can be different.  Using the type system makes it possible for the compiler
+ * to detect when we overlook these differences.
  *
  */
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-काष्ठा user_namespace;
-बाह्य काष्ठा user_namespace init_user_ns;
+struct user_namespace;
+extern struct user_namespace init_user_ns;
 
-प्रकार __kernel_uid32_t projid_t;
+typedef __kernel_uid32_t projid_t;
 
-प्रकार काष्ठा अणु
+typedef struct {
 	projid_t val;
-पूर्ण kprojid_t;
+} kprojid_t;
 
-अटल अंतरभूत projid_t __kprojid_val(kprojid_t projid)
-अणु
-	वापस projid.val;
-पूर्ण
+static inline projid_t __kprojid_val(kprojid_t projid)
+{
+	return projid.val;
+}
 
-#घोषणा KPROJIDT_INIT(value) (kprojid_t)अणु value पूर्ण
+#define KPROJIDT_INIT(value) (kprojid_t){ value }
 
-#घोषणा INVALID_PROJID KPROJIDT_INIT(-1)
-#घोषणा OVERFLOW_PROJID 65534
+#define INVALID_PROJID KPROJIDT_INIT(-1)
+#define OVERFLOW_PROJID 65534
 
-अटल अंतरभूत bool projid_eq(kprojid_t left, kprojid_t right)
-अणु
-	वापस __kprojid_val(left) == __kprojid_val(right);
-पूर्ण
+static inline bool projid_eq(kprojid_t left, kprojid_t right)
+{
+	return __kprojid_val(left) == __kprojid_val(right);
+}
 
-अटल अंतरभूत bool projid_lt(kprojid_t left, kprojid_t right)
-अणु
-	वापस __kprojid_val(left) < __kprojid_val(right);
-पूर्ण
+static inline bool projid_lt(kprojid_t left, kprojid_t right)
+{
+	return __kprojid_val(left) < __kprojid_val(right);
+}
 
-अटल अंतरभूत bool projid_valid(kprojid_t projid)
-अणु
-	वापस !projid_eq(projid, INVALID_PROJID);
-पूर्ण
+static inline bool projid_valid(kprojid_t projid)
+{
+	return !projid_eq(projid, INVALID_PROJID);
+}
 
-#अगर_घोषित CONFIG_USER_NS
+#ifdef CONFIG_USER_NS
 
-बाह्य kprojid_t make_kprojid(काष्ठा user_namespace *from, projid_t projid);
+extern kprojid_t make_kprojid(struct user_namespace *from, projid_t projid);
 
-बाह्य projid_t from_kprojid(काष्ठा user_namespace *to, kprojid_t projid);
-बाह्य projid_t from_kprojid_munged(काष्ठा user_namespace *to, kprojid_t projid);
+extern projid_t from_kprojid(struct user_namespace *to, kprojid_t projid);
+extern projid_t from_kprojid_munged(struct user_namespace *to, kprojid_t projid);
 
-अटल अंतरभूत bool kprojid_has_mapping(काष्ठा user_namespace *ns, kprojid_t projid)
-अणु
-	वापस from_kprojid(ns, projid) != (projid_t)-1;
-पूर्ण
+static inline bool kprojid_has_mapping(struct user_namespace *ns, kprojid_t projid)
+{
+	return from_kprojid(ns, projid) != (projid_t)-1;
+}
 
-#अन्यथा
+#else
 
-अटल अंतरभूत kprojid_t make_kprojid(काष्ठा user_namespace *from, projid_t projid)
-अणु
-	वापस KPROJIDT_INIT(projid);
-पूर्ण
+static inline kprojid_t make_kprojid(struct user_namespace *from, projid_t projid)
+{
+	return KPROJIDT_INIT(projid);
+}
 
-अटल अंतरभूत projid_t from_kprojid(काष्ठा user_namespace *to, kprojid_t kprojid)
-अणु
-	वापस __kprojid_val(kprojid);
-पूर्ण
+static inline projid_t from_kprojid(struct user_namespace *to, kprojid_t kprojid)
+{
+	return __kprojid_val(kprojid);
+}
 
-अटल अंतरभूत projid_t from_kprojid_munged(काष्ठा user_namespace *to, kprojid_t kprojid)
-अणु
+static inline projid_t from_kprojid_munged(struct user_namespace *to, kprojid_t kprojid)
+{
 	projid_t projid = from_kprojid(to, kprojid);
-	अगर (projid == (projid_t)-1)
+	if (projid == (projid_t)-1)
 		projid = OVERFLOW_PROJID;
-	वापस projid;
-पूर्ण
+	return projid;
+}
 
-अटल अंतरभूत bool kprojid_has_mapping(काष्ठा user_namespace *ns, kprojid_t projid)
-अणु
-	वापस true;
-पूर्ण
+static inline bool kprojid_has_mapping(struct user_namespace *ns, kprojid_t projid)
+{
+	return true;
+}
 
-#पूर्ण_अगर /* CONFIG_USER_NS */
+#endif /* CONFIG_USER_NS */
 
-#पूर्ण_अगर /* _LINUX_PROJID_H */
+#endif /* _LINUX_PROJID_H */

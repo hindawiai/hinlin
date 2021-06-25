@@ -1,74 +1,73 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Functions related to generic helpers functions
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/bपन.स>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/scatterlist.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/bio.h>
+#include <linux/blkdev.h>
+#include <linux/scatterlist.h>
 
-#समावेश "blk.h"
+#include "blk.h"
 
-काष्ठा bio *blk_next_bio(काष्ठा bio *bio, अचिन्हित पूर्णांक nr_pages, gfp_t gfp)
-अणु
-	काष्ठा bio *new = bio_alloc(gfp, nr_pages);
+struct bio *blk_next_bio(struct bio *bio, unsigned int nr_pages, gfp_t gfp)
+{
+	struct bio *new = bio_alloc(gfp, nr_pages);
 
-	अगर (bio) अणु
+	if (bio) {
 		bio_chain(bio, new);
 		submit_bio(bio);
-	पूर्ण
+	}
 
-	वापस new;
-पूर्ण
+	return new;
+}
 
-पूर्णांक __blkdev_issue_discard(काष्ठा block_device *bdev, sector_t sector,
-		sector_t nr_sects, gfp_t gfp_mask, पूर्णांक flags,
-		काष्ठा bio **biop)
-अणु
-	काष्ठा request_queue *q = bdev_get_queue(bdev);
-	काष्ठा bio *bio = *biop;
-	अचिन्हित पूर्णांक op;
+int __blkdev_issue_discard(struct block_device *bdev, sector_t sector,
+		sector_t nr_sects, gfp_t gfp_mask, int flags,
+		struct bio **biop)
+{
+	struct request_queue *q = bdev_get_queue(bdev);
+	struct bio *bio = *biop;
+	unsigned int op;
 	sector_t bs_mask, part_offset = 0;
 
-	अगर (!q)
-		वापस -ENXIO;
+	if (!q)
+		return -ENXIO;
 
-	अगर (bdev_पढ़ो_only(bdev))
-		वापस -EPERM;
+	if (bdev_read_only(bdev))
+		return -EPERM;
 
-	अगर (flags & BLKDEV_DISCARD_SECURE) अणु
-		अगर (!blk_queue_secure_erase(q))
-			वापस -EOPNOTSUPP;
+	if (flags & BLKDEV_DISCARD_SECURE) {
+		if (!blk_queue_secure_erase(q))
+			return -EOPNOTSUPP;
 		op = REQ_OP_SECURE_ERASE;
-	पूर्ण अन्यथा अणु
-		अगर (!blk_queue_discard(q))
-			वापस -EOPNOTSUPP;
+	} else {
+		if (!blk_queue_discard(q))
+			return -EOPNOTSUPP;
 		op = REQ_OP_DISCARD;
-	पूर्ण
+	}
 
-	/* In हाल the discard granularity isn't set by buggy device driver */
-	अगर (WARN_ON_ONCE(!q->limits.discard_granularity)) अणु
-		अक्षर dev_name[BDEVNAME_SIZE];
+	/* In case the discard granularity isn't set by buggy device driver */
+	if (WARN_ON_ONCE(!q->limits.discard_granularity)) {
+		char dev_name[BDEVNAME_SIZE];
 
 		bdevname(bdev, dev_name);
 		pr_err_ratelimited("%s: Error: discard_granularity is 0.\n", dev_name);
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
 	bs_mask = (bdev_logical_block_size(bdev) >> 9) - 1;
-	अगर ((sector | nr_sects) & bs_mask)
-		वापस -EINVAL;
+	if ((sector | nr_sects) & bs_mask)
+		return -EINVAL;
 
-	अगर (!nr_sects)
-		वापस -EINVAL;
+	if (!nr_sects)
+		return -EINVAL;
 
-	/* In हाल the discard request is in a partition */
-	अगर (bdev_is_partition(bdev))
+	/* In case the discard request is in a partition */
+	if (bdev_is_partition(bdev))
 		part_offset = bdev->bd_start_sect;
 
-	जबतक (nr_sects) अणु
+	while (nr_sects) {
 		sector_t granularity_aligned_lba, req_sects;
 		sector_t sector_mapped = sector + part_offset;
 
@@ -86,14 +85,14 @@
 		 *   is split in device drive, the split ones are very probably
 		 *   to be aligned to discard_granularity of the device's queue.
 		 */
-		अगर (granularity_aligned_lba == sector_mapped)
+		if (granularity_aligned_lba == sector_mapped)
 			req_sects = min_t(sector_t, nr_sects,
 					  bio_aligned_discard_max_sectors(q));
-		अन्यथा
+		else
 			req_sects = min_t(sector_t, nr_sects,
 					  granularity_aligned_lba - sector_mapped);
 
-		WARN_ON_ONCE((req_sects << 9) > अच_पूर्णांक_उच्च);
+		WARN_ON_ONCE((req_sects << 9) > UINT_MAX);
 
 		bio = blk_next_bio(bio, 0, gfp_mask);
 		bio->bi_iter.bi_sector = sector;
@@ -105,90 +104,90 @@
 		nr_sects -= req_sects;
 
 		/*
-		 * We can loop क्रम a दीर्घ समय in here, अगर someone करोes
+		 * We can loop for a long time in here, if someone does
 		 * full device discards (like mkfs). Be nice and allow
-		 * us to schedule out to aव्योम softlocking अगर preempt
+		 * us to schedule out to avoid softlocking if preempt
 		 * is disabled.
 		 */
 		cond_resched();
-	पूर्ण
+	}
 
 	*biop = bio;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(__blkdev_issue_discard);
 
 /**
  * blkdev_issue_discard - queue a discard
- * @bdev:	blockdev to issue discard क्रम
+ * @bdev:	blockdev to issue discard for
  * @sector:	start sector
  * @nr_sects:	number of sectors to discard
- * @gfp_mask:	memory allocation flags (क्रम bio_alloc)
+ * @gfp_mask:	memory allocation flags (for bio_alloc)
  * @flags:	BLKDEV_DISCARD_* flags to control behaviour
  *
  * Description:
- *    Issue a discard request क्रम the sectors in question.
+ *    Issue a discard request for the sectors in question.
  */
-पूर्णांक blkdev_issue_discard(काष्ठा block_device *bdev, sector_t sector,
-		sector_t nr_sects, gfp_t gfp_mask, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा bio *bio = शून्य;
-	काष्ठा blk_plug plug;
-	पूर्णांक ret;
+int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
+		sector_t nr_sects, gfp_t gfp_mask, unsigned long flags)
+{
+	struct bio *bio = NULL;
+	struct blk_plug plug;
+	int ret;
 
 	blk_start_plug(&plug);
 	ret = __blkdev_issue_discard(bdev, sector, nr_sects, gfp_mask, flags,
 			&bio);
-	अगर (!ret && bio) अणु
-		ret = submit_bio_रुको(bio);
-		अगर (ret == -EOPNOTSUPP)
+	if (!ret && bio) {
+		ret = submit_bio_wait(bio);
+		if (ret == -EOPNOTSUPP)
 			ret = 0;
 		bio_put(bio);
-	पूर्ण
+	}
 	blk_finish_plug(&plug);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(blkdev_issue_discard);
 
 /**
- * __blkdev_issue_ग_लिखो_same - generate number of bios with same page
+ * __blkdev_issue_write_same - generate number of bios with same page
  * @bdev:	target blockdev
  * @sector:	start sector
- * @nr_sects:	number of sectors to ग_लिखो
- * @gfp_mask:	memory allocation flags (क्रम bio_alloc)
- * @page:	page containing data to ग_लिखो
- * @biop:	poपूर्णांकer to anchor bio
+ * @nr_sects:	number of sectors to write
+ * @gfp_mask:	memory allocation flags (for bio_alloc)
+ * @page:	page containing data to write
+ * @biop:	pointer to anchor bio
  *
  * Description:
  *  Generate and issue number of bios(REQ_OP_WRITE_SAME) with same page.
  */
-अटल पूर्णांक __blkdev_issue_ग_लिखो_same(काष्ठा block_device *bdev, sector_t sector,
-		sector_t nr_sects, gfp_t gfp_mask, काष्ठा page *page,
-		काष्ठा bio **biop)
-अणु
-	काष्ठा request_queue *q = bdev_get_queue(bdev);
-	अचिन्हित पूर्णांक max_ग_लिखो_same_sectors;
-	काष्ठा bio *bio = *biop;
+static int __blkdev_issue_write_same(struct block_device *bdev, sector_t sector,
+		sector_t nr_sects, gfp_t gfp_mask, struct page *page,
+		struct bio **biop)
+{
+	struct request_queue *q = bdev_get_queue(bdev);
+	unsigned int max_write_same_sectors;
+	struct bio *bio = *biop;
 	sector_t bs_mask;
 
-	अगर (!q)
-		वापस -ENXIO;
+	if (!q)
+		return -ENXIO;
 
-	अगर (bdev_पढ़ो_only(bdev))
-		वापस -EPERM;
+	if (bdev_read_only(bdev))
+		return -EPERM;
 
 	bs_mask = (bdev_logical_block_size(bdev) >> 9) - 1;
-	अगर ((sector | nr_sects) & bs_mask)
-		वापस -EINVAL;
+	if ((sector | nr_sects) & bs_mask)
+		return -EINVAL;
 
-	अगर (!bdev_ग_लिखो_same(bdev))
-		वापस -EOPNOTSUPP;
+	if (!bdev_write_same(bdev))
+		return -EOPNOTSUPP;
 
-	/* Ensure that max_ग_लिखो_same_sectors करोesn't overflow bi_size */
-	max_ग_लिखो_same_sectors = bio_allowed_max_sectors(q);
+	/* Ensure that max_write_same_sectors doesn't overflow bi_size */
+	max_write_same_sectors = bio_allowed_max_sectors(q);
 
-	जबतक (nr_sects) अणु
+	while (nr_sects) {
 		bio = blk_next_bio(bio, 1, gfp_mask);
 		bio->bi_iter.bi_sector = sector;
 		bio_set_dev(bio, bdev);
@@ -198,152 +197,152 @@ EXPORT_SYMBOL(blkdev_issue_discard);
 		bio->bi_io_vec->bv_len = bdev_logical_block_size(bdev);
 		bio_set_op_attrs(bio, REQ_OP_WRITE_SAME, 0);
 
-		अगर (nr_sects > max_ग_लिखो_same_sectors) अणु
-			bio->bi_iter.bi_size = max_ग_लिखो_same_sectors << 9;
-			nr_sects -= max_ग_लिखो_same_sectors;
-			sector += max_ग_लिखो_same_sectors;
-		पूर्ण अन्यथा अणु
+		if (nr_sects > max_write_same_sectors) {
+			bio->bi_iter.bi_size = max_write_same_sectors << 9;
+			nr_sects -= max_write_same_sectors;
+			sector += max_write_same_sectors;
+		} else {
 			bio->bi_iter.bi_size = nr_sects << 9;
 			nr_sects = 0;
-		पूर्ण
+		}
 		cond_resched();
-	पूर्ण
+	}
 
 	*biop = bio;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * blkdev_issue_ग_लिखो_same - queue a ग_लिखो same operation
+ * blkdev_issue_write_same - queue a write same operation
  * @bdev:	target blockdev
  * @sector:	start sector
- * @nr_sects:	number of sectors to ग_लिखो
- * @gfp_mask:	memory allocation flags (क्रम bio_alloc)
+ * @nr_sects:	number of sectors to write
+ * @gfp_mask:	memory allocation flags (for bio_alloc)
  * @page:	page containing data
  *
  * Description:
- *    Issue a ग_लिखो same request क्रम the sectors in question.
+ *    Issue a write same request for the sectors in question.
  */
-पूर्णांक blkdev_issue_ग_लिखो_same(काष्ठा block_device *bdev, sector_t sector,
+int blkdev_issue_write_same(struct block_device *bdev, sector_t sector,
 				sector_t nr_sects, gfp_t gfp_mask,
-				काष्ठा page *page)
-अणु
-	काष्ठा bio *bio = शून्य;
-	काष्ठा blk_plug plug;
-	पूर्णांक ret;
+				struct page *page)
+{
+	struct bio *bio = NULL;
+	struct blk_plug plug;
+	int ret;
 
 	blk_start_plug(&plug);
-	ret = __blkdev_issue_ग_लिखो_same(bdev, sector, nr_sects, gfp_mask, page,
+	ret = __blkdev_issue_write_same(bdev, sector, nr_sects, gfp_mask, page,
 			&bio);
-	अगर (ret == 0 && bio) अणु
-		ret = submit_bio_रुको(bio);
+	if (ret == 0 && bio) {
+		ret = submit_bio_wait(bio);
 		bio_put(bio);
-	पूर्ण
+	}
 	blk_finish_plug(&plug);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(blkdev_issue_ग_लिखो_same);
+	return ret;
+}
+EXPORT_SYMBOL(blkdev_issue_write_same);
 
-अटल पूर्णांक __blkdev_issue_ग_लिखो_zeroes(काष्ठा block_device *bdev,
+static int __blkdev_issue_write_zeroes(struct block_device *bdev,
 		sector_t sector, sector_t nr_sects, gfp_t gfp_mask,
-		काष्ठा bio **biop, अचिन्हित flags)
-अणु
-	काष्ठा bio *bio = *biop;
-	अचिन्हित पूर्णांक max_ग_लिखो_zeroes_sectors;
-	काष्ठा request_queue *q = bdev_get_queue(bdev);
+		struct bio **biop, unsigned flags)
+{
+	struct bio *bio = *biop;
+	unsigned int max_write_zeroes_sectors;
+	struct request_queue *q = bdev_get_queue(bdev);
 
-	अगर (!q)
-		वापस -ENXIO;
+	if (!q)
+		return -ENXIO;
 
-	अगर (bdev_पढ़ो_only(bdev))
-		वापस -EPERM;
+	if (bdev_read_only(bdev))
+		return -EPERM;
 
-	/* Ensure that max_ग_लिखो_zeroes_sectors करोesn't overflow bi_size */
-	max_ग_लिखो_zeroes_sectors = bdev_ग_लिखो_zeroes_sectors(bdev);
+	/* Ensure that max_write_zeroes_sectors doesn't overflow bi_size */
+	max_write_zeroes_sectors = bdev_write_zeroes_sectors(bdev);
 
-	अगर (max_ग_लिखो_zeroes_sectors == 0)
-		वापस -EOPNOTSUPP;
+	if (max_write_zeroes_sectors == 0)
+		return -EOPNOTSUPP;
 
-	जबतक (nr_sects) अणु
+	while (nr_sects) {
 		bio = blk_next_bio(bio, 0, gfp_mask);
 		bio->bi_iter.bi_sector = sector;
 		bio_set_dev(bio, bdev);
 		bio->bi_opf = REQ_OP_WRITE_ZEROES;
-		अगर (flags & BLKDEV_ZERO_NOUNMAP)
+		if (flags & BLKDEV_ZERO_NOUNMAP)
 			bio->bi_opf |= REQ_NOUNMAP;
 
-		अगर (nr_sects > max_ग_लिखो_zeroes_sectors) अणु
-			bio->bi_iter.bi_size = max_ग_लिखो_zeroes_sectors << 9;
-			nr_sects -= max_ग_लिखो_zeroes_sectors;
-			sector += max_ग_लिखो_zeroes_sectors;
-		पूर्ण अन्यथा अणु
+		if (nr_sects > max_write_zeroes_sectors) {
+			bio->bi_iter.bi_size = max_write_zeroes_sectors << 9;
+			nr_sects -= max_write_zeroes_sectors;
+			sector += max_write_zeroes_sectors;
+		} else {
 			bio->bi_iter.bi_size = nr_sects << 9;
 			nr_sects = 0;
-		पूर्ण
+		}
 		cond_resched();
-	पूर्ण
+	}
 
 	*biop = bio;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Convert a number of 512B sectors to a number of pages.
- * The result is limited to a number of pages that can fit पूर्णांकo a BIO.
- * Also make sure that the result is always at least 1 (page) क्रम the हालs
+ * The result is limited to a number of pages that can fit into a BIO.
+ * Also make sure that the result is always at least 1 (page) for the cases
  * where nr_sects is lower than the number of sectors in a page.
  */
-अटल अचिन्हित पूर्णांक __blkdev_sectors_to_bio_pages(sector_t nr_sects)
-अणु
+static unsigned int __blkdev_sectors_to_bio_pages(sector_t nr_sects)
+{
 	sector_t pages = DIV_ROUND_UP_SECTOR_T(nr_sects, PAGE_SIZE / 512);
 
-	वापस min(pages, (sector_t)BIO_MAX_VECS);
-पूर्ण
+	return min(pages, (sector_t)BIO_MAX_VECS);
+}
 
-अटल पूर्णांक __blkdev_issue_zero_pages(काष्ठा block_device *bdev,
+static int __blkdev_issue_zero_pages(struct block_device *bdev,
 		sector_t sector, sector_t nr_sects, gfp_t gfp_mask,
-		काष्ठा bio **biop)
-अणु
-	काष्ठा request_queue *q = bdev_get_queue(bdev);
-	काष्ठा bio *bio = *biop;
-	पूर्णांक bi_size = 0;
-	अचिन्हित पूर्णांक sz;
+		struct bio **biop)
+{
+	struct request_queue *q = bdev_get_queue(bdev);
+	struct bio *bio = *biop;
+	int bi_size = 0;
+	unsigned int sz;
 
-	अगर (!q)
-		वापस -ENXIO;
+	if (!q)
+		return -ENXIO;
 
-	अगर (bdev_पढ़ो_only(bdev))
-		वापस -EPERM;
+	if (bdev_read_only(bdev))
+		return -EPERM;
 
-	जबतक (nr_sects != 0) अणु
+	while (nr_sects != 0) {
 		bio = blk_next_bio(bio, __blkdev_sectors_to_bio_pages(nr_sects),
 				   gfp_mask);
 		bio->bi_iter.bi_sector = sector;
 		bio_set_dev(bio, bdev);
 		bio_set_op_attrs(bio, REQ_OP_WRITE, 0);
 
-		जबतक (nr_sects != 0) अणु
+		while (nr_sects != 0) {
 			sz = min((sector_t) PAGE_SIZE, nr_sects << 9);
 			bi_size = bio_add_page(bio, ZERO_PAGE(0), sz, 0);
 			nr_sects -= bi_size >> 9;
 			sector += bi_size >> 9;
-			अगर (bi_size < sz)
-				अवरोध;
-		पूर्ण
+			if (bi_size < sz)
+				break;
+		}
 		cond_resched();
-	पूर्ण
+	}
 
 	*biop = bio;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * __blkdev_issue_zeroout - generate number of zero filed ग_लिखो bios
+ * __blkdev_issue_zeroout - generate number of zero filed write bios
  * @bdev:	blockdev to issue
  * @sector:	start sector
- * @nr_sects:	number of sectors to ग_लिखो
- * @gfp_mask:	memory allocation flags (क्रम bio_alloc)
- * @biop:	poपूर्णांकer to anchor bio
+ * @nr_sects:	number of sectors to write
+ * @gfp_mask:	memory allocation flags (for bio_alloc)
+ * @biop:	pointer to anchor bio
  * @flags:	controls detailed behavior
  *
  * Description:
@@ -351,92 +350,92 @@ EXPORT_SYMBOL(blkdev_issue_ग_लिखो_same);
  *  writing zeroes to the device.
  *
  *  If a device is using logical block provisioning, the underlying space will
- *  not be released अगर %flags contains BLKDEV_ZERO_NOUNMAP.
+ *  not be released if %flags contains BLKDEV_ZERO_NOUNMAP.
  *
- *  If %flags contains BLKDEV_ZERO_NOFALLBACK, the function will वापस
- *  -EOPNOTSUPP अगर no explicit hardware offload क्रम zeroing is provided.
+ *  If %flags contains BLKDEV_ZERO_NOFALLBACK, the function will return
+ *  -EOPNOTSUPP if no explicit hardware offload for zeroing is provided.
  */
-पूर्णांक __blkdev_issue_zeroout(काष्ठा block_device *bdev, sector_t sector,
-		sector_t nr_sects, gfp_t gfp_mask, काष्ठा bio **biop,
-		अचिन्हित flags)
-अणु
-	पूर्णांक ret;
+int __blkdev_issue_zeroout(struct block_device *bdev, sector_t sector,
+		sector_t nr_sects, gfp_t gfp_mask, struct bio **biop,
+		unsigned flags)
+{
+	int ret;
 	sector_t bs_mask;
 
 	bs_mask = (bdev_logical_block_size(bdev) >> 9) - 1;
-	अगर ((sector | nr_sects) & bs_mask)
-		वापस -EINVAL;
+	if ((sector | nr_sects) & bs_mask)
+		return -EINVAL;
 
-	ret = __blkdev_issue_ग_लिखो_zeroes(bdev, sector, nr_sects, gfp_mask,
+	ret = __blkdev_issue_write_zeroes(bdev, sector, nr_sects, gfp_mask,
 			biop, flags);
-	अगर (ret != -EOPNOTSUPP || (flags & BLKDEV_ZERO_NOFALLBACK))
-		वापस ret;
+	if (ret != -EOPNOTSUPP || (flags & BLKDEV_ZERO_NOFALLBACK))
+		return ret;
 
-	वापस __blkdev_issue_zero_pages(bdev, sector, nr_sects, gfp_mask,
+	return __blkdev_issue_zero_pages(bdev, sector, nr_sects, gfp_mask,
 					 biop);
-पूर्ण
+}
 EXPORT_SYMBOL(__blkdev_issue_zeroout);
 
 /**
  * blkdev_issue_zeroout - zero-fill a block range
- * @bdev:	blockdev to ग_लिखो
+ * @bdev:	blockdev to write
  * @sector:	start sector
- * @nr_sects:	number of sectors to ग_लिखो
- * @gfp_mask:	memory allocation flags (क्रम bio_alloc)
+ * @nr_sects:	number of sectors to write
+ * @gfp_mask:	memory allocation flags (for bio_alloc)
  * @flags:	controls detailed behavior
  *
  * Description:
  *  Zero-fill a block range, either using hardware offload or by explicitly
- *  writing zeroes to the device.  See __blkdev_issue_zeroout() क्रम the
- *  valid values क्रम %flags.
+ *  writing zeroes to the device.  See __blkdev_issue_zeroout() for the
+ *  valid values for %flags.
  */
-पूर्णांक blkdev_issue_zeroout(काष्ठा block_device *bdev, sector_t sector,
-		sector_t nr_sects, gfp_t gfp_mask, अचिन्हित flags)
-अणु
-	पूर्णांक ret = 0;
+int blkdev_issue_zeroout(struct block_device *bdev, sector_t sector,
+		sector_t nr_sects, gfp_t gfp_mask, unsigned flags)
+{
+	int ret = 0;
 	sector_t bs_mask;
-	काष्ठा bio *bio;
-	काष्ठा blk_plug plug;
-	bool try_ग_लिखो_zeroes = !!bdev_ग_लिखो_zeroes_sectors(bdev);
+	struct bio *bio;
+	struct blk_plug plug;
+	bool try_write_zeroes = !!bdev_write_zeroes_sectors(bdev);
 
 	bs_mask = (bdev_logical_block_size(bdev) >> 9) - 1;
-	अगर ((sector | nr_sects) & bs_mask)
-		वापस -EINVAL;
+	if ((sector | nr_sects) & bs_mask)
+		return -EINVAL;
 
 retry:
-	bio = शून्य;
+	bio = NULL;
 	blk_start_plug(&plug);
-	अगर (try_ग_लिखो_zeroes) अणु
-		ret = __blkdev_issue_ग_लिखो_zeroes(bdev, sector, nr_sects,
+	if (try_write_zeroes) {
+		ret = __blkdev_issue_write_zeroes(bdev, sector, nr_sects,
 						  gfp_mask, &bio, flags);
-	पूर्ण अन्यथा अगर (!(flags & BLKDEV_ZERO_NOFALLBACK)) अणु
+	} else if (!(flags & BLKDEV_ZERO_NOFALLBACK)) {
 		ret = __blkdev_issue_zero_pages(bdev, sector, nr_sects,
 						gfp_mask, &bio);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* No zeroing offload support */
 		ret = -EOPNOTSUPP;
-	पूर्ण
-	अगर (ret == 0 && bio) अणु
-		ret = submit_bio_रुको(bio);
+	}
+	if (ret == 0 && bio) {
+		ret = submit_bio_wait(bio);
 		bio_put(bio);
-	पूर्ण
+	}
 	blk_finish_plug(&plug);
-	अगर (ret && try_ग_लिखो_zeroes) अणु
-		अगर (!(flags & BLKDEV_ZERO_NOFALLBACK)) अणु
-			try_ग_लिखो_zeroes = false;
-			जाओ retry;
-		पूर्ण
-		अगर (!bdev_ग_लिखो_zeroes_sectors(bdev)) अणु
+	if (ret && try_write_zeroes) {
+		if (!(flags & BLKDEV_ZERO_NOFALLBACK)) {
+			try_write_zeroes = false;
+			goto retry;
+		}
+		if (!bdev_write_zeroes_sectors(bdev)) {
 			/*
 			 * Zeroing offload support was indicated, but the
-			 * device reported ILLEGAL REQUEST (क्रम some devices
-			 * there is no non-deकाष्ठाive way to verअगरy whether
+			 * device reported ILLEGAL REQUEST (for some devices
+			 * there is no non-destructive way to verify whether
 			 * WRITE ZEROES is actually supported).
 			 */
 			ret = -EOPNOTSUPP;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(blkdev_issue_zeroout);

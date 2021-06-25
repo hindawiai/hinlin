@@ -1,39 +1,38 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: (BSD-3-Clause OR GPL-2.0-only) */
+/* SPDX-License-Identifier: (BSD-3-Clause OR GPL-2.0-only) */
 /* Copyright(c) 2014 - 2020 Intel Corporation */
-#अगर_अघोषित ADF_CFG_USER_H_
-#घोषणा ADF_CFG_USER_H_
+#ifndef ADF_CFG_USER_H_
+#define ADF_CFG_USER_H_
 
-#समावेश "adf_cfg_common.h"
-#समावेश "adf_cfg_strings.h"
+#include "adf_cfg_common.h"
+#include "adf_cfg_strings.h"
 
-काष्ठा adf_user_cfg_key_val अणु
-	अक्षर key[ADF_CFG_MAX_KEY_LEN_IN_BYTES];
-	अक्षर val[ADF_CFG_MAX_VAL_LEN_IN_BYTES];
-	जोड़ अणु
-		काष्ठा adf_user_cfg_key_val *next;
+struct adf_user_cfg_key_val {
+	char key[ADF_CFG_MAX_KEY_LEN_IN_BYTES];
+	char val[ADF_CFG_MAX_VAL_LEN_IN_BYTES];
+	union {
+		struct adf_user_cfg_key_val *next;
 		__u64 padding3;
-	पूर्ण;
-	क्रमागत adf_cfg_val_type type;
-पूर्ण __packed;
+	};
+	enum adf_cfg_val_type type;
+} __packed;
 
-काष्ठा adf_user_cfg_section अणु
-	अक्षर name[ADF_CFG_MAX_SECTION_LEN_IN_BYTES];
-	जोड़ अणु
-		काष्ठा adf_user_cfg_key_val *params;
+struct adf_user_cfg_section {
+	char name[ADF_CFG_MAX_SECTION_LEN_IN_BYTES];
+	union {
+		struct adf_user_cfg_key_val *params;
 		__u64 padding1;
-	पूर्ण;
-	जोड़ अणु
-		काष्ठा adf_user_cfg_section *next;
+	};
+	union {
+		struct adf_user_cfg_section *next;
 		__u64 padding3;
-	पूर्ण;
-पूर्ण __packed;
+	};
+} __packed;
 
-काष्ठा adf_user_cfg_ctl_data अणु
-	जोड़ अणु
-		काष्ठा adf_user_cfg_section *config_section;
+struct adf_user_cfg_ctl_data {
+	union {
+		struct adf_user_cfg_section *config_section;
 		__u64 padding;
-	पूर्ण;
+	};
 	__u8 device_id;
-पूर्ण __packed;
-#पूर्ण_अगर
+} __packed;
+#endif

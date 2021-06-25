@@ -1,35 +1,34 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Interrupt support क्रम Cirrus Logic Madera codecs
+ * Interrupt support for Cirrus Logic Madera codecs
  *
  * Copyright (C) 2015-2018 Cirrus Logic, Inc. and
  *                         Cirrus Logic International Semiconductor Ltd.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/irqकरोमुख्य.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/regmap.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/irqchip/irq-madera.h>
-#समावेश <linux/mfd/madera/core.h>
-#समावेश <linux/mfd/madera/pdata.h>
-#समावेश <linux/mfd/madera/रेजिस्टरs.h>
+#include <linux/module.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/irqdomain.h>
+#include <linux/pm_runtime.h>
+#include <linux/regmap.h>
+#include <linux/slab.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/of_irq.h>
+#include <linux/irqchip/irq-madera.h>
+#include <linux/mfd/madera/core.h>
+#include <linux/mfd/madera/pdata.h>
+#include <linux/mfd/madera/registers.h>
 
-#घोषणा MADERA_IRQ(_irq, _reg)					\
-	[MADERA_IRQ_ ## _irq] = अणु				\
+#define MADERA_IRQ(_irq, _reg)					\
+	[MADERA_IRQ_ ## _irq] = {				\
 		.reg_offset = (_reg) - MADERA_IRQ1_STATUS_2,	\
 		.mask = MADERA_ ## _irq ## _EINT1		\
-	पूर्ण
+	}
 
-/* Mappings are the same क्रम all Madera codecs */
-अटल स्थिर काष्ठा regmap_irq madera_irqs[MADERA_NUM_IRQ] = अणु
+/* Mappings are the same for all Madera codecs */
+static const struct regmap_irq madera_irqs[MADERA_NUM_IRQ] = {
 	MADERA_IRQ(FLL1_LOCK,		MADERA_IRQ1_STATUS_2),
 	MADERA_IRQ(FLL2_LOCK,		MADERA_IRQ1_STATUS_2),
 	MADERA_IRQ(FLL3_LOCK,		MADERA_IRQ1_STATUS_2),
@@ -85,169 +84,169 @@
 	MADERA_IRQ(DSP5_BUS_ERR,	MADERA_IRQ1_STATUS_33),
 	MADERA_IRQ(DSP6_BUS_ERR,	MADERA_IRQ1_STATUS_33),
 	MADERA_IRQ(DSP7_BUS_ERR,	MADERA_IRQ1_STATUS_33),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regmap_irq_chip madera_irq_chip = अणु
+static const struct regmap_irq_chip madera_irq_chip = {
 	.name		= "madera IRQ",
 	.status_base	= MADERA_IRQ1_STATUS_2,
 	.mask_base	= MADERA_IRQ1_MASK_2,
 	.ack_base	= MADERA_IRQ1_STATUS_2,
-	.runसमय_pm	= true,
+	.runtime_pm	= true,
 	.num_regs	= 32,
 	.irqs		= madera_irqs,
 	.num_irqs	= ARRAY_SIZE(madera_irqs),
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक madera_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा madera *madera = dev_get_drvdata(dev->parent);
+#ifdef CONFIG_PM_SLEEP
+static int madera_suspend(struct device *dev)
+{
+	struct madera *madera = dev_get_drvdata(dev->parent);
 
 	dev_dbg(madera->irq_dev, "Suspend, disabling IRQ\n");
 
 	/*
-	 * A runसमय resume would be needed to access the chip पूर्णांकerrupt
-	 * controller but runसमय pm करोesn't function during suspend.
-	 * Temporarily disable पूर्णांकerrupts until we reach suspend_noirq state.
+	 * A runtime resume would be needed to access the chip interrupt
+	 * controller but runtime pm doesn't function during suspend.
+	 * Temporarily disable interrupts until we reach suspend_noirq state.
 	 */
 	disable_irq(madera->irq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक madera_suspend_noirq(काष्ठा device *dev)
-अणु
-	काष्ठा madera *madera = dev_get_drvdata(dev->parent);
+static int madera_suspend_noirq(struct device *dev)
+{
+	struct madera *madera = dev_get_drvdata(dev->parent);
 
 	dev_dbg(madera->irq_dev, "No IRQ suspend, reenabling IRQ\n");
 
-	/* Re-enable पूर्णांकerrupts to service wakeup पूर्णांकerrupts from the chip */
+	/* Re-enable interrupts to service wakeup interrupts from the chip */
 	enable_irq(madera->irq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक madera_resume_noirq(काष्ठा device *dev)
-अणु
-	काष्ठा madera *madera = dev_get_drvdata(dev->parent);
+static int madera_resume_noirq(struct device *dev)
+{
+	struct madera *madera = dev_get_drvdata(dev->parent);
 
 	dev_dbg(madera->irq_dev, "No IRQ resume, disabling IRQ\n");
 
 	/*
-	 * We can't handle पूर्णांकerrupts until runसमय pm is available again.
+	 * We can't handle interrupts until runtime pm is available again.
 	 * Disable them temporarily.
 	 */
 	disable_irq(madera->irq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक madera_resume(काष्ठा device *dev)
-अणु
-	काष्ठा madera *madera = dev_get_drvdata(dev->parent);
+static int madera_resume(struct device *dev)
+{
+	struct madera *madera = dev_get_drvdata(dev->parent);
 
 	dev_dbg(madera->irq_dev, "Resume, reenabling IRQ\n");
 
 	/* Interrupts can now be handled */
 	enable_irq(madera->irq);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल स्थिर काष्ठा dev_pm_ops madera_irq_pm_ops = अणु
+static const struct dev_pm_ops madera_irq_pm_ops = {
 	SET_SYSTEM_SLEEP_PM_OPS(madera_suspend, madera_resume)
 	SET_NOIRQ_SYSTEM_SLEEP_PM_OPS(madera_suspend_noirq,
 				      madera_resume_noirq)
-पूर्ण;
+};
 
-अटल पूर्णांक madera_irq_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा madera *madera = dev_get_drvdata(pdev->dev.parent);
-	काष्ठा irq_data *irq_data;
-	अचिन्हित पूर्णांक irq_flags = 0;
-	पूर्णांक ret;
+static int madera_irq_probe(struct platform_device *pdev)
+{
+	struct madera *madera = dev_get_drvdata(pdev->dev.parent);
+	struct irq_data *irq_data;
+	unsigned int irq_flags = 0;
+	int ret;
 
 	dev_dbg(&pdev->dev, "probe\n");
 
 	/*
-	 * Read the flags from the पूर्णांकerrupt controller अगर not specअगरied
+	 * Read the flags from the interrupt controller if not specified
 	 * by pdata
 	 */
 	irq_flags = madera->pdata.irq_flags;
-	अगर (!irq_flags) अणु
+	if (!irq_flags) {
 		irq_data = irq_get_irq_data(madera->irq);
-		अगर (!irq_data) अणु
+		if (!irq_data) {
 			dev_err(&pdev->dev, "Invalid IRQ: %d\n", madera->irq);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		irq_flags = irqd_get_trigger_type(irq_data);
 
-		/* Codec शेषs to trigger low, use this अगर no flags given */
-		अगर (irq_flags == IRQ_TYPE_NONE)
+		/* Codec defaults to trigger low, use this if no flags given */
+		if (irq_flags == IRQ_TYPE_NONE)
 			irq_flags = IRQF_TRIGGER_LOW;
-	पूर्ण
+	}
 
-	अगर (irq_flags & (IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING)) अणु
+	if (irq_flags & (IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING)) {
 		dev_err(&pdev->dev, "Host interrupt not level-triggered\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
-	 * The silicon always starts at active-low, check अगर we need to
-	 * चयन to active-high.
+	 * The silicon always starts at active-low, check if we need to
+	 * switch to active-high.
 	 */
-	अगर (irq_flags & IRQF_TRIGGER_HIGH) अणु
+	if (irq_flags & IRQF_TRIGGER_HIGH) {
 		ret = regmap_update_bits(madera->regmap, MADERA_IRQ1_CTRL,
 					 MADERA_IRQ_POL_MASK, 0);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&pdev->dev,
 				"Failed to set IRQ polarity: %d\n", ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
 	/*
-	 * NOTE: regmap रेजिस्टरs this against the OF node of the parent of
+	 * NOTE: regmap registers this against the OF node of the parent of
 	 * the regmap - that is, against the mfd driver
 	 */
 	ret = regmap_add_irq_chip(madera->regmap, madera->irq, IRQF_ONESHOT, 0,
 				  &madera_irq_chip, &madera->irq_data);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "add_irq_chip failed: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* Save dev in parent MFD काष्ठा so it is accessible to siblings */
+	/* Save dev in parent MFD struct so it is accessible to siblings */
 	madera->irq_dev = &pdev->dev;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक madera_irq_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा madera *madera = dev_get_drvdata(pdev->dev.parent);
+static int madera_irq_remove(struct platform_device *pdev)
+{
+	struct madera *madera = dev_get_drvdata(pdev->dev.parent);
 
 	/*
-	 * The IRQ is disabled by the parent MFD driver beक्रमe
+	 * The IRQ is disabled by the parent MFD driver before
 	 * it starts cleaning up all child drivers
 	 */
-	madera->irq_dev = शून्य;
+	madera->irq_dev = NULL;
 	regmap_del_irq_chip(madera->irq, madera->irq_data);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver madera_irq_driver = अणु
+static struct platform_driver madera_irq_driver = {
 	.probe	= &madera_irq_probe,
-	.हटाओ = &madera_irq_हटाओ,
-	.driver = अणु
+	.remove = &madera_irq_remove,
+	.driver = {
 		.name	= "madera-irq",
 		.pm	= &madera_irq_pm_ops,
-	पूर्ण
-पूर्ण;
-module_platक्रमm_driver(madera_irq_driver);
+	}
+};
+module_platform_driver(madera_irq_driver);
 
 MODULE_SOFTDEP("pre: madera");
 MODULE_DESCRIPTION("Madera IRQ driver");

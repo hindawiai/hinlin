@@ -1,104 +1,103 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file COPYING in the main directory of this archive
+ * for more details.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/माला.स>
+#include <linux/module.h>
+#include <linux/string.h>
 
-व्योम *स_हटाओ(व्योम *dest, स्थिर व्योम *src, माप_प्रकार n)
-अणु
-	व्योम *xdest = dest;
-	माप_प्रकार temp;
+void *memmove(void *dest, const void *src, size_t n)
+{
+	void *xdest = dest;
+	size_t temp;
 
-	अगर (!n)
-		वापस xdest;
+	if (!n)
+		return xdest;
 
-	अगर (dest < src) अणु
-		अगर ((दीर्घ)dest & 1) अणु
-			अक्षर *cdest = dest;
-			स्थिर अक्षर *csrc = src;
+	if (dest < src) {
+		if ((long)dest & 1) {
+			char *cdest = dest;
+			const char *csrc = src;
 			*cdest++ = *csrc++;
 			dest = cdest;
 			src = csrc;
 			n--;
-		पूर्ण
-		अगर (n > 2 && (दीर्घ)dest & 2) अणु
-			लघु *sdest = dest;
-			स्थिर लघु *ssrc = src;
+		}
+		if (n > 2 && (long)dest & 2) {
+			short *sdest = dest;
+			const short *ssrc = src;
 			*sdest++ = *ssrc++;
 			dest = sdest;
 			src = ssrc;
 			n -= 2;
-		पूर्ण
+		}
 		temp = n >> 2;
-		अगर (temp) अणु
-			दीर्घ *ldest = dest;
-			स्थिर दीर्घ *lsrc = src;
+		if (temp) {
+			long *ldest = dest;
+			const long *lsrc = src;
 			temp--;
-			करो
+			do
 				*ldest++ = *lsrc++;
-			जबतक (temp--);
+			while (temp--);
 			dest = ldest;
 			src = lsrc;
-		पूर्ण
-		अगर (n & 2) अणु
-			लघु *sdest = dest;
-			स्थिर लघु *ssrc = src;
+		}
+		if (n & 2) {
+			short *sdest = dest;
+			const short *ssrc = src;
 			*sdest++ = *ssrc++;
 			dest = sdest;
 			src = ssrc;
-		पूर्ण
-		अगर (n & 1) अणु
-			अक्षर *cdest = dest;
-			स्थिर अक्षर *csrc = src;
+		}
+		if (n & 1) {
+			char *cdest = dest;
+			const char *csrc = src;
 			*cdest = *csrc;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		dest = (अक्षर *)dest + n;
-		src = (स्थिर अक्षर *)src + n;
-		अगर ((दीर्घ)dest & 1) अणु
-			अक्षर *cdest = dest;
-			स्थिर अक्षर *csrc = src;
+		}
+	} else {
+		dest = (char *)dest + n;
+		src = (const char *)src + n;
+		if ((long)dest & 1) {
+			char *cdest = dest;
+			const char *csrc = src;
 			*--cdest = *--csrc;
 			dest = cdest;
 			src = csrc;
 			n--;
-		पूर्ण
-		अगर (n > 2 && (दीर्घ)dest & 2) अणु
-			लघु *sdest = dest;
-			स्थिर लघु *ssrc = src;
+		}
+		if (n > 2 && (long)dest & 2) {
+			short *sdest = dest;
+			const short *ssrc = src;
 			*--sdest = *--ssrc;
 			dest = sdest;
 			src = ssrc;
 			n -= 2;
-		पूर्ण
+		}
 		temp = n >> 2;
-		अगर (temp) अणु
-			दीर्घ *ldest = dest;
-			स्थिर दीर्घ *lsrc = src;
+		if (temp) {
+			long *ldest = dest;
+			const long *lsrc = src;
 			temp--;
-			करो
+			do
 				*--ldest = *--lsrc;
-			जबतक (temp--);
+			while (temp--);
 			dest = ldest;
 			src = lsrc;
-		पूर्ण
-		अगर (n & 2) अणु
-			लघु *sdest = dest;
-			स्थिर लघु *ssrc = src;
+		}
+		if (n & 2) {
+			short *sdest = dest;
+			const short *ssrc = src;
 			*--sdest = *--ssrc;
 			dest = sdest;
 			src = ssrc;
-		पूर्ण
-		अगर (n & 1) अणु
-			अक्षर *cdest = dest;
-			स्थिर अक्षर *csrc = src;
+		}
+		if (n & 1) {
+			char *cdest = dest;
+			const char *csrc = src;
 			*--cdest = *--csrc;
-		पूर्ण
-	पूर्ण
-	वापस xdest;
-पूर्ण
-EXPORT_SYMBOL(स_हटाओ);
+		}
+	}
+	return xdest;
+}
+EXPORT_SYMBOL(memmove);

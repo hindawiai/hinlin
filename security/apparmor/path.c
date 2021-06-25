@@ -1,218 +1,217 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * AppArmor security module
  *
- * This file contains AppArmor function क्रम pathnames
+ * This file contains AppArmor function for pathnames
  *
  * Copyright (C) 1998-2008 Novell/SUSE
  * Copyright 2009-2010 Canonical Ltd.
  */
 
-#समावेश <linux/magic.h>
-#समावेश <linux/mount.h>
-#समावेश <linux/namei.h>
-#समावेश <linux/nsproxy.h>
-#समावेश <linux/path.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/fs_काष्ठा.h>
+#include <linux/magic.h>
+#include <linux/mount.h>
+#include <linux/namei.h>
+#include <linux/nsproxy.h>
+#include <linux/path.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/fs_struct.h>
 
-#समावेश "include/apparmor.h"
-#समावेश "include/path.h"
-#समावेश "include/policy.h"
+#include "include/apparmor.h"
+#include "include/path.h"
+#include "include/policy.h"
 
-/* modअगरied from dcache.c */
-अटल पूर्णांक prepend(अक्षर **buffer, पूर्णांक buflen, स्थिर अक्षर *str, पूर्णांक namelen)
-अणु
+/* modified from dcache.c */
+static int prepend(char **buffer, int buflen, const char *str, int namelen)
+{
 	buflen -= namelen;
-	अगर (buflen < 0)
-		वापस -ENAMETOOLONG;
+	if (buflen < 0)
+		return -ENAMETOOLONG;
 	*buffer -= namelen;
-	स_नकल(*buffer, str, namelen);
-	वापस 0;
-पूर्ण
+	memcpy(*buffer, str, namelen);
+	return 0;
+}
 
-#घोषणा CHROOT_NSCONNECT (PATH_CHROOT_REL | PATH_CHROOT_NSCONNECT)
+#define CHROOT_NSCONNECT (PATH_CHROOT_REL | PATH_CHROOT_NSCONNECT)
 
 /* If the path is not connected to the expected root,
- * check अगर it is a sysctl and handle specially अन्यथा हटाओ any
- * leading / that __d_path may have वापसed.
+ * check if it is a sysctl and handle specially else remove any
+ * leading / that __d_path may have returned.
  * Unless
- *     specअगरically directed to connect the path,
+ *     specifically directed to connect the path,
  * OR
- *     अगर in a chroot and करोing chroot relative paths and the path
+ *     if in a chroot and doing chroot relative paths and the path
  *     resolves to the namespace root (would be connected outside
- *     of chroot) and specअगरically directed to connect paths to
+ *     of chroot) and specifically directed to connect paths to
  *     namespace root.
  */
-अटल पूर्णांक disconnect(स्थिर काष्ठा path *path, अक्षर *buf, अक्षर **name,
-		      पूर्णांक flags, स्थिर अक्षर *disconnected)
-अणु
-	पूर्णांक error = 0;
+static int disconnect(const struct path *path, char *buf, char **name,
+		      int flags, const char *disconnected)
+{
+	int error = 0;
 
-	अगर (!(flags & PATH_CONNECT_PATH) &&
+	if (!(flags & PATH_CONNECT_PATH) &&
 	    !(((flags & CHROOT_NSCONNECT) == CHROOT_NSCONNECT) &&
-	      our_mnt(path->mnt))) अणु
-		/* disconnected path, करोn't वापस pathname starting
+	      our_mnt(path->mnt))) {
+		/* disconnected path, don't return pathname starting
 		 * with '/'
 		 */
 		error = -EACCES;
-		अगर (**name == '/')
+		if (**name == '/')
 			*name = *name + 1;
-	पूर्ण अन्यथा अणु
-		अगर (**name != '/')
+	} else {
+		if (**name != '/')
 			/* CONNECT_PATH with missing root */
 			error = prepend(name, *name - buf, "/", 1);
-		अगर (!error && disconnected)
+		if (!error && disconnected)
 			error = prepend(name, *name - buf, disconnected,
-					म_माप(disconnected));
-	पूर्ण
+					strlen(disconnected));
+	}
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /**
  * d_namespace_path - lookup a name associated with a given path
- * @path: path to lookup  (NOT शून्य)
- * @buf:  buffer to store path to  (NOT शून्य)
- * @name: Returns - poपूर्णांकer क्रम start of path name with in @buf (NOT शून्य)
+ * @path: path to lookup  (NOT NULL)
+ * @buf:  buffer to store path to  (NOT NULL)
+ * @name: Returns - pointer for start of path name with in @buf (NOT NULL)
  * @flags: flags controlling path lookup
  * @disconnected: string to prefix to disconnected paths
  *
  * Handle path name lookup.
  *
- * Returns: %0 अन्यथा error code अगर path lookup fails
- *          When no error the path name is वापसed in @name which poपूर्णांकs to
+ * Returns: %0 else error code if path lookup fails
+ *          When no error the path name is returned in @name which points to
  *          to a position in @buf
  */
-अटल पूर्णांक d_namespace_path(स्थिर काष्ठा path *path, अक्षर *buf, अक्षर **name,
-			    पूर्णांक flags, स्थिर अक्षर *disconnected)
-अणु
-	अक्षर *res;
-	पूर्णांक error = 0;
-	पूर्णांक connected = 1;
-	पूर्णांक isdir = (flags & PATH_IS_सूची) ? 1 : 0;
-	पूर्णांक buflen = aa_g_path_max - isdir;
+static int d_namespace_path(const struct path *path, char *buf, char **name,
+			    int flags, const char *disconnected)
+{
+	char *res;
+	int error = 0;
+	int connected = 1;
+	int isdir = (flags & PATH_IS_DIR) ? 1 : 0;
+	int buflen = aa_g_path_max - isdir;
 
-	अगर (path->mnt->mnt_flags & MNT_INTERNAL) अणु
+	if (path->mnt->mnt_flags & MNT_INTERNAL) {
 		/* it's not mounted anywhere */
 		res = dentry_path(path->dentry, buf, buflen);
 		*name = res;
-		अगर (IS_ERR(res)) अणु
+		if (IS_ERR(res)) {
 			*name = buf;
-			वापस PTR_ERR(res);
-		पूर्ण
-		अगर (path->dentry->d_sb->s_magic == PROC_SUPER_MAGIC &&
-		    म_भेदन(*name, "/sys/", 5) == 0) अणु
+			return PTR_ERR(res);
+		}
+		if (path->dentry->d_sb->s_magic == PROC_SUPER_MAGIC &&
+		    strncmp(*name, "/sys/", 5) == 0) {
 			/* TODO: convert over to using a per namespace
 			 * control instead of hard coded /proc
 			 */
 			error = prepend(name, *name - buf, "/proc", 5);
-			जाओ out;
-		पूर्ण अन्यथा
+			goto out;
+		} else
 			error = disconnect(path, buf, name, flags,
 					   disconnected);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* resolve paths relative to chroot?*/
-	अगर (flags & PATH_CHROOT_REL) अणु
-		काष्ठा path root;
+	if (flags & PATH_CHROOT_REL) {
+		struct path root;
 		get_fs_root(current->fs, &root);
 		res = __d_path(path, &root, buf, buflen);
 		path_put(&root);
-	पूर्ण अन्यथा अणु
-		res = d_असलolute_path(path, buf, buflen);
-		अगर (!our_mnt(path->mnt))
+	} else {
+		res = d_absolute_path(path, buf, buflen);
+		if (!our_mnt(path->mnt))
 			connected = 0;
-	पूर्ण
+	}
 
 	/* handle error conditions - and still allow a partial path to
-	 * be वापसed.
+	 * be returned.
 	 */
-	अगर (!res || IS_ERR(res)) अणु
-		अगर (PTR_ERR(res) == -ENAMETOOLONG) अणु
+	if (!res || IS_ERR(res)) {
+		if (PTR_ERR(res) == -ENAMETOOLONG) {
 			error = -ENAMETOOLONG;
 			*name = buf;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		connected = 0;
 		res = dentry_path_raw(path->dentry, buf, buflen);
-		अगर (IS_ERR(res)) अणु
+		if (IS_ERR(res)) {
 			error = PTR_ERR(res);
 			*name = buf;
-			जाओ out;
-		पूर्ण
-	पूर्ण अन्यथा अगर (!our_mnt(path->mnt))
+			goto out;
+		}
+	} else if (!our_mnt(path->mnt))
 		connected = 0;
 
 	*name = res;
 
-	अगर (!connected)
+	if (!connected)
 		error = disconnect(path, buf, name, flags, disconnected);
 
-	/* Handle two हालs:
+	/* Handle two cases:
 	 * 1. A deleted dentry && profile is not allowing mediation of deleted
-	 * 2. On some fileप्रणालीs, newly allocated dentries appear to the
+	 * 2. On some filesystems, newly allocated dentries appear to the
 	 *    security_path hooks as a deleted dentry except without an inode
 	 *    allocated.
 	 */
-	अगर (d_unlinked(path->dentry) && d_is_positive(path->dentry) &&
-	    !(flags & (PATH_MEDIATE_DELETED | PATH_DELEGATE_DELETED))) अणु
+	if (d_unlinked(path->dentry) && d_is_positive(path->dentry) &&
+	    !(flags & (PATH_MEDIATE_DELETED | PATH_DELEGATE_DELETED))) {
 			error = -ENOENT;
-			जाओ out;
-	पूर्ण
+			goto out;
+	}
 
 out:
 	/*
 	 * Append "/" to the pathname.  The root directory is a special
-	 * हाल; it alपढ़ोy ends in slash.
+	 * case; it already ends in slash.
 	 */
-	अगर (!error && isdir && ((*name)[1] != '\0' || (*name)[0] != '/'))
-		म_नकल(&buf[aa_g_path_max - 2], "/");
+	if (!error && isdir && ((*name)[1] != '\0' || (*name)[0] != '/'))
+		strcpy(&buf[aa_g_path_max - 2], "/");
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /**
  * aa_path_name - get the pathname to a buffer ensure dir / is appended
- * @path: path the file  (NOT शून्य)
+ * @path: path the file  (NOT NULL)
  * @flags: flags controlling path name generation
- * @buffer: buffer to put name in (NOT शून्य)
- * @name: Returns - the generated path name अगर !error (NOT शून्य)
- * @info: Returns - inक्रमmation on why the path lookup failed (MAYBE शून्य)
+ * @buffer: buffer to put name in (NOT NULL)
+ * @name: Returns - the generated path name if !error (NOT NULL)
+ * @info: Returns - information on why the path lookup failed (MAYBE NULL)
  * @disconnected: string to prepend to disconnected paths
  *
- * @name is a poपूर्णांकer to the beginning of the pathname (which usually dअगरfers
- * from the beginning of the buffer), or शून्य.  If there is an error @name
- * may contain a partial or invalid name that can be used क्रम audit purposes,
- * but it can not be used क्रम mediation.
+ * @name is a pointer to the beginning of the pathname (which usually differs
+ * from the beginning of the buffer), or NULL.  If there is an error @name
+ * may contain a partial or invalid name that can be used for audit purposes,
+ * but it can not be used for mediation.
  *
- * We need PATH_IS_सूची to indicate whether the file is a directory or not
+ * We need PATH_IS_DIR to indicate whether the file is a directory or not
  * because the file may not yet exist, and so we cannot check the inode's
  * file type.
  *
- * Returns: %0 अन्यथा error code अगर could retrieve name
+ * Returns: %0 else error code if could retrieve name
  */
-पूर्णांक aa_path_name(स्थिर काष्ठा path *path, पूर्णांक flags, अक्षर *buffer,
-		 स्थिर अक्षर **name, स्थिर अक्षर **info, स्थिर अक्षर *disconnected)
-अणु
-	अक्षर *str = शून्य;
-	पूर्णांक error = d_namespace_path(path, buffer, &str, flags, disconnected);
+int aa_path_name(const struct path *path, int flags, char *buffer,
+		 const char **name, const char **info, const char *disconnected)
+{
+	char *str = NULL;
+	int error = d_namespace_path(path, buffer, &str, flags, disconnected);
 
-	अगर (info && error) अणु
-		अगर (error == -ENOENT)
+	if (info && error) {
+		if (error == -ENOENT)
 			*info = "Failed name lookup - deleted entry";
-		अन्यथा अगर (error == -EACCES)
+		else if (error == -EACCES)
 			*info = "Failed name lookup - disconnected path";
-		अन्यथा अगर (error == -ENAMETOOLONG)
+		else if (error == -ENAMETOOLONG)
 			*info = "Failed name lookup - name too long";
-		अन्यथा
+		else
 			*info = "Failed name lookup";
-	पूर्ण
+	}
 
 	*name = str;
 
-	वापस error;
-पूर्ण
+	return error;
+}

@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  *  cx18 driver PCI memory mapped IO access routines
  *
@@ -7,172 +6,172 @@
  *  Copyright (C) 2008  Andy Walls <awalls@md.metrocast.net>
  */
 
-#अगर_अघोषित CX18_IO_H
-#घोषणा CX18_IO_H
+#ifndef CX18_IO_H
+#define CX18_IO_H
 
-#समावेश "cx18-driver.h"
+#include "cx18-driver.h"
 
 /*
- * Readback and retry of MMIO access क्रम reliability:
+ * Readback and retry of MMIO access for reliability:
  * The concept was suggested by Steve Toth <stoth@linuxtv.org>.
  * The implementation is the fault of Andy Walls <awalls@md.metrocast.net>.
  *
- * *ग_लिखो* functions are implied to retry the mmio unless suffixed with _noretry
- * *पढ़ो* functions never retry the mmio (it never helps to करो so)
+ * *write* functions are implied to retry the mmio unless suffixed with _noretry
+ * *read* functions never retry the mmio (it never helps to do so)
  */
 
 /* Non byteswapping memory mapped IO */
-अटल अंतरभूत u32 cx18_raw_पढ़ोl(काष्ठा cx18 *cx, स्थिर व्योम __iomem *addr)
-अणु
-	वापस __raw_पढ़ोl(addr);
-पूर्ण
+static inline u32 cx18_raw_readl(struct cx18 *cx, const void __iomem *addr)
+{
+	return __raw_readl(addr);
+}
 
-अटल अंतरभूत
-व्योम cx18_raw_ग_लिखोl_noretry(काष्ठा cx18 *cx, u32 val, व्योम __iomem *addr)
-अणु
-	__raw_ग_लिखोl(val, addr);
-पूर्ण
+static inline
+void cx18_raw_writel_noretry(struct cx18 *cx, u32 val, void __iomem *addr)
+{
+	__raw_writel(val, addr);
+}
 
-अटल अंतरभूत व्योम cx18_raw_ग_लिखोl(काष्ठा cx18 *cx, u32 val, व्योम __iomem *addr)
-अणु
-	पूर्णांक i;
-	क्रम (i = 0; i < CX18_MAX_MMIO_WR_RETRIES; i++) अणु
-		cx18_raw_ग_लिखोl_noretry(cx, val, addr);
-		अगर (val == cx18_raw_पढ़ोl(cx, addr))
-			अवरोध;
-	पूर्ण
-पूर्ण
+static inline void cx18_raw_writel(struct cx18 *cx, u32 val, void __iomem *addr)
+{
+	int i;
+	for (i = 0; i < CX18_MAX_MMIO_WR_RETRIES; i++) {
+		cx18_raw_writel_noretry(cx, val, addr);
+		if (val == cx18_raw_readl(cx, addr))
+			break;
+	}
+}
 
 /* Normal memory mapped IO */
-अटल अंतरभूत u32 cx18_पढ़ोl(काष्ठा cx18 *cx, स्थिर व्योम __iomem *addr)
-अणु
-	वापस पढ़ोl(addr);
-पूर्ण
+static inline u32 cx18_readl(struct cx18 *cx, const void __iomem *addr)
+{
+	return readl(addr);
+}
 
-अटल अंतरभूत
-व्योम cx18_ग_लिखोl_noretry(काष्ठा cx18 *cx, u32 val, व्योम __iomem *addr)
-अणु
-	ग_लिखोl(val, addr);
-पूर्ण
+static inline
+void cx18_writel_noretry(struct cx18 *cx, u32 val, void __iomem *addr)
+{
+	writel(val, addr);
+}
 
-अटल अंतरभूत व्योम cx18_ग_लिखोl(काष्ठा cx18 *cx, u32 val, व्योम __iomem *addr)
-अणु
-	पूर्णांक i;
-	क्रम (i = 0; i < CX18_MAX_MMIO_WR_RETRIES; i++) अणु
-		cx18_ग_लिखोl_noretry(cx, val, addr);
-		अगर (val == cx18_पढ़ोl(cx, addr))
-			अवरोध;
-	पूर्ण
-पूर्ण
+static inline void cx18_writel(struct cx18 *cx, u32 val, void __iomem *addr)
+{
+	int i;
+	for (i = 0; i < CX18_MAX_MMIO_WR_RETRIES; i++) {
+		cx18_writel_noretry(cx, val, addr);
+		if (val == cx18_readl(cx, addr))
+			break;
+	}
+}
 
-अटल अंतरभूत
-व्योम cx18_ग_लिखोl_expect(काष्ठा cx18 *cx, u32 val, व्योम __iomem *addr,
+static inline
+void cx18_writel_expect(struct cx18 *cx, u32 val, void __iomem *addr,
 			u32 eval, u32 mask)
-अणु
-	पूर्णांक i;
+{
+	int i;
 	u32 r;
 	eval &= mask;
-	क्रम (i = 0; i < CX18_MAX_MMIO_WR_RETRIES; i++) अणु
-		cx18_ग_लिखोl_noretry(cx, val, addr);
-		r = cx18_पढ़ोl(cx, addr);
-		अगर (r == 0xffffffff && eval != 0xffffffff)
-			जारी;
-		अगर (eval == (r & mask))
-			अवरोध;
-	पूर्ण
-पूर्ण
+	for (i = 0; i < CX18_MAX_MMIO_WR_RETRIES; i++) {
+		cx18_writel_noretry(cx, val, addr);
+		r = cx18_readl(cx, addr);
+		if (r == 0xffffffff && eval != 0xffffffff)
+			continue;
+		if (eval == (r & mask))
+			break;
+	}
+}
 
-अटल अंतरभूत u16 cx18_पढ़ोw(काष्ठा cx18 *cx, स्थिर व्योम __iomem *addr)
-अणु
-	वापस पढ़ोw(addr);
-पूर्ण
+static inline u16 cx18_readw(struct cx18 *cx, const void __iomem *addr)
+{
+	return readw(addr);
+}
 
-अटल अंतरभूत
-व्योम cx18_ग_लिखोw_noretry(काष्ठा cx18 *cx, u16 val, व्योम __iomem *addr)
-अणु
-	ग_लिखोw(val, addr);
-पूर्ण
+static inline
+void cx18_writew_noretry(struct cx18 *cx, u16 val, void __iomem *addr)
+{
+	writew(val, addr);
+}
 
-अटल अंतरभूत व्योम cx18_ग_लिखोw(काष्ठा cx18 *cx, u16 val, व्योम __iomem *addr)
-अणु
-	पूर्णांक i;
-	क्रम (i = 0; i < CX18_MAX_MMIO_WR_RETRIES; i++) अणु
-		cx18_ग_लिखोw_noretry(cx, val, addr);
-		अगर (val == cx18_पढ़ोw(cx, addr))
-			अवरोध;
-	पूर्ण
-पूर्ण
+static inline void cx18_writew(struct cx18 *cx, u16 val, void __iomem *addr)
+{
+	int i;
+	for (i = 0; i < CX18_MAX_MMIO_WR_RETRIES; i++) {
+		cx18_writew_noretry(cx, val, addr);
+		if (val == cx18_readw(cx, addr))
+			break;
+	}
+}
 
-अटल अंतरभूत u8 cx18_पढ़ोb(काष्ठा cx18 *cx, स्थिर व्योम __iomem *addr)
-अणु
-	वापस पढ़ोb(addr);
-पूर्ण
+static inline u8 cx18_readb(struct cx18 *cx, const void __iomem *addr)
+{
+	return readb(addr);
+}
 
-अटल अंतरभूत
-व्योम cx18_ग_लिखोb_noretry(काष्ठा cx18 *cx, u8 val, व्योम __iomem *addr)
-अणु
-	ग_लिखोb(val, addr);
-पूर्ण
+static inline
+void cx18_writeb_noretry(struct cx18 *cx, u8 val, void __iomem *addr)
+{
+	writeb(val, addr);
+}
 
-अटल अंतरभूत व्योम cx18_ग_लिखोb(काष्ठा cx18 *cx, u8 val, व्योम __iomem *addr)
-अणु
-	पूर्णांक i;
-	क्रम (i = 0; i < CX18_MAX_MMIO_WR_RETRIES; i++) अणु
-		cx18_ग_लिखोb_noretry(cx, val, addr);
-		अगर (val == cx18_पढ़ोb(cx, addr))
-			अवरोध;
-	पूर्ण
-पूर्ण
+static inline void cx18_writeb(struct cx18 *cx, u8 val, void __iomem *addr)
+{
+	int i;
+	for (i = 0; i < CX18_MAX_MMIO_WR_RETRIES; i++) {
+		cx18_writeb_noretry(cx, val, addr);
+		if (val == cx18_readb(cx, addr))
+			break;
+	}
+}
 
-अटल अंतरभूत
-व्योम cx18_स_नकल_fromio(काष्ठा cx18 *cx, व्योम *to,
-			स्थिर व्योम __iomem *from, अचिन्हित पूर्णांक len)
-अणु
-	स_नकल_fromio(to, from, len);
-पूर्ण
+static inline
+void cx18_memcpy_fromio(struct cx18 *cx, void *to,
+			const void __iomem *from, unsigned int len)
+{
+	memcpy_fromio(to, from, len);
+}
 
-व्योम cx18_स_रखो_io(काष्ठा cx18 *cx, व्योम __iomem *addr, पूर्णांक val, माप_प्रकार count);
+void cx18_memset_io(struct cx18 *cx, void __iomem *addr, int val, size_t count);
 
 
 /* Access "register" region of CX23418 memory mapped I/O */
-अटल अंतरभूत व्योम cx18_ग_लिखो_reg_noretry(काष्ठा cx18 *cx, u32 val, u32 reg)
-अणु
-	cx18_ग_लिखोl_noretry(cx, val, cx->reg_mem + reg);
-पूर्ण
+static inline void cx18_write_reg_noretry(struct cx18 *cx, u32 val, u32 reg)
+{
+	cx18_writel_noretry(cx, val, cx->reg_mem + reg);
+}
 
-अटल अंतरभूत व्योम cx18_ग_लिखो_reg(काष्ठा cx18 *cx, u32 val, u32 reg)
-अणु
-	cx18_ग_लिखोl(cx, val, cx->reg_mem + reg);
-पूर्ण
+static inline void cx18_write_reg(struct cx18 *cx, u32 val, u32 reg)
+{
+	cx18_writel(cx, val, cx->reg_mem + reg);
+}
 
-अटल अंतरभूत व्योम cx18_ग_लिखो_reg_expect(काष्ठा cx18 *cx, u32 val, u32 reg,
+static inline void cx18_write_reg_expect(struct cx18 *cx, u32 val, u32 reg,
 					 u32 eval, u32 mask)
-अणु
-	cx18_ग_लिखोl_expect(cx, val, cx->reg_mem + reg, eval, mask);
-पूर्ण
+{
+	cx18_writel_expect(cx, val, cx->reg_mem + reg, eval, mask);
+}
 
-अटल अंतरभूत u32 cx18_पढ़ो_reg(काष्ठा cx18 *cx, u32 reg)
-अणु
-	वापस cx18_पढ़ोl(cx, cx->reg_mem + reg);
-पूर्ण
+static inline u32 cx18_read_reg(struct cx18 *cx, u32 reg)
+{
+	return cx18_readl(cx, cx->reg_mem + reg);
+}
 
 
 /* Access "encoder memory" region of CX23418 memory mapped I/O */
-अटल अंतरभूत व्योम cx18_ग_लिखो_enc(काष्ठा cx18 *cx, u32 val, u32 addr)
-अणु
-	cx18_ग_लिखोl(cx, val, cx->enc_mem + addr);
-पूर्ण
+static inline void cx18_write_enc(struct cx18 *cx, u32 val, u32 addr)
+{
+	cx18_writel(cx, val, cx->enc_mem + addr);
+}
 
-अटल अंतरभूत u32 cx18_पढ़ो_enc(काष्ठा cx18 *cx, u32 addr)
-अणु
-	वापस cx18_पढ़ोl(cx, cx->enc_mem + addr);
-पूर्ण
+static inline u32 cx18_read_enc(struct cx18 *cx, u32 addr)
+{
+	return cx18_readl(cx, cx->enc_mem + addr);
+}
 
-व्योम cx18_sw1_irq_enable(काष्ठा cx18 *cx, u32 val);
-व्योम cx18_sw1_irq_disable(काष्ठा cx18 *cx, u32 val);
-व्योम cx18_sw2_irq_enable(काष्ठा cx18 *cx, u32 val);
-व्योम cx18_sw2_irq_disable(काष्ठा cx18 *cx, u32 val);
-व्योम cx18_sw2_irq_disable_cpu(काष्ठा cx18 *cx, u32 val);
-व्योम cx18_setup_page(काष्ठा cx18 *cx, u32 addr);
+void cx18_sw1_irq_enable(struct cx18 *cx, u32 val);
+void cx18_sw1_irq_disable(struct cx18 *cx, u32 val);
+void cx18_sw2_irq_enable(struct cx18 *cx, u32 val);
+void cx18_sw2_irq_disable(struct cx18 *cx, u32 val);
+void cx18_sw2_irq_disable_cpu(struct cx18 *cx, u32 val);
+void cx18_setup_page(struct cx18 *cx, u32 addr);
 
-#पूर्ण_अगर /* CX18_IO_H */
+#endif /* CX18_IO_H */

@@ -1,47 +1,46 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Support क्रम Intel Camera Imaging ISP subप्रणाली.
+ * Support for Intel Camera Imaging ISP subsystem.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
 
-#अगर_अघोषित __VMEM_H_INCLUDED__
-#घोषणा __VMEM_H_INCLUDED__
+#ifndef __VMEM_H_INCLUDED__
+#define __VMEM_H_INCLUDED__
 
 /*
- * This file is included on every cell अणुSP,ISP,hostपूर्ण and on every प्रणाली
+ * This file is included on every cell {SP,ISP,host} and on every system
  * that uses the VMEM device. It defines the API to DLI bridge
  *
- * System and cell specअगरic पूर्णांकerfaces and अंतरभूत code are included
+ * System and cell specific interfaces and inline code are included
  * conditionally through Makefile path settings.
  *
- *  - .        प्रणाली and cell agnostic पूर्णांकerfaces, स्थिरants and identअगरiers
- *	- खुला:  प्रणाली agnostic, cell specअगरic पूर्णांकerfaces
- *	- निजी: प्रणाली dependent, cell specअगरic पूर्णांकerfaces & अंतरभूत implementations
- *	- global:  प्रणाली specअगरic स्थिरants and identअगरiers
- *	- local:   प्रणाली and cell specअगरic स्थिरants and identअगरiers
+ *  - .        system and cell agnostic interfaces, constants and identifiers
+ *	- public:  system agnostic, cell specific interfaces
+ *	- private: system dependent, cell specific interfaces & inline implementations
+ *	- global:  system specific constants and identifiers
+ *	- local:   system and cell specific constants and identifiers
  */
 
-#समावेश "system_local.h"
-#समावेश "vmem_local.h"
+#include "system_local.h"
+#include "vmem_local.h"
 
-#अगर_अघोषित __INLINE_VMEM__
-#घोषणा STORAGE_CLASS_VMEM_H बाह्य
-#घोषणा STORAGE_CLASS_VMEM_C
-#समावेश "vmem_public.h"
-#अन्यथा  /* __INLINE_VMEM__ */
-#घोषणा STORAGE_CLASS_VMEM_H अटल अंतरभूत
-#घोषणा STORAGE_CLASS_VMEM_C अटल अंतरभूत
-#समावेश "vmem_private.h"
-#पूर्ण_अगर /* __INLINE_VMEM__ */
+#ifndef __INLINE_VMEM__
+#define STORAGE_CLASS_VMEM_H extern
+#define STORAGE_CLASS_VMEM_C
+#include "vmem_public.h"
+#else  /* __INLINE_VMEM__ */
+#define STORAGE_CLASS_VMEM_H static inline
+#define STORAGE_CLASS_VMEM_C static inline
+#include "vmem_private.h"
+#endif /* __INLINE_VMEM__ */
 
-#पूर्ण_अगर /* __VMEM_H_INCLUDED__ */
+#endif /* __VMEM_H_INCLUDED__ */

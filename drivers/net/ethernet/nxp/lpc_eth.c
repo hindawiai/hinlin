@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * drivers/net/ethernet/nxp/lpc_eth.c
  *
@@ -9,536 +8,536 @@
  * Copyright (C) 2012 Roland Stigge <stigge@antcom.de>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/clk.h>
-#समावेश <linux/crc32.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_mdपन.स>
-#समावेश <linux/of_net.h>
-#समावेश <linux/phy.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/soc/nxp/lpc32xx-misc.h>
+#include <linux/clk.h>
+#include <linux/crc32.h>
+#include <linux/etherdevice.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_mdio.h>
+#include <linux/of_net.h>
+#include <linux/phy.h>
+#include <linux/platform_device.h>
+#include <linux/spinlock.h>
+#include <linux/soc/nxp/lpc32xx-misc.h>
 
-#घोषणा MODNAME "lpc-eth"
-#घोषणा DRV_VERSION "1.00"
+#define MODNAME "lpc-eth"
+#define DRV_VERSION "1.00"
 
-#घोषणा ENET_MAXF_SIZE 1536
-#घोषणा ENET_RX_DESC 48
-#घोषणा ENET_TX_DESC 16
+#define ENET_MAXF_SIZE 1536
+#define ENET_RX_DESC 48
+#define ENET_TX_DESC 16
 
-#घोषणा NAPI_WEIGHT 16
+#define NAPI_WEIGHT 16
 
 /*
  * Ethernet MAC controller Register offsets
  */
-#घोषणा LPC_ENET_MAC1(x)			(x + 0x000)
-#घोषणा LPC_ENET_MAC2(x)			(x + 0x004)
-#घोषणा LPC_ENET_IPGT(x)			(x + 0x008)
-#घोषणा LPC_ENET_IPGR(x)			(x + 0x00C)
-#घोषणा LPC_ENET_CLRT(x)			(x + 0x010)
-#घोषणा LPC_ENET_MAXF(x)			(x + 0x014)
-#घोषणा LPC_ENET_SUPP(x)			(x + 0x018)
-#घोषणा LPC_ENET_TEST(x)			(x + 0x01C)
-#घोषणा LPC_ENET_MCFG(x)			(x + 0x020)
-#घोषणा LPC_ENET_MCMD(x)			(x + 0x024)
-#घोषणा LPC_ENET_MADR(x)			(x + 0x028)
-#घोषणा LPC_ENET_MWTD(x)			(x + 0x02C)
-#घोषणा LPC_ENET_MRDD(x)			(x + 0x030)
-#घोषणा LPC_ENET_MIND(x)			(x + 0x034)
-#घोषणा LPC_ENET_SA0(x)				(x + 0x040)
-#घोषणा LPC_ENET_SA1(x)				(x + 0x044)
-#घोषणा LPC_ENET_SA2(x)				(x + 0x048)
-#घोषणा LPC_ENET_COMMAND(x)			(x + 0x100)
-#घोषणा LPC_ENET_STATUS(x)			(x + 0x104)
-#घोषणा LPC_ENET_RXDESCRIPTOR(x)		(x + 0x108)
-#घोषणा LPC_ENET_RXSTATUS(x)			(x + 0x10C)
-#घोषणा LPC_ENET_RXDESCRIPTORNUMBER(x)		(x + 0x110)
-#घोषणा LPC_ENET_RXPRODUCEINDEX(x)		(x + 0x114)
-#घोषणा LPC_ENET_RXCONSUMEINDEX(x)		(x + 0x118)
-#घोषणा LPC_ENET_TXDESCRIPTOR(x)		(x + 0x11C)
-#घोषणा LPC_ENET_TXSTATUS(x)			(x + 0x120)
-#घोषणा LPC_ENET_TXDESCRIPTORNUMBER(x)		(x + 0x124)
-#घोषणा LPC_ENET_TXPRODUCEINDEX(x)		(x + 0x128)
-#घोषणा LPC_ENET_TXCONSUMEINDEX(x)		(x + 0x12C)
-#घोषणा LPC_ENET_TSV0(x)			(x + 0x158)
-#घोषणा LPC_ENET_TSV1(x)			(x + 0x15C)
-#घोषणा LPC_ENET_RSV(x)				(x + 0x160)
-#घोषणा LPC_ENET_FLOWCONTROLCOUNTER(x)		(x + 0x170)
-#घोषणा LPC_ENET_FLOWCONTROLSTATUS(x)		(x + 0x174)
-#घोषणा LPC_ENET_RXFILTER_CTRL(x)		(x + 0x200)
-#घोषणा LPC_ENET_RXFILTERWOLSTATUS(x)		(x + 0x204)
-#घोषणा LPC_ENET_RXFILTERWOLCLEAR(x)		(x + 0x208)
-#घोषणा LPC_ENET_HASHFILTERL(x)			(x + 0x210)
-#घोषणा LPC_ENET_HASHFILTERH(x)			(x + 0x214)
-#घोषणा LPC_ENET_INTSTATUS(x)			(x + 0xFE0)
-#घोषणा LPC_ENET_INTENABLE(x)			(x + 0xFE4)
-#घोषणा LPC_ENET_INTCLEAR(x)			(x + 0xFE8)
-#घोषणा LPC_ENET_INTSET(x)			(x + 0xFEC)
-#घोषणा LPC_ENET_POWERDOWN(x)			(x + 0xFF4)
+#define LPC_ENET_MAC1(x)			(x + 0x000)
+#define LPC_ENET_MAC2(x)			(x + 0x004)
+#define LPC_ENET_IPGT(x)			(x + 0x008)
+#define LPC_ENET_IPGR(x)			(x + 0x00C)
+#define LPC_ENET_CLRT(x)			(x + 0x010)
+#define LPC_ENET_MAXF(x)			(x + 0x014)
+#define LPC_ENET_SUPP(x)			(x + 0x018)
+#define LPC_ENET_TEST(x)			(x + 0x01C)
+#define LPC_ENET_MCFG(x)			(x + 0x020)
+#define LPC_ENET_MCMD(x)			(x + 0x024)
+#define LPC_ENET_MADR(x)			(x + 0x028)
+#define LPC_ENET_MWTD(x)			(x + 0x02C)
+#define LPC_ENET_MRDD(x)			(x + 0x030)
+#define LPC_ENET_MIND(x)			(x + 0x034)
+#define LPC_ENET_SA0(x)				(x + 0x040)
+#define LPC_ENET_SA1(x)				(x + 0x044)
+#define LPC_ENET_SA2(x)				(x + 0x048)
+#define LPC_ENET_COMMAND(x)			(x + 0x100)
+#define LPC_ENET_STATUS(x)			(x + 0x104)
+#define LPC_ENET_RXDESCRIPTOR(x)		(x + 0x108)
+#define LPC_ENET_RXSTATUS(x)			(x + 0x10C)
+#define LPC_ENET_RXDESCRIPTORNUMBER(x)		(x + 0x110)
+#define LPC_ENET_RXPRODUCEINDEX(x)		(x + 0x114)
+#define LPC_ENET_RXCONSUMEINDEX(x)		(x + 0x118)
+#define LPC_ENET_TXDESCRIPTOR(x)		(x + 0x11C)
+#define LPC_ENET_TXSTATUS(x)			(x + 0x120)
+#define LPC_ENET_TXDESCRIPTORNUMBER(x)		(x + 0x124)
+#define LPC_ENET_TXPRODUCEINDEX(x)		(x + 0x128)
+#define LPC_ENET_TXCONSUMEINDEX(x)		(x + 0x12C)
+#define LPC_ENET_TSV0(x)			(x + 0x158)
+#define LPC_ENET_TSV1(x)			(x + 0x15C)
+#define LPC_ENET_RSV(x)				(x + 0x160)
+#define LPC_ENET_FLOWCONTROLCOUNTER(x)		(x + 0x170)
+#define LPC_ENET_FLOWCONTROLSTATUS(x)		(x + 0x174)
+#define LPC_ENET_RXFILTER_CTRL(x)		(x + 0x200)
+#define LPC_ENET_RXFILTERWOLSTATUS(x)		(x + 0x204)
+#define LPC_ENET_RXFILTERWOLCLEAR(x)		(x + 0x208)
+#define LPC_ENET_HASHFILTERL(x)			(x + 0x210)
+#define LPC_ENET_HASHFILTERH(x)			(x + 0x214)
+#define LPC_ENET_INTSTATUS(x)			(x + 0xFE0)
+#define LPC_ENET_INTENABLE(x)			(x + 0xFE4)
+#define LPC_ENET_INTCLEAR(x)			(x + 0xFE8)
+#define LPC_ENET_INTSET(x)			(x + 0xFEC)
+#define LPC_ENET_POWERDOWN(x)			(x + 0xFF4)
 
 /*
- * mac1 रेजिस्टर definitions
+ * mac1 register definitions
  */
-#घोषणा LPC_MAC1_RECV_ENABLE			(1 << 0)
-#घोषणा LPC_MAC1_PASS_ALL_RX_FRAMES		(1 << 1)
-#घोषणा LPC_MAC1_RX_FLOW_CONTROL		(1 << 2)
-#घोषणा LPC_MAC1_TX_FLOW_CONTROL		(1 << 3)
-#घोषणा LPC_MAC1_LOOPBACK			(1 << 4)
-#घोषणा LPC_MAC1_RESET_TX			(1 << 8)
-#घोषणा LPC_MAC1_RESET_MCS_TX			(1 << 9)
-#घोषणा LPC_MAC1_RESET_RX			(1 << 10)
-#घोषणा LPC_MAC1_RESET_MCS_RX			(1 << 11)
-#घोषणा LPC_MAC1_SIMULATION_RESET		(1 << 14)
-#घोषणा LPC_MAC1_SOFT_RESET			(1 << 15)
+#define LPC_MAC1_RECV_ENABLE			(1 << 0)
+#define LPC_MAC1_PASS_ALL_RX_FRAMES		(1 << 1)
+#define LPC_MAC1_RX_FLOW_CONTROL		(1 << 2)
+#define LPC_MAC1_TX_FLOW_CONTROL		(1 << 3)
+#define LPC_MAC1_LOOPBACK			(1 << 4)
+#define LPC_MAC1_RESET_TX			(1 << 8)
+#define LPC_MAC1_RESET_MCS_TX			(1 << 9)
+#define LPC_MAC1_RESET_RX			(1 << 10)
+#define LPC_MAC1_RESET_MCS_RX			(1 << 11)
+#define LPC_MAC1_SIMULATION_RESET		(1 << 14)
+#define LPC_MAC1_SOFT_RESET			(1 << 15)
 
 /*
- * mac2 रेजिस्टर definitions
+ * mac2 register definitions
  */
-#घोषणा LPC_MAC2_FULL_DUPLEX			(1 << 0)
-#घोषणा LPC_MAC2_FRAME_LENGTH_CHECKING		(1 << 1)
-#घोषणा LPC_MAC2_HUGH_LENGTH_CHECKING		(1 << 2)
-#घोषणा LPC_MAC2_DELAYED_CRC			(1 << 3)
-#घोषणा LPC_MAC2_CRC_ENABLE			(1 << 4)
-#घोषणा LPC_MAC2_PAD_CRC_ENABLE			(1 << 5)
-#घोषणा LPC_MAC2_VLAN_PAD_ENABLE		(1 << 6)
-#घोषणा LPC_MAC2_AUTO_DETECT_PAD_ENABLE		(1 << 7)
-#घोषणा LPC_MAC2_PURE_PREAMBLE_ENFORCEMENT	(1 << 8)
-#घोषणा LPC_MAC2_LONG_PREAMBLE_ENFORCEMENT	(1 << 9)
-#घोषणा LPC_MAC2_NO_BACKOFF			(1 << 12)
-#घोषणा LPC_MAC2_BACK_PRESSURE			(1 << 13)
-#घोषणा LPC_MAC2_EXCESS_DEFER			(1 << 14)
+#define LPC_MAC2_FULL_DUPLEX			(1 << 0)
+#define LPC_MAC2_FRAME_LENGTH_CHECKING		(1 << 1)
+#define LPC_MAC2_HUGH_LENGTH_CHECKING		(1 << 2)
+#define LPC_MAC2_DELAYED_CRC			(1 << 3)
+#define LPC_MAC2_CRC_ENABLE			(1 << 4)
+#define LPC_MAC2_PAD_CRC_ENABLE			(1 << 5)
+#define LPC_MAC2_VLAN_PAD_ENABLE		(1 << 6)
+#define LPC_MAC2_AUTO_DETECT_PAD_ENABLE		(1 << 7)
+#define LPC_MAC2_PURE_PREAMBLE_ENFORCEMENT	(1 << 8)
+#define LPC_MAC2_LONG_PREAMBLE_ENFORCEMENT	(1 << 9)
+#define LPC_MAC2_NO_BACKOFF			(1 << 12)
+#define LPC_MAC2_BACK_PRESSURE			(1 << 13)
+#define LPC_MAC2_EXCESS_DEFER			(1 << 14)
 
 /*
- * ipgt रेजिस्टर definitions
+ * ipgt register definitions
  */
-#घोषणा LPC_IPGT_LOAD(n)			((n) & 0x7F)
+#define LPC_IPGT_LOAD(n)			((n) & 0x7F)
 
 /*
- * ipgr रेजिस्टर definitions
+ * ipgr register definitions
  */
-#घोषणा LPC_IPGR_LOAD_PART2(n)			((n) & 0x7F)
-#घोषणा LPC_IPGR_LOAD_PART1(n)			(((n) & 0x7F) << 8)
+#define LPC_IPGR_LOAD_PART2(n)			((n) & 0x7F)
+#define LPC_IPGR_LOAD_PART1(n)			(((n) & 0x7F) << 8)
 
 /*
- * clrt रेजिस्टर definitions
+ * clrt register definitions
  */
-#घोषणा LPC_CLRT_LOAD_RETRY_MAX(n)		((n) & 0xF)
-#घोषणा LPC_CLRT_LOAD_COLLISION_WINDOW(n)	(((n) & 0x3F) << 8)
+#define LPC_CLRT_LOAD_RETRY_MAX(n)		((n) & 0xF)
+#define LPC_CLRT_LOAD_COLLISION_WINDOW(n)	(((n) & 0x3F) << 8)
 
 /*
- * maxf रेजिस्टर definitions
+ * maxf register definitions
  */
-#घोषणा LPC_MAXF_LOAD_MAX_FRAME_LEN(n)		((n) & 0xFFFF)
+#define LPC_MAXF_LOAD_MAX_FRAME_LEN(n)		((n) & 0xFFFF)
 
 /*
- * supp रेजिस्टर definitions
+ * supp register definitions
  */
-#घोषणा LPC_SUPP_SPEED				(1 << 8)
-#घोषणा LPC_SUPP_RESET_RMII			(1 << 11)
+#define LPC_SUPP_SPEED				(1 << 8)
+#define LPC_SUPP_RESET_RMII			(1 << 11)
 
 /*
- * test रेजिस्टर definitions
+ * test register definitions
  */
-#घोषणा LPC_TEST_SHORTCUT_PAUSE_QUANTA		(1 << 0)
-#घोषणा LPC_TEST_PAUSE				(1 << 1)
-#घोषणा LPC_TEST_BACKPRESSURE			(1 << 2)
+#define LPC_TEST_SHORTCUT_PAUSE_QUANTA		(1 << 0)
+#define LPC_TEST_PAUSE				(1 << 1)
+#define LPC_TEST_BACKPRESSURE			(1 << 2)
 
 /*
- * mcfg रेजिस्टर definitions
+ * mcfg register definitions
  */
-#घोषणा LPC_MCFG_SCAN_INCREMENT			(1 << 0)
-#घोषणा LPC_MCFG_SUPPRESS_PREAMBLE		(1 << 1)
-#घोषणा LPC_MCFG_CLOCK_SELECT(n)		(((n) & 0x7) << 2)
-#घोषणा LPC_MCFG_CLOCK_HOST_DIV_4		0
-#घोषणा LPC_MCFG_CLOCK_HOST_DIV_6		2
-#घोषणा LPC_MCFG_CLOCK_HOST_DIV_8		3
-#घोषणा LPC_MCFG_CLOCK_HOST_DIV_10		4
-#घोषणा LPC_MCFG_CLOCK_HOST_DIV_14		5
-#घोषणा LPC_MCFG_CLOCK_HOST_DIV_20		6
-#घोषणा LPC_MCFG_CLOCK_HOST_DIV_28		7
-#घोषणा LPC_MCFG_RESET_MII_MGMT			(1 << 15)
+#define LPC_MCFG_SCAN_INCREMENT			(1 << 0)
+#define LPC_MCFG_SUPPRESS_PREAMBLE		(1 << 1)
+#define LPC_MCFG_CLOCK_SELECT(n)		(((n) & 0x7) << 2)
+#define LPC_MCFG_CLOCK_HOST_DIV_4		0
+#define LPC_MCFG_CLOCK_HOST_DIV_6		2
+#define LPC_MCFG_CLOCK_HOST_DIV_8		3
+#define LPC_MCFG_CLOCK_HOST_DIV_10		4
+#define LPC_MCFG_CLOCK_HOST_DIV_14		5
+#define LPC_MCFG_CLOCK_HOST_DIV_20		6
+#define LPC_MCFG_CLOCK_HOST_DIV_28		7
+#define LPC_MCFG_RESET_MII_MGMT			(1 << 15)
 
 /*
- * mcmd रेजिस्टर definitions
+ * mcmd register definitions
  */
-#घोषणा LPC_MCMD_READ				(1 << 0)
-#घोषणा LPC_MCMD_SCAN				(1 << 1)
+#define LPC_MCMD_READ				(1 << 0)
+#define LPC_MCMD_SCAN				(1 << 1)
 
 /*
- * madr रेजिस्टर definitions
+ * madr register definitions
  */
-#घोषणा LPC_MADR_REGISTER_ADDRESS(n)		((n) & 0x1F)
-#घोषणा LPC_MADR_PHY_0ADDRESS(n)		(((n) & 0x1F) << 8)
+#define LPC_MADR_REGISTER_ADDRESS(n)		((n) & 0x1F)
+#define LPC_MADR_PHY_0ADDRESS(n)		(((n) & 0x1F) << 8)
 
 /*
- * mwtd रेजिस्टर definitions
+ * mwtd register definitions
  */
-#घोषणा LPC_MWDT_WRITE(n)			((n) & 0xFFFF)
+#define LPC_MWDT_WRITE(n)			((n) & 0xFFFF)
 
 /*
- * mrdd रेजिस्टर definitions
+ * mrdd register definitions
  */
-#घोषणा LPC_MRDD_READ_MASK			0xFFFF
+#define LPC_MRDD_READ_MASK			0xFFFF
 
 /*
- * mind रेजिस्टर definitions
+ * mind register definitions
  */
-#घोषणा LPC_MIND_BUSY				(1 << 0)
-#घोषणा LPC_MIND_SCANNING			(1 << 1)
-#घोषणा LPC_MIND_NOT_VALID			(1 << 2)
-#घोषणा LPC_MIND_MII_LINK_FAIL			(1 << 3)
+#define LPC_MIND_BUSY				(1 << 0)
+#define LPC_MIND_SCANNING			(1 << 1)
+#define LPC_MIND_NOT_VALID			(1 << 2)
+#define LPC_MIND_MII_LINK_FAIL			(1 << 3)
 
 /*
- * command रेजिस्टर definitions
+ * command register definitions
  */
-#घोषणा LPC_COMMAND_RXENABLE			(1 << 0)
-#घोषणा LPC_COMMAND_TXENABLE			(1 << 1)
-#घोषणा LPC_COMMAND_REG_RESET			(1 << 3)
-#घोषणा LPC_COMMAND_TXRESET			(1 << 4)
-#घोषणा LPC_COMMAND_RXRESET			(1 << 5)
-#घोषणा LPC_COMMAND_PASSRUNTFRAME		(1 << 6)
-#घोषणा LPC_COMMAND_PASSRXFILTER		(1 << 7)
-#घोषणा LPC_COMMAND_TXFLOWCONTROL		(1 << 8)
-#घोषणा LPC_COMMAND_RMII			(1 << 9)
-#घोषणा LPC_COMMAND_FULLDUPLEX			(1 << 10)
+#define LPC_COMMAND_RXENABLE			(1 << 0)
+#define LPC_COMMAND_TXENABLE			(1 << 1)
+#define LPC_COMMAND_REG_RESET			(1 << 3)
+#define LPC_COMMAND_TXRESET			(1 << 4)
+#define LPC_COMMAND_RXRESET			(1 << 5)
+#define LPC_COMMAND_PASSRUNTFRAME		(1 << 6)
+#define LPC_COMMAND_PASSRXFILTER		(1 << 7)
+#define LPC_COMMAND_TXFLOWCONTROL		(1 << 8)
+#define LPC_COMMAND_RMII			(1 << 9)
+#define LPC_COMMAND_FULLDUPLEX			(1 << 10)
 
 /*
- * status रेजिस्टर definitions
+ * status register definitions
  */
-#घोषणा LPC_STATUS_RXACTIVE			(1 << 0)
-#घोषणा LPC_STATUS_TXACTIVE			(1 << 1)
+#define LPC_STATUS_RXACTIVE			(1 << 0)
+#define LPC_STATUS_TXACTIVE			(1 << 1)
 
 /*
- * tsv0 रेजिस्टर definitions
+ * tsv0 register definitions
  */
-#घोषणा LPC_TSV0_CRC_ERROR			(1 << 0)
-#घोषणा LPC_TSV0_LENGTH_CHECK_ERROR		(1 << 1)
-#घोषणा LPC_TSV0_LENGTH_OUT_OF_RANGE		(1 << 2)
-#घोषणा LPC_TSV0_DONE				(1 << 3)
-#घोषणा LPC_TSV0_MULTICAST			(1 << 4)
-#घोषणा LPC_TSV0_BROADCAST			(1 << 5)
-#घोषणा LPC_TSV0_PACKET_DEFER			(1 << 6)
-#घोषणा LPC_TSV0_ESCESSIVE_DEFER		(1 << 7)
-#घोषणा LPC_TSV0_ESCESSIVE_COLLISION		(1 << 8)
-#घोषणा LPC_TSV0_LATE_COLLISION			(1 << 9)
-#घोषणा LPC_TSV0_GIANT				(1 << 10)
-#घोषणा LPC_TSV0_UNDERRUN			(1 << 11)
-#घोषणा LPC_TSV0_TOTAL_BYTES(n)			(((n) >> 12) & 0xFFFF)
-#घोषणा LPC_TSV0_CONTROL_FRAME			(1 << 28)
-#घोषणा LPC_TSV0_PAUSE				(1 << 29)
-#घोषणा LPC_TSV0_BACKPRESSURE			(1 << 30)
-#घोषणा LPC_TSV0_VLAN				(1 << 31)
+#define LPC_TSV0_CRC_ERROR			(1 << 0)
+#define LPC_TSV0_LENGTH_CHECK_ERROR		(1 << 1)
+#define LPC_TSV0_LENGTH_OUT_OF_RANGE		(1 << 2)
+#define LPC_TSV0_DONE				(1 << 3)
+#define LPC_TSV0_MULTICAST			(1 << 4)
+#define LPC_TSV0_BROADCAST			(1 << 5)
+#define LPC_TSV0_PACKET_DEFER			(1 << 6)
+#define LPC_TSV0_ESCESSIVE_DEFER		(1 << 7)
+#define LPC_TSV0_ESCESSIVE_COLLISION		(1 << 8)
+#define LPC_TSV0_LATE_COLLISION			(1 << 9)
+#define LPC_TSV0_GIANT				(1 << 10)
+#define LPC_TSV0_UNDERRUN			(1 << 11)
+#define LPC_TSV0_TOTAL_BYTES(n)			(((n) >> 12) & 0xFFFF)
+#define LPC_TSV0_CONTROL_FRAME			(1 << 28)
+#define LPC_TSV0_PAUSE				(1 << 29)
+#define LPC_TSV0_BACKPRESSURE			(1 << 30)
+#define LPC_TSV0_VLAN				(1 << 31)
 
 /*
- * tsv1 रेजिस्टर definitions
+ * tsv1 register definitions
  */
-#घोषणा LPC_TSV1_TRANSMIT_BYTE_COUNT(n)		((n) & 0xFFFF)
-#घोषणा LPC_TSV1_COLLISION_COUNT(n)		(((n) >> 16) & 0xF)
+#define LPC_TSV1_TRANSMIT_BYTE_COUNT(n)		((n) & 0xFFFF)
+#define LPC_TSV1_COLLISION_COUNT(n)		(((n) >> 16) & 0xF)
 
 /*
- * rsv रेजिस्टर definitions
+ * rsv register definitions
  */
-#घोषणा LPC_RSV_RECEIVED_BYTE_COUNT(n)		((n) & 0xFFFF)
-#घोषणा LPC_RSV_RXDV_EVENT_IGNORED		(1 << 16)
-#घोषणा LPC_RSV_RXDV_EVENT_PREVIOUSLY_SEEN	(1 << 17)
-#घोषणा LPC_RSV_CARRIER_EVNT_PREVIOUS_SEEN	(1 << 18)
-#घोषणा LPC_RSV_RECEIVE_CODE_VIOLATION		(1 << 19)
-#घोषणा LPC_RSV_CRC_ERROR			(1 << 20)
-#घोषणा LPC_RSV_LENGTH_CHECK_ERROR		(1 << 21)
-#घोषणा LPC_RSV_LENGTH_OUT_OF_RANGE		(1 << 22)
-#घोषणा LPC_RSV_RECEIVE_OK			(1 << 23)
-#घोषणा LPC_RSV_MULTICAST			(1 << 24)
-#घोषणा LPC_RSV_BROADCAST			(1 << 25)
-#घोषणा LPC_RSV_DRIBBLE_NIBBLE			(1 << 26)
-#घोषणा LPC_RSV_CONTROL_FRAME			(1 << 27)
-#घोषणा LPC_RSV_PAUSE				(1 << 28)
-#घोषणा LPC_RSV_UNSUPPORTED_OPCODE		(1 << 29)
-#घोषणा LPC_RSV_VLAN				(1 << 30)
+#define LPC_RSV_RECEIVED_BYTE_COUNT(n)		((n) & 0xFFFF)
+#define LPC_RSV_RXDV_EVENT_IGNORED		(1 << 16)
+#define LPC_RSV_RXDV_EVENT_PREVIOUSLY_SEEN	(1 << 17)
+#define LPC_RSV_CARRIER_EVNT_PREVIOUS_SEEN	(1 << 18)
+#define LPC_RSV_RECEIVE_CODE_VIOLATION		(1 << 19)
+#define LPC_RSV_CRC_ERROR			(1 << 20)
+#define LPC_RSV_LENGTH_CHECK_ERROR		(1 << 21)
+#define LPC_RSV_LENGTH_OUT_OF_RANGE		(1 << 22)
+#define LPC_RSV_RECEIVE_OK			(1 << 23)
+#define LPC_RSV_MULTICAST			(1 << 24)
+#define LPC_RSV_BROADCAST			(1 << 25)
+#define LPC_RSV_DRIBBLE_NIBBLE			(1 << 26)
+#define LPC_RSV_CONTROL_FRAME			(1 << 27)
+#define LPC_RSV_PAUSE				(1 << 28)
+#define LPC_RSV_UNSUPPORTED_OPCODE		(1 << 29)
+#define LPC_RSV_VLAN				(1 << 30)
 
 /*
- * flowcontrolcounter रेजिस्टर definitions
+ * flowcontrolcounter register definitions
  */
-#घोषणा LPC_FCCR_MIRRORCOUNTER(n)		((n) & 0xFFFF)
-#घोषणा LPC_FCCR_PAUSETIMER(n)			(((n) >> 16) & 0xFFFF)
+#define LPC_FCCR_MIRRORCOUNTER(n)		((n) & 0xFFFF)
+#define LPC_FCCR_PAUSETIMER(n)			(((n) >> 16) & 0xFFFF)
 
 /*
- * flowcontrolstatus रेजिस्टर definitions
+ * flowcontrolstatus register definitions
  */
-#घोषणा LPC_FCCR_MIRRORCOUNTERCURRENT(n)	((n) & 0xFFFF)
+#define LPC_FCCR_MIRRORCOUNTERCURRENT(n)	((n) & 0xFFFF)
 
 /*
  * rxfilterctrl, rxfilterwolstatus, and rxfilterwolclear shared
- * रेजिस्टर definitions
+ * register definitions
  */
-#घोषणा LPC_RXFLTRW_ACCEPTUNICAST		(1 << 0)
-#घोषणा LPC_RXFLTRW_ACCEPTUBROADCAST		(1 << 1)
-#घोषणा LPC_RXFLTRW_ACCEPTUMULTICAST		(1 << 2)
-#घोषणा LPC_RXFLTRW_ACCEPTUNICASTHASH		(1 << 3)
-#घोषणा LPC_RXFLTRW_ACCEPTUMULTICASTHASH	(1 << 4)
-#घोषणा LPC_RXFLTRW_ACCEPTPERFECT		(1 << 5)
+#define LPC_RXFLTRW_ACCEPTUNICAST		(1 << 0)
+#define LPC_RXFLTRW_ACCEPTUBROADCAST		(1 << 1)
+#define LPC_RXFLTRW_ACCEPTUMULTICAST		(1 << 2)
+#define LPC_RXFLTRW_ACCEPTUNICASTHASH		(1 << 3)
+#define LPC_RXFLTRW_ACCEPTUMULTICASTHASH	(1 << 4)
+#define LPC_RXFLTRW_ACCEPTPERFECT		(1 << 5)
 
 /*
- * rxfilterctrl रेजिस्टर definitions
+ * rxfilterctrl register definitions
  */
-#घोषणा LPC_RXFLTRWSTS_MAGICPACKETENWOL		(1 << 12)
-#घोषणा LPC_RXFLTRWSTS_RXFILTERENWOL		(1 << 13)
+#define LPC_RXFLTRWSTS_MAGICPACKETENWOL		(1 << 12)
+#define LPC_RXFLTRWSTS_RXFILTERENWOL		(1 << 13)
 
 /*
- * rxfilterwolstatus/rxfilterwolclear रेजिस्टर definitions
+ * rxfilterwolstatus/rxfilterwolclear register definitions
  */
-#घोषणा LPC_RXFLTRWSTS_RXFILTERWOL		(1 << 7)
-#घोषणा LPC_RXFLTRWSTS_MAGICPACKETWOL		(1 << 8)
+#define LPC_RXFLTRWSTS_RXFILTERWOL		(1 << 7)
+#define LPC_RXFLTRWSTS_MAGICPACKETWOL		(1 << 8)
 
 /*
- * पूर्णांकstatus, पूर्णांकenable, पूर्णांकclear, and Intset shared रेजिस्टर
+ * intstatus, intenable, intclear, and Intset shared register
  * definitions
  */
-#घोषणा LPC_MACINT_RXOVERRUNINTEN		(1 << 0)
-#घोषणा LPC_MACINT_RXERRORONINT			(1 << 1)
-#घोषणा LPC_MACINT_RXFINISHEDINTEN		(1 << 2)
-#घोषणा LPC_MACINT_RXDONEINTEN			(1 << 3)
-#घोषणा LPC_MACINT_TXUNDERRUNINTEN		(1 << 4)
-#घोषणा LPC_MACINT_TXERRORINTEN			(1 << 5)
-#घोषणा LPC_MACINT_TXFINISHEDINTEN		(1 << 6)
-#घोषणा LPC_MACINT_TXDONEINTEN			(1 << 7)
-#घोषणा LPC_MACINT_SOFTINTEN			(1 << 12)
-#घोषणा LPC_MACINT_WAKEUPINTEN			(1 << 13)
+#define LPC_MACINT_RXOVERRUNINTEN		(1 << 0)
+#define LPC_MACINT_RXERRORONINT			(1 << 1)
+#define LPC_MACINT_RXFINISHEDINTEN		(1 << 2)
+#define LPC_MACINT_RXDONEINTEN			(1 << 3)
+#define LPC_MACINT_TXUNDERRUNINTEN		(1 << 4)
+#define LPC_MACINT_TXERRORINTEN			(1 << 5)
+#define LPC_MACINT_TXFINISHEDINTEN		(1 << 6)
+#define LPC_MACINT_TXDONEINTEN			(1 << 7)
+#define LPC_MACINT_SOFTINTEN			(1 << 12)
+#define LPC_MACINT_WAKEUPINTEN			(1 << 13)
 
 /*
- * घातerकरोwn रेजिस्टर definitions
+ * powerdown register definitions
  */
-#घोषणा LPC_POWERDOWN_MACAHB			(1 << 31)
+#define LPC_POWERDOWN_MACAHB			(1 << 31)
 
-अटल phy_पूर्णांकerface_t lpc_phy_पूर्णांकerface_mode(काष्ठा device *dev)
-अणु
-	अगर (dev && dev->of_node) अणु
-		स्थिर अक्षर *mode = of_get_property(dev->of_node,
-						   "phy-mode", शून्य);
-		अगर (mode && !म_भेद(mode, "mii"))
-			वापस PHY_INTERFACE_MODE_MII;
-	पूर्ण
-	वापस PHY_INTERFACE_MODE_RMII;
-पूर्ण
+static phy_interface_t lpc_phy_interface_mode(struct device *dev)
+{
+	if (dev && dev->of_node) {
+		const char *mode = of_get_property(dev->of_node,
+						   "phy-mode", NULL);
+		if (mode && !strcmp(mode, "mii"))
+			return PHY_INTERFACE_MODE_MII;
+	}
+	return PHY_INTERFACE_MODE_RMII;
+}
 
-अटल bool use_iram_क्रम_net(काष्ठा device *dev)
-अणु
-	अगर (dev && dev->of_node)
-		वापस of_property_पढ़ो_bool(dev->of_node, "use-iram");
-	वापस false;
-पूर्ण
+static bool use_iram_for_net(struct device *dev)
+{
+	if (dev && dev->of_node)
+		return of_property_read_bool(dev->of_node, "use-iram");
+	return false;
+}
 
-/* Receive Status inक्रमmation word */
-#घोषणा RXSTATUS_SIZE			0x000007FF
-#घोषणा RXSTATUS_CONTROL		(1 << 18)
-#घोषणा RXSTATUS_VLAN			(1 << 19)
-#घोषणा RXSTATUS_FILTER			(1 << 20)
-#घोषणा RXSTATUS_MULTICAST		(1 << 21)
-#घोषणा RXSTATUS_BROADCAST		(1 << 22)
-#घोषणा RXSTATUS_CRC			(1 << 23)
-#घोषणा RXSTATUS_SYMBOL			(1 << 24)
-#घोषणा RXSTATUS_LENGTH			(1 << 25)
-#घोषणा RXSTATUS_RANGE			(1 << 26)
-#घोषणा RXSTATUS_ALIGN			(1 << 27)
-#घोषणा RXSTATUS_OVERRUN		(1 << 28)
-#घोषणा RXSTATUS_NODESC			(1 << 29)
-#घोषणा RXSTATUS_LAST			(1 << 30)
-#घोषणा RXSTATUS_ERROR			(1 << 31)
+/* Receive Status information word */
+#define RXSTATUS_SIZE			0x000007FF
+#define RXSTATUS_CONTROL		(1 << 18)
+#define RXSTATUS_VLAN			(1 << 19)
+#define RXSTATUS_FILTER			(1 << 20)
+#define RXSTATUS_MULTICAST		(1 << 21)
+#define RXSTATUS_BROADCAST		(1 << 22)
+#define RXSTATUS_CRC			(1 << 23)
+#define RXSTATUS_SYMBOL			(1 << 24)
+#define RXSTATUS_LENGTH			(1 << 25)
+#define RXSTATUS_RANGE			(1 << 26)
+#define RXSTATUS_ALIGN			(1 << 27)
+#define RXSTATUS_OVERRUN		(1 << 28)
+#define RXSTATUS_NODESC			(1 << 29)
+#define RXSTATUS_LAST			(1 << 30)
+#define RXSTATUS_ERROR			(1 << 31)
 
-#घोषणा RXSTATUS_STATUS_ERROR \
+#define RXSTATUS_STATUS_ERROR \
 	(RXSTATUS_NODESC | RXSTATUS_OVERRUN | RXSTATUS_ALIGN | \
 	 RXSTATUS_RANGE | RXSTATUS_LENGTH | RXSTATUS_SYMBOL | RXSTATUS_CRC)
 
 /* Receive Descriptor control word */
-#घोषणा RXDESC_CONTROL_SIZE		0x000007FF
-#घोषणा RXDESC_CONTROL_INT		(1 << 31)
+#define RXDESC_CONTROL_SIZE		0x000007FF
+#define RXDESC_CONTROL_INT		(1 << 31)
 
-/* Transmit Status inक्रमmation word */
-#घोषणा TXSTATUS_COLLISIONS_GET(x)	(((x) >> 21) & 0xF)
-#घोषणा TXSTATUS_DEFER			(1 << 25)
-#घोषणा TXSTATUS_EXCESSDEFER		(1 << 26)
-#घोषणा TXSTATUS_EXCESSCOLL		(1 << 27)
-#घोषणा TXSTATUS_LATECOLL		(1 << 28)
-#घोषणा TXSTATUS_UNDERRUN		(1 << 29)
-#घोषणा TXSTATUS_NODESC			(1 << 30)
-#घोषणा TXSTATUS_ERROR			(1 << 31)
+/* Transmit Status information word */
+#define TXSTATUS_COLLISIONS_GET(x)	(((x) >> 21) & 0xF)
+#define TXSTATUS_DEFER			(1 << 25)
+#define TXSTATUS_EXCESSDEFER		(1 << 26)
+#define TXSTATUS_EXCESSCOLL		(1 << 27)
+#define TXSTATUS_LATECOLL		(1 << 28)
+#define TXSTATUS_UNDERRUN		(1 << 29)
+#define TXSTATUS_NODESC			(1 << 30)
+#define TXSTATUS_ERROR			(1 << 31)
 
 /* Transmit Descriptor control word */
-#घोषणा TXDESC_CONTROL_SIZE		0x000007FF
-#घोषणा TXDESC_CONTROL_OVERRIDE		(1 << 26)
-#घोषणा TXDESC_CONTROL_HUGE		(1 << 27)
-#घोषणा TXDESC_CONTROL_PAD		(1 << 28)
-#घोषणा TXDESC_CONTROL_CRC		(1 << 29)
-#घोषणा TXDESC_CONTROL_LAST		(1 << 30)
-#घोषणा TXDESC_CONTROL_INT		(1 << 31)
+#define TXDESC_CONTROL_SIZE		0x000007FF
+#define TXDESC_CONTROL_OVERRIDE		(1 << 26)
+#define TXDESC_CONTROL_HUGE		(1 << 27)
+#define TXDESC_CONTROL_PAD		(1 << 28)
+#define TXDESC_CONTROL_CRC		(1 << 29)
+#define TXDESC_CONTROL_LAST		(1 << 30)
+#define TXDESC_CONTROL_INT		(1 << 31)
 
 /*
  * Structure of a TX/RX descriptors and RX status
  */
-काष्ठा txrx_desc_t अणु
+struct txrx_desc_t {
 	__le32 packet;
 	__le32 control;
-पूर्ण;
-काष्ठा rx_status_t अणु
+};
+struct rx_status_t {
 	__le32 statusinfo;
 	__le32 statushashcrc;
-पूर्ण;
+};
 
 /*
- * Device driver data काष्ठाure
+ * Device driver data structure
  */
-काष्ठा netdata_local अणु
-	काष्ठा platक्रमm_device	*pdev;
-	काष्ठा net_device	*ndev;
-	काष्ठा device_node	*phy_node;
+struct netdata_local {
+	struct platform_device	*pdev;
+	struct net_device	*ndev;
+	struct device_node	*phy_node;
 	spinlock_t		lock;
-	व्योम __iomem		*net_base;
+	void __iomem		*net_base;
 	u32			msg_enable;
-	अचिन्हित पूर्णांक		skblen[ENET_TX_DESC];
-	अचिन्हित पूर्णांक		last_tx_idx;
-	अचिन्हित पूर्णांक		num_used_tx_buffs;
-	काष्ठा mii_bus		*mii_bus;
-	काष्ठा clk		*clk;
+	unsigned int		skblen[ENET_TX_DESC];
+	unsigned int		last_tx_idx;
+	unsigned int		num_used_tx_buffs;
+	struct mii_bus		*mii_bus;
+	struct clk		*clk;
 	dma_addr_t		dma_buff_base_p;
-	व्योम			*dma_buff_base_v;
-	माप_प्रकार			dma_buff_size;
-	काष्ठा txrx_desc_t	*tx_desc_v;
+	void			*dma_buff_base_v;
+	size_t			dma_buff_size;
+	struct txrx_desc_t	*tx_desc_v;
 	u32			*tx_stat_v;
-	व्योम			*tx_buff_v;
-	काष्ठा txrx_desc_t	*rx_desc_v;
-	काष्ठा rx_status_t	*rx_stat_v;
-	व्योम			*rx_buff_v;
-	पूर्णांक			link;
-	पूर्णांक			speed;
-	पूर्णांक			duplex;
-	काष्ठा napi_काष्ठा	napi;
-पूर्ण;
+	void			*tx_buff_v;
+	struct txrx_desc_t	*rx_desc_v;
+	struct rx_status_t	*rx_stat_v;
+	void			*rx_buff_v;
+	int			link;
+	int			speed;
+	int			duplex;
+	struct napi_struct	napi;
+};
 
 /*
  * MAC support functions
  */
-अटल व्योम __lpc_set_mac(काष्ठा netdata_local *pldat, u8 *mac)
-अणु
-	u32 पंचांगp;
+static void __lpc_set_mac(struct netdata_local *pldat, u8 *mac)
+{
+	u32 tmp;
 
 	/* Set station address */
-	पंचांगp = mac[0] | ((u32)mac[1] << 8);
-	ग_लिखोl(पंचांगp, LPC_ENET_SA2(pldat->net_base));
-	पंचांगp = mac[2] | ((u32)mac[3] << 8);
-	ग_लिखोl(पंचांगp, LPC_ENET_SA1(pldat->net_base));
-	पंचांगp = mac[4] | ((u32)mac[5] << 8);
-	ग_लिखोl(पंचांगp, LPC_ENET_SA0(pldat->net_base));
+	tmp = mac[0] | ((u32)mac[1] << 8);
+	writel(tmp, LPC_ENET_SA2(pldat->net_base));
+	tmp = mac[2] | ((u32)mac[3] << 8);
+	writel(tmp, LPC_ENET_SA1(pldat->net_base));
+	tmp = mac[4] | ((u32)mac[5] << 8);
+	writel(tmp, LPC_ENET_SA0(pldat->net_base));
 
 	netdev_dbg(pldat->ndev, "Ethernet MAC address %pM\n", mac);
-पूर्ण
+}
 
-अटल व्योम __lpc_get_mac(काष्ठा netdata_local *pldat, u8 *mac)
-अणु
-	u32 पंचांगp;
+static void __lpc_get_mac(struct netdata_local *pldat, u8 *mac)
+{
+	u32 tmp;
 
 	/* Get station address */
-	पंचांगp = पढ़ोl(LPC_ENET_SA2(pldat->net_base));
-	mac[0] = पंचांगp & 0xFF;
-	mac[1] = पंचांगp >> 8;
-	पंचांगp = पढ़ोl(LPC_ENET_SA1(pldat->net_base));
-	mac[2] = पंचांगp & 0xFF;
-	mac[3] = पंचांगp >> 8;
-	पंचांगp = पढ़ोl(LPC_ENET_SA0(pldat->net_base));
-	mac[4] = पंचांगp & 0xFF;
-	mac[5] = पंचांगp >> 8;
-पूर्ण
+	tmp = readl(LPC_ENET_SA2(pldat->net_base));
+	mac[0] = tmp & 0xFF;
+	mac[1] = tmp >> 8;
+	tmp = readl(LPC_ENET_SA1(pldat->net_base));
+	mac[2] = tmp & 0xFF;
+	mac[3] = tmp >> 8;
+	tmp = readl(LPC_ENET_SA0(pldat->net_base));
+	mac[4] = tmp & 0xFF;
+	mac[5] = tmp >> 8;
+}
 
-अटल व्योम __lpc_params_setup(काष्ठा netdata_local *pldat)
-अणु
-	u32 पंचांगp;
+static void __lpc_params_setup(struct netdata_local *pldat)
+{
+	u32 tmp;
 
-	अगर (pldat->duplex == DUPLEX_FULL) अणु
-		पंचांगp = पढ़ोl(LPC_ENET_MAC2(pldat->net_base));
-		पंचांगp |= LPC_MAC2_FULL_DUPLEX;
-		ग_लिखोl(पंचांगp, LPC_ENET_MAC2(pldat->net_base));
-		पंचांगp = पढ़ोl(LPC_ENET_COMMAND(pldat->net_base));
-		पंचांगp |= LPC_COMMAND_FULLDUPLEX;
-		ग_लिखोl(पंचांगp, LPC_ENET_COMMAND(pldat->net_base));
-		ग_लिखोl(LPC_IPGT_LOAD(0x15), LPC_ENET_IPGT(pldat->net_base));
-	पूर्ण अन्यथा अणु
-		पंचांगp = पढ़ोl(LPC_ENET_MAC2(pldat->net_base));
-		पंचांगp &= ~LPC_MAC2_FULL_DUPLEX;
-		ग_लिखोl(पंचांगp, LPC_ENET_MAC2(pldat->net_base));
-		पंचांगp = पढ़ोl(LPC_ENET_COMMAND(pldat->net_base));
-		पंचांगp &= ~LPC_COMMAND_FULLDUPLEX;
-		ग_लिखोl(पंचांगp, LPC_ENET_COMMAND(pldat->net_base));
-		ग_लिखोl(LPC_IPGT_LOAD(0x12), LPC_ENET_IPGT(pldat->net_base));
-	पूर्ण
+	if (pldat->duplex == DUPLEX_FULL) {
+		tmp = readl(LPC_ENET_MAC2(pldat->net_base));
+		tmp |= LPC_MAC2_FULL_DUPLEX;
+		writel(tmp, LPC_ENET_MAC2(pldat->net_base));
+		tmp = readl(LPC_ENET_COMMAND(pldat->net_base));
+		tmp |= LPC_COMMAND_FULLDUPLEX;
+		writel(tmp, LPC_ENET_COMMAND(pldat->net_base));
+		writel(LPC_IPGT_LOAD(0x15), LPC_ENET_IPGT(pldat->net_base));
+	} else {
+		tmp = readl(LPC_ENET_MAC2(pldat->net_base));
+		tmp &= ~LPC_MAC2_FULL_DUPLEX;
+		writel(tmp, LPC_ENET_MAC2(pldat->net_base));
+		tmp = readl(LPC_ENET_COMMAND(pldat->net_base));
+		tmp &= ~LPC_COMMAND_FULLDUPLEX;
+		writel(tmp, LPC_ENET_COMMAND(pldat->net_base));
+		writel(LPC_IPGT_LOAD(0x12), LPC_ENET_IPGT(pldat->net_base));
+	}
 
-	अगर (pldat->speed == SPEED_100)
-		ग_लिखोl(LPC_SUPP_SPEED, LPC_ENET_SUPP(pldat->net_base));
-	अन्यथा
-		ग_लिखोl(0, LPC_ENET_SUPP(pldat->net_base));
-पूर्ण
+	if (pldat->speed == SPEED_100)
+		writel(LPC_SUPP_SPEED, LPC_ENET_SUPP(pldat->net_base));
+	else
+		writel(0, LPC_ENET_SUPP(pldat->net_base));
+}
 
-अटल व्योम __lpc_eth_reset(काष्ठा netdata_local *pldat)
-अणु
+static void __lpc_eth_reset(struct netdata_local *pldat)
+{
 	/* Reset all MAC logic */
-	ग_लिखोl((LPC_MAC1_RESET_TX | LPC_MAC1_RESET_MCS_TX | LPC_MAC1_RESET_RX |
+	writel((LPC_MAC1_RESET_TX | LPC_MAC1_RESET_MCS_TX | LPC_MAC1_RESET_RX |
 		LPC_MAC1_RESET_MCS_RX | LPC_MAC1_SIMULATION_RESET |
 		LPC_MAC1_SOFT_RESET), LPC_ENET_MAC1(pldat->net_base));
-	ग_लिखोl((LPC_COMMAND_REG_RESET | LPC_COMMAND_TXRESET |
+	writel((LPC_COMMAND_REG_RESET | LPC_COMMAND_TXRESET |
 		LPC_COMMAND_RXRESET), LPC_ENET_COMMAND(pldat->net_base));
-पूर्ण
+}
 
-अटल पूर्णांक __lpc_mii_mngt_reset(काष्ठा netdata_local *pldat)
-अणु
+static int __lpc_mii_mngt_reset(struct netdata_local *pldat)
+{
 	/* Reset MII management hardware */
-	ग_लिखोl(LPC_MCFG_RESET_MII_MGMT, LPC_ENET_MCFG(pldat->net_base));
+	writel(LPC_MCFG_RESET_MII_MGMT, LPC_ENET_MCFG(pldat->net_base));
 
-	/* Setup MII घड़ी to slowest rate with a /28 भागider */
-	ग_लिखोl(LPC_MCFG_CLOCK_SELECT(LPC_MCFG_CLOCK_HOST_DIV_28),
+	/* Setup MII clock to slowest rate with a /28 divider */
+	writel(LPC_MCFG_CLOCK_SELECT(LPC_MCFG_CLOCK_HOST_DIV_28),
 	       LPC_ENET_MCFG(pldat->net_base));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत phys_addr_t __va_to_pa(व्योम *addr, काष्ठा netdata_local *pldat)
-अणु
+static inline phys_addr_t __va_to_pa(void *addr, struct netdata_local *pldat)
+{
 	phys_addr_t phaddr;
 
 	phaddr = addr - pldat->dma_buff_base_v;
 	phaddr += pldat->dma_buff_base_p;
 
-	वापस phaddr;
-पूर्ण
+	return phaddr;
+}
 
-अटल व्योम lpc_eth_enable_पूर्णांक(व्योम __iomem *regbase)
-अणु
-	ग_लिखोl((LPC_MACINT_RXDONEINTEN | LPC_MACINT_TXDONEINTEN),
+static void lpc_eth_enable_int(void __iomem *regbase)
+{
+	writel((LPC_MACINT_RXDONEINTEN | LPC_MACINT_TXDONEINTEN),
 	       LPC_ENET_INTENABLE(regbase));
-पूर्ण
+}
 
-अटल व्योम lpc_eth_disable_पूर्णांक(व्योम __iomem *regbase)
-अणु
-	ग_लिखोl(0, LPC_ENET_INTENABLE(regbase));
-पूर्ण
+static void lpc_eth_disable_int(void __iomem *regbase)
+{
+	writel(0, LPC_ENET_INTENABLE(regbase));
+}
 
 /* Setup TX/RX descriptors */
-अटल व्योम __lpc_txrx_desc_setup(काष्ठा netdata_local *pldat)
-अणु
+static void __lpc_txrx_desc_setup(struct netdata_local *pldat)
+{
 	u32 *ptxstat;
-	व्योम *tbuff;
-	पूर्णांक i;
-	काष्ठा txrx_desc_t *ptxrxdesc;
-	काष्ठा rx_status_t *prxstat;
+	void *tbuff;
+	int i;
+	struct txrx_desc_t *ptxrxdesc;
+	struct rx_status_t *prxstat;
 
 	tbuff = PTR_ALIGN(pldat->dma_buff_base_v, 16);
 
 	/* Setup TX descriptors, status, and buffers */
 	pldat->tx_desc_v = tbuff;
-	tbuff += माप(काष्ठा txrx_desc_t) * ENET_TX_DESC;
+	tbuff += sizeof(struct txrx_desc_t) * ENET_TX_DESC;
 
 	pldat->tx_stat_v = tbuff;
-	tbuff += माप(u32) * ENET_TX_DESC;
+	tbuff += sizeof(u32) * ENET_TX_DESC;
 
 	tbuff = PTR_ALIGN(tbuff, 16);
 	pldat->tx_buff_v = tbuff;
@@ -546,18 +545,18 @@
 
 	/* Setup RX descriptors, status, and buffers */
 	pldat->rx_desc_v = tbuff;
-	tbuff += माप(काष्ठा txrx_desc_t) * ENET_RX_DESC;
+	tbuff += sizeof(struct txrx_desc_t) * ENET_RX_DESC;
 
 	tbuff = PTR_ALIGN(tbuff, 16);
 	pldat->rx_stat_v = tbuff;
-	tbuff += माप(काष्ठा rx_status_t) * ENET_RX_DESC;
+	tbuff += sizeof(struct rx_status_t) * ENET_RX_DESC;
 
 	tbuff = PTR_ALIGN(tbuff, 16);
 	pldat->rx_buff_v = tbuff;
 	tbuff += ENET_MAXF_SIZE * ENET_RX_DESC;
 
 	/* Map the TX descriptors to the TX buffers in hardware */
-	क्रम (i = 0; i < ENET_TX_DESC; i++) अणु
+	for (i = 0; i < ENET_TX_DESC; i++) {
 		ptxstat = &pldat->tx_stat_v[i];
 		ptxrxdesc = &pldat->tx_desc_v[i];
 
@@ -565,10 +564,10 @@
 				pldat->tx_buff_v + i * ENET_MAXF_SIZE, pldat);
 		ptxrxdesc->control = 0;
 		*ptxstat = 0;
-	पूर्ण
+	}
 
 	/* Map the RX descriptors to the RX buffers in hardware */
-	क्रम (i = 0; i < ENET_RX_DESC; i++) अणु
+	for (i = 0; i < ENET_RX_DESC; i++) {
 		prxstat = &pldat->rx_stat_v[i];
 		ptxrxdesc = &pldat->rx_desc_v[i];
 
@@ -577,57 +576,57 @@
 		ptxrxdesc->control = RXDESC_CONTROL_INT | (ENET_MAXF_SIZE - 1);
 		prxstat->statusinfo = 0;
 		prxstat->statushashcrc = 0;
-	पूर्ण
+	}
 
-	/* Setup base addresses in hardware to poपूर्णांक to buffers and
+	/* Setup base addresses in hardware to point to buffers and
 	 * descriptors
 	 */
-	ग_लिखोl((ENET_TX_DESC - 1),
+	writel((ENET_TX_DESC - 1),
 	       LPC_ENET_TXDESCRIPTORNUMBER(pldat->net_base));
-	ग_लिखोl(__va_to_pa(pldat->tx_desc_v, pldat),
+	writel(__va_to_pa(pldat->tx_desc_v, pldat),
 	       LPC_ENET_TXDESCRIPTOR(pldat->net_base));
-	ग_लिखोl(__va_to_pa(pldat->tx_stat_v, pldat),
+	writel(__va_to_pa(pldat->tx_stat_v, pldat),
 	       LPC_ENET_TXSTATUS(pldat->net_base));
-	ग_लिखोl((ENET_RX_DESC - 1),
+	writel((ENET_RX_DESC - 1),
 	       LPC_ENET_RXDESCRIPTORNUMBER(pldat->net_base));
-	ग_लिखोl(__va_to_pa(pldat->rx_desc_v, pldat),
+	writel(__va_to_pa(pldat->rx_desc_v, pldat),
 	       LPC_ENET_RXDESCRIPTOR(pldat->net_base));
-	ग_लिखोl(__va_to_pa(pldat->rx_stat_v, pldat),
+	writel(__va_to_pa(pldat->rx_stat_v, pldat),
 	       LPC_ENET_RXSTATUS(pldat->net_base));
-पूर्ण
+}
 
-अटल व्योम __lpc_eth_init(काष्ठा netdata_local *pldat)
-अणु
-	u32 पंचांगp;
+static void __lpc_eth_init(struct netdata_local *pldat)
+{
+	u32 tmp;
 
 	/* Disable controller and reset */
-	पंचांगp = पढ़ोl(LPC_ENET_COMMAND(pldat->net_base));
-	पंचांगp &= ~LPC_COMMAND_RXENABLE | LPC_COMMAND_TXENABLE;
-	ग_लिखोl(पंचांगp, LPC_ENET_COMMAND(pldat->net_base));
-	पंचांगp = पढ़ोl(LPC_ENET_MAC1(pldat->net_base));
-	पंचांगp &= ~LPC_MAC1_RECV_ENABLE;
-	ग_लिखोl(पंचांगp, LPC_ENET_MAC1(pldat->net_base));
+	tmp = readl(LPC_ENET_COMMAND(pldat->net_base));
+	tmp &= ~LPC_COMMAND_RXENABLE | LPC_COMMAND_TXENABLE;
+	writel(tmp, LPC_ENET_COMMAND(pldat->net_base));
+	tmp = readl(LPC_ENET_MAC1(pldat->net_base));
+	tmp &= ~LPC_MAC1_RECV_ENABLE;
+	writel(tmp, LPC_ENET_MAC1(pldat->net_base));
 
 	/* Initial MAC setup */
-	ग_लिखोl(LPC_MAC1_PASS_ALL_RX_FRAMES, LPC_ENET_MAC1(pldat->net_base));
-	ग_लिखोl((LPC_MAC2_PAD_CRC_ENABLE | LPC_MAC2_CRC_ENABLE),
+	writel(LPC_MAC1_PASS_ALL_RX_FRAMES, LPC_ENET_MAC1(pldat->net_base));
+	writel((LPC_MAC2_PAD_CRC_ENABLE | LPC_MAC2_CRC_ENABLE),
 	       LPC_ENET_MAC2(pldat->net_base));
-	ग_लिखोl(ENET_MAXF_SIZE, LPC_ENET_MAXF(pldat->net_base));
+	writel(ENET_MAXF_SIZE, LPC_ENET_MAXF(pldat->net_base));
 
-	/* Collision winकरोw, gap */
-	ग_लिखोl((LPC_CLRT_LOAD_RETRY_MAX(0xF) |
+	/* Collision window, gap */
+	writel((LPC_CLRT_LOAD_RETRY_MAX(0xF) |
 		LPC_CLRT_LOAD_COLLISION_WINDOW(0x37)),
 	       LPC_ENET_CLRT(pldat->net_base));
-	ग_लिखोl(LPC_IPGR_LOAD_PART2(0x12), LPC_ENET_IPGR(pldat->net_base));
+	writel(LPC_IPGR_LOAD_PART2(0x12), LPC_ENET_IPGR(pldat->net_base));
 
-	अगर (lpc_phy_पूर्णांकerface_mode(&pldat->pdev->dev) == PHY_INTERFACE_MODE_MII)
-		ग_लिखोl(LPC_COMMAND_PASSRUNTFRAME,
+	if (lpc_phy_interface_mode(&pldat->pdev->dev) == PHY_INTERFACE_MODE_MII)
+		writel(LPC_COMMAND_PASSRUNTFRAME,
 		       LPC_ENET_COMMAND(pldat->net_base));
-	अन्यथा अणु
-		ग_लिखोl((LPC_COMMAND_PASSRUNTFRAME | LPC_COMMAND_RMII),
+	else {
+		writel((LPC_COMMAND_PASSRUNTFRAME | LPC_COMMAND_RMII),
 		       LPC_ENET_COMMAND(pldat->net_base));
-		ग_लिखोl(LPC_SUPP_RESET_RMII, LPC_ENET_SUPP(pldat->net_base));
-	पूर्ण
+		writel(LPC_SUPP_RESET_RMII, LPC_ENET_SUPP(pldat->net_base));
+	}
 
 	__lpc_params_setup(pldat);
 
@@ -635,147 +634,147 @@
 	__lpc_txrx_desc_setup(pldat);
 
 	/* Setup packet filtering */
-	ग_लिखोl((LPC_RXFLTRW_ACCEPTUBROADCAST | LPC_RXFLTRW_ACCEPTPERFECT),
+	writel((LPC_RXFLTRW_ACCEPTUBROADCAST | LPC_RXFLTRW_ACCEPTPERFECT),
 	       LPC_ENET_RXFILTER_CTRL(pldat->net_base));
 
 	/* Get the next TX buffer output index */
 	pldat->num_used_tx_buffs = 0;
 	pldat->last_tx_idx =
-		पढ़ोl(LPC_ENET_TXCONSUMEINDEX(pldat->net_base));
+		readl(LPC_ENET_TXCONSUMEINDEX(pldat->net_base));
 
-	/* Clear and enable पूर्णांकerrupts */
-	ग_लिखोl(0xFFFF, LPC_ENET_INTCLEAR(pldat->net_base));
+	/* Clear and enable interrupts */
+	writel(0xFFFF, LPC_ENET_INTCLEAR(pldat->net_base));
 	smp_wmb();
-	lpc_eth_enable_पूर्णांक(pldat->net_base);
+	lpc_eth_enable_int(pldat->net_base);
 
 	/* Enable controller */
-	पंचांगp = पढ़ोl(LPC_ENET_COMMAND(pldat->net_base));
-	पंचांगp |= LPC_COMMAND_RXENABLE | LPC_COMMAND_TXENABLE;
-	ग_लिखोl(पंचांगp, LPC_ENET_COMMAND(pldat->net_base));
-	पंचांगp = पढ़ोl(LPC_ENET_MAC1(pldat->net_base));
-	पंचांगp |= LPC_MAC1_RECV_ENABLE;
-	ग_लिखोl(पंचांगp, LPC_ENET_MAC1(pldat->net_base));
-पूर्ण
+	tmp = readl(LPC_ENET_COMMAND(pldat->net_base));
+	tmp |= LPC_COMMAND_RXENABLE | LPC_COMMAND_TXENABLE;
+	writel(tmp, LPC_ENET_COMMAND(pldat->net_base));
+	tmp = readl(LPC_ENET_MAC1(pldat->net_base));
+	tmp |= LPC_MAC1_RECV_ENABLE;
+	writel(tmp, LPC_ENET_MAC1(pldat->net_base));
+}
 
-अटल व्योम __lpc_eth_shutकरोwn(काष्ठा netdata_local *pldat)
-अणु
-	/* Reset ethernet and घातer करोwn PHY */
+static void __lpc_eth_shutdown(struct netdata_local *pldat)
+{
+	/* Reset ethernet and power down PHY */
 	__lpc_eth_reset(pldat);
-	ग_लिखोl(0, LPC_ENET_MAC1(pldat->net_base));
-	ग_लिखोl(0, LPC_ENET_MAC2(pldat->net_base));
-पूर्ण
+	writel(0, LPC_ENET_MAC1(pldat->net_base));
+	writel(0, LPC_ENET_MAC2(pldat->net_base));
+}
 
 /*
  * MAC<--->PHY support functions
  */
-अटल पूर्णांक lpc_mdio_पढ़ो(काष्ठा mii_bus *bus, पूर्णांक phy_id, पूर्णांक phyreg)
-अणु
-	काष्ठा netdata_local *pldat = bus->priv;
-	अचिन्हित दीर्घ समयout = jअगरfies + msecs_to_jअगरfies(100);
-	पूर्णांक lps;
+static int lpc_mdio_read(struct mii_bus *bus, int phy_id, int phyreg)
+{
+	struct netdata_local *pldat = bus->priv;
+	unsigned long timeout = jiffies + msecs_to_jiffies(100);
+	int lps;
 
-	ग_लिखोl(((phy_id << 8) | phyreg), LPC_ENET_MADR(pldat->net_base));
-	ग_लिखोl(LPC_MCMD_READ, LPC_ENET_MCMD(pldat->net_base));
+	writel(((phy_id << 8) | phyreg), LPC_ENET_MADR(pldat->net_base));
+	writel(LPC_MCMD_READ, LPC_ENET_MCMD(pldat->net_base));
 
-	/* Wait क्रम unbusy status */
-	जबतक (पढ़ोl(LPC_ENET_MIND(pldat->net_base)) & LPC_MIND_BUSY) अणु
-		अगर (समय_after(jअगरfies, समयout))
-			वापस -EIO;
+	/* Wait for unbusy status */
+	while (readl(LPC_ENET_MIND(pldat->net_base)) & LPC_MIND_BUSY) {
+		if (time_after(jiffies, timeout))
+			return -EIO;
 		cpu_relax();
-	पूर्ण
+	}
 
-	lps = पढ़ोl(LPC_ENET_MRDD(pldat->net_base));
-	ग_लिखोl(0, LPC_ENET_MCMD(pldat->net_base));
+	lps = readl(LPC_ENET_MRDD(pldat->net_base));
+	writel(0, LPC_ENET_MCMD(pldat->net_base));
 
-	वापस lps;
-पूर्ण
+	return lps;
+}
 
-अटल पूर्णांक lpc_mdio_ग_लिखो(काष्ठा mii_bus *bus, पूर्णांक phy_id, पूर्णांक phyreg,
+static int lpc_mdio_write(struct mii_bus *bus, int phy_id, int phyreg,
 			u16 phydata)
-अणु
-	काष्ठा netdata_local *pldat = bus->priv;
-	अचिन्हित दीर्घ समयout = jअगरfies + msecs_to_jअगरfies(100);
+{
+	struct netdata_local *pldat = bus->priv;
+	unsigned long timeout = jiffies + msecs_to_jiffies(100);
 
-	ग_लिखोl(((phy_id << 8) | phyreg), LPC_ENET_MADR(pldat->net_base));
-	ग_लिखोl(phydata, LPC_ENET_MWTD(pldat->net_base));
+	writel(((phy_id << 8) | phyreg), LPC_ENET_MADR(pldat->net_base));
+	writel(phydata, LPC_ENET_MWTD(pldat->net_base));
 
-	/* Wait क्रम completion */
-	जबतक (पढ़ोl(LPC_ENET_MIND(pldat->net_base)) & LPC_MIND_BUSY) अणु
-		अगर (समय_after(jअगरfies, समयout))
-			वापस -EIO;
+	/* Wait for completion */
+	while (readl(LPC_ENET_MIND(pldat->net_base)) & LPC_MIND_BUSY) {
+		if (time_after(jiffies, timeout))
+			return -EIO;
 		cpu_relax();
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lpc_mdio_reset(काष्ठा mii_bus *bus)
-अणु
-	वापस __lpc_mii_mngt_reset((काष्ठा netdata_local *)bus->priv);
-पूर्ण
+static int lpc_mdio_reset(struct mii_bus *bus)
+{
+	return __lpc_mii_mngt_reset((struct netdata_local *)bus->priv);
+}
 
-अटल व्योम lpc_handle_link_change(काष्ठा net_device *ndev)
-अणु
-	काष्ठा netdata_local *pldat = netdev_priv(ndev);
-	काष्ठा phy_device *phydev = ndev->phydev;
-	अचिन्हित दीर्घ flags;
+static void lpc_handle_link_change(struct net_device *ndev)
+{
+	struct netdata_local *pldat = netdev_priv(ndev);
+	struct phy_device *phydev = ndev->phydev;
+	unsigned long flags;
 
 	bool status_change = false;
 
 	spin_lock_irqsave(&pldat->lock, flags);
 
-	अगर (phydev->link) अणु
-		अगर ((pldat->speed != phydev->speed) ||
-		    (pldat->duplex != phydev->duplex)) अणु
+	if (phydev->link) {
+		if ((pldat->speed != phydev->speed) ||
+		    (pldat->duplex != phydev->duplex)) {
 			pldat->speed = phydev->speed;
 			pldat->duplex = phydev->duplex;
 			status_change = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (phydev->link != pldat->link) अणु
-		अगर (!phydev->link) अणु
+	if (phydev->link != pldat->link) {
+		if (!phydev->link) {
 			pldat->speed = 0;
 			pldat->duplex = -1;
-		पूर्ण
+		}
 		pldat->link = phydev->link;
 
 		status_change = true;
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&pldat->lock, flags);
 
-	अगर (status_change)
+	if (status_change)
 		__lpc_params_setup(pldat);
-पूर्ण
+}
 
-अटल पूर्णांक lpc_mii_probe(काष्ठा net_device *ndev)
-अणु
-	काष्ठा netdata_local *pldat = netdev_priv(ndev);
-	काष्ठा phy_device *phydev;
+static int lpc_mii_probe(struct net_device *ndev)
+{
+	struct netdata_local *pldat = netdev_priv(ndev);
+	struct phy_device *phydev;
 
 	/* Attach to the PHY */
-	अगर (lpc_phy_पूर्णांकerface_mode(&pldat->pdev->dev) == PHY_INTERFACE_MODE_MII)
+	if (lpc_phy_interface_mode(&pldat->pdev->dev) == PHY_INTERFACE_MODE_MII)
 		netdev_info(ndev, "using MII interface\n");
-	अन्यथा
+	else
 		netdev_info(ndev, "using RMII interface\n");
 
-	अगर (pldat->phy_node)
+	if (pldat->phy_node)
 		phydev =  of_phy_find_device(pldat->phy_node);
-	अन्यथा
+	else
 		phydev = phy_find_first(pldat->mii_bus);
-	अगर (!phydev) अणु
+	if (!phydev) {
 		netdev_err(ndev, "no PHY found\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	phydev = phy_connect(ndev, phydev_name(phydev),
 			     &lpc_handle_link_change,
-			     lpc_phy_पूर्णांकerface_mode(&pldat->pdev->dev));
-	अगर (IS_ERR(phydev)) अणु
+			     lpc_phy_interface_mode(&pldat->pdev->dev));
+	if (IS_ERR(phydev)) {
 		netdev_err(ndev, "Could not attach to PHY\n");
-		वापस PTR_ERR(phydev);
-	पूर्ण
+		return PTR_ERR(phydev);
+	}
 
 	phy_set_max_speed(phydev, SPEED_100);
 
@@ -785,66 +784,66 @@
 
 	phy_attached_info(phydev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lpc_mii_init(काष्ठा netdata_local *pldat)
-अणु
-	काष्ठा device_node *node;
-	पूर्णांक err = -ENXIO;
+static int lpc_mii_init(struct netdata_local *pldat)
+{
+	struct device_node *node;
+	int err = -ENXIO;
 
 	pldat->mii_bus = mdiobus_alloc();
-	अगर (!pldat->mii_bus) अणु
+	if (!pldat->mii_bus) {
 		err = -ENOMEM;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
 	/* Setup MII mode */
-	अगर (lpc_phy_पूर्णांकerface_mode(&pldat->pdev->dev) == PHY_INTERFACE_MODE_MII)
-		ग_लिखोl(LPC_COMMAND_PASSRUNTFRAME,
+	if (lpc_phy_interface_mode(&pldat->pdev->dev) == PHY_INTERFACE_MODE_MII)
+		writel(LPC_COMMAND_PASSRUNTFRAME,
 		       LPC_ENET_COMMAND(pldat->net_base));
-	अन्यथा अणु
-		ग_लिखोl((LPC_COMMAND_PASSRUNTFRAME | LPC_COMMAND_RMII),
+	else {
+		writel((LPC_COMMAND_PASSRUNTFRAME | LPC_COMMAND_RMII),
 		       LPC_ENET_COMMAND(pldat->net_base));
-		ग_लिखोl(LPC_SUPP_RESET_RMII, LPC_ENET_SUPP(pldat->net_base));
-	पूर्ण
+		writel(LPC_SUPP_RESET_RMII, LPC_ENET_SUPP(pldat->net_base));
+	}
 
 	pldat->mii_bus->name = "lpc_mii_bus";
-	pldat->mii_bus->पढ़ो = &lpc_mdio_पढ़ो;
-	pldat->mii_bus->ग_लिखो = &lpc_mdio_ग_लिखो;
+	pldat->mii_bus->read = &lpc_mdio_read;
+	pldat->mii_bus->write = &lpc_mdio_write;
 	pldat->mii_bus->reset = &lpc_mdio_reset;
-	snम_लिखो(pldat->mii_bus->id, MII_BUS_ID_SIZE, "%s-%x",
+	snprintf(pldat->mii_bus->id, MII_BUS_ID_SIZE, "%s-%x",
 		 pldat->pdev->name, pldat->pdev->id);
 	pldat->mii_bus->priv = pldat;
 	pldat->mii_bus->parent = &pldat->pdev->dev;
 
 	node = of_get_child_by_name(pldat->pdev->dev.of_node, "mdio");
-	err = of_mdiobus_रेजिस्टर(pldat->mii_bus, node);
+	err = of_mdiobus_register(pldat->mii_bus, node);
 	of_node_put(node);
-	अगर (err)
-		जाओ err_out_unरेजिस्टर_bus;
+	if (err)
+		goto err_out_unregister_bus;
 
 	err = lpc_mii_probe(pldat->ndev);
-	अगर (err)
-		जाओ err_out_unरेजिस्टर_bus;
+	if (err)
+		goto err_out_unregister_bus;
 
-	वापस 0;
+	return 0;
 
-err_out_unरेजिस्टर_bus:
-	mdiobus_unरेजिस्टर(pldat->mii_bus);
-	mdiobus_मुक्त(pldat->mii_bus);
+err_out_unregister_bus:
+	mdiobus_unregister(pldat->mii_bus);
+	mdiobus_free(pldat->mii_bus);
 err_out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम __lpc_handle_xmit(काष्ठा net_device *ndev)
-अणु
-	काष्ठा netdata_local *pldat = netdev_priv(ndev);
+static void __lpc_handle_xmit(struct net_device *ndev)
+{
+	struct netdata_local *pldat = netdev_priv(ndev);
 	u32 txcidx, *ptxstat, txstat;
 
-	txcidx = पढ़ोl(LPC_ENET_TXCONSUMEINDEX(pldat->net_base));
-	जबतक (pldat->last_tx_idx != txcidx) अणु
-		अचिन्हित पूर्णांक skblen = pldat->skblen[pldat->last_tx_idx];
+	txcidx = readl(LPC_ENET_TXCONSUMEINDEX(pldat->net_base));
+	while (pldat->last_tx_idx != txcidx) {
+		unsigned int skblen = pldat->skblen[pldat->last_tx_idx];
 
 		/* A buffer is available, get buffer status */
 		ptxstat = &pldat->tx_stat_v[pldat->last_tx_idx];
@@ -853,91 +852,91 @@ err_out:
 		/* Next buffer and decrement used buffer counter */
 		pldat->num_used_tx_buffs--;
 		pldat->last_tx_idx++;
-		अगर (pldat->last_tx_idx >= ENET_TX_DESC)
+		if (pldat->last_tx_idx >= ENET_TX_DESC)
 			pldat->last_tx_idx = 0;
 
 		/* Update collision counter */
 		ndev->stats.collisions += TXSTATUS_COLLISIONS_GET(txstat);
 
 		/* Any errors occurred? */
-		अगर (txstat & TXSTATUS_ERROR) अणु
-			अगर (txstat & TXSTATUS_UNDERRUN) अणु
+		if (txstat & TXSTATUS_ERROR) {
+			if (txstat & TXSTATUS_UNDERRUN) {
 				/* FIFO underrun */
-				ndev->stats.tx_fअगरo_errors++;
-			पूर्ण
-			अगर (txstat & TXSTATUS_LATECOLL) अणु
+				ndev->stats.tx_fifo_errors++;
+			}
+			if (txstat & TXSTATUS_LATECOLL) {
 				/* Late collision */
-				ndev->stats.tx_पातed_errors++;
-			पूर्ण
-			अगर (txstat & TXSTATUS_EXCESSCOLL) अणु
+				ndev->stats.tx_aborted_errors++;
+			}
+			if (txstat & TXSTATUS_EXCESSCOLL) {
 				/* Excessive collision */
-				ndev->stats.tx_पातed_errors++;
-			पूर्ण
-			अगर (txstat & TXSTATUS_EXCESSDEFER) अणु
+				ndev->stats.tx_aborted_errors++;
+			}
+			if (txstat & TXSTATUS_EXCESSDEFER) {
 				/* Defer limit */
-				ndev->stats.tx_पातed_errors++;
-			पूर्ण
+				ndev->stats.tx_aborted_errors++;
+			}
 			ndev->stats.tx_errors++;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Update stats */
 			ndev->stats.tx_packets++;
 			ndev->stats.tx_bytes += skblen;
-		पूर्ण
+		}
 
-		txcidx = पढ़ोl(LPC_ENET_TXCONSUMEINDEX(pldat->net_base));
-	पूर्ण
+		txcidx = readl(LPC_ENET_TXCONSUMEINDEX(pldat->net_base));
+	}
 
-	अगर (pldat->num_used_tx_buffs <= ENET_TX_DESC/2) अणु
-		अगर (netअगर_queue_stopped(ndev))
-			netअगर_wake_queue(ndev);
-	पूर्ण
-पूर्ण
+	if (pldat->num_used_tx_buffs <= ENET_TX_DESC/2) {
+		if (netif_queue_stopped(ndev))
+			netif_wake_queue(ndev);
+	}
+}
 
-अटल पूर्णांक __lpc_handle_recv(काष्ठा net_device *ndev, पूर्णांक budget)
-अणु
-	काष्ठा netdata_local *pldat = netdev_priv(ndev);
-	काष्ठा sk_buff *skb;
+static int __lpc_handle_recv(struct net_device *ndev, int budget)
+{
+	struct netdata_local *pldat = netdev_priv(ndev);
+	struct sk_buff *skb;
 	u32 rxconsidx, len, ethst;
-	काष्ठा rx_status_t *prxstat;
-	पूर्णांक rx_करोne = 0;
+	struct rx_status_t *prxstat;
+	int rx_done = 0;
 
 	/* Get the current RX buffer indexes */
-	rxconsidx = पढ़ोl(LPC_ENET_RXCONSUMEINDEX(pldat->net_base));
-	जबतक (rx_करोne < budget && rxconsidx !=
-			पढ़ोl(LPC_ENET_RXPRODUCEINDEX(pldat->net_base))) अणु
-		/* Get poपूर्णांकer to receive status */
+	rxconsidx = readl(LPC_ENET_RXCONSUMEINDEX(pldat->net_base));
+	while (rx_done < budget && rxconsidx !=
+			readl(LPC_ENET_RXPRODUCEINDEX(pldat->net_base))) {
+		/* Get pointer to receive status */
 		prxstat = &pldat->rx_stat_v[rxconsidx];
 		len = (prxstat->statusinfo & RXSTATUS_SIZE) + 1;
 
 		/* Status error? */
 		ethst = prxstat->statusinfo;
-		अगर ((ethst & (RXSTATUS_ERROR | RXSTATUS_STATUS_ERROR)) ==
+		if ((ethst & (RXSTATUS_ERROR | RXSTATUS_STATUS_ERROR)) ==
 		    (RXSTATUS_ERROR | RXSTATUS_RANGE))
 			ethst &= ~RXSTATUS_ERROR;
 
-		अगर (ethst & RXSTATUS_ERROR) अणु
-			पूर्णांक si = prxstat->statusinfo;
+		if (ethst & RXSTATUS_ERROR) {
+			int si = prxstat->statusinfo;
 			/* Check statuses */
-			अगर (si & RXSTATUS_OVERRUN) अणु
+			if (si & RXSTATUS_OVERRUN) {
 				/* Overrun error */
-				ndev->stats.rx_fअगरo_errors++;
-			पूर्ण अन्यथा अगर (si & RXSTATUS_CRC) अणु
+				ndev->stats.rx_fifo_errors++;
+			} else if (si & RXSTATUS_CRC) {
 				/* CRC error */
 				ndev->stats.rx_crc_errors++;
-			पूर्ण अन्यथा अगर (si & RXSTATUS_LENGTH) अणु
+			} else if (si & RXSTATUS_LENGTH) {
 				/* Length error */
 				ndev->stats.rx_length_errors++;
-			पूर्ण अन्यथा अगर (si & RXSTATUS_ERROR) अणु
+			} else if (si & RXSTATUS_ERROR) {
 				/* Other error */
 				ndev->stats.rx_length_errors++;
-			पूर्ण
+			}
 			ndev->stats.rx_errors++;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Packet is good */
 			skb = dev_alloc_skb(len);
-			अगर (!skb) अणु
+			if (!skb) {
 				ndev->stats.rx_dropped++;
-			पूर्ण अन्यथा अणु
+			} else {
 				/* Copy packet from buffer */
 				skb_put_data(skb,
 					     pldat->rx_buff_v + rxconsidx * ENET_MAXF_SIZE,
@@ -945,118 +944,118 @@ err_out:
 
 				/* Pass to upper layer */
 				skb->protocol = eth_type_trans(skb, ndev);
-				netअगर_receive_skb(skb);
+				netif_receive_skb(skb);
 				ndev->stats.rx_packets++;
 				ndev->stats.rx_bytes += len;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		/* Increment consume index */
 		rxconsidx = rxconsidx + 1;
-		अगर (rxconsidx >= ENET_RX_DESC)
+		if (rxconsidx >= ENET_RX_DESC)
 			rxconsidx = 0;
-		ग_लिखोl(rxconsidx,
+		writel(rxconsidx,
 		       LPC_ENET_RXCONSUMEINDEX(pldat->net_base));
-		rx_करोne++;
-	पूर्ण
+		rx_done++;
+	}
 
-	वापस rx_करोne;
-पूर्ण
+	return rx_done;
+}
 
-अटल पूर्णांक lpc_eth_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
-अणु
-	काष्ठा netdata_local *pldat = container_of(napi,
-			काष्ठा netdata_local, napi);
-	काष्ठा net_device *ndev = pldat->ndev;
-	पूर्णांक rx_करोne = 0;
-	काष्ठा netdev_queue *txq = netdev_get_tx_queue(ndev, 0);
+static int lpc_eth_poll(struct napi_struct *napi, int budget)
+{
+	struct netdata_local *pldat = container_of(napi,
+			struct netdata_local, napi);
+	struct net_device *ndev = pldat->ndev;
+	int rx_done = 0;
+	struct netdev_queue *txq = netdev_get_tx_queue(ndev, 0);
 
-	__netअगर_tx_lock(txq, smp_processor_id());
+	__netif_tx_lock(txq, smp_processor_id());
 	__lpc_handle_xmit(ndev);
-	__netअगर_tx_unlock(txq);
-	rx_करोne = __lpc_handle_recv(ndev, budget);
+	__netif_tx_unlock(txq);
+	rx_done = __lpc_handle_recv(ndev, budget);
 
-	अगर (rx_करोne < budget) अणु
-		napi_complete_करोne(napi, rx_करोne);
-		lpc_eth_enable_पूर्णांक(pldat->net_base);
-	पूर्ण
+	if (rx_done < budget) {
+		napi_complete_done(napi, rx_done);
+		lpc_eth_enable_int(pldat->net_base);
+	}
 
-	वापस rx_करोne;
-पूर्ण
+	return rx_done;
+}
 
-अटल irqवापस_t __lpc_eth_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा net_device *ndev = dev_id;
-	काष्ठा netdata_local *pldat = netdev_priv(ndev);
-	u32 पंचांगp;
+static irqreturn_t __lpc_eth_interrupt(int irq, void *dev_id)
+{
+	struct net_device *ndev = dev_id;
+	struct netdata_local *pldat = netdev_priv(ndev);
+	u32 tmp;
 
 	spin_lock(&pldat->lock);
 
-	पंचांगp = पढ़ोl(LPC_ENET_INTSTATUS(pldat->net_base));
-	/* Clear पूर्णांकerrupts */
-	ग_लिखोl(पंचांगp, LPC_ENET_INTCLEAR(pldat->net_base));
+	tmp = readl(LPC_ENET_INTSTATUS(pldat->net_base));
+	/* Clear interrupts */
+	writel(tmp, LPC_ENET_INTCLEAR(pldat->net_base));
 
-	lpc_eth_disable_पूर्णांक(pldat->net_base);
-	अगर (likely(napi_schedule_prep(&pldat->napi)))
+	lpc_eth_disable_int(pldat->net_base);
+	if (likely(napi_schedule_prep(&pldat->napi)))
 		__napi_schedule(&pldat->napi);
 
 	spin_unlock(&pldat->lock);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक lpc_eth_बंद(काष्ठा net_device *ndev)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा netdata_local *pldat = netdev_priv(ndev);
+static int lpc_eth_close(struct net_device *ndev)
+{
+	unsigned long flags;
+	struct netdata_local *pldat = netdev_priv(ndev);
 
-	अगर (netअगर_msg_अगरकरोwn(pldat))
+	if (netif_msg_ifdown(pldat))
 		dev_dbg(&pldat->pdev->dev, "shutting down %s\n", ndev->name);
 
 	napi_disable(&pldat->napi);
-	netअगर_stop_queue(ndev);
+	netif_stop_queue(ndev);
 
-	अगर (ndev->phydev)
+	if (ndev->phydev)
 		phy_stop(ndev->phydev);
 
 	spin_lock_irqsave(&pldat->lock, flags);
 	__lpc_eth_reset(pldat);
-	netअगर_carrier_off(ndev);
-	ग_लिखोl(0, LPC_ENET_MAC1(pldat->net_base));
-	ग_लिखोl(0, LPC_ENET_MAC2(pldat->net_base));
+	netif_carrier_off(ndev);
+	writel(0, LPC_ENET_MAC1(pldat->net_base));
+	writel(0, LPC_ENET_MAC2(pldat->net_base));
 	spin_unlock_irqrestore(&pldat->lock, flags);
 
 	clk_disable_unprepare(pldat->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल netdev_tx_t lpc_eth_hard_start_xmit(काष्ठा sk_buff *skb,
-					   काष्ठा net_device *ndev)
-अणु
-	काष्ठा netdata_local *pldat = netdev_priv(ndev);
+static netdev_tx_t lpc_eth_hard_start_xmit(struct sk_buff *skb,
+					   struct net_device *ndev)
+{
+	struct netdata_local *pldat = netdev_priv(ndev);
 	u32 len, txidx;
 	u32 *ptxstat;
-	काष्ठा txrx_desc_t *ptxrxdesc;
+	struct txrx_desc_t *ptxrxdesc;
 
 	len = skb->len;
 
 	spin_lock_irq(&pldat->lock);
 
-	अगर (pldat->num_used_tx_buffs >= (ENET_TX_DESC - 1)) अणु
+	if (pldat->num_used_tx_buffs >= (ENET_TX_DESC - 1)) {
 		/* This function should never be called when there are no
 		 * buffers
 		 */
-		netअगर_stop_queue(ndev);
+		netif_stop_queue(ndev);
 		spin_unlock_irq(&pldat->lock);
 		WARN(1, "BUG! TX request when no free TX buffers!\n");
-		वापस NETDEV_TX_BUSY;
-	पूर्ण
+		return NETDEV_TX_BUSY;
+	}
 
 	/* Get the next TX descriptor index */
-	txidx = पढ़ोl(LPC_ENET_TXPRODUCEINDEX(pldat->net_base));
+	txidx = readl(LPC_ENET_TXPRODUCEINDEX(pldat->net_base));
 
-	/* Setup control क्रम the transfer */
+	/* Setup control for the transfer */
 	ptxstat = &pldat->tx_stat_v[txidx];
 	*ptxstat = 0;
 	ptxrxdesc = &pldat->tx_desc_v[txidx];
@@ -1064,7 +1063,7 @@ err_out:
 		(len - 1) | TXDESC_CONTROL_LAST | TXDESC_CONTROL_INT;
 
 	/* Copy data to the DMA buffer */
-	स_नकल(pldat->tx_buff_v + txidx * ENET_MAXF_SIZE, skb->data, len);
+	memcpy(pldat->tx_buff_v + txidx * ENET_MAXF_SIZE, skb->data, len);
 
 	/* Save the buffer and increment the buffer counter */
 	pldat->skblen[txidx] = len;
@@ -1072,29 +1071,29 @@ err_out:
 
 	/* Start transmit */
 	txidx++;
-	अगर (txidx >= ENET_TX_DESC)
+	if (txidx >= ENET_TX_DESC)
 		txidx = 0;
-	ग_लिखोl(txidx, LPC_ENET_TXPRODUCEINDEX(pldat->net_base));
+	writel(txidx, LPC_ENET_TXPRODUCEINDEX(pldat->net_base));
 
-	/* Stop queue अगर no more TX buffers */
-	अगर (pldat->num_used_tx_buffs >= (ENET_TX_DESC - 1))
-		netअगर_stop_queue(ndev);
+	/* Stop queue if no more TX buffers */
+	if (pldat->num_used_tx_buffs >= (ENET_TX_DESC - 1))
+		netif_stop_queue(ndev);
 
 	spin_unlock_irq(&pldat->lock);
 
-	dev_kमुक्त_skb(skb);
-	वापस NETDEV_TX_OK;
-पूर्ण
+	dev_kfree_skb(skb);
+	return NETDEV_TX_OK;
+}
 
-अटल पूर्णांक lpc_set_mac_address(काष्ठा net_device *ndev, व्योम *p)
-अणु
-	काष्ठा sockaddr *addr = p;
-	काष्ठा netdata_local *pldat = netdev_priv(ndev);
-	अचिन्हित दीर्घ flags;
+static int lpc_set_mac_address(struct net_device *ndev, void *p)
+{
+	struct sockaddr *addr = p;
+	struct netdata_local *pldat = netdev_priv(ndev);
+	unsigned long flags;
 
-	अगर (!is_valid_ether_addr(addr->sa_data))
-		वापस -EADDRNOTAVAIL;
-	स_नकल(ndev->dev_addr, addr->sa_data, ETH_ALEN);
+	if (!is_valid_ether_addr(addr->sa_data))
+		return -EADDRNOTAVAIL;
+	memcpy(ndev->dev_addr, addr->sa_data, ETH_ALEN);
 
 	spin_lock_irqsave(&pldat->lock, flags);
 
@@ -1103,34 +1102,34 @@ err_out:
 
 	spin_unlock_irqrestore(&pldat->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम lpc_eth_set_multicast_list(काष्ठा net_device *ndev)
-अणु
-	काष्ठा netdata_local *pldat = netdev_priv(ndev);
-	काष्ठा netdev_hw_addr_list *mcptr = &ndev->mc;
-	काष्ठा netdev_hw_addr *ha;
-	u32 पंचांगp32, hash_val, hashlo, hashhi;
-	अचिन्हित दीर्घ flags;
+static void lpc_eth_set_multicast_list(struct net_device *ndev)
+{
+	struct netdata_local *pldat = netdev_priv(ndev);
+	struct netdev_hw_addr_list *mcptr = &ndev->mc;
+	struct netdev_hw_addr *ha;
+	u32 tmp32, hash_val, hashlo, hashhi;
+	unsigned long flags;
 
 	spin_lock_irqsave(&pldat->lock, flags);
 
 	/* Set station address */
 	__lpc_set_mac(pldat, ndev->dev_addr);
 
-	पंचांगp32 =  LPC_RXFLTRW_ACCEPTUBROADCAST | LPC_RXFLTRW_ACCEPTPERFECT;
+	tmp32 =  LPC_RXFLTRW_ACCEPTUBROADCAST | LPC_RXFLTRW_ACCEPTPERFECT;
 
-	अगर (ndev->flags & IFF_PROMISC)
-		पंचांगp32 |= LPC_RXFLTRW_ACCEPTUNICAST |
+	if (ndev->flags & IFF_PROMISC)
+		tmp32 |= LPC_RXFLTRW_ACCEPTUNICAST |
 			LPC_RXFLTRW_ACCEPTUMULTICAST;
-	अगर (ndev->flags & IFF_ALLMULTI)
-		पंचांगp32 |= LPC_RXFLTRW_ACCEPTUMULTICAST;
+	if (ndev->flags & IFF_ALLMULTI)
+		tmp32 |= LPC_RXFLTRW_ACCEPTUMULTICAST;
 
-	अगर (netdev_hw_addr_list_count(mcptr))
-		पंचांगp32 |= LPC_RXFLTRW_ACCEPTUMULTICASTHASH;
+	if (netdev_hw_addr_list_count(mcptr))
+		tmp32 |= LPC_RXFLTRW_ACCEPTUMULTICASTHASH;
 
-	ग_लिखोl(पंचांगp32, LPC_ENET_RXFILTER_CTRL(pldat->net_base));
+	writel(tmp32, LPC_ENET_RXFILTER_CTRL(pldat->net_base));
 
 
 	/* Set initial hash table */
@@ -1138,32 +1137,32 @@ err_out:
 	hashhi = 0x0;
 
 	/* 64 bits : multicast address in hash table */
-	netdev_hw_addr_list_क्रम_each(ha, mcptr) अणु
+	netdev_hw_addr_list_for_each(ha, mcptr) {
 		hash_val = (ether_crc(6, ha->addr) >> 23) & 0x3F;
 
-		अगर (hash_val >= 32)
+		if (hash_val >= 32)
 			hashhi |= 1 << (hash_val - 32);
-		अन्यथा
+		else
 			hashlo |= 1 << hash_val;
-	पूर्ण
+	}
 
-	ग_लिखोl(hashlo, LPC_ENET_HASHFILTERL(pldat->net_base));
-	ग_लिखोl(hashhi, LPC_ENET_HASHFILTERH(pldat->net_base));
+	writel(hashlo, LPC_ENET_HASHFILTERL(pldat->net_base));
+	writel(hashhi, LPC_ENET_HASHFILTERH(pldat->net_base));
 
 	spin_unlock_irqrestore(&pldat->lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक lpc_eth_खोलो(काष्ठा net_device *ndev)
-अणु
-	काष्ठा netdata_local *pldat = netdev_priv(ndev);
-	पूर्णांक ret;
+static int lpc_eth_open(struct net_device *ndev)
+{
+	struct netdata_local *pldat = netdev_priv(ndev);
+	int ret;
 
-	अगर (netअगर_msg_अगरup(pldat))
+	if (netif_msg_ifup(pldat))
 		dev_dbg(&pldat->pdev->dev, "enabling %s\n", ndev->name);
 
 	ret = clk_prepare_enable(pldat->clk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* Suspended PHY makes LPC ethernet core block, so resume now */
 	phy_resume(ndev->phydev);
@@ -1174,86 +1173,86 @@ err_out:
 
 	/* schedule a link state check */
 	phy_start(ndev->phydev);
-	netअगर_start_queue(ndev);
+	netif_start_queue(ndev);
 	napi_enable(&pldat->napi);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Ethtool ops
  */
-अटल व्योम lpc_eth_ethtool_getdrvinfo(काष्ठा net_device *ndev,
-	काष्ठा ethtool_drvinfo *info)
-अणु
-	strlcpy(info->driver, MODNAME, माप(info->driver));
-	strlcpy(info->version, DRV_VERSION, माप(info->version));
+static void lpc_eth_ethtool_getdrvinfo(struct net_device *ndev,
+	struct ethtool_drvinfo *info)
+{
+	strlcpy(info->driver, MODNAME, sizeof(info->driver));
+	strlcpy(info->version, DRV_VERSION, sizeof(info->version));
 	strlcpy(info->bus_info, dev_name(ndev->dev.parent),
-		माप(info->bus_info));
-पूर्ण
+		sizeof(info->bus_info));
+}
 
-अटल u32 lpc_eth_ethtool_geपंचांगsglevel(काष्ठा net_device *ndev)
-अणु
-	काष्ठा netdata_local *pldat = netdev_priv(ndev);
+static u32 lpc_eth_ethtool_getmsglevel(struct net_device *ndev)
+{
+	struct netdata_local *pldat = netdev_priv(ndev);
 
-	वापस pldat->msg_enable;
-पूर्ण
+	return pldat->msg_enable;
+}
 
-अटल व्योम lpc_eth_ethtool_seपंचांगsglevel(काष्ठा net_device *ndev, u32 level)
-अणु
-	काष्ठा netdata_local *pldat = netdev_priv(ndev);
+static void lpc_eth_ethtool_setmsglevel(struct net_device *ndev, u32 level)
+{
+	struct netdata_local *pldat = netdev_priv(ndev);
 
 	pldat->msg_enable = level;
-पूर्ण
+}
 
-अटल स्थिर काष्ठा ethtool_ops lpc_eth_ethtool_ops = अणु
+static const struct ethtool_ops lpc_eth_ethtool_ops = {
 	.get_drvinfo	= lpc_eth_ethtool_getdrvinfo,
-	.get_msglevel	= lpc_eth_ethtool_geपंचांगsglevel,
-	.set_msglevel	= lpc_eth_ethtool_seपंचांगsglevel,
+	.get_msglevel	= lpc_eth_ethtool_getmsglevel,
+	.set_msglevel	= lpc_eth_ethtool_setmsglevel,
 	.get_link	= ethtool_op_get_link,
 	.get_link_ksettings = phy_ethtool_get_link_ksettings,
 	.set_link_ksettings = phy_ethtool_set_link_ksettings,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा net_device_ops lpc_netdev_ops = अणु
-	.nकरो_खोलो		= lpc_eth_खोलो,
-	.nकरो_stop		= lpc_eth_बंद,
-	.nकरो_start_xmit		= lpc_eth_hard_start_xmit,
-	.nकरो_set_rx_mode	= lpc_eth_set_multicast_list,
-	.nकरो_करो_ioctl		= phy_करो_ioctl_running,
-	.nकरो_set_mac_address	= lpc_set_mac_address,
-	.nकरो_validate_addr	= eth_validate_addr,
-पूर्ण;
+static const struct net_device_ops lpc_netdev_ops = {
+	.ndo_open		= lpc_eth_open,
+	.ndo_stop		= lpc_eth_close,
+	.ndo_start_xmit		= lpc_eth_hard_start_xmit,
+	.ndo_set_rx_mode	= lpc_eth_set_multicast_list,
+	.ndo_do_ioctl		= phy_do_ioctl_running,
+	.ndo_set_mac_address	= lpc_set_mac_address,
+	.ndo_validate_addr	= eth_validate_addr,
+};
 
-अटल पूर्णांक lpc_eth_drv_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा device_node *np = dev->of_node;
-	काष्ठा netdata_local *pldat;
-	काष्ठा net_device *ndev;
+static int lpc_eth_drv_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct device_node *np = dev->of_node;
+	struct netdata_local *pldat;
+	struct net_device *ndev;
 	dma_addr_t dma_handle;
-	काष्ठा resource *res;
-	पूर्णांक irq, ret;
+	struct resource *res;
+	int irq, ret;
 
-	/* Setup network पूर्णांकerface क्रम RMII or MII mode */
-	lpc32xx_set_phy_पूर्णांकerface_mode(lpc_phy_पूर्णांकerface_mode(dev));
+	/* Setup network interface for RMII or MII mode */
+	lpc32xx_set_phy_interface_mode(lpc_phy_interface_mode(dev));
 
-	/* Get platक्रमm resources */
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (!res || irq < 0) अणु
+	/* Get platform resources */
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	irq = platform_get_irq(pdev, 0);
+	if (!res || irq < 0) {
 		dev_err(dev, "error getting resources.\n");
 		ret = -ENXIO;
-		जाओ err_निकास;
-	पूर्ण
+		goto err_exit;
+	}
 
-	/* Allocate net driver data काष्ठाure */
-	ndev = alloc_etherdev(माप(काष्ठा netdata_local));
-	अगर (!ndev) अणु
+	/* Allocate net driver data structure */
+	ndev = alloc_etherdev(sizeof(struct netdata_local));
+	if (!ndev) {
 		dev_err(dev, "could not allocate device.\n");
 		ret = -ENOMEM;
-		जाओ err_निकास;
-	पूर्ण
+		goto err_exit;
+	}
 
 	SET_NETDEV_DEV(ndev, dev);
 
@@ -1266,76 +1265,76 @@ err_out:
 	/* Save resources */
 	ndev->irq = irq;
 
-	/* Get घड़ी क्रम the device */
-	pldat->clk = clk_get(dev, शून्य);
-	अगर (IS_ERR(pldat->clk)) अणु
+	/* Get clock for the device */
+	pldat->clk = clk_get(dev, NULL);
+	if (IS_ERR(pldat->clk)) {
 		dev_err(dev, "error getting clock.\n");
 		ret = PTR_ERR(pldat->clk);
-		जाओ err_out_मुक्त_dev;
-	पूर्ण
+		goto err_out_free_dev;
+	}
 
-	/* Enable network घड़ी */
+	/* Enable network clock */
 	ret = clk_prepare_enable(pldat->clk);
-	अगर (ret)
-		जाओ err_out_clk_put;
+	if (ret)
+		goto err_out_clk_put;
 
 	/* Map IO space */
 	pldat->net_base = ioremap(res->start, resource_size(res));
-	अगर (!pldat->net_base) अणु
+	if (!pldat->net_base) {
 		dev_err(dev, "failed to map registers\n");
 		ret = -ENOMEM;
-		जाओ err_out_disable_घड़ीs;
-	पूर्ण
-	ret = request_irq(ndev->irq, __lpc_eth_पूर्णांकerrupt, 0,
+		goto err_out_disable_clocks;
+	}
+	ret = request_irq(ndev->irq, __lpc_eth_interrupt, 0,
 			  ndev->name, ndev);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "error requesting interrupt.\n");
-		जाओ err_out_iounmap;
-	पूर्ण
+		goto err_out_iounmap;
+	}
 
 	/* Setup driver functions */
 	ndev->netdev_ops = &lpc_netdev_ops;
 	ndev->ethtool_ops = &lpc_eth_ethtool_ops;
-	ndev->watchकरोg_समयo = msecs_to_jअगरfies(2500);
+	ndev->watchdog_timeo = msecs_to_jiffies(2500);
 
 	/* Get size of DMA buffers/descriptors region */
 	pldat->dma_buff_size = (ENET_TX_DESC + ENET_RX_DESC) * (ENET_MAXF_SIZE +
-		माप(काष्ठा txrx_desc_t) + माप(काष्ठा rx_status_t));
+		sizeof(struct txrx_desc_t) + sizeof(struct rx_status_t));
 
-	अगर (use_iram_क्रम_net(dev)) अणु
-		अगर (pldat->dma_buff_size >
-		    lpc32xx_वापस_iram(&pldat->dma_buff_base_v, &dma_handle)) अणु
-			pldat->dma_buff_base_v = शून्य;
+	if (use_iram_for_net(dev)) {
+		if (pldat->dma_buff_size >
+		    lpc32xx_return_iram(&pldat->dma_buff_base_v, &dma_handle)) {
+			pldat->dma_buff_base_v = NULL;
 			pldat->dma_buff_size = 0;
 			netdev_err(ndev,
 				"IRAM not big enough for net buffers, using SDRAM instead.\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (pldat->dma_buff_base_v == शून्य) अणु
+	if (pldat->dma_buff_base_v == NULL) {
 		ret = dma_coerce_mask_and_coherent(dev, DMA_BIT_MASK(32));
-		अगर (ret)
-			जाओ err_out_मुक्त_irq;
+		if (ret)
+			goto err_out_free_irq;
 
 		pldat->dma_buff_size = PAGE_ALIGN(pldat->dma_buff_size);
 
-		/* Allocate a chunk of memory क्रम the DMA ethernet buffers
+		/* Allocate a chunk of memory for the DMA ethernet buffers
 		 * and descriptors
 		 */
 		pldat->dma_buff_base_v =
 			dma_alloc_coherent(dev,
 					   pldat->dma_buff_size, &dma_handle,
 					   GFP_KERNEL);
-		अगर (pldat->dma_buff_base_v == शून्य) अणु
+		if (pldat->dma_buff_base_v == NULL) {
 			ret = -ENOMEM;
-			जाओ err_out_मुक्त_irq;
-		पूर्ण
-	पूर्ण
+			goto err_out_free_irq;
+		}
+	}
 	pldat->dma_buff_base_p = dma_handle;
 
 	netdev_dbg(ndev, "IO address space     :%pR\n", res);
 	netdev_dbg(ndev, "IO address size      :%zd\n",
-			(माप_प्रकार)resource_size(res));
+			(size_t)resource_size(res));
 	netdev_dbg(ndev, "IO address (mapped)  :0x%p\n",
 			pldat->net_base);
 	netdev_dbg(ndev, "IRQ number           :%d\n", ndev->irq);
@@ -1350,22 +1349,22 @@ err_out:
 	/* Get MAC address from current HW setting (POR state is all zeros) */
 	__lpc_get_mac(pldat, ndev->dev_addr);
 
-	अगर (!is_valid_ether_addr(ndev->dev_addr)) अणु
+	if (!is_valid_ether_addr(ndev->dev_addr)) {
 		of_get_mac_address(np, ndev->dev_addr);
-	पूर्ण
-	अगर (!is_valid_ether_addr(ndev->dev_addr))
-		eth_hw_addr_अक्रमom(ndev);
+	}
+	if (!is_valid_ether_addr(ndev->dev_addr))
+		eth_hw_addr_random(ndev);
 
-	/* then shut everything करोwn to save घातer */
-	__lpc_eth_shutकरोwn(pldat);
+	/* then shut everything down to save power */
+	__lpc_eth_shutdown(pldat);
 
-	/* Set शेष parameters */
+	/* Set default parameters */
 	pldat->msg_enable = NETIF_MSG_LINK;
 
-	/* Force an MII पूर्णांकerface reset and घड़ी setup */
+	/* Force an MII interface reset and clock setup */
 	__lpc_mii_mngt_reset(pldat);
 
-	/* Force शेष PHY पूर्णांकerface setup in chip, this will probably be
+	/* Force default PHY interface setup in chip, this will probably be
 	 * changed by the PHY driver
 	 */
 	pldat->link = 0;
@@ -1373,147 +1372,147 @@ err_out:
 	pldat->duplex = DUPLEX_FULL;
 	__lpc_params_setup(pldat);
 
-	netअगर_napi_add(ndev, &pldat->napi, lpc_eth_poll, NAPI_WEIGHT);
+	netif_napi_add(ndev, &pldat->napi, lpc_eth_poll, NAPI_WEIGHT);
 
-	ret = रेजिस्टर_netdev(ndev);
-	अगर (ret) अणु
+	ret = register_netdev(ndev);
+	if (ret) {
 		dev_err(dev, "Cannot register net device, aborting.\n");
-		जाओ err_out_dma_unmap;
-	पूर्ण
-	platक्रमm_set_drvdata(pdev, ndev);
+		goto err_out_dma_unmap;
+	}
+	platform_set_drvdata(pdev, ndev);
 
 	ret = lpc_mii_init(pldat);
-	अगर (ret)
-		जाओ err_out_unरेजिस्टर_netdev;
+	if (ret)
+		goto err_out_unregister_netdev;
 
 	netdev_info(ndev, "LPC mac at 0x%08lx irq %d\n",
-	       (अचिन्हित दीर्घ)res->start, ndev->irq);
+	       (unsigned long)res->start, ndev->irq);
 
 	device_init_wakeup(dev, 1);
 	device_set_wakeup_enable(dev, 0);
 
-	वापस 0;
+	return 0;
 
-err_out_unरेजिस्टर_netdev:
-	unरेजिस्टर_netdev(ndev);
+err_out_unregister_netdev:
+	unregister_netdev(ndev);
 err_out_dma_unmap:
-	अगर (!use_iram_क्रम_net(dev) ||
-	    pldat->dma_buff_size > lpc32xx_वापस_iram(शून्य, शून्य))
-		dma_मुक्त_coherent(dev, pldat->dma_buff_size,
+	if (!use_iram_for_net(dev) ||
+	    pldat->dma_buff_size > lpc32xx_return_iram(NULL, NULL))
+		dma_free_coherent(dev, pldat->dma_buff_size,
 				  pldat->dma_buff_base_v,
 				  pldat->dma_buff_base_p);
-err_out_मुक्त_irq:
-	मुक्त_irq(ndev->irq, ndev);
+err_out_free_irq:
+	free_irq(ndev->irq, ndev);
 err_out_iounmap:
 	iounmap(pldat->net_base);
-err_out_disable_घड़ीs:
+err_out_disable_clocks:
 	clk_disable_unprepare(pldat->clk);
 err_out_clk_put:
 	clk_put(pldat->clk);
-err_out_मुक्त_dev:
-	मुक्त_netdev(ndev);
-err_निकास:
+err_out_free_dev:
+	free_netdev(ndev);
+err_exit:
 	pr_err("%s: not found (%d).\n", MODNAME, ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक lpc_eth_drv_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा net_device *ndev = platक्रमm_get_drvdata(pdev);
-	काष्ठा netdata_local *pldat = netdev_priv(ndev);
+static int lpc_eth_drv_remove(struct platform_device *pdev)
+{
+	struct net_device *ndev = platform_get_drvdata(pdev);
+	struct netdata_local *pldat = netdev_priv(ndev);
 
-	unरेजिस्टर_netdev(ndev);
+	unregister_netdev(ndev);
 
-	अगर (!use_iram_क्रम_net(&pldat->pdev->dev) ||
-	    pldat->dma_buff_size > lpc32xx_वापस_iram(शून्य, शून्य))
-		dma_मुक्त_coherent(&pldat->pdev->dev, pldat->dma_buff_size,
+	if (!use_iram_for_net(&pldat->pdev->dev) ||
+	    pldat->dma_buff_size > lpc32xx_return_iram(NULL, NULL))
+		dma_free_coherent(&pldat->pdev->dev, pldat->dma_buff_size,
 				  pldat->dma_buff_base_v,
 				  pldat->dma_buff_base_p);
-	मुक्त_irq(ndev->irq, ndev);
+	free_irq(ndev->irq, ndev);
 	iounmap(pldat->net_base);
-	mdiobus_unरेजिस्टर(pldat->mii_bus);
-	mdiobus_मुक्त(pldat->mii_bus);
+	mdiobus_unregister(pldat->mii_bus);
+	mdiobus_free(pldat->mii_bus);
 	clk_disable_unprepare(pldat->clk);
 	clk_put(pldat->clk);
-	मुक्त_netdev(ndev);
+	free_netdev(ndev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक lpc_eth_drv_suspend(काष्ठा platक्रमm_device *pdev,
+#ifdef CONFIG_PM
+static int lpc_eth_drv_suspend(struct platform_device *pdev,
 	pm_message_t state)
-अणु
-	काष्ठा net_device *ndev = platक्रमm_get_drvdata(pdev);
-	काष्ठा netdata_local *pldat = netdev_priv(ndev);
+{
+	struct net_device *ndev = platform_get_drvdata(pdev);
+	struct netdata_local *pldat = netdev_priv(ndev);
 
-	अगर (device_may_wakeup(&pdev->dev))
+	if (device_may_wakeup(&pdev->dev))
 		enable_irq_wake(ndev->irq);
 
-	अगर (ndev) अणु
-		अगर (netअगर_running(ndev)) अणु
-			netअगर_device_detach(ndev);
-			__lpc_eth_shutकरोwn(pldat);
+	if (ndev) {
+		if (netif_running(ndev)) {
+			netif_device_detach(ndev);
+			__lpc_eth_shutdown(pldat);
 			clk_disable_unprepare(pldat->clk);
 
 			/*
-			 * Reset again now घड़ी is disable to be sure
-			 * EMC_MDC is करोwn
+			 * Reset again now clock is disable to be sure
+			 * EMC_MDC is down
 			 */
 			__lpc_eth_reset(pldat);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lpc_eth_drv_resume(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा net_device *ndev = platक्रमm_get_drvdata(pdev);
-	काष्ठा netdata_local *pldat;
+static int lpc_eth_drv_resume(struct platform_device *pdev)
+{
+	struct net_device *ndev = platform_get_drvdata(pdev);
+	struct netdata_local *pldat;
 
-	अगर (device_may_wakeup(&pdev->dev))
+	if (device_may_wakeup(&pdev->dev))
 		disable_irq_wake(ndev->irq);
 
-	अगर (ndev) अणु
-		अगर (netअगर_running(ndev)) अणु
+	if (ndev) {
+		if (netif_running(ndev)) {
 			pldat = netdev_priv(ndev);
 
-			/* Enable पूर्णांकerface घड़ी */
+			/* Enable interface clock */
 			clk_enable(pldat->clk);
 
 			/* Reset and initialize */
 			__lpc_eth_reset(pldat);
 			__lpc_eth_init(pldat);
 
-			netअगर_device_attach(ndev);
-		पूर्ण
-	पूर्ण
+			netif_device_attach(ndev);
+		}
+	}
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल स्थिर काष्ठा of_device_id lpc_eth_match[] = अणु
-	अणु .compatible = "nxp,lpc-eth" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id lpc_eth_match[] = {
+	{ .compatible = "nxp,lpc-eth" },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, lpc_eth_match);
 
-अटल काष्ठा platक्रमm_driver lpc_eth_driver = अणु
+static struct platform_driver lpc_eth_driver = {
 	.probe		= lpc_eth_drv_probe,
-	.हटाओ		= lpc_eth_drv_हटाओ,
-#अगर_घोषित CONFIG_PM
+	.remove		= lpc_eth_drv_remove,
+#ifdef CONFIG_PM
 	.suspend	= lpc_eth_drv_suspend,
 	.resume		= lpc_eth_drv_resume,
-#पूर्ण_अगर
-	.driver		= अणु
+#endif
+	.driver		= {
 		.name	= MODNAME,
 		.of_match_table = lpc_eth_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(lpc_eth_driver);
+module_platform_driver(lpc_eth_driver);
 
 MODULE_AUTHOR("Kevin Wells <kevin.wells@nxp.com>");
 MODULE_AUTHOR("Roland Stigge <stigge@antcom.de>");

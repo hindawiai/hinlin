@@ -1,33 +1,32 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Support क्रम Intel Camera Imaging ISP subप्रणाली.
+ * Support for Intel Camera Imaging ISP subsystem.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
 
-#अगर_अघोषित __IA_CSS_VF_TYPES_H
-#घोषणा __IA_CSS_VF_TYPES_H
+#ifndef __IA_CSS_VF_TYPES_H
+#define __IA_CSS_VF_TYPES_H
 
 /* Viewfinder decimation
  *
- *  ISP block: vfeven_horizontal_करोwnscale
+ *  ISP block: vfeven_horizontal_downscale
  */
 
-#समावेश <ia_css_frame_खुला.h>
-#समावेश <type_support.h>
+#include <ia_css_frame_public.h>
+#include <type_support.h>
 
-काष्ठा ia_css_vf_configuration अणु
-	u32 vf_करोwnscale_bits; /** Log VF करोwnscale value */
-	स्थिर काष्ठा ia_css_frame_info *info;
-पूर्ण;
+struct ia_css_vf_configuration {
+	u32 vf_downscale_bits; /** Log VF downscale value */
+	const struct ia_css_frame_info *info;
+};
 
-#पूर्ण_अगर /* __IA_CSS_VF_TYPES_H */
+#endif /* __IA_CSS_VF_TYPES_H */

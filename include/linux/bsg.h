@@ -1,40 +1,39 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_BSG_H
-#घोषणा _LINUX_BSG_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_BSG_H
+#define _LINUX_BSG_H
 
-#समावेश <uapi/linux/bsg.h>
+#include <uapi/linux/bsg.h>
 
-काष्ठा request;
+struct request;
 
-#अगर_घोषित CONFIG_BLK_DEV_BSG
-काष्ठा bsg_ops अणु
-	पूर्णांक	(*check_proto)(काष्ठा sg_io_v4 *hdr);
-	पूर्णांक	(*fill_hdr)(काष्ठा request *rq, काष्ठा sg_io_v4 *hdr,
-				भ_शेषe_t mode);
-	पूर्णांक	(*complete_rq)(काष्ठा request *rq, काष्ठा sg_io_v4 *hdr);
-	व्योम	(*मुक्त_rq)(काष्ठा request *rq);
-पूर्ण;
+#ifdef CONFIG_BLK_DEV_BSG
+struct bsg_ops {
+	int	(*check_proto)(struct sg_io_v4 *hdr);
+	int	(*fill_hdr)(struct request *rq, struct sg_io_v4 *hdr,
+				fmode_t mode);
+	int	(*complete_rq)(struct request *rq, struct sg_io_v4 *hdr);
+	void	(*free_rq)(struct request *rq);
+};
 
-काष्ठा bsg_class_device अणु
-	काष्ठा device *class_dev;
-	पूर्णांक minor;
-	काष्ठा request_queue *queue;
-	स्थिर काष्ठा bsg_ops *ops;
-पूर्ण;
+struct bsg_class_device {
+	struct device *class_dev;
+	int minor;
+	struct request_queue *queue;
+	const struct bsg_ops *ops;
+};
 
-पूर्णांक bsg_रेजिस्टर_queue(काष्ठा request_queue *q, काष्ठा device *parent,
-		स्थिर अक्षर *name, स्थिर काष्ठा bsg_ops *ops);
-पूर्णांक bsg_scsi_रेजिस्टर_queue(काष्ठा request_queue *q, काष्ठा device *parent);
-व्योम bsg_unरेजिस्टर_queue(काष्ठा request_queue *q);
-#अन्यथा
-अटल अंतरभूत पूर्णांक bsg_scsi_रेजिस्टर_queue(काष्ठा request_queue *q,
-		काष्ठा device *parent)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत व्योम bsg_unरेजिस्टर_queue(काष्ठा request_queue *q)
-अणु
-पूर्ण
-#पूर्ण_अगर /* CONFIG_BLK_DEV_BSG */
-#पूर्ण_अगर /* _LINUX_BSG_H */
+int bsg_register_queue(struct request_queue *q, struct device *parent,
+		const char *name, const struct bsg_ops *ops);
+int bsg_scsi_register_queue(struct request_queue *q, struct device *parent);
+void bsg_unregister_queue(struct request_queue *q);
+#else
+static inline int bsg_scsi_register_queue(struct request_queue *q,
+		struct device *parent)
+{
+	return 0;
+}
+static inline void bsg_unregister_queue(struct request_queue *q)
+{
+}
+#endif /* CONFIG_BLK_DEV_BSG */
+#endif /* _LINUX_BSG_H */

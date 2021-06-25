@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright(c) 2011-2016 Intel Corporation. All rights reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -22,52 +21,52 @@
  * SOFTWARE.
  *
  * Authors:
- *    Kevin Tian <kevin.tian@पूर्णांकel.com>
- *    Eddie Dong <eddie.करोng@पूर्णांकel.com>
+ *    Kevin Tian <kevin.tian@intel.com>
+ *    Eddie Dong <eddie.dong@intel.com>
  *
  * Contributors:
- *    Niu Bing <bing.niu@पूर्णांकel.com>
- *    Zhi Wang <zhi.a.wang@पूर्णांकel.com>
+ *    Niu Bing <bing.niu@intel.com>
+ *    Zhi Wang <zhi.a.wang@intel.com>
  *
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/kthपढ़ो.h>
+#include <linux/types.h>
+#include <linux/kthread.h>
 
-#समावेश "i915_drv.h"
-#समावेश "intel_gvt.h"
-#समावेश "gvt.h"
-#समावेश <linux/vfपन.स>
-#समावेश <linux/mdev.h>
+#include "i915_drv.h"
+#include "intel_gvt.h"
+#include "gvt.h"
+#include <linux/vfio.h>
+#include <linux/mdev.h>
 
-काष्ठा पूर्णांकel_gvt_host पूर्णांकel_gvt_host;
+struct intel_gvt_host intel_gvt_host;
 
-अटल स्थिर अक्षर * स्थिर supported_hypervisors[] = अणु
+static const char * const supported_hypervisors[] = {
 	[INTEL_GVT_HYPERVISOR_XEN] = "XEN",
 	[INTEL_GVT_HYPERVISOR_KVM] = "KVM",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा पूर्णांकel_gvt_ops पूर्णांकel_gvt_ops = अणु
-	.emulate_cfg_पढ़ो = पूर्णांकel_vgpu_emulate_cfg_पढ़ो,
-	.emulate_cfg_ग_लिखो = पूर्णांकel_vgpu_emulate_cfg_ग_लिखो,
-	.emulate_mmio_पढ़ो = पूर्णांकel_vgpu_emulate_mmio_पढ़ो,
-	.emulate_mmio_ग_लिखो = पूर्णांकel_vgpu_emulate_mmio_ग_लिखो,
-	.vgpu_create = पूर्णांकel_gvt_create_vgpu,
-	.vgpu_destroy = पूर्णांकel_gvt_destroy_vgpu,
-	.vgpu_release = पूर्णांकel_gvt_release_vgpu,
-	.vgpu_reset = पूर्णांकel_gvt_reset_vgpu,
-	.vgpu_activate = पूर्णांकel_gvt_activate_vgpu,
-	.vgpu_deactivate = पूर्णांकel_gvt_deactivate_vgpu,
-	.vgpu_query_plane = पूर्णांकel_vgpu_query_plane,
-	.vgpu_get_dmabuf = पूर्णांकel_vgpu_get_dmabuf,
-	.ग_लिखो_protect_handler = पूर्णांकel_vgpu_page_track_handler,
-	.emulate_hotplug = पूर्णांकel_vgpu_emulate_hotplug,
-पूर्ण;
+static const struct intel_gvt_ops intel_gvt_ops = {
+	.emulate_cfg_read = intel_vgpu_emulate_cfg_read,
+	.emulate_cfg_write = intel_vgpu_emulate_cfg_write,
+	.emulate_mmio_read = intel_vgpu_emulate_mmio_read,
+	.emulate_mmio_write = intel_vgpu_emulate_mmio_write,
+	.vgpu_create = intel_gvt_create_vgpu,
+	.vgpu_destroy = intel_gvt_destroy_vgpu,
+	.vgpu_release = intel_gvt_release_vgpu,
+	.vgpu_reset = intel_gvt_reset_vgpu,
+	.vgpu_activate = intel_gvt_activate_vgpu,
+	.vgpu_deactivate = intel_gvt_deactivate_vgpu,
+	.vgpu_query_plane = intel_vgpu_query_plane,
+	.vgpu_get_dmabuf = intel_vgpu_get_dmabuf,
+	.write_protect_handler = intel_vgpu_page_track_handler,
+	.emulate_hotplug = intel_vgpu_emulate_hotplug,
+};
 
-अटल व्योम init_device_info(काष्ठा पूर्णांकel_gvt *gvt)
-अणु
-	काष्ठा पूर्णांकel_gvt_device_info *info = &gvt->device_info;
-	काष्ठा pci_dev *pdev = to_pci_dev(gvt->gt->i915->drm.dev);
+static void init_device_info(struct intel_gvt *gvt)
+{
+	struct intel_gvt_device_info *info = &gvt->device_info;
+	struct pci_dev *pdev = to_pci_dev(gvt->gt->i915->drm.dev);
 
 	info->max_support_vgpus = 8;
 	info->cfg_space_size = PCI_CFG_SPACE_EXP_SIZE;
@@ -75,130 +74,130 @@
 	info->mmio_bar = 0;
 	info->gtt_start_offset = 8 * 1024 * 1024;
 	info->gtt_entry_size = 8;
-	info->gtt_entry_size_shअगरt = 3;
+	info->gtt_entry_size_shift = 3;
 	info->gmadr_bytes_in_cmd = 8;
 	info->max_surface_size = 36 * 1024 * 1024;
 	info->msi_cap_offset = pdev->msi_cap;
-पूर्ण
+}
 
-अटल व्योम पूर्णांकel_gvt_test_and_emulate_vblank(काष्ठा पूर्णांकel_gvt *gvt)
-अणु
-	काष्ठा पूर्णांकel_vgpu *vgpu;
-	पूर्णांक id;
+static void intel_gvt_test_and_emulate_vblank(struct intel_gvt *gvt)
+{
+	struct intel_vgpu *vgpu;
+	int id;
 
 	mutex_lock(&gvt->lock);
-	idr_क्रम_each_entry((&(gvt)->vgpu_idr), (vgpu), (id)) अणु
-		अगर (test_and_clear_bit(INTEL_GVT_REQUEST_EMULATE_VBLANK + id,
-				       (व्योम *)&gvt->service_request)) अणु
-			अगर (vgpu->active)
-				पूर्णांकel_vgpu_emulate_vblank(vgpu);
-		पूर्ण
-	पूर्ण
+	idr_for_each_entry((&(gvt)->vgpu_idr), (vgpu), (id)) {
+		if (test_and_clear_bit(INTEL_GVT_REQUEST_EMULATE_VBLANK + id,
+				       (void *)&gvt->service_request)) {
+			if (vgpu->active)
+				intel_vgpu_emulate_vblank(vgpu);
+		}
+	}
 	mutex_unlock(&gvt->lock);
-पूर्ण
+}
 
-अटल पूर्णांक gvt_service_thपढ़ो(व्योम *data)
-अणु
-	काष्ठा पूर्णांकel_gvt *gvt = (काष्ठा पूर्णांकel_gvt *)data;
-	पूर्णांक ret;
+static int gvt_service_thread(void *data)
+{
+	struct intel_gvt *gvt = (struct intel_gvt *)data;
+	int ret;
 
 	gvt_dbg_core("service thread start\n");
 
-	जबतक (!kthपढ़ो_should_stop()) अणु
-		ret = रुको_event_पूर्णांकerruptible(gvt->service_thपढ़ो_wq,
-				kthपढ़ो_should_stop() || gvt->service_request);
+	while (!kthread_should_stop()) {
+		ret = wait_event_interruptible(gvt->service_thread_wq,
+				kthread_should_stop() || gvt->service_request);
 
-		अगर (kthपढ़ो_should_stop())
-			अवरोध;
+		if (kthread_should_stop())
+			break;
 
-		अगर (WARN_ONCE(ret, "service thread is waken up by signal.\n"))
-			जारी;
+		if (WARN_ONCE(ret, "service thread is waken up by signal.\n"))
+			continue;
 
-		पूर्णांकel_gvt_test_and_emulate_vblank(gvt);
+		intel_gvt_test_and_emulate_vblank(gvt);
 
-		अगर (test_bit(INTEL_GVT_REQUEST_SCHED,
-				(व्योम *)&gvt->service_request) ||
+		if (test_bit(INTEL_GVT_REQUEST_SCHED,
+				(void *)&gvt->service_request) ||
 			test_bit(INTEL_GVT_REQUEST_EVENT_SCHED,
-					(व्योम *)&gvt->service_request)) अणु
-			पूर्णांकel_gvt_schedule(gvt);
-		पूर्ण
-	पूर्ण
+					(void *)&gvt->service_request)) {
+			intel_gvt_schedule(gvt);
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम clean_service_thपढ़ो(काष्ठा पूर्णांकel_gvt *gvt)
-अणु
-	kthपढ़ो_stop(gvt->service_thपढ़ो);
-पूर्ण
+static void clean_service_thread(struct intel_gvt *gvt)
+{
+	kthread_stop(gvt->service_thread);
+}
 
-अटल पूर्णांक init_service_thपढ़ो(काष्ठा पूर्णांकel_gvt *gvt)
-अणु
-	init_रुकोqueue_head(&gvt->service_thपढ़ो_wq);
+static int init_service_thread(struct intel_gvt *gvt)
+{
+	init_waitqueue_head(&gvt->service_thread_wq);
 
-	gvt->service_thपढ़ो = kthपढ़ो_run(gvt_service_thपढ़ो,
+	gvt->service_thread = kthread_run(gvt_service_thread,
 			gvt, "gvt_service_thread");
-	अगर (IS_ERR(gvt->service_thपढ़ो)) अणु
+	if (IS_ERR(gvt->service_thread)) {
 		gvt_err("fail to start service thread.\n");
-		वापस PTR_ERR(gvt->service_thपढ़ो);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return PTR_ERR(gvt->service_thread);
+	}
+	return 0;
+}
 
 /**
- * पूर्णांकel_gvt_clean_device - clean a GVT device
- * @i915: i915 निजी
+ * intel_gvt_clean_device - clean a GVT device
+ * @i915: i915 private
  *
- * This function is called at the driver unloading stage, to मुक्त the
+ * This function is called at the driver unloading stage, to free the
  * resources owned by a GVT device.
  *
  */
-व्योम पूर्णांकel_gvt_clean_device(काष्ठा drm_i915_निजी *i915)
-अणु
-	काष्ठा पूर्णांकel_gvt *gvt = fetch_and_zero(&i915->gvt);
+void intel_gvt_clean_device(struct drm_i915_private *i915)
+{
+	struct intel_gvt *gvt = fetch_and_zero(&i915->gvt);
 
-	अगर (drm_WARN_ON(&i915->drm, !gvt))
-		वापस;
+	if (drm_WARN_ON(&i915->drm, !gvt))
+		return;
 
-	पूर्णांकel_gvt_destroy_idle_vgpu(gvt->idle_vgpu);
-	पूर्णांकel_gvt_clean_vgpu_types(gvt);
+	intel_gvt_destroy_idle_vgpu(gvt->idle_vgpu);
+	intel_gvt_clean_vgpu_types(gvt);
 
-	पूर्णांकel_gvt_debugfs_clean(gvt);
-	clean_service_thपढ़ो(gvt);
-	पूर्णांकel_gvt_clean_cmd_parser(gvt);
-	पूर्णांकel_gvt_clean_sched_policy(gvt);
-	पूर्णांकel_gvt_clean_workload_scheduler(gvt);
-	पूर्णांकel_gvt_clean_gtt(gvt);
-	पूर्णांकel_gvt_मुक्त_firmware(gvt);
-	पूर्णांकel_gvt_clean_mmio_info(gvt);
+	intel_gvt_debugfs_clean(gvt);
+	clean_service_thread(gvt);
+	intel_gvt_clean_cmd_parser(gvt);
+	intel_gvt_clean_sched_policy(gvt);
+	intel_gvt_clean_workload_scheduler(gvt);
+	intel_gvt_clean_gtt(gvt);
+	intel_gvt_free_firmware(gvt);
+	intel_gvt_clean_mmio_info(gvt);
 	idr_destroy(&gvt->vgpu_idr);
 
-	kमुक्त(i915->gvt);
-पूर्ण
+	kfree(i915->gvt);
+}
 
 /**
- * पूर्णांकel_gvt_init_device - initialize a GVT device
- * @i915: drm i915 निजी data
+ * intel_gvt_init_device - initialize a GVT device
+ * @i915: drm i915 private data
  *
  * This function is called at the initialization stage, to initialize
  * necessary GVT components.
  *
  * Returns:
- * Zero on success, negative error code अगर failed.
+ * Zero on success, negative error code if failed.
  *
  */
-पूर्णांक पूर्णांकel_gvt_init_device(काष्ठा drm_i915_निजी *i915)
-अणु
-	काष्ठा पूर्णांकel_gvt *gvt;
-	काष्ठा पूर्णांकel_vgpu *vgpu;
-	पूर्णांक ret;
+int intel_gvt_init_device(struct drm_i915_private *i915)
+{
+	struct intel_gvt *gvt;
+	struct intel_vgpu *vgpu;
+	int ret;
 
-	अगर (drm_WARN_ON(&i915->drm, i915->gvt))
-		वापस -EEXIST;
+	if (drm_WARN_ON(&i915->drm, i915->gvt))
+		return -EEXIST;
 
-	gvt = kzalloc(माप(काष्ठा पूर्णांकel_gvt), GFP_KERNEL);
-	अगर (!gvt)
-		वापस -ENOMEM;
+	gvt = kzalloc(sizeof(struct intel_gvt), GFP_KERNEL);
+	if (!gvt)
+		return -ENOMEM;
 
 	gvt_dbg_core("init gvt device\n");
 
@@ -211,131 +210,131 @@
 
 	init_device_info(gvt);
 
-	ret = पूर्णांकel_gvt_setup_mmio_info(gvt);
-	अगर (ret)
-		जाओ out_clean_idr;
+	ret = intel_gvt_setup_mmio_info(gvt);
+	if (ret)
+		goto out_clean_idr;
 
-	पूर्णांकel_gvt_init_engine_mmio_context(gvt);
+	intel_gvt_init_engine_mmio_context(gvt);
 
-	ret = पूर्णांकel_gvt_load_firmware(gvt);
-	अगर (ret)
-		जाओ out_clean_mmio_info;
+	ret = intel_gvt_load_firmware(gvt);
+	if (ret)
+		goto out_clean_mmio_info;
 
-	ret = पूर्णांकel_gvt_init_irq(gvt);
-	अगर (ret)
-		जाओ out_मुक्त_firmware;
+	ret = intel_gvt_init_irq(gvt);
+	if (ret)
+		goto out_free_firmware;
 
-	ret = पूर्णांकel_gvt_init_gtt(gvt);
-	अगर (ret)
-		जाओ out_मुक्त_firmware;
+	ret = intel_gvt_init_gtt(gvt);
+	if (ret)
+		goto out_free_firmware;
 
-	ret = पूर्णांकel_gvt_init_workload_scheduler(gvt);
-	अगर (ret)
-		जाओ out_clean_gtt;
+	ret = intel_gvt_init_workload_scheduler(gvt);
+	if (ret)
+		goto out_clean_gtt;
 
-	ret = पूर्णांकel_gvt_init_sched_policy(gvt);
-	अगर (ret)
-		जाओ out_clean_workload_scheduler;
+	ret = intel_gvt_init_sched_policy(gvt);
+	if (ret)
+		goto out_clean_workload_scheduler;
 
-	ret = पूर्णांकel_gvt_init_cmd_parser(gvt);
-	अगर (ret)
-		जाओ out_clean_sched_policy;
+	ret = intel_gvt_init_cmd_parser(gvt);
+	if (ret)
+		goto out_clean_sched_policy;
 
-	ret = init_service_thपढ़ो(gvt);
-	अगर (ret)
-		जाओ out_clean_cmd_parser;
+	ret = init_service_thread(gvt);
+	if (ret)
+		goto out_clean_cmd_parser;
 
-	ret = पूर्णांकel_gvt_init_vgpu_types(gvt);
-	अगर (ret)
-		जाओ out_clean_thपढ़ो;
+	ret = intel_gvt_init_vgpu_types(gvt);
+	if (ret)
+		goto out_clean_thread;
 
-	vgpu = पूर्णांकel_gvt_create_idle_vgpu(gvt);
-	अगर (IS_ERR(vgpu)) अणु
+	vgpu = intel_gvt_create_idle_vgpu(gvt);
+	if (IS_ERR(vgpu)) {
 		ret = PTR_ERR(vgpu);
 		gvt_err("failed to create idle vgpu\n");
-		जाओ out_clean_types;
-	पूर्ण
+		goto out_clean_types;
+	}
 	gvt->idle_vgpu = vgpu;
 
-	पूर्णांकel_gvt_debugfs_init(gvt);
+	intel_gvt_debugfs_init(gvt);
 
 	gvt_dbg_core("gvt device initialization is done\n");
-	पूर्णांकel_gvt_host.dev = i915->drm.dev;
-	पूर्णांकel_gvt_host.initialized = true;
-	वापस 0;
+	intel_gvt_host.dev = i915->drm.dev;
+	intel_gvt_host.initialized = true;
+	return 0;
 
 out_clean_types:
-	पूर्णांकel_gvt_clean_vgpu_types(gvt);
-out_clean_thपढ़ो:
-	clean_service_thपढ़ो(gvt);
+	intel_gvt_clean_vgpu_types(gvt);
+out_clean_thread:
+	clean_service_thread(gvt);
 out_clean_cmd_parser:
-	पूर्णांकel_gvt_clean_cmd_parser(gvt);
+	intel_gvt_clean_cmd_parser(gvt);
 out_clean_sched_policy:
-	पूर्णांकel_gvt_clean_sched_policy(gvt);
+	intel_gvt_clean_sched_policy(gvt);
 out_clean_workload_scheduler:
-	पूर्णांकel_gvt_clean_workload_scheduler(gvt);
+	intel_gvt_clean_workload_scheduler(gvt);
 out_clean_gtt:
-	पूर्णांकel_gvt_clean_gtt(gvt);
-out_मुक्त_firmware:
-	पूर्णांकel_gvt_मुक्त_firmware(gvt);
+	intel_gvt_clean_gtt(gvt);
+out_free_firmware:
+	intel_gvt_free_firmware(gvt);
 out_clean_mmio_info:
-	पूर्णांकel_gvt_clean_mmio_info(gvt);
+	intel_gvt_clean_mmio_info(gvt);
 out_clean_idr:
 	idr_destroy(&gvt->vgpu_idr);
-	kमुक्त(gvt);
-	i915->gvt = शून्य;
-	वापस ret;
-पूर्ण
+	kfree(gvt);
+	i915->gvt = NULL;
+	return ret;
+}
 
-पूर्णांक
-पूर्णांकel_gvt_pm_resume(काष्ठा पूर्णांकel_gvt *gvt)
-अणु
-	पूर्णांकel_gvt_restore_fence(gvt);
-	पूर्णांकel_gvt_restore_mmio(gvt);
-	पूर्णांकel_gvt_restore_ggtt(gvt);
-	वापस 0;
-पूर्ण
+int
+intel_gvt_pm_resume(struct intel_gvt *gvt)
+{
+	intel_gvt_restore_fence(gvt);
+	intel_gvt_restore_mmio(gvt);
+	intel_gvt_restore_ggtt(gvt);
+	return 0;
+}
 
-पूर्णांक
-पूर्णांकel_gvt_रेजिस्टर_hypervisor(स्थिर काष्ठा पूर्णांकel_gvt_mpt *m)
-अणु
-	पूर्णांक ret;
-	व्योम *gvt;
+int
+intel_gvt_register_hypervisor(const struct intel_gvt_mpt *m)
+{
+	int ret;
+	void *gvt;
 
-	अगर (!पूर्णांकel_gvt_host.initialized)
-		वापस -ENODEV;
+	if (!intel_gvt_host.initialized)
+		return -ENODEV;
 
-	अगर (m->type != INTEL_GVT_HYPERVISOR_KVM &&
+	if (m->type != INTEL_GVT_HYPERVISOR_KVM &&
 	    m->type != INTEL_GVT_HYPERVISOR_XEN)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	/* Get a reference क्रम device model module */
-	अगर (!try_module_get(THIS_MODULE))
-		वापस -ENODEV;
+	/* Get a reference for device model module */
+	if (!try_module_get(THIS_MODULE))
+		return -ENODEV;
 
-	पूर्णांकel_gvt_host.mpt = m;
-	पूर्णांकel_gvt_host.hypervisor_type = m->type;
-	gvt = (व्योम *)kdev_to_i915(पूर्णांकel_gvt_host.dev)->gvt;
+	intel_gvt_host.mpt = m;
+	intel_gvt_host.hypervisor_type = m->type;
+	gvt = (void *)kdev_to_i915(intel_gvt_host.dev)->gvt;
 
-	ret = पूर्णांकel_gvt_hypervisor_host_init(पूर्णांकel_gvt_host.dev, gvt,
-					     &पूर्णांकel_gvt_ops);
-	अगर (ret < 0) अणु
+	ret = intel_gvt_hypervisor_host_init(intel_gvt_host.dev, gvt,
+					     &intel_gvt_ops);
+	if (ret < 0) {
 		gvt_err("Failed to init %s hypervisor module\n",
-			supported_hypervisors[पूर्णांकel_gvt_host.hypervisor_type]);
+			supported_hypervisors[intel_gvt_host.hypervisor_type]);
 		module_put(THIS_MODULE);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	gvt_dbg_core("Running with hypervisor %s in host mode\n",
-		     supported_hypervisors[पूर्णांकel_gvt_host.hypervisor_type]);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(पूर्णांकel_gvt_रेजिस्टर_hypervisor);
+		     supported_hypervisors[intel_gvt_host.hypervisor_type]);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(intel_gvt_register_hypervisor);
 
-व्योम
-पूर्णांकel_gvt_unरेजिस्टर_hypervisor(व्योम)
-अणु
-	व्योम *gvt = (व्योम *)kdev_to_i915(पूर्णांकel_gvt_host.dev)->gvt;
-	पूर्णांकel_gvt_hypervisor_host_निकास(पूर्णांकel_gvt_host.dev, gvt);
+void
+intel_gvt_unregister_hypervisor(void)
+{
+	void *gvt = (void *)kdev_to_i915(intel_gvt_host.dev)->gvt;
+	intel_gvt_hypervisor_host_exit(intel_gvt_host.dev, gvt);
 	module_put(THIS_MODULE);
-पूर्ण
-EXPORT_SYMBOL_GPL(पूर्णांकel_gvt_unरेजिस्टर_hypervisor);
+}
+EXPORT_SYMBOL_GPL(intel_gvt_unregister_hypervisor);

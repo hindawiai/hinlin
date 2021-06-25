@@ -1,43 +1,42 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2019 Facebook */
-#समावेश <stdbool.h>
-#समावेश <मानकघोष.स>
-#समावेश <linux/bpf.h>
-#समावेश <linux/ptrace.h>
-#समावेश <bpf/bpf_helpers.h>
-#समावेश <bpf/bpf_tracing.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <linux/bpf.h>
+#include <linux/ptrace.h>
+#include <bpf/bpf_helpers.h>
+#include <bpf/bpf_tracing.h>
 
-काष्ठा task_काष्ठा;
+struct task_struct;
 
 SEC("kprobe/__set_task_comm")
-पूर्णांक BPF_KPROBE(prog1, काष्ठा task_काष्ठा *tsk, स्थिर अक्षर *buf, bool exec)
-अणु
-	वापस !tsk;
-पूर्ण
+int BPF_KPROBE(prog1, struct task_struct *tsk, const char *buf, bool exec)
+{
+	return !tsk;
+}
 
 SEC("kretprobe/__set_task_comm")
-पूर्णांक BPF_KRETPROBE(prog2, पूर्णांक ret)
-अणु
-	वापस ret;
-पूर्ण
+int BPF_KRETPROBE(prog2, int ret)
+{
+	return ret;
+}
 
 SEC("raw_tp/task_rename")
-पूर्णांक prog3(काष्ठा bpf_raw_tracepoपूर्णांक_args *ctx)
-अणु
-	वापस !ctx->args[0];
-पूर्ण
+int prog3(struct bpf_raw_tracepoint_args *ctx)
+{
+	return !ctx->args[0];
+}
 
 SEC("fentry/__set_task_comm")
-पूर्णांक BPF_PROG(prog4, काष्ठा task_काष्ठा *tsk, स्थिर अक्षर *buf, bool exec)
-अणु
-	वापस 0;
-पूर्ण
+int BPF_PROG(prog4, struct task_struct *tsk, const char *buf, bool exec)
+{
+	return 0;
+}
 
 SEC("fexit/__set_task_comm")
-पूर्णांक BPF_PROG(prog5, काष्ठा task_काष्ठा *tsk, स्थिर अक्षर *buf, bool exec)
-अणु
-	वापस 0;
-पूर्ण
+int BPF_PROG(prog5, struct task_struct *tsk, const char *buf, bool exec)
+{
+	return 0;
+}
 
-अक्षर _license[] SEC("license") = "GPL";
+char _license[] SEC("license") = "GPL";

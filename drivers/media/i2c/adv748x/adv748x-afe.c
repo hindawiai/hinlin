@@ -1,119 +1,118 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * Driver क्रम Analog Devices ADV748X 8 channel analog front end (AFE) receiver
+ * Driver for Analog Devices ADV748X 8 channel analog front end (AFE) receiver
  * with standard definition processor (SDP)
  *
  * Copyright (C) 2017 Renesas Electronics Corp.
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/v4l2-dv-timings.h>
+#include <linux/delay.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/v4l2-dv-timings.h>
 
-#समावेश <media/v4l2-ctrls.h>
-#समावेश <media/v4l2-device.h>
-#समावेश <media/v4l2-dv-timings.h>
-#समावेश <media/v4l2-ioctl.h>
+#include <media/v4l2-ctrls.h>
+#include <media/v4l2-device.h>
+#include <media/v4l2-dv-timings.h>
+#include <media/v4l2-ioctl.h>
 
-#समावेश "adv748x.h"
+#include "adv748x.h"
 
 /* -----------------------------------------------------------------------------
  * SDP
  */
 
-#घोषणा ADV748X_AFE_STD_AD_PAL_BG_NTSC_J_SECAM		0x0
-#घोषणा ADV748X_AFE_STD_AD_PAL_BG_NTSC_J_SECAM_PED	0x1
-#घोषणा ADV748X_AFE_STD_AD_PAL_N_NTSC_J_SECAM		0x2
-#घोषणा ADV748X_AFE_STD_AD_PAL_N_NTSC_M_SECAM		0x3
-#घोषणा ADV748X_AFE_STD_NTSC_J				0x4
-#घोषणा ADV748X_AFE_STD_NTSC_M				0x5
-#घोषणा ADV748X_AFE_STD_PAL60				0x6
-#घोषणा ADV748X_AFE_STD_NTSC_443			0x7
-#घोषणा ADV748X_AFE_STD_PAL_BG				0x8
-#घोषणा ADV748X_AFE_STD_PAL_N				0x9
-#घोषणा ADV748X_AFE_STD_PAL_M				0xa
-#घोषणा ADV748X_AFE_STD_PAL_M_PED			0xb
-#घोषणा ADV748X_AFE_STD_PAL_COMB_N			0xc
-#घोषणा ADV748X_AFE_STD_PAL_COMB_N_PED			0xd
-#घोषणा ADV748X_AFE_STD_PAL_SECAM			0xe
-#घोषणा ADV748X_AFE_STD_PAL_SECAM_PED			0xf
+#define ADV748X_AFE_STD_AD_PAL_BG_NTSC_J_SECAM		0x0
+#define ADV748X_AFE_STD_AD_PAL_BG_NTSC_J_SECAM_PED	0x1
+#define ADV748X_AFE_STD_AD_PAL_N_NTSC_J_SECAM		0x2
+#define ADV748X_AFE_STD_AD_PAL_N_NTSC_M_SECAM		0x3
+#define ADV748X_AFE_STD_NTSC_J				0x4
+#define ADV748X_AFE_STD_NTSC_M				0x5
+#define ADV748X_AFE_STD_PAL60				0x6
+#define ADV748X_AFE_STD_NTSC_443			0x7
+#define ADV748X_AFE_STD_PAL_BG				0x8
+#define ADV748X_AFE_STD_PAL_N				0x9
+#define ADV748X_AFE_STD_PAL_M				0xa
+#define ADV748X_AFE_STD_PAL_M_PED			0xb
+#define ADV748X_AFE_STD_PAL_COMB_N			0xc
+#define ADV748X_AFE_STD_PAL_COMB_N_PED			0xd
+#define ADV748X_AFE_STD_PAL_SECAM			0xe
+#define ADV748X_AFE_STD_PAL_SECAM_PED			0xf
 
-अटल पूर्णांक adv748x_afe_पढ़ो_ro_map(काष्ठा adv748x_state *state, u8 reg)
-अणु
-	पूर्णांक ret;
+static int adv748x_afe_read_ro_map(struct adv748x_state *state, u8 reg)
+{
+	int ret;
 
 	/* Select SDP Read-Only Main Map */
-	ret = sdp_ग_लिखो(state, ADV748X_SDP_MAP_SEL,
+	ret = sdp_write(state, ADV748X_SDP_MAP_SEL,
 			ADV748X_SDP_MAP_SEL_RO_MAIN);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस sdp_पढ़ो(state, reg);
-पूर्ण
+	return sdp_read(state, reg);
+}
 
-अटल पूर्णांक adv748x_afe_status(काष्ठा adv748x_afe *afe, u32 *संकेत,
+static int adv748x_afe_status(struct adv748x_afe *afe, u32 *signal,
 			      v4l2_std_id *std)
-अणु
-	काष्ठा adv748x_state *state = adv748x_afe_to_state(afe);
-	पूर्णांक info;
+{
+	struct adv748x_state *state = adv748x_afe_to_state(afe);
+	int info;
 
 	/* Read status from reg 0x10 of SDP RO Map */
-	info = adv748x_afe_पढ़ो_ro_map(state, ADV748X_SDP_RO_10);
-	अगर (info < 0)
-		वापस info;
+	info = adv748x_afe_read_ro_map(state, ADV748X_SDP_RO_10);
+	if (info < 0)
+		return info;
 
-	अगर (संकेत)
-		*संकेत = info & ADV748X_SDP_RO_10_IN_LOCK ?
+	if (signal)
+		*signal = info & ADV748X_SDP_RO_10_IN_LOCK ?
 				0 : V4L2_IN_ST_NO_SIGNAL;
 
-	अगर (!std)
-		वापस 0;
+	if (!std)
+		return 0;
 
-	/* Standard not valid अगर there is no संकेत */
-	अगर (!(info & ADV748X_SDP_RO_10_IN_LOCK)) अणु
+	/* Standard not valid if there is no signal */
+	if (!(info & ADV748X_SDP_RO_10_IN_LOCK)) {
 		*std = V4L2_STD_UNKNOWN;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	चयन (info & 0x70) अणु
-	हाल 0x00:
+	switch (info & 0x70) {
+	case 0x00:
 		*std = V4L2_STD_NTSC;
-		अवरोध;
-	हाल 0x10:
+		break;
+	case 0x10:
 		*std = V4L2_STD_NTSC_443;
-		अवरोध;
-	हाल 0x20:
+		break;
+	case 0x20:
 		*std = V4L2_STD_PAL_M;
-		अवरोध;
-	हाल 0x30:
+		break;
+	case 0x30:
 		*std = V4L2_STD_PAL_60;
-		अवरोध;
-	हाल 0x40:
+		break;
+	case 0x40:
 		*std = V4L2_STD_PAL;
-		अवरोध;
-	हाल 0x50:
+		break;
+	case 0x50:
 		*std = V4L2_STD_SECAM;
-		अवरोध;
-	हाल 0x60:
+		break;
+	case 0x60:
 		*std = V4L2_STD_PAL_Nc | V4L2_STD_PAL_N;
-		अवरोध;
-	हाल 0x70:
+		break;
+	case 0x70:
 		*std = V4L2_STD_SECAM;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		*std = V4L2_STD_UNKNOWN;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम adv748x_afe_fill_क्रमmat(काष्ठा adv748x_afe *afe,
-				    काष्ठा v4l2_mbus_framefmt *fmt)
-अणु
-	स_रखो(fmt, 0, माप(*fmt));
+static void adv748x_afe_fill_format(struct adv748x_afe *afe,
+				    struct v4l2_mbus_framefmt *fmt)
+{
+	memset(fmt, 0, sizeof(*fmt));
 
 	fmt->code = MEDIA_BUS_FMT_UYVY8_2X8;
 	fmt->colorspace = V4L2_COLORSPACE_SMPTE170M;
@@ -124,81 +123,81 @@
 
 	/* Field height */
 	fmt->height /= 2;
-पूर्ण
+}
 
-अटल पूर्णांक adv748x_afe_std(v4l2_std_id std)
-अणु
-	अगर (std == V4L2_STD_PAL_60)
-		वापस ADV748X_AFE_STD_PAL60;
-	अगर (std == V4L2_STD_NTSC_443)
-		वापस ADV748X_AFE_STD_NTSC_443;
-	अगर (std == V4L2_STD_PAL_N)
-		वापस ADV748X_AFE_STD_PAL_N;
-	अगर (std == V4L2_STD_PAL_M)
-		वापस ADV748X_AFE_STD_PAL_M;
-	अगर (std == V4L2_STD_PAL_Nc)
-		वापस ADV748X_AFE_STD_PAL_COMB_N;
-	अगर (std & V4L2_STD_NTSC)
-		वापस ADV748X_AFE_STD_NTSC_M;
-	अगर (std & V4L2_STD_PAL)
-		वापस ADV748X_AFE_STD_PAL_BG;
-	अगर (std & V4L2_STD_SECAM)
-		वापस ADV748X_AFE_STD_PAL_SECAM;
+static int adv748x_afe_std(v4l2_std_id std)
+{
+	if (std == V4L2_STD_PAL_60)
+		return ADV748X_AFE_STD_PAL60;
+	if (std == V4L2_STD_NTSC_443)
+		return ADV748X_AFE_STD_NTSC_443;
+	if (std == V4L2_STD_PAL_N)
+		return ADV748X_AFE_STD_PAL_N;
+	if (std == V4L2_STD_PAL_M)
+		return ADV748X_AFE_STD_PAL_M;
+	if (std == V4L2_STD_PAL_Nc)
+		return ADV748X_AFE_STD_PAL_COMB_N;
+	if (std & V4L2_STD_NTSC)
+		return ADV748X_AFE_STD_NTSC_M;
+	if (std & V4L2_STD_PAL)
+		return ADV748X_AFE_STD_PAL_BG;
+	if (std & V4L2_STD_SECAM)
+		return ADV748X_AFE_STD_PAL_SECAM;
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल व्योम adv748x_afe_set_video_standard(काष्ठा adv748x_state *state,
-					  पूर्णांक sdpstd)
-अणु
+static void adv748x_afe_set_video_standard(struct adv748x_state *state,
+					  int sdpstd)
+{
 	sdp_clrset(state, ADV748X_SDP_VID_SEL, ADV748X_SDP_VID_SEL_MASK,
 		   (sdpstd & 0xf) << ADV748X_SDP_VID_SEL_SHIFT);
-पूर्ण
+}
 
-पूर्णांक adv748x_afe_s_input(काष्ठा adv748x_afe *afe, अचिन्हित पूर्णांक input)
-अणु
-	काष्ठा adv748x_state *state = adv748x_afe_to_state(afe);
+int adv748x_afe_s_input(struct adv748x_afe *afe, unsigned int input)
+{
+	struct adv748x_state *state = adv748x_afe_to_state(afe);
 
-	वापस sdp_ग_लिखो(state, ADV748X_SDP_INSEL, input);
-पूर्ण
+	return sdp_write(state, ADV748X_SDP_INSEL, input);
+}
 
-अटल पूर्णांक adv748x_afe_g_pixelaspect(काष्ठा v4l2_subdev *sd,
-				     काष्ठा v4l2_fract *aspect)
-अणु
-	काष्ठा adv748x_afe *afe = adv748x_sd_to_afe(sd);
+static int adv748x_afe_g_pixelaspect(struct v4l2_subdev *sd,
+				     struct v4l2_fract *aspect)
+{
+	struct adv748x_afe *afe = adv748x_sd_to_afe(sd);
 
-	अगर (afe->curr_norm & V4L2_STD_525_60) अणु
+	if (afe->curr_norm & V4L2_STD_525_60) {
 		aspect->numerator = 11;
 		aspect->denominator = 10;
-	पूर्ण अन्यथा अणु
+	} else {
 		aspect->numerator = 54;
 		aspect->denominator = 59;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* -----------------------------------------------------------------------------
  * v4l2_subdev_video_ops
  */
 
-अटल पूर्णांक adv748x_afe_g_std(काष्ठा v4l2_subdev *sd, v4l2_std_id *norm)
-अणु
-	काष्ठा adv748x_afe *afe = adv748x_sd_to_afe(sd);
+static int adv748x_afe_g_std(struct v4l2_subdev *sd, v4l2_std_id *norm)
+{
+	struct adv748x_afe *afe = adv748x_sd_to_afe(sd);
 
 	*norm = afe->curr_norm;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक adv748x_afe_s_std(काष्ठा v4l2_subdev *sd, v4l2_std_id std)
-अणु
-	काष्ठा adv748x_afe *afe = adv748x_sd_to_afe(sd);
-	काष्ठा adv748x_state *state = adv748x_afe_to_state(afe);
-	पूर्णांक afe_std = adv748x_afe_std(std);
+static int adv748x_afe_s_std(struct v4l2_subdev *sd, v4l2_std_id std)
+{
+	struct adv748x_afe *afe = adv748x_sd_to_afe(sd);
+	struct adv748x_state *state = adv748x_afe_to_state(afe);
+	int afe_std = adv748x_afe_std(std);
 
-	अगर (afe_std < 0)
-		वापस afe_std;
+	if (afe_std < 0)
+		return afe_std;
 
 	mutex_lock(&state->mutex);
 
@@ -207,35 +206,35 @@
 
 	mutex_unlock(&state->mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक adv748x_afe_querystd(काष्ठा v4l2_subdev *sd, v4l2_std_id *std)
-अणु
-	काष्ठा adv748x_afe *afe = adv748x_sd_to_afe(sd);
-	काष्ठा adv748x_state *state = adv748x_afe_to_state(afe);
-	पूर्णांक afe_std;
-	पूर्णांक ret;
+static int adv748x_afe_querystd(struct v4l2_subdev *sd, v4l2_std_id *std)
+{
+	struct adv748x_afe *afe = adv748x_sd_to_afe(sd);
+	struct adv748x_state *state = adv748x_afe_to_state(afe);
+	int afe_std;
+	int ret;
 
 	mutex_lock(&state->mutex);
 
-	अगर (afe->streaming) अणु
+	if (afe->streaming) {
 		ret = -EBUSY;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	/* Set स्वतः detect mode */
+	/* Set auto detect mode */
 	adv748x_afe_set_video_standard(state,
 				       ADV748X_AFE_STD_AD_PAL_BG_NTSC_J_SECAM);
 
 	msleep(100);
 
 	/* Read detected standard */
-	ret = adv748x_afe_status(afe, शून्य, std);
+	ret = adv748x_afe_status(afe, NULL, std);
 
 	afe_std = adv748x_afe_std(afe->curr_norm);
-	अगर (afe_std < 0)
-		जाओ unlock;
+	if (afe_std < 0)
+		goto unlock;
 
 	/* Restore original state */
 	adv748x_afe_set_video_standard(state, afe_std);
@@ -243,65 +242,65 @@
 unlock:
 	mutex_unlock(&state->mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक adv748x_afe_g_tvnorms(काष्ठा v4l2_subdev *sd, v4l2_std_id *norm)
-अणु
+static int adv748x_afe_g_tvnorms(struct v4l2_subdev *sd, v4l2_std_id *norm)
+{
 	*norm = V4L2_STD_ALL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक adv748x_afe_g_input_status(काष्ठा v4l2_subdev *sd, u32 *status)
-अणु
-	काष्ठा adv748x_afe *afe = adv748x_sd_to_afe(sd);
-	काष्ठा adv748x_state *state = adv748x_afe_to_state(afe);
-	पूर्णांक ret;
+static int adv748x_afe_g_input_status(struct v4l2_subdev *sd, u32 *status)
+{
+	struct adv748x_afe *afe = adv748x_sd_to_afe(sd);
+	struct adv748x_state *state = adv748x_afe_to_state(afe);
+	int ret;
 
 	mutex_lock(&state->mutex);
 
-	ret = adv748x_afe_status(afe, status, शून्य);
+	ret = adv748x_afe_status(afe, status, NULL);
 
 	mutex_unlock(&state->mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक adv748x_afe_s_stream(काष्ठा v4l2_subdev *sd, पूर्णांक enable)
-अणु
-	काष्ठा adv748x_afe *afe = adv748x_sd_to_afe(sd);
-	काष्ठा adv748x_state *state = adv748x_afe_to_state(afe);
-	u32 संकेत = V4L2_IN_ST_NO_SIGNAL;
-	पूर्णांक ret;
+static int adv748x_afe_s_stream(struct v4l2_subdev *sd, int enable)
+{
+	struct adv748x_afe *afe = adv748x_sd_to_afe(sd);
+	struct adv748x_state *state = adv748x_afe_to_state(afe);
+	u32 signal = V4L2_IN_ST_NO_SIGNAL;
+	int ret;
 
 	mutex_lock(&state->mutex);
 
-	अगर (enable) अणु
+	if (enable) {
 		ret = adv748x_afe_s_input(afe, afe->input);
-		अगर (ret)
-			जाओ unlock;
-	पूर्ण
+		if (ret)
+			goto unlock;
+	}
 
-	ret = adv748x_tx_घातer(afe->tx, enable);
-	अगर (ret)
-		जाओ unlock;
+	ret = adv748x_tx_power(afe->tx, enable);
+	if (ret)
+		goto unlock;
 
 	afe->streaming = enable;
 
-	adv748x_afe_status(afe, &संकेत, शून्य);
-	अगर (संकेत != V4L2_IN_ST_NO_SIGNAL)
+	adv748x_afe_status(afe, &signal, NULL);
+	if (signal != V4L2_IN_ST_NO_SIGNAL)
 		adv_dbg(state, "Detected SDP signal\n");
-	अन्यथा
+	else
 		adv_dbg(state, "Couldn't detect SDP video signal\n");
 
 unlock:
 	mutex_unlock(&state->mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा v4l2_subdev_video_ops adv748x_afe_video_ops = अणु
+static const struct v4l2_subdev_video_ops adv748x_afe_video_ops = {
 	.g_std = adv748x_afe_g_std,
 	.s_std = adv748x_afe_s_std,
 	.querystd = adv748x_afe_querystd,
@@ -309,101 +308,101 @@ unlock:
 	.g_input_status = adv748x_afe_g_input_status,
 	.s_stream = adv748x_afe_s_stream,
 	.g_pixelaspect = adv748x_afe_g_pixelaspect,
-पूर्ण;
+};
 
 /* -----------------------------------------------------------------------------
  * v4l2_subdev_pad_ops
  */
 
-अटल पूर्णांक adv748x_afe_propagate_pixelrate(काष्ठा adv748x_afe *afe)
-अणु
-	काष्ठा v4l2_subdev *tx;
+static int adv748x_afe_propagate_pixelrate(struct adv748x_afe *afe)
+{
+	struct v4l2_subdev *tx;
 
 	tx = adv748x_get_remote_sd(&afe->pads[ADV748X_AFE_SOURCE]);
-	अगर (!tx)
-		वापस -ENOLINK;
+	if (!tx)
+		return -ENOLINK;
 
 	/*
-	 * The ADV748x ADC sampling frequency is twice the बाह्यally supplied
-	 * घड़ी whose frequency is required to be 28.63636 MHz. It oversamples
+	 * The ADV748x ADC sampling frequency is twice the externally supplied
+	 * clock whose frequency is required to be 28.63636 MHz. It oversamples
 	 * with a factor of 4 resulting in a pixel rate of 14.3180180 MHz.
 	 */
-	वापस adv748x_csi2_set_pixelrate(tx, 14318180);
-पूर्ण
+	return adv748x_csi2_set_pixelrate(tx, 14318180);
+}
 
-अटल पूर्णांक adv748x_afe_क्रमागत_mbus_code(काष्ठा v4l2_subdev *sd,
-				      काष्ठा v4l2_subdev_pad_config *cfg,
-				      काष्ठा v4l2_subdev_mbus_code_क्रमागत *code)
-अणु
-	अगर (code->index != 0)
-		वापस -EINVAL;
+static int adv748x_afe_enum_mbus_code(struct v4l2_subdev *sd,
+				      struct v4l2_subdev_pad_config *cfg,
+				      struct v4l2_subdev_mbus_code_enum *code)
+{
+	if (code->index != 0)
+		return -EINVAL;
 
 	code->code = MEDIA_BUS_FMT_UYVY8_2X8;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक adv748x_afe_get_क्रमmat(काष्ठा v4l2_subdev *sd,
-				      काष्ठा v4l2_subdev_pad_config *cfg,
-				      काष्ठा v4l2_subdev_क्रमmat *sdक्रमmat)
-अणु
-	काष्ठा adv748x_afe *afe = adv748x_sd_to_afe(sd);
-	काष्ठा v4l2_mbus_framefmt *mbusक्रमmat;
+static int adv748x_afe_get_format(struct v4l2_subdev *sd,
+				      struct v4l2_subdev_pad_config *cfg,
+				      struct v4l2_subdev_format *sdformat)
+{
+	struct adv748x_afe *afe = adv748x_sd_to_afe(sd);
+	struct v4l2_mbus_framefmt *mbusformat;
 
-	/* It makes no sense to get the क्रमmat of the analog sink pads */
-	अगर (sdक्रमmat->pad != ADV748X_AFE_SOURCE)
-		वापस -EINVAL;
+	/* It makes no sense to get the format of the analog sink pads */
+	if (sdformat->pad != ADV748X_AFE_SOURCE)
+		return -EINVAL;
 
-	अगर (sdक्रमmat->which == V4L2_SUBDEV_FORMAT_TRY) अणु
-		mbusक्रमmat = v4l2_subdev_get_try_क्रमmat(sd, cfg, sdक्रमmat->pad);
-		sdक्रमmat->क्रमmat = *mbusक्रमmat;
-	पूर्ण अन्यथा अणु
-		adv748x_afe_fill_क्रमmat(afe, &sdक्रमmat->क्रमmat);
+	if (sdformat->which == V4L2_SUBDEV_FORMAT_TRY) {
+		mbusformat = v4l2_subdev_get_try_format(sd, cfg, sdformat->pad);
+		sdformat->format = *mbusformat;
+	} else {
+		adv748x_afe_fill_format(afe, &sdformat->format);
 		adv748x_afe_propagate_pixelrate(afe);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक adv748x_afe_set_क्रमmat(काष्ठा v4l2_subdev *sd,
-				      काष्ठा v4l2_subdev_pad_config *cfg,
-				      काष्ठा v4l2_subdev_क्रमmat *sdक्रमmat)
-अणु
-	काष्ठा v4l2_mbus_framefmt *mbusक्रमmat;
+static int adv748x_afe_set_format(struct v4l2_subdev *sd,
+				      struct v4l2_subdev_pad_config *cfg,
+				      struct v4l2_subdev_format *sdformat)
+{
+	struct v4l2_mbus_framefmt *mbusformat;
 
-	/* It makes no sense to get the क्रमmat of the analog sink pads */
-	अगर (sdक्रमmat->pad != ADV748X_AFE_SOURCE)
-		वापस -EINVAL;
+	/* It makes no sense to get the format of the analog sink pads */
+	if (sdformat->pad != ADV748X_AFE_SOURCE)
+		return -EINVAL;
 
-	अगर (sdक्रमmat->which == V4L2_SUBDEV_FORMAT_ACTIVE)
-		वापस adv748x_afe_get_क्रमmat(sd, cfg, sdक्रमmat);
+	if (sdformat->which == V4L2_SUBDEV_FORMAT_ACTIVE)
+		return adv748x_afe_get_format(sd, cfg, sdformat);
 
-	mbusक्रमmat = v4l2_subdev_get_try_क्रमmat(sd, cfg, sdक्रमmat->pad);
-	*mbusक्रमmat = sdक्रमmat->क्रमmat;
+	mbusformat = v4l2_subdev_get_try_format(sd, cfg, sdformat->pad);
+	*mbusformat = sdformat->format;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा v4l2_subdev_pad_ops adv748x_afe_pad_ops = अणु
-	.क्रमागत_mbus_code = adv748x_afe_क्रमागत_mbus_code,
-	.set_fmt = adv748x_afe_set_क्रमmat,
-	.get_fmt = adv748x_afe_get_क्रमmat,
-पूर्ण;
+static const struct v4l2_subdev_pad_ops adv748x_afe_pad_ops = {
+	.enum_mbus_code = adv748x_afe_enum_mbus_code,
+	.set_fmt = adv748x_afe_set_format,
+	.get_fmt = adv748x_afe_get_format,
+};
 
 /* -----------------------------------------------------------------------------
  * v4l2_subdev_ops
  */
 
-अटल स्थिर काष्ठा v4l2_subdev_ops adv748x_afe_ops = अणु
+static const struct v4l2_subdev_ops adv748x_afe_ops = {
 	.video = &adv748x_afe_video_ops,
 	.pad = &adv748x_afe_pad_ops,
-पूर्ण;
+};
 
 /* -----------------------------------------------------------------------------
  * Controls
  */
 
-अटल स्थिर अक्षर * स्थिर afe_ctrl_frp_menu[] = अणु
+static const char * const afe_ctrl_frp_menu[] = {
 	"Disabled",
 	"Solid Blue",
 	"Color Bars",
@@ -411,65 +410,65 @@ unlock:
 	"Cb Ramp",
 	"Cr Ramp",
 	"Boundary"
-पूर्ण;
+};
 
-अटल पूर्णांक adv748x_afe_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	काष्ठा adv748x_afe *afe = adv748x_ctrl_to_afe(ctrl);
-	काष्ठा adv748x_state *state = adv748x_afe_to_state(afe);
+static int adv748x_afe_s_ctrl(struct v4l2_ctrl *ctrl)
+{
+	struct adv748x_afe *afe = adv748x_ctrl_to_afe(ctrl);
+	struct adv748x_state *state = adv748x_afe_to_state(afe);
 	bool enable;
-	पूर्णांक ret;
+	int ret;
 
-	ret = sdp_ग_लिखो(state, 0x0e, 0x00);
-	अगर (ret < 0)
-		वापस ret;
+	ret = sdp_write(state, 0x0e, 0x00);
+	if (ret < 0)
+		return ret;
 
-	चयन (ctrl->id) अणु
-	हाल V4L2_CID_BRIGHTNESS:
-		ret = sdp_ग_लिखो(state, ADV748X_SDP_BRI, ctrl->val);
-		अवरोध;
-	हाल V4L2_CID_HUE:
-		/* Hue is inverted according to HSL अक्षरt */
-		ret = sdp_ग_लिखो(state, ADV748X_SDP_HUE, -ctrl->val);
-		अवरोध;
-	हाल V4L2_CID_CONTRAST:
-		ret = sdp_ग_लिखो(state, ADV748X_SDP_CON, ctrl->val);
-		अवरोध;
-	हाल V4L2_CID_SATURATION:
-		ret = sdp_ग_लिखो(state, ADV748X_SDP_SD_SAT_U, ctrl->val);
-		अगर (ret)
-			अवरोध;
-		ret = sdp_ग_लिखो(state, ADV748X_SDP_SD_SAT_V, ctrl->val);
-		अवरोध;
-	हाल V4L2_CID_TEST_PATTERN:
+	switch (ctrl->id) {
+	case V4L2_CID_BRIGHTNESS:
+		ret = sdp_write(state, ADV748X_SDP_BRI, ctrl->val);
+		break;
+	case V4L2_CID_HUE:
+		/* Hue is inverted according to HSL chart */
+		ret = sdp_write(state, ADV748X_SDP_HUE, -ctrl->val);
+		break;
+	case V4L2_CID_CONTRAST:
+		ret = sdp_write(state, ADV748X_SDP_CON, ctrl->val);
+		break;
+	case V4L2_CID_SATURATION:
+		ret = sdp_write(state, ADV748X_SDP_SD_SAT_U, ctrl->val);
+		if (ret)
+			break;
+		ret = sdp_write(state, ADV748X_SDP_SD_SAT_V, ctrl->val);
+		break;
+	case V4L2_CID_TEST_PATTERN:
 		enable = !!ctrl->val;
 
 		/* Enable/Disable Color bar test patterns */
 		ret = sdp_clrset(state, ADV748X_SDP_DEF, ADV748X_SDP_DEF_VAL_EN,
 				enable);
-		अगर (ret)
-			अवरोध;
+		if (ret)
+			break;
 		ret = sdp_clrset(state, ADV748X_SDP_FRP, ADV748X_SDP_FRP_MASK,
 				enable ? ctrl->val - 1 : 0);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा v4l2_ctrl_ops adv748x_afe_ctrl_ops = अणु
+static const struct v4l2_ctrl_ops adv748x_afe_ctrl_ops = {
 	.s_ctrl = adv748x_afe_s_ctrl,
-पूर्ण;
+};
 
-अटल पूर्णांक adv748x_afe_init_controls(काष्ठा adv748x_afe *afe)
-अणु
-	काष्ठा adv748x_state *state = adv748x_afe_to_state(afe);
+static int adv748x_afe_init_controls(struct adv748x_afe *afe)
+{
+	struct adv748x_state *state = adv748x_afe_to_state(afe);
 
 	v4l2_ctrl_handler_init(&afe->ctrl_hdl, 5);
 
-	/* Use our mutex क्रम the controls */
+	/* Use our mutex for the controls */
 	afe->ctrl_hdl.lock = &state->mutex;
 
 	v4l2_ctrl_new_std(&afe->ctrl_hdl, &adv748x_afe_ctrl_ops,
@@ -491,19 +490,19 @@ unlock:
 				     0, 0, afe_ctrl_frp_menu);
 
 	afe->sd.ctrl_handler = &afe->ctrl_hdl;
-	अगर (afe->ctrl_hdl.error) अणु
-		v4l2_ctrl_handler_मुक्त(&afe->ctrl_hdl);
-		वापस afe->ctrl_hdl.error;
-	पूर्ण
+	if (afe->ctrl_hdl.error) {
+		v4l2_ctrl_handler_free(&afe->ctrl_hdl);
+		return afe->ctrl_hdl.error;
+	}
 
-	वापस v4l2_ctrl_handler_setup(&afe->ctrl_hdl);
-पूर्ण
+	return v4l2_ctrl_handler_setup(&afe->ctrl_hdl);
+}
 
-पूर्णांक adv748x_afe_init(काष्ठा adv748x_afe *afe)
-अणु
-	काष्ठा adv748x_state *state = adv748x_afe_to_state(afe);
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक i;
+int adv748x_afe_init(struct adv748x_afe *afe)
+{
+	struct adv748x_state *state = adv748x_afe_to_state(afe);
+	int ret;
+	unsigned int i;
 
 	afe->input = 0;
 	afe->streaming = false;
@@ -512,41 +511,41 @@ unlock:
 	adv748x_subdev_init(&afe->sd, state, &adv748x_afe_ops,
 			    MEDIA_ENT_F_ATV_DECODER, "afe");
 
-	/* Identअगरy the first connector found as a शेष input अगर set */
-	क्रम (i = ADV748X_PORT_AIN0; i <= ADV748X_PORT_AIN7; i++) अणु
-		/* Inमाला_दो and ports are 1-indexed to match the data sheet */
-		अगर (state->endpoपूर्णांकs[i]) अणु
+	/* Identify the first connector found as a default input if set */
+	for (i = ADV748X_PORT_AIN0; i <= ADV748X_PORT_AIN7; i++) {
+		/* Inputs and ports are 1-indexed to match the data sheet */
+		if (state->endpoints[i]) {
 			afe->input = i;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	/* Entity pads and sinks are 0-indexed to match the pads */
-	क्रम (i = ADV748X_AFE_SINK_AIN0; i <= ADV748X_AFE_SINK_AIN7; i++)
+	for (i = ADV748X_AFE_SINK_AIN0; i <= ADV748X_AFE_SINK_AIN7; i++)
 		afe->pads[i].flags = MEDIA_PAD_FL_SINK;
 
 	afe->pads[ADV748X_AFE_SOURCE].flags = MEDIA_PAD_FL_SOURCE;
 
 	ret = media_entity_pads_init(&afe->sd.entity, ADV748X_AFE_NR_PADS,
 			afe->pads);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = adv748x_afe_init_controls(afe);
-	अगर (ret)
-		जाओ error;
+	if (ret)
+		goto error;
 
-	वापस 0;
+	return 0;
 
 error:
 	media_entity_cleanup(&afe->sd.entity);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम adv748x_afe_cleanup(काष्ठा adv748x_afe *afe)
-अणु
-	v4l2_device_unरेजिस्टर_subdev(&afe->sd);
+void adv748x_afe_cleanup(struct adv748x_afe *afe)
+{
+	v4l2_device_unregister_subdev(&afe->sd);
 	media_entity_cleanup(&afe->sd.entity);
-	v4l2_ctrl_handler_मुक्त(&afe->ctrl_hdl);
-पूर्ण
+	v4l2_ctrl_handler_free(&afe->ctrl_hdl);
+}

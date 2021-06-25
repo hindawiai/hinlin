@@ -1,187 +1,186 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * bvec iterator
  *
  * Copyright (C) 2001 Ming Lei <ming.lei@canonical.com>
  */
-#अगर_अघोषित __LINUX_BVEC_ITER_H
-#घोषणा __LINUX_BVEC_ITER_H
+#ifndef __LINUX_BVEC_ITER_H
+#define __LINUX_BVEC_ITER_H
 
-#समावेश <linux/bug.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/सीमा.स>
-#समावेश <linux/minmax.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/types.h>
+#include <linux/bug.h>
+#include <linux/errno.h>
+#include <linux/limits.h>
+#include <linux/minmax.h>
+#include <linux/mm.h>
+#include <linux/types.h>
 
-काष्ठा page;
+struct page;
 
 /**
- * काष्ठा bio_vec - a contiguous range of physical memory addresses
+ * struct bio_vec - a contiguous range of physical memory addresses
  * @bv_page:   First page associated with the address range.
  * @bv_len:    Number of bytes in the address range.
  * @bv_offset: Start of the address range relative to the start of @bv_page.
  *
- * The following holds क्रम a bvec अगर n * PAGE_SIZE < bv_offset + bv_len:
+ * The following holds for a bvec if n * PAGE_SIZE < bv_offset + bv_len:
  *
  *   nth_page(@bv_page, n) == @bv_page + n
  *
  * This holds because page_is_mergeable() checks the above property.
  */
-काष्ठा bio_vec अणु
-	काष्ठा page	*bv_page;
-	अचिन्हित पूर्णांक	bv_len;
-	अचिन्हित पूर्णांक	bv_offset;
-पूर्ण;
+struct bio_vec {
+	struct page	*bv_page;
+	unsigned int	bv_len;
+	unsigned int	bv_offset;
+};
 
-काष्ठा bvec_iter अणु
+struct bvec_iter {
 	sector_t		bi_sector;	/* device address in 512 byte
 						   sectors */
-	अचिन्हित पूर्णांक		bi_size;	/* residual I/O count */
+	unsigned int		bi_size;	/* residual I/O count */
 
-	अचिन्हित पूर्णांक		bi_idx;		/* current index पूर्णांकo bvl_vec */
+	unsigned int		bi_idx;		/* current index into bvl_vec */
 
-	अचिन्हित पूर्णांक            bi_bvec_करोne;	/* number of bytes completed in
+	unsigned int            bi_bvec_done;	/* number of bytes completed in
 						   current bvec */
-पूर्ण;
+};
 
-काष्ठा bvec_iter_all अणु
-	काष्ठा bio_vec	bv;
-	पूर्णांक		idx;
-	अचिन्हित	करोne;
-पूर्ण;
+struct bvec_iter_all {
+	struct bio_vec	bv;
+	int		idx;
+	unsigned	done;
+};
 
 /*
  * various member access, note that bio_data should of course not be used
  * on highmem page vectors
  */
-#घोषणा __bvec_iter_bvec(bvec, iter)	(&(bvec)[(iter).bi_idx])
+#define __bvec_iter_bvec(bvec, iter)	(&(bvec)[(iter).bi_idx])
 
 /* multi-page (mp_bvec) helpers */
-#घोषणा mp_bvec_iter_page(bvec, iter)				\
+#define mp_bvec_iter_page(bvec, iter)				\
 	(__bvec_iter_bvec((bvec), (iter))->bv_page)
 
-#घोषणा mp_bvec_iter_len(bvec, iter)				\
+#define mp_bvec_iter_len(bvec, iter)				\
 	min((iter).bi_size,					\
-	    __bvec_iter_bvec((bvec), (iter))->bv_len - (iter).bi_bvec_करोne)
+	    __bvec_iter_bvec((bvec), (iter))->bv_len - (iter).bi_bvec_done)
 
-#घोषणा mp_bvec_iter_offset(bvec, iter)				\
-	(__bvec_iter_bvec((bvec), (iter))->bv_offset + (iter).bi_bvec_करोne)
+#define mp_bvec_iter_offset(bvec, iter)				\
+	(__bvec_iter_bvec((bvec), (iter))->bv_offset + (iter).bi_bvec_done)
 
-#घोषणा mp_bvec_iter_page_idx(bvec, iter)			\
+#define mp_bvec_iter_page_idx(bvec, iter)			\
 	(mp_bvec_iter_offset((bvec), (iter)) / PAGE_SIZE)
 
-#घोषणा mp_bvec_iter_bvec(bvec, iter)				\
-((काष्ठा bio_vec) अणु						\
+#define mp_bvec_iter_bvec(bvec, iter)				\
+((struct bio_vec) {						\
 	.bv_page	= mp_bvec_iter_page((bvec), (iter)),	\
 	.bv_len		= mp_bvec_iter_len((bvec), (iter)),	\
 	.bv_offset	= mp_bvec_iter_offset((bvec), (iter)),	\
-पूर्ण)
+})
 
 /* For building single-page bvec in flight */
- #घोषणा bvec_iter_offset(bvec, iter)				\
+ #define bvec_iter_offset(bvec, iter)				\
 	(mp_bvec_iter_offset((bvec), (iter)) % PAGE_SIZE)
 
-#घोषणा bvec_iter_len(bvec, iter)				\
-	min_t(अचिन्हित, mp_bvec_iter_len((bvec), (iter)),		\
+#define bvec_iter_len(bvec, iter)				\
+	min_t(unsigned, mp_bvec_iter_len((bvec), (iter)),		\
 	      PAGE_SIZE - bvec_iter_offset((bvec), (iter)))
 
-#घोषणा bvec_iter_page(bvec, iter)				\
+#define bvec_iter_page(bvec, iter)				\
 	(mp_bvec_iter_page((bvec), (iter)) +			\
 	 mp_bvec_iter_page_idx((bvec), (iter)))
 
-#घोषणा bvec_iter_bvec(bvec, iter)				\
-((काष्ठा bio_vec) अणु						\
+#define bvec_iter_bvec(bvec, iter)				\
+((struct bio_vec) {						\
 	.bv_page	= bvec_iter_page((bvec), (iter)),	\
 	.bv_len		= bvec_iter_len((bvec), (iter)),	\
 	.bv_offset	= bvec_iter_offset((bvec), (iter)),	\
-पूर्ण)
+})
 
-अटल अंतरभूत bool bvec_iter_advance(स्थिर काष्ठा bio_vec *bv,
-		काष्ठा bvec_iter *iter, अचिन्हित bytes)
-अणु
-	अचिन्हित पूर्णांक idx = iter->bi_idx;
+static inline bool bvec_iter_advance(const struct bio_vec *bv,
+		struct bvec_iter *iter, unsigned bytes)
+{
+	unsigned int idx = iter->bi_idx;
 
-	अगर (WARN_ONCE(bytes > iter->bi_size,
-		     "Attempted to advance past end of bvec iter\n")) अणु
+	if (WARN_ONCE(bytes > iter->bi_size,
+		     "Attempted to advance past end of bvec iter\n")) {
 		iter->bi_size = 0;
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	iter->bi_size -= bytes;
-	bytes += iter->bi_bvec_करोne;
+	bytes += iter->bi_bvec_done;
 
-	जबतक (bytes && bytes >= bv[idx].bv_len) अणु
+	while (bytes && bytes >= bv[idx].bv_len) {
 		bytes -= bv[idx].bv_len;
 		idx++;
-	पूर्ण
+	}
 
 	iter->bi_idx = idx;
-	iter->bi_bvec_करोne = bytes;
-	वापस true;
-पूर्ण
+	iter->bi_bvec_done = bytes;
+	return true;
+}
 
 /*
  * A simpler version of bvec_iter_advance(), @bytes should not span
  * across multiple bvec entries, i.e. bytes <= bv[i->bi_idx].bv_len
  */
-अटल अंतरभूत व्योम bvec_iter_advance_single(स्थिर काष्ठा bio_vec *bv,
-				काष्ठा bvec_iter *iter, अचिन्हित पूर्णांक bytes)
-अणु
-	अचिन्हित पूर्णांक करोne = iter->bi_bvec_करोne + bytes;
+static inline void bvec_iter_advance_single(const struct bio_vec *bv,
+				struct bvec_iter *iter, unsigned int bytes)
+{
+	unsigned int done = iter->bi_bvec_done + bytes;
 
-	अगर (करोne == bv[iter->bi_idx].bv_len) अणु
-		करोne = 0;
+	if (done == bv[iter->bi_idx].bv_len) {
+		done = 0;
 		iter->bi_idx++;
-	पूर्ण
-	iter->bi_bvec_करोne = करोne;
+	}
+	iter->bi_bvec_done = done;
 	iter->bi_size -= bytes;
-पूर्ण
+}
 
-#घोषणा क्रम_each_bvec(bvl, bio_vec, iter, start)			\
-	क्रम (iter = (start);						\
+#define for_each_bvec(bvl, bio_vec, iter, start)			\
+	for (iter = (start);						\
 	     (iter).bi_size &&						\
 		((bvl = bvec_iter_bvec((bio_vec), (iter))), 1);	\
 	     bvec_iter_advance_single((bio_vec), &(iter), (bvl).bv_len))
 
-/* क्रम iterating one bio from start to end */
-#घोषणा BVEC_ITER_ALL_INIT (काष्ठा bvec_iter)				\
-अणु									\
+/* for iterating one bio from start to end */
+#define BVEC_ITER_ALL_INIT (struct bvec_iter)				\
+{									\
 	.bi_sector	= 0,						\
-	.bi_size	= अच_पूर्णांक_उच्च,					\
+	.bi_size	= UINT_MAX,					\
 	.bi_idx		= 0,						\
-	.bi_bvec_करोne	= 0,						\
-पूर्ण
+	.bi_bvec_done	= 0,						\
+}
 
-अटल अंतरभूत काष्ठा bio_vec *bvec_init_iter_all(काष्ठा bvec_iter_all *iter_all)
-अणु
-	iter_all->करोne = 0;
+static inline struct bio_vec *bvec_init_iter_all(struct bvec_iter_all *iter_all)
+{
+	iter_all->done = 0;
 	iter_all->idx = 0;
 
-	वापस &iter_all->bv;
-पूर्ण
+	return &iter_all->bv;
+}
 
-अटल अंतरभूत व्योम bvec_advance(स्थिर काष्ठा bio_vec *bvec,
-				काष्ठा bvec_iter_all *iter_all)
-अणु
-	काष्ठा bio_vec *bv = &iter_all->bv;
+static inline void bvec_advance(const struct bio_vec *bvec,
+				struct bvec_iter_all *iter_all)
+{
+	struct bio_vec *bv = &iter_all->bv;
 
-	अगर (iter_all->करोne) अणु
+	if (iter_all->done) {
 		bv->bv_page++;
 		bv->bv_offset = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		bv->bv_page = bvec->bv_page + (bvec->bv_offset >> PAGE_SHIFT);
 		bv->bv_offset = bvec->bv_offset & ~PAGE_MASK;
-	पूर्ण
-	bv->bv_len = min_t(अचिन्हित पूर्णांक, PAGE_SIZE - bv->bv_offset,
-			   bvec->bv_len - iter_all->करोne);
-	iter_all->करोne += bv->bv_len;
+	}
+	bv->bv_len = min_t(unsigned int, PAGE_SIZE - bv->bv_offset,
+			   bvec->bv_len - iter_all->done);
+	iter_all->done += bv->bv_len;
 
-	अगर (iter_all->करोne == bvec->bv_len) अणु
+	if (iter_all->done == bvec->bv_len) {
 		iter_all->idx++;
-		iter_all->करोne = 0;
-	पूर्ण
-पूर्ण
+		iter_all->done = 0;
+	}
+}
 
-#पूर्ण_अगर /* __LINUX_BVEC_ITER_H */
+#endif /* __LINUX_BVEC_ITER_H */

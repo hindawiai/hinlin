@@ -1,18 +1,17 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_GENERIC_TRACE_CLOCK_H
-#घोषणा _ASM_GENERIC_TRACE_CLOCK_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_GENERIC_TRACE_CLOCK_H
+#define _ASM_GENERIC_TRACE_CLOCK_H
 /*
- * Arch-specअगरic trace घड़ीs.
+ * Arch-specific trace clocks.
  */
 
 /*
- * Additional trace घड़ीs added to the trace_घड़ीs
+ * Additional trace clocks added to the trace_clocks
  * array in kernel/trace/trace.c
- * None अगर the architecture has not defined it.
+ * None if the architecture has not defined it.
  */
-#अगर_अघोषित ARCH_TRACE_CLOCKS
+#ifndef ARCH_TRACE_CLOCKS
 # define ARCH_TRACE_CLOCKS
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर  /* _ASM_GENERIC_TRACE_CLOCK_H */
+#endif  /* _ASM_GENERIC_TRACE_CLOCK_H */

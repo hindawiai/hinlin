@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  arch/arm/mach-socfpga/pm.c
  *
@@ -10,76 +9,76 @@
  * Copyright 2011 Linaro Ltd.
  */
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/genभाग.स>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/suspend.h>
-#समावेश <यंत्र/suspend.h>
-#समावेश <यंत्र/fncpy.h>
-#समावेश "core.h"
+#include <linux/bitops.h>
+#include <linux/genalloc.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/of_platform.h>
+#include <linux/suspend.h>
+#include <asm/suspend.h>
+#include <asm/fncpy.h>
+#include "core.h"
 
-/* Poपूर्णांकer to function copied to ocram */
-अटल u32 (*socfpga_sdram_self_refresh_in_ocram)(u32 sdr_base);
+/* Pointer to function copied to ocram */
+static u32 (*socfpga_sdram_self_refresh_in_ocram)(u32 sdr_base);
 
-अटल पूर्णांक socfpga_setup_ocram_self_refresh(व्योम)
-अणु
-	काष्ठा platक्रमm_device *pdev;
+static int socfpga_setup_ocram_self_refresh(void)
+{
+	struct platform_device *pdev;
 	phys_addr_t ocram_pbase;
-	काष्ठा device_node *np;
-	काष्ठा gen_pool *ocram_pool;
-	अचिन्हित दीर्घ ocram_base;
-	व्योम __iomem *suspend_ocram_base;
-	पूर्णांक ret = 0;
+	struct device_node *np;
+	struct gen_pool *ocram_pool;
+	unsigned long ocram_base;
+	void __iomem *suspend_ocram_base;
+	int ret = 0;
 
-	np = of_find_compatible_node(शून्य, शून्य, "mmio-sram");
-	अगर (!np) अणु
+	np = of_find_compatible_node(NULL, NULL, "mmio-sram");
+	if (!np) {
 		pr_err("%s: Unable to find mmio-sram in dtb\n", __func__);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	pdev = of_find_device_by_node(np);
-	अगर (!pdev) अणु
+	if (!pdev) {
 		pr_warn("%s: failed to find ocram device!\n", __func__);
 		ret = -ENODEV;
-		जाओ put_node;
-	पूर्ण
+		goto put_node;
+	}
 
-	ocram_pool = gen_pool_get(&pdev->dev, शून्य);
-	अगर (!ocram_pool) अणु
+	ocram_pool = gen_pool_get(&pdev->dev, NULL);
+	if (!ocram_pool) {
 		pr_warn("%s: ocram pool unavailable!\n", __func__);
 		ret = -ENODEV;
-		जाओ put_device;
-	पूर्ण
+		goto put_device;
+	}
 
 	ocram_base = gen_pool_alloc(ocram_pool, socfpga_sdram_self_refresh_sz);
-	अगर (!ocram_base) अणु
+	if (!ocram_base) {
 		pr_warn("%s: unable to alloc ocram!\n", __func__);
 		ret = -ENOMEM;
-		जाओ put_device;
-	पूर्ण
+		goto put_device;
+	}
 
 	ocram_pbase = gen_pool_virt_to_phys(ocram_pool, ocram_base);
 
 	suspend_ocram_base = __arm_ioremap_exec(ocram_pbase,
 						socfpga_sdram_self_refresh_sz,
 						false);
-	अगर (!suspend_ocram_base) अणु
+	if (!suspend_ocram_base) {
 		pr_warn("%s: __arm_ioremap_exec failed!\n", __func__);
 		ret = -ENOMEM;
-		जाओ put_device;
-	पूर्ण
+		goto put_device;
+	}
 
-	/* Copy the code that माला_दो DDR in self refresh to ocram */
+	/* Copy the code that puts DDR in self refresh to ocram */
 	socfpga_sdram_self_refresh_in_ocram =
-		(व्योम *)fncpy(suspend_ocram_base,
+		(void *)fncpy(suspend_ocram_base,
 			      &socfpga_sdram_self_refresh,
 			      socfpga_sdram_self_refresh_sz);
 
 	WARN(!socfpga_sdram_self_refresh_in_ocram,
 	     "could not copy function to ocram");
-	अगर (!socfpga_sdram_self_refresh_in_ocram)
+	if (!socfpga_sdram_self_refresh_in_ocram)
 		ret = -EFAULT;
 
 put_device:
@@ -87,54 +86,54 @@ put_device:
 put_node:
 	of_node_put(np);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक socfpga_pm_suspend(अचिन्हित दीर्घ arg)
-अणु
+static int socfpga_pm_suspend(unsigned long arg)
+{
 	u32 ret;
 
-	अगर (!sdr_ctl_base_addr)
-		वापस -EFAULT;
+	if (!sdr_ctl_base_addr)
+		return -EFAULT;
 
 	ret = socfpga_sdram_self_refresh_in_ocram((u32)sdr_ctl_base_addr);
 
 	pr_debug("%s self-refresh loops request=%d exit=%d\n", __func__,
 		 ret & 0xffff, (ret >> 16) & 0xffff);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक socfpga_pm_enter(suspend_state_t state)
-अणु
-	चयन (state) अणु
-	हाल PM_SUSPEND_MEM:
+static int socfpga_pm_enter(suspend_state_t state)
+{
+	switch (state) {
+	case PM_SUSPEND_MEM:
 		outer_disable();
 		cpu_suspend(0, socfpga_pm_suspend);
 		outer_resume();
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल स्थिर काष्ठा platक्रमm_suspend_ops socfpga_pm_ops = अणु
+static const struct platform_suspend_ops socfpga_pm_ops = {
 	.valid	= suspend_valid_only_mem,
 	.enter	= socfpga_pm_enter,
-पूर्ण;
+};
 
-अटल पूर्णांक __init socfpga_pm_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init socfpga_pm_init(void)
+{
+	int ret;
 
 	ret = socfpga_setup_ocram_self_refresh();
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	suspend_set_ops(&socfpga_pm_ops);
 	pr_info("SoCFPGA initialized for DDR self-refresh during suspend.\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 arch_initcall(socfpga_pm_init);

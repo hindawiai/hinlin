@@ -1,13 +1,12 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2017 Free Electrons
- * Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
+ * Maxime Ripard <maxime.ripard@free-electrons.com>
  */
 
-#अगर_अघोषित _SUN4I_LVDS_H_
-#घोषणा _SUN4I_LVDS_H_
+#ifndef _SUN4I_LVDS_H_
+#define _SUN4I_LVDS_H_
 
-पूर्णांक sun4i_lvds_init(काष्ठा drm_device *drm, काष्ठा sun4i_tcon *tcon);
+int sun4i_lvds_init(struct drm_device *drm, struct sun4i_tcon *tcon);
 
-#पूर्ण_अगर /* _SUN4I_LVDS_H_ */
+#endif /* _SUN4I_LVDS_H_ */

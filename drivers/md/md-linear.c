@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
-   linear.c : Multiple Devices driver क्रम Linux
+   linear.c : Multiple Devices driver for Linux
 	      Copyright (C) 1994-96 Marc ZYNGIER
 	      <zyngier@ufr-info-p7.ibp.fr> or
 	      <maz@gloups.fdn.fr>
@@ -10,87 +9,87 @@
 
 */
 
-#समावेश <linux/blkdev.h>
-#समावेश <linux/raid/md_u.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <trace/events/block.h>
-#समावेश "md.h"
-#समावेश "md-linear.h"
+#include <linux/blkdev.h>
+#include <linux/raid/md_u.h>
+#include <linux/seq_file.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <trace/events/block.h>
+#include "md.h"
+#include "md-linear.h"
 
 /*
  * find which device holds a particular offset
  */
-अटल अंतरभूत काष्ठा dev_info *which_dev(काष्ठा mddev *mddev, sector_t sector)
-अणु
-	पूर्णांक lo, mid, hi;
-	काष्ठा linear_conf *conf;
+static inline struct dev_info *which_dev(struct mddev *mddev, sector_t sector)
+{
+	int lo, mid, hi;
+	struct linear_conf *conf;
 
 	lo = 0;
 	hi = mddev->raid_disks - 1;
-	conf = mddev->निजी;
+	conf = mddev->private;
 
 	/*
 	 * Binary Search
 	 */
 
-	जबतक (hi > lo) अणु
+	while (hi > lo) {
 
 		mid = (hi + lo) / 2;
-		अगर (sector < conf->disks[mid].end_sector)
+		if (sector < conf->disks[mid].end_sector)
 			hi = mid;
-		अन्यथा
+		else
 			lo = mid + 1;
-	पूर्ण
+	}
 
-	वापस conf->disks + lo;
-पूर्ण
+	return conf->disks + lo;
+}
 
-अटल sector_t linear_size(काष्ठा mddev *mddev, sector_t sectors, पूर्णांक raid_disks)
-अणु
-	काष्ठा linear_conf *conf;
+static sector_t linear_size(struct mddev *mddev, sector_t sectors, int raid_disks)
+{
+	struct linear_conf *conf;
 	sector_t array_sectors;
 
-	conf = mddev->निजी;
+	conf = mddev->private;
 	WARN_ONCE(sectors || raid_disks,
 		  "%s does not support generic reshape\n", __func__);
 	array_sectors = conf->array_sectors;
 
-	वापस array_sectors;
-पूर्ण
+	return array_sectors;
+}
 
-अटल काष्ठा linear_conf *linear_conf(काष्ठा mddev *mddev, पूर्णांक raid_disks)
-अणु
-	काष्ठा linear_conf *conf;
-	काष्ठा md_rdev *rdev;
-	पूर्णांक i, cnt;
+static struct linear_conf *linear_conf(struct mddev *mddev, int raid_disks)
+{
+	struct linear_conf *conf;
+	struct md_rdev *rdev;
+	int i, cnt;
 	bool discard_supported = false;
 
-	conf = kzalloc(काष्ठा_size(conf, disks, raid_disks), GFP_KERNEL);
-	अगर (!conf)
-		वापस शून्य;
+	conf = kzalloc(struct_size(conf, disks, raid_disks), GFP_KERNEL);
+	if (!conf)
+		return NULL;
 
 	cnt = 0;
 	conf->array_sectors = 0;
 
-	rdev_क्रम_each(rdev, mddev) अणु
-		पूर्णांक j = rdev->raid_disk;
-		काष्ठा dev_info *disk = conf->disks + j;
+	rdev_for_each(rdev, mddev) {
+		int j = rdev->raid_disk;
+		struct dev_info *disk = conf->disks + j;
 		sector_t sectors;
 
-		अगर (j < 0 || j >= raid_disks || disk->rdev) अणु
+		if (j < 0 || j >= raid_disks || disk->rdev) {
 			pr_warn("md/linear:%s: disk numbering problem. Aborting!\n",
 				mdname(mddev));
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		disk->rdev = rdev;
-		अगर (mddev->chunk_sectors) अणु
+		if (mddev->chunk_sectors) {
 			sectors = rdev->sectors;
-			sector_भाग(sectors, mddev->chunk_sectors);
+			sector_div(sectors, mddev->chunk_sectors);
 			rdev->sectors = sectors * mddev->chunk_sectors;
-		पूर्ण
+		}
 
 		disk_stack_limits(mddev->gendisk, rdev->bdev,
 				  rdev->data_offset << 9);
@@ -98,18 +97,18 @@
 		conf->array_sectors += rdev->sectors;
 		cnt++;
 
-		अगर (blk_queue_discard(bdev_get_queue(rdev->bdev)))
+		if (blk_queue_discard(bdev_get_queue(rdev->bdev)))
 			discard_supported = true;
-	पूर्ण
-	अगर (cnt != raid_disks) अणु
+	}
+	if (cnt != raid_disks) {
 		pr_warn("md/linear:%s: not enough drives present. Aborting!\n",
 			mdname(mddev));
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!discard_supported)
+	if (!discard_supported)
 		blk_queue_flag_clear(QUEUE_FLAG_DISCARD, mddev->queue);
-	अन्यथा
+	else
 		blk_queue_flag_set(QUEUE_FLAG_DISCARD, mddev->queue);
 
 	/*
@@ -117,201 +116,201 @@
 	 */
 	conf->disks[0].end_sector = conf->disks[0].rdev->sectors;
 
-	क्रम (i = 1; i < raid_disks; i++)
+	for (i = 1; i < raid_disks; i++)
 		conf->disks[i].end_sector =
 			conf->disks[i-1].end_sector +
 			conf->disks[i].rdev->sectors;
 
 	/*
 	 * conf->raid_disks is copy of mddev->raid_disks. The reason to
-	 * keep a copy of mddev->raid_disks in काष्ठा linear_conf is,
-	 * mddev->raid_disks may not be consistent with poपूर्णांकers number of
+	 * keep a copy of mddev->raid_disks in struct linear_conf is,
+	 * mddev->raid_disks may not be consistent with pointers number of
 	 * conf->disks[] when it is updated in linear_add() and used to
 	 * iterate old conf->disks[] earray in linear_congested().
 	 * Here conf->raid_disks is always consitent with number of
-	 * poपूर्णांकers in conf->disks[] array, and mddev->निजी is updated
-	 * with rcu_assign_poपूर्णांकer() in linear_addr(), such race can be
-	 * aव्योमed.
+	 * pointers in conf->disks[] array, and mddev->private is updated
+	 * with rcu_assign_pointer() in linear_addr(), such race can be
+	 * avoided.
 	 */
 	conf->raid_disks = raid_disks;
 
-	वापस conf;
+	return conf;
 
 out:
-	kमुक्त(conf);
-	वापस शून्य;
-पूर्ण
+	kfree(conf);
+	return NULL;
+}
 
-अटल पूर्णांक linear_run (काष्ठा mddev *mddev)
-अणु
-	काष्ठा linear_conf *conf;
-	पूर्णांक ret;
+static int linear_run (struct mddev *mddev)
+{
+	struct linear_conf *conf;
+	int ret;
 
-	अगर (md_check_no_biपंचांगap(mddev))
-		वापस -EINVAL;
+	if (md_check_no_bitmap(mddev))
+		return -EINVAL;
 	conf = linear_conf(mddev, mddev->raid_disks);
 
-	अगर (!conf)
-		वापस 1;
-	mddev->निजी = conf;
+	if (!conf)
+		return 1;
+	mddev->private = conf;
 	md_set_array_sectors(mddev, linear_size(mddev, 0, 0));
 
-	ret =  md_पूर्णांकegrity_रेजिस्टर(mddev);
-	अगर (ret) अणु
-		kमुक्त(conf);
-		mddev->निजी = शून्य;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	ret =  md_integrity_register(mddev);
+	if (ret) {
+		kfree(conf);
+		mddev->private = NULL;
+	}
+	return ret;
+}
 
-अटल पूर्णांक linear_add(काष्ठा mddev *mddev, काष्ठा md_rdev *rdev)
-अणु
+static int linear_add(struct mddev *mddev, struct md_rdev *rdev)
+{
 	/* Adding a drive to a linear array allows the array to grow.
-	 * It is permitted अगर the new drive has a matching superblock
-	 * alपढ़ोy on it, with raid_disk equal to raid_disks.
-	 * It is achieved by creating a new linear_निजी_data काष्ठाure
+	 * It is permitted if the new drive has a matching superblock
+	 * already on it, with raid_disk equal to raid_disks.
+	 * It is achieved by creating a new linear_private_data structure
 	 * and swapping it in in-place of the current one.
-	 * The current one is never मुक्तd until the array is stopped.
-	 * This aव्योमs races.
+	 * The current one is never freed until the array is stopped.
+	 * This avoids races.
 	 */
-	काष्ठा linear_conf *newconf, *oldconf;
+	struct linear_conf *newconf, *oldconf;
 
-	अगर (rdev->saved_raid_disk != mddev->raid_disks)
-		वापस -EINVAL;
+	if (rdev->saved_raid_disk != mddev->raid_disks)
+		return -EINVAL;
 
 	rdev->raid_disk = rdev->saved_raid_disk;
 	rdev->saved_raid_disk = -1;
 
 	newconf = linear_conf(mddev,mddev->raid_disks+1);
 
-	अगर (!newconf)
-		वापस -ENOMEM;
+	if (!newconf)
+		return -ENOMEM;
 
-	/* newconf->raid_disks alपढ़ोy keeps a copy of * the increased
+	/* newconf->raid_disks already keeps a copy of * the increased
 	 * value of mddev->raid_disks, WARN_ONCE() is just used to make
 	 * sure of this. It is possible that oldconf is still referenced
-	 * in linear_congested(), thereक्रमe kमुक्त_rcu() is used to मुक्त
+	 * in linear_congested(), therefore kfree_rcu() is used to free
 	 * oldconf until no one uses it anymore.
 	 */
 	mddev_suspend(mddev);
-	oldconf = rcu_dereference_रक्षित(mddev->निजी,
+	oldconf = rcu_dereference_protected(mddev->private,
 			lockdep_is_held(&mddev->reconfig_mutex));
 	mddev->raid_disks++;
 	WARN_ONCE(mddev->raid_disks != newconf->raid_disks,
 		"copied raid_disks doesn't match mddev->raid_disks");
-	rcu_assign_poपूर्णांकer(mddev->निजी, newconf);
+	rcu_assign_pointer(mddev->private, newconf);
 	md_set_array_sectors(mddev, linear_size(mddev, 0, 0));
-	set_capacity_and_notअगरy(mddev->gendisk, mddev->array_sectors);
+	set_capacity_and_notify(mddev->gendisk, mddev->array_sectors);
 	mddev_resume(mddev);
-	kमुक्त_rcu(oldconf, rcu);
-	वापस 0;
-पूर्ण
+	kfree_rcu(oldconf, rcu);
+	return 0;
+}
 
-अटल व्योम linear_मुक्त(काष्ठा mddev *mddev, व्योम *priv)
-अणु
-	काष्ठा linear_conf *conf = priv;
+static void linear_free(struct mddev *mddev, void *priv)
+{
+	struct linear_conf *conf = priv;
 
-	kमुक्त(conf);
-पूर्ण
+	kfree(conf);
+}
 
-अटल bool linear_make_request(काष्ठा mddev *mddev, काष्ठा bio *bio)
-अणु
-	अक्षर b[BDEVNAME_SIZE];
-	काष्ठा dev_info *पंचांगp_dev;
+static bool linear_make_request(struct mddev *mddev, struct bio *bio)
+{
+	char b[BDEVNAME_SIZE];
+	struct dev_info *tmp_dev;
 	sector_t start_sector, end_sector, data_offset;
 	sector_t bio_sector = bio->bi_iter.bi_sector;
 
-	अगर (unlikely(bio->bi_opf & REQ_PREFLUSH)
+	if (unlikely(bio->bi_opf & REQ_PREFLUSH)
 	    && md_flush_request(mddev, bio))
-		वापस true;
+		return true;
 
-	पंचांगp_dev = which_dev(mddev, bio_sector);
-	start_sector = पंचांगp_dev->end_sector - पंचांगp_dev->rdev->sectors;
-	end_sector = पंचांगp_dev->end_sector;
-	data_offset = पंचांगp_dev->rdev->data_offset;
+	tmp_dev = which_dev(mddev, bio_sector);
+	start_sector = tmp_dev->end_sector - tmp_dev->rdev->sectors;
+	end_sector = tmp_dev->end_sector;
+	data_offset = tmp_dev->rdev->data_offset;
 
-	अगर (unlikely(bio_sector >= end_sector ||
+	if (unlikely(bio_sector >= end_sector ||
 		     bio_sector < start_sector))
-		जाओ out_of_bounds;
+		goto out_of_bounds;
 
-	अगर (unlikely(is_mddev_broken(पंचांगp_dev->rdev, "linear"))) अणु
+	if (unlikely(is_mddev_broken(tmp_dev->rdev, "linear"))) {
 		bio_io_error(bio);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	अगर (unlikely(bio_end_sector(bio) > end_sector)) अणु
+	if (unlikely(bio_end_sector(bio) > end_sector)) {
 		/* This bio crosses a device boundary, so we have to split it */
-		काष्ठा bio *split = bio_split(bio, end_sector - bio_sector,
+		struct bio *split = bio_split(bio, end_sector - bio_sector,
 					      GFP_NOIO, &mddev->bio_set);
 		bio_chain(split, bio);
 		submit_bio_noacct(bio);
 		bio = split;
-	पूर्ण
+	}
 
-	bio_set_dev(bio, पंचांगp_dev->rdev->bdev);
+	bio_set_dev(bio, tmp_dev->rdev->bdev);
 	bio->bi_iter.bi_sector = bio->bi_iter.bi_sector -
 		start_sector + data_offset;
 
-	अगर (unlikely((bio_op(bio) == REQ_OP_DISCARD) &&
-		     !blk_queue_discard(bio->bi_bdev->bd_disk->queue))) अणु
+	if (unlikely((bio_op(bio) == REQ_OP_DISCARD) &&
+		     !blk_queue_discard(bio->bi_bdev->bd_disk->queue))) {
 		/* Just ignore it */
 		bio_endio(bio);
-	पूर्ण अन्यथा अणु
-		अगर (mddev->gendisk)
+	} else {
+		if (mddev->gendisk)
 			trace_block_bio_remap(bio, disk_devt(mddev->gendisk),
 					      bio_sector);
-		mddev_check_ग_लिखोsame(mddev, bio);
-		mddev_check_ग_लिखो_zeroes(mddev, bio);
+		mddev_check_writesame(mddev, bio);
+		mddev_check_write_zeroes(mddev, bio);
 		submit_bio_noacct(bio);
-	पूर्ण
-	वापस true;
+	}
+	return true;
 
 out_of_bounds:
 	pr_err("md/linear:%s: make_request: Sector %llu out of bounds on dev %s: %llu sectors, offset %llu\n",
 	       mdname(mddev),
-	       (अचिन्हित दीर्घ दीर्घ)bio->bi_iter.bi_sector,
-	       bdevname(पंचांगp_dev->rdev->bdev, b),
-	       (अचिन्हित दीर्घ दीर्घ)पंचांगp_dev->rdev->sectors,
-	       (अचिन्हित दीर्घ दीर्घ)start_sector);
+	       (unsigned long long)bio->bi_iter.bi_sector,
+	       bdevname(tmp_dev->rdev->bdev, b),
+	       (unsigned long long)tmp_dev->rdev->sectors,
+	       (unsigned long long)start_sector);
 	bio_io_error(bio);
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम linear_status (काष्ठा seq_file *seq, काष्ठा mddev *mddev)
-अणु
-	seq_म_लिखो(seq, " %dk rounding", mddev->chunk_sectors / 2);
-पूर्ण
+static void linear_status (struct seq_file *seq, struct mddev *mddev)
+{
+	seq_printf(seq, " %dk rounding", mddev->chunk_sectors / 2);
+}
 
-अटल व्योम linear_quiesce(काष्ठा mddev *mddev, पूर्णांक state)
-अणु
-पूर्ण
+static void linear_quiesce(struct mddev *mddev, int state)
+{
+}
 
-अटल काष्ठा md_personality linear_personality =
-अणु
+static struct md_personality linear_personality =
+{
 	.name		= "linear",
 	.level		= LEVEL_LINEAR,
 	.owner		= THIS_MODULE,
 	.make_request	= linear_make_request,
 	.run		= linear_run,
-	.मुक्त		= linear_मुक्त,
+	.free		= linear_free,
 	.status		= linear_status,
 	.hot_add_disk	= linear_add,
 	.size		= linear_size,
 	.quiesce	= linear_quiesce,
-पूर्ण;
+};
 
-अटल पूर्णांक __init linear_init (व्योम)
-अणु
-	वापस रेजिस्टर_md_personality (&linear_personality);
-पूर्ण
+static int __init linear_init (void)
+{
+	return register_md_personality (&linear_personality);
+}
 
-अटल व्योम linear_निकास (व्योम)
-अणु
-	unरेजिस्टर_md_personality (&linear_personality);
-पूर्ण
+static void linear_exit (void)
+{
+	unregister_md_personality (&linear_personality);
+}
 
 module_init(linear_init);
-module_निकास(linear_निकास);
+module_exit(linear_exit);
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Linear device concatenation personality for MD");
 MODULE_ALIAS("md-personality-1"); /* LINEAR - deprecated*/

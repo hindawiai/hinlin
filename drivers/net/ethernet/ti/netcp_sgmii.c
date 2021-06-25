@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * SGMI module initialisation
  *
@@ -10,142 +9,142 @@
  *
  */
 
-#समावेश "netcp.h"
+#include "netcp.h"
 
-#घोषणा SGMII_SRESET_RESET		BIT(0)
-#घोषणा SGMII_SRESET_RTRESET		BIT(1)
+#define SGMII_SRESET_RESET		BIT(0)
+#define SGMII_SRESET_RTRESET		BIT(1)
 
-#घोषणा SGMII_REG_STATUS_LOCK		BIT(4)
-#घोषणा	SGMII_REG_STATUS_LINK		BIT(0)
-#घोषणा SGMII_REG_STATUS_AUTONEG	BIT(2)
-#घोषणा SGMII_REG_CONTROL_AUTONEG	BIT(0)
+#define SGMII_REG_STATUS_LOCK		BIT(4)
+#define	SGMII_REG_STATUS_LINK		BIT(0)
+#define SGMII_REG_STATUS_AUTONEG	BIT(2)
+#define SGMII_REG_CONTROL_AUTONEG	BIT(0)
 
-#घोषणा SGMII23_OFFSET(x)	((x - 2) * 0x100)
-#घोषणा SGMII_OFFSET(x)		((x <= 1) ? (x * 0x100) : (SGMII23_OFFSET(x)))
+#define SGMII23_OFFSET(x)	((x - 2) * 0x100)
+#define SGMII_OFFSET(x)		((x <= 1) ? (x * 0x100) : (SGMII23_OFFSET(x)))
 
-/* SGMII रेजिस्टरs */
-#घोषणा SGMII_SRESET_REG(x)   (SGMII_OFFSET(x) + 0x004)
-#घोषणा SGMII_CTL_REG(x)      (SGMII_OFFSET(x) + 0x010)
-#घोषणा SGMII_STATUS_REG(x)   (SGMII_OFFSET(x) + 0x014)
-#घोषणा SGMII_MRADV_REG(x)    (SGMII_OFFSET(x) + 0x018)
+/* SGMII registers */
+#define SGMII_SRESET_REG(x)   (SGMII_OFFSET(x) + 0x004)
+#define SGMII_CTL_REG(x)      (SGMII_OFFSET(x) + 0x010)
+#define SGMII_STATUS_REG(x)   (SGMII_OFFSET(x) + 0x014)
+#define SGMII_MRADV_REG(x)    (SGMII_OFFSET(x) + 0x018)
 
-अटल व्योम sgmii_ग_लिखो_reg(व्योम __iomem *base, पूर्णांक reg, u32 val)
-अणु
-	ग_लिखोl(val, base + reg);
-पूर्ण
+static void sgmii_write_reg(void __iomem *base, int reg, u32 val)
+{
+	writel(val, base + reg);
+}
 
-अटल u32 sgmii_पढ़ो_reg(व्योम __iomem *base, पूर्णांक reg)
-अणु
-	वापस पढ़ोl(base + reg);
-पूर्ण
+static u32 sgmii_read_reg(void __iomem *base, int reg)
+{
+	return readl(base + reg);
+}
 
-अटल व्योम sgmii_ग_लिखो_reg_bit(व्योम __iomem *base, पूर्णांक reg, u32 val)
-अणु
-	ग_लिखोl((पढ़ोl(base + reg) | val), base + reg);
-पूर्ण
+static void sgmii_write_reg_bit(void __iomem *base, int reg, u32 val)
+{
+	writel((readl(base + reg) | val), base + reg);
+}
 
 /* port is 0 based */
-पूर्णांक netcp_sgmii_reset(व्योम __iomem *sgmii_ofs, पूर्णांक port)
-अणु
+int netcp_sgmii_reset(void __iomem *sgmii_ofs, int port)
+{
 	/* Soft reset */
-	sgmii_ग_लिखो_reg_bit(sgmii_ofs, SGMII_SRESET_REG(port),
+	sgmii_write_reg_bit(sgmii_ofs, SGMII_SRESET_REG(port),
 			    SGMII_SRESET_RESET);
 
-	जबतक ((sgmii_पढ़ो_reg(sgmii_ofs, SGMII_SRESET_REG(port)) &
+	while ((sgmii_read_reg(sgmii_ofs, SGMII_SRESET_REG(port)) &
 		SGMII_SRESET_RESET) != 0x0)
 		;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* port is 0 based */
-bool netcp_sgmii_rtreset(व्योम __iomem *sgmii_ofs, पूर्णांक port, bool set)
-अणु
+bool netcp_sgmii_rtreset(void __iomem *sgmii_ofs, int port, bool set)
+{
 	u32 reg;
 	bool oldval;
 
 	/* Initiate a soft reset */
-	reg = sgmii_पढ़ो_reg(sgmii_ofs, SGMII_SRESET_REG(port));
+	reg = sgmii_read_reg(sgmii_ofs, SGMII_SRESET_REG(port));
 	oldval = (reg & SGMII_SRESET_RTRESET) != 0x0;
-	अगर (set)
+	if (set)
 		reg |= SGMII_SRESET_RTRESET;
-	अन्यथा
+	else
 		reg &= ~SGMII_SRESET_RTRESET;
-	sgmii_ग_लिखो_reg(sgmii_ofs, SGMII_SRESET_REG(port), reg);
+	sgmii_write_reg(sgmii_ofs, SGMII_SRESET_REG(port), reg);
 	wmb();
 
-	वापस oldval;
-पूर्ण
+	return oldval;
+}
 
-पूर्णांक netcp_sgmii_get_port_link(व्योम __iomem *sgmii_ofs, पूर्णांक port)
-अणु
+int netcp_sgmii_get_port_link(void __iomem *sgmii_ofs, int port)
+{
 	u32 status = 0, link = 0;
 
-	status = sgmii_पढ़ो_reg(sgmii_ofs, SGMII_STATUS_REG(port));
-	अगर ((status & SGMII_REG_STATUS_LINK) != 0)
+	status = sgmii_read_reg(sgmii_ofs, SGMII_STATUS_REG(port));
+	if ((status & SGMII_REG_STATUS_LINK) != 0)
 		link = 1;
-	वापस link;
-पूर्ण
+	return link;
+}
 
-पूर्णांक netcp_sgmii_config(व्योम __iomem *sgmii_ofs, पूर्णांक port, u32 पूर्णांकerface)
-अणु
-	अचिन्हित पूर्णांक i, status, mask;
+int netcp_sgmii_config(void __iomem *sgmii_ofs, int port, u32 interface)
+{
+	unsigned int i, status, mask;
 	u32 mr_adv_ability;
 	u32 control;
 
-	चयन (पूर्णांकerface) अणु
-	हाल SGMII_LINK_MAC_MAC_AUTONEG:
+	switch (interface) {
+	case SGMII_LINK_MAC_MAC_AUTONEG:
 		mr_adv_ability	= 0x9801;
 		control		= 0x21;
-		अवरोध;
+		break;
 
-	हाल SGMII_LINK_MAC_PHY:
-	हाल SGMII_LINK_MAC_PHY_NO_MDIO:
+	case SGMII_LINK_MAC_PHY:
+	case SGMII_LINK_MAC_PHY_NO_MDIO:
 		mr_adv_ability	= 1;
 		control		= 1;
-		अवरोध;
+		break;
 
-	हाल SGMII_LINK_MAC_MAC_FORCED:
+	case SGMII_LINK_MAC_MAC_FORCED:
 		mr_adv_ability	= 0x9801;
 		control		= 0x20;
-		अवरोध;
+		break;
 
-	हाल SGMII_LINK_MAC_FIBER:
+	case SGMII_LINK_MAC_FIBER:
 		mr_adv_ability	= 0x20;
 		control		= 0x1;
-		अवरोध;
+		break;
 
-	शेष:
-		WARN_ONCE(1, "Invalid sgmii interface: %d\n", पूर्णांकerface);
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		WARN_ONCE(1, "Invalid sgmii interface: %d\n", interface);
+		return -EINVAL;
+	}
 
-	sgmii_ग_लिखो_reg(sgmii_ofs, SGMII_CTL_REG(port), 0);
+	sgmii_write_reg(sgmii_ofs, SGMII_CTL_REG(port), 0);
 
-	/* Wait क्रम the SerDes pll to lock */
-	क्रम (i = 0; i < 1000; i++)  अणु
+	/* Wait for the SerDes pll to lock */
+	for (i = 0; i < 1000; i++)  {
 		usleep_range(1000, 2000);
-		status = sgmii_पढ़ो_reg(sgmii_ofs, SGMII_STATUS_REG(port));
-		अगर ((status & SGMII_REG_STATUS_LOCK) != 0)
-			अवरोध;
-	पूर्ण
+		status = sgmii_read_reg(sgmii_ofs, SGMII_STATUS_REG(port));
+		if ((status & SGMII_REG_STATUS_LOCK) != 0)
+			break;
+	}
 
-	अगर ((status & SGMII_REG_STATUS_LOCK) == 0)
+	if ((status & SGMII_REG_STATUS_LOCK) == 0)
 		pr_err("serdes PLL not locked\n");
 
-	sgmii_ग_लिखो_reg(sgmii_ofs, SGMII_MRADV_REG(port), mr_adv_ability);
-	sgmii_ग_लिखो_reg(sgmii_ofs, SGMII_CTL_REG(port), control);
+	sgmii_write_reg(sgmii_ofs, SGMII_MRADV_REG(port), mr_adv_ability);
+	sgmii_write_reg(sgmii_ofs, SGMII_CTL_REG(port), control);
 
 	mask = SGMII_REG_STATUS_LINK;
-	अगर (control & SGMII_REG_CONTROL_AUTONEG)
+	if (control & SGMII_REG_CONTROL_AUTONEG)
 		mask |= SGMII_REG_STATUS_AUTONEG;
 
-	क्रम (i = 0; i < 1000; i++)  अणु
+	for (i = 0; i < 1000; i++)  {
 		usleep_range(200, 500);
-		status = sgmii_पढ़ो_reg(sgmii_ofs, SGMII_STATUS_REG(port));
-		अगर ((status & mask) == mask)
-			अवरोध;
-	पूर्ण
+		status = sgmii_read_reg(sgmii_ofs, SGMII_STATUS_REG(port));
+		if ((status & mask) == mask)
+			break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

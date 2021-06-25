@@ -1,66 +1,65 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /******************************************************************************
  *
  *	(C)Copyright 1998,1999 SysKonnect,
- *	a business unit of Schneider & Koch & Co. Datenप्रणालीe GmbH.
+ *	a business unit of Schneider & Koch & Co. Datensysteme GmbH.
  *
- *	The inक्रमmation in this file is provided "AS IS" without warranty.
+ *	The information in this file is provided "AS IS" without warranty.
  *
  ******************************************************************************/
 
-#अगर_अघोषित	_FDDI_
-#घोषणा _FDDI_
+#ifndef	_FDDI_
+#define _FDDI_
 
-काष्ठा fddi_addr अणु
-	u_अक्षर	a[6] ;
-पूर्ण ;
+struct fddi_addr {
+	u_char	a[6] ;
+} ;
 
-#घोषणा GROUP_ADDR	0x80		/* MSB in a[0] */
+#define GROUP_ADDR	0x80		/* MSB in a[0] */
 
-काष्ठा fddi_mac अणु
-	काष्ठा fddi_addr	mac_dest ;
-	काष्ठा fddi_addr	mac_source ;
-	u_अक्षर			mac_info[4478] ;
-पूर्ण ;
+struct fddi_mac {
+	struct fddi_addr	mac_dest ;
+	struct fddi_addr	mac_source ;
+	u_char			mac_info[4478] ;
+} ;
 
-#घोषणा FDDI_MAC_SIZE	(12)
-#घोषणा FDDI_RAW_MTU	(4500-5)	/* exl. Pr,SD, ED/FS */
-#घोषणा FDDI_RAW	(4500)
+#define FDDI_MAC_SIZE	(12)
+#define FDDI_RAW_MTU	(4500-5)	/* exl. Pr,SD, ED/FS */
+#define FDDI_RAW	(4500)
 
 /*
  * FC values
  */
-#घोषणा FC_VOID		0x40		/* व्योम frame */
-#घोषणा FC_TOKEN	0x80		/* token */
-#घोषणा FC_RES_TOKEN	0xc0		/* restricted token */
-#घोषणा FC_SMT_INFO	0x41		/* SMT Info frame */
+#define FC_VOID		0x40		/* void frame */
+#define FC_TOKEN	0x80		/* token */
+#define FC_RES_TOKEN	0xc0		/* restricted token */
+#define FC_SMT_INFO	0x41		/* SMT Info frame */
 /*
- * FC_SMT_LAN_LOC && FC_SMT_LOC are SK specअगरic !
+ * FC_SMT_LAN_LOC && FC_SMT_LOC are SK specific !
  */
-#घोषणा FC_SMT_LAN_LOC	0x42		/* local SMT Info frame */
-#घोषणा FC_SMT_LOC	0x43		/* local SMT Info frame */
-#घोषणा FC_SMT_NSA	0x4f		/* SMT NSA frame */
-#घोषणा FC_MAC		0xc0		/* MAC frame */
-#घोषणा FC_BEACON	0xc2		/* MAC beacon frame */
-#घोषणा FC_CLAIM	0xc3		/* MAC claim frame */
-#घोषणा FC_SYNC_LLC	0xd0		/* sync. LLC frame */
-#घोषणा FC_ASYNC_LLC	0x50		/* async. LLC frame */
-#घोषणा FC_SYNC_BIT	0x80		/* sync. bit in FC */
+#define FC_SMT_LAN_LOC	0x42		/* local SMT Info frame */
+#define FC_SMT_LOC	0x43		/* local SMT Info frame */
+#define FC_SMT_NSA	0x4f		/* SMT NSA frame */
+#define FC_MAC		0xc0		/* MAC frame */
+#define FC_BEACON	0xc2		/* MAC beacon frame */
+#define FC_CLAIM	0xc3		/* MAC claim frame */
+#define FC_SYNC_LLC	0xd0		/* sync. LLC frame */
+#define FC_ASYNC_LLC	0x50		/* async. LLC frame */
+#define FC_SYNC_BIT	0x80		/* sync. bit in FC */
 
-#घोषणा FC_LLC_PRIOR	0x07		/* priority bits */
+#define FC_LLC_PRIOR	0x07		/* priority bits */
 
-#घोषणा BEACON_INFO	0		/* beacon type */
-#घोषणा DBEACON_INFO	1		/* beacon type सूचीECTED */
+#define BEACON_INFO	0		/* beacon type */
+#define DBEACON_INFO	1		/* beacon type DIRECTED */
 
 
 /*
  * indicator bits
  */
-#घोषणा C_INDICATOR	(1<<0)
-#घोषणा A_INDICATOR	(1<<1)
-#घोषणा E_INDICATOR	(1<<2)
-#घोषणा I_INDICATOR	(1<<6)		/* SK specअगरic */ 
-#घोषणा L_INDICATOR	(1<<7)		/* SK specअगरic */
+#define C_INDICATOR	(1<<0)
+#define A_INDICATOR	(1<<1)
+#define E_INDICATOR	(1<<2)
+#define I_INDICATOR	(1<<6)		/* SK specific */ 
+#define L_INDICATOR	(1<<7)		/* SK specific */
 
-#पूर्ण_अगर	/* _FDDI_ */
+#endif	/* _FDDI_ */

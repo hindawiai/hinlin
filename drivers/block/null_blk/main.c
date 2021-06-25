@@ -1,473 +1,472 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Add configfs and memory store: Kyungchan Koh <kkc6196@fb.com> and
  * Shaohua Li <shli@fb.com>
  */
-#समावेश <linux/module.h>
+#include <linux/module.h>
 
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/init.h>
-#समावेश "null_blk.h"
+#include <linux/moduleparam.h>
+#include <linux/sched.h>
+#include <linux/fs.h>
+#include <linux/init.h>
+#include "null_blk.h"
 
-#घोषणा PAGE_SECTORS_SHIFT	(PAGE_SHIFT - SECTOR_SHIFT)
-#घोषणा PAGE_SECTORS		(1 << PAGE_SECTORS_SHIFT)
-#घोषणा SECTOR_MASK		(PAGE_SECTORS - 1)
+#define PAGE_SECTORS_SHIFT	(PAGE_SHIFT - SECTOR_SHIFT)
+#define PAGE_SECTORS		(1 << PAGE_SECTORS_SHIFT)
+#define SECTOR_MASK		(PAGE_SECTORS - 1)
 
-#घोषणा FREE_BATCH		16
+#define FREE_BATCH		16
 
-#घोषणा TICKS_PER_SEC		50ULL
-#घोषणा TIMER_INTERVAL		(NSEC_PER_SEC / TICKS_PER_SEC)
+#define TICKS_PER_SEC		50ULL
+#define TIMER_INTERVAL		(NSEC_PER_SEC / TICKS_PER_SEC)
 
-#अगर_घोषित CONFIG_BLK_DEV_शून्य_BLK_FAULT_INJECTION
-अटल DECLARE_FAULT_ATTR(null_समयout_attr);
-अटल DECLARE_FAULT_ATTR(null_requeue_attr);
-अटल DECLARE_FAULT_ATTR(null_init_hctx_attr);
-#पूर्ण_अगर
+#ifdef CONFIG_BLK_DEV_NULL_BLK_FAULT_INJECTION
+static DECLARE_FAULT_ATTR(null_timeout_attr);
+static DECLARE_FAULT_ATTR(null_requeue_attr);
+static DECLARE_FAULT_ATTR(null_init_hctx_attr);
+#endif
 
-अटल अंतरभूत u64 mb_per_tick(पूर्णांक mbps)
-अणु
-	वापस (1 << 20) / TICKS_PER_SEC * ((u64) mbps);
-पूर्ण
+static inline u64 mb_per_tick(int mbps)
+{
+	return (1 << 20) / TICKS_PER_SEC * ((u64) mbps);
+}
 
 /*
- * Status flags क्रम nullb_device.
+ * Status flags for nullb_device.
  *
  * CONFIGURED:	Device has been configured and turned on. Cannot reconfigure.
  * UP:		Device is currently on and visible in userspace.
  * THROTTLED:	Device is being throttled.
- * CACHE:	Device is using a ग_लिखो-back cache.
+ * CACHE:	Device is using a write-back cache.
  */
-क्रमागत nullb_device_flags अणु
-	शून्यB_DEV_FL_CONFIGURED	= 0,
-	शून्यB_DEV_FL_UP		= 1,
-	शून्यB_DEV_FL_THROTTLED	= 2,
-	शून्यB_DEV_FL_CACHE	= 3,
-पूर्ण;
+enum nullb_device_flags {
+	NULLB_DEV_FL_CONFIGURED	= 0,
+	NULLB_DEV_FL_UP		= 1,
+	NULLB_DEV_FL_THROTTLED	= 2,
+	NULLB_DEV_FL_CACHE	= 3,
+};
 
-#घोषणा MAP_SZ		((PAGE_SIZE >> SECTOR_SHIFT) + 2)
+#define MAP_SZ		((PAGE_SIZE >> SECTOR_SHIFT) + 2)
 /*
- * nullb_page is a page in memory क्रम nullb devices.
+ * nullb_page is a page in memory for nullb devices.
  *
  * @page:	The page holding the data.
- * @biपंचांगap:	The biपंचांगap represents which sector in the page has data.
+ * @bitmap:	The bitmap represents which sector in the page has data.
  *		Each bit represents one block size. For example, sector 8
  *		will use the 7th bit
- * The highest 2 bits of biपंचांगap are क्रम special purpose. LOCK means the cache
- * page is being flushing to storage. FREE means the cache page is मुक्तd and
+ * The highest 2 bits of bitmap are for special purpose. LOCK means the cache
+ * page is being flushing to storage. FREE means the cache page is freed and
  * should be skipped from flushing to storage. Please see
  * null_make_cache_space
  */
-काष्ठा nullb_page अणु
-	काष्ठा page *page;
-	DECLARE_BITMAP(biपंचांगap, MAP_SZ);
-पूर्ण;
-#घोषणा शून्यB_PAGE_LOCK (MAP_SZ - 1)
-#घोषणा शून्यB_PAGE_FREE (MAP_SZ - 2)
+struct nullb_page {
+	struct page *page;
+	DECLARE_BITMAP(bitmap, MAP_SZ);
+};
+#define NULLB_PAGE_LOCK (MAP_SZ - 1)
+#define NULLB_PAGE_FREE (MAP_SZ - 2)
 
-अटल LIST_HEAD(nullb_list);
-अटल काष्ठा mutex lock;
-अटल पूर्णांक null_major;
-अटल DEFINE_IDA(nullb_indexes);
-अटल काष्ठा blk_mq_tag_set tag_set;
+static LIST_HEAD(nullb_list);
+static struct mutex lock;
+static int null_major;
+static DEFINE_IDA(nullb_indexes);
+static struct blk_mq_tag_set tag_set;
 
-क्रमागत अणु
-	शून्य_IRQ_NONE		= 0,
-	शून्य_IRQ_SOFTIRQ	= 1,
-	शून्य_IRQ_TIMER		= 2,
-पूर्ण;
+enum {
+	NULL_IRQ_NONE		= 0,
+	NULL_IRQ_SOFTIRQ	= 1,
+	NULL_IRQ_TIMER		= 2,
+};
 
-क्रमागत अणु
-	शून्य_Q_BIO		= 0,
-	शून्य_Q_RQ		= 1,
-	शून्य_Q_MQ		= 2,
-पूर्ण;
+enum {
+	NULL_Q_BIO		= 0,
+	NULL_Q_RQ		= 1,
+	NULL_Q_MQ		= 2,
+};
 
-अटल bool g_virt_boundary = false;
+static bool g_virt_boundary = false;
 module_param_named(virt_boundary, g_virt_boundary, bool, 0444);
 MODULE_PARM_DESC(virt_boundary, "Require a virtual boundary for the device. Default: False");
 
-अटल पूर्णांक g_no_sched;
-module_param_named(no_sched, g_no_sched, पूर्णांक, 0444);
+static int g_no_sched;
+module_param_named(no_sched, g_no_sched, int, 0444);
 MODULE_PARM_DESC(no_sched, "No io scheduler");
 
-अटल पूर्णांक g_submit_queues = 1;
-module_param_named(submit_queues, g_submit_queues, पूर्णांक, 0444);
+static int g_submit_queues = 1;
+module_param_named(submit_queues, g_submit_queues, int, 0444);
 MODULE_PARM_DESC(submit_queues, "Number of submission queues");
 
-अटल पूर्णांक g_home_node = NUMA_NO_NODE;
-module_param_named(home_node, g_home_node, पूर्णांक, 0444);
+static int g_home_node = NUMA_NO_NODE;
+module_param_named(home_node, g_home_node, int, 0444);
 MODULE_PARM_DESC(home_node, "Home node for the device");
 
-#अगर_घोषित CONFIG_BLK_DEV_शून्य_BLK_FAULT_INJECTION
+#ifdef CONFIG_BLK_DEV_NULL_BLK_FAULT_INJECTION
 /*
  * For more details about fault injection, please refer to
  * Documentation/fault-injection/fault-injection.rst.
  */
-अटल अक्षर g_समयout_str[80];
-module_param_string(समयout, g_समयout_str, माप(g_समयout_str), 0444);
-MODULE_PARM_DESC(समयout, "Fault injection. timeout=<interval>,<probability>,<space>,<times>");
+static char g_timeout_str[80];
+module_param_string(timeout, g_timeout_str, sizeof(g_timeout_str), 0444);
+MODULE_PARM_DESC(timeout, "Fault injection. timeout=<interval>,<probability>,<space>,<times>");
 
-अटल अक्षर g_requeue_str[80];
-module_param_string(requeue, g_requeue_str, माप(g_requeue_str), 0444);
+static char g_requeue_str[80];
+module_param_string(requeue, g_requeue_str, sizeof(g_requeue_str), 0444);
 MODULE_PARM_DESC(requeue, "Fault injection. requeue=<interval>,<probability>,<space>,<times>");
 
-अटल अक्षर g_init_hctx_str[80];
-module_param_string(init_hctx, g_init_hctx_str, माप(g_init_hctx_str), 0444);
+static char g_init_hctx_str[80];
+module_param_string(init_hctx, g_init_hctx_str, sizeof(g_init_hctx_str), 0444);
 MODULE_PARM_DESC(init_hctx, "Fault injection to fail hctx init. init_hctx=<interval>,<probability>,<space>,<times>");
-#पूर्ण_अगर
+#endif
 
-अटल पूर्णांक g_queue_mode = शून्य_Q_MQ;
+static int g_queue_mode = NULL_Q_MQ;
 
-अटल पूर्णांक null_param_store_val(स्थिर अक्षर *str, पूर्णांक *val, पूर्णांक min, पूर्णांक max)
-अणु
-	पूर्णांक ret, new_val;
+static int null_param_store_val(const char *str, int *val, int min, int max)
+{
+	int ret, new_val;
 
-	ret = kstrtoपूर्णांक(str, 10, &new_val);
-	अगर (ret)
-		वापस -EINVAL;
+	ret = kstrtoint(str, 10, &new_val);
+	if (ret)
+		return -EINVAL;
 
-	अगर (new_val < min || new_val > max)
-		वापस -EINVAL;
+	if (new_val < min || new_val > max)
+		return -EINVAL;
 
 	*val = new_val;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक null_set_queue_mode(स्थिर अक्षर *str, स्थिर काष्ठा kernel_param *kp)
-अणु
-	वापस null_param_store_val(str, &g_queue_mode, शून्य_Q_BIO, शून्य_Q_MQ);
-पूर्ण
+static int null_set_queue_mode(const char *str, const struct kernel_param *kp)
+{
+	return null_param_store_val(str, &g_queue_mode, NULL_Q_BIO, NULL_Q_MQ);
+}
 
-अटल स्थिर काष्ठा kernel_param_ops null_queue_mode_param_ops = अणु
+static const struct kernel_param_ops null_queue_mode_param_ops = {
 	.set	= null_set_queue_mode,
-	.get	= param_get_पूर्णांक,
-पूर्ण;
+	.get	= param_get_int,
+};
 
 device_param_cb(queue_mode, &null_queue_mode_param_ops, &g_queue_mode, 0444);
 MODULE_PARM_DESC(queue_mode, "Block interface to use (0=bio,1=rq,2=multiqueue)");
 
-अटल पूर्णांक g_gb = 250;
-module_param_named(gb, g_gb, पूर्णांक, 0444);
+static int g_gb = 250;
+module_param_named(gb, g_gb, int, 0444);
 MODULE_PARM_DESC(gb, "Size in GB");
 
-अटल पूर्णांक g_bs = 512;
-module_param_named(bs, g_bs, पूर्णांक, 0444);
+static int g_bs = 512;
+module_param_named(bs, g_bs, int, 0444);
 MODULE_PARM_DESC(bs, "Block size (in bytes)");
 
-अटल पूर्णांक g_max_sectors;
-module_param_named(max_sectors, g_max_sectors, पूर्णांक, 0444);
+static int g_max_sectors;
+module_param_named(max_sectors, g_max_sectors, int, 0444);
 MODULE_PARM_DESC(max_sectors, "Maximum size of a command (in 512B sectors)");
 
-अटल अचिन्हित पूर्णांक nr_devices = 1;
-module_param(nr_devices, uपूर्णांक, 0444);
+static unsigned int nr_devices = 1;
+module_param(nr_devices, uint, 0444);
 MODULE_PARM_DESC(nr_devices, "Number of devices to register");
 
-अटल bool g_blocking;
+static bool g_blocking;
 module_param_named(blocking, g_blocking, bool, 0444);
 MODULE_PARM_DESC(blocking, "Register as a blocking blk-mq driver device");
 
-अटल bool shared_tags;
+static bool shared_tags;
 module_param(shared_tags, bool, 0444);
 MODULE_PARM_DESC(shared_tags, "Share tag set between devices for blk-mq");
 
-अटल bool g_shared_tag_biपंचांगap;
-module_param_named(shared_tag_biपंचांगap, g_shared_tag_biपंचांगap, bool, 0444);
-MODULE_PARM_DESC(shared_tag_biपंचांगap, "Use shared tag bitmap for all submission queues for blk-mq");
+static bool g_shared_tag_bitmap;
+module_param_named(shared_tag_bitmap, g_shared_tag_bitmap, bool, 0444);
+MODULE_PARM_DESC(shared_tag_bitmap, "Use shared tag bitmap for all submission queues for blk-mq");
 
-अटल पूर्णांक g_irqmode = शून्य_IRQ_SOFTIRQ;
+static int g_irqmode = NULL_IRQ_SOFTIRQ;
 
-अटल पूर्णांक null_set_irqmode(स्थिर अक्षर *str, स्थिर काष्ठा kernel_param *kp)
-अणु
-	वापस null_param_store_val(str, &g_irqmode, शून्य_IRQ_NONE,
-					शून्य_IRQ_TIMER);
-पूर्ण
+static int null_set_irqmode(const char *str, const struct kernel_param *kp)
+{
+	return null_param_store_val(str, &g_irqmode, NULL_IRQ_NONE,
+					NULL_IRQ_TIMER);
+}
 
-अटल स्थिर काष्ठा kernel_param_ops null_irqmode_param_ops = अणु
+static const struct kernel_param_ops null_irqmode_param_ops = {
 	.set	= null_set_irqmode,
-	.get	= param_get_पूर्णांक,
-पूर्ण;
+	.get	= param_get_int,
+};
 
 device_param_cb(irqmode, &null_irqmode_param_ops, &g_irqmode, 0444);
 MODULE_PARM_DESC(irqmode, "IRQ completion handler. 0-none, 1-softirq, 2-timer");
 
-अटल अचिन्हित दीर्घ g_completion_nsec = 10000;
-module_param_named(completion_nsec, g_completion_nsec, uदीर्घ, 0444);
+static unsigned long g_completion_nsec = 10000;
+module_param_named(completion_nsec, g_completion_nsec, ulong, 0444);
 MODULE_PARM_DESC(completion_nsec, "Time in ns to complete a request in hardware. Default: 10,000ns");
 
-अटल पूर्णांक g_hw_queue_depth = 64;
-module_param_named(hw_queue_depth, g_hw_queue_depth, पूर्णांक, 0444);
+static int g_hw_queue_depth = 64;
+module_param_named(hw_queue_depth, g_hw_queue_depth, int, 0444);
 MODULE_PARM_DESC(hw_queue_depth, "Queue depth for each hardware queue. Default: 64");
 
-अटल bool g_use_per_node_hctx;
+static bool g_use_per_node_hctx;
 module_param_named(use_per_node_hctx, g_use_per_node_hctx, bool, 0444);
 MODULE_PARM_DESC(use_per_node_hctx, "Use per-node allocation for hardware context queues. Default: false");
 
-अटल bool g_zoned;
+static bool g_zoned;
 module_param_named(zoned, g_zoned, bool, S_IRUGO);
 MODULE_PARM_DESC(zoned, "Make device as a host-managed zoned block device. Default: false");
 
-अटल अचिन्हित दीर्घ g_zone_size = 256;
-module_param_named(zone_size, g_zone_size, uदीर्घ, S_IRUGO);
+static unsigned long g_zone_size = 256;
+module_param_named(zone_size, g_zone_size, ulong, S_IRUGO);
 MODULE_PARM_DESC(zone_size, "Zone size in MB when block device is zoned. Must be power-of-two: Default: 256");
 
-अटल अचिन्हित दीर्घ g_zone_capacity;
-module_param_named(zone_capacity, g_zone_capacity, uदीर्घ, 0444);
+static unsigned long g_zone_capacity;
+module_param_named(zone_capacity, g_zone_capacity, ulong, 0444);
 MODULE_PARM_DESC(zone_capacity, "Zone capacity in MB when block device is zoned. Can be less than or equal to zone size. Default: Zone size");
 
-अटल अचिन्हित पूर्णांक g_zone_nr_conv;
-module_param_named(zone_nr_conv, g_zone_nr_conv, uपूर्णांक, 0444);
+static unsigned int g_zone_nr_conv;
+module_param_named(zone_nr_conv, g_zone_nr_conv, uint, 0444);
 MODULE_PARM_DESC(zone_nr_conv, "Number of conventional zones when block device is zoned. Default: 0");
 
-अटल अचिन्हित पूर्णांक g_zone_max_खोलो;
-module_param_named(zone_max_खोलो, g_zone_max_खोलो, uपूर्णांक, 0444);
-MODULE_PARM_DESC(zone_max_खोलो, "Maximum number of open zones when block device is zoned. Default: 0 (no limit)");
+static unsigned int g_zone_max_open;
+module_param_named(zone_max_open, g_zone_max_open, uint, 0444);
+MODULE_PARM_DESC(zone_max_open, "Maximum number of open zones when block device is zoned. Default: 0 (no limit)");
 
-अटल अचिन्हित पूर्णांक g_zone_max_active;
-module_param_named(zone_max_active, g_zone_max_active, uपूर्णांक, 0444);
+static unsigned int g_zone_max_active;
+module_param_named(zone_max_active, g_zone_max_active, uint, 0444);
 MODULE_PARM_DESC(zone_max_active, "Maximum number of active zones when block device is zoned. Default: 0 (no limit)");
 
-अटल काष्ठा nullb_device *null_alloc_dev(व्योम);
-अटल व्योम null_मुक्त_dev(काष्ठा nullb_device *dev);
-अटल व्योम null_del_dev(काष्ठा nullb *nullb);
-अटल पूर्णांक null_add_dev(काष्ठा nullb_device *dev);
-अटल व्योम null_मुक्त_device_storage(काष्ठा nullb_device *dev, bool is_cache);
+static struct nullb_device *null_alloc_dev(void);
+static void null_free_dev(struct nullb_device *dev);
+static void null_del_dev(struct nullb *nullb);
+static int null_add_dev(struct nullb_device *dev);
+static void null_free_device_storage(struct nullb_device *dev, bool is_cache);
 
-अटल अंतरभूत काष्ठा nullb_device *to_nullb_device(काष्ठा config_item *item)
-अणु
-	वापस item ? container_of(item, काष्ठा nullb_device, item) : शून्य;
-पूर्ण
+static inline struct nullb_device *to_nullb_device(struct config_item *item)
+{
+	return item ? container_of(item, struct nullb_device, item) : NULL;
+}
 
-अटल अंतरभूत sमाप_प्रकार nullb_device_uपूर्णांक_attr_show(अचिन्हित पूर्णांक val, अक्षर *page)
-अणु
-	वापस snम_लिखो(page, PAGE_SIZE, "%u\n", val);
-पूर्ण
+static inline ssize_t nullb_device_uint_attr_show(unsigned int val, char *page)
+{
+	return snprintf(page, PAGE_SIZE, "%u\n", val);
+}
 
-अटल अंतरभूत sमाप_प्रकार nullb_device_uदीर्घ_attr_show(अचिन्हित दीर्घ val,
-	अक्षर *page)
-अणु
-	वापस snम_लिखो(page, PAGE_SIZE, "%lu\n", val);
-पूर्ण
+static inline ssize_t nullb_device_ulong_attr_show(unsigned long val,
+	char *page)
+{
+	return snprintf(page, PAGE_SIZE, "%lu\n", val);
+}
 
-अटल अंतरभूत sमाप_प्रकार nullb_device_bool_attr_show(bool val, अक्षर *page)
-अणु
-	वापस snम_लिखो(page, PAGE_SIZE, "%u\n", val);
-पूर्ण
+static inline ssize_t nullb_device_bool_attr_show(bool val, char *page)
+{
+	return snprintf(page, PAGE_SIZE, "%u\n", val);
+}
 
-अटल sमाप_प्रकार nullb_device_uपूर्णांक_attr_store(अचिन्हित पूर्णांक *val,
-	स्थिर अक्षर *page, माप_प्रकार count)
-अणु
-	अचिन्हित पूर्णांक पंचांगp;
-	पूर्णांक result;
+static ssize_t nullb_device_uint_attr_store(unsigned int *val,
+	const char *page, size_t count)
+{
+	unsigned int tmp;
+	int result;
 
-	result = kstrtouपूर्णांक(page, 0, &पंचांगp);
-	अगर (result < 0)
-		वापस result;
+	result = kstrtouint(page, 0, &tmp);
+	if (result < 0)
+		return result;
 
-	*val = पंचांगp;
-	वापस count;
-पूर्ण
+	*val = tmp;
+	return count;
+}
 
-अटल sमाप_प्रकार nullb_device_uदीर्घ_attr_store(अचिन्हित दीर्घ *val,
-	स्थिर अक्षर *page, माप_प्रकार count)
-अणु
-	पूर्णांक result;
-	अचिन्हित दीर्घ पंचांगp;
+static ssize_t nullb_device_ulong_attr_store(unsigned long *val,
+	const char *page, size_t count)
+{
+	int result;
+	unsigned long tmp;
 
-	result = kम_से_अदीर्घ(page, 0, &पंचांगp);
-	अगर (result < 0)
-		वापस result;
+	result = kstrtoul(page, 0, &tmp);
+	if (result < 0)
+		return result;
 
-	*val = पंचांगp;
-	वापस count;
-पूर्ण
+	*val = tmp;
+	return count;
+}
 
-अटल sमाप_प्रकार nullb_device_bool_attr_store(bool *val, स्थिर अक्षर *page,
-	माप_प्रकार count)
-अणु
-	bool पंचांगp;
-	पूर्णांक result;
+static ssize_t nullb_device_bool_attr_store(bool *val, const char *page,
+	size_t count)
+{
+	bool tmp;
+	int result;
 
-	result = kstrtobool(page,  &पंचांगp);
-	अगर (result < 0)
-		वापस result;
+	result = kstrtobool(page,  &tmp);
+	if (result < 0)
+		return result;
 
-	*val = पंचांगp;
-	वापस count;
-पूर्ण
+	*val = tmp;
+	return count;
+}
 
-/* The following macro should only be used with TYPE = अणुuपूर्णांक, uदीर्घ, boolपूर्ण. */
-#घोषणा शून्यB_DEVICE_ATTR(NAME, TYPE, APPLY)				\
-अटल sमाप_प्रकार								\
-nullb_device_##NAME##_show(काष्ठा config_item *item, अक्षर *page)	\
-अणु									\
-	वापस nullb_device_##TYPE##_attr_show(				\
+/* The following macro should only be used with TYPE = {uint, ulong, bool}. */
+#define NULLB_DEVICE_ATTR(NAME, TYPE, APPLY)				\
+static ssize_t								\
+nullb_device_##NAME##_show(struct config_item *item, char *page)	\
+{									\
+	return nullb_device_##TYPE##_attr_show(				\
 				to_nullb_device(item)->NAME, page);	\
-पूर्ण									\
-अटल sमाप_प्रकार								\
-nullb_device_##NAME##_store(काष्ठा config_item *item, स्थिर अक्षर *page,	\
-			    माप_प्रकार count)				\
-अणु									\
-	पूर्णांक (*apply_fn)(काष्ठा nullb_device *dev, TYPE new_value) = APPLY;\
-	काष्ठा nullb_device *dev = to_nullb_device(item);		\
+}									\
+static ssize_t								\
+nullb_device_##NAME##_store(struct config_item *item, const char *page,	\
+			    size_t count)				\
+{									\
+	int (*apply_fn)(struct nullb_device *dev, TYPE new_value) = APPLY;\
+	struct nullb_device *dev = to_nullb_device(item);		\
 	TYPE new_value = 0;						\
-	पूर्णांक ret;							\
+	int ret;							\
 									\
 	ret = nullb_device_##TYPE##_attr_store(&new_value, page, count);\
-	अगर (ret < 0)							\
-		वापस ret;						\
-	अगर (apply_fn)							\
+	if (ret < 0)							\
+		return ret;						\
+	if (apply_fn)							\
 		ret = apply_fn(dev, new_value);				\
-	अन्यथा अगर (test_bit(शून्यB_DEV_FL_CONFIGURED, &dev->flags)) 	\
+	else if (test_bit(NULLB_DEV_FL_CONFIGURED, &dev->flags)) 	\
 		ret = -EBUSY;						\
-	अगर (ret < 0)							\
-		वापस ret;						\
+	if (ret < 0)							\
+		return ret;						\
 	dev->NAME = new_value;						\
-	वापस count;							\
-पूर्ण									\
+	return count;							\
+}									\
 CONFIGFS_ATTR(nullb_device_, NAME);
 
-अटल पूर्णांक nullb_apply_submit_queues(काष्ठा nullb_device *dev,
-				     अचिन्हित पूर्णांक submit_queues)
-अणु
-	काष्ठा nullb *nullb = dev->nullb;
-	काष्ठा blk_mq_tag_set *set;
+static int nullb_apply_submit_queues(struct nullb_device *dev,
+				     unsigned int submit_queues)
+{
+	struct nullb *nullb = dev->nullb;
+	struct blk_mq_tag_set *set;
 
-	अगर (!nullb)
-		वापस 0;
+	if (!nullb)
+		return 0;
 
 	/*
-	 * Make sure that null_init_hctx() करोes not access nullb->queues[] past
+	 * Make sure that null_init_hctx() does not access nullb->queues[] past
 	 * the end of that array.
 	 */
-	अगर (submit_queues > nr_cpu_ids)
-		वापस -EINVAL;
+	if (submit_queues > nr_cpu_ids)
+		return -EINVAL;
 	set = nullb->tag_set;
 	blk_mq_update_nr_hw_queues(set, submit_queues);
-	वापस set->nr_hw_queues == submit_queues ? 0 : -ENOMEM;
-पूर्ण
+	return set->nr_hw_queues == submit_queues ? 0 : -ENOMEM;
+}
 
-शून्यB_DEVICE_ATTR(size, uदीर्घ, शून्य);
-शून्यB_DEVICE_ATTR(completion_nsec, uदीर्घ, शून्य);
-शून्यB_DEVICE_ATTR(submit_queues, uपूर्णांक, nullb_apply_submit_queues);
-शून्यB_DEVICE_ATTR(home_node, uपूर्णांक, शून्य);
-शून्यB_DEVICE_ATTR(queue_mode, uपूर्णांक, शून्य);
-शून्यB_DEVICE_ATTR(blocksize, uपूर्णांक, शून्य);
-शून्यB_DEVICE_ATTR(max_sectors, uपूर्णांक, शून्य);
-शून्यB_DEVICE_ATTR(irqmode, uपूर्णांक, शून्य);
-शून्यB_DEVICE_ATTR(hw_queue_depth, uपूर्णांक, शून्य);
-शून्यB_DEVICE_ATTR(index, uपूर्णांक, शून्य);
-शून्यB_DEVICE_ATTR(blocking, bool, शून्य);
-शून्यB_DEVICE_ATTR(use_per_node_hctx, bool, शून्य);
-शून्यB_DEVICE_ATTR(memory_backed, bool, शून्य);
-शून्यB_DEVICE_ATTR(discard, bool, शून्य);
-शून्यB_DEVICE_ATTR(mbps, uपूर्णांक, शून्य);
-शून्यB_DEVICE_ATTR(cache_size, uदीर्घ, शून्य);
-शून्यB_DEVICE_ATTR(zoned, bool, शून्य);
-शून्यB_DEVICE_ATTR(zone_size, uदीर्घ, शून्य);
-शून्यB_DEVICE_ATTR(zone_capacity, uदीर्घ, शून्य);
-शून्यB_DEVICE_ATTR(zone_nr_conv, uपूर्णांक, शून्य);
-शून्यB_DEVICE_ATTR(zone_max_खोलो, uपूर्णांक, शून्य);
-शून्यB_DEVICE_ATTR(zone_max_active, uपूर्णांक, शून्य);
-शून्यB_DEVICE_ATTR(virt_boundary, bool, शून्य);
+NULLB_DEVICE_ATTR(size, ulong, NULL);
+NULLB_DEVICE_ATTR(completion_nsec, ulong, NULL);
+NULLB_DEVICE_ATTR(submit_queues, uint, nullb_apply_submit_queues);
+NULLB_DEVICE_ATTR(home_node, uint, NULL);
+NULLB_DEVICE_ATTR(queue_mode, uint, NULL);
+NULLB_DEVICE_ATTR(blocksize, uint, NULL);
+NULLB_DEVICE_ATTR(max_sectors, uint, NULL);
+NULLB_DEVICE_ATTR(irqmode, uint, NULL);
+NULLB_DEVICE_ATTR(hw_queue_depth, uint, NULL);
+NULLB_DEVICE_ATTR(index, uint, NULL);
+NULLB_DEVICE_ATTR(blocking, bool, NULL);
+NULLB_DEVICE_ATTR(use_per_node_hctx, bool, NULL);
+NULLB_DEVICE_ATTR(memory_backed, bool, NULL);
+NULLB_DEVICE_ATTR(discard, bool, NULL);
+NULLB_DEVICE_ATTR(mbps, uint, NULL);
+NULLB_DEVICE_ATTR(cache_size, ulong, NULL);
+NULLB_DEVICE_ATTR(zoned, bool, NULL);
+NULLB_DEVICE_ATTR(zone_size, ulong, NULL);
+NULLB_DEVICE_ATTR(zone_capacity, ulong, NULL);
+NULLB_DEVICE_ATTR(zone_nr_conv, uint, NULL);
+NULLB_DEVICE_ATTR(zone_max_open, uint, NULL);
+NULLB_DEVICE_ATTR(zone_max_active, uint, NULL);
+NULLB_DEVICE_ATTR(virt_boundary, bool, NULL);
 
-अटल sमाप_प्रकार nullb_device_घातer_show(काष्ठा config_item *item, अक्षर *page)
-अणु
-	वापस nullb_device_bool_attr_show(to_nullb_device(item)->घातer, page);
-पूर्ण
+static ssize_t nullb_device_power_show(struct config_item *item, char *page)
+{
+	return nullb_device_bool_attr_show(to_nullb_device(item)->power, page);
+}
 
-अटल sमाप_प्रकार nullb_device_घातer_store(काष्ठा config_item *item,
-				     स्थिर अक्षर *page, माप_प्रकार count)
-अणु
-	काष्ठा nullb_device *dev = to_nullb_device(item);
+static ssize_t nullb_device_power_store(struct config_item *item,
+				     const char *page, size_t count)
+{
+	struct nullb_device *dev = to_nullb_device(item);
 	bool newp = false;
-	sमाप_प्रकार ret;
+	ssize_t ret;
 
 	ret = nullb_device_bool_attr_store(&newp, page, count);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (!dev->घातer && newp) अणु
-		अगर (test_and_set_bit(शून्यB_DEV_FL_UP, &dev->flags))
-			वापस count;
-		अगर (null_add_dev(dev)) अणु
-			clear_bit(शून्यB_DEV_FL_UP, &dev->flags);
-			वापस -ENOMEM;
-		पूर्ण
+	if (!dev->power && newp) {
+		if (test_and_set_bit(NULLB_DEV_FL_UP, &dev->flags))
+			return count;
+		if (null_add_dev(dev)) {
+			clear_bit(NULLB_DEV_FL_UP, &dev->flags);
+			return -ENOMEM;
+		}
 
-		set_bit(शून्यB_DEV_FL_CONFIGURED, &dev->flags);
-		dev->घातer = newp;
-	पूर्ण अन्यथा अगर (dev->घातer && !newp) अणु
-		अगर (test_and_clear_bit(शून्यB_DEV_FL_UP, &dev->flags)) अणु
+		set_bit(NULLB_DEV_FL_CONFIGURED, &dev->flags);
+		dev->power = newp;
+	} else if (dev->power && !newp) {
+		if (test_and_clear_bit(NULLB_DEV_FL_UP, &dev->flags)) {
 			mutex_lock(&lock);
-			dev->घातer = newp;
+			dev->power = newp;
 			null_del_dev(dev->nullb);
 			mutex_unlock(&lock);
-		पूर्ण
-		clear_bit(शून्यB_DEV_FL_CONFIGURED, &dev->flags);
-	पूर्ण
+		}
+		clear_bit(NULLB_DEV_FL_CONFIGURED, &dev->flags);
+	}
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-CONFIGFS_ATTR(nullb_device_, घातer);
+CONFIGFS_ATTR(nullb_device_, power);
 
-अटल sमाप_प्रकार nullb_device_badblocks_show(काष्ठा config_item *item, अक्षर *page)
-अणु
-	काष्ठा nullb_device *t_dev = to_nullb_device(item);
+static ssize_t nullb_device_badblocks_show(struct config_item *item, char *page)
+{
+	struct nullb_device *t_dev = to_nullb_device(item);
 
-	वापस badblocks_show(&t_dev->badblocks, page, 0);
-पूर्ण
+	return badblocks_show(&t_dev->badblocks, page, 0);
+}
 
-अटल sमाप_प्रकार nullb_device_badblocks_store(काष्ठा config_item *item,
-				     स्थिर अक्षर *page, माप_प्रकार count)
-अणु
-	काष्ठा nullb_device *t_dev = to_nullb_device(item);
-	अक्षर *orig, *buf, *पंचांगp;
+static ssize_t nullb_device_badblocks_store(struct config_item *item,
+				     const char *page, size_t count)
+{
+	struct nullb_device *t_dev = to_nullb_device(item);
+	char *orig, *buf, *tmp;
 	u64 start, end;
-	पूर्णांक ret;
+	int ret;
 
 	orig = kstrndup(page, count, GFP_KERNEL);
-	अगर (!orig)
-		वापस -ENOMEM;
+	if (!orig)
+		return -ENOMEM;
 
-	buf = म_मालाip(orig);
+	buf = strstrip(orig);
 
 	ret = -EINVAL;
-	अगर (buf[0] != '+' && buf[0] != '-')
-		जाओ out;
-	पंचांगp = म_अक्षर(&buf[1], '-');
-	अगर (!पंचांगp)
-		जाओ out;
-	*पंचांगp = '\0';
-	ret = kम_से_अदीर्घl(buf + 1, 0, &start);
-	अगर (ret)
-		जाओ out;
-	ret = kम_से_अदीर्घl(पंचांगp + 1, 0, &end);
-	अगर (ret)
-		जाओ out;
+	if (buf[0] != '+' && buf[0] != '-')
+		goto out;
+	tmp = strchr(&buf[1], '-');
+	if (!tmp)
+		goto out;
+	*tmp = '\0';
+	ret = kstrtoull(buf + 1, 0, &start);
+	if (ret)
+		goto out;
+	ret = kstrtoull(tmp + 1, 0, &end);
+	if (ret)
+		goto out;
 	ret = -EINVAL;
-	अगर (start > end)
-		जाओ out;
+	if (start > end)
+		goto out;
 	/* enable badblocks */
-	cmpxchg(&t_dev->badblocks.shअगरt, -1, 0);
-	अगर (buf[0] == '+')
+	cmpxchg(&t_dev->badblocks.shift, -1, 0);
+	if (buf[0] == '+')
 		ret = badblocks_set(&t_dev->badblocks, start,
 			end - start + 1, 1);
-	अन्यथा
+	else
 		ret = badblocks_clear(&t_dev->badblocks, start,
 			end - start + 1);
-	अगर (ret == 0)
+	if (ret == 0)
 		ret = count;
 out:
-	kमुक्त(orig);
-	वापस ret;
-पूर्ण
+	kfree(orig);
+	return ret;
+}
 CONFIGFS_ATTR(nullb_device_, badblocks);
 
-अटल काष्ठा configfs_attribute *nullb_device_attrs[] = अणु
+static struct configfs_attribute *nullb_device_attrs[] = {
 	&nullb_device_attr_size,
 	&nullb_device_attr_completion_nsec,
 	&nullb_device_attr_submit_queues,
@@ -480,7 +479,7 @@ CONFIGFS_ATTR(nullb_device_, badblocks);
 	&nullb_device_attr_index,
 	&nullb_device_attr_blocking,
 	&nullb_device_attr_use_per_node_hctx,
-	&nullb_device_attr_घातer,
+	&nullb_device_attr_power,
 	&nullb_device_attr_memory_backed,
 	&nullb_device_attr_discard,
 	&nullb_device_attr_mbps,
@@ -490,110 +489,110 @@ CONFIGFS_ATTR(nullb_device_, badblocks);
 	&nullb_device_attr_zone_size,
 	&nullb_device_attr_zone_capacity,
 	&nullb_device_attr_zone_nr_conv,
-	&nullb_device_attr_zone_max_खोलो,
+	&nullb_device_attr_zone_max_open,
 	&nullb_device_attr_zone_max_active,
 	&nullb_device_attr_virt_boundary,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल व्योम nullb_device_release(काष्ठा config_item *item)
-अणु
-	काष्ठा nullb_device *dev = to_nullb_device(item);
+static void nullb_device_release(struct config_item *item)
+{
+	struct nullb_device *dev = to_nullb_device(item);
 
-	null_मुक्त_device_storage(dev, false);
-	null_मुक्त_dev(dev);
-पूर्ण
+	null_free_device_storage(dev, false);
+	null_free_dev(dev);
+}
 
-अटल काष्ठा configfs_item_operations nullb_device_ops = अणु
+static struct configfs_item_operations nullb_device_ops = {
 	.release	= nullb_device_release,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा config_item_type nullb_device_type = अणु
+static const struct config_item_type nullb_device_type = {
 	.ct_item_ops	= &nullb_device_ops,
 	.ct_attrs	= nullb_device_attrs,
 	.ct_owner	= THIS_MODULE,
-पूर्ण;
+};
 
-अटल काष्ठा
-config_item *nullb_group_make_item(काष्ठा config_group *group, स्थिर अक्षर *name)
-अणु
-	काष्ठा nullb_device *dev;
+static struct
+config_item *nullb_group_make_item(struct config_group *group, const char *name)
+{
+	struct nullb_device *dev;
 
 	dev = null_alloc_dev();
-	अगर (!dev)
-		वापस ERR_PTR(-ENOMEM);
+	if (!dev)
+		return ERR_PTR(-ENOMEM);
 
 	config_item_init_type_name(&dev->item, name, &nullb_device_type);
 
-	वापस &dev->item;
-पूर्ण
+	return &dev->item;
+}
 
-अटल व्योम
-nullb_group_drop_item(काष्ठा config_group *group, काष्ठा config_item *item)
-अणु
-	काष्ठा nullb_device *dev = to_nullb_device(item);
+static void
+nullb_group_drop_item(struct config_group *group, struct config_item *item)
+{
+	struct nullb_device *dev = to_nullb_device(item);
 
-	अगर (test_and_clear_bit(शून्यB_DEV_FL_UP, &dev->flags)) अणु
+	if (test_and_clear_bit(NULLB_DEV_FL_UP, &dev->flags)) {
 		mutex_lock(&lock);
-		dev->घातer = false;
+		dev->power = false;
 		null_del_dev(dev->nullb);
 		mutex_unlock(&lock);
-	पूर्ण
+	}
 
 	config_item_put(item);
-पूर्ण
+}
 
-अटल sमाप_प्रकार memb_group_features_show(काष्ठा config_item *item, अक्षर *page)
-अणु
-	वापस snम_लिखो(page, PAGE_SIZE,
+static ssize_t memb_group_features_show(struct config_item *item, char *page)
+{
+	return snprintf(page, PAGE_SIZE,
 			"memory_backed,discard,bandwidth,cache,badblocks,zoned,zone_size,zone_capacity,zone_nr_conv,zone_max_open,zone_max_active,blocksize,max_sectors,virt_boundary\n");
-पूर्ण
+}
 
 CONFIGFS_ATTR_RO(memb_group_, features);
 
-अटल काष्ठा configfs_attribute *nullb_group_attrs[] = अणु
+static struct configfs_attribute *nullb_group_attrs[] = {
 	&memb_group_attr_features,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल काष्ठा configfs_group_operations nullb_group_ops = अणु
+static struct configfs_group_operations nullb_group_ops = {
 	.make_item	= nullb_group_make_item,
 	.drop_item	= nullb_group_drop_item,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा config_item_type nullb_group_type = अणु
+static const struct config_item_type nullb_group_type = {
 	.ct_group_ops	= &nullb_group_ops,
 	.ct_attrs	= nullb_group_attrs,
 	.ct_owner	= THIS_MODULE,
-पूर्ण;
+};
 
-अटल काष्ठा configfs_subप्रणाली nullb_subsys = अणु
-	.su_group = अणु
-		.cg_item = अणु
+static struct configfs_subsystem nullb_subsys = {
+	.su_group = {
+		.cg_item = {
 			.ci_namebuf = "nullb",
 			.ci_type = &nullb_group_type,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल अंतरभूत पूर्णांक null_cache_active(काष्ठा nullb *nullb)
-अणु
-	वापस test_bit(शून्यB_DEV_FL_CACHE, &nullb->dev->flags);
-पूर्ण
+static inline int null_cache_active(struct nullb *nullb)
+{
+	return test_bit(NULLB_DEV_FL_CACHE, &nullb->dev->flags);
+}
 
-अटल काष्ठा nullb_device *null_alloc_dev(व्योम)
-अणु
-	काष्ठा nullb_device *dev;
+static struct nullb_device *null_alloc_dev(void)
+{
+	struct nullb_device *dev;
 
-	dev = kzalloc(माप(*dev), GFP_KERNEL);
-	अगर (!dev)
-		वापस शून्य;
+	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
+	if (!dev)
+		return NULL;
 	INIT_RADIX_TREE(&dev->data, GFP_ATOMIC);
 	INIT_RADIX_TREE(&dev->cache, GFP_ATOMIC);
-	अगर (badblocks_init(&dev->badblocks, 0)) अणु
-		kमुक्त(dev);
-		वापस शून्य;
-	पूर्ण
+	if (badblocks_init(&dev->badblocks, 0)) {
+		kfree(dev);
+		return NULL;
+	}
 
 	dev->size = g_gb * 1024;
 	dev->completion_nsec = g_completion_nsec;
@@ -610,245 +609,245 @@ CONFIGFS_ATTR_RO(memb_group_, features);
 	dev->zone_size = g_zone_size;
 	dev->zone_capacity = g_zone_capacity;
 	dev->zone_nr_conv = g_zone_nr_conv;
-	dev->zone_max_खोलो = g_zone_max_खोलो;
+	dev->zone_max_open = g_zone_max_open;
 	dev->zone_max_active = g_zone_max_active;
 	dev->virt_boundary = g_virt_boundary;
-	वापस dev;
-पूर्ण
+	return dev;
+}
 
-अटल व्योम null_मुक्त_dev(काष्ठा nullb_device *dev)
-अणु
-	अगर (!dev)
-		वापस;
+static void null_free_dev(struct nullb_device *dev)
+{
+	if (!dev)
+		return;
 
-	null_मुक्त_zoned_dev(dev);
-	badblocks_निकास(&dev->badblocks);
-	kमुक्त(dev);
-पूर्ण
+	null_free_zoned_dev(dev);
+	badblocks_exit(&dev->badblocks);
+	kfree(dev);
+}
 
-अटल व्योम put_tag(काष्ठा nullb_queue *nq, अचिन्हित पूर्णांक tag)
-अणु
+static void put_tag(struct nullb_queue *nq, unsigned int tag)
+{
 	clear_bit_unlock(tag, nq->tag_map);
 
-	अगर (रुकोqueue_active(&nq->रुको))
-		wake_up(&nq->रुको);
-पूर्ण
+	if (waitqueue_active(&nq->wait))
+		wake_up(&nq->wait);
+}
 
-अटल अचिन्हित पूर्णांक get_tag(काष्ठा nullb_queue *nq)
-अणु
-	अचिन्हित पूर्णांक tag;
+static unsigned int get_tag(struct nullb_queue *nq)
+{
+	unsigned int tag;
 
-	करो अणु
+	do {
 		tag = find_first_zero_bit(nq->tag_map, nq->queue_depth);
-		अगर (tag >= nq->queue_depth)
-			वापस -1U;
-	पूर्ण जबतक (test_and_set_bit_lock(tag, nq->tag_map));
+		if (tag >= nq->queue_depth)
+			return -1U;
+	} while (test_and_set_bit_lock(tag, nq->tag_map));
 
-	वापस tag;
-पूर्ण
+	return tag;
+}
 
-अटल व्योम मुक्त_cmd(काष्ठा nullb_cmd *cmd)
-अणु
+static void free_cmd(struct nullb_cmd *cmd)
+{
 	put_tag(cmd->nq, cmd->tag);
-पूर्ण
+}
 
-अटल क्रमागत hrसमयr_restart null_cmd_समयr_expired(काष्ठा hrसमयr *समयr);
+static enum hrtimer_restart null_cmd_timer_expired(struct hrtimer *timer);
 
-अटल काष्ठा nullb_cmd *__alloc_cmd(काष्ठा nullb_queue *nq)
-अणु
-	काष्ठा nullb_cmd *cmd;
-	अचिन्हित पूर्णांक tag;
+static struct nullb_cmd *__alloc_cmd(struct nullb_queue *nq)
+{
+	struct nullb_cmd *cmd;
+	unsigned int tag;
 
 	tag = get_tag(nq);
-	अगर (tag != -1U) अणु
+	if (tag != -1U) {
 		cmd = &nq->cmds[tag];
 		cmd->tag = tag;
 		cmd->error = BLK_STS_OK;
 		cmd->nq = nq;
-		अगर (nq->dev->irqmode == शून्य_IRQ_TIMER) अणु
-			hrसमयr_init(&cmd->समयr, CLOCK_MONOTONIC,
+		if (nq->dev->irqmode == NULL_IRQ_TIMER) {
+			hrtimer_init(&cmd->timer, CLOCK_MONOTONIC,
 				     HRTIMER_MODE_REL);
-			cmd->समयr.function = null_cmd_समयr_expired;
-		पूर्ण
-		वापस cmd;
-	पूर्ण
+			cmd->timer.function = null_cmd_timer_expired;
+		}
+		return cmd;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा nullb_cmd *alloc_cmd(काष्ठा nullb_queue *nq, पूर्णांक can_रुको)
-अणु
-	काष्ठा nullb_cmd *cmd;
-	DEFINE_WAIT(रुको);
+static struct nullb_cmd *alloc_cmd(struct nullb_queue *nq, int can_wait)
+{
+	struct nullb_cmd *cmd;
+	DEFINE_WAIT(wait);
 
 	cmd = __alloc_cmd(nq);
-	अगर (cmd || !can_रुको)
-		वापस cmd;
+	if (cmd || !can_wait)
+		return cmd;
 
-	करो अणु
-		prepare_to_रुको(&nq->रुको, &रुको, TASK_UNINTERRUPTIBLE);
+	do {
+		prepare_to_wait(&nq->wait, &wait, TASK_UNINTERRUPTIBLE);
 		cmd = __alloc_cmd(nq);
-		अगर (cmd)
-			अवरोध;
+		if (cmd)
+			break;
 
 		io_schedule();
-	पूर्ण जबतक (1);
+	} while (1);
 
-	finish_रुको(&nq->रुको, &रुको);
-	वापस cmd;
-पूर्ण
+	finish_wait(&nq->wait, &wait);
+	return cmd;
+}
 
-अटल व्योम end_cmd(काष्ठा nullb_cmd *cmd)
-अणु
-	पूर्णांक queue_mode = cmd->nq->dev->queue_mode;
+static void end_cmd(struct nullb_cmd *cmd)
+{
+	int queue_mode = cmd->nq->dev->queue_mode;
 
-	चयन (queue_mode)  अणु
-	हाल शून्य_Q_MQ:
+	switch (queue_mode)  {
+	case NULL_Q_MQ:
 		blk_mq_end_request(cmd->rq, cmd->error);
-		वापस;
-	हाल शून्य_Q_BIO:
+		return;
+	case NULL_Q_BIO:
 		cmd->bio->bi_status = cmd->error;
 		bio_endio(cmd->bio);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	मुक्त_cmd(cmd);
-पूर्ण
+	free_cmd(cmd);
+}
 
-अटल क्रमागत hrसमयr_restart null_cmd_समयr_expired(काष्ठा hrसमयr *समयr)
-अणु
-	end_cmd(container_of(समयr, काष्ठा nullb_cmd, समयr));
+static enum hrtimer_restart null_cmd_timer_expired(struct hrtimer *timer)
+{
+	end_cmd(container_of(timer, struct nullb_cmd, timer));
 
-	वापस HRTIMER_NORESTART;
-पूर्ण
+	return HRTIMER_NORESTART;
+}
 
-अटल व्योम null_cmd_end_समयr(काष्ठा nullb_cmd *cmd)
-अणु
-	kसमय_प्रकार kt = cmd->nq->dev->completion_nsec;
+static void null_cmd_end_timer(struct nullb_cmd *cmd)
+{
+	ktime_t kt = cmd->nq->dev->completion_nsec;
 
-	hrसमयr_start(&cmd->समयr, kt, HRTIMER_MODE_REL);
-पूर्ण
+	hrtimer_start(&cmd->timer, kt, HRTIMER_MODE_REL);
+}
 
-अटल व्योम null_complete_rq(काष्ठा request *rq)
-अणु
+static void null_complete_rq(struct request *rq)
+{
 	end_cmd(blk_mq_rq_to_pdu(rq));
-पूर्ण
+}
 
-अटल काष्ठा nullb_page *null_alloc_page(gfp_t gfp_flags)
-अणु
-	काष्ठा nullb_page *t_page;
+static struct nullb_page *null_alloc_page(gfp_t gfp_flags)
+{
+	struct nullb_page *t_page;
 
-	t_page = kदो_स्मृति(माप(काष्ठा nullb_page), gfp_flags);
-	अगर (!t_page)
-		जाओ out;
+	t_page = kmalloc(sizeof(struct nullb_page), gfp_flags);
+	if (!t_page)
+		goto out;
 
 	t_page->page = alloc_pages(gfp_flags, 0);
-	अगर (!t_page->page)
-		जाओ out_मुक्तpage;
+	if (!t_page->page)
+		goto out_freepage;
 
-	स_रखो(t_page->biपंचांगap, 0, माप(t_page->biपंचांगap));
-	वापस t_page;
-out_मुक्तpage:
-	kमुक्त(t_page);
+	memset(t_page->bitmap, 0, sizeof(t_page->bitmap));
+	return t_page;
+out_freepage:
+	kfree(t_page);
 out:
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम null_मुक्त_page(काष्ठा nullb_page *t_page)
-अणु
-	__set_bit(शून्यB_PAGE_FREE, t_page->biपंचांगap);
-	अगर (test_bit(शून्यB_PAGE_LOCK, t_page->biपंचांगap))
-		वापस;
-	__मुक्त_page(t_page->page);
-	kमुक्त(t_page);
-पूर्ण
+static void null_free_page(struct nullb_page *t_page)
+{
+	__set_bit(NULLB_PAGE_FREE, t_page->bitmap);
+	if (test_bit(NULLB_PAGE_LOCK, t_page->bitmap))
+		return;
+	__free_page(t_page->page);
+	kfree(t_page);
+}
 
-अटल bool null_page_empty(काष्ठा nullb_page *page)
-अणु
-	पूर्णांक size = MAP_SZ - 2;
+static bool null_page_empty(struct nullb_page *page)
+{
+	int size = MAP_SZ - 2;
 
-	वापस find_first_bit(page->biपंचांगap, size) == size;
-पूर्ण
+	return find_first_bit(page->bitmap, size) == size;
+}
 
-अटल व्योम null_मुक्त_sector(काष्ठा nullb *nullb, sector_t sector,
+static void null_free_sector(struct nullb *nullb, sector_t sector,
 	bool is_cache)
-अणु
-	अचिन्हित पूर्णांक sector_bit;
+{
+	unsigned int sector_bit;
 	u64 idx;
-	काष्ठा nullb_page *t_page, *ret;
-	काष्ठा radix_tree_root *root;
+	struct nullb_page *t_page, *ret;
+	struct radix_tree_root *root;
 
 	root = is_cache ? &nullb->dev->cache : &nullb->dev->data;
 	idx = sector >> PAGE_SECTORS_SHIFT;
 	sector_bit = (sector & SECTOR_MASK);
 
 	t_page = radix_tree_lookup(root, idx);
-	अगर (t_page) अणु
-		__clear_bit(sector_bit, t_page->biपंचांगap);
+	if (t_page) {
+		__clear_bit(sector_bit, t_page->bitmap);
 
-		अगर (null_page_empty(t_page)) अणु
+		if (null_page_empty(t_page)) {
 			ret = radix_tree_delete_item(root, idx, t_page);
 			WARN_ON(ret != t_page);
-			null_मुक्त_page(ret);
-			अगर (is_cache)
+			null_free_page(ret);
+			if (is_cache)
 				nullb->dev->curr_cache -= PAGE_SIZE;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल काष्ठा nullb_page *null_radix_tree_insert(काष्ठा nullb *nullb, u64 idx,
-	काष्ठा nullb_page *t_page, bool is_cache)
-अणु
-	काष्ठा radix_tree_root *root;
+static struct nullb_page *null_radix_tree_insert(struct nullb *nullb, u64 idx,
+	struct nullb_page *t_page, bool is_cache)
+{
+	struct radix_tree_root *root;
 
 	root = is_cache ? &nullb->dev->cache : &nullb->dev->data;
 
-	अगर (radix_tree_insert(root, idx, t_page)) अणु
-		null_मुक्त_page(t_page);
+	if (radix_tree_insert(root, idx, t_page)) {
+		null_free_page(t_page);
 		t_page = radix_tree_lookup(root, idx);
 		WARN_ON(!t_page || t_page->page->index != idx);
-	पूर्ण अन्यथा अगर (is_cache)
+	} else if (is_cache)
 		nullb->dev->curr_cache += PAGE_SIZE;
 
-	वापस t_page;
-पूर्ण
+	return t_page;
+}
 
-अटल व्योम null_मुक्त_device_storage(काष्ठा nullb_device *dev, bool is_cache)
-अणु
-	अचिन्हित दीर्घ pos = 0;
-	पूर्णांक nr_pages;
-	काष्ठा nullb_page *ret, *t_pages[FREE_BATCH];
-	काष्ठा radix_tree_root *root;
+static void null_free_device_storage(struct nullb_device *dev, bool is_cache)
+{
+	unsigned long pos = 0;
+	int nr_pages;
+	struct nullb_page *ret, *t_pages[FREE_BATCH];
+	struct radix_tree_root *root;
 
 	root = is_cache ? &dev->cache : &dev->data;
 
-	करो अणु
-		पूर्णांक i;
+	do {
+		int i;
 
 		nr_pages = radix_tree_gang_lookup(root,
-				(व्योम **)t_pages, pos, FREE_BATCH);
+				(void **)t_pages, pos, FREE_BATCH);
 
-		क्रम (i = 0; i < nr_pages; i++) अणु
+		for (i = 0; i < nr_pages; i++) {
 			pos = t_pages[i]->page->index;
 			ret = radix_tree_delete_item(root, pos, t_pages[i]);
 			WARN_ON(ret != t_pages[i]);
-			null_मुक्त_page(ret);
-		पूर्ण
+			null_free_page(ret);
+		}
 
 		pos++;
-	पूर्ण जबतक (nr_pages == FREE_BATCH);
+	} while (nr_pages == FREE_BATCH);
 
-	अगर (is_cache)
+	if (is_cache)
 		dev->curr_cache = 0;
-पूर्ण
+}
 
-अटल काष्ठा nullb_page *__null_lookup_page(काष्ठा nullb *nullb,
-	sector_t sector, bool क्रम_ग_लिखो, bool is_cache)
-अणु
-	अचिन्हित पूर्णांक sector_bit;
+static struct nullb_page *__null_lookup_page(struct nullb *nullb,
+	sector_t sector, bool for_write, bool is_cache)
+{
+	unsigned int sector_bit;
 	u64 idx;
-	काष्ठा nullb_page *t_page;
-	काष्ठा radix_tree_root *root;
+	struct nullb_page *t_page;
+	struct radix_tree_root *root;
 
 	idx = sector >> PAGE_SECTORS_SHIFT;
 	sector_bit = (sector & SECTOR_MASK);
@@ -857,44 +856,44 @@ out:
 	t_page = radix_tree_lookup(root, idx);
 	WARN_ON(t_page && t_page->page->index != idx);
 
-	अगर (t_page && (क्रम_ग_लिखो || test_bit(sector_bit, t_page->biपंचांगap)))
-		वापस t_page;
+	if (t_page && (for_write || test_bit(sector_bit, t_page->bitmap)))
+		return t_page;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा nullb_page *null_lookup_page(काष्ठा nullb *nullb,
-	sector_t sector, bool क्रम_ग_लिखो, bool ignore_cache)
-अणु
-	काष्ठा nullb_page *page = शून्य;
+static struct nullb_page *null_lookup_page(struct nullb *nullb,
+	sector_t sector, bool for_write, bool ignore_cache)
+{
+	struct nullb_page *page = NULL;
 
-	अगर (!ignore_cache)
-		page = __null_lookup_page(nullb, sector, क्रम_ग_लिखो, true);
-	अगर (page)
-		वापस page;
-	वापस __null_lookup_page(nullb, sector, क्रम_ग_लिखो, false);
-पूर्ण
+	if (!ignore_cache)
+		page = __null_lookup_page(nullb, sector, for_write, true);
+	if (page)
+		return page;
+	return __null_lookup_page(nullb, sector, for_write, false);
+}
 
-अटल काष्ठा nullb_page *null_insert_page(काष्ठा nullb *nullb,
+static struct nullb_page *null_insert_page(struct nullb *nullb,
 					   sector_t sector, bool ignore_cache)
 	__releases(&nullb->lock)
 	__acquires(&nullb->lock)
-अणु
+{
 	u64 idx;
-	काष्ठा nullb_page *t_page;
+	struct nullb_page *t_page;
 
 	t_page = null_lookup_page(nullb, sector, true, ignore_cache);
-	अगर (t_page)
-		वापस t_page;
+	if (t_page)
+		return t_page;
 
 	spin_unlock_irq(&nullb->lock);
 
 	t_page = null_alloc_page(GFP_NOIO);
-	अगर (!t_page)
-		जाओ out_lock;
+	if (!t_page)
+		goto out_lock;
 
-	अगर (radix_tree_preload(GFP_NOIO))
-		जाओ out_मुक्तpage;
+	if (radix_tree_preload(GFP_NOIO))
+		goto out_freepage;
 
 	spin_lock_irq(&nullb->lock);
 	idx = sector >> PAGE_SECTORS_SHIFT;
@@ -902,990 +901,990 @@ out:
 	t_page = null_radix_tree_insert(nullb, idx, t_page, !ignore_cache);
 	radix_tree_preload_end();
 
-	वापस t_page;
-out_मुक्तpage:
-	null_मुक्त_page(t_page);
+	return t_page;
+out_freepage:
+	null_free_page(t_page);
 out_lock:
 	spin_lock_irq(&nullb->lock);
-	वापस null_lookup_page(nullb, sector, true, ignore_cache);
-पूर्ण
+	return null_lookup_page(nullb, sector, true, ignore_cache);
+}
 
-अटल पूर्णांक null_flush_cache_page(काष्ठा nullb *nullb, काष्ठा nullb_page *c_page)
-अणु
-	पूर्णांक i;
-	अचिन्हित पूर्णांक offset;
+static int null_flush_cache_page(struct nullb *nullb, struct nullb_page *c_page)
+{
+	int i;
+	unsigned int offset;
 	u64 idx;
-	काष्ठा nullb_page *t_page, *ret;
-	व्योम *dst, *src;
+	struct nullb_page *t_page, *ret;
+	void *dst, *src;
 
 	idx = c_page->page->index;
 
 	t_page = null_insert_page(nullb, idx << PAGE_SECTORS_SHIFT, true);
 
-	__clear_bit(शून्यB_PAGE_LOCK, c_page->biपंचांगap);
-	अगर (test_bit(शून्यB_PAGE_FREE, c_page->biपंचांगap)) अणु
-		null_मुक्त_page(c_page);
-		अगर (t_page && null_page_empty(t_page)) अणु
+	__clear_bit(NULLB_PAGE_LOCK, c_page->bitmap);
+	if (test_bit(NULLB_PAGE_FREE, c_page->bitmap)) {
+		null_free_page(c_page);
+		if (t_page && null_page_empty(t_page)) {
 			ret = radix_tree_delete_item(&nullb->dev->data,
 				idx, t_page);
-			null_मुक्त_page(t_page);
-		पूर्ण
-		वापस 0;
-	पूर्ण
+			null_free_page(t_page);
+		}
+		return 0;
+	}
 
-	अगर (!t_page)
-		वापस -ENOMEM;
+	if (!t_page)
+		return -ENOMEM;
 
 	src = kmap_atomic(c_page->page);
 	dst = kmap_atomic(t_page->page);
 
-	क्रम (i = 0; i < PAGE_SECTORS;
-			i += (nullb->dev->blocksize >> SECTOR_SHIFT)) अणु
-		अगर (test_bit(i, c_page->biपंचांगap)) अणु
+	for (i = 0; i < PAGE_SECTORS;
+			i += (nullb->dev->blocksize >> SECTOR_SHIFT)) {
+		if (test_bit(i, c_page->bitmap)) {
 			offset = (i << SECTOR_SHIFT);
-			स_नकल(dst + offset, src + offset,
+			memcpy(dst + offset, src + offset,
 				nullb->dev->blocksize);
-			__set_bit(i, t_page->biपंचांगap);
-		पूर्ण
-	पूर्ण
+			__set_bit(i, t_page->bitmap);
+		}
+	}
 
 	kunmap_atomic(dst);
 	kunmap_atomic(src);
 
 	ret = radix_tree_delete_item(&nullb->dev->cache, idx, c_page);
-	null_मुक्त_page(ret);
+	null_free_page(ret);
 	nullb->dev->curr_cache -= PAGE_SIZE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक null_make_cache_space(काष्ठा nullb *nullb, अचिन्हित दीर्घ n)
-अणु
-	पूर्णांक i, err, nr_pages;
-	काष्ठा nullb_page *c_pages[FREE_BATCH];
-	अचिन्हित दीर्घ flushed = 0, one_round;
+static int null_make_cache_space(struct nullb *nullb, unsigned long n)
+{
+	int i, err, nr_pages;
+	struct nullb_page *c_pages[FREE_BATCH];
+	unsigned long flushed = 0, one_round;
 
 again:
-	अगर ((nullb->dev->cache_size * 1024 * 1024) >
+	if ((nullb->dev->cache_size * 1024 * 1024) >
 	     nullb->dev->curr_cache + n || nullb->dev->curr_cache == 0)
-		वापस 0;
+		return 0;
 
 	nr_pages = radix_tree_gang_lookup(&nullb->dev->cache,
-			(व्योम **)c_pages, nullb->cache_flush_pos, FREE_BATCH);
+			(void **)c_pages, nullb->cache_flush_pos, FREE_BATCH);
 	/*
-	 * nullb_flush_cache_page could unlock beक्रमe using the c_pages. To
-	 * aव्योम race, we करोn't allow page मुक्त
+	 * nullb_flush_cache_page could unlock before using the c_pages. To
+	 * avoid race, we don't allow page free
 	 */
-	क्रम (i = 0; i < nr_pages; i++) अणु
+	for (i = 0; i < nr_pages; i++) {
 		nullb->cache_flush_pos = c_pages[i]->page->index;
 		/*
 		 * We found the page which is being flushed to disk by other
-		 * thपढ़ोs
+		 * threads
 		 */
-		अगर (test_bit(शून्यB_PAGE_LOCK, c_pages[i]->biपंचांगap))
-			c_pages[i] = शून्य;
-		अन्यथा
-			__set_bit(शून्यB_PAGE_LOCK, c_pages[i]->biपंचांगap);
-	पूर्ण
+		if (test_bit(NULLB_PAGE_LOCK, c_pages[i]->bitmap))
+			c_pages[i] = NULL;
+		else
+			__set_bit(NULLB_PAGE_LOCK, c_pages[i]->bitmap);
+	}
 
 	one_round = 0;
-	क्रम (i = 0; i < nr_pages; i++) अणु
-		अगर (c_pages[i] == शून्य)
-			जारी;
+	for (i = 0; i < nr_pages; i++) {
+		if (c_pages[i] == NULL)
+			continue;
 		err = null_flush_cache_page(nullb, c_pages[i]);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 		one_round++;
-	पूर्ण
+	}
 	flushed += one_round << PAGE_SHIFT;
 
-	अगर (n > flushed) अणु
-		अगर (nr_pages == 0)
+	if (n > flushed) {
+		if (nr_pages == 0)
 			nullb->cache_flush_pos = 0;
-		अगर (one_round == 0) अणु
-			/* give other thपढ़ोs a chance */
+		if (one_round == 0) {
+			/* give other threads a chance */
 			spin_unlock_irq(&nullb->lock);
 			spin_lock_irq(&nullb->lock);
-		पूर्ण
-		जाओ again;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+		goto again;
+	}
+	return 0;
+}
 
-अटल पूर्णांक copy_to_nullb(काष्ठा nullb *nullb, काष्ठा page *source,
-	अचिन्हित पूर्णांक off, sector_t sector, माप_प्रकार n, bool is_fua)
-अणु
-	माप_प्रकार temp, count = 0;
-	अचिन्हित पूर्णांक offset;
-	काष्ठा nullb_page *t_page;
-	व्योम *dst, *src;
+static int copy_to_nullb(struct nullb *nullb, struct page *source,
+	unsigned int off, sector_t sector, size_t n, bool is_fua)
+{
+	size_t temp, count = 0;
+	unsigned int offset;
+	struct nullb_page *t_page;
+	void *dst, *src;
 
-	जबतक (count < n) अणु
-		temp = min_t(माप_प्रकार, nullb->dev->blocksize, n - count);
+	while (count < n) {
+		temp = min_t(size_t, nullb->dev->blocksize, n - count);
 
-		अगर (null_cache_active(nullb) && !is_fua)
+		if (null_cache_active(nullb) && !is_fua)
 			null_make_cache_space(nullb, PAGE_SIZE);
 
 		offset = (sector & SECTOR_MASK) << SECTOR_SHIFT;
 		t_page = null_insert_page(nullb, sector,
 			!null_cache_active(nullb) || is_fua);
-		अगर (!t_page)
-			वापस -ENOSPC;
+		if (!t_page)
+			return -ENOSPC;
 
 		src = kmap_atomic(source);
 		dst = kmap_atomic(t_page->page);
-		स_नकल(dst + offset, src + off + count, temp);
+		memcpy(dst + offset, src + off + count, temp);
 		kunmap_atomic(dst);
 		kunmap_atomic(src);
 
-		__set_bit(sector & SECTOR_MASK, t_page->biपंचांगap);
+		__set_bit(sector & SECTOR_MASK, t_page->bitmap);
 
-		अगर (is_fua)
-			null_मुक्त_sector(nullb, sector, true);
+		if (is_fua)
+			null_free_sector(nullb, sector, true);
 
 		count += temp;
 		sector += temp >> SECTOR_SHIFT;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक copy_from_nullb(काष्ठा nullb *nullb, काष्ठा page *dest,
-	अचिन्हित पूर्णांक off, sector_t sector, माप_प्रकार n)
-अणु
-	माप_प्रकार temp, count = 0;
-	अचिन्हित पूर्णांक offset;
-	काष्ठा nullb_page *t_page;
-	व्योम *dst, *src;
+static int copy_from_nullb(struct nullb *nullb, struct page *dest,
+	unsigned int off, sector_t sector, size_t n)
+{
+	size_t temp, count = 0;
+	unsigned int offset;
+	struct nullb_page *t_page;
+	void *dst, *src;
 
-	जबतक (count < n) अणु
-		temp = min_t(माप_प्रकार, nullb->dev->blocksize, n - count);
+	while (count < n) {
+		temp = min_t(size_t, nullb->dev->blocksize, n - count);
 
 		offset = (sector & SECTOR_MASK) << SECTOR_SHIFT;
 		t_page = null_lookup_page(nullb, sector, false,
 			!null_cache_active(nullb));
 
 		dst = kmap_atomic(dest);
-		अगर (!t_page) अणु
-			स_रखो(dst + off + count, 0, temp);
-			जाओ next;
-		पूर्ण
+		if (!t_page) {
+			memset(dst + off + count, 0, temp);
+			goto next;
+		}
 		src = kmap_atomic(t_page->page);
-		स_नकल(dst + off + count, src + offset, temp);
+		memcpy(dst + off + count, src + offset, temp);
 		kunmap_atomic(src);
 next:
 		kunmap_atomic(dst);
 
 		count += temp;
 		sector += temp >> SECTOR_SHIFT;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल व्योम nullb_fill_pattern(काष्ठा nullb *nullb, काष्ठा page *page,
-			       अचिन्हित पूर्णांक len, अचिन्हित पूर्णांक off)
-अणु
-	व्योम *dst;
+static void nullb_fill_pattern(struct nullb *nullb, struct page *page,
+			       unsigned int len, unsigned int off)
+{
+	void *dst;
 
 	dst = kmap_atomic(page);
-	स_रखो(dst + off, 0xFF, len);
+	memset(dst + off, 0xFF, len);
 	kunmap_atomic(dst);
-पूर्ण
+}
 
-blk_status_t null_handle_discard(काष्ठा nullb_device *dev,
+blk_status_t null_handle_discard(struct nullb_device *dev,
 				 sector_t sector, sector_t nr_sectors)
-अणु
-	काष्ठा nullb *nullb = dev->nullb;
-	माप_प्रकार n = nr_sectors << SECTOR_SHIFT;
-	माप_प्रकार temp;
+{
+	struct nullb *nullb = dev->nullb;
+	size_t n = nr_sectors << SECTOR_SHIFT;
+	size_t temp;
 
 	spin_lock_irq(&nullb->lock);
-	जबतक (n > 0) अणु
-		temp = min_t(माप_प्रकार, n, dev->blocksize);
-		null_मुक्त_sector(nullb, sector, false);
-		अगर (null_cache_active(nullb))
-			null_मुक्त_sector(nullb, sector, true);
+	while (n > 0) {
+		temp = min_t(size_t, n, dev->blocksize);
+		null_free_sector(nullb, sector, false);
+		if (null_cache_active(nullb))
+			null_free_sector(nullb, sector, true);
 		sector += temp >> SECTOR_SHIFT;
 		n -= temp;
-	पूर्ण
+	}
 	spin_unlock_irq(&nullb->lock);
 
-	वापस BLK_STS_OK;
-पूर्ण
+	return BLK_STS_OK;
+}
 
-अटल पूर्णांक null_handle_flush(काष्ठा nullb *nullb)
-अणु
-	पूर्णांक err;
+static int null_handle_flush(struct nullb *nullb)
+{
+	int err;
 
-	अगर (!null_cache_active(nullb))
-		वापस 0;
+	if (!null_cache_active(nullb))
+		return 0;
 
 	spin_lock_irq(&nullb->lock);
-	जबतक (true) अणु
+	while (true) {
 		err = null_make_cache_space(nullb,
 			nullb->dev->cache_size * 1024 * 1024);
-		अगर (err || nullb->dev->curr_cache == 0)
-			अवरोध;
-	पूर्ण
+		if (err || nullb->dev->curr_cache == 0)
+			break;
+	}
 
 	WARN_ON(!radix_tree_empty(&nullb->dev->cache));
 	spin_unlock_irq(&nullb->lock);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक null_transfer(काष्ठा nullb *nullb, काष्ठा page *page,
-	अचिन्हित पूर्णांक len, अचिन्हित पूर्णांक off, bool is_ग_लिखो, sector_t sector,
+static int null_transfer(struct nullb *nullb, struct page *page,
+	unsigned int len, unsigned int off, bool is_write, sector_t sector,
 	bool is_fua)
-अणु
-	काष्ठा nullb_device *dev = nullb->dev;
-	अचिन्हित पूर्णांक valid_len = len;
-	पूर्णांक err = 0;
+{
+	struct nullb_device *dev = nullb->dev;
+	unsigned int valid_len = len;
+	int err = 0;
 
-	अगर (!is_ग_लिखो) अणु
-		अगर (dev->zoned)
-			valid_len = null_zone_valid_पढ़ो_len(nullb,
+	if (!is_write) {
+		if (dev->zoned)
+			valid_len = null_zone_valid_read_len(nullb,
 				sector, len);
 
-		अगर (valid_len) अणु
+		if (valid_len) {
 			err = copy_from_nullb(nullb, page, off,
 				sector, valid_len);
 			off += valid_len;
 			len -= valid_len;
-		पूर्ण
+		}
 
-		अगर (len)
+		if (len)
 			nullb_fill_pattern(nullb, page, len, off);
 		flush_dcache_page(page);
-	पूर्ण अन्यथा अणु
+	} else {
 		flush_dcache_page(page);
 		err = copy_to_nullb(nullb, page, off, sector, len, is_fua);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक null_handle_rq(काष्ठा nullb_cmd *cmd)
-अणु
-	काष्ठा request *rq = cmd->rq;
-	काष्ठा nullb *nullb = cmd->nq->dev->nullb;
-	पूर्णांक err;
-	अचिन्हित पूर्णांक len;
+static int null_handle_rq(struct nullb_cmd *cmd)
+{
+	struct request *rq = cmd->rq;
+	struct nullb *nullb = cmd->nq->dev->nullb;
+	int err;
+	unsigned int len;
 	sector_t sector = blk_rq_pos(rq);
-	काष्ठा req_iterator iter;
-	काष्ठा bio_vec bvec;
+	struct req_iterator iter;
+	struct bio_vec bvec;
 
 	spin_lock_irq(&nullb->lock);
-	rq_क्रम_each_segment(bvec, rq, iter) अणु
+	rq_for_each_segment(bvec, rq, iter) {
 		len = bvec.bv_len;
 		err = null_transfer(nullb, bvec.bv_page, len, bvec.bv_offset,
-				     op_is_ग_लिखो(req_op(rq)), sector,
+				     op_is_write(req_op(rq)), sector,
 				     rq->cmd_flags & REQ_FUA);
-		अगर (err) अणु
+		if (err) {
 			spin_unlock_irq(&nullb->lock);
-			वापस err;
-		पूर्ण
+			return err;
+		}
 		sector += len >> SECTOR_SHIFT;
-	पूर्ण
+	}
 	spin_unlock_irq(&nullb->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक null_handle_bio(काष्ठा nullb_cmd *cmd)
-अणु
-	काष्ठा bio *bio = cmd->bio;
-	काष्ठा nullb *nullb = cmd->nq->dev->nullb;
-	पूर्णांक err;
-	अचिन्हित पूर्णांक len;
+static int null_handle_bio(struct nullb_cmd *cmd)
+{
+	struct bio *bio = cmd->bio;
+	struct nullb *nullb = cmd->nq->dev->nullb;
+	int err;
+	unsigned int len;
 	sector_t sector = bio->bi_iter.bi_sector;
-	काष्ठा bio_vec bvec;
-	काष्ठा bvec_iter iter;
+	struct bio_vec bvec;
+	struct bvec_iter iter;
 
 	spin_lock_irq(&nullb->lock);
-	bio_क्रम_each_segment(bvec, bio, iter) अणु
+	bio_for_each_segment(bvec, bio, iter) {
 		len = bvec.bv_len;
 		err = null_transfer(nullb, bvec.bv_page, len, bvec.bv_offset,
-				     op_is_ग_लिखो(bio_op(bio)), sector,
+				     op_is_write(bio_op(bio)), sector,
 				     bio->bi_opf & REQ_FUA);
-		अगर (err) अणु
+		if (err) {
 			spin_unlock_irq(&nullb->lock);
-			वापस err;
-		पूर्ण
+			return err;
+		}
 		sector += len >> SECTOR_SHIFT;
-	पूर्ण
+	}
 	spin_unlock_irq(&nullb->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम null_stop_queue(काष्ठा nullb *nullb)
-अणु
-	काष्ठा request_queue *q = nullb->q;
+static void null_stop_queue(struct nullb *nullb)
+{
+	struct request_queue *q = nullb->q;
 
-	अगर (nullb->dev->queue_mode == शून्य_Q_MQ)
+	if (nullb->dev->queue_mode == NULL_Q_MQ)
 		blk_mq_stop_hw_queues(q);
-पूर्ण
+}
 
-अटल व्योम null_restart_queue_async(काष्ठा nullb *nullb)
-अणु
-	काष्ठा request_queue *q = nullb->q;
+static void null_restart_queue_async(struct nullb *nullb)
+{
+	struct request_queue *q = nullb->q;
 
-	अगर (nullb->dev->queue_mode == शून्य_Q_MQ)
+	if (nullb->dev->queue_mode == NULL_Q_MQ)
 		blk_mq_start_stopped_hw_queues(q, true);
-पूर्ण
+}
 
-अटल अंतरभूत blk_status_t null_handle_throttled(काष्ठा nullb_cmd *cmd)
-अणु
-	काष्ठा nullb_device *dev = cmd->nq->dev;
-	काष्ठा nullb *nullb = dev->nullb;
+static inline blk_status_t null_handle_throttled(struct nullb_cmd *cmd)
+{
+	struct nullb_device *dev = cmd->nq->dev;
+	struct nullb *nullb = dev->nullb;
 	blk_status_t sts = BLK_STS_OK;
-	काष्ठा request *rq = cmd->rq;
+	struct request *rq = cmd->rq;
 
-	अगर (!hrसमयr_active(&nullb->bw_समयr))
-		hrसमयr_restart(&nullb->bw_समयr);
+	if (!hrtimer_active(&nullb->bw_timer))
+		hrtimer_restart(&nullb->bw_timer);
 
-	अगर (atomic_दीर्घ_sub_वापस(blk_rq_bytes(rq), &nullb->cur_bytes) < 0) अणु
+	if (atomic_long_sub_return(blk_rq_bytes(rq), &nullb->cur_bytes) < 0) {
 		null_stop_queue(nullb);
-		/* race with समयr */
-		अगर (atomic_दीर्घ_पढ़ो(&nullb->cur_bytes) > 0)
+		/* race with timer */
+		if (atomic_long_read(&nullb->cur_bytes) > 0)
 			null_restart_queue_async(nullb);
 		/* requeue request */
 		sts = BLK_STS_DEV_RESOURCE;
-	पूर्ण
-	वापस sts;
-पूर्ण
+	}
+	return sts;
+}
 
-अटल अंतरभूत blk_status_t null_handle_badblocks(काष्ठा nullb_cmd *cmd,
+static inline blk_status_t null_handle_badblocks(struct nullb_cmd *cmd,
 						 sector_t sector,
 						 sector_t nr_sectors)
-अणु
-	काष्ठा badblocks *bb = &cmd->nq->dev->badblocks;
+{
+	struct badblocks *bb = &cmd->nq->dev->badblocks;
 	sector_t first_bad;
-	पूर्णांक bad_sectors;
+	int bad_sectors;
 
-	अगर (badblocks_check(bb, sector, nr_sectors, &first_bad, &bad_sectors))
-		वापस BLK_STS_IOERR;
+	if (badblocks_check(bb, sector, nr_sectors, &first_bad, &bad_sectors))
+		return BLK_STS_IOERR;
 
-	वापस BLK_STS_OK;
-पूर्ण
+	return BLK_STS_OK;
+}
 
-अटल अंतरभूत blk_status_t null_handle_memory_backed(काष्ठा nullb_cmd *cmd,
-						     क्रमागत req_opf op,
+static inline blk_status_t null_handle_memory_backed(struct nullb_cmd *cmd,
+						     enum req_opf op,
 						     sector_t sector,
 						     sector_t nr_sectors)
-अणु
-	काष्ठा nullb_device *dev = cmd->nq->dev;
-	पूर्णांक err;
+{
+	struct nullb_device *dev = cmd->nq->dev;
+	int err;
 
-	अगर (op == REQ_OP_DISCARD)
-		वापस null_handle_discard(dev, sector, nr_sectors);
+	if (op == REQ_OP_DISCARD)
+		return null_handle_discard(dev, sector, nr_sectors);
 
-	अगर (dev->queue_mode == शून्य_Q_BIO)
+	if (dev->queue_mode == NULL_Q_BIO)
 		err = null_handle_bio(cmd);
-	अन्यथा
+	else
 		err = null_handle_rq(cmd);
 
-	वापस त्रुटि_सं_to_blk_status(err);
-पूर्ण
+	return errno_to_blk_status(err);
+}
 
-अटल व्योम nullb_zero_पढ़ो_cmd_buffer(काष्ठा nullb_cmd *cmd)
-अणु
-	काष्ठा nullb_device *dev = cmd->nq->dev;
-	काष्ठा bio *bio;
+static void nullb_zero_read_cmd_buffer(struct nullb_cmd *cmd)
+{
+	struct nullb_device *dev = cmd->nq->dev;
+	struct bio *bio;
 
-	अगर (dev->memory_backed)
-		वापस;
+	if (dev->memory_backed)
+		return;
 
-	अगर (dev->queue_mode == शून्य_Q_BIO && bio_op(cmd->bio) == REQ_OP_READ) अणु
+	if (dev->queue_mode == NULL_Q_BIO && bio_op(cmd->bio) == REQ_OP_READ) {
 		zero_fill_bio(cmd->bio);
-	पूर्ण अन्यथा अगर (req_op(cmd->rq) == REQ_OP_READ) अणु
-		__rq_क्रम_each_bio(bio, cmd->rq)
+	} else if (req_op(cmd->rq) == REQ_OP_READ) {
+		__rq_for_each_bio(bio, cmd->rq)
 			zero_fill_bio(bio);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम nullb_complete_cmd(काष्ठा nullb_cmd *cmd)
-अणु
+static inline void nullb_complete_cmd(struct nullb_cmd *cmd)
+{
 	/*
 	 * Since root privileges are required to configure the null_blk
-	 * driver, it is fine that this driver करोes not initialize the
-	 * data buffers of पढ़ो commands. Zero-initialize these buffers
-	 * anyway अगर KMSAN is enabled to prevent that KMSAN complains
-	 * about null_blk not initializing पढ़ो data buffers.
+	 * driver, it is fine that this driver does not initialize the
+	 * data buffers of read commands. Zero-initialize these buffers
+	 * anyway if KMSAN is enabled to prevent that KMSAN complains
+	 * about null_blk not initializing read data buffers.
 	 */
-	अगर (IS_ENABLED(CONFIG_KMSAN))
-		nullb_zero_पढ़ो_cmd_buffer(cmd);
+	if (IS_ENABLED(CONFIG_KMSAN))
+		nullb_zero_read_cmd_buffer(cmd);
 
-	/* Complete IO by अंतरभूत, softirq or समयr */
-	चयन (cmd->nq->dev->irqmode) अणु
-	हाल शून्य_IRQ_SOFTIRQ:
-		चयन (cmd->nq->dev->queue_mode) अणु
-		हाल शून्य_Q_MQ:
-			अगर (likely(!blk_should_fake_समयout(cmd->rq->q)))
+	/* Complete IO by inline, softirq or timer */
+	switch (cmd->nq->dev->irqmode) {
+	case NULL_IRQ_SOFTIRQ:
+		switch (cmd->nq->dev->queue_mode) {
+		case NULL_Q_MQ:
+			if (likely(!blk_should_fake_timeout(cmd->rq->q)))
 				blk_mq_complete_request(cmd->rq);
-			अवरोध;
-		हाल शून्य_Q_BIO:
+			break;
+		case NULL_Q_BIO:
 			/*
-			 * XXX: no proper submitting cpu inक्रमmation available.
+			 * XXX: no proper submitting cpu information available.
 			 */
 			end_cmd(cmd);
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल शून्य_IRQ_NONE:
+			break;
+		}
+		break;
+	case NULL_IRQ_NONE:
 		end_cmd(cmd);
-		अवरोध;
-	हाल शून्य_IRQ_TIMER:
-		null_cmd_end_समयr(cmd);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	case NULL_IRQ_TIMER:
+		null_cmd_end_timer(cmd);
+		break;
+	}
+}
 
-blk_status_t null_process_cmd(काष्ठा nullb_cmd *cmd,
-			      क्रमागत req_opf op, sector_t sector,
-			      अचिन्हित पूर्णांक nr_sectors)
-अणु
-	काष्ठा nullb_device *dev = cmd->nq->dev;
+blk_status_t null_process_cmd(struct nullb_cmd *cmd,
+			      enum req_opf op, sector_t sector,
+			      unsigned int nr_sectors)
+{
+	struct nullb_device *dev = cmd->nq->dev;
 	blk_status_t ret;
 
-	अगर (dev->badblocks.shअगरt != -1) अणु
+	if (dev->badblocks.shift != -1) {
 		ret = null_handle_badblocks(cmd, sector, nr_sectors);
-		अगर (ret != BLK_STS_OK)
-			वापस ret;
-	पूर्ण
+		if (ret != BLK_STS_OK)
+			return ret;
+	}
 
-	अगर (dev->memory_backed)
-		वापस null_handle_memory_backed(cmd, op, sector, nr_sectors);
+	if (dev->memory_backed)
+		return null_handle_memory_backed(cmd, op, sector, nr_sectors);
 
-	वापस BLK_STS_OK;
-पूर्ण
+	return BLK_STS_OK;
+}
 
-अटल blk_status_t null_handle_cmd(काष्ठा nullb_cmd *cmd, sector_t sector,
-				    sector_t nr_sectors, क्रमागत req_opf op)
-अणु
-	काष्ठा nullb_device *dev = cmd->nq->dev;
-	काष्ठा nullb *nullb = dev->nullb;
+static blk_status_t null_handle_cmd(struct nullb_cmd *cmd, sector_t sector,
+				    sector_t nr_sectors, enum req_opf op)
+{
+	struct nullb_device *dev = cmd->nq->dev;
+	struct nullb *nullb = dev->nullb;
 	blk_status_t sts;
 
-	अगर (test_bit(शून्यB_DEV_FL_THROTTLED, &dev->flags)) अणु
+	if (test_bit(NULLB_DEV_FL_THROTTLED, &dev->flags)) {
 		sts = null_handle_throttled(cmd);
-		अगर (sts != BLK_STS_OK)
-			वापस sts;
-	पूर्ण
+		if (sts != BLK_STS_OK)
+			return sts;
+	}
 
-	अगर (op == REQ_OP_FLUSH) अणु
-		cmd->error = त्रुटि_सं_to_blk_status(null_handle_flush(nullb));
-		जाओ out;
-	पूर्ण
+	if (op == REQ_OP_FLUSH) {
+		cmd->error = errno_to_blk_status(null_handle_flush(nullb));
+		goto out;
+	}
 
-	अगर (dev->zoned)
+	if (dev->zoned)
 		sts = null_process_zoned_cmd(cmd, op, sector, nr_sectors);
-	अन्यथा
+	else
 		sts = null_process_cmd(cmd, op, sector, nr_sectors);
 
-	/* Do not overग_लिखो errors (e.g. समयout errors) */
-	अगर (cmd->error == BLK_STS_OK)
+	/* Do not overwrite errors (e.g. timeout errors) */
+	if (cmd->error == BLK_STS_OK)
 		cmd->error = sts;
 
 out:
 	nullb_complete_cmd(cmd);
-	वापस BLK_STS_OK;
-पूर्ण
+	return BLK_STS_OK;
+}
 
-अटल क्रमागत hrसमयr_restart nullb_bwसमयr_fn(काष्ठा hrसमयr *समयr)
-अणु
-	काष्ठा nullb *nullb = container_of(समयr, काष्ठा nullb, bw_समयr);
-	kसमय_प्रकार समयr_पूर्णांकerval = kसमय_set(0, TIMER_INTERVAL);
-	अचिन्हित पूर्णांक mbps = nullb->dev->mbps;
+static enum hrtimer_restart nullb_bwtimer_fn(struct hrtimer *timer)
+{
+	struct nullb *nullb = container_of(timer, struct nullb, bw_timer);
+	ktime_t timer_interval = ktime_set(0, TIMER_INTERVAL);
+	unsigned int mbps = nullb->dev->mbps;
 
-	अगर (atomic_दीर्घ_पढ़ो(&nullb->cur_bytes) == mb_per_tick(mbps))
-		वापस HRTIMER_NORESTART;
+	if (atomic_long_read(&nullb->cur_bytes) == mb_per_tick(mbps))
+		return HRTIMER_NORESTART;
 
-	atomic_दीर्घ_set(&nullb->cur_bytes, mb_per_tick(mbps));
+	atomic_long_set(&nullb->cur_bytes, mb_per_tick(mbps));
 	null_restart_queue_async(nullb);
 
-	hrसमयr_क्रमward_now(&nullb->bw_समयr, समयr_पूर्णांकerval);
+	hrtimer_forward_now(&nullb->bw_timer, timer_interval);
 
-	वापस HRTIMER_RESTART;
-पूर्ण
+	return HRTIMER_RESTART;
+}
 
-अटल व्योम nullb_setup_bwसमयr(काष्ठा nullb *nullb)
-अणु
-	kसमय_प्रकार समयr_पूर्णांकerval = kसमय_set(0, TIMER_INTERVAL);
+static void nullb_setup_bwtimer(struct nullb *nullb)
+{
+	ktime_t timer_interval = ktime_set(0, TIMER_INTERVAL);
 
-	hrसमयr_init(&nullb->bw_समयr, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-	nullb->bw_समयr.function = nullb_bwसमयr_fn;
-	atomic_दीर्घ_set(&nullb->cur_bytes, mb_per_tick(nullb->dev->mbps));
-	hrसमयr_start(&nullb->bw_समयr, समयr_पूर्णांकerval, HRTIMER_MODE_REL);
-पूर्ण
+	hrtimer_init(&nullb->bw_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+	nullb->bw_timer.function = nullb_bwtimer_fn;
+	atomic_long_set(&nullb->cur_bytes, mb_per_tick(nullb->dev->mbps));
+	hrtimer_start(&nullb->bw_timer, timer_interval, HRTIMER_MODE_REL);
+}
 
-अटल काष्ठा nullb_queue *nullb_to_queue(काष्ठा nullb *nullb)
-अणु
-	पूर्णांक index = 0;
+static struct nullb_queue *nullb_to_queue(struct nullb *nullb)
+{
+	int index = 0;
 
-	अगर (nullb->nr_queues != 1)
+	if (nullb->nr_queues != 1)
 		index = raw_smp_processor_id() / ((nr_cpu_ids + nullb->nr_queues - 1) / nullb->nr_queues);
 
-	वापस &nullb->queues[index];
-पूर्ण
+	return &nullb->queues[index];
+}
 
-अटल blk_qc_t null_submit_bio(काष्ठा bio *bio)
-अणु
+static blk_qc_t null_submit_bio(struct bio *bio)
+{
 	sector_t sector = bio->bi_iter.bi_sector;
 	sector_t nr_sectors = bio_sectors(bio);
-	काष्ठा nullb *nullb = bio->bi_bdev->bd_disk->निजी_data;
-	काष्ठा nullb_queue *nq = nullb_to_queue(nullb);
-	काष्ठा nullb_cmd *cmd;
+	struct nullb *nullb = bio->bi_bdev->bd_disk->private_data;
+	struct nullb_queue *nq = nullb_to_queue(nullb);
+	struct nullb_cmd *cmd;
 
 	cmd = alloc_cmd(nq, 1);
 	cmd->bio = bio;
 
 	null_handle_cmd(cmd, sector, nr_sectors, bio_op(bio));
-	वापस BLK_QC_T_NONE;
-पूर्ण
+	return BLK_QC_T_NONE;
+}
 
-अटल bool should_समयout_request(काष्ठा request *rq)
-अणु
-#अगर_घोषित CONFIG_BLK_DEV_शून्य_BLK_FAULT_INJECTION
-	अगर (g_समयout_str[0])
-		वापस should_fail(&null_समयout_attr, 1);
-#पूर्ण_अगर
-	वापस false;
-पूर्ण
+static bool should_timeout_request(struct request *rq)
+{
+#ifdef CONFIG_BLK_DEV_NULL_BLK_FAULT_INJECTION
+	if (g_timeout_str[0])
+		return should_fail(&null_timeout_attr, 1);
+#endif
+	return false;
+}
 
-अटल bool should_requeue_request(काष्ठा request *rq)
-अणु
-#अगर_घोषित CONFIG_BLK_DEV_शून्य_BLK_FAULT_INJECTION
-	अगर (g_requeue_str[0])
-		वापस should_fail(&null_requeue_attr, 1);
-#पूर्ण_अगर
-	वापस false;
-पूर्ण
+static bool should_requeue_request(struct request *rq)
+{
+#ifdef CONFIG_BLK_DEV_NULL_BLK_FAULT_INJECTION
+	if (g_requeue_str[0])
+		return should_fail(&null_requeue_attr, 1);
+#endif
+	return false;
+}
 
-अटल क्रमागत blk_eh_समयr_वापस null_समयout_rq(काष्ठा request *rq, bool res)
-अणु
-	काष्ठा nullb_cmd *cmd = blk_mq_rq_to_pdu(rq);
+static enum blk_eh_timer_return null_timeout_rq(struct request *rq, bool res)
+{
+	struct nullb_cmd *cmd = blk_mq_rq_to_pdu(rq);
 
 	pr_info("rq %p timed out\n", rq);
 
 	/*
 	 * If the device is marked as blocking (i.e. memory backed or zoned
-	 * device), the submission path may be blocked रुकोing क्रम resources
-	 * and cause real समयouts. For these real समयouts, the submission
+	 * device), the submission path may be blocked waiting for resources
+	 * and cause real timeouts. For these real timeouts, the submission
 	 * path will complete the request using blk_mq_complete_request().
-	 * Only fake समयouts need to execute blk_mq_complete_request() here.
+	 * Only fake timeouts need to execute blk_mq_complete_request() here.
 	 */
 	cmd->error = BLK_STS_TIMEOUT;
-	अगर (cmd->fake_समयout)
+	if (cmd->fake_timeout)
 		blk_mq_complete_request(rq);
-	वापस BLK_EH_DONE;
-पूर्ण
+	return BLK_EH_DONE;
+}
 
-अटल blk_status_t null_queue_rq(काष्ठा blk_mq_hw_ctx *hctx,
-			 स्थिर काष्ठा blk_mq_queue_data *bd)
-अणु
-	काष्ठा nullb_cmd *cmd = blk_mq_rq_to_pdu(bd->rq);
-	काष्ठा nullb_queue *nq = hctx->driver_data;
+static blk_status_t null_queue_rq(struct blk_mq_hw_ctx *hctx,
+			 const struct blk_mq_queue_data *bd)
+{
+	struct nullb_cmd *cmd = blk_mq_rq_to_pdu(bd->rq);
+	struct nullb_queue *nq = hctx->driver_data;
 	sector_t nr_sectors = blk_rq_sectors(bd->rq);
 	sector_t sector = blk_rq_pos(bd->rq);
 
-	might_sleep_अगर(hctx->flags & BLK_MQ_F_BLOCKING);
+	might_sleep_if(hctx->flags & BLK_MQ_F_BLOCKING);
 
-	अगर (nq->dev->irqmode == शून्य_IRQ_TIMER) अणु
-		hrसमयr_init(&cmd->समयr, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-		cmd->समयr.function = null_cmd_समयr_expired;
-	पूर्ण
+	if (nq->dev->irqmode == NULL_IRQ_TIMER) {
+		hrtimer_init(&cmd->timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+		cmd->timer.function = null_cmd_timer_expired;
+	}
 	cmd->rq = bd->rq;
 	cmd->error = BLK_STS_OK;
 	cmd->nq = nq;
-	cmd->fake_समयout = should_समयout_request(bd->rq);
+	cmd->fake_timeout = should_timeout_request(bd->rq);
 
 	blk_mq_start_request(bd->rq);
 
-	अगर (should_requeue_request(bd->rq)) अणु
+	if (should_requeue_request(bd->rq)) {
 		/*
 		 * Alternate between hitting the core BUSY path, and the
 		 * driver driven requeue path
 		 */
 		nq->requeue_selection++;
-		अगर (nq->requeue_selection & 1)
-			वापस BLK_STS_RESOURCE;
-		अन्यथा अणु
+		if (nq->requeue_selection & 1)
+			return BLK_STS_RESOURCE;
+		else {
 			blk_mq_requeue_request(bd->rq, true);
-			वापस BLK_STS_OK;
-		पूर्ण
-	पूर्ण
-	अगर (cmd->fake_समयout)
-		वापस BLK_STS_OK;
+			return BLK_STS_OK;
+		}
+	}
+	if (cmd->fake_timeout)
+		return BLK_STS_OK;
 
-	वापस null_handle_cmd(cmd, sector, nr_sectors, req_op(bd->rq));
-पूर्ण
+	return null_handle_cmd(cmd, sector, nr_sectors, req_op(bd->rq));
+}
 
-अटल व्योम cleanup_queue(काष्ठा nullb_queue *nq)
-अणु
-	kमुक्त(nq->tag_map);
-	kमुक्त(nq->cmds);
-पूर्ण
+static void cleanup_queue(struct nullb_queue *nq)
+{
+	kfree(nq->tag_map);
+	kfree(nq->cmds);
+}
 
-अटल व्योम cleanup_queues(काष्ठा nullb *nullb)
-अणु
-	पूर्णांक i;
+static void cleanup_queues(struct nullb *nullb)
+{
+	int i;
 
-	क्रम (i = 0; i < nullb->nr_queues; i++)
+	for (i = 0; i < nullb->nr_queues; i++)
 		cleanup_queue(&nullb->queues[i]);
 
-	kमुक्त(nullb->queues);
-पूर्ण
+	kfree(nullb->queues);
+}
 
-अटल व्योम null_निकास_hctx(काष्ठा blk_mq_hw_ctx *hctx, अचिन्हित पूर्णांक hctx_idx)
-अणु
-	काष्ठा nullb_queue *nq = hctx->driver_data;
-	काष्ठा nullb *nullb = nq->dev->nullb;
+static void null_exit_hctx(struct blk_mq_hw_ctx *hctx, unsigned int hctx_idx)
+{
+	struct nullb_queue *nq = hctx->driver_data;
+	struct nullb *nullb = nq->dev->nullb;
 
 	nullb->nr_queues--;
-पूर्ण
+}
 
-अटल व्योम null_init_queue(काष्ठा nullb *nullb, काष्ठा nullb_queue *nq)
-अणु
-	init_रुकोqueue_head(&nq->रुको);
+static void null_init_queue(struct nullb *nullb, struct nullb_queue *nq)
+{
+	init_waitqueue_head(&nq->wait);
 	nq->queue_depth = nullb->queue_depth;
 	nq->dev = nullb->dev;
-पूर्ण
+}
 
-अटल पूर्णांक null_init_hctx(काष्ठा blk_mq_hw_ctx *hctx, व्योम *driver_data,
-			  अचिन्हित पूर्णांक hctx_idx)
-अणु
-	काष्ठा nullb *nullb = hctx->queue->queuedata;
-	काष्ठा nullb_queue *nq;
+static int null_init_hctx(struct blk_mq_hw_ctx *hctx, void *driver_data,
+			  unsigned int hctx_idx)
+{
+	struct nullb *nullb = hctx->queue->queuedata;
+	struct nullb_queue *nq;
 
-#अगर_घोषित CONFIG_BLK_DEV_शून्य_BLK_FAULT_INJECTION
-	अगर (g_init_hctx_str[0] && should_fail(&null_init_hctx_attr, 1))
-		वापस -EFAULT;
-#पूर्ण_अगर
+#ifdef CONFIG_BLK_DEV_NULL_BLK_FAULT_INJECTION
+	if (g_init_hctx_str[0] && should_fail(&null_init_hctx_attr, 1))
+		return -EFAULT;
+#endif
 
 	nq = &nullb->queues[hctx_idx];
 	hctx->driver_data = nq;
 	null_init_queue(nullb, nq);
 	nullb->nr_queues++;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा blk_mq_ops null_mq_ops = अणु
+static const struct blk_mq_ops null_mq_ops = {
 	.queue_rq       = null_queue_rq,
 	.complete	= null_complete_rq,
-	.समयout	= null_समयout_rq,
+	.timeout	= null_timeout_rq,
 	.init_hctx	= null_init_hctx,
-	.निकास_hctx	= null_निकास_hctx,
-पूर्ण;
+	.exit_hctx	= null_exit_hctx,
+};
 
-अटल व्योम null_del_dev(काष्ठा nullb *nullb)
-अणु
-	काष्ठा nullb_device *dev;
+static void null_del_dev(struct nullb *nullb)
+{
+	struct nullb_device *dev;
 
-	अगर (!nullb)
-		वापस;
+	if (!nullb)
+		return;
 
 	dev = nullb->dev;
 
-	ida_simple_हटाओ(&nullb_indexes, nullb->index);
+	ida_simple_remove(&nullb_indexes, nullb->index);
 
 	list_del_init(&nullb->list);
 
 	del_gendisk(nullb->disk);
 
-	अगर (test_bit(शून्यB_DEV_FL_THROTTLED, &nullb->dev->flags)) अणु
-		hrसमयr_cancel(&nullb->bw_समयr);
-		atomic_दीर्घ_set(&nullb->cur_bytes, दीर्घ_उच्च);
+	if (test_bit(NULLB_DEV_FL_THROTTLED, &nullb->dev->flags)) {
+		hrtimer_cancel(&nullb->bw_timer);
+		atomic_long_set(&nullb->cur_bytes, LONG_MAX);
 		null_restart_queue_async(nullb);
-	पूर्ण
+	}
 
 	blk_cleanup_queue(nullb->q);
-	अगर (dev->queue_mode == शून्य_Q_MQ &&
+	if (dev->queue_mode == NULL_Q_MQ &&
 	    nullb->tag_set == &nullb->__tag_set)
-		blk_mq_मुक्त_tag_set(nullb->tag_set);
+		blk_mq_free_tag_set(nullb->tag_set);
 	put_disk(nullb->disk);
 	cleanup_queues(nullb);
-	अगर (null_cache_active(nullb))
-		null_मुक्त_device_storage(nullb->dev, true);
-	kमुक्त(nullb);
-	dev->nullb = शून्य;
-पूर्ण
+	if (null_cache_active(nullb))
+		null_free_device_storage(nullb->dev, true);
+	kfree(nullb);
+	dev->nullb = NULL;
+}
 
-अटल व्योम null_config_discard(काष्ठा nullb *nullb)
-अणु
-	अगर (nullb->dev->discard == false)
-		वापस;
+static void null_config_discard(struct nullb *nullb)
+{
+	if (nullb->dev->discard == false)
+		return;
 
-	अगर (!nullb->dev->memory_backed) अणु
+	if (!nullb->dev->memory_backed) {
 		nullb->dev->discard = false;
 		pr_info("discard option is ignored without memory backing\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (nullb->dev->zoned) अणु
+	if (nullb->dev->zoned) {
 		nullb->dev->discard = false;
 		pr_info("discard option is ignored in zoned mode\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	nullb->q->limits.discard_granularity = nullb->dev->blocksize;
 	nullb->q->limits.discard_alignment = nullb->dev->blocksize;
-	blk_queue_max_discard_sectors(nullb->q, अच_पूर्णांक_उच्च >> 9);
+	blk_queue_max_discard_sectors(nullb->q, UINT_MAX >> 9);
 	blk_queue_flag_set(QUEUE_FLAG_DISCARD, nullb->q);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा block_device_operations null_bio_ops = अणु
+static const struct block_device_operations null_bio_ops = {
 	.owner		= THIS_MODULE,
 	.submit_bio	= null_submit_bio,
 	.report_zones	= null_report_zones,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा block_device_operations null_rq_ops = अणु
+static const struct block_device_operations null_rq_ops = {
 	.owner		= THIS_MODULE,
 	.report_zones	= null_report_zones,
-पूर्ण;
+};
 
-अटल पूर्णांक setup_commands(काष्ठा nullb_queue *nq)
-अणु
-	काष्ठा nullb_cmd *cmd;
-	पूर्णांक i, tag_size;
+static int setup_commands(struct nullb_queue *nq)
+{
+	struct nullb_cmd *cmd;
+	int i, tag_size;
 
-	nq->cmds = kसुस्मृति(nq->queue_depth, माप(*cmd), GFP_KERNEL);
-	अगर (!nq->cmds)
-		वापस -ENOMEM;
+	nq->cmds = kcalloc(nq->queue_depth, sizeof(*cmd), GFP_KERNEL);
+	if (!nq->cmds)
+		return -ENOMEM;
 
 	tag_size = ALIGN(nq->queue_depth, BITS_PER_LONG) / BITS_PER_LONG;
-	nq->tag_map = kसुस्मृति(tag_size, माप(अचिन्हित दीर्घ), GFP_KERNEL);
-	अगर (!nq->tag_map) अणु
-		kमुक्त(nq->cmds);
-		वापस -ENOMEM;
-	पूर्ण
+	nq->tag_map = kcalloc(tag_size, sizeof(unsigned long), GFP_KERNEL);
+	if (!nq->tag_map) {
+		kfree(nq->cmds);
+		return -ENOMEM;
+	}
 
-	क्रम (i = 0; i < nq->queue_depth; i++) अणु
+	for (i = 0; i < nq->queue_depth; i++) {
 		cmd = &nq->cmds[i];
 		cmd->tag = -1U;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक setup_queues(काष्ठा nullb *nullb)
-अणु
-	nullb->queues = kसुस्मृति(nr_cpu_ids, माप(काष्ठा nullb_queue),
+static int setup_queues(struct nullb *nullb)
+{
+	nullb->queues = kcalloc(nr_cpu_ids, sizeof(struct nullb_queue),
 				GFP_KERNEL);
-	अगर (!nullb->queues)
-		वापस -ENOMEM;
+	if (!nullb->queues)
+		return -ENOMEM;
 
 	nullb->queue_depth = nullb->dev->hw_queue_depth;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक init_driver_queues(काष्ठा nullb *nullb)
-अणु
-	काष्ठा nullb_queue *nq;
-	पूर्णांक i, ret = 0;
+static int init_driver_queues(struct nullb *nullb)
+{
+	struct nullb_queue *nq;
+	int i, ret = 0;
 
-	क्रम (i = 0; i < nullb->dev->submit_queues; i++) अणु
+	for (i = 0; i < nullb->dev->submit_queues; i++) {
 		nq = &nullb->queues[i];
 
 		null_init_queue(nullb, nq);
 
 		ret = setup_commands(nq);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 		nullb->nr_queues++;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक null_gendisk_रेजिस्टर(काष्ठा nullb *nullb)
-अणु
+static int null_gendisk_register(struct nullb *nullb)
+{
 	sector_t size = ((sector_t)nullb->dev->size * SZ_1M) >> SECTOR_SHIFT;
-	काष्ठा gendisk *disk;
+	struct gendisk *disk;
 
 	disk = nullb->disk = alloc_disk_node(1, nullb->dev->home_node);
-	अगर (!disk)
-		वापस -ENOMEM;
+	if (!disk)
+		return -ENOMEM;
 	set_capacity(disk, size);
 
 	disk->flags |= GENHD_FL_EXT_DEVT | GENHD_FL_SUPPRESS_PARTITION_INFO;
 	disk->major		= null_major;
 	disk->first_minor	= nullb->index;
-	अगर (queue_is_mq(nullb->q))
+	if (queue_is_mq(nullb->q))
 		disk->fops		= &null_rq_ops;
-	अन्यथा
+	else
 		disk->fops		= &null_bio_ops;
-	disk->निजी_data	= nullb;
+	disk->private_data	= nullb;
 	disk->queue		= nullb->q;
-	म_नकलन(disk->disk_name, nullb->disk_name, DISK_NAME_LEN);
+	strncpy(disk->disk_name, nullb->disk_name, DISK_NAME_LEN);
 
-	अगर (nullb->dev->zoned) अणु
-		पूर्णांक ret = null_रेजिस्टर_zoned_dev(nullb);
+	if (nullb->dev->zoned) {
+		int ret = null_register_zoned_dev(nullb);
 
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	add_disk(disk);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक null_init_tag_set(काष्ठा nullb *nullb, काष्ठा blk_mq_tag_set *set)
-अणु
+static int null_init_tag_set(struct nullb *nullb, struct blk_mq_tag_set *set)
+{
 	set->ops = &null_mq_ops;
 	set->nr_hw_queues = nullb ? nullb->dev->submit_queues :
 						g_submit_queues;
 	set->queue_depth = nullb ? nullb->dev->hw_queue_depth :
 						g_hw_queue_depth;
 	set->numa_node = nullb ? nullb->dev->home_node : g_home_node;
-	set->cmd_size	= माप(काष्ठा nullb_cmd);
+	set->cmd_size	= sizeof(struct nullb_cmd);
 	set->flags = BLK_MQ_F_SHOULD_MERGE;
-	अगर (g_no_sched)
+	if (g_no_sched)
 		set->flags |= BLK_MQ_F_NO_SCHED;
-	अगर (g_shared_tag_biपंचांगap)
+	if (g_shared_tag_bitmap)
 		set->flags |= BLK_MQ_F_TAG_HCTX_SHARED;
-	set->driver_data = शून्य;
+	set->driver_data = NULL;
 
-	अगर ((nullb && nullb->dev->blocking) || g_blocking)
+	if ((nullb && nullb->dev->blocking) || g_blocking)
 		set->flags |= BLK_MQ_F_BLOCKING;
 
-	वापस blk_mq_alloc_tag_set(set);
-पूर्ण
+	return blk_mq_alloc_tag_set(set);
+}
 
-अटल पूर्णांक null_validate_conf(काष्ठा nullb_device *dev)
-अणु
-	dev->blocksize = round_करोwn(dev->blocksize, 512);
-	dev->blocksize = clamp_t(अचिन्हित पूर्णांक, dev->blocksize, 512, 4096);
+static int null_validate_conf(struct nullb_device *dev)
+{
+	dev->blocksize = round_down(dev->blocksize, 512);
+	dev->blocksize = clamp_t(unsigned int, dev->blocksize, 512, 4096);
 
-	अगर (dev->queue_mode == शून्य_Q_MQ && dev->use_per_node_hctx) अणु
-		अगर (dev->submit_queues != nr_online_nodes)
+	if (dev->queue_mode == NULL_Q_MQ && dev->use_per_node_hctx) {
+		if (dev->submit_queues != nr_online_nodes)
 			dev->submit_queues = nr_online_nodes;
-	पूर्ण अन्यथा अगर (dev->submit_queues > nr_cpu_ids)
+	} else if (dev->submit_queues > nr_cpu_ids)
 		dev->submit_queues = nr_cpu_ids;
-	अन्यथा अगर (dev->submit_queues == 0)
+	else if (dev->submit_queues == 0)
 		dev->submit_queues = 1;
 
-	dev->queue_mode = min_t(अचिन्हित पूर्णांक, dev->queue_mode, शून्य_Q_MQ);
-	dev->irqmode = min_t(अचिन्हित पूर्णांक, dev->irqmode, शून्य_IRQ_TIMER);
+	dev->queue_mode = min_t(unsigned int, dev->queue_mode, NULL_Q_MQ);
+	dev->irqmode = min_t(unsigned int, dev->irqmode, NULL_IRQ_TIMER);
 
 	/* Do memory allocation, so set blocking */
-	अगर (dev->memory_backed)
+	if (dev->memory_backed)
 		dev->blocking = true;
-	अन्यथा /* cache is meaningless */
+	else /* cache is meaningless */
 		dev->cache_size = 0;
-	dev->cache_size = min_t(अचिन्हित दीर्घ, अच_दीर्घ_उच्च / 1024 / 1024,
+	dev->cache_size = min_t(unsigned long, ULONG_MAX / 1024 / 1024,
 						dev->cache_size);
-	dev->mbps = min_t(अचिन्हित पूर्णांक, 1024 * 40, dev->mbps);
+	dev->mbps = min_t(unsigned int, 1024 * 40, dev->mbps);
 	/* can not stop a queue */
-	अगर (dev->queue_mode == शून्य_Q_BIO)
+	if (dev->queue_mode == NULL_Q_BIO)
 		dev->mbps = 0;
 
-	अगर (dev->zoned &&
-	    (!dev->zone_size || !is_घातer_of_2(dev->zone_size))) अणु
+	if (dev->zoned &&
+	    (!dev->zone_size || !is_power_of_2(dev->zone_size))) {
 		pr_err("zone_size must be power-of-two\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_BLK_DEV_शून्य_BLK_FAULT_INJECTION
-अटल bool __null_setup_fault(काष्ठा fault_attr *attr, अक्षर *str)
-अणु
-	अगर (!str[0])
-		वापस true;
+#ifdef CONFIG_BLK_DEV_NULL_BLK_FAULT_INJECTION
+static bool __null_setup_fault(struct fault_attr *attr, char *str)
+{
+	if (!str[0])
+		return true;
 
-	अगर (!setup_fault_attr(attr, str))
-		वापस false;
+	if (!setup_fault_attr(attr, str))
+		return false;
 
 	attr->verbose = 0;
-	वापस true;
-पूर्ण
-#पूर्ण_अगर
+	return true;
+}
+#endif
 
-अटल bool null_setup_fault(व्योम)
-अणु
-#अगर_घोषित CONFIG_BLK_DEV_शून्य_BLK_FAULT_INJECTION
-	अगर (!__null_setup_fault(&null_समयout_attr, g_समयout_str))
-		वापस false;
-	अगर (!__null_setup_fault(&null_requeue_attr, g_requeue_str))
-		वापस false;
-	अगर (!__null_setup_fault(&null_init_hctx_attr, g_init_hctx_str))
-		वापस false;
-#पूर्ण_अगर
-	वापस true;
-पूर्ण
+static bool null_setup_fault(void)
+{
+#ifdef CONFIG_BLK_DEV_NULL_BLK_FAULT_INJECTION
+	if (!__null_setup_fault(&null_timeout_attr, g_timeout_str))
+		return false;
+	if (!__null_setup_fault(&null_requeue_attr, g_requeue_str))
+		return false;
+	if (!__null_setup_fault(&null_init_hctx_attr, g_init_hctx_str))
+		return false;
+#endif
+	return true;
+}
 
-अटल पूर्णांक null_add_dev(काष्ठा nullb_device *dev)
-अणु
-	काष्ठा nullb *nullb;
-	पूर्णांक rv;
+static int null_add_dev(struct nullb_device *dev)
+{
+	struct nullb *nullb;
+	int rv;
 
 	rv = null_validate_conf(dev);
-	अगर (rv)
-		वापस rv;
+	if (rv)
+		return rv;
 
-	nullb = kzalloc_node(माप(*nullb), GFP_KERNEL, dev->home_node);
-	अगर (!nullb) अणु
+	nullb = kzalloc_node(sizeof(*nullb), GFP_KERNEL, dev->home_node);
+	if (!nullb) {
 		rv = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	nullb->dev = dev;
 	dev->nullb = nullb;
 
 	spin_lock_init(&nullb->lock);
 
 	rv = setup_queues(nullb);
-	अगर (rv)
-		जाओ out_मुक्त_nullb;
+	if (rv)
+		goto out_free_nullb;
 
-	अगर (dev->queue_mode == शून्य_Q_MQ) अणु
-		अगर (shared_tags) अणु
+	if (dev->queue_mode == NULL_Q_MQ) {
+		if (shared_tags) {
 			nullb->tag_set = &tag_set;
 			rv = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			nullb->tag_set = &nullb->__tag_set;
 			rv = null_init_tag_set(nullb, nullb->tag_set);
-		पूर्ण
+		}
 
-		अगर (rv)
-			जाओ out_cleanup_queues;
+		if (rv)
+			goto out_cleanup_queues;
 
-		अगर (!null_setup_fault())
-			जाओ out_cleanup_queues;
+		if (!null_setup_fault())
+			goto out_cleanup_queues;
 
-		nullb->tag_set->समयout = 5 * HZ;
+		nullb->tag_set->timeout = 5 * HZ;
 		nullb->q = blk_mq_init_queue_data(nullb->tag_set, nullb);
-		अगर (IS_ERR(nullb->q)) अणु
+		if (IS_ERR(nullb->q)) {
 			rv = -ENOMEM;
-			जाओ out_cleanup_tags;
-		पूर्ण
-	पूर्ण अन्यथा अगर (dev->queue_mode == शून्य_Q_BIO) अणु
+			goto out_cleanup_tags;
+		}
+	} else if (dev->queue_mode == NULL_Q_BIO) {
 		nullb->q = blk_alloc_queue(dev->home_node);
-		अगर (!nullb->q) अणु
+		if (!nullb->q) {
 			rv = -ENOMEM;
-			जाओ out_cleanup_queues;
-		पूर्ण
+			goto out_cleanup_queues;
+		}
 		rv = init_driver_queues(nullb);
-		अगर (rv)
-			जाओ out_cleanup_blk_queue;
-	पूर्ण
+		if (rv)
+			goto out_cleanup_blk_queue;
+	}
 
-	अगर (dev->mbps) अणु
-		set_bit(शून्यB_DEV_FL_THROTTLED, &dev->flags);
-		nullb_setup_bwसमयr(nullb);
-	पूर्ण
+	if (dev->mbps) {
+		set_bit(NULLB_DEV_FL_THROTTLED, &dev->flags);
+		nullb_setup_bwtimer(nullb);
+	}
 
-	अगर (dev->cache_size > 0) अणु
-		set_bit(शून्यB_DEV_FL_CACHE, &nullb->dev->flags);
-		blk_queue_ग_लिखो_cache(nullb->q, true, true);
-	पूर्ण
+	if (dev->cache_size > 0) {
+		set_bit(NULLB_DEV_FL_CACHE, &nullb->dev->flags);
+		blk_queue_write_cache(nullb->q, true, true);
+	}
 
-	अगर (dev->zoned) अणु
+	if (dev->zoned) {
 		rv = null_init_zoned_dev(dev, nullb->q);
-		अगर (rv)
-			जाओ out_cleanup_blk_queue;
-	पूर्ण
+		if (rv)
+			goto out_cleanup_blk_queue;
+	}
 
 	nullb->q->queuedata = nullb;
 	blk_queue_flag_set(QUEUE_FLAG_NONROT, nullb->q);
@@ -1898,161 +1897,161 @@ out:
 
 	blk_queue_logical_block_size(nullb->q, dev->blocksize);
 	blk_queue_physical_block_size(nullb->q, dev->blocksize);
-	अगर (!dev->max_sectors)
+	if (!dev->max_sectors)
 		dev->max_sectors = queue_max_hw_sectors(nullb->q);
-	dev->max_sectors = min_t(अचिन्हित पूर्णांक, dev->max_sectors,
+	dev->max_sectors = min_t(unsigned int, dev->max_sectors,
 				 BLK_DEF_MAX_SECTORS);
 	blk_queue_max_hw_sectors(nullb->q, dev->max_sectors);
 
-	अगर (dev->virt_boundary)
+	if (dev->virt_boundary)
 		blk_queue_virt_boundary(nullb->q, PAGE_SIZE - 1);
 
 	null_config_discard(nullb);
 
-	प्र_लिखो(nullb->disk_name, "nullb%d", nullb->index);
+	sprintf(nullb->disk_name, "nullb%d", nullb->index);
 
-	rv = null_gendisk_रेजिस्टर(nullb);
-	अगर (rv)
-		जाओ out_cleanup_zone;
+	rv = null_gendisk_register(nullb);
+	if (rv)
+		goto out_cleanup_zone;
 
 	mutex_lock(&lock);
 	list_add_tail(&nullb->list, &nullb_list);
 	mutex_unlock(&lock);
 
-	वापस 0;
+	return 0;
 out_cleanup_zone:
-	null_मुक्त_zoned_dev(dev);
+	null_free_zoned_dev(dev);
 out_cleanup_blk_queue:
 	blk_cleanup_queue(nullb->q);
 out_cleanup_tags:
-	अगर (dev->queue_mode == शून्य_Q_MQ && nullb->tag_set == &nullb->__tag_set)
-		blk_mq_मुक्त_tag_set(nullb->tag_set);
+	if (dev->queue_mode == NULL_Q_MQ && nullb->tag_set == &nullb->__tag_set)
+		blk_mq_free_tag_set(nullb->tag_set);
 out_cleanup_queues:
 	cleanup_queues(nullb);
-out_मुक्त_nullb:
-	kमुक्त(nullb);
-	dev->nullb = शून्य;
+out_free_nullb:
+	kfree(nullb);
+	dev->nullb = NULL;
 out:
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-अटल पूर्णांक __init null_init(व्योम)
-अणु
-	पूर्णांक ret = 0;
-	अचिन्हित पूर्णांक i;
-	काष्ठा nullb *nullb;
-	काष्ठा nullb_device *dev;
+static int __init null_init(void)
+{
+	int ret = 0;
+	unsigned int i;
+	struct nullb *nullb;
+	struct nullb_device *dev;
 
-	अगर (g_bs > PAGE_SIZE) अणु
+	if (g_bs > PAGE_SIZE) {
 		pr_warn("invalid block size\n");
 		pr_warn("defaults block size to %lu\n", PAGE_SIZE);
 		g_bs = PAGE_SIZE;
-	पूर्ण
+	}
 
-	अगर (g_max_sectors > BLK_DEF_MAX_SECTORS) अणु
+	if (g_max_sectors > BLK_DEF_MAX_SECTORS) {
 		pr_warn("invalid max sectors\n");
 		pr_warn("defaults max sectors to %u\n", BLK_DEF_MAX_SECTORS);
 		g_max_sectors = BLK_DEF_MAX_SECTORS;
-	पूर्ण
+	}
 
-	अगर (g_home_node != NUMA_NO_NODE && g_home_node >= nr_online_nodes) अणु
+	if (g_home_node != NUMA_NO_NODE && g_home_node >= nr_online_nodes) {
 		pr_err("invalid home_node value\n");
 		g_home_node = NUMA_NO_NODE;
-	पूर्ण
+	}
 
-	अगर (g_queue_mode == शून्य_Q_RQ) अणु
+	if (g_queue_mode == NULL_Q_RQ) {
 		pr_err("legacy IO path no longer available\n");
-		वापस -EINVAL;
-	पूर्ण
-	अगर (g_queue_mode == शून्य_Q_MQ && g_use_per_node_hctx) अणु
-		अगर (g_submit_queues != nr_online_nodes) अणु
+		return -EINVAL;
+	}
+	if (g_queue_mode == NULL_Q_MQ && g_use_per_node_hctx) {
+		if (g_submit_queues != nr_online_nodes) {
 			pr_warn("submit_queues param is set to %u.\n",
 							nr_online_nodes);
 			g_submit_queues = nr_online_nodes;
-		पूर्ण
-	पूर्ण अन्यथा अगर (g_submit_queues > nr_cpu_ids)
+		}
+	} else if (g_submit_queues > nr_cpu_ids)
 		g_submit_queues = nr_cpu_ids;
-	अन्यथा अगर (g_submit_queues <= 0)
+	else if (g_submit_queues <= 0)
 		g_submit_queues = 1;
 
-	अगर (g_queue_mode == शून्य_Q_MQ && shared_tags) अणु
-		ret = null_init_tag_set(शून्य, &tag_set);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	if (g_queue_mode == NULL_Q_MQ && shared_tags) {
+		ret = null_init_tag_set(NULL, &tag_set);
+		if (ret)
+			return ret;
+	}
 
 	config_group_init(&nullb_subsys.su_group);
 	mutex_init(&nullb_subsys.su_mutex);
 
-	ret = configfs_रेजिस्टर_subप्रणाली(&nullb_subsys);
-	अगर (ret)
-		जाओ err_tagset;
+	ret = configfs_register_subsystem(&nullb_subsys);
+	if (ret)
+		goto err_tagset;
 
 	mutex_init(&lock);
 
-	null_major = रेजिस्टर_blkdev(0, "nullb");
-	अगर (null_major < 0) अणु
+	null_major = register_blkdev(0, "nullb");
+	if (null_major < 0) {
 		ret = null_major;
-		जाओ err_conf;
-	पूर्ण
+		goto err_conf;
+	}
 
-	क्रम (i = 0; i < nr_devices; i++) अणु
+	for (i = 0; i < nr_devices; i++) {
 		dev = null_alloc_dev();
-		अगर (!dev) अणु
+		if (!dev) {
 			ret = -ENOMEM;
-			जाओ err_dev;
-		पूर्ण
+			goto err_dev;
+		}
 		ret = null_add_dev(dev);
-		अगर (ret) अणु
-			null_मुक्त_dev(dev);
-			जाओ err_dev;
-		पूर्ण
-	पूर्ण
+		if (ret) {
+			null_free_dev(dev);
+			goto err_dev;
+		}
+	}
 
 	pr_info("module loaded\n");
-	वापस 0;
+	return 0;
 
 err_dev:
-	जबतक (!list_empty(&nullb_list)) अणु
-		nullb = list_entry(nullb_list.next, काष्ठा nullb, list);
+	while (!list_empty(&nullb_list)) {
+		nullb = list_entry(nullb_list.next, struct nullb, list);
 		dev = nullb->dev;
 		null_del_dev(nullb);
-		null_मुक्त_dev(dev);
-	पूर्ण
-	unरेजिस्टर_blkdev(null_major, "nullb");
+		null_free_dev(dev);
+	}
+	unregister_blkdev(null_major, "nullb");
 err_conf:
-	configfs_unरेजिस्टर_subप्रणाली(&nullb_subsys);
+	configfs_unregister_subsystem(&nullb_subsys);
 err_tagset:
-	अगर (g_queue_mode == शून्य_Q_MQ && shared_tags)
-		blk_mq_मुक्त_tag_set(&tag_set);
-	वापस ret;
-पूर्ण
+	if (g_queue_mode == NULL_Q_MQ && shared_tags)
+		blk_mq_free_tag_set(&tag_set);
+	return ret;
+}
 
-अटल व्योम __निकास null_निकास(व्योम)
-अणु
-	काष्ठा nullb *nullb;
+static void __exit null_exit(void)
+{
+	struct nullb *nullb;
 
-	configfs_unरेजिस्टर_subप्रणाली(&nullb_subsys);
+	configfs_unregister_subsystem(&nullb_subsys);
 
-	unरेजिस्टर_blkdev(null_major, "nullb");
+	unregister_blkdev(null_major, "nullb");
 
 	mutex_lock(&lock);
-	जबतक (!list_empty(&nullb_list)) अणु
-		काष्ठा nullb_device *dev;
+	while (!list_empty(&nullb_list)) {
+		struct nullb_device *dev;
 
-		nullb = list_entry(nullb_list.next, काष्ठा nullb, list);
+		nullb = list_entry(nullb_list.next, struct nullb, list);
 		dev = nullb->dev;
 		null_del_dev(nullb);
-		null_मुक्त_dev(dev);
-	पूर्ण
+		null_free_dev(dev);
+	}
 	mutex_unlock(&lock);
 
-	अगर (g_queue_mode == शून्य_Q_MQ && shared_tags)
-		blk_mq_मुक्त_tag_set(&tag_set);
-पूर्ण
+	if (g_queue_mode == NULL_Q_MQ && shared_tags)
+		blk_mq_free_tag_set(&tag_set);
+}
 
 module_init(null_init);
-module_निकास(null_निकास);
+module_exit(null_exit);
 
 MODULE_AUTHOR("Jens Axboe <axboe@kernel.dk>");
 MODULE_LICENSE("GPL");

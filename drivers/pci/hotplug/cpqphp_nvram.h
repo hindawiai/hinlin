@@ -1,10 +1,9 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Compaq Hot Plug Controller Driver
  *
  * Copyright (C) 1995,2001 Compaq Computer Corporation
- * Copyright (C) 2001 Greg Kroah-Harपंचांगan (greg@kroah.com)
+ * Copyright (C) 2001 Greg Kroah-Hartman (greg@kroah.com)
  *
  * All rights reserved.
  *
@@ -12,30 +11,30 @@
  *
  */
 
-#अगर_अघोषित _CPQPHP_NVRAM_H
-#घोषणा _CPQPHP_NVRAM_H
+#ifndef _CPQPHP_NVRAM_H
+#define _CPQPHP_NVRAM_H
 
-#अगर_अघोषित CONFIG_HOTPLUG_PCI_COMPAQ_NVRAM
+#ifndef CONFIG_HOTPLUG_PCI_COMPAQ_NVRAM
 
-अटल अंतरभूत व्योम compaq_nvram_init(व्योम __iomem *rom_start) अणु पूर्ण
+static inline void compaq_nvram_init(void __iomem *rom_start) { }
 
-अटल अंतरभूत पूर्णांक compaq_nvram_load(व्योम __iomem *rom_start, काष्ठा controller *ctrl)
-अणु
-	वापस 0;
-पूर्ण
+static inline int compaq_nvram_load(void __iomem *rom_start, struct controller *ctrl)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक compaq_nvram_store(व्योम __iomem *rom_start)
-अणु
-	वापस 0;
-पूर्ण
+static inline int compaq_nvram_store(void __iomem *rom_start)
+{
+	return 0;
+}
 
-#अन्यथा
+#else
 
-व्योम compaq_nvram_init(व्योम __iomem *rom_start);
-पूर्णांक compaq_nvram_load(व्योम __iomem *rom_start, काष्ठा controller *ctrl);
-पूर्णांक compaq_nvram_store(व्योम __iomem *rom_start);
+void compaq_nvram_init(void __iomem *rom_start);
+int compaq_nvram_load(void __iomem *rom_start, struct controller *ctrl);
+int compaq_nvram_store(void __iomem *rom_start);
 
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर
+#endif
 

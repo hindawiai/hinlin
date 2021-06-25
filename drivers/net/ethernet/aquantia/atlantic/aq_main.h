@@ -1,19 +1,18 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * aQuantia Corporation Network Driver
  * Copyright (C) 2014-2017 aQuantia Corporation. All rights reserved
  */
 
-/* File aq_मुख्य.h: Main file क्रम aQuantia Linux driver. */
+/* File aq_main.h: Main file for aQuantia Linux driver. */
 
-#अगर_अघोषित AQ_MAIN_H
-#घोषणा AQ_MAIN_H
+#ifndef AQ_MAIN_H
+#define AQ_MAIN_H
 
-#समावेश "aq_common.h"
-#समावेश "aq_nic.h"
+#include "aq_common.h"
+#include "aq_nic.h"
 
-व्योम aq_ndev_schedule_work(काष्ठा work_काष्ठा *work);
-काष्ठा net_device *aq_ndev_alloc(व्योम);
+void aq_ndev_schedule_work(struct work_struct *work);
+struct net_device *aq_ndev_alloc(void);
 
-#पूर्ण_अगर /* AQ_MAIN_H */
+#endif /* AQ_MAIN_H */

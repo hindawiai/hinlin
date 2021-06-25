@@ -1,256 +1,255 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Generic barrier definitions.
  *
  * It should be possible to use these on really simple architectures,
- * but it serves more as a starting poपूर्णांक क्रम new ports.
+ * but it serves more as a starting point for new ports.
  *
  * Copyright (C) 2007 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
-#अगर_अघोषित __ASM_GENERIC_BARRIER_H
-#घोषणा __ASM_GENERIC_BARRIER_H
+#ifndef __ASM_GENERIC_BARRIER_H
+#define __ASM_GENERIC_BARRIER_H
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-#समावेश <linux/compiler.h>
-#समावेश <यंत्र/rwonce.h>
+#include <linux/compiler.h>
+#include <asm/rwonce.h>
 
-#अगर_अघोषित nop
-#घोषणा nop()	यंत्र अस्थिर ("nop")
-#पूर्ण_अगर
+#ifndef nop
+#define nop()	asm volatile ("nop")
+#endif
 
 /*
  * Force strict CPU ordering. And yes, this is required on UP too when we're
  * talking to devices.
  *
- * Fall back to compiler barriers अगर nothing better is provided.
+ * Fall back to compiler barriers if nothing better is provided.
  */
 
-#अगर_अघोषित mb
-#घोषणा mb()	barrier()
-#पूर्ण_अगर
+#ifndef mb
+#define mb()	barrier()
+#endif
 
-#अगर_अघोषित rmb
-#घोषणा rmb()	mb()
-#पूर्ण_अगर
+#ifndef rmb
+#define rmb()	mb()
+#endif
 
-#अगर_अघोषित wmb
-#घोषणा wmb()	mb()
-#पूर्ण_अगर
+#ifndef wmb
+#define wmb()	mb()
+#endif
 
-#अगर_अघोषित dma_rmb
-#घोषणा dma_rmb()	rmb()
-#पूर्ण_अगर
+#ifndef dma_rmb
+#define dma_rmb()	rmb()
+#endif
 
-#अगर_अघोषित dma_wmb
-#घोषणा dma_wmb()	wmb()
-#पूर्ण_अगर
+#ifndef dma_wmb
+#define dma_wmb()	wmb()
+#endif
 
-#अगर_अघोषित __smp_mb
-#घोषणा __smp_mb()	mb()
-#पूर्ण_अगर
+#ifndef __smp_mb
+#define __smp_mb()	mb()
+#endif
 
-#अगर_अघोषित __smp_rmb
-#घोषणा __smp_rmb()	rmb()
-#पूर्ण_अगर
+#ifndef __smp_rmb
+#define __smp_rmb()	rmb()
+#endif
 
-#अगर_अघोषित __smp_wmb
-#घोषणा __smp_wmb()	wmb()
-#पूर्ण_अगर
+#ifndef __smp_wmb
+#define __smp_wmb()	wmb()
+#endif
 
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 
-#अगर_अघोषित smp_mb
-#घोषणा smp_mb()	__smp_mb()
-#पूर्ण_अगर
+#ifndef smp_mb
+#define smp_mb()	__smp_mb()
+#endif
 
-#अगर_अघोषित smp_rmb
-#घोषणा smp_rmb()	__smp_rmb()
-#पूर्ण_अगर
+#ifndef smp_rmb
+#define smp_rmb()	__smp_rmb()
+#endif
 
-#अगर_अघोषित smp_wmb
-#घोषणा smp_wmb()	__smp_wmb()
-#पूर्ण_अगर
+#ifndef smp_wmb
+#define smp_wmb()	__smp_wmb()
+#endif
 
-#अन्यथा	/* !CONFIG_SMP */
+#else	/* !CONFIG_SMP */
 
-#अगर_अघोषित smp_mb
-#घोषणा smp_mb()	barrier()
-#पूर्ण_अगर
+#ifndef smp_mb
+#define smp_mb()	barrier()
+#endif
 
-#अगर_अघोषित smp_rmb
-#घोषणा smp_rmb()	barrier()
-#पूर्ण_अगर
+#ifndef smp_rmb
+#define smp_rmb()	barrier()
+#endif
 
-#अगर_अघोषित smp_wmb
-#घोषणा smp_wmb()	barrier()
-#पूर्ण_अगर
+#ifndef smp_wmb
+#define smp_wmb()	barrier()
+#endif
 
-#पूर्ण_अगर	/* CONFIG_SMP */
+#endif	/* CONFIG_SMP */
 
-#अगर_अघोषित __smp_store_mb
-#घोषणा __smp_store_mb(var, value)  करो अणु WRITE_ONCE(var, value); __smp_mb(); पूर्ण जबतक (0)
-#पूर्ण_अगर
+#ifndef __smp_store_mb
+#define __smp_store_mb(var, value)  do { WRITE_ONCE(var, value); __smp_mb(); } while (0)
+#endif
 
-#अगर_अघोषित __smp_mb__beक्रमe_atomic
-#घोषणा __smp_mb__beक्रमe_atomic()	__smp_mb()
-#पूर्ण_अगर
+#ifndef __smp_mb__before_atomic
+#define __smp_mb__before_atomic()	__smp_mb()
+#endif
 
-#अगर_अघोषित __smp_mb__after_atomic
-#घोषणा __smp_mb__after_atomic()	__smp_mb()
-#पूर्ण_अगर
+#ifndef __smp_mb__after_atomic
+#define __smp_mb__after_atomic()	__smp_mb()
+#endif
 
-#अगर_अघोषित __smp_store_release
-#घोषणा __smp_store_release(p, v)					\
-करो अणु									\
-	compileसमय_निश्चित_atomic_type(*p);				\
+#ifndef __smp_store_release
+#define __smp_store_release(p, v)					\
+do {									\
+	compiletime_assert_atomic_type(*p);				\
 	__smp_mb();							\
 	WRITE_ONCE(*p, v);						\
-पूर्ण जबतक (0)
-#पूर्ण_अगर
+} while (0)
+#endif
 
-#अगर_अघोषित __smp_load_acquire
-#घोषणा __smp_load_acquire(p)						\
-(अणु									\
+#ifndef __smp_load_acquire
+#define __smp_load_acquire(p)						\
+({									\
 	__unqual_scalar_typeof(*p) ___p1 = READ_ONCE(*p);		\
-	compileसमय_निश्चित_atomic_type(*p);				\
+	compiletime_assert_atomic_type(*p);				\
 	__smp_mb();							\
 	(typeof(*p))___p1;						\
-पूर्ण)
-#पूर्ण_अगर
+})
+#endif
 
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 
-#अगर_अघोषित smp_store_mb
-#घोषणा smp_store_mb(var, value)  __smp_store_mb(var, value)
-#पूर्ण_अगर
+#ifndef smp_store_mb
+#define smp_store_mb(var, value)  __smp_store_mb(var, value)
+#endif
 
-#अगर_अघोषित smp_mb__beक्रमe_atomic
-#घोषणा smp_mb__beक्रमe_atomic()	__smp_mb__beक्रमe_atomic()
-#पूर्ण_अगर
+#ifndef smp_mb__before_atomic
+#define smp_mb__before_atomic()	__smp_mb__before_atomic()
+#endif
 
-#अगर_अघोषित smp_mb__after_atomic
-#घोषणा smp_mb__after_atomic()	__smp_mb__after_atomic()
-#पूर्ण_अगर
+#ifndef smp_mb__after_atomic
+#define smp_mb__after_atomic()	__smp_mb__after_atomic()
+#endif
 
-#अगर_अघोषित smp_store_release
-#घोषणा smp_store_release(p, v) __smp_store_release(p, v)
-#पूर्ण_अगर
+#ifndef smp_store_release
+#define smp_store_release(p, v) __smp_store_release(p, v)
+#endif
 
-#अगर_अघोषित smp_load_acquire
-#घोषणा smp_load_acquire(p) __smp_load_acquire(p)
-#पूर्ण_अगर
+#ifndef smp_load_acquire
+#define smp_load_acquire(p) __smp_load_acquire(p)
+#endif
 
-#अन्यथा	/* !CONFIG_SMP */
+#else	/* !CONFIG_SMP */
 
-#अगर_अघोषित smp_store_mb
-#घोषणा smp_store_mb(var, value)  करो अणु WRITE_ONCE(var, value); barrier(); पूर्ण जबतक (0)
-#पूर्ण_अगर
+#ifndef smp_store_mb
+#define smp_store_mb(var, value)  do { WRITE_ONCE(var, value); barrier(); } while (0)
+#endif
 
-#अगर_अघोषित smp_mb__beक्रमe_atomic
-#घोषणा smp_mb__beक्रमe_atomic()	barrier()
-#पूर्ण_अगर
+#ifndef smp_mb__before_atomic
+#define smp_mb__before_atomic()	barrier()
+#endif
 
-#अगर_अघोषित smp_mb__after_atomic
-#घोषणा smp_mb__after_atomic()	barrier()
-#पूर्ण_अगर
+#ifndef smp_mb__after_atomic
+#define smp_mb__after_atomic()	barrier()
+#endif
 
-#अगर_अघोषित smp_store_release
-#घोषणा smp_store_release(p, v)						\
-करो अणु									\
-	compileसमय_निश्चित_atomic_type(*p);				\
+#ifndef smp_store_release
+#define smp_store_release(p, v)						\
+do {									\
+	compiletime_assert_atomic_type(*p);				\
 	barrier();							\
 	WRITE_ONCE(*p, v);						\
-पूर्ण जबतक (0)
-#पूर्ण_अगर
+} while (0)
+#endif
 
-#अगर_अघोषित smp_load_acquire
-#घोषणा smp_load_acquire(p)						\
-(अणु									\
+#ifndef smp_load_acquire
+#define smp_load_acquire(p)						\
+({									\
 	__unqual_scalar_typeof(*p) ___p1 = READ_ONCE(*p);		\
-	compileसमय_निश्चित_atomic_type(*p);				\
+	compiletime_assert_atomic_type(*p);				\
 	barrier();							\
 	(typeof(*p))___p1;						\
-पूर्ण)
-#पूर्ण_अगर
+})
+#endif
 
-#पूर्ण_अगर	/* CONFIG_SMP */
+#endif	/* CONFIG_SMP */
 
-/* Barriers क्रम भव machine guests when talking to an SMP host */
-#घोषणा virt_mb() __smp_mb()
-#घोषणा virt_rmb() __smp_rmb()
-#घोषणा virt_wmb() __smp_wmb()
-#घोषणा virt_store_mb(var, value) __smp_store_mb(var, value)
-#घोषणा virt_mb__beक्रमe_atomic() __smp_mb__beक्रमe_atomic()
-#घोषणा virt_mb__after_atomic()	__smp_mb__after_atomic()
-#घोषणा virt_store_release(p, v) __smp_store_release(p, v)
-#घोषणा virt_load_acquire(p) __smp_load_acquire(p)
+/* Barriers for virtual machine guests when talking to an SMP host */
+#define virt_mb() __smp_mb()
+#define virt_rmb() __smp_rmb()
+#define virt_wmb() __smp_wmb()
+#define virt_store_mb(var, value) __smp_store_mb(var, value)
+#define virt_mb__before_atomic() __smp_mb__before_atomic()
+#define virt_mb__after_atomic()	__smp_mb__after_atomic()
+#define virt_store_release(p, v) __smp_store_release(p, v)
+#define virt_load_acquire(p) __smp_load_acquire(p)
 
 /**
  * smp_acquire__after_ctrl_dep() - Provide ACQUIRE ordering after a control dependency
  *
  * A control dependency provides a LOAD->STORE order, the additional RMB
- * provides LOAD->LOAD order, together they provide LOAD->अणुLOAD,STOREपूर्ण order,
+ * provides LOAD->LOAD order, together they provide LOAD->{LOAD,STORE} order,
  * aka. (load)-ACQUIRE.
  *
- * Architectures that करो not करो load speculation can have this be barrier().
+ * Architectures that do not do load speculation can have this be barrier().
  */
-#अगर_अघोषित smp_acquire__after_ctrl_dep
-#घोषणा smp_acquire__after_ctrl_dep()		smp_rmb()
-#पूर्ण_अगर
+#ifndef smp_acquire__after_ctrl_dep
+#define smp_acquire__after_ctrl_dep()		smp_rmb()
+#endif
 
 /**
- * smp_cond_load_relaxed() - (Spin) रुको क्रम cond with no ordering guarantees
- * @ptr: poपूर्णांकer to the variable to रुको on
- * @cond: boolean expression to रुको क्रम
+ * smp_cond_load_relaxed() - (Spin) wait for cond with no ordering guarantees
+ * @ptr: pointer to the variable to wait on
+ * @cond: boolean expression to wait for
  *
  * Equivalent to using READ_ONCE() on the condition variable.
  *
- * Due to C lacking lambda expressions we load the value of *ptr पूर्णांकo a
+ * Due to C lacking lambda expressions we load the value of *ptr into a
  * pre-named variable @VAL to be used in @cond.
  */
-#अगर_अघोषित smp_cond_load_relaxed
-#घोषणा smp_cond_load_relaxed(ptr, cond_expr) (अणु		\
+#ifndef smp_cond_load_relaxed
+#define smp_cond_load_relaxed(ptr, cond_expr) ({		\
 	typeof(ptr) __PTR = (ptr);				\
 	__unqual_scalar_typeof(*ptr) VAL;			\
-	क्रम (;;) अणु						\
+	for (;;) {						\
 		VAL = READ_ONCE(*__PTR);			\
-		अगर (cond_expr)					\
-			अवरोध;					\
+		if (cond_expr)					\
+			break;					\
 		cpu_relax();					\
-	पूर्ण							\
+	}							\
 	(typeof(*ptr))VAL;					\
-पूर्ण)
-#पूर्ण_अगर
+})
+#endif
 
 /**
- * smp_cond_load_acquire() - (Spin) रुको क्रम cond with ACQUIRE ordering
- * @ptr: poपूर्णांकer to the variable to रुको on
- * @cond: boolean expression to रुको क्रम
+ * smp_cond_load_acquire() - (Spin) wait for cond with ACQUIRE ordering
+ * @ptr: pointer to the variable to wait on
+ * @cond: boolean expression to wait for
  *
  * Equivalent to using smp_load_acquire() on the condition variable but employs
- * the control dependency of the रुको to reduce the barrier on many platक्रमms.
+ * the control dependency of the wait to reduce the barrier on many platforms.
  */
-#अगर_अघोषित smp_cond_load_acquire
-#घोषणा smp_cond_load_acquire(ptr, cond_expr) (अणु		\
+#ifndef smp_cond_load_acquire
+#define smp_cond_load_acquire(ptr, cond_expr) ({		\
 	__unqual_scalar_typeof(*ptr) _val;			\
 	_val = smp_cond_load_relaxed(ptr, cond_expr);		\
 	smp_acquire__after_ctrl_dep();				\
 	(typeof(*ptr))_val;					\
-पूर्ण)
-#पूर्ण_अगर
+})
+#endif
 
 /*
- * pmem_wmb() ensures that all stores क्रम which the modअगरication
- * are written to persistent storage by preceding inकाष्ठाions have
- * updated persistent storage beक्रमe any data  access or data transfer
- * caused by subsequent inकाष्ठाions is initiated.
+ * pmem_wmb() ensures that all stores for which the modification
+ * are written to persistent storage by preceding instructions have
+ * updated persistent storage before any data  access or data transfer
+ * caused by subsequent instructions is initiated.
  */
-#अगर_अघोषित pmem_wmb
-#घोषणा pmem_wmb()	wmb()
-#पूर्ण_अगर
+#ifndef pmem_wmb
+#define pmem_wmb()	wmb()
+#endif
 
-#पूर्ण_अगर /* !__ASSEMBLY__ */
-#पूर्ण_अगर /* __ASM_GENERIC_BARRIER_H */
+#endif /* !__ASSEMBLY__ */
+#endif /* __ASM_GENERIC_BARRIER_H */

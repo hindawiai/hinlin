@@ -1,8 +1,7 @@
-<शैली गुरु>
 /*
- * Header क्रम code common to all OMAP2+ machines.
+ * Header for code common to all OMAP2+ machines.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
@@ -10,7 +9,7 @@
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN
- * NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY सूचीECT, INसूचीECT,
+ * NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
  * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
@@ -18,349 +17,349 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * You should have received a copy of the  GNU General Public License aदीर्घ
- * with this program; अगर not, ग_लिखो  to the Free Software Foundation, Inc.,
+ * You should have received a copy of the  GNU General Public License along
+ * with this program; if not, write  to the Free Software Foundation, Inc.,
  * 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#अगर_अघोषित __ARCH_ARM_MACH_OMAP2PLUS_COMMON_H
-#घोषणा __ARCH_ARM_MACH_OMAP2PLUS_COMMON_H
-#अगर_अघोषित __ASSEMBLER__
+#ifndef __ARCH_ARM_MACH_OMAP2PLUS_COMMON_H
+#define __ARCH_ARM_MACH_OMAP2PLUS_COMMON_H
+#ifndef __ASSEMBLER__
 
-#समावेश <linux/irq.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/mfd/twl.h>
-#समावेश <linux/platक्रमm_data/i2c-omap.h>
-#समावेश <linux/reboot.h>
-#समावेश <linux/irqchip/irq-omap-पूर्णांकc.h>
+#include <linux/irq.h>
+#include <linux/delay.h>
+#include <linux/i2c.h>
+#include <linux/mfd/twl.h>
+#include <linux/platform_data/i2c-omap.h>
+#include <linux/reboot.h>
+#include <linux/irqchip/irq-omap-intc.h>
 
-#समावेश <यंत्र/proc-fns.h>
-#समावेश <यंत्र/hardware/cache-l2x0.h>
+#include <asm/proc-fns.h>
+#include <asm/hardware/cache-l2x0.h>
 
-#समावेश "i2c.h"
-#समावेश "serial.h"
+#include "i2c.h"
+#include "serial.h"
 
-#समावेश "usb.h"
+#include "usb.h"
 
-#घोषणा OMAP_INTC_START		NR_IRQS
+#define OMAP_INTC_START		NR_IRQS
 
-बाह्य पूर्णांक (*omap_pm_soc_init)(व्योम);
-पूर्णांक omap_pm_nop_init(व्योम);
+extern int (*omap_pm_soc_init)(void);
+int omap_pm_nop_init(void);
 
-#अगर defined(CONFIG_PM) && defined(CONFIG_ARCH_OMAP2)
-पूर्णांक omap2_pm_init(व्योम);
-#अन्यथा
-अटल अंतरभूत पूर्णांक omap2_pm_init(व्योम)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+#if defined(CONFIG_PM) && defined(CONFIG_ARCH_OMAP2)
+int omap2_pm_init(void);
+#else
+static inline int omap2_pm_init(void)
+{
+	return 0;
+}
+#endif
 
-#अगर defined(CONFIG_PM) && defined(CONFIG_ARCH_OMAP3)
-पूर्णांक omap3_pm_init(व्योम);
-#अन्यथा
-अटल अंतरभूत पूर्णांक omap3_pm_init(व्योम)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+#if defined(CONFIG_PM) && defined(CONFIG_ARCH_OMAP3)
+int omap3_pm_init(void);
+#else
+static inline int omap3_pm_init(void)
+{
+	return 0;
+}
+#endif
 
-#अगर defined(CONFIG_PM) && (defined(CONFIG_ARCH_OMAP4) || defined(CONFIG_SOC_OMAP5) || defined(CONFIG_SOC_DRA7XX))
-पूर्णांक omap4_pm_init(व्योम);
-पूर्णांक omap4_pm_init_early(व्योम);
-#अन्यथा
-अटल अंतरभूत पूर्णांक omap4_pm_init(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+#if defined(CONFIG_PM) && (defined(CONFIG_ARCH_OMAP4) || defined(CONFIG_SOC_OMAP5) || defined(CONFIG_SOC_DRA7XX))
+int omap4_pm_init(void);
+int omap4_pm_init_early(void);
+#else
+static inline int omap4_pm_init(void)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक omap4_pm_init_early(व्योम)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+static inline int omap4_pm_init_early(void)
+{
+	return 0;
+}
+#endif
 
-#अगर defined(CONFIG_PM) && (defined(CONFIG_SOC_AM33XX) || \
+#if defined(CONFIG_PM) && (defined(CONFIG_SOC_AM33XX) || \
 	defined(CONFIG_SOC_AM43XX))
-पूर्णांक amx3_common_pm_init(व्योम);
-#अन्यथा
-अटल अंतरभूत पूर्णांक amx3_common_pm_init(व्योम)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+int amx3_common_pm_init(void);
+#else
+static inline int amx3_common_pm_init(void)
+{
+	return 0;
+}
+#endif
 
-बाह्य व्योम omap2_init_common_infraकाष्ठाure(व्योम);
+extern void omap2_init_common_infrastructure(void);
 
-बाह्य व्योम omap_init_समय(व्योम);
-बाह्य व्योम omap3_secure_sync32k_समयr_init(व्योम);
-बाह्य व्योम omap3_gpसमयr_समयr_init(व्योम);
-बाह्य व्योम omap4_local_समयr_init(व्योम);
-#अगर_घोषित CONFIG_CACHE_L2X0
-पूर्णांक omap_l2_cache_init(व्योम);
-#घोषणा OMAP_L2C_AUX_CTRL	(L2C_AUX_CTRL_SHARED_OVERRIDE | \
+extern void omap_init_time(void);
+extern void omap3_secure_sync32k_timer_init(void);
+extern void omap3_gptimer_timer_init(void);
+extern void omap4_local_timer_init(void);
+#ifdef CONFIG_CACHE_L2X0
+int omap_l2_cache_init(void);
+#define OMAP_L2C_AUX_CTRL	(L2C_AUX_CTRL_SHARED_OVERRIDE | \
 				 L310_AUX_CTRL_DATA_PREFETCH | \
 				 L310_AUX_CTRL_INSTR_PREFETCH)
-व्योम omap4_l2c310_ग_लिखो_sec(अचिन्हित दीर्घ val, अचिन्हित reg);
-#अन्यथा
-अटल अंतरभूत पूर्णांक omap_l2_cache_init(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+void omap4_l2c310_write_sec(unsigned long val, unsigned reg);
+#else
+static inline int omap_l2_cache_init(void)
+{
+	return 0;
+}
 
-#घोषणा OMAP_L2C_AUX_CTRL	0
-#घोषणा omap4_l2c310_ग_लिखो_sec	शून्य
-#पूर्ण_अगर
+#define OMAP_L2C_AUX_CTRL	0
+#define omap4_l2c310_write_sec	NULL
+#endif
 
-#अगर_घोषित CONFIG_SOC_HAS_REALTIME_COUNTER
-बाह्य व्योम omap5_realसमय_प्रकारimer_init(व्योम);
-#अन्यथा
-अटल अंतरभूत व्योम omap5_realसमय_प्रकारimer_init(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_SOC_HAS_REALTIME_COUNTER
+extern void omap5_realtime_timer_init(void);
+#else
+static inline void omap5_realtime_timer_init(void)
+{
+}
+#endif
 
-व्योम omap2420_init_early(व्योम);
-व्योम omap2430_init_early(व्योम);
-व्योम omap3430_init_early(व्योम);
-व्योम omap35xx_init_early(व्योम);
-व्योम omap3630_init_early(व्योम);
-व्योम omap3_init_early(व्योम);	/* Do not use this one */
-व्योम am33xx_init_early(व्योम);
-व्योम am35xx_init_early(व्योम);
-व्योम ti814x_init_early(व्योम);
-व्योम ti816x_init_early(व्योम);
-व्योम am33xx_init_early(व्योम);
-व्योम am43xx_init_early(व्योम);
-व्योम am43xx_init_late(व्योम);
-व्योम omap4430_init_early(व्योम);
-व्योम omap5_init_early(व्योम);
-व्योम omap3_init_late(व्योम);
-व्योम omap4430_init_late(व्योम);
-व्योम omap2420_init_late(व्योम);
-व्योम omap2430_init_late(व्योम);
-व्योम ti81xx_init_late(व्योम);
-व्योम am33xx_init_late(व्योम);
-व्योम omap5_init_late(व्योम);
-पूर्णांक omap2_common_pm_late_init(व्योम);
-व्योम dra7xx_init_early(व्योम);
-व्योम dra7xx_init_late(व्योम);
+void omap2420_init_early(void);
+void omap2430_init_early(void);
+void omap3430_init_early(void);
+void omap35xx_init_early(void);
+void omap3630_init_early(void);
+void omap3_init_early(void);	/* Do not use this one */
+void am33xx_init_early(void);
+void am35xx_init_early(void);
+void ti814x_init_early(void);
+void ti816x_init_early(void);
+void am33xx_init_early(void);
+void am43xx_init_early(void);
+void am43xx_init_late(void);
+void omap4430_init_early(void);
+void omap5_init_early(void);
+void omap3_init_late(void);
+void omap4430_init_late(void);
+void omap2420_init_late(void);
+void omap2430_init_late(void);
+void ti81xx_init_late(void);
+void am33xx_init_late(void);
+void omap5_init_late(void);
+int omap2_common_pm_late_init(void);
+void dra7xx_init_early(void);
+void dra7xx_init_late(void);
 
-#अगर_घोषित CONFIG_SOC_BUS
-व्योम omap_soc_device_init(व्योम);
-#अन्यथा
-अटल अंतरभूत व्योम omap_soc_device_init(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_SOC_BUS
+void omap_soc_device_init(void);
+#else
+static inline void omap_soc_device_init(void)
+{
+}
+#endif
 
-#अगर defined(CONFIG_SOC_OMAP2420) || defined(CONFIG_SOC_OMAP2430)
-व्योम omap2xxx_restart(क्रमागत reboot_mode mode, स्थिर अक्षर *cmd);
-#अन्यथा
-अटल अंतरभूत व्योम omap2xxx_restart(क्रमागत reboot_mode mode, स्थिर अक्षर *cmd)
-अणु
-पूर्ण
-#पूर्ण_अगर
+#if defined(CONFIG_SOC_OMAP2420) || defined(CONFIG_SOC_OMAP2430)
+void omap2xxx_restart(enum reboot_mode mode, const char *cmd);
+#else
+static inline void omap2xxx_restart(enum reboot_mode mode, const char *cmd)
+{
+}
+#endif
 
-#अगर_घोषित CONFIG_SOC_AM33XX
-व्योम am33xx_restart(क्रमागत reboot_mode mode, स्थिर अक्षर *cmd);
-#अन्यथा
-अटल अंतरभूत व्योम am33xx_restart(क्रमागत reboot_mode mode, स्थिर अक्षर *cmd)
-अणु
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_SOC_AM33XX
+void am33xx_restart(enum reboot_mode mode, const char *cmd);
+#else
+static inline void am33xx_restart(enum reboot_mode mode, const char *cmd)
+{
+}
+#endif
 
-#अगर_घोषित CONFIG_ARCH_OMAP3
-व्योम omap3xxx_restart(क्रमागत reboot_mode mode, स्थिर अक्षर *cmd);
-#अन्यथा
-अटल अंतरभूत व्योम omap3xxx_restart(क्रमागत reboot_mode mode, स्थिर अक्षर *cmd)
-अणु
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_ARCH_OMAP3
+void omap3xxx_restart(enum reboot_mode mode, const char *cmd);
+#else
+static inline void omap3xxx_restart(enum reboot_mode mode, const char *cmd)
+{
+}
+#endif
 
-#अगर_घोषित CONFIG_SOC_TI81XX
-व्योम ti81xx_restart(क्रमागत reboot_mode mode, स्थिर अक्षर *cmd);
-#अन्यथा
-अटल अंतरभूत व्योम ti81xx_restart(क्रमागत reboot_mode mode, स्थिर अक्षर *cmd)
-अणु
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_SOC_TI81XX
+void ti81xx_restart(enum reboot_mode mode, const char *cmd);
+#else
+static inline void ti81xx_restart(enum reboot_mode mode, const char *cmd)
+{
+}
+#endif
 
-#अगर defined(CONFIG_ARCH_OMAP4) || defined(CONFIG_SOC_OMAP5) || \
+#if defined(CONFIG_ARCH_OMAP4) || defined(CONFIG_SOC_OMAP5) || \
 	defined(CONFIG_SOC_DRA7XX) || defined(CONFIG_SOC_AM43XX)
-व्योम omap44xx_restart(क्रमागत reboot_mode mode, स्थिर अक्षर *cmd);
-#अन्यथा
-अटल अंतरभूत व्योम omap44xx_restart(क्रमागत reboot_mode mode, स्थिर अक्षर *cmd)
-अणु
-पूर्ण
-#पूर्ण_अगर
+void omap44xx_restart(enum reboot_mode mode, const char *cmd);
+#else
+static inline void omap44xx_restart(enum reboot_mode mode, const char *cmd)
+{
+}
+#endif
 
-#अगर_घोषित CONFIG_OMAP_INTERCONNECT_BARRIER
-व्योम omap_barrier_reserve_memblock(व्योम);
-व्योम omap_barriers_init(व्योम);
-#अन्यथा
-अटल अंतरभूत व्योम omap_barrier_reserve_memblock(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_OMAP_INTERCONNECT_BARRIER
+void omap_barrier_reserve_memblock(void);
+void omap_barriers_init(void);
+#else
+static inline void omap_barrier_reserve_memblock(void)
+{
+}
+#endif
 
-/* This माला_लो called from mach-omap2/io.c, करो not call this */
-व्योम __init omap2_set_globals_tap(u32 class, व्योम __iomem *tap);
+/* This gets called from mach-omap2/io.c, do not call this */
+void __init omap2_set_globals_tap(u32 class, void __iomem *tap);
 
-व्योम __init omap242x_map_io(व्योम);
-व्योम __init omap243x_map_io(व्योम);
-व्योम __init omap3_map_io(व्योम);
-व्योम __init am33xx_map_io(व्योम);
-व्योम __init omap4_map_io(व्योम);
-व्योम __init omap5_map_io(व्योम);
-व्योम __init dra7xx_map_io(व्योम);
-व्योम __init ti81xx_map_io(व्योम);
+void __init omap242x_map_io(void);
+void __init omap243x_map_io(void);
+void __init omap3_map_io(void);
+void __init am33xx_map_io(void);
+void __init omap4_map_io(void);
+void __init omap5_map_io(void);
+void __init dra7xx_map_io(void);
+void __init ti81xx_map_io(void);
 
 /**
- * omap_test_समयout - busy-loop, testing a condition
+ * omap_test_timeout - busy-loop, testing a condition
  * @cond: condition to test until it evaluates to true
- * @समयout: maximum number of microseconds in the समयout
- * @index: loop index (पूर्णांकeger)
+ * @timeout: maximum number of microseconds in the timeout
+ * @index: loop index (integer)
  *
- * Loop रुकोing क्रम @cond to become true or until at least @समयout
- * microseconds have passed.  To use, define some पूर्णांकeger @index in the
- * calling code.  After running, अगर @index == @समयout, then the loop has
- * समयd out.
+ * Loop waiting for @cond to become true or until at least @timeout
+ * microseconds have passed.  To use, define some integer @index in the
+ * calling code.  After running, if @index == @timeout, then the loop has
+ * timed out.
  */
-#घोषणा omap_test_समयout(cond, समयout, index)			\
-(अणु								\
-	क्रम (index = 0; index < समयout; index++) अणु		\
-		अगर (cond)					\
-			अवरोध;					\
+#define omap_test_timeout(cond, timeout, index)			\
+({								\
+	for (index = 0; index < timeout; index++) {		\
+		if (cond)					\
+			break;					\
 		udelay(1);					\
-	पूर्ण							\
-पूर्ण)
+	}							\
+})
 
-बाह्य काष्ठा device *omap2_get_mpuss_device(व्योम);
-बाह्य काष्ठा device *omap2_get_iva_device(व्योम);
-बाह्य काष्ठा device *omap2_get_l3_device(व्योम);
-बाह्य काष्ठा device *omap4_get_dsp_device(व्योम);
+extern struct device *omap2_get_mpuss_device(void);
+extern struct device *omap2_get_iva_device(void);
+extern struct device *omap2_get_l3_device(void);
+extern struct device *omap4_get_dsp_device(void);
 
-व्योम omap_gic_of_init(व्योम);
+void omap_gic_of_init(void);
 
-#अगर_घोषित CONFIG_CACHE_L2X0
-बाह्य व्योम __iomem *omap4_get_l2cache_base(व्योम);
-#पूर्ण_अगर
+#ifdef CONFIG_CACHE_L2X0
+extern void __iomem *omap4_get_l2cache_base(void);
+#endif
 
-काष्ठा device_node;
+struct device_node;
 
-#अगर_घोषित CONFIG_SMP
-बाह्य व्योम __iomem *omap4_get_scu_base(व्योम);
-#अन्यथा
-अटल अंतरभूत व्योम __iomem *omap4_get_scu_base(व्योम)
-अणु
-	वापस शून्य;
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_SMP
+extern void __iomem *omap4_get_scu_base(void);
+#else
+static inline void __iomem *omap4_get_scu_base(void)
+{
+	return NULL;
+}
+#endif
 
-बाह्य व्योम gic_dist_disable(व्योम);
-बाह्य व्योम gic_dist_enable(व्योम);
-बाह्य bool gic_dist_disabled(व्योम);
-बाह्य व्योम gic_समयr_retrigger(व्योम);
-बाह्य व्योम _omap_smc1(u32 fn, u32 arg);
-बाह्य व्योम omap4_sar_ram_init(व्योम);
-बाह्य व्योम __iomem *omap4_get_sar_ram_base(व्योम);
-बाह्य व्योम omap4_mpuss_early_init(व्योम);
-बाह्य व्योम omap_करो_wfi(व्योम);
+extern void gic_dist_disable(void);
+extern void gic_dist_enable(void);
+extern bool gic_dist_disabled(void);
+extern void gic_timer_retrigger(void);
+extern void _omap_smc1(u32 fn, u32 arg);
+extern void omap4_sar_ram_init(void);
+extern void __iomem *omap4_get_sar_ram_base(void);
+extern void omap4_mpuss_early_init(void);
+extern void omap_do_wfi(void);
 
 
-#अगर_घोषित CONFIG_SMP
-/* Needed क्रम secondary core boot */
-बाह्य u32 omap_modअगरy_auxcoreboot0(u32 set_mask, u32 clear_mask);
-बाह्य व्योम omap_auxcoreboot_addr(u32 cpu_addr);
-बाह्य u32 omap_पढ़ो_auxcoreboot0(व्योम);
+#ifdef CONFIG_SMP
+/* Needed for secondary core boot */
+extern u32 omap_modify_auxcoreboot0(u32 set_mask, u32 clear_mask);
+extern void omap_auxcoreboot_addr(u32 cpu_addr);
+extern u32 omap_read_auxcoreboot0(void);
 
-बाह्य व्योम omap4_cpu_die(अचिन्हित पूर्णांक cpu);
-बाह्य पूर्णांक omap4_cpu_समाप्त(अचिन्हित पूर्णांक cpu);
+extern void omap4_cpu_die(unsigned int cpu);
+extern int omap4_cpu_kill(unsigned int cpu);
 
-बाह्य स्थिर काष्ठा smp_operations omap4_smp_ops;
-#पूर्ण_अगर
+extern const struct smp_operations omap4_smp_ops;
+#endif
 
-बाह्य u32 omap4_get_cpu1_ns_pa_addr(व्योम);
+extern u32 omap4_get_cpu1_ns_pa_addr(void);
 
-#अगर defined(CONFIG_SMP) && defined(CONFIG_PM)
-बाह्य पूर्णांक omap4_mpuss_init(व्योम);
-बाह्य पूर्णांक omap4_enter_lowघातer(अचिन्हित पूर्णांक cpu, अचिन्हित पूर्णांक घातer_state);
-बाह्य पूर्णांक omap4_hotplug_cpu(अचिन्हित पूर्णांक cpu, अचिन्हित पूर्णांक घातer_state);
-#अन्यथा
-अटल अंतरभूत पूर्णांक omap4_enter_lowघातer(अचिन्हित पूर्णांक cpu,
-					अचिन्हित पूर्णांक घातer_state)
-अणु
-	cpu_करो_idle();
-	वापस 0;
-पूर्ण
+#if defined(CONFIG_SMP) && defined(CONFIG_PM)
+extern int omap4_mpuss_init(void);
+extern int omap4_enter_lowpower(unsigned int cpu, unsigned int power_state);
+extern int omap4_hotplug_cpu(unsigned int cpu, unsigned int power_state);
+#else
+static inline int omap4_enter_lowpower(unsigned int cpu,
+					unsigned int power_state)
+{
+	cpu_do_idle();
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक omap4_hotplug_cpu(अचिन्हित पूर्णांक cpu, अचिन्हित पूर्णांक घातer_state)
-अणु
-	cpu_करो_idle();
-	वापस 0;
-पूर्ण
+static inline int omap4_hotplug_cpu(unsigned int cpu, unsigned int power_state)
+{
+	cpu_do_idle();
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक omap4_mpuss_init(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+static inline int omap4_mpuss_init(void)
+{
+	return 0;
+}
 
-#पूर्ण_अगर
+#endif
 
-#अगर_घोषित CONFIG_ARCH_OMAP4
-व्योम omap4_secondary_startup(व्योम);
-व्योम omap4460_secondary_startup(व्योम);
-पूर्णांक omap4_finish_suspend(अचिन्हित दीर्घ cpu_state);
-व्योम omap4_cpu_resume(व्योम);
-#अन्यथा
-अटल अंतरभूत व्योम omap4_secondary_startup(व्योम)
-अणु
-पूर्ण
+#ifdef CONFIG_ARCH_OMAP4
+void omap4_secondary_startup(void);
+void omap4460_secondary_startup(void);
+int omap4_finish_suspend(unsigned long cpu_state);
+void omap4_cpu_resume(void);
+#else
+static inline void omap4_secondary_startup(void)
+{
+}
 
-अटल अंतरभूत व्योम omap4460_secondary_startup(व्योम)
-अणु
-पूर्ण
-अटल अंतरभूत पूर्णांक omap4_finish_suspend(अचिन्हित दीर्घ cpu_state)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत व्योम omap4_cpu_resume(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर
+static inline void omap4460_secondary_startup(void)
+{
+}
+static inline int omap4_finish_suspend(unsigned long cpu_state)
+{
+	return 0;
+}
+static inline void omap4_cpu_resume(void)
+{
+}
+#endif
 
-#अगर defined(CONFIG_SOC_OMAP5) || defined(CONFIG_SOC_DRA7XX)
-व्योम omap5_secondary_startup(व्योम);
-व्योम omap5_secondary_hyp_startup(व्योम);
-#अन्यथा
-अटल अंतरभूत व्योम omap5_secondary_startup(व्योम)
-अणु
-पूर्ण
+#if defined(CONFIG_SOC_OMAP5) || defined(CONFIG_SOC_DRA7XX)
+void omap5_secondary_startup(void);
+void omap5_secondary_hyp_startup(void);
+#else
+static inline void omap5_secondary_startup(void)
+{
+}
 
-अटल अंतरभूत व्योम omap5_secondary_hyp_startup(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर
+static inline void omap5_secondary_hyp_startup(void)
+{
+}
+#endif
 
-काष्ठा omap_प्रणाली_dma_plat_info;
+struct omap_system_dma_plat_info;
 
-व्योम pdata_quirks_init(स्थिर काष्ठा of_device_id *);
-व्योम omap_auxdata_legacy_init(काष्ठा device *dev);
-व्योम omap_pcs_legacy_init(पूर्णांक irq, व्योम (*rearm)(व्योम));
-बाह्य काष्ठा omap_प्रणाली_dma_plat_info dma_plat_info;
+void pdata_quirks_init(const struct of_device_id *);
+void omap_auxdata_legacy_init(struct device *dev);
+void omap_pcs_legacy_init(int irq, void (*rearm)(void));
+extern struct omap_system_dma_plat_info dma_plat_info;
 
-काष्ठा omap_sdrc_params;
-बाह्य व्योम omap_sdrc_init(काष्ठा omap_sdrc_params *sdrc_cs0,
-				      काष्ठा omap_sdrc_params *sdrc_cs1);
-बाह्य व्योम omap_reserve(व्योम);
+struct omap_sdrc_params;
+extern void omap_sdrc_init(struct omap_sdrc_params *sdrc_cs0,
+				      struct omap_sdrc_params *sdrc_cs1);
+extern void omap_reserve(void);
 
-काष्ठा omap_hwmod;
-बाह्य पूर्णांक omap_dss_reset(काष्ठा omap_hwmod *);
+struct omap_hwmod;
+extern int omap_dss_reset(struct omap_hwmod *);
 
-/* SoC specअगरic घड़ी initializer */
-पूर्णांक omap_clk_init(व्योम);
+/* SoC specific clock initializer */
+int omap_clk_init(void);
 
-#पूर्ण_अगर /* __ASSEMBLER__ */
-#पूर्ण_अगर /* __ARCH_ARM_MACH_OMAP2PLUS_COMMON_H */
+#endif /* __ASSEMBLER__ */
+#endif /* __ARCH_ARM_MACH_OMAP2PLUS_COMMON_H */

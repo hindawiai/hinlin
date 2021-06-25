@@ -1,31 +1,30 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2019 Facebook
-#समावेश <linux/bpf.h>
-#समावेश <bpf/bpf_helpers.h>
-#घोषणा ATTR __attribute__((noअंतरभूत))
-#समावेश "test_jhash.h"
+#include <linux/bpf.h>
+#include <bpf/bpf_helpers.h>
+#define ATTR __attribute__((noinline))
+#include "test_jhash.h"
 
 SEC("scale90_noinline32")
-पूर्णांक balancer_ingress(काष्ठा __sk_buff *ctx)
-अणु
-	व्योम *data_end = (व्योम *)(दीर्घ)ctx->data_end;
-	व्योम *data = (व्योम *)(दीर्घ)ctx->data;
-	व्योम *ptr;
-	पूर्णांक ret = 0, nh_off, i = 0;
+int balancer_ingress(struct __sk_buff *ctx)
+{
+	void *data_end = (void *)(long)ctx->data_end;
+	void *data = (void *)(long)ctx->data;
+	void *ptr;
+	int ret = 0, nh_off, i = 0;
 
 	nh_off = 32;
 
-	/* pragma unroll करोesn't work on large loops */
+	/* pragma unroll doesn't work on large loops */
 
-#घोषणा C करो अणु \
+#define C do { \
 	ptr = data + i; \
-	अगर (ptr + nh_off > data_end) \
-		अवरोध; \
+	if (ptr + nh_off > data_end) \
+		break; \
 	ctx->tc_index = jhash(ptr, nh_off, ctx->cb[0] + i++); \
-	पूर्ण जबतक (0);
-#घोषणा C30 C;C;C;C;C;C;C;C;C;C;C;C;C;C;C;C;C;C;C;C;C;C;C;C;C;C;C;C;C;C;
+	} while (0);
+#define C30 C;C;C;C;C;C;C;C;C;C;C;C;C;C;C;C;C;C;C;C;C;C;C;C;C;C;C;C;C;C;
 	C30;C30;C30; /* 90 calls */
-	वापस 0;
-पूर्ण
-अक्षर _license[] SEC("license") = "GPL";
+	return 0;
+}
+char _license[] SEC("license") = "GPL";

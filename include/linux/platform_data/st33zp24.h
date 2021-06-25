@@ -1,17 +1,16 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * STMicroelectronics TPM Linux driver क्रम TPM 1.2 ST33ZP24
+ * STMicroelectronics TPM Linux driver for TPM 1.2 ST33ZP24
  * Copyright (C) 2009 - 2016  STMicroelectronics
  */
-#अगर_अघोषित __ST33ZP24_H__
-#घोषणा __ST33ZP24_H__
+#ifndef __ST33ZP24_H__
+#define __ST33ZP24_H__
 
-#घोषणा TPM_ST33_I2C			"st33zp24-i2c"
-#घोषणा TPM_ST33_SPI			"st33zp24-spi"
+#define TPM_ST33_I2C			"st33zp24-i2c"
+#define TPM_ST33_SPI			"st33zp24-spi"
 
-काष्ठा st33zp24_platक्रमm_data अणु
-	पूर्णांक io_lpcpd;
-पूर्ण;
+struct st33zp24_platform_data {
+	int io_lpcpd;
+};
 
-#पूर्ण_अगर /* __ST33ZP24_H__ */
+#endif /* __ST33ZP24_H__ */

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * f_obex.c -- USB CDC OBEX function driver
  *
@@ -9,465 +8,465 @@
  * Based on f_acm.c by Al Borchers and David Brownell.
  */
 
-/* #घोषणा VERBOSE_DEBUG */
+/* #define VERBOSE_DEBUG */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/device.h>
-#समावेश <linux/module.h>
+#include <linux/slab.h>
+#include <linux/kernel.h>
+#include <linux/device.h>
+#include <linux/module.h>
 
-#समावेश "u_serial.h"
+#include "u_serial.h"
 
 
 /*
  * This CDC OBEX function support just packages a TTY-ish byte stream.
- * A user mode server will put it पूर्णांकo "raw" mode and handle all the
+ * A user mode server will put it into "raw" mode and handle all the
  * relevant protocol details ... this is just a kernel passthrough.
- * When possible, we prevent gadget क्रमागतeration until that server is
- * पढ़ोy to handle the commands.
+ * When possible, we prevent gadget enumeration until that server is
+ * ready to handle the commands.
  */
 
-काष्ठा f_obex अणु
-	काष्ठा gserial			port;
+struct f_obex {
+	struct gserial			port;
 	u8				ctrl_id;
 	u8				data_id;
 	u8				cur_alt;
 	u8				port_num;
-पूर्ण;
+};
 
-अटल अंतरभूत काष्ठा f_obex *func_to_obex(काष्ठा usb_function *f)
-अणु
-	वापस container_of(f, काष्ठा f_obex, port.func);
-पूर्ण
+static inline struct f_obex *func_to_obex(struct usb_function *f)
+{
+	return container_of(f, struct f_obex, port.func);
+}
 
-अटल अंतरभूत काष्ठा f_obex *port_to_obex(काष्ठा gserial *p)
-अणु
-	वापस container_of(p, काष्ठा f_obex, port);
-पूर्ण
+static inline struct f_obex *port_to_obex(struct gserial *p)
+{
+	return container_of(p, struct f_obex, port);
+}
 
 /*-------------------------------------------------------------------------*/
 
-#घोषणा OBEX_CTRL_IDX	0
-#घोषणा OBEX_DATA_IDX	1
+#define OBEX_CTRL_IDX	0
+#define OBEX_DATA_IDX	1
 
-अटल काष्ठा usb_string obex_string_defs[] = अणु
+static struct usb_string obex_string_defs[] = {
 	[OBEX_CTRL_IDX].s	= "CDC Object Exchange (OBEX)",
 	[OBEX_DATA_IDX].s	= "CDC OBEX Data",
-	अणु  पूर्ण,	/* end of list */
-पूर्ण;
+	{  },	/* end of list */
+};
 
-अटल काष्ठा usb_gadget_strings obex_string_table = अणु
+static struct usb_gadget_strings obex_string_table = {
 	.language		= 0x0409,	/* en-US */
 	.strings		= obex_string_defs,
-पूर्ण;
+};
 
-अटल काष्ठा usb_gadget_strings *obex_strings[] = अणु
+static struct usb_gadget_strings *obex_strings[] = {
 	&obex_string_table,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
 /*-------------------------------------------------------------------------*/
 
-अटल काष्ठा usb_पूर्णांकerface_descriptor obex_control_पूर्णांकf = अणु
-	.bLength		= माप(obex_control_पूर्णांकf),
+static struct usb_interface_descriptor obex_control_intf = {
+	.bLength		= sizeof(obex_control_intf),
 	.bDescriptorType	= USB_DT_INTERFACE,
 	.bInterfaceNumber	= 0,
 
 	.bAlternateSetting	= 0,
-	.bNumEndpoपूर्णांकs		= 0,
+	.bNumEndpoints		= 0,
 	.bInterfaceClass	= USB_CLASS_COMM,
 	.bInterfaceSubClass	= USB_CDC_SUBCLASS_OBEX,
-पूर्ण;
+};
 
-अटल काष्ठा usb_पूर्णांकerface_descriptor obex_data_nop_पूर्णांकf = अणु
-	.bLength		= माप(obex_data_nop_पूर्णांकf),
+static struct usb_interface_descriptor obex_data_nop_intf = {
+	.bLength		= sizeof(obex_data_nop_intf),
 	.bDescriptorType	= USB_DT_INTERFACE,
 	.bInterfaceNumber	= 1,
 
 	.bAlternateSetting	= 0,
-	.bNumEndpoपूर्णांकs		= 0,
+	.bNumEndpoints		= 0,
 	.bInterfaceClass	= USB_CLASS_CDC_DATA,
-पूर्ण;
+};
 
-अटल काष्ठा usb_पूर्णांकerface_descriptor obex_data_पूर्णांकf = अणु
-	.bLength		= माप(obex_data_पूर्णांकf),
+static struct usb_interface_descriptor obex_data_intf = {
+	.bLength		= sizeof(obex_data_intf),
 	.bDescriptorType	= USB_DT_INTERFACE,
 	.bInterfaceNumber	= 2,
 
 	.bAlternateSetting	= 1,
-	.bNumEndpoपूर्णांकs		= 2,
+	.bNumEndpoints		= 2,
 	.bInterfaceClass	= USB_CLASS_CDC_DATA,
-पूर्ण;
+};
 
-अटल काष्ठा usb_cdc_header_desc obex_cdc_header_desc = अणु
-	.bLength		= माप(obex_cdc_header_desc),
+static struct usb_cdc_header_desc obex_cdc_header_desc = {
+	.bLength		= sizeof(obex_cdc_header_desc),
 	.bDescriptorType	= USB_DT_CS_INTERFACE,
 	.bDescriptorSubType	= USB_CDC_HEADER_TYPE,
 	.bcdCDC			= cpu_to_le16(0x0120),
-पूर्ण;
+};
 
-अटल काष्ठा usb_cdc_जोड़_desc obex_cdc_जोड़_desc = अणु
-	.bLength		= माप(obex_cdc_जोड़_desc),
+static struct usb_cdc_union_desc obex_cdc_union_desc = {
+	.bLength		= sizeof(obex_cdc_union_desc),
 	.bDescriptorType	= USB_DT_CS_INTERFACE,
 	.bDescriptorSubType	= USB_CDC_UNION_TYPE,
 	.bMasterInterface0	= 1,
 	.bSlaveInterface0	= 2,
-पूर्ण;
+};
 
-अटल काष्ठा usb_cdc_obex_desc obex_desc = अणु
-	.bLength		= माप(obex_desc),
+static struct usb_cdc_obex_desc obex_desc = {
+	.bLength		= sizeof(obex_desc),
 	.bDescriptorType	= USB_DT_CS_INTERFACE,
 	.bDescriptorSubType	= USB_CDC_OBEX_TYPE,
 	.bcdVersion		= cpu_to_le16(0x0100),
-पूर्ण;
+};
 
 /* High-Speed Support */
 
-अटल काष्ठा usb_endpoपूर्णांक_descriptor obex_hs_ep_out_desc = अणु
+static struct usb_endpoint_descriptor obex_hs_ep_out_desc = {
 	.bLength		= USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType	= USB_DT_ENDPOINT,
 
-	.bEndpoपूर्णांकAddress	= USB_सूची_OUT,
+	.bEndpointAddress	= USB_DIR_OUT,
 	.bmAttributes		= USB_ENDPOINT_XFER_BULK,
 	.wMaxPacketSize		= cpu_to_le16(512),
-पूर्ण;
+};
 
-अटल काष्ठा usb_endpoपूर्णांक_descriptor obex_hs_ep_in_desc = अणु
+static struct usb_endpoint_descriptor obex_hs_ep_in_desc = {
 	.bLength		= USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType	= USB_DT_ENDPOINT,
 
-	.bEndpoपूर्णांकAddress	= USB_सूची_IN,
+	.bEndpointAddress	= USB_DIR_IN,
 	.bmAttributes		= USB_ENDPOINT_XFER_BULK,
 	.wMaxPacketSize		= cpu_to_le16(512),
-पूर्ण;
+};
 
-अटल काष्ठा usb_descriptor_header *hs_function[] = अणु
-	(काष्ठा usb_descriptor_header *) &obex_control_पूर्णांकf,
-	(काष्ठा usb_descriptor_header *) &obex_cdc_header_desc,
-	(काष्ठा usb_descriptor_header *) &obex_desc,
-	(काष्ठा usb_descriptor_header *) &obex_cdc_जोड़_desc,
+static struct usb_descriptor_header *hs_function[] = {
+	(struct usb_descriptor_header *) &obex_control_intf,
+	(struct usb_descriptor_header *) &obex_cdc_header_desc,
+	(struct usb_descriptor_header *) &obex_desc,
+	(struct usb_descriptor_header *) &obex_cdc_union_desc,
 
-	(काष्ठा usb_descriptor_header *) &obex_data_nop_पूर्णांकf,
-	(काष्ठा usb_descriptor_header *) &obex_data_पूर्णांकf,
-	(काष्ठा usb_descriptor_header *) &obex_hs_ep_in_desc,
-	(काष्ठा usb_descriptor_header *) &obex_hs_ep_out_desc,
-	शून्य,
-पूर्ण;
+	(struct usb_descriptor_header *) &obex_data_nop_intf,
+	(struct usb_descriptor_header *) &obex_data_intf,
+	(struct usb_descriptor_header *) &obex_hs_ep_in_desc,
+	(struct usb_descriptor_header *) &obex_hs_ep_out_desc,
+	NULL,
+};
 
 /* Full-Speed Support */
 
-अटल काष्ठा usb_endpoपूर्णांक_descriptor obex_fs_ep_in_desc = अणु
+static struct usb_endpoint_descriptor obex_fs_ep_in_desc = {
 	.bLength		= USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType	= USB_DT_ENDPOINT,
 
-	.bEndpoपूर्णांकAddress	= USB_सूची_IN,
+	.bEndpointAddress	= USB_DIR_IN,
 	.bmAttributes		= USB_ENDPOINT_XFER_BULK,
-पूर्ण;
+};
 
-अटल काष्ठा usb_endpoपूर्णांक_descriptor obex_fs_ep_out_desc = अणु
+static struct usb_endpoint_descriptor obex_fs_ep_out_desc = {
 	.bLength		= USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType	= USB_DT_ENDPOINT,
 
-	.bEndpoपूर्णांकAddress	= USB_सूची_OUT,
+	.bEndpointAddress	= USB_DIR_OUT,
 	.bmAttributes		= USB_ENDPOINT_XFER_BULK,
-पूर्ण;
+};
 
-अटल काष्ठा usb_descriptor_header *fs_function[] = अणु
-	(काष्ठा usb_descriptor_header *) &obex_control_पूर्णांकf,
-	(काष्ठा usb_descriptor_header *) &obex_cdc_header_desc,
-	(काष्ठा usb_descriptor_header *) &obex_desc,
-	(काष्ठा usb_descriptor_header *) &obex_cdc_जोड़_desc,
+static struct usb_descriptor_header *fs_function[] = {
+	(struct usb_descriptor_header *) &obex_control_intf,
+	(struct usb_descriptor_header *) &obex_cdc_header_desc,
+	(struct usb_descriptor_header *) &obex_desc,
+	(struct usb_descriptor_header *) &obex_cdc_union_desc,
 
-	(काष्ठा usb_descriptor_header *) &obex_data_nop_पूर्णांकf,
-	(काष्ठा usb_descriptor_header *) &obex_data_पूर्णांकf,
-	(काष्ठा usb_descriptor_header *) &obex_fs_ep_in_desc,
-	(काष्ठा usb_descriptor_header *) &obex_fs_ep_out_desc,
-	शून्य,
-पूर्ण;
+	(struct usb_descriptor_header *) &obex_data_nop_intf,
+	(struct usb_descriptor_header *) &obex_data_intf,
+	(struct usb_descriptor_header *) &obex_fs_ep_in_desc,
+	(struct usb_descriptor_header *) &obex_fs_ep_out_desc,
+	NULL,
+};
 
 /*-------------------------------------------------------------------------*/
 
-अटल पूर्णांक obex_set_alt(काष्ठा usb_function *f, अचिन्हित पूर्णांकf, अचिन्हित alt)
-अणु
-	काष्ठा f_obex		*obex = func_to_obex(f);
-	काष्ठा usb_composite_dev *cdev = f->config->cdev;
+static int obex_set_alt(struct usb_function *f, unsigned intf, unsigned alt)
+{
+	struct f_obex		*obex = func_to_obex(f);
+	struct usb_composite_dev *cdev = f->config->cdev;
 
-	अगर (पूर्णांकf == obex->ctrl_id) अणु
-		अगर (alt != 0)
-			जाओ fail;
+	if (intf == obex->ctrl_id) {
+		if (alt != 0)
+			goto fail;
 		/* NOP */
 		dev_dbg(&cdev->gadget->dev,
 			"reset obex ttyGS%d control\n", obex->port_num);
 
-	पूर्ण अन्यथा अगर (पूर्णांकf == obex->data_id) अणु
-		अगर (alt > 1)
-			जाओ fail;
+	} else if (intf == obex->data_id) {
+		if (alt > 1)
+			goto fail;
 
-		अगर (obex->port.in->enabled) अणु
+		if (obex->port.in->enabled) {
 			dev_dbg(&cdev->gadget->dev,
 				"reset obex ttyGS%d\n", obex->port_num);
 			gserial_disconnect(&obex->port);
-		पूर्ण
+		}
 
-		अगर (!obex->port.in->desc || !obex->port.out->desc) अणु
+		if (!obex->port.in->desc || !obex->port.out->desc) {
 			dev_dbg(&cdev->gadget->dev,
 				"init obex ttyGS%d\n", obex->port_num);
-			अगर (config_ep_by_speed(cdev->gadget, f,
+			if (config_ep_by_speed(cdev->gadget, f,
 					       obex->port.in) ||
 			    config_ep_by_speed(cdev->gadget, f,
-					       obex->port.out)) अणु
-				obex->port.out->desc = शून्य;
-				obex->port.in->desc = शून्य;
-				जाओ fail;
-			पूर्ण
-		पूर्ण
+					       obex->port.out)) {
+				obex->port.out->desc = NULL;
+				obex->port.in->desc = NULL;
+				goto fail;
+			}
+		}
 
-		अगर (alt == 1) अणु
+		if (alt == 1) {
 			dev_dbg(&cdev->gadget->dev,
 				"activate obex ttyGS%d\n", obex->port_num);
 			gserial_connect(&obex->port, obex->port_num);
-		पूर्ण
+		}
 
-	पूर्ण अन्यथा
-		जाओ fail;
+	} else
+		goto fail;
 
 	obex->cur_alt = alt;
 
-	वापस 0;
+	return 0;
 
 fail:
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक obex_get_alt(काष्ठा usb_function *f, अचिन्हित पूर्णांकf)
-अणु
-	काष्ठा f_obex		*obex = func_to_obex(f);
+static int obex_get_alt(struct usb_function *f, unsigned intf)
+{
+	struct f_obex		*obex = func_to_obex(f);
 
-	वापस obex->cur_alt;
-पूर्ण
+	return obex->cur_alt;
+}
 
-अटल व्योम obex_disable(काष्ठा usb_function *f)
-अणु
-	काष्ठा f_obex	*obex = func_to_obex(f);
-	काष्ठा usb_composite_dev *cdev = f->config->cdev;
+static void obex_disable(struct usb_function *f)
+{
+	struct f_obex	*obex = func_to_obex(f);
+	struct usb_composite_dev *cdev = f->config->cdev;
 
 	dev_dbg(&cdev->gadget->dev, "obex ttyGS%d disable\n", obex->port_num);
 	gserial_disconnect(&obex->port);
-पूर्ण
+}
 
 /*-------------------------------------------------------------------------*/
 
-अटल व्योम obex_connect(काष्ठा gserial *g)
-अणु
-	काष्ठा f_obex		*obex = port_to_obex(g);
-	काष्ठा usb_composite_dev *cdev = g->func.config->cdev;
-	पूर्णांक			status;
+static void obex_connect(struct gserial *g)
+{
+	struct f_obex		*obex = port_to_obex(g);
+	struct usb_composite_dev *cdev = g->func.config->cdev;
+	int			status;
 
 	status = usb_function_activate(&g->func);
-	अगर (status)
+	if (status)
 		dev_dbg(&cdev->gadget->dev,
 			"obex ttyGS%d function activate --> %d\n",
 			obex->port_num, status);
-पूर्ण
+}
 
-अटल व्योम obex_disconnect(काष्ठा gserial *g)
-अणु
-	काष्ठा f_obex		*obex = port_to_obex(g);
-	काष्ठा usb_composite_dev *cdev = g->func.config->cdev;
-	पूर्णांक			status;
+static void obex_disconnect(struct gserial *g)
+{
+	struct f_obex		*obex = port_to_obex(g);
+	struct usb_composite_dev *cdev = g->func.config->cdev;
+	int			status;
 
 	status = usb_function_deactivate(&g->func);
-	अगर (status)
+	if (status)
 		dev_dbg(&cdev->gadget->dev,
 			"obex ttyGS%d function deactivate --> %d\n",
 			obex->port_num, status);
-पूर्ण
+}
 
 /*-------------------------------------------------------------------------*/
 
 /* Some controllers can't support CDC OBEX ... */
-अटल अंतरभूत bool can_support_obex(काष्ठा usb_configuration *c)
-अणु
-	/* Since the first पूर्णांकerface is a NOP, we can ignore the
-	 * issue of multi-पूर्णांकerface support on most controllers.
+static inline bool can_support_obex(struct usb_configuration *c)
+{
+	/* Since the first interface is a NOP, we can ignore the
+	 * issue of multi-interface support on most controllers.
 	 *
 	 * Altsettings are mandatory, however...
 	 */
-	अगर (!gadget_is_altset_supported(c->cdev->gadget))
-		वापस false;
+	if (!gadget_is_altset_supported(c->cdev->gadget))
+		return false;
 
-	/* everything अन्यथा is *probably* fine ... */
-	वापस true;
-पूर्ण
+	/* everything else is *probably* fine ... */
+	return true;
+}
 
-अटल पूर्णांक obex_bind(काष्ठा usb_configuration *c, काष्ठा usb_function *f)
-अणु
-	काष्ठा usb_composite_dev *cdev = c->cdev;
-	काष्ठा f_obex		*obex = func_to_obex(f);
-	काष्ठा usb_string	*us;
-	पूर्णांक			status;
-	काष्ठा usb_ep		*ep;
+static int obex_bind(struct usb_configuration *c, struct usb_function *f)
+{
+	struct usb_composite_dev *cdev = c->cdev;
+	struct f_obex		*obex = func_to_obex(f);
+	struct usb_string	*us;
+	int			status;
+	struct usb_ep		*ep;
 
-	अगर (!can_support_obex(c))
-		वापस -EINVAL;
+	if (!can_support_obex(c))
+		return -EINVAL;
 
 	us = usb_gstrings_attach(cdev, obex_strings,
 				 ARRAY_SIZE(obex_string_defs));
-	अगर (IS_ERR(us))
-		वापस PTR_ERR(us);
-	obex_control_पूर्णांकf.iInterface = us[OBEX_CTRL_IDX].id;
-	obex_data_nop_पूर्णांकf.iInterface = us[OBEX_DATA_IDX].id;
-	obex_data_पूर्णांकf.iInterface = us[OBEX_DATA_IDX].id;
+	if (IS_ERR(us))
+		return PTR_ERR(us);
+	obex_control_intf.iInterface = us[OBEX_CTRL_IDX].id;
+	obex_data_nop_intf.iInterface = us[OBEX_DATA_IDX].id;
+	obex_data_intf.iInterface = us[OBEX_DATA_IDX].id;
 
-	/* allocate instance-specअगरic पूर्णांकerface IDs, and patch descriptors */
+	/* allocate instance-specific interface IDs, and patch descriptors */
 
-	status = usb_पूर्णांकerface_id(c, f);
-	अगर (status < 0)
-		जाओ fail;
+	status = usb_interface_id(c, f);
+	if (status < 0)
+		goto fail;
 	obex->ctrl_id = status;
 
-	obex_control_पूर्णांकf.bInterfaceNumber = status;
-	obex_cdc_जोड़_desc.bMasterInterface0 = status;
+	obex_control_intf.bInterfaceNumber = status;
+	obex_cdc_union_desc.bMasterInterface0 = status;
 
-	status = usb_पूर्णांकerface_id(c, f);
-	अगर (status < 0)
-		जाओ fail;
+	status = usb_interface_id(c, f);
+	if (status < 0)
+		goto fail;
 	obex->data_id = status;
 
-	obex_data_nop_पूर्णांकf.bInterfaceNumber = status;
-	obex_data_पूर्णांकf.bInterfaceNumber = status;
-	obex_cdc_जोड़_desc.bSlaveInterface0 = status;
+	obex_data_nop_intf.bInterfaceNumber = status;
+	obex_data_intf.bInterfaceNumber = status;
+	obex_cdc_union_desc.bSlaveInterface0 = status;
 
-	/* allocate instance-specअगरic endpoपूर्णांकs */
+	/* allocate instance-specific endpoints */
 
 	status = -ENODEV;
-	ep = usb_ep_स्वतःconfig(cdev->gadget, &obex_fs_ep_in_desc);
-	अगर (!ep)
-		जाओ fail;
+	ep = usb_ep_autoconfig(cdev->gadget, &obex_fs_ep_in_desc);
+	if (!ep)
+		goto fail;
 	obex->port.in = ep;
 
-	ep = usb_ep_स्वतःconfig(cdev->gadget, &obex_fs_ep_out_desc);
-	अगर (!ep)
-		जाओ fail;
+	ep = usb_ep_autoconfig(cdev->gadget, &obex_fs_ep_out_desc);
+	if (!ep)
+		goto fail;
 	obex->port.out = ep;
 
 	/* support all relevant hardware speeds... we expect that when
-	 * hardware is dual speed, all bulk-capable endpoपूर्णांकs work at
+	 * hardware is dual speed, all bulk-capable endpoints work at
 	 * both speeds
 	 */
 
-	obex_hs_ep_in_desc.bEndpoपूर्णांकAddress =
-		obex_fs_ep_in_desc.bEndpoपूर्णांकAddress;
-	obex_hs_ep_out_desc.bEndpoपूर्णांकAddress =
-		obex_fs_ep_out_desc.bEndpoपूर्णांकAddress;
+	obex_hs_ep_in_desc.bEndpointAddress =
+		obex_fs_ep_in_desc.bEndpointAddress;
+	obex_hs_ep_out_desc.bEndpointAddress =
+		obex_fs_ep_out_desc.bEndpointAddress;
 
-	status = usb_assign_descriptors(f, fs_function, hs_function, शून्य,
-					शून्य);
-	अगर (status)
-		जाओ fail;
+	status = usb_assign_descriptors(f, fs_function, hs_function, NULL,
+					NULL);
+	if (status)
+		goto fail;
 
 	dev_dbg(&cdev->gadget->dev, "obex ttyGS%d: %s speed IN/%s OUT/%s\n",
 		obex->port_num,
 		gadget_is_dualspeed(c->cdev->gadget) ? "dual" : "full",
 		obex->port.in->name, obex->port.out->name);
 
-	वापस 0;
+	return 0;
 
 fail:
 	ERROR(cdev, "%s/%p: can't bind, err %d\n", f->name, f, status);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल अंतरभूत काष्ठा f_serial_opts *to_f_serial_opts(काष्ठा config_item *item)
-अणु
-	वापस container_of(to_config_group(item), काष्ठा f_serial_opts,
+static inline struct f_serial_opts *to_f_serial_opts(struct config_item *item)
+{
+	return container_of(to_config_group(item), struct f_serial_opts,
 			    func_inst.group);
-पूर्ण
+}
 
-अटल व्योम obex_attr_release(काष्ठा config_item *item)
-अणु
-	काष्ठा f_serial_opts *opts = to_f_serial_opts(item);
+static void obex_attr_release(struct config_item *item)
+{
+	struct f_serial_opts *opts = to_f_serial_opts(item);
 
 	usb_put_function_instance(&opts->func_inst);
-पूर्ण
+}
 
-अटल काष्ठा configfs_item_operations obex_item_ops = अणु
+static struct configfs_item_operations obex_item_ops = {
 	.release	= obex_attr_release,
-पूर्ण;
+};
 
-अटल sमाप_प्रकार f_obex_port_num_show(काष्ठा config_item *item, अक्षर *page)
-अणु
-	वापस प्र_लिखो(page, "%u\n", to_f_serial_opts(item)->port_num);
-पूर्ण
+static ssize_t f_obex_port_num_show(struct config_item *item, char *page)
+{
+	return sprintf(page, "%u\n", to_f_serial_opts(item)->port_num);
+}
 
 CONFIGFS_ATTR_RO(f_obex_, port_num);
 
-अटल काष्ठा configfs_attribute *acm_attrs[] = अणु
+static struct configfs_attribute *acm_attrs[] = {
 	&f_obex_attr_port_num,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा config_item_type obex_func_type = अणु
+static const struct config_item_type obex_func_type = {
 	.ct_item_ops	= &obex_item_ops,
 	.ct_attrs	= acm_attrs,
 	.ct_owner	= THIS_MODULE,
-पूर्ण;
+};
 
-अटल व्योम obex_मुक्त_inst(काष्ठा usb_function_instance *f)
-अणु
-	काष्ठा f_serial_opts *opts;
+static void obex_free_inst(struct usb_function_instance *f)
+{
+	struct f_serial_opts *opts;
 
-	opts = container_of(f, काष्ठा f_serial_opts, func_inst);
-	gserial_मुक्त_line(opts->port_num);
-	kमुक्त(opts);
-पूर्ण
+	opts = container_of(f, struct f_serial_opts, func_inst);
+	gserial_free_line(opts->port_num);
+	kfree(opts);
+}
 
-अटल काष्ठा usb_function_instance *obex_alloc_inst(व्योम)
-अणु
-	काष्ठा f_serial_opts *opts;
-	पूर्णांक ret;
+static struct usb_function_instance *obex_alloc_inst(void)
+{
+	struct f_serial_opts *opts;
+	int ret;
 
-	opts = kzalloc(माप(*opts), GFP_KERNEL);
-	अगर (!opts)
-		वापस ERR_PTR(-ENOMEM);
+	opts = kzalloc(sizeof(*opts), GFP_KERNEL);
+	if (!opts)
+		return ERR_PTR(-ENOMEM);
 
-	opts->func_inst.मुक्त_func_inst = obex_मुक्त_inst;
+	opts->func_inst.free_func_inst = obex_free_inst;
 	ret = gserial_alloc_line_no_console(&opts->port_num);
-	अगर (ret) अणु
-		kमुक्त(opts);
-		वापस ERR_PTR(ret);
-	पूर्ण
+	if (ret) {
+		kfree(opts);
+		return ERR_PTR(ret);
+	}
 	config_group_init_type_name(&opts->func_inst.group, "",
 				    &obex_func_type);
 
-	वापस &opts->func_inst;
-पूर्ण
+	return &opts->func_inst;
+}
 
-अटल व्योम obex_मुक्त(काष्ठा usb_function *f)
-अणु
-	काष्ठा f_obex *obex;
+static void obex_free(struct usb_function *f)
+{
+	struct f_obex *obex;
 
 	obex = func_to_obex(f);
-	kमुक्त(obex);
-पूर्ण
+	kfree(obex);
+}
 
-अटल व्योम obex_unbind(काष्ठा usb_configuration *c, काष्ठा usb_function *f)
-अणु
-	usb_मुक्त_all_descriptors(f);
-पूर्ण
+static void obex_unbind(struct usb_configuration *c, struct usb_function *f)
+{
+	usb_free_all_descriptors(f);
+}
 
-अटल काष्ठा usb_function *obex_alloc(काष्ठा usb_function_instance *fi)
-अणु
-	काष्ठा f_obex	*obex;
-	काष्ठा f_serial_opts *opts;
+static struct usb_function *obex_alloc(struct usb_function_instance *fi)
+{
+	struct f_obex	*obex;
+	struct f_serial_opts *opts;
 
 	/* allocate and initialize one new instance */
-	obex = kzalloc(माप(*obex), GFP_KERNEL);
-	अगर (!obex)
-		वापस ERR_PTR(-ENOMEM);
+	obex = kzalloc(sizeof(*obex), GFP_KERNEL);
+	if (!obex)
+		return ERR_PTR(-ENOMEM);
 
-	opts = container_of(fi, काष्ठा f_serial_opts, func_inst);
+	opts = container_of(fi, struct f_serial_opts, func_inst);
 
 	obex->port_num = opts->port_num;
 
@@ -481,11 +480,11 @@ CONFIGFS_ATTR_RO(f_obex_, port_num);
 	obex->port.func.set_alt = obex_set_alt;
 	obex->port.func.get_alt = obex_get_alt;
 	obex->port.func.disable = obex_disable;
-	obex->port.func.मुक्त_func = obex_मुक्त;
+	obex->port.func.free_func = obex_free;
 	obex->port.func.bind_deactivated = true;
 
-	वापस &obex->port.func;
-पूर्ण
+	return &obex->port.func;
+}
 
 DECLARE_USB_FUNCTION_INIT(obex, obex_alloc_inst, obex_alloc);
 MODULE_AUTHOR("Felipe Balbi");

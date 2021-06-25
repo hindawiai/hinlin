@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
 /*
  * Common functionality of grant device.
@@ -9,82 +8,82 @@
  *           (c) 2018 Oleksandr Andrushchenko, EPAM Systems Inc.
  */
 
-#अगर_अघोषित _GNTDEV_COMMON_H
-#घोषणा _GNTDEV_COMMON_H
+#ifndef _GNTDEV_COMMON_H
+#define _GNTDEV_COMMON_H
 
-#समावेश <linux/mm.h>
-#समावेश <linux/mman.h>
-#समावेश <linux/mmu_notअगरier.h>
-#समावेश <linux/types.h>
-#समावेश <xen/पूर्णांकerface/event_channel.h>
+#include <linux/mm.h>
+#include <linux/mman.h>
+#include <linux/mmu_notifier.h>
+#include <linux/types.h>
+#include <xen/interface/event_channel.h>
 
-काष्ठा gntdev_dmabuf_priv;
+struct gntdev_dmabuf_priv;
 
-काष्ठा gntdev_priv अणु
+struct gntdev_priv {
 	/* Maps with visible offsets in the file descriptor. */
-	काष्ठा list_head maps;
-	/* lock protects maps and मुक्तable_maps. */
-	काष्ठा mutex lock;
+	struct list_head maps;
+	/* lock protects maps and freeable_maps. */
+	struct mutex lock;
 
-#अगर_घोषित CONFIG_XEN_GRANT_DMA_ALLOC
-	/* Device क्रम which DMA memory is allocated. */
-	काष्ठा device *dma_dev;
-#पूर्ण_अगर
+#ifdef CONFIG_XEN_GRANT_DMA_ALLOC
+	/* Device for which DMA memory is allocated. */
+	struct device *dma_dev;
+#endif
 
-#अगर_घोषित CONFIG_XEN_GNTDEV_DMABUF
-	काष्ठा gntdev_dmabuf_priv *dmabuf_priv;
-#पूर्ण_अगर
-पूर्ण;
+#ifdef CONFIG_XEN_GNTDEV_DMABUF
+	struct gntdev_dmabuf_priv *dmabuf_priv;
+#endif
+};
 
-काष्ठा gntdev_unmap_notअगरy अणु
-	पूर्णांक flags;
+struct gntdev_unmap_notify {
+	int flags;
 	/* Address relative to the start of the gntdev_grant_map. */
-	पूर्णांक addr;
+	int addr;
 	evtchn_port_t event;
-पूर्ण;
+};
 
-काष्ठा gntdev_grant_map अणु
-	काष्ठा mmu_पूर्णांकerval_notअगरier notअगरier;
-	काष्ठा list_head next;
-	काष्ठा vm_area_काष्ठा *vma;
-	पूर्णांक index;
-	पूर्णांक count;
-	पूर्णांक flags;
+struct gntdev_grant_map {
+	struct mmu_interval_notifier notifier;
+	struct list_head next;
+	struct vm_area_struct *vma;
+	int index;
+	int count;
+	int flags;
 	refcount_t users;
-	काष्ठा gntdev_unmap_notअगरy notअगरy;
-	काष्ठा ioctl_gntdev_grant_ref *grants;
-	काष्ठा gnttab_map_grant_ref   *map_ops;
-	काष्ठा gnttab_unmap_grant_ref *unmap_ops;
-	काष्ठा gnttab_map_grant_ref   *kmap_ops;
-	काष्ठा gnttab_unmap_grant_ref *kunmap_ops;
-	काष्ठा page **pages;
-	अचिन्हित दीर्घ pages_vm_start;
+	struct gntdev_unmap_notify notify;
+	struct ioctl_gntdev_grant_ref *grants;
+	struct gnttab_map_grant_ref   *map_ops;
+	struct gnttab_unmap_grant_ref *unmap_ops;
+	struct gnttab_map_grant_ref   *kmap_ops;
+	struct gnttab_unmap_grant_ref *kunmap_ops;
+	struct page **pages;
+	unsigned long pages_vm_start;
 
-#अगर_घोषित CONFIG_XEN_GRANT_DMA_ALLOC
+#ifdef CONFIG_XEN_GRANT_DMA_ALLOC
 	/*
-	 * If dmabuf_vaddr is not शून्य then this mapping is backed by DMA
+	 * If dmabuf_vaddr is not NULL then this mapping is backed by DMA
 	 * capable memory.
 	 */
 
-	काष्ठा device *dma_dev;
+	struct device *dma_dev;
 	/* Flags used to create this DMA buffer: GNTDEV_DMA_FLAG_XXX. */
-	पूर्णांक dma_flags;
-	व्योम *dma_vaddr;
+	int dma_flags;
+	void *dma_vaddr;
 	dma_addr_t dma_bus_addr;
-	/* Needed to aव्योम allocation in gnttab_dma_मुक्त_pages(). */
+	/* Needed to avoid allocation in gnttab_dma_free_pages(). */
 	xen_pfn_t *frames;
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-काष्ठा gntdev_grant_map *gntdev_alloc_map(काष्ठा gntdev_priv *priv, पूर्णांक count,
-					  पूर्णांक dma_flags);
+struct gntdev_grant_map *gntdev_alloc_map(struct gntdev_priv *priv, int count,
+					  int dma_flags);
 
-व्योम gntdev_add_map(काष्ठा gntdev_priv *priv, काष्ठा gntdev_grant_map *add);
+void gntdev_add_map(struct gntdev_priv *priv, struct gntdev_grant_map *add);
 
-व्योम gntdev_put_map(काष्ठा gntdev_priv *priv, काष्ठा gntdev_grant_map *map);
+void gntdev_put_map(struct gntdev_priv *priv, struct gntdev_grant_map *map);
 
-bool gntdev_test_page_count(अचिन्हित पूर्णांक count);
+bool gntdev_test_page_count(unsigned int count);
 
-पूर्णांक gntdev_map_grant_pages(काष्ठा gntdev_grant_map *map);
+int gntdev_map_grant_pages(struct gntdev_grant_map *map);
 
-#पूर्ण_अगर
+#endif

@@ -1,11 +1,10 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित CAIAQ_MIDI_H
-#घोषणा CAIAQ_MIDI_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef CAIAQ_MIDI_H
+#define CAIAQ_MIDI_H
 
-पूर्णांक snd_usb_caiaq_midi_init(काष्ठा snd_usb_caiaqdev *cdev);
-व्योम snd_usb_caiaq_midi_handle_input(काष्ठा snd_usb_caiaqdev *cdev,
-				     पूर्णांक port, स्थिर अक्षर *buf, पूर्णांक len);
-व्योम snd_usb_caiaq_midi_output_करोne(काष्ठा urb *urb);
+int snd_usb_caiaq_midi_init(struct snd_usb_caiaqdev *cdev);
+void snd_usb_caiaq_midi_handle_input(struct snd_usb_caiaqdev *cdev,
+				     int port, const char *buf, int len);
+void snd_usb_caiaq_midi_output_done(struct urb *urb);
 
-#पूर्ण_अगर /* CAIAQ_MIDI_H */
+#endif /* CAIAQ_MIDI_H */

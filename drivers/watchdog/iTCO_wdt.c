@@ -1,656 +1,655 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- *	पूर्णांकel TCO Watchकरोg Driver
+ *	intel TCO Watchdog Driver
  *
  *	(c) Copyright 2006-2011 Wim Van Sebroeck <wim@iguana.be>.
  *
  *	Neither Wim Van Sebroeck nor Iguana vzw. admit liability nor
- *	provide warranty क्रम any of this software. This material is
- *	provided "AS-IS" and at no अक्षरge.
+ *	provide warranty for any of this software. This material is
+ *	provided "AS-IS" and at no charge.
  *
- *	The TCO watchकरोg is implemented in the following I/O controller hubs:
- *	(See the पूर्णांकel करोcumentation on http://developer.पूर्णांकel.com.)
- *	करोcument number 290655-003, 290677-014: 82801AA (ICH), 82801AB (ICHO)
- *	करोcument number 290687-002, 298242-027: 82801BA (ICH2)
- *	करोcument number 290733-003, 290739-013: 82801CA (ICH3-S)
- *	करोcument number 290716-001, 290718-007: 82801CAM (ICH3-M)
- *	करोcument number 290744-001, 290745-025: 82801DB (ICH4)
- *	करोcument number 252337-001, 252663-008: 82801DBM (ICH4-M)
- *	करोcument number 273599-001, 273645-002: 82801E (C-ICH)
- *	करोcument number 252516-001, 252517-028: 82801EB (ICH5), 82801ER (ICH5R)
- *	करोcument number 300641-004, 300884-013: 6300ESB
- *	करोcument number 301473-002, 301474-026: 82801F (ICH6)
- *	करोcument number 313082-001, 313075-006: 631xESB, 632xESB
- *	करोcument number 307013-003, 307014-024: 82801G (ICH7)
- *	करोcument number 322896-001, 322897-001: NM10
- *	करोcument number 313056-003, 313057-017: 82801H (ICH8)
- *	करोcument number 316972-004, 316973-012: 82801I (ICH9)
- *	करोcument number 319973-002, 319974-002: 82801J (ICH10)
- *	करोcument number 322169-001, 322170-003: 5 Series, 3400 Series (PCH)
- *	करोcument number 320066-003, 320257-008: EP80597 (IICH)
- *	करोcument number 324645-001, 324646-001: Cougar Poपूर्णांक (CPT)
- *	करोcument number TBD                   : Patsburg (PBG)
- *	करोcument number TBD                   : DH89xxCC
- *	करोcument number TBD                   : Panther Poपूर्णांक
- *	करोcument number TBD                   : Lynx Poपूर्णांक
- *	करोcument number TBD                   : Lynx Poपूर्णांक-LP
+ *	The TCO watchdog is implemented in the following I/O controller hubs:
+ *	(See the intel documentation on http://developer.intel.com.)
+ *	document number 290655-003, 290677-014: 82801AA (ICH), 82801AB (ICHO)
+ *	document number 290687-002, 298242-027: 82801BA (ICH2)
+ *	document number 290733-003, 290739-013: 82801CA (ICH3-S)
+ *	document number 290716-001, 290718-007: 82801CAM (ICH3-M)
+ *	document number 290744-001, 290745-025: 82801DB (ICH4)
+ *	document number 252337-001, 252663-008: 82801DBM (ICH4-M)
+ *	document number 273599-001, 273645-002: 82801E (C-ICH)
+ *	document number 252516-001, 252517-028: 82801EB (ICH5), 82801ER (ICH5R)
+ *	document number 300641-004, 300884-013: 6300ESB
+ *	document number 301473-002, 301474-026: 82801F (ICH6)
+ *	document number 313082-001, 313075-006: 631xESB, 632xESB
+ *	document number 307013-003, 307014-024: 82801G (ICH7)
+ *	document number 322896-001, 322897-001: NM10
+ *	document number 313056-003, 313057-017: 82801H (ICH8)
+ *	document number 316972-004, 316973-012: 82801I (ICH9)
+ *	document number 319973-002, 319974-002: 82801J (ICH10)
+ *	document number 322169-001, 322170-003: 5 Series, 3400 Series (PCH)
+ *	document number 320066-003, 320257-008: EP80597 (IICH)
+ *	document number 324645-001, 324646-001: Cougar Point (CPT)
+ *	document number TBD                   : Patsburg (PBG)
+ *	document number TBD                   : DH89xxCC
+ *	document number TBD                   : Panther Point
+ *	document number TBD                   : Lynx Point
+ *	document number TBD                   : Lynx Point-LP
  */
 
 /*
  *	Includes, defines, variables, module parameters, ...
  */
 
-/* Module and version inक्रमmation */
-#घोषणा DRV_NAME	"iTCO_wdt"
-#घोषणा DRV_VERSION	"1.11"
+/* Module and version information */
+#define DRV_NAME	"iTCO_wdt"
+#define DRV_VERSION	"1.11"
 
 /* Includes */
-#समावेश <linux/acpi.h>			/* For ACPI support */
-#समावेश <linux/bits.h>			/* For BIT() */
-#समावेश <linux/module.h>		/* For module specअगरic items */
-#समावेश <linux/moduleparam.h>		/* For new moduleparam's */
-#समावेश <linux/types.h>		/* For standard types (like माप_प्रकार) */
-#समावेश <linux/त्रुटिसं.स>		/* For the -ENODEV/... values */
-#समावेश <linux/kernel.h>		/* For prपूर्णांकk/panic/... */
-#समावेश <linux/watchकरोg.h>		/* For the watchकरोg specअगरic items */
-#समावेश <linux/init.h>			/* For __init/__निकास/... */
-#समावेश <linux/fs.h>			/* For file operations */
-#समावेश <linux/platक्रमm_device.h>	/* For platक्रमm_driver framework */
-#समावेश <linux/pci.h>			/* For pci functions */
-#समावेश <linux/ioport.h>		/* For io-port access */
-#समावेश <linux/spinlock.h>		/* For spin_lock/spin_unlock/... */
-#समावेश <linux/uaccess.h>		/* For copy_to_user/put_user/... */
-#समावेश <linux/पन.स>			/* For inb/outb/... */
-#समावेश <linux/platक्रमm_data/itco_wdt.h>
-#समावेश <linux/mfd/पूर्णांकel_pmc_bxt.h>
+#include <linux/acpi.h>			/* For ACPI support */
+#include <linux/bits.h>			/* For BIT() */
+#include <linux/module.h>		/* For module specific items */
+#include <linux/moduleparam.h>		/* For new moduleparam's */
+#include <linux/types.h>		/* For standard types (like size_t) */
+#include <linux/errno.h>		/* For the -ENODEV/... values */
+#include <linux/kernel.h>		/* For printk/panic/... */
+#include <linux/watchdog.h>		/* For the watchdog specific items */
+#include <linux/init.h>			/* For __init/__exit/... */
+#include <linux/fs.h>			/* For file operations */
+#include <linux/platform_device.h>	/* For platform_driver framework */
+#include <linux/pci.h>			/* For pci functions */
+#include <linux/ioport.h>		/* For io-port access */
+#include <linux/spinlock.h>		/* For spin_lock/spin_unlock/... */
+#include <linux/uaccess.h>		/* For copy_to_user/put_user/... */
+#include <linux/io.h>			/* For inb/outb/... */
+#include <linux/platform_data/itco_wdt.h>
+#include <linux/mfd/intel_pmc_bxt.h>
 
-#समावेश "iTCO_vendor.h"
+#include "iTCO_vendor.h"
 
-/* Address definitions क्रम the TCO */
+/* Address definitions for the TCO */
 /* TCO base address */
-#घोषणा TCOBASE(p)	((p)->tco_res->start)
+#define TCOBASE(p)	((p)->tco_res->start)
 /* SMI Control and Enable Register */
-#घोषणा SMI_EN(p)	((p)->smi_res->start)
+#define SMI_EN(p)	((p)->smi_res->start)
 
-#घोषणा TCO_RLD(p)	(TCOBASE(p) + 0x00) /* TCO Timer Reload/Curr. Value */
-#घोषणा TCOv1_TMR(p)	(TCOBASE(p) + 0x01) /* TCOv1 Timer Initial Value*/
-#घोषणा TCO_DAT_IN(p)	(TCOBASE(p) + 0x02) /* TCO Data In Register	*/
-#घोषणा TCO_DAT_OUT(p)	(TCOBASE(p) + 0x03) /* TCO Data Out Register	*/
-#घोषणा TCO1_STS(p)	(TCOBASE(p) + 0x04) /* TCO1 Status Register	*/
-#घोषणा TCO2_STS(p)	(TCOBASE(p) + 0x06) /* TCO2 Status Register	*/
-#घोषणा TCO1_CNT(p)	(TCOBASE(p) + 0x08) /* TCO1 Control Register	*/
-#घोषणा TCO2_CNT(p)	(TCOBASE(p) + 0x0a) /* TCO2 Control Register	*/
-#घोषणा TCOv2_TMR(p)	(TCOBASE(p) + 0x12) /* TCOv2 Timer Initial Value*/
+#define TCO_RLD(p)	(TCOBASE(p) + 0x00) /* TCO Timer Reload/Curr. Value */
+#define TCOv1_TMR(p)	(TCOBASE(p) + 0x01) /* TCOv1 Timer Initial Value*/
+#define TCO_DAT_IN(p)	(TCOBASE(p) + 0x02) /* TCO Data In Register	*/
+#define TCO_DAT_OUT(p)	(TCOBASE(p) + 0x03) /* TCO Data Out Register	*/
+#define TCO1_STS(p)	(TCOBASE(p) + 0x04) /* TCO1 Status Register	*/
+#define TCO2_STS(p)	(TCOBASE(p) + 0x06) /* TCO2 Status Register	*/
+#define TCO1_CNT(p)	(TCOBASE(p) + 0x08) /* TCO1 Control Register	*/
+#define TCO2_CNT(p)	(TCOBASE(p) + 0x0a) /* TCO2 Control Register	*/
+#define TCOv2_TMR(p)	(TCOBASE(p) + 0x12) /* TCOv2 Timer Initial Value*/
 
-/* पूर्णांकernal variables */
-काष्ठा iTCO_wdt_निजी अणु
-	काष्ठा watchकरोg_device wddev;
+/* internal variables */
+struct iTCO_wdt_private {
+	struct watchdog_device wddev;
 
 	/* TCO version/generation */
-	अचिन्हित पूर्णांक iTCO_version;
-	काष्ठा resource *tco_res;
-	काष्ठा resource *smi_res;
+	unsigned int iTCO_version;
+	struct resource *tco_res;
+	struct resource *smi_res;
 	/*
-	 * NO_REBOOT flag is Memory-Mapped GCS रेजिस्टर bit 5 (TCO version 2),
-	 * or memory-mapped PMC रेजिस्टर bit 4 (TCO version 3).
+	 * NO_REBOOT flag is Memory-Mapped GCS register bit 5 (TCO version 2),
+	 * or memory-mapped PMC register bit 4 (TCO version 3).
 	 */
-	काष्ठा resource *gcs_pmc_res;
-	अचिन्हित दीर्घ __iomem *gcs_pmc;
-	/* the lock क्रम io operations */
+	struct resource *gcs_pmc_res;
+	unsigned long __iomem *gcs_pmc;
+	/* the lock for io operations */
 	spinlock_t io_lock;
 	/* the PCI-device */
-	काष्ठा pci_dev *pci_dev;
-	/* whether or not the watchकरोg has been suspended */
+	struct pci_dev *pci_dev;
+	/* whether or not the watchdog has been suspended */
 	bool suspended;
-	/* no reboot API निजी data */
-	व्योम *no_reboot_priv;
-	/* no reboot update function poपूर्णांकer */
-	पूर्णांक (*update_no_reboot_bit)(व्योम *p, bool set);
-पूर्ण;
+	/* no reboot API private data */
+	void *no_reboot_priv;
+	/* no reboot update function pointer */
+	int (*update_no_reboot_bit)(void *p, bool set);
+};
 
 /* module parameters */
-#घोषणा WATCHDOG_TIMEOUT 30	/* 30 sec शेष heartbeat */
-अटल पूर्णांक heartbeat = WATCHDOG_TIMEOUT;  /* in seconds */
-module_param(heartbeat, पूर्णांक, 0);
+#define WATCHDOG_TIMEOUT 30	/* 30 sec default heartbeat */
+static int heartbeat = WATCHDOG_TIMEOUT;  /* in seconds */
+module_param(heartbeat, int, 0);
 MODULE_PARM_DESC(heartbeat, "Watchdog timeout in seconds. "
 	"5..76 (TCO v1) or 3..614 (TCO v2), default="
 				__MODULE_STRING(WATCHDOG_TIMEOUT) ")");
 
-अटल bool nowayout = WATCHDOG_NOWAYOUT;
+static bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout,
 	"Watchdog cannot be stopped once started (default="
 				__MODULE_STRING(WATCHDOG_NOWAYOUT) ")");
 
-अटल पूर्णांक turn_SMI_watchकरोg_clear_off = 1;
-module_param(turn_SMI_watchकरोg_clear_off, पूर्णांक, 0);
-MODULE_PARM_DESC(turn_SMI_watchकरोg_clear_off,
+static int turn_SMI_watchdog_clear_off = 1;
+module_param(turn_SMI_watchdog_clear_off, int, 0);
+MODULE_PARM_DESC(turn_SMI_watchdog_clear_off,
 	"Turn off SMI clearing watchdog (depends on TCO-version)(default=1)");
 
 /*
- * Some TCO specअगरic functions
+ * Some TCO specific functions
  */
 
 /*
- * The iTCO v1 and v2's पूर्णांकernal समयr is stored as ticks which decrement
- * every 0.6 seconds.  v3's पूर्णांकernal समयr is stored as seconds (some
+ * The iTCO v1 and v2's internal timer is stored as ticks which decrement
+ * every 0.6 seconds.  v3's internal timer is stored as seconds (some
  * datasheets incorrectly state 0.6 seconds).
  */
-अटल अंतरभूत अचिन्हित पूर्णांक seconds_to_ticks(काष्ठा iTCO_wdt_निजी *p,
-					    पूर्णांक secs)
-अणु
-	वापस p->iTCO_version == 3 ? secs : (secs * 10) / 6;
-पूर्ण
+static inline unsigned int seconds_to_ticks(struct iTCO_wdt_private *p,
+					    int secs)
+{
+	return p->iTCO_version == 3 ? secs : (secs * 10) / 6;
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक ticks_to_seconds(काष्ठा iTCO_wdt_निजी *p,
-					    पूर्णांक ticks)
-अणु
-	वापस p->iTCO_version == 3 ? ticks : (ticks * 6) / 10;
-पूर्ण
+static inline unsigned int ticks_to_seconds(struct iTCO_wdt_private *p,
+					    int ticks)
+{
+	return p->iTCO_version == 3 ? ticks : (ticks * 6) / 10;
+}
 
-अटल अंतरभूत u32 no_reboot_bit(काष्ठा iTCO_wdt_निजी *p)
-अणु
+static inline u32 no_reboot_bit(struct iTCO_wdt_private *p)
+{
 	u32 enable_bit;
 
-	चयन (p->iTCO_version) अणु
-	हाल 5:
-	हाल 3:
+	switch (p->iTCO_version) {
+	case 5:
+	case 3:
 		enable_bit = 0x00000010;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		enable_bit = 0x00000020;
-		अवरोध;
-	हाल 4:
-	हाल 1:
-	शेष:
+		break;
+	case 4:
+	case 1:
+	default:
 		enable_bit = 0x00000002;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस enable_bit;
-पूर्ण
+	return enable_bit;
+}
 
-अटल पूर्णांक update_no_reboot_bit_def(व्योम *priv, bool set)
-अणु
-	वापस 0;
-पूर्ण
+static int update_no_reboot_bit_def(void *priv, bool set)
+{
+	return 0;
+}
 
-अटल पूर्णांक update_no_reboot_bit_pci(व्योम *priv, bool set)
-अणु
-	काष्ठा iTCO_wdt_निजी *p = priv;
+static int update_no_reboot_bit_pci(void *priv, bool set)
+{
+	struct iTCO_wdt_private *p = priv;
 	u32 val32 = 0, newval32 = 0;
 
-	pci_पढ़ो_config_dword(p->pci_dev, 0xd4, &val32);
-	अगर (set)
+	pci_read_config_dword(p->pci_dev, 0xd4, &val32);
+	if (set)
 		val32 |= no_reboot_bit(p);
-	अन्यथा
+	else
 		val32 &= ~no_reboot_bit(p);
-	pci_ग_लिखो_config_dword(p->pci_dev, 0xd4, val32);
-	pci_पढ़ो_config_dword(p->pci_dev, 0xd4, &newval32);
+	pci_write_config_dword(p->pci_dev, 0xd4, val32);
+	pci_read_config_dword(p->pci_dev, 0xd4, &newval32);
 
 	/* make sure the update is successful */
-	अगर (val32 != newval32)
-		वापस -EIO;
+	if (val32 != newval32)
+		return -EIO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक update_no_reboot_bit_mem(व्योम *priv, bool set)
-अणु
-	काष्ठा iTCO_wdt_निजी *p = priv;
+static int update_no_reboot_bit_mem(void *priv, bool set)
+{
+	struct iTCO_wdt_private *p = priv;
 	u32 val32 = 0, newval32 = 0;
 
-	val32 = पढ़ोl(p->gcs_pmc);
-	अगर (set)
+	val32 = readl(p->gcs_pmc);
+	if (set)
 		val32 |= no_reboot_bit(p);
-	अन्यथा
+	else
 		val32 &= ~no_reboot_bit(p);
-	ग_लिखोl(val32, p->gcs_pmc);
-	newval32 = पढ़ोl(p->gcs_pmc);
+	writel(val32, p->gcs_pmc);
+	newval32 = readl(p->gcs_pmc);
 
 	/* make sure the update is successful */
-	अगर (val32 != newval32)
-		वापस -EIO;
+	if (val32 != newval32)
+		return -EIO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक update_no_reboot_bit_cnt(व्योम *priv, bool set)
-अणु
-	काष्ठा iTCO_wdt_निजी *p = priv;
+static int update_no_reboot_bit_cnt(void *priv, bool set)
+{
+	struct iTCO_wdt_private *p = priv;
 	u16 val, newval;
 
 	val = inw(TCO1_CNT(p));
-	अगर (set)
+	if (set)
 		val |= BIT(0);
-	अन्यथा
+	else
 		val &= ~BIT(0);
 	outw(val, TCO1_CNT(p));
 	newval = inw(TCO1_CNT(p));
 
 	/* make sure the update is successful */
-	वापस val != newval ? -EIO : 0;
-पूर्ण
+	return val != newval ? -EIO : 0;
+}
 
-अटल पूर्णांक update_no_reboot_bit_pmc(व्योम *priv, bool set)
-अणु
-	काष्ठा पूर्णांकel_pmc_dev *pmc = priv;
+static int update_no_reboot_bit_pmc(void *priv, bool set)
+{
+	struct intel_pmc_dev *pmc = priv;
 	u32 bits = PMC_CFG_NO_REBOOT_EN;
 	u32 value = set ? bits : 0;
 
-	वापस पूर्णांकel_pmc_gcr_update(pmc, PMC_GCR_PMC_CFG_REG, bits, value);
-पूर्ण
+	return intel_pmc_gcr_update(pmc, PMC_GCR_PMC_CFG_REG, bits, value);
+}
 
-अटल व्योम iTCO_wdt_no_reboot_bit_setup(काष्ठा iTCO_wdt_निजी *p,
-					 काष्ठा platक्रमm_device *pdev,
-					 काष्ठा itco_wdt_platक्रमm_data *pdata)
-अणु
-	अगर (pdata->no_reboot_use_pmc) अणु
-		काष्ठा पूर्णांकel_pmc_dev *pmc = dev_get_drvdata(pdev->dev.parent);
+static void iTCO_wdt_no_reboot_bit_setup(struct iTCO_wdt_private *p,
+					 struct platform_device *pdev,
+					 struct itco_wdt_platform_data *pdata)
+{
+	if (pdata->no_reboot_use_pmc) {
+		struct intel_pmc_dev *pmc = dev_get_drvdata(pdev->dev.parent);
 
 		p->update_no_reboot_bit = update_no_reboot_bit_pmc;
 		p->no_reboot_priv = pmc;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (p->iTCO_version >= 6)
+	if (p->iTCO_version >= 6)
 		p->update_no_reboot_bit = update_no_reboot_bit_cnt;
-	अन्यथा अगर (p->iTCO_version >= 2)
+	else if (p->iTCO_version >= 2)
 		p->update_no_reboot_bit = update_no_reboot_bit_mem;
-	अन्यथा अगर (p->iTCO_version == 1)
+	else if (p->iTCO_version == 1)
 		p->update_no_reboot_bit = update_no_reboot_bit_pci;
-	अन्यथा
+	else
 		p->update_no_reboot_bit = update_no_reboot_bit_def;
 
 	p->no_reboot_priv = p;
-पूर्ण
+}
 
-अटल पूर्णांक iTCO_wdt_start(काष्ठा watchकरोg_device *wd_dev)
-अणु
-	काष्ठा iTCO_wdt_निजी *p = watchकरोg_get_drvdata(wd_dev);
-	अचिन्हित पूर्णांक val;
+static int iTCO_wdt_start(struct watchdog_device *wd_dev)
+{
+	struct iTCO_wdt_private *p = watchdog_get_drvdata(wd_dev);
+	unsigned int val;
 
 	spin_lock(&p->io_lock);
 
-	iTCO_venकरोr_pre_start(p->smi_res, wd_dev->समयout);
+	iTCO_vendor_pre_start(p->smi_res, wd_dev->timeout);
 
 	/* disable chipset's NO_REBOOT bit */
-	अगर (p->update_no_reboot_bit(p->no_reboot_priv, false)) अणु
+	if (p->update_no_reboot_bit(p->no_reboot_priv, false)) {
 		spin_unlock(&p->io_lock);
 		dev_err(wd_dev->parent, "failed to reset NO_REBOOT flag, reboot disabled by hardware/BIOS\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	/* Force the समयr to its reload value by writing to the TCO_RLD
-	   रेजिस्टर */
-	अगर (p->iTCO_version >= 2)
+	/* Force the timer to its reload value by writing to the TCO_RLD
+	   register */
+	if (p->iTCO_version >= 2)
 		outw(0x01, TCO_RLD(p));
-	अन्यथा अगर (p->iTCO_version == 1)
+	else if (p->iTCO_version == 1)
 		outb(0x01, TCO_RLD(p));
 
-	/* Bit 11: TCO Timer Halt -> 0 = The TCO समयr is enabled to count */
+	/* Bit 11: TCO Timer Halt -> 0 = The TCO timer is enabled to count */
 	val = inw(TCO1_CNT(p));
 	val &= 0xf7ff;
 	outw(val, TCO1_CNT(p));
 	val = inw(TCO1_CNT(p));
 	spin_unlock(&p->io_lock);
 
-	अगर (val & 0x0800)
-		वापस -1;
-	वापस 0;
-पूर्ण
+	if (val & 0x0800)
+		return -1;
+	return 0;
+}
 
-अटल पूर्णांक iTCO_wdt_stop(काष्ठा watchकरोg_device *wd_dev)
-अणु
-	काष्ठा iTCO_wdt_निजी *p = watchकरोg_get_drvdata(wd_dev);
-	अचिन्हित पूर्णांक val;
+static int iTCO_wdt_stop(struct watchdog_device *wd_dev)
+{
+	struct iTCO_wdt_private *p = watchdog_get_drvdata(wd_dev);
+	unsigned int val;
 
 	spin_lock(&p->io_lock);
 
-	iTCO_venकरोr_pre_stop(p->smi_res);
+	iTCO_vendor_pre_stop(p->smi_res);
 
-	/* Bit 11: TCO Timer Halt -> 1 = The TCO समयr is disabled */
+	/* Bit 11: TCO Timer Halt -> 1 = The TCO timer is disabled */
 	val = inw(TCO1_CNT(p));
 	val |= 0x0800;
 	outw(val, TCO1_CNT(p));
 	val = inw(TCO1_CNT(p));
 
-	/* Set the NO_REBOOT bit to prevent later reboots, just क्रम sure */
+	/* Set the NO_REBOOT bit to prevent later reboots, just for sure */
 	p->update_no_reboot_bit(p->no_reboot_priv, true);
 
 	spin_unlock(&p->io_lock);
 
-	अगर ((val & 0x0800) == 0)
-		वापस -1;
-	वापस 0;
-पूर्ण
+	if ((val & 0x0800) == 0)
+		return -1;
+	return 0;
+}
 
-अटल पूर्णांक iTCO_wdt_ping(काष्ठा watchकरोg_device *wd_dev)
-अणु
-	काष्ठा iTCO_wdt_निजी *p = watchकरोg_get_drvdata(wd_dev);
+static int iTCO_wdt_ping(struct watchdog_device *wd_dev)
+{
+	struct iTCO_wdt_private *p = watchdog_get_drvdata(wd_dev);
 
 	spin_lock(&p->io_lock);
 
-	/* Reload the समयr by writing to the TCO Timer Counter रेजिस्टर */
-	अगर (p->iTCO_version >= 2) अणु
+	/* Reload the timer by writing to the TCO Timer Counter register */
+	if (p->iTCO_version >= 2) {
 		outw(0x01, TCO_RLD(p));
-	पूर्ण अन्यथा अगर (p->iTCO_version == 1) अणु
-		/* Reset the समयout status bit so that the समयr
-		 * needs to count करोwn twice again beक्रमe rebooting */
-		outw(0x0008, TCO1_STS(p));	/* ग_लिखो 1 to clear bit */
+	} else if (p->iTCO_version == 1) {
+		/* Reset the timeout status bit so that the timer
+		 * needs to count down twice again before rebooting */
+		outw(0x0008, TCO1_STS(p));	/* write 1 to clear bit */
 
 		outb(0x01, TCO_RLD(p));
-	पूर्ण
+	}
 
 	spin_unlock(&p->io_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक iTCO_wdt_set_समयout(काष्ठा watchकरोg_device *wd_dev, अचिन्हित पूर्णांक t)
-अणु
-	काष्ठा iTCO_wdt_निजी *p = watchकरोg_get_drvdata(wd_dev);
-	अचिन्हित पूर्णांक val16;
-	अचिन्हित अक्षर val8;
-	अचिन्हित पूर्णांक पंचांगrval;
+static int iTCO_wdt_set_timeout(struct watchdog_device *wd_dev, unsigned int t)
+{
+	struct iTCO_wdt_private *p = watchdog_get_drvdata(wd_dev);
+	unsigned int val16;
+	unsigned char val8;
+	unsigned int tmrval;
 
-	पंचांगrval = seconds_to_ticks(p, t);
+	tmrval = seconds_to_ticks(p, t);
 
-	/* For TCO v1 the समयr counts करोwn twice beक्रमe rebooting */
-	अगर (p->iTCO_version == 1)
-		पंचांगrval /= 2;
+	/* For TCO v1 the timer counts down twice before rebooting */
+	if (p->iTCO_version == 1)
+		tmrval /= 2;
 
 	/* from the specs: */
 	/* "Values of 0h-3h are ignored and should not be attempted" */
-	अगर (पंचांगrval < 0x04)
-		वापस -EINVAL;
-	अगर ((p->iTCO_version >= 2 && पंचांगrval > 0x3ff) ||
-	    (p->iTCO_version == 1 && पंचांगrval > 0x03f))
-		वापस -EINVAL;
+	if (tmrval < 0x04)
+		return -EINVAL;
+	if ((p->iTCO_version >= 2 && tmrval > 0x3ff) ||
+	    (p->iTCO_version == 1 && tmrval > 0x03f))
+		return -EINVAL;
 
-	/* Write new heartbeat to watchकरोg */
-	अगर (p->iTCO_version >= 2) अणु
+	/* Write new heartbeat to watchdog */
+	if (p->iTCO_version >= 2) {
 		spin_lock(&p->io_lock);
 		val16 = inw(TCOv2_TMR(p));
 		val16 &= 0xfc00;
-		val16 |= पंचांगrval;
+		val16 |= tmrval;
 		outw(val16, TCOv2_TMR(p));
 		val16 = inw(TCOv2_TMR(p));
 		spin_unlock(&p->io_lock);
 
-		अगर ((val16 & 0x3ff) != पंचांगrval)
-			वापस -EINVAL;
-	पूर्ण अन्यथा अगर (p->iTCO_version == 1) अणु
+		if ((val16 & 0x3ff) != tmrval)
+			return -EINVAL;
+	} else if (p->iTCO_version == 1) {
 		spin_lock(&p->io_lock);
 		val8 = inb(TCOv1_TMR(p));
 		val8 &= 0xc0;
-		val8 |= (पंचांगrval & 0xff);
+		val8 |= (tmrval & 0xff);
 		outb(val8, TCOv1_TMR(p));
 		val8 = inb(TCOv1_TMR(p));
 		spin_unlock(&p->io_lock);
 
-		अगर ((val8 & 0x3f) != पंचांगrval)
-			वापस -EINVAL;
-	पूर्ण
+		if ((val8 & 0x3f) != tmrval)
+			return -EINVAL;
+	}
 
-	wd_dev->समयout = t;
-	वापस 0;
-पूर्ण
+	wd_dev->timeout = t;
+	return 0;
+}
 
-अटल अचिन्हित पूर्णांक iTCO_wdt_get_समयleft(काष्ठा watchकरोg_device *wd_dev)
-अणु
-	काष्ठा iTCO_wdt_निजी *p = watchकरोg_get_drvdata(wd_dev);
-	अचिन्हित पूर्णांक val16;
-	अचिन्हित अक्षर val8;
-	अचिन्हित पूर्णांक समय_left = 0;
+static unsigned int iTCO_wdt_get_timeleft(struct watchdog_device *wd_dev)
+{
+	struct iTCO_wdt_private *p = watchdog_get_drvdata(wd_dev);
+	unsigned int val16;
+	unsigned char val8;
+	unsigned int time_left = 0;
 
-	/* पढ़ो the TCO Timer */
-	अगर (p->iTCO_version >= 2) अणु
+	/* read the TCO Timer */
+	if (p->iTCO_version >= 2) {
 		spin_lock(&p->io_lock);
 		val16 = inw(TCO_RLD(p));
 		val16 &= 0x3ff;
 		spin_unlock(&p->io_lock);
 
-		समय_left = ticks_to_seconds(p, val16);
-	पूर्ण अन्यथा अगर (p->iTCO_version == 1) अणु
+		time_left = ticks_to_seconds(p, val16);
+	} else if (p->iTCO_version == 1) {
 		spin_lock(&p->io_lock);
 		val8 = inb(TCO_RLD(p));
 		val8 &= 0x3f;
-		अगर (!(inw(TCO1_STS(p)) & 0x0008))
+		if (!(inw(TCO1_STS(p)) & 0x0008))
 			val8 += (inb(TCOv1_TMR(p)) & 0x3f);
 		spin_unlock(&p->io_lock);
 
-		समय_left = ticks_to_seconds(p, val8);
-	पूर्ण
-	वापस समय_left;
-पूर्ण
+		time_left = ticks_to_seconds(p, val8);
+	}
+	return time_left;
+}
 
 /*
  *	Kernel Interfaces
  */
 
-अटल स्थिर काष्ठा watchकरोg_info ident = अणु
+static const struct watchdog_info ident = {
 	.options =		WDIOF_SETTIMEOUT |
 				WDIOF_KEEPALIVEPING |
 				WDIOF_MAGICCLOSE,
 	.firmware_version =	0,
 	.identity =		DRV_NAME,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा watchकरोg_ops iTCO_wdt_ops = अणु
+static const struct watchdog_ops iTCO_wdt_ops = {
 	.owner =		THIS_MODULE,
 	.start =		iTCO_wdt_start,
 	.stop =			iTCO_wdt_stop,
 	.ping =			iTCO_wdt_ping,
-	.set_समयout =		iTCO_wdt_set_समयout,
-	.get_समयleft =		iTCO_wdt_get_समयleft,
-पूर्ण;
+	.set_timeout =		iTCO_wdt_set_timeout,
+	.get_timeleft =		iTCO_wdt_get_timeleft,
+};
 
 /*
- *	Init & निकास routines
+ *	Init & exit routines
  */
 
-अटल पूर्णांक iTCO_wdt_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा itco_wdt_platक्रमm_data *pdata = dev_get_platdata(dev);
-	काष्ठा iTCO_wdt_निजी *p;
-	अचिन्हित दीर्घ val32;
-	पूर्णांक ret;
+static int iTCO_wdt_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct itco_wdt_platform_data *pdata = dev_get_platdata(dev);
+	struct iTCO_wdt_private *p;
+	unsigned long val32;
+	int ret;
 
-	अगर (!pdata)
-		वापस -ENODEV;
+	if (!pdata)
+		return -ENODEV;
 
-	p = devm_kzalloc(dev, माप(*p), GFP_KERNEL);
-	अगर (!p)
-		वापस -ENOMEM;
+	p = devm_kzalloc(dev, sizeof(*p), GFP_KERNEL);
+	if (!p)
+		return -ENOMEM;
 
 	spin_lock_init(&p->io_lock);
 
-	p->tco_res = platक्रमm_get_resource(pdev, IORESOURCE_IO, ICH_RES_IO_TCO);
-	अगर (!p->tco_res)
-		वापस -ENODEV;
+	p->tco_res = platform_get_resource(pdev, IORESOURCE_IO, ICH_RES_IO_TCO);
+	if (!p->tco_res)
+		return -ENODEV;
 
 	p->iTCO_version = pdata->version;
 	p->pci_dev = to_pci_dev(dev->parent);
 
-	p->smi_res = platक्रमm_get_resource(pdev, IORESOURCE_IO, ICH_RES_IO_SMI);
-	अगर (p->smi_res) अणु
-		/* The TCO logic uses the TCO_EN bit in the SMI_EN रेजिस्टर */
-		अगर (!devm_request_region(dev, p->smi_res->start,
+	p->smi_res = platform_get_resource(pdev, IORESOURCE_IO, ICH_RES_IO_SMI);
+	if (p->smi_res) {
+		/* The TCO logic uses the TCO_EN bit in the SMI_EN register */
+		if (!devm_request_region(dev, p->smi_res->start,
 					 resource_size(p->smi_res),
-					 pdev->name)) अणु
+					 pdev->name)) {
 			pr_err("I/O address 0x%04llx already in use, device disabled\n",
 			       (u64)SMI_EN(p));
-			वापस -EBUSY;
-		पूर्ण
-	पूर्ण अन्यथा अगर (iTCO_venकरोrsupport ||
-		   turn_SMI_watchकरोg_clear_off >= p->iTCO_version) अणु
+			return -EBUSY;
+		}
+	} else if (iTCO_vendorsupport ||
+		   turn_SMI_watchdog_clear_off >= p->iTCO_version) {
 		pr_err("SMI I/O resource is missing\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	iTCO_wdt_no_reboot_bit_setup(p, pdev, pdata);
 
 	/*
-	 * Get the Memory-Mapped GCS or PMC रेजिस्टर, we need it क्रम the
+	 * Get the Memory-Mapped GCS or PMC register, we need it for the
 	 * NO_REBOOT flag (TCO v2 and v3).
 	 */
-	अगर (p->iTCO_version >= 2 && p->iTCO_version < 6 &&
-	    !pdata->no_reboot_use_pmc) अणु
-		p->gcs_pmc_res = platक्रमm_get_resource(pdev,
+	if (p->iTCO_version >= 2 && p->iTCO_version < 6 &&
+	    !pdata->no_reboot_use_pmc) {
+		p->gcs_pmc_res = platform_get_resource(pdev,
 						       IORESOURCE_MEM,
 						       ICH_RES_MEM_GCS_PMC);
 		p->gcs_pmc = devm_ioremap_resource(dev, p->gcs_pmc_res);
-		अगर (IS_ERR(p->gcs_pmc))
-			वापस PTR_ERR(p->gcs_pmc);
-	पूर्ण
+		if (IS_ERR(p->gcs_pmc))
+			return PTR_ERR(p->gcs_pmc);
+	}
 
 	/* Check chipset's NO_REBOOT bit */
-	अगर (p->update_no_reboot_bit(p->no_reboot_priv, false) &&
-	    iTCO_venकरोr_check_noreboot_on()) अणु
+	if (p->update_no_reboot_bit(p->no_reboot_priv, false) &&
+	    iTCO_vendor_check_noreboot_on()) {
 		dev_info(dev, "unable to reset NO_REBOOT flag, device disabled by hardware/BIOS\n");
-		वापस -ENODEV;	/* Cannot reset NO_REBOOT bit */
-	पूर्ण
+		return -ENODEV;	/* Cannot reset NO_REBOOT bit */
+	}
 
-	/* Set the NO_REBOOT bit to prevent later reboots, just क्रम sure */
+	/* Set the NO_REBOOT bit to prevent later reboots, just for sure */
 	p->update_no_reboot_bit(p->no_reboot_priv, true);
 
-	अगर (turn_SMI_watchकरोg_clear_off >= p->iTCO_version) अणु
+	if (turn_SMI_watchdog_clear_off >= p->iTCO_version) {
 		/*
 		 * Bit 13: TCO_EN -> 0
 		 * Disables TCO logic generating an SMI#
 		 */
 		val32 = inl(SMI_EN(p));
-		val32 &= 0xffffdfff;	/* Turn off SMI clearing watchकरोg */
+		val32 &= 0xffffdfff;	/* Turn off SMI clearing watchdog */
 		outl(val32, SMI_EN(p));
-	पूर्ण
+	}
 
-	अगर (!devm_request_region(dev, p->tco_res->start,
+	if (!devm_request_region(dev, p->tco_res->start,
 				 resource_size(p->tco_res),
-				 pdev->name)) अणु
+				 pdev->name)) {
 		dev_err(dev, "I/O address 0x%04llx already in use, device disabled\n",
 		       (u64)TCOBASE(p));
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	dev_info(dev, "Found a %s TCO device (Version=%d, TCOBASE=0x%04llx)\n",
 		pdata->name, pdata->version, (u64)TCOBASE(p));
 
 	/* Clear out the (probably old) status */
-	चयन (p->iTCO_version) अणु
-	हाल 6:
-	हाल 5:
-	हाल 4:
+	switch (p->iTCO_version) {
+	case 6:
+	case 5:
+	case 4:
 		outw(0x0008, TCO1_STS(p)); /* Clear the Time Out Status bit */
 		outw(0x0002, TCO2_STS(p)); /* Clear SECOND_TO_STS bit */
-		अवरोध;
-	हाल 3:
+		break;
+	case 3:
 		outl(0x20008, TCO1_STS(p));
-		अवरोध;
-	हाल 2:
-	हाल 1:
-	शेष:
+		break;
+	case 2:
+	case 1:
+	default:
 		outw(0x0008, TCO1_STS(p)); /* Clear the Time Out Status bit */
 		outw(0x0002, TCO2_STS(p)); /* Clear SECOND_TO_STS bit */
 		outw(0x0004, TCO2_STS(p)); /* Clear BOOT_STS bit */
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	p->wddev.info = &ident,
 	p->wddev.ops = &iTCO_wdt_ops,
 	p->wddev.bootstatus = 0;
-	p->wddev.समयout = WATCHDOG_TIMEOUT;
-	watchकरोg_set_nowayout(&p->wddev, nowayout);
+	p->wddev.timeout = WATCHDOG_TIMEOUT;
+	watchdog_set_nowayout(&p->wddev, nowayout);
 	p->wddev.parent = dev;
 
-	watchकरोg_set_drvdata(&p->wddev, p);
-	platक्रमm_set_drvdata(pdev, p);
+	watchdog_set_drvdata(&p->wddev, p);
+	platform_set_drvdata(pdev, p);
 
-	/* Make sure the watchकरोg is not running */
+	/* Make sure the watchdog is not running */
 	iTCO_wdt_stop(&p->wddev);
 
 	/* Check that the heartbeat value is within it's range;
-	   अगर not reset to the शेष */
-	अगर (iTCO_wdt_set_समयout(&p->wddev, heartbeat)) अणु
-		iTCO_wdt_set_समयout(&p->wddev, WATCHDOG_TIMEOUT);
+	   if not reset to the default */
+	if (iTCO_wdt_set_timeout(&p->wddev, heartbeat)) {
+		iTCO_wdt_set_timeout(&p->wddev, WATCHDOG_TIMEOUT);
 		dev_info(dev, "timeout value out of range, using %d\n",
 			WATCHDOG_TIMEOUT);
-	पूर्ण
+	}
 
-	watchकरोg_stop_on_reboot(&p->wddev);
-	watchकरोg_stop_on_unरेजिस्टर(&p->wddev);
-	ret = devm_watchकरोg_रेजिस्टर_device(dev, &p->wddev);
-	अगर (ret != 0) अणु
+	watchdog_stop_on_reboot(&p->wddev);
+	watchdog_stop_on_unregister(&p->wddev);
+	ret = devm_watchdog_register_device(dev, &p->wddev);
+	if (ret != 0) {
 		dev_err(dev, "cannot register watchdog device (err=%d)\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	dev_info(dev, "initialized. heartbeat=%d sec (nowayout=%d)\n",
 		heartbeat, nowayout);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
+#ifdef CONFIG_PM_SLEEP
 /*
- * Suspend-to-idle requires this, because it stops the ticks and समयkeeping, so
- * the watchकरोg cannot be pinged जबतक in that state.  In ACPI sleep states the
- * watchकरोg is stopped by the platक्रमm firmware.
+ * Suspend-to-idle requires this, because it stops the ticks and timekeeping, so
+ * the watchdog cannot be pinged while in that state.  In ACPI sleep states the
+ * watchdog is stopped by the platform firmware.
  */
 
-#अगर_घोषित CONFIG_ACPI
-अटल अंतरभूत bool need_suspend(व्योम)
-अणु
-	वापस acpi_target_प्रणाली_state() == ACPI_STATE_S0;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत bool need_suspend(व्योम) अणु वापस true; पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_ACPI
+static inline bool need_suspend(void)
+{
+	return acpi_target_system_state() == ACPI_STATE_S0;
+}
+#else
+static inline bool need_suspend(void) { return true; }
+#endif
 
-अटल पूर्णांक iTCO_wdt_suspend_noirq(काष्ठा device *dev)
-अणु
-	काष्ठा iTCO_wdt_निजी *p = dev_get_drvdata(dev);
-	पूर्णांक ret = 0;
+static int iTCO_wdt_suspend_noirq(struct device *dev)
+{
+	struct iTCO_wdt_private *p = dev_get_drvdata(dev);
+	int ret = 0;
 
 	p->suspended = false;
-	अगर (watchकरोg_active(&p->wddev) && need_suspend()) अणु
+	if (watchdog_active(&p->wddev) && need_suspend()) {
 		ret = iTCO_wdt_stop(&p->wddev);
-		अगर (!ret)
+		if (!ret)
 			p->suspended = true;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल पूर्णांक iTCO_wdt_resume_noirq(काष्ठा device *dev)
-अणु
-	काष्ठा iTCO_wdt_निजी *p = dev_get_drvdata(dev);
+static int iTCO_wdt_resume_noirq(struct device *dev)
+{
+	struct iTCO_wdt_private *p = dev_get_drvdata(dev);
 
-	अगर (p->suspended)
+	if (p->suspended)
 		iTCO_wdt_start(&p->wddev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops iTCO_wdt_pm = अणु
+static const struct dev_pm_ops iTCO_wdt_pm = {
 	.suspend_noirq = iTCO_wdt_suspend_noirq,
 	.resume_noirq = iTCO_wdt_resume_noirq,
-पूर्ण;
+};
 
-#घोषणा ITCO_WDT_PM_OPS	(&iTCO_wdt_pm)
-#अन्यथा
-#घोषणा ITCO_WDT_PM_OPS	शून्य
-#पूर्ण_अगर /* CONFIG_PM_SLEEP */
+#define ITCO_WDT_PM_OPS	(&iTCO_wdt_pm)
+#else
+#define ITCO_WDT_PM_OPS	NULL
+#endif /* CONFIG_PM_SLEEP */
 
-अटल काष्ठा platक्रमm_driver iTCO_wdt_driver = अणु
+static struct platform_driver iTCO_wdt_driver = {
 	.probe          = iTCO_wdt_probe,
-	.driver         = अणु
+	.driver         = {
 		.name   = DRV_NAME,
 		.pm     = ITCO_WDT_PM_OPS,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(iTCO_wdt_driver);
+module_platform_driver(iTCO_wdt_driver);
 
 MODULE_AUTHOR("Wim Van Sebroeck <wim@iguana.be>");
 MODULE_DESCRIPTION("Intel TCO WatchDog Timer Driver");

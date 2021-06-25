@@ -1,64 +1,63 @@
-<शैली गुरु>
 /*
- * Support क्रम hardware-managed IRQ स्वतः-distribution.
+ * Support for hardware-managed IRQ auto-distribution.
  *
  * Copyright (C) 2010  Paul Mundt
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  */
-#समावेश "internals.h"
+#include "internals.h"
 
-अटल अचिन्हित दीर्घ dist_handle[INTC_NR_IRQS];
+static unsigned long dist_handle[INTC_NR_IRQS];
 
-व्योम पूर्णांकc_balancing_enable(अचिन्हित पूर्णांक irq)
-अणु
-	काष्ठा पूर्णांकc_desc_पूर्णांक *d = get_पूर्णांकc_desc(irq);
-	अचिन्हित दीर्घ handle = dist_handle[irq];
-	अचिन्हित दीर्घ addr;
+void intc_balancing_enable(unsigned int irq)
+{
+	struct intc_desc_int *d = get_intc_desc(irq);
+	unsigned long handle = dist_handle[irq];
+	unsigned long addr;
 
-	अगर (irq_balancing_disabled(irq) || !handle)
-		वापस;
-
-	addr = INTC_REG(d, _INTC_ADDR_D(handle), 0);
-	पूर्णांकc_reg_fns[_INTC_FN(handle)](addr, handle, 1);
-पूर्ण
-
-व्योम पूर्णांकc_balancing_disable(अचिन्हित पूर्णांक irq)
-अणु
-	काष्ठा पूर्णांकc_desc_पूर्णांक *d = get_पूर्णांकc_desc(irq);
-	अचिन्हित दीर्घ handle = dist_handle[irq];
-	अचिन्हित दीर्घ addr;
-
-	अगर (irq_balancing_disabled(irq) || !handle)
-		वापस;
+	if (irq_balancing_disabled(irq) || !handle)
+		return;
 
 	addr = INTC_REG(d, _INTC_ADDR_D(handle), 0);
-	पूर्णांकc_reg_fns[_INTC_FN(handle)](addr, handle, 0);
-पूर्ण
+	intc_reg_fns[_INTC_FN(handle)](addr, handle, 1);
+}
 
-अटल अचिन्हित पूर्णांक पूर्णांकc_dist_data(काष्ठा पूर्णांकc_desc *desc,
-				   काष्ठा पूर्णांकc_desc_पूर्णांक *d,
-				   पूर्णांकc_क्रमागत क्रमागत_id)
-अणु
-	काष्ठा पूर्णांकc_mask_reg *mr = desc->hw.mask_regs;
-	अचिन्हित पूर्णांक i, j, fn, mode;
-	अचिन्हित दीर्घ reg_e, reg_d;
+void intc_balancing_disable(unsigned int irq)
+{
+	struct intc_desc_int *d = get_intc_desc(irq);
+	unsigned long handle = dist_handle[irq];
+	unsigned long addr;
 
-	क्रम (i = 0; mr && क्रमागत_id && i < desc->hw.nr_mask_regs; i++) अणु
+	if (irq_balancing_disabled(irq) || !handle)
+		return;
+
+	addr = INTC_REG(d, _INTC_ADDR_D(handle), 0);
+	intc_reg_fns[_INTC_FN(handle)](addr, handle, 0);
+}
+
+static unsigned int intc_dist_data(struct intc_desc *desc,
+				   struct intc_desc_int *d,
+				   intc_enum enum_id)
+{
+	struct intc_mask_reg *mr = desc->hw.mask_regs;
+	unsigned int i, j, fn, mode;
+	unsigned long reg_e, reg_d;
+
+	for (i = 0; mr && enum_id && i < desc->hw.nr_mask_regs; i++) {
 		mr = desc->hw.mask_regs + i;
 
 		/*
-		 * Skip this entry अगर there's no स्वतः-distribution
-		 * रेजिस्टर associated with it.
+		 * Skip this entry if there's no auto-distribution
+		 * register associated with it.
 		 */
-		अगर (!mr->dist_reg)
-			जारी;
+		if (!mr->dist_reg)
+			continue;
 
-		क्रम (j = 0; j < ARRAY_SIZE(mr->क्रमागत_ids); j++) अणु
-			अगर (mr->क्रमागत_ids[j] != क्रमागत_id)
-				जारी;
+		for (j = 0; j < ARRAY_SIZE(mr->enum_ids); j++) {
+			if (mr->enum_ids[j] != enum_id)
+				continue;
 
 			fn = REG_FN_MODIFY_BASE;
 			mode = MODE_ENABLE_REG;
@@ -66,33 +65,33 @@
 			reg_d = mr->dist_reg;
 
 			fn += (mr->reg_width >> 3) - 1;
-			वापस _INTC_MK(fn, mode,
-					पूर्णांकc_get_reg(d, reg_e),
-					पूर्णांकc_get_reg(d, reg_d),
+			return _INTC_MK(fn, mode,
+					intc_get_reg(d, reg_e),
+					intc_get_reg(d, reg_d),
 					1,
 					(mr->reg_width - 1) - j);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*
 	 * It's possible we've gotten here with no distribution options
-	 * available क्रम the IRQ in question, so we just skip over those.
+	 * available for the IRQ in question, so we just skip over those.
 	 */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम पूर्णांकc_set_dist_handle(अचिन्हित पूर्णांक irq, काष्ठा पूर्णांकc_desc *desc,
-			  काष्ठा पूर्णांकc_desc_पूर्णांक *d, पूर्णांकc_क्रमागत id)
-अणु
-	अचिन्हित दीर्घ flags;
+void intc_set_dist_handle(unsigned int irq, struct intc_desc *desc,
+			  struct intc_desc_int *d, intc_enum id)
+{
+	unsigned long flags;
 
 	/*
-	 * Nothing to करो क्रम this IRQ.
+	 * Nothing to do for this IRQ.
 	 */
-	अगर (!desc->hw.mask_regs)
-		वापस;
+	if (!desc->hw.mask_regs)
+		return;
 
-	raw_spin_lock_irqsave(&पूर्णांकc_big_lock, flags);
-	dist_handle[irq] = पूर्णांकc_dist_data(desc, d, id);
-	raw_spin_unlock_irqrestore(&पूर्णांकc_big_lock, flags);
-पूर्ण
+	raw_spin_lock_irqsave(&intc_big_lock, flags);
+	dist_handle[irq] = intc_dist_data(desc, d, id);
+	raw_spin_unlock_irqrestore(&intc_big_lock, flags);
+}

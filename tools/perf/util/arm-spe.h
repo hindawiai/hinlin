@@ -1,32 +1,31 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Arm Statistical Profiling Extensions (SPE) support
  * Copyright (c) 2017-2018, Arm Ltd.
  */
 
-#अगर_अघोषित INCLUDE__PERF_ARM_SPE_H__
-#घोषणा INCLUDE__PERF_ARM_SPE_H__
+#ifndef INCLUDE__PERF_ARM_SPE_H__
+#define INCLUDE__PERF_ARM_SPE_H__
 
-#घोषणा ARM_SPE_PMU_NAME "arm_spe_"
+#define ARM_SPE_PMU_NAME "arm_spe_"
 
-क्रमागत अणु
+enum {
 	ARM_SPE_PMU_TYPE,
 	ARM_SPE_PER_CPU_MMAPS,
 	ARM_SPE_AUXTRACE_PRIV_MAX,
-पूर्ण;
+};
 
-#घोषणा ARM_SPE_AUXTRACE_PRIV_SIZE (ARM_SPE_AUXTRACE_PRIV_MAX * माप(u64))
+#define ARM_SPE_AUXTRACE_PRIV_SIZE (ARM_SPE_AUXTRACE_PRIV_MAX * sizeof(u64))
 
-जोड़ perf_event;
-काष्ठा perf_session;
-काष्ठा perf_pmu;
+union perf_event;
+struct perf_session;
+struct perf_pmu;
 
-काष्ठा auxtrace_record *arm_spe_recording_init(पूर्णांक *err,
-					       काष्ठा perf_pmu *arm_spe_pmu);
+struct auxtrace_record *arm_spe_recording_init(int *err,
+					       struct perf_pmu *arm_spe_pmu);
 
-पूर्णांक arm_spe_process_auxtrace_info(जोड़ perf_event *event,
-				  काष्ठा perf_session *session);
+int arm_spe_process_auxtrace_info(union perf_event *event,
+				  struct perf_session *session);
 
-काष्ठा perf_event_attr *arm_spe_pmu_शेष_config(काष्ठा perf_pmu *arm_spe_pmu);
-#पूर्ण_अगर
+struct perf_event_attr *arm_spe_pmu_default_config(struct perf_pmu *arm_spe_pmu);
+#endif

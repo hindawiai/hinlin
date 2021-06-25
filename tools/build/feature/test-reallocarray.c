@@ -1,11 +1,10 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#घोषणा _GNU_SOURCE
-#समावेश <मानककोष.स>
+// SPDX-License-Identifier: GPL-2.0
+#define _GNU_SOURCE
+#include <stdlib.h>
 
-पूर्णांक मुख्य(व्योम)
-अणु
-	वापस !!पुनः_स्मृतिarray(शून्य, 1, 1);
-पूर्ण
+int main(void)
+{
+	return !!reallocarray(NULL, 1, 1);
+}
 
-#अघोषित _GNU_SOURCE
+#undef _GNU_SOURCE

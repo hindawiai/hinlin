@@ -1,95 +1,94 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * FPGA Manager Driver क्रम Lattice iCE40.
+ * FPGA Manager Driver for Lattice iCE40.
  *
  *  Copyright (c) 2016 Joel Holdsworth
  *
- * This driver adds support to the FPGA manager क्रम configuring the SRAM of
+ * This driver adds support to the FPGA manager for configuring the SRAM of
  * Lattice iCE40 FPGAs through slave SPI.
  */
 
-#समावेश <linux/fpga/fpga-mgr.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_gpपन.स>
-#समावेश <linux/spi/spi.h>
-#समावेश <linux/stringअगरy.h>
+#include <linux/fpga/fpga-mgr.h>
+#include <linux/gpio/consumer.h>
+#include <linux/module.h>
+#include <linux/of_gpio.h>
+#include <linux/spi/spi.h>
+#include <linux/stringify.h>
 
-#घोषणा ICE40_SPI_MAX_SPEED 25000000 /* Hz */
-#घोषणा ICE40_SPI_MIN_SPEED 1000000 /* Hz */
+#define ICE40_SPI_MAX_SPEED 25000000 /* Hz */
+#define ICE40_SPI_MIN_SPEED 1000000 /* Hz */
 
-#घोषणा ICE40_SPI_RESET_DELAY 1 /* us (>200ns) */
-#घोषणा ICE40_SPI_HOUSEKEEPING_DELAY 1200 /* us */
+#define ICE40_SPI_RESET_DELAY 1 /* us (>200ns) */
+#define ICE40_SPI_HOUSEKEEPING_DELAY 1200 /* us */
 
-#घोषणा ICE40_SPI_NUM_ACTIVATION_BYTES DIV_ROUND_UP(49, 8)
+#define ICE40_SPI_NUM_ACTIVATION_BYTES DIV_ROUND_UP(49, 8)
 
-काष्ठा ice40_fpga_priv अणु
-	काष्ठा spi_device *dev;
-	काष्ठा gpio_desc *reset;
-	काष्ठा gpio_desc *cकरोne;
-पूर्ण;
+struct ice40_fpga_priv {
+	struct spi_device *dev;
+	struct gpio_desc *reset;
+	struct gpio_desc *cdone;
+};
 
-अटल क्रमागत fpga_mgr_states ice40_fpga_ops_state(काष्ठा fpga_manager *mgr)
-अणु
-	काष्ठा ice40_fpga_priv *priv = mgr->priv;
+static enum fpga_mgr_states ice40_fpga_ops_state(struct fpga_manager *mgr)
+{
+	struct ice40_fpga_priv *priv = mgr->priv;
 
-	वापस gpiod_get_value(priv->cकरोne) ? FPGA_MGR_STATE_OPERATING :
+	return gpiod_get_value(priv->cdone) ? FPGA_MGR_STATE_OPERATING :
 		FPGA_MGR_STATE_UNKNOWN;
-पूर्ण
+}
 
-अटल पूर्णांक ice40_fpga_ops_ग_लिखो_init(काष्ठा fpga_manager *mgr,
-				     काष्ठा fpga_image_info *info,
-				     स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा ice40_fpga_priv *priv = mgr->priv;
-	काष्ठा spi_device *dev = priv->dev;
-	काष्ठा spi_message message;
-	काष्ठा spi_transfer निश्चित_cs_then_reset_delay = अणु
+static int ice40_fpga_ops_write_init(struct fpga_manager *mgr,
+				     struct fpga_image_info *info,
+				     const char *buf, size_t count)
+{
+	struct ice40_fpga_priv *priv = mgr->priv;
+	struct spi_device *dev = priv->dev;
+	struct spi_message message;
+	struct spi_transfer assert_cs_then_reset_delay = {
 		.cs_change   = 1,
-		.delay = अणु
+		.delay = {
 			.value = ICE40_SPI_RESET_DELAY,
 			.unit = SPI_DELAY_UNIT_USECS
-		पूर्ण
-	पूर्ण;
-	काष्ठा spi_transfer housekeeping_delay_then_release_cs = अणु
-		.delay = अणु
+		}
+	};
+	struct spi_transfer housekeeping_delay_then_release_cs = {
+		.delay = {
 			.value = ICE40_SPI_HOUSEKEEPING_DELAY,
 			.unit = SPI_DELAY_UNIT_USECS
-		पूर्ण
-	पूर्ण;
-	पूर्णांक ret;
+		}
+	};
+	int ret;
 
-	अगर ((info->flags & FPGA_MGR_PARTIAL_RECONFIG)) अणु
+	if ((info->flags & FPGA_MGR_PARTIAL_RECONFIG)) {
 		dev_err(&dev->dev,
 			"Partial reconfiguration is not supported\n");
-		वापस -ENOTSUPP;
-	पूर्ण
+		return -ENOTSUPP;
+	}
 
-	/* Lock the bus, निश्चित CRESET_B and SS_B and delay >200ns */
+	/* Lock the bus, assert CRESET_B and SS_B and delay >200ns */
 	spi_bus_lock(dev->master);
 
 	gpiod_set_value(priv->reset, 1);
 
 	spi_message_init(&message);
-	spi_message_add_tail(&निश्चित_cs_then_reset_delay, &message);
+	spi_message_add_tail(&assert_cs_then_reset_delay, &message);
 	ret = spi_sync_locked(dev, &message);
 
 	/* Come out of reset */
 	gpiod_set_value(priv->reset, 0);
 
-	/* Abort अगर the chip-select failed */
-	अगर (ret)
-		जाओ fail;
+	/* Abort if the chip-select failed */
+	if (ret)
+		goto fail;
 
-	/* Check CDONE is de-निश्चितed i.e. the FPGA is reset */
-	अगर (gpiod_get_value(priv->cकरोne)) अणु
+	/* Check CDONE is de-asserted i.e. the FPGA is reset */
+	if (gpiod_get_value(priv->cdone)) {
 		dev_err(&dev->dev, "Device reset failed, CDONE is asserted\n");
 		ret = -EIO;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	/* Wait क्रम the housekeeping to complete, and release SS_B */
+	/* Wait for the housekeeping to complete, and release SS_B */
 	spi_message_init(&message);
 	spi_message_add_tail(&housekeeping_delay_then_release_cs, &message);
 	ret = spi_sync_locked(dev, &message);
@@ -97,109 +96,109 @@
 fail:
 	spi_bus_unlock(dev->master);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ice40_fpga_ops_ग_लिखो(काष्ठा fpga_manager *mgr,
-				स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा ice40_fpga_priv *priv = mgr->priv;
+static int ice40_fpga_ops_write(struct fpga_manager *mgr,
+				const char *buf, size_t count)
+{
+	struct ice40_fpga_priv *priv = mgr->priv;
 
-	वापस spi_ग_लिखो(priv->dev, buf, count);
-पूर्ण
+	return spi_write(priv->dev, buf, count);
+}
 
-अटल पूर्णांक ice40_fpga_ops_ग_लिखो_complete(काष्ठा fpga_manager *mgr,
-					 काष्ठा fpga_image_info *info)
-अणु
-	काष्ठा ice40_fpga_priv *priv = mgr->priv;
-	काष्ठा spi_device *dev = priv->dev;
-	स्थिर u8 padding[ICE40_SPI_NUM_ACTIVATION_BYTES] = अणु0पूर्ण;
+static int ice40_fpga_ops_write_complete(struct fpga_manager *mgr,
+					 struct fpga_image_info *info)
+{
+	struct ice40_fpga_priv *priv = mgr->priv;
+	struct spi_device *dev = priv->dev;
+	const u8 padding[ICE40_SPI_NUM_ACTIVATION_BYTES] = {0};
 
-	/* Check CDONE is निश्चितed */
-	अगर (!gpiod_get_value(priv->cकरोne)) अणु
+	/* Check CDONE is asserted */
+	if (!gpiod_get_value(priv->cdone)) {
 		dev_err(&dev->dev,
 			"CDONE was not asserted after firmware transfer\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	/* Send of zero-padding to activate the firmware */
-	वापस spi_ग_लिखो(dev, padding, माप(padding));
-पूर्ण
+	return spi_write(dev, padding, sizeof(padding));
+}
 
-अटल स्थिर काष्ठा fpga_manager_ops ice40_fpga_ops = अणु
+static const struct fpga_manager_ops ice40_fpga_ops = {
 	.state = ice40_fpga_ops_state,
-	.ग_लिखो_init = ice40_fpga_ops_ग_लिखो_init,
-	.ग_लिखो = ice40_fpga_ops_ग_लिखो,
-	.ग_लिखो_complete = ice40_fpga_ops_ग_लिखो_complete,
-पूर्ण;
+	.write_init = ice40_fpga_ops_write_init,
+	.write = ice40_fpga_ops_write,
+	.write_complete = ice40_fpga_ops_write_complete,
+};
 
-अटल पूर्णांक ice40_fpga_probe(काष्ठा spi_device *spi)
-अणु
-	काष्ठा device *dev = &spi->dev;
-	काष्ठा ice40_fpga_priv *priv;
-	काष्ठा fpga_manager *mgr;
-	पूर्णांक ret;
+static int ice40_fpga_probe(struct spi_device *spi)
+{
+	struct device *dev = &spi->dev;
+	struct ice40_fpga_priv *priv;
+	struct fpga_manager *mgr;
+	int ret;
 
-	priv = devm_kzalloc(&spi->dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(&spi->dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	priv->dev = spi;
 
 	/* Check board setup data. */
-	अगर (spi->max_speed_hz > ICE40_SPI_MAX_SPEED) अणु
+	if (spi->max_speed_hz > ICE40_SPI_MAX_SPEED) {
 		dev_err(dev, "SPI speed is too high, maximum speed is "
-			__stringअगरy(ICE40_SPI_MAX_SPEED) "\n");
-		वापस -EINVAL;
-	पूर्ण
+			__stringify(ICE40_SPI_MAX_SPEED) "\n");
+		return -EINVAL;
+	}
 
-	अगर (spi->max_speed_hz < ICE40_SPI_MIN_SPEED) अणु
+	if (spi->max_speed_hz < ICE40_SPI_MIN_SPEED) {
 		dev_err(dev, "SPI speed is too low, minimum speed is "
-			__stringअगरy(ICE40_SPI_MIN_SPEED) "\n");
-		वापस -EINVAL;
-	पूर्ण
+			__stringify(ICE40_SPI_MIN_SPEED) "\n");
+		return -EINVAL;
+	}
 
-	अगर (spi->mode & SPI_CPHA) अणु
+	if (spi->mode & SPI_CPHA) {
 		dev_err(dev, "Bad SPI mode, CPHA not supported\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Set up the GPIOs */
-	priv->cकरोne = devm_gpiod_get(dev, "cdone", GPIOD_IN);
-	अगर (IS_ERR(priv->cकरोne)) अणु
-		ret = PTR_ERR(priv->cकरोne);
+	priv->cdone = devm_gpiod_get(dev, "cdone", GPIOD_IN);
+	if (IS_ERR(priv->cdone)) {
+		ret = PTR_ERR(priv->cdone);
 		dev_err(dev, "Failed to get CDONE GPIO: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	priv->reset = devm_gpiod_get(dev, "reset", GPIOD_OUT_HIGH);
-	अगर (IS_ERR(priv->reset)) अणु
+	if (IS_ERR(priv->reset)) {
 		ret = PTR_ERR(priv->reset);
 		dev_err(dev, "Failed to get CRESET_B GPIO: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	mgr = devm_fpga_mgr_create(dev, "Lattice iCE40 FPGA Manager",
 				   &ice40_fpga_ops, priv);
-	अगर (!mgr)
-		वापस -ENOMEM;
+	if (!mgr)
+		return -ENOMEM;
 
-	वापस devm_fpga_mgr_रेजिस्टर(dev, mgr);
-पूर्ण
+	return devm_fpga_mgr_register(dev, mgr);
+}
 
-अटल स्थिर काष्ठा of_device_id ice40_fpga_of_match[] = अणु
-	अणु .compatible = "lattice,ice40-fpga-mgr", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id ice40_fpga_of_match[] = {
+	{ .compatible = "lattice,ice40-fpga-mgr", },
+	{},
+};
 MODULE_DEVICE_TABLE(of, ice40_fpga_of_match);
 
-अटल काष्ठा spi_driver ice40_fpga_driver = अणु
+static struct spi_driver ice40_fpga_driver = {
 	.probe = ice40_fpga_probe,
-	.driver = अणु
+	.driver = {
 		.name = "ice40spi",
 		.of_match_table = of_match_ptr(ice40_fpga_of_match),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 module_spi_driver(ice40_fpga_driver);
 

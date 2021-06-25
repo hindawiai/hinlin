@@ -1,40 +1,39 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
 /* Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
  * Copyright (C) 2019-2020 Linaro Ltd.
  */
-#अगर_अघोषित _IPA_CMD_H_
-#घोषणा _IPA_CMD_H_
+#ifndef _IPA_CMD_H_
+#define _IPA_CMD_H_
 
-#समावेश <linux/types.h>
-#समावेश <linux/dma-direction.h>
+#include <linux/types.h>
+#include <linux/dma-direction.h>
 
-काष्ठा sk_buff;
-काष्ठा scatterlist;
+struct sk_buff;
+struct scatterlist;
 
-काष्ठा ipa;
-काष्ठा ipa_mem;
-काष्ठा gsi_trans;
-काष्ठा gsi_channel;
+struct ipa;
+struct ipa_mem;
+struct gsi_trans;
+struct gsi_channel;
 
 /**
- * क्रमागत ipa_cmd_opcode:	IPA immediate commands
+ * enum ipa_cmd_opcode:	IPA immediate commands
  *
  * @IPA_CMD_IP_V4_FILTER_INIT:	Initialize IPv4 filter table
  * @IPA_CMD_IP_V6_FILTER_INIT:	Initialize IPv6 filter table
  * @IPA_CMD_IP_V4_ROUTING_INIT:	Initialize IPv4 routing table
  * @IPA_CMD_IP_V6_ROUTING_INIT:	Initialize IPv6 routing table
  * @IPA_CMD_HDR_INIT_LOCAL:	Initialize IPA-local header memory
- * @IPA_CMD_REGISTER_WRITE:	Register ग_लिखो perक्रमmed by IPA
- * @IPA_CMD_IP_PACKET_INIT:	Set up next packet's destination endpoपूर्णांक
- * @IPA_CMD_DMA_SHARED_MEM:	DMA command perक्रमmed by IPA
+ * @IPA_CMD_REGISTER_WRITE:	Register write performed by IPA
+ * @IPA_CMD_IP_PACKET_INIT:	Set up next packet's destination endpoint
+ * @IPA_CMD_DMA_SHARED_MEM:	DMA command performed by IPA
  * @IPA_CMD_IP_PACKET_TAG_STATUS: Have next packet generate tag * status
  * @IPA_CMD_NONE:		Special (invalid) "not a command" value
  *
- * All immediate commands are issued using the AP command TX endpoपूर्णांक.
+ * All immediate commands are issued using the AP command TX endpoint.
  */
-क्रमागत ipa_cmd_opcode अणु
+enum ipa_cmd_opcode {
 	IPA_CMD_NONE			= 0x0,
 	IPA_CMD_IP_V4_FILTER_INIT	= 0x3,
 	IPA_CMD_IP_V6_FILTER_INIT	= 0x4,
@@ -45,72 +44,72 @@
 	IPA_CMD_IP_PACKET_INIT		= 0x10,
 	IPA_CMD_DMA_SHARED_MEM		= 0x13,
 	IPA_CMD_IP_PACKET_TAG_STATUS	= 0x14,
-पूर्ण;
+};
 
 /**
- * काष्ठा ipa_cmd_info - inक्रमmation needed क्रम an IPA immediate command
+ * struct ipa_cmd_info - information needed for an IPA immediate command
  *
  * @opcode:	The command opcode.
- * @direction:	Direction of data transfer क्रम DMA commands
+ * @direction:	Direction of data transfer for DMA commands
  */
-काष्ठा ipa_cmd_info अणु
-	क्रमागत ipa_cmd_opcode opcode;
-	क्रमागत dma_data_direction direction;
-पूर्ण;
+struct ipa_cmd_info {
+	enum ipa_cmd_opcode opcode;
+	enum dma_data_direction direction;
+};
 
-#अगर_घोषित IPA_VALIDATE
+#ifdef IPA_VALIDATE
 
 /**
  * ipa_cmd_table_valid() - Validate a memory region holding a table
- * @ipa:	- IPA poपूर्णांकer
+ * @ipa:	- IPA pointer
  * @mem:	- IPA memory region descriptor
  * @route:	- Whether the region holds a route or filter table
- * @ipv6:	- Whether the table is क्रम IPv6 or IPv4
+ * @ipv6:	- Whether the table is for IPv6 or IPv4
  * @hashed:	- Whether the table is hashed or non-hashed
  *
- * Return:	true अगर region is valid, false otherwise
+ * Return:	true if region is valid, false otherwise
  */
-bool ipa_cmd_table_valid(काष्ठा ipa *ipa, स्थिर काष्ठा ipa_mem *mem,
+bool ipa_cmd_table_valid(struct ipa *ipa, const struct ipa_mem *mem,
 			    bool route, bool ipv6, bool hashed);
 
 /**
  * ipa_cmd_data_valid() - Validate command-realted configuration is valid
- * @ipa:	- IPA poपूर्णांकer
+ * @ipa:	- IPA pointer
  *
- * Return:	true अगर assumptions required क्रम command are valid
+ * Return:	true if assumptions required for command are valid
  */
-bool ipa_cmd_data_valid(काष्ठा ipa *ipa);
+bool ipa_cmd_data_valid(struct ipa *ipa);
 
-#अन्यथा /* !IPA_VALIDATE */
+#else /* !IPA_VALIDATE */
 
-अटल अंतरभूत bool ipa_cmd_table_valid(काष्ठा ipa *ipa,
-				       स्थिर काष्ठा ipa_mem *mem, bool route,
+static inline bool ipa_cmd_table_valid(struct ipa *ipa,
+				       const struct ipa_mem *mem, bool route,
 				       bool ipv6, bool hashed)
-अणु
-	वापस true;
-पूर्ण
+{
+	return true;
+}
 
-अटल अंतरभूत bool ipa_cmd_data_valid(काष्ठा ipa *ipa)
-अणु
-	वापस true;
-पूर्ण
+static inline bool ipa_cmd_data_valid(struct ipa *ipa)
+{
+	return true;
+}
 
-#पूर्ण_अगर /* !IPA_VALIDATE */
+#endif /* !IPA_VALIDATE */
 
 /**
  * ipa_cmd_pool_init() - initialize command channel pools
- * @channel:	AP->IPA command TX GSI channel poपूर्णांकer
+ * @channel:	AP->IPA command TX GSI channel pointer
  * @tre_count:	Number of pool elements to allocate
  *
- * Return:	0 अगर successful, or a negative error code
+ * Return:	0 if successful, or a negative error code
  */
-पूर्णांक ipa_cmd_pool_init(काष्ठा gsi_channel *channel, u32 tre_count);
+int ipa_cmd_pool_init(struct gsi_channel *channel, u32 tre_count);
 
 /**
- * ipa_cmd_pool_निकास() - Inverse of ipa_cmd_pool_init()
- * @channel:	AP->IPA command TX GSI channel poपूर्णांकer
+ * ipa_cmd_pool_exit() - Inverse of ipa_cmd_pool_init()
+ * @channel:	AP->IPA command TX GSI channel pointer
  */
-व्योम ipa_cmd_pool_निकास(काष्ठा gsi_channel *channel);
+void ipa_cmd_pool_exit(struct gsi_channel *channel);
 
 /**
  * ipa_cmd_table_init_add() - Add table init command to a transaction
@@ -118,14 +117,14 @@ bool ipa_cmd_data_valid(काष्ठा ipa *ipa);
  * @opcode:	IPA immediate command opcode
  * @size:	Size of non-hashed routing table memory
  * @offset:	Offset in IPA shared memory of non-hashed routing table memory
- * @addr:	DMA address of non-hashed table data to ग_लिखो
+ * @addr:	DMA address of non-hashed table data to write
  * @hash_size:	Size of hashed routing table memory
  * @hash_offset: Offset in IPA shared memory of hashed routing table memory
- * @hash_addr:	DMA address of hashed table data to ग_लिखो
+ * @hash_addr:	DMA address of hashed table data to write
  *
  * If hash_size is 0, hash_offset and hash_addr are ignored.
  */
-व्योम ipa_cmd_table_init_add(काष्ठा gsi_trans *trans, क्रमागत ipa_cmd_opcode opcode,
+void ipa_cmd_table_init_add(struct gsi_trans *trans, enum ipa_cmd_opcode opcode,
 			    u16 size, u32 offset, dma_addr_t addr,
 			    u16 hash_size, u32 hash_offset,
 			    dma_addr_t hash_addr);
@@ -137,38 +136,38 @@ bool ipa_cmd_data_valid(काष्ठा ipa *ipa);
  * @size:	Size of header memory
  * @addr:	DMA address of buffer to be written from
  *
- * Defines and fills the location in IPA memory to use क्रम headers.
+ * Defines and fills the location in IPA memory to use for headers.
  */
-व्योम ipa_cmd_hdr_init_local_add(काष्ठा gsi_trans *trans, u32 offset, u16 size,
+void ipa_cmd_hdr_init_local_add(struct gsi_trans *trans, u32 offset, u16 size,
 				dma_addr_t addr);
 
 /**
- * ipa_cmd_रेजिस्टर_ग_लिखो_add() - Add a रेजिस्टर ग_लिखो command to a transaction
+ * ipa_cmd_register_write_add() - Add a register write command to a transaction
  * @trans:	GSI transaction
- * @offset:	Offset of रेजिस्टर to be written
+ * @offset:	Offset of register to be written
  * @value:	Value to be written
- * @mask:	Mask of bits in रेजिस्टर to update with bits from value
+ * @mask:	Mask of bits in register to update with bits from value
  * @clear_full: Pipeline clear option; true means full pipeline clear
  */
-व्योम ipa_cmd_रेजिस्टर_ग_लिखो_add(काष्ठा gsi_trans *trans, u32 offset, u32 value,
+void ipa_cmd_register_write_add(struct gsi_trans *trans, u32 offset, u32 value,
 				u32 mask, bool clear_full);
 
 /**
  * ipa_cmd_dma_shared_mem_add() - Add a DMA memory command to a transaction
  * @trans:	GSI transaction
- * @offset:	Offset of IPA memory to be पढ़ो or written
+ * @offset:	Offset of IPA memory to be read or written
  * @size:	Number of bytes of memory to be transferred
- * @addr:	DMA address of buffer to be पढ़ो पूर्णांकo or written from
- * @toward_ipa:	true means ग_लिखो to IPA memory; false means पढ़ो
+ * @addr:	DMA address of buffer to be read into or written from
+ * @toward_ipa:	true means write to IPA memory; false means read
  */
-व्योम ipa_cmd_dma_shared_mem_add(काष्ठा gsi_trans *trans, u32 offset,
+void ipa_cmd_dma_shared_mem_add(struct gsi_trans *trans, u32 offset,
 				u16 size, dma_addr_t addr, bool toward_ipa);
 
 /**
  * ipa_cmd_pipeline_clear_add() - Add pipeline clear commands to a transaction
  * @trans:	GSI transaction
  */
-व्योम ipa_cmd_pipeline_clear_add(काष्ठा gsi_trans *trans);
+void ipa_cmd_pipeline_clear_add(struct gsi_trans *trans);
 
 /**
  * ipa_cmd_pipeline_clear_count() - # commands required to clear pipeline
@@ -176,28 +175,28 @@ bool ipa_cmd_data_valid(काष्ठा ipa *ipa);
  * Return:	The number of elements to allocate in a transaction
  *		to hold commands to clear the pipeline
  */
-u32 ipa_cmd_pipeline_clear_count(व्योम);
+u32 ipa_cmd_pipeline_clear_count(void);
 
 /**
- * ipa_cmd_pipeline_clear_रुको() - Wait pipeline clear to complete
- * @ipa:	- IPA poपूर्णांकer
+ * ipa_cmd_pipeline_clear_wait() - Wait pipeline clear to complete
+ * @ipa:	- IPA pointer
  */
-व्योम ipa_cmd_pipeline_clear_रुको(काष्ठा ipa *ipa);
+void ipa_cmd_pipeline_clear_wait(struct ipa *ipa);
 
 /**
  * ipa_cmd_pipeline_clear() - Clear the hardware pipeline
- * @ipa:	- IPA poपूर्णांकer
+ * @ipa:	- IPA pointer
  */
-व्योम ipa_cmd_pipeline_clear(काष्ठा ipa *ipa);
+void ipa_cmd_pipeline_clear(struct ipa *ipa);
 
 /**
- * ipa_cmd_trans_alloc() - Allocate a transaction क्रम the command TX endpoपूर्णांक
- * @ipa:	IPA poपूर्णांकer
+ * ipa_cmd_trans_alloc() - Allocate a transaction for the command TX endpoint
+ * @ipa:	IPA pointer
  * @tre_count:	Number of elements in the transaction
  *
- * Return:	A GSI transaction काष्ठाure, or a null poपूर्णांकer अगर all
+ * Return:	A GSI transaction structure, or a null pointer if all
  *		available transactions are in use
  */
-काष्ठा gsi_trans *ipa_cmd_trans_alloc(काष्ठा ipa *ipa, u32 tre_count);
+struct gsi_trans *ipa_cmd_trans_alloc(struct ipa *ipa, u32 tre_count);
 
-#पूर्ण_अगर /* _IPA_CMD_H_ */
+#endif /* _IPA_CMD_H_ */

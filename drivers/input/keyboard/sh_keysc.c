@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * SuperH KEYSC Keypad Driver
  *
@@ -8,207 +7,207 @@
  * Based on gpio_keys.c, Copyright 2005 Phil Blundell
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/input.h>
-#समावेश <linux/input/sh_keysc.h>
-#समावेश <linux/biपंचांगap.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/पन.स>
-#समावेश <linux/slab.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/delay.h>
+#include <linux/platform_device.h>
+#include <linux/input.h>
+#include <linux/input/sh_keysc.h>
+#include <linux/bitmap.h>
+#include <linux/pm_runtime.h>
+#include <linux/io.h>
+#include <linux/slab.h>
 
-अटल स्थिर काष्ठा अणु
-	अचिन्हित अक्षर kymd, keyout, keyin;
-पूर्ण sh_keysc_mode[] = अणु
-	[SH_KEYSC_MODE_1] = अणु 0, 6, 5 पूर्ण,
-	[SH_KEYSC_MODE_2] = अणु 1, 5, 6 पूर्ण,
-	[SH_KEYSC_MODE_3] = अणु 2, 4, 7 पूर्ण,
-	[SH_KEYSC_MODE_4] = अणु 3, 6, 6 पूर्ण,
-	[SH_KEYSC_MODE_5] = अणु 4, 6, 7 पूर्ण,
-	[SH_KEYSC_MODE_6] = अणु 5, 8, 8 पूर्ण,
-पूर्ण;
+static const struct {
+	unsigned char kymd, keyout, keyin;
+} sh_keysc_mode[] = {
+	[SH_KEYSC_MODE_1] = { 0, 6, 5 },
+	[SH_KEYSC_MODE_2] = { 1, 5, 6 },
+	[SH_KEYSC_MODE_3] = { 2, 4, 7 },
+	[SH_KEYSC_MODE_4] = { 3, 6, 6 },
+	[SH_KEYSC_MODE_5] = { 4, 6, 7 },
+	[SH_KEYSC_MODE_6] = { 5, 8, 8 },
+};
 
-काष्ठा sh_keysc_priv अणु
-	व्योम __iomem *iomem_base;
+struct sh_keysc_priv {
+	void __iomem *iomem_base;
 	DECLARE_BITMAP(last_keys, SH_KEYSC_MAXKEYS);
-	काष्ठा input_dev *input;
-	काष्ठा sh_keysc_info pdata;
-पूर्ण;
+	struct input_dev *input;
+	struct sh_keysc_info pdata;
+};
 
-#घोषणा KYCR1 0
-#घोषणा KYCR2 1
-#घोषणा KYINDR 2
-#घोषणा KYOUTDR 3
+#define KYCR1 0
+#define KYCR2 1
+#define KYINDR 2
+#define KYOUTDR 3
 
-#घोषणा KYCR2_IRQ_LEVEL    0x10
-#घोषणा KYCR2_IRQ_DISABLED 0x00
+#define KYCR2_IRQ_LEVEL    0x10
+#define KYCR2_IRQ_DISABLED 0x00
 
-अटल अचिन्हित दीर्घ sh_keysc_पढ़ो(काष्ठा sh_keysc_priv *p, पूर्णांक reg_nr)
-अणु
-	वापस ioपढ़ो16(p->iomem_base + (reg_nr << 2));
-पूर्ण
+static unsigned long sh_keysc_read(struct sh_keysc_priv *p, int reg_nr)
+{
+	return ioread16(p->iomem_base + (reg_nr << 2));
+}
 
-अटल व्योम sh_keysc_ग_लिखो(काष्ठा sh_keysc_priv *p, पूर्णांक reg_nr,
-			   अचिन्हित दीर्घ value)
-अणु
-	ioग_लिखो16(value, p->iomem_base + (reg_nr << 2));
-पूर्ण
+static void sh_keysc_write(struct sh_keysc_priv *p, int reg_nr,
+			   unsigned long value)
+{
+	iowrite16(value, p->iomem_base + (reg_nr << 2));
+}
 
-अटल व्योम sh_keysc_level_mode(काष्ठा sh_keysc_priv *p,
-				अचिन्हित दीर्घ keys_set)
-अणु
-	काष्ठा sh_keysc_info *pdata = &p->pdata;
+static void sh_keysc_level_mode(struct sh_keysc_priv *p,
+				unsigned long keys_set)
+{
+	struct sh_keysc_info *pdata = &p->pdata;
 
-	sh_keysc_ग_लिखो(p, KYOUTDR, 0);
-	sh_keysc_ग_लिखो(p, KYCR2, KYCR2_IRQ_LEVEL | (keys_set << 8));
+	sh_keysc_write(p, KYOUTDR, 0);
+	sh_keysc_write(p, KYCR2, KYCR2_IRQ_LEVEL | (keys_set << 8));
 
-	अगर (pdata->kycr2_delay)
+	if (pdata->kycr2_delay)
 		udelay(pdata->kycr2_delay);
-पूर्ण
+}
 
-अटल व्योम sh_keysc_map_dbg(काष्ठा device *dev, अचिन्हित दीर्घ *map,
-			     स्थिर अक्षर *str)
-अणु
-	पूर्णांक k;
+static void sh_keysc_map_dbg(struct device *dev, unsigned long *map,
+			     const char *str)
+{
+	int k;
 
-	क्रम (k = 0; k < BITS_TO_LONGS(SH_KEYSC_MAXKEYS); k++)
+	for (k = 0; k < BITS_TO_LONGS(SH_KEYSC_MAXKEYS); k++)
 		dev_dbg(dev, "%s[%d] 0x%lx\n", str, k, map[k]);
-पूर्ण
+}
 
-अटल irqवापस_t sh_keysc_isr(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा platक्रमm_device *pdev = dev_id;
-	काष्ठा sh_keysc_priv *priv = platक्रमm_get_drvdata(pdev);
-	काष्ठा sh_keysc_info *pdata = &priv->pdata;
-	पूर्णांक keyout_nr = sh_keysc_mode[pdata->mode].keyout;
-	पूर्णांक keyin_nr = sh_keysc_mode[pdata->mode].keyin;
+static irqreturn_t sh_keysc_isr(int irq, void *dev_id)
+{
+	struct platform_device *pdev = dev_id;
+	struct sh_keysc_priv *priv = platform_get_drvdata(pdev);
+	struct sh_keysc_info *pdata = &priv->pdata;
+	int keyout_nr = sh_keysc_mode[pdata->mode].keyout;
+	int keyin_nr = sh_keysc_mode[pdata->mode].keyin;
 	DECLARE_BITMAP(keys, SH_KEYSC_MAXKEYS);
 	DECLARE_BITMAP(keys0, SH_KEYSC_MAXKEYS);
 	DECLARE_BITMAP(keys1, SH_KEYSC_MAXKEYS);
-	अचिन्हित अक्षर keyin_set, पंचांगp;
-	पूर्णांक i, k, n;
+	unsigned char keyin_set, tmp;
+	int i, k, n;
 
 	dev_dbg(&pdev->dev, "isr!\n");
 
-	biपंचांगap_fill(keys1, SH_KEYSC_MAXKEYS);
-	biपंचांगap_zero(keys0, SH_KEYSC_MAXKEYS);
+	bitmap_fill(keys1, SH_KEYSC_MAXKEYS);
+	bitmap_zero(keys0, SH_KEYSC_MAXKEYS);
 
-	करो अणु
-		biपंचांगap_zero(keys, SH_KEYSC_MAXKEYS);
+	do {
+		bitmap_zero(keys, SH_KEYSC_MAXKEYS);
 		keyin_set = 0;
 
-		sh_keysc_ग_लिखो(priv, KYCR2, KYCR2_IRQ_DISABLED);
+		sh_keysc_write(priv, KYCR2, KYCR2_IRQ_DISABLED);
 
-		क्रम (i = 0; i < keyout_nr; i++) अणु
+		for (i = 0; i < keyout_nr; i++) {
 			n = keyin_nr * i;
 
-			/* drive one KEYOUT pin low, पढ़ो KEYIN pins */
-			sh_keysc_ग_लिखो(priv, KYOUTDR, 0xffff ^ (3 << (i * 2)));
+			/* drive one KEYOUT pin low, read KEYIN pins */
+			sh_keysc_write(priv, KYOUTDR, 0xffff ^ (3 << (i * 2)));
 			udelay(pdata->delay);
-			पंचांगp = sh_keysc_पढ़ो(priv, KYINDR);
+			tmp = sh_keysc_read(priv, KYINDR);
 
-			/* set bit अगर key press has been detected */
-			क्रम (k = 0; k < keyin_nr; k++) अणु
-				अगर (पंचांगp & (1 << k))
+			/* set bit if key press has been detected */
+			for (k = 0; k < keyin_nr; k++) {
+				if (tmp & (1 << k))
 					__set_bit(n + k, keys);
-			पूर्ण
+			}
 
 			/* keep track of which KEYIN bits that have been set */
-			keyin_set |= पंचांगp ^ ((1 << keyin_nr) - 1);
-		पूर्ण
+			keyin_set |= tmp ^ ((1 << keyin_nr) - 1);
+		}
 
 		sh_keysc_level_mode(priv, keyin_set);
 
-		biपंचांगap_complement(keys, keys, SH_KEYSC_MAXKEYS);
-		biपंचांगap_and(keys1, keys1, keys, SH_KEYSC_MAXKEYS);
-		biपंचांगap_or(keys0, keys0, keys, SH_KEYSC_MAXKEYS);
+		bitmap_complement(keys, keys, SH_KEYSC_MAXKEYS);
+		bitmap_and(keys1, keys1, keys, SH_KEYSC_MAXKEYS);
+		bitmap_or(keys0, keys0, keys, SH_KEYSC_MAXKEYS);
 
 		sh_keysc_map_dbg(&pdev->dev, keys, "keys");
 
-	पूर्ण जबतक (sh_keysc_पढ़ो(priv, KYCR2) & 0x01);
+	} while (sh_keysc_read(priv, KYCR2) & 0x01);
 
 	sh_keysc_map_dbg(&pdev->dev, priv->last_keys, "last_keys");
 	sh_keysc_map_dbg(&pdev->dev, keys0, "keys0");
 	sh_keysc_map_dbg(&pdev->dev, keys1, "keys1");
 
-	क्रम (i = 0; i < SH_KEYSC_MAXKEYS; i++) अणु
+	for (i = 0; i < SH_KEYSC_MAXKEYS; i++) {
 		k = pdata->keycodes[i];
-		अगर (!k)
-			जारी;
+		if (!k)
+			continue;
 
-		अगर (test_bit(i, keys0) == test_bit(i, priv->last_keys))
-			जारी;
+		if (test_bit(i, keys0) == test_bit(i, priv->last_keys))
+			continue;
 
-		अगर (test_bit(i, keys1) || test_bit(i, keys0)) अणु
+		if (test_bit(i, keys1) || test_bit(i, keys0)) {
 			input_event(priv->input, EV_KEY, k, 1);
 			__set_bit(i, priv->last_keys);
-		पूर्ण
+		}
 
-		अगर (!test_bit(i, keys1)) अणु
+		if (!test_bit(i, keys1)) {
 			input_event(priv->input, EV_KEY, k, 0);
 			__clear_bit(i, priv->last_keys);
-		पूर्ण
+		}
 
-	पूर्ण
+	}
 	input_sync(priv->input);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक sh_keysc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sh_keysc_priv *priv;
-	काष्ठा sh_keysc_info *pdata;
-	काष्ठा resource *res;
-	काष्ठा input_dev *input;
-	पूर्णांक i;
-	पूर्णांक irq, error;
+static int sh_keysc_probe(struct platform_device *pdev)
+{
+	struct sh_keysc_priv *priv;
+	struct sh_keysc_info *pdata;
+	struct resource *res;
+	struct input_dev *input;
+	int i;
+	int irq, error;
 
-	अगर (!dev_get_platdata(&pdev->dev)) अणु
+	if (!dev_get_platdata(&pdev->dev)) {
 		dev_err(&pdev->dev, "no platform data defined\n");
 		error = -EINVAL;
-		जाओ err0;
-	पूर्ण
+		goto err0;
+	}
 
 	error = -ENXIO;
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (res == शून्य) अणु
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (res == NULL) {
 		dev_err(&pdev->dev, "failed to get I/O memory\n");
-		जाओ err0;
-	पूर्ण
+		goto err0;
+	}
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0)
-		जाओ err0;
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0)
+		goto err0;
 
-	priv = kzalloc(माप(*priv), GFP_KERNEL);
-	अगर (priv == शून्य) अणु
+	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
+	if (priv == NULL) {
 		dev_err(&pdev->dev, "failed to allocate driver data\n");
 		error = -ENOMEM;
-		जाओ err0;
-	पूर्ण
+		goto err0;
+	}
 
-	platक्रमm_set_drvdata(pdev, priv);
-	स_नकल(&priv->pdata, dev_get_platdata(&pdev->dev), माप(priv->pdata));
+	platform_set_drvdata(pdev, priv);
+	memcpy(&priv->pdata, dev_get_platdata(&pdev->dev), sizeof(priv->pdata));
 	pdata = &priv->pdata;
 
 	priv->iomem_base = ioremap(res->start, resource_size(res));
-	अगर (priv->iomem_base == शून्य) अणु
+	if (priv->iomem_base == NULL) {
 		dev_err(&pdev->dev, "failed to remap I/O memory\n");
 		error = -ENXIO;
-		जाओ err1;
-	पूर्ण
+		goto err1;
+	}
 
 	priv->input = input_allocate_device();
-	अगर (!priv->input) अणु
+	if (!priv->input) {
 		dev_err(&pdev->dev, "failed to allocate input device\n");
 		error = -ENOMEM;
-		जाओ err2;
-	पूर्ण
+		goto err2;
+	}
 
 	input = priv->input;
 	input->evbit[0] = BIT_MASK(EV_KEY);
@@ -218,119 +217,119 @@
 	input->dev.parent = &pdev->dev;
 
 	input->id.bustype = BUS_HOST;
-	input->id.venकरोr = 0x0001;
+	input->id.vendor = 0x0001;
 	input->id.product = 0x0001;
 	input->id.version = 0x0100;
 
 	input->keycode = pdata->keycodes;
-	input->keycodesize = माप(pdata->keycodes[0]);
+	input->keycodesize = sizeof(pdata->keycodes[0]);
 	input->keycodemax = ARRAY_SIZE(pdata->keycodes);
 
-	error = request_thपढ़ोed_irq(irq, शून्य, sh_keysc_isr, IRQF_ONESHOT,
+	error = request_threaded_irq(irq, NULL, sh_keysc_isr, IRQF_ONESHOT,
 				     dev_name(&pdev->dev), pdev);
-	अगर (error) अणु
+	if (error) {
 		dev_err(&pdev->dev, "failed to request IRQ\n");
-		जाओ err3;
-	पूर्ण
+		goto err3;
+	}
 
-	क्रम (i = 0; i < SH_KEYSC_MAXKEYS; i++)
+	for (i = 0; i < SH_KEYSC_MAXKEYS; i++)
 		__set_bit(pdata->keycodes[i], input->keybit);
 	__clear_bit(KEY_RESERVED, input->keybit);
 
-	error = input_रेजिस्टर_device(input);
-	अगर (error) अणु
+	error = input_register_device(input);
+	if (error) {
 		dev_err(&pdev->dev, "failed to register input device\n");
-		जाओ err4;
-	पूर्ण
+		goto err4;
+	}
 
-	pm_runसमय_enable(&pdev->dev);
-	pm_runसमय_get_sync(&pdev->dev);
+	pm_runtime_enable(&pdev->dev);
+	pm_runtime_get_sync(&pdev->dev);
 
-	sh_keysc_ग_लिखो(priv, KYCR1, (sh_keysc_mode[pdata->mode].kymd << 8) |
+	sh_keysc_write(priv, KYCR1, (sh_keysc_mode[pdata->mode].kymd << 8) |
 		       pdata->scan_timing);
 	sh_keysc_level_mode(priv, 0);
 
 	device_init_wakeup(&pdev->dev, 1);
 
-	वापस 0;
+	return 0;
 
  err4:
-	मुक्त_irq(irq, pdev);
+	free_irq(irq, pdev);
  err3:
-	input_मुक्त_device(input);
+	input_free_device(input);
  err2:
 	iounmap(priv->iomem_base);
  err1:
-	kमुक्त(priv);
+	kfree(priv);
  err0:
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक sh_keysc_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sh_keysc_priv *priv = platक्रमm_get_drvdata(pdev);
+static int sh_keysc_remove(struct platform_device *pdev)
+{
+	struct sh_keysc_priv *priv = platform_get_drvdata(pdev);
 
-	sh_keysc_ग_लिखो(priv, KYCR2, KYCR2_IRQ_DISABLED);
+	sh_keysc_write(priv, KYCR2, KYCR2_IRQ_DISABLED);
 
-	input_unरेजिस्टर_device(priv->input);
-	मुक्त_irq(platक्रमm_get_irq(pdev, 0), pdev);
+	input_unregister_device(priv->input);
+	free_irq(platform_get_irq(pdev, 0), pdev);
 	iounmap(priv->iomem_base);
 
-	pm_runसमय_put_sync(&pdev->dev);
-	pm_runसमय_disable(&pdev->dev);
+	pm_runtime_put_sync(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
 
-	kमुक्त(priv);
+	kfree(priv);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक sh_keysc_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	काष्ठा sh_keysc_priv *priv = platक्रमm_get_drvdata(pdev);
-	पूर्णांक irq = platक्रमm_get_irq(pdev, 0);
-	अचिन्हित लघु value;
+#ifdef CONFIG_PM_SLEEP
+static int sh_keysc_suspend(struct device *dev)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct sh_keysc_priv *priv = platform_get_drvdata(pdev);
+	int irq = platform_get_irq(pdev, 0);
+	unsigned short value;
 
-	value = sh_keysc_पढ़ो(priv, KYCR1);
+	value = sh_keysc_read(priv, KYCR1);
 
-	अगर (device_may_wakeup(dev)) अणु
-		sh_keysc_ग_लिखो(priv, KYCR1, value | 0x80);
+	if (device_may_wakeup(dev)) {
+		sh_keysc_write(priv, KYCR1, value | 0x80);
 		enable_irq_wake(irq);
-	पूर्ण अन्यथा अणु
-		sh_keysc_ग_लिखो(priv, KYCR1, value & ~0x80);
-		pm_runसमय_put_sync(dev);
-	पूर्ण
+	} else {
+		sh_keysc_write(priv, KYCR1, value & ~0x80);
+		pm_runtime_put_sync(dev);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sh_keysc_resume(काष्ठा device *dev)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	पूर्णांक irq = platक्रमm_get_irq(pdev, 0);
+static int sh_keysc_resume(struct device *dev)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	int irq = platform_get_irq(pdev, 0);
 
-	अगर (device_may_wakeup(dev))
+	if (device_may_wakeup(dev))
 		disable_irq_wake(irq);
-	अन्यथा
-		pm_runसमय_get_sync(dev);
+	else
+		pm_runtime_get_sync(dev);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(sh_keysc_dev_pm_ops,
+static SIMPLE_DEV_PM_OPS(sh_keysc_dev_pm_ops,
 			 sh_keysc_suspend, sh_keysc_resume);
 
-अटल काष्ठा platक्रमm_driver sh_keysc_device_driver = अणु
+static struct platform_driver sh_keysc_device_driver = {
 	.probe		= sh_keysc_probe,
-	.हटाओ		= sh_keysc_हटाओ,
-	.driver		= अणु
+	.remove		= sh_keysc_remove,
+	.driver		= {
 		.name	= "sh_keysc",
 		.pm	= &sh_keysc_dev_pm_ops,
-	पूर्ण
-पूर्ण;
-module_platक्रमm_driver(sh_keysc_device_driver);
+	}
+};
+module_platform_driver(sh_keysc_device_driver);
 
 MODULE_AUTHOR("Magnus Damm");
 MODULE_DESCRIPTION("SuperH KEYSC Keypad Driver");

@@ -1,169 +1,168 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * softing common पूर्णांकerfaces
+ * softing common interfaces
  *
  * by Kurt Van Dijck, 2008-2010
  */
 
-#समावेश <linux/atomic.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/kसमय.स>
-#समावेश <linux/mutex.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/can.h>
-#समावेश <linux/can/dev.h>
+#include <linux/atomic.h>
+#include <linux/netdevice.h>
+#include <linux/ktime.h>
+#include <linux/mutex.h>
+#include <linux/spinlock.h>
+#include <linux/can.h>
+#include <linux/can/dev.h>
 
-#समावेश "softing_platform.h"
+#include "softing_platform.h"
 
-काष्ठा softing;
+struct softing;
 
-काष्ठा softing_priv अणु
-	काष्ठा can_priv can; /* must be the first member! */
-	काष्ठा net_device *netdev;
-	काष्ठा softing *card;
-	काष्ठा अणु
-		पूर्णांक pending;
+struct softing_priv {
+	struct can_priv can; /* must be the first member! */
+	struct net_device *netdev;
+	struct softing *card;
+	struct {
+		int pending;
 		/* variables which hold the circular buffer */
-		पूर्णांक echo_put;
-		पूर्णांक echo_get;
-	पूर्ण tx;
-	काष्ठा can_bittiming_स्थिर btr_स्थिर;
-	पूर्णांक index;
-	uपूर्णांक8_t output;
-	uपूर्णांक16_t chip;
-पूर्ण;
-#घोषणा netdev2softing(netdev)	((काष्ठा softing_priv *)netdev_priv(netdev))
+		int echo_put;
+		int echo_get;
+	} tx;
+	struct can_bittiming_const btr_const;
+	int index;
+	uint8_t output;
+	uint16_t chip;
+};
+#define netdev2softing(netdev)	((struct softing_priv *)netdev_priv(netdev))
 
-काष्ठा softing अणु
-	स्थिर काष्ठा softing_platक्रमm_data *pdat;
-	काष्ठा platक्रमm_device *pdev;
-	काष्ठा net_device *net[2];
-	spinlock_t spin; /* protect this काष्ठाure & DPRAM access */
-	kसमय_प्रकार ts_ref;
-	kसमय_प्रकार ts_overflow; /* बारtamp overflow value, in kसमय */
+struct softing {
+	const struct softing_platform_data *pdat;
+	struct platform_device *pdev;
+	struct net_device *net[2];
+	spinlock_t spin; /* protect this structure & DPRAM access */
+	ktime_t ts_ref;
+	ktime_t ts_overflow; /* timestamp overflow value, in ktime */
 
-	काष्ठा अणु
+	struct {
 		/* indication of firmware status */
-		पूर्णांक up;
+		int up;
 		/* protection of the 'up' variable */
-		काष्ठा mutex lock;
-	पूर्ण fw;
-	काष्ठा अणु
-		पूर्णांक nr;
-		पूर्णांक requested;
-		पूर्णांक svc_count;
-		अचिन्हित पूर्णांक dpram_position;
-	पूर्ण irq;
-	काष्ठा अणु
-		पूर्णांक pending;
-		पूर्णांक last_bus;
+		struct mutex lock;
+	} fw;
+	struct {
+		int nr;
+		int requested;
+		int svc_count;
+		unsigned int dpram_position;
+	} irq;
+	struct {
+		int pending;
+		int last_bus;
 		/*
 		 * keep the bus that last tx'd a message,
 		 * in order to let every netdev queue resume
 		 */
-	पूर्ण tx;
-	__iomem uपूर्णांक8_t *dpram;
-	अचिन्हित दीर्घ dpram_phys;
-	अचिन्हित दीर्घ dpram_size;
-	काष्ठा अणु
-		uपूर्णांक16_t fw_version, hw_version, license, serial;
-		uपूर्णांक16_t chip[2];
-		अचिन्हित पूर्णांक freq; /* remote cpu's operating frequency */
-	पूर्ण id;
-पूर्ण;
+	} tx;
+	__iomem uint8_t *dpram;
+	unsigned long dpram_phys;
+	unsigned long dpram_size;
+	struct {
+		uint16_t fw_version, hw_version, license, serial;
+		uint16_t chip[2];
+		unsigned int freq; /* remote cpu's operating frequency */
+	} id;
+};
 
-पूर्णांक softing_शेष_output(काष्ठा net_device *netdev);
+int softing_default_output(struct net_device *netdev);
 
-kसमय_प्रकार softing_raw2kसमय(काष्ठा softing *card, u32 raw);
+ktime_t softing_raw2ktime(struct softing *card, u32 raw);
 
-पूर्णांक softing_chip_घातeron(काष्ठा softing *card);
+int softing_chip_poweron(struct softing *card);
 
-पूर्णांक softing_bootloader_command(काष्ठा softing *card, पूर्णांक16_t cmd,
-			       स्थिर अक्षर *msg);
+int softing_bootloader_command(struct softing *card, int16_t cmd,
+			       const char *msg);
 
 /* Load firmware after reset */
-पूर्णांक softing_load_fw(स्थिर अक्षर *file, काष्ठा softing *card,
-		    __iomem uपूर्णांक8_t *virt, अचिन्हित पूर्णांक size, पूर्णांक offset);
+int softing_load_fw(const char *file, struct softing *card,
+		    __iomem uint8_t *virt, unsigned int size, int offset);
 
 /* Load final application firmware after bootloader */
-पूर्णांक softing_load_app_fw(स्थिर अक्षर *file, काष्ठा softing *card);
+int softing_load_app_fw(const char *file, struct softing *card);
 
 /*
  * enable or disable irq
  * only called with fw.lock locked
  */
-पूर्णांक softing_enable_irq(काष्ठा softing *card, पूर्णांक enable);
+int softing_enable_irq(struct softing *card, int enable);
 
 /* start/stop 1 bus on card */
-पूर्णांक softing_startstop(काष्ठा net_device *netdev, पूर्णांक up);
+int softing_startstop(struct net_device *netdev, int up);
 
-/* netअगर_rx() */
-पूर्णांक softing_netdev_rx(काष्ठा net_device *netdev, स्थिर काष्ठा can_frame *msg,
-		      kसमय_प्रकार kसमय);
+/* netif_rx() */
+int softing_netdev_rx(struct net_device *netdev, const struct can_frame *msg,
+		      ktime_t ktime);
 
 /* SOFTING DPRAM mappings */
-#घोषणा DPRAM_RX		0x0000
-	#घोषणा DPRAM_RX_SIZE	32
-	#घोषणा DPRAM_RX_CNT	16
-#घोषणा DPRAM_RX_RD		0x0201	/* uपूर्णांक8_t */
-#घोषणा DPRAM_RX_WR		0x0205	/* uपूर्णांक8_t */
-#घोषणा DPRAM_RX_LOST		0x0207	/* uपूर्णांक8_t */
+#define DPRAM_RX		0x0000
+	#define DPRAM_RX_SIZE	32
+	#define DPRAM_RX_CNT	16
+#define DPRAM_RX_RD		0x0201	/* uint8_t */
+#define DPRAM_RX_WR		0x0205	/* uint8_t */
+#define DPRAM_RX_LOST		0x0207	/* uint8_t */
 
-#घोषणा DPRAM_FCT_PARAM		0x0300	/* पूर्णांक16_t [20] */
-#घोषणा DPRAM_FCT_RESULT	0x0328	/* पूर्णांक16_t */
-#घोषणा DPRAM_FCT_HOST		0x032b	/* uपूर्णांक16_t */
+#define DPRAM_FCT_PARAM		0x0300	/* int16_t [20] */
+#define DPRAM_FCT_RESULT	0x0328	/* int16_t */
+#define DPRAM_FCT_HOST		0x032b	/* uint16_t */
 
-#घोषणा DPRAM_INFO_BUSSTATE	0x0331	/* uपूर्णांक16_t */
-#घोषणा DPRAM_INFO_BUSSTATE2	0x0335	/* uपूर्णांक16_t */
-#घोषणा DPRAM_INFO_ERRSTATE	0x0339	/* uपूर्णांक16_t */
-#घोषणा DPRAM_INFO_ERRSTATE2	0x033d	/* uपूर्णांक16_t */
-#घोषणा DPRAM_RESET		0x0341	/* uपूर्णांक16_t */
-#घोषणा DPRAM_CLR_RECV_FIFO	0x0345	/* uपूर्णांक16_t */
-#घोषणा DPRAM_RESET_TIME	0x034d	/* uपूर्णांक16_t */
-#घोषणा DPRAM_TIME		0x0350	/* uपूर्णांक64_t */
-#घोषणा DPRAM_WR_START		0x0358	/* uपूर्णांक8_t */
-#घोषणा DPRAM_WR_END		0x0359	/* uपूर्णांक8_t */
-#घोषणा DPRAM_RESET_RX_FIFO	0x0361	/* uपूर्णांक16_t */
-#घोषणा DPRAM_RESET_TX_FIFO	0x0364	/* uपूर्णांक8_t */
-#घोषणा DPRAM_READ_FIFO_LEVEL	0x0365	/* uपूर्णांक8_t */
-#घोषणा DPRAM_RX_FIFO_LEVEL	0x0366	/* uपूर्णांक16_t */
-#घोषणा DPRAM_TX_FIFO_LEVEL	0x0366	/* uपूर्णांक16_t */
+#define DPRAM_INFO_BUSSTATE	0x0331	/* uint16_t */
+#define DPRAM_INFO_BUSSTATE2	0x0335	/* uint16_t */
+#define DPRAM_INFO_ERRSTATE	0x0339	/* uint16_t */
+#define DPRAM_INFO_ERRSTATE2	0x033d	/* uint16_t */
+#define DPRAM_RESET		0x0341	/* uint16_t */
+#define DPRAM_CLR_RECV_FIFO	0x0345	/* uint16_t */
+#define DPRAM_RESET_TIME	0x034d	/* uint16_t */
+#define DPRAM_TIME		0x0350	/* uint64_t */
+#define DPRAM_WR_START		0x0358	/* uint8_t */
+#define DPRAM_WR_END		0x0359	/* uint8_t */
+#define DPRAM_RESET_RX_FIFO	0x0361	/* uint16_t */
+#define DPRAM_RESET_TX_FIFO	0x0364	/* uint8_t */
+#define DPRAM_READ_FIFO_LEVEL	0x0365	/* uint8_t */
+#define DPRAM_RX_FIFO_LEVEL	0x0366	/* uint16_t */
+#define DPRAM_TX_FIFO_LEVEL	0x0366	/* uint16_t */
 
-#घोषणा DPRAM_TX		0x0400	/* uपूर्णांक16_t */
-	#घोषणा DPRAM_TX_SIZE	16
-	#घोषणा DPRAM_TX_CNT	32
-#घोषणा DPRAM_TX_RD		0x0601	/* uपूर्णांक8_t */
-#घोषणा DPRAM_TX_WR		0x0605	/* uपूर्णांक8_t */
+#define DPRAM_TX		0x0400	/* uint16_t */
+	#define DPRAM_TX_SIZE	16
+	#define DPRAM_TX_CNT	32
+#define DPRAM_TX_RD		0x0601	/* uint8_t */
+#define DPRAM_TX_WR		0x0605	/* uint8_t */
 
-#घोषणा DPRAM_COMMAND		0x07e0	/* uपूर्णांक16_t */
-#घोषणा DPRAM_RECEIPT		0x07f0	/* uपूर्णांक16_t */
-#घोषणा DPRAM_IRQ_TOHOST	0x07fe	/* uपूर्णांक8_t */
-#घोषणा DPRAM_IRQ_TOCARD	0x07ff	/* uपूर्णांक8_t */
+#define DPRAM_COMMAND		0x07e0	/* uint16_t */
+#define DPRAM_RECEIPT		0x07f0	/* uint16_t */
+#define DPRAM_IRQ_TOHOST	0x07fe	/* uint8_t */
+#define DPRAM_IRQ_TOCARD	0x07ff	/* uint8_t */
 
-#घोषणा DPRAM_V2_RESET		0x0e00	/* uपूर्णांक8_t */
-#घोषणा DPRAM_V2_IRQ_TOHOST	0x0e02	/* uपूर्णांक8_t */
+#define DPRAM_V2_RESET		0x0e00	/* uint8_t */
+#define DPRAM_V2_IRQ_TOHOST	0x0e02	/* uint8_t */
 
-#घोषणा TXMAX	(DPRAM_TX_CNT - 1)
+#define TXMAX	(DPRAM_TX_CNT - 1)
 
-/* DPRAM वापस codes */
-#घोषणा RES_NONE	0
-#घोषणा RES_OK		1
-#घोषणा RES_NOK		2
-#घोषणा RES_UNKNOWN	3
+/* DPRAM return codes */
+#define RES_NONE	0
+#define RES_OK		1
+#define RES_NOK		2
+#define RES_UNKNOWN	3
 /* DPRAM flags */
-#घोषणा CMD_TX		0x01
-#घोषणा CMD_ACK		0x02
-#घोषणा CMD_XTD		0x04
-#घोषणा CMD_RTR		0x08
-#घोषणा CMD_ERR		0x10
-#घोषणा CMD_BUS2	0x80
+#define CMD_TX		0x01
+#define CMD_ACK		0x02
+#define CMD_XTD		0x04
+#define CMD_RTR		0x08
+#define CMD_ERR		0x10
+#define CMD_BUS2	0x80
 
-/* वापसed fअगरo entry bus state masks */
-#घोषणा SF_MASK_BUSOFF		0x80
-#घोषणा SF_MASK_EPASSIVE	0x60
+/* returned fifo entry bus state masks */
+#define SF_MASK_BUSOFF		0x80
+#define SF_MASK_EPASSIVE	0x60
 
 /* bus states */
-#घोषणा STATE_BUSOFF	2
-#घोषणा STATE_EPASSIVE	1
-#घोषणा STATE_EACTIVE	0
+#define STATE_BUSOFF	2
+#define STATE_EPASSIVE	1
+#define STATE_EACTIVE	0

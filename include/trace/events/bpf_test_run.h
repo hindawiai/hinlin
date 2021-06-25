@@ -1,51 +1,50 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_SYSTEM bpf_test_run
+/* SPDX-License-Identifier: GPL-2.0 */
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM bpf_test_run
 
-#अगर !defined(_TRACE_BPF_TEST_RUN_H) || defined(TRACE_HEADER_MULTI_READ)
-#घोषणा _TRACE_BPF_TEST_RUN_H
+#if !defined(_TRACE_BPF_TEST_RUN_H) || defined(TRACE_HEADER_MULTI_READ)
+#define _TRACE_BPF_TEST_RUN_H
 
-#समावेश <linux/tracepoपूर्णांक.h>
+#include <linux/tracepoint.h>
 
 DECLARE_EVENT_CLASS(bpf_test_finish,
 
-	TP_PROTO(पूर्णांक *err),
+	TP_PROTO(int *err),
 
 	TP_ARGS(err),
 
 	TP_STRUCT__entry(
-		__field(पूर्णांक, err)
+		__field(int, err)
 	),
 
 	TP_fast_assign(
 		__entry->err = *err;
 	),
 
-	TP_prपूर्णांकk("bpf_test_finish with err=%d", __entry->err)
+	TP_printk("bpf_test_finish with err=%d", __entry->err)
 );
 
-#अगर_घोषित DEFINE_EVENT_WRITABLE
-#अघोषित BPF_TEST_RUN_DEFINE_EVENT
-#घोषणा BPF_TEST_RUN_DEFINE_EVENT(ढाँचा, call, proto, args, size)	\
-	DEFINE_EVENT_WRITABLE(ढाँचा, call, PARAMS(proto),		\
+#ifdef DEFINE_EVENT_WRITABLE
+#undef BPF_TEST_RUN_DEFINE_EVENT
+#define BPF_TEST_RUN_DEFINE_EVENT(template, call, proto, args, size)	\
+	DEFINE_EVENT_WRITABLE(template, call, PARAMS(proto),		\
 			      PARAMS(args), size)
-#अन्यथा
-#अघोषित BPF_TEST_RUN_DEFINE_EVENT
-#घोषणा BPF_TEST_RUN_DEFINE_EVENT(ढाँचा, call, proto, args, size)	\
-	DEFINE_EVENT(ढाँचा, call, PARAMS(proto), PARAMS(args))
-#पूर्ण_अगर
+#else
+#undef BPF_TEST_RUN_DEFINE_EVENT
+#define BPF_TEST_RUN_DEFINE_EVENT(template, call, proto, args, size)	\
+	DEFINE_EVENT(template, call, PARAMS(proto), PARAMS(args))
+#endif
 
 BPF_TEST_RUN_DEFINE_EVENT(bpf_test_finish, bpf_test_finish,
 
-	TP_PROTO(पूर्णांक *err),
+	TP_PROTO(int *err),
 
 	TP_ARGS(err),
 
-	माप(पूर्णांक)
+	sizeof(int)
 );
 
-#पूर्ण_अगर
+#endif
 
 /* This part must be outside protection */
-#समावेश <trace/define_trace.h>
+#include <trace/define_trace.h>

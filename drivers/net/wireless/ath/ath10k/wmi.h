@@ -1,89 +1,88 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: ISC */
+/* SPDX-License-Identifier: ISC */
 /*
  * Copyright (c) 2005-2011 Atheros Communications Inc.
  * Copyright (c) 2011-2017 Qualcomm Atheros, Inc.
  * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 
-#अगर_अघोषित _WMI_H_
-#घोषणा _WMI_H_
+#ifndef _WMI_H_
+#define _WMI_H_
 
-#समावेश <linux/types.h>
-#समावेश <linux/ieee80211.h>
+#include <linux/types.h>
+#include <linux/ieee80211.h>
 
 /*
- * This file specअगरies the WMI पूर्णांकerface क्रम the Unअगरied Software
+ * This file specifies the WMI interface for the Unified Software
  * Architecture.
  *
  * It includes definitions of all the commands and events. Commands are
  * messages from the host to the target. Events and Replies are messages
  * from the target to the host.
  *
- * Ownership of correctness in regards to WMI commands beदीर्घs to the host
- * driver and the target is not required to validate parameters क्रम value,
+ * Ownership of correctness in regards to WMI commands belongs to the host
+ * driver and the target is not required to validate parameters for value,
  * proper range, or any other checking.
  *
- * Guidelines क्रम extending this पूर्णांकerface are below.
+ * Guidelines for extending this interface are below.
  *
- * 1. Add new WMI commands ONLY within the specअगरied range - 0x9000 - 0x9fff
+ * 1. Add new WMI commands ONLY within the specified range - 0x9000 - 0x9fff
  *
- * 2. Use ONLY u32 type क्रम defining member variables within WMI
- *    command/event काष्ठाures. Do not use u8, u16, bool or
- *    क्रमागत types within these काष्ठाures.
+ * 2. Use ONLY u32 type for defining member variables within WMI
+ *    command/event structures. Do not use u8, u16, bool or
+ *    enum types within these structures.
  *
- * 3. DO NOT define bit fields within काष्ठाures. Implement bit fields
- *    using masks अगर necessary. Do not use the programming language's bit
+ * 3. DO NOT define bit fields within structures. Implement bit fields
+ *    using masks if necessary. Do not use the programming language's bit
  *    field definition.
  *
- * 4. Define macros क्रम encode/decode of u8, u16 fields within
- *    the u32 variables. Use these macros क्रम set/get of these fields.
- *    Try to use this to optimize the काष्ठाure without bloating it with
- *    u32 variables क्रम every lower sized field.
+ * 4. Define macros for encode/decode of u8, u16 fields within
+ *    the u32 variables. Use these macros for set/get of these fields.
+ *    Try to use this to optimize the structure without bloating it with
+ *    u32 variables for every lower sized field.
  *
- * 5. Do not use PACK/UNPACK attributes क्रम the काष्ठाures as each member
- *    variable is alपढ़ोy 4-byte aligned by virtue of being a u32
+ * 5. Do not use PACK/UNPACK attributes for the structures as each member
+ *    variable is already 4-byte aligned by virtue of being a u32
  *    type.
  *
- * 6. Comment each parameter part of the WMI command/event काष्ठाure by
+ * 6. Comment each parameter part of the WMI command/event structure by
  *    using the 2 stars at the beginning of C comment instead of one star to
- *    enable HTML करोcument generation using Doxygen.
+ *    enable HTML document generation using Doxygen.
  *
  */
 
 /* Control Path */
-काष्ठा wmi_cmd_hdr अणु
+struct wmi_cmd_hdr {
 	__le32 cmd_id;
-पूर्ण __packed;
+} __packed;
 
-#घोषणा WMI_CMD_HDR_CMD_ID_MASK   0x00FFFFFF
-#घोषणा WMI_CMD_HDR_CMD_ID_LSB    0
-#घोषणा WMI_CMD_HDR_PLT_PRIV_MASK 0xFF000000
-#घोषणा WMI_CMD_HDR_PLT_PRIV_LSB  24
+#define WMI_CMD_HDR_CMD_ID_MASK   0x00FFFFFF
+#define WMI_CMD_HDR_CMD_ID_LSB    0
+#define WMI_CMD_HDR_PLT_PRIV_MASK 0xFF000000
+#define WMI_CMD_HDR_PLT_PRIV_LSB  24
 
-#घोषणा HTC_PROTOCOL_VERSION    0x0002
-#घोषणा WMI_PROTOCOL_VERSION    0x0002
+#define HTC_PROTOCOL_VERSION    0x0002
+#define WMI_PROTOCOL_VERSION    0x0002
 
 /*
- * There is no चिन्हित version of __le32, so क्रम a temporary solution come
+ * There is no signed version of __le32, so for a temporary solution come
  * up with our own version. The idea is from fs/ntfs/endian.h.
  *
- * Use a_ prefix so that it करोesn't conflict अगर we get proper support to
+ * Use a_ prefix so that it doesn't conflict if we get proper support to
  * linux/types.h.
  */
-प्रकार __s32 __bitwise a_sle32;
+typedef __s32 __bitwise a_sle32;
 
-अटल अंतरभूत a_sle32 a_cpu_to_sle32(s32 val)
-अणु
-	वापस (__क्रमce a_sle32)cpu_to_le32(val);
-पूर्ण
+static inline a_sle32 a_cpu_to_sle32(s32 val)
+{
+	return (__force a_sle32)cpu_to_le32(val);
+}
 
-अटल अंतरभूत s32 a_sle32_to_cpu(a_sle32 val)
-अणु
-	वापस le32_to_cpu((__क्रमce __le32)val);
-पूर्ण
+static inline s32 a_sle32_to_cpu(a_sle32 val)
+{
+	return le32_to_cpu((__force __le32)val);
+}
 
-क्रमागत wmi_service अणु
+enum wmi_service {
 	WMI_SERVICE_BEACON_OFFLOAD = 0,
 	WMI_SERVICE_SCAN_OFFLOAD,
 	WMI_SERVICE_ROAM_OFFLOAD,
@@ -140,7 +139,7 @@
 	WMI_SERVICE_MHF_OFFLOAD,
 	WMI_SERVICE_COEX_SAR,
 	WMI_SERVICE_BCN_TXRATE_OVERRIDE,
-	WMI_SERVICE_न_अंक,
+	WMI_SERVICE_NAN,
 	WMI_SERVICE_L1SS_STAT,
 	WMI_SERVICE_ESTIMATE_LINKSPEED,
 	WMI_SERVICE_OBSS_SCAN,
@@ -211,9 +210,9 @@
 
 	/* keep last */
 	WMI_SERVICE_MAX,
-पूर्ण;
+};
 
-क्रमागत wmi_10x_service अणु
+enum wmi_10x_service {
 	WMI_10X_SERVICE_BEACON_OFFLOAD = 0,
 	WMI_10X_SERVICE_SCAN_OFFLOAD,
 	WMI_10X_SERVICE_ROAM_OFFLOAD,
@@ -233,7 +232,7 @@
 	WMI_10X_SERVICE_IRAM_TIDS,
 	WMI_10X_SERVICE_BURST,
 
-	/* पूर्णांकroduced in 10.2 */
+	/* introduced in 10.2 */
 	WMI_10X_SERVICE_SMART_ANTENNA_SW_SUPPORT,
 	WMI_10X_SERVICE_FORCE_FW_HANG,
 	WMI_10X_SERVICE_SMART_ANTENNA_HW_SUPPORT,
@@ -250,9 +249,9 @@
 	WMI_10X_SERVICE_VDEV_BCN_RATE_CONTROL,
 	WMI_10X_SERVICE_PER_PACKET_SW_ENCRYPT,
 	WMI_10X_SERVICE_BB_TIMING_CONFIG_SUPPORT,
-पूर्ण;
+};
 
-क्रमागत wmi_मुख्य_service अणु
+enum wmi_main_service {
 	WMI_MAIN_SERVICE_BEACON_OFFLOAD = 0,
 	WMI_MAIN_SERVICE_SCAN_OFFLOAD,
 	WMI_MAIN_SERVICE_ROAM_OFFLOAD,
@@ -285,9 +284,9 @@
 	WMI_MAIN_SERVICE_STA_UAPSD_VAR_AUTO_TRIG,
 	WMI_MAIN_SERVICE_STA_KEEP_ALIVE,
 	WMI_MAIN_SERVICE_TX_ENCAP,
-पूर्ण;
+};
 
-क्रमागत wmi_10_4_service अणु
+enum wmi_10_4_service {
 	WMI_10_4_SERVICE_BEACON_OFFLOAD = 0,
 	WMI_10_4_SERVICE_SCAN_OFFLOAD,
 	WMI_10_4_SERVICE_ROAM_OFFLOAD,
@@ -379,13 +378,13 @@
 	WMI_10_4_SERVICE_ENHANCED_RADIO_COUNTERS,
 	WMI_10_4_SERVICE_QINQ_SUPPORT,
 	WMI_10_4_SERVICE_RESET_CHIP,
-पूर्ण;
+};
 
-अटल अंतरभूत अक्षर *wmi_service_name(क्रमागत wmi_service service_id)
-अणु
-#घोषणा SVCSTR(x) हाल x: वापस #x
+static inline char *wmi_service_name(enum wmi_service service_id)
+{
+#define SVCSTR(x) case x: return #x
 
-	चयन (service_id) अणु
+	switch (service_id) {
 	SVCSTR(WMI_SERVICE_BEACON_OFFLOAD);
 	SVCSTR(WMI_SERVICE_SCAN_OFFLOAD);
 	SVCSTR(WMI_SERVICE_ROAM_OFFLOAD);
@@ -442,7 +441,7 @@
 	SVCSTR(WMI_SERVICE_MHF_OFFLOAD);
 	SVCSTR(WMI_SERVICE_COEX_SAR);
 	SVCSTR(WMI_SERVICE_BCN_TXRATE_OVERRIDE);
-	SVCSTR(WMI_SERVICE_न_अंक);
+	SVCSTR(WMI_SERVICE_NAN);
 	SVCSTR(WMI_SERVICE_L1SS_STAT);
 	SVCSTR(WMI_SERVICE_ESTIMATE_LINKSPEED);
 	SVCSTR(WMI_SERVICE_OBSS_SCAN);
@@ -509,40 +508,40 @@
 	SVCSTR(WMI_SERVICE_PEER_TID_CONFIGS_SUPPORT);
 	SVCSTR(WMI_SERVICE_EXT_PEER_TID_CONFIGS_SUPPORT);
 
-	हाल WMI_SERVICE_MAX:
-		वापस शून्य;
-	पूर्ण
+	case WMI_SERVICE_MAX:
+		return NULL;
+	}
 
-#अघोषित SVCSTR
+#undef SVCSTR
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-#घोषणा WMI_SERVICE_IS_ENABLED(wmi_svc_bmap, svc_id, len) \
+#define WMI_SERVICE_IS_ENABLED(wmi_svc_bmap, svc_id, len) \
 	((svc_id) < (len) && \
-	 __le32_to_cpu((wmi_svc_bmap)[(svc_id) / (माप(u32))]) & \
-	 BIT((svc_id) % (माप(u32))))
+	 __le32_to_cpu((wmi_svc_bmap)[(svc_id) / (sizeof(u32))]) & \
+	 BIT((svc_id) % (sizeof(u32))))
 
 /* This extension is required to accommodate new services, current limit
- * क्रम wmi_services is 64 as target is using only 4-bits of each 32-bit
- * wmi_service word. Extending this to make use of reमुख्यing unused bits
- * क्रम new services.
+ * for wmi_services is 64 as target is using only 4-bits of each 32-bit
+ * wmi_service word. Extending this to make use of remaining unused bits
+ * for new services.
  */
-#घोषणा WMI_EXT_SERVICE_IS_ENABLED(wmi_svc_bmap, svc_id, len) \
+#define WMI_EXT_SERVICE_IS_ENABLED(wmi_svc_bmap, svc_id, len) \
 	((svc_id) >= (len) && \
 	__le32_to_cpu((wmi_svc_bmap)[((svc_id) - (len)) / 28]) & \
 	BIT(((((svc_id) - (len)) % 28) & 0x1f) + 4))
 
-#घोषणा SVCMAP(x, y, len) \
-	करो अणु \
-		अगर ((WMI_SERVICE_IS_ENABLED((in), (x), (len))) || \
+#define SVCMAP(x, y, len) \
+	do { \
+		if ((WMI_SERVICE_IS_ENABLED((in), (x), (len))) || \
 		    (WMI_EXT_SERVICE_IS_ENABLED((in), (x), (len)))) \
 			__set_bit(y, out); \
-	पूर्ण जबतक (0)
+	} while (0)
 
-अटल अंतरभूत व्योम wmi_10x_svc_map(स्थिर __le32 *in, अचिन्हित दीर्घ *out,
-				   माप_प्रकार len)
-अणु
+static inline void wmi_10x_svc_map(const __le32 *in, unsigned long *out,
+				   size_t len)
+{
 	SVCMAP(WMI_10X_SERVICE_BEACON_OFFLOAD,
 	       WMI_SERVICE_BEACON_OFFLOAD, len);
 	SVCMAP(WMI_10X_SERVICE_SCAN_OFFLOAD,
@@ -609,11 +608,11 @@
 	       WMI_SERVICE_BB_TIMING_CONFIG_SUPPORT, len);
 	SVCMAP(WMI_10X_SERVICE_PER_PACKET_SW_ENCRYPT,
 	       WMI_SERVICE_PER_PACKET_SW_ENCRYPT, len);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम wmi_मुख्य_svc_map(स्थिर __le32 *in, अचिन्हित दीर्घ *out,
-				    माप_प्रकार len)
-अणु
+static inline void wmi_main_svc_map(const __le32 *in, unsigned long *out,
+				    size_t len)
+{
 	SVCMAP(WMI_MAIN_SERVICE_BEACON_OFFLOAD,
 	       WMI_SERVICE_BEACON_OFFLOAD, len);
 	SVCMAP(WMI_MAIN_SERVICE_SCAN_OFFLOAD,
@@ -678,11 +677,11 @@
 	       WMI_SERVICE_STA_KEEP_ALIVE, len);
 	SVCMAP(WMI_MAIN_SERVICE_TX_ENCAP,
 	       WMI_SERVICE_TX_ENCAP, len);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम wmi_10_4_svc_map(स्थिर __le32 *in, अचिन्हित दीर्घ *out,
-				    माप_प्रकार len)
-अणु
+static inline void wmi_10_4_svc_map(const __le32 *in, unsigned long *out,
+				    size_t len)
+{
 	SVCMAP(WMI_10_4_SERVICE_BEACON_OFFLOAD,
 	       WMI_SERVICE_BEACON_OFFLOAD, len);
 	SVCMAP(WMI_10_4_SERVICE_SCAN_OFFLOAD,
@@ -843,29 +842,29 @@
 	       WMI_SERVICE_PEER_TID_CONFIGS_SUPPORT, len);
 	SVCMAP(WMI_10_4_SERVICE_EXT_PEER_TID_CONFIGS_SUPPORT,
 	       WMI_SERVICE_PEER_TID_CONFIGS_SUPPORT, len);
-पूर्ण
+}
 
-#अघोषित SVCMAP
+#undef SVCMAP
 
 /* 2 word representation of MAC addr */
-काष्ठा wmi_mac_addr अणु
-	जोड़ अणु
+struct wmi_mac_addr {
+	union {
 		u8 addr[6];
-		काष्ठा अणु
+		struct {
 			u32 word0;
 			u32 word1;
-		पूर्ण __packed;
-	पूर्ण __packed;
-पूर्ण __packed;
+		} __packed;
+	} __packed;
+} __packed;
 
-काष्ठा wmi_cmd_map अणु
+struct wmi_cmd_map {
 	u32 init_cmdid;
 	u32 start_scan_cmdid;
 	u32 stop_scan_cmdid;
 	u32 scan_chan_list_cmdid;
 	u32 scan_sch_prio_tbl_cmdid;
 	u32 scan_prob_req_oui_cmdid;
-	u32 pdev_set_regकरोमुख्य_cmdid;
+	u32 pdev_set_regdomain_cmdid;
 	u32 pdev_set_channel_cmdid;
 	u32 pdev_set_param_cmdid;
 	u32 pdev_pktlog_enable_cmdid;
@@ -884,7 +883,7 @@
 	u32 vdev_restart_request_cmdid;
 	u32 vdev_up_cmdid;
 	u32 vdev_stop_cmdid;
-	u32 vdev_करोwn_cmdid;
+	u32 vdev_down_cmdid;
 	u32 vdev_set_param_cmdid;
 	u32 vdev_install_key_cmdid;
 	u32 peer_create_cmdid;
@@ -893,24 +892,24 @@
 	u32 peer_set_param_cmdid;
 	u32 peer_assoc_cmdid;
 	u32 peer_add_wds_entry_cmdid;
-	u32 peer_हटाओ_wds_entry_cmdid;
+	u32 peer_remove_wds_entry_cmdid;
 	u32 peer_mcast_group_cmdid;
 	u32 bcn_tx_cmdid;
 	u32 pdev_send_bcn_cmdid;
-	u32 bcn_पंचांगpl_cmdid;
+	u32 bcn_tmpl_cmdid;
 	u32 bcn_filter_rx_cmdid;
 	u32 prb_req_filter_rx_cmdid;
 	u32 mgmt_tx_cmdid;
 	u32 mgmt_tx_send_cmdid;
-	u32 prb_पंचांगpl_cmdid;
+	u32 prb_tmpl_cmdid;
 	u32 addba_clear_resp_cmdid;
 	u32 addba_send_cmdid;
 	u32 addba_status_cmdid;
 	u32 delba_send_cmdid;
 	u32 addba_set_resp_cmdid;
 	u32 send_singleamsdu_cmdid;
-	u32 sta_घातersave_mode_cmdid;
-	u32 sta_घातersave_param_cmdid;
+	u32 sta_powersave_mode_cmdid;
+	u32 sta_powersave_param_cmdid;
 	u32 sta_mimo_ps_mode_cmdid;
 	u32 pdev_dfs_enable_cmdid;
 	u32 pdev_dfs_disable_cmdid;
@@ -920,18 +919,18 @@
 	u32 roam_scan_rssi_change_threshold;
 	u32 roam_ap_profile;
 	u32 ofl_scan_add_ap_profile;
-	u32 ofl_scan_हटाओ_ap_profile;
+	u32 ofl_scan_remove_ap_profile;
 	u32 ofl_scan_period;
 	u32 p2p_dev_set_device_info;
 	u32 p2p_dev_set_discoverability;
 	u32 p2p_go_set_beacon_ie;
 	u32 p2p_go_set_probe_resp_ie;
-	u32 p2p_set_venकरोr_ie_data_cmdid;
+	u32 p2p_set_vendor_ie_data_cmdid;
 	u32 ap_ps_peer_param_cmdid;
 	u32 ap_ps_peer_uapsd_coex_cmdid;
 	u32 peer_rate_retry_sched_cmdid;
 	u32 wlan_profile_trigger_cmdid;
-	u32 wlan_profile_set_hist_पूर्णांकvl_cmdid;
+	u32 wlan_profile_set_hist_intvl_cmdid;
 	u32 wlan_profile_get_profile_data_cmdid;
 	u32 wlan_profile_enable_profile_id_cmdid;
 	u32 wlan_profile_list_profile_id_cmdid;
@@ -954,21 +953,21 @@
 	u32 network_list_offload_config_cmdid;
 	u32 gtk_offload_cmdid;
 	u32 csa_offload_enable_cmdid;
-	u32 csa_offload_chanचयन_cmdid;
+	u32 csa_offload_chanswitch_cmdid;
 	u32 chatter_set_mode_cmdid;
 	u32 peer_tid_addba_cmdid;
 	u32 peer_tid_delba_cmdid;
 	u32 sta_dtim_ps_method_cmdid;
-	u32 sta_uapsd_स्वतः_trig_cmdid;
+	u32 sta_uapsd_auto_trig_cmdid;
 	u32 sta_keepalive_cmd;
 	u32 echo_cmdid;
 	u32 pdev_utf_cmdid;
 	u32 dbglog_cfg_cmdid;
 	u32 pdev_qvit_cmdid;
-	u32 pdev_fपंचांग_पूर्णांकg_cmdid;
+	u32 pdev_ftm_intg_cmdid;
 	u32 vdev_set_keepalive_cmdid;
 	u32 vdev_get_keepalive_cmdid;
-	u32 क्रमce_fw_hang_cmdid;
+	u32 force_fw_hang_cmdid;
 	u32 gpio_config_cmdid;
 	u32 gpio_output_cmdid;
 	u32 pdev_get_temperature_cmdid;
@@ -982,7 +981,7 @@
 	u32 wlan_peer_caching_add_peer_cmdid;
 	u32 wlan_peer_caching_evict_peer_cmdid;
 	u32 wlan_peer_caching_restore_peer_cmdid;
-	u32 wlan_peer_caching_prपूर्णांक_all_peers_info_cmdid;
+	u32 wlan_peer_caching_print_all_peers_info_cmdid;
 	u32 peer_update_wds_entry_cmdid;
 	u32 peer_add_proxy_sta_entry_cmdid;
 	u32 rtt_keepalive_cmdid;
@@ -995,7 +994,7 @@
 	u32 peer_smart_ant_set_tx_antenna_cmdid;
 	u32 peer_smart_ant_set_train_info_cmdid;
 	u32 peer_smart_ant_set_node_config_ops_cmdid;
-	u32 pdev_set_antenna_चयन_table_cmdid;
+	u32 pdev_set_antenna_switch_table_cmdid;
 	u32 pdev_set_ctl_table_cmdid;
 	u32 pdev_set_mimogain_table_cmdid;
 	u32 pdev_ratepwr_table_cmdid;
@@ -1008,7 +1007,7 @@
 	u32 pdev_get_ani_cck_config_cmdid;
 	u32 pdev_get_ani_ofdm_config_cmdid;
 	u32 pdev_reserve_ast_entry_cmdid;
-	u32 pdev_get_nfcal_घातer_cmdid;
+	u32 pdev_get_nfcal_power_cmdid;
 	u32 pdev_get_tpc_cmdid;
 	u32 pdev_get_ast_info_cmdid;
 	u32 vdev_set_dscp_tid_map_cmdid;
@@ -1038,20 +1037,20 @@
 	u32 prog_gpio_band_select_cmdid;
 	u32 config_smart_logging_cmdid;
 	u32 debug_fatal_condition_cmdid;
-	u32 get_tsf_समयr_cmdid;
+	u32 get_tsf_timer_cmdid;
 	u32 pdev_get_tpc_table_cmdid;
-	u32 vdev_sअगरs_trigger_समय_cmdid;
+	u32 vdev_sifs_trigger_time_cmdid;
 	u32 pdev_wds_entry_list_cmdid;
 	u32 tdls_set_offchan_mode_cmdid;
 	u32 radar_found_cmdid;
 	u32 set_bb_timing_cmdid;
 	u32 per_peer_per_tid_config_cmdid;
-पूर्ण;
+};
 
 /*
  * wmi command groups.
  */
-क्रमागत wmi_cmd_group अणु
+enum wmi_cmd_group {
 	/* 0 to 2 are reserved */
 	WMI_GRP_START = 0x3,
 	WMI_GRP_SCAN = WMI_GRP_START,
@@ -1067,7 +1066,7 @@
 	WMI_GRP_P2P,
 	WMI_GRP_AP_PS,
 	WMI_GRP_RATE_CTRL,
-	WMI_GRP_PROखाता,
+	WMI_GRP_PROFILE,
 	WMI_GRP_SUSPEND,
 	WMI_GRP_BCN_FILTER,
 	WMI_GRP_WOW,
@@ -1082,24 +1081,24 @@
 	WMI_GRP_TID_ADDBA,
 	WMI_GRP_MISC,
 	WMI_GRP_GPIO,
-पूर्ण;
+};
 
-#घोषणा WMI_CMD_GRP(grp_id) (((grp_id) << 12) | 0x1)
-#घोषणा WMI_EVT_GRP_START_ID(grp_id) (((grp_id) << 12) | 0x1)
+#define WMI_CMD_GRP(grp_id) (((grp_id) << 12) | 0x1)
+#define WMI_EVT_GRP_START_ID(grp_id) (((grp_id) << 12) | 0x1)
 
-#घोषणा WMI_CMD_UNSUPPORTED 0
+#define WMI_CMD_UNSUPPORTED 0
 
-/* Command IDs and command events क्रम MAIN FW. */
-क्रमागत wmi_cmd_id अणु
+/* Command IDs and command events for MAIN FW. */
+enum wmi_cmd_id {
 	WMI_INIT_CMDID = 0x1,
 
-	/* Scan specअगरic commands */
+	/* Scan specific commands */
 	WMI_START_SCAN_CMDID = WMI_CMD_GRP(WMI_GRP_SCAN),
 	WMI_STOP_SCAN_CMDID,
 	WMI_SCAN_CHAN_LIST_CMDID,
 	WMI_SCAN_SCH_PRIO_TBL_CMDID,
 
-	/* PDEV (physical device) specअगरic commands */
+	/* PDEV (physical device) specific commands */
 	WMI_PDEV_SET_REGDOMAIN_CMDID = WMI_CMD_GRP(WMI_GRP_PDEV),
 	WMI_PDEV_SET_CHANNEL_CMDID,
 	WMI_PDEV_SET_PARAM_CMDID,
@@ -1114,7 +1113,7 @@
 	WMI_PDEV_GET_TPC_CONFIG_CMDID,
 	WMI_PDEV_SET_BASE_MACADDR_CMDID,
 
-	/* VDEV (भव device) specअगरic commands */
+	/* VDEV (virtual device) specific commands */
 	WMI_VDEV_CREATE_CMDID = WMI_CMD_GRP(WMI_GRP_VDEV),
 	WMI_VDEV_DELETE_CMDID,
 	WMI_VDEV_START_REQUEST_CMDID,
@@ -1125,7 +1124,7 @@
 	WMI_VDEV_SET_PARAM_CMDID,
 	WMI_VDEV_INSTALL_KEY_CMDID,
 
-	/* peer specअगरic commands */
+	/* peer specific commands */
 	WMI_PEER_CREATE_CMDID = WMI_CMD_GRP(WMI_GRP_PEER),
 	WMI_PEER_DELETE_CMDID,
 	WMI_PEER_FLUSH_TIDS_CMDID,
@@ -1135,7 +1134,7 @@
 	WMI_PEER_REMOVE_WDS_ENTRY_CMDID,
 	WMI_PEER_MCAST_GROUP_CMDID,
 
-	/* beacon/management specअगरic commands */
+	/* beacon/management specific commands */
 	WMI_BCN_TX_CMDID = WMI_CMD_GRP(WMI_GRP_MGMT),
 	WMI_PDEV_SEND_BCN_CMDID,
 	WMI_BCN_TMPL_CMDID,
@@ -1152,48 +1151,48 @@
 	WMI_ADDBA_SET_RESP_CMDID,
 	WMI_SEND_SINGLEAMSDU_CMDID,
 
-	/* Station घातer save specअगरic config */
+	/* Station power save specific config */
 	WMI_STA_POWERSAVE_MODE_CMDID = WMI_CMD_GRP(WMI_GRP_STA_PS),
 	WMI_STA_POWERSAVE_PARAM_CMDID,
 	WMI_STA_MIMO_PS_MODE_CMDID,
 
-	/** DFS-specअगरic commands */
+	/** DFS-specific commands */
 	WMI_PDEV_DFS_ENABLE_CMDID = WMI_CMD_GRP(WMI_GRP_DFS),
 	WMI_PDEV_DFS_DISABLE_CMDID,
 
-	/* Roaming specअगरic  commands */
+	/* Roaming specific  commands */
 	WMI_ROAM_SCAN_MODE = WMI_CMD_GRP(WMI_GRP_ROAM),
 	WMI_ROAM_SCAN_RSSI_THRESHOLD,
 	WMI_ROAM_SCAN_PERIOD,
 	WMI_ROAM_SCAN_RSSI_CHANGE_THRESHOLD,
-	WMI_ROAM_AP_PROखाता,
+	WMI_ROAM_AP_PROFILE,
 
-	/* offload scan specअगरic commands */
-	WMI_OFL_SCAN_ADD_AP_PROखाता = WMI_CMD_GRP(WMI_GRP_OFL_SCAN),
-	WMI_OFL_SCAN_REMOVE_AP_PROखाता,
+	/* offload scan specific commands */
+	WMI_OFL_SCAN_ADD_AP_PROFILE = WMI_CMD_GRP(WMI_GRP_OFL_SCAN),
+	WMI_OFL_SCAN_REMOVE_AP_PROFILE,
 	WMI_OFL_SCAN_PERIOD,
 
-	/* P2P specअगरic commands */
+	/* P2P specific commands */
 	WMI_P2P_DEV_SET_DEVICE_INFO = WMI_CMD_GRP(WMI_GRP_P2P),
 	WMI_P2P_DEV_SET_DISCOVERABILITY,
 	WMI_P2P_GO_SET_BEACON_IE,
 	WMI_P2P_GO_SET_PROBE_RESP_IE,
 	WMI_P2P_SET_VENDOR_IE_DATA_CMDID,
 
-	/* AP घातer save specअगरic config */
+	/* AP power save specific config */
 	WMI_AP_PS_PEER_PARAM_CMDID = WMI_CMD_GRP(WMI_GRP_AP_PS),
 	WMI_AP_PS_PEER_UAPSD_COEX_CMDID,
 
-	/* Rate-control specअगरic commands */
+	/* Rate-control specific commands */
 	WMI_PEER_RATE_RETRY_SCHED_CMDID =
 	WMI_CMD_GRP(WMI_GRP_RATE_CTRL),
 
 	/* WLAN Profiling commands. */
-	WMI_WLAN_PROखाता_TRIGGER_CMDID = WMI_CMD_GRP(WMI_GRP_PROखाता),
-	WMI_WLAN_PROखाता_SET_HIST_INTVL_CMDID,
-	WMI_WLAN_PROखाता_GET_PROखाता_DATA_CMDID,
-	WMI_WLAN_PROखाता_ENABLE_PROखाता_ID_CMDID,
-	WMI_WLAN_PROखाता_LIST_PROखाता_ID_CMDID,
+	WMI_WLAN_PROFILE_TRIGGER_CMDID = WMI_CMD_GRP(WMI_GRP_PROFILE),
+	WMI_WLAN_PROFILE_SET_HIST_INTVL_CMDID,
+	WMI_WLAN_PROFILE_GET_PROFILE_DATA_CMDID,
+	WMI_WLAN_PROFILE_ENABLE_PROFILE_ID_CMDID,
+	WMI_WLAN_PROFILE_LIST_PROFILE_ID_CMDID,
 
 	/* Suspend resume command Ids */
 	WMI_PDEV_SUSPEND_CMDID = WMI_CMD_GRP(WMI_GRP_SUSPEND),
@@ -1203,7 +1202,7 @@
 	WMI_ADD_BCN_FILTER_CMDID = WMI_CMD_GRP(WMI_GRP_BCN_FILTER),
 	WMI_RMV_BCN_FILTER_CMDID,
 
-	/* WOW Specअगरic WMI commands*/
+	/* WOW Specific WMI commands*/
 	WMI_WOW_ADD_WAKE_PATTERN_CMDID = WMI_CMD_GRP(WMI_GRP_WOW),
 	WMI_WOW_DEL_WAKE_PATTERN_CMDID,
 	WMI_WOW_ENABLE_DISABLE_WAKE_EVENT_CMDID,
@@ -1227,21 +1226,21 @@
 	/* NS offload confid*/
 	WMI_NETWORK_LIST_OFFLOAD_CONFIG_CMDID = WMI_CMD_GRP(WMI_GRP_NLO_OFL),
 
-	/* GTK offload Specअगरic WMI commands*/
+	/* GTK offload Specific WMI commands*/
 	WMI_GTK_OFFLOAD_CMDID = WMI_CMD_GRP(WMI_GRP_GTK_OFL),
 
-	/* CSA offload Specअगरic WMI commands*/
+	/* CSA offload Specific WMI commands*/
 	WMI_CSA_OFFLOAD_ENABLE_CMDID = WMI_CMD_GRP(WMI_GRP_CSA_OFL),
 	WMI_CSA_OFFLOAD_CHANSWITCH_CMDID,
 
 	/* Chatter commands*/
 	WMI_CHATTER_SET_MODE_CMDID = WMI_CMD_GRP(WMI_GRP_CHATTER),
 
-	/* addba specअगरic commands */
+	/* addba specific commands */
 	WMI_PEER_TID_ADDBA_CMDID = WMI_CMD_GRP(WMI_GRP_TID_ADDBA),
 	WMI_PEER_TID_DELBA_CMDID,
 
-	/* set station mimo घातersave method */
+	/* set station mimo powersave method */
 	WMI_STA_DTIM_PS_METHOD_CMDID,
 	/* Configure the Station UAPSD AC Auto Trigger Parameters */
 	WMI_STA_UAPSD_AUTO_TRIG_CMDID,
@@ -1264,30 +1263,30 @@
 	/* GPIO Configuration */
 	WMI_GPIO_CONFIG_CMDID = WMI_CMD_GRP(WMI_GRP_GPIO),
 	WMI_GPIO_OUTPUT_CMDID,
-पूर्ण;
+};
 
-क्रमागत wmi_event_id अणु
+enum wmi_event_id {
 	WMI_SERVICE_READY_EVENTID = 0x1,
 	WMI_READY_EVENTID,
 	WMI_SERVICE_AVAILABLE_EVENTID,
 
-	/* Scan specअगरic events */
+	/* Scan specific events */
 	WMI_SCAN_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_SCAN),
 
-	/* PDEV specअगरic events */
+	/* PDEV specific events */
 	WMI_PDEV_TPC_CONFIG_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_PDEV),
 	WMI_CHAN_INFO_EVENTID,
 	WMI_PHYERR_EVENTID,
 
-	/* VDEV specअगरic events */
+	/* VDEV specific events */
 	WMI_VDEV_START_RESP_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_VDEV),
 	WMI_VDEV_STOPPED_EVENTID,
 	WMI_VDEV_INSTALL_KEY_COMPLETE_EVENTID,
 
-	/* peer specअगरic events */
+	/* peer specific events */
 	WMI_PEER_STA_KICKOUT_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_PEER),
 
-	/* beacon/mgmt specअगरic events */
+	/* beacon/mgmt specific events */
 	WMI_MGMT_RX_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_MGMT),
 	WMI_HOST_SWBA_EVENTID,
 	WMI_TBTTOFFSET_UPDATE_EVENTID,
@@ -1298,7 +1297,7 @@
 
 	/* Roam event to trigger roaming on host */
 	WMI_ROAM_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_ROAM),
-	WMI_PROखाता_MATCH,
+	WMI_PROFILE_MATCH,
 
 	/* WoW */
 	WMI_WOW_WAKEUP_HOST_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_WOW),
@@ -1323,31 +1322,31 @@
 	WMI_DEBUG_PRINT_EVENTID,
 	WMI_DCS_INTERFERENCE_EVENTID,
 	WMI_PDEV_QVIT_EVENTID,
-	WMI_WLAN_PROखाता_DATA_EVENTID,
+	WMI_WLAN_PROFILE_DATA_EVENTID,
 	WMI_PDEV_FTM_INTG_EVENTID,
 	WMI_WLAN_FREQ_AVOID_EVENTID,
 	WMI_VDEV_GET_KEEPALIVE_EVENTID,
 
 	/* GPIO Event */
 	WMI_GPIO_INPUT_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_GPIO),
-पूर्ण;
+};
 
-/* Command IDs and command events क्रम 10.X firmware */
-क्रमागत wmi_10x_cmd_id अणु
+/* Command IDs and command events for 10.X firmware */
+enum wmi_10x_cmd_id {
 	WMI_10X_START_CMDID = 0x9000,
 	WMI_10X_END_CMDID = 0x9FFF,
 
-	/* initialize the wlan sub प्रणाली */
+	/* initialize the wlan sub system */
 	WMI_10X_INIT_CMDID,
 
-	/* Scan specअगरic commands */
+	/* Scan specific commands */
 
 	WMI_10X_START_SCAN_CMDID = WMI_10X_START_CMDID,
 	WMI_10X_STOP_SCAN_CMDID,
 	WMI_10X_SCAN_CHAN_LIST_CMDID,
 	WMI_10X_ECHO_CMDID,
 
-	/* PDEV(physical device) specअगरic commands */
+	/* PDEV(physical device) specific commands */
 	WMI_10X_PDEV_SET_REGDOMAIN_CMDID,
 	WMI_10X_PDEV_SET_CHANNEL_CMDID,
 	WMI_10X_PDEV_SET_PARAM_CMDID,
@@ -1362,7 +1361,7 @@
 	WMI_10X_PDEV_GREEN_AP_PS_ENABLE_CMDID,
 	WMI_10X_PDEV_GET_TPC_CONFIG_CMDID,
 
-	/* VDEV(भव device) specअगरic commands */
+	/* VDEV(virtual device) specific commands */
 	WMI_10X_VDEV_CREATE_CMDID,
 	WMI_10X_VDEV_DELETE_CMDID,
 	WMI_10X_VDEV_START_REQUEST_CMDID,
@@ -1375,7 +1374,7 @@
 	WMI_10X_VDEV_SET_PARAM_CMDID,
 	WMI_10X_VDEV_INSTALL_KEY_CMDID,
 
-	/* peer specअगरic commands */
+	/* peer specific commands */
 	WMI_10X_PEER_CREATE_CMDID,
 	WMI_10X_PEER_DELETE_CMDID,
 	WMI_10X_PEER_FLUSH_TIDS_CMDID,
@@ -1385,7 +1384,7 @@
 	WMI_10X_PEER_REMOVE_WDS_ENTRY_CMDID,
 	WMI_10X_PEER_MCAST_GROUP_CMDID,
 
-	/* beacon/management specअगरic commands */
+	/* beacon/management specific commands */
 
 	WMI_10X_BCN_TX_CMDID,
 	WMI_10X_BCN_PRB_TMPL_CMDID,
@@ -1401,7 +1400,7 @@
 	WMI_10X_ADDBA_SET_RESP_CMDID,
 	WMI_10X_SEND_SINGLEAMSDU_CMDID,
 
-	/* Station घातer save specअगरic config */
+	/* Station power save specific config */
 	WMI_10X_STA_POWERSAVE_MODE_CMDID,
 	WMI_10X_STA_POWERSAVE_PARAM_CMDID,
 	WMI_10X_STA_MIMO_PS_MODE_CMDID,
@@ -1409,11 +1408,11 @@
 	/* set debug log config */
 	WMI_10X_DBGLOG_CFG_CMDID,
 
-	/* DFS-specअगरic commands */
+	/* DFS-specific commands */
 	WMI_10X_PDEV_DFS_ENABLE_CMDID,
 	WMI_10X_PDEV_DFS_DISABLE_CMDID,
 
-	/* QVIT specअगरic command id */
+	/* QVIT specific command id */
 	WMI_10X_PDEV_QVIT_CMDID,
 
 	/* Offload Scan and Roaming related  commands */
@@ -1421,30 +1420,30 @@
 	WMI_10X_ROAM_SCAN_RSSI_THRESHOLD,
 	WMI_10X_ROAM_SCAN_PERIOD,
 	WMI_10X_ROAM_SCAN_RSSI_CHANGE_THRESHOLD,
-	WMI_10X_ROAM_AP_PROखाता,
-	WMI_10X_OFL_SCAN_ADD_AP_PROखाता,
-	WMI_10X_OFL_SCAN_REMOVE_AP_PROखाता,
+	WMI_10X_ROAM_AP_PROFILE,
+	WMI_10X_OFL_SCAN_ADD_AP_PROFILE,
+	WMI_10X_OFL_SCAN_REMOVE_AP_PROFILE,
 	WMI_10X_OFL_SCAN_PERIOD,
 
-	/* P2P specअगरic commands */
+	/* P2P specific commands */
 	WMI_10X_P2P_DEV_SET_DEVICE_INFO,
 	WMI_10X_P2P_DEV_SET_DISCOVERABILITY,
 	WMI_10X_P2P_GO_SET_BEACON_IE,
 	WMI_10X_P2P_GO_SET_PROBE_RESP_IE,
 
-	/* AP घातer save specअगरic config */
+	/* AP power save specific config */
 	WMI_10X_AP_PS_PEER_PARAM_CMDID,
 	WMI_10X_AP_PS_PEER_UAPSD_COEX_CMDID,
 
-	/* Rate-control specअगरic commands */
+	/* Rate-control specific commands */
 	WMI_10X_PEER_RATE_RETRY_SCHED_CMDID,
 
 	/* WLAN Profiling commands. */
-	WMI_10X_WLAN_PROखाता_TRIGGER_CMDID,
-	WMI_10X_WLAN_PROखाता_SET_HIST_INTVL_CMDID,
-	WMI_10X_WLAN_PROखाता_GET_PROखाता_DATA_CMDID,
-	WMI_10X_WLAN_PROखाता_ENABLE_PROखाता_ID_CMDID,
-	WMI_10X_WLAN_PROखाता_LIST_PROखाता_ID_CMDID,
+	WMI_10X_WLAN_PROFILE_TRIGGER_CMDID,
+	WMI_10X_WLAN_PROFILE_SET_HIST_INTVL_CMDID,
+	WMI_10X_WLAN_PROFILE_GET_PROFILE_DATA_CMDID,
+	WMI_10X_WLAN_PROFILE_ENABLE_PROFILE_ID_CMDID,
+	WMI_10X_WLAN_PROFILE_LIST_PROFILE_ID_CMDID,
 
 	/* Suspend resume command Ids */
 	WMI_10X_PDEV_SUSPEND_CMDID,
@@ -1454,7 +1453,7 @@
 	WMI_10X_ADD_BCN_FILTER_CMDID,
 	WMI_10X_RMV_BCN_FILTER_CMDID,
 
-	/* WOW Specअगरic WMI commands*/
+	/* WOW Specific WMI commands*/
 	WMI_10X_WOW_ADD_WAKE_PATTERN_CMDID,
 	WMI_10X_WOW_DEL_WAKE_PATTERN_CMDID,
 	WMI_10X_WOW_ENABLE_DISABLE_WAKE_EVENT_CMDID,
@@ -1478,15 +1477,15 @@
 	WMI_10X_GPIO_OUTPUT_CMDID,
 
 	WMI_10X_PDEV_UTF_CMDID = WMI_10X_END_CMDID - 1,
-पूर्ण;
+};
 
-क्रमागत wmi_10x_event_id अणु
+enum wmi_10x_event_id {
 	WMI_10X_SERVICE_READY_EVENTID = 0x8000,
 	WMI_10X_READY_EVENTID,
 	WMI_10X_START_EVENTID = 0x9000,
 	WMI_10X_END_EVENTID = 0x9FFF,
 
-	/* Scan specअगरic events */
+	/* Scan specific events */
 	WMI_10X_SCAN_EVENTID = WMI_10X_START_EVENTID,
 	WMI_10X_ECHO_EVENTID,
 	WMI_10X_DEBUG_MESG_EVENTID,
@@ -1495,16 +1494,16 @@
 	/* Instantaneous RSSI event */
 	WMI_10X_INST_RSSI_STATS_EVENTID,
 
-	/* VDEV specअगरic events */
+	/* VDEV specific events */
 	WMI_10X_VDEV_START_RESP_EVENTID,
 	WMI_10X_VDEV_STANDBY_REQ_EVENTID,
 	WMI_10X_VDEV_RESUME_REQ_EVENTID,
 	WMI_10X_VDEV_STOPPED_EVENTID,
 
-	/* peer  specअगरic events */
+	/* peer  specific events */
 	WMI_10X_PEER_STA_KICKOUT_EVENTID,
 
-	/* beacon/mgmt specअगरic events */
+	/* beacon/mgmt specific events */
 	WMI_10X_HOST_SWBA_EVENTID,
 	WMI_10X_TBTTOFFSET_UPDATE_EVENTID,
 	WMI_10X_MGMT_RX_EVENTID,
@@ -1512,21 +1511,21 @@
 	/* Channel stats event */
 	WMI_10X_CHAN_INFO_EVENTID,
 
-	/* PHY Error specअगरic WMI event */
+	/* PHY Error specific WMI event */
 	WMI_10X_PHYERR_EVENTID,
 
 	/* Roam event to trigger roaming on host */
 	WMI_10X_ROAM_EVENTID,
 
 	/* matching AP found from list of profiles */
-	WMI_10X_PROखाता_MATCH,
+	WMI_10X_PROFILE_MATCH,
 
-	/* debug prपूर्णांक message used क्रम tracing FW code जबतक debugging */
+	/* debug print message used for tracing FW code while debugging */
 	WMI_10X_DEBUG_PRINT_EVENTID,
-	/* VI spoecअगरic event */
+	/* VI spoecific event */
 	WMI_10X_PDEV_QVIT_EVENTID,
 	/* FW code profile data in response to profile request */
-	WMI_10X_WLAN_PROखाता_DATA_EVENTID,
+	WMI_10X_WLAN_PROFILE_DATA_EVENTID,
 
 	/*RTT related event ID*/
 	WMI_10X_RTT_MEASUREMENT_REPORT_EVENTID,
@@ -1536,14 +1535,14 @@
 	WMI_10X_WOW_WAKEUP_HOST_EVENTID,
 	WMI_10X_DCS_INTERFERENCE_EVENTID,
 
-	/* TPC config क्रम the current operating channel */
+	/* TPC config for the current operating channel */
 	WMI_10X_PDEV_TPC_CONFIG_EVENTID,
 
 	WMI_10X_GPIO_INPUT_EVENTID,
 	WMI_10X_PDEV_UTF_EVENTID = WMI_10X_END_EVENTID - 1,
-पूर्ण;
+};
 
-क्रमागत wmi_10_2_cmd_id अणु
+enum wmi_10_2_cmd_id {
 	WMI_10_2_START_CMDID = 0x9000,
 	WMI_10_2_END_CMDID = 0x9FFF,
 	WMI_10_2_INIT_CMDID,
@@ -1606,9 +1605,9 @@
 	WMI_10_2_ROAM_SCAN_RSSI_THRESHOLD,
 	WMI_10_2_ROAM_SCAN_PERIOD,
 	WMI_10_2_ROAM_SCAN_RSSI_CHANGE_THRESHOLD,
-	WMI_10_2_ROAM_AP_PROखाता,
-	WMI_10_2_OFL_SCAN_ADD_AP_PROखाता,
-	WMI_10_2_OFL_SCAN_REMOVE_AP_PROखाता,
+	WMI_10_2_ROAM_AP_PROFILE,
+	WMI_10_2_OFL_SCAN_ADD_AP_PROFILE,
+	WMI_10_2_OFL_SCAN_REMOVE_AP_PROFILE,
 	WMI_10_2_OFL_SCAN_PERIOD,
 	WMI_10_2_P2P_DEV_SET_DEVICE_INFO,
 	WMI_10_2_P2P_DEV_SET_DISCOVERABILITY,
@@ -1617,11 +1616,11 @@
 	WMI_10_2_AP_PS_PEER_PARAM_CMDID,
 	WMI_10_2_AP_PS_PEER_UAPSD_COEX_CMDID,
 	WMI_10_2_PEER_RATE_RETRY_SCHED_CMDID,
-	WMI_10_2_WLAN_PROखाता_TRIGGER_CMDID,
-	WMI_10_2_WLAN_PROखाता_SET_HIST_INTVL_CMDID,
-	WMI_10_2_WLAN_PROखाता_GET_PROखाता_DATA_CMDID,
-	WMI_10_2_WLAN_PROखाता_ENABLE_PROखाता_ID_CMDID,
-	WMI_10_2_WLAN_PROखाता_LIST_PROखाता_ID_CMDID,
+	WMI_10_2_WLAN_PROFILE_TRIGGER_CMDID,
+	WMI_10_2_WLAN_PROFILE_SET_HIST_INTVL_CMDID,
+	WMI_10_2_WLAN_PROFILE_GET_PROFILE_DATA_CMDID,
+	WMI_10_2_WLAN_PROFILE_ENABLE_PROFILE_ID_CMDID,
+	WMI_10_2_WLAN_PROFILE_LIST_PROFILE_ID_CMDID,
 	WMI_10_2_PDEV_SUSPEND_CMDID,
 	WMI_10_2_PDEV_RESUME_CMDID,
 	WMI_10_2_ADD_BCN_FILTER_CMDID,
@@ -1664,9 +1663,9 @@
 	WMI_10_2_FWTEST_CMDID,
 	WMI_10_2_PDEV_SET_BB_TIMING_CONFIG_CMDID,
 	WMI_10_2_PDEV_UTF_CMDID = WMI_10_2_END_CMDID - 1,
-पूर्ण;
+};
 
-क्रमागत wmi_10_2_event_id अणु
+enum wmi_10_2_event_id {
 	WMI_10_2_SERVICE_READY_EVENTID = 0x8000,
 	WMI_10_2_READY_EVENTID,
 	WMI_10_2_DEBUG_MESG_EVENTID,
@@ -1687,10 +1686,10 @@
 	WMI_10_2_CHAN_INFO_EVENTID,
 	WMI_10_2_PHYERR_EVENTID,
 	WMI_10_2_ROAM_EVENTID,
-	WMI_10_2_PROखाता_MATCH,
+	WMI_10_2_PROFILE_MATCH,
 	WMI_10_2_DEBUG_PRINT_EVENTID,
 	WMI_10_2_PDEV_QVIT_EVENTID,
-	WMI_10_2_WLAN_PROखाता_DATA_EVENTID,
+	WMI_10_2_WLAN_PROFILE_DATA_EVENTID,
 	WMI_10_2_RTT_MEASUREMENT_REPORT_EVENTID,
 	WMI_10_2_TSF_MEASUREMENT_REPORT_EVENTID,
 	WMI_10_2_RTT_ERROR_REPORT_EVENTID,
@@ -1709,9 +1708,9 @@
 	WMI_10_2_MU_REPORT_EVENTID,
 	WMI_10_2_PDEV_BSS_CHAN_INFO_EVENTID,
 	WMI_10_2_PDEV_UTF_EVENTID = WMI_10_2_END_EVENTID - 1,
-पूर्ण;
+};
 
-क्रमागत wmi_10_4_cmd_id अणु
+enum wmi_10_4_cmd_id {
 	WMI_10_4_START_CMDID = 0x9000,
 	WMI_10_4_END_CMDID = 0x9FFF,
 	WMI_10_4_INIT_CMDID,
@@ -1783,9 +1782,9 @@
 	WMI_10_4_ROAM_SCAN_RSSI_THRESHOLD,
 	WMI_10_4_ROAM_SCAN_PERIOD,
 	WMI_10_4_ROAM_SCAN_RSSI_CHANGE_THRESHOLD,
-	WMI_10_4_ROAM_AP_PROखाता,
-	WMI_10_4_OFL_SCAN_ADD_AP_PROखाता,
-	WMI_10_4_OFL_SCAN_REMOVE_AP_PROखाता,
+	WMI_10_4_ROAM_AP_PROFILE,
+	WMI_10_4_OFL_SCAN_ADD_AP_PROFILE,
+	WMI_10_4_OFL_SCAN_REMOVE_AP_PROFILE,
 	WMI_10_4_OFL_SCAN_PERIOD,
 	WMI_10_4_P2P_DEV_SET_DEVICE_INFO,
 	WMI_10_4_P2P_DEV_SET_DISCOVERABILITY,
@@ -1795,11 +1794,11 @@
 	WMI_10_4_AP_PS_PEER_PARAM_CMDID,
 	WMI_10_4_AP_PS_PEER_UAPSD_COEX_CMDID,
 	WMI_10_4_PEER_RATE_RETRY_SCHED_CMDID,
-	WMI_10_4_WLAN_PROखाता_TRIGGER_CMDID,
-	WMI_10_4_WLAN_PROखाता_SET_HIST_INTVL_CMDID,
-	WMI_10_4_WLAN_PROखाता_GET_PROखाता_DATA_CMDID,
-	WMI_10_4_WLAN_PROखाता_ENABLE_PROखाता_ID_CMDID,
-	WMI_10_4_WLAN_PROखाता_LIST_PROखाता_ID_CMDID,
+	WMI_10_4_WLAN_PROFILE_TRIGGER_CMDID,
+	WMI_10_4_WLAN_PROFILE_SET_HIST_INTVL_CMDID,
+	WMI_10_4_WLAN_PROFILE_GET_PROFILE_DATA_CMDID,
+	WMI_10_4_WLAN_PROFILE_ENABLE_PROFILE_ID_CMDID,
+	WMI_10_4_WLAN_PROFILE_LIST_PROFILE_ID_CMDID,
 	WMI_10_4_PDEV_SUSPEND_CMDID,
 	WMI_10_4_PDEV_RESUME_CMDID,
 	WMI_10_4_ADD_BCN_FILTER_CMDID,
@@ -1813,7 +1812,7 @@
 	WMI_10_4_RTT_TSF_CMDID,
 	WMI_10_4_RTT_KEEPALIVE_CMDID,
 	WMI_10_4_OEM_REQ_CMDID,
-	WMI_10_4_न_अंक_CMDID,
+	WMI_10_4_NAN_CMDID,
 	WMI_10_4_VDEV_SPECTRAL_SCAN_CONFIGURE_CMDID,
 	WMI_10_4_VDEV_SPECTRAL_SCAN_ENABLE_CMDID,
 	WMI_10_4_REQUEST_STATS_CMDID,
@@ -1890,9 +1889,9 @@
 	WMI_10_4_PEER_CFR_CAPTURE_CMDID,
 	WMI_10_4_PER_PEER_PER_TID_CONFIG_CMDID,
 	WMI_10_4_PDEV_UTF_CMDID = WMI_10_4_END_CMDID - 1,
-पूर्ण;
+};
 
-क्रमागत wmi_10_4_event_id अणु
+enum wmi_10_4_event_id {
 	WMI_10_4_SERVICE_READY_EVENTID = 0x8000,
 	WMI_10_4_READY_EVENTID,
 	WMI_10_4_DEBUG_MESG_EVENTID,
@@ -1913,10 +1912,10 @@
 	WMI_10_4_CHAN_INFO_EVENTID,
 	WMI_10_4_PHYERR_EVENTID,
 	WMI_10_4_ROAM_EVENTID,
-	WMI_10_4_PROखाता_MATCH,
+	WMI_10_4_PROFILE_MATCH,
 	WMI_10_4_DEBUG_PRINT_EVENTID,
 	WMI_10_4_PDEV_QVIT_EVENTID,
-	WMI_10_4_WLAN_PROखाता_DATA_EVENTID,
+	WMI_10_4_WLAN_PROFILE_DATA_EVENTID,
 	WMI_10_4_RTT_MEASUREMENT_REPORT_EVENTID,
 	WMI_10_4_TSF_MEASUREMENT_REPORT_EVENTID,
 	WMI_10_4_RTT_ERROR_REPORT_EVENTID,
@@ -1924,7 +1923,7 @@
 	WMI_10_4_OEM_CAPABILITY_EVENTID,
 	WMI_10_4_OEM_MEASUREMENT_REPORT_EVENTID,
 	WMI_10_4_OEM_ERROR_REPORT_EVENTID,
-	WMI_10_4_न_अंक_EVENTID,
+	WMI_10_4_NAN_EVENTID,
 	WMI_10_4_WOW_WAKEUP_HOST_EVENTID,
 	WMI_10_4_GTK_OFFLOAD_STATUS_EVENTID,
 	WMI_10_4_GTK_REKEY_FAIL_EVENTID,
@@ -1968,9 +1967,9 @@
 	WMI_10_4_ESP_ESTIMATE_EVENTID,
 	WMI_10_4_DFS_STATUS_CHECK_EVENTID,
 	WMI_10_4_PDEV_UTF_EVENTID = WMI_10_4_END_EVENTID - 1,
-पूर्ण;
+};
 
-क्रमागत wmi_phy_mode अणु
+enum wmi_phy_mode {
 	MODE_11A        = 0,   /* 11a Mode */
 	MODE_11G        = 1,   /* 11b/g Mode */
 	MODE_11B        = 2,   /* 11b Mode */
@@ -1990,90 +1989,90 @@
 	MODE_11AC_VHT160 = 15,
 	MODE_UNKNOWN    = 16,
 	MODE_MAX        = 16
-पूर्ण;
+};
 
-अटल अंतरभूत स्थिर अक्षर *ath10k_wmi_phymode_str(क्रमागत wmi_phy_mode mode)
-अणु
-	चयन (mode) अणु
-	हाल MODE_11A:
-		वापस "11a";
-	हाल MODE_11G:
-		वापस "11g";
-	हाल MODE_11B:
-		वापस "11b";
-	हाल MODE_11GONLY:
-		वापस "11gonly";
-	हाल MODE_11NA_HT20:
-		वापस "11na-ht20";
-	हाल MODE_11NG_HT20:
-		वापस "11ng-ht20";
-	हाल MODE_11NA_HT40:
-		वापस "11na-ht40";
-	हाल MODE_11NG_HT40:
-		वापस "11ng-ht40";
-	हाल MODE_11AC_VHT20:
-		वापस "11ac-vht20";
-	हाल MODE_11AC_VHT40:
-		वापस "11ac-vht40";
-	हाल MODE_11AC_VHT80:
-		वापस "11ac-vht80";
-	हाल MODE_11AC_VHT160:
-		वापस "11ac-vht160";
-	हाल MODE_11AC_VHT80_80:
-		वापस "11ac-vht80+80";
-	हाल MODE_11AC_VHT20_2G:
-		वापस "11ac-vht20-2g";
-	हाल MODE_11AC_VHT40_2G:
-		वापस "11ac-vht40-2g";
-	हाल MODE_11AC_VHT80_2G:
-		वापस "11ac-vht80-2g";
-	हाल MODE_UNKNOWN:
+static inline const char *ath10k_wmi_phymode_str(enum wmi_phy_mode mode)
+{
+	switch (mode) {
+	case MODE_11A:
+		return "11a";
+	case MODE_11G:
+		return "11g";
+	case MODE_11B:
+		return "11b";
+	case MODE_11GONLY:
+		return "11gonly";
+	case MODE_11NA_HT20:
+		return "11na-ht20";
+	case MODE_11NG_HT20:
+		return "11ng-ht20";
+	case MODE_11NA_HT40:
+		return "11na-ht40";
+	case MODE_11NG_HT40:
+		return "11ng-ht40";
+	case MODE_11AC_VHT20:
+		return "11ac-vht20";
+	case MODE_11AC_VHT40:
+		return "11ac-vht40";
+	case MODE_11AC_VHT80:
+		return "11ac-vht80";
+	case MODE_11AC_VHT160:
+		return "11ac-vht160";
+	case MODE_11AC_VHT80_80:
+		return "11ac-vht80+80";
+	case MODE_11AC_VHT20_2G:
+		return "11ac-vht20-2g";
+	case MODE_11AC_VHT40_2G:
+		return "11ac-vht40-2g";
+	case MODE_11AC_VHT80_2G:
+		return "11ac-vht80-2g";
+	case MODE_UNKNOWN:
 		/* skip */
-		अवरोध;
+		break;
 
-		/* no शेष handler to allow compiler to check that the
-		 * क्रमागत is fully handled
+		/* no default handler to allow compiler to check that the
+		 * enum is fully handled
 		 */
-	पूर्ण
+	}
 
-	वापस "<unknown>";
-पूर्ण
+	return "<unknown>";
+}
 
-#घोषणा WMI_CHAN_LIST_TAG	0x1
-#घोषणा WMI_SSID_LIST_TAG	0x2
-#घोषणा WMI_BSSID_LIST_TAG	0x3
-#घोषणा WMI_IE_TAG		0x4
+#define WMI_CHAN_LIST_TAG	0x1
+#define WMI_SSID_LIST_TAG	0x2
+#define WMI_BSSID_LIST_TAG	0x3
+#define WMI_IE_TAG		0x4
 
-काष्ठा wmi_channel अणु
+struct wmi_channel {
 	__le32 mhz;
 	__le32 band_center_freq1;
-	__le32 band_center_freq2; /* valid क्रम 11ac, 80plus80 */
-	जोड़ अणु
+	__le32 band_center_freq2; /* valid for 11ac, 80plus80 */
+	union {
 		__le32 flags; /* WMI_CHAN_FLAG_ */
-		काष्ठा अणु
+		struct {
 			u8 mode; /* only 6 LSBs */
-		पूर्ण __packed;
-	पूर्ण __packed;
-	जोड़ अणु
+		} __packed;
+	} __packed;
+	union {
 		__le32 reginfo0;
-		काष्ठा अणु
-			/* note: घातer unit is 0.5 dBm */
-			u8 min_घातer;
-			u8 max_घातer;
-			u8 reg_घातer;
+		struct {
+			/* note: power unit is 0.5 dBm */
+			u8 min_power;
+			u8 max_power;
+			u8 reg_power;
 			u8 reg_classid;
-		पूर्ण __packed;
-	पूर्ण __packed;
-	जोड़ अणु
+		} __packed;
+	} __packed;
+	union {
 		__le32 reginfo1;
-		काष्ठा अणु
+		struct {
 			u8 antenna_max;
-			u8 max_tx_घातer;
-		पूर्ण __packed;
-	पूर्ण __packed;
-पूर्ण __packed;
+			u8 max_tx_power;
+		} __packed;
+	} __packed;
+} __packed;
 
-काष्ठा wmi_channel_arg अणु
+struct wmi_channel_arg {
 	u32 freq;
 	u32 band_center_freq1;
 	u32 band_center_freq2;
@@ -2083,51 +2082,51 @@
 	bool allow_vht;
 	bool ht40plus;
 	bool chan_radar;
-	/* note: घातer unit is 0.5 dBm */
-	u32 min_घातer;
-	u32 max_घातer;
-	u32 max_reg_घातer;
+	/* note: power unit is 0.5 dBm */
+	u32 min_power;
+	u32 max_power;
+	u32 max_reg_power;
 	u32 max_antenna_gain;
 	u32 reg_class_id;
-	क्रमागत wmi_phy_mode mode;
-पूर्ण;
+	enum wmi_phy_mode mode;
+};
 
-क्रमागत wmi_channel_change_cause अणु
+enum wmi_channel_change_cause {
 	WMI_CHANNEL_CHANGE_CAUSE_NONE = 0,
 	WMI_CHANNEL_CHANGE_CAUSE_CSA,
-पूर्ण;
+};
 
-#घोषणा WMI_CHAN_FLAG_HT40_PLUS      (1 << 6)
-#घोषणा WMI_CHAN_FLAG_PASSIVE        (1 << 7)
-#घोषणा WMI_CHAN_FLAG_ADHOC_ALLOWED  (1 << 8)
-#घोषणा WMI_CHAN_FLAG_AP_DISABLED    (1 << 9)
-#घोषणा WMI_CHAN_FLAG_DFS            (1 << 10)
-#घोषणा WMI_CHAN_FLAG_ALLOW_HT       (1 << 11)
-#घोषणा WMI_CHAN_FLAG_ALLOW_VHT      (1 << 12)
+#define WMI_CHAN_FLAG_HT40_PLUS      (1 << 6)
+#define WMI_CHAN_FLAG_PASSIVE        (1 << 7)
+#define WMI_CHAN_FLAG_ADHOC_ALLOWED  (1 << 8)
+#define WMI_CHAN_FLAG_AP_DISABLED    (1 << 9)
+#define WMI_CHAN_FLAG_DFS            (1 << 10)
+#define WMI_CHAN_FLAG_ALLOW_HT       (1 << 11)
+#define WMI_CHAN_FLAG_ALLOW_VHT      (1 << 12)
 
-/* Indicate reason क्रम channel चयन */
-#घोषणा WMI_CHANNEL_CHANGE_CAUSE_CSA (1 << 13)
-/* DFS required on channel क्रम 2nd segment of VHT160 and VHT80+80*/
-#घोषणा WMI_CHAN_FLAG_DFS_CFREQ2  (1 << 15)
-#घोषणा WMI_MAX_SPATIAL_STREAM        3 /* शेष max ss */
+/* Indicate reason for channel switch */
+#define WMI_CHANNEL_CHANGE_CAUSE_CSA (1 << 13)
+/* DFS required on channel for 2nd segment of VHT160 and VHT80+80*/
+#define WMI_CHAN_FLAG_DFS_CFREQ2  (1 << 15)
+#define WMI_MAX_SPATIAL_STREAM        3 /* default max ss */
 
 /* HT Capabilities*/
-#घोषणा WMI_HT_CAP_ENABLED                0x0001   /* HT Enabled/ disabled */
-#घोषणा WMI_HT_CAP_HT20_SGI       0x0002   /* Short Guard Interval with HT20 */
-#घोषणा WMI_HT_CAP_DYNAMIC_SMPS           0x0004   /* Dynamic MIMO घातersave */
-#घोषणा WMI_HT_CAP_TX_STBC                0x0008   /* B3 TX STBC */
-#घोषणा WMI_HT_CAP_TX_STBC_MASK_SHIFT     3
-#घोषणा WMI_HT_CAP_RX_STBC                0x0030   /* B4-B5 RX STBC */
-#घोषणा WMI_HT_CAP_RX_STBC_MASK_SHIFT     4
-#घोषणा WMI_HT_CAP_LDPC                   0x0040   /* LDPC supported */
-#घोषणा WMI_HT_CAP_L_SIG_TXOP_PROT        0x0080   /* L-SIG TXOP Protection */
-#घोषणा WMI_HT_CAP_MPDU_DENSITY           0x0700   /* MPDU Density */
-#घोषणा WMI_HT_CAP_MPDU_DENSITY_MASK_SHIFT 8
-#घोषणा WMI_HT_CAP_HT40_SGI               0x0800
-#घोषणा WMI_HT_CAP_RX_LDPC                0x1000   /* LDPC RX support */
-#घोषणा WMI_HT_CAP_TX_LDPC                0x2000   /* LDPC TX support */
+#define WMI_HT_CAP_ENABLED                0x0001   /* HT Enabled/ disabled */
+#define WMI_HT_CAP_HT20_SGI       0x0002   /* Short Guard Interval with HT20 */
+#define WMI_HT_CAP_DYNAMIC_SMPS           0x0004   /* Dynamic MIMO powersave */
+#define WMI_HT_CAP_TX_STBC                0x0008   /* B3 TX STBC */
+#define WMI_HT_CAP_TX_STBC_MASK_SHIFT     3
+#define WMI_HT_CAP_RX_STBC                0x0030   /* B4-B5 RX STBC */
+#define WMI_HT_CAP_RX_STBC_MASK_SHIFT     4
+#define WMI_HT_CAP_LDPC                   0x0040   /* LDPC supported */
+#define WMI_HT_CAP_L_SIG_TXOP_PROT        0x0080   /* L-SIG TXOP Protection */
+#define WMI_HT_CAP_MPDU_DENSITY           0x0700   /* MPDU Density */
+#define WMI_HT_CAP_MPDU_DENSITY_MASK_SHIFT 8
+#define WMI_HT_CAP_HT40_SGI               0x0800
+#define WMI_HT_CAP_RX_LDPC                0x1000   /* LDPC RX support */
+#define WMI_HT_CAP_TX_LDPC                0x2000   /* LDPC TX support */
 
-#घोषणा WMI_HT_CAP_DEFAULT_ALL (WMI_HT_CAP_ENABLED       | \
+#define WMI_HT_CAP_DEFAULT_ALL (WMI_HT_CAP_ENABLED       | \
 				WMI_HT_CAP_HT20_SGI      | \
 				WMI_HT_CAP_HT40_SGI      | \
 				WMI_HT_CAP_TX_STBC       | \
@@ -2135,38 +2134,38 @@
 				WMI_HT_CAP_LDPC)
 
 /*
- * WMI_VHT_CAP_* these maps to ieee 802.11ac vht capability inक्रमmation
+ * WMI_VHT_CAP_* these maps to ieee 802.11ac vht capability information
  * field. The fields not defined here are not supported, or reserved.
- * Do not change these masks and अगर you have to add new one follow the
- * biपंचांगask as specअगरied by 802.11ac draft.
+ * Do not change these masks and if you have to add new one follow the
+ * bitmask as specified by 802.11ac draft.
  */
 
-#घोषणा WMI_VHT_CAP_MAX_MPDU_LEN_MASK            0x00000003
-#घोषणा WMI_VHT_CAP_RX_LDPC                      0x00000010
-#घोषणा WMI_VHT_CAP_SGI_80MHZ                    0x00000020
-#घोषणा WMI_VHT_CAP_SGI_160MHZ                   0x00000040
-#घोषणा WMI_VHT_CAP_TX_STBC                      0x00000080
-#घोषणा WMI_VHT_CAP_RX_STBC_MASK                 0x00000300
-#घोषणा WMI_VHT_CAP_RX_STBC_MASK_SHIFT           8
-#घोषणा WMI_VHT_CAP_SU_BFER                      0x00000800
-#घोषणा WMI_VHT_CAP_SU_BFEE                      0x00001000
-#घोषणा WMI_VHT_CAP_MAX_CS_ANT_MASK              0x0000E000
-#घोषणा WMI_VHT_CAP_MAX_CS_ANT_MASK_SHIFT        13
-#घोषणा WMI_VHT_CAP_MAX_SND_DIM_MASK             0x00070000
-#घोषणा WMI_VHT_CAP_MAX_SND_DIM_MASK_SHIFT       16
-#घोषणा WMI_VHT_CAP_MU_BFER                      0x00080000
-#घोषणा WMI_VHT_CAP_MU_BFEE                      0x00100000
-#घोषणा WMI_VHT_CAP_MAX_AMPDU_LEN_EXP            0x03800000
-#घोषणा WMI_VHT_CAP_MAX_AMPDU_LEN_EXP_SHIFT      23
-#घोषणा WMI_VHT_CAP_RX_FIXED_ANT                 0x10000000
-#घोषणा WMI_VHT_CAP_TX_FIXED_ANT                 0x20000000
+#define WMI_VHT_CAP_MAX_MPDU_LEN_MASK            0x00000003
+#define WMI_VHT_CAP_RX_LDPC                      0x00000010
+#define WMI_VHT_CAP_SGI_80MHZ                    0x00000020
+#define WMI_VHT_CAP_SGI_160MHZ                   0x00000040
+#define WMI_VHT_CAP_TX_STBC                      0x00000080
+#define WMI_VHT_CAP_RX_STBC_MASK                 0x00000300
+#define WMI_VHT_CAP_RX_STBC_MASK_SHIFT           8
+#define WMI_VHT_CAP_SU_BFER                      0x00000800
+#define WMI_VHT_CAP_SU_BFEE                      0x00001000
+#define WMI_VHT_CAP_MAX_CS_ANT_MASK              0x0000E000
+#define WMI_VHT_CAP_MAX_CS_ANT_MASK_SHIFT        13
+#define WMI_VHT_CAP_MAX_SND_DIM_MASK             0x00070000
+#define WMI_VHT_CAP_MAX_SND_DIM_MASK_SHIFT       16
+#define WMI_VHT_CAP_MU_BFER                      0x00080000
+#define WMI_VHT_CAP_MU_BFEE                      0x00100000
+#define WMI_VHT_CAP_MAX_AMPDU_LEN_EXP            0x03800000
+#define WMI_VHT_CAP_MAX_AMPDU_LEN_EXP_SHIFT      23
+#define WMI_VHT_CAP_RX_FIXED_ANT                 0x10000000
+#define WMI_VHT_CAP_TX_FIXED_ANT                 0x20000000
 
-/* The following also refer क्रम max HT AMSDU */
-#घोषणा WMI_VHT_CAP_MAX_MPDU_LEN_3839            0x00000000
-#घोषणा WMI_VHT_CAP_MAX_MPDU_LEN_7935            0x00000001
-#घोषणा WMI_VHT_CAP_MAX_MPDU_LEN_11454           0x00000002
+/* The following also refer for max HT AMSDU */
+#define WMI_VHT_CAP_MAX_MPDU_LEN_3839            0x00000000
+#define WMI_VHT_CAP_MAX_MPDU_LEN_7935            0x00000001
+#define WMI_VHT_CAP_MAX_MPDU_LEN_11454           0x00000002
 
-#घोषणा WMI_VHT_CAP_DEFAULT_ALL (WMI_VHT_CAP_MAX_MPDU_LEN_11454  | \
+#define WMI_VHT_CAP_DEFAULT_ALL (WMI_VHT_CAP_MAX_MPDU_LEN_11454  | \
 				 WMI_VHT_CAP_RX_LDPC             | \
 				 WMI_VHT_CAP_SGI_80MHZ           | \
 				 WMI_VHT_CAP_TX_STBC             | \
@@ -2176,14 +2175,14 @@
 				 WMI_VHT_CAP_TX_FIXED_ANT)
 
 /*
- * Interested पढ़ोers refer to Rx/Tx MCS Map definition as defined in
+ * Interested readers refer to Rx/Tx MCS Map definition as defined in
  * 802.11ac
  */
-#घोषणा WMI_VHT_MAX_MCS_4_SS_MASK(r, ss)      ((3 & (r)) << (((ss) - 1) << 1))
-#घोषणा WMI_VHT_MAX_SUPP_RATE_MASK           0x1fff0000
-#घोषणा WMI_VHT_MAX_SUPP_RATE_MASK_SHIFT     16
+#define WMI_VHT_MAX_MCS_4_SS_MASK(r, ss)      ((3 & (r)) << (((ss) - 1) << 1))
+#define WMI_VHT_MAX_SUPP_RATE_MASK           0x1fff0000
+#define WMI_VHT_MAX_SUPP_RATE_MASK_SHIFT     16
 
-क्रमागत अणु
+enum {
 	REGDMN_MODE_11A              = 0x00001, /* 11a channels */
 	REGDMN_MODE_TURBO            = 0x00002, /* 11a turbo-only channels */
 	REGDMN_MODE_11B              = 0x00004, /* 11b channels */
@@ -2207,24 +2206,24 @@
 	REGDMN_MODE_11AC_VHT160      = 0x200000,     /* 5Ghz, VHT160 channels */
 	REGDMN_MODE_11AC_VHT80_80    = 0x400000,     /* 5Ghz, VHT80+80 channels */
 	REGDMN_MODE_ALL              = 0xffffffff
-पूर्ण;
+};
 
-#घोषणा REGDMN_CAP1_CHAN_HALF_RATE        0x00000001
-#घोषणा REGDMN_CAP1_CHAN_QUARTER_RATE     0x00000002
-#घोषणा REGDMN_CAP1_CHAN_HAL49GHZ         0x00000004
+#define REGDMN_CAP1_CHAN_HALF_RATE        0x00000001
+#define REGDMN_CAP1_CHAN_QUARTER_RATE     0x00000002
+#define REGDMN_CAP1_CHAN_HAL49GHZ         0x00000004
 
 /* regulatory capabilities */
-#घोषणा REGDMN_EEPROM_EEREGCAP_EN_FCC_MIDBAND   0x0040
-#घोषणा REGDMN_EEPROM_EEREGCAP_EN_KK_U1_EVEN    0x0080
-#घोषणा REGDMN_EEPROM_EEREGCAP_EN_KK_U2         0x0100
-#घोषणा REGDMN_EEPROM_EEREGCAP_EN_KK_MIDBAND    0x0200
-#घोषणा REGDMN_EEPROM_EEREGCAP_EN_KK_U1_ODD     0x0400
-#घोषणा REGDMN_EEPROM_EEREGCAP_EN_KK_NEW_11A    0x0800
+#define REGDMN_EEPROM_EEREGCAP_EN_FCC_MIDBAND   0x0040
+#define REGDMN_EEPROM_EEREGCAP_EN_KK_U1_EVEN    0x0080
+#define REGDMN_EEPROM_EEREGCAP_EN_KK_U2         0x0100
+#define REGDMN_EEPROM_EEREGCAP_EN_KK_MIDBAND    0x0200
+#define REGDMN_EEPROM_EEREGCAP_EN_KK_U1_ODD     0x0400
+#define REGDMN_EEPROM_EEREGCAP_EN_KK_NEW_11A    0x0800
 
-काष्ठा hal_reg_capabilities अणु
-	/* regकरोमुख्य value specअगरied in EEPROM */
+struct hal_reg_capabilities {
+	/* regdomain value specified in EEPROM */
 	__le32 eeprom_rd;
-	/*regकरोमुख्य */
+	/*regdomain */
 	__le32 eeprom_rd_ext;
 	/* CAP1 capabilities bit map. */
 	__le32 regcap1;
@@ -2236,16 +2235,16 @@
 	__le32 high_2ghz_chan;
 	__le32 low_5ghz_chan;
 	__le32 high_5ghz_chan;
-पूर्ण __packed;
+} __packed;
 
-क्रमागत wlan_mode_capability अणु
+enum wlan_mode_capability {
 	WHAL_WLAN_11A_CAPABILITY   = 0x1,
 	WHAL_WLAN_11G_CAPABILITY   = 0x2,
 	WHAL_WLAN_11AG_CAPABILITY  = 0x3,
-पूर्ण;
+};
 
-/* काष्ठाure used by FW क्रम requesting host memory */
-काष्ठा wlan_host_mem_req अणु
+/* structure used by FW for requesting host memory */
+struct wlan_host_mem_req {
 	/* ID of the request */
 	__le32 req_id;
 	/* size of the  of each unit */
@@ -2256,21 +2255,21 @@
 	 */
 	__le32 num_unit_info;
 	/*
-	 * actual number of units to allocate . अगर flags in the num_unit_info
+	 * actual number of units to allocate . if flags in the num_unit_info
 	 * indicate that number of units is tied to number of a particular
 	 * resource to allocate then  num_units filed is set to 0 and host
 	 * will derive the number units from number of the resources it is
 	 * requesting.
 	 */
 	__le32 num_units;
-पूर्ण __packed;
+} __packed;
 
 /*
- * The following काष्ठा holds optional payload क्रम
- * wmi_service_पढ़ोy_event,e.g., 11ac pass some of the
+ * The following struct holds optional payload for
+ * wmi_service_ready_event,e.g., 11ac pass some of the
  * device capability to the host.
  */
-काष्ठा wmi_service_पढ़ोy_event अणु
+struct wmi_service_ready_event {
 	__le32 sw_version;
 	__le32 sw_version_1;
 	__le32 abi_version;
@@ -2278,37 +2277,37 @@
 	__le32 phy_capability;
 	/* Maximum number of frag table entries that SW will populate less 1 */
 	__le32 max_frag_entry;
-	__le32 wmi_service_biपंचांगap[16];
+	__le32 wmi_service_bitmap[16];
 	__le32 num_rf_chains;
 	/*
-	 * The following field is only valid क्रम service type
+	 * The following field is only valid for service type
 	 * WMI_SERVICE_11AC
 	 */
 	__le32 ht_cap_info; /* WMI HT Capability */
 	__le32 vht_cap_info; /* VHT capability info field of 802.11ac */
 	__le32 vht_supp_mcs; /* VHT Supported MCS Set field Rx/Tx same */
-	__le32 hw_min_tx_घातer;
-	__le32 hw_max_tx_घातer;
-	काष्ठा hal_reg_capabilities hal_reg_capabilities;
+	__le32 hw_min_tx_power;
+	__le32 hw_max_tx_power;
+	struct hal_reg_capabilities hal_reg_capabilities;
 	__le32 sys_cap_info;
-	__le32 min_pkt_size_enable; /* Enterprise mode लघु pkt enable */
+	__le32 min_pkt_size_enable; /* Enterprise mode short pkt enable */
 	/*
 	 * Max beacon and Probe Response IE offload size
 	 * (includes optional P2P IEs)
 	 */
 	__le32 max_bcn_ie_size;
 	/*
-	 * request to host to allocate a chuck of memory and pss it करोwn to FW
-	 * via WM_INIT. FW uses this as FW extesnsion memory क्रम saving its
-	 * data काष्ठाures. Only valid क्रम low latency पूर्णांकerfaces like PCIE
+	 * request to host to allocate a chuck of memory and pss it down to FW
+	 * via WM_INIT. FW uses this as FW extesnsion memory for saving its
+	 * data structures. Only valid for low latency interfaces like PCIE
 	 * where FW can access this memory directly (or) by DMA.
 	 */
 	__le32 num_mem_reqs;
-	काष्ठा wlan_host_mem_req mem_reqs[];
-पूर्ण __packed;
+	struct wlan_host_mem_req mem_reqs[];
+} __packed;
 
 /* This is the definition from 10.X firmware branch */
-काष्ठा wmi_10x_service_पढ़ोy_event अणु
+struct wmi_10x_service_ready_event {
 	__le32 sw_version;
 	__le32 abi_version;
 
@@ -2317,47 +2316,47 @@
 
 	/* Maximum number of frag table entries that SW will populate less 1 */
 	__le32 max_frag_entry;
-	__le32 wmi_service_biपंचांगap[16];
+	__le32 wmi_service_bitmap[16];
 	__le32 num_rf_chains;
 
 	/*
-	 * The following field is only valid क्रम service type
+	 * The following field is only valid for service type
 	 * WMI_SERVICE_11AC
 	 */
 	__le32 ht_cap_info; /* WMI HT Capability */
 	__le32 vht_cap_info; /* VHT capability info field of 802.11ac */
 	__le32 vht_supp_mcs; /* VHT Supported MCS Set field Rx/Tx same */
-	__le32 hw_min_tx_घातer;
-	__le32 hw_max_tx_घातer;
+	__le32 hw_min_tx_power;
+	__le32 hw_max_tx_power;
 
-	काष्ठा hal_reg_capabilities hal_reg_capabilities;
+	struct hal_reg_capabilities hal_reg_capabilities;
 
 	__le32 sys_cap_info;
-	__le32 min_pkt_size_enable; /* Enterprise mode लघु pkt enable */
+	__le32 min_pkt_size_enable; /* Enterprise mode short pkt enable */
 
 	/*
-	 * request to host to allocate a chuck of memory and pss it करोwn to FW
-	 * via WM_INIT. FW uses this as FW extesnsion memory क्रम saving its
-	 * data काष्ठाures. Only valid क्रम low latency पूर्णांकerfaces like PCIE
+	 * request to host to allocate a chuck of memory and pss it down to FW
+	 * via WM_INIT. FW uses this as FW extesnsion memory for saving its
+	 * data structures. Only valid for low latency interfaces like PCIE
 	 * where FW can access this memory directly (or) by DMA.
 	 */
 	__le32 num_mem_reqs;
 
-	काष्ठा wlan_host_mem_req mem_reqs[];
-पूर्ण __packed;
+	struct wlan_host_mem_req mem_reqs[];
+} __packed;
 
-#घोषणा WMI_SERVICE_READY_TIMEOUT_HZ (5 * HZ)
-#घोषणा WMI_UNIFIED_READY_TIMEOUT_HZ (5 * HZ)
+#define WMI_SERVICE_READY_TIMEOUT_HZ (5 * HZ)
+#define WMI_UNIFIED_READY_TIMEOUT_HZ (5 * HZ)
 
-काष्ठा wmi_पढ़ोy_event अणु
+struct wmi_ready_event {
 	__le32 sw_version;
 	__le32 abi_version;
-	काष्ठा wmi_mac_addr mac_addr;
+	struct wmi_mac_addr mac_addr;
 	__le32 status;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_resource_config अणु
-	/* number of भव devices (VAPs) to support */
+struct wmi_resource_config {
+	/* number of virtual devices (VAPs) to support */
 	__le32 num_vdevs;
 
 	/* number of peer nodes to support */
@@ -2367,7 +2366,7 @@
 	 * In offload mode target supports features like WOW, chatter and
 	 * other protocol offloads. In order to support them some
 	 * functionalities like reorder buffering, PN checking need to be
-	 * करोne in target. This determines maximum number of peers supported
+	 * done in target. This determines maximum number of peers supported
 	 * by target in offload mode
 	 */
 	__le32 num_offload_peers;
@@ -2382,60 +2381,60 @@
 	__le32 num_tids;
 
 	/*
-	 * max skid क्रम resolving hash collisions
+	 * max skid for resolving hash collisions
 	 *
-	 *   The address search table is sparse, so that अगर two MAC addresses
+	 *   The address search table is sparse, so that if two MAC addresses
 	 *   result in the same hash value, the second of these conflicting
 	 *   entries can slide to the next index in the address search table,
-	 *   and use it, अगर it is unoccupied.  This ast_skid_limit parameter
-	 *   specअगरies the upper bound on how many subsequent indices to search
+	 *   and use it, if it is unoccupied.  This ast_skid_limit parameter
+	 *   specifies the upper bound on how many subsequent indices to search
 	 *   over to find an unoccupied space.
 	 */
 	__le32 ast_skid_limit;
 
 	/*
-	 * the nominal chain mask क्रम transmit
+	 * the nominal chain mask for transmit
 	 *
-	 *   The chain mask may be modअगरied dynamically, e.g. to operate AP
-	 *   tx with a reduced number of chains अगर no clients are associated.
-	 *   This configuration parameter specअगरies the nominal chain-mask that
+	 *   The chain mask may be modified dynamically, e.g. to operate AP
+	 *   tx with a reduced number of chains if no clients are associated.
+	 *   This configuration parameter specifies the nominal chain-mask that
 	 *   should be used when not operating with a reduced set of tx chains.
 	 */
 	__le32 tx_chain_mask;
 
 	/*
-	 * the nominal chain mask क्रम receive
+	 * the nominal chain mask for receive
 	 *
-	 *   The chain mask may be modअगरied dynamically, e.g. क्रम a client
-	 *   to use a reduced number of chains क्रम receive अगर the traffic to
-	 *   the client is low enough that it करोesn't require करोwnlink MIMO
-	 *   or antenna भागersity.
-	 *   This configuration parameter specअगरies the nominal chain-mask that
+	 *   The chain mask may be modified dynamically, e.g. for a client
+	 *   to use a reduced number of chains for receive if the traffic to
+	 *   the client is low enough that it doesn't require downlink MIMO
+	 *   or antenna diversity.
+	 *   This configuration parameter specifies the nominal chain-mask that
 	 *   should be used when not operating with a reduced set of rx chains.
 	 */
 	__le32 rx_chain_mask;
 
 	/*
-	 * what rx reorder समयout (ms) to use क्रम the AC
+	 * what rx reorder timeout (ms) to use for the AC
 	 *
-	 *   Each WMM access class (voice, video, best-efक्रमt, background) will
-	 *   have its own समयout value to dictate how दीर्घ to रुको क्रम missing
-	 *   rx MPDUs to arrive beक्रमe flushing subsequent MPDUs that have
-	 *   alपढ़ोy been received.
-	 *   This parameter specअगरies the समयout in milliseconds क्रम each
+	 *   Each WMM access class (voice, video, best-effort, background) will
+	 *   have its own timeout value to dictate how long to wait for missing
+	 *   rx MPDUs to arrive before flushing subsequent MPDUs that have
+	 *   already been received.
+	 *   This parameter specifies the timeout in milliseconds for each
 	 *   class.
 	 */
-	__le32 rx_समयout_pri_vi;
-	__le32 rx_समयout_pri_vo;
-	__le32 rx_समयout_pri_be;
-	__le32 rx_समयout_pri_bk;
+	__le32 rx_timeout_pri_vi;
+	__le32 rx_timeout_pri_vo;
+	__le32 rx_timeout_pri_be;
+	__le32 rx_timeout_pri_bk;
 
 	/*
 	 * what mode the rx should decap packets to
 	 *
-	 *   MAC can decap to RAW (no decap), native wअगरi or Ethernet types
-	 *   THis setting also determines the शेष TX behavior, however TX
-	 *   behavior can be modअगरied on a per VAP basis during VAP init
+	 *   MAC can decap to RAW (no decap), native wifi or Ethernet types
+	 *   THis setting also determines the default TX behavior, however TX
+	 *   behavior can be modified on a per VAP basis during VAP init
 	 */
 	__le32 rx_decap_mode;
 
@@ -2452,24 +2451,24 @@
 	__le32 roam_offload_max_ap_profiles;
 
 	/*
-	 * how many groups to use क्रम mcast->ucast conversion
+	 * how many groups to use for mcast->ucast conversion
 	 *
-	 *   The target's WAL मुख्यtains a table to hold inक्रमmation regarding
-	 *   which peers beदीर्घ to a given multicast group, so that अगर
+	 *   The target's WAL maintains a table to hold information regarding
+	 *   which peers belong to a given multicast group, so that if
 	 *   multicast->unicast conversion is enabled, the target can convert
 	 *   multicast tx frames to a series of unicast tx frames, to each
 	 *   peer within the multicast group.
 	     This num_mcast_groups configuration parameter tells the target how
-	 *   many multicast groups to provide storage क्रम within its multicast
+	 *   many multicast groups to provide storage for within its multicast
 	 *   group membership table.
 	 */
 	__le32 num_mcast_groups;
 
 	/*
-	 * size to alloc क्रम the mcast membership table
+	 * size to alloc for the mcast membership table
 	 *
 	 *   This num_mcast_table_elems configuration parameter tells the
-	 *   target how many peer elements it needs to provide storage क्रम in
+	 *   target how many peer elements it needs to provide storage for in
 	 *   its multicast group membership table.
 	 *   These multicast group membership table elements are shared by the
 	 *   multicast groups stored within the table.
@@ -2477,19 +2476,19 @@
 	__le32 num_mcast_table_elems;
 
 	/*
-	 * whether/how to करो multicast->unicast conversion
+	 * whether/how to do multicast->unicast conversion
 	 *
-	 *   This configuration parameter specअगरies whether the target should
-	 *   perक्रमm multicast --> unicast conversion on transmit, and अगर so,
-	 *   what to करो अगर it finds no entries in its multicast group
-	 *   membership table क्रम the multicast IP address in the tx frame.
+	 *   This configuration parameter specifies whether the target should
+	 *   perform multicast --> unicast conversion on transmit, and if so,
+	 *   what to do if it finds no entries in its multicast group
+	 *   membership table for the multicast IP address in the tx frame.
 	 *   Configuration value:
-	 *   0 -> Do not perक्रमm multicast to unicast conversion.
-	 *   1 -> Convert multicast frames to unicast, अगर the IP multicast
+	 *   0 -> Do not perform multicast to unicast conversion.
+	 *   1 -> Convert multicast frames to unicast, if the IP multicast
 	 *        address from the tx frame is found in the multicast group
 	 *        membership table.  If the IP multicast address is not found,
 	 *        drop the frame.
-	 *   2 -> Convert multicast frames to unicast, अगर the IP multicast
+	 *   2 -> Convert multicast frames to unicast, if the IP multicast
 	 *        address from the tx frame is found in the multicast group
 	 *        membership table.  If the IP multicast address is not found,
 	 *        transmit the frame as multicast.
@@ -2497,44 +2496,44 @@
 	__le32 mcast2ucast_mode;
 
 	/*
-	 * how much memory to allocate क्रम a tx PPDU dbg log
+	 * how much memory to allocate for a tx PPDU dbg log
 	 *
 	 *   This parameter controls how much memory the target will allocate
-	 *   to store a log of tx PPDU meta-inक्रमmation (how large the PPDU
+	 *   to store a log of tx PPDU meta-information (how large the PPDU
 	 *   was, when it was sent, whether it was successful, etc.)
 	 */
 	__le32 tx_dbg_log_size;
 
-	/* how many AST entries to be allocated क्रम WDS */
+	/* how many AST entries to be allocated for WDS */
 	__le32 num_wds_entries;
 
 	/*
 	 * MAC DMA burst size, e.g., For target PCI limit can be
-	 * 0 -शेष, 1 256B
+	 * 0 -default, 1 256B
 	 */
 	__le32 dma_burst_size;
 
 	/*
 	 * Fixed delimiters to be inserted after every MPDU to
-	 * account क्रम पूर्णांकerface latency to aव्योम underrun.
+	 * account for interface latency to avoid underrun.
 	 */
 	__le32 mac_aggr_delim;
 
 	/*
-	 *   determine whether target is responsible क्रम detecting duplicate
+	 *   determine whether target is responsible for detecting duplicate
 	 *   non-aggregate MPDU and timing out stale fragments.
 	 *
-	 *   A-MPDU reordering is always perक्रमmed on the target.
+	 *   A-MPDU reordering is always performed on the target.
 	 *
-	 *   0: target responsible क्रम frag समयout and dup checking
-	 *   1: host responsible क्रम frag समयout and dup checking
+	 *   0: target responsible for frag timeout and dup checking
+	 *   1: host responsible for frag timeout and dup checking
 	 */
-	__le32 rx_skip_defrag_समयout_dup_detection_check;
+	__le32 rx_skip_defrag_timeout_dup_detection_check;
 
 	/*
-	 * Configuration क्रम VoW :
+	 * Configuration for VoW :
 	 * No of Video Nodes to be supported
-	 * and Max no of descriptors क्रम each Video link (node).
+	 * and Max no of descriptors for each Video link (node).
 	 */
 	__le32 vow_config;
 
@@ -2551,10 +2550,10 @@
 	 *  and is overridden by the OS shim as required.
 	 */
 	__le32 max_frag_entries;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_resource_config_10x अणु
-	/* number of भव devices (VAPs) to support */
+struct wmi_resource_config_10x {
+	/* number of virtual devices (VAPs) to support */
 	__le32 num_vdevs;
 
 	/* number of peer nodes to support */
@@ -2567,60 +2566,60 @@
 	__le32 num_tids;
 
 	/*
-	 * max skid क्रम resolving hash collisions
+	 * max skid for resolving hash collisions
 	 *
-	 *   The address search table is sparse, so that अगर two MAC addresses
+	 *   The address search table is sparse, so that if two MAC addresses
 	 *   result in the same hash value, the second of these conflicting
 	 *   entries can slide to the next index in the address search table,
-	 *   and use it, अगर it is unoccupied.  This ast_skid_limit parameter
-	 *   specअगरies the upper bound on how many subsequent indices to search
+	 *   and use it, if it is unoccupied.  This ast_skid_limit parameter
+	 *   specifies the upper bound on how many subsequent indices to search
 	 *   over to find an unoccupied space.
 	 */
 	__le32 ast_skid_limit;
 
 	/*
-	 * the nominal chain mask क्रम transmit
+	 * the nominal chain mask for transmit
 	 *
-	 *   The chain mask may be modअगरied dynamically, e.g. to operate AP
-	 *   tx with a reduced number of chains अगर no clients are associated.
-	 *   This configuration parameter specअगरies the nominal chain-mask that
+	 *   The chain mask may be modified dynamically, e.g. to operate AP
+	 *   tx with a reduced number of chains if no clients are associated.
+	 *   This configuration parameter specifies the nominal chain-mask that
 	 *   should be used when not operating with a reduced set of tx chains.
 	 */
 	__le32 tx_chain_mask;
 
 	/*
-	 * the nominal chain mask क्रम receive
+	 * the nominal chain mask for receive
 	 *
-	 *   The chain mask may be modअगरied dynamically, e.g. क्रम a client
-	 *   to use a reduced number of chains क्रम receive अगर the traffic to
-	 *   the client is low enough that it करोesn't require करोwnlink MIMO
-	 *   or antenna भागersity.
-	 *   This configuration parameter specअगरies the nominal chain-mask that
+	 *   The chain mask may be modified dynamically, e.g. for a client
+	 *   to use a reduced number of chains for receive if the traffic to
+	 *   the client is low enough that it doesn't require downlink MIMO
+	 *   or antenna diversity.
+	 *   This configuration parameter specifies the nominal chain-mask that
 	 *   should be used when not operating with a reduced set of rx chains.
 	 */
 	__le32 rx_chain_mask;
 
 	/*
-	 * what rx reorder समयout (ms) to use क्रम the AC
+	 * what rx reorder timeout (ms) to use for the AC
 	 *
-	 *   Each WMM access class (voice, video, best-efक्रमt, background) will
-	 *   have its own समयout value to dictate how दीर्घ to रुको क्रम missing
-	 *   rx MPDUs to arrive beक्रमe flushing subsequent MPDUs that have
-	 *   alपढ़ोy been received.
-	 *   This parameter specअगरies the समयout in milliseconds क्रम each
+	 *   Each WMM access class (voice, video, best-effort, background) will
+	 *   have its own timeout value to dictate how long to wait for missing
+	 *   rx MPDUs to arrive before flushing subsequent MPDUs that have
+	 *   already been received.
+	 *   This parameter specifies the timeout in milliseconds for each
 	 *   class.
 	 */
-	__le32 rx_समयout_pri_vi;
-	__le32 rx_समयout_pri_vo;
-	__le32 rx_समयout_pri_be;
-	__le32 rx_समयout_pri_bk;
+	__le32 rx_timeout_pri_vi;
+	__le32 rx_timeout_pri_vo;
+	__le32 rx_timeout_pri_be;
+	__le32 rx_timeout_pri_bk;
 
 	/*
 	 * what mode the rx should decap packets to
 	 *
-	 *   MAC can decap to RAW (no decap), native wअगरi or Ethernet types
-	 *   THis setting also determines the शेष TX behavior, however TX
-	 *   behavior can be modअगरied on a per VAP basis during VAP init
+	 *   MAC can decap to RAW (no decap), native wifi or Ethernet types
+	 *   THis setting also determines the default TX behavior, however TX
+	 *   behavior can be modified on a per VAP basis during VAP init
 	 */
 	__le32 rx_decap_mode;
 
@@ -2637,24 +2636,24 @@
 	__le32 roam_offload_max_ap_profiles;
 
 	/*
-	 * how many groups to use क्रम mcast->ucast conversion
+	 * how many groups to use for mcast->ucast conversion
 	 *
-	 *   The target's WAL मुख्यtains a table to hold inक्रमmation regarding
-	 *   which peers beदीर्घ to a given multicast group, so that अगर
+	 *   The target's WAL maintains a table to hold information regarding
+	 *   which peers belong to a given multicast group, so that if
 	 *   multicast->unicast conversion is enabled, the target can convert
 	 *   multicast tx frames to a series of unicast tx frames, to each
 	 *   peer within the multicast group.
 	     This num_mcast_groups configuration parameter tells the target how
-	 *   many multicast groups to provide storage क्रम within its multicast
+	 *   many multicast groups to provide storage for within its multicast
 	 *   group membership table.
 	 */
 	__le32 num_mcast_groups;
 
 	/*
-	 * size to alloc क्रम the mcast membership table
+	 * size to alloc for the mcast membership table
 	 *
 	 *   This num_mcast_table_elems configuration parameter tells the
-	 *   target how many peer elements it needs to provide storage क्रम in
+	 *   target how many peer elements it needs to provide storage for in
 	 *   its multicast group membership table.
 	 *   These multicast group membership table elements are shared by the
 	 *   multicast groups stored within the table.
@@ -2662,19 +2661,19 @@
 	__le32 num_mcast_table_elems;
 
 	/*
-	 * whether/how to करो multicast->unicast conversion
+	 * whether/how to do multicast->unicast conversion
 	 *
-	 *   This configuration parameter specअगरies whether the target should
-	 *   perक्रमm multicast --> unicast conversion on transmit, and अगर so,
-	 *   what to करो अगर it finds no entries in its multicast group
-	 *   membership table क्रम the multicast IP address in the tx frame.
+	 *   This configuration parameter specifies whether the target should
+	 *   perform multicast --> unicast conversion on transmit, and if so,
+	 *   what to do if it finds no entries in its multicast group
+	 *   membership table for the multicast IP address in the tx frame.
 	 *   Configuration value:
-	 *   0 -> Do not perक्रमm multicast to unicast conversion.
-	 *   1 -> Convert multicast frames to unicast, अगर the IP multicast
+	 *   0 -> Do not perform multicast to unicast conversion.
+	 *   1 -> Convert multicast frames to unicast, if the IP multicast
 	 *        address from the tx frame is found in the multicast group
 	 *        membership table.  If the IP multicast address is not found,
 	 *        drop the frame.
-	 *   2 -> Convert multicast frames to unicast, अगर the IP multicast
+	 *   2 -> Convert multicast frames to unicast, if the IP multicast
 	 *        address from the tx frame is found in the multicast group
 	 *        membership table.  If the IP multicast address is not found,
 	 *        transmit the frame as multicast.
@@ -2682,44 +2681,44 @@
 	__le32 mcast2ucast_mode;
 
 	/*
-	 * how much memory to allocate क्रम a tx PPDU dbg log
+	 * how much memory to allocate for a tx PPDU dbg log
 	 *
 	 *   This parameter controls how much memory the target will allocate
-	 *   to store a log of tx PPDU meta-inक्रमmation (how large the PPDU
+	 *   to store a log of tx PPDU meta-information (how large the PPDU
 	 *   was, when it was sent, whether it was successful, etc.)
 	 */
 	__le32 tx_dbg_log_size;
 
-	/* how many AST entries to be allocated क्रम WDS */
+	/* how many AST entries to be allocated for WDS */
 	__le32 num_wds_entries;
 
 	/*
 	 * MAC DMA burst size, e.g., For target PCI limit can be
-	 * 0 -शेष, 1 256B
+	 * 0 -default, 1 256B
 	 */
 	__le32 dma_burst_size;
 
 	/*
 	 * Fixed delimiters to be inserted after every MPDU to
-	 * account क्रम पूर्णांकerface latency to aव्योम underrun.
+	 * account for interface latency to avoid underrun.
 	 */
 	__le32 mac_aggr_delim;
 
 	/*
-	 *   determine whether target is responsible क्रम detecting duplicate
+	 *   determine whether target is responsible for detecting duplicate
 	 *   non-aggregate MPDU and timing out stale fragments.
 	 *
-	 *   A-MPDU reordering is always perक्रमmed on the target.
+	 *   A-MPDU reordering is always performed on the target.
 	 *
-	 *   0: target responsible क्रम frag समयout and dup checking
-	 *   1: host responsible क्रम frag समयout and dup checking
+	 *   0: target responsible for frag timeout and dup checking
+	 *   1: host responsible for frag timeout and dup checking
 	 */
-	__le32 rx_skip_defrag_समयout_dup_detection_check;
+	__le32 rx_skip_defrag_timeout_dup_detection_check;
 
 	/*
-	 * Configuration क्रम VoW :
+	 * Configuration for VoW :
 	 * No of Video Nodes to be supported
-	 * and Max no of descriptors क्रम each Video link (node).
+	 * and Max no of descriptors for each Video link (node).
 	 */
 	__le32 vow_config;
 
@@ -2733,33 +2732,33 @@
 	 *  and is overridden by the OS shim as required.
 	 */
 	__le32 max_frag_entries;
-पूर्ण __packed;
+} __packed;
 
-क्रमागत wmi_10_2_feature_mask अणु
+enum wmi_10_2_feature_mask {
 	WMI_10_2_RX_BATCH_MODE = BIT(0),
 	WMI_10_2_ATF_CONFIG    = BIT(1),
 	WMI_10_2_COEX_GPIO     = BIT(3),
 	WMI_10_2_BSS_CHAN_INFO = BIT(6),
 	WMI_10_2_PEER_STATS    = BIT(7),
-पूर्ण;
+};
 
-काष्ठा wmi_resource_config_10_2 अणु
-	काष्ठा wmi_resource_config_10x common;
+struct wmi_resource_config_10_2 {
+	struct wmi_resource_config_10x common;
 	__le32 max_peer_ext_stats;
 	__le32 smart_ant_cap; /* 0-disable, 1-enable */
-	__le32 bk_min_मुक्त;
-	__le32 be_min_मुक्त;
-	__le32 vi_min_मुक्त;
-	__le32 vo_min_मुक्त;
+	__le32 bk_min_free;
+	__le32 be_min_free;
+	__le32 vi_min_free;
+	__le32 vo_min_free;
 	__le32 feature_mask;
-पूर्ण __packed;
+} __packed;
 
-#घोषणा NUM_UNITS_IS_NUM_VDEVS         BIT(0)
-#घोषणा NUM_UNITS_IS_NUM_PEERS         BIT(1)
-#घोषणा NUM_UNITS_IS_NUM_ACTIVE_PEERS  BIT(2)
+#define NUM_UNITS_IS_NUM_VDEVS         BIT(0)
+#define NUM_UNITS_IS_NUM_PEERS         BIT(1)
+#define NUM_UNITS_IS_NUM_ACTIVE_PEERS  BIT(2)
 
-काष्ठा wmi_resource_config_10_4 अणु
-	/* Number of भव devices (VAPs) to support */
+struct wmi_resource_config_10_4 {
+	/* Number of virtual devices (VAPs) to support */
 	__le32 num_vdevs;
 
 	/* Number of peer nodes to support */
@@ -2770,13 +2769,13 @@
 
 	/* In offload mode, target supports features like WOW, chatter and other
 	 * protocol offloads. In order to support them some functionalities like
-	 * reorder buffering, PN checking need to be करोne in target.
+	 * reorder buffering, PN checking need to be done in target.
 	 * This determines maximum number of peers supported by target in
 	 * offload mode.
 	 */
 	__le32 num_offload_peers;
 
-	/* Number of reorder buffers available क्रम करोing target based reorder
+	/* Number of reorder buffers available for doing target based reorder
 	 * Rx reorder buffering
 	 */
 	__le32 num_offload_reorder_buffs;
@@ -2787,47 +2786,47 @@
 	/* Total number of TX/RX data TIDs */
 	__le32 num_tids;
 
-	/* Max skid क्रम resolving hash collisions.
-	 * The address search table is sparse, so that अगर two MAC addresses
+	/* Max skid for resolving hash collisions.
+	 * The address search table is sparse, so that if two MAC addresses
 	 * result in the same hash value, the second of these conflicting
 	 * entries can slide to the next index in the address search table,
-	 * and use it, अगर it is unoccupied.  This ast_skid_limit parameter
-	 * specअगरies the upper bound on how many subsequent indices to search
+	 * and use it, if it is unoccupied.  This ast_skid_limit parameter
+	 * specifies the upper bound on how many subsequent indices to search
 	 * over to find an unoccupied space.
 	 */
 	__le32 ast_skid_limit;
 
-	/* The nominal chain mask क्रम transmit.
-	 * The chain mask may be modअगरied dynamically, e.g. to operate AP tx
-	 * with a reduced number of chains अगर no clients are associated.
-	 * This configuration parameter specअगरies the nominal chain-mask that
+	/* The nominal chain mask for transmit.
+	 * The chain mask may be modified dynamically, e.g. to operate AP tx
+	 * with a reduced number of chains if no clients are associated.
+	 * This configuration parameter specifies the nominal chain-mask that
 	 * should be used when not operating with a reduced set of tx chains.
 	 */
 	__le32 tx_chain_mask;
 
-	/* The nominal chain mask क्रम receive.
-	 * The chain mask may be modअगरied dynamically, e.g. क्रम a client to use
-	 * a reduced number of chains क्रम receive अगर the traffic to the client
-	 * is low enough that it करोesn't require करोwnlink MIMO or antenna
-	 * भागersity. This configuration parameter specअगरies the nominal
+	/* The nominal chain mask for receive.
+	 * The chain mask may be modified dynamically, e.g. for a client to use
+	 * a reduced number of chains for receive if the traffic to the client
+	 * is low enough that it doesn't require downlink MIMO or antenna
+	 * diversity. This configuration parameter specifies the nominal
 	 * chain-mask that should be used when not operating with a reduced
 	 * set of rx chains.
 	 */
 	__le32 rx_chain_mask;
 
-	/* What rx reorder समयout (ms) to use क्रम the AC.
-	 * Each WMM access class (voice, video, best-efक्रमt, background) will
-	 * have its own समयout value to dictate how दीर्घ to रुको क्रम missing
-	 * rx MPDUs to arrive beक्रमe flushing subsequent MPDUs that have alपढ़ोy
-	 * been received. This parameter specअगरies the समयout in milliseconds
-	 * क्रम each class.
+	/* What rx reorder timeout (ms) to use for the AC.
+	 * Each WMM access class (voice, video, best-effort, background) will
+	 * have its own timeout value to dictate how long to wait for missing
+	 * rx MPDUs to arrive before flushing subsequent MPDUs that have already
+	 * been received. This parameter specifies the timeout in milliseconds
+	 * for each class.
 	 */
-	__le32 rx_समयout_pri[4];
+	__le32 rx_timeout_pri[4];
 
 	/* What mode the rx should decap packets to.
-	 * MAC can decap to RAW (no decap), native wअगरi or Ethernet types.
-	 * This setting also determines the शेष TX behavior, however TX
-	 * behavior can be modअगरied on a per VAP basis during VAP init
+	 * MAC can decap to RAW (no decap), native wifi or Ethernet types.
+	 * This setting also determines the default TX behavior, however TX
+	 * behavior can be modified on a per VAP basis during VAP init
 	 */
 	__le32 rx_decap_mode;
 
@@ -2839,72 +2838,72 @@
 
 	__le32 roam_offload_max_ap_profiles;
 
-	/* How many groups to use क्रम mcast->ucast conversion.
-	 * The target's WAL मुख्यtains a table to hold inक्रमmation regarding
-	 * which peers beदीर्घ to a given multicast group, so that अगर
+	/* How many groups to use for mcast->ucast conversion.
+	 * The target's WAL maintains a table to hold information regarding
+	 * which peers belong to a given multicast group, so that if
 	 * multicast->unicast conversion is enabled, the target can convert
 	 * multicast tx frames to a series of unicast tx frames, to each peer
 	 * within the multicast group. This num_mcast_groups configuration
 	 * parameter tells the target how many multicast groups to provide
-	 * storage क्रम within its multicast group membership table.
+	 * storage for within its multicast group membership table.
 	 */
 	__le32 num_mcast_groups;
 
-	/* Size to alloc क्रम the mcast membership table.
+	/* Size to alloc for the mcast membership table.
 	 * This num_mcast_table_elems configuration parameter tells the target
-	 * how many peer elements it needs to provide storage क्रम in its
+	 * how many peer elements it needs to provide storage for in its
 	 * multicast group membership table. These multicast group membership
 	 * table elements are shared by the multicast groups stored within
 	 * the table.
 	 */
 	__le32 num_mcast_table_elems;
 
-	/* Whether/how to करो multicast->unicast conversion.
-	 * This configuration parameter specअगरies whether the target should
-	 * perक्रमm multicast --> unicast conversion on transmit, and अगर so,
-	 * what to करो अगर it finds no entries in its multicast group membership
-	 * table क्रम the multicast IP address in the tx frame.
+	/* Whether/how to do multicast->unicast conversion.
+	 * This configuration parameter specifies whether the target should
+	 * perform multicast --> unicast conversion on transmit, and if so,
+	 * what to do if it finds no entries in its multicast group membership
+	 * table for the multicast IP address in the tx frame.
 	 * Configuration value:
-	 * 0 -> Do not perक्रमm multicast to unicast conversion.
-	 * 1 -> Convert multicast frames to unicast, अगर the IP multicast address
+	 * 0 -> Do not perform multicast to unicast conversion.
+	 * 1 -> Convert multicast frames to unicast, if the IP multicast address
 	 *      from the tx frame is found in the multicast group membership
 	 *      table.  If the IP multicast address is not found, drop the frame
-	 * 2 -> Convert multicast frames to unicast, अगर the IP multicast address
+	 * 2 -> Convert multicast frames to unicast, if the IP multicast address
 	 *      from the tx frame is found in the multicast group membership
 	 *      table.  If the IP multicast address is not found, transmit the
 	 *      frame as multicast.
 	 */
 	__le32 mcast2ucast_mode;
 
-	/* How much memory to allocate क्रम a tx PPDU dbg log.
+	/* How much memory to allocate for a tx PPDU dbg log.
 	 * This parameter controls how much memory the target will allocate to
-	 * store a log of tx PPDU meta-inक्रमmation (how large the PPDU was,
+	 * store a log of tx PPDU meta-information (how large the PPDU was,
 	 * when it was sent, whether it was successful, etc.)
 	 */
 	__le32 tx_dbg_log_size;
 
-	/* How many AST entries to be allocated क्रम WDS */
+	/* How many AST entries to be allocated for WDS */
 	__le32 num_wds_entries;
 
-	/* MAC DMA burst size. 0 -शेष, 1 -256B */
+	/* MAC DMA burst size. 0 -default, 1 -256B */
 	__le32 dma_burst_size;
 
-	/* Fixed delimiters to be inserted after every MPDU to account क्रम
-	 * पूर्णांकerface latency to aव्योम underrun.
+	/* Fixed delimiters to be inserted after every MPDU to account for
+	 * interface latency to avoid underrun.
 	 */
 	__le32 mac_aggr_delim;
 
-	/* Determine whether target is responsible क्रम detecting duplicate
+	/* Determine whether target is responsible for detecting duplicate
 	 * non-aggregate MPDU and timing out stale fragments. A-MPDU reordering
-	 * is always perक्रमmed on the target.
+	 * is always performed on the target.
 	 *
-	 * 0: target responsible क्रम frag समयout and dup checking
-	 * 1: host responsible क्रम frag समयout and dup checking
+	 * 0: target responsible for frag timeout and dup checking
+	 * 1: host responsible for frag timeout and dup checking
 	 */
-	__le32 rx_skip_defrag_समयout_dup_detection_check;
+	__le32 rx_skip_defrag_timeout_dup_detection_check;
 
-	/* Configuration क्रम VoW : No of Video nodes to be supported and max
-	 * no of descriptors क्रम each video link (node).
+	/* Configuration for VoW : No of Video nodes to be supported and max
+	 * no of descriptors for each video link (node).
 	 */
 	__le32 vow_config;
 
@@ -2922,25 +2921,25 @@
 	__le32 max_frag_entries;
 
 	/* Max number of extended peer stats.
-	 * This parameter controls the max number of peers क्रम which extended
+	 * This parameter controls the max number of peers for which extended
 	 * statistics are supported by target
 	 */
 	__le32 max_peer_ext_stats;
 
-	/* Smart antenna capabilities inक्रमmation.
+	/* Smart antenna capabilities information.
 	 * 1 - Smart antenna is enabled
 	 * 0 - Smart antenna is disabled
-	 * In future this can contain smart antenna specअगरic capabilities.
+	 * In future this can contain smart antenna specific capabilities.
 	 */
 	__le32 smart_ant_cap;
 
-	/* User can configure the buffers allocated क्रम each AC (BE, BK, VI, VO)
+	/* User can configure the buffers allocated for each AC (BE, BK, VI, VO)
 	 * during init.
 	 */
-	__le32 bk_minमुक्त;
-	__le32 be_minमुक्त;
-	__le32 vi_minमुक्त;
-	__le32 vo_minमुक्त;
+	__le32 bk_minfree;
+	__le32 be_minfree;
+	__le32 vi_minfree;
+	__le32 vo_minfree;
 
 	/* Rx batch mode capability.
 	 * 1 - Rx batch mode enabled
@@ -2970,15 +2969,15 @@
 	 * 1  - This is qwrap configuration
 	 * 0  - This is not qwrap
 	 *
-	 * Bits 31-16 is alloc_frag_desc_क्रम_data_pkt (1 enables, 0 disables)
-	 * In order to get ack-RSSI reporting and to specअगरy the tx-rate क्रम
-	 * inभागidual frames, this option must be enabled.  This uses an extra
-	 * 4 bytes per tx-msdu descriptor, so करोn't enable it unless you need it.
+	 * Bits 31-16 is alloc_frag_desc_for_data_pkt (1 enables, 0 disables)
+	 * In order to get ack-RSSI reporting and to specify the tx-rate for
+	 * individual frames, this option must be enabled.  This uses an extra
+	 * 4 bytes per tx-msdu descriptor, so don't enable it unless you need it.
 	 */
 	__le32 qwrap_config;
-पूर्ण __packed;
+} __packed;
 
-क्रमागत wmi_coex_version अणु
+enum wmi_coex_version {
 	WMI_NO_COEX_VERSION_SUPPORT	= 0,
 	/* 3 wire coex support*/
 	WMI_COEX_VERSION_1		= 1,
@@ -2988,14 +2987,14 @@
 	WMI_COEX_VERSION_3		= 3,
 	/* 4 wire coex support*/
 	WMI_COEX_VERSION_4		= 4,
-पूर्ण;
+};
 
 /**
- * क्रमागत wmi_10_4_feature_mask - WMI 10.4 feature enable/disable flags
+ * enum wmi_10_4_feature_mask - WMI 10.4 feature enable/disable flags
  * @WMI_10_4_LTEU_SUPPORT: LTEU config
  * @WMI_10_4_COEX_GPIO_SUPPORT: COEX GPIO config
- * @WMI_10_4_AUX_RADIO_SPECTRAL_INTF: AUX Radio Enhancement क्रम spectral scan
- * @WMI_10_4_AUX_RADIO_CHAN_LOAD_INTF: AUX Radio Enhancement क्रम chan load scan
+ * @WMI_10_4_AUX_RADIO_SPECTRAL_INTF: AUX Radio Enhancement for spectral scan
+ * @WMI_10_4_AUX_RADIO_CHAN_LOAD_INTF: AUX Radio Enhancement for chan load scan
  * @WMI_10_4_BSS_CHANNEL_INFO_64: BSS channel info stats
  * @WMI_10_4_PEER_STATS: Per station stats
  * @WMI_10_4_VDEV_STATS: Per vdev stats
@@ -3006,9 +3005,9 @@
  * @WMI_10_4_TDLS_CONN_TRACKER_IN_HOST_MODE: TDLS connection tracker in host
  *	enable/disable
  * @WMI_10_4_TDLS_EXPLICIT_MODE_ONLY:Explicit TDLS mode enable/disable
- * @WMI_10_4_TX_DATA_ACK_RSSI: Enable DATA ACK RSSI अगर firmware is capable
+ * @WMI_10_4_TX_DATA_ACK_RSSI: Enable DATA ACK RSSI if firmware is capable
  */
-क्रमागत wmi_10_4_feature_mask अणु
+enum wmi_10_4_feature_mask {
 	WMI_10_4_LTEU_SUPPORT			= BIT(0),
 	WMI_10_4_COEX_GPIO_SUPPORT		= BIT(1),
 	WMI_10_4_AUX_RADIO_SPECTRAL_INTF	= BIT(2),
@@ -3026,22 +3025,22 @@
 	WMI_10_4_EXT_PEER_TID_CONFIGS_SUPPORT	= BIT(17),
 	WMI_10_4_REPORT_AIRTIME			= BIT(18),
 
-पूर्ण;
+};
 
-काष्ठा wmi_ext_resource_config_10_4_cmd अणु
-	/* contains क्रमागत wmi_host_platक्रमm_type */
-	__le32 host_platक्रमm_config;
-	/* see क्रमागत wmi_10_4_feature_mask */
-	__le32 fw_feature_biपंचांगap;
+struct wmi_ext_resource_config_10_4_cmd {
+	/* contains enum wmi_host_platform_type */
+	__le32 host_platform_config;
+	/* see enum wmi_10_4_feature_mask */
+	__le32 fw_feature_bitmap;
 	/* WLAN priority GPIO number */
 	__le32 wlan_gpio_priority;
-	/* see क्रमागत wmi_coex_version */
+	/* see enum wmi_coex_version */
 	__le32 coex_version;
 	/* COEX GPIO config */
 	__le32 coex_gpio_pin1;
 	__le32 coex_gpio_pin2;
 	__le32 coex_gpio_pin3;
-	/* number of vdevs allowed to perक्रमm tdls */
+	/* number of vdevs allowed to perform tdls */
 	__le32 num_tdls_vdevs;
 	/* number of peers to track per TDLS vdev */
 	__le32 num_tdls_conn_table_entries;
@@ -3049,211 +3048,211 @@
 	__le32 max_tdls_concurrent_sleep_sta;
 	/* number of tdls buffer sta supported */
 	__le32 max_tdls_concurrent_buffer_sta;
-पूर्ण;
+};
 
-/* काष्ठाure describing host memory chunk. */
-काष्ठा host_memory_chunk अणु
-	/* id of the request that is passed up in service पढ़ोy */
+/* structure describing host memory chunk. */
+struct host_memory_chunk {
+	/* id of the request that is passed up in service ready */
 	__le32 req_id;
 	/* the physical address the memory chunk */
 	__le32 ptr;
 	/* size of the chunk */
 	__le32 size;
-पूर्ण __packed;
+} __packed;
 
-#घोषणा WMI_IRAM_RECOVERY_HOST_MEM_REQ_ID 8
+#define WMI_IRAM_RECOVERY_HOST_MEM_REQ_ID 8
 
-काष्ठा wmi_host_mem_chunks अणु
+struct wmi_host_mem_chunks {
 	__le32 count;
 	/* some fw revisions require at least 1 chunk regardless of count */
-	काष्ठा host_memory_chunk items[1];
-पूर्ण __packed;
+	struct host_memory_chunk items[1];
+} __packed;
 
-काष्ठा wmi_init_cmd अणु
-	काष्ठा wmi_resource_config resource_config;
-	काष्ठा wmi_host_mem_chunks mem_chunks;
-पूर्ण __packed;
+struct wmi_init_cmd {
+	struct wmi_resource_config resource_config;
+	struct wmi_host_mem_chunks mem_chunks;
+} __packed;
 
-/* _10x काष्ठाure is from 10.X FW API */
-काष्ठा wmi_init_cmd_10x अणु
-	काष्ठा wmi_resource_config_10x resource_config;
-	काष्ठा wmi_host_mem_chunks mem_chunks;
-पूर्ण __packed;
+/* _10x structure is from 10.X FW API */
+struct wmi_init_cmd_10x {
+	struct wmi_resource_config_10x resource_config;
+	struct wmi_host_mem_chunks mem_chunks;
+} __packed;
 
-काष्ठा wmi_init_cmd_10_2 अणु
-	काष्ठा wmi_resource_config_10_2 resource_config;
-	काष्ठा wmi_host_mem_chunks mem_chunks;
-पूर्ण __packed;
+struct wmi_init_cmd_10_2 {
+	struct wmi_resource_config_10_2 resource_config;
+	struct wmi_host_mem_chunks mem_chunks;
+} __packed;
 
-काष्ठा wmi_init_cmd_10_4 अणु
-	काष्ठा wmi_resource_config_10_4 resource_config;
-	काष्ठा wmi_host_mem_chunks mem_chunks;
-पूर्ण __packed;
+struct wmi_init_cmd_10_4 {
+	struct wmi_resource_config_10_4 resource_config;
+	struct wmi_host_mem_chunks mem_chunks;
+} __packed;
 
-काष्ठा wmi_chan_list_entry अणु
+struct wmi_chan_list_entry {
 	__le16 freq;
-	u8 phy_mode; /* valid क्रम 10.2 only */
+	u8 phy_mode; /* valid for 10.2 only */
 	u8 reserved;
-पूर्ण __packed;
+} __packed;
 
-/* TLV क्रम channel list */
-काष्ठा wmi_chan_list अणु
+/* TLV for channel list */
+struct wmi_chan_list {
 	__le32 tag; /* WMI_CHAN_LIST_TAG */
 	__le32 num_chan;
-	काष्ठा wmi_chan_list_entry channel_list[];
-पूर्ण __packed;
+	struct wmi_chan_list_entry channel_list[];
+} __packed;
 
-काष्ठा wmi_bssid_list अणु
+struct wmi_bssid_list {
 	__le32 tag; /* WMI_BSSID_LIST_TAG */
 	__le32 num_bssid;
-	काष्ठा wmi_mac_addr bssid_list[];
-पूर्ण __packed;
+	struct wmi_mac_addr bssid_list[];
+} __packed;
 
-काष्ठा wmi_ie_data अणु
+struct wmi_ie_data {
 	__le32 tag; /* WMI_IE_TAG */
 	__le32 ie_len;
 	u8 ie_data[];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_ssid अणु
+struct wmi_ssid {
 	__le32 ssid_len;
 	u8 ssid[32];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_ssid_list अणु
+struct wmi_ssid_list {
 	__le32 tag; /* WMI_SSID_LIST_TAG */
 	__le32 num_ssids;
-	काष्ठा wmi_ssid ssids[];
-पूर्ण __packed;
+	struct wmi_ssid ssids[];
+} __packed;
 
 /* prefix used by scan requestor ids on the host */
-#घोषणा WMI_HOST_SCAN_REQUESTOR_ID_PREFIX 0xA000
+#define WMI_HOST_SCAN_REQUESTOR_ID_PREFIX 0xA000
 
 /* prefix used by scan request ids generated on the host */
 /* host cycles through the lower 12 bits to generate ids */
-#घोषणा WMI_HOST_SCAN_REQ_ID_PREFIX 0xA000
+#define WMI_HOST_SCAN_REQ_ID_PREFIX 0xA000
 
-#घोषणा WLAN_SCAN_PARAMS_MAX_SSID    16
-#घोषणा WLAN_SCAN_PARAMS_MAX_BSSID   4
-#घोषणा WLAN_SCAN_PARAMS_MAX_IE_LEN  256
+#define WLAN_SCAN_PARAMS_MAX_SSID    16
+#define WLAN_SCAN_PARAMS_MAX_BSSID   4
+#define WLAN_SCAN_PARAMS_MAX_IE_LEN  256
 
 /* Values lower than this may be refused by some firmware revisions with a scan
- * completion with a समयकरोut reason.
+ * completion with a timedout reason.
  */
-#घोषणा WMI_SCAN_CHAN_MIN_TIME_MSEC 40
+#define WMI_SCAN_CHAN_MIN_TIME_MSEC 40
 
 /* Scan priority numbers must be sequential, starting with 0 */
-क्रमागत wmi_scan_priority अणु
+enum wmi_scan_priority {
 	WMI_SCAN_PRIORITY_VERY_LOW = 0,
 	WMI_SCAN_PRIORITY_LOW,
 	WMI_SCAN_PRIORITY_MEDIUM,
 	WMI_SCAN_PRIORITY_HIGH,
 	WMI_SCAN_PRIORITY_VERY_HIGH,
 	WMI_SCAN_PRIORITY_COUNT   /* number of priorities supported */
-पूर्ण;
+};
 
-काष्ठा wmi_start_scan_common अणु
+struct wmi_start_scan_common {
 	/* Scan ID */
 	__le32 scan_id;
 	/* Scan requestor ID */
 	__le32 scan_req_id;
-	/* VDEV id(पूर्णांकerface) that is requesting scan */
+	/* VDEV id(interface) that is requesting scan */
 	__le32 vdev_id;
 	/* Scan Priority, input to scan scheduler */
 	__le32 scan_priority;
 	/* Scan events subscription */
-	__le32 notअगरy_scan_events;
-	/* dwell समय in msec on active channels */
-	__le32 dwell_समय_active;
-	/* dwell समय in msec on passive channels */
-	__le32 dwell_समय_passive;
+	__le32 notify_scan_events;
+	/* dwell time in msec on active channels */
+	__le32 dwell_time_active;
+	/* dwell time in msec on passive channels */
+	__le32 dwell_time_passive;
 	/*
-	 * min समय in msec on the BSS channel,only valid अगर atleast one
+	 * min time in msec on the BSS channel,only valid if atleast one
 	 * VDEV is active
 	 */
-	__le32 min_rest_समय;
+	__le32 min_rest_time;
 	/*
-	 * max rest समय in msec on the BSS channel,only valid अगर at least
+	 * max rest time in msec on the BSS channel,only valid if at least
 	 * one VDEV is active
 	 */
 	/*
-	 * the scanner will rest on the bss channel at least min_rest_समय
-	 * after min_rest_समय the scanner will start checking क्रम tx/rx
-	 * activity on all VDEVs. अगर there is no activity the scanner will
-	 * चयन to off channel. अगर there is activity the scanner will let
-	 * the radio on the bss channel until max_rest_समय expires.at
-	 * max_rest_समय scanner will चयन to off channel irrespective of
-	 * activity. activity is determined by the idle_समय parameter.
+	 * the scanner will rest on the bss channel at least min_rest_time
+	 * after min_rest_time the scanner will start checking for tx/rx
+	 * activity on all VDEVs. if there is no activity the scanner will
+	 * switch to off channel. if there is activity the scanner will let
+	 * the radio on the bss channel until max_rest_time expires.at
+	 * max_rest_time scanner will switch to off channel irrespective of
+	 * activity. activity is determined by the idle_time parameter.
 	 */
-	__le32 max_rest_समय;
+	__le32 max_rest_time;
 	/*
-	 * समय beक्रमe sending next set of probe requests.
+	 * time before sending next set of probe requests.
 	 * The scanner keeps repeating probe requests transmission with
-	 * period specअगरied by repeat_probe_समय.
-	 * The number of probe requests specअगरied depends on the ssid_list
+	 * period specified by repeat_probe_time.
+	 * The number of probe requests specified depends on the ssid_list
 	 * and bssid_list
 	 */
-	__le32 repeat_probe_समय;
-	/* समय in msec between 2 consequetive probe requests with in a set. */
-	__le32 probe_spacing_समय;
+	__le32 repeat_probe_time;
+	/* time in msec between 2 consequetive probe requests with in a set. */
+	__le32 probe_spacing_time;
 	/*
-	 * data inactivity समय in msec on bss channel that will be used by
-	 * scanner क्रम measuring the inactivity.
+	 * data inactivity time in msec on bss channel that will be used by
+	 * scanner for measuring the inactivity.
 	 */
-	__le32 idle_समय;
-	/* maximum समय in msec allowed क्रम scan  */
-	__le32 max_scan_समय;
+	__le32 idle_time;
+	/* maximum time in msec allowed for scan  */
+	__le32 max_scan_time;
 	/*
-	 * delay in msec beक्रमe sending first probe request after चयनing
+	 * delay in msec before sending first probe request after switching
 	 * to a channel
 	 */
 	__le32 probe_delay;
 	/* Scan control flags */
 	__le32 scan_ctrl_flags;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_start_scan_tlvs अणु
+struct wmi_start_scan_tlvs {
 	/* TLV parameters. These includes channel list, ssid list, bssid list,
 	 * extra ies.
 	 */
 	u8 tlvs[0];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_start_scan_cmd अणु
-	काष्ठा wmi_start_scan_common common;
+struct wmi_start_scan_cmd {
+	struct wmi_start_scan_common common;
 	__le32 burst_duration_ms;
-	काष्ठा wmi_start_scan_tlvs tlvs;
-पूर्ण __packed;
+	struct wmi_start_scan_tlvs tlvs;
+} __packed;
 
 /* This is the definition from 10.X firmware branch */
-काष्ठा wmi_10x_start_scan_cmd अणु
-	काष्ठा wmi_start_scan_common common;
-	काष्ठा wmi_start_scan_tlvs tlvs;
-पूर्ण __packed;
+struct wmi_10x_start_scan_cmd {
+	struct wmi_start_scan_common common;
+	struct wmi_start_scan_tlvs tlvs;
+} __packed;
 
-काष्ठा wmi_ssid_arg अणु
-	पूर्णांक len;
-	स्थिर u8 *ssid;
-पूर्ण;
+struct wmi_ssid_arg {
+	int len;
+	const u8 *ssid;
+};
 
-काष्ठा wmi_bssid_arg अणु
-	स्थिर u8 *bssid;
-पूर्ण;
+struct wmi_bssid_arg {
+	const u8 *bssid;
+};
 
-काष्ठा wmi_start_scan_arg अणु
+struct wmi_start_scan_arg {
 	u32 scan_id;
 	u32 scan_req_id;
 	u32 vdev_id;
 	u32 scan_priority;
-	u32 notअगरy_scan_events;
-	u32 dwell_समय_active;
-	u32 dwell_समय_passive;
-	u32 min_rest_समय;
-	u32 max_rest_समय;
-	u32 repeat_probe_समय;
-	u32 probe_spacing_समय;
-	u32 idle_समय;
-	u32 max_scan_समय;
+	u32 notify_scan_events;
+	u32 dwell_time_active;
+	u32 dwell_time_passive;
+	u32 min_rest_time;
+	u32 max_rest_time;
+	u32 repeat_probe_time;
+	u32 probe_spacing_time;
+	u32 idle_time;
+	u32 max_scan_time;
 	u32 probe_delay;
 	u32 scan_ctrl_flags;
 	u32 burst_duration_ms;
@@ -3265,86 +3264,86 @@
 
 	u8 ie[WLAN_SCAN_PARAMS_MAX_IE_LEN];
 	u16 channels[64];
-	काष्ठा wmi_ssid_arg ssids[WLAN_SCAN_PARAMS_MAX_SSID];
-	काष्ठा wmi_bssid_arg bssids[WLAN_SCAN_PARAMS_MAX_BSSID];
-	काष्ठा wmi_mac_addr mac_addr;
-	काष्ठा wmi_mac_addr mac_mask;
-पूर्ण;
+	struct wmi_ssid_arg ssids[WLAN_SCAN_PARAMS_MAX_SSID];
+	struct wmi_bssid_arg bssids[WLAN_SCAN_PARAMS_MAX_BSSID];
+	struct wmi_mac_addr mac_addr;
+	struct wmi_mac_addr mac_mask;
+};
 
 /* scan control flags */
 
 /* passively scan all channels including active channels */
-#घोषणा WMI_SCAN_FLAG_PASSIVE        0x1
-/* add wild card ssid probe request even though ssid_list is specअगरied. */
-#घोषणा WMI_SCAN_ADD_BCAST_PROBE_REQ 0x2
-/* add cck rates to rates/xrate ie क्रम the generated probe request */
-#घोषणा WMI_SCAN_ADD_CCK_RATES 0x4
-/* add ofdm rates to rates/xrate ie क्रम the generated probe request */
-#घोषणा WMI_SCAN_ADD_OFDM_RATES 0x8
-/* To enable indication of Chan load and Noise न्यूनमान to host */
-#घोषणा WMI_SCAN_CHAN_STAT_EVENT 0x10
+#define WMI_SCAN_FLAG_PASSIVE        0x1
+/* add wild card ssid probe request even though ssid_list is specified. */
+#define WMI_SCAN_ADD_BCAST_PROBE_REQ 0x2
+/* add cck rates to rates/xrate ie for the generated probe request */
+#define WMI_SCAN_ADD_CCK_RATES 0x4
+/* add ofdm rates to rates/xrate ie for the generated probe request */
+#define WMI_SCAN_ADD_OFDM_RATES 0x8
+/* To enable indication of Chan load and Noise floor to host */
+#define WMI_SCAN_CHAN_STAT_EVENT 0x10
 /* Filter Probe request frames  */
-#घोषणा WMI_SCAN_FILTER_PROBE_REQ 0x20
+#define WMI_SCAN_FILTER_PROBE_REQ 0x20
 /* When set, DFS channels will not be scanned */
-#घोषणा WMI_SCAN_BYPASS_DFS_CHN 0x40
-/* Dअगरferent FW scan engine may choose to bail out on errors.
+#define WMI_SCAN_BYPASS_DFS_CHN 0x40
+/* Different FW scan engine may choose to bail out on errors.
  * Allow the driver to have influence over that.
  */
-#घोषणा WMI_SCAN_CONTINUE_ON_ERROR 0x80
+#define WMI_SCAN_CONTINUE_ON_ERROR 0x80
 
-/* Use अक्रमom MAC address क्रम TA क्रम Probe Request frame and add
- * OUI specअगरied by WMI_SCAN_PROB_REQ_OUI_CMDID to the Probe Request frame.
- * अगर OUI is not set by WMI_SCAN_PROB_REQ_OUI_CMDID then the flag is ignored.
+/* Use random MAC address for TA for Probe Request frame and add
+ * OUI specified by WMI_SCAN_PROB_REQ_OUI_CMDID to the Probe Request frame.
+ * if OUI is not set by WMI_SCAN_PROB_REQ_OUI_CMDID then the flag is ignored.
  */
-#घोषणा WMI_SCAN_ADD_SPOOFED_MAC_IN_PROBE_REQ   0x1000
+#define WMI_SCAN_ADD_SPOOFED_MAC_IN_PROBE_REQ   0x1000
 
 /* WMI_SCAN_CLASS_MASK must be the same value as IEEE80211_SCAN_CLASS_MASK */
-#घोषणा WMI_SCAN_CLASS_MASK 0xFF000000
+#define WMI_SCAN_CLASS_MASK 0xFF000000
 
-क्रमागत wmi_stop_scan_type अणु
+enum wmi_stop_scan_type {
 	WMI_SCAN_STOP_ONE	= 0x00000000, /* stop by scan_id */
 	WMI_SCAN_STOP_VDEV_ALL	= 0x01000000, /* stop by vdev_id */
 	WMI_SCAN_STOP_ALL	= 0x04000000, /* stop all scans */
-पूर्ण;
+};
 
-काष्ठा wmi_stop_scan_cmd अणु
+struct wmi_stop_scan_cmd {
 	__le32 scan_req_id;
 	__le32 scan_id;
 	__le32 req_type;
 	__le32 vdev_id;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_stop_scan_arg अणु
+struct wmi_stop_scan_arg {
 	u32 req_id;
-	क्रमागत wmi_stop_scan_type req_type;
-	जोड़ अणु
+	enum wmi_stop_scan_type req_type;
+	union {
 		u32 scan_id;
 		u32 vdev_id;
-	पूर्ण u;
-पूर्ण;
+	} u;
+};
 
-काष्ठा wmi_scan_chan_list_cmd अणु
+struct wmi_scan_chan_list_cmd {
 	__le32 num_scan_chans;
-	काष्ठा wmi_channel chan_info[];
-पूर्ण __packed;
+	struct wmi_channel chan_info[];
+} __packed;
 
-काष्ठा wmi_scan_chan_list_arg अणु
+struct wmi_scan_chan_list_arg {
 	u32 n_channels;
-	काष्ठा wmi_channel_arg *channels;
-पूर्ण;
+	struct wmi_channel_arg *channels;
+};
 
-क्रमागत wmi_bss_filter अणु
-	WMI_BSS_FILTER_NONE = 0,        /* no beacons क्रमwarded */
-	WMI_BSS_FILTER_ALL,             /* all beacons क्रमwarded */
-	WMI_BSS_FILTER_PROखाता,         /* only beacons matching profile */
-	WMI_BSS_FILTER_ALL_BUT_PROखाता, /* all but beacons matching profile */
+enum wmi_bss_filter {
+	WMI_BSS_FILTER_NONE = 0,        /* no beacons forwarded */
+	WMI_BSS_FILTER_ALL,             /* all beacons forwarded */
+	WMI_BSS_FILTER_PROFILE,         /* only beacons matching profile */
+	WMI_BSS_FILTER_ALL_BUT_PROFILE, /* all but beacons matching profile */
 	WMI_BSS_FILTER_CURRENT_BSS,     /* only beacons matching current BSS */
 	WMI_BSS_FILTER_ALL_BUT_BSS,     /* all but beacons matching BSS */
 	WMI_BSS_FILTER_PROBED_SSID,     /* beacons matching probed ssid */
 	WMI_BSS_FILTER_LAST_BSS,        /* marker only */
-पूर्ण;
+};
 
-क्रमागत wmi_scan_event_type अणु
+enum wmi_scan_event_type {
 	WMI_SCAN_EVENT_STARTED              = BIT(0),
 	WMI_SCAN_EVENT_COMPLETED            = BIT(1),
 	WMI_SCAN_EVENT_BSS_CHANNEL          = BIT(2),
@@ -3356,68 +3355,68 @@
 	WMI_SCAN_EVENT_RESTARTED            = BIT(7),
 	WMI_SCAN_EVENT_FOREIGN_CHANNEL_EXIT = BIT(8),
 	WMI_SCAN_EVENT_MAX                  = BIT(15),
-पूर्ण;
+};
 
-क्रमागत wmi_scan_completion_reason अणु
+enum wmi_scan_completion_reason {
 	WMI_SCAN_REASON_COMPLETED,
 	WMI_SCAN_REASON_CANCELLED,
 	WMI_SCAN_REASON_PREEMPTED,
 	WMI_SCAN_REASON_TIMEDOUT,
 	WMI_SCAN_REASON_INTERNAL_FAILURE,
 	WMI_SCAN_REASON_MAX,
-पूर्ण;
+};
 
-काष्ठा wmi_scan_event अणु
+struct wmi_scan_event {
 	__le32 event_type; /* %WMI_SCAN_EVENT_ */
 	__le32 reason; /* %WMI_SCAN_REASON_ */
-	__le32 channel_freq; /* only valid क्रम WMI_SCAN_EVENT_FOREIGN_CHANNEL */
+	__le32 channel_freq; /* only valid for WMI_SCAN_EVENT_FOREIGN_CHANNEL */
 	__le32 scan_req_id;
 	__le32 scan_id;
 	__le32 vdev_id;
-पूर्ण __packed;
+} __packed;
 
 /*
  * This defines how much headroom is kept in the
  * receive frame between the descriptor and the
- * payload, in order क्रम the WMI PHY error and
+ * payload, in order for the WMI PHY error and
  * management handler to insert header contents.
  *
  * This is in bytes.
  */
-#घोषणा WMI_MGMT_RX_HDR_HEADROOM    52
+#define WMI_MGMT_RX_HDR_HEADROOM    52
 
 /*
- * This event will be used क्रम sending scan results
+ * This event will be used for sending scan results
  * as well as rx mgmt frames to the host. The rx buffer
  * will be sent as part of this WMI event. It would be a
  * good idea to pass all the fields in the RX status
  * descriptor up to the host.
  */
-काष्ठा wmi_mgmt_rx_hdr_v1 अणु
+struct wmi_mgmt_rx_hdr_v1 {
 	__le32 channel;
 	__le32 snr;
 	__le32 rate;
 	__le32 phy_mode;
 	__le32 buf_len;
 	__le32 status; /* %WMI_RX_STATUS_ */
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_mgmt_rx_hdr_v2 अणु
-	काष्ठा wmi_mgmt_rx_hdr_v1 v1;
+struct wmi_mgmt_rx_hdr_v2 {
+	struct wmi_mgmt_rx_hdr_v1 v1;
 	__le32 rssi_ctl[4];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_mgmt_rx_event_v1 अणु
-	काष्ठा wmi_mgmt_rx_hdr_v1 hdr;
+struct wmi_mgmt_rx_event_v1 {
+	struct wmi_mgmt_rx_hdr_v1 hdr;
 	u8 buf[];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_mgmt_rx_event_v2 अणु
-	काष्ठा wmi_mgmt_rx_hdr_v2 hdr;
+struct wmi_mgmt_rx_event_v2 {
+	struct wmi_mgmt_rx_hdr_v2 hdr;
 	u8 buf[];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_10_4_mgmt_rx_hdr अणु
+struct wmi_10_4_mgmt_rx_hdr {
 	__le32 channel;
 	__le32 snr;
 	    u8 rssi_ctl[4];
@@ -3425,41 +3424,41 @@
 	__le32 phy_mode;
 	__le32 buf_len;
 	__le32 status;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_10_4_mgmt_rx_event अणु
-	काष्ठा wmi_10_4_mgmt_rx_hdr hdr;
+struct wmi_10_4_mgmt_rx_event {
+	struct wmi_10_4_mgmt_rx_hdr hdr;
 	u8 buf[];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_mgmt_rx_ext_info अणु
-	__le64 rx_mac_बारtamp;
-पूर्ण __packed __aligned(4);
+struct wmi_mgmt_rx_ext_info {
+	__le64 rx_mac_timestamp;
+} __packed __aligned(4);
 
-#घोषणा WMI_RX_STATUS_OK			0x00
-#घोषणा WMI_RX_STATUS_ERR_CRC			0x01
-#घोषणा WMI_RX_STATUS_ERR_DECRYPT		0x08
-#घोषणा WMI_RX_STATUS_ERR_MIC			0x10
-#घोषणा WMI_RX_STATUS_ERR_KEY_CACHE_MISS	0x20
+#define WMI_RX_STATUS_OK			0x00
+#define WMI_RX_STATUS_ERR_CRC			0x01
+#define WMI_RX_STATUS_ERR_DECRYPT		0x08
+#define WMI_RX_STATUS_ERR_MIC			0x10
+#define WMI_RX_STATUS_ERR_KEY_CACHE_MISS	0x20
 /* Extension data at the end of mgmt frame */
-#घोषणा WMI_RX_STATUS_EXT_INFO		0x40
+#define WMI_RX_STATUS_EXT_INFO		0x40
 
-#घोषणा PHY_ERROR_GEN_SPECTRAL_SCAN		0x26
-#घोषणा PHY_ERROR_GEN_FALSE_RADAR_EXT		0x24
-#घोषणा PHY_ERROR_GEN_RADAR			0x05
+#define PHY_ERROR_GEN_SPECTRAL_SCAN		0x26
+#define PHY_ERROR_GEN_FALSE_RADAR_EXT		0x24
+#define PHY_ERROR_GEN_RADAR			0x05
 
-#घोषणा PHY_ERROR_10_4_RADAR_MASK               0x4
-#घोषणा PHY_ERROR_10_4_SPECTRAL_SCAN_MASK       0x4000000
+#define PHY_ERROR_10_4_RADAR_MASK               0x4
+#define PHY_ERROR_10_4_SPECTRAL_SCAN_MASK       0x4000000
 
-क्रमागत phy_err_type अणु
+enum phy_err_type {
 	PHY_ERROR_UNKNOWN,
 	PHY_ERROR_SPECTRAL_SCAN,
 	PHY_ERROR_FALSE_RADAR_EXT,
 	PHY_ERROR_RADAR
-पूर्ण;
+};
 
-काष्ठा wmi_phyerr अणु
-	__le32 tsf_बारtamp;
+struct wmi_phyerr {
+	__le32 tsf_timestamp;
 	__le16 freq1;
 	__le16 freq2;
 	u8 rssi_combined;
@@ -3470,16 +3469,16 @@
 	__le16 nf_chains[4];
 	__le32 buf_len;
 	u8 buf[];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_phyerr_event अणु
+struct wmi_phyerr_event {
 	__le32 num_phyerrs;
 	__le32 tsf_l32;
 	__le32 tsf_u32;
-	काष्ठा wmi_phyerr phyerrs[];
-पूर्ण __packed;
+	struct wmi_phyerr phyerrs[];
+} __packed;
 
-काष्ठा wmi_10_4_phyerr_event अणु
+struct wmi_10_4_phyerr_event {
 	__le32 tsf_l32;
 	__le32 tsf_u32;
 	__le16 freq1;
@@ -3491,21 +3490,21 @@
 	__le32 rssi_chains[4];
 	__le16 nf_chains[4];
 	__le32 phy_err_mask[2];
-	__le32 tsf_बारtamp;
+	__le32 tsf_timestamp;
 	__le32 buf_len;
 	u8 buf[];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_radar_found_info अणु
+struct wmi_radar_found_info {
 	__le32 pri_min;
 	__le32 pri_max;
 	__le32 width_min;
 	__le32 width_max;
 	__le32 sidx_min;
 	__le32 sidx_max;
-पूर्ण __packed;
+} __packed;
 
-क्रमागत wmi_radar_confirmation_status अणु
+enum wmi_radar_confirmation_status {
 	/* Detected radar was due to SW pulses */
 	WMI_SW_RADAR_DETECTED    = 0,
 
@@ -3513,145 +3512,145 @@
 
 	/* Real radar detected */
 	WMI_HW_RADAR_DETECTED    = 2,
-पूर्ण;
+};
 
-#घोषणा PHYERR_TLV_SIG				0xBB
-#घोषणा PHYERR_TLV_TAG_SEARCH_FFT_REPORT	0xFB
-#घोषणा PHYERR_TLV_TAG_RADAR_PULSE_SUMMARY	0xF8
-#घोषणा PHYERR_TLV_TAG_SPECTRAL_SUMMARY_REPORT	0xF9
+#define PHYERR_TLV_SIG				0xBB
+#define PHYERR_TLV_TAG_SEARCH_FFT_REPORT	0xFB
+#define PHYERR_TLV_TAG_RADAR_PULSE_SUMMARY	0xF8
+#define PHYERR_TLV_TAG_SPECTRAL_SUMMARY_REPORT	0xF9
 
-काष्ठा phyerr_radar_report अणु
+struct phyerr_radar_report {
 	__le32 reg0; /* RADAR_REPORT_REG0_* */
 	__le32 reg1; /* RADAR_REPORT_REG1_* */
-पूर्ण __packed;
+} __packed;
 
-#घोषणा RADAR_REPORT_REG0_PULSE_IS_CHIRP_MASK		0x80000000
-#घोषणा RADAR_REPORT_REG0_PULSE_IS_CHIRP_LSB		31
+#define RADAR_REPORT_REG0_PULSE_IS_CHIRP_MASK		0x80000000
+#define RADAR_REPORT_REG0_PULSE_IS_CHIRP_LSB		31
 
-#घोषणा RADAR_REPORT_REG0_PULSE_IS_MAX_WIDTH_MASK	0x40000000
-#घोषणा RADAR_REPORT_REG0_PULSE_IS_MAX_WIDTH_LSB	30
+#define RADAR_REPORT_REG0_PULSE_IS_MAX_WIDTH_MASK	0x40000000
+#define RADAR_REPORT_REG0_PULSE_IS_MAX_WIDTH_LSB	30
 
-#घोषणा RADAR_REPORT_REG0_AGC_TOTAL_GAIN_MASK		0x3FF00000
-#घोषणा RADAR_REPORT_REG0_AGC_TOTAL_GAIN_LSB		20
+#define RADAR_REPORT_REG0_AGC_TOTAL_GAIN_MASK		0x3FF00000
+#define RADAR_REPORT_REG0_AGC_TOTAL_GAIN_LSB		20
 
-#घोषणा RADAR_REPORT_REG0_PULSE_DELTA_DIFF_MASK		0x000F0000
-#घोषणा RADAR_REPORT_REG0_PULSE_DELTA_DIFF_LSB		16
+#define RADAR_REPORT_REG0_PULSE_DELTA_DIFF_MASK		0x000F0000
+#define RADAR_REPORT_REG0_PULSE_DELTA_DIFF_LSB		16
 
-#घोषणा RADAR_REPORT_REG0_PULSE_DELTA_PEAK_MASK		0x0000FC00
-#घोषणा RADAR_REPORT_REG0_PULSE_DELTA_PEAK_LSB		10
+#define RADAR_REPORT_REG0_PULSE_DELTA_PEAK_MASK		0x0000FC00
+#define RADAR_REPORT_REG0_PULSE_DELTA_PEAK_LSB		10
 
-#घोषणा RADAR_REPORT_REG0_PULSE_SIDX_MASK		0x000003FF
-#घोषणा RADAR_REPORT_REG0_PULSE_SIDX_LSB		0
+#define RADAR_REPORT_REG0_PULSE_SIDX_MASK		0x000003FF
+#define RADAR_REPORT_REG0_PULSE_SIDX_LSB		0
 
-#घोषणा RADAR_REPORT_REG1_PULSE_SRCH_FFT_VALID_MASK	0x80000000
-#घोषणा RADAR_REPORT_REG1_PULSE_SRCH_FFT_VALID_LSB	31
+#define RADAR_REPORT_REG1_PULSE_SRCH_FFT_VALID_MASK	0x80000000
+#define RADAR_REPORT_REG1_PULSE_SRCH_FFT_VALID_LSB	31
 
-#घोषणा RADAR_REPORT_REG1_PULSE_AGC_MB_GAIN_MASK	0x7F000000
-#घोषणा RADAR_REPORT_REG1_PULSE_AGC_MB_GAIN_LSB		24
+#define RADAR_REPORT_REG1_PULSE_AGC_MB_GAIN_MASK	0x7F000000
+#define RADAR_REPORT_REG1_PULSE_AGC_MB_GAIN_LSB		24
 
-#घोषणा RADAR_REPORT_REG1_PULSE_SUBCHAN_MASK_MASK	0x00FF0000
-#घोषणा RADAR_REPORT_REG1_PULSE_SUBCHAN_MASK_LSB	16
+#define RADAR_REPORT_REG1_PULSE_SUBCHAN_MASK_MASK	0x00FF0000
+#define RADAR_REPORT_REG1_PULSE_SUBCHAN_MASK_LSB	16
 
-#घोषणा RADAR_REPORT_REG1_PULSE_TSF_OFFSET_MASK		0x0000FF00
-#घोषणा RADAR_REPORT_REG1_PULSE_TSF_OFFSET_LSB		8
+#define RADAR_REPORT_REG1_PULSE_TSF_OFFSET_MASK		0x0000FF00
+#define RADAR_REPORT_REG1_PULSE_TSF_OFFSET_LSB		8
 
-#घोषणा RADAR_REPORT_REG1_PULSE_DUR_MASK		0x000000FF
-#घोषणा RADAR_REPORT_REG1_PULSE_DUR_LSB			0
+#define RADAR_REPORT_REG1_PULSE_DUR_MASK		0x000000FF
+#define RADAR_REPORT_REG1_PULSE_DUR_LSB			0
 
-काष्ठा phyerr_fft_report अणु
+struct phyerr_fft_report {
 	__le32 reg0; /* SEARCH_FFT_REPORT_REG0_ * */
 	__le32 reg1; /* SEARCH_FFT_REPORT_REG1_ * */
-पूर्ण __packed;
+} __packed;
 
-#घोषणा SEARCH_FFT_REPORT_REG0_TOTAL_GAIN_DB_MASK	0xFF800000
-#घोषणा SEARCH_FFT_REPORT_REG0_TOTAL_GAIN_DB_LSB	23
+#define SEARCH_FFT_REPORT_REG0_TOTAL_GAIN_DB_MASK	0xFF800000
+#define SEARCH_FFT_REPORT_REG0_TOTAL_GAIN_DB_LSB	23
 
-#घोषणा SEARCH_FFT_REPORT_REG0_BASE_PWR_DB_MASK		0x007FC000
-#घोषणा SEARCH_FFT_REPORT_REG0_BASE_PWR_DB_LSB		14
+#define SEARCH_FFT_REPORT_REG0_BASE_PWR_DB_MASK		0x007FC000
+#define SEARCH_FFT_REPORT_REG0_BASE_PWR_DB_LSB		14
 
-#घोषणा SEARCH_FFT_REPORT_REG0_FFT_CHN_IDX_MASK		0x00003000
-#घोषणा SEARCH_FFT_REPORT_REG0_FFT_CHN_IDX_LSB		12
+#define SEARCH_FFT_REPORT_REG0_FFT_CHN_IDX_MASK		0x00003000
+#define SEARCH_FFT_REPORT_REG0_FFT_CHN_IDX_LSB		12
 
-#घोषणा SEARCH_FFT_REPORT_REG0_PEAK_SIDX_MASK		0x00000FFF
-#घोषणा SEARCH_FFT_REPORT_REG0_PEAK_SIDX_LSB		0
+#define SEARCH_FFT_REPORT_REG0_PEAK_SIDX_MASK		0x00000FFF
+#define SEARCH_FFT_REPORT_REG0_PEAK_SIDX_LSB		0
 
-#घोषणा SEARCH_FFT_REPORT_REG1_RELPWR_DB_MASK		0xFC000000
-#घोषणा SEARCH_FFT_REPORT_REG1_RELPWR_DB_LSB		26
+#define SEARCH_FFT_REPORT_REG1_RELPWR_DB_MASK		0xFC000000
+#define SEARCH_FFT_REPORT_REG1_RELPWR_DB_LSB		26
 
-#घोषणा SEARCH_FFT_REPORT_REG1_AVGPWR_DB_MASK		0x03FC0000
-#घोषणा SEARCH_FFT_REPORT_REG1_AVGPWR_DB_LSB		18
+#define SEARCH_FFT_REPORT_REG1_AVGPWR_DB_MASK		0x03FC0000
+#define SEARCH_FFT_REPORT_REG1_AVGPWR_DB_LSB		18
 
-#घोषणा SEARCH_FFT_REPORT_REG1_PEAK_MAG_MASK		0x0003FF00
-#घोषणा SEARCH_FFT_REPORT_REG1_PEAK_MAG_LSB		8
+#define SEARCH_FFT_REPORT_REG1_PEAK_MAG_MASK		0x0003FF00
+#define SEARCH_FFT_REPORT_REG1_PEAK_MAG_LSB		8
 
-#घोषणा SEARCH_FFT_REPORT_REG1_NUM_STR_BINS_IB_MASK	0x000000FF
-#घोषणा SEARCH_FFT_REPORT_REG1_NUM_STR_BINS_IB_LSB	0
+#define SEARCH_FFT_REPORT_REG1_NUM_STR_BINS_IB_MASK	0x000000FF
+#define SEARCH_FFT_REPORT_REG1_NUM_STR_BINS_IB_LSB	0
 
-काष्ठा phyerr_tlv अणु
+struct phyerr_tlv {
 	__le16 len;
 	u8 tag;
 	u8 sig;
-पूर्ण __packed;
+} __packed;
 
-#घोषणा DFS_RSSI_POSSIBLY_FALSE			50
-#घोषणा DFS_PEAK_MAG_THOLD_POSSIBLY_FALSE	40
+#define DFS_RSSI_POSSIBLY_FALSE			50
+#define DFS_PEAK_MAG_THOLD_POSSIBLY_FALSE	40
 
-काष्ठा wmi_mgmt_tx_hdr अणु
+struct wmi_mgmt_tx_hdr {
 	__le32 vdev_id;
-	काष्ठा wmi_mac_addr peer_macaddr;
+	struct wmi_mac_addr peer_macaddr;
 	__le32 tx_rate;
-	__le32 tx_घातer;
+	__le32 tx_power;
 	__le32 buf_len;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_mgmt_tx_cmd अणु
-	काष्ठा wmi_mgmt_tx_hdr hdr;
+struct wmi_mgmt_tx_cmd {
+	struct wmi_mgmt_tx_hdr hdr;
 	u8 buf[];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_echo_event अणु
+struct wmi_echo_event {
 	__le32 value;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_echo_cmd अणु
+struct wmi_echo_cmd {
 	__le32 value;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_pdev_set_regकरोमुख्य_cmd अणु
-	__le32 reg_करोमुख्य;
-	__le32 reg_करोमुख्य_2G;
-	__le32 reg_करोमुख्य_5G;
-	__le32 conक्रमmance_test_limit_2G;
-	__le32 conक्रमmance_test_limit_5G;
-पूर्ण __packed;
+struct wmi_pdev_set_regdomain_cmd {
+	__le32 reg_domain;
+	__le32 reg_domain_2G;
+	__le32 reg_domain_5G;
+	__le32 conformance_test_limit_2G;
+	__le32 conformance_test_limit_5G;
+} __packed;
 
-क्रमागत wmi_dfs_region अणु
-	/* Uninitialized dfs करोमुख्य */
+enum wmi_dfs_region {
+	/* Uninitialized dfs domain */
 	WMI_UNINIT_DFS_DOMAIN = 0,
 
-	/* FCC3 dfs करोमुख्य */
+	/* FCC3 dfs domain */
 	WMI_FCC_DFS_DOMAIN = 1,
 
-	/* ETSI dfs करोमुख्य */
+	/* ETSI dfs domain */
 	WMI_ETSI_DFS_DOMAIN = 2,
 
-	/*Japan dfs करोमुख्य */
+	/*Japan dfs domain */
 	WMI_MKK4_DFS_DOMAIN = 3,
-पूर्ण;
+};
 
-काष्ठा wmi_pdev_set_regकरोमुख्य_cmd_10x अणु
-	__le32 reg_करोमुख्य;
-	__le32 reg_करोमुख्य_2G;
-	__le32 reg_करोमुख्य_5G;
-	__le32 conक्रमmance_test_limit_2G;
-	__le32 conक्रमmance_test_limit_5G;
+struct wmi_pdev_set_regdomain_cmd_10x {
+	__le32 reg_domain;
+	__le32 reg_domain_2G;
+	__le32 reg_domain_5G;
+	__le32 conformance_test_limit_2G;
+	__le32 conformance_test_limit_5G;
 
-	/* dfs करोमुख्य from wmi_dfs_region */
-	__le32 dfs_करोमुख्य;
-पूर्ण __packed;
+	/* dfs domain from wmi_dfs_region */
+	__le32 dfs_domain;
+} __packed;
 
 /* Command to set/unset chip in quiet mode */
-काष्ठा wmi_pdev_set_quiet_cmd अणु
+struct wmi_pdev_set_quiet_cmd {
 	/* period in TUs */
 	__le32 period;
 
@@ -3663,67 +3662,67 @@
 
 	/* enable/disable */
 	__le32 enabled;
-पूर्ण __packed;
+} __packed;
 
 /*
  * 802.11g protection mode.
  */
-क्रमागत ath10k_proपंचांगode अणु
+enum ath10k_protmode {
 	ATH10K_PROT_NONE     = 0,    /* no protection */
 	ATH10K_PROT_CTSONLY  = 1,    /* CTS to self */
 	ATH10K_PROT_RTSCTS   = 2,    /* RTS-CTS */
-पूर्ण;
+};
 
-क्रमागत wmi_rtscts_profile अणु
+enum wmi_rtscts_profile {
 	WMI_RTSCTS_FOR_NO_RATESERIES = 0,
 	WMI_RTSCTS_FOR_SECOND_RATESERIES,
 	WMI_RTSCTS_ACROSS_SW_RETRIES
-पूर्ण;
+};
 
-#घोषणा WMI_RTSCTS_ENABLED		1
-#घोषणा WMI_RTSCTS_SET_MASK		0x0f
-#घोषणा WMI_RTSCTS_SET_LSB		0
+#define WMI_RTSCTS_ENABLED		1
+#define WMI_RTSCTS_SET_MASK		0x0f
+#define WMI_RTSCTS_SET_LSB		0
 
-#घोषणा WMI_RTSCTS_PROखाता_MASK		0xf0
-#घोषणा WMI_RTSCTS_PROखाता_LSB		4
+#define WMI_RTSCTS_PROFILE_MASK		0xf0
+#define WMI_RTSCTS_PROFILE_LSB		4
 
-क्रमागत wmi_beacon_gen_mode अणु
+enum wmi_beacon_gen_mode {
 	WMI_BEACON_STAGGERED_MODE = 0,
 	WMI_BEACON_BURST_MODE = 1
-पूर्ण;
+};
 
-क्रमागत wmi_csa_event_ies_present_flag अणु
+enum wmi_csa_event_ies_present_flag {
 	WMI_CSA_IE_PRESENT = 0x00000001,
 	WMI_XCSA_IE_PRESENT = 0x00000002,
 	WMI_WBW_IE_PRESENT = 0x00000004,
 	WMI_CSWARP_IE_PRESENT = 0x00000008,
-पूर्ण;
+};
 
 /* wmi CSA receive event from beacon frame */
-काष्ठा wmi_csa_event अणु
+struct wmi_csa_event {
 	__le32 i_fc_dur;
 	/* Bit 0-15: FC */
 	/* Bit 16-31: DUR */
-	काष्ठा wmi_mac_addr i_addr1;
-	काष्ठा wmi_mac_addr i_addr2;
+	struct wmi_mac_addr i_addr1;
+	struct wmi_mac_addr i_addr2;
 	__le32 csa_ie[2];
 	__le32 xcsa_ie[2];
 	__le32 wb_ie[2];
 	__le32 cswarp_ie;
 	__le32 ies_present_flag; /* wmi_csa_event_ies_present_flag */
-पूर्ण __packed;
+} __packed;
 
-/* the definition of dअगरferent PDEV parameters */
-#घोषणा PDEV_DEFAULT_STATS_UPDATE_PERIOD    500
-#घोषणा VDEV_DEFAULT_STATS_UPDATE_PERIOD    500
-#घोषणा PEER_DEFAULT_STATS_UPDATE_PERIOD    500
+/* the definition of different PDEV parameters */
+#define PDEV_DEFAULT_STATS_UPDATE_PERIOD    500
+#define VDEV_DEFAULT_STATS_UPDATE_PERIOD    500
+#define PEER_DEFAULT_STATS_UPDATE_PERIOD    500
 
-काष्ठा wmi_pdev_param_map अणु
+struct wmi_pdev_param_map {
 	u32 tx_chain_mask;
 	u32 rx_chain_mask;
-	u32 txघातer_limit2g;
-	u32 txघातer_limit5g;
-	u32 txघातer_scale;
+	u32 txpower_limit2g;
+	u32 txpower_limit5g;
+	u32 txpower_scale;
 	u32 beacon_gen_mode;
 	u32 beacon_tx_mode;
 	u32 resmgr_offchan_mode;
@@ -3738,16 +3737,16 @@
 	u32 ltr_ac_latency_bk;
 	u32 ltr_ac_latency_vi;
 	u32 ltr_ac_latency_vo;
-	u32 ltr_ac_latency_समयout;
+	u32 ltr_ac_latency_timeout;
 	u32 ltr_sleep_override;
 	u32 ltr_rx_override;
-	u32 ltr_tx_activity_समयout;
+	u32 ltr_tx_activity_timeout;
 	u32 l1ss_enable;
 	u32 dsleep_enable;
 	u32 pcielp_txbuf_flush;
 	u32 pcielp_txbuf_watermark;
-	u32 pcielp_txbuf_पंचांगo_en;
-	u32 pcielp_txbuf_पंचांगo_value;
+	u32 pcielp_txbuf_tmo_en;
+	u32 pcielp_txbuf_tmo_value;
 	u32 pdev_stats_update_period;
 	u32 vdev_stats_update_period;
 	u32 peer_stats_update_period;
@@ -3763,14 +3762,14 @@
 	u32 dyntxchain;
 	u32 proxy_sta;
 	u32 idle_ps_config;
-	u32 घातer_gating_sleep;
+	u32 power_gating_sleep;
 	u32 fast_channel_reset;
 	u32 burst_dur;
 	u32 burst_enable;
 	u32 cal_period;
 	u32 aggr_burst;
 	u32 rx_decap_mode;
-	u32 smart_antenna_शेष_antenna;
+	u32 smart_antenna_default_antenna;
 	u32 igmpmld_override;
 	u32 igmpmld_tid;
 	u32 antenna_gain;
@@ -3779,10 +3778,10 @@
 	u32 proxy_sta_mode;
 	u32 set_mcast2ucast_mode;
 	u32 set_mcast2ucast_buffer;
-	u32 हटाओ_mcast2ucast_buffer;
+	u32 remove_mcast2ucast_buffer;
 	u32 peer_sta_ps_statechg_enable;
 	u32 igmpmld_ac_override;
-	u32 block_पूर्णांकerbss;
+	u32 block_interbss;
 	u32 set_disable_reset_cmdid;
 	u32 set_msdu_ttl_cmdid;
 	u32 set_ppdu_duration_cmdid;
@@ -3800,8 +3799,8 @@
 	u32 ant_plzn;
 	u32 mgmt_retry_limit;
 	u32 sensitivity_level;
-	u32 चिन्हित_txघातer_2g;
-	u32 चिन्हित_txघातer_5g;
+	u32 signed_txpower_2g;
+	u32 signed_txpower_5g;
 	u32 enable_per_tid_amsdu;
 	u32 enable_per_tid_ampdu;
 	u32 cca_threshold;
@@ -3811,23 +3810,23 @@
 	u32 arp_srcaddr;
 	u32 arp_dstaddr;
 	u32 enable_btcoex;
-	u32 rfसमाप्त_config;
-	u32 rfसमाप्त_enable;
+	u32 rfkill_config;
+	u32 rfkill_enable;
 	u32 peer_stats_info_enable;
-पूर्ण;
+};
 
-#घोषणा WMI_PDEV_PARAM_UNSUPPORTED 0
+#define WMI_PDEV_PARAM_UNSUPPORTED 0
 
-क्रमागत wmi_pdev_param अणु
+enum wmi_pdev_param {
 	/* TX chain mask */
 	WMI_PDEV_PARAM_TX_CHAIN_MASK = 0x1,
 	/* RX chain mask */
 	WMI_PDEV_PARAM_RX_CHAIN_MASK,
-	/* TX घातer limit क्रम 2G Radio */
+	/* TX power limit for 2G Radio */
 	WMI_PDEV_PARAM_TXPOWER_LIMIT2G,
-	/* TX घातer limit क्रम 5G Radio */
+	/* TX power limit for 5G Radio */
 	WMI_PDEV_PARAM_TXPOWER_LIMIT5G,
-	/* TX घातer scale */
+	/* TX power scale */
 	WMI_PDEV_PARAM_TXPOWER_SCALE,
 	/* Beacon generation mode . 0: host, 1: target   */
 	WMI_PDEV_PARAM_BEACON_GEN_MODE,
@@ -3846,7 +3845,7 @@
 	/*
 	 * Dynamic bandwidth - 0: disable, 1: enable
 	 *
-	 * When enabled HW rate control tries dअगरferent bandwidths when
+	 * When enabled HW rate control tries different bandwidths when
 	 * retransmitting frames.
 	 */
 	WMI_PDEV_PARAM_DYNAMIC_BW,
@@ -3860,21 +3859,21 @@
 	WMI_PDEV_PARAM_AC_AGGRSIZE_SCALING,
 	/* LTR enable */
 	WMI_PDEV_PARAM_LTR_ENABLE,
-	/* LTR latency क्रम BE, in us */
+	/* LTR latency for BE, in us */
 	WMI_PDEV_PARAM_LTR_AC_LATENCY_BE,
-	/* LTR latency क्रम BK, in us */
+	/* LTR latency for BK, in us */
 	WMI_PDEV_PARAM_LTR_AC_LATENCY_BK,
-	/* LTR latency क्रम VI, in us */
+	/* LTR latency for VI, in us */
 	WMI_PDEV_PARAM_LTR_AC_LATENCY_VI,
-	/* LTR latency क्रम VO, in us  */
+	/* LTR latency for VO, in us  */
 	WMI_PDEV_PARAM_LTR_AC_LATENCY_VO,
-	/* LTR AC latency समयout, in ms */
+	/* LTR AC latency timeout, in ms */
 	WMI_PDEV_PARAM_LTR_AC_LATENCY_TIMEOUT,
-	/* LTR platक्रमm latency override, in us */
+	/* LTR platform latency override, in us */
 	WMI_PDEV_PARAM_LTR_SLEEP_OVERRIDE,
 	/* LTR-RX override, in us */
 	WMI_PDEV_PARAM_LTR_RX_OVERRIDE,
-	/* Tx activity समयout क्रम LTR, in us */
+	/* Tx activity timeout for LTR, in us */
 	WMI_PDEV_PARAM_LTR_TX_ACTIVITY_TIMEOUT,
 	/* L1SS state machine enable */
 	WMI_PDEV_PARAM_L1SS_ENABLE,
@@ -3884,9 +3883,9 @@
 	WMI_PDEV_PARAM_PCIELP_TXBUF_FLUSH,
 	/* RX buffering matermark */
 	WMI_PDEV_PARAM_PCIELP_TXBUF_WATERMARK,
-	/* RX buffering समयout enable */
+	/* RX buffering timeout enable */
 	WMI_PDEV_PARAM_PCIELP_TXBUF_TMO_EN,
-	/* RX buffering समयout value */
+	/* RX buffering timeout value */
 	WMI_PDEV_PARAM_PCIELP_TXBUF_TMO_VALUE,
 	/* pdev level stats update period in ms */
 	WMI_PDEV_PARAM_PDEV_STATS_UPDATE_PERIOD,
@@ -3912,26 +3911,26 @@
 	WMI_PDEV_PARAM_ANI_OFDM_LEVEL,
 	/* configure CCK immunity level */
 	WMI_PDEV_PARAM_ANI_CCK_LEVEL,
-	/* Enable/Disable CDD क्रम 1x1 STAs in rate control module */
+	/* Enable/Disable CDD for 1x1 STAs in rate control module */
 	WMI_PDEV_PARAM_DYNTXCHAIN,
 	/* Enable/Disable proxy STA */
 	WMI_PDEV_PARAM_PROXY_STA,
-	/* Enable/Disable low घातer state when all VDEVs are inactive/idle. */
+	/* Enable/Disable low power state when all VDEVs are inactive/idle. */
 	WMI_PDEV_PARAM_IDLE_PS_CONFIG,
-	/* Enable/Disable घातer gating sleep */
+	/* Enable/Disable power gating sleep */
 	WMI_PDEV_PARAM_POWER_GATING_SLEEP,
-पूर्ण;
+};
 
-क्रमागत wmi_10x_pdev_param अणु
+enum wmi_10x_pdev_param {
 	/* TX chian mask */
 	WMI_10X_PDEV_PARAM_TX_CHAIN_MASK = 0x1,
 	/* RX chian mask */
 	WMI_10X_PDEV_PARAM_RX_CHAIN_MASK,
-	/* TX घातer limit क्रम 2G Radio */
+	/* TX power limit for 2G Radio */
 	WMI_10X_PDEV_PARAM_TXPOWER_LIMIT2G,
-	/* TX घातer limit क्रम 5G Radio */
+	/* TX power limit for 5G Radio */
 	WMI_10X_PDEV_PARAM_TXPOWER_LIMIT5G,
-	/* TX घातer scale */
+	/* TX power scale */
 	WMI_10X_PDEV_PARAM_TXPOWER_SCALE,
 	/* Beacon generation mode . 0: host, 1: target   */
 	WMI_10X_PDEV_PARAM_BEACON_GEN_MODE,
@@ -3959,21 +3958,21 @@
 	WMI_10X_PDEV_PARAM_AC_AGGRSIZE_SCALING,
 	/* LTR enable */
 	WMI_10X_PDEV_PARAM_LTR_ENABLE,
-	/* LTR latency क्रम BE, in us */
+	/* LTR latency for BE, in us */
 	WMI_10X_PDEV_PARAM_LTR_AC_LATENCY_BE,
-	/* LTR latency क्रम BK, in us */
+	/* LTR latency for BK, in us */
 	WMI_10X_PDEV_PARAM_LTR_AC_LATENCY_BK,
-	/* LTR latency क्रम VI, in us */
+	/* LTR latency for VI, in us */
 	WMI_10X_PDEV_PARAM_LTR_AC_LATENCY_VI,
-	/* LTR latency क्रम VO, in us  */
+	/* LTR latency for VO, in us  */
 	WMI_10X_PDEV_PARAM_LTR_AC_LATENCY_VO,
-	/* LTR AC latency समयout, in ms */
+	/* LTR AC latency timeout, in ms */
 	WMI_10X_PDEV_PARAM_LTR_AC_LATENCY_TIMEOUT,
-	/* LTR platक्रमm latency override, in us */
+	/* LTR platform latency override, in us */
 	WMI_10X_PDEV_PARAM_LTR_SLEEP_OVERRIDE,
 	/* LTR-RX override, in us */
 	WMI_10X_PDEV_PARAM_LTR_RX_OVERRIDE,
-	/* Tx activity समयout क्रम LTR, in us */
+	/* Tx activity timeout for LTR, in us */
 	WMI_10X_PDEV_PARAM_LTR_TX_ACTIVITY_TIMEOUT,
 	/* L1SS state machine enable */
 	WMI_10X_PDEV_PARAM_L1SS_ENABLE,
@@ -4003,7 +4002,7 @@
 	WMI_10X_PDEV_PARAM_ANI_OFDM_LEVEL,
 	/* configure CCK immunity level */
 	WMI_10X_PDEV_PARAM_ANI_CCK_LEVEL,
-	/* Enable/Disable CDD क्रम 1x1 STAs in rate control module */
+	/* Enable/Disable CDD for 1x1 STAs in rate control module */
 	WMI_10X_PDEV_PARAM_DYNTXCHAIN,
 	/* Enable/Disable Fast channel reset*/
 	WMI_10X_PDEV_PARAM_FAST_CHANNEL_RESET,
@@ -4031,9 +4030,9 @@
 	WMI_10X_PDEV_PARAM_ATF_SCHED_DURATION,
 	WMI_10X_PDEV_PARAM_SET_PROMISC_MODE_CMDID,
 	WMI_10X_PDEV_PARAM_PDEV_RESET
-पूर्ण;
+};
 
-क्रमागत wmi_10_4_pdev_param अणु
+enum wmi_10_4_pdev_param {
 	WMI_10_4_PDEV_PARAM_TX_CHAIN_MASK = 0x1,
 	WMI_10_4_PDEV_PARAM_RX_CHAIN_MASK,
 	WMI_10_4_PDEV_PARAM_TXPOWER_LIMIT2G,
@@ -4134,101 +4133,101 @@
 	WMI_10_4_PDEV_PARAM_ATF_DYNAMIC_ENABLE,
 	WMI_10_4_PDEV_PARAM_ATF_SSID_GROUP_POLICY,
 	WMI_10_4_PDEV_PARAM_ENABLE_BTCOEX,
-पूर्ण;
+};
 
-काष्ठा wmi_pdev_set_param_cmd अणु
+struct wmi_pdev_set_param_cmd {
 	__le32 param_id;
 	__le32 param_value;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_pdev_set_base_macaddr_cmd अणु
-	काष्ठा wmi_mac_addr mac_addr;
-पूर्ण __packed;
+struct wmi_pdev_set_base_macaddr_cmd {
+	struct wmi_mac_addr mac_addr;
+} __packed;
 
 /* valid period is 1 ~ 60000ms, unit in millisecond */
-#घोषणा WMI_PDEV_PARAM_CAL_PERIOD_MAX 60000
+#define WMI_PDEV_PARAM_CAL_PERIOD_MAX 60000
 
-काष्ठा wmi_pdev_get_tpc_config_cmd अणु
+struct wmi_pdev_get_tpc_config_cmd {
 	/* parameter   */
 	__le32 param;
-पूर्ण __packed;
+} __packed;
 
-#घोषणा WMI_TPC_CONFIG_PARAM		1
-#घोषणा WMI_TPC_FINAL_RATE_MAX		240
-#घोषणा WMI_TPC_TX_N_CHAIN		4
-#घोषणा WMI_TPC_RATE_MAX               (WMI_TPC_TX_N_CHAIN * 65)
-#घोषणा WMI_TPC_PREAM_TABLE_MAX		10
-#घोषणा WMI_TPC_FLAG			3
-#घोषणा WMI_TPC_BUF_SIZE		10
-#घोषणा WMI_TPC_BEAMFORMING		2
+#define WMI_TPC_CONFIG_PARAM		1
+#define WMI_TPC_FINAL_RATE_MAX		240
+#define WMI_TPC_TX_N_CHAIN		4
+#define WMI_TPC_RATE_MAX               (WMI_TPC_TX_N_CHAIN * 65)
+#define WMI_TPC_PREAM_TABLE_MAX		10
+#define WMI_TPC_FLAG			3
+#define WMI_TPC_BUF_SIZE		10
+#define WMI_TPC_BEAMFORMING		2
 
-क्रमागत wmi_tpc_table_type अणु
+enum wmi_tpc_table_type {
 	WMI_TPC_TABLE_TYPE_CDD = 0,
 	WMI_TPC_TABLE_TYPE_STBC = 1,
 	WMI_TPC_TABLE_TYPE_TXBF = 2,
-पूर्ण;
+};
 
-क्रमागत wmi_tpc_config_event_flag अणु
+enum wmi_tpc_config_event_flag {
 	WMI_TPC_CONFIG_EVENT_FLAG_TABLE_CDD	= 0x1,
 	WMI_TPC_CONFIG_EVENT_FLAG_TABLE_STBC	= 0x2,
 	WMI_TPC_CONFIG_EVENT_FLAG_TABLE_TXBF	= 0x4,
-पूर्ण;
+};
 
-काष्ठा wmi_pdev_tpc_config_event अणु
-	__le32 reg_करोमुख्य;
+struct wmi_pdev_tpc_config_event {
+	__le32 reg_domain;
 	__le32 chan_freq;
 	__le32 phy_mode;
 	__le32 twice_antenna_reduction;
-	__le32 twice_max_rd_घातer;
+	__le32 twice_max_rd_power;
 	a_sle32 twice_antenna_gain;
-	__le32 घातer_limit;
+	__le32 power_limit;
 	__le32 rate_max;
 	__le32 num_tx_chain;
 	__le32 ctl;
 	__le32 flags;
-	s8 max_reg_allow_घात[WMI_TPC_TX_N_CHAIN];
-	s8 max_reg_allow_घात_agcdd[WMI_TPC_TX_N_CHAIN][WMI_TPC_TX_N_CHAIN];
-	s8 max_reg_allow_घात_agstbc[WMI_TPC_TX_N_CHAIN][WMI_TPC_TX_N_CHAIN];
-	s8 max_reg_allow_घात_agtxbf[WMI_TPC_TX_N_CHAIN][WMI_TPC_TX_N_CHAIN];
+	s8 max_reg_allow_pow[WMI_TPC_TX_N_CHAIN];
+	s8 max_reg_allow_pow_agcdd[WMI_TPC_TX_N_CHAIN][WMI_TPC_TX_N_CHAIN];
+	s8 max_reg_allow_pow_agstbc[WMI_TPC_TX_N_CHAIN][WMI_TPC_TX_N_CHAIN];
+	s8 max_reg_allow_pow_agtxbf[WMI_TPC_TX_N_CHAIN][WMI_TPC_TX_N_CHAIN];
 	u8 rates_array[WMI_TPC_RATE_MAX];
-पूर्ण __packed;
+} __packed;
 
-/* Transmit घातer scale factor. */
-क्रमागत wmi_tp_scale अणु
-	WMI_TP_SCALE_MAX    = 0,	/* no scaling (शेष) */
+/* Transmit power scale factor. */
+enum wmi_tp_scale {
+	WMI_TP_SCALE_MAX    = 0,	/* no scaling (default) */
 	WMI_TP_SCALE_50     = 1,	/* 50% of max (-3 dBm) */
 	WMI_TP_SCALE_25     = 2,	/* 25% of max (-6 dBm) */
 	WMI_TP_SCALE_12     = 3,	/* 12% of max (-9 dBm) */
 	WMI_TP_SCALE_MIN    = 4,	/* min, but still on   */
-	WMI_TP_SCALE_SIZE   = 5,	/* max num of क्रमागत     */
-पूर्ण;
+	WMI_TP_SCALE_SIZE   = 5,	/* max num of enum     */
+};
 
-काष्ठा wmi_pdev_tpc_final_table_event अणु
-	__le32 reg_करोमुख्य;
+struct wmi_pdev_tpc_final_table_event {
+	__le32 reg_domain;
 	__le32 chan_freq;
 	__le32 phy_mode;
 	__le32 twice_antenna_reduction;
-	__le32 twice_max_rd_घातer;
+	__le32 twice_max_rd_power;
 	a_sle32 twice_antenna_gain;
-	__le32 घातer_limit;
+	__le32 power_limit;
 	__le32 rate_max;
 	__le32 num_tx_chain;
 	__le32 ctl;
 	__le32 flags;
-	s8 max_reg_allow_घात[WMI_TPC_TX_N_CHAIN];
-	s8 max_reg_allow_घात_agcdd[WMI_TPC_TX_N_CHAIN][WMI_TPC_TX_N_CHAIN];
-	s8 max_reg_allow_घात_agstbc[WMI_TPC_TX_N_CHAIN][WMI_TPC_TX_N_CHAIN];
-	s8 max_reg_allow_घात_agtxbf[WMI_TPC_TX_N_CHAIN][WMI_TPC_TX_N_CHAIN];
+	s8 max_reg_allow_pow[WMI_TPC_TX_N_CHAIN];
+	s8 max_reg_allow_pow_agcdd[WMI_TPC_TX_N_CHAIN][WMI_TPC_TX_N_CHAIN];
+	s8 max_reg_allow_pow_agstbc[WMI_TPC_TX_N_CHAIN][WMI_TPC_TX_N_CHAIN];
+	s8 max_reg_allow_pow_agtxbf[WMI_TPC_TX_N_CHAIN][WMI_TPC_TX_N_CHAIN];
 	u8 rates_array[WMI_TPC_FINAL_RATE_MAX];
-	u8 ctl_घातer_table[WMI_TPC_BEAMFORMING][WMI_TPC_TX_N_CHAIN]
+	u8 ctl_power_table[WMI_TPC_BEAMFORMING][WMI_TPC_TX_N_CHAIN]
 	   [WMI_TPC_TX_N_CHAIN];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_pdev_get_tpc_table_cmd अणु
+struct wmi_pdev_get_tpc_table_cmd {
 	__le32 param;
-पूर्ण __packed;
+} __packed;
 
-क्रमागत wmi_tpc_pream_2ghz अणु
+enum wmi_tpc_pream_2ghz {
 	WMI_TPC_PREAM_2GHZ_CCK = 0,
 	WMI_TPC_PREAM_2GHZ_OFDM,
 	WMI_TPC_PREAM_2GHZ_HT20,
@@ -4236,9 +4235,9 @@
 	WMI_TPC_PREAM_2GHZ_VHT20,
 	WMI_TPC_PREAM_2GHZ_VHT40,
 	WMI_TPC_PREAM_2GHZ_VHT80,
-पूर्ण;
+};
 
-क्रमागत wmi_tpc_pream_5ghz अणु
+enum wmi_tpc_pream_5ghz {
 	WMI_TPC_PREAM_5GHZ_OFDM = 1,
 	WMI_TPC_PREAM_5GHZ_HT20,
 	WMI_TPC_PREAM_5GHZ_HT40,
@@ -4246,30 +4245,30 @@
 	WMI_TPC_PREAM_5GHZ_VHT40,
 	WMI_TPC_PREAM_5GHZ_VHT80,
 	WMI_TPC_PREAM_5GHZ_HTCUP,
-पूर्ण;
+};
 
-#घोषणा	WMI_PEER_PS_STATE_DISABLED	2
+#define	WMI_PEER_PS_STATE_DISABLED	2
 
-काष्ठा wmi_peer_sta_ps_state_chg_event अणु
-	काष्ठा wmi_mac_addr peer_macaddr;
+struct wmi_peer_sta_ps_state_chg_event {
+	struct wmi_mac_addr peer_macaddr;
 	__le32 peer_ps_state;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_pdev_chanlist_update_event अणु
+struct wmi_pdev_chanlist_update_event {
 	/* number of channels */
 	__le32 num_chan;
 	/* array of channels */
-	काष्ठा wmi_channel channel_list[1];
-पूर्ण __packed;
+	struct wmi_channel channel_list[1];
+} __packed;
 
-#घोषणा WMI_MAX_DEBUG_MESG (माप(u32) * 32)
+#define WMI_MAX_DEBUG_MESG (sizeof(u32) * 32)
 
-काष्ठा wmi_debug_mesg_event अणु
-	/* message buffer, शून्य terminated */
-	अक्षर bufp[WMI_MAX_DEBUG_MESG];
-पूर्ण __packed;
+struct wmi_debug_mesg_event {
+	/* message buffer, NULL terminated */
+	char bufp[WMI_MAX_DEBUG_MESG];
+} __packed;
 
-क्रमागत अणु
+enum {
 	/* P2P device */
 	VDEV_SUBTYPE_P2PDEV = 0,
 	/* P2P client */
@@ -4278,67 +4277,67 @@
 	VDEV_SUBTYPE_P2PGO,
 	/* BT3.0 HS */
 	VDEV_SUBTYPE_BT,
-पूर्ण;
+};
 
-काष्ठा wmi_pdev_set_channel_cmd अणु
-	/* idnore घातer , only use flags , mode and freq */
-	काष्ठा wmi_channel chan;
-पूर्ण __packed;
+struct wmi_pdev_set_channel_cmd {
+	/* idnore power , only use flags , mode and freq */
+	struct wmi_channel chan;
+} __packed;
 
-काष्ठा wmi_pdev_pktlog_enable_cmd अणु
-	__le32 ev_biपंचांगap;
-पूर्ण __packed;
+struct wmi_pdev_pktlog_enable_cmd {
+	__le32 ev_bitmap;
+} __packed;
 
-/* Customize the DSCP (bit) to TID (0-7) mapping क्रम QOS */
-#घोषणा WMI_DSCP_MAP_MAX    (64)
-काष्ठा wmi_pdev_set_dscp_tid_map_cmd अणु
+/* Customize the DSCP (bit) to TID (0-7) mapping for QOS */
+#define WMI_DSCP_MAP_MAX    (64)
+struct wmi_pdev_set_dscp_tid_map_cmd {
 	/* map indicating DSCP to TID conversion */
 	__le32 dscp_to_tid_map[WMI_DSCP_MAP_MAX];
-पूर्ण __packed;
+} __packed;
 
-क्रमागत mcast_bcast_rate_id अणु
+enum mcast_bcast_rate_id {
 	WMI_SET_MCAST_RATE,
 	WMI_SET_BCAST_RATE
-पूर्ण;
+};
 
-काष्ठा mcast_bcast_rate अणु
-	क्रमागत mcast_bcast_rate_id rate_id;
+struct mcast_bcast_rate {
+	enum mcast_bcast_rate_id rate_id;
 	__le32 rate;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_wmm_params अणु
+struct wmi_wmm_params {
 	__le32 cwmin;
 	__le32 cwmax;
-	__le32 aअगरs;
+	__le32 aifs;
 	__le32 txop;
 	__le32 acm;
 	__le32 no_ack;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_pdev_set_wmm_params अणु
-	काष्ठा wmi_wmm_params ac_be;
-	काष्ठा wmi_wmm_params ac_bk;
-	काष्ठा wmi_wmm_params ac_vi;
-	काष्ठा wmi_wmm_params ac_vo;
-पूर्ण __packed;
+struct wmi_pdev_set_wmm_params {
+	struct wmi_wmm_params ac_be;
+	struct wmi_wmm_params ac_bk;
+	struct wmi_wmm_params ac_vi;
+	struct wmi_wmm_params ac_vo;
+} __packed;
 
-काष्ठा wmi_wmm_params_arg अणु
+struct wmi_wmm_params_arg {
 	u32 cwmin;
 	u32 cwmax;
-	u32 aअगरs;
+	u32 aifs;
 	u32 txop;
 	u32 acm;
 	u32 no_ack;
-पूर्ण;
+};
 
-काष्ठा wmi_wmm_params_all_arg अणु
-	काष्ठा wmi_wmm_params_arg ac_be;
-	काष्ठा wmi_wmm_params_arg ac_bk;
-	काष्ठा wmi_wmm_params_arg ac_vi;
-	काष्ठा wmi_wmm_params_arg ac_vo;
-पूर्ण;
+struct wmi_wmm_params_all_arg {
+	struct wmi_wmm_params_arg ac_be;
+	struct wmi_wmm_params_arg ac_bk;
+	struct wmi_wmm_params_arg ac_vi;
+	struct wmi_wmm_params_arg ac_vo;
+};
 
-काष्ठा wmi_pdev_stats_tx अणु
+struct wmi_pdev_stats_tx {
 	/* Num HTT cookies queued to dispatch list */
 	__le32 comp_queued;
 
@@ -4357,8 +4356,8 @@
 	/* Num Local frames queued */
 	__le32 local_enqued;
 
-	/* Num Local frames करोne */
-	__le32 local_मुक्तd;
+	/* Num Local frames done */
+	__le32 local_freed;
 
 	/* Num queued to HW */
 	__le32 hw_queued;
@@ -4369,8 +4368,8 @@
 	/* Num underruns */
 	__le32 underrun;
 
-	/* Num PPDUs cleaned up in TX पात */
-	__le32 tx_पात;
+	/* Num PPDUs cleaned up in TX abort */
+	__le32 tx_abort;
 
 	/* Num MPDUs requed by SW */
 	__le32 mpdus_requed;
@@ -4394,7 +4393,7 @@
 	__le32 pdev_cont_xretry;
 
 	/* wal pdev continous xretry */
-	__le32 pdev_tx_समयout;
+	__le32 pdev_tx_timeout;
 
 	/* wal pdev resets  */
 	__le32 pdev_resets;
@@ -4406,9 +4405,9 @@
 
 	/* MPDU is more than txop limit */
 	__le32 txop_ovf;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_10_4_pdev_stats_tx अणु
+struct wmi_10_4_pdev_stats_tx {
 	/* Num HTT cookies queued to dispatch list */
 	__le32 comp_queued;
 
@@ -4427,8 +4426,8 @@
 	/* Num Local frames queued */
 	__le32 local_enqued;
 
-	/* Num Local frames करोne */
-	__le32 local_मुक्तd;
+	/* Num Local frames done */
+	__le32 local_freed;
 
 	/* Num queued to HW */
 	__le32 hw_queued;
@@ -4440,10 +4439,10 @@
 	__le32 underrun;
 
 	/* HW Paused. */
-	__le32  hw_छोड़ोd;
+	__le32  hw_paused;
 
-	/* Num PPDUs cleaned up in TX पात */
-	__le32 tx_पात;
+	/* Num PPDUs cleaned up in TX abort */
+	__le32 tx_abort;
 
 	/* Num MPDUs requed by SW */
 	__le32 mpdus_requed;
@@ -4466,8 +4465,8 @@
 	/* wal pdev continuous xretry */
 	__le32 pdev_cont_xretry;
 
-	/* wal pdev tx समयouts */
-	__le32 pdev_tx_समयout;
+	/* wal pdev tx timeouts */
+	__le32 pdev_tx_timeout;
 
 	/* wal pdev resets  */
 	__le32 pdev_resets;
@@ -4511,9 +4510,9 @@
 
 	/* Num MPDUs that was dropped due to expiry. */
 	__le32 mpdus_expired;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_pdev_stats_rx अणु
+struct wmi_pdev_stats_rx {
 	/* Cnts any change in ring routing mid-ppdu */
 	__le32 mid_ppdu_route_change;
 
@@ -4545,107 +4544,107 @@
 
 	/* Number of mpdu errors - FCS, MIC, ENC etc. */
 	__le32 mpdu_errs;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_pdev_stats_peer अणु
+struct wmi_pdev_stats_peer {
 	/* REMOVE THIS ONCE REAL PEER STAT COUNTERS ARE ADDED */
 	__le32 dummy;
-पूर्ण __packed;
+} __packed;
 
-क्रमागत wmi_stats_id अणु
+enum wmi_stats_id {
 	WMI_STAT_PEER = BIT(0),
 	WMI_STAT_AP = BIT(1),
 	WMI_STAT_PDEV = BIT(2),
 	WMI_STAT_VDEV = BIT(3),
 	WMI_STAT_BCNFLT = BIT(4),
 	WMI_STAT_VDEV_RATE = BIT(5),
-पूर्ण;
+};
 
-क्रमागत wmi_10_4_stats_id अणु
+enum wmi_10_4_stats_id {
 	WMI_10_4_STAT_PEER		= BIT(0),
 	WMI_10_4_STAT_AP		= BIT(1),
 	WMI_10_4_STAT_INST		= BIT(2),
 	WMI_10_4_STAT_PEER_EXTD		= BIT(3),
 	WMI_10_4_STAT_VDEV_EXTD		= BIT(4),
-पूर्ण;
+};
 
-क्रमागत wmi_tlv_stats_id अणु
+enum wmi_tlv_stats_id {
 	WMI_TLV_STAT_PEER	= BIT(0),
 	WMI_TLV_STAT_AP		= BIT(1),
 	WMI_TLV_STAT_PDEV	= BIT(2),
 	WMI_TLV_STAT_VDEV	= BIT(3),
 	WMI_TLV_STAT_PEER_EXTD  = BIT(10),
-पूर्ण;
+};
 
-काष्ठा wlan_inst_rssi_args अणु
+struct wlan_inst_rssi_args {
 	__le16 cfg_retry_count;
 	__le16 retry_count;
-पूर्ण;
+};
 
-काष्ठा wmi_request_stats_cmd अणु
+struct wmi_request_stats_cmd {
 	__le32 stats_id;
 
 	__le32 vdev_id;
 
 	/* peer MAC address */
-	काष्ठा wmi_mac_addr peer_macaddr;
+	struct wmi_mac_addr peer_macaddr;
 
 	/* Instantaneous RSSI arguments */
-	काष्ठा wlan_inst_rssi_args inst_rssi_args;
-पूर्ण __packed;
+	struct wlan_inst_rssi_args inst_rssi_args;
+} __packed;
 
-क्रमागत wmi_peer_stats_info_request_type अणु
-	/* request stats of one specअगरied peer */
+enum wmi_peer_stats_info_request_type {
+	/* request stats of one specified peer */
 	WMI_REQUEST_ONE_PEER_STATS_INFO = 0x01,
-	/* request stats of all peers beदीर्घ to specअगरied VDEV */
+	/* request stats of all peers belong to specified VDEV */
 	WMI_REQUEST_VDEV_ALL_PEER_STATS_INFO = 0x02,
-पूर्ण;
+};
 
 /* Suspend option */
-क्रमागत अणु
+enum {
 	/* suspend */
 	WMI_PDEV_SUSPEND,
 
-	/* suspend and disable all पूर्णांकerrupts */
+	/* suspend and disable all interrupts */
 	WMI_PDEV_SUSPEND_AND_DISABLE_INTR,
-पूर्ण;
+};
 
-काष्ठा wmi_pdev_suspend_cmd अणु
+struct wmi_pdev_suspend_cmd {
 	/* suspend option sent to target */
 	__le32 suspend_opt;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_stats_event अणु
+struct wmi_stats_event {
 	__le32 stats_id; /* WMI_STAT_ */
 	/*
-	 * number of pdev stats event काष्ठाures
+	 * number of pdev stats event structures
 	 * (wmi_pdev_stats) 0 or 1
 	 */
 	__le32 num_pdev_stats;
 	/*
-	 * number of vdev stats event काष्ठाures
+	 * number of vdev stats event structures
 	 * (wmi_vdev_stats) 0 or max vdevs
 	 */
 	__le32 num_vdev_stats;
 	/*
-	 * number of peer stats event काष्ठाures
+	 * number of peer stats event structures
 	 * (wmi_peer_stats) 0 or max peers
 	 */
 	__le32 num_peer_stats;
 	__le32 num_bcnflt_stats;
 	/*
 	 * followed by
-	 *   num_pdev_stats * size of(काष्ठा wmi_pdev_stats)
-	 *   num_vdev_stats * size of(काष्ठा wmi_vdev_stats)
-	 *   num_peer_stats * size of(काष्ठा wmi_peer_stats)
+	 *   num_pdev_stats * size of(struct wmi_pdev_stats)
+	 *   num_vdev_stats * size of(struct wmi_vdev_stats)
+	 *   num_peer_stats * size of(struct wmi_peer_stats)
 	 *
-	 *  By having a zero sized array, the poपूर्णांकer to data area
-	 *  becomes available without increasing the काष्ठा size
+	 *  By having a zero sized array, the pointer to data area
+	 *  becomes available without increasing the struct size
 	 */
 	u8 data[];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_10_2_stats_event अणु
+struct wmi_10_2_stats_event {
 	__le32 stats_id; /* %WMI_REQUEST_ */
 	__le32 num_pdev_stats;
 	__le32 num_pdev_ext_stats;
@@ -4653,85 +4652,85 @@
 	__le32 num_peer_stats;
 	__le32 num_bcnflt_stats;
 	u8 data[];
-पूर्ण __packed;
+} __packed;
 
 /*
  * PDEV statistics
  * TODO: add all PDEV stats here
  */
-काष्ठा wmi_pdev_stats_base अणु
+struct wmi_pdev_stats_base {
 	__le32 chan_nf;
 	__le32 tx_frame_count; /* Cycles spent transmitting frames */
 	__le32 rx_frame_count; /* Cycles spent receiving frames */
-	__le32 rx_clear_count; /* Total channel busy समय, evidently */
-	__le32 cycle_count; /* Total on-channel समय */
+	__le32 rx_clear_count; /* Total channel busy time, evidently */
+	__le32 cycle_count; /* Total on-channel time */
 	__le32 phy_err_count;
 	__le32 chan_tx_pwr;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_pdev_stats अणु
-	काष्ठा wmi_pdev_stats_base base;
-	काष्ठा wmi_pdev_stats_tx tx;
-	काष्ठा wmi_pdev_stats_rx rx;
-	काष्ठा wmi_pdev_stats_peer peer;
-पूर्ण __packed;
+struct wmi_pdev_stats {
+	struct wmi_pdev_stats_base base;
+	struct wmi_pdev_stats_tx tx;
+	struct wmi_pdev_stats_rx rx;
+	struct wmi_pdev_stats_peer peer;
+} __packed;
 
-काष्ठा wmi_pdev_stats_extra अणु
+struct wmi_pdev_stats_extra {
 	__le32 ack_rx_bad;
 	__le32 rts_bad;
 	__le32 rts_good;
 	__le32 fcs_bad;
 	__le32 no_beacons;
-	__le32 mib_पूर्णांक_count;
-पूर्ण __packed;
+	__le32 mib_int_count;
+} __packed;
 
-काष्ठा wmi_10x_pdev_stats अणु
-	काष्ठा wmi_pdev_stats_base base;
-	काष्ठा wmi_pdev_stats_tx tx;
-	काष्ठा wmi_pdev_stats_rx rx;
-	काष्ठा wmi_pdev_stats_peer peer;
-	काष्ठा wmi_pdev_stats_extra extra;
-पूर्ण __packed;
+struct wmi_10x_pdev_stats {
+	struct wmi_pdev_stats_base base;
+	struct wmi_pdev_stats_tx tx;
+	struct wmi_pdev_stats_rx rx;
+	struct wmi_pdev_stats_peer peer;
+	struct wmi_pdev_stats_extra extra;
+} __packed;
 
-काष्ठा wmi_pdev_stats_mem अणु
-	__le32 dram_मुक्त;
-	__le32 iram_मुक्त;
-पूर्ण __packed;
+struct wmi_pdev_stats_mem {
+	__le32 dram_free;
+	__le32 iram_free;
+} __packed;
 
-काष्ठा wmi_10_2_pdev_stats अणु
-	काष्ठा wmi_pdev_stats_base base;
-	काष्ठा wmi_pdev_stats_tx tx;
+struct wmi_10_2_pdev_stats {
+	struct wmi_pdev_stats_base base;
+	struct wmi_pdev_stats_tx tx;
 	__le32 mc_drop;
-	काष्ठा wmi_pdev_stats_rx rx;
-	__le32 pdev_rx_समयout;
-	काष्ठा wmi_pdev_stats_mem mem;
-	काष्ठा wmi_pdev_stats_peer peer;
-	काष्ठा wmi_pdev_stats_extra extra;
-पूर्ण __packed;
+	struct wmi_pdev_stats_rx rx;
+	__le32 pdev_rx_timeout;
+	struct wmi_pdev_stats_mem mem;
+	struct wmi_pdev_stats_peer peer;
+	struct wmi_pdev_stats_extra extra;
+} __packed;
 
-काष्ठा wmi_10_4_pdev_stats अणु
-	काष्ठा wmi_pdev_stats_base base;
-	काष्ठा wmi_10_4_pdev_stats_tx tx;
-	काष्ठा wmi_pdev_stats_rx rx;
+struct wmi_10_4_pdev_stats {
+	struct wmi_pdev_stats_base base;
+	struct wmi_10_4_pdev_stats_tx tx;
+	struct wmi_pdev_stats_rx rx;
 	__le32 rx_ovfl_errs;
-	काष्ठा wmi_pdev_stats_mem mem;
-	__le32 sram_मुक्त_size;
-	काष्ठा wmi_pdev_stats_extra extra;
-पूर्ण __packed;
+	struct wmi_pdev_stats_mem mem;
+	__le32 sram_free_size;
+	struct wmi_pdev_stats_extra extra;
+} __packed;
 
 /*
  * VDEV statistics
  */
 
-#घोषणा WMI_VDEV_STATS_FTM_COUNT_VALID	BIT(31)
-#घोषणा WMI_VDEV_STATS_FTM_COUNT_LSB	0
-#घोषणा WMI_VDEV_STATS_FTM_COUNT_MASK	0x7fffffff
+#define WMI_VDEV_STATS_FTM_COUNT_VALID	BIT(31)
+#define WMI_VDEV_STATS_FTM_COUNT_LSB	0
+#define WMI_VDEV_STATS_FTM_COUNT_MASK	0x7fffffff
 
-काष्ठा wmi_vdev_stats अणु
+struct wmi_vdev_stats {
 	__le32 vdev_id;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_vdev_stats_extd अणु
+struct wmi_vdev_stats_extd {
 	__le32 vdev_id;
 	__le32 ppdu_aggr_cnt;
 	__le32 ppdu_noack;
@@ -4741,33 +4740,33 @@
 	__le32 mpdu_suc_retry;
 	__le32 mpdu_suc_multitry;
 	__le32 mpdu_fail_retry;
-	__le32 tx_fपंचांग_suc;
-	__le32 tx_fपंचांग_suc_retry;
-	__le32 tx_fपंचांग_fail;
-	__le32 rx_fपंचांगr_cnt;
-	__le32 rx_fपंचांगr_dup_cnt;
-	__le32 rx_अगरपंचांगr_cnt;
-	__le32 rx_अगरपंचांगr_dup_cnt;
+	__le32 tx_ftm_suc;
+	__le32 tx_ftm_suc_retry;
+	__le32 tx_ftm_fail;
+	__le32 rx_ftmr_cnt;
+	__le32 rx_ftmr_dup_cnt;
+	__le32 rx_iftmr_cnt;
+	__le32 rx_iftmr_dup_cnt;
 	__le32 reserved[6];
-पूर्ण __packed;
+} __packed;
 
 /*
  * peer statistics.
  * TODO: add more stats
  */
-काष्ठा wmi_peer_stats अणु
-	काष्ठा wmi_mac_addr peer_macaddr;
+struct wmi_peer_stats {
+	struct wmi_mac_addr peer_macaddr;
 	__le32 peer_rssi;
 	__le32 peer_tx_rate;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_10x_peer_stats अणु
-	काष्ठा wmi_peer_stats old;
+struct wmi_10x_peer_stats {
+	struct wmi_peer_stats old;
 	__le32 peer_rx_rate;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_10_2_peer_stats अणु
-	काष्ठा wmi_peer_stats old;
+struct wmi_10_2_peer_stats {
+	struct wmi_peer_stats old;
 	__le32 peer_rx_rate;
 	__le32 current_per;
 	__le32 retries;
@@ -4777,21 +4776,21 @@
 	__le32 tx_bytes;
 	__le32 num_pkt_loss_overflow[4];
 	__le32 num_pkt_loss_excess_retry[4];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_10_2_4_peer_stats अणु
-	काष्ठा wmi_10_2_peer_stats common;
+struct wmi_10_2_4_peer_stats {
+	struct wmi_10_2_peer_stats common;
 	__le32 peer_rssi_changed;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_10_2_4_ext_peer_stats अणु
-	काष्ठा wmi_10_2_peer_stats common;
+struct wmi_10_2_4_ext_peer_stats {
+	struct wmi_10_2_peer_stats common;
 	__le32 peer_rssi_changed;
 	__le32 rx_duration;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_10_4_peer_stats अणु
-	काष्ठा wmi_mac_addr peer_macaddr;
+struct wmi_10_4_peer_stats {
+	struct wmi_mac_addr peer_macaddr;
 	__le32 peer_rssi;
 	__le32 peer_rssi_seq_num;
 	__le32 peer_tx_rate;
@@ -4805,52 +4804,52 @@
 	__le32 num_pkt_loss_overflow[4];
 	__le32 num_pkt_loss_excess_retry[4];
 	__le32 peer_rssi_changed;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_10_4_peer_extd_stats अणु
-	काष्ठा wmi_mac_addr peer_macaddr;
-	__le32 inactive_समय;
+struct wmi_10_4_peer_extd_stats {
+	struct wmi_mac_addr peer_macaddr;
+	__le32 inactive_time;
 	__le32 peer_chain_rssi;
 	__le32 rx_duration;
 	__le32 reserved[10];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_10_4_bss_bcn_stats अणु
+struct wmi_10_4_bss_bcn_stats {
 	__le32 vdev_id;
 	__le32 bss_bcns_dropped;
 	__le32 bss_bcn_delivered;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_10_4_bss_bcn_filter_stats अणु
+struct wmi_10_4_bss_bcn_filter_stats {
 	__le32 bcns_dropped;
 	__le32 bcns_delivered;
 	__le32 active_filters;
-	काष्ठा wmi_10_4_bss_bcn_stats bss_stats;
-पूर्ण __packed;
+	struct wmi_10_4_bss_bcn_stats bss_stats;
+} __packed;
 
-काष्ठा wmi_10_2_pdev_ext_stats अणु
+struct wmi_10_2_pdev_ext_stats {
 	__le32 rx_rssi_comb;
 	__le32 rx_rssi[4];
 	__le32 rx_mcs[10];
 	__le32 tx_mcs[10];
 	__le32 ack_rssi;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_vdev_create_cmd अणु
+struct wmi_vdev_create_cmd {
 	__le32 vdev_id;
 	__le32 vdev_type;
 	__le32 vdev_subtype;
-	काष्ठा wmi_mac_addr vdev_macaddr;
-पूर्ण __packed;
+	struct wmi_mac_addr vdev_macaddr;
+} __packed;
 
-क्रमागत wmi_vdev_type अणु
+enum wmi_vdev_type {
 	WMI_VDEV_TYPE_AP      = 1,
 	WMI_VDEV_TYPE_STA     = 2,
 	WMI_VDEV_TYPE_IBSS    = 3,
 	WMI_VDEV_TYPE_MONITOR = 4,
-पूर्ण;
+};
 
-क्रमागत wmi_vdev_subtype अणु
+enum wmi_vdev_subtype {
 	WMI_VDEV_SUBTYPE_NONE,
 	WMI_VDEV_SUBTYPE_P2P_DEVICE,
 	WMI_VDEV_SUBTYPE_P2P_CLIENT,
@@ -4858,26 +4857,26 @@
 	WMI_VDEV_SUBTYPE_PROXY_STA,
 	WMI_VDEV_SUBTYPE_MESH_11S,
 	WMI_VDEV_SUBTYPE_MESH_NON_11S,
-पूर्ण;
+};
 
-क्रमागत wmi_vdev_subtype_legacy अणु
+enum wmi_vdev_subtype_legacy {
 	WMI_VDEV_SUBTYPE_LEGACY_NONE      = 0,
 	WMI_VDEV_SUBTYPE_LEGACY_P2P_DEV   = 1,
 	WMI_VDEV_SUBTYPE_LEGACY_P2P_CLI   = 2,
 	WMI_VDEV_SUBTYPE_LEGACY_P2P_GO    = 3,
 	WMI_VDEV_SUBTYPE_LEGACY_PROXY_STA = 4,
-पूर्ण;
+};
 
-क्रमागत wmi_vdev_subtype_10_2_4 अणु
+enum wmi_vdev_subtype_10_2_4 {
 	WMI_VDEV_SUBTYPE_10_2_4_NONE      = 0,
 	WMI_VDEV_SUBTYPE_10_2_4_P2P_DEV   = 1,
 	WMI_VDEV_SUBTYPE_10_2_4_P2P_CLI   = 2,
 	WMI_VDEV_SUBTYPE_10_2_4_P2P_GO    = 3,
 	WMI_VDEV_SUBTYPE_10_2_4_PROXY_STA = 4,
 	WMI_VDEV_SUBTYPE_10_2_4_MESH_11S  = 5,
-पूर्ण;
+};
 
-क्रमागत wmi_vdev_subtype_10_4 अणु
+enum wmi_vdev_subtype_10_4 {
 	WMI_VDEV_SUBTYPE_10_4_NONE         = 0,
 	WMI_VDEV_SUBTYPE_10_4_P2P_DEV      = 1,
 	WMI_VDEV_SUBTYPE_10_4_P2P_CLI      = 2,
@@ -4885,51 +4884,51 @@
 	WMI_VDEV_SUBTYPE_10_4_PROXY_STA    = 4,
 	WMI_VDEV_SUBTYPE_10_4_MESH_NON_11S = 5,
 	WMI_VDEV_SUBTYPE_10_4_MESH_11S     = 6,
-पूर्ण;
+};
 
-/* values क्रम vdev_subtype */
+/* values for vdev_subtype */
 
-/* values क्रम vdev_start_request flags */
+/* values for vdev_start_request flags */
 /*
- * Indicates that AP VDEV uses hidden ssid. only valid क्रम
+ * Indicates that AP VDEV uses hidden ssid. only valid for
  *  AP/GO
  */
-#घोषणा WMI_VDEV_START_HIDDEN_SSID  (1 << 0)
+#define WMI_VDEV_START_HIDDEN_SSID  (1 << 0)
 /*
- * Indicates अगर robust management frame/management frame
+ * Indicates if robust management frame/management frame
  *  protection is enabled. For GO/AP vdevs, it indicates that
  *  it may support station/client associations with RMF enabled.
  *  For STA/client vdevs, it indicates that sta will
  *  associate with AP with RMF enabled.
  */
-#घोषणा WMI_VDEV_START_PMF_ENABLED  (1 << 1)
+#define WMI_VDEV_START_PMF_ENABLED  (1 << 1)
 
-काष्ठा wmi_p2p_noa_descriptor अणु
+struct wmi_p2p_noa_descriptor {
 	__le32 type_count; /* 255: continuous schedule, 0: reserved */
 	__le32 duration;  /* Absent period duration in micro seconds */
-	__le32 पूर्णांकerval;   /* Absent period पूर्णांकerval in micro seconds */
-	__le32 start_समय; /* 32 bit tsf समय when in starts */
-पूर्ण __packed;
+	__le32 interval;   /* Absent period interval in micro seconds */
+	__le32 start_time; /* 32 bit tsf time when in starts */
+} __packed;
 
-काष्ठा wmi_vdev_start_request_cmd अणु
+struct wmi_vdev_start_request_cmd {
 	/* WMI channel */
-	काष्ठा wmi_channel chan;
-	/* unique id identअगरying the VDEV, generated by the caller */
+	struct wmi_channel chan;
+	/* unique id identifying the VDEV, generated by the caller */
 	__le32 vdev_id;
-	/* requestor id identअगरying the caller module */
+	/* requestor id identifying the caller module */
 	__le32 requestor_id;
-	/* beacon पूर्णांकerval from received beacon */
-	__le32 beacon_पूर्णांकerval;
+	/* beacon interval from received beacon */
+	__le32 beacon_interval;
 	/* DTIM Period from the received beacon */
 	__le32 dtim_period;
 	/* Flags */
 	__le32 flags;
-	/* ssid field. Only valid क्रम AP/GO/IBSS/BTAmp VDEV type. */
-	काष्ठा wmi_ssid ssid;
-	/* beacon/probe response xmit rate. Applicable क्रम SoftAP. */
+	/* ssid field. Only valid for AP/GO/IBSS/BTAmp VDEV type. */
+	struct wmi_ssid ssid;
+	/* beacon/probe response xmit rate. Applicable for SoftAP. */
 	__le32 bcn_tx_rate;
-	/* beacon/probe response xmit घातer. Applicable क्रम SoftAP. */
-	__le32 bcn_tx_घातer;
+	/* beacon/probe response xmit power. Applicable for SoftAP. */
+	__le32 bcn_tx_power;
 	/* number of p2p NOA descriptor(s) from scan entry */
 	__le32 num_noa_descriptors;
 	/*
@@ -4938,75 +4937,75 @@
 	 */
 	__le32 disable_hw_ack;
 	/* actual p2p NOA descriptor from scan entry */
-	काष्ठा wmi_p2p_noa_descriptor noa_descriptors[2];
-पूर्ण __packed;
+	struct wmi_p2p_noa_descriptor noa_descriptors[2];
+} __packed;
 
-काष्ठा wmi_vdev_restart_request_cmd अणु
-	काष्ठा wmi_vdev_start_request_cmd vdev_start_request_cmd;
-पूर्ण __packed;
+struct wmi_vdev_restart_request_cmd {
+	struct wmi_vdev_start_request_cmd vdev_start_request_cmd;
+} __packed;
 
-काष्ठा wmi_vdev_start_request_arg अणु
+struct wmi_vdev_start_request_arg {
 	u32 vdev_id;
-	काष्ठा wmi_channel_arg channel;
-	u32 bcn_पूर्णांकval;
+	struct wmi_channel_arg channel;
+	u32 bcn_intval;
 	u32 dtim_period;
 	u8 *ssid;
 	u32 ssid_len;
 	u32 bcn_tx_rate;
-	u32 bcn_tx_घातer;
+	u32 bcn_tx_power;
 	bool disable_hw_ack;
 	bool hidden_ssid;
 	bool pmf_enabled;
-पूर्ण;
+};
 
-काष्ठा wmi_vdev_delete_cmd अणु
-	/* unique id identअगरying the VDEV, generated by the caller */
+struct wmi_vdev_delete_cmd {
+	/* unique id identifying the VDEV, generated by the caller */
 	__le32 vdev_id;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_vdev_up_cmd अणु
+struct wmi_vdev_up_cmd {
 	__le32 vdev_id;
 	__le32 vdev_assoc_id;
-	काष्ठा wmi_mac_addr vdev_bssid;
-पूर्ण __packed;
+	struct wmi_mac_addr vdev_bssid;
+} __packed;
 
-काष्ठा wmi_vdev_stop_cmd अणु
+struct wmi_vdev_stop_cmd {
 	__le32 vdev_id;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_vdev_करोwn_cmd अणु
+struct wmi_vdev_down_cmd {
 	__le32 vdev_id;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_vdev_standby_response_cmd अणु
-	/* unique id identअगरying the VDEV, generated by the caller */
+struct wmi_vdev_standby_response_cmd {
+	/* unique id identifying the VDEV, generated by the caller */
 	__le32 vdev_id;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_vdev_resume_response_cmd अणु
-	/* unique id identअगरying the VDEV, generated by the caller */
+struct wmi_vdev_resume_response_cmd {
+	/* unique id identifying the VDEV, generated by the caller */
 	__le32 vdev_id;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_vdev_set_param_cmd अणु
+struct wmi_vdev_set_param_cmd {
 	__le32 vdev_id;
 	__le32 param_id;
 	__le32 param_value;
-पूर्ण __packed;
+} __packed;
 
-#घोषणा WMI_MAX_KEY_INDEX   3
-#घोषणा WMI_MAX_KEY_LEN     32
+#define WMI_MAX_KEY_INDEX   3
+#define WMI_MAX_KEY_LEN     32
 
-#घोषणा WMI_KEY_PAIRWISE 0x00
-#घोषणा WMI_KEY_GROUP    0x01
-#घोषणा WMI_KEY_TX_USAGE 0x02 /* शेष tx key - अटल wep */
+#define WMI_KEY_PAIRWISE 0x00
+#define WMI_KEY_GROUP    0x01
+#define WMI_KEY_TX_USAGE 0x02 /* default tx key - static wep */
 
-काष्ठा wmi_key_seq_counter अणु
+struct wmi_key_seq_counter {
 	__le32 key_seq_counter_l;
 	__le32 key_seq_counter_h;
-पूर्ण __packed;
+} __packed;
 
-क्रमागत wmi_cipher_suites अणु
+enum wmi_cipher_suites {
 	WMI_CIPHER_NONE,
 	WMI_CIPHER_WEP,
 	WMI_CIPHER_TKIP,
@@ -5016,9 +5015,9 @@
 	WMI_CIPHER_CKIP,
 	WMI_CIPHER_AES_CMAC,
 	WMI_CIPHER_AES_GCM,
-पूर्ण;
+};
 
-क्रमागत wmi_tlv_cipher_suites अणु
+enum wmi_tlv_cipher_suites {
 	WMI_TLV_CIPHER_NONE,
 	WMI_TLV_CIPHER_WEP,
 	WMI_TLV_CIPHER_TKIP,
@@ -5029,17 +5028,17 @@
 	WMI_TLV_CIPHER_AES_CMAC,
 	WMI_TLV_CIPHER_ANY,
 	WMI_TLV_CIPHER_AES_GCM,
-पूर्ण;
+};
 
-काष्ठा wmi_vdev_install_key_cmd अणु
+struct wmi_vdev_install_key_cmd {
 	__le32 vdev_id;
-	काष्ठा wmi_mac_addr peer_macaddr;
+	struct wmi_mac_addr peer_macaddr;
 	__le32 key_idx;
 	__le32 key_flags;
 	__le32 key_cipher; /* %WMI_CIPHER_ */
-	काष्ठा wmi_key_seq_counter key_rsc_counter;
-	काष्ठा wmi_key_seq_counter key_global_rsc_counter;
-	काष्ठा wmi_key_seq_counter key_tsc_counter;
+	struct wmi_key_seq_counter key_rsc_counter;
+	struct wmi_key_seq_counter key_global_rsc_counter;
+	struct wmi_key_seq_counter key_tsc_counter;
 	u8 wpi_key_rsc_counter[16];
 	u8 wpi_key_tsc_counter[16];
 	__le32 key_len;
@@ -5048,22 +5047,22 @@
 
 	/* contains key followed by tx mic followed by rx mic */
 	u8 key_data[];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_vdev_install_key_arg अणु
+struct wmi_vdev_install_key_arg {
 	u32 vdev_id;
-	स्थिर u8 *macaddr;
+	const u8 *macaddr;
 	u32 key_idx;
 	u32 key_flags;
 	u32 key_cipher;
 	u32 key_len;
 	u32 key_txmic_len;
 	u32 key_rxmic_len;
-	स्थिर व्योम *key_data;
-पूर्ण;
+	const void *key_data;
+};
 
 /*
- * vdev fixed rate क्रमmat:
+ * vdev fixed rate format:
  * - preamble - b7:b6 - see WMI_RATE_PREMABLE_
  * - nss      - b5:b4 - ss number (0 mean 1ss)
  * - rate_mcs - b3:b0 - as below
@@ -5075,38 +5074,38 @@
  */
 
 /* Preamble types to be used with VDEV fixed rate configuration */
-क्रमागत wmi_rate_preamble अणु
+enum wmi_rate_preamble {
 	WMI_RATE_PREAMBLE_OFDM,
 	WMI_RATE_PREAMBLE_CCK,
 	WMI_RATE_PREAMBLE_HT,
 	WMI_RATE_PREAMBLE_VHT,
-पूर्ण;
+};
 
-#घोषणा ATH10K_HW_NSS(rate)		(1 + (((rate) >> 4) & 0x3))
-#घोषणा ATH10K_HW_PREAMBLE(rate)	(((rate) >> 6) & 0x3)
-#घोषणा ATH10K_HW_MCS_RATE(rate)	((rate) & 0xf)
-#घोषणा ATH10K_HW_LEGACY_RATE(rate)	((rate) & 0x3f)
-#घोषणा ATH10K_HW_BW(flags)		(((flags) >> 3) & 0x3)
-#घोषणा ATH10K_HW_GI(flags)		(((flags) >> 5) & 0x1)
-#घोषणा ATH10K_HW_RATECODE(rate, nss, preamble) \
+#define ATH10K_HW_NSS(rate)		(1 + (((rate) >> 4) & 0x3))
+#define ATH10K_HW_PREAMBLE(rate)	(((rate) >> 6) & 0x3)
+#define ATH10K_HW_MCS_RATE(rate)	((rate) & 0xf)
+#define ATH10K_HW_LEGACY_RATE(rate)	((rate) & 0x3f)
+#define ATH10K_HW_BW(flags)		(((flags) >> 3) & 0x3)
+#define ATH10K_HW_GI(flags)		(((flags) >> 5) & 0x1)
+#define ATH10K_HW_RATECODE(rate, nss, preamble) \
 	(((preamble) << 6) | ((nss) << 4) | (rate))
-#घोषणा ATH10K_HW_AMPDU(flags)		((flags) & 0x1)
-#घोषणा ATH10K_HW_BA_FAIL(flags)	(((flags) >> 1) & 0x3)
-#घोषणा ATH10K_FW_SKIPPED_RATE_CTRL(flags)	(((flags) >> 6) & 0x1)
+#define ATH10K_HW_AMPDU(flags)		((flags) & 0x1)
+#define ATH10K_HW_BA_FAIL(flags)	(((flags) >> 1) & 0x3)
+#define ATH10K_FW_SKIPPED_RATE_CTRL(flags)	(((flags) >> 6) & 0x1)
 
-#घोषणा ATH10K_VHT_MCS_NUM	10
-#घोषणा ATH10K_BW_NUM		6
-#घोषणा ATH10K_NSS_NUM		4
-#घोषणा ATH10K_LEGACY_NUM	12
-#घोषणा ATH10K_GI_NUM		2
-#घोषणा ATH10K_HT_MCS_NUM	32
-#घोषणा ATH10K_RATE_TABLE_NUM	320
-#घोषणा ATH10K_RATE_INFO_FLAGS_SGI_BIT	2
+#define ATH10K_VHT_MCS_NUM	10
+#define ATH10K_BW_NUM		6
+#define ATH10K_NSS_NUM		4
+#define ATH10K_LEGACY_NUM	12
+#define ATH10K_GI_NUM		2
+#define ATH10K_HT_MCS_NUM	32
+#define ATH10K_RATE_TABLE_NUM	320
+#define ATH10K_RATE_INFO_FLAGS_SGI_BIT	2
 
 /* Value to disable fixed rate setting */
-#घोषणा WMI_FIXED_RATE_NONE    (0xff)
+#define WMI_FIXED_RATE_NONE    (0xff)
 
-काष्ठा wmi_peer_param_map अणु
+struct wmi_peer_param_map {
 	u32 smps_state;
 	u32 ampdu;
 	u32 authorize;
@@ -5114,34 +5113,34 @@
 	u32 nss;
 	u32 use_4addr;
 	u32 membership;
-	u32 use_fixed_घातer;
+	u32 use_fixed_power;
 	u32 user_pos;
-	u32 crit_proto_hपूर्णांक_enabled;
+	u32 crit_proto_hint_enabled;
 	u32 tx_fail_cnt_thr;
 	u32 set_hw_retry_cts2s;
 	u32 ibss_atim_win_len;
 	u32 debug;
 	u32 phymode;
 	u32 dummy_var;
-पूर्ण;
+};
 
-काष्ठा wmi_vdev_param_map अणु
+struct wmi_vdev_param_map {
 	u32 rts_threshold;
 	u32 fragmentation_threshold;
-	u32 beacon_पूर्णांकerval;
-	u32 listen_पूर्णांकerval;
+	u32 beacon_interval;
+	u32 listen_interval;
 	u32 multicast_rate;
 	u32 mgmt_tx_rate;
-	u32 slot_समय;
+	u32 slot_time;
 	u32 preamble;
-	u32 swba_समय;
+	u32 swba_time;
 	u32 wmi_vdev_stats_update_period;
-	u32 wmi_vdev_pwrsave_ageout_समय;
-	u32 wmi_vdev_host_swba_पूर्णांकerval;
+	u32 wmi_vdev_pwrsave_ageout_time;
+	u32 wmi_vdev_host_swba_interval;
 	u32 dtim_period;
-	u32 wmi_vdev_oc_scheduler_air_समय_limit;
+	u32 wmi_vdev_oc_scheduler_air_time_limit;
 	u32 wds;
-	u32 atim_winकरोw;
+	u32 atim_window;
 	u32 bmiss_count_max;
 	u32 bmiss_first_bcnt;
 	u32 bmiss_final_bcnt;
@@ -5157,7 +5156,7 @@
 	u32 ldpc;
 	u32 tx_stbc;
 	u32 rx_stbc;
-	u32 पूर्णांकra_bss_fwd;
+	u32 intra_bss_fwd;
 	u32 def_keyid;
 	u32 nss;
 	u32 bcast_data_rate;
@@ -5165,17 +5164,17 @@
 	u32 mcast_indicate;
 	u32 dhcp_indicate;
 	u32 unknown_dest_indicate;
-	u32 ap_keepalive_min_idle_inactive_समय_secs;
-	u32 ap_keepalive_max_idle_inactive_समय_secs;
-	u32 ap_keepalive_max_unresponsive_समय_secs;
+	u32 ap_keepalive_min_idle_inactive_time_secs;
+	u32 ap_keepalive_max_idle_inactive_time_secs;
+	u32 ap_keepalive_max_unresponsive_time_secs;
 	u32 ap_enable_nawds;
 	u32 mcast2ucast_set;
 	u32 enable_rtscts;
 	u32 txbf;
-	u32 packet_घातersave;
+	u32 packet_powersave;
 	u32 drop_unencry;
 	u32 tx_encap_type;
-	u32 ap_detect_out_of_sync_sleeping_sta_समय_secs;
+	u32 ap_detect_out_of_sync_sleeping_sta_time_secs;
 	u32 rc_num_retries;
 	u32 cabq_maxdur;
 	u32 mfptest_set;
@@ -5187,7 +5186,7 @@
 	u32 early_rx_bmiss_sample_cycle;
 	u32 early_rx_slop_step;
 	u32 early_rx_init_slop;
-	u32 early_rx_adjust_छोड़ो;
+	u32 early_rx_adjust_pause;
 	u32 proxy_sta;
 	u32 meru_vc;
 	u32 rx_decap_type;
@@ -5196,55 +5195,55 @@
 	u32 dec_tsf;
 	u32 disable_4addr_src_lrn;
 	u32 rtt_responder_role;
-पूर्ण;
+};
 
-#घोषणा WMI_VDEV_PARAM_UNSUPPORTED 0
+#define WMI_VDEV_PARAM_UNSUPPORTED 0
 
-/* the definition of dअगरferent VDEV parameters */
-क्रमागत wmi_vdev_param अणु
+/* the definition of different VDEV parameters */
+enum wmi_vdev_param {
 	/* RTS Threshold */
 	WMI_VDEV_PARAM_RTS_THRESHOLD = 0x1,
 	/* Fragmentation threshold */
 	WMI_VDEV_PARAM_FRAGMENTATION_THRESHOLD,
-	/* beacon पूर्णांकerval in TUs */
+	/* beacon interval in TUs */
 	WMI_VDEV_PARAM_BEACON_INTERVAL,
-	/* Listen पूर्णांकerval in TUs */
+	/* Listen interval in TUs */
 	WMI_VDEV_PARAM_LISTEN_INTERVAL,
 	/* multicast rate in Mbps */
 	WMI_VDEV_PARAM_MULTICAST_RATE,
 	/* management frame rate in Mbps */
 	WMI_VDEV_PARAM_MGMT_TX_RATE,
-	/* slot समय (दीर्घ vs लघु) */
+	/* slot time (long vs short) */
 	WMI_VDEV_PARAM_SLOT_TIME,
-	/* preamble (दीर्घ vs लघु) */
+	/* preamble (long vs short) */
 	WMI_VDEV_PARAM_PREAMBLE,
-	/* SWBA समय (समय beक्रमe tbtt in msec) */
+	/* SWBA time (time before tbtt in msec) */
 	WMI_VDEV_PARAM_SWBA_TIME,
-	/* समय period क्रम updating VDEV stats */
+	/* time period for updating VDEV stats */
 	WMI_VDEV_STATS_UPDATE_PERIOD,
-	/* age out समय in msec क्रम frames queued क्रम station in घातer save */
+	/* age out time in msec for frames queued for station in power save */
 	WMI_VDEV_PWRSAVE_AGEOUT_TIME,
 	/*
-	 * Host SWBA पूर्णांकerval (समय in msec beक्रमe tbtt क्रम SWBA event
+	 * Host SWBA interval (time in msec before tbtt for SWBA event
 	 * generation).
 	 */
 	WMI_VDEV_HOST_SWBA_INTERVAL,
-	/* DTIM period (specअगरied in units of num beacon पूर्णांकervals) */
+	/* DTIM period (specified in units of num beacon intervals) */
 	WMI_VDEV_PARAM_DTIM_PERIOD,
 	/*
-	 * scheduler air समय limit क्रम this VDEV. used by off chan
+	 * scheduler air time limit for this VDEV. used by off chan
 	 * scheduler.
 	 */
 	WMI_VDEV_OC_SCHEDULER_AIR_TIME_LIMIT,
-	/* enable/dsiable WDS क्रम this VDEV  */
+	/* enable/dsiable WDS for this VDEV  */
 	WMI_VDEV_PARAM_WDS,
-	/* ATIM Winकरोw */
+	/* ATIM Window */
 	WMI_VDEV_PARAM_ATIM_WINDOW,
 	/* BMISS max */
 	WMI_VDEV_PARAM_BMISS_COUNT_MAX,
-	/* BMISS first समय */
+	/* BMISS first time */
 	WMI_VDEV_PARAM_BMISS_FIRST_BCNT,
-	/* BMISS final समय */
+	/* BMISS final time */
 	WMI_VDEV_PARAM_BMISS_FINAL_BCNT,
 	/* WMM enables/disabled */
 	WMI_VDEV_PARAM_FEATURE_WMM,
@@ -5270,15 +5269,15 @@
 	WMI_VDEV_PARAM_TX_STBC,
 	/* Enable Rx STBC */
 	WMI_VDEV_PARAM_RX_STBC,
-	/* Intra BSS क्रमwarding  */
+	/* Intra BSS forwarding  */
 	WMI_VDEV_PARAM_INTRA_BSS_FWD,
-	/* Setting Default xmit key क्रम Vdev */
+	/* Setting Default xmit key for Vdev */
 	WMI_VDEV_PARAM_DEF_KEYID,
 	/* NSS width */
 	WMI_VDEV_PARAM_NSS,
-	/* Set the custom rate क्रम the broadcast data frames */
+	/* Set the custom rate for the broadcast data frames */
 	WMI_VDEV_PARAM_BCAST_DATA_RATE,
-	/* Set the custom rate (rate-code) क्रम multicast data frames */
+	/* Set the custom rate (rate-code) for multicast data frames */
 	WMI_VDEV_PARAM_MCAST_DATA_RATE,
 	/* Tx multicast packet indicate Enable/Disable */
 	WMI_VDEV_PARAM_MCAST_INDICATE,
@@ -5287,25 +5286,25 @@
 	/* Enable host inspection of Tx unicast packet to unknown destination */
 	WMI_VDEV_PARAM_UNKNOWN_DEST_INDICATE,
 
-	/* The minimum amount of समय AP begins to consider STA inactive */
+	/* The minimum amount of time AP begins to consider STA inactive */
 	WMI_VDEV_PARAM_AP_KEEPALIVE_MIN_IDLE_INACTIVE_TIME_SECS,
 
 	/*
 	 * An associated STA is considered inactive when there is no recent
-	 * TX/RX activity and no करोwnlink frames are buffered क्रम it. Once a
-	 * STA exceeds the maximum idle inactive समय, the AP will send an
-	 * 802.11 data-null as a keep alive to verअगरy the STA is still
-	 * associated. If the STA करोes ACK the data-null, or अगर the data-null
-	 * is buffered and the STA करोes not retrieve it, the STA will be
+	 * TX/RX activity and no downlink frames are buffered for it. Once a
+	 * STA exceeds the maximum idle inactive time, the AP will send an
+	 * 802.11 data-null as a keep alive to verify the STA is still
+	 * associated. If the STA does ACK the data-null, or if the data-null
+	 * is buffered and the STA does not retrieve it, the STA will be
 	 * considered unresponsive
 	 * (see WMI_VDEV_AP_KEEPALIVE_MAX_UNRESPONSIVE_TIME_SECS).
 	 */
 	WMI_VDEV_PARAM_AP_KEEPALIVE_MAX_IDLE_INACTIVE_TIME_SECS,
 
 	/*
-	 * An associated STA is considered unresponsive अगर there is no recent
-	 * TX/RX activity and करोwnlink frames are buffered क्रम it. Once a STA
-	 * exceeds the maximum unresponsive समय, the AP will send a
+	 * An associated STA is considered unresponsive if there is no recent
+	 * TX/RX activity and downlink frames are buffered for it. Once a STA
+	 * exceeds the maximum unresponsive time, the AP will send a
 	 * WMI_STA_KICKOUT event to the host so the STA can be deleted.
 	 */
 	WMI_VDEV_PARAM_AP_KEEPALIVE_MAX_UNRESPONSIVE_TIME_SECS,
@@ -5317,60 +5316,60 @@
 	/* Enable TXBFee/er */
 	WMI_VDEV_PARAM_TXBF,
 
-	/* Set packet घातer save */
+	/* Set packet power save */
 	WMI_VDEV_PARAM_PACKET_POWERSAVE,
 
 	/*
-	 * Drops un-encrypted packets अगर eceived in an encrypted connection
-	 * otherwise क्रमwards to host.
+	 * Drops un-encrypted packets if eceived in an encrypted connection
+	 * otherwise forwards to host.
 	 */
 	WMI_VDEV_PARAM_DROP_UNENCRY,
 
 	/*
-	 * Set the encapsulation type क्रम frames.
+	 * Set the encapsulation type for frames.
 	 */
 	WMI_VDEV_PARAM_TX_ENCAP_TYPE,
-पूर्ण;
+};
 
-/* the definition of dअगरferent VDEV parameters */
-क्रमागत wmi_10x_vdev_param अणु
+/* the definition of different VDEV parameters */
+enum wmi_10x_vdev_param {
 	/* RTS Threshold */
 	WMI_10X_VDEV_PARAM_RTS_THRESHOLD = 0x1,
 	/* Fragmentation threshold */
 	WMI_10X_VDEV_PARAM_FRAGMENTATION_THRESHOLD,
-	/* beacon पूर्णांकerval in TUs */
+	/* beacon interval in TUs */
 	WMI_10X_VDEV_PARAM_BEACON_INTERVAL,
-	/* Listen पूर्णांकerval in TUs */
+	/* Listen interval in TUs */
 	WMI_10X_VDEV_PARAM_LISTEN_INTERVAL,
 	/* multicast rate in Mbps */
 	WMI_10X_VDEV_PARAM_MULTICAST_RATE,
 	/* management frame rate in Mbps */
 	WMI_10X_VDEV_PARAM_MGMT_TX_RATE,
-	/* slot समय (दीर्घ vs लघु) */
+	/* slot time (long vs short) */
 	WMI_10X_VDEV_PARAM_SLOT_TIME,
-	/* preamble (दीर्घ vs लघु) */
+	/* preamble (long vs short) */
 	WMI_10X_VDEV_PARAM_PREAMBLE,
-	/* SWBA समय (समय beक्रमe tbtt in msec) */
+	/* SWBA time (time before tbtt in msec) */
 	WMI_10X_VDEV_PARAM_SWBA_TIME,
-	/* समय period क्रम updating VDEV stats */
+	/* time period for updating VDEV stats */
 	WMI_10X_VDEV_STATS_UPDATE_PERIOD,
-	/* age out समय in msec क्रम frames queued क्रम station in घातer save */
+	/* age out time in msec for frames queued for station in power save */
 	WMI_10X_VDEV_PWRSAVE_AGEOUT_TIME,
 	/*
-	 * Host SWBA पूर्णांकerval (समय in msec beक्रमe tbtt क्रम SWBA event
+	 * Host SWBA interval (time in msec before tbtt for SWBA event
 	 * generation).
 	 */
 	WMI_10X_VDEV_HOST_SWBA_INTERVAL,
-	/* DTIM period (specअगरied in units of num beacon पूर्णांकervals) */
+	/* DTIM period (specified in units of num beacon intervals) */
 	WMI_10X_VDEV_PARAM_DTIM_PERIOD,
 	/*
-	 * scheduler air समय limit क्रम this VDEV. used by off chan
+	 * scheduler air time limit for this VDEV. used by off chan
 	 * scheduler.
 	 */
 	WMI_10X_VDEV_OC_SCHEDULER_AIR_TIME_LIMIT,
-	/* enable/dsiable WDS क्रम this VDEV  */
+	/* enable/dsiable WDS for this VDEV  */
 	WMI_10X_VDEV_PARAM_WDS,
-	/* ATIM Winकरोw */
+	/* ATIM Window */
 	WMI_10X_VDEV_PARAM_ATIM_WINDOW,
 	/* BMISS max */
 	WMI_10X_VDEV_PARAM_BMISS_COUNT_MAX,
@@ -5398,15 +5397,15 @@
 	WMI_10X_VDEV_PARAM_TX_STBC,
 	/* Enable Rx STBC */
 	WMI_10X_VDEV_PARAM_RX_STBC,
-	/* Intra BSS क्रमwarding  */
+	/* Intra BSS forwarding  */
 	WMI_10X_VDEV_PARAM_INTRA_BSS_FWD,
-	/* Setting Default xmit key क्रम Vdev */
+	/* Setting Default xmit key for Vdev */
 	WMI_10X_VDEV_PARAM_DEF_KEYID,
 	/* NSS width */
 	WMI_10X_VDEV_PARAM_NSS,
-	/* Set the custom rate क्रम the broadcast data frames */
+	/* Set the custom rate for the broadcast data frames */
 	WMI_10X_VDEV_PARAM_BCAST_DATA_RATE,
-	/* Set the custom rate (rate-code) क्रम multicast data frames */
+	/* Set the custom rate (rate-code) for multicast data frames */
 	WMI_10X_VDEV_PARAM_MCAST_DATA_RATE,
 	/* Tx multicast packet indicate Enable/Disable */
 	WMI_10X_VDEV_PARAM_MCAST_INDICATE,
@@ -5415,25 +5414,25 @@
 	/* Enable host inspection of Tx unicast packet to unknown destination */
 	WMI_10X_VDEV_PARAM_UNKNOWN_DEST_INDICATE,
 
-	/* The minimum amount of समय AP begins to consider STA inactive */
+	/* The minimum amount of time AP begins to consider STA inactive */
 	WMI_10X_VDEV_PARAM_AP_KEEPALIVE_MIN_IDLE_INACTIVE_TIME_SECS,
 
 	/*
 	 * An associated STA is considered inactive when there is no recent
-	 * TX/RX activity and no करोwnlink frames are buffered क्रम it. Once a
-	 * STA exceeds the maximum idle inactive समय, the AP will send an
-	 * 802.11 data-null as a keep alive to verअगरy the STA is still
-	 * associated. If the STA करोes ACK the data-null, or अगर the data-null
-	 * is buffered and the STA करोes not retrieve it, the STA will be
+	 * TX/RX activity and no downlink frames are buffered for it. Once a
+	 * STA exceeds the maximum idle inactive time, the AP will send an
+	 * 802.11 data-null as a keep alive to verify the STA is still
+	 * associated. If the STA does ACK the data-null, or if the data-null
+	 * is buffered and the STA does not retrieve it, the STA will be
 	 * considered unresponsive
 	 * (see WMI_10X_VDEV_AP_KEEPALIVE_MAX_UNRESPONSIVE_TIME_SECS).
 	 */
 	WMI_10X_VDEV_PARAM_AP_KEEPALIVE_MAX_IDLE_INACTIVE_TIME_SECS,
 
 	/*
-	 * An associated STA is considered unresponsive अगर there is no recent
-	 * TX/RX activity and करोwnlink frames are buffered क्रम it. Once a STA
-	 * exceeds the maximum unresponsive समय, the AP will send a
+	 * An associated STA is considered unresponsive if there is no recent
+	 * TX/RX activity and downlink frames are buffered for it. Once a STA
+	 * exceeds the maximum unresponsive time, the AP will send a
 	 * WMI_10X_STA_KICKOUT event to the host so the STA can be deleted.
 	 */
 	WMI_10X_VDEV_PARAM_AP_KEEPALIVE_MAX_UNRESPONSIVE_TIME_SECS,
@@ -5455,9 +5454,9 @@
 	WMI_10X_VDEV_PARAM_VHT_SGIMASK,
 	WMI_10X_VDEV_PARAM_VHT80_RATEMASK,
 	WMI_10X_VDEV_PARAM_TSF_INCREMENT,
-पूर्ण;
+};
 
-क्रमागत wmi_10_4_vdev_param अणु
+enum wmi_10_4_vdev_param {
 	WMI_10_4_VDEV_PARAM_RTS_THRESHOLD = 0x1,
 	WMI_10_4_VDEV_PARAM_FRAGMENTATION_THRESHOLD,
 	WMI_10_4_VDEV_PARAM_BEACON_INTERVAL,
@@ -5545,81 +5544,81 @@
 	WMI_10_4_VDEV_PARAM_TX_POWER,
 	WMI_10_4_VDEV_PARAM_ENABLE_DISABLE_RTT_RESPONDER_ROLE,
 	WMI_10_4_VDEV_PARAM_DISABLE_4_ADDR_SRC_LRN,
-पूर्ण;
+};
 
-#घोषणा WMI_VDEV_DISABLE_4_ADDR_SRC_LRN 1
+#define WMI_VDEV_DISABLE_4_ADDR_SRC_LRN 1
 
-#घोषणा WMI_VDEV_PARAM_TXBF_SU_TX_BFEE BIT(0)
-#घोषणा WMI_VDEV_PARAM_TXBF_MU_TX_BFEE BIT(1)
-#घोषणा WMI_VDEV_PARAM_TXBF_SU_TX_BFER BIT(2)
-#घोषणा WMI_VDEV_PARAM_TXBF_MU_TX_BFER BIT(3)
+#define WMI_VDEV_PARAM_TXBF_SU_TX_BFEE BIT(0)
+#define WMI_VDEV_PARAM_TXBF_MU_TX_BFEE BIT(1)
+#define WMI_VDEV_PARAM_TXBF_SU_TX_BFER BIT(2)
+#define WMI_VDEV_PARAM_TXBF_MU_TX_BFER BIT(3)
 
-#घोषणा WMI_TXBF_STS_CAP_OFFSET_LSB	4
-#घोषणा WMI_TXBF_STS_CAP_OFFSET_MASK	0x70
-#घोषणा WMI_TXBF_CONF_IMPLICIT_BF       BIT(7)
-#घोषणा WMI_BF_SOUND_DIM_OFFSET_LSB	8
-#घोषणा WMI_BF_SOUND_DIM_OFFSET_MASK	0xf00
+#define WMI_TXBF_STS_CAP_OFFSET_LSB	4
+#define WMI_TXBF_STS_CAP_OFFSET_MASK	0x70
+#define WMI_TXBF_CONF_IMPLICIT_BF       BIT(7)
+#define WMI_BF_SOUND_DIM_OFFSET_LSB	8
+#define WMI_BF_SOUND_DIM_OFFSET_MASK	0xf00
 
-/* slot समय दीर्घ */
-#घोषणा WMI_VDEV_SLOT_TIME_LONG		0x1
-/* slot समय लघु */
-#घोषणा WMI_VDEV_SLOT_TIME_SHORT	0x2
-/* preablbe दीर्घ */
-#घोषणा WMI_VDEV_PREAMBLE_LONG		0x1
-/* preablbe लघु */
-#घोषणा WMI_VDEV_PREAMBLE_SHORT		0x2
+/* slot time long */
+#define WMI_VDEV_SLOT_TIME_LONG		0x1
+/* slot time short */
+#define WMI_VDEV_SLOT_TIME_SHORT	0x2
+/* preablbe long */
+#define WMI_VDEV_PREAMBLE_LONG		0x1
+/* preablbe short */
+#define WMI_VDEV_PREAMBLE_SHORT		0x2
 
-क्रमागत wmi_start_event_param अणु
+enum wmi_start_event_param {
 	WMI_VDEV_RESP_START_EVENT = 0,
 	WMI_VDEV_RESP_RESTART_EVENT,
-पूर्ण;
+};
 
-काष्ठा wmi_vdev_start_response_event अणु
+struct wmi_vdev_start_response_event {
 	__le32 vdev_id;
 	__le32 req_id;
 	__le32 resp_type; /* %WMI_VDEV_RESP_ */
 	__le32 status;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_vdev_standby_req_event अणु
-	/* unique id identअगरying the VDEV, generated by the caller */
+struct wmi_vdev_standby_req_event {
+	/* unique id identifying the VDEV, generated by the caller */
 	__le32 vdev_id;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_vdev_resume_req_event अणु
-	/* unique id identअगरying the VDEV, generated by the caller */
+struct wmi_vdev_resume_req_event {
+	/* unique id identifying the VDEV, generated by the caller */
 	__le32 vdev_id;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_vdev_stopped_event अणु
-	/* unique id identअगरying the VDEV, generated by the caller */
+struct wmi_vdev_stopped_event {
+	/* unique id identifying the VDEV, generated by the caller */
 	__le32 vdev_id;
-पूर्ण __packed;
+} __packed;
 
 /*
- * common काष्ठाure used क्रम simple events
+ * common structure used for simple events
  * (stopped, resume_req, standby response)
  */
-काष्ठा wmi_vdev_simple_event अणु
-	/* unique id identअगरying the VDEV, generated by the caller */
+struct wmi_vdev_simple_event {
+	/* unique id identifying the VDEV, generated by the caller */
 	__le32 vdev_id;
-पूर्ण __packed;
+} __packed;
 
 /* VDEV start response status codes */
 /* VDEV successfully started */
-#घोषणा WMI_INIFIED_VDEV_START_RESPONSE_STATUS_SUCCESS	0x0
+#define WMI_INIFIED_VDEV_START_RESPONSE_STATUS_SUCCESS	0x0
 
 /* requested VDEV not found */
-#घोषणा WMI_INIFIED_VDEV_START_RESPONSE_INVALID_VDEVID	0x1
+#define WMI_INIFIED_VDEV_START_RESPONSE_INVALID_VDEVID	0x1
 
 /* unsupported VDEV combination */
-#घोषणा WMI_INIFIED_VDEV_START_RESPONSE_NOT_SUPPORTED	0x2
+#define WMI_INIFIED_VDEV_START_RESPONSE_NOT_SUPPORTED	0x2
 
-/* TODO: please add more comments अगर you have in-depth inक्रमmation */
-काष्ठा wmi_vdev_spectral_conf_cmd अणु
+/* TODO: please add more comments if you have in-depth information */
+struct wmi_vdev_spectral_conf_cmd {
 	__le32 vdev_id;
 
-	/* number of fft samples to send (0 क्रम infinite) */
+	/* number of fft samples to send (0 for infinite) */
 	__le32 scan_count;
 	__le32 scan_period;
 	__le32 scan_priority;
@@ -5628,33 +5627,33 @@
 	__le32 scan_fft_size;
 	__le32 scan_gc_ena;
 	__le32 scan_restart_ena;
-	__le32 scan_noise_न्यूनमान_ref;
+	__le32 scan_noise_floor_ref;
 	__le32 scan_init_delay;
 	__le32 scan_nb_tone_thr;
 	__le32 scan_str_bin_thr;
 	__le32 scan_wb_rpt_mode;
 	__le32 scan_rssi_rpt_mode;
 	__le32 scan_rssi_thr;
-	__le32 scan_pwr_क्रमmat;
+	__le32 scan_pwr_format;
 
-	/* rpt_mode: Format of FFT report to software क्रम spectral scan
+	/* rpt_mode: Format of FFT report to software for spectral scan
 	 * triggered FFTs:
 	 *	0: No FFT report (only spectral scan summary report)
-	 *	1: 2-dword summary of metrics क्रम each completed FFT + spectral
+	 *	1: 2-dword summary of metrics for each completed FFT + spectral
 	 *	   scan	summary report
-	 *	2: 2-dword summary of metrics क्रम each completed FFT +
+	 *	2: 2-dword summary of metrics for each completed FFT +
 	 *	   1x- oversampled bins(in-band) per FFT + spectral scan summary
 	 *	   report
-	 *	3: 2-dword summary of metrics क्रम each completed FFT +
+	 *	3: 2-dword summary of metrics for each completed FFT +
 	 *	   2x- oversampled bins	(all) per FFT + spectral scan summary
 	 */
 	__le32 scan_rpt_mode;
 	__le32 scan_bin_scale;
 	__le32 scan_dbm_adj;
 	__le32 scan_chn_mask;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_vdev_spectral_conf_arg अणु
+struct wmi_vdev_spectral_conf_arg {
 	u32 vdev_id;
 	u32 scan_count;
 	u32 scan_period;
@@ -5662,105 +5661,105 @@
 	u32 scan_fft_size;
 	u32 scan_gc_ena;
 	u32 scan_restart_ena;
-	u32 scan_noise_न्यूनमान_ref;
+	u32 scan_noise_floor_ref;
 	u32 scan_init_delay;
 	u32 scan_nb_tone_thr;
 	u32 scan_str_bin_thr;
 	u32 scan_wb_rpt_mode;
 	u32 scan_rssi_rpt_mode;
 	u32 scan_rssi_thr;
-	u32 scan_pwr_क्रमmat;
+	u32 scan_pwr_format;
 	u32 scan_rpt_mode;
 	u32 scan_bin_scale;
 	u32 scan_dbm_adj;
 	u32 scan_chn_mask;
-पूर्ण;
+};
 
-#घोषणा WMI_SPECTRAL_ENABLE_DEFAULT              0
-#घोषणा WMI_SPECTRAL_COUNT_DEFAULT               0
-#घोषणा WMI_SPECTRAL_PERIOD_DEFAULT             35
-#घोषणा WMI_SPECTRAL_PRIORITY_DEFAULT            1
-#घोषणा WMI_SPECTRAL_FFT_SIZE_DEFAULT            7
-#घोषणा WMI_SPECTRAL_GC_ENA_DEFAULT              1
-#घोषणा WMI_SPECTRAL_RESTART_ENA_DEFAULT         0
-#घोषणा WMI_SPECTRAL_NOISE_FLOOR_REF_DEFAULT   -96
-#घोषणा WMI_SPECTRAL_INIT_DELAY_DEFAULT         80
-#घोषणा WMI_SPECTRAL_NB_TONE_THR_DEFAULT        12
-#घोषणा WMI_SPECTRAL_STR_BIN_THR_DEFAULT         8
-#घोषणा WMI_SPECTRAL_WB_RPT_MODE_DEFAULT         0
-#घोषणा WMI_SPECTRAL_RSSI_RPT_MODE_DEFAULT       0
-#घोषणा WMI_SPECTRAL_RSSI_THR_DEFAULT         0xf0
-#घोषणा WMI_SPECTRAL_PWR_FORMAT_DEFAULT          0
-#घोषणा WMI_SPECTRAL_RPT_MODE_DEFAULT            2
-#घोषणा WMI_SPECTRAL_BIN_SCALE_DEFAULT           1
-#घोषणा WMI_SPECTRAL_DBM_ADJ_DEFAULT             1
-#घोषणा WMI_SPECTRAL_CHN_MASK_DEFAULT            1
+#define WMI_SPECTRAL_ENABLE_DEFAULT              0
+#define WMI_SPECTRAL_COUNT_DEFAULT               0
+#define WMI_SPECTRAL_PERIOD_DEFAULT             35
+#define WMI_SPECTRAL_PRIORITY_DEFAULT            1
+#define WMI_SPECTRAL_FFT_SIZE_DEFAULT            7
+#define WMI_SPECTRAL_GC_ENA_DEFAULT              1
+#define WMI_SPECTRAL_RESTART_ENA_DEFAULT         0
+#define WMI_SPECTRAL_NOISE_FLOOR_REF_DEFAULT   -96
+#define WMI_SPECTRAL_INIT_DELAY_DEFAULT         80
+#define WMI_SPECTRAL_NB_TONE_THR_DEFAULT        12
+#define WMI_SPECTRAL_STR_BIN_THR_DEFAULT         8
+#define WMI_SPECTRAL_WB_RPT_MODE_DEFAULT         0
+#define WMI_SPECTRAL_RSSI_RPT_MODE_DEFAULT       0
+#define WMI_SPECTRAL_RSSI_THR_DEFAULT         0xf0
+#define WMI_SPECTRAL_PWR_FORMAT_DEFAULT          0
+#define WMI_SPECTRAL_RPT_MODE_DEFAULT            2
+#define WMI_SPECTRAL_BIN_SCALE_DEFAULT           1
+#define WMI_SPECTRAL_DBM_ADJ_DEFAULT             1
+#define WMI_SPECTRAL_CHN_MASK_DEFAULT            1
 
-काष्ठा wmi_vdev_spectral_enable_cmd अणु
+struct wmi_vdev_spectral_enable_cmd {
 	__le32 vdev_id;
 	__le32 trigger_cmd;
 	__le32 enable_cmd;
-पूर्ण __packed;
+} __packed;
 
-#घोषणा WMI_SPECTRAL_TRIGGER_CMD_TRIGGER  1
-#घोषणा WMI_SPECTRAL_TRIGGER_CMD_CLEAR    2
-#घोषणा WMI_SPECTRAL_ENABLE_CMD_ENABLE    1
-#घोषणा WMI_SPECTRAL_ENABLE_CMD_DISABLE   2
+#define WMI_SPECTRAL_TRIGGER_CMD_TRIGGER  1
+#define WMI_SPECTRAL_TRIGGER_CMD_CLEAR    2
+#define WMI_SPECTRAL_ENABLE_CMD_ENABLE    1
+#define WMI_SPECTRAL_ENABLE_CMD_DISABLE   2
 
-/* Beacon processing related command and event काष्ठाures */
-काष्ठा wmi_bcn_tx_hdr अणु
+/* Beacon processing related command and event structures */
+struct wmi_bcn_tx_hdr {
 	__le32 vdev_id;
 	__le32 tx_rate;
-	__le32 tx_घातer;
+	__le32 tx_power;
 	__le32 bcn_len;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_bcn_tx_cmd अणु
-	काष्ठा wmi_bcn_tx_hdr hdr;
+struct wmi_bcn_tx_cmd {
+	struct wmi_bcn_tx_hdr hdr;
 	u8 *bcn[];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_bcn_tx_arg अणु
+struct wmi_bcn_tx_arg {
 	u32 vdev_id;
 	u32 tx_rate;
-	u32 tx_घातer;
+	u32 tx_power;
 	u32 bcn_len;
-	स्थिर व्योम *bcn;
-पूर्ण;
+	const void *bcn;
+};
 
-क्रमागत wmi_bcn_tx_ref_flags अणु
+enum wmi_bcn_tx_ref_flags {
 	WMI_BCN_TX_REF_FLAG_DTIM_ZERO = 0x1,
 	WMI_BCN_TX_REF_FLAG_DELIVER_CAB = 0x2,
-पूर्ण;
+};
 
-/* TODO: It is unclear why "no antenna" works जबतक any other seemingly valid
+/* TODO: It is unclear why "no antenna" works while any other seemingly valid
  * chainmask yields no beacons on the air at all.
  */
-#घोषणा WMI_BCN_TX_REF_DEF_ANTENNA 0
+#define WMI_BCN_TX_REF_DEF_ANTENNA 0
 
-काष्ठा wmi_bcn_tx_ref_cmd अणु
+struct wmi_bcn_tx_ref_cmd {
 	__le32 vdev_id;
 	__le32 data_len;
-	/* physical address of the frame - dma poपूर्णांकer */
+	/* physical address of the frame - dma pointer */
 	__le32 data_ptr;
-	/* id क्रम host to track */
+	/* id for host to track */
 	__le32 msdu_id;
 	/* frame ctrl to setup PPDU desc */
 	__le32 frame_control;
 	/* to control CABQ traffic: WMI_BCN_TX_REF_FLAG_ */
 	__le32 flags;
-	/* पूर्णांकroduced in 10.2 */
+	/* introduced in 10.2 */
 	__le32 antenna_mask;
-पूर्ण __packed;
+} __packed;
 
 /* Beacon filter */
-#घोषणा WMI_BCN_FILTER_ALL   0 /* Filter all beacons */
-#घोषणा WMI_BCN_FILTER_NONE  1 /* Pass all beacons */
-#घोषणा WMI_BCN_FILTER_RSSI  2 /* Pass Beacons RSSI >= RSSI threshold */
-#घोषणा WMI_BCN_FILTER_BSSID 3 /* Pass Beacons with matching BSSID */
-#घोषणा WMI_BCN_FILTER_SSID  4 /* Pass Beacons with matching SSID */
+#define WMI_BCN_FILTER_ALL   0 /* Filter all beacons */
+#define WMI_BCN_FILTER_NONE  1 /* Pass all beacons */
+#define WMI_BCN_FILTER_RSSI  2 /* Pass Beacons RSSI >= RSSI threshold */
+#define WMI_BCN_FILTER_BSSID 3 /* Pass Beacons with matching BSSID */
+#define WMI_BCN_FILTER_SSID  4 /* Pass Beacons with matching SSID */
 
-काष्ठा wmi_bcn_filter_rx_cmd अणु
+struct wmi_bcn_filter_rx_cmd {
 	/* Filter ID */
 	__le32 bcn_filter_id;
 	/* Filter type - wmi_bcn_filter */
@@ -5769,10 +5768,10 @@
 	__le32 bcn_filter_len;
 	/* Filter info (threshold, BSSID, RSSI) */
 	u8 *bcn_filter_buf;
-पूर्ण __packed;
+} __packed;
 
 /* Capabilities and IEs to be passed to firmware */
-काष्ठा wmi_bcn_prb_info अणु
+struct wmi_bcn_prb_info {
 	/* Capabilities */
 	__le32 caps;
 	/* ERP info */
@@ -5786,72 +5785,72 @@
 	/* rrm info */
 	/* ath_ext */
 	/* app IE */
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_bcn_पंचांगpl_cmd अणु
-	/* unique id identअगरying the VDEV, generated by the caller */
+struct wmi_bcn_tmpl_cmd {
+	/* unique id identifying the VDEV, generated by the caller */
 	__le32 vdev_id;
-	/* TIM IE offset from the beginning of the ढाँचा. */
+	/* TIM IE offset from the beginning of the template. */
 	__le32 tim_ie_offset;
 	/* beacon probe capabilities and IEs */
-	काष्ठा wmi_bcn_prb_info bcn_prb_info;
+	struct wmi_bcn_prb_info bcn_prb_info;
 	/* beacon buffer length */
 	__le32 buf_len;
 	/* variable length data */
 	u8 data[1];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_prb_पंचांगpl_cmd अणु
-	/* unique id identअगरying the VDEV, generated by the caller */
+struct wmi_prb_tmpl_cmd {
+	/* unique id identifying the VDEV, generated by the caller */
 	__le32 vdev_id;
 	/* beacon probe capabilities and IEs */
-	काष्ठा wmi_bcn_prb_info bcn_prb_info;
+	struct wmi_bcn_prb_info bcn_prb_info;
 	/* beacon buffer length */
 	__le32 buf_len;
 	/* Variable length data */
 	u8 data[1];
-पूर्ण __packed;
+} __packed;
 
-क्रमागत wmi_sta_ps_mode अणु
-	/* enable घातer save क्रम the given STA VDEV */
+enum wmi_sta_ps_mode {
+	/* enable power save for the given STA VDEV */
 	WMI_STA_PS_MODE_DISABLED = 0,
-	/* disable घातer save  क्रम a given STA VDEV */
+	/* disable power save  for a given STA VDEV */
 	WMI_STA_PS_MODE_ENABLED = 1,
-पूर्ण;
+};
 
-काष्ठा wmi_sta_घातersave_mode_cmd अणु
-	/* unique id identअगरying the VDEV, generated by the caller */
+struct wmi_sta_powersave_mode_cmd {
+	/* unique id identifying the VDEV, generated by the caller */
 	__le32 vdev_id;
 
 	/*
 	 * Power save mode
-	 * (see क्रमागत wmi_sta_ps_mode)
+	 * (see enum wmi_sta_ps_mode)
 	 */
 	__le32 sta_ps_mode;
-पूर्ण __packed;
+} __packed;
 
-क्रमागत wmi_csa_offload_en अणु
+enum wmi_csa_offload_en {
 	WMI_CSA_OFFLOAD_DISABLE = 0,
 	WMI_CSA_OFFLOAD_ENABLE = 1,
-पूर्ण;
+};
 
-काष्ठा wmi_csa_offload_enable_cmd अणु
+struct wmi_csa_offload_enable_cmd {
 	__le32 vdev_id;
 	__le32 csa_offload_enable;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_csa_offload_chanचयन_cmd अणु
+struct wmi_csa_offload_chanswitch_cmd {
 	__le32 vdev_id;
-	काष्ठा wmi_channel chan;
-पूर्ण __packed;
+	struct wmi_channel chan;
+} __packed;
 
 /*
- * This parameter controls the policy क्रम retrieving frames from AP जबतक the
+ * This parameter controls the policy for retrieving frames from AP while the
  * STA is in sleep state.
  *
- * Only takes affect अगर the sta_ps_mode is enabled
+ * Only takes affect if the sta_ps_mode is enabled
  */
-क्रमागत wmi_sta_ps_param_rx_wake_policy अणु
+enum wmi_sta_ps_param_rx_wake_policy {
 	/*
 	 * Wake up when ever there is an  RX activity on the VDEV. In this mode
 	 * the Power save SM(state machine) will come out of sleep by either
@@ -5861,70 +5860,70 @@
 	WMI_STA_PS_RX_WAKE_POLICY_WAKE = 0,
 
 	/*
-	 * Here the घातer save state machine will not wakeup in response to TIM
+	 * Here the power save state machine will not wakeup in response to TIM
 	 * bit, instead it will send a PSPOLL (or) UASPD trigger based on UAPSD
 	 * configuration setup by WMISET_PS_SET_UAPSD  WMI command.  When all
 	 * access categories are delivery-enabled, the station will send a
 	 * UAPSD trigger frame, otherwise it will send a PS-Poll.
 	 */
 	WMI_STA_PS_RX_WAKE_POLICY_POLL_UAPSD = 1,
-पूर्ण;
+};
 
 /*
- * Number of tx frames/beacon  that cause the घातer save SM to wake up.
+ * Number of tx frames/beacon  that cause the power save SM to wake up.
  *
- * Value 1 causes the SM to wake up क्रम every TX. Value 0 has a special
- * meaning, It will cause the SM to never wake up. This is useful अगर you want
- * to keep the प्रणाली to sleep all the समय क्रम some kind of test mode . host
- * can change this parameter any समय.  It will affect at the next tx frame.
+ * Value 1 causes the SM to wake up for every TX. Value 0 has a special
+ * meaning, It will cause the SM to never wake up. This is useful if you want
+ * to keep the system to sleep all the time for some kind of test mode . host
+ * can change this parameter any time.  It will affect at the next tx frame.
  */
-क्रमागत wmi_sta_ps_param_tx_wake_threshold अणु
+enum wmi_sta_ps_param_tx_wake_threshold {
 	WMI_STA_PS_TX_WAKE_THRESHOLD_NEVER = 0,
 	WMI_STA_PS_TX_WAKE_THRESHOLD_ALWAYS = 1,
 
 	/*
 	 * Values greater than one indicate that many TX attempts per beacon
-	 * पूर्णांकerval beक्रमe the STA will wake up
+	 * interval before the STA will wake up
 	 */
-पूर्ण;
+};
 
 /*
  * The maximum number of PS-Poll frames the FW will send in response to
- * traffic advertised in TIM beक्रमe waking up (by sending a null frame with PS
+ * traffic advertised in TIM before waking up (by sending a null frame with PS
  * = 0). Value 0 has a special meaning: there is no maximum count and the FW
  * will send as many PS-Poll as are necessary to retrieve buffered BU. This
  * parameter is used when the RX wake policy is
  * WMI_STA_PS_RX_WAKE_POLICY_POLL_UAPSD and ignored when the RX wake
  * policy is WMI_STA_PS_RX_WAKE_POLICY_WAKE.
  */
-क्रमागत wmi_sta_ps_param_pspoll_count अणु
+enum wmi_sta_ps_param_pspoll_count {
 	WMI_STA_PS_PSPOLL_COUNT_NO_MAX = 0,
 	/*
 	 * Values greater than 0 indicate the maximum numer of PS-Poll frames
-	 * FW will send beक्रमe waking up.
+	 * FW will send before waking up.
 	 */
 
-	/* When u-APSD is enabled the firmware will be very reluctant to निकास
-	 * STA PS. This could result in very poor Rx perक्रमmance with STA करोing
-	 * PS-Poll क्रम each and every buffered frame. This value is a bit
+	/* When u-APSD is enabled the firmware will be very reluctant to exit
+	 * STA PS. This could result in very poor Rx performance with STA doing
+	 * PS-Poll for each and every buffered frame. This value is a bit
 	 * arbitrary.
 	 */
 	WMI_STA_PS_PSPOLL_COUNT_UAPSD = 3,
-पूर्ण;
+};
 
 /*
- * This will include the delivery and trigger enabled state क्रम every AC.
+ * This will include the delivery and trigger enabled state for every AC.
  * This is the negotiated state with AP. The host MLME needs to set this based
  * on AP capability and the state Set in the association request by the
- * station MLME.Lower 8 bits of the value specअगरy the UAPSD configuration.
+ * station MLME.Lower 8 bits of the value specify the UAPSD configuration.
  */
-#घोषणा WMI_UAPSD_AC_TYPE_DELI 0
-#घोषणा WMI_UAPSD_AC_TYPE_TRIG 1
+#define WMI_UAPSD_AC_TYPE_DELI 0
+#define WMI_UAPSD_AC_TYPE_TRIG 1
 
-#घोषणा WMI_UAPSD_AC_BIT_MASK(ac, type) \
+#define WMI_UAPSD_AC_BIT_MASK(ac, type) \
 	(type == WMI_UAPSD_AC_TYPE_DELI ? 1 << (ac << 1) : 1 << ((ac << 1) + 1))
 
-क्रमागत wmi_sta_ps_param_uapsd अणु
+enum wmi_sta_ps_param_uapsd {
 	WMI_STA_PS_UAPSD_AC0_DELIVERY_EN = (1 << 0),
 	WMI_STA_PS_UAPSD_AC0_TRIGGER_EN  = (1 << 1),
 	WMI_STA_PS_UAPSD_AC1_DELIVERY_EN = (1 << 2),
@@ -5933,60 +5932,60 @@
 	WMI_STA_PS_UAPSD_AC2_TRIGGER_EN  = (1 << 5),
 	WMI_STA_PS_UAPSD_AC3_DELIVERY_EN = (1 << 6),
 	WMI_STA_PS_UAPSD_AC3_TRIGGER_EN  = (1 << 7),
-पूर्ण;
+};
 
-#घोषणा WMI_STA_UAPSD_MAX_INTERVAL_MSEC अच_पूर्णांक_उच्च
+#define WMI_STA_UAPSD_MAX_INTERVAL_MSEC UINT_MAX
 
-काष्ठा wmi_sta_uapsd_स्वतः_trig_param अणु
+struct wmi_sta_uapsd_auto_trig_param {
 	__le32 wmm_ac;
 	__le32 user_priority;
-	__le32 service_पूर्णांकerval;
-	__le32 suspend_पूर्णांकerval;
-	__le32 delay_पूर्णांकerval;
-पूर्ण;
+	__le32 service_interval;
+	__le32 suspend_interval;
+	__le32 delay_interval;
+};
 
-काष्ठा wmi_sta_uapsd_स्वतः_trig_cmd_fixed_param अणु
+struct wmi_sta_uapsd_auto_trig_cmd_fixed_param {
 	__le32 vdev_id;
-	काष्ठा wmi_mac_addr peer_macaddr;
+	struct wmi_mac_addr peer_macaddr;
 	__le32 num_ac;
-पूर्ण;
+};
 
-काष्ठा wmi_sta_uapsd_स्वतः_trig_arg अणु
+struct wmi_sta_uapsd_auto_trig_arg {
 	u32 wmm_ac;
 	u32 user_priority;
-	u32 service_पूर्णांकerval;
-	u32 suspend_पूर्णांकerval;
-	u32 delay_पूर्णांकerval;
-पूर्ण;
+	u32 service_interval;
+	u32 suspend_interval;
+	u32 delay_interval;
+};
 
-क्रमागत wmi_sta_घातersave_param अणु
+enum wmi_sta_powersave_param {
 	/*
-	 * Controls how frames are retrievd from AP जबतक STA is sleeping
+	 * Controls how frames are retrievd from AP while STA is sleeping
 	 *
-	 * (see क्रमागत wmi_sta_ps_param_rx_wake_policy)
+	 * (see enum wmi_sta_ps_param_rx_wake_policy)
 	 */
 	WMI_STA_PS_PARAM_RX_WAKE_POLICY = 0,
 
 	/*
 	 * The STA will go active after this many TX
 	 *
-	 * (see क्रमागत wmi_sta_ps_param_tx_wake_threshold)
+	 * (see enum wmi_sta_ps_param_tx_wake_threshold)
 	 */
 	WMI_STA_PS_PARAM_TX_WAKE_THRESHOLD = 1,
 
 	/*
-	 * Number of PS-Poll to send beक्रमe STA wakes up
+	 * Number of PS-Poll to send before STA wakes up
 	 *
-	 * (see क्रमागत wmi_sta_ps_param_pspoll_count)
+	 * (see enum wmi_sta_ps_param_pspoll_count)
 	 *
 	 */
 	WMI_STA_PS_PARAM_PSPOLL_COUNT = 2,
 
 	/*
-	 * TX/RX inactivity समय in msec beक्रमe going to sleep.
+	 * TX/RX inactivity time in msec before going to sleep.
 	 *
-	 * The घातer save SM will monitor tx/rx activity on the VDEV, अगर no
-	 * activity क्रम the specअगरied msec of the parameter the Power save
+	 * The power save SM will monitor tx/rx activity on the VDEV, if no
+	 * activity for the specified msec of the parameter the Power save
 	 * SM will go to sleep.
 	 */
 	WMI_STA_PS_PARAM_INACTIVITY_TIME = 3,
@@ -5994,33 +5993,33 @@
 	/*
 	 * Set uapsd configuration.
 	 *
-	 * (see क्रमागत wmi_sta_ps_param_uapsd)
+	 * (see enum wmi_sta_ps_param_uapsd)
 	 */
 	WMI_STA_PS_PARAM_UAPSD = 4,
-पूर्ण;
+};
 
-काष्ठा wmi_sta_घातersave_param_cmd अणु
+struct wmi_sta_powersave_param_cmd {
 	__le32 vdev_id;
 	__le32 param_id; /* %WMI_STA_PS_PARAM_ */
 	__le32 param_value;
-पूर्ण __packed;
+} __packed;
 
-/* No MIMO घातer save */
-#घोषणा WMI_STA_MIMO_PS_MODE_DISABLE
-/* mimo घातersave mode अटल*/
-#घोषणा WMI_STA_MIMO_PS_MODE_STATIC
-/* mimo घातersave mode dynamic */
-#घोषणा WMI_STA_MIMO_PS_MODE_DYNAMIC
+/* No MIMO power save */
+#define WMI_STA_MIMO_PS_MODE_DISABLE
+/* mimo powersave mode static*/
+#define WMI_STA_MIMO_PS_MODE_STATIC
+/* mimo powersave mode dynamic */
+#define WMI_STA_MIMO_PS_MODE_DYNAMIC
 
-काष्ठा wmi_sta_mimo_ps_mode_cmd अणु
-	/* unique id identअगरying the VDEV, generated by the caller */
+struct wmi_sta_mimo_ps_mode_cmd {
+	/* unique id identifying the VDEV, generated by the caller */
 	__le32 vdev_id;
-	/* mimo घातersave mode as defined above */
+	/* mimo powersave mode as defined above */
 	__le32 mimo_pwrsave_mode;
-पूर्ण __packed;
+} __packed;
 
 /* U-APSD configuration of peer station from (re)assoc request and TSPECs */
-क्रमागत wmi_ap_ps_param_uapsd अणु
+enum wmi_ap_ps_param_uapsd {
 	WMI_AP_PS_UAPSD_AC0_DELIVERY_EN = (1 << 0),
 	WMI_AP_PS_UAPSD_AC0_TRIGGER_EN  = (1 << 1),
 	WMI_AP_PS_UAPSD_AC1_DELIVERY_EN = (1 << 2),
@@ -6029,88 +6028,88 @@
 	WMI_AP_PS_UAPSD_AC2_TRIGGER_EN  = (1 << 5),
 	WMI_AP_PS_UAPSD_AC3_DELIVERY_EN = (1 << 6),
 	WMI_AP_PS_UAPSD_AC3_TRIGGER_EN  = (1 << 7),
-पूर्ण;
+};
 
 /* U-APSD maximum service period of peer station */
-क्रमागत wmi_ap_ps_peer_param_max_sp अणु
+enum wmi_ap_ps_peer_param_max_sp {
 	WMI_AP_PS_PEER_PARAM_MAX_SP_UNLIMITED = 0,
 	WMI_AP_PS_PEER_PARAM_MAX_SP_2 = 1,
 	WMI_AP_PS_PEER_PARAM_MAX_SP_4 = 2,
 	WMI_AP_PS_PEER_PARAM_MAX_SP_6 = 3,
 	MAX_WMI_AP_PS_PEER_PARAM_MAX_SP,
-पूर्ण;
+};
 
 /*
- * AP घातer save parameter
- * Set a घातer save specअगरic parameter क्रम a peer station
+ * AP power save parameter
+ * Set a power save specific parameter for a peer station
  */
-क्रमागत wmi_ap_ps_peer_param अणु
-	/* Set uapsd configuration क्रम a given peer.
+enum wmi_ap_ps_peer_param {
+	/* Set uapsd configuration for a given peer.
 	 *
-	 * Include the delivery and trigger enabled state क्रम every AC.
+	 * Include the delivery and trigger enabled state for every AC.
 	 * The host  MLME needs to set this based on AP capability and stations
 	 * request Set in the association request  received from the station.
 	 *
-	 * Lower 8 bits of the value specअगरy the UAPSD configuration.
+	 * Lower 8 bits of the value specify the UAPSD configuration.
 	 *
-	 * (see क्रमागत wmi_ap_ps_param_uapsd)
-	 * The शेष value is 0.
+	 * (see enum wmi_ap_ps_param_uapsd)
+	 * The default value is 0.
 	 */
 	WMI_AP_PS_PEER_PARAM_UAPSD = 0,
 
 	/*
-	 * Set the service period क्रम a UAPSD capable station
+	 * Set the service period for a UAPSD capable station
 	 *
 	 * The service period from wme ie in the (re)assoc request frame.
 	 *
-	 * (see क्रमागत wmi_ap_ps_peer_param_max_sp)
+	 * (see enum wmi_ap_ps_peer_param_max_sp)
 	 */
 	WMI_AP_PS_PEER_PARAM_MAX_SP = 1,
 
-	/* Time in seconds क्रम aging out buffered frames क्रम STA in PS */
+	/* Time in seconds for aging out buffered frames for STA in PS */
 	WMI_AP_PS_PEER_PARAM_AGEOUT_TIME = 2,
-पूर्ण;
+};
 
-काष्ठा wmi_ap_ps_peer_cmd अणु
-	/* unique id identअगरying the VDEV, generated by the caller */
+struct wmi_ap_ps_peer_cmd {
+	/* unique id identifying the VDEV, generated by the caller */
 	__le32 vdev_id;
 
 	/* peer MAC address */
-	काष्ठा wmi_mac_addr peer_macaddr;
+	struct wmi_mac_addr peer_macaddr;
 
-	/* AP घातersave param (see क्रमागत wmi_ap_ps_peer_param) */
+	/* AP powersave param (see enum wmi_ap_ps_peer_param) */
 	__le32 param_id;
 
-	/* AP घातersave param value */
+	/* AP powersave param value */
 	__le32 param_value;
-पूर्ण __packed;
+} __packed;
 
 /* 128 clients = 4 words */
-#घोषणा WMI_TIM_BITMAP_ARRAY_SIZE 4
+#define WMI_TIM_BITMAP_ARRAY_SIZE 4
 
-काष्ठा wmi_tim_info अणु
+struct wmi_tim_info {
 	__le32 tim_len;
 	__le32 tim_mcast;
-	__le32 tim_biपंचांगap[WMI_TIM_BITMAP_ARRAY_SIZE];
+	__le32 tim_bitmap[WMI_TIM_BITMAP_ARRAY_SIZE];
 	__le32 tim_changed;
 	__le32 tim_num_ps_pending;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_tim_info_arg अणु
+struct wmi_tim_info_arg {
 	__le32 tim_len;
 	__le32 tim_mcast;
-	स्थिर __le32 *tim_biपंचांगap;
+	const __le32 *tim_bitmap;
 	__le32 tim_changed;
 	__le32 tim_num_ps_pending;
-पूर्ण __packed;
+} __packed;
 
 /* Maximum number of NOA Descriptors supported */
-#घोषणा WMI_P2P_MAX_NOA_DESCRIPTORS 4
-#घोषणा WMI_P2P_OPPPS_ENABLE_BIT	BIT(0)
-#घोषणा WMI_P2P_OPPPS_CTWINDOW_OFFSET	1
-#घोषणा WMI_P2P_NOA_CHANGED_BIT	BIT(0)
+#define WMI_P2P_MAX_NOA_DESCRIPTORS 4
+#define WMI_P2P_OPPPS_ENABLE_BIT	BIT(0)
+#define WMI_P2P_OPPPS_CTWINDOW_OFFSET	1
+#define WMI_P2P_NOA_CHANGED_BIT	BIT(0)
 
-काष्ठा wmi_p2p_noa_info अणु
+struct wmi_p2p_noa_info {
 	/* Bit 0 - Flag to indicate an update in NOA schedule
 	 * Bits 7-1 - Reserved
 	 */
@@ -6118,49 +6117,49 @@
 	/* NOA index */
 	u8 index;
 	/* Bit 0 - Opp PS state of the AP
-	 * Bits 1-7 - Ctwinकरोw in TUs
+	 * Bits 1-7 - Ctwindow in TUs
 	 */
-	u8 ctwinकरोw_oppps;
+	u8 ctwindow_oppps;
 	/* Number of NOA descriptors */
 	u8 num_descriptors;
 
-	काष्ठा wmi_p2p_noa_descriptor descriptors[WMI_P2P_MAX_NOA_DESCRIPTORS];
-पूर्ण __packed;
+	struct wmi_p2p_noa_descriptor descriptors[WMI_P2P_MAX_NOA_DESCRIPTORS];
+} __packed;
 
-काष्ठा wmi_bcn_info अणु
-	काष्ठा wmi_tim_info tim_info;
-	काष्ठा wmi_p2p_noa_info p2p_noa_info;
-पूर्ण __packed;
+struct wmi_bcn_info {
+	struct wmi_tim_info tim_info;
+	struct wmi_p2p_noa_info p2p_noa_info;
+} __packed;
 
-काष्ठा wmi_host_swba_event अणु
+struct wmi_host_swba_event {
 	__le32 vdev_map;
-	काष्ठा wmi_bcn_info bcn_info[];
-पूर्ण __packed;
+	struct wmi_bcn_info bcn_info[];
+} __packed;
 
-काष्ठा wmi_10_2_4_bcn_info अणु
-	काष्ठा wmi_tim_info tim_info;
-	/* The 10.2.4 FW करोesn't have p2p NOA info */
-पूर्ण __packed;
+struct wmi_10_2_4_bcn_info {
+	struct wmi_tim_info tim_info;
+	/* The 10.2.4 FW doesn't have p2p NOA info */
+} __packed;
 
-काष्ठा wmi_10_2_4_host_swba_event अणु
+struct wmi_10_2_4_host_swba_event {
 	__le32 vdev_map;
-	काष्ठा wmi_10_2_4_bcn_info bcn_info[];
-पूर्ण __packed;
+	struct wmi_10_2_4_bcn_info bcn_info[];
+} __packed;
 
-/* 16 words = 512 client + 1 word = क्रम guard */
-#घोषणा WMI_10_4_TIM_BITMAP_ARRAY_SIZE 17
+/* 16 words = 512 client + 1 word = for guard */
+#define WMI_10_4_TIM_BITMAP_ARRAY_SIZE 17
 
-काष्ठा wmi_10_4_tim_info अणु
+struct wmi_10_4_tim_info {
 	__le32 tim_len;
 	__le32 tim_mcast;
-	__le32 tim_biपंचांगap[WMI_10_4_TIM_BITMAP_ARRAY_SIZE];
+	__le32 tim_bitmap[WMI_10_4_TIM_BITMAP_ARRAY_SIZE];
 	__le32 tim_changed;
 	__le32 tim_num_ps_pending;
-पूर्ण __packed;
+} __packed;
 
-#घोषणा WMI_10_4_P2P_MAX_NOA_DESCRIPTORS 1
+#define WMI_10_4_P2P_MAX_NOA_DESCRIPTORS 1
 
-काष्ठा wmi_10_4_p2p_noa_info अणु
+struct wmi_10_4_p2p_noa_info {
 	/* Bit 0 - Flag to indicate an update in NOA schedule
 	 * Bits 7-1 - Reserved
 	 */
@@ -6168,153 +6167,153 @@
 	/* NOA index */
 	u8 index;
 	/* Bit 0 - Opp PS state of the AP
-	 * Bits 1-7 - Ctwinकरोw in TUs
+	 * Bits 1-7 - Ctwindow in TUs
 	 */
-	u8 ctwinकरोw_oppps;
+	u8 ctwindow_oppps;
 	/* Number of NOA descriptors */
 	u8 num_descriptors;
 
-	काष्ठा wmi_p2p_noa_descriptor
+	struct wmi_p2p_noa_descriptor
 		noa_descriptors[WMI_10_4_P2P_MAX_NOA_DESCRIPTORS];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_10_4_bcn_info अणु
-	काष्ठा wmi_10_4_tim_info tim_info;
-	काष्ठा wmi_10_4_p2p_noa_info p2p_noa_info;
-पूर्ण __packed;
+struct wmi_10_4_bcn_info {
+	struct wmi_10_4_tim_info tim_info;
+	struct wmi_10_4_p2p_noa_info p2p_noa_info;
+} __packed;
 
-काष्ठा wmi_10_4_host_swba_event अणु
+struct wmi_10_4_host_swba_event {
 	__le32 vdev_map;
-	काष्ठा wmi_10_4_bcn_info bcn_info[];
-पूर्ण __packed;
+	struct wmi_10_4_bcn_info bcn_info[];
+} __packed;
 
-#घोषणा WMI_MAX_AP_VDEV 16
+#define WMI_MAX_AP_VDEV 16
 
-काष्ठा wmi_tbtt_offset_event अणु
+struct wmi_tbtt_offset_event {
 	__le32 vdev_map;
 	__le32 tbttoffset_list[WMI_MAX_AP_VDEV];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_peer_create_cmd अणु
+struct wmi_peer_create_cmd {
 	__le32 vdev_id;
-	काष्ठा wmi_mac_addr peer_macaddr;
+	struct wmi_mac_addr peer_macaddr;
 	__le32 peer_type;
-पूर्ण __packed;
+} __packed;
 
-क्रमागत wmi_peer_type अणु
+enum wmi_peer_type {
 	WMI_PEER_TYPE_DEFAULT = 0,
 	WMI_PEER_TYPE_BSS = 1,
 	WMI_PEER_TYPE_TDLS = 2,
-पूर्ण;
+};
 
-काष्ठा wmi_peer_delete_cmd अणु
+struct wmi_peer_delete_cmd {
 	__le32 vdev_id;
-	काष्ठा wmi_mac_addr peer_macaddr;
-पूर्ण __packed;
+	struct wmi_mac_addr peer_macaddr;
+} __packed;
 
-काष्ठा wmi_peer_flush_tids_cmd अणु
+struct wmi_peer_flush_tids_cmd {
 	__le32 vdev_id;
-	काष्ठा wmi_mac_addr peer_macaddr;
-	__le32 peer_tid_biपंचांगap;
-पूर्ण __packed;
+	struct wmi_mac_addr peer_macaddr;
+	__le32 peer_tid_bitmap;
+} __packed;
 
-काष्ठा wmi_fixed_rate अणु
+struct wmi_fixed_rate {
 	/*
-	 * rate mode . 0: disable fixed rate (स्वतः rate)
-	 *   1: legacy (non 11n) rate  specअगरied as ieee rate 2*Mbps
-	 *   2: ht20 11n rate  specअगरied as mcs index
-	 *   3: ht40 11n rate  specअगरied as mcs index
+	 * rate mode . 0: disable fixed rate (auto rate)
+	 *   1: legacy (non 11n) rate  specified as ieee rate 2*Mbps
+	 *   2: ht20 11n rate  specified as mcs index
+	 *   3: ht40 11n rate  specified as mcs index
 	 */
 	__le32  rate_mode;
 	/*
-	 * 4 rate values क्रम 4 rate series. series 0 is stored in byte 0 (LSB)
+	 * 4 rate values for 4 rate series. series 0 is stored in byte 0 (LSB)
 	 * and series 3 is stored at byte 3 (MSB)
 	 */
 	__le32  rate_series;
 	/*
-	 * 4 retry counts क्रम 4 rate series. retry count क्रम rate 0 is stored
-	 * in byte 0 (LSB) and retry count क्रम rate 3 is stored at byte 3
+	 * 4 retry counts for 4 rate series. retry count for rate 0 is stored
+	 * in byte 0 (LSB) and retry count for rate 3 is stored at byte 3
 	 * (MSB)
 	 */
 	__le32  rate_retries;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_peer_fixed_rate_cmd अणु
-	/* unique id identअगरying the VDEV, generated by the caller */
+struct wmi_peer_fixed_rate_cmd {
+	/* unique id identifying the VDEV, generated by the caller */
 	__le32 vdev_id;
 	/* peer MAC address */
-	काष्ठा wmi_mac_addr peer_macaddr;
+	struct wmi_mac_addr peer_macaddr;
 	/* fixed rate */
-	काष्ठा wmi_fixed_rate peer_fixed_rate;
-पूर्ण __packed;
+	struct wmi_fixed_rate peer_fixed_rate;
+} __packed;
 
-#घोषणा WMI_MGMT_TID    17
+#define WMI_MGMT_TID    17
 
-काष्ठा wmi_addba_clear_resp_cmd अणु
-	/* unique id identअगरying the VDEV, generated by the caller */
+struct wmi_addba_clear_resp_cmd {
+	/* unique id identifying the VDEV, generated by the caller */
 	__le32 vdev_id;
 	/* peer MAC address */
-	काष्ठा wmi_mac_addr peer_macaddr;
-पूर्ण __packed;
+	struct wmi_mac_addr peer_macaddr;
+} __packed;
 
-काष्ठा wmi_addba_send_cmd अणु
-	/* unique id identअगरying the VDEV, generated by the caller */
+struct wmi_addba_send_cmd {
+	/* unique id identifying the VDEV, generated by the caller */
 	__le32 vdev_id;
 	/* peer MAC address */
-	काष्ठा wmi_mac_addr peer_macaddr;
+	struct wmi_mac_addr peer_macaddr;
 	/* Tid number */
 	__le32 tid;
-	/* Buffer/Winकरोw size*/
+	/* Buffer/Window size*/
 	__le32 buffersize;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_delba_send_cmd अणु
-	/* unique id identअगरying the VDEV, generated by the caller */
+struct wmi_delba_send_cmd {
+	/* unique id identifying the VDEV, generated by the caller */
 	__le32 vdev_id;
 	/* peer MAC address */
-	काष्ठा wmi_mac_addr peer_macaddr;
+	struct wmi_mac_addr peer_macaddr;
 	/* Tid number */
 	__le32 tid;
 	/* Is Initiator */
 	__le32 initiator;
 	/* Reason code */
 	__le32 reasoncode;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_addba_setresponse_cmd अणु
-	/* unique id identअगरying the vdev, generated by the caller */
+struct wmi_addba_setresponse_cmd {
+	/* unique id identifying the vdev, generated by the caller */
 	__le32 vdev_id;
 	/* peer mac address */
-	काष्ठा wmi_mac_addr peer_macaddr;
+	struct wmi_mac_addr peer_macaddr;
 	/* Tid number */
 	__le32 tid;
 	/* status code */
 	__le32 statuscode;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_send_singleamsdu_cmd अणु
-	/* unique id identअगरying the vdev, generated by the caller */
+struct wmi_send_singleamsdu_cmd {
+	/* unique id identifying the vdev, generated by the caller */
 	__le32 vdev_id;
 	/* peer mac address */
-	काष्ठा wmi_mac_addr peer_macaddr;
+	struct wmi_mac_addr peer_macaddr;
 	/* Tid number */
 	__le32 tid;
-पूर्ण __packed;
+} __packed;
 
-क्रमागत wmi_peer_smps_state अणु
+enum wmi_peer_smps_state {
 	WMI_PEER_SMPS_PS_NONE = 0x0,
 	WMI_PEER_SMPS_STATIC  = 0x1,
 	WMI_PEER_SMPS_DYNAMIC = 0x2
-पूर्ण;
+};
 
-क्रमागत wmi_peer_chwidth अणु
+enum wmi_peer_chwidth {
 	WMI_PEER_CHWIDTH_20MHZ = 0,
 	WMI_PEER_CHWIDTH_40MHZ = 1,
 	WMI_PEER_CHWIDTH_80MHZ = 2,
 	WMI_PEER_CHWIDTH_160MHZ = 3,
-पूर्ण;
+};
 
-क्रमागत wmi_peer_param अणु
+enum wmi_peer_param {
 	WMI_PEER_SMPS_STATE = 0x1, /* see %wmi_peer_smps_state */
 	WMI_PEER_AMPDU      = 0x2,
 	WMI_PEER_AUTHORIZE  = 0x3,
@@ -6325,71 +6324,71 @@
 	WMI_PEER_PARAM_FIXED_RATE = 0x9,
 	WMI_PEER_DEBUG      = 0xa,
 	WMI_PEER_PHYMODE    = 0xd,
-	WMI_PEER_DUMMY_VAR  = 0xff, /* dummy parameter क्रम STA PS workaround */
-पूर्ण;
+	WMI_PEER_DUMMY_VAR  = 0xff, /* dummy parameter for STA PS workaround */
+};
 
-काष्ठा wmi_peer_set_param_cmd अणु
+struct wmi_peer_set_param_cmd {
 	__le32 vdev_id;
-	काष्ठा wmi_mac_addr peer_macaddr;
+	struct wmi_mac_addr peer_macaddr;
 	__le32 param_id;
 	__le32 param_value;
-पूर्ण __packed;
+} __packed;
 
-#घोषणा MAX_SUPPORTED_RATES 128
+#define MAX_SUPPORTED_RATES 128
 
-काष्ठा wmi_rate_set अणु
+struct wmi_rate_set {
 	/* total number of rates */
 	__le32 num_rates;
 	/*
-	 * rates (each 8bit value) packed पूर्णांकo a 32 bit word.
-	 * the rates are filled from least signअगरicant byte to most
-	 * signअगरicant byte.
+	 * rates (each 8bit value) packed into a 32 bit word.
+	 * the rates are filled from least significant byte to most
+	 * significant byte.
 	 */
 	__le32 rates[(MAX_SUPPORTED_RATES / 4) + 1];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_rate_set_arg अणु
-	अचिन्हित पूर्णांक num_rates;
+struct wmi_rate_set_arg {
+	unsigned int num_rates;
 	u8 rates[MAX_SUPPORTED_RATES];
-पूर्ण;
+};
 
 /*
  * NOTE: It would bea good idea to represent the Tx MCS
  * info in one word and Rx in another word. This is split
- * पूर्णांकo multiple words क्रम convenience
+ * into multiple words for convenience
  */
-काष्ठा wmi_vht_rate_set अणु
+struct wmi_vht_rate_set {
 	__le32 rx_max_rate; /* Max Rx data rate */
 	__le32 rx_mcs_set;  /* Negotiated RX VHT rates */
 	__le32 tx_max_rate; /* Max Tx data rate */
 	__le32 tx_mcs_set;  /* Negotiated TX VHT rates */
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_vht_rate_set_arg अणु
+struct wmi_vht_rate_set_arg {
 	u32 rx_max_rate;
 	u32 rx_mcs_set;
 	u32 tx_max_rate;
 	u32 tx_mcs_set;
-पूर्ण;
+};
 
-काष्ठा wmi_peer_set_rates_cmd अणु
+struct wmi_peer_set_rates_cmd {
 	/* peer MAC address */
-	काष्ठा wmi_mac_addr peer_macaddr;
+	struct wmi_mac_addr peer_macaddr;
 	/* legacy rate set */
-	काष्ठा wmi_rate_set peer_legacy_rates;
+	struct wmi_rate_set peer_legacy_rates;
 	/* ht rate set */
-	काष्ठा wmi_rate_set peer_ht_rates;
-पूर्ण __packed;
+	struct wmi_rate_set peer_ht_rates;
+} __packed;
 
-काष्ठा wmi_peer_set_q_empty_callback_cmd अणु
-	/* unique id identअगरying the VDEV, generated by the caller */
+struct wmi_peer_set_q_empty_callback_cmd {
+	/* unique id identifying the VDEV, generated by the caller */
 	__le32 vdev_id;
 	/* peer MAC address */
-	काष्ठा wmi_mac_addr peer_macaddr;
+	struct wmi_mac_addr peer_macaddr;
 	__le32 callback_enable;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_peer_flags_map अणु
+struct wmi_peer_flags_map {
 	u32 auth;
 	u32 qos;
 	u32 need_ptk_4_way;
@@ -6400,16 +6399,16 @@
 	u32 stbc;
 	u32 ldbc;
 	u32 dyn_mimops;
-	u32 अटल_mimops;
+	u32 static_mimops;
 	u32 spatial_mux;
 	u32 vht;
 	u32 bw80;
 	u32 vht_2g;
 	u32 pmf;
 	u32 bw160;
-पूर्ण;
+};
 
-क्रमागत wmi_peer_flags अणु
+enum wmi_peer_flags {
 	WMI_PEER_AUTH = 0x00000001,
 	WMI_PEER_QOS = 0x00000002,
 	WMI_PEER_NEED_PTK_4_WAY = 0x00000004,
@@ -6427,9 +6426,9 @@
 	WMI_PEER_VHT_2G = 0x08000000,
 	WMI_PEER_PMF = 0x10000000,
 	WMI_PEER_160MHZ = 0x20000000
-पूर्ण;
+};
 
-क्रमागत wmi_10x_peer_flags अणु
+enum wmi_10x_peer_flags {
 	WMI_10X_PEER_AUTH = 0x00000001,
 	WMI_10X_PEER_QOS = 0x00000002,
 	WMI_10X_PEER_NEED_PTK_4_WAY = 0x00000004,
@@ -6445,9 +6444,9 @@
 	WMI_10X_PEER_VHT = 0x02000000,
 	WMI_10X_PEER_80MHZ = 0x04000000,
 	WMI_10X_PEER_160MHZ = 0x20000000
-पूर्ण;
+};
 
-क्रमागत wmi_10_2_peer_flags अणु
+enum wmi_10_2_peer_flags {
 	WMI_10_2_PEER_AUTH = 0x00000001,
 	WMI_10_2_PEER_QOS = 0x00000002,
 	WMI_10_2_PEER_NEED_PTK_4_WAY = 0x00000004,
@@ -6465,270 +6464,270 @@
 	WMI_10_2_PEER_VHT_2G = 0x08000000,
 	WMI_10_2_PEER_PMF = 0x10000000,
 	WMI_10_2_PEER_160MHZ = 0x20000000
-पूर्ण;
+};
 
 /*
  * Peer rate capabilities.
  *
- * This is of पूर्णांकerest to the ratecontrol
+ * This is of interest to the ratecontrol
  * module which resides in the firmware. The bit definitions are
- * consistent with that defined in अगर_athrate.c.
+ * consistent with that defined in if_athrate.c.
  */
-#घोषणा WMI_RC_DS_FLAG          0x01
-#घोषणा WMI_RC_CW40_FLAG        0x02
-#घोषणा WMI_RC_SGI_FLAG         0x04
-#घोषणा WMI_RC_HT_FLAG          0x08
-#घोषणा WMI_RC_RTSCTS_FLAG      0x10
-#घोषणा WMI_RC_TX_STBC_FLAG     0x20
-#घोषणा WMI_RC_RX_STBC_FLAG     0xC0
-#घोषणा WMI_RC_RX_STBC_FLAG_S   6
-#घोषणा WMI_RC_WEP_TKIP_FLAG    0x100
-#घोषणा WMI_RC_TS_FLAG          0x200
-#घोषणा WMI_RC_UAPSD_FLAG       0x400
+#define WMI_RC_DS_FLAG          0x01
+#define WMI_RC_CW40_FLAG        0x02
+#define WMI_RC_SGI_FLAG         0x04
+#define WMI_RC_HT_FLAG          0x08
+#define WMI_RC_RTSCTS_FLAG      0x10
+#define WMI_RC_TX_STBC_FLAG     0x20
+#define WMI_RC_RX_STBC_FLAG     0xC0
+#define WMI_RC_RX_STBC_FLAG_S   6
+#define WMI_RC_WEP_TKIP_FLAG    0x100
+#define WMI_RC_TS_FLAG          0x200
+#define WMI_RC_UAPSD_FLAG       0x400
 
-/* Maximum listen पूर्णांकerval supported by hw in units of beacon पूर्णांकerval */
-#घोषणा ATH10K_MAX_HW_LISTEN_INTERVAL 5
+/* Maximum listen interval supported by hw in units of beacon interval */
+#define ATH10K_MAX_HW_LISTEN_INTERVAL 5
 
-काष्ठा wmi_common_peer_assoc_complete_cmd अणु
-	काष्ठा wmi_mac_addr peer_macaddr;
+struct wmi_common_peer_assoc_complete_cmd {
+	struct wmi_mac_addr peer_macaddr;
 	__le32 vdev_id;
 	__le32 peer_new_assoc; /* 1=assoc, 0=reassoc */
 	__le32 peer_associd; /* 16 LSBs */
 	__le32 peer_flags;
 	__le32 peer_caps; /* 16 LSBs */
-	__le32 peer_listen_पूर्णांकval;
+	__le32 peer_listen_intval;
 	__le32 peer_ht_caps;
 	__le32 peer_max_mpdu;
 	__le32 peer_mpdu_density; /* 0..16 */
 	__le32 peer_rate_caps;
-	काष्ठा wmi_rate_set peer_legacy_rates;
-	काष्ठा wmi_rate_set peer_ht_rates;
+	struct wmi_rate_set peer_legacy_rates;
+	struct wmi_rate_set peer_ht_rates;
 	__le32 peer_nss; /* num of spatial streams */
 	__le32 peer_vht_caps;
 	__le32 peer_phymode;
-	काष्ठा wmi_vht_rate_set peer_vht_rates;
-पूर्ण;
+	struct wmi_vht_rate_set peer_vht_rates;
+};
 
-काष्ठा wmi_मुख्य_peer_assoc_complete_cmd अणु
-	काष्ठा wmi_common_peer_assoc_complete_cmd cmd;
+struct wmi_main_peer_assoc_complete_cmd {
+	struct wmi_common_peer_assoc_complete_cmd cmd;
 
 	/* HT Operation Element of the peer. Five bytes packed in 2
 	 *  INT32 array and filled from lsb to msb.
 	 */
 	__le32 peer_ht_info[2];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_10_1_peer_assoc_complete_cmd अणु
-	काष्ठा wmi_common_peer_assoc_complete_cmd cmd;
-पूर्ण __packed;
+struct wmi_10_1_peer_assoc_complete_cmd {
+	struct wmi_common_peer_assoc_complete_cmd cmd;
+} __packed;
 
-#घोषणा WMI_PEER_ASSOC_INFO0_MAX_MCS_IDX_LSB 0
-#घोषणा WMI_PEER_ASSOC_INFO0_MAX_MCS_IDX_MASK 0x0f
-#घोषणा WMI_PEER_ASSOC_INFO0_MAX_NSS_LSB 4
-#घोषणा WMI_PEER_ASSOC_INFO0_MAX_NSS_MASK 0xf0
+#define WMI_PEER_ASSOC_INFO0_MAX_MCS_IDX_LSB 0
+#define WMI_PEER_ASSOC_INFO0_MAX_MCS_IDX_MASK 0x0f
+#define WMI_PEER_ASSOC_INFO0_MAX_NSS_LSB 4
+#define WMI_PEER_ASSOC_INFO0_MAX_NSS_MASK 0xf0
 
-काष्ठा wmi_10_2_peer_assoc_complete_cmd अणु
-	काष्ठा wmi_common_peer_assoc_complete_cmd cmd;
+struct wmi_10_2_peer_assoc_complete_cmd {
+	struct wmi_common_peer_assoc_complete_cmd cmd;
 	__le32 info0; /* WMI_PEER_ASSOC_INFO0_ */
-पूर्ण __packed;
+} __packed;
 
 /* NSS Mapping to FW */
-#घोषणा WMI_PEER_NSS_MAP_ENABLE	BIT(31)
-#घोषणा WMI_PEER_NSS_160MHZ_MASK	GENMASK(2, 0)
-#घोषणा WMI_PEER_NSS_80_80MHZ_MASK	GENMASK(5, 3)
+#define WMI_PEER_NSS_MAP_ENABLE	BIT(31)
+#define WMI_PEER_NSS_160MHZ_MASK	GENMASK(2, 0)
+#define WMI_PEER_NSS_80_80MHZ_MASK	GENMASK(5, 3)
 
-काष्ठा wmi_10_4_peer_assoc_complete_cmd अणु
-	काष्ठा wmi_10_2_peer_assoc_complete_cmd cmd;
+struct wmi_10_4_peer_assoc_complete_cmd {
+	struct wmi_10_2_peer_assoc_complete_cmd cmd;
 	__le32 peer_bw_rxnss_override;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_peer_assoc_complete_arg अणु
+struct wmi_peer_assoc_complete_arg {
 	u8 addr[ETH_ALEN];
 	u32 vdev_id;
 	bool peer_reassoc;
 	u16 peer_aid;
 	u32 peer_flags; /* see %WMI_PEER_ */
 	u16 peer_caps;
-	u32 peer_listen_पूर्णांकval;
+	u32 peer_listen_intval;
 	u32 peer_ht_caps;
 	u32 peer_max_mpdu;
 	u32 peer_mpdu_density; /* 0..16 */
 	u32 peer_rate_caps; /* see %WMI_RC_ */
-	काष्ठा wmi_rate_set_arg peer_legacy_rates;
-	काष्ठा wmi_rate_set_arg peer_ht_rates;
+	struct wmi_rate_set_arg peer_legacy_rates;
+	struct wmi_rate_set_arg peer_ht_rates;
 	u32 peer_num_spatial_streams;
 	u32 peer_vht_caps;
-	क्रमागत wmi_phy_mode peer_phymode;
-	काष्ठा wmi_vht_rate_set_arg peer_vht_rates;
+	enum wmi_phy_mode peer_phymode;
+	struct wmi_vht_rate_set_arg peer_vht_rates;
 	u32 peer_bw_rxnss_override;
-पूर्ण;
+};
 
-काष्ठा wmi_peer_add_wds_entry_cmd अणु
+struct wmi_peer_add_wds_entry_cmd {
 	/* peer MAC address */
-	काष्ठा wmi_mac_addr peer_macaddr;
+	struct wmi_mac_addr peer_macaddr;
 	/* wds MAC addr */
-	काष्ठा wmi_mac_addr wds_macaddr;
-पूर्ण __packed;
+	struct wmi_mac_addr wds_macaddr;
+} __packed;
 
-काष्ठा wmi_peer_हटाओ_wds_entry_cmd अणु
+struct wmi_peer_remove_wds_entry_cmd {
 	/* wds MAC addr */
-	काष्ठा wmi_mac_addr wds_macaddr;
-पूर्ण __packed;
+	struct wmi_mac_addr wds_macaddr;
+} __packed;
 
-काष्ठा wmi_peer_q_empty_callback_event अणु
+struct wmi_peer_q_empty_callback_event {
 	/* peer MAC address */
-	काष्ठा wmi_mac_addr peer_macaddr;
-पूर्ण __packed;
+	struct wmi_mac_addr peer_macaddr;
+} __packed;
 
 /*
  * Channel info WMI event
  */
-काष्ठा wmi_chan_info_event अणु
+struct wmi_chan_info_event {
 	__le32 err_code;
 	__le32 freq;
 	__le32 cmd_flags;
-	__le32 noise_न्यूनमान;
+	__le32 noise_floor;
 	__le32 rx_clear_count;
 	__le32 cycle_count;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_10_4_chan_info_event अणु
+struct wmi_10_4_chan_info_event {
 	__le32 err_code;
 	__le32 freq;
 	__le32 cmd_flags;
-	__le32 noise_न्यूनमान;
+	__le32 noise_floor;
 	__le32 rx_clear_count;
 	__le32 cycle_count;
 	__le32 chan_tx_pwr_range;
 	__le32 chan_tx_pwr_tp;
 	__le32 rx_frame_count;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_peer_sta_kickout_event अणु
-	काष्ठा wmi_mac_addr peer_macaddr;
-पूर्ण __packed;
+struct wmi_peer_sta_kickout_event {
+	struct wmi_mac_addr peer_macaddr;
+} __packed;
 
-#घोषणा WMI_CHAN_INFO_FLAG_COMPLETE BIT(0)
-#घोषणा WMI_CHAN_INFO_FLAG_PRE_COMPLETE BIT(1)
+#define WMI_CHAN_INFO_FLAG_COMPLETE BIT(0)
+#define WMI_CHAN_INFO_FLAG_PRE_COMPLETE BIT(1)
 
 /* Beacon filter wmi command info */
-#घोषणा BCN_भग्न_उच्च_SUPPORTED_IES	256
-#घोषणा BCN_भग्न_उच्च_ELEMS_IE_LIST	(BCN_भग्न_उच्च_SUPPORTED_IES / 32)
+#define BCN_FLT_MAX_SUPPORTED_IES	256
+#define BCN_FLT_MAX_ELEMS_IE_LIST	(BCN_FLT_MAX_SUPPORTED_IES / 32)
 
-काष्ठा bss_bcn_stats अणु
+struct bss_bcn_stats {
 	__le32 vdev_id;
 	__le32 bss_bcnsdropped;
 	__le32 bss_bcnsdelivered;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा bcn_filter_stats अणु
+struct bcn_filter_stats {
 	__le32 bcns_dropped;
 	__le32 bcns_delivered;
 	__le32 activefilters;
-	काष्ठा bss_bcn_stats bss_stats;
-पूर्ण __packed;
+	struct bss_bcn_stats bss_stats;
+} __packed;
 
-काष्ठा wmi_add_bcn_filter_cmd अणु
+struct wmi_add_bcn_filter_cmd {
 	u32 vdev_id;
-	u32 ie_map[BCN_भग्न_उच्च_ELEMS_IE_LIST];
-पूर्ण __packed;
+	u32 ie_map[BCN_FLT_MAX_ELEMS_IE_LIST];
+} __packed;
 
-क्रमागत wmi_sta_keepalive_method अणु
-	WMI_STA_KEEPALIVE_METHOD_शून्य_FRAME = 1,
+enum wmi_sta_keepalive_method {
+	WMI_STA_KEEPALIVE_METHOD_NULL_FRAME = 1,
 	WMI_STA_KEEPALIVE_METHOD_UNSOLICITATED_ARP_RESPONSE = 2,
-पूर्ण;
+};
 
-#घोषणा WMI_STA_KEEPALIVE_INTERVAL_DISABLE 0
+#define WMI_STA_KEEPALIVE_INTERVAL_DISABLE 0
 
-/* Firmware crashes अगर keepalive पूर्णांकerval exceeds this limit */
-#घोषणा WMI_STA_KEEPALIVE_INTERVAL_MAX_SECONDS 0xffff
+/* Firmware crashes if keepalive interval exceeds this limit */
+#define WMI_STA_KEEPALIVE_INTERVAL_MAX_SECONDS 0xffff
 
 /* note: ip4 addresses are in network byte order, i.e. big endian */
-काष्ठा wmi_sta_keepalive_arp_resp अणु
+struct wmi_sta_keepalive_arp_resp {
 	__be32 src_ip4_addr;
 	__be32 dest_ip4_addr;
-	काष्ठा wmi_mac_addr dest_mac_addr;
-पूर्ण __packed;
+	struct wmi_mac_addr dest_mac_addr;
+} __packed;
 
-काष्ठा wmi_sta_keepalive_cmd अणु
+struct wmi_sta_keepalive_cmd {
 	__le32 vdev_id;
 	__le32 enabled;
 	__le32 method; /* WMI_STA_KEEPALIVE_METHOD_ */
-	__le32 पूर्णांकerval; /* in seconds */
-	काष्ठा wmi_sta_keepalive_arp_resp arp_resp;
-पूर्ण __packed;
+	__le32 interval; /* in seconds */
+	struct wmi_sta_keepalive_arp_resp arp_resp;
+} __packed;
 
-काष्ठा wmi_sta_keepalive_arg अणु
+struct wmi_sta_keepalive_arg {
 	u32 vdev_id;
 	u32 enabled;
 	u32 method;
-	u32 पूर्णांकerval;
+	u32 interval;
 	__be32 src_ip4_addr;
 	__be32 dest_ip4_addr;
-	स्थिर u8 dest_mac_addr[ETH_ALEN];
-पूर्ण;
+	const u8 dest_mac_addr[ETH_ALEN];
+};
 
-क्रमागत wmi_क्रमce_fw_hang_type अणु
+enum wmi_force_fw_hang_type {
 	WMI_FORCE_FW_HANG_ASSERT = 1,
 	WMI_FORCE_FW_HANG_NO_DETECT,
 	WMI_FORCE_FW_HANG_CTRL_EP_FULL,
 	WMI_FORCE_FW_HANG_EMPTY_POINT,
 	WMI_FORCE_FW_HANG_STACK_OVERFLOW,
 	WMI_FORCE_FW_HANG_INFINITE_LOOP,
-पूर्ण;
+};
 
-#घोषणा WMI_FORCE_FW_HANG_RANDOM_TIME 0xFFFFFFFF
+#define WMI_FORCE_FW_HANG_RANDOM_TIME 0xFFFFFFFF
 
-काष्ठा wmi_क्रमce_fw_hang_cmd अणु
+struct wmi_force_fw_hang_cmd {
 	__le32 type;
 	__le32 delay_ms;
-पूर्ण __packed;
+} __packed;
 
-क्रमागत wmi_pdev_reset_mode_type अणु
+enum wmi_pdev_reset_mode_type {
 	WMI_RST_MODE_TX_FLUSH = 1,
 	WMI_RST_MODE_WARM_RESET,
 	WMI_RST_MODE_COLD_RESET,
 	WMI_RST_MODE_WARM_RESET_RESTORE_CAL,
 	WMI_RST_MODE_COLD_RESET_RESTORE_CAL,
 	WMI_RST_MODE_MAX,
-पूर्ण;
+};
 
-क्रमागत ath10k_dbglog_level अणु
+enum ath10k_dbglog_level {
 	ATH10K_DBGLOG_LEVEL_VERBOSE = 0,
 	ATH10K_DBGLOG_LEVEL_INFO = 1,
 	ATH10K_DBGLOG_LEVEL_WARN = 2,
 	ATH10K_DBGLOG_LEVEL_ERR = 3,
-पूर्ण;
+};
 
 /* VAP ids to enable dbglog */
-#घोषणा ATH10K_DBGLOG_CFG_VAP_LOG_LSB		0
-#घोषणा ATH10K_DBGLOG_CFG_VAP_LOG_MASK		0x0000ffff
+#define ATH10K_DBGLOG_CFG_VAP_LOG_LSB		0
+#define ATH10K_DBGLOG_CFG_VAP_LOG_MASK		0x0000ffff
 
 /* to enable dbglog in the firmware */
-#घोषणा ATH10K_DBGLOG_CFG_REPORTING_ENABLE_LSB	16
-#घोषणा ATH10K_DBGLOG_CFG_REPORTING_ENABLE_MASK	0x00010000
+#define ATH10K_DBGLOG_CFG_REPORTING_ENABLE_LSB	16
+#define ATH10K_DBGLOG_CFG_REPORTING_ENABLE_MASK	0x00010000
 
-/* बारtamp resolution */
-#घोषणा ATH10K_DBGLOG_CFG_RESOLUTION_LSB	17
-#घोषणा ATH10K_DBGLOG_CFG_RESOLUTION_MASK	0x000E0000
+/* timestamp resolution */
+#define ATH10K_DBGLOG_CFG_RESOLUTION_LSB	17
+#define ATH10K_DBGLOG_CFG_RESOLUTION_MASK	0x000E0000
 
-/* number of queued messages beक्रमe sending them to the host */
-#घोषणा ATH10K_DBGLOG_CFG_REPORT_SIZE_LSB	20
-#घोषणा ATH10K_DBGLOG_CFG_REPORT_SIZE_MASK	0x0ff00000
+/* number of queued messages before sending them to the host */
+#define ATH10K_DBGLOG_CFG_REPORT_SIZE_LSB	20
+#define ATH10K_DBGLOG_CFG_REPORT_SIZE_MASK	0x0ff00000
 
 /*
  * Log levels to enable. This defines the minimum level to enable, this is
- * not a biपंचांगask. See क्रमागत ath10k_dbglog_level क्रम the values.
+ * not a bitmask. See enum ath10k_dbglog_level for the values.
  */
-#घोषणा ATH10K_DBGLOG_CFG_LOG_LVL_LSB		28
-#घोषणा ATH10K_DBGLOG_CFG_LOG_LVL_MASK		0x70000000
+#define ATH10K_DBGLOG_CFG_LOG_LVL_LSB		28
+#define ATH10K_DBGLOG_CFG_LOG_LVL_MASK		0x70000000
 
 /*
- * Note: this is a cleaned up version of a काष्ठा firmware uses. For
+ * Note: this is a cleaned up version of a struct firmware uses. For
  * example, config_valid was hidden inside an array.
  */
-काष्ठा wmi_dbglog_cfg_cmd अणु
-	/* biपंचांगask to hold mod id config*/
+struct wmi_dbglog_cfg_cmd {
+	/* bitmask to hold mod id config*/
 	__le32 module_enable;
 
 	/* see ATH10K_DBGLOG_CFG_ */
@@ -6739,10 +6738,10 @@
 
 	/* mask of config bits to be changed, see ATH10K_DBGLOG_CFG_ */
 	__le32 config_valid;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_10_4_dbglog_cfg_cmd अणु
-	/* biपंचांगask to hold mod id config*/
+struct wmi_10_4_dbglog_cfg_cmd {
+	/* bitmask to hold mod id config*/
 	__le64 module_enable;
 
 	/* see ATH10K_DBGLOG_CFG_ */
@@ -6753,9 +6752,9 @@
 
 	/* mask of config bits to be changed, see ATH10K_DBGLOG_CFG_ */
 	__le32 config_valid;
-पूर्ण __packed;
+} __packed;
 
-क्रमागत wmi_roam_reason अणु
+enum wmi_roam_reason {
 	WMI_ROAM_REASON_BETTER_AP = 1,
 	WMI_ROAM_REASON_BEACON_MISS = 2,
 	WMI_ROAM_REASON_LOW_RSSI = 3,
@@ -6764,79 +6763,79 @@
 
 	/* keep last */
 	WMI_ROAM_REASON_MAX,
-पूर्ण;
+};
 
-काष्ठा wmi_roam_ev अणु
+struct wmi_roam_ev {
 	__le32 vdev_id;
 	__le32 reason;
-पूर्ण __packed;
+} __packed;
 
-#घोषणा ATH10K_FRAGMT_THRESHOLD_MIN	540
-#घोषणा ATH10K_FRAGMT_THRESHOLD_MAX	2346
+#define ATH10K_FRAGMT_THRESHOLD_MIN	540
+#define ATH10K_FRAGMT_THRESHOLD_MAX	2346
 
-#घोषणा WMI_MAX_EVENT 0x1000
+#define WMI_MAX_EVENT 0x1000
 /* Maximum number of pending TXed WMI packets */
-#घोषणा WMI_SKB_HEADROOM माप(काष्ठा wmi_cmd_hdr)
+#define WMI_SKB_HEADROOM sizeof(struct wmi_cmd_hdr)
 
-/* By शेष disable घातer save क्रम IBSS */
-#घोषणा ATH10K_DEFAULT_ATIM 0
+/* By default disable power save for IBSS */
+#define ATH10K_DEFAULT_ATIM 0
 
-#घोषणा WMI_MAX_MEM_REQS 16
+#define WMI_MAX_MEM_REQS 16
 
-काष्ठा wmi_scan_ev_arg अणु
+struct wmi_scan_ev_arg {
 	__le32 event_type; /* %WMI_SCAN_EVENT_ */
 	__le32 reason; /* %WMI_SCAN_REASON_ */
-	__le32 channel_freq; /* only valid क्रम WMI_SCAN_EVENT_FOREIGN_CHANNEL */
+	__le32 channel_freq; /* only valid for WMI_SCAN_EVENT_FOREIGN_CHANNEL */
 	__le32 scan_req_id;
 	__le32 scan_id;
 	__le32 vdev_id;
-पूर्ण;
+};
 
-काष्ठा mgmt_tx_compl_params अणु
+struct mgmt_tx_compl_params {
 	u32 desc_id;
 	u32 status;
 	u32 ppdu_id;
-	पूर्णांक ack_rssi;
-पूर्ण;
+	int ack_rssi;
+};
 
-काष्ठा wmi_tlv_mgmt_tx_compl_ev_arg अणु
+struct wmi_tlv_mgmt_tx_compl_ev_arg {
 	__le32 desc_id;
 	__le32 status;
 	__le32 pdev_id;
 	__le32 ppdu_id;
 	__le32 ack_rssi;
-पूर्ण;
+};
 
-काष्ठा wmi_tlv_mgmt_tx_bundle_compl_ev_arg अणु
+struct wmi_tlv_mgmt_tx_bundle_compl_ev_arg {
 	__le32 num_reports;
-	स्थिर __le32 *desc_ids;
-	स्थिर __le32 *status;
-	स्थिर __le32 *ppdu_ids;
-	स्थिर __le32 *ack_rssi;
-पूर्ण;
+	const __le32 *desc_ids;
+	const __le32 *status;
+	const __le32 *ppdu_ids;
+	const __le32 *ack_rssi;
+};
 
-काष्ठा wmi_peer_delete_resp_ev_arg अणु
+struct wmi_peer_delete_resp_ev_arg {
 	__le32 vdev_id;
-	काष्ठा wmi_mac_addr peer_addr;
-पूर्ण;
+	struct wmi_mac_addr peer_addr;
+};
 
-#घोषणा WMI_MGMT_RX_NUM_RSSI 4
-काष्ठा wmi_mgmt_rx_ev_arg अणु
+#define WMI_MGMT_RX_NUM_RSSI 4
+struct wmi_mgmt_rx_ev_arg {
 	__le32 channel;
 	__le32 snr;
 	__le32 rate;
 	__le32 phy_mode;
 	__le32 buf_len;
 	__le32 status; /* %WMI_RX_STATUS_ */
-	काष्ठा wmi_mgmt_rx_ext_info ext_info;
+	struct wmi_mgmt_rx_ext_info ext_info;
 	__le32 rssi[WMI_MGMT_RX_NUM_RSSI];
-पूर्ण;
+};
 
-काष्ठा wmi_ch_info_ev_arg अणु
+struct wmi_ch_info_ev_arg {
 	__le32 err_code;
 	__le32 freq;
 	__le32 cmd_flags;
-	__le32 noise_न्यूनमान;
+	__le32 noise_floor;
 	__le32 rx_clear_count;
 	__le32 cycle_count;
 	__le32 chan_tx_pwr_range;
@@ -6846,33 +6845,33 @@
 	__le32 rx_11b_mode_data_duration;
 	__le32 tx_frame_cnt;
 	__le32 mac_clk_mhz;
-पूर्ण;
+};
 
 /* From 10.4 firmware, not sure all have the same values. */
-क्रमागत wmi_vdev_start_status अणु
+enum wmi_vdev_start_status {
 	WMI_VDEV_START_OK = 0,
 	WMI_VDEV_START_CHAN_INVALID,
-पूर्ण;
+};
 
-काष्ठा wmi_vdev_start_ev_arg अणु
+struct wmi_vdev_start_ev_arg {
 	__le32 vdev_id;
 	__le32 req_id;
 	__le32 resp_type; /* %WMI_VDEV_RESP_ */
-	__le32 status; /* See wmi_vdev_start_status क्रमागत above */
-पूर्ण;
+	__le32 status; /* See wmi_vdev_start_status enum above */
+};
 
-काष्ठा wmi_peer_kick_ev_arg अणु
-	स्थिर u8 *mac_addr;
-पूर्ण;
+struct wmi_peer_kick_ev_arg {
+	const u8 *mac_addr;
+};
 
-काष्ठा wmi_swba_ev_arg अणु
+struct wmi_swba_ev_arg {
 	__le32 vdev_map;
-	काष्ठा wmi_tim_info_arg tim_info[WMI_MAX_AP_VDEV];
-	स्थिर काष्ठा wmi_p2p_noa_info *noa_info[WMI_MAX_AP_VDEV];
-पूर्ण;
+	struct wmi_tim_info_arg tim_info[WMI_MAX_AP_VDEV];
+	const struct wmi_p2p_noa_info *noa_info[WMI_MAX_AP_VDEV];
+};
 
-काष्ठा wmi_phyerr_ev_arg अणु
-	u32 tsf_बारtamp;
+struct wmi_phyerr_ev_arg {
+	u32 tsf_timestamp;
 	u16 freq1;
 	u16 freq2;
 	u8 rssi_combined;
@@ -6880,25 +6879,25 @@
 	u8 phy_err_code;
 	u16 nf_chains[4];
 	u32 buf_len;
-	स्थिर u8 *buf;
+	const u8 *buf;
 	u8 hdr_len;
-पूर्ण;
+};
 
-काष्ठा wmi_phyerr_hdr_arg अणु
+struct wmi_phyerr_hdr_arg {
 	u32 num_phyerrs;
 	u32 tsf_l32;
 	u32 tsf_u32;
 	u32 buf_len;
-	स्थिर व्योम *phyerrs;
-पूर्ण;
+	const void *phyerrs;
+};
 
-काष्ठा wmi_dfs_status_ev_arg अणु
+struct wmi_dfs_status_ev_arg {
 	u32 status;
-पूर्ण;
+};
 
-काष्ठा wmi_svc_rdy_ev_arg अणु
-	__le32 min_tx_घातer;
-	__le32 max_tx_घातer;
+struct wmi_svc_rdy_ev_arg {
+	__le32 min_tx_power;
+	__le32 max_tx_power;
 	__le32 ht_cap;
 	__le32 vht_cap;
 	__le32 vht_supp_mcs;
@@ -6914,52 +6913,52 @@
 	__le32 low_5ghz_chan;
 	__le32 high_5ghz_chan;
 	__le32 sys_cap_info;
-	स्थिर __le32 *service_map;
-	माप_प्रकार service_map_len;
-	स्थिर काष्ठा wlan_host_mem_req *mem_reqs[WMI_MAX_MEM_REQS];
-पूर्ण;
+	const __le32 *service_map;
+	size_t service_map_len;
+	const struct wlan_host_mem_req *mem_reqs[WMI_MAX_MEM_REQS];
+};
 
-काष्ठा wmi_svc_avail_ev_arg अणु
+struct wmi_svc_avail_ev_arg {
 	bool service_map_ext_valid;
 	__le32 service_map_ext_len;
-	स्थिर __le32 *service_map_ext;
-पूर्ण;
+	const __le32 *service_map_ext;
+};
 
-काष्ठा wmi_rdy_ev_arg अणु
+struct wmi_rdy_ev_arg {
 	__le32 sw_version;
 	__le32 abi_version;
 	__le32 status;
-	स्थिर u8 *mac_addr;
-पूर्ण;
+	const u8 *mac_addr;
+};
 
-काष्ठा wmi_roam_ev_arg अणु
+struct wmi_roam_ev_arg {
 	__le32 vdev_id;
 	__le32 reason;
 	__le32 rssi;
-पूर्ण;
+};
 
-काष्ठा wmi_echo_ev_arg अणु
+struct wmi_echo_ev_arg {
 	__le32 value;
-पूर्ण;
+};
 
-काष्ठा wmi_pdev_temperature_event अणु
+struct wmi_pdev_temperature_event {
 	/* temperature value in Celcius degree */
 	__le32 temperature;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_pdev_bss_chan_info_event अणु
+struct wmi_pdev_bss_chan_info_event {
 	__le32 freq;
-	__le32 noise_न्यूनमान;
+	__le32 noise_floor;
 	__le64 cycle_busy;
 	__le64 cycle_total;
 	__le64 cycle_tx;
 	__le64 cycle_rx;
 	__le64 cycle_rx_bss;
 	__le32 reserved;
-पूर्ण __packed;
+} __packed;
 
-/* WOW काष्ठाures */
-क्रमागत wmi_wow_wakeup_event अणु
+/* WOW structures */
+enum wmi_wow_wakeup_event {
 	WOW_BMISS_EVENT = 0,
 	WOW_BETTER_AP_EVENT,
 	WOW_DEAUTH_RECVD_EVENT,
@@ -6985,13 +6984,13 @@
 	WOW_BEACON_EVENT,
 	WOW_CLIENT_KICKOUT_EVENT,
 	WOW_EVENT_MAX,
-पूर्ण;
+};
 
-#घोषणा C2S(x) हाल x: वापस #x
+#define C2S(x) case x: return #x
 
-अटल अंतरभूत स्थिर अक्षर *wow_wakeup_event(क्रमागत wmi_wow_wakeup_event ev)
-अणु
-	चयन (ev) अणु
+static inline const char *wow_wakeup_event(enum wmi_wow_wakeup_event ev)
+{
+	switch (ev) {
 	C2S(WOW_BMISS_EVENT);
 	C2S(WOW_BETTER_AP_EVENT);
 	C2S(WOW_DEAUTH_RECVD_EVENT);
@@ -7017,12 +7016,12 @@
 	C2S(WOW_BEACON_EVENT);
 	C2S(WOW_CLIENT_KICKOUT_EVENT);
 	C2S(WOW_EVENT_MAX);
-	शेष:
-		वापस शून्य;
-	पूर्ण
-पूर्ण
+	default:
+		return NULL;
+	}
+}
 
-क्रमागत wmi_wow_wake_reason अणु
+enum wmi_wow_wake_reason {
 	WOW_REASON_UNSPECIFIED = -1,
 	WOW_REASON_NLOD = 0,
 	WOW_REASON_AP_ASSOC_LOST,
@@ -7053,11 +7052,11 @@
 	WOW_REASON_BEACON_RECV,
 	WOW_REASON_CLIENT_KICKOUT_EVENT,
 	WOW_REASON_DEBUG_TEST = 0xFF,
-पूर्ण;
+};
 
-अटल अंतरभूत स्थिर अक्षर *wow_reason(क्रमागत wmi_wow_wake_reason reason)
-अणु
-	चयन (reason) अणु
+static inline const char *wow_reason(enum wmi_wow_wake_reason reason)
+{
+	switch (reason) {
 	C2S(WOW_REASON_UNSPECIFIED);
 	C2S(WOW_REASON_NLOD);
 	C2S(WOW_REASON_AP_ASSOC_LOST);
@@ -7088,66 +7087,66 @@
 	C2S(WOW_REASON_BEACON_RECV);
 	C2S(WOW_REASON_CLIENT_KICKOUT_EVENT);
 	C2S(WOW_REASON_DEBUG_TEST);
-	शेष:
-		वापस शून्य;
-	पूर्ण
-पूर्ण
+	default:
+		return NULL;
+	}
+}
 
-#अघोषित C2S
+#undef C2S
 
-काष्ठा wmi_wow_ev_arg अणु
+struct wmi_wow_ev_arg {
 	u32 vdev_id;
 	u32 flag;
-	क्रमागत wmi_wow_wake_reason wake_reason;
+	enum wmi_wow_wake_reason wake_reason;
 	u32 data_len;
-पूर्ण;
+};
 
-#घोषणा WOW_MIN_PATTERN_SIZE	1
-#घोषणा WOW_MAX_PATTERN_SIZE	148
-#घोषणा WOW_MAX_PKT_OFFSET	128
-#घोषणा WOW_HDR_LEN	(माप(काष्ठा ieee80211_hdr_3addr) + \
-	माप(काष्ठा rfc1042_hdr))
-#घोषणा WOW_MAX_REDUCE	(WOW_HDR_LEN - माप(काष्ठा ethhdr) - \
-	दुरत्व(काष्ठा ieee80211_hdr_3addr, addr1))
+#define WOW_MIN_PATTERN_SIZE	1
+#define WOW_MAX_PATTERN_SIZE	148
+#define WOW_MAX_PKT_OFFSET	128
+#define WOW_HDR_LEN	(sizeof(struct ieee80211_hdr_3addr) + \
+	sizeof(struct rfc1042_hdr))
+#define WOW_MAX_REDUCE	(WOW_HDR_LEN - sizeof(struct ethhdr) - \
+	offsetof(struct ieee80211_hdr_3addr, addr1))
 
-क्रमागत wmi_tdls_state अणु
+enum wmi_tdls_state {
 	WMI_TDLS_DISABLE,
 	WMI_TDLS_ENABLE_PASSIVE,
 	WMI_TDLS_ENABLE_ACTIVE,
 	WMI_TDLS_ENABLE_ACTIVE_EXTERNAL_CONTROL,
-पूर्ण;
+};
 
-क्रमागत wmi_tdls_peer_state अणु
+enum wmi_tdls_peer_state {
 	WMI_TDLS_PEER_STATE_PEERING,
 	WMI_TDLS_PEER_STATE_CONNECTED,
 	WMI_TDLS_PEER_STATE_TEARDOWN,
-पूर्ण;
+};
 
-काष्ठा wmi_tdls_peer_update_cmd_arg अणु
+struct wmi_tdls_peer_update_cmd_arg {
 	u32 vdev_id;
-	क्रमागत wmi_tdls_peer_state peer_state;
+	enum wmi_tdls_peer_state peer_state;
 	u8 addr[ETH_ALEN];
-पूर्ण;
+};
 
-#घोषणा WMI_TDLS_MAX_SUPP_OPER_CLASSES 32
+#define WMI_TDLS_MAX_SUPP_OPER_CLASSES 32
 
-#घोषणा WMI_TDLS_PEER_SP_MASK	0x60
-#घोषणा WMI_TDLS_PEER_SP_LSB	5
+#define WMI_TDLS_PEER_SP_MASK	0x60
+#define WMI_TDLS_PEER_SP_LSB	5
 
-क्रमागत wmi_tdls_options अणु
+enum wmi_tdls_options {
 	WMI_TDLS_OFFCHAN_EN = BIT(0),
 	WMI_TDLS_BUFFER_STA_EN = BIT(1),
 	WMI_TDLS_SLEEP_STA_EN = BIT(2),
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	WMI_TDLS_PEER_QOS_AC_VO = BIT(0),
 	WMI_TDLS_PEER_QOS_AC_VI = BIT(1),
 	WMI_TDLS_PEER_QOS_AC_BK = BIT(2),
 	WMI_TDLS_PEER_QOS_AC_BE = BIT(3),
-पूर्ण;
+};
 
-काष्ठा wmi_tdls_peer_capab_arg अणु
+struct wmi_tdls_peer_capab_arg {
 	u8 peer_uapsd_queues;
 	u8 peer_max_sp;
 	u32 buff_sta_support;
@@ -7160,27 +7159,27 @@
 	u32 is_peer_responder;
 	u32 pref_offchan_num;
 	u32 pref_offchan_bw;
-पूर्ण;
+};
 
-काष्ठा wmi_10_4_tdls_set_state_cmd अणु
+struct wmi_10_4_tdls_set_state_cmd {
 	__le32 vdev_id;
 	__le32 state;
-	__le32 notअगरication_पूर्णांकerval_ms;
+	__le32 notification_interval_ms;
 	__le32 tx_discovery_threshold;
-	__le32 tx_tearकरोwn_threshold;
-	__le32 rssi_tearकरोwn_threshold;
+	__le32 tx_teardown_threshold;
+	__le32 rssi_teardown_threshold;
 	__le32 rssi_delta;
 	__le32 tdls_options;
-	__le32 tdls_peer_traffic_ind_winकरोw;
-	__le32 tdls_peer_traffic_response_समयout_ms;
+	__le32 tdls_peer_traffic_ind_window;
+	__le32 tdls_peer_traffic_response_timeout_ms;
 	__le32 tdls_puapsd_mask;
-	__le32 tdls_puapsd_inactivity_समय_ms;
+	__le32 tdls_puapsd_inactivity_time_ms;
 	__le32 tdls_puapsd_rx_frame_threshold;
-	__le32 tearकरोwn_notअगरication_ms;
+	__le32 teardown_notification_ms;
 	__le32 tdls_peer_kickout_threshold;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_tdls_peer_capabilities अणु
+struct wmi_tdls_peer_capabilities {
 	__le32 peer_qos;
 	__le32 buff_sta_support;
 	__le32 off_chan_support;
@@ -7192,18 +7191,18 @@
 	__le32 is_peer_responder;
 	__le32 pref_offchan_num;
 	__le32 pref_offchan_bw;
-	काष्ठा wmi_channel peer_chan_list[1];
-पूर्ण __packed;
+	struct wmi_channel peer_chan_list[1];
+} __packed;
 
-काष्ठा wmi_10_4_tdls_peer_update_cmd अणु
+struct wmi_10_4_tdls_peer_update_cmd {
 	__le32 vdev_id;
-	काष्ठा wmi_mac_addr peer_macaddr;
+	struct wmi_mac_addr peer_macaddr;
 	__le32 peer_state;
 	__le32 reserved[4];
-	काष्ठा wmi_tdls_peer_capabilities peer_capab;
-पूर्ण __packed;
+	struct wmi_tdls_peer_capabilities peer_capab;
+} __packed;
 
-क्रमागत wmi_tdls_peer_reason अणु
+enum wmi_tdls_peer_reason {
 	WMI_TDLS_TEARDOWN_REASON_TX,
 	WMI_TDLS_TEARDOWN_REASON_RSSI,
 	WMI_TDLS_TEARDOWN_REASON_SCAN,
@@ -7217,298 +7216,298 @@
 	WMI_TDLS_EXIT_BT_BUSY_MODE,
 	WMI_TDLS_SCAN_STARTED_EVENT,
 	WMI_TDLS_SCAN_COMPLETED_EVENT,
-पूर्ण;
+};
 
-क्रमागत wmi_tdls_peer_notअगरication अणु
+enum wmi_tdls_peer_notification {
 	WMI_TDLS_SHOULD_DISCOVER,
 	WMI_TDLS_SHOULD_TEARDOWN,
 	WMI_TDLS_PEER_DISCONNECTED,
 	WMI_TDLS_CONNECTION_TRACKER_NOTIFICATION,
-पूर्ण;
+};
 
-काष्ठा wmi_tdls_peer_event अणु
-	काष्ठा wmi_mac_addr peer_macaddr;
-	/* see क्रमागत wmi_tdls_peer_notअगरication*/
+struct wmi_tdls_peer_event {
+	struct wmi_mac_addr peer_macaddr;
+	/* see enum wmi_tdls_peer_notification*/
 	__le32 peer_status;
-	/* see क्रमागत wmi_tdls_peer_reason */
+	/* see enum wmi_tdls_peer_reason */
 	__le32 peer_reason;
 	__le32 vdev_id;
-पूर्ण __packed;
+} __packed;
 
-क्रमागत wmi_tid_aggr_control_conf अणु
+enum wmi_tid_aggr_control_conf {
 	WMI_TID_CONFIG_AGGR_CONTROL_IGNORE,
 	WMI_TID_CONFIG_AGGR_CONTROL_ENABLE,
 	WMI_TID_CONFIG_AGGR_CONTROL_DISABLE,
-पूर्ण;
+};
 
-क्रमागत wmi_noack_tid_conf अणु
+enum wmi_noack_tid_conf {
 	WMI_NOACK_TID_CONFIG_IGNORE_ACK_POLICY,
 	WMI_PEER_TID_CONFIG_ACK,
 	WMI_PEER_TID_CONFIG_NOACK,
-पूर्ण;
+};
 
-क्रमागत wmi_tid_rate_ctrl_conf अणु
+enum wmi_tid_rate_ctrl_conf {
 	WMI_TID_CONFIG_RATE_CONTROL_IGNORE,
 	WMI_TID_CONFIG_RATE_CONTROL_AUTO,
 	WMI_TID_CONFIG_RATE_CONTROL_FIXED_RATE,
 	WMI_TID_CONFIG_RATE_CONTROL_DEFAULT_LOWEST_RATE,
 	WMI_PEER_TID_CONFIG_RATE_UPPER_CAP,
-पूर्ण;
+};
 
-क्रमागत wmi_tid_rtscts_control_conf अणु
+enum wmi_tid_rtscts_control_conf {
 	WMI_TID_CONFIG_RTSCTS_CONTROL_ENABLE,
 	WMI_TID_CONFIG_RTSCTS_CONTROL_DISABLE,
-पूर्ण;
+};
 
-क्रमागत wmi_ext_tid_config_map अणु
+enum wmi_ext_tid_config_map {
 	WMI_EXT_TID_RTS_CTS_CONFIG = BIT(0),
-पूर्ण;
+};
 
-काष्ठा wmi_per_peer_per_tid_cfg_arg अणु
+struct wmi_per_peer_per_tid_cfg_arg {
 	u32 vdev_id;
-	काष्ठा wmi_mac_addr peer_macaddr;
+	struct wmi_mac_addr peer_macaddr;
 	u32 tid;
-	क्रमागत wmi_noack_tid_conf ack_policy;
-	क्रमागत wmi_tid_aggr_control_conf aggr_control;
+	enum wmi_noack_tid_conf ack_policy;
+	enum wmi_tid_aggr_control_conf aggr_control;
 	u8 rate_ctrl;
 	u32 retry_count;
 	u32 rcode_flags;
-	u32 ext_tid_cfg_biपंचांगap;
+	u32 ext_tid_cfg_bitmap;
 	u32 rtscts_ctrl;
-पूर्ण;
+};
 
-काष्ठा wmi_peer_per_tid_cfg_cmd अणु
+struct wmi_peer_per_tid_cfg_cmd {
 	__le32 vdev_id;
-	काष्ठा wmi_mac_addr peer_macaddr;
+	struct wmi_mac_addr peer_macaddr;
 	__le32 tid;
 
-	/* see क्रमागत wmi_noack_tid_conf */
+	/* see enum wmi_noack_tid_conf */
 	__le32 ack_policy;
 
-	/* see क्रमागत wmi_tid_aggr_control_conf */
+	/* see enum wmi_tid_aggr_control_conf */
 	__le32 aggr_control;
 
-	/* see क्रमागत wmi_tid_rate_ctrl_conf */
+	/* see enum wmi_tid_rate_ctrl_conf */
 	__le32 rate_control;
 	__le32 rcode_flags;
 	__le32 retry_count;
 
-	/* See क्रमागत wmi_ext_tid_config_map */
-	__le32 ext_tid_cfg_biपंचांगap;
+	/* See enum wmi_ext_tid_config_map */
+	__le32 ext_tid_cfg_bitmap;
 
-	/* see क्रमागत wmi_tid_rtscts_control_conf */
+	/* see enum wmi_tid_rtscts_control_conf */
 	__le32 rtscts_ctrl;
-पूर्ण __packed;
+} __packed;
 
-क्रमागत wmi_txbf_conf अणु
+enum wmi_txbf_conf {
 	WMI_TXBF_CONF_UNSUPPORTED,
 	WMI_TXBF_CONF_BEFORE_ASSOC,
 	WMI_TXBF_CONF_AFTER_ASSOC,
-पूर्ण;
+};
 
-#घोषणा	WMI_CCA_DETECT_LEVEL_AUTO	0
-#घोषणा	WMI_CCA_DETECT_MARGIN_AUTO	0
+#define	WMI_CCA_DETECT_LEVEL_AUTO	0
+#define	WMI_CCA_DETECT_MARGIN_AUTO	0
 
-काष्ठा wmi_pdev_set_adaptive_cca_params अणु
+struct wmi_pdev_set_adaptive_cca_params {
 	__le32 enable;
 	__le32 cca_detect_level;
 	__le32 cca_detect_margin;
-पूर्ण __packed;
+} __packed;
 
-#घोषणा WMI_PNO_MAX_SCHED_SCAN_PLANS      2
-#घोषणा WMI_PNO_MAX_SCHED_SCAN_PLAN_INT   7200
-#घोषणा WMI_PNO_MAX_SCHED_SCAN_PLAN_ITRNS 100
-#घोषणा WMI_PNO_MAX_NETW_CHANNELS         26
-#घोषणा WMI_PNO_MAX_NETW_CHANNELS_EX      60
-#घोषणा WMI_PNO_MAX_SUPP_NETWORKS         WLAN_SCAN_PARAMS_MAX_SSID
-#घोषणा WMI_PNO_MAX_IE_LENGTH             WLAN_SCAN_PARAMS_MAX_IE_LEN
+#define WMI_PNO_MAX_SCHED_SCAN_PLANS      2
+#define WMI_PNO_MAX_SCHED_SCAN_PLAN_INT   7200
+#define WMI_PNO_MAX_SCHED_SCAN_PLAN_ITRNS 100
+#define WMI_PNO_MAX_NETW_CHANNELS         26
+#define WMI_PNO_MAX_NETW_CHANNELS_EX      60
+#define WMI_PNO_MAX_SUPP_NETWORKS         WLAN_SCAN_PARAMS_MAX_SSID
+#define WMI_PNO_MAX_IE_LENGTH             WLAN_SCAN_PARAMS_MAX_IE_LEN
 
-/*size based of करोt11 declaration without extra IEs as we will not carry those क्रम PNO*/
-#घोषणा WMI_PNO_MAX_PB_REQ_SIZE    450
+/*size based of dot11 declaration without extra IEs as we will not carry those for PNO*/
+#define WMI_PNO_MAX_PB_REQ_SIZE    450
 
-#घोषणा WMI_PNO_24G_DEFAULT_CH     1
-#घोषणा WMI_PNO_5G_DEFAULT_CH      36
+#define WMI_PNO_24G_DEFAULT_CH     1
+#define WMI_PNO_5G_DEFAULT_CH      36
 
-#घोषणा WMI_ACTIVE_MAX_CHANNEL_TIME 40
-#घोषणा WMI_PASSIVE_MAX_CHANNEL_TIME   110
+#define WMI_ACTIVE_MAX_CHANNEL_TIME 40
+#define WMI_PASSIVE_MAX_CHANNEL_TIME   110
 
 /* SSID broadcast type */
-क्रमागत wmi_SSID_bcast_type अणु
+enum wmi_SSID_bcast_type {
 	BCAST_UNKNOWN      = 0,
 	BCAST_NORMAL       = 1,
 	BCAST_HIDDEN       = 2,
-पूर्ण;
+};
 
-काष्ठा wmi_network_type अणु
-	काष्ठा wmi_ssid ssid;
+struct wmi_network_type {
+	struct wmi_ssid ssid;
 	u32 authentication;
 	u32 encryption;
 	u32 bcast_nw_type;
 	u8 channel_count;
 	u16 channels[WMI_PNO_MAX_NETW_CHANNELS_EX];
 	s32 rssi_threshold;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wmi_pno_scan_req अणु
+struct wmi_pno_scan_req {
 	u8 enable;
 	u8 vdev_id;
 	u8 uc_networks_count;
-	काष्ठा wmi_network_type a_networks[WMI_PNO_MAX_SUPP_NETWORKS];
+	struct wmi_network_type a_networks[WMI_PNO_MAX_SUPP_NETWORKS];
 	u32 fast_scan_period;
 	u32 slow_scan_period;
 	u8 fast_scan_max_cycles;
 
-	bool करो_passive_scan;
+	bool do_passive_scan;
 
-	u32 delay_start_समय;
-	u32 active_min_समय;
-	u32 active_max_समय;
-	u32 passive_min_समय;
-	u32 passive_max_समय;
+	u32 delay_start_time;
+	u32 active_min_time;
+	u32 active_max_time;
+	u32 passive_min_time;
+	u32 passive_max_time;
 
-	/* mac address अक्रमomization attributes */
-	u32 enable_pno_scan_अक्रमomization;
+	/* mac address randomization attributes */
+	u32 enable_pno_scan_randomization;
 	u8 mac_addr[ETH_ALEN];
 	u8 mac_addr_mask[ETH_ALEN];
-पूर्ण __packed;
+} __packed;
 
-क्रमागत wmi_host_platक्रमm_type अणु
+enum wmi_host_platform_type {
 	WMI_HOST_PLATFORM_HIGH_PERF,
 	WMI_HOST_PLATFORM_LOW_PERF,
-पूर्ण;
+};
 
-क्रमागत wmi_bss_survey_req_type अणु
+enum wmi_bss_survey_req_type {
 	WMI_BSS_SURVEY_REQ_TYPE_READ = 1,
 	WMI_BSS_SURVEY_REQ_TYPE_READ_CLEAR,
-पूर्ण;
+};
 
-काष्ठा wmi_pdev_chan_info_req_cmd अणु
+struct wmi_pdev_chan_info_req_cmd {
 	__le32 type;
 	__le32 reserved;
-पूर्ण __packed;
+} __packed;
 
-/* bb timing रेजिस्टर configurations */
-काष्ठा wmi_bb_timing_cfg_arg अणु
+/* bb timing register configurations */
+struct wmi_bb_timing_cfg_arg {
 	/* Tx_end to pa off timing */
 	u32 bb_tx_timing;
 
-	/* Tx_end to बाह्यal pa off timing */
+	/* Tx_end to external pa off timing */
 	u32 bb_xpa_timing;
-पूर्ण;
+};
 
-काष्ठा wmi_pdev_bb_timing_cfg_cmd अणु
+struct wmi_pdev_bb_timing_cfg_cmd {
 	/* Tx_end to pa off timing */
 	__le32 bb_tx_timing;
 
-	/* Tx_end to बाह्यal pa off timing */
+	/* Tx_end to external pa off timing */
 	__le32 bb_xpa_timing;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा ath10k;
-काष्ठा ath10k_vअगर;
-काष्ठा ath10k_fw_stats_pdev;
-काष्ठा ath10k_fw_stats_peer;
-काष्ठा ath10k_fw_stats;
+struct ath10k;
+struct ath10k_vif;
+struct ath10k_fw_stats_pdev;
+struct ath10k_fw_stats_peer;
+struct ath10k_fw_stats;
 
-पूर्णांक ath10k_wmi_attach(काष्ठा ath10k *ar);
-व्योम ath10k_wmi_detach(काष्ठा ath10k *ar);
-व्योम ath10k_wmi_मुक्त_host_mem(काष्ठा ath10k *ar);
-पूर्णांक ath10k_wmi_रुको_क्रम_service_पढ़ोy(काष्ठा ath10k *ar);
-पूर्णांक ath10k_wmi_रुको_क्रम_unअगरied_पढ़ोy(काष्ठा ath10k *ar);
+int ath10k_wmi_attach(struct ath10k *ar);
+void ath10k_wmi_detach(struct ath10k *ar);
+void ath10k_wmi_free_host_mem(struct ath10k *ar);
+int ath10k_wmi_wait_for_service_ready(struct ath10k *ar);
+int ath10k_wmi_wait_for_unified_ready(struct ath10k *ar);
 
-काष्ठा sk_buff *ath10k_wmi_alloc_skb(काष्ठा ath10k *ar, u32 len);
-पूर्णांक ath10k_wmi_connect(काष्ठा ath10k *ar);
+struct sk_buff *ath10k_wmi_alloc_skb(struct ath10k *ar, u32 len);
+int ath10k_wmi_connect(struct ath10k *ar);
 
-काष्ठा sk_buff *ath10k_wmi_alloc_skb(काष्ठा ath10k *ar, u32 len);
-पूर्णांक ath10k_wmi_cmd_send(काष्ठा ath10k *ar, काष्ठा sk_buff *skb, u32 cmd_id);
-पूर्णांक ath10k_wmi_cmd_send_noरुको(काष्ठा ath10k *ar, काष्ठा sk_buff *skb,
+struct sk_buff *ath10k_wmi_alloc_skb(struct ath10k *ar, u32 len);
+int ath10k_wmi_cmd_send(struct ath10k *ar, struct sk_buff *skb, u32 cmd_id);
+int ath10k_wmi_cmd_send_nowait(struct ath10k *ar, struct sk_buff *skb,
 			       u32 cmd_id);
-व्योम ath10k_wmi_start_scan_init(काष्ठा ath10k *ar, काष्ठा wmi_start_scan_arg *arg);
+void ath10k_wmi_start_scan_init(struct ath10k *ar, struct wmi_start_scan_arg *arg);
 
-व्योम ath10k_wmi_pull_pdev_stats_base(स्थिर काष्ठा wmi_pdev_stats_base *src,
-				     काष्ठा ath10k_fw_stats_pdev *dst);
-व्योम ath10k_wmi_pull_pdev_stats_tx(स्थिर काष्ठा wmi_pdev_stats_tx *src,
-				   काष्ठा ath10k_fw_stats_pdev *dst);
-व्योम ath10k_wmi_pull_pdev_stats_rx(स्थिर काष्ठा wmi_pdev_stats_rx *src,
-				   काष्ठा ath10k_fw_stats_pdev *dst);
-व्योम ath10k_wmi_pull_pdev_stats_extra(स्थिर काष्ठा wmi_pdev_stats_extra *src,
-				      काष्ठा ath10k_fw_stats_pdev *dst);
-व्योम ath10k_wmi_pull_peer_stats(स्थिर काष्ठा wmi_peer_stats *src,
-				काष्ठा ath10k_fw_stats_peer *dst);
-व्योम ath10k_wmi_put_host_mem_chunks(काष्ठा ath10k *ar,
-				    काष्ठा wmi_host_mem_chunks *chunks);
-व्योम ath10k_wmi_put_start_scan_common(काष्ठा wmi_start_scan_common *cmn,
-				      स्थिर काष्ठा wmi_start_scan_arg *arg);
-व्योम ath10k_wmi_set_wmm_param(काष्ठा wmi_wmm_params *params,
-			      स्थिर काष्ठा wmi_wmm_params_arg *arg);
-व्योम ath10k_wmi_put_wmi_channel(काष्ठा ath10k *ar, काष्ठा wmi_channel *ch,
-				स्थिर काष्ठा wmi_channel_arg *arg);
-पूर्णांक ath10k_wmi_start_scan_verअगरy(स्थिर काष्ठा wmi_start_scan_arg *arg);
+void ath10k_wmi_pull_pdev_stats_base(const struct wmi_pdev_stats_base *src,
+				     struct ath10k_fw_stats_pdev *dst);
+void ath10k_wmi_pull_pdev_stats_tx(const struct wmi_pdev_stats_tx *src,
+				   struct ath10k_fw_stats_pdev *dst);
+void ath10k_wmi_pull_pdev_stats_rx(const struct wmi_pdev_stats_rx *src,
+				   struct ath10k_fw_stats_pdev *dst);
+void ath10k_wmi_pull_pdev_stats_extra(const struct wmi_pdev_stats_extra *src,
+				      struct ath10k_fw_stats_pdev *dst);
+void ath10k_wmi_pull_peer_stats(const struct wmi_peer_stats *src,
+				struct ath10k_fw_stats_peer *dst);
+void ath10k_wmi_put_host_mem_chunks(struct ath10k *ar,
+				    struct wmi_host_mem_chunks *chunks);
+void ath10k_wmi_put_start_scan_common(struct wmi_start_scan_common *cmn,
+				      const struct wmi_start_scan_arg *arg);
+void ath10k_wmi_set_wmm_param(struct wmi_wmm_params *params,
+			      const struct wmi_wmm_params_arg *arg);
+void ath10k_wmi_put_wmi_channel(struct ath10k *ar, struct wmi_channel *ch,
+				const struct wmi_channel_arg *arg);
+int ath10k_wmi_start_scan_verify(const struct wmi_start_scan_arg *arg);
 
-पूर्णांक ath10k_wmi_event_scan(काष्ठा ath10k *ar, काष्ठा sk_buff *skb);
-पूर्णांक ath10k_wmi_event_mgmt_rx(काष्ठा ath10k *ar, काष्ठा sk_buff *skb);
-पूर्णांक ath10k_wmi_event_mgmt_tx_compl(काष्ठा ath10k *ar, काष्ठा sk_buff *skb);
-पूर्णांक ath10k_wmi_event_mgmt_tx_bundle_compl(काष्ठा ath10k *ar, काष्ठा sk_buff *skb);
-व्योम ath10k_wmi_event_chan_info(काष्ठा ath10k *ar, काष्ठा sk_buff *skb);
-व्योम ath10k_wmi_event_echo(काष्ठा ath10k *ar, काष्ठा sk_buff *skb);
-पूर्णांक ath10k_wmi_event_debug_mesg(काष्ठा ath10k *ar, काष्ठा sk_buff *skb);
-व्योम ath10k_wmi_event_update_stats(काष्ठा ath10k *ar, काष्ठा sk_buff *skb);
-व्योम ath10k_wmi_event_vdev_start_resp(काष्ठा ath10k *ar, काष्ठा sk_buff *skb);
-व्योम ath10k_wmi_event_vdev_stopped(काष्ठा ath10k *ar, काष्ठा sk_buff *skb);
-व्योम ath10k_wmi_event_peer_sta_kickout(काष्ठा ath10k *ar, काष्ठा sk_buff *skb);
-व्योम ath10k_wmi_event_host_swba(काष्ठा ath10k *ar, काष्ठा sk_buff *skb);
-व्योम ath10k_wmi_event_tbttoffset_update(काष्ठा ath10k *ar, काष्ठा sk_buff *skb);
-व्योम ath10k_wmi_event_dfs(काष्ठा ath10k *ar,
-			  काष्ठा wmi_phyerr_ev_arg *phyerr, u64 tsf);
-व्योम ath10k_wmi_event_spectral_scan(काष्ठा ath10k *ar,
-				    काष्ठा wmi_phyerr_ev_arg *phyerr,
+int ath10k_wmi_event_scan(struct ath10k *ar, struct sk_buff *skb);
+int ath10k_wmi_event_mgmt_rx(struct ath10k *ar, struct sk_buff *skb);
+int ath10k_wmi_event_mgmt_tx_compl(struct ath10k *ar, struct sk_buff *skb);
+int ath10k_wmi_event_mgmt_tx_bundle_compl(struct ath10k *ar, struct sk_buff *skb);
+void ath10k_wmi_event_chan_info(struct ath10k *ar, struct sk_buff *skb);
+void ath10k_wmi_event_echo(struct ath10k *ar, struct sk_buff *skb);
+int ath10k_wmi_event_debug_mesg(struct ath10k *ar, struct sk_buff *skb);
+void ath10k_wmi_event_update_stats(struct ath10k *ar, struct sk_buff *skb);
+void ath10k_wmi_event_vdev_start_resp(struct ath10k *ar, struct sk_buff *skb);
+void ath10k_wmi_event_vdev_stopped(struct ath10k *ar, struct sk_buff *skb);
+void ath10k_wmi_event_peer_sta_kickout(struct ath10k *ar, struct sk_buff *skb);
+void ath10k_wmi_event_host_swba(struct ath10k *ar, struct sk_buff *skb);
+void ath10k_wmi_event_tbttoffset_update(struct ath10k *ar, struct sk_buff *skb);
+void ath10k_wmi_event_dfs(struct ath10k *ar,
+			  struct wmi_phyerr_ev_arg *phyerr, u64 tsf);
+void ath10k_wmi_event_spectral_scan(struct ath10k *ar,
+				    struct wmi_phyerr_ev_arg *phyerr,
 				    u64 tsf);
-व्योम ath10k_wmi_event_phyerr(काष्ठा ath10k *ar, काष्ठा sk_buff *skb);
-व्योम ath10k_wmi_event_roam(काष्ठा ath10k *ar, काष्ठा sk_buff *skb);
-व्योम ath10k_wmi_event_profile_match(काष्ठा ath10k *ar, काष्ठा sk_buff *skb);
-व्योम ath10k_wmi_event_debug_prपूर्णांक(काष्ठा ath10k *ar, काष्ठा sk_buff *skb);
-व्योम ath10k_wmi_event_pdev_qvit(काष्ठा ath10k *ar, काष्ठा sk_buff *skb);
-व्योम ath10k_wmi_event_wlan_profile_data(काष्ठा ath10k *ar, काष्ठा sk_buff *skb);
-व्योम ath10k_wmi_event_rtt_measurement_report(काष्ठा ath10k *ar,
-					     काष्ठा sk_buff *skb);
-व्योम ath10k_wmi_event_tsf_measurement_report(काष्ठा ath10k *ar,
-					     काष्ठा sk_buff *skb);
-व्योम ath10k_wmi_event_rtt_error_report(काष्ठा ath10k *ar, काष्ठा sk_buff *skb);
-व्योम ath10k_wmi_event_wow_wakeup_host(काष्ठा ath10k *ar, काष्ठा sk_buff *skb);
-व्योम ath10k_wmi_event_dcs_पूर्णांकerference(काष्ठा ath10k *ar, काष्ठा sk_buff *skb);
-व्योम ath10k_wmi_event_pdev_tpc_config(काष्ठा ath10k *ar, काष्ठा sk_buff *skb);
-व्योम ath10k_wmi_event_pdev_fपंचांग_पूर्णांकg(काष्ठा ath10k *ar, काष्ठा sk_buff *skb);
-व्योम ath10k_wmi_event_gtk_offload_status(काष्ठा ath10k *ar,
-					 काष्ठा sk_buff *skb);
-व्योम ath10k_wmi_event_gtk_rekey_fail(काष्ठा ath10k *ar, काष्ठा sk_buff *skb);
-व्योम ath10k_wmi_event_delba_complete(काष्ठा ath10k *ar, काष्ठा sk_buff *skb);
-व्योम ath10k_wmi_event_addba_complete(काष्ठा ath10k *ar, काष्ठा sk_buff *skb);
-व्योम ath10k_wmi_event_vdev_install_key_complete(काष्ठा ath10k *ar,
-						काष्ठा sk_buff *skb);
-व्योम ath10k_wmi_event_inst_rssi_stats(काष्ठा ath10k *ar, काष्ठा sk_buff *skb);
-व्योम ath10k_wmi_event_vdev_standby_req(काष्ठा ath10k *ar, काष्ठा sk_buff *skb);
-व्योम ath10k_wmi_event_vdev_resume_req(काष्ठा ath10k *ar, काष्ठा sk_buff *skb);
-व्योम ath10k_wmi_event_service_पढ़ोy(काष्ठा ath10k *ar, काष्ठा sk_buff *skb);
-पूर्णांक ath10k_wmi_event_पढ़ोy(काष्ठा ath10k *ar, काष्ठा sk_buff *skb);
-व्योम ath10k_wmi_event_service_available(काष्ठा ath10k *ar, काष्ठा sk_buff *skb);
-पूर्णांक ath10k_wmi_op_pull_phyerr_ev(काष्ठा ath10k *ar, स्थिर व्योम *phyerr_buf,
-				 पूर्णांक left_len, काष्ठा wmi_phyerr_ev_arg *arg);
-व्योम ath10k_wmi_मुख्य_op_fw_stats_fill(काष्ठा ath10k *ar,
-				      काष्ठा ath10k_fw_stats *fw_stats,
-				      अक्षर *buf);
-व्योम ath10k_wmi_10x_op_fw_stats_fill(काष्ठा ath10k *ar,
-				     काष्ठा ath10k_fw_stats *fw_stats,
-				     अक्षर *buf);
-माप_प्रकार ath10k_wmi_fw_stats_num_peers(काष्ठा list_head *head);
-माप_प्रकार ath10k_wmi_fw_stats_num_vdevs(काष्ठा list_head *head);
-व्योम ath10k_wmi_10_4_op_fw_stats_fill(काष्ठा ath10k *ar,
-				      काष्ठा ath10k_fw_stats *fw_stats,
-				      अक्षर *buf);
-पूर्णांक ath10k_wmi_op_get_vdev_subtype(काष्ठा ath10k *ar,
-				   क्रमागत wmi_vdev_subtype subtype);
-पूर्णांक ath10k_wmi_barrier(काष्ठा ath10k *ar);
-व्योम ath10k_wmi_tpc_config_get_rate_code(u8 *rate_code, u16 *pream_table,
+void ath10k_wmi_event_phyerr(struct ath10k *ar, struct sk_buff *skb);
+void ath10k_wmi_event_roam(struct ath10k *ar, struct sk_buff *skb);
+void ath10k_wmi_event_profile_match(struct ath10k *ar, struct sk_buff *skb);
+void ath10k_wmi_event_debug_print(struct ath10k *ar, struct sk_buff *skb);
+void ath10k_wmi_event_pdev_qvit(struct ath10k *ar, struct sk_buff *skb);
+void ath10k_wmi_event_wlan_profile_data(struct ath10k *ar, struct sk_buff *skb);
+void ath10k_wmi_event_rtt_measurement_report(struct ath10k *ar,
+					     struct sk_buff *skb);
+void ath10k_wmi_event_tsf_measurement_report(struct ath10k *ar,
+					     struct sk_buff *skb);
+void ath10k_wmi_event_rtt_error_report(struct ath10k *ar, struct sk_buff *skb);
+void ath10k_wmi_event_wow_wakeup_host(struct ath10k *ar, struct sk_buff *skb);
+void ath10k_wmi_event_dcs_interference(struct ath10k *ar, struct sk_buff *skb);
+void ath10k_wmi_event_pdev_tpc_config(struct ath10k *ar, struct sk_buff *skb);
+void ath10k_wmi_event_pdev_ftm_intg(struct ath10k *ar, struct sk_buff *skb);
+void ath10k_wmi_event_gtk_offload_status(struct ath10k *ar,
+					 struct sk_buff *skb);
+void ath10k_wmi_event_gtk_rekey_fail(struct ath10k *ar, struct sk_buff *skb);
+void ath10k_wmi_event_delba_complete(struct ath10k *ar, struct sk_buff *skb);
+void ath10k_wmi_event_addba_complete(struct ath10k *ar, struct sk_buff *skb);
+void ath10k_wmi_event_vdev_install_key_complete(struct ath10k *ar,
+						struct sk_buff *skb);
+void ath10k_wmi_event_inst_rssi_stats(struct ath10k *ar, struct sk_buff *skb);
+void ath10k_wmi_event_vdev_standby_req(struct ath10k *ar, struct sk_buff *skb);
+void ath10k_wmi_event_vdev_resume_req(struct ath10k *ar, struct sk_buff *skb);
+void ath10k_wmi_event_service_ready(struct ath10k *ar, struct sk_buff *skb);
+int ath10k_wmi_event_ready(struct ath10k *ar, struct sk_buff *skb);
+void ath10k_wmi_event_service_available(struct ath10k *ar, struct sk_buff *skb);
+int ath10k_wmi_op_pull_phyerr_ev(struct ath10k *ar, const void *phyerr_buf,
+				 int left_len, struct wmi_phyerr_ev_arg *arg);
+void ath10k_wmi_main_op_fw_stats_fill(struct ath10k *ar,
+				      struct ath10k_fw_stats *fw_stats,
+				      char *buf);
+void ath10k_wmi_10x_op_fw_stats_fill(struct ath10k *ar,
+				     struct ath10k_fw_stats *fw_stats,
+				     char *buf);
+size_t ath10k_wmi_fw_stats_num_peers(struct list_head *head);
+size_t ath10k_wmi_fw_stats_num_vdevs(struct list_head *head);
+void ath10k_wmi_10_4_op_fw_stats_fill(struct ath10k *ar,
+				      struct ath10k_fw_stats *fw_stats,
+				      char *buf);
+int ath10k_wmi_op_get_vdev_subtype(struct ath10k *ar,
+				   enum wmi_vdev_subtype subtype);
+int ath10k_wmi_barrier(struct ath10k *ar);
+void ath10k_wmi_tpc_config_get_rate_code(u8 *rate_code, u16 *pream_table,
 					 u32 num_tx_chain);
-व्योम ath10k_wmi_event_tpc_final_table(काष्ठा ath10k *ar, काष्ठा sk_buff *skb);
+void ath10k_wmi_event_tpc_final_table(struct ath10k *ar, struct sk_buff *skb);
 
-#पूर्ण_अगर /* _WMI_H_ */
+#endif /* _WMI_H_ */

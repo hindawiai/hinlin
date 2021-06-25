@@ -1,21 +1,20 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Sync File validation framework
  *
  * Copyright (C) 2012 Google, Inc.
  */
 
-#समावेश <linux/file.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sync_file.h>
+#include <linux/file.h>
+#include <linux/fs.h>
+#include <linux/uaccess.h>
+#include <linux/slab.h>
+#include <linux/sync_file.h>
 
-#समावेश "sync_debug.h"
+#include "sync_debug.h"
 
-#घोषणा CREATE_TRACE_POINTS
-#समावेश "sync_trace.h"
+#define CREATE_TRACE_POINTS
+#include "sync_trace.h"
 
 /*
  * SW SYNC validation framework
@@ -24,265 +23,265 @@
  * synchronization.  Useful when there is no hardware primitive backing
  * the synchronization.
  *
- * To start the framework just खोलो:
+ * To start the framework just open:
  *
  * <debugfs>/sync/sw_sync
  *
- * That will create a sync समयline, all fences created under this समयline
- * file descriptor will beदीर्घ to the this समयline.
+ * That will create a sync timeline, all fences created under this timeline
+ * file descriptor will belong to the this timeline.
  *
- * The 'sw_sync' file can be खोलोed many बार as to create dअगरferent
- * समयlines.
+ * The 'sw_sync' file can be opened many times as to create different
+ * timelines.
  *
- * Fences can be created with SW_SYNC_IOC_CREATE_FENCE ioctl with काष्ठा
+ * Fences can be created with SW_SYNC_IOC_CREATE_FENCE ioctl with struct
  * sw_sync_create_fence_data as parameter.
  *
- * To increment the समयline counter, SW_SYNC_IOC_INC ioctl should be used
- * with the increment as u32. This will update the last संकेतed value
- * from the समयline and संकेत any fence that has a seqno smaller or equal
+ * To increment the timeline counter, SW_SYNC_IOC_INC ioctl should be used
+ * with the increment as u32. This will update the last signaled value
+ * from the timeline and signal any fence that has a seqno smaller or equal
  * to it.
  *
- * काष्ठा sw_sync_create_fence_data
+ * struct sw_sync_create_fence_data
  * @value:	the seqno to initialise the fence with
- * @name:	the name of the new sync poपूर्णांक
- * @fence:	वापस the fd of the new sync_file with the created fence
+ * @name:	the name of the new sync point
+ * @fence:	return the fd of the new sync_file with the created fence
  */
-काष्ठा sw_sync_create_fence_data अणु
+struct sw_sync_create_fence_data {
 	__u32	value;
-	अक्षर	name[32];
+	char	name[32];
 	__s32	fence; /* fd of new fence */
-पूर्ण;
+};
 
-#घोषणा SW_SYNC_IOC_MAGIC	'W'
+#define SW_SYNC_IOC_MAGIC	'W'
 
-#घोषणा SW_SYNC_IOC_CREATE_FENCE	_IOWR(SW_SYNC_IOC_MAGIC, 0,\
-		काष्ठा sw_sync_create_fence_data)
+#define SW_SYNC_IOC_CREATE_FENCE	_IOWR(SW_SYNC_IOC_MAGIC, 0,\
+		struct sw_sync_create_fence_data)
 
-#घोषणा SW_SYNC_IOC_INC			_IOW(SW_SYNC_IOC_MAGIC, 1, __u32)
+#define SW_SYNC_IOC_INC			_IOW(SW_SYNC_IOC_MAGIC, 1, __u32)
 
-अटल स्थिर काष्ठा dma_fence_ops समयline_fence_ops;
+static const struct dma_fence_ops timeline_fence_ops;
 
-अटल अंतरभूत काष्ठा sync_pt *dma_fence_to_sync_pt(काष्ठा dma_fence *fence)
-अणु
-	अगर (fence->ops != &समयline_fence_ops)
-		वापस शून्य;
-	वापस container_of(fence, काष्ठा sync_pt, base);
-पूर्ण
+static inline struct sync_pt *dma_fence_to_sync_pt(struct dma_fence *fence)
+{
+	if (fence->ops != &timeline_fence_ops)
+		return NULL;
+	return container_of(fence, struct sync_pt, base);
+}
 
 /**
- * sync_समयline_create() - creates a sync object
- * @name:	sync_समयline name
+ * sync_timeline_create() - creates a sync object
+ * @name:	sync_timeline name
  *
- * Creates a new sync_समयline. Returns the sync_समयline object or शून्य in
- * हाल of error.
+ * Creates a new sync_timeline. Returns the sync_timeline object or NULL in
+ * case of error.
  */
-अटल काष्ठा sync_समयline *sync_समयline_create(स्थिर अक्षर *name)
-अणु
-	काष्ठा sync_समयline *obj;
+static struct sync_timeline *sync_timeline_create(const char *name)
+{
+	struct sync_timeline *obj;
 
-	obj = kzalloc(माप(*obj), GFP_KERNEL);
-	अगर (!obj)
-		वापस शून्य;
+	obj = kzalloc(sizeof(*obj), GFP_KERNEL);
+	if (!obj)
+		return NULL;
 
 	kref_init(&obj->kref);
 	obj->context = dma_fence_context_alloc(1);
-	strlcpy(obj->name, name, माप(obj->name));
+	strlcpy(obj->name, name, sizeof(obj->name));
 
 	obj->pt_tree = RB_ROOT;
 	INIT_LIST_HEAD(&obj->pt_list);
 	spin_lock_init(&obj->lock);
 
-	sync_समयline_debug_add(obj);
+	sync_timeline_debug_add(obj);
 
-	वापस obj;
-पूर्ण
+	return obj;
+}
 
-अटल व्योम sync_समयline_मुक्त(काष्ठा kref *kref)
-अणु
-	काष्ठा sync_समयline *obj =
-		container_of(kref, काष्ठा sync_समयline, kref);
+static void sync_timeline_free(struct kref *kref)
+{
+	struct sync_timeline *obj =
+		container_of(kref, struct sync_timeline, kref);
 
-	sync_समयline_debug_हटाओ(obj);
+	sync_timeline_debug_remove(obj);
 
-	kमुक्त(obj);
-पूर्ण
+	kfree(obj);
+}
 
-अटल व्योम sync_समयline_get(काष्ठा sync_समयline *obj)
-अणु
+static void sync_timeline_get(struct sync_timeline *obj)
+{
 	kref_get(&obj->kref);
-पूर्ण
+}
 
-अटल व्योम sync_समयline_put(काष्ठा sync_समयline *obj)
-अणु
-	kref_put(&obj->kref, sync_समयline_मुक्त);
-पूर्ण
+static void sync_timeline_put(struct sync_timeline *obj)
+{
+	kref_put(&obj->kref, sync_timeline_free);
+}
 
-अटल स्थिर अक्षर *समयline_fence_get_driver_name(काष्ठा dma_fence *fence)
-अणु
-	वापस "sw_sync";
-पूर्ण
+static const char *timeline_fence_get_driver_name(struct dma_fence *fence)
+{
+	return "sw_sync";
+}
 
-अटल स्थिर अक्षर *समयline_fence_get_समयline_name(काष्ठा dma_fence *fence)
-अणु
-	काष्ठा sync_समयline *parent = dma_fence_parent(fence);
+static const char *timeline_fence_get_timeline_name(struct dma_fence *fence)
+{
+	struct sync_timeline *parent = dma_fence_parent(fence);
 
-	वापस parent->name;
-पूर्ण
+	return parent->name;
+}
 
-अटल व्योम समयline_fence_release(काष्ठा dma_fence *fence)
-अणु
-	काष्ठा sync_pt *pt = dma_fence_to_sync_pt(fence);
-	काष्ठा sync_समयline *parent = dma_fence_parent(fence);
-	अचिन्हित दीर्घ flags;
+static void timeline_fence_release(struct dma_fence *fence)
+{
+	struct sync_pt *pt = dma_fence_to_sync_pt(fence);
+	struct sync_timeline *parent = dma_fence_parent(fence);
+	unsigned long flags;
 
 	spin_lock_irqsave(fence->lock, flags);
-	अगर (!list_empty(&pt->link)) अणु
+	if (!list_empty(&pt->link)) {
 		list_del(&pt->link);
 		rb_erase(&pt->node, &parent->pt_tree);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(fence->lock, flags);
 
-	sync_समयline_put(parent);
-	dma_fence_मुक्त(fence);
-पूर्ण
+	sync_timeline_put(parent);
+	dma_fence_free(fence);
+}
 
-अटल bool समयline_fence_संकेतed(काष्ठा dma_fence *fence)
-अणु
-	काष्ठा sync_समयline *parent = dma_fence_parent(fence);
+static bool timeline_fence_signaled(struct dma_fence *fence)
+{
+	struct sync_timeline *parent = dma_fence_parent(fence);
 
-	वापस !__dma_fence_is_later(fence->seqno, parent->value, fence->ops);
-पूर्ण
+	return !__dma_fence_is_later(fence->seqno, parent->value, fence->ops);
+}
 
-अटल bool समयline_fence_enable_संकेतing(काष्ठा dma_fence *fence)
-अणु
-	वापस true;
-पूर्ण
+static bool timeline_fence_enable_signaling(struct dma_fence *fence)
+{
+	return true;
+}
 
-अटल व्योम समयline_fence_value_str(काष्ठा dma_fence *fence,
-				    अक्षर *str, पूर्णांक size)
-अणु
-	snम_लिखो(str, size, "%lld", fence->seqno);
-पूर्ण
+static void timeline_fence_value_str(struct dma_fence *fence,
+				    char *str, int size)
+{
+	snprintf(str, size, "%lld", fence->seqno);
+}
 
-अटल व्योम समयline_fence_समयline_value_str(काष्ठा dma_fence *fence,
-					     अक्षर *str, पूर्णांक size)
-अणु
-	काष्ठा sync_समयline *parent = dma_fence_parent(fence);
+static void timeline_fence_timeline_value_str(struct dma_fence *fence,
+					     char *str, int size)
+{
+	struct sync_timeline *parent = dma_fence_parent(fence);
 
-	snम_लिखो(str, size, "%d", parent->value);
-पूर्ण
+	snprintf(str, size, "%d", parent->value);
+}
 
-अटल स्थिर काष्ठा dma_fence_ops समयline_fence_ops = अणु
-	.get_driver_name = समयline_fence_get_driver_name,
-	.get_समयline_name = समयline_fence_get_समयline_name,
-	.enable_संकेतing = समयline_fence_enable_संकेतing,
-	.संकेतed = समयline_fence_संकेतed,
-	.release = समयline_fence_release,
-	.fence_value_str = समयline_fence_value_str,
-	.समयline_value_str = समयline_fence_समयline_value_str,
-पूर्ण;
+static const struct dma_fence_ops timeline_fence_ops = {
+	.get_driver_name = timeline_fence_get_driver_name,
+	.get_timeline_name = timeline_fence_get_timeline_name,
+	.enable_signaling = timeline_fence_enable_signaling,
+	.signaled = timeline_fence_signaled,
+	.release = timeline_fence_release,
+	.fence_value_str = timeline_fence_value_str,
+	.timeline_value_str = timeline_fence_timeline_value_str,
+};
 
 /**
- * sync_समयline_संकेत() - संकेत a status change on a sync_समयline
- * @obj:	sync_समयline to संकेत
- * @inc:	num to increment on समयline->value
+ * sync_timeline_signal() - signal a status change on a sync_timeline
+ * @obj:	sync_timeline to signal
+ * @inc:	num to increment on timeline->value
  *
- * A sync implementation should call this any समय one of it's fences
- * has संकेतed or has an error condition.
+ * A sync implementation should call this any time one of it's fences
+ * has signaled or has an error condition.
  */
-अटल व्योम sync_समयline_संकेत(काष्ठा sync_समयline *obj, अचिन्हित पूर्णांक inc)
-अणु
-	काष्ठा sync_pt *pt, *next;
+static void sync_timeline_signal(struct sync_timeline *obj, unsigned int inc)
+{
+	struct sync_pt *pt, *next;
 
-	trace_sync_समयline(obj);
+	trace_sync_timeline(obj);
 
 	spin_lock_irq(&obj->lock);
 
 	obj->value += inc;
 
-	list_क्रम_each_entry_safe(pt, next, &obj->pt_list, link) अणु
-		अगर (!समयline_fence_संकेतed(&pt->base))
-			अवरोध;
+	list_for_each_entry_safe(pt, next, &obj->pt_list, link) {
+		if (!timeline_fence_signaled(&pt->base))
+			break;
 
 		list_del_init(&pt->link);
 		rb_erase(&pt->node, &obj->pt_tree);
 
 		/*
-		 * A संकेत callback may release the last reference to this
-		 * fence, causing it to be मुक्तd. That operation has to be
-		 * last to aव्योम a use after मुक्त inside this loop, and must
-		 * be after we हटाओ the fence from the समयline in order to
-		 * prevent deadlocking on समयline->lock inside
-		 * समयline_fence_release().
+		 * A signal callback may release the last reference to this
+		 * fence, causing it to be freed. That operation has to be
+		 * last to avoid a use after free inside this loop, and must
+		 * be after we remove the fence from the timeline in order to
+		 * prevent deadlocking on timeline->lock inside
+		 * timeline_fence_release().
 		 */
-		dma_fence_संकेत_locked(&pt->base);
-	पूर्ण
+		dma_fence_signal_locked(&pt->base);
+	}
 
 	spin_unlock_irq(&obj->lock);
-पूर्ण
+}
 
 /**
  * sync_pt_create() - creates a sync pt
- * @obj:	parent sync_समयline
+ * @obj:	parent sync_timeline
  * @value:	value of the fence
  *
  * Creates a new sync_pt (fence) as a child of @parent.  @size bytes will be
- * allocated allowing क्रम implementation specअगरic data to be kept after
- * the generic sync_समयline काष्ठा. Returns the sync_pt object or
- * शून्य in हाल of error.
+ * allocated allowing for implementation specific data to be kept after
+ * the generic sync_timeline struct. Returns the sync_pt object or
+ * NULL in case of error.
  */
-अटल काष्ठा sync_pt *sync_pt_create(काष्ठा sync_समयline *obj,
-				      अचिन्हित पूर्णांक value)
-अणु
-	काष्ठा sync_pt *pt;
+static struct sync_pt *sync_pt_create(struct sync_timeline *obj,
+				      unsigned int value)
+{
+	struct sync_pt *pt;
 
-	pt = kzalloc(माप(*pt), GFP_KERNEL);
-	अगर (!pt)
-		वापस शून्य;
+	pt = kzalloc(sizeof(*pt), GFP_KERNEL);
+	if (!pt)
+		return NULL;
 
-	sync_समयline_get(obj);
-	dma_fence_init(&pt->base, &समयline_fence_ops, &obj->lock,
+	sync_timeline_get(obj);
+	dma_fence_init(&pt->base, &timeline_fence_ops, &obj->lock,
 		       obj->context, value);
 	INIT_LIST_HEAD(&pt->link);
 
 	spin_lock_irq(&obj->lock);
-	अगर (!dma_fence_is_संकेतed_locked(&pt->base)) अणु
-		काष्ठा rb_node **p = &obj->pt_tree.rb_node;
-		काष्ठा rb_node *parent = शून्य;
+	if (!dma_fence_is_signaled_locked(&pt->base)) {
+		struct rb_node **p = &obj->pt_tree.rb_node;
+		struct rb_node *parent = NULL;
 
-		जबतक (*p) अणु
-			काष्ठा sync_pt *other;
-			पूर्णांक cmp;
+		while (*p) {
+			struct sync_pt *other;
+			int cmp;
 
 			parent = *p;
 			other = rb_entry(parent, typeof(*pt), node);
 			cmp = value - other->base.seqno;
-			अगर (cmp > 0) अणु
+			if (cmp > 0) {
 				p = &parent->rb_right;
-			पूर्ण अन्यथा अगर (cmp < 0) अणु
+			} else if (cmp < 0) {
 				p = &parent->rb_left;
-			पूर्ण अन्यथा अणु
-				अगर (dma_fence_get_rcu(&other->base)) अणु
-					sync_समयline_put(obj);
-					kमुक्त(pt);
+			} else {
+				if (dma_fence_get_rcu(&other->base)) {
+					sync_timeline_put(obj);
+					kfree(pt);
 					pt = other;
-					जाओ unlock;
-				पूर्ण
+					goto unlock;
+				}
 				p = &parent->rb_left;
-			पूर्ण
-		पूर्ण
+			}
+		}
 		rb_link_node(&pt->node, parent, p);
 		rb_insert_color(&pt->node, &obj->pt_tree);
 
 		parent = rb_next(&pt->node);
 		list_add_tail(&pt->link,
 			      parent ? &rb_entry(parent, typeof(*pt), node)->link : &obj->pt_list);
-	पूर्ण
+	}
 unlock:
 	spin_unlock_irq(&obj->lock);
 
-	वापस pt;
-पूर्ण
+	return pt;
+}
 
 /*
  * *WARNING*
@@ -290,124 +289,124 @@ unlock:
  * improper use of this can result in deadlocking kernel drivers from userspace.
  */
 
-/* खोलोing sw_sync create a new sync obj */
-अटल पूर्णांक sw_sync_debugfs_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा sync_समयline *obj;
-	अक्षर task_comm[TASK_COMM_LEN];
+/* opening sw_sync create a new sync obj */
+static int sw_sync_debugfs_open(struct inode *inode, struct file *file)
+{
+	struct sync_timeline *obj;
+	char task_comm[TASK_COMM_LEN];
 
 	get_task_comm(task_comm, current);
 
-	obj = sync_समयline_create(task_comm);
-	अगर (!obj)
-		वापस -ENOMEM;
+	obj = sync_timeline_create(task_comm);
+	if (!obj)
+		return -ENOMEM;
 
-	file->निजी_data = obj;
+	file->private_data = obj;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sw_sync_debugfs_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा sync_समयline *obj = file->निजी_data;
-	काष्ठा sync_pt *pt, *next;
+static int sw_sync_debugfs_release(struct inode *inode, struct file *file)
+{
+	struct sync_timeline *obj = file->private_data;
+	struct sync_pt *pt, *next;
 
 	spin_lock_irq(&obj->lock);
 
-	list_क्रम_each_entry_safe(pt, next, &obj->pt_list, link) अणु
+	list_for_each_entry_safe(pt, next, &obj->pt_list, link) {
 		dma_fence_set_error(&pt->base, -ENOENT);
-		dma_fence_संकेत_locked(&pt->base);
-	पूर्ण
+		dma_fence_signal_locked(&pt->base);
+	}
 
 	spin_unlock_irq(&obj->lock);
 
-	sync_समयline_put(obj);
-	वापस 0;
-पूर्ण
+	sync_timeline_put(obj);
+	return 0;
+}
 
-अटल दीर्घ sw_sync_ioctl_create_fence(काष्ठा sync_समयline *obj,
-				       अचिन्हित दीर्घ arg)
-अणु
-	पूर्णांक fd = get_unused_fd_flags(O_CLOEXEC);
-	पूर्णांक err;
-	काष्ठा sync_pt *pt;
-	काष्ठा sync_file *sync_file;
-	काष्ठा sw_sync_create_fence_data data;
+static long sw_sync_ioctl_create_fence(struct sync_timeline *obj,
+				       unsigned long arg)
+{
+	int fd = get_unused_fd_flags(O_CLOEXEC);
+	int err;
+	struct sync_pt *pt;
+	struct sync_file *sync_file;
+	struct sw_sync_create_fence_data data;
 
-	अगर (fd < 0)
-		वापस fd;
+	if (fd < 0)
+		return fd;
 
-	अगर (copy_from_user(&data, (व्योम __user *)arg, माप(data))) अणु
+	if (copy_from_user(&data, (void __user *)arg, sizeof(data))) {
 		err = -EFAULT;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	pt = sync_pt_create(obj, data.value);
-	अगर (!pt) अणु
+	if (!pt) {
 		err = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	sync_file = sync_file_create(&pt->base);
 	dma_fence_put(&pt->base);
-	अगर (!sync_file) अणु
+	if (!sync_file) {
 		err = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	data.fence = fd;
-	अगर (copy_to_user((व्योम __user *)arg, &data, माप(data))) अणु
+	if (copy_to_user((void __user *)arg, &data, sizeof(data))) {
 		fput(sync_file->file);
 		err = -EFAULT;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	fd_install(fd, sync_file->file);
 
-	वापस 0;
+	return 0;
 
 err:
 	put_unused_fd(fd);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल दीर्घ sw_sync_ioctl_inc(काष्ठा sync_समयline *obj, अचिन्हित दीर्घ arg)
-अणु
+static long sw_sync_ioctl_inc(struct sync_timeline *obj, unsigned long arg)
+{
 	u32 value;
 
-	अगर (copy_from_user(&value, (व्योम __user *)arg, माप(value)))
-		वापस -EFAULT;
+	if (copy_from_user(&value, (void __user *)arg, sizeof(value)))
+		return -EFAULT;
 
-	जबतक (value > पूर्णांक_उच्च)  अणु
-		sync_समयline_संकेत(obj, पूर्णांक_उच्च);
-		value -= पूर्णांक_उच्च;
-	पूर्ण
+	while (value > INT_MAX)  {
+		sync_timeline_signal(obj, INT_MAX);
+		value -= INT_MAX;
+	}
 
-	sync_समयline_संकेत(obj, value);
+	sync_timeline_signal(obj, value);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल दीर्घ sw_sync_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
-			  अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा sync_समयline *obj = file->निजी_data;
+static long sw_sync_ioctl(struct file *file, unsigned int cmd,
+			  unsigned long arg)
+{
+	struct sync_timeline *obj = file->private_data;
 
-	चयन (cmd) अणु
-	हाल SW_SYNC_IOC_CREATE_FENCE:
-		वापस sw_sync_ioctl_create_fence(obj, arg);
+	switch (cmd) {
+	case SW_SYNC_IOC_CREATE_FENCE:
+		return sw_sync_ioctl_create_fence(obj, arg);
 
-	हाल SW_SYNC_IOC_INC:
-		वापस sw_sync_ioctl_inc(obj, arg);
+	case SW_SYNC_IOC_INC:
+		return sw_sync_ioctl_inc(obj, arg);
 
-	शेष:
-		वापस -ENOTTY;
-	पूर्ण
-पूर्ण
+	default:
+		return -ENOTTY;
+	}
+}
 
-स्थिर काष्ठा file_operations sw_sync_debugfs_fops = अणु
-	.खोलो           = sw_sync_debugfs_खोलो,
+const struct file_operations sw_sync_debugfs_fops = {
+	.open           = sw_sync_debugfs_open,
 	.release        = sw_sync_debugfs_release,
 	.unlocked_ioctl = sw_sync_ioctl,
 	.compat_ioctl	= compat_ptr_ioctl,
-पूर्ण;
+};

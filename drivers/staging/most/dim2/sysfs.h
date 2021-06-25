@@ -1,31 +1,30 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * sysfs.h - MediaLB sysfs inक्रमmation
+ * sysfs.h - MediaLB sysfs information
  *
  * Copyright (C) 2015, Microchip Technology Germany II GmbH & Co. KG
  */
 
 /* Author: Andrey Shvetsov <andrey.shvetsov@k2l.de> */
 
-#अगर_अघोषित DIM2_SYSFS_H
-#घोषणा	DIM2_SYSFS_H
+#ifndef DIM2_SYSFS_H
+#define	DIM2_SYSFS_H
 
-#समावेश <linux/kobject.h>
+#include <linux/kobject.h>
 
-काष्ठा medialb_bus अणु
-	काष्ठा kobject kobj_group;
-पूर्ण;
+struct medialb_bus {
+	struct kobject kobj_group;
+};
 
-काष्ठा device;
+struct device;
 
-पूर्णांक dim2_sysfs_probe(काष्ठा device *dev);
-व्योम dim2_sysfs_destroy(काष्ठा device *dev);
+int dim2_sysfs_probe(struct device *dev);
+void dim2_sysfs_destroy(struct device *dev);
 
 /*
  * callback,
- * must deliver MediaLB state as true अगर locked or false अगर unlocked
+ * must deliver MediaLB state as true if locked or false if unlocked
  */
-bool dim2_sysfs_get_state_cb(व्योम);
+bool dim2_sysfs_get_state_cb(void);
 
-#पूर्ण_अगर	/* DIM2_SYSFS_H */
+#endif	/* DIM2_SYSFS_H */

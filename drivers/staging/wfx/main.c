@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Device probe and रेजिस्टर.
+ * Device probe and register.
  *
  * Copyright (c) 2017-2020, Silicon Laboratories, Inc.
  * Copyright (c) 2010, ST-Ericsson
@@ -11,42 +10,42 @@
  * Copyright (c) 2006, Michael Wu <flamingice@sourmilk.net>
  * Copyright (c) 2004-2006 Jean-Baptiste Note <jbnote@gmail.com>, et al.
  */
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_net.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/mmc/sdio_func.h>
-#समावेश <linux/spi/spi.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/firmware.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_net.h>
+#include <linux/gpio/consumer.h>
+#include <linux/mmc/sdio_func.h>
+#include <linux/spi/spi.h>
+#include <linux/etherdevice.h>
+#include <linux/firmware.h>
 
-#समावेश "main.h"
-#समावेश "wfx.h"
-#समावेश "fwio.h"
-#समावेश "hwio.h"
-#समावेश "bus.h"
-#समावेश "bh.h"
-#समावेश "sta.h"
-#समावेश "key.h"
-#समावेश "scan.h"
-#समावेश "debug.h"
-#समावेश "data_tx.h"
-#समावेश "hif_tx_mib.h"
-#समावेश "hif_api_cmd.h"
+#include "main.h"
+#include "wfx.h"
+#include "fwio.h"
+#include "hwio.h"
+#include "bus.h"
+#include "bh.h"
+#include "sta.h"
+#include "key.h"
+#include "scan.h"
+#include "debug.h"
+#include "data_tx.h"
+#include "hif_tx_mib.h"
+#include "hif_api_cmd.h"
 
-#घोषणा WFX_PDS_MAX_SIZE 1500
+#define WFX_PDS_MAX_SIZE 1500
 
 MODULE_DESCRIPTION("Silicon Labs 802.11 Wireless LAN driver for WFx");
-MODULE_AUTHOR("Jथऊrथखme Pouiller <jerome.pouiller@silabs.com>");
+MODULE_AUTHOR("Jérôme Pouiller <jerome.pouiller@silabs.com>");
 MODULE_LICENSE("GPL");
 
-#घोषणा RATETAB_ENT(_rate, _rateid, _flags) अणु \
+#define RATETAB_ENT(_rate, _rateid, _flags) { \
 	.bitrate  = (_rate),   \
 	.hw_value = (_rateid), \
 	.flags    = (_flags),  \
-पूर्ण
+}
 
-अटल काष्ठा ieee80211_rate wfx_rates[] = अणु
+static struct ieee80211_rate wfx_rates[] = {
 	RATETAB_ENT(10,  0,  0),
 	RATETAB_ENT(20,  1,  IEEE80211_RATE_SHORT_PREAMBLE),
 	RATETAB_ENT(55,  2,  IEEE80211_RATE_SHORT_PREAMBLE),
@@ -59,18 +58,18 @@ MODULE_LICENSE("GPL");
 	RATETAB_ENT(360, 11, 0),
 	RATETAB_ENT(480, 12, 0),
 	RATETAB_ENT(540, 13, 0),
-पूर्ण;
+};
 
-#घोषणा CHAN2G(_channel, _freq, _flags) अणु \
+#define CHAN2G(_channel, _freq, _flags) { \
 	.band = NL80211_BAND_2GHZ, \
 	.center_freq = (_freq),    \
 	.hw_value = (_channel),    \
 	.flags = (_flags),         \
 	.max_antenna_gain = 0,     \
-	.max_घातer = 30,           \
-पूर्ण
+	.max_power = 30,           \
+}
 
-अटल काष्ठा ieee80211_channel wfx_2ghz_chantable[] = अणु
+static struct ieee80211_channel wfx_2ghz_chantable[] = {
 	CHAN2G(1,  2412, 0),
 	CHAN2G(2,  2417, 0),
 	CHAN2G(3,  2422, 0),
@@ -85,14 +84,14 @@ MODULE_LICENSE("GPL");
 	CHAN2G(12, 2467, 0),
 	CHAN2G(13, 2472, 0),
 	CHAN2G(14, 2484, 0),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा ieee80211_supported_band wfx_band_2ghz = अणु
+static const struct ieee80211_supported_band wfx_band_2ghz = {
 	.channels = wfx_2ghz_chantable,
 	.n_channels = ARRAY_SIZE(wfx_2ghz_chantable),
 	.bitrates = wfx_rates,
 	.n_bitrates = ARRAY_SIZE(wfx_rates),
-	.ht_cap = अणु
+	.ht_cap = {
 		// Receive caps
 		.cap = IEEE80211_HT_CAP_GRN_FLD | IEEE80211_HT_CAP_SGI_20 |
 		       IEEE80211_HT_CAP_MAX_AMSDU |
@@ -100,33 +99,33 @@ MODULE_LICENSE("GPL");
 		.ht_supported = 1,
 		.ampdu_factor = IEEE80211_HT_MAX_AMPDU_16K,
 		.ampdu_density = IEEE80211_HT_MPDU_DENSITY_NONE,
-		.mcs = अणु
-			.rx_mask = अणु 0xFF पूर्ण, // MCS0 to MCS7
+		.mcs = {
+			.rx_mask = { 0xFF }, // MCS0 to MCS7
 			.rx_highest = cpu_to_le16(72),
 			.tx_params = IEEE80211_HT_MCS_TX_DEFINED,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल स्थिर काष्ठा ieee80211_अगरace_limit wdev_अगरace_limits[] = अणु
-	अणु .max = 1, .types = BIT(NL80211_IFTYPE_STATION) पूर्ण,
-	अणु .max = 1, .types = BIT(NL80211_IFTYPE_AP) पूर्ण,
-पूर्ण;
+static const struct ieee80211_iface_limit wdev_iface_limits[] = {
+	{ .max = 1, .types = BIT(NL80211_IFTYPE_STATION) },
+	{ .max = 1, .types = BIT(NL80211_IFTYPE_AP) },
+};
 
-अटल स्थिर काष्ठा ieee80211_अगरace_combination wfx_अगरace_combinations[] = अणु
-	अणु
-		.num_dअगरferent_channels = 2,
-		.max_पूर्णांकerfaces = 2,
-		.limits = wdev_अगरace_limits,
-		.n_limits = ARRAY_SIZE(wdev_अगरace_limits),
-	पूर्ण
-पूर्ण;
+static const struct ieee80211_iface_combination wfx_iface_combinations[] = {
+	{
+		.num_different_channels = 2,
+		.max_interfaces = 2,
+		.limits = wdev_iface_limits,
+		.n_limits = ARRAY_SIZE(wdev_iface_limits),
+	}
+};
 
-अटल स्थिर काष्ठा ieee80211_ops wfx_ops = अणु
+static const struct ieee80211_ops wfx_ops = {
 	.start			= wfx_start,
 	.stop			= wfx_stop,
-	.add_पूर्णांकerface		= wfx_add_पूर्णांकerface,
-	.हटाओ_पूर्णांकerface	= wfx_हटाओ_पूर्णांकerface,
+	.add_interface		= wfx_add_interface,
+	.remove_interface	= wfx_remove_interface,
 	.config                 = wfx_config,
 	.tx			= wfx_tx,
 	.join_ibss		= wfx_join_ibss,
@@ -137,128 +136,128 @@ MODULE_LICENSE("GPL");
 	.start_ap		= wfx_start_ap,
 	.stop_ap		= wfx_stop_ap,
 	.sta_add		= wfx_sta_add,
-	.sta_हटाओ		= wfx_sta_हटाओ,
+	.sta_remove		= wfx_sta_remove,
 	.set_tim		= wfx_set_tim,
 	.set_key		= wfx_set_key,
 	.set_rts_threshold	= wfx_set_rts_threshold,
-	.set_शेष_unicast_key = wfx_set_शेष_unicast_key,
+	.set_default_unicast_key = wfx_set_default_unicast_key,
 	.bss_info_changed	= wfx_bss_info_changed,
 	.configure_filter	= wfx_configure_filter,
 	.ampdu_action		= wfx_ampdu_action,
 	.flush			= wfx_flush,
 	.add_chanctx		= wfx_add_chanctx,
-	.हटाओ_chanctx		= wfx_हटाओ_chanctx,
+	.remove_chanctx		= wfx_remove_chanctx,
 	.change_chanctx		= wfx_change_chanctx,
-	.assign_vअगर_chanctx	= wfx_assign_vअगर_chanctx,
-	.unassign_vअगर_chanctx	= wfx_unassign_vअगर_chanctx,
-पूर्ण;
+	.assign_vif_chanctx	= wfx_assign_vif_chanctx,
+	.unassign_vif_chanctx	= wfx_unassign_vif_chanctx,
+};
 
-bool wfx_api_older_than(काष्ठा wfx_dev *wdev, पूर्णांक major, पूर्णांक minor)
-अणु
-	अगर (wdev->hw_caps.api_version_major < major)
-		वापस true;
-	अगर (wdev->hw_caps.api_version_major > major)
-		वापस false;
-	अगर (wdev->hw_caps.api_version_minor < minor)
-		वापस true;
-	वापस false;
-पूर्ण
+bool wfx_api_older_than(struct wfx_dev *wdev, int major, int minor)
+{
+	if (wdev->hw_caps.api_version_major < major)
+		return true;
+	if (wdev->hw_caps.api_version_major > major)
+		return false;
+	if (wdev->hw_caps.api_version_minor < minor)
+		return true;
+	return false;
+}
 
 /* NOTE: wfx_send_pds() destroy buf */
-पूर्णांक wfx_send_pds(काष्ठा wfx_dev *wdev, u8 *buf, माप_प्रकार len)
-अणु
-	पूर्णांक ret;
-	पूर्णांक start, brace_level, i;
+int wfx_send_pds(struct wfx_dev *wdev, u8 *buf, size_t len)
+{
+	int ret;
+	int start, brace_level, i;
 
 	start = 0;
 	brace_level = 0;
-	अगर (buf[0] != '{') अणु
+	if (buf[0] != '{') {
 		dev_err(wdev->dev, "valid PDS start with '{'. Did you forget to compress it?\n");
-		वापस -EINVAL;
-	पूर्ण
-	क्रम (i = 1; i < len - 1; i++) अणु
-		अगर (buf[i] == '{')
+		return -EINVAL;
+	}
+	for (i = 1; i < len - 1; i++) {
+		if (buf[i] == '{')
 			brace_level++;
-		अगर (buf[i] == '}')
+		if (buf[i] == '}')
 			brace_level--;
-		अगर (buf[i] == '}' && !brace_level) अणु
+		if (buf[i] == '}' && !brace_level) {
 			i++;
-			अगर (i - start + 1 > WFX_PDS_MAX_SIZE)
-				वापस -EFBIG;
+			if (i - start + 1 > WFX_PDS_MAX_SIZE)
+				return -EFBIG;
 			buf[start] = '{';
 			buf[i] = 0;
 			dev_dbg(wdev->dev, "send PDS '%s}'\n", buf + start);
 			buf[i] = '}';
-			ret = hअगर_configuration(wdev, buf + start,
+			ret = hif_configuration(wdev, buf + start,
 						i - start + 1);
-			अगर (ret > 0) अणु
+			if (ret > 0) {
 				dev_err(wdev->dev, "PDS bytes %d to %d: invalid data (unsupported options?)\n",
 					start, i);
-				वापस -EINVAL;
-			पूर्ण
-			अगर (ret == -ETIMEDOUT) अणु
+				return -EINVAL;
+			}
+			if (ret == -ETIMEDOUT) {
 				dev_err(wdev->dev, "PDS bytes %d to %d: chip didn't reply (corrupted file?)\n",
 					start, i);
-				वापस ret;
-			पूर्ण
-			अगर (ret) अणु
+				return ret;
+			}
+			if (ret) {
 				dev_err(wdev->dev, "PDS bytes %d to %d: chip returned an unknown error\n",
 					start, i);
-				वापस -EIO;
-			पूर्ण
+				return -EIO;
+			}
 			buf[i] = ',';
 			start = i;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+	}
+	return 0;
+}
 
-अटल पूर्णांक wfx_send_pdata_pds(काष्ठा wfx_dev *wdev)
-अणु
-	पूर्णांक ret = 0;
-	स्थिर काष्ठा firmware *pds;
-	u8 *पंचांगp_buf;
+static int wfx_send_pdata_pds(struct wfx_dev *wdev)
+{
+	int ret = 0;
+	const struct firmware *pds;
+	u8 *tmp_buf;
 
 	ret = request_firmware(&pds, wdev->pdata.file_pds, wdev->dev);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(wdev->dev, "can't load PDS file %s\n",
 			wdev->pdata.file_pds);
-		जाओ err1;
-	पूर्ण
-	पंचांगp_buf = kmemdup(pds->data, pds->size, GFP_KERNEL);
-	अगर (!पंचांगp_buf) अणु
+		goto err1;
+	}
+	tmp_buf = kmemdup(pds->data, pds->size, GFP_KERNEL);
+	if (!tmp_buf) {
 		ret = -ENOMEM;
-		जाओ err2;
-	पूर्ण
-	ret = wfx_send_pds(wdev, पंचांगp_buf, pds->size);
-	kमुक्त(पंचांगp_buf);
+		goto err2;
+	}
+	ret = wfx_send_pds(wdev, tmp_buf, pds->size);
+	kfree(tmp_buf);
 err2:
 	release_firmware(pds);
 err1:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम wfx_मुक्त_common(व्योम *data)
-अणु
-	काष्ठा wfx_dev *wdev = data;
+static void wfx_free_common(void *data)
+{
+	struct wfx_dev *wdev = data;
 
-	mutex_destroy(&wdev->tx_घातer_loop_info_lock);
+	mutex_destroy(&wdev->tx_power_loop_info_lock);
 	mutex_destroy(&wdev->rx_stats_lock);
 	mutex_destroy(&wdev->conf_mutex);
-	ieee80211_मुक्त_hw(wdev->hw);
-पूर्ण
+	ieee80211_free_hw(wdev->hw);
+}
 
-काष्ठा wfx_dev *wfx_init_common(काष्ठा device *dev,
-				स्थिर काष्ठा wfx_platक्रमm_data *pdata,
-				स्थिर काष्ठा hwbus_ops *hwbus_ops,
-				व्योम *hwbus_priv)
-अणु
-	काष्ठा ieee80211_hw *hw;
-	काष्ठा wfx_dev *wdev;
+struct wfx_dev *wfx_init_common(struct device *dev,
+				const struct wfx_platform_data *pdata,
+				const struct hwbus_ops *hwbus_ops,
+				void *hwbus_priv)
+{
+	struct ieee80211_hw *hw;
+	struct wfx_dev *wdev;
 
-	hw = ieee80211_alloc_hw(माप(काष्ठा wfx_dev), &wfx_ops);
-	अगर (!hw)
-		वापस शून्य;
+	hw = ieee80211_alloc_hw(sizeof(struct wfx_dev), &wfx_ops);
+	if (!hw)
+		return NULL;
 
 	SET_IEEE80211_DEV(hw, dev);
 
@@ -271,15 +270,15 @@ err1:
 	ieee80211_hw_set(hw, SUPPORTS_PS);
 	ieee80211_hw_set(hw, MFP_CAPABLE);
 
-	hw->vअगर_data_size = माप(काष्ठा wfx_vअगर);
-	hw->sta_data_size = माप(काष्ठा wfx_sta_priv);
+	hw->vif_data_size = sizeof(struct wfx_vif);
+	hw->sta_data_size = sizeof(struct wfx_sta_priv);
 	hw->queues = 4;
 	hw->max_rates = 8;
 	hw->max_rate_tries = 8;
-	hw->extra_tx_headroom = माप(काष्ठा hअगर_msg)
-				+ माप(काष्ठा hअगर_req_tx)
+	hw->extra_tx_headroom = sizeof(struct hif_msg)
+				+ sizeof(struct hif_req_tx)
 				+ 4 /* alignment */ + 8 /* TKIP IV */;
-	hw->wiphy->पूर्णांकerface_modes = BIT(NL80211_IFTYPE_STATION) |
+	hw->wiphy->interface_modes = BIT(NL80211_IFTYPE_STATION) |
 				     BIT(NL80211_IFTYPE_ADHOC) |
 				     BIT(NL80211_IFTYPE_AP);
 	hw->wiphy->probe_resp_offload = NL80211_PROBE_RESP_OFFLOAD_SUPPORT_WPS |
@@ -292,74 +291,74 @@ err1:
 	hw->wiphy->max_ap_assoc_sta = HIF_LINK_ID_MAX;
 	hw->wiphy->max_scan_ssids = 2;
 	hw->wiphy->max_scan_ie_len = IEEE80211_MAX_DATA_LEN;
-	hw->wiphy->n_अगरace_combinations = ARRAY_SIZE(wfx_अगरace_combinations);
-	hw->wiphy->अगरace_combinations = wfx_अगरace_combinations;
-	hw->wiphy->bands[NL80211_BAND_2GHZ] = devm_kदो_स्मृति(dev, माप(wfx_band_2ghz), GFP_KERNEL);
+	hw->wiphy->n_iface_combinations = ARRAY_SIZE(wfx_iface_combinations);
+	hw->wiphy->iface_combinations = wfx_iface_combinations;
+	hw->wiphy->bands[NL80211_BAND_2GHZ] = devm_kmalloc(dev, sizeof(wfx_band_2ghz), GFP_KERNEL);
 	// FIXME: also copy wfx_rates and wfx_2ghz_chantable
-	स_नकल(hw->wiphy->bands[NL80211_BAND_2GHZ], &wfx_band_2ghz,
-	       माप(wfx_band_2ghz));
+	memcpy(hw->wiphy->bands[NL80211_BAND_2GHZ], &wfx_band_2ghz,
+	       sizeof(wfx_band_2ghz));
 
 	wdev = hw->priv;
 	wdev->hw = hw;
 	wdev->dev = dev;
 	wdev->hwbus_ops = hwbus_ops;
 	wdev->hwbus_priv = hwbus_priv;
-	स_नकल(&wdev->pdata, pdata, माप(*pdata));
-	of_property_पढ़ो_string(dev->of_node, "config-file",
+	memcpy(&wdev->pdata, pdata, sizeof(*pdata));
+	of_property_read_string(dev->of_node, "config-file",
 				&wdev->pdata.file_pds);
 	wdev->pdata.gpio_wakeup = devm_gpiod_get_optional(dev, "wakeup",
 							  GPIOD_OUT_LOW);
-	अगर (IS_ERR(wdev->pdata.gpio_wakeup))
-		वापस शून्य;
-	अगर (wdev->pdata.gpio_wakeup)
+	if (IS_ERR(wdev->pdata.gpio_wakeup))
+		return NULL;
+	if (wdev->pdata.gpio_wakeup)
 		gpiod_set_consumer_name(wdev->pdata.gpio_wakeup, "wfx wakeup");
 
 	mutex_init(&wdev->conf_mutex);
 	mutex_init(&wdev->rx_stats_lock);
-	mutex_init(&wdev->tx_घातer_loop_info_lock);
-	init_completion(&wdev->firmware_पढ़ोy);
-	INIT_DELAYED_WORK(&wdev->cooling_समयout_work,
-			  wfx_cooling_समयout_work);
+	mutex_init(&wdev->tx_power_loop_info_lock);
+	init_completion(&wdev->firmware_ready);
+	INIT_DELAYED_WORK(&wdev->cooling_timeout_work,
+			  wfx_cooling_timeout_work);
 	skb_queue_head_init(&wdev->tx_pending);
-	init_रुकोqueue_head(&wdev->tx_dequeue);
-	wfx_init_hअगर_cmd(&wdev->hअगर_cmd);
-	wdev->क्रमce_ps_समयout = -1;
+	init_waitqueue_head(&wdev->tx_dequeue);
+	wfx_init_hif_cmd(&wdev->hif_cmd);
+	wdev->force_ps_timeout = -1;
 
-	अगर (devm_add_action_or_reset(dev, wfx_मुक्त_common, wdev))
-		वापस शून्य;
+	if (devm_add_action_or_reset(dev, wfx_free_common, wdev))
+		return NULL;
 
-	वापस wdev;
-पूर्ण
+	return wdev;
+}
 
-पूर्णांक wfx_probe(काष्ठा wfx_dev *wdev)
-अणु
-	पूर्णांक i;
-	पूर्णांक err;
-	काष्ठा gpio_desc *gpio_saved;
+int wfx_probe(struct wfx_dev *wdev)
+{
+	int i;
+	int err;
+	struct gpio_desc *gpio_saved;
 
 	// During first part of boot, gpio_wakeup cannot yet been used. So
 	// prevent bh() to touch it.
 	gpio_saved = wdev->pdata.gpio_wakeup;
-	wdev->pdata.gpio_wakeup = शून्य;
+	wdev->pdata.gpio_wakeup = NULL;
 	wdev->poll_irq = true;
 
-	wfx_bh_रेजिस्टर(wdev);
+	wfx_bh_register(wdev);
 
 	err = wfx_init_device(wdev);
-	अगर (err)
-		जाओ err0;
+	if (err)
+		goto err0;
 
 	wfx_bh_poll_irq(wdev);
-	err = रुको_क्रम_completion_समयout(&wdev->firmware_पढ़ोy, 1 * HZ);
-	अगर (err <= 0) अणु
-		अगर (err == 0) अणु
+	err = wait_for_completion_timeout(&wdev->firmware_ready, 1 * HZ);
+	if (err <= 0) {
+		if (err == 0) {
 			dev_err(wdev->dev, "timeout while waiting for startup indication\n");
 			err = -ETIMEDOUT;
-		पूर्ण अन्यथा अगर (err == -ERESTARTSYS) अणु
+		} else if (err == -ERESTARTSYS) {
 			dev_info(wdev->dev, "probe interrupted by user\n");
-		पूर्ण
-		जाओ err0;
-	पूर्ण
+		}
+		goto err0;
+	}
 
 	// FIXME: fill wiphy::hw_version
 	dev_info(wdev->dev, "started firmware %d.%d.%d \"%s\" (API: %d.%d, keyset: %02X, caps: 0x%.8X)\n",
@@ -367,124 +366,124 @@ err1:
 		 wdev->hw_caps.firmware_build, wdev->hw_caps.firmware_label,
 		 wdev->hw_caps.api_version_major, wdev->hw_caps.api_version_minor,
 		 wdev->keyset, wdev->hw_caps.link_mode);
-	snम_लिखो(wdev->hw->wiphy->fw_version,
-		 माप(wdev->hw->wiphy->fw_version),
+	snprintf(wdev->hw->wiphy->fw_version,
+		 sizeof(wdev->hw->wiphy->fw_version),
 		 "%d.%d.%d",
 		 wdev->hw_caps.firmware_major,
 		 wdev->hw_caps.firmware_minor,
 		 wdev->hw_caps.firmware_build);
 
-	अगर (wfx_api_older_than(wdev, 1, 0)) अणु
+	if (wfx_api_older_than(wdev, 1, 0)) {
 		dev_err(wdev->dev,
 			"unsupported firmware API version (expect 1 while firmware returns %d)\n",
 			wdev->hw_caps.api_version_major);
 		err = -ENOTSUPP;
-		जाओ err0;
-	पूर्ण
+		goto err0;
+	}
 
-	अगर (wdev->hw_caps.link_mode == SEC_LINK_ENFORCED) अणु
+	if (wdev->hw_caps.link_mode == SEC_LINK_ENFORCED) {
 		dev_err(wdev->dev,
 			"chip require secure_link, but can't negotiate it\n");
-		जाओ err0;
-	पूर्ण
+		goto err0;
+	}
 
-	अगर (wdev->hw_caps.region_sel_mode) अणु
+	if (wdev->hw_caps.region_sel_mode) {
 		wdev->hw->wiphy->bands[NL80211_BAND_2GHZ]->channels[11].flags |= IEEE80211_CHAN_NO_IR;
 		wdev->hw->wiphy->bands[NL80211_BAND_2GHZ]->channels[12].flags |= IEEE80211_CHAN_NO_IR;
 		wdev->hw->wiphy->bands[NL80211_BAND_2GHZ]->channels[13].flags |= IEEE80211_CHAN_DISABLED;
-	पूर्ण
+	}
 
 	dev_dbg(wdev->dev, "sending configuration file %s\n",
 		wdev->pdata.file_pds);
 	err = wfx_send_pdata_pds(wdev);
-	अगर (err < 0)
-		जाओ err0;
+	if (err < 0)
+		goto err0;
 
 	wdev->poll_irq = false;
 	err = wdev->hwbus_ops->irq_subscribe(wdev->hwbus_priv);
-	अगर (err)
-		जाओ err0;
+	if (err)
+		goto err0;
 
-	err = hअगर_use_multi_tx_conf(wdev, true);
-	अगर (err)
+	err = hif_use_multi_tx_conf(wdev, true);
+	if (err)
 		dev_err(wdev->dev, "misconfigured IRQ?\n");
 
 	wdev->pdata.gpio_wakeup = gpio_saved;
-	अगर (wdev->pdata.gpio_wakeup) अणु
+	if (wdev->pdata.gpio_wakeup) {
 		dev_dbg(wdev->dev,
 			"enable 'quiescent' power mode with wakeup GPIO and PDS file %s\n",
 			wdev->pdata.file_pds);
 		gpiod_set_value_cansleep(wdev->pdata.gpio_wakeup, 1);
-		control_reg_ग_लिखो(wdev, 0);
-		hअगर_set_operational_mode(wdev, HIF_OP_POWER_MODE_QUIESCENT);
-	पूर्ण अन्यथा अणु
-		hअगर_set_operational_mode(wdev, HIF_OP_POWER_MODE_DOZE);
-	पूर्ण
+		control_reg_write(wdev, 0);
+		hif_set_operational_mode(wdev, HIF_OP_POWER_MODE_QUIESCENT);
+	} else {
+		hif_set_operational_mode(wdev, HIF_OP_POWER_MODE_DOZE);
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(wdev->addresses); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(wdev->addresses); i++) {
 		eth_zero_addr(wdev->addresses[i].addr);
 		err = of_get_mac_address(wdev->dev->of_node,
 					 wdev->addresses[i].addr);
-		अगर (!err) अणु
+		if (!err) {
 			wdev->addresses[i].addr[ETH_ALEN - 1] += i;
-		पूर्ण अन्यथा अणु
+		} else {
 			ether_addr_copy(wdev->addresses[i].addr,
 					wdev->hw_caps.mac_addr[i]);
-		पूर्ण
-		अगर (!is_valid_ether_addr(wdev->addresses[i].addr)) अणु
+		}
+		if (!is_valid_ether_addr(wdev->addresses[i].addr)) {
 			dev_warn(wdev->dev, "using random MAC address\n");
-			eth_अक्रमom_addr(wdev->addresses[i].addr);
-		पूर्ण
+			eth_random_addr(wdev->addresses[i].addr);
+		}
 		dev_info(wdev->dev, "MAC address %d: %pM\n", i,
 			 wdev->addresses[i].addr);
-	पूर्ण
+	}
 	wdev->hw->wiphy->n_addresses = ARRAY_SIZE(wdev->addresses);
 	wdev->hw->wiphy->addresses = wdev->addresses;
 
-	err = ieee80211_रेजिस्टर_hw(wdev->hw);
-	अगर (err)
-		जाओ err1;
+	err = ieee80211_register_hw(wdev->hw);
+	if (err)
+		goto err1;
 
 	err = wfx_debug_init(wdev);
-	अगर (err)
-		जाओ err2;
+	if (err)
+		goto err2;
 
-	वापस 0;
+	return 0;
 
 err2:
-	ieee80211_unरेजिस्टर_hw(wdev->hw);
+	ieee80211_unregister_hw(wdev->hw);
 err1:
 	wdev->hwbus_ops->irq_unsubscribe(wdev->hwbus_priv);
 err0:
-	wfx_bh_unरेजिस्टर(wdev);
-	वापस err;
-पूर्ण
+	wfx_bh_unregister(wdev);
+	return err;
+}
 
-व्योम wfx_release(काष्ठा wfx_dev *wdev)
-अणु
-	ieee80211_unरेजिस्टर_hw(wdev->hw);
-	hअगर_shutकरोwn(wdev);
+void wfx_release(struct wfx_dev *wdev)
+{
+	ieee80211_unregister_hw(wdev->hw);
+	hif_shutdown(wdev);
 	wdev->hwbus_ops->irq_unsubscribe(wdev->hwbus_priv);
-	wfx_bh_unरेजिस्टर(wdev);
-पूर्ण
+	wfx_bh_unregister(wdev);
+}
 
-अटल पूर्णांक __init wfx_core_init(व्योम)
-अणु
-	पूर्णांक ret = 0;
+static int __init wfx_core_init(void)
+{
+	int ret = 0;
 
-	अगर (IS_ENABLED(CONFIG_SPI))
-		ret = spi_रेजिस्टर_driver(&wfx_spi_driver);
-	अगर (IS_ENABLED(CONFIG_MMC) && !ret)
-		ret = sdio_रेजिस्टर_driver(&wfx_sdio_driver);
-	वापस ret;
-पूर्ण
+	if (IS_ENABLED(CONFIG_SPI))
+		ret = spi_register_driver(&wfx_spi_driver);
+	if (IS_ENABLED(CONFIG_MMC) && !ret)
+		ret = sdio_register_driver(&wfx_sdio_driver);
+	return ret;
+}
 module_init(wfx_core_init);
 
-अटल व्योम __निकास wfx_core_निकास(व्योम)
-अणु
-	अगर (IS_ENABLED(CONFIG_MMC))
-		sdio_unरेजिस्टर_driver(&wfx_sdio_driver);
-	अगर (IS_ENABLED(CONFIG_SPI))
-		spi_unरेजिस्टर_driver(&wfx_spi_driver);
-पूर्ण
-module_निकास(wfx_core_निकास);
+static void __exit wfx_core_exit(void)
+{
+	if (IS_ENABLED(CONFIG_MMC))
+		sdio_unregister_driver(&wfx_sdio_driver);
+	if (IS_ENABLED(CONFIG_SPI))
+		spi_unregister_driver(&wfx_spi_driver);
+}
+module_exit(wfx_core_exit);

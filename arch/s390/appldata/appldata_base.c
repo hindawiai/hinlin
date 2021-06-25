@@ -1,8 +1,7 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Base infraकाष्ठाure क्रम Linux-z/VM Monitor Stream, Stage 1.
- * Exports appldata_रेजिस्टर_ops() and appldata_unरेजिस्टर_ops() क्रम the
+ * Base infrastructure for Linux-z/VM Monitor Stream, Stage 1.
+ * Exports appldata_register_ops() and appldata_unregister_ops() for the
  * data gathering modules.
  *
  * Copyright IBM Corp. 2003, 2009
@@ -10,267 +9,267 @@
  * Author: Gerald Schaefer <gerald.schaefer@de.ibm.com>
  */
 
-#घोषणा KMSG_COMPONENT	"appldata"
-#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#define KMSG_COMPONENT	"appldata"
+#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/sched/स्थिति.स>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/swap.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/sysctl.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/suspend.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <यंत्र/appldata.h>
-#समावेश <यंत्र/vसमयr.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/smp.h>
+#include <linux/module.h>
+#include <linux/sched/stat.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/errno.h>
+#include <linux/interrupt.h>
+#include <linux/proc_fs.h>
+#include <linux/mm.h>
+#include <linux/swap.h>
+#include <linux/pagemap.h>
+#include <linux/sysctl.h>
+#include <linux/notifier.h>
+#include <linux/cpu.h>
+#include <linux/workqueue.h>
+#include <linux/suspend.h>
+#include <linux/platform_device.h>
+#include <asm/appldata.h>
+#include <asm/vtimer.h>
+#include <linux/uaccess.h>
+#include <asm/io.h>
+#include <asm/smp.h>
 
-#समावेश "appldata.h"
+#include "appldata.h"
 
 
-#घोषणा APPLDATA_CPU_INTERVAL	10000		/* शेष (CPU) समय क्रम
-						   sampling पूर्णांकerval in
+#define APPLDATA_CPU_INTERVAL	10000		/* default (CPU) time for
+						   sampling interval in
 						   milliseconds */
 
-#घोषणा TOD_MICRO	0x01000			/* nr. of TOD घड़ी units
-						   क्रम 1 microsecond */
+#define TOD_MICRO	0x01000			/* nr. of TOD clock units
+						   for 1 microsecond */
 
-अटल काष्ठा platक्रमm_device *appldata_pdev;
+static struct platform_device *appldata_pdev;
 
 /*
  * /proc entries (sysctl)
  */
-अटल स्थिर अक्षर appldata_proc_name[APPLDATA_PROC_NAME_LENGTH] = "appldata";
-अटल पूर्णांक appldata_समयr_handler(काष्ठा ctl_table *ctl, पूर्णांक ग_लिखो,
-				  व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos);
-अटल पूर्णांक appldata_पूर्णांकerval_handler(काष्ठा ctl_table *ctl, पूर्णांक ग_लिखो,
-				     व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos);
+static const char appldata_proc_name[APPLDATA_PROC_NAME_LENGTH] = "appldata";
+static int appldata_timer_handler(struct ctl_table *ctl, int write,
+				  void *buffer, size_t *lenp, loff_t *ppos);
+static int appldata_interval_handler(struct ctl_table *ctl, int write,
+				     void *buffer, size_t *lenp, loff_t *ppos);
 
-अटल काष्ठा ctl_table_header *appldata_sysctl_header;
-अटल काष्ठा ctl_table appldata_table[] = अणु
-	अणु
+static struct ctl_table_header *appldata_sysctl_header;
+static struct ctl_table appldata_table[] = {
+	{
 		.procname	= "timer",
 		.mode		= S_IRUGO | S_IWUSR,
-		.proc_handler	= appldata_समयr_handler,
-	पूर्ण,
-	अणु
+		.proc_handler	= appldata_timer_handler,
+	},
+	{
 		.procname	= "interval",
 		.mode		= S_IRUGO | S_IWUSR,
-		.proc_handler	= appldata_पूर्णांकerval_handler,
-	पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+		.proc_handler	= appldata_interval_handler,
+	},
+	{ },
+};
 
-अटल काष्ठा ctl_table appldata_dir_table[] = अणु
-	अणु
+static struct ctl_table appldata_dir_table[] = {
+	{
 		.procname	= appldata_proc_name,
 		.maxlen		= 0,
 		.mode		= S_IRUGO | S_IXUGO,
 		.child		= appldata_table,
-	पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+	},
+	{ },
+};
 
 /*
  * Timer
  */
-अटल काष्ठा vसमयr_list appldata_समयr;
+static struct vtimer_list appldata_timer;
 
-अटल DEFINE_SPINLOCK(appldata_समयr_lock);
-अटल पूर्णांक appldata_पूर्णांकerval = APPLDATA_CPU_INTERVAL;
-अटल पूर्णांक appldata_समयr_active;
-अटल पूर्णांक appldata_समयr_suspended = 0;
+static DEFINE_SPINLOCK(appldata_timer_lock);
+static int appldata_interval = APPLDATA_CPU_INTERVAL;
+static int appldata_timer_active;
+static int appldata_timer_suspended = 0;
 
 /*
  * Work queue
  */
-अटल काष्ठा workqueue_काष्ठा *appldata_wq;
-अटल व्योम appldata_work_fn(काष्ठा work_काष्ठा *work);
-अटल DECLARE_WORK(appldata_work, appldata_work_fn);
+static struct workqueue_struct *appldata_wq;
+static void appldata_work_fn(struct work_struct *work);
+static DECLARE_WORK(appldata_work, appldata_work_fn);
 
 
 /*
  * Ops list
  */
-अटल DEFINE_MUTEX(appldata_ops_mutex);
-अटल LIST_HEAD(appldata_ops_list);
+static DEFINE_MUTEX(appldata_ops_mutex);
+static LIST_HEAD(appldata_ops_list);
 
 
-/*************************** समयr, work, DIAG *******************************/
+/*************************** timer, work, DIAG *******************************/
 /*
- * appldata_समयr_function()
+ * appldata_timer_function()
  *
- * schedule work and reschedule समयr
+ * schedule work and reschedule timer
  */
-अटल व्योम appldata_समयr_function(अचिन्हित दीर्घ data)
-अणु
-	queue_work(appldata_wq, (काष्ठा work_काष्ठा *) data);
-पूर्ण
+static void appldata_timer_function(unsigned long data)
+{
+	queue_work(appldata_wq, (struct work_struct *) data);
+}
 
 /*
  * appldata_work_fn()
  *
- * call data gathering function क्रम each (active) module
+ * call data gathering function for each (active) module
  */
-अटल व्योम appldata_work_fn(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा list_head *lh;
-	काष्ठा appldata_ops *ops;
+static void appldata_work_fn(struct work_struct *work)
+{
+	struct list_head *lh;
+	struct appldata_ops *ops;
 
 	mutex_lock(&appldata_ops_mutex);
-	list_क्रम_each(lh, &appldata_ops_list) अणु
-		ops = list_entry(lh, काष्ठा appldata_ops, list);
-		अगर (ops->active == 1) अणु
+	list_for_each(lh, &appldata_ops_list) {
+		ops = list_entry(lh, struct appldata_ops, list);
+		if (ops->active == 1) {
 			ops->callback(ops->data);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	mutex_unlock(&appldata_ops_mutex);
-पूर्ण
+}
 
-अटल काष्ठा appldata_product_id appldata_id = अणु
-	.prod_nr    = अणु0xD3, 0xC9, 0xD5, 0xE4,
-		       0xE7, 0xD2, 0xD9पूर्ण,	/* "LINUXKR" */
+static struct appldata_product_id appldata_id = {
+	.prod_nr    = {0xD3, 0xC9, 0xD5, 0xE4,
+		       0xE7, 0xD2, 0xD9},	/* "LINUXKR" */
 	.prod_fn    = 0xD5D3,			/* "NL" */
 	.version_nr = 0xF2F6,			/* "26" */
 	.release_nr = 0xF0F1,			/* "01" */
-पूर्ण;
+};
 
 /*
  * appldata_diag()
  *
  * prepare parameter list, issue DIAG 0xDC
  */
-पूर्णांक appldata_diag(अक्षर record_nr, u16 function, अचिन्हित दीर्घ buffer,
-			u16 length, अक्षर *mod_lvl)
-अणु
-	काष्ठा appldata_parameter_list *parm_list;
-	काष्ठा appldata_product_id *id;
-	पूर्णांक rc;
+int appldata_diag(char record_nr, u16 function, unsigned long buffer,
+			u16 length, char *mod_lvl)
+{
+	struct appldata_parameter_list *parm_list;
+	struct appldata_product_id *id;
+	int rc;
 
-	parm_list = kदो_स्मृति(माप(*parm_list), GFP_KERNEL);
-	id = kmemdup(&appldata_id, माप(appldata_id), GFP_KERNEL);
+	parm_list = kmalloc(sizeof(*parm_list), GFP_KERNEL);
+	id = kmemdup(&appldata_id, sizeof(appldata_id), GFP_KERNEL);
 	rc = -ENOMEM;
-	अगर (parm_list && id) अणु
+	if (parm_list && id) {
 		id->record_nr = record_nr;
 		id->mod_lvl = (mod_lvl[0]) << 8 | mod_lvl[1];
-		rc = appldata_यंत्र(parm_list, id, function,
-				  (व्योम *) buffer, length);
-	पूर्ण
-	kमुक्त(id);
-	kमुक्त(parm_list);
-	वापस rc;
-पूर्ण
-/************************ समयr, work, DIAG <END> ****************************/
+		rc = appldata_asm(parm_list, id, function,
+				  (void *) buffer, length);
+	}
+	kfree(id);
+	kfree(parm_list);
+	return rc;
+}
+/************************ timer, work, DIAG <END> ****************************/
 
 
 /****************************** /proc stuff **********************************/
 
-#घोषणा APPLDATA_ADD_TIMER	0
-#घोषणा APPLDATA_DEL_TIMER	1
-#घोषणा APPLDATA_MOD_TIMER	2
+#define APPLDATA_ADD_TIMER	0
+#define APPLDATA_DEL_TIMER	1
+#define APPLDATA_MOD_TIMER	2
 
 /*
- * __appldata_vसमयr_setup()
+ * __appldata_vtimer_setup()
  *
- * Add, delete or modअगरy भव समयrs on all online cpus.
- * The caller needs to get the appldata_समयr_lock spinlock.
+ * Add, delete or modify virtual timers on all online cpus.
+ * The caller needs to get the appldata_timer_lock spinlock.
  */
-अटल व्योम __appldata_vसमयr_setup(पूर्णांक cmd)
-अणु
-	u64 समयr_पूर्णांकerval = (u64) appldata_पूर्णांकerval * 1000 * TOD_MICRO;
+static void __appldata_vtimer_setup(int cmd)
+{
+	u64 timer_interval = (u64) appldata_interval * 1000 * TOD_MICRO;
 
-	चयन (cmd) अणु
-	हाल APPLDATA_ADD_TIMER:
-		अगर (appldata_समयr_active)
-			अवरोध;
-		appldata_समयr.expires = समयr_पूर्णांकerval;
-		add_virt_समयr_periodic(&appldata_समयr);
-		appldata_समयr_active = 1;
-		अवरोध;
-	हाल APPLDATA_DEL_TIMER:
-		del_virt_समयr(&appldata_समयr);
-		अगर (!appldata_समयr_active)
-			अवरोध;
-		appldata_समयr_active = 0;
-		अवरोध;
-	हाल APPLDATA_MOD_TIMER:
-		अगर (!appldata_समयr_active)
-			अवरोध;
-		mod_virt_समयr_periodic(&appldata_समयr, समयr_पूर्णांकerval);
-	पूर्ण
-पूर्ण
+	switch (cmd) {
+	case APPLDATA_ADD_TIMER:
+		if (appldata_timer_active)
+			break;
+		appldata_timer.expires = timer_interval;
+		add_virt_timer_periodic(&appldata_timer);
+		appldata_timer_active = 1;
+		break;
+	case APPLDATA_DEL_TIMER:
+		del_virt_timer(&appldata_timer);
+		if (!appldata_timer_active)
+			break;
+		appldata_timer_active = 0;
+		break;
+	case APPLDATA_MOD_TIMER:
+		if (!appldata_timer_active)
+			break;
+		mod_virt_timer_periodic(&appldata_timer, timer_interval);
+	}
+}
 
 /*
- * appldata_समयr_handler()
+ * appldata_timer_handler()
  *
- * Start/Stop समयr, show status of समयr (0 = not active, 1 = active)
+ * Start/Stop timer, show status of timer (0 = not active, 1 = active)
  */
-अटल पूर्णांक
-appldata_समयr_handler(काष्ठा ctl_table *ctl, पूर्णांक ग_लिखो,
-			   व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
-अणु
-	पूर्णांक समयr_active = appldata_समयr_active;
-	पूर्णांक rc;
-	काष्ठा ctl_table ctl_entry = अणु
+static int
+appldata_timer_handler(struct ctl_table *ctl, int write,
+			   void *buffer, size_t *lenp, loff_t *ppos)
+{
+	int timer_active = appldata_timer_active;
+	int rc;
+	struct ctl_table ctl_entry = {
 		.procname	= ctl->procname,
-		.data		= &समयr_active,
-		.maxlen		= माप(पूर्णांक),
+		.data		= &timer_active,
+		.maxlen		= sizeof(int),
 		.extra1		= SYSCTL_ZERO,
 		.extra2		= SYSCTL_ONE,
-	पूर्ण;
+	};
 
-	rc = proc_करोuपूर्णांकvec_minmax(&ctl_entry, ग_लिखो, buffer, lenp, ppos);
-	अगर (rc < 0 || !ग_लिखो)
-		वापस rc;
+	rc = proc_douintvec_minmax(&ctl_entry, write, buffer, lenp, ppos);
+	if (rc < 0 || !write)
+		return rc;
 
-	spin_lock(&appldata_समयr_lock);
-	अगर (समयr_active)
-		__appldata_vसमयr_setup(APPLDATA_ADD_TIMER);
-	अन्यथा
-		__appldata_vसमयr_setup(APPLDATA_DEL_TIMER);
-	spin_unlock(&appldata_समयr_lock);
-	वापस 0;
-पूर्ण
+	spin_lock(&appldata_timer_lock);
+	if (timer_active)
+		__appldata_vtimer_setup(APPLDATA_ADD_TIMER);
+	else
+		__appldata_vtimer_setup(APPLDATA_DEL_TIMER);
+	spin_unlock(&appldata_timer_lock);
+	return 0;
+}
 
 /*
- * appldata_पूर्णांकerval_handler()
+ * appldata_interval_handler()
  *
- * Set (CPU) समयr पूर्णांकerval क्रम collection of data (in milliseconds), show
- * current समयr पूर्णांकerval.
+ * Set (CPU) timer interval for collection of data (in milliseconds), show
+ * current timer interval.
  */
-अटल पूर्णांक
-appldata_पूर्णांकerval_handler(काष्ठा ctl_table *ctl, पूर्णांक ग_लिखो,
-			   व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
-अणु
-	पूर्णांक पूर्णांकerval = appldata_पूर्णांकerval;
-	पूर्णांक rc;
-	काष्ठा ctl_table ctl_entry = अणु
+static int
+appldata_interval_handler(struct ctl_table *ctl, int write,
+			   void *buffer, size_t *lenp, loff_t *ppos)
+{
+	int interval = appldata_interval;
+	int rc;
+	struct ctl_table ctl_entry = {
 		.procname	= ctl->procname,
-		.data		= &पूर्णांकerval,
-		.maxlen		= माप(पूर्णांक),
+		.data		= &interval,
+		.maxlen		= sizeof(int),
 		.extra1		= SYSCTL_ONE,
-	पूर्ण;
+	};
 
-	rc = proc_करोपूर्णांकvec_minmax(&ctl_entry, ग_लिखो, buffer, lenp, ppos);
-	अगर (rc < 0 || !ग_लिखो)
-		वापस rc;
+	rc = proc_dointvec_minmax(&ctl_entry, write, buffer, lenp, ppos);
+	if (rc < 0 || !write)
+		return rc;
 
-	spin_lock(&appldata_समयr_lock);
-	appldata_पूर्णांकerval = पूर्णांकerval;
-	__appldata_vसमयr_setup(APPLDATA_MOD_TIMER);
-	spin_unlock(&appldata_समयr_lock);
-	वापस 0;
-पूर्ण
+	spin_lock(&appldata_timer_lock);
+	appldata_interval = interval;
+	__appldata_vtimer_setup(APPLDATA_MOD_TIMER);
+	spin_unlock(&appldata_timer_lock);
+	return 0;
+}
 
 /*
  * appldata_generic_handler()
@@ -278,98 +277,98 @@ appldata_पूर्णांकerval_handler(काष्ठा ctl_table *ctl
  * Generic start/stop monitoring and DIAG, show status of
  * monitoring (0 = not in process, 1 = in process)
  */
-अटल पूर्णांक
-appldata_generic_handler(काष्ठा ctl_table *ctl, पूर्णांक ग_लिखो,
-			   व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
-अणु
-	काष्ठा appldata_ops *ops = शून्य, *पंचांगp_ops;
-	काष्ठा list_head *lh;
-	पूर्णांक rc, found;
-	पूर्णांक active;
-	काष्ठा ctl_table ctl_entry = अणु
+static int
+appldata_generic_handler(struct ctl_table *ctl, int write,
+			   void *buffer, size_t *lenp, loff_t *ppos)
+{
+	struct appldata_ops *ops = NULL, *tmp_ops;
+	struct list_head *lh;
+	int rc, found;
+	int active;
+	struct ctl_table ctl_entry = {
 		.data		= &active,
-		.maxlen		= माप(पूर्णांक),
+		.maxlen		= sizeof(int),
 		.extra1		= SYSCTL_ZERO,
 		.extra2		= SYSCTL_ONE,
-	पूर्ण;
+	};
 
 	found = 0;
 	mutex_lock(&appldata_ops_mutex);
-	list_क्रम_each(lh, &appldata_ops_list) अणु
-		पंचांगp_ops = list_entry(lh, काष्ठा appldata_ops, list);
-		अगर (&पंचांगp_ops->ctl_table[2] == ctl) अणु
+	list_for_each(lh, &appldata_ops_list) {
+		tmp_ops = list_entry(lh, struct appldata_ops, list);
+		if (&tmp_ops->ctl_table[2] == ctl) {
 			found = 1;
-		पूर्ण
-	पूर्ण
-	अगर (!found) अणु
+		}
+	}
+	if (!found) {
 		mutex_unlock(&appldata_ops_mutex);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	ops = ctl->data;
-	अगर (!try_module_get(ops->owner)) अणु	// protect this function
+	if (!try_module_get(ops->owner)) {	// protect this function
 		mutex_unlock(&appldata_ops_mutex);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	mutex_unlock(&appldata_ops_mutex);
 
 	active = ops->active;
-	rc = proc_करोuपूर्णांकvec_minmax(&ctl_entry, ग_लिखो, buffer, lenp, ppos);
-	अगर (rc < 0 || !ग_लिखो) अणु
+	rc = proc_douintvec_minmax(&ctl_entry, write, buffer, lenp, ppos);
+	if (rc < 0 || !write) {
 		module_put(ops->owner);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	mutex_lock(&appldata_ops_mutex);
-	अगर (active && (ops->active == 0)) अणु
+	if (active && (ops->active == 0)) {
 		// protect work queue callback
-		अगर (!try_module_get(ops->owner)) अणु
+		if (!try_module_get(ops->owner)) {
 			mutex_unlock(&appldata_ops_mutex);
 			module_put(ops->owner);
-			वापस -ENODEV;
-		पूर्ण
+			return -ENODEV;
+		}
 		ops->callback(ops->data);	// init record
 		rc = appldata_diag(ops->record_nr,
 					APPLDATA_START_INTERVAL_REC,
-					(अचिन्हित दीर्घ) ops->data, ops->size,
+					(unsigned long) ops->data, ops->size,
 					ops->mod_lvl);
-		अगर (rc != 0) अणु
+		if (rc != 0) {
 			pr_err("Starting the data collection for %s "
 			       "failed with rc=%d\n", ops->name, rc);
 			module_put(ops->owner);
-		पूर्ण अन्यथा
+		} else
 			ops->active = 1;
-	पूर्ण अन्यथा अगर (!active && (ops->active == 1)) अणु
+	} else if (!active && (ops->active == 1)) {
 		ops->active = 0;
 		rc = appldata_diag(ops->record_nr, APPLDATA_STOP_REC,
-				(अचिन्हित दीर्घ) ops->data, ops->size,
+				(unsigned long) ops->data, ops->size,
 				ops->mod_lvl);
-		अगर (rc != 0)
+		if (rc != 0)
 			pr_err("Stopping the data collection for %s "
 			       "failed with rc=%d\n", ops->name, rc);
 		module_put(ops->owner);
-	पूर्ण
+	}
 	mutex_unlock(&appldata_ops_mutex);
 	module_put(ops->owner);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*************************** /proc stuff <END> *******************************/
 
 
 /************************* module-ops management *****************************/
 /*
- * appldata_रेजिस्टर_ops()
+ * appldata_register_ops()
  *
- * update ops list, रेजिस्टर /proc/sys entries
+ * update ops list, register /proc/sys entries
  */
-पूर्णांक appldata_रेजिस्टर_ops(काष्ठा appldata_ops *ops)
-अणु
-	अगर (ops->size > APPLDATA_MAX_REC_SIZE)
-		वापस -EINVAL;
+int appldata_register_ops(struct appldata_ops *ops)
+{
+	if (ops->size > APPLDATA_MAX_REC_SIZE)
+		return -EINVAL;
 
-	ops->ctl_table = kसुस्मृति(4, माप(काष्ठा ctl_table), GFP_KERNEL);
-	अगर (!ops->ctl_table)
-		वापस -ENOMEM;
+	ops->ctl_table = kcalloc(4, sizeof(struct ctl_table), GFP_KERNEL);
+	if (!ops->ctl_table)
+		return -ENOMEM;
 
 	mutex_lock(&appldata_ops_mutex);
 	list_add(&ops->list, &appldata_ops_list);
@@ -385,168 +384,168 @@ appldata_generic_handler(काष्ठा ctl_table *ctl, पूर्णा�
 	ops->ctl_table[2].proc_handler = appldata_generic_handler;
 	ops->ctl_table[2].data = ops;
 
-	ops->sysctl_header = रेजिस्टर_sysctl_table(ops->ctl_table);
-	अगर (!ops->sysctl_header)
-		जाओ out;
-	वापस 0;
+	ops->sysctl_header = register_sysctl_table(ops->ctl_table);
+	if (!ops->sysctl_header)
+		goto out;
+	return 0;
 out:
 	mutex_lock(&appldata_ops_mutex);
 	list_del(&ops->list);
 	mutex_unlock(&appldata_ops_mutex);
-	kमुक्त(ops->ctl_table);
-	वापस -ENOMEM;
-पूर्ण
+	kfree(ops->ctl_table);
+	return -ENOMEM;
+}
 
 /*
- * appldata_unरेजिस्टर_ops()
+ * appldata_unregister_ops()
  *
- * update ops list, unरेजिस्टर /proc entries, stop DIAG अगर necessary
+ * update ops list, unregister /proc entries, stop DIAG if necessary
  */
-व्योम appldata_unरेजिस्टर_ops(काष्ठा appldata_ops *ops)
-अणु
+void appldata_unregister_ops(struct appldata_ops *ops)
+{
 	mutex_lock(&appldata_ops_mutex);
 	list_del(&ops->list);
 	mutex_unlock(&appldata_ops_mutex);
-	unरेजिस्टर_sysctl_table(ops->sysctl_header);
-	kमुक्त(ops->ctl_table);
-पूर्ण
+	unregister_sysctl_table(ops->sysctl_header);
+	kfree(ops->ctl_table);
+}
 /********************** module-ops management <END> **************************/
 
 
 /**************************** suspend / resume *******************************/
-अटल पूर्णांक appldata_मुक्तze(काष्ठा device *dev)
-अणु
-	काष्ठा appldata_ops *ops;
-	पूर्णांक rc;
-	काष्ठा list_head *lh;
+static int appldata_freeze(struct device *dev)
+{
+	struct appldata_ops *ops;
+	int rc;
+	struct list_head *lh;
 
-	spin_lock(&appldata_समयr_lock);
-	अगर (appldata_समयr_active) अणु
-		__appldata_vसमयr_setup(APPLDATA_DEL_TIMER);
-		appldata_समयr_suspended = 1;
-	पूर्ण
-	spin_unlock(&appldata_समयr_lock);
+	spin_lock(&appldata_timer_lock);
+	if (appldata_timer_active) {
+		__appldata_vtimer_setup(APPLDATA_DEL_TIMER);
+		appldata_timer_suspended = 1;
+	}
+	spin_unlock(&appldata_timer_lock);
 
 	mutex_lock(&appldata_ops_mutex);
-	list_क्रम_each(lh, &appldata_ops_list) अणु
-		ops = list_entry(lh, काष्ठा appldata_ops, list);
-		अगर (ops->active == 1) अणु
+	list_for_each(lh, &appldata_ops_list) {
+		ops = list_entry(lh, struct appldata_ops, list);
+		if (ops->active == 1) {
 			rc = appldata_diag(ops->record_nr, APPLDATA_STOP_REC,
-					(अचिन्हित दीर्घ) ops->data, ops->size,
+					(unsigned long) ops->data, ops->size,
 					ops->mod_lvl);
-			अगर (rc != 0)
+			if (rc != 0)
 				pr_err("Stopping the data collection for %s "
 				       "failed with rc=%d\n", ops->name, rc);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	mutex_unlock(&appldata_ops_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक appldata_restore(काष्ठा device *dev)
-अणु
-	काष्ठा appldata_ops *ops;
-	पूर्णांक rc;
-	काष्ठा list_head *lh;
+static int appldata_restore(struct device *dev)
+{
+	struct appldata_ops *ops;
+	int rc;
+	struct list_head *lh;
 
-	spin_lock(&appldata_समयr_lock);
-	अगर (appldata_समयr_suspended) अणु
-		__appldata_vसमयr_setup(APPLDATA_ADD_TIMER);
-		appldata_समयr_suspended = 0;
-	पूर्ण
-	spin_unlock(&appldata_समयr_lock);
+	spin_lock(&appldata_timer_lock);
+	if (appldata_timer_suspended) {
+		__appldata_vtimer_setup(APPLDATA_ADD_TIMER);
+		appldata_timer_suspended = 0;
+	}
+	spin_unlock(&appldata_timer_lock);
 
 	mutex_lock(&appldata_ops_mutex);
-	list_क्रम_each(lh, &appldata_ops_list) अणु
-		ops = list_entry(lh, काष्ठा appldata_ops, list);
-		अगर (ops->active == 1) अणु
+	list_for_each(lh, &appldata_ops_list) {
+		ops = list_entry(lh, struct appldata_ops, list);
+		if (ops->active == 1) {
 			ops->callback(ops->data);	// init record
 			rc = appldata_diag(ops->record_nr,
 					APPLDATA_START_INTERVAL_REC,
-					(अचिन्हित दीर्घ) ops->data, ops->size,
+					(unsigned long) ops->data, ops->size,
 					ops->mod_lvl);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("Starting the data collection for %s "
 				       "failed with rc=%d\n", ops->name, rc);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 	mutex_unlock(&appldata_ops_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक appldata_thaw(काष्ठा device *dev)
-अणु
-	वापस appldata_restore(dev);
-पूर्ण
+static int appldata_thaw(struct device *dev)
+{
+	return appldata_restore(dev);
+}
 
-अटल स्थिर काष्ठा dev_pm_ops appldata_pm_ops = अणु
-	.मुक्तze		= appldata_मुक्तze,
+static const struct dev_pm_ops appldata_pm_ops = {
+	.freeze		= appldata_freeze,
 	.thaw		= appldata_thaw,
 	.restore	= appldata_restore,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_driver appldata_pdrv = अणु
-	.driver = अणु
+static struct platform_driver appldata_pdrv = {
+	.driver = {
 		.name	= "appldata",
 		.pm	= &appldata_pm_ops,
-	पूर्ण,
-पूर्ण;
+	},
+};
 /************************* suspend / resume <END> ****************************/
 
 
-/******************************* init / निकास *********************************/
+/******************************* init / exit *********************************/
 
 /*
  * appldata_init()
  *
- * init समयr, रेजिस्टर /proc entries
+ * init timer, register /proc entries
  */
-अटल पूर्णांक __init appldata_init(व्योम)
-अणु
-	पूर्णांक rc;
+static int __init appldata_init(void)
+{
+	int rc;
 
-	init_virt_समयr(&appldata_समयr);
-	appldata_समयr.function = appldata_समयr_function;
-	appldata_समयr.data = (अचिन्हित दीर्घ) &appldata_work;
+	init_virt_timer(&appldata_timer);
+	appldata_timer.function = appldata_timer_function;
+	appldata_timer.data = (unsigned long) &appldata_work;
 
-	rc = platक्रमm_driver_रेजिस्टर(&appldata_pdrv);
-	अगर (rc)
-		वापस rc;
+	rc = platform_driver_register(&appldata_pdrv);
+	if (rc)
+		return rc;
 
-	appldata_pdev = platक्रमm_device_रेजिस्टर_simple("appldata", -1, शून्य,
+	appldata_pdev = platform_device_register_simple("appldata", -1, NULL,
 							0);
-	अगर (IS_ERR(appldata_pdev)) अणु
+	if (IS_ERR(appldata_pdev)) {
 		rc = PTR_ERR(appldata_pdev);
-		जाओ out_driver;
-	पूर्ण
+		goto out_driver;
+	}
 	appldata_wq = alloc_ordered_workqueue("appldata", 0);
-	अगर (!appldata_wq) अणु
+	if (!appldata_wq) {
 		rc = -ENOMEM;
-		जाओ out_device;
-	पूर्ण
+		goto out_device;
+	}
 
-	appldata_sysctl_header = रेजिस्टर_sysctl_table(appldata_dir_table);
-	वापस 0;
+	appldata_sysctl_header = register_sysctl_table(appldata_dir_table);
+	return 0;
 
 out_device:
-	platक्रमm_device_unरेजिस्टर(appldata_pdev);
+	platform_device_unregister(appldata_pdev);
 out_driver:
-	platक्रमm_driver_unरेजिस्टर(&appldata_pdrv);
-	वापस rc;
-पूर्ण
+	platform_driver_unregister(&appldata_pdrv);
+	return rc;
+}
 
 __initcall(appldata_init);
 
-/**************************** init / निकास <END> ******************************/
+/**************************** init / exit <END> ******************************/
 
-EXPORT_SYMBOL_GPL(appldata_रेजिस्टर_ops);
-EXPORT_SYMBOL_GPL(appldata_unरेजिस्टर_ops);
+EXPORT_SYMBOL_GPL(appldata_register_ops);
+EXPORT_SYMBOL_GPL(appldata_unregister_ops);
 EXPORT_SYMBOL_GPL(appldata_diag);
 
-#अगर_घोषित CONFIG_SWAP
+#ifdef CONFIG_SWAP
 EXPORT_SYMBOL_GPL(si_swapinfo);
-#पूर्ण_अगर
-EXPORT_SYMBOL_GPL(nr_thपढ़ोs);
+#endif
+EXPORT_SYMBOL_GPL(nr_threads);
 EXPORT_SYMBOL_GPL(nr_running);
-EXPORT_SYMBOL_GPL(nr_ioरुको);
+EXPORT_SYMBOL_GPL(nr_iowait);

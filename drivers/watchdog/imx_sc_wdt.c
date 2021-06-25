@@ -1,260 +1,259 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright 2018-2019 NXP.
  */
 
-#समावेश <linux/arm-smccc.h>
-#समावेश <linux/firmware/imx/sci.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/watchकरोg.h>
+#include <linux/arm-smccc.h>
+#include <linux/firmware/imx/sci.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/watchdog.h>
 
-#घोषणा DEFAULT_TIMEOUT 60
+#define DEFAULT_TIMEOUT 60
 /*
- * Software समयr tick implemented in scfw side, support 10ms to 0xffffffff ms
- * in theory, but क्रम normal हाल, 1s~128s is enough, you can change this max
- * value in हाल it's not enough.
+ * Software timer tick implemented in scfw side, support 10ms to 0xffffffff ms
+ * in theory, but for normal case, 1s~128s is enough, you can change this max
+ * value in case it's not enough.
  */
-#घोषणा MAX_TIMEOUT 128
+#define MAX_TIMEOUT 128
 
-#घोषणा IMX_SIP_TIMER			0xC2000002
-#घोषणा IMX_SIP_TIMER_START_WDOG		0x01
-#घोषणा IMX_SIP_TIMER_STOP_WDOG		0x02
-#घोषणा IMX_SIP_TIMER_SET_WDOG_ACT	0x03
-#घोषणा IMX_SIP_TIMER_PING_WDOG		0x04
-#घोषणा IMX_SIP_TIMER_SET_TIMEOUT_WDOG	0x05
-#घोषणा IMX_SIP_TIMER_GET_WDOG_STAT	0x06
-#घोषणा IMX_SIP_TIMER_SET_PRETIME_WDOG	0x07
+#define IMX_SIP_TIMER			0xC2000002
+#define IMX_SIP_TIMER_START_WDOG		0x01
+#define IMX_SIP_TIMER_STOP_WDOG		0x02
+#define IMX_SIP_TIMER_SET_WDOG_ACT	0x03
+#define IMX_SIP_TIMER_PING_WDOG		0x04
+#define IMX_SIP_TIMER_SET_TIMEOUT_WDOG	0x05
+#define IMX_SIP_TIMER_GET_WDOG_STAT	0x06
+#define IMX_SIP_TIMER_SET_PRETIME_WDOG	0x07
 
-#घोषणा SC_TIMER_WDOG_ACTION_PARTITION	0
+#define SC_TIMER_WDOG_ACTION_PARTITION	0
 
-#घोषणा SC_IRQ_WDOG			1
-#घोषणा SC_IRQ_GROUP_WDOG		1
+#define SC_IRQ_WDOG			1
+#define SC_IRQ_GROUP_WDOG		1
 
-अटल bool nowayout = WATCHDOG_NOWAYOUT;
+static bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0000);
 MODULE_PARM_DESC(nowayout, "Watchdog cannot be stopped once started (default="
 		 __MODULE_STRING(WATCHDOG_NOWAYOUT) ")");
 
-काष्ठा imx_sc_wdt_device अणु
-	काष्ठा watchकरोg_device wdd;
-	काष्ठा notअगरier_block wdt_notअगरier;
-पूर्ण;
+struct imx_sc_wdt_device {
+	struct watchdog_device wdd;
+	struct notifier_block wdt_notifier;
+};
 
-अटल पूर्णांक imx_sc_wdt_ping(काष्ठा watchकरोg_device *wकरोg)
-अणु
-	काष्ठा arm_smccc_res res;
+static int imx_sc_wdt_ping(struct watchdog_device *wdog)
+{
+	struct arm_smccc_res res;
 
 	arm_smccc_smc(IMX_SIP_TIMER, IMX_SIP_TIMER_PING_WDOG,
 		      0, 0, 0, 0, 0, 0, &res);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक imx_sc_wdt_start(काष्ठा watchकरोg_device *wकरोg)
-अणु
-	काष्ठा arm_smccc_res res;
+static int imx_sc_wdt_start(struct watchdog_device *wdog)
+{
+	struct arm_smccc_res res;
 
 	arm_smccc_smc(IMX_SIP_TIMER, IMX_SIP_TIMER_START_WDOG,
 		      0, 0, 0, 0, 0, 0, &res);
-	अगर (res.a0)
-		वापस -EACCES;
+	if (res.a0)
+		return -EACCES;
 
 	arm_smccc_smc(IMX_SIP_TIMER, IMX_SIP_TIMER_SET_WDOG_ACT,
 		      SC_TIMER_WDOG_ACTION_PARTITION,
 		      0, 0, 0, 0, 0, &res);
-	वापस res.a0 ? -EACCES : 0;
-पूर्ण
+	return res.a0 ? -EACCES : 0;
+}
 
-अटल पूर्णांक imx_sc_wdt_stop(काष्ठा watchकरोg_device *wकरोg)
-अणु
-	काष्ठा arm_smccc_res res;
+static int imx_sc_wdt_stop(struct watchdog_device *wdog)
+{
+	struct arm_smccc_res res;
 
 	arm_smccc_smc(IMX_SIP_TIMER, IMX_SIP_TIMER_STOP_WDOG,
 		      0, 0, 0, 0, 0, 0, &res);
 
-	वापस res.a0 ? -EACCES : 0;
-पूर्ण
+	return res.a0 ? -EACCES : 0;
+}
 
-अटल पूर्णांक imx_sc_wdt_set_समयout(काष्ठा watchकरोg_device *wकरोg,
-				अचिन्हित पूर्णांक समयout)
-अणु
-	काष्ठा arm_smccc_res res;
+static int imx_sc_wdt_set_timeout(struct watchdog_device *wdog,
+				unsigned int timeout)
+{
+	struct arm_smccc_res res;
 
-	wकरोg->समयout = समयout;
+	wdog->timeout = timeout;
 	arm_smccc_smc(IMX_SIP_TIMER, IMX_SIP_TIMER_SET_TIMEOUT_WDOG,
-		      समयout * 1000, 0, 0, 0, 0, 0, &res);
+		      timeout * 1000, 0, 0, 0, 0, 0, &res);
 
-	वापस res.a0 ? -EACCES : 0;
-पूर्ण
+	return res.a0 ? -EACCES : 0;
+}
 
-अटल पूर्णांक imx_sc_wdt_set_preसमयout(काष्ठा watchकरोg_device *wकरोg,
-				     अचिन्हित पूर्णांक preसमयout)
-अणु
-	काष्ठा arm_smccc_res res;
+static int imx_sc_wdt_set_pretimeout(struct watchdog_device *wdog,
+				     unsigned int pretimeout)
+{
+	struct arm_smccc_res res;
 
 	/*
-	 * SCU firmware calculates preसमयout based on current समय
-	 * stamp instead of watchकरोg समयout stamp, need to convert
-	 * the preसमयout to SCU firmware's समयout value.
+	 * SCU firmware calculates pretimeout based on current time
+	 * stamp instead of watchdog timeout stamp, need to convert
+	 * the pretimeout to SCU firmware's timeout value.
 	 */
 	arm_smccc_smc(IMX_SIP_TIMER, IMX_SIP_TIMER_SET_PRETIME_WDOG,
-		      (wकरोg->समयout - preसमयout) * 1000, 0, 0, 0,
+		      (wdog->timeout - pretimeout) * 1000, 0, 0, 0,
 		      0, 0, &res);
-	अगर (res.a0)
-		वापस -EACCES;
+	if (res.a0)
+		return -EACCES;
 
-	wकरोg->preसमयout = preसमयout;
+	wdog->pretimeout = pretimeout;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक imx_sc_wdt_notअगरy(काष्ठा notअगरier_block *nb,
-			     अचिन्हित दीर्घ event, व्योम *group)
-अणु
-	काष्ठा imx_sc_wdt_device *imx_sc_wdd =
+static int imx_sc_wdt_notify(struct notifier_block *nb,
+			     unsigned long event, void *group)
+{
+	struct imx_sc_wdt_device *imx_sc_wdd =
 				 container_of(nb,
-					      काष्ठा imx_sc_wdt_device,
-					      wdt_notअगरier);
+					      struct imx_sc_wdt_device,
+					      wdt_notifier);
 
-	अगर (event & SC_IRQ_WDOG &&
+	if (event & SC_IRQ_WDOG &&
 	    *(u8 *)group == SC_IRQ_GROUP_WDOG)
-		watchकरोg_notअगरy_preसमयout(&imx_sc_wdd->wdd);
+		watchdog_notify_pretimeout(&imx_sc_wdd->wdd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम imx_sc_wdt_action(व्योम *data)
-अणु
-	काष्ठा notअगरier_block *wdt_notअगरier = data;
+static void imx_sc_wdt_action(void *data)
+{
+	struct notifier_block *wdt_notifier = data;
 
-	imx_scu_irq_unरेजिस्टर_notअगरier(wdt_notअगरier);
+	imx_scu_irq_unregister_notifier(wdt_notifier);
 	imx_scu_irq_group_enable(SC_IRQ_GROUP_WDOG,
 				 SC_IRQ_WDOG,
 				 false);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा watchकरोg_ops imx_sc_wdt_ops = अणु
+static const struct watchdog_ops imx_sc_wdt_ops = {
 	.owner = THIS_MODULE,
 	.start = imx_sc_wdt_start,
 	.stop  = imx_sc_wdt_stop,
 	.ping  = imx_sc_wdt_ping,
-	.set_समयout = imx_sc_wdt_set_समयout,
-	.set_preसमयout = imx_sc_wdt_set_preसमयout,
-पूर्ण;
+	.set_timeout = imx_sc_wdt_set_timeout,
+	.set_pretimeout = imx_sc_wdt_set_pretimeout,
+};
 
-अटल काष्ठा watchकरोg_info imx_sc_wdt_info = अणु
+static struct watchdog_info imx_sc_wdt_info = {
 	.identity	= "i.MX SC watchdog timer",
 	.options	= WDIOF_SETTIMEOUT | WDIOF_KEEPALIVEPING |
 			  WDIOF_MAGICCLOSE,
-पूर्ण;
+};
 
-अटल पूर्णांक imx_sc_wdt_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा imx_sc_wdt_device *imx_sc_wdd;
-	काष्ठा watchकरोg_device *wकरोg;
-	काष्ठा device *dev = &pdev->dev;
-	पूर्णांक ret;
+static int imx_sc_wdt_probe(struct platform_device *pdev)
+{
+	struct imx_sc_wdt_device *imx_sc_wdd;
+	struct watchdog_device *wdog;
+	struct device *dev = &pdev->dev;
+	int ret;
 
-	imx_sc_wdd = devm_kzalloc(dev, माप(*imx_sc_wdd), GFP_KERNEL);
-	अगर (!imx_sc_wdd)
-		वापस -ENOMEM;
+	imx_sc_wdd = devm_kzalloc(dev, sizeof(*imx_sc_wdd), GFP_KERNEL);
+	if (!imx_sc_wdd)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, imx_sc_wdd);
+	platform_set_drvdata(pdev, imx_sc_wdd);
 
-	wकरोg = &imx_sc_wdd->wdd;
-	wकरोg->info = &imx_sc_wdt_info;
-	wकरोg->ops = &imx_sc_wdt_ops;
-	wकरोg->min_समयout = 1;
-	wकरोg->max_समयout = MAX_TIMEOUT;
-	wकरोg->parent = dev;
-	wकरोg->समयout = DEFAULT_TIMEOUT;
+	wdog = &imx_sc_wdd->wdd;
+	wdog->info = &imx_sc_wdt_info;
+	wdog->ops = &imx_sc_wdt_ops;
+	wdog->min_timeout = 1;
+	wdog->max_timeout = MAX_TIMEOUT;
+	wdog->parent = dev;
+	wdog->timeout = DEFAULT_TIMEOUT;
 
-	watchकरोg_init_समयout(wकरोg, 0, dev);
+	watchdog_init_timeout(wdog, 0, dev);
 
-	ret = imx_sc_wdt_set_समयout(wकरोg, wकरोg->समयout);
-	अगर (ret)
-		वापस ret;
+	ret = imx_sc_wdt_set_timeout(wdog, wdog->timeout);
+	if (ret)
+		return ret;
 
-	watchकरोg_stop_on_reboot(wकरोg);
-	watchकरोg_stop_on_unरेजिस्टर(wकरोg);
+	watchdog_stop_on_reboot(wdog);
+	watchdog_stop_on_unregister(wdog);
 
-	ret = devm_watchकरोg_रेजिस्टर_device(dev, wकरोg);
-	अगर (ret)
-		वापस ret;
+	ret = devm_watchdog_register_device(dev, wdog);
+	if (ret)
+		return ret;
 
 	ret = imx_scu_irq_group_enable(SC_IRQ_GROUP_WDOG,
 				       SC_IRQ_WDOG,
 				       true);
-	अगर (ret) अणु
+	if (ret) {
 		dev_warn(dev, "Enable irq failed, pretimeout NOT supported\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	imx_sc_wdd->wdt_notअगरier.notअगरier_call = imx_sc_wdt_notअगरy;
-	ret = imx_scu_irq_रेजिस्टर_notअगरier(&imx_sc_wdd->wdt_notअगरier);
-	अगर (ret) अणु
+	imx_sc_wdd->wdt_notifier.notifier_call = imx_sc_wdt_notify;
+	ret = imx_scu_irq_register_notifier(&imx_sc_wdd->wdt_notifier);
+	if (ret) {
 		imx_scu_irq_group_enable(SC_IRQ_GROUP_WDOG,
 					 SC_IRQ_WDOG,
 					 false);
 		dev_warn(dev,
 			 "Register irq notifier failed, pretimeout NOT supported\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	ret = devm_add_action_or_reset(dev, imx_sc_wdt_action,
-				       &imx_sc_wdd->wdt_notअगरier);
-	अगर (!ret)
+				       &imx_sc_wdd->wdt_notifier);
+	if (!ret)
 		imx_sc_wdt_info.options |= WDIOF_PRETIMEOUT;
-	अन्यथा
+	else
 		dev_warn(dev, "Add action failed, pretimeout NOT supported\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused imx_sc_wdt_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा imx_sc_wdt_device *imx_sc_wdd = dev_get_drvdata(dev);
+static int __maybe_unused imx_sc_wdt_suspend(struct device *dev)
+{
+	struct imx_sc_wdt_device *imx_sc_wdd = dev_get_drvdata(dev);
 
-	अगर (watchकरोg_active(&imx_sc_wdd->wdd))
+	if (watchdog_active(&imx_sc_wdd->wdd))
 		imx_sc_wdt_stop(&imx_sc_wdd->wdd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused imx_sc_wdt_resume(काष्ठा device *dev)
-अणु
-	काष्ठा imx_sc_wdt_device *imx_sc_wdd = dev_get_drvdata(dev);
+static int __maybe_unused imx_sc_wdt_resume(struct device *dev)
+{
+	struct imx_sc_wdt_device *imx_sc_wdd = dev_get_drvdata(dev);
 
-	अगर (watchकरोg_active(&imx_sc_wdd->wdd))
+	if (watchdog_active(&imx_sc_wdd->wdd))
 		imx_sc_wdt_start(&imx_sc_wdd->wdd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल SIMPLE_DEV_PM_OPS(imx_sc_wdt_pm_ops,
+static SIMPLE_DEV_PM_OPS(imx_sc_wdt_pm_ops,
 			 imx_sc_wdt_suspend, imx_sc_wdt_resume);
 
-अटल स्थिर काष्ठा of_device_id imx_sc_wdt_dt_ids[] = अणु
-	अणु .compatible = "fsl,imx-sc-wdt", पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id imx_sc_wdt_dt_ids[] = {
+	{ .compatible = "fsl,imx-sc-wdt", },
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, imx_sc_wdt_dt_ids);
 
-अटल काष्ठा platक्रमm_driver imx_sc_wdt_driver = अणु
+static struct platform_driver imx_sc_wdt_driver = {
 	.probe		= imx_sc_wdt_probe,
-	.driver		= अणु
+	.driver		= {
 		.name	= "imx-sc-wdt",
 		.of_match_table = imx_sc_wdt_dt_ids,
 		.pm	= &imx_sc_wdt_pm_ops,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(imx_sc_wdt_driver);
+	},
+};
+module_platform_driver(imx_sc_wdt_driver);
 
 MODULE_AUTHOR("Robin Gong <yibin.gong@nxp.com>");
 MODULE_DESCRIPTION("NXP i.MX system controller watchdog driver");

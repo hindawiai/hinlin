@@ -1,329 +1,328 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (C) 2019 ARM Limited */
 
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <संकेत.स>
-#समावेश <माला.स>
-#समावेश <unistd.h>
-#समावेश <निश्चित.स>
-#समावेश <sys/auxv.h>
-#समावेश <linux/auxvec.h>
-#समावेश <ucontext.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <signal.h>
+#include <string.h>
+#include <unistd.h>
+#include <assert.h>
+#include <sys/auxv.h>
+#include <linux/auxvec.h>
+#include <ucontext.h>
 
-#समावेश <यंत्र/unistd.h>
+#include <asm/unistd.h>
 
-#समावेश <kselftest.h>
+#include <kselftest.h>
 
-#समावेश "test_signals.h"
-#समावेश "test_signals_utils.h"
-#समावेश "testcases/testcases.h"
+#include "test_signals.h"
+#include "test_signals_utils.h"
+#include "testcases/testcases.h"
 
 
-बाह्य काष्ठा tdescr *current;
+extern struct tdescr *current;
 
-अटल पूर्णांक sig_copyctx = SIGTRAP;
+static int sig_copyctx = SIGTRAP;
 
-अटल अक्षर स्थिर *स्थिर feats_names[FMAX_END] = अणु
+static char const *const feats_names[FMAX_END] = {
 	" SSBS ",
-पूर्ण;
+};
 
-#घोषणा MAX_FEATS_SZ	128
-अटल अक्षर feats_string[MAX_FEATS_SZ];
+#define MAX_FEATS_SZ	128
+static char feats_string[MAX_FEATS_SZ];
 
-अटल अंतरभूत अक्षर *feats_to_string(अचिन्हित दीर्घ feats)
-अणु
-	माप_प्रकार flen = MAX_FEATS_SZ - 1;
+static inline char *feats_to_string(unsigned long feats)
+{
+	size_t flen = MAX_FEATS_SZ - 1;
 
-	क्रम (पूर्णांक i = 0; i < FMAX_END; i++) अणु
-		अगर (feats & (1UL << i)) अणु
-			माप_प्रकार tlen = म_माप(feats_names[i]);
+	for (int i = 0; i < FMAX_END; i++) {
+		if (feats & (1UL << i)) {
+			size_t tlen = strlen(feats_names[i]);
 
-			निश्चित(flen > tlen);
+			assert(flen > tlen);
 			flen -= tlen;
-			म_जोड़न(feats_string, feats_names[i], flen);
-		पूर्ण
-	पूर्ण
+			strncat(feats_string, feats_names[i], flen);
+		}
+	}
 
-	वापस feats_string;
-पूर्ण
+	return feats_string;
+}
 
-अटल व्योम unblock_संकेत(पूर्णांक signum)
-अणु
+static void unblock_signal(int signum)
+{
 	sigset_t sset;
 
 	sigemptyset(&sset);
 	sigaddset(&sset, signum);
-	sigprocmask(SIG_UNBLOCK, &sset, शून्य);
-पूर्ण
+	sigprocmask(SIG_UNBLOCK, &sset, NULL);
+}
 
-अटल व्योम शेष_result(काष्ठा tdescr *td, bool क्रमce_निकास)
-अणु
-	अगर (td->result == KSFT_SKIP) अणु
-		ख_लिखो(मानक_त्रुटि, "==>> completed. SKIP.\n");
-	पूर्ण अन्यथा अगर (td->pass) अणु
-		ख_लिखो(मानक_त्रुटि, "==>> completed. PASS(1)\n");
+static void default_result(struct tdescr *td, bool force_exit)
+{
+	if (td->result == KSFT_SKIP) {
+		fprintf(stderr, "==>> completed. SKIP.\n");
+	} else if (td->pass) {
+		fprintf(stderr, "==>> completed. PASS(1)\n");
 		td->result = KSFT_PASS;
-	पूर्ण अन्यथा अणु
-		ख_लिखो(मानक_निकास, "==>> completed. FAIL(0)\n");
+	} else {
+		fprintf(stdout, "==>> completed. FAIL(0)\n");
 		td->result = KSFT_FAIL;
-	पूर्ण
+	}
 
-	अगर (क्रमce_निकास)
-		निकास(td->result);
-पूर्ण
+	if (force_exit)
+		exit(td->result);
+}
 
 /*
- * The following handle_संकेत_* helpers are used by मुख्य शेष_handler
- * and are meant to वापस true when संकेत is handled successfully:
- * when false is वापसed instead, it means that the संकेत was somehow
- * unexpected in that context and it was NOT handled; शेष_handler will
+ * The following handle_signal_* helpers are used by main default_handler
+ * and are meant to return true when signal is handled successfully:
+ * when false is returned instead, it means that the signal was somehow
+ * unexpected in that context and it was NOT handled; default_handler will
  * take care of such unexpected situations.
  */
 
-अटल bool handle_संकेत_unsupported(काष्ठा tdescr *td,
-				      siginfo_t *si, व्योम *uc)
-अणु
-	अगर (feats_ok(td))
-		वापस false;
+static bool handle_signal_unsupported(struct tdescr *td,
+				      siginfo_t *si, void *uc)
+{
+	if (feats_ok(td))
+		return false;
 
-	/* Mangling PC to aव्योम loops on original संक_अवैध */
+	/* Mangling PC to avoid loops on original SIGILL */
 	((ucontext_t *)uc)->uc_mcontext.pc += 4;
 
-	अगर (!td->initialized) अणु
-		ख_लिखो(मानक_त्रुटि,
+	if (!td->initialized) {
+		fprintf(stderr,
 			"Got SIG_UNSUPP @test_init. Ignore.\n");
-	पूर्ण अन्यथा अणु
-		ख_लिखो(मानक_त्रुटि,
+	} else {
+		fprintf(stderr,
 			"-- RX SIG_UNSUPP on unsupported feat...OK\n");
 		td->pass = 1;
-		शेष_result(current, 1);
-	पूर्ण
+		default_result(current, 1);
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool handle_संकेत_trigger(काष्ठा tdescr *td,
-				  siginfo_t *si, व्योम *uc)
-अणु
+static bool handle_signal_trigger(struct tdescr *td,
+				  siginfo_t *si, void *uc)
+{
 	td->triggered = 1;
-	/* ->run was निश्चितed NON-शून्य in test_setup() alपढ़ोy */
+	/* ->run was asserted NON-NULL in test_setup() already */
 	td->run(td, si, uc);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool handle_संकेत_ok(काष्ठा tdescr *td,
-			     siginfo_t *si, व्योम *uc)
-अणु
+static bool handle_signal_ok(struct tdescr *td,
+			     siginfo_t *si, void *uc)
+{
 	/*
-	 * it's a bug in the test code when this निश्चित fail:
-	 * अगर sig_trig was defined, it must have been used beक्रमe getting here.
+	 * it's a bug in the test code when this assert fail:
+	 * if sig_trig was defined, it must have been used before getting here.
 	 */
-	निश्चित(!td->sig_trig || td->triggered);
-	ख_लिखो(मानक_त्रुटि,
+	assert(!td->sig_trig || td->triggered);
+	fprintf(stderr,
 		"SIG_OK -- SP:0x%llX  si_addr@:%p  si_code:%d  token@:%p  offset:%ld\n",
 		((ucontext_t *)uc)->uc_mcontext.sp,
 		si->si_addr, si->si_code, td->token, td->token - si->si_addr);
 	/*
-	 * fake_sigवापस tests, which have sanity_enabled=1, set, at the very
-	 * last समय, the token field to the SP address used to place the fake
+	 * fake_sigreturn tests, which have sanity_enabled=1, set, at the very
+	 * last time, the token field to the SP address used to place the fake
 	 * sigframe: so token==0 means we never made it to the end,
-	 * segfaulting well-beक्रमe, and the test is possibly broken.
+	 * segfaulting well-before, and the test is possibly broken.
 	 */
-	अगर (!td->sanity_disabled && !td->token) अणु
-		ख_लिखो(मानक_निकास,
+	if (!td->sanity_disabled && !td->token) {
+		fprintf(stdout,
 			"current->token ZEROED...test is probably broken!\n");
-		पात();
-	पूर्ण
+		abort();
+	}
 	/*
-	 * Trying to narrow करोwn the SEGV to the ones generated by Kernel itself
-	 * via arm64_notअगरy_segfault(). This is a best-efक्रमt check anyway, and
-	 * the si_code check may need to change अगर this aspect of the kernel
+	 * Trying to narrow down the SEGV to the ones generated by Kernel itself
+	 * via arm64_notify_segfault(). This is a best-effort check anyway, and
+	 * the si_code check may need to change if this aspect of the kernel
 	 * ABI changes.
 	 */
-	अगर (td->sig_ok == संक_अंश && si->si_code != SEGV_ACCERR) अणु
-		ख_लिखो(मानक_निकास,
+	if (td->sig_ok == SIGSEGV && si->si_code != SEGV_ACCERR) {
+		fprintf(stdout,
 			"si_code != SEGV_ACCERR...test is probably broken!\n");
-		पात();
-	पूर्ण
+		abort();
+	}
 	td->pass = 1;
 	/*
-	 * Some tests can lead to SEGV loops: in such a हाल we want to
-	 * terminate immediately निकासing straight away; some others are not
-	 * supposed to outlive the संकेत handler code, due to the content of
-	 * the fake sigframe which caused the संकेत itself.
+	 * Some tests can lead to SEGV loops: in such a case we want to
+	 * terminate immediately exiting straight away; some others are not
+	 * supposed to outlive the signal handler code, due to the content of
+	 * the fake sigframe which caused the signal itself.
 	 */
-	शेष_result(current, 1);
+	default_result(current, 1);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool handle_संकेत_copyctx(काष्ठा tdescr *td,
-				  siginfo_t *si, व्योम *uc)
-अणु
-	/* Mangling PC to aव्योम loops on original BRK instr */
+static bool handle_signal_copyctx(struct tdescr *td,
+				  siginfo_t *si, void *uc)
+{
+	/* Mangling PC to avoid loops on original BRK instr */
 	((ucontext_t *)uc)->uc_mcontext.pc += 4;
-	स_नकल(td->live_uc, uc, td->live_sz);
+	memcpy(td->live_uc, uc, td->live_sz);
 	ASSERT_GOOD_CONTEXT(td->live_uc);
 	td->live_uc_valid = 1;
-	ख_लिखो(मानक_त्रुटि,
+	fprintf(stderr,
 		"GOOD CONTEXT grabbed from sig_copyctx handler\n");
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम शेष_handler(पूर्णांक signum, siginfo_t *si, व्योम *uc)
-अणु
-	अगर (current->sig_unsupp && signum == current->sig_unsupp &&
-	    handle_संकेत_unsupported(current, si, uc)) अणु
-		ख_लिखो(मानक_त्रुटि, "Handled SIG_UNSUPP\n");
-	पूर्ण अन्यथा अगर (current->sig_trig && signum == current->sig_trig &&
-		   handle_संकेत_trigger(current, si, uc)) अणु
-		ख_लिखो(मानक_त्रुटि, "Handled SIG_TRIG\n");
-	पूर्ण अन्यथा अगर (current->sig_ok && signum == current->sig_ok &&
-		   handle_संकेत_ok(current, si, uc)) अणु
-		ख_लिखो(मानक_त्रुटि, "Handled SIG_OK\n");
-	पूर्ण अन्यथा अगर (signum == sig_copyctx && current->live_uc &&
-		   handle_संकेत_copyctx(current, si, uc)) अणु
-		ख_लिखो(मानक_त्रुटि, "Handled SIG_COPYCTX\n");
-	पूर्ण अन्यथा अणु
-		अगर (signum == SIGALRM && current->समयout) अणु
-			ख_लिखो(मानक_त्रुटि, "-- Timeout !\n");
-		पूर्ण अन्यथा अणु
-			ख_लिखो(मानक_त्रुटि,
+static void default_handler(int signum, siginfo_t *si, void *uc)
+{
+	if (current->sig_unsupp && signum == current->sig_unsupp &&
+	    handle_signal_unsupported(current, si, uc)) {
+		fprintf(stderr, "Handled SIG_UNSUPP\n");
+	} else if (current->sig_trig && signum == current->sig_trig &&
+		   handle_signal_trigger(current, si, uc)) {
+		fprintf(stderr, "Handled SIG_TRIG\n");
+	} else if (current->sig_ok && signum == current->sig_ok &&
+		   handle_signal_ok(current, si, uc)) {
+		fprintf(stderr, "Handled SIG_OK\n");
+	} else if (signum == sig_copyctx && current->live_uc &&
+		   handle_signal_copyctx(current, si, uc)) {
+		fprintf(stderr, "Handled SIG_COPYCTX\n");
+	} else {
+		if (signum == SIGALRM && current->timeout) {
+			fprintf(stderr, "-- Timeout !\n");
+		} else {
+			fprintf(stderr,
 				"-- RX UNEXPECTED SIGNAL: %d\n", signum);
-		पूर्ण
-		शेष_result(current, 1);
-	पूर्ण
-पूर्ण
+		}
+		default_result(current, 1);
+	}
+}
 
-अटल पूर्णांक शेष_setup(काष्ठा tdescr *td)
-अणु
-	काष्ठा sigaction sa;
+static int default_setup(struct tdescr *td)
+{
+	struct sigaction sa;
 
-	sa.sa_sigaction = शेष_handler;
+	sa.sa_sigaction = default_handler;
 	sa.sa_flags = SA_SIGINFO | SA_RESTART;
 	sa.sa_flags |= td->sa_flags;
 	sigemptyset(&sa.sa_mask);
-	/* uncatchable संकेतs naturally skipped ... */
-	क्रम (पूर्णांक sig = 1; sig < 32; sig++)
-		sigaction(sig, &sa, शून्य);
+	/* uncatchable signals naturally skipped ... */
+	for (int sig = 1; sig < 32; sig++)
+		sigaction(sig, &sa, NULL);
 	/*
-	 * RT Signals शेष disposition is Term but they cannot be
+	 * RT Signals default disposition is Term but they cannot be
 	 * generated by the Kernel in response to our tests; so just catch
-	 * them all and report them as UNEXPECTED संकेतs.
+	 * them all and report them as UNEXPECTED signals.
 	 */
-	क्रम (पूर्णांक sig = SIGRTMIN; sig <= SIGRTMAX; sig++)
-		sigaction(sig, &sa, शून्य);
+	for (int sig = SIGRTMIN; sig <= SIGRTMAX; sig++)
+		sigaction(sig, &sa, NULL);
 
-	/* just in हाल...unblock explicitly all we need */
-	अगर (td->sig_trig)
-		unblock_संकेत(td->sig_trig);
-	अगर (td->sig_ok)
-		unblock_संकेत(td->sig_ok);
-	अगर (td->sig_unsupp)
-		unblock_संकेत(td->sig_unsupp);
+	/* just in case...unblock explicitly all we need */
+	if (td->sig_trig)
+		unblock_signal(td->sig_trig);
+	if (td->sig_ok)
+		unblock_signal(td->sig_ok);
+	if (td->sig_unsupp)
+		unblock_signal(td->sig_unsupp);
 
-	अगर (td->समयout) अणु
-		unblock_संकेत(SIGALRM);
-		alarm(td->समयout);
-	पूर्ण
-	ख_लिखो(मानक_त्रुटि, "Registered handlers for all signals.\n");
+	if (td->timeout) {
+		unblock_signal(SIGALRM);
+		alarm(td->timeout);
+	}
+	fprintf(stderr, "Registered handlers for all signals.\n");
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल अंतरभूत पूर्णांक शेष_trigger(काष्ठा tdescr *td)
-अणु
-	वापस !उठाओ(td->sig_trig);
-पूर्ण
+static inline int default_trigger(struct tdescr *td)
+{
+	return !raise(td->sig_trig);
+}
 
-पूर्णांक test_init(काष्ठा tdescr *td)
-अणु
-	अगर (td->sig_trig == sig_copyctx) अणु
-		ख_लिखो(मानक_निकास,
+int test_init(struct tdescr *td)
+{
+	if (td->sig_trig == sig_copyctx) {
+		fprintf(stdout,
 			"Signal %d is RESERVED, cannot be used as a trigger. Aborting\n",
 			sig_copyctx);
-		वापस 0;
-	पूर्ण
-	/* just in हाल */
-	unblock_संकेत(sig_copyctx);
+		return 0;
+	}
+	/* just in case */
+	unblock_signal(sig_copyctx);
 
 	td->minsigstksz = getauxval(AT_MINSIGSTKSZ);
-	अगर (!td->minsigstksz)
+	if (!td->minsigstksz)
 		td->minsigstksz = MINSIGSTKSZ;
-	ख_लिखो(मानक_त्रुटि, "Detected MINSTKSIGSZ:%d\n", td->minsigstksz);
+	fprintf(stderr, "Detected MINSTKSIGSZ:%d\n", td->minsigstksz);
 
-	अगर (td->feats_required) अणु
+	if (td->feats_required) {
 		td->feats_supported = 0;
 		/*
-		 * Checking क्रम CPU required features using both the
-		 * auxval and the arm64 MRS Emulation to पढ़ो sysregs.
+		 * Checking for CPU required features using both the
+		 * auxval and the arm64 MRS Emulation to read sysregs.
 		 */
-		अगर (getauxval(AT_HWCAP) & HWCAP_SSBS)
+		if (getauxval(AT_HWCAP) & HWCAP_SSBS)
 			td->feats_supported |= FEAT_SSBS;
-		अगर (feats_ok(td))
-			ख_लिखो(मानक_त्रुटि,
+		if (feats_ok(td))
+			fprintf(stderr,
 				"Required Features: [%s] supported\n",
 				feats_to_string(td->feats_required &
 						td->feats_supported));
-		अन्यथा
-			ख_लिखो(मानक_त्रुटि,
+		else
+			fprintf(stderr,
 				"Required Features: [%s] NOT supported\n",
 				feats_to_string(td->feats_required &
 						~td->feats_supported));
-	पूर्ण
+	}
 
-	/* Perक्रमm test specअगरic additional initialization */
-	अगर (td->init && !td->init(td)) अणु
-		ख_लिखो(मानक_त्रुटि, "FAILED Testcase initialization.\n");
-		वापस 0;
-	पूर्ण
+	/* Perform test specific additional initialization */
+	if (td->init && !td->init(td)) {
+		fprintf(stderr, "FAILED Testcase initialization.\n");
+		return 0;
+	}
 	td->initialized = 1;
-	ख_लिखो(मानक_त्रुटि, "Testcase initialized.\n");
+	fprintf(stderr, "Testcase initialized.\n");
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-पूर्णांक test_setup(काष्ठा tdescr *td)
-अणु
-	/* निश्चित core invariants symptom of a rotten testहाल */
-	निश्चित(current);
-	निश्चित(td);
-	निश्चित(td->name);
-	निश्चित(td->run);
+int test_setup(struct tdescr *td)
+{
+	/* assert core invariants symptom of a rotten testcase */
+	assert(current);
+	assert(td);
+	assert(td->name);
+	assert(td->run);
 
-	/* Default result is FAIL अगर test setup fails */
+	/* Default result is FAIL if test setup fails */
 	td->result = KSFT_FAIL;
-	अगर (td->setup)
-		वापस td->setup(td);
-	अन्यथा
-		वापस शेष_setup(td);
-पूर्ण
+	if (td->setup)
+		return td->setup(td);
+	else
+		return default_setup(td);
+}
 
-पूर्णांक test_run(काष्ठा tdescr *td)
-अणु
-	अगर (td->sig_trig) अणु
-		अगर (td->trigger)
-			वापस td->trigger(td);
-		अन्यथा
-			वापस शेष_trigger(td);
-	पूर्ण अन्यथा अणु
-		वापस td->run(td, शून्य, शून्य);
-	पूर्ण
-पूर्ण
+int test_run(struct tdescr *td)
+{
+	if (td->sig_trig) {
+		if (td->trigger)
+			return td->trigger(td);
+		else
+			return default_trigger(td);
+	} else {
+		return td->run(td, NULL, NULL);
+	}
+}
 
-व्योम test_result(काष्ठा tdescr *td)
-अणु
-	अगर (td->initialized && td->result != KSFT_SKIP && td->check_result)
+void test_result(struct tdescr *td)
+{
+	if (td->initialized && td->result != KSFT_SKIP && td->check_result)
 		td->check_result(td);
-	शेष_result(td, 0);
-पूर्ण
+	default_result(td, 0);
+}
 
-व्योम test_cleanup(काष्ठा tdescr *td)
-अणु
-	अगर (td->cleanup)
+void test_cleanup(struct tdescr *td)
+{
+	if (td->cleanup)
 		td->cleanup(td);
-पूर्ण
+}

@@ -1,136 +1,135 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 //
-// Spपढ़ोtrum gate घड़ी driver
+// Spreadtrum gate clock driver
 //
-// Copyright (C) 2017 Spपढ़ोtrum, Inc.
-// Author: Chunyan Zhang <chunyan.zhang@spपढ़ोtrum.com>
+// Copyright (C) 2017 Spreadtrum, Inc.
+// Author: Chunyan Zhang <chunyan.zhang@spreadtrum.com>
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/regmap.h>
+#include <linux/clk-provider.h>
+#include <linux/regmap.h>
 
-#समावेश "gate.h"
+#include "gate.h"
 
-अटल व्योम clk_gate_toggle(स्थिर काष्ठा sprd_gate *sg, bool en)
-अणु
-	स्थिर काष्ठा sprd_clk_common *common = &sg->common;
-	अचिन्हित पूर्णांक reg;
+static void clk_gate_toggle(const struct sprd_gate *sg, bool en)
+{
+	const struct sprd_clk_common *common = &sg->common;
+	unsigned int reg;
 	bool set = sg->flags & CLK_GATE_SET_TO_DISABLE ? true : false;
 
 	set ^= en;
 
-	regmap_पढ़ो(common->regmap, common->reg, &reg);
+	regmap_read(common->regmap, common->reg, &reg);
 
-	अगर (set)
+	if (set)
 		reg |= sg->enable_mask;
-	अन्यथा
+	else
 		reg &= ~sg->enable_mask;
 
-	regmap_ग_लिखो(common->regmap, common->reg, reg);
-पूर्ण
+	regmap_write(common->regmap, common->reg, reg);
+}
 
-अटल व्योम clk_sc_gate_toggle(स्थिर काष्ठा sprd_gate *sg, bool en)
-अणु
-	स्थिर काष्ठा sprd_clk_common *common = &sg->common;
+static void clk_sc_gate_toggle(const struct sprd_gate *sg, bool en)
+{
+	const struct sprd_clk_common *common = &sg->common;
 	bool set = sg->flags & CLK_GATE_SET_TO_DISABLE ? 1 : 0;
-	अचिन्हित पूर्णांक offset;
+	unsigned int offset;
 
 	set ^= en;
 
 	/*
-	 * Each set/clear gate घड़ी has three रेजिस्टरs:
-	 * common->reg			- base रेजिस्टर
-	 * common->reg + offset		- set रेजिस्टर
-	 * common->reg + 2 * offset	- clear रेजिस्टर
+	 * Each set/clear gate clock has three registers:
+	 * common->reg			- base register
+	 * common->reg + offset		- set register
+	 * common->reg + 2 * offset	- clear register
 	 */
 	offset = set ? sg->sc_offset : sg->sc_offset * 2;
 
-	regmap_ग_लिखो(common->regmap, common->reg + offset,
+	regmap_write(common->regmap, common->reg + offset,
 			  sg->enable_mask);
-पूर्ण
+}
 
-अटल व्योम sprd_gate_disable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा sprd_gate *sg = hw_to_sprd_gate(hw);
+static void sprd_gate_disable(struct clk_hw *hw)
+{
+	struct sprd_gate *sg = hw_to_sprd_gate(hw);
 
 	clk_gate_toggle(sg, false);
-पूर्ण
+}
 
-अटल पूर्णांक sprd_gate_enable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा sprd_gate *sg = hw_to_sprd_gate(hw);
+static int sprd_gate_enable(struct clk_hw *hw)
+{
+	struct sprd_gate *sg = hw_to_sprd_gate(hw);
 
 	clk_gate_toggle(sg, true);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sprd_sc_gate_disable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा sprd_gate *sg = hw_to_sprd_gate(hw);
+static void sprd_sc_gate_disable(struct clk_hw *hw)
+{
+	struct sprd_gate *sg = hw_to_sprd_gate(hw);
 
 	clk_sc_gate_toggle(sg, false);
-पूर्ण
+}
 
-अटल पूर्णांक sprd_sc_gate_enable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा sprd_gate *sg = hw_to_sprd_gate(hw);
+static int sprd_sc_gate_enable(struct clk_hw *hw)
+{
+	struct sprd_gate *sg = hw_to_sprd_gate(hw);
 
 	clk_sc_gate_toggle(sg, true);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sprd_pll_sc_gate_prepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा sprd_gate *sg = hw_to_sprd_gate(hw);
+static int sprd_pll_sc_gate_prepare(struct clk_hw *hw)
+{
+	struct sprd_gate *sg = hw_to_sprd_gate(hw);
 
 	clk_sc_gate_toggle(sg, true);
 	udelay(sg->udelay);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sprd_gate_is_enabled(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा sprd_gate *sg = hw_to_sprd_gate(hw);
-	काष्ठा sprd_clk_common *common = &sg->common;
-	काष्ठा clk_hw *parent;
-	अचिन्हित पूर्णांक reg;
+static int sprd_gate_is_enabled(struct clk_hw *hw)
+{
+	struct sprd_gate *sg = hw_to_sprd_gate(hw);
+	struct sprd_clk_common *common = &sg->common;
+	struct clk_hw *parent;
+	unsigned int reg;
 
-	अगर (sg->flags & SPRD_GATE_NON_AON) अणु
+	if (sg->flags & SPRD_GATE_NON_AON) {
 		parent = clk_hw_get_parent(hw);
-		अगर (!parent || !clk_hw_is_enabled(parent))
-			वापस 0;
-	पूर्ण
+		if (!parent || !clk_hw_is_enabled(parent))
+			return 0;
+	}
 
-	regmap_पढ़ो(common->regmap, common->reg, &reg);
+	regmap_read(common->regmap, common->reg, &reg);
 
-	अगर (sg->flags & CLK_GATE_SET_TO_DISABLE)
+	if (sg->flags & CLK_GATE_SET_TO_DISABLE)
 		reg ^= sg->enable_mask;
 
 	reg &= sg->enable_mask;
 
-	वापस reg ? 1 : 0;
-पूर्ण
+	return reg ? 1 : 0;
+}
 
-स्थिर काष्ठा clk_ops sprd_gate_ops = अणु
+const struct clk_ops sprd_gate_ops = {
 	.disable	= sprd_gate_disable,
 	.enable		= sprd_gate_enable,
 	.is_enabled	= sprd_gate_is_enabled,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(sprd_gate_ops);
 
-स्थिर काष्ठा clk_ops sprd_sc_gate_ops = अणु
+const struct clk_ops sprd_sc_gate_ops = {
 	.disable	= sprd_sc_gate_disable,
 	.enable		= sprd_sc_gate_enable,
 	.is_enabled	= sprd_gate_is_enabled,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(sprd_sc_gate_ops);
 
-स्थिर काष्ठा clk_ops sprd_pll_sc_gate_ops = अणु
+const struct clk_ops sprd_pll_sc_gate_ops = {
 	.unprepare	= sprd_sc_gate_disable,
 	.prepare	= sprd_pll_sc_gate_prepare,
 	.is_enabled	= sprd_gate_is_enabled,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(sprd_pll_sc_gate_ops);

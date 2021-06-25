@@ -1,52 +1,51 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2015 MediaTek Inc.
  */
 
-#अगर_अघोषित _MTK_DRM_GEM_H_
-#घोषणा _MTK_DRM_GEM_H_
+#ifndef _MTK_DRM_GEM_H_
+#define _MTK_DRM_GEM_H_
 
-#समावेश <drm/drm_gem.h>
+#include <drm/drm_gem.h>
 
 /*
- * mtk drm buffer काष्ठाure.
+ * mtk drm buffer structure.
  *
  * @base: a gem object.
  *	- a new handle to this gem object would be created
  *	by drm_gem_handle_create().
- * @cookie: the वापस value of dma_alloc_attrs(), keep it क्रम dma_मुक्त_attrs()
- * @kvaddr: kernel भव address of gem buffer.
+ * @cookie: the return value of dma_alloc_attrs(), keep it for dma_free_attrs()
+ * @kvaddr: kernel virtual address of gem buffer.
  * @dma_addr: dma address of gem buffer.
  * @dma_attrs: dma attributes of gem buffer.
  *
  * P.S. this object would be transferred to user as kms_bo.handle so
  *	user can access the buffer through kms_bo.handle.
  */
-काष्ठा mtk_drm_gem_obj अणु
-	काष्ठा drm_gem_object	base;
-	व्योम			*cookie;
-	व्योम			*kvaddr;
+struct mtk_drm_gem_obj {
+	struct drm_gem_object	base;
+	void			*cookie;
+	void			*kvaddr;
 	dma_addr_t		dma_addr;
-	अचिन्हित दीर्घ		dma_attrs;
-	काष्ठा sg_table		*sg;
-	काष्ठा page		**pages;
-पूर्ण;
+	unsigned long		dma_attrs;
+	struct sg_table		*sg;
+	struct page		**pages;
+};
 
-#घोषणा to_mtk_gem_obj(x)	container_of(x, काष्ठा mtk_drm_gem_obj, base)
+#define to_mtk_gem_obj(x)	container_of(x, struct mtk_drm_gem_obj, base)
 
-व्योम mtk_drm_gem_मुक्त_object(काष्ठा drm_gem_object *gem);
-काष्ठा mtk_drm_gem_obj *mtk_drm_gem_create(काष्ठा drm_device *dev, माप_प्रकार size,
+void mtk_drm_gem_free_object(struct drm_gem_object *gem);
+struct mtk_drm_gem_obj *mtk_drm_gem_create(struct drm_device *dev, size_t size,
 					   bool alloc_kmap);
-पूर्णांक mtk_drm_gem_dumb_create(काष्ठा drm_file *file_priv, काष्ठा drm_device *dev,
-			    काष्ठा drm_mode_create_dumb *args);
-पूर्णांक mtk_drm_gem_mmap(काष्ठा file *filp, काष्ठा vm_area_काष्ठा *vma);
-पूर्णांक mtk_drm_gem_mmap_buf(काष्ठा drm_gem_object *obj,
-			 काष्ठा vm_area_काष्ठा *vma);
-काष्ठा sg_table *mtk_gem_prime_get_sg_table(काष्ठा drm_gem_object *obj);
-काष्ठा drm_gem_object *mtk_gem_prime_import_sg_table(काष्ठा drm_device *dev,
-			काष्ठा dma_buf_attachment *attach, काष्ठा sg_table *sg);
-पूर्णांक mtk_drm_gem_prime_vmap(काष्ठा drm_gem_object *obj, काष्ठा dma_buf_map *map);
-व्योम mtk_drm_gem_prime_vunmap(काष्ठा drm_gem_object *obj, काष्ठा dma_buf_map *map);
+int mtk_drm_gem_dumb_create(struct drm_file *file_priv, struct drm_device *dev,
+			    struct drm_mode_create_dumb *args);
+int mtk_drm_gem_mmap(struct file *filp, struct vm_area_struct *vma);
+int mtk_drm_gem_mmap_buf(struct drm_gem_object *obj,
+			 struct vm_area_struct *vma);
+struct sg_table *mtk_gem_prime_get_sg_table(struct drm_gem_object *obj);
+struct drm_gem_object *mtk_gem_prime_import_sg_table(struct drm_device *dev,
+			struct dma_buf_attachment *attach, struct sg_table *sg);
+int mtk_drm_gem_prime_vmap(struct drm_gem_object *obj, struct dma_buf_map *map);
+void mtk_drm_gem_prime_vunmap(struct drm_gem_object *obj, struct dma_buf_map *map);
 
-#पूर्ण_अगर
+#endif

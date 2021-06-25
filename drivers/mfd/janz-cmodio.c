@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Janz CMOD-IO MODULbus Carrier Board PCI Driver
  *
@@ -8,65 +7,65 @@
  * Lots of inspiration and code was copied from drivers/mfd/sm501.c
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/mfd/core.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/interrupt.h>
+#include <linux/delay.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
+#include <linux/mfd/core.h>
 
-#समावेश <linux/mfd/janz.h>
+#include <linux/mfd/janz.h>
 
-#घोषणा DRV_NAME "janz-cmodio"
+#define DRV_NAME "janz-cmodio"
 
 /* Size of each MODULbus module in PCI BAR4 */
-#घोषणा CMODIO_MODULBUS_SIZE	0x200
+#define CMODIO_MODULBUS_SIZE	0x200
 
 /* Maximum number of MODULbus modules on a CMOD-IO carrier board */
-#घोषणा CMODIO_MAX_MODULES	4
+#define CMODIO_MAX_MODULES	4
 
 /* Module Parameters */
-अटल अचिन्हित पूर्णांक num_modules = CMODIO_MAX_MODULES;
-अटल अक्षर *modules[CMODIO_MAX_MODULES] = अणु
+static unsigned int num_modules = CMODIO_MAX_MODULES;
+static char *modules[CMODIO_MAX_MODULES] = {
 	"empty", "empty", "empty", "empty",
-पूर्ण;
+};
 
-module_param_array(modules, अक्षरp, &num_modules, S_IRUGO);
+module_param_array(modules, charp, &num_modules, S_IRUGO);
 MODULE_PARM_DESC(modules, "MODULbus modules attached to the carrier board");
 
 /* Unique Device Id */
-अटल अचिन्हित पूर्णांक cmodio_id;
+static unsigned int cmodio_id;
 
-काष्ठा cmodio_device अणु
+struct cmodio_device {
 	/* Parent PCI device */
-	काष्ठा pci_dev *pdev;
+	struct pci_dev *pdev;
 
-	/* PLX control रेजिस्टरs */
-	काष्ठा janz_cmodio_onboard_regs __iomem *ctrl;
+	/* PLX control registers */
+	struct janz_cmodio_onboard_regs __iomem *ctrl;
 
-	/* hex चयन position */
+	/* hex switch position */
 	u8 hex;
 
 	/* mfd-core API */
-	काष्ठा mfd_cell cells[CMODIO_MAX_MODULES];
-	काष्ठा resource resources[3 * CMODIO_MAX_MODULES];
-	काष्ठा janz_platक्रमm_data pdata[CMODIO_MAX_MODULES];
-पूर्ण;
+	struct mfd_cell cells[CMODIO_MAX_MODULES];
+	struct resource resources[3 * CMODIO_MAX_MODULES];
+	struct janz_platform_data pdata[CMODIO_MAX_MODULES];
+};
 
 /*
  * Subdevices using the mfd-core API
  */
 
-अटल पूर्णांक cmodio_setup_subdevice(काष्ठा cmodio_device *priv,
-					    अक्षर *name, अचिन्हित पूर्णांक devno,
-					    अचिन्हित पूर्णांक modno)
-अणु
-	काष्ठा janz_platक्रमm_data *pdata;
-	काष्ठा mfd_cell *cell;
-	काष्ठा resource *res;
-	काष्ठा pci_dev *pci;
+static int cmodio_setup_subdevice(struct cmodio_device *priv,
+					    char *name, unsigned int devno,
+					    unsigned int modno)
+{
+	struct janz_platform_data *pdata;
+	struct mfd_cell *cell;
+	struct resource *res;
+	struct pci_dev *pci;
 
 	pci = priv->pdev;
 	cell = &priv->cells[devno];
@@ -80,19 +79,19 @@ MODULE_PARM_DESC(modules, "MODULbus modules attached to the carrier board");
 	/* Setup the subdevice ID -- must be unique */
 	cell->id = cmodio_id++;
 
-	/* Add platक्रमm data */
+	/* Add platform data */
 	pdata->modno = modno;
-	cell->platक्रमm_data = pdata;
-	cell->pdata_size = माप(*pdata);
+	cell->platform_data = pdata;
+	cell->pdata_size = sizeof(*pdata);
 
-	/* MODULbus रेजिस्टरs -- PCI BAR3 is big-endian MODULbus access */
+	/* MODULbus registers -- PCI BAR3 is big-endian MODULbus access */
 	res->flags = IORESOURCE_MEM;
 	res->parent = &pci->resource[3];
 	res->start = pci->resource[3].start + (CMODIO_MODULBUS_SIZE * modno);
 	res->end = res->start + CMODIO_MODULBUS_SIZE - 1;
 	res++;
 
-	/* PLX Control Registers -- PCI BAR4 is पूर्णांकerrupt and other रेजिस्टरs */
+	/* PLX Control Registers -- PCI BAR4 is interrupt and other registers */
 	res->flags = IORESOURCE_MEM;
 	res->parent = &pci->resource[4];
 	res->start = pci->resource[4].start;
@@ -103,138 +102,138 @@ MODULE_PARM_DESC(modules, "MODULbus modules attached to the carrier board");
 	 * IRQ
 	 *
 	 * The start and end fields are used as an offset to the irq_base
-	 * parameter passed पूर्णांकo the mfd_add_devices() function call. All
+	 * parameter passed into the mfd_add_devices() function call. All
 	 * devices share the same IRQ.
 	 */
 	res->flags = IORESOURCE_IRQ;
-	res->parent = शून्य;
+	res->parent = NULL;
 	res->start = 0;
 	res->end = 0;
 	res++;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Probe each submodule using kernel parameters */
-अटल पूर्णांक cmodio_probe_submodules(काष्ठा cmodio_device *priv)
-अणु
-	काष्ठा pci_dev *pdev = priv->pdev;
-	अचिन्हित पूर्णांक num_probed = 0;
-	अक्षर *name;
-	पूर्णांक i;
+static int cmodio_probe_submodules(struct cmodio_device *priv)
+{
+	struct pci_dev *pdev = priv->pdev;
+	unsigned int num_probed = 0;
+	char *name;
+	int i;
 
-	क्रम (i = 0; i < num_modules; i++) अणु
+	for (i = 0; i < num_modules; i++) {
 		name = modules[i];
-		अगर (!म_भेद(name, "") || !म_भेद(name, "empty"))
-			जारी;
+		if (!strcmp(name, "") || !strcmp(name, "empty"))
+			continue;
 
 		dev_dbg(&priv->pdev->dev, "MODULbus %d: name %s\n", i, name);
 		cmodio_setup_subdevice(priv, name, num_probed, i);
 		num_probed++;
-	पूर्ण
+	}
 
-	/* prपूर्णांक an error message अगर no modules were probed */
-	अगर (num_probed == 0) अणु
+	/* print an error message if no modules were probed */
+	if (num_probed == 0) {
 		dev_err(&priv->pdev->dev, "no MODULbus modules specified, "
 					  "please set the ``modules'' kernel "
 					  "parameter according to your "
 					  "hardware configuration\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	वापस mfd_add_devices(&pdev->dev, 0, priv->cells,
-			       num_probed, शून्य, pdev->irq, शून्य);
-पूर्ण
+	return mfd_add_devices(&pdev->dev, 0, priv->cells,
+			       num_probed, NULL, pdev->irq, NULL);
+}
 
 /*
  * SYSFS Attributes
  */
 
-अटल sमाप_प्रकार mbus_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			 अक्षर *buf)
-अणु
-	काष्ठा cmodio_device *priv = dev_get_drvdata(dev);
+static ssize_t mbus_show(struct device *dev, struct device_attribute *attr,
+			 char *buf)
+{
+	struct cmodio_device *priv = dev_get_drvdata(dev);
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%x\n", priv->hex);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%x\n", priv->hex);
+}
 
-अटल DEVICE_ATTR(modulbus_number, S_IRUGO, mbus_show, शून्य);
+static DEVICE_ATTR(modulbus_number, S_IRUGO, mbus_show, NULL);
 
-अटल काष्ठा attribute *cmodio_sysfs_attrs[] = अणु
+static struct attribute *cmodio_sysfs_attrs[] = {
 	&dev_attr_modulbus_number.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group cmodio_sysfs_attr_group = अणु
+static const struct attribute_group cmodio_sysfs_attr_group = {
 	.attrs = cmodio_sysfs_attrs,
-पूर्ण;
+};
 
 /*
  * PCI Driver
  */
 
-अटल पूर्णांक cmodio_pci_probe(काष्ठा pci_dev *dev,
-				      स्थिर काष्ठा pci_device_id *id)
-अणु
-	काष्ठा cmodio_device *priv;
-	पूर्णांक ret;
+static int cmodio_pci_probe(struct pci_dev *dev,
+				      const struct pci_device_id *id)
+{
+	struct cmodio_device *priv;
+	int ret;
 
-	priv = devm_kzalloc(&dev->dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(&dev->dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	pci_set_drvdata(dev, priv);
 	priv->pdev = dev;
 
 	/* Hardware Initialization */
 	ret = pci_enable_device(dev);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&dev->dev, "unable to enable device\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	pci_set_master(dev);
 	ret = pci_request_regions(dev, DRV_NAME);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&dev->dev, "unable to request regions\n");
-		जाओ out_pci_disable_device;
-	पूर्ण
+		goto out_pci_disable_device;
+	}
 
-	/* Onboard configuration रेजिस्टरs */
+	/* Onboard configuration registers */
 	priv->ctrl = pci_ioremap_bar(dev, 4);
-	अगर (!priv->ctrl) अणु
+	if (!priv->ctrl) {
 		dev_err(&dev->dev, "unable to remap onboard regs\n");
 		ret = -ENOMEM;
-		जाओ out_pci_release_regions;
-	पूर्ण
+		goto out_pci_release_regions;
+	}
 
-	/* Read the hex चयन on the carrier board */
-	priv->hex = ioपढ़ो8(&priv->ctrl->पूर्णांक_enable);
+	/* Read the hex switch on the carrier board */
+	priv->hex = ioread8(&priv->ctrl->int_enable);
 
-	/* Add the MODULbus number (hex चयन value) to the device's sysfs */
+	/* Add the MODULbus number (hex switch value) to the device's sysfs */
 	ret = sysfs_create_group(&dev->dev.kobj, &cmodio_sysfs_attr_group);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&dev->dev, "unable to create sysfs attributes\n");
-		जाओ out_unmap_ctrl;
-	पूर्ण
+		goto out_unmap_ctrl;
+	}
 
 	/*
-	 * Disable all पूर्णांकerrupt lines, each submodule will enable its
-	 * own पूर्णांकerrupt line अगर needed
+	 * Disable all interrupt lines, each submodule will enable its
+	 * own interrupt line if needed
 	 */
-	ioग_लिखो8(0xf, &priv->ctrl->पूर्णांक_disable);
+	iowrite8(0xf, &priv->ctrl->int_disable);
 
-	/* Register drivers क्रम all submodules */
+	/* Register drivers for all submodules */
 	ret = cmodio_probe_submodules(priv);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&dev->dev, "unable to probe submodules\n");
-		जाओ out_sysfs_हटाओ_group;
-	पूर्ण
+		goto out_sysfs_remove_group;
+	}
 
-	वापस 0;
+	return 0;
 
-out_sysfs_हटाओ_group:
-	sysfs_हटाओ_group(&dev->dev.kobj, &cmodio_sysfs_attr_group);
+out_sysfs_remove_group:
+	sysfs_remove_group(&dev->dev.kobj, &cmodio_sysfs_attr_group);
 out_unmap_ctrl:
 	iounmap(priv->ctrl);
 out_pci_release_regions:
@@ -242,40 +241,40 @@ out_pci_release_regions:
 out_pci_disable_device:
 	pci_disable_device(dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम cmodio_pci_हटाओ(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा cmodio_device *priv = pci_get_drvdata(dev);
+static void cmodio_pci_remove(struct pci_dev *dev)
+{
+	struct cmodio_device *priv = pci_get_drvdata(dev);
 
-	mfd_हटाओ_devices(&dev->dev);
-	sysfs_हटाओ_group(&dev->dev.kobj, &cmodio_sysfs_attr_group);
+	mfd_remove_devices(&dev->dev);
+	sysfs_remove_group(&dev->dev.kobj, &cmodio_sysfs_attr_group);
 	iounmap(priv->ctrl);
 	pci_release_regions(dev);
 	pci_disable_device(dev);
-पूर्ण
+}
 
-#घोषणा PCI_VENDOR_ID_JANZ		0x13c3
+#define PCI_VENDOR_ID_JANZ		0x13c3
 
 /* The list of devices that this module will support */
-अटल स्थिर काष्ठा pci_device_id cmodio_pci_ids[] = अणु
-	अणु PCI_VENDOR_ID_PLX, PCI_DEVICE_ID_PLX_9030, PCI_VENDOR_ID_JANZ, 0x0101 पूर्ण,
-	अणु PCI_VENDOR_ID_PLX, PCI_DEVICE_ID_PLX_9050, PCI_VENDOR_ID_JANZ, 0x0100 पूर्ण,
-	अणु PCI_VENDOR_ID_PLX, PCI_DEVICE_ID_PLX_9030, PCI_VENDOR_ID_JANZ, 0x0201 पूर्ण,
-	अणु PCI_VENDOR_ID_PLX, PCI_DEVICE_ID_PLX_9030, PCI_VENDOR_ID_JANZ, 0x0202 पूर्ण,
-	अणु PCI_VENDOR_ID_PLX, PCI_DEVICE_ID_PLX_9050, PCI_VENDOR_ID_JANZ, 0x0201 पूर्ण,
-	अणु PCI_VENDOR_ID_PLX, PCI_DEVICE_ID_PLX_9050, PCI_VENDOR_ID_JANZ, 0x0202 पूर्ण,
-	अणु 0, पूर्ण
-पूर्ण;
+static const struct pci_device_id cmodio_pci_ids[] = {
+	{ PCI_VENDOR_ID_PLX, PCI_DEVICE_ID_PLX_9030, PCI_VENDOR_ID_JANZ, 0x0101 },
+	{ PCI_VENDOR_ID_PLX, PCI_DEVICE_ID_PLX_9050, PCI_VENDOR_ID_JANZ, 0x0100 },
+	{ PCI_VENDOR_ID_PLX, PCI_DEVICE_ID_PLX_9030, PCI_VENDOR_ID_JANZ, 0x0201 },
+	{ PCI_VENDOR_ID_PLX, PCI_DEVICE_ID_PLX_9030, PCI_VENDOR_ID_JANZ, 0x0202 },
+	{ PCI_VENDOR_ID_PLX, PCI_DEVICE_ID_PLX_9050, PCI_VENDOR_ID_JANZ, 0x0201 },
+	{ PCI_VENDOR_ID_PLX, PCI_DEVICE_ID_PLX_9050, PCI_VENDOR_ID_JANZ, 0x0202 },
+	{ 0, }
+};
 MODULE_DEVICE_TABLE(pci, cmodio_pci_ids);
 
-अटल काष्ठा pci_driver cmodio_pci_driver = अणु
+static struct pci_driver cmodio_pci_driver = {
 	.name     = DRV_NAME,
 	.id_table = cmodio_pci_ids,
 	.probe    = cmodio_pci_probe,
-	.हटाओ   = cmodio_pci_हटाओ,
-पूर्ण;
+	.remove   = cmodio_pci_remove,
+};
 
 module_pci_driver(cmodio_pci_driver);
 

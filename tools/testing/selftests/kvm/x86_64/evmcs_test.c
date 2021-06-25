@@ -1,64 +1,63 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2018, Red Hat, Inc.
  *
- * Tests क्रम Enlightened VMCS, including nested guest state.
+ * Tests for Enlightened VMCS, including nested guest state.
  */
-#घोषणा _GNU_SOURCE /* क्रम program_invocation_लघु_name */
-#समावेश <fcntl.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <sys/ioctl.h>
+#define _GNU_SOURCE /* for program_invocation_short_name */
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/ioctl.h>
 
-#समावेश "test_util.h"
+#include "test_util.h"
 
-#समावेश "kvm_util.h"
+#include "kvm_util.h"
 
-#समावेश "vmx.h"
+#include "vmx.h"
 
-#घोषणा VCPU_ID		5
-#घोषणा NMI_VECTOR	2
+#define VCPU_ID		5
+#define NMI_VECTOR	2
 
-अटल पूर्णांक ud_count;
+static int ud_count;
 
-व्योम enable_x2apic(व्योम)
-अणु
-	uपूर्णांक32_t spiv_reg = APIC_BASE_MSR + (APIC_SPIV >> 4);
+void enable_x2apic(void)
+{
+	uint32_t spiv_reg = APIC_BASE_MSR + (APIC_SPIV >> 4);
 
 	wrmsr(MSR_IA32_APICBASE, rdmsr(MSR_IA32_APICBASE) |
 	      MSR_IA32_APICBASE_ENABLE | MSR_IA32_APICBASE_EXTD);
 	wrmsr(spiv_reg, rdmsr(spiv_reg) | APIC_SPIV_APIC_ENABLED);
-पूर्ण
+}
 
-अटल व्योम guest_ud_handler(काष्ठा ex_regs *regs)
-अणु
+static void guest_ud_handler(struct ex_regs *regs)
+{
 	ud_count++;
 	regs->rip += 3; /* VMLAUNCH */
-पूर्ण
+}
 
-अटल व्योम guest_nmi_handler(काष्ठा ex_regs *regs)
-अणु
-पूर्ण
+static void guest_nmi_handler(struct ex_regs *regs)
+{
+}
 
-व्योम l2_guest_code(व्योम)
-अणु
+void l2_guest_code(void)
+{
 	GUEST_SYNC(7);
 
 	GUEST_SYNC(8);
 
-	/* Forced निकास to L1 upon restore */
+	/* Forced exit to L1 upon restore */
 	GUEST_SYNC(9);
 
-	/* Done, निकास to L1 and never come back.  */
+	/* Done, exit to L1 and never come back.  */
 	vmcall();
-पूर्ण
+}
 
-व्योम guest_code(काष्ठा vmx_pages *vmx_pages)
-अणु
-#घोषणा L2_GUEST_STACK_SIZE 64
-	अचिन्हित दीर्घ l2_guest_stack[L2_GUEST_STACK_SIZE];
+void guest_code(struct vmx_pages *vmx_pages)
+{
+#define L2_GUEST_STACK_SIZE 64
+	unsigned long l2_guest_stack[L2_GUEST_STACK_SIZE];
 
 	enable_x2apic();
 
@@ -68,7 +67,7 @@
 	enable_vp_assist(vmx_pages->vp_assist_gpa, vmx_pages->vp_assist);
 
 	GUEST_ASSERT(vmx_pages->vmcs_gpa);
-	GUEST_ASSERT(prepare_क्रम_vmx_operation(vmx_pages));
+	GUEST_ASSERT(prepare_for_vmx_operation(vmx_pages));
 	GUEST_SYNC(3);
 	GUEST_ASSERT(load_vmcs(vmx_pages));
 	GUEST_ASSERT(vmptrstz() == vmx_pages->enlightened_vmcs_gpa);
@@ -92,15 +91,15 @@
 	GUEST_ASSERT(vmptrstz() == vmx_pages->enlightened_vmcs_gpa);
 
 	/*
-	 * NMI क्रमces L2->L1 निकास, resuming L2 and hope that EVMCS is
-	 * up-to-date (RIP poपूर्णांकs where it should and not at the beginning
+	 * NMI forces L2->L1 exit, resuming L2 and hope that EVMCS is
+	 * up-to-date (RIP points where it should and not at the beginning
 	 * of l2_guest_code(). GUEST_SYNC(9) checkes that.
 	 */
 	GUEST_ASSERT(!vmresume());
 
 	GUEST_SYNC(10);
 
-	GUEST_ASSERT(vmपढ़ोz(VM_EXIT_REASON) == EXIT_REASON_VMCALL);
+	GUEST_ASSERT(vmreadz(VM_EXIT_REASON) == EXIT_REASON_VMCALL);
 	GUEST_SYNC(11);
 
 	/* Try enlightened vmptrld with an incorrect GPA */
@@ -108,11 +107,11 @@
 	GUEST_ASSERT(vmlaunch());
 	GUEST_ASSERT(ud_count == 1);
 	GUEST_DONE();
-पूर्ण
+}
 
-व्योम inject_nmi(काष्ठा kvm_vm *vm)
-अणु
-	काष्ठा kvm_vcpu_events events;
+void inject_nmi(struct kvm_vm *vm)
+{
+	struct kvm_vcpu_events events;
 
 	vcpu_events_get(vm, VCPU_ID, &events);
 
@@ -120,28 +119,28 @@
 	events.flags |= KVM_VCPUEVENT_VALID_NMI_PENDING;
 
 	vcpu_events_set(vm, VCPU_ID, &events);
-पूर्ण
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
+int main(int argc, char *argv[])
+{
 	vm_vaddr_t vmx_pages_gva = 0;
 
-	काष्ठा kvm_regs regs1, regs2;
-	काष्ठा kvm_vm *vm;
-	काष्ठा kvm_run *run;
-	काष्ठा kvm_x86_state *state;
-	काष्ठा ucall uc;
-	पूर्णांक stage;
+	struct kvm_regs regs1, regs2;
+	struct kvm_vm *vm;
+	struct kvm_run *run;
+	struct kvm_x86_state *state;
+	struct ucall uc;
+	int stage;
 
 	/* Create VM */
-	vm = vm_create_शेष(VCPU_ID, 0, guest_code);
+	vm = vm_create_default(VCPU_ID, 0, guest_code);
 
-	अगर (!nested_vmx_supported() ||
+	if (!nested_vmx_supported() ||
 	    !kvm_check_cap(KVM_CAP_NESTED_STATE) ||
-	    !kvm_check_cap(KVM_CAP_HYPERV_ENLIGHTENED_VMCS)) अणु
-		prपूर्णांक_skip("Enlightened VMCS is unsupported");
-		निकास(KSFT_SKIP);
-	पूर्ण
+	    !kvm_check_cap(KVM_CAP_HYPERV_ENLIGHTENED_VMCS)) {
+		print_skip("Enlightened VMCS is unsupported");
+		exit(KSFT_SKIP);
+	}
 
 	vcpu_set_hv_cpuid(vm, VCPU_ID);
 	vcpu_enable_evmcs(vm, VCPU_ID);
@@ -160,33 +159,33 @@
 
 	pr_info("Running L1 which uses EVMCS to run L2\n");
 
-	क्रम (stage = 1;; stage++) अणु
+	for (stage = 1;; stage++) {
 		_vcpu_run(vm, VCPU_ID);
-		TEST_ASSERT(run->निकास_reason == KVM_EXIT_IO,
+		TEST_ASSERT(run->exit_reason == KVM_EXIT_IO,
 			    "Stage %d: unexpected exit reason: %u (%s),\n",
-			    stage, run->निकास_reason,
-			    निकास_reason_str(run->निकास_reason));
+			    stage, run->exit_reason,
+			    exit_reason_str(run->exit_reason));
 
-		चयन (get_ucall(vm, VCPU_ID, &uc)) अणु
-		हाल UCALL_ABORT:
-			TEST_FAIL("%s at %s:%ld", (स्थिर अक्षर *)uc.args[0],
-		      		  __खाता__, uc.args[1]);
+		switch (get_ucall(vm, VCPU_ID, &uc)) {
+		case UCALL_ABORT:
+			TEST_FAIL("%s at %s:%ld", (const char *)uc.args[0],
+		      		  __FILE__, uc.args[1]);
 			/* NOT REACHED */
-		हाल UCALL_SYNC:
-			अवरोध;
-		हाल UCALL_DONE:
-			जाओ करोne;
-		शेष:
+		case UCALL_SYNC:
+			break;
+		case UCALL_DONE:
+			goto done;
+		default:
 			TEST_FAIL("Unknown ucall %lu", uc.cmd);
-		पूर्ण
+		}
 
 		/* UCALL_SYNC is handled here.  */
-		TEST_ASSERT(!म_भेद((स्थिर अक्षर *)uc.args[0], "hello") &&
+		TEST_ASSERT(!strcmp((const char *)uc.args[0], "hello") &&
 			    uc.args[1] == stage, "Stage %d: Unexpected register values vmexit, got %lx",
-			    stage, (uदीर्घ)uc.args[1]);
+			    stage, (ulong)uc.args[1]);
 
 		state = vcpu_save_state(vm, VCPU_ID);
-		स_रखो(&regs1, 0, माप(regs1));
+		memset(&regs1, 0, sizeof(regs1));
 		vcpu_regs_get(vm, VCPU_ID, &regs1);
 
 		kvm_vm_release(vm);
@@ -198,21 +197,21 @@
 		vcpu_enable_evmcs(vm, VCPU_ID);
 		vcpu_load_state(vm, VCPU_ID, state);
 		run = vcpu_state(vm, VCPU_ID);
-		मुक्त(state);
+		free(state);
 
-		स_रखो(&regs2, 0, माप(regs2));
+		memset(&regs2, 0, sizeof(regs2));
 		vcpu_regs_get(vm, VCPU_ID, &regs2);
-		TEST_ASSERT(!स_भेद(&regs1, &regs2, माप(regs2)),
+		TEST_ASSERT(!memcmp(&regs1, &regs2, sizeof(regs2)),
 			    "Unexpected register values after vcpu_load_state; rdi: %lx rsi: %lx",
-			    (uदीर्घ) regs2.rdi, (uदीर्घ) regs2.rsi);
+			    (ulong) regs2.rdi, (ulong) regs2.rsi);
 
-		/* Force immediate L2->L1 निकास beक्रमe resuming */
-		अगर (stage == 8) अणु
+		/* Force immediate L2->L1 exit before resuming */
+		if (stage == 8) {
 			pr_info("Injecting NMI into L1 before L2 had a chance to run after restore\n");
 			inject_nmi(vm);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-करोne:
-	kvm_vm_मुक्त(vm);
-पूर्ण
+done:
+	kvm_vm_free(vm);
+}

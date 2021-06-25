@@ -1,19 +1,18 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Based on <यंत्र-i386/mman.h>.
+ * Based on <asm-i386/mman.h>.
  *
- * Modअगरied 1998-2000, 2002
+ * Modified 1998-2000, 2002
  *	David Mosberger-Tang <davidm@hpl.hp.com>, Hewlett-Packard Co
  */
-#अगर_अघोषित _ASM_IA64_MMAN_H
-#घोषणा _ASM_IA64_MMAN_H
+#ifndef _ASM_IA64_MMAN_H
+#define _ASM_IA64_MMAN_H
 
-#समावेश <uapi/यंत्र/mman.h>
+#include <uapi/asm/mman.h>
 
-#अगर_अघोषित __ASSEMBLY__
-#घोषणा arch_mmap_check	ia64_mmap_check
-पूर्णांक ia64_mmap_check(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len,
-		अचिन्हित दीर्घ flags);
-#पूर्ण_अगर
-#पूर्ण_अगर /* _ASM_IA64_MMAN_H */
+#ifndef __ASSEMBLY__
+#define arch_mmap_check	ia64_mmap_check
+int ia64_mmap_check(unsigned long addr, unsigned long len,
+		unsigned long flags);
+#endif
+#endif /* _ASM_IA64_MMAN_H */

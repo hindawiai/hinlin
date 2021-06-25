@@ -1,19 +1,18 @@
-<शैली गुरु>
 /*
- * AGPGART backend specअगरic includes. Not क्रम userspace consumption.
+ * AGPGART backend specific includes. Not for userspace consumption.
  *
  * Copyright (C) 2004 Silicon Graphics, Inc.
  * Copyright (C) 2002-2003 Dave Jones
- * Copyright (C) 1999 Jeff Harपंचांगann
+ * Copyright (C) 1999 Jeff Hartmann
  * Copyright (C) 1999 Precision Insight, Inc.
  * Copyright (C) 1999 Xi Graphics, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
@@ -28,83 +27,83 @@
  *
  */
 
-#अगर_अघोषित _AGP_BACKEND_H
-#घोषणा _AGP_BACKEND_H 1
+#ifndef _AGP_BACKEND_H
+#define _AGP_BACKEND_H 1
 
-#समावेश <linux/list.h>
+#include <linux/list.h>
 
-क्रमागत chipset_type अणु
+enum chipset_type {
 	NOT_SUPPORTED,
 	SUPPORTED,
-पूर्ण;
+};
 
-काष्ठा agp_version अणु
+struct agp_version {
 	u16 major;
 	u16 minor;
-पूर्ण;
+};
 
-काष्ठा agp_kern_info अणु
-	काष्ठा agp_version version;
-	काष्ठा pci_dev *device;
-	क्रमागत chipset_type chipset;
-	अचिन्हित दीर्घ mode;
-	अचिन्हित दीर्घ aper_base;
-	माप_प्रकार aper_size;
-	पूर्णांक max_memory;		/* In pages */
-	पूर्णांक current_memory;
+struct agp_kern_info {
+	struct agp_version version;
+	struct pci_dev *device;
+	enum chipset_type chipset;
+	unsigned long mode;
+	unsigned long aper_base;
+	size_t aper_size;
+	int max_memory;		/* In pages */
+	int current_memory;
 	bool cant_use_aperture;
-	अचिन्हित दीर्घ page_mask;
-	स्थिर काष्ठा vm_operations_काष्ठा *vm_ops;
-पूर्ण;
+	unsigned long page_mask;
+	const struct vm_operations_struct *vm_ops;
+};
 
 /*
- * The agp_memory काष्ठाure has inक्रमmation about the block of agp memory
- * allocated.  A caller may manipulate the next and prev poपूर्णांकers to link
- * each allocated item पूर्णांकo a list.  These poपूर्णांकers are ignored by the backend.
- * Everything अन्यथा should never be written to, but the caller may पढ़ो any of
+ * The agp_memory structure has information about the block of agp memory
+ * allocated.  A caller may manipulate the next and prev pointers to link
+ * each allocated item into a list.  These pointers are ignored by the backend.
+ * Everything else should never be written to, but the caller may read any of
  * the items to determine the status of this block of agp memory.
  */
 
-काष्ठा agp_bridge_data;
+struct agp_bridge_data;
 
-काष्ठा agp_memory अणु
-	काष्ठा agp_memory *next;
-	काष्ठा agp_memory *prev;
-	काष्ठा agp_bridge_data *bridge;
-	काष्ठा page **pages;
-	माप_प्रकार page_count;
-	पूर्णांक key;
-	पूर्णांक num_scratch_pages;
+struct agp_memory {
+	struct agp_memory *next;
+	struct agp_memory *prev;
+	struct agp_bridge_data *bridge;
+	struct page **pages;
+	size_t page_count;
+	int key;
+	int num_scratch_pages;
 	off_t pg_start;
 	u32 type;
 	u32 physical;
 	bool is_bound;
 	bool is_flushed;
 	/* list of agp_memory mapped to the aperture */
-	काष्ठा list_head mapped_list;
+	struct list_head mapped_list;
 	/* DMA-mapped addresses */
-	काष्ठा scatterlist *sg_list;
-	पूर्णांक num_sg;
-पूर्ण;
+	struct scatterlist *sg_list;
+	int num_sg;
+};
 
-#घोषणा AGP_NORMAL_MEMORY 0
+#define AGP_NORMAL_MEMORY 0
 
-#घोषणा AGP_USER_TYPES (1 << 16)
-#घोषणा AGP_USER_MEMORY (AGP_USER_TYPES)
-#घोषणा AGP_USER_CACHED_MEMORY (AGP_USER_TYPES + 1)
+#define AGP_USER_TYPES (1 << 16)
+#define AGP_USER_MEMORY (AGP_USER_TYPES)
+#define AGP_USER_CACHED_MEMORY (AGP_USER_TYPES + 1)
 
-बाह्य काष्ठा agp_bridge_data *agp_bridge;
-बाह्य काष्ठा list_head agp_bridges;
+extern struct agp_bridge_data *agp_bridge;
+extern struct list_head agp_bridges;
 
-बाह्य काष्ठा agp_bridge_data *(*agp_find_bridge)(काष्ठा pci_dev *);
+extern struct agp_bridge_data *(*agp_find_bridge)(struct pci_dev *);
 
-बाह्य व्योम agp_मुक्त_memory(काष्ठा agp_memory *);
-बाह्य काष्ठा agp_memory *agp_allocate_memory(काष्ठा agp_bridge_data *, माप_प्रकार, u32);
-बाह्य पूर्णांक agp_copy_info(काष्ठा agp_bridge_data *, काष्ठा agp_kern_info *);
-बाह्य पूर्णांक agp_bind_memory(काष्ठा agp_memory *, off_t);
-बाह्य पूर्णांक agp_unbind_memory(काष्ठा agp_memory *);
-बाह्य व्योम agp_enable(काष्ठा agp_bridge_data *, u32);
-बाह्य काष्ठा agp_bridge_data *agp_backend_acquire(काष्ठा pci_dev *);
-बाह्य व्योम agp_backend_release(काष्ठा agp_bridge_data *);
+extern void agp_free_memory(struct agp_memory *);
+extern struct agp_memory *agp_allocate_memory(struct agp_bridge_data *, size_t, u32);
+extern int agp_copy_info(struct agp_bridge_data *, struct agp_kern_info *);
+extern int agp_bind_memory(struct agp_memory *, off_t);
+extern int agp_unbind_memory(struct agp_memory *);
+extern void agp_enable(struct agp_bridge_data *, u32);
+extern struct agp_bridge_data *agp_backend_acquire(struct pci_dev *);
+extern void agp_backend_release(struct agp_bridge_data *);
 
-#पूर्ण_अगर				/* _AGP_BACKEND_H */
+#endif				/* _AGP_BACKEND_H */

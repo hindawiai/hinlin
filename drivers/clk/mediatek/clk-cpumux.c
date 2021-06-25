@@ -1,62 +1,61 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2015 Linaro Ltd.
  * Author: Pi-Cheng Chen <pi-cheng.chen@linaro.org>
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/slab.h>
+#include <linux/clk-provider.h>
+#include <linux/mfd/syscon.h>
+#include <linux/slab.h>
 
-#समावेश "clk-mtk.h"
-#समावेश "clk-cpumux.h"
+#include "clk-mtk.h"
+#include "clk-cpumux.h"
 
-अटल अंतरभूत काष्ठा mtk_clk_cpumux *to_mtk_clk_cpumux(काष्ठा clk_hw *_hw)
-अणु
-	वापस container_of(_hw, काष्ठा mtk_clk_cpumux, hw);
-पूर्ण
+static inline struct mtk_clk_cpumux *to_mtk_clk_cpumux(struct clk_hw *_hw)
+{
+	return container_of(_hw, struct mtk_clk_cpumux, hw);
+}
 
-अटल u8 clk_cpumux_get_parent(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा mtk_clk_cpumux *mux = to_mtk_clk_cpumux(hw);
-	अचिन्हित पूर्णांक val;
+static u8 clk_cpumux_get_parent(struct clk_hw *hw)
+{
+	struct mtk_clk_cpumux *mux = to_mtk_clk_cpumux(hw);
+	unsigned int val;
 
-	regmap_पढ़ो(mux->regmap, mux->reg, &val);
+	regmap_read(mux->regmap, mux->reg, &val);
 
-	val >>= mux->shअगरt;
+	val >>= mux->shift;
 	val &= mux->mask;
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल पूर्णांक clk_cpumux_set_parent(काष्ठा clk_hw *hw, u8 index)
-अणु
-	काष्ठा mtk_clk_cpumux *mux = to_mtk_clk_cpumux(hw);
+static int clk_cpumux_set_parent(struct clk_hw *hw, u8 index)
+{
+	struct mtk_clk_cpumux *mux = to_mtk_clk_cpumux(hw);
 	u32 mask, val;
 
-	val = index << mux->shअगरt;
-	mask = mux->mask << mux->shअगरt;
+	val = index << mux->shift;
+	mask = mux->mask << mux->shift;
 
-	वापस regmap_update_bits(mux->regmap, mux->reg, mask, val);
-पूर्ण
+	return regmap_update_bits(mux->regmap, mux->reg, mask, val);
+}
 
-अटल स्थिर काष्ठा clk_ops clk_cpumux_ops = अणु
+static const struct clk_ops clk_cpumux_ops = {
 	.get_parent = clk_cpumux_get_parent,
 	.set_parent = clk_cpumux_set_parent,
-पूर्ण;
+};
 
-अटल काष्ठा clk *
-mtk_clk_रेजिस्टर_cpumux(स्थिर काष्ठा mtk_composite *mux,
-			काष्ठा regmap *regmap)
-अणु
-	काष्ठा mtk_clk_cpumux *cpumux;
-	काष्ठा clk *clk;
-	काष्ठा clk_init_data init;
+static struct clk *
+mtk_clk_register_cpumux(const struct mtk_composite *mux,
+			struct regmap *regmap)
+{
+	struct mtk_clk_cpumux *cpumux;
+	struct clk *clk;
+	struct clk_init_data init;
 
-	cpumux = kzalloc(माप(*cpumux), GFP_KERNEL);
-	अगर (!cpumux)
-		वापस ERR_PTR(-ENOMEM);
+	cpumux = kzalloc(sizeof(*cpumux), GFP_KERNEL);
+	if (!cpumux)
+		return ERR_PTR(-ENOMEM);
 
 	init.name = mux->name;
 	init.ops = &clk_cpumux_ops;
@@ -65,45 +64,45 @@ mtk_clk_रेजिस्टर_cpumux(स्थिर काष्ठा mtk_c
 	init.flags = mux->flags;
 
 	cpumux->reg = mux->mux_reg;
-	cpumux->shअगरt = mux->mux_shअगरt;
+	cpumux->shift = mux->mux_shift;
 	cpumux->mask = BIT(mux->mux_width) - 1;
 	cpumux->regmap = regmap;
 	cpumux->hw.init = &init;
 
-	clk = clk_रेजिस्टर(शून्य, &cpumux->hw);
-	अगर (IS_ERR(clk))
-		kमुक्त(cpumux);
+	clk = clk_register(NULL, &cpumux->hw);
+	if (IS_ERR(clk))
+		kfree(cpumux);
 
-	वापस clk;
-पूर्ण
+	return clk;
+}
 
-पूर्णांक mtk_clk_रेजिस्टर_cpumuxes(काष्ठा device_node *node,
-			      स्थिर काष्ठा mtk_composite *clks, पूर्णांक num,
-			      काष्ठा clk_onecell_data *clk_data)
-अणु
-	पूर्णांक i;
-	काष्ठा clk *clk;
-	काष्ठा regmap *regmap;
+int mtk_clk_register_cpumuxes(struct device_node *node,
+			      const struct mtk_composite *clks, int num,
+			      struct clk_onecell_data *clk_data)
+{
+	int i;
+	struct clk *clk;
+	struct regmap *regmap;
 
 	regmap = syscon_node_to_regmap(node);
-	अगर (IS_ERR(regmap)) अणु
+	if (IS_ERR(regmap)) {
 		pr_err("Cannot find regmap for %pOF: %ld\n", node,
 		       PTR_ERR(regmap));
-		वापस PTR_ERR(regmap);
-	पूर्ण
+		return PTR_ERR(regmap);
+	}
 
-	क्रम (i = 0; i < num; i++) अणु
-		स्थिर काष्ठा mtk_composite *mux = &clks[i];
+	for (i = 0; i < num; i++) {
+		const struct mtk_composite *mux = &clks[i];
 
-		clk = mtk_clk_रेजिस्टर_cpumux(mux, regmap);
-		अगर (IS_ERR(clk)) अणु
+		clk = mtk_clk_register_cpumux(mux, regmap);
+		if (IS_ERR(clk)) {
 			pr_err("Failed to register clk %s: %ld\n",
 			       mux->name, PTR_ERR(clk));
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		clk_data->clks[mux->id] = clk;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

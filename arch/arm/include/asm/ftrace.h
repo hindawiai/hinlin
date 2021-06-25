@@ -1,76 +1,75 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_ARM_FTRACE
-#घोषणा _ASM_ARM_FTRACE
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_ARM_FTRACE
+#define _ASM_ARM_FTRACE
 
-#अगर_घोषित CONFIG_DYNAMIC_FTRACE_WITH_REGS
-#घोषणा ARCH_SUPPORTS_FTRACE_OPS 1
-#पूर्ण_अगर
+#ifdef CONFIG_DYNAMIC_FTRACE_WITH_REGS
+#define ARCH_SUPPORTS_FTRACE_OPS 1
+#endif
 
-#अगर_घोषित CONFIG_FUNCTION_TRACER
-#घोषणा MCOUNT_ADDR		((अचिन्हित दीर्घ)(__gnu_mcount_nc))
-#घोषणा MCOUNT_INSN_SIZE	4 /* माप mcount call */
+#ifdef CONFIG_FUNCTION_TRACER
+#define MCOUNT_ADDR		((unsigned long)(__gnu_mcount_nc))
+#define MCOUNT_INSN_SIZE	4 /* sizeof mcount call */
 
-#अगर_अघोषित __ASSEMBLY__
-बाह्य व्योम __gnu_mcount_nc(व्योम);
+#ifndef __ASSEMBLY__
+extern void __gnu_mcount_nc(void);
 
-#अगर_घोषित CONFIG_DYNAMIC_FTRACE
-काष्ठा dyn_arch_ftrace अणु
-पूर्ण;
+#ifdef CONFIG_DYNAMIC_FTRACE
+struct dyn_arch_ftrace {
+};
 
-अटल अंतरभूत अचिन्हित दीर्घ ftrace_call_adjust(अचिन्हित दीर्घ addr)
-अणु
+static inline unsigned long ftrace_call_adjust(unsigned long addr)
+{
 	/* With Thumb-2, the recorded addresses have the lsb set */
-	वापस addr & ~1;
-पूर्ण
-#पूर्ण_अगर
+	return addr & ~1;
+}
+#endif
 
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर
+#endif
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-#अगर defined(CONFIG_FRAME_POINTER) && !defined(CONFIG_ARM_UNWIND)
+#if defined(CONFIG_FRAME_POINTER) && !defined(CONFIG_ARM_UNWIND)
 /*
- * वापस_address uses walk_stackframe to करो it's work.  If both
+ * return_address uses walk_stackframe to do it's work.  If both
  * CONFIG_FRAME_POINTER=y and CONFIG_ARM_UNWIND=y walk_stackframe uses unwind
- * inक्रमmation.  For this to work in the function tracer many functions would
- * have to be marked with __notrace.  So क्रम now just depend on
+ * information.  For this to work in the function tracer many functions would
+ * have to be marked with __notrace.  So for now just depend on
  * !CONFIG_ARM_UNWIND.
  */
 
-व्योम *वापस_address(अचिन्हित पूर्णांक);
+void *return_address(unsigned int);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत व्योम *वापस_address(अचिन्हित पूर्णांक level)
-अणु
-	वापस शून्य;
-पूर्ण
+static inline void *return_address(unsigned int level)
+{
+	return NULL;
+}
 
-#पूर्ण_अगर
+#endif
 
-#घोषणा ftrace_वापस_address(n) वापस_address(n)
+#define ftrace_return_address(n) return_address(n)
 
-#घोषणा ARCH_HAS_SYSCALL_MATCH_SYM_NAME
+#define ARCH_HAS_SYSCALL_MATCH_SYM_NAME
 
-अटल अंतरभूत bool arch_syscall_match_sym_name(स्थिर अक्षर *sym,
-					       स्थिर अक्षर *name)
-अणु
-	अगर (!म_भेद(sym, "sys_mmap2"))
+static inline bool arch_syscall_match_sym_name(const char *sym,
+					       const char *name)
+{
+	if (!strcmp(sym, "sys_mmap2"))
 		sym = "sys_mmap_pgoff";
-	अन्यथा अगर (!म_भेद(sym, "sys_statfs64_wrapper"))
+	else if (!strcmp(sym, "sys_statfs64_wrapper"))
 		sym = "sys_statfs64";
-	अन्यथा अगर (!म_भेद(sym, "sys_fstatfs64_wrapper"))
+	else if (!strcmp(sym, "sys_fstatfs64_wrapper"))
 		sym = "sys_fstatfs64";
-	अन्यथा अगर (!म_भेद(sym, "sys_arm_fadvise64_64"))
+	else if (!strcmp(sym, "sys_arm_fadvise64_64"))
 		sym = "sys_fadvise64_64";
 
-	/* Ignore हाल since sym may start with "SyS" instead of "sys" */
-	वापस !strहालcmp(sym, name);
-पूर्ण
+	/* Ignore case since sym may start with "SyS" instead of "sys" */
+	return !strcasecmp(sym, name);
+}
 
-#पूर्ण_अगर /* अगरndef __ASSEMBLY__ */
+#endif /* ifndef __ASSEMBLY__ */
 
-#पूर्ण_अगर /* _ASM_ARM_FTRACE */
+#endif /* _ASM_ARM_FTRACE */

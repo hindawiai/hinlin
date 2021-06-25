@@ -1,12 +1,11 @@
-<शैली गुरु>
-#अगर_अघोषित _VC4_HDMI_REGS_H_
-#घोषणा _VC4_HDMI_REGS_H_
+#ifndef _VC4_HDMI_REGS_H_
+#define _VC4_HDMI_REGS_H_
 
-#समावेश "vc4_hdmi.h"
+#include "vc4_hdmi.h"
 
-#घोषणा VC4_HDMI_PACKET_STRIDE			0x24
+#define VC4_HDMI_PACKET_STRIDE			0x24
 
-क्रमागत vc4_hdmi_regs अणु
+enum vc4_hdmi_regs {
 	VC4_INVALID = 0,
 	VC4_HDMI,
 	VC4_HD,
@@ -16,9 +15,9 @@
 	VC5_PHY,
 	VC5_RAM,
 	VC5_RM,
-पूर्ण;
+};
 
-क्रमागत vc4_hdmi_field अणु
+enum vc4_hdmi_field {
 	HDMI_AUDIO_PACKET_CONFIG,
 	HDMI_CEC_CNTRL_1,
 	HDMI_CEC_CNTRL_2,
@@ -56,7 +55,7 @@
 	HDMI_CSC_CTL,
 
 	/*
-	 * 20-bit fields containing CTS values to be transmitted अगर
+	 * 20-bit fields containing CTS values to be transmitted if
 	 * !EXTERNAL_CTS_EN
 	 */
 	HDMI_CTS_0,
@@ -81,7 +80,7 @@
 	HDMI_MAI_CTL,
 
 	/*
-	 * Register क्रम DMAing in audio data to be transported over
+	 * Register for DMAing in audio data to be transported over
 	 * the MAI bus to the Falcon core.
 	 */
 	HDMI_MAI_DATA,
@@ -89,7 +88,7 @@
 	/* Format header to be placed on the MAI data. Unused. */
 	HDMI_MAI_FMT,
 
-	/* Last received क्रमmat word on the MAI bus. */
+	/* Last received format word on the MAI bus. */
 	HDMI_MAI_FORMAT,
 	HDMI_MAI_SMP,
 	HDMI_MAI_THR,
@@ -123,31 +122,31 @@
 	HDMI_VERTB0,
 	HDMI_VERTB1,
 	HDMI_VID_CTL,
-पूर्ण;
+};
 
-काष्ठा vc4_hdmi_रेजिस्टर अणु
-	अक्षर *name;
-	क्रमागत vc4_hdmi_regs reg;
-	अचिन्हित पूर्णांक offset;
-पूर्ण;
+struct vc4_hdmi_register {
+	char *name;
+	enum vc4_hdmi_regs reg;
+	unsigned int offset;
+};
 
-#घोषणा _VC4_REG(_base, _reg, _offset)	\
-	[_reg] = अणु				\
+#define _VC4_REG(_base, _reg, _offset)	\
+	[_reg] = {				\
 		.name = #_reg,			\
 		.reg = _base,			\
 		.offset = _offset,		\
-	पूर्ण
+	}
 
-#घोषणा VC4_HD_REG(reg, offset)		_VC4_REG(VC4_HD, reg, offset)
-#घोषणा VC4_HDMI_REG(reg, offset)	_VC4_REG(VC4_HDMI, reg, offset)
-#घोषणा VC5_CEC_REG(reg, offset)	_VC4_REG(VC5_CEC, reg, offset)
-#घोषणा VC5_CSC_REG(reg, offset)	_VC4_REG(VC5_CSC, reg, offset)
-#घोषणा VC5_DVP_REG(reg, offset)	_VC4_REG(VC5_DVP, reg, offset)
-#घोषणा VC5_PHY_REG(reg, offset)	_VC4_REG(VC5_PHY, reg, offset)
-#घोषणा VC5_RAM_REG(reg, offset)	_VC4_REG(VC5_RAM, reg, offset)
-#घोषणा VC5_RM_REG(reg, offset)		_VC4_REG(VC5_RM, reg, offset)
+#define VC4_HD_REG(reg, offset)		_VC4_REG(VC4_HD, reg, offset)
+#define VC4_HDMI_REG(reg, offset)	_VC4_REG(VC4_HDMI, reg, offset)
+#define VC5_CEC_REG(reg, offset)	_VC4_REG(VC5_CEC, reg, offset)
+#define VC5_CSC_REG(reg, offset)	_VC4_REG(VC5_CSC, reg, offset)
+#define VC5_DVP_REG(reg, offset)	_VC4_REG(VC5_DVP, reg, offset)
+#define VC5_PHY_REG(reg, offset)	_VC4_REG(VC5_PHY, reg, offset)
+#define VC5_RAM_REG(reg, offset)	_VC4_REG(VC5_RAM, reg, offset)
+#define VC5_RM_REG(reg, offset)		_VC4_REG(VC5_RM, reg, offset)
 
-अटल स्थिर काष्ठा vc4_hdmi_रेजिस्टर __maybe_unused vc4_hdmi_fields[] = अणु
+static const struct vc4_hdmi_register __maybe_unused vc4_hdmi_fields[] = {
 	VC4_HD_REG(HDMI_M_CTL, 0x000c),
 	VC4_HD_REG(HDMI_MAI_CTL, 0x0014),
 	VC4_HD_REG(HDMI_MAI_THR, 0x0018),
@@ -207,9 +206,9 @@
 	VC4_HDMI_REG(HDMI_CEC_CPU_MASK_SET, 0x0350),
 	VC4_HDMI_REG(HDMI_CEC_CPU_MASK_CLEAR, 0x0354),
 	VC4_HDMI_REG(HDMI_RAM_PACKET_START, 0x0400),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा vc4_hdmi_रेजिस्टर __maybe_unused vc5_hdmi_hdmi0_fields[] = अणु
+static const struct vc4_hdmi_register __maybe_unused vc5_hdmi_hdmi0_fields[] = {
 	VC4_HD_REG(HDMI_DVP_CTL, 0x0000),
 	VC4_HD_REG(HDMI_MAI_CTL, 0x0010),
 	VC4_HD_REG(HDMI_MAI_THR, 0x0014),
@@ -286,9 +285,9 @@
 	VC5_CSC_REG(HDMI_CSC_24_23, 0x010),
 	VC5_CSC_REG(HDMI_CSC_32_31, 0x014),
 	VC5_CSC_REG(HDMI_CSC_34_33, 0x018),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा vc4_hdmi_रेजिस्टर __maybe_unused vc5_hdmi_hdmi1_fields[] = अणु
+static const struct vc4_hdmi_register __maybe_unused vc5_hdmi_hdmi1_fields[] = {
 	VC4_HD_REG(HDMI_DVP_CTL, 0x0000),
 	VC4_HD_REG(HDMI_MAI_CTL, 0x0030),
 	VC4_HD_REG(HDMI_MAI_THR, 0x0034),
@@ -365,90 +364,90 @@
 	VC5_CSC_REG(HDMI_CSC_24_23, 0x010),
 	VC5_CSC_REG(HDMI_CSC_32_31, 0x014),
 	VC5_CSC_REG(HDMI_CSC_34_33, 0x018),
-पूर्ण;
+};
 
-अटल अंतरभूत
-व्योम __iomem *__vc4_hdmi_get_field_base(काष्ठा vc4_hdmi *hdmi,
-					क्रमागत vc4_hdmi_regs reg)
-अणु
-	चयन (reg) अणु
-	हाल VC4_HD:
-		वापस hdmi->hd_regs;
+static inline
+void __iomem *__vc4_hdmi_get_field_base(struct vc4_hdmi *hdmi,
+					enum vc4_hdmi_regs reg)
+{
+	switch (reg) {
+	case VC4_HD:
+		return hdmi->hd_regs;
 
-	हाल VC4_HDMI:
-		वापस hdmi->hdmicore_regs;
+	case VC4_HDMI:
+		return hdmi->hdmicore_regs;
 
-	हाल VC5_CSC:
-		वापस hdmi->csc_regs;
+	case VC5_CSC:
+		return hdmi->csc_regs;
 
-	हाल VC5_CEC:
-		वापस hdmi->cec_regs;
+	case VC5_CEC:
+		return hdmi->cec_regs;
 
-	हाल VC5_DVP:
-		वापस hdmi->dvp_regs;
+	case VC5_DVP:
+		return hdmi->dvp_regs;
 
-	हाल VC5_PHY:
-		वापस hdmi->phy_regs;
+	case VC5_PHY:
+		return hdmi->phy_regs;
 
-	हाल VC5_RAM:
-		वापस hdmi->ram_regs;
+	case VC5_RAM:
+		return hdmi->ram_regs;
 
-	हाल VC5_RM:
-		वापस hdmi->rm_regs;
+	case VC5_RM:
+		return hdmi->rm_regs;
 
-	शेष:
-		वापस शून्य;
-	पूर्ण
+	default:
+		return NULL;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल अंतरभूत u32 vc4_hdmi_पढ़ो(काष्ठा vc4_hdmi *hdmi,
-				क्रमागत vc4_hdmi_field reg)
-अणु
-	स्थिर काष्ठा vc4_hdmi_रेजिस्टर *field;
-	स्थिर काष्ठा vc4_hdmi_variant *variant = hdmi->variant;
-	व्योम __iomem *base;
+static inline u32 vc4_hdmi_read(struct vc4_hdmi *hdmi,
+				enum vc4_hdmi_field reg)
+{
+	const struct vc4_hdmi_register *field;
+	const struct vc4_hdmi_variant *variant = hdmi->variant;
+	void __iomem *base;
 
-	अगर (reg >= variant->num_रेजिस्टरs) अणु
+	if (reg >= variant->num_registers) {
 		dev_warn(&hdmi->pdev->dev,
 			 "Invalid register ID %u\n", reg);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	field = &variant->रेजिस्टरs[reg];
+	field = &variant->registers[reg];
 	base = __vc4_hdmi_get_field_base(hdmi, field->reg);
-	अगर (!base) अणु
+	if (!base) {
 		dev_warn(&hdmi->pdev->dev,
 			 "Unknown register ID %u\n", reg);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस पढ़ोl(base + field->offset);
-पूर्ण
-#घोषणा HDMI_READ(reg)		vc4_hdmi_पढ़ो(vc4_hdmi, reg)
+	return readl(base + field->offset);
+}
+#define HDMI_READ(reg)		vc4_hdmi_read(vc4_hdmi, reg)
 
-अटल अंतरभूत व्योम vc4_hdmi_ग_लिखो(काष्ठा vc4_hdmi *hdmi,
-				  क्रमागत vc4_hdmi_field reg,
+static inline void vc4_hdmi_write(struct vc4_hdmi *hdmi,
+				  enum vc4_hdmi_field reg,
 				  u32 value)
-अणु
-	स्थिर काष्ठा vc4_hdmi_रेजिस्टर *field;
-	स्थिर काष्ठा vc4_hdmi_variant *variant = hdmi->variant;
-	व्योम __iomem *base;
+{
+	const struct vc4_hdmi_register *field;
+	const struct vc4_hdmi_variant *variant = hdmi->variant;
+	void __iomem *base;
 
-	अगर (reg >= variant->num_रेजिस्टरs) अणु
+	if (reg >= variant->num_registers) {
 		dev_warn(&hdmi->pdev->dev,
 			 "Invalid register ID %u\n", reg);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	field = &variant->रेजिस्टरs[reg];
+	field = &variant->registers[reg];
 	base = __vc4_hdmi_get_field_base(hdmi, field->reg);
-	अगर (!base)
-		वापस;
+	if (!base)
+		return;
 
-	ग_लिखोl(value, base + field->offset);
-पूर्ण
-#घोषणा HDMI_WRITE(reg, val)	vc4_hdmi_ग_लिखो(vc4_hdmi, reg, val)
+	writel(value, base + field->offset);
+}
+#define HDMI_WRITE(reg, val)	vc4_hdmi_write(vc4_hdmi, reg, val)
 
-#पूर्ण_अगर /* _VC4_HDMI_REGS_H_ */
+#endif /* _VC4_HDMI_REGS_H_ */

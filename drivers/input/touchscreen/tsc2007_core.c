@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * drivers/input/touchscreen/tsc2007.c
  *
@@ -11,36 +10,36 @@
  *	Copyright (c) 2005 David Brownell
  *	Copyright (c) 2006 Nokia Corporation
  *  - corgi_ts.c
- *	Copyright (C) 2004-2005 Riअक्षरd Purdie
+ *	Copyright (C) 2004-2005 Richard Purdie
  *  - omap_ts.[hc], ads7846.h, ts_osk.c
  *	Copyright (C) 2002 MontaVista Software
  *	Copyright (C) 2004 Texas Instruments
  *	Copyright (C) 2005 Dirk Behme
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/input.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <linux/property.h>
-#समावेश <linux/platक्रमm_data/tsc2007.h>
-#समावेश "tsc2007.h"
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/gpio/consumer.h>
+#include <linux/input.h>
+#include <linux/interrupt.h>
+#include <linux/i2c.h>
+#include <linux/mod_devicetable.h>
+#include <linux/property.h>
+#include <linux/platform_data/tsc2007.h>
+#include "tsc2007.h"
 
-पूर्णांक tsc2007_xfer(काष्ठा tsc2007 *tsc, u8 cmd)
-अणु
+int tsc2007_xfer(struct tsc2007 *tsc, u8 cmd)
+{
 	s32 data;
 	u16 val;
 
-	data = i2c_smbus_पढ़ो_word_data(tsc->client, cmd);
-	अगर (data < 0) अणु
+	data = i2c_smbus_read_word_data(tsc->client, cmd);
+	if (data < 0) {
 		dev_err(&tsc->client->dev, "i2c io error: %d\n", data);
-		वापस data;
-	पूर्ण
+		return data;
+	}
 
-	/* The protocol and raw data क्रमmat from i2c पूर्णांकerface:
+	/* The protocol and raw data format from i2c interface:
 	 * S Addr Wr [A] Comm [A] S Addr Rd [A] [DataLow] A [DataHigh] NA P
 	 * Where DataLow has [D11-D4], DataHigh has [D3-D0 << 4 | Dummy 4bit].
 	 */
@@ -48,94 +47,94 @@
 
 	dev_dbg(&tsc->client->dev, "data: 0x%x, val: 0x%x\n", data, val);
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल व्योम tsc2007_पढ़ो_values(काष्ठा tsc2007 *tsc, काष्ठा ts_event *tc)
-अणु
+static void tsc2007_read_values(struct tsc2007 *tsc, struct ts_event *tc)
+{
 	/* y- still on; turn on only y+ (and ADC) */
 	tc->y = tsc2007_xfer(tsc, READ_Y);
 
-	/* turn y- off, x+ on, then leave in lowघातer */
+	/* turn y- off, x+ on, then leave in lowpower */
 	tc->x = tsc2007_xfer(tsc, READ_X);
 
-	/* turn y+ off, x- on; we'll use क्रमmula #1 */
+	/* turn y+ off, x- on; we'll use formula #1 */
 	tc->z1 = tsc2007_xfer(tsc, READ_Z1);
 	tc->z2 = tsc2007_xfer(tsc, READ_Z2);
 
-	/* Prepare क्रम next touch पढ़ोing - घातer करोwn ADC, enable PENIRQ */
+	/* Prepare for next touch reading - power down ADC, enable PENIRQ */
 	tsc2007_xfer(tsc, PWRDOWN);
-पूर्ण
+}
 
-u32 tsc2007_calculate_resistance(काष्ठा tsc2007 *tsc, काष्ठा ts_event *tc)
-अणु
+u32 tsc2007_calculate_resistance(struct tsc2007 *tsc, struct ts_event *tc)
+{
 	u32 rt = 0;
 
 	/* range filtering */
-	अगर (tc->x == MAX_12BIT)
+	if (tc->x == MAX_12BIT)
 		tc->x = 0;
 
-	अगर (likely(tc->x && tc->z1)) अणु
+	if (likely(tc->x && tc->z1)) {
 		/* compute touch resistance using equation #1 */
 		rt = tc->z2 - tc->z1;
 		rt *= tc->x;
 		rt *= tsc->x_plate_ohms;
 		rt /= tc->z1;
 		rt = (rt + 2047) >> 12;
-	पूर्ण
+	}
 
-	वापस rt;
-पूर्ण
+	return rt;
+}
 
-bool tsc2007_is_pen_करोwn(काष्ठा tsc2007 *ts)
-अणु
+bool tsc2007_is_pen_down(struct tsc2007 *ts)
+{
 	/*
-	 * NOTE: We can't rely on the pressure to determine the pen करोwn
+	 * NOTE: We can't rely on the pressure to determine the pen down
 	 * state, even though this controller has a pressure sensor.
-	 * The pressure value can fluctuate क्रम quite a जबतक after
-	 * lअगरting the pen and in some हालs may not even settle at the
+	 * The pressure value can fluctuate for quite a while after
+	 * lifting the pen and in some cases may not even settle at the
 	 * expected value.
 	 *
-	 * The only safe way to check क्रम the pen up condition is in the
-	 * work function by पढ़ोing the pen संकेत state (it's a GPIO
-	 * and IRQ). Unक्रमtunately such callback is not always available,
-	 * in that हाल we assume that the pen is करोwn and expect caller
-	 * to fall back on the pressure पढ़ोing.
+	 * The only safe way to check for the pen up condition is in the
+	 * work function by reading the pen signal state (it's a GPIO
+	 * and IRQ). Unfortunately such callback is not always available,
+	 * in that case we assume that the pen is down and expect caller
+	 * to fall back on the pressure reading.
 	 */
 
-	अगर (!ts->get_penकरोwn_state)
-		वापस true;
+	if (!ts->get_pendown_state)
+		return true;
 
-	वापस ts->get_penकरोwn_state(&ts->client->dev);
-पूर्ण
+	return ts->get_pendown_state(&ts->client->dev);
+}
 
-अटल irqवापस_t tsc2007_soft_irq(पूर्णांक irq, व्योम *handle)
-अणु
-	काष्ठा tsc2007 *ts = handle;
-	काष्ठा input_dev *input = ts->input;
-	काष्ठा ts_event tc;
+static irqreturn_t tsc2007_soft_irq(int irq, void *handle)
+{
+	struct tsc2007 *ts = handle;
+	struct input_dev *input = ts->input;
+	struct ts_event tc;
 	u32 rt;
 
-	जबतक (!ts->stopped && tsc2007_is_pen_करोwn(ts)) अणु
+	while (!ts->stopped && tsc2007_is_pen_down(ts)) {
 
-		/* pen is करोwn, जारी with the measurement */
+		/* pen is down, continue with the measurement */
 
 		mutex_lock(&ts->mlock);
-		tsc2007_पढ़ो_values(ts, &tc);
+		tsc2007_read_values(ts, &tc);
 		mutex_unlock(&ts->mlock);
 
 		rt = tsc2007_calculate_resistance(ts, &tc);
 
-		अगर (!rt && !ts->get_penकरोwn_state) अणु
+		if (!rt && !ts->get_pendown_state) {
 			/*
-			 * If pressure reported is 0 and we करोn't have
-			 * callback to check penकरोwn state, we have to
-			 * assume that pen was lअगरted up.
+			 * If pressure reported is 0 and we don't have
+			 * callback to check pendown state, we have to
+			 * assume that pen was lifted up.
 			 */
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (rt <= ts->max_rt) अणु
+		if (rt <= ts->max_rt) {
 			dev_dbg(&ts->client->dev,
 				"DOWN point(%4d,%4d), resistance (%4u)\n",
 				tc.x, tc.y, rt);
@@ -143,193 +142,193 @@ bool tsc2007_is_pen_करोwn(काष्ठा tsc2007 *ts)
 			rt = ts->max_rt - rt;
 
 			input_report_key(input, BTN_TOUCH, 1);
-			input_report_असल(input, ABS_X, tc.x);
-			input_report_असल(input, ABS_Y, tc.y);
-			input_report_असल(input, ABS_PRESSURE, rt);
+			input_report_abs(input, ABS_X, tc.x);
+			input_report_abs(input, ABS_Y, tc.y);
+			input_report_abs(input, ABS_PRESSURE, rt);
 
 			input_sync(input);
 
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
 			 * Sample found inconsistent by debouncing or pressure is
 			 * beyond the maximum. Don't report it to user space,
 			 * repeat at least once more the measurement.
 			 */
 			dev_dbg(&ts->client->dev, "ignored pressure %d\n", rt);
-		पूर्ण
+		}
 
-		रुको_event_समयout(ts->रुको, ts->stopped, ts->poll_period);
-	पूर्ण
+		wait_event_timeout(ts->wait, ts->stopped, ts->poll_period);
+	}
 
 	dev_dbg(&ts->client->dev, "UP\n");
 
 	input_report_key(input, BTN_TOUCH, 0);
-	input_report_असल(input, ABS_PRESSURE, 0);
+	input_report_abs(input, ABS_PRESSURE, 0);
 	input_sync(input);
 
-	अगर (ts->clear_penirq)
+	if (ts->clear_penirq)
 		ts->clear_penirq();
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t tsc2007_hard_irq(पूर्णांक irq, व्योम *handle)
-अणु
-	काष्ठा tsc2007 *ts = handle;
+static irqreturn_t tsc2007_hard_irq(int irq, void *handle)
+{
+	struct tsc2007 *ts = handle;
 
-	अगर (tsc2007_is_pen_करोwn(ts))
-		वापस IRQ_WAKE_THREAD;
+	if (tsc2007_is_pen_down(ts))
+		return IRQ_WAKE_THREAD;
 
-	अगर (ts->clear_penirq)
+	if (ts->clear_penirq)
 		ts->clear_penirq();
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम tsc2007_stop(काष्ठा tsc2007 *ts)
-अणु
+static void tsc2007_stop(struct tsc2007 *ts)
+{
 	ts->stopped = true;
 	mb();
-	wake_up(&ts->रुको);
+	wake_up(&ts->wait);
 
 	disable_irq(ts->irq);
-पूर्ण
+}
 
-अटल पूर्णांक tsc2007_खोलो(काष्ठा input_dev *input_dev)
-अणु
-	काष्ठा tsc2007 *ts = input_get_drvdata(input_dev);
-	पूर्णांक err;
+static int tsc2007_open(struct input_dev *input_dev)
+{
+	struct tsc2007 *ts = input_get_drvdata(input_dev);
+	int err;
 
 	ts->stopped = false;
 	mb();
 
 	enable_irq(ts->irq);
 
-	/* Prepare क्रम touch पढ़ोings - घातer करोwn ADC and enable PENIRQ */
+	/* Prepare for touch readings - power down ADC and enable PENIRQ */
 	err = tsc2007_xfer(ts, PWRDOWN);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		tsc2007_stop(ts);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tsc2007_बंद(काष्ठा input_dev *input_dev)
-अणु
-	काष्ठा tsc2007 *ts = input_get_drvdata(input_dev);
+static void tsc2007_close(struct input_dev *input_dev)
+{
+	struct tsc2007 *ts = input_get_drvdata(input_dev);
 
 	tsc2007_stop(ts);
-पूर्ण
+}
 
-अटल पूर्णांक tsc2007_get_penकरोwn_state_gpio(काष्ठा device *dev)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
-	काष्ठा tsc2007 *ts = i2c_get_clientdata(client);
+static int tsc2007_get_pendown_state_gpio(struct device *dev)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct tsc2007 *ts = i2c_get_clientdata(client);
 
-	वापस gpiod_get_value(ts->gpiod);
-पूर्ण
+	return gpiod_get_value(ts->gpiod);
+}
 
-अटल पूर्णांक tsc2007_probe_properties(काष्ठा device *dev, काष्ठा tsc2007 *ts)
-अणु
+static int tsc2007_probe_properties(struct device *dev, struct tsc2007 *ts)
+{
 	u32 val32;
 	u64 val64;
 
-	अगर (!device_property_पढ़ो_u32(dev, "ti,max-rt", &val32))
+	if (!device_property_read_u32(dev, "ti,max-rt", &val32))
 		ts->max_rt = val32;
-	अन्यथा
+	else
 		ts->max_rt = MAX_12BIT;
 
-	अगर (!device_property_पढ़ो_u32(dev, "ti,fuzzx", &val32))
+	if (!device_property_read_u32(dev, "ti,fuzzx", &val32))
 		ts->fuzzx = val32;
 
-	अगर (!device_property_पढ़ो_u32(dev, "ti,fuzzy", &val32))
+	if (!device_property_read_u32(dev, "ti,fuzzy", &val32))
 		ts->fuzzy = val32;
 
-	अगर (!device_property_पढ़ो_u32(dev, "ti,fuzzz", &val32))
+	if (!device_property_read_u32(dev, "ti,fuzzz", &val32))
 		ts->fuzzz = val32;
 
-	अगर (!device_property_पढ़ो_u64(dev, "ti,poll-period", &val64))
-		ts->poll_period = msecs_to_jअगरfies(val64);
-	अन्यथा
-		ts->poll_period = msecs_to_jअगरfies(1);
+	if (!device_property_read_u64(dev, "ti,poll-period", &val64))
+		ts->poll_period = msecs_to_jiffies(val64);
+	else
+		ts->poll_period = msecs_to_jiffies(1);
 
-	अगर (!device_property_पढ़ो_u32(dev, "ti,x-plate-ohms", &val32)) अणु
+	if (!device_property_read_u32(dev, "ti,x-plate-ohms", &val32)) {
 		ts->x_plate_ohms = val32;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_err(dev, "Missing ti,x-plate-ohms device property\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ts->gpiod = devm_gpiod_get_optional(dev, शून्य, GPIOD_IN);
-	अगर (IS_ERR(ts->gpiod))
-		वापस PTR_ERR(ts->gpiod);
+	ts->gpiod = devm_gpiod_get_optional(dev, NULL, GPIOD_IN);
+	if (IS_ERR(ts->gpiod))
+		return PTR_ERR(ts->gpiod);
 
-	अगर (ts->gpiod)
-		ts->get_penकरोwn_state = tsc2007_get_penकरोwn_state_gpio;
-	अन्यथा
+	if (ts->gpiod)
+		ts->get_pendown_state = tsc2007_get_pendown_state_gpio;
+	else
 		dev_warn(dev, "Pen down GPIO is not specified in properties\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tsc2007_probe_pdev(काष्ठा device *dev, काष्ठा tsc2007 *ts,
-			      स्थिर काष्ठा tsc2007_platक्रमm_data *pdata,
-			      स्थिर काष्ठा i2c_device_id *id)
-अणु
+static int tsc2007_probe_pdev(struct device *dev, struct tsc2007 *ts,
+			      const struct tsc2007_platform_data *pdata,
+			      const struct i2c_device_id *id)
+{
 	ts->model             = pdata->model;
 	ts->x_plate_ohms      = pdata->x_plate_ohms;
 	ts->max_rt            = pdata->max_rt ? : MAX_12BIT;
-	ts->poll_period       = msecs_to_jअगरfies(pdata->poll_period ? : 1);
-	ts->get_penकरोwn_state = pdata->get_penकरोwn_state;
+	ts->poll_period       = msecs_to_jiffies(pdata->poll_period ? : 1);
+	ts->get_pendown_state = pdata->get_pendown_state;
 	ts->clear_penirq      = pdata->clear_penirq;
 	ts->fuzzx             = pdata->fuzzx;
 	ts->fuzzy             = pdata->fuzzy;
 	ts->fuzzz             = pdata->fuzzz;
 
-	अगर (pdata->x_plate_ohms == 0) अणु
+	if (pdata->x_plate_ohms == 0) {
 		dev_err(dev, "x_plate_ohms is not set up in platform data\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tsc2007_call_निकास_platक्रमm_hw(व्योम *data)
-अणु
-	काष्ठा device *dev = data;
-	स्थिर काष्ठा tsc2007_platक्रमm_data *pdata = dev_get_platdata(dev);
+static void tsc2007_call_exit_platform_hw(void *data)
+{
+	struct device *dev = data;
+	const struct tsc2007_platform_data *pdata = dev_get_platdata(dev);
 
-	pdata->निकास_platक्रमm_hw();
-पूर्ण
+	pdata->exit_platform_hw();
+}
 
-अटल पूर्णांक tsc2007_probe(काष्ठा i2c_client *client,
-			 स्थिर काष्ठा i2c_device_id *id)
-अणु
-	स्थिर काष्ठा tsc2007_platक्रमm_data *pdata =
+static int tsc2007_probe(struct i2c_client *client,
+			 const struct i2c_device_id *id)
+{
+	const struct tsc2007_platform_data *pdata =
 		dev_get_platdata(&client->dev);
-	काष्ठा tsc2007 *ts;
-	काष्ठा input_dev *input_dev;
-	पूर्णांक err;
+	struct tsc2007 *ts;
+	struct input_dev *input_dev;
+	int err;
 
-	अगर (!i2c_check_functionality(client->adapter,
+	if (!i2c_check_functionality(client->adapter,
 				     I2C_FUNC_SMBUS_READ_WORD_DATA))
-		वापस -EIO;
+		return -EIO;
 
-	ts = devm_kzalloc(&client->dev, माप(काष्ठा tsc2007), GFP_KERNEL);
-	अगर (!ts)
-		वापस -ENOMEM;
+	ts = devm_kzalloc(&client->dev, sizeof(struct tsc2007), GFP_KERNEL);
+	if (!ts)
+		return -ENOMEM;
 
-	अगर (pdata)
+	if (pdata)
 		err = tsc2007_probe_pdev(&client->dev, ts, pdata, id);
-	अन्यथा
+	else
 		err = tsc2007_probe_properties(&client->dev, ts);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	input_dev = devm_input_allocate_device(&client->dev);
-	अगर (!input_dev)
-		वापस -ENOMEM;
+	if (!input_dev)
+		return -ENOMEM;
 
 	i2c_set_clientdata(client, ts);
 
@@ -337,103 +336,103 @@ bool tsc2007_is_pen_करोwn(काष्ठा tsc2007 *ts)
 	ts->irq = client->irq;
 	ts->input = input_dev;
 
-	init_रुकोqueue_head(&ts->रुको);
+	init_waitqueue_head(&ts->wait);
 	mutex_init(&ts->mlock);
 
-	snम_लिखो(ts->phys, माप(ts->phys),
+	snprintf(ts->phys, sizeof(ts->phys),
 		 "%s/input0", dev_name(&client->dev));
 
 	input_dev->name = "TSC2007 Touchscreen";
 	input_dev->phys = ts->phys;
 	input_dev->id.bustype = BUS_I2C;
 
-	input_dev->खोलो = tsc2007_खोलो;
-	input_dev->बंद = tsc2007_बंद;
+	input_dev->open = tsc2007_open;
+	input_dev->close = tsc2007_close;
 
 	input_set_drvdata(input_dev, ts);
 
 	input_set_capability(input_dev, EV_KEY, BTN_TOUCH);
 
-	input_set_असल_params(input_dev, ABS_X, 0, MAX_12BIT, ts->fuzzx, 0);
-	input_set_असल_params(input_dev, ABS_Y, 0, MAX_12BIT, ts->fuzzy, 0);
-	input_set_असल_params(input_dev, ABS_PRESSURE, 0, MAX_12BIT,
+	input_set_abs_params(input_dev, ABS_X, 0, MAX_12BIT, ts->fuzzx, 0);
+	input_set_abs_params(input_dev, ABS_Y, 0, MAX_12BIT, ts->fuzzy, 0);
+	input_set_abs_params(input_dev, ABS_PRESSURE, 0, MAX_12BIT,
 			     ts->fuzzz, 0);
 
-	अगर (pdata) अणु
-		अगर (pdata->निकास_platक्रमm_hw) अणु
+	if (pdata) {
+		if (pdata->exit_platform_hw) {
 			err = devm_add_action(&client->dev,
-					      tsc2007_call_निकास_platक्रमm_hw,
+					      tsc2007_call_exit_platform_hw,
 					      &client->dev);
-			अगर (err) अणु
+			if (err) {
 				dev_err(&client->dev,
 					"Failed to register exit_platform_hw action, %d\n",
 					err);
-				वापस err;
-			पूर्ण
-		पूर्ण
+				return err;
+			}
+		}
 
-		अगर (pdata->init_platक्रमm_hw)
-			pdata->init_platक्रमm_hw();
-	पूर्ण
+		if (pdata->init_platform_hw)
+			pdata->init_platform_hw();
+	}
 
-	err = devm_request_thपढ़ोed_irq(&client->dev, ts->irq,
+	err = devm_request_threaded_irq(&client->dev, ts->irq,
 					tsc2007_hard_irq, tsc2007_soft_irq,
 					IRQF_ONESHOT,
 					client->dev.driver->name, ts);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&client->dev, "Failed to request irq %d: %d\n",
 			ts->irq, err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	tsc2007_stop(ts);
 
-	/* घातer करोwn the chip (TSC2007_SETUP करोes not ACK on I2C) */
+	/* power down the chip (TSC2007_SETUP does not ACK on I2C) */
 	err = tsc2007_xfer(ts, PWRDOWN);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		dev_err(&client->dev,
 			"Failed to setup chip: %d\n", err);
-		वापस err;	/* chip करोes not respond */
-	पूर्ण
+		return err;	/* chip does not respond */
+	}
 
-	err = input_रेजिस्टर_device(input_dev);
-	अगर (err) अणु
+	err = input_register_device(input_dev);
+	if (err) {
 		dev_err(&client->dev,
 			"Failed to register input device: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	err =  tsc2007_iio_configure(ts);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&client->dev,
 			"Failed to register with IIO: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id tsc2007_idtable[] = अणु
-	अणु "tsc2007", 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id tsc2007_idtable[] = {
+	{ "tsc2007", 0 },
+	{ }
+};
 
 MODULE_DEVICE_TABLE(i2c, tsc2007_idtable);
 
-अटल स्थिर काष्ठा of_device_id tsc2007_of_match[] = अणु
-	अणु .compatible = "ti,tsc2007" पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id tsc2007_of_match[] = {
+	{ .compatible = "ti,tsc2007" },
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, tsc2007_of_match);
 
-अटल काष्ठा i2c_driver tsc2007_driver = अणु
-	.driver = अणु
+static struct i2c_driver tsc2007_driver = {
+	.driver = {
 		.name	= "tsc2007",
 		.of_match_table = tsc2007_of_match,
-	पूर्ण,
+	},
 	.id_table	= tsc2007_idtable,
 	.probe		= tsc2007_probe,
-पूर्ण;
+};
 
 module_i2c_driver(tsc2007_driver);
 

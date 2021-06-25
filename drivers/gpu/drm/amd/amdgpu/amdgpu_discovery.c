@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,18 +21,18 @@
  *
  */
 
-#समावेश "amdgpu.h"
-#समावेश "amdgpu_discovery.h"
-#समावेश "soc15_hw_ip.h"
-#समावेश "discovery.h"
+#include "amdgpu.h"
+#include "amdgpu_discovery.h"
+#include "soc15_hw_ip.h"
+#include "discovery.h"
 
-#घोषणा mmRCC_CONFIG_MEMSIZE	0xde3
-#घोषणा mmMM_INDEX		0x0
-#घोषणा mmMM_INDEX_HI		0x6
-#घोषणा mmMM_DATA		0x1
-#घोषणा HW_ID_MAX		300
+#define mmRCC_CONFIG_MEMSIZE	0xde3
+#define mmMM_INDEX		0x0
+#define mmMM_INDEX_HI		0x6
+#define mmMM_DATA		0x1
+#define HW_ID_MAX		300
 
-अटल स्थिर अक्षर *hw_id_names[HW_ID_MAX] = अणु
+static const char *hw_id_names[HW_ID_MAX] = {
 	[MP1_HWID]		= "MP1",
 	[MP2_HWID]		= "MP2",
 	[THM_HWID]		= "THM",
@@ -107,9 +106,9 @@
 	[XGMI_HWID]		= "XGMI",
 	[XGBE_HWID]		= "XGBE",
 	[MP0_HWID]		= "MP0",
-पूर्ण;
+};
 
-अटल पूर्णांक hw_id_map[MAX_HWIP] = अणु
+static int hw_id_map[MAX_HWIP] = {
 	[GC_HWIP]	= GC_HWID,
 	[HDP_HWIP]	= HDP_HWID,
 	[SDMA0_HWIP]	= SDMA0_HWID,
@@ -130,167 +129,167 @@
 	[THM_HWIP]	= THM_HWID,
 	[CLK_HWIP]	= CLKA_HWID,
 	[UMC_HWIP]	= UMC_HWID,
-पूर्ण;
+};
 
-अटल पूर्णांक amdgpu_discovery_पढ़ो_binary(काष्ठा amdgpu_device *adev, uपूर्णांक8_t *binary)
-अणु
-	uपूर्णांक64_t vram_size = (uपूर्णांक64_t)RREG32(mmRCC_CONFIG_MEMSIZE) << 20;
-	uपूर्णांक64_t pos = vram_size - DISCOVERY_TMR_OFFSET;
+static int amdgpu_discovery_read_binary(struct amdgpu_device *adev, uint8_t *binary)
+{
+	uint64_t vram_size = (uint64_t)RREG32(mmRCC_CONFIG_MEMSIZE) << 20;
+	uint64_t pos = vram_size - DISCOVERY_TMR_OFFSET;
 
-	amdgpu_device_vram_access(adev, pos, (uपूर्णांक32_t *)binary,
-				  adev->mman.discovery_पंचांगr_size, false);
-	वापस 0;
-पूर्ण
+	amdgpu_device_vram_access(adev, pos, (uint32_t *)binary,
+				  adev->mman.discovery_tmr_size, false);
+	return 0;
+}
 
-अटल uपूर्णांक16_t amdgpu_discovery_calculate_checksum(uपूर्णांक8_t *data, uपूर्णांक32_t size)
-अणु
-	uपूर्णांक16_t checksum = 0;
-	पूर्णांक i;
+static uint16_t amdgpu_discovery_calculate_checksum(uint8_t *data, uint32_t size)
+{
+	uint16_t checksum = 0;
+	int i;
 
-	क्रम (i = 0; i < size; i++)
+	for (i = 0; i < size; i++)
 		checksum += data[i];
 
-	वापस checksum;
-पूर्ण
+	return checksum;
+}
 
-अटल अंतरभूत bool amdgpu_discovery_verअगरy_checksum(uपूर्णांक8_t *data, uपूर्णांक32_t size,
-						    uपूर्णांक16_t expected)
-अणु
-	वापस !!(amdgpu_discovery_calculate_checksum(data, size) == expected);
-पूर्ण
+static inline bool amdgpu_discovery_verify_checksum(uint8_t *data, uint32_t size,
+						    uint16_t expected)
+{
+	return !!(amdgpu_discovery_calculate_checksum(data, size) == expected);
+}
 
-अटल पूर्णांक amdgpu_discovery_init(काष्ठा amdgpu_device *adev)
-अणु
-	काष्ठा table_info *info;
-	काष्ठा binary_header *bhdr;
-	काष्ठा ip_discovery_header *ihdr;
-	काष्ठा gpu_info_header *ghdr;
-	uपूर्णांक16_t offset;
-	uपूर्णांक16_t size;
-	uपूर्णांक16_t checksum;
-	पूर्णांक r;
+static int amdgpu_discovery_init(struct amdgpu_device *adev)
+{
+	struct table_info *info;
+	struct binary_header *bhdr;
+	struct ip_discovery_header *ihdr;
+	struct gpu_info_header *ghdr;
+	uint16_t offset;
+	uint16_t size;
+	uint16_t checksum;
+	int r;
 
-	adev->mman.discovery_पंचांगr_size = DISCOVERY_TMR_SIZE;
-	adev->mman.discovery_bin = kzalloc(adev->mman.discovery_पंचांगr_size, GFP_KERNEL);
-	अगर (!adev->mman.discovery_bin)
-		वापस -ENOMEM;
+	adev->mman.discovery_tmr_size = DISCOVERY_TMR_SIZE;
+	adev->mman.discovery_bin = kzalloc(adev->mman.discovery_tmr_size, GFP_KERNEL);
+	if (!adev->mman.discovery_bin)
+		return -ENOMEM;
 
-	r = amdgpu_discovery_पढ़ो_binary(adev, adev->mman.discovery_bin);
-	अगर (r) अणु
+	r = amdgpu_discovery_read_binary(adev, adev->mman.discovery_bin);
+	if (r) {
 		DRM_ERROR("failed to read ip discovery binary\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	bhdr = (काष्ठा binary_header *)adev->mman.discovery_bin;
+	bhdr = (struct binary_header *)adev->mman.discovery_bin;
 
-	अगर (le32_to_cpu(bhdr->binary_signature) != BINARY_SIGNATURE) अणु
+	if (le32_to_cpu(bhdr->binary_signature) != BINARY_SIGNATURE) {
 		DRM_ERROR("invalid ip discovery binary signature\n");
 		r = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	offset = दुरत्व(काष्ठा binary_header, binary_checksum) +
-		माप(bhdr->binary_checksum);
+	offset = offsetof(struct binary_header, binary_checksum) +
+		sizeof(bhdr->binary_checksum);
 	size = bhdr->binary_size - offset;
 	checksum = bhdr->binary_checksum;
 
-	अगर (!amdgpu_discovery_verअगरy_checksum(adev->mman.discovery_bin + offset,
-					      size, checksum)) अणु
+	if (!amdgpu_discovery_verify_checksum(adev->mman.discovery_bin + offset,
+					      size, checksum)) {
 		DRM_ERROR("invalid ip discovery binary checksum\n");
 		r = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	info = &bhdr->table_list[IP_DISCOVERY];
 	offset = le16_to_cpu(info->offset);
 	checksum = le16_to_cpu(info->checksum);
-	ihdr = (काष्ठा ip_discovery_header *)(adev->mman.discovery_bin + offset);
+	ihdr = (struct ip_discovery_header *)(adev->mman.discovery_bin + offset);
 
-	अगर (le32_to_cpu(ihdr->signature) != DISCOVERY_TABLE_SIGNATURE) अणु
+	if (le32_to_cpu(ihdr->signature) != DISCOVERY_TABLE_SIGNATURE) {
 		DRM_ERROR("invalid ip discovery data table signature\n");
 		r = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!amdgpu_discovery_verअगरy_checksum(adev->mman.discovery_bin + offset,
-					      ihdr->size, checksum)) अणु
+	if (!amdgpu_discovery_verify_checksum(adev->mman.discovery_bin + offset,
+					      ihdr->size, checksum)) {
 		DRM_ERROR("invalid ip discovery data table checksum\n");
 		r = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	info = &bhdr->table_list[GC];
 	offset = le16_to_cpu(info->offset);
 	checksum = le16_to_cpu(info->checksum);
-	ghdr = (काष्ठा gpu_info_header *)(adev->mman.discovery_bin + offset);
+	ghdr = (struct gpu_info_header *)(adev->mman.discovery_bin + offset);
 
-	अगर (!amdgpu_discovery_verअगरy_checksum(adev->mman.discovery_bin + offset,
-				              ghdr->size, checksum)) अणु
+	if (!amdgpu_discovery_verify_checksum(adev->mman.discovery_bin + offset,
+				              ghdr->size, checksum)) {
 		DRM_ERROR("invalid gc data table checksum\n");
 		r = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	वापस 0;
+	return 0;
 
 out:
-	kमुक्त(adev->mman.discovery_bin);
-	adev->mman.discovery_bin = शून्य;
+	kfree(adev->mman.discovery_bin);
+	adev->mman.discovery_bin = NULL;
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-व्योम amdgpu_discovery_fini(काष्ठा amdgpu_device *adev)
-अणु
-	kमुक्त(adev->mman.discovery_bin);
-	adev->mman.discovery_bin = शून्य;
-पूर्ण
+void amdgpu_discovery_fini(struct amdgpu_device *adev)
+{
+	kfree(adev->mman.discovery_bin);
+	adev->mman.discovery_bin = NULL;
+}
 
-पूर्णांक amdgpu_discovery_reg_base_init(काष्ठा amdgpu_device *adev)
-अणु
-	काष्ठा binary_header *bhdr;
-	काष्ठा ip_discovery_header *ihdr;
-	काष्ठा die_header *dhdr;
-	काष्ठा ip *ip;
-	uपूर्णांक16_t die_offset;
-	uपूर्णांक16_t ip_offset;
-	uपूर्णांक16_t num_dies;
-	uपूर्णांक16_t num_ips;
-	uपूर्णांक8_t num_base_address;
-	पूर्णांक hw_ip;
-	पूर्णांक i, j, k;
-	पूर्णांक r;
+int amdgpu_discovery_reg_base_init(struct amdgpu_device *adev)
+{
+	struct binary_header *bhdr;
+	struct ip_discovery_header *ihdr;
+	struct die_header *dhdr;
+	struct ip *ip;
+	uint16_t die_offset;
+	uint16_t ip_offset;
+	uint16_t num_dies;
+	uint16_t num_ips;
+	uint8_t num_base_address;
+	int hw_ip;
+	int i, j, k;
+	int r;
 
 	r = amdgpu_discovery_init(adev);
-	अगर (r) अणु
+	if (r) {
 		DRM_ERROR("amdgpu_discovery_init failed\n");
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
-	bhdr = (काष्ठा binary_header *)adev->mman.discovery_bin;
-	ihdr = (काष्ठा ip_discovery_header *)(adev->mman.discovery_bin +
+	bhdr = (struct binary_header *)adev->mman.discovery_bin;
+	ihdr = (struct ip_discovery_header *)(adev->mman.discovery_bin +
 			le16_to_cpu(bhdr->table_list[IP_DISCOVERY].offset));
 	num_dies = le16_to_cpu(ihdr->num_dies);
 
 	DRM_DEBUG("number of dies: %d\n", num_dies);
 
-	क्रम (i = 0; i < num_dies; i++) अणु
+	for (i = 0; i < num_dies; i++) {
 		die_offset = le16_to_cpu(ihdr->die_info[i].die_offset);
-		dhdr = (काष्ठा die_header *)(adev->mman.discovery_bin + die_offset);
+		dhdr = (struct die_header *)(adev->mman.discovery_bin + die_offset);
 		num_ips = le16_to_cpu(dhdr->num_ips);
-		ip_offset = die_offset + माप(*dhdr);
+		ip_offset = die_offset + sizeof(*dhdr);
 
-		अगर (le16_to_cpu(dhdr->die_id) != i) अणु
+		if (le16_to_cpu(dhdr->die_id) != i) {
 			DRM_ERROR("invalid die id %d, expected %d\n",
 					le16_to_cpu(dhdr->die_id), i);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		DRM_DEBUG("number of hardware IPs on die%d: %d\n",
 				le16_to_cpu(dhdr->die_id), num_ips);
 
-		क्रम (j = 0; j < num_ips; j++) अणु
-			ip = (काष्ठा ip *)(adev->mman.discovery_bin + ip_offset);
+		for (j = 0; j < num_ips; j++) {
+			ip = (struct ip *)(adev->mman.discovery_bin + ip_offset);
 			num_base_address = ip->num_base_address;
 
 			DRM_DEBUG("%s(%d) #%d v%d.%d.%d:\n",
@@ -300,120 +299,120 @@ out:
 				  ip->major, ip->minor,
 				  ip->revision);
 
-			क्रम (k = 0; k < num_base_address; k++) अणु
+			for (k = 0; k < num_base_address; k++) {
 				/*
 				 * convert the endianness of base addresses in place,
-				 * so that we करोn't need to convert them when accessing adev->reg_offset.
+				 * so that we don't need to convert them when accessing adev->reg_offset.
 				 */
 				ip->base_address[k] = le32_to_cpu(ip->base_address[k]);
 				DRM_DEBUG("\t0x%08x\n", ip->base_address[k]);
-			पूर्ण
+			}
 
-			क्रम (hw_ip = 0; hw_ip < MAX_HWIP; hw_ip++) अणु
-				अगर (hw_id_map[hw_ip] == le16_to_cpu(ip->hw_id)) अणु
+			for (hw_ip = 0; hw_ip < MAX_HWIP; hw_ip++) {
+				if (hw_id_map[hw_ip] == le16_to_cpu(ip->hw_id)) {
 					DRM_DEBUG("set register base offset for %s\n",
 							hw_id_names[le16_to_cpu(ip->hw_id)]);
 					adev->reg_offset[hw_ip][ip->number_instance] =
 						ip->base_address;
-				पूर्ण
+				}
 
-			पूर्ण
+			}
 
-			ip_offset += माप(*ip) + 4 * (ip->num_base_address - 1);
-		पूर्ण
-	पूर्ण
+			ip_offset += sizeof(*ip) + 4 * (ip->num_base_address - 1);
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक amdgpu_discovery_get_ip_version(काष्ठा amdgpu_device *adev, पूर्णांक hw_id,
-				    पूर्णांक *major, पूर्णांक *minor, पूर्णांक *revision)
-अणु
-	काष्ठा binary_header *bhdr;
-	काष्ठा ip_discovery_header *ihdr;
-	काष्ठा die_header *dhdr;
-	काष्ठा ip *ip;
-	uपूर्णांक16_t die_offset;
-	uपूर्णांक16_t ip_offset;
-	uपूर्णांक16_t num_dies;
-	uपूर्णांक16_t num_ips;
-	पूर्णांक i, j;
+int amdgpu_discovery_get_ip_version(struct amdgpu_device *adev, int hw_id,
+				    int *major, int *minor, int *revision)
+{
+	struct binary_header *bhdr;
+	struct ip_discovery_header *ihdr;
+	struct die_header *dhdr;
+	struct ip *ip;
+	uint16_t die_offset;
+	uint16_t ip_offset;
+	uint16_t num_dies;
+	uint16_t num_ips;
+	int i, j;
 
-	अगर (!adev->mman.discovery_bin) अणु
+	if (!adev->mman.discovery_bin) {
 		DRM_ERROR("ip discovery uninitialized\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	bhdr = (काष्ठा binary_header *)adev->mman.discovery_bin;
-	ihdr = (काष्ठा ip_discovery_header *)(adev->mman.discovery_bin +
+	bhdr = (struct binary_header *)adev->mman.discovery_bin;
+	ihdr = (struct ip_discovery_header *)(adev->mman.discovery_bin +
 			le16_to_cpu(bhdr->table_list[IP_DISCOVERY].offset));
 	num_dies = le16_to_cpu(ihdr->num_dies);
 
-	क्रम (i = 0; i < num_dies; i++) अणु
+	for (i = 0; i < num_dies; i++) {
 		die_offset = le16_to_cpu(ihdr->die_info[i].die_offset);
-		dhdr = (काष्ठा die_header *)(adev->mman.discovery_bin + die_offset);
+		dhdr = (struct die_header *)(adev->mman.discovery_bin + die_offset);
 		num_ips = le16_to_cpu(dhdr->num_ips);
-		ip_offset = die_offset + माप(*dhdr);
+		ip_offset = die_offset + sizeof(*dhdr);
 
-		क्रम (j = 0; j < num_ips; j++) अणु
-			ip = (काष्ठा ip *)(adev->mman.discovery_bin + ip_offset);
+		for (j = 0; j < num_ips; j++) {
+			ip = (struct ip *)(adev->mman.discovery_bin + ip_offset);
 
-			अगर (le16_to_cpu(ip->hw_id) == hw_id) अणु
-				अगर (major)
+			if (le16_to_cpu(ip->hw_id) == hw_id) {
+				if (major)
 					*major = ip->major;
-				अगर (minor)
+				if (minor)
 					*minor = ip->minor;
-				अगर (revision)
+				if (revision)
 					*revision = ip->revision;
-				वापस 0;
-			पूर्ण
-			ip_offset += माप(*ip) + 4 * (ip->num_base_address - 1);
-		पूर्ण
-	पूर्ण
+				return 0;
+			}
+			ip_offset += sizeof(*ip) + 4 * (ip->num_base_address - 1);
+		}
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-व्योम amdgpu_discovery_harvest_ip(काष्ठा amdgpu_device *adev)
-अणु
-	काष्ठा binary_header *bhdr;
-	काष्ठा harvest_table *harvest_info;
-	पूर्णांक i;
+void amdgpu_discovery_harvest_ip(struct amdgpu_device *adev)
+{
+	struct binary_header *bhdr;
+	struct harvest_table *harvest_info;
+	int i;
 
-	bhdr = (काष्ठा binary_header *)adev->mman.discovery_bin;
-	harvest_info = (काष्ठा harvest_table *)(adev->mman.discovery_bin +
+	bhdr = (struct binary_header *)adev->mman.discovery_bin;
+	harvest_info = (struct harvest_table *)(adev->mman.discovery_bin +
 			le16_to_cpu(bhdr->table_list[HARVEST_INFO].offset));
 
-	क्रम (i = 0; i < 32; i++) अणु
-		अगर (le32_to_cpu(harvest_info->list[i].hw_id) == 0)
-			अवरोध;
+	for (i = 0; i < 32; i++) {
+		if (le32_to_cpu(harvest_info->list[i].hw_id) == 0)
+			break;
 
-		चयन (le32_to_cpu(harvest_info->list[i].hw_id)) अणु
-		हाल VCN_HWID:
+		switch (le32_to_cpu(harvest_info->list[i].hw_id)) {
+		case VCN_HWID:
 			adev->harvest_ip_mask |= AMD_HARVEST_IP_VCN_MASK;
 			adev->harvest_ip_mask |= AMD_HARVEST_IP_JPEG_MASK;
-			अवरोध;
-		हाल DMU_HWID:
+			break;
+		case DMU_HWID:
 			adev->harvest_ip_mask |= AMD_HARVEST_IP_DMU_MASK;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		default:
+			break;
+		}
+	}
+}
 
-पूर्णांक amdgpu_discovery_get_gfx_info(काष्ठा amdgpu_device *adev)
-अणु
-	काष्ठा binary_header *bhdr;
-	काष्ठा gc_info_v1_0 *gc_info;
+int amdgpu_discovery_get_gfx_info(struct amdgpu_device *adev)
+{
+	struct binary_header *bhdr;
+	struct gc_info_v1_0 *gc_info;
 
-	अगर (!adev->mman.discovery_bin) अणु
+	if (!adev->mman.discovery_bin) {
 		DRM_ERROR("ip discovery uninitialized\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	bhdr = (काष्ठा binary_header *)adev->mman.discovery_bin;
-	gc_info = (काष्ठा gc_info_v1_0 *)(adev->mman.discovery_bin +
+	bhdr = (struct binary_header *)adev->mman.discovery_bin;
+	gc_info = (struct gc_info_v1_0 *)(adev->mman.discovery_bin +
 			le16_to_cpu(bhdr->table_list[GC].offset));
 
 	adev->gfx.config.max_shader_engines = le32_to_cpu(gc_info->gc_num_se);
@@ -423,10 +422,10 @@ out:
 	adev->gfx.config.max_backends_per_se = le32_to_cpu(gc_info->gc_num_rb_per_se);
 	adev->gfx.config.max_texture_channel_caches = le32_to_cpu(gc_info->gc_num_gl2c);
 	adev->gfx.config.max_gprs = le32_to_cpu(gc_info->gc_num_gprs);
-	adev->gfx.config.max_gs_thपढ़ोs = le32_to_cpu(gc_info->gc_num_max_gs_thds);
+	adev->gfx.config.max_gs_threads = le32_to_cpu(gc_info->gc_num_max_gs_thds);
 	adev->gfx.config.gs_vgt_table_depth = le32_to_cpu(gc_info->gc_gs_table_depth);
 	adev->gfx.config.gs_prim_buffer_depth = le32_to_cpu(gc_info->gc_gsprim_buff_depth);
-	adev->gfx.config.द्विगुन_offchip_lds_buf = le32_to_cpu(gc_info->gc_द्विगुन_offchip_lds_buffer);
+	adev->gfx.config.double_offchip_lds_buf = le32_to_cpu(gc_info->gc_double_offchip_lds_buffer);
 	adev->gfx.cu_info.wave_front_size = le32_to_cpu(gc_info->gc_wave_size);
 	adev->gfx.cu_info.max_waves_per_simd = le32_to_cpu(gc_info->gc_max_waves_per_simd);
 	adev->gfx.cu_info.max_scratch_slots_per_cu = le32_to_cpu(gc_info->gc_max_scratch_slots_per_cu);
@@ -435,5 +434,5 @@ out:
 					 le32_to_cpu(gc_info->gc_num_sa_per_se);
 	adev->gfx.config.num_packer_per_sc = le32_to_cpu(gc_info->gc_num_packer_per_sc);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

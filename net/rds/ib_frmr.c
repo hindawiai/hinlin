@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2016 Oracle.  All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -31,119 +30,119 @@
  * SOFTWARE.
  */
 
-#समावेश "ib_mr.h"
+#include "ib_mr.h"
 
-अटल अंतरभूत व्योम
-rds_transition_frwr_state(काष्ठा rds_ib_mr *ibmr,
-			  क्रमागत rds_ib_fr_state old_state,
-			  क्रमागत rds_ib_fr_state new_state)
-अणु
-	अगर (cmpxchg(&ibmr->u.frmr.fr_state,
+static inline void
+rds_transition_frwr_state(struct rds_ib_mr *ibmr,
+			  enum rds_ib_fr_state old_state,
+			  enum rds_ib_fr_state new_state)
+{
+	if (cmpxchg(&ibmr->u.frmr.fr_state,
 		    old_state, new_state) == old_state &&
-	    old_state == FRMR_IS_INUSE) अणु
-		/* enक्रमce order of ibmr->u.frmr.fr_state update
-		 * beक्रमe decrementing i_fastreg_inuse_count
+	    old_state == FRMR_IS_INUSE) {
+		/* enforce order of ibmr->u.frmr.fr_state update
+		 * before decrementing i_fastreg_inuse_count
 		 */
-		smp_mb__beक्रमe_atomic();
+		smp_mb__before_atomic();
 		atomic_dec(&ibmr->ic->i_fastreg_inuse_count);
-		अगर (रुकोqueue_active(&rds_ib_ring_empty_रुको))
-			wake_up(&rds_ib_ring_empty_रुको);
-	पूर्ण
-पूर्ण
+		if (waitqueue_active(&rds_ib_ring_empty_wait))
+			wake_up(&rds_ib_ring_empty_wait);
+	}
+}
 
-अटल काष्ठा rds_ib_mr *rds_ib_alloc_frmr(काष्ठा rds_ib_device *rds_ibdev,
-					   पूर्णांक npages)
-अणु
-	काष्ठा rds_ib_mr_pool *pool;
-	काष्ठा rds_ib_mr *ibmr = शून्य;
-	काष्ठा rds_ib_frmr *frmr;
-	पूर्णांक err = 0;
+static struct rds_ib_mr *rds_ib_alloc_frmr(struct rds_ib_device *rds_ibdev,
+					   int npages)
+{
+	struct rds_ib_mr_pool *pool;
+	struct rds_ib_mr *ibmr = NULL;
+	struct rds_ib_frmr *frmr;
+	int err = 0;
 
-	अगर (npages <= RDS_MR_8K_MSG_SIZE)
+	if (npages <= RDS_MR_8K_MSG_SIZE)
 		pool = rds_ibdev->mr_8k_pool;
-	अन्यथा
+	else
 		pool = rds_ibdev->mr_1m_pool;
 
 	ibmr = rds_ib_try_reuse_ibmr(pool);
-	अगर (ibmr)
-		वापस ibmr;
+	if (ibmr)
+		return ibmr;
 
-	ibmr = kzalloc_node(माप(*ibmr), GFP_KERNEL,
+	ibmr = kzalloc_node(sizeof(*ibmr), GFP_KERNEL,
 			    rdsibdev_to_node(rds_ibdev));
-	अगर (!ibmr) अणु
+	if (!ibmr) {
 		err = -ENOMEM;
-		जाओ out_no_cigar;
-	पूर्ण
+		goto out_no_cigar;
+	}
 
 	frmr = &ibmr->u.frmr;
 	frmr->mr = ib_alloc_mr(rds_ibdev->pd, IB_MR_TYPE_MEM_REG,
 			 pool->max_pages);
-	अगर (IS_ERR(frmr->mr)) अणु
+	if (IS_ERR(frmr->mr)) {
 		pr_warn("RDS/IB: %s failed to allocate MR", __func__);
 		err = PTR_ERR(frmr->mr);
-		जाओ out_no_cigar;
-	पूर्ण
+		goto out_no_cigar;
+	}
 
 	ibmr->pool = pool;
-	अगर (pool->pool_type == RDS_IB_MR_8K_POOL)
+	if (pool->pool_type == RDS_IB_MR_8K_POOL)
 		rds_ib_stats_inc(s_ib_rdma_mr_8k_alloc);
-	अन्यथा
+	else
 		rds_ib_stats_inc(s_ib_rdma_mr_1m_alloc);
 
-	अगर (atomic_पढ़ो(&pool->item_count) > pool->max_items_soft)
+	if (atomic_read(&pool->item_count) > pool->max_items_soft)
 		pool->max_items_soft = pool->max_items;
 
 	frmr->fr_state = FRMR_IS_FREE;
-	init_रुकोqueue_head(&frmr->fr_inv_करोne);
-	init_रुकोqueue_head(&frmr->fr_reg_करोne);
-	वापस ibmr;
+	init_waitqueue_head(&frmr->fr_inv_done);
+	init_waitqueue_head(&frmr->fr_reg_done);
+	return ibmr;
 
 out_no_cigar:
-	kमुक्त(ibmr);
+	kfree(ibmr);
 	atomic_dec(&pool->item_count);
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 
-अटल व्योम rds_ib_मुक्त_frmr(काष्ठा rds_ib_mr *ibmr, bool drop)
-अणु
-	काष्ठा rds_ib_mr_pool *pool = ibmr->pool;
+static void rds_ib_free_frmr(struct rds_ib_mr *ibmr, bool drop)
+{
+	struct rds_ib_mr_pool *pool = ibmr->pool;
 
-	अगर (drop)
+	if (drop)
 		llist_add(&ibmr->llnode, &pool->drop_list);
-	अन्यथा
-		llist_add(&ibmr->llnode, &pool->मुक्त_list);
-	atomic_add(ibmr->sg_len, &pool->मुक्त_pinned);
+	else
+		llist_add(&ibmr->llnode, &pool->free_list);
+	atomic_add(ibmr->sg_len, &pool->free_pinned);
 	atomic_inc(&pool->dirty_count);
 
 	/* If we've pinned too many pages, request a flush */
-	अगर (atomic_पढ़ो(&pool->मुक्त_pinned) >= pool->max_मुक्त_pinned ||
-	    atomic_पढ़ो(&pool->dirty_count) >= pool->max_items / 5)
+	if (atomic_read(&pool->free_pinned) >= pool->max_free_pinned ||
+	    atomic_read(&pool->dirty_count) >= pool->max_items / 5)
 		queue_delayed_work(rds_ib_mr_wq, &pool->flush_worker, 10);
-पूर्ण
+}
 
-अटल पूर्णांक rds_ib_post_reg_frmr(काष्ठा rds_ib_mr *ibmr)
-अणु
-	काष्ठा rds_ib_frmr *frmr = &ibmr->u.frmr;
-	काष्ठा ib_reg_wr reg_wr;
-	पूर्णांक ret, off = 0;
+static int rds_ib_post_reg_frmr(struct rds_ib_mr *ibmr)
+{
+	struct rds_ib_frmr *frmr = &ibmr->u.frmr;
+	struct ib_reg_wr reg_wr;
+	int ret, off = 0;
 
-	जबतक (atomic_dec_वापस(&ibmr->ic->i_fastreg_wrs) <= 0) अणु
+	while (atomic_dec_return(&ibmr->ic->i_fastreg_wrs) <= 0) {
 		atomic_inc(&ibmr->ic->i_fastreg_wrs);
 		cpu_relax();
-	पूर्ण
+	}
 
 	ret = ib_map_mr_sg_zbva(frmr->mr, ibmr->sg, ibmr->sg_len,
 				&off, PAGE_SIZE);
-	अगर (unlikely(ret != ibmr->sg_len))
-		वापस ret < 0 ? ret : -EINVAL;
+	if (unlikely(ret != ibmr->sg_len))
+		return ret < 0 ? ret : -EINVAL;
 
-	अगर (cmpxchg(&frmr->fr_state,
+	if (cmpxchg(&frmr->fr_state,
 		    FRMR_IS_FREE, FRMR_IS_INUSE) != FRMR_IS_FREE)
-		वापस -EBUSY;
+		return -EBUSY;
 
 	atomic_inc(&ibmr->ic->i_fastreg_inuse_count);
 
-	/* Perक्रमm a WR क्रम the fast_reg_mr. Each inभागidual page
+	/* Perform a WR for the fast_reg_mr. Each individual page
 	 * in the sg list is added to the fast reg page list and placed
 	 * inside the fast_reg_mr WR.  The key used is a rolling 8bit
 	 * counter, which should guarantee uniqueness.
@@ -151,8 +150,8 @@ out_no_cigar:
 	ib_update_fast_reg_key(frmr->mr, ibmr->remap_count++);
 	frmr->fr_reg = true;
 
-	स_रखो(&reg_wr, 0, माप(reg_wr));
-	reg_wr.wr.wr_id = (अचिन्हित दीर्घ)(व्योम *)ibmr;
+	memset(&reg_wr, 0, sizeof(reg_wr));
+	reg_wr.wr.wr_id = (unsigned long)(void *)ibmr;
 	reg_wr.wr.opcode = IB_WR_REG_MR;
 	reg_wr.wr.num_sge = 0;
 	reg_wr.mr = frmr->mr;
@@ -162,44 +161,44 @@ out_no_cigar:
 			IB_ACCESS_REMOTE_WRITE;
 	reg_wr.wr.send_flags = IB_SEND_SIGNALED;
 
-	ret = ib_post_send(ibmr->ic->i_cm_id->qp, &reg_wr.wr, शून्य);
-	अगर (unlikely(ret)) अणु
+	ret = ib_post_send(ibmr->ic->i_cm_id->qp, &reg_wr.wr, NULL);
+	if (unlikely(ret)) {
 		/* Failure here can be because of -ENOMEM as well */
 		rds_transition_frwr_state(ibmr, FRMR_IS_INUSE, FRMR_IS_STALE);
 
 		atomic_inc(&ibmr->ic->i_fastreg_wrs);
-		अगर (prपूर्णांकk_ratelimit())
+		if (printk_ratelimit())
 			pr_warn("RDS/IB: %s returned error(%d)\n",
 				__func__, ret);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Wait क्रम the registration to complete in order to prevent an invalid
-	 * access error resulting from a race between the memory region alपढ़ोy
-	 * being accessed जबतक registration is still pending.
+	/* Wait for the registration to complete in order to prevent an invalid
+	 * access error resulting from a race between the memory region already
+	 * being accessed while registration is still pending.
 	 */
-	रुको_event(frmr->fr_reg_करोne, !frmr->fr_reg);
+	wait_event(frmr->fr_reg_done, !frmr->fr_reg);
 
 out:
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक rds_ib_map_frmr(काष्ठा rds_ib_device *rds_ibdev,
-			   काष्ठा rds_ib_mr_pool *pool,
-			   काष्ठा rds_ib_mr *ibmr,
-			   काष्ठा scatterlist *sg, अचिन्हित पूर्णांक sg_len)
-अणु
-	काष्ठा ib_device *dev = rds_ibdev->dev;
-	काष्ठा rds_ib_frmr *frmr = &ibmr->u.frmr;
-	पूर्णांक i;
+static int rds_ib_map_frmr(struct rds_ib_device *rds_ibdev,
+			   struct rds_ib_mr_pool *pool,
+			   struct rds_ib_mr *ibmr,
+			   struct scatterlist *sg, unsigned int sg_len)
+{
+	struct ib_device *dev = rds_ibdev->dev;
+	struct rds_ib_frmr *frmr = &ibmr->u.frmr;
+	int i;
 	u32 len;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	/* We want to tearकरोwn old ibmr values here and fill it up with
+	/* We want to teardown old ibmr values here and fill it up with
 	 * new sg values
 	 */
-	rds_ib_tearकरोwn_mr(ibmr);
+	rds_ib_teardown_mr(ibmr);
 
 	ibmr->sg = sg;
 	ibmr->sg_len = sg_len;
@@ -207,241 +206,241 @@ out:
 	frmr->sg_byte_len = 0;
 	WARN_ON(ibmr->sg_dma_len);
 	ibmr->sg_dma_len = ib_dma_map_sg(dev, ibmr->sg, ibmr->sg_len,
-					 DMA_BIसूचीECTIONAL);
-	अगर (unlikely(!ibmr->sg_dma_len)) अणु
+					 DMA_BIDIRECTIONAL);
+	if (unlikely(!ibmr->sg_dma_len)) {
 		pr_warn("RDS/IB: %s failed!\n", __func__);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	frmr->sg_byte_len = 0;
 	frmr->dma_npages = 0;
 	len = 0;
 
 	ret = -EINVAL;
-	क्रम (i = 0; i < ibmr->sg_dma_len; ++i) अणु
-		अचिन्हित पूर्णांक dma_len = sg_dma_len(&ibmr->sg[i]);
+	for (i = 0; i < ibmr->sg_dma_len; ++i) {
+		unsigned int dma_len = sg_dma_len(&ibmr->sg[i]);
 		u64 dma_addr = sg_dma_address(&ibmr->sg[i]);
 
 		frmr->sg_byte_len += dma_len;
-		अगर (dma_addr & ~PAGE_MASK) अणु
-			अगर (i > 0)
-				जाओ out_unmap;
-			अन्यथा
+		if (dma_addr & ~PAGE_MASK) {
+			if (i > 0)
+				goto out_unmap;
+			else
 				++frmr->dma_npages;
-		पूर्ण
+		}
 
-		अगर ((dma_addr + dma_len) & ~PAGE_MASK) अणु
-			अगर (i < ibmr->sg_dma_len - 1)
-				जाओ out_unmap;
-			अन्यथा
+		if ((dma_addr + dma_len) & ~PAGE_MASK) {
+			if (i < ibmr->sg_dma_len - 1)
+				goto out_unmap;
+			else
 				++frmr->dma_npages;
-		पूर्ण
+		}
 
 		len += dma_len;
-	पूर्ण
+	}
 	frmr->dma_npages += len >> PAGE_SHIFT;
 
-	अगर (frmr->dma_npages > ibmr->pool->max_pages) अणु
+	if (frmr->dma_npages > ibmr->pool->max_pages) {
 		ret = -EMSGSIZE;
-		जाओ out_unmap;
-	पूर्ण
+		goto out_unmap;
+	}
 
 	ret = rds_ib_post_reg_frmr(ibmr);
-	अगर (ret)
-		जाओ out_unmap;
+	if (ret)
+		goto out_unmap;
 
-	अगर (ibmr->pool->pool_type == RDS_IB_MR_8K_POOL)
+	if (ibmr->pool->pool_type == RDS_IB_MR_8K_POOL)
 		rds_ib_stats_inc(s_ib_rdma_mr_8k_used);
-	अन्यथा
+	else
 		rds_ib_stats_inc(s_ib_rdma_mr_1m_used);
 
-	वापस ret;
+	return ret;
 
 out_unmap:
 	ib_dma_unmap_sg(rds_ibdev->dev, ibmr->sg, ibmr->sg_len,
-			DMA_BIसूचीECTIONAL);
+			DMA_BIDIRECTIONAL);
 	ibmr->sg_dma_len = 0;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक rds_ib_post_inv(काष्ठा rds_ib_mr *ibmr)
-अणु
-	काष्ठा ib_send_wr *s_wr;
-	काष्ठा rds_ib_frmr *frmr = &ibmr->u.frmr;
-	काष्ठा rdma_cm_id *i_cm_id = ibmr->ic->i_cm_id;
-	पूर्णांक ret = -EINVAL;
+static int rds_ib_post_inv(struct rds_ib_mr *ibmr)
+{
+	struct ib_send_wr *s_wr;
+	struct rds_ib_frmr *frmr = &ibmr->u.frmr;
+	struct rdma_cm_id *i_cm_id = ibmr->ic->i_cm_id;
+	int ret = -EINVAL;
 
-	अगर (!i_cm_id || !i_cm_id->qp || !frmr->mr)
-		जाओ out;
+	if (!i_cm_id || !i_cm_id->qp || !frmr->mr)
+		goto out;
 
-	अगर (frmr->fr_state != FRMR_IS_INUSE)
-		जाओ out;
+	if (frmr->fr_state != FRMR_IS_INUSE)
+		goto out;
 
-	जबतक (atomic_dec_वापस(&ibmr->ic->i_fastreg_wrs) <= 0) अणु
+	while (atomic_dec_return(&ibmr->ic->i_fastreg_wrs) <= 0) {
 		atomic_inc(&ibmr->ic->i_fastreg_wrs);
 		cpu_relax();
-	पूर्ण
+	}
 
 	frmr->fr_inv = true;
 	s_wr = &frmr->fr_wr;
 
-	स_रखो(s_wr, 0, माप(*s_wr));
-	s_wr->wr_id = (अचिन्हित दीर्घ)(व्योम *)ibmr;
+	memset(s_wr, 0, sizeof(*s_wr));
+	s_wr->wr_id = (unsigned long)(void *)ibmr;
 	s_wr->opcode = IB_WR_LOCAL_INV;
 	s_wr->ex.invalidate_rkey = frmr->mr->rkey;
 	s_wr->send_flags = IB_SEND_SIGNALED;
 
-	ret = ib_post_send(i_cm_id->qp, s_wr, शून्य);
-	अगर (unlikely(ret)) अणु
+	ret = ib_post_send(i_cm_id->qp, s_wr, NULL);
+	if (unlikely(ret)) {
 		rds_transition_frwr_state(ibmr, FRMR_IS_INUSE, FRMR_IS_STALE);
 		frmr->fr_inv = false;
-		/* enक्रमce order of frmr->fr_inv update
-		 * beक्रमe incrementing i_fastreg_wrs
+		/* enforce order of frmr->fr_inv update
+		 * before incrementing i_fastreg_wrs
 		 */
-		smp_mb__beक्रमe_atomic();
+		smp_mb__before_atomic();
 		atomic_inc(&ibmr->ic->i_fastreg_wrs);
 		pr_err("RDS/IB: %s returned error(%d)\n", __func__, ret);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Wait क्रम the FRMR_IS_FREE (or FRMR_IS_STALE) transition in order to
-	 * 1) aव्योम a silly bouncing between "clean_list" and "drop_list"
+	/* Wait for the FRMR_IS_FREE (or FRMR_IS_STALE) transition in order to
+	 * 1) avoid a silly bouncing between "clean_list" and "drop_list"
 	 *    triggered by function "rds_ib_reg_frmr" as it is releases frmr
 	 *    regions whose state is not "FRMR_IS_FREE" right away.
 	 * 2) prevents an invalid access error in a race
 	 *    from a pending "IB_WR_LOCAL_INV" operation
-	 *    with a tearकरोwn ("dma_unmap_sg", "put_page")
+	 *    with a teardown ("dma_unmap_sg", "put_page")
 	 *    and de-registration ("ib_dereg_mr") of the corresponding
 	 *    memory region.
 	 */
-	रुको_event(frmr->fr_inv_करोne, frmr->fr_state != FRMR_IS_INUSE);
+	wait_event(frmr->fr_inv_done, frmr->fr_state != FRMR_IS_INUSE);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम rds_ib_mr_cqe_handler(काष्ठा rds_ib_connection *ic, काष्ठा ib_wc *wc)
-अणु
-	काष्ठा rds_ib_mr *ibmr = (व्योम *)(अचिन्हित दीर्घ)wc->wr_id;
-	काष्ठा rds_ib_frmr *frmr = &ibmr->u.frmr;
+void rds_ib_mr_cqe_handler(struct rds_ib_connection *ic, struct ib_wc *wc)
+{
+	struct rds_ib_mr *ibmr = (void *)(unsigned long)wc->wr_id;
+	struct rds_ib_frmr *frmr = &ibmr->u.frmr;
 
-	अगर (wc->status != IB_WC_SUCCESS) अणु
+	if (wc->status != IB_WC_SUCCESS) {
 		rds_transition_frwr_state(ibmr, FRMR_IS_INUSE, FRMR_IS_STALE);
-		अगर (rds_conn_up(ic->conn))
+		if (rds_conn_up(ic->conn))
 			rds_ib_conn_error(ic->conn,
 					  "frmr completion <%pI4,%pI4> status %u(%s), vendor_err 0x%x, disconnecting and reconnecting\n",
 					  &ic->conn->c_laddr,
 					  &ic->conn->c_faddr,
 					  wc->status,
 					  ib_wc_status_msg(wc->status),
-					  wc->venकरोr_err);
-	पूर्ण
+					  wc->vendor_err);
+	}
 
-	अगर (frmr->fr_inv) अणु
+	if (frmr->fr_inv) {
 		rds_transition_frwr_state(ibmr, FRMR_IS_INUSE, FRMR_IS_FREE);
 		frmr->fr_inv = false;
-		wake_up(&frmr->fr_inv_करोne);
-	पूर्ण
+		wake_up(&frmr->fr_inv_done);
+	}
 
-	अगर (frmr->fr_reg) अणु
+	if (frmr->fr_reg) {
 		frmr->fr_reg = false;
-		wake_up(&frmr->fr_reg_करोne);
-	पूर्ण
+		wake_up(&frmr->fr_reg_done);
+	}
 
-	/* enक्रमce order of frmr->अणुfr_reg,fr_invपूर्ण update
-	 * beक्रमe incrementing i_fastreg_wrs
+	/* enforce order of frmr->{fr_reg,fr_inv} update
+	 * before incrementing i_fastreg_wrs
 	 */
-	smp_mb__beक्रमe_atomic();
+	smp_mb__before_atomic();
 	atomic_inc(&ic->i_fastreg_wrs);
-पूर्ण
+}
 
-व्योम rds_ib_unreg_frmr(काष्ठा list_head *list, अचिन्हित पूर्णांक *nमुक्तd,
-		       अचिन्हित दीर्घ *unpinned, अचिन्हित पूर्णांक goal)
-अणु
-	काष्ठा rds_ib_mr *ibmr, *next;
-	काष्ठा rds_ib_frmr *frmr;
-	पूर्णांक ret = 0, ret2;
-	अचिन्हित पूर्णांक मुक्तd = *nमुक्तd;
+void rds_ib_unreg_frmr(struct list_head *list, unsigned int *nfreed,
+		       unsigned long *unpinned, unsigned int goal)
+{
+	struct rds_ib_mr *ibmr, *next;
+	struct rds_ib_frmr *frmr;
+	int ret = 0, ret2;
+	unsigned int freed = *nfreed;
 
 	/* String all ib_mr's onto one list and hand them to ib_unmap_fmr */
-	list_क्रम_each_entry(ibmr, list, unmap_list) अणु
-		अगर (ibmr->sg_dma_len) अणु
+	list_for_each_entry(ibmr, list, unmap_list) {
+		if (ibmr->sg_dma_len) {
 			ret2 = rds_ib_post_inv(ibmr);
-			अगर (ret2 && !ret)
+			if (ret2 && !ret)
 				ret = ret2;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (ret)
+	if (ret)
 		pr_warn("RDS/IB: %s failed (err=%d)\n", __func__, ret);
 
 	/* Now we can destroy the DMA mapping and unpin any pages */
-	list_क्रम_each_entry_safe(ibmr, next, list, unmap_list) अणु
+	list_for_each_entry_safe(ibmr, next, list, unmap_list) {
 		*unpinned += ibmr->sg_len;
 		frmr = &ibmr->u.frmr;
-		__rds_ib_tearकरोwn_mr(ibmr);
-		अगर (मुक्तd < goal || frmr->fr_state == FRMR_IS_STALE) अणु
-			/* Don't de-allocate अगर the MR is not मुक्त yet */
-			अगर (frmr->fr_state == FRMR_IS_INUSE)
-				जारी;
+		__rds_ib_teardown_mr(ibmr);
+		if (freed < goal || frmr->fr_state == FRMR_IS_STALE) {
+			/* Don't de-allocate if the MR is not free yet */
+			if (frmr->fr_state == FRMR_IS_INUSE)
+				continue;
 
-			अगर (ibmr->pool->pool_type == RDS_IB_MR_8K_POOL)
-				rds_ib_stats_inc(s_ib_rdma_mr_8k_मुक्त);
-			अन्यथा
-				rds_ib_stats_inc(s_ib_rdma_mr_1m_मुक्त);
+			if (ibmr->pool->pool_type == RDS_IB_MR_8K_POOL)
+				rds_ib_stats_inc(s_ib_rdma_mr_8k_free);
+			else
+				rds_ib_stats_inc(s_ib_rdma_mr_1m_free);
 			list_del(&ibmr->unmap_list);
-			अगर (frmr->mr)
+			if (frmr->mr)
 				ib_dereg_mr(frmr->mr);
-			kमुक्त(ibmr);
-			मुक्तd++;
-		पूर्ण
-	पूर्ण
-	*nमुक्तd = मुक्तd;
-पूर्ण
+			kfree(ibmr);
+			freed++;
+		}
+	}
+	*nfreed = freed;
+}
 
-काष्ठा rds_ib_mr *rds_ib_reg_frmr(काष्ठा rds_ib_device *rds_ibdev,
-				  काष्ठा rds_ib_connection *ic,
-				  काष्ठा scatterlist *sg,
-				  अचिन्हित दीर्घ nents, u32 *key)
-अणु
-	काष्ठा rds_ib_mr *ibmr = शून्य;
-	काष्ठा rds_ib_frmr *frmr;
-	पूर्णांक ret;
+struct rds_ib_mr *rds_ib_reg_frmr(struct rds_ib_device *rds_ibdev,
+				  struct rds_ib_connection *ic,
+				  struct scatterlist *sg,
+				  unsigned long nents, u32 *key)
+{
+	struct rds_ib_mr *ibmr = NULL;
+	struct rds_ib_frmr *frmr;
+	int ret;
 
-	अगर (!ic) अणु
-		/* TODO: Add FRWR support क्रम RDS_GET_MR using proxy qp*/
-		वापस ERR_PTR(-EOPNOTSUPP);
-	पूर्ण
+	if (!ic) {
+		/* TODO: Add FRWR support for RDS_GET_MR using proxy qp*/
+		return ERR_PTR(-EOPNOTSUPP);
+	}
 
-	करो अणु
-		अगर (ibmr)
-			rds_ib_मुक्त_frmr(ibmr, true);
+	do {
+		if (ibmr)
+			rds_ib_free_frmr(ibmr, true);
 		ibmr = rds_ib_alloc_frmr(rds_ibdev, nents);
-		अगर (IS_ERR(ibmr))
-			वापस ibmr;
+		if (IS_ERR(ibmr))
+			return ibmr;
 		frmr = &ibmr->u.frmr;
-	पूर्ण जबतक (frmr->fr_state != FRMR_IS_FREE);
+	} while (frmr->fr_state != FRMR_IS_FREE);
 
 	ibmr->ic = ic;
 	ibmr->device = rds_ibdev;
 	ret = rds_ib_map_frmr(rds_ibdev, ibmr->pool, ibmr, sg, nents);
-	अगर (ret == 0) अणु
+	if (ret == 0) {
 		*key = frmr->mr->rkey;
-	पूर्ण अन्यथा अणु
-		rds_ib_मुक्त_frmr(ibmr, false);
+	} else {
+		rds_ib_free_frmr(ibmr, false);
 		ibmr = ERR_PTR(ret);
-	पूर्ण
+	}
 
-	वापस ibmr;
-पूर्ण
+	return ibmr;
+}
 
-व्योम rds_ib_मुक्त_frmr_list(काष्ठा rds_ib_mr *ibmr)
-अणु
-	काष्ठा rds_ib_mr_pool *pool = ibmr->pool;
-	काष्ठा rds_ib_frmr *frmr = &ibmr->u.frmr;
+void rds_ib_free_frmr_list(struct rds_ib_mr *ibmr)
+{
+	struct rds_ib_mr_pool *pool = ibmr->pool;
+	struct rds_ib_frmr *frmr = &ibmr->u.frmr;
 
-	अगर (frmr->fr_state == FRMR_IS_STALE)
+	if (frmr->fr_state == FRMR_IS_STALE)
 		llist_add(&ibmr->llnode, &pool->drop_list);
-	अन्यथा
-		llist_add(&ibmr->llnode, &pool->मुक्त_list);
-पूर्ण
+	else
+		llist_add(&ibmr->llnode, &pool->free_list);
+}

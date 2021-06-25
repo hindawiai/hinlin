@@ -1,59 +1,58 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* Altera TSE SGDMA and MSGDMA Linux driver
  * Copyright (C) 2014 Altera Corporation. All rights reserved
  */
 
-#समावेश <linux/list.h>
-#समावेश "altera_utils.h"
-#समावेश "altera_tse.h"
-#समावेश "altera_sgdmahw.h"
-#समावेश "altera_sgdma.h"
+#include <linux/list.h>
+#include "altera_utils.h"
+#include "altera_tse.h"
+#include "altera_sgdmahw.h"
+#include "altera_sgdma.h"
 
-अटल व्योम sgdma_setup_descrip(काष्ठा sgdma_descrip __iomem *desc,
-				काष्ठा sgdma_descrip __iomem *ndesc,
+static void sgdma_setup_descrip(struct sgdma_descrip __iomem *desc,
+				struct sgdma_descrip __iomem *ndesc,
 				dma_addr_t ndesc_phys,
 				dma_addr_t raddr,
 				dma_addr_t waddr,
 				u16 length,
-				पूर्णांक generate_eop,
-				पूर्णांक rfixed,
-				पूर्णांक wfixed);
+				int generate_eop,
+				int rfixed,
+				int wfixed);
 
-अटल पूर्णांक sgdma_async_ग_लिखो(काष्ठा altera_tse_निजी *priv,
-			      काष्ठा sgdma_descrip __iomem *desc);
+static int sgdma_async_write(struct altera_tse_private *priv,
+			      struct sgdma_descrip __iomem *desc);
 
-अटल पूर्णांक sgdma_async_पढ़ो(काष्ठा altera_tse_निजी *priv);
+static int sgdma_async_read(struct altera_tse_private *priv);
 
-अटल dma_addr_t
-sgdma_txphysaddr(काष्ठा altera_tse_निजी *priv,
-		 काष्ठा sgdma_descrip __iomem *desc);
+static dma_addr_t
+sgdma_txphysaddr(struct altera_tse_private *priv,
+		 struct sgdma_descrip __iomem *desc);
 
-अटल dma_addr_t
-sgdma_rxphysaddr(काष्ठा altera_tse_निजी *priv,
-		 काष्ठा sgdma_descrip __iomem *desc);
+static dma_addr_t
+sgdma_rxphysaddr(struct altera_tse_private *priv,
+		 struct sgdma_descrip __iomem *desc);
 
-अटल पूर्णांक sgdma_txbusy(काष्ठा altera_tse_निजी *priv);
+static int sgdma_txbusy(struct altera_tse_private *priv);
 
-अटल पूर्णांक sgdma_rxbusy(काष्ठा altera_tse_निजी *priv);
+static int sgdma_rxbusy(struct altera_tse_private *priv);
 
-अटल व्योम
-queue_tx(काष्ठा altera_tse_निजी *priv, काष्ठा tse_buffer *buffer);
+static void
+queue_tx(struct altera_tse_private *priv, struct tse_buffer *buffer);
 
-अटल व्योम
-queue_rx(काष्ठा altera_tse_निजी *priv, काष्ठा tse_buffer *buffer);
+static void
+queue_rx(struct altera_tse_private *priv, struct tse_buffer *buffer);
 
-अटल काष्ठा tse_buffer *
-dequeue_tx(काष्ठा altera_tse_निजी *priv);
+static struct tse_buffer *
+dequeue_tx(struct altera_tse_private *priv);
 
-अटल काष्ठा tse_buffer *
-dequeue_rx(काष्ठा altera_tse_निजी *priv);
+static struct tse_buffer *
+dequeue_rx(struct altera_tse_private *priv);
 
-अटल काष्ठा tse_buffer *
-queue_rx_peekhead(काष्ठा altera_tse_निजी *priv);
+static struct tse_buffer *
+queue_rx_peekhead(struct altera_tse_private *priv);
 
-पूर्णांक sgdma_initialize(काष्ठा altera_tse_निजी *priv)
-अणु
+int sgdma_initialize(struct altera_tse_private *priv)
+{
 	priv->txctrlreg = SGDMA_CTRLREG_ILASTD |
 		      SGDMA_CTRLREG_INTEN;
 
@@ -68,179 +67,179 @@ queue_rx_peekhead(काष्ठा altera_tse_निजी *priv);
 	priv->txdescphys = (dma_addr_t) 0;
 
 	priv->rxdescphys = dma_map_single(priv->device,
-					  (व्योम __क्रमce *)priv->rx_dma_desc,
-					  priv->rxdescmem, DMA_BIसूचीECTIONAL);
+					  (void __force *)priv->rx_dma_desc,
+					  priv->rxdescmem, DMA_BIDIRECTIONAL);
 
-	अगर (dma_mapping_error(priv->device, priv->rxdescphys)) अणु
+	if (dma_mapping_error(priv->device, priv->rxdescphys)) {
 		sgdma_uninitialize(priv);
 		netdev_err(priv->dev, "error mapping rx descriptor memory\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	priv->txdescphys = dma_map_single(priv->device,
-					  (व्योम __क्रमce *)priv->tx_dma_desc,
+					  (void __force *)priv->tx_dma_desc,
 					  priv->txdescmem, DMA_TO_DEVICE);
 
-	अगर (dma_mapping_error(priv->device, priv->txdescphys)) अणु
+	if (dma_mapping_error(priv->device, priv->txdescphys)) {
 		sgdma_uninitialize(priv);
 		netdev_err(priv->dev, "error mapping tx descriptor memory\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Initialize descriptor memory to all 0's, sync memory to cache */
-	स_रखो_io(priv->tx_dma_desc, 0, priv->txdescmem);
-	स_रखो_io(priv->rx_dma_desc, 0, priv->rxdescmem);
+	memset_io(priv->tx_dma_desc, 0, priv->txdescmem);
+	memset_io(priv->rx_dma_desc, 0, priv->rxdescmem);
 
-	dma_sync_single_क्रम_device(priv->device, priv->txdescphys,
+	dma_sync_single_for_device(priv->device, priv->txdescphys,
 				   priv->txdescmem, DMA_TO_DEVICE);
 
-	dma_sync_single_क्रम_device(priv->device, priv->rxdescphys,
+	dma_sync_single_for_device(priv->device, priv->rxdescphys,
 				   priv->rxdescmem, DMA_TO_DEVICE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम sgdma_uninitialize(काष्ठा altera_tse_निजी *priv)
-अणु
-	अगर (priv->rxdescphys)
+void sgdma_uninitialize(struct altera_tse_private *priv)
+{
+	if (priv->rxdescphys)
 		dma_unmap_single(priv->device, priv->rxdescphys,
-				 priv->rxdescmem, DMA_BIसूचीECTIONAL);
+				 priv->rxdescmem, DMA_BIDIRECTIONAL);
 
-	अगर (priv->txdescphys)
+	if (priv->txdescphys)
 		dma_unmap_single(priv->device, priv->txdescphys,
 				 priv->txdescmem, DMA_TO_DEVICE);
-पूर्ण
+}
 
 /* This function resets the SGDMA controller and clears the
- * descriptor memory used क्रम transmits and receives.
+ * descriptor memory used for transmits and receives.
  */
-व्योम sgdma_reset(काष्ठा altera_tse_निजी *priv)
-अणु
+void sgdma_reset(struct altera_tse_private *priv)
+{
 	/* Initialize descriptor memory to 0 */
-	स_रखो_io(priv->tx_dma_desc, 0, priv->txdescmem);
-	स_रखो_io(priv->rx_dma_desc, 0, priv->rxdescmem);
+	memset_io(priv->tx_dma_desc, 0, priv->txdescmem);
+	memset_io(priv->rx_dma_desc, 0, priv->rxdescmem);
 
 	csrwr32(SGDMA_CTRLREG_RESET, priv->tx_dma_csr, sgdma_csroffs(control));
 	csrwr32(0, priv->tx_dma_csr, sgdma_csroffs(control));
 
 	csrwr32(SGDMA_CTRLREG_RESET, priv->rx_dma_csr, sgdma_csroffs(control));
 	csrwr32(0, priv->rx_dma_csr, sgdma_csroffs(control));
-पूर्ण
+}
 
-/* For SGDMA, पूर्णांकerrupts reमुख्य enabled after initially enabling,
- * so no need to provide implementations क्रम असलtract enable
+/* For SGDMA, interrupts remain enabled after initially enabling,
+ * so no need to provide implementations for abstract enable
  * and disable
  */
 
-व्योम sgdma_enable_rxirq(काष्ठा altera_tse_निजी *priv)
-अणु
-पूर्ण
+void sgdma_enable_rxirq(struct altera_tse_private *priv)
+{
+}
 
-व्योम sgdma_enable_txirq(काष्ठा altera_tse_निजी *priv)
-अणु
-पूर्ण
+void sgdma_enable_txirq(struct altera_tse_private *priv)
+{
+}
 
-व्योम sgdma_disable_rxirq(काष्ठा altera_tse_निजी *priv)
-अणु
-पूर्ण
+void sgdma_disable_rxirq(struct altera_tse_private *priv)
+{
+}
 
-व्योम sgdma_disable_txirq(काष्ठा altera_tse_निजी *priv)
-अणु
-पूर्ण
+void sgdma_disable_txirq(struct altera_tse_private *priv)
+{
+}
 
-व्योम sgdma_clear_rxirq(काष्ठा altera_tse_निजी *priv)
-अणु
+void sgdma_clear_rxirq(struct altera_tse_private *priv)
+{
 	tse_set_bit(priv->rx_dma_csr, sgdma_csroffs(control),
 		    SGDMA_CTRLREG_CLRINT);
-पूर्ण
+}
 
-व्योम sgdma_clear_txirq(काष्ठा altera_tse_निजी *priv)
-अणु
+void sgdma_clear_txirq(struct altera_tse_private *priv)
+{
 	tse_set_bit(priv->tx_dma_csr, sgdma_csroffs(control),
 		    SGDMA_CTRLREG_CLRINT);
-पूर्ण
+}
 
 /* transmits buffer through SGDMA. Returns number of buffers
- * transmitted, 0 अगर not possible.
+ * transmitted, 0 if not possible.
  *
  * tx_lock is held by the caller
  */
-पूर्णांक sgdma_tx_buffer(काष्ठा altera_tse_निजी *priv, काष्ठा tse_buffer *buffer)
-अणु
-	काष्ठा sgdma_descrip __iomem *descbase =
-		(काष्ठा sgdma_descrip __iomem *)priv->tx_dma_desc;
+int sgdma_tx_buffer(struct altera_tse_private *priv, struct tse_buffer *buffer)
+{
+	struct sgdma_descrip __iomem *descbase =
+		(struct sgdma_descrip __iomem *)priv->tx_dma_desc;
 
-	काष्ठा sgdma_descrip __iomem *cdesc = &descbase[0];
-	काष्ठा sgdma_descrip __iomem *ndesc = &descbase[1];
+	struct sgdma_descrip __iomem *cdesc = &descbase[0];
+	struct sgdma_descrip __iomem *ndesc = &descbase[1];
 
-	/* रुको 'til the tx sgdma is पढ़ोy क्रम the next transmit request */
-	अगर (sgdma_txbusy(priv))
-		वापस 0;
+	/* wait 'til the tx sgdma is ready for the next transmit request */
+	if (sgdma_txbusy(priv))
+		return 0;
 
 	sgdma_setup_descrip(cdesc,			/* current descriptor */
 			    ndesc,			/* next descriptor */
 			    sgdma_txphysaddr(priv, ndesc),
 			    buffer->dma_addr,		/* address of packet to xmit */
-			    0,				/* ग_लिखो addr 0 क्रम tx dma */
+			    0,				/* write addr 0 for tx dma */
 			    buffer->len,		/* length of packet */
 			    SGDMA_CONTROL_EOP,		/* Generate EOP */
-			    0,				/* पढ़ो fixed */
+			    0,				/* read fixed */
 			    SGDMA_CONTROL_WR_FIXED);	/* Generate SOP */
 
-	sgdma_async_ग_लिखो(priv, cdesc);
+	sgdma_async_write(priv, cdesc);
 
 	/* enqueue the request to the pending transmit queue */
 	queue_tx(priv, buffer);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 
 /* tx_lock held to protect access to queued tx list
  */
-u32 sgdma_tx_completions(काष्ठा altera_tse_निजी *priv)
-अणु
-	u32 पढ़ोy = 0;
+u32 sgdma_tx_completions(struct altera_tse_private *priv)
+{
+	u32 ready = 0;
 
-	अगर (!sgdma_txbusy(priv) &&
+	if (!sgdma_txbusy(priv) &&
 	    ((csrrd8(priv->tx_dma_desc, sgdma_descroffs(control))
 	     & SGDMA_CONTROL_HW_OWNED) == 0) &&
-	    (dequeue_tx(priv))) अणु
-		पढ़ोy = 1;
-	पूर्ण
+	    (dequeue_tx(priv))) {
+		ready = 1;
+	}
 
-	वापस पढ़ोy;
-पूर्ण
+	return ready;
+}
 
-व्योम sgdma_start_rxdma(काष्ठा altera_tse_निजी *priv)
-अणु
-	sgdma_async_पढ़ो(priv);
-पूर्ण
+void sgdma_start_rxdma(struct altera_tse_private *priv)
+{
+	sgdma_async_read(priv);
+}
 
-व्योम sgdma_add_rx_desc(काष्ठा altera_tse_निजी *priv,
-		       काष्ठा tse_buffer *rxbuffer)
-अणु
+void sgdma_add_rx_desc(struct altera_tse_private *priv,
+		       struct tse_buffer *rxbuffer)
+{
 	queue_rx(priv, rxbuffer);
-पूर्ण
+}
 
-/* status is वापसed on upper 16 bits,
- * length is वापसed in lower 16 bits
+/* status is returned on upper 16 bits,
+ * length is returned in lower 16 bits
  */
-u32 sgdma_rx_status(काष्ठा altera_tse_निजी *priv)
-अणु
-	काष्ठा sgdma_descrip __iomem *base =
-		(काष्ठा sgdma_descrip __iomem *)priv->rx_dma_desc;
-	काष्ठा sgdma_descrip __iomem *desc = शून्य;
-	काष्ठा tse_buffer *rxbuffer = शून्य;
-	अचिन्हित पूर्णांक rxstatus = 0;
+u32 sgdma_rx_status(struct altera_tse_private *priv)
+{
+	struct sgdma_descrip __iomem *base =
+		(struct sgdma_descrip __iomem *)priv->rx_dma_desc;
+	struct sgdma_descrip __iomem *desc = NULL;
+	struct tse_buffer *rxbuffer = NULL;
+	unsigned int rxstatus = 0;
 
 	u32 sts = csrrd32(priv->rx_dma_csr, sgdma_csroffs(status));
 
 	desc = &base[0];
-	अगर (sts & SGDMA_STSREG_EOP) अणु
-		अचिन्हित पूर्णांक pktlength = 0;
-		अचिन्हित पूर्णांक pktstatus = 0;
-		dma_sync_single_क्रम_cpu(priv->device,
+	if (sts & SGDMA_STSREG_EOP) {
+		unsigned int pktlength = 0;
+		unsigned int pktstatus = 0;
+		dma_sync_single_for_cpu(priv->device,
 					priv->rxdescphys,
 					SGDMA_DESC_LEN,
 					DMA_FROM_DEVICE);
@@ -251,11 +250,11 @@ u32 sgdma_rx_status(काष्ठा altera_tse_निजी *priv)
 		rxstatus = rxstatus << 16;
 		rxstatus |= (pktlength & 0xffff);
 
-		अगर (rxstatus) अणु
+		if (rxstatus) {
 			csrwr8(0, desc, sgdma_descroffs(status));
 
 			rxbuffer = dequeue_rx(priv);
-			अगर (rxbuffer == शून्य)
+			if (rxbuffer == NULL)
 				netdev_info(priv->dev,
 					    "sgdma rx and rx queue empty!\n");
 
@@ -265,42 +264,42 @@ u32 sgdma_rx_status(काष्ठा altera_tse_निजी *priv)
 			csrwr32(0xf, priv->rx_dma_csr, sgdma_csroffs(status));
 
 			/* kick the rx sgdma after reaping this descriptor */
-			sgdma_async_पढ़ो(priv);
+			sgdma_async_read(priv);
 
-		पूर्ण अन्यथा अणु
+		} else {
 			/* If the SGDMA indicated an end of packet on recv,
 			 * then it's expected that the rxstatus from the
 			 * descriptor is non-zero - meaning a valid packet
 			 * with a nonzero length, or an error has been
-			 * indicated. अगर not, then all we can करो is संकेत
-			 * an error and वापस no packet received. Most likely
-			 * there is a प्रणाली design error, or an error in the
+			 * indicated. if not, then all we can do is signal
+			 * an error and return no packet received. Most likely
+			 * there is a system design error, or an error in the
 			 * underlying kernel (cache or cache management problem)
 			 */
 			netdev_err(priv->dev,
 				   "SGDMA RX Error Info: %x, %x, %x\n",
 				   sts, csrrd8(desc, sgdma_descroffs(status)),
 				   rxstatus);
-		पूर्ण
-	पूर्ण अन्यथा अगर (sts == 0) अणु
-		sgdma_async_पढ़ो(priv);
-	पूर्ण
+		}
+	} else if (sts == 0) {
+		sgdma_async_read(priv);
+	}
 
-	वापस rxstatus;
-पूर्ण
+	return rxstatus;
+}
 
 
 /* Private functions */
-अटल व्योम sgdma_setup_descrip(काष्ठा sgdma_descrip __iomem *desc,
-				काष्ठा sgdma_descrip __iomem *ndesc,
+static void sgdma_setup_descrip(struct sgdma_descrip __iomem *desc,
+				struct sgdma_descrip __iomem *ndesc,
 				dma_addr_t ndesc_phys,
 				dma_addr_t raddr,
 				dma_addr_t waddr,
 				u16 length,
-				पूर्णांक generate_eop,
-				पूर्णांक rfixed,
-				पूर्णांक wfixed)
-अणु
+				int generate_eop,
+				int rfixed,
+				int wfixed)
+{
 	/* Clear the next descriptor as not owned by hardware */
 
 	u32 ctrl = csrrd8(ndesc, sgdma_descroffs(control));
@@ -312,7 +311,7 @@ u32 sgdma_rx_status(काष्ठा altera_tse_निजी *priv)
 	ctrl |= rfixed;
 	ctrl |= wfixed;
 
-	/* Channel is implicitly zero, initialized to 0 by शेष */
+	/* Channel is implicitly zero, initialized to 0 by default */
 	csrwr32(lower_32_bits(raddr), desc, sgdma_descroffs(raddr));
 	csrwr32(lower_32_bits(waddr), desc, sgdma_descroffs(waddr));
 
@@ -326,41 +325,41 @@ u32 sgdma_rx_status(काष्ठा altera_tse_निजी *priv)
 	csrwr8(0, desc, sgdma_descroffs(rburst));
 	csrwr16(length, desc, sgdma_descroffs(bytes));
 	csrwr16(0, desc, sgdma_descroffs(bytes_xferred));
-पूर्ण
+}
 
-/* If hardware is busy, करोn't restart async पढ़ो.
- * अगर status रेजिस्टर is 0 - meaning initial state, restart async पढ़ो,
- * probably क्रम the first समय when populating a receive buffer.
- * If पढ़ो status indicate not busy and a status, restart the async
- * DMA पढ़ो.
+/* If hardware is busy, don't restart async read.
+ * if status register is 0 - meaning initial state, restart async read,
+ * probably for the first time when populating a receive buffer.
+ * If read status indicate not busy and a status, restart the async
+ * DMA read.
  */
-अटल पूर्णांक sgdma_async_पढ़ो(काष्ठा altera_tse_निजी *priv)
-अणु
-	काष्ठा sgdma_descrip __iomem *descbase =
-		(काष्ठा sgdma_descrip __iomem *)priv->rx_dma_desc;
+static int sgdma_async_read(struct altera_tse_private *priv)
+{
+	struct sgdma_descrip __iomem *descbase =
+		(struct sgdma_descrip __iomem *)priv->rx_dma_desc;
 
-	काष्ठा sgdma_descrip __iomem *cdesc = &descbase[0];
-	काष्ठा sgdma_descrip __iomem *ndesc = &descbase[1];
-	काष्ठा tse_buffer *rxbuffer = शून्य;
+	struct sgdma_descrip __iomem *cdesc = &descbase[0];
+	struct sgdma_descrip __iomem *ndesc = &descbase[1];
+	struct tse_buffer *rxbuffer = NULL;
 
-	अगर (!sgdma_rxbusy(priv)) अणु
+	if (!sgdma_rxbusy(priv)) {
 		rxbuffer = queue_rx_peekhead(priv);
-		अगर (rxbuffer == शून्य) अणु
+		if (rxbuffer == NULL) {
 			netdev_err(priv->dev, "no rx buffers available\n");
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
 		sgdma_setup_descrip(cdesc,		/* current descriptor */
 				    ndesc,		/* next descriptor */
 				    sgdma_rxphysaddr(priv, ndesc),
-				    0,			/* पढ़ो addr 0 क्रम rx dma */
-				    rxbuffer->dma_addr, /* ग_लिखो addr क्रम rx dma */
-				    0,			/* पढ़ो 'til EOP */
-				    0,			/* EOP: NA क्रम rx dma */
-				    0,			/* पढ़ो fixed: NA क्रम rx dma */
-				    0);			/* SOP: NA क्रम rx DMA */
+				    0,			/* read addr 0 for rx dma */
+				    rxbuffer->dma_addr, /* write addr for rx dma */
+				    0,			/* read 'til EOP */
+				    0,			/* EOP: NA for rx dma */
+				    0,			/* read fixed: NA for rx dma */
+				    0);			/* SOP: NA for rx DMA */
 
-		dma_sync_single_क्रम_device(priv->device,
+		dma_sync_single_for_device(priv->device,
 					   priv->rxdescphys,
 					   SGDMA_DESC_LEN,
 					   DMA_TO_DEVICE);
@@ -373,23 +372,23 @@ u32 sgdma_rx_status(काष्ठा altera_tse_निजी *priv)
 			priv->rx_dma_csr,
 			sgdma_csroffs(control));
 
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sgdma_async_ग_लिखो(काष्ठा altera_tse_निजी *priv,
-			     काष्ठा sgdma_descrip __iomem *desc)
-अणु
-	अगर (sgdma_txbusy(priv))
-		वापस 0;
+static int sgdma_async_write(struct altera_tse_private *priv,
+			     struct sgdma_descrip __iomem *desc)
+{
+	if (sgdma_txbusy(priv))
+		return 0;
 
 	/* clear control and status */
 	csrwr32(0, priv->tx_dma_csr, sgdma_csroffs(control));
 	csrwr32(0x1f, priv->tx_dma_csr, sgdma_csroffs(status));
 
-	dma_sync_single_क्रम_device(priv->device, priv->txdescphys,
+	dma_sync_single_for_device(priv->device, priv->txdescphys,
 				   SGDMA_DESC_LEN, DMA_TO_DEVICE);
 
 	csrwr32(lower_32_bits(sgdma_txphysaddr(priv, desc)),
@@ -400,129 +399,129 @@ u32 sgdma_rx_status(काष्ठा altera_tse_निजी *priv)
 		priv->tx_dma_csr,
 		sgdma_csroffs(control));
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल dma_addr_t
-sgdma_txphysaddr(काष्ठा altera_tse_निजी *priv,
-		 काष्ठा sgdma_descrip __iomem *desc)
-अणु
+static dma_addr_t
+sgdma_txphysaddr(struct altera_tse_private *priv,
+		 struct sgdma_descrip __iomem *desc)
+{
 	dma_addr_t paddr = priv->txdescmem_busaddr;
-	uपूर्णांकptr_t offs = (uपूर्णांकptr_t)desc - (uपूर्णांकptr_t)priv->tx_dma_desc;
-	वापस (dma_addr_t)((uपूर्णांकptr_t)paddr + offs);
-पूर्ण
+	uintptr_t offs = (uintptr_t)desc - (uintptr_t)priv->tx_dma_desc;
+	return (dma_addr_t)((uintptr_t)paddr + offs);
+}
 
-अटल dma_addr_t
-sgdma_rxphysaddr(काष्ठा altera_tse_निजी *priv,
-		 काष्ठा sgdma_descrip __iomem *desc)
-अणु
+static dma_addr_t
+sgdma_rxphysaddr(struct altera_tse_private *priv,
+		 struct sgdma_descrip __iomem *desc)
+{
 	dma_addr_t paddr = priv->rxdescmem_busaddr;
-	uपूर्णांकptr_t offs = (uपूर्णांकptr_t)desc - (uपूर्णांकptr_t)priv->rx_dma_desc;
-	वापस (dma_addr_t)((uपूर्णांकptr_t)paddr + offs);
-पूर्ण
+	uintptr_t offs = (uintptr_t)desc - (uintptr_t)priv->rx_dma_desc;
+	return (dma_addr_t)((uintptr_t)paddr + offs);
+}
 
-#घोषणा list_हटाओ_head(list, entry, type, member)			\
-	करो अणु								\
-		entry = शून्य;						\
-		अगर (!list_empty(list)) अणु				\
+#define list_remove_head(list, entry, type, member)			\
+	do {								\
+		entry = NULL;						\
+		if (!list_empty(list)) {				\
 			entry = list_entry((list)->next, type, member);	\
 			list_del_init(&entry->member);			\
-		पूर्ण							\
-	पूर्ण जबतक (0)
+		}							\
+	} while (0)
 
-#घोषणा list_peek_head(list, entry, type, member)			\
-	करो अणु								\
-		entry = शून्य;						\
-		अगर (!list_empty(list)) अणु				\
+#define list_peek_head(list, entry, type, member)			\
+	do {								\
+		entry = NULL;						\
+		if (!list_empty(list)) {				\
 			entry = list_entry((list)->next, type, member);	\
-		पूर्ण							\
-	पूर्ण जबतक (0)
+		}							\
+	} while (0)
 
 /* adds a tse_buffer to the tail of a tx buffer list.
  * assumes the caller is managing and holding a mutual exclusion
- * primitive to aव्योम simultaneous pushes/pops to the list.
+ * primitive to avoid simultaneous pushes/pops to the list.
  */
-अटल व्योम
-queue_tx(काष्ठा altera_tse_निजी *priv, काष्ठा tse_buffer *buffer)
-अणु
+static void
+queue_tx(struct altera_tse_private *priv, struct tse_buffer *buffer)
+{
 	list_add_tail(&buffer->lh, &priv->txlisthd);
-पूर्ण
+}
 
 
 /* adds a tse_buffer to the tail of a rx buffer list
  * assumes the caller is managing and holding a mutual exclusion
- * primitive to aव्योम simultaneous pushes/pops to the list.
+ * primitive to avoid simultaneous pushes/pops to the list.
  */
-अटल व्योम
-queue_rx(काष्ठा altera_tse_निजी *priv, काष्ठा tse_buffer *buffer)
-अणु
+static void
+queue_rx(struct altera_tse_private *priv, struct tse_buffer *buffer)
+{
 	list_add_tail(&buffer->lh, &priv->rxlisthd);
-पूर्ण
+}
 
 /* dequeues a tse_buffer from the transmit buffer list, otherwise
- * वापसs शून्य अगर empty.
+ * returns NULL if empty.
  * assumes the caller is managing and holding a mutual exclusion
- * primitive to aव्योम simultaneous pushes/pops to the list.
+ * primitive to avoid simultaneous pushes/pops to the list.
  */
-अटल काष्ठा tse_buffer *
-dequeue_tx(काष्ठा altera_tse_निजी *priv)
-अणु
-	काष्ठा tse_buffer *buffer = शून्य;
-	list_हटाओ_head(&priv->txlisthd, buffer, काष्ठा tse_buffer, lh);
-	वापस buffer;
-पूर्ण
+static struct tse_buffer *
+dequeue_tx(struct altera_tse_private *priv)
+{
+	struct tse_buffer *buffer = NULL;
+	list_remove_head(&priv->txlisthd, buffer, struct tse_buffer, lh);
+	return buffer;
+}
 
 /* dequeues a tse_buffer from the receive buffer list, otherwise
- * वापसs शून्य अगर empty
+ * returns NULL if empty
  * assumes the caller is managing and holding a mutual exclusion
- * primitive to aव्योम simultaneous pushes/pops to the list.
+ * primitive to avoid simultaneous pushes/pops to the list.
  */
-अटल काष्ठा tse_buffer *
-dequeue_rx(काष्ठा altera_tse_निजी *priv)
-अणु
-	काष्ठा tse_buffer *buffer = शून्य;
-	list_हटाओ_head(&priv->rxlisthd, buffer, काष्ठा tse_buffer, lh);
-	वापस buffer;
-पूर्ण
+static struct tse_buffer *
+dequeue_rx(struct altera_tse_private *priv)
+{
+	struct tse_buffer *buffer = NULL;
+	list_remove_head(&priv->rxlisthd, buffer, struct tse_buffer, lh);
+	return buffer;
+}
 
 /* dequeues a tse_buffer from the receive buffer list, otherwise
- * वापसs शून्य अगर empty
+ * returns NULL if empty
  * assumes the caller is managing and holding a mutual exclusion
- * primitive to aव्योम simultaneous pushes/pops to the list जबतक the
+ * primitive to avoid simultaneous pushes/pops to the list while the
  * head is being examined.
  */
-अटल काष्ठा tse_buffer *
-queue_rx_peekhead(काष्ठा altera_tse_निजी *priv)
-अणु
-	काष्ठा tse_buffer *buffer = शून्य;
-	list_peek_head(&priv->rxlisthd, buffer, काष्ठा tse_buffer, lh);
-	वापस buffer;
-पूर्ण
+static struct tse_buffer *
+queue_rx_peekhead(struct altera_tse_private *priv)
+{
+	struct tse_buffer *buffer = NULL;
+	list_peek_head(&priv->rxlisthd, buffer, struct tse_buffer, lh);
+	return buffer;
+}
 
-/* check and वापस rx sgdma status without polling
+/* check and return rx sgdma status without polling
  */
-अटल पूर्णांक sgdma_rxbusy(काष्ठा altera_tse_निजी *priv)
-अणु
-	वापस csrrd32(priv->rx_dma_csr, sgdma_csroffs(status))
+static int sgdma_rxbusy(struct altera_tse_private *priv)
+{
+	return csrrd32(priv->rx_dma_csr, sgdma_csroffs(status))
 		       & SGDMA_STSREG_BUSY;
-पूर्ण
+}
 
-/* रुकोs क्रम the tx sgdma to finish it's current operation, वापसs 0
- * when it transitions to nonbusy, वापसs 1 अगर the operation बार out
+/* waits for the tx sgdma to finish it's current operation, returns 0
+ * when it transitions to nonbusy, returns 1 if the operation times out
  */
-अटल पूर्णांक sgdma_txbusy(काष्ठा altera_tse_निजी *priv)
-अणु
-	पूर्णांक delay = 0;
+static int sgdma_txbusy(struct altera_tse_private *priv)
+{
+	int delay = 0;
 
-	/* अगर DMA is busy, रुको क्रम current transactino to finish */
-	जबतक ((csrrd32(priv->tx_dma_csr, sgdma_csroffs(status))
+	/* if DMA is busy, wait for current transactino to finish */
+	while ((csrrd32(priv->tx_dma_csr, sgdma_csroffs(status))
 		& SGDMA_STSREG_BUSY) && (delay++ < 100))
 		udelay(1);
 
-	अगर (csrrd32(priv->tx_dma_csr, sgdma_csroffs(status))
-	    & SGDMA_STSREG_BUSY) अणु
+	if (csrrd32(priv->tx_dma_csr, sgdma_csroffs(status))
+	    & SGDMA_STSREG_BUSY) {
 		netdev_err(priv->dev, "timeout waiting for tx dma\n");
-		वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return 1;
+	}
+	return 0;
+}

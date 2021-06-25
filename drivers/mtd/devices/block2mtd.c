@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * block2mtd.c - create an mtd from a block device
  *
@@ -8,491 +7,491 @@
  * Licence: GPL
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
 /*
  * When the first attempt at device initialization fails, we may need to
- * रुको a little bit and retry. This समयout, by शेष 3 seconds, gives
- * device समय to start up. Required on BCM2708 and a few other chipsets.
+ * wait a little bit and retry. This timeout, by default 3 seconds, gives
+ * device time to start up. Required on BCM2708 and a few other chipsets.
  */
-#घोषणा MTD_DEFAULT_TIMEOUT	3
+#define MTD_DEFAULT_TIMEOUT	3
 
-#समावेश <linux/module.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/backing-dev.h>
-#समावेश <linux/bपन.स>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/list.h>
-#समावेश <linux/init.h>
-#समावेश <linux/mtd/mtd.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/mount.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/major.h>
+#include <linux/module.h>
+#include <linux/delay.h>
+#include <linux/fs.h>
+#include <linux/blkdev.h>
+#include <linux/backing-dev.h>
+#include <linux/bio.h>
+#include <linux/pagemap.h>
+#include <linux/list.h>
+#include <linux/init.h>
+#include <linux/mtd/mtd.h>
+#include <linux/mutex.h>
+#include <linux/mount.h>
+#include <linux/slab.h>
+#include <linux/major.h>
 
-/* Info क्रम the block device */
-काष्ठा block2mtd_dev अणु
-	काष्ठा list_head list;
-	काष्ठा block_device *blkdev;
-	काष्ठा mtd_info mtd;
-	काष्ठा mutex ग_लिखो_mutex;
-पूर्ण;
+/* Info for the block device */
+struct block2mtd_dev {
+	struct list_head list;
+	struct block_device *blkdev;
+	struct mtd_info mtd;
+	struct mutex write_mutex;
+};
 
 
 /* Static info about the MTD, used in cleanup_module */
-अटल LIST_HEAD(blkmtd_device_list);
+static LIST_HEAD(blkmtd_device_list);
 
 
-अटल काष्ठा page *page_पढ़ो(काष्ठा address_space *mapping, pgoff_t index)
-अणु
-	वापस पढ़ो_mapping_page(mapping, index, शून्य);
-पूर्ण
+static struct page *page_read(struct address_space *mapping, pgoff_t index)
+{
+	return read_mapping_page(mapping, index, NULL);
+}
 
-/* erase a specअगरied part of the device */
-अटल पूर्णांक _block2mtd_erase(काष्ठा block2mtd_dev *dev, loff_t to, माप_प्रकार len)
-अणु
-	काष्ठा address_space *mapping = dev->blkdev->bd_inode->i_mapping;
-	काष्ठा page *page;
+/* erase a specified part of the device */
+static int _block2mtd_erase(struct block2mtd_dev *dev, loff_t to, size_t len)
+{
+	struct address_space *mapping = dev->blkdev->bd_inode->i_mapping;
+	struct page *page;
 	pgoff_t index = to >> PAGE_SHIFT;	// page index
-	पूर्णांक pages = len >> PAGE_SHIFT;
-	u_दीर्घ *p;
-	u_दीर्घ *max;
+	int pages = len >> PAGE_SHIFT;
+	u_long *p;
+	u_long *max;
 
-	जबतक (pages) अणु
-		page = page_पढ़ो(mapping, index);
-		अगर (IS_ERR(page))
-			वापस PTR_ERR(page);
+	while (pages) {
+		page = page_read(mapping, index);
+		if (IS_ERR(page))
+			return PTR_ERR(page);
 
 		max = page_address(page) + PAGE_SIZE;
-		क्रम (p=page_address(page); p<max; p++)
-			अगर (*p != -1UL) अणु
+		for (p=page_address(page); p<max; p++)
+			if (*p != -1UL) {
 				lock_page(page);
-				स_रखो(page_address(page), 0xff, PAGE_SIZE);
+				memset(page_address(page), 0xff, PAGE_SIZE);
 				set_page_dirty(page);
 				unlock_page(page);
 				balance_dirty_pages_ratelimited(mapping);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 		put_page(page);
 		pages--;
 		index++;
-	पूर्ण
-	वापस 0;
-पूर्ण
-अटल पूर्णांक block2mtd_erase(काष्ठा mtd_info *mtd, काष्ठा erase_info *instr)
-अणु
-	काष्ठा block2mtd_dev *dev = mtd->priv;
-	माप_प्रकार from = instr->addr;
-	माप_प्रकार len = instr->len;
-	पूर्णांक err;
+	}
+	return 0;
+}
+static int block2mtd_erase(struct mtd_info *mtd, struct erase_info *instr)
+{
+	struct block2mtd_dev *dev = mtd->priv;
+	size_t from = instr->addr;
+	size_t len = instr->len;
+	int err;
 
-	mutex_lock(&dev->ग_लिखो_mutex);
+	mutex_lock(&dev->write_mutex);
 	err = _block2mtd_erase(dev, from, len);
-	mutex_unlock(&dev->ग_लिखो_mutex);
-	अगर (err)
+	mutex_unlock(&dev->write_mutex);
+	if (err)
 		pr_err("erase failed err = %d\n", err);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 
-अटल पूर्णांक block2mtd_पढ़ो(काष्ठा mtd_info *mtd, loff_t from, माप_प्रकार len,
-		माप_प्रकार *retlen, u_अक्षर *buf)
-अणु
-	काष्ठा block2mtd_dev *dev = mtd->priv;
-	काष्ठा page *page;
+static int block2mtd_read(struct mtd_info *mtd, loff_t from, size_t len,
+		size_t *retlen, u_char *buf)
+{
+	struct block2mtd_dev *dev = mtd->priv;
+	struct page *page;
 	pgoff_t index = from >> PAGE_SHIFT;
-	पूर्णांक offset = from & (PAGE_SIZE-1);
-	पूर्णांक cpylen;
+	int offset = from & (PAGE_SIZE-1);
+	int cpylen;
 
-	जबतक (len) अणु
-		अगर ((offset + len) > PAGE_SIZE)
+	while (len) {
+		if ((offset + len) > PAGE_SIZE)
 			cpylen = PAGE_SIZE - offset;	// multiple pages
-		अन्यथा
+		else
 			cpylen = len;	// this page
 		len = len - cpylen;
 
-		page = page_पढ़ो(dev->blkdev->bd_inode->i_mapping, index);
-		अगर (IS_ERR(page))
-			वापस PTR_ERR(page);
+		page = page_read(dev->blkdev->bd_inode->i_mapping, index);
+		if (IS_ERR(page))
+			return PTR_ERR(page);
 
-		स_नकल(buf, page_address(page) + offset, cpylen);
+		memcpy(buf, page_address(page) + offset, cpylen);
 		put_page(page);
 
-		अगर (retlen)
+		if (retlen)
 			*retlen += cpylen;
 		buf += cpylen;
 		offset = 0;
 		index++;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 
-/* ग_लिखो data to the underlying device */
-अटल पूर्णांक _block2mtd_ग_लिखो(काष्ठा block2mtd_dev *dev, स्थिर u_अक्षर *buf,
-		loff_t to, माप_प्रकार len, माप_प्रकार *retlen)
-अणु
-	काष्ठा page *page;
-	काष्ठा address_space *mapping = dev->blkdev->bd_inode->i_mapping;
+/* write data to the underlying device */
+static int _block2mtd_write(struct block2mtd_dev *dev, const u_char *buf,
+		loff_t to, size_t len, size_t *retlen)
+{
+	struct page *page;
+	struct address_space *mapping = dev->blkdev->bd_inode->i_mapping;
 	pgoff_t index = to >> PAGE_SHIFT;	// page index
-	पूर्णांक offset = to & ~PAGE_MASK;	// page offset
-	पूर्णांक cpylen;
+	int offset = to & ~PAGE_MASK;	// page offset
+	int cpylen;
 
-	जबतक (len) अणु
-		अगर ((offset+len) > PAGE_SIZE)
+	while (len) {
+		if ((offset+len) > PAGE_SIZE)
 			cpylen = PAGE_SIZE - offset;	// multiple pages
-		अन्यथा
+		else
 			cpylen = len;			// this page
 		len = len - cpylen;
 
-		page = page_पढ़ो(mapping, index);
-		अगर (IS_ERR(page))
-			वापस PTR_ERR(page);
+		page = page_read(mapping, index);
+		if (IS_ERR(page))
+			return PTR_ERR(page);
 
-		अगर (स_भेद(page_address(page)+offset, buf, cpylen)) अणु
+		if (memcmp(page_address(page)+offset, buf, cpylen)) {
 			lock_page(page);
-			स_नकल(page_address(page) + offset, buf, cpylen);
+			memcpy(page_address(page) + offset, buf, cpylen);
 			set_page_dirty(page);
 			unlock_page(page);
 			balance_dirty_pages_ratelimited(mapping);
-		पूर्ण
+		}
 		put_page(page);
 
-		अगर (retlen)
+		if (retlen)
 			*retlen += cpylen;
 
 		buf += cpylen;
 		offset = 0;
 		index++;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 
-अटल पूर्णांक block2mtd_ग_लिखो(काष्ठा mtd_info *mtd, loff_t to, माप_प्रकार len,
-		माप_प्रकार *retlen, स्थिर u_अक्षर *buf)
-अणु
-	काष्ठा block2mtd_dev *dev = mtd->priv;
-	पूर्णांक err;
+static int block2mtd_write(struct mtd_info *mtd, loff_t to, size_t len,
+		size_t *retlen, const u_char *buf)
+{
+	struct block2mtd_dev *dev = mtd->priv;
+	int err;
 
-	mutex_lock(&dev->ग_लिखो_mutex);
-	err = _block2mtd_ग_लिखो(dev, buf, to, len, retlen);
-	mutex_unlock(&dev->ग_लिखो_mutex);
-	अगर (err > 0)
+	mutex_lock(&dev->write_mutex);
+	err = _block2mtd_write(dev, buf, to, len, retlen);
+	mutex_unlock(&dev->write_mutex);
+	if (err > 0)
 		err = 0;
-	वापस err;
-पूर्ण
+	return err;
+}
 
 
-/* sync the device - रुको until the ग_लिखो queue is empty */
-अटल व्योम block2mtd_sync(काष्ठा mtd_info *mtd)
-अणु
-	काष्ठा block2mtd_dev *dev = mtd->priv;
+/* sync the device - wait until the write queue is empty */
+static void block2mtd_sync(struct mtd_info *mtd)
+{
+	struct block2mtd_dev *dev = mtd->priv;
 	sync_blockdev(dev->blkdev);
-	वापस;
-पूर्ण
+	return;
+}
 
 
-अटल व्योम block2mtd_मुक्त_device(काष्ठा block2mtd_dev *dev)
-अणु
-	अगर (!dev)
-		वापस;
+static void block2mtd_free_device(struct block2mtd_dev *dev)
+{
+	if (!dev)
+		return;
 
-	kमुक्त(dev->mtd.name);
+	kfree(dev->mtd.name);
 
-	अगर (dev->blkdev) अणु
+	if (dev->blkdev) {
 		invalidate_mapping_pages(dev->blkdev->bd_inode->i_mapping,
 					0, -1);
 		blkdev_put(dev->blkdev, FMODE_READ|FMODE_WRITE|FMODE_EXCL);
-	पूर्ण
+	}
 
-	kमुक्त(dev);
-पूर्ण
+	kfree(dev);
+}
 
 
-अटल काष्ठा block2mtd_dev *add_device(अक्षर *devname, पूर्णांक erase_size,
-		पूर्णांक समयout)
-अणु
-#अगर_अघोषित MODULE
-	पूर्णांक i;
-#पूर्ण_अगर
-	स्थिर भ_शेषe_t mode = FMODE_READ | FMODE_WRITE | FMODE_EXCL;
-	काष्ठा block_device *bdev;
-	काष्ठा block2mtd_dev *dev;
-	अक्षर *name;
+static struct block2mtd_dev *add_device(char *devname, int erase_size,
+		int timeout)
+{
+#ifndef MODULE
+	int i;
+#endif
+	const fmode_t mode = FMODE_READ | FMODE_WRITE | FMODE_EXCL;
+	struct block_device *bdev;
+	struct block2mtd_dev *dev;
+	char *name;
 
-	अगर (!devname)
-		वापस शून्य;
+	if (!devname)
+		return NULL;
 
-	dev = kzalloc(माप(काष्ठा block2mtd_dev), GFP_KERNEL);
-	अगर (!dev)
-		वापस शून्य;
+	dev = kzalloc(sizeof(struct block2mtd_dev), GFP_KERNEL);
+	if (!dev)
+		return NULL;
 
 	/* Get a handle on the device */
 	bdev = blkdev_get_by_path(devname, mode, dev);
 
-#अगर_अघोषित MODULE
+#ifndef MODULE
 	/*
-	 * We might not have the root device mounted at this poपूर्णांक.
+	 * We might not have the root device mounted at this point.
 	 * Try to resolve the device name by other means.
 	 */
-	क्रम (i = 0; IS_ERR(bdev) && i <= समयout; i++) अणु
+	for (i = 0; IS_ERR(bdev) && i <= timeout; i++) {
 		dev_t devt;
 
-		अगर (i)
+		if (i)
 			/*
-			 * Calling रुको_क्रम_device_probe in the first loop
-			 * was not enough, sleep क्रम a bit in subsequent
+			 * Calling wait_for_device_probe in the first loop
+			 * was not enough, sleep for a bit in subsequent
 			 * go-arounds.
 			 */
 			msleep(1000);
-		रुको_क्रम_device_probe();
+		wait_for_device_probe();
 
 		devt = name_to_dev_t(devname);
-		अगर (!devt)
-			जारी;
+		if (!devt)
+			continue;
 		bdev = blkdev_get_by_dev(devt, mode, dev);
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
-	अगर (IS_ERR(bdev)) अणु
+	if (IS_ERR(bdev)) {
 		pr_err("error: cannot open device %s\n", devname);
-		जाओ err_मुक्त_block2mtd;
-	पूर्ण
+		goto err_free_block2mtd;
+	}
 	dev->blkdev = bdev;
 
-	अगर (MAJOR(bdev->bd_dev) == MTD_BLOCK_MAJOR) अणु
+	if (MAJOR(bdev->bd_dev) == MTD_BLOCK_MAJOR) {
 		pr_err("attempting to use an MTD device as a block device\n");
-		जाओ err_मुक्त_block2mtd;
-	पूर्ण
+		goto err_free_block2mtd;
+	}
 
-	अगर ((दीर्घ)dev->blkdev->bd_inode->i_size % erase_size) अणु
+	if ((long)dev->blkdev->bd_inode->i_size % erase_size) {
 		pr_err("erasesize must be a divisor of device size\n");
-		जाओ err_मुक्त_block2mtd;
-	पूर्ण
+		goto err_free_block2mtd;
+	}
 
-	mutex_init(&dev->ग_लिखो_mutex);
+	mutex_init(&dev->write_mutex);
 
-	/* Setup the MTD काष्ठाure */
+	/* Setup the MTD structure */
 	/* make the name contain the block device in */
-	name = kaप्र_लिखो(GFP_KERNEL, "block2mtd: %s", devname);
-	अगर (!name)
-		जाओ err_destroy_mutex;
+	name = kasprintf(GFP_KERNEL, "block2mtd: %s", devname);
+	if (!name)
+		goto err_destroy_mutex;
 
 	dev->mtd.name = name;
 
 	dev->mtd.size = dev->blkdev->bd_inode->i_size & PAGE_MASK;
 	dev->mtd.erasesize = erase_size;
-	dev->mtd.ग_लिखोsize = 1;
-	dev->mtd.ग_लिखोbufsize = PAGE_SIZE;
+	dev->mtd.writesize = 1;
+	dev->mtd.writebufsize = PAGE_SIZE;
 	dev->mtd.type = MTD_RAM;
 	dev->mtd.flags = MTD_CAP_RAM;
 	dev->mtd._erase = block2mtd_erase;
-	dev->mtd._ग_लिखो = block2mtd_ग_लिखो;
+	dev->mtd._write = block2mtd_write;
 	dev->mtd._sync = block2mtd_sync;
-	dev->mtd._पढ़ो = block2mtd_पढ़ो;
+	dev->mtd._read = block2mtd_read;
 	dev->mtd.priv = dev;
 	dev->mtd.owner = THIS_MODULE;
 
-	अगर (mtd_device_रेजिस्टर(&dev->mtd, शून्य, 0)) अणु
-		/* Device didn't get added, so मुक्त the entry */
-		जाओ err_destroy_mutex;
-	पूर्ण
+	if (mtd_device_register(&dev->mtd, NULL, 0)) {
+		/* Device didn't get added, so free the entry */
+		goto err_destroy_mutex;
+	}
 
 	list_add(&dev->list, &blkmtd_device_list);
 	pr_info("mtd%d: [%s] erase_size = %dKiB [%d]\n",
 		dev->mtd.index,
-		dev->mtd.name + म_माप("block2mtd: "),
+		dev->mtd.name + strlen("block2mtd: "),
 		dev->mtd.erasesize >> 10, dev->mtd.erasesize);
-	वापस dev;
+	return dev;
 
 err_destroy_mutex:
-	mutex_destroy(&dev->ग_लिखो_mutex);
-err_मुक्त_block2mtd:
-	block2mtd_मुक्त_device(dev);
-	वापस शून्य;
-पूर्ण
+	mutex_destroy(&dev->write_mutex);
+err_free_block2mtd:
+	block2mtd_free_device(dev);
+	return NULL;
+}
 
 
-/* This function works similar to reguler म_से_अदीर्घ.  In addition, it
- * allows some suffixes क्रम a more human-पढ़ोable number क्रमmat:
+/* This function works similar to reguler strtoul.  In addition, it
+ * allows some suffixes for a more human-readable number format:
  * ki, Ki, kiB, KiB	- multiply result with 1024
  * Mi, MiB		- multiply result with 1024^2
  * Gi, GiB		- multiply result with 1024^3
  */
-अटल पूर्णांक uम_से_अदीर्घ(स्थिर अक्षर *cp, अक्षर **endp, अचिन्हित पूर्णांक base)
-अणु
-	अचिन्हित दीर्घ result = simple_म_से_अदीर्घ(cp, endp, base);
-	चयन (**endp) अणु
-	हाल 'G' :
+static int ustrtoul(const char *cp, char **endp, unsigned int base)
+{
+	unsigned long result = simple_strtoul(cp, endp, base);
+	switch (**endp) {
+	case 'G' :
 		result *= 1024;
 		fallthrough;
-	हाल 'M':
+	case 'M':
 		result *= 1024;
 		fallthrough;
-	हाल 'K':
-	हाल 'k':
+	case 'K':
+	case 'k':
 		result *= 1024;
 	/* By dwmw2 editorial decree, "ki", "Mi" or "Gi" are to be used. */
-		अगर ((*endp)[1] == 'i') अणु
-			अगर ((*endp)[2] == 'B')
+		if ((*endp)[1] == 'i') {
+			if ((*endp)[2] == 'B')
 				(*endp) += 3;
-			अन्यथा
+			else
 				(*endp) += 2;
-		पूर्ण
-	पूर्ण
-	वापस result;
-पूर्ण
+		}
+	}
+	return result;
+}
 
 
-अटल पूर्णांक parse_num(माप_प्रकार *num, स्थिर अक्षर *token)
-अणु
-	अक्षर *endp;
-	माप_प्रकार n;
+static int parse_num(size_t *num, const char *token)
+{
+	char *endp;
+	size_t n;
 
-	n = (माप_प्रकार) uम_से_अदीर्घ(token, &endp, 0);
-	अगर (*endp)
-		वापस -EINVAL;
+	n = (size_t) ustrtoul(token, &endp, 0);
+	if (*endp)
+		return -EINVAL;
 
 	*num = n;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल अंतरभूत व्योम समाप्त_final_newline(अक्षर *str)
-अणु
-	अक्षर *newline = म_खोजप(str, '\n');
-	अगर (newline && !newline[1])
+static inline void kill_final_newline(char *str)
+{
+	char *newline = strrchr(str, '\n');
+	if (newline && !newline[1])
 		*newline = 0;
-पूर्ण
+}
 
 
-#अगर_अघोषित MODULE
-अटल पूर्णांक block2mtd_init_called = 0;
-/* 80 क्रम device, 12 क्रम erase size */
-अटल अक्षर block2mtd_paramline[80 + 12];
-#पूर्ण_अगर
+#ifndef MODULE
+static int block2mtd_init_called = 0;
+/* 80 for device, 12 for erase size */
+static char block2mtd_paramline[80 + 12];
+#endif
 
-अटल पूर्णांक block2mtd_setup2(स्थिर अक्षर *val)
-अणु
-	/* 80 क्रम device, 12 क्रम erase size, 80 क्रम name, 8 क्रम समयout */
-	अक्षर buf[80 + 12 + 80 + 8];
-	अक्षर *str = buf;
-	अक्षर *token[2];
-	अक्षर *name;
-	माप_प्रकार erase_size = PAGE_SIZE;
-	अचिन्हित दीर्घ समयout = MTD_DEFAULT_TIMEOUT;
-	पूर्णांक i, ret;
+static int block2mtd_setup2(const char *val)
+{
+	/* 80 for device, 12 for erase size, 80 for name, 8 for timeout */
+	char buf[80 + 12 + 80 + 8];
+	char *str = buf;
+	char *token[2];
+	char *name;
+	size_t erase_size = PAGE_SIZE;
+	unsigned long timeout = MTD_DEFAULT_TIMEOUT;
+	int i, ret;
 
-	अगर (strnlen(val, माप(buf)) >= माप(buf)) अणु
+	if (strnlen(val, sizeof(buf)) >= sizeof(buf)) {
 		pr_err("parameter too long\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	म_नकल(str, val);
-	समाप्त_final_newline(str);
+	strcpy(str, val);
+	kill_final_newline(str);
 
-	क्रम (i = 0; i < 2; i++)
+	for (i = 0; i < 2; i++)
 		token[i] = strsep(&str, ",");
 
-	अगर (str) अणु
+	if (str) {
 		pr_err("too many arguments\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (!token[0]) अणु
+	if (!token[0]) {
 		pr_err("no argument\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	name = token[0];
-	अगर (म_माप(name) + 1 > 80) अणु
+	if (strlen(name) + 1 > 80) {
 		pr_err("device name too long\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (token[1]) अणु
+	if (token[1]) {
 		ret = parse_num(&erase_size, token[1]);
-		अगर (ret) अणु
+		if (ret) {
 			pr_err("illegal erase size\n");
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	add_device(name, erase_size, समयout);
+	add_device(name, erase_size, timeout);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक block2mtd_setup(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp)
-अणु
-#अगर_घोषित MODULE
-	वापस block2mtd_setup2(val);
-#अन्यथा
+static int block2mtd_setup(const char *val, const struct kernel_param *kp)
+{
+#ifdef MODULE
+	return block2mtd_setup2(val);
+#else
 	/* If more parameters are later passed in via
 	   /sys/module/block2mtd/parameters/block2mtd
-	   and block2mtd_init() has alपढ़ोy been called,
+	   and block2mtd_init() has already been called,
 	   we can parse the argument now. */
 
-	अगर (block2mtd_init_called)
-		वापस block2mtd_setup2(val);
+	if (block2mtd_init_called)
+		return block2mtd_setup2(val);
 
 	/* During early boot stage, we only save the parameters
-	   here. We must parse them later: अगर the param passed
+	   here. We must parse them later: if the param passed
 	   from kernel boot command line, block2mtd_setup() is
 	   called so early that it is not possible to resolve
-	   the device (even kदो_स्मृति() fails). Deter that work to
+	   the device (even kmalloc() fails). Deter that work to
 	   block2mtd_setup2(). */
 
-	strlcpy(block2mtd_paramline, val, माप(block2mtd_paramline));
+	strlcpy(block2mtd_paramline, val, sizeof(block2mtd_paramline));
 
-	वापस 0;
-#पूर्ण_अगर
-पूर्ण
+	return 0;
+#endif
+}
 
 
-module_param_call(block2mtd, block2mtd_setup, शून्य, शून्य, 0200);
+module_param_call(block2mtd, block2mtd_setup, NULL, NULL, 0200);
 MODULE_PARM_DESC(block2mtd, "Device to use. \"block2mtd=<dev>[,<erasesize>]\"");
 
-अटल पूर्णांक __init block2mtd_init(व्योम)
-अणु
-	पूर्णांक ret = 0;
+static int __init block2mtd_init(void)
+{
+	int ret = 0;
 
-#अगर_अघोषित MODULE
-	अगर (म_माप(block2mtd_paramline))
+#ifndef MODULE
+	if (strlen(block2mtd_paramline))
 		ret = block2mtd_setup2(block2mtd_paramline);
 	block2mtd_init_called = 1;
-#पूर्ण_अगर
+#endif
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
-अटल व्योम block2mtd_निकास(व्योम)
-अणु
-	काष्ठा list_head *pos, *next;
+static void block2mtd_exit(void)
+{
+	struct list_head *pos, *next;
 
 	/* Remove the MTD devices */
-	list_क्रम_each_safe(pos, next, &blkmtd_device_list) अणु
-		काष्ठा block2mtd_dev *dev = list_entry(pos, typeof(*dev), list);
+	list_for_each_safe(pos, next, &blkmtd_device_list) {
+		struct block2mtd_dev *dev = list_entry(pos, typeof(*dev), list);
 		block2mtd_sync(&dev->mtd);
-		mtd_device_unरेजिस्टर(&dev->mtd);
-		mutex_destroy(&dev->ग_लिखो_mutex);
+		mtd_device_unregister(&dev->mtd);
+		mutex_destroy(&dev->write_mutex);
 		pr_info("mtd%d: [%s] removed\n",
 			dev->mtd.index,
-			dev->mtd.name + म_माप("block2mtd: "));
+			dev->mtd.name + strlen("block2mtd: "));
 		list_del(&dev->list);
-		block2mtd_मुक्त_device(dev);
-	पूर्ण
-पूर्ण
+		block2mtd_free_device(dev);
+	}
+}
 
 late_initcall(block2mtd_init);
-module_निकास(block2mtd_निकास);
+module_exit(block2mtd_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Joern Engel <joern@lazybastard.org>");

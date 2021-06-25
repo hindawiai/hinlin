@@ -1,22 +1,21 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright(c) 2008 - 2010 Realtek Corporation. All rights reserved.
  *
- * Contact Inक्रमmation: wlanfae <wlanfae@realtek.com>
+ * Contact Information: wlanfae <wlanfae@realtek.com>
  */
-#अगर_अघोषित _RTL_DEBUG_H
-#घोषणा _RTL_DEBUG_H
+#ifndef _RTL_DEBUG_H
+#define _RTL_DEBUG_H
 
 /* Allow files to override DRV_NAME */
-#अगर_अघोषित DRV_NAME
-#घोषणा DRV_NAME "rtllib_92e"
-#पूर्ण_अगर
+#ifndef DRV_NAME
+#define DRV_NAME "rtllib_92e"
+#endif
 
-बाह्य u32 rt_global_debug_component;
+extern u32 rt_global_debug_component;
 
-/* These are the defines क्रम rt_global_debug_component */
-क्रमागत RTL_DEBUG अणु
+/* These are the defines for rt_global_debug_component */
+enum RTL_DEBUG {
 	COMP_TRACE		= (1 << 0),
 	COMP_DBG		= (1 << 1),
 	COMP_INIT		= (1 << 2),
@@ -43,12 +42,12 @@
 	COMP_DOWN		= (1 << 27),
 	COMP_INTR		= (1 << 28),
 	COMP_ERR		= (1 << 31)
-पूर्ण;
+};
 
-#घोषणा RT_TRACE(component, x, args...)		\
-करो अणु			\
-	अगर (rt_global_debug_component & component) \
-		prपूर्णांकk(KERN_DEBUG DRV_NAME ":" x "\n", ##args);\
-पूर्ण जबतक (0)
+#define RT_TRACE(component, x, args...)		\
+do {			\
+	if (rt_global_debug_component & component) \
+		printk(KERN_DEBUG DRV_NAME ":" x "\n", ##args);\
+} while (0)
 
-#पूर्ण_अगर
+#endif

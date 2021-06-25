@@ -1,81 +1,80 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (C) 2012-2019 ARM Limited (or its affiliates). */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश "cc_driver.h"
-#समावेश "cc_buffer_mgr.h"
-#समावेश "cc_request_mgr.h"
-#समावेश "cc_sram_mgr.h"
-#समावेश "cc_hash.h"
-#समावेश "cc_pm.h"
-#समावेश "cc_fips.h"
+#include <linux/kernel.h>
+#include <linux/interrupt.h>
+#include <linux/pm_runtime.h>
+#include "cc_driver.h"
+#include "cc_buffer_mgr.h"
+#include "cc_request_mgr.h"
+#include "cc_sram_mgr.h"
+#include "cc_hash.h"
+#include "cc_pm.h"
+#include "cc_fips.h"
 
-#घोषणा POWER_DOWN_ENABLE 0x01
-#घोषणा POWER_DOWN_DISABLE 0x00
+#define POWER_DOWN_ENABLE 0x01
+#define POWER_DOWN_DISABLE 0x00
 
-अटल पूर्णांक cc_pm_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा cc_drvdata *drvdata = dev_get_drvdata(dev);
+static int cc_pm_suspend(struct device *dev)
+{
+	struct cc_drvdata *drvdata = dev_get_drvdata(dev);
 
 	dev_dbg(dev, "set HOST_POWER_DOWN_EN\n");
 	fini_cc_regs(drvdata);
-	cc_ioग_लिखो(drvdata, CC_REG(HOST_POWER_DOWN_EN), POWER_DOWN_ENABLE);
+	cc_iowrite(drvdata, CC_REG(HOST_POWER_DOWN_EN), POWER_DOWN_ENABLE);
 	clk_disable_unprepare(drvdata->clk);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cc_pm_resume(काष्ठा device *dev)
-अणु
-	पूर्णांक rc;
-	काष्ठा cc_drvdata *drvdata = dev_get_drvdata(dev);
+static int cc_pm_resume(struct device *dev)
+{
+	int rc;
+	struct cc_drvdata *drvdata = dev_get_drvdata(dev);
 
 	dev_dbg(dev, "unset HOST_POWER_DOWN_EN\n");
 	/* Enables the device source clk */
 	rc = clk_prepare_enable(drvdata->clk);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(dev, "failed getting clock back on. We're toast.\n");
-		वापस rc;
-	पूर्ण
-	/* रुको क्रम Cryptocell reset completion */
-	अगर (!cc_रुको_क्रम_reset_completion(drvdata)) अणु
+		return rc;
+	}
+	/* wait for Cryptocell reset completion */
+	if (!cc_wait_for_reset_completion(drvdata)) {
 		dev_err(dev, "Cryptocell reset not completed");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	cc_ioग_लिखो(drvdata, CC_REG(HOST_POWER_DOWN_EN), POWER_DOWN_DISABLE);
+	cc_iowrite(drvdata, CC_REG(HOST_POWER_DOWN_EN), POWER_DOWN_DISABLE);
 	rc = init_cc_regs(drvdata);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(dev, "init_cc_regs (%x)\n", rc);
-		वापस rc;
-	पूर्ण
-	/* check अगर tee fips error occurred during घातer करोwn */
+		return rc;
+	}
+	/* check if tee fips error occurred during power down */
 	cc_tee_handle_fips_error(drvdata);
 
 	cc_init_hash_sram(drvdata);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा dev_pm_ops ccree_pm = अणु
-	SET_RUNTIME_PM_OPS(cc_pm_suspend, cc_pm_resume, शून्य)
-पूर्ण;
+const struct dev_pm_ops ccree_pm = {
+	SET_RUNTIME_PM_OPS(cc_pm_suspend, cc_pm_resume, NULL)
+};
 
-पूर्णांक cc_pm_get(काष्ठा device *dev)
-अणु
-	पूर्णांक rc = pm_runसमय_get_sync(dev);
-	अगर (rc < 0) अणु
-		pm_runसमय_put_noidle(dev);
-		वापस rc;
-	पूर्ण
+int cc_pm_get(struct device *dev)
+{
+	int rc = pm_runtime_get_sync(dev);
+	if (rc < 0) {
+		pm_runtime_put_noidle(dev);
+		return rc;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम cc_pm_put_suspend(काष्ठा device *dev)
-अणु
-	pm_runसमय_mark_last_busy(dev);
-	pm_runसमय_put_स्वतःsuspend(dev);
-पूर्ण
+void cc_pm_put_suspend(struct device *dev)
+{
+	pm_runtime_mark_last_busy(dev);
+	pm_runtime_put_autosuspend(dev);
+}

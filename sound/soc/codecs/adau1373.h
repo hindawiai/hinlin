@@ -1,9 +1,8 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ADAU1373_H__
-#घोषणा __ADAU1373_H__
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ADAU1373_H__
+#define __ADAU1373_H__
 
-क्रमागत adau1373_pll_src अणु
+enum adau1373_pll_src {
 	ADAU1373_PLL_SRC_MCLK1 = 0,
 	ADAU1373_PLL_SRC_BCLK1 = 1,
 	ADAU1373_PLL_SRC_BCLK2 = 2,
@@ -16,16 +15,16 @@
 	ADAU1373_PLL_SRC_GPIO3 = 9,
 	ADAU1373_PLL_SRC_GPIO4 = 10,
 	ADAU1373_PLL_SRC_MCLK2 = 11,
-पूर्ण;
+};
 
-क्रमागत adau1373_pll अणु
+enum adau1373_pll {
 	ADAU1373_PLL1 = 0,
 	ADAU1373_PLL2 = 1,
-पूर्ण;
+};
 
-क्रमागत adau1373_clk_src अणु
+enum adau1373_clk_src {
 	ADAU1373_CLK_SRC_PLL1 = 0,
 	ADAU1373_CLK_SRC_PLL2 = 1,
-पूर्ण;
+};
 
-#पूर्ण_अगर
+#endif

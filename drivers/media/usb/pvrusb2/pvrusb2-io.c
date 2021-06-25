@@ -1,104 +1,103 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *
  *  Copyright (C) 2005 Mike Isely <isely@pobox.com>
  */
 
-#समावेश "pvrusb2-io.h"
-#समावेश "pvrusb2-debug.h"
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/माला.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/mutex.h>
+#include "pvrusb2-io.h"
+#include "pvrusb2-debug.h"
+#include <linux/errno.h>
+#include <linux/string.h>
+#include <linux/slab.h>
+#include <linux/mutex.h>
 
-अटल स्थिर अक्षर *pvr2_buffer_state_decode(क्रमागत pvr2_buffer_state);
+static const char *pvr2_buffer_state_decode(enum pvr2_buffer_state);
 
-#घोषणा BUFFER_SIG 0x47653271
+#define BUFFER_SIG 0x47653271
 
-// #घोषणा SANITY_CHECK_BUFFERS
+// #define SANITY_CHECK_BUFFERS
 
 
-#अगर_घोषित SANITY_CHECK_BUFFERS
-#घोषणा BUFFER_CHECK(bp) करो अणु \
-	अगर ((bp)->signature != BUFFER_SIG) अणु \
+#ifdef SANITY_CHECK_BUFFERS
+#define BUFFER_CHECK(bp) do { \
+	if ((bp)->signature != BUFFER_SIG) { \
 		pvr2_trace(PVR2_TRACE_ERROR_LEGS, \
 		"Buffer %p is bad at %s:%d", \
-		(bp), __खाता__, __LINE__); \
+		(bp), __FILE__, __LINE__); \
 		pvr2_buffer_describe(bp, "BadSig"); \
 		BUG(); \
-	पूर्ण \
-पूर्ण जबतक (0)
-#अन्यथा
-#घोषणा BUFFER_CHECK(bp) करो अणुपूर्ण जबतक (0)
-#पूर्ण_अगर
+	} \
+} while (0)
+#else
+#define BUFFER_CHECK(bp) do {} while (0)
+#endif
 
-काष्ठा pvr2_stream अणु
-	/* Buffers queued क्रम पढ़ोing */
-	काष्ठा list_head queued_list;
-	अचिन्हित पूर्णांक q_count;
-	अचिन्हित पूर्णांक q_bcount;
+struct pvr2_stream {
+	/* Buffers queued for reading */
+	struct list_head queued_list;
+	unsigned int q_count;
+	unsigned int q_bcount;
 	/* Buffers with retrieved data */
-	काष्ठा list_head पढ़ोy_list;
-	अचिन्हित पूर्णांक r_count;
-	अचिन्हित पूर्णांक r_bcount;
-	/* Buffers available क्रम use */
-	काष्ठा list_head idle_list;
-	अचिन्हित पूर्णांक i_count;
-	अचिन्हित पूर्णांक i_bcount;
-	/* Poपूर्णांकers to all buffers */
-	काष्ठा pvr2_buffer **buffers;
+	struct list_head ready_list;
+	unsigned int r_count;
+	unsigned int r_bcount;
+	/* Buffers available for use */
+	struct list_head idle_list;
+	unsigned int i_count;
+	unsigned int i_bcount;
+	/* Pointers to all buffers */
+	struct pvr2_buffer **buffers;
 	/* Array size of buffers */
-	अचिन्हित पूर्णांक buffer_slot_count;
+	unsigned int buffer_slot_count;
 	/* Total buffers actually in circulation */
-	अचिन्हित पूर्णांक buffer_total_count;
-	/* Deचिन्हित number of buffers to be in circulation */
-	अचिन्हित पूर्णांक buffer_target_count;
-	/* Executed when पढ़ोy list become non-empty */
+	unsigned int buffer_total_count;
+	/* Designed number of buffers to be in circulation */
+	unsigned int buffer_target_count;
+	/* Executed when ready list become non-empty */
 	pvr2_stream_callback callback_func;
-	व्योम *callback_data;
-	/* Context क्रम transfer endpoपूर्णांक */
-	काष्ठा usb_device *dev;
-	पूर्णांक endpoपूर्णांक;
-	/* Overhead क्रम mutex enक्रमcement */
+	void *callback_data;
+	/* Context for transfer endpoint */
+	struct usb_device *dev;
+	int endpoint;
+	/* Overhead for mutex enforcement */
 	spinlock_t list_lock;
-	काष्ठा mutex mutex;
-	/* Tracking state क्रम tolerating errors */
-	अचिन्हित पूर्णांक fail_count;
-	अचिन्हित पूर्णांक fail_tolerance;
+	struct mutex mutex;
+	/* Tracking state for tolerating errors */
+	unsigned int fail_count;
+	unsigned int fail_tolerance;
 
-	अचिन्हित पूर्णांक buffers_processed;
-	अचिन्हित पूर्णांक buffers_failed;
-	अचिन्हित पूर्णांक bytes_processed;
-पूर्ण;
+	unsigned int buffers_processed;
+	unsigned int buffers_failed;
+	unsigned int bytes_processed;
+};
 
-काष्ठा pvr2_buffer अणु
-	पूर्णांक id;
-	पूर्णांक signature;
-	क्रमागत pvr2_buffer_state state;
-	व्योम *ptr;               /* Poपूर्णांकer to storage area */
-	अचिन्हित पूर्णांक max_count;  /* Size of storage area */
-	अचिन्हित पूर्णांक used_count; /* Amount of valid data in storage area */
-	पूर्णांक status;              /* Transfer result status */
-	काष्ठा pvr2_stream *stream;
-	काष्ठा list_head list_overhead;
-	काष्ठा urb *purb;
-पूर्ण;
+struct pvr2_buffer {
+	int id;
+	int signature;
+	enum pvr2_buffer_state state;
+	void *ptr;               /* Pointer to storage area */
+	unsigned int max_count;  /* Size of storage area */
+	unsigned int used_count; /* Amount of valid data in storage area */
+	int status;              /* Transfer result status */
+	struct pvr2_stream *stream;
+	struct list_head list_overhead;
+	struct urb *purb;
+};
 
-अटल स्थिर अक्षर *pvr2_buffer_state_decode(क्रमागत pvr2_buffer_state st)
-अणु
-	चयन (st) अणु
-	हाल pvr2_buffer_state_none: वापस "none";
-	हाल pvr2_buffer_state_idle: वापस "idle";
-	हाल pvr2_buffer_state_queued: वापस "queued";
-	हाल pvr2_buffer_state_पढ़ोy: वापस "ready";
-	पूर्ण
-	वापस "unknown";
-पूर्ण
+static const char *pvr2_buffer_state_decode(enum pvr2_buffer_state st)
+{
+	switch (st) {
+	case pvr2_buffer_state_none: return "none";
+	case pvr2_buffer_state_idle: return "idle";
+	case pvr2_buffer_state_queued: return "queued";
+	case pvr2_buffer_state_ready: return "ready";
+	}
+	return "unknown";
+}
 
-#अगर_घोषित SANITY_CHECK_BUFFERS
-अटल व्योम pvr2_buffer_describe(काष्ठा pvr2_buffer *bp, स्थिर अक्षर *msg)
-अणु
+#ifdef SANITY_CHECK_BUFFERS
+static void pvr2_buffer_describe(struct pvr2_buffer *bp, const char *msg)
+{
 	pvr2_trace(PVR2_TRACE_INFO,
 		   "buffer%s%s %p state=%s id=%d status=%d stream=%p purb=%p sig=0x%x",
 		   (msg ? " " : ""),
@@ -107,37 +106,37 @@
 		   (bp ? pvr2_buffer_state_decode(bp->state) : "(invalid)"),
 		   (bp ? bp->id : 0),
 		   (bp ? bp->status : 0),
-		   (bp ? bp->stream : शून्य),
-		   (bp ? bp->purb : शून्य),
+		   (bp ? bp->stream : NULL),
+		   (bp ? bp->purb : NULL),
 		   (bp ? bp->signature : 0));
-पूर्ण
-#पूर्ण_अगर  /*  SANITY_CHECK_BUFFERS  */
+}
+#endif  /*  SANITY_CHECK_BUFFERS  */
 
-अटल व्योम pvr2_buffer_हटाओ(काष्ठा pvr2_buffer *bp)
-अणु
-	अचिन्हित पूर्णांक *cnt;
-	अचिन्हित पूर्णांक *bcnt;
-	अचिन्हित पूर्णांक ccnt;
-	काष्ठा pvr2_stream *sp = bp->stream;
-	चयन (bp->state) अणु
-	हाल pvr2_buffer_state_idle:
+static void pvr2_buffer_remove(struct pvr2_buffer *bp)
+{
+	unsigned int *cnt;
+	unsigned int *bcnt;
+	unsigned int ccnt;
+	struct pvr2_stream *sp = bp->stream;
+	switch (bp->state) {
+	case pvr2_buffer_state_idle:
 		cnt = &sp->i_count;
 		bcnt = &sp->i_bcount;
 		ccnt = bp->max_count;
-		अवरोध;
-	हाल pvr2_buffer_state_queued:
+		break;
+	case pvr2_buffer_state_queued:
 		cnt = &sp->q_count;
 		bcnt = &sp->q_bcount;
 		ccnt = bp->max_count;
-		अवरोध;
-	हाल pvr2_buffer_state_पढ़ोy:
+		break;
+	case pvr2_buffer_state_ready:
 		cnt = &sp->r_count;
 		bcnt = &sp->r_bcount;
 		ccnt = bp->used_count;
-		अवरोध;
-	शेष:
-		वापस;
-	पूर्ण
+		break;
+	default:
+		return;
+	}
 	list_del_init(&bp->list_overhead);
 	(*cnt)--;
 	(*bcnt) -= ccnt;
@@ -145,12 +144,12 @@
 		   "/*---TRACE_FLOW---*/ bufferPool	%8s dec cap=%07d cnt=%02d",
 		   pvr2_buffer_state_decode(bp->state), *bcnt, *cnt);
 	bp->state = pvr2_buffer_state_none;
-पूर्ण
+}
 
-अटल व्योम pvr2_buffer_set_none(काष्ठा pvr2_buffer *bp)
-अणु
-	अचिन्हित दीर्घ irq_flags;
-	काष्ठा pvr2_stream *sp;
+static void pvr2_buffer_set_none(struct pvr2_buffer *bp)
+{
+	unsigned long irq_flags;
+	struct pvr2_stream *sp;
 	BUFFER_CHECK(bp);
 	sp = bp->stream;
 	pvr2_trace(PVR2_TRACE_BUF_FLOW,
@@ -159,27 +158,27 @@
 		   pvr2_buffer_state_decode(bp->state),
 		   pvr2_buffer_state_decode(pvr2_buffer_state_none));
 	spin_lock_irqsave(&sp->list_lock, irq_flags);
-	pvr2_buffer_हटाओ(bp);
+	pvr2_buffer_remove(bp);
 	spin_unlock_irqrestore(&sp->list_lock, irq_flags);
-पूर्ण
+}
 
-अटल पूर्णांक pvr2_buffer_set_पढ़ोy(काष्ठा pvr2_buffer *bp)
-अणु
-	पूर्णांक fl;
-	अचिन्हित दीर्घ irq_flags;
-	काष्ठा pvr2_stream *sp;
+static int pvr2_buffer_set_ready(struct pvr2_buffer *bp)
+{
+	int fl;
+	unsigned long irq_flags;
+	struct pvr2_stream *sp;
 	BUFFER_CHECK(bp);
 	sp = bp->stream;
 	pvr2_trace(PVR2_TRACE_BUF_FLOW,
 		   "/*---TRACE_FLOW---*/ bufferState    %p %6s --> %6s",
 		   bp,
 		   pvr2_buffer_state_decode(bp->state),
-		   pvr2_buffer_state_decode(pvr2_buffer_state_पढ़ोy));
+		   pvr2_buffer_state_decode(pvr2_buffer_state_ready));
 	spin_lock_irqsave(&sp->list_lock, irq_flags);
 	fl = (sp->r_count == 0);
-	pvr2_buffer_हटाओ(bp);
-	list_add_tail(&bp->list_overhead, &sp->पढ़ोy_list);
-	bp->state = pvr2_buffer_state_पढ़ोy;
+	pvr2_buffer_remove(bp);
+	list_add_tail(&bp->list_overhead, &sp->ready_list);
+	bp->state = pvr2_buffer_state_ready;
 	(sp->r_count)++;
 	sp->r_bcount += bp->used_count;
 	pvr2_trace(PVR2_TRACE_BUF_FLOW,
@@ -187,13 +186,13 @@
 		   pvr2_buffer_state_decode(bp->state),
 		   sp->r_bcount, sp->r_count);
 	spin_unlock_irqrestore(&sp->list_lock, irq_flags);
-	वापस fl;
-पूर्ण
+	return fl;
+}
 
-अटल व्योम pvr2_buffer_set_idle(काष्ठा pvr2_buffer *bp)
-अणु
-	अचिन्हित दीर्घ irq_flags;
-	काष्ठा pvr2_stream *sp;
+static void pvr2_buffer_set_idle(struct pvr2_buffer *bp)
+{
+	unsigned long irq_flags;
+	struct pvr2_stream *sp;
 	BUFFER_CHECK(bp);
 	sp = bp->stream;
 	pvr2_trace(PVR2_TRACE_BUF_FLOW,
@@ -202,7 +201,7 @@
 		   pvr2_buffer_state_decode(bp->state),
 		   pvr2_buffer_state_decode(pvr2_buffer_state_idle));
 	spin_lock_irqsave(&sp->list_lock, irq_flags);
-	pvr2_buffer_हटाओ(bp);
+	pvr2_buffer_remove(bp);
 	list_add_tail(&bp->list_overhead, &sp->idle_list);
 	bp->state = pvr2_buffer_state_idle;
 	(sp->i_count)++;
@@ -212,12 +211,12 @@
 		   pvr2_buffer_state_decode(bp->state),
 		   sp->i_bcount, sp->i_count);
 	spin_unlock_irqrestore(&sp->list_lock, irq_flags);
-पूर्ण
+}
 
-अटल व्योम pvr2_buffer_set_queued(काष्ठा pvr2_buffer *bp)
-अणु
-	अचिन्हित दीर्घ irq_flags;
-	काष्ठा pvr2_stream *sp;
+static void pvr2_buffer_set_queued(struct pvr2_buffer *bp)
+{
+	unsigned long irq_flags;
+	struct pvr2_stream *sp;
 	BUFFER_CHECK(bp);
 	sp = bp->stream;
 	pvr2_trace(PVR2_TRACE_BUF_FLOW,
@@ -226,7 +225,7 @@
 		   pvr2_buffer_state_decode(bp->state),
 		   pvr2_buffer_state_decode(pvr2_buffer_state_queued));
 	spin_lock_irqsave(&sp->list_lock, irq_flags);
-	pvr2_buffer_हटाओ(bp);
+	pvr2_buffer_remove(bp);
 	list_add_tail(&bp->list_overhead, &sp->queued_list);
 	bp->state = pvr2_buffer_state_queued;
 	(sp->q_count)++;
@@ -236,20 +235,20 @@
 		   pvr2_buffer_state_decode(bp->state),
 		   sp->q_bcount, sp->q_count);
 	spin_unlock_irqrestore(&sp->list_lock, irq_flags);
-पूर्ण
+}
 
-अटल व्योम pvr2_buffer_wipe(काष्ठा pvr2_buffer *bp)
-अणु
-	अगर (bp->state == pvr2_buffer_state_queued) अणु
-		usb_समाप्त_urb(bp->purb);
-	पूर्ण
-पूर्ण
+static void pvr2_buffer_wipe(struct pvr2_buffer *bp)
+{
+	if (bp->state == pvr2_buffer_state_queued) {
+		usb_kill_urb(bp->purb);
+	}
+}
 
-अटल पूर्णांक pvr2_buffer_init(काष्ठा pvr2_buffer *bp,
-			    काष्ठा pvr2_stream *sp,
-			    अचिन्हित पूर्णांक id)
-अणु
-	स_रखो(bp, 0, माप(*bp));
+static int pvr2_buffer_init(struct pvr2_buffer *bp,
+			    struct pvr2_stream *sp,
+			    unsigned int id)
+{
+	memset(bp, 0, sizeof(*bp));
 	bp->signature = BUFFER_SIG;
 	bp->id = id;
 	pvr2_trace(PVR2_TRACE_BUF_POOL,
@@ -258,34 +257,34 @@
 	bp->state = pvr2_buffer_state_none;
 	INIT_LIST_HEAD(&bp->list_overhead);
 	bp->purb = usb_alloc_urb(0, GFP_KERNEL);
-	अगर (! bp->purb) वापस -ENOMEM;
-#अगर_घोषित SANITY_CHECK_BUFFERS
+	if (! bp->purb) return -ENOMEM;
+#ifdef SANITY_CHECK_BUFFERS
 	pvr2_buffer_describe(bp, "create");
-#पूर्ण_अगर
-	वापस 0;
-पूर्ण
+#endif
+	return 0;
+}
 
-अटल व्योम pvr2_buffer_करोne(काष्ठा pvr2_buffer *bp)
-अणु
-#अगर_घोषित SANITY_CHECK_BUFFERS
+static void pvr2_buffer_done(struct pvr2_buffer *bp)
+{
+#ifdef SANITY_CHECK_BUFFERS
 	pvr2_buffer_describe(bp, "delete");
-#पूर्ण_अगर
+#endif
 	pvr2_buffer_wipe(bp);
 	pvr2_buffer_set_none(bp);
 	bp->signature = 0;
-	bp->stream = शून्य;
-	usb_मुक्त_urb(bp->purb);
+	bp->stream = NULL;
+	usb_free_urb(bp->purb);
 	pvr2_trace(PVR2_TRACE_BUF_POOL, "/*---TRACE_FLOW---*/ bufferDone     %p",
 		   bp);
-पूर्ण
+}
 
-अटल पूर्णांक pvr2_stream_buffer_count(काष्ठा pvr2_stream *sp, अचिन्हित पूर्णांक cnt)
-अणु
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक scnt;
+static int pvr2_stream_buffer_count(struct pvr2_stream *sp, unsigned int cnt)
+{
+	int ret;
+	unsigned int scnt;
 
-	/* Allocate buffers poपूर्णांकer array in multiples of 32 entries */
-	अगर (cnt == sp->buffer_total_count) वापस 0;
+	/* Allocate buffers pointer array in multiples of 32 entries */
+	if (cnt == sp->buffer_total_count) return 0;
 
 	pvr2_trace(PVR2_TRACE_BUF_POOL,
 		   "/*---TRACE_FLOW---*/ poolResize	stream=%p cur=%d adj=%+d",
@@ -294,130 +293,130 @@
 		   cnt-sp->buffer_total_count);
 
 	scnt = cnt & ~0x1f;
-	अगर (cnt > scnt) scnt += 0x20;
+	if (cnt > scnt) scnt += 0x20;
 
-	अगर (cnt > sp->buffer_total_count) अणु
-		अगर (scnt > sp->buffer_slot_count) अणु
-			काष्ठा pvr2_buffer **nb;
+	if (cnt > sp->buffer_total_count) {
+		if (scnt > sp->buffer_slot_count) {
+			struct pvr2_buffer **nb;
 
-			nb = kदो_स्मृति_array(scnt, माप(*nb), GFP_KERNEL);
-			अगर (!nb) वापस -ENOMEM;
-			अगर (sp->buffer_slot_count) अणु
-				स_नकल(nb, sp->buffers,
-				       sp->buffer_slot_count * माप(*nb));
-				kमुक्त(sp->buffers);
-			पूर्ण
+			nb = kmalloc_array(scnt, sizeof(*nb), GFP_KERNEL);
+			if (!nb) return -ENOMEM;
+			if (sp->buffer_slot_count) {
+				memcpy(nb, sp->buffers,
+				       sp->buffer_slot_count * sizeof(*nb));
+				kfree(sp->buffers);
+			}
 			sp->buffers = nb;
 			sp->buffer_slot_count = scnt;
-		पूर्ण
-		जबतक (sp->buffer_total_count < cnt) अणु
-			काष्ठा pvr2_buffer *bp;
-			bp = kदो_स्मृति(माप(*bp), GFP_KERNEL);
-			अगर (!bp) वापस -ENOMEM;
+		}
+		while (sp->buffer_total_count < cnt) {
+			struct pvr2_buffer *bp;
+			bp = kmalloc(sizeof(*bp), GFP_KERNEL);
+			if (!bp) return -ENOMEM;
 			ret = pvr2_buffer_init(bp, sp, sp->buffer_total_count);
-			अगर (ret) अणु
-				kमुक्त(bp);
-				वापस -ENOMEM;
-			पूर्ण
+			if (ret) {
+				kfree(bp);
+				return -ENOMEM;
+			}
 			sp->buffers[sp->buffer_total_count] = bp;
 			(sp->buffer_total_count)++;
 			pvr2_buffer_set_idle(bp);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		जबतक (sp->buffer_total_count > cnt) अणु
-			काष्ठा pvr2_buffer *bp;
+		}
+	} else {
+		while (sp->buffer_total_count > cnt) {
+			struct pvr2_buffer *bp;
 			bp = sp->buffers[sp->buffer_total_count - 1];
 			/* Paranoia */
-			sp->buffers[sp->buffer_total_count - 1] = शून्य;
+			sp->buffers[sp->buffer_total_count - 1] = NULL;
 			(sp->buffer_total_count)--;
-			pvr2_buffer_करोne(bp);
-			kमुक्त(bp);
-		पूर्ण
-		अगर (scnt < sp->buffer_slot_count) अणु
-			काष्ठा pvr2_buffer **nb = शून्य;
-			अगर (scnt) अणु
-				nb = kmemdup(sp->buffers, scnt * माप(*nb),
+			pvr2_buffer_done(bp);
+			kfree(bp);
+		}
+		if (scnt < sp->buffer_slot_count) {
+			struct pvr2_buffer **nb = NULL;
+			if (scnt) {
+				nb = kmemdup(sp->buffers, scnt * sizeof(*nb),
 					     GFP_KERNEL);
-				अगर (!nb) वापस -ENOMEM;
-			पूर्ण
-			kमुक्त(sp->buffers);
+				if (!nb) return -ENOMEM;
+			}
+			kfree(sp->buffers);
 			sp->buffers = nb;
 			sp->buffer_slot_count = scnt;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+	}
+	return 0;
+}
 
-अटल पूर्णांक pvr2_stream_achieve_buffer_count(काष्ठा pvr2_stream *sp)
-अणु
-	काष्ठा pvr2_buffer *bp;
-	अचिन्हित पूर्णांक cnt;
+static int pvr2_stream_achieve_buffer_count(struct pvr2_stream *sp)
+{
+	struct pvr2_buffer *bp;
+	unsigned int cnt;
 
-	अगर (sp->buffer_total_count == sp->buffer_target_count) वापस 0;
+	if (sp->buffer_total_count == sp->buffer_target_count) return 0;
 
 	pvr2_trace(PVR2_TRACE_BUF_POOL,
 		   "/*---TRACE_FLOW---*/ poolCheck	stream=%p cur=%d tgt=%d",
 		   sp, sp->buffer_total_count, sp->buffer_target_count);
 
-	अगर (sp->buffer_total_count < sp->buffer_target_count) अणु
-		वापस pvr2_stream_buffer_count(sp, sp->buffer_target_count);
-	पूर्ण
+	if (sp->buffer_total_count < sp->buffer_target_count) {
+		return pvr2_stream_buffer_count(sp, sp->buffer_target_count);
+	}
 
 	cnt = 0;
-	जबतक ((sp->buffer_total_count - cnt) > sp->buffer_target_count) अणु
+	while ((sp->buffer_total_count - cnt) > sp->buffer_target_count) {
 		bp = sp->buffers[sp->buffer_total_count - (cnt + 1)];
-		अगर (bp->state != pvr2_buffer_state_idle) अवरोध;
+		if (bp->state != pvr2_buffer_state_idle) break;
 		cnt++;
-	पूर्ण
-	अगर (cnt) अणु
+	}
+	if (cnt) {
 		pvr2_stream_buffer_count(sp, sp->buffer_total_count - cnt);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम pvr2_stream_पूर्णांकernal_flush(काष्ठा pvr2_stream *sp)
-अणु
-	काष्ठा list_head *lp;
-	काष्ठा pvr2_buffer *bp1;
-	जबतक ((lp = sp->queued_list.next) != &sp->queued_list) अणु
-		bp1 = list_entry(lp, काष्ठा pvr2_buffer, list_overhead);
+static void pvr2_stream_internal_flush(struct pvr2_stream *sp)
+{
+	struct list_head *lp;
+	struct pvr2_buffer *bp1;
+	while ((lp = sp->queued_list.next) != &sp->queued_list) {
+		bp1 = list_entry(lp, struct pvr2_buffer, list_overhead);
 		pvr2_buffer_wipe(bp1);
-		/* At this poपूर्णांक, we should be guaranteed that no
+		/* At this point, we should be guaranteed that no
 		   completion callback may happen on this buffer.  But it's
 		   possible that it might have completed after we noticed
-		   it but beक्रमe we wiped it.  So द्विगुन check its status
+		   it but before we wiped it.  So double check its status
 		   here first. */
-		अगर (bp1->state != pvr2_buffer_state_queued) जारी;
+		if (bp1->state != pvr2_buffer_state_queued) continue;
 		pvr2_buffer_set_idle(bp1);
-	पूर्ण
-	अगर (sp->buffer_total_count != sp->buffer_target_count) अणु
+	}
+	if (sp->buffer_total_count != sp->buffer_target_count) {
 		pvr2_stream_achieve_buffer_count(sp);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम pvr2_stream_init(काष्ठा pvr2_stream *sp)
-अणु
+static void pvr2_stream_init(struct pvr2_stream *sp)
+{
 	spin_lock_init(&sp->list_lock);
 	mutex_init(&sp->mutex);
 	INIT_LIST_HEAD(&sp->queued_list);
-	INIT_LIST_HEAD(&sp->पढ़ोy_list);
+	INIT_LIST_HEAD(&sp->ready_list);
 	INIT_LIST_HEAD(&sp->idle_list);
-पूर्ण
+}
 
-अटल व्योम pvr2_stream_करोne(काष्ठा pvr2_stream *sp)
-अणु
-	mutex_lock(&sp->mutex); करो अणु
-		pvr2_stream_पूर्णांकernal_flush(sp);
+static void pvr2_stream_done(struct pvr2_stream *sp)
+{
+	mutex_lock(&sp->mutex); do {
+		pvr2_stream_internal_flush(sp);
 		pvr2_stream_buffer_count(sp, 0);
-	पूर्ण जबतक (0); mutex_unlock(&sp->mutex);
-पूर्ण
+	} while (0); mutex_unlock(&sp->mutex);
+}
 
-अटल व्योम buffer_complete(काष्ठा urb *urb)
-अणु
-	काष्ठा pvr2_buffer *bp = urb->context;
-	काष्ठा pvr2_stream *sp;
-	अचिन्हित दीर्घ irq_flags;
+static void buffer_complete(struct urb *urb)
+{
+	struct pvr2_buffer *bp = urb->context;
+	struct pvr2_stream *sp;
+	unsigned long irq_flags;
 	BUFFER_CHECK(bp);
 	sp = bp->stream;
 	bp->used_count = 0;
@@ -426,20 +425,20 @@
 		   "/*---TRACE_FLOW---*/ bufferComplete %p stat=%d cnt=%d",
 		   bp, urb->status, urb->actual_length);
 	spin_lock_irqsave(&sp->list_lock, irq_flags);
-	अगर ((!(urb->status)) ||
+	if ((!(urb->status)) ||
 	    (urb->status == -ENOENT) ||
 	    (urb->status == -ECONNRESET) ||
-	    (urb->status == -ESHUTDOWN)) अणु
+	    (urb->status == -ESHUTDOWN)) {
 		(sp->buffers_processed)++;
 		sp->bytes_processed += urb->actual_length;
 		bp->used_count = urb->actual_length;
-		अगर (sp->fail_count) अणु
+		if (sp->fail_count) {
 			pvr2_trace(PVR2_TRACE_TOLERANCE,
 				   "stream %p transfer ok - fail count reset",
 				   sp);
 			sp->fail_count = 0;
-		पूर्ण
-	पूर्ण अन्यथा अगर (sp->fail_count < sp->fail_tolerance) अणु
+		}
+	} else if (sp->fail_count < sp->fail_tolerance) {
 		// We can tolerate this error, because we're below the
 		// threshold...
 		(sp->fail_count)++;
@@ -447,200 +446,200 @@
 		pvr2_trace(PVR2_TRACE_TOLERANCE,
 			   "stream %p ignoring error %d - fail count increased to %u",
 			   sp, urb->status, sp->fail_count);
-	पूर्ण अन्यथा अणु
+	} else {
 		(sp->buffers_failed)++;
 		bp->status = urb->status;
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&sp->list_lock, irq_flags);
-	pvr2_buffer_set_पढ़ोy(bp);
-	अगर (sp->callback_func) अणु
+	pvr2_buffer_set_ready(bp);
+	if (sp->callback_func) {
 		sp->callback_func(sp->callback_data);
-	पूर्ण
-पूर्ण
+	}
+}
 
-काष्ठा pvr2_stream *pvr2_stream_create(व्योम)
-अणु
-	काष्ठा pvr2_stream *sp;
-	sp = kzalloc(माप(*sp), GFP_KERNEL);
-	अगर (!sp) वापस sp;
+struct pvr2_stream *pvr2_stream_create(void)
+{
+	struct pvr2_stream *sp;
+	sp = kzalloc(sizeof(*sp), GFP_KERNEL);
+	if (!sp) return sp;
 	pvr2_trace(PVR2_TRACE_INIT, "pvr2_stream_create: sp=%p", sp);
 	pvr2_stream_init(sp);
-	वापस sp;
-पूर्ण
+	return sp;
+}
 
-व्योम pvr2_stream_destroy(काष्ठा pvr2_stream *sp)
-अणु
-	अगर (!sp) वापस;
+void pvr2_stream_destroy(struct pvr2_stream *sp)
+{
+	if (!sp) return;
 	pvr2_trace(PVR2_TRACE_INIT, "pvr2_stream_destroy: sp=%p", sp);
-	pvr2_stream_करोne(sp);
-	kमुक्त(sp);
-पूर्ण
+	pvr2_stream_done(sp);
+	kfree(sp);
+}
 
-व्योम pvr2_stream_setup(काष्ठा pvr2_stream *sp,
-		       काष्ठा usb_device *dev,
-		       पूर्णांक endpoपूर्णांक,
-		       अचिन्हित पूर्णांक tolerance)
-अणु
-	mutex_lock(&sp->mutex); करो अणु
-		pvr2_stream_पूर्णांकernal_flush(sp);
+void pvr2_stream_setup(struct pvr2_stream *sp,
+		       struct usb_device *dev,
+		       int endpoint,
+		       unsigned int tolerance)
+{
+	mutex_lock(&sp->mutex); do {
+		pvr2_stream_internal_flush(sp);
 		sp->dev = dev;
-		sp->endpoपूर्णांक = endpoपूर्णांक;
+		sp->endpoint = endpoint;
 		sp->fail_tolerance = tolerance;
-	पूर्ण जबतक (0); mutex_unlock(&sp->mutex);
-पूर्ण
+	} while (0); mutex_unlock(&sp->mutex);
+}
 
-व्योम pvr2_stream_set_callback(काष्ठा pvr2_stream *sp,
+void pvr2_stream_set_callback(struct pvr2_stream *sp,
 			      pvr2_stream_callback func,
-			      व्योम *data)
-अणु
-	अचिन्हित दीर्घ irq_flags;
+			      void *data)
+{
+	unsigned long irq_flags;
 	mutex_lock(&sp->mutex);
-	करो अणु
+	do {
 		spin_lock_irqsave(&sp->list_lock, irq_flags);
 		sp->callback_data = data;
 		sp->callback_func = func;
 		spin_unlock_irqrestore(&sp->list_lock, irq_flags);
-	पूर्ण जबतक (0);
+	} while (0);
 	mutex_unlock(&sp->mutex);
-पूर्ण
+}
 
-व्योम pvr2_stream_get_stats(काष्ठा pvr2_stream *sp,
-			   काष्ठा pvr2_stream_stats *stats,
-			   पूर्णांक zero_counts)
-अणु
-	अचिन्हित दीर्घ irq_flags;
+void pvr2_stream_get_stats(struct pvr2_stream *sp,
+			   struct pvr2_stream_stats *stats,
+			   int zero_counts)
+{
+	unsigned long irq_flags;
 	spin_lock_irqsave(&sp->list_lock, irq_flags);
-	अगर (stats) अणु
+	if (stats) {
 		stats->buffers_in_queue = sp->q_count;
 		stats->buffers_in_idle = sp->i_count;
-		stats->buffers_in_पढ़ोy = sp->r_count;
+		stats->buffers_in_ready = sp->r_count;
 		stats->buffers_processed = sp->buffers_processed;
 		stats->buffers_failed = sp->buffers_failed;
 		stats->bytes_processed = sp->bytes_processed;
-	पूर्ण
-	अगर (zero_counts) अणु
+	}
+	if (zero_counts) {
 		sp->buffers_processed = 0;
 		sp->buffers_failed = 0;
 		sp->bytes_processed = 0;
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&sp->list_lock, irq_flags);
-पूर्ण
+}
 
 /* Query / set the nominal buffer count */
-पूर्णांक pvr2_stream_get_buffer_count(काष्ठा pvr2_stream *sp)
-अणु
-	वापस sp->buffer_target_count;
-पूर्ण
+int pvr2_stream_get_buffer_count(struct pvr2_stream *sp)
+{
+	return sp->buffer_target_count;
+}
 
-पूर्णांक pvr2_stream_set_buffer_count(काष्ठा pvr2_stream *sp, अचिन्हित पूर्णांक cnt)
-अणु
-	पूर्णांक ret;
-	अगर (sp->buffer_target_count == cnt) वापस 0;
+int pvr2_stream_set_buffer_count(struct pvr2_stream *sp, unsigned int cnt)
+{
+	int ret;
+	if (sp->buffer_target_count == cnt) return 0;
 	mutex_lock(&sp->mutex);
-	करो अणु
+	do {
 		sp->buffer_target_count = cnt;
 		ret = pvr2_stream_achieve_buffer_count(sp);
-	पूर्ण जबतक (0);
+	} while (0);
 	mutex_unlock(&sp->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-काष्ठा pvr2_buffer *pvr2_stream_get_idle_buffer(काष्ठा pvr2_stream *sp)
-अणु
-	काष्ठा list_head *lp = sp->idle_list.next;
-	अगर (lp == &sp->idle_list) वापस शून्य;
-	वापस list_entry(lp, काष्ठा pvr2_buffer, list_overhead);
-पूर्ण
+struct pvr2_buffer *pvr2_stream_get_idle_buffer(struct pvr2_stream *sp)
+{
+	struct list_head *lp = sp->idle_list.next;
+	if (lp == &sp->idle_list) return NULL;
+	return list_entry(lp, struct pvr2_buffer, list_overhead);
+}
 
-काष्ठा pvr2_buffer *pvr2_stream_get_पढ़ोy_buffer(काष्ठा pvr2_stream *sp)
-अणु
-	काष्ठा list_head *lp = sp->पढ़ोy_list.next;
-	अगर (lp == &sp->पढ़ोy_list) वापस शून्य;
-	वापस list_entry(lp, काष्ठा pvr2_buffer, list_overhead);
-पूर्ण
+struct pvr2_buffer *pvr2_stream_get_ready_buffer(struct pvr2_stream *sp)
+{
+	struct list_head *lp = sp->ready_list.next;
+	if (lp == &sp->ready_list) return NULL;
+	return list_entry(lp, struct pvr2_buffer, list_overhead);
+}
 
-काष्ठा pvr2_buffer *pvr2_stream_get_buffer(काष्ठा pvr2_stream *sp, पूर्णांक id)
-अणु
-	अगर (id < 0) वापस शून्य;
-	अगर (id >= sp->buffer_total_count) वापस शून्य;
-	वापस sp->buffers[id];
-पूर्ण
+struct pvr2_buffer *pvr2_stream_get_buffer(struct pvr2_stream *sp, int id)
+{
+	if (id < 0) return NULL;
+	if (id >= sp->buffer_total_count) return NULL;
+	return sp->buffers[id];
+}
 
-पूर्णांक pvr2_stream_get_पढ़ोy_count(काष्ठा pvr2_stream *sp)
-अणु
-	वापस sp->r_count;
-पूर्ण
+int pvr2_stream_get_ready_count(struct pvr2_stream *sp)
+{
+	return sp->r_count;
+}
 
-व्योम pvr2_stream_समाप्त(काष्ठा pvr2_stream *sp)
-अणु
-	काष्ठा pvr2_buffer *bp;
+void pvr2_stream_kill(struct pvr2_stream *sp)
+{
+	struct pvr2_buffer *bp;
 	mutex_lock(&sp->mutex);
-	करो अणु
-		pvr2_stream_पूर्णांकernal_flush(sp);
-		जबतक ((bp = pvr2_stream_get_पढ़ोy_buffer(sp)) != शून्य) अणु
+	do {
+		pvr2_stream_internal_flush(sp);
+		while ((bp = pvr2_stream_get_ready_buffer(sp)) != NULL) {
 			pvr2_buffer_set_idle(bp);
-		पूर्ण
-		अगर (sp->buffer_total_count != sp->buffer_target_count) अणु
+		}
+		if (sp->buffer_total_count != sp->buffer_target_count) {
 			pvr2_stream_achieve_buffer_count(sp);
-		पूर्ण
-	पूर्ण जबतक (0);
+		}
+	} while (0);
 	mutex_unlock(&sp->mutex);
-पूर्ण
+}
 
-पूर्णांक pvr2_buffer_queue(काष्ठा pvr2_buffer *bp)
-अणु
-#अघोषित SEED_BUFFER
-#अगर_घोषित SEED_BUFFER
-	अचिन्हित पूर्णांक idx;
-	अचिन्हित पूर्णांक val;
-#पूर्ण_अगर
-	पूर्णांक ret = 0;
-	काष्ठा pvr2_stream *sp;
-	अगर (!bp) वापस -EINVAL;
+int pvr2_buffer_queue(struct pvr2_buffer *bp)
+{
+#undef SEED_BUFFER
+#ifdef SEED_BUFFER
+	unsigned int idx;
+	unsigned int val;
+#endif
+	int ret = 0;
+	struct pvr2_stream *sp;
+	if (!bp) return -EINVAL;
 	sp = bp->stream;
 	mutex_lock(&sp->mutex);
-	करो अणु
+	do {
 		pvr2_buffer_wipe(bp);
-		अगर (!sp->dev) अणु
+		if (!sp->dev) {
 			ret = -EIO;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		pvr2_buffer_set_queued(bp);
-#अगर_घोषित SEED_BUFFER
-		क्रम (idx = 0; idx < (bp->max_count) / 4; idx++) अणु
+#ifdef SEED_BUFFER
+		for (idx = 0; idx < (bp->max_count) / 4; idx++) {
 			val = bp->id << 24;
 			val |= idx;
-			((अचिन्हित पूर्णांक *)(bp->ptr))[idx] = val;
-		पूर्ण
-#पूर्ण_अगर
+			((unsigned int *)(bp->ptr))[idx] = val;
+		}
+#endif
 		bp->status = -EINPROGRESS;
-		usb_fill_bulk_urb(bp->purb,      // काष्ठा urb *urb
-				  sp->dev,       // काष्ठा usb_device *dev
-				  // endpoपूर्णांक (below)
-				  usb_rcvbulkpipe(sp->dev, sp->endpoपूर्णांक),
-				  bp->ptr,       // व्योम *transfer_buffer
-				  bp->max_count, // पूर्णांक buffer_length
+		usb_fill_bulk_urb(bp->purb,      // struct urb *urb
+				  sp->dev,       // struct usb_device *dev
+				  // endpoint (below)
+				  usb_rcvbulkpipe(sp->dev, sp->endpoint),
+				  bp->ptr,       // void *transfer_buffer
+				  bp->max_count, // int buffer_length
 				  buffer_complete,
 				  bp);
 		usb_submit_urb(bp->purb, GFP_KERNEL);
-	पूर्ण जबतक (0);
+	} while (0);
 	mutex_unlock(&sp->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक pvr2_buffer_set_buffer(काष्ठा pvr2_buffer *bp, व्योम *ptr, अचिन्हित पूर्णांक cnt)
-अणु
-	पूर्णांक ret = 0;
-	अचिन्हित दीर्घ irq_flags;
-	काष्ठा pvr2_stream *sp;
-	अगर (!bp) वापस -EINVAL;
+int pvr2_buffer_set_buffer(struct pvr2_buffer *bp, void *ptr, unsigned int cnt)
+{
+	int ret = 0;
+	unsigned long irq_flags;
+	struct pvr2_stream *sp;
+	if (!bp) return -EINVAL;
 	sp = bp->stream;
 	mutex_lock(&sp->mutex);
-	करो अणु
+	do {
 		spin_lock_irqsave(&sp->list_lock, irq_flags);
-		अगर (bp->state != pvr2_buffer_state_idle) अणु
+		if (bp->state != pvr2_buffer_state_idle) {
 			ret = -EPERM;
-		पूर्ण अन्यथा अणु
+		} else {
 			bp->ptr = ptr;
 			bp->stream->i_bcount -= bp->max_count;
 			bp->max_count = cnt;
@@ -650,24 +649,24 @@
 				   pvr2_buffer_state_decode(
 					   pvr2_buffer_state_idle),
 				   bp->stream->i_bcount, bp->stream->i_count);
-		पूर्ण
+		}
 		spin_unlock_irqrestore(&sp->list_lock, irq_flags);
-	पूर्ण जबतक (0);
+	} while (0);
 	mutex_unlock(&sp->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अचिन्हित पूर्णांक pvr2_buffer_get_count(काष्ठा pvr2_buffer *bp)
-अणु
-	वापस bp->used_count;
-पूर्ण
+unsigned int pvr2_buffer_get_count(struct pvr2_buffer *bp)
+{
+	return bp->used_count;
+}
 
-पूर्णांक pvr2_buffer_get_status(काष्ठा pvr2_buffer *bp)
-अणु
-	वापस bp->status;
-पूर्ण
+int pvr2_buffer_get_status(struct pvr2_buffer *bp)
+{
+	return bp->status;
+}
 
-पूर्णांक pvr2_buffer_get_id(काष्ठा pvr2_buffer *bp)
-अणु
-	वापस bp->id;
-पूर्ण
+int pvr2_buffer_get_id(struct pvr2_buffer *bp)
+{
+	return bp->id;
+}

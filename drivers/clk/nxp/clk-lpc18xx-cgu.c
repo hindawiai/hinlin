@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- * Clk driver क्रम NXP LPC18xx/LPC43xx Clock Generation Unit (CGU)
+ * Clk driver for NXP LPC18xx/LPC43xx Clock Generation Unit (CGU)
  *
  * Copyright (C) 2015 Joachim Eastwood <manabian@gmail.com>
  *
@@ -9,50 +8,50 @@
  * warranty of any kind, whether express or implied.
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
+#include <linux/clk-provider.h>
+#include <linux/delay.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
 
-#समावेश <dt-bindings/घड़ी/lpc18xx-cgu.h>
+#include <dt-bindings/clock/lpc18xx-cgu.h>
 
-/* Clock Generation Unit (CGU) रेजिस्टरs */
-#घोषणा LPC18XX_CGU_XTAL_OSC_CTRL	0x018
-#घोषणा LPC18XX_CGU_PLL0USB_STAT	0x01c
-#घोषणा LPC18XX_CGU_PLL0USB_CTRL	0x020
-#घोषणा LPC18XX_CGU_PLL0USB_MDIV	0x024
-#घोषणा LPC18XX_CGU_PLL0USB_NP_DIV	0x028
-#घोषणा LPC18XX_CGU_PLL0AUDIO_STAT	0x02c
-#घोषणा LPC18XX_CGU_PLL0AUDIO_CTRL	0x030
-#घोषणा LPC18XX_CGU_PLL0AUDIO_MDIV	0x034
-#घोषणा LPC18XX_CGU_PLL0AUDIO_NP_DIV	0x038
-#घोषणा LPC18XX_CGU_PLL0AUDIO_FRAC	0x03c
-#घोषणा LPC18XX_CGU_PLL1_STAT		0x040
-#घोषणा LPC18XX_CGU_PLL1_CTRL		0x044
-#घोषणा  LPC18XX_PLL1_CTRL_FBSEL	BIT(6)
-#घोषणा  LPC18XX_PLL1_CTRL_सूचीECT	BIT(7)
-#घोषणा LPC18XX_CGU_IDIV_CTRL(n)	(0x048 + (n) * माप(u32))
-#घोषणा LPC18XX_CGU_BASE_CLK(id)	(0x05c + (id) * माप(u32))
-#घोषणा LPC18XX_CGU_PLL_CTRL_OFFSET	0x4
+/* Clock Generation Unit (CGU) registers */
+#define LPC18XX_CGU_XTAL_OSC_CTRL	0x018
+#define LPC18XX_CGU_PLL0USB_STAT	0x01c
+#define LPC18XX_CGU_PLL0USB_CTRL	0x020
+#define LPC18XX_CGU_PLL0USB_MDIV	0x024
+#define LPC18XX_CGU_PLL0USB_NP_DIV	0x028
+#define LPC18XX_CGU_PLL0AUDIO_STAT	0x02c
+#define LPC18XX_CGU_PLL0AUDIO_CTRL	0x030
+#define LPC18XX_CGU_PLL0AUDIO_MDIV	0x034
+#define LPC18XX_CGU_PLL0AUDIO_NP_DIV	0x038
+#define LPC18XX_CGU_PLL0AUDIO_FRAC	0x03c
+#define LPC18XX_CGU_PLL1_STAT		0x040
+#define LPC18XX_CGU_PLL1_CTRL		0x044
+#define  LPC18XX_PLL1_CTRL_FBSEL	BIT(6)
+#define  LPC18XX_PLL1_CTRL_DIRECT	BIT(7)
+#define LPC18XX_CGU_IDIV_CTRL(n)	(0x048 + (n) * sizeof(u32))
+#define LPC18XX_CGU_BASE_CLK(id)	(0x05c + (id) * sizeof(u32))
+#define LPC18XX_CGU_PLL_CTRL_OFFSET	0x4
 
 /* PLL0 bits common to both audio and USB PLL */
-#घोषणा LPC18XX_PLL0_STAT_LOCK		BIT(0)
-#घोषणा LPC18XX_PLL0_CTRL_PD		BIT(0)
-#घोषणा LPC18XX_PLL0_CTRL_BYPASS	BIT(1)
-#घोषणा LPC18XX_PLL0_CTRL_सूचीECTI	BIT(2)
-#घोषणा LPC18XX_PLL0_CTRL_सूचीECTO	BIT(3)
-#घोषणा LPC18XX_PLL0_CTRL_CLKEN		BIT(4)
-#घोषणा LPC18XX_PLL0_MDIV_MDEC_MASK	0x1ffff
-#घोषणा LPC18XX_PLL0_MDIV_SELP_SHIFT	17
-#घोषणा LPC18XX_PLL0_MDIV_SELI_SHIFT	22
-#घोषणा LPC18XX_PLL0_MSEL_MAX		BIT(15)
+#define LPC18XX_PLL0_STAT_LOCK		BIT(0)
+#define LPC18XX_PLL0_CTRL_PD		BIT(0)
+#define LPC18XX_PLL0_CTRL_BYPASS	BIT(1)
+#define LPC18XX_PLL0_CTRL_DIRECTI	BIT(2)
+#define LPC18XX_PLL0_CTRL_DIRECTO	BIT(3)
+#define LPC18XX_PLL0_CTRL_CLKEN		BIT(4)
+#define LPC18XX_PLL0_MDIV_MDEC_MASK	0x1ffff
+#define LPC18XX_PLL0_MDIV_SELP_SHIFT	17
+#define LPC18XX_PLL0_MDIV_SELI_SHIFT	22
+#define LPC18XX_PLL0_MSEL_MAX		BIT(15)
 
-/* Register value that gives PLL0 post/pre भागiders equal to 1 */
-#घोषणा LPC18XX_PLL0_NP_DIVS_1		0x00302062
+/* Register value that gives PLL0 post/pre dividers equal to 1 */
+#define LPC18XX_PLL0_NP_DIVS_1		0x00302062
 
-क्रमागत अणु
+enum {
 	CLK_SRC_OSC32,
 	CLK_SRC_IRC,
 	CLK_SRC_ENET_RX_CLK,
@@ -71,9 +70,9 @@
 	CLK_SRC_IDIVD,
 	CLK_SRC_IDIVE,
 	CLK_SRC_MAX
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *clk_src_names[CLK_SRC_MAX] = अणु
+static const char *clk_src_names[CLK_SRC_MAX] = {
 	[CLK_SRC_OSC32]		= "osc32",
 	[CLK_SRC_IRC]		= "irc",
 	[CLK_SRC_ENET_RX_CLK]	= "enet_rx_clk",
@@ -88,9 +87,9 @@
 	[CLK_SRC_IDIVC]		= "idivc",
 	[CLK_SRC_IDIVD]		= "idivd",
 	[CLK_SRC_IDIVE]		= "idive",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *clk_base_names[BASE_CLK_MAX] = अणु
+static const char *clk_base_names[BASE_CLK_MAX] = {
 	[BASE_SAFE_CLK]		= "base_safe_clk",
 	[BASE_USB0_CLK]		= "base_usb0_clk",
 	[BASE_PERIPH_CLK]	= "base_periph_clk",
@@ -115,112 +114,112 @@
 	[BASE_AUDIO_CLK]	= "base_audio_clk",
 	[BASE_CGU_OUT0_CLK]	= "base_cgu_out0_clk",
 	[BASE_CGU_OUT1_CLK]	= "base_cgu_out1_clk",
-पूर्ण;
+};
 
-अटल u32 lpc18xx_cgu_pll0_src_ids[] = अणु
+static u32 lpc18xx_cgu_pll0_src_ids[] = {
 	CLK_SRC_OSC32, CLK_SRC_IRC, CLK_SRC_ENET_RX_CLK,
 	CLK_SRC_ENET_TX_CLK, CLK_SRC_GP_CLKIN, CLK_SRC_OSC,
 	CLK_SRC_PLL1, CLK_SRC_IDIVA, CLK_SRC_IDIVB, CLK_SRC_IDIVC,
 	CLK_SRC_IDIVD, CLK_SRC_IDIVE,
-पूर्ण;
+};
 
-अटल u32 lpc18xx_cgu_pll1_src_ids[] = अणु
+static u32 lpc18xx_cgu_pll1_src_ids[] = {
 	CLK_SRC_OSC32, CLK_SRC_IRC, CLK_SRC_ENET_RX_CLK,
 	CLK_SRC_ENET_TX_CLK, CLK_SRC_GP_CLKIN, CLK_SRC_OSC,
 	CLK_SRC_PLL0USB, CLK_SRC_PLL0AUDIO, CLK_SRC_IDIVA,
 	CLK_SRC_IDIVB, CLK_SRC_IDIVC, CLK_SRC_IDIVD, CLK_SRC_IDIVE,
-पूर्ण;
+};
 
-अटल u32 lpc18xx_cgu_iभागa_src_ids[] = अणु
+static u32 lpc18xx_cgu_idiva_src_ids[] = {
 	CLK_SRC_OSC32, CLK_SRC_IRC, CLK_SRC_ENET_RX_CLK,
 	CLK_SRC_ENET_TX_CLK, CLK_SRC_GP_CLKIN, CLK_SRC_OSC,
 	CLK_SRC_PLL0USB, CLK_SRC_PLL0AUDIO, CLK_SRC_PLL1
-पूर्ण;
+};
 
-अटल u32 lpc18xx_cgu_iभागbcde_src_ids[] = अणु
+static u32 lpc18xx_cgu_idivbcde_src_ids[] = {
 	CLK_SRC_OSC32, CLK_SRC_IRC, CLK_SRC_ENET_RX_CLK,
 	CLK_SRC_ENET_TX_CLK, CLK_SRC_GP_CLKIN, CLK_SRC_OSC,
 	CLK_SRC_PLL0AUDIO, CLK_SRC_PLL1, CLK_SRC_IDIVA,
-पूर्ण;
+};
 
-अटल u32 lpc18xx_cgu_base_irc_src_ids[] = अणुCLK_SRC_IRCपूर्ण;
+static u32 lpc18xx_cgu_base_irc_src_ids[] = {CLK_SRC_IRC};
 
-अटल u32 lpc18xx_cgu_base_usb0_src_ids[] = अणुCLK_SRC_PLL0USBपूर्ण;
+static u32 lpc18xx_cgu_base_usb0_src_ids[] = {CLK_SRC_PLL0USB};
 
-अटल u32 lpc18xx_cgu_base_common_src_ids[] = अणु
+static u32 lpc18xx_cgu_base_common_src_ids[] = {
 	CLK_SRC_OSC32, CLK_SRC_IRC, CLK_SRC_ENET_RX_CLK,
 	CLK_SRC_ENET_TX_CLK, CLK_SRC_GP_CLKIN, CLK_SRC_OSC,
 	CLK_SRC_PLL0AUDIO, CLK_SRC_PLL1, CLK_SRC_IDIVA,
 	CLK_SRC_IDIVB, CLK_SRC_IDIVC, CLK_SRC_IDIVD, CLK_SRC_IDIVE,
-पूर्ण;
+};
 
-अटल u32 lpc18xx_cgu_base_all_src_ids[] = अणु
+static u32 lpc18xx_cgu_base_all_src_ids[] = {
 	CLK_SRC_OSC32, CLK_SRC_IRC, CLK_SRC_ENET_RX_CLK,
 	CLK_SRC_ENET_TX_CLK, CLK_SRC_GP_CLKIN, CLK_SRC_OSC,
 	CLK_SRC_PLL0USB, CLK_SRC_PLL0AUDIO, CLK_SRC_PLL1,
 	CLK_SRC_IDIVA, CLK_SRC_IDIVB, CLK_SRC_IDIVC,
 	CLK_SRC_IDIVD, CLK_SRC_IDIVE,
-पूर्ण;
+};
 
-काष्ठा lpc18xx_cgu_src_clk_भाग अणु
+struct lpc18xx_cgu_src_clk_div {
 	u8 clk_id;
 	u8 n_parents;
-	काष्ठा clk_भागider	भाग;
-	काष्ठा clk_mux		mux;
-	काष्ठा clk_gate		gate;
-पूर्ण;
+	struct clk_divider	div;
+	struct clk_mux		mux;
+	struct clk_gate		gate;
+};
 
-#घोषणा LPC1XX_CGU_SRC_CLK_DIV(_id, _width, _table)	\
-अणु							\
+#define LPC1XX_CGU_SRC_CLK_DIV(_id, _width, _table)	\
+{							\
 	.clk_id = CLK_SRC_ ##_id,			\
 	.n_parents = ARRAY_SIZE(lpc18xx_cgu_ ##_table),	\
-	.भाग = अणु					\
-		.shअगरt = 2,				\
+	.div = {					\
+		.shift = 2,				\
 		.width = _width,			\
-	पूर्ण,						\
-	.mux = अणु					\
+	},						\
+	.mux = {					\
 		.mask = 0x1f,				\
-		.shअगरt = 24,				\
+		.shift = 24,				\
 		.table = lpc18xx_cgu_ ##_table,		\
-	पूर्ण,						\
-	.gate = अणु					\
+	},						\
+	.gate = {					\
 		.bit_idx = 0,				\
 		.flags = CLK_GATE_SET_TO_DISABLE,	\
-	पूर्ण,						\
-पूर्ण
+	},						\
+}
 
-अटल काष्ठा lpc18xx_cgu_src_clk_भाग lpc18xx_cgu_src_clk_भागs[] = अणु
-	LPC1XX_CGU_SRC_CLK_DIV(IDIVA, 2, iभागa_src_ids),
-	LPC1XX_CGU_SRC_CLK_DIV(IDIVB, 4, iभागbcde_src_ids),
-	LPC1XX_CGU_SRC_CLK_DIV(IDIVC, 4, iभागbcde_src_ids),
-	LPC1XX_CGU_SRC_CLK_DIV(IDIVD, 4, iभागbcde_src_ids),
-	LPC1XX_CGU_SRC_CLK_DIV(IDIVE, 8, iभागbcde_src_ids),
-पूर्ण;
+static struct lpc18xx_cgu_src_clk_div lpc18xx_cgu_src_clk_divs[] = {
+	LPC1XX_CGU_SRC_CLK_DIV(IDIVA, 2, idiva_src_ids),
+	LPC1XX_CGU_SRC_CLK_DIV(IDIVB, 4, idivbcde_src_ids),
+	LPC1XX_CGU_SRC_CLK_DIV(IDIVC, 4, idivbcde_src_ids),
+	LPC1XX_CGU_SRC_CLK_DIV(IDIVD, 4, idivbcde_src_ids),
+	LPC1XX_CGU_SRC_CLK_DIV(IDIVE, 8, idivbcde_src_ids),
+};
 
-काष्ठा lpc18xx_cgu_base_clk अणु
+struct lpc18xx_cgu_base_clk {
 	u8 clk_id;
 	u8 n_parents;
-	काष्ठा clk_mux mux;
-	काष्ठा clk_gate gate;
-पूर्ण;
+	struct clk_mux mux;
+	struct clk_gate gate;
+};
 
-#घोषणा LPC1XX_CGU_BASE_CLK(_id, _table, _flags)	\
-अणु							\
+#define LPC1XX_CGU_BASE_CLK(_id, _table, _flags)	\
+{							\
 	.clk_id = BASE_ ##_id ##_CLK,			\
 	.n_parents = ARRAY_SIZE(lpc18xx_cgu_ ##_table),	\
-	.mux = अणु					\
+	.mux = {					\
 		.mask = 0x1f,				\
-		.shअगरt = 24,				\
+		.shift = 24,				\
 		.table = lpc18xx_cgu_ ##_table,		\
 		.flags = _flags,			\
-	पूर्ण,						\
-	.gate = अणु					\
+	},						\
+	.gate = {					\
 		.bit_idx = 0,				\
 		.flags = CLK_GATE_SET_TO_DISABLE,	\
-	पूर्ण,						\
-पूर्ण
+	},						\
+}
 
-अटल काष्ठा lpc18xx_cgu_base_clk lpc18xx_cgu_base_clks[] = अणु
+static struct lpc18xx_cgu_base_clk lpc18xx_cgu_base_clks[] = {
 	LPC1XX_CGU_BASE_CLK(SAFE,	base_irc_src_ids, CLK_MUX_READ_ONLY),
 	LPC1XX_CGU_BASE_CLK(USB0,	base_usb0_src_ids,   0),
 	LPC1XX_CGU_BASE_CLK(PERIPH,	base_common_src_ids, 0),
@@ -242,325 +241,325 @@
 	LPC1XX_CGU_BASE_CLK(UART2,	base_common_src_ids, 0),
 	LPC1XX_CGU_BASE_CLK(UART3,	base_common_src_ids, 0),
 	LPC1XX_CGU_BASE_CLK(OUT,	base_all_src_ids,    0),
-	अणु /* 21 reserved */ पूर्ण,
-	अणु /* 22 reserved */ पूर्ण,
-	अणु /* 23 reserved */ पूर्ण,
-	अणु /* 24 reserved */ पूर्ण,
+	{ /* 21 reserved */ },
+	{ /* 22 reserved */ },
+	{ /* 23 reserved */ },
+	{ /* 24 reserved */ },
 	LPC1XX_CGU_BASE_CLK(AUDIO,	base_common_src_ids, 0),
 	LPC1XX_CGU_BASE_CLK(CGU_OUT0,	base_all_src_ids,    0),
 	LPC1XX_CGU_BASE_CLK(CGU_OUT1,	base_all_src_ids,    0),
-पूर्ण;
+};
 
-काष्ठा lpc18xx_pll अणु
-	काष्ठा		clk_hw hw;
-	व्योम __iomem	*reg;
+struct lpc18xx_pll {
+	struct		clk_hw hw;
+	void __iomem	*reg;
 	spinlock_t	*lock;
 	u8		flags;
-पूर्ण;
+};
 
-#घोषणा to_lpc_pll(hw) container_of(hw, काष्ठा lpc18xx_pll, hw)
+#define to_lpc_pll(hw) container_of(hw, struct lpc18xx_pll, hw)
 
-काष्ठा lpc18xx_cgu_pll_clk अणु
+struct lpc18xx_cgu_pll_clk {
 	u8 clk_id;
 	u8 n_parents;
 	u8 reg_offset;
-	काष्ठा clk_mux mux;
-	काष्ठा clk_gate gate;
-	काष्ठा lpc18xx_pll pll;
-	स्थिर काष्ठा clk_ops *pll_ops;
-पूर्ण;
+	struct clk_mux mux;
+	struct clk_gate gate;
+	struct lpc18xx_pll pll;
+	const struct clk_ops *pll_ops;
+};
 
-#घोषणा LPC1XX_CGU_CLK_PLL(_id, _table, _pll_ops)	\
-अणु							\
+#define LPC1XX_CGU_CLK_PLL(_id, _table, _pll_ops)	\
+{							\
 	.clk_id = CLK_SRC_ ##_id,			\
 	.n_parents = ARRAY_SIZE(lpc18xx_cgu_ ##_table),	\
 	.reg_offset = LPC18XX_CGU_ ##_id ##_STAT,	\
-	.mux = अणु					\
+	.mux = {					\
 		.mask = 0x1f,				\
-		.shअगरt = 24,				\
+		.shift = 24,				\
 		.table = lpc18xx_cgu_ ##_table,		\
-	पूर्ण,						\
-	.gate = अणु					\
+	},						\
+	.gate = {					\
 		.bit_idx = 0,				\
 		.flags = CLK_GATE_SET_TO_DISABLE,	\
-	पूर्ण,						\
+	},						\
 	.pll_ops = &lpc18xx_ ##_pll_ops,		\
-पूर्ण
+}
 
 /*
- * PLL0 uses a special रेजिस्टर value encoding. The compute functions below
+ * PLL0 uses a special register value encoding. The compute functions below
  * are taken or derived from the LPC1850 user manual (section 12.6.3.3).
  */
 
 /* Compute PLL0 multiplier from decoded version */
-अटल u32 lpc18xx_pll0_mdec2msel(u32 x)
-अणु
-	पूर्णांक i;
+static u32 lpc18xx_pll0_mdec2msel(u32 x)
+{
+	int i;
 
-	चयन (x) अणु
-	हाल 0x18003: वापस 1;
-	हाल 0x10003: वापस 2;
-	शेष:
-		क्रम (i = LPC18XX_PLL0_MSEL_MAX + 1; x != 0x4000 && i > 0; i--)
+	switch (x) {
+	case 0x18003: return 1;
+	case 0x10003: return 2;
+	default:
+		for (i = LPC18XX_PLL0_MSEL_MAX + 1; x != 0x4000 && i > 0; i--)
 			x = ((x ^ x >> 14) & 1) | (x << 1 & 0x7fff);
-		वापस i;
-	पूर्ण
-पूर्ण
+		return i;
+	}
+}
 /* Compute PLL0 decoded multiplier from binary version */
-अटल u32 lpc18xx_pll0_msel2mdec(u32 msel)
-अणु
+static u32 lpc18xx_pll0_msel2mdec(u32 msel)
+{
 	u32 i, x = 0x4000;
 
-	चयन (msel) अणु
-	हाल 0: वापस 0;
-	हाल 1: वापस 0x18003;
-	हाल 2: वापस 0x10003;
-	शेष:
-		क्रम (i = msel; i <= LPC18XX_PLL0_MSEL_MAX; i++)
+	switch (msel) {
+	case 0: return 0;
+	case 1: return 0x18003;
+	case 2: return 0x10003;
+	default:
+		for (i = msel; i <= LPC18XX_PLL0_MSEL_MAX; i++)
 			x = ((x ^ x >> 1) & 1) << 14 | (x >> 1 & 0xffff);
-		वापस x;
-	पूर्ण
-पूर्ण
+		return x;
+	}
+}
 
 /* Compute PLL0 bandwidth SELI reg from multiplier */
-अटल u32 lpc18xx_pll0_msel2seli(u32 msel)
-अणु
-	u32 पंचांगp;
+static u32 lpc18xx_pll0_msel2seli(u32 msel)
+{
+	u32 tmp;
 
-	अगर (msel > 16384) वापस 1;
-	अगर (msel >  8192) वापस 2;
-	अगर (msel >  2048) वापस 4;
-	अगर (msel >=  501) वापस 8;
-	अगर (msel >=   60) अणु
-		पंचांगp = 1024 / (msel + 9);
-		वापस ((1024 == (पंचांगp * (msel + 9))) == 0) ? पंचांगp * 4 : (पंचांगp + 1) * 4;
-	पूर्ण
+	if (msel > 16384) return 1;
+	if (msel >  8192) return 2;
+	if (msel >  2048) return 4;
+	if (msel >=  501) return 8;
+	if (msel >=   60) {
+		tmp = 1024 / (msel + 9);
+		return ((1024 == (tmp * (msel + 9))) == 0) ? tmp * 4 : (tmp + 1) * 4;
+	}
 
-	वापस (msel & 0x3c) + 4;
-पूर्ण
+	return (msel & 0x3c) + 4;
+}
 
 /* Compute PLL0 bandwidth SELP reg from multiplier */
-अटल u32 lpc18xx_pll0_msel2selp(u32 msel)
-अणु
-	अगर (msel < 60)
-		वापस (msel >> 1) + 1;
+static u32 lpc18xx_pll0_msel2selp(u32 msel)
+{
+	if (msel < 60)
+		return (msel >> 1) + 1;
 
-	वापस 31;
-पूर्ण
+	return 31;
+}
 
-अटल अचिन्हित दीर्घ lpc18xx_pll0_recalc_rate(काष्ठा clk_hw *hw,
-					      अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा lpc18xx_pll *pll = to_lpc_pll(hw);
-	u32 ctrl, mभाग, msel, npभाग;
+static unsigned long lpc18xx_pll0_recalc_rate(struct clk_hw *hw,
+					      unsigned long parent_rate)
+{
+	struct lpc18xx_pll *pll = to_lpc_pll(hw);
+	u32 ctrl, mdiv, msel, npdiv;
 
-	ctrl = पढ़ोl(pll->reg + LPC18XX_CGU_PLL0USB_CTRL);
-	mभाग = पढ़ोl(pll->reg + LPC18XX_CGU_PLL0USB_MDIV);
-	npभाग = पढ़ोl(pll->reg + LPC18XX_CGU_PLL0USB_NP_DIV);
+	ctrl = readl(pll->reg + LPC18XX_CGU_PLL0USB_CTRL);
+	mdiv = readl(pll->reg + LPC18XX_CGU_PLL0USB_MDIV);
+	npdiv = readl(pll->reg + LPC18XX_CGU_PLL0USB_NP_DIV);
 
-	अगर (ctrl & LPC18XX_PLL0_CTRL_BYPASS)
-		वापस parent_rate;
+	if (ctrl & LPC18XX_PLL0_CTRL_BYPASS)
+		return parent_rate;
 
-	अगर (npभाग != LPC18XX_PLL0_NP_DIVS_1) अणु
+	if (npdiv != LPC18XX_PLL0_NP_DIVS_1) {
 		pr_warn("%s: pre/post dividers not supported\n", __func__);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	msel = lpc18xx_pll0_mdec2msel(mभाग & LPC18XX_PLL0_MDIV_MDEC_MASK);
-	अगर (msel)
-		वापस 2 * msel * parent_rate;
+	msel = lpc18xx_pll0_mdec2msel(mdiv & LPC18XX_PLL0_MDIV_MDEC_MASK);
+	if (msel)
+		return 2 * msel * parent_rate;
 
 	pr_warn("%s: unable to calculate rate\n", __func__);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल दीर्घ lpc18xx_pll0_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				    अचिन्हित दीर्घ *prate)
-अणु
-	अचिन्हित दीर्घ m;
+static long lpc18xx_pll0_round_rate(struct clk_hw *hw, unsigned long rate,
+				    unsigned long *prate)
+{
+	unsigned long m;
 
-	अगर (*prate < rate) अणु
+	if (*prate < rate) {
 		pr_warn("%s: pll dividers not supported\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	m = DIV_ROUND_UP_ULL(*prate, rate * 2);
-	अगर (m <= 0 && m > LPC18XX_PLL0_MSEL_MAX) अणु
+	if (m <= 0 && m > LPC18XX_PLL0_MSEL_MAX) {
 		pr_warn("%s: unable to support rate %lu\n", __func__, rate);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 2 * *prate * m;
-पूर्ण
+	return 2 * *prate * m;
+}
 
-अटल पूर्णांक lpc18xx_pll0_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				 अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा lpc18xx_pll *pll = to_lpc_pll(hw);
+static int lpc18xx_pll0_set_rate(struct clk_hw *hw, unsigned long rate,
+				 unsigned long parent_rate)
+{
+	struct lpc18xx_pll *pll = to_lpc_pll(hw);
 	u32 ctrl, stat, m;
-	पूर्णांक retry = 3;
+	int retry = 3;
 
-	अगर (parent_rate < rate) अणु
+	if (parent_rate < rate) {
 		pr_warn("%s: pll dividers not supported\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	m = DIV_ROUND_UP_ULL(parent_rate, rate * 2);
-	अगर (m <= 0 && m > LPC18XX_PLL0_MSEL_MAX) अणु
+	if (m <= 0 && m > LPC18XX_PLL0_MSEL_MAX) {
 		pr_warn("%s: unable to support rate %lu\n", __func__, rate);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	m  = lpc18xx_pll0_msel2mdec(m);
 	m |= lpc18xx_pll0_msel2selp(m) << LPC18XX_PLL0_MDIV_SELP_SHIFT;
 	m |= lpc18xx_pll0_msel2seli(m) << LPC18XX_PLL0_MDIV_SELI_SHIFT;
 
-	/* Power करोwn PLL, disable clk output and भागiders */
-	ctrl = पढ़ोl(pll->reg + LPC18XX_CGU_PLL0USB_CTRL);
+	/* Power down PLL, disable clk output and dividers */
+	ctrl = readl(pll->reg + LPC18XX_CGU_PLL0USB_CTRL);
 	ctrl |= LPC18XX_PLL0_CTRL_PD;
-	ctrl &= ~(LPC18XX_PLL0_CTRL_BYPASS | LPC18XX_PLL0_CTRL_सूचीECTI |
-		  LPC18XX_PLL0_CTRL_सूचीECTO | LPC18XX_PLL0_CTRL_CLKEN);
-	ग_लिखोl(ctrl, pll->reg + LPC18XX_CGU_PLL0USB_CTRL);
+	ctrl &= ~(LPC18XX_PLL0_CTRL_BYPASS | LPC18XX_PLL0_CTRL_DIRECTI |
+		  LPC18XX_PLL0_CTRL_DIRECTO | LPC18XX_PLL0_CTRL_CLKEN);
+	writel(ctrl, pll->reg + LPC18XX_CGU_PLL0USB_CTRL);
 
 	/* Configure new PLL settings */
-	ग_लिखोl(m, pll->reg + LPC18XX_CGU_PLL0USB_MDIV);
-	ग_लिखोl(LPC18XX_PLL0_NP_DIVS_1, pll->reg + LPC18XX_CGU_PLL0USB_NP_DIV);
+	writel(m, pll->reg + LPC18XX_CGU_PLL0USB_MDIV);
+	writel(LPC18XX_PLL0_NP_DIVS_1, pll->reg + LPC18XX_CGU_PLL0USB_NP_DIV);
 
-	/* Power up PLL and रुको क्रम lock */
+	/* Power up PLL and wait for lock */
 	ctrl &= ~LPC18XX_PLL0_CTRL_PD;
-	ग_लिखोl(ctrl, pll->reg + LPC18XX_CGU_PLL0USB_CTRL);
-	करो अणु
+	writel(ctrl, pll->reg + LPC18XX_CGU_PLL0USB_CTRL);
+	do {
 		udelay(10);
-		stat = पढ़ोl(pll->reg + LPC18XX_CGU_PLL0USB_STAT);
-		अगर (stat & LPC18XX_PLL0_STAT_LOCK) अणु
+		stat = readl(pll->reg + LPC18XX_CGU_PLL0USB_STAT);
+		if (stat & LPC18XX_PLL0_STAT_LOCK) {
 			ctrl |= LPC18XX_PLL0_CTRL_CLKEN;
-			ग_लिखोl(ctrl, pll->reg + LPC18XX_CGU_PLL0USB_CTRL);
+			writel(ctrl, pll->reg + LPC18XX_CGU_PLL0USB_CTRL);
 
-			वापस 0;
-		पूर्ण
-	पूर्ण जबतक (retry--);
+			return 0;
+		}
+	} while (retry--);
 
 	pr_warn("%s: unable to lock pll\n", __func__);
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल स्थिर काष्ठा clk_ops lpc18xx_pll0_ops = अणु
+static const struct clk_ops lpc18xx_pll0_ops = {
 	.recalc_rate	= lpc18xx_pll0_recalc_rate,
 	.round_rate	= lpc18xx_pll0_round_rate,
 	.set_rate	= lpc18xx_pll0_set_rate,
-पूर्ण;
+};
 
-अटल अचिन्हित दीर्घ lpc18xx_pll1_recalc_rate(काष्ठा clk_hw *hw,
-					      अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा lpc18xx_pll *pll = to_lpc_pll(hw);
+static unsigned long lpc18xx_pll1_recalc_rate(struct clk_hw *hw,
+					      unsigned long parent_rate)
+{
+	struct lpc18xx_pll *pll = to_lpc_pll(hw);
 	u16 msel, nsel, psel;
 	bool direct, fbsel;
 	u32 stat, ctrl;
 
-	stat = पढ़ोl(pll->reg + LPC18XX_CGU_PLL1_STAT);
-	ctrl = पढ़ोl(pll->reg + LPC18XX_CGU_PLL1_CTRL);
+	stat = readl(pll->reg + LPC18XX_CGU_PLL1_STAT);
+	ctrl = readl(pll->reg + LPC18XX_CGU_PLL1_CTRL);
 
-	direct = (ctrl & LPC18XX_PLL1_CTRL_सूचीECT) ? true : false;
+	direct = (ctrl & LPC18XX_PLL1_CTRL_DIRECT) ? true : false;
 	fbsel = (ctrl & LPC18XX_PLL1_CTRL_FBSEL) ? true : false;
 
 	msel = ((ctrl >> 16) & 0xff) + 1;
 	nsel = ((ctrl >> 12) & 0x3) + 1;
 
-	अगर (direct || fbsel)
-		वापस msel * (parent_rate / nsel);
+	if (direct || fbsel)
+		return msel * (parent_rate / nsel);
 
 	psel = (ctrl >>  8) & 0x3;
 	psel = 1 << psel;
 
-	वापस (msel / (2 * psel)) * (parent_rate / nsel);
-पूर्ण
+	return (msel / (2 * psel)) * (parent_rate / nsel);
+}
 
-अटल स्थिर काष्ठा clk_ops lpc18xx_pll1_ops = अणु
+static const struct clk_ops lpc18xx_pll1_ops = {
 	.recalc_rate = lpc18xx_pll1_recalc_rate,
-पूर्ण;
+};
 
-अटल पूर्णांक lpc18xx_cgu_gate_enable(काष्ठा clk_hw *hw)
-अणु
-	वापस clk_gate_ops.enable(hw);
-पूर्ण
+static int lpc18xx_cgu_gate_enable(struct clk_hw *hw)
+{
+	return clk_gate_ops.enable(hw);
+}
 
-अटल व्योम lpc18xx_cgu_gate_disable(काष्ठा clk_hw *hw)
-अणु
+static void lpc18xx_cgu_gate_disable(struct clk_hw *hw)
+{
 	clk_gate_ops.disable(hw);
-पूर्ण
+}
 
-अटल पूर्णांक lpc18xx_cgu_gate_is_enabled(काष्ठा clk_hw *hw)
-अणु
-	स्थिर काष्ठा clk_hw *parent;
+static int lpc18xx_cgu_gate_is_enabled(struct clk_hw *hw)
+{
+	const struct clk_hw *parent;
 
 	/*
-	 * The consumer of base घड़ीs needs know अगर the
-	 * base घड़ी is really enabled beक्रमe it can be
-	 * accessed. It is thereक्रमe necessary to verअगरy
+	 * The consumer of base clocks needs know if the
+	 * base clock is really enabled before it can be
+	 * accessed. It is therefore necessary to verify
 	 * this all the way up.
 	 */
 	parent = clk_hw_get_parent(hw);
-	अगर (!parent)
-		वापस 0;
+	if (!parent)
+		return 0;
 
-	अगर (!clk_hw_is_enabled(parent))
-		वापस 0;
+	if (!clk_hw_is_enabled(parent))
+		return 0;
 
-	वापस clk_gate_ops.is_enabled(hw);
-पूर्ण
+	return clk_gate_ops.is_enabled(hw);
+}
 
-अटल स्थिर काष्ठा clk_ops lpc18xx_gate_ops = अणु
+static const struct clk_ops lpc18xx_gate_ops = {
 	.enable = lpc18xx_cgu_gate_enable,
 	.disable = lpc18xx_cgu_gate_disable,
 	.is_enabled = lpc18xx_cgu_gate_is_enabled,
-पूर्ण;
+};
 
-अटल काष्ठा lpc18xx_cgu_pll_clk lpc18xx_cgu_src_clk_plls[] = अणु
+static struct lpc18xx_cgu_pll_clk lpc18xx_cgu_src_clk_plls[] = {
 	LPC1XX_CGU_CLK_PLL(PLL0USB,	pll0_src_ids, pll0_ops),
 	LPC1XX_CGU_CLK_PLL(PLL0AUDIO,	pll0_src_ids, pll0_ops),
 	LPC1XX_CGU_CLK_PLL(PLL1,	pll1_src_ids, pll1_ops),
-पूर्ण;
+};
 
-अटल व्योम lpc18xx_fill_parent_names(स्थिर अक्षर **parent, u32 *id, पूर्णांक size)
-अणु
-	पूर्णांक i;
+static void lpc18xx_fill_parent_names(const char **parent, u32 *id, int size)
+{
+	int i;
 
-	क्रम (i = 0; i < size; i++)
+	for (i = 0; i < size; i++)
 		parent[i] = clk_src_names[id[i]];
-पूर्ण
+}
 
-अटल काष्ठा clk *lpc18xx_cgu_रेजिस्टर_भाग(काष्ठा lpc18xx_cgu_src_clk_भाग *clk,
-					    व्योम __iomem *base, पूर्णांक n)
-अणु
-	व्योम __iomem *reg = base + LPC18XX_CGU_IDIV_CTRL(n);
-	स्थिर अक्षर *name = clk_src_names[clk->clk_id];
-	स्थिर अक्षर *parents[CLK_SRC_MAX];
+static struct clk *lpc18xx_cgu_register_div(struct lpc18xx_cgu_src_clk_div *clk,
+					    void __iomem *base, int n)
+{
+	void __iomem *reg = base + LPC18XX_CGU_IDIV_CTRL(n);
+	const char *name = clk_src_names[clk->clk_id];
+	const char *parents[CLK_SRC_MAX];
 
-	clk->भाग.reg = reg;
+	clk->div.reg = reg;
 	clk->mux.reg = reg;
 	clk->gate.reg = reg;
 
 	lpc18xx_fill_parent_names(parents, clk->mux.table, clk->n_parents);
 
-	वापस clk_रेजिस्टर_composite(शून्य, name, parents, clk->n_parents,
+	return clk_register_composite(NULL, name, parents, clk->n_parents,
 				      &clk->mux.hw, &clk_mux_ops,
-				      &clk->भाग.hw, &clk_भागider_ops,
+				      &clk->div.hw, &clk_divider_ops,
 				      &clk->gate.hw, &lpc18xx_gate_ops, 0);
-पूर्ण
+}
 
 
-अटल काष्ठा clk *lpc18xx_रेजिस्टर_base_clk(काष्ठा lpc18xx_cgu_base_clk *clk,
-					     व्योम __iomem *reg_base, पूर्णांक n)
-अणु
-	व्योम __iomem *reg = reg_base + LPC18XX_CGU_BASE_CLK(n);
-	स्थिर अक्षर *name = clk_base_names[clk->clk_id];
-	स्थिर अक्षर *parents[CLK_SRC_MAX];
+static struct clk *lpc18xx_register_base_clk(struct lpc18xx_cgu_base_clk *clk,
+					     void __iomem *reg_base, int n)
+{
+	void __iomem *reg = reg_base + LPC18XX_CGU_BASE_CLK(n);
+	const char *name = clk_base_names[clk->clk_id];
+	const char *parents[CLK_SRC_MAX];
 
-	अगर (clk->n_parents == 0)
-		वापस ERR_PTR(-ENOENT);
+	if (clk->n_parents == 0)
+		return ERR_PTR(-ENOENT);
 
 	clk->mux.reg = reg;
 	clk->gate.reg = reg;
@@ -568,23 +567,23 @@
 	lpc18xx_fill_parent_names(parents, clk->mux.table, clk->n_parents);
 
 	/* SAFE_CLK can not be turned off */
-	अगर (n == BASE_SAFE_CLK)
-		वापस clk_रेजिस्टर_composite(शून्य, name, parents, clk->n_parents,
+	if (n == BASE_SAFE_CLK)
+		return clk_register_composite(NULL, name, parents, clk->n_parents,
 					      &clk->mux.hw, &clk_mux_ops,
-					      शून्य, शून्य, शून्य, शून्य, 0);
+					      NULL, NULL, NULL, NULL, 0);
 
-	वापस clk_रेजिस्टर_composite(शून्य, name, parents, clk->n_parents,
+	return clk_register_composite(NULL, name, parents, clk->n_parents,
 				      &clk->mux.hw, &clk_mux_ops,
-				      शून्य,  शून्य,
+				      NULL,  NULL,
 				      &clk->gate.hw, &lpc18xx_gate_ops, 0);
-पूर्ण
+}
 
 
-अटल काष्ठा clk *lpc18xx_cgu_रेजिस्टर_pll(काष्ठा lpc18xx_cgu_pll_clk *clk,
-					    व्योम __iomem *base)
-अणु
-	स्थिर अक्षर *name = clk_src_names[clk->clk_id];
-	स्थिर अक्षर *parents[CLK_SRC_MAX];
+static struct clk *lpc18xx_cgu_register_pll(struct lpc18xx_cgu_pll_clk *clk,
+					    void __iomem *base)
+{
+	const char *name = clk_src_names[clk->clk_id];
+	const char *parents[CLK_SRC_MAX];
 
 	clk->pll.reg  = base;
 	clk->mux.reg  = base + clk->reg_offset + LPC18XX_CGU_PLL_CTRL_OFFSET;
@@ -592,81 +591,81 @@
 
 	lpc18xx_fill_parent_names(parents, clk->mux.table, clk->n_parents);
 
-	वापस clk_रेजिस्टर_composite(शून्य, name, parents, clk->n_parents,
+	return clk_register_composite(NULL, name, parents, clk->n_parents,
 				      &clk->mux.hw, &clk_mux_ops,
 				      &clk->pll.hw, clk->pll_ops,
 				      &clk->gate.hw, &lpc18xx_gate_ops, 0);
-पूर्ण
+}
 
-अटल व्योम __init lpc18xx_cgu_रेजिस्टर_source_clks(काष्ठा device_node *np,
-						    व्योम __iomem *base)
-अणु
-	स्थिर अक्षर *parents[CLK_SRC_MAX];
-	काष्ठा clk *clk;
-	पूर्णांक i;
+static void __init lpc18xx_cgu_register_source_clks(struct device_node *np,
+						    void __iomem *base)
+{
+	const char *parents[CLK_SRC_MAX];
+	struct clk *clk;
+	int i;
 
-	/* Register the पूर्णांकernal 12 MHz RC oscillator (IRC) */
-	clk = clk_रेजिस्टर_fixed_rate(शून्य, clk_src_names[CLK_SRC_IRC],
-				      शून्य, 0, 12000000);
-	अगर (IS_ERR(clk))
+	/* Register the internal 12 MHz RC oscillator (IRC) */
+	clk = clk_register_fixed_rate(NULL, clk_src_names[CLK_SRC_IRC],
+				      NULL, 0, 12000000);
+	if (IS_ERR(clk))
 		pr_warn("%s: failed to register irc clk\n", __func__);
 
 	/* Register crystal oscillator controlller */
 	parents[0] = of_clk_get_parent_name(np, 0);
-	clk = clk_रेजिस्टर_gate(शून्य, clk_src_names[CLK_SRC_OSC], parents[0],
+	clk = clk_register_gate(NULL, clk_src_names[CLK_SRC_OSC], parents[0],
 				0, base + LPC18XX_CGU_XTAL_OSC_CTRL,
-				0, CLK_GATE_SET_TO_DISABLE, शून्य);
-	अगर (IS_ERR(clk))
+				0, CLK_GATE_SET_TO_DISABLE, NULL);
+	if (IS_ERR(clk))
 		pr_warn("%s: failed to register osc clk\n", __func__);
 
 	/* Register all PLLs */
-	क्रम (i = 0; i < ARRAY_SIZE(lpc18xx_cgu_src_clk_plls); i++) अणु
-		clk = lpc18xx_cgu_रेजिस्टर_pll(&lpc18xx_cgu_src_clk_plls[i],
+	for (i = 0; i < ARRAY_SIZE(lpc18xx_cgu_src_clk_plls); i++) {
+		clk = lpc18xx_cgu_register_pll(&lpc18xx_cgu_src_clk_plls[i],
 						   base);
-		अगर (IS_ERR(clk))
+		if (IS_ERR(clk))
 			pr_warn("%s: failed to register pll (%d)\n", __func__, i);
-	पूर्ण
+	}
 
-	/* Register all घड़ी भागiders A-E */
-	क्रम (i = 0; i < ARRAY_SIZE(lpc18xx_cgu_src_clk_भागs); i++) अणु
-		clk = lpc18xx_cgu_रेजिस्टर_भाग(&lpc18xx_cgu_src_clk_भागs[i],
+	/* Register all clock dividers A-E */
+	for (i = 0; i < ARRAY_SIZE(lpc18xx_cgu_src_clk_divs); i++) {
+		clk = lpc18xx_cgu_register_div(&lpc18xx_cgu_src_clk_divs[i],
 					       base, i);
-		अगर (IS_ERR(clk))
+		if (IS_ERR(clk))
 			pr_warn("%s: failed to register div %d\n", __func__, i);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल काष्ठा clk *clk_base[BASE_CLK_MAX];
-अटल काष्ठा clk_onecell_data clk_base_data = अणु
+static struct clk *clk_base[BASE_CLK_MAX];
+static struct clk_onecell_data clk_base_data = {
 	.clks = clk_base,
 	.clk_num = BASE_CLK_MAX,
-पूर्ण;
+};
 
-अटल व्योम __init lpc18xx_cgu_रेजिस्टर_base_clks(व्योम __iomem *reg_base)
-अणु
-	पूर्णांक i;
+static void __init lpc18xx_cgu_register_base_clks(void __iomem *reg_base)
+{
+	int i;
 
-	क्रम (i = BASE_SAFE_CLK; i < BASE_CLK_MAX; i++) अणु
-		clk_base[i] = lpc18xx_रेजिस्टर_base_clk(&lpc18xx_cgu_base_clks[i],
+	for (i = BASE_SAFE_CLK; i < BASE_CLK_MAX; i++) {
+		clk_base[i] = lpc18xx_register_base_clk(&lpc18xx_cgu_base_clks[i],
 							reg_base, i);
-		अगर (IS_ERR(clk_base[i]) && PTR_ERR(clk_base[i]) != -ENOENT)
+		if (IS_ERR(clk_base[i]) && PTR_ERR(clk_base[i]) != -ENOENT)
 			pr_warn("%s: register base clk %d failed\n", __func__, i);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम __init lpc18xx_cgu_init(काष्ठा device_node *np)
-अणु
-	व्योम __iomem *reg_base;
+static void __init lpc18xx_cgu_init(struct device_node *np)
+{
+	void __iomem *reg_base;
 
 	reg_base = of_iomap(np, 0);
-	अगर (!reg_base) अणु
+	if (!reg_base) {
 		pr_warn("%s: failed to map address range\n", __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	lpc18xx_cgu_रेजिस्टर_source_clks(np, reg_base);
-	lpc18xx_cgu_रेजिस्टर_base_clks(reg_base);
+	lpc18xx_cgu_register_source_clks(np, reg_base);
+	lpc18xx_cgu_register_base_clks(reg_base);
 
 	of_clk_add_provider(np, of_clk_src_onecell_get, &clk_base_data);
-पूर्ण
+}
 CLK_OF_DECLARE(lpc18xx_cgu, "nxp,lpc1850-cgu", lpc18xx_cgu_init);

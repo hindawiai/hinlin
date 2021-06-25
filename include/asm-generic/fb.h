@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_GENERIC_FB_H_
-#घोषणा __ASM_GENERIC_FB_H_
-#समावेश <linux/fb.h>
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_GENERIC_FB_H_
+#define __ASM_GENERIC_FB_H_
+#include <linux/fb.h>
 
-#घोषणा fb_pgprotect(...) करो अणुपूर्ण जबतक (0)
+#define fb_pgprotect(...) do {} while (0)
 
-अटल अंतरभूत पूर्णांक fb_is_primary_device(काष्ठा fb_info *info)
-अणु
-	वापस 0;
-पूर्ण
+static inline int fb_is_primary_device(struct fb_info *info)
+{
+	return 0;
+}
 
-#पूर्ण_अगर /* __ASM_GENERIC_FB_H_ */
+#endif /* __ASM_GENERIC_FB_H_ */

@@ -1,43 +1,42 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) ST-Ericsson SA 2010
  *
- * Author: Rabin Vincent <rabin.vincent@stericsson.com> क्रम ST-Ericsson
+ * Author: Rabin Vincent <rabin.vincent@stericsson.com> for ST-Ericsson
  */
 
-#अगर_अघोषित __LINUX_MFD_STMPE_H
-#घोषणा __LINUX_MFD_STMPE_H
+#ifndef __LINUX_MFD_STMPE_H
+#define __LINUX_MFD_STMPE_H
 
-#समावेश <linux/mutex.h>
+#include <linux/mutex.h>
 
-#घोषणा STMPE_SAMPLE_TIME(x)	((x & 0xf) << 4)
-#घोषणा STMPE_MOD_12B(x)	((x & 0x1) << 3)
-#घोषणा STMPE_REF_SEL(x)	((x & 0x1) << 1)
-#घोषणा STMPE_ADC_FREQ(x)	(x & 0x3)
-#घोषणा STMPE_AVE_CTRL(x)	((x & 0x3) << 6)
-#घोषणा STMPE_DET_DELAY(x)	((x & 0x7) << 3)
-#घोषणा STMPE_SETTLING(x)	(x & 0x7)
-#घोषणा STMPE_FRACTION_Z(x)	(x & 0x7)
-#घोषणा STMPE_I_DRIVE(x)	(x & 0x1)
-#घोषणा STMPE_OP_MODE(x)	((x & 0x7) << 1)
+#define STMPE_SAMPLE_TIME(x)	((x & 0xf) << 4)
+#define STMPE_MOD_12B(x)	((x & 0x1) << 3)
+#define STMPE_REF_SEL(x)	((x & 0x1) << 1)
+#define STMPE_ADC_FREQ(x)	(x & 0x3)
+#define STMPE_AVE_CTRL(x)	((x & 0x3) << 6)
+#define STMPE_DET_DELAY(x)	((x & 0x7) << 3)
+#define STMPE_SETTLING(x)	(x & 0x7)
+#define STMPE_FRACTION_Z(x)	(x & 0x7)
+#define STMPE_I_DRIVE(x)	(x & 0x1)
+#define STMPE_OP_MODE(x)	((x & 0x7) << 1)
 
-#घोषणा STMPE811_REG_ADC_CTRL1	0x20
-#घोषणा STMPE811_REG_ADC_CTRL2	0x21
+#define STMPE811_REG_ADC_CTRL1	0x20
+#define STMPE811_REG_ADC_CTRL2	0x21
 
-काष्ठा device;
-काष्ठा regulator;
+struct device;
+struct regulator;
 
-क्रमागत sपंचांगpe_block अणु
+enum stmpe_block {
 	STMPE_BLOCK_GPIO	= 1 << 0,
 	STMPE_BLOCK_KEYPAD	= 1 << 1,
 	STMPE_BLOCK_TOUCHSCREEN	= 1 << 2,
 	STMPE_BLOCK_ADC		= 1 << 3,
 	STMPE_BLOCK_PWM		= 1 << 4,
 	STMPE_BLOCK_ROTATOR	= 1 << 5,
-पूर्ण;
+};
 
-क्रमागत sपंचांगpe_partnum अणु
+enum stmpe_partnum {
 	STMPE610,
 	STMPE801,
 	STMPE811,
@@ -47,13 +46,13 @@
 	STMPE2401,
 	STMPE2403,
 	STMPE_NBR_PARTS
-पूर्ण;
+};
 
 /*
- * For रेजिस्टरs whose locations dअगरfer on variants,  the correct address is
- * obtained by indexing sपंचांगpe->regs with one of the following.
+ * For registers whose locations differ on variants,  the correct address is
+ * obtained by indexing stmpe->regs with one of the following.
  */
-क्रमागत अणु
+enum {
 	STMPE_IDX_CHIP_ID,
 	STMPE_IDX_SYS_CTRL,
 	STMPE_IDX_SYS_CTRL2,
@@ -93,72 +92,72 @@
 	STMPE_IDX_ISGPIOR_CSB,
 	STMPE_IDX_ISGPIOR_MSB,
 	STMPE_IDX_MAX,
-पूर्ण;
+};
 
 
-काष्ठा sपंचांगpe_variant_info;
-काष्ठा sपंचांगpe_client_info;
-काष्ठा sपंचांगpe_platक्रमm_data;
+struct stmpe_variant_info;
+struct stmpe_client_info;
+struct stmpe_platform_data;
 
 /**
- * काष्ठा sपंचांगpe - STMPE MFD काष्ठाure
+ * struct stmpe - STMPE MFD structure
  * @vcc: optional VCC regulator
  * @vio: optional VIO regulator
  * @lock: lock protecting I/O operations
  * @irq_lock: IRQ bus lock
- * @dev: device, mostly क्रम dev_dbg()
- * @irq_करोमुख्य: IRQ करोमुख्य
+ * @dev: device, mostly for dev_dbg()
+ * @irq_domain: IRQ domain
  * @client: client - i2c or spi
- * @ci: client specअगरic inक्रमmation
+ * @ci: client specific information
  * @partnum: part number
  * @variant: the detected STMPE model number
- * @regs: list of addresses of रेजिस्टरs which are at dअगरferent addresses on
- *	  dअगरferent variants.  Indexed by one of STMPE_IDX_*.
- * @irq: irq number क्रम sपंचांगpe
- * @num_gpios: number of gpios, dअगरfers क्रम variants
- * @ier: cache of IER रेजिस्टरs क्रम bus_lock
- * @oldier: cache of IER रेजिस्टरs क्रम bus_lock
- * @pdata: platक्रमm data
+ * @regs: list of addresses of registers which are at different addresses on
+ *	  different variants.  Indexed by one of STMPE_IDX_*.
+ * @irq: irq number for stmpe
+ * @num_gpios: number of gpios, differs for variants
+ * @ier: cache of IER registers for bus_lock
+ * @oldier: cache of IER registers for bus_lock
+ * @pdata: platform data
  */
-काष्ठा sपंचांगpe अणु
-	काष्ठा regulator *vcc;
-	काष्ठा regulator *vio;
-	काष्ठा mutex lock;
-	काष्ठा mutex irq_lock;
-	काष्ठा device *dev;
-	काष्ठा irq_करोमुख्य *करोमुख्य;
-	व्योम *client;
-	काष्ठा sपंचांगpe_client_info *ci;
-	क्रमागत sपंचांगpe_partnum partnum;
-	काष्ठा sपंचांगpe_variant_info *variant;
-	स्थिर u8 *regs;
+struct stmpe {
+	struct regulator *vcc;
+	struct regulator *vio;
+	struct mutex lock;
+	struct mutex irq_lock;
+	struct device *dev;
+	struct irq_domain *domain;
+	void *client;
+	struct stmpe_client_info *ci;
+	enum stmpe_partnum partnum;
+	struct stmpe_variant_info *variant;
+	const u8 *regs;
 
-	पूर्णांक irq;
-	पूर्णांक num_gpios;
+	int irq;
+	int num_gpios;
 	u8 ier[2];
 	u8 oldier[2];
-	काष्ठा sपंचांगpe_platक्रमm_data *pdata;
+	struct stmpe_platform_data *pdata;
 
 	/* For devices that use an ADC */
-	u8 sample_समय;
+	u8 sample_time;
 	u8 mod_12b;
 	u8 ref_sel;
 	u8 adc_freq;
-पूर्ण;
+};
 
-बाह्य पूर्णांक sपंचांगpe_reg_ग_लिखो(काष्ठा sपंचांगpe *sपंचांगpe, u8 reg, u8 data);
-बाह्य पूर्णांक sपंचांगpe_reg_पढ़ो(काष्ठा sपंचांगpe *sपंचांगpe, u8 reg);
-बाह्य पूर्णांक sपंचांगpe_block_पढ़ो(काष्ठा sपंचांगpe *sपंचांगpe, u8 reg, u8 length,
+extern int stmpe_reg_write(struct stmpe *stmpe, u8 reg, u8 data);
+extern int stmpe_reg_read(struct stmpe *stmpe, u8 reg);
+extern int stmpe_block_read(struct stmpe *stmpe, u8 reg, u8 length,
 			    u8 *values);
-बाह्य पूर्णांक sपंचांगpe_block_ग_लिखो(काष्ठा sपंचांगpe *sपंचांगpe, u8 reg, u8 length,
-			     स्थिर u8 *values);
-बाह्य पूर्णांक sपंचांगpe_set_bits(काष्ठा sपंचांगpe *sपंचांगpe, u8 reg, u8 mask, u8 val);
-बाह्य पूर्णांक sपंचांगpe_set_altfunc(काष्ठा sपंचांगpe *sपंचांगpe, u32 pins,
-			     क्रमागत sपंचांगpe_block block);
-बाह्य पूर्णांक sपंचांगpe_enable(काष्ठा sपंचांगpe *sपंचांगpe, अचिन्हित पूर्णांक blocks);
-बाह्य पूर्णांक sपंचांगpe_disable(काष्ठा sपंचांगpe *sपंचांगpe, अचिन्हित पूर्णांक blocks);
-बाह्य पूर्णांक sपंचांगpe811_adc_common_init(काष्ठा sपंचांगpe *sपंचांगpe);
+extern int stmpe_block_write(struct stmpe *stmpe, u8 reg, u8 length,
+			     const u8 *values);
+extern int stmpe_set_bits(struct stmpe *stmpe, u8 reg, u8 mask, u8 val);
+extern int stmpe_set_altfunc(struct stmpe *stmpe, u32 pins,
+			     enum stmpe_block block);
+extern int stmpe_enable(struct stmpe *stmpe, unsigned int blocks);
+extern int stmpe_disable(struct stmpe *stmpe, unsigned int blocks);
+extern int stmpe811_adc_common_init(struct stmpe *stmpe);
 
-#घोषणा STMPE_GPIO_NOREQ_811_TOUCH	(0xf0)
+#define STMPE_GPIO_NOREQ_811_TOUCH	(0xf0)
 
-#पूर्ण_अगर
+#endif

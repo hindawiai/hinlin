@@ -1,184 +1,183 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright(c) 2009 Intel Corporation. All rights reserved.
  *
- * Maपूर्णांकained at www.Open-FCoE.org
+ * Maintained at www.Open-FCoE.org
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/crc32.h>
-#समावेश <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/scatterlist.h>
+#include <linux/crc32.h>
+#include <linux/module.h>
 
-#समावेश <scsi/libfc.h>
+#include <scsi/libfc.h>
 
-#समावेश "fc_encode.h"
-#समावेश "fc_libfc.h"
+#include "fc_encode.h"
+#include "fc_libfc.h"
 
 MODULE_AUTHOR("Open-FCoE.org");
 MODULE_DESCRIPTION("libfc");
 MODULE_LICENSE("GPL v2");
 
-अचिन्हित पूर्णांक fc_debug_logging;
-module_param_named(debug_logging, fc_debug_logging, पूर्णांक, S_IRUGO|S_IWUSR);
+unsigned int fc_debug_logging;
+module_param_named(debug_logging, fc_debug_logging, int, S_IRUGO|S_IWUSR);
 MODULE_PARM_DESC(debug_logging, "a bit mask of logging levels");
 
 DEFINE_MUTEX(fc_prov_mutex);
-अटल LIST_HEAD(fc_local_ports);
-काष्ठा blocking_notअगरier_head fc_lport_notअगरier_head =
-		BLOCKING_NOTIFIER_INIT(fc_lport_notअगरier_head);
-EXPORT_SYMBOL(fc_lport_notअगरier_head);
+static LIST_HEAD(fc_local_ports);
+struct blocking_notifier_head fc_lport_notifier_head =
+		BLOCKING_NOTIFIER_INIT(fc_lport_notifier_head);
+EXPORT_SYMBOL(fc_lport_notifier_head);
 
 /*
  * Providers which primarily send requests and PRLIs.
  */
-काष्ठा fc4_prov *fc_active_prov[FC_FC4_PROV_SIZE] = अणु
+struct fc4_prov *fc_active_prov[FC_FC4_PROV_SIZE] = {
 	[0] = &fc_rport_t0_prov,
 	[FC_TYPE_FCP] = &fc_rport_fcp_init,
-पूर्ण;
+};
 
 /*
  * Providers which receive requests.
  */
-काष्ठा fc4_prov *fc_passive_prov[FC_FC4_PROV_SIZE] = अणु
+struct fc4_prov *fc_passive_prov[FC_FC4_PROV_SIZE] = {
 	[FC_TYPE_ELS] = &fc_lport_els_prov,
-पूर्ण;
+};
 
 /**
  * libfc_init() - Initialize libfc.ko
  */
-अटल पूर्णांक __init libfc_init(व्योम)
-अणु
-	पूर्णांक rc = 0;
+static int __init libfc_init(void)
+{
+	int rc = 0;
 
 	rc = fc_setup_fcp();
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	rc = fc_setup_exch_mgr();
-	अगर (rc)
-		जाओ destroy_pkt_cache;
+	if (rc)
+		goto destroy_pkt_cache;
 
 	rc = fc_setup_rport();
-	अगर (rc)
-		जाओ destroy_em;
+	if (rc)
+		goto destroy_em;
 
-	वापस rc;
+	return rc;
 destroy_em:
 	fc_destroy_exch_mgr();
 destroy_pkt_cache:
 	fc_destroy_fcp();
-	वापस rc;
-पूर्ण
+	return rc;
+}
 module_init(libfc_init);
 
 /**
- * libfc_निकास() - Tear करोwn libfc.ko
+ * libfc_exit() - Tear down libfc.ko
  */
-अटल व्योम __निकास libfc_निकास(व्योम)
-अणु
+static void __exit libfc_exit(void)
+{
 	fc_destroy_fcp();
 	fc_destroy_exch_mgr();
 	fc_destroy_rport();
-पूर्ण
-module_निकास(libfc_निकास);
+}
+module_exit(libfc_exit);
 
 /**
  * fc_copy_buffer_to_sglist() - This routine copies the data of a buffer
- *				पूर्णांकo a scatter-gather list (SG list).
+ *				into a scatter-gather list (SG list).
  *
- * @buf: poपूर्णांकer to the data buffer.
+ * @buf: pointer to the data buffer.
  * @len: the byte-length of the data buffer.
- * @sg: poपूर्णांकer to the poपूर्णांकer of the SG list.
- * @nents: poपूर्णांकer to the reमुख्यing number of entries in the SG list.
- * @offset: poपूर्णांकer to the current offset in the SG list.
- * @crc: poपूर्णांकer to the 32-bit crc value.
- *	 If crc is शून्य, CRC is not calculated.
+ * @sg: pointer to the pointer of the SG list.
+ * @nents: pointer to the remaining number of entries in the SG list.
+ * @offset: pointer to the current offset in the SG list.
+ * @crc: pointer to the 32-bit crc value.
+ *	 If crc is NULL, CRC is not calculated.
  */
-u32 fc_copy_buffer_to_sglist(व्योम *buf, माप_प्रकार len,
-			     काष्ठा scatterlist *sg,
-			     u32 *nents, माप_प्रकार *offset,
+u32 fc_copy_buffer_to_sglist(void *buf, size_t len,
+			     struct scatterlist *sg,
+			     u32 *nents, size_t *offset,
 			     u32 *crc)
-अणु
-	माप_प्रकार reमुख्यing = len;
+{
+	size_t remaining = len;
 	u32 copy_len = 0;
 
-	जबतक (reमुख्यing > 0 && sg) अणु
-		माप_प्रकार off, sg_bytes;
-		व्योम *page_addr;
+	while (remaining > 0 && sg) {
+		size_t off, sg_bytes;
+		void *page_addr;
 
-		अगर (*offset >= sg->length) अणु
+		if (*offset >= sg->length) {
 			/*
-			 * Check क्रम end and drop resources
+			 * Check for end and drop resources
 			 * from the last iteration.
 			 */
-			अगर (!(*nents))
-				अवरोध;
+			if (!(*nents))
+				break;
 			--(*nents);
 			*offset -= sg->length;
 			sg = sg_next(sg);
-			जारी;
-		पूर्ण
-		sg_bytes = min(reमुख्यing, sg->length - *offset);
+			continue;
+		}
+		sg_bytes = min(remaining, sg->length - *offset);
 
 		/*
 		 * The scatterlist item may be bigger than PAGE_SIZE,
-		 * but we are limited to mapping PAGE_SIZE at a समय.
+		 * but we are limited to mapping PAGE_SIZE at a time.
 		 */
 		off = *offset + sg->offset;
 		sg_bytes = min(sg_bytes,
-			       (माप_प्रकार)(PAGE_SIZE - (off & ~PAGE_MASK)));
+			       (size_t)(PAGE_SIZE - (off & ~PAGE_MASK)));
 		page_addr = kmap_atomic(sg_page(sg) + (off >> PAGE_SHIFT));
-		अगर (crc)
+		if (crc)
 			*crc = crc32(*crc, buf, sg_bytes);
-		स_नकल((अक्षर *)page_addr + (off & ~PAGE_MASK), buf, sg_bytes);
+		memcpy((char *)page_addr + (off & ~PAGE_MASK), buf, sg_bytes);
 		kunmap_atomic(page_addr);
 		buf += sg_bytes;
 		*offset += sg_bytes;
-		reमुख्यing -= sg_bytes;
+		remaining -= sg_bytes;
 		copy_len += sg_bytes;
-	पूर्ण
-	वापस copy_len;
-पूर्ण
+	}
+	return copy_len;
+}
 
 /**
  * fc_fill_hdr() -  fill FC header fields based on request
  * @fp: reply frame containing header to be filled in
  * @in_fp: request frame containing header to use in filling in reply
- * @r_ctl: R_CTL value क्रम header
- * @f_ctl: F_CTL value क्रम header, with 0 pad
- * @seq_cnt: sequence count क्रम the header, ignored अगर frame has a sequence
+ * @r_ctl: R_CTL value for header
+ * @f_ctl: F_CTL value for header, with 0 pad
+ * @seq_cnt: sequence count for the header, ignored if frame has a sequence
  * @parm_offset: parameter / offset value
  */
-व्योम fc_fill_hdr(काष्ठा fc_frame *fp, स्थिर काष्ठा fc_frame *in_fp,
-		 क्रमागत fc_rctl r_ctl, u32 f_ctl, u16 seq_cnt, u32 parm_offset)
-अणु
-	काष्ठा fc_frame_header *fh;
-	काष्ठा fc_frame_header *in_fh;
-	काष्ठा fc_seq *sp;
+void fc_fill_hdr(struct fc_frame *fp, const struct fc_frame *in_fp,
+		 enum fc_rctl r_ctl, u32 f_ctl, u16 seq_cnt, u32 parm_offset)
+{
+	struct fc_frame_header *fh;
+	struct fc_frame_header *in_fh;
+	struct fc_seq *sp;
 	u32 fill;
 
 	fh = __fc_frame_header_get(fp);
 	in_fh = __fc_frame_header_get(in_fp);
 
-	अगर (f_ctl & FC_FC_END_SEQ) अणु
+	if (f_ctl & FC_FC_END_SEQ) {
 		fill = -fr_len(fp) & 3;
-		अगर (fill) अणु
+		if (fill) {
 			/* TODO, this may be a problem with fragmented skb */
 			skb_put_zero(fp_skb(fp), fill);
 			f_ctl |= fill;
-		पूर्ण
-		fr_eof(fp) = FC_खातापूर्ण_T;
-	पूर्ण अन्यथा अणु
+		}
+		fr_eof(fp) = FC_EOF_T;
+	} else {
 		WARN_ON(fr_len(fp) % 4 != 0);	/* no pad to non last frame */
-		fr_eof(fp) = FC_खातापूर्ण_N;
-	पूर्ण
+		fr_eof(fp) = FC_EOF_N;
+	}
 
 	fh->fh_r_ctl = r_ctl;
-	स_नकल(fh->fh_d_id, in_fh->fh_s_id, माप(fh->fh_d_id));
-	स_नकल(fh->fh_s_id, in_fh->fh_d_id, माप(fh->fh_s_id));
+	memcpy(fh->fh_d_id, in_fh->fh_s_id, sizeof(fh->fh_d_id));
+	memcpy(fh->fh_s_id, in_fh->fh_d_id, sizeof(fh->fh_s_id));
 	fh->fh_type = in_fh->fh_type;
 	hton24(fh->fh_f_ctl, f_ctl);
 	fh->fh_ox_id = in_fh->fh_ox_id;
@@ -188,133 +187,133 @@ u32 fc_copy_buffer_to_sglist(व्योम *buf, माप_प्रकार 
 	fh->fh_parm_offset = htonl(parm_offset);
 
 	sp = fr_seq(in_fp);
-	अगर (sp) अणु
+	if (sp) {
 		fr_seq(fp) = sp;
 		fh->fh_seq_id = sp->id;
 		seq_cnt = sp->cnt;
-	पूर्ण अन्यथा अणु
+	} else {
 		fh->fh_seq_id = 0;
-	पूर्ण
+	}
 	fh->fh_seq_cnt = ntohs(seq_cnt);
 	fr_sof(fp) = seq_cnt ? FC_SOF_N3 : FC_SOF_I3;
 	fr_encaps(fp) = fr_encaps(in_fp);
-पूर्ण
+}
 EXPORT_SYMBOL(fc_fill_hdr);
 
 /**
  * fc_fill_reply_hdr() -  fill FC reply header fields based on request
  * @fp: reply frame containing header to be filled in
  * @in_fp: request frame containing header to use in filling in reply
- * @r_ctl: R_CTL value क्रम reply
+ * @r_ctl: R_CTL value for reply
  * @parm_offset: parameter / offset value
  */
-व्योम fc_fill_reply_hdr(काष्ठा fc_frame *fp, स्थिर काष्ठा fc_frame *in_fp,
-		       क्रमागत fc_rctl r_ctl, u32 parm_offset)
-अणु
-	काष्ठा fc_seq *sp;
+void fc_fill_reply_hdr(struct fc_frame *fp, const struct fc_frame *in_fp,
+		       enum fc_rctl r_ctl, u32 parm_offset)
+{
+	struct fc_seq *sp;
 
 	sp = fr_seq(in_fp);
-	अगर (sp)
+	if (sp)
 		fr_seq(fp) = fc_seq_start_next(sp);
 	fc_fill_hdr(fp, in_fp, r_ctl, FC_FCTL_RESP, 0, parm_offset);
-पूर्ण
+}
 EXPORT_SYMBOL(fc_fill_reply_hdr);
 
 /**
- * fc_fc4_conf_lport_params() - Modअगरy "service_params" of specअगरied lport
- * अगर there is service provider (target provider) रेजिस्टरed with libfc
- * क्रम specअगरied "fc_ft_type"
- * @lport: Local port which service_params needs to be modअगरied
+ * fc_fc4_conf_lport_params() - Modify "service_params" of specified lport
+ * if there is service provider (target provider) registered with libfc
+ * for specified "fc_ft_type"
+ * @lport: Local port which service_params needs to be modified
  * @type: FC-4 type, such as FC_TYPE_FCP
  */
-व्योम fc_fc4_conf_lport_params(काष्ठा fc_lport *lport, क्रमागत fc_fh_type type)
-अणु
-	काष्ठा fc4_prov *prov_entry;
+void fc_fc4_conf_lport_params(struct fc_lport *lport, enum fc_fh_type type)
+{
+	struct fc4_prov *prov_entry;
 	BUG_ON(type >= FC_FC4_PROV_SIZE);
 	BUG_ON(!lport);
 	prov_entry = fc_passive_prov[type];
-	अगर (type == FC_TYPE_FCP) अणु
-		अगर (prov_entry && prov_entry->recv)
+	if (type == FC_TYPE_FCP) {
+		if (prov_entry && prov_entry->recv)
 			lport->service_params |= FCP_SPPF_TARG_FCN;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम fc_lport_iterate(व्योम (*notअगरy)(काष्ठा fc_lport *, व्योम *), व्योम *arg)
-अणु
-	काष्ठा fc_lport *lport;
+void fc_lport_iterate(void (*notify)(struct fc_lport *, void *), void *arg)
+{
+	struct fc_lport *lport;
 
 	mutex_lock(&fc_prov_mutex);
-	list_क्रम_each_entry(lport, &fc_local_ports, lport_list)
-		notअगरy(lport, arg);
+	list_for_each_entry(lport, &fc_local_ports, lport_list)
+		notify(lport, arg);
 	mutex_unlock(&fc_prov_mutex);
-पूर्ण
+}
 EXPORT_SYMBOL(fc_lport_iterate);
 
 /**
- * fc_fc4_रेजिस्टर_provider() - रेजिस्टर FC-4 upper-level provider.
+ * fc_fc4_register_provider() - register FC-4 upper-level provider.
  * @type: FC-4 type, such as FC_TYPE_FCP
- * @prov: काष्ठाure describing provider including ops vector.
+ * @prov: structure describing provider including ops vector.
  *
  * Returns 0 on success, negative error otherwise.
  */
-पूर्णांक fc_fc4_रेजिस्टर_provider(क्रमागत fc_fh_type type, काष्ठा fc4_prov *prov)
-अणु
-	काष्ठा fc4_prov **prov_entry;
-	पूर्णांक ret = 0;
+int fc_fc4_register_provider(enum fc_fh_type type, struct fc4_prov *prov)
+{
+	struct fc4_prov **prov_entry;
+	int ret = 0;
 
-	अगर (type >= FC_FC4_PROV_SIZE)
-		वापस -EINVAL;
+	if (type >= FC_FC4_PROV_SIZE)
+		return -EINVAL;
 	mutex_lock(&fc_prov_mutex);
 	prov_entry = (prov->recv ? fc_passive_prov : fc_active_prov) + type;
-	अगर (*prov_entry)
+	if (*prov_entry)
 		ret = -EBUSY;
-	अन्यथा
+	else
 		*prov_entry = prov;
 	mutex_unlock(&fc_prov_mutex);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(fc_fc4_रेजिस्टर_provider);
+	return ret;
+}
+EXPORT_SYMBOL(fc_fc4_register_provider);
 
 /**
- * fc_fc4_deरेजिस्टर_provider() - deरेजिस्टर FC-4 upper-level provider.
+ * fc_fc4_deregister_provider() - deregister FC-4 upper-level provider.
  * @type: FC-4 type, such as FC_TYPE_FCP
- * @prov: काष्ठाure describing provider including ops vector.
+ * @prov: structure describing provider including ops vector.
  */
-व्योम fc_fc4_deरेजिस्टर_provider(क्रमागत fc_fh_type type, काष्ठा fc4_prov *prov)
-अणु
+void fc_fc4_deregister_provider(enum fc_fh_type type, struct fc4_prov *prov)
+{
 	BUG_ON(type >= FC_FC4_PROV_SIZE);
 	mutex_lock(&fc_prov_mutex);
-	अगर (prov->recv)
-		RCU_INIT_POINTER(fc_passive_prov[type], शून्य);
-	अन्यथा
-		RCU_INIT_POINTER(fc_active_prov[type], शून्य);
+	if (prov->recv)
+		RCU_INIT_POINTER(fc_passive_prov[type], NULL);
+	else
+		RCU_INIT_POINTER(fc_active_prov[type], NULL);
 	mutex_unlock(&fc_prov_mutex);
 	synchronize_rcu();
-पूर्ण
-EXPORT_SYMBOL(fc_fc4_deरेजिस्टर_provider);
+}
+EXPORT_SYMBOL(fc_fc4_deregister_provider);
 
 /**
- * fc_fc4_add_lport() - add new local port to list and run notअगरiers.
+ * fc_fc4_add_lport() - add new local port to list and run notifiers.
  * @lport:  The new local port.
  */
-व्योम fc_fc4_add_lport(काष्ठा fc_lport *lport)
-अणु
+void fc_fc4_add_lport(struct fc_lport *lport)
+{
 	mutex_lock(&fc_prov_mutex);
 	list_add_tail(&lport->lport_list, &fc_local_ports);
-	blocking_notअगरier_call_chain(&fc_lport_notअगरier_head,
+	blocking_notifier_call_chain(&fc_lport_notifier_head,
 				     FC_LPORT_EV_ADD, lport);
 	mutex_unlock(&fc_prov_mutex);
-पूर्ण
+}
 
 /**
- * fc_fc4_del_lport() - हटाओ local port from list and run notअगरiers.
+ * fc_fc4_del_lport() - remove local port from list and run notifiers.
  * @lport:  The new local port.
  */
-व्योम fc_fc4_del_lport(काष्ठा fc_lport *lport)
-अणु
+void fc_fc4_del_lport(struct fc_lport *lport)
+{
 	mutex_lock(&fc_prov_mutex);
 	list_del(&lport->lport_list);
-	blocking_notअगरier_call_chain(&fc_lport_notअगरier_head,
+	blocking_notifier_call_chain(&fc_lport_notifier_head,
 				     FC_LPORT_EV_DEL, lport);
 	mutex_unlock(&fc_prov_mutex);
-पूर्ण
+}

@@ -1,95 +1,94 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2016 Chen-Yu Tsai. All rights reserved.
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/reset.h>
+#include <linux/clk.h>
+#include <linux/clk-provider.h>
+#include <linux/of_address.h>
+#include <linux/platform_device.h>
+#include <linux/reset.h>
 
-#समावेश "ccu_common.h"
-#समावेश "ccu_div.h"
-#समावेश "ccu_gate.h"
-#समावेश "ccu_reset.h"
+#include "ccu_common.h"
+#include "ccu_div.h"
+#include "ccu_gate.h"
+#include "ccu_reset.h"
 
-#समावेश "ccu-sun9i-a80-de.h"
+#include "ccu-sun9i-a80-de.h"
 
-अटल SUNXI_CCU_GATE(fe0_clk,		"fe0",		"fe0-div",
+static SUNXI_CCU_GATE(fe0_clk,		"fe0",		"fe0-div",
 		      0x00, BIT(0), 0);
-अटल SUNXI_CCU_GATE(fe1_clk,		"fe1",		"fe1-div",
+static SUNXI_CCU_GATE(fe1_clk,		"fe1",		"fe1-div",
 		      0x00, BIT(1), 0);
-अटल SUNXI_CCU_GATE(fe2_clk,		"fe2",		"fe2-div",
+static SUNXI_CCU_GATE(fe2_clk,		"fe2",		"fe2-div",
 		      0x00, BIT(2), 0);
-अटल SUNXI_CCU_GATE(iep_deu0_clk,	"iep-deu0",	"de",
+static SUNXI_CCU_GATE(iep_deu0_clk,	"iep-deu0",	"de",
 		      0x00, BIT(4), 0);
-अटल SUNXI_CCU_GATE(iep_deu1_clk,	"iep-deu1",	"de",
+static SUNXI_CCU_GATE(iep_deu1_clk,	"iep-deu1",	"de",
 		      0x00, BIT(5), 0);
-अटल SUNXI_CCU_GATE(be0_clk,		"be0",		"be0-div",
+static SUNXI_CCU_GATE(be0_clk,		"be0",		"be0-div",
 		      0x00, BIT(8), 0);
-अटल SUNXI_CCU_GATE(be1_clk,		"be1",		"be1-div",
+static SUNXI_CCU_GATE(be1_clk,		"be1",		"be1-div",
 		      0x00, BIT(9), 0);
-अटल SUNXI_CCU_GATE(be2_clk,		"be2",		"be2-div",
+static SUNXI_CCU_GATE(be2_clk,		"be2",		"be2-div",
 		      0x00, BIT(10), 0);
-अटल SUNXI_CCU_GATE(iep_drc0_clk,	"iep-drc0",	"de",
+static SUNXI_CCU_GATE(iep_drc0_clk,	"iep-drc0",	"de",
 		      0x00, BIT(12), 0);
-अटल SUNXI_CCU_GATE(iep_drc1_clk,	"iep-drc1",	"de",
+static SUNXI_CCU_GATE(iep_drc1_clk,	"iep-drc1",	"de",
 		      0x00, BIT(13), 0);
-अटल SUNXI_CCU_GATE(merge_clk,	"merge",	"de",
+static SUNXI_CCU_GATE(merge_clk,	"merge",	"de",
 		      0x00, BIT(20), 0);
 
-अटल SUNXI_CCU_GATE(dram_fe0_clk,	"dram-fe0",	"sdram",
+static SUNXI_CCU_GATE(dram_fe0_clk,	"dram-fe0",	"sdram",
 		      0x04, BIT(0), 0);
-अटल SUNXI_CCU_GATE(dram_fe1_clk,	"dram-fe1",	"sdram",
+static SUNXI_CCU_GATE(dram_fe1_clk,	"dram-fe1",	"sdram",
 		      0x04, BIT(1), 0);
-अटल SUNXI_CCU_GATE(dram_fe2_clk,	"dram-fe2",	"sdram",
+static SUNXI_CCU_GATE(dram_fe2_clk,	"dram-fe2",	"sdram",
 		      0x04, BIT(2), 0);
-अटल SUNXI_CCU_GATE(dram_deu0_clk,	"dram-deu0",	"sdram",
+static SUNXI_CCU_GATE(dram_deu0_clk,	"dram-deu0",	"sdram",
 		      0x04, BIT(4), 0);
-अटल SUNXI_CCU_GATE(dram_deu1_clk,	"dram-deu1",	"sdram",
+static SUNXI_CCU_GATE(dram_deu1_clk,	"dram-deu1",	"sdram",
 		      0x04, BIT(5), 0);
-अटल SUNXI_CCU_GATE(dram_be0_clk,	"dram-be0",	"sdram",
+static SUNXI_CCU_GATE(dram_be0_clk,	"dram-be0",	"sdram",
 		      0x04, BIT(8), 0);
-अटल SUNXI_CCU_GATE(dram_be1_clk,	"dram-be1",	"sdram",
+static SUNXI_CCU_GATE(dram_be1_clk,	"dram-be1",	"sdram",
 		      0x04, BIT(9), 0);
-अटल SUNXI_CCU_GATE(dram_be2_clk,	"dram-be2",	"sdram",
+static SUNXI_CCU_GATE(dram_be2_clk,	"dram-be2",	"sdram",
 		      0x04, BIT(10), 0);
-अटल SUNXI_CCU_GATE(dram_drc0_clk,	"dram-drc0",	"sdram",
+static SUNXI_CCU_GATE(dram_drc0_clk,	"dram-drc0",	"sdram",
 		      0x04, BIT(12), 0);
-अटल SUNXI_CCU_GATE(dram_drc1_clk,	"dram-drc1",	"sdram",
+static SUNXI_CCU_GATE(dram_drc1_clk,	"dram-drc1",	"sdram",
 		      0x04, BIT(13), 0);
 
-अटल SUNXI_CCU_GATE(bus_fe0_clk,	"bus-fe0",	"bus-de",
+static SUNXI_CCU_GATE(bus_fe0_clk,	"bus-fe0",	"bus-de",
 		      0x08, BIT(0), 0);
-अटल SUNXI_CCU_GATE(bus_fe1_clk,	"bus-fe1",	"bus-de",
+static SUNXI_CCU_GATE(bus_fe1_clk,	"bus-fe1",	"bus-de",
 		      0x08, BIT(1), 0);
-अटल SUNXI_CCU_GATE(bus_fe2_clk,	"bus-fe2",	"bus-de",
+static SUNXI_CCU_GATE(bus_fe2_clk,	"bus-fe2",	"bus-de",
 		      0x08, BIT(2), 0);
-अटल SUNXI_CCU_GATE(bus_deu0_clk,	"bus-deu0",	"bus-de",
+static SUNXI_CCU_GATE(bus_deu0_clk,	"bus-deu0",	"bus-de",
 		      0x08, BIT(4), 0);
-अटल SUNXI_CCU_GATE(bus_deu1_clk,	"bus-deu1",	"bus-de",
+static SUNXI_CCU_GATE(bus_deu1_clk,	"bus-deu1",	"bus-de",
 		      0x08, BIT(5), 0);
-अटल SUNXI_CCU_GATE(bus_be0_clk,	"bus-be0",	"bus-de",
+static SUNXI_CCU_GATE(bus_be0_clk,	"bus-be0",	"bus-de",
 		      0x08, BIT(8), 0);
-अटल SUNXI_CCU_GATE(bus_be1_clk,	"bus-be1",	"bus-de",
+static SUNXI_CCU_GATE(bus_be1_clk,	"bus-be1",	"bus-de",
 		      0x08, BIT(9), 0);
-अटल SUNXI_CCU_GATE(bus_be2_clk,	"bus-be2",	"bus-de",
+static SUNXI_CCU_GATE(bus_be2_clk,	"bus-be2",	"bus-de",
 		      0x08, BIT(10), 0);
-अटल SUNXI_CCU_GATE(bus_drc0_clk,	"bus-drc0",	"bus-de",
+static SUNXI_CCU_GATE(bus_drc0_clk,	"bus-drc0",	"bus-de",
 		      0x08, BIT(12), 0);
-अटल SUNXI_CCU_GATE(bus_drc1_clk,	"bus-drc1",	"bus-de",
+static SUNXI_CCU_GATE(bus_drc1_clk,	"bus-drc1",	"bus-de",
 		      0x08, BIT(13), 0);
 
-अटल SUNXI_CCU_M(fe0_भाग_clk, "fe0-div", "de", 0x20, 0, 4, 0);
-अटल SUNXI_CCU_M(fe1_भाग_clk, "fe1-div", "de", 0x20, 4, 4, 0);
-अटल SUNXI_CCU_M(fe2_भाग_clk, "fe2-div", "de", 0x20, 8, 4, 0);
-अटल SUNXI_CCU_M(be0_भाग_clk, "be0-div", "de", 0x20, 16, 4, 0);
-अटल SUNXI_CCU_M(be1_भाग_clk, "be1-div", "de", 0x20, 20, 4, 0);
-अटल SUNXI_CCU_M(be2_भाग_clk, "be2-div", "de", 0x20, 24, 4, 0);
+static SUNXI_CCU_M(fe0_div_clk, "fe0-div", "de", 0x20, 0, 4, 0);
+static SUNXI_CCU_M(fe1_div_clk, "fe1-div", "de", 0x20, 4, 4, 0);
+static SUNXI_CCU_M(fe2_div_clk, "fe2-div", "de", 0x20, 8, 4, 0);
+static SUNXI_CCU_M(be0_div_clk, "be0-div", "de", 0x20, 16, 4, 0);
+static SUNXI_CCU_M(be1_div_clk, "be1-div", "de", 0x20, 20, 4, 0);
+static SUNXI_CCU_M(be2_div_clk, "be2-div", "de", 0x20, 24, 4, 0);
 
-अटल काष्ठा ccu_common *sun9i_a80_de_clks[] = अणु
+static struct ccu_common *sun9i_a80_de_clks[] = {
 	&fe0_clk.common,
 	&fe1_clk.common,
 	&fe2_clk.common,
@@ -124,16 +123,16 @@
 	&bus_drc0_clk.common,
 	&bus_drc1_clk.common,
 
-	&fe0_भाग_clk.common,
-	&fe1_भाग_clk.common,
-	&fe2_भाग_clk.common,
-	&be0_भाग_clk.common,
-	&be1_भाग_clk.common,
-	&be2_भाग_clk.common,
-पूर्ण;
+	&fe0_div_clk.common,
+	&fe1_div_clk.common,
+	&fe2_div_clk.common,
+	&be0_div_clk.common,
+	&be1_div_clk.common,
+	&be2_div_clk.common,
+};
 
-अटल काष्ठा clk_hw_onecell_data sun9i_a80_de_hw_clks = अणु
-	.hws	= अणु
+static struct clk_hw_onecell_data sun9i_a80_de_hw_clks = {
+	.hws	= {
 		[CLK_FE0]	= &fe0_clk.common.hw,
 		[CLK_FE1]	= &fe1_clk.common.hw,
 		[CLK_FE2]	= &fe2_clk.common.hw,
@@ -168,31 +167,31 @@
 		[CLK_BUS_DRC0]	= &bus_drc0_clk.common.hw,
 		[CLK_BUS_DRC1]	= &bus_drc1_clk.common.hw,
 
-		[CLK_FE0_DIV]	= &fe0_भाग_clk.common.hw,
-		[CLK_FE1_DIV]	= &fe1_भाग_clk.common.hw,
-		[CLK_FE2_DIV]	= &fe2_भाग_clk.common.hw,
-		[CLK_BE0_DIV]	= &be0_भाग_clk.common.hw,
-		[CLK_BE1_DIV]	= &be1_भाग_clk.common.hw,
-		[CLK_BE2_DIV]	= &be2_भाग_clk.common.hw,
-	पूर्ण,
+		[CLK_FE0_DIV]	= &fe0_div_clk.common.hw,
+		[CLK_FE1_DIV]	= &fe1_div_clk.common.hw,
+		[CLK_FE2_DIV]	= &fe2_div_clk.common.hw,
+		[CLK_BE0_DIV]	= &be0_div_clk.common.hw,
+		[CLK_BE1_DIV]	= &be1_div_clk.common.hw,
+		[CLK_BE2_DIV]	= &be2_div_clk.common.hw,
+	},
 	.num	= CLK_NUMBER,
-पूर्ण;
+};
 
-अटल काष्ठा ccu_reset_map sun9i_a80_de_resets[] = अणु
-	[RST_FE0]	= अणु 0x0c, BIT(0) पूर्ण,
-	[RST_FE1]	= अणु 0x0c, BIT(1) पूर्ण,
-	[RST_FE2]	= अणु 0x0c, BIT(2) पूर्ण,
-	[RST_DEU0]	= अणु 0x0c, BIT(4) पूर्ण,
-	[RST_DEU1]	= अणु 0x0c, BIT(5) पूर्ण,
-	[RST_BE0]	= अणु 0x0c, BIT(8) पूर्ण,
-	[RST_BE1]	= अणु 0x0c, BIT(9) पूर्ण,
-	[RST_BE2]	= अणु 0x0c, BIT(10) पूर्ण,
-	[RST_DRC0]	= अणु 0x0c, BIT(12) पूर्ण,
-	[RST_DRC1]	= अणु 0x0c, BIT(13) पूर्ण,
-	[RST_MERGE]	= अणु 0x0c, BIT(20) पूर्ण,
-पूर्ण;
+static struct ccu_reset_map sun9i_a80_de_resets[] = {
+	[RST_FE0]	= { 0x0c, BIT(0) },
+	[RST_FE1]	= { 0x0c, BIT(1) },
+	[RST_FE2]	= { 0x0c, BIT(2) },
+	[RST_DEU0]	= { 0x0c, BIT(4) },
+	[RST_DEU1]	= { 0x0c, BIT(5) },
+	[RST_BE0]	= { 0x0c, BIT(8) },
+	[RST_BE1]	= { 0x0c, BIT(9) },
+	[RST_BE2]	= { 0x0c, BIT(10) },
+	[RST_DRC0]	= { 0x0c, BIT(12) },
+	[RST_DRC1]	= { 0x0c, BIT(13) },
+	[RST_MERGE]	= { 0x0c, BIT(20) },
+};
 
-अटल स्थिर काष्ठा sunxi_ccu_desc sun9i_a80_de_clk_desc = अणु
+static const struct sunxi_ccu_desc sun9i_a80_de_clk_desc = {
 	.ccu_clks	= sun9i_a80_de_clks,
 	.num_ccu_clks	= ARRAY_SIZE(sun9i_a80_de_clks),
 
@@ -200,77 +199,77 @@
 
 	.resets		= sun9i_a80_de_resets,
 	.num_resets	= ARRAY_SIZE(sun9i_a80_de_resets),
-पूर्ण;
+};
 
-अटल पूर्णांक sun9i_a80_de_clk_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा resource *res;
-	काष्ठा clk *bus_clk;
-	काष्ठा reset_control *rstc;
-	व्योम __iomem *reg;
-	पूर्णांक ret;
+static int sun9i_a80_de_clk_probe(struct platform_device *pdev)
+{
+	struct resource *res;
+	struct clk *bus_clk;
+	struct reset_control *rstc;
+	void __iomem *reg;
+	int ret;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	reg = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(reg))
-		वापस PTR_ERR(reg);
+	if (IS_ERR(reg))
+		return PTR_ERR(reg);
 
 	bus_clk = devm_clk_get(&pdev->dev, "bus");
-	अगर (IS_ERR(bus_clk)) अणु
+	if (IS_ERR(bus_clk)) {
 		ret = PTR_ERR(bus_clk);
-		अगर (ret != -EPROBE_DEFER)
+		if (ret != -EPROBE_DEFER)
 			dev_err(&pdev->dev, "Couldn't get bus clk: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	rstc = devm_reset_control_get_exclusive(&pdev->dev, शून्य);
-	अगर (IS_ERR(rstc)) अणु
+	rstc = devm_reset_control_get_exclusive(&pdev->dev, NULL);
+	if (IS_ERR(rstc)) {
 		ret = PTR_ERR(rstc);
-		अगर (ret != -EPROBE_DEFER)
+		if (ret != -EPROBE_DEFER)
 			dev_err(&pdev->dev,
 				"Couldn't get reset control: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* The bus घड़ी needs to be enabled क्रम us to access the रेजिस्टरs */
+	/* The bus clock needs to be enabled for us to access the registers */
 	ret = clk_prepare_enable(bus_clk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "Couldn't enable bus clk: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* The reset control needs to be निश्चितed क्रम the controls to work */
-	ret = reset_control_deनिश्चित(rstc);
-	अगर (ret) अणु
+	/* The reset control needs to be asserted for the controls to work */
+	ret = reset_control_deassert(rstc);
+	if (ret) {
 		dev_err(&pdev->dev,
 			"Couldn't deassert reset control: %d\n", ret);
-		जाओ err_disable_clk;
-	पूर्ण
+		goto err_disable_clk;
+	}
 
 	ret = sunxi_ccu_probe(pdev->dev.of_node, reg,
 			      &sun9i_a80_de_clk_desc);
-	अगर (ret)
-		जाओ err_निश्चित_reset;
+	if (ret)
+		goto err_assert_reset;
 
-	वापस 0;
+	return 0;
 
-err_निश्चित_reset:
-	reset_control_निश्चित(rstc);
+err_assert_reset:
+	reset_control_assert(rstc);
 err_disable_clk:
 	clk_disable_unprepare(bus_clk);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा of_device_id sun9i_a80_de_clk_ids[] = अणु
-	अणु .compatible = "allwinner,sun9i-a80-de-clks" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id sun9i_a80_de_clk_ids[] = {
+	{ .compatible = "allwinner,sun9i-a80-de-clks" },
+	{ }
+};
 
-अटल काष्ठा platक्रमm_driver sun9i_a80_de_clk_driver = अणु
+static struct platform_driver sun9i_a80_de_clk_driver = {
 	.probe	= sun9i_a80_de_clk_probe,
-	.driver	= अणु
+	.driver	= {
 		.name	= "sun9i-a80-de-clks",
 		.of_match_table	= sun9i_a80_de_clk_ids,
-	पूर्ण,
-पूर्ण;
-builtin_platक्रमm_driver(sun9i_a80_de_clk_driver);
+	},
+};
+builtin_platform_driver(sun9i_a80_de_clk_driver);

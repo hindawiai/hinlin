@@ -1,44 +1,43 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * User address space access functions.
- * The non अंतरभूतd parts of यंत्र-i386/uaccess.h are here.
+ * The non inlined parts of asm-i386/uaccess.h are here.
  *
  * Copyright 1997 Andi Kleen <ak@muc.de>
  * Copyright 1997 Linus Torvalds
  */
-#समावेश <linux/export.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/mmx.h>
-#समावेश <यंत्र/यंत्र.h>
+#include <linux/export.h>
+#include <linux/uaccess.h>
+#include <asm/mmx.h>
+#include <asm/asm.h>
 
-#अगर_घोषित CONFIG_X86_INTEL_USERCOPY
+#ifdef CONFIG_X86_INTEL_USERCOPY
 /*
- * Alignment at which movsl is preferred क्रम bulk memory copies.
+ * Alignment at which movsl is preferred for bulk memory copies.
  */
-काष्ठा movsl_mask movsl_mask __पढ़ो_mostly;
-#पूर्ण_अगर
+struct movsl_mask movsl_mask __read_mostly;
+#endif
 
-अटल अंतरभूत पूर्णांक __movsl_is_ok(अचिन्हित दीर्घ a1, अचिन्हित दीर्घ a2, अचिन्हित दीर्घ n)
-अणु
-#अगर_घोषित CONFIG_X86_INTEL_USERCOPY
-	अगर (n >= 64 && ((a1 ^ a2) & movsl_mask.mask))
-		वापस 0;
-#पूर्ण_अगर
-	वापस 1;
-पूर्ण
-#घोषणा movsl_is_ok(a1, a2, n) \
-	__movsl_is_ok((अचिन्हित दीर्घ)(a1), (अचिन्हित दीर्घ)(a2), (n))
+static inline int __movsl_is_ok(unsigned long a1, unsigned long a2, unsigned long n)
+{
+#ifdef CONFIG_X86_INTEL_USERCOPY
+	if (n >= 64 && ((a1 ^ a2) & movsl_mask.mask))
+		return 0;
+#endif
+	return 1;
+}
+#define movsl_is_ok(a1, a2, n) \
+	__movsl_is_ok((unsigned long)(a1), (unsigned long)(a2), (n))
 
 /*
  * Zero Userspace
  */
 
-#घोषणा __करो_clear_user(addr,size)					\
-करो अणु									\
-	पूर्णांक __d0;							\
+#define __do_clear_user(addr,size)					\
+do {									\
+	int __d0;							\
 	might_fault();							\
-	__यंत्र__ __अस्थिर__(						\
+	__asm__ __volatile__(						\
 		ASM_STAC "\n"						\
 		"0:	rep; stosl\n"					\
 		"	movl %2,%0\n"					\
@@ -52,7 +51,7 @@
 		_ASM_EXTABLE_UA(1b, 2b)					\
 		: "=&c"(size), "=&D" (__d0)				\
 		: "r"(size & 3), "0"(size / 4), "1"(addr), "a"(0));	\
-पूर्ण जबतक (0)
+} while (0)
 
 /**
  * clear_user - Zero a block of memory in user space.
@@ -64,14 +63,14 @@
  * Return: number of bytes that could not be cleared.
  * On success, this will be zero.
  */
-अचिन्हित दीर्घ
-clear_user(व्योम __user *to, अचिन्हित दीर्घ n)
-अणु
+unsigned long
+clear_user(void __user *to, unsigned long n)
+{
 	might_fault();
-	अगर (access_ok(to, n))
-		__करो_clear_user(to, n);
-	वापस n;
-पूर्ण
+	if (access_ok(to, n))
+		__do_clear_user(to, n);
+	return n;
+}
 EXPORT_SYMBOL(clear_user);
 
 /**
@@ -80,25 +79,25 @@ EXPORT_SYMBOL(clear_user);
  * @n:    Number of bytes to zero.
  *
  * Zero a block of memory in user space.  Caller must check
- * the specअगरied block with access_ok() beक्रमe calling this function.
+ * the specified block with access_ok() before calling this function.
  *
  * Return: number of bytes that could not be cleared.
  * On success, this will be zero.
  */
-अचिन्हित दीर्घ
-__clear_user(व्योम __user *to, अचिन्हित दीर्घ n)
-अणु
-	__करो_clear_user(to, n);
-	वापस n;
-पूर्ण
+unsigned long
+__clear_user(void __user *to, unsigned long n)
+{
+	__do_clear_user(to, n);
+	return n;
+}
 EXPORT_SYMBOL(__clear_user);
 
-#अगर_घोषित CONFIG_X86_INTEL_USERCOPY
-अटल अचिन्हित दीर्घ
-__copy_user_पूर्णांकel(व्योम __user *to, स्थिर व्योम *from, अचिन्हित दीर्घ size)
-अणु
-	पूर्णांक d0, d1;
-	__यंत्र__ __अस्थिर__(
+#ifdef CONFIG_X86_INTEL_USERCOPY
+static unsigned long
+__copy_user_intel(void __user *to, const void *from, unsigned long size)
+{
+	int d0, d1;
+	__asm__ __volatile__(
 		       "       .align 2,0x90\n"
 		       "1:     movl 32(%4), %%eax\n"
 		       "       cmpl $67, %0\n"
@@ -195,15 +194,15 @@ __copy_user_पूर्णांकel(व्योम __user *to, स्थि�
 		       : "=&c"(size), "=&D" (d0), "=&S" (d1)
 		       :  "1"(to), "2"(from), "0"(size)
 		       : "eax", "edx", "memory");
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल अचिन्हित दीर्घ __copy_user_पूर्णांकel_nocache(व्योम *to,
-				स्थिर व्योम __user *from, अचिन्हित दीर्घ size)
-अणु
-	पूर्णांक d0, d1;
+static unsigned long __copy_user_intel_nocache(void *to,
+				const void __user *from, unsigned long size)
+{
+	int d0, d1;
 
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 	       "        .align 2,0x90\n"
 	       "0:      movl 32(%4), %%eax\n"
 	       "        cmpl $67, %0\n"
@@ -283,24 +282,24 @@ __copy_user_पूर्णांकel(व्योम __user *to, स्थि�
 	       : "=&c"(size), "=&D" (d0), "=&S" (d1)
 	       :  "1"(to), "2"(from), "0"(size)
 	       : "eax", "edx", "memory");
-	वापस size;
-पूर्ण
+	return size;
+}
 
-#अन्यथा
+#else
 
 /*
  * Leave these declared but undefined.  They should not be any references to
  * them
  */
-अचिन्हित दीर्घ __copy_user_पूर्णांकel(व्योम __user *to, स्थिर व्योम *from,
-					अचिन्हित दीर्घ size);
-#पूर्ण_अगर /* CONFIG_X86_INTEL_USERCOPY */
+unsigned long __copy_user_intel(void __user *to, const void *from,
+					unsigned long size);
+#endif /* CONFIG_X86_INTEL_USERCOPY */
 
 /* Generic arbitrary sized copy.  */
-#घोषणा __copy_user(to, from, size)					\
-करो अणु									\
-	पूर्णांक __d0, __d1, __d2;						\
-	__यंत्र__ __अस्थिर__(						\
+#define __copy_user(to, from, size)					\
+do {									\
+	int __d0, __d1, __d2;						\
+	__asm__ __volatile__(						\
 		"	cmp  $7,%0\n"					\
 		"	jbe  1f\n"					\
 		"	movl %1,%0\n"					\
@@ -328,33 +327,33 @@ __copy_user_पूर्णांकel(व्योम __user *to, स्थि�
 		: "=&c"(size), "=&D" (__d0), "=&S" (__d1), "=r"(__d2)	\
 		: "3"(size), "0"(size), "1"(to), "2"(from)		\
 		: "memory");						\
-पूर्ण जबतक (0)
+} while (0)
 
-अचिन्हित दीर्घ __copy_user_ll(व्योम *to, स्थिर व्योम *from, अचिन्हित दीर्घ n)
-अणु
+unsigned long __copy_user_ll(void *to, const void *from, unsigned long n)
+{
 	__uaccess_begin_nospec();
-	अगर (movsl_is_ok(to, from, n))
+	if (movsl_is_ok(to, from, n))
 		__copy_user(to, from, n);
-	अन्यथा
-		n = __copy_user_पूर्णांकel(to, from, n);
+	else
+		n = __copy_user_intel(to, from, n);
 	__uaccess_end();
-	वापस n;
-पूर्ण
+	return n;
+}
 EXPORT_SYMBOL(__copy_user_ll);
 
-अचिन्हित दीर्घ __copy_from_user_ll_nocache_nozero(व्योम *to, स्थिर व्योम __user *from,
-					अचिन्हित दीर्घ n)
-अणु
+unsigned long __copy_from_user_ll_nocache_nozero(void *to, const void __user *from,
+					unsigned long n)
+{
 	__uaccess_begin_nospec();
-#अगर_घोषित CONFIG_X86_INTEL_USERCOPY
-	अगर (n > 64 && अटल_cpu_has(X86_FEATURE_XMM2))
-		n = __copy_user_पूर्णांकel_nocache(to, from, n);
-	अन्यथा
+#ifdef CONFIG_X86_INTEL_USERCOPY
+	if (n > 64 && static_cpu_has(X86_FEATURE_XMM2))
+		n = __copy_user_intel_nocache(to, from, n);
+	else
 		__copy_user(to, from, n);
-#अन्यथा
+#else
 	__copy_user(to, from, n);
-#पूर्ण_अगर
+#endif
 	__uaccess_end();
-	वापस n;
-पूर्ण
+	return n;
+}
 EXPORT_SYMBOL(__copy_from_user_ll_nocache_nozero);

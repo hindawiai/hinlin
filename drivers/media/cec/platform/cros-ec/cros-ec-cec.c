@@ -1,281 +1,280 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * CEC driver क्रम ChromeOS Embedded Controller
+ * CEC driver for ChromeOS Embedded Controller
  *
  * Copyright (c) 2018 BayLibre, SAS
  * Author: Neil Armstrong <narmstrong@baylibre.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/dmi.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/cec.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/platक्रमm_data/cros_ec_commands.h>
-#समावेश <linux/platक्रमm_data/cros_ec_proto.h>
-#समावेश <media/cec.h>
-#समावेश <media/cec-notअगरier.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/dmi.h>
+#include <linux/pci.h>
+#include <linux/cec.h>
+#include <linux/slab.h>
+#include <linux/interrupt.h>
+#include <linux/platform_data/cros_ec_commands.h>
+#include <linux/platform_data/cros_ec_proto.h>
+#include <media/cec.h>
+#include <media/cec-notifier.h>
 
-#घोषणा DRV_NAME	"cros-ec-cec"
+#define DRV_NAME	"cros-ec-cec"
 
 /**
- * काष्ठा cros_ec_cec - Driver data क्रम EC CEC
+ * struct cros_ec_cec - Driver data for EC CEC
  *
- * @cros_ec: Poपूर्णांकer to EC device
- * @notअगरier: Notअगरier info क्रम responding to EC events
+ * @cros_ec: Pointer to EC device
+ * @notifier: Notifier info for responding to EC events
  * @adap: CEC adapter
- * @notअगरy: CEC notअगरier poपूर्णांकer
- * @rx_msg: storage क्रम a received message
+ * @notify: CEC notifier pointer
+ * @rx_msg: storage for a received message
  */
-काष्ठा cros_ec_cec अणु
-	काष्ठा cros_ec_device *cros_ec;
-	काष्ठा notअगरier_block notअगरier;
-	काष्ठा cec_adapter *adap;
-	काष्ठा cec_notअगरier *notअगरy;
-	काष्ठा cec_msg rx_msg;
-पूर्ण;
+struct cros_ec_cec {
+	struct cros_ec_device *cros_ec;
+	struct notifier_block notifier;
+	struct cec_adapter *adap;
+	struct cec_notifier *notify;
+	struct cec_msg rx_msg;
+};
 
-अटल व्योम handle_cec_message(काष्ठा cros_ec_cec *cros_ec_cec)
-अणु
-	काष्ठा cros_ec_device *cros_ec = cros_ec_cec->cros_ec;
-	uपूर्णांक8_t *cec_message = cros_ec->event_data.data.cec_message;
-	अचिन्हित पूर्णांक len = cros_ec->event_size;
+static void handle_cec_message(struct cros_ec_cec *cros_ec_cec)
+{
+	struct cros_ec_device *cros_ec = cros_ec_cec->cros_ec;
+	uint8_t *cec_message = cros_ec->event_data.data.cec_message;
+	unsigned int len = cros_ec->event_size;
 
 	cros_ec_cec->rx_msg.len = len;
-	स_नकल(cros_ec_cec->rx_msg.msg, cec_message, len);
+	memcpy(cros_ec_cec->rx_msg.msg, cec_message, len);
 
 	cec_received_msg(cros_ec_cec->adap, &cros_ec_cec->rx_msg);
-पूर्ण
+}
 
-अटल व्योम handle_cec_event(काष्ठा cros_ec_cec *cros_ec_cec)
-अणु
-	काष्ठा cros_ec_device *cros_ec = cros_ec_cec->cros_ec;
-	uपूर्णांक32_t events = cros_ec->event_data.data.cec_events;
+static void handle_cec_event(struct cros_ec_cec *cros_ec_cec)
+{
+	struct cros_ec_device *cros_ec = cros_ec_cec->cros_ec;
+	uint32_t events = cros_ec->event_data.data.cec_events;
 
-	अगर (events & EC_MKBP_CEC_SEND_OK)
-		cec_transmit_attempt_करोne(cros_ec_cec->adap,
+	if (events & EC_MKBP_CEC_SEND_OK)
+		cec_transmit_attempt_done(cros_ec_cec->adap,
 					  CEC_TX_STATUS_OK);
 
-	/* FW takes care of all retries, tell core to aव्योम more retries */
-	अगर (events & EC_MKBP_CEC_SEND_FAILED)
-		cec_transmit_attempt_करोne(cros_ec_cec->adap,
+	/* FW takes care of all retries, tell core to avoid more retries */
+	if (events & EC_MKBP_CEC_SEND_FAILED)
+		cec_transmit_attempt_done(cros_ec_cec->adap,
 					  CEC_TX_STATUS_MAX_RETRIES |
 					  CEC_TX_STATUS_NACK);
-पूर्ण
+}
 
-अटल पूर्णांक cros_ec_cec_event(काष्ठा notअगरier_block *nb,
-			     अचिन्हित दीर्घ queued_during_suspend,
-			     व्योम *_notअगरy)
-अणु
-	काष्ठा cros_ec_cec *cros_ec_cec;
-	काष्ठा cros_ec_device *cros_ec;
+static int cros_ec_cec_event(struct notifier_block *nb,
+			     unsigned long queued_during_suspend,
+			     void *_notify)
+{
+	struct cros_ec_cec *cros_ec_cec;
+	struct cros_ec_device *cros_ec;
 
-	cros_ec_cec = container_of(nb, काष्ठा cros_ec_cec, notअगरier);
+	cros_ec_cec = container_of(nb, struct cros_ec_cec, notifier);
 	cros_ec = cros_ec_cec->cros_ec;
 
-	अगर (cros_ec->event_data.event_type == EC_MKBP_EVENT_CEC_EVENT) अणु
+	if (cros_ec->event_data.event_type == EC_MKBP_EVENT_CEC_EVENT) {
 		handle_cec_event(cros_ec_cec);
-		वापस NOTIFY_OK;
-	पूर्ण
+		return NOTIFY_OK;
+	}
 
-	अगर (cros_ec->event_data.event_type == EC_MKBP_EVENT_CEC_MESSAGE) अणु
+	if (cros_ec->event_data.event_type == EC_MKBP_EVENT_CEC_MESSAGE) {
 		handle_cec_message(cros_ec_cec);
-		वापस NOTIFY_OK;
-	पूर्ण
+		return NOTIFY_OK;
+	}
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल पूर्णांक cros_ec_cec_set_log_addr(काष्ठा cec_adapter *adap, u8 logical_addr)
-अणु
-	काष्ठा cros_ec_cec *cros_ec_cec = adap->priv;
-	काष्ठा cros_ec_device *cros_ec = cros_ec_cec->cros_ec;
-	काष्ठा अणु
-		काष्ठा cros_ec_command msg;
-		काष्ठा ec_params_cec_set data;
-	पूर्ण __packed msg = अणुपूर्ण;
-	पूर्णांक ret;
+static int cros_ec_cec_set_log_addr(struct cec_adapter *adap, u8 logical_addr)
+{
+	struct cros_ec_cec *cros_ec_cec = adap->priv;
+	struct cros_ec_device *cros_ec = cros_ec_cec->cros_ec;
+	struct {
+		struct cros_ec_command msg;
+		struct ec_params_cec_set data;
+	} __packed msg = {};
+	int ret;
 
 	msg.msg.command = EC_CMD_CEC_SET;
-	msg.msg.outsize = माप(msg.data);
+	msg.msg.outsize = sizeof(msg.data);
 	msg.data.cmd = CEC_CMD_LOGICAL_ADDRESS;
 	msg.data.val = logical_addr;
 
 	ret = cros_ec_cmd_xfer_status(cros_ec, &msg.msg);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(cros_ec->dev,
 			"error setting CEC logical address on EC: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cros_ec_cec_transmit(काष्ठा cec_adapter *adap, u8 attempts,
-				u32 संकेत_मुक्त_समय, काष्ठा cec_msg *cec_msg)
-अणु
-	काष्ठा cros_ec_cec *cros_ec_cec = adap->priv;
-	काष्ठा cros_ec_device *cros_ec = cros_ec_cec->cros_ec;
-	काष्ठा अणु
-		काष्ठा cros_ec_command msg;
-		काष्ठा ec_params_cec_ग_लिखो data;
-	पूर्ण __packed msg = अणुपूर्ण;
-	पूर्णांक ret;
+static int cros_ec_cec_transmit(struct cec_adapter *adap, u8 attempts,
+				u32 signal_free_time, struct cec_msg *cec_msg)
+{
+	struct cros_ec_cec *cros_ec_cec = adap->priv;
+	struct cros_ec_device *cros_ec = cros_ec_cec->cros_ec;
+	struct {
+		struct cros_ec_command msg;
+		struct ec_params_cec_write data;
+	} __packed msg = {};
+	int ret;
 
 	msg.msg.command = EC_CMD_CEC_WRITE_MSG;
 	msg.msg.outsize = cec_msg->len;
-	स_नकल(msg.data.msg, cec_msg->msg, cec_msg->len);
+	memcpy(msg.data.msg, cec_msg->msg, cec_msg->len);
 
 	ret = cros_ec_cmd_xfer_status(cros_ec, &msg.msg);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(cros_ec->dev,
 			"error writing CEC msg on EC: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cros_ec_cec_adap_enable(काष्ठा cec_adapter *adap, bool enable)
-अणु
-	काष्ठा cros_ec_cec *cros_ec_cec = adap->priv;
-	काष्ठा cros_ec_device *cros_ec = cros_ec_cec->cros_ec;
-	काष्ठा अणु
-		काष्ठा cros_ec_command msg;
-		काष्ठा ec_params_cec_set data;
-	पूर्ण __packed msg = अणुपूर्ण;
-	पूर्णांक ret;
+static int cros_ec_cec_adap_enable(struct cec_adapter *adap, bool enable)
+{
+	struct cros_ec_cec *cros_ec_cec = adap->priv;
+	struct cros_ec_device *cros_ec = cros_ec_cec->cros_ec;
+	struct {
+		struct cros_ec_command msg;
+		struct ec_params_cec_set data;
+	} __packed msg = {};
+	int ret;
 
 	msg.msg.command = EC_CMD_CEC_SET;
-	msg.msg.outsize = माप(msg.data);
+	msg.msg.outsize = sizeof(msg.data);
 	msg.data.cmd = CEC_CMD_ENABLE;
 	msg.data.val = enable;
 
 	ret = cros_ec_cmd_xfer_status(cros_ec, &msg.msg);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(cros_ec->dev,
 			"error %sabling CEC on EC: %d\n",
 			(enable ? "en" : "dis"), ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा cec_adap_ops cros_ec_cec_ops = अणु
+static const struct cec_adap_ops cros_ec_cec_ops = {
 	.adap_enable = cros_ec_cec_adap_enable,
 	.adap_log_addr = cros_ec_cec_set_log_addr,
 	.adap_transmit = cros_ec_cec_transmit,
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक cros_ec_cec_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	काष्ठा cros_ec_cec *cros_ec_cec = dev_get_drvdata(&pdev->dev);
+#ifdef CONFIG_PM_SLEEP
+static int cros_ec_cec_suspend(struct device *dev)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct cros_ec_cec *cros_ec_cec = dev_get_drvdata(&pdev->dev);
 
-	अगर (device_may_wakeup(dev))
+	if (device_may_wakeup(dev))
 		enable_irq_wake(cros_ec_cec->cros_ec->irq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cros_ec_cec_resume(काष्ठा device *dev)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	काष्ठा cros_ec_cec *cros_ec_cec = dev_get_drvdata(&pdev->dev);
+static int cros_ec_cec_resume(struct device *dev)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct cros_ec_cec *cros_ec_cec = dev_get_drvdata(&pdev->dev);
 
-	अगर (device_may_wakeup(dev))
+	if (device_may_wakeup(dev))
 		disable_irq_wake(cros_ec_cec->cros_ec->irq);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(cros_ec_cec_pm_ops,
+static SIMPLE_DEV_PM_OPS(cros_ec_cec_pm_ops,
 	cros_ec_cec_suspend, cros_ec_cec_resume);
 
-#अगर IS_ENABLED(CONFIG_PCI) && IS_ENABLED(CONFIG_DMI)
+#if IS_ENABLED(CONFIG_PCI) && IS_ENABLED(CONFIG_DMI)
 
 /*
- * The Firmware only handles a single CEC पूर्णांकerface tied to a single HDMI
- * connector we specअगरy aदीर्घ with the DRM device name handling the HDMI output
+ * The Firmware only handles a single CEC interface tied to a single HDMI
+ * connector we specify along with the DRM device name handling the HDMI output
  */
 
-काष्ठा cec_dmi_match अणु
-	स्थिर अक्षर *sys_venकरोr;
-	स्थिर अक्षर *product_name;
-	स्थिर अक्षर *devname;
-	स्थिर अक्षर *conn;
-पूर्ण;
+struct cec_dmi_match {
+	const char *sys_vendor;
+	const char *product_name;
+	const char *devname;
+	const char *conn;
+};
 
-अटल स्थिर काष्ठा cec_dmi_match cec_dmi_match_table[] = अणु
+static const struct cec_dmi_match cec_dmi_match_table[] = {
 	/* Google Fizz */
-	अणु "Google", "Fizz", "0000:00:02.0", "Port B" पूर्ण,
-पूर्ण;
+	{ "Google", "Fizz", "0000:00:02.0", "Port B" },
+};
 
-अटल काष्ठा device *cros_ec_cec_find_hdmi_dev(काष्ठा device *dev,
-						स्थिर अक्षर **conn)
-अणु
-	पूर्णांक i;
+static struct device *cros_ec_cec_find_hdmi_dev(struct device *dev,
+						const char **conn)
+{
+	int i;
 
-	क्रम (i = 0 ; i < ARRAY_SIZE(cec_dmi_match_table) ; ++i) अणु
-		स्थिर काष्ठा cec_dmi_match *m = &cec_dmi_match_table[i];
+	for (i = 0 ; i < ARRAY_SIZE(cec_dmi_match_table) ; ++i) {
+		const struct cec_dmi_match *m = &cec_dmi_match_table[i];
 
-		अगर (dmi_match(DMI_SYS_VENDOR, m->sys_venकरोr) &&
-		    dmi_match(DMI_PRODUCT_NAME, m->product_name)) अणु
-			काष्ठा device *d;
+		if (dmi_match(DMI_SYS_VENDOR, m->sys_vendor) &&
+		    dmi_match(DMI_PRODUCT_NAME, m->product_name)) {
+			struct device *d;
 
-			/* Find the device, bail out अगर not yet रेजिस्टरed */
-			d = bus_find_device_by_name(&pci_bus_type, शून्य,
+			/* Find the device, bail out if not yet registered */
+			d = bus_find_device_by_name(&pci_bus_type, NULL,
 						    m->devname);
-			अगर (!d)
-				वापस ERR_PTR(-EPROBE_DEFER);
+			if (!d)
+				return ERR_PTR(-EPROBE_DEFER);
 			put_device(d);
 			*conn = m->conn;
-			वापस d;
-		पूर्ण
-	पूर्ण
+			return d;
+		}
+	}
 
 	/* Hardware support must be added in the cec_dmi_match_table */
 	dev_warn(dev, "CEC notifier not configured for this hardware\n");
 
-	वापस ERR_PTR(-ENODEV);
-पूर्ण
+	return ERR_PTR(-ENODEV);
+}
 
-#अन्यथा
+#else
 
-अटल काष्ठा device *cros_ec_cec_find_hdmi_dev(काष्ठा device *dev,
-						स्थिर अक्षर **conn)
-अणु
-	वापस ERR_PTR(-ENODEV);
-पूर्ण
+static struct device *cros_ec_cec_find_hdmi_dev(struct device *dev,
+						const char **conn)
+{
+	return ERR_PTR(-ENODEV);
+}
 
-#पूर्ण_अगर
+#endif
 
-अटल पूर्णांक cros_ec_cec_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा cros_ec_dev *ec_dev = dev_get_drvdata(pdev->dev.parent);
-	काष्ठा cros_ec_device *cros_ec = ec_dev->ec_dev;
-	काष्ठा cros_ec_cec *cros_ec_cec;
-	काष्ठा device *hdmi_dev;
-	स्थिर अक्षर *conn = शून्य;
-	पूर्णांक ret;
+static int cros_ec_cec_probe(struct platform_device *pdev)
+{
+	struct cros_ec_dev *ec_dev = dev_get_drvdata(pdev->dev.parent);
+	struct cros_ec_device *cros_ec = ec_dev->ec_dev;
+	struct cros_ec_cec *cros_ec_cec;
+	struct device *hdmi_dev;
+	const char *conn = NULL;
+	int ret;
 
 	hdmi_dev = cros_ec_cec_find_hdmi_dev(&pdev->dev, &conn);
-	अगर (IS_ERR(hdmi_dev))
-		वापस PTR_ERR(hdmi_dev);
+	if (IS_ERR(hdmi_dev))
+		return PTR_ERR(hdmi_dev);
 
-	cros_ec_cec = devm_kzalloc(&pdev->dev, माप(*cros_ec_cec),
+	cros_ec_cec = devm_kzalloc(&pdev->dev, sizeof(*cros_ec_cec),
 				   GFP_KERNEL);
-	अगर (!cros_ec_cec)
-		वापस -ENOMEM;
+	if (!cros_ec_cec)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, cros_ec_cec);
+	platform_set_drvdata(pdev, cros_ec_cec);
 	cros_ec_cec->cros_ec = cros_ec;
 
 	device_init_wakeup(&pdev->dev, 1);
@@ -284,71 +283,71 @@
 						 DRV_NAME,
 						 CEC_CAP_DEFAULTS |
 						 CEC_CAP_CONNECTOR_INFO, 1);
-	अगर (IS_ERR(cros_ec_cec->adap))
-		वापस PTR_ERR(cros_ec_cec->adap);
+	if (IS_ERR(cros_ec_cec->adap))
+		return PTR_ERR(cros_ec_cec->adap);
 
-	cros_ec_cec->notअगरy = cec_notअगरier_cec_adap_रेजिस्टर(hdmi_dev, conn,
+	cros_ec_cec->notify = cec_notifier_cec_adap_register(hdmi_dev, conn,
 							     cros_ec_cec->adap);
-	अगर (!cros_ec_cec->notअगरy) अणु
+	if (!cros_ec_cec->notify) {
 		ret = -ENOMEM;
-		जाओ out_probe_adapter;
-	पूर्ण
+		goto out_probe_adapter;
+	}
 
 	/* Get CEC events from the EC. */
-	cros_ec_cec->notअगरier.notअगरier_call = cros_ec_cec_event;
-	ret = blocking_notअगरier_chain_रेजिस्टर(&cros_ec->event_notअगरier,
-					       &cros_ec_cec->notअगरier);
-	अगर (ret) अणु
+	cros_ec_cec->notifier.notifier_call = cros_ec_cec_event;
+	ret = blocking_notifier_chain_register(&cros_ec->event_notifier,
+					       &cros_ec_cec->notifier);
+	if (ret) {
 		dev_err(&pdev->dev, "failed to register notifier\n");
-		जाओ out_probe_notअगरy;
-	पूर्ण
+		goto out_probe_notify;
+	}
 
-	ret = cec_रेजिस्टर_adapter(cros_ec_cec->adap, &pdev->dev);
-	अगर (ret < 0)
-		जाओ out_probe_notअगरy;
+	ret = cec_register_adapter(cros_ec_cec->adap, &pdev->dev);
+	if (ret < 0)
+		goto out_probe_notify;
 
-	वापस 0;
+	return 0;
 
-out_probe_notअगरy:
-	cec_notअगरier_cec_adap_unरेजिस्टर(cros_ec_cec->notअगरy,
+out_probe_notify:
+	cec_notifier_cec_adap_unregister(cros_ec_cec->notify,
 					 cros_ec_cec->adap);
 out_probe_adapter:
 	cec_delete_adapter(cros_ec_cec->adap);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cros_ec_cec_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा cros_ec_cec *cros_ec_cec = platक्रमm_get_drvdata(pdev);
-	काष्ठा device *dev = &pdev->dev;
-	पूर्णांक ret;
+static int cros_ec_cec_remove(struct platform_device *pdev)
+{
+	struct cros_ec_cec *cros_ec_cec = platform_get_drvdata(pdev);
+	struct device *dev = &pdev->dev;
+	int ret;
 
-	ret = blocking_notअगरier_chain_unरेजिस्टर(
-			&cros_ec_cec->cros_ec->event_notअगरier,
-			&cros_ec_cec->notअगरier);
+	ret = blocking_notifier_chain_unregister(
+			&cros_ec_cec->cros_ec->event_notifier,
+			&cros_ec_cec->notifier);
 
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to unregister notifier\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	cec_notअगरier_cec_adap_unरेजिस्टर(cros_ec_cec->notअगरy,
+	cec_notifier_cec_adap_unregister(cros_ec_cec->notify,
 					 cros_ec_cec->adap);
-	cec_unरेजिस्टर_adapter(cros_ec_cec->adap);
+	cec_unregister_adapter(cros_ec_cec->adap);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver cros_ec_cec_driver = अणु
+static struct platform_driver cros_ec_cec_driver = {
 	.probe = cros_ec_cec_probe,
-	.हटाओ  = cros_ec_cec_हटाओ,
-	.driver = अणु
+	.remove  = cros_ec_cec_remove,
+	.driver = {
 		.name = DRV_NAME,
 		.pm = &cros_ec_cec_pm_ops,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(cros_ec_cec_driver);
+module_platform_driver(cros_ec_cec_driver);
 
 MODULE_DESCRIPTION("CEC driver for ChromeOS ECs");
 MODULE_AUTHOR("Neil Armstrong <narmstrong@baylibre.com>");

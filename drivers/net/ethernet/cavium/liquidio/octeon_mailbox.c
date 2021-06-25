@@ -1,4 +1,3 @@
-<शैली गुरु>
 /**********************************************************************
  * Author: Cavium, Inc.
  *
@@ -7,68 +6,68 @@
  *
  * Copyright (c) 2003-2016 Cavium, Inc.
  *
- * This file is मुक्त software; you can redistribute it and/or modअगरy
+ * This file is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, Version 2, as
  * published by the Free Software Foundation.
  *
  * This file is distributed in the hope that it will be useful, but
  * AS-IS and WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE, TITLE, or
- * NONINFRINGEMENT.  See the GNU General Public License क्रम more details.
+ * NONINFRINGEMENT.  See the GNU General Public License for more details.
  ***********************************************************************/
-#समावेश <linux/pci.h>
-#समावेश <linux/netdevice.h>
-#समावेश "liquidio_common.h"
-#समावेश "octeon_droq.h"
-#समावेश "octeon_iq.h"
-#समावेश "response_manager.h"
-#समावेश "octeon_device.h"
-#समावेश "octeon_main.h"
-#समावेश "octeon_mailbox.h"
-#समावेश "cn23xx_pf_device.h"
+#include <linux/pci.h>
+#include <linux/netdevice.h>
+#include "liquidio_common.h"
+#include "octeon_droq.h"
+#include "octeon_iq.h"
+#include "response_manager.h"
+#include "octeon_device.h"
+#include "octeon_main.h"
+#include "octeon_mailbox.h"
+#include "cn23xx_pf_device.h"
 
 /**
- * octeon_mbox_पढ़ो:
- * @mbox: Poपूर्णांकer mailbox
+ * octeon_mbox_read:
+ * @mbox: Pointer mailbox
  *
- * Reads the 8-bytes of data from the mbox रेजिस्टर
- * Writes back the acknowldgement inidcating completion of पढ़ो
+ * Reads the 8-bytes of data from the mbox register
+ * Writes back the acknowldgement inidcating completion of read
  */
-पूर्णांक octeon_mbox_पढ़ो(काष्ठा octeon_mbox *mbox)
-अणु
-	जोड़ octeon_mbox_message msg;
-	पूर्णांक ret = 0;
+int octeon_mbox_read(struct octeon_mbox *mbox)
+{
+	union octeon_mbox_message msg;
+	int ret = 0;
 
 	spin_lock(&mbox->lock);
 
-	msg.u64 = पढ़ोq(mbox->mbox_पढ़ो_reg);
+	msg.u64 = readq(mbox->mbox_read_reg);
 
-	अगर ((msg.u64 == OCTEON_PFVFACK) || (msg.u64 == OCTEON_PFVFSIG)) अणु
+	if ((msg.u64 == OCTEON_PFVFACK) || (msg.u64 == OCTEON_PFVFSIG)) {
 		spin_unlock(&mbox->lock);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (mbox->state & OCTEON_MBOX_STATE_REQUEST_RECEIVING) अणु
+	if (mbox->state & OCTEON_MBOX_STATE_REQUEST_RECEIVING) {
 		mbox->mbox_req.data[mbox->mbox_req.recv_len - 1] = msg.u64;
 		mbox->mbox_req.recv_len++;
-	पूर्ण अन्यथा अणु
-		अगर (mbox->state & OCTEON_MBOX_STATE_RESPONSE_RECEIVING) अणु
+	} else {
+		if (mbox->state & OCTEON_MBOX_STATE_RESPONSE_RECEIVING) {
 			mbox->mbox_resp.data[mbox->mbox_resp.recv_len - 1] =
 				msg.u64;
 			mbox->mbox_resp.recv_len++;
-		पूर्ण अन्यथा अणु
-			अगर ((mbox->state & OCTEON_MBOX_STATE_IDLE) &&
-			    (msg.s.type == OCTEON_MBOX_REQUEST)) अणु
+		} else {
+			if ((mbox->state & OCTEON_MBOX_STATE_IDLE) &&
+			    (msg.s.type == OCTEON_MBOX_REQUEST)) {
 				mbox->state &= ~OCTEON_MBOX_STATE_IDLE;
 				mbox->state |=
 				    OCTEON_MBOX_STATE_REQUEST_RECEIVING;
 				mbox->mbox_req.msg.u64 = msg.u64;
 				mbox->mbox_req.q_no = mbox->q_no;
 				mbox->mbox_req.recv_len = 1;
-			पूर्ण अन्यथा अणु
-				अगर ((mbox->state &
+			} else {
+				if ((mbox->state &
 				     OCTEON_MBOX_STATE_RESPONSE_PENDING) &&
-				    (msg.s.type == OCTEON_MBOX_RESPONSE)) अणु
+				    (msg.s.type == OCTEON_MBOX_RESPONSE)) {
 					mbox->state &=
 					    ~OCTEON_MBOX_STATE_RESPONSE_PENDING;
 					mbox->state |=
@@ -77,213 +76,213 @@
 					mbox->mbox_resp.msg.u64 = msg.u64;
 					mbox->mbox_resp.q_no = mbox->q_no;
 					mbox->mbox_resp.recv_len = 1;
-				पूर्ण अन्यथा अणु
-					ग_लिखोq(OCTEON_PFVFERR,
-					       mbox->mbox_पढ़ो_reg);
+				} else {
+					writeq(OCTEON_PFVFERR,
+					       mbox->mbox_read_reg);
 					mbox->state |= OCTEON_MBOX_STATE_ERROR;
 					spin_unlock(&mbox->lock);
-					वापस 1;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+					return 1;
+				}
+			}
+		}
+	}
 
-	अगर (mbox->state & OCTEON_MBOX_STATE_REQUEST_RECEIVING) अणु
-		अगर (mbox->mbox_req.recv_len < mbox->mbox_req.msg.s.len) अणु
+	if (mbox->state & OCTEON_MBOX_STATE_REQUEST_RECEIVING) {
+		if (mbox->mbox_req.recv_len < mbox->mbox_req.msg.s.len) {
 			ret = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			mbox->state &= ~OCTEON_MBOX_STATE_REQUEST_RECEIVING;
 			mbox->state |= OCTEON_MBOX_STATE_REQUEST_RECEIVED;
 			ret = 1;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (mbox->state & OCTEON_MBOX_STATE_RESPONSE_RECEIVING) अणु
-			अगर (mbox->mbox_resp.recv_len <
-			    mbox->mbox_resp.msg.s.len) अणु
+		}
+	} else {
+		if (mbox->state & OCTEON_MBOX_STATE_RESPONSE_RECEIVING) {
+			if (mbox->mbox_resp.recv_len <
+			    mbox->mbox_resp.msg.s.len) {
 				ret = 0;
-			पूर्ण अन्यथा अणु
+			} else {
 				mbox->state &=
 				    ~OCTEON_MBOX_STATE_RESPONSE_RECEIVING;
 				mbox->state |=
 				    OCTEON_MBOX_STATE_RESPONSE_RECEIVED;
 				ret = 1;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			WARN_ON(1);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	ग_लिखोq(OCTEON_PFVFACK, mbox->mbox_पढ़ो_reg);
+	writeq(OCTEON_PFVFACK, mbox->mbox_read_reg);
 
 	spin_unlock(&mbox->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * octeon_mbox_ग_लिखो:
- * @oct: Poपूर्णांकer Octeon Device
+ * octeon_mbox_write:
+ * @oct: Pointer Octeon Device
  * @mbox_cmd: Cmd to send to mailbox.
  *
- * Populates the queue specअगरic mbox काष्ठाure
- * with cmd inक्रमmation.
- * Write the cmd to mbox रेजिस्टर
+ * Populates the queue specific mbox structure
+ * with cmd information.
+ * Write the cmd to mbox register
  */
-पूर्णांक octeon_mbox_ग_लिखो(काष्ठा octeon_device *oct,
-		      काष्ठा octeon_mbox_cmd *mbox_cmd)
-अणु
-	काष्ठा octeon_mbox *mbox = oct->mbox[mbox_cmd->q_no];
+int octeon_mbox_write(struct octeon_device *oct,
+		      struct octeon_mbox_cmd *mbox_cmd)
+{
+	struct octeon_mbox *mbox = oct->mbox[mbox_cmd->q_no];
 	u32 count, i, ret = OCTEON_MBOX_STATUS_SUCCESS;
-	दीर्घ समयout = LIO_MBOX_WRITE_WAIT_TIME;
-	अचिन्हित दीर्घ flags;
+	long timeout = LIO_MBOX_WRITE_WAIT_TIME;
+	unsigned long flags;
 
 	spin_lock_irqsave(&mbox->lock, flags);
 
-	अगर ((mbox_cmd->msg.s.type == OCTEON_MBOX_RESPONSE) &&
-	    !(mbox->state & OCTEON_MBOX_STATE_REQUEST_RECEIVED)) अणु
+	if ((mbox_cmd->msg.s.type == OCTEON_MBOX_RESPONSE) &&
+	    !(mbox->state & OCTEON_MBOX_STATE_REQUEST_RECEIVED)) {
 		spin_unlock_irqrestore(&mbox->lock, flags);
-		वापस OCTEON_MBOX_STATUS_FAILED;
-	पूर्ण
+		return OCTEON_MBOX_STATUS_FAILED;
+	}
 
-	अगर ((mbox_cmd->msg.s.type == OCTEON_MBOX_REQUEST) &&
-	    !(mbox->state & OCTEON_MBOX_STATE_IDLE)) अणु
+	if ((mbox_cmd->msg.s.type == OCTEON_MBOX_REQUEST) &&
+	    !(mbox->state & OCTEON_MBOX_STATE_IDLE)) {
 		spin_unlock_irqrestore(&mbox->lock, flags);
-		वापस OCTEON_MBOX_STATUS_BUSY;
-	पूर्ण
+		return OCTEON_MBOX_STATUS_BUSY;
+	}
 
-	अगर (mbox_cmd->msg.s.type == OCTEON_MBOX_REQUEST) अणु
-		स_नकल(&mbox->mbox_resp, mbox_cmd,
-		       माप(काष्ठा octeon_mbox_cmd));
+	if (mbox_cmd->msg.s.type == OCTEON_MBOX_REQUEST) {
+		memcpy(&mbox->mbox_resp, mbox_cmd,
+		       sizeof(struct octeon_mbox_cmd));
 		mbox->state = OCTEON_MBOX_STATE_RESPONSE_PENDING;
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&mbox->lock, flags);
 
 	count = 0;
 
-	जबतक (पढ़ोq(mbox->mbox_ग_लिखो_reg) != OCTEON_PFVFSIG) अणु
-		schedule_समयout_unपूर्णांकerruptible(समयout);
-		अगर (count++ == LIO_MBOX_WRITE_WAIT_CNT) अणु
+	while (readq(mbox->mbox_write_reg) != OCTEON_PFVFSIG) {
+		schedule_timeout_uninterruptible(timeout);
+		if (count++ == LIO_MBOX_WRITE_WAIT_CNT) {
 			ret = OCTEON_MBOX_STATUS_FAILED;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (ret == OCTEON_MBOX_STATUS_SUCCESS) अणु
-		ग_लिखोq(mbox_cmd->msg.u64, mbox->mbox_ग_लिखो_reg);
-		क्रम (i = 0; i < (u32)(mbox_cmd->msg.s.len - 1); i++) अणु
+	if (ret == OCTEON_MBOX_STATUS_SUCCESS) {
+		writeq(mbox_cmd->msg.u64, mbox->mbox_write_reg);
+		for (i = 0; i < (u32)(mbox_cmd->msg.s.len - 1); i++) {
 			count = 0;
-			जबतक (पढ़ोq(mbox->mbox_ग_लिखो_reg) !=
-			       OCTEON_PFVFACK) अणु
-				schedule_समयout_unपूर्णांकerruptible(समयout);
-				अगर (count++ == LIO_MBOX_WRITE_WAIT_CNT) अणु
+			while (readq(mbox->mbox_write_reg) !=
+			       OCTEON_PFVFACK) {
+				schedule_timeout_uninterruptible(timeout);
+				if (count++ == LIO_MBOX_WRITE_WAIT_CNT) {
 					ret = OCTEON_MBOX_STATUS_FAILED;
-					अवरोध;
-				पूर्ण
-			पूर्ण
-			अगर (ret == OCTEON_MBOX_STATUS_SUCCESS)
-				ग_लिखोq(mbox_cmd->data[i], mbox->mbox_ग_लिखो_reg);
-			अन्यथा
-				अवरोध;
-		पूर्ण
-	पूर्ण
+					break;
+				}
+			}
+			if (ret == OCTEON_MBOX_STATUS_SUCCESS)
+				writeq(mbox_cmd->data[i], mbox->mbox_write_reg);
+			else
+				break;
+		}
+	}
 
 	spin_lock_irqsave(&mbox->lock, flags);
-	अगर (mbox_cmd->msg.s.type == OCTEON_MBOX_RESPONSE) अणु
+	if (mbox_cmd->msg.s.type == OCTEON_MBOX_RESPONSE) {
 		mbox->state = OCTEON_MBOX_STATE_IDLE;
-		ग_लिखोq(OCTEON_PFVFSIG, mbox->mbox_पढ़ो_reg);
-	पूर्ण अन्यथा अणु
-		अगर ((!mbox_cmd->msg.s.resp_needed) ||
-		    (ret == OCTEON_MBOX_STATUS_FAILED)) अणु
+		writeq(OCTEON_PFVFSIG, mbox->mbox_read_reg);
+	} else {
+		if ((!mbox_cmd->msg.s.resp_needed) ||
+		    (ret == OCTEON_MBOX_STATUS_FAILED)) {
 			mbox->state &= ~OCTEON_MBOX_STATE_RESPONSE_PENDING;
-			अगर (!(mbox->state &
+			if (!(mbox->state &
 			      (OCTEON_MBOX_STATE_REQUEST_RECEIVING |
 			       OCTEON_MBOX_STATE_REQUEST_RECEIVED)))
 				mbox->state = OCTEON_MBOX_STATE_IDLE;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock_irqrestore(&mbox->lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम get_vf_stats(काष्ठा octeon_device *oct,
-			 काष्ठा oct_vf_stats *stats)
-अणु
-	पूर्णांक i;
+static void get_vf_stats(struct octeon_device *oct,
+			 struct oct_vf_stats *stats)
+{
+	int i;
 
-	क्रम (i = 0; i < oct->num_iqs; i++) अणु
-		अगर (!oct->instr_queue[i])
-			जारी;
-		stats->tx_packets += oct->instr_queue[i]->stats.tx_करोne;
+	for (i = 0; i < oct->num_iqs; i++) {
+		if (!oct->instr_queue[i])
+			continue;
+		stats->tx_packets += oct->instr_queue[i]->stats.tx_done;
 		stats->tx_bytes += oct->instr_queue[i]->stats.tx_tot_bytes;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < oct->num_oqs; i++) अणु
-		अगर (!oct->droq[i])
-			जारी;
+	for (i = 0; i < oct->num_oqs; i++) {
+		if (!oct->droq[i])
+			continue;
 		stats->rx_packets += oct->droq[i]->stats.rx_pkts_received;
 		stats->rx_bytes += oct->droq[i]->stats.rx_bytes_received;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * octeon_mbox_process_cmd:
- * @mbox: Poपूर्णांकer mailbox
- * @mbox_cmd: Poपूर्णांकer to command received
+ * @mbox: Pointer mailbox
+ * @mbox_cmd: Pointer to command received
  *
  * Process the cmd received in mbox
  */
-अटल पूर्णांक octeon_mbox_process_cmd(काष्ठा octeon_mbox *mbox,
-				   काष्ठा octeon_mbox_cmd *mbox_cmd)
-अणु
-	काष्ठा octeon_device *oct = mbox->oct_dev;
+static int octeon_mbox_process_cmd(struct octeon_mbox *mbox,
+				   struct octeon_mbox_cmd *mbox_cmd)
+{
+	struct octeon_device *oct = mbox->oct_dev;
 
-	चयन (mbox_cmd->msg.s.cmd) अणु
-	हाल OCTEON_VF_ACTIVE:
+	switch (mbox_cmd->msg.s.cmd) {
+	case OCTEON_VF_ACTIVE:
 		dev_dbg(&oct->pci_dev->dev, "got vfactive sending data back\n");
 		mbox_cmd->msg.s.type = OCTEON_MBOX_RESPONSE;
 		mbox_cmd->msg.s.resp_needed = 1;
 		mbox_cmd->msg.s.len = 2;
 		mbox_cmd->data[0] = 0; /* VF version is in mbox_cmd->data[0] */
-		((काष्ठा lio_version *)&mbox_cmd->data[0])->major =
+		((struct lio_version *)&mbox_cmd->data[0])->major =
 			LIQUIDIO_BASE_MAJOR_VERSION;
-		((काष्ठा lio_version *)&mbox_cmd->data[0])->minor =
+		((struct lio_version *)&mbox_cmd->data[0])->minor =
 			LIQUIDIO_BASE_MINOR_VERSION;
-		((काष्ठा lio_version *)&mbox_cmd->data[0])->micro =
+		((struct lio_version *)&mbox_cmd->data[0])->micro =
 			LIQUIDIO_BASE_MICRO_VERSION;
-		स_नकल(mbox_cmd->msg.s.params, (uपूर्णांक8_t *)&oct->pfvf_hsword, 6);
+		memcpy(mbox_cmd->msg.s.params, (uint8_t *)&oct->pfvf_hsword, 6);
 		/* Sending core cofig info to the corresponding active VF.*/
-		octeon_mbox_ग_लिखो(oct, mbox_cmd);
-		अवरोध;
+		octeon_mbox_write(oct, mbox_cmd);
+		break;
 
-	हाल OCTEON_VF_FLR_REQUEST:
+	case OCTEON_VF_FLR_REQUEST:
 		dev_info(&oct->pci_dev->dev,
 			 "got a request for FLR from VF that owns DPI ring %u\n",
 			 mbox->q_no);
 		pcie_flr(oct->sriov_info.dpiring_to_vfpcidev_lut[mbox->q_no]);
-		अवरोध;
+		break;
 
-	हाल OCTEON_PF_CHANGED_VF_MACADDR:
-		अगर (OCTEON_CN23XX_VF(oct))
+	case OCTEON_PF_CHANGED_VF_MACADDR:
+		if (OCTEON_CN23XX_VF(oct))
 			octeon_pf_changed_vf_macaddr(oct,
 						     mbox_cmd->msg.s.params);
-		अवरोध;
+		break;
 
-	हाल OCTEON_GET_VF_STATS:
+	case OCTEON_GET_VF_STATS:
 		dev_dbg(&oct->pci_dev->dev, "Got VF stats request. Sending data back\n");
 		mbox_cmd->msg.s.type = OCTEON_MBOX_RESPONSE;
 		mbox_cmd->msg.s.resp_needed = 1;
 		mbox_cmd->msg.s.len = 1 +
-			माप(काष्ठा oct_vf_stats) / माप(u64);
-		get_vf_stats(oct, (काष्ठा oct_vf_stats *)mbox_cmd->data);
-		octeon_mbox_ग_लिखो(oct, mbox_cmd);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+			sizeof(struct oct_vf_stats) / sizeof(u64);
+		get_vf_stats(oct, (struct oct_vf_stats *)mbox_cmd->data);
+		octeon_mbox_write(oct, mbox_cmd);
+		break;
+	default:
+		break;
+	}
+	return 0;
+}
 
 /**
  * octeon_mbox_process_message
@@ -291,86 +290,86 @@
  *
  * Process the received mbox message.
  */
-पूर्णांक octeon_mbox_process_message(काष्ठा octeon_mbox *mbox)
-अणु
-	काष्ठा octeon_mbox_cmd mbox_cmd;
-	अचिन्हित दीर्घ flags;
+int octeon_mbox_process_message(struct octeon_mbox *mbox)
+{
+	struct octeon_mbox_cmd mbox_cmd;
+	unsigned long flags;
 
 	spin_lock_irqsave(&mbox->lock, flags);
 
-	अगर (mbox->state & OCTEON_MBOX_STATE_ERROR) अणु
-		अगर (mbox->state & (OCTEON_MBOX_STATE_RESPONSE_PENDING |
-				   OCTEON_MBOX_STATE_RESPONSE_RECEIVING)) अणु
-			स_नकल(&mbox_cmd, &mbox->mbox_resp,
-			       माप(काष्ठा octeon_mbox_cmd));
+	if (mbox->state & OCTEON_MBOX_STATE_ERROR) {
+		if (mbox->state & (OCTEON_MBOX_STATE_RESPONSE_PENDING |
+				   OCTEON_MBOX_STATE_RESPONSE_RECEIVING)) {
+			memcpy(&mbox_cmd, &mbox->mbox_resp,
+			       sizeof(struct octeon_mbox_cmd));
 			mbox->state = OCTEON_MBOX_STATE_IDLE;
-			ग_लिखोq(OCTEON_PFVFSIG, mbox->mbox_पढ़ो_reg);
+			writeq(OCTEON_PFVFSIG, mbox->mbox_read_reg);
 			spin_unlock_irqrestore(&mbox->lock, flags);
 			mbox_cmd.recv_status = 1;
-			अगर (mbox_cmd.fn)
+			if (mbox_cmd.fn)
 				mbox_cmd.fn(mbox->oct_dev, &mbox_cmd,
 					    mbox_cmd.fn_arg);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
 		mbox->state = OCTEON_MBOX_STATE_IDLE;
-		ग_लिखोq(OCTEON_PFVFSIG, mbox->mbox_पढ़ो_reg);
+		writeq(OCTEON_PFVFSIG, mbox->mbox_read_reg);
 		spin_unlock_irqrestore(&mbox->lock, flags);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (mbox->state & OCTEON_MBOX_STATE_RESPONSE_RECEIVED) अणु
-		स_नकल(&mbox_cmd, &mbox->mbox_resp,
-		       माप(काष्ठा octeon_mbox_cmd));
+	if (mbox->state & OCTEON_MBOX_STATE_RESPONSE_RECEIVED) {
+		memcpy(&mbox_cmd, &mbox->mbox_resp,
+		       sizeof(struct octeon_mbox_cmd));
 		mbox->state = OCTEON_MBOX_STATE_IDLE;
-		ग_लिखोq(OCTEON_PFVFSIG, mbox->mbox_पढ़ो_reg);
+		writeq(OCTEON_PFVFSIG, mbox->mbox_read_reg);
 		spin_unlock_irqrestore(&mbox->lock, flags);
 		mbox_cmd.recv_status = 0;
-		अगर (mbox_cmd.fn)
+		if (mbox_cmd.fn)
 			mbox_cmd.fn(mbox->oct_dev, &mbox_cmd, mbox_cmd.fn_arg);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (mbox->state & OCTEON_MBOX_STATE_REQUEST_RECEIVED) अणु
-		स_नकल(&mbox_cmd, &mbox->mbox_req,
-		       माप(काष्ठा octeon_mbox_cmd));
-		अगर (!mbox_cmd.msg.s.resp_needed) अणु
+	if (mbox->state & OCTEON_MBOX_STATE_REQUEST_RECEIVED) {
+		memcpy(&mbox_cmd, &mbox->mbox_req,
+		       sizeof(struct octeon_mbox_cmd));
+		if (!mbox_cmd.msg.s.resp_needed) {
 			mbox->state &= ~OCTEON_MBOX_STATE_REQUEST_RECEIVED;
-			अगर (!(mbox->state &
+			if (!(mbox->state &
 			      OCTEON_MBOX_STATE_RESPONSE_PENDING))
 				mbox->state = OCTEON_MBOX_STATE_IDLE;
-			ग_लिखोq(OCTEON_PFVFSIG, mbox->mbox_पढ़ो_reg);
-		पूर्ण
+			writeq(OCTEON_PFVFSIG, mbox->mbox_read_reg);
+		}
 
 		spin_unlock_irqrestore(&mbox->lock, flags);
 		octeon_mbox_process_cmd(mbox, &mbox_cmd);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	spin_unlock_irqrestore(&mbox->lock, flags);
 	WARN_ON(1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक octeon_mbox_cancel(काष्ठा octeon_device *oct, पूर्णांक q_no)
-अणु
-	काष्ठा octeon_mbox *mbox = oct->mbox[q_no];
-	काष्ठा octeon_mbox_cmd *mbox_cmd;
-	अचिन्हित दीर्घ flags = 0;
+int octeon_mbox_cancel(struct octeon_device *oct, int q_no)
+{
+	struct octeon_mbox *mbox = oct->mbox[q_no];
+	struct octeon_mbox_cmd *mbox_cmd;
+	unsigned long flags = 0;
 
 	spin_lock_irqsave(&mbox->lock, flags);
 	mbox_cmd = &mbox->mbox_resp;
 
-	अगर (!(mbox->state & OCTEON_MBOX_STATE_RESPONSE_PENDING)) अणु
+	if (!(mbox->state & OCTEON_MBOX_STATE_RESPONSE_PENDING)) {
 		spin_unlock_irqrestore(&mbox->lock, flags);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
 	mbox->state = OCTEON_MBOX_STATE_IDLE;
-	स_रखो(mbox_cmd, 0, माप(*mbox_cmd));
-	ग_लिखोq(OCTEON_PFVFSIG, mbox->mbox_पढ़ो_reg);
+	memset(mbox_cmd, 0, sizeof(*mbox_cmd));
+	writeq(OCTEON_PFVFSIG, mbox->mbox_read_reg);
 	spin_unlock_irqrestore(&mbox->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

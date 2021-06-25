@@ -1,98 +1,97 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_SH_SUSPEND_H
-#घोषणा _ASM_SH_SUSPEND_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_SH_SUSPEND_H
+#define _ASM_SH_SUSPEND_H
 
-#अगर_अघोषित __ASSEMBLY__
-#समावेश <linux/notअगरier.h>
+#ifndef __ASSEMBLY__
+#include <linux/notifier.h>
 
-#समावेश <यंत्र/ptrace.h>
+#include <asm/ptrace.h>
 
-काष्ठा swsusp_arch_regs अणु
-	काष्ठा pt_regs user_regs;
-	अचिन्हित दीर्घ bank1_regs[8];
-पूर्ण;
+struct swsusp_arch_regs {
+	struct pt_regs user_regs;
+	unsigned long bank1_regs[8];
+};
 
-व्योम sh_mobile_call_standby(अचिन्हित दीर्घ mode);
+void sh_mobile_call_standby(unsigned long mode);
 
-#अगर_घोषित CONFIG_CPU_IDLE
-पूर्णांक sh_mobile_setup_cpuidle(व्योम);
-#अन्यथा
-अटल अंतरभूत पूर्णांक sh_mobile_setup_cpuidle(व्योम) अणु वापस 0; पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_CPU_IDLE
+int sh_mobile_setup_cpuidle(void);
+#else
+static inline int sh_mobile_setup_cpuidle(void) { return 0; }
+#endif
 
-/* notअगरier chains क्रम pre/post sleep hooks */
-बाह्य काष्ठा atomic_notअगरier_head sh_mobile_pre_sleep_notअगरier_list;
-बाह्य काष्ठा atomic_notअगरier_head sh_mobile_post_sleep_notअगरier_list;
+/* notifier chains for pre/post sleep hooks */
+extern struct atomic_notifier_head sh_mobile_pre_sleep_notifier_list;
+extern struct atomic_notifier_head sh_mobile_post_sleep_notifier_list;
 
-/* priority levels क्रम notअगरiers */
-#घोषणा SH_MOBILE_SLEEP_BOARD	0
-#घोषणा SH_MOBILE_SLEEP_CPU	1
-#घोषणा SH_MOBILE_PRE(x)	(x)
-#घोषणा SH_MOBILE_POST(x)	(-(x))
+/* priority levels for notifiers */
+#define SH_MOBILE_SLEEP_BOARD	0
+#define SH_MOBILE_SLEEP_CPU	1
+#define SH_MOBILE_PRE(x)	(x)
+#define SH_MOBILE_POST(x)	(-(x))
 
-/* board code registration function क्रम self-refresh assembly snippets */
-व्योम sh_mobile_रेजिस्टर_self_refresh(अचिन्हित दीर्घ flags,
-				     व्योम *pre_start, व्योम *pre_end,
-				     व्योम *post_start, व्योम *post_end);
+/* board code registration function for self-refresh assembly snippets */
+void sh_mobile_register_self_refresh(unsigned long flags,
+				     void *pre_start, void *pre_end,
+				     void *post_start, void *post_end);
 
-/* रेजिस्टर काष्ठाure क्रम address/data inक्रमmation */
-काष्ठा sh_sleep_regs अणु
-	अचिन्हित दीर्घ stbcr;
-	अचिन्हित दीर्घ bar;
+/* register structure for address/data information */
+struct sh_sleep_regs {
+	unsigned long stbcr;
+	unsigned long bar;
 
 	/* MMU */
-	अचिन्हित दीर्घ pteh;
-	अचिन्हित दीर्घ ptel;
-	अचिन्हित दीर्घ ttb;
-	अचिन्हित दीर्घ tea;
-	अचिन्हित दीर्घ mmucr;
-	अचिन्हित दीर्घ ptea;
-	अचिन्हित दीर्घ pascr;
-	अचिन्हित दीर्घ irmcr;
+	unsigned long pteh;
+	unsigned long ptel;
+	unsigned long ttb;
+	unsigned long tea;
+	unsigned long mmucr;
+	unsigned long ptea;
+	unsigned long pascr;
+	unsigned long irmcr;
 
 	/* Cache */
-	अचिन्हित दीर्घ ccr;
-	अचिन्हित दीर्घ ramcr;
-पूर्ण;
+	unsigned long ccr;
+	unsigned long ramcr;
+};
 
-/* data area क्रम low-level sleep code */
-काष्ठा sh_sleep_data अणु
+/* data area for low-level sleep code */
+struct sh_sleep_data {
 	/* current sleep mode (SUSP_SH_...) */
-	अचिन्हित दीर्घ mode;
+	unsigned long mode;
 
-	/* addresses of board specअगरic self-refresh snippets */
-	अचिन्हित दीर्घ sf_pre;
-	अचिन्हित दीर्घ sf_post;
+	/* addresses of board specific self-refresh snippets */
+	unsigned long sf_pre;
+	unsigned long sf_post;
 
 	/* address of resume code */
-	अचिन्हित दीर्घ resume;
+	unsigned long resume;
 
-	/* रेजिस्टर state saved and restored by the assembly code */
-	अचिन्हित दीर्घ vbr;
-	अचिन्हित दीर्घ spc;
-	अचिन्हित दीर्घ sr;
-	अचिन्हित दीर्घ sp;
+	/* register state saved and restored by the assembly code */
+	unsigned long vbr;
+	unsigned long spc;
+	unsigned long sr;
+	unsigned long sp;
 
-	/* काष्ठाure क्रम keeping रेजिस्टर addresses */
-	काष्ठा sh_sleep_regs addr;
+	/* structure for keeping register addresses */
+	struct sh_sleep_regs addr;
 
-	/* काष्ठाure क्रम saving/restoring रेजिस्टर state */
-	काष्ठा sh_sleep_regs data;
-पूर्ण;
+	/* structure for saving/restoring register state */
+	struct sh_sleep_regs data;
+};
 
-/* a biपंचांगap of supported sleep modes (SUSP_SH..) */
-बाह्य अचिन्हित दीर्घ sh_mobile_sleep_supported;
+/* a bitmap of supported sleep modes (SUSP_SH..) */
+extern unsigned long sh_mobile_sleep_supported;
 
-#पूर्ण_अगर
+#endif
 
 /* flags passed to assembly suspend code */
-#घोषणा SUSP_SH_SLEEP		(1 << 0) /* Regular sleep mode */
-#घोषणा SUSP_SH_STANDBY		(1 << 1) /* SH-Mobile Software standby mode */
-#घोषणा SUSP_SH_RSTANDBY	(1 << 2) /* SH-Mobile R-standby mode */
-#घोषणा SUSP_SH_USTANDBY	(1 << 3) /* SH-Mobile U-standby mode */
-#घोषणा SUSP_SH_SF		(1 << 4) /* Enable self-refresh */
-#घोषणा SUSP_SH_MMU		(1 << 5) /* Save/restore MMU and cache */
-#घोषणा SUSP_SH_REGS		(1 << 6) /* Save/restore रेजिस्टरs */
+#define SUSP_SH_SLEEP		(1 << 0) /* Regular sleep mode */
+#define SUSP_SH_STANDBY		(1 << 1) /* SH-Mobile Software standby mode */
+#define SUSP_SH_RSTANDBY	(1 << 2) /* SH-Mobile R-standby mode */
+#define SUSP_SH_USTANDBY	(1 << 3) /* SH-Mobile U-standby mode */
+#define SUSP_SH_SF		(1 << 4) /* Enable self-refresh */
+#define SUSP_SH_MMU		(1 << 5) /* Save/restore MMU and cache */
+#define SUSP_SH_REGS		(1 << 6) /* Save/restore registers */
 
-#पूर्ण_अगर /* _ASM_SH_SUSPEND_H */
+#endif /* _ASM_SH_SUSPEND_H */

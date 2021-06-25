@@ -1,146 +1,145 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Memory Bandwidth Monitoring (MBM) test
  *
  * Copyright (C) 2018 Intel Corporation
  *
  * Authors:
- *    Sai Praneeth Prakhya <sai.praneeth.prakhya@पूर्णांकel.com>,
- *    Fenghua Yu <fenghua.yu@पूर्णांकel.com>
+ *    Sai Praneeth Prakhya <sai.praneeth.prakhya@intel.com>,
+ *    Fenghua Yu <fenghua.yu@intel.com>
  */
-#समावेश "resctrl.h"
+#include "resctrl.h"
 
-#घोषणा RESULT_खाता_NAME	"result_mbm"
-#घोषणा MAX_DIFF_PERCENT	5
-#घोषणा NUM_OF_RUNS		5
+#define RESULT_FILE_NAME	"result_mbm"
+#define MAX_DIFF_PERCENT	5
+#define NUM_OF_RUNS		5
 
-अटल पूर्णांक
-show_bw_info(अचिन्हित दीर्घ *bw_imc, अचिन्हित दीर्घ *bw_resc, पूर्णांक span)
-अणु
-	अचिन्हित दीर्घ avg_bw_imc = 0, avg_bw_resc = 0;
-	अचिन्हित दीर्घ sum_bw_imc = 0, sum_bw_resc = 0;
-	पूर्णांक runs, ret, avg_dअगरf_per;
-	भग्न avg_dअगरf = 0;
+static int
+show_bw_info(unsigned long *bw_imc, unsigned long *bw_resc, int span)
+{
+	unsigned long avg_bw_imc = 0, avg_bw_resc = 0;
+	unsigned long sum_bw_imc = 0, sum_bw_resc = 0;
+	int runs, ret, avg_diff_per;
+	float avg_diff = 0;
 
 	/*
 	 * Discard the first value which is inaccurate due to monitoring setup
 	 * transition phase.
 	 */
-	क्रम (runs = 1; runs < NUM_OF_RUNS ; runs++) अणु
+	for (runs = 1; runs < NUM_OF_RUNS ; runs++) {
 		sum_bw_imc += bw_imc[runs];
 		sum_bw_resc += bw_resc[runs];
-	पूर्ण
+	}
 
 	avg_bw_imc = sum_bw_imc / 4;
 	avg_bw_resc = sum_bw_resc / 4;
-	avg_dअगरf = (भग्न)द_असल(avg_bw_resc - avg_bw_imc) / avg_bw_imc;
-	avg_dअगरf_per = (पूर्णांक)(avg_dअगरf * 100);
+	avg_diff = (float)labs(avg_bw_resc - avg_bw_imc) / avg_bw_imc;
+	avg_diff_per = (int)(avg_diff * 100);
 
-	ret = avg_dअगरf_per > MAX_DIFF_PERCENT;
-	ksft_prपूर्णांक_msg("%s Check MBM diff within %d%%\n",
+	ret = avg_diff_per > MAX_DIFF_PERCENT;
+	ksft_print_msg("%s Check MBM diff within %d%%\n",
 		       ret ? "Fail:" : "Pass:", MAX_DIFF_PERCENT);
-	ksft_prपूर्णांक_msg("avg_diff_per: %d%%\n", avg_dअगरf_per);
-	ksft_prपूर्णांक_msg("Span (MB): %d\n", span);
-	ksft_prपूर्णांक_msg("avg_bw_imc: %lu\n", avg_bw_imc);
-	ksft_prपूर्णांक_msg("avg_bw_resc: %lu\n", avg_bw_resc);
+	ksft_print_msg("avg_diff_per: %d%%\n", avg_diff_per);
+	ksft_print_msg("Span (MB): %d\n", span);
+	ksft_print_msg("avg_bw_imc: %lu\n", avg_bw_imc);
+	ksft_print_msg("avg_bw_resc: %lu\n", avg_bw_resc);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक check_results(पूर्णांक span)
-अणु
-	अचिन्हित दीर्घ bw_imc[NUM_OF_RUNS], bw_resc[NUM_OF_RUNS];
-	अक्षर temp[1024], *token_array[8];
-	अक्षर output[] = RESULT_खाता_NAME;
-	पूर्णांक runs, ret;
-	खाता *fp;
+static int check_results(int span)
+{
+	unsigned long bw_imc[NUM_OF_RUNS], bw_resc[NUM_OF_RUNS];
+	char temp[1024], *token_array[8];
+	char output[] = RESULT_FILE_NAME;
+	int runs, ret;
+	FILE *fp;
 
-	ksft_prपूर्णांक_msg("Checking for pass/fail\n");
+	ksft_print_msg("Checking for pass/fail\n");
 
-	fp = ख_खोलो(output, "r");
-	अगर (!fp) अणु
-		लिखो_त्रुटि(output);
+	fp = fopen(output, "r");
+	if (!fp) {
+		perror(output);
 
-		वापस त्रुटि_सं;
-	पूर्ण
+		return errno;
+	}
 
 	runs = 0;
-	जबतक (ख_माला_लो(temp, माप(temp), fp)) अणु
-		अक्षर *token = म_मोहर(temp, ":\t");
-		पूर्णांक i = 0;
+	while (fgets(temp, sizeof(temp), fp)) {
+		char *token = strtok(temp, ":\t");
+		int i = 0;
 
-		जबतक (token) अणु
+		while (token) {
 			token_array[i++] = token;
-			token = म_मोहर(शून्य, ":\t");
-		पूर्ण
+			token = strtok(NULL, ":\t");
+		}
 
-		bw_resc[runs] = म_से_अदीर्घ(token_array[5], शून्य, 0);
-		bw_imc[runs] = म_से_अदीर्घ(token_array[3], शून्य, 0);
+		bw_resc[runs] = strtoul(token_array[5], NULL, 0);
+		bw_imc[runs] = strtoul(token_array[3], NULL, 0);
 		runs++;
-	पूर्ण
+	}
 
 	ret = show_bw_info(bw_imc, bw_resc, span);
 
-	ख_बंद(fp);
+	fclose(fp);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mbm_setup(पूर्णांक num, ...)
-अणु
-	काष्ठा resctrl_val_param *p;
-	अटल पूर्णांक num_of_runs;
-	बहु_सूची param;
-	पूर्णांक ret = 0;
+static int mbm_setup(int num, ...)
+{
+	struct resctrl_val_param *p;
+	static int num_of_runs;
+	va_list param;
+	int ret = 0;
 
-	/* Run NUM_OF_RUNS बार */
-	अगर (num_of_runs++ >= NUM_OF_RUNS)
-		वापस -1;
+	/* Run NUM_OF_RUNS times */
+	if (num_of_runs++ >= NUM_OF_RUNS)
+		return -1;
 
-	बहु_शुरू(param, num);
-	p = बहु_तर्क(param, काष्ठा resctrl_val_param *);
-	बहु_पूर्ण(param);
+	va_start(param, num);
+	p = va_arg(param, struct resctrl_val_param *);
+	va_end(param);
 
 	/* Set up shemata with 100% allocation on the first run. */
-	अगर (num_of_runs == 0)
-		ret = ग_लिखो_schemata(p->ctrlgrp, "100", p->cpu_no,
+	if (num_of_runs == 0)
+		ret = write_schemata(p->ctrlgrp, "100", p->cpu_no,
 				     p->resctrl_val);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम mbm_test_cleanup(व्योम)
-अणु
-	हटाओ(RESULT_खाता_NAME);
-पूर्ण
+void mbm_test_cleanup(void)
+{
+	remove(RESULT_FILE_NAME);
+}
 
-पूर्णांक mbm_bw_change(पूर्णांक span, पूर्णांक cpu_no, अक्षर *bw_report, अक्षर **benchmark_cmd)
-अणु
-	काष्ठा resctrl_val_param param = अणु
+int mbm_bw_change(int span, int cpu_no, char *bw_report, char **benchmark_cmd)
+{
+	struct resctrl_val_param param = {
 		.resctrl_val	= MBM_STR,
 		.ctrlgrp	= "c1",
 		.mongrp		= "m1",
 		.span		= span,
 		.cpu_no		= cpu_no,
 		.mum_resctrlfs	= 1,
-		.filename	= RESULT_खाता_NAME,
+		.filename	= RESULT_FILE_NAME,
 		.bw_report	=  bw_report,
 		.setup		= mbm_setup
-	पूर्ण;
-	पूर्णांक ret;
+	};
+	int ret;
 
-	हटाओ(RESULT_खाता_NAME);
+	remove(RESULT_FILE_NAME);
 
 	ret = resctrl_val(benchmark_cmd, &param);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = check_results(span);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	mbm_test_cleanup();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

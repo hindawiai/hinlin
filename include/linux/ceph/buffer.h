@@ -1,40 +1,39 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __FS_CEPH_BUFFER_H
-#घोषणा __FS_CEPH_BUFFER_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __FS_CEPH_BUFFER_H
+#define __FS_CEPH_BUFFER_H
 
-#समावेश <linux/kref.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/types.h>
-#समावेश <linux/uपन.स>
+#include <linux/kref.h>
+#include <linux/mm.h>
+#include <linux/vmalloc.h>
+#include <linux/types.h>
+#include <linux/uio.h>
 
 /*
  * a simple reference counted buffer.
  *
- * use kदो_स्मृति क्रम smaller sizes, vदो_स्मृति क्रम larger sizes.
+ * use kmalloc for smaller sizes, vmalloc for larger sizes.
  */
-काष्ठा ceph_buffer अणु
-	काष्ठा kref kref;
-	काष्ठा kvec vec;
-	माप_प्रकार alloc_len;
-पूर्ण;
+struct ceph_buffer {
+	struct kref kref;
+	struct kvec vec;
+	size_t alloc_len;
+};
 
-बाह्य काष्ठा ceph_buffer *ceph_buffer_new(माप_प्रकार len, gfp_t gfp);
-बाह्य व्योम ceph_buffer_release(काष्ठा kref *kref);
+extern struct ceph_buffer *ceph_buffer_new(size_t len, gfp_t gfp);
+extern void ceph_buffer_release(struct kref *kref);
 
-अटल अंतरभूत काष्ठा ceph_buffer *ceph_buffer_get(काष्ठा ceph_buffer *b)
-अणु
+static inline struct ceph_buffer *ceph_buffer_get(struct ceph_buffer *b)
+{
 	kref_get(&b->kref);
-	वापस b;
-पूर्ण
+	return b;
+}
 
-अटल अंतरभूत व्योम ceph_buffer_put(काष्ठा ceph_buffer *b)
-अणु
-	अगर (b)
+static inline void ceph_buffer_put(struct ceph_buffer *b)
+{
+	if (b)
 		kref_put(&b->kref, ceph_buffer_release);
-पूर्ण
+}
 
-बाह्य पूर्णांक ceph_decode_buffer(काष्ठा ceph_buffer **b, व्योम **p, व्योम *end);
+extern int ceph_decode_buffer(struct ceph_buffer **b, void **p, void *end);
 
-#पूर्ण_अगर
+#endif

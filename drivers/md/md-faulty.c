@@ -1,11 +1,10 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * faulty.c : Multiple Devices driver क्रम Linux
+ * faulty.c : Multiple Devices driver for Linux
  *
  * Copyright (C) 2004 Neil Brown
  *
- * fautly-device-simulator personality क्रम md
+ * fautly-device-simulator personality for md
  */
 
 
@@ -13,19 +12,19 @@
  * The "faulty" personality causes some requests to fail.
  *
  * Possible failure modes are:
- *   पढ़ोs fail "randomly" but succeed on retry
- *   ग_लिखोs fail "randomly" but succeed on retry
- *   पढ़ोs क्रम some address fail and then persist until a ग_लिखो
- *   पढ़ोs क्रम some address fail and then persist irrespective of ग_लिखो
- *   ग_लिखोs क्रम some address fail and persist
- *   all ग_लिखोs fail
+ *   reads fail "randomly" but succeed on retry
+ *   writes fail "randomly" but succeed on retry
+ *   reads for some address fail and then persist until a write
+ *   reads for some address fail and then persist irrespective of write
+ *   writes for some address fail and persist
+ *   all writes fail
  *
- * Dअगरferent modes can be active at a समय, but only
+ * Different modes can be active at a time, but only
  * one can be set at array creation.  Others can be added later.
  * A mode can be one-shot or recurrent with the recurrence being
  * once in every N requests.
  * The bottom 5 bits of the "layout" indicate the mode.  The
- * reमुख्यder indicate a period, or 0 क्रम one-shot.
+ * remainder indicate a period, or 0 for one-shot.
  *
  * There is an implementation limit on the number of concurrently
  * persisting-faulty blocks. When a new fault is requested that would
@@ -33,38 +32,38 @@
  * All current faults can be clear using a layout of "0".
  *
  * Requests are always sent to the device.  If they are to fail,
- * we clone the bio and insert a new b_end_io पूर्णांकo the chain.
+ * we clone the bio and insert a new b_end_io into the chain.
  */
 
-#घोषणा	WriteTransient	0
-#घोषणा	ReadTransient	1
-#घोषणा	WritePersistent	2
-#घोषणा	ReadPersistent	3
-#घोषणा	WriteAll	4 /* करोesn't go to device */
-#घोषणा	ReadFixable	5
-#घोषणा	Modes	6
+#define	WriteTransient	0
+#define	ReadTransient	1
+#define	WritePersistent	2
+#define	ReadPersistent	3
+#define	WriteAll	4 /* doesn't go to device */
+#define	ReadFixable	5
+#define	Modes	6
 
-#घोषणा	ClearErrors	31
-#घोषणा	ClearFaults	30
+#define	ClearErrors	31
+#define	ClearFaults	30
 
-#घोषणा AllPersist	100 /* पूर्णांकernal use only */
-#घोषणा	NoPersist	101
+#define AllPersist	100 /* internal use only */
+#define	NoPersist	101
 
-#घोषणा	ModeMask	0x1f
-#घोषणा	ModeShअगरt	5
+#define	ModeMask	0x1f
+#define	ModeShift	5
 
-#घोषणा MaxFault	50
-#समावेश <linux/blkdev.h>
-#समावेश <linux/module.h>
-#समावेश <linux/raid/md_u.h>
-#समावेश <linux/slab.h>
-#समावेश "md.h"
-#समावेश <linux/seq_file.h>
+#define MaxFault	50
+#include <linux/blkdev.h>
+#include <linux/module.h>
+#include <linux/raid/md_u.h>
+#include <linux/slab.h>
+#include "md.h"
+#include <linux/seq_file.h>
 
 
-अटल व्योम faulty_fail(काष्ठा bio *bio)
-अणु
-	काष्ठा bio *b = bio->bi_निजी;
+static void faulty_fail(struct bio *bio)
+{
+	struct bio *b = bio->bi_private;
 
 	b->bi_iter.bi_size = bio->bi_iter.bi_size;
 	b->bi_iter.bi_sector = bio->bi_iter.bi_sector;
@@ -72,291 +71,291 @@
 	bio_put(bio);
 
 	bio_io_error(b);
-पूर्ण
+}
 
-काष्ठा faulty_conf अणु
-	पूर्णांक period[Modes];
+struct faulty_conf {
+	int period[Modes];
 	atomic_t counters[Modes];
 	sector_t faults[MaxFault];
-	पूर्णांक	modes[MaxFault];
-	पूर्णांक nfaults;
-	काष्ठा md_rdev *rdev;
-पूर्ण;
+	int	modes[MaxFault];
+	int nfaults;
+	struct md_rdev *rdev;
+};
 
-अटल पूर्णांक check_mode(काष्ठा faulty_conf *conf, पूर्णांक mode)
-अणु
-	अगर (conf->period[mode] == 0 &&
-	    atomic_पढ़ो(&conf->counters[mode]) <= 0)
-		वापस 0; /* no failure, no decrement */
+static int check_mode(struct faulty_conf *conf, int mode)
+{
+	if (conf->period[mode] == 0 &&
+	    atomic_read(&conf->counters[mode]) <= 0)
+		return 0; /* no failure, no decrement */
 
 
-	अगर (atomic_dec_and_test(&conf->counters[mode])) अणु
-		अगर (conf->period[mode])
+	if (atomic_dec_and_test(&conf->counters[mode])) {
+		if (conf->period[mode])
 			atomic_set(&conf->counters[mode], conf->period[mode]);
-		वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return 1;
+	}
+	return 0;
+}
 
-अटल पूर्णांक check_sector(काष्ठा faulty_conf *conf, sector_t start, sector_t end, पूर्णांक dir)
-अणु
+static int check_sector(struct faulty_conf *conf, sector_t start, sector_t end, int dir)
+{
 	/* If we find a ReadFixable sector, we fix it ... */
-	पूर्णांक i;
-	क्रम (i=0; i<conf->nfaults; i++)
-		अगर (conf->faults[i] >= start &&
-		    conf->faults[i] < end) अणु
+	int i;
+	for (i=0; i<conf->nfaults; i++)
+		if (conf->faults[i] >= start &&
+		    conf->faults[i] < end) {
 			/* found it ... */
-			चयन (conf->modes[i] * 2 + dir) अणु
-			हाल WritePersistent*2+WRITE: वापस 1;
-			हाल ReadPersistent*2+READ: वापस 1;
-			हाल ReadFixable*2+READ: वापस 1;
-			हाल ReadFixable*2+WRITE:
+			switch (conf->modes[i] * 2 + dir) {
+			case WritePersistent*2+WRITE: return 1;
+			case ReadPersistent*2+READ: return 1;
+			case ReadFixable*2+READ: return 1;
+			case ReadFixable*2+WRITE:
 				conf->modes[i] = NoPersist;
-				वापस 0;
-			हाल AllPersist*2+READ:
-			हाल AllPersist*2+WRITE: वापस 1;
-			शेष:
-				वापस 0;
-			पूर्ण
-		पूर्ण
-	वापस 0;
-पूर्ण
+				return 0;
+			case AllPersist*2+READ:
+			case AllPersist*2+WRITE: return 1;
+			default:
+				return 0;
+			}
+		}
+	return 0;
+}
 
-अटल व्योम add_sector(काष्ठा faulty_conf *conf, sector_t start, पूर्णांक mode)
-अणु
-	पूर्णांक i;
-	पूर्णांक n = conf->nfaults;
-	क्रम (i=0; i<conf->nfaults; i++)
-		अगर (conf->faults[i] == start) अणु
-			चयन(mode) अणु
-			हाल NoPersist: conf->modes[i] = mode; वापस;
-			हाल WritePersistent:
-				अगर (conf->modes[i] == ReadPersistent ||
+static void add_sector(struct faulty_conf *conf, sector_t start, int mode)
+{
+	int i;
+	int n = conf->nfaults;
+	for (i=0; i<conf->nfaults; i++)
+		if (conf->faults[i] == start) {
+			switch(mode) {
+			case NoPersist: conf->modes[i] = mode; return;
+			case WritePersistent:
+				if (conf->modes[i] == ReadPersistent ||
 				    conf->modes[i] == ReadFixable)
 					conf->modes[i] = AllPersist;
-				अन्यथा
+				else
 					conf->modes[i] = WritePersistent;
-				वापस;
-			हाल ReadPersistent:
-				अगर (conf->modes[i] == WritePersistent)
+				return;
+			case ReadPersistent:
+				if (conf->modes[i] == WritePersistent)
 					conf->modes[i] = AllPersist;
-				अन्यथा
+				else
 					conf->modes[i] = ReadPersistent;
-				वापस;
-			हाल ReadFixable:
-				अगर (conf->modes[i] == WritePersistent ||
+				return;
+			case ReadFixable:
+				if (conf->modes[i] == WritePersistent ||
 				    conf->modes[i] == ReadPersistent)
 					conf->modes[i] = AllPersist;
-				अन्यथा
+				else
 					conf->modes[i] = ReadFixable;
-				वापस;
-			पूर्ण
-		पूर्ण अन्यथा अगर (conf->modes[i] == NoPersist)
+				return;
+			}
+		} else if (conf->modes[i] == NoPersist)
 			n = i;
 
-	अगर (n >= MaxFault)
-		वापस;
+	if (n >= MaxFault)
+		return;
 	conf->faults[n] = start;
 	conf->modes[n] = mode;
-	अगर (conf->nfaults == n)
+	if (conf->nfaults == n)
 		conf->nfaults = n+1;
-पूर्ण
+}
 
-अटल bool faulty_make_request(काष्ठा mddev *mddev, काष्ठा bio *bio)
-अणु
-	काष्ठा faulty_conf *conf = mddev->निजी;
-	पूर्णांक failit = 0;
+static bool faulty_make_request(struct mddev *mddev, struct bio *bio)
+{
+	struct faulty_conf *conf = mddev->private;
+	int failit = 0;
 
-	अगर (bio_data_dir(bio) == WRITE) अणु
-		/* ग_लिखो request */
-		अगर (atomic_पढ़ो(&conf->counters[WriteAll])) अणु
-			/* special हाल - करोn't decrement, don't submit_bio_noacct,
+	if (bio_data_dir(bio) == WRITE) {
+		/* write request */
+		if (atomic_read(&conf->counters[WriteAll])) {
+			/* special case - don't decrement, don't submit_bio_noacct,
 			 * just fail immediately
 			 */
 			bio_io_error(bio);
-			वापस true;
-		पूर्ण
+			return true;
+		}
 
-		अगर (check_sector(conf, bio->bi_iter.bi_sector,
+		if (check_sector(conf, bio->bi_iter.bi_sector,
 				 bio_end_sector(bio), WRITE))
 			failit = 1;
-		अगर (check_mode(conf, WritePersistent)) अणु
+		if (check_mode(conf, WritePersistent)) {
 			add_sector(conf, bio->bi_iter.bi_sector,
 				   WritePersistent);
 			failit = 1;
-		पूर्ण
-		अगर (check_mode(conf, WriteTransient))
+		}
+		if (check_mode(conf, WriteTransient))
 			failit = 1;
-	पूर्ण अन्यथा अणु
-		/* पढ़ो request */
-		अगर (check_sector(conf, bio->bi_iter.bi_sector,
+	} else {
+		/* read request */
+		if (check_sector(conf, bio->bi_iter.bi_sector,
 				 bio_end_sector(bio), READ))
 			failit = 1;
-		अगर (check_mode(conf, ReadTransient))
+		if (check_mode(conf, ReadTransient))
 			failit = 1;
-		अगर (check_mode(conf, ReadPersistent)) अणु
+		if (check_mode(conf, ReadPersistent)) {
 			add_sector(conf, bio->bi_iter.bi_sector,
 				   ReadPersistent);
 			failit = 1;
-		पूर्ण
-		अगर (check_mode(conf, ReadFixable)) अणु
+		}
+		if (check_mode(conf, ReadFixable)) {
 			add_sector(conf, bio->bi_iter.bi_sector,
 				   ReadFixable);
 			failit = 1;
-		पूर्ण
-	पूर्ण
-	अगर (failit) अणु
-		काष्ठा bio *b = bio_clone_fast(bio, GFP_NOIO, &mddev->bio_set);
+		}
+	}
+	if (failit) {
+		struct bio *b = bio_clone_fast(bio, GFP_NOIO, &mddev->bio_set);
 
 		bio_set_dev(b, conf->rdev->bdev);
-		b->bi_निजी = bio;
+		b->bi_private = bio;
 		b->bi_end_io = faulty_fail;
 		bio = b;
-	पूर्ण अन्यथा
+	} else
 		bio_set_dev(bio, conf->rdev->bdev);
 
 	submit_bio_noacct(bio);
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम faulty_status(काष्ठा seq_file *seq, काष्ठा mddev *mddev)
-अणु
-	काष्ठा faulty_conf *conf = mddev->निजी;
-	पूर्णांक n;
+static void faulty_status(struct seq_file *seq, struct mddev *mddev)
+{
+	struct faulty_conf *conf = mddev->private;
+	int n;
 
-	अगर ((n=atomic_पढ़ो(&conf->counters[WriteTransient])) != 0)
-		seq_म_लिखो(seq, " WriteTransient=%d(%d)",
+	if ((n=atomic_read(&conf->counters[WriteTransient])) != 0)
+		seq_printf(seq, " WriteTransient=%d(%d)",
 			   n, conf->period[WriteTransient]);
 
-	अगर ((n=atomic_पढ़ो(&conf->counters[ReadTransient])) != 0)
-		seq_म_लिखो(seq, " ReadTransient=%d(%d)",
+	if ((n=atomic_read(&conf->counters[ReadTransient])) != 0)
+		seq_printf(seq, " ReadTransient=%d(%d)",
 			   n, conf->period[ReadTransient]);
 
-	अगर ((n=atomic_पढ़ो(&conf->counters[WritePersistent])) != 0)
-		seq_म_लिखो(seq, " WritePersistent=%d(%d)",
+	if ((n=atomic_read(&conf->counters[WritePersistent])) != 0)
+		seq_printf(seq, " WritePersistent=%d(%d)",
 			   n, conf->period[WritePersistent]);
 
-	अगर ((n=atomic_पढ़ो(&conf->counters[ReadPersistent])) != 0)
-		seq_म_लिखो(seq, " ReadPersistent=%d(%d)",
+	if ((n=atomic_read(&conf->counters[ReadPersistent])) != 0)
+		seq_printf(seq, " ReadPersistent=%d(%d)",
 			   n, conf->period[ReadPersistent]);
 
 
-	अगर ((n=atomic_पढ़ो(&conf->counters[ReadFixable])) != 0)
-		seq_म_लिखो(seq, " ReadFixable=%d(%d)",
+	if ((n=atomic_read(&conf->counters[ReadFixable])) != 0)
+		seq_printf(seq, " ReadFixable=%d(%d)",
 			   n, conf->period[ReadFixable]);
 
-	अगर ((n=atomic_पढ़ो(&conf->counters[WriteAll])) != 0)
-		seq_म_लिखो(seq, " WriteAll");
+	if ((n=atomic_read(&conf->counters[WriteAll])) != 0)
+		seq_printf(seq, " WriteAll");
 
-	seq_म_लिखो(seq, " nfaults=%d", conf->nfaults);
-पूर्ण
+	seq_printf(seq, " nfaults=%d", conf->nfaults);
+}
 
 
-अटल पूर्णांक faulty_reshape(काष्ठा mddev *mddev)
-अणु
-	पूर्णांक mode = mddev->new_layout & ModeMask;
-	पूर्णांक count = mddev->new_layout >> ModeShअगरt;
-	काष्ठा faulty_conf *conf = mddev->निजी;
+static int faulty_reshape(struct mddev *mddev)
+{
+	int mode = mddev->new_layout & ModeMask;
+	int count = mddev->new_layout >> ModeShift;
+	struct faulty_conf *conf = mddev->private;
 
-	अगर (mddev->new_layout < 0)
-		वापस 0;
+	if (mddev->new_layout < 0)
+		return 0;
 
 	/* new layout */
-	अगर (mode == ClearFaults)
+	if (mode == ClearFaults)
 		conf->nfaults = 0;
-	अन्यथा अगर (mode == ClearErrors) अणु
-		पूर्णांक i;
-		क्रम (i=0 ; i < Modes ; i++) अणु
+	else if (mode == ClearErrors) {
+		int i;
+		for (i=0 ; i < Modes ; i++) {
 			conf->period[i] = 0;
 			atomic_set(&conf->counters[i], 0);
-		पूर्ण
-	पूर्ण अन्यथा अगर (mode < Modes) अणु
+		}
+	} else if (mode < Modes) {
 		conf->period[mode] = count;
-		अगर (!count) count++;
+		if (!count) count++;
 		atomic_set(&conf->counters[mode], count);
-	पूर्ण अन्यथा
-		वापस -EINVAL;
+	} else
+		return -EINVAL;
 	mddev->new_layout = -1;
 	mddev->layout = -1; /* makes sure further changes come through */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sector_t faulty_size(काष्ठा mddev *mddev, sector_t sectors, पूर्णांक raid_disks)
-अणु
+static sector_t faulty_size(struct mddev *mddev, sector_t sectors, int raid_disks)
+{
 	WARN_ONCE(raid_disks,
 		  "%s does not support generic reshape\n", __func__);
 
-	अगर (sectors == 0)
-		वापस mddev->dev_sectors;
+	if (sectors == 0)
+		return mddev->dev_sectors;
 
-	वापस sectors;
-पूर्ण
+	return sectors;
+}
 
-अटल पूर्णांक faulty_run(काष्ठा mddev *mddev)
-अणु
-	काष्ठा md_rdev *rdev;
-	पूर्णांक i;
-	काष्ठा faulty_conf *conf;
+static int faulty_run(struct mddev *mddev)
+{
+	struct md_rdev *rdev;
+	int i;
+	struct faulty_conf *conf;
 
-	अगर (md_check_no_biपंचांगap(mddev))
-		वापस -EINVAL;
+	if (md_check_no_bitmap(mddev))
+		return -EINVAL;
 
-	conf = kदो_स्मृति(माप(*conf), GFP_KERNEL);
-	अगर (!conf)
-		वापस -ENOMEM;
+	conf = kmalloc(sizeof(*conf), GFP_KERNEL);
+	if (!conf)
+		return -ENOMEM;
 
-	क्रम (i=0; i<Modes; i++) अणु
+	for (i=0; i<Modes; i++) {
 		atomic_set(&conf->counters[i], 0);
 		conf->period[i] = 0;
-	पूर्ण
+	}
 	conf->nfaults = 0;
 
-	rdev_क्रम_each(rdev, mddev) अणु
+	rdev_for_each(rdev, mddev) {
 		conf->rdev = rdev;
 		disk_stack_limits(mddev->gendisk, rdev->bdev,
 				  rdev->data_offset << 9);
-	पूर्ण
+	}
 
 	md_set_array_sectors(mddev, faulty_size(mddev, 0, 0));
-	mddev->निजी = conf;
+	mddev->private = conf;
 
 	faulty_reshape(mddev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम faulty_मुक्त(काष्ठा mddev *mddev, व्योम *priv)
-अणु
-	काष्ठा faulty_conf *conf = priv;
+static void faulty_free(struct mddev *mddev, void *priv)
+{
+	struct faulty_conf *conf = priv;
 
-	kमुक्त(conf);
-पूर्ण
+	kfree(conf);
+}
 
-अटल काष्ठा md_personality faulty_personality =
-अणु
+static struct md_personality faulty_personality =
+{
 	.name		= "faulty",
 	.level		= LEVEL_FAULTY,
 	.owner		= THIS_MODULE,
 	.make_request	= faulty_make_request,
 	.run		= faulty_run,
-	.मुक्त		= faulty_मुक्त,
+	.free		= faulty_free,
 	.status		= faulty_status,
 	.check_reshape	= faulty_reshape,
 	.size		= faulty_size,
-पूर्ण;
+};
 
-अटल पूर्णांक __init raid_init(व्योम)
-अणु
-	वापस रेजिस्टर_md_personality(&faulty_personality);
-पूर्ण
+static int __init raid_init(void)
+{
+	return register_md_personality(&faulty_personality);
+}
 
-अटल व्योम raid_निकास(व्योम)
-अणु
-	unरेजिस्टर_md_personality(&faulty_personality);
-पूर्ण
+static void raid_exit(void)
+{
+	unregister_md_personality(&faulty_personality);
+}
 
 module_init(raid_init);
-module_निकास(raid_निकास);
+module_exit(raid_exit);
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Fault injection personality for MD");
 MODULE_ALIAS("md-personality-10"); /* faulty */

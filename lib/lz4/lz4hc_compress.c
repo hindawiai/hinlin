@@ -1,23 +1,22 @@
-<शैली गुरु>
 /*
  * LZ4 HC - High Compression Mode of LZ4
  * Copyright (C) 2011-2015, Yann Collet.
  *
- * BSD 2 - Clause License (http://www.खोलोsource.org/licenses/bsd - license.php)
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions are
+ * BSD 2 - Clause License (http://www.opensource.org/licenses/bsd - license.php)
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
  * met:
  *	* Redistributions of source code must retain the above copyright
  *	  notice, this list of conditions and the following disclaimer.
- *	* Redistributions in binary क्रमm must reproduce the above
+ *	* Redistributions in binary form must reproduce the above
  * copyright notice, this list of conditions and the following disclaimer
- * in the करोcumentation and/or other materials provided with the
+ * in the documentation and/or other materials provided with the
  * distribution.
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -28,269 +27,269 @@
  *	- LZ4 homepage : http://www.lz4.org
  *	- LZ4 source repository : https://github.com/lz4/lz4
  *
- *	Changed क्रम kernel usage by:
- *	Sven Schmidt <4sschmid@inक्रमmatik.uni-hamburg.de>
+ *	Changed for kernel usage by:
+ *	Sven Schmidt <4sschmid@informatik.uni-hamburg.de>
  */
 
 /*-************************************
  *	Dependencies
  **************************************/
-#समावेश <linux/lz4.h>
-#समावेश "lz4defs.h"
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स> /* स_रखो */
+#include <linux/lz4.h>
+#include "lz4defs.h"
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/string.h> /* memset */
 
 /* *************************************
  *	Local Constants and types
  ***************************************/
 
-#घोषणा OPTIMAL_ML (पूर्णांक)((ML_MASK - 1) + MINMATCH)
+#define OPTIMAL_ML (int)((ML_MASK - 1) + MINMATCH)
 
-#घोषणा HASH_FUNCTION(i)	(((i) * 2654435761U) \
+#define HASH_FUNCTION(i)	(((i) * 2654435761U) \
 	>> ((MINMATCH*8) - LZ4HC_HASH_LOG))
-#घोषणा DELTANEXTU16(p)	chainTable[(U16)(p)] /* faster */
+#define DELTANEXTU16(p)	chainTable[(U16)(p)] /* faster */
 
-अटल U32 LZ4HC_hashPtr(स्थिर व्योम *ptr)
-अणु
-	वापस HASH_FUNCTION(LZ4_पढ़ो32(ptr));
-पूर्ण
+static U32 LZ4HC_hashPtr(const void *ptr)
+{
+	return HASH_FUNCTION(LZ4_read32(ptr));
+}
 
 /**************************************
  *	HC Compression
  **************************************/
-अटल व्योम LZ4HC_init(LZ4HC_CCtx_पूर्णांकernal *hc4, स्थिर BYTE *start)
-अणु
-	स_रखो((व्योम *)hc4->hashTable, 0, माप(hc4->hashTable));
-	स_रखो(hc4->chainTable, 0xFF, माप(hc4->chainTable));
+static void LZ4HC_init(LZ4HC_CCtx_internal *hc4, const BYTE *start)
+{
+	memset((void *)hc4->hashTable, 0, sizeof(hc4->hashTable));
+	memset(hc4->chainTable, 0xFF, sizeof(hc4->chainTable));
 	hc4->nextToUpdate = 64 * KB;
 	hc4->base = start - 64 * KB;
 	hc4->end = start;
 	hc4->dictBase = start - 64 * KB;
 	hc4->dictLimit = 64 * KB;
 	hc4->lowLimit = 64 * KB;
-पूर्ण
+}
 
 /* Update chains up to ip (excluded) */
-अटल FORCE_INLINE व्योम LZ4HC_Insert(LZ4HC_CCtx_पूर्णांकernal *hc4,
-	स्थिर BYTE *ip)
-अणु
-	U16 * स्थिर chainTable = hc4->chainTable;
-	U32 * स्थिर hashTable	= hc4->hashTable;
-	स्थिर BYTE * स्थिर base = hc4->base;
-	U32 स्थिर target = (U32)(ip - base);
+static FORCE_INLINE void LZ4HC_Insert(LZ4HC_CCtx_internal *hc4,
+	const BYTE *ip)
+{
+	U16 * const chainTable = hc4->chainTable;
+	U32 * const hashTable	= hc4->hashTable;
+	const BYTE * const base = hc4->base;
+	U32 const target = (U32)(ip - base);
 	U32 idx = hc4->nextToUpdate;
 
-	जबतक (idx < target) अणु
-		U32 स्थिर h = LZ4HC_hashPtr(base + idx);
-		माप_प्रकार delta = idx - hashTable[h];
+	while (idx < target) {
+		U32 const h = LZ4HC_hashPtr(base + idx);
+		size_t delta = idx - hashTable[h];
 
-		अगर (delta > MAX_DISTANCE)
+		if (delta > MAX_DISTANCE)
 			delta = MAX_DISTANCE;
 
 		DELTANEXTU16(idx) = (U16)delta;
 
 		hashTable[h] = idx;
 		idx++;
-	पूर्ण
+	}
 
 	hc4->nextToUpdate = target;
-पूर्ण
+}
 
-अटल FORCE_INLINE पूर्णांक LZ4HC_InsertAndFindBestMatch(
-	LZ4HC_CCtx_पूर्णांकernal *hc4, /* Index table will be updated */
-	स्थिर BYTE *ip,
-	स्थिर BYTE * स्थिर iLimit,
-	स्थिर BYTE **matchpos,
-	स्थिर पूर्णांक maxNbAttempts)
-अणु
-	U16 * स्थिर chainTable = hc4->chainTable;
-	U32 * स्थिर HashTable = hc4->hashTable;
-	स्थिर BYTE * स्थिर base = hc4->base;
-	स्थिर BYTE * स्थिर dictBase = hc4->dictBase;
-	स्थिर U32 dictLimit = hc4->dictLimit;
-	स्थिर U32 lowLimit = (hc4->lowLimit + 64 * KB > (U32)(ip - base))
+static FORCE_INLINE int LZ4HC_InsertAndFindBestMatch(
+	LZ4HC_CCtx_internal *hc4, /* Index table will be updated */
+	const BYTE *ip,
+	const BYTE * const iLimit,
+	const BYTE **matchpos,
+	const int maxNbAttempts)
+{
+	U16 * const chainTable = hc4->chainTable;
+	U32 * const HashTable = hc4->hashTable;
+	const BYTE * const base = hc4->base;
+	const BYTE * const dictBase = hc4->dictBase;
+	const U32 dictLimit = hc4->dictLimit;
+	const U32 lowLimit = (hc4->lowLimit + 64 * KB > (U32)(ip - base))
 		? hc4->lowLimit
 		: (U32)(ip - base) - (64 * KB - 1);
 	U32 matchIndex;
-	पूर्णांक nbAttempts = maxNbAttempts;
-	माप_प्रकार ml = 0;
+	int nbAttempts = maxNbAttempts;
+	size_t ml = 0;
 
 	/* HC4 match finder */
 	LZ4HC_Insert(hc4, ip);
 	matchIndex = HashTable[LZ4HC_hashPtr(ip)];
 
-	जबतक ((matchIndex >= lowLimit)
-		&& (nbAttempts)) अणु
+	while ((matchIndex >= lowLimit)
+		&& (nbAttempts)) {
 		nbAttempts--;
-		अगर (matchIndex >= dictLimit) अणु
-			स्थिर BYTE * स्थिर match = base + matchIndex;
+		if (matchIndex >= dictLimit) {
+			const BYTE * const match = base + matchIndex;
 
-			अगर (*(match + ml) == *(ip + ml)
-				&& (LZ4_पढ़ो32(match) == LZ4_पढ़ो32(ip))) अणु
-				माप_प्रकार स्थिर mlt = LZ4_count(ip + MINMATCH,
+			if (*(match + ml) == *(ip + ml)
+				&& (LZ4_read32(match) == LZ4_read32(ip))) {
+				size_t const mlt = LZ4_count(ip + MINMATCH,
 					match + MINMATCH, iLimit) + MINMATCH;
 
-				अगर (mlt > ml) अणु
+				if (mlt > ml) {
 					ml = mlt;
 					*matchpos = match;
-				पूर्ण
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			स्थिर BYTE * स्थिर match = dictBase + matchIndex;
+				}
+			}
+		} else {
+			const BYTE * const match = dictBase + matchIndex;
 
-			अगर (LZ4_पढ़ो32(match) == LZ4_पढ़ो32(ip)) अणु
-				माप_प्रकार mlt;
-				स्थिर BYTE *vLimit = ip
+			if (LZ4_read32(match) == LZ4_read32(ip)) {
+				size_t mlt;
+				const BYTE *vLimit = ip
 					+ (dictLimit - matchIndex);
 
-				अगर (vLimit > iLimit)
+				if (vLimit > iLimit)
 					vLimit = iLimit;
 				mlt = LZ4_count(ip + MINMATCH,
 					match + MINMATCH, vLimit) + MINMATCH;
-				अगर ((ip + mlt == vLimit)
+				if ((ip + mlt == vLimit)
 					&& (vLimit < iLimit))
 					mlt += LZ4_count(ip + mlt,
 						base + dictLimit,
 						iLimit);
-				अगर (mlt > ml) अणु
-					/* भव matchpos */
+				if (mlt > ml) {
+					/* virtual matchpos */
 					ml = mlt;
 					*matchpos = base + matchIndex;
-				पूर्ण
-			पूर्ण
-		पूर्ण
+				}
+			}
+		}
 		matchIndex -= DELTANEXTU16(matchIndex);
-	पूर्ण
+	}
 
-	वापस (पूर्णांक)ml;
-पूर्ण
+	return (int)ml;
+}
 
-अटल FORCE_INLINE पूर्णांक LZ4HC_InsertAndGetWiderMatch(
-	LZ4HC_CCtx_पूर्णांकernal *hc4,
-	स्थिर BYTE * स्थिर ip,
-	स्थिर BYTE * स्थिर iLowLimit,
-	स्थिर BYTE * स्थिर iHighLimit,
-	पूर्णांक दीर्घest,
-	स्थिर BYTE **matchpos,
-	स्थिर BYTE **startpos,
-	स्थिर पूर्णांक maxNbAttempts)
-अणु
-	U16 * स्थिर chainTable = hc4->chainTable;
-	U32 * स्थिर HashTable = hc4->hashTable;
-	स्थिर BYTE * स्थिर base = hc4->base;
-	स्थिर U32 dictLimit = hc4->dictLimit;
-	स्थिर BYTE * स्थिर lowPrefixPtr = base + dictLimit;
-	स्थिर U32 lowLimit = (hc4->lowLimit + 64 * KB > (U32)(ip - base))
+static FORCE_INLINE int LZ4HC_InsertAndGetWiderMatch(
+	LZ4HC_CCtx_internal *hc4,
+	const BYTE * const ip,
+	const BYTE * const iLowLimit,
+	const BYTE * const iHighLimit,
+	int longest,
+	const BYTE **matchpos,
+	const BYTE **startpos,
+	const int maxNbAttempts)
+{
+	U16 * const chainTable = hc4->chainTable;
+	U32 * const HashTable = hc4->hashTable;
+	const BYTE * const base = hc4->base;
+	const U32 dictLimit = hc4->dictLimit;
+	const BYTE * const lowPrefixPtr = base + dictLimit;
+	const U32 lowLimit = (hc4->lowLimit + 64 * KB > (U32)(ip - base))
 		? hc4->lowLimit
 		: (U32)(ip - base) - (64 * KB - 1);
-	स्थिर BYTE * स्थिर dictBase = hc4->dictBase;
+	const BYTE * const dictBase = hc4->dictBase;
 	U32 matchIndex;
-	पूर्णांक nbAttempts = maxNbAttempts;
-	पूर्णांक delta = (पूर्णांक)(ip - iLowLimit);
+	int nbAttempts = maxNbAttempts;
+	int delta = (int)(ip - iLowLimit);
 
 	/* First Match */
 	LZ4HC_Insert(hc4, ip);
 	matchIndex = HashTable[LZ4HC_hashPtr(ip)];
 
-	जबतक ((matchIndex >= lowLimit)
-		&& (nbAttempts)) अणु
+	while ((matchIndex >= lowLimit)
+		&& (nbAttempts)) {
 		nbAttempts--;
-		अगर (matchIndex >= dictLimit) अणु
-			स्थिर BYTE *matchPtr = base + matchIndex;
+		if (matchIndex >= dictLimit) {
+			const BYTE *matchPtr = base + matchIndex;
 
-			अगर (*(iLowLimit + दीर्घest)
-				== *(matchPtr - delta + दीर्घest)) अणु
-				अगर (LZ4_पढ़ो32(matchPtr) == LZ4_पढ़ो32(ip)) अणु
-					पूर्णांक mlt = MINMATCH + LZ4_count(
+			if (*(iLowLimit + longest)
+				== *(matchPtr - delta + longest)) {
+				if (LZ4_read32(matchPtr) == LZ4_read32(ip)) {
+					int mlt = MINMATCH + LZ4_count(
 						ip + MINMATCH,
 						matchPtr + MINMATCH,
 						iHighLimit);
-					पूर्णांक back = 0;
+					int back = 0;
 
-					जबतक ((ip + back > iLowLimit)
+					while ((ip + back > iLowLimit)
 						&& (matchPtr + back > lowPrefixPtr)
 						&& (ip[back - 1] == matchPtr[back - 1]))
 						back--;
 
 					mlt -= back;
 
-					अगर (mlt > दीर्घest) अणु
-						दीर्घest = (पूर्णांक)mlt;
+					if (mlt > longest) {
+						longest = (int)mlt;
 						*matchpos = matchPtr + back;
 						*startpos = ip + back;
-					पूर्ण
-				पूर्ण
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			स्थिर BYTE * स्थिर matchPtr = dictBase + matchIndex;
+					}
+				}
+			}
+		} else {
+			const BYTE * const matchPtr = dictBase + matchIndex;
 
-			अगर (LZ4_पढ़ो32(matchPtr) == LZ4_पढ़ो32(ip)) अणु
-				माप_प्रकार mlt;
-				पूर्णांक back = 0;
-				स्थिर BYTE *vLimit = ip + (dictLimit - matchIndex);
+			if (LZ4_read32(matchPtr) == LZ4_read32(ip)) {
+				size_t mlt;
+				int back = 0;
+				const BYTE *vLimit = ip + (dictLimit - matchIndex);
 
-				अगर (vLimit > iHighLimit)
+				if (vLimit > iHighLimit)
 					vLimit = iHighLimit;
 
 				mlt = LZ4_count(ip + MINMATCH,
 					matchPtr + MINMATCH, vLimit) + MINMATCH;
 
-				अगर ((ip + mlt == vLimit) && (vLimit < iHighLimit))
+				if ((ip + mlt == vLimit) && (vLimit < iHighLimit))
 					mlt += LZ4_count(ip + mlt, base + dictLimit,
 						iHighLimit);
-				जबतक ((ip + back > iLowLimit)
+				while ((ip + back > iLowLimit)
 					&& (matchIndex + back > lowLimit)
 					&& (ip[back - 1] == matchPtr[back - 1]))
 					back--;
 
 				mlt -= back;
 
-				अगर ((पूर्णांक)mlt > दीर्घest) अणु
-					दीर्घest = (पूर्णांक)mlt;
+				if ((int)mlt > longest) {
+					longest = (int)mlt;
 					*matchpos = base + matchIndex + back;
 					*startpos = ip + back;
-				पूर्ण
-			पूर्ण
-		पूर्ण
+				}
+			}
+		}
 
 		matchIndex -= DELTANEXTU16(matchIndex);
-	पूर्ण
+	}
 
-	वापस दीर्घest;
-पूर्ण
+	return longest;
+}
 
-अटल FORCE_INLINE पूर्णांक LZ4HC_encodeSequence(
-	स्थिर BYTE **ip,
+static FORCE_INLINE int LZ4HC_encodeSequence(
+	const BYTE **ip,
 	BYTE **op,
-	स्थिर BYTE **anchor,
-	पूर्णांक matchLength,
-	स्थिर BYTE * स्थिर match,
+	const BYTE **anchor,
+	int matchLength,
+	const BYTE * const match,
 	limitedOutput_directive limitedOutputBuffer,
 	BYTE *oend)
-अणु
-	पूर्णांक length;
+{
+	int length;
 	BYTE *token;
 
 	/* Encode Literal length */
-	length = (पूर्णांक)(*ip - *anchor);
+	length = (int)(*ip - *anchor);
 	token = (*op)++;
 
-	अगर ((limitedOutputBuffer)
+	if ((limitedOutputBuffer)
 		&& ((*op + (length>>8)
-			+ length + (2 + 1 + LASTLITERALS)) > oend)) अणु
+			+ length + (2 + 1 + LASTLITERALS)) > oend)) {
 		/* Check output limit */
-		वापस 1;
-	पूर्ण
-	अगर (length >= (पूर्णांक)RUN_MASK) अणु
-		पूर्णांक len;
+		return 1;
+	}
+	if (length >= (int)RUN_MASK) {
+		int len;
 
 		*token = (RUN_MASK<<ML_BITS);
 		len = length - RUN_MASK;
-		क्रम (; len > 254 ; len -= 255)
+		for (; len > 254 ; len -= 255)
 			*(*op)++ = 255;
 		*(*op)++ = (BYTE)len;
-	पूर्ण अन्यथा
+	} else
 		*token = (BYTE)(length<<ML_BITS);
 
 	/* Copy Literals */
@@ -298,77 +297,77 @@
 	*op += length;
 
 	/* Encode Offset */
-	LZ4_ग_लिखोLE16(*op, (U16)(*ip - match));
+	LZ4_writeLE16(*op, (U16)(*ip - match));
 	*op += 2;
 
 	/* Encode MatchLength */
-	length = (पूर्णांक)(matchLength - MINMATCH);
+	length = (int)(matchLength - MINMATCH);
 
-	अगर ((limitedOutputBuffer)
+	if ((limitedOutputBuffer)
 		&& (*op + (length>>8)
-			+ (1 + LASTLITERALS) > oend)) अणु
+			+ (1 + LASTLITERALS) > oend)) {
 		/* Check output limit */
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	अगर (length >= (पूर्णांक)ML_MASK) अणु
+	if (length >= (int)ML_MASK) {
 		*token += ML_MASK;
 		length -= ML_MASK;
 
-		क्रम (; length > 509 ; length -= 510) अणु
+		for (; length > 509 ; length -= 510) {
 			*(*op)++ = 255;
 			*(*op)++ = 255;
-		पूर्ण
+		}
 
-		अगर (length > 254) अणु
+		if (length > 254) {
 			length -= 255;
 			*(*op)++ = 255;
-		पूर्ण
+		}
 
 		*(*op)++ = (BYTE)length;
-	पूर्ण अन्यथा
+	} else
 		*token += (BYTE)(length);
 
 	/* Prepare next loop */
 	*ip += matchLength;
 	*anchor = *ip;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक LZ4HC_compress_generic(
-	LZ4HC_CCtx_पूर्णांकernal *स्थिर ctx,
-	स्थिर अक्षर * स्थिर source,
-	अक्षर * स्थिर dest,
-	पूर्णांक स्थिर inputSize,
-	पूर्णांक स्थिर maxOutputSize,
-	पूर्णांक compressionLevel,
+static int LZ4HC_compress_generic(
+	LZ4HC_CCtx_internal *const ctx,
+	const char * const source,
+	char * const dest,
+	int const inputSize,
+	int const maxOutputSize,
+	int compressionLevel,
 	limitedOutput_directive limit
 	)
-अणु
-	स्थिर BYTE *ip = (स्थिर BYTE *) source;
-	स्थिर BYTE *anchor = ip;
-	स्थिर BYTE * स्थिर iend = ip + inputSize;
-	स्थिर BYTE * स्थिर mflimit = iend - MFLIMIT;
-	स्थिर BYTE * स्थिर matchlimit = (iend - LASTLITERALS);
+{
+	const BYTE *ip = (const BYTE *) source;
+	const BYTE *anchor = ip;
+	const BYTE * const iend = ip + inputSize;
+	const BYTE * const mflimit = iend - MFLIMIT;
+	const BYTE * const matchlimit = (iend - LASTLITERALS);
 
 	BYTE *op = (BYTE *) dest;
-	BYTE * स्थिर oend = op + maxOutputSize;
+	BYTE * const oend = op + maxOutputSize;
 
-	अचिन्हित पूर्णांक maxNbAttempts;
-	पूर्णांक ml, ml2, ml3, ml0;
-	स्थिर BYTE *ref = शून्य;
-	स्थिर BYTE *start2 = शून्य;
-	स्थिर BYTE *ref2 = शून्य;
-	स्थिर BYTE *start3 = शून्य;
-	स्थिर BYTE *ref3 = शून्य;
-	स्थिर BYTE *start0;
-	स्थिर BYTE *ref0;
+	unsigned int maxNbAttempts;
+	int ml, ml2, ml3, ml0;
+	const BYTE *ref = NULL;
+	const BYTE *start2 = NULL;
+	const BYTE *ref2 = NULL;
+	const BYTE *start3 = NULL;
+	const BYTE *ref3 = NULL;
+	const BYTE *start0;
+	const BYTE *ref0;
 
 	/* init */
-	अगर (compressionLevel > LZ4HC_MAX_CLEVEL)
+	if (compressionLevel > LZ4HC_MAX_CLEVEL)
 		compressionLevel = LZ4HC_MAX_CLEVEL;
-	अगर (compressionLevel < 1)
+	if (compressionLevel < 1)
 		compressionLevel = LZ4HC_DEFAULT_CLEVEL;
 	maxNbAttempts = 1 << (compressionLevel - 1);
 	ctx->end += inputSize;
@@ -376,53 +375,53 @@
 	ip++;
 
 	/* Main Loop */
-	जबतक (ip < mflimit) अणु
+	while (ip < mflimit) {
 		ml = LZ4HC_InsertAndFindBestMatch(ctx, ip,
 			matchlimit, (&ref), maxNbAttempts);
-		अगर (!ml) अणु
+		if (!ml) {
 			ip++;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		/* saved, in हाल we would skip too much */
+		/* saved, in case we would skip too much */
 		start0 = ip;
 		ref0 = ref;
 		ml0 = ml;
 
 _Search2:
-		अगर (ip + ml < mflimit)
+		if (ip + ml < mflimit)
 			ml2 = LZ4HC_InsertAndGetWiderMatch(ctx,
 				ip + ml - 2, ip + 0,
 				matchlimit, ml, &ref2,
 				&start2, maxNbAttempts);
-		अन्यथा
+		else
 			ml2 = ml;
 
-		अगर (ml2 == ml) अणु
+		if (ml2 == ml) {
 			/* No better match */
-			अगर (LZ4HC_encodeSequence(&ip, &op,
+			if (LZ4HC_encodeSequence(&ip, &op,
 				&anchor, ml, ref, limit, oend))
-				वापस 0;
-			जारी;
-		पूर्ण
+				return 0;
+			continue;
+		}
 
-		अगर (start0 < ip) अणु
-			अगर (start2 < ip + ml0) अणु
+		if (start0 < ip) {
+			if (start2 < ip + ml0) {
 				/* empirical */
 				ip = start0;
 				ref = ref0;
 				ml = ml0;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		/* Here, start0 == ip */
-		अगर ((start2 - ip) < 3) अणु
-			/* First Match too small : हटाओd */
+		if ((start2 - ip) < 3) {
+			/* First Match too small : removed */
 			ml = ml2;
 			ip = start2;
 			ref = ref2;
-			जाओ _Search2;
-		पूर्ण
+			goto _Search2;
+		}
 
 _Search3:
 		/*
@@ -430,75 +429,75 @@ _Search3:
 		* ml2 > ml1, and
 		* ip1 + 3 <= ip2 (usually < ip1 + ml1)
 		*/
-		अगर ((start2 - ip) < OPTIMAL_ML) अणु
-			पूर्णांक correction;
-			पूर्णांक new_ml = ml;
+		if ((start2 - ip) < OPTIMAL_ML) {
+			int correction;
+			int new_ml = ml;
 
-			अगर (new_ml > OPTIMAL_ML)
+			if (new_ml > OPTIMAL_ML)
 				new_ml = OPTIMAL_ML;
-			अगर (ip + new_ml > start2 + ml2 - MINMATCH)
-				new_ml = (पूर्णांक)(start2 - ip) + ml2 - MINMATCH;
+			if (ip + new_ml > start2 + ml2 - MINMATCH)
+				new_ml = (int)(start2 - ip) + ml2 - MINMATCH;
 
-			correction = new_ml - (पूर्णांक)(start2 - ip);
+			correction = new_ml - (int)(start2 - ip);
 
-			अगर (correction > 0) अणु
+			if (correction > 0) {
 				start2 += correction;
 				ref2 += correction;
 				ml2 -= correction;
-			पूर्ण
-		पूर्ण
+			}
+		}
 		/*
 		 * Now, we have start2 = ip + new_ml,
 		 * with new_ml = min(ml, OPTIMAL_ML = 18)
 		 */
 
-		अगर (start2 + ml2 < mflimit)
+		if (start2 + ml2 < mflimit)
 			ml3 = LZ4HC_InsertAndGetWiderMatch(ctx,
 				start2 + ml2 - 3, start2,
 				matchlimit, ml2, &ref3, &start3,
 				maxNbAttempts);
-		अन्यथा
+		else
 			ml3 = ml2;
 
-		अगर (ml3 == ml2) अणु
+		if (ml3 == ml2) {
 			/* No better match : 2 sequences to encode */
-			/* ip & ref are known; Now क्रम ml */
-			अगर (start2 < ip + ml)
-				ml = (पूर्णांक)(start2 - ip);
+			/* ip & ref are known; Now for ml */
+			if (start2 < ip + ml)
+				ml = (int)(start2 - ip);
 			/* Now, encode 2 sequences */
-			अगर (LZ4HC_encodeSequence(&ip, &op, &anchor,
+			if (LZ4HC_encodeSequence(&ip, &op, &anchor,
 				ml, ref, limit, oend))
-				वापस 0;
+				return 0;
 			ip = start2;
-			अगर (LZ4HC_encodeSequence(&ip, &op, &anchor,
+			if (LZ4HC_encodeSequence(&ip, &op, &anchor,
 				ml2, ref2, limit, oend))
-				वापस 0;
-			जारी;
-		पूर्ण
+				return 0;
+			continue;
+		}
 
-		अगर (start3 < ip + ml + 3) अणु
-			/* Not enough space क्रम match 2 : हटाओ it */
-			अगर (start3 >= (ip + ml)) अणु
-				/* can ग_लिखो Seq1 immediately
-				 * ==> Seq2 is हटाओd,
+		if (start3 < ip + ml + 3) {
+			/* Not enough space for match 2 : remove it */
+			if (start3 >= (ip + ml)) {
+				/* can write Seq1 immediately
+				 * ==> Seq2 is removed,
 				 * so Seq3 becomes Seq1
 				 */
-				अगर (start2 < ip + ml) अणु
-					पूर्णांक correction = (पूर्णांक)(ip + ml - start2);
+				if (start2 < ip + ml) {
+					int correction = (int)(ip + ml - start2);
 
 					start2 += correction;
 					ref2 += correction;
 					ml2 -= correction;
-					अगर (ml2 < MINMATCH) अणु
+					if (ml2 < MINMATCH) {
 						start2 = start3;
 						ref2 = ref3;
 						ml2 = ml3;
-					पूर्ण
-				पूर्ण
+					}
+				}
 
-				अगर (LZ4HC_encodeSequence(&ip, &op, &anchor,
+				if (LZ4HC_encodeSequence(&ip, &op, &anchor,
 					ml, ref, limit, oend))
-					वापस 0;
+					return 0;
 				ip = start3;
 				ref = ref3;
 				ml = ml3;
@@ -506,40 +505,40 @@ _Search3:
 				start0 = start2;
 				ref0 = ref2;
 				ml0 = ml2;
-				जाओ _Search2;
-			पूर्ण
+				goto _Search2;
+			}
 
 			start2 = start3;
 			ref2 = ref3;
 			ml2 = ml3;
-			जाओ _Search3;
-		पूर्ण
+			goto _Search3;
+		}
 
 		/*
 		* OK, now we have 3 ascending matches;
-		* let's ग_लिखो at least the first one
-		* ip & ref are known; Now क्रम ml
+		* let's write at least the first one
+		* ip & ref are known; Now for ml
 		*/
-		अगर (start2 < ip + ml) अणु
-			अगर ((start2 - ip) < (पूर्णांक)ML_MASK) अणु
-				पूर्णांक correction;
+		if (start2 < ip + ml) {
+			if ((start2 - ip) < (int)ML_MASK) {
+				int correction;
 
-				अगर (ml > OPTIMAL_ML)
+				if (ml > OPTIMAL_ML)
 					ml = OPTIMAL_ML;
-				अगर (ip + ml > start2 + ml2 - MINMATCH)
-					ml = (पूर्णांक)(start2 - ip) + ml2 - MINMATCH;
-				correction = ml - (पूर्णांक)(start2 - ip);
-				अगर (correction > 0) अणु
+				if (ip + ml > start2 + ml2 - MINMATCH)
+					ml = (int)(start2 - ip) + ml2 - MINMATCH;
+				correction = ml - (int)(start2 - ip);
+				if (correction > 0) {
 					start2 += correction;
 					ref2 += correction;
 					ml2 -= correction;
-				पूर्ण
-			पूर्ण अन्यथा
-				ml = (पूर्णांक)(start2 - ip);
-		पूर्ण
-		अगर (LZ4HC_encodeSequence(&ip, &op, &anchor, ml,
+				}
+			} else
+				ml = (int)(start2 - ip);
+		}
+		if (LZ4HC_encodeSequence(&ip, &op, &anchor, ml,
 			ref, limit, oend))
-			वापस 0;
+			return 0;
 
 		ip = start2;
 		ref = ref2;
@@ -549,111 +548,111 @@ _Search3:
 		ref2 = ref3;
 		ml2 = ml3;
 
-		जाओ _Search3;
-	पूर्ण
+		goto _Search3;
+	}
 
 	/* Encode Last Literals */
-	अणु
-		पूर्णांक lastRun = (पूर्णांक)(iend - anchor);
+	{
+		int lastRun = (int)(iend - anchor);
 
-		अगर ((limit)
-			&& (((अक्षर *)op - dest) + lastRun + 1
+		if ((limit)
+			&& (((char *)op - dest) + lastRun + 1
 				+ ((lastRun + 255 - RUN_MASK)/255)
-					> (U32)maxOutputSize)) अणु
+					> (U32)maxOutputSize)) {
 			/* Check output limit */
-			वापस 0;
-		पूर्ण
-		अगर (lastRun >= (पूर्णांक)RUN_MASK) अणु
+			return 0;
+		}
+		if (lastRun >= (int)RUN_MASK) {
 			*op++ = (RUN_MASK<<ML_BITS);
 			lastRun -= RUN_MASK;
-			क्रम (; lastRun > 254 ; lastRun -= 255)
+			for (; lastRun > 254 ; lastRun -= 255)
 				*op++ = 255;
 			*op++ = (BYTE) lastRun;
-		पूर्ण अन्यथा
+		} else
 			*op++ = (BYTE)(lastRun<<ML_BITS);
-		LZ4_स_नकल(op, anchor, iend - anchor);
+		LZ4_memcpy(op, anchor, iend - anchor);
 		op += iend - anchor;
-	पूर्ण
+	}
 
 	/* End */
-	वापस (पूर्णांक) (((अक्षर *)op) - dest);
-पूर्ण
+	return (int) (((char *)op) - dest);
+}
 
-अटल पूर्णांक LZ4_compress_HC_extStateHC(
-	व्योम *state,
-	स्थिर अक्षर *src,
-	अक्षर *dst,
-	पूर्णांक srcSize,
-	पूर्णांक maxDstSize,
-	पूर्णांक compressionLevel)
-अणु
-	LZ4HC_CCtx_पूर्णांकernal *ctx = &((LZ4_streamHC_t *)state)->पूर्णांकernal_करोnotuse;
+static int LZ4_compress_HC_extStateHC(
+	void *state,
+	const char *src,
+	char *dst,
+	int srcSize,
+	int maxDstSize,
+	int compressionLevel)
+{
+	LZ4HC_CCtx_internal *ctx = &((LZ4_streamHC_t *)state)->internal_donotuse;
 
-	अगर (((माप_प्रकार)(state)&(माप(व्योम *) - 1)) != 0) अणु
+	if (((size_t)(state)&(sizeof(void *) - 1)) != 0) {
 		/* Error : state is not aligned
-		 * क्रम poपूर्णांकers (32 or 64 bits)
+		 * for pointers (32 or 64 bits)
 		 */
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	LZ4HC_init(ctx, (स्थिर BYTE *)src);
+	LZ4HC_init(ctx, (const BYTE *)src);
 
-	अगर (maxDstSize < LZ4_compressBound(srcSize))
-		वापस LZ4HC_compress_generic(ctx, src, dst,
+	if (maxDstSize < LZ4_compressBound(srcSize))
+		return LZ4HC_compress_generic(ctx, src, dst,
 			srcSize, maxDstSize, compressionLevel, limitedOutput);
-	अन्यथा
-		वापस LZ4HC_compress_generic(ctx, src, dst,
+	else
+		return LZ4HC_compress_generic(ctx, src, dst,
 			srcSize, maxDstSize, compressionLevel, noLimit);
-पूर्ण
+}
 
-पूर्णांक LZ4_compress_HC(स्थिर अक्षर *src, अक्षर *dst, पूर्णांक srcSize,
-	पूर्णांक maxDstSize, पूर्णांक compressionLevel, व्योम *wrkmem)
-अणु
-	वापस LZ4_compress_HC_extStateHC(wrkmem, src, dst,
+int LZ4_compress_HC(const char *src, char *dst, int srcSize,
+	int maxDstSize, int compressionLevel, void *wrkmem)
+{
+	return LZ4_compress_HC_extStateHC(wrkmem, src, dst,
 		srcSize, maxDstSize, compressionLevel);
-पूर्ण
+}
 EXPORT_SYMBOL(LZ4_compress_HC);
 
 /**************************************
  *	Streaming Functions
  **************************************/
-व्योम LZ4_resetStreamHC(LZ4_streamHC_t *LZ4_streamHCPtr, पूर्णांक compressionLevel)
-अणु
-	LZ4_streamHCPtr->पूर्णांकernal_करोnotuse.base = शून्य;
-	LZ4_streamHCPtr->पूर्णांकernal_करोnotuse.compressionLevel = (अचिन्हित पूर्णांक)compressionLevel;
-पूर्ण
+void LZ4_resetStreamHC(LZ4_streamHC_t *LZ4_streamHCPtr, int compressionLevel)
+{
+	LZ4_streamHCPtr->internal_donotuse.base = NULL;
+	LZ4_streamHCPtr->internal_donotuse.compressionLevel = (unsigned int)compressionLevel;
+}
 
-पूर्णांक LZ4_loadDictHC(LZ4_streamHC_t *LZ4_streamHCPtr,
-	स्थिर अक्षर *dictionary,
-	पूर्णांक dictSize)
-अणु
-	LZ4HC_CCtx_पूर्णांकernal *ctxPtr = &LZ4_streamHCPtr->पूर्णांकernal_करोnotuse;
+int LZ4_loadDictHC(LZ4_streamHC_t *LZ4_streamHCPtr,
+	const char *dictionary,
+	int dictSize)
+{
+	LZ4HC_CCtx_internal *ctxPtr = &LZ4_streamHCPtr->internal_donotuse;
 
-	अगर (dictSize > 64 * KB) अणु
+	if (dictSize > 64 * KB) {
 		dictionary += dictSize - 64 * KB;
 		dictSize = 64 * KB;
-	पूर्ण
-	LZ4HC_init(ctxPtr, (स्थिर BYTE *)dictionary);
-	अगर (dictSize >= 4)
-		LZ4HC_Insert(ctxPtr, (स्थिर BYTE *)dictionary + (dictSize - 3));
-	ctxPtr->end = (स्थिर BYTE *)dictionary + dictSize;
-	वापस dictSize;
-पूर्ण
+	}
+	LZ4HC_init(ctxPtr, (const BYTE *)dictionary);
+	if (dictSize >= 4)
+		LZ4HC_Insert(ctxPtr, (const BYTE *)dictionary + (dictSize - 3));
+	ctxPtr->end = (const BYTE *)dictionary + dictSize;
+	return dictSize;
+}
 EXPORT_SYMBOL(LZ4_loadDictHC);
 
 /* compression */
 
-अटल व्योम LZ4HC_setExternalDict(
-	LZ4HC_CCtx_पूर्णांकernal *ctxPtr,
-	स्थिर BYTE *newBlock)
-अणु
-	अगर (ctxPtr->end >= ctxPtr->base + 4) अणु
-		/* Referencing reमुख्यing dictionary content */
+static void LZ4HC_setExternalDict(
+	LZ4HC_CCtx_internal *ctxPtr,
+	const BYTE *newBlock)
+{
+	if (ctxPtr->end >= ctxPtr->base + 4) {
+		/* Referencing remaining dictionary content */
 		LZ4HC_Insert(ctxPtr, ctxPtr->end - 3);
-	पूर्ण
+	}
 
 	/*
-	 * Only one memory segment क्रम extDict,
+	 * Only one memory segment for extDict,
 	 * so any previous extDict is lost at this stage
 	 */
 	ctxPtr->lowLimit	= ctxPtr->dictLimit;
@@ -663,106 +662,106 @@ EXPORT_SYMBOL(LZ4_loadDictHC);
 	ctxPtr->end	= newBlock;
 	/* match referencing will resume from there */
 	ctxPtr->nextToUpdate = ctxPtr->dictLimit;
-पूर्ण
+}
 
-अटल पूर्णांक LZ4_compressHC_जारी_generic(
+static int LZ4_compressHC_continue_generic(
 	LZ4_streamHC_t *LZ4_streamHCPtr,
-	स्थिर अक्षर *source,
-	अक्षर *dest,
-	पूर्णांक inputSize,
-	पूर्णांक maxOutputSize,
+	const char *source,
+	char *dest,
+	int inputSize,
+	int maxOutputSize,
 	limitedOutput_directive limit)
-अणु
-	LZ4HC_CCtx_पूर्णांकernal *ctxPtr = &LZ4_streamHCPtr->पूर्णांकernal_करोnotuse;
+{
+	LZ4HC_CCtx_internal *ctxPtr = &LZ4_streamHCPtr->internal_donotuse;
 
-	/* स्वतः - init अगर क्रमgotten */
-	अगर (ctxPtr->base == शून्य)
-		LZ4HC_init(ctxPtr, (स्थिर BYTE *) source);
+	/* auto - init if forgotten */
+	if (ctxPtr->base == NULL)
+		LZ4HC_init(ctxPtr, (const BYTE *) source);
 
 	/* Check overflow */
-	अगर ((माप_प्रकार)(ctxPtr->end - ctxPtr->base) > 2 * GB) अणु
-		माप_प्रकार dictSize = (माप_प्रकार)(ctxPtr->end - ctxPtr->base)
+	if ((size_t)(ctxPtr->end - ctxPtr->base) > 2 * GB) {
+		size_t dictSize = (size_t)(ctxPtr->end - ctxPtr->base)
 			- ctxPtr->dictLimit;
-		अगर (dictSize > 64 * KB)
+		if (dictSize > 64 * KB)
 			dictSize = 64 * KB;
 		LZ4_loadDictHC(LZ4_streamHCPtr,
-			(स्थिर अक्षर *)(ctxPtr->end) - dictSize, (पूर्णांक)dictSize);
-	पूर्ण
+			(const char *)(ctxPtr->end) - dictSize, (int)dictSize);
+	}
 
-	/* Check अगर blocks follow each other */
-	अगर ((स्थिर BYTE *)source != ctxPtr->end)
-		LZ4HC_setExternalDict(ctxPtr, (स्थिर BYTE *)source);
+	/* Check if blocks follow each other */
+	if ((const BYTE *)source != ctxPtr->end)
+		LZ4HC_setExternalDict(ctxPtr, (const BYTE *)source);
 
 	/* Check overlapping input/dictionary space */
-	अणु
-		स्थिर BYTE *sourceEnd = (स्थिर BYTE *) source + inputSize;
-		स्थिर BYTE * स्थिर dictBegin = ctxPtr->dictBase + ctxPtr->lowLimit;
-		स्थिर BYTE * स्थिर dictEnd = ctxPtr->dictBase + ctxPtr->dictLimit;
+	{
+		const BYTE *sourceEnd = (const BYTE *) source + inputSize;
+		const BYTE * const dictBegin = ctxPtr->dictBase + ctxPtr->lowLimit;
+		const BYTE * const dictEnd = ctxPtr->dictBase + ctxPtr->dictLimit;
 
-		अगर ((sourceEnd > dictBegin)
-			&& ((स्थिर BYTE *)source < dictEnd)) अणु
-			अगर (sourceEnd > dictEnd)
+		if ((sourceEnd > dictBegin)
+			&& ((const BYTE *)source < dictEnd)) {
+			if (sourceEnd > dictEnd)
 				sourceEnd = dictEnd;
 			ctxPtr->lowLimit = (U32)(sourceEnd - ctxPtr->dictBase);
 
-			अगर (ctxPtr->dictLimit - ctxPtr->lowLimit < 4)
+			if (ctxPtr->dictLimit - ctxPtr->lowLimit < 4)
 				ctxPtr->lowLimit = ctxPtr->dictLimit;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस LZ4HC_compress_generic(ctxPtr, source, dest,
+	return LZ4HC_compress_generic(ctxPtr, source, dest,
 		inputSize, maxOutputSize, ctxPtr->compressionLevel, limit);
-पूर्ण
+}
 
-पूर्णांक LZ4_compress_HC_जारी(
+int LZ4_compress_HC_continue(
 	LZ4_streamHC_t *LZ4_streamHCPtr,
-	स्थिर अक्षर *source,
-	अक्षर *dest,
-	पूर्णांक inputSize,
-	पूर्णांक maxOutputSize)
-अणु
-	अगर (maxOutputSize < LZ4_compressBound(inputSize))
-		वापस LZ4_compressHC_जारी_generic(LZ4_streamHCPtr,
+	const char *source,
+	char *dest,
+	int inputSize,
+	int maxOutputSize)
+{
+	if (maxOutputSize < LZ4_compressBound(inputSize))
+		return LZ4_compressHC_continue_generic(LZ4_streamHCPtr,
 			source, dest, inputSize, maxOutputSize, limitedOutput);
-	अन्यथा
-		वापस LZ4_compressHC_जारी_generic(LZ4_streamHCPtr,
+	else
+		return LZ4_compressHC_continue_generic(LZ4_streamHCPtr,
 			source, dest, inputSize, maxOutputSize, noLimit);
-पूर्ण
-EXPORT_SYMBOL(LZ4_compress_HC_जारी);
+}
+EXPORT_SYMBOL(LZ4_compress_HC_continue);
 
 /* dictionary saving */
 
-पूर्णांक LZ4_saveDictHC(
+int LZ4_saveDictHC(
 	LZ4_streamHC_t *LZ4_streamHCPtr,
-	अक्षर *safeBuffer,
-	पूर्णांक dictSize)
-अणु
-	LZ4HC_CCtx_पूर्णांकernal *स्थिर streamPtr = &LZ4_streamHCPtr->पूर्णांकernal_करोnotuse;
-	पूर्णांक स्थिर prefixSize = (पूर्णांक)(streamPtr->end
+	char *safeBuffer,
+	int dictSize)
+{
+	LZ4HC_CCtx_internal *const streamPtr = &LZ4_streamHCPtr->internal_donotuse;
+	int const prefixSize = (int)(streamPtr->end
 		- (streamPtr->base + streamPtr->dictLimit));
 
-	अगर (dictSize > 64 * KB)
+	if (dictSize > 64 * KB)
 		dictSize = 64 * KB;
-	अगर (dictSize < 4)
+	if (dictSize < 4)
 		dictSize = 0;
-	अगर (dictSize > prefixSize)
+	if (dictSize > prefixSize)
 		dictSize = prefixSize;
 
-	स_हटाओ(safeBuffer, streamPtr->end - dictSize, dictSize);
+	memmove(safeBuffer, streamPtr->end - dictSize, dictSize);
 
-	अणु
-		U32 स्थिर endIndex = (U32)(streamPtr->end - streamPtr->base);
+	{
+		U32 const endIndex = (U32)(streamPtr->end - streamPtr->base);
 
-		streamPtr->end = (स्थिर BYTE *)safeBuffer + dictSize;
+		streamPtr->end = (const BYTE *)safeBuffer + dictSize;
 		streamPtr->base = streamPtr->end - endIndex;
 		streamPtr->dictLimit = endIndex - dictSize;
 		streamPtr->lowLimit = endIndex - dictSize;
 
-		अगर (streamPtr->nextToUpdate < streamPtr->dictLimit)
+		if (streamPtr->nextToUpdate < streamPtr->dictLimit)
 			streamPtr->nextToUpdate = streamPtr->dictLimit;
-	पूर्ण
-	वापस dictSize;
-पूर्ण
+	}
+	return dictSize;
+}
 EXPORT_SYMBOL(LZ4_saveDictHC);
 
 MODULE_LICENSE("Dual BSD/GPL");

@@ -1,164 +1,163 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Intel LPSS ACPI support.
  *
  * Copyright (C) 2015, Intel Corporation
  *
- * Authors: Andy Shevchenko <andriy.shevchenko@linux.पूर्णांकel.com>
- *          Mika Westerberg <mika.westerberg@linux.पूर्णांकel.com>
+ * Authors: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+ *          Mika Westerberg <mika.westerberg@linux.intel.com>
  */
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/property.h>
+#include <linux/acpi.h>
+#include <linux/ioport.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/pm_runtime.h>
+#include <linux/platform_device.h>
+#include <linux/property.h>
 
-#समावेश "intel-lpss.h"
+#include "intel-lpss.h"
 
-अटल स्थिर काष्ठा पूर्णांकel_lpss_platक्रमm_info spt_info = अणु
+static const struct intel_lpss_platform_info spt_info = {
 	.clk_rate = 120000000,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा property_entry spt_i2c_properties[] = अणु
+static const struct property_entry spt_i2c_properties[] = {
 	PROPERTY_ENTRY_U32("i2c-sda-hold-time-ns", 230),
-	अणु पूर्ण,
-पूर्ण;
+	{ },
+};
 
-अटल स्थिर काष्ठा software_node spt_i2c_node = अणु
+static const struct software_node spt_i2c_node = {
 	.properties = spt_i2c_properties,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा पूर्णांकel_lpss_platक्रमm_info spt_i2c_info = अणु
+static const struct intel_lpss_platform_info spt_i2c_info = {
 	.clk_rate = 120000000,
 	.swnode = &spt_i2c_node,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा property_entry uart_properties[] = अणु
+static const struct property_entry uart_properties[] = {
 	PROPERTY_ENTRY_U32("reg-io-width", 4),
 	PROPERTY_ENTRY_U32("reg-shift", 2),
 	PROPERTY_ENTRY_BOOL("snps,uart-16550-compatible"),
-	अणु पूर्ण,
-पूर्ण;
+	{ },
+};
 
-अटल स्थिर काष्ठा software_node uart_node = अणु
+static const struct software_node uart_node = {
 	.properties = uart_properties,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा पूर्णांकel_lpss_platक्रमm_info spt_uart_info = अणु
+static const struct intel_lpss_platform_info spt_uart_info = {
 	.clk_rate = 120000000,
 	.clk_con_id = "baudclk",
 	.swnode = &uart_node,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा पूर्णांकel_lpss_platक्रमm_info bxt_info = अणु
+static const struct intel_lpss_platform_info bxt_info = {
 	.clk_rate = 100000000,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा property_entry bxt_i2c_properties[] = अणु
+static const struct property_entry bxt_i2c_properties[] = {
 	PROPERTY_ENTRY_U32("i2c-sda-hold-time-ns", 42),
 	PROPERTY_ENTRY_U32("i2c-sda-falling-time-ns", 171),
 	PROPERTY_ENTRY_U32("i2c-scl-falling-time-ns", 208),
-	अणु पूर्ण,
-पूर्ण;
+	{ },
+};
 
-अटल स्थिर काष्ठा software_node bxt_i2c_node = अणु
+static const struct software_node bxt_i2c_node = {
 	.properties = bxt_i2c_properties,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा पूर्णांकel_lpss_platक्रमm_info bxt_i2c_info = अणु
+static const struct intel_lpss_platform_info bxt_i2c_info = {
 	.clk_rate = 133000000,
 	.swnode = &bxt_i2c_node,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा property_entry apl_i2c_properties[] = अणु
+static const struct property_entry apl_i2c_properties[] = {
 	PROPERTY_ENTRY_U32("i2c-sda-hold-time-ns", 207),
 	PROPERTY_ENTRY_U32("i2c-sda-falling-time-ns", 171),
 	PROPERTY_ENTRY_U32("i2c-scl-falling-time-ns", 208),
-	अणु पूर्ण,
-पूर्ण;
+	{ },
+};
 
-अटल स्थिर काष्ठा software_node apl_i2c_node = अणु
+static const struct software_node apl_i2c_node = {
 	.properties = apl_i2c_properties,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा पूर्णांकel_lpss_platक्रमm_info apl_i2c_info = अणु
+static const struct intel_lpss_platform_info apl_i2c_info = {
 	.clk_rate = 133000000,
 	.swnode = &apl_i2c_node,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा acpi_device_id पूर्णांकel_lpss_acpi_ids[] = अणु
+static const struct acpi_device_id intel_lpss_acpi_ids[] = {
 	/* SPT */
-	अणु "INT3440", (kernel_uदीर्घ_t)&spt_info पूर्ण,
-	अणु "INT3441", (kernel_uदीर्घ_t)&spt_info पूर्ण,
-	अणु "INT3442", (kernel_uदीर्घ_t)&spt_i2c_info पूर्ण,
-	अणु "INT3443", (kernel_uदीर्घ_t)&spt_i2c_info पूर्ण,
-	अणु "INT3444", (kernel_uदीर्घ_t)&spt_i2c_info पूर्ण,
-	अणु "INT3445", (kernel_uदीर्घ_t)&spt_i2c_info पूर्ण,
-	अणु "INT3446", (kernel_uदीर्घ_t)&spt_i2c_info पूर्ण,
-	अणु "INT3447", (kernel_uदीर्घ_t)&spt_i2c_info पूर्ण,
-	अणु "INT3448", (kernel_uदीर्घ_t)&spt_uart_info पूर्ण,
-	अणु "INT3449", (kernel_uदीर्घ_t)&spt_uart_info पूर्ण,
-	अणु "INT344A", (kernel_uदीर्घ_t)&spt_uart_info पूर्ण,
+	{ "INT3440", (kernel_ulong_t)&spt_info },
+	{ "INT3441", (kernel_ulong_t)&spt_info },
+	{ "INT3442", (kernel_ulong_t)&spt_i2c_info },
+	{ "INT3443", (kernel_ulong_t)&spt_i2c_info },
+	{ "INT3444", (kernel_ulong_t)&spt_i2c_info },
+	{ "INT3445", (kernel_ulong_t)&spt_i2c_info },
+	{ "INT3446", (kernel_ulong_t)&spt_i2c_info },
+	{ "INT3447", (kernel_ulong_t)&spt_i2c_info },
+	{ "INT3448", (kernel_ulong_t)&spt_uart_info },
+	{ "INT3449", (kernel_ulong_t)&spt_uart_info },
+	{ "INT344A", (kernel_ulong_t)&spt_uart_info },
 	/* BXT */
-	अणु "80860AAC", (kernel_uदीर्घ_t)&bxt_i2c_info पूर्ण,
-	अणु "80860ABC", (kernel_uदीर्घ_t)&bxt_info पूर्ण,
-	अणु "80860AC2", (kernel_uदीर्घ_t)&bxt_info पूर्ण,
+	{ "80860AAC", (kernel_ulong_t)&bxt_i2c_info },
+	{ "80860ABC", (kernel_ulong_t)&bxt_info },
+	{ "80860AC2", (kernel_ulong_t)&bxt_info },
 	/* APL */
-	अणु "80865AAC", (kernel_uदीर्घ_t)&apl_i2c_info पूर्ण,
-	अणु "80865ABC", (kernel_uदीर्घ_t)&bxt_info पूर्ण,
-	अणु "80865AC2", (kernel_uदीर्घ_t)&bxt_info पूर्ण,
-	अणु पूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(acpi, पूर्णांकel_lpss_acpi_ids);
+	{ "80865AAC", (kernel_ulong_t)&apl_i2c_info },
+	{ "80865ABC", (kernel_ulong_t)&bxt_info },
+	{ "80865AC2", (kernel_ulong_t)&bxt_info },
+	{ }
+};
+MODULE_DEVICE_TABLE(acpi, intel_lpss_acpi_ids);
 
-अटल पूर्णांक पूर्णांकel_lpss_acpi_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा पूर्णांकel_lpss_platक्रमm_info *info;
-	स्थिर काष्ठा acpi_device_id *id;
+static int intel_lpss_acpi_probe(struct platform_device *pdev)
+{
+	struct intel_lpss_platform_info *info;
+	const struct acpi_device_id *id;
 
-	id = acpi_match_device(पूर्णांकel_lpss_acpi_ids, &pdev->dev);
-	अगर (!id)
-		वापस -ENODEV;
+	id = acpi_match_device(intel_lpss_acpi_ids, &pdev->dev);
+	if (!id)
+		return -ENODEV;
 
-	info = devm_kmemdup(&pdev->dev, (व्योम *)id->driver_data, माप(*info),
+	info = devm_kmemdup(&pdev->dev, (void *)id->driver_data, sizeof(*info),
 			    GFP_KERNEL);
-	अगर (!info)
-		वापस -ENOMEM;
+	if (!info)
+		return -ENOMEM;
 
-	info->mem = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	info->irq = platक्रमm_get_irq(pdev, 0);
+	info->mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	info->irq = platform_get_irq(pdev, 0);
 
-	pm_runसमय_set_active(&pdev->dev);
-	pm_runसमय_enable(&pdev->dev);
+	pm_runtime_set_active(&pdev->dev);
+	pm_runtime_enable(&pdev->dev);
 
-	वापस पूर्णांकel_lpss_probe(&pdev->dev, info);
-पूर्ण
+	return intel_lpss_probe(&pdev->dev, info);
+}
 
-अटल पूर्णांक पूर्णांकel_lpss_acpi_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांकel_lpss_हटाओ(&pdev->dev);
-	pm_runसमय_disable(&pdev->dev);
+static int intel_lpss_acpi_remove(struct platform_device *pdev)
+{
+	intel_lpss_remove(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल INTEL_LPSS_PM_OPS(पूर्णांकel_lpss_acpi_pm_ops);
+static INTEL_LPSS_PM_OPS(intel_lpss_acpi_pm_ops);
 
-अटल काष्ठा platक्रमm_driver पूर्णांकel_lpss_acpi_driver = अणु
-	.probe = पूर्णांकel_lpss_acpi_probe,
-	.हटाओ = पूर्णांकel_lpss_acpi_हटाओ,
-	.driver = अणु
+static struct platform_driver intel_lpss_acpi_driver = {
+	.probe = intel_lpss_acpi_probe,
+	.remove = intel_lpss_acpi_remove,
+	.driver = {
 		.name = "intel-lpss",
-		.acpi_match_table = पूर्णांकel_lpss_acpi_ids,
-		.pm = &पूर्णांकel_lpss_acpi_pm_ops,
-	पूर्ण,
-पूर्ण;
+		.acpi_match_table = intel_lpss_acpi_ids,
+		.pm = &intel_lpss_acpi_pm_ops,
+	},
+};
 
-module_platक्रमm_driver(पूर्णांकel_lpss_acpi_driver);
+module_platform_driver(intel_lpss_acpi_driver);
 
 MODULE_AUTHOR("Andy Shevchenko <andriy.shevchenko@linux.intel.com>");
 MODULE_AUTHOR("Mika Westerberg <mika.westerberg@linux.intel.com>");

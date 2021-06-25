@@ -1,424 +1,423 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /* Crypto operations using stored keys
  *
  * Copyright (c) 2016, Intel Corporation
  */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/crypto.h>
-#समावेश <crypto/hash.h>
-#समावेश <crypto/kpp.h>
-#समावेश <crypto/dh.h>
-#समावेश <keys/user-type.h>
-#समावेश "internal.h"
+#include <linux/slab.h>
+#include <linux/uaccess.h>
+#include <linux/scatterlist.h>
+#include <linux/crypto.h>
+#include <crypto/hash.h>
+#include <crypto/kpp.h>
+#include <crypto/dh.h>
+#include <keys/user-type.h>
+#include "internal.h"
 
-अटल sमाप_प्रकार dh_data_from_key(key_serial_t keyid, व्योम **data)
-अणु
-	काष्ठा key *key;
+static ssize_t dh_data_from_key(key_serial_t keyid, void **data)
+{
+	struct key *key;
 	key_ref_t key_ref;
-	दीर्घ status;
-	sमाप_प्रकार ret;
+	long status;
+	ssize_t ret;
 
 	key_ref = lookup_user_key(keyid, 0, KEY_NEED_READ);
-	अगर (IS_ERR(key_ref)) अणु
+	if (IS_ERR(key_ref)) {
 		ret = -ENOKEY;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	key = key_ref_to_ptr(key_ref);
 
 	ret = -EOPNOTSUPP;
-	अगर (key->type == &key_type_user) अणु
-		करोwn_पढ़ो(&key->sem);
+	if (key->type == &key_type_user) {
+		down_read(&key->sem);
 		status = key_validate(key);
-		अगर (status == 0) अणु
-			स्थिर काष्ठा user_key_payload *payload;
-			uपूर्णांक8_t *duplicate;
+		if (status == 0) {
+			const struct user_key_payload *payload;
+			uint8_t *duplicate;
 
 			payload = user_key_payload_locked(key);
 
 			duplicate = kmemdup(payload->data, payload->datalen,
 					    GFP_KERNEL);
-			अगर (duplicate) अणु
+			if (duplicate) {
 				*data = duplicate;
 				ret = payload->datalen;
-			पूर्ण अन्यथा अणु
+			} else {
 				ret = -ENOMEM;
-			पूर्ण
-		पूर्ण
-		up_पढ़ो(&key->sem);
-	पूर्ण
+			}
+		}
+		up_read(&key->sem);
+	}
 
 	key_put(key);
 error:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम dh_मुक्त_data(काष्ठा dh *dh)
-अणु
-	kमुक्त_sensitive(dh->key);
-	kमुक्त_sensitive(dh->p);
-	kमुक्त_sensitive(dh->g);
-पूर्ण
+static void dh_free_data(struct dh *dh)
+{
+	kfree_sensitive(dh->key);
+	kfree_sensitive(dh->p);
+	kfree_sensitive(dh->g);
+}
 
-काष्ठा dh_completion अणु
-	काष्ठा completion completion;
-	पूर्णांक err;
-पूर्ण;
+struct dh_completion {
+	struct completion completion;
+	int err;
+};
 
-अटल व्योम dh_crypto_करोne(काष्ठा crypto_async_request *req, पूर्णांक err)
-अणु
-	काष्ठा dh_completion *compl = req->data;
+static void dh_crypto_done(struct crypto_async_request *req, int err)
+{
+	struct dh_completion *compl = req->data;
 
-	अगर (err == -EINPROGRESS)
-		वापस;
+	if (err == -EINPROGRESS)
+		return;
 
 	compl->err = err;
 	complete(&compl->completion);
-पूर्ण
+}
 
-काष्ठा kdf_sdesc अणु
-	काष्ठा shash_desc shash;
-	अक्षर ctx[];
-पूर्ण;
+struct kdf_sdesc {
+	struct shash_desc shash;
+	char ctx[];
+};
 
-अटल पूर्णांक kdf_alloc(काष्ठा kdf_sdesc **sdesc_ret, अक्षर *hashname)
-अणु
-	काष्ठा crypto_shash *tfm;
-	काष्ठा kdf_sdesc *sdesc;
-	पूर्णांक size;
-	पूर्णांक err;
+static int kdf_alloc(struct kdf_sdesc **sdesc_ret, char *hashname)
+{
+	struct crypto_shash *tfm;
+	struct kdf_sdesc *sdesc;
+	int size;
+	int err;
 
 	/* allocate synchronous hash */
 	tfm = crypto_alloc_shash(hashname, 0, 0);
-	अगर (IS_ERR(tfm)) अणु
+	if (IS_ERR(tfm)) {
 		pr_info("could not allocate digest TFM handle %s\n", hashname);
-		वापस PTR_ERR(tfm);
-	पूर्ण
+		return PTR_ERR(tfm);
+	}
 
 	err = -EINVAL;
-	अगर (crypto_shash_digestsize(tfm) == 0)
-		जाओ out_मुक्त_tfm;
+	if (crypto_shash_digestsize(tfm) == 0)
+		goto out_free_tfm;
 
 	err = -ENOMEM;
-	size = माप(काष्ठा shash_desc) + crypto_shash_descsize(tfm);
-	sdesc = kदो_स्मृति(size, GFP_KERNEL);
-	अगर (!sdesc)
-		जाओ out_मुक्त_tfm;
+	size = sizeof(struct shash_desc) + crypto_shash_descsize(tfm);
+	sdesc = kmalloc(size, GFP_KERNEL);
+	if (!sdesc)
+		goto out_free_tfm;
 	sdesc->shash.tfm = tfm;
 
 	*sdesc_ret = sdesc;
 
-	वापस 0;
+	return 0;
 
-out_मुक्त_tfm:
-	crypto_मुक्त_shash(tfm);
-	वापस err;
-पूर्ण
+out_free_tfm:
+	crypto_free_shash(tfm);
+	return err;
+}
 
-अटल व्योम kdf_dealloc(काष्ठा kdf_sdesc *sdesc)
-अणु
-	अगर (!sdesc)
-		वापस;
+static void kdf_dealloc(struct kdf_sdesc *sdesc)
+{
+	if (!sdesc)
+		return;
 
-	अगर (sdesc->shash.tfm)
-		crypto_मुक्त_shash(sdesc->shash.tfm);
+	if (sdesc->shash.tfm)
+		crypto_free_shash(sdesc->shash.tfm);
 
-	kमुक्त_sensitive(sdesc);
-पूर्ण
+	kfree_sensitive(sdesc);
+}
 
 /*
  * Implementation of the KDF in counter mode according to SP800-108 section 5.1
  * as well as SP800-56A section 5.8.1 (Single-step KDF).
  *
  * SP800-56A:
- * The src poपूर्णांकer is defined as Z || other info where Z is the shared secret
+ * The src pointer is defined as Z || other info where Z is the shared secret
  * from DH and other info is an arbitrary string (see SP800-56A section
  * 5.8.1.2).
  *
  * 'dlen' must be a multiple of the digest size.
  */
-अटल पूर्णांक kdf_ctr(काष्ठा kdf_sdesc *sdesc, स्थिर u8 *src, अचिन्हित पूर्णांक slen,
-		   u8 *dst, अचिन्हित पूर्णांक dlen, अचिन्हित पूर्णांक zlen)
-अणु
-	काष्ठा shash_desc *desc = &sdesc->shash;
-	अचिन्हित पूर्णांक h = crypto_shash_digestsize(desc->tfm);
-	पूर्णांक err = 0;
+static int kdf_ctr(struct kdf_sdesc *sdesc, const u8 *src, unsigned int slen,
+		   u8 *dst, unsigned int dlen, unsigned int zlen)
+{
+	struct shash_desc *desc = &sdesc->shash;
+	unsigned int h = crypto_shash_digestsize(desc->tfm);
+	int err = 0;
 	u8 *dst_orig = dst;
 	__be32 counter = cpu_to_be32(1);
 
-	जबतक (dlen) अणु
+	while (dlen) {
 		err = crypto_shash_init(desc);
-		अगर (err)
-			जाओ err;
+		if (err)
+			goto err;
 
-		err = crypto_shash_update(desc, (u8 *)&counter, माप(__be32));
-		अगर (err)
-			जाओ err;
+		err = crypto_shash_update(desc, (u8 *)&counter, sizeof(__be32));
+		if (err)
+			goto err;
 
-		अगर (zlen && h) अणु
-			u8 पंचांगpbuffer[32];
-			माप_प्रकार chunk = min_t(माप_प्रकार, zlen, माप(पंचांगpbuffer));
-			स_रखो(पंचांगpbuffer, 0, chunk);
+		if (zlen && h) {
+			u8 tmpbuffer[32];
+			size_t chunk = min_t(size_t, zlen, sizeof(tmpbuffer));
+			memset(tmpbuffer, 0, chunk);
 
-			करो अणु
-				err = crypto_shash_update(desc, पंचांगpbuffer,
+			do {
+				err = crypto_shash_update(desc, tmpbuffer,
 							  chunk);
-				अगर (err)
-					जाओ err;
+				if (err)
+					goto err;
 
 				zlen -= chunk;
-				chunk = min_t(माप_प्रकार, zlen, माप(पंचांगpbuffer));
-			पूर्ण जबतक (zlen);
-		पूर्ण
+				chunk = min_t(size_t, zlen, sizeof(tmpbuffer));
+			} while (zlen);
+		}
 
-		अगर (src && slen) अणु
+		if (src && slen) {
 			err = crypto_shash_update(desc, src, slen);
-			अगर (err)
-				जाओ err;
-		पूर्ण
+			if (err)
+				goto err;
+		}
 
 		err = crypto_shash_final(desc, dst);
-		अगर (err)
-			जाओ err;
+		if (err)
+			goto err;
 
 		dlen -= h;
 		dst += h;
 		counter = cpu_to_be32(be32_to_cpu(counter) + 1);
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 err:
 	memzero_explicit(dst_orig, dlen);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक keyctl_dh_compute_kdf(काष्ठा kdf_sdesc *sdesc,
-				 अक्षर __user *buffer, माप_प्रकार buflen,
-				 uपूर्णांक8_t *kbuf, माप_प्रकार kbuflen, माप_प्रकार lzero)
-अणु
-	uपूर्णांक8_t *outbuf = शून्य;
-	पूर्णांक ret;
-	माप_प्रकार outbuf_len = roundup(buflen,
+static int keyctl_dh_compute_kdf(struct kdf_sdesc *sdesc,
+				 char __user *buffer, size_t buflen,
+				 uint8_t *kbuf, size_t kbuflen, size_t lzero)
+{
+	uint8_t *outbuf = NULL;
+	int ret;
+	size_t outbuf_len = roundup(buflen,
 				    crypto_shash_digestsize(sdesc->shash.tfm));
 
-	outbuf = kदो_स्मृति(outbuf_len, GFP_KERNEL);
-	अगर (!outbuf) अणु
+	outbuf = kmalloc(outbuf_len, GFP_KERNEL);
+	if (!outbuf) {
 		ret = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	ret = kdf_ctr(sdesc, kbuf, kbuflen, outbuf, outbuf_len, lzero);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	ret = buflen;
-	अगर (copy_to_user(buffer, outbuf, buflen) != 0)
+	if (copy_to_user(buffer, outbuf, buflen) != 0)
 		ret = -EFAULT;
 
 err:
-	kमुक्त_sensitive(outbuf);
-	वापस ret;
-पूर्ण
+	kfree_sensitive(outbuf);
+	return ret;
+}
 
-दीर्घ __keyctl_dh_compute(काष्ठा keyctl_dh_params __user *params,
-			 अक्षर __user *buffer, माप_प्रकार buflen,
-			 काष्ठा keyctl_kdf_params *kdfcopy)
-अणु
-	दीर्घ ret;
-	sमाप_प्रकार dlen;
-	पूर्णांक secretlen;
-	पूर्णांक outlen;
-	काष्ठा keyctl_dh_params pcopy;
-	काष्ठा dh dh_inमाला_दो;
-	काष्ठा scatterlist outsg;
-	काष्ठा dh_completion compl;
-	काष्ठा crypto_kpp *tfm;
-	काष्ठा kpp_request *req;
-	uपूर्णांक8_t *secret;
-	uपूर्णांक8_t *outbuf;
-	काष्ठा kdf_sdesc *sdesc = शून्य;
+long __keyctl_dh_compute(struct keyctl_dh_params __user *params,
+			 char __user *buffer, size_t buflen,
+			 struct keyctl_kdf_params *kdfcopy)
+{
+	long ret;
+	ssize_t dlen;
+	int secretlen;
+	int outlen;
+	struct keyctl_dh_params pcopy;
+	struct dh dh_inputs;
+	struct scatterlist outsg;
+	struct dh_completion compl;
+	struct crypto_kpp *tfm;
+	struct kpp_request *req;
+	uint8_t *secret;
+	uint8_t *outbuf;
+	struct kdf_sdesc *sdesc = NULL;
 
-	अगर (!params || (!buffer && buflen)) अणु
+	if (!params || (!buffer && buflen)) {
 		ret = -EINVAL;
-		जाओ out1;
-	पूर्ण
-	अगर (copy_from_user(&pcopy, params, माप(pcopy)) != 0) अणु
+		goto out1;
+	}
+	if (copy_from_user(&pcopy, params, sizeof(pcopy)) != 0) {
 		ret = -EFAULT;
-		जाओ out1;
-	पूर्ण
+		goto out1;
+	}
 
-	अगर (kdfcopy) अणु
-		अक्षर *hashname;
+	if (kdfcopy) {
+		char *hashname;
 
-		अगर (स_प्रथम_inv(kdfcopy->__spare, 0, माप(kdfcopy->__spare))) अणु
+		if (memchr_inv(kdfcopy->__spare, 0, sizeof(kdfcopy->__spare))) {
 			ret = -EINVAL;
-			जाओ out1;
-		पूर्ण
+			goto out1;
+		}
 
-		अगर (buflen > KEYCTL_KDF_MAX_OUTPUT_LEN ||
-		    kdfcopy->otherinfolen > KEYCTL_KDF_MAX_OI_LEN) अणु
+		if (buflen > KEYCTL_KDF_MAX_OUTPUT_LEN ||
+		    kdfcopy->otherinfolen > KEYCTL_KDF_MAX_OI_LEN) {
 			ret = -EMSGSIZE;
-			जाओ out1;
-		पूर्ण
+			goto out1;
+		}
 
 		/* get KDF name string */
 		hashname = strndup_user(kdfcopy->hashname, CRYPTO_MAX_ALG_NAME);
-		अगर (IS_ERR(hashname)) अणु
+		if (IS_ERR(hashname)) {
 			ret = PTR_ERR(hashname);
-			जाओ out1;
-		पूर्ण
+			goto out1;
+		}
 
 		/* allocate KDF from the kernel crypto API */
 		ret = kdf_alloc(&sdesc, hashname);
-		kमुक्त(hashname);
-		अगर (ret)
-			जाओ out1;
-	पूर्ण
+		kfree(hashname);
+		if (ret)
+			goto out1;
+	}
 
-	स_रखो(&dh_inमाला_दो, 0, माप(dh_inमाला_दो));
+	memset(&dh_inputs, 0, sizeof(dh_inputs));
 
-	dlen = dh_data_from_key(pcopy.prime, &dh_inमाला_दो.p);
-	अगर (dlen < 0) अणु
+	dlen = dh_data_from_key(pcopy.prime, &dh_inputs.p);
+	if (dlen < 0) {
 		ret = dlen;
-		जाओ out1;
-	पूर्ण
-	dh_inमाला_दो.p_size = dlen;
+		goto out1;
+	}
+	dh_inputs.p_size = dlen;
 
-	dlen = dh_data_from_key(pcopy.base, &dh_inमाला_दो.g);
-	अगर (dlen < 0) अणु
+	dlen = dh_data_from_key(pcopy.base, &dh_inputs.g);
+	if (dlen < 0) {
 		ret = dlen;
-		जाओ out2;
-	पूर्ण
-	dh_inमाला_दो.g_size = dlen;
+		goto out2;
+	}
+	dh_inputs.g_size = dlen;
 
-	dlen = dh_data_from_key(pcopy.निजी, &dh_inमाला_दो.key);
-	अगर (dlen < 0) अणु
+	dlen = dh_data_from_key(pcopy.private, &dh_inputs.key);
+	if (dlen < 0) {
 		ret = dlen;
-		जाओ out2;
-	पूर्ण
-	dh_inमाला_दो.key_size = dlen;
+		goto out2;
+	}
+	dh_inputs.key_size = dlen;
 
-	secretlen = crypto_dh_key_len(&dh_inमाला_दो);
-	secret = kदो_स्मृति(secretlen, GFP_KERNEL);
-	अगर (!secret) अणु
+	secretlen = crypto_dh_key_len(&dh_inputs);
+	secret = kmalloc(secretlen, GFP_KERNEL);
+	if (!secret) {
 		ret = -ENOMEM;
-		जाओ out2;
-	पूर्ण
-	ret = crypto_dh_encode_key(secret, secretlen, &dh_inमाला_दो);
-	अगर (ret)
-		जाओ out3;
+		goto out2;
+	}
+	ret = crypto_dh_encode_key(secret, secretlen, &dh_inputs);
+	if (ret)
+		goto out3;
 
 	tfm = crypto_alloc_kpp("dh", 0, 0);
-	अगर (IS_ERR(tfm)) अणु
+	if (IS_ERR(tfm)) {
 		ret = PTR_ERR(tfm);
-		जाओ out3;
-	पूर्ण
+		goto out3;
+	}
 
 	ret = crypto_kpp_set_secret(tfm, secret, secretlen);
-	अगर (ret)
-		जाओ out4;
+	if (ret)
+		goto out4;
 
 	outlen = crypto_kpp_maxsize(tfm);
 
-	अगर (!kdfcopy) अणु
+	if (!kdfcopy) {
 		/*
-		 * When not using a KDF, buflen 0 is used to पढ़ो the
+		 * When not using a KDF, buflen 0 is used to read the
 		 * required buffer length
 		 */
-		अगर (buflen == 0) अणु
+		if (buflen == 0) {
 			ret = outlen;
-			जाओ out4;
-		पूर्ण अन्यथा अगर (outlen > buflen) अणु
+			goto out4;
+		} else if (outlen > buflen) {
 			ret = -EOVERFLOW;
-			जाओ out4;
-		पूर्ण
-	पूर्ण
+			goto out4;
+		}
+	}
 
 	outbuf = kzalloc(kdfcopy ? (outlen + kdfcopy->otherinfolen) : outlen,
 			 GFP_KERNEL);
-	अगर (!outbuf) अणु
+	if (!outbuf) {
 		ret = -ENOMEM;
-		जाओ out4;
-	पूर्ण
+		goto out4;
+	}
 
 	sg_init_one(&outsg, outbuf, outlen);
 
 	req = kpp_request_alloc(tfm, GFP_KERNEL);
-	अगर (!req) अणु
+	if (!req) {
 		ret = -ENOMEM;
-		जाओ out5;
-	पूर्ण
+		goto out5;
+	}
 
-	kpp_request_set_input(req, शून्य, 0);
+	kpp_request_set_input(req, NULL, 0);
 	kpp_request_set_output(req, &outsg, outlen);
 	init_completion(&compl.completion);
 	kpp_request_set_callback(req, CRYPTO_TFM_REQ_MAY_BACKLOG |
 				 CRYPTO_TFM_REQ_MAY_SLEEP,
-				 dh_crypto_करोne, &compl);
+				 dh_crypto_done, &compl);
 
 	/*
-	 * For DH, generate_खुला_key and generate_shared_secret are
+	 * For DH, generate_public_key and generate_shared_secret are
 	 * the same calculation
 	 */
-	ret = crypto_kpp_generate_खुला_key(req);
-	अगर (ret == -EINPROGRESS) अणु
-		रुको_क्रम_completion(&compl.completion);
+	ret = crypto_kpp_generate_public_key(req);
+	if (ret == -EINPROGRESS) {
+		wait_for_completion(&compl.completion);
 		ret = compl.err;
-		अगर (ret)
-			जाओ out6;
-	पूर्ण
+		if (ret)
+			goto out6;
+	}
 
-	अगर (kdfcopy) अणु
+	if (kdfcopy) {
 		/*
 		 * Concatenate SP800-56A otherinfo past DH shared secret -- the
 		 * input to the KDF is (DH shared secret || otherinfo)
 		 */
-		अगर (copy_from_user(outbuf + req->dst_len, kdfcopy->otherinfo,
-				   kdfcopy->otherinfolen) != 0) अणु
+		if (copy_from_user(outbuf + req->dst_len, kdfcopy->otherinfo,
+				   kdfcopy->otherinfolen) != 0) {
 			ret = -EFAULT;
-			जाओ out6;
-		पूर्ण
+			goto out6;
+		}
 
 		ret = keyctl_dh_compute_kdf(sdesc, buffer, buflen, outbuf,
 					    req->dst_len + kdfcopy->otherinfolen,
 					    outlen - req->dst_len);
-	पूर्ण अन्यथा अगर (copy_to_user(buffer, outbuf, req->dst_len) == 0) अणु
+	} else if (copy_to_user(buffer, outbuf, req->dst_len) == 0) {
 		ret = req->dst_len;
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = -EFAULT;
-	पूर्ण
+	}
 
 out6:
-	kpp_request_मुक्त(req);
+	kpp_request_free(req);
 out5:
-	kमुक्त_sensitive(outbuf);
+	kfree_sensitive(outbuf);
 out4:
-	crypto_मुक्त_kpp(tfm);
+	crypto_free_kpp(tfm);
 out3:
-	kमुक्त_sensitive(secret);
+	kfree_sensitive(secret);
 out2:
-	dh_मुक्त_data(&dh_inमाला_दो);
+	dh_free_data(&dh_inputs);
 out1:
 	kdf_dealloc(sdesc);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-दीर्घ keyctl_dh_compute(काष्ठा keyctl_dh_params __user *params,
-		       अक्षर __user *buffer, माप_प्रकार buflen,
-		       काष्ठा keyctl_kdf_params __user *kdf)
-अणु
-	काष्ठा keyctl_kdf_params kdfcopy;
+long keyctl_dh_compute(struct keyctl_dh_params __user *params,
+		       char __user *buffer, size_t buflen,
+		       struct keyctl_kdf_params __user *kdf)
+{
+	struct keyctl_kdf_params kdfcopy;
 
-	अगर (!kdf)
-		वापस __keyctl_dh_compute(params, buffer, buflen, शून्य);
+	if (!kdf)
+		return __keyctl_dh_compute(params, buffer, buflen, NULL);
 
-	अगर (copy_from_user(&kdfcopy, kdf, माप(kdfcopy)) != 0)
-		वापस -EFAULT;
+	if (copy_from_user(&kdfcopy, kdf, sizeof(kdfcopy)) != 0)
+		return -EFAULT;
 
-	वापस __keyctl_dh_compute(params, buffer, buflen, &kdfcopy);
-पूर्ण
+	return __keyctl_dh_compute(params, buffer, buflen, &kdfcopy);
+}

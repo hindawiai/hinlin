@@ -1,77 +1,76 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _MIOA701_H_
-#घोषणा _MIOA701_H_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _MIOA701_H_
+#define _MIOA701_H_
 
-#घोषणा MIO_CFG_IN(pin, af)		\
-	((MFP_CFG_DEFAULT & ~(MFP_AF_MASK | MFP_सूची_MASK)) |\
-	 (MFP_PIN(pin) | MFP_##af | MFP_सूची_IN))
+#define MIO_CFG_IN(pin, af)		\
+	((MFP_CFG_DEFAULT & ~(MFP_AF_MASK | MFP_DIR_MASK)) |\
+	 (MFP_PIN(pin) | MFP_##af | MFP_DIR_IN))
 
-#घोषणा MIO_CFG_OUT(pin, af, state)	\
-	((MFP_CFG_DEFAULT & ~(MFP_AF_MASK | MFP_सूची_MASK | MFP_LPM_STATE_MASK)) |\
-	 (MFP_PIN(pin) | MFP_##af | MFP_सूची_OUT | MFP_LPM_##state))
+#define MIO_CFG_OUT(pin, af, state)	\
+	((MFP_CFG_DEFAULT & ~(MFP_AF_MASK | MFP_DIR_MASK | MFP_LPM_STATE_MASK)) |\
+	 (MFP_PIN(pin) | MFP_##af | MFP_DIR_OUT | MFP_LPM_##state))
 
 /* Global GPIOs */
-#घोषणा GPIO9_CHARGE_EN				9
-#घोषणा GPIO18_POWEROFF				18
-#घोषणा GPIO87_LCD_POWER			87
-#घोषणा GPIO96_AC_DETECT			96
-#घोषणा GPIO80_MAYBE_CHARGE_VDROP		80	/* Drop of 88mV */
+#define GPIO9_CHARGE_EN				9
+#define GPIO18_POWEROFF				18
+#define GPIO87_LCD_POWER			87
+#define GPIO96_AC_DETECT			96
+#define GPIO80_MAYBE_CHARGE_VDROP		80	/* Drop of 88mV */
 
 /* USB */
-#घोषणा GPIO13_nUSB_DETECT			13
-#घोषणा GPIO22_USB_ENABLE			22
+#define GPIO13_nUSB_DETECT			13
+#define GPIO22_USB_ENABLE			22
 
 /* SDIO bits */
-#घोषणा GPIO78_SDIO_RO				78
-#घोषणा GPIO15_SDIO_INSERT			15
-#घोषणा GPIO91_SDIO_EN				91
+#define GPIO78_SDIO_RO				78
+#define GPIO15_SDIO_INSERT			15
+#define GPIO91_SDIO_EN				91
 
 /* Bluetooth */
-#घोषणा GPIO14_BT_nACTIVITY			14
-#घोषणा GPIO83_BT_ON				83
-#घोषणा GPIO77_BT_UNKNOWN1			77
-#घोषणा GPIO86_BT_MAYBE_nRESET			86
+#define GPIO14_BT_nACTIVITY			14
+#define GPIO83_BT_ON				83
+#define GPIO77_BT_UNKNOWN1			77
+#define GPIO86_BT_MAYBE_nRESET			86
 
 /* GPS */
-#घोषणा GPIO23_GPS_UNKNOWN1			23
-#घोषणा GPIO26_GPS_ON				26
-#घोषणा GPIO27_GPS_RESET			27
-#घोषणा GPIO106_GPS_UNKNOWN2			106
-#घोषणा GPIO107_GPS_UNKNOWN3			107
+#define GPIO23_GPS_UNKNOWN1			23
+#define GPIO26_GPS_ON				26
+#define GPIO27_GPS_RESET			27
+#define GPIO106_GPS_UNKNOWN2			106
+#define GPIO107_GPS_UNKNOWN3			107
 
 /* GSM */
-#घोषणा GPIO24_GSM_MOD_RESET_CMD		24
-#घोषणा GPIO88_GSM_nMOD_ON_CMD			88
-#घोषणा GPIO90_GSM_nMOD_OFF_CMD			90
-#घोषणा GPIO114_GSM_nMOD_DTE_UART_STATE 	114
-#घोषणा GPIO25_GSM_MOD_ON_STATE			25
-#घोषणा GPIO113_GSM_EVENT			113
+#define GPIO24_GSM_MOD_RESET_CMD		24
+#define GPIO88_GSM_nMOD_ON_CMD			88
+#define GPIO90_GSM_nMOD_OFF_CMD			90
+#define GPIO114_GSM_nMOD_DTE_UART_STATE 	114
+#define GPIO25_GSM_MOD_ON_STATE			25
+#define GPIO113_GSM_EVENT			113
 
 /* SOUND */
-#घोषणा GPIO12_HPJACK_INSERT			12
+#define GPIO12_HPJACK_INSERT			12
 
 /* LEDS */
-#घोषणा GPIO10_LED_nCharging			10
-#घोषणा GPIO97_LED_nBlue			97
-#घोषणा GPIO98_LED_nOrange			98
-#घोषणा GPIO82_LED_nVibra			82
-#घोषणा GPIO115_LED_nKeyboard			115
+#define GPIO10_LED_nCharging			10
+#define GPIO97_LED_nBlue			97
+#define GPIO98_LED_nOrange			98
+#define GPIO82_LED_nVibra			82
+#define GPIO115_LED_nKeyboard			115
 
 /* Keyboard */
-#घोषणा GPIO0_KEY_POWER				0
-#घोषणा GPIO93_KEY_VOLUME_UP			93
-#घोषणा GPIO94_KEY_VOLUME_DOWN			94
+#define GPIO0_KEY_POWER				0
+#define GPIO93_KEY_VOLUME_UP			93
+#define GPIO94_KEY_VOLUME_DOWN			94
 
 /* Camera */
-#घोषणा GPIO56_MT9M111_nOE			56
+#define GPIO56_MT9M111_nOE			56
 
-बाह्य काष्ठा input_dev *mioa701_evdev;
-बाह्य व्योम mioa701_gpio_lpm_set(अचिन्हित दीर्घ mfp_pin);
+extern struct input_dev *mioa701_evdev;
+extern void mioa701_gpio_lpm_set(unsigned long mfp_pin);
 
-/* Assembler बाह्यals mioa701_bootresume.S */
-बाह्य u32 mioa701_bootstrap;
-बाह्य u32 mioa701_jumpaddr;
-बाह्य u32 mioa701_bootstrap_lg;
+/* Assembler externals mioa701_bootresume.S */
+extern u32 mioa701_bootstrap;
+extern u32 mioa701_jumpaddr;
+extern u32 mioa701_bootstrap_lg;
 
-#पूर्ण_अगर /* _MIOA701_H */
+#endif /* _MIOA701_H */

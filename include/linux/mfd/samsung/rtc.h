@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (c) 2011-2014 Samsung Electronics Co., Ltd
  *              http://www.samsung.com
  */
 
-#अगर_अघोषित __LINUX_MFD_SEC_RTC_H
-#घोषणा __LINUX_MFD_SEC_RTC_H
+#ifndef __LINUX_MFD_SEC_RTC_H
+#define __LINUX_MFD_SEC_RTC_H
 
-क्रमागत s5m_rtc_reg अणु
+enum s5m_rtc_reg {
 	S5M_RTC_SEC,
 	S5M_RTC_MIN,
 	S5M_RTC_HOUR,
@@ -40,9 +39,9 @@
 	S5M_RTC_UDR_CON,
 
 	S5M_RTC_REG_MAX,
-पूर्ण;
+};
 
-क्रमागत s2mps_rtc_reg अणु
+enum s2mps_rtc_reg {
 	S2MPS_RTC_CTRL,
 	S2MPS_WTSR_SMPL_CNTL,
 	S2MPS_RTC_UDR_CON,
@@ -71,64 +70,64 @@
 	S2MPS_OFFSRC,
 
 	S2MPS_RTC_REG_MAX,
-पूर्ण;
+};
 
-#घोषणा RTC_I2C_ADDR		(0x0C >> 1)
+#define RTC_I2C_ADDR		(0x0C >> 1)
 
-#घोषणा HOUR_12			(1 << 7)
-#घोषणा HOUR_AMPM		(1 << 6)
-#घोषणा HOUR_PM			(1 << 5)
-#घोषणा S5M_ALARM0_STATUS	(1 << 1)
-#घोषणा S5M_ALARM1_STATUS	(1 << 2)
-#घोषणा S5M_UPDATE_AD		(1 << 0)
+#define HOUR_12			(1 << 7)
+#define HOUR_AMPM		(1 << 6)
+#define HOUR_PM			(1 << 5)
+#define S5M_ALARM0_STATUS	(1 << 1)
+#define S5M_ALARM1_STATUS	(1 << 2)
+#define S5M_UPDATE_AD		(1 << 0)
 
-#घोषणा S2MPS_ALARM0_STATUS	(1 << 2)
-#घोषणा S2MPS_ALARM1_STATUS	(1 << 1)
+#define S2MPS_ALARM0_STATUS	(1 << 2)
+#define S2MPS_ALARM1_STATUS	(1 << 1)
 
 /* RTC Control Register */
-#घोषणा BCD_EN_SHIFT		0
-#घोषणा BCD_EN_MASK		(1 << BCD_EN_SHIFT)
-#घोषणा MODEL24_SHIFT		1
-#घोषणा MODEL24_MASK		(1 << MODEL24_SHIFT)
+#define BCD_EN_SHIFT		0
+#define BCD_EN_MASK		(1 << BCD_EN_SHIFT)
+#define MODEL24_SHIFT		1
+#define MODEL24_MASK		(1 << MODEL24_SHIFT)
 /* RTC Update Register1 */
-#घोषणा S5M_RTC_UDR_SHIFT	0
-#घोषणा S5M_RTC_UDR_MASK	(1 << S5M_RTC_UDR_SHIFT)
-#घोषणा S2MPS_RTC_WUDR_SHIFT	4
-#घोषणा S2MPS_RTC_WUDR_MASK	(1 << S2MPS_RTC_WUDR_SHIFT)
-#घोषणा S2MPS15_RTC_AUDR_SHIFT	4
-#घोषणा S2MPS15_RTC_AUDR_MASK	(1 << S2MPS15_RTC_AUDR_SHIFT)
-#घोषणा S2MPS13_RTC_AUDR_SHIFT	1
-#घोषणा S2MPS13_RTC_AUDR_MASK	(1 << S2MPS13_RTC_AUDR_SHIFT)
-#घोषणा S2MPS15_RTC_WUDR_SHIFT	1
-#घोषणा S2MPS15_RTC_WUDR_MASK	(1 << S2MPS15_RTC_WUDR_SHIFT)
-#घोषणा S2MPS_RTC_RUDR_SHIFT	0
-#घोषणा S2MPS_RTC_RUDR_MASK	(1 << S2MPS_RTC_RUDR_SHIFT)
-#घोषणा RTC_TCON_SHIFT		1
-#घोषणा RTC_TCON_MASK		(1 << RTC_TCON_SHIFT)
-#घोषणा S5M_RTC_TIME_EN_SHIFT	3
-#घोषणा S5M_RTC_TIME_EN_MASK	(1 << S5M_RTC_TIME_EN_SHIFT)
+#define S5M_RTC_UDR_SHIFT	0
+#define S5M_RTC_UDR_MASK	(1 << S5M_RTC_UDR_SHIFT)
+#define S2MPS_RTC_WUDR_SHIFT	4
+#define S2MPS_RTC_WUDR_MASK	(1 << S2MPS_RTC_WUDR_SHIFT)
+#define S2MPS15_RTC_AUDR_SHIFT	4
+#define S2MPS15_RTC_AUDR_MASK	(1 << S2MPS15_RTC_AUDR_SHIFT)
+#define S2MPS13_RTC_AUDR_SHIFT	1
+#define S2MPS13_RTC_AUDR_MASK	(1 << S2MPS13_RTC_AUDR_SHIFT)
+#define S2MPS15_RTC_WUDR_SHIFT	1
+#define S2MPS15_RTC_WUDR_MASK	(1 << S2MPS15_RTC_WUDR_SHIFT)
+#define S2MPS_RTC_RUDR_SHIFT	0
+#define S2MPS_RTC_RUDR_MASK	(1 << S2MPS_RTC_RUDR_SHIFT)
+#define RTC_TCON_SHIFT		1
+#define RTC_TCON_MASK		(1 << RTC_TCON_SHIFT)
+#define S5M_RTC_TIME_EN_SHIFT	3
+#define S5M_RTC_TIME_EN_MASK	(1 << S5M_RTC_TIME_EN_SHIFT)
 /*
- * UDR_T field in S5M_RTC_UDR_CON रेजिस्टर determines the समय needed
- * क्रम updating alarm and समय रेजिस्टरs. Default is 7.32 ms.
+ * UDR_T field in S5M_RTC_UDR_CON register determines the time needed
+ * for updating alarm and time registers. Default is 7.32 ms.
  */
-#घोषणा S5M_RTC_UDR_T_SHIFT	6
-#घोषणा S5M_RTC_UDR_T_MASK	(0x3 << S5M_RTC_UDR_T_SHIFT)
-#घोषणा S5M_RTC_UDR_T_7320_US	(0x0 << S5M_RTC_UDR_T_SHIFT)
-#घोषणा S5M_RTC_UDR_T_1830_US	(0x1 << S5M_RTC_UDR_T_SHIFT)
-#घोषणा S5M_RTC_UDR_T_3660_US	(0x2 << S5M_RTC_UDR_T_SHIFT)
-#घोषणा S5M_RTC_UDR_T_450_US	(0x3 << S5M_RTC_UDR_T_SHIFT)
+#define S5M_RTC_UDR_T_SHIFT	6
+#define S5M_RTC_UDR_T_MASK	(0x3 << S5M_RTC_UDR_T_SHIFT)
+#define S5M_RTC_UDR_T_7320_US	(0x0 << S5M_RTC_UDR_T_SHIFT)
+#define S5M_RTC_UDR_T_1830_US	(0x1 << S5M_RTC_UDR_T_SHIFT)
+#define S5M_RTC_UDR_T_3660_US	(0x2 << S5M_RTC_UDR_T_SHIFT)
+#define S5M_RTC_UDR_T_450_US	(0x3 << S5M_RTC_UDR_T_SHIFT)
 
-/* RTC Hour रेजिस्टर */
-#घोषणा HOUR_PM_SHIFT		6
-#घोषणा HOUR_PM_MASK		(1 << HOUR_PM_SHIFT)
+/* RTC Hour register */
+#define HOUR_PM_SHIFT		6
+#define HOUR_PM_MASK		(1 << HOUR_PM_SHIFT)
 /* RTC Alarm Enable */
-#घोषणा ALARM_ENABLE_SHIFT	7
-#घोषणा ALARM_ENABLE_MASK	(1 << ALARM_ENABLE_SHIFT)
+#define ALARM_ENABLE_SHIFT	7
+#define ALARM_ENABLE_MASK	(1 << ALARM_ENABLE_SHIFT)
 
-#घोषणा SMPL_ENABLE_SHIFT	7
-#घोषणा SMPL_ENABLE_MASK	(1 << SMPL_ENABLE_SHIFT)
+#define SMPL_ENABLE_SHIFT	7
+#define SMPL_ENABLE_MASK	(1 << SMPL_ENABLE_SHIFT)
 
-#घोषणा WTSR_ENABLE_SHIFT	6
-#घोषणा WTSR_ENABLE_MASK	(1 << WTSR_ENABLE_SHIFT)
+#define WTSR_ENABLE_SHIFT	6
+#define WTSR_ENABLE_MASK	(1 << WTSR_ENABLE_SHIFT)
 
-#पूर्ण_अगर /*  __LINUX_MFD_SEC_RTC_H */
+#endif /*  __LINUX_MFD_SEC_RTC_H */

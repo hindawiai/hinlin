@@ -1,207 +1,206 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_MATH64_H
-#घोषणा _LINUX_MATH64_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_MATH64_H
+#define _LINUX_MATH64_H
 
-#समावेश <linux/types.h>
-#समावेश <vdso/math64.h>
-#समावेश <यंत्र/भाग64.h>
+#include <linux/types.h>
+#include <vdso/math64.h>
+#include <asm/div64.h>
 
-#अगर BITS_PER_LONG == 64
+#if BITS_PER_LONG == 64
 
-#घोषणा भाग64_दीर्घ(x, y) भाग64_s64((x), (y))
-#घोषणा भाग64_ul(x, y)   भाग64_u64((x), (y))
+#define div64_long(x, y) div64_s64((x), (y))
+#define div64_ul(x, y)   div64_u64((x), (y))
 
 /**
- * भाग_u64_rem - अचिन्हित 64bit भागide with 32bit भागisor with reमुख्यder
- * @भागidend: अचिन्हित 64bit भागidend
- * @भागisor: अचिन्हित 32bit भागisor
- * @reमुख्यder: poपूर्णांकer to अचिन्हित 32bit reमुख्यder
+ * div_u64_rem - unsigned 64bit divide with 32bit divisor with remainder
+ * @dividend: unsigned 64bit dividend
+ * @divisor: unsigned 32bit divisor
+ * @remainder: pointer to unsigned 32bit remainder
  *
- * Return: sets ``*reमुख्यder``, then वापसs भागidend / भागisor
+ * Return: sets ``*remainder``, then returns dividend / divisor
  *
  * This is commonly provided by 32bit archs to provide an optimized 64bit
- * भागide.
+ * divide.
  */
-अटल अंतरभूत u64 भाग_u64_rem(u64 भागidend, u32 भागisor, u32 *reमुख्यder)
-अणु
-	*reमुख्यder = भागidend % भागisor;
-	वापस भागidend / भागisor;
-पूर्ण
+static inline u64 div_u64_rem(u64 dividend, u32 divisor, u32 *remainder)
+{
+	*remainder = dividend % divisor;
+	return dividend / divisor;
+}
 
 /*
- * भाग_s64_rem - चिन्हित 64bit भागide with 32bit भागisor with reमुख्यder
- * @भागidend: चिन्हित 64bit भागidend
- * @भागisor: चिन्हित 32bit भागisor
- * @reमुख्यder: poपूर्णांकer to चिन्हित 32bit reमुख्यder
+ * div_s64_rem - signed 64bit divide with 32bit divisor with remainder
+ * @dividend: signed 64bit dividend
+ * @divisor: signed 32bit divisor
+ * @remainder: pointer to signed 32bit remainder
  *
- * Return: sets ``*reमुख्यder``, then वापसs भागidend / भागisor
+ * Return: sets ``*remainder``, then returns dividend / divisor
  */
-अटल अंतरभूत s64 भाग_s64_rem(s64 भागidend, s32 भागisor, s32 *reमुख्यder)
-अणु
-	*reमुख्यder = भागidend % भागisor;
-	वापस भागidend / भागisor;
-पूर्ण
+static inline s64 div_s64_rem(s64 dividend, s32 divisor, s32 *remainder)
+{
+	*remainder = dividend % divisor;
+	return dividend / divisor;
+}
 
 /*
- * भाग64_u64_rem - अचिन्हित 64bit भागide with 64bit भागisor and reमुख्यder
- * @भागidend: अचिन्हित 64bit भागidend
- * @भागisor: अचिन्हित 64bit भागisor
- * @reमुख्यder: poपूर्णांकer to अचिन्हित 64bit reमुख्यder
+ * div64_u64_rem - unsigned 64bit divide with 64bit divisor and remainder
+ * @dividend: unsigned 64bit dividend
+ * @divisor: unsigned 64bit divisor
+ * @remainder: pointer to unsigned 64bit remainder
  *
- * Return: sets ``*reमुख्यder``, then वापसs भागidend / भागisor
+ * Return: sets ``*remainder``, then returns dividend / divisor
  */
-अटल अंतरभूत u64 भाग64_u64_rem(u64 भागidend, u64 भागisor, u64 *reमुख्यder)
-अणु
-	*reमुख्यder = भागidend % भागisor;
-	वापस भागidend / भागisor;
-पूर्ण
+static inline u64 div64_u64_rem(u64 dividend, u64 divisor, u64 *remainder)
+{
+	*remainder = dividend % divisor;
+	return dividend / divisor;
+}
 
 /*
- * भाग64_u64 - अचिन्हित 64bit भागide with 64bit भागisor
- * @भागidend: अचिन्हित 64bit भागidend
- * @भागisor: अचिन्हित 64bit भागisor
+ * div64_u64 - unsigned 64bit divide with 64bit divisor
+ * @dividend: unsigned 64bit dividend
+ * @divisor: unsigned 64bit divisor
  *
- * Return: भागidend / भागisor
+ * Return: dividend / divisor
  */
-अटल अंतरभूत u64 भाग64_u64(u64 भागidend, u64 भागisor)
-अणु
-	वापस भागidend / भागisor;
-पूर्ण
+static inline u64 div64_u64(u64 dividend, u64 divisor)
+{
+	return dividend / divisor;
+}
 
 /*
- * भाग64_s64 - चिन्हित 64bit भागide with 64bit भागisor
- * @भागidend: चिन्हित 64bit भागidend
- * @भागisor: चिन्हित 64bit भागisor
+ * div64_s64 - signed 64bit divide with 64bit divisor
+ * @dividend: signed 64bit dividend
+ * @divisor: signed 64bit divisor
  *
- * Return: भागidend / भागisor
+ * Return: dividend / divisor
  */
-अटल अंतरभूत s64 भाग64_s64(s64 भागidend, s64 भागisor)
-अणु
-	वापस भागidend / भागisor;
-पूर्ण
+static inline s64 div64_s64(s64 dividend, s64 divisor)
+{
+	return dividend / divisor;
+}
 
-#या_अगर BITS_PER_LONG == 32
+#elif BITS_PER_LONG == 32
 
-#घोषणा भाग64_दीर्घ(x, y) भाग_s64((x), (y))
-#घोषणा भाग64_ul(x, y)   भाग_u64((x), (y))
+#define div64_long(x, y) div_s64((x), (y))
+#define div64_ul(x, y)   div_u64((x), (y))
 
-#अगर_अघोषित भाग_u64_rem
-अटल अंतरभूत u64 भाग_u64_rem(u64 भागidend, u32 भागisor, u32 *reमुख्यder)
-अणु
-	*reमुख्यder = करो_भाग(भागidend, भागisor);
-	वापस भागidend;
-पूर्ण
-#पूर्ण_अगर
+#ifndef div_u64_rem
+static inline u64 div_u64_rem(u64 dividend, u32 divisor, u32 *remainder)
+{
+	*remainder = do_div(dividend, divisor);
+	return dividend;
+}
+#endif
 
-#अगर_अघोषित भाग_s64_rem
-बाह्य s64 भाग_s64_rem(s64 भागidend, s32 भागisor, s32 *reमुख्यder);
-#पूर्ण_अगर
+#ifndef div_s64_rem
+extern s64 div_s64_rem(s64 dividend, s32 divisor, s32 *remainder);
+#endif
 
-#अगर_अघोषित भाग64_u64_rem
-बाह्य u64 भाग64_u64_rem(u64 भागidend, u64 भागisor, u64 *reमुख्यder);
-#पूर्ण_अगर
+#ifndef div64_u64_rem
+extern u64 div64_u64_rem(u64 dividend, u64 divisor, u64 *remainder);
+#endif
 
-#अगर_अघोषित भाग64_u64
-बाह्य u64 भाग64_u64(u64 भागidend, u64 भागisor);
-#पूर्ण_अगर
+#ifndef div64_u64
+extern u64 div64_u64(u64 dividend, u64 divisor);
+#endif
 
-#अगर_अघोषित भाग64_s64
-बाह्य s64 भाग64_s64(s64 भागidend, s64 भागisor);
-#पूर्ण_अगर
+#ifndef div64_s64
+extern s64 div64_s64(s64 dividend, s64 divisor);
+#endif
 
-#पूर्ण_अगर /* BITS_PER_LONG */
+#endif /* BITS_PER_LONG */
 
 /**
- * भाग_u64 - अचिन्हित 64bit भागide with 32bit भागisor
- * @भागidend: अचिन्हित 64bit भागidend
- * @भागisor: अचिन्हित 32bit भागisor
+ * div_u64 - unsigned 64bit divide with 32bit divisor
+ * @dividend: unsigned 64bit dividend
+ * @divisor: unsigned 32bit divisor
  *
- * This is the most common 64bit भागide and should be used अगर possible,
+ * This is the most common 64bit divide and should be used if possible,
  * as many 32bit archs can optimize this variant better than a full 64bit
- * भागide.
+ * divide.
  */
-#अगर_अघोषित भाग_u64
-अटल अंतरभूत u64 भाग_u64(u64 भागidend, u32 भागisor)
-अणु
-	u32 reमुख्यder;
-	वापस भाग_u64_rem(भागidend, भागisor, &reमुख्यder);
-पूर्ण
-#पूर्ण_अगर
+#ifndef div_u64
+static inline u64 div_u64(u64 dividend, u32 divisor)
+{
+	u32 remainder;
+	return div_u64_rem(dividend, divisor, &remainder);
+}
+#endif
 
 /**
- * भाग_s64 - चिन्हित 64bit भागide with 32bit भागisor
- * @भागidend: चिन्हित 64bit भागidend
- * @भागisor: चिन्हित 32bit भागisor
+ * div_s64 - signed 64bit divide with 32bit divisor
+ * @dividend: signed 64bit dividend
+ * @divisor: signed 32bit divisor
  */
-#अगर_अघोषित भाग_s64
-अटल अंतरभूत s64 भाग_s64(s64 भागidend, s32 भागisor)
-अणु
-	s32 reमुख्यder;
-	वापस भाग_s64_rem(भागidend, भागisor, &reमुख्यder);
-पूर्ण
-#पूर्ण_अगर
+#ifndef div_s64
+static inline s64 div_s64(s64 dividend, s32 divisor)
+{
+	s32 remainder;
+	return div_s64_rem(dividend, divisor, &remainder);
+}
+#endif
 
-u32 iter_भाग_u64_rem(u64 भागidend, u32 भागisor, u64 *reमुख्यder);
+u32 iter_div_u64_rem(u64 dividend, u32 divisor, u64 *remainder);
 
-#अगर_अघोषित mul_u32_u32
+#ifndef mul_u32_u32
 /*
  * Many a GCC version messes this up and generates a 64x64 mult :-(
  */
-अटल अंतरभूत u64 mul_u32_u32(u32 a, u32 b)
-अणु
-	वापस (u64)a * b;
-पूर्ण
-#पूर्ण_अगर
+static inline u64 mul_u32_u32(u32 a, u32 b)
+{
+	return (u64)a * b;
+}
+#endif
 
-#अगर defined(CONFIG_ARCH_SUPPORTS_INT128) && defined(__SIZखातापूर्ण_INT128__)
+#if defined(CONFIG_ARCH_SUPPORTS_INT128) && defined(__SIZEOF_INT128__)
 
-#अगर_अघोषित mul_u64_u32_shr
-अटल अंतरभूत u64 mul_u64_u32_shr(u64 a, u32 mul, अचिन्हित पूर्णांक shअगरt)
-अणु
-	वापस (u64)(((अचिन्हित __पूर्णांक128)a * mul) >> shअगरt);
-पूर्ण
-#पूर्ण_अगर /* mul_u64_u32_shr */
+#ifndef mul_u64_u32_shr
+static inline u64 mul_u64_u32_shr(u64 a, u32 mul, unsigned int shift)
+{
+	return (u64)(((unsigned __int128)a * mul) >> shift);
+}
+#endif /* mul_u64_u32_shr */
 
-#अगर_अघोषित mul_u64_u64_shr
-अटल अंतरभूत u64 mul_u64_u64_shr(u64 a, u64 mul, अचिन्हित पूर्णांक shअगरt)
-अणु
-	वापस (u64)(((अचिन्हित __पूर्णांक128)a * mul) >> shअगरt);
-पूर्ण
-#पूर्ण_अगर /* mul_u64_u64_shr */
+#ifndef mul_u64_u64_shr
+static inline u64 mul_u64_u64_shr(u64 a, u64 mul, unsigned int shift)
+{
+	return (u64)(((unsigned __int128)a * mul) >> shift);
+}
+#endif /* mul_u64_u64_shr */
 
-#अन्यथा
+#else
 
-#अगर_अघोषित mul_u64_u32_shr
-अटल अंतरभूत u64 mul_u64_u32_shr(u64 a, u32 mul, अचिन्हित पूर्णांक shअगरt)
-अणु
+#ifndef mul_u64_u32_shr
+static inline u64 mul_u64_u32_shr(u64 a, u32 mul, unsigned int shift)
+{
 	u32 ah, al;
 	u64 ret;
 
 	al = a;
 	ah = a >> 32;
 
-	ret = mul_u32_u32(al, mul) >> shअगरt;
-	अगर (ah)
-		ret += mul_u32_u32(ah, mul) << (32 - shअगरt);
+	ret = mul_u32_u32(al, mul) >> shift;
+	if (ah)
+		ret += mul_u32_u32(ah, mul) << (32 - shift);
 
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर /* mul_u64_u32_shr */
+	return ret;
+}
+#endif /* mul_u64_u32_shr */
 
-#अगर_अघोषित mul_u64_u64_shr
-अटल अंतरभूत u64 mul_u64_u64_shr(u64 a, u64 b, अचिन्हित पूर्णांक shअगरt)
-अणु
-	जोड़ अणु
+#ifndef mul_u64_u64_shr
+static inline u64 mul_u64_u64_shr(u64 a, u64 b, unsigned int shift)
+{
+	union {
 		u64 ll;
-		काष्ठा अणु
-#अगर_घोषित __BIG_ENDIAN
+		struct {
+#ifdef __BIG_ENDIAN
 			u32 high, low;
-#अन्यथा
+#else
 			u32 low, high;
-#पूर्ण_अगर
-		पूर्ण l;
-	पूर्ण rl, rm, rn, rh, a0, b0;
+#endif
+		} l;
+	} rl, rm, rn, rh, a0, b0;
 	u64 c;
 
 	a0.ll = a;
@@ -213,9 +212,9 @@ u32 iter_भाग_u64_rem(u64 भागidend, u32 भागisor, u64 *reमु�
 	rh.ll = mul_u32_u32(a0.l.high, b0.l.high);
 
 	/*
-	 * Each of these lines computes a 64-bit पूर्णांकermediate result पूर्णांकo "c",
-	 * starting at bits 32-95.  The low 32-bits go पूर्णांकo the result of the
-	 * multiplication, the high 32-bits are carried पूर्णांकo the next step.
+	 * Each of these lines computes a 64-bit intermediate result into "c",
+	 * starting at bits 32-95.  The low 32-bits go into the result of the
+	 * multiplication, the high 32-bits are carried into the next step.
 	 */
 	rl.l.high = c = (u64)rl.l.high + rm.l.low + rn.l.low;
 	rh.l.low = c = (c >> 32) + rm.l.high + rn.l.high + rh.l.low;
@@ -223,82 +222,82 @@ u32 iter_भाग_u64_rem(u64 भागidend, u32 भागisor, u64 *reमु�
 
 	/*
 	 * The 128-bit result of the multiplication is in rl.ll and rh.ll,
-	 * shअगरt it right and throw away the high part of the result.
+	 * shift it right and throw away the high part of the result.
 	 */
-	अगर (shअगरt == 0)
-		वापस rl.ll;
-	अगर (shअगरt < 64)
-		वापस (rl.ll >> shअगरt) | (rh.ll << (64 - shअगरt));
-	वापस rh.ll >> (shअगरt & 63);
-पूर्ण
-#पूर्ण_अगर /* mul_u64_u64_shr */
+	if (shift == 0)
+		return rl.ll;
+	if (shift < 64)
+		return (rl.ll >> shift) | (rh.ll << (64 - shift));
+	return rh.ll >> (shift & 63);
+}
+#endif /* mul_u64_u64_shr */
 
-#पूर्ण_अगर
+#endif
 
-#अगर_अघोषित mul_u64_u32_भाग
-अटल अंतरभूत u64 mul_u64_u32_भाग(u64 a, u32 mul, u32 भागisor)
-अणु
-	जोड़ अणु
+#ifndef mul_u64_u32_div
+static inline u64 mul_u64_u32_div(u64 a, u32 mul, u32 divisor)
+{
+	union {
 		u64 ll;
-		काष्ठा अणु
-#अगर_घोषित __BIG_ENDIAN
+		struct {
+#ifdef __BIG_ENDIAN
 			u32 high, low;
-#अन्यथा
+#else
 			u32 low, high;
-#पूर्ण_अगर
-		पूर्ण l;
-	पूर्ण u, rl, rh;
+#endif
+		} l;
+	} u, rl, rh;
 
 	u.ll = a;
 	rl.ll = mul_u32_u32(u.l.low, mul);
 	rh.ll = mul_u32_u32(u.l.high, mul) + rl.l.high;
 
 	/* Bits 32-63 of the result will be in rh.l.low. */
-	rl.l.high = करो_भाग(rh.ll, भागisor);
+	rl.l.high = do_div(rh.ll, divisor);
 
 	/* Bits 0-31 of the result will be in rl.l.low.	*/
-	करो_भाग(rl.ll, भागisor);
+	do_div(rl.ll, divisor);
 
 	rl.l.high = rh.l.low;
-	वापस rl.ll;
-पूर्ण
-#पूर्ण_अगर /* mul_u64_u32_भाग */
+	return rl.ll;
+}
+#endif /* mul_u64_u32_div */
 
-u64 mul_u64_u64_भाग_u64(u64 a, u64 mul, u64 भाग);
+u64 mul_u64_u64_div_u64(u64 a, u64 mul, u64 div);
 
-#घोषणा DIV64_U64_ROUND_UP(ll, d)	\
-	(अणु u64 _पंचांगp = (d); भाग64_u64((ll) + _पंचांगp - 1, _पंचांगp); पूर्ण)
+#define DIV64_U64_ROUND_UP(ll, d)	\
+	({ u64 _tmp = (d); div64_u64((ll) + _tmp - 1, _tmp); })
 
 /**
- * DIV64_U64_ROUND_CLOSEST - अचिन्हित 64bit भागide with 64bit भागisor rounded to nearest पूर्णांकeger
- * @भागidend: अचिन्हित 64bit भागidend
- * @भागisor: अचिन्हित 64bit भागisor
+ * DIV64_U64_ROUND_CLOSEST - unsigned 64bit divide with 64bit divisor rounded to nearest integer
+ * @dividend: unsigned 64bit dividend
+ * @divisor: unsigned 64bit divisor
  *
- * Divide अचिन्हित 64bit भागidend by अचिन्हित 64bit भागisor
- * and round to बंदst पूर्णांकeger.
+ * Divide unsigned 64bit dividend by unsigned 64bit divisor
+ * and round to closest integer.
  *
- * Return: भागidend / भागisor rounded to nearest पूर्णांकeger
+ * Return: dividend / divisor rounded to nearest integer
  */
-#घोषणा DIV64_U64_ROUND_CLOSEST(भागidend, भागisor)	\
-	(अणु u64 _पंचांगp = (भागisor); भाग64_u64((भागidend) + _पंचांगp / 2, _पंचांगp); पूर्ण)
+#define DIV64_U64_ROUND_CLOSEST(dividend, divisor)	\
+	({ u64 _tmp = (divisor); div64_u64((dividend) + _tmp / 2, _tmp); })
 
 /*
- * DIV_S64_ROUND_CLOSEST - चिन्हित 64bit भागide with 32bit भागisor rounded to nearest पूर्णांकeger
- * @भागidend: चिन्हित 64bit भागidend
- * @भागisor: चिन्हित 32bit भागisor
+ * DIV_S64_ROUND_CLOSEST - signed 64bit divide with 32bit divisor rounded to nearest integer
+ * @dividend: signed 64bit dividend
+ * @divisor: signed 32bit divisor
  *
- * Divide चिन्हित 64bit भागidend by चिन्हित 32bit भागisor
- * and round to बंदst पूर्णांकeger.
+ * Divide signed 64bit dividend by signed 32bit divisor
+ * and round to closest integer.
  *
- * Return: भागidend / भागisor rounded to nearest पूर्णांकeger
+ * Return: dividend / divisor rounded to nearest integer
  */
-#घोषणा DIV_S64_ROUND_CLOSEST(भागidend, भागisor)(	\
-अणु							\
-	s64 __x = (भागidend);				\
-	s32 __d = (भागisor);				\
+#define DIV_S64_ROUND_CLOSEST(dividend, divisor)(	\
+{							\
+	s64 __x = (dividend);				\
+	s32 __d = (divisor);				\
 	((__x > 0) == (__d > 0)) ?			\
-		भाग_s64((__x + (__d / 2)), __d) :	\
-		भाग_s64((__x - (__d / 2)), __d);	\
-पूर्ण							\
+		div_s64((__x + (__d / 2)), __d) :	\
+		div_s64((__x - (__d / 2)), __d);	\
+}							\
 )
-#पूर्ण_अगर /* _LINUX_MATH64_H */
+#endif /* _LINUX_MATH64_H */

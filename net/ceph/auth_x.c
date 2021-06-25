@@ -1,253 +1,252 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#समावेश <linux/ceph/ceph_debug.h>
+#include <linux/ceph/ceph_debug.h>
 
-#समावेश <linux/err.h>
-#समावेश <linux/module.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/slab.h>
+#include <linux/err.h>
+#include <linux/module.h>
+#include <linux/random.h>
+#include <linux/slab.h>
 
-#समावेश <linux/ceph/decode.h>
-#समावेश <linux/ceph/auth.h>
-#समावेश <linux/ceph/ceph_features.h>
-#समावेश <linux/ceph/libceph.h>
-#समावेश <linux/ceph/messenger.h>
+#include <linux/ceph/decode.h>
+#include <linux/ceph/auth.h>
+#include <linux/ceph/ceph_features.h>
+#include <linux/ceph/libceph.h>
+#include <linux/ceph/messenger.h>
 
-#समावेश "crypto.h"
-#समावेश "auth_x.h"
-#समावेश "auth_x_protocol.h"
+#include "crypto.h"
+#include "auth_x.h"
+#include "auth_x_protocol.h"
 
-अटल व्योम ceph_x_validate_tickets(काष्ठा ceph_auth_client *ac, पूर्णांक *pneed);
+static void ceph_x_validate_tickets(struct ceph_auth_client *ac, int *pneed);
 
-अटल पूर्णांक ceph_x_is_authenticated(काष्ठा ceph_auth_client *ac)
-अणु
-	काष्ठा ceph_x_info *xi = ac->निजी;
-	पूर्णांक missing;
-	पूर्णांक need;  /* missing + need renewal */
+static int ceph_x_is_authenticated(struct ceph_auth_client *ac)
+{
+	struct ceph_x_info *xi = ac->private;
+	int missing;
+	int need;  /* missing + need renewal */
 
 	ceph_x_validate_tickets(ac, &need);
 	missing = ac->want_keys & ~xi->have_keys;
 	WARN_ON((need & missing) != missing);
-	करोut("%s want 0x%x have 0x%x missing 0x%x -> %d\n", __func__,
+	dout("%s want 0x%x have 0x%x missing 0x%x -> %d\n", __func__,
 	     ac->want_keys, xi->have_keys, missing, !missing);
-	वापस !missing;
-पूर्ण
+	return !missing;
+}
 
-अटल पूर्णांक ceph_x_should_authenticate(काष्ठा ceph_auth_client *ac)
-अणु
-	काष्ठा ceph_x_info *xi = ac->निजी;
-	पूर्णांक need;
+static int ceph_x_should_authenticate(struct ceph_auth_client *ac)
+{
+	struct ceph_x_info *xi = ac->private;
+	int need;
 
 	ceph_x_validate_tickets(ac, &need);
-	करोut("%s want 0x%x have 0x%x need 0x%x -> %d\n", __func__,
+	dout("%s want 0x%x have 0x%x need 0x%x -> %d\n", __func__,
 	     ac->want_keys, xi->have_keys, need, !!need);
-	वापस !!need;
-पूर्ण
+	return !!need;
+}
 
-अटल पूर्णांक ceph_x_encrypt_offset(व्योम)
-अणु
-	वापस माप(u32) + माप(काष्ठा ceph_x_encrypt_header);
-पूर्ण
+static int ceph_x_encrypt_offset(void)
+{
+	return sizeof(u32) + sizeof(struct ceph_x_encrypt_header);
+}
 
-अटल पूर्णांक ceph_x_encrypt_buflen(पूर्णांक ilen)
-अणु
-	वापस ceph_x_encrypt_offset() + ilen + 16;
-पूर्ण
+static int ceph_x_encrypt_buflen(int ilen)
+{
+	return ceph_x_encrypt_offset() + ilen + 16;
+}
 
-अटल पूर्णांक ceph_x_encrypt(काष्ठा ceph_crypto_key *secret, व्योम *buf,
-			  पूर्णांक buf_len, पूर्णांक plaपूर्णांकext_len)
-अणु
-	काष्ठा ceph_x_encrypt_header *hdr = buf + माप(u32);
-	पूर्णांक ciphertext_len;
-	पूर्णांक ret;
+static int ceph_x_encrypt(struct ceph_crypto_key *secret, void *buf,
+			  int buf_len, int plaintext_len)
+{
+	struct ceph_x_encrypt_header *hdr = buf + sizeof(u32);
+	int ciphertext_len;
+	int ret;
 
-	hdr->काष्ठा_v = 1;
+	hdr->struct_v = 1;
 	hdr->magic = cpu_to_le64(CEPHX_ENC_MAGIC);
 
-	ret = ceph_crypt(secret, true, buf + माप(u32), buf_len - माप(u32),
-			 plaपूर्णांकext_len + माप(काष्ठा ceph_x_encrypt_header),
+	ret = ceph_crypt(secret, true, buf + sizeof(u32), buf_len - sizeof(u32),
+			 plaintext_len + sizeof(struct ceph_x_encrypt_header),
 			 &ciphertext_len);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ceph_encode_32(&buf, ciphertext_len);
-	वापस माप(u32) + ciphertext_len;
-पूर्ण
+	return sizeof(u32) + ciphertext_len;
+}
 
-अटल पूर्णांक __ceph_x_decrypt(काष्ठा ceph_crypto_key *secret, व्योम *p,
-			    पूर्णांक ciphertext_len)
-अणु
-	काष्ठा ceph_x_encrypt_header *hdr = p;
-	पूर्णांक plaपूर्णांकext_len;
-	पूर्णांक ret;
+static int __ceph_x_decrypt(struct ceph_crypto_key *secret, void *p,
+			    int ciphertext_len)
+{
+	struct ceph_x_encrypt_header *hdr = p;
+	int plaintext_len;
+	int ret;
 
 	ret = ceph_crypt(secret, false, p, ciphertext_len, ciphertext_len,
-			 &plaपूर्णांकext_len);
-	अगर (ret)
-		वापस ret;
+			 &plaintext_len);
+	if (ret)
+		return ret;
 
-	अगर (le64_to_cpu(hdr->magic) != CEPHX_ENC_MAGIC) अणु
+	if (le64_to_cpu(hdr->magic) != CEPHX_ENC_MAGIC) {
 		pr_err("%s bad magic\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस plaपूर्णांकext_len - माप(*hdr);
-पूर्ण
+	return plaintext_len - sizeof(*hdr);
+}
 
-अटल पूर्णांक ceph_x_decrypt(काष्ठा ceph_crypto_key *secret, व्योम **p, व्योम *end)
-अणु
-	पूर्णांक ciphertext_len;
-	पूर्णांक ret;
+static int ceph_x_decrypt(struct ceph_crypto_key *secret, void **p, void *end)
+{
+	int ciphertext_len;
+	int ret;
 
 	ceph_decode_32_safe(p, end, ciphertext_len, e_inval);
 	ceph_decode_need(p, end, ciphertext_len, e_inval);
 
 	ret = __ceph_x_decrypt(secret, *p, ciphertext_len);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	*p += ciphertext_len;
-	वापस ret;
+	return ret;
 
 e_inval:
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 /*
  * get existing (or insert new) ticket handler
  */
-अटल काष्ठा ceph_x_ticket_handler *
-get_ticket_handler(काष्ठा ceph_auth_client *ac, पूर्णांक service)
-अणु
-	काष्ठा ceph_x_ticket_handler *th;
-	काष्ठा ceph_x_info *xi = ac->निजी;
-	काष्ठा rb_node *parent = शून्य, **p = &xi->ticket_handlers.rb_node;
+static struct ceph_x_ticket_handler *
+get_ticket_handler(struct ceph_auth_client *ac, int service)
+{
+	struct ceph_x_ticket_handler *th;
+	struct ceph_x_info *xi = ac->private;
+	struct rb_node *parent = NULL, **p = &xi->ticket_handlers.rb_node;
 
-	जबतक (*p) अणु
+	while (*p) {
 		parent = *p;
-		th = rb_entry(parent, काष्ठा ceph_x_ticket_handler, node);
-		अगर (service < th->service)
+		th = rb_entry(parent, struct ceph_x_ticket_handler, node);
+		if (service < th->service)
 			p = &(*p)->rb_left;
-		अन्यथा अगर (service > th->service)
+		else if (service > th->service)
 			p = &(*p)->rb_right;
-		अन्यथा
-			वापस th;
-	पूर्ण
+		else
+			return th;
+	}
 
 	/* add it */
-	th = kzalloc(माप(*th), GFP_NOFS);
-	अगर (!th)
-		वापस ERR_PTR(-ENOMEM);
+	th = kzalloc(sizeof(*th), GFP_NOFS);
+	if (!th)
+		return ERR_PTR(-ENOMEM);
 	th->service = service;
 	rb_link_node(&th->node, parent, p);
 	rb_insert_color(&th->node, &xi->ticket_handlers);
-	वापस th;
-पूर्ण
+	return th;
+}
 
-अटल व्योम हटाओ_ticket_handler(काष्ठा ceph_auth_client *ac,
-				  काष्ठा ceph_x_ticket_handler *th)
-अणु
-	काष्ठा ceph_x_info *xi = ac->निजी;
+static void remove_ticket_handler(struct ceph_auth_client *ac,
+				  struct ceph_x_ticket_handler *th)
+{
+	struct ceph_x_info *xi = ac->private;
 
-	करोut("remove_ticket_handler %p %d\n", th, th->service);
+	dout("remove_ticket_handler %p %d\n", th, th->service);
 	rb_erase(&th->node, &xi->ticket_handlers);
 	ceph_crypto_key_destroy(&th->session_key);
-	अगर (th->ticket_blob)
+	if (th->ticket_blob)
 		ceph_buffer_put(th->ticket_blob);
-	kमुक्त(th);
-पूर्ण
+	kfree(th);
+}
 
-अटल पूर्णांक process_one_ticket(काष्ठा ceph_auth_client *ac,
-			      काष्ठा ceph_crypto_key *secret,
-			      व्योम **p, व्योम *end)
-अणु
-	काष्ठा ceph_x_info *xi = ac->निजी;
-	पूर्णांक type;
-	u8 tkt_काष्ठा_v, blob_काष्ठा_v;
-	काष्ठा ceph_x_ticket_handler *th;
-	व्योम *dp, *dend;
-	पूर्णांक dlen;
-	अक्षर is_enc;
-	काष्ठा बारpec64 validity;
-	व्योम *tp, *tpend;
-	व्योम **ptp;
-	काष्ठा ceph_crypto_key new_session_key = अणु 0 पूर्ण;
-	काष्ठा ceph_buffer *new_ticket_blob;
-	समय64_t new_expires, new_renew_after;
+static int process_one_ticket(struct ceph_auth_client *ac,
+			      struct ceph_crypto_key *secret,
+			      void **p, void *end)
+{
+	struct ceph_x_info *xi = ac->private;
+	int type;
+	u8 tkt_struct_v, blob_struct_v;
+	struct ceph_x_ticket_handler *th;
+	void *dp, *dend;
+	int dlen;
+	char is_enc;
+	struct timespec64 validity;
+	void *tp, *tpend;
+	void **ptp;
+	struct ceph_crypto_key new_session_key = { 0 };
+	struct ceph_buffer *new_ticket_blob;
+	time64_t new_expires, new_renew_after;
 	u64 new_secret_id;
-	पूर्णांक ret;
+	int ret;
 
-	ceph_decode_need(p, end, माप(u32) + 1, bad);
+	ceph_decode_need(p, end, sizeof(u32) + 1, bad);
 
 	type = ceph_decode_32(p);
-	करोut(" ticket type %d %s\n", type, ceph_entity_type_name(type));
+	dout(" ticket type %d %s\n", type, ceph_entity_type_name(type));
 
-	tkt_काष्ठा_v = ceph_decode_8(p);
-	अगर (tkt_काष्ठा_v != 1)
-		जाओ bad;
+	tkt_struct_v = ceph_decode_8(p);
+	if (tkt_struct_v != 1)
+		goto bad;
 
 	th = get_ticket_handler(ac, type);
-	अगर (IS_ERR(th)) अणु
+	if (IS_ERR(th)) {
 		ret = PTR_ERR(th);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* blob क्रम me */
+	/* blob for me */
 	dp = *p + ceph_x_encrypt_offset();
 	ret = ceph_x_decrypt(secret, p, end);
-	अगर (ret < 0)
-		जाओ out;
-	करोut(" decrypted %d bytes\n", ret);
+	if (ret < 0)
+		goto out;
+	dout(" decrypted %d bytes\n", ret);
 	dend = dp + ret;
 
-	ceph_decode_8_safe(&dp, dend, tkt_काष्ठा_v, bad);
-	अगर (tkt_काष्ठा_v != 1)
-		जाओ bad;
+	ceph_decode_8_safe(&dp, dend, tkt_struct_v, bad);
+	if (tkt_struct_v != 1)
+		goto bad;
 
 	ret = ceph_crypto_key_decode(&new_session_key, &dp, dend);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	ceph_decode_need(&dp, dend, माप(काष्ठा ceph_बारpec), bad);
-	ceph_decode_बारpec64(&validity, dp);
-	dp += माप(काष्ठा ceph_बारpec);
-	new_expires = kसमय_get_real_seconds() + validity.tv_sec;
+	ceph_decode_need(&dp, dend, sizeof(struct ceph_timespec), bad);
+	ceph_decode_timespec64(&validity, dp);
+	dp += sizeof(struct ceph_timespec);
+	new_expires = ktime_get_real_seconds() + validity.tv_sec;
 	new_renew_after = new_expires - (validity.tv_sec / 4);
-	करोut(" expires=%llu renew_after=%llu\n", new_expires,
+	dout(" expires=%llu renew_after=%llu\n", new_expires,
 	     new_renew_after);
 
-	/* ticket blob क्रम service */
+	/* ticket blob for service */
 	ceph_decode_8_safe(p, end, is_enc, bad);
-	अगर (is_enc) अणु
+	if (is_enc) {
 		/* encrypted */
 		tp = *p + ceph_x_encrypt_offset();
 		ret = ceph_x_decrypt(&th->session_key, p, end);
-		अगर (ret < 0)
-			जाओ out;
-		करोut(" encrypted ticket, decrypted %d bytes\n", ret);
+		if (ret < 0)
+			goto out;
+		dout(" encrypted ticket, decrypted %d bytes\n", ret);
 		ptp = &tp;
 		tpend = tp + ret;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* unencrypted */
 		ptp = p;
 		tpend = end;
-	पूर्ण
+	}
 	ceph_decode_32_safe(ptp, tpend, dlen, bad);
-	करोut(" ticket blob is %d bytes\n", dlen);
-	ceph_decode_need(ptp, tpend, 1 + माप(u64), bad);
-	blob_काष्ठा_v = ceph_decode_8(ptp);
-	अगर (blob_काष्ठा_v != 1)
-		जाओ bad;
+	dout(" ticket blob is %d bytes\n", dlen);
+	ceph_decode_need(ptp, tpend, 1 + sizeof(u64), bad);
+	blob_struct_v = ceph_decode_8(ptp);
+	if (blob_struct_v != 1)
+		goto bad;
 
 	new_secret_id = ceph_decode_64(ptp);
 	ret = ceph_decode_buffer(&new_ticket_blob, ptp, tpend);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	/* all is well, update our ticket */
 	ceph_crypto_key_destroy(&th->session_key);
-	अगर (th->ticket_blob)
+	if (th->ticket_blob)
 		ceph_buffer_put(th->ticket_blob);
 	th->session_key = new_session_key;
 	th->ticket_blob = new_ticket_blob;
@@ -255,303 +254,303 @@ get_ticket_handler(काष्ठा ceph_auth_client *ac, पूर्णा�
 	th->expires = new_expires;
 	th->renew_after = new_renew_after;
 	th->have_key = true;
-	करोut(" got ticket service %d (%s) secret_id %lld len %d\n",
+	dout(" got ticket service %d (%s) secret_id %lld len %d\n",
 	     type, ceph_entity_type_name(type), th->secret_id,
-	     (पूर्णांक)th->ticket_blob->vec.iov_len);
+	     (int)th->ticket_blob->vec.iov_len);
 	xi->have_keys |= th->service;
-	वापस 0;
+	return 0;
 
 bad:
 	ret = -EINVAL;
 out:
 	ceph_crypto_key_destroy(&new_session_key);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ceph_x_proc_ticket_reply(काष्ठा ceph_auth_client *ac,
-				    काष्ठा ceph_crypto_key *secret,
-				    व्योम **p, व्योम *end)
-अणु
-	u8 reply_काष्ठा_v;
+static int ceph_x_proc_ticket_reply(struct ceph_auth_client *ac,
+				    struct ceph_crypto_key *secret,
+				    void **p, void *end)
+{
+	u8 reply_struct_v;
 	u32 num;
-	पूर्णांक ret;
+	int ret;
 
-	ceph_decode_8_safe(p, end, reply_काष्ठा_v, bad);
-	अगर (reply_काष्ठा_v != 1)
-		वापस -EINVAL;
+	ceph_decode_8_safe(p, end, reply_struct_v, bad);
+	if (reply_struct_v != 1)
+		return -EINVAL;
 
 	ceph_decode_32_safe(p, end, num, bad);
-	करोut("%d tickets\n", num);
+	dout("%d tickets\n", num);
 
-	जबतक (num--) अणु
+	while (num--) {
 		ret = process_one_ticket(ac, secret, p, end);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
+	return 0;
 
 bad:
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 /*
  * Encode and encrypt the second part (ceph_x_authorize_b) of the
- * authorizer.  The first part (ceph_x_authorize_a) should alपढ़ोy be
+ * authorizer.  The first part (ceph_x_authorize_a) should already be
  * encoded.
  */
-अटल पूर्णांक encrypt_authorizer(काष्ठा ceph_x_authorizer *au,
+static int encrypt_authorizer(struct ceph_x_authorizer *au,
 			      u64 *server_challenge)
-अणु
-	काष्ठा ceph_x_authorize_a *msg_a;
-	काष्ठा ceph_x_authorize_b *msg_b;
-	व्योम *p, *end;
-	पूर्णांक ret;
+{
+	struct ceph_x_authorize_a *msg_a;
+	struct ceph_x_authorize_b *msg_b;
+	void *p, *end;
+	int ret;
 
 	msg_a = au->buf->vec.iov_base;
 	WARN_ON(msg_a->ticket_blob.secret_id != cpu_to_le64(au->secret_id));
-	p = (व्योम *)(msg_a + 1) + le32_to_cpu(msg_a->ticket_blob.blob_len);
+	p = (void *)(msg_a + 1) + le32_to_cpu(msg_a->ticket_blob.blob_len);
 	end = au->buf->vec.iov_base + au->buf->vec.iov_len;
 
 	msg_b = p + ceph_x_encrypt_offset();
-	msg_b->काष्ठा_v = 2;
+	msg_b->struct_v = 2;
 	msg_b->nonce = cpu_to_le64(au->nonce);
-	अगर (server_challenge) अणु
+	if (server_challenge) {
 		msg_b->have_challenge = 1;
 		msg_b->server_challenge_plus_one =
 		    cpu_to_le64(*server_challenge + 1);
-	पूर्ण अन्यथा अणु
+	} else {
 		msg_b->have_challenge = 0;
 		msg_b->server_challenge_plus_one = 0;
-	पूर्ण
+	}
 
-	ret = ceph_x_encrypt(&au->session_key, p, end - p, माप(*msg_b));
-	अगर (ret < 0)
-		वापस ret;
+	ret = ceph_x_encrypt(&au->session_key, p, end - p, sizeof(*msg_b));
+	if (ret < 0)
+		return ret;
 
 	p += ret;
-	अगर (server_challenge) अणु
+	if (server_challenge) {
 		WARN_ON(p != end);
-	पूर्ण अन्यथा अणु
+	} else {
 		WARN_ON(p > end);
 		au->buf->vec.iov_len = p - au->buf->vec.iov_base;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ceph_x_authorizer_cleanup(काष्ठा ceph_x_authorizer *au)
-अणु
+static void ceph_x_authorizer_cleanup(struct ceph_x_authorizer *au)
+{
 	ceph_crypto_key_destroy(&au->session_key);
-	अगर (au->buf) अणु
+	if (au->buf) {
 		ceph_buffer_put(au->buf);
-		au->buf = शून्य;
-	पूर्ण
-पूर्ण
+		au->buf = NULL;
+	}
+}
 
-अटल पूर्णांक ceph_x_build_authorizer(काष्ठा ceph_auth_client *ac,
-				   काष्ठा ceph_x_ticket_handler *th,
-				   काष्ठा ceph_x_authorizer *au)
-अणु
-	पूर्णांक maxlen;
-	काष्ठा ceph_x_authorize_a *msg_a;
-	काष्ठा ceph_x_authorize_b *msg_b;
-	पूर्णांक ret;
-	पूर्णांक ticket_blob_len =
+static int ceph_x_build_authorizer(struct ceph_auth_client *ac,
+				   struct ceph_x_ticket_handler *th,
+				   struct ceph_x_authorizer *au)
+{
+	int maxlen;
+	struct ceph_x_authorize_a *msg_a;
+	struct ceph_x_authorize_b *msg_b;
+	int ret;
+	int ticket_blob_len =
 		(th->ticket_blob ? th->ticket_blob->vec.iov_len : 0);
 
-	करोut("build_authorizer for %s %p\n",
+	dout("build_authorizer for %s %p\n",
 	     ceph_entity_type_name(th->service), au);
 
 	ceph_crypto_key_destroy(&au->session_key);
 	ret = ceph_crypto_key_clone(&au->session_key, &th->session_key);
-	अगर (ret)
-		जाओ out_au;
+	if (ret)
+		goto out_au;
 
-	maxlen = माप(*msg_a) + ticket_blob_len +
-		ceph_x_encrypt_buflen(माप(*msg_b));
-	करोut("  need len %d\n", maxlen);
-	अगर (au->buf && au->buf->alloc_len < maxlen) अणु
+	maxlen = sizeof(*msg_a) + ticket_blob_len +
+		ceph_x_encrypt_buflen(sizeof(*msg_b));
+	dout("  need len %d\n", maxlen);
+	if (au->buf && au->buf->alloc_len < maxlen) {
 		ceph_buffer_put(au->buf);
-		au->buf = शून्य;
-	पूर्ण
-	अगर (!au->buf) अणु
+		au->buf = NULL;
+	}
+	if (!au->buf) {
 		au->buf = ceph_buffer_new(maxlen, GFP_NOFS);
-		अगर (!au->buf) अणु
+		if (!au->buf) {
 			ret = -ENOMEM;
-			जाओ out_au;
-		पूर्ण
-	पूर्ण
+			goto out_au;
+		}
+	}
 	au->service = th->service;
 	WARN_ON(!th->secret_id);
 	au->secret_id = th->secret_id;
 
 	msg_a = au->buf->vec.iov_base;
-	msg_a->काष्ठा_v = 1;
+	msg_a->struct_v = 1;
 	msg_a->global_id = cpu_to_le64(ac->global_id);
 	msg_a->service_id = cpu_to_le32(th->service);
-	msg_a->ticket_blob.काष्ठा_v = 1;
+	msg_a->ticket_blob.struct_v = 1;
 	msg_a->ticket_blob.secret_id = cpu_to_le64(th->secret_id);
 	msg_a->ticket_blob.blob_len = cpu_to_le32(ticket_blob_len);
-	अगर (ticket_blob_len) अणु
-		स_नकल(msg_a->ticket_blob.blob, th->ticket_blob->vec.iov_base,
+	if (ticket_blob_len) {
+		memcpy(msg_a->ticket_blob.blob, th->ticket_blob->vec.iov_base,
 		       th->ticket_blob->vec.iov_len);
-	पूर्ण
-	करोut(" th %p secret_id %lld %lld\n", th, th->secret_id,
+	}
+	dout(" th %p secret_id %lld %lld\n", th, th->secret_id,
 	     le64_to_cpu(msg_a->ticket_blob.secret_id));
 
-	get_अक्रमom_bytes(&au->nonce, माप(au->nonce));
-	ret = encrypt_authorizer(au, शून्य);
-	अगर (ret) अणु
+	get_random_bytes(&au->nonce, sizeof(au->nonce));
+	ret = encrypt_authorizer(au, NULL);
+	if (ret) {
 		pr_err("failed to encrypt authorizer: %d", ret);
-		जाओ out_au;
-	पूर्ण
+		goto out_au;
+	}
 
-	करोut(" built authorizer nonce %llx len %d\n", au->nonce,
-	     (पूर्णांक)au->buf->vec.iov_len);
-	वापस 0;
+	dout(" built authorizer nonce %llx len %d\n", au->nonce,
+	     (int)au->buf->vec.iov_len);
+	return 0;
 
 out_au:
 	ceph_x_authorizer_cleanup(au);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ceph_x_encode_ticket(काष्ठा ceph_x_ticket_handler *th,
-				व्योम **p, व्योम *end)
-अणु
-	ceph_decode_need(p, end, 1 + माप(u64), bad);
+static int ceph_x_encode_ticket(struct ceph_x_ticket_handler *th,
+				void **p, void *end)
+{
+	ceph_decode_need(p, end, 1 + sizeof(u64), bad);
 	ceph_encode_8(p, 1);
 	ceph_encode_64(p, th->secret_id);
-	अगर (th->ticket_blob) अणु
-		स्थिर अक्षर *buf = th->ticket_blob->vec.iov_base;
+	if (th->ticket_blob) {
+		const char *buf = th->ticket_blob->vec.iov_base;
 		u32 len = th->ticket_blob->vec.iov_len;
 
 		ceph_encode_32_safe(p, end, len, bad);
 		ceph_encode_copy_safe(p, end, buf, len, bad);
-	पूर्ण अन्यथा अणु
+	} else {
 		ceph_encode_32_safe(p, end, 0, bad);
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 bad:
-	वापस -दुस्फल;
-पूर्ण
+	return -ERANGE;
+}
 
-अटल bool need_key(काष्ठा ceph_x_ticket_handler *th)
-अणु
-	अगर (!th->have_key)
-		वापस true;
+static bool need_key(struct ceph_x_ticket_handler *th)
+{
+	if (!th->have_key)
+		return true;
 
-	वापस kसमय_get_real_seconds() >= th->renew_after;
-पूर्ण
+	return ktime_get_real_seconds() >= th->renew_after;
+}
 
-अटल bool have_key(काष्ठा ceph_x_ticket_handler *th)
-अणु
-	अगर (th->have_key && kसमय_get_real_seconds() >= th->expires) अणु
-		करोut("ticket %d (%s) secret_id %llu expired\n", th->service,
+static bool have_key(struct ceph_x_ticket_handler *th)
+{
+	if (th->have_key && ktime_get_real_seconds() >= th->expires) {
+		dout("ticket %d (%s) secret_id %llu expired\n", th->service,
 		     ceph_entity_type_name(th->service), th->secret_id);
 		th->have_key = false;
-	पूर्ण
+	}
 
-	वापस th->have_key;
-पूर्ण
+	return th->have_key;
+}
 
-अटल व्योम ceph_x_validate_tickets(काष्ठा ceph_auth_client *ac, पूर्णांक *pneed)
-अणु
-	पूर्णांक want = ac->want_keys;
-	काष्ठा ceph_x_info *xi = ac->निजी;
-	पूर्णांक service;
+static void ceph_x_validate_tickets(struct ceph_auth_client *ac, int *pneed)
+{
+	int want = ac->want_keys;
+	struct ceph_x_info *xi = ac->private;
+	int service;
 
 	*pneed = ac->want_keys & ~(xi->have_keys);
 
-	क्रम (service = 1; service <= want; service <<= 1) अणु
-		काष्ठा ceph_x_ticket_handler *th;
+	for (service = 1; service <= want; service <<= 1) {
+		struct ceph_x_ticket_handler *th;
 
-		अगर (!(ac->want_keys & service))
-			जारी;
+		if (!(ac->want_keys & service))
+			continue;
 
-		अगर (*pneed & service)
-			जारी;
+		if (*pneed & service)
+			continue;
 
 		th = get_ticket_handler(ac, service);
-		अगर (IS_ERR(th)) अणु
+		if (IS_ERR(th)) {
 			*pneed |= service;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (need_key(th))
+		if (need_key(th))
 			*pneed |= service;
-		अगर (!have_key(th))
+		if (!have_key(th))
 			xi->have_keys &= ~service;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक ceph_x_build_request(काष्ठा ceph_auth_client *ac,
-				व्योम *buf, व्योम *end)
-अणु
-	काष्ठा ceph_x_info *xi = ac->निजी;
-	पूर्णांक need;
-	काष्ठा ceph_x_request_header *head = buf;
-	व्योम *p;
-	पूर्णांक ret;
-	काष्ठा ceph_x_ticket_handler *th =
+static int ceph_x_build_request(struct ceph_auth_client *ac,
+				void *buf, void *end)
+{
+	struct ceph_x_info *xi = ac->private;
+	int need;
+	struct ceph_x_request_header *head = buf;
+	void *p;
+	int ret;
+	struct ceph_x_ticket_handler *th =
 		get_ticket_handler(ac, CEPH_ENTITY_TYPE_AUTH);
 
-	अगर (IS_ERR(th))
-		वापस PTR_ERR(th);
+	if (IS_ERR(th))
+		return PTR_ERR(th);
 
 	ceph_x_validate_tickets(ac, &need);
-	करोut("%s want 0x%x have 0x%x need 0x%x\n", __func__, ac->want_keys,
+	dout("%s want 0x%x have 0x%x need 0x%x\n", __func__, ac->want_keys,
 	     xi->have_keys, need);
 
-	अगर (need & CEPH_ENTITY_TYPE_AUTH) अणु
-		काष्ठा ceph_x_authenticate *auth = (व्योम *)(head + 1);
-		व्योम *enc_buf = xi->auth_authorizer.enc_buf;
-		काष्ठा ceph_x_challenge_blob *blob = enc_buf +
+	if (need & CEPH_ENTITY_TYPE_AUTH) {
+		struct ceph_x_authenticate *auth = (void *)(head + 1);
+		void *enc_buf = xi->auth_authorizer.enc_buf;
+		struct ceph_x_challenge_blob *blob = enc_buf +
 							ceph_x_encrypt_offset();
 		u64 *u;
 
 		p = auth + 1;
-		अगर (p > end)
-			वापस -दुस्फल;
+		if (p > end)
+			return -ERANGE;
 
-		करोut(" get_auth_session_key\n");
+		dout(" get_auth_session_key\n");
 		head->op = cpu_to_le16(CEPHX_GET_AUTH_SESSION_KEY);
 
 		/* encrypt and hash */
-		get_अक्रमom_bytes(&auth->client_challenge, माप(u64));
+		get_random_bytes(&auth->client_challenge, sizeof(u64));
 		blob->client_challenge = auth->client_challenge;
 		blob->server_challenge = cpu_to_le64(xi->server_challenge);
 		ret = ceph_x_encrypt(&xi->secret, enc_buf, CEPHX_AU_ENC_BUF_LEN,
-				     माप(*blob));
-		अगर (ret < 0)
-			वापस ret;
+				     sizeof(*blob));
+		if (ret < 0)
+			return ret;
 
-		auth->काष्ठा_v = 3;  /* nautilus+ */
+		auth->struct_v = 3;  /* nautilus+ */
 		auth->key = 0;
-		क्रम (u = (u64 *)enc_buf; u + 1 <= (u64 *)(enc_buf + ret); u++)
+		for (u = (u64 *)enc_buf; u + 1 <= (u64 *)(enc_buf + ret); u++)
 			auth->key ^= *(__le64 *)u;
-		करोut(" server_challenge %llx client_challenge %llx key %llx\n",
+		dout(" server_challenge %llx client_challenge %llx key %llx\n",
 		     xi->server_challenge, le64_to_cpu(auth->client_challenge),
 		     le64_to_cpu(auth->key));
 
-		/* now encode the old ticket अगर exists */
+		/* now encode the old ticket if exists */
 		ret = ceph_x_encode_ticket(th, &p, end);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
-		/* nautilus+: request service tickets at the same समय */
+		/* nautilus+: request service tickets at the same time */
 		need = ac->want_keys & ~CEPH_ENTITY_TYPE_AUTH;
 		WARN_ON(!need);
 		ceph_encode_32_safe(&p, end, need, e_range);
-		वापस p - buf;
-	पूर्ण
+		return p - buf;
+	}
 
-	अगर (need) अणु
-		करोut(" get_principal_session_key\n");
+	if (need) {
+		dout(" get_principal_session_key\n");
 		ret = ceph_x_build_authorizer(ac, th, &xi->auth_authorizer);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		p = buf;
 		ceph_encode_16_safe(&p, end, CEPHX_GET_PRINCIPAL_SESSION_KEY,
@@ -561,203 +560,203 @@ bad:
 			xi->auth_authorizer.buf->vec.iov_len, e_range);
 		ceph_encode_8_safe(&p, end, 1, e_range);
 		ceph_encode_32_safe(&p, end, need, e_range);
-		वापस p - buf;
-	पूर्ण
+		return p - buf;
+	}
 
-	वापस 0;
+	return 0;
 
 e_range:
-	वापस -दुस्फल;
-पूर्ण
+	return -ERANGE;
+}
 
-अटल पूर्णांक decode_con_secret(व्योम **p, व्योम *end, u8 *con_secret,
-			     पूर्णांक *con_secret_len)
-अणु
-	पूर्णांक len;
+static int decode_con_secret(void **p, void *end, u8 *con_secret,
+			     int *con_secret_len)
+{
+	int len;
 
 	ceph_decode_32_safe(p, end, len, bad);
 	ceph_decode_need(p, end, len, bad);
 
-	करोut("%s len %d\n", __func__, len);
-	अगर (con_secret) अणु
-		अगर (len > CEPH_MAX_CON_SECRET_LEN) अणु
+	dout("%s len %d\n", __func__, len);
+	if (con_secret) {
+		if (len > CEPH_MAX_CON_SECRET_LEN) {
 			pr_err("connection secret too big %d\n", len);
-			जाओ bad_memzero;
-		पूर्ण
-		स_नकल(con_secret, *p, len);
+			goto bad_memzero;
+		}
+		memcpy(con_secret, *p, len);
 		*con_secret_len = len;
-	पूर्ण
+	}
 	memzero_explicit(*p, len);
 	*p += len;
-	वापस 0;
+	return 0;
 
 bad_memzero:
 	memzero_explicit(*p, len);
 bad:
 	pr_err("failed to decode connection secret\n");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक handle_auth_session_key(काष्ठा ceph_auth_client *ac,
-				   व्योम **p, व्योम *end,
-				   u8 *session_key, पूर्णांक *session_key_len,
-				   u8 *con_secret, पूर्णांक *con_secret_len)
-अणु
-	काष्ठा ceph_x_info *xi = ac->निजी;
-	काष्ठा ceph_x_ticket_handler *th;
-	व्योम *dp, *dend;
-	पूर्णांक len;
-	पूर्णांक ret;
+static int handle_auth_session_key(struct ceph_auth_client *ac,
+				   void **p, void *end,
+				   u8 *session_key, int *session_key_len,
+				   u8 *con_secret, int *con_secret_len)
+{
+	struct ceph_x_info *xi = ac->private;
+	struct ceph_x_ticket_handler *th;
+	void *dp, *dend;
+	int len;
+	int ret;
 
 	/* AUTH ticket */
 	ret = ceph_x_proc_ticket_reply(ac, &xi->secret, p, end);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (*p == end) अणु
+	if (*p == end) {
 		/* pre-nautilus (or didn't request service tickets!) */
 		WARN_ON(session_key || con_secret);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	th = get_ticket_handler(ac, CEPH_ENTITY_TYPE_AUTH);
-	अगर (IS_ERR(th))
-		वापस PTR_ERR(th);
+	if (IS_ERR(th))
+		return PTR_ERR(th);
 
-	अगर (session_key) अणु
-		स_नकल(session_key, th->session_key.key, th->session_key.len);
+	if (session_key) {
+		memcpy(session_key, th->session_key.key, th->session_key.len);
 		*session_key_len = th->session_key.len;
-	पूर्ण
+	}
 
 	/* connection secret */
 	ceph_decode_32_safe(p, end, len, e_inval);
-	करोut("%s connection secret blob len %d\n", __func__, len);
-	अगर (len > 0) अणु
+	dout("%s connection secret blob len %d\n", __func__, len);
+	if (len > 0) {
 		dp = *p + ceph_x_encrypt_offset();
 		ret = ceph_x_decrypt(&th->session_key, p, *p + len);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
-		करोut("%s decrypted %d bytes\n", __func__, ret);
+		dout("%s decrypted %d bytes\n", __func__, ret);
 		dend = dp + ret;
 
 		ret = decode_con_secret(&dp, dend, con_secret, con_secret_len);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	/* service tickets */
 	ceph_decode_32_safe(p, end, len, e_inval);
-	करोut("%s service tickets blob len %d\n", __func__, len);
-	अगर (len > 0) अणु
+	dout("%s service tickets blob len %d\n", __func__, len);
+	if (len > 0) {
 		ret = ceph_x_proc_ticket_reply(ac, &th->session_key,
 					       p, *p + len);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
+	return 0;
 
 e_inval:
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक ceph_x_handle_reply(काष्ठा ceph_auth_client *ac, पूर्णांक result,
-			       व्योम *buf, व्योम *end,
-			       u8 *session_key, पूर्णांक *session_key_len,
-			       u8 *con_secret, पूर्णांक *con_secret_len)
-अणु
-	काष्ठा ceph_x_info *xi = ac->निजी;
-	काष्ठा ceph_x_ticket_handler *th;
-	पूर्णांक len = end - buf;
-	व्योम *p;
-	पूर्णांक op;
-	पूर्णांक ret;
+static int ceph_x_handle_reply(struct ceph_auth_client *ac, int result,
+			       void *buf, void *end,
+			       u8 *session_key, int *session_key_len,
+			       u8 *con_secret, int *con_secret_len)
+{
+	struct ceph_x_info *xi = ac->private;
+	struct ceph_x_ticket_handler *th;
+	int len = end - buf;
+	void *p;
+	int op;
+	int ret;
 
-	अगर (result)
-		वापस result;  /* XXX hmm? */
+	if (result)
+		return result;  /* XXX hmm? */
 
-	अगर (xi->starting) अणु
+	if (xi->starting) {
 		/* it's a hello */
-		काष्ठा ceph_x_server_challenge *sc = buf;
+		struct ceph_x_server_challenge *sc = buf;
 
-		अगर (len != माप(*sc))
-			वापस -EINVAL;
+		if (len != sizeof(*sc))
+			return -EINVAL;
 		xi->server_challenge = le64_to_cpu(sc->server_challenge);
-		करोut("handle_reply got server challenge %llx\n",
+		dout("handle_reply got server challenge %llx\n",
 		     xi->server_challenge);
 		xi->starting = false;
 		xi->have_keys &= ~CEPH_ENTITY_TYPE_AUTH;
-		वापस -EAGAIN;
-	पूर्ण
+		return -EAGAIN;
+	}
 
 	p = buf;
 	ceph_decode_16_safe(&p, end, op, e_inval);
 	ceph_decode_32_safe(&p, end, result, e_inval);
-	करोut("handle_reply op %d result %d\n", op, result);
-	चयन (op) अणु
-	हाल CEPHX_GET_AUTH_SESSION_KEY:
+	dout("handle_reply op %d result %d\n", op, result);
+	switch (op) {
+	case CEPHX_GET_AUTH_SESSION_KEY:
 		/* AUTH ticket + [connection secret] + service tickets */
 		ret = handle_auth_session_key(ac, &p, end, session_key,
 					      session_key_len, con_secret,
 					      con_secret_len);
-		अवरोध;
+		break;
 
-	हाल CEPHX_GET_PRINCIPAL_SESSION_KEY:
+	case CEPHX_GET_PRINCIPAL_SESSION_KEY:
 		th = get_ticket_handler(ac, CEPH_ENTITY_TYPE_AUTH);
-		अगर (IS_ERR(th))
-			वापस PTR_ERR(th);
+		if (IS_ERR(th))
+			return PTR_ERR(th);
 
 		/* service tickets */
 		ret = ceph_x_proc_ticket_reply(ac, &th->session_key, &p, end);
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	अगर (ret)
-		वापस ret;
-	अगर (ac->want_keys == xi->have_keys)
-		वापस 0;
-	वापस -EAGAIN;
+	default:
+		return -EINVAL;
+	}
+	if (ret)
+		return ret;
+	if (ac->want_keys == xi->have_keys)
+		return 0;
+	return -EAGAIN;
 
 e_inval:
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल व्योम ceph_x_destroy_authorizer(काष्ठा ceph_authorizer *a)
-अणु
-	काष्ठा ceph_x_authorizer *au = (व्योम *)a;
+static void ceph_x_destroy_authorizer(struct ceph_authorizer *a)
+{
+	struct ceph_x_authorizer *au = (void *)a;
 
 	ceph_x_authorizer_cleanup(au);
-	kमुक्त(au);
-पूर्ण
+	kfree(au);
+}
 
-अटल पूर्णांक ceph_x_create_authorizer(
-	काष्ठा ceph_auth_client *ac, पूर्णांक peer_type,
-	काष्ठा ceph_auth_handshake *auth)
-अणु
-	काष्ठा ceph_x_authorizer *au;
-	काष्ठा ceph_x_ticket_handler *th;
-	पूर्णांक ret;
+static int ceph_x_create_authorizer(
+	struct ceph_auth_client *ac, int peer_type,
+	struct ceph_auth_handshake *auth)
+{
+	struct ceph_x_authorizer *au;
+	struct ceph_x_ticket_handler *th;
+	int ret;
 
 	th = get_ticket_handler(ac, peer_type);
-	अगर (IS_ERR(th))
-		वापस PTR_ERR(th);
+	if (IS_ERR(th))
+		return PTR_ERR(th);
 
-	au = kzalloc(माप(*au), GFP_NOFS);
-	अगर (!au)
-		वापस -ENOMEM;
+	au = kzalloc(sizeof(*au), GFP_NOFS);
+	if (!au)
+		return -ENOMEM;
 
 	au->base.destroy = ceph_x_destroy_authorizer;
 
 	ret = ceph_x_build_authorizer(ac, th, au);
-	अगर (ret) अणु
-		kमुक्त(au);
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		kfree(au);
+		return ret;
+	}
 
-	auth->authorizer = (काष्ठा ceph_authorizer *) au;
+	auth->authorizer = (struct ceph_authorizer *) au;
 	auth->authorizer_buf = au->buf->vec.iov_base;
 	auth->authorizer_buf_len = au->buf->vec.iov_len;
 	auth->authorizer_reply_buf = au->enc_buf;
@@ -765,231 +764,231 @@ e_inval:
 	auth->sign_message = ac->ops->sign_message;
 	auth->check_message_signature = ac->ops->check_message_signature;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ceph_x_update_authorizer(
-	काष्ठा ceph_auth_client *ac, पूर्णांक peer_type,
-	काष्ठा ceph_auth_handshake *auth)
-अणु
-	काष्ठा ceph_x_authorizer *au;
-	काष्ठा ceph_x_ticket_handler *th;
+static int ceph_x_update_authorizer(
+	struct ceph_auth_client *ac, int peer_type,
+	struct ceph_auth_handshake *auth)
+{
+	struct ceph_x_authorizer *au;
+	struct ceph_x_ticket_handler *th;
 
 	th = get_ticket_handler(ac, peer_type);
-	अगर (IS_ERR(th))
-		वापस PTR_ERR(th);
+	if (IS_ERR(th))
+		return PTR_ERR(th);
 
-	au = (काष्ठा ceph_x_authorizer *)auth->authorizer;
-	अगर (au->secret_id < th->secret_id) अणु
-		करोut("ceph_x_update_authorizer service %u secret %llu < %llu\n",
+	au = (struct ceph_x_authorizer *)auth->authorizer;
+	if (au->secret_id < th->secret_id) {
+		dout("ceph_x_update_authorizer service %u secret %llu < %llu\n",
 		     au->service, au->secret_id, th->secret_id);
-		वापस ceph_x_build_authorizer(ac, th, au);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return ceph_x_build_authorizer(ac, th, au);
+	}
+	return 0;
+}
 
 /*
  * CephXAuthorizeChallenge
  */
-अटल पूर्णांक decrypt_authorizer_challenge(काष्ठा ceph_crypto_key *secret,
-					व्योम *challenge, पूर्णांक challenge_len,
+static int decrypt_authorizer_challenge(struct ceph_crypto_key *secret,
+					void *challenge, int challenge_len,
 					u64 *server_challenge)
-अणु
-	व्योम *dp, *dend;
-	पूर्णांक ret;
+{
+	void *dp, *dend;
+	int ret;
 
 	/* no leading len */
 	ret = __ceph_x_decrypt(secret, challenge, challenge_len);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	करोut("%s decrypted %d bytes\n", __func__, ret);
-	dp = challenge + माप(काष्ठा ceph_x_encrypt_header);
+	dout("%s decrypted %d bytes\n", __func__, ret);
+	dp = challenge + sizeof(struct ceph_x_encrypt_header);
 	dend = dp + ret;
 
-	ceph_decode_skip_8(&dp, dend, e_inval);  /* काष्ठा_v */
+	ceph_decode_skip_8(&dp, dend, e_inval);  /* struct_v */
 	ceph_decode_64_safe(&dp, dend, *server_challenge, e_inval);
-	करोut("%s server_challenge %llu\n", __func__, *server_challenge);
-	वापस 0;
+	dout("%s server_challenge %llu\n", __func__, *server_challenge);
+	return 0;
 
 e_inval:
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक ceph_x_add_authorizer_challenge(काष्ठा ceph_auth_client *ac,
-					   काष्ठा ceph_authorizer *a,
-					   व्योम *challenge, पूर्णांक challenge_len)
-अणु
-	काष्ठा ceph_x_authorizer *au = (व्योम *)a;
+static int ceph_x_add_authorizer_challenge(struct ceph_auth_client *ac,
+					   struct ceph_authorizer *a,
+					   void *challenge, int challenge_len)
+{
+	struct ceph_x_authorizer *au = (void *)a;
 	u64 server_challenge;
-	पूर्णांक ret;
+	int ret;
 
 	ret = decrypt_authorizer_challenge(&au->session_key, challenge,
 					   challenge_len, &server_challenge);
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("failed to decrypt authorize challenge: %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = encrypt_authorizer(au, &server_challenge);
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("failed to encrypt authorizer w/ challenge: %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * CephXAuthorizeReply
  */
-अटल पूर्णांक decrypt_authorizer_reply(काष्ठा ceph_crypto_key *secret,
-				    व्योम **p, व्योम *end, u64 *nonce_plus_one,
-				    u8 *con_secret, पूर्णांक *con_secret_len)
-अणु
-	व्योम *dp, *dend;
-	u8 काष्ठा_v;
-	पूर्णांक ret;
+static int decrypt_authorizer_reply(struct ceph_crypto_key *secret,
+				    void **p, void *end, u64 *nonce_plus_one,
+				    u8 *con_secret, int *con_secret_len)
+{
+	void *dp, *dend;
+	u8 struct_v;
+	int ret;
 
 	dp = *p + ceph_x_encrypt_offset();
 	ret = ceph_x_decrypt(secret, p, end);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	करोut("%s decrypted %d bytes\n", __func__, ret);
+	dout("%s decrypted %d bytes\n", __func__, ret);
 	dend = dp + ret;
 
-	ceph_decode_8_safe(&dp, dend, काष्ठा_v, e_inval);
+	ceph_decode_8_safe(&dp, dend, struct_v, e_inval);
 	ceph_decode_64_safe(&dp, dend, *nonce_plus_one, e_inval);
-	करोut("%s nonce_plus_one %llu\n", __func__, *nonce_plus_one);
-	अगर (काष्ठा_v >= 2) अणु
+	dout("%s nonce_plus_one %llu\n", __func__, *nonce_plus_one);
+	if (struct_v >= 2) {
 		ret = decode_con_secret(&dp, dend, con_secret, con_secret_len);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
+	return 0;
 
 e_inval:
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक ceph_x_verअगरy_authorizer_reply(काष्ठा ceph_auth_client *ac,
-					  काष्ठा ceph_authorizer *a,
-					  व्योम *reply, पूर्णांक reply_len,
-					  u8 *session_key, पूर्णांक *session_key_len,
-					  u8 *con_secret, पूर्णांक *con_secret_len)
-अणु
-	काष्ठा ceph_x_authorizer *au = (व्योम *)a;
+static int ceph_x_verify_authorizer_reply(struct ceph_auth_client *ac,
+					  struct ceph_authorizer *a,
+					  void *reply, int reply_len,
+					  u8 *session_key, int *session_key_len,
+					  u8 *con_secret, int *con_secret_len)
+{
+	struct ceph_x_authorizer *au = (void *)a;
 	u64 nonce_plus_one;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (session_key) अणु
-		स_नकल(session_key, au->session_key.key, au->session_key.len);
+	if (session_key) {
+		memcpy(session_key, au->session_key.key, au->session_key.len);
 		*session_key_len = au->session_key.len;
-	पूर्ण
+	}
 
 	ret = decrypt_authorizer_reply(&au->session_key, &reply,
 				       reply + reply_len, &nonce_plus_one,
 				       con_secret, con_secret_len);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (nonce_plus_one != au->nonce + 1) अणु
+	if (nonce_plus_one != au->nonce + 1) {
 		pr_err("failed to authenticate server\n");
-		वापस -EPERM;
-	पूर्ण
+		return -EPERM;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ceph_x_reset(काष्ठा ceph_auth_client *ac)
-अणु
-	काष्ठा ceph_x_info *xi = ac->निजी;
+static void ceph_x_reset(struct ceph_auth_client *ac)
+{
+	struct ceph_x_info *xi = ac->private;
 
-	करोut("reset\n");
+	dout("reset\n");
 	xi->starting = true;
 	xi->server_challenge = 0;
-पूर्ण
+}
 
-अटल व्योम ceph_x_destroy(काष्ठा ceph_auth_client *ac)
-अणु
-	काष्ठा ceph_x_info *xi = ac->निजी;
-	काष्ठा rb_node *p;
+static void ceph_x_destroy(struct ceph_auth_client *ac)
+{
+	struct ceph_x_info *xi = ac->private;
+	struct rb_node *p;
 
-	करोut("ceph_x_destroy %p\n", ac);
+	dout("ceph_x_destroy %p\n", ac);
 	ceph_crypto_key_destroy(&xi->secret);
 
-	जबतक ((p = rb_first(&xi->ticket_handlers)) != शून्य) अणु
-		काष्ठा ceph_x_ticket_handler *th =
-			rb_entry(p, काष्ठा ceph_x_ticket_handler, node);
-		हटाओ_ticket_handler(ac, th);
-	पूर्ण
+	while ((p = rb_first(&xi->ticket_handlers)) != NULL) {
+		struct ceph_x_ticket_handler *th =
+			rb_entry(p, struct ceph_x_ticket_handler, node);
+		remove_ticket_handler(ac, th);
+	}
 
 	ceph_x_authorizer_cleanup(&xi->auth_authorizer);
 
-	kमुक्त(ac->निजी);
-	ac->निजी = शून्य;
-पूर्ण
+	kfree(ac->private);
+	ac->private = NULL;
+}
 
-अटल व्योम invalidate_ticket(काष्ठा ceph_auth_client *ac, पूर्णांक peer_type)
-अणु
-	काष्ठा ceph_x_ticket_handler *th;
+static void invalidate_ticket(struct ceph_auth_client *ac, int peer_type)
+{
+	struct ceph_x_ticket_handler *th;
 
 	th = get_ticket_handler(ac, peer_type);
-	अगर (IS_ERR(th))
-		वापस;
+	if (IS_ERR(th))
+		return;
 
-	अगर (th->have_key) अणु
-		करोut("ticket %d (%s) secret_id %llu invalidated\n",
+	if (th->have_key) {
+		dout("ticket %d (%s) secret_id %llu invalidated\n",
 		     th->service, ceph_entity_type_name(th->service),
 		     th->secret_id);
 		th->have_key = false;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम ceph_x_invalidate_authorizer(काष्ठा ceph_auth_client *ac,
-					 पूर्णांक peer_type)
-अणु
+static void ceph_x_invalidate_authorizer(struct ceph_auth_client *ac,
+					 int peer_type)
+{
 	/*
 	 * We are to invalidate a service ticket in the hopes of
 	 * getting a new, hopefully more valid, one.  But, we won't get
 	 * it unless our AUTH ticket is good, so invalidate AUTH ticket
-	 * as well, just in हाल.
+	 * as well, just in case.
 	 */
 	invalidate_ticket(ac, peer_type);
 	invalidate_ticket(ac, CEPH_ENTITY_TYPE_AUTH);
-पूर्ण
+}
 
-अटल पूर्णांक calc_signature(काष्ठा ceph_x_authorizer *au, काष्ठा ceph_msg *msg,
+static int calc_signature(struct ceph_x_authorizer *au, struct ceph_msg *msg,
 			  __le64 *psig)
-अणु
-	व्योम *enc_buf = au->enc_buf;
-	पूर्णांक ret;
+{
+	void *enc_buf = au->enc_buf;
+	int ret;
 
-	अगर (!CEPH_HAVE_FEATURE(msg->con->peer_features, CEPHX_V2)) अणु
-		काष्ठा अणु
+	if (!CEPH_HAVE_FEATURE(msg->con->peer_features, CEPHX_V2)) {
+		struct {
 			__le32 len;
 			__le32 header_crc;
 			__le32 front_crc;
 			__le32 middle_crc;
 			__le32 data_crc;
-		पूर्ण __packed *sigblock = enc_buf + ceph_x_encrypt_offset();
+		} __packed *sigblock = enc_buf + ceph_x_encrypt_offset();
 
-		sigblock->len = cpu_to_le32(4*माप(u32));
+		sigblock->len = cpu_to_le32(4*sizeof(u32));
 		sigblock->header_crc = msg->hdr.crc;
 		sigblock->front_crc = msg->footer.front_crc;
 		sigblock->middle_crc = msg->footer.middle_crc;
 		sigblock->data_crc =  msg->footer.data_crc;
 
 		ret = ceph_x_encrypt(&au->session_key, enc_buf,
-				     CEPHX_AU_ENC_BUF_LEN, माप(*sigblock));
-		अगर (ret < 0)
-			वापस ret;
+				     CEPHX_AU_ENC_BUF_LEN, sizeof(*sigblock));
+		if (ret < 0)
+			return ret;
 
-		*psig = *(__le64 *)(enc_buf + माप(u32));
-	पूर्ण अन्यथा अणु
-		काष्ठा अणु
+		*psig = *(__le64 *)(enc_buf + sizeof(u32));
+	} else {
+		struct {
 			__le32 header_crc;
 			__le32 front_crc;
 			__le32 front_len;
@@ -998,11 +997,11 @@ e_inval:
 			__le32 data_crc;
 			__le32 data_len;
 			__le32 seq_lower_word;
-		पूर्ण __packed *sigblock = enc_buf;
-		काष्ठा अणु
+		} __packed *sigblock = enc_buf;
+		struct {
 			__le64 a, b, c, d;
-		पूर्ण __packed *penc = enc_buf;
-		पूर्णांक ciphertext_len;
+		} __packed *penc = enc_buf;
+		int ciphertext_len;
 
 		sigblock->header_crc = msg->hdr.crc;
 		sigblock->front_crc = msg->footer.front_crc;
@@ -1015,61 +1014,61 @@ e_inval:
 
 		/* no leading len, no ceph_x_encrypt_header */
 		ret = ceph_crypt(&au->session_key, true, enc_buf,
-				 CEPHX_AU_ENC_BUF_LEN, माप(*sigblock),
+				 CEPHX_AU_ENC_BUF_LEN, sizeof(*sigblock),
 				 &ciphertext_len);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		*psig = penc->a ^ penc->b ^ penc->c ^ penc->d;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ceph_x_sign_message(काष्ठा ceph_auth_handshake *auth,
-			       काष्ठा ceph_msg *msg)
-अणु
+static int ceph_x_sign_message(struct ceph_auth_handshake *auth,
+			       struct ceph_msg *msg)
+{
 	__le64 sig;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (ceph_test_opt(from_msgr(msg->con->msgr), NOMSGSIGN))
-		वापस 0;
+	if (ceph_test_opt(from_msgr(msg->con->msgr), NOMSGSIGN))
+		return 0;
 
-	ret = calc_signature((काष्ठा ceph_x_authorizer *)auth->authorizer,
+	ret = calc_signature((struct ceph_x_authorizer *)auth->authorizer,
 			     msg, &sig);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	msg->footer.sig = sig;
 	msg->footer.flags |= CEPH_MSG_FOOTER_SIGNED;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ceph_x_check_message_signature(काष्ठा ceph_auth_handshake *auth,
-					  काष्ठा ceph_msg *msg)
-अणु
+static int ceph_x_check_message_signature(struct ceph_auth_handshake *auth,
+					  struct ceph_msg *msg)
+{
 	__le64 sig_check;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (ceph_test_opt(from_msgr(msg->con->msgr), NOMSGSIGN))
-		वापस 0;
+	if (ceph_test_opt(from_msgr(msg->con->msgr), NOMSGSIGN))
+		return 0;
 
-	ret = calc_signature((काष्ठा ceph_x_authorizer *)auth->authorizer,
+	ret = calc_signature((struct ceph_x_authorizer *)auth->authorizer,
 			     msg, &sig_check);
-	अगर (ret)
-		वापस ret;
-	अगर (sig_check == msg->footer.sig)
-		वापस 0;
-	अगर (msg->footer.flags & CEPH_MSG_FOOTER_SIGNED)
-		करोut("ceph_x_check_message_signature %p has signature %llx "
+	if (ret)
+		return ret;
+	if (sig_check == msg->footer.sig)
+		return 0;
+	if (msg->footer.flags & CEPH_MSG_FOOTER_SIGNED)
+		dout("ceph_x_check_message_signature %p has signature %llx "
 		     "expect %llx\n", msg, msg->footer.sig, sig_check);
-	अन्यथा
-		करोut("ceph_x_check_message_signature %p sender did not set "
+	else
+		dout("ceph_x_check_message_signature %p sender did not set "
 		     "CEPH_MSG_FOOTER_SIGNED\n", msg);
-	वापस -EBADMSG;
-पूर्ण
+	return -EBADMSG;
+}
 
-अटल स्थिर काष्ठा ceph_auth_client_ops ceph_x_ops = अणु
+static const struct ceph_auth_client_ops ceph_x_ops = {
 	.is_authenticated = ceph_x_is_authenticated,
 	.should_authenticate = ceph_x_should_authenticate,
 	.build_request = ceph_x_build_request,
@@ -1077,48 +1076,48 @@ e_inval:
 	.create_authorizer = ceph_x_create_authorizer,
 	.update_authorizer = ceph_x_update_authorizer,
 	.add_authorizer_challenge = ceph_x_add_authorizer_challenge,
-	.verअगरy_authorizer_reply = ceph_x_verअगरy_authorizer_reply,
+	.verify_authorizer_reply = ceph_x_verify_authorizer_reply,
 	.invalidate_authorizer = ceph_x_invalidate_authorizer,
 	.reset =  ceph_x_reset,
 	.destroy = ceph_x_destroy,
 	.sign_message = ceph_x_sign_message,
 	.check_message_signature = ceph_x_check_message_signature,
-पूर्ण;
+};
 
 
-पूर्णांक ceph_x_init(काष्ठा ceph_auth_client *ac)
-अणु
-	काष्ठा ceph_x_info *xi;
-	पूर्णांक ret;
+int ceph_x_init(struct ceph_auth_client *ac)
+{
+	struct ceph_x_info *xi;
+	int ret;
 
-	करोut("ceph_x_init %p\n", ac);
+	dout("ceph_x_init %p\n", ac);
 	ret = -ENOMEM;
-	xi = kzalloc(माप(*xi), GFP_NOFS);
-	अगर (!xi)
-		जाओ out;
+	xi = kzalloc(sizeof(*xi), GFP_NOFS);
+	if (!xi)
+		goto out;
 
 	ret = -EINVAL;
-	अगर (!ac->key) अणु
+	if (!ac->key) {
 		pr_err("no secret set (for auth_x protocol)\n");
-		जाओ out_nomem;
-	पूर्ण
+		goto out_nomem;
+	}
 
 	ret = ceph_crypto_key_clone(&xi->secret, ac->key);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		pr_err("cannot clone key: %d\n", ret);
-		जाओ out_nomem;
-	पूर्ण
+		goto out_nomem;
+	}
 
 	xi->starting = true;
 	xi->ticket_handlers = RB_ROOT;
 
 	ac->protocol = CEPH_AUTH_CEPHX;
-	ac->निजी = xi;
+	ac->private = xi;
 	ac->ops = &ceph_x_ops;
-	वापस 0;
+	return 0;
 
 out_nomem:
-	kमुक्त(xi);
+	kfree(xi);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}

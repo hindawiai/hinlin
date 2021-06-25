@@ -1,108 +1,107 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2017 Facebook
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/debugfs.h>
+#include <linux/kernel.h>
+#include <linux/blkdev.h>
+#include <linux/debugfs.h>
 
-#समावेश <linux/blk-mq.h>
-#समावेश "blk.h"
-#समावेश "blk-mq.h"
-#समावेश "blk-mq-debugfs.h"
-#समावेश "blk-mq-tag.h"
-#समावेश "blk-rq-qos.h"
+#include <linux/blk-mq.h>
+#include "blk.h"
+#include "blk-mq.h"
+#include "blk-mq-debugfs.h"
+#include "blk-mq-tag.h"
+#include "blk-rq-qos.h"
 
-अटल व्योम prपूर्णांक_stat(काष्ठा seq_file *m, काष्ठा blk_rq_stat *stat)
-अणु
-	अगर (stat->nr_samples) अणु
-		seq_म_लिखो(m, "samples=%d, mean=%llu, min=%llu, max=%llu",
+static void print_stat(struct seq_file *m, struct blk_rq_stat *stat)
+{
+	if (stat->nr_samples) {
+		seq_printf(m, "samples=%d, mean=%llu, min=%llu, max=%llu",
 			   stat->nr_samples, stat->mean, stat->min, stat->max);
-	पूर्ण अन्यथा अणु
-		seq_माला_दो(m, "samples=0");
-	पूर्ण
-पूर्ण
+	} else {
+		seq_puts(m, "samples=0");
+	}
+}
 
-अटल पूर्णांक queue_poll_stat_show(व्योम *data, काष्ठा seq_file *m)
-अणु
-	काष्ठा request_queue *q = data;
-	पूर्णांक bucket;
+static int queue_poll_stat_show(void *data, struct seq_file *m)
+{
+	struct request_queue *q = data;
+	int bucket;
 
-	क्रम (bucket = 0; bucket < (BLK_MQ_POLL_STATS_BKTS / 2); bucket++) अणु
-		seq_म_लिखो(m, "read  (%d Bytes): ", 1 << (9 + bucket));
-		prपूर्णांक_stat(m, &q->poll_stat[2 * bucket]);
-		seq_माला_दो(m, "\n");
+	for (bucket = 0; bucket < (BLK_MQ_POLL_STATS_BKTS / 2); bucket++) {
+		seq_printf(m, "read  (%d Bytes): ", 1 << (9 + bucket));
+		print_stat(m, &q->poll_stat[2 * bucket]);
+		seq_puts(m, "\n");
 
-		seq_म_लिखो(m, "write (%d Bytes): ",  1 << (9 + bucket));
-		prपूर्णांक_stat(m, &q->poll_stat[2 * bucket + 1]);
-		seq_माला_दो(m, "\n");
-	पूर्ण
-	वापस 0;
-पूर्ण
+		seq_printf(m, "write (%d Bytes): ",  1 << (9 + bucket));
+		print_stat(m, &q->poll_stat[2 * bucket + 1]);
+		seq_puts(m, "\n");
+	}
+	return 0;
+}
 
-अटल व्योम *queue_requeue_list_start(काष्ठा seq_file *m, loff_t *pos)
+static void *queue_requeue_list_start(struct seq_file *m, loff_t *pos)
 	__acquires(&q->requeue_lock)
-अणु
-	काष्ठा request_queue *q = m->निजी;
+{
+	struct request_queue *q = m->private;
 
 	spin_lock_irq(&q->requeue_lock);
-	वापस seq_list_start(&q->requeue_list, *pos);
-पूर्ण
+	return seq_list_start(&q->requeue_list, *pos);
+}
 
-अटल व्योम *queue_requeue_list_next(काष्ठा seq_file *m, व्योम *v, loff_t *pos)
-अणु
-	काष्ठा request_queue *q = m->निजी;
+static void *queue_requeue_list_next(struct seq_file *m, void *v, loff_t *pos)
+{
+	struct request_queue *q = m->private;
 
-	वापस seq_list_next(v, &q->requeue_list, pos);
-पूर्ण
+	return seq_list_next(v, &q->requeue_list, pos);
+}
 
-अटल व्योम queue_requeue_list_stop(काष्ठा seq_file *m, व्योम *v)
+static void queue_requeue_list_stop(struct seq_file *m, void *v)
 	__releases(&q->requeue_lock)
-अणु
-	काष्ठा request_queue *q = m->निजी;
+{
+	struct request_queue *q = m->private;
 
 	spin_unlock_irq(&q->requeue_lock);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा seq_operations queue_requeue_list_seq_ops = अणु
+static const struct seq_operations queue_requeue_list_seq_ops = {
 	.start	= queue_requeue_list_start,
 	.next	= queue_requeue_list_next,
 	.stop	= queue_requeue_list_stop,
 	.show	= blk_mq_debugfs_rq_show,
-पूर्ण;
+};
 
-अटल पूर्णांक blk_flags_show(काष्ठा seq_file *m, स्थिर अचिन्हित दीर्घ flags,
-			  स्थिर अक्षर *स्थिर *flag_name, पूर्णांक flag_name_count)
-अणु
+static int blk_flags_show(struct seq_file *m, const unsigned long flags,
+			  const char *const *flag_name, int flag_name_count)
+{
 	bool sep = false;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < माप(flags) * BITS_PER_BYTE; i++) अणु
-		अगर (!(flags & BIT(i)))
-			जारी;
-		अगर (sep)
-			seq_माला_दो(m, "|");
+	for (i = 0; i < sizeof(flags) * BITS_PER_BYTE; i++) {
+		if (!(flags & BIT(i)))
+			continue;
+		if (sep)
+			seq_puts(m, "|");
 		sep = true;
-		अगर (i < flag_name_count && flag_name[i])
-			seq_माला_दो(m, flag_name[i]);
-		अन्यथा
-			seq_म_लिखो(m, "%d", i);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (i < flag_name_count && flag_name[i])
+			seq_puts(m, flag_name[i]);
+		else
+			seq_printf(m, "%d", i);
+	}
+	return 0;
+}
 
-अटल पूर्णांक queue_pm_only_show(व्योम *data, काष्ठा seq_file *m)
-अणु
-	काष्ठा request_queue *q = data;
+static int queue_pm_only_show(void *data, struct seq_file *m)
+{
+	struct request_queue *q = data;
 
-	seq_म_लिखो(m, "%d\n", atomic_पढ़ो(&q->pm_only));
-	वापस 0;
-पूर्ण
+	seq_printf(m, "%d\n", atomic_read(&q->pm_only));
+	return 0;
+}
 
-#घोषणा QUEUE_FLAG_NAME(name) [QUEUE_FLAG_##name] = #name
-अटल स्थिर अक्षर *स्थिर blk_queue_flag_name[] = अणु
+#define QUEUE_FLAG_NAME(name) [QUEUE_FLAG_##name] = #name
+static const char *const blk_queue_flag_name[] = {
 	QUEUE_FLAG_NAME(STOPPED),
 	QUEUE_FLAG_NAME(DYING),
 	QUEUE_FLAG_NAME(NOMERGES),
@@ -131,147 +130,147 @@
 	QUEUE_FLAG_NAME(ZONE_RESETALL),
 	QUEUE_FLAG_NAME(RQ_ALLOC_TIME),
 	QUEUE_FLAG_NAME(NOWAIT),
-पूर्ण;
-#अघोषित QUEUE_FLAG_NAME
+};
+#undef QUEUE_FLAG_NAME
 
-अटल पूर्णांक queue_state_show(व्योम *data, काष्ठा seq_file *m)
-अणु
-	काष्ठा request_queue *q = data;
+static int queue_state_show(void *data, struct seq_file *m)
+{
+	struct request_queue *q = data;
 
 	blk_flags_show(m, q->queue_flags, blk_queue_flag_name,
 		       ARRAY_SIZE(blk_queue_flag_name));
-	seq_माला_दो(m, "\n");
-	वापस 0;
-पूर्ण
+	seq_puts(m, "\n");
+	return 0;
+}
 
-अटल sमाप_प्रकार queue_state_ग_लिखो(व्योम *data, स्थिर अक्षर __user *buf,
-				 माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा request_queue *q = data;
-	अक्षर opbuf[16] = अणु पूर्ण, *op;
+static ssize_t queue_state_write(void *data, const char __user *buf,
+				 size_t count, loff_t *ppos)
+{
+	struct request_queue *q = data;
+	char opbuf[16] = { }, *op;
 
 	/*
-	 * The "state" attribute is हटाओd after blk_cleanup_queue() has called
-	 * blk_mq_मुक्त_queue(). Return अगर QUEUE_FLAG_DEAD has been set to aव्योम
-	 * triggering a use-after-मुक्त.
+	 * The "state" attribute is removed after blk_cleanup_queue() has called
+	 * blk_mq_free_queue(). Return if QUEUE_FLAG_DEAD has been set to avoid
+	 * triggering a use-after-free.
 	 */
-	अगर (blk_queue_dead(q))
-		वापस -ENOENT;
+	if (blk_queue_dead(q))
+		return -ENOENT;
 
-	अगर (count >= माप(opbuf)) अणु
+	if (count >= sizeof(opbuf)) {
 		pr_err("%s: operation too long\n", __func__);
-		जाओ inval;
-	पूर्ण
+		goto inval;
+	}
 
-	अगर (copy_from_user(opbuf, buf, count))
-		वापस -EFAULT;
-	op = म_मालाip(opbuf);
-	अगर (म_भेद(op, "run") == 0) अणु
+	if (copy_from_user(opbuf, buf, count))
+		return -EFAULT;
+	op = strstrip(opbuf);
+	if (strcmp(op, "run") == 0) {
 		blk_mq_run_hw_queues(q, true);
-	पूर्ण अन्यथा अगर (म_भेद(op, "start") == 0) अणु
+	} else if (strcmp(op, "start") == 0) {
 		blk_mq_start_stopped_hw_queues(q, true);
-	पूर्ण अन्यथा अगर (म_भेद(op, "kick") == 0) अणु
+	} else if (strcmp(op, "kick") == 0) {
 		blk_mq_kick_requeue_list(q);
-	पूर्ण अन्यथा अणु
+	} else {
 		pr_err("%s: unsupported operation '%s'\n", __func__, op);
 inval:
 		pr_err("%s: use 'run', 'start' or 'kick'\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
-	वापस count;
-पूर्ण
+		return -EINVAL;
+	}
+	return count;
+}
 
-अटल पूर्णांक queue_ग_लिखो_hपूर्णांक_show(व्योम *data, काष्ठा seq_file *m)
-अणु
-	काष्ठा request_queue *q = data;
-	पूर्णांक i;
+static int queue_write_hint_show(void *data, struct seq_file *m)
+{
+	struct request_queue *q = data;
+	int i;
 
-	क्रम (i = 0; i < BLK_MAX_WRITE_HINTS; i++)
-		seq_म_लिखो(m, "hint%d: %llu\n", i, q->ग_लिखो_hपूर्णांकs[i]);
+	for (i = 0; i < BLK_MAX_WRITE_HINTS; i++)
+		seq_printf(m, "hint%d: %llu\n", i, q->write_hints[i]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार queue_ग_लिखो_hपूर्णांक_store(व्योम *data, स्थिर अक्षर __user *buf,
-				      माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा request_queue *q = data;
-	पूर्णांक i;
+static ssize_t queue_write_hint_store(void *data, const char __user *buf,
+				      size_t count, loff_t *ppos)
+{
+	struct request_queue *q = data;
+	int i;
 
-	क्रम (i = 0; i < BLK_MAX_WRITE_HINTS; i++)
-		q->ग_लिखो_hपूर्णांकs[i] = 0;
+	for (i = 0; i < BLK_MAX_WRITE_HINTS; i++)
+		q->write_hints[i] = 0;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा blk_mq_debugfs_attr blk_mq_debugfs_queue_attrs[] = अणु
-	अणु "poll_stat", 0400, queue_poll_stat_show पूर्ण,
-	अणु "requeue_list", 0400, .seq_ops = &queue_requeue_list_seq_ops पूर्ण,
-	अणु "pm_only", 0600, queue_pm_only_show, शून्य पूर्ण,
-	अणु "state", 0600, queue_state_show, queue_state_ग_लिखो पूर्ण,
-	अणु "write_hints", 0600, queue_ग_लिखो_hपूर्णांक_show, queue_ग_लिखो_hपूर्णांक_store पूर्ण,
-	अणु "zone_wlock", 0400, queue_zone_wlock_show, शून्य पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct blk_mq_debugfs_attr blk_mq_debugfs_queue_attrs[] = {
+	{ "poll_stat", 0400, queue_poll_stat_show },
+	{ "requeue_list", 0400, .seq_ops = &queue_requeue_list_seq_ops },
+	{ "pm_only", 0600, queue_pm_only_show, NULL },
+	{ "state", 0600, queue_state_show, queue_state_write },
+	{ "write_hints", 0600, queue_write_hint_show, queue_write_hint_store },
+	{ "zone_wlock", 0400, queue_zone_wlock_show, NULL },
+	{ },
+};
 
-#घोषणा HCTX_STATE_NAME(name) [BLK_MQ_S_##name] = #name
-अटल स्थिर अक्षर *स्थिर hctx_state_name[] = अणु
+#define HCTX_STATE_NAME(name) [BLK_MQ_S_##name] = #name
+static const char *const hctx_state_name[] = {
 	HCTX_STATE_NAME(STOPPED),
 	HCTX_STATE_NAME(TAG_ACTIVE),
 	HCTX_STATE_NAME(SCHED_RESTART),
 	HCTX_STATE_NAME(INACTIVE),
-पूर्ण;
-#अघोषित HCTX_STATE_NAME
+};
+#undef HCTX_STATE_NAME
 
-अटल पूर्णांक hctx_state_show(व्योम *data, काष्ठा seq_file *m)
-अणु
-	काष्ठा blk_mq_hw_ctx *hctx = data;
+static int hctx_state_show(void *data, struct seq_file *m)
+{
+	struct blk_mq_hw_ctx *hctx = data;
 
 	blk_flags_show(m, hctx->state, hctx_state_name,
 		       ARRAY_SIZE(hctx_state_name));
-	seq_माला_दो(m, "\n");
-	वापस 0;
-पूर्ण
+	seq_puts(m, "\n");
+	return 0;
+}
 
-#घोषणा BLK_TAG_ALLOC_NAME(name) [BLK_TAG_ALLOC_##name] = #name
-अटल स्थिर अक्षर *स्थिर alloc_policy_name[] = अणु
+#define BLK_TAG_ALLOC_NAME(name) [BLK_TAG_ALLOC_##name] = #name
+static const char *const alloc_policy_name[] = {
 	BLK_TAG_ALLOC_NAME(FIFO),
 	BLK_TAG_ALLOC_NAME(RR),
-पूर्ण;
-#अघोषित BLK_TAG_ALLOC_NAME
+};
+#undef BLK_TAG_ALLOC_NAME
 
-#घोषणा HCTX_FLAG_NAME(name) [ilog2(BLK_MQ_F_##name)] = #name
-अटल स्थिर अक्षर *स्थिर hctx_flag_name[] = अणु
+#define HCTX_FLAG_NAME(name) [ilog2(BLK_MQ_F_##name)] = #name
+static const char *const hctx_flag_name[] = {
 	HCTX_FLAG_NAME(SHOULD_MERGE),
 	HCTX_FLAG_NAME(TAG_QUEUE_SHARED),
 	HCTX_FLAG_NAME(BLOCKING),
 	HCTX_FLAG_NAME(NO_SCHED),
 	HCTX_FLAG_NAME(STACKING),
 	HCTX_FLAG_NAME(TAG_HCTX_SHARED),
-पूर्ण;
-#अघोषित HCTX_FLAG_NAME
+};
+#undef HCTX_FLAG_NAME
 
-अटल पूर्णांक hctx_flags_show(व्योम *data, काष्ठा seq_file *m)
-अणु
-	काष्ठा blk_mq_hw_ctx *hctx = data;
-	स्थिर पूर्णांक alloc_policy = BLK_MQ_FLAG_TO_ALLOC_POLICY(hctx->flags);
+static int hctx_flags_show(void *data, struct seq_file *m)
+{
+	struct blk_mq_hw_ctx *hctx = data;
+	const int alloc_policy = BLK_MQ_FLAG_TO_ALLOC_POLICY(hctx->flags);
 
-	seq_माला_दो(m, "alloc_policy=");
-	अगर (alloc_policy < ARRAY_SIZE(alloc_policy_name) &&
+	seq_puts(m, "alloc_policy=");
+	if (alloc_policy < ARRAY_SIZE(alloc_policy_name) &&
 	    alloc_policy_name[alloc_policy])
-		seq_माला_दो(m, alloc_policy_name[alloc_policy]);
-	अन्यथा
-		seq_म_लिखो(m, "%d", alloc_policy);
-	seq_माला_दो(m, " ");
+		seq_puts(m, alloc_policy_name[alloc_policy]);
+	else
+		seq_printf(m, "%d", alloc_policy);
+	seq_puts(m, " ");
 	blk_flags_show(m,
 		       hctx->flags ^ BLK_ALLOC_POLICY_TO_MQ_FLAG(alloc_policy),
 		       hctx_flag_name, ARRAY_SIZE(hctx_flag_name));
-	seq_माला_दो(m, "\n");
-	वापस 0;
-पूर्ण
+	seq_puts(m, "\n");
+	return 0;
+}
 
-#घोषणा CMD_FLAG_NAME(name) [__REQ_##name] = #name
-अटल स्थिर अक्षर *स्थिर cmd_flag_name[] = अणु
+#define CMD_FLAG_NAME(name) [__REQ_##name] = #name
+static const char *const cmd_flag_name[] = {
 	CMD_FLAG_NAME(FAILFAST_DEV),
 	CMD_FLAG_NAME(FAILFAST_TRANSPORT),
 	CMD_FLAG_NAME(FAILFAST_DRIVER),
@@ -288,11 +287,11 @@ inval:
 	CMD_FLAG_NAME(NOWAIT),
 	CMD_FLAG_NAME(NOUNMAP),
 	CMD_FLAG_NAME(HIPRI),
-पूर्ण;
-#अघोषित CMD_FLAG_NAME
+};
+#undef CMD_FLAG_NAME
 
-#घोषणा RQF_NAME(name) [ilog2((__क्रमce u32)RQF_##name)] = #name
-अटल स्थिर अक्षर *स्थिर rqf_name[] = अणु
+#define RQF_NAME(name) [ilog2((__force u32)RQF_##name)] = #name
+static const char *const rqf_name[] = {
 	RQF_NAME(STARTED),
 	RQF_NAME(SOFTBARRIER),
 	RQF_NAME(FLUSH_SEQ),
@@ -309,650 +308,650 @@ inval:
 	RQF_NAME(SPECIAL_PAYLOAD),
 	RQF_NAME(ZONE_WRITE_LOCKED),
 	RQF_NAME(MQ_POLL_SLEPT),
-पूर्ण;
-#अघोषित RQF_NAME
+};
+#undef RQF_NAME
 
-अटल स्थिर अक्षर *स्थिर blk_mq_rq_state_name_array[] = अणु
+static const char *const blk_mq_rq_state_name_array[] = {
 	[MQ_RQ_IDLE]		= "idle",
 	[MQ_RQ_IN_FLIGHT]	= "in_flight",
 	[MQ_RQ_COMPLETE]	= "complete",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *blk_mq_rq_state_name(क्रमागत mq_rq_state rq_state)
-अणु
-	अगर (WARN_ON_ONCE((अचिन्हित पूर्णांक)rq_state >=
+static const char *blk_mq_rq_state_name(enum mq_rq_state rq_state)
+{
+	if (WARN_ON_ONCE((unsigned int)rq_state >=
 			 ARRAY_SIZE(blk_mq_rq_state_name_array)))
-		वापस "(?)";
-	वापस blk_mq_rq_state_name_array[rq_state];
-पूर्ण
+		return "(?)";
+	return blk_mq_rq_state_name_array[rq_state];
+}
 
-पूर्णांक __blk_mq_debugfs_rq_show(काष्ठा seq_file *m, काष्ठा request *rq)
-अणु
-	स्थिर काष्ठा blk_mq_ops *स्थिर mq_ops = rq->q->mq_ops;
-	स्थिर अचिन्हित पूर्णांक op = req_op(rq);
-	स्थिर अक्षर *op_str = blk_op_str(op);
+int __blk_mq_debugfs_rq_show(struct seq_file *m, struct request *rq)
+{
+	const struct blk_mq_ops *const mq_ops = rq->q->mq_ops;
+	const unsigned int op = req_op(rq);
+	const char *op_str = blk_op_str(op);
 
-	seq_म_लिखो(m, "%p {.op=", rq);
-	अगर (म_भेद(op_str, "UNKNOWN") == 0)
-		seq_म_लिखो(m, "%u", op);
-	अन्यथा
-		seq_म_लिखो(m, "%s", op_str);
-	seq_माला_दो(m, ", .cmd_flags=");
+	seq_printf(m, "%p {.op=", rq);
+	if (strcmp(op_str, "UNKNOWN") == 0)
+		seq_printf(m, "%u", op);
+	else
+		seq_printf(m, "%s", op_str);
+	seq_puts(m, ", .cmd_flags=");
 	blk_flags_show(m, rq->cmd_flags & ~REQ_OP_MASK, cmd_flag_name,
 		       ARRAY_SIZE(cmd_flag_name));
-	seq_माला_दो(m, ", .rq_flags=");
-	blk_flags_show(m, (__क्रमce अचिन्हित पूर्णांक)rq->rq_flags, rqf_name,
+	seq_puts(m, ", .rq_flags=");
+	blk_flags_show(m, (__force unsigned int)rq->rq_flags, rqf_name,
 		       ARRAY_SIZE(rqf_name));
-	seq_म_लिखो(m, ", .state=%s", blk_mq_rq_state_name(blk_mq_rq_state(rq)));
-	seq_म_लिखो(m, ", .tag=%d, .internal_tag=%d", rq->tag,
-		   rq->पूर्णांकernal_tag);
-	अगर (mq_ops->show_rq)
+	seq_printf(m, ", .state=%s", blk_mq_rq_state_name(blk_mq_rq_state(rq)));
+	seq_printf(m, ", .tag=%d, .internal_tag=%d", rq->tag,
+		   rq->internal_tag);
+	if (mq_ops->show_rq)
 		mq_ops->show_rq(m, rq);
-	seq_माला_दो(m, "}\n");
-	वापस 0;
-पूर्ण
+	seq_puts(m, "}\n");
+	return 0;
+}
 EXPORT_SYMBOL_GPL(__blk_mq_debugfs_rq_show);
 
-पूर्णांक blk_mq_debugfs_rq_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	वापस __blk_mq_debugfs_rq_show(m, list_entry_rq(v));
-पूर्ण
+int blk_mq_debugfs_rq_show(struct seq_file *m, void *v)
+{
+	return __blk_mq_debugfs_rq_show(m, list_entry_rq(v));
+}
 EXPORT_SYMBOL_GPL(blk_mq_debugfs_rq_show);
 
-अटल व्योम *hctx_dispatch_start(काष्ठा seq_file *m, loff_t *pos)
+static void *hctx_dispatch_start(struct seq_file *m, loff_t *pos)
 	__acquires(&hctx->lock)
-अणु
-	काष्ठा blk_mq_hw_ctx *hctx = m->निजी;
+{
+	struct blk_mq_hw_ctx *hctx = m->private;
 
 	spin_lock(&hctx->lock);
-	वापस seq_list_start(&hctx->dispatch, *pos);
-पूर्ण
+	return seq_list_start(&hctx->dispatch, *pos);
+}
 
-अटल व्योम *hctx_dispatch_next(काष्ठा seq_file *m, व्योम *v, loff_t *pos)
-अणु
-	काष्ठा blk_mq_hw_ctx *hctx = m->निजी;
+static void *hctx_dispatch_next(struct seq_file *m, void *v, loff_t *pos)
+{
+	struct blk_mq_hw_ctx *hctx = m->private;
 
-	वापस seq_list_next(v, &hctx->dispatch, pos);
-पूर्ण
+	return seq_list_next(v, &hctx->dispatch, pos);
+}
 
-अटल व्योम hctx_dispatch_stop(काष्ठा seq_file *m, व्योम *v)
+static void hctx_dispatch_stop(struct seq_file *m, void *v)
 	__releases(&hctx->lock)
-अणु
-	काष्ठा blk_mq_hw_ctx *hctx = m->निजी;
+{
+	struct blk_mq_hw_ctx *hctx = m->private;
 
 	spin_unlock(&hctx->lock);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा seq_operations hctx_dispatch_seq_ops = अणु
+static const struct seq_operations hctx_dispatch_seq_ops = {
 	.start	= hctx_dispatch_start,
 	.next	= hctx_dispatch_next,
 	.stop	= hctx_dispatch_stop,
 	.show	= blk_mq_debugfs_rq_show,
-पूर्ण;
+};
 
-काष्ठा show_busy_params अणु
-	काष्ठा seq_file		*m;
-	काष्ठा blk_mq_hw_ctx	*hctx;
-पूर्ण;
+struct show_busy_params {
+	struct seq_file		*m;
+	struct blk_mq_hw_ctx	*hctx;
+};
 
 /*
- * Note: the state of a request may change जबतक this function is in progress,
+ * Note: the state of a request may change while this function is in progress,
  * e.g. due to a concurrent blk_mq_finish_request() call. Returns true to
  * keep iterating requests.
  */
-अटल bool hctx_show_busy_rq(काष्ठा request *rq, व्योम *data, bool reserved)
-अणु
-	स्थिर काष्ठा show_busy_params *params = data;
+static bool hctx_show_busy_rq(struct request *rq, void *data, bool reserved)
+{
+	const struct show_busy_params *params = data;
 
-	अगर (rq->mq_hctx == params->hctx)
+	if (rq->mq_hctx == params->hctx)
 		__blk_mq_debugfs_rq_show(params->m, rq);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक hctx_busy_show(व्योम *data, काष्ठा seq_file *m)
-अणु
-	काष्ठा blk_mq_hw_ctx *hctx = data;
-	काष्ठा show_busy_params params = अणु .m = m, .hctx = hctx पूर्ण;
+static int hctx_busy_show(void *data, struct seq_file *m)
+{
+	struct blk_mq_hw_ctx *hctx = data;
+	struct show_busy_params params = { .m = m, .hctx = hctx };
 
 	blk_mq_tagset_busy_iter(hctx->queue->tag_set, hctx_show_busy_rq,
 				&params);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर अक्षर *स्थिर hctx_types[] = अणु
+static const char *const hctx_types[] = {
 	[HCTX_TYPE_DEFAULT]	= "default",
 	[HCTX_TYPE_READ]	= "read",
 	[HCTX_TYPE_POLL]	= "poll",
-पूर्ण;
+};
 
-अटल पूर्णांक hctx_type_show(व्योम *data, काष्ठा seq_file *m)
-अणु
-	काष्ठा blk_mq_hw_ctx *hctx = data;
+static int hctx_type_show(void *data, struct seq_file *m)
+{
+	struct blk_mq_hw_ctx *hctx = data;
 
 	BUILD_BUG_ON(ARRAY_SIZE(hctx_types) != HCTX_MAX_TYPES);
-	seq_म_लिखो(m, "%s\n", hctx_types[hctx->type]);
-	वापस 0;
-पूर्ण
+	seq_printf(m, "%s\n", hctx_types[hctx->type]);
+	return 0;
+}
 
-अटल पूर्णांक hctx_ctx_map_show(व्योम *data, काष्ठा seq_file *m)
-अणु
-	काष्ठा blk_mq_hw_ctx *hctx = data;
+static int hctx_ctx_map_show(void *data, struct seq_file *m)
+{
+	struct blk_mq_hw_ctx *hctx = data;
 
-	sbiपंचांगap_biपंचांगap_show(&hctx->ctx_map, m);
-	वापस 0;
-पूर्ण
+	sbitmap_bitmap_show(&hctx->ctx_map, m);
+	return 0;
+}
 
-अटल व्योम blk_mq_debugfs_tags_show(काष्ठा seq_file *m,
-				     काष्ठा blk_mq_tags *tags)
-अणु
-	seq_म_लिखो(m, "nr_tags=%u\n", tags->nr_tags);
-	seq_म_लिखो(m, "nr_reserved_tags=%u\n", tags->nr_reserved_tags);
-	seq_म_लिखो(m, "active_queues=%d\n",
-		   atomic_पढ़ो(&tags->active_queues));
+static void blk_mq_debugfs_tags_show(struct seq_file *m,
+				     struct blk_mq_tags *tags)
+{
+	seq_printf(m, "nr_tags=%u\n", tags->nr_tags);
+	seq_printf(m, "nr_reserved_tags=%u\n", tags->nr_reserved_tags);
+	seq_printf(m, "active_queues=%d\n",
+		   atomic_read(&tags->active_queues));
 
-	seq_माला_दो(m, "\nbitmap_tags:\n");
-	sbiपंचांगap_queue_show(tags->biपंचांगap_tags, m);
+	seq_puts(m, "\nbitmap_tags:\n");
+	sbitmap_queue_show(tags->bitmap_tags, m);
 
-	अगर (tags->nr_reserved_tags) अणु
-		seq_माला_दो(m, "\nbreserved_tags:\n");
-		sbiपंचांगap_queue_show(tags->breserved_tags, m);
-	पूर्ण
-पूर्ण
+	if (tags->nr_reserved_tags) {
+		seq_puts(m, "\nbreserved_tags:\n");
+		sbitmap_queue_show(tags->breserved_tags, m);
+	}
+}
 
-अटल पूर्णांक hctx_tags_show(व्योम *data, काष्ठा seq_file *m)
-अणु
-	काष्ठा blk_mq_hw_ctx *hctx = data;
-	काष्ठा request_queue *q = hctx->queue;
-	पूर्णांक res;
+static int hctx_tags_show(void *data, struct seq_file *m)
+{
+	struct blk_mq_hw_ctx *hctx = data;
+	struct request_queue *q = hctx->queue;
+	int res;
 
-	res = mutex_lock_पूर्णांकerruptible(&q->sysfs_lock);
-	अगर (res)
-		जाओ out;
-	अगर (hctx->tags)
+	res = mutex_lock_interruptible(&q->sysfs_lock);
+	if (res)
+		goto out;
+	if (hctx->tags)
 		blk_mq_debugfs_tags_show(m, hctx->tags);
 	mutex_unlock(&q->sysfs_lock);
 
 out:
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल पूर्णांक hctx_tags_biपंचांगap_show(व्योम *data, काष्ठा seq_file *m)
-अणु
-	काष्ठा blk_mq_hw_ctx *hctx = data;
-	काष्ठा request_queue *q = hctx->queue;
-	पूर्णांक res;
+static int hctx_tags_bitmap_show(void *data, struct seq_file *m)
+{
+	struct blk_mq_hw_ctx *hctx = data;
+	struct request_queue *q = hctx->queue;
+	int res;
 
-	res = mutex_lock_पूर्णांकerruptible(&q->sysfs_lock);
-	अगर (res)
-		जाओ out;
-	अगर (hctx->tags)
-		sbiपंचांगap_biपंचांगap_show(&hctx->tags->biपंचांगap_tags->sb, m);
+	res = mutex_lock_interruptible(&q->sysfs_lock);
+	if (res)
+		goto out;
+	if (hctx->tags)
+		sbitmap_bitmap_show(&hctx->tags->bitmap_tags->sb, m);
 	mutex_unlock(&q->sysfs_lock);
 
 out:
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल पूर्णांक hctx_sched_tags_show(व्योम *data, काष्ठा seq_file *m)
-अणु
-	काष्ठा blk_mq_hw_ctx *hctx = data;
-	काष्ठा request_queue *q = hctx->queue;
-	पूर्णांक res;
+static int hctx_sched_tags_show(void *data, struct seq_file *m)
+{
+	struct blk_mq_hw_ctx *hctx = data;
+	struct request_queue *q = hctx->queue;
+	int res;
 
-	res = mutex_lock_पूर्णांकerruptible(&q->sysfs_lock);
-	अगर (res)
-		जाओ out;
-	अगर (hctx->sched_tags)
+	res = mutex_lock_interruptible(&q->sysfs_lock);
+	if (res)
+		goto out;
+	if (hctx->sched_tags)
 		blk_mq_debugfs_tags_show(m, hctx->sched_tags);
 	mutex_unlock(&q->sysfs_lock);
 
 out:
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल पूर्णांक hctx_sched_tags_biपंचांगap_show(व्योम *data, काष्ठा seq_file *m)
-अणु
-	काष्ठा blk_mq_hw_ctx *hctx = data;
-	काष्ठा request_queue *q = hctx->queue;
-	पूर्णांक res;
+static int hctx_sched_tags_bitmap_show(void *data, struct seq_file *m)
+{
+	struct blk_mq_hw_ctx *hctx = data;
+	struct request_queue *q = hctx->queue;
+	int res;
 
-	res = mutex_lock_पूर्णांकerruptible(&q->sysfs_lock);
-	अगर (res)
-		जाओ out;
-	अगर (hctx->sched_tags)
-		sbiपंचांगap_biपंचांगap_show(&hctx->sched_tags->biपंचांगap_tags->sb, m);
+	res = mutex_lock_interruptible(&q->sysfs_lock);
+	if (res)
+		goto out;
+	if (hctx->sched_tags)
+		sbitmap_bitmap_show(&hctx->sched_tags->bitmap_tags->sb, m);
 	mutex_unlock(&q->sysfs_lock);
 
 out:
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल पूर्णांक hctx_io_poll_show(व्योम *data, काष्ठा seq_file *m)
-अणु
-	काष्ठा blk_mq_hw_ctx *hctx = data;
+static int hctx_io_poll_show(void *data, struct seq_file *m)
+{
+	struct blk_mq_hw_ctx *hctx = data;
 
-	seq_म_लिखो(m, "considered=%lu\n", hctx->poll_considered);
-	seq_म_लिखो(m, "invoked=%lu\n", hctx->poll_invoked);
-	seq_म_लिखो(m, "success=%lu\n", hctx->poll_success);
-	वापस 0;
-पूर्ण
+	seq_printf(m, "considered=%lu\n", hctx->poll_considered);
+	seq_printf(m, "invoked=%lu\n", hctx->poll_invoked);
+	seq_printf(m, "success=%lu\n", hctx->poll_success);
+	return 0;
+}
 
-अटल sमाप_प्रकार hctx_io_poll_ग_लिखो(व्योम *data, स्थिर अक्षर __user *buf,
-				  माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा blk_mq_hw_ctx *hctx = data;
+static ssize_t hctx_io_poll_write(void *data, const char __user *buf,
+				  size_t count, loff_t *ppos)
+{
+	struct blk_mq_hw_ctx *hctx = data;
 
 	hctx->poll_considered = hctx->poll_invoked = hctx->poll_success = 0;
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल पूर्णांक hctx_dispatched_show(व्योम *data, काष्ठा seq_file *m)
-अणु
-	काष्ठा blk_mq_hw_ctx *hctx = data;
-	पूर्णांक i;
+static int hctx_dispatched_show(void *data, struct seq_file *m)
+{
+	struct blk_mq_hw_ctx *hctx = data;
+	int i;
 
-	seq_म_लिखो(m, "%8u\t%lu\n", 0U, hctx->dispatched[0]);
+	seq_printf(m, "%8u\t%lu\n", 0U, hctx->dispatched[0]);
 
-	क्रम (i = 1; i < BLK_MQ_MAX_DISPATCH_ORDER - 1; i++) अणु
-		अचिन्हित पूर्णांक d = 1U << (i - 1);
+	for (i = 1; i < BLK_MQ_MAX_DISPATCH_ORDER - 1; i++) {
+		unsigned int d = 1U << (i - 1);
 
-		seq_म_लिखो(m, "%8u\t%lu\n", d, hctx->dispatched[i]);
-	पूर्ण
+		seq_printf(m, "%8u\t%lu\n", d, hctx->dispatched[i]);
+	}
 
-	seq_म_लिखो(m, "%8u+\t%lu\n", 1U << (i - 1), hctx->dispatched[i]);
-	वापस 0;
-पूर्ण
+	seq_printf(m, "%8u+\t%lu\n", 1U << (i - 1), hctx->dispatched[i]);
+	return 0;
+}
 
-अटल sमाप_प्रकार hctx_dispatched_ग_लिखो(व्योम *data, स्थिर अक्षर __user *buf,
-				     माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा blk_mq_hw_ctx *hctx = data;
-	पूर्णांक i;
+static ssize_t hctx_dispatched_write(void *data, const char __user *buf,
+				     size_t count, loff_t *ppos)
+{
+	struct blk_mq_hw_ctx *hctx = data;
+	int i;
 
-	क्रम (i = 0; i < BLK_MQ_MAX_DISPATCH_ORDER; i++)
+	for (i = 0; i < BLK_MQ_MAX_DISPATCH_ORDER; i++)
 		hctx->dispatched[i] = 0;
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल पूर्णांक hctx_queued_show(व्योम *data, काष्ठा seq_file *m)
-अणु
-	काष्ठा blk_mq_hw_ctx *hctx = data;
+static int hctx_queued_show(void *data, struct seq_file *m)
+{
+	struct blk_mq_hw_ctx *hctx = data;
 
-	seq_म_लिखो(m, "%lu\n", hctx->queued);
-	वापस 0;
-पूर्ण
+	seq_printf(m, "%lu\n", hctx->queued);
+	return 0;
+}
 
-अटल sमाप_प्रकार hctx_queued_ग_लिखो(व्योम *data, स्थिर अक्षर __user *buf,
-				 माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा blk_mq_hw_ctx *hctx = data;
+static ssize_t hctx_queued_write(void *data, const char __user *buf,
+				 size_t count, loff_t *ppos)
+{
+	struct blk_mq_hw_ctx *hctx = data;
 
 	hctx->queued = 0;
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल पूर्णांक hctx_run_show(व्योम *data, काष्ठा seq_file *m)
-अणु
-	काष्ठा blk_mq_hw_ctx *hctx = data;
+static int hctx_run_show(void *data, struct seq_file *m)
+{
+	struct blk_mq_hw_ctx *hctx = data;
 
-	seq_म_लिखो(m, "%lu\n", hctx->run);
-	वापस 0;
-पूर्ण
+	seq_printf(m, "%lu\n", hctx->run);
+	return 0;
+}
 
-अटल sमाप_प्रकार hctx_run_ग_लिखो(व्योम *data, स्थिर अक्षर __user *buf, माप_प्रकार count,
+static ssize_t hctx_run_write(void *data, const char __user *buf, size_t count,
 			      loff_t *ppos)
-अणु
-	काष्ठा blk_mq_hw_ctx *hctx = data;
+{
+	struct blk_mq_hw_ctx *hctx = data;
 
 	hctx->run = 0;
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल पूर्णांक hctx_active_show(व्योम *data, काष्ठा seq_file *m)
-अणु
-	काष्ठा blk_mq_hw_ctx *hctx = data;
+static int hctx_active_show(void *data, struct seq_file *m)
+{
+	struct blk_mq_hw_ctx *hctx = data;
 
-	seq_म_लिखो(m, "%d\n", atomic_पढ़ो(&hctx->nr_active));
-	वापस 0;
-पूर्ण
+	seq_printf(m, "%d\n", atomic_read(&hctx->nr_active));
+	return 0;
+}
 
-अटल पूर्णांक hctx_dispatch_busy_show(व्योम *data, काष्ठा seq_file *m)
-अणु
-	काष्ठा blk_mq_hw_ctx *hctx = data;
+static int hctx_dispatch_busy_show(void *data, struct seq_file *m)
+{
+	struct blk_mq_hw_ctx *hctx = data;
 
-	seq_म_लिखो(m, "%u\n", hctx->dispatch_busy);
-	वापस 0;
-पूर्ण
+	seq_printf(m, "%u\n", hctx->dispatch_busy);
+	return 0;
+}
 
-#घोषणा CTX_RQ_SEQ_OPS(name, type)					\
-अटल व्योम *ctx_##name##_rq_list_start(काष्ठा seq_file *m, loff_t *pos) \
+#define CTX_RQ_SEQ_OPS(name, type)					\
+static void *ctx_##name##_rq_list_start(struct seq_file *m, loff_t *pos) \
 	__acquires(&ctx->lock)						\
-अणु									\
-	काष्ठा blk_mq_ctx *ctx = m->निजी;				\
+{									\
+	struct blk_mq_ctx *ctx = m->private;				\
 									\
 	spin_lock(&ctx->lock);						\
-	वापस seq_list_start(&ctx->rq_lists[type], *pos);		\
-पूर्ण									\
+	return seq_list_start(&ctx->rq_lists[type], *pos);		\
+}									\
 									\
-अटल व्योम *ctx_##name##_rq_list_next(काष्ठा seq_file *m, व्योम *v,	\
+static void *ctx_##name##_rq_list_next(struct seq_file *m, void *v,	\
 				     loff_t *pos)			\
-अणु									\
-	काष्ठा blk_mq_ctx *ctx = m->निजी;				\
+{									\
+	struct blk_mq_ctx *ctx = m->private;				\
 									\
-	वापस seq_list_next(v, &ctx->rq_lists[type], pos);		\
-पूर्ण									\
+	return seq_list_next(v, &ctx->rq_lists[type], pos);		\
+}									\
 									\
-अटल व्योम ctx_##name##_rq_list_stop(काष्ठा seq_file *m, व्योम *v)	\
+static void ctx_##name##_rq_list_stop(struct seq_file *m, void *v)	\
 	__releases(&ctx->lock)						\
-अणु									\
-	काष्ठा blk_mq_ctx *ctx = m->निजी;				\
+{									\
+	struct blk_mq_ctx *ctx = m->private;				\
 									\
 	spin_unlock(&ctx->lock);					\
-पूर्ण									\
+}									\
 									\
-अटल स्थिर काष्ठा seq_operations ctx_##name##_rq_list_seq_ops = अणु	\
+static const struct seq_operations ctx_##name##_rq_list_seq_ops = {	\
 	.start	= ctx_##name##_rq_list_start,				\
 	.next	= ctx_##name##_rq_list_next,				\
 	.stop	= ctx_##name##_rq_list_stop,				\
 	.show	= blk_mq_debugfs_rq_show,				\
-पूर्ण
+}
 
-CTX_RQ_SEQ_OPS(शेष, HCTX_TYPE_DEFAULT);
-CTX_RQ_SEQ_OPS(पढ़ो, HCTX_TYPE_READ);
+CTX_RQ_SEQ_OPS(default, HCTX_TYPE_DEFAULT);
+CTX_RQ_SEQ_OPS(read, HCTX_TYPE_READ);
 CTX_RQ_SEQ_OPS(poll, HCTX_TYPE_POLL);
 
-अटल पूर्णांक ctx_dispatched_show(व्योम *data, काष्ठा seq_file *m)
-अणु
-	काष्ठा blk_mq_ctx *ctx = data;
+static int ctx_dispatched_show(void *data, struct seq_file *m)
+{
+	struct blk_mq_ctx *ctx = data;
 
-	seq_म_लिखो(m, "%lu %lu\n", ctx->rq_dispatched[1], ctx->rq_dispatched[0]);
-	वापस 0;
-पूर्ण
+	seq_printf(m, "%lu %lu\n", ctx->rq_dispatched[1], ctx->rq_dispatched[0]);
+	return 0;
+}
 
-अटल sमाप_प्रकार ctx_dispatched_ग_लिखो(व्योम *data, स्थिर अक्षर __user *buf,
-				    माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा blk_mq_ctx *ctx = data;
+static ssize_t ctx_dispatched_write(void *data, const char __user *buf,
+				    size_t count, loff_t *ppos)
+{
+	struct blk_mq_ctx *ctx = data;
 
 	ctx->rq_dispatched[0] = ctx->rq_dispatched[1] = 0;
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल पूर्णांक ctx_merged_show(व्योम *data, काष्ठा seq_file *m)
-अणु
-	काष्ठा blk_mq_ctx *ctx = data;
+static int ctx_merged_show(void *data, struct seq_file *m)
+{
+	struct blk_mq_ctx *ctx = data;
 
-	seq_म_लिखो(m, "%lu\n", ctx->rq_merged);
-	वापस 0;
-पूर्ण
+	seq_printf(m, "%lu\n", ctx->rq_merged);
+	return 0;
+}
 
-अटल sमाप_प्रकार ctx_merged_ग_लिखो(व्योम *data, स्थिर अक्षर __user *buf,
-				माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा blk_mq_ctx *ctx = data;
+static ssize_t ctx_merged_write(void *data, const char __user *buf,
+				size_t count, loff_t *ppos)
+{
+	struct blk_mq_ctx *ctx = data;
 
 	ctx->rq_merged = 0;
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल पूर्णांक ctx_completed_show(व्योम *data, काष्ठा seq_file *m)
-अणु
-	काष्ठा blk_mq_ctx *ctx = data;
+static int ctx_completed_show(void *data, struct seq_file *m)
+{
+	struct blk_mq_ctx *ctx = data;
 
-	seq_म_लिखो(m, "%lu %lu\n", ctx->rq_completed[1], ctx->rq_completed[0]);
-	वापस 0;
-पूर्ण
+	seq_printf(m, "%lu %lu\n", ctx->rq_completed[1], ctx->rq_completed[0]);
+	return 0;
+}
 
-अटल sमाप_प्रकार ctx_completed_ग_लिखो(व्योम *data, स्थिर अक्षर __user *buf,
-				   माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा blk_mq_ctx *ctx = data;
+static ssize_t ctx_completed_write(void *data, const char __user *buf,
+				   size_t count, loff_t *ppos)
+{
+	struct blk_mq_ctx *ctx = data;
 
 	ctx->rq_completed[0] = ctx->rq_completed[1] = 0;
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल पूर्णांक blk_mq_debugfs_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	स्थिर काष्ठा blk_mq_debugfs_attr *attr = m->निजी;
-	व्योम *data = d_inode(m->file->f_path.dentry->d_parent)->i_निजी;
+static int blk_mq_debugfs_show(struct seq_file *m, void *v)
+{
+	const struct blk_mq_debugfs_attr *attr = m->private;
+	void *data = d_inode(m->file->f_path.dentry->d_parent)->i_private;
 
-	वापस attr->show(data, m);
-पूर्ण
+	return attr->show(data, m);
+}
 
-अटल sमाप_प्रकार blk_mq_debugfs_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
-				    माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा seq_file *m = file->निजी_data;
-	स्थिर काष्ठा blk_mq_debugfs_attr *attr = m->निजी;
-	व्योम *data = d_inode(file->f_path.dentry->d_parent)->i_निजी;
+static ssize_t blk_mq_debugfs_write(struct file *file, const char __user *buf,
+				    size_t count, loff_t *ppos)
+{
+	struct seq_file *m = file->private_data;
+	const struct blk_mq_debugfs_attr *attr = m->private;
+	void *data = d_inode(file->f_path.dentry->d_parent)->i_private;
 
 	/*
-	 * Attributes that only implement .seq_ops are पढ़ो-only and 'attr' is
-	 * the same with 'data' in this हाल.
+	 * Attributes that only implement .seq_ops are read-only and 'attr' is
+	 * the same with 'data' in this case.
 	 */
-	अगर (attr == data || !attr->ग_लिखो)
-		वापस -EPERM;
+	if (attr == data || !attr->write)
+		return -EPERM;
 
-	वापस attr->ग_लिखो(data, buf, count, ppos);
-पूर्ण
+	return attr->write(data, buf, count, ppos);
+}
 
-अटल पूर्णांक blk_mq_debugfs_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	स्थिर काष्ठा blk_mq_debugfs_attr *attr = inode->i_निजी;
-	व्योम *data = d_inode(file->f_path.dentry->d_parent)->i_निजी;
-	काष्ठा seq_file *m;
-	पूर्णांक ret;
+static int blk_mq_debugfs_open(struct inode *inode, struct file *file)
+{
+	const struct blk_mq_debugfs_attr *attr = inode->i_private;
+	void *data = d_inode(file->f_path.dentry->d_parent)->i_private;
+	struct seq_file *m;
+	int ret;
 
-	अगर (attr->seq_ops) अणु
-		ret = seq_खोलो(file, attr->seq_ops);
-		अगर (!ret) अणु
-			m = file->निजी_data;
-			m->निजी = data;
-		पूर्ण
-		वापस ret;
-	पूर्ण
+	if (attr->seq_ops) {
+		ret = seq_open(file, attr->seq_ops);
+		if (!ret) {
+			m = file->private_data;
+			m->private = data;
+		}
+		return ret;
+	}
 
-	अगर (WARN_ON_ONCE(!attr->show))
-		वापस -EPERM;
+	if (WARN_ON_ONCE(!attr->show))
+		return -EPERM;
 
-	वापस single_खोलो(file, blk_mq_debugfs_show, inode->i_निजी);
-पूर्ण
+	return single_open(file, blk_mq_debugfs_show, inode->i_private);
+}
 
-अटल पूर्णांक blk_mq_debugfs_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	स्थिर काष्ठा blk_mq_debugfs_attr *attr = inode->i_निजी;
+static int blk_mq_debugfs_release(struct inode *inode, struct file *file)
+{
+	const struct blk_mq_debugfs_attr *attr = inode->i_private;
 
-	अगर (attr->show)
-		वापस single_release(inode, file);
+	if (attr->show)
+		return single_release(inode, file);
 
-	वापस seq_release(inode, file);
-पूर्ण
+	return seq_release(inode, file);
+}
 
-अटल स्थिर काष्ठा file_operations blk_mq_debugfs_fops = अणु
-	.खोलो		= blk_mq_debugfs_खोलो,
-	.पढ़ो		= seq_पढ़ो,
-	.ग_लिखो		= blk_mq_debugfs_ग_लिखो,
+static const struct file_operations blk_mq_debugfs_fops = {
+	.open		= blk_mq_debugfs_open,
+	.read		= seq_read,
+	.write		= blk_mq_debugfs_write,
 	.llseek		= seq_lseek,
 	.release	= blk_mq_debugfs_release,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा blk_mq_debugfs_attr blk_mq_debugfs_hctx_attrs[] = अणु
-	अणु"state", 0400, hctx_state_showपूर्ण,
-	अणु"flags", 0400, hctx_flags_showपूर्ण,
-	अणु"dispatch", 0400, .seq_ops = &hctx_dispatch_seq_opsपूर्ण,
-	अणु"busy", 0400, hctx_busy_showपूर्ण,
-	अणु"ctx_map", 0400, hctx_ctx_map_showपूर्ण,
-	अणु"tags", 0400, hctx_tags_showपूर्ण,
-	अणु"tags_bitmap", 0400, hctx_tags_biपंचांगap_showपूर्ण,
-	अणु"sched_tags", 0400, hctx_sched_tags_showपूर्ण,
-	अणु"sched_tags_bitmap", 0400, hctx_sched_tags_biपंचांगap_showपूर्ण,
-	अणु"io_poll", 0600, hctx_io_poll_show, hctx_io_poll_ग_लिखोपूर्ण,
-	अणु"dispatched", 0600, hctx_dispatched_show, hctx_dispatched_ग_लिखोपूर्ण,
-	अणु"queued", 0600, hctx_queued_show, hctx_queued_ग_लिखोपूर्ण,
-	अणु"run", 0600, hctx_run_show, hctx_run_ग_लिखोपूर्ण,
-	अणु"active", 0400, hctx_active_showपूर्ण,
-	अणु"dispatch_busy", 0400, hctx_dispatch_busy_showपूर्ण,
-	अणु"type", 0400, hctx_type_showपूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct blk_mq_debugfs_attr blk_mq_debugfs_hctx_attrs[] = {
+	{"state", 0400, hctx_state_show},
+	{"flags", 0400, hctx_flags_show},
+	{"dispatch", 0400, .seq_ops = &hctx_dispatch_seq_ops},
+	{"busy", 0400, hctx_busy_show},
+	{"ctx_map", 0400, hctx_ctx_map_show},
+	{"tags", 0400, hctx_tags_show},
+	{"tags_bitmap", 0400, hctx_tags_bitmap_show},
+	{"sched_tags", 0400, hctx_sched_tags_show},
+	{"sched_tags_bitmap", 0400, hctx_sched_tags_bitmap_show},
+	{"io_poll", 0600, hctx_io_poll_show, hctx_io_poll_write},
+	{"dispatched", 0600, hctx_dispatched_show, hctx_dispatched_write},
+	{"queued", 0600, hctx_queued_show, hctx_queued_write},
+	{"run", 0600, hctx_run_show, hctx_run_write},
+	{"active", 0400, hctx_active_show},
+	{"dispatch_busy", 0400, hctx_dispatch_busy_show},
+	{"type", 0400, hctx_type_show},
+	{},
+};
 
-अटल स्थिर काष्ठा blk_mq_debugfs_attr blk_mq_debugfs_ctx_attrs[] = अणु
-	अणु"default_rq_list", 0400, .seq_ops = &ctx_शेष_rq_list_seq_opsपूर्ण,
-	अणु"read_rq_list", 0400, .seq_ops = &ctx_पढ़ो_rq_list_seq_opsपूर्ण,
-	अणु"poll_rq_list", 0400, .seq_ops = &ctx_poll_rq_list_seq_opsपूर्ण,
-	अणु"dispatched", 0600, ctx_dispatched_show, ctx_dispatched_ग_लिखोपूर्ण,
-	अणु"merged", 0600, ctx_merged_show, ctx_merged_ग_लिखोपूर्ण,
-	अणु"completed", 0600, ctx_completed_show, ctx_completed_ग_लिखोपूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct blk_mq_debugfs_attr blk_mq_debugfs_ctx_attrs[] = {
+	{"default_rq_list", 0400, .seq_ops = &ctx_default_rq_list_seq_ops},
+	{"read_rq_list", 0400, .seq_ops = &ctx_read_rq_list_seq_ops},
+	{"poll_rq_list", 0400, .seq_ops = &ctx_poll_rq_list_seq_ops},
+	{"dispatched", 0600, ctx_dispatched_show, ctx_dispatched_write},
+	{"merged", 0600, ctx_merged_show, ctx_merged_write},
+	{"completed", 0600, ctx_completed_show, ctx_completed_write},
+	{},
+};
 
-अटल व्योम debugfs_create_files(काष्ठा dentry *parent, व्योम *data,
-				 स्थिर काष्ठा blk_mq_debugfs_attr *attr)
-अणु
-	अगर (IS_ERR_OR_शून्य(parent))
-		वापस;
+static void debugfs_create_files(struct dentry *parent, void *data,
+				 const struct blk_mq_debugfs_attr *attr)
+{
+	if (IS_ERR_OR_NULL(parent))
+		return;
 
-	d_inode(parent)->i_निजी = data;
+	d_inode(parent)->i_private = data;
 
-	क्रम (; attr->name; attr++)
+	for (; attr->name; attr++)
 		debugfs_create_file(attr->name, attr->mode, parent,
-				    (व्योम *)attr, &blk_mq_debugfs_fops);
-पूर्ण
+				    (void *)attr, &blk_mq_debugfs_fops);
+}
 
-व्योम blk_mq_debugfs_रेजिस्टर(काष्ठा request_queue *q)
-अणु
-	काष्ठा blk_mq_hw_ctx *hctx;
-	पूर्णांक i;
+void blk_mq_debugfs_register(struct request_queue *q)
+{
+	struct blk_mq_hw_ctx *hctx;
+	int i;
 
 	debugfs_create_files(q->debugfs_dir, q, blk_mq_debugfs_queue_attrs);
 
 	/*
-	 * blk_mq_init_sched() attempted to करो this alपढ़ोy, but q->debugfs_dir
+	 * blk_mq_init_sched() attempted to do this already, but q->debugfs_dir
 	 * didn't exist yet (because we don't know what to name the directory
-	 * until the queue is रेजिस्टरed to a gendisk).
+	 * until the queue is registered to a gendisk).
 	 */
-	अगर (q->elevator && !q->sched_debugfs_dir)
-		blk_mq_debugfs_रेजिस्टर_sched(q);
+	if (q->elevator && !q->sched_debugfs_dir)
+		blk_mq_debugfs_register_sched(q);
 
-	/* Similarly, blk_mq_init_hctx() couldn't करो this previously. */
-	queue_क्रम_each_hw_ctx(q, hctx, i) अणु
-		अगर (!hctx->debugfs_dir)
-			blk_mq_debugfs_रेजिस्टर_hctx(q, hctx);
-		अगर (q->elevator && !hctx->sched_debugfs_dir)
-			blk_mq_debugfs_रेजिस्टर_sched_hctx(q, hctx);
-	पूर्ण
+	/* Similarly, blk_mq_init_hctx() couldn't do this previously. */
+	queue_for_each_hw_ctx(q, hctx, i) {
+		if (!hctx->debugfs_dir)
+			blk_mq_debugfs_register_hctx(q, hctx);
+		if (q->elevator && !hctx->sched_debugfs_dir)
+			blk_mq_debugfs_register_sched_hctx(q, hctx);
+	}
 
-	अगर (q->rq_qos) अणु
-		काष्ठा rq_qos *rqos = q->rq_qos;
+	if (q->rq_qos) {
+		struct rq_qos *rqos = q->rq_qos;
 
-		जबतक (rqos) अणु
-			blk_mq_debugfs_रेजिस्टर_rqos(rqos);
+		while (rqos) {
+			blk_mq_debugfs_register_rqos(rqos);
 			rqos = rqos->next;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-व्योम blk_mq_debugfs_unरेजिस्टर(काष्ठा request_queue *q)
-अणु
-	q->sched_debugfs_dir = शून्य;
-पूर्ण
+void blk_mq_debugfs_unregister(struct request_queue *q)
+{
+	q->sched_debugfs_dir = NULL;
+}
 
-अटल व्योम blk_mq_debugfs_रेजिस्टर_ctx(काष्ठा blk_mq_hw_ctx *hctx,
-					काष्ठा blk_mq_ctx *ctx)
-अणु
-	काष्ठा dentry *ctx_dir;
-	अक्षर name[20];
+static void blk_mq_debugfs_register_ctx(struct blk_mq_hw_ctx *hctx,
+					struct blk_mq_ctx *ctx)
+{
+	struct dentry *ctx_dir;
+	char name[20];
 
-	snम_लिखो(name, माप(name), "cpu%u", ctx->cpu);
+	snprintf(name, sizeof(name), "cpu%u", ctx->cpu);
 	ctx_dir = debugfs_create_dir(name, hctx->debugfs_dir);
 
 	debugfs_create_files(ctx_dir, ctx, blk_mq_debugfs_ctx_attrs);
-पूर्ण
+}
 
-व्योम blk_mq_debugfs_रेजिस्टर_hctx(काष्ठा request_queue *q,
-				  काष्ठा blk_mq_hw_ctx *hctx)
-अणु
-	काष्ठा blk_mq_ctx *ctx;
-	अक्षर name[20];
-	पूर्णांक i;
+void blk_mq_debugfs_register_hctx(struct request_queue *q,
+				  struct blk_mq_hw_ctx *hctx)
+{
+	struct blk_mq_ctx *ctx;
+	char name[20];
+	int i;
 
-	snम_लिखो(name, माप(name), "hctx%u", hctx->queue_num);
+	snprintf(name, sizeof(name), "hctx%u", hctx->queue_num);
 	hctx->debugfs_dir = debugfs_create_dir(name, q->debugfs_dir);
 
 	debugfs_create_files(hctx->debugfs_dir, hctx, blk_mq_debugfs_hctx_attrs);
 
-	hctx_क्रम_each_ctx(hctx, ctx, i)
-		blk_mq_debugfs_रेजिस्टर_ctx(hctx, ctx);
-पूर्ण
+	hctx_for_each_ctx(hctx, ctx, i)
+		blk_mq_debugfs_register_ctx(hctx, ctx);
+}
 
-व्योम blk_mq_debugfs_unरेजिस्टर_hctx(काष्ठा blk_mq_hw_ctx *hctx)
-अणु
-	debugfs_हटाओ_recursive(hctx->debugfs_dir);
-	hctx->sched_debugfs_dir = शून्य;
-	hctx->debugfs_dir = शून्य;
-पूर्ण
+void blk_mq_debugfs_unregister_hctx(struct blk_mq_hw_ctx *hctx)
+{
+	debugfs_remove_recursive(hctx->debugfs_dir);
+	hctx->sched_debugfs_dir = NULL;
+	hctx->debugfs_dir = NULL;
+}
 
-व्योम blk_mq_debugfs_रेजिस्टर_hctxs(काष्ठा request_queue *q)
-अणु
-	काष्ठा blk_mq_hw_ctx *hctx;
-	पूर्णांक i;
+void blk_mq_debugfs_register_hctxs(struct request_queue *q)
+{
+	struct blk_mq_hw_ctx *hctx;
+	int i;
 
-	queue_क्रम_each_hw_ctx(q, hctx, i)
-		blk_mq_debugfs_रेजिस्टर_hctx(q, hctx);
-पूर्ण
+	queue_for_each_hw_ctx(q, hctx, i)
+		blk_mq_debugfs_register_hctx(q, hctx);
+}
 
-व्योम blk_mq_debugfs_unरेजिस्टर_hctxs(काष्ठा request_queue *q)
-अणु
-	काष्ठा blk_mq_hw_ctx *hctx;
-	पूर्णांक i;
+void blk_mq_debugfs_unregister_hctxs(struct request_queue *q)
+{
+	struct blk_mq_hw_ctx *hctx;
+	int i;
 
-	queue_क्रम_each_hw_ctx(q, hctx, i)
-		blk_mq_debugfs_unरेजिस्टर_hctx(hctx);
-पूर्ण
+	queue_for_each_hw_ctx(q, hctx, i)
+		blk_mq_debugfs_unregister_hctx(hctx);
+}
 
-व्योम blk_mq_debugfs_रेजिस्टर_sched(काष्ठा request_queue *q)
-अणु
-	काष्ठा elevator_type *e = q->elevator->type;
+void blk_mq_debugfs_register_sched(struct request_queue *q)
+{
+	struct elevator_type *e = q->elevator->type;
 
 	/*
-	 * If the parent directory has not been created yet, वापस, we will be
+	 * If the parent directory has not been created yet, return, we will be
 	 * called again later on and the directory/files will be created then.
 	 */
-	अगर (!q->debugfs_dir)
-		वापस;
+	if (!q->debugfs_dir)
+		return;
 
-	अगर (!e->queue_debugfs_attrs)
-		वापस;
+	if (!e->queue_debugfs_attrs)
+		return;
 
 	q->sched_debugfs_dir = debugfs_create_dir("sched", q->debugfs_dir);
 
 	debugfs_create_files(q->sched_debugfs_dir, q, e->queue_debugfs_attrs);
-पूर्ण
+}
 
-व्योम blk_mq_debugfs_unरेजिस्टर_sched(काष्ठा request_queue *q)
-अणु
-	debugfs_हटाओ_recursive(q->sched_debugfs_dir);
-	q->sched_debugfs_dir = शून्य;
-पूर्ण
+void blk_mq_debugfs_unregister_sched(struct request_queue *q)
+{
+	debugfs_remove_recursive(q->sched_debugfs_dir);
+	q->sched_debugfs_dir = NULL;
+}
 
-व्योम blk_mq_debugfs_unरेजिस्टर_rqos(काष्ठा rq_qos *rqos)
-अणु
-	debugfs_हटाओ_recursive(rqos->debugfs_dir);
-	rqos->debugfs_dir = शून्य;
-पूर्ण
+void blk_mq_debugfs_unregister_rqos(struct rq_qos *rqos)
+{
+	debugfs_remove_recursive(rqos->debugfs_dir);
+	rqos->debugfs_dir = NULL;
+}
 
-व्योम blk_mq_debugfs_रेजिस्टर_rqos(काष्ठा rq_qos *rqos)
-अणु
-	काष्ठा request_queue *q = rqos->q;
-	स्थिर अक्षर *dir_name = rq_qos_id_to_name(rqos->id);
+void blk_mq_debugfs_register_rqos(struct rq_qos *rqos)
+{
+	struct request_queue *q = rqos->q;
+	const char *dir_name = rq_qos_id_to_name(rqos->id);
 
-	अगर (rqos->debugfs_dir || !rqos->ops->debugfs_attrs)
-		वापस;
+	if (rqos->debugfs_dir || !rqos->ops->debugfs_attrs)
+		return;
 
-	अगर (!q->rqos_debugfs_dir)
+	if (!q->rqos_debugfs_dir)
 		q->rqos_debugfs_dir = debugfs_create_dir("rqos",
 							 q->debugfs_dir);
 
@@ -960,38 +959,38 @@ CTX_RQ_SEQ_OPS(poll, HCTX_TYPE_POLL);
 					       rqos->q->rqos_debugfs_dir);
 
 	debugfs_create_files(rqos->debugfs_dir, rqos, rqos->ops->debugfs_attrs);
-पूर्ण
+}
 
-व्योम blk_mq_debugfs_unरेजिस्टर_queue_rqos(काष्ठा request_queue *q)
-अणु
-	debugfs_हटाओ_recursive(q->rqos_debugfs_dir);
-	q->rqos_debugfs_dir = शून्य;
-पूर्ण
+void blk_mq_debugfs_unregister_queue_rqos(struct request_queue *q)
+{
+	debugfs_remove_recursive(q->rqos_debugfs_dir);
+	q->rqos_debugfs_dir = NULL;
+}
 
-व्योम blk_mq_debugfs_रेजिस्टर_sched_hctx(काष्ठा request_queue *q,
-					काष्ठा blk_mq_hw_ctx *hctx)
-अणु
-	काष्ठा elevator_type *e = q->elevator->type;
+void blk_mq_debugfs_register_sched_hctx(struct request_queue *q,
+					struct blk_mq_hw_ctx *hctx)
+{
+	struct elevator_type *e = q->elevator->type;
 
 	/*
-	 * If the parent debugfs directory has not been created yet, वापस;
+	 * If the parent debugfs directory has not been created yet, return;
 	 * We will be called again later on with appropriate parent debugfs
-	 * directory from blk_रेजिस्टर_queue()
+	 * directory from blk_register_queue()
 	 */
-	अगर (!hctx->debugfs_dir)
-		वापस;
+	if (!hctx->debugfs_dir)
+		return;
 
-	अगर (!e->hctx_debugfs_attrs)
-		वापस;
+	if (!e->hctx_debugfs_attrs)
+		return;
 
 	hctx->sched_debugfs_dir = debugfs_create_dir("sched",
 						     hctx->debugfs_dir);
 	debugfs_create_files(hctx->sched_debugfs_dir, hctx,
 			     e->hctx_debugfs_attrs);
-पूर्ण
+}
 
-व्योम blk_mq_debugfs_unरेजिस्टर_sched_hctx(काष्ठा blk_mq_hw_ctx *hctx)
-अणु
-	debugfs_हटाओ_recursive(hctx->sched_debugfs_dir);
-	hctx->sched_debugfs_dir = शून्य;
-पूर्ण
+void blk_mq_debugfs_unregister_sched_hctx(struct blk_mq_hw_ctx *hctx)
+{
+	debugfs_remove_recursive(hctx->sched_debugfs_dir);
+	hctx->sched_debugfs_dir = NULL;
+}

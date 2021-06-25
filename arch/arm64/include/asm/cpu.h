@@ -1,21 +1,20 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
   * Copyright (C) 2014 ARM Ltd.
  */
-#अगर_अघोषित __ASM_CPU_H
-#घोषणा __ASM_CPU_H
+#ifndef __ASM_CPU_H
+#define __ASM_CPU_H
 
-#समावेश <linux/cpu.h>
-#समावेश <linux/init.h>
-#समावेश <linux/percpu.h>
+#include <linux/cpu.h>
+#include <linux/init.h>
+#include <linux/percpu.h>
 
 /*
- * Records attributes of an inभागidual CPU.
+ * Records attributes of an individual CPU.
  */
-काष्ठा cpuinfo_arm64 अणु
-	काष्ठा cpu	cpu;
-	काष्ठा kobject	kobj;
+struct cpuinfo_arm64 {
+	struct cpu	cpu;
+	struct kobject	kobj;
 	u32		reg_ctr;
 	u32		reg_cntfrq;
 	u32		reg_dczid;
@@ -56,17 +55,17 @@
 	u32		reg_mvfr1;
 	u32		reg_mvfr2;
 
-	/* pseuकरो-ZCR क्रम recording maximum ZCR_EL1 LEN value: */
+	/* pseudo-ZCR for recording maximum ZCR_EL1 LEN value: */
 	u64		reg_zcr;
-पूर्ण;
+};
 
-DECLARE_PER_CPU(काष्ठा cpuinfo_arm64, cpu_data);
+DECLARE_PER_CPU(struct cpuinfo_arm64, cpu_data);
 
-व्योम cpuinfo_store_cpu(व्योम);
-व्योम __init cpuinfo_store_boot_cpu(व्योम);
+void cpuinfo_store_cpu(void);
+void __init cpuinfo_store_boot_cpu(void);
 
-व्योम __init init_cpu_features(काष्ठा cpuinfo_arm64 *info);
-व्योम update_cpu_features(पूर्णांक cpu, काष्ठा cpuinfo_arm64 *info,
-				 काष्ठा cpuinfo_arm64 *boot);
+void __init init_cpu_features(struct cpuinfo_arm64 *info);
+void update_cpu_features(int cpu, struct cpuinfo_arm64 *info,
+				 struct cpuinfo_arm64 *boot);
 
-#पूर्ण_अगर /* __ASM_CPU_H */
+#endif /* __ASM_CPU_H */

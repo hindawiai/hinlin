@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,22 +23,22 @@
  *
  */
 
-#अगर_अघोषित __DAL_BIOS_PARSER_INTERFACE_H__
-#घोषणा __DAL_BIOS_PARSER_INTERFACE_H__
+#ifndef __DAL_BIOS_PARSER_INTERFACE_H__
+#define __DAL_BIOS_PARSER_INTERFACE_H__
 
-#समावेश "dc_bios_types.h"
+#include "dc_bios_types.h"
 
-काष्ठा bios_parser;
+struct bios_parser;
 
-काष्ठा bp_init_data अणु
-	काष्ठा dc_context *ctx;
-	uपूर्णांक8_t *bios;
-पूर्ण;
+struct bp_init_data {
+	struct dc_context *ctx;
+	uint8_t *bios;
+};
 
-काष्ठा dc_bios *dal_bios_parser_create(
-	काष्ठा bp_init_data *init,
-	क्रमागत dce_version dce_version);
+struct dc_bios *dal_bios_parser_create(
+	struct bp_init_data *init,
+	enum dce_version dce_version);
 
-व्योम dal_bios_parser_destroy(काष्ठा dc_bios **dcb);
+void dal_bios_parser_destroy(struct dc_bios **dcb);
 
-#पूर्ण_अगर /* __DAL_BIOS_PARSER_INTERFACE_H__ */
+#endif /* __DAL_BIOS_PARSER_INTERFACE_H__ */

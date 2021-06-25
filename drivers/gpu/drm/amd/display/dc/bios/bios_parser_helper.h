@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012-16 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,19 +23,19 @@
  *
  */
 
-#अगर_अघोषित __DAL_BIOS_PARSER_HELPER_H__
-#घोषणा __DAL_BIOS_PARSER_HELPER_H__
+#ifndef __DAL_BIOS_PARSER_HELPER_H__
+#define __DAL_BIOS_PARSER_HELPER_H__
 
-काष्ठा bios_parser;
+struct bios_parser;
 
-uपूर्णांक8_t *bios_get_image(काष्ठा dc_bios *bp, uपूर्णांक32_t offset,
-	uपूर्णांक32_t size);
+uint8_t *bios_get_image(struct dc_bios *bp, uint32_t offset,
+	uint32_t size);
 
-bool bios_is_accelerated_mode(काष्ठा dc_bios *bios);
-व्योम bios_set_scratch_acc_mode_change(काष्ठा dc_bios *bios, uपूर्णांक32_t state);
-व्योम bios_set_scratch_critical_state(काष्ठा dc_bios *bios, bool state);
-uपूर्णांक32_t bios_get_vga_enabled_displays(काष्ठा dc_bios *bios);
+bool bios_is_accelerated_mode(struct dc_bios *bios);
+void bios_set_scratch_acc_mode_change(struct dc_bios *bios, uint32_t state);
+void bios_set_scratch_critical_state(struct dc_bios *bios, bool state);
+uint32_t bios_get_vga_enabled_displays(struct dc_bios *bios);
 
-#घोषणा GET_IMAGE(type, offset) ((type *) bios_get_image(&bp->base, offset, माप(type)))
+#define GET_IMAGE(type, offset) ((type *) bios_get_image(&bp->base, offset, sizeof(type)))
 
-#पूर्ण_अगर
+#endif

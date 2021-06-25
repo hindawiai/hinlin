@@ -1,108 +1,107 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * Framework and drivers क्रम configuring and पढ़ोing dअगरferent PHYs
- * Based on code in sungem_phy.c and (दीर्घ-हटाओd) gianfar_phy.c
+ * Framework and drivers for configuring and reading different PHYs
+ * Based on code in sungem_phy.c and (long-removed) gianfar_phy.c
  *
  * Author: Andy Fleming
  *
  * Copyright (c) 2004 Freescale Semiconductor, Inc.
  */
 
-#अगर_अघोषित __PHY_H
-#घोषणा __PHY_H
+#ifndef __PHY_H
+#define __PHY_H
 
-#समावेश <linux/compiler.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/linkmode.h>
-#समावेश <linux/netlink.h>
-#समावेश <linux/mdपन.स>
-#समावेश <linux/mii.h>
-#समावेश <linux/mii_बारtamper.h>
-#समावेश <linux/module.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <linux/u64_stats_sync.h>
-#समावेश <linux/irqवापस.h>
-#समावेश <linux/iopoll.h>
-#समावेश <linux/refcount.h>
+#include <linux/compiler.h>
+#include <linux/spinlock.h>
+#include <linux/ethtool.h>
+#include <linux/linkmode.h>
+#include <linux/netlink.h>
+#include <linux/mdio.h>
+#include <linux/mii.h>
+#include <linux/mii_timestamper.h>
+#include <linux/module.h>
+#include <linux/timer.h>
+#include <linux/workqueue.h>
+#include <linux/mod_devicetable.h>
+#include <linux/u64_stats_sync.h>
+#include <linux/irqreturn.h>
+#include <linux/iopoll.h>
+#include <linux/refcount.h>
 
-#समावेश <linux/atomic.h>
+#include <linux/atomic.h>
 
-#घोषणा PHY_DEFAULT_FEATURES	(SUPPORTED_Autoneg | \
+#define PHY_DEFAULT_FEATURES	(SUPPORTED_Autoneg | \
 				 SUPPORTED_TP | \
 				 SUPPORTED_MII)
 
-#घोषणा PHY_10BT_FEATURES	(SUPPORTED_10baseT_Half | \
+#define PHY_10BT_FEATURES	(SUPPORTED_10baseT_Half | \
 				 SUPPORTED_10baseT_Full)
 
-#घोषणा PHY_100BT_FEATURES	(SUPPORTED_100baseT_Half | \
+#define PHY_100BT_FEATURES	(SUPPORTED_100baseT_Half | \
 				 SUPPORTED_100baseT_Full)
 
-#घोषणा PHY_1000BT_FEATURES	(SUPPORTED_1000baseT_Half | \
+#define PHY_1000BT_FEATURES	(SUPPORTED_1000baseT_Half | \
 				 SUPPORTED_1000baseT_Full)
 
-बाह्य __ETHTOOL_DECLARE_LINK_MODE_MASK(phy_basic_features) __ro_after_init;
-बाह्य __ETHTOOL_DECLARE_LINK_MODE_MASK(phy_basic_t1_features) __ro_after_init;
-बाह्य __ETHTOOL_DECLARE_LINK_MODE_MASK(phy_gbit_features) __ro_after_init;
-बाह्य __ETHTOOL_DECLARE_LINK_MODE_MASK(phy_gbit_fibre_features) __ro_after_init;
-बाह्य __ETHTOOL_DECLARE_LINK_MODE_MASK(phy_gbit_all_ports_features) __ro_after_init;
-बाह्य __ETHTOOL_DECLARE_LINK_MODE_MASK(phy_10gbit_features) __ro_after_init;
-बाह्य __ETHTOOL_DECLARE_LINK_MODE_MASK(phy_10gbit_fec_features) __ro_after_init;
-बाह्य __ETHTOOL_DECLARE_LINK_MODE_MASK(phy_10gbit_full_features) __ro_after_init;
+extern __ETHTOOL_DECLARE_LINK_MODE_MASK(phy_basic_features) __ro_after_init;
+extern __ETHTOOL_DECLARE_LINK_MODE_MASK(phy_basic_t1_features) __ro_after_init;
+extern __ETHTOOL_DECLARE_LINK_MODE_MASK(phy_gbit_features) __ro_after_init;
+extern __ETHTOOL_DECLARE_LINK_MODE_MASK(phy_gbit_fibre_features) __ro_after_init;
+extern __ETHTOOL_DECLARE_LINK_MODE_MASK(phy_gbit_all_ports_features) __ro_after_init;
+extern __ETHTOOL_DECLARE_LINK_MODE_MASK(phy_10gbit_features) __ro_after_init;
+extern __ETHTOOL_DECLARE_LINK_MODE_MASK(phy_10gbit_fec_features) __ro_after_init;
+extern __ETHTOOL_DECLARE_LINK_MODE_MASK(phy_10gbit_full_features) __ro_after_init;
 
-#घोषणा PHY_BASIC_FEATURES ((अचिन्हित दीर्घ *)&phy_basic_features)
-#घोषणा PHY_BASIC_T1_FEATURES ((अचिन्हित दीर्घ *)&phy_basic_t1_features)
-#घोषणा PHY_GBIT_FEATURES ((अचिन्हित दीर्घ *)&phy_gbit_features)
-#घोषणा PHY_GBIT_FIBRE_FEATURES ((अचिन्हित दीर्घ *)&phy_gbit_fibre_features)
-#घोषणा PHY_GBIT_ALL_PORTS_FEATURES ((अचिन्हित दीर्घ *)&phy_gbit_all_ports_features)
-#घोषणा PHY_10GBIT_FEATURES ((अचिन्हित दीर्घ *)&phy_10gbit_features)
-#घोषणा PHY_10GBIT_FEC_FEATURES ((अचिन्हित दीर्घ *)&phy_10gbit_fec_features)
-#घोषणा PHY_10GBIT_FULL_FEATURES ((अचिन्हित दीर्घ *)&phy_10gbit_full_features)
+#define PHY_BASIC_FEATURES ((unsigned long *)&phy_basic_features)
+#define PHY_BASIC_T1_FEATURES ((unsigned long *)&phy_basic_t1_features)
+#define PHY_GBIT_FEATURES ((unsigned long *)&phy_gbit_features)
+#define PHY_GBIT_FIBRE_FEATURES ((unsigned long *)&phy_gbit_fibre_features)
+#define PHY_GBIT_ALL_PORTS_FEATURES ((unsigned long *)&phy_gbit_all_ports_features)
+#define PHY_10GBIT_FEATURES ((unsigned long *)&phy_10gbit_features)
+#define PHY_10GBIT_FEC_FEATURES ((unsigned long *)&phy_10gbit_fec_features)
+#define PHY_10GBIT_FULL_FEATURES ((unsigned long *)&phy_10gbit_full_features)
 
-बाह्य स्थिर पूर्णांक phy_basic_ports_array[3];
-बाह्य स्थिर पूर्णांक phy_fibre_port_array[1];
-बाह्य स्थिर पूर्णांक phy_all_ports_features_array[7];
-बाह्य स्थिर पूर्णांक phy_10_100_features_array[4];
-बाह्य स्थिर पूर्णांक phy_basic_t1_features_array[2];
-बाह्य स्थिर पूर्णांक phy_gbit_features_array[2];
-बाह्य स्थिर पूर्णांक phy_10gbit_features_array[1];
+extern const int phy_basic_ports_array[3];
+extern const int phy_fibre_port_array[1];
+extern const int phy_all_ports_features_array[7];
+extern const int phy_10_100_features_array[4];
+extern const int phy_basic_t1_features_array[2];
+extern const int phy_gbit_features_array[2];
+extern const int phy_10gbit_features_array[1];
 
 /*
- * Set phydev->irq to PHY_POLL अगर पूर्णांकerrupts are not supported,
- * or not desired क्रम this PHY.  Set to PHY_MAC_INTERRUPT अगर
- * the attached MAC driver handles the पूर्णांकerrupt
+ * Set phydev->irq to PHY_POLL if interrupts are not supported,
+ * or not desired for this PHY.  Set to PHY_MAC_INTERRUPT if
+ * the attached MAC driver handles the interrupt
  */
-#घोषणा PHY_POLL		-1
-#घोषणा PHY_MAC_INTERRUPT	-2
+#define PHY_POLL		-1
+#define PHY_MAC_INTERRUPT	-2
 
-#घोषणा PHY_IS_INTERNAL		0x00000001
-#घोषणा PHY_RST_AFTER_CLK_EN	0x00000002
-#घोषणा PHY_POLL_CABLE_TEST	0x00000004
-#घोषणा MDIO_DEVICE_IS_PHY	0x80000000
+#define PHY_IS_INTERNAL		0x00000001
+#define PHY_RST_AFTER_CLK_EN	0x00000002
+#define PHY_POLL_CABLE_TEST	0x00000004
+#define MDIO_DEVICE_IS_PHY	0x80000000
 
 /**
- * क्रमागत phy_पूर्णांकerface_t - Interface Mode definitions
+ * enum phy_interface_t - Interface Mode definitions
  *
- * @PHY_INTERFACE_MODE_NA: Not Applicable - करोn't touch
- * @PHY_INTERFACE_MODE_INTERNAL: No पूर्णांकerface, MAC and PHY combined
- * @PHY_INTERFACE_MODE_MII: Median-independent पूर्णांकerface
- * @PHY_INTERFACE_MODE_GMII: Gigabit median-independent पूर्णांकerface
- * @PHY_INTERFACE_MODE_SGMII: Serial gigabit media-independent पूर्णांकerface
+ * @PHY_INTERFACE_MODE_NA: Not Applicable - don't touch
+ * @PHY_INTERFACE_MODE_INTERNAL: No interface, MAC and PHY combined
+ * @PHY_INTERFACE_MODE_MII: Median-independent interface
+ * @PHY_INTERFACE_MODE_GMII: Gigabit median-independent interface
+ * @PHY_INTERFACE_MODE_SGMII: Serial gigabit media-independent interface
  * @PHY_INTERFACE_MODE_TBI: Ten Bit Interface
  * @PHY_INTERFACE_MODE_REVMII: Reverse Media Independent Interface
  * @PHY_INTERFACE_MODE_RMII: Reduced Media Independent Interface
- * @PHY_INTERFACE_MODE_RGMII: Reduced gigabit media-independent पूर्णांकerface
+ * @PHY_INTERFACE_MODE_RGMII: Reduced gigabit media-independent interface
  * @PHY_INTERFACE_MODE_RGMII_ID: RGMII with Internal RX+TX delay
  * @PHY_INTERFACE_MODE_RGMII_RXID: RGMII with Internal RX delay
  * @PHY_INTERFACE_MODE_RGMII_TXID: RGMII with Internal RX delay
  * @PHY_INTERFACE_MODE_RTBI: Reduced TBI
  * @PHY_INTERFACE_MODE_SMII: ??? MII
- * @PHY_INTERFACE_MODE_XGMII: 10 gigabit media-independent पूर्णांकerface
- * @PHY_INTERFACE_MODE_XLGMII:40 gigabit media-independent पूर्णांकerface
- * @PHY_INTERFACE_MODE_MOCA: Mulसमयdia over Coax
+ * @PHY_INTERFACE_MODE_XGMII: 10 gigabit media-independent interface
+ * @PHY_INTERFACE_MODE_XLGMII:40 gigabit media-independent interface
+ * @PHY_INTERFACE_MODE_MOCA: Multimedia over Coax
  * @PHY_INTERFACE_MODE_QSGMII: Quad SGMII
  * @PHY_INTERFACE_MODE_TRGMII: Turbo RGMII
  * @PHY_INTERFACE_MODE_100BASEX: 100 BaseX
@@ -116,9 +115,9 @@
  * @PHY_INTERFACE_MODE_10GKR: 10GBASE-KR - with Clause 73 AN
  * @PHY_INTERFACE_MODE_MAX: Book keeping
  *
- * Describes the पूर्णांकerface between the MAC and PHY.
+ * Describes the interface between the MAC and PHY.
  */
-प्रकार क्रमागत अणु
+typedef enum {
 	PHY_INTERFACE_MODE_NA,
 	PHY_INTERFACE_MODE_INTERNAL,
 	PHY_INTERFACE_MODE_MII,
@@ -150,306 +149,306 @@
 	/* 10GBASE-KR - with Clause 73 AN */
 	PHY_INTERFACE_MODE_10GKR,
 	PHY_INTERFACE_MODE_MAX,
-पूर्ण phy_पूर्णांकerface_t;
+} phy_interface_t;
 
 /*
- * phy_supported_speeds - वापस all speeds currently supported by a PHY device
+ * phy_supported_speeds - return all speeds currently supported by a PHY device
  */
-अचिन्हित पूर्णांक phy_supported_speeds(काष्ठा phy_device *phy,
-				      अचिन्हित पूर्णांक *speeds,
-				      अचिन्हित पूर्णांक size);
+unsigned int phy_supported_speeds(struct phy_device *phy,
+				      unsigned int *speeds,
+				      unsigned int size);
 
 /**
- * phy_modes - map phy_पूर्णांकerface_t क्रमागत to device tree binding of phy-mode
- * @पूर्णांकerface: क्रमागत phy_पूर्णांकerface_t value
+ * phy_modes - map phy_interface_t enum to device tree binding of phy-mode
+ * @interface: enum phy_interface_t value
  *
- * Description: maps क्रमागत &phy_पूर्णांकerface_t defined in this file
- * पूर्णांकo the device tree binding of 'phy-mode', so that Ethernet
- * device driver can get PHY पूर्णांकerface from device tree.
+ * Description: maps enum &phy_interface_t defined in this file
+ * into the device tree binding of 'phy-mode', so that Ethernet
+ * device driver can get PHY interface from device tree.
  */
-अटल अंतरभूत स्थिर अक्षर *phy_modes(phy_पूर्णांकerface_t पूर्णांकerface)
-अणु
-	चयन (पूर्णांकerface) अणु
-	हाल PHY_INTERFACE_MODE_NA:
-		वापस "";
-	हाल PHY_INTERFACE_MODE_INTERNAL:
-		वापस "internal";
-	हाल PHY_INTERFACE_MODE_MII:
-		वापस "mii";
-	हाल PHY_INTERFACE_MODE_GMII:
-		वापस "gmii";
-	हाल PHY_INTERFACE_MODE_SGMII:
-		वापस "sgmii";
-	हाल PHY_INTERFACE_MODE_TBI:
-		वापस "tbi";
-	हाल PHY_INTERFACE_MODE_REVMII:
-		वापस "rev-mii";
-	हाल PHY_INTERFACE_MODE_RMII:
-		वापस "rmii";
-	हाल PHY_INTERFACE_MODE_RGMII:
-		वापस "rgmii";
-	हाल PHY_INTERFACE_MODE_RGMII_ID:
-		वापस "rgmii-id";
-	हाल PHY_INTERFACE_MODE_RGMII_RXID:
-		वापस "rgmii-rxid";
-	हाल PHY_INTERFACE_MODE_RGMII_TXID:
-		वापस "rgmii-txid";
-	हाल PHY_INTERFACE_MODE_RTBI:
-		वापस "rtbi";
-	हाल PHY_INTERFACE_MODE_SMII:
-		वापस "smii";
-	हाल PHY_INTERFACE_MODE_XGMII:
-		वापस "xgmii";
-	हाल PHY_INTERFACE_MODE_XLGMII:
-		वापस "xlgmii";
-	हाल PHY_INTERFACE_MODE_MOCA:
-		वापस "moca";
-	हाल PHY_INTERFACE_MODE_QSGMII:
-		वापस "qsgmii";
-	हाल PHY_INTERFACE_MODE_TRGMII:
-		वापस "trgmii";
-	हाल PHY_INTERFACE_MODE_1000BASEX:
-		वापस "1000base-x";
-	हाल PHY_INTERFACE_MODE_2500BASEX:
-		वापस "2500base-x";
-	हाल PHY_INTERFACE_MODE_5GBASER:
-		वापस "5gbase-r";
-	हाल PHY_INTERFACE_MODE_RXAUI:
-		वापस "rxaui";
-	हाल PHY_INTERFACE_MODE_XAUI:
-		वापस "xaui";
-	हाल PHY_INTERFACE_MODE_10GBASER:
-		वापस "10gbase-r";
-	हाल PHY_INTERFACE_MODE_USXGMII:
-		वापस "usxgmii";
-	हाल PHY_INTERFACE_MODE_10GKR:
-		वापस "10gbase-kr";
-	हाल PHY_INTERFACE_MODE_100BASEX:
-		वापस "100base-x";
-	शेष:
-		वापस "unknown";
-	पूर्ण
-पूर्ण
+static inline const char *phy_modes(phy_interface_t interface)
+{
+	switch (interface) {
+	case PHY_INTERFACE_MODE_NA:
+		return "";
+	case PHY_INTERFACE_MODE_INTERNAL:
+		return "internal";
+	case PHY_INTERFACE_MODE_MII:
+		return "mii";
+	case PHY_INTERFACE_MODE_GMII:
+		return "gmii";
+	case PHY_INTERFACE_MODE_SGMII:
+		return "sgmii";
+	case PHY_INTERFACE_MODE_TBI:
+		return "tbi";
+	case PHY_INTERFACE_MODE_REVMII:
+		return "rev-mii";
+	case PHY_INTERFACE_MODE_RMII:
+		return "rmii";
+	case PHY_INTERFACE_MODE_RGMII:
+		return "rgmii";
+	case PHY_INTERFACE_MODE_RGMII_ID:
+		return "rgmii-id";
+	case PHY_INTERFACE_MODE_RGMII_RXID:
+		return "rgmii-rxid";
+	case PHY_INTERFACE_MODE_RGMII_TXID:
+		return "rgmii-txid";
+	case PHY_INTERFACE_MODE_RTBI:
+		return "rtbi";
+	case PHY_INTERFACE_MODE_SMII:
+		return "smii";
+	case PHY_INTERFACE_MODE_XGMII:
+		return "xgmii";
+	case PHY_INTERFACE_MODE_XLGMII:
+		return "xlgmii";
+	case PHY_INTERFACE_MODE_MOCA:
+		return "moca";
+	case PHY_INTERFACE_MODE_QSGMII:
+		return "qsgmii";
+	case PHY_INTERFACE_MODE_TRGMII:
+		return "trgmii";
+	case PHY_INTERFACE_MODE_1000BASEX:
+		return "1000base-x";
+	case PHY_INTERFACE_MODE_2500BASEX:
+		return "2500base-x";
+	case PHY_INTERFACE_MODE_5GBASER:
+		return "5gbase-r";
+	case PHY_INTERFACE_MODE_RXAUI:
+		return "rxaui";
+	case PHY_INTERFACE_MODE_XAUI:
+		return "xaui";
+	case PHY_INTERFACE_MODE_10GBASER:
+		return "10gbase-r";
+	case PHY_INTERFACE_MODE_USXGMII:
+		return "usxgmii";
+	case PHY_INTERFACE_MODE_10GKR:
+		return "10gbase-kr";
+	case PHY_INTERFACE_MODE_100BASEX:
+		return "100base-x";
+	default:
+		return "unknown";
+	}
+}
 
 
-#घोषणा PHY_INIT_TIMEOUT	100000
-#घोषणा PHY_FORCE_TIMEOUT	10
+#define PHY_INIT_TIMEOUT	100000
+#define PHY_FORCE_TIMEOUT	10
 
-#घोषणा PHY_MAX_ADDR	32
+#define PHY_MAX_ADDR	32
 
-/* Used when trying to connect to a specअगरic phy (mii bus id:phy device id) */
-#घोषणा PHY_ID_FMT "%s:%02x"
+/* Used when trying to connect to a specific phy (mii bus id:phy device id) */
+#define PHY_ID_FMT "%s:%02x"
 
-#घोषणा MII_BUS_ID_SIZE	61
+#define MII_BUS_ID_SIZE	61
 
-काष्ठा device;
-काष्ठा phylink;
-काष्ठा sfp_bus;
-काष्ठा sfp_upstream_ops;
-काष्ठा sk_buff;
+struct device;
+struct phylink;
+struct sfp_bus;
+struct sfp_upstream_ops;
+struct sk_buff;
 
 /**
- * काष्ठा mdio_bus_stats - Statistics counters क्रम MDIO busses
- * @transfers: Total number of transfers, i.e. @ग_लिखोs + @पढ़ोs
- * @errors: Number of MDIO transfers that वापसed an error
- * @ग_लिखोs: Number of ग_लिखो transfers
- * @पढ़ोs: Number of पढ़ो transfers
- * @syncp: Synchronisation क्रम incrementing statistics
+ * struct mdio_bus_stats - Statistics counters for MDIO busses
+ * @transfers: Total number of transfers, i.e. @writes + @reads
+ * @errors: Number of MDIO transfers that returned an error
+ * @writes: Number of write transfers
+ * @reads: Number of read transfers
+ * @syncp: Synchronisation for incrementing statistics
  */
-काष्ठा mdio_bus_stats अणु
+struct mdio_bus_stats {
 	u64_stats_t transfers;
 	u64_stats_t errors;
-	u64_stats_t ग_लिखोs;
-	u64_stats_t पढ़ोs;
+	u64_stats_t writes;
+	u64_stats_t reads;
 	/* Must be last, add new statistics above */
-	काष्ठा u64_stats_sync syncp;
-पूर्ण;
+	struct u64_stats_sync syncp;
+};
 
 /**
- * काष्ठा phy_package_shared - Shared inक्रमmation in PHY packages
+ * struct phy_package_shared - Shared information in PHY packages
  * @addr: Common PHY address used to combine PHYs in one package
  * @refcnt: Number of PHYs connected to this shared data
  * @flags: Initialization of PHY package
- * @priv_size: Size of the shared निजी data @priv
- * @priv: Driver निजी data shared across a PHY package
+ * @priv_size: Size of the shared private data @priv
+ * @priv: Driver private data shared across a PHY package
  *
- * Represents a shared काष्ठाure between dअगरferent phydev's in the same
- * package, क्रम example a quad PHY. See phy_package_join() and
+ * Represents a shared structure between different phydev's in the same
+ * package, for example a quad PHY. See phy_package_join() and
  * phy_package_leave().
  */
-काष्ठा phy_package_shared अणु
-	पूर्णांक addr;
+struct phy_package_shared {
+	int addr;
 	refcount_t refcnt;
-	अचिन्हित दीर्घ flags;
-	माप_प्रकार priv_size;
+	unsigned long flags;
+	size_t priv_size;
 
-	/* निजी data poपूर्णांकer */
-	/* note that this poपूर्णांकer is shared between dअगरferent phydevs and
+	/* private data pointer */
+	/* note that this pointer is shared between different phydevs and
 	 * the user has to take care of appropriate locking. It is allocated
-	 * and मुक्तd स्वतःmatically by phy_package_join() and
+	 * and freed automatically by phy_package_join() and
 	 * phy_package_leave().
 	 */
-	व्योम *priv;
-पूर्ण;
+	void *priv;
+};
 
 /* used as bit number in atomic bitops */
-#घोषणा PHY_SHARED_F_INIT_DONE  0
-#घोषणा PHY_SHARED_F_PROBE_DONE 1
+#define PHY_SHARED_F_INIT_DONE  0
+#define PHY_SHARED_F_PROBE_DONE 1
 
 /**
- * काष्ठा mii_bus - Represents an MDIO bus
+ * struct mii_bus - Represents an MDIO bus
  *
  * @owner: Who owns this device
- * @name: User मित्रly name क्रम this MDIO device, or driver name
- * @id: Unique identअगरier क्रम this bus, typical from bus hierarchy
- * @priv: Driver निजी data
+ * @name: User friendly name for this MDIO device, or driver name
+ * @id: Unique identifier for this bus, typical from bus hierarchy
+ * @priv: Driver private data
  *
- * The Bus class क्रम PHYs.  Devices which provide access to
- * PHYs should रेजिस्टर using this काष्ठाure
+ * The Bus class for PHYs.  Devices which provide access to
+ * PHYs should register using this structure
  */
-काष्ठा mii_bus अणु
-	काष्ठा module *owner;
-	स्थिर अक्षर *name;
-	अक्षर id[MII_BUS_ID_SIZE];
-	व्योम *priv;
-	/** @पढ़ो: Perक्रमm a पढ़ो transfer on the bus */
-	पूर्णांक (*पढ़ो)(काष्ठा mii_bus *bus, पूर्णांक addr, पूर्णांक regnum);
-	/** @ग_लिखो: Perक्रमm a ग_लिखो transfer on the bus */
-	पूर्णांक (*ग_लिखो)(काष्ठा mii_bus *bus, पूर्णांक addr, पूर्णांक regnum, u16 val);
-	/** @reset: Perक्रमm a reset of the bus */
-	पूर्णांक (*reset)(काष्ठा mii_bus *bus);
+struct mii_bus {
+	struct module *owner;
+	const char *name;
+	char id[MII_BUS_ID_SIZE];
+	void *priv;
+	/** @read: Perform a read transfer on the bus */
+	int (*read)(struct mii_bus *bus, int addr, int regnum);
+	/** @write: Perform a write transfer on the bus */
+	int (*write)(struct mii_bus *bus, int addr, int regnum, u16 val);
+	/** @reset: Perform a reset of the bus */
+	int (*reset)(struct mii_bus *bus);
 
 	/** @stats: Statistic counters per device on the bus */
-	काष्ठा mdio_bus_stats stats[PHY_MAX_ADDR];
+	struct mdio_bus_stats stats[PHY_MAX_ADDR];
 
 	/**
-	 * @mdio_lock: A lock to ensure that only one thing can पढ़ो/ग_लिखो
-	 * the MDIO bus at a समय
+	 * @mdio_lock: A lock to ensure that only one thing can read/write
+	 * the MDIO bus at a time
 	 */
-	काष्ठा mutex mdio_lock;
+	struct mutex mdio_lock;
 
 	/** @parent: Parent device of this bus */
-	काष्ठा device *parent;
-	/** @state: State of bus काष्ठाure */
-	क्रमागत अणु
+	struct device *parent;
+	/** @state: State of bus structure */
+	enum {
 		MDIOBUS_ALLOCATED = 1,
 		MDIOBUS_REGISTERED,
 		MDIOBUS_UNREGISTERED,
 		MDIOBUS_RELEASED,
-	पूर्ण state;
+	} state;
 
 	/** @dev: Kernel device representation */
-	काष्ठा device dev;
+	struct device dev;
 
 	/** @mdio_map: list of all MDIO devices on bus */
-	काष्ठा mdio_device *mdio_map[PHY_MAX_ADDR];
+	struct mdio_device *mdio_map[PHY_MAX_ADDR];
 
 	/** @phy_mask: PHY addresses to be ignored when probing */
 	u32 phy_mask;
 
-	/** @phy_ignore_ta_mask: PHY addresses to ignore the TA/पढ़ो failure */
+	/** @phy_ignore_ta_mask: PHY addresses to ignore the TA/read failure */
 	u32 phy_ignore_ta_mask;
 
 	/**
-	 * @irq: An array of पूर्णांकerrupts, each PHY's पूर्णांकerrupt at the index
+	 * @irq: An array of interrupts, each PHY's interrupt at the index
 	 * matching its address
 	 */
-	पूर्णांक irq[PHY_MAX_ADDR];
+	int irq[PHY_MAX_ADDR];
 
 	/** @reset_delay_us: GPIO reset pulse width in microseconds */
-	पूर्णांक reset_delay_us;
-	/** @reset_post_delay_us: GPIO reset deनिश्चित delay in microseconds */
-	पूर्णांक reset_post_delay_us;
-	/** @reset_gpiod: Reset GPIO descriptor poपूर्णांकer */
-	काष्ठा gpio_desc *reset_gpiod;
+	int reset_delay_us;
+	/** @reset_post_delay_us: GPIO reset deassert delay in microseconds */
+	int reset_post_delay_us;
+	/** @reset_gpiod: Reset GPIO descriptor pointer */
+	struct gpio_desc *reset_gpiod;
 
-	/** @probe_capabilities: bus capabilities, used क्रम probing */
-	क्रमागत अणु
+	/** @probe_capabilities: bus capabilities, used for probing */
+	enum {
 		MDIOBUS_NO_CAP = 0,
 		MDIOBUS_C22,
 		MDIOBUS_C45,
 		MDIOBUS_C22_C45,
-	पूर्ण probe_capabilities;
+	} probe_capabilities;
 
 	/** @shared_lock: protect access to the shared element */
-	काष्ठा mutex shared_lock;
+	struct mutex shared_lock;
 
-	/** @shared: shared state across dअगरferent PHYs */
-	काष्ठा phy_package_shared *shared[PHY_MAX_ADDR];
-पूर्ण;
-#घोषणा to_mii_bus(d) container_of(d, काष्ठा mii_bus, dev)
+	/** @shared: shared state across different PHYs */
+	struct phy_package_shared *shared[PHY_MAX_ADDR];
+};
+#define to_mii_bus(d) container_of(d, struct mii_bus, dev)
 
-काष्ठा mii_bus *mdiobus_alloc_size(माप_प्रकार size);
+struct mii_bus *mdiobus_alloc_size(size_t size);
 
 /**
- * mdiobus_alloc - Allocate an MDIO bus काष्ठाure
+ * mdiobus_alloc - Allocate an MDIO bus structure
  *
- * The पूर्णांकernal state of the MDIO bus will be set of MDIOBUS_ALLOCATED पढ़ोy
- * क्रम the driver to रेजिस्टर the bus.
+ * The internal state of the MDIO bus will be set of MDIOBUS_ALLOCATED ready
+ * for the driver to register the bus.
  */
-अटल अंतरभूत काष्ठा mii_bus *mdiobus_alloc(व्योम)
-अणु
-	वापस mdiobus_alloc_size(0);
-पूर्ण
+static inline struct mii_bus *mdiobus_alloc(void)
+{
+	return mdiobus_alloc_size(0);
+}
 
-पूर्णांक __mdiobus_रेजिस्टर(काष्ठा mii_bus *bus, काष्ठा module *owner);
-पूर्णांक __devm_mdiobus_रेजिस्टर(काष्ठा device *dev, काष्ठा mii_bus *bus,
-			    काष्ठा module *owner);
-#घोषणा mdiobus_रेजिस्टर(bus) __mdiobus_रेजिस्टर(bus, THIS_MODULE)
-#घोषणा devm_mdiobus_रेजिस्टर(dev, bus) \
-		__devm_mdiobus_रेजिस्टर(dev, bus, THIS_MODULE)
+int __mdiobus_register(struct mii_bus *bus, struct module *owner);
+int __devm_mdiobus_register(struct device *dev, struct mii_bus *bus,
+			    struct module *owner);
+#define mdiobus_register(bus) __mdiobus_register(bus, THIS_MODULE)
+#define devm_mdiobus_register(dev, bus) \
+		__devm_mdiobus_register(dev, bus, THIS_MODULE)
 
-व्योम mdiobus_unरेजिस्टर(काष्ठा mii_bus *bus);
-व्योम mdiobus_मुक्त(काष्ठा mii_bus *bus);
-काष्ठा mii_bus *devm_mdiobus_alloc_size(काष्ठा device *dev, पूर्णांक माप_priv);
-अटल अंतरभूत काष्ठा mii_bus *devm_mdiobus_alloc(काष्ठा device *dev)
-अणु
-	वापस devm_mdiobus_alloc_size(dev, 0);
-पूर्ण
+void mdiobus_unregister(struct mii_bus *bus);
+void mdiobus_free(struct mii_bus *bus);
+struct mii_bus *devm_mdiobus_alloc_size(struct device *dev, int sizeof_priv);
+static inline struct mii_bus *devm_mdiobus_alloc(struct device *dev)
+{
+	return devm_mdiobus_alloc_size(dev, 0);
+}
 
-काष्ठा mii_bus *mdio_find_bus(स्थिर अक्षर *mdio_name);
-काष्ठा phy_device *mdiobus_scan(काष्ठा mii_bus *bus, पूर्णांक addr);
+struct mii_bus *mdio_find_bus(const char *mdio_name);
+struct phy_device *mdiobus_scan(struct mii_bus *bus, int addr);
 
-#घोषणा PHY_INTERRUPT_DISABLED	false
-#घोषणा PHY_INTERRUPT_ENABLED	true
+#define PHY_INTERRUPT_DISABLED	false
+#define PHY_INTERRUPT_ENABLED	true
 
 /**
- * क्रमागत phy_state - PHY state machine states:
+ * enum phy_state - PHY state machine states:
  *
- * @PHY_DOWN: PHY device and driver are not पढ़ोy क्रम anything.  probe
- * should be called अगर and only अगर the PHY is in this state,
+ * @PHY_DOWN: PHY device and driver are not ready for anything.  probe
+ * should be called if and only if the PHY is in this state,
  * given that the PHY device exists.
  * - PHY driver probe function will set the state to @PHY_READY
  *
- * @PHY_READY: PHY is पढ़ोy to send and receive packets, but the
- * controller is not.  By शेष, PHYs which करो not implement
+ * @PHY_READY: PHY is ready to send and receive packets, but the
+ * controller is not.  By default, PHYs which do not implement
  * probe will be set to this state by phy_probe().
  * - start will set the state to UP
  *
- * @PHY_UP: The PHY and attached device are पढ़ोy to करो work.
+ * @PHY_UP: The PHY and attached device are ready to do work.
  * Interrupts should be started here.
- * - समयr moves to @PHY_NOLINK or @PHY_RUNNING
+ * - timer moves to @PHY_NOLINK or @PHY_RUNNING
  *
  * @PHY_NOLINK: PHY is up, but not currently plugged in.
- * - irq or समयr will set @PHY_RUNNING अगर link comes back
+ * - irq or timer will set @PHY_RUNNING if link comes back
  * - phy_stop moves to @PHY_HALTED
  *
  * @PHY_RUNNING: PHY is currently up, running, and possibly sending
  * and/or receiving packets
- * - irq or समयr will set @PHY_NOLINK अगर link goes करोwn
+ * - irq or timer will set @PHY_NOLINK if link goes down
  * - phy_stop moves to @PHY_HALTED
  *
- * @PHY_CABLETEST: PHY is perक्रमming a cable test. Packet reception/sending
- * is not expected to work, carrier will be indicated as करोwn. PHY will be
- * poll once per second, or on पूर्णांकerrupt क्रम it current state.
+ * @PHY_CABLETEST: PHY is performing a cable test. Packet reception/sending
+ * is not expected to work, carrier will be indicated as down. PHY will be
+ * poll once per second, or on interrupt for it current state.
  * Once complete, move to UP to restart the PHY.
- * - phy_stop पातs the running test and moves to @PHY_HALTED
+ * - phy_stop aborts the running test and moves to @PHY_HALTED
  *
- * @PHY_HALTED: PHY is up, but no polling or पूर्णांकerrupts are करोne. Or
+ * @PHY_HALTED: PHY is up, but no polling or interrupts are done. Or
  * PHY is in an error state.
  * - phy_start moves to @PHY_UP
  */
-क्रमागत phy_state अणु
+enum phy_state {
 	PHY_DOWN = 0,
 	PHY_READY,
 	PHY_HALTED,
@@ -457,1299 +456,1299 @@
 	PHY_RUNNING,
 	PHY_NOLINK,
 	PHY_CABLETEST,
-पूर्ण;
+};
 
-#घोषणा MDIO_MMD_NUM 32
+#define MDIO_MMD_NUM 32
 
 /**
- * काष्ठा phy_c45_device_ids - 802.3-c45 Device Identअगरiers
- * @devices_in_package: IEEE 802.3 devices in package रेजिस्टर value.
+ * struct phy_c45_device_ids - 802.3-c45 Device Identifiers
+ * @devices_in_package: IEEE 802.3 devices in package register value.
  * @mmds_present: bit vector of MMDs present.
- * @device_ids: The device identअगरer क्रम each present device.
+ * @device_ids: The device identifer for each present device.
  */
-काष्ठा phy_c45_device_ids अणु
+struct phy_c45_device_ids {
 	u32 devices_in_package;
 	u32 mmds_present;
 	u32 device_ids[MDIO_MMD_NUM];
-पूर्ण;
+};
 
-काष्ठा macsec_context;
-काष्ठा macsec_ops;
+struct macsec_context;
+struct macsec_ops;
 
 /**
- * काष्ठा phy_device - An instance of a PHY
+ * struct phy_device - An instance of a PHY
  *
  * @mdio: MDIO bus this PHY is on
- * @drv: Poपूर्णांकer to the driver क्रम this PHY instance
- * @phy_id: UID क्रम this device found during discovery
- * @c45_ids: 802.3-c45 Device Identअगरiers अगर is_c45.
- * @is_c45:  Set to true अगर this PHY uses clause 45 addressing.
- * @is_पूर्णांकernal: Set to true अगर this PHY is पूर्णांकernal to a MAC.
- * @is_pseuकरो_fixed_link: Set to true अगर this PHY is an Ethernet चयन, etc.
- * @is_gigabit_capable: Set to true अगर PHY supports 1000Mbps
- * @has_fixups: Set to true अगर this PHY has fixups/quirks.
- * @suspended: Set to true अगर this PHY has been suspended successfully.
- * @suspended_by_mdio_bus: Set to true अगर this PHY was suspended by MDIO bus.
+ * @drv: Pointer to the driver for this PHY instance
+ * @phy_id: UID for this device found during discovery
+ * @c45_ids: 802.3-c45 Device Identifiers if is_c45.
+ * @is_c45:  Set to true if this PHY uses clause 45 addressing.
+ * @is_internal: Set to true if this PHY is internal to a MAC.
+ * @is_pseudo_fixed_link: Set to true if this PHY is an Ethernet switch, etc.
+ * @is_gigabit_capable: Set to true if PHY supports 1000Mbps
+ * @has_fixups: Set to true if this PHY has fixups/quirks.
+ * @suspended: Set to true if this PHY has been suspended successfully.
+ * @suspended_by_mdio_bus: Set to true if this PHY was suspended by MDIO bus.
  * @sysfs_links: Internal boolean tracking sysfs symbolic links setup/removal.
- * @loopback_enabled: Set true अगर this PHY has been loopbacked successfully.
- * @करोwnshअगरted_rate: Set true अगर link speed has been करोwnshअगरted.
- * @is_on_sfp_module: Set true अगर PHY is located on an SFP module.
- * @mac_managed_pm: Set true अगर MAC driver takes of suspending/resuming PHY
- * @state: State of the PHY क्रम management purposes
- * @dev_flags: Device-specअगरic flags used by the PHY driver.
- *		Bits [15:0] are मुक्त to use by the PHY driver to communicate
- *			    driver specअगरic behavior.
- *		Bits [23:16] are currently reserved क्रम future use.
- *		Bits [31:24] are reserved क्रम defining generic
+ * @loopback_enabled: Set true if this PHY has been loopbacked successfully.
+ * @downshifted_rate: Set true if link speed has been downshifted.
+ * @is_on_sfp_module: Set true if PHY is located on an SFP module.
+ * @mac_managed_pm: Set true if MAC driver takes of suspending/resuming PHY
+ * @state: State of the PHY for management purposes
+ * @dev_flags: Device-specific flags used by the PHY driver.
+ *		Bits [15:0] are free to use by the PHY driver to communicate
+ *			    driver specific behavior.
+ *		Bits [23:16] are currently reserved for future use.
+ *		Bits [31:24] are reserved for defining generic
  *			     PHY driver behavior.
- * @irq: IRQ number of the PHY's पूर्णांकerrupt (-1 अगर none)
- * @phy_समयr: The समयr क्रम handling the state machine
- * @phylink: Poपूर्णांकer to phylink instance क्रम this PHY
+ * @irq: IRQ number of the PHY's interrupt (-1 if none)
+ * @phy_timer: The timer for handling the state machine
+ * @phylink: Pointer to phylink instance for this PHY
  * @sfp_bus_attached: Flag indicating whether the SFP bus has been attached
  * @sfp_bus: SFP bus attached to this PHY's fiber port
  * @attached_dev: The attached enet driver's device instance ptr
- * @adjust_link: Callback क्रम the enet controller to respond to changes: in the
+ * @adjust_link: Callback for the enet controller to respond to changes: in the
  *               link state.
- * @phy_link_change: Callback क्रम phylink क्रम notअगरication of link change
+ * @phy_link_change: Callback for phylink for notification of link change
  * @macsec_ops: MACsec offloading ops.
  *
  * @speed: Current link speed
  * @duplex: Current duplex
  * @port: Current port
- * @छोड़ो: Current छोड़ो
- * @asym_छोड़ो: Current asymmetric छोड़ो
+ * @pause: Current pause
+ * @asym_pause: Current asymmetric pause
  * @supported: Combined MAC/PHY supported linkmodes
  * @advertising: Currently advertised linkmodes
- * @adv_old: Saved advertised जबतक घातer saving क्रम WoL
+ * @adv_old: Saved advertised while power saving for WoL
  * @lp_advertising: Current link partner advertised linkmodes
  * @eee_broken_modes: Energy efficient ethernet modes which should be prohibited
- * @स्वतःneg: Flag स्वतःneg being used
+ * @autoneg: Flag autoneg being used
  * @link: Current link state
- * @स्वतःneg_complete: Flag स्वतः negotiation of the link has completed
+ * @autoneg_complete: Flag auto negotiation of the link has completed
  * @mdix: Current crossover
  * @mdix_ctrl: User setting of crossover
- * @पूर्णांकerrupts: Flag पूर्णांकerrupts have been enabled
- * @पूर्णांकerface: क्रमागत phy_पूर्णांकerface_t value
- * @skb: Netlink message क्रम cable diagnostics
- * @nest: Netlink nest used क्रम cable diagnostics
- * @ehdr: nNtlink header क्रम cable diagnostics
+ * @interrupts: Flag interrupts have been enabled
+ * @interface: enum phy_interface_t value
+ * @skb: Netlink message for cable diagnostics
+ * @nest: Netlink nest used for cable diagnostics
+ * @ehdr: nNtlink header for cable diagnostics
  * @phy_led_triggers: Array of LED triggers
  * @phy_num_led_triggers: Number of triggers in @phy_led_triggers
- * @led_link_trigger: LED trigger क्रम link up/करोwn
- * @last_triggered: last LED trigger क्रम link speed
+ * @led_link_trigger: LED trigger for link up/down
+ * @last_triggered: last LED trigger for link speed
  * @master_slave_set: User requested master/slave configuration
  * @master_slave_get: Current master/slave advertisement
  * @master_slave_state: Current master/slave configuration
- * @mii_ts: Poपूर्णांकer to समय stamper callbacks
- * @lock:  Mutex क्रम serialization access to PHY
- * @state_queue: Work queue क्रम state machine
- * @shared: Poपूर्णांकer to निजी data shared by phys in one package
- * @priv: Poपूर्णांकer to driver निजी data
+ * @mii_ts: Pointer to time stamper callbacks
+ * @lock:  Mutex for serialization access to PHY
+ * @state_queue: Work queue for state machine
+ * @shared: Pointer to private data shared by phys in one package
+ * @priv: Pointer to driver private data
  *
- * पूर्णांकerrupts currently only supports enabled or disabled,
+ * interrupts currently only supports enabled or disabled,
  * but could be changed in the future to support enabling
- * and disabling specअगरic पूर्णांकerrupts
+ * and disabling specific interrupts
  *
- * Contains some infraकाष्ठाure क्रम polling and पूर्णांकerrupt
- * handling, as well as handling shअगरts in PHY hardware state
+ * Contains some infrastructure for polling and interrupt
+ * handling, as well as handling shifts in PHY hardware state
  */
-काष्ठा phy_device अणु
-	काष्ठा mdio_device mdio;
+struct phy_device {
+	struct mdio_device mdio;
 
-	/* Inक्रमmation about the PHY type */
+	/* Information about the PHY type */
 	/* And management functions */
-	काष्ठा phy_driver *drv;
+	struct phy_driver *drv;
 
 	u32 phy_id;
 
-	काष्ठा phy_c45_device_ids c45_ids;
-	अचिन्हित is_c45:1;
-	अचिन्हित is_पूर्णांकernal:1;
-	अचिन्हित is_pseuकरो_fixed_link:1;
-	अचिन्हित is_gigabit_capable:1;
-	अचिन्हित has_fixups:1;
-	अचिन्हित suspended:1;
-	अचिन्हित suspended_by_mdio_bus:1;
-	अचिन्हित sysfs_links:1;
-	अचिन्हित loopback_enabled:1;
-	अचिन्हित करोwnshअगरted_rate:1;
-	अचिन्हित is_on_sfp_module:1;
-	अचिन्हित mac_managed_pm:1;
+	struct phy_c45_device_ids c45_ids;
+	unsigned is_c45:1;
+	unsigned is_internal:1;
+	unsigned is_pseudo_fixed_link:1;
+	unsigned is_gigabit_capable:1;
+	unsigned has_fixups:1;
+	unsigned suspended:1;
+	unsigned suspended_by_mdio_bus:1;
+	unsigned sysfs_links:1;
+	unsigned loopback_enabled:1;
+	unsigned downshifted_rate:1;
+	unsigned is_on_sfp_module:1;
+	unsigned mac_managed_pm:1;
 
-	अचिन्हित स्वतःneg:1;
-	/* The most recently पढ़ो link state */
-	अचिन्हित link:1;
-	अचिन्हित स्वतःneg_complete:1;
+	unsigned autoneg:1;
+	/* The most recently read link state */
+	unsigned link:1;
+	unsigned autoneg_complete:1;
 
 	/* Interrupts are enabled */
-	अचिन्हित पूर्णांकerrupts:1;
+	unsigned interrupts:1;
 
-	क्रमागत phy_state state;
+	enum phy_state state;
 
 	u32 dev_flags;
 
-	phy_पूर्णांकerface_t पूर्णांकerface;
+	phy_interface_t interface;
 
 	/*
-	 * क्रमced speed & duplex (no स्वतःneg)
-	 * partner speed & duplex & छोड़ो (स्वतःneg)
+	 * forced speed & duplex (no autoneg)
+	 * partner speed & duplex & pause (autoneg)
 	 */
-	पूर्णांक speed;
-	पूर्णांक duplex;
-	पूर्णांक port;
-	पूर्णांक छोड़ो;
-	पूर्णांक asym_छोड़ो;
+	int speed;
+	int duplex;
+	int port;
+	int pause;
+	int asym_pause;
 	u8 master_slave_get;
 	u8 master_slave_set;
 	u8 master_slave_state;
 
 	/* Union of PHY and Attached devices' supported link modes */
-	/* See ethtool.h क्रम more info */
+	/* See ethtool.h for more info */
 	__ETHTOOL_DECLARE_LINK_MODE_MASK(supported);
 	__ETHTOOL_DECLARE_LINK_MODE_MASK(advertising);
 	__ETHTOOL_DECLARE_LINK_MODE_MASK(lp_advertising);
-	/* used with phy_speed_करोwn */
+	/* used with phy_speed_down */
 	__ETHTOOL_DECLARE_LINK_MODE_MASK(adv_old);
 
 	/* Energy efficient ethernet modes which should be prohibited */
 	u32 eee_broken_modes;
 
-#अगर_घोषित CONFIG_LED_TRIGGER_PHY
-	काष्ठा phy_led_trigger *phy_led_triggers;
-	अचिन्हित पूर्णांक phy_num_led_triggers;
-	काष्ठा phy_led_trigger *last_triggered;
+#ifdef CONFIG_LED_TRIGGER_PHY
+	struct phy_led_trigger *phy_led_triggers;
+	unsigned int phy_num_led_triggers;
+	struct phy_led_trigger *last_triggered;
 
-	काष्ठा phy_led_trigger *led_link_trigger;
-#पूर्ण_अगर
+	struct phy_led_trigger *led_link_trigger;
+#endif
 
 	/*
-	 * Interrupt number क्रम this PHY
-	 * -1 means no पूर्णांकerrupt
+	 * Interrupt number for this PHY
+	 * -1 means no interrupt
 	 */
-	पूर्णांक irq;
+	int irq;
 
-	/* निजी data poपूर्णांकer */
-	/* For use by PHYs to मुख्यtain extra state */
-	व्योम *priv;
+	/* private data pointer */
+	/* For use by PHYs to maintain extra state */
+	void *priv;
 
-	/* shared data poपूर्णांकer */
+	/* shared data pointer */
 	/* For use by PHYs inside the same package that need a shared state. */
-	काष्ठा phy_package_shared *shared;
+	struct phy_package_shared *shared;
 
 	/* Reporting cable test results */
-	काष्ठा sk_buff *skb;
-	व्योम *ehdr;
-	काष्ठा nlattr *nest;
+	struct sk_buff *skb;
+	void *ehdr;
+	struct nlattr *nest;
 
-	/* Interrupt and Polling infraकाष्ठाure */
-	काष्ठा delayed_work state_queue;
+	/* Interrupt and Polling infrastructure */
+	struct delayed_work state_queue;
 
-	काष्ठा mutex lock;
+	struct mutex lock;
 
-	/* This may be modअगरied under the rtnl lock */
+	/* This may be modified under the rtnl lock */
 	bool sfp_bus_attached;
-	काष्ठा sfp_bus *sfp_bus;
-	काष्ठा phylink *phylink;
-	काष्ठा net_device *attached_dev;
-	काष्ठा mii_बारtamper *mii_ts;
+	struct sfp_bus *sfp_bus;
+	struct phylink *phylink;
+	struct net_device *attached_dev;
+	struct mii_timestamper *mii_ts;
 
 	u8 mdix;
 	u8 mdix_ctrl;
 
-	व्योम (*phy_link_change)(काष्ठा phy_device *phydev, bool up);
-	व्योम (*adjust_link)(काष्ठा net_device *dev);
+	void (*phy_link_change)(struct phy_device *phydev, bool up);
+	void (*adjust_link)(struct net_device *dev);
 
-#अगर IS_ENABLED(CONFIG_MACSEC)
+#if IS_ENABLED(CONFIG_MACSEC)
 	/* MACsec management functions */
-	स्थिर काष्ठा macsec_ops *macsec_ops;
-#पूर्ण_अगर
-पूर्ण;
+	const struct macsec_ops *macsec_ops;
+#endif
+};
 
-अटल अंतरभूत काष्ठा phy_device *to_phy_device(स्थिर काष्ठा device *dev)
-अणु
-	वापस container_of(to_mdio_device(dev), काष्ठा phy_device, mdio);
-पूर्ण
+static inline struct phy_device *to_phy_device(const struct device *dev)
+{
+	return container_of(to_mdio_device(dev), struct phy_device, mdio);
+}
 
 /**
- * काष्ठा phy_tdr_config - Configuration of a TDR raw test
+ * struct phy_tdr_config - Configuration of a TDR raw test
  *
- * @first: Distance क्रम first data collection poपूर्णांक
- * @last: Distance क्रम last data collection poपूर्णांक
- * @step: Step between data collection poपूर्णांकs
- * @pair: Biपंचांगap of cable pairs to collect data क्रम
+ * @first: Distance for first data collection point
+ * @last: Distance for last data collection point
+ * @step: Step between data collection points
+ * @pair: Bitmap of cable pairs to collect data for
  *
- * A काष्ठाure containing possible configuration parameters
- * क्रम a TDR cable test. The driver करोes not need to implement
+ * A structure containing possible configuration parameters
+ * for a TDR cable test. The driver does not need to implement
  * all the parameters, but should report what is actually used.
- * All distances are in cenसमयters.
+ * All distances are in centimeters.
  */
-काष्ठा phy_tdr_config अणु
+struct phy_tdr_config {
 	u32 first;
 	u32 last;
 	u32 step;
 	s8 pair;
-पूर्ण;
-#घोषणा PHY_PAIR_ALL -1
+};
+#define PHY_PAIR_ALL -1
 
 /**
- * काष्ठा phy_driver - Driver काष्ठाure क्रम a particular PHY type
+ * struct phy_driver - Driver structure for a particular PHY type
  *
  * @mdiodrv: Data common to all MDIO devices
- * @phy_id: The result of पढ़ोing the UID रेजिस्टरs of this PHY
+ * @phy_id: The result of reading the UID registers of this PHY
  *   type, and ANDing them with the phy_id_mask.  This driver
- *   only works क्रम PHYs with IDs which match this field
- * @name: The मित्रly name of this PHY type
+ *   only works for PHYs with IDs which match this field
+ * @name: The friendly name of this PHY type
  * @phy_id_mask: Defines the important bits of the phy_id
  * @features: A mandatory list of features (speed, duplex, etc)
  *   supported by this PHY
  * @flags: A bitfield defining certain other features this PHY
- *   supports (like पूर्णांकerrupts)
+ *   supports (like interrupts)
  * @driver_data: Static driver data
  *
- * All functions are optional. If config_aneg or पढ़ो_status
+ * All functions are optional. If config_aneg or read_status
  * are not implemented, the phy core uses the genphy versions.
  * Note that none of these functions should be called from
- * पूर्णांकerrupt समय. The goal is क्रम the bus पढ़ो/ग_लिखो functions
+ * interrupt time. The goal is for the bus read/write functions
  * to be able to block when the bus transaction is happening,
- * and be मुक्तd up by an पूर्णांकerrupt (The MPC85xx has this ability,
+ * and be freed up by an interrupt (The MPC85xx has this ability,
  * though it is not currently supported in the driver).
  */
-काष्ठा phy_driver अणु
-	काष्ठा mdio_driver_common mdiodrv;
+struct phy_driver {
+	struct mdio_driver_common mdiodrv;
 	u32 phy_id;
-	अक्षर *name;
+	char *name;
 	u32 phy_id_mask;
-	स्थिर अचिन्हित दीर्घ * स्थिर features;
+	const unsigned long * const features;
 	u32 flags;
-	स्थिर व्योम *driver_data;
+	const void *driver_data;
 
 	/**
 	 * @soft_reset: Called to issue a PHY software reset
 	 */
-	पूर्णांक (*soft_reset)(काष्ठा phy_device *phydev);
+	int (*soft_reset)(struct phy_device *phydev);
 
 	/**
 	 * @config_init: Called to initialize the PHY,
 	 * including after a reset
 	 */
-	पूर्णांक (*config_init)(काष्ठा phy_device *phydev);
+	int (*config_init)(struct phy_device *phydev);
 
 	/**
 	 * @probe: Called during discovery.  Used to set
-	 * up device-specअगरic काष्ठाures, अगर any
+	 * up device-specific structures, if any
 	 */
-	पूर्णांक (*probe)(काष्ठा phy_device *phydev);
+	int (*probe)(struct phy_device *phydev);
 
 	/**
 	 * @get_features: Probe the hardware to determine what
 	 * abilities it has.  Should only set phydev->supported.
 	 */
-	पूर्णांक (*get_features)(काष्ठा phy_device *phydev);
+	int (*get_features)(struct phy_device *phydev);
 
 	/* PHY Power Management */
-	/** @suspend: Suspend the hardware, saving state अगर needed */
-	पूर्णांक (*suspend)(काष्ठा phy_device *phydev);
-	/** @resume: Resume the hardware, restoring state अगर needed */
-	पूर्णांक (*resume)(काष्ठा phy_device *phydev);
+	/** @suspend: Suspend the hardware, saving state if needed */
+	int (*suspend)(struct phy_device *phydev);
+	/** @resume: Resume the hardware, restoring state if needed */
+	int (*resume)(struct phy_device *phydev);
 
 	/**
 	 * @config_aneg: Configures the advertisement and resets
-	 * स्वतःnegotiation अगर phydev->स्वतःneg is on,
-	 * क्रमces the speed to the current settings in phydev
-	 * अगर phydev->स्वतःneg is off
+	 * autonegotiation if phydev->autoneg is on,
+	 * forces the speed to the current settings in phydev
+	 * if phydev->autoneg is off
 	 */
-	पूर्णांक (*config_aneg)(काष्ठा phy_device *phydev);
+	int (*config_aneg)(struct phy_device *phydev);
 
-	/** @aneg_करोne: Determines the स्वतः negotiation result */
-	पूर्णांक (*aneg_करोne)(काष्ठा phy_device *phydev);
+	/** @aneg_done: Determines the auto negotiation result */
+	int (*aneg_done)(struct phy_device *phydev);
 
-	/** @पढ़ो_status: Determines the negotiated speed and duplex */
-	पूर्णांक (*पढ़ो_status)(काष्ठा phy_device *phydev);
+	/** @read_status: Determines the negotiated speed and duplex */
+	int (*read_status)(struct phy_device *phydev);
 
 	/**
-	 * @config_पूर्णांकr: Enables or disables पूर्णांकerrupts.
-	 * It should also clear any pending पूर्णांकerrupts prior to enabling the
+	 * @config_intr: Enables or disables interrupts.
+	 * It should also clear any pending interrupts prior to enabling the
 	 * IRQs and after disabling them.
 	 */
-	पूर्णांक (*config_पूर्णांकr)(काष्ठा phy_device *phydev);
+	int (*config_intr)(struct phy_device *phydev);
 
-	/** @handle_पूर्णांकerrupt: Override शेष पूर्णांकerrupt handling */
-	irqवापस_t (*handle_पूर्णांकerrupt)(काष्ठा phy_device *phydev);
+	/** @handle_interrupt: Override default interrupt handling */
+	irqreturn_t (*handle_interrupt)(struct phy_device *phydev);
 
-	/** @हटाओ: Clears up any memory अगर needed */
-	व्योम (*हटाओ)(काष्ठा phy_device *phydev);
+	/** @remove: Clears up any memory if needed */
+	void (*remove)(struct phy_device *phydev);
 
 	/**
-	 * @match_phy_device: Returns true अगर this is a suitable
-	 * driver क्रम the given phydev.	 If शून्य, matching is based on
+	 * @match_phy_device: Returns true if this is a suitable
+	 * driver for the given phydev.	 If NULL, matching is based on
 	 * phy_id and phy_id_mask.
 	 */
-	पूर्णांक (*match_phy_device)(काष्ठा phy_device *phydev);
+	int (*match_phy_device)(struct phy_device *phydev);
 
 	/**
 	 * @set_wol: Some devices (e.g. qnap TS-119P II) require PHY
-	 * रेजिस्टर changes to enable Wake on LAN, so set_wol is
+	 * register changes to enable Wake on LAN, so set_wol is
 	 * provided to be called in the ethernet driver's set_wol
 	 * function.
 	 */
-	पूर्णांक (*set_wol)(काष्ठा phy_device *dev, काष्ठा ethtool_wolinfo *wol);
+	int (*set_wol)(struct phy_device *dev, struct ethtool_wolinfo *wol);
 
 	/**
-	 * @get_wol: See set_wol, but क्रम checking whether Wake on LAN
+	 * @get_wol: See set_wol, but for checking whether Wake on LAN
 	 * is enabled.
 	 */
-	व्योम (*get_wol)(काष्ठा phy_device *dev, काष्ठा ethtool_wolinfo *wol);
+	void (*get_wol)(struct phy_device *dev, struct ethtool_wolinfo *wol);
 
 	/**
-	 * @link_change_notअगरy: Called to inक्रमm a PHY device driver
+	 * @link_change_notify: Called to inform a PHY device driver
 	 * when the core is about to change the link state. This
-	 * callback is supposed to be used as fixup hook क्रम drivers
+	 * callback is supposed to be used as fixup hook for drivers
 	 * that need to take action when the link state
 	 * changes. Drivers are by no means allowed to mess with the
-	 * PHY device काष्ठाure in their implementations.
+	 * PHY device structure in their implementations.
 	 */
-	व्योम (*link_change_notअगरy)(काष्ठा phy_device *dev);
+	void (*link_change_notify)(struct phy_device *dev);
 
 	/**
-	 * @पढ़ो_mmd: PHY specअगरic driver override क्रम पढ़ोing a MMD
-	 * रेजिस्टर.  This function is optional क्रम PHY specअगरic
-	 * drivers.  When not provided, the शेष MMD पढ़ो function
-	 * will be used by phy_पढ़ो_mmd(), which will use either a
-	 * direct पढ़ो क्रम Clause 45 PHYs or an indirect पढ़ो क्रम
+	 * @read_mmd: PHY specific driver override for reading a MMD
+	 * register.  This function is optional for PHY specific
+	 * drivers.  When not provided, the default MMD read function
+	 * will be used by phy_read_mmd(), which will use either a
+	 * direct read for Clause 45 PHYs or an indirect read for
 	 * Clause 22 PHYs.  devnum is the MMD device number within the
-	 * PHY device, regnum is the रेजिस्टर within the selected MMD
+	 * PHY device, regnum is the register within the selected MMD
 	 * device.
 	 */
-	पूर्णांक (*पढ़ो_mmd)(काष्ठा phy_device *dev, पूर्णांक devnum, u16 regnum);
+	int (*read_mmd)(struct phy_device *dev, int devnum, u16 regnum);
 
 	/**
-	 * @ग_लिखो_mmd: PHY specअगरic driver override क्रम writing a MMD
-	 * रेजिस्टर.  This function is optional क्रम PHY specअगरic
-	 * drivers.  When not provided, the शेष MMD ग_लिखो function
-	 * will be used by phy_ग_लिखो_mmd(), which will use either a
-	 * direct ग_लिखो क्रम Clause 45 PHYs, or an indirect ग_लिखो क्रम
+	 * @write_mmd: PHY specific driver override for writing a MMD
+	 * register.  This function is optional for PHY specific
+	 * drivers.  When not provided, the default MMD write function
+	 * will be used by phy_write_mmd(), which will use either a
+	 * direct write for Clause 45 PHYs, or an indirect write for
 	 * Clause 22 PHYs.  devnum is the MMD device number within the
-	 * PHY device, regnum is the रेजिस्टर within the selected MMD
+	 * PHY device, regnum is the register within the selected MMD
 	 * device.  val is the value to be written.
 	 */
-	पूर्णांक (*ग_लिखो_mmd)(काष्ठा phy_device *dev, पूर्णांक devnum, u16 regnum,
+	int (*write_mmd)(struct phy_device *dev, int devnum, u16 regnum,
 			 u16 val);
 
-	/** @पढ़ो_page: Return the current PHY रेजिस्टर page number */
-	पूर्णांक (*पढ़ो_page)(काष्ठा phy_device *dev);
-	/** @ग_लिखो_page: Set the current PHY रेजिस्टर page number */
-	पूर्णांक (*ग_लिखो_page)(काष्ठा phy_device *dev, पूर्णांक page);
+	/** @read_page: Return the current PHY register page number */
+	int (*read_page)(struct phy_device *dev);
+	/** @write_page: Set the current PHY register page number */
+	int (*write_page)(struct phy_device *dev, int page);
 
 	/**
 	 * @module_info: Get the size and type of the eeprom contained
 	 * within a plug-in module
 	 */
-	पूर्णांक (*module_info)(काष्ठा phy_device *dev,
-			   काष्ठा ethtool_modinfo *modinfo);
+	int (*module_info)(struct phy_device *dev,
+			   struct ethtool_modinfo *modinfo);
 
 	/**
-	 * @module_eeprom: Get the eeprom inक्रमmation from the plug-in
+	 * @module_eeprom: Get the eeprom information from the plug-in
 	 * module
 	 */
-	पूर्णांक (*module_eeprom)(काष्ठा phy_device *dev,
-			     काष्ठा ethtool_eeprom *ee, u8 *data);
+	int (*module_eeprom)(struct phy_device *dev,
+			     struct ethtool_eeprom *ee, u8 *data);
 
 	/** @cable_test_start: Start a cable test */
-	पूर्णांक (*cable_test_start)(काष्ठा phy_device *dev);
+	int (*cable_test_start)(struct phy_device *dev);
 
 	/**  @cable_test_tdr_start: Start a raw TDR cable test */
-	पूर्णांक (*cable_test_tdr_start)(काष्ठा phy_device *dev,
-				    स्थिर काष्ठा phy_tdr_config *config);
+	int (*cable_test_tdr_start)(struct phy_device *dev,
+				    const struct phy_tdr_config *config);
 
 	/**
-	 * @cable_test_get_status: Once per second, or on पूर्णांकerrupt,
+	 * @cable_test_get_status: Once per second, or on interrupt,
 	 * request the status of the test.
 	 */
-	पूर्णांक (*cable_test_get_status)(काष्ठा phy_device *dev, bool *finished);
+	int (*cable_test_get_status)(struct phy_device *dev, bool *finished);
 
 	/* Get statistics from the PHY using ethtool */
 	/** @get_sset_count: Number of statistic counters */
-	पूर्णांक (*get_sset_count)(काष्ठा phy_device *dev);
+	int (*get_sset_count)(struct phy_device *dev);
 	/** @get_strings: Names of the statistic counters */
-	व्योम (*get_strings)(काष्ठा phy_device *dev, u8 *data);
+	void (*get_strings)(struct phy_device *dev, u8 *data);
 	/** @get_stats: Return the statistic counter values */
-	व्योम (*get_stats)(काष्ठा phy_device *dev,
-			  काष्ठा ethtool_stats *stats, u64 *data);
+	void (*get_stats)(struct phy_device *dev,
+			  struct ethtool_stats *stats, u64 *data);
 
 	/* Get and Set PHY tunables */
 	/** @get_tunable: Return the value of a tunable */
-	पूर्णांक (*get_tunable)(काष्ठा phy_device *dev,
-			   काष्ठा ethtool_tunable *tuna, व्योम *data);
+	int (*get_tunable)(struct phy_device *dev,
+			   struct ethtool_tunable *tuna, void *data);
 	/** @set_tunable: Set the value of a tunable */
-	पूर्णांक (*set_tunable)(काष्ठा phy_device *dev,
-			    काष्ठा ethtool_tunable *tuna,
-			    स्थिर व्योम *data);
+	int (*set_tunable)(struct phy_device *dev,
+			    struct ethtool_tunable *tuna,
+			    const void *data);
 	/** @set_loopback: Set the loopback mood of the PHY */
-	पूर्णांक (*set_loopback)(काष्ठा phy_device *dev, bool enable);
-	/** @get_sqi: Get the संकेत quality indication */
-	पूर्णांक (*get_sqi)(काष्ठा phy_device *dev);
-	/** @get_sqi_max: Get the maximum संकेत quality indication */
-	पूर्णांक (*get_sqi_max)(काष्ठा phy_device *dev);
-पूर्ण;
-#घोषणा to_phy_driver(d) container_of(to_mdio_common_driver(d),		\
-				      काष्ठा phy_driver, mdiodrv)
+	int (*set_loopback)(struct phy_device *dev, bool enable);
+	/** @get_sqi: Get the signal quality indication */
+	int (*get_sqi)(struct phy_device *dev);
+	/** @get_sqi_max: Get the maximum signal quality indication */
+	int (*get_sqi_max)(struct phy_device *dev);
+};
+#define to_phy_driver(d) container_of(to_mdio_common_driver(d),		\
+				      struct phy_driver, mdiodrv)
 
-#घोषणा PHY_ANY_ID "MATCH ANY PHY"
-#घोषणा PHY_ANY_UID 0xffffffff
+#define PHY_ANY_ID "MATCH ANY PHY"
+#define PHY_ANY_UID 0xffffffff
 
-#घोषणा PHY_ID_MATCH_EXACT(id) .phy_id = (id), .phy_id_mask = GENMASK(31, 0)
-#घोषणा PHY_ID_MATCH_MODEL(id) .phy_id = (id), .phy_id_mask = GENMASK(31, 4)
-#घोषणा PHY_ID_MATCH_VENDOR(id) .phy_id = (id), .phy_id_mask = GENMASK(31, 10)
+#define PHY_ID_MATCH_EXACT(id) .phy_id = (id), .phy_id_mask = GENMASK(31, 0)
+#define PHY_ID_MATCH_MODEL(id) .phy_id = (id), .phy_id_mask = GENMASK(31, 4)
+#define PHY_ID_MATCH_VENDOR(id) .phy_id = (id), .phy_id_mask = GENMASK(31, 10)
 
-/* A Structure क्रम boards to रेजिस्टर fixups with the PHY Lib */
-काष्ठा phy_fixup अणु
-	काष्ठा list_head list;
-	अक्षर bus_id[MII_BUS_ID_SIZE + 3];
+/* A Structure for boards to register fixups with the PHY Lib */
+struct phy_fixup {
+	struct list_head list;
+	char bus_id[MII_BUS_ID_SIZE + 3];
 	u32 phy_uid;
 	u32 phy_uid_mask;
-	पूर्णांक (*run)(काष्ठा phy_device *phydev);
-पूर्ण;
+	int (*run)(struct phy_device *phydev);
+};
 
-स्थिर अक्षर *phy_speed_to_str(पूर्णांक speed);
-स्थिर अक्षर *phy_duplex_to_str(अचिन्हित पूर्णांक duplex);
+const char *phy_speed_to_str(int speed);
+const char *phy_duplex_to_str(unsigned int duplex);
 
-/* A काष्ठाure क्रम mapping a particular speed and duplex
+/* A structure for mapping a particular speed and duplex
  * combination to a particular SUPPORTED and ADVERTISED value
  */
-काष्ठा phy_setting अणु
+struct phy_setting {
 	u32 speed;
 	u8 duplex;
 	u8 bit;
-पूर्ण;
+};
 
-स्थिर काष्ठा phy_setting *
-phy_lookup_setting(पूर्णांक speed, पूर्णांक duplex, स्थिर अचिन्हित दीर्घ *mask,
+const struct phy_setting *
+phy_lookup_setting(int speed, int duplex, const unsigned long *mask,
 		   bool exact);
-माप_प्रकार phy_speeds(अचिन्हित पूर्णांक *speeds, माप_प्रकार size,
-		  अचिन्हित दीर्घ *mask);
-व्योम of_set_phy_supported(काष्ठा phy_device *phydev);
-व्योम of_set_phy_eee_broken(काष्ठा phy_device *phydev);
-पूर्णांक phy_speed_करोwn_core(काष्ठा phy_device *phydev);
+size_t phy_speeds(unsigned int *speeds, size_t size,
+		  unsigned long *mask);
+void of_set_phy_supported(struct phy_device *phydev);
+void of_set_phy_eee_broken(struct phy_device *phydev);
+int phy_speed_down_core(struct phy_device *phydev);
 
 /**
  * phy_is_started - Convenience function to check whether PHY is started
- * @phydev: The phy_device काष्ठा
+ * @phydev: The phy_device struct
  */
-अटल अंतरभूत bool phy_is_started(काष्ठा phy_device *phydev)
-अणु
-	वापस phydev->state >= PHY_UP;
-पूर्ण
+static inline bool phy_is_started(struct phy_device *phydev)
+{
+	return phydev->state >= PHY_UP;
+}
 
-व्योम phy_resolve_aneg_छोड़ो(काष्ठा phy_device *phydev);
-व्योम phy_resolve_aneg_linkmode(काष्ठा phy_device *phydev);
-व्योम phy_check_करोwnshअगरt(काष्ठा phy_device *phydev);
+void phy_resolve_aneg_pause(struct phy_device *phydev);
+void phy_resolve_aneg_linkmode(struct phy_device *phydev);
+void phy_check_downshift(struct phy_device *phydev);
 
 /**
- * phy_पढ़ो - Convenience function क्रम पढ़ोing a given PHY रेजिस्टर
- * @phydev: the phy_device काष्ठा
- * @regnum: रेजिस्टर number to पढ़ो
+ * phy_read - Convenience function for reading a given PHY register
+ * @phydev: the phy_device struct
+ * @regnum: register number to read
  *
- * NOTE: MUST NOT be called from पूर्णांकerrupt context,
- * because the bus पढ़ो/ग_लिखो functions may रुको क्रम an पूर्णांकerrupt
+ * NOTE: MUST NOT be called from interrupt context,
+ * because the bus read/write functions may wait for an interrupt
  * to conclude the operation.
  */
-अटल अंतरभूत पूर्णांक phy_पढ़ो(काष्ठा phy_device *phydev, u32 regnum)
-अणु
-	वापस mdiobus_पढ़ो(phydev->mdio.bus, phydev->mdio.addr, regnum);
-पूर्ण
+static inline int phy_read(struct phy_device *phydev, u32 regnum)
+{
+	return mdiobus_read(phydev->mdio.bus, phydev->mdio.addr, regnum);
+}
 
-#घोषणा phy_पढ़ो_poll_समयout(phydev, regnum, val, cond, sleep_us, \
-				समयout_us, sleep_beक्रमe_पढ़ो) \
-(अणु \
-	पूर्णांक __ret = पढ़ो_poll_समयout(phy_पढ़ो, val, (cond) || val < 0, \
-		sleep_us, समयout_us, sleep_beक्रमe_पढ़ो, phydev, regnum); \
-	अगर (val <  0) \
+#define phy_read_poll_timeout(phydev, regnum, val, cond, sleep_us, \
+				timeout_us, sleep_before_read) \
+({ \
+	int __ret = read_poll_timeout(phy_read, val, (cond) || val < 0, \
+		sleep_us, timeout_us, sleep_before_read, phydev, regnum); \
+	if (val <  0) \
 		__ret = val; \
-	अगर (__ret) \
+	if (__ret) \
 		phydev_err(phydev, "%s failed: %d\n", __func__, __ret); \
 	__ret; \
-पूर्ण)
+})
 
 
 /**
- * __phy_पढ़ो - convenience function क्रम पढ़ोing a given PHY रेजिस्टर
- * @phydev: the phy_device काष्ठा
- * @regnum: रेजिस्टर number to पढ़ो
+ * __phy_read - convenience function for reading a given PHY register
+ * @phydev: the phy_device struct
+ * @regnum: register number to read
  *
  * The caller must have taken the MDIO bus lock.
  */
-अटल अंतरभूत पूर्णांक __phy_पढ़ो(काष्ठा phy_device *phydev, u32 regnum)
-अणु
-	वापस __mdiobus_पढ़ो(phydev->mdio.bus, phydev->mdio.addr, regnum);
-पूर्ण
+static inline int __phy_read(struct phy_device *phydev, u32 regnum)
+{
+	return __mdiobus_read(phydev->mdio.bus, phydev->mdio.addr, regnum);
+}
 
 /**
- * phy_ग_लिखो - Convenience function क्रम writing a given PHY रेजिस्टर
- * @phydev: the phy_device काष्ठा
- * @regnum: रेजिस्टर number to ग_लिखो
- * @val: value to ग_लिखो to @regnum
+ * phy_write - Convenience function for writing a given PHY register
+ * @phydev: the phy_device struct
+ * @regnum: register number to write
+ * @val: value to write to @regnum
  *
- * NOTE: MUST NOT be called from पूर्णांकerrupt context,
- * because the bus पढ़ो/ग_लिखो functions may रुको क्रम an पूर्णांकerrupt
+ * NOTE: MUST NOT be called from interrupt context,
+ * because the bus read/write functions may wait for an interrupt
  * to conclude the operation.
  */
-अटल अंतरभूत पूर्णांक phy_ग_लिखो(काष्ठा phy_device *phydev, u32 regnum, u16 val)
-अणु
-	वापस mdiobus_ग_लिखो(phydev->mdio.bus, phydev->mdio.addr, regnum, val);
-पूर्ण
+static inline int phy_write(struct phy_device *phydev, u32 regnum, u16 val)
+{
+	return mdiobus_write(phydev->mdio.bus, phydev->mdio.addr, regnum, val);
+}
 
 /**
- * __phy_ग_लिखो - Convenience function क्रम writing a given PHY रेजिस्टर
- * @phydev: the phy_device काष्ठा
- * @regnum: रेजिस्टर number to ग_लिखो
- * @val: value to ग_लिखो to @regnum
+ * __phy_write - Convenience function for writing a given PHY register
+ * @phydev: the phy_device struct
+ * @regnum: register number to write
+ * @val: value to write to @regnum
  *
  * The caller must have taken the MDIO bus lock.
  */
-अटल अंतरभूत पूर्णांक __phy_ग_लिखो(काष्ठा phy_device *phydev, u32 regnum, u16 val)
-अणु
-	वापस __mdiobus_ग_लिखो(phydev->mdio.bus, phydev->mdio.addr, regnum,
+static inline int __phy_write(struct phy_device *phydev, u32 regnum, u16 val)
+{
+	return __mdiobus_write(phydev->mdio.bus, phydev->mdio.addr, regnum,
 			       val);
-पूर्ण
+}
 
 /**
- * __phy_modअगरy_changed() - Convenience function क्रम modअगरying a PHY रेजिस्टर
- * @phydev: a poपूर्णांकer to a &काष्ठा phy_device
- * @regnum: रेजिस्टर number
+ * __phy_modify_changed() - Convenience function for modifying a PHY register
+ * @phydev: a pointer to a &struct phy_device
+ * @regnum: register number
  * @mask: bit mask of bits to clear
  * @set: bit mask of bits to set
  *
- * Unlocked helper function which allows a PHY रेजिस्टर to be modअगरied as
- * new रेजिस्टर value = (old रेजिस्टर value & ~mask) | set
+ * Unlocked helper function which allows a PHY register to be modified as
+ * new register value = (old register value & ~mask) | set
  *
- * Returns negative त्रुटि_सं, 0 अगर there was no change, and 1 in हाल of change
+ * Returns negative errno, 0 if there was no change, and 1 in case of change
  */
-अटल अंतरभूत पूर्णांक __phy_modअगरy_changed(काष्ठा phy_device *phydev, u32 regnum,
+static inline int __phy_modify_changed(struct phy_device *phydev, u32 regnum,
 				       u16 mask, u16 set)
-अणु
-	वापस __mdiobus_modअगरy_changed(phydev->mdio.bus, phydev->mdio.addr,
+{
+	return __mdiobus_modify_changed(phydev->mdio.bus, phydev->mdio.addr,
 					regnum, mask, set);
-पूर्ण
+}
 
 /*
- * phy_पढ़ो_mmd - Convenience function क्रम पढ़ोing a रेजिस्टर
+ * phy_read_mmd - Convenience function for reading a register
  * from an MMD on a given PHY.
  */
-पूर्णांक phy_पढ़ो_mmd(काष्ठा phy_device *phydev, पूर्णांक devad, u32 regnum);
+int phy_read_mmd(struct phy_device *phydev, int devad, u32 regnum);
 
 /**
- * phy_पढ़ो_mmd_poll_समयout - Periodically poll a PHY रेजिस्टर until a
- *                             condition is met or a समयout occurs
+ * phy_read_mmd_poll_timeout - Periodically poll a PHY register until a
+ *                             condition is met or a timeout occurs
  *
- * @phydev: The phy_device काष्ठा
- * @devaddr: The MMD to पढ़ो from
- * @regnum: The रेजिस्टर on the MMD to पढ़ो
- * @val: Variable to पढ़ो the रेजिस्टर पूर्णांकo
+ * @phydev: The phy_device struct
+ * @devaddr: The MMD to read from
+ * @regnum: The register on the MMD to read
+ * @val: Variable to read the register into
  * @cond: Break condition (usually involving @val)
- * @sleep_us: Maximum समय to sleep between पढ़ोs in us (0
+ * @sleep_us: Maximum time to sleep between reads in us (0
  *            tight-loops).  Should be less than ~20ms since usleep_range
- *            is used (see Documentation/समयrs/समयrs-howto.rst).
- * @समयout_us: Timeout in us, 0 means never समयout
- * @sleep_beक्रमe_पढ़ो: अगर it is true, sleep @sleep_us beक्रमe पढ़ो.
- * Returns 0 on success and -ETIMEDOUT upon a समयout. In either
- * हाल, the last पढ़ो value at @args is stored in @val. Must not
- * be called from atomic context अगर sleep_us or समयout_us are used.
+ *            is used (see Documentation/timers/timers-howto.rst).
+ * @timeout_us: Timeout in us, 0 means never timeout
+ * @sleep_before_read: if it is true, sleep @sleep_us before read.
+ * Returns 0 on success and -ETIMEDOUT upon a timeout. In either
+ * case, the last read value at @args is stored in @val. Must not
+ * be called from atomic context if sleep_us or timeout_us are used.
  */
-#घोषणा phy_पढ़ो_mmd_poll_समयout(phydev, devaddr, regnum, val, cond, \
-				  sleep_us, समयout_us, sleep_beक्रमe_पढ़ो) \
-(अणु \
-	पूर्णांक __ret = पढ़ो_poll_समयout(phy_पढ़ो_mmd, val, (cond) || val < 0, \
-				  sleep_us, समयout_us, sleep_beक्रमe_पढ़ो, \
+#define phy_read_mmd_poll_timeout(phydev, devaddr, regnum, val, cond, \
+				  sleep_us, timeout_us, sleep_before_read) \
+({ \
+	int __ret = read_poll_timeout(phy_read_mmd, val, (cond) || val < 0, \
+				  sleep_us, timeout_us, sleep_before_read, \
 				  phydev, devaddr, regnum); \
-	अगर (val <  0) \
+	if (val <  0) \
 		__ret = val; \
-	अगर (__ret) \
+	if (__ret) \
 		phydev_err(phydev, "%s failed: %d\n", __func__, __ret); \
 	__ret; \
-पूर्ण)
+})
 
 /*
- * __phy_पढ़ो_mmd - Convenience function क्रम पढ़ोing a रेजिस्टर
+ * __phy_read_mmd - Convenience function for reading a register
  * from an MMD on a given PHY.
  */
-पूर्णांक __phy_पढ़ो_mmd(काष्ठा phy_device *phydev, पूर्णांक devad, u32 regnum);
+int __phy_read_mmd(struct phy_device *phydev, int devad, u32 regnum);
 
 /*
- * phy_ग_लिखो_mmd - Convenience function क्रम writing a रेजिस्टर
+ * phy_write_mmd - Convenience function for writing a register
  * on an MMD on a given PHY.
  */
-पूर्णांक phy_ग_लिखो_mmd(काष्ठा phy_device *phydev, पूर्णांक devad, u32 regnum, u16 val);
+int phy_write_mmd(struct phy_device *phydev, int devad, u32 regnum, u16 val);
 
 /*
- * __phy_ग_लिखो_mmd - Convenience function क्रम writing a रेजिस्टर
+ * __phy_write_mmd - Convenience function for writing a register
  * on an MMD on a given PHY.
  */
-पूर्णांक __phy_ग_लिखो_mmd(काष्ठा phy_device *phydev, पूर्णांक devad, u32 regnum, u16 val);
+int __phy_write_mmd(struct phy_device *phydev, int devad, u32 regnum, u16 val);
 
-पूर्णांक __phy_modअगरy_changed(काष्ठा phy_device *phydev, u32 regnum, u16 mask,
+int __phy_modify_changed(struct phy_device *phydev, u32 regnum, u16 mask,
 			 u16 set);
-पूर्णांक phy_modअगरy_changed(काष्ठा phy_device *phydev, u32 regnum, u16 mask,
+int phy_modify_changed(struct phy_device *phydev, u32 regnum, u16 mask,
 		       u16 set);
-पूर्णांक __phy_modअगरy(काष्ठा phy_device *phydev, u32 regnum, u16 mask, u16 set);
-पूर्णांक phy_modअगरy(काष्ठा phy_device *phydev, u32 regnum, u16 mask, u16 set);
+int __phy_modify(struct phy_device *phydev, u32 regnum, u16 mask, u16 set);
+int phy_modify(struct phy_device *phydev, u32 regnum, u16 mask, u16 set);
 
-पूर्णांक __phy_modअगरy_mmd_changed(काष्ठा phy_device *phydev, पूर्णांक devad, u32 regnum,
+int __phy_modify_mmd_changed(struct phy_device *phydev, int devad, u32 regnum,
 			     u16 mask, u16 set);
-पूर्णांक phy_modअगरy_mmd_changed(काष्ठा phy_device *phydev, पूर्णांक devad, u32 regnum,
+int phy_modify_mmd_changed(struct phy_device *phydev, int devad, u32 regnum,
 			   u16 mask, u16 set);
-पूर्णांक __phy_modअगरy_mmd(काष्ठा phy_device *phydev, पूर्णांक devad, u32 regnum,
+int __phy_modify_mmd(struct phy_device *phydev, int devad, u32 regnum,
 		     u16 mask, u16 set);
-पूर्णांक phy_modअगरy_mmd(काष्ठा phy_device *phydev, पूर्णांक devad, u32 regnum,
+int phy_modify_mmd(struct phy_device *phydev, int devad, u32 regnum,
 		   u16 mask, u16 set);
 
 /**
- * __phy_set_bits - Convenience function क्रम setting bits in a PHY रेजिस्टर
- * @phydev: the phy_device काष्ठा
- * @regnum: रेजिस्टर number to ग_लिखो
+ * __phy_set_bits - Convenience function for setting bits in a PHY register
+ * @phydev: the phy_device struct
+ * @regnum: register number to write
  * @val: bits to set
  *
  * The caller must have taken the MDIO bus lock.
  */
-अटल अंतरभूत पूर्णांक __phy_set_bits(काष्ठा phy_device *phydev, u32 regnum, u16 val)
-अणु
-	वापस __phy_modअगरy(phydev, regnum, 0, val);
-पूर्ण
+static inline int __phy_set_bits(struct phy_device *phydev, u32 regnum, u16 val)
+{
+	return __phy_modify(phydev, regnum, 0, val);
+}
 
 /**
- * __phy_clear_bits - Convenience function क्रम clearing bits in a PHY रेजिस्टर
- * @phydev: the phy_device काष्ठा
- * @regnum: रेजिस्टर number to ग_लिखो
+ * __phy_clear_bits - Convenience function for clearing bits in a PHY register
+ * @phydev: the phy_device struct
+ * @regnum: register number to write
  * @val: bits to clear
  *
  * The caller must have taken the MDIO bus lock.
  */
-अटल अंतरभूत पूर्णांक __phy_clear_bits(काष्ठा phy_device *phydev, u32 regnum,
+static inline int __phy_clear_bits(struct phy_device *phydev, u32 regnum,
 				   u16 val)
-अणु
-	वापस __phy_modअगरy(phydev, regnum, val, 0);
-पूर्ण
+{
+	return __phy_modify(phydev, regnum, val, 0);
+}
 
 /**
- * phy_set_bits - Convenience function क्रम setting bits in a PHY रेजिस्टर
- * @phydev: the phy_device काष्ठा
- * @regnum: रेजिस्टर number to ग_लिखो
+ * phy_set_bits - Convenience function for setting bits in a PHY register
+ * @phydev: the phy_device struct
+ * @regnum: register number to write
  * @val: bits to set
  */
-अटल अंतरभूत पूर्णांक phy_set_bits(काष्ठा phy_device *phydev, u32 regnum, u16 val)
-अणु
-	वापस phy_modअगरy(phydev, regnum, 0, val);
-पूर्ण
+static inline int phy_set_bits(struct phy_device *phydev, u32 regnum, u16 val)
+{
+	return phy_modify(phydev, regnum, 0, val);
+}
 
 /**
- * phy_clear_bits - Convenience function क्रम clearing bits in a PHY रेजिस्टर
- * @phydev: the phy_device काष्ठा
- * @regnum: रेजिस्टर number to ग_लिखो
+ * phy_clear_bits - Convenience function for clearing bits in a PHY register
+ * @phydev: the phy_device struct
+ * @regnum: register number to write
  * @val: bits to clear
  */
-अटल अंतरभूत पूर्णांक phy_clear_bits(काष्ठा phy_device *phydev, u32 regnum, u16 val)
-अणु
-	वापस phy_modअगरy(phydev, regnum, val, 0);
-पूर्ण
+static inline int phy_clear_bits(struct phy_device *phydev, u32 regnum, u16 val)
+{
+	return phy_modify(phydev, regnum, val, 0);
+}
 
 /**
- * __phy_set_bits_mmd - Convenience function क्रम setting bits in a रेजिस्टर
+ * __phy_set_bits_mmd - Convenience function for setting bits in a register
  * on MMD
- * @phydev: the phy_device काष्ठा
- * @devad: the MMD containing रेजिस्टर to modअगरy
- * @regnum: रेजिस्टर number to modअगरy
+ * @phydev: the phy_device struct
+ * @devad: the MMD containing register to modify
+ * @regnum: register number to modify
  * @val: bits to set
  *
  * The caller must have taken the MDIO bus lock.
  */
-अटल अंतरभूत पूर्णांक __phy_set_bits_mmd(काष्ठा phy_device *phydev, पूर्णांक devad,
+static inline int __phy_set_bits_mmd(struct phy_device *phydev, int devad,
 		u32 regnum, u16 val)
-अणु
-	वापस __phy_modअगरy_mmd(phydev, devad, regnum, 0, val);
-पूर्ण
+{
+	return __phy_modify_mmd(phydev, devad, regnum, 0, val);
+}
 
 /**
- * __phy_clear_bits_mmd - Convenience function क्रम clearing bits in a रेजिस्टर
+ * __phy_clear_bits_mmd - Convenience function for clearing bits in a register
  * on MMD
- * @phydev: the phy_device काष्ठा
- * @devad: the MMD containing रेजिस्टर to modअगरy
- * @regnum: रेजिस्टर number to modअगरy
+ * @phydev: the phy_device struct
+ * @devad: the MMD containing register to modify
+ * @regnum: register number to modify
  * @val: bits to clear
  *
  * The caller must have taken the MDIO bus lock.
  */
-अटल अंतरभूत पूर्णांक __phy_clear_bits_mmd(काष्ठा phy_device *phydev, पूर्णांक devad,
+static inline int __phy_clear_bits_mmd(struct phy_device *phydev, int devad,
 		u32 regnum, u16 val)
-अणु
-	वापस __phy_modअगरy_mmd(phydev, devad, regnum, val, 0);
-पूर्ण
+{
+	return __phy_modify_mmd(phydev, devad, regnum, val, 0);
+}
 
 /**
- * phy_set_bits_mmd - Convenience function क्रम setting bits in a रेजिस्टर
+ * phy_set_bits_mmd - Convenience function for setting bits in a register
  * on MMD
- * @phydev: the phy_device काष्ठा
- * @devad: the MMD containing रेजिस्टर to modअगरy
- * @regnum: रेजिस्टर number to modअगरy
+ * @phydev: the phy_device struct
+ * @devad: the MMD containing register to modify
+ * @regnum: register number to modify
  * @val: bits to set
  */
-अटल अंतरभूत पूर्णांक phy_set_bits_mmd(काष्ठा phy_device *phydev, पूर्णांक devad,
+static inline int phy_set_bits_mmd(struct phy_device *phydev, int devad,
 		u32 regnum, u16 val)
-अणु
-	वापस phy_modअगरy_mmd(phydev, devad, regnum, 0, val);
-पूर्ण
+{
+	return phy_modify_mmd(phydev, devad, regnum, 0, val);
+}
 
 /**
- * phy_clear_bits_mmd - Convenience function क्रम clearing bits in a रेजिस्टर
+ * phy_clear_bits_mmd - Convenience function for clearing bits in a register
  * on MMD
- * @phydev: the phy_device काष्ठा
- * @devad: the MMD containing रेजिस्टर to modअगरy
- * @regnum: रेजिस्टर number to modअगरy
+ * @phydev: the phy_device struct
+ * @devad: the MMD containing register to modify
+ * @regnum: register number to modify
  * @val: bits to clear
  */
-अटल अंतरभूत पूर्णांक phy_clear_bits_mmd(काष्ठा phy_device *phydev, पूर्णांक devad,
+static inline int phy_clear_bits_mmd(struct phy_device *phydev, int devad,
 		u32 regnum, u16 val)
-अणु
-	वापस phy_modअगरy_mmd(phydev, devad, regnum, val, 0);
-पूर्ण
+{
+	return phy_modify_mmd(phydev, devad, regnum, val, 0);
+}
 
 /**
- * phy_पूर्णांकerrupt_is_valid - Convenience function क्रम testing a given PHY irq
- * @phydev: the phy_device काष्ठा
+ * phy_interrupt_is_valid - Convenience function for testing a given PHY irq
+ * @phydev: the phy_device struct
  *
  * NOTE: must be kept in sync with addition/removal of PHY_POLL and
  * PHY_MAC_INTERRUPT
  */
-अटल अंतरभूत bool phy_पूर्णांकerrupt_is_valid(काष्ठा phy_device *phydev)
-अणु
-	वापस phydev->irq != PHY_POLL && phydev->irq != PHY_MAC_INTERRUPT;
-पूर्ण
+static inline bool phy_interrupt_is_valid(struct phy_device *phydev)
+{
+	return phydev->irq != PHY_POLL && phydev->irq != PHY_MAC_INTERRUPT;
+}
 
 /**
- * phy_polling_mode - Convenience function क्रम testing whether polling is
+ * phy_polling_mode - Convenience function for testing whether polling is
  * used to detect PHY status changes
- * @phydev: the phy_device काष्ठा
+ * @phydev: the phy_device struct
  */
-अटल अंतरभूत bool phy_polling_mode(काष्ठा phy_device *phydev)
-अणु
-	अगर (phydev->state == PHY_CABLETEST)
-		अगर (phydev->drv->flags & PHY_POLL_CABLE_TEST)
-			वापस true;
+static inline bool phy_polling_mode(struct phy_device *phydev)
+{
+	if (phydev->state == PHY_CABLETEST)
+		if (phydev->drv->flags & PHY_POLL_CABLE_TEST)
+			return true;
 
-	वापस phydev->irq == PHY_POLL;
-पूर्ण
+	return phydev->irq == PHY_POLL;
+}
 
 /**
- * phy_has_hwtstamp - Tests whether a PHY समय stamp configuration.
- * @phydev: the phy_device काष्ठा
+ * phy_has_hwtstamp - Tests whether a PHY time stamp configuration.
+ * @phydev: the phy_device struct
  */
-अटल अंतरभूत bool phy_has_hwtstamp(काष्ठा phy_device *phydev)
-अणु
-	वापस phydev && phydev->mii_ts && phydev->mii_ts->hwtstamp;
-पूर्ण
+static inline bool phy_has_hwtstamp(struct phy_device *phydev)
+{
+	return phydev && phydev->mii_ts && phydev->mii_ts->hwtstamp;
+}
 
 /**
- * phy_has_rxtstamp - Tests whether a PHY supports receive समय stamping.
- * @phydev: the phy_device काष्ठा
+ * phy_has_rxtstamp - Tests whether a PHY supports receive time stamping.
+ * @phydev: the phy_device struct
  */
-अटल अंतरभूत bool phy_has_rxtstamp(काष्ठा phy_device *phydev)
-अणु
-	वापस phydev && phydev->mii_ts && phydev->mii_ts->rxtstamp;
-पूर्ण
+static inline bool phy_has_rxtstamp(struct phy_device *phydev)
+{
+	return phydev && phydev->mii_ts && phydev->mii_ts->rxtstamp;
+}
 
 /**
- * phy_has_tsinfo - Tests whether a PHY reports समय stamping and/or
- * PTP hardware घड़ी capabilities.
- * @phydev: the phy_device काष्ठा
+ * phy_has_tsinfo - Tests whether a PHY reports time stamping and/or
+ * PTP hardware clock capabilities.
+ * @phydev: the phy_device struct
  */
-अटल अंतरभूत bool phy_has_tsinfo(काष्ठा phy_device *phydev)
-अणु
-	वापस phydev && phydev->mii_ts && phydev->mii_ts->ts_info;
-पूर्ण
+static inline bool phy_has_tsinfo(struct phy_device *phydev)
+{
+	return phydev && phydev->mii_ts && phydev->mii_ts->ts_info;
+}
 
 /**
- * phy_has_txtstamp - Tests whether a PHY supports transmit समय stamping.
- * @phydev: the phy_device काष्ठा
+ * phy_has_txtstamp - Tests whether a PHY supports transmit time stamping.
+ * @phydev: the phy_device struct
  */
-अटल अंतरभूत bool phy_has_txtstamp(काष्ठा phy_device *phydev)
-अणु
-	वापस phydev && phydev->mii_ts && phydev->mii_ts->txtstamp;
-पूर्ण
+static inline bool phy_has_txtstamp(struct phy_device *phydev)
+{
+	return phydev && phydev->mii_ts && phydev->mii_ts->txtstamp;
+}
 
-अटल अंतरभूत पूर्णांक phy_hwtstamp(काष्ठा phy_device *phydev, काष्ठा अगरreq *अगरr)
-अणु
-	वापस phydev->mii_ts->hwtstamp(phydev->mii_ts, अगरr);
-पूर्ण
+static inline int phy_hwtstamp(struct phy_device *phydev, struct ifreq *ifr)
+{
+	return phydev->mii_ts->hwtstamp(phydev->mii_ts, ifr);
+}
 
-अटल अंतरभूत bool phy_rxtstamp(काष्ठा phy_device *phydev, काष्ठा sk_buff *skb,
-				पूर्णांक type)
-अणु
-	वापस phydev->mii_ts->rxtstamp(phydev->mii_ts, skb, type);
-पूर्ण
+static inline bool phy_rxtstamp(struct phy_device *phydev, struct sk_buff *skb,
+				int type)
+{
+	return phydev->mii_ts->rxtstamp(phydev->mii_ts, skb, type);
+}
 
-अटल अंतरभूत पूर्णांक phy_ts_info(काष्ठा phy_device *phydev,
-			      काष्ठा ethtool_ts_info *tsinfo)
-अणु
-	वापस phydev->mii_ts->ts_info(phydev->mii_ts, tsinfo);
-पूर्ण
+static inline int phy_ts_info(struct phy_device *phydev,
+			      struct ethtool_ts_info *tsinfo)
+{
+	return phydev->mii_ts->ts_info(phydev->mii_ts, tsinfo);
+}
 
-अटल अंतरभूत व्योम phy_txtstamp(काष्ठा phy_device *phydev, काष्ठा sk_buff *skb,
-				पूर्णांक type)
-अणु
+static inline void phy_txtstamp(struct phy_device *phydev, struct sk_buff *skb,
+				int type)
+{
 	phydev->mii_ts->txtstamp(phydev->mii_ts, skb, type);
-पूर्ण
+}
 
 /**
- * phy_is_पूर्णांकernal - Convenience function क्रम testing अगर a PHY is पूर्णांकernal
- * @phydev: the phy_device काष्ठा
+ * phy_is_internal - Convenience function for testing if a PHY is internal
+ * @phydev: the phy_device struct
  */
-अटल अंतरभूत bool phy_is_पूर्णांकernal(काष्ठा phy_device *phydev)
-अणु
-	वापस phydev->is_पूर्णांकernal;
-पूर्ण
+static inline bool phy_is_internal(struct phy_device *phydev)
+{
+	return phydev->is_internal;
+}
 
 /**
- * phy_on_sfp - Convenience function क्रम testing अगर a PHY is on an SFP module
- * @phydev: the phy_device काष्ठा
+ * phy_on_sfp - Convenience function for testing if a PHY is on an SFP module
+ * @phydev: the phy_device struct
  */
-अटल अंतरभूत bool phy_on_sfp(काष्ठा phy_device *phydev)
-अणु
-	वापस phydev->is_on_sfp_module;
-पूर्ण
+static inline bool phy_on_sfp(struct phy_device *phydev)
+{
+	return phydev->is_on_sfp_module;
+}
 
 /**
- * phy_पूर्णांकerface_mode_is_rgmii - Convenience function क्रम testing अगर a
- * PHY पूर्णांकerface mode is RGMII (all variants)
- * @mode: the &phy_पूर्णांकerface_t क्रमागत
+ * phy_interface_mode_is_rgmii - Convenience function for testing if a
+ * PHY interface mode is RGMII (all variants)
+ * @mode: the &phy_interface_t enum
  */
-अटल अंतरभूत bool phy_पूर्णांकerface_mode_is_rgmii(phy_पूर्णांकerface_t mode)
-अणु
-	वापस mode >= PHY_INTERFACE_MODE_RGMII &&
+static inline bool phy_interface_mode_is_rgmii(phy_interface_t mode)
+{
+	return mode >= PHY_INTERFACE_MODE_RGMII &&
 		mode <= PHY_INTERFACE_MODE_RGMII_TXID;
-पूर्ण;
+};
 
 /**
- * phy_पूर्णांकerface_mode_is_8023z() - करोes the PHY पूर्णांकerface mode use 802.3z
+ * phy_interface_mode_is_8023z() - does the PHY interface mode use 802.3z
  *   negotiation
- * @mode: one of &क्रमागत phy_पूर्णांकerface_t
+ * @mode: one of &enum phy_interface_t
  *
- * Returns true अगर the PHY पूर्णांकerface mode uses the 16-bit negotiation
+ * Returns true if the PHY interface mode uses the 16-bit negotiation
  * word as defined in 802.3z. (See 802.3-2015 37.2.1 Config_Reg encoding)
  */
-अटल अंतरभूत bool phy_पूर्णांकerface_mode_is_8023z(phy_पूर्णांकerface_t mode)
-अणु
-	वापस mode == PHY_INTERFACE_MODE_1000BASEX ||
+static inline bool phy_interface_mode_is_8023z(phy_interface_t mode)
+{
+	return mode == PHY_INTERFACE_MODE_1000BASEX ||
 	       mode == PHY_INTERFACE_MODE_2500BASEX;
-पूर्ण
+}
 
 /**
- * phy_पूर्णांकerface_is_rgmii - Convenience function क्रम testing अगर a PHY पूर्णांकerface
+ * phy_interface_is_rgmii - Convenience function for testing if a PHY interface
  * is RGMII (all variants)
- * @phydev: the phy_device काष्ठा
+ * @phydev: the phy_device struct
  */
-अटल अंतरभूत bool phy_पूर्णांकerface_is_rgmii(काष्ठा phy_device *phydev)
-अणु
-	वापस phy_पूर्णांकerface_mode_is_rgmii(phydev->पूर्णांकerface);
-पूर्ण;
+static inline bool phy_interface_is_rgmii(struct phy_device *phydev)
+{
+	return phy_interface_mode_is_rgmii(phydev->interface);
+};
 
 /**
- * phy_is_pseuकरो_fixed_link - Convenience function क्रम testing अगर this
- * PHY is the CPU port facing side of an Ethernet चयन, or similar.
- * @phydev: the phy_device काष्ठा
+ * phy_is_pseudo_fixed_link - Convenience function for testing if this
+ * PHY is the CPU port facing side of an Ethernet switch, or similar.
+ * @phydev: the phy_device struct
  */
-अटल अंतरभूत bool phy_is_pseuकरो_fixed_link(काष्ठा phy_device *phydev)
-अणु
-	वापस phydev->is_pseuकरो_fixed_link;
-पूर्ण
+static inline bool phy_is_pseudo_fixed_link(struct phy_device *phydev)
+{
+	return phydev->is_pseudo_fixed_link;
+}
 
-पूर्णांक phy_save_page(काष्ठा phy_device *phydev);
-पूर्णांक phy_select_page(काष्ठा phy_device *phydev, पूर्णांक page);
-पूर्णांक phy_restore_page(काष्ठा phy_device *phydev, पूर्णांक oldpage, पूर्णांक ret);
-पूर्णांक phy_पढ़ो_paged(काष्ठा phy_device *phydev, पूर्णांक page, u32 regnum);
-पूर्णांक phy_ग_लिखो_paged(काष्ठा phy_device *phydev, पूर्णांक page, u32 regnum, u16 val);
-पूर्णांक phy_modअगरy_paged_changed(काष्ठा phy_device *phydev, पूर्णांक page, u32 regnum,
+int phy_save_page(struct phy_device *phydev);
+int phy_select_page(struct phy_device *phydev, int page);
+int phy_restore_page(struct phy_device *phydev, int oldpage, int ret);
+int phy_read_paged(struct phy_device *phydev, int page, u32 regnum);
+int phy_write_paged(struct phy_device *phydev, int page, u32 regnum, u16 val);
+int phy_modify_paged_changed(struct phy_device *phydev, int page, u32 regnum,
 			     u16 mask, u16 set);
-पूर्णांक phy_modअगरy_paged(काष्ठा phy_device *phydev, पूर्णांक page, u32 regnum,
+int phy_modify_paged(struct phy_device *phydev, int page, u32 regnum,
 		     u16 mask, u16 set);
 
-काष्ठा phy_device *phy_device_create(काष्ठा mii_bus *bus, पूर्णांक addr, u32 phy_id,
+struct phy_device *phy_device_create(struct mii_bus *bus, int addr, u32 phy_id,
 				     bool is_c45,
-				     काष्ठा phy_c45_device_ids *c45_ids);
-#अगर IS_ENABLED(CONFIG_PHYLIB)
-काष्ठा phy_device *get_phy_device(काष्ठा mii_bus *bus, पूर्णांक addr, bool is_c45);
-पूर्णांक phy_device_रेजिस्टर(काष्ठा phy_device *phy);
-व्योम phy_device_मुक्त(काष्ठा phy_device *phydev);
-#अन्यथा
-अटल अंतरभूत
-काष्ठा phy_device *get_phy_device(काष्ठा mii_bus *bus, पूर्णांक addr, bool is_c45)
-अणु
-	वापस शून्य;
-पूर्ण
+				     struct phy_c45_device_ids *c45_ids);
+#if IS_ENABLED(CONFIG_PHYLIB)
+struct phy_device *get_phy_device(struct mii_bus *bus, int addr, bool is_c45);
+int phy_device_register(struct phy_device *phy);
+void phy_device_free(struct phy_device *phydev);
+#else
+static inline
+struct phy_device *get_phy_device(struct mii_bus *bus, int addr, bool is_c45)
+{
+	return NULL;
+}
 
-अटल अंतरभूत पूर्णांक phy_device_रेजिस्टर(काष्ठा phy_device *phy)
-अणु
-	वापस 0;
-पूर्ण
+static inline int phy_device_register(struct phy_device *phy)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम phy_device_मुक्त(काष्ठा phy_device *phydev) अणु पूर्ण
-#पूर्ण_अगर /* CONFIG_PHYLIB */
-व्योम phy_device_हटाओ(काष्ठा phy_device *phydev);
-पूर्णांक phy_init_hw(काष्ठा phy_device *phydev);
-पूर्णांक phy_suspend(काष्ठा phy_device *phydev);
-पूर्णांक phy_resume(काष्ठा phy_device *phydev);
-पूर्णांक __phy_resume(काष्ठा phy_device *phydev);
-पूर्णांक phy_loopback(काष्ठा phy_device *phydev, bool enable);
-व्योम phy_sfp_attach(व्योम *upstream, काष्ठा sfp_bus *bus);
-व्योम phy_sfp_detach(व्योम *upstream, काष्ठा sfp_bus *bus);
-पूर्णांक phy_sfp_probe(काष्ठा phy_device *phydev,
-	          स्थिर काष्ठा sfp_upstream_ops *ops);
-काष्ठा phy_device *phy_attach(काष्ठा net_device *dev, स्थिर अक्षर *bus_id,
-			      phy_पूर्णांकerface_t पूर्णांकerface);
-काष्ठा phy_device *phy_find_first(काष्ठा mii_bus *bus);
-पूर्णांक phy_attach_direct(काष्ठा net_device *dev, काष्ठा phy_device *phydev,
-		      u32 flags, phy_पूर्णांकerface_t पूर्णांकerface);
-पूर्णांक phy_connect_direct(काष्ठा net_device *dev, काष्ठा phy_device *phydev,
-		       व्योम (*handler)(काष्ठा net_device *),
-		       phy_पूर्णांकerface_t पूर्णांकerface);
-काष्ठा phy_device *phy_connect(काष्ठा net_device *dev, स्थिर अक्षर *bus_id,
-			       व्योम (*handler)(काष्ठा net_device *),
-			       phy_पूर्णांकerface_t पूर्णांकerface);
-व्योम phy_disconnect(काष्ठा phy_device *phydev);
-व्योम phy_detach(काष्ठा phy_device *phydev);
-व्योम phy_start(काष्ठा phy_device *phydev);
-व्योम phy_stop(काष्ठा phy_device *phydev);
-पूर्णांक phy_config_aneg(काष्ठा phy_device *phydev);
-पूर्णांक phy_start_aneg(काष्ठा phy_device *phydev);
-पूर्णांक phy_aneg_करोne(काष्ठा phy_device *phydev);
-पूर्णांक phy_speed_करोwn(काष्ठा phy_device *phydev, bool sync);
-पूर्णांक phy_speed_up(काष्ठा phy_device *phydev);
+static inline void phy_device_free(struct phy_device *phydev) { }
+#endif /* CONFIG_PHYLIB */
+void phy_device_remove(struct phy_device *phydev);
+int phy_init_hw(struct phy_device *phydev);
+int phy_suspend(struct phy_device *phydev);
+int phy_resume(struct phy_device *phydev);
+int __phy_resume(struct phy_device *phydev);
+int phy_loopback(struct phy_device *phydev, bool enable);
+void phy_sfp_attach(void *upstream, struct sfp_bus *bus);
+void phy_sfp_detach(void *upstream, struct sfp_bus *bus);
+int phy_sfp_probe(struct phy_device *phydev,
+	          const struct sfp_upstream_ops *ops);
+struct phy_device *phy_attach(struct net_device *dev, const char *bus_id,
+			      phy_interface_t interface);
+struct phy_device *phy_find_first(struct mii_bus *bus);
+int phy_attach_direct(struct net_device *dev, struct phy_device *phydev,
+		      u32 flags, phy_interface_t interface);
+int phy_connect_direct(struct net_device *dev, struct phy_device *phydev,
+		       void (*handler)(struct net_device *),
+		       phy_interface_t interface);
+struct phy_device *phy_connect(struct net_device *dev, const char *bus_id,
+			       void (*handler)(struct net_device *),
+			       phy_interface_t interface);
+void phy_disconnect(struct phy_device *phydev);
+void phy_detach(struct phy_device *phydev);
+void phy_start(struct phy_device *phydev);
+void phy_stop(struct phy_device *phydev);
+int phy_config_aneg(struct phy_device *phydev);
+int phy_start_aneg(struct phy_device *phydev);
+int phy_aneg_done(struct phy_device *phydev);
+int phy_speed_down(struct phy_device *phydev, bool sync);
+int phy_speed_up(struct phy_device *phydev);
 
-पूर्णांक phy_restart_aneg(काष्ठा phy_device *phydev);
-पूर्णांक phy_reset_after_clk_enable(काष्ठा phy_device *phydev);
+int phy_restart_aneg(struct phy_device *phydev);
+int phy_reset_after_clk_enable(struct phy_device *phydev);
 
-#अगर IS_ENABLED(CONFIG_PHYLIB)
-पूर्णांक phy_start_cable_test(काष्ठा phy_device *phydev,
-			 काष्ठा netlink_ext_ack *extack);
-पूर्णांक phy_start_cable_test_tdr(काष्ठा phy_device *phydev,
-			     काष्ठा netlink_ext_ack *extack,
-			     स्थिर काष्ठा phy_tdr_config *config);
-#अन्यथा
-अटल अंतरभूत
-पूर्णांक phy_start_cable_test(काष्ठा phy_device *phydev,
-			 काष्ठा netlink_ext_ack *extack)
-अणु
+#if IS_ENABLED(CONFIG_PHYLIB)
+int phy_start_cable_test(struct phy_device *phydev,
+			 struct netlink_ext_ack *extack);
+int phy_start_cable_test_tdr(struct phy_device *phydev,
+			     struct netlink_ext_ack *extack,
+			     const struct phy_tdr_config *config);
+#else
+static inline
+int phy_start_cable_test(struct phy_device *phydev,
+			 struct netlink_ext_ack *extack)
+{
 	NL_SET_ERR_MSG(extack, "Kernel not compiled with PHYLIB support");
-	वापस -EOPNOTSUPP;
-पूर्ण
-अटल अंतरभूत
-पूर्णांक phy_start_cable_test_tdr(काष्ठा phy_device *phydev,
-			     काष्ठा netlink_ext_ack *extack,
-			     स्थिर काष्ठा phy_tdr_config *config)
-अणु
+	return -EOPNOTSUPP;
+}
+static inline
+int phy_start_cable_test_tdr(struct phy_device *phydev,
+			     struct netlink_ext_ack *extack,
+			     const struct phy_tdr_config *config)
+{
 	NL_SET_ERR_MSG(extack, "Kernel not compiled with PHYLIB support");
-	वापस -EOPNOTSUPP;
-पूर्ण
-#पूर्ण_अगर
+	return -EOPNOTSUPP;
+}
+#endif
 
-पूर्णांक phy_cable_test_result(काष्ठा phy_device *phydev, u8 pair, u16 result);
-पूर्णांक phy_cable_test_fault_length(काष्ठा phy_device *phydev, u8 pair,
+int phy_cable_test_result(struct phy_device *phydev, u8 pair, u16 result);
+int phy_cable_test_fault_length(struct phy_device *phydev, u8 pair,
 				u16 cm);
 
-अटल अंतरभूत व्योम phy_device_reset(काष्ठा phy_device *phydev, पूर्णांक value)
-अणु
+static inline void phy_device_reset(struct phy_device *phydev, int value)
+{
 	mdio_device_reset(&phydev->mdio, value);
-पूर्ण
+}
 
-#घोषणा phydev_err(_phydev, क्रमmat, args...)	\
-	dev_err(&_phydev->mdio.dev, क्रमmat, ##args)
+#define phydev_err(_phydev, format, args...)	\
+	dev_err(&_phydev->mdio.dev, format, ##args)
 
-#घोषणा phydev_info(_phydev, क्रमmat, args...)	\
-	dev_info(&_phydev->mdio.dev, क्रमmat, ##args)
+#define phydev_info(_phydev, format, args...)	\
+	dev_info(&_phydev->mdio.dev, format, ##args)
 
-#घोषणा phydev_warn(_phydev, क्रमmat, args...)	\
-	dev_warn(&_phydev->mdio.dev, क्रमmat, ##args)
+#define phydev_warn(_phydev, format, args...)	\
+	dev_warn(&_phydev->mdio.dev, format, ##args)
 
-#घोषणा phydev_dbg(_phydev, क्रमmat, args...)	\
-	dev_dbg(&_phydev->mdio.dev, क्रमmat, ##args)
+#define phydev_dbg(_phydev, format, args...)	\
+	dev_dbg(&_phydev->mdio.dev, format, ##args)
 
-अटल अंतरभूत स्थिर अक्षर *phydev_name(स्थिर काष्ठा phy_device *phydev)
-अणु
-	वापस dev_name(&phydev->mdio.dev);
-पूर्ण
+static inline const char *phydev_name(const struct phy_device *phydev)
+{
+	return dev_name(&phydev->mdio.dev);
+}
 
-अटल अंतरभूत व्योम phy_lock_mdio_bus(काष्ठा phy_device *phydev)
-अणु
+static inline void phy_lock_mdio_bus(struct phy_device *phydev)
+{
 	mutex_lock(&phydev->mdio.bus->mdio_lock);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम phy_unlock_mdio_bus(काष्ठा phy_device *phydev)
-अणु
+static inline void phy_unlock_mdio_bus(struct phy_device *phydev)
+{
 	mutex_unlock(&phydev->mdio.bus->mdio_lock);
-पूर्ण
+}
 
-व्योम phy_attached_prपूर्णांक(काष्ठा phy_device *phydev, स्थिर अक्षर *fmt, ...)
-	__म_लिखो(2, 3);
-अक्षर *phy_attached_info_irq(काष्ठा phy_device *phydev)
-	__दो_स्मृति;
-व्योम phy_attached_info(काष्ठा phy_device *phydev);
+void phy_attached_print(struct phy_device *phydev, const char *fmt, ...)
+	__printf(2, 3);
+char *phy_attached_info_irq(struct phy_device *phydev)
+	__malloc;
+void phy_attached_info(struct phy_device *phydev);
 
 /* Clause 22 PHY */
-पूर्णांक genphy_पढ़ो_abilities(काष्ठा phy_device *phydev);
-पूर्णांक genphy_setup_क्रमced(काष्ठा phy_device *phydev);
-पूर्णांक genphy_restart_aneg(काष्ठा phy_device *phydev);
-पूर्णांक genphy_check_and_restart_aneg(काष्ठा phy_device *phydev, bool restart);
-पूर्णांक genphy_config_eee_advert(काष्ठा phy_device *phydev);
-पूर्णांक __genphy_config_aneg(काष्ठा phy_device *phydev, bool changed);
-पूर्णांक genphy_aneg_करोne(काष्ठा phy_device *phydev);
-पूर्णांक genphy_update_link(काष्ठा phy_device *phydev);
-पूर्णांक genphy_पढ़ो_lpa(काष्ठा phy_device *phydev);
-पूर्णांक genphy_पढ़ो_status_fixed(काष्ठा phy_device *phydev);
-पूर्णांक genphy_पढ़ो_status(काष्ठा phy_device *phydev);
-पूर्णांक genphy_suspend(काष्ठा phy_device *phydev);
-पूर्णांक genphy_resume(काष्ठा phy_device *phydev);
-पूर्णांक genphy_loopback(काष्ठा phy_device *phydev, bool enable);
-पूर्णांक genphy_soft_reset(काष्ठा phy_device *phydev);
-irqवापस_t genphy_handle_पूर्णांकerrupt_no_ack(काष्ठा phy_device *phydev);
+int genphy_read_abilities(struct phy_device *phydev);
+int genphy_setup_forced(struct phy_device *phydev);
+int genphy_restart_aneg(struct phy_device *phydev);
+int genphy_check_and_restart_aneg(struct phy_device *phydev, bool restart);
+int genphy_config_eee_advert(struct phy_device *phydev);
+int __genphy_config_aneg(struct phy_device *phydev, bool changed);
+int genphy_aneg_done(struct phy_device *phydev);
+int genphy_update_link(struct phy_device *phydev);
+int genphy_read_lpa(struct phy_device *phydev);
+int genphy_read_status_fixed(struct phy_device *phydev);
+int genphy_read_status(struct phy_device *phydev);
+int genphy_suspend(struct phy_device *phydev);
+int genphy_resume(struct phy_device *phydev);
+int genphy_loopback(struct phy_device *phydev, bool enable);
+int genphy_soft_reset(struct phy_device *phydev);
+irqreturn_t genphy_handle_interrupt_no_ack(struct phy_device *phydev);
 
-अटल अंतरभूत पूर्णांक genphy_config_aneg(काष्ठा phy_device *phydev)
-अणु
-	वापस __genphy_config_aneg(phydev, false);
-पूर्ण
+static inline int genphy_config_aneg(struct phy_device *phydev)
+{
+	return __genphy_config_aneg(phydev, false);
+}
 
-अटल अंतरभूत पूर्णांक genphy_no_config_पूर्णांकr(काष्ठा phy_device *phydev)
-अणु
-	वापस 0;
-पूर्ण
-पूर्णांक genphy_पढ़ो_mmd_unsupported(काष्ठा phy_device *phdev, पूर्णांक devad,
+static inline int genphy_no_config_intr(struct phy_device *phydev)
+{
+	return 0;
+}
+int genphy_read_mmd_unsupported(struct phy_device *phdev, int devad,
 				u16 regnum);
-पूर्णांक genphy_ग_लिखो_mmd_unsupported(काष्ठा phy_device *phdev, पूर्णांक devnum,
+int genphy_write_mmd_unsupported(struct phy_device *phdev, int devnum,
 				 u16 regnum, u16 val);
 
 /* Clause 37 */
-पूर्णांक genphy_c37_config_aneg(काष्ठा phy_device *phydev);
-पूर्णांक genphy_c37_पढ़ो_status(काष्ठा phy_device *phydev);
+int genphy_c37_config_aneg(struct phy_device *phydev);
+int genphy_c37_read_status(struct phy_device *phydev);
 
 /* Clause 45 PHY */
-पूर्णांक genphy_c45_restart_aneg(काष्ठा phy_device *phydev);
-पूर्णांक genphy_c45_check_and_restart_aneg(काष्ठा phy_device *phydev, bool restart);
-पूर्णांक genphy_c45_aneg_करोne(काष्ठा phy_device *phydev);
-पूर्णांक genphy_c45_पढ़ो_link(काष्ठा phy_device *phydev);
-पूर्णांक genphy_c45_पढ़ो_lpa(काष्ठा phy_device *phydev);
-पूर्णांक genphy_c45_पढ़ो_pma(काष्ठा phy_device *phydev);
-पूर्णांक genphy_c45_pma_setup_क्रमced(काष्ठा phy_device *phydev);
-पूर्णांक genphy_c45_an_config_aneg(काष्ठा phy_device *phydev);
-पूर्णांक genphy_c45_an_disable_aneg(काष्ठा phy_device *phydev);
-पूर्णांक genphy_c45_पढ़ो_mdix(काष्ठा phy_device *phydev);
-पूर्णांक genphy_c45_pma_पढ़ो_abilities(काष्ठा phy_device *phydev);
-पूर्णांक genphy_c45_पढ़ो_status(काष्ठा phy_device *phydev);
-पूर्णांक genphy_c45_config_aneg(काष्ठा phy_device *phydev);
-पूर्णांक genphy_c45_loopback(काष्ठा phy_device *phydev, bool enable);
-पूर्णांक genphy_c45_pma_resume(काष्ठा phy_device *phydev);
-पूर्णांक genphy_c45_pma_suspend(काष्ठा phy_device *phydev);
+int genphy_c45_restart_aneg(struct phy_device *phydev);
+int genphy_c45_check_and_restart_aneg(struct phy_device *phydev, bool restart);
+int genphy_c45_aneg_done(struct phy_device *phydev);
+int genphy_c45_read_link(struct phy_device *phydev);
+int genphy_c45_read_lpa(struct phy_device *phydev);
+int genphy_c45_read_pma(struct phy_device *phydev);
+int genphy_c45_pma_setup_forced(struct phy_device *phydev);
+int genphy_c45_an_config_aneg(struct phy_device *phydev);
+int genphy_c45_an_disable_aneg(struct phy_device *phydev);
+int genphy_c45_read_mdix(struct phy_device *phydev);
+int genphy_c45_pma_read_abilities(struct phy_device *phydev);
+int genphy_c45_read_status(struct phy_device *phydev);
+int genphy_c45_config_aneg(struct phy_device *phydev);
+int genphy_c45_loopback(struct phy_device *phydev, bool enable);
+int genphy_c45_pma_resume(struct phy_device *phydev);
+int genphy_c45_pma_suspend(struct phy_device *phydev);
 
 /* Generic C45 PHY driver */
-बाह्य काष्ठा phy_driver genphy_c45_driver;
+extern struct phy_driver genphy_c45_driver;
 
 /* The gen10g_* functions are the old Clause 45 stub */
-पूर्णांक gen10g_config_aneg(काष्ठा phy_device *phydev);
+int gen10g_config_aneg(struct phy_device *phydev);
 
-अटल अंतरभूत पूर्णांक phy_पढ़ो_status(काष्ठा phy_device *phydev)
-अणु
-	अगर (!phydev->drv)
-		वापस -EIO;
+static inline int phy_read_status(struct phy_device *phydev)
+{
+	if (!phydev->drv)
+		return -EIO;
 
-	अगर (phydev->drv->पढ़ो_status)
-		वापस phydev->drv->पढ़ो_status(phydev);
-	अन्यथा
-		वापस genphy_पढ़ो_status(phydev);
-पूर्ण
+	if (phydev->drv->read_status)
+		return phydev->drv->read_status(phydev);
+	else
+		return genphy_read_status(phydev);
+}
 
-व्योम phy_driver_unरेजिस्टर(काष्ठा phy_driver *drv);
-व्योम phy_drivers_unरेजिस्टर(काष्ठा phy_driver *drv, पूर्णांक n);
-पूर्णांक phy_driver_रेजिस्टर(काष्ठा phy_driver *new_driver, काष्ठा module *owner);
-पूर्णांक phy_drivers_रेजिस्टर(काष्ठा phy_driver *new_driver, पूर्णांक n,
-			 काष्ठा module *owner);
-व्योम phy_error(काष्ठा phy_device *phydev);
-व्योम phy_state_machine(काष्ठा work_काष्ठा *work);
-व्योम phy_queue_state_machine(काष्ठा phy_device *phydev, अचिन्हित दीर्घ jअगरfies);
-व्योम phy_trigger_machine(काष्ठा phy_device *phydev);
-व्योम phy_mac_पूर्णांकerrupt(काष्ठा phy_device *phydev);
-व्योम phy_start_machine(काष्ठा phy_device *phydev);
-व्योम phy_stop_machine(काष्ठा phy_device *phydev);
-व्योम phy_ethtool_ksettings_get(काष्ठा phy_device *phydev,
-			       काष्ठा ethtool_link_ksettings *cmd);
-पूर्णांक phy_ethtool_ksettings_set(काष्ठा phy_device *phydev,
-			      स्थिर काष्ठा ethtool_link_ksettings *cmd);
-पूर्णांक phy_mii_ioctl(काष्ठा phy_device *phydev, काष्ठा अगरreq *अगरr, पूर्णांक cmd);
-पूर्णांक phy_करो_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *अगरr, पूर्णांक cmd);
-पूर्णांक phy_करो_ioctl_running(काष्ठा net_device *dev, काष्ठा अगरreq *अगरr, पूर्णांक cmd);
-पूर्णांक phy_disable_पूर्णांकerrupts(काष्ठा phy_device *phydev);
-व्योम phy_request_पूर्णांकerrupt(काष्ठा phy_device *phydev);
-व्योम phy_मुक्त_पूर्णांकerrupt(काष्ठा phy_device *phydev);
-व्योम phy_prपूर्णांक_status(काष्ठा phy_device *phydev);
-पूर्णांक phy_set_max_speed(काष्ठा phy_device *phydev, u32 max_speed);
-व्योम phy_हटाओ_link_mode(काष्ठा phy_device *phydev, u32 link_mode);
-व्योम phy_advertise_supported(काष्ठा phy_device *phydev);
-व्योम phy_support_sym_छोड़ो(काष्ठा phy_device *phydev);
-व्योम phy_support_asym_छोड़ो(काष्ठा phy_device *phydev);
-व्योम phy_set_sym_छोड़ो(काष्ठा phy_device *phydev, bool rx, bool tx,
-		       bool स्वतःneg);
-व्योम phy_set_asym_छोड़ो(काष्ठा phy_device *phydev, bool rx, bool tx);
-bool phy_validate_छोड़ो(काष्ठा phy_device *phydev,
-			काष्ठा ethtool_छोड़ोparam *pp);
-व्योम phy_get_छोड़ो(काष्ठा phy_device *phydev, bool *tx_छोड़ो, bool *rx_छोड़ो);
+void phy_driver_unregister(struct phy_driver *drv);
+void phy_drivers_unregister(struct phy_driver *drv, int n);
+int phy_driver_register(struct phy_driver *new_driver, struct module *owner);
+int phy_drivers_register(struct phy_driver *new_driver, int n,
+			 struct module *owner);
+void phy_error(struct phy_device *phydev);
+void phy_state_machine(struct work_struct *work);
+void phy_queue_state_machine(struct phy_device *phydev, unsigned long jiffies);
+void phy_trigger_machine(struct phy_device *phydev);
+void phy_mac_interrupt(struct phy_device *phydev);
+void phy_start_machine(struct phy_device *phydev);
+void phy_stop_machine(struct phy_device *phydev);
+void phy_ethtool_ksettings_get(struct phy_device *phydev,
+			       struct ethtool_link_ksettings *cmd);
+int phy_ethtool_ksettings_set(struct phy_device *phydev,
+			      const struct ethtool_link_ksettings *cmd);
+int phy_mii_ioctl(struct phy_device *phydev, struct ifreq *ifr, int cmd);
+int phy_do_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd);
+int phy_do_ioctl_running(struct net_device *dev, struct ifreq *ifr, int cmd);
+int phy_disable_interrupts(struct phy_device *phydev);
+void phy_request_interrupt(struct phy_device *phydev);
+void phy_free_interrupt(struct phy_device *phydev);
+void phy_print_status(struct phy_device *phydev);
+int phy_set_max_speed(struct phy_device *phydev, u32 max_speed);
+void phy_remove_link_mode(struct phy_device *phydev, u32 link_mode);
+void phy_advertise_supported(struct phy_device *phydev);
+void phy_support_sym_pause(struct phy_device *phydev);
+void phy_support_asym_pause(struct phy_device *phydev);
+void phy_set_sym_pause(struct phy_device *phydev, bool rx, bool tx,
+		       bool autoneg);
+void phy_set_asym_pause(struct phy_device *phydev, bool rx, bool tx);
+bool phy_validate_pause(struct phy_device *phydev,
+			struct ethtool_pauseparam *pp);
+void phy_get_pause(struct phy_device *phydev, bool *tx_pause, bool *rx_pause);
 
-s32 phy_get_पूर्णांकernal_delay(काष्ठा phy_device *phydev, काष्ठा device *dev,
-			   स्थिर पूर्णांक *delay_values, पूर्णांक size, bool is_rx);
+s32 phy_get_internal_delay(struct phy_device *phydev, struct device *dev,
+			   const int *delay_values, int size, bool is_rx);
 
-व्योम phy_resolve_छोड़ो(अचिन्हित दीर्घ *local_adv, अचिन्हित दीर्घ *partner_adv,
-		       bool *tx_छोड़ो, bool *rx_छोड़ो);
+void phy_resolve_pause(unsigned long *local_adv, unsigned long *partner_adv,
+		       bool *tx_pause, bool *rx_pause);
 
-पूर्णांक phy_रेजिस्टर_fixup(स्थिर अक्षर *bus_id, u32 phy_uid, u32 phy_uid_mask,
-		       पूर्णांक (*run)(काष्ठा phy_device *));
-पूर्णांक phy_रेजिस्टर_fixup_क्रम_id(स्थिर अक्षर *bus_id,
-			      पूर्णांक (*run)(काष्ठा phy_device *));
-पूर्णांक phy_रेजिस्टर_fixup_क्रम_uid(u32 phy_uid, u32 phy_uid_mask,
-			       पूर्णांक (*run)(काष्ठा phy_device *));
+int phy_register_fixup(const char *bus_id, u32 phy_uid, u32 phy_uid_mask,
+		       int (*run)(struct phy_device *));
+int phy_register_fixup_for_id(const char *bus_id,
+			      int (*run)(struct phy_device *));
+int phy_register_fixup_for_uid(u32 phy_uid, u32 phy_uid_mask,
+			       int (*run)(struct phy_device *));
 
-पूर्णांक phy_unरेजिस्टर_fixup(स्थिर अक्षर *bus_id, u32 phy_uid, u32 phy_uid_mask);
-पूर्णांक phy_unरेजिस्टर_fixup_क्रम_id(स्थिर अक्षर *bus_id);
-पूर्णांक phy_unरेजिस्टर_fixup_क्रम_uid(u32 phy_uid, u32 phy_uid_mask);
+int phy_unregister_fixup(const char *bus_id, u32 phy_uid, u32 phy_uid_mask);
+int phy_unregister_fixup_for_id(const char *bus_id);
+int phy_unregister_fixup_for_uid(u32 phy_uid, u32 phy_uid_mask);
 
-पूर्णांक phy_init_eee(काष्ठा phy_device *phydev, bool clk_stop_enable);
-पूर्णांक phy_get_eee_err(काष्ठा phy_device *phydev);
-पूर्णांक phy_ethtool_set_eee(काष्ठा phy_device *phydev, काष्ठा ethtool_eee *data);
-पूर्णांक phy_ethtool_get_eee(काष्ठा phy_device *phydev, काष्ठा ethtool_eee *data);
-पूर्णांक phy_ethtool_set_wol(काष्ठा phy_device *phydev, काष्ठा ethtool_wolinfo *wol);
-व्योम phy_ethtool_get_wol(काष्ठा phy_device *phydev,
-			 काष्ठा ethtool_wolinfo *wol);
-पूर्णांक phy_ethtool_get_link_ksettings(काष्ठा net_device *ndev,
-				   काष्ठा ethtool_link_ksettings *cmd);
-पूर्णांक phy_ethtool_set_link_ksettings(काष्ठा net_device *ndev,
-				   स्थिर काष्ठा ethtool_link_ksettings *cmd);
-पूर्णांक phy_ethtool_nway_reset(काष्ठा net_device *ndev);
-पूर्णांक phy_package_join(काष्ठा phy_device *phydev, पूर्णांक addr, माप_प्रकार priv_size);
-व्योम phy_package_leave(काष्ठा phy_device *phydev);
-पूर्णांक devm_phy_package_join(काष्ठा device *dev, काष्ठा phy_device *phydev,
-			  पूर्णांक addr, माप_प्रकार priv_size);
+int phy_init_eee(struct phy_device *phydev, bool clk_stop_enable);
+int phy_get_eee_err(struct phy_device *phydev);
+int phy_ethtool_set_eee(struct phy_device *phydev, struct ethtool_eee *data);
+int phy_ethtool_get_eee(struct phy_device *phydev, struct ethtool_eee *data);
+int phy_ethtool_set_wol(struct phy_device *phydev, struct ethtool_wolinfo *wol);
+void phy_ethtool_get_wol(struct phy_device *phydev,
+			 struct ethtool_wolinfo *wol);
+int phy_ethtool_get_link_ksettings(struct net_device *ndev,
+				   struct ethtool_link_ksettings *cmd);
+int phy_ethtool_set_link_ksettings(struct net_device *ndev,
+				   const struct ethtool_link_ksettings *cmd);
+int phy_ethtool_nway_reset(struct net_device *ndev);
+int phy_package_join(struct phy_device *phydev, int addr, size_t priv_size);
+void phy_package_leave(struct phy_device *phydev);
+int devm_phy_package_join(struct device *dev, struct phy_device *phydev,
+			  int addr, size_t priv_size);
 
-#अगर IS_ENABLED(CONFIG_PHYLIB)
-पूर्णांक __init mdio_bus_init(व्योम);
-व्योम mdio_bus_निकास(व्योम);
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_PHYLIB)
+int __init mdio_bus_init(void);
+void mdio_bus_exit(void);
+#endif
 
-पूर्णांक phy_ethtool_get_strings(काष्ठा phy_device *phydev, u8 *data);
-पूर्णांक phy_ethtool_get_sset_count(काष्ठा phy_device *phydev);
-पूर्णांक phy_ethtool_get_stats(काष्ठा phy_device *phydev,
-			  काष्ठा ethtool_stats *stats, u64 *data);
+int phy_ethtool_get_strings(struct phy_device *phydev, u8 *data);
+int phy_ethtool_get_sset_count(struct phy_device *phydev);
+int phy_ethtool_get_stats(struct phy_device *phydev,
+			  struct ethtool_stats *stats, u64 *data);
 
-अटल अंतरभूत पूर्णांक phy_package_पढ़ो(काष्ठा phy_device *phydev, u32 regnum)
-अणु
-	काष्ठा phy_package_shared *shared = phydev->shared;
+static inline int phy_package_read(struct phy_device *phydev, u32 regnum)
+{
+	struct phy_package_shared *shared = phydev->shared;
 
-	अगर (!shared)
-		वापस -EIO;
+	if (!shared)
+		return -EIO;
 
-	वापस mdiobus_पढ़ो(phydev->mdio.bus, shared->addr, regnum);
-पूर्ण
+	return mdiobus_read(phydev->mdio.bus, shared->addr, regnum);
+}
 
-अटल अंतरभूत पूर्णांक __phy_package_पढ़ो(काष्ठा phy_device *phydev, u32 regnum)
-अणु
-	काष्ठा phy_package_shared *shared = phydev->shared;
+static inline int __phy_package_read(struct phy_device *phydev, u32 regnum)
+{
+	struct phy_package_shared *shared = phydev->shared;
 
-	अगर (!shared)
-		वापस -EIO;
+	if (!shared)
+		return -EIO;
 
-	वापस __mdiobus_पढ़ो(phydev->mdio.bus, shared->addr, regnum);
-पूर्ण
+	return __mdiobus_read(phydev->mdio.bus, shared->addr, regnum);
+}
 
-अटल अंतरभूत पूर्णांक phy_package_ग_लिखो(काष्ठा phy_device *phydev,
+static inline int phy_package_write(struct phy_device *phydev,
 				    u32 regnum, u16 val)
-अणु
-	काष्ठा phy_package_shared *shared = phydev->shared;
+{
+	struct phy_package_shared *shared = phydev->shared;
 
-	अगर (!shared)
-		वापस -EIO;
+	if (!shared)
+		return -EIO;
 
-	वापस mdiobus_ग_लिखो(phydev->mdio.bus, shared->addr, regnum, val);
-पूर्ण
+	return mdiobus_write(phydev->mdio.bus, shared->addr, regnum, val);
+}
 
-अटल अंतरभूत पूर्णांक __phy_package_ग_लिखो(काष्ठा phy_device *phydev,
+static inline int __phy_package_write(struct phy_device *phydev,
 				      u32 regnum, u16 val)
-अणु
-	काष्ठा phy_package_shared *shared = phydev->shared;
+{
+	struct phy_package_shared *shared = phydev->shared;
 
-	अगर (!shared)
-		वापस -EIO;
+	if (!shared)
+		return -EIO;
 
-	वापस __mdiobus_ग_लिखो(phydev->mdio.bus, shared->addr, regnum, val);
-पूर्ण
+	return __mdiobus_write(phydev->mdio.bus, shared->addr, regnum, val);
+}
 
-अटल अंतरभूत bool __phy_package_set_once(काष्ठा phy_device *phydev,
-					  अचिन्हित पूर्णांक b)
-अणु
-	काष्ठा phy_package_shared *shared = phydev->shared;
+static inline bool __phy_package_set_once(struct phy_device *phydev,
+					  unsigned int b)
+{
+	struct phy_package_shared *shared = phydev->shared;
 
-	अगर (!shared)
-		वापस false;
+	if (!shared)
+		return false;
 
-	वापस !test_and_set_bit(b, &shared->flags);
-पूर्ण
+	return !test_and_set_bit(b, &shared->flags);
+}
 
-अटल अंतरभूत bool phy_package_init_once(काष्ठा phy_device *phydev)
-अणु
-	वापस __phy_package_set_once(phydev, PHY_SHARED_F_INIT_DONE);
-पूर्ण
+static inline bool phy_package_init_once(struct phy_device *phydev)
+{
+	return __phy_package_set_once(phydev, PHY_SHARED_F_INIT_DONE);
+}
 
-अटल अंतरभूत bool phy_package_probe_once(काष्ठा phy_device *phydev)
-अणु
-	वापस __phy_package_set_once(phydev, PHY_SHARED_F_PROBE_DONE);
-पूर्ण
+static inline bool phy_package_probe_once(struct phy_device *phydev)
+{
+	return __phy_package_set_once(phydev, PHY_SHARED_F_PROBE_DONE);
+}
 
-बाह्य काष्ठा bus_type mdio_bus_type;
+extern struct bus_type mdio_bus_type;
 
-काष्ठा mdio_board_info अणु
-	स्थिर अक्षर	*bus_id;
-	अक्षर		modalias[MDIO_NAME_SIZE];
-	पूर्णांक		mdio_addr;
-	स्थिर व्योम	*platक्रमm_data;
-पूर्ण;
+struct mdio_board_info {
+	const char	*bus_id;
+	char		modalias[MDIO_NAME_SIZE];
+	int		mdio_addr;
+	const void	*platform_data;
+};
 
-#अगर IS_ENABLED(CONFIG_MDIO_DEVICE)
-पूर्णांक mdiobus_रेजिस्टर_board_info(स्थिर काष्ठा mdio_board_info *info,
-				अचिन्हित पूर्णांक n);
-#अन्यथा
-अटल अंतरभूत पूर्णांक mdiobus_रेजिस्टर_board_info(स्थिर काष्ठा mdio_board_info *i,
-					      अचिन्हित पूर्णांक n)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_MDIO_DEVICE)
+int mdiobus_register_board_info(const struct mdio_board_info *info,
+				unsigned int n);
+#else
+static inline int mdiobus_register_board_info(const struct mdio_board_info *i,
+					      unsigned int n)
+{
+	return 0;
+}
+#endif
 
 
 /**
- * phy_module_driver() - Helper macro क्रम रेजिस्टरing PHY drivers
- * @__phy_drivers: array of PHY drivers to रेजिस्टर
+ * phy_module_driver() - Helper macro for registering PHY drivers
+ * @__phy_drivers: array of PHY drivers to register
  * @__count: Numbers of members in array
  *
- * Helper macro क्रम PHY drivers which करो not करो anything special in module
- * init/निकास. Each module may only use this macro once, and calling it
- * replaces module_init() and module_निकास().
+ * Helper macro for PHY drivers which do not do anything special in module
+ * init/exit. Each module may only use this macro once, and calling it
+ * replaces module_init() and module_exit().
  */
-#घोषणा phy_module_driver(__phy_drivers, __count)			\
-अटल पूर्णांक __init phy_module_init(व्योम)					\
-अणु									\
-	वापस phy_drivers_रेजिस्टर(__phy_drivers, __count, THIS_MODULE); \
-पूर्ण									\
+#define phy_module_driver(__phy_drivers, __count)			\
+static int __init phy_module_init(void)					\
+{									\
+	return phy_drivers_register(__phy_drivers, __count, THIS_MODULE); \
+}									\
 module_init(phy_module_init);						\
-अटल व्योम __निकास phy_module_निकास(व्योम)				\
-अणु									\
-	phy_drivers_unरेजिस्टर(__phy_drivers, __count);			\
-पूर्ण									\
-module_निकास(phy_module_निकास)
+static void __exit phy_module_exit(void)				\
+{									\
+	phy_drivers_unregister(__phy_drivers, __count);			\
+}									\
+module_exit(phy_module_exit)
 
-#घोषणा module_phy_driver(__phy_drivers)				\
+#define module_phy_driver(__phy_drivers)				\
 	phy_module_driver(__phy_drivers, ARRAY_SIZE(__phy_drivers))
 
-bool phy_driver_is_genphy(काष्ठा phy_device *phydev);
-bool phy_driver_is_genphy_10g(काष्ठा phy_device *phydev);
+bool phy_driver_is_genphy(struct phy_device *phydev);
+bool phy_driver_is_genphy_10g(struct phy_device *phydev);
 
-#पूर्ण_अगर /* __PHY_H */
+#endif /* __PHY_H */

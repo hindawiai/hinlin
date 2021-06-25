@@ -1,42 +1,41 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /* ASN.1 BER/DER/CER encoding definitions
  *
  * Copyright (C) 2012 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#अगर_अघोषित _LINUX_ASN1_H
-#घोषणा _LINUX_ASN1_H
+#ifndef _LINUX_ASN1_H
+#define _LINUX_ASN1_H
 
 /* Class */
-क्रमागत asn1_class अणु
+enum asn1_class {
 	ASN1_UNIV	= 0,	/* Universal */
 	ASN1_APPL	= 1,	/* Application */
 	ASN1_CONT	= 2,	/* Context */
 	ASN1_PRIV	= 3	/* Private */
-पूर्ण;
-#घोषणा ASN1_CLASS_BITS	0xc0
+};
+#define ASN1_CLASS_BITS	0xc0
 
 
-क्रमागत asn1_method अणु
+enum asn1_method {
 	ASN1_PRIM	= 0,	/* Primitive */
-	ASN1_CONS	= 1	/* Conकाष्ठाed */
-पूर्ण;
-#घोषणा ASN1_CONS_BIT	0x20
+	ASN1_CONS	= 1	/* Constructed */
+};
+#define ASN1_CONS_BIT	0x20
 
 /* Tag */
-क्रमागत asn1_tag अणु
+enum asn1_tag {
 	ASN1_EOC	= 0,	/* End Of Contents or N/A */
 	ASN1_BOOL	= 1,	/* Boolean */
 	ASN1_INT	= 2,	/* Integer */
 	ASN1_BTS	= 3,	/* Bit String */
 	ASN1_OTS	= 4,	/* Octet String */
-	ASN1_शून्य	= 5,	/* Null */
-	ASN1_OID	= 6,	/* Object Identअगरier  */
+	ASN1_NULL	= 5,	/* Null */
+	ASN1_OID	= 6,	/* Object Identifier  */
 	ASN1_ODE	= 7,	/* Object Description */
 	ASN1_EXT	= 8,	/* External */
-	ASN1_REAL	= 9,	/* Real भग्न */
+	ASN1_REAL	= 9,	/* Real float */
 	ASN1_ENUM	= 10,	/* Enumerated */
 	ASN1_EPDV	= 11,	/* Embedded PDV */
 	ASN1_UTF8STR	= 12,	/* UTF8 String */
@@ -46,7 +45,7 @@
 	ASN1_SEQ	= 16,	/* Sequence and Sequence of */
 	ASN1_SET	= 17,	/* Set and Set of */
 	ASN1_NUMSTR	= 18,	/* Numerical String */
-	ASN1_PRNSTR	= 19,	/* Prपूर्णांकable String */
+	ASN1_PRNSTR	= 19,	/* Printable String */
 	ASN1_TEXSTR	= 20,	/* T61 String / Teletext String */
 	ASN1_VIDSTR	= 21,	/* Videotex String */
 	ASN1_IA5STR	= 22,	/* IA5 String */
@@ -58,9 +57,9 @@
 	ASN1_UNISTR	= 28,	/* Universal String */
 	ASN1_CHRSTR	= 29,	/* Character String */
 	ASN1_BMPSTR	= 30,	/* BMP String */
-	ASN1_LONG_TAG	= 31	/* Long क्रमm tag */
-पूर्ण;
+	ASN1_LONG_TAG	= 31	/* Long form tag */
+};
 
-#घोषणा ASN1_INDEFINITE_LENGTH 0x80
+#define ASN1_INDEFINITE_LENGTH 0x80
 
-#पूर्ण_अगर /* _LINUX_ASN1_H */
+#endif /* _LINUX_ASN1_H */

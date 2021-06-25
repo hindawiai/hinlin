@@ -1,115 +1,114 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2018 Texas Instruments Incorporated - https://www.ti.com/
  * Author: Tomi Valkeinen <tomi.valkeinen@ti.com>
  */
 
-#समावेश <linux/console.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pm_runसमय.स>
+#include <linux/console.h>
+#include <linux/of_device.h>
+#include <linux/module.h>
+#include <linux/pm_runtime.h>
 
-#समावेश <drm/drm_atomic.h>
-#समावेश <drm/drm_atomic_helper.h>
-#समावेश <drm/drm_crtc.h>
-#समावेश <drm/drm_crtc_helper.h>
-#समावेश <drm/drm_drv.h>
-#समावेश <drm/drm_fb_helper.h>
-#समावेश <drm/drm_gem_cma_helper.h>
-#समावेश <drm/drm_irq.h>
-#समावेश <drm/drm_managed.h>
-#समावेश <drm/drm_probe_helper.h>
+#include <drm/drm_atomic.h>
+#include <drm/drm_atomic_helper.h>
+#include <drm/drm_crtc.h>
+#include <drm/drm_crtc_helper.h>
+#include <drm/drm_drv.h>
+#include <drm/drm_fb_helper.h>
+#include <drm/drm_gem_cma_helper.h>
+#include <drm/drm_irq.h>
+#include <drm/drm_managed.h>
+#include <drm/drm_probe_helper.h>
 
-#समावेश "tidss_dispc.h"
-#समावेश "tidss_drv.h"
-#समावेश "tidss_kms.h"
-#समावेश "tidss_irq.h"
+#include "tidss_dispc.h"
+#include "tidss_drv.h"
+#include "tidss_kms.h"
+#include "tidss_irq.h"
 
 /* Power management */
 
-पूर्णांक tidss_runसमय_get(काष्ठा tidss_device *tidss)
-अणु
-	पूर्णांक r;
+int tidss_runtime_get(struct tidss_device *tidss)
+{
+	int r;
 
 	dev_dbg(tidss->dev, "%s\n", __func__);
 
-	r = pm_runसमय_get_sync(tidss->dev);
+	r = pm_runtime_get_sync(tidss->dev);
 	WARN_ON(r < 0);
-	वापस r < 0 ? r : 0;
-पूर्ण
+	return r < 0 ? r : 0;
+}
 
-व्योम tidss_runसमय_put(काष्ठा tidss_device *tidss)
-अणु
-	पूर्णांक r;
+void tidss_runtime_put(struct tidss_device *tidss)
+{
+	int r;
 
 	dev_dbg(tidss->dev, "%s\n", __func__);
 
-	r = pm_runसमय_put_sync(tidss->dev);
+	r = pm_runtime_put_sync(tidss->dev);
 	WARN_ON(r < 0);
-पूर्ण
+}
 
-अटल पूर्णांक __maybe_unused tidss_pm_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा tidss_device *tidss = dev_get_drvdata(dev);
-
-	dev_dbg(dev, "%s\n", __func__);
-
-	वापस dispc_runसमय_suspend(tidss->dispc);
-पूर्ण
-
-अटल पूर्णांक __maybe_unused tidss_pm_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा tidss_device *tidss = dev_get_drvdata(dev);
-	पूर्णांक r;
+static int __maybe_unused tidss_pm_runtime_suspend(struct device *dev)
+{
+	struct tidss_device *tidss = dev_get_drvdata(dev);
 
 	dev_dbg(dev, "%s\n", __func__);
 
-	r = dispc_runसमय_resume(tidss->dispc);
-	अगर (r)
-		वापस r;
+	return dispc_runtime_suspend(tidss->dispc);
+}
 
-	वापस 0;
-पूर्ण
-
-अटल पूर्णांक __maybe_unused tidss_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा tidss_device *tidss = dev_get_drvdata(dev);
+static int __maybe_unused tidss_pm_runtime_resume(struct device *dev)
+{
+	struct tidss_device *tidss = dev_get_drvdata(dev);
+	int r;
 
 	dev_dbg(dev, "%s\n", __func__);
 
-	वापस drm_mode_config_helper_suspend(&tidss->ddev);
-पूर्ण
+	r = dispc_runtime_resume(tidss->dispc);
+	if (r)
+		return r;
 
-अटल पूर्णांक __maybe_unused tidss_resume(काष्ठा device *dev)
-अणु
-	काष्ठा tidss_device *tidss = dev_get_drvdata(dev);
+	return 0;
+}
+
+static int __maybe_unused tidss_suspend(struct device *dev)
+{
+	struct tidss_device *tidss = dev_get_drvdata(dev);
 
 	dev_dbg(dev, "%s\n", __func__);
 
-	वापस drm_mode_config_helper_resume(&tidss->ddev);
-पूर्ण
+	return drm_mode_config_helper_suspend(&tidss->ddev);
+}
 
-#अगर_घोषित CONFIG_PM
+static int __maybe_unused tidss_resume(struct device *dev)
+{
+	struct tidss_device *tidss = dev_get_drvdata(dev);
 
-अटल स्थिर काष्ठा dev_pm_ops tidss_pm_ops = अणु
-	.runसमय_suspend = tidss_pm_runसमय_suspend,
-	.runसमय_resume = tidss_pm_runसमय_resume,
+	dev_dbg(dev, "%s\n", __func__);
+
+	return drm_mode_config_helper_resume(&tidss->ddev);
+}
+
+#ifdef CONFIG_PM
+
+static const struct dev_pm_ops tidss_pm_ops = {
+	.runtime_suspend = tidss_pm_runtime_suspend,
+	.runtime_resume = tidss_pm_runtime_resume,
 	SET_SYSTEM_SLEEP_PM_OPS(tidss_suspend, tidss_resume)
-पूर्ण;
+};
 
-#पूर्ण_अगर /* CONFIG_PM */
+#endif /* CONFIG_PM */
 
-/* DRM device Inक्रमmation */
+/* DRM device Information */
 
-अटल व्योम tidss_release(काष्ठा drm_device *ddev)
-अणु
+static void tidss_release(struct drm_device *ddev)
+{
 	drm_kms_helper_poll_fini(ddev);
-पूर्ण
+}
 
 DEFINE_DRM_GEM_CMA_FOPS(tidss_fops);
 
-अटल स्थिर काष्ठा drm_driver tidss_driver = अणु
+static const struct drm_driver tidss_driver = {
 	.driver_features	= DRIVER_GEM | DRIVER_MODESET | DRIVER_ATOMIC,
 	.fops			= &tidss_fops,
 	.release		= tidss_release,
@@ -124,147 +123,147 @@ DEFINE_DRM_GEM_CMA_FOPS(tidss_fops);
 	.irq_postinstall	= tidss_irq_postinstall,
 	.irq_handler		= tidss_irq_handler,
 	.irq_uninstall		= tidss_irq_uninstall,
-पूर्ण;
+};
 
-अटल पूर्णांक tidss_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा tidss_device *tidss;
-	काष्ठा drm_device *ddev;
-	पूर्णांक ret;
-	पूर्णांक irq;
+static int tidss_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct tidss_device *tidss;
+	struct drm_device *ddev;
+	int ret;
+	int irq;
 
 	dev_dbg(dev, "%s\n", __func__);
 
 	tidss = devm_drm_dev_alloc(&pdev->dev, &tidss_driver,
-				   काष्ठा tidss_device, ddev);
-	अगर (IS_ERR(tidss))
-		वापस PTR_ERR(tidss);
+				   struct tidss_device, ddev);
+	if (IS_ERR(tidss))
+		return PTR_ERR(tidss);
 
 	ddev = &tidss->ddev;
 
 	tidss->dev = dev;
 	tidss->feat = of_device_get_match_data(dev);
 
-	platक्रमm_set_drvdata(pdev, tidss);
+	platform_set_drvdata(pdev, tidss);
 
 	ret = dispc_init(tidss);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to initialize dispc: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	pm_runसमय_enable(dev);
+	pm_runtime_enable(dev);
 
-#अगर_अघोषित CONFIG_PM
-	/* If we करोn't have PM, we need to call resume manually */
-	dispc_runसमय_resume(tidss->dispc);
-#पूर्ण_अगर
+#ifndef CONFIG_PM
+	/* If we don't have PM, we need to call resume manually */
+	dispc_runtime_resume(tidss->dispc);
+#endif
 
 	ret = tidss_modeset_init(tidss);
-	अगर (ret < 0) अणु
-		अगर (ret != -EPROBE_DEFER)
+	if (ret < 0) {
+		if (ret != -EPROBE_DEFER)
 			dev_err(dev, "failed to init DRM/KMS (%d)\n", ret);
-		जाओ err_runसमय_suspend;
-	पूर्ण
+		goto err_runtime_suspend;
+	}
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0) अणु
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0) {
 		ret = irq;
-		जाओ err_runसमय_suspend;
-	पूर्ण
+		goto err_runtime_suspend;
+	}
 
 	ret = drm_irq_install(ddev, irq);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "drm_irq_install failed: %d\n", ret);
-		जाओ err_runसमय_suspend;
-	पूर्ण
+		goto err_runtime_suspend;
+	}
 
 	drm_kms_helper_poll_init(ddev);
 
 	drm_mode_config_reset(ddev);
 
-	ret = drm_dev_रेजिस्टर(ddev, 0);
-	अगर (ret) अणु
+	ret = drm_dev_register(ddev, 0);
+	if (ret) {
 		dev_err(dev, "failed to register DRM device\n");
-		जाओ err_irq_uninstall;
-	पूर्ण
+		goto err_irq_uninstall;
+	}
 
 	drm_fbdev_generic_setup(ddev, 32);
 
 	dev_dbg(dev, "%s done\n", __func__);
 
-	वापस 0;
+	return 0;
 
 err_irq_uninstall:
 	drm_irq_uninstall(ddev);
 
-err_runसमय_suspend:
-#अगर_अघोषित CONFIG_PM
-	dispc_runसमय_suspend(tidss->dispc);
-#पूर्ण_अगर
-	pm_runसमय_disable(dev);
+err_runtime_suspend:
+#ifndef CONFIG_PM
+	dispc_runtime_suspend(tidss->dispc);
+#endif
+	pm_runtime_disable(dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक tidss_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा tidss_device *tidss = platक्रमm_get_drvdata(pdev);
-	काष्ठा drm_device *ddev = &tidss->ddev;
+static int tidss_remove(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct tidss_device *tidss = platform_get_drvdata(pdev);
+	struct drm_device *ddev = &tidss->ddev;
 
 	dev_dbg(dev, "%s\n", __func__);
 
-	drm_dev_unरेजिस्टर(ddev);
+	drm_dev_unregister(ddev);
 
-	drm_atomic_helper_shutकरोwn(ddev);
+	drm_atomic_helper_shutdown(ddev);
 
 	drm_irq_uninstall(ddev);
 
-#अगर_अघोषित CONFIG_PM
-	/* If we करोn't have PM, we need to call suspend manually */
-	dispc_runसमय_suspend(tidss->dispc);
-#पूर्ण_अगर
-	pm_runसमय_disable(dev);
+#ifndef CONFIG_PM
+	/* If we don't have PM, we need to call suspend manually */
+	dispc_runtime_suspend(tidss->dispc);
+#endif
+	pm_runtime_disable(dev);
 
-	/* devm allocated dispc goes away with the dev so mark it शून्य */
-	dispc_हटाओ(tidss);
+	/* devm allocated dispc goes away with the dev so mark it NULL */
+	dispc_remove(tidss);
 
 	dev_dbg(dev, "%s done\n", __func__);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tidss_shutकरोwn(काष्ठा platक्रमm_device *pdev)
-अणु
-	drm_atomic_helper_shutकरोwn(platक्रमm_get_drvdata(pdev));
-पूर्ण
+static void tidss_shutdown(struct platform_device *pdev)
+{
+	drm_atomic_helper_shutdown(platform_get_drvdata(pdev));
+}
 
-अटल स्थिर काष्ठा of_device_id tidss_of_table[] = अणु
-	अणु .compatible = "ti,k2g-dss", .data = &dispc_k2g_feats, पूर्ण,
-	अणु .compatible = "ti,am65x-dss", .data = &dispc_am65x_feats, पूर्ण,
-	अणु .compatible = "ti,j721e-dss", .data = &dispc_j721e_feats, पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id tidss_of_table[] = {
+	{ .compatible = "ti,k2g-dss", .data = &dispc_k2g_feats, },
+	{ .compatible = "ti,am65x-dss", .data = &dispc_am65x_feats, },
+	{ .compatible = "ti,j721e-dss", .data = &dispc_j721e_feats, },
+	{ }
+};
 
 MODULE_DEVICE_TABLE(of, tidss_of_table);
 
-अटल काष्ठा platक्रमm_driver tidss_platक्रमm_driver = अणु
+static struct platform_driver tidss_platform_driver = {
 	.probe		= tidss_probe,
-	.हटाओ		= tidss_हटाओ,
-	.shutकरोwn	= tidss_shutकरोwn,
-	.driver		= अणु
+	.remove		= tidss_remove,
+	.shutdown	= tidss_shutdown,
+	.driver		= {
 		.name	= "tidss",
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 		.pm	= &tidss_pm_ops,
-#पूर्ण_अगर
+#endif
 		.of_match_table = tidss_of_table,
 		.suppress_bind_attrs = true,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(tidss_platक्रमm_driver);
+module_platform_driver(tidss_platform_driver);
 
 MODULE_AUTHOR("Tomi Valkeinen <tomi.valkeinen@ti.com>");
 MODULE_DESCRIPTION("TI Keystone DSS Driver");

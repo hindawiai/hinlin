@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  *  linux/drivers/video/macmodes.c -- Standard MacOS video modes
  *
@@ -12,122 +11,122 @@
  *	- Brad Douglas <brad@neruo.com>
  *
  *  This file is subject to the terms and conditions of the GNU General Public
- *  License. See the file COPYING in the मुख्य directory of this archive क्रम
+ *  License. See the file COPYING in the main directory of this archive for
  *  more details.
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/fb.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/module.h>
+#include <linux/errno.h>
+#include <linux/fb.h>
+#include <linux/string.h>
+#include <linux/module.h>
 
-#समावेश "macmodes.h"
+#include "macmodes.h"
 
     /*
      *  MacOS video mode definitions
      *
-     *  Order IS important! If you change these, करोn't क्रमget to update
+     *  Order IS important! If you change these, don't forget to update
      *  mac_modes[] below!
      */
 
-#घोषणा DEFAULT_MODEDB_INDEX	0
+#define DEFAULT_MODEDB_INDEX	0
 
-अटल स्थिर काष्ठा fb_videomode mac_modedb[] = अणु
-    अणु
-	/* 512x384, 60Hz, Non-Interlaced (15.67 MHz करोt घड़ी) */
+static const struct fb_videomode mac_modedb[] = {
+    {
+	/* 512x384, 60Hz, Non-Interlaced (15.67 MHz dot clock) */
 	"mac2", 60, 512, 384, 63828, 80, 16, 19, 1, 32, 3,
 	0, FB_VMODE_NONINTERLACED
-    पूर्ण, अणु
-	/* 640x480, 60 Hz, Non-Interlaced (25.175 MHz करोtघड़ी) */
+    }, {
+	/* 640x480, 60 Hz, Non-Interlaced (25.175 MHz dotclock) */
 	"mac5", 60, 640, 480, 39722, 32, 32, 33, 10, 96, 2,
 	0, FB_VMODE_NONINTERLACED
-    पूर्ण, अणु
-	/* 640x480, 67Hz, Non-Interlaced (30.0 MHz करोtघड़ी) */
+    }, {
+	/* 640x480, 67Hz, Non-Interlaced (30.0 MHz dotclock) */
 	"mac6", 67, 640, 480, 33334, 80, 80, 39, 3, 64, 3,
 	0, FB_VMODE_NONINTERLACED
-    पूर्ण, अणु
-	/* 640x870, 75Hz (portrait), Non-Interlaced (57.28 MHz करोt घड़ी) */
+    }, {
+	/* 640x870, 75Hz (portrait), Non-Interlaced (57.28 MHz dot clock) */
 	"mac7", 75, 640, 870, 17457, 80, 32, 42, 3, 80, 3,
 	0, FB_VMODE_NONINTERLACED
-    पूर्ण, अणु
-	/* 800x600, 56 Hz, Non-Interlaced (36.00 MHz करोtघड़ी) */
+    }, {
+	/* 800x600, 56 Hz, Non-Interlaced (36.00 MHz dotclock) */
 	"mac9", 56, 800, 600, 27778, 112, 40, 22, 1, 72, 2,
 	FB_SYNC_HOR_HIGH_ACT|FB_SYNC_VERT_HIGH_ACT, FB_VMODE_NONINTERLACED
-    पूर्ण, अणु
-	/* 800x600, 60 Hz, Non-Interlaced (40.00 MHz करोtघड़ी) */
+    }, {
+	/* 800x600, 60 Hz, Non-Interlaced (40.00 MHz dotclock) */
 	"mac10", 60, 800, 600, 25000, 72, 56, 23, 1, 128, 4,
 	FB_SYNC_HOR_HIGH_ACT|FB_SYNC_VERT_HIGH_ACT, FB_VMODE_NONINTERLACED
-    पूर्ण, अणु
-	/* 800x600, 72 Hz, Non-Interlaced (50.00 MHz करोtघड़ी) */
+    }, {
+	/* 800x600, 72 Hz, Non-Interlaced (50.00 MHz dotclock) */
 	"mac11", 72, 800, 600, 20000, 48, 72, 23, 37, 120, 6,
 	FB_SYNC_HOR_HIGH_ACT|FB_SYNC_VERT_HIGH_ACT, FB_VMODE_NONINTERLACED
-    पूर्ण, अणु
-	/* 800x600, 75 Hz, Non-Interlaced (49.50 MHz करोtघड़ी) */
+    }, {
+	/* 800x600, 75 Hz, Non-Interlaced (49.50 MHz dotclock) */
 	"mac12", 75, 800, 600, 20203, 144, 32, 21, 1, 80, 3,
 	FB_SYNC_HOR_HIGH_ACT|FB_SYNC_VERT_HIGH_ACT, FB_VMODE_NONINTERLACED
-    पूर्ण, अणु
-	/* 832x624, 75Hz, Non-Interlaced (57.6 MHz करोtघड़ी) */
+    }, {
+	/* 832x624, 75Hz, Non-Interlaced (57.6 MHz dotclock) */
 	"mac13", 75, 832, 624, 17362, 208, 48, 39, 1, 64, 3,
 	0, FB_VMODE_NONINTERLACED
-    पूर्ण, अणु
-	/* 1024x768, 60 Hz, Non-Interlaced (65.00 MHz करोtघड़ी) */
+    }, {
+	/* 1024x768, 60 Hz, Non-Interlaced (65.00 MHz dotclock) */
 	"mac14", 60, 1024, 768, 15385, 144, 40, 29, 3, 136, 6,
 	0, FB_VMODE_NONINTERLACED
-    पूर्ण, अणु
-	/* 1024x768, 72 Hz, Non-Interlaced (75.00 MHz करोtघड़ी) */
+    }, {
+	/* 1024x768, 72 Hz, Non-Interlaced (75.00 MHz dotclock) */
 	"mac15", 72, 1024, 768, 13334, 128, 40, 29, 3, 136, 6,
 	0, FB_VMODE_NONINTERLACED
-    पूर्ण, अणु
-	/* 1024x768, 75 Hz, Non-Interlaced (78.75 MHz करोtघड़ी) */
+    }, {
+	/* 1024x768, 75 Hz, Non-Interlaced (78.75 MHz dotclock) */
 	"mac16", 75, 1024, 768, 12699, 176, 16, 28, 1, 96, 3,
 	FB_SYNC_HOR_HIGH_ACT|FB_SYNC_VERT_HIGH_ACT, FB_VMODE_NONINTERLACED
-    पूर्ण, अणु
-	/* 1024x768, 75 Hz, Non-Interlaced (78.75 MHz करोtघड़ी) */
+    }, {
+	/* 1024x768, 75 Hz, Non-Interlaced (78.75 MHz dotclock) */
 	"mac17", 75, 1024, 768, 12699, 160, 32, 28, 1, 96, 3,
 	FB_SYNC_HOR_HIGH_ACT|FB_SYNC_VERT_HIGH_ACT, FB_VMODE_NONINTERLACED
-    पूर्ण, अणु
-	/* 1152x870, 75 Hz, Non-Interlaced (100.0 MHz करोtघड़ी) */
+    }, {
+	/* 1152x870, 75 Hz, Non-Interlaced (100.0 MHz dotclock) */
 	"mac18", 75, 1152, 870, 10000, 128, 48, 39, 3, 128, 3,
 	FB_SYNC_HOR_HIGH_ACT|FB_SYNC_VERT_HIGH_ACT, FB_VMODE_NONINTERLACED
-    पूर्ण, अणु
-	/* 1280x960, 75 Hz, Non-Interlaced (126.00 MHz करोtघड़ी) */
+    }, {
+	/* 1280x960, 75 Hz, Non-Interlaced (126.00 MHz dotclock) */
 	"mac19", 75, 1280, 960, 7937, 224, 32, 36, 1, 144, 3,
 	0, FB_VMODE_NONINTERLACED
-    पूर्ण, अणु
-	/* 1280x1024, 75 Hz, Non-Interlaced (135.00 MHz करोtघड़ी) */
+    }, {
+	/* 1280x1024, 75 Hz, Non-Interlaced (135.00 MHz dotclock) */
 	"mac20", 75, 1280, 1024, 7408, 232, 64, 38, 1, 112, 3,
 	FB_SYNC_HOR_HIGH_ACT|FB_SYNC_VERT_HIGH_ACT, FB_VMODE_NONINTERLACED
-    पूर्ण, अणु
+    }, {
 	/* 1152x768, 60 Hz, Titanium PowerBook */
 	"mac21", 60, 1152, 768, 15386, 158, 26, 29, 3, 136, 6,
 	FB_SYNC_HOR_HIGH_ACT|FB_SYNC_VERT_HIGH_ACT, FB_VMODE_NONINTERLACED
-    पूर्ण, अणु
-	/* 1600x1024, 60 Hz, Non-Interlaced (112.27 MHz करोtघड़ी) */
+    }, {
+	/* 1600x1024, 60 Hz, Non-Interlaced (112.27 MHz dotclock) */
 	"mac22", 60, 1600, 1024, 8908, 88, 104, 1, 10, 16, 1,
 	FB_SYNC_HOR_HIGH_ACT|FB_SYNC_VERT_HIGH_ACT, FB_VMODE_NONINTERLACED
-    पूर्ण
+    }
 
-#अगर 0
-    /* Anyone who has timings क्रम these? */
-    अणु
+#if 0
+    /* Anyone who has timings for these? */
+    {
 	/* VMODE_512_384_60I: 512x384, 60Hz, Interlaced (NTSC) */
-	"mac1", 60, 512, 384, pixघड़ी, left, right, upper, lower, hslen, vslen,
+	"mac1", 60, 512, 384, pixclock, left, right, upper, lower, hslen, vslen,
 	sync, FB_VMODE_INTERLACED
-    पूर्ण, अणु
+    }, {
 	/* VMODE_640_480_50I: 640x480, 50Hz, Interlaced (PAL) */
-	"mac3", 50, 640, 480, pixघड़ी, left, right, upper, lower, hslen, vslen,
+	"mac3", 50, 640, 480, pixclock, left, right, upper, lower, hslen, vslen,
 	sync, FB_VMODE_INTERLACED
-    पूर्ण, अणु
+    }, {
 	/* VMODE_640_480_60I: 640x480, 60Hz, Interlaced (NTSC) */
-	"mac4", 60, 640, 480, pixघड़ी, left, right, upper, lower, hslen, vslen,
+	"mac4", 60, 640, 480, pixclock, left, right, upper, lower, hslen, vslen,
 	sync, FB_VMODE_INTERLACED
-    पूर्ण, अणु
+    }, {
 	/* VMODE_768_576_50I: 768x576, 50Hz (PAL full frame), Interlaced */
-	"mac8", 50, 768, 576, pixघड़ी, left, right, upper, lower, hslen, vslen,
+	"mac8", 50, 768, 576, pixclock, left, right, upper, lower, hslen, vslen,
 	sync, FB_VMODE_INTERLACED
-    पूर्ण,
-#पूर्ण_अगर
-पूर्ण;
+    },
+#endif
+};
 
 
     /*
@@ -135,106 +134,106 @@
      *
      *  These MUST be ordered in
      *    - increasing resolution
-     *    - decreasing pixel घड़ी period
+     *    - decreasing pixel clock period
      */
 
-अटल स्थिर काष्ठा mode_map अणु
-    पूर्णांक vmode;
-    स्थिर काष्ठा fb_videomode *mode;
-पूर्ण mac_modes[] = अणु
+static const struct mode_map {
+    int vmode;
+    const struct fb_videomode *mode;
+} mac_modes[] = {
     /* 512x384 */
-    अणु VMODE_512_384_60, &mac_modedb[0] पूर्ण,
+    { VMODE_512_384_60, &mac_modedb[0] },
     /* 640x480 */
-    अणु VMODE_640_480_60, &mac_modedb[1] पूर्ण,
-    अणु VMODE_640_480_67, &mac_modedb[2] पूर्ण,
+    { VMODE_640_480_60, &mac_modedb[1] },
+    { VMODE_640_480_67, &mac_modedb[2] },
     /* 640x870 */
-    अणु VMODE_640_870_75P, &mac_modedb[3] पूर्ण,
+    { VMODE_640_870_75P, &mac_modedb[3] },
     /* 800x600 */
-    अणु VMODE_800_600_56, &mac_modedb[4] पूर्ण,
-    अणु VMODE_800_600_60, &mac_modedb[5] पूर्ण,
-    अणु VMODE_800_600_75, &mac_modedb[7] पूर्ण,
-    अणु VMODE_800_600_72, &mac_modedb[6] पूर्ण,
+    { VMODE_800_600_56, &mac_modedb[4] },
+    { VMODE_800_600_60, &mac_modedb[5] },
+    { VMODE_800_600_75, &mac_modedb[7] },
+    { VMODE_800_600_72, &mac_modedb[6] },
     /* 832x624 */
-    अणु VMODE_832_624_75, &mac_modedb[8] पूर्ण,
+    { VMODE_832_624_75, &mac_modedb[8] },
     /* 1024x768 */
-    अणु VMODE_1024_768_60, &mac_modedb[9] पूर्ण,
-    अणु VMODE_1024_768_70, &mac_modedb[10] पूर्ण,
-    अणु VMODE_1024_768_75V, &mac_modedb[11] पूर्ण,
-    अणु VMODE_1024_768_75, &mac_modedb[12] पूर्ण,
+    { VMODE_1024_768_60, &mac_modedb[9] },
+    { VMODE_1024_768_70, &mac_modedb[10] },
+    { VMODE_1024_768_75V, &mac_modedb[11] },
+    { VMODE_1024_768_75, &mac_modedb[12] },
     /* 1152x768 */
-    अणु VMODE_1152_768_60, &mac_modedb[16] पूर्ण,
+    { VMODE_1152_768_60, &mac_modedb[16] },
     /* 1152x870 */
-    अणु VMODE_1152_870_75, &mac_modedb[13] पूर्ण,
+    { VMODE_1152_870_75, &mac_modedb[13] },
     /* 1280x960 */
-    अणु VMODE_1280_960_75, &mac_modedb[14] पूर्ण,
+    { VMODE_1280_960_75, &mac_modedb[14] },
     /* 1280x1024 */
-    अणु VMODE_1280_1024_75, &mac_modedb[15] पूर्ण,
+    { VMODE_1280_1024_75, &mac_modedb[15] },
     /* 1600x1024 */
-    अणु VMODE_1600_1024_60, &mac_modedb[17] पूर्ण,
-    अणु -1, शून्य पूर्ण
-पूर्ण;
+    { VMODE_1600_1024_60, &mac_modedb[17] },
+    { -1, NULL }
+};
 
 
     /*
      *  Mapping between monitor sense values and MacOS video mode numbers
      */
 
-अटल स्थिर काष्ठा monitor_map अणु
-    पूर्णांक sense;
-    पूर्णांक vmode;
-पूर्ण mac_monitors[] = अणु
-    अणु 0x000, VMODE_1280_1024_75 पूर्ण,	/* 21" RGB */
-    अणु 0x114, VMODE_640_870_75P पूर्ण,	/* Portrait Monochrome */
-    अणु 0x221, VMODE_512_384_60 पूर्ण,	/* 12" RGB*/
-    अणु 0x331, VMODE_1280_1024_75 पूर्ण,	/* 21" RGB (Radius) */
-    अणु 0x334, VMODE_1280_1024_75 पूर्ण,	/* 21" mono (Radius) */
-    अणु 0x335, VMODE_1280_1024_75 पूर्ण,	/* 21" mono */
-    अणु 0x40A, VMODE_640_480_60I पूर्ण,	/* NTSC */
-    अणु 0x51E, VMODE_640_870_75P पूर्ण,	/* Portrait RGB */
-    अणु 0x603, VMODE_832_624_75 पूर्ण,	/* 12"-16" multiscan */
-    अणु 0x60b, VMODE_1024_768_70 पूर्ण,	/* 13"-19" multiscan */
-    अणु 0x623, VMODE_1152_870_75 पूर्ण,	/* 13"-21" multiscan */
-    अणु 0x62b, VMODE_640_480_67 पूर्ण,	/* 13"/14" RGB */
-    अणु 0x700, VMODE_640_480_50I पूर्ण,	/* PAL */
-    अणु 0x714, VMODE_640_480_60I पूर्ण,	/* NTSC */
-    अणु 0x717, VMODE_800_600_75 पूर्ण,	/* VGA */
-    अणु 0x72d, VMODE_832_624_75 पूर्ण,	/* 16" RGB (Goldfish) */
-    अणु 0x730, VMODE_768_576_50I पूर्ण,	/* PAL (Alternate) */
-    अणु 0x73a, VMODE_1152_870_75 पूर्ण,	/* 3rd party 19" */
-    अणु 0x73f, VMODE_640_480_67 पूर्ण,	/* no sense lines connected at all */
-    अणु 0xBEEF, VMODE_1600_1024_60 पूर्ण,	/* 22" Apple Cinema Display */
-    अणु -1,    VMODE_640_480_60 पूर्ण,	/* catch-all, must be last */
-पूर्ण;
+static const struct monitor_map {
+    int sense;
+    int vmode;
+} mac_monitors[] = {
+    { 0x000, VMODE_1280_1024_75 },	/* 21" RGB */
+    { 0x114, VMODE_640_870_75P },	/* Portrait Monochrome */
+    { 0x221, VMODE_512_384_60 },	/* 12" RGB*/
+    { 0x331, VMODE_1280_1024_75 },	/* 21" RGB (Radius) */
+    { 0x334, VMODE_1280_1024_75 },	/* 21" mono (Radius) */
+    { 0x335, VMODE_1280_1024_75 },	/* 21" mono */
+    { 0x40A, VMODE_640_480_60I },	/* NTSC */
+    { 0x51E, VMODE_640_870_75P },	/* Portrait RGB */
+    { 0x603, VMODE_832_624_75 },	/* 12"-16" multiscan */
+    { 0x60b, VMODE_1024_768_70 },	/* 13"-19" multiscan */
+    { 0x623, VMODE_1152_870_75 },	/* 13"-21" multiscan */
+    { 0x62b, VMODE_640_480_67 },	/* 13"/14" RGB */
+    { 0x700, VMODE_640_480_50I },	/* PAL */
+    { 0x714, VMODE_640_480_60I },	/* NTSC */
+    { 0x717, VMODE_800_600_75 },	/* VGA */
+    { 0x72d, VMODE_832_624_75 },	/* 16" RGB (Goldfish) */
+    { 0x730, VMODE_768_576_50I },	/* PAL (Alternate) */
+    { 0x73a, VMODE_1152_870_75 },	/* 3rd party 19" */
+    { 0x73f, VMODE_640_480_67 },	/* no sense lines connected at all */
+    { 0xBEEF, VMODE_1600_1024_60 },	/* 22" Apple Cinema Display */
+    { -1,    VMODE_640_480_60 },	/* catch-all, must be last */
+};
 
 /**
- *	mac_vmode_to_var - converts vmode/cmode pair to var काष्ठाure
+ *	mac_vmode_to_var - converts vmode/cmode pair to var structure
  *	@vmode: MacOS video mode
  *	@cmode: MacOS color mode
- *	@var: frame buffer video mode काष्ठाure
+ *	@var: frame buffer video mode structure
  *
  *	Converts a MacOS vmode/cmode pair to a frame buffer video
- *	mode काष्ठाure.
+ *	mode structure.
  *
- *	Returns negative त्रुटि_सं on error, or zero क्रम success.
+ *	Returns negative errno on error, or zero for success.
  *
  */
 
-पूर्णांक mac_vmode_to_var(पूर्णांक vmode, पूर्णांक cmode, काष्ठा fb_var_screeninfo *var)
-अणु
-    स्थिर काष्ठा fb_videomode *mode = शून्य;
-    स्थिर काष्ठा mode_map *map;
+int mac_vmode_to_var(int vmode, int cmode, struct fb_var_screeninfo *var)
+{
+    const struct fb_videomode *mode = NULL;
+    const struct mode_map *map;
 
-    क्रम (map = mac_modes; map->vmode != -1; map++)
-	अगर (map->vmode == vmode) अणु
+    for (map = mac_modes; map->vmode != -1; map++)
+	if (map->vmode == vmode) {
 	    mode = map->mode;
-	    अवरोध;
-	पूर्ण
-    अगर (!mode)
-	वापस -EINVAL;
+	    break;
+	}
+    if (!mode)
+	return -EINVAL;
 
-    स_रखो(var, 0, माप(काष्ठा fb_var_screeninfo));
-    चयन (cmode) अणु
-	हाल CMODE_8:
+    memset(var, 0, sizeof(struct fb_var_screeninfo));
+    switch (cmode) {
+	case CMODE_8:
 	    var->bits_per_pixel = 8;
 	    var->red.offset = 0;
 	    var->red.length = 8;   
@@ -242,9 +241,9 @@
 	    var->green.length = 8;
 	    var->blue.offset = 0;
 	    var->blue.length = 8;
-	    अवरोध;
+	    break;
 
-	हाल CMODE_16:
+	case CMODE_16:
 	    var->bits_per_pixel = 16;
 	    var->red.offset = 10;
 	    var->red.length = 5;
@@ -252,9 +251,9 @@
 	    var->green.length = 5;
 	    var->blue.offset = 0;
 	    var->blue.length = 5;
-	    अवरोध;
+	    break;
 
-	हाल CMODE_32:
+	case CMODE_32:
 	    var->bits_per_pixel = 32;
 	    var->red.offset = 16;
 	    var->red.length = 8;
@@ -264,18 +263,18 @@
 	    var->blue.length = 8;
 	    var->transp.offset = 24;
 	    var->transp.length = 8;
-	    अवरोध;
+	    break;
 
-	शेष:
-	    वापस -EINVAL;
-    पूर्ण
+	default:
+	    return -EINVAL;
+    }
     var->xres = mode->xres;
     var->yres = mode->yres;
-    var->xres_भव = mode->xres;
-    var->yres_भव = mode->yres;
+    var->xres_virtual = mode->xres;
+    var->yres_virtual = mode->yres;
     var->height = -1;
     var->width = -1;
-    var->pixघड़ी = mode->pixघड़ी;
+    var->pixclock = mode->pixclock;
     var->left_margin = mode->left_margin;
     var->right_margin = mode->right_margin;
     var->upper_margin = mode->upper_margin;
@@ -284,132 +283,132 @@
     var->vsync_len = mode->vsync_len;
     var->sync = mode->sync;
     var->vmode = mode->vmode;
-    वापस 0;
-पूर्ण
+    return 0;
+}
 EXPORT_SYMBOL(mac_vmode_to_var);
 
 /**
- *	mac_var_to_vmode - convert var काष्ठाure to MacOS vmode/cmode pair
- *	@var: frame buffer video mode काष्ठाure
+ *	mac_var_to_vmode - convert var structure to MacOS vmode/cmode pair
+ *	@var: frame buffer video mode structure
  *	@vmode: MacOS video mode
  *	@cmode: MacOS color mode
  *
- *	Converts a frame buffer video mode काष्ठाure to a MacOS
+ *	Converts a frame buffer video mode structure to a MacOS
  *	vmode/cmode pair.
  *
- *	Returns negative त्रुटि_सं on error, or zero क्रम success.
+ *	Returns negative errno on error, or zero for success.
  *
  */
 
-पूर्णांक mac_var_to_vmode(स्थिर काष्ठा fb_var_screeninfo *var, पूर्णांक *vmode,
-		     पूर्णांक *cmode)
-अणु
-    स्थिर काष्ठा mode_map *map;
+int mac_var_to_vmode(const struct fb_var_screeninfo *var, int *vmode,
+		     int *cmode)
+{
+    const struct mode_map *map;
 
-    अगर (var->bits_per_pixel <= 8)
+    if (var->bits_per_pixel <= 8)
 	*cmode = CMODE_8;
-    अन्यथा अगर (var->bits_per_pixel <= 16)
+    else if (var->bits_per_pixel <= 16)
 	*cmode = CMODE_16;
-    अन्यथा अगर (var->bits_per_pixel <= 32)
+    else if (var->bits_per_pixel <= 32)
 	*cmode = CMODE_32;
-    अन्यथा
-	वापस -EINVAL;
+    else
+	return -EINVAL;
 
     /*
      * Find the mac_mode with a matching resolution or failing that, the
-     * बंदst larger resolution. Skip modes with a लघुer pixel घड़ी period.
+     * closest larger resolution. Skip modes with a shorter pixel clock period.
      */
-    क्रम (map = mac_modes; map->vmode != -1; map++) अणु
-	स्थिर काष्ठा fb_videomode *mode = map->mode;
+    for (map = mac_modes; map->vmode != -1; map++) {
+	const struct fb_videomode *mode = map->mode;
 
-	अगर (var->xres > mode->xres || var->yres > mode->yres)
-	    जारी;
-	अगर (var->xres_भव > mode->xres || var->yres_भव > mode->yres)
-	    जारी;
-	अगर (var->pixघड़ी > mode->pixघड़ी)
-	    जारी;
-	अगर ((var->vmode & FB_VMODE_MASK) != mode->vmode)
-	    जारी;
+	if (var->xres > mode->xres || var->yres > mode->yres)
+	    continue;
+	if (var->xres_virtual > mode->xres || var->yres_virtual > mode->yres)
+	    continue;
+	if (var->pixclock > mode->pixclock)
+	    continue;
+	if ((var->vmode & FB_VMODE_MASK) != mode->vmode)
+	    continue;
 	*vmode = map->vmode;
 
 	/*
-	 * Having found a good resolution, find the matching pixel घड़ी
-	 * or failing that, the बंदst दीर्घer pixel घड़ी period.
+	 * Having found a good resolution, find the matching pixel clock
+	 * or failing that, the closest longer pixel clock period.
 	 */
 	map++;
-	जबतक (map->vmode != -1) अणु
-	    स्थिर काष्ठा fb_videomode *clk_mode = map->mode;
+	while (map->vmode != -1) {
+	    const struct fb_videomode *clk_mode = map->mode;
 
-	    अगर (mode->xres != clk_mode->xres || mode->yres != clk_mode->yres)
-		अवरोध;
-	    अगर (var->pixघड़ी > mode->pixघड़ी)
-	        अवरोध;
-	    अगर (mode->vmode != clk_mode->vmode)
-		जारी;
+	    if (mode->xres != clk_mode->xres || mode->yres != clk_mode->yres)
+		break;
+	    if (var->pixclock > mode->pixclock)
+	        break;
+	    if (mode->vmode != clk_mode->vmode)
+		continue;
 	    *vmode = map->vmode;
 	    map++;
-	पूर्ण
-	वापस 0;
-    पूर्ण
-    वापस -EINVAL;
-पूर्ण
+	}
+	return 0;
+    }
+    return -EINVAL;
+}
 
 /**
  *	mac_map_monitor_sense - Convert monitor sense to vmode
- *	@sense: Macपूर्णांकosh monitor sense number
+ *	@sense: Macintosh monitor sense number
  *
- *	Converts a Macपूर्णांकosh monitor sense number to a MacOS
+ *	Converts a Macintosh monitor sense number to a MacOS
  *	vmode number.
  *
  *	Returns MacOS vmode video mode number.
  *
  */
 
-पूर्णांक mac_map_monitor_sense(पूर्णांक sense)
-अणु
-    स्थिर काष्ठा monitor_map *map;
+int mac_map_monitor_sense(int sense)
+{
+    const struct monitor_map *map;
 
-    क्रम (map = mac_monitors; map->sense != -1; map++)
-	अगर (map->sense == sense)
-	    अवरोध;
-    वापस map->vmode;
-पूर्ण
+    for (map = mac_monitors; map->sense != -1; map++)
+	if (map->sense == sense)
+	    break;
+    return map->vmode;
+}
 EXPORT_SYMBOL(mac_map_monitor_sense);
 
 /**
  *	mac_find_mode - find a video mode
  *	@var: frame buffer user defined part of display
- *	@info: frame buffer info काष्ठाure
+ *	@info: frame buffer info structure
  *	@mode_option: video mode name (see mac_modedb[])
- *	@शेष_bpp: शेष color depth in bits per pixel
+ *	@default_bpp: default color depth in bits per pixel
  *
- *	Finds a suitable video mode.  Tries to set mode specअगरied
+ *	Finds a suitable video mode.  Tries to set mode specified
  *	by @mode_option.  If the name of the wanted mode begins with
  *	'mac', the Mac video mode database will be used, otherwise it
  *	will fall back to the standard video mode database.
  *
  *	Note: Function marked as __init and can only be used during
- *	प्रणाली boot.
+ *	system boot.
  *
  *	Returns error code from fb_find_mode (see fb_find_mode
  *	function).
  *
  */
 
-पूर्णांक mac_find_mode(काष्ठा fb_var_screeninfo *var, काष्ठा fb_info *info,
-		  स्थिर अक्षर *mode_option, अचिन्हित पूर्णांक शेष_bpp)
-अणु
-    स्थिर काष्ठा fb_videomode *db = शून्य;
-    अचिन्हित पूर्णांक dbsize = 0;
+int mac_find_mode(struct fb_var_screeninfo *var, struct fb_info *info,
+		  const char *mode_option, unsigned int default_bpp)
+{
+    const struct fb_videomode *db = NULL;
+    unsigned int dbsize = 0;
 
-    अगर (mode_option && !म_भेदन(mode_option, "mac", 3)) अणु
+    if (mode_option && !strncmp(mode_option, "mac", 3)) {
 	mode_option += 3;
 	db = mac_modedb;
 	dbsize = ARRAY_SIZE(mac_modedb);
-    पूर्ण
-    वापस fb_find_mode(var, info, mode_option, db, dbsize,
-			&mac_modedb[DEFAULT_MODEDB_INDEX], शेष_bpp);
-पूर्ण
+    }
+    return fb_find_mode(var, info, mode_option, db, dbsize,
+			&mac_modedb[DEFAULT_MODEDB_INDEX], default_bpp);
+}
 EXPORT_SYMBOL(mac_find_mode);
 
 MODULE_LICENSE("GPL");

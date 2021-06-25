@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * linux/fs/nfs/delegation.c
  *
@@ -8,232 +7,232 @@
  * NFS file delegation management
  *
  */
-#समावेश <linux/completion.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/module.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/iversion.h>
+#include <linux/completion.h>
+#include <linux/kthread.h>
+#include <linux/module.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/iversion.h>
 
-#समावेश <linux/nfs4.h>
-#समावेश <linux/nfs_fs.h>
-#समावेश <linux/nfs_xdr.h>
+#include <linux/nfs4.h>
+#include <linux/nfs_fs.h>
+#include <linux/nfs_xdr.h>
 
-#समावेश "nfs4_fs.h"
-#समावेश "nfs4session.h"
-#समावेश "delegation.h"
-#समावेश "internal.h"
-#समावेश "nfs4trace.h"
+#include "nfs4_fs.h"
+#include "nfs4session.h"
+#include "delegation.h"
+#include "internal.h"
+#include "nfs4trace.h"
 
-#घोषणा NFS_DEFAULT_DELEGATION_WATERMARK (5000U)
+#define NFS_DEFAULT_DELEGATION_WATERMARK (5000U)
 
-अटल atomic_दीर्घ_t nfs_active_delegations;
-अटल अचिन्हित nfs_delegation_watermark = NFS_DEFAULT_DELEGATION_WATERMARK;
+static atomic_long_t nfs_active_delegations;
+static unsigned nfs_delegation_watermark = NFS_DEFAULT_DELEGATION_WATERMARK;
 
-अटल व्योम __nfs_मुक्त_delegation(काष्ठा nfs_delegation *delegation)
-अणु
+static void __nfs_free_delegation(struct nfs_delegation *delegation)
+{
 	put_cred(delegation->cred);
-	delegation->cred = शून्य;
-	kमुक्त_rcu(delegation, rcu);
-पूर्ण
+	delegation->cred = NULL;
+	kfree_rcu(delegation, rcu);
+}
 
-अटल व्योम nfs_mark_delegation_revoked(काष्ठा nfs_delegation *delegation)
-अणु
-	अगर (!test_and_set_bit(NFS_DELEGATION_REVOKED, &delegation->flags)) अणु
+static void nfs_mark_delegation_revoked(struct nfs_delegation *delegation)
+{
+	if (!test_and_set_bit(NFS_DELEGATION_REVOKED, &delegation->flags)) {
 		delegation->stateid.type = NFS4_INVALID_STATEID_TYPE;
-		atomic_दीर्घ_dec(&nfs_active_delegations);
-		अगर (!test_bit(NFS_DELEGATION_RETURNING, &delegation->flags))
-			nfs_clear_verअगरier_delegated(delegation->inode);
-	पूर्ण
-पूर्ण
+		atomic_long_dec(&nfs_active_delegations);
+		if (!test_bit(NFS_DELEGATION_RETURNING, &delegation->flags))
+			nfs_clear_verifier_delegated(delegation->inode);
+	}
+}
 
-अटल काष्ठा nfs_delegation *nfs_get_delegation(काष्ठा nfs_delegation *delegation)
-अणु
+static struct nfs_delegation *nfs_get_delegation(struct nfs_delegation *delegation)
+{
 	refcount_inc(&delegation->refcount);
-	वापस delegation;
-पूर्ण
+	return delegation;
+}
 
-अटल व्योम nfs_put_delegation(काष्ठा nfs_delegation *delegation)
-अणु
-	अगर (refcount_dec_and_test(&delegation->refcount))
-		__nfs_मुक्त_delegation(delegation);
-पूर्ण
+static void nfs_put_delegation(struct nfs_delegation *delegation)
+{
+	if (refcount_dec_and_test(&delegation->refcount))
+		__nfs_free_delegation(delegation);
+}
 
-अटल व्योम nfs_मुक्त_delegation(काष्ठा nfs_delegation *delegation)
-अणु
+static void nfs_free_delegation(struct nfs_delegation *delegation)
+{
 	nfs_mark_delegation_revoked(delegation);
 	nfs_put_delegation(delegation);
-पूर्ण
+}
 
 /**
  * nfs_mark_delegation_referenced - set delegation's REFERENCED flag
  * @delegation: delegation to process
  *
  */
-व्योम nfs_mark_delegation_referenced(काष्ठा nfs_delegation *delegation)
-अणु
+void nfs_mark_delegation_referenced(struct nfs_delegation *delegation)
+{
 	set_bit(NFS_DELEGATION_REFERENCED, &delegation->flags);
-पूर्ण
+}
 
-अटल bool
-nfs4_is_valid_delegation(स्थिर काष्ठा nfs_delegation *delegation,
-		भ_शेषe_t flags)
-अणु
-	अगर (delegation != शून्य && (delegation->type & flags) == flags &&
+static bool
+nfs4_is_valid_delegation(const struct nfs_delegation *delegation,
+		fmode_t flags)
+{
+	if (delegation != NULL && (delegation->type & flags) == flags &&
 	    !test_bit(NFS_DELEGATION_REVOKED, &delegation->flags) &&
 	    !test_bit(NFS_DELEGATION_RETURNING, &delegation->flags))
-		वापस true;
-	वापस false;
-पूर्ण
+		return true;
+	return false;
+}
 
-काष्ठा nfs_delegation *nfs4_get_valid_delegation(स्थिर काष्ठा inode *inode)
-अणु
-	काष्ठा nfs_delegation *delegation;
+struct nfs_delegation *nfs4_get_valid_delegation(const struct inode *inode)
+{
+	struct nfs_delegation *delegation;
 
 	delegation = rcu_dereference(NFS_I(inode)->delegation);
-	अगर (nfs4_is_valid_delegation(delegation, 0))
-		वापस delegation;
-	वापस शून्य;
-पूर्ण
+	if (nfs4_is_valid_delegation(delegation, 0))
+		return delegation;
+	return NULL;
+}
 
-अटल पूर्णांक
-nfs4_करो_check_delegation(काष्ठा inode *inode, भ_शेषe_t flags, bool mark)
-अणु
-	काष्ठा nfs_delegation *delegation;
-	पूर्णांक ret = 0;
+static int
+nfs4_do_check_delegation(struct inode *inode, fmode_t flags, bool mark)
+{
+	struct nfs_delegation *delegation;
+	int ret = 0;
 
 	flags &= FMODE_READ|FMODE_WRITE;
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	delegation = rcu_dereference(NFS_I(inode)->delegation);
-	अगर (nfs4_is_valid_delegation(delegation, flags)) अणु
-		अगर (mark)
+	if (nfs4_is_valid_delegation(delegation, flags)) {
+		if (mark)
 			nfs_mark_delegation_referenced(delegation);
 		ret = 1;
-	पूर्ण
-	rcu_पढ़ो_unlock();
-	वापस ret;
-पूर्ण
+	}
+	rcu_read_unlock();
+	return ret;
+}
 /**
- * nfs4_have_delegation - check अगर inode has a delegation, mark it
- * NFS_DELEGATION_REFERENCED अगर there is one.
+ * nfs4_have_delegation - check if inode has a delegation, mark it
+ * NFS_DELEGATION_REFERENCED if there is one.
  * @inode: inode to check
- * @flags: delegation types to check क्रम
+ * @flags: delegation types to check for
  *
- * Returns one अगर inode has the indicated delegation, otherwise zero.
+ * Returns one if inode has the indicated delegation, otherwise zero.
  */
-पूर्णांक nfs4_have_delegation(काष्ठा inode *inode, भ_शेषe_t flags)
-अणु
-	वापस nfs4_करो_check_delegation(inode, flags, true);
-पूर्ण
+int nfs4_have_delegation(struct inode *inode, fmode_t flags)
+{
+	return nfs4_do_check_delegation(inode, flags, true);
+}
 
 /*
- * nfs4_check_delegation - check अगर inode has a delegation, करो not mark
- * NFS_DELEGATION_REFERENCED अगर it has one.
+ * nfs4_check_delegation - check if inode has a delegation, do not mark
+ * NFS_DELEGATION_REFERENCED if it has one.
  */
-पूर्णांक nfs4_check_delegation(काष्ठा inode *inode, भ_शेषe_t flags)
-अणु
-	वापस nfs4_करो_check_delegation(inode, flags, false);
-पूर्ण
+int nfs4_check_delegation(struct inode *inode, fmode_t flags)
+{
+	return nfs4_do_check_delegation(inode, flags, false);
+}
 
-अटल पूर्णांक nfs_delegation_claim_locks(काष्ठा nfs4_state *state, स्थिर nfs4_stateid *stateid)
-अणु
-	काष्ठा inode *inode = state->inode;
-	काष्ठा file_lock *fl;
-	काष्ठा file_lock_context *flctx = inode->i_flctx;
-	काष्ठा list_head *list;
-	पूर्णांक status = 0;
+static int nfs_delegation_claim_locks(struct nfs4_state *state, const nfs4_stateid *stateid)
+{
+	struct inode *inode = state->inode;
+	struct file_lock *fl;
+	struct file_lock_context *flctx = inode->i_flctx;
+	struct list_head *list;
+	int status = 0;
 
-	अगर (flctx == शून्य)
-		जाओ out;
+	if (flctx == NULL)
+		goto out;
 
 	list = &flctx->flc_posix;
 	spin_lock(&flctx->flc_lock);
 restart:
-	list_क्रम_each_entry(fl, list, fl_list) अणु
-		अगर (nfs_file_खोलो_context(fl->fl_file)->state != state)
-			जारी;
+	list_for_each_entry(fl, list, fl_list) {
+		if (nfs_file_open_context(fl->fl_file)->state != state)
+			continue;
 		spin_unlock(&flctx->flc_lock);
 		status = nfs4_lock_delegation_recall(fl, state, stateid);
-		अगर (status < 0)
-			जाओ out;
+		if (status < 0)
+			goto out;
 		spin_lock(&flctx->flc_lock);
-	पूर्ण
-	अगर (list == &flctx->flc_posix) अणु
+	}
+	if (list == &flctx->flc_posix) {
 		list = &flctx->flc_flock;
-		जाओ restart;
-	पूर्ण
+		goto restart;
+	}
 	spin_unlock(&flctx->flc_lock);
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक nfs_delegation_claim_खोलोs(काष्ठा inode *inode,
-		स्थिर nfs4_stateid *stateid, भ_शेषe_t type)
-अणु
-	काष्ठा nfs_inode *nfsi = NFS_I(inode);
-	काष्ठा nfs_खोलो_context *ctx;
-	काष्ठा nfs4_state_owner *sp;
-	काष्ठा nfs4_state *state;
-	अचिन्हित पूर्णांक seq;
-	पूर्णांक err;
+static int nfs_delegation_claim_opens(struct inode *inode,
+		const nfs4_stateid *stateid, fmode_t type)
+{
+	struct nfs_inode *nfsi = NFS_I(inode);
+	struct nfs_open_context *ctx;
+	struct nfs4_state_owner *sp;
+	struct nfs4_state *state;
+	unsigned int seq;
+	int err;
 
 again:
-	rcu_पढ़ो_lock();
-	list_क्रम_each_entry_rcu(ctx, &nfsi->खोलो_files, list) अणु
+	rcu_read_lock();
+	list_for_each_entry_rcu(ctx, &nfsi->open_files, list) {
 		state = ctx->state;
-		अगर (state == शून्य)
-			जारी;
-		अगर (!test_bit(NFS_DELEGATED_STATE, &state->flags))
-			जारी;
-		अगर (!nfs4_valid_खोलो_stateid(state))
-			जारी;
-		अगर (!nfs4_stateid_match(&state->stateid, stateid))
-			जारी;
-		अगर (!get_nfs_खोलो_context(ctx))
-			जारी;
-		rcu_पढ़ो_unlock();
+		if (state == NULL)
+			continue;
+		if (!test_bit(NFS_DELEGATED_STATE, &state->flags))
+			continue;
+		if (!nfs4_valid_open_stateid(state))
+			continue;
+		if (!nfs4_stateid_match(&state->stateid, stateid))
+			continue;
+		if (!get_nfs_open_context(ctx))
+			continue;
+		rcu_read_unlock();
 		sp = state->owner;
 		/* Block nfs4_proc_unlck */
-		mutex_lock(&sp->so_delegवापस_mutex);
+		mutex_lock(&sp->so_delegreturn_mutex);
 		seq = raw_seqcount_begin(&sp->so_reclaim_seqcount);
-		err = nfs4_खोलो_delegation_recall(ctx, state, stateid);
-		अगर (!err)
+		err = nfs4_open_delegation_recall(ctx, state, stateid);
+		if (!err)
 			err = nfs_delegation_claim_locks(state, stateid);
-		अगर (!err && पढ़ो_seqcount_retry(&sp->so_reclaim_seqcount, seq))
+		if (!err && read_seqcount_retry(&sp->so_reclaim_seqcount, seq))
 			err = -EAGAIN;
-		mutex_unlock(&sp->so_delegवापस_mutex);
-		put_nfs_खोलो_context(ctx);
-		अगर (err != 0)
-			वापस err;
-		जाओ again;
-	पूर्ण
-	rcu_पढ़ो_unlock();
-	वापस 0;
-पूर्ण
+		mutex_unlock(&sp->so_delegreturn_mutex);
+		put_nfs_open_context(ctx);
+		if (err != 0)
+			return err;
+		goto again;
+	}
+	rcu_read_unlock();
+	return 0;
+}
 
 /**
  * nfs_inode_reclaim_delegation - process a delegation reclaim request
  * @inode: inode to process
- * @cred: credential to use क्रम request
+ * @cred: credential to use for request
  * @type: delegation type
  * @stateid: delegation stateid
- * @pagemod_limit: ग_लिखो delegation "space_limit"
+ * @pagemod_limit: write delegation "space_limit"
  *
  */
-व्योम nfs_inode_reclaim_delegation(काष्ठा inode *inode, स्थिर काष्ठा cred *cred,
-				  भ_शेषe_t type,
-				  स्थिर nfs4_stateid *stateid,
-				  अचिन्हित दीर्घ pagemod_limit)
-अणु
-	काष्ठा nfs_delegation *delegation;
-	स्थिर काष्ठा cred *oldcred = शून्य;
+void nfs_inode_reclaim_delegation(struct inode *inode, const struct cred *cred,
+				  fmode_t type,
+				  const nfs4_stateid *stateid,
+				  unsigned long pagemod_limit)
+{
+	struct nfs_delegation *delegation;
+	const struct cred *oldcred = NULL;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	delegation = rcu_dereference(NFS_I(inode)->delegation);
-	अगर (delegation != शून्य) अणु
+	if (delegation != NULL) {
 		spin_lock(&delegation->lock);
-		अगर (nfs4_is_valid_delegation(delegation, 0)) अणु
+		if (nfs4_is_valid_delegation(delegation, 0)) {
 			nfs4_stateid_copy(&delegation->stateid, stateid);
 			delegation->type = type;
 			delegation->pagemod_limit = pagemod_limit;
@@ -242,198 +241,198 @@ again:
 			clear_bit(NFS_DELEGATION_NEED_RECLAIM,
 				  &delegation->flags);
 			spin_unlock(&delegation->lock);
-			rcu_पढ़ो_unlock();
+			rcu_read_unlock();
 			put_cred(oldcred);
 			trace_nfs4_reclaim_delegation(inode, type);
-			वापस;
-		पूर्ण
-		/* We appear to have raced with a delegation वापस. */
+			return;
+		}
+		/* We appear to have raced with a delegation return. */
 		spin_unlock(&delegation->lock);
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	}
+	rcu_read_unlock();
 	nfs_inode_set_delegation(inode, cred, type, stateid, pagemod_limit);
-पूर्ण
+}
 
-अटल पूर्णांक nfs_करो_वापस_delegation(काष्ठा inode *inode, काष्ठा nfs_delegation *delegation, पूर्णांक issync)
-अणु
-	स्थिर काष्ठा cred *cred;
-	पूर्णांक res = 0;
+static int nfs_do_return_delegation(struct inode *inode, struct nfs_delegation *delegation, int issync)
+{
+	const struct cred *cred;
+	int res = 0;
 
-	अगर (!test_bit(NFS_DELEGATION_REVOKED, &delegation->flags)) अणु
+	if (!test_bit(NFS_DELEGATION_REVOKED, &delegation->flags)) {
 		spin_lock(&delegation->lock);
 		cred = get_cred(delegation->cred);
 		spin_unlock(&delegation->lock);
-		res = nfs4_proc_delegवापस(inode, cred,
+		res = nfs4_proc_delegreturn(inode, cred,
 				&delegation->stateid,
 				issync);
 		put_cred(cred);
-	पूर्ण
-	वापस res;
-पूर्ण
+	}
+	return res;
+}
 
-अटल काष्ठा inode *nfs_delegation_grab_inode(काष्ठा nfs_delegation *delegation)
-अणु
-	काष्ठा inode *inode = शून्य;
+static struct inode *nfs_delegation_grab_inode(struct nfs_delegation *delegation)
+{
+	struct inode *inode = NULL;
 
 	spin_lock(&delegation->lock);
-	अगर (delegation->inode != शून्य)
+	if (delegation->inode != NULL)
 		inode = igrab(delegation->inode);
-	अगर (!inode)
+	if (!inode)
 		set_bit(NFS_DELEGATION_INODE_FREEING, &delegation->flags);
 	spin_unlock(&delegation->lock);
-	वापस inode;
-पूर्ण
+	return inode;
+}
 
-अटल काष्ठा nfs_delegation *
-nfs_start_delegation_वापस_locked(काष्ठा nfs_inode *nfsi)
-अणु
-	काष्ठा nfs_delegation *ret = शून्य;
-	काष्ठा nfs_delegation *delegation = rcu_dereference(nfsi->delegation);
+static struct nfs_delegation *
+nfs_start_delegation_return_locked(struct nfs_inode *nfsi)
+{
+	struct nfs_delegation *ret = NULL;
+	struct nfs_delegation *delegation = rcu_dereference(nfsi->delegation);
 
-	अगर (delegation == शून्य)
-		जाओ out;
+	if (delegation == NULL)
+		goto out;
 	spin_lock(&delegation->lock);
-	अगर (!test_and_set_bit(NFS_DELEGATION_RETURNING, &delegation->flags)) अणु
-		/* Refcount matched in nfs_end_delegation_वापस() */
+	if (!test_and_set_bit(NFS_DELEGATION_RETURNING, &delegation->flags)) {
+		/* Refcount matched in nfs_end_delegation_return() */
 		ret = nfs_get_delegation(delegation);
-	पूर्ण
+	}
 	spin_unlock(&delegation->lock);
-	अगर (ret)
-		nfs_clear_verअगरier_delegated(&nfsi->vfs_inode);
+	if (ret)
+		nfs_clear_verifier_delegated(&nfsi->vfs_inode);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा nfs_delegation *
-nfs_start_delegation_वापस(काष्ठा nfs_inode *nfsi)
-अणु
-	काष्ठा nfs_delegation *delegation;
+static struct nfs_delegation *
+nfs_start_delegation_return(struct nfs_inode *nfsi)
+{
+	struct nfs_delegation *delegation;
 
-	rcu_पढ़ो_lock();
-	delegation = nfs_start_delegation_वापस_locked(nfsi);
-	rcu_पढ़ो_unlock();
-	वापस delegation;
-पूर्ण
+	rcu_read_lock();
+	delegation = nfs_start_delegation_return_locked(nfsi);
+	rcu_read_unlock();
+	return delegation;
+}
 
-अटल व्योम
-nfs_पात_delegation_वापस(काष्ठा nfs_delegation *delegation,
-		काष्ठा nfs_client *clp)
-अणु
+static void
+nfs_abort_delegation_return(struct nfs_delegation *delegation,
+		struct nfs_client *clp)
+{
 
 	spin_lock(&delegation->lock);
 	clear_bit(NFS_DELEGATION_RETURNING, &delegation->flags);
 	set_bit(NFS_DELEGATION_RETURN, &delegation->flags);
 	spin_unlock(&delegation->lock);
 	set_bit(NFS4CLNT_DELEGRETURN, &clp->cl_state);
-पूर्ण
+}
 
-अटल काष्ठा nfs_delegation *
-nfs_detach_delegation_locked(काष्ठा nfs_inode *nfsi,
-		काष्ठा nfs_delegation *delegation,
-		काष्ठा nfs_client *clp)
-अणु
-	काष्ठा nfs_delegation *deleg_cur =
-		rcu_dereference_रक्षित(nfsi->delegation,
+static struct nfs_delegation *
+nfs_detach_delegation_locked(struct nfs_inode *nfsi,
+		struct nfs_delegation *delegation,
+		struct nfs_client *clp)
+{
+	struct nfs_delegation *deleg_cur =
+		rcu_dereference_protected(nfsi->delegation,
 				lockdep_is_held(&clp->cl_lock));
 
-	अगर (deleg_cur == शून्य || delegation != deleg_cur)
-		वापस शून्य;
+	if (deleg_cur == NULL || delegation != deleg_cur)
+		return NULL;
 
 	spin_lock(&delegation->lock);
-	अगर (!delegation->inode) अणु
+	if (!delegation->inode) {
 		spin_unlock(&delegation->lock);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 	list_del_rcu(&delegation->super_list);
-	delegation->inode = शून्य;
-	rcu_assign_poपूर्णांकer(nfsi->delegation, शून्य);
+	delegation->inode = NULL;
+	rcu_assign_pointer(nfsi->delegation, NULL);
 	spin_unlock(&delegation->lock);
-	वापस delegation;
-पूर्ण
+	return delegation;
+}
 
-अटल काष्ठा nfs_delegation *nfs_detach_delegation(काष्ठा nfs_inode *nfsi,
-		काष्ठा nfs_delegation *delegation,
-		काष्ठा nfs_server *server)
-अणु
-	काष्ठा nfs_client *clp = server->nfs_client;
+static struct nfs_delegation *nfs_detach_delegation(struct nfs_inode *nfsi,
+		struct nfs_delegation *delegation,
+		struct nfs_server *server)
+{
+	struct nfs_client *clp = server->nfs_client;
 
 	spin_lock(&clp->cl_lock);
 	delegation = nfs_detach_delegation_locked(nfsi, delegation, clp);
 	spin_unlock(&clp->cl_lock);
-	वापस delegation;
-पूर्ण
+	return delegation;
+}
 
-अटल काष्ठा nfs_delegation *
-nfs_inode_detach_delegation(काष्ठा inode *inode)
-अणु
-	काष्ठा nfs_inode *nfsi = NFS_I(inode);
-	काष्ठा nfs_server *server = NFS_SERVER(inode);
-	काष्ठा nfs_delegation *delegation;
+static struct nfs_delegation *
+nfs_inode_detach_delegation(struct inode *inode)
+{
+	struct nfs_inode *nfsi = NFS_I(inode);
+	struct nfs_server *server = NFS_SERVER(inode);
+	struct nfs_delegation *delegation;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	delegation = rcu_dereference(nfsi->delegation);
-	अगर (delegation != शून्य)
+	if (delegation != NULL)
 		delegation = nfs_detach_delegation(nfsi, delegation, server);
-	rcu_पढ़ो_unlock();
-	वापस delegation;
-पूर्ण
+	rcu_read_unlock();
+	return delegation;
+}
 
-अटल व्योम
-nfs_update_delegation_cred(काष्ठा nfs_delegation *delegation,
-		स्थिर काष्ठा cred *cred)
-अणु
-	स्थिर काष्ठा cred *old;
+static void
+nfs_update_delegation_cred(struct nfs_delegation *delegation,
+		const struct cred *cred)
+{
+	const struct cred *old;
 
-	अगर (cred_fscmp(delegation->cred, cred) != 0) अणु
+	if (cred_fscmp(delegation->cred, cred) != 0) {
 		old = xchg(&delegation->cred, get_cred(cred));
 		put_cred(old);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम
-nfs_update_inplace_delegation(काष्ठा nfs_delegation *delegation,
-		स्थिर काष्ठा nfs_delegation *update)
-अणु
-	अगर (nfs4_stateid_is_newer(&update->stateid, &delegation->stateid)) अणु
+static void
+nfs_update_inplace_delegation(struct nfs_delegation *delegation,
+		const struct nfs_delegation *update)
+{
+	if (nfs4_stateid_is_newer(&update->stateid, &delegation->stateid)) {
 		delegation->stateid.seqid = update->stateid.seqid;
 		smp_wmb();
 		delegation->type = update->type;
 		delegation->pagemod_limit = update->pagemod_limit;
-		अगर (test_bit(NFS_DELEGATION_REVOKED, &delegation->flags)) अणु
+		if (test_bit(NFS_DELEGATION_REVOKED, &delegation->flags)) {
 			delegation->change_attr = update->change_attr;
 			nfs_update_delegation_cred(delegation, update->cred);
-			/* smp_mb__beक्रमe_atomic() is implicit due to xchg() */
+			/* smp_mb__before_atomic() is implicit due to xchg() */
 			clear_bit(NFS_DELEGATION_REVOKED, &delegation->flags);
-			atomic_दीर्घ_inc(&nfs_active_delegations);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			atomic_long_inc(&nfs_active_delegations);
+		}
+	}
+}
 
 /**
  * nfs_inode_set_delegation - set up a delegation on an inode
  * @inode: inode to which delegation applies
- * @cred: cred to use क्रम subsequent delegation processing
+ * @cred: cred to use for subsequent delegation processing
  * @type: delegation type
  * @stateid: delegation stateid
- * @pagemod_limit: ग_लिखो delegation "space_limit"
+ * @pagemod_limit: write delegation "space_limit"
  *
- * Returns zero on success, or a negative त्रुटि_सं value.
+ * Returns zero on success, or a negative errno value.
  */
-पूर्णांक nfs_inode_set_delegation(काष्ठा inode *inode, स्थिर काष्ठा cred *cred,
-				  भ_शेषe_t type,
-				  स्थिर nfs4_stateid *stateid,
-				  अचिन्हित दीर्घ pagemod_limit)
-अणु
-	काष्ठा nfs_server *server = NFS_SERVER(inode);
-	काष्ठा nfs_client *clp = server->nfs_client;
-	काष्ठा nfs_inode *nfsi = NFS_I(inode);
-	काष्ठा nfs_delegation *delegation, *old_delegation;
-	काष्ठा nfs_delegation *मुक्तme = शून्य;
-	पूर्णांक status = 0;
+int nfs_inode_set_delegation(struct inode *inode, const struct cred *cred,
+				  fmode_t type,
+				  const nfs4_stateid *stateid,
+				  unsigned long pagemod_limit)
+{
+	struct nfs_server *server = NFS_SERVER(inode);
+	struct nfs_client *clp = server->nfs_client;
+	struct nfs_inode *nfsi = NFS_I(inode);
+	struct nfs_delegation *delegation, *old_delegation;
+	struct nfs_delegation *freeme = NULL;
+	int status = 0;
 
-	delegation = kदो_स्मृति(माप(*delegation), GFP_NOFS);
-	अगर (delegation == शून्य)
-		वापस -ENOMEM;
+	delegation = kmalloc(sizeof(*delegation), GFP_NOFS);
+	if (delegation == NULL)
+		return -ENOMEM;
 	nfs4_stateid_copy(&delegation->stateid, stateid);
 	refcount_set(&delegation->refcount, 1);
 	delegation->type = type;
@@ -445,50 +444,50 @@ nfs_update_inplace_delegation(काष्ठा nfs_delegation *delegation,
 	spin_lock_init(&delegation->lock);
 
 	spin_lock(&clp->cl_lock);
-	old_delegation = rcu_dereference_रक्षित(nfsi->delegation,
+	old_delegation = rcu_dereference_protected(nfsi->delegation,
 					lockdep_is_held(&clp->cl_lock));
-	अगर (old_delegation == शून्य)
-		जाओ add_new;
+	if (old_delegation == NULL)
+		goto add_new;
 	/* Is this an update of the existing delegation? */
-	अगर (nfs4_stateid_match_other(&old_delegation->stateid,
-				&delegation->stateid)) अणु
+	if (nfs4_stateid_match_other(&old_delegation->stateid,
+				&delegation->stateid)) {
 		spin_lock(&old_delegation->lock);
 		nfs_update_inplace_delegation(old_delegation,
 				delegation);
 		spin_unlock(&old_delegation->lock);
-		जाओ out;
-	पूर्ण
-	अगर (!test_bit(NFS_DELEGATION_REVOKED, &old_delegation->flags)) अणु
+		goto out;
+	}
+	if (!test_bit(NFS_DELEGATION_REVOKED, &old_delegation->flags)) {
 		/*
 		 * Deal with broken servers that hand out two
-		 * delegations क्रम the same file.
-		 * Allow क्रम upgrades to a WRITE delegation, but
-		 * nothing अन्यथा.
+		 * delegations for the same file.
+		 * Allow for upgrades to a WRITE delegation, but
+		 * nothing else.
 		 */
-		dfprपूर्णांकk(खाता, "%s: server %s handed out "
+		dfprintk(FILE, "%s: server %s handed out "
 				"a duplicate delegation!\n",
 				__func__, clp->cl_hostname);
-		अगर (delegation->type == old_delegation->type ||
-		    !(delegation->type & FMODE_WRITE)) अणु
-			मुक्तme = delegation;
-			delegation = शून्य;
-			जाओ out;
-		पूर्ण
-		अगर (test_and_set_bit(NFS_DELEGATION_RETURNING,
+		if (delegation->type == old_delegation->type ||
+		    !(delegation->type & FMODE_WRITE)) {
+			freeme = delegation;
+			delegation = NULL;
+			goto out;
+		}
+		if (test_and_set_bit(NFS_DELEGATION_RETURNING,
 					&old_delegation->flags))
-			जाओ out;
-	पूर्ण
-	मुक्तme = nfs_detach_delegation_locked(nfsi, old_delegation, clp);
-	अगर (मुक्तme == शून्य)
-		जाओ out;
+			goto out;
+	}
+	freeme = nfs_detach_delegation_locked(nfsi, old_delegation, clp);
+	if (freeme == NULL)
+		goto out;
 add_new:
 	/*
-	 * If we didn't revalidate the change attribute beक्रमe setting
-	 * the delegation, then pre-emptively ask क्रम a full attribute
+	 * If we didn't revalidate the change attribute before setting
+	 * the delegation, then pre-emptively ask for a full attribute
 	 * cache revalidation.
 	 */
 	spin_lock(&inode->i_lock);
-	अगर (NFS_I(inode)->cache_validity & NFS_INO_INVALID_CHANGE)
+	if (NFS_I(inode)->cache_validity & NFS_INO_INVALID_CHANGE)
 		nfs_set_cache_invalid(inode,
 			NFS_INO_INVALID_ATIME | NFS_INO_INVALID_CTIME |
 			NFS_INO_INVALID_MTIME | NFS_INO_INVALID_SIZE |
@@ -499,453 +498,453 @@ add_new:
 	spin_unlock(&inode->i_lock);
 
 	list_add_tail_rcu(&delegation->super_list, &server->delegations);
-	rcu_assign_poपूर्णांकer(nfsi->delegation, delegation);
-	delegation = शून्य;
+	rcu_assign_pointer(nfsi->delegation, delegation);
+	delegation = NULL;
 
-	atomic_दीर्घ_inc(&nfs_active_delegations);
+	atomic_long_inc(&nfs_active_delegations);
 
 	trace_nfs4_set_delegation(inode, type);
 out:
 	spin_unlock(&clp->cl_lock);
-	अगर (delegation != शून्य)
-		__nfs_मुक्त_delegation(delegation);
-	अगर (मुक्तme != शून्य) अणु
-		nfs_करो_वापस_delegation(inode, मुक्तme, 0);
-		nfs_मुक्त_delegation(मुक्तme);
-	पूर्ण
-	वापस status;
-पूर्ण
+	if (delegation != NULL)
+		__nfs_free_delegation(delegation);
+	if (freeme != NULL) {
+		nfs_do_return_delegation(inode, freeme, 0);
+		nfs_free_delegation(freeme);
+	}
+	return status;
+}
 
 /*
- * Basic procedure क्रम वापसing a delegation to the server
+ * Basic procedure for returning a delegation to the server
  */
-अटल पूर्णांक nfs_end_delegation_वापस(काष्ठा inode *inode, काष्ठा nfs_delegation *delegation, पूर्णांक issync)
-अणु
-	काष्ठा nfs_client *clp = NFS_SERVER(inode)->nfs_client;
-	पूर्णांक err = 0;
+static int nfs_end_delegation_return(struct inode *inode, struct nfs_delegation *delegation, int issync)
+{
+	struct nfs_client *clp = NFS_SERVER(inode)->nfs_client;
+	int err = 0;
 
-	अगर (delegation == शून्य)
-		वापस 0;
-	करो अणु
-		अगर (test_bit(NFS_DELEGATION_REVOKED, &delegation->flags))
-			अवरोध;
-		err = nfs_delegation_claim_खोलोs(inode, &delegation->stateid,
+	if (delegation == NULL)
+		return 0;
+	do {
+		if (test_bit(NFS_DELEGATION_REVOKED, &delegation->flags))
+			break;
+		err = nfs_delegation_claim_opens(inode, &delegation->stateid,
 				delegation->type);
-		अगर (!issync || err != -EAGAIN)
-			अवरोध;
+		if (!issync || err != -EAGAIN)
+			break;
 		/*
 		 * Guard against state recovery
 		 */
-		err = nfs4_रुको_clnt_recover(clp);
-	पूर्ण जबतक (err == 0);
+		err = nfs4_wait_clnt_recover(clp);
+	} while (err == 0);
 
-	अगर (err) अणु
-		nfs_पात_delegation_वापस(delegation, clp);
-		जाओ out;
-	पूर्ण
+	if (err) {
+		nfs_abort_delegation_return(delegation, clp);
+		goto out;
+	}
 
-	err = nfs_करो_वापस_delegation(inode, delegation, issync);
+	err = nfs_do_return_delegation(inode, delegation, issync);
 out:
-	/* Refcount matched in nfs_start_delegation_वापस_locked() */
+	/* Refcount matched in nfs_start_delegation_return_locked() */
 	nfs_put_delegation(delegation);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल bool nfs_delegation_need_वापस(काष्ठा nfs_delegation *delegation)
-अणु
+static bool nfs_delegation_need_return(struct nfs_delegation *delegation)
+{
 	bool ret = false;
 
-	अगर (test_and_clear_bit(NFS_DELEGATION_RETURN, &delegation->flags))
+	if (test_and_clear_bit(NFS_DELEGATION_RETURN, &delegation->flags))
 		ret = true;
-	अन्यथा अगर (test_bit(NFS_DELEGATION_RETURN_IF_CLOSED, &delegation->flags)) अणु
-		काष्ठा inode *inode;
+	else if (test_bit(NFS_DELEGATION_RETURN_IF_CLOSED, &delegation->flags)) {
+		struct inode *inode;
 
 		spin_lock(&delegation->lock);
 		inode = delegation->inode;
-		अगर (inode && list_empty(&NFS_I(inode)->खोलो_files))
+		if (inode && list_empty(&NFS_I(inode)->open_files))
 			ret = true;
 		spin_unlock(&delegation->lock);
-	पूर्ण
-	अगर (ret)
+	}
+	if (ret)
 		clear_bit(NFS_DELEGATION_RETURN_IF_CLOSED, &delegation->flags);
-	अगर (test_bit(NFS_DELEGATION_RETURNING, &delegation->flags) ||
+	if (test_bit(NFS_DELEGATION_RETURNING, &delegation->flags) ||
 	    test_bit(NFS_DELEGATION_REVOKED, &delegation->flags))
 		ret = false;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक nfs_server_वापस_marked_delegations(काष्ठा nfs_server *server,
-		व्योम __always_unused *data)
-अणु
-	काष्ठा nfs_delegation *delegation;
-	काष्ठा nfs_delegation *prev;
-	काष्ठा inode *inode;
-	काष्ठा inode *place_holder = शून्य;
-	काष्ठा nfs_delegation *place_holder_deleg = शून्य;
-	पूर्णांक err = 0;
+static int nfs_server_return_marked_delegations(struct nfs_server *server,
+		void __always_unused *data)
+{
+	struct nfs_delegation *delegation;
+	struct nfs_delegation *prev;
+	struct inode *inode;
+	struct inode *place_holder = NULL;
+	struct nfs_delegation *place_holder_deleg = NULL;
+	int err = 0;
 
 restart:
 	/*
-	 * To aव्योम quadratic looping we hold a reference
-	 * to an inode place_holder.  Each समय we restart, we
+	 * To avoid quadratic looping we hold a reference
+	 * to an inode place_holder.  Each time we restart, we
 	 * list delegation in the server from the delegations
 	 * of that inode.
-	 * prev is an RCU-रक्षित poपूर्णांकer to a delegation which
-	 * wasn't marked क्रम वापस and might be a good choice क्रम
+	 * prev is an RCU-protected pointer to a delegation which
+	 * wasn't marked for return and might be a good choice for
 	 * the next place_holder.
 	 */
-	prev = शून्य;
-	delegation = शून्य;
-	rcu_पढ़ो_lock();
-	अगर (place_holder)
+	prev = NULL;
+	delegation = NULL;
+	rcu_read_lock();
+	if (place_holder)
 		delegation = rcu_dereference(NFS_I(place_holder)->delegation);
-	अगर (!delegation || delegation != place_holder_deleg)
+	if (!delegation || delegation != place_holder_deleg)
 		delegation = list_entry_rcu(server->delegations.next,
-					    काष्ठा nfs_delegation, super_list);
-	list_क्रम_each_entry_from_rcu(delegation, &server->delegations, super_list) अणु
-		काष्ठा inode *to_put = शून्य;
+					    struct nfs_delegation, super_list);
+	list_for_each_entry_from_rcu(delegation, &server->delegations, super_list) {
+		struct inode *to_put = NULL;
 
-		अगर (test_bit(NFS_DELEGATION_INODE_FREEING, &delegation->flags))
-			जारी;
-		अगर (!nfs_delegation_need_वापस(delegation)) अणु
-			अगर (nfs4_is_valid_delegation(delegation, 0))
+		if (test_bit(NFS_DELEGATION_INODE_FREEING, &delegation->flags))
+			continue;
+		if (!nfs_delegation_need_return(delegation)) {
+			if (nfs4_is_valid_delegation(delegation, 0))
 				prev = delegation;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (prev) अणु
-			काष्ठा inode *पंचांगp = nfs_delegation_grab_inode(prev);
-			अगर (पंचांगp) अणु
+		if (prev) {
+			struct inode *tmp = nfs_delegation_grab_inode(prev);
+			if (tmp) {
 				to_put = place_holder;
-				place_holder = पंचांगp;
+				place_holder = tmp;
 				place_holder_deleg = prev;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		inode = nfs_delegation_grab_inode(delegation);
-		अगर (inode == शून्य) अणु
-			rcu_पढ़ो_unlock();
+		if (inode == NULL) {
+			rcu_read_unlock();
 			iput(to_put);
-			जाओ restart;
-		पूर्ण
-		delegation = nfs_start_delegation_वापस_locked(NFS_I(inode));
-		rcu_पढ़ो_unlock();
+			goto restart;
+		}
+		delegation = nfs_start_delegation_return_locked(NFS_I(inode));
+		rcu_read_unlock();
 
 		iput(to_put);
 
-		err = nfs_end_delegation_वापस(inode, delegation, 0);
+		err = nfs_end_delegation_return(inode, delegation, 0);
 		iput(inode);
 		cond_resched();
-		अगर (!err)
-			जाओ restart;
+		if (!err)
+			goto restart;
 		set_bit(NFS4CLNT_DELEGRETURN, &server->nfs_client->cl_state);
-		जाओ out;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+		goto out;
+	}
+	rcu_read_unlock();
 out:
 	iput(place_holder);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /**
- * nfs_client_वापस_marked_delegations - वापस previously marked delegations
+ * nfs_client_return_marked_delegations - return previously marked delegations
  * @clp: nfs_client to process
  *
- * Note that this function is deचिन्हित to be called by the state
- * manager thपढ़ो. For this reason, it cannot flush the dirty data,
- * since that could deadlock in हाल of a state recovery error.
+ * Note that this function is designed to be called by the state
+ * manager thread. For this reason, it cannot flush the dirty data,
+ * since that could deadlock in case of a state recovery error.
  *
- * Returns zero on success, or a negative त्रुटि_सं value.
+ * Returns zero on success, or a negative errno value.
  */
-पूर्णांक nfs_client_वापस_marked_delegations(काष्ठा nfs_client *clp)
-अणु
-	वापस nfs_client_क्रम_each_server(clp,
-			nfs_server_वापस_marked_delegations, शून्य);
-पूर्ण
+int nfs_client_return_marked_delegations(struct nfs_client *clp)
+{
+	return nfs_client_for_each_server(clp,
+			nfs_server_return_marked_delegations, NULL);
+}
 
 /**
- * nfs_inode_evict_delegation - वापस delegation, करोn't reclaim खोलोs
+ * nfs_inode_evict_delegation - return delegation, don't reclaim opens
  * @inode: inode to process
  *
- * Does not protect against delegation reclaims, thereक्रमe really only safe
- * to be called from nfs4_clear_inode(). Guaranteed to always मुक्त
- * the delegation काष्ठाure.
+ * Does not protect against delegation reclaims, therefore really only safe
+ * to be called from nfs4_clear_inode(). Guaranteed to always free
+ * the delegation structure.
  */
-व्योम nfs_inode_evict_delegation(काष्ठा inode *inode)
-अणु
-	काष्ठा nfs_delegation *delegation;
+void nfs_inode_evict_delegation(struct inode *inode)
+{
+	struct nfs_delegation *delegation;
 
 	delegation = nfs_inode_detach_delegation(inode);
-	अगर (delegation != शून्य) अणु
+	if (delegation != NULL) {
 		set_bit(NFS_DELEGATION_RETURNING, &delegation->flags);
 		set_bit(NFS_DELEGATION_INODE_FREEING, &delegation->flags);
-		nfs_करो_वापस_delegation(inode, delegation, 1);
-		nfs_मुक्त_delegation(delegation);
-	पूर्ण
-पूर्ण
+		nfs_do_return_delegation(inode, delegation, 1);
+		nfs_free_delegation(delegation);
+	}
+}
 
 /**
- * nfs4_inode_वापस_delegation - synchronously वापस a delegation
+ * nfs4_inode_return_delegation - synchronously return a delegation
  * @inode: inode to process
  *
  * This routine will always flush any dirty data to disk on the
- * assumption that अगर we need to वापस the delegation, then
+ * assumption that if we need to return the delegation, then
  * we should stop caching.
  *
- * Returns zero on success, or a negative त्रुटि_सं value.
+ * Returns zero on success, or a negative errno value.
  */
-पूर्णांक nfs4_inode_वापस_delegation(काष्ठा inode *inode)
-अणु
-	काष्ठा nfs_inode *nfsi = NFS_I(inode);
-	काष्ठा nfs_delegation *delegation;
-	पूर्णांक err = 0;
+int nfs4_inode_return_delegation(struct inode *inode)
+{
+	struct nfs_inode *nfsi = NFS_I(inode);
+	struct nfs_delegation *delegation;
+	int err = 0;
 
 	nfs_wb_all(inode);
-	delegation = nfs_start_delegation_वापस(nfsi);
-	अगर (delegation != शून्य)
-		err = nfs_end_delegation_वापस(inode, delegation, 1);
-	वापस err;
-पूर्ण
+	delegation = nfs_start_delegation_return(nfsi);
+	if (delegation != NULL)
+		err = nfs_end_delegation_return(inode, delegation, 1);
+	return err;
+}
 
 /**
- * nfs4_inode_वापस_delegation_on_बंद - asynchronously वापस a delegation
+ * nfs4_inode_return_delegation_on_close - asynchronously return a delegation
  * @inode: inode to process
  *
- * This routine is called on file बंद in order to determine अगर the
- * inode delegation needs to be वापसed immediately.
+ * This routine is called on file close in order to determine if the
+ * inode delegation needs to be returned immediately.
  */
-व्योम nfs4_inode_वापस_delegation_on_बंद(काष्ठा inode *inode)
-अणु
-	काष्ठा nfs_delegation *delegation;
-	काष्ठा nfs_delegation *ret = शून्य;
+void nfs4_inode_return_delegation_on_close(struct inode *inode)
+{
+	struct nfs_delegation *delegation;
+	struct nfs_delegation *ret = NULL;
 
-	अगर (!inode)
-		वापस;
-	rcu_पढ़ो_lock();
+	if (!inode)
+		return;
+	rcu_read_lock();
 	delegation = nfs4_get_valid_delegation(inode);
-	अगर (!delegation)
-		जाओ out;
-	अगर (test_bit(NFS_DELEGATION_RETURN_IF_CLOSED, &delegation->flags) ||
-	    atomic_दीर्घ_पढ़ो(&nfs_active_delegations) >= nfs_delegation_watermark) अणु
+	if (!delegation)
+		goto out;
+	if (test_bit(NFS_DELEGATION_RETURN_IF_CLOSED, &delegation->flags) ||
+	    atomic_long_read(&nfs_active_delegations) >= nfs_delegation_watermark) {
 		spin_lock(&delegation->lock);
-		अगर (delegation->inode &&
-		    list_empty(&NFS_I(inode)->खोलो_files) &&
-		    !test_and_set_bit(NFS_DELEGATION_RETURNING, &delegation->flags)) अणु
+		if (delegation->inode &&
+		    list_empty(&NFS_I(inode)->open_files) &&
+		    !test_and_set_bit(NFS_DELEGATION_RETURNING, &delegation->flags)) {
 			clear_bit(NFS_DELEGATION_RETURN_IF_CLOSED, &delegation->flags);
-			/* Refcount matched in nfs_end_delegation_वापस() */
+			/* Refcount matched in nfs_end_delegation_return() */
 			ret = nfs_get_delegation(delegation);
-		पूर्ण
+		}
 		spin_unlock(&delegation->lock);
-		अगर (ret)
-			nfs_clear_verअगरier_delegated(inode);
-	पूर्ण
+		if (ret)
+			nfs_clear_verifier_delegated(inode);
+	}
 out:
-	rcu_पढ़ो_unlock();
-	nfs_end_delegation_वापस(inode, ret, 0);
-पूर्ण
+	rcu_read_unlock();
+	nfs_end_delegation_return(inode, ret, 0);
+}
 
 /**
- * nfs4_inode_make_ग_लिखोable
- * @inode: poपूर्णांकer to inode
+ * nfs4_inode_make_writeable
+ * @inode: pointer to inode
  *
- * Make the inode ग_लिखोable by वापसing the delegation अगर necessary
+ * Make the inode writeable by returning the delegation if necessary
  *
- * Returns zero on success, or a negative त्रुटि_सं value.
+ * Returns zero on success, or a negative errno value.
  */
-पूर्णांक nfs4_inode_make_ग_लिखोable(काष्ठा inode *inode)
-अणु
-	काष्ठा nfs_delegation *delegation;
+int nfs4_inode_make_writeable(struct inode *inode)
+{
+	struct nfs_delegation *delegation;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	delegation = nfs4_get_valid_delegation(inode);
-	अगर (delegation == शून्य ||
+	if (delegation == NULL ||
 	    (nfs4_has_session(NFS_SERVER(inode)->nfs_client) &&
-	     (delegation->type & FMODE_WRITE))) अणु
-		rcu_पढ़ो_unlock();
-		वापस 0;
-	पूर्ण
-	rcu_पढ़ो_unlock();
-	वापस nfs4_inode_वापस_delegation(inode);
-पूर्ण
+	     (delegation->type & FMODE_WRITE))) {
+		rcu_read_unlock();
+		return 0;
+	}
+	rcu_read_unlock();
+	return nfs4_inode_return_delegation(inode);
+}
 
-अटल व्योम nfs_mark_वापस_अगर_बंदd_delegation(काष्ठा nfs_server *server,
-		काष्ठा nfs_delegation *delegation)
-अणु
+static void nfs_mark_return_if_closed_delegation(struct nfs_server *server,
+		struct nfs_delegation *delegation)
+{
 	set_bit(NFS_DELEGATION_RETURN_IF_CLOSED, &delegation->flags);
 	set_bit(NFS4CLNT_DELEGRETURN, &server->nfs_client->cl_state);
-पूर्ण
+}
 
-अटल व्योम nfs_mark_वापस_delegation(काष्ठा nfs_server *server,
-		काष्ठा nfs_delegation *delegation)
-अणु
+static void nfs_mark_return_delegation(struct nfs_server *server,
+		struct nfs_delegation *delegation)
+{
 	set_bit(NFS_DELEGATION_RETURN, &delegation->flags);
 	set_bit(NFS4CLNT_DELEGRETURN, &server->nfs_client->cl_state);
-पूर्ण
+}
 
-अटल bool nfs_server_mark_वापस_all_delegations(काष्ठा nfs_server *server)
-अणु
-	काष्ठा nfs_delegation *delegation;
+static bool nfs_server_mark_return_all_delegations(struct nfs_server *server)
+{
+	struct nfs_delegation *delegation;
 	bool ret = false;
 
-	list_क्रम_each_entry_rcu(delegation, &server->delegations, super_list) अणु
-		nfs_mark_वापस_delegation(server, delegation);
+	list_for_each_entry_rcu(delegation, &server->delegations, super_list) {
+		nfs_mark_return_delegation(server, delegation);
 		ret = true;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल व्योम nfs_client_mark_वापस_all_delegations(काष्ठा nfs_client *clp)
-अणु
-	काष्ठा nfs_server *server;
+static void nfs_client_mark_return_all_delegations(struct nfs_client *clp)
+{
+	struct nfs_server *server;
 
-	rcu_पढ़ो_lock();
-	list_क्रम_each_entry_rcu(server, &clp->cl_superblocks, client_link)
-		nfs_server_mark_वापस_all_delegations(server);
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_lock();
+	list_for_each_entry_rcu(server, &clp->cl_superblocks, client_link)
+		nfs_server_mark_return_all_delegations(server);
+	rcu_read_unlock();
+}
 
-अटल व्योम nfs_delegation_run_state_manager(काष्ठा nfs_client *clp)
-अणु
-	अगर (test_bit(NFS4CLNT_DELEGRETURN, &clp->cl_state))
+static void nfs_delegation_run_state_manager(struct nfs_client *clp)
+{
+	if (test_bit(NFS4CLNT_DELEGRETURN, &clp->cl_state))
 		nfs4_schedule_state_manager(clp);
-पूर्ण
+}
 
 /**
  * nfs_expire_all_delegations
  * @clp: client to process
  *
  */
-व्योम nfs_expire_all_delegations(काष्ठा nfs_client *clp)
-अणु
-	nfs_client_mark_वापस_all_delegations(clp);
+void nfs_expire_all_delegations(struct nfs_client *clp)
+{
+	nfs_client_mark_return_all_delegations(clp);
 	nfs_delegation_run_state_manager(clp);
-पूर्ण
+}
 
 /**
- * nfs_server_वापस_all_delegations - वापस delegations क्रम one superblock
- * @server: poपूर्णांकer to nfs_server to process
+ * nfs_server_return_all_delegations - return delegations for one superblock
+ * @server: pointer to nfs_server to process
  *
  */
-व्योम nfs_server_वापस_all_delegations(काष्ठा nfs_server *server)
-अणु
-	काष्ठा nfs_client *clp = server->nfs_client;
-	bool need_रुको;
+void nfs_server_return_all_delegations(struct nfs_server *server)
+{
+	struct nfs_client *clp = server->nfs_client;
+	bool need_wait;
 
-	अगर (clp == शून्य)
-		वापस;
+	if (clp == NULL)
+		return;
 
-	rcu_पढ़ो_lock();
-	need_रुको = nfs_server_mark_वापस_all_delegations(server);
-	rcu_पढ़ो_unlock();
+	rcu_read_lock();
+	need_wait = nfs_server_mark_return_all_delegations(server);
+	rcu_read_unlock();
 
-	अगर (need_रुको) अणु
+	if (need_wait) {
 		nfs4_schedule_state_manager(clp);
-		nfs4_रुको_clnt_recover(clp);
-	पूर्ण
-पूर्ण
+		nfs4_wait_clnt_recover(clp);
+	}
+}
 
-अटल व्योम nfs_mark_वापस_unused_delegation_types(काष्ठा nfs_server *server,
-						 भ_शेषe_t flags)
-अणु
-	काष्ठा nfs_delegation *delegation;
+static void nfs_mark_return_unused_delegation_types(struct nfs_server *server,
+						 fmode_t flags)
+{
+	struct nfs_delegation *delegation;
 
-	list_क्रम_each_entry_rcu(delegation, &server->delegations, super_list) अणु
-		अगर ((delegation->type == (FMODE_READ|FMODE_WRITE)) && !(flags & FMODE_WRITE))
-			जारी;
-		अगर (delegation->type & flags)
-			nfs_mark_वापस_अगर_बंदd_delegation(server, delegation);
-	पूर्ण
-पूर्ण
+	list_for_each_entry_rcu(delegation, &server->delegations, super_list) {
+		if ((delegation->type == (FMODE_READ|FMODE_WRITE)) && !(flags & FMODE_WRITE))
+			continue;
+		if (delegation->type & flags)
+			nfs_mark_return_if_closed_delegation(server, delegation);
+	}
+}
 
-अटल व्योम nfs_client_mark_वापस_unused_delegation_types(काष्ठा nfs_client *clp,
-							भ_शेषe_t flags)
-अणु
-	काष्ठा nfs_server *server;
+static void nfs_client_mark_return_unused_delegation_types(struct nfs_client *clp,
+							fmode_t flags)
+{
+	struct nfs_server *server;
 
-	rcu_पढ़ो_lock();
-	list_क्रम_each_entry_rcu(server, &clp->cl_superblocks, client_link)
-		nfs_mark_वापस_unused_delegation_types(server, flags);
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_lock();
+	list_for_each_entry_rcu(server, &clp->cl_superblocks, client_link)
+		nfs_mark_return_unused_delegation_types(server, flags);
+	rcu_read_unlock();
+}
 
-अटल व्योम nfs_revoke_delegation(काष्ठा inode *inode,
-		स्थिर nfs4_stateid *stateid)
-अणु
-	काष्ठा nfs_delegation *delegation;
-	nfs4_stateid पंचांगp;
+static void nfs_revoke_delegation(struct inode *inode,
+		const nfs4_stateid *stateid)
+{
+	struct nfs_delegation *delegation;
+	nfs4_stateid tmp;
 	bool ret = false;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	delegation = rcu_dereference(NFS_I(inode)->delegation);
-	अगर (delegation == शून्य)
-		जाओ out;
-	अगर (stateid == शून्य) अणु
-		nfs4_stateid_copy(&पंचांगp, &delegation->stateid);
-		stateid = &पंचांगp;
-	पूर्ण अन्यथा अणु
-		अगर (!nfs4_stateid_match_other(stateid, &delegation->stateid))
-			जाओ out;
+	if (delegation == NULL)
+		goto out;
+	if (stateid == NULL) {
+		nfs4_stateid_copy(&tmp, &delegation->stateid);
+		stateid = &tmp;
+	} else {
+		if (!nfs4_stateid_match_other(stateid, &delegation->stateid))
+			goto out;
 		spin_lock(&delegation->lock);
-		अगर (stateid->seqid) अणु
-			अगर (nfs4_stateid_is_newer(&delegation->stateid, stateid)) अणु
+		if (stateid->seqid) {
+			if (nfs4_stateid_is_newer(&delegation->stateid, stateid)) {
 				spin_unlock(&delegation->lock);
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			delegation->stateid.seqid = stateid->seqid;
-		पूर्ण
+		}
 		spin_unlock(&delegation->lock);
-	पूर्ण
+	}
 	nfs_mark_delegation_revoked(delegation);
 	ret = true;
 out:
-	rcu_पढ़ो_unlock();
-	अगर (ret)
+	rcu_read_unlock();
+	if (ret)
 		nfs_inode_find_state_and_recover(inode, stateid);
-पूर्ण
+}
 
-व्योम nfs_हटाओ_bad_delegation(काष्ठा inode *inode,
-		स्थिर nfs4_stateid *stateid)
-अणु
+void nfs_remove_bad_delegation(struct inode *inode,
+		const nfs4_stateid *stateid)
+{
 	nfs_revoke_delegation(inode, stateid);
-पूर्ण
-EXPORT_SYMBOL_GPL(nfs_हटाओ_bad_delegation);
+}
+EXPORT_SYMBOL_GPL(nfs_remove_bad_delegation);
 
-व्योम nfs_delegation_mark_वापसed(काष्ठा inode *inode,
-		स्थिर nfs4_stateid *stateid)
-अणु
-	काष्ठा nfs_delegation *delegation;
+void nfs_delegation_mark_returned(struct inode *inode,
+		const nfs4_stateid *stateid)
+{
+	struct nfs_delegation *delegation;
 
-	अगर (!inode)
-		वापस;
+	if (!inode)
+		return;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	delegation = rcu_dereference(NFS_I(inode)->delegation);
-	अगर (!delegation)
-		जाओ out_rcu_unlock;
+	if (!delegation)
+		goto out_rcu_unlock;
 
 	spin_lock(&delegation->lock);
-	अगर (!nfs4_stateid_match_other(stateid, &delegation->stateid))
-		जाओ out_spin_unlock;
-	अगर (stateid->seqid) अणु
-		/* If delegation->stateid is newer, करोnt mark as वापसed */
-		अगर (nfs4_stateid_is_newer(&delegation->stateid, stateid))
-			जाओ out_clear_वापसing;
-		अगर (delegation->stateid.seqid != stateid->seqid)
+	if (!nfs4_stateid_match_other(stateid, &delegation->stateid))
+		goto out_spin_unlock;
+	if (stateid->seqid) {
+		/* If delegation->stateid is newer, dont mark as returned */
+		if (nfs4_stateid_is_newer(&delegation->stateid, stateid))
+			goto out_clear_returning;
+		if (delegation->stateid.seqid != stateid->seqid)
 			delegation->stateid.seqid = stateid->seqid;
-	पूर्ण
+	}
 
 	nfs_mark_delegation_revoked(delegation);
 
-out_clear_वापसing:
+out_clear_returning:
 	clear_bit(NFS_DELEGATION_RETURNING, &delegation->flags);
 out_spin_unlock:
 	spin_unlock(&delegation->lock);
 out_rcu_unlock:
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
 	nfs_inode_find_state_and_recover(inode, stateid);
-पूर्ण
+}
 
 /**
  * nfs_expire_unused_delegation_types
@@ -953,476 +952,476 @@ out_rcu_unlock:
  * @flags: delegation types to expire
  *
  */
-व्योम nfs_expire_unused_delegation_types(काष्ठा nfs_client *clp, भ_शेषe_t flags)
-अणु
-	nfs_client_mark_वापस_unused_delegation_types(clp, flags);
+void nfs_expire_unused_delegation_types(struct nfs_client *clp, fmode_t flags)
+{
+	nfs_client_mark_return_unused_delegation_types(clp, flags);
 	nfs_delegation_run_state_manager(clp);
-पूर्ण
+}
 
-अटल व्योम nfs_mark_वापस_unreferenced_delegations(काष्ठा nfs_server *server)
-अणु
-	काष्ठा nfs_delegation *delegation;
+static void nfs_mark_return_unreferenced_delegations(struct nfs_server *server)
+{
+	struct nfs_delegation *delegation;
 
-	list_क्रम_each_entry_rcu(delegation, &server->delegations, super_list) अणु
-		अगर (test_and_clear_bit(NFS_DELEGATION_REFERENCED, &delegation->flags))
-			जारी;
-		nfs_mark_वापस_अगर_बंदd_delegation(server, delegation);
-	पूर्ण
-पूर्ण
+	list_for_each_entry_rcu(delegation, &server->delegations, super_list) {
+		if (test_and_clear_bit(NFS_DELEGATION_REFERENCED, &delegation->flags))
+			continue;
+		nfs_mark_return_if_closed_delegation(server, delegation);
+	}
+}
 
 /**
  * nfs_expire_unreferenced_delegations - Eliminate unused delegations
  * @clp: nfs_client to process
  *
  */
-व्योम nfs_expire_unreferenced_delegations(काष्ठा nfs_client *clp)
-अणु
-	काष्ठा nfs_server *server;
+void nfs_expire_unreferenced_delegations(struct nfs_client *clp)
+{
+	struct nfs_server *server;
 
-	rcu_पढ़ो_lock();
-	list_क्रम_each_entry_rcu(server, &clp->cl_superblocks, client_link)
-		nfs_mark_वापस_unreferenced_delegations(server);
-	rcu_पढ़ो_unlock();
+	rcu_read_lock();
+	list_for_each_entry_rcu(server, &clp->cl_superblocks, client_link)
+		nfs_mark_return_unreferenced_delegations(server);
+	rcu_read_unlock();
 
 	nfs_delegation_run_state_manager(clp);
-पूर्ण
+}
 
 /**
- * nfs_async_inode_वापस_delegation - asynchronously वापस a delegation
+ * nfs_async_inode_return_delegation - asynchronously return a delegation
  * @inode: inode to process
- * @stateid: state ID inक्रमmation
+ * @stateid: state ID information
  *
- * Returns zero on success, or a negative त्रुटि_सं value.
+ * Returns zero on success, or a negative errno value.
  */
-पूर्णांक nfs_async_inode_वापस_delegation(काष्ठा inode *inode,
-				      स्थिर nfs4_stateid *stateid)
-अणु
-	काष्ठा nfs_server *server = NFS_SERVER(inode);
-	काष्ठा nfs_client *clp = server->nfs_client;
-	काष्ठा nfs_delegation *delegation;
+int nfs_async_inode_return_delegation(struct inode *inode,
+				      const nfs4_stateid *stateid)
+{
+	struct nfs_server *server = NFS_SERVER(inode);
+	struct nfs_client *clp = server->nfs_client;
+	struct nfs_delegation *delegation;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	delegation = nfs4_get_valid_delegation(inode);
-	अगर (delegation == शून्य)
-		जाओ out_enoent;
-	अगर (stateid != शून्य &&
+	if (delegation == NULL)
+		goto out_enoent;
+	if (stateid != NULL &&
 	    !clp->cl_mvops->match_stateid(&delegation->stateid, stateid))
-		जाओ out_enoent;
-	nfs_mark_वापस_delegation(server, delegation);
-	rcu_पढ़ो_unlock();
+		goto out_enoent;
+	nfs_mark_return_delegation(server, delegation);
+	rcu_read_unlock();
 
 	nfs_delegation_run_state_manager(clp);
-	वापस 0;
+	return 0;
 out_enoent:
-	rcu_पढ़ो_unlock();
-	वापस -ENOENT;
-पूर्ण
+	rcu_read_unlock();
+	return -ENOENT;
+}
 
-अटल काष्ठा inode *
-nfs_delegation_find_inode_server(काष्ठा nfs_server *server,
-				 स्थिर काष्ठा nfs_fh *fhandle)
-अणु
-	काष्ठा nfs_delegation *delegation;
-	काष्ठा super_block *मुक्तme = शून्य;
-	काष्ठा inode *res = शून्य;
+static struct inode *
+nfs_delegation_find_inode_server(struct nfs_server *server,
+				 const struct nfs_fh *fhandle)
+{
+	struct nfs_delegation *delegation;
+	struct super_block *freeme = NULL;
+	struct inode *res = NULL;
 
-	list_क्रम_each_entry_rcu(delegation, &server->delegations, super_list) अणु
+	list_for_each_entry_rcu(delegation, &server->delegations, super_list) {
 		spin_lock(&delegation->lock);
-		अगर (delegation->inode != शून्य &&
+		if (delegation->inode != NULL &&
 		    !test_bit(NFS_DELEGATION_REVOKED, &delegation->flags) &&
-		    nfs_compare_fh(fhandle, &NFS_I(delegation->inode)->fh) == 0) अणु
-			अगर (nfs_sb_active(server->super)) अणु
-				मुक्तme = server->super;
+		    nfs_compare_fh(fhandle, &NFS_I(delegation->inode)->fh) == 0) {
+			if (nfs_sb_active(server->super)) {
+				freeme = server->super;
 				res = igrab(delegation->inode);
-			पूर्ण
+			}
 			spin_unlock(&delegation->lock);
-			अगर (res != शून्य)
-				वापस res;
-			अगर (मुक्तme) अणु
-				rcu_पढ़ो_unlock();
-				nfs_sb_deactive(मुक्तme);
-				rcu_पढ़ो_lock();
-			पूर्ण
-			वापस ERR_PTR(-EAGAIN);
-		पूर्ण
+			if (res != NULL)
+				return res;
+			if (freeme) {
+				rcu_read_unlock();
+				nfs_sb_deactive(freeme);
+				rcu_read_lock();
+			}
+			return ERR_PTR(-EAGAIN);
+		}
 		spin_unlock(&delegation->lock);
-	पूर्ण
-	वापस ERR_PTR(-ENOENT);
-पूर्ण
+	}
+	return ERR_PTR(-ENOENT);
+}
 
 /**
  * nfs_delegation_find_inode - retrieve the inode associated with a delegation
  * @clp: client state handle
  * @fhandle: filehandle from a delegation recall
  *
- * Returns poपूर्णांकer to inode matching "fhandle," or शून्य अगर a matching inode
+ * Returns pointer to inode matching "fhandle," or NULL if a matching inode
  * cannot be found.
  */
-काष्ठा inode *nfs_delegation_find_inode(काष्ठा nfs_client *clp,
-					स्थिर काष्ठा nfs_fh *fhandle)
-अणु
-	काष्ठा nfs_server *server;
-	काष्ठा inode *res;
+struct inode *nfs_delegation_find_inode(struct nfs_client *clp,
+					const struct nfs_fh *fhandle)
+{
+	struct nfs_server *server;
+	struct inode *res;
 
-	rcu_पढ़ो_lock();
-	list_क्रम_each_entry_rcu(server, &clp->cl_superblocks, client_link) अणु
+	rcu_read_lock();
+	list_for_each_entry_rcu(server, &clp->cl_superblocks, client_link) {
 		res = nfs_delegation_find_inode_server(server, fhandle);
-		अगर (res != ERR_PTR(-ENOENT)) अणु
-			rcu_पढ़ो_unlock();
-			वापस res;
-		पूर्ण
-	पूर्ण
-	rcu_पढ़ो_unlock();
-	वापस ERR_PTR(-ENOENT);
-पूर्ण
+		if (res != ERR_PTR(-ENOENT)) {
+			rcu_read_unlock();
+			return res;
+		}
+	}
+	rcu_read_unlock();
+	return ERR_PTR(-ENOENT);
+}
 
-अटल व्योम nfs_delegation_mark_reclaim_server(काष्ठा nfs_server *server)
-अणु
-	काष्ठा nfs_delegation *delegation;
+static void nfs_delegation_mark_reclaim_server(struct nfs_server *server)
+{
+	struct nfs_delegation *delegation;
 
-	list_क्रम_each_entry_rcu(delegation, &server->delegations, super_list) अणु
+	list_for_each_entry_rcu(delegation, &server->delegations, super_list) {
 		/*
 		 * If the delegation may have been admin revoked, then we
 		 * cannot reclaim it.
 		 */
-		अगर (test_bit(NFS_DELEGATION_TEST_EXPIRED, &delegation->flags))
-			जारी;
+		if (test_bit(NFS_DELEGATION_TEST_EXPIRED, &delegation->flags))
+			continue;
 		set_bit(NFS_DELEGATION_NEED_RECLAIM, &delegation->flags);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * nfs_delegation_mark_reclaim - mark all delegations as needing to be reclaimed
  * @clp: nfs_client to process
  *
  */
-व्योम nfs_delegation_mark_reclaim(काष्ठा nfs_client *clp)
-अणु
-	काष्ठा nfs_server *server;
+void nfs_delegation_mark_reclaim(struct nfs_client *clp)
+{
+	struct nfs_server *server;
 
-	rcu_पढ़ो_lock();
-	list_क्रम_each_entry_rcu(server, &clp->cl_superblocks, client_link)
+	rcu_read_lock();
+	list_for_each_entry_rcu(server, &clp->cl_superblocks, client_link)
 		nfs_delegation_mark_reclaim_server(server);
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_unlock();
+}
 
-अटल पूर्णांक nfs_server_reap_unclaimed_delegations(काष्ठा nfs_server *server,
-		व्योम __always_unused *data)
-अणु
-	काष्ठा nfs_delegation *delegation;
-	काष्ठा inode *inode;
+static int nfs_server_reap_unclaimed_delegations(struct nfs_server *server,
+		void __always_unused *data)
+{
+	struct nfs_delegation *delegation;
+	struct inode *inode;
 restart:
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 restart_locked:
-	list_क्रम_each_entry_rcu(delegation, &server->delegations, super_list) अणु
-		अगर (test_bit(NFS_DELEGATION_INODE_FREEING,
+	list_for_each_entry_rcu(delegation, &server->delegations, super_list) {
+		if (test_bit(NFS_DELEGATION_INODE_FREEING,
 					&delegation->flags) ||
 		    test_bit(NFS_DELEGATION_RETURNING,
 					&delegation->flags) ||
 		    test_bit(NFS_DELEGATION_NEED_RECLAIM,
 					&delegation->flags) == 0)
-			जारी;
+			continue;
 		inode = nfs_delegation_grab_inode(delegation);
-		अगर (inode == शून्य)
-			जाओ restart_locked;
-		delegation = nfs_start_delegation_वापस_locked(NFS_I(inode));
-		rcu_पढ़ो_unlock();
-		अगर (delegation != शून्य) अणु
-			अगर (nfs_detach_delegation(NFS_I(inode), delegation,
-						server) != शून्य)
-				nfs_मुक्त_delegation(delegation);
-			/* Match nfs_start_delegation_वापस_locked */
+		if (inode == NULL)
+			goto restart_locked;
+		delegation = nfs_start_delegation_return_locked(NFS_I(inode));
+		rcu_read_unlock();
+		if (delegation != NULL) {
+			if (nfs_detach_delegation(NFS_I(inode), delegation,
+						server) != NULL)
+				nfs_free_delegation(delegation);
+			/* Match nfs_start_delegation_return_locked */
 			nfs_put_delegation(delegation);
-		पूर्ण
+		}
 		iput(inode);
 		cond_resched();
-		जाओ restart;
-	पूर्ण
-	rcu_पढ़ो_unlock();
-	वापस 0;
-पूर्ण
+		goto restart;
+	}
+	rcu_read_unlock();
+	return 0;
+}
 
 /**
- * nfs_delegation_reap_unclaimed - reap unclaimed delegations after reboot recovery is करोne
+ * nfs_delegation_reap_unclaimed - reap unclaimed delegations after reboot recovery is done
  * @clp: nfs_client to process
  *
  */
-व्योम nfs_delegation_reap_unclaimed(काष्ठा nfs_client *clp)
-अणु
-	nfs_client_क्रम_each_server(clp, nfs_server_reap_unclaimed_delegations,
-			शून्य);
-पूर्ण
+void nfs_delegation_reap_unclaimed(struct nfs_client *clp)
+{
+	nfs_client_for_each_server(clp, nfs_server_reap_unclaimed_delegations,
+			NULL);
+}
 
-अटल अंतरभूत bool nfs4_server_rebooted(स्थिर काष्ठा nfs_client *clp)
-अणु
-	वापस (clp->cl_state & (BIT(NFS4CLNT_CHECK_LEASE) |
+static inline bool nfs4_server_rebooted(const struct nfs_client *clp)
+{
+	return (clp->cl_state & (BIT(NFS4CLNT_CHECK_LEASE) |
 				BIT(NFS4CLNT_LEASE_EXPIRED) |
 				BIT(NFS4CLNT_SESSION_RESET))) != 0;
-पूर्ण
+}
 
-अटल व्योम nfs_mark_test_expired_delegation(काष्ठा nfs_server *server,
-	    काष्ठा nfs_delegation *delegation)
-अणु
-	अगर (delegation->stateid.type == NFS4_INVALID_STATEID_TYPE)
-		वापस;
+static void nfs_mark_test_expired_delegation(struct nfs_server *server,
+	    struct nfs_delegation *delegation)
+{
+	if (delegation->stateid.type == NFS4_INVALID_STATEID_TYPE)
+		return;
 	clear_bit(NFS_DELEGATION_NEED_RECLAIM, &delegation->flags);
 	set_bit(NFS_DELEGATION_TEST_EXPIRED, &delegation->flags);
 	set_bit(NFS4CLNT_DELEGATION_EXPIRED, &server->nfs_client->cl_state);
-पूर्ण
+}
 
-अटल व्योम nfs_inode_mark_test_expired_delegation(काष्ठा nfs_server *server,
-		काष्ठा inode *inode)
-अणु
-	काष्ठा nfs_delegation *delegation;
+static void nfs_inode_mark_test_expired_delegation(struct nfs_server *server,
+		struct inode *inode)
+{
+	struct nfs_delegation *delegation;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	delegation = rcu_dereference(NFS_I(inode)->delegation);
-	अगर (delegation)
+	if (delegation)
 		nfs_mark_test_expired_delegation(server, delegation);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-पूर्ण
+}
 
-अटल व्योम nfs_delegation_mark_test_expired_server(काष्ठा nfs_server *server)
-अणु
-	काष्ठा nfs_delegation *delegation;
+static void nfs_delegation_mark_test_expired_server(struct nfs_server *server)
+{
+	struct nfs_delegation *delegation;
 
-	list_क्रम_each_entry_rcu(delegation, &server->delegations, super_list)
+	list_for_each_entry_rcu(delegation, &server->delegations, super_list)
 		nfs_mark_test_expired_delegation(server, delegation);
-पूर्ण
+}
 
 /**
- * nfs_mark_test_expired_all_delegations - mark all delegations क्रम testing
+ * nfs_mark_test_expired_all_delegations - mark all delegations for testing
  * @clp: nfs_client to process
  *
  * Iterates through all the delegations associated with this server and
- * marks them as needing to be checked क्रम validity.
+ * marks them as needing to be checked for validity.
  */
-व्योम nfs_mark_test_expired_all_delegations(काष्ठा nfs_client *clp)
-अणु
-	काष्ठा nfs_server *server;
+void nfs_mark_test_expired_all_delegations(struct nfs_client *clp)
+{
+	struct nfs_server *server;
 
-	rcu_पढ़ो_lock();
-	list_क्रम_each_entry_rcu(server, &clp->cl_superblocks, client_link)
+	rcu_read_lock();
+	list_for_each_entry_rcu(server, &clp->cl_superblocks, client_link)
 		nfs_delegation_mark_test_expired_server(server);
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_unlock();
+}
 
 /**
- * nfs_test_expired_all_delegations - test all delegations क्रम a client
+ * nfs_test_expired_all_delegations - test all delegations for a client
  * @clp: nfs_client to process
  *
- * Helper क्रम handling "recallable state revoked" status from server.
+ * Helper for handling "recallable state revoked" status from server.
  */
-व्योम nfs_test_expired_all_delegations(काष्ठा nfs_client *clp)
-अणु
+void nfs_test_expired_all_delegations(struct nfs_client *clp)
+{
 	nfs_mark_test_expired_all_delegations(clp);
 	nfs4_schedule_state_manager(clp);
-पूर्ण
+}
 
-अटल व्योम
-nfs_delegation_test_मुक्त_expired(काष्ठा inode *inode,
+static void
+nfs_delegation_test_free_expired(struct inode *inode,
 		nfs4_stateid *stateid,
-		स्थिर काष्ठा cred *cred)
-अणु
-	काष्ठा nfs_server *server = NFS_SERVER(inode);
-	स्थिर काष्ठा nfs4_minor_version_ops *ops = server->nfs_client->cl_mvops;
-	पूर्णांक status;
+		const struct cred *cred)
+{
+	struct nfs_server *server = NFS_SERVER(inode);
+	const struct nfs4_minor_version_ops *ops = server->nfs_client->cl_mvops;
+	int status;
 
-	अगर (!cred)
-		वापस;
-	status = ops->test_and_मुक्त_expired(server, stateid, cred);
-	अगर (status == -NFS4ERR_EXPIRED || status == -NFS4ERR_BAD_STATEID)
-		nfs_हटाओ_bad_delegation(inode, stateid);
-पूर्ण
+	if (!cred)
+		return;
+	status = ops->test_and_free_expired(server, stateid, cred);
+	if (status == -NFS4ERR_EXPIRED || status == -NFS4ERR_BAD_STATEID)
+		nfs_remove_bad_delegation(inode, stateid);
+}
 
-अटल पूर्णांक nfs_server_reap_expired_delegations(काष्ठा nfs_server *server,
-		व्योम __always_unused *data)
-अणु
-	काष्ठा nfs_delegation *delegation;
-	काष्ठा inode *inode;
-	स्थिर काष्ठा cred *cred;
+static int nfs_server_reap_expired_delegations(struct nfs_server *server,
+		void __always_unused *data)
+{
+	struct nfs_delegation *delegation;
+	struct inode *inode;
+	const struct cred *cred;
 	nfs4_stateid stateid;
 restart:
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 restart_locked:
-	list_क्रम_each_entry_rcu(delegation, &server->delegations, super_list) अणु
-		अगर (test_bit(NFS_DELEGATION_INODE_FREEING,
+	list_for_each_entry_rcu(delegation, &server->delegations, super_list) {
+		if (test_bit(NFS_DELEGATION_INODE_FREEING,
 					&delegation->flags) ||
 		    test_bit(NFS_DELEGATION_RETURNING,
 					&delegation->flags) ||
 		    test_bit(NFS_DELEGATION_TEST_EXPIRED,
 					&delegation->flags) == 0)
-			जारी;
+			continue;
 		inode = nfs_delegation_grab_inode(delegation);
-		अगर (inode == शून्य)
-			जाओ restart_locked;
+		if (inode == NULL)
+			goto restart_locked;
 		spin_lock(&delegation->lock);
 		cred = get_cred_rcu(delegation->cred);
 		nfs4_stateid_copy(&stateid, &delegation->stateid);
 		spin_unlock(&delegation->lock);
 		clear_bit(NFS_DELEGATION_TEST_EXPIRED, &delegation->flags);
-		rcu_पढ़ो_unlock();
-		nfs_delegation_test_मुक्त_expired(inode, &stateid, cred);
+		rcu_read_unlock();
+		nfs_delegation_test_free_expired(inode, &stateid, cred);
 		put_cred(cred);
-		अगर (!nfs4_server_rebooted(server->nfs_client)) अणु
+		if (!nfs4_server_rebooted(server->nfs_client)) {
 			iput(inode);
 			cond_resched();
-			जाओ restart;
-		पूर्ण
+			goto restart;
+		}
 		nfs_inode_mark_test_expired_delegation(server,inode);
 		iput(inode);
-		वापस -EAGAIN;
-	पूर्ण
-	rcu_पढ़ो_unlock();
-	वापस 0;
-पूर्ण
+		return -EAGAIN;
+	}
+	rcu_read_unlock();
+	return 0;
+}
 
 /**
  * nfs_reap_expired_delegations - reap expired delegations
  * @clp: nfs_client to process
  *
  * Iterates through all the delegations associated with this server and
- * checks अगर they have may have been revoked. This function is usually
- * expected to be called in हालs where the server may have lost its
+ * checks if they have may have been revoked. This function is usually
+ * expected to be called in cases where the server may have lost its
  * lease.
  */
-व्योम nfs_reap_expired_delegations(काष्ठा nfs_client *clp)
-अणु
-	nfs_client_क्रम_each_server(clp, nfs_server_reap_expired_delegations,
-			शून्य);
-पूर्ण
+void nfs_reap_expired_delegations(struct nfs_client *clp)
+{
+	nfs_client_for_each_server(clp, nfs_server_reap_expired_delegations,
+			NULL);
+}
 
-व्योम nfs_inode_find_delegation_state_and_recover(काष्ठा inode *inode,
-		स्थिर nfs4_stateid *stateid)
-अणु
-	काष्ठा nfs_client *clp = NFS_SERVER(inode)->nfs_client;
-	काष्ठा nfs_delegation *delegation;
+void nfs_inode_find_delegation_state_and_recover(struct inode *inode,
+		const nfs4_stateid *stateid)
+{
+	struct nfs_client *clp = NFS_SERVER(inode)->nfs_client;
+	struct nfs_delegation *delegation;
 	bool found = false;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	delegation = rcu_dereference(NFS_I(inode)->delegation);
-	अगर (delegation &&
+	if (delegation &&
 	    nfs4_stateid_match_or_older(&delegation->stateid, stateid) &&
-	    !test_bit(NFS_DELEGATION_REVOKED, &delegation->flags)) अणु
+	    !test_bit(NFS_DELEGATION_REVOKED, &delegation->flags)) {
 		nfs_mark_test_expired_delegation(NFS_SERVER(inode), delegation);
 		found = true;
-	पूर्ण
-	rcu_पढ़ो_unlock();
-	अगर (found)
+	}
+	rcu_read_unlock();
+	if (found)
 		nfs4_schedule_state_manager(clp);
-पूर्ण
+}
 
 /**
- * nfs_delegations_present - check क्रम existence of delegations
+ * nfs_delegations_present - check for existence of delegations
  * @clp: client state handle
  *
- * Returns one अगर there are any nfs_delegation काष्ठाures attached
+ * Returns one if there are any nfs_delegation structures attached
  * to this nfs_client.
  */
-पूर्णांक nfs_delegations_present(काष्ठा nfs_client *clp)
-अणु
-	काष्ठा nfs_server *server;
-	पूर्णांक ret = 0;
+int nfs_delegations_present(struct nfs_client *clp)
+{
+	struct nfs_server *server;
+	int ret = 0;
 
-	rcu_पढ़ो_lock();
-	list_क्रम_each_entry_rcu(server, &clp->cl_superblocks, client_link)
-		अगर (!list_empty(&server->delegations)) अणु
+	rcu_read_lock();
+	list_for_each_entry_rcu(server, &clp->cl_superblocks, client_link)
+		if (!list_empty(&server->delegations)) {
 			ret = 1;
-			अवरोध;
-		पूर्ण
-	rcu_पढ़ो_unlock();
-	वापस ret;
-पूर्ण
+			break;
+		}
+	rcu_read_unlock();
+	return ret;
+}
 
 /**
  * nfs4_refresh_delegation_stateid - Update delegation stateid seqid
  * @dst: stateid to refresh
  * @inode: inode to check
  *
- * Returns "true" and updates "dst->seqid" * अगर inode had a delegation
- * that matches our delegation stateid. Otherwise "false" is वापसed.
+ * Returns "true" and updates "dst->seqid" * if inode had a delegation
+ * that matches our delegation stateid. Otherwise "false" is returned.
  */
-bool nfs4_refresh_delegation_stateid(nfs4_stateid *dst, काष्ठा inode *inode)
-अणु
-	काष्ठा nfs_delegation *delegation;
+bool nfs4_refresh_delegation_stateid(nfs4_stateid *dst, struct inode *inode)
+{
+	struct nfs_delegation *delegation;
 	bool ret = false;
-	अगर (!inode)
-		जाओ out;
+	if (!inode)
+		goto out;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	delegation = rcu_dereference(NFS_I(inode)->delegation);
-	अगर (delegation != शून्य &&
+	if (delegation != NULL &&
 	    nfs4_stateid_match_other(dst, &delegation->stateid) &&
 	    nfs4_stateid_is_newer(&delegation->stateid, dst) &&
-	    !test_bit(NFS_DELEGATION_REVOKED, &delegation->flags)) अणु
+	    !test_bit(NFS_DELEGATION_REVOKED, &delegation->flags)) {
 		dst->seqid = delegation->stateid.seqid;
 		ret = true;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	}
+	rcu_read_unlock();
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * nfs4_copy_delegation_stateid - Copy inode's state ID inक्रमmation
+ * nfs4_copy_delegation_stateid - Copy inode's state ID information
  * @inode: inode to check
  * @flags: delegation type requirement
- * @dst: stateid data काष्ठाure to fill in
+ * @dst: stateid data structure to fill in
  * @cred: optional argument to retrieve credential
  *
- * Returns "true" and fills in "dst->data" * अगर inode had a delegation,
- * otherwise "false" is वापसed.
+ * Returns "true" and fills in "dst->data" * if inode had a delegation,
+ * otherwise "false" is returned.
  */
-bool nfs4_copy_delegation_stateid(काष्ठा inode *inode, भ_शेषe_t flags,
-		nfs4_stateid *dst, स्थिर काष्ठा cred **cred)
-अणु
-	काष्ठा nfs_inode *nfsi = NFS_I(inode);
-	काष्ठा nfs_delegation *delegation;
+bool nfs4_copy_delegation_stateid(struct inode *inode, fmode_t flags,
+		nfs4_stateid *dst, const struct cred **cred)
+{
+	struct nfs_inode *nfsi = NFS_I(inode);
+	struct nfs_delegation *delegation;
 	bool ret = false;
 
 	flags &= FMODE_READ|FMODE_WRITE;
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	delegation = rcu_dereference(nfsi->delegation);
-	अगर (!delegation)
-		जाओ out;
+	if (!delegation)
+		goto out;
 	spin_lock(&delegation->lock);
 	ret = nfs4_is_valid_delegation(delegation, flags);
-	अगर (ret) अणु
+	if (ret) {
 		nfs4_stateid_copy(dst, &delegation->stateid);
 		nfs_mark_delegation_referenced(delegation);
-		अगर (cred)
+		if (cred)
 			*cred = get_cred(delegation->cred);
-	पूर्ण
+	}
 	spin_unlock(&delegation->lock);
 out:
-	rcu_पढ़ो_unlock();
-	वापस ret;
-पूर्ण
+	rcu_read_unlock();
+	return ret;
+}
 
 /**
- * nfs4_delegation_flush_on_बंद - Check अगर we must flush file on बंद
+ * nfs4_delegation_flush_on_close - Check if we must flush file on close
  * @inode: inode to check
  *
- * This function checks the number of outstanding ग_लिखोs to the file
- * against the delegation 'space_limit' field to see अगर
- * the spec requires us to flush the file on बंद.
+ * This function checks the number of outstanding writes to the file
+ * against the delegation 'space_limit' field to see if
+ * the spec requires us to flush the file on close.
  */
-bool nfs4_delegation_flush_on_बंद(स्थिर काष्ठा inode *inode)
-अणु
-	काष्ठा nfs_inode *nfsi = NFS_I(inode);
-	काष्ठा nfs_delegation *delegation;
+bool nfs4_delegation_flush_on_close(const struct inode *inode)
+{
+	struct nfs_inode *nfsi = NFS_I(inode);
+	struct nfs_delegation *delegation;
 	bool ret = true;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	delegation = rcu_dereference(nfsi->delegation);
-	अगर (delegation == शून्य || !(delegation->type & FMODE_WRITE))
-		जाओ out;
-	अगर (atomic_दीर्घ_पढ़ो(&nfsi->nrequests) < delegation->pagemod_limit)
+	if (delegation == NULL || !(delegation->type & FMODE_WRITE))
+		goto out;
+	if (atomic_long_read(&nfsi->nrequests) < delegation->pagemod_limit)
 		ret = false;
 out:
-	rcu_पढ़ो_unlock();
-	वापस ret;
-पूर्ण
+	rcu_read_unlock();
+	return ret;
+}
 
-module_param_named(delegation_watermark, nfs_delegation_watermark, uपूर्णांक, 0644);
+module_param_named(delegation_watermark, nfs_delegation_watermark, uint, 0644);

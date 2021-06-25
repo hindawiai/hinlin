@@ -1,669 +1,668 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#समावेश "misc.h"
-#समावेश "ctree.h"
-#समावेश "block-group.h"
-#समावेश "space-info.h"
-#समावेश "disk-io.h"
-#समावेश "free-space-cache.h"
-#समावेश "free-space-tree.h"
-#समावेश "volumes.h"
-#समावेश "transaction.h"
-#समावेश "ref-verify.h"
-#समावेश "sysfs.h"
-#समावेश "tree-log.h"
-#समावेश "delalloc-space.h"
-#समावेश "discard.h"
-#समावेश "raid56.h"
-#समावेश "zoned.h"
+#include "misc.h"
+#include "ctree.h"
+#include "block-group.h"
+#include "space-info.h"
+#include "disk-io.h"
+#include "free-space-cache.h"
+#include "free-space-tree.h"
+#include "volumes.h"
+#include "transaction.h"
+#include "ref-verify.h"
+#include "sysfs.h"
+#include "tree-log.h"
+#include "delalloc-space.h"
+#include "discard.h"
+#include "raid56.h"
+#include "zoned.h"
 
 /*
- * Return target flags in extended क्रमmat or 0 अगर restripe क्रम this chunk_type
+ * Return target flags in extended format or 0 if restripe for this chunk_type
  * is not in progress
  *
  * Should be called with balance_lock held
  */
-अटल u64 get_restripe_target(काष्ठा btrfs_fs_info *fs_info, u64 flags)
-अणु
-	काष्ठा btrfs_balance_control *bctl = fs_info->balance_ctl;
+static u64 get_restripe_target(struct btrfs_fs_info *fs_info, u64 flags)
+{
+	struct btrfs_balance_control *bctl = fs_info->balance_ctl;
 	u64 target = 0;
 
-	अगर (!bctl)
-		वापस 0;
+	if (!bctl)
+		return 0;
 
-	अगर (flags & BTRFS_BLOCK_GROUP_DATA &&
-	    bctl->data.flags & BTRFS_BALANCE_ARGS_CONVERT) अणु
+	if (flags & BTRFS_BLOCK_GROUP_DATA &&
+	    bctl->data.flags & BTRFS_BALANCE_ARGS_CONVERT) {
 		target = BTRFS_BLOCK_GROUP_DATA | bctl->data.target;
-	पूर्ण अन्यथा अगर (flags & BTRFS_BLOCK_GROUP_SYSTEM &&
-		   bctl->sys.flags & BTRFS_BALANCE_ARGS_CONVERT) अणु
+	} else if (flags & BTRFS_BLOCK_GROUP_SYSTEM &&
+		   bctl->sys.flags & BTRFS_BALANCE_ARGS_CONVERT) {
 		target = BTRFS_BLOCK_GROUP_SYSTEM | bctl->sys.target;
-	पूर्ण अन्यथा अगर (flags & BTRFS_BLOCK_GROUP_METADATA &&
-		   bctl->meta.flags & BTRFS_BALANCE_ARGS_CONVERT) अणु
+	} else if (flags & BTRFS_BLOCK_GROUP_METADATA &&
+		   bctl->meta.flags & BTRFS_BALANCE_ARGS_CONVERT) {
 		target = BTRFS_BLOCK_GROUP_METADATA | bctl->meta.target;
-	पूर्ण
+	}
 
-	वापस target;
-पूर्ण
+	return target;
+}
 
 /*
- * @flags: available profiles in extended क्रमmat (see ctree.h)
+ * @flags: available profiles in extended format (see ctree.h)
  *
- * Return reduced profile in chunk क्रमmat.  If profile changing is in progress
- * (either running or छोड़ोd) picks the target profile (अगर it's alपढ़ोy
+ * Return reduced profile in chunk format.  If profile changing is in progress
+ * (either running or paused) picks the target profile (if it's already
  * available), otherwise falls back to plain reducing.
  */
-अटल u64 btrfs_reduce_alloc_profile(काष्ठा btrfs_fs_info *fs_info, u64 flags)
-अणु
+static u64 btrfs_reduce_alloc_profile(struct btrfs_fs_info *fs_info, u64 flags)
+{
 	u64 num_devices = fs_info->fs_devices->rw_devices;
 	u64 target;
 	u64 raid_type;
 	u64 allowed = 0;
 
 	/*
-	 * See अगर restripe क्रम this chunk_type is in progress, अगर so try to
+	 * See if restripe for this chunk_type is in progress, if so try to
 	 * reduce to the target profile
 	 */
 	spin_lock(&fs_info->balance_lock);
 	target = get_restripe_target(fs_info, flags);
-	अगर (target) अणु
+	if (target) {
 		spin_unlock(&fs_info->balance_lock);
-		वापस extended_to_chunk(target);
-	पूर्ण
+		return extended_to_chunk(target);
+	}
 	spin_unlock(&fs_info->balance_lock);
 
 	/* First, mask out the RAID levels which aren't possible */
-	क्रम (raid_type = 0; raid_type < BTRFS_NR_RAID_TYPES; raid_type++) अणु
-		अगर (num_devices >= btrfs_raid_array[raid_type].devs_min)
+	for (raid_type = 0; raid_type < BTRFS_NR_RAID_TYPES; raid_type++) {
+		if (num_devices >= btrfs_raid_array[raid_type].devs_min)
 			allowed |= btrfs_raid_array[raid_type].bg_flag;
-	पूर्ण
+	}
 	allowed &= flags;
 
-	अगर (allowed & BTRFS_BLOCK_GROUP_RAID6)
+	if (allowed & BTRFS_BLOCK_GROUP_RAID6)
 		allowed = BTRFS_BLOCK_GROUP_RAID6;
-	अन्यथा अगर (allowed & BTRFS_BLOCK_GROUP_RAID5)
+	else if (allowed & BTRFS_BLOCK_GROUP_RAID5)
 		allowed = BTRFS_BLOCK_GROUP_RAID5;
-	अन्यथा अगर (allowed & BTRFS_BLOCK_GROUP_RAID10)
+	else if (allowed & BTRFS_BLOCK_GROUP_RAID10)
 		allowed = BTRFS_BLOCK_GROUP_RAID10;
-	अन्यथा अगर (allowed & BTRFS_BLOCK_GROUP_RAID1)
+	else if (allowed & BTRFS_BLOCK_GROUP_RAID1)
 		allowed = BTRFS_BLOCK_GROUP_RAID1;
-	अन्यथा अगर (allowed & BTRFS_BLOCK_GROUP_RAID0)
+	else if (allowed & BTRFS_BLOCK_GROUP_RAID0)
 		allowed = BTRFS_BLOCK_GROUP_RAID0;
 
-	flags &= ~BTRFS_BLOCK_GROUP_PROखाता_MASK;
+	flags &= ~BTRFS_BLOCK_GROUP_PROFILE_MASK;
 
-	वापस extended_to_chunk(flags | allowed);
-पूर्ण
+	return extended_to_chunk(flags | allowed);
+}
 
-u64 btrfs_get_alloc_profile(काष्ठा btrfs_fs_info *fs_info, u64 orig_flags)
-अणु
-	अचिन्हित seq;
+u64 btrfs_get_alloc_profile(struct btrfs_fs_info *fs_info, u64 orig_flags)
+{
+	unsigned seq;
 	u64 flags;
 
-	करो अणु
+	do {
 		flags = orig_flags;
-		seq = पढ़ो_seqbegin(&fs_info->profiles_lock);
+		seq = read_seqbegin(&fs_info->profiles_lock);
 
-		अगर (flags & BTRFS_BLOCK_GROUP_DATA)
+		if (flags & BTRFS_BLOCK_GROUP_DATA)
 			flags |= fs_info->avail_data_alloc_bits;
-		अन्यथा अगर (flags & BTRFS_BLOCK_GROUP_SYSTEM)
-			flags |= fs_info->avail_प्रणाली_alloc_bits;
-		अन्यथा अगर (flags & BTRFS_BLOCK_GROUP_METADATA)
+		else if (flags & BTRFS_BLOCK_GROUP_SYSTEM)
+			flags |= fs_info->avail_system_alloc_bits;
+		else if (flags & BTRFS_BLOCK_GROUP_METADATA)
 			flags |= fs_info->avail_metadata_alloc_bits;
-	पूर्ण जबतक (पढ़ो_seqretry(&fs_info->profiles_lock, seq));
+	} while (read_seqretry(&fs_info->profiles_lock, seq));
 
-	वापस btrfs_reduce_alloc_profile(fs_info, flags);
-पूर्ण
+	return btrfs_reduce_alloc_profile(fs_info, flags);
+}
 
-व्योम btrfs_get_block_group(काष्ठा btrfs_block_group *cache)
-अणु
+void btrfs_get_block_group(struct btrfs_block_group *cache)
+{
 	refcount_inc(&cache->refs);
-पूर्ण
+}
 
-व्योम btrfs_put_block_group(काष्ठा btrfs_block_group *cache)
-अणु
-	अगर (refcount_dec_and_test(&cache->refs)) अणु
+void btrfs_put_block_group(struct btrfs_block_group *cache)
+{
+	if (refcount_dec_and_test(&cache->refs)) {
 		WARN_ON(cache->pinned > 0);
 		WARN_ON(cache->reserved > 0);
 
 		/*
 		 * A block_group shouldn't be on the discard_list anymore.
 		 * Remove the block_group from the discard_list to prevent us
-		 * from causing a panic due to शून्य poपूर्णांकer dereference.
+		 * from causing a panic due to NULL pointer dereference.
 		 */
-		अगर (WARN_ON(!list_empty(&cache->discard_list)))
+		if (WARN_ON(!list_empty(&cache->discard_list)))
 			btrfs_discard_cancel_work(&cache->fs_info->discard_ctl,
 						  cache);
 
 		/*
 		 * If not empty, someone is still holding mutex of
 		 * full_stripe_lock, which can only be released by caller.
-		 * And it will definitely cause use-after-मुक्त when caller
+		 * And it will definitely cause use-after-free when caller
 		 * tries to release full stripe lock.
 		 *
 		 * No better way to resolve, but only to warn.
 		 */
 		WARN_ON(!RB_EMPTY_ROOT(&cache->full_stripe_locks_root.root));
-		kमुक्त(cache->मुक्त_space_ctl);
-		kमुक्त(cache);
-	पूर्ण
-पूर्ण
+		kfree(cache->free_space_ctl);
+		kfree(cache);
+	}
+}
 
 /*
- * This adds the block group to the fs_info rb tree क्रम the block group cache
+ * This adds the block group to the fs_info rb tree for the block group cache
  */
-अटल पूर्णांक btrfs_add_block_group_cache(काष्ठा btrfs_fs_info *info,
-				       काष्ठा btrfs_block_group *block_group)
-अणु
-	काष्ठा rb_node **p;
-	काष्ठा rb_node *parent = शून्य;
-	काष्ठा btrfs_block_group *cache;
+static int btrfs_add_block_group_cache(struct btrfs_fs_info *info,
+				       struct btrfs_block_group *block_group)
+{
+	struct rb_node **p;
+	struct rb_node *parent = NULL;
+	struct btrfs_block_group *cache;
 
 	ASSERT(block_group->length != 0);
 
 	spin_lock(&info->block_group_cache_lock);
 	p = &info->block_group_cache_tree.rb_node;
 
-	जबतक (*p) अणु
+	while (*p) {
 		parent = *p;
-		cache = rb_entry(parent, काष्ठा btrfs_block_group, cache_node);
-		अगर (block_group->start < cache->start) अणु
+		cache = rb_entry(parent, struct btrfs_block_group, cache_node);
+		if (block_group->start < cache->start) {
 			p = &(*p)->rb_left;
-		पूर्ण अन्यथा अगर (block_group->start > cache->start) अणु
+		} else if (block_group->start > cache->start) {
 			p = &(*p)->rb_right;
-		पूर्ण अन्यथा अणु
+		} else {
 			spin_unlock(&info->block_group_cache_lock);
-			वापस -EEXIST;
-		पूर्ण
-	पूर्ण
+			return -EEXIST;
+		}
+	}
 
 	rb_link_node(&block_group->cache_node, parent, p);
 	rb_insert_color(&block_group->cache_node,
 			&info->block_group_cache_tree);
 
-	अगर (info->first_logical_byte > block_group->start)
+	if (info->first_logical_byte > block_group->start)
 		info->first_logical_byte = block_group->start;
 
 	spin_unlock(&info->block_group_cache_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * This will वापस the block group at or after bytenr अगर contains is 0, अन्यथा
- * it will वापस the block group that contains the bytenr
+ * This will return the block group at or after bytenr if contains is 0, else
+ * it will return the block group that contains the bytenr
  */
-अटल काष्ठा btrfs_block_group *block_group_cache_tree_search(
-		काष्ठा btrfs_fs_info *info, u64 bytenr, पूर्णांक contains)
-अणु
-	काष्ठा btrfs_block_group *cache, *ret = शून्य;
-	काष्ठा rb_node *n;
+static struct btrfs_block_group *block_group_cache_tree_search(
+		struct btrfs_fs_info *info, u64 bytenr, int contains)
+{
+	struct btrfs_block_group *cache, *ret = NULL;
+	struct rb_node *n;
 	u64 end, start;
 
 	spin_lock(&info->block_group_cache_lock);
 	n = info->block_group_cache_tree.rb_node;
 
-	जबतक (n) अणु
-		cache = rb_entry(n, काष्ठा btrfs_block_group, cache_node);
+	while (n) {
+		cache = rb_entry(n, struct btrfs_block_group, cache_node);
 		end = cache->start + cache->length - 1;
 		start = cache->start;
 
-		अगर (bytenr < start) अणु
-			अगर (!contains && (!ret || start < ret->start))
+		if (bytenr < start) {
+			if (!contains && (!ret || start < ret->start))
 				ret = cache;
 			n = n->rb_left;
-		पूर्ण अन्यथा अगर (bytenr > start) अणु
-			अगर (contains && bytenr <= end) अणु
+		} else if (bytenr > start) {
+			if (contains && bytenr <= end) {
 				ret = cache;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			n = n->rb_right;
-		पूर्ण अन्यथा अणु
+		} else {
 			ret = cache;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (ret) अणु
+			break;
+		}
+	}
+	if (ret) {
 		btrfs_get_block_group(ret);
-		अगर (bytenr == 0 && info->first_logical_byte > ret->start)
+		if (bytenr == 0 && info->first_logical_byte > ret->start)
 			info->first_logical_byte = ret->start;
-	पूर्ण
+	}
 	spin_unlock(&info->block_group_cache_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Return the block group that starts at or after bytenr
  */
-काष्ठा btrfs_block_group *btrfs_lookup_first_block_group(
-		काष्ठा btrfs_fs_info *info, u64 bytenr)
-अणु
-	वापस block_group_cache_tree_search(info, bytenr, 0);
-पूर्ण
+struct btrfs_block_group *btrfs_lookup_first_block_group(
+		struct btrfs_fs_info *info, u64 bytenr)
+{
+	return block_group_cache_tree_search(info, bytenr, 0);
+}
 
 /*
  * Return the block group that contains the given bytenr
  */
-काष्ठा btrfs_block_group *btrfs_lookup_block_group(
-		काष्ठा btrfs_fs_info *info, u64 bytenr)
-अणु
-	वापस block_group_cache_tree_search(info, bytenr, 1);
-पूर्ण
+struct btrfs_block_group *btrfs_lookup_block_group(
+		struct btrfs_fs_info *info, u64 bytenr)
+{
+	return block_group_cache_tree_search(info, bytenr, 1);
+}
 
-काष्ठा btrfs_block_group *btrfs_next_block_group(
-		काष्ठा btrfs_block_group *cache)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = cache->fs_info;
-	काष्ठा rb_node *node;
+struct btrfs_block_group *btrfs_next_block_group(
+		struct btrfs_block_group *cache)
+{
+	struct btrfs_fs_info *fs_info = cache->fs_info;
+	struct rb_node *node;
 
 	spin_lock(&fs_info->block_group_cache_lock);
 
-	/* If our block group was हटाओd, we need a full search. */
-	अगर (RB_EMPTY_NODE(&cache->cache_node)) अणु
-		स्थिर u64 next_bytenr = cache->start + cache->length;
+	/* If our block group was removed, we need a full search. */
+	if (RB_EMPTY_NODE(&cache->cache_node)) {
+		const u64 next_bytenr = cache->start + cache->length;
 
 		spin_unlock(&fs_info->block_group_cache_lock);
 		btrfs_put_block_group(cache);
-		cache = btrfs_lookup_first_block_group(fs_info, next_bytenr); वापस cache;
-	पूर्ण
+		cache = btrfs_lookup_first_block_group(fs_info, next_bytenr); return cache;
+	}
 	node = rb_next(&cache->cache_node);
 	btrfs_put_block_group(cache);
-	अगर (node) अणु
-		cache = rb_entry(node, काष्ठा btrfs_block_group, cache_node);
+	if (node) {
+		cache = rb_entry(node, struct btrfs_block_group, cache_node);
 		btrfs_get_block_group(cache);
-	पूर्ण अन्यथा
-		cache = शून्य;
+	} else
+		cache = NULL;
 	spin_unlock(&fs_info->block_group_cache_lock);
-	वापस cache;
-पूर्ण
+	return cache;
+}
 
-bool btrfs_inc_nocow_ग_लिखोrs(काष्ठा btrfs_fs_info *fs_info, u64 bytenr)
-अणु
-	काष्ठा btrfs_block_group *bg;
+bool btrfs_inc_nocow_writers(struct btrfs_fs_info *fs_info, u64 bytenr)
+{
+	struct btrfs_block_group *bg;
 	bool ret = true;
 
 	bg = btrfs_lookup_block_group(fs_info, bytenr);
-	अगर (!bg)
-		वापस false;
+	if (!bg)
+		return false;
 
 	spin_lock(&bg->lock);
-	अगर (bg->ro)
+	if (bg->ro)
 		ret = false;
-	अन्यथा
-		atomic_inc(&bg->nocow_ग_लिखोrs);
+	else
+		atomic_inc(&bg->nocow_writers);
 	spin_unlock(&bg->lock);
 
-	/* No put on block group, करोne by btrfs_dec_nocow_ग_लिखोrs */
-	अगर (!ret)
+	/* No put on block group, done by btrfs_dec_nocow_writers */
+	if (!ret)
 		btrfs_put_block_group(bg);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम btrfs_dec_nocow_ग_लिखोrs(काष्ठा btrfs_fs_info *fs_info, u64 bytenr)
-अणु
-	काष्ठा btrfs_block_group *bg;
+void btrfs_dec_nocow_writers(struct btrfs_fs_info *fs_info, u64 bytenr)
+{
+	struct btrfs_block_group *bg;
 
 	bg = btrfs_lookup_block_group(fs_info, bytenr);
 	ASSERT(bg);
-	अगर (atomic_dec_and_test(&bg->nocow_ग_लिखोrs))
-		wake_up_var(&bg->nocow_ग_लिखोrs);
+	if (atomic_dec_and_test(&bg->nocow_writers))
+		wake_up_var(&bg->nocow_writers);
 	/*
-	 * Once क्रम our lookup and once क्रम the lookup करोne by a previous call
-	 * to btrfs_inc_nocow_ग_लिखोrs()
+	 * Once for our lookup and once for the lookup done by a previous call
+	 * to btrfs_inc_nocow_writers()
 	 */
 	btrfs_put_block_group(bg);
 	btrfs_put_block_group(bg);
-पूर्ण
+}
 
-व्योम btrfs_रुको_nocow_ग_लिखोrs(काष्ठा btrfs_block_group *bg)
-अणु
-	रुको_var_event(&bg->nocow_ग_लिखोrs, !atomic_पढ़ो(&bg->nocow_ग_लिखोrs));
-पूर्ण
+void btrfs_wait_nocow_writers(struct btrfs_block_group *bg)
+{
+	wait_var_event(&bg->nocow_writers, !atomic_read(&bg->nocow_writers));
+}
 
-व्योम btrfs_dec_block_group_reservations(काष्ठा btrfs_fs_info *fs_info,
-					स्थिर u64 start)
-अणु
-	काष्ठा btrfs_block_group *bg;
+void btrfs_dec_block_group_reservations(struct btrfs_fs_info *fs_info,
+					const u64 start)
+{
+	struct btrfs_block_group *bg;
 
 	bg = btrfs_lookup_block_group(fs_info, start);
 	ASSERT(bg);
-	अगर (atomic_dec_and_test(&bg->reservations))
+	if (atomic_dec_and_test(&bg->reservations))
 		wake_up_var(&bg->reservations);
 	btrfs_put_block_group(bg);
-पूर्ण
+}
 
-व्योम btrfs_रुको_block_group_reservations(काष्ठा btrfs_block_group *bg)
-अणु
-	काष्ठा btrfs_space_info *space_info = bg->space_info;
+void btrfs_wait_block_group_reservations(struct btrfs_block_group *bg)
+{
+	struct btrfs_space_info *space_info = bg->space_info;
 
 	ASSERT(bg->ro);
 
-	अगर (!(bg->flags & BTRFS_BLOCK_GROUP_DATA))
-		वापस;
+	if (!(bg->flags & BTRFS_BLOCK_GROUP_DATA))
+		return;
 
 	/*
-	 * Our block group is पढ़ो only but beक्रमe we set it to पढ़ो only,
-	 * some task might have had allocated an extent from it alपढ़ोy, but it
+	 * Our block group is read only but before we set it to read only,
+	 * some task might have had allocated an extent from it already, but it
 	 * has not yet created a respective ordered extent (and added it to a
 	 * root's list of ordered extents).
-	 * Thereक्रमe रुको क्रम any task currently allocating extents, since the
-	 * block group's reservations counter is incremented जबतक a पढ़ो lock
+	 * Therefore wait for any task currently allocating extents, since the
+	 * block group's reservations counter is incremented while a read lock
 	 * on the groups' semaphore is held and decremented after releasing
-	 * the पढ़ो access on that semaphore and creating the ordered extent.
+	 * the read access on that semaphore and creating the ordered extent.
 	 */
-	करोwn_ग_लिखो(&space_info->groups_sem);
-	up_ग_लिखो(&space_info->groups_sem);
+	down_write(&space_info->groups_sem);
+	up_write(&space_info->groups_sem);
 
-	रुको_var_event(&bg->reservations, !atomic_पढ़ो(&bg->reservations));
-पूर्ण
+	wait_var_event(&bg->reservations, !atomic_read(&bg->reservations));
+}
 
-काष्ठा btrfs_caching_control *btrfs_get_caching_control(
-		काष्ठा btrfs_block_group *cache)
-अणु
-	काष्ठा btrfs_caching_control *ctl;
+struct btrfs_caching_control *btrfs_get_caching_control(
+		struct btrfs_block_group *cache)
+{
+	struct btrfs_caching_control *ctl;
 
 	spin_lock(&cache->lock);
-	अगर (!cache->caching_ctl) अणु
+	if (!cache->caching_ctl) {
 		spin_unlock(&cache->lock);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	ctl = cache->caching_ctl;
 	refcount_inc(&ctl->count);
 	spin_unlock(&cache->lock);
-	वापस ctl;
-पूर्ण
+	return ctl;
+}
 
-व्योम btrfs_put_caching_control(काष्ठा btrfs_caching_control *ctl)
-अणु
-	अगर (refcount_dec_and_test(&ctl->count))
-		kमुक्त(ctl);
-पूर्ण
+void btrfs_put_caching_control(struct btrfs_caching_control *ctl)
+{
+	if (refcount_dec_and_test(&ctl->count))
+		kfree(ctl);
+}
 
 /*
- * When we रुको क्रम progress in the block group caching, its because our
+ * When we wait for progress in the block group caching, its because our
  * allocation attempt failed at least once.  So, we must sleep and let some
- * progress happen beक्रमe we try again.
+ * progress happen before we try again.
  *
- * This function will sleep at least once रुकोing क्रम new मुक्त space to show
- * up, and then it will check the block group मुक्त space numbers क्रम our min
- * num_bytes.  Another option is to have it go ahead and look in the rbtree क्रम
- * a मुक्त extent of a given size, but this is a good start.
+ * This function will sleep at least once waiting for new free space to show
+ * up, and then it will check the block group free space numbers for our min
+ * num_bytes.  Another option is to have it go ahead and look in the rbtree for
+ * a free extent of a given size, but this is a good start.
  *
- * Callers of this must check अगर cache->cached == BTRFS_CACHE_ERROR beक्रमe using
- * any of the inक्रमmation in this block group.
+ * Callers of this must check if cache->cached == BTRFS_CACHE_ERROR before using
+ * any of the information in this block group.
  */
-व्योम btrfs_रुको_block_group_cache_progress(काष्ठा btrfs_block_group *cache,
+void btrfs_wait_block_group_cache_progress(struct btrfs_block_group *cache,
 					   u64 num_bytes)
-अणु
-	काष्ठा btrfs_caching_control *caching_ctl;
+{
+	struct btrfs_caching_control *caching_ctl;
 
 	caching_ctl = btrfs_get_caching_control(cache);
-	अगर (!caching_ctl)
-		वापस;
+	if (!caching_ctl)
+		return;
 
-	रुको_event(caching_ctl->रुको, btrfs_block_group_करोne(cache) ||
-		   (cache->मुक्त_space_ctl->मुक्त_space >= num_bytes));
+	wait_event(caching_ctl->wait, btrfs_block_group_done(cache) ||
+		   (cache->free_space_ctl->free_space >= num_bytes));
 
 	btrfs_put_caching_control(caching_ctl);
-पूर्ण
+}
 
-पूर्णांक btrfs_रुको_block_group_cache_करोne(काष्ठा btrfs_block_group *cache)
-अणु
-	काष्ठा btrfs_caching_control *caching_ctl;
-	पूर्णांक ret = 0;
+int btrfs_wait_block_group_cache_done(struct btrfs_block_group *cache)
+{
+	struct btrfs_caching_control *caching_ctl;
+	int ret = 0;
 
 	caching_ctl = btrfs_get_caching_control(cache);
-	अगर (!caching_ctl)
-		वापस (cache->cached == BTRFS_CACHE_ERROR) ? -EIO : 0;
+	if (!caching_ctl)
+		return (cache->cached == BTRFS_CACHE_ERROR) ? -EIO : 0;
 
-	रुको_event(caching_ctl->रुको, btrfs_block_group_करोne(cache));
-	अगर (cache->cached == BTRFS_CACHE_ERROR)
+	wait_event(caching_ctl->wait, btrfs_block_group_done(cache));
+	if (cache->cached == BTRFS_CACHE_ERROR)
 		ret = -EIO;
 	btrfs_put_caching_control(caching_ctl);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल bool space_cache_v1_करोne(काष्ठा btrfs_block_group *cache)
-अणु
+static bool space_cache_v1_done(struct btrfs_block_group *cache)
+{
 	bool ret;
 
 	spin_lock(&cache->lock);
 	ret = cache->cached != BTRFS_CACHE_FAST;
 	spin_unlock(&cache->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम btrfs_रुको_space_cache_v1_finished(काष्ठा btrfs_block_group *cache,
-				काष्ठा btrfs_caching_control *caching_ctl)
-अणु
-	रुको_event(caching_ctl->रुको, space_cache_v1_करोne(cache));
-पूर्ण
+void btrfs_wait_space_cache_v1_finished(struct btrfs_block_group *cache,
+				struct btrfs_caching_control *caching_ctl)
+{
+	wait_event(caching_ctl->wait, space_cache_v1_done(cache));
+}
 
-#अगर_घोषित CONFIG_BTRFS_DEBUG
-अटल व्योम fragment_मुक्त_space(काष्ठा btrfs_block_group *block_group)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = block_group->fs_info;
+#ifdef CONFIG_BTRFS_DEBUG
+static void fragment_free_space(struct btrfs_block_group *block_group)
+{
+	struct btrfs_fs_info *fs_info = block_group->fs_info;
 	u64 start = block_group->start;
 	u64 len = block_group->length;
 	u64 chunk = block_group->flags & BTRFS_BLOCK_GROUP_METADATA ?
 		fs_info->nodesize : fs_info->sectorsize;
 	u64 step = chunk << 1;
 
-	जबतक (len > chunk) अणु
-		btrfs_हटाओ_मुक्त_space(block_group, start, chunk);
+	while (len > chunk) {
+		btrfs_remove_free_space(block_group, start, chunk);
 		start += step;
-		अगर (len < step)
+		if (len < step)
 			len = 0;
-		अन्यथा
+		else
 			len -= step;
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर
+	}
+}
+#endif
 
 /*
- * This is only called by btrfs_cache_block_group, since we could have मुक्तd
- * extents we need to check the pinned_extents क्रम any extents that can't be
- * used yet since their मुक्त space will be released as soon as the transaction
+ * This is only called by btrfs_cache_block_group, since we could have freed
+ * extents we need to check the pinned_extents for any extents that can't be
+ * used yet since their free space will be released as soon as the transaction
  * commits.
  */
-u64 add_new_मुक्त_space(काष्ठा btrfs_block_group *block_group, u64 start, u64 end)
-अणु
-	काष्ठा btrfs_fs_info *info = block_group->fs_info;
+u64 add_new_free_space(struct btrfs_block_group *block_group, u64 start, u64 end)
+{
+	struct btrfs_fs_info *info = block_group->fs_info;
 	u64 extent_start, extent_end, size, total_added = 0;
-	पूर्णांक ret;
+	int ret;
 
-	जबतक (start < end) अणु
+	while (start < end) {
 		ret = find_first_extent_bit(&info->excluded_extents, start,
 					    &extent_start, &extent_end,
-					    EXTENT_सूचीTY | EXTENT_UPTODATE,
-					    शून्य);
-		अगर (ret)
-			अवरोध;
+					    EXTENT_DIRTY | EXTENT_UPTODATE,
+					    NULL);
+		if (ret)
+			break;
 
-		अगर (extent_start <= start) अणु
+		if (extent_start <= start) {
 			start = extent_end + 1;
-		पूर्ण अन्यथा अगर (extent_start > start && extent_start < end) अणु
+		} else if (extent_start > start && extent_start < end) {
 			size = extent_start - start;
 			total_added += size;
-			ret = btrfs_add_मुक्त_space_async_trimmed(block_group,
+			ret = btrfs_add_free_space_async_trimmed(block_group,
 								 start, size);
 			BUG_ON(ret); /* -ENOMEM or logic error */
 			start = extent_end + 1;
-		पूर्ण अन्यथा अणु
-			अवरोध;
-		पूर्ण
-	पूर्ण
+		} else {
+			break;
+		}
+	}
 
-	अगर (start < end) अणु
+	if (start < end) {
 		size = end - start;
 		total_added += size;
-		ret = btrfs_add_मुक्त_space_async_trimmed(block_group, start,
+		ret = btrfs_add_free_space_async_trimmed(block_group, start,
 							 size);
 		BUG_ON(ret); /* -ENOMEM or logic error */
-	पूर्ण
+	}
 
-	वापस total_added;
-पूर्ण
+	return total_added;
+}
 
-अटल पूर्णांक load_extent_tree_मुक्त(काष्ठा btrfs_caching_control *caching_ctl)
-अणु
-	काष्ठा btrfs_block_group *block_group = caching_ctl->block_group;
-	काष्ठा btrfs_fs_info *fs_info = block_group->fs_info;
-	काष्ठा btrfs_root *extent_root = fs_info->extent_root;
-	काष्ठा btrfs_path *path;
-	काष्ठा extent_buffer *leaf;
-	काष्ठा btrfs_key key;
+static int load_extent_tree_free(struct btrfs_caching_control *caching_ctl)
+{
+	struct btrfs_block_group *block_group = caching_ctl->block_group;
+	struct btrfs_fs_info *fs_info = block_group->fs_info;
+	struct btrfs_root *extent_root = fs_info->extent_root;
+	struct btrfs_path *path;
+	struct extent_buffer *leaf;
+	struct btrfs_key key;
 	u64 total_found = 0;
 	u64 last = 0;
 	u32 nritems;
-	पूर्णांक ret;
+	int ret;
 	bool wakeup = true;
 
 	path = btrfs_alloc_path();
-	अगर (!path)
-		वापस -ENOMEM;
+	if (!path)
+		return -ENOMEM;
 
 	last = max_t(u64, block_group->start, BTRFS_SUPER_INFO_OFFSET);
 
-#अगर_घोषित CONFIG_BTRFS_DEBUG
+#ifdef CONFIG_BTRFS_DEBUG
 	/*
 	 * If we're fragmenting we don't want to make anybody think we can
 	 * allocate from this block group until we've had a chance to fragment
-	 * the मुक्त space.
+	 * the free space.
 	 */
-	अगर (btrfs_should_fragment_मुक्त_space(block_group))
+	if (btrfs_should_fragment_free_space(block_group))
 		wakeup = false;
-#पूर्ण_अगर
+#endif
 	/*
-	 * We करोn't want to deadlock with somebody trying to allocate a new
-	 * extent क्रम the extent root जबतक also trying to search the extent
-	 * root to add मुक्त space.  So we skip locking and search the commit
-	 * root, since its पढ़ो-only
+	 * We don't want to deadlock with somebody trying to allocate a new
+	 * extent for the extent root while also trying to search the extent
+	 * root to add free space.  So we skip locking and search the commit
+	 * root, since its read-only
 	 */
 	path->skip_locking = 1;
 	path->search_commit_root = 1;
-	path->पढ़ोa = READA_FORWARD;
+	path->reada = READA_FORWARD;
 
 	key.objectid = last;
 	key.offset = 0;
 	key.type = BTRFS_EXTENT_ITEM_KEY;
 
 next:
-	ret = btrfs_search_slot(शून्य, extent_root, &key, path, 0, 0);
-	अगर (ret < 0)
-		जाओ out;
+	ret = btrfs_search_slot(NULL, extent_root, &key, path, 0, 0);
+	if (ret < 0)
+		goto out;
 
 	leaf = path->nodes[0];
 	nritems = btrfs_header_nritems(leaf);
 
-	जबतक (1) अणु
-		अगर (btrfs_fs_closing(fs_info) > 1) अणु
+	while (1) {
+		if (btrfs_fs_closing(fs_info) > 1) {
 			last = (u64)-1;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (path->slots[0] < nritems) अणु
+		if (path->slots[0] < nritems) {
 			btrfs_item_key_to_cpu(leaf, &key, path->slots[0]);
-		पूर्ण अन्यथा अणु
+		} else {
 			ret = btrfs_find_next_key(extent_root, path, &key, 0, 0);
-			अगर (ret)
-				अवरोध;
+			if (ret)
+				break;
 
-			अगर (need_resched() ||
-			    rwsem_is_contended(&fs_info->commit_root_sem)) अणु
-				अगर (wakeup)
+			if (need_resched() ||
+			    rwsem_is_contended(&fs_info->commit_root_sem)) {
+				if (wakeup)
 					caching_ctl->progress = last;
 				btrfs_release_path(path);
-				up_पढ़ो(&fs_info->commit_root_sem);
+				up_read(&fs_info->commit_root_sem);
 				mutex_unlock(&caching_ctl->mutex);
 				cond_resched();
 				mutex_lock(&caching_ctl->mutex);
-				करोwn_पढ़ो(&fs_info->commit_root_sem);
-				जाओ next;
-			पूर्ण
+				down_read(&fs_info->commit_root_sem);
+				goto next;
+			}
 
 			ret = btrfs_next_leaf(extent_root, path);
-			अगर (ret < 0)
-				जाओ out;
-			अगर (ret)
-				अवरोध;
+			if (ret < 0)
+				goto out;
+			if (ret)
+				break;
 			leaf = path->nodes[0];
 			nritems = btrfs_header_nritems(leaf);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (key.objectid < last) अणु
+		if (key.objectid < last) {
 			key.objectid = last;
 			key.offset = 0;
 			key.type = BTRFS_EXTENT_ITEM_KEY;
 
-			अगर (wakeup)
+			if (wakeup)
 				caching_ctl->progress = last;
 			btrfs_release_path(path);
-			जाओ next;
-		पूर्ण
+			goto next;
+		}
 
-		अगर (key.objectid < block_group->start) अणु
+		if (key.objectid < block_group->start) {
 			path->slots[0]++;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (key.objectid >= block_group->start + block_group->length)
-			अवरोध;
+		if (key.objectid >= block_group->start + block_group->length)
+			break;
 
-		अगर (key.type == BTRFS_EXTENT_ITEM_KEY ||
-		    key.type == BTRFS_METADATA_ITEM_KEY) अणु
-			total_found += add_new_मुक्त_space(block_group, last,
+		if (key.type == BTRFS_EXTENT_ITEM_KEY ||
+		    key.type == BTRFS_METADATA_ITEM_KEY) {
+			total_found += add_new_free_space(block_group, last,
 							  key.objectid);
-			अगर (key.type == BTRFS_METADATA_ITEM_KEY)
+			if (key.type == BTRFS_METADATA_ITEM_KEY)
 				last = key.objectid +
 					fs_info->nodesize;
-			अन्यथा
+			else
 				last = key.objectid + key.offset;
 
-			अगर (total_found > CACHING_CTL_WAKE_UP) अणु
+			if (total_found > CACHING_CTL_WAKE_UP) {
 				total_found = 0;
-				अगर (wakeup)
-					wake_up(&caching_ctl->रुको);
-			पूर्ण
-		पूर्ण
+				if (wakeup)
+					wake_up(&caching_ctl->wait);
+			}
+		}
 		path->slots[0]++;
-	पूर्ण
+	}
 	ret = 0;
 
-	total_found += add_new_मुक्त_space(block_group, last,
+	total_found += add_new_free_space(block_group, last,
 				block_group->start + block_group->length);
 	caching_ctl->progress = (u64)-1;
 
 out:
-	btrfs_मुक्त_path(path);
-	वापस ret;
-पूर्ण
+	btrfs_free_path(path);
+	return ret;
+}
 
-अटल noअंतरभूत व्योम caching_thपढ़ो(काष्ठा btrfs_work *work)
-अणु
-	काष्ठा btrfs_block_group *block_group;
-	काष्ठा btrfs_fs_info *fs_info;
-	काष्ठा btrfs_caching_control *caching_ctl;
-	पूर्णांक ret;
+static noinline void caching_thread(struct btrfs_work *work)
+{
+	struct btrfs_block_group *block_group;
+	struct btrfs_fs_info *fs_info;
+	struct btrfs_caching_control *caching_ctl;
+	int ret;
 
-	caching_ctl = container_of(work, काष्ठा btrfs_caching_control, work);
+	caching_ctl = container_of(work, struct btrfs_caching_control, work);
 	block_group = caching_ctl->block_group;
 	fs_info = block_group->fs_info;
 
 	mutex_lock(&caching_ctl->mutex);
-	करोwn_पढ़ो(&fs_info->commit_root_sem);
+	down_read(&fs_info->commit_root_sem);
 
-	अगर (btrfs_test_opt(fs_info, SPACE_CACHE)) अणु
-		ret = load_मुक्त_space_cache(block_group);
-		अगर (ret == 1) अणु
+	if (btrfs_test_opt(fs_info, SPACE_CACHE)) {
+		ret = load_free_space_cache(block_group);
+		if (ret == 1) {
 			ret = 0;
-			जाओ करोne;
-		पूर्ण
+			goto done;
+		}
 
 		/*
 		 * We failed to load the space cache, set ourselves to
@@ -672,29 +671,29 @@ out:
 		spin_lock(&block_group->lock);
 		block_group->cached = BTRFS_CACHE_STARTED;
 		spin_unlock(&block_group->lock);
-		wake_up(&caching_ctl->रुको);
-	पूर्ण
+		wake_up(&caching_ctl->wait);
+	}
 
 	/*
-	 * If we are in the transaction that populated the मुक्त space tree we
-	 * can't actually cache from the मुक्त space tree as our commit root and
+	 * If we are in the transaction that populated the free space tree we
+	 * can't actually cache from the free space tree as our commit root and
 	 * real root are the same, so we could change the contents of the blocks
-	 * जबतक caching.  Instead करो the slow caching in this हाल, and after
+	 * while caching.  Instead do the slow caching in this case, and after
 	 * the transaction has committed we will be safe.
 	 */
-	अगर (btrfs_fs_compat_ro(fs_info, FREE_SPACE_TREE) &&
+	if (btrfs_fs_compat_ro(fs_info, FREE_SPACE_TREE) &&
 	    !(test_bit(BTRFS_FS_FREE_SPACE_TREE_UNTRUSTED, &fs_info->flags)))
-		ret = load_मुक्त_space_tree(caching_ctl);
-	अन्यथा
-		ret = load_extent_tree_मुक्त(caching_ctl);
-करोne:
+		ret = load_free_space_tree(caching_ctl);
+	else
+		ret = load_extent_tree_free(caching_ctl);
+done:
 	spin_lock(&block_group->lock);
-	block_group->caching_ctl = शून्य;
+	block_group->caching_ctl = NULL;
 	block_group->cached = ret ? BTRFS_CACHE_ERROR : BTRFS_CACHE_FINISHED;
 	spin_unlock(&block_group->lock);
 
-#अगर_घोषित CONFIG_BTRFS_DEBUG
-	अगर (btrfs_should_fragment_मुक्त_space(block_group)) अणु
+#ifdef CONFIG_BTRFS_DEBUG
+	if (btrfs_should_fragment_free_space(block_group)) {
 		u64 bytes_used;
 
 		spin_lock(&block_group->space_info->lock);
@@ -703,60 +702,60 @@ out:
 		block_group->space_info->bytes_used += bytes_used >> 1;
 		spin_unlock(&block_group->lock);
 		spin_unlock(&block_group->space_info->lock);
-		fragment_मुक्त_space(block_group);
-	पूर्ण
-#पूर्ण_अगर
+		fragment_free_space(block_group);
+	}
+#endif
 
 	caching_ctl->progress = (u64)-1;
 
-	up_पढ़ो(&fs_info->commit_root_sem);
-	btrfs_मुक्त_excluded_extents(block_group);
+	up_read(&fs_info->commit_root_sem);
+	btrfs_free_excluded_extents(block_group);
 	mutex_unlock(&caching_ctl->mutex);
 
-	wake_up(&caching_ctl->रुको);
+	wake_up(&caching_ctl->wait);
 
 	btrfs_put_caching_control(caching_ctl);
 	btrfs_put_block_group(block_group);
-पूर्ण
+}
 
-पूर्णांक btrfs_cache_block_group(काष्ठा btrfs_block_group *cache, पूर्णांक load_cache_only)
-अणु
-	DEFINE_WAIT(रुको);
-	काष्ठा btrfs_fs_info *fs_info = cache->fs_info;
-	काष्ठा btrfs_caching_control *caching_ctl = शून्य;
-	पूर्णांक ret = 0;
+int btrfs_cache_block_group(struct btrfs_block_group *cache, int load_cache_only)
+{
+	DEFINE_WAIT(wait);
+	struct btrfs_fs_info *fs_info = cache->fs_info;
+	struct btrfs_caching_control *caching_ctl = NULL;
+	int ret = 0;
 
-	/* Allocator क्रम zoned fileप्रणालीs करोes not use the cache at all */
-	अगर (btrfs_is_zoned(fs_info))
-		वापस 0;
+	/* Allocator for zoned filesystems does not use the cache at all */
+	if (btrfs_is_zoned(fs_info))
+		return 0;
 
-	caching_ctl = kzalloc(माप(*caching_ctl), GFP_NOFS);
-	अगर (!caching_ctl)
-		वापस -ENOMEM;
+	caching_ctl = kzalloc(sizeof(*caching_ctl), GFP_NOFS);
+	if (!caching_ctl)
+		return -ENOMEM;
 
 	INIT_LIST_HEAD(&caching_ctl->list);
 	mutex_init(&caching_ctl->mutex);
-	init_रुकोqueue_head(&caching_ctl->रुको);
+	init_waitqueue_head(&caching_ctl->wait);
 	caching_ctl->block_group = cache;
 	caching_ctl->progress = cache->start;
 	refcount_set(&caching_ctl->count, 2);
-	btrfs_init_work(&caching_ctl->work, caching_thपढ़ो, शून्य, शून्य);
+	btrfs_init_work(&caching_ctl->work, caching_thread, NULL, NULL);
 
 	spin_lock(&cache->lock);
-	अगर (cache->cached != BTRFS_CACHE_NO) अणु
-		kमुक्त(caching_ctl);
+	if (cache->cached != BTRFS_CACHE_NO) {
+		kfree(caching_ctl);
 
 		caching_ctl = cache->caching_ctl;
-		अगर (caching_ctl)
+		if (caching_ctl)
 			refcount_inc(&caching_ctl->count);
 		spin_unlock(&cache->lock);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	WARN_ON(cache->caching_ctl);
 	cache->caching_ctl = caching_ctl;
-	अगर (btrfs_test_opt(fs_info, SPACE_CACHE))
+	if (btrfs_test_opt(fs_info, SPACE_CACHE))
 		cache->cached = BTRFS_CACHE_FAST;
-	अन्यथा
+	else
 		cache->cached = BTRFS_CACHE_STARTED;
 	cache->has_caching_ctl = 1;
 	spin_unlock(&cache->lock);
@@ -770,75 +769,75 @@ out:
 
 	btrfs_queue_work(fs_info->caching_workers, &caching_ctl->work);
 out:
-	अगर (load_cache_only && caching_ctl)
-		btrfs_रुको_space_cache_v1_finished(cache, caching_ctl);
-	अगर (caching_ctl)
+	if (load_cache_only && caching_ctl)
+		btrfs_wait_space_cache_v1_finished(cache, caching_ctl);
+	if (caching_ctl)
 		btrfs_put_caching_control(caching_ctl);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम clear_avail_alloc_bits(काष्ठा btrfs_fs_info *fs_info, u64 flags)
-अणु
+static void clear_avail_alloc_bits(struct btrfs_fs_info *fs_info, u64 flags)
+{
 	u64 extra_flags = chunk_to_extended(flags) &
-				BTRFS_EXTENDED_PROखाता_MASK;
+				BTRFS_EXTENDED_PROFILE_MASK;
 
-	ग_लिखो_seqlock(&fs_info->profiles_lock);
-	अगर (flags & BTRFS_BLOCK_GROUP_DATA)
+	write_seqlock(&fs_info->profiles_lock);
+	if (flags & BTRFS_BLOCK_GROUP_DATA)
 		fs_info->avail_data_alloc_bits &= ~extra_flags;
-	अगर (flags & BTRFS_BLOCK_GROUP_METADATA)
+	if (flags & BTRFS_BLOCK_GROUP_METADATA)
 		fs_info->avail_metadata_alloc_bits &= ~extra_flags;
-	अगर (flags & BTRFS_BLOCK_GROUP_SYSTEM)
-		fs_info->avail_प्रणाली_alloc_bits &= ~extra_flags;
-	ग_लिखो_sequnlock(&fs_info->profiles_lock);
-पूर्ण
+	if (flags & BTRFS_BLOCK_GROUP_SYSTEM)
+		fs_info->avail_system_alloc_bits &= ~extra_flags;
+	write_sequnlock(&fs_info->profiles_lock);
+}
 
 /*
- * Clear incompat bits क्रम the following feature(s):
+ * Clear incompat bits for the following feature(s):
  *
- * - RAID56 - in हाल there's neither RAID5 nor RAID6 profile block group
- *            in the whole fileप्रणाली
+ * - RAID56 - in case there's neither RAID5 nor RAID6 profile block group
+ *            in the whole filesystem
  *
- * - RAID1C34 - same as above क्रम RAID1C3 and RAID1C4 block groups
+ * - RAID1C34 - same as above for RAID1C3 and RAID1C4 block groups
  */
-अटल व्योम clear_incompat_bg_bits(काष्ठा btrfs_fs_info *fs_info, u64 flags)
-अणु
+static void clear_incompat_bg_bits(struct btrfs_fs_info *fs_info, u64 flags)
+{
 	bool found_raid56 = false;
 	bool found_raid1c34 = false;
 
-	अगर ((flags & BTRFS_BLOCK_GROUP_RAID56_MASK) ||
+	if ((flags & BTRFS_BLOCK_GROUP_RAID56_MASK) ||
 	    (flags & BTRFS_BLOCK_GROUP_RAID1C3) ||
-	    (flags & BTRFS_BLOCK_GROUP_RAID1C4)) अणु
-		काष्ठा list_head *head = &fs_info->space_info;
-		काष्ठा btrfs_space_info *sinfo;
+	    (flags & BTRFS_BLOCK_GROUP_RAID1C4)) {
+		struct list_head *head = &fs_info->space_info;
+		struct btrfs_space_info *sinfo;
 
-		list_क्रम_each_entry_rcu(sinfo, head, list) अणु
-			करोwn_पढ़ो(&sinfo->groups_sem);
-			अगर (!list_empty(&sinfo->block_groups[BTRFS_RAID_RAID5]))
+		list_for_each_entry_rcu(sinfo, head, list) {
+			down_read(&sinfo->groups_sem);
+			if (!list_empty(&sinfo->block_groups[BTRFS_RAID_RAID5]))
 				found_raid56 = true;
-			अगर (!list_empty(&sinfo->block_groups[BTRFS_RAID_RAID6]))
+			if (!list_empty(&sinfo->block_groups[BTRFS_RAID_RAID6]))
 				found_raid56 = true;
-			अगर (!list_empty(&sinfo->block_groups[BTRFS_RAID_RAID1C3]))
+			if (!list_empty(&sinfo->block_groups[BTRFS_RAID_RAID1C3]))
 				found_raid1c34 = true;
-			अगर (!list_empty(&sinfo->block_groups[BTRFS_RAID_RAID1C4]))
+			if (!list_empty(&sinfo->block_groups[BTRFS_RAID_RAID1C4]))
 				found_raid1c34 = true;
-			up_पढ़ो(&sinfo->groups_sem);
-		पूर्ण
-		अगर (!found_raid56)
+			up_read(&sinfo->groups_sem);
+		}
+		if (!found_raid56)
 			btrfs_clear_fs_incompat(fs_info, RAID56);
-		अगर (!found_raid1c34)
+		if (!found_raid1c34)
 			btrfs_clear_fs_incompat(fs_info, RAID1C34);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक हटाओ_block_group_item(काष्ठा btrfs_trans_handle *trans,
-				   काष्ठा btrfs_path *path,
-				   काष्ठा btrfs_block_group *block_group)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = trans->fs_info;
-	काष्ठा btrfs_root *root;
-	काष्ठा btrfs_key key;
-	पूर्णांक ret;
+static int remove_block_group_item(struct btrfs_trans_handle *trans,
+				   struct btrfs_path *path,
+				   struct btrfs_block_group *block_group)
+{
+	struct btrfs_fs_info *fs_info = trans->fs_info;
+	struct btrfs_root *root;
+	struct btrfs_key key;
+	int ret;
 
 	root = fs_info->extent_root;
 	key.objectid = block_group->start;
@@ -846,42 +845,42 @@ out:
 	key.offset = block_group->length;
 
 	ret = btrfs_search_slot(trans, root, &key, path, -1, 1);
-	अगर (ret > 0)
+	if (ret > 0)
 		ret = -ENOENT;
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	ret = btrfs_del_item(trans, root, path);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक btrfs_हटाओ_block_group(काष्ठा btrfs_trans_handle *trans,
-			     u64 group_start, काष्ठा extent_map *em)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = trans->fs_info;
-	काष्ठा btrfs_path *path;
-	काष्ठा btrfs_block_group *block_group;
-	काष्ठा btrfs_मुक्त_cluster *cluster;
-	काष्ठा inode *inode;
-	काष्ठा kobject *kobj = शून्य;
-	पूर्णांक ret;
-	पूर्णांक index;
-	पूर्णांक factor;
-	काष्ठा btrfs_caching_control *caching_ctl = शून्य;
-	bool हटाओ_em;
-	bool हटाओ_rsv = false;
+int btrfs_remove_block_group(struct btrfs_trans_handle *trans,
+			     u64 group_start, struct extent_map *em)
+{
+	struct btrfs_fs_info *fs_info = trans->fs_info;
+	struct btrfs_path *path;
+	struct btrfs_block_group *block_group;
+	struct btrfs_free_cluster *cluster;
+	struct inode *inode;
+	struct kobject *kobj = NULL;
+	int ret;
+	int index;
+	int factor;
+	struct btrfs_caching_control *caching_ctl = NULL;
+	bool remove_em;
+	bool remove_rsv = false;
 
 	block_group = btrfs_lookup_block_group(fs_info, group_start);
 	BUG_ON(!block_group);
 	BUG_ON(!block_group->ro);
 
-	trace_btrfs_हटाओ_block_group(block_group);
+	trace_btrfs_remove_block_group(block_group);
 	/*
-	 * Free the reserved super bytes from this block group beक्रमe
-	 * हटाओ it.
+	 * Free the reserved super bytes from this block group before
+	 * remove it.
 	 */
-	btrfs_मुक्त_excluded_extents(block_group);
-	btrfs_मुक्त_ref_tree_range(fs_info, block_group->start,
+	btrfs_free_excluded_extents(block_group);
+	btrfs_free_ref_tree_range(fs_info, block_group->start,
 				  block_group->length);
 
 	index = btrfs_bg_flags_to_raid_index(block_group->flags);
@@ -890,7 +889,7 @@ out:
 	/* make sure this block group isn't part of an allocation cluster */
 	cluster = &fs_info->data_alloc_cluster;
 	spin_lock(&cluster->refill_lock);
-	btrfs_वापस_cluster_to_मुक्त_space(block_group, cluster);
+	btrfs_return_cluster_to_free_space(block_group, cluster);
 	spin_unlock(&cluster->refill_lock);
 
 	/*
@@ -899,131 +898,131 @@ out:
 	 */
 	cluster = &fs_info->meta_alloc_cluster;
 	spin_lock(&cluster->refill_lock);
-	btrfs_वापस_cluster_to_मुक्त_space(block_group, cluster);
+	btrfs_return_cluster_to_free_space(block_group, cluster);
 	spin_unlock(&cluster->refill_lock);
 
 	btrfs_clear_treelog_bg(block_group);
 
 	path = btrfs_alloc_path();
-	अगर (!path) अणु
+	if (!path) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
-	 * get the inode first so any iput calls करोne क्रम the io_list
+	 * get the inode first so any iput calls done for the io_list
 	 * aren't the final iput (no unlinks allowed now)
 	 */
-	inode = lookup_मुक्त_space_inode(block_group, path);
+	inode = lookup_free_space_inode(block_group, path);
 
-	mutex_lock(&trans->transaction->cache_ग_लिखो_mutex);
+	mutex_lock(&trans->transaction->cache_write_mutex);
 	/*
-	 * Make sure our मुक्त space cache IO is करोne beक्रमe removing the
-	 * मुक्त space inode
+	 * Make sure our free space cache IO is done before removing the
+	 * free space inode
 	 */
 	spin_lock(&trans->transaction->dirty_bgs_lock);
-	अगर (!list_empty(&block_group->io_list)) अणु
+	if (!list_empty(&block_group->io_list)) {
 		list_del_init(&block_group->io_list);
 
 		WARN_ON(!IS_ERR(inode) && inode != block_group->io_ctl.inode);
 
 		spin_unlock(&trans->transaction->dirty_bgs_lock);
-		btrfs_रुको_cache_io(trans, block_group, path);
+		btrfs_wait_cache_io(trans, block_group, path);
 		btrfs_put_block_group(block_group);
 		spin_lock(&trans->transaction->dirty_bgs_lock);
-	पूर्ण
+	}
 
-	अगर (!list_empty(&block_group->dirty_list)) अणु
+	if (!list_empty(&block_group->dirty_list)) {
 		list_del_init(&block_group->dirty_list);
-		हटाओ_rsv = true;
+		remove_rsv = true;
 		btrfs_put_block_group(block_group);
-	पूर्ण
+	}
 	spin_unlock(&trans->transaction->dirty_bgs_lock);
-	mutex_unlock(&trans->transaction->cache_ग_लिखो_mutex);
+	mutex_unlock(&trans->transaction->cache_write_mutex);
 
-	ret = btrfs_हटाओ_मुक्त_space_inode(trans, inode, block_group);
-	अगर (ret)
-		जाओ out;
+	ret = btrfs_remove_free_space_inode(trans, inode, block_group);
+	if (ret)
+		goto out;
 
 	spin_lock(&fs_info->block_group_cache_lock);
 	rb_erase(&block_group->cache_node,
 		 &fs_info->block_group_cache_tree);
 	RB_CLEAR_NODE(&block_group->cache_node);
 
-	/* Once क्रम the block groups rbtree */
+	/* Once for the block groups rbtree */
 	btrfs_put_block_group(block_group);
 
-	अगर (fs_info->first_logical_byte == block_group->start)
+	if (fs_info->first_logical_byte == block_group->start)
 		fs_info->first_logical_byte = (u64)-1;
 	spin_unlock(&fs_info->block_group_cache_lock);
 
-	करोwn_ग_लिखो(&block_group->space_info->groups_sem);
+	down_write(&block_group->space_info->groups_sem);
 	/*
-	 * we must use list_del_init so people can check to see अगर they
+	 * we must use list_del_init so people can check to see if they
 	 * are still on the list after taking the semaphore
 	 */
 	list_del_init(&block_group->list);
-	अगर (list_empty(&block_group->space_info->block_groups[index])) अणु
+	if (list_empty(&block_group->space_info->block_groups[index])) {
 		kobj = block_group->space_info->block_group_kobjs[index];
-		block_group->space_info->block_group_kobjs[index] = शून्य;
+		block_group->space_info->block_group_kobjs[index] = NULL;
 		clear_avail_alloc_bits(fs_info, block_group->flags);
-	पूर्ण
-	up_ग_लिखो(&block_group->space_info->groups_sem);
+	}
+	up_write(&block_group->space_info->groups_sem);
 	clear_incompat_bg_bits(fs_info, block_group->flags);
-	अगर (kobj) अणु
+	if (kobj) {
 		kobject_del(kobj);
 		kobject_put(kobj);
-	पूर्ण
+	}
 
-	अगर (block_group->has_caching_ctl)
+	if (block_group->has_caching_ctl)
 		caching_ctl = btrfs_get_caching_control(block_group);
-	अगर (block_group->cached == BTRFS_CACHE_STARTED)
-		btrfs_रुको_block_group_cache_करोne(block_group);
-	अगर (block_group->has_caching_ctl) अणु
+	if (block_group->cached == BTRFS_CACHE_STARTED)
+		btrfs_wait_block_group_cache_done(block_group);
+	if (block_group->has_caching_ctl) {
 		spin_lock(&fs_info->block_group_cache_lock);
-		अगर (!caching_ctl) अणु
-			काष्ठा btrfs_caching_control *ctl;
+		if (!caching_ctl) {
+			struct btrfs_caching_control *ctl;
 
-			list_क्रम_each_entry(ctl,
+			list_for_each_entry(ctl,
 				    &fs_info->caching_block_groups, list)
-				अगर (ctl->block_group == block_group) अणु
+				if (ctl->block_group == block_group) {
 					caching_ctl = ctl;
 					refcount_inc(&caching_ctl->count);
-					अवरोध;
-				पूर्ण
-		पूर्ण
-		अगर (caching_ctl)
+					break;
+				}
+		}
+		if (caching_ctl)
 			list_del_init(&caching_ctl->list);
 		spin_unlock(&fs_info->block_group_cache_lock);
-		अगर (caching_ctl) अणु
-			/* Once क्रम the caching bgs list and once क्रम us. */
+		if (caching_ctl) {
+			/* Once for the caching bgs list and once for us. */
 			btrfs_put_caching_control(caching_ctl);
 			btrfs_put_caching_control(caching_ctl);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	spin_lock(&trans->transaction->dirty_bgs_lock);
 	WARN_ON(!list_empty(&block_group->dirty_list));
 	WARN_ON(!list_empty(&block_group->io_list));
 	spin_unlock(&trans->transaction->dirty_bgs_lock);
 
-	btrfs_हटाओ_मुक्त_space_cache(block_group);
+	btrfs_remove_free_space_cache(block_group);
 
 	spin_lock(&block_group->space_info->lock);
 	list_del_init(&block_group->ro_list);
 
-	अगर (btrfs_test_opt(fs_info, ENOSPC_DEBUG)) अणु
+	if (btrfs_test_opt(fs_info, ENOSPC_DEBUG)) {
 		WARN_ON(block_group->space_info->total_bytes
 			< block_group->length);
-		WARN_ON(block_group->space_info->bytes_पढ़ोonly
+		WARN_ON(block_group->space_info->bytes_readonly
 			< block_group->length - block_group->zone_unusable);
 		WARN_ON(block_group->space_info->bytes_zone_unusable
 			< block_group->zone_unusable);
 		WARN_ON(block_group->space_info->disk_total
 			< block_group->length * factor);
-	पूर्ण
+	}
 	block_group->space_info->total_bytes -= block_group->length;
-	block_group->space_info->bytes_पढ़ोonly -=
+	block_group->space_info->bytes_readonly -=
 		(block_group->length - block_group->zone_unusable);
 	block_group->space_info->bytes_zone_unusable -=
 		block_group->zone_unusable;
@@ -1032,374 +1031,374 @@ out:
 	spin_unlock(&block_group->space_info->lock);
 
 	/*
-	 * Remove the मुक्त space क्रम the block group from the मुक्त space tree
-	 * and the block group's item from the extent tree beक्रमe marking the
-	 * block group as हटाओd. This is to prevent races with tasks that
-	 * मुक्तze and unमुक्तze a block group, this task and another task
-	 * allocating a new block group - the unमुक्तze task ends up removing
-	 * the block group's extent map beक्रमe the task calling this function
-	 * deletes the block group item from the extent tree, allowing क्रम
+	 * Remove the free space for the block group from the free space tree
+	 * and the block group's item from the extent tree before marking the
+	 * block group as removed. This is to prevent races with tasks that
+	 * freeze and unfreeze a block group, this task and another task
+	 * allocating a new block group - the unfreeze task ends up removing
+	 * the block group's extent map before the task calling this function
+	 * deletes the block group item from the extent tree, allowing for
 	 * another task to attempt to create another block group with the same
-	 * item key (and failing with -EEXIST and a transaction पात).
+	 * item key (and failing with -EEXIST and a transaction abort).
 	 */
-	ret = हटाओ_block_group_मुक्त_space(trans, block_group);
-	अगर (ret)
-		जाओ out;
+	ret = remove_block_group_free_space(trans, block_group);
+	if (ret)
+		goto out;
 
-	ret = हटाओ_block_group_item(trans, path, block_group);
-	अगर (ret < 0)
-		जाओ out;
+	ret = remove_block_group_item(trans, path, block_group);
+	if (ret < 0)
+		goto out;
 
 	spin_lock(&block_group->lock);
-	block_group->हटाओd = 1;
+	block_group->removed = 1;
 	/*
-	 * At this poपूर्णांक trimming or scrub can't start on this block group,
-	 * because we हटाओd the block group from the rbtree
+	 * At this point trimming or scrub can't start on this block group,
+	 * because we removed the block group from the rbtree
 	 * fs_info->block_group_cache_tree so no one can't find it anymore and
-	 * even अगर someone alपढ़ोy got this block group beक्रमe we हटाओd it
-	 * from the rbtree, they have alपढ़ोy incremented block_group->frozen -
-	 * अगर they didn't, for the trimming case they won't find any मुक्त space
-	 * entries because we alपढ़ोy हटाओd them all when we called
-	 * btrfs_हटाओ_मुक्त_space_cache().
+	 * even if someone already got this block group before we removed it
+	 * from the rbtree, they have already incremented block_group->frozen -
+	 * if they didn't, for the trimming case they won't find any free space
+	 * entries because we already removed them all when we called
+	 * btrfs_remove_free_space_cache().
 	 *
-	 * And we must not हटाओ the extent map from the fs_info->mapping_tree
+	 * And we must not remove the extent map from the fs_info->mapping_tree
 	 * to prevent the same logical address range and physical device space
-	 * ranges from being reused क्रम a new block group. This is needed to
-	 * aव्योम races with trimming and scrub.
+	 * ranges from being reused for a new block group. This is needed to
+	 * avoid races with trimming and scrub.
 	 *
 	 * An fs trim operation (btrfs_trim_fs() / btrfs_ioctl_fitrim()) is
-	 * completely transactionless, so जबतक it is trimming a range the
+	 * completely transactionless, so while it is trimming a range the
 	 * currently running transaction might finish and a new one start,
-	 * allowing क्रम new block groups to be created that can reuse the same
+	 * allowing for new block groups to be created that can reuse the same
 	 * physical device locations unless we take this special care.
 	 *
-	 * There may also be an implicit trim operation अगर the file प्रणाली
-	 * is mounted with -odiscard. The same protections must reमुख्य
+	 * There may also be an implicit trim operation if the file system
+	 * is mounted with -odiscard. The same protections must remain
 	 * in place until the extents have been discarded completely when
 	 * the transaction commit has completed.
 	 */
-	हटाओ_em = (atomic_पढ़ो(&block_group->frozen) == 0);
+	remove_em = (atomic_read(&block_group->frozen) == 0);
 	spin_unlock(&block_group->lock);
 
-	अगर (हटाओ_em) अणु
-		काष्ठा extent_map_tree *em_tree;
+	if (remove_em) {
+		struct extent_map_tree *em_tree;
 
 		em_tree = &fs_info->mapping_tree;
-		ग_लिखो_lock(&em_tree->lock);
-		हटाओ_extent_mapping(em_tree, em);
-		ग_लिखो_unlock(&em_tree->lock);
-		/* once क्रम the tree */
-		मुक्त_extent_map(em);
-	पूर्ण
+		write_lock(&em_tree->lock);
+		remove_extent_mapping(em_tree, em);
+		write_unlock(&em_tree->lock);
+		/* once for the tree */
+		free_extent_map(em);
+	}
 
 out:
-	/* Once क्रम the lookup reference */
+	/* Once for the lookup reference */
 	btrfs_put_block_group(block_group);
-	अगर (हटाओ_rsv)
+	if (remove_rsv)
 		btrfs_delayed_refs_rsv_release(fs_info, 1);
-	btrfs_मुक्त_path(path);
-	वापस ret;
-पूर्ण
+	btrfs_free_path(path);
+	return ret;
+}
 
-काष्ठा btrfs_trans_handle *btrfs_start_trans_हटाओ_block_group(
-		काष्ठा btrfs_fs_info *fs_info, स्थिर u64 chunk_offset)
-अणु
-	काष्ठा extent_map_tree *em_tree = &fs_info->mapping_tree;
-	काष्ठा extent_map *em;
-	काष्ठा map_lookup *map;
-	अचिन्हित पूर्णांक num_items;
+struct btrfs_trans_handle *btrfs_start_trans_remove_block_group(
+		struct btrfs_fs_info *fs_info, const u64 chunk_offset)
+{
+	struct extent_map_tree *em_tree = &fs_info->mapping_tree;
+	struct extent_map *em;
+	struct map_lookup *map;
+	unsigned int num_items;
 
-	पढ़ो_lock(&em_tree->lock);
+	read_lock(&em_tree->lock);
 	em = lookup_extent_mapping(em_tree, chunk_offset, 1);
-	पढ़ो_unlock(&em_tree->lock);
+	read_unlock(&em_tree->lock);
 	ASSERT(em && em->start == chunk_offset);
 
 	/*
 	 * We need to reserve 3 + N units from the metadata space info in order
-	 * to हटाओ a block group (करोne at btrfs_हटाओ_chunk() and at
-	 * btrfs_हटाओ_block_group()), which are used क्रम:
+	 * to remove a block group (done at btrfs_remove_chunk() and at
+	 * btrfs_remove_block_group()), which are used for:
 	 *
-	 * 1 unit क्रम adding the मुक्त space inode's orphan (located in the tree
+	 * 1 unit for adding the free space inode's orphan (located in the tree
 	 * of tree roots).
-	 * 1 unit क्रम deleting the block group item (located in the extent
+	 * 1 unit for deleting the block group item (located in the extent
 	 * tree).
-	 * 1 unit क्रम deleting the मुक्त space item (located in tree of tree
+	 * 1 unit for deleting the free space item (located in tree of tree
 	 * roots).
-	 * N units क्रम deleting N device extent items corresponding to each
+	 * N units for deleting N device extent items corresponding to each
 	 * stripe (located in the device tree).
 	 *
-	 * In order to हटाओ a block group we also need to reserve units in the
-	 * प्रणाली space info in order to update the chunk tree (update one or
-	 * more device items and हटाओ one chunk item), but this is करोne at
-	 * btrfs_हटाओ_chunk() through a call to check_प्रणाली_chunk().
+	 * In order to remove a block group we also need to reserve units in the
+	 * system space info in order to update the chunk tree (update one or
+	 * more device items and remove one chunk item), but this is done at
+	 * btrfs_remove_chunk() through a call to check_system_chunk().
 	 */
 	map = em->map_lookup;
 	num_items = 3 + map->num_stripes;
-	मुक्त_extent_map(em);
+	free_extent_map(em);
 
-	वापस btrfs_start_transaction_fallback_global_rsv(fs_info->extent_root,
+	return btrfs_start_transaction_fallback_global_rsv(fs_info->extent_root,
 							   num_items);
-पूर्ण
+}
 
 /*
- * Mark block group @cache पढ़ो-only, so later ग_लिखो won't happen to block
+ * Mark block group @cache read-only, so later write won't happen to block
  * group @cache.
  *
- * If @क्रमce is not set, this function will only mark the block group पढ़ोonly
- * अगर we have enough मुक्त space (1M) in other metadata/प्रणाली block groups.
- * If @क्रमce is not set, this function will mark the block group पढ़ोonly
- * without checking मुक्त space.
+ * If @force is not set, this function will only mark the block group readonly
+ * if we have enough free space (1M) in other metadata/system block groups.
+ * If @force is not set, this function will mark the block group readonly
+ * without checking free space.
  *
- * NOTE: This function करोesn't care अगर other block groups can contain all the
- * data in this block group. That check should be करोne by relocation routine,
+ * NOTE: This function doesn't care if other block groups can contain all the
+ * data in this block group. That check should be done by relocation routine,
  * not this function.
  */
-अटल पूर्णांक inc_block_group_ro(काष्ठा btrfs_block_group *cache, पूर्णांक क्रमce)
-अणु
-	काष्ठा btrfs_space_info *sinfo = cache->space_info;
+static int inc_block_group_ro(struct btrfs_block_group *cache, int force)
+{
+	struct btrfs_space_info *sinfo = cache->space_info;
 	u64 num_bytes;
-	पूर्णांक ret = -ENOSPC;
+	int ret = -ENOSPC;
 
 	spin_lock(&sinfo->lock);
 	spin_lock(&cache->lock);
 
-	अगर (cache->swap_extents) अणु
+	if (cache->swap_extents) {
 		ret = -ETXTBSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (cache->ro) अणु
+	if (cache->ro) {
 		cache->ro++;
 		ret = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	num_bytes = cache->length - cache->reserved - cache->pinned -
 		    cache->bytes_super - cache->zone_unusable - cache->used;
 
 	/*
-	 * Data never overcommits, even in mixed mode, so करो just the straight
+	 * Data never overcommits, even in mixed mode, so do just the straight
 	 * check of left over space in how much we have allocated.
 	 */
-	अगर (क्रमce) अणु
+	if (force) {
 		ret = 0;
-	पूर्ण अन्यथा अगर (sinfo->flags & BTRFS_BLOCK_GROUP_DATA) अणु
+	} else if (sinfo->flags & BTRFS_BLOCK_GROUP_DATA) {
 		u64 sinfo_used = btrfs_space_info_used(sinfo, true);
 
 		/*
-		 * Here we make sure अगर we mark this bg RO, we still have enough
-		 * मुक्त space as buffer.
+		 * Here we make sure if we mark this bg RO, we still have enough
+		 * free space as buffer.
 		 */
-		अगर (sinfo_used + num_bytes <= sinfo->total_bytes)
+		if (sinfo_used + num_bytes <= sinfo->total_bytes)
 			ret = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
-		 * We overcommit metadata, so we need to करो the
+		 * We overcommit metadata, so we need to do the
 		 * btrfs_can_overcommit check here, and we need to pass in
 		 * BTRFS_RESERVE_NO_FLUSH to give ourselves the most amount of
-		 * leeway to allow us to mark this block group as पढ़ो only.
+		 * leeway to allow us to mark this block group as read only.
 		 */
-		अगर (btrfs_can_overcommit(cache->fs_info, sinfo, num_bytes,
+		if (btrfs_can_overcommit(cache->fs_info, sinfo, num_bytes,
 					 BTRFS_RESERVE_NO_FLUSH))
 			ret = 0;
-	पूर्ण
+	}
 
-	अगर (!ret) अणु
-		sinfo->bytes_पढ़ोonly += num_bytes;
-		अगर (btrfs_is_zoned(cache->fs_info)) अणु
-			/* Migrate zone_unusable bytes to पढ़ोonly */
-			sinfo->bytes_पढ़ोonly += cache->zone_unusable;
+	if (!ret) {
+		sinfo->bytes_readonly += num_bytes;
+		if (btrfs_is_zoned(cache->fs_info)) {
+			/* Migrate zone_unusable bytes to readonly */
+			sinfo->bytes_readonly += cache->zone_unusable;
 			sinfo->bytes_zone_unusable -= cache->zone_unusable;
 			cache->zone_unusable = 0;
-		पूर्ण
+		}
 		cache->ro++;
 		list_add_tail(&cache->ro_list, &sinfo->ro_bgs);
-	पूर्ण
+	}
 out:
 	spin_unlock(&cache->lock);
 	spin_unlock(&sinfo->lock);
-	अगर (ret == -ENOSPC && btrfs_test_opt(cache->fs_info, ENOSPC_DEBUG)) अणु
+	if (ret == -ENOSPC && btrfs_test_opt(cache->fs_info, ENOSPC_DEBUG)) {
 		btrfs_info(cache->fs_info,
 			"unable to make block group %llu ro", cache->start);
 		btrfs_dump_space_info(cache->fs_info, cache->space_info, 0, 0);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल bool clean_pinned_extents(काष्ठा btrfs_trans_handle *trans,
-				 काष्ठा btrfs_block_group *bg)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = bg->fs_info;
-	काष्ठा btrfs_transaction *prev_trans = शून्य;
-	स्थिर u64 start = bg->start;
-	स्थिर u64 end = start + bg->length - 1;
-	पूर्णांक ret;
+static bool clean_pinned_extents(struct btrfs_trans_handle *trans,
+				 struct btrfs_block_group *bg)
+{
+	struct btrfs_fs_info *fs_info = bg->fs_info;
+	struct btrfs_transaction *prev_trans = NULL;
+	const u64 start = bg->start;
+	const u64 end = start + bg->length - 1;
+	int ret;
 
 	spin_lock(&fs_info->trans_lock);
-	अगर (trans->transaction->list.prev != &fs_info->trans_list) अणु
+	if (trans->transaction->list.prev != &fs_info->trans_list) {
 		prev_trans = list_last_entry(&trans->transaction->list,
-					     काष्ठा btrfs_transaction, list);
+					     struct btrfs_transaction, list);
 		refcount_inc(&prev_trans->use_count);
-	पूर्ण
+	}
 	spin_unlock(&fs_info->trans_lock);
 
 	/*
-	 * Hold the unused_bg_unpin_mutex lock to aव्योम racing with
+	 * Hold the unused_bg_unpin_mutex lock to avoid racing with
 	 * btrfs_finish_extent_commit(). If we are at transaction N, another
-	 * task might be running finish_extent_commit() क्रम the previous
-	 * transaction N - 1, and have seen a range beदीर्घing to the block
-	 * group in pinned_extents beक्रमe we were able to clear the whole block
-	 * group range from pinned_extents. This means that task can lookup क्रम
-	 * the block group after we unpinned it from pinned_extents and हटाओd
+	 * task might be running finish_extent_commit() for the previous
+	 * transaction N - 1, and have seen a range belonging to the block
+	 * group in pinned_extents before we were able to clear the whole block
+	 * group range from pinned_extents. This means that task can lookup for
+	 * the block group after we unpinned it from pinned_extents and removed
 	 * it, leading to a BUG_ON() at unpin_extent_range().
 	 */
 	mutex_lock(&fs_info->unused_bg_unpin_mutex);
-	अगर (prev_trans) अणु
+	if (prev_trans) {
 		ret = clear_extent_bits(&prev_trans->pinned_extents, start, end,
-					EXTENT_सूचीTY);
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+					EXTENT_DIRTY);
+		if (ret)
+			goto out;
+	}
 
 	ret = clear_extent_bits(&trans->transaction->pinned_extents, start, end,
-				EXTENT_सूचीTY);
+				EXTENT_DIRTY);
 out:
 	mutex_unlock(&fs_info->unused_bg_unpin_mutex);
-	अगर (prev_trans)
+	if (prev_trans)
 		btrfs_put_transaction(prev_trans);
 
-	वापस ret == 0;
-पूर्ण
+	return ret == 0;
+}
 
 /*
- * Process the unused_bgs list and हटाओ any that करोn't have any allocated
+ * Process the unused_bgs list and remove any that don't have any allocated
  * space inside of them.
  */
-व्योम btrfs_delete_unused_bgs(काष्ठा btrfs_fs_info *fs_info)
-अणु
-	काष्ठा btrfs_block_group *block_group;
-	काष्ठा btrfs_space_info *space_info;
-	काष्ठा btrfs_trans_handle *trans;
-	स्थिर bool async_trim_enabled = btrfs_test_opt(fs_info, DISCARD_ASYNC);
-	पूर्णांक ret = 0;
+void btrfs_delete_unused_bgs(struct btrfs_fs_info *fs_info)
+{
+	struct btrfs_block_group *block_group;
+	struct btrfs_space_info *space_info;
+	struct btrfs_trans_handle *trans;
+	const bool async_trim_enabled = btrfs_test_opt(fs_info, DISCARD_ASYNC);
+	int ret = 0;
 
-	अगर (!test_bit(BTRFS_FS_OPEN, &fs_info->flags))
-		वापस;
+	if (!test_bit(BTRFS_FS_OPEN, &fs_info->flags))
+		return;
 
 	/*
-	 * Long running balances can keep us blocked here क्रम eternity, so
-	 * simply skip deletion अगर we're unable to get the mutex.
+	 * Long running balances can keep us blocked here for eternity, so
+	 * simply skip deletion if we're unable to get the mutex.
 	 */
-	अगर (!mutex_trylock(&fs_info->reclaim_bgs_lock))
-		वापस;
+	if (!mutex_trylock(&fs_info->reclaim_bgs_lock))
+		return;
 
 	spin_lock(&fs_info->unused_bgs_lock);
-	जबतक (!list_empty(&fs_info->unused_bgs)) अणु
-		पूर्णांक trimming;
+	while (!list_empty(&fs_info->unused_bgs)) {
+		int trimming;
 
 		block_group = list_first_entry(&fs_info->unused_bgs,
-					       काष्ठा btrfs_block_group,
+					       struct btrfs_block_group,
 					       bg_list);
 		list_del_init(&block_group->bg_list);
 
 		space_info = block_group->space_info;
 
-		अगर (ret || btrfs_mixed_space_info(space_info)) अणु
+		if (ret || btrfs_mixed_space_info(space_info)) {
 			btrfs_put_block_group(block_group);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		spin_unlock(&fs_info->unused_bgs_lock);
 
 		btrfs_discard_cancel_work(&fs_info->discard_ctl, block_group);
 
 		/* Don't want to race with allocators so take the groups_sem */
-		करोwn_ग_लिखो(&space_info->groups_sem);
+		down_write(&space_info->groups_sem);
 
 		/*
 		 * Async discard moves the final block group discard to be prior
-		 * to the unused_bgs code path.  Thereक्रमe, अगर it's not fully
+		 * to the unused_bgs code path.  Therefore, if it's not fully
 		 * trimmed, punt it back to the async discard lists.
 		 */
-		अगर (btrfs_test_opt(fs_info, DISCARD_ASYNC) &&
-		    !btrfs_is_मुक्त_space_trimmed(block_group)) अणु
+		if (btrfs_test_opt(fs_info, DISCARD_ASYNC) &&
+		    !btrfs_is_free_space_trimmed(block_group)) {
 			trace_btrfs_skip_unused_block_group(block_group);
-			up_ग_लिखो(&space_info->groups_sem);
-			/* Requeue अगर we failed because of async discard */
+			up_write(&space_info->groups_sem);
+			/* Requeue if we failed because of async discard */
 			btrfs_discard_queue_work(&fs_info->discard_ctl,
 						 block_group);
-			जाओ next;
-		पूर्ण
+			goto next;
+		}
 
 		spin_lock(&block_group->lock);
-		अगर (block_group->reserved || block_group->pinned ||
+		if (block_group->reserved || block_group->pinned ||
 		    block_group->used || block_group->ro ||
-		    list_is_singular(&block_group->list)) अणु
+		    list_is_singular(&block_group->list)) {
 			/*
-			 * We want to bail अगर we made new allocations or have
-			 * outstanding allocations in this block group.  We करो
-			 * the ro check in हाल balance is currently acting on
+			 * We want to bail if we made new allocations or have
+			 * outstanding allocations in this block group.  We do
+			 * the ro check in case balance is currently acting on
 			 * this block group.
 			 */
 			trace_btrfs_skip_unused_block_group(block_group);
 			spin_unlock(&block_group->lock);
-			up_ग_लिखो(&space_info->groups_sem);
-			जाओ next;
-		पूर्ण
+			up_write(&space_info->groups_sem);
+			goto next;
+		}
 		spin_unlock(&block_group->lock);
 
-		/* We करोn't want to force the issue, only flip if it's ok. */
+		/* We don't want to force the issue, only flip if it's ok. */
 		ret = inc_block_group_ro(block_group, 0);
-		up_ग_लिखो(&space_info->groups_sem);
-		अगर (ret < 0) अणु
+		up_write(&space_info->groups_sem);
+		if (ret < 0) {
 			ret = 0;
-			जाओ next;
-		पूर्ण
+			goto next;
+		}
 
 		/*
-		 * Want to करो this beक्रमe we करो anything अन्यथा so we can recover
-		 * properly अगर we fail to join the transaction.
+		 * Want to do this before we do anything else so we can recover
+		 * properly if we fail to join the transaction.
 		 */
-		trans = btrfs_start_trans_हटाओ_block_group(fs_info,
+		trans = btrfs_start_trans_remove_block_group(fs_info,
 						     block_group->start);
-		अगर (IS_ERR(trans)) अणु
+		if (IS_ERR(trans)) {
 			btrfs_dec_block_group_ro(block_group);
 			ret = PTR_ERR(trans);
-			जाओ next;
-		पूर्ण
+			goto next;
+		}
 
 		/*
-		 * We could have pending pinned extents क्रम this block group,
-		 * just delete them, we करोn't care about them anymore.
+		 * We could have pending pinned extents for this block group,
+		 * just delete them, we don't care about them anymore.
 		 */
-		अगर (!clean_pinned_extents(trans, block_group)) अणु
+		if (!clean_pinned_extents(trans, block_group)) {
 			btrfs_dec_block_group_ro(block_group);
-			जाओ end_trans;
-		पूर्ण
+			goto end_trans;
+		}
 
 		/*
-		 * At this poपूर्णांक, the block_group is पढ़ो only and should fail
+		 * At this point, the block_group is read only and should fail
 		 * new allocations.  However, btrfs_finish_extent_commit() can
 		 * cause this block_group to be placed back on the discard
 		 * lists because now the block_group isn't fully discarded.
 		 * Bail here and try again later after discarding everything.
 		 */
 		spin_lock(&fs_info->discard_ctl.lock);
-		अगर (!list_empty(&block_group->discard_list)) अणु
+		if (!list_empty(&block_group->discard_list)) {
 			spin_unlock(&fs_info->discard_ctl.lock);
 			btrfs_dec_block_group_ro(block_group);
 			btrfs_discard_queue_work(&fs_info->discard_ctl,
 						 block_group);
-			जाओ end_trans;
-		पूर्ण
+			goto end_trans;
+		}
 		spin_unlock(&fs_info->discard_ctl.lock);
 
-		/* Reset pinned so btrfs_put_block_group करोesn't complain */
+		/* Reset pinned so btrfs_put_block_group doesn't complain */
 		spin_lock(&space_info->lock);
 		spin_lock(&block_group->lock);
 
 		btrfs_space_info_update_bytes_pinned(fs_info, space_info,
 						     -block_group->pinned);
-		space_info->bytes_पढ़ोonly += block_group->pinned;
+		space_info->bytes_readonly += block_group->pinned;
 		__btrfs_mod_total_bytes_pinned(space_info, -block_group->pinned);
 		block_group->pinned = 0;
 
@@ -1409,42 +1408,42 @@ out:
 		/*
 		 * The normal path here is an unused block group is passed here,
 		 * then trimming is handled in the transaction commit path.
-		 * Async discard पूर्णांकerposes beक्रमe this to करो the trimming
-		 * beक्रमe coming करोwn the unused block group path as trimming
-		 * will no दीर्घer be करोne later in the transaction commit path.
+		 * Async discard interposes before this to do the trimming
+		 * before coming down the unused block group path as trimming
+		 * will no longer be done later in the transaction commit path.
 		 */
-		अगर (!async_trim_enabled && btrfs_test_opt(fs_info, DISCARD_ASYNC))
-			जाओ flip_async;
+		if (!async_trim_enabled && btrfs_test_opt(fs_info, DISCARD_ASYNC))
+			goto flip_async;
 
 		/*
-		 * DISCARD can flip during remount. On zoned fileप्रणालीs, we
+		 * DISCARD can flip during remount. On zoned filesystems, we
 		 * need to reset sequential-required zones.
 		 */
 		trimming = btrfs_test_opt(fs_info, DISCARD_SYNC) ||
 				btrfs_is_zoned(fs_info);
 
 		/* Implicit trim during transaction commit. */
-		अगर (trimming)
-			btrfs_मुक्तze_block_group(block_group);
+		if (trimming)
+			btrfs_freeze_block_group(block_group);
 
 		/*
-		 * Btrfs_हटाओ_chunk will पात the transaction अगर things go
+		 * Btrfs_remove_chunk will abort the transaction if things go
 		 * horribly wrong.
 		 */
-		ret = btrfs_हटाओ_chunk(trans, block_group->start);
+		ret = btrfs_remove_chunk(trans, block_group->start);
 
-		अगर (ret) अणु
-			अगर (trimming)
-				btrfs_unमुक्तze_block_group(block_group);
-			जाओ end_trans;
-		पूर्ण
+		if (ret) {
+			if (trimming)
+				btrfs_unfreeze_block_group(block_group);
+			goto end_trans;
+		}
 
 		/*
-		 * If we're not mounted with -odiscard, we can just क्रमget
-		 * about this block group. Otherwise we'll need to रुको
-		 * until transaction commit to करो the actual discard.
+		 * If we're not mounted with -odiscard, we can just forget
+		 * about this block group. Otherwise we'll need to wait
+		 * until transaction commit to do the actual discard.
 		 */
-		अगर (trimming) अणु
+		if (trimming) {
 			spin_lock(&fs_info->unused_bgs_lock);
 			/*
 			 * A concurrent scrub might have added us to the list
@@ -1455,56 +1454,56 @@ out:
 				  &trans->transaction->deleted_bgs);
 			spin_unlock(&fs_info->unused_bgs_lock);
 			btrfs_get_block_group(block_group);
-		पूर्ण
+		}
 end_trans:
 		btrfs_end_transaction(trans);
 next:
 		btrfs_put_block_group(block_group);
 		spin_lock(&fs_info->unused_bgs_lock);
-	पूर्ण
+	}
 	spin_unlock(&fs_info->unused_bgs_lock);
 	mutex_unlock(&fs_info->reclaim_bgs_lock);
-	वापस;
+	return;
 
 flip_async:
 	btrfs_end_transaction(trans);
 	mutex_unlock(&fs_info->reclaim_bgs_lock);
 	btrfs_put_block_group(block_group);
 	btrfs_discard_punt_unused_bgs_list(fs_info);
-पूर्ण
+}
 
-व्योम btrfs_mark_bg_unused(काष्ठा btrfs_block_group *bg)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = bg->fs_info;
+void btrfs_mark_bg_unused(struct btrfs_block_group *bg)
+{
+	struct btrfs_fs_info *fs_info = bg->fs_info;
 
 	spin_lock(&fs_info->unused_bgs_lock);
-	अगर (list_empty(&bg->bg_list)) अणु
+	if (list_empty(&bg->bg_list)) {
 		btrfs_get_block_group(bg);
 		trace_btrfs_add_unused_block_group(bg);
 		list_add_tail(&bg->bg_list, &fs_info->unused_bgs);
-	पूर्ण
+	}
 	spin_unlock(&fs_info->unused_bgs_lock);
-पूर्ण
+}
 
-व्योम btrfs_reclaim_bgs_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा btrfs_fs_info *fs_info =
-		container_of(work, काष्ठा btrfs_fs_info, reclaim_bgs_work);
-	काष्ठा btrfs_block_group *bg;
-	काष्ठा btrfs_space_info *space_info;
-	पूर्णांक ret;
+void btrfs_reclaim_bgs_work(struct work_struct *work)
+{
+	struct btrfs_fs_info *fs_info =
+		container_of(work, struct btrfs_fs_info, reclaim_bgs_work);
+	struct btrfs_block_group *bg;
+	struct btrfs_space_info *space_info;
+	int ret;
 
-	अगर (!test_bit(BTRFS_FS_OPEN, &fs_info->flags))
-		वापस;
+	if (!test_bit(BTRFS_FS_OPEN, &fs_info->flags))
+		return;
 
-	अगर (!btrfs_exclop_start(fs_info, BTRFS_EXCLOP_BALANCE))
-		वापस;
+	if (!btrfs_exclop_start(fs_info, BTRFS_EXCLOP_BALANCE))
+		return;
 
 	mutex_lock(&fs_info->reclaim_bgs_lock);
 	spin_lock(&fs_info->unused_bgs_lock);
-	जबतक (!list_empty(&fs_info->reclaim_bgs)) अणु
+	while (!list_empty(&fs_info->reclaim_bgs)) {
 		bg = list_first_entry(&fs_info->reclaim_bgs,
-				      काष्ठा btrfs_block_group,
+				      struct btrfs_block_group,
 				      bg_list);
 		list_del_init(&bg->bg_list);
 
@@ -1512,207 +1511,207 @@ flip_async:
 		spin_unlock(&fs_info->unused_bgs_lock);
 
 		/* Don't race with allocators so take the groups_sem */
-		करोwn_ग_लिखो(&space_info->groups_sem);
+		down_write(&space_info->groups_sem);
 
 		spin_lock(&bg->lock);
-		अगर (bg->reserved || bg->pinned || bg->ro) अणु
+		if (bg->reserved || bg->pinned || bg->ro) {
 			/*
-			 * We want to bail अगर we made new allocations or have
-			 * outstanding allocations in this block group.  We करो
-			 * the ro check in हाल balance is currently acting on
+			 * We want to bail if we made new allocations or have
+			 * outstanding allocations in this block group.  We do
+			 * the ro check in case balance is currently acting on
 			 * this block group.
 			 */
 			spin_unlock(&bg->lock);
-			up_ग_लिखो(&space_info->groups_sem);
-			जाओ next;
-		पूर्ण
+			up_write(&space_info->groups_sem);
+			goto next;
+		}
 		spin_unlock(&bg->lock);
 
-		/* Get out fast, in हाल we're unmounting the fileप्रणाली */
-		अगर (btrfs_fs_closing(fs_info)) अणु
-			up_ग_लिखो(&space_info->groups_sem);
-			जाओ next;
-		पूर्ण
+		/* Get out fast, in case we're unmounting the filesystem */
+		if (btrfs_fs_closing(fs_info)) {
+			up_write(&space_info->groups_sem);
+			goto next;
+		}
 
 		ret = inc_block_group_ro(bg, 0);
-		up_ग_लिखो(&space_info->groups_sem);
-		अगर (ret < 0)
-			जाओ next;
+		up_write(&space_info->groups_sem);
+		if (ret < 0)
+			goto next;
 
 		btrfs_info(fs_info, "reclaiming chunk %llu with %llu%% used",
-				bg->start, भाग_u64(bg->used * 100, bg->length));
+				bg->start, div_u64(bg->used * 100, bg->length));
 		trace_btrfs_reclaim_block_group(bg);
 		ret = btrfs_relocate_chunk(fs_info, bg->start);
-		अगर (ret)
+		if (ret)
 			btrfs_err(fs_info, "error relocating chunk %llu",
 				  bg->start);
 
 next:
 		btrfs_put_block_group(bg);
 		spin_lock(&fs_info->unused_bgs_lock);
-	पूर्ण
+	}
 	spin_unlock(&fs_info->unused_bgs_lock);
 	mutex_unlock(&fs_info->reclaim_bgs_lock);
 	btrfs_exclop_finish(fs_info);
-पूर्ण
+}
 
-व्योम btrfs_reclaim_bgs(काष्ठा btrfs_fs_info *fs_info)
-अणु
+void btrfs_reclaim_bgs(struct btrfs_fs_info *fs_info)
+{
 	spin_lock(&fs_info->unused_bgs_lock);
-	अगर (!list_empty(&fs_info->reclaim_bgs))
-		queue_work(प्रणाली_unbound_wq, &fs_info->reclaim_bgs_work);
+	if (!list_empty(&fs_info->reclaim_bgs))
+		queue_work(system_unbound_wq, &fs_info->reclaim_bgs_work);
 	spin_unlock(&fs_info->unused_bgs_lock);
-पूर्ण
+}
 
-व्योम btrfs_mark_bg_to_reclaim(काष्ठा btrfs_block_group *bg)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = bg->fs_info;
+void btrfs_mark_bg_to_reclaim(struct btrfs_block_group *bg)
+{
+	struct btrfs_fs_info *fs_info = bg->fs_info;
 
 	spin_lock(&fs_info->unused_bgs_lock);
-	अगर (list_empty(&bg->bg_list)) अणु
+	if (list_empty(&bg->bg_list)) {
 		btrfs_get_block_group(bg);
 		trace_btrfs_add_reclaim_block_group(bg);
 		list_add_tail(&bg->bg_list, &fs_info->reclaim_bgs);
-	पूर्ण
+	}
 	spin_unlock(&fs_info->unused_bgs_lock);
-पूर्ण
+}
 
-अटल पूर्णांक पढ़ो_bg_from_eb(काष्ठा btrfs_fs_info *fs_info, काष्ठा btrfs_key *key,
-			   काष्ठा btrfs_path *path)
-अणु
-	काष्ठा extent_map_tree *em_tree;
-	काष्ठा extent_map *em;
-	काष्ठा btrfs_block_group_item bg;
-	काष्ठा extent_buffer *leaf;
-	पूर्णांक slot;
+static int read_bg_from_eb(struct btrfs_fs_info *fs_info, struct btrfs_key *key,
+			   struct btrfs_path *path)
+{
+	struct extent_map_tree *em_tree;
+	struct extent_map *em;
+	struct btrfs_block_group_item bg;
+	struct extent_buffer *leaf;
+	int slot;
 	u64 flags;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	slot = path->slots[0];
 	leaf = path->nodes[0];
 
 	em_tree = &fs_info->mapping_tree;
-	पढ़ो_lock(&em_tree->lock);
+	read_lock(&em_tree->lock);
 	em = lookup_extent_mapping(em_tree, key->objectid, key->offset);
-	पढ़ो_unlock(&em_tree->lock);
-	अगर (!em) अणु
+	read_unlock(&em_tree->lock);
+	if (!em) {
 		btrfs_err(fs_info,
 			  "logical %llu len %llu found bg but no related chunk",
 			  key->objectid, key->offset);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
-	अगर (em->start != key->objectid || em->len != key->offset) अणु
+	if (em->start != key->objectid || em->len != key->offset) {
 		btrfs_err(fs_info,
 			"block group %llu len %llu mismatch with chunk %llu len %llu",
 			key->objectid, key->offset, em->start, em->len);
 		ret = -EUCLEAN;
-		जाओ out_मुक्त_em;
-	पूर्ण
+		goto out_free_em;
+	}
 
-	पढ़ो_extent_buffer(leaf, &bg, btrfs_item_ptr_offset(leaf, slot),
-			   माप(bg));
+	read_extent_buffer(leaf, &bg, btrfs_item_ptr_offset(leaf, slot),
+			   sizeof(bg));
 	flags = btrfs_stack_block_group_flags(&bg) &
 		BTRFS_BLOCK_GROUP_TYPE_MASK;
 
-	अगर (flags != (em->map_lookup->type & BTRFS_BLOCK_GROUP_TYPE_MASK)) अणु
+	if (flags != (em->map_lookup->type & BTRFS_BLOCK_GROUP_TYPE_MASK)) {
 		btrfs_err(fs_info,
 "block group %llu len %llu type flags 0x%llx mismatch with chunk type flags 0x%llx",
 			  key->objectid, key->offset, flags,
 			  (BTRFS_BLOCK_GROUP_TYPE_MASK & em->map_lookup->type));
 		ret = -EUCLEAN;
-	पूर्ण
+	}
 
-out_मुक्त_em:
-	मुक्त_extent_map(em);
-	वापस ret;
-पूर्ण
+out_free_em:
+	free_extent_map(em);
+	return ret;
+}
 
-अटल पूर्णांक find_first_block_group(काष्ठा btrfs_fs_info *fs_info,
-				  काष्ठा btrfs_path *path,
-				  काष्ठा btrfs_key *key)
-अणु
-	काष्ठा btrfs_root *root = fs_info->extent_root;
-	पूर्णांक ret;
-	काष्ठा btrfs_key found_key;
-	काष्ठा extent_buffer *leaf;
-	पूर्णांक slot;
+static int find_first_block_group(struct btrfs_fs_info *fs_info,
+				  struct btrfs_path *path,
+				  struct btrfs_key *key)
+{
+	struct btrfs_root *root = fs_info->extent_root;
+	int ret;
+	struct btrfs_key found_key;
+	struct extent_buffer *leaf;
+	int slot;
 
-	ret = btrfs_search_slot(शून्य, root, key, path, 0, 0);
-	अगर (ret < 0)
-		वापस ret;
+	ret = btrfs_search_slot(NULL, root, key, path, 0, 0);
+	if (ret < 0)
+		return ret;
 
-	जबतक (1) अणु
+	while (1) {
 		slot = path->slots[0];
 		leaf = path->nodes[0];
-		अगर (slot >= btrfs_header_nritems(leaf)) अणु
+		if (slot >= btrfs_header_nritems(leaf)) {
 			ret = btrfs_next_leaf(root, path);
-			अगर (ret == 0)
-				जारी;
-			अगर (ret < 0)
-				जाओ out;
-			अवरोध;
-		पूर्ण
+			if (ret == 0)
+				continue;
+			if (ret < 0)
+				goto out;
+			break;
+		}
 		btrfs_item_key_to_cpu(leaf, &found_key, slot);
 
-		अगर (found_key.objectid >= key->objectid &&
-		    found_key.type == BTRFS_BLOCK_GROUP_ITEM_KEY) अणु
-			ret = पढ़ो_bg_from_eb(fs_info, &found_key, path);
-			अवरोध;
-		पूर्ण
+		if (found_key.objectid >= key->objectid &&
+		    found_key.type == BTRFS_BLOCK_GROUP_ITEM_KEY) {
+			ret = read_bg_from_eb(fs_info, &found_key, path);
+			break;
+		}
 
 		path->slots[0]++;
-	पूर्ण
+	}
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम set_avail_alloc_bits(काष्ठा btrfs_fs_info *fs_info, u64 flags)
-अणु
+static void set_avail_alloc_bits(struct btrfs_fs_info *fs_info, u64 flags)
+{
 	u64 extra_flags = chunk_to_extended(flags) &
-				BTRFS_EXTENDED_PROखाता_MASK;
+				BTRFS_EXTENDED_PROFILE_MASK;
 
-	ग_लिखो_seqlock(&fs_info->profiles_lock);
-	अगर (flags & BTRFS_BLOCK_GROUP_DATA)
+	write_seqlock(&fs_info->profiles_lock);
+	if (flags & BTRFS_BLOCK_GROUP_DATA)
 		fs_info->avail_data_alloc_bits |= extra_flags;
-	अगर (flags & BTRFS_BLOCK_GROUP_METADATA)
+	if (flags & BTRFS_BLOCK_GROUP_METADATA)
 		fs_info->avail_metadata_alloc_bits |= extra_flags;
-	अगर (flags & BTRFS_BLOCK_GROUP_SYSTEM)
-		fs_info->avail_प्रणाली_alloc_bits |= extra_flags;
-	ग_लिखो_sequnlock(&fs_info->profiles_lock);
-पूर्ण
+	if (flags & BTRFS_BLOCK_GROUP_SYSTEM)
+		fs_info->avail_system_alloc_bits |= extra_flags;
+	write_sequnlock(&fs_info->profiles_lock);
+}
 
 /**
  * Map a physical disk address to a list of logical addresses
  *
- * @fs_info:       the fileप्रणाली
+ * @fs_info:       the filesystem
  * @chunk_start:   logical address of block group
- * @bdev:	   physical device to resolve, can be शून्य to indicate any device
+ * @bdev:	   physical device to resolve, can be NULL to indicate any device
  * @physical:	   physical address to map to logical addresses
- * @logical:	   वापस array of logical addresses which map to @physical
+ * @logical:	   return array of logical addresses which map to @physical
  * @naddrs:	   length of @logical
- * @stripe_len:    size of IO stripe क्रम the given block group
+ * @stripe_len:    size of IO stripe for the given block group
  *
  * Maps a particular @physical disk address to a list of @logical addresses.
  * Used primarily to exclude those portions of a block group that contain super
  * block copies.
  */
-पूर्णांक btrfs_rmap_block(काष्ठा btrfs_fs_info *fs_info, u64 chunk_start,
-		     काष्ठा block_device *bdev, u64 physical, u64 **logical,
-		     पूर्णांक *naddrs, पूर्णांक *stripe_len)
-अणु
-	काष्ठा extent_map *em;
-	काष्ठा map_lookup *map;
+int btrfs_rmap_block(struct btrfs_fs_info *fs_info, u64 chunk_start,
+		     struct block_device *bdev, u64 physical, u64 **logical,
+		     int *naddrs, int *stripe_len)
+{
+	struct extent_map *em;
+	struct map_lookup *map;
 	u64 *buf;
 	u64 bytenr;
 	u64 data_stripe_length;
 	u64 io_stripe_size;
-	पूर्णांक i, nr = 0;
-	पूर्णांक ret = 0;
+	int i, nr = 0;
+	int ret = 0;
 
 	em = btrfs_get_chunk_map(fs_info, chunk_start, 1);
-	अगर (IS_ERR(em))
-		वापस -EIO;
+	if (IS_ERR(em))
+		return -EIO;
 
 	map = em->map_lookup;
 	data_stripe_length = em->orig_block_len;
@@ -1720,141 +1719,141 @@ out:
 	chunk_start = em->start;
 
 	/* For RAID5/6 adjust to a full IO stripe length */
-	अगर (map->type & BTRFS_BLOCK_GROUP_RAID56_MASK)
+	if (map->type & BTRFS_BLOCK_GROUP_RAID56_MASK)
 		io_stripe_size = map->stripe_len * nr_data_stripes(map);
 
-	buf = kसुस्मृति(map->num_stripes, माप(u64), GFP_NOFS);
-	अगर (!buf) अणु
+	buf = kcalloc(map->num_stripes, sizeof(u64), GFP_NOFS);
+	if (!buf) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	क्रम (i = 0; i < map->num_stripes; i++) अणु
-		bool alपढ़ोy_inserted = false;
+	for (i = 0; i < map->num_stripes; i++) {
+		bool already_inserted = false;
 		u64 stripe_nr;
 		u64 offset;
-		पूर्णांक j;
+		int j;
 
-		अगर (!in_range(physical, map->stripes[i].physical,
+		if (!in_range(physical, map->stripes[i].physical,
 			      data_stripe_length))
-			जारी;
+			continue;
 
-		अगर (bdev && map->stripes[i].dev->bdev != bdev)
-			जारी;
+		if (bdev && map->stripes[i].dev->bdev != bdev)
+			continue;
 
 		stripe_nr = physical - map->stripes[i].physical;
-		stripe_nr = भाग64_u64_rem(stripe_nr, map->stripe_len, &offset);
+		stripe_nr = div64_u64_rem(stripe_nr, map->stripe_len, &offset);
 
-		अगर (map->type & BTRFS_BLOCK_GROUP_RAID10) अणु
+		if (map->type & BTRFS_BLOCK_GROUP_RAID10) {
 			stripe_nr = stripe_nr * map->num_stripes + i;
-			stripe_nr = भाग_u64(stripe_nr, map->sub_stripes);
-		पूर्ण अन्यथा अगर (map->type & BTRFS_BLOCK_GROUP_RAID0) अणु
+			stripe_nr = div_u64(stripe_nr, map->sub_stripes);
+		} else if (map->type & BTRFS_BLOCK_GROUP_RAID0) {
 			stripe_nr = stripe_nr * map->num_stripes + i;
-		पूर्ण
+		}
 		/*
-		 * The reमुख्यing हाल would be क्रम RAID56, multiply by
+		 * The remaining case would be for RAID56, multiply by
 		 * nr_data_stripes().  Alternatively, just use rmap_len below
 		 * instead of map->stripe_len
 		 */
 
 		bytenr = chunk_start + stripe_nr * io_stripe_size + offset;
 
-		/* Ensure we करोn't add duplicate addresses */
-		क्रम (j = 0; j < nr; j++) अणु
-			अगर (buf[j] == bytenr) अणु
-				alपढ़ोy_inserted = true;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+		/* Ensure we don't add duplicate addresses */
+		for (j = 0; j < nr; j++) {
+			if (buf[j] == bytenr) {
+				already_inserted = true;
+				break;
+			}
+		}
 
-		अगर (!alपढ़ोy_inserted)
+		if (!already_inserted)
 			buf[nr++] = bytenr;
-	पूर्ण
+	}
 
 	*logical = buf;
 	*naddrs = nr;
 	*stripe_len = io_stripe_size;
 out:
-	मुक्त_extent_map(em);
-	वापस ret;
-पूर्ण
+	free_extent_map(em);
+	return ret;
+}
 
-अटल पूर्णांक exclude_super_stripes(काष्ठा btrfs_block_group *cache)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = cache->fs_info;
-	स्थिर bool zoned = btrfs_is_zoned(fs_info);
+static int exclude_super_stripes(struct btrfs_block_group *cache)
+{
+	struct btrfs_fs_info *fs_info = cache->fs_info;
+	const bool zoned = btrfs_is_zoned(fs_info);
 	u64 bytenr;
 	u64 *logical;
-	पूर्णांक stripe_len;
-	पूर्णांक i, nr, ret;
+	int stripe_len;
+	int i, nr, ret;
 
-	अगर (cache->start < BTRFS_SUPER_INFO_OFFSET) अणु
+	if (cache->start < BTRFS_SUPER_INFO_OFFSET) {
 		stripe_len = BTRFS_SUPER_INFO_OFFSET - cache->start;
 		cache->bytes_super += stripe_len;
 		ret = btrfs_add_excluded_extent(fs_info, cache->start,
 						stripe_len);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	क्रम (i = 0; i < BTRFS_SUPER_MIRROR_MAX; i++) अणु
+	for (i = 0; i < BTRFS_SUPER_MIRROR_MAX; i++) {
 		bytenr = btrfs_sb_offset(i);
-		ret = btrfs_rmap_block(fs_info, cache->start, शून्य,
+		ret = btrfs_rmap_block(fs_info, cache->start, NULL,
 				       bytenr, &logical, &nr, &stripe_len);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		/* Shouldn't have super stripes in sequential zones */
-		अगर (zoned && nr) अणु
+		if (zoned && nr) {
 			btrfs_err(fs_info,
 			"zoned: block group %llu must not contain super block",
 				  cache->start);
-			वापस -EUCLEAN;
-		पूर्ण
+			return -EUCLEAN;
+		}
 
-		जबतक (nr--) अणु
+		while (nr--) {
 			u64 len = min_t(u64, stripe_len,
 				cache->start + cache->length - logical[nr]);
 
 			cache->bytes_super += len;
 			ret = btrfs_add_excluded_extent(fs_info, logical[nr],
 							len);
-			अगर (ret) अणु
-				kमुक्त(logical);
-				वापस ret;
-			पूर्ण
-		पूर्ण
+			if (ret) {
+				kfree(logical);
+				return ret;
+			}
+		}
 
-		kमुक्त(logical);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		kfree(logical);
+	}
+	return 0;
+}
 
-अटल व्योम link_block_group(काष्ठा btrfs_block_group *cache)
-अणु
-	काष्ठा btrfs_space_info *space_info = cache->space_info;
-	पूर्णांक index = btrfs_bg_flags_to_raid_index(cache->flags);
+static void link_block_group(struct btrfs_block_group *cache)
+{
+	struct btrfs_space_info *space_info = cache->space_info;
+	int index = btrfs_bg_flags_to_raid_index(cache->flags);
 
-	करोwn_ग_लिखो(&space_info->groups_sem);
+	down_write(&space_info->groups_sem);
 	list_add_tail(&cache->list, &space_info->block_groups[index]);
-	up_ग_लिखो(&space_info->groups_sem);
-पूर्ण
+	up_write(&space_info->groups_sem);
+}
 
-अटल काष्ठा btrfs_block_group *btrfs_create_block_group_cache(
-		काष्ठा btrfs_fs_info *fs_info, u64 start)
-अणु
-	काष्ठा btrfs_block_group *cache;
+static struct btrfs_block_group *btrfs_create_block_group_cache(
+		struct btrfs_fs_info *fs_info, u64 start)
+{
+	struct btrfs_block_group *cache;
 
-	cache = kzalloc(माप(*cache), GFP_NOFS);
-	अगर (!cache)
-		वापस शून्य;
+	cache = kzalloc(sizeof(*cache), GFP_NOFS);
+	if (!cache)
+		return NULL;
 
-	cache->मुक्त_space_ctl = kzalloc(माप(*cache->मुक्त_space_ctl),
+	cache->free_space_ctl = kzalloc(sizeof(*cache->free_space_ctl),
 					GFP_NOFS);
-	अगर (!cache->मुक्त_space_ctl) अणु
-		kमुक्त(cache);
-		वापस शून्य;
-	पूर्ण
+	if (!cache->free_space_ctl) {
+		kfree(cache);
+		return NULL;
+	}
 
 	cache->start = start;
 
@@ -1873,50 +1872,50 @@ out:
 	INIT_LIST_HEAD(&cache->discard_list);
 	INIT_LIST_HEAD(&cache->dirty_list);
 	INIT_LIST_HEAD(&cache->io_list);
-	btrfs_init_मुक्त_space_ctl(cache, cache->मुक्त_space_ctl);
+	btrfs_init_free_space_ctl(cache, cache->free_space_ctl);
 	atomic_set(&cache->frozen, 0);
-	mutex_init(&cache->मुक्त_space_lock);
+	mutex_init(&cache->free_space_lock);
 	btrfs_init_full_stripe_locks_tree(&cache->full_stripe_locks_root);
 
-	वापस cache;
-पूर्ण
+	return cache;
+}
 
 /*
- * Iterate all chunks and verअगरy that each of them has the corresponding block
+ * Iterate all chunks and verify that each of them has the corresponding block
  * group
  */
-अटल पूर्णांक check_chunk_block_group_mappings(काष्ठा btrfs_fs_info *fs_info)
-अणु
-	काष्ठा extent_map_tree *map_tree = &fs_info->mapping_tree;
-	काष्ठा extent_map *em;
-	काष्ठा btrfs_block_group *bg;
+static int check_chunk_block_group_mappings(struct btrfs_fs_info *fs_info)
+{
+	struct extent_map_tree *map_tree = &fs_info->mapping_tree;
+	struct extent_map *em;
+	struct btrfs_block_group *bg;
 	u64 start = 0;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	जबतक (1) अणु
-		पढ़ो_lock(&map_tree->lock);
+	while (1) {
+		read_lock(&map_tree->lock);
 		/*
-		 * lookup_extent_mapping will वापस the first extent map
-		 * पूर्णांकersecting the range, so setting @len to 1 is enough to
+		 * lookup_extent_mapping will return the first extent map
+		 * intersecting the range, so setting @len to 1 is enough to
 		 * get the first chunk.
 		 */
 		em = lookup_extent_mapping(map_tree, start, 1);
-		पढ़ो_unlock(&map_tree->lock);
-		अगर (!em)
-			अवरोध;
+		read_unlock(&map_tree->lock);
+		if (!em)
+			break;
 
 		bg = btrfs_lookup_block_group(fs_info, em->start);
-		अगर (!bg) अणु
+		if (!bg) {
 			btrfs_err(fs_info,
 	"chunk start=%llu len=%llu doesn't have corresponding block group",
 				     em->start, em->len);
 			ret = -EUCLEAN;
-			मुक्त_extent_map(em);
-			अवरोध;
-		पूर्ण
-		अगर (bg->start != em->start || bg->length != em->len ||
+			free_extent_map(em);
+			break;
+		}
+		if (bg->start != em->start || bg->length != em->len ||
 		    (bg->flags & BTRFS_BLOCK_GROUP_TYPE_MASK) !=
-		    (em->map_lookup->type & BTRFS_BLOCK_GROUP_TYPE_MASK)) अणु
+		    (em->map_lookup->type & BTRFS_BLOCK_GROUP_TYPE_MASK)) {
 			btrfs_err(fs_info,
 "chunk start=%llu len=%llu flags=0x%llx doesn't match block group start=%llu len=%llu flags=0x%llx",
 				em->start, em->len,
@@ -1924,112 +1923,112 @@ out:
 				bg->start, bg->length,
 				bg->flags & BTRFS_BLOCK_GROUP_TYPE_MASK);
 			ret = -EUCLEAN;
-			मुक्त_extent_map(em);
+			free_extent_map(em);
 			btrfs_put_block_group(bg);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		start = em->start + em->len;
-		मुक्त_extent_map(em);
+		free_extent_map(em);
 		btrfs_put_block_group(bg);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल पूर्णांक पढ़ो_one_block_group(काष्ठा btrfs_fs_info *info,
-				काष्ठा btrfs_block_group_item *bgi,
-				स्थिर काष्ठा btrfs_key *key,
-				पूर्णांक need_clear)
-अणु
-	काष्ठा btrfs_block_group *cache;
-	काष्ठा btrfs_space_info *space_info;
-	स्थिर bool mixed = btrfs_fs_incompat(info, MIXED_GROUPS);
-	पूर्णांक ret;
+static int read_one_block_group(struct btrfs_fs_info *info,
+				struct btrfs_block_group_item *bgi,
+				const struct btrfs_key *key,
+				int need_clear)
+{
+	struct btrfs_block_group *cache;
+	struct btrfs_space_info *space_info;
+	const bool mixed = btrfs_fs_incompat(info, MIXED_GROUPS);
+	int ret;
 
 	ASSERT(key->type == BTRFS_BLOCK_GROUP_ITEM_KEY);
 
 	cache = btrfs_create_block_group_cache(info, key->objectid);
-	अगर (!cache)
-		वापस -ENOMEM;
+	if (!cache)
+		return -ENOMEM;
 
 	cache->length = key->offset;
 	cache->used = btrfs_stack_block_group_used(bgi);
 	cache->flags = btrfs_stack_block_group_flags(bgi);
 
-	set_मुक्त_space_tree_thresholds(cache);
+	set_free_space_tree_thresholds(cache);
 
-	अगर (need_clear) अणु
+	if (need_clear) {
 		/*
 		 * When we mount with old space cache, we need to
 		 * set BTRFS_DC_CLEAR and set dirty flag.
 		 *
 		 * a) Setting 'BTRFS_DC_CLEAR' makes sure that we
-		 *    truncate the old मुक्त space cache inode and
+		 *    truncate the old free space cache inode and
 		 *    setup a new one.
 		 * b) Setting 'dirty flag' makes sure that we flush
 		 *    the new space cache info onto disk.
 		 */
-		अगर (btrfs_test_opt(info, SPACE_CACHE))
+		if (btrfs_test_opt(info, SPACE_CACHE))
 			cache->disk_cache_state = BTRFS_DC_CLEAR;
-	पूर्ण
-	अगर (!mixed && ((cache->flags & BTRFS_BLOCK_GROUP_METADATA) &&
-	    (cache->flags & BTRFS_BLOCK_GROUP_DATA))) अणु
+	}
+	if (!mixed && ((cache->flags & BTRFS_BLOCK_GROUP_METADATA) &&
+	    (cache->flags & BTRFS_BLOCK_GROUP_DATA))) {
 			btrfs_err(info,
 "bg %llu is a mixed block group but filesystem hasn't enabled mixed block groups",
 				  cache->start);
 			ret = -EINVAL;
-			जाओ error;
-	पूर्ण
+			goto error;
+	}
 
 	ret = btrfs_load_block_group_zone_info(cache, false);
-	अगर (ret) अणु
+	if (ret) {
 		btrfs_err(info, "zoned: failed to load zone info of bg %llu",
 			  cache->start);
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	/*
 	 * We need to exclude the super stripes now so that the space info has
-	 * super bytes accounted क्रम, otherwise we'll think we have more space
-	 * than we actually करो.
+	 * super bytes accounted for, otherwise we'll think we have more space
+	 * than we actually do.
 	 */
 	ret = exclude_super_stripes(cache);
-	अगर (ret) अणु
-		/* We may have excluded something, so call this just in हाल. */
-		btrfs_मुक्त_excluded_extents(cache);
-		जाओ error;
-	पूर्ण
+	if (ret) {
+		/* We may have excluded something, so call this just in case. */
+		btrfs_free_excluded_extents(cache);
+		goto error;
+	}
 
 	/*
-	 * For zoned fileप्रणाली, space after the allocation offset is the only
-	 * मुक्त space क्रम a block group. So, we करोn't need any caching work.
-	 * btrfs_calc_zone_unusable() will set the amount of मुक्त space and
+	 * For zoned filesystem, space after the allocation offset is the only
+	 * free space for a block group. So, we don't need any caching work.
+	 * btrfs_calc_zone_unusable() will set the amount of free space and
 	 * zone_unusable space.
 	 *
-	 * For regular fileप्रणाली, check क्रम two हालs, either we are full, and
-	 * thereक्रमe करोn't need to bother with the caching work since we won't
+	 * For regular filesystem, check for two cases, either we are full, and
+	 * therefore don't need to bother with the caching work since we won't
 	 * find any space, or we are empty, and we can just add all the space
-	 * in and be करोne with it.  This saves us _a_lot_ of समय, particularly
-	 * in the full हाल.
+	 * in and be done with it.  This saves us _a_lot_ of time, particularly
+	 * in the full case.
 	 */
-	अगर (btrfs_is_zoned(info)) अणु
+	if (btrfs_is_zoned(info)) {
 		btrfs_calc_zone_unusable(cache);
-	पूर्ण अन्यथा अगर (cache->length == cache->used) अणु
+	} else if (cache->length == cache->used) {
 		cache->last_byte_to_unpin = (u64)-1;
 		cache->cached = BTRFS_CACHE_FINISHED;
-		btrfs_मुक्त_excluded_extents(cache);
-	पूर्ण अन्यथा अगर (cache->used == 0) अणु
+		btrfs_free_excluded_extents(cache);
+	} else if (cache->used == 0) {
 		cache->last_byte_to_unpin = (u64)-1;
 		cache->cached = BTRFS_CACHE_FINISHED;
-		add_new_मुक्त_space(cache, cache->start,
+		add_new_free_space(cache, cache->start,
 				   cache->start + cache->length);
-		btrfs_मुक्त_excluded_extents(cache);
-	पूर्ण
+		btrfs_free_excluded_extents(cache);
+	}
 
 	ret = btrfs_add_block_group_cache(info, cache);
-	अगर (ret) अणु
-		btrfs_हटाओ_मुक्त_space_cache(cache);
-		जाओ error;
-	पूर्ण
+	if (ret) {
+		btrfs_remove_free_space_cache(cache);
+		goto error;
+	}
 	trace_btrfs_add_block_group(info, cache, 0);
 	btrfs_update_space_info(info, cache->flags, cache->length,
 				cache->used, cache->bytes_super,
@@ -2040,40 +2039,40 @@ out:
 	link_block_group(cache);
 
 	set_avail_alloc_bits(info, cache->flags);
-	अगर (btrfs_chunk_पढ़ोonly(info, cache->start)) अणु
+	if (btrfs_chunk_readonly(info, cache->start)) {
 		inc_block_group_ro(cache, 1);
-	पूर्ण अन्यथा अगर (cache->used == 0) अणु
+	} else if (cache->used == 0) {
 		ASSERT(list_empty(&cache->bg_list));
-		अगर (btrfs_test_opt(info, DISCARD_ASYNC))
+		if (btrfs_test_opt(info, DISCARD_ASYNC))
 			btrfs_discard_queue_work(&info->discard_ctl, cache);
-		अन्यथा
+		else
 			btrfs_mark_bg_unused(cache);
-	पूर्ण
-	वापस 0;
+	}
+	return 0;
 error:
 	btrfs_put_block_group(cache);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक fill_dummy_bgs(काष्ठा btrfs_fs_info *fs_info)
-अणु
-	काष्ठा extent_map_tree *em_tree = &fs_info->mapping_tree;
-	काष्ठा btrfs_space_info *space_info;
-	काष्ठा rb_node *node;
-	पूर्णांक ret = 0;
+static int fill_dummy_bgs(struct btrfs_fs_info *fs_info)
+{
+	struct extent_map_tree *em_tree = &fs_info->mapping_tree;
+	struct btrfs_space_info *space_info;
+	struct rb_node *node;
+	int ret = 0;
 
-	क्रम (node = rb_first_cached(&em_tree->map); node; node = rb_next(node)) अणु
-		काष्ठा extent_map *em;
-		काष्ठा map_lookup *map;
-		काष्ठा btrfs_block_group *bg;
+	for (node = rb_first_cached(&em_tree->map); node; node = rb_next(node)) {
+		struct extent_map *em;
+		struct map_lookup *map;
+		struct btrfs_block_group *bg;
 
-		em = rb_entry(node, काष्ठा extent_map, rb_node);
+		em = rb_entry(node, struct extent_map, rb_node);
 		map = em->map_lookup;
 		bg = btrfs_create_block_group_cache(fs_info, em->start);
-		अगर (!bg) अणु
+		if (!bg) {
 			ret = -ENOMEM;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/* Fill dummy cache as FULL */
 		bg->length = em->len;
@@ -2083,123 +2082,123 @@ error:
 		bg->used = em->len;
 		bg->flags = map->type;
 		ret = btrfs_add_block_group_cache(fs_info, bg);
-		अगर (ret) अणु
-			btrfs_हटाओ_मुक्त_space_cache(bg);
+		if (ret) {
+			btrfs_remove_free_space_cache(bg);
 			btrfs_put_block_group(bg);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		btrfs_update_space_info(fs_info, bg->flags, em->len, em->len,
 					0, 0, &space_info);
 		bg->space_info = space_info;
 		link_block_group(bg);
 
 		set_avail_alloc_bits(fs_info, bg->flags);
-	पूर्ण
-	अगर (!ret)
+	}
+	if (!ret)
 		btrfs_init_global_block_rsv(fs_info);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक btrfs_पढ़ो_block_groups(काष्ठा btrfs_fs_info *info)
-अणु
-	काष्ठा btrfs_path *path;
-	पूर्णांक ret;
-	काष्ठा btrfs_block_group *cache;
-	काष्ठा btrfs_space_info *space_info;
-	काष्ठा btrfs_key key;
-	पूर्णांक need_clear = 0;
+int btrfs_read_block_groups(struct btrfs_fs_info *info)
+{
+	struct btrfs_path *path;
+	int ret;
+	struct btrfs_block_group *cache;
+	struct btrfs_space_info *space_info;
+	struct btrfs_key key;
+	int need_clear = 0;
 	u64 cache_gen;
 
-	अगर (!info->extent_root)
-		वापस fill_dummy_bgs(info);
+	if (!info->extent_root)
+		return fill_dummy_bgs(info);
 
 	key.objectid = 0;
 	key.offset = 0;
 	key.type = BTRFS_BLOCK_GROUP_ITEM_KEY;
 	path = btrfs_alloc_path();
-	अगर (!path)
-		वापस -ENOMEM;
+	if (!path)
+		return -ENOMEM;
 
 	cache_gen = btrfs_super_cache_generation(info->super_copy);
-	अगर (btrfs_test_opt(info, SPACE_CACHE) &&
+	if (btrfs_test_opt(info, SPACE_CACHE) &&
 	    btrfs_super_generation(info->super_copy) != cache_gen)
 		need_clear = 1;
-	अगर (btrfs_test_opt(info, CLEAR_CACHE))
+	if (btrfs_test_opt(info, CLEAR_CACHE))
 		need_clear = 1;
 
-	जबतक (1) अणु
-		काष्ठा btrfs_block_group_item bgi;
-		काष्ठा extent_buffer *leaf;
-		पूर्णांक slot;
+	while (1) {
+		struct btrfs_block_group_item bgi;
+		struct extent_buffer *leaf;
+		int slot;
 
 		ret = find_first_block_group(info, path, &key);
-		अगर (ret > 0)
-			अवरोध;
-		अगर (ret != 0)
-			जाओ error;
+		if (ret > 0)
+			break;
+		if (ret != 0)
+			goto error;
 
 		leaf = path->nodes[0];
 		slot = path->slots[0];
 
-		पढ़ो_extent_buffer(leaf, &bgi, btrfs_item_ptr_offset(leaf, slot),
-				   माप(bgi));
+		read_extent_buffer(leaf, &bgi, btrfs_item_ptr_offset(leaf, slot),
+				   sizeof(bgi));
 
 		btrfs_item_key_to_cpu(leaf, &key, slot);
 		btrfs_release_path(path);
-		ret = पढ़ो_one_block_group(info, &bgi, &key, need_clear);
-		अगर (ret < 0)
-			जाओ error;
+		ret = read_one_block_group(info, &bgi, &key, need_clear);
+		if (ret < 0)
+			goto error;
 		key.objectid += key.offset;
 		key.offset = 0;
-	पूर्ण
+	}
 	btrfs_release_path(path);
 
-	list_क्रम_each_entry(space_info, &info->space_info, list) अणु
-		पूर्णांक i;
+	list_for_each_entry(space_info, &info->space_info, list) {
+		int i;
 
-		क्रम (i = 0; i < BTRFS_NR_RAID_TYPES; i++) अणु
-			अगर (list_empty(&space_info->block_groups[i]))
-				जारी;
+		for (i = 0; i < BTRFS_NR_RAID_TYPES; i++) {
+			if (list_empty(&space_info->block_groups[i]))
+				continue;
 			cache = list_first_entry(&space_info->block_groups[i],
-						 काष्ठा btrfs_block_group,
+						 struct btrfs_block_group,
 						 list);
 			btrfs_sysfs_add_block_group_type(cache);
-		पूर्ण
+		}
 
-		अगर (!(btrfs_get_alloc_profile(info, space_info->flags) &
+		if (!(btrfs_get_alloc_profile(info, space_info->flags) &
 		      (BTRFS_BLOCK_GROUP_RAID10 |
 		       BTRFS_BLOCK_GROUP_RAID1_MASK |
 		       BTRFS_BLOCK_GROUP_RAID56_MASK |
 		       BTRFS_BLOCK_GROUP_DUP)))
-			जारी;
+			continue;
 		/*
-		 * Aव्योम allocating from un-mirrored block group अगर there are
+		 * Avoid allocating from un-mirrored block group if there are
 		 * mirrored block groups.
 		 */
-		list_क्रम_each_entry(cache,
+		list_for_each_entry(cache,
 				&space_info->block_groups[BTRFS_RAID_RAID0],
 				list)
 			inc_block_group_ro(cache, 1);
-		list_क्रम_each_entry(cache,
+		list_for_each_entry(cache,
 				&space_info->block_groups[BTRFS_RAID_SINGLE],
 				list)
 			inc_block_group_ro(cache, 1);
-	पूर्ण
+	}
 
 	btrfs_init_global_block_rsv(info);
 	ret = check_chunk_block_group_mappings(info);
 error:
-	btrfs_मुक्त_path(path);
-	वापस ret;
-पूर्ण
+	btrfs_free_path(path);
+	return ret;
+}
 
-अटल पूर्णांक insert_block_group_item(काष्ठा btrfs_trans_handle *trans,
-				   काष्ठा btrfs_block_group *block_group)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = trans->fs_info;
-	काष्ठा btrfs_block_group_item bgi;
-	काष्ठा btrfs_root *root;
-	काष्ठा btrfs_key key;
+static int insert_block_group_item(struct btrfs_trans_handle *trans,
+				   struct btrfs_block_group *block_group)
+{
+	struct btrfs_fs_info *fs_info = trans->fs_info;
+	struct btrfs_block_group_item bgi;
+	struct btrfs_root *root;
+	struct btrfs_key key;
 
 	spin_lock(&block_group->lock);
 	btrfs_set_stack_block_group_used(&bgi, block_group->used);
@@ -2212,117 +2211,117 @@ error:
 	spin_unlock(&block_group->lock);
 
 	root = fs_info->extent_root;
-	वापस btrfs_insert_item(trans, root, &key, &bgi, माप(bgi));
-पूर्ण
+	return btrfs_insert_item(trans, root, &key, &bgi, sizeof(bgi));
+}
 
-व्योम btrfs_create_pending_block_groups(काष्ठा btrfs_trans_handle *trans)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = trans->fs_info;
-	काष्ठा btrfs_block_group *block_group;
-	पूर्णांक ret = 0;
+void btrfs_create_pending_block_groups(struct btrfs_trans_handle *trans)
+{
+	struct btrfs_fs_info *fs_info = trans->fs_info;
+	struct btrfs_block_group *block_group;
+	int ret = 0;
 
-	अगर (!trans->can_flush_pending_bgs)
-		वापस;
+	if (!trans->can_flush_pending_bgs)
+		return;
 
-	जबतक (!list_empty(&trans->new_bgs)) अणु
-		पूर्णांक index;
+	while (!list_empty(&trans->new_bgs)) {
+		int index;
 
 		block_group = list_first_entry(&trans->new_bgs,
-					       काष्ठा btrfs_block_group,
+					       struct btrfs_block_group,
 					       bg_list);
-		अगर (ret)
-			जाओ next;
+		if (ret)
+			goto next;
 
 		index = btrfs_bg_flags_to_raid_index(block_group->flags);
 
 		ret = insert_block_group_item(trans, block_group);
-		अगर (ret)
-			btrfs_पात_transaction(trans, ret);
+		if (ret)
+			btrfs_abort_transaction(trans, ret);
 		ret = btrfs_finish_chunk_alloc(trans, block_group->start,
 					block_group->length);
-		अगर (ret)
-			btrfs_पात_transaction(trans, ret);
-		add_block_group_मुक्त_space(trans, block_group);
+		if (ret)
+			btrfs_abort_transaction(trans, ret);
+		add_block_group_free_space(trans, block_group);
 
 		/*
 		 * If we restriped during balance, we may have added a new raid
-		 * type, so now add the sysfs entries when it is safe to करो so.
-		 * We करोn't have to worry about locking here as it's handled in
+		 * type, so now add the sysfs entries when it is safe to do so.
+		 * We don't have to worry about locking here as it's handled in
 		 * btrfs_sysfs_add_block_group_type.
 		 */
-		अगर (block_group->space_info->block_group_kobjs[index] == शून्य)
+		if (block_group->space_info->block_group_kobjs[index] == NULL)
 			btrfs_sysfs_add_block_group_type(block_group);
 
-		/* Alपढ़ोy पातed the transaction अगर it failed. */
+		/* Already aborted the transaction if it failed. */
 next:
 		btrfs_delayed_refs_rsv_release(fs_info, 1);
 		list_del_init(&block_group->bg_list);
-	पूर्ण
+	}
 	btrfs_trans_release_chunk_metadata(trans);
-पूर्ण
+}
 
-पूर्णांक btrfs_make_block_group(काष्ठा btrfs_trans_handle *trans, u64 bytes_used,
+int btrfs_make_block_group(struct btrfs_trans_handle *trans, u64 bytes_used,
 			   u64 type, u64 chunk_offset, u64 size)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = trans->fs_info;
-	काष्ठा btrfs_block_group *cache;
-	पूर्णांक ret;
+{
+	struct btrfs_fs_info *fs_info = trans->fs_info;
+	struct btrfs_block_group *cache;
+	int ret;
 
 	btrfs_set_log_full_commit(trans);
 
 	cache = btrfs_create_block_group_cache(fs_info, chunk_offset);
-	अगर (!cache)
-		वापस -ENOMEM;
+	if (!cache)
+		return -ENOMEM;
 
 	cache->length = size;
-	set_मुक्त_space_tree_thresholds(cache);
+	set_free_space_tree_thresholds(cache);
 	cache->used = bytes_used;
 	cache->flags = type;
 	cache->last_byte_to_unpin = (u64)-1;
 	cache->cached = BTRFS_CACHE_FINISHED;
-	अगर (btrfs_fs_compat_ro(fs_info, FREE_SPACE_TREE))
-		cache->needs_मुक्त_space = 1;
+	if (btrfs_fs_compat_ro(fs_info, FREE_SPACE_TREE))
+		cache->needs_free_space = 1;
 
 	ret = btrfs_load_block_group_zone_info(cache, true);
-	अगर (ret) अणु
+	if (ret) {
 		btrfs_put_block_group(cache);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = exclude_super_stripes(cache);
-	अगर (ret) अणु
-		/* We may have excluded something, so call this just in हाल */
-		btrfs_मुक्त_excluded_extents(cache);
+	if (ret) {
+		/* We may have excluded something, so call this just in case */
+		btrfs_free_excluded_extents(cache);
 		btrfs_put_block_group(cache);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	add_new_मुक्त_space(cache, chunk_offset, chunk_offset + size);
+	add_new_free_space(cache, chunk_offset, chunk_offset + size);
 
-	btrfs_मुक्त_excluded_extents(cache);
+	btrfs_free_excluded_extents(cache);
 
-#अगर_घोषित CONFIG_BTRFS_DEBUG
-	अगर (btrfs_should_fragment_मुक्त_space(cache)) अणु
+#ifdef CONFIG_BTRFS_DEBUG
+	if (btrfs_should_fragment_free_space(cache)) {
 		u64 new_bytes_used = size - bytes_used;
 
 		bytes_used += new_bytes_used >> 1;
-		fragment_मुक्त_space(cache);
-	पूर्ण
-#पूर्ण_अगर
+		fragment_free_space(cache);
+	}
+#endif
 	/*
 	 * Ensure the corresponding space_info object is created and
-	 * asचिन्हित to our block group. We want our bg to be added to the rbtree
+	 * assigned to our block group. We want our bg to be added to the rbtree
 	 * with its ->space_info set.
 	 */
 	cache->space_info = btrfs_find_space_info(fs_info, cache->flags);
 	ASSERT(cache->space_info);
 
 	ret = btrfs_add_block_group_cache(fs_info, cache);
-	अगर (ret) अणु
-		btrfs_हटाओ_मुक्त_space_cache(cache);
+	if (ret) {
+		btrfs_remove_free_space_cache(cache);
 		btrfs_put_block_group(cache);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/*
 	 * Now that our block group has its ->space_info set and is inserted in
@@ -2340,147 +2339,147 @@ next:
 	btrfs_update_delayed_refs_rsv(trans);
 
 	set_avail_alloc_bits(fs_info, type);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Mark one block group RO, can be called several बार क्रम the same block
+ * Mark one block group RO, can be called several times for the same block
  * group.
  *
  * @cache:		the destination block group
- * @करो_chunk_alloc:	whether need to करो chunk pre-allocation, this is to
- * 			ensure we still have some मुक्त space after marking this
+ * @do_chunk_alloc:	whether need to do chunk pre-allocation, this is to
+ * 			ensure we still have some free space after marking this
  * 			block group RO.
  */
-पूर्णांक btrfs_inc_block_group_ro(काष्ठा btrfs_block_group *cache,
-			     bool करो_chunk_alloc)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = cache->fs_info;
-	काष्ठा btrfs_trans_handle *trans;
+int btrfs_inc_block_group_ro(struct btrfs_block_group *cache,
+			     bool do_chunk_alloc)
+{
+	struct btrfs_fs_info *fs_info = cache->fs_info;
+	struct btrfs_trans_handle *trans;
 	u64 alloc_flags;
-	पूर्णांक ret;
+	int ret;
 	bool dirty_bg_running;
 
-	करो अणु
+	do {
 		trans = btrfs_join_transaction(fs_info->extent_root);
-		अगर (IS_ERR(trans))
-			वापस PTR_ERR(trans);
+		if (IS_ERR(trans))
+			return PTR_ERR(trans);
 
 		dirty_bg_running = false;
 
 		/*
-		 * We're not allowed to set block groups पढ़ोonly after the dirty
-		 * block group cache has started writing.  If it alपढ़ोy started,
+		 * We're not allowed to set block groups readonly after the dirty
+		 * block group cache has started writing.  If it already started,
 		 * back off and let this transaction commit.
 		 */
 		mutex_lock(&fs_info->ro_block_group_mutex);
-		अगर (test_bit(BTRFS_TRANS_सूचीTY_BG_RUN, &trans->transaction->flags)) अणु
+		if (test_bit(BTRFS_TRANS_DIRTY_BG_RUN, &trans->transaction->flags)) {
 			u64 transid = trans->transid;
 
 			mutex_unlock(&fs_info->ro_block_group_mutex);
 			btrfs_end_transaction(trans);
 
-			ret = btrfs_रुको_क्रम_commit(fs_info, transid);
-			अगर (ret)
-				वापस ret;
+			ret = btrfs_wait_for_commit(fs_info, transid);
+			if (ret)
+				return ret;
 			dirty_bg_running = true;
-		पूर्ण
-	पूर्ण जबतक (dirty_bg_running);
+		}
+	} while (dirty_bg_running);
 
-	अगर (करो_chunk_alloc) अणु
+	if (do_chunk_alloc) {
 		/*
 		 * If we are changing raid levels, try to allocate a
 		 * corresponding block group with the new raid level.
 		 */
 		alloc_flags = btrfs_get_alloc_profile(fs_info, cache->flags);
-		अगर (alloc_flags != cache->flags) अणु
+		if (alloc_flags != cache->flags) {
 			ret = btrfs_chunk_alloc(trans, alloc_flags,
 						CHUNK_ALLOC_FORCE);
 			/*
 			 * ENOSPC is allowed here, we may have enough space
-			 * alपढ़ोy allocated at the new raid level to carry on
+			 * already allocated at the new raid level to carry on
 			 */
-			अगर (ret == -ENOSPC)
+			if (ret == -ENOSPC)
 				ret = 0;
-			अगर (ret < 0)
-				जाओ out;
-		पूर्ण
-	पूर्ण
+			if (ret < 0)
+				goto out;
+		}
+	}
 
 	ret = inc_block_group_ro(cache, 0);
-	अगर (!करो_chunk_alloc || ret == -ETXTBSY)
-		जाओ unlock_out;
-	अगर (!ret)
-		जाओ out;
+	if (!do_chunk_alloc || ret == -ETXTBSY)
+		goto unlock_out;
+	if (!ret)
+		goto out;
 	alloc_flags = btrfs_get_alloc_profile(fs_info, cache->space_info->flags);
 	ret = btrfs_chunk_alloc(trans, alloc_flags, CHUNK_ALLOC_FORCE);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 	ret = inc_block_group_ro(cache, 0);
-	अगर (ret == -ETXTBSY)
-		जाओ unlock_out;
+	if (ret == -ETXTBSY)
+		goto unlock_out;
 out:
-	अगर (cache->flags & BTRFS_BLOCK_GROUP_SYSTEM) अणु
+	if (cache->flags & BTRFS_BLOCK_GROUP_SYSTEM) {
 		alloc_flags = btrfs_get_alloc_profile(fs_info, cache->flags);
 		mutex_lock(&fs_info->chunk_mutex);
-		check_प्रणाली_chunk(trans, alloc_flags);
+		check_system_chunk(trans, alloc_flags);
 		mutex_unlock(&fs_info->chunk_mutex);
-	पूर्ण
+	}
 unlock_out:
 	mutex_unlock(&fs_info->ro_block_group_mutex);
 
 	btrfs_end_transaction(trans);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम btrfs_dec_block_group_ro(काष्ठा btrfs_block_group *cache)
-अणु
-	काष्ठा btrfs_space_info *sinfo = cache->space_info;
+void btrfs_dec_block_group_ro(struct btrfs_block_group *cache)
+{
+	struct btrfs_space_info *sinfo = cache->space_info;
 	u64 num_bytes;
 
 	BUG_ON(!cache->ro);
 
 	spin_lock(&sinfo->lock);
 	spin_lock(&cache->lock);
-	अगर (!--cache->ro) अणु
-		अगर (btrfs_is_zoned(cache->fs_info)) अणु
+	if (!--cache->ro) {
+		if (btrfs_is_zoned(cache->fs_info)) {
 			/* Migrate zone_unusable bytes back */
 			cache->zone_unusable = cache->alloc_offset - cache->used;
 			sinfo->bytes_zone_unusable += cache->zone_unusable;
-			sinfo->bytes_पढ़ोonly -= cache->zone_unusable;
-		पूर्ण
+			sinfo->bytes_readonly -= cache->zone_unusable;
+		}
 		num_bytes = cache->length - cache->reserved -
 			    cache->pinned - cache->bytes_super -
 			    cache->zone_unusable - cache->used;
-		sinfo->bytes_पढ़ोonly -= num_bytes;
+		sinfo->bytes_readonly -= num_bytes;
 		list_del_init(&cache->ro_list);
-	पूर्ण
+	}
 	spin_unlock(&cache->lock);
 	spin_unlock(&sinfo->lock);
-पूर्ण
+}
 
-अटल पूर्णांक update_block_group_item(काष्ठा btrfs_trans_handle *trans,
-				   काष्ठा btrfs_path *path,
-				   काष्ठा btrfs_block_group *cache)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = trans->fs_info;
-	पूर्णांक ret;
-	काष्ठा btrfs_root *root = fs_info->extent_root;
-	अचिन्हित दीर्घ bi;
-	काष्ठा extent_buffer *leaf;
-	काष्ठा btrfs_block_group_item bgi;
-	काष्ठा btrfs_key key;
+static int update_block_group_item(struct btrfs_trans_handle *trans,
+				   struct btrfs_path *path,
+				   struct btrfs_block_group *cache)
+{
+	struct btrfs_fs_info *fs_info = trans->fs_info;
+	int ret;
+	struct btrfs_root *root = fs_info->extent_root;
+	unsigned long bi;
+	struct extent_buffer *leaf;
+	struct btrfs_block_group_item bgi;
+	struct btrfs_key key;
 
 	key.objectid = cache->start;
 	key.type = BTRFS_BLOCK_GROUP_ITEM_KEY;
 	key.offset = cache->length;
 
 	ret = btrfs_search_slot(trans, root, &key, path, 0, 1);
-	अगर (ret) अणु
-		अगर (ret > 0)
+	if (ret) {
+		if (ret > 0)
 			ret = -ENOENT;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	leaf = path->nodes[0];
 	bi = btrfs_item_ptr_offset(leaf, path->slots[0]);
@@ -2488,235 +2487,235 @@ unlock_out:
 	btrfs_set_stack_block_group_chunk_objectid(&bgi,
 			BTRFS_FIRST_CHUNK_TREE_OBJECTID);
 	btrfs_set_stack_block_group_flags(&bgi, cache->flags);
-	ग_लिखो_extent_buffer(leaf, &bgi, bi, माप(bgi));
+	write_extent_buffer(leaf, &bgi, bi, sizeof(bgi));
 	btrfs_mark_buffer_dirty(leaf);
 fail:
 	btrfs_release_path(path);
-	वापस ret;
+	return ret;
 
-पूर्ण
+}
 
-अटल पूर्णांक cache_save_setup(काष्ठा btrfs_block_group *block_group,
-			    काष्ठा btrfs_trans_handle *trans,
-			    काष्ठा btrfs_path *path)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = block_group->fs_info;
-	काष्ठा btrfs_root *root = fs_info->tree_root;
-	काष्ठा inode *inode = शून्य;
-	काष्ठा extent_changeset *data_reserved = शून्य;
-	u64 alloc_hपूर्णांक = 0;
-	पूर्णांक dcs = BTRFS_DC_ERROR;
+static int cache_save_setup(struct btrfs_block_group *block_group,
+			    struct btrfs_trans_handle *trans,
+			    struct btrfs_path *path)
+{
+	struct btrfs_fs_info *fs_info = block_group->fs_info;
+	struct btrfs_root *root = fs_info->tree_root;
+	struct inode *inode = NULL;
+	struct extent_changeset *data_reserved = NULL;
+	u64 alloc_hint = 0;
+	int dcs = BTRFS_DC_ERROR;
 	u64 num_pages = 0;
-	पूर्णांक retries = 0;
-	पूर्णांक ret = 0;
+	int retries = 0;
+	int ret = 0;
 
-	अगर (!btrfs_test_opt(fs_info, SPACE_CACHE))
-		वापस 0;
+	if (!btrfs_test_opt(fs_info, SPACE_CACHE))
+		return 0;
 
 	/*
-	 * If this block group is smaller than 100 megs करोn't bother caching the
+	 * If this block group is smaller than 100 megs don't bother caching the
 	 * block group.
 	 */
-	अगर (block_group->length < (100 * SZ_1M)) अणु
+	if (block_group->length < (100 * SZ_1M)) {
 		spin_lock(&block_group->lock);
 		block_group->disk_cache_state = BTRFS_DC_WRITTEN;
 		spin_unlock(&block_group->lock);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (TRANS_ABORTED(trans))
-		वापस 0;
+	if (TRANS_ABORTED(trans))
+		return 0;
 again:
-	inode = lookup_मुक्त_space_inode(block_group, path);
-	अगर (IS_ERR(inode) && PTR_ERR(inode) != -ENOENT) अणु
+	inode = lookup_free_space_inode(block_group, path);
+	if (IS_ERR(inode) && PTR_ERR(inode) != -ENOENT) {
 		ret = PTR_ERR(inode);
 		btrfs_release_path(path);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (IS_ERR(inode)) अणु
+	if (IS_ERR(inode)) {
 		BUG_ON(retries);
 		retries++;
 
-		अगर (block_group->ro)
-			जाओ out_मुक्त;
+		if (block_group->ro)
+			goto out_free;
 
-		ret = create_मुक्त_space_inode(trans, block_group, path);
-		अगर (ret)
-			जाओ out_मुक्त;
-		जाओ again;
-	पूर्ण
+		ret = create_free_space_inode(trans, block_group, path);
+		if (ret)
+			goto out_free;
+		goto again;
+	}
 
 	/*
-	 * We want to set the generation to 0, that way अगर anything goes wrong
+	 * We want to set the generation to 0, that way if anything goes wrong
 	 * from here on out we know not to trust this cache when we load up next
-	 * समय.
+	 * time.
 	 */
 	BTRFS_I(inode)->generation = 0;
 	ret = btrfs_update_inode(trans, root, BTRFS_I(inode));
-	अगर (ret) अणु
+	if (ret) {
 		/*
 		 * So theoretically we could recover from this, simply set the
 		 * super cache generation to 0 so we know to invalidate the
 		 * cache, but then we'd have to keep track of the block groups
 		 * that fail this way so we know we _have_ to reset this cache
-		 * beक्रमe the next commit or risk पढ़ोing stale cache.  So to
-		 * limit our exposure to horrible edge हालs lets just पात the
+		 * before the next commit or risk reading stale cache.  So to
+		 * limit our exposure to horrible edge cases lets just abort the
 		 * transaction, this only happens in really bad situations
 		 * anyway.
 		 */
-		btrfs_पात_transaction(trans, ret);
-		जाओ out_put;
-	पूर्ण
+		btrfs_abort_transaction(trans, ret);
+		goto out_put;
+	}
 	WARN_ON(ret);
 
-	/* We've alपढ़ोy setup this transaction, go ahead and निकास */
-	अगर (block_group->cache_generation == trans->transid &&
-	    i_size_पढ़ो(inode)) अणु
+	/* We've already setup this transaction, go ahead and exit */
+	if (block_group->cache_generation == trans->transid &&
+	    i_size_read(inode)) {
 		dcs = BTRFS_DC_SETUP;
-		जाओ out_put;
-	पूर्ण
+		goto out_put;
+	}
 
-	अगर (i_size_पढ़ो(inode) > 0) अणु
-		ret = btrfs_check_trunc_cache_मुक्त_space(fs_info,
+	if (i_size_read(inode) > 0) {
+		ret = btrfs_check_trunc_cache_free_space(fs_info,
 					&fs_info->global_block_rsv);
-		अगर (ret)
-			जाओ out_put;
+		if (ret)
+			goto out_put;
 
-		ret = btrfs_truncate_मुक्त_space_cache(trans, शून्य, inode);
-		अगर (ret)
-			जाओ out_put;
-	पूर्ण
+		ret = btrfs_truncate_free_space_cache(trans, NULL, inode);
+		if (ret)
+			goto out_put;
+	}
 
 	spin_lock(&block_group->lock);
-	अगर (block_group->cached != BTRFS_CACHE_FINISHED ||
-	    !btrfs_test_opt(fs_info, SPACE_CACHE)) अणु
+	if (block_group->cached != BTRFS_CACHE_FINISHED ||
+	    !btrfs_test_opt(fs_info, SPACE_CACHE)) {
 		/*
-		 * करोn't bother trying to ग_लिखो stuff out _अगर_
+		 * don't bother trying to write stuff out _if_
 		 * a) we're not cached,
 		 * b) we're with nospace_cache mount option,
 		 * c) we're with v2 space_cache (FREE_SPACE_TREE).
 		 */
 		dcs = BTRFS_DC_WRITTEN;
 		spin_unlock(&block_group->lock);
-		जाओ out_put;
-	पूर्ण
+		goto out_put;
+	}
 	spin_unlock(&block_group->lock);
 
 	/*
 	 * We hit an ENOSPC when setting up the cache in this transaction, just
-	 * skip करोing the setup, we've already cleared the cache so we're safe.
+	 * skip doing the setup, we've already cleared the cache so we're safe.
 	 */
-	अगर (test_bit(BTRFS_TRANS_CACHE_ENOSPC, &trans->transaction->flags)) अणु
+	if (test_bit(BTRFS_TRANS_CACHE_ENOSPC, &trans->transaction->flags)) {
 		ret = -ENOSPC;
-		जाओ out_put;
-	पूर्ण
+		goto out_put;
+	}
 
 	/*
-	 * Try to pपुनः_स्मृतिate enough space based on how big the block group is.
+	 * Try to preallocate enough space based on how big the block group is.
 	 * Keep in mind this has to include any pinned space which could end up
-	 * taking up quite a bit since it's not folded पूर्णांकo the other space
+	 * taking up quite a bit since it's not folded into the other space
 	 * cache.
 	 */
-	num_pages = भाग_u64(block_group->length, SZ_256M);
-	अगर (!num_pages)
+	num_pages = div_u64(block_group->length, SZ_256M);
+	if (!num_pages)
 		num_pages = 1;
 
 	num_pages *= 16;
 	num_pages *= PAGE_SIZE;
 
-	ret = btrfs_check_data_मुक्त_space(BTRFS_I(inode), &data_reserved, 0,
+	ret = btrfs_check_data_free_space(BTRFS_I(inode), &data_reserved, 0,
 					  num_pages);
-	अगर (ret)
-		जाओ out_put;
+	if (ret)
+		goto out_put;
 
-	ret = btrfs_pपुनः_स्मृति_file_range_trans(inode, trans, 0, 0, num_pages,
+	ret = btrfs_prealloc_file_range_trans(inode, trans, 0, 0, num_pages,
 					      num_pages, num_pages,
-					      &alloc_hपूर्णांक);
+					      &alloc_hint);
 	/*
-	 * Our cache requires contiguous chunks so that we करोn't modअगरy a bunch
+	 * Our cache requires contiguous chunks so that we don't modify a bunch
 	 * of metadata or split extents when writing the cache out, which means
-	 * we can enospc अगर we are heavily fragmented in addition to just normal
-	 * out of space conditions.  So अगर we hit this just skip setting up any
-	 * other block groups क्रम this transaction, maybe we'll unpin enough
-	 * space the next समय around.
+	 * we can enospc if we are heavily fragmented in addition to just normal
+	 * out of space conditions.  So if we hit this just skip setting up any
+	 * other block groups for this transaction, maybe we'll unpin enough
+	 * space the next time around.
 	 */
-	अगर (!ret)
+	if (!ret)
 		dcs = BTRFS_DC_SETUP;
-	अन्यथा अगर (ret == -ENOSPC)
+	else if (ret == -ENOSPC)
 		set_bit(BTRFS_TRANS_CACHE_ENOSPC, &trans->transaction->flags);
 
 out_put:
 	iput(inode);
-out_मुक्त:
+out_free:
 	btrfs_release_path(path);
 out:
 	spin_lock(&block_group->lock);
-	अगर (!ret && dcs == BTRFS_DC_SETUP)
+	if (!ret && dcs == BTRFS_DC_SETUP)
 		block_group->cache_generation = trans->transid;
 	block_group->disk_cache_state = dcs;
 	spin_unlock(&block_group->lock);
 
-	extent_changeset_मुक्त(data_reserved);
-	वापस ret;
-पूर्ण
+	extent_changeset_free(data_reserved);
+	return ret;
+}
 
-पूर्णांक btrfs_setup_space_cache(काष्ठा btrfs_trans_handle *trans)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = trans->fs_info;
-	काष्ठा btrfs_block_group *cache, *पंचांगp;
-	काष्ठा btrfs_transaction *cur_trans = trans->transaction;
-	काष्ठा btrfs_path *path;
+int btrfs_setup_space_cache(struct btrfs_trans_handle *trans)
+{
+	struct btrfs_fs_info *fs_info = trans->fs_info;
+	struct btrfs_block_group *cache, *tmp;
+	struct btrfs_transaction *cur_trans = trans->transaction;
+	struct btrfs_path *path;
 
-	अगर (list_empty(&cur_trans->dirty_bgs) ||
+	if (list_empty(&cur_trans->dirty_bgs) ||
 	    !btrfs_test_opt(fs_info, SPACE_CACHE))
-		वापस 0;
+		return 0;
 
 	path = btrfs_alloc_path();
-	अगर (!path)
-		वापस -ENOMEM;
+	if (!path)
+		return -ENOMEM;
 
-	/* Could add new block groups, use _safe just in हाल */
-	list_क्रम_each_entry_safe(cache, पंचांगp, &cur_trans->dirty_bgs,
-				 dirty_list) अणु
-		अगर (cache->disk_cache_state == BTRFS_DC_CLEAR)
+	/* Could add new block groups, use _safe just in case */
+	list_for_each_entry_safe(cache, tmp, &cur_trans->dirty_bgs,
+				 dirty_list) {
+		if (cache->disk_cache_state == BTRFS_DC_CLEAR)
 			cache_save_setup(cache, trans, path);
-	पूर्ण
+	}
 
-	btrfs_मुक्त_path(path);
-	वापस 0;
-पूर्ण
+	btrfs_free_path(path);
+	return 0;
+}
 
 /*
- * Transaction commit करोes final block group cache ग_लिखोback during a critical
+ * Transaction commit does final block group cache writeback during a critical
  * section where nothing is allowed to change the FS.  This is required in
- * order क्रम the cache to actually match the block group, but can पूर्णांकroduce a
- * lot of latency पूर्णांकo the commit.
+ * order for the cache to actually match the block group, but can introduce a
+ * lot of latency into the commit.
  *
  * So, btrfs_start_dirty_block_groups is here to kick off block group cache IO.
- * There's a chance we'll have to reकरो some of it अगर the block group changes
+ * There's a chance we'll have to redo some of it if the block group changes
  * again during the commit, but it greatly reduces the commit latency by
- * getting rid of the easy block groups जबतक we're still allowing others to
+ * getting rid of the easy block groups while we're still allowing others to
  * join the commit.
  */
-पूर्णांक btrfs_start_dirty_block_groups(काष्ठा btrfs_trans_handle *trans)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = trans->fs_info;
-	काष्ठा btrfs_block_group *cache;
-	काष्ठा btrfs_transaction *cur_trans = trans->transaction;
-	पूर्णांक ret = 0;
-	पूर्णांक should_put;
-	काष्ठा btrfs_path *path = शून्य;
+int btrfs_start_dirty_block_groups(struct btrfs_trans_handle *trans)
+{
+	struct btrfs_fs_info *fs_info = trans->fs_info;
+	struct btrfs_block_group *cache;
+	struct btrfs_transaction *cur_trans = trans->transaction;
+	int ret = 0;
+	int should_put;
+	struct btrfs_path *path = NULL;
 	LIST_HEAD(dirty);
-	काष्ठा list_head *io = &cur_trans->io_bgs;
-	पूर्णांक num_started = 0;
-	पूर्णांक loops = 0;
+	struct list_head *io = &cur_trans->io_bgs;
+	int num_started = 0;
+	int loops = 0;
 
 	spin_lock(&cur_trans->dirty_bgs_lock);
-	अगर (list_empty(&cur_trans->dirty_bgs)) अणु
+	if (list_empty(&cur_trans->dirty_bgs)) {
 		spin_unlock(&cur_trans->dirty_bgs_lock);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	list_splice_init(&cur_trans->dirty_bgs, &dirty);
 	spin_unlock(&cur_trans->dirty_bgs_lock);
 
@@ -2724,41 +2723,41 @@ again:
 	/* Make sure all the block groups on our dirty list actually exist */
 	btrfs_create_pending_block_groups(trans);
 
-	अगर (!path) अणु
+	if (!path) {
 		path = btrfs_alloc_path();
-		अगर (!path) अणु
+		if (!path) {
 			ret = -ENOMEM;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	/*
-	 * cache_ग_लिखो_mutex is here only to save us from balance or स्वतःmatic
-	 * removal of empty block groups deleting this block group जबतक we are
+	 * cache_write_mutex is here only to save us from balance or automatic
+	 * removal of empty block groups deleting this block group while we are
 	 * writing out the cache
 	 */
-	mutex_lock(&trans->transaction->cache_ग_लिखो_mutex);
-	जबतक (!list_empty(&dirty)) अणु
+	mutex_lock(&trans->transaction->cache_write_mutex);
+	while (!list_empty(&dirty)) {
 		bool drop_reserve = true;
 
-		cache = list_first_entry(&dirty, काष्ठा btrfs_block_group,
+		cache = list_first_entry(&dirty, struct btrfs_block_group,
 					 dirty_list);
 		/*
-		 * This can happen अगर something re-dirties a block group that
-		 * is alपढ़ोy under IO.  Just रुको क्रम it to finish and then करो
+		 * This can happen if something re-dirties a block group that
+		 * is already under IO.  Just wait for it to finish and then do
 		 * it all again
 		 */
-		अगर (!list_empty(&cache->io_list)) अणु
+		if (!list_empty(&cache->io_list)) {
 			list_del_init(&cache->io_list);
-			btrfs_रुको_cache_io(trans, cache, path);
+			btrfs_wait_cache_io(trans, cache, path);
 			btrfs_put_block_group(cache);
-		पूर्ण
+		}
 
 
 		/*
-		 * btrfs_रुको_cache_io uses the cache->dirty_list to decide अगर
+		 * btrfs_wait_cache_io uses the cache->dirty_list to decide if
 		 * it should update the cache_state.  Don't delete until after
-		 * we रुको.
+		 * we wait.
 		 *
 		 * Since we're not running in the commit critical section
 		 * we need the dirty_bgs_lock to protect from update_block_group
@@ -2771,153 +2770,153 @@ again:
 
 		cache_save_setup(cache, trans, path);
 
-		अगर (cache->disk_cache_state == BTRFS_DC_SETUP) अणु
-			cache->io_ctl.inode = शून्य;
-			ret = btrfs_ग_लिखो_out_cache(trans, cache, path);
-			अगर (ret == 0 && cache->io_ctl.inode) अणु
+		if (cache->disk_cache_state == BTRFS_DC_SETUP) {
+			cache->io_ctl.inode = NULL;
+			ret = btrfs_write_out_cache(trans, cache, path);
+			if (ret == 0 && cache->io_ctl.inode) {
 				num_started++;
 				should_put = 0;
 
 				/*
-				 * The cache_ग_लिखो_mutex is protecting the
+				 * The cache_write_mutex is protecting the
 				 * io_list, also refer to the definition of
-				 * btrfs_transaction::io_bgs क्रम more details
+				 * btrfs_transaction::io_bgs for more details
 				 */
 				list_add_tail(&cache->io_list, io);
-			पूर्ण अन्यथा अणु
+			} else {
 				/*
-				 * If we failed to ग_लिखो the cache, the
-				 * generation will be bad and lअगरe goes on
+				 * If we failed to write the cache, the
+				 * generation will be bad and life goes on
 				 */
 				ret = 0;
-			पूर्ण
-		पूर्ण
-		अगर (!ret) अणु
+			}
+		}
+		if (!ret) {
 			ret = update_block_group_item(trans, path, cache);
 			/*
 			 * Our block group might still be attached to the list
 			 * of new block groups in the transaction handle of some
-			 * other task (काष्ठा btrfs_trans_handle->new_bgs). This
+			 * other task (struct btrfs_trans_handle->new_bgs). This
 			 * means its block group item isn't yet in the extent
 			 * tree. If this happens ignore the error, as we will
 			 * try again later in the critical section of the
 			 * transaction commit.
 			 */
-			अगर (ret == -ENOENT) अणु
+			if (ret == -ENOENT) {
 				ret = 0;
 				spin_lock(&cur_trans->dirty_bgs_lock);
-				अगर (list_empty(&cache->dirty_list)) अणु
+				if (list_empty(&cache->dirty_list)) {
 					list_add_tail(&cache->dirty_list,
 						      &cur_trans->dirty_bgs);
 					btrfs_get_block_group(cache);
 					drop_reserve = false;
-				पूर्ण
+				}
 				spin_unlock(&cur_trans->dirty_bgs_lock);
-			पूर्ण अन्यथा अगर (ret) अणु
-				btrfs_पात_transaction(trans, ret);
-			पूर्ण
-		पूर्ण
+			} else if (ret) {
+				btrfs_abort_transaction(trans, ret);
+			}
+		}
 
 		/* If it's not on the io list, we need to put the block group */
-		अगर (should_put)
+		if (should_put)
 			btrfs_put_block_group(cache);
-		अगर (drop_reserve)
+		if (drop_reserve)
 			btrfs_delayed_refs_rsv_release(fs_info, 1);
 		/*
-		 * Aव्योम blocking other tasks क्रम too दीर्घ. It might even save
-		 * us from writing caches क्रम block groups that are going to be
-		 * हटाओd.
+		 * Avoid blocking other tasks for too long. It might even save
+		 * us from writing caches for block groups that are going to be
+		 * removed.
 		 */
-		mutex_unlock(&trans->transaction->cache_ग_लिखो_mutex);
-		अगर (ret)
-			जाओ out;
-		mutex_lock(&trans->transaction->cache_ग_लिखो_mutex);
-	पूर्ण
-	mutex_unlock(&trans->transaction->cache_ग_लिखो_mutex);
+		mutex_unlock(&trans->transaction->cache_write_mutex);
+		if (ret)
+			goto out;
+		mutex_lock(&trans->transaction->cache_write_mutex);
+	}
+	mutex_unlock(&trans->transaction->cache_write_mutex);
 
 	/*
-	 * Go through delayed refs क्रम all the stuff we've just kicked off
+	 * Go through delayed refs for all the stuff we've just kicked off
 	 * and then loop back (just once)
 	 */
-	अगर (!ret)
+	if (!ret)
 		ret = btrfs_run_delayed_refs(trans, 0);
-	अगर (!ret && loops == 0) अणु
+	if (!ret && loops == 0) {
 		loops++;
 		spin_lock(&cur_trans->dirty_bgs_lock);
 		list_splice_init(&cur_trans->dirty_bgs, &dirty);
 		/*
 		 * dirty_bgs_lock protects us from concurrent block group
-		 * deletes too (not just cache_ग_लिखो_mutex).
+		 * deletes too (not just cache_write_mutex).
 		 */
-		अगर (!list_empty(&dirty)) अणु
+		if (!list_empty(&dirty)) {
 			spin_unlock(&cur_trans->dirty_bgs_lock);
-			जाओ again;
-		पूर्ण
+			goto again;
+		}
 		spin_unlock(&cur_trans->dirty_bgs_lock);
-	पूर्ण
+	}
 out:
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		spin_lock(&cur_trans->dirty_bgs_lock);
 		list_splice_init(&dirty, &cur_trans->dirty_bgs);
 		spin_unlock(&cur_trans->dirty_bgs_lock);
 		btrfs_cleanup_dirty_bgs(cur_trans, fs_info);
-	पूर्ण
+	}
 
-	btrfs_मुक्त_path(path);
-	वापस ret;
-पूर्ण
+	btrfs_free_path(path);
+	return ret;
+}
 
-पूर्णांक btrfs_ग_लिखो_dirty_block_groups(काष्ठा btrfs_trans_handle *trans)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = trans->fs_info;
-	काष्ठा btrfs_block_group *cache;
-	काष्ठा btrfs_transaction *cur_trans = trans->transaction;
-	पूर्णांक ret = 0;
-	पूर्णांक should_put;
-	काष्ठा btrfs_path *path;
-	काष्ठा list_head *io = &cur_trans->io_bgs;
-	पूर्णांक num_started = 0;
+int btrfs_write_dirty_block_groups(struct btrfs_trans_handle *trans)
+{
+	struct btrfs_fs_info *fs_info = trans->fs_info;
+	struct btrfs_block_group *cache;
+	struct btrfs_transaction *cur_trans = trans->transaction;
+	int ret = 0;
+	int should_put;
+	struct btrfs_path *path;
+	struct list_head *io = &cur_trans->io_bgs;
+	int num_started = 0;
 
 	path = btrfs_alloc_path();
-	अगर (!path)
-		वापस -ENOMEM;
+	if (!path)
+		return -ENOMEM;
 
 	/*
 	 * Even though we are in the critical section of the transaction commit,
 	 * we can still have concurrent tasks adding elements to this
 	 * transaction's list of dirty block groups. These tasks correspond to
-	 * endio मुक्त space workers started when ग_लिखोback finishes क्रम a
+	 * endio free space workers started when writeback finishes for a
 	 * space cache, which run inode.c:btrfs_finish_ordered_io(), and can
 	 * allocate new block groups as a result of COWing nodes of the root
-	 * tree when updating the मुक्त space inode. The ग_लिखोback क्रम the space
+	 * tree when updating the free space inode. The writeback for the space
 	 * caches is triggered by an earlier call to
 	 * btrfs_start_dirty_block_groups() and iterations of the following
 	 * loop.
-	 * Also we want to करो the cache_save_setup first and then run the
-	 * delayed refs to make sure we have the best chance at करोing this all
+	 * Also we want to do the cache_save_setup first and then run the
+	 * delayed refs to make sure we have the best chance at doing this all
 	 * in one shot.
 	 */
 	spin_lock(&cur_trans->dirty_bgs_lock);
-	जबतक (!list_empty(&cur_trans->dirty_bgs)) अणु
+	while (!list_empty(&cur_trans->dirty_bgs)) {
 		cache = list_first_entry(&cur_trans->dirty_bgs,
-					 काष्ठा btrfs_block_group,
+					 struct btrfs_block_group,
 					 dirty_list);
 
 		/*
-		 * This can happen अगर cache_save_setup re-dirties a block group
-		 * that is alपढ़ोy under IO.  Just रुको क्रम it to finish and
-		 * then करो it all again
+		 * This can happen if cache_save_setup re-dirties a block group
+		 * that is already under IO.  Just wait for it to finish and
+		 * then do it all again
 		 */
-		अगर (!list_empty(&cache->io_list)) अणु
+		if (!list_empty(&cache->io_list)) {
 			spin_unlock(&cur_trans->dirty_bgs_lock);
 			list_del_init(&cache->io_list);
-			btrfs_रुको_cache_io(trans, cache, path);
+			btrfs_wait_cache_io(trans, cache, path);
 			btrfs_put_block_group(cache);
 			spin_lock(&cur_trans->dirty_bgs_lock);
-		पूर्ण
+		}
 
 		/*
-		 * Don't remove from the dirty list until after we've रुकोed on
+		 * Don't remove from the dirty list until after we've waited on
 		 * any pending IO
 		 */
 		list_del_init(&cache->dirty_list);
@@ -2926,109 +2925,109 @@ out:
 
 		cache_save_setup(cache, trans, path);
 
-		अगर (!ret)
+		if (!ret)
 			ret = btrfs_run_delayed_refs(trans,
-						     (अचिन्हित दीर्घ) -1);
+						     (unsigned long) -1);
 
-		अगर (!ret && cache->disk_cache_state == BTRFS_DC_SETUP) अणु
-			cache->io_ctl.inode = शून्य;
-			ret = btrfs_ग_लिखो_out_cache(trans, cache, path);
-			अगर (ret == 0 && cache->io_ctl.inode) अणु
+		if (!ret && cache->disk_cache_state == BTRFS_DC_SETUP) {
+			cache->io_ctl.inode = NULL;
+			ret = btrfs_write_out_cache(trans, cache, path);
+			if (ret == 0 && cache->io_ctl.inode) {
 				num_started++;
 				should_put = 0;
 				list_add_tail(&cache->io_list, io);
-			पूर्ण अन्यथा अणु
+			} else {
 				/*
-				 * If we failed to ग_लिखो the cache, the
-				 * generation will be bad and lअगरe goes on
+				 * If we failed to write the cache, the
+				 * generation will be bad and life goes on
 				 */
 				ret = 0;
-			पूर्ण
-		पूर्ण
-		अगर (!ret) अणु
+			}
+		}
+		if (!ret) {
 			ret = update_block_group_item(trans, path, cache);
 			/*
-			 * One of the मुक्त space endio workers might have
-			 * created a new block group जबतक updating a मुक्त space
+			 * One of the free space endio workers might have
+			 * created a new block group while updating a free space
 			 * cache's inode (at inode.c:btrfs_finish_ordered_io())
 			 * and hasn't released its transaction handle yet, in
-			 * which हाल the new block group is still attached to
+			 * which case the new block group is still attached to
 			 * its transaction handle and its creation has not
 			 * finished yet (no block group item in the extent tree
-			 * yet, etc). If this is the हाल, रुको क्रम all मुक्त
+			 * yet, etc). If this is the case, wait for all free
 			 * space endio workers to finish and retry. This is a
-			 * very rare हाल so no need क्रम a more efficient and
+			 * very rare case so no need for a more efficient and
 			 * complex approach.
 			 */
-			अगर (ret == -ENOENT) अणु
-				रुको_event(cur_trans->ग_लिखोr_रुको,
-				   atomic_पढ़ो(&cur_trans->num_ग_लिखोrs) == 1);
+			if (ret == -ENOENT) {
+				wait_event(cur_trans->writer_wait,
+				   atomic_read(&cur_trans->num_writers) == 1);
 				ret = update_block_group_item(trans, path, cache);
-			पूर्ण
-			अगर (ret)
-				btrfs_पात_transaction(trans, ret);
-		पूर्ण
+			}
+			if (ret)
+				btrfs_abort_transaction(trans, ret);
+		}
 
 		/* If its not on the io list, we need to put the block group */
-		अगर (should_put)
+		if (should_put)
 			btrfs_put_block_group(cache);
 		btrfs_delayed_refs_rsv_release(fs_info, 1);
 		spin_lock(&cur_trans->dirty_bgs_lock);
-	पूर्ण
+	}
 	spin_unlock(&cur_trans->dirty_bgs_lock);
 
 	/*
-	 * Refer to the definition of io_bgs member क्रम details why it's safe
+	 * Refer to the definition of io_bgs member for details why it's safe
 	 * to use it without any locking
 	 */
-	जबतक (!list_empty(io)) अणु
-		cache = list_first_entry(io, काष्ठा btrfs_block_group,
+	while (!list_empty(io)) {
+		cache = list_first_entry(io, struct btrfs_block_group,
 					 io_list);
 		list_del_init(&cache->io_list);
-		btrfs_रुको_cache_io(trans, cache, path);
+		btrfs_wait_cache_io(trans, cache, path);
 		btrfs_put_block_group(cache);
-	पूर्ण
+	}
 
-	btrfs_मुक्त_path(path);
-	वापस ret;
-पूर्ण
+	btrfs_free_path(path);
+	return ret;
+}
 
-पूर्णांक btrfs_update_block_group(काष्ठा btrfs_trans_handle *trans,
-			     u64 bytenr, u64 num_bytes, पूर्णांक alloc)
-अणु
-	काष्ठा btrfs_fs_info *info = trans->fs_info;
-	काष्ठा btrfs_block_group *cache = शून्य;
+int btrfs_update_block_group(struct btrfs_trans_handle *trans,
+			     u64 bytenr, u64 num_bytes, int alloc)
+{
+	struct btrfs_fs_info *info = trans->fs_info;
+	struct btrfs_block_group *cache = NULL;
 	u64 total = num_bytes;
 	u64 old_val;
 	u64 byte_in_group;
-	पूर्णांक factor;
-	पूर्णांक ret = 0;
+	int factor;
+	int ret = 0;
 
-	/* Block accounting क्रम super block */
+	/* Block accounting for super block */
 	spin_lock(&info->delalloc_root_lock);
 	old_val = btrfs_super_bytes_used(info->super_copy);
-	अगर (alloc)
+	if (alloc)
 		old_val += num_bytes;
-	अन्यथा
+	else
 		old_val -= num_bytes;
 	btrfs_set_super_bytes_used(info->super_copy, old_val);
 	spin_unlock(&info->delalloc_root_lock);
 
-	जबतक (total) अणु
+	while (total) {
 		cache = btrfs_lookup_block_group(info, bytenr);
-		अगर (!cache) अणु
+		if (!cache) {
 			ret = -ENOENT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		factor = btrfs_bg_type_to_factor(cache->flags);
 
 		/*
-		 * If this block group has मुक्त space cache written out, we
-		 * need to make sure to load it अगर we are removing space.  This
+		 * If this block group has free space cache written out, we
+		 * need to make sure to load it if we are removing space.  This
 		 * is because we need the unpinning stage to actually add the
 		 * space back to the block group, otherwise we will leak space.
 		 */
-		अगर (!alloc && !btrfs_block_group_करोne(cache))
+		if (!alloc && !btrfs_block_group_done(cache))
 			btrfs_cache_block_group(cache, 1);
 
 		byte_in_group = bytenr - cache->start;
@@ -3037,13 +3036,13 @@ out:
 		spin_lock(&cache->space_info->lock);
 		spin_lock(&cache->lock);
 
-		अगर (btrfs_test_opt(info, SPACE_CACHE) &&
+		if (btrfs_test_opt(info, SPACE_CACHE) &&
 		    cache->disk_cache_state < BTRFS_DC_CLEAR)
 			cache->disk_cache_state = BTRFS_DC_CLEAR;
 
 		old_val = cache->used;
 		num_bytes = min(total, cache->length - byte_in_group);
-		अगर (alloc) अणु
+		if (alloc) {
 			old_val += num_bytes;
 			cache->used = old_val;
 			cache->reserved -= num_bytes;
@@ -3052,7 +3051,7 @@ out:
 			cache->space_info->disk_used += num_bytes * factor;
 			spin_unlock(&cache->lock);
 			spin_unlock(&cache->space_info->lock);
-		पूर्ण अन्यथा अणु
+		} else {
 			old_val -= num_bytes;
 			cache->used = old_val;
 			cache->pinned += num_bytes;
@@ -3068,263 +3067,263 @@ out:
 			set_extent_dirty(&trans->transaction->pinned_extents,
 					 bytenr, bytenr + num_bytes - 1,
 					 GFP_NOFS | __GFP_NOFAIL);
-		पूर्ण
+		}
 
 		spin_lock(&trans->transaction->dirty_bgs_lock);
-		अगर (list_empty(&cache->dirty_list)) अणु
+		if (list_empty(&cache->dirty_list)) {
 			list_add_tail(&cache->dirty_list,
 				      &trans->transaction->dirty_bgs);
 			trans->delayed_ref_updates++;
 			btrfs_get_block_group(cache);
-		पूर्ण
+		}
 		spin_unlock(&trans->transaction->dirty_bgs_lock);
 
 		/*
-		 * No दीर्घer have used bytes in this block group, queue it क्रम
-		 * deletion. We करो this after adding the block group to the
-		 * dirty list to aव्योम races between cleaner kthपढ़ो and space
-		 * cache ग_लिखोout.
+		 * No longer have used bytes in this block group, queue it for
+		 * deletion. We do this after adding the block group to the
+		 * dirty list to avoid races between cleaner kthread and space
+		 * cache writeout.
 		 */
-		अगर (!alloc && old_val == 0) अणु
-			अगर (!btrfs_test_opt(info, DISCARD_ASYNC))
+		if (!alloc && old_val == 0) {
+			if (!btrfs_test_opt(info, DISCARD_ASYNC))
 				btrfs_mark_bg_unused(cache);
-		पूर्ण
+		}
 
 		btrfs_put_block_group(cache);
 		total -= num_bytes;
 		bytenr += num_bytes;
-	पूर्ण
+	}
 
-	/* Modअगरied block groups are accounted क्रम in the delayed_refs_rsv. */
+	/* Modified block groups are accounted for in the delayed_refs_rsv. */
 	btrfs_update_delayed_refs_rsv(trans);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * btrfs_add_reserved_bytes - update the block_group and space info counters
  * @cache:	The cache we are manipulating
  * @ram_bytes:  The number of bytes of file content, and will be same to
- *              @num_bytes except क्रम the compress path.
+ *              @num_bytes except for the compress path.
  * @num_bytes:	The number of bytes in question
- * @delalloc:   The blocks are allocated क्रम the delalloc ग_लिखो
+ * @delalloc:   The blocks are allocated for the delalloc write
  *
  * This is called by the allocator when it reserves space. If this is a
- * reservation and the block group has become पढ़ो only we cannot make the
- * reservation and वापस -EAGAIN, otherwise this function always succeeds.
+ * reservation and the block group has become read only we cannot make the
+ * reservation and return -EAGAIN, otherwise this function always succeeds.
  */
-पूर्णांक btrfs_add_reserved_bytes(काष्ठा btrfs_block_group *cache,
-			     u64 ram_bytes, u64 num_bytes, पूर्णांक delalloc)
-अणु
-	काष्ठा btrfs_space_info *space_info = cache->space_info;
-	पूर्णांक ret = 0;
+int btrfs_add_reserved_bytes(struct btrfs_block_group *cache,
+			     u64 ram_bytes, u64 num_bytes, int delalloc)
+{
+	struct btrfs_space_info *space_info = cache->space_info;
+	int ret = 0;
 
 	spin_lock(&space_info->lock);
 	spin_lock(&cache->lock);
-	अगर (cache->ro) अणु
+	if (cache->ro) {
 		ret = -EAGAIN;
-	पूर्ण अन्यथा अणु
+	} else {
 		cache->reserved += num_bytes;
 		space_info->bytes_reserved += num_bytes;
 		trace_btrfs_space_reservation(cache->fs_info, "space_info",
 					      space_info->flags, num_bytes, 1);
 		btrfs_space_info_update_bytes_may_use(cache->fs_info,
 						      space_info, -ram_bytes);
-		अगर (delalloc)
+		if (delalloc)
 			cache->delalloc_bytes += num_bytes;
 
 		/*
 		 * Compression can use less space than we reserved, so wake
-		 * tickets अगर that happens
+		 * tickets if that happens
 		 */
-		अगर (num_bytes < ram_bytes)
+		if (num_bytes < ram_bytes)
 			btrfs_try_granting_tickets(cache->fs_info, space_info);
-	पूर्ण
+	}
 	spin_unlock(&cache->lock);
 	spin_unlock(&space_info->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * btrfs_मुक्त_reserved_bytes - update the block_group and space info counters
+ * btrfs_free_reserved_bytes - update the block_group and space info counters
  * @cache:      The cache we are manipulating
  * @num_bytes:  The number of bytes in question
- * @delalloc:   The blocks are allocated क्रम the delalloc ग_लिखो
+ * @delalloc:   The blocks are allocated for the delalloc write
  *
- * This is called by somebody who is मुक्तing space that was never actually used
- * on disk.  For example अगर you reserve some space क्रम a new leaf in transaction
- * A and beक्रमe transaction A commits you मुक्त that leaf, you call this with
+ * This is called by somebody who is freeing space that was never actually used
+ * on disk.  For example if you reserve some space for a new leaf in transaction
+ * A and before transaction A commits you free that leaf, you call this with
  * reserve set to 0 in order to clear the reservation.
  */
-व्योम btrfs_मुक्त_reserved_bytes(काष्ठा btrfs_block_group *cache,
-			       u64 num_bytes, पूर्णांक delalloc)
-अणु
-	काष्ठा btrfs_space_info *space_info = cache->space_info;
+void btrfs_free_reserved_bytes(struct btrfs_block_group *cache,
+			       u64 num_bytes, int delalloc)
+{
+	struct btrfs_space_info *space_info = cache->space_info;
 
 	spin_lock(&space_info->lock);
 	spin_lock(&cache->lock);
-	अगर (cache->ro)
-		space_info->bytes_पढ़ोonly += num_bytes;
+	if (cache->ro)
+		space_info->bytes_readonly += num_bytes;
 	cache->reserved -= num_bytes;
 	space_info->bytes_reserved -= num_bytes;
 	space_info->max_extent_size = 0;
 
-	अगर (delalloc)
+	if (delalloc)
 		cache->delalloc_bytes -= num_bytes;
 	spin_unlock(&cache->lock);
 
 	btrfs_try_granting_tickets(cache->fs_info, space_info);
 	spin_unlock(&space_info->lock);
-पूर्ण
+}
 
-अटल व्योम क्रमce_metadata_allocation(काष्ठा btrfs_fs_info *info)
-अणु
-	काष्ठा list_head *head = &info->space_info;
-	काष्ठा btrfs_space_info *found;
+static void force_metadata_allocation(struct btrfs_fs_info *info)
+{
+	struct list_head *head = &info->space_info;
+	struct btrfs_space_info *found;
 
-	list_क्रम_each_entry(found, head, list) अणु
-		अगर (found->flags & BTRFS_BLOCK_GROUP_METADATA)
-			found->क्रमce_alloc = CHUNK_ALLOC_FORCE;
-	पूर्ण
-पूर्ण
+	list_for_each_entry(found, head, list) {
+		if (found->flags & BTRFS_BLOCK_GROUP_METADATA)
+			found->force_alloc = CHUNK_ALLOC_FORCE;
+	}
+}
 
-अटल पूर्णांक should_alloc_chunk(काष्ठा btrfs_fs_info *fs_info,
-			      काष्ठा btrfs_space_info *sinfo, पूर्णांक क्रमce)
-अणु
+static int should_alloc_chunk(struct btrfs_fs_info *fs_info,
+			      struct btrfs_space_info *sinfo, int force)
+{
 	u64 bytes_used = btrfs_space_info_used(sinfo, false);
 	u64 thresh;
 
-	अगर (क्रमce == CHUNK_ALLOC_FORCE)
-		वापस 1;
+	if (force == CHUNK_ALLOC_FORCE)
+		return 1;
 
 	/*
-	 * in limited mode, we want to have some मुक्त space up to
+	 * in limited mode, we want to have some free space up to
 	 * about 1% of the FS size.
 	 */
-	अगर (क्रमce == CHUNK_ALLOC_LIMITED) अणु
+	if (force == CHUNK_ALLOC_LIMITED) {
 		thresh = btrfs_super_total_bytes(fs_info->super_copy);
-		thresh = max_t(u64, SZ_64M, भाग_factor_fine(thresh, 1));
+		thresh = max_t(u64, SZ_64M, div_factor_fine(thresh, 1));
 
-		अगर (sinfo->total_bytes - bytes_used < thresh)
-			वापस 1;
-	पूर्ण
+		if (sinfo->total_bytes - bytes_used < thresh)
+			return 1;
+	}
 
-	अगर (bytes_used + SZ_2M < भाग_factor(sinfo->total_bytes, 8))
-		वापस 0;
-	वापस 1;
-पूर्ण
+	if (bytes_used + SZ_2M < div_factor(sinfo->total_bytes, 8))
+		return 0;
+	return 1;
+}
 
-पूर्णांक btrfs_क्रमce_chunk_alloc(काष्ठा btrfs_trans_handle *trans, u64 type)
-अणु
+int btrfs_force_chunk_alloc(struct btrfs_trans_handle *trans, u64 type)
+{
 	u64 alloc_flags = btrfs_get_alloc_profile(trans->fs_info, type);
 
-	वापस btrfs_chunk_alloc(trans, alloc_flags, CHUNK_ALLOC_FORCE);
-पूर्ण
+	return btrfs_chunk_alloc(trans, alloc_flags, CHUNK_ALLOC_FORCE);
+}
 
 /*
- * If क्रमce is CHUNK_ALLOC_FORCE:
- *    - वापस 1 अगर it successfully allocates a chunk,
- *    - वापस errors including -ENOSPC otherwise.
- * If क्रमce is NOT CHUNK_ALLOC_FORCE:
- *    - वापस 0 अगर it करोesn't need to allocate a new chunk,
- *    - वापस 1 अगर it successfully allocates a chunk,
- *    - वापस errors including -ENOSPC otherwise.
+ * If force is CHUNK_ALLOC_FORCE:
+ *    - return 1 if it successfully allocates a chunk,
+ *    - return errors including -ENOSPC otherwise.
+ * If force is NOT CHUNK_ALLOC_FORCE:
+ *    - return 0 if it doesn't need to allocate a new chunk,
+ *    - return 1 if it successfully allocates a chunk,
+ *    - return errors including -ENOSPC otherwise.
  */
-पूर्णांक btrfs_chunk_alloc(काष्ठा btrfs_trans_handle *trans, u64 flags,
-		      क्रमागत btrfs_chunk_alloc_क्रमागत क्रमce)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = trans->fs_info;
-	काष्ठा btrfs_space_info *space_info;
-	bool रुको_क्रम_alloc = false;
+int btrfs_chunk_alloc(struct btrfs_trans_handle *trans, u64 flags,
+		      enum btrfs_chunk_alloc_enum force)
+{
+	struct btrfs_fs_info *fs_info = trans->fs_info;
+	struct btrfs_space_info *space_info;
+	bool wait_for_alloc = false;
 	bool should_alloc = false;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	/* Don't re-enter if we're alपढ़ोy allocating a chunk */
-	अगर (trans->allocating_chunk)
-		वापस -ENOSPC;
+	/* Don't re-enter if we're already allocating a chunk */
+	if (trans->allocating_chunk)
+		return -ENOSPC;
 
 	space_info = btrfs_find_space_info(fs_info, flags);
 	ASSERT(space_info);
 
-	करो अणु
+	do {
 		spin_lock(&space_info->lock);
-		अगर (क्रमce < space_info->क्रमce_alloc)
-			क्रमce = space_info->क्रमce_alloc;
-		should_alloc = should_alloc_chunk(fs_info, space_info, क्रमce);
-		अगर (space_info->full) अणु
-			/* No more मुक्त physical space */
-			अगर (should_alloc)
+		if (force < space_info->force_alloc)
+			force = space_info->force_alloc;
+		should_alloc = should_alloc_chunk(fs_info, space_info, force);
+		if (space_info->full) {
+			/* No more free physical space */
+			if (should_alloc)
 				ret = -ENOSPC;
-			अन्यथा
+			else
 				ret = 0;
 			spin_unlock(&space_info->lock);
-			वापस ret;
-		पूर्ण अन्यथा अगर (!should_alloc) अणु
+			return ret;
+		} else if (!should_alloc) {
 			spin_unlock(&space_info->lock);
-			वापस 0;
-		पूर्ण अन्यथा अगर (space_info->chunk_alloc) अणु
+			return 0;
+		} else if (space_info->chunk_alloc) {
 			/*
-			 * Someone is alपढ़ोy allocating, so we need to block
+			 * Someone is already allocating, so we need to block
 			 * until this someone is finished and then loop to
-			 * recheck अगर we should जारी with our allocation
+			 * recheck if we should continue with our allocation
 			 * attempt.
 			 */
-			रुको_क्रम_alloc = true;
+			wait_for_alloc = true;
 			spin_unlock(&space_info->lock);
 			mutex_lock(&fs_info->chunk_mutex);
 			mutex_unlock(&fs_info->chunk_mutex);
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Proceed with allocation */
 			space_info->chunk_alloc = 1;
-			रुको_क्रम_alloc = false;
+			wait_for_alloc = false;
 			spin_unlock(&space_info->lock);
-		पूर्ण
+		}
 
 		cond_resched();
-	पूर्ण जबतक (रुको_क्रम_alloc);
+	} while (wait_for_alloc);
 
 	mutex_lock(&fs_info->chunk_mutex);
 	trans->allocating_chunk = true;
 
 	/*
 	 * If we have mixed data/metadata chunks we want to make sure we keep
-	 * allocating mixed chunks instead of inभागidual chunks.
+	 * allocating mixed chunks instead of individual chunks.
 	 */
-	अगर (btrfs_mixed_space_info(space_info))
+	if (btrfs_mixed_space_info(space_info))
 		flags |= (BTRFS_BLOCK_GROUP_DATA | BTRFS_BLOCK_GROUP_METADATA);
 
 	/*
-	 * अगर we're करोing a data chunk, go ahead and make sure that
+	 * if we're doing a data chunk, go ahead and make sure that
 	 * we keep a reasonable number of metadata chunks allocated in the
 	 * FS as well.
 	 */
-	अगर (flags & BTRFS_BLOCK_GROUP_DATA && fs_info->metadata_ratio) अणु
+	if (flags & BTRFS_BLOCK_GROUP_DATA && fs_info->metadata_ratio) {
 		fs_info->data_chunk_allocations++;
-		अगर (!(fs_info->data_chunk_allocations %
+		if (!(fs_info->data_chunk_allocations %
 		      fs_info->metadata_ratio))
-			क्रमce_metadata_allocation(fs_info);
-	पूर्ण
+			force_metadata_allocation(fs_info);
+	}
 
 	/*
-	 * Check अगर we have enough space in SYSTEM chunk because we may need
+	 * Check if we have enough space in SYSTEM chunk because we may need
 	 * to update devices.
 	 */
-	check_प्रणाली_chunk(trans, flags);
+	check_system_chunk(trans, flags);
 
 	ret = btrfs_alloc_chunk(trans, flags);
 	trans->allocating_chunk = false;
 
 	spin_lock(&space_info->lock);
-	अगर (ret < 0) अणु
-		अगर (ret == -ENOSPC)
+	if (ret < 0) {
+		if (ret == -ENOSPC)
 			space_info->full = 1;
-		अन्यथा
-			जाओ out;
-	पूर्ण अन्यथा अणु
+		else
+			goto out;
+	} else {
 		ret = 1;
 		space_info->max_extent_size = 0;
-	पूर्ण
+	}
 
-	space_info->क्रमce_alloc = CHUNK_ALLOC_NO_FORCE;
+	space_info->force_alloc = CHUNK_ALLOC_NO_FORCE;
 out:
 	space_info->chunk_alloc = 0;
 	spin_unlock(&space_info->lock);
@@ -3332,52 +3331,52 @@ out:
 	/*
 	 * When we allocate a new chunk we reserve space in the chunk block
 	 * reserve to make sure we can COW nodes/leafs in the chunk tree or
-	 * add new nodes/leafs to it अगर we end up needing to करो it when
+	 * add new nodes/leafs to it if we end up needing to do it when
 	 * inserting the chunk item and updating device items as part of the
-	 * second phase of chunk allocation, perक्रमmed by
-	 * btrfs_finish_chunk_alloc(). So make sure we करोn't accumulate a
+	 * second phase of chunk allocation, performed by
+	 * btrfs_finish_chunk_alloc(). So make sure we don't accumulate a
 	 * large number of new block groups to create in our transaction
-	 * handle's new_bgs list to aव्योम exhausting the chunk block reserve
-	 * in extreme हालs - like having a single transaction create many new
-	 * block groups when starting to ग_लिखो out the मुक्त space caches of all
-	 * the block groups that were made dirty during the lअगरeसमय of the
+	 * handle's new_bgs list to avoid exhausting the chunk block reserve
+	 * in extreme cases - like having a single transaction create many new
+	 * block groups when starting to write out the free space caches of all
+	 * the block groups that were made dirty during the lifetime of the
 	 * transaction.
 	 */
-	अगर (trans->chunk_bytes_reserved >= (u64)SZ_2M)
+	if (trans->chunk_bytes_reserved >= (u64)SZ_2M)
 		btrfs_create_pending_block_groups(trans);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल u64 get_profile_num_devs(काष्ठा btrfs_fs_info *fs_info, u64 type)
-अणु
+static u64 get_profile_num_devs(struct btrfs_fs_info *fs_info, u64 type)
+{
 	u64 num_dev;
 
 	num_dev = btrfs_raid_array[btrfs_bg_flags_to_raid_index(type)].devs_max;
-	अगर (!num_dev)
+	if (!num_dev)
 		num_dev = fs_info->fs_devices->rw_devices;
 
-	वापस num_dev;
-पूर्ण
+	return num_dev;
+}
 
 /*
- * Reserve space in the प्रणाली space क्रम allocating or removing a chunk
+ * Reserve space in the system space for allocating or removing a chunk
  */
-व्योम check_प्रणाली_chunk(काष्ठा btrfs_trans_handle *trans, u64 type)
-अणु
-	काष्ठा btrfs_transaction *cur_trans = trans->transaction;
-	काष्ठा btrfs_fs_info *fs_info = trans->fs_info;
-	काष्ठा btrfs_space_info *info;
+void check_system_chunk(struct btrfs_trans_handle *trans, u64 type)
+{
+	struct btrfs_transaction *cur_trans = trans->transaction;
+	struct btrfs_fs_info *fs_info = trans->fs_info;
+	struct btrfs_space_info *info;
 	u64 left;
 	u64 thresh;
-	पूर्णांक ret = 0;
+	int ret = 0;
 	u64 num_devs;
 
 	/*
-	 * Needed because we can end up allocating a प्रणाली chunk and क्रम an
-	 * atomic and race मुक्त space reservation in the chunk block reserve.
+	 * Needed because we can end up allocating a system chunk and for an
+	 * atomic and race free space reservation in the chunk block reserve.
 	 */
-	lockdep_निश्चित_held(&fs_info->chunk_mutex);
+	lockdep_assert_held(&fs_info->chunk_mutex);
 
 	info = btrfs_find_space_info(fs_info, BTRFS_BLOCK_GROUP_SYSTEM);
 again:
@@ -3387,281 +3386,281 @@ again:
 
 	num_devs = get_profile_num_devs(fs_info, type);
 
-	/* num_devs device items to update and 1 chunk item to add or हटाओ */
+	/* num_devs device items to update and 1 chunk item to add or remove */
 	thresh = btrfs_calc_metadata_size(fs_info, num_devs) +
 		btrfs_calc_insert_metadata_size(fs_info, 1);
 
-	अगर (left < thresh && btrfs_test_opt(fs_info, ENOSPC_DEBUG)) अणु
+	if (left < thresh && btrfs_test_opt(fs_info, ENOSPC_DEBUG)) {
 		btrfs_info(fs_info, "left=%llu, need=%llu, flags=%llu",
 			   left, thresh, type);
 		btrfs_dump_space_info(fs_info, info, 0, 0);
-	पूर्ण
+	}
 
-	अगर (left < thresh) अणु
-		u64 flags = btrfs_प्रणाली_alloc_profile(fs_info);
-		u64 reserved = atomic64_पढ़ो(&cur_trans->chunk_bytes_reserved);
+	if (left < thresh) {
+		u64 flags = btrfs_system_alloc_profile(fs_info);
+		u64 reserved = atomic64_read(&cur_trans->chunk_bytes_reserved);
 
 		/*
-		 * If there's not available space क्रम the chunk tree (प्रणाली
-		 * space) and there are other tasks that reserved space क्रम
-		 * creating a new प्रणाली block group, रुको क्रम them to complete
-		 * the creation of their प्रणाली block group and release excess
-		 * reserved space. We करो this because:
+		 * If there's not available space for the chunk tree (system
+		 * space) and there are other tasks that reserved space for
+		 * creating a new system block group, wait for them to complete
+		 * the creation of their system block group and release excess
+		 * reserved space. We do this because:
 		 *
-		 * *) We can end up allocating more प्रणाली chunks than necessary
+		 * *) We can end up allocating more system chunks than necessary
 		 *    when there are multiple tasks that are concurrently
 		 *    allocating block groups, which can lead to exhaustion of
-		 *    the प्रणाली array in the superblock;
+		 *    the system array in the superblock;
 		 *
-		 * *) If we allocate extra and unnecessary प्रणाली block groups,
-		 *    despite being empty क्रम a दीर्घ समय, and possibly क्रमever,
+		 * *) If we allocate extra and unnecessary system block groups,
+		 *    despite being empty for a long time, and possibly forever,
 		 *    they end not being added to the list of unused block groups
 		 *    because that typically happens only when deallocating the
 		 *    last extent from a block group - which never happens since
 		 *    we never allocate from them in the first place. The few
-		 *    exceptions are when mounting a fileप्रणाली or running scrub,
+		 *    exceptions are when mounting a filesystem or running scrub,
 		 *    which add unused block groups to the list of unused block
-		 *    groups, to be deleted by the cleaner kthपढ़ो.
+		 *    groups, to be deleted by the cleaner kthread.
 		 *    And even when they are added to the list of unused block
-		 *    groups, it can take a दीर्घ समय until they get deleted,
-		 *    since the cleaner kthपढ़ो might be sleeping or busy with
-		 *    other work (deleting subvolumes, running delayed iमाला_दो,
+		 *    groups, it can take a long time until they get deleted,
+		 *    since the cleaner kthread might be sleeping or busy with
+		 *    other work (deleting subvolumes, running delayed iputs,
 		 *    defrag scheduling, etc);
 		 *
 		 * This is rare in practice, but can happen when too many tasks
 		 * are allocating blocks groups in parallel (via fallocate())
-		 * and beक्रमe the one that reserved space क्रम a new प्रणाली block
+		 * and before the one that reserved space for a new system block
 		 * group finishes the block group creation and releases the space
 		 * reserved in excess (at btrfs_create_pending_block_groups()),
-		 * other tasks end up here and see मुक्त प्रणाली space temporarily
-		 * not enough क्रम updating the chunk tree.
+		 * other tasks end up here and see free system space temporarily
+		 * not enough for updating the chunk tree.
 		 *
-		 * We unlock the chunk mutex beक्रमe रुकोing क्रम such tasks and
-		 * lock it again after the रुको, otherwise we would deadlock.
-		 * It is safe to करो so because allocating a प्रणाली chunk is the
-		 * first thing करोne जबतक allocating a new block group.
+		 * We unlock the chunk mutex before waiting for such tasks and
+		 * lock it again after the wait, otherwise we would deadlock.
+		 * It is safe to do so because allocating a system chunk is the
+		 * first thing done while allocating a new block group.
 		 */
-		अगर (reserved > trans->chunk_bytes_reserved) अणु
-			स्थिर u64 min_needed = reserved - thresh;
+		if (reserved > trans->chunk_bytes_reserved) {
+			const u64 min_needed = reserved - thresh;
 
 			mutex_unlock(&fs_info->chunk_mutex);
-			रुको_event(cur_trans->chunk_reserve_रुको,
-			   atomic64_पढ़ो(&cur_trans->chunk_bytes_reserved) <=
+			wait_event(cur_trans->chunk_reserve_wait,
+			   atomic64_read(&cur_trans->chunk_bytes_reserved) <=
 			   min_needed);
 			mutex_lock(&fs_info->chunk_mutex);
-			जाओ again;
-		पूर्ण
+			goto again;
+		}
 
 		/*
-		 * Ignore failure to create प्रणाली chunk. We might end up not
+		 * Ignore failure to create system chunk. We might end up not
 		 * needing it, as we might not need to COW all nodes/leafs from
-		 * the paths we visit in the chunk tree (they were alपढ़ोy COWed
-		 * or created in the current transaction क्रम example).
+		 * the paths we visit in the chunk tree (they were already COWed
+		 * or created in the current transaction for example).
 		 */
 		ret = btrfs_alloc_chunk(trans, flags);
-	पूर्ण
+	}
 
-	अगर (!ret) अणु
+	if (!ret) {
 		ret = btrfs_block_rsv_add(fs_info->chunk_root,
 					  &fs_info->chunk_block_rsv,
 					  thresh, BTRFS_RESERVE_NO_FLUSH);
-		अगर (!ret) अणु
+		if (!ret) {
 			atomic64_add(thresh, &cur_trans->chunk_bytes_reserved);
 			trans->chunk_bytes_reserved += thresh;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-व्योम btrfs_put_block_group_cache(काष्ठा btrfs_fs_info *info)
-अणु
-	काष्ठा btrfs_block_group *block_group;
+void btrfs_put_block_group_cache(struct btrfs_fs_info *info)
+{
+	struct btrfs_block_group *block_group;
 	u64 last = 0;
 
-	जबतक (1) अणु
-		काष्ठा inode *inode;
+	while (1) {
+		struct inode *inode;
 
 		block_group = btrfs_lookup_first_block_group(info, last);
-		जबतक (block_group) अणु
-			btrfs_रुको_block_group_cache_करोne(block_group);
+		while (block_group) {
+			btrfs_wait_block_group_cache_done(block_group);
 			spin_lock(&block_group->lock);
-			अगर (block_group->iref)
-				अवरोध;
+			if (block_group->iref)
+				break;
 			spin_unlock(&block_group->lock);
 			block_group = btrfs_next_block_group(block_group);
-		पूर्ण
-		अगर (!block_group) अणु
-			अगर (last == 0)
-				अवरोध;
+		}
+		if (!block_group) {
+			if (last == 0)
+				break;
 			last = 0;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		inode = block_group->inode;
 		block_group->iref = 0;
-		block_group->inode = शून्य;
+		block_group->inode = NULL;
 		spin_unlock(&block_group->lock);
-		ASSERT(block_group->io_ctl.inode == शून्य);
+		ASSERT(block_group->io_ctl.inode == NULL);
 		iput(inode);
 		last = block_group->start + block_group->length;
 		btrfs_put_block_group(block_group);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Must be called only after stopping all workers, since we could have block
- * group caching kthपढ़ोs running, and thereक्रमe they could race with us अगर we
- * मुक्तd the block groups beक्रमe stopping them.
+ * group caching kthreads running, and therefore they could race with us if we
+ * freed the block groups before stopping them.
  */
-पूर्णांक btrfs_मुक्त_block_groups(काष्ठा btrfs_fs_info *info)
-अणु
-	काष्ठा btrfs_block_group *block_group;
-	काष्ठा btrfs_space_info *space_info;
-	काष्ठा btrfs_caching_control *caching_ctl;
-	काष्ठा rb_node *n;
+int btrfs_free_block_groups(struct btrfs_fs_info *info)
+{
+	struct btrfs_block_group *block_group;
+	struct btrfs_space_info *space_info;
+	struct btrfs_caching_control *caching_ctl;
+	struct rb_node *n;
 
 	spin_lock(&info->block_group_cache_lock);
-	जबतक (!list_empty(&info->caching_block_groups)) अणु
+	while (!list_empty(&info->caching_block_groups)) {
 		caching_ctl = list_entry(info->caching_block_groups.next,
-					 काष्ठा btrfs_caching_control, list);
+					 struct btrfs_caching_control, list);
 		list_del(&caching_ctl->list);
 		btrfs_put_caching_control(caching_ctl);
-	पूर्ण
+	}
 	spin_unlock(&info->block_group_cache_lock);
 
 	spin_lock(&info->unused_bgs_lock);
-	जबतक (!list_empty(&info->unused_bgs)) अणु
+	while (!list_empty(&info->unused_bgs)) {
 		block_group = list_first_entry(&info->unused_bgs,
-					       काष्ठा btrfs_block_group,
+					       struct btrfs_block_group,
 					       bg_list);
 		list_del_init(&block_group->bg_list);
 		btrfs_put_block_group(block_group);
-	पूर्ण
+	}
 	spin_unlock(&info->unused_bgs_lock);
 
 	spin_lock(&info->unused_bgs_lock);
-	जबतक (!list_empty(&info->reclaim_bgs)) अणु
+	while (!list_empty(&info->reclaim_bgs)) {
 		block_group = list_first_entry(&info->reclaim_bgs,
-					       काष्ठा btrfs_block_group,
+					       struct btrfs_block_group,
 					       bg_list);
 		list_del_init(&block_group->bg_list);
 		btrfs_put_block_group(block_group);
-	पूर्ण
+	}
 	spin_unlock(&info->unused_bgs_lock);
 
 	spin_lock(&info->block_group_cache_lock);
-	जबतक ((n = rb_last(&info->block_group_cache_tree)) != शून्य) अणु
-		block_group = rb_entry(n, काष्ठा btrfs_block_group,
+	while ((n = rb_last(&info->block_group_cache_tree)) != NULL) {
+		block_group = rb_entry(n, struct btrfs_block_group,
 				       cache_node);
 		rb_erase(&block_group->cache_node,
 			 &info->block_group_cache_tree);
 		RB_CLEAR_NODE(&block_group->cache_node);
 		spin_unlock(&info->block_group_cache_lock);
 
-		करोwn_ग_लिखो(&block_group->space_info->groups_sem);
+		down_write(&block_group->space_info->groups_sem);
 		list_del(&block_group->list);
-		up_ग_लिखो(&block_group->space_info->groups_sem);
+		up_write(&block_group->space_info->groups_sem);
 
 		/*
 		 * We haven't cached this block group, which means we could
 		 * possibly have excluded extents on this block group.
 		 */
-		अगर (block_group->cached == BTRFS_CACHE_NO ||
+		if (block_group->cached == BTRFS_CACHE_NO ||
 		    block_group->cached == BTRFS_CACHE_ERROR)
-			btrfs_मुक्त_excluded_extents(block_group);
+			btrfs_free_excluded_extents(block_group);
 
-		btrfs_हटाओ_मुक्त_space_cache(block_group);
+		btrfs_remove_free_space_cache(block_group);
 		ASSERT(block_group->cached != BTRFS_CACHE_STARTED);
 		ASSERT(list_empty(&block_group->dirty_list));
 		ASSERT(list_empty(&block_group->io_list));
 		ASSERT(list_empty(&block_group->bg_list));
-		ASSERT(refcount_पढ़ो(&block_group->refs) == 1);
+		ASSERT(refcount_read(&block_group->refs) == 1);
 		ASSERT(block_group->swap_extents == 0);
 		btrfs_put_block_group(block_group);
 
 		spin_lock(&info->block_group_cache_lock);
-	पूर्ण
+	}
 	spin_unlock(&info->block_group_cache_lock);
 
 	btrfs_release_global_block_rsv(info);
 
-	जबतक (!list_empty(&info->space_info)) अणु
+	while (!list_empty(&info->space_info)) {
 		space_info = list_entry(info->space_info.next,
-					काष्ठा btrfs_space_info,
+					struct btrfs_space_info,
 					list);
 
 		/*
 		 * Do not hide this behind enospc_debug, this is actually
-		 * important and indicates a real bug अगर this happens.
+		 * important and indicates a real bug if this happens.
 		 */
-		अगर (WARN_ON(space_info->bytes_pinned > 0 ||
+		if (WARN_ON(space_info->bytes_pinned > 0 ||
 			    space_info->bytes_reserved > 0 ||
 			    space_info->bytes_may_use > 0))
 			btrfs_dump_space_info(info, space_info, 0, 0);
 		WARN_ON(space_info->reclaim_size > 0);
 		list_del(&space_info->list);
-		btrfs_sysfs_हटाओ_space_info(space_info);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		btrfs_sysfs_remove_space_info(space_info);
+	}
+	return 0;
+}
 
-व्योम btrfs_मुक्तze_block_group(काष्ठा btrfs_block_group *cache)
-अणु
+void btrfs_freeze_block_group(struct btrfs_block_group *cache)
+{
 	atomic_inc(&cache->frozen);
-पूर्ण
+}
 
-व्योम btrfs_unमुक्तze_block_group(काष्ठा btrfs_block_group *block_group)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = block_group->fs_info;
-	काष्ठा extent_map_tree *em_tree;
-	काष्ठा extent_map *em;
+void btrfs_unfreeze_block_group(struct btrfs_block_group *block_group)
+{
+	struct btrfs_fs_info *fs_info = block_group->fs_info;
+	struct extent_map_tree *em_tree;
+	struct extent_map *em;
 	bool cleanup;
 
 	spin_lock(&block_group->lock);
 	cleanup = (atomic_dec_and_test(&block_group->frozen) &&
-		   block_group->हटाओd);
+		   block_group->removed);
 	spin_unlock(&block_group->lock);
 
-	अगर (cleanup) अणु
+	if (cleanup) {
 		em_tree = &fs_info->mapping_tree;
-		ग_लिखो_lock(&em_tree->lock);
+		write_lock(&em_tree->lock);
 		em = lookup_extent_mapping(em_tree, block_group->start,
 					   1);
 		BUG_ON(!em); /* logic error, can't happen */
-		हटाओ_extent_mapping(em_tree, em);
-		ग_लिखो_unlock(&em_tree->lock);
+		remove_extent_mapping(em_tree, em);
+		write_unlock(&em_tree->lock);
 
-		/* once क्रम us and once क्रम the tree */
-		मुक्त_extent_map(em);
-		मुक्त_extent_map(em);
+		/* once for us and once for the tree */
+		free_extent_map(em);
+		free_extent_map(em);
 
 		/*
-		 * We may have left one मुक्त space entry and other possible
+		 * We may have left one free space entry and other possible
 		 * tasks trimming this block group have left 1 entry each one.
-		 * Free them अगर any.
+		 * Free them if any.
 		 */
-		__btrfs_हटाओ_मुक्त_space_cache(block_group->मुक्त_space_ctl);
-	पूर्ण
-पूर्ण
+		__btrfs_remove_free_space_cache(block_group->free_space_ctl);
+	}
+}
 
-bool btrfs_inc_block_group_swap_extents(काष्ठा btrfs_block_group *bg)
-अणु
+bool btrfs_inc_block_group_swap_extents(struct btrfs_block_group *bg)
+{
 	bool ret = true;
 
 	spin_lock(&bg->lock);
-	अगर (bg->ro)
+	if (bg->ro)
 		ret = false;
-	अन्यथा
+	else
 		bg->swap_extents++;
 	spin_unlock(&bg->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम btrfs_dec_block_group_swap_extents(काष्ठा btrfs_block_group *bg, पूर्णांक amount)
-अणु
+void btrfs_dec_block_group_swap_extents(struct btrfs_block_group *bg, int amount)
+{
 	spin_lock(&bg->lock);
 	ASSERT(!bg->ro);
 	ASSERT(bg->swap_extents >= amount);
 	bg->swap_extents -= amount;
 	spin_unlock(&bg->lock);
-पूर्ण
+}

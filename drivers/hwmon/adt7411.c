@@ -1,81 +1,80 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- *  Driver क्रम the ADT7411 (I2C/SPI 8 channel 10 bit ADC & temperature-sensor)
+ *  Driver for the ADT7411 (I2C/SPI 8 channel 10 bit ADC & temperature-sensor)
  *
  *  Copyright (C) 2008, 2010 Pengutronix
  *
- *  TODO: SPI, use घातer-करोwn mode क्रम suspend?, पूर्णांकerrupt handling?
+ *  TODO: SPI, use power-down mode for suspend?, interrupt handling?
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/err.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/hwmon.h>
-#समावेश <linux/hwmon-sysfs.h>
-#समावेश <linux/slab.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/err.h>
+#include <linux/mutex.h>
+#include <linux/jiffies.h>
+#include <linux/i2c.h>
+#include <linux/hwmon.h>
+#include <linux/hwmon-sysfs.h>
+#include <linux/slab.h>
 
-#घोषणा ADT7411_REG_STAT_1			0x00
-#घोषणा ADT7411_STAT_1_INT_TEMP_HIGH		BIT(0)
-#घोषणा ADT7411_STAT_1_INT_TEMP_LOW		BIT(1)
-#घोषणा ADT7411_STAT_1_EXT_TEMP_HIGH_AIN1	BIT(2)
-#घोषणा ADT7411_STAT_1_EXT_TEMP_LOW		BIT(3)
-#घोषणा ADT7411_STAT_1_EXT_TEMP_FAULT		BIT(4)
-#घोषणा ADT7411_STAT_1_AIN2			BIT(5)
-#घोषणा ADT7411_STAT_1_AIN3			BIT(6)
-#घोषणा ADT7411_STAT_1_AIN4			BIT(7)
-#घोषणा ADT7411_REG_STAT_2			0x01
-#घोषणा ADT7411_STAT_2_AIN5			BIT(0)
-#घोषणा ADT7411_STAT_2_AIN6			BIT(1)
-#घोषणा ADT7411_STAT_2_AIN7			BIT(2)
-#घोषणा ADT7411_STAT_2_AIN8			BIT(3)
-#घोषणा ADT7411_STAT_2_VDD			BIT(4)
-#घोषणा ADT7411_REG_INT_TEMP_VDD_LSB		0x03
-#घोषणा ADT7411_REG_EXT_TEMP_AIN14_LSB		0x04
-#घोषणा ADT7411_REG_VDD_MSB			0x06
-#घोषणा ADT7411_REG_INT_TEMP_MSB		0x07
-#घोषणा ADT7411_REG_EXT_TEMP_AIN1_MSB		0x08
+#define ADT7411_REG_STAT_1			0x00
+#define ADT7411_STAT_1_INT_TEMP_HIGH		BIT(0)
+#define ADT7411_STAT_1_INT_TEMP_LOW		BIT(1)
+#define ADT7411_STAT_1_EXT_TEMP_HIGH_AIN1	BIT(2)
+#define ADT7411_STAT_1_EXT_TEMP_LOW		BIT(3)
+#define ADT7411_STAT_1_EXT_TEMP_FAULT		BIT(4)
+#define ADT7411_STAT_1_AIN2			BIT(5)
+#define ADT7411_STAT_1_AIN3			BIT(6)
+#define ADT7411_STAT_1_AIN4			BIT(7)
+#define ADT7411_REG_STAT_2			0x01
+#define ADT7411_STAT_2_AIN5			BIT(0)
+#define ADT7411_STAT_2_AIN6			BIT(1)
+#define ADT7411_STAT_2_AIN7			BIT(2)
+#define ADT7411_STAT_2_AIN8			BIT(3)
+#define ADT7411_STAT_2_VDD			BIT(4)
+#define ADT7411_REG_INT_TEMP_VDD_LSB		0x03
+#define ADT7411_REG_EXT_TEMP_AIN14_LSB		0x04
+#define ADT7411_REG_VDD_MSB			0x06
+#define ADT7411_REG_INT_TEMP_MSB		0x07
+#define ADT7411_REG_EXT_TEMP_AIN1_MSB		0x08
 
-#घोषणा ADT7411_REG_CFG1			0x18
-#घोषणा ADT7411_CFG1_START_MONITOR		BIT(0)
-#घोषणा ADT7411_CFG1_RESERVED_BIT1		BIT(1)
-#घोषणा ADT7411_CFG1_EXT_TDM			BIT(2)
-#घोषणा ADT7411_CFG1_RESERVED_BIT3		BIT(3)
+#define ADT7411_REG_CFG1			0x18
+#define ADT7411_CFG1_START_MONITOR		BIT(0)
+#define ADT7411_CFG1_RESERVED_BIT1		BIT(1)
+#define ADT7411_CFG1_EXT_TDM			BIT(2)
+#define ADT7411_CFG1_RESERVED_BIT3		BIT(3)
 
-#घोषणा ADT7411_REG_CFG2			0x19
-#घोषणा ADT7411_CFG2_DISABLE_AVG		BIT(5)
+#define ADT7411_REG_CFG2			0x19
+#define ADT7411_CFG2_DISABLE_AVG		BIT(5)
 
-#घोषणा ADT7411_REG_CFG3			0x1a
-#घोषणा ADT7411_CFG3_ADC_CLK_225		BIT(0)
-#घोषणा ADT7411_CFG3_RESERVED_BIT1		BIT(1)
-#घोषणा ADT7411_CFG3_RESERVED_BIT2		BIT(2)
-#घोषणा ADT7411_CFG3_RESERVED_BIT3		BIT(3)
-#घोषणा ADT7411_CFG3_REF_VDD			BIT(4)
+#define ADT7411_REG_CFG3			0x1a
+#define ADT7411_CFG3_ADC_CLK_225		BIT(0)
+#define ADT7411_CFG3_RESERVED_BIT1		BIT(1)
+#define ADT7411_CFG3_RESERVED_BIT2		BIT(2)
+#define ADT7411_CFG3_RESERVED_BIT3		BIT(3)
+#define ADT7411_CFG3_REF_VDD			BIT(4)
 
-#घोषणा ADT7411_REG_VDD_HIGH			0x23
-#घोषणा ADT7411_REG_VDD_LOW			0x24
-#घोषणा ADT7411_REG_TEMP_HIGH(nr)		(0x25 + 2 * (nr))
-#घोषणा ADT7411_REG_TEMP_LOW(nr)		(0x26 + 2 * (nr))
-#घोषणा ADT7411_REG_IN_HIGH(nr)		((nr) > 1 \
+#define ADT7411_REG_VDD_HIGH			0x23
+#define ADT7411_REG_VDD_LOW			0x24
+#define ADT7411_REG_TEMP_HIGH(nr)		(0x25 + 2 * (nr))
+#define ADT7411_REG_TEMP_LOW(nr)		(0x26 + 2 * (nr))
+#define ADT7411_REG_IN_HIGH(nr)		((nr) > 1 \
 						  ? 0x2b + 2 * ((nr)-2) \
 						  : 0x27)
-#घोषणा ADT7411_REG_IN_LOW(nr)			((nr) > 1 \
+#define ADT7411_REG_IN_LOW(nr)			((nr) > 1 \
 						  ? 0x2c + 2 * ((nr)-2) \
 						  : 0x28)
 
-#घोषणा ADT7411_REG_DEVICE_ID			0x4d
-#घोषणा ADT7411_REG_MANUFACTURER_ID		0x4e
+#define ADT7411_REG_DEVICE_ID			0x4d
+#define ADT7411_REG_MANUFACTURER_ID		0x4e
 
-#घोषणा ADT7411_DEVICE_ID			0x2
-#घोषणा ADT7411_MANUFACTURER_ID			0x41
+#define ADT7411_DEVICE_ID			0x2
+#define ADT7411_MANUFACTURER_ID			0x41
 
-अटल स्थिर अचिन्हित लघु normal_i2c[] = अणु 0x48, 0x4a, 0x4b, I2C_CLIENT_END पूर्ण;
+static const unsigned short normal_i2c[] = { 0x48, 0x4a, 0x4b, I2C_CLIENT_END };
 
-अटल स्थिर u8 adt7411_in_alarm_reg[] = अणु
+static const u8 adt7411_in_alarm_reg[] = {
 	ADT7411_REG_STAT_2,
 	ADT7411_REG_STAT_1,
 	ADT7411_REG_STAT_1,
@@ -85,9 +84,9 @@
 	ADT7411_REG_STAT_2,
 	ADT7411_REG_STAT_2,
 	ADT7411_REG_STAT_2,
-पूर्ण;
+};
 
-अटल स्थिर u8 adt7411_in_alarm_bits[] = अणु
+static const u8 adt7411_in_alarm_bits[] = {
 	ADT7411_STAT_2_VDD,
 	ADT7411_STAT_1_EXT_TEMP_HIGH_AIN1,
 	ADT7411_STAT_1_AIN2,
@@ -97,534 +96,534 @@
 	ADT7411_STAT_2_AIN6,
 	ADT7411_STAT_2_AIN7,
 	ADT7411_STAT_2_AIN8,
-पूर्ण;
+};
 
-काष्ठा adt7411_data अणु
-	काष्ठा mutex device_lock;	/* क्रम "atomic" device accesses */
-	काष्ठा mutex update_lock;
-	अचिन्हित दीर्घ next_update;
-	दीर्घ vref_cached;
-	काष्ठा i2c_client *client;
+struct adt7411_data {
+	struct mutex device_lock;	/* for "atomic" device accesses */
+	struct mutex update_lock;
+	unsigned long next_update;
+	long vref_cached;
+	struct i2c_client *client;
 	bool use_ext_temp;
-पूर्ण;
+};
 
 /*
- * When पढ़ोing a रेजिस्टर containing (up to 4) lsb, all associated
- * msb-रेजिस्टरs get locked by the hardware. After _one_ of those msb is पढ़ो,
- * _all_ are unlocked. In order to use this locking correctly, पढ़ोing lsb/msb
- * is रक्षित here with a mutex, too.
+ * When reading a register containing (up to 4) lsb, all associated
+ * msb-registers get locked by the hardware. After _one_ of those msb is read,
+ * _all_ are unlocked. In order to use this locking correctly, reading lsb/msb
+ * is protected here with a mutex, too.
  */
-अटल पूर्णांक adt7411_पढ़ो_10_bit(काष्ठा i2c_client *client, u8 lsb_reg,
-				u8 msb_reg, u8 lsb_shअगरt)
-अणु
-	काष्ठा adt7411_data *data = i2c_get_clientdata(client);
-	पूर्णांक val, पंचांगp;
+static int adt7411_read_10_bit(struct i2c_client *client, u8 lsb_reg,
+				u8 msb_reg, u8 lsb_shift)
+{
+	struct adt7411_data *data = i2c_get_clientdata(client);
+	int val, tmp;
 
 	mutex_lock(&data->device_lock);
 
-	val = i2c_smbus_पढ़ो_byte_data(client, lsb_reg);
-	अगर (val < 0)
-		जाओ निकास_unlock;
+	val = i2c_smbus_read_byte_data(client, lsb_reg);
+	if (val < 0)
+		goto exit_unlock;
 
-	पंचांगp = (val >> lsb_shअगरt) & 3;
-	val = i2c_smbus_पढ़ो_byte_data(client, msb_reg);
+	tmp = (val >> lsb_shift) & 3;
+	val = i2c_smbus_read_byte_data(client, msb_reg);
 
-	अगर (val >= 0)
-		val = (val << 2) | पंचांगp;
+	if (val >= 0)
+		val = (val << 2) | tmp;
 
- निकास_unlock:
+ exit_unlock:
 	mutex_unlock(&data->device_lock);
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल पूर्णांक adt7411_modअगरy_bit(काष्ठा i2c_client *client, u8 reg, u8 bit,
+static int adt7411_modify_bit(struct i2c_client *client, u8 reg, u8 bit,
 				bool flag)
-अणु
-	काष्ठा adt7411_data *data = i2c_get_clientdata(client);
-	पूर्णांक ret, val;
+{
+	struct adt7411_data *data = i2c_get_clientdata(client);
+	int ret, val;
 
 	mutex_lock(&data->device_lock);
 
-	ret = i2c_smbus_पढ़ो_byte_data(client, reg);
-	अगर (ret < 0)
-		जाओ निकास_unlock;
+	ret = i2c_smbus_read_byte_data(client, reg);
+	if (ret < 0)
+		goto exit_unlock;
 
-	अगर (flag)
+	if (flag)
 		val = ret | bit;
-	अन्यथा
+	else
 		val = ret & ~bit;
 
-	ret = i2c_smbus_ग_लिखो_byte_data(client, reg, val);
+	ret = i2c_smbus_write_byte_data(client, reg, val);
 
- निकास_unlock:
+ exit_unlock:
 	mutex_unlock(&data->device_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार adt7411_show_bit(काष्ठा device *dev,
-				काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा sensor_device_attribute_2 *attr2 = to_sensor_dev_attr_2(attr);
-	काष्ठा adt7411_data *data = dev_get_drvdata(dev);
-	काष्ठा i2c_client *client = data->client;
-	पूर्णांक ret = i2c_smbus_पढ़ो_byte_data(client, attr2->index);
+static ssize_t adt7411_show_bit(struct device *dev,
+				struct device_attribute *attr, char *buf)
+{
+	struct sensor_device_attribute_2 *attr2 = to_sensor_dev_attr_2(attr);
+	struct adt7411_data *data = dev_get_drvdata(dev);
+	struct i2c_client *client = data->client;
+	int ret = i2c_smbus_read_byte_data(client, attr2->index);
 
-	वापस ret < 0 ? ret : प्र_लिखो(buf, "%u\n", !!(ret & attr2->nr));
-पूर्ण
+	return ret < 0 ? ret : sprintf(buf, "%u\n", !!(ret & attr2->nr));
+}
 
-अटल sमाप_प्रकार adt7411_set_bit(काष्ठा device *dev,
-			       काष्ठा device_attribute *attr, स्थिर अक्षर *buf,
-			       माप_प्रकार count)
-अणु
-	काष्ठा sensor_device_attribute_2 *s_attr2 = to_sensor_dev_attr_2(attr);
-	काष्ठा adt7411_data *data = dev_get_drvdata(dev);
-	काष्ठा i2c_client *client = data->client;
-	पूर्णांक ret;
-	अचिन्हित दीर्घ flag;
+static ssize_t adt7411_set_bit(struct device *dev,
+			       struct device_attribute *attr, const char *buf,
+			       size_t count)
+{
+	struct sensor_device_attribute_2 *s_attr2 = to_sensor_dev_attr_2(attr);
+	struct adt7411_data *data = dev_get_drvdata(dev);
+	struct i2c_client *client = data->client;
+	int ret;
+	unsigned long flag;
 
-	ret = kम_से_अदीर्घ(buf, 0, &flag);
-	अगर (ret || flag > 1)
-		वापस -EINVAL;
+	ret = kstrtoul(buf, 0, &flag);
+	if (ret || flag > 1)
+		return -EINVAL;
 
-	ret = adt7411_modअगरy_bit(client, s_attr2->index, s_attr2->nr, flag);
+	ret = adt7411_modify_bit(client, s_attr2->index, s_attr2->nr, flag);
 
-	/* क्रमce update */
+	/* force update */
 	mutex_lock(&data->update_lock);
-	data->next_update = jअगरfies;
+	data->next_update = jiffies;
 	mutex_unlock(&data->update_lock);
 
-	वापस ret < 0 ? ret : count;
-पूर्ण
+	return ret < 0 ? ret : count;
+}
 
-#घोषणा ADT7411_BIT_ATTR(__name, __reg, __bit) \
+#define ADT7411_BIT_ATTR(__name, __reg, __bit) \
 	SENSOR_DEVICE_ATTR_2(__name, S_IRUGO | S_IWUSR, adt7411_show_bit, \
 	adt7411_set_bit, __bit, __reg)
 
-अटल ADT7411_BIT_ATTR(no_average, ADT7411_REG_CFG2, ADT7411_CFG2_DISABLE_AVG);
-अटल ADT7411_BIT_ATTR(fast_sampling, ADT7411_REG_CFG3, ADT7411_CFG3_ADC_CLK_225);
-अटल ADT7411_BIT_ATTR(adc_ref_vdd, ADT7411_REG_CFG3, ADT7411_CFG3_REF_VDD);
+static ADT7411_BIT_ATTR(no_average, ADT7411_REG_CFG2, ADT7411_CFG2_DISABLE_AVG);
+static ADT7411_BIT_ATTR(fast_sampling, ADT7411_REG_CFG3, ADT7411_CFG3_ADC_CLK_225);
+static ADT7411_BIT_ATTR(adc_ref_vdd, ADT7411_REG_CFG3, ADT7411_CFG3_REF_VDD);
 
-अटल काष्ठा attribute *adt7411_attrs[] = अणु
+static struct attribute *adt7411_attrs[] = {
 	&sensor_dev_attr_no_average.dev_attr.attr,
 	&sensor_dev_attr_fast_sampling.dev_attr.attr,
 	&sensor_dev_attr_adc_ref_vdd.dev_attr.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 ATTRIBUTE_GROUPS(adt7411);
 
-अटल पूर्णांक adt7411_पढ़ो_in_alarm(काष्ठा device *dev, पूर्णांक channel, दीर्घ *val)
-अणु
-	काष्ठा adt7411_data *data = dev_get_drvdata(dev);
-	काष्ठा i2c_client *client = data->client;
-	पूर्णांक ret;
+static int adt7411_read_in_alarm(struct device *dev, int channel, long *val)
+{
+	struct adt7411_data *data = dev_get_drvdata(dev);
+	struct i2c_client *client = data->client;
+	int ret;
 
-	ret = i2c_smbus_पढ़ो_byte_data(client, adt7411_in_alarm_reg[channel]);
-	अगर (ret < 0)
-		वापस ret;
+	ret = i2c_smbus_read_byte_data(client, adt7411_in_alarm_reg[channel]);
+	if (ret < 0)
+		return ret;
 	*val = !!(ret & adt7411_in_alarm_bits[channel]);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक adt7411_पढ़ो_in_vdd(काष्ठा device *dev, u32 attr, दीर्घ *val)
-अणु
-	काष्ठा adt7411_data *data = dev_get_drvdata(dev);
-	काष्ठा i2c_client *client = data->client;
-	पूर्णांक ret;
+static int adt7411_read_in_vdd(struct device *dev, u32 attr, long *val)
+{
+	struct adt7411_data *data = dev_get_drvdata(dev);
+	struct i2c_client *client = data->client;
+	int ret;
 
-	चयन (attr) अणु
-	हाल hwmon_in_input:
-		ret = adt7411_पढ़ो_10_bit(client, ADT7411_REG_INT_TEMP_VDD_LSB,
+	switch (attr) {
+	case hwmon_in_input:
+		ret = adt7411_read_10_bit(client, ADT7411_REG_INT_TEMP_VDD_LSB,
 					  ADT7411_REG_VDD_MSB, 2);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 		*val = ret * 7000 / 1024;
-		वापस 0;
-	हाल hwmon_in_min:
-		ret = i2c_smbus_पढ़ो_byte_data(client, ADT7411_REG_VDD_LOW);
-		अगर (ret < 0)
-			वापस ret;
+		return 0;
+	case hwmon_in_min:
+		ret = i2c_smbus_read_byte_data(client, ADT7411_REG_VDD_LOW);
+		if (ret < 0)
+			return ret;
 		*val = ret * 7000 / 256;
-		वापस 0;
-	हाल hwmon_in_max:
-		ret = i2c_smbus_पढ़ो_byte_data(client, ADT7411_REG_VDD_HIGH);
-		अगर (ret < 0)
-			वापस ret;
+		return 0;
+	case hwmon_in_max:
+		ret = i2c_smbus_read_byte_data(client, ADT7411_REG_VDD_HIGH);
+		if (ret < 0)
+			return ret;
 		*val = ret * 7000 / 256;
-		वापस 0;
-	हाल hwmon_in_alarm:
-		वापस adt7411_पढ़ो_in_alarm(dev, 0, val);
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+		return 0;
+	case hwmon_in_alarm:
+		return adt7411_read_in_alarm(dev, 0, val);
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल पूर्णांक adt7411_update_vref(काष्ठा device *dev)
-अणु
-	काष्ठा adt7411_data *data = dev_get_drvdata(dev);
-	काष्ठा i2c_client *client = data->client;
-	पूर्णांक val;
+static int adt7411_update_vref(struct device *dev)
+{
+	struct adt7411_data *data = dev_get_drvdata(dev);
+	struct i2c_client *client = data->client;
+	int val;
 
-	अगर (समय_after_eq(jअगरfies, data->next_update)) अणु
-		val = i2c_smbus_पढ़ो_byte_data(client, ADT7411_REG_CFG3);
-		अगर (val < 0)
-			वापस val;
+	if (time_after_eq(jiffies, data->next_update)) {
+		val = i2c_smbus_read_byte_data(client, ADT7411_REG_CFG3);
+		if (val < 0)
+			return val;
 
-		अगर (val & ADT7411_CFG3_REF_VDD) अणु
-			val = adt7411_पढ़ो_in_vdd(dev, hwmon_in_input,
+		if (val & ADT7411_CFG3_REF_VDD) {
+			val = adt7411_read_in_vdd(dev, hwmon_in_input,
 						  &data->vref_cached);
-			अगर (val < 0)
-				वापस val;
-		पूर्ण अन्यथा अणु
+			if (val < 0)
+				return val;
+		} else {
 			data->vref_cached = 2250;
-		पूर्ण
+		}
 
-		data->next_update = jअगरfies + HZ;
-	पूर्ण
+		data->next_update = jiffies + HZ;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक adt7411_पढ़ो_in_chan(काष्ठा device *dev, u32 attr, पूर्णांक channel,
-				दीर्घ *val)
-अणु
-	काष्ठा adt7411_data *data = dev_get_drvdata(dev);
-	काष्ठा i2c_client *client = data->client;
+static int adt7411_read_in_chan(struct device *dev, u32 attr, int channel,
+				long *val)
+{
+	struct adt7411_data *data = dev_get_drvdata(dev);
+	struct i2c_client *client = data->client;
 
-	पूर्णांक ret;
-	पूर्णांक reg, lsb_reg, lsb_shअगरt;
-	पूर्णांक nr = channel - 1;
+	int ret;
+	int reg, lsb_reg, lsb_shift;
+	int nr = channel - 1;
 
 	mutex_lock(&data->update_lock);
 	ret = adt7411_update_vref(dev);
-	अगर (ret < 0)
-		जाओ निकास_unlock;
+	if (ret < 0)
+		goto exit_unlock;
 
-	चयन (attr) अणु
-	हाल hwmon_in_input:
+	switch (attr) {
+	case hwmon_in_input:
 		lsb_reg = ADT7411_REG_EXT_TEMP_AIN14_LSB + (nr >> 2);
-		lsb_shअगरt = 2 * (nr & 0x03);
-		ret = adt7411_पढ़ो_10_bit(client, lsb_reg,
+		lsb_shift = 2 * (nr & 0x03);
+		ret = adt7411_read_10_bit(client, lsb_reg,
 					  ADT7411_REG_EXT_TEMP_AIN1_MSB + nr,
-					  lsb_shअगरt);
-		अगर (ret < 0)
-			जाओ निकास_unlock;
+					  lsb_shift);
+		if (ret < 0)
+			goto exit_unlock;
 		*val = ret * data->vref_cached / 1024;
 		ret = 0;
-		अवरोध;
-	हाल hwmon_in_min:
-	हाल hwmon_in_max:
+		break;
+	case hwmon_in_min:
+	case hwmon_in_max:
 		reg = (attr == hwmon_in_min)
 			? ADT7411_REG_IN_LOW(channel)
 			: ADT7411_REG_IN_HIGH(channel);
-		ret = i2c_smbus_पढ़ो_byte_data(client, reg);
-		अगर (ret < 0)
-			जाओ निकास_unlock;
+		ret = i2c_smbus_read_byte_data(client, reg);
+		if (ret < 0)
+			goto exit_unlock;
 		*val = ret * data->vref_cached / 256;
 		ret = 0;
-		अवरोध;
-	हाल hwmon_in_alarm:
-		ret = adt7411_पढ़ो_in_alarm(dev, channel, val);
-		अवरोध;
-	शेष:
+		break;
+	case hwmon_in_alarm:
+		ret = adt7411_read_in_alarm(dev, channel, val);
+		break;
+	default:
 		ret = -EOPNOTSUPP;
-		अवरोध;
-	पूर्ण
- निकास_unlock:
+		break;
+	}
+ exit_unlock:
 	mutex_unlock(&data->update_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक adt7411_पढ़ो_in(काष्ठा device *dev, u32 attr, पूर्णांक channel,
-			   दीर्घ *val)
-अणु
-	अगर (channel == 0)
-		वापस adt7411_पढ़ो_in_vdd(dev, attr, val);
-	अन्यथा
-		वापस adt7411_पढ़ो_in_chan(dev, attr, channel, val);
-पूर्ण
+static int adt7411_read_in(struct device *dev, u32 attr, int channel,
+			   long *val)
+{
+	if (channel == 0)
+		return adt7411_read_in_vdd(dev, attr, val);
+	else
+		return adt7411_read_in_chan(dev, attr, channel, val);
+}
 
 
-अटल पूर्णांक adt7411_पढ़ो_temp_alarm(काष्ठा device *dev, u32 attr, पूर्णांक channel,
-				   दीर्घ *val)
-अणु
-	काष्ठा adt7411_data *data = dev_get_drvdata(dev);
-	काष्ठा i2c_client *client = data->client;
-	पूर्णांक ret, bit;
+static int adt7411_read_temp_alarm(struct device *dev, u32 attr, int channel,
+				   long *val)
+{
+	struct adt7411_data *data = dev_get_drvdata(dev);
+	struct i2c_client *client = data->client;
+	int ret, bit;
 
-	ret = i2c_smbus_पढ़ो_byte_data(client, ADT7411_REG_STAT_1);
-	अगर (ret < 0)
-		वापस ret;
+	ret = i2c_smbus_read_byte_data(client, ADT7411_REG_STAT_1);
+	if (ret < 0)
+		return ret;
 
-	चयन (attr) अणु
-	हाल hwmon_temp_min_alarm:
+	switch (attr) {
+	case hwmon_temp_min_alarm:
 		bit = channel ? ADT7411_STAT_1_EXT_TEMP_LOW
 			      : ADT7411_STAT_1_INT_TEMP_LOW;
-		अवरोध;
-	हाल hwmon_temp_max_alarm:
+		break;
+	case hwmon_temp_max_alarm:
 		bit = channel ? ADT7411_STAT_1_EXT_TEMP_HIGH_AIN1
 			      : ADT7411_STAT_1_INT_TEMP_HIGH;
-		अवरोध;
-	हाल hwmon_temp_fault:
+		break;
+	case hwmon_temp_fault:
 		bit = ADT7411_STAT_1_EXT_TEMP_FAULT;
-		अवरोध;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		break;
+	default:
+		return -EOPNOTSUPP;
+	}
 
 	*val = !!(ret & bit);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक adt7411_पढ़ो_temp(काष्ठा device *dev, u32 attr, पूर्णांक channel,
-			     दीर्घ *val)
-अणु
-	काष्ठा adt7411_data *data = dev_get_drvdata(dev);
-	काष्ठा i2c_client *client = data->client;
-	पूर्णांक ret, reg, regl, regh;
+static int adt7411_read_temp(struct device *dev, u32 attr, int channel,
+			     long *val)
+{
+	struct adt7411_data *data = dev_get_drvdata(dev);
+	struct i2c_client *client = data->client;
+	int ret, reg, regl, regh;
 
-	चयन (attr) अणु
-	हाल hwmon_temp_input:
+	switch (attr) {
+	case hwmon_temp_input:
 		regl = channel ? ADT7411_REG_EXT_TEMP_AIN14_LSB :
 				 ADT7411_REG_INT_TEMP_VDD_LSB;
 		regh = channel ? ADT7411_REG_EXT_TEMP_AIN1_MSB :
 				 ADT7411_REG_INT_TEMP_MSB;
-		ret = adt7411_पढ़ो_10_bit(client, regl, regh, 0);
-		अगर (ret < 0)
-			वापस ret;
-		ret = ret & 0x200 ? ret - 0x400 : ret; /* 10 bit चिन्हित */
+		ret = adt7411_read_10_bit(client, regl, regh, 0);
+		if (ret < 0)
+			return ret;
+		ret = ret & 0x200 ? ret - 0x400 : ret; /* 10 bit signed */
 		*val = ret * 250;
-		वापस 0;
-	हाल hwmon_temp_min:
-	हाल hwmon_temp_max:
+		return 0;
+	case hwmon_temp_min:
+	case hwmon_temp_max:
 		reg = (attr == hwmon_temp_min)
 			? ADT7411_REG_TEMP_LOW(channel)
 			: ADT7411_REG_TEMP_HIGH(channel);
-		ret = i2c_smbus_पढ़ो_byte_data(client, reg);
-		अगर (ret < 0)
-			वापस ret;
-		ret = ret & 0x80 ? ret - 0x100 : ret; /* 8 bit चिन्हित */
+		ret = i2c_smbus_read_byte_data(client, reg);
+		if (ret < 0)
+			return ret;
+		ret = ret & 0x80 ? ret - 0x100 : ret; /* 8 bit signed */
 		*val = ret * 1000;
-		वापस 0;
-	हाल hwmon_temp_min_alarm:
-	हाल hwmon_temp_max_alarm:
-	हाल hwmon_temp_fault:
-		वापस adt7411_पढ़ो_temp_alarm(dev, attr, channel, val);
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+		return 0;
+	case hwmon_temp_min_alarm:
+	case hwmon_temp_max_alarm:
+	case hwmon_temp_fault:
+		return adt7411_read_temp_alarm(dev, attr, channel, val);
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल पूर्णांक adt7411_पढ़ो(काष्ठा device *dev, क्रमागत hwmon_sensor_types type,
-			u32 attr, पूर्णांक channel, दीर्घ *val)
-अणु
-	चयन (type) अणु
-	हाल hwmon_in:
-		वापस adt7411_पढ़ो_in(dev, attr, channel, val);
-	हाल hwmon_temp:
-		वापस adt7411_पढ़ो_temp(dev, attr, channel, val);
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+static int adt7411_read(struct device *dev, enum hwmon_sensor_types type,
+			u32 attr, int channel, long *val)
+{
+	switch (type) {
+	case hwmon_in:
+		return adt7411_read_in(dev, attr, channel, val);
+	case hwmon_temp:
+		return adt7411_read_temp(dev, attr, channel, val);
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल पूर्णांक adt7411_ग_लिखो_in_vdd(काष्ठा device *dev, u32 attr, दीर्घ val)
-अणु
-	काष्ठा adt7411_data *data = dev_get_drvdata(dev);
-	काष्ठा i2c_client *client = data->client;
-	पूर्णांक reg;
+static int adt7411_write_in_vdd(struct device *dev, u32 attr, long val)
+{
+	struct adt7411_data *data = dev_get_drvdata(dev);
+	struct i2c_client *client = data->client;
+	int reg;
 
 	val = clamp_val(val, 0, 255 * 7000 / 256);
 	val = DIV_ROUND_CLOSEST(val * 256, 7000);
 
-	चयन (attr) अणु
-	हाल hwmon_in_min:
+	switch (attr) {
+	case hwmon_in_min:
 		reg = ADT7411_REG_VDD_LOW;
-		अवरोध;
-	हाल hwmon_in_max:
+		break;
+	case hwmon_in_max:
 		reg = ADT7411_REG_VDD_HIGH;
-		अवरोध;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		break;
+	default:
+		return -EOPNOTSUPP;
+	}
 
-	वापस i2c_smbus_ग_लिखो_byte_data(client, reg, val);
-पूर्ण
+	return i2c_smbus_write_byte_data(client, reg, val);
+}
 
-अटल पूर्णांक adt7411_ग_लिखो_in_chan(काष्ठा device *dev, u32 attr, पूर्णांक channel,
-				 दीर्घ val)
-अणु
-	काष्ठा adt7411_data *data = dev_get_drvdata(dev);
-	काष्ठा i2c_client *client = data->client;
-	पूर्णांक ret, reg;
+static int adt7411_write_in_chan(struct device *dev, u32 attr, int channel,
+				 long val)
+{
+	struct adt7411_data *data = dev_get_drvdata(dev);
+	struct i2c_client *client = data->client;
+	int ret, reg;
 
 	mutex_lock(&data->update_lock);
 	ret = adt7411_update_vref(dev);
-	अगर (ret < 0)
-		जाओ निकास_unlock;
+	if (ret < 0)
+		goto exit_unlock;
 	val = clamp_val(val, 0, 255 * data->vref_cached / 256);
 	val = DIV_ROUND_CLOSEST(val * 256, data->vref_cached);
 
-	चयन (attr) अणु
-	हाल hwmon_in_min:
+	switch (attr) {
+	case hwmon_in_min:
 		reg = ADT7411_REG_IN_LOW(channel);
-		अवरोध;
-	हाल hwmon_in_max:
+		break;
+	case hwmon_in_max:
 		reg = ADT7411_REG_IN_HIGH(channel);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EOPNOTSUPP;
-		जाओ निकास_unlock;
-	पूर्ण
+		goto exit_unlock;
+	}
 
-	ret = i2c_smbus_ग_लिखो_byte_data(client, reg, val);
- निकास_unlock:
+	ret = i2c_smbus_write_byte_data(client, reg, val);
+ exit_unlock:
 	mutex_unlock(&data->update_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक adt7411_ग_लिखो_in(काष्ठा device *dev, u32 attr, पूर्णांक channel,
-			    दीर्घ val)
-अणु
-	अगर (channel == 0)
-		वापस adt7411_ग_लिखो_in_vdd(dev, attr, val);
-	अन्यथा
-		वापस adt7411_ग_लिखो_in_chan(dev, attr, channel, val);
-पूर्ण
+static int adt7411_write_in(struct device *dev, u32 attr, int channel,
+			    long val)
+{
+	if (channel == 0)
+		return adt7411_write_in_vdd(dev, attr, val);
+	else
+		return adt7411_write_in_chan(dev, attr, channel, val);
+}
 
-अटल पूर्णांक adt7411_ग_लिखो_temp(काष्ठा device *dev, u32 attr, पूर्णांक channel,
-			      दीर्घ val)
-अणु
-	काष्ठा adt7411_data *data = dev_get_drvdata(dev);
-	काष्ठा i2c_client *client = data->client;
-	पूर्णांक reg;
+static int adt7411_write_temp(struct device *dev, u32 attr, int channel,
+			      long val)
+{
+	struct adt7411_data *data = dev_get_drvdata(dev);
+	struct i2c_client *client = data->client;
+	int reg;
 
 	val = clamp_val(val, -128000, 127000);
 	val = DIV_ROUND_CLOSEST(val, 1000);
 
-	चयन (attr) अणु
-	हाल hwmon_temp_min:
+	switch (attr) {
+	case hwmon_temp_min:
 		reg = ADT7411_REG_TEMP_LOW(channel);
-		अवरोध;
-	हाल hwmon_temp_max:
+		break;
+	case hwmon_temp_max:
 		reg = ADT7411_REG_TEMP_HIGH(channel);
-		अवरोध;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		break;
+	default:
+		return -EOPNOTSUPP;
+	}
 
-	वापस i2c_smbus_ग_लिखो_byte_data(client, reg, val);
-पूर्ण
+	return i2c_smbus_write_byte_data(client, reg, val);
+}
 
-अटल पूर्णांक adt7411_ग_लिखो(काष्ठा device *dev, क्रमागत hwmon_sensor_types type,
-			 u32 attr, पूर्णांक channel, दीर्घ val)
-अणु
-	चयन (type) अणु
-	हाल hwmon_in:
-		वापस adt7411_ग_लिखो_in(dev, attr, channel, val);
-	हाल hwmon_temp:
-		वापस adt7411_ग_लिखो_temp(dev, attr, channel, val);
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+static int adt7411_write(struct device *dev, enum hwmon_sensor_types type,
+			 u32 attr, int channel, long val)
+{
+	switch (type) {
+	case hwmon_in:
+		return adt7411_write_in(dev, attr, channel, val);
+	case hwmon_temp:
+		return adt7411_write_temp(dev, attr, channel, val);
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल umode_t adt7411_is_visible(स्थिर व्योम *_data,
-				  क्रमागत hwmon_sensor_types type,
-				  u32 attr, पूर्णांक channel)
-अणु
-	स्थिर काष्ठा adt7411_data *data = _data;
+static umode_t adt7411_is_visible(const void *_data,
+				  enum hwmon_sensor_types type,
+				  u32 attr, int channel)
+{
+	const struct adt7411_data *data = _data;
 	bool visible;
 
-	चयन (type) अणु
-	हाल hwmon_in:
+	switch (type) {
+	case hwmon_in:
 		visible = channel == 0 || channel >= 3 || !data->use_ext_temp;
-		चयन (attr) अणु
-		हाल hwmon_in_input:
-		हाल hwmon_in_alarm:
-			वापस visible ? S_IRUGO : 0;
-		हाल hwmon_in_min:
-		हाल hwmon_in_max:
-			वापस visible ? S_IRUGO | S_IWUSR : 0;
-		पूर्ण
-		अवरोध;
-	हाल hwmon_temp:
+		switch (attr) {
+		case hwmon_in_input:
+		case hwmon_in_alarm:
+			return visible ? S_IRUGO : 0;
+		case hwmon_in_min:
+		case hwmon_in_max:
+			return visible ? S_IRUGO | S_IWUSR : 0;
+		}
+		break;
+	case hwmon_temp:
 		visible = channel == 0 || data->use_ext_temp;
-		चयन (attr) अणु
-		हाल hwmon_temp_input:
-		हाल hwmon_temp_min_alarm:
-		हाल hwmon_temp_max_alarm:
-		हाल hwmon_temp_fault:
-			वापस visible ? S_IRUGO : 0;
-		हाल hwmon_temp_min:
-		हाल hwmon_temp_max:
-			वापस visible ? S_IRUGO | S_IWUSR : 0;
-		पूर्ण
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		switch (attr) {
+		case hwmon_temp_input:
+		case hwmon_temp_min_alarm:
+		case hwmon_temp_max_alarm:
+		case hwmon_temp_fault:
+			return visible ? S_IRUGO : 0;
+		case hwmon_temp_min:
+		case hwmon_temp_max:
+			return visible ? S_IRUGO | S_IWUSR : 0;
+		}
+		break;
+	default:
+		break;
+	}
+	return 0;
+}
 
-अटल पूर्णांक adt7411_detect(काष्ठा i2c_client *client,
-			  काष्ठा i2c_board_info *info)
-अणु
-	पूर्णांक val;
+static int adt7411_detect(struct i2c_client *client,
+			  struct i2c_board_info *info)
+{
+	int val;
 
-	अगर (!i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_BYTE_DATA))
-		वापस -ENODEV;
+	if (!i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_BYTE_DATA))
+		return -ENODEV;
 
-	val = i2c_smbus_पढ़ो_byte_data(client, ADT7411_REG_MANUFACTURER_ID);
-	अगर (val < 0 || val != ADT7411_MANUFACTURER_ID) अणु
+	val = i2c_smbus_read_byte_data(client, ADT7411_REG_MANUFACTURER_ID);
+	if (val < 0 || val != ADT7411_MANUFACTURER_ID) {
 		dev_dbg(&client->dev,
 			"Wrong manufacturer ID. Got %d, expected %d\n",
 			val, ADT7411_MANUFACTURER_ID);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	val = i2c_smbus_पढ़ो_byte_data(client, ADT7411_REG_DEVICE_ID);
-	अगर (val < 0 || val != ADT7411_DEVICE_ID) अणु
+	val = i2c_smbus_read_byte_data(client, ADT7411_REG_DEVICE_ID);
+	if (val < 0 || val != ADT7411_DEVICE_ID) {
 		dev_dbg(&client->dev,
 			"Wrong device ID. Got %d, expected %d\n",
 			val, ADT7411_DEVICE_ID);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	strlcpy(info->type, "adt7411", I2C_NAME_SIZE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक adt7411_init_device(काष्ठा adt7411_data *data)
-अणु
-	पूर्णांक ret;
+static int adt7411_init_device(struct adt7411_data *data)
+{
+	int ret;
 	u8 val;
 
-	ret = i2c_smbus_पढ़ो_byte_data(data->client, ADT7411_REG_CFG3);
-	अगर (ret < 0)
-		वापस ret;
+	ret = i2c_smbus_read_byte_data(data->client, ADT7411_REG_CFG3);
+	if (ret < 0)
+		return ret;
 
 	/*
-	 * We must only ग_लिखो zero to bit 1 and bit 2 and only one to bit 3
+	 * We must only write zero to bit 1 and bit 2 and only one to bit 3
 	 * according to the datasheet.
 	 */
 	val = ret;
 	val &= ~(ADT7411_CFG3_RESERVED_BIT1 | ADT7411_CFG3_RESERVED_BIT2);
 	val |= ADT7411_CFG3_RESERVED_BIT3;
 
-	ret = i2c_smbus_ग_लिखो_byte_data(data->client, ADT7411_REG_CFG3, val);
-	अगर (ret < 0)
-		वापस ret;
+	ret = i2c_smbus_write_byte_data(data->client, ADT7411_REG_CFG3, val);
+	if (ret < 0)
+		return ret;
 
-	ret = i2c_smbus_पढ़ो_byte_data(data->client, ADT7411_REG_CFG1);
-	अगर (ret < 0)
-		वापस ret;
+	ret = i2c_smbus_read_byte_data(data->client, ADT7411_REG_CFG1);
+	if (ret < 0)
+		return ret;
 
 	data->use_ext_temp = ret & ADT7411_CFG1_EXT_TDM;
 
 	/*
-	 * We must only ग_लिखो zero to bit 1 and only one to bit 3 according to
+	 * We must only write zero to bit 1 and only one to bit 3 according to
 	 * the datasheet.
 	 */
 	val = ret;
@@ -634,10 +633,10 @@ ATTRIBUTE_GROUPS(adt7411);
 	/* enable monitoring */
 	val |= ADT7411_CFG1_START_MONITOR;
 
-	वापस i2c_smbus_ग_लिखो_byte_data(data->client, ADT7411_REG_CFG1, val);
-पूर्ण
+	return i2c_smbus_write_byte_data(data->client, ADT7411_REG_CFG1, val);
+}
 
-अटल स्थिर काष्ठा hwmon_channel_info *adt7411_info[] = अणु
+static const struct hwmon_channel_info *adt7411_info[] = {
 	HWMON_CHANNEL_INFO(in,
 			   HWMON_I_INPUT | HWMON_I_MIN | HWMON_I_MAX | HWMON_I_ALARM,
 			   HWMON_I_INPUT | HWMON_I_MIN | HWMON_I_MAX | HWMON_I_ALARM,
@@ -653,30 +652,30 @@ ATTRIBUTE_GROUPS(adt7411);
 			   HWMON_T_MAX | HWMON_T_MAX_ALARM,
 			   HWMON_T_INPUT | HWMON_T_MIN | HWMON_T_MIN_ALARM |
 			   HWMON_T_MAX | HWMON_T_MAX_ALARM | HWMON_T_FAULT),
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा hwmon_ops adt7411_hwmon_ops = अणु
+static const struct hwmon_ops adt7411_hwmon_ops = {
 	.is_visible = adt7411_is_visible,
-	.पढ़ो = adt7411_पढ़ो,
-	.ग_लिखो = adt7411_ग_लिखो,
-पूर्ण;
+	.read = adt7411_read,
+	.write = adt7411_write,
+};
 
-अटल स्थिर काष्ठा hwmon_chip_info adt7411_chip_info = अणु
+static const struct hwmon_chip_info adt7411_chip_info = {
 	.ops = &adt7411_hwmon_ops,
 	.info = adt7411_info,
-पूर्ण;
+};
 
-अटल पूर्णांक adt7411_probe(काष्ठा i2c_client *client)
-अणु
-	काष्ठा device *dev = &client->dev;
-	काष्ठा adt7411_data *data;
-	काष्ठा device *hwmon_dev;
-	पूर्णांक ret;
+static int adt7411_probe(struct i2c_client *client)
+{
+	struct device *dev = &client->dev;
+	struct adt7411_data *data;
+	struct device *hwmon_dev;
+	int ret;
 
-	data = devm_kzalloc(dev, माप(*data), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = devm_kzalloc(dev, sizeof(*data), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
 	i2c_set_clientdata(client, data);
 	data->client = client;
@@ -684,35 +683,35 @@ ATTRIBUTE_GROUPS(adt7411);
 	mutex_init(&data->update_lock);
 
 	ret = adt7411_init_device(data);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	/* क्रमce update on first occasion */
-	data->next_update = jअगरfies;
+	/* force update on first occasion */
+	data->next_update = jiffies;
 
-	hwmon_dev = devm_hwmon_device_रेजिस्टर_with_info(dev, client->name,
+	hwmon_dev = devm_hwmon_device_register_with_info(dev, client->name,
 							 data,
 							 &adt7411_chip_info,
 							 adt7411_groups);
-	वापस PTR_ERR_OR_ZERO(hwmon_dev);
-पूर्ण
+	return PTR_ERR_OR_ZERO(hwmon_dev);
+}
 
-अटल स्थिर काष्ठा i2c_device_id adt7411_id[] = अणु
-	अणु "adt7411", 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id adt7411_id[] = {
+	{ "adt7411", 0 },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, adt7411_id);
 
-अटल काष्ठा i2c_driver adt7411_driver = अणु
-	.driver		= अणु
+static struct i2c_driver adt7411_driver = {
+	.driver		= {
 		.name		= "adt7411",
-	पूर्ण,
+	},
 	.probe_new = adt7411_probe,
 	.id_table = adt7411_id,
 	.detect = adt7411_detect,
 	.address_list = normal_i2c,
 	.class = I2C_CLASS_HWMON,
-पूर्ण;
+};
 
 module_i2c_driver(adt7411_driver);
 

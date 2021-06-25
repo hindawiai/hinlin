@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Compiler-dependent पूर्णांकrinsics.
+ * Compiler-dependent intrinsics.
  *
  * Copyright (C) 2002-2003 Hewlett-Packard Co
  *	David Mosberger-Tang <davidm@hpl.hp.com>
  */
-#अगर_अघोषित _ASM_IA64_INTRINSICS_H
-#घोषणा _ASM_IA64_INTRINSICS_H
+#ifndef _ASM_IA64_INTRINSICS_H
+#define _ASM_IA64_INTRINSICS_H
 
-#समावेश <uapi/यंत्र/पूर्णांकrinsics.h>
+#include <uapi/asm/intrinsics.h>
 
-#पूर्ण_अगर /* _ASM_IA64_INTRINSICS_H */
+#endif /* _ASM_IA64_INTRINSICS_H */

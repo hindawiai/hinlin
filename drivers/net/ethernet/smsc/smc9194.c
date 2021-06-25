@@ -1,26 +1,25 @@
-<शैली गुरु>
 /*------------------------------------------------------------------------
  . smc9194.c
- . This is a driver क्रम SMC's 9000 series of Ethernet cards.
+ . This is a driver for SMC's 9000 series of Ethernet cards.
  .
  . Copyright (C) 1996 by Erik Stahlman
  . This software may be used and distributed according to the terms
  . of the GNU General Public License, incorporated herein by reference.
  .
  . "Features" of the SMC chip:
- .   4608 byte packet memory. ( क्रम the 91C92.  Others have more )
- .   EEPROM क्रम configuration
+ .   4608 byte packet memory. ( for the 91C92.  Others have more )
+ .   EEPROM for configuration
  .   AUI/TP selection  ( mine has 10Base2/10BaseT select )
  .
  . Arguments:
- . 	io		 = क्रम the base address
- .	irq	 = क्रम the IRQ
- .	अगरport = 0 क्रम स्वतःdetect, 1 क्रम TP, 2 क्रम AUI ( or 10base2 )
+ . 	io		 = for the base address
+ .	irq	 = for the IRQ
+ .	ifport = 0 for autodetect, 1 for TP, 2 for AUI ( or 10base2 )
  .
  . author:
  . 	Erik Stahlman				( erik@vt.edu )
  . contributors:
- .      Arnalकरो Carvalho de Melo <acme@conectiva.com.br>
+ .      Arnaldo Carvalho de Melo <acme@conectiva.com.br>
  .
  . Hardware multicast code from Peter Cammaert ( pc@denkart.be )
  .
@@ -33,204 +32,204 @@
  .	12/07/95  Erik Stahlman  written, got receive/xmit handled
  . 	01/03/96  Erik Stahlman  worked out some bugs, actually usable!!! :-)
  .	01/06/96  Erik Stahlman	 cleaned up some, better testing, etc
- .	01/29/96  Erik Stahlman	 fixed स्वतःirq, added multicast
- . 	02/01/96  Erik Stahlman	 1. disabled all पूर्णांकerrupts in smc_reset
+ .	01/29/96  Erik Stahlman	 fixed autoirq, added multicast
+ . 	02/01/96  Erik Stahlman	 1. disabled all interrupts in smc_reset
  .		   		 2. got rid of post-decrementing bug -- UGH.
- .	02/13/96  Erik Stahlman  Tried to fix स्वतःirq failure.  Added more
+ .	02/13/96  Erik Stahlman  Tried to fix autoirq failure.  Added more
  .				 descriptive error messages.
  .	02/15/96  Erik Stahlman  Fixed typo that caused detection failure
- . 	02/23/96  Erik Stahlman	 Modअगरied it to fit पूर्णांकo kernel tree
+ . 	02/23/96  Erik Stahlman	 Modified it to fit into kernel tree
  .				 Added support to change hardware address
- .				 Cleared stats on खोलोs
- .	02/26/96  Erik Stahlman	 Trial support क्रम Kernel 1.2.13
- .				 Kludge क्रम स्वतःmatic IRQ detection
+ .				 Cleared stats on opens
+ .	02/26/96  Erik Stahlman	 Trial support for Kernel 1.2.13
+ .				 Kludge for automatic IRQ detection
  .	03/04/96  Erik Stahlman	 Fixed kernel 1.3.70 +
  .				 Fixed bug reported by Gardner Buchanan in
  .				   smc_enable, with outw instead of outb
  .	03/06/96  Erik Stahlman  Added hardware multicast from Peter Cammaert
- .	04/14/00  Heiko Pruessing (SMA Regelप्रणालीe)  Fixed bug in chip memory
+ .	04/14/00  Heiko Pruessing (SMA Regelsysteme)  Fixed bug in chip memory
  .				 allocation
- .      08/20/00  Arnalकरो Melo   fix kमुक्त(skb) in smc_hardware_send_packet
+ .      08/20/00  Arnaldo Melo   fix kfree(skb) in smc_hardware_send_packet
  .      12/15/00  Christian Jullien fix "Warning: kfree_skb on hard IRQ"
  .      11/08/01 Matt Domsch     Use common crc32 function
  ----------------------------------------------------------------------------*/
 
-अटल स्थिर अक्षर version[] =
+static const char version[] =
 	"smc9194.c:v0.14 12/15/00 by Erik Stahlman (erik@vt.edu)";
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/fcntl.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/in.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/init.h>
-#समावेश <linux/crc32.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/bitops.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/fcntl.h>
+#include <linux/interrupt.h>
+#include <linux/ioport.h>
+#include <linux/in.h>
+#include <linux/string.h>
+#include <linux/init.h>
+#include <linux/crc32.h>
+#include <linux/errno.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/skbuff.h>
+#include <linux/bitops.h>
 
-#समावेश <यंत्र/पन.स>
+#include <asm/io.h>
 
-#समावेश "smc9194.h"
+#include "smc9194.h"
 
-#घोषणा DRV_NAME "smc9194"
+#define DRV_NAME "smc9194"
 
 /*------------------------------------------------------------------------
  .
- . Configuration options, क्रम the experienced user to change.
+ . Configuration options, for the experienced user to change.
  .
  -------------------------------------------------------------------------*/
 
 /*
  . Do you want to use 32 bit xfers?  This should work on all chips, as
- . the chipset is deचिन्हित to accommodate them.
+ . the chipset is designed to accommodate them.
 */
-#अगर_घोषित __sh__
-#अघोषित USE_32_BIT
-#अन्यथा
-#घोषणा USE_32_BIT 1
-#पूर्ण_अगर
+#ifdef __sh__
+#undef USE_32_BIT
+#else
+#define USE_32_BIT 1
+#endif
 
 /*
  .the SMC9194 can be at any of the following port addresses.  To change,
- .क्रम a slightly dअगरferent card, you can add it to the array.  Keep in
+ .for a slightly different card, you can add it to the array.  Keep in
  .mind that the array must end in zero.
 */
 
-काष्ठा devlist अणु
-	अचिन्हित पूर्णांक port;
-	अचिन्हित पूर्णांक irq;
-पूर्ण;
+struct devlist {
+	unsigned int port;
+	unsigned int irq;
+};
 
-अटल काष्ठा devlist smc_devlist[] __initdata = अणु
-	अणु.port = 0x200, .irq = 0पूर्ण,
-	अणु.port = 0x220, .irq = 0पूर्ण,
-	अणु.port = 0x240, .irq = 0पूर्ण,
-	अणु.port = 0x260, .irq = 0पूर्ण,
-	अणु.port = 0x280, .irq = 0पूर्ण,
-	अणु.port = 0x2A0, .irq = 0पूर्ण,
-	अणु.port = 0x2C0, .irq = 0पूर्ण,
-	अणु.port = 0x2E0, .irq = 0पूर्ण,
-	अणु.port = 0x300, .irq = 0पूर्ण,
-	अणु.port = 0x320, .irq = 0पूर्ण,
-	अणु.port = 0x340, .irq = 0पूर्ण,
-	अणु.port = 0x360, .irq = 0पूर्ण,
-	अणु.port = 0x380, .irq = 0पूर्ण,
-	अणु.port = 0x3A0, .irq = 0पूर्ण,
-	अणु.port = 0x3C0, .irq = 0पूर्ण,
-	अणु.port = 0x3E0, .irq = 0पूर्ण,
-	अणु.port = 0,     .irq = 0पूर्ण,
-पूर्ण;
+static struct devlist smc_devlist[] __initdata = {
+	{.port = 0x200, .irq = 0},
+	{.port = 0x220, .irq = 0},
+	{.port = 0x240, .irq = 0},
+	{.port = 0x260, .irq = 0},
+	{.port = 0x280, .irq = 0},
+	{.port = 0x2A0, .irq = 0},
+	{.port = 0x2C0, .irq = 0},
+	{.port = 0x2E0, .irq = 0},
+	{.port = 0x300, .irq = 0},
+	{.port = 0x320, .irq = 0},
+	{.port = 0x340, .irq = 0},
+	{.port = 0x360, .irq = 0},
+	{.port = 0x380, .irq = 0},
+	{.port = 0x3A0, .irq = 0},
+	{.port = 0x3C0, .irq = 0},
+	{.port = 0x3E0, .irq = 0},
+	{.port = 0,     .irq = 0},
+};
 /*
- . Wait समय क्रम memory to be मुक्त.  This probably shouldn't be
- . tuned that much, as रुकोing क्रम this means nothing अन्यथा happens
- . in the प्रणाली
+ . Wait time for memory to be free.  This probably shouldn't be
+ . tuned that much, as waiting for this means nothing else happens
+ . in the system
 */
-#घोषणा MEMORY_WAIT_TIME 16
+#define MEMORY_WAIT_TIME 16
 
 /*
  . DEBUGGING LEVELS
  .
- . 0 क्रम normal operation
- . 1 क्रम slightly more details
- . >2 क्रम various levels of increasingly useless inक्रमmation
- .    2 क्रम पूर्णांकerrupt tracking, status flags
- .    3 क्रम packet dumps, etc.
+ . 0 for normal operation
+ . 1 for slightly more details
+ . >2 for various levels of increasingly useless information
+ .    2 for interrupt tracking, status flags
+ .    3 for packet dumps, etc.
 */
-#घोषणा SMC_DEBUG 0
+#define SMC_DEBUG 0
 
-#अगर (SMC_DEBUG > 2 )
-#घोषणा PRINTK3(x) prपूर्णांकk x
-#अन्यथा
-#घोषणा PRINTK3(x)
-#पूर्ण_अगर
+#if (SMC_DEBUG > 2 )
+#define PRINTK3(x) printk x
+#else
+#define PRINTK3(x)
+#endif
 
-#अगर SMC_DEBUG > 1
-#घोषणा PRINTK2(x) prपूर्णांकk x
-#अन्यथा
-#घोषणा PRINTK2(x)
-#पूर्ण_अगर
+#if SMC_DEBUG > 1
+#define PRINTK2(x) printk x
+#else
+#define PRINTK2(x)
+#endif
 
-#अगर_घोषित SMC_DEBUG
-#घोषणा PRINTK(x) prपूर्णांकk x
-#अन्यथा
-#घोषणा PRINTK(x)
-#पूर्ण_अगर
+#ifdef SMC_DEBUG
+#define PRINTK(x) printk x
+#else
+#define PRINTK(x)
+#endif
 
 
 /*------------------------------------------------------------------------
  .
- . The पूर्णांकernal workings of the driver.  If you are changing anything
+ . The internal workings of the driver.  If you are changing anything
  . here with the SMC stuff, you should have the datasheet and known
- . what you are करोing.
+ . what you are doing.
  .
  -------------------------------------------------------------------------*/
-#घोषणा CARDNAME "SMC9194"
+#define CARDNAME "SMC9194"
 
 
-/* store this inक्रमmation क्रम the driver.. */
-काष्ठा smc_local अणु
+/* store this information for the driver.. */
+struct smc_local {
 	/*
-	   If I have to रुको until memory is available to send
+	   If I have to wait until memory is available to send
 	   a packet, I will store the skbuff here, until I get the
-	   desired memory.  Then, I'll send it out and मुक्त it.
+	   desired memory.  Then, I'll send it out and free it.
 	*/
-	काष्ठा sk_buff * saved_skb;
+	struct sk_buff * saved_skb;
 
 	/*
  	 . This keeps track of how many packets that I have
- 	 . sent out.  When an TX_EMPTY पूर्णांकerrupt comes, I know
+ 	 . sent out.  When an TX_EMPTY interrupt comes, I know
 	 . that all of these have been sent.
 	*/
-	पूर्णांक	packets_रुकोing;
-पूर्ण;
+	int	packets_waiting;
+};
 
 
 /*-----------------------------------------------------------------
  .
- .  The driver can be entered at any of the following entry poपूर्णांकs.
+ .  The driver can be entered at any of the following entry points.
  .
  .------------------------------------------------------------------  */
 
 /*
- . This is called by  रेजिस्टर_netdev().  It is responsible क्रम
- . checking the portlist क्रम the SMC9000 series chipset.  If it finds
- . one, then it will initialize the device, find the hardware inक्रमmation,
+ . This is called by  register_netdev().  It is responsible for
+ . checking the portlist for the SMC9000 series chipset.  If it finds
+ . one, then it will initialize the device, find the hardware information,
  . and sets up the appropriate device parameters.
  . NOTE: Interrupts are *OFF* when this procedure is called.
  .
- . NB:This shouldn't be अटल since it is referred to बाह्यally.
+ . NB:This shouldn't be static since it is referred to externally.
 */
-काष्ठा net_device *smc_init(पूर्णांक unit);
+struct net_device *smc_init(int unit);
 
 /*
  . The kernel calls this function when someone wants to use the device,
  . typically 'ifconfig ethX up'.
 */
-अटल पूर्णांक smc_खोलो(काष्ठा net_device *dev);
+static int smc_open(struct net_device *dev);
 
 /*
- . Our watchकरोg समयd out. Called by the networking layer
+ . Our watchdog timed out. Called by the networking layer
 */
-अटल व्योम smc_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue);
+static void smc_timeout(struct net_device *dev, unsigned int txqueue);
 
 /*
  . This is called by the kernel in response to 'ifconfig ethX down'.  It
- . is responsible क्रम cleaning up everything that the खोलो routine
- . करोes, and maybe putting the card पूर्णांकo a घातerकरोwn state.
+ . is responsible for cleaning up everything that the open routine
+ . does, and maybe putting the card into a powerdown state.
 */
-अटल पूर्णांक smc_बंद(काष्ठा net_device *dev);
+static int smc_close(struct net_device *dev);
 
 /*
- . Finally, a call to set promiscuous mode ( क्रम TCPDUMP and related
+ . Finally, a call to set promiscuous mode ( for TCPDUMP and related
  . programs ) and multicast modes.
 */
-अटल व्योम smc_set_multicast_list(काष्ठा net_device *dev);
+static void smc_set_multicast_list(struct net_device *dev);
 
 
 /*---------------------------------------------------------------
@@ -240,19 +239,19 @@
  ----------------------------------------------------------------*/
 
 /*
- . Handles the actual पूर्णांकerrupt
+ . Handles the actual interrupt
 */
-अटल irqवापस_t smc_पूर्णांकerrupt(पूर्णांक irq, व्योम *);
+static irqreturn_t smc_interrupt(int irq, void *);
 /*
  . This is a separate procedure to handle the receipt of a packet, to
- . leave the पूर्णांकerrupt code looking slightly cleaner
+ . leave the interrupt code looking slightly cleaner
 */
-अटल अंतरभूत व्योम smc_rcv( काष्ठा net_device *dev );
+static inline void smc_rcv( struct net_device *dev );
 /*
- . This handles a TX पूर्णांकerrupt, which is only called when an error
+ . This handles a TX interrupt, which is only called when an error
  . relating to a packet is sent.
 */
-अटल अंतरभूत व्योम smc_tx( काष्ठा net_device * dev );
+static inline void smc_tx( struct net_device * dev );
 
 /*
  ------------------------------------------------------------
@@ -263,76 +262,76 @@
 */
 
 /*
- . Test अगर a given location contains a chip, trying to cause as
- . little damage as possible अगर it's not a SMC chip.
+ . Test if a given location contains a chip, trying to cause as
+ . little damage as possible if it's not a SMC chip.
 */
-अटल पूर्णांक smc_probe(काष्ठा net_device *dev, पूर्णांक ioaddr);
+static int smc_probe(struct net_device *dev, int ioaddr);
 
 /*
- . A rather simple routine to prपूर्णांक out a packet क्रम debugging purposes.
+ . A rather simple routine to print out a packet for debugging purposes.
 */
-#अगर SMC_DEBUG > 2
-अटल व्योम prपूर्णांक_packet( byte *, पूर्णांक );
-#पूर्ण_अगर
+#if SMC_DEBUG > 2
+static void print_packet( byte *, int );
+#endif
 
-#घोषणा tx_करोne(dev) 1
+#define tx_done(dev) 1
 
 /* this is called to actually send the packet to the chip */
-अटल व्योम smc_hardware_send_packet( काष्ठा net_device * dev );
+static void smc_hardware_send_packet( struct net_device * dev );
 
-/* Since I am not sure अगर I will have enough room in the chip's ram
+/* Since I am not sure if I will have enough room in the chip's ram
  . to store the packet, I call this routine, which either sends it
- . now, or generates an पूर्णांकerrupt when the card is पढ़ोy क्रम the
+ . now, or generates an interrupt when the card is ready for the
  . packet */
-अटल netdev_tx_t  smc_रुको_to_send_packet( काष्ठा sk_buff * skb,
-					     काष्ठा net_device *dev );
+static netdev_tx_t  smc_wait_to_send_packet( struct sk_buff * skb,
+					     struct net_device *dev );
 
-/* this करोes a soft reset on the device */
-अटल व्योम smc_reset( पूर्णांक ioaddr );
+/* this does a soft reset on the device */
+static void smc_reset( int ioaddr );
 
 /* Enable Interrupts, Receive, and Transmit */
-अटल व्योम smc_enable( पूर्णांक ioaddr );
+static void smc_enable( int ioaddr );
 
-/* this माला_दो the device in an inactive state */
-अटल व्योम smc_shutकरोwn( पूर्णांक ioaddr );
+/* this puts the device in an inactive state */
+static void smc_shutdown( int ioaddr );
 
-/* This routine will find the IRQ of the driver अगर one is not
- . specअगरied in the input to the device.  */
-अटल पूर्णांक smc_findirq( पूर्णांक ioaddr );
+/* This routine will find the IRQ of the driver if one is not
+ . specified in the input to the device.  */
+static int smc_findirq( int ioaddr );
 
 /*
- . Function: smc_reset( पूर्णांक ioaddr )
+ . Function: smc_reset( int ioaddr )
  . Purpose:
  .  	This sets the SMC91xx chip to its normal state, hopefully from whatever
  . 	mess that any other DOS driver has put it in.
  .
- . Maybe I should reset more रेजिस्टरs to शेषs in here?  SOFTRESET  should
- . करो that क्रम me.
+ . Maybe I should reset more registers to defaults in here?  SOFTRESET  should
+ . do that for me.
  .
  . Method:
  .	1.  send a SOFT RESET
- .	2.  रुको क्रम it to finish
- .	3.  enable स्वतःrelease mode
+ .	2.  wait for it to finish
+ .	3.  enable autorelease mode
  .	4.  reset the memory management unit
- .	5.  clear all पूर्णांकerrupts
+ .	5.  clear all interrupts
  .
 */
-अटल व्योम smc_reset( पूर्णांक ioaddr )
-अणु
-	/* This resets the रेजिस्टरs mostly to शेषs, but करोesn't
+static void smc_reset( int ioaddr )
+{
+	/* This resets the registers mostly to defaults, but doesn't
 	   affect EEPROM.  That seems unnecessary */
 	SMC_SELECT_BANK( 0 );
 	outw( RCR_SOFTRESET, ioaddr + RCR );
 
-	/* this should छोड़ो enough क्रम the chip to be happy */
+	/* this should pause enough for the chip to be happy */
 	SMC_DELAY( );
 
-	/* Set the transmit and receive configuration रेजिस्टरs to
-	   शेष values */
+	/* Set the transmit and receive configuration registers to
+	   default values */
 	outw( RCR_CLEAR, ioaddr + RCR );
 	outw( TCR_CLEAR, ioaddr + TCR );
 
-	/* set the control रेजिस्टर to स्वतःmatically
+	/* set the control register to automatically
 	   release successfully transmitted packets, to make the best
 	   use out of our limited memory */
 	SMC_SELECT_BANK( 1 );
@@ -342,12 +341,12 @@
 	SMC_SELECT_BANK( 2 );
 	outw( MC_RESET, ioaddr + MMU_CMD );
 
-	/* Note:  It करोesn't seem that रुकोing क्रम the MMU busy is needed here,
-	   but this is a place where future chipsets _COULD_ अवरोध.  Be wary
+	/* Note:  It doesn't seem that waiting for the MMU busy is needed here,
+	   but this is a place where future chipsets _COULD_ break.  Be wary
  	   of issuing another MMU command right after this */
 
 	outb( 0, ioaddr + INT_MASK );
-पूर्ण
+}
 
 /*
  . Function: smc_enable
@@ -355,37 +354,37 @@
  . Method:
  .	1.  Enable the transmitter
  .	2.  Enable the receiver
- .	3.  Enable पूर्णांकerrupts
+ .	3.  Enable interrupts
 */
-अटल व्योम smc_enable( पूर्णांक ioaddr )
-अणु
+static void smc_enable( int ioaddr )
+{
 	SMC_SELECT_BANK( 0 );
-	/* see the header file क्रम options in TCR/RCR NORMAL*/
+	/* see the header file for options in TCR/RCR NORMAL*/
 	outw( TCR_NORMAL, ioaddr + TCR );
 	outw( RCR_NORMAL, ioaddr + RCR );
 
-	/* now, enable पूर्णांकerrupts */
+	/* now, enable interrupts */
 	SMC_SELECT_BANK( 2 );
 	outb( SMC_INTERRUPT_MASK, ioaddr + INT_MASK );
-पूर्ण
+}
 
 /*
- . Function: smc_shutकरोwn
- . Purpose:  बंदs करोwn the SMC91xxx chip.
+ . Function: smc_shutdown
+ . Purpose:  closes down the SMC91xxx chip.
  . Method:
- .	1. zero the पूर्णांकerrupt mask
+ .	1. zero the interrupt mask
  .	2. clear the enable receive flag
  .	3. clear the enable xmit flags
  .
  . TODO:
- .   (1) maybe utilize घातer करोwn mode.
- .	Why not yet?  Because जबतक the chip will go पूर्णांकo घातer करोwn mode,
+ .   (1) maybe utilize power down mode.
+ .	Why not yet?  Because while the chip will go into power down mode,
  .	the manual says that it will wake up in response to any I/O requests
- .	in the रेजिस्टर space.   Empirical results करो not show this working.
+ .	in the register space.   Empirical results do not show this working.
 */
-अटल व्योम smc_shutकरोwn( पूर्णांक ioaddr )
-अणु
-	/* no more पूर्णांकerrupts क्रम me */
+static void smc_shutdown( int ioaddr )
+{
+	/* no more interrupts for me */
 	SMC_SELECT_BANK( 2 );
 	outb( 0, ioaddr + INT_MASK );
 
@@ -393,267 +392,267 @@
 	SMC_SELECT_BANK( 0 );
 	outb( RCR_CLEAR, ioaddr + RCR );
 	outb( TCR_CLEAR, ioaddr + TCR );
-#अगर 0
-	/* finally, shut the chip करोwn */
+#if 0
+	/* finally, shut the chip down */
 	SMC_SELECT_BANK( 1 );
 	outw( inw( ioaddr + CONTROL ), CTL_POWERDOWN, ioaddr + CONTROL  );
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
 
 /*
- . Function: smc_seपंचांगulticast( पूर्णांक ioaddr, काष्ठा net_device *dev )
+ . Function: smc_setmulticast( int ioaddr, struct net_device *dev )
  . Purpose:
- .    This sets the पूर्णांकernal hardware table to filter out unwanted multicast
- .    packets beक्रमe they take up memory.
+ .    This sets the internal hardware table to filter out unwanted multicast
+ .    packets before they take up memory.
  .
  .    The SMC chip uses a hash table where the high 6 bits of the CRC of
- .    address are the offset पूर्णांकo the table.  If that bit is 1, then the
+ .    address are the offset into the table.  If that bit is 1, then the
  .    multicast packet is accepted.  Otherwise, it's dropped silently.
  .
- .    To use the 6 bits as an offset पूर्णांकo the table, the high 3 bits are the
- .    number of the 8 bit रेजिस्टर, जबतक the low 3 bits are the bit within
- .    that रेजिस्टर.
+ .    To use the 6 bits as an offset into the table, the high 3 bits are the
+ .    number of the 8 bit register, while the low 3 bits are the bit within
+ .    that register.
  .
  . This routine is based very heavily on the one provided by Peter Cammaert.
 */
 
 
-अटल व्योम smc_seपंचांगulticast(पूर्णांक ioaddr, काष्ठा net_device *dev)
-अणु
-	पूर्णांक			i;
-	अचिन्हित अक्षर		multicast_table[ 8 ];
-	काष्ठा netdev_hw_addr *ha;
-	/* table क्रम flipping the order of 3 bits */
-	अचिन्हित अक्षर invert3[] = अणु 0, 4, 2, 6, 1, 5, 3, 7 पूर्ण;
+static void smc_setmulticast(int ioaddr, struct net_device *dev)
+{
+	int			i;
+	unsigned char		multicast_table[ 8 ];
+	struct netdev_hw_addr *ha;
+	/* table for flipping the order of 3 bits */
+	unsigned char invert3[] = { 0, 4, 2, 6, 1, 5, 3, 7 };
 
 	/* start with a table of all zeros: reject all */
-	स_रखो( multicast_table, 0, माप( multicast_table ) );
+	memset( multicast_table, 0, sizeof( multicast_table ) );
 
-	netdev_क्रम_each_mc_addr(ha, dev) अणु
-		पूर्णांक position;
+	netdev_for_each_mc_addr(ha, dev) {
+		int position;
 
 		/* only use the low order bits */
 		position = ether_crc_le(6, ha->addr) & 0x3f;
 
-		/* करो some messy swapping to put the bit in the right spot */
+		/* do some messy swapping to put the bit in the right spot */
 		multicast_table[invert3[position&7]] |=
 					(1<<invert3[(position>>3)&7]);
 
-	पूर्ण
-	/* now, the table can be loaded पूर्णांकo the chipset */
+	}
+	/* now, the table can be loaded into the chipset */
 	SMC_SELECT_BANK( 3 );
 
-	क्रम ( i = 0; i < 8 ; i++ ) अणु
+	for ( i = 0; i < 8 ; i++ ) {
 		outb( multicast_table[i], ioaddr + MULTICAST1 + i );
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- . Function: smc_रुको_to_send_packet( काष्ठा sk_buff * skb, काष्ठा net_device * )
+ . Function: smc_wait_to_send_packet( struct sk_buff * skb, struct net_device * )
  . Purpose:
- .    Attempt to allocate memory क्रम a packet, अगर chip-memory is not
- .    available, then tell the card to generate an पूर्णांकerrupt when it
+ .    Attempt to allocate memory for a packet, if chip-memory is not
+ .    available, then tell the card to generate an interrupt when it
  .    is available.
  .
  . Algorithm:
  .
- . o	अगर the saved_skb is not currently null, then drop this packet
- .	on the न्यूनमान.  This should never happen, because of TBUSY.
- . o	अगर the saved_skb is null, then replace it with the current packet,
- . o	See अगर I can sending it now.
- . o 	(NO): Enable पूर्णांकerrupts and let the पूर्णांकerrupt handler deal with it.
+ . o	if the saved_skb is not currently null, then drop this packet
+ .	on the floor.  This should never happen, because of TBUSY.
+ . o	if the saved_skb is null, then replace it with the current packet,
+ . o	See if I can sending it now.
+ . o 	(NO): Enable interrupts and let the interrupt handler deal with it.
  . o	(YES):Send it now.
 */
-अटल netdev_tx_t smc_रुको_to_send_packet(काष्ठा sk_buff *skb,
-					   काष्ठा net_device *dev)
-अणु
-	काष्ठा smc_local *lp = netdev_priv(dev);
-	अचिन्हित पूर्णांक ioaddr 	= dev->base_addr;
+static netdev_tx_t smc_wait_to_send_packet(struct sk_buff *skb,
+					   struct net_device *dev)
+{
+	struct smc_local *lp = netdev_priv(dev);
+	unsigned int ioaddr 	= dev->base_addr;
 	word 			length;
-	अचिन्हित लघु 		numPages;
-	word			समय_out;
+	unsigned short 		numPages;
+	word			time_out;
 
-	netअगर_stop_queue(dev);
-	/* Well, I want to send the packet.. but I करोn't know
-	   अगर I can send it right now...  */
+	netif_stop_queue(dev);
+	/* Well, I want to send the packet.. but I don't know
+	   if I can send it right now...  */
 
-	अगर ( lp->saved_skb) अणु
+	if ( lp->saved_skb) {
 		/* THIS SHOULD NEVER HAPPEN. */
-		dev->stats.tx_पातed_errors++;
-		prपूर्णांकk(CARDNAME": Bad Craziness - sent packet while busy.\n" );
-		वापस NETDEV_TX_BUSY;
-	पूर्ण
+		dev->stats.tx_aborted_errors++;
+		printk(CARDNAME": Bad Craziness - sent packet while busy.\n" );
+		return NETDEV_TX_BUSY;
+	}
 	lp->saved_skb = skb;
 
 	length = skb->len;
 
-	अगर (length < ETH_ZLEN) अणु
-		अगर (skb_padto(skb, ETH_ZLEN)) अणु
-			netअगर_wake_queue(dev);
-			वापस NETDEV_TX_OK;
-		पूर्ण
+	if (length < ETH_ZLEN) {
+		if (skb_padto(skb, ETH_ZLEN)) {
+			netif_wake_queue(dev);
+			return NETDEV_TX_OK;
+		}
 		length = ETH_ZLEN;
-	पूर्ण
+	}
 
 	/*
 	** The MMU wants the number of pages to be the number of 256 bytes
 	** 'pages', minus 1 ( since a packet can't ever have 0 pages :) )
 	**
-	** Pkt size क्रम allocating is data length +6 (क्रम additional status words,
+	** Pkt size for allocating is data length +6 (for additional status words,
 	** length and ctl!) If odd size last byte is included in this header.
 	*/
 	numPages =  ((length & 0xfffe) + 6) / 256;
 
-	अगर (numPages > 7 ) अणु
-		prपूर्णांकk(CARDNAME": Far too big packet error.\n");
-		/* मुक्तing the packet is a good thing here... but should
-		 . any packets of this size get करोwn here?   */
-		dev_kमुक्त_skb (skb);
-		lp->saved_skb = शून्य;
-		/* this IS an error, but, i करोn't want the skb saved */
-		netअगर_wake_queue(dev);
-		वापस NETDEV_TX_OK;
-	पूर्ण
-	/* either way, a packet is रुकोing now */
-	lp->packets_रुकोing++;
+	if (numPages > 7 ) {
+		printk(CARDNAME": Far too big packet error.\n");
+		/* freeing the packet is a good thing here... but should
+		 . any packets of this size get down here?   */
+		dev_kfree_skb (skb);
+		lp->saved_skb = NULL;
+		/* this IS an error, but, i don't want the skb saved */
+		netif_wake_queue(dev);
+		return NETDEV_TX_OK;
+	}
+	/* either way, a packet is waiting now */
+	lp->packets_waiting++;
 
 	/* now, try to allocate the memory */
 	SMC_SELECT_BANK( 2 );
 	outw( MC_ALLOC | numPages, ioaddr + MMU_CMD );
 	/*
- 	. Perक्रमmance Hack
+ 	. Performance Hack
 	.
- 	. रुको a लघु amount of समय.. अगर I can send a packet now, I send
-	. it now.  Otherwise, I enable an पूर्णांकerrupt and रुको क्रम one to be
+ 	. wait a short amount of time.. if I can send a packet now, I send
+	. it now.  Otherwise, I enable an interrupt and wait for one to be
 	. available.
 	.
-	. I could have handled this a slightly dअगरferent way, by checking to
-	. see अगर any memory was available in the FREE MEMORY रेजिस्टर.  However,
+	. I could have handled this a slightly different way, by checking to
+	. see if any memory was available in the FREE MEMORY register.  However,
 	. either way, I need to generate an allocation, and the allocation works
-	. no matter what, so I saw no poपूर्णांक in checking मुक्त memory.
+	. no matter what, so I saw no point in checking free memory.
 	*/
-	समय_out = MEMORY_WAIT_TIME;
-	करो अणु
+	time_out = MEMORY_WAIT_TIME;
+	do {
 		word	status;
 
 		status = inb( ioaddr + INTERRUPT );
-		अगर ( status & IM_ALLOC_INT ) अणु
-			/* acknowledge the पूर्णांकerrupt */
+		if ( status & IM_ALLOC_INT ) {
+			/* acknowledge the interrupt */
 			outb( IM_ALLOC_INT, ioaddr + INTERRUPT );
-  			अवरोध;
-		पूर्ण
-   	पूर्ण जबतक ( -- समय_out );
+  			break;
+		}
+   	} while ( -- time_out );
 
-   	अगर ( !समय_out ) अणु
-		/* oh well, रुको until the chip finds memory later */
+   	if ( !time_out ) {
+		/* oh well, wait until the chip finds memory later */
 		SMC_ENABLE_INT( IM_ALLOC_INT );
 		PRINTK2((CARDNAME": memory allocation deferred.\n"));
 		/* it's deferred, but I'll handle it later */
-		वापस NETDEV_TX_OK;
-   	पूर्ण
+		return NETDEV_TX_OK;
+   	}
 	/* or YES! I can send the packet now.. */
 	smc_hardware_send_packet(dev);
-	netअगर_wake_queue(dev);
-	वापस NETDEV_TX_OK;
-पूर्ण
+	netif_wake_queue(dev);
+	return NETDEV_TX_OK;
+}
 
 /*
- . Function:  smc_hardware_send_packet(काष्ठा net_device * )
+ . Function:  smc_hardware_send_packet(struct net_device * )
  . Purpose:
  .	This sends the actual packet to the SMC9xxx chip.
  .
  . Algorithm:
- . 	First, see अगर a saved_skb is available.
- .		( this should NOT be called अगर there is no 'saved_skb'
+ . 	First, see if a saved_skb is available.
+ .		( this should NOT be called if there is no 'saved_skb'
  .	Now, find the packet number that the chip allocated
- .	Poपूर्णांक the data poपूर्णांकers at it in memory
+ .	Point the data pointers at it in memory
  .	Set the length word in the chip's memory
  .	Dump the packet to chip memory
- .	Check अगर a last byte is needed ( odd length packet )
- .		अगर so, set the control flag right
+ .	Check if a last byte is needed ( odd length packet )
+ .		if so, set the control flag right
  . 	Tell the card to send it
- .	Enable the transmit पूर्णांकerrupt, so I know अगर it failed
- . 	Free the kernel data अगर I actually sent it.
+ .	Enable the transmit interrupt, so I know if it failed
+ . 	Free the kernel data if I actually sent it.
 */
-अटल व्योम smc_hardware_send_packet( काष्ठा net_device * dev )
-अणु
-	काष्ठा smc_local *lp = netdev_priv(dev);
+static void smc_hardware_send_packet( struct net_device * dev )
+{
+	struct smc_local *lp = netdev_priv(dev);
 	byte	 		packet_no;
-	काष्ठा sk_buff * 	skb = lp->saved_skb;
+	struct sk_buff * 	skb = lp->saved_skb;
 	word			length;
-	अचिन्हित पूर्णांक		ioaddr;
+	unsigned int		ioaddr;
 	byte			* buf;
 
 	ioaddr = dev->base_addr;
 
-	अगर ( !skb ) अणु
+	if ( !skb ) {
 		PRINTK((CARDNAME": In XMIT with no packet to send\n"));
-		वापस;
-	पूर्ण
+		return;
+	}
 	length = ETH_ZLEN < skb->len ? skb->len : ETH_ZLEN;
 	buf = skb->data;
 
-	/* If I get here, I _know_ there is a packet slot रुकोing क्रम me */
+	/* If I get here, I _know_ there is a packet slot waiting for me */
 	packet_no = inb( ioaddr + PNR_ARR + 1 );
-	अगर ( packet_no & 0x80 ) अणु
+	if ( packet_no & 0x80 ) {
 		/* or isn't there?  BAD CHIP! */
 		netdev_dbg(dev, CARDNAME": Memory allocation failed.\n");
-		dev_kमुक्त_skb_any(skb);
-		lp->saved_skb = शून्य;
-		netअगर_wake_queue(dev);
-		वापस;
-	पूर्ण
+		dev_kfree_skb_any(skb);
+		lp->saved_skb = NULL;
+		netif_wake_queue(dev);
+		return;
+	}
 
 	/* we have a packet address, so tell the card to use it */
 	outb( packet_no, ioaddr + PNR_ARR );
 
-	/* poपूर्णांक to the beginning of the packet */
+	/* point to the beginning of the packet */
 	outw( PTR_AUTOINC , ioaddr + POINTER );
 
 	PRINTK3((CARDNAME": Trying to xmit packet of length %x\n", length));
-#अगर SMC_DEBUG > 2
-	prपूर्णांक_packet( buf, length );
-#पूर्ण_अगर
+#if SMC_DEBUG > 2
+	print_packet( buf, length );
+#endif
 
-	/* send the packet length ( +6 क्रम status, length and ctl byte )
+	/* send the packet length ( +6 for status, length and ctl byte )
  	   and the status word ( set to zeros ) */
-#अगर_घोषित USE_32_BIT
+#ifdef USE_32_BIT
 	outl(  (length +6 ) << 16 , ioaddr + DATA_1 );
-#अन्यथा
+#else
 	outw( 0, ioaddr + DATA_1 );
-	/* send the packet length ( +6 क्रम status words, length, and ctl*/
+	/* send the packet length ( +6 for status words, length, and ctl*/
 	outb( (length+6) & 0xFF,ioaddr + DATA_1 );
 	outb( (length+6) >> 8 , ioaddr + DATA_1 );
-#पूर्ण_अगर
+#endif
 
 	/* send the actual data
-	 . I _think_ it's faster to send the दीर्घs first, and then
+	 . I _think_ it's faster to send the longs first, and then
 	 . mop up by sending the last word.  It depends heavily
  	 . on alignment, at least on the 486.  Maybe it would be
  	 . a good idea to check which is optimal?  But that could take
-	 . almost as much समय as is saved?
+	 . almost as much time as is saved?
 	*/
-#अगर_घोषित USE_32_BIT
-	अगर ( length & 0x2  ) अणु
+#ifdef USE_32_BIT
+	if ( length & 0x2  ) {
 		outsl(ioaddr + DATA_1, buf,  length >> 2 );
 		outw( *((word *)(buf + (length & 0xFFFFFFFC))),ioaddr +DATA_1);
-	पूर्ण
-	अन्यथा
+	}
+	else
 		outsl(ioaddr + DATA_1, buf,  length >> 2 );
-#अन्यथा
+#else
 	outsw(ioaddr + DATA_1 , buf, (length ) >> 1);
-#पूर्ण_अगर
-	/* Send the last byte, अगर there is one.   */
+#endif
+	/* Send the last byte, if there is one.   */
 
-	अगर ( (length & 1) == 0 ) अणु
+	if ( (length & 1) == 0 ) {
 		outw( 0, ioaddr + DATA_1 );
-	पूर्ण अन्यथा अणु
+	} else {
 		outb( buf[length -1 ], ioaddr + DATA_1 );
 		outb( 0x20, ioaddr + DATA_1);
-	पूर्ण
+	}
 
-	/* enable the पूर्णांकerrupts */
+	/* enable the interrupts */
 	SMC_ENABLE_INT( (IM_TX_INT | IM_TX_EMPTY_INT) );
 
 	/* and let the chipset deal with it */
@@ -661,100 +660,100 @@
 
 	PRINTK2((CARDNAME": Sent packet of length %d\n", length));
 
-	lp->saved_skb = शून्य;
-	dev_kमुक्त_skb_any (skb);
+	lp->saved_skb = NULL;
+	dev_kfree_skb_any (skb);
 
-	netअगर_trans_update(dev);
+	netif_trans_update(dev);
 
 	/* we can send another packet */
-	netअगर_wake_queue(dev);
-पूर्ण
+	netif_wake_queue(dev);
+}
 
 /*-------------------------------------------------------------------------
  |
- | smc_init(पूर्णांक unit)
+ | smc_init(int unit)
  |   Input parameters:
  |	dev->base_addr == 0, try to find all possible locations
- |	dev->base_addr == 1, वापस failure code
- |	dev->base_addr == 2, always allocate space,  and वापस success
- |	dev->base_addr == <anything अन्यथा>   this is the address to check
+ |	dev->base_addr == 1, return failure code
+ |	dev->base_addr == 2, always allocate space,  and return success
+ |	dev->base_addr == <anything else>   this is the address to check
  |
  |   Output:
- |	poपूर्णांकer to net_device or ERR_PTR(error)
+ |	pointer to net_device or ERR_PTR(error)
  |
  ---------------------------------------------------------------------------
 */
-अटल पूर्णांक io;
-अटल पूर्णांक irq;
-अटल पूर्णांक अगरport;
+static int io;
+static int irq;
+static int ifport;
 
-काष्ठा net_device * __init smc_init(पूर्णांक unit)
-अणु
-	काष्ठा net_device *dev = alloc_etherdev(माप(काष्ठा smc_local));
-	काष्ठा devlist *smcdev = smc_devlist;
-	पूर्णांक err = 0;
+struct net_device * __init smc_init(int unit)
+{
+	struct net_device *dev = alloc_etherdev(sizeof(struct smc_local));
+	struct devlist *smcdev = smc_devlist;
+	int err = 0;
 
-	अगर (!dev)
-		वापस ERR_PTR(-ENODEV);
+	if (!dev)
+		return ERR_PTR(-ENODEV);
 
-	अगर (unit >= 0) अणु
-		प्र_लिखो(dev->name, "eth%d", unit);
+	if (unit >= 0) {
+		sprintf(dev->name, "eth%d", unit);
 		netdev_boot_setup_check(dev);
 		io = dev->base_addr;
 		irq = dev->irq;
-	पूर्ण
+	}
 
-	अगर (io > 0x1ff) अणु	/* Check a single specअगरied location. */
+	if (io > 0x1ff) {	/* Check a single specified location. */
 		err = smc_probe(dev, io);
-	पूर्ण अन्यथा अगर (io != 0) अणु	/* Don't probe at all. */
+	} else if (io != 0) {	/* Don't probe at all. */
 		err = -ENXIO;
-	पूर्ण अन्यथा अणु
-		क्रम (;smcdev->port; smcdev++) अणु
-			अगर (smc_probe(dev, smcdev->port) == 0)
-				अवरोध;
-		पूर्ण
-		अगर (!smcdev->port)
+	} else {
+		for (;smcdev->port; smcdev++) {
+			if (smc_probe(dev, smcdev->port) == 0)
+				break;
+		}
+		if (!smcdev->port)
 			err = -ENODEV;
-	पूर्ण
-	अगर (err)
-		जाओ out;
-	err = रेजिस्टर_netdev(dev);
-	अगर (err)
-		जाओ out1;
-	वापस dev;
+	}
+	if (err)
+		goto out;
+	err = register_netdev(dev);
+	if (err)
+		goto out1;
+	return dev;
 out1:
-	मुक्त_irq(dev->irq, dev);
+	free_irq(dev->irq, dev);
 	release_region(dev->base_addr, SMC_IO_EXTENT);
 out:
-	मुक्त_netdev(dev);
-	वापस ERR_PTR(err);
-पूर्ण
+	free_netdev(dev);
+	return ERR_PTR(err);
+}
 
 /*----------------------------------------------------------------------
  . smc_findirq
  .
  . This routine has a simple purpose -- make the SMC chip generate an
- . पूर्णांकerrupt, so an स्वतः-detect routine can detect it, and find the IRQ,
+ . interrupt, so an auto-detect routine can detect it, and find the IRQ,
  ------------------------------------------------------------------------
 */
-अटल पूर्णांक __init smc_findirq(पूर्णांक ioaddr)
-अणु
-#अगर_अघोषित NO_AUTOPROBE
-	पूर्णांक	समयout = 20;
-	अचिन्हित दीर्घ cookie;
+static int __init smc_findirq(int ioaddr)
+{
+#ifndef NO_AUTOPROBE
+	int	timeout = 20;
+	unsigned long cookie;
 
 
 	cookie = probe_irq_on();
 
 	/*
-	 * What I try to करो here is trigger an ALLOC_INT. This is करोne
-	 * by allocating a small chunk of memory, which will give an पूर्णांकerrupt
-	 * when करोne.
+	 * What I try to do here is trigger an ALLOC_INT. This is done
+	 * by allocating a small chunk of memory, which will give an interrupt
+	 * when done.
 	 */
 
 
 	SMC_SELECT_BANK(2);
-	/* enable ALLOCation पूर्णांकerrupts ONLY */
+	/* enable ALLOCation interrupts ONLY */
 	outb( IM_ALLOC_INT, ioaddr + INT_MASK );
 
 	/*
@@ -764,153 +763,153 @@ out:
 	outw( MC_ALLOC | 1, ioaddr + MMU_CMD );
 
 	/*
-	 . Wait until positive that the पूर्णांकerrupt has been generated
+	 . Wait until positive that the interrupt has been generated
 	*/
-	जबतक ( समयout ) अणु
-		byte	पूर्णांक_status;
+	while ( timeout ) {
+		byte	int_status;
 
-		पूर्णांक_status = inb( ioaddr + INTERRUPT );
+		int_status = inb( ioaddr + INTERRUPT );
 
-		अगर ( पूर्णांक_status & IM_ALLOC_INT )
-			अवरोध;		/* got the पूर्णांकerrupt */
-		समयout--;
-	पूर्ण
-	/* there is really nothing that I can करो here अगर समयout fails,
-	   as probe_irq_off will वापस a 0 anyway, which is what I
-	   want in this हाल.   Plus, the clean up is needed in both
-	   हालs.  */
+		if ( int_status & IM_ALLOC_INT )
+			break;		/* got the interrupt */
+		timeout--;
+	}
+	/* there is really nothing that I can do here if timeout fails,
+	   as probe_irq_off will return a 0 anyway, which is what I
+	   want in this case.   Plus, the clean up is needed in both
+	   cases.  */
 
 	/* DELAY HERE!
-	   On a fast machine, the status might change beक्रमe the पूर्णांकerrupt
-	   is given to the processor.  This means that the पूर्णांकerrupt was
+	   On a fast machine, the status might change before the interrupt
+	   is given to the processor.  This means that the interrupt was
 	   never detected, and probe_irq_off fails to report anything.
 	   This should fix probe_irq_* problems.
 	*/
 	SMC_DELAY();
 	SMC_DELAY();
 
-	/* and disable all पूर्णांकerrupts again */
+	/* and disable all interrupts again */
 	outb( 0, ioaddr + INT_MASK );
 
-	/* and वापस what I found */
-	वापस probe_irq_off(cookie);
-#अन्यथा /* NO_AUTOPROBE */
-	काष्ठा devlist *smcdev;
-	क्रम (smcdev = smc_devlist; smcdev->port; smcdev++) अणु
-		अगर (smcdev->port == ioaddr)
-			वापस smcdev->irq;
-	पूर्ण
-	वापस 0;
-#पूर्ण_अगर
-पूर्ण
+	/* and return what I found */
+	return probe_irq_off(cookie);
+#else /* NO_AUTOPROBE */
+	struct devlist *smcdev;
+	for (smcdev = smc_devlist; smcdev->port; smcdev++) {
+		if (smcdev->port == ioaddr)
+			return smcdev->irq;
+	}
+	return 0;
+#endif
+}
 
-अटल स्थिर काष्ठा net_device_ops smc_netdev_ops = अणु
-	.nकरो_खोलो		 = smc_खोलो,
-	.nकरो_stop		= smc_बंद,
-	.nकरो_start_xmit    	= smc_रुको_to_send_packet,
-	.nकरो_tx_समयout	    	= smc_समयout,
-	.nकरो_set_rx_mode	= smc_set_multicast_list,
-	.nकरो_set_mac_address 	= eth_mac_addr,
-	.nकरो_validate_addr	= eth_validate_addr,
-पूर्ण;
+static const struct net_device_ops smc_netdev_ops = {
+	.ndo_open		 = smc_open,
+	.ndo_stop		= smc_close,
+	.ndo_start_xmit    	= smc_wait_to_send_packet,
+	.ndo_tx_timeout	    	= smc_timeout,
+	.ndo_set_rx_mode	= smc_set_multicast_list,
+	.ndo_set_mac_address 	= eth_mac_addr,
+	.ndo_validate_addr	= eth_validate_addr,
+};
 
 /*----------------------------------------------------------------------
- . Function: smc_probe( पूर्णांक ioaddr )
+ . Function: smc_probe( int ioaddr )
  .
  . Purpose:
- .	Tests to see अगर a given ioaddr poपूर्णांकs to an SMC9xxx chip.
+ .	Tests to see if a given ioaddr points to an SMC9xxx chip.
  .	Returns a 0 on success
  .
  . Algorithm:
- .	(1) see अगर the high byte of BANK_SELECT is 0x33
- . 	(2) compare the ioaddr with the base रेजिस्टर's address
- .	(3) see अगर I recognize the chip ID in the appropriate रेजिस्टर
+ .	(1) see if the high byte of BANK_SELECT is 0x33
+ . 	(2) compare the ioaddr with the base register's address
+ .	(3) see if I recognize the chip ID in the appropriate register
  .
  .---------------------------------------------------------------------
  */
 
 /*---------------------------------------------------------------
- . Here I करो typical initialization tasks.
+ . Here I do typical initialization tasks.
  .
- . o  Initialize the काष्ठाure अगर needed
- . o  prपूर्णांक out my vanity message अगर not करोne so alपढ़ोy
- . o  prपूर्णांक out what type of hardware is detected
- . o  prपूर्णांक out the ethernet address
+ . o  Initialize the structure if needed
+ . o  print out my vanity message if not done so already
+ . o  print out what type of hardware is detected
+ . o  print out the ethernet address
  . o  find the IRQ
- . o  set up my निजी data
- . o  configure the dev काष्ठाure with my subroutines
+ . o  set up my private data
+ . o  configure the dev structure with my subroutines
  . o  actually GRAB the irq.
  . o  GRAB the region
  .-----------------------------------------------------------------
 */
-अटल पूर्णांक __init smc_probe(काष्ठा net_device *dev, पूर्णांक ioaddr)
-अणु
-	पूर्णांक i, memory, retval;
-	अचिन्हित पूर्णांक bank;
+static int __init smc_probe(struct net_device *dev, int ioaddr)
+{
+	int i, memory, retval;
+	unsigned int bank;
 
-	स्थिर अक्षर *version_string;
-	स्थिर अक्षर *अगर_string;
+	const char *version_string;
+	const char *if_string;
 
-	/* रेजिस्टरs */
-	word revision_रेजिस्टर;
-	word base_address_रेजिस्टर;
-	word configuration_रेजिस्टर;
-	word memory_info_रेजिस्टर;
-	word memory_cfg_रेजिस्टर;
+	/* registers */
+	word revision_register;
+	word base_address_register;
+	word configuration_register;
+	word memory_info_register;
+	word memory_cfg_register;
 
-	/* Grab the region so that no one अन्यथा tries to probe our ioports. */
-	अगर (!request_region(ioaddr, SMC_IO_EXTENT, DRV_NAME))
-		वापस -EBUSY;
+	/* Grab the region so that no one else tries to probe our ioports. */
+	if (!request_region(ioaddr, SMC_IO_EXTENT, DRV_NAME))
+		return -EBUSY;
 
 	dev->irq = irq;
-	dev->अगर_port = अगरport;
+	dev->if_port = ifport;
 
-	/* First, see अगर the high byte is 0x33 */
+	/* First, see if the high byte is 0x33 */
 	bank = inw( ioaddr + BANK_SELECT );
-	अगर ( (bank & 0xFF00) != 0x3300 ) अणु
+	if ( (bank & 0xFF00) != 0x3300 ) {
 		retval = -ENODEV;
-		जाओ err_out;
-	पूर्ण
-	/* The above MIGHT indicate a device, but I need to ग_लिखो to further
+		goto err_out;
+	}
+	/* The above MIGHT indicate a device, but I need to write to further
  	 	test this.  */
 	outw( 0x0, ioaddr + BANK_SELECT );
 	bank = inw( ioaddr + BANK_SELECT );
-	अगर ( (bank & 0xFF00 ) != 0x3300 ) अणु
+	if ( (bank & 0xFF00 ) != 0x3300 ) {
 		retval = -ENODEV;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 	/* well, we've already written once, so hopefully another time won't
- 	   hurt.  This समय, I need to चयन the bank रेजिस्टर to bank 1,
-	   so I can access the base address रेजिस्टर */
+ 	   hurt.  This time, I need to switch the bank register to bank 1,
+	   so I can access the base address register */
 	SMC_SELECT_BANK(1);
-	base_address_रेजिस्टर = inw( ioaddr + BASE );
-	अगर ( ioaddr != ( base_address_रेजिस्टर >> 3 & 0x3E0 ) )  अणु
-		prपूर्णांकk(CARDNAME ": IOADDR %x doesn't match configuration (%x). "
+	base_address_register = inw( ioaddr + BASE );
+	if ( ioaddr != ( base_address_register >> 3 & 0x3E0 ) )  {
+		printk(CARDNAME ": IOADDR %x doesn't match configuration (%x). "
 			"Probably not a SMC chip\n",
-			ioaddr, base_address_रेजिस्टर >> 3 & 0x3E0 );
-		/* well, the base address रेजिस्टर didn't match.  Must not have
+			ioaddr, base_address_register >> 3 & 0x3E0 );
+		/* well, the base address register didn't match.  Must not have
 		   been a SMC chip after all. */
 		retval = -ENODEV;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
-	/*  check अगर the revision रेजिस्टर is something that I recognize.
+	/*  check if the revision register is something that I recognize.
 	    These might need to be added to later, as future revisions
 	    could be added.  */
 	SMC_SELECT_BANK(3);
-	revision_रेजिस्टर  = inw( ioaddr + REVISION );
-	अगर ( !chip_ids[ ( revision_रेजिस्टर  >> 4 ) & 0xF  ] ) अणु
-		/* I करोn't recognize this chip, so... */
-		prपूर्णांकk(CARDNAME ": IO %x: Unrecognized revision register:"
-			" %x, Contact author.\n", ioaddr, revision_रेजिस्टर);
+	revision_register  = inw( ioaddr + REVISION );
+	if ( !chip_ids[ ( revision_register  >> 4 ) & 0xF  ] ) {
+		/* I don't recognize this chip, so... */
+		printk(CARDNAME ": IO %x: Unrecognized revision register:"
+			" %x, Contact author.\n", ioaddr, revision_register);
 
 		retval = -ENODEV;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
-	/* at this poपूर्णांक I'll assume that the chip is an SMC9xxx.
+	/* at this point I'll assume that the chip is an SMC9xxx.
 	   It might be prudent to check a listing of MAC addresses
-	   against the hardware address, or करो some other tests. */
+	   against the hardware address, or do some other tests. */
 
 	pr_info_once("%s\n", version);
 
@@ -921,121 +920,121 @@ out:
  	 . Get the MAC address ( bank 1, regs 4 - 9 )
 	*/
 	SMC_SELECT_BANK( 1 );
-	क्रम ( i = 0; i < 6; i += 2 ) अणु
+	for ( i = 0; i < 6; i += 2 ) {
 		word	address;
 
 		address = inw( ioaddr + ADDR0 + i  );
 		dev->dev_addr[ i + 1] = address >> 8;
 		dev->dev_addr[ i ] = address & 0xFF;
-	पूर्ण
+	}
 
-	/* get the memory inक्रमmation */
+	/* get the memory information */
 
 	SMC_SELECT_BANK( 0 );
-	memory_info_रेजिस्टर = inw( ioaddr + MIR );
-	memory_cfg_रेजिस्टर  = inw( ioaddr + MCR );
-	memory = ( memory_cfg_रेजिस्टर >> 9 )  & 0x7;  /* multiplier */
-	memory *= 256 * ( memory_info_रेजिस्टर & 0xFF );
+	memory_info_register = inw( ioaddr + MIR );
+	memory_cfg_register  = inw( ioaddr + MCR );
+	memory = ( memory_cfg_register >> 9 )  & 0x7;  /* multiplier */
+	memory *= 256 * ( memory_info_register & 0xFF );
 
 	/*
 	 Now, I want to find out more about the chip.  This is sort of
  	 redundant, but it's cleaner to have it in both, rather than having
- 	 one VERY दीर्घ probe procedure.
+ 	 one VERY long probe procedure.
 	*/
 	SMC_SELECT_BANK(3);
-	revision_रेजिस्टर  = inw( ioaddr + REVISION );
-	version_string = chip_ids[ ( revision_रेजिस्टर  >> 4 ) & 0xF  ];
-	अगर ( !version_string ) अणु
-		/* I shouldn't get here because this call was करोne beक्रमe.... */
+	revision_register  = inw( ioaddr + REVISION );
+	version_string = chip_ids[ ( revision_register  >> 4 ) & 0xF  ];
+	if ( !version_string ) {
+		/* I shouldn't get here because this call was done before.... */
 		retval = -ENODEV;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
 	/* is it using AUI or 10BaseT ? */
-	अगर ( dev->अगर_port == 0 ) अणु
+	if ( dev->if_port == 0 ) {
 		SMC_SELECT_BANK(1);
-		configuration_रेजिस्टर = inw( ioaddr + CONFIG );
-		अगर ( configuration_रेजिस्टर & CFG_AUI_SELECT )
-			dev->अगर_port = 2;
-		अन्यथा
-			dev->अगर_port = 1;
-	पूर्ण
-	अगर_string = पूर्णांकerfaces[ dev->अगर_port - 1 ];
+		configuration_register = inw( ioaddr + CONFIG );
+		if ( configuration_register & CFG_AUI_SELECT )
+			dev->if_port = 2;
+		else
+			dev->if_port = 1;
+	}
+	if_string = interfaces[ dev->if_port - 1 ];
 
-	/* now, reset the chip, and put it पूर्णांकo a known state */
+	/* now, reset the chip, and put it into a known state */
 	smc_reset( ioaddr );
 
 	/*
 	 . If dev->irq is 0, then the device has to be banged on to see
 	 . what the IRQ is.
  	 .
-	 . This banging करोesn't always detect the IRQ, क्रम unknown reasons.
+	 . This banging doesn't always detect the IRQ, for unknown reasons.
 	 . a workaround is to reset the chip and try again.
 	 .
 	 . Interestingly, the DOS packet driver *SETS* the IRQ on the card to
-	 . be what is requested on the command line.   I करोn't करो that, mostly
+	 . be what is requested on the command line.   I don't do that, mostly
 	 . because the card that I have uses a non-standard method of accessing
 	 . the IRQs, and because this _should_ work in most configurations.
 	 .
-	 . Specअगरying an IRQ is करोne with the assumption that the user knows
-	 . what (s)he is करोing.  No checking is करोne!!!!
+	 . Specifying an IRQ is done with the assumption that the user knows
+	 . what (s)he is doing.  No checking is done!!!!
  	 .
 	*/
-	अगर ( dev->irq < 2 ) अणु
-		पूर्णांक	trials;
+	if ( dev->irq < 2 ) {
+		int	trials;
 
 		trials = 3;
-		जबतक ( trials-- ) अणु
+		while ( trials-- ) {
 			dev->irq = smc_findirq( ioaddr );
-			अगर ( dev->irq )
-				अवरोध;
+			if ( dev->irq )
+				break;
 			/* kick the card and try again */
 			smc_reset( ioaddr );
-		पूर्ण
-	पूर्ण
-	अगर (dev->irq == 0 ) अणु
-		prपूर्णांकk(CARDNAME": Couldn't autodetect your IRQ. Use irq=xx.\n");
+		}
+	}
+	if (dev->irq == 0 ) {
+		printk(CARDNAME": Couldn't autodetect your IRQ. Use irq=xx.\n");
 		retval = -ENODEV;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
-	/* now, prपूर्णांक out the card info, in a लघु क्रमmat.. */
+	/* now, print out the card info, in a short format.. */
 
 	netdev_info(dev, "%s(r:%d) at %#3x IRQ:%d INTF:%s MEM:%db ",
-		    version_string, revision_रेजिस्टर & 0xF, ioaddr, dev->irq,
-		    अगर_string, memory);
+		    version_string, revision_register & 0xF, ioaddr, dev->irq,
+		    if_string, memory);
 	/*
-	 . Prपूर्णांक the Ethernet address
+	 . Print the Ethernet address
 	*/
 	netdev_info(dev, "ADDR: %pM\n", dev->dev_addr);
 
 	/* Grab the IRQ */
-	retval = request_irq(dev->irq, smc_पूर्णांकerrupt, 0, DRV_NAME, dev);
-	अगर (retval) अणु
+	retval = request_irq(dev->irq, smc_interrupt, 0, DRV_NAME, dev);
+	if (retval) {
 		netdev_warn(dev, "%s: unable to get IRQ %d (irqval=%d).\n",
 			    DRV_NAME, dev->irq, retval);
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
 	dev->netdev_ops			= &smc_netdev_ops;
-	dev->watchकरोg_समयo		= HZ/20;
+	dev->watchdog_timeo		= HZ/20;
 
-	वापस 0;
+	return 0;
 
 err_out:
 	release_region(ioaddr, SMC_IO_EXTENT);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-#अगर SMC_DEBUG > 2
-अटल व्योम prपूर्णांक_packet( byte * buf, पूर्णांक length )
-अणु
-#अगर 0
-	prपूर्णांक_hex_dump_debug(DRV_NAME, DUMP_PREFIX_OFFSET, 16, 1,
+#if SMC_DEBUG > 2
+static void print_packet( byte * buf, int length )
+{
+#if 0
+	print_hex_dump_debug(DRV_NAME, DUMP_PREFIX_OFFSET, 16, 1,
 			     buf, length, true);
-#पूर्ण_अगर
-पूर्ण
-#पूर्ण_अगर
+#endif
+}
+#endif
 
 
 /*
@@ -1044,88 +1043,88 @@ err_out:
  * Set up everything, reset the card, etc ..
  *
  */
-अटल पूर्णांक smc_खोलो(काष्ठा net_device *dev)
-अणु
-	पूर्णांक	ioaddr = dev->base_addr;
+static int smc_open(struct net_device *dev)
+{
+	int	ioaddr = dev->base_addr;
 
-	पूर्णांक	i;	/* used to set hw ethernet address */
+	int	i;	/* used to set hw ethernet address */
 
-	/* clear out all the junk that was put here beक्रमe... */
-	स_रखो(netdev_priv(dev), 0, माप(काष्ठा smc_local));
+	/* clear out all the junk that was put here before... */
+	memset(netdev_priv(dev), 0, sizeof(struct smc_local));
 
 	/* reset the hardware */
 
 	smc_reset( ioaddr );
 	smc_enable( ioaddr );
 
-	/* Select which पूर्णांकerface to use */
+	/* Select which interface to use */
 
 	SMC_SELECT_BANK( 1 );
-	अगर ( dev->अगर_port == 1 ) अणु
+	if ( dev->if_port == 1 ) {
 		outw( inw( ioaddr + CONFIG ) & ~CFG_AUI_SELECT,
 			ioaddr + CONFIG );
-	पूर्ण
-	अन्यथा अगर ( dev->अगर_port == 2 ) अणु
+	}
+	else if ( dev->if_port == 2 ) {
 		outw( inw( ioaddr + CONFIG ) | CFG_AUI_SELECT,
 			ioaddr + CONFIG );
-	पूर्ण
+	}
 
 	/*
   		According to Becker, I have to set the hardware address
-		at this poपूर्णांक, because the (l)user can set it with an
-		ioctl.  Easily करोne...
+		at this point, because the (l)user can set it with an
+		ioctl.  Easily done...
 	*/
 	SMC_SELECT_BANK( 1 );
-	क्रम ( i = 0; i < 6; i += 2 ) अणु
+	for ( i = 0; i < 6; i += 2 ) {
 		word	address;
 
 		address = dev->dev_addr[ i + 1 ] << 8 ;
 		address  |= dev->dev_addr[ i ];
 		outw( address, ioaddr + ADDR0 + i );
-	पूर्ण
+	}
 
-	netअगर_start_queue(dev);
-	वापस 0;
-पूर्ण
+	netif_start_queue(dev);
+	return 0;
+}
 
 /*--------------------------------------------------------
- . Called by the kernel to send a packet out पूर्णांकo the व्योम
+ . Called by the kernel to send a packet out into the void
  . of the net.  This routine is largely based on
  . skeleton.c, from Becker.
  .--------------------------------------------------------
 */
 
-अटल व्योम smc_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue)
-अणु
+static void smc_timeout(struct net_device *dev, unsigned int txqueue)
+{
 	/* If we get here, some higher level has decided we are broken.
 	   There should really be a "kick me" function call instead. */
 	netdev_warn(dev, CARDNAME": transmit timed out, %s?\n",
-		    tx_करोne(dev) ? "IRQ conflict" : "network cable problem");
+		    tx_done(dev) ? "IRQ conflict" : "network cable problem");
 	/* "kick" the adaptor */
 	smc_reset( dev->base_addr );
 	smc_enable( dev->base_addr );
-	netअगर_trans_update(dev); /* prevent tx समयout */
+	netif_trans_update(dev); /* prevent tx timeout */
 	/* clear anything saved */
-	((काष्ठा smc_local *)netdev_priv(dev))->saved_skb = शून्य;
-	netअगर_wake_queue(dev);
-पूर्ण
+	((struct smc_local *)netdev_priv(dev))->saved_skb = NULL;
+	netif_wake_queue(dev);
+}
 
 /*-------------------------------------------------------------
  .
  . smc_rcv -  receive a packet from the card
  .
- . There is ( at least ) a packet रुकोing to be पढ़ो from
+ . There is ( at least ) a packet waiting to be read from
  . chip-memory.
  .
  . o Read the status
  . o If an error, record it
- . o otherwise, पढ़ो in the packet
+ . o otherwise, read in the packet
  --------------------------------------------------------------
 */
-अटल व्योम smc_rcv(काष्ठा net_device *dev)
-अणु
-	पूर्णांक 	ioaddr = dev->base_addr;
-	पूर्णांक 	packet_number;
+static void smc_rcv(struct net_device *dev)
+{
+	int 	ioaddr = dev->base_addr;
+	int 	packet_number;
 	word	status;
 	word	packet_length;
 
@@ -1133,14 +1132,14 @@ err_out:
 
 	packet_number = inw( ioaddr + FIFO_PORTS );
 
-	अगर ( packet_number & FP_RXEMPTY ) अणु
+	if ( packet_number & FP_RXEMPTY ) {
 		/* we got called , but nothing was on the FIFO */
 		PRINTK((CARDNAME ": WARNING: smc_rcv with nothing on FIFO.\n"));
-		/* करोn't need to restore anything */
-		वापस;
-	पूर्ण
+		/* don't need to restore anything */
+		return;
+	}
 
-	/*  start पढ़ोing from the start of the packet */
+	/*  start reading from the start of the packet */
 	outw( PTR_READ | PTR_RCV | PTR_AUTOINC, ioaddr + POINTER );
 
 	/* First two words are status and packet_length */
@@ -1156,76 +1155,76 @@ err_out:
 	*/
 	packet_length -= 6;
 
-	अगर ( !(status & RS_ERRORS ) )अणु
-		/* करो stuff to make a new packet */
-		काष्ठा sk_buff  * skb;
+	if ( !(status & RS_ERRORS ) ){
+		/* do stuff to make a new packet */
+		struct sk_buff  * skb;
 		byte		* data;
 
-		/* पढ़ो one extra byte */
-		अगर ( status & RS_ODDFRAME )
+		/* read one extra byte */
+		if ( status & RS_ODDFRAME )
 			packet_length++;
 
 		/* set multicast stats */
-		अगर ( status & RS_MULTICAST )
+		if ( status & RS_MULTICAST )
 			dev->stats.multicast++;
 
 		skb = netdev_alloc_skb(dev, packet_length + 5);
-		अगर ( skb == शून्य ) अणु
+		if ( skb == NULL ) {
 			dev->stats.rx_dropped++;
-			जाओ करोne;
-		पूर्ण
+			goto done;
+		}
 
 		/*
 		 ! This should work without alignment, but it could be
-		 ! in the worse हाल
+		 ! in the worse case
 		*/
 
 		skb_reserve( skb, 2 );   /* 16 bit alignment */
 
 		data = skb_put( skb, packet_length);
 
-#अगर_घोषित USE_32_BIT
-		/* QUESTION:  Like in the TX routine, करो I want
+#ifdef USE_32_BIT
+		/* QUESTION:  Like in the TX routine, do I want
 		   to send the DWORDs or the bytes first, or some
-		   mixture.  A mixture might improve alपढ़ोy slow PIO
-		   perक्रमmance  */
+		   mixture.  A mixture might improve already slow PIO
+		   performance  */
 		PRINTK3((" Reading %d dwords (and %d bytes)\n",
 			packet_length >> 2, packet_length & 3 ));
 		insl(ioaddr + DATA_1 , data, packet_length >> 2 );
-		/* पढ़ो the left over bytes */
+		/* read the left over bytes */
 		insb( ioaddr + DATA_1, data + (packet_length & 0xFFFFFC),
 			packet_length & 0x3  );
-#अन्यथा
+#else
 		PRINTK3((" Reading %d words and %d byte(s)\n",
 			(packet_length >> 1 ), packet_length & 1 ));
 		insw(ioaddr + DATA_1 , data, packet_length >> 1);
-		अगर ( packet_length & 1 ) अणु
+		if ( packet_length & 1 ) {
 			data += packet_length & ~1;
 			*(data++) = inb( ioaddr + DATA_1 );
-		पूर्ण
-#पूर्ण_अगर
-#अगर	SMC_DEBUG > 2
-			prपूर्णांक_packet( data, packet_length );
-#पूर्ण_अगर
+		}
+#endif
+#if	SMC_DEBUG > 2
+			print_packet( data, packet_length );
+#endif
 
 		skb->protocol = eth_type_trans(skb, dev );
-		netअगर_rx(skb);
+		netif_rx(skb);
 		dev->stats.rx_packets++;
 		dev->stats.rx_bytes += packet_length;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* error ... */
 		dev->stats.rx_errors++;
 
-		अगर ( status & RS_ALGNERR )  dev->stats.rx_frame_errors++;
-		अगर ( status & (RS_TOOSHORT | RS_TOOLONG ) )
+		if ( status & RS_ALGNERR )  dev->stats.rx_frame_errors++;
+		if ( status & (RS_TOOSHORT | RS_TOOLONG ) )
 			dev->stats.rx_length_errors++;
-		अगर ( status & RS_BADCRC)	dev->stats.rx_crc_errors++;
-	पूर्ण
+		if ( status & RS_BADCRC)	dev->stats.rx_crc_errors++;
+	}
 
-करोne:
+done:
 	/*  error or good, tell the card to get rid of this packet */
 	outw( MC_RELEASE, ioaddr + MMU_CMD );
-पूर्ण
+}
 
 
 /*************************************************************************
@@ -1235,18 +1234,18 @@ err_out:
  .   when an error, because of the AUTO_RELEASE mode.
  .
  . Algorithm:
- .	Save poपूर्णांकer and packet no
+ .	Save pointer and packet no
  .	Get the packet no from the top of the queue
- .	check अगर it's valid ( अगर not, is this an error??? )
- .	पढ़ो the status word
+ .	check if it's valid ( if not, is this an error??? )
+ .	read the status word
  .	record the error
- .	( resend?  Not really, since we करोn't want old packets around )
+ .	( resend?  Not really, since we don't want old packets around )
  .	Restore saved values
  ************************************************************************/
-अटल व्योम smc_tx( काष्ठा net_device * dev )
-अणु
-	पूर्णांक	ioaddr = dev->base_addr;
-	काष्ठा smc_local *lp = netdev_priv(dev);
+static void smc_tx( struct net_device * dev )
+{
+	int	ioaddr = dev->base_addr;
+	struct smc_local *lp = netdev_priv(dev);
 	byte saved_packet;
 	byte packet_no;
 	word tx_status;
@@ -1258,69 +1257,69 @@ err_out:
 	packet_no = inw( ioaddr + FIFO_PORTS );
 	packet_no &= 0x7F;
 
-	/* select this as the packet to पढ़ो from */
+	/* select this as the packet to read from */
 	outb( packet_no, ioaddr + PNR_ARR );
 
-	/* पढ़ो the first word from this packet */
+	/* read the first word from this packet */
 	outw( PTR_AUTOINC | PTR_READ, ioaddr + POINTER );
 
 	tx_status = inw( ioaddr + DATA_1 );
 	PRINTK3((CARDNAME": TX DONE STATUS: %4x\n", tx_status));
 
 	dev->stats.tx_errors++;
-	अगर ( tx_status & TS_LOSTCAR ) dev->stats.tx_carrier_errors++;
-	अगर ( tx_status & TS_LATCOL  ) अणु
+	if ( tx_status & TS_LOSTCAR ) dev->stats.tx_carrier_errors++;
+	if ( tx_status & TS_LATCOL  ) {
 		netdev_dbg(dev, CARDNAME": Late collision occurred on last xmit.\n");
-		dev->stats.tx_winकरोw_errors++;
-	पूर्ण
-#अगर 0
-		अगर ( tx_status & TS_16COL ) अणु ... पूर्ण
-#पूर्ण_अगर
+		dev->stats.tx_window_errors++;
+	}
+#if 0
+		if ( tx_status & TS_16COL ) { ... }
+#endif
 
-	अगर ( tx_status & TS_SUCCESS ) अणु
+	if ( tx_status & TS_SUCCESS ) {
 		netdev_info(dev, CARDNAME": Successful packet caused interrupt\n");
-	पूर्ण
+	}
 	/* re-enable transmit */
 	SMC_SELECT_BANK( 0 );
 	outw( inw( ioaddr + TCR ) | TCR_ENABLE, ioaddr + TCR );
 
-	/* समाप्त the packet */
+	/* kill the packet */
 	SMC_SELECT_BANK( 2 );
 	outw( MC_FREEPKT, ioaddr + MMU_CMD );
 
-	/* one less packet रुकोing क्रम me */
-	lp->packets_रुकोing--;
+	/* one less packet waiting for me */
+	lp->packets_waiting--;
 
 	outb( saved_packet, ioaddr + PNR_ARR );
-पूर्ण
+}
 
 /*--------------------------------------------------------------------
  .
- . This is the मुख्य routine of the driver, to handle the device when
+ . This is the main routine of the driver, to handle the device when
  . it needs some attention.
  .
  . So:
  .   first, save state of the chipset
- .   branch off पूर्णांकo routines to handle each हाल, and acknowledge
- .	    each to the पूर्णांकerrupt रेजिस्टर
+ .   branch off into routines to handle each case, and acknowledge
+ .	    each to the interrupt register
  .   and finally restore state.
  .
  ---------------------------------------------------------------------*/
 
-अटल irqवापस_t smc_पूर्णांकerrupt(पूर्णांक irq, व्योम * dev_id)
-अणु
-	काष्ठा net_device *dev 	= dev_id;
-	पूर्णांक ioaddr 		= dev->base_addr;
-	काष्ठा smc_local *lp = netdev_priv(dev);
+static irqreturn_t smc_interrupt(int irq, void * dev_id)
+{
+	struct net_device *dev 	= dev_id;
+	int ioaddr 		= dev->base_addr;
+	struct smc_local *lp = netdev_priv(dev);
 
 	byte	status;
 	word	card_stats;
 	byte	mask;
-	पूर्णांक	समयout;
-	/* state रेजिस्टरs */
+	int	timeout;
+	/* state registers */
 	word	saved_bank;
-	word	saved_poपूर्णांकer;
-	पूर्णांक handled = 0;
+	word	saved_pointer;
+	int handled = 0;
 
 
 	PRINTK3((CARDNAME": SMC interrupt started\n"));
@@ -1328,39 +1327,39 @@ err_out:
 	saved_bank = inw( ioaddr + BANK_SELECT );
 
 	SMC_SELECT_BANK(2);
-	saved_poपूर्णांकer = inw( ioaddr + POINTER );
+	saved_pointer = inw( ioaddr + POINTER );
 
 	mask = inb( ioaddr + INT_MASK );
-	/* clear all पूर्णांकerrupts */
+	/* clear all interrupts */
 	outb( 0, ioaddr + INT_MASK );
 
 
-	/* set a समयout value, so I करोn't stay here क्रमever */
-	समयout = 4;
+	/* set a timeout value, so I don't stay here forever */
+	timeout = 4;
 
 	PRINTK2((KERN_WARNING CARDNAME ": MASK IS %x\n", mask));
-	करो अणु
-		/* पढ़ो the status flag, and mask it */
+	do {
+		/* read the status flag, and mask it */
 		status = inb( ioaddr + INTERRUPT ) & mask;
-		अगर (!status )
-			अवरोध;
+		if (!status )
+			break;
 
 		handled = 1;
 
 		PRINTK3((KERN_WARNING CARDNAME
 			": Handling interrupt status %x\n", status));
 
-		अगर (status & IM_RCV_INT) अणु
+		if (status & IM_RCV_INT) {
 			/* Got a packet(s). */
 			PRINTK2((KERN_WARNING CARDNAME
 				": Receive Interrupt\n"));
 			smc_rcv(dev);
-		पूर्ण अन्यथा अगर (status & IM_TX_INT ) अणु
+		} else if (status & IM_TX_INT ) {
 			PRINTK2((KERN_WARNING CARDNAME
 				": TX ERROR handled\n"));
 			smc_tx(dev);
 			outb(IM_TX_INT, ioaddr + INTERRUPT );
-		पूर्ण अन्यथा अगर (status & IM_TX_EMPTY_INT ) अणु
+		} else if (status & IM_TX_EMPTY_INT ) {
 			/* update stats */
 			SMC_SELECT_BANK( 0 );
 			card_stats = inw( ioaddr + COUNTER );
@@ -1370,108 +1369,108 @@ err_out:
 			/* multiple collisions */
 			dev->stats.collisions += card_stats & 0xF;
 
-			/* these are क्रम when linux supports these statistics */
+			/* these are for when linux supports these statistics */
 
 			SMC_SELECT_BANK( 2 );
 			PRINTK2((KERN_WARNING CARDNAME
 				": TX_BUFFER_EMPTY handled\n"));
 			outb( IM_TX_EMPTY_INT, ioaddr + INTERRUPT );
 			mask &= ~IM_TX_EMPTY_INT;
-			dev->stats.tx_packets += lp->packets_रुकोing;
-			lp->packets_रुकोing = 0;
+			dev->stats.tx_packets += lp->packets_waiting;
+			lp->packets_waiting = 0;
 
-		पूर्ण अन्यथा अगर (status & IM_ALLOC_INT ) अणु
+		} else if (status & IM_ALLOC_INT ) {
 			PRINTK2((KERN_DEBUG CARDNAME
 				": Allocation interrupt\n"));
-			/* clear this पूर्णांकerrupt so it करोesn't happen again */
+			/* clear this interrupt so it doesn't happen again */
 			mask &= ~IM_ALLOC_INT;
 
 			smc_hardware_send_packet( dev );
 
-			/* enable xmit पूर्णांकerrupts based on this */
+			/* enable xmit interrupts based on this */
 			mask |= ( IM_TX_EMPTY_INT | IM_TX_INT );
 
 			/* and let the card send more packets to me */
-			netअगर_wake_queue(dev);
+			netif_wake_queue(dev);
 
 			PRINTK2((CARDNAME": Handoff done successfully.\n"));
-		पूर्ण अन्यथा अगर (status & IM_RX_OVRN_INT ) अणु
+		} else if (status & IM_RX_OVRN_INT ) {
 			dev->stats.rx_errors++;
-			dev->stats.rx_fअगरo_errors++;
+			dev->stats.rx_fifo_errors++;
 			outb( IM_RX_OVRN_INT, ioaddr + INTERRUPT );
-		पूर्ण अन्यथा अगर (status & IM_EPH_INT ) अणु
+		} else if (status & IM_EPH_INT ) {
 			PRINTK((CARDNAME ": UNSUPPORTED: EPH INTERRUPT\n"));
-		पूर्ण अन्यथा अगर (status & IM_ERCV_INT ) अणु
+		} else if (status & IM_ERCV_INT ) {
 			PRINTK((CARDNAME ": UNSUPPORTED: ERCV INTERRUPT\n"));
 			outb( IM_ERCV_INT, ioaddr + INTERRUPT );
-		पूर्ण
-	पूर्ण जबतक ( समयout -- );
+		}
+	} while ( timeout -- );
 
 
-	/* restore state रेजिस्टर */
+	/* restore state register */
 	SMC_SELECT_BANK( 2 );
 	outb( mask, ioaddr + INT_MASK );
 
 	PRINTK3((KERN_WARNING CARDNAME ": MASK is now %x\n", mask));
-	outw( saved_poपूर्णांकer, ioaddr + POINTER );
+	outw( saved_pointer, ioaddr + POINTER );
 
 	SMC_SELECT_BANK( saved_bank );
 
 	PRINTK3((CARDNAME ": Interrupt done\n"));
-	वापस IRQ_RETVAL(handled);
-पूर्ण
+	return IRQ_RETVAL(handled);
+}
 
 
 /*----------------------------------------------------
- . smc_बंद
+ . smc_close
  .
  . this makes the board clean up everything that it can
  . and not talk to the outside world.   Caused by
  . an 'ifconfig ethX down'
  .
  -----------------------------------------------------*/
-अटल पूर्णांक smc_बंद(काष्ठा net_device *dev)
-अणु
-	netअगर_stop_queue(dev);
+static int smc_close(struct net_device *dev)
+{
+	netif_stop_queue(dev);
 	/* clear everything */
-	smc_shutकरोwn( dev->base_addr );
+	smc_shutdown( dev->base_addr );
 
 	/* Update the statistics here. */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*-----------------------------------------------------------
  . smc_set_multicast_list
  .
  . This routine will, depending on the values passed to it,
- . either make it accept multicast packets, go पूर्णांकo
- . promiscuous mode ( क्रम TCPDUMP and cousins ) or accept
+ . either make it accept multicast packets, go into
+ . promiscuous mode ( for TCPDUMP and cousins ) or accept
  . a select set of multicast packets
 */
-अटल व्योम smc_set_multicast_list(काष्ठा net_device *dev)
-अणु
-	लघु ioaddr = dev->base_addr;
+static void smc_set_multicast_list(struct net_device *dev)
+{
+	short ioaddr = dev->base_addr;
 
 	SMC_SELECT_BANK(0);
-	अगर ( dev->flags & IFF_PROMISC )
+	if ( dev->flags & IFF_PROMISC )
 		outw( inw(ioaddr + RCR ) | RCR_PROMISC, ioaddr + RCR );
 
-/* BUG?  I never disable promiscuous mode अगर multicasting was turned on.
-   Now, I turn off promiscuous mode, but I करोn't करो anything to multicasting
+/* BUG?  I never disable promiscuous mode if multicasting was turned on.
+   Now, I turn off promiscuous mode, but I don't do anything to multicasting
    when promiscuous mode is turned on.
 */
 
 	/* Here, I am setting this to accept all multicast packets.
-	   I करोn't need to zero the multicast table, because the flag is
-	   checked beक्रमe the table is
+	   I don't need to zero the multicast table, because the flag is
+	   checked before the table is
 	*/
-	अन्यथा अगर (dev->flags & IFF_ALLMULTI)
+	else if (dev->flags & IFF_ALLMULTI)
 		outw( inw(ioaddr + RCR ) | RCR_ALMUL, ioaddr + RCR );
 
-	/* We just get all multicast packets even अगर we only want them
+	/* We just get all multicast packets even if we only want them
 	 . from one source.  This will be changed at some future
-	 . poपूर्णांक. */
-	अन्यथा अगर (!netdev_mc_empty(dev)) अणु
+	 . point. */
+	else if (!netdev_mc_empty(dev)) {
 		/* support hardware multicasting */
 
 		/* be sure I get rid of flags I might have set */
@@ -1479,9 +1478,9 @@ err_out:
 			ioaddr + RCR );
 		/* NOTE: this has to set the bank, so make sure it is the
 		   last thing called.  The bank is set to zero at the top */
-		smc_seपंचांगulticast(ioaddr, dev);
-	पूर्ण
-	अन्यथा  अणु
+		smc_setmulticast(ioaddr, dev);
+	}
+	else  {
 		outw( inw( ioaddr + RCR ) & ~(RCR_PROMISC | RCR_ALMUL),
 			ioaddr + RCR );
 
@@ -1494,38 +1493,38 @@ err_out:
 		outw( 0, ioaddr + MULTICAST2 );
 		outw( 0, ioaddr + MULTICAST3 );
 		outw( 0, ioaddr + MULTICAST4 );
-	पूर्ण
-पूर्ण
+	}
+}
 
-#अगर_घोषित MODULE
+#ifdef MODULE
 
-अटल काष्ठा net_device *devSMC9194;
+static struct net_device *devSMC9194;
 MODULE_LICENSE("GPL");
 
-module_param_hw(io, पूर्णांक, ioport, 0);
-module_param_hw(irq, पूर्णांक, irq, 0);
-module_param(अगरport, पूर्णांक, 0);
+module_param_hw(io, int, ioport, 0);
+module_param_hw(irq, int, irq, 0);
+module_param(ifport, int, 0);
 MODULE_PARM_DESC(io, "SMC 99194 I/O base address");
 MODULE_PARM_DESC(irq, "SMC 99194 IRQ number");
-MODULE_PARM_DESC(अगरport, "SMC 99194 interface port (0-default, 1-TP, 2-AUI)");
+MODULE_PARM_DESC(ifport, "SMC 99194 interface port (0-default, 1-TP, 2-AUI)");
 
-पूर्णांक __init init_module(व्योम)
-अणु
-	अगर (io == 0)
-		prपूर्णांकk(KERN_WARNING
+int __init init_module(void)
+{
+	if (io == 0)
+		printk(KERN_WARNING
 		CARDNAME": You shouldn't use auto-probing with insmod!\n" );
 
-	/* copy the parameters from insmod पूर्णांकo the device काष्ठाure */
+	/* copy the parameters from insmod into the device structure */
 	devSMC9194 = smc_init(-1);
-	वापस PTR_ERR_OR_ZERO(devSMC9194);
-पूर्ण
+	return PTR_ERR_OR_ZERO(devSMC9194);
+}
 
-व्योम __निकास cleanup_module(व्योम)
-अणु
-	unरेजिस्टर_netdev(devSMC9194);
-	मुक्त_irq(devSMC9194->irq, devSMC9194);
+void __exit cleanup_module(void)
+{
+	unregister_netdev(devSMC9194);
+	free_irq(devSMC9194->irq, devSMC9194);
 	release_region(devSMC9194->base_addr, SMC_IO_EXTENT);
-	मुक्त_netdev(devSMC9194);
-पूर्ण
+	free_netdev(devSMC9194);
+}
 
-#पूर्ण_अगर /* MODULE */
+#endif /* MODULE */

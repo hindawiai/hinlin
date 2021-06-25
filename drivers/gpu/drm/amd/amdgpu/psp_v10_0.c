@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,19 +23,19 @@
  *
  */
 
-#समावेश <linux/firmware.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
+#include <linux/firmware.h>
+#include <linux/module.h>
+#include <linux/pci.h>
 
-#समावेश "amdgpu.h"
-#समावेश "amdgpu_psp.h"
-#समावेश "amdgpu_ucode.h"
-#समावेश "soc15_common.h"
-#समावेश "psp_v10_0.h"
+#include "amdgpu.h"
+#include "amdgpu_psp.h"
+#include "amdgpu_ucode.h"
+#include "soc15_common.h"
+#include "psp_v10_0.h"
 
-#समावेश "mp/mp_10_0_offset.h"
-#समावेश "gc/gc_9_1_offset.h"
-#समावेश "sdma0/sdma0_4_1_offset.h"
+#include "mp/mp_10_0_offset.h"
+#include "gc/gc_9_1_offset.h"
+#include "sdma0/sdma0_4_1_offset.h"
 
 MODULE_FIRMWARE("amdgpu/raven_asd.bin");
 MODULE_FIRMWARE("amdgpu/picasso_asd.bin");
@@ -45,121 +44,121 @@ MODULE_FIRMWARE("amdgpu/picasso_ta.bin");
 MODULE_FIRMWARE("amdgpu/raven2_ta.bin");
 MODULE_FIRMWARE("amdgpu/raven_ta.bin");
 
-अटल पूर्णांक psp_v10_0_init_microcode(काष्ठा psp_context *psp)
-अणु
-	काष्ठा amdgpu_device *adev = psp->adev;
-	स्थिर अक्षर *chip_name;
-	अक्षर fw_name[30];
-	पूर्णांक err = 0;
-	स्थिर काष्ठा ta_firmware_header_v1_0 *ta_hdr;
+static int psp_v10_0_init_microcode(struct psp_context *psp)
+{
+	struct amdgpu_device *adev = psp->adev;
+	const char *chip_name;
+	char fw_name[30];
+	int err = 0;
+	const struct ta_firmware_header_v1_0 *ta_hdr;
 	DRM_DEBUG("\n");
 
-	चयन (adev->asic_type) अणु
-	हाल CHIP_RAVEN:
-		अगर (adev->apu_flags & AMD_APU_IS_RAVEN2)
+	switch (adev->asic_type) {
+	case CHIP_RAVEN:
+		if (adev->apu_flags & AMD_APU_IS_RAVEN2)
 			chip_name = "raven2";
-		अन्यथा अगर (adev->apu_flags & AMD_APU_IS_PICASSO)
+		else if (adev->apu_flags & AMD_APU_IS_PICASSO)
 			chip_name = "picasso";
-		अन्यथा
+		else
 			chip_name = "raven";
-		अवरोध;
-	शेष: BUG();
-	पूर्ण
+		break;
+	default: BUG();
+	}
 
 	err = psp_init_asd_microcode(psp, chip_name);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
-	snम_लिखो(fw_name, माप(fw_name), "amdgpu/%s_ta.bin", chip_name);
+	snprintf(fw_name, sizeof(fw_name), "amdgpu/%s_ta.bin", chip_name);
 	err = request_firmware(&adev->psp.ta_fw, fw_name, adev->dev);
-	अगर (err) अणु
+	if (err) {
 		release_firmware(adev->psp.ta_fw);
-		adev->psp.ta_fw = शून्य;
+		adev->psp.ta_fw = NULL;
 		dev_info(adev->dev,
 			 "psp v10.0: Failed to load firmware \"%s\"\n",
 			 fw_name);
-	पूर्ण अन्यथा अणु
+	} else {
 		err = amdgpu_ucode_validate(adev->psp.ta_fw);
-		अगर (err)
-			जाओ out2;
+		if (err)
+			goto out2;
 
-		ta_hdr = (स्थिर काष्ठा ta_firmware_header_v1_0 *)
+		ta_hdr = (const struct ta_firmware_header_v1_0 *)
 				 adev->psp.ta_fw->data;
 		adev->psp.ta_hdcp_ucode_version =
 			le32_to_cpu(ta_hdr->ta_hdcp_ucode_version);
 		adev->psp.ta_hdcp_ucode_size =
 			le32_to_cpu(ta_hdr->ta_hdcp_size_bytes);
 		adev->psp.ta_hdcp_start_addr =
-			(uपूर्णांक8_t *)ta_hdr +
+			(uint8_t *)ta_hdr +
 			le32_to_cpu(ta_hdr->header.ucode_array_offset_bytes);
 
-		adev->psp.ta_dपंचांग_ucode_version =
-			le32_to_cpu(ta_hdr->ta_dपंचांग_ucode_version);
-		adev->psp.ta_dपंचांग_ucode_size =
-			le32_to_cpu(ta_hdr->ta_dपंचांग_size_bytes);
-		adev->psp.ta_dपंचांग_start_addr =
-			(uपूर्णांक8_t *)adev->psp.ta_hdcp_start_addr +
-			le32_to_cpu(ta_hdr->ta_dपंचांग_offset_bytes);
+		adev->psp.ta_dtm_ucode_version =
+			le32_to_cpu(ta_hdr->ta_dtm_ucode_version);
+		adev->psp.ta_dtm_ucode_size =
+			le32_to_cpu(ta_hdr->ta_dtm_size_bytes);
+		adev->psp.ta_dtm_start_addr =
+			(uint8_t *)adev->psp.ta_hdcp_start_addr +
+			le32_to_cpu(ta_hdr->ta_dtm_offset_bytes);
 
 		adev->psp.ta_securedisplay_ucode_version =
 			le32_to_cpu(ta_hdr->ta_securedisplay_ucode_version);
 		adev->psp.ta_securedisplay_ucode_size =
 			le32_to_cpu(ta_hdr->ta_securedisplay_size_bytes);
 		adev->psp.ta_securedisplay_start_addr =
-			(uपूर्णांक8_t *)adev->psp.ta_hdcp_start_addr +
+			(uint8_t *)adev->psp.ta_hdcp_start_addr +
 			le32_to_cpu(ta_hdr->ta_securedisplay_offset_bytes);
 
 		adev->psp.ta_fw_version = le32_to_cpu(ta_hdr->header.ucode_version);
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 out2:
 	release_firmware(adev->psp.ta_fw);
-	adev->psp.ta_fw = शून्य;
+	adev->psp.ta_fw = NULL;
 out:
-	अगर (err) अणु
+	if (err) {
 		dev_err(adev->dev,
 			"psp v10.0: Failed to load firmware \"%s\"\n",
 			fw_name);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक psp_v10_0_ring_init(काष्ठा psp_context *psp,
-			       क्रमागत psp_ring_type ring_type)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा psp_ring *ring;
-	काष्ठा amdgpu_device *adev = psp->adev;
+static int psp_v10_0_ring_init(struct psp_context *psp,
+			       enum psp_ring_type ring_type)
+{
+	int ret = 0;
+	struct psp_ring *ring;
+	struct amdgpu_device *adev = psp->adev;
 
 	ring = &psp->km_ring;
 
 	ring->ring_type = ring_type;
 
-	/* allocate 4k Page of Local Frame Buffer memory क्रम ring */
+	/* allocate 4k Page of Local Frame Buffer memory for ring */
 	ring->ring_size = 0x1000;
 	ret = amdgpu_bo_create_kernel(adev, ring->ring_size, PAGE_SIZE,
 				      AMDGPU_GEM_DOMAIN_VRAM,
 				      &adev->firmware.rbuf,
 				      &ring->ring_mem_mc_addr,
-				      (व्योम **)&ring->ring_mem);
-	अगर (ret) अणु
+				      (void **)&ring->ring_mem);
+	if (ret) {
 		ring->ring_size = 0;
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक psp_v10_0_ring_create(काष्ठा psp_context *psp,
-				 क्रमागत psp_ring_type ring_type)
-अणु
-	पूर्णांक ret = 0;
-	अचिन्हित पूर्णांक psp_ring_reg = 0;
-	काष्ठा psp_ring *ring = &psp->km_ring;
-	काष्ठा amdgpu_device *adev = psp->adev;
+static int psp_v10_0_ring_create(struct psp_context *psp,
+				 enum psp_ring_type ring_type)
+{
+	int ret = 0;
+	unsigned int psp_ring_reg = 0;
+	struct psp_ring *ring = &psp->km_ring;
+	struct amdgpu_device *adev = psp->adev;
 
 	/* Write low address of the ring to C2PMSG_69 */
 	psp_ring_reg = lower_32_bits(ring->ring_mem_mc_addr);
@@ -178,19 +177,19 @@ out:
 	/* There might be handshake issue with hardware which needs delay */
 	mdelay(20);
 
-	/* Wait क्रम response flag (bit 31) in C2PMSG_64 */
-	ret = psp_रुको_क्रम(psp, SOC15_REG_OFFSET(MP0, 0, mmMP0_SMN_C2PMSG_64),
+	/* Wait for response flag (bit 31) in C2PMSG_64 */
+	ret = psp_wait_for(psp, SOC15_REG_OFFSET(MP0, 0, mmMP0_SMN_C2PMSG_64),
 			   0x80000000, 0x8000FFFF, false);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक psp_v10_0_ring_stop(काष्ठा psp_context *psp,
-			       क्रमागत psp_ring_type ring_type)
-अणु
-	पूर्णांक ret = 0;
-	अचिन्हित पूर्णांक psp_ring_reg = 0;
-	काष्ठा amdgpu_device *adev = psp->adev;
+static int psp_v10_0_ring_stop(struct psp_context *psp,
+			       enum psp_ring_type ring_type)
+{
+	int ret = 0;
+	unsigned int psp_ring_reg = 0;
+	struct amdgpu_device *adev = psp->adev;
 
 	/* Write the ring destroy command to C2PMSG_64 */
 	psp_ring_reg = 3 << 16;
@@ -199,52 +198,52 @@ out:
 	/* There might be handshake issue with hardware which needs delay */
 	mdelay(20);
 
-	/* Wait क्रम response flag (bit 31) in C2PMSG_64 */
-	ret = psp_रुको_क्रम(psp, SOC15_REG_OFFSET(MP0, 0, mmMP0_SMN_C2PMSG_64),
+	/* Wait for response flag (bit 31) in C2PMSG_64 */
+	ret = psp_wait_for(psp, SOC15_REG_OFFSET(MP0, 0, mmMP0_SMN_C2PMSG_64),
 			   0x80000000, 0x80000000, false);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक psp_v10_0_ring_destroy(काष्ठा psp_context *psp,
-				  क्रमागत psp_ring_type ring_type)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा psp_ring *ring = &psp->km_ring;
-	काष्ठा amdgpu_device *adev = psp->adev;
+static int psp_v10_0_ring_destroy(struct psp_context *psp,
+				  enum psp_ring_type ring_type)
+{
+	int ret = 0;
+	struct psp_ring *ring = &psp->km_ring;
+	struct amdgpu_device *adev = psp->adev;
 
 	ret = psp_v10_0_ring_stop(psp, ring_type);
-	अगर (ret)
+	if (ret)
 		DRM_ERROR("Fail to stop psp ring\n");
 
-	amdgpu_bo_मुक्त_kernel(&adev->firmware.rbuf,
+	amdgpu_bo_free_kernel(&adev->firmware.rbuf,
 			      &ring->ring_mem_mc_addr,
-			      (व्योम **)&ring->ring_mem);
+			      (void **)&ring->ring_mem);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक psp_v10_0_mode1_reset(काष्ठा psp_context *psp)
-अणु
+static int psp_v10_0_mode1_reset(struct psp_context *psp)
+{
 	DRM_INFO("psp mode 1 reset not supported now! \n");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल uपूर्णांक32_t psp_v10_0_ring_get_wptr(काष्ठा psp_context *psp)
-अणु
-	काष्ठा amdgpu_device *adev = psp->adev;
+static uint32_t psp_v10_0_ring_get_wptr(struct psp_context *psp)
+{
+	struct amdgpu_device *adev = psp->adev;
 
-	वापस RREG32_SOC15(MP0, 0, mmMP0_SMN_C2PMSG_67);
-पूर्ण
+	return RREG32_SOC15(MP0, 0, mmMP0_SMN_C2PMSG_67);
+}
 
-अटल व्योम psp_v10_0_ring_set_wptr(काष्ठा psp_context *psp, uपूर्णांक32_t value)
-अणु
-	काष्ठा amdgpu_device *adev = psp->adev;
+static void psp_v10_0_ring_set_wptr(struct psp_context *psp, uint32_t value)
+{
+	struct amdgpu_device *adev = psp->adev;
 
 	WREG32_SOC15(MP0, 0, mmMP0_SMN_C2PMSG_67, value);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा psp_funcs psp_v10_0_funcs = अणु
+static const struct psp_funcs psp_v10_0_funcs = {
 	.init_microcode = psp_v10_0_init_microcode,
 	.ring_init = psp_v10_0_ring_init,
 	.ring_create = psp_v10_0_ring_create,
@@ -253,9 +252,9 @@ out:
 	.mode1_reset = psp_v10_0_mode1_reset,
 	.ring_get_wptr = psp_v10_0_ring_get_wptr,
 	.ring_set_wptr = psp_v10_0_ring_set_wptr,
-पूर्ण;
+};
 
-व्योम psp_v10_0_set_psp_funcs(काष्ठा psp_context *psp)
-अणु
+void psp_v10_0_set_psp_funcs(struct psp_context *psp)
+{
 	psp->funcs = &psp_v10_0_funcs;
-पूर्ण
+}

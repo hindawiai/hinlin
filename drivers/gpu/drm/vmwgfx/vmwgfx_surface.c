@@ -1,15 +1,14 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0 OR MIT
+// SPDX-License-Identifier: GPL-2.0 OR MIT
 /**************************************************************************
  *
  * Copyright 2009-2015 VMware, Inc., Palo Alto, CA., USA
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modअगरy, merge, publish,
+ * without limitation the rights to use, copy, modify, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to करो so, subject to
+ * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -26,113 +25,113 @@
  *
  **************************************************************************/
 
-#समावेश <drm/tपंचांग/tपंचांग_placement.h>
+#include <drm/ttm/ttm_placement.h>
 
-#समावेश "vmwgfx_drv.h"
-#समावेश "vmwgfx_resource_priv.h"
-#समावेश "vmwgfx_so.h"
-#समावेश "vmwgfx_binding.h"
-#समावेश "device_include/svga3d_surfacedefs.h"
+#include "vmwgfx_drv.h"
+#include "vmwgfx_resource_priv.h"
+#include "vmwgfx_so.h"
+#include "vmwgfx_binding.h"
+#include "device_include/svga3d_surfacedefs.h"
 
-#घोषणा SVGA3D_FLAGS_64(upper32, lower32) (((uपूर्णांक64_t)upper32 << 32) | lower32)
-#घोषणा SVGA3D_FLAGS_UPPER_32(svga3d_flags) (svga3d_flags >> 32)
-#घोषणा SVGA3D_FLAGS_LOWER_32(svga3d_flags) \
-	(svga3d_flags & ((uपूर्णांक64_t)U32_MAX))
+#define SVGA3D_FLAGS_64(upper32, lower32) (((uint64_t)upper32 << 32) | lower32)
+#define SVGA3D_FLAGS_UPPER_32(svga3d_flags) (svga3d_flags >> 32)
+#define SVGA3D_FLAGS_LOWER_32(svga3d_flags) \
+	(svga3d_flags & ((uint64_t)U32_MAX))
 
 /**
- * काष्ठा vmw_user_surface - User-space visible surface resource
+ * struct vmw_user_surface - User-space visible surface resource
  *
  * @prime:          The TTM prime object.
  * @base:           The TTM base object handling user-space visibility.
  * @srf:            The surface metadata.
- * @size:           TTM accounting size क्रम the surface.
- * @master:         Master of the creating client. Used क्रम security check.
+ * @size:           TTM accounting size for the surface.
+ * @master:         Master of the creating client. Used for security check.
  * @backup_base:    The TTM base object of the backup buffer.
  */
-काष्ठा vmw_user_surface अणु
-	काष्ठा tपंचांग_prime_object prime;
-	काष्ठा vmw_surface srf;
-	uपूर्णांक32_t size;
-	काष्ठा drm_master *master;
-	काष्ठा tपंचांग_base_object *backup_base;
-पूर्ण;
+struct vmw_user_surface {
+	struct ttm_prime_object prime;
+	struct vmw_surface srf;
+	uint32_t size;
+	struct drm_master *master;
+	struct ttm_base_object *backup_base;
+};
 
 /**
- * काष्ठा vmw_surface_offset - Backing store mip level offset info
+ * struct vmw_surface_offset - Backing store mip level offset info
  *
  * @face:           Surface face.
  * @mip:            Mip level.
- * @bo_offset:      Offset पूर्णांकo backing store of this mip level.
+ * @bo_offset:      Offset into backing store of this mip level.
  *
  */
-काष्ठा vmw_surface_offset अणु
-	uपूर्णांक32_t face;
-	uपूर्णांक32_t mip;
-	uपूर्णांक32_t bo_offset;
-पूर्ण;
+struct vmw_surface_offset {
+	uint32_t face;
+	uint32_t mip;
+	uint32_t bo_offset;
+};
 
 /**
- * काष्ठा vmw_surface_dirty - Surface dirty-tracker
- * @cache: Cached layout inक्रमmation of the surface.
- * @size: Accounting size क्रम the काष्ठा vmw_surface_dirty.
+ * struct vmw_surface_dirty - Surface dirty-tracker
+ * @cache: Cached layout information of the surface.
+ * @size: Accounting size for the struct vmw_surface_dirty.
  * @num_subres: Number of subresources.
  * @boxes: Array of SVGA3dBoxes indicating dirty regions. One per subresource.
  */
-काष्ठा vmw_surface_dirty अणु
-	काष्ठा svga3dsurface_cache cache;
-	माप_प्रकार size;
+struct vmw_surface_dirty {
+	struct svga3dsurface_cache cache;
+	size_t size;
 	u32 num_subres;
 	SVGA3dBox boxes[];
-पूर्ण;
+};
 
-अटल व्योम vmw_user_surface_मुक्त(काष्ठा vmw_resource *res);
-अटल काष्ठा vmw_resource *
-vmw_user_surface_base_to_res(काष्ठा tपंचांग_base_object *base);
-अटल पूर्णांक vmw_legacy_srf_bind(काष्ठा vmw_resource *res,
-			       काष्ठा tपंचांग_validate_buffer *val_buf);
-अटल पूर्णांक vmw_legacy_srf_unbind(काष्ठा vmw_resource *res,
-				 bool पढ़ोback,
-				 काष्ठा tपंचांग_validate_buffer *val_buf);
-अटल पूर्णांक vmw_legacy_srf_create(काष्ठा vmw_resource *res);
-अटल पूर्णांक vmw_legacy_srf_destroy(काष्ठा vmw_resource *res);
-अटल पूर्णांक vmw_gb_surface_create(काष्ठा vmw_resource *res);
-अटल पूर्णांक vmw_gb_surface_bind(काष्ठा vmw_resource *res,
-			       काष्ठा tपंचांग_validate_buffer *val_buf);
-अटल पूर्णांक vmw_gb_surface_unbind(काष्ठा vmw_resource *res,
-				 bool पढ़ोback,
-				 काष्ठा tपंचांग_validate_buffer *val_buf);
-अटल पूर्णांक vmw_gb_surface_destroy(काष्ठा vmw_resource *res);
-अटल पूर्णांक
-vmw_gb_surface_define_पूर्णांकernal(काष्ठा drm_device *dev,
-			       काष्ठा drm_vmw_gb_surface_create_ext_req *req,
-			       काष्ठा drm_vmw_gb_surface_create_rep *rep,
-			       काष्ठा drm_file *file_priv);
-अटल पूर्णांक
-vmw_gb_surface_reference_पूर्णांकernal(काष्ठा drm_device *dev,
-				  काष्ठा drm_vmw_surface_arg *req,
-				  काष्ठा drm_vmw_gb_surface_ref_ext_rep *rep,
-				  काष्ठा drm_file *file_priv);
+static void vmw_user_surface_free(struct vmw_resource *res);
+static struct vmw_resource *
+vmw_user_surface_base_to_res(struct ttm_base_object *base);
+static int vmw_legacy_srf_bind(struct vmw_resource *res,
+			       struct ttm_validate_buffer *val_buf);
+static int vmw_legacy_srf_unbind(struct vmw_resource *res,
+				 bool readback,
+				 struct ttm_validate_buffer *val_buf);
+static int vmw_legacy_srf_create(struct vmw_resource *res);
+static int vmw_legacy_srf_destroy(struct vmw_resource *res);
+static int vmw_gb_surface_create(struct vmw_resource *res);
+static int vmw_gb_surface_bind(struct vmw_resource *res,
+			       struct ttm_validate_buffer *val_buf);
+static int vmw_gb_surface_unbind(struct vmw_resource *res,
+				 bool readback,
+				 struct ttm_validate_buffer *val_buf);
+static int vmw_gb_surface_destroy(struct vmw_resource *res);
+static int
+vmw_gb_surface_define_internal(struct drm_device *dev,
+			       struct drm_vmw_gb_surface_create_ext_req *req,
+			       struct drm_vmw_gb_surface_create_rep *rep,
+			       struct drm_file *file_priv);
+static int
+vmw_gb_surface_reference_internal(struct drm_device *dev,
+				  struct drm_vmw_surface_arg *req,
+				  struct drm_vmw_gb_surface_ref_ext_rep *rep,
+				  struct drm_file *file_priv);
 
-अटल व्योम vmw_surface_dirty_मुक्त(काष्ठा vmw_resource *res);
-अटल पूर्णांक vmw_surface_dirty_alloc(काष्ठा vmw_resource *res);
-अटल पूर्णांक vmw_surface_dirty_sync(काष्ठा vmw_resource *res);
-अटल व्योम vmw_surface_dirty_range_add(काष्ठा vmw_resource *res, माप_प्रकार start,
-					माप_प्रकार end);
-अटल पूर्णांक vmw_surface_clean(काष्ठा vmw_resource *res);
+static void vmw_surface_dirty_free(struct vmw_resource *res);
+static int vmw_surface_dirty_alloc(struct vmw_resource *res);
+static int vmw_surface_dirty_sync(struct vmw_resource *res);
+static void vmw_surface_dirty_range_add(struct vmw_resource *res, size_t start,
+					size_t end);
+static int vmw_surface_clean(struct vmw_resource *res);
 
-अटल स्थिर काष्ठा vmw_user_resource_conv user_surface_conv = अणु
+static const struct vmw_user_resource_conv user_surface_conv = {
 	.object_type = VMW_RES_SURFACE,
 	.base_obj_to_res = vmw_user_surface_base_to_res,
-	.res_मुक्त = vmw_user_surface_मुक्त
-पूर्ण;
+	.res_free = vmw_user_surface_free
+};
 
-स्थिर काष्ठा vmw_user_resource_conv *user_surface_converter =
+const struct vmw_user_resource_conv *user_surface_converter =
 	&user_surface_conv;
 
 
-अटल uपूर्णांक64_t vmw_user_surface_size;
+static uint64_t vmw_user_surface_size;
 
-अटल स्थिर काष्ठा vmw_res_func vmw_legacy_surface_func = अणु
+static const struct vmw_res_func vmw_legacy_surface_func = {
 	.res_type = vmw_res_surface,
 	.needs_backup = false,
 	.may_evict = true,
@@ -144,9 +143,9 @@ vmw_gb_surface_reference_पूर्णांकernal(काष्ठा drm_de
 	.destroy = &vmw_legacy_srf_destroy,
 	.bind = &vmw_legacy_srf_bind,
 	.unbind = &vmw_legacy_srf_unbind
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा vmw_res_func vmw_gb_surface_func = अणु
+static const struct vmw_res_func vmw_gb_surface_func = {
 	.res_type = vmw_res_surface,
 	.needs_backup = true,
 	.may_evict = true,
@@ -159,168 +158,168 @@ vmw_gb_surface_reference_पूर्णांकernal(काष्ठा drm_de
 	.bind = vmw_gb_surface_bind,
 	.unbind = vmw_gb_surface_unbind,
 	.dirty_alloc = vmw_surface_dirty_alloc,
-	.dirty_मुक्त = vmw_surface_dirty_मुक्त,
+	.dirty_free = vmw_surface_dirty_free,
 	.dirty_sync = vmw_surface_dirty_sync,
 	.dirty_range_add = vmw_surface_dirty_range_add,
 	.clean = vmw_surface_clean,
-पूर्ण;
+};
 
 /*
- * काष्ठा vmw_surface_dma - SVGA3D DMA command
+ * struct vmw_surface_dma - SVGA3D DMA command
  */
-काष्ठा vmw_surface_dma अणु
+struct vmw_surface_dma {
 	SVGA3dCmdHeader header;
 	SVGA3dCmdSurfaceDMA body;
 	SVGA3dCopyBox cb;
 	SVGA3dCmdSurfaceDMASuffix suffix;
-पूर्ण;
+};
 
 /*
- * काष्ठा vmw_surface_define - SVGA3D Surface Define command
+ * struct vmw_surface_define - SVGA3D Surface Define command
  */
-काष्ठा vmw_surface_define अणु
+struct vmw_surface_define {
 	SVGA3dCmdHeader header;
 	SVGA3dCmdDefineSurface body;
-पूर्ण;
+};
 
 /*
- * काष्ठा vmw_surface_destroy - SVGA3D Surface Destroy command
+ * struct vmw_surface_destroy - SVGA3D Surface Destroy command
  */
-काष्ठा vmw_surface_destroy अणु
+struct vmw_surface_destroy {
 	SVGA3dCmdHeader header;
 	SVGA3dCmdDestroySurface body;
-पूर्ण;
+};
 
 
 /**
- * vmw_surface_dma_size - Compute fअगरo size क्रम a dma command.
+ * vmw_surface_dma_size - Compute fifo size for a dma command.
  *
- * @srf: Poपूर्णांकer to a काष्ठा vmw_surface
+ * @srf: Pointer to a struct vmw_surface
  *
- * Computes the required size क्रम a surface dma command क्रम backup or
+ * Computes the required size for a surface dma command for backup or
  * restoration of the surface represented by @srf.
  */
-अटल अंतरभूत uपूर्णांक32_t vmw_surface_dma_size(स्थिर काष्ठा vmw_surface *srf)
-अणु
-	वापस srf->metadata.num_sizes * माप(काष्ठा vmw_surface_dma);
-पूर्ण
+static inline uint32_t vmw_surface_dma_size(const struct vmw_surface *srf)
+{
+	return srf->metadata.num_sizes * sizeof(struct vmw_surface_dma);
+}
 
 
 /**
- * vmw_surface_define_size - Compute fअगरo size क्रम a surface define command.
+ * vmw_surface_define_size - Compute fifo size for a surface define command.
  *
- * @srf: Poपूर्णांकer to a काष्ठा vmw_surface
+ * @srf: Pointer to a struct vmw_surface
  *
- * Computes the required size क्रम a surface define command क्रम the definition
+ * Computes the required size for a surface define command for the definition
  * of the surface represented by @srf.
  */
-अटल अंतरभूत uपूर्णांक32_t vmw_surface_define_size(स्थिर काष्ठा vmw_surface *srf)
-अणु
-	वापस माप(काष्ठा vmw_surface_define) + srf->metadata.num_sizes *
-		माप(SVGA3dSize);
-पूर्ण
+static inline uint32_t vmw_surface_define_size(const struct vmw_surface *srf)
+{
+	return sizeof(struct vmw_surface_define) + srf->metadata.num_sizes *
+		sizeof(SVGA3dSize);
+}
 
 
 /**
- * vmw_surface_destroy_size - Compute fअगरo size क्रम a surface destroy command.
+ * vmw_surface_destroy_size - Compute fifo size for a surface destroy command.
  *
- * Computes the required size क्रम a surface destroy command क्रम the deकाष्ठाion
+ * Computes the required size for a surface destroy command for the destruction
  * of a hw surface.
  */
-अटल अंतरभूत uपूर्णांक32_t vmw_surface_destroy_size(व्योम)
-अणु
-	वापस माप(काष्ठा vmw_surface_destroy);
-पूर्ण
+static inline uint32_t vmw_surface_destroy_size(void)
+{
+	return sizeof(struct vmw_surface_destroy);
+}
 
 /**
  * vmw_surface_destroy_encode - Encode a surface_destroy command.
  *
  * @id: The surface id
- * @cmd_space: Poपूर्णांकer to memory area in which the commands should be encoded.
+ * @cmd_space: Pointer to memory area in which the commands should be encoded.
  */
-अटल व्योम vmw_surface_destroy_encode(uपूर्णांक32_t id,
-				       व्योम *cmd_space)
-अणु
-	काष्ठा vmw_surface_destroy *cmd = (काष्ठा vmw_surface_destroy *)
+static void vmw_surface_destroy_encode(uint32_t id,
+				       void *cmd_space)
+{
+	struct vmw_surface_destroy *cmd = (struct vmw_surface_destroy *)
 		cmd_space;
 
 	cmd->header.id = SVGA_3D_CMD_SURFACE_DESTROY;
-	cmd->header.size = माप(cmd->body);
+	cmd->header.size = sizeof(cmd->body);
 	cmd->body.sid = id;
-पूर्ण
+}
 
 /**
  * vmw_surface_define_encode - Encode a surface_define command.
  *
- * @srf: Poपूर्णांकer to a काष्ठा vmw_surface object.
- * @cmd_space: Poपूर्णांकer to memory area in which the commands should be encoded.
+ * @srf: Pointer to a struct vmw_surface object.
+ * @cmd_space: Pointer to memory area in which the commands should be encoded.
  */
-अटल व्योम vmw_surface_define_encode(स्थिर काष्ठा vmw_surface *srf,
-				      व्योम *cmd_space)
-अणु
-	काष्ठा vmw_surface_define *cmd = (काष्ठा vmw_surface_define *)
+static void vmw_surface_define_encode(const struct vmw_surface *srf,
+				      void *cmd_space)
+{
+	struct vmw_surface_define *cmd = (struct vmw_surface_define *)
 		cmd_space;
-	काष्ठा drm_vmw_size *src_size;
+	struct drm_vmw_size *src_size;
 	SVGA3dSize *cmd_size;
-	uपूर्णांक32_t cmd_len;
-	पूर्णांक i;
+	uint32_t cmd_len;
+	int i;
 
-	cmd_len = माप(cmd->body) + srf->metadata.num_sizes *
-		माप(SVGA3dSize);
+	cmd_len = sizeof(cmd->body) + srf->metadata.num_sizes *
+		sizeof(SVGA3dSize);
 
 	cmd->header.id = SVGA_3D_CMD_SURFACE_DEFINE;
 	cmd->header.size = cmd_len;
 	cmd->body.sid = srf->res.id;
 	/*
 	 * Downcast of surfaceFlags, was upcasted when received from user-space,
-	 * since driver पूर्णांकernally stores as 64 bit.
+	 * since driver internally stores as 64 bit.
 	 * For legacy surface define only 32 bit flag is supported.
 	 */
 	cmd->body.surfaceFlags = (SVGA3dSurface1Flags)srf->metadata.flags;
-	cmd->body.क्रमmat = srf->metadata.क्रमmat;
-	क्रम (i = 0; i < DRM_VMW_MAX_SURFACE_FACES; ++i)
+	cmd->body.format = srf->metadata.format;
+	for (i = 0; i < DRM_VMW_MAX_SURFACE_FACES; ++i)
 		cmd->body.face[i].numMipLevels = srf->metadata.mip_levels[i];
 
 	cmd += 1;
 	cmd_size = (SVGA3dSize *) cmd;
 	src_size = srf->metadata.sizes;
 
-	क्रम (i = 0; i < srf->metadata.num_sizes; ++i, cmd_size++, src_size++) अणु
+	for (i = 0; i < srf->metadata.num_sizes; ++i, cmd_size++, src_size++) {
 		cmd_size->width = src_size->width;
 		cmd_size->height = src_size->height;
 		cmd_size->depth = src_size->depth;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * vmw_surface_dma_encode - Encode a surface_dma command.
  *
- * @srf: Poपूर्णांकer to a काष्ठा vmw_surface object.
- * @cmd_space: Poपूर्णांकer to memory area in which the commands should be encoded.
- * @ptr: Poपूर्णांकer to an SVGAGuestPtr indicating where the surface contents
- * should be placed or पढ़ो from.
+ * @srf: Pointer to a struct vmw_surface object.
+ * @cmd_space: Pointer to memory area in which the commands should be encoded.
+ * @ptr: Pointer to an SVGAGuestPtr indicating where the surface contents
+ * should be placed or read from.
  * @to_surface: Boolean whether to DMA to the surface or from the surface.
  */
-अटल व्योम vmw_surface_dma_encode(काष्ठा vmw_surface *srf,
-				   व्योम *cmd_space,
-				   स्थिर SVGAGuestPtr *ptr,
+static void vmw_surface_dma_encode(struct vmw_surface *srf,
+				   void *cmd_space,
+				   const SVGAGuestPtr *ptr,
 				   bool to_surface)
-अणु
-	uपूर्णांक32_t i;
-	काष्ठा vmw_surface_dma *cmd = (काष्ठा vmw_surface_dma *)cmd_space;
-	स्थिर काष्ठा svga3d_surface_desc *desc =
-		svga3dsurface_get_desc(srf->metadata.क्रमmat);
+{
+	uint32_t i;
+	struct vmw_surface_dma *cmd = (struct vmw_surface_dma *)cmd_space;
+	const struct svga3d_surface_desc *desc =
+		svga3dsurface_get_desc(srf->metadata.format);
 
-	क्रम (i = 0; i < srf->metadata.num_sizes; ++i) अणु
+	for (i = 0; i < srf->metadata.num_sizes; ++i) {
 		SVGA3dCmdHeader *header = &cmd->header;
 		SVGA3dCmdSurfaceDMA *body = &cmd->body;
 		SVGA3dCopyBox *cb = &cmd->cb;
 		SVGA3dCmdSurfaceDMASuffix *suffix = &cmd->suffix;
-		स्थिर काष्ठा vmw_surface_offset *cur_offset = &srf->offsets[i];
-		स्थिर काष्ठा drm_vmw_size *cur_size = &srf->metadata.sizes[i];
+		const struct vmw_surface_offset *cur_offset = &srf->offsets[i];
+		const struct drm_vmw_size *cur_size = &srf->metadata.sizes[i];
 
 		header->id = SVGA_3D_CMD_SURFACE_DMA;
-		header->size = माप(*body) + माप(*cb) + माप(*suffix);
+		header->size = sizeof(*body) + sizeof(*cb) + sizeof(*suffix);
 
 		body->guest.ptr = *ptr;
 		body->guest.ptr.offset += cur_offset->bo_offset;
@@ -341,7 +340,7 @@ vmw_gb_surface_reference_पूर्णांकernal(काष्ठा drm_de
 		cb->h = cur_size->height;
 		cb->d = cur_size->depth;
 
-		suffix->suffixSize = माप(*suffix);
+		suffix->suffixSize = sizeof(*suffix);
 		suffix->maximumOffset =
 			svga3dsurface_get_image_buffer_size(desc, cur_size,
 							    body->guest.pitch);
@@ -349,94 +348,94 @@ vmw_gb_surface_reference_पूर्णांकernal(काष्ठा drm_de
 		suffix->flags.unsynchronized = 0;
 		suffix->flags.reserved = 0;
 		++cmd;
-	पूर्ण
-पूर्ण;
+	}
+};
 
 
 /**
  * vmw_hw_surface_destroy - destroy a Device surface
  *
- * @res:        Poपूर्णांकer to a काष्ठा vmw_resource embedded in a काष्ठा
+ * @res:        Pointer to a struct vmw_resource embedded in a struct
  *              vmw_surface.
  *
- * Destroys a the device surface associated with a काष्ठा vmw_surface अगर
+ * Destroys a the device surface associated with a struct vmw_surface if
  * any, and adjusts accounting and resource count accordingly.
  */
-अटल व्योम vmw_hw_surface_destroy(काष्ठा vmw_resource *res)
-अणु
+static void vmw_hw_surface_destroy(struct vmw_resource *res)
+{
 
-	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
-	व्योम *cmd;
+	struct vmw_private *dev_priv = res->dev_priv;
+	void *cmd;
 
-	अगर (res->func->destroy == vmw_gb_surface_destroy) अणु
-		(व्योम) vmw_gb_surface_destroy(res);
-		वापस;
-	पूर्ण
+	if (res->func->destroy == vmw_gb_surface_destroy) {
+		(void) vmw_gb_surface_destroy(res);
+		return;
+	}
 
-	अगर (res->id != -1) अणु
+	if (res->id != -1) {
 
 		cmd = VMW_CMD_RESERVE(dev_priv, vmw_surface_destroy_size());
-		अगर (unlikely(!cmd))
-			वापस;
+		if (unlikely(!cmd))
+			return;
 
 		vmw_surface_destroy_encode(res->id, cmd);
 		vmw_cmd_commit(dev_priv, vmw_surface_destroy_size());
 
 		/*
 		 * used_memory_size_atomic, or separate lock
-		 * to aव्योम taking dev_priv::cmdbuf_mutex in
+		 * to avoid taking dev_priv::cmdbuf_mutex in
 		 * the destroy path.
 		 */
 
 		mutex_lock(&dev_priv->cmdbuf_mutex);
 		dev_priv->used_memory_size -= res->backup_size;
 		mutex_unlock(&dev_priv->cmdbuf_mutex);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * vmw_legacy_srf_create - Create a device surface as part of the
  * resource validation process.
  *
- * @res: Poपूर्णांकer to a काष्ठा vmw_surface.
+ * @res: Pointer to a struct vmw_surface.
  *
- * If the surface करोesn't have a hw id.
+ * If the surface doesn't have a hw id.
  *
- * Returns -EBUSY अगर there wasn't sufficient device resources to
- * complete the validation. Retry after मुक्तing up resources.
+ * Returns -EBUSY if there wasn't sufficient device resources to
+ * complete the validation. Retry after freeing up resources.
  *
- * May वापस other errors अगर the kernel is out of guest resources.
+ * May return other errors if the kernel is out of guest resources.
  */
-अटल पूर्णांक vmw_legacy_srf_create(काष्ठा vmw_resource *res)
-अणु
-	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
-	काष्ठा vmw_surface *srf;
-	uपूर्णांक32_t submit_size;
-	uपूर्णांक8_t *cmd;
-	पूर्णांक ret;
+static int vmw_legacy_srf_create(struct vmw_resource *res)
+{
+	struct vmw_private *dev_priv = res->dev_priv;
+	struct vmw_surface *srf;
+	uint32_t submit_size;
+	uint8_t *cmd;
+	int ret;
 
-	अगर (likely(res->id != -1))
-		वापस 0;
+	if (likely(res->id != -1))
+		return 0;
 
 	srf = vmw_res_to_srf(res);
-	अगर (unlikely(dev_priv->used_memory_size + res->backup_size >=
+	if (unlikely(dev_priv->used_memory_size + res->backup_size >=
 		     dev_priv->memory_size))
-		वापस -EBUSY;
+		return -EBUSY;
 
 	/*
-	 * Alloc id क्रम the resource.
+	 * Alloc id for the resource.
 	 */
 
 	ret = vmw_resource_alloc_id(res);
-	अगर (unlikely(ret != 0)) अणु
+	if (unlikely(ret != 0)) {
 		DRM_ERROR("Failed to allocate a surface id.\n");
-		जाओ out_no_id;
-	पूर्ण
+		goto out_no_id;
+	}
 
-	अगर (unlikely(res->id >= SVGA3D_MAX_SURFACE_IDS)) अणु
+	if (unlikely(res->id >= SVGA3D_MAX_SURFACE_IDS)) {
 		ret = -EBUSY;
-		जाओ out_no_fअगरo;
-	पूर्ण
+		goto out_no_fifo;
+	}
 
 	/*
 	 * Encode surface define- commands.
@@ -444,60 +443,60 @@ vmw_gb_surface_reference_पूर्णांकernal(काष्ठा drm_de
 
 	submit_size = vmw_surface_define_size(srf);
 	cmd = VMW_CMD_RESERVE(dev_priv, submit_size);
-	अगर (unlikely(!cmd)) अणु
+	if (unlikely(!cmd)) {
 		ret = -ENOMEM;
-		जाओ out_no_fअगरo;
-	पूर्ण
+		goto out_no_fifo;
+	}
 
 	vmw_surface_define_encode(srf, cmd);
 	vmw_cmd_commit(dev_priv, submit_size);
-	vmw_fअगरo_resource_inc(dev_priv);
+	vmw_fifo_resource_inc(dev_priv);
 
 	/*
 	 * Surface memory usage accounting.
 	 */
 
 	dev_priv->used_memory_size += res->backup_size;
-	वापस 0;
+	return 0;
 
-out_no_fअगरo:
+out_no_fifo:
 	vmw_resource_release_id(res);
 out_no_id:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * vmw_legacy_srf_dma - Copy backup data to or from a legacy surface.
  *
- * @res:            Poपूर्णांकer to a काष्ठा vmw_res embedded in a काष्ठा
+ * @res:            Pointer to a struct vmw_res embedded in a struct
  *                  vmw_surface.
- * @val_buf:        Poपूर्णांकer to a काष्ठा tपंचांग_validate_buffer containing
- *                  inक्रमmation about the backup buffer.
+ * @val_buf:        Pointer to a struct ttm_validate_buffer containing
+ *                  information about the backup buffer.
  * @bind:           Boolean wether to DMA to the surface.
  *
  * Transfer backup data to or from a legacy surface as part of the
  * validation process.
- * May वापस other errors अगर the kernel is out of guest resources.
+ * May return other errors if the kernel is out of guest resources.
  * The backup buffer will be fenced or idle upon successful completion,
- * and अगर the surface needs persistent backup storage, the backup buffer
- * will also be वापसed reserved अगरf @bind is true.
+ * and if the surface needs persistent backup storage, the backup buffer
+ * will also be returned reserved iff @bind is true.
  */
-अटल पूर्णांक vmw_legacy_srf_dma(काष्ठा vmw_resource *res,
-			      काष्ठा tपंचांग_validate_buffer *val_buf,
+static int vmw_legacy_srf_dma(struct vmw_resource *res,
+			      struct ttm_validate_buffer *val_buf,
 			      bool bind)
-अणु
+{
 	SVGAGuestPtr ptr;
-	काष्ठा vmw_fence_obj *fence;
-	uपूर्णांक32_t submit_size;
-	काष्ठा vmw_surface *srf = vmw_res_to_srf(res);
-	uपूर्णांक8_t *cmd;
-	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
+	struct vmw_fence_obj *fence;
+	uint32_t submit_size;
+	struct vmw_surface *srf = vmw_res_to_srf(res);
+	uint8_t *cmd;
+	struct vmw_private *dev_priv = res->dev_priv;
 
 	BUG_ON(!val_buf->bo);
 	submit_size = vmw_surface_dma_size(srf);
 	cmd = VMW_CMD_RESERVE(dev_priv, submit_size);
-	अगर (unlikely(!cmd))
-		वापस -ENOMEM;
+	if (unlikely(!cmd))
+		return -ENOMEM;
 
 	vmw_bo_get_guest_ptr(val_buf->bo, &ptr);
 	vmw_surface_dma_encode(srf, cmd, &ptr, bind);
@@ -508,72 +507,72 @@ out_no_id:
 	 * Create a fence object and fence the backup buffer.
 	 */
 
-	(व्योम) vmw_execbuf_fence_commands(शून्य, dev_priv,
-					  &fence, शून्य);
+	(void) vmw_execbuf_fence_commands(NULL, dev_priv,
+					  &fence, NULL);
 
 	vmw_bo_fence_single(val_buf->bo, fence);
 
-	अगर (likely(fence != शून्य))
+	if (likely(fence != NULL))
 		vmw_fence_obj_unreference(&fence);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * vmw_legacy_srf_bind - Perक्रमm a legacy surface bind as part of the
+ * vmw_legacy_srf_bind - Perform a legacy surface bind as part of the
  *                       surface validation process.
  *
- * @res:            Poपूर्णांकer to a काष्ठा vmw_res embedded in a काष्ठा
+ * @res:            Pointer to a struct vmw_res embedded in a struct
  *                  vmw_surface.
- * @val_buf:        Poपूर्णांकer to a काष्ठा tपंचांग_validate_buffer containing
- *                  inक्रमmation about the backup buffer.
+ * @val_buf:        Pointer to a struct ttm_validate_buffer containing
+ *                  information about the backup buffer.
  *
- * This function will copy backup data to the surface अगर the
+ * This function will copy backup data to the surface if the
  * backup buffer is dirty.
  */
-अटल पूर्णांक vmw_legacy_srf_bind(काष्ठा vmw_resource *res,
-			       काष्ठा tपंचांग_validate_buffer *val_buf)
-अणु
-	अगर (!res->backup_dirty)
-		वापस 0;
+static int vmw_legacy_srf_bind(struct vmw_resource *res,
+			       struct ttm_validate_buffer *val_buf)
+{
+	if (!res->backup_dirty)
+		return 0;
 
-	वापस vmw_legacy_srf_dma(res, val_buf, true);
-पूर्ण
+	return vmw_legacy_srf_dma(res, val_buf, true);
+}
 
 
 /**
- * vmw_legacy_srf_unbind - Perक्रमm a legacy surface unbind as part of the
+ * vmw_legacy_srf_unbind - Perform a legacy surface unbind as part of the
  *                         surface eviction process.
  *
- * @res:            Poपूर्णांकer to a काष्ठा vmw_res embedded in a काष्ठा
+ * @res:            Pointer to a struct vmw_res embedded in a struct
  *                  vmw_surface.
- * @पढ़ोback:       Readback - only true अगर dirty
- * @val_buf:        Poपूर्णांकer to a काष्ठा tपंचांग_validate_buffer containing
- *                  inक्रमmation about the backup buffer.
+ * @readback:       Readback - only true if dirty
+ * @val_buf:        Pointer to a struct ttm_validate_buffer containing
+ *                  information about the backup buffer.
  *
  * This function will copy backup data from the surface.
  */
-अटल पूर्णांक vmw_legacy_srf_unbind(काष्ठा vmw_resource *res,
-				 bool पढ़ोback,
-				 काष्ठा tपंचांग_validate_buffer *val_buf)
-अणु
-	अगर (unlikely(पढ़ोback))
-		वापस vmw_legacy_srf_dma(res, val_buf, false);
-	वापस 0;
-पूर्ण
+static int vmw_legacy_srf_unbind(struct vmw_resource *res,
+				 bool readback,
+				 struct ttm_validate_buffer *val_buf)
+{
+	if (unlikely(readback))
+		return vmw_legacy_srf_dma(res, val_buf, false);
+	return 0;
+}
 
 /**
  * vmw_legacy_srf_destroy - Destroy a device surface as part of a
  *                          resource eviction process.
  *
- * @res:            Poपूर्णांकer to a काष्ठा vmw_res embedded in a काष्ठा
+ * @res:            Pointer to a struct vmw_res embedded in a struct
  *                  vmw_surface.
  */
-अटल पूर्णांक vmw_legacy_srf_destroy(काष्ठा vmw_resource *res)
-अणु
-	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
-	uपूर्णांक32_t submit_size;
-	uपूर्णांक8_t *cmd;
+static int vmw_legacy_srf_destroy(struct vmw_resource *res)
+{
+	struct vmw_private *dev_priv = res->dev_priv;
+	uint32_t submit_size;
+	uint8_t *cmd;
 
 	BUG_ON(res->id == -1);
 
@@ -583,8 +582,8 @@ out_no_id:
 
 	submit_size = vmw_surface_destroy_size();
 	cmd = VMW_CMD_RESERVE(dev_priv, submit_size);
-	अगर (unlikely(!cmd))
-		वापस -ENOMEM;
+	if (unlikely(!cmd))
+		return -ENOMEM;
 
 	vmw_surface_destroy_encode(res->id, cmd);
 	vmw_cmd_commit(dev_priv, submit_size);
@@ -600,36 +599,36 @@ out_no_id:
 	 */
 
 	vmw_resource_release_id(res);
-	vmw_fअगरo_resource_dec(dev_priv);
+	vmw_fifo_resource_dec(dev_priv);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /**
- * vmw_surface_init - initialize a काष्ठा vmw_surface
+ * vmw_surface_init - initialize a struct vmw_surface
  *
- * @dev_priv:       Poपूर्णांकer to a device निजी काष्ठा.
- * @srf:            Poपूर्णांकer to the काष्ठा vmw_surface to initialize.
- * @res_मुक्त:       Poपूर्णांकer to a resource deकाष्ठाor used to मुक्त
+ * @dev_priv:       Pointer to a device private struct.
+ * @srf:            Pointer to the struct vmw_surface to initialize.
+ * @res_free:       Pointer to a resource destructor used to free
  *                  the object.
  */
-अटल पूर्णांक vmw_surface_init(काष्ठा vmw_निजी *dev_priv,
-			    काष्ठा vmw_surface *srf,
-			    व्योम (*res_मुक्त) (काष्ठा vmw_resource *res))
-अणु
-	पूर्णांक ret;
-	काष्ठा vmw_resource *res = &srf->res;
+static int vmw_surface_init(struct vmw_private *dev_priv,
+			    struct vmw_surface *srf,
+			    void (*res_free) (struct vmw_resource *res))
+{
+	int ret;
+	struct vmw_resource *res = &srf->res;
 
-	BUG_ON(!res_मुक्त);
-	ret = vmw_resource_init(dev_priv, res, true, res_मुक्त,
+	BUG_ON(!res_free);
+	ret = vmw_resource_init(dev_priv, res, true, res_free,
 				(dev_priv->has_mob) ? &vmw_gb_surface_func :
 				&vmw_legacy_surface_func);
 
-	अगर (unlikely(ret != 0)) अणु
-		res_मुक्त(res);
-		वापस ret;
-	पूर्ण
+	if (unlikely(ret != 0)) {
+		res_free(res);
+		return ret;
+	}
 
 	/*
 	 * The surface won't be visible to hardware until a
@@ -638,196 +637,196 @@ out_no_id:
 
 	INIT_LIST_HEAD(&srf->view_list);
 	res->hw_destroy = vmw_hw_surface_destroy;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * vmw_user_surface_base_to_res - TTM base object to resource converter क्रम
+ * vmw_user_surface_base_to_res - TTM base object to resource converter for
  *                                user visible surfaces
  *
- * @base:           Poपूर्णांकer to a TTM base object
+ * @base:           Pointer to a TTM base object
  *
- * Returns the काष्ठा vmw_resource embedded in a काष्ठा vmw_surface
- * क्रम the user-visible object identअगरied by the TTM base object @base.
+ * Returns the struct vmw_resource embedded in a struct vmw_surface
+ * for the user-visible object identified by the TTM base object @base.
  */
-अटल काष्ठा vmw_resource *
-vmw_user_surface_base_to_res(काष्ठा tपंचांग_base_object *base)
-अणु
-	वापस &(container_of(base, काष्ठा vmw_user_surface,
+static struct vmw_resource *
+vmw_user_surface_base_to_res(struct ttm_base_object *base)
+{
+	return &(container_of(base, struct vmw_user_surface,
 			      prime.base)->srf.res);
-पूर्ण
+}
 
 /**
- * vmw_user_surface_मुक्त - User visible surface resource deकाष्ठाor
+ * vmw_user_surface_free - User visible surface resource destructor
  *
- * @res:            A काष्ठा vmw_resource embedded in a काष्ठा vmw_surface.
+ * @res:            A struct vmw_resource embedded in a struct vmw_surface.
  */
-अटल व्योम vmw_user_surface_मुक्त(काष्ठा vmw_resource *res)
-अणु
-	काष्ठा vmw_surface *srf = vmw_res_to_srf(res);
-	काष्ठा vmw_user_surface *user_srf =
-	    container_of(srf, काष्ठा vmw_user_surface, srf);
-	काष्ठा vmw_निजी *dev_priv = srf->res.dev_priv;
-	uपूर्णांक32_t size = user_srf->size;
+static void vmw_user_surface_free(struct vmw_resource *res)
+{
+	struct vmw_surface *srf = vmw_res_to_srf(res);
+	struct vmw_user_surface *user_srf =
+	    container_of(srf, struct vmw_user_surface, srf);
+	struct vmw_private *dev_priv = srf->res.dev_priv;
+	uint32_t size = user_srf->size;
 
 	WARN_ON_ONCE(res->dirty);
-	अगर (user_srf->master)
+	if (user_srf->master)
 		drm_master_put(&user_srf->master);
-	kमुक्त(srf->offsets);
-	kमुक्त(srf->metadata.sizes);
-	kमुक्त(srf->snooper.image);
-	tपंचांग_prime_object_kमुक्त(user_srf, prime);
-	tपंचांग_mem_global_मुक्त(vmw_mem_glob(dev_priv), size);
-पूर्ण
+	kfree(srf->offsets);
+	kfree(srf->metadata.sizes);
+	kfree(srf->snooper.image);
+	ttm_prime_object_kfree(user_srf, prime);
+	ttm_mem_global_free(vmw_mem_glob(dev_priv), size);
+}
 
 /**
- * vmw_user_surface_मुक्त - User visible surface TTM base object deकाष्ठाor
+ * vmw_user_surface_free - User visible surface TTM base object destructor
  *
- * @p_base:         Poपूर्णांकer to a poपूर्णांकer to a TTM base object
- *                  embedded in a काष्ठा vmw_user_surface.
+ * @p_base:         Pointer to a pointer to a TTM base object
+ *                  embedded in a struct vmw_user_surface.
  *
  * Drops the base object's reference on its resource, and the
- * poपूर्णांकer poपूर्णांकed to by *p_base is set to शून्य.
+ * pointer pointed to by *p_base is set to NULL.
  */
-अटल व्योम vmw_user_surface_base_release(काष्ठा tपंचांग_base_object **p_base)
-अणु
-	काष्ठा tपंचांग_base_object *base = *p_base;
-	काष्ठा vmw_user_surface *user_srf =
-	    container_of(base, काष्ठा vmw_user_surface, prime.base);
-	काष्ठा vmw_resource *res = &user_srf->srf.res;
+static void vmw_user_surface_base_release(struct ttm_base_object **p_base)
+{
+	struct ttm_base_object *base = *p_base;
+	struct vmw_user_surface *user_srf =
+	    container_of(base, struct vmw_user_surface, prime.base);
+	struct vmw_resource *res = &user_srf->srf.res;
 
-	*p_base = शून्य;
-	अगर (user_srf->backup_base)
-		tपंचांग_base_object_unref(&user_srf->backup_base);
+	*p_base = NULL;
+	if (user_srf->backup_base)
+		ttm_base_object_unref(&user_srf->backup_base);
 	vmw_resource_unreference(&res);
-पूर्ण
+}
 
 /**
  * vmw_user_surface_destroy_ioctl - Ioctl function implementing
  *                                  the user surface destroy functionality.
  *
- * @dev:            Poपूर्णांकer to a काष्ठा drm_device.
- * @data:           Poपूर्णांकer to data copied from / to user-space.
- * @file_priv:      Poपूर्णांकer to a drm file निजी काष्ठाure.
+ * @dev:            Pointer to a struct drm_device.
+ * @data:           Pointer to data copied from / to user-space.
+ * @file_priv:      Pointer to a drm file private structure.
  */
-पूर्णांक vmw_surface_destroy_ioctl(काष्ठा drm_device *dev, व्योम *data,
-			      काष्ठा drm_file *file_priv)
-अणु
-	काष्ठा drm_vmw_surface_arg *arg = (काष्ठा drm_vmw_surface_arg *)data;
-	काष्ठा tपंचांग_object_file *tfile = vmw_fpriv(file_priv)->tfile;
+int vmw_surface_destroy_ioctl(struct drm_device *dev, void *data,
+			      struct drm_file *file_priv)
+{
+	struct drm_vmw_surface_arg *arg = (struct drm_vmw_surface_arg *)data;
+	struct ttm_object_file *tfile = vmw_fpriv(file_priv)->tfile;
 
-	वापस tपंचांग_ref_object_base_unref(tfile, arg->sid, TTM_REF_USAGE);
-पूर्ण
+	return ttm_ref_object_base_unref(tfile, arg->sid, TTM_REF_USAGE);
+}
 
 /**
  * vmw_user_surface_define_ioctl - Ioctl function implementing
  *                                  the user surface define functionality.
  *
- * @dev:            Poपूर्णांकer to a काष्ठा drm_device.
- * @data:           Poपूर्णांकer to data copied from / to user-space.
- * @file_priv:      Poपूर्णांकer to a drm file निजी काष्ठाure.
+ * @dev:            Pointer to a struct drm_device.
+ * @data:           Pointer to data copied from / to user-space.
+ * @file_priv:      Pointer to a drm file private structure.
  */
-पूर्णांक vmw_surface_define_ioctl(काष्ठा drm_device *dev, व्योम *data,
-			     काष्ठा drm_file *file_priv)
-अणु
-	काष्ठा vmw_निजी *dev_priv = vmw_priv(dev);
-	काष्ठा vmw_user_surface *user_srf;
-	काष्ठा vmw_surface *srf;
-	काष्ठा vmw_surface_metadata *metadata;
-	काष्ठा vmw_resource *res;
-	काष्ठा vmw_resource *पंचांगp;
-	जोड़ drm_vmw_surface_create_arg *arg =
-	    (जोड़ drm_vmw_surface_create_arg *)data;
-	काष्ठा drm_vmw_surface_create_req *req = &arg->req;
-	काष्ठा drm_vmw_surface_arg *rep = &arg->rep;
-	काष्ठा tपंचांग_object_file *tfile = vmw_fpriv(file_priv)->tfile;
-	काष्ठा tपंचांग_operation_ctx ctx = अणु
-		.पूर्णांकerruptible = true,
-		.no_रुको_gpu = false
-	पूर्ण;
-	पूर्णांक ret;
-	पूर्णांक i, j;
-	uपूर्णांक32_t cur_bo_offset;
-	काष्ठा drm_vmw_size *cur_size;
-	काष्ठा vmw_surface_offset *cur_offset;
-	uपूर्णांक32_t num_sizes;
-	uपूर्णांक32_t size;
-	स्थिर काष्ठा svga3d_surface_desc *desc;
+int vmw_surface_define_ioctl(struct drm_device *dev, void *data,
+			     struct drm_file *file_priv)
+{
+	struct vmw_private *dev_priv = vmw_priv(dev);
+	struct vmw_user_surface *user_srf;
+	struct vmw_surface *srf;
+	struct vmw_surface_metadata *metadata;
+	struct vmw_resource *res;
+	struct vmw_resource *tmp;
+	union drm_vmw_surface_create_arg *arg =
+	    (union drm_vmw_surface_create_arg *)data;
+	struct drm_vmw_surface_create_req *req = &arg->req;
+	struct drm_vmw_surface_arg *rep = &arg->rep;
+	struct ttm_object_file *tfile = vmw_fpriv(file_priv)->tfile;
+	struct ttm_operation_ctx ctx = {
+		.interruptible = true,
+		.no_wait_gpu = false
+	};
+	int ret;
+	int i, j;
+	uint32_t cur_bo_offset;
+	struct drm_vmw_size *cur_size;
+	struct vmw_surface_offset *cur_offset;
+	uint32_t num_sizes;
+	uint32_t size;
+	const struct svga3d_surface_desc *desc;
 
-	अगर (unlikely(vmw_user_surface_size == 0))
-		vmw_user_surface_size = tपंचांग_round_pot(माप(*user_srf)) +
+	if (unlikely(vmw_user_surface_size == 0))
+		vmw_user_surface_size = ttm_round_pot(sizeof(*user_srf)) +
 			VMW_IDA_ACC_SIZE + TTM_OBJ_EXTRA_SIZE;
 
 	num_sizes = 0;
-	क्रम (i = 0; i < DRM_VMW_MAX_SURFACE_FACES; ++i) अणु
-		अगर (req->mip_levels[i] > DRM_VMW_MAX_MIP_LEVELS)
-			वापस -EINVAL;
+	for (i = 0; i < DRM_VMW_MAX_SURFACE_FACES; ++i) {
+		if (req->mip_levels[i] > DRM_VMW_MAX_MIP_LEVELS)
+			return -EINVAL;
 		num_sizes += req->mip_levels[i];
-	पूर्ण
+	}
 
-	अगर (num_sizes > DRM_VMW_MAX_SURFACE_FACES * DRM_VMW_MAX_MIP_LEVELS ||
+	if (num_sizes > DRM_VMW_MAX_SURFACE_FACES * DRM_VMW_MAX_MIP_LEVELS ||
 	    num_sizes == 0)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	size = vmw_user_surface_size +
-		tपंचांग_round_pot(num_sizes * माप(काष्ठा drm_vmw_size)) +
-		tपंचांग_round_pot(num_sizes * माप(काष्ठा vmw_surface_offset));
+		ttm_round_pot(num_sizes * sizeof(struct drm_vmw_size)) +
+		ttm_round_pot(num_sizes * sizeof(struct vmw_surface_offset));
 
-	desc = svga3dsurface_get_desc(req->क्रमmat);
-	अगर (unlikely(desc->block_desc == SVGA3DBLOCKDESC_NONE)) अणु
+	desc = svga3dsurface_get_desc(req->format);
+	if (unlikely(desc->block_desc == SVGA3DBLOCKDESC_NONE)) {
 		VMW_DEBUG_USER("Invalid format %d for surface creation.\n",
-			       req->क्रमmat);
-		वापस -EINVAL;
-	पूर्ण
+			       req->format);
+		return -EINVAL;
+	}
 
-	ret = tपंचांग_पढ़ो_lock(&dev_priv->reservation_sem, true);
-	अगर (unlikely(ret != 0))
-		वापस ret;
+	ret = ttm_read_lock(&dev_priv->reservation_sem, true);
+	if (unlikely(ret != 0))
+		return ret;
 
-	ret = tपंचांग_mem_global_alloc(vmw_mem_glob(dev_priv),
+	ret = ttm_mem_global_alloc(vmw_mem_glob(dev_priv),
 				   size, &ctx);
-	अगर (unlikely(ret != 0)) अणु
-		अगर (ret != -ERESTARTSYS)
+	if (unlikely(ret != 0)) {
+		if (ret != -ERESTARTSYS)
 			DRM_ERROR("Out of graphics memory for surface.\n");
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	user_srf = kzalloc(माप(*user_srf), GFP_KERNEL);
-	अगर (unlikely(!user_srf)) अणु
+	user_srf = kzalloc(sizeof(*user_srf), GFP_KERNEL);
+	if (unlikely(!user_srf)) {
 		ret = -ENOMEM;
-		जाओ out_no_user_srf;
-	पूर्ण
+		goto out_no_user_srf;
+	}
 
 	srf = &user_srf->srf;
 	metadata = &srf->metadata;
 	res = &srf->res;
 
-	/* Driver पूर्णांकernally stores as 64-bit flags */
+	/* Driver internally stores as 64-bit flags */
 	metadata->flags = (SVGA3dSurfaceAllFlags)req->flags;
-	metadata->क्रमmat = req->क्रमmat;
+	metadata->format = req->format;
 	metadata->scanout = req->scanout;
 
-	स_नकल(metadata->mip_levels, req->mip_levels,
-	       माप(metadata->mip_levels));
+	memcpy(metadata->mip_levels, req->mip_levels,
+	       sizeof(metadata->mip_levels));
 	metadata->num_sizes = num_sizes;
 	user_srf->size = size;
 	metadata->sizes =
-		memdup_user((काष्ठा drm_vmw_size __user *)(अचिन्हित दीर्घ)
+		memdup_user((struct drm_vmw_size __user *)(unsigned long)
 			    req->size_addr,
-			    माप(*metadata->sizes) * metadata->num_sizes);
-	अगर (IS_ERR(metadata->sizes)) अणु
+			    sizeof(*metadata->sizes) * metadata->num_sizes);
+	if (IS_ERR(metadata->sizes)) {
 		ret = PTR_ERR(metadata->sizes);
-		जाओ out_no_sizes;
-	पूर्ण
-	srf->offsets = kदो_स्मृति_array(metadata->num_sizes, माप(*srf->offsets),
+		goto out_no_sizes;
+	}
+	srf->offsets = kmalloc_array(metadata->num_sizes, sizeof(*srf->offsets),
 				     GFP_KERNEL);
-	अगर (unlikely(!srf->offsets)) अणु
+	if (unlikely(!srf->offsets)) {
 		ret = -ENOMEM;
-		जाओ out_no_offsets;
-	पूर्ण
+		goto out_no_offsets;
+	}
 
 	metadata->base_size = *srf->metadata.sizes;
-	metadata->स्वतःgen_filter = SVGA3D_TEX_FILTER_NONE;
+	metadata->autogen_filter = SVGA3D_TEX_FILTER_NONE;
 	metadata->multisample_count = 0;
 	metadata->multisample_pattern = SVGA3D_MS_PATTERN_NONE;
 	metadata->quality_level = SVGA3D_MS_QUALITY_NONE;
@@ -836,9 +835,9 @@ vmw_user_surface_base_to_res(काष्ठा tपंचांग_base_object 
 	cur_offset = srf->offsets;
 	cur_size = metadata->sizes;
 
-	क्रम (i = 0; i < DRM_VMW_MAX_SURFACE_FACES; ++i) अणु
-		क्रम (j = 0; j < metadata->mip_levels[i]; ++j) अणु
-			uपूर्णांक32_t stride = svga3dsurface_calculate_pitch
+	for (i = 0; i < DRM_VMW_MAX_SURFACE_FACES; ++i) {
+		for (j = 0; j < metadata->mip_levels[i]; ++j) {
+			uint32_t stride = svga3dsurface_calculate_pitch
 				(desc, cur_size);
 
 			cur_offset->face = i;
@@ -848,45 +847,45 @@ vmw_user_surface_base_to_res(काष्ठा tपंचांग_base_object 
 				(desc, cur_size, stride);
 			++cur_offset;
 			++cur_size;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	res->backup_size = cur_bo_offset;
-	अगर (metadata->scanout &&
+	if (metadata->scanout &&
 	    metadata->num_sizes == 1 &&
 	    metadata->sizes[0].width == 64 &&
 	    metadata->sizes[0].height == 64 &&
-	    metadata->क्रमmat == SVGA3D_A8R8G8B8) अणु
+	    metadata->format == SVGA3D_A8R8G8B8) {
 
 		srf->snooper.image = kzalloc(64 * 64 * 4, GFP_KERNEL);
-		अगर (!srf->snooper.image) अणु
+		if (!srf->snooper.image) {
 			DRM_ERROR("Failed to allocate cursor_image\n");
 			ret = -ENOMEM;
-			जाओ out_no_copy;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		srf->snooper.image = शून्य;
-	पूर्ण
+			goto out_no_copy;
+		}
+	} else {
+		srf->snooper.image = NULL;
+	}
 
 	user_srf->prime.base.shareable = false;
-	user_srf->prime.base.tfile = शून्य;
-	अगर (drm_is_primary_client(file_priv))
+	user_srf->prime.base.tfile = NULL;
+	if (drm_is_primary_client(file_priv))
 		user_srf->master = drm_master_get(file_priv->master);
 
 	/**
-	 * From this poपूर्णांक, the generic resource management functions
+	 * From this point, the generic resource management functions
 	 * destroy the object on failure.
 	 */
 
-	ret = vmw_surface_init(dev_priv, srf, vmw_user_surface_मुक्त);
-	अगर (unlikely(ret != 0))
-		जाओ out_unlock;
+	ret = vmw_surface_init(dev_priv, srf, vmw_user_surface_free);
+	if (unlikely(ret != 0))
+		goto out_unlock;
 
 	/*
 	 * A gb-aware client referencing a shared surface will
 	 * expect a backup buffer to be present.
 	 */
-	अगर (dev_priv->has_mob && req->shareable) अणु
-		uपूर्णांक32_t backup_handle;
+	if (dev_priv->has_mob && req->shareable) {
+		uint32_t backup_handle;
 
 		ret = vmw_user_bo_alloc(dev_priv, tfile,
 					res->backup_size,
@@ -894,408 +893,408 @@ vmw_user_surface_base_to_res(काष्ठा tपंचांग_base_object 
 					&backup_handle,
 					&res->backup,
 					&user_srf->backup_base);
-		अगर (unlikely(ret != 0)) अणु
+		if (unlikely(ret != 0)) {
 			vmw_resource_unreference(&res);
-			जाओ out_unlock;
-		पूर्ण
-	पूर्ण
+			goto out_unlock;
+		}
+	}
 
-	पंचांगp = vmw_resource_reference(&srf->res);
-	ret = tपंचांग_prime_object_init(tfile, res->backup_size, &user_srf->prime,
+	tmp = vmw_resource_reference(&srf->res);
+	ret = ttm_prime_object_init(tfile, res->backup_size, &user_srf->prime,
 				    req->shareable, VMW_RES_SURFACE,
-				    &vmw_user_surface_base_release, शून्य);
+				    &vmw_user_surface_base_release, NULL);
 
-	अगर (unlikely(ret != 0)) अणु
-		vmw_resource_unreference(&पंचांगp);
+	if (unlikely(ret != 0)) {
+		vmw_resource_unreference(&tmp);
 		vmw_resource_unreference(&res);
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	rep->sid = user_srf->prime.base.handle;
 	vmw_resource_unreference(&res);
 
-	tपंचांग_पढ़ो_unlock(&dev_priv->reservation_sem);
-	वापस 0;
+	ttm_read_unlock(&dev_priv->reservation_sem);
+	return 0;
 out_no_copy:
-	kमुक्त(srf->offsets);
+	kfree(srf->offsets);
 out_no_offsets:
-	kमुक्त(metadata->sizes);
+	kfree(metadata->sizes);
 out_no_sizes:
-	tपंचांग_prime_object_kमुक्त(user_srf, prime);
+	ttm_prime_object_kfree(user_srf, prime);
 out_no_user_srf:
-	tपंचांग_mem_global_मुक्त(vmw_mem_glob(dev_priv), size);
+	ttm_mem_global_free(vmw_mem_glob(dev_priv), size);
 out_unlock:
-	tपंचांग_पढ़ो_unlock(&dev_priv->reservation_sem);
-	वापस ret;
-पूर्ण
+	ttm_read_unlock(&dev_priv->reservation_sem);
+	return ret;
+}
 
 
-अटल पूर्णांक
-vmw_surface_handle_reference(काष्ठा vmw_निजी *dev_priv,
-			     काष्ठा drm_file *file_priv,
-			     uपूर्णांक32_t u_handle,
-			     क्रमागत drm_vmw_handle_type handle_type,
-			     काष्ठा tपंचांग_base_object **base_p)
-अणु
-	काष्ठा tपंचांग_object_file *tfile = vmw_fpriv(file_priv)->tfile;
-	काष्ठा vmw_user_surface *user_srf;
-	uपूर्णांक32_t handle;
-	काष्ठा tपंचांग_base_object *base;
-	पूर्णांक ret;
+static int
+vmw_surface_handle_reference(struct vmw_private *dev_priv,
+			     struct drm_file *file_priv,
+			     uint32_t u_handle,
+			     enum drm_vmw_handle_type handle_type,
+			     struct ttm_base_object **base_p)
+{
+	struct ttm_object_file *tfile = vmw_fpriv(file_priv)->tfile;
+	struct vmw_user_surface *user_srf;
+	uint32_t handle;
+	struct ttm_base_object *base;
+	int ret;
 
-	अगर (handle_type == DRM_VMW_HANDLE_PRIME) अणु
-		ret = tपंचांग_prime_fd_to_handle(tfile, u_handle, &handle);
-		अगर (unlikely(ret != 0))
-			वापस ret;
-	पूर्ण अन्यथा अणु
+	if (handle_type == DRM_VMW_HANDLE_PRIME) {
+		ret = ttm_prime_fd_to_handle(tfile, u_handle, &handle);
+		if (unlikely(ret != 0))
+			return ret;
+	} else {
 		handle = u_handle;
-	पूर्ण
+	}
 
 	ret = -EINVAL;
-	base = tपंचांग_base_object_lookup_क्रम_ref(dev_priv->tdev, handle);
-	अगर (unlikely(!base)) अणु
+	base = ttm_base_object_lookup_for_ref(dev_priv->tdev, handle);
+	if (unlikely(!base)) {
 		VMW_DEBUG_USER("Could not find surface to reference.\n");
-		जाओ out_no_lookup;
-	पूर्ण
+		goto out_no_lookup;
+	}
 
-	अगर (unlikely(tपंचांग_base_object_type(base) != VMW_RES_SURFACE)) अणु
+	if (unlikely(ttm_base_object_type(base) != VMW_RES_SURFACE)) {
 		VMW_DEBUG_USER("Referenced object is not a surface.\n");
-		जाओ out_bad_resource;
-	पूर्ण
+		goto out_bad_resource;
+	}
 
-	अगर (handle_type != DRM_VMW_HANDLE_PRIME) अणु
+	if (handle_type != DRM_VMW_HANDLE_PRIME) {
 		bool require_exist = false;
 
-		user_srf = container_of(base, काष्ठा vmw_user_surface,
+		user_srf = container_of(base, struct vmw_user_surface,
 					prime.base);
 
-		/* Error out अगर we are unauthenticated primary */
-		अगर (drm_is_primary_client(file_priv) &&
-		    !file_priv->authenticated) अणु
+		/* Error out if we are unauthenticated primary */
+		if (drm_is_primary_client(file_priv) &&
+		    !file_priv->authenticated) {
 			ret = -EACCES;
-			जाओ out_bad_resource;
-		पूर्ण
+			goto out_bad_resource;
+		}
 
 		/*
 		 * Make sure the surface creator has the same
-		 * authenticating master, or is alपढ़ोy रेजिस्टरed with us.
+		 * authenticating master, or is already registered with us.
 		 */
-		अगर (drm_is_primary_client(file_priv) &&
+		if (drm_is_primary_client(file_priv) &&
 		    user_srf->master != file_priv->master)
 			require_exist = true;
 
-		अगर (unlikely(drm_is_render_client(file_priv)))
+		if (unlikely(drm_is_render_client(file_priv)))
 			require_exist = true;
 
-		ret = tपंचांग_ref_object_add(tfile, base, TTM_REF_USAGE, शून्य,
+		ret = ttm_ref_object_add(tfile, base, TTM_REF_USAGE, NULL,
 					 require_exist);
-		अगर (unlikely(ret != 0)) अणु
+		if (unlikely(ret != 0)) {
 			DRM_ERROR("Could not add a reference to a surface.\n");
-			जाओ out_bad_resource;
-		पूर्ण
-	पूर्ण
+			goto out_bad_resource;
+		}
+	}
 
 	*base_p = base;
-	वापस 0;
+	return 0;
 
 out_bad_resource:
-	tपंचांग_base_object_unref(&base);
+	ttm_base_object_unref(&base);
 out_no_lookup:
-	अगर (handle_type == DRM_VMW_HANDLE_PRIME)
-		(व्योम) tपंचांग_ref_object_base_unref(tfile, handle, TTM_REF_USAGE);
+	if (handle_type == DRM_VMW_HANDLE_PRIME)
+		(void) ttm_ref_object_base_unref(tfile, handle, TTM_REF_USAGE);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * vmw_user_surface_define_ioctl - Ioctl function implementing
  *                                  the user surface reference functionality.
  *
- * @dev:            Poपूर्णांकer to a काष्ठा drm_device.
- * @data:           Poपूर्णांकer to data copied from / to user-space.
- * @file_priv:      Poपूर्णांकer to a drm file निजी काष्ठाure.
+ * @dev:            Pointer to a struct drm_device.
+ * @data:           Pointer to data copied from / to user-space.
+ * @file_priv:      Pointer to a drm file private structure.
  */
-पूर्णांक vmw_surface_reference_ioctl(काष्ठा drm_device *dev, व्योम *data,
-				काष्ठा drm_file *file_priv)
-अणु
-	काष्ठा vmw_निजी *dev_priv = vmw_priv(dev);
-	जोड़ drm_vmw_surface_reference_arg *arg =
-	    (जोड़ drm_vmw_surface_reference_arg *)data;
-	काष्ठा drm_vmw_surface_arg *req = &arg->req;
-	काष्ठा drm_vmw_surface_create_req *rep = &arg->rep;
-	काष्ठा tपंचांग_object_file *tfile = vmw_fpriv(file_priv)->tfile;
-	काष्ठा vmw_surface *srf;
-	काष्ठा vmw_user_surface *user_srf;
-	काष्ठा drm_vmw_size __user *user_sizes;
-	काष्ठा tपंचांग_base_object *base;
-	पूर्णांक ret;
+int vmw_surface_reference_ioctl(struct drm_device *dev, void *data,
+				struct drm_file *file_priv)
+{
+	struct vmw_private *dev_priv = vmw_priv(dev);
+	union drm_vmw_surface_reference_arg *arg =
+	    (union drm_vmw_surface_reference_arg *)data;
+	struct drm_vmw_surface_arg *req = &arg->req;
+	struct drm_vmw_surface_create_req *rep = &arg->rep;
+	struct ttm_object_file *tfile = vmw_fpriv(file_priv)->tfile;
+	struct vmw_surface *srf;
+	struct vmw_user_surface *user_srf;
+	struct drm_vmw_size __user *user_sizes;
+	struct ttm_base_object *base;
+	int ret;
 
 	ret = vmw_surface_handle_reference(dev_priv, file_priv, req->sid,
 					   req->handle_type, &base);
-	अगर (unlikely(ret != 0))
-		वापस ret;
+	if (unlikely(ret != 0))
+		return ret;
 
-	user_srf = container_of(base, काष्ठा vmw_user_surface, prime.base);
+	user_srf = container_of(base, struct vmw_user_surface, prime.base);
 	srf = &user_srf->srf;
 
 	/* Downcast of flags when sending back to user space */
-	rep->flags = (uपूर्णांक32_t)srf->metadata.flags;
-	rep->क्रमmat = srf->metadata.क्रमmat;
-	स_नकल(rep->mip_levels, srf->metadata.mip_levels,
-	       माप(srf->metadata.mip_levels));
-	user_sizes = (काष्ठा drm_vmw_size __user *)(अचिन्हित दीर्घ)
+	rep->flags = (uint32_t)srf->metadata.flags;
+	rep->format = srf->metadata.format;
+	memcpy(rep->mip_levels, srf->metadata.mip_levels,
+	       sizeof(srf->metadata.mip_levels));
+	user_sizes = (struct drm_vmw_size __user *)(unsigned long)
 	    rep->size_addr;
 
-	अगर (user_sizes)
+	if (user_sizes)
 		ret = copy_to_user(user_sizes, &srf->metadata.base_size,
-				   माप(srf->metadata.base_size));
-	अगर (unlikely(ret != 0)) अणु
+				   sizeof(srf->metadata.base_size));
+	if (unlikely(ret != 0)) {
 		VMW_DEBUG_USER("copy_to_user failed %p %u\n", user_sizes,
 			       srf->metadata.num_sizes);
-		tपंचांग_ref_object_base_unref(tfile, base->handle, TTM_REF_USAGE);
+		ttm_ref_object_base_unref(tfile, base->handle, TTM_REF_USAGE);
 		ret = -EFAULT;
-	पूर्ण
+	}
 
-	tपंचांग_base_object_unref(&base);
+	ttm_base_object_unref(&base);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * vmw_surface_define_encode - Encode a surface_define command.
  *
- * @res:        Poपूर्णांकer to a काष्ठा vmw_resource embedded in a काष्ठा
+ * @res:        Pointer to a struct vmw_resource embedded in a struct
  *              vmw_surface.
  */
-अटल पूर्णांक vmw_gb_surface_create(काष्ठा vmw_resource *res)
-अणु
-	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
-	काष्ठा vmw_surface *srf = vmw_res_to_srf(res);
-	काष्ठा vmw_surface_metadata *metadata = &srf->metadata;
-	uपूर्णांक32_t cmd_len, cmd_id, submit_len;
-	पूर्णांक ret;
-	काष्ठा अणु
+static int vmw_gb_surface_create(struct vmw_resource *res)
+{
+	struct vmw_private *dev_priv = res->dev_priv;
+	struct vmw_surface *srf = vmw_res_to_srf(res);
+	struct vmw_surface_metadata *metadata = &srf->metadata;
+	uint32_t cmd_len, cmd_id, submit_len;
+	int ret;
+	struct {
 		SVGA3dCmdHeader header;
 		SVGA3dCmdDefineGBSurface body;
-	पूर्ण *cmd;
-	काष्ठा अणु
+	} *cmd;
+	struct {
 		SVGA3dCmdHeader header;
 		SVGA3dCmdDefineGBSurface_v2 body;
-	पूर्ण *cmd2;
-	काष्ठा अणु
+	} *cmd2;
+	struct {
 		SVGA3dCmdHeader header;
 		SVGA3dCmdDefineGBSurface_v3 body;
-	पूर्ण *cmd3;
-	काष्ठा अणु
+	} *cmd3;
+	struct {
 		SVGA3dCmdHeader header;
 		SVGA3dCmdDefineGBSurface_v4 body;
-	पूर्ण *cmd4;
+	} *cmd4;
 
-	अगर (likely(res->id != -1))
-		वापस 0;
+	if (likely(res->id != -1))
+		return 0;
 
-	vmw_fअगरo_resource_inc(dev_priv);
+	vmw_fifo_resource_inc(dev_priv);
 	ret = vmw_resource_alloc_id(res);
-	अगर (unlikely(ret != 0)) अणु
+	if (unlikely(ret != 0)) {
 		DRM_ERROR("Failed to allocate a surface id.\n");
-		जाओ out_no_id;
-	पूर्ण
+		goto out_no_id;
+	}
 
-	अगर (unlikely(res->id >= VMWGFX_NUM_GB_SURFACE)) अणु
+	if (unlikely(res->id >= VMWGFX_NUM_GB_SURFACE)) {
 		ret = -EBUSY;
-		जाओ out_no_fअगरo;
-	पूर्ण
+		goto out_no_fifo;
+	}
 
-	अगर (has_sm5_context(dev_priv) && metadata->array_size > 0) अणु
+	if (has_sm5_context(dev_priv) && metadata->array_size > 0) {
 		cmd_id = SVGA_3D_CMD_DEFINE_GB_SURFACE_V4;
-		cmd_len = माप(cmd4->body);
-		submit_len = माप(*cmd4);
-	पूर्ण अन्यथा अगर (has_sm4_1_context(dev_priv) && metadata->array_size > 0) अणु
+		cmd_len = sizeof(cmd4->body);
+		submit_len = sizeof(*cmd4);
+	} else if (has_sm4_1_context(dev_priv) && metadata->array_size > 0) {
 		cmd_id = SVGA_3D_CMD_DEFINE_GB_SURFACE_V3;
-		cmd_len = माप(cmd3->body);
-		submit_len = माप(*cmd3);
-	पूर्ण अन्यथा अगर (metadata->array_size > 0) अणु
-		/* VMW_SM_4 support verअगरied at creation समय. */
+		cmd_len = sizeof(cmd3->body);
+		submit_len = sizeof(*cmd3);
+	} else if (metadata->array_size > 0) {
+		/* VMW_SM_4 support verified at creation time. */
 		cmd_id = SVGA_3D_CMD_DEFINE_GB_SURFACE_V2;
-		cmd_len = माप(cmd2->body);
-		submit_len = माप(*cmd2);
-	पूर्ण अन्यथा अणु
+		cmd_len = sizeof(cmd2->body);
+		submit_len = sizeof(*cmd2);
+	} else {
 		cmd_id = SVGA_3D_CMD_DEFINE_GB_SURFACE;
-		cmd_len = माप(cmd->body);
-		submit_len = माप(*cmd);
-	पूर्ण
+		cmd_len = sizeof(cmd->body);
+		submit_len = sizeof(*cmd);
+	}
 
 	cmd = VMW_CMD_RESERVE(dev_priv, submit_len);
 	cmd2 = (typeof(cmd2))cmd;
 	cmd3 = (typeof(cmd3))cmd;
 	cmd4 = (typeof(cmd4))cmd;
-	अगर (unlikely(!cmd)) अणु
+	if (unlikely(!cmd)) {
 		ret = -ENOMEM;
-		जाओ out_no_fअगरo;
-	पूर्ण
+		goto out_no_fifo;
+	}
 
-	अगर (has_sm5_context(dev_priv) && metadata->array_size > 0) अणु
+	if (has_sm5_context(dev_priv) && metadata->array_size > 0) {
 		cmd4->header.id = cmd_id;
 		cmd4->header.size = cmd_len;
 		cmd4->body.sid = srf->res.id;
 		cmd4->body.surfaceFlags = metadata->flags;
-		cmd4->body.क्रमmat = metadata->क्रमmat;
+		cmd4->body.format = metadata->format;
 		cmd4->body.numMipLevels = metadata->mip_levels[0];
 		cmd4->body.multisampleCount = metadata->multisample_count;
 		cmd4->body.multisamplePattern = metadata->multisample_pattern;
 		cmd4->body.qualityLevel = metadata->quality_level;
-		cmd4->body.स्वतःgenFilter = metadata->स्वतःgen_filter;
+		cmd4->body.autogenFilter = metadata->autogen_filter;
 		cmd4->body.size.width = metadata->base_size.width;
 		cmd4->body.size.height = metadata->base_size.height;
 		cmd4->body.size.depth = metadata->base_size.depth;
 		cmd4->body.arraySize = metadata->array_size;
 		cmd4->body.bufferByteStride = metadata->buffer_byte_stride;
-	पूर्ण अन्यथा अगर (has_sm4_1_context(dev_priv) && metadata->array_size > 0) अणु
+	} else if (has_sm4_1_context(dev_priv) && metadata->array_size > 0) {
 		cmd3->header.id = cmd_id;
 		cmd3->header.size = cmd_len;
 		cmd3->body.sid = srf->res.id;
 		cmd3->body.surfaceFlags = metadata->flags;
-		cmd3->body.क्रमmat = metadata->क्रमmat;
+		cmd3->body.format = metadata->format;
 		cmd3->body.numMipLevels = metadata->mip_levels[0];
 		cmd3->body.multisampleCount = metadata->multisample_count;
 		cmd3->body.multisamplePattern = metadata->multisample_pattern;
 		cmd3->body.qualityLevel = metadata->quality_level;
-		cmd3->body.स्वतःgenFilter = metadata->स्वतःgen_filter;
+		cmd3->body.autogenFilter = metadata->autogen_filter;
 		cmd3->body.size.width = metadata->base_size.width;
 		cmd3->body.size.height = metadata->base_size.height;
 		cmd3->body.size.depth = metadata->base_size.depth;
 		cmd3->body.arraySize = metadata->array_size;
-	पूर्ण अन्यथा अगर (metadata->array_size > 0) अणु
+	} else if (metadata->array_size > 0) {
 		cmd2->header.id = cmd_id;
 		cmd2->header.size = cmd_len;
 		cmd2->body.sid = srf->res.id;
 		cmd2->body.surfaceFlags = metadata->flags;
-		cmd2->body.क्रमmat = metadata->क्रमmat;
+		cmd2->body.format = metadata->format;
 		cmd2->body.numMipLevels = metadata->mip_levels[0];
 		cmd2->body.multisampleCount = metadata->multisample_count;
-		cmd2->body.स्वतःgenFilter = metadata->स्वतःgen_filter;
+		cmd2->body.autogenFilter = metadata->autogen_filter;
 		cmd2->body.size.width = metadata->base_size.width;
 		cmd2->body.size.height = metadata->base_size.height;
 		cmd2->body.size.depth = metadata->base_size.depth;
 		cmd2->body.arraySize = metadata->array_size;
-	पूर्ण अन्यथा अणु
+	} else {
 		cmd->header.id = cmd_id;
 		cmd->header.size = cmd_len;
 		cmd->body.sid = srf->res.id;
 		cmd->body.surfaceFlags = metadata->flags;
-		cmd->body.क्रमmat = metadata->क्रमmat;
+		cmd->body.format = metadata->format;
 		cmd->body.numMipLevels = metadata->mip_levels[0];
 		cmd->body.multisampleCount = metadata->multisample_count;
-		cmd->body.स्वतःgenFilter = metadata->स्वतःgen_filter;
+		cmd->body.autogenFilter = metadata->autogen_filter;
 		cmd->body.size.width = metadata->base_size.width;
 		cmd->body.size.height = metadata->base_size.height;
 		cmd->body.size.depth = metadata->base_size.depth;
-	पूर्ण
+	}
 
 	vmw_cmd_commit(dev_priv, submit_len);
 
-	वापस 0;
+	return 0;
 
-out_no_fअगरo:
+out_no_fifo:
 	vmw_resource_release_id(res);
 out_no_id:
-	vmw_fअगरo_resource_dec(dev_priv);
-	वापस ret;
-पूर्ण
+	vmw_fifo_resource_dec(dev_priv);
+	return ret;
+}
 
 
-अटल पूर्णांक vmw_gb_surface_bind(काष्ठा vmw_resource *res,
-			       काष्ठा tपंचांग_validate_buffer *val_buf)
-अणु
-	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
-	काष्ठा अणु
+static int vmw_gb_surface_bind(struct vmw_resource *res,
+			       struct ttm_validate_buffer *val_buf)
+{
+	struct vmw_private *dev_priv = res->dev_priv;
+	struct {
 		SVGA3dCmdHeader header;
 		SVGA3dCmdBindGBSurface body;
-	पूर्ण *cmd1;
-	काष्ठा अणु
+	} *cmd1;
+	struct {
 		SVGA3dCmdHeader header;
 		SVGA3dCmdUpdateGBSurface body;
-	पूर्ण *cmd2;
-	uपूर्णांक32_t submit_size;
-	काष्ठा tपंचांग_buffer_object *bo = val_buf->bo;
+	} *cmd2;
+	uint32_t submit_size;
+	struct ttm_buffer_object *bo = val_buf->bo;
 
 	BUG_ON(bo->mem.mem_type != VMW_PL_MOB);
 
-	submit_size = माप(*cmd1) + (res->backup_dirty ? माप(*cmd2) : 0);
+	submit_size = sizeof(*cmd1) + (res->backup_dirty ? sizeof(*cmd2) : 0);
 
 	cmd1 = VMW_CMD_RESERVE(dev_priv, submit_size);
-	अगर (unlikely(!cmd1))
-		वापस -ENOMEM;
+	if (unlikely(!cmd1))
+		return -ENOMEM;
 
 	cmd1->header.id = SVGA_3D_CMD_BIND_GB_SURFACE;
-	cmd1->header.size = माप(cmd1->body);
+	cmd1->header.size = sizeof(cmd1->body);
 	cmd1->body.sid = res->id;
 	cmd1->body.mobid = bo->mem.start;
-	अगर (res->backup_dirty) अणु
-		cmd2 = (व्योम *) &cmd1[1];
+	if (res->backup_dirty) {
+		cmd2 = (void *) &cmd1[1];
 		cmd2->header.id = SVGA_3D_CMD_UPDATE_GB_SURFACE;
-		cmd2->header.size = माप(cmd2->body);
+		cmd2->header.size = sizeof(cmd2->body);
 		cmd2->body.sid = res->id;
-	पूर्ण
+	}
 	vmw_cmd_commit(dev_priv, submit_size);
 
-	अगर (res->backup->dirty && res->backup_dirty) अणु
+	if (res->backup->dirty && res->backup_dirty) {
 		/* We've just made a full upload. Cear dirty regions. */
 		vmw_bo_dirty_clear_res(res);
-	पूर्ण
+	}
 
 	res->backup_dirty = false;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vmw_gb_surface_unbind(काष्ठा vmw_resource *res,
-				 bool पढ़ोback,
-				 काष्ठा tपंचांग_validate_buffer *val_buf)
-अणु
-	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
-	काष्ठा tपंचांग_buffer_object *bo = val_buf->bo;
-	काष्ठा vmw_fence_obj *fence;
+static int vmw_gb_surface_unbind(struct vmw_resource *res,
+				 bool readback,
+				 struct ttm_validate_buffer *val_buf)
+{
+	struct vmw_private *dev_priv = res->dev_priv;
+	struct ttm_buffer_object *bo = val_buf->bo;
+	struct vmw_fence_obj *fence;
 
-	काष्ठा अणु
+	struct {
 		SVGA3dCmdHeader header;
 		SVGA3dCmdReadbackGBSurface body;
-	पूर्ण *cmd1;
-	काष्ठा अणु
+	} *cmd1;
+	struct {
 		SVGA3dCmdHeader header;
 		SVGA3dCmdInvalidateGBSurface body;
-	पूर्ण *cmd2;
-	काष्ठा अणु
+	} *cmd2;
+	struct {
 		SVGA3dCmdHeader header;
 		SVGA3dCmdBindGBSurface body;
-	पूर्ण *cmd3;
-	uपूर्णांक32_t submit_size;
-	uपूर्णांक8_t *cmd;
+	} *cmd3;
+	uint32_t submit_size;
+	uint8_t *cmd;
 
 
 	BUG_ON(bo->mem.mem_type != VMW_PL_MOB);
 
-	submit_size = माप(*cmd3) + (पढ़ोback ? माप(*cmd1) : माप(*cmd2));
+	submit_size = sizeof(*cmd3) + (readback ? sizeof(*cmd1) : sizeof(*cmd2));
 	cmd = VMW_CMD_RESERVE(dev_priv, submit_size);
-	अगर (unlikely(!cmd))
-		वापस -ENOMEM;
+	if (unlikely(!cmd))
+		return -ENOMEM;
 
-	अगर (पढ़ोback) अणु
-		cmd1 = (व्योम *) cmd;
+	if (readback) {
+		cmd1 = (void *) cmd;
 		cmd1->header.id = SVGA_3D_CMD_READBACK_GB_SURFACE;
-		cmd1->header.size = माप(cmd1->body);
+		cmd1->header.size = sizeof(cmd1->body);
 		cmd1->body.sid = res->id;
-		cmd3 = (व्योम *) &cmd1[1];
-	पूर्ण अन्यथा अणु
-		cmd2 = (व्योम *) cmd;
+		cmd3 = (void *) &cmd1[1];
+	} else {
+		cmd2 = (void *) cmd;
 		cmd2->header.id = SVGA_3D_CMD_INVALIDATE_GB_SURFACE;
-		cmd2->header.size = माप(cmd2->body);
+		cmd2->header.size = sizeof(cmd2->body);
 		cmd2->body.sid = res->id;
-		cmd3 = (व्योम *) &cmd2[1];
-	पूर्ण
+		cmd3 = (void *) &cmd2[1];
+	}
 
 	cmd3->header.id = SVGA_3D_CMD_BIND_GB_SURFACE;
-	cmd3->header.size = माप(cmd3->body);
+	cmd3->header.size = sizeof(cmd3->body);
 	cmd3->body.sid = res->id;
 	cmd3->body.mobid = SVGA3D_INVALID_ID;
 
@@ -1305,65 +1304,65 @@ out_no_id:
 	 * Create a fence object and fence the backup buffer.
 	 */
 
-	(व्योम) vmw_execbuf_fence_commands(शून्य, dev_priv,
-					  &fence, शून्य);
+	(void) vmw_execbuf_fence_commands(NULL, dev_priv,
+					  &fence, NULL);
 
 	vmw_bo_fence_single(val_buf->bo, fence);
 
-	अगर (likely(fence != शून्य))
+	if (likely(fence != NULL))
 		vmw_fence_obj_unreference(&fence);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vmw_gb_surface_destroy(काष्ठा vmw_resource *res)
-अणु
-	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
-	काष्ठा vmw_surface *srf = vmw_res_to_srf(res);
-	काष्ठा अणु
+static int vmw_gb_surface_destroy(struct vmw_resource *res)
+{
+	struct vmw_private *dev_priv = res->dev_priv;
+	struct vmw_surface *srf = vmw_res_to_srf(res);
+	struct {
 		SVGA3dCmdHeader header;
 		SVGA3dCmdDestroyGBSurface body;
-	पूर्ण *cmd;
+	} *cmd;
 
-	अगर (likely(res->id == -1))
-		वापस 0;
+	if (likely(res->id == -1))
+		return 0;
 
 	mutex_lock(&dev_priv->binding_mutex);
 	vmw_view_surface_list_destroy(dev_priv, &srf->view_list);
 	vmw_binding_res_list_scrub(&res->binding_head);
 
-	cmd = VMW_CMD_RESERVE(dev_priv, माप(*cmd));
-	अगर (unlikely(!cmd)) अणु
+	cmd = VMW_CMD_RESERVE(dev_priv, sizeof(*cmd));
+	if (unlikely(!cmd)) {
 		mutex_unlock(&dev_priv->binding_mutex);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	cmd->header.id = SVGA_3D_CMD_DESTROY_GB_SURFACE;
-	cmd->header.size = माप(cmd->body);
+	cmd->header.size = sizeof(cmd->body);
 	cmd->body.sid = res->id;
-	vmw_cmd_commit(dev_priv, माप(*cmd));
+	vmw_cmd_commit(dev_priv, sizeof(*cmd));
 	mutex_unlock(&dev_priv->binding_mutex);
 	vmw_resource_release_id(res);
-	vmw_fअगरo_resource_dec(dev_priv);
+	vmw_fifo_resource_dec(dev_priv);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * vmw_gb_surface_define_ioctl - Ioctl function implementing
  * the user surface define functionality.
  *
- * @dev: Poपूर्णांकer to a काष्ठा drm_device.
- * @data: Poपूर्णांकer to data copied from / to user-space.
- * @file_priv: Poपूर्णांकer to a drm file निजी काष्ठाure.
+ * @dev: Pointer to a struct drm_device.
+ * @data: Pointer to data copied from / to user-space.
+ * @file_priv: Pointer to a drm file private structure.
  */
-पूर्णांक vmw_gb_surface_define_ioctl(काष्ठा drm_device *dev, व्योम *data,
-				काष्ठा drm_file *file_priv)
-अणु
-	जोड़ drm_vmw_gb_surface_create_arg *arg =
-	    (जोड़ drm_vmw_gb_surface_create_arg *)data;
-	काष्ठा drm_vmw_gb_surface_create_rep *rep = &arg->rep;
-	काष्ठा drm_vmw_gb_surface_create_ext_req req_ext;
+int vmw_gb_surface_define_ioctl(struct drm_device *dev, void *data,
+				struct drm_file *file_priv)
+{
+	union drm_vmw_gb_surface_create_arg *arg =
+	    (union drm_vmw_gb_surface_create_arg *)data;
+	struct drm_vmw_gb_surface_create_rep *rep = &arg->rep;
+	struct drm_vmw_gb_surface_create_ext_req req_ext;
 
 	req_ext.base = arg->req;
 	req_ext.version = drm_vmw_gb_surface_v1;
@@ -1373,154 +1372,154 @@ out_no_id:
 	req_ext.buffer_byte_stride = 0;
 	req_ext.must_be_zero = 0;
 
-	वापस vmw_gb_surface_define_पूर्णांकernal(dev, &req_ext, rep, file_priv);
-पूर्ण
+	return vmw_gb_surface_define_internal(dev, &req_ext, rep, file_priv);
+}
 
 /**
  * vmw_gb_surface_reference_ioctl - Ioctl function implementing
  * the user surface reference functionality.
  *
- * @dev: Poपूर्णांकer to a काष्ठा drm_device.
- * @data: Poपूर्णांकer to data copied from / to user-space.
- * @file_priv: Poपूर्णांकer to a drm file निजी काष्ठाure.
+ * @dev: Pointer to a struct drm_device.
+ * @data: Pointer to data copied from / to user-space.
+ * @file_priv: Pointer to a drm file private structure.
  */
-पूर्णांक vmw_gb_surface_reference_ioctl(काष्ठा drm_device *dev, व्योम *data,
-				   काष्ठा drm_file *file_priv)
-अणु
-	जोड़ drm_vmw_gb_surface_reference_arg *arg =
-	    (जोड़ drm_vmw_gb_surface_reference_arg *)data;
-	काष्ठा drm_vmw_surface_arg *req = &arg->req;
-	काष्ठा drm_vmw_gb_surface_ref_rep *rep = &arg->rep;
-	काष्ठा drm_vmw_gb_surface_ref_ext_rep rep_ext;
-	पूर्णांक ret;
+int vmw_gb_surface_reference_ioctl(struct drm_device *dev, void *data,
+				   struct drm_file *file_priv)
+{
+	union drm_vmw_gb_surface_reference_arg *arg =
+	    (union drm_vmw_gb_surface_reference_arg *)data;
+	struct drm_vmw_surface_arg *req = &arg->req;
+	struct drm_vmw_gb_surface_ref_rep *rep = &arg->rep;
+	struct drm_vmw_gb_surface_ref_ext_rep rep_ext;
+	int ret;
 
-	ret = vmw_gb_surface_reference_पूर्णांकernal(dev, req, &rep_ext, file_priv);
+	ret = vmw_gb_surface_reference_internal(dev, req, &rep_ext, file_priv);
 
-	अगर (unlikely(ret != 0))
-		वापस ret;
+	if (unlikely(ret != 0))
+		return ret;
 
 	rep->creq = rep_ext.creq.base;
 	rep->crep = rep_ext.crep;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * vmw_gb_surface_define_ext_ioctl - Ioctl function implementing
  * the user surface define functionality.
  *
- * @dev: Poपूर्णांकer to a काष्ठा drm_device.
- * @data: Poपूर्णांकer to data copied from / to user-space.
- * @file_priv: Poपूर्णांकer to a drm file निजी काष्ठाure.
+ * @dev: Pointer to a struct drm_device.
+ * @data: Pointer to data copied from / to user-space.
+ * @file_priv: Pointer to a drm file private structure.
  */
-पूर्णांक vmw_gb_surface_define_ext_ioctl(काष्ठा drm_device *dev, व्योम *data,
-				काष्ठा drm_file *file_priv)
-अणु
-	जोड़ drm_vmw_gb_surface_create_ext_arg *arg =
-	    (जोड़ drm_vmw_gb_surface_create_ext_arg *)data;
-	काष्ठा drm_vmw_gb_surface_create_ext_req *req = &arg->req;
-	काष्ठा drm_vmw_gb_surface_create_rep *rep = &arg->rep;
+int vmw_gb_surface_define_ext_ioctl(struct drm_device *dev, void *data,
+				struct drm_file *file_priv)
+{
+	union drm_vmw_gb_surface_create_ext_arg *arg =
+	    (union drm_vmw_gb_surface_create_ext_arg *)data;
+	struct drm_vmw_gb_surface_create_ext_req *req = &arg->req;
+	struct drm_vmw_gb_surface_create_rep *rep = &arg->rep;
 
-	वापस vmw_gb_surface_define_पूर्णांकernal(dev, req, rep, file_priv);
-पूर्ण
+	return vmw_gb_surface_define_internal(dev, req, rep, file_priv);
+}
 
 /**
  * vmw_gb_surface_reference_ext_ioctl - Ioctl function implementing
  * the user surface reference functionality.
  *
- * @dev: Poपूर्णांकer to a काष्ठा drm_device.
- * @data: Poपूर्णांकer to data copied from / to user-space.
- * @file_priv: Poपूर्णांकer to a drm file निजी काष्ठाure.
+ * @dev: Pointer to a struct drm_device.
+ * @data: Pointer to data copied from / to user-space.
+ * @file_priv: Pointer to a drm file private structure.
  */
-पूर्णांक vmw_gb_surface_reference_ext_ioctl(काष्ठा drm_device *dev, व्योम *data,
-				   काष्ठा drm_file *file_priv)
-अणु
-	जोड़ drm_vmw_gb_surface_reference_ext_arg *arg =
-	    (जोड़ drm_vmw_gb_surface_reference_ext_arg *)data;
-	काष्ठा drm_vmw_surface_arg *req = &arg->req;
-	काष्ठा drm_vmw_gb_surface_ref_ext_rep *rep = &arg->rep;
+int vmw_gb_surface_reference_ext_ioctl(struct drm_device *dev, void *data,
+				   struct drm_file *file_priv)
+{
+	union drm_vmw_gb_surface_reference_ext_arg *arg =
+	    (union drm_vmw_gb_surface_reference_ext_arg *)data;
+	struct drm_vmw_surface_arg *req = &arg->req;
+	struct drm_vmw_gb_surface_ref_ext_rep *rep = &arg->rep;
 
-	वापस vmw_gb_surface_reference_पूर्णांकernal(dev, req, rep, file_priv);
-पूर्ण
+	return vmw_gb_surface_reference_internal(dev, req, rep, file_priv);
+}
 
 /**
- * vmw_gb_surface_define_पूर्णांकernal - Ioctl function implementing
+ * vmw_gb_surface_define_internal - Ioctl function implementing
  * the user surface define functionality.
  *
- * @dev: Poपूर्णांकer to a काष्ठा drm_device.
+ * @dev: Pointer to a struct drm_device.
  * @req: Request argument from user-space.
  * @rep: Response argument to user-space.
- * @file_priv: Poपूर्णांकer to a drm file निजी काष्ठाure.
+ * @file_priv: Pointer to a drm file private structure.
  */
-अटल पूर्णांक
-vmw_gb_surface_define_पूर्णांकernal(काष्ठा drm_device *dev,
-			       काष्ठा drm_vmw_gb_surface_create_ext_req *req,
-			       काष्ठा drm_vmw_gb_surface_create_rep *rep,
-			       काष्ठा drm_file *file_priv)
-अणु
-	काष्ठा tपंचांग_object_file *tfile = vmw_fpriv(file_priv)->tfile;
-	काष्ठा vmw_निजी *dev_priv = vmw_priv(dev);
-	काष्ठा vmw_user_surface *user_srf;
-	काष्ठा vmw_surface_metadata metadata = अणु0पूर्ण;
-	काष्ठा vmw_surface *srf;
-	काष्ठा vmw_resource *res;
-	काष्ठा vmw_resource *पंचांगp;
-	पूर्णांक ret = 0;
-	uपूर्णांक32_t size;
-	uपूर्णांक32_t backup_handle = 0;
+static int
+vmw_gb_surface_define_internal(struct drm_device *dev,
+			       struct drm_vmw_gb_surface_create_ext_req *req,
+			       struct drm_vmw_gb_surface_create_rep *rep,
+			       struct drm_file *file_priv)
+{
+	struct ttm_object_file *tfile = vmw_fpriv(file_priv)->tfile;
+	struct vmw_private *dev_priv = vmw_priv(dev);
+	struct vmw_user_surface *user_srf;
+	struct vmw_surface_metadata metadata = {0};
+	struct vmw_surface *srf;
+	struct vmw_resource *res;
+	struct vmw_resource *tmp;
+	int ret = 0;
+	uint32_t size;
+	uint32_t backup_handle = 0;
 	SVGA3dSurfaceAllFlags svga3d_flags_64 =
 		SVGA3D_FLAGS_64(req->svga3d_flags_upper_32_bits,
 				req->base.svga3d_flags);
 
-	/* array_size must be null क्रम non-GL3 host. */
-	अगर (req->base.array_size > 0 && !has_sm4_context(dev_priv)) अणु
+	/* array_size must be null for non-GL3 host. */
+	if (req->base.array_size > 0 && !has_sm4_context(dev_priv)) {
 		VMW_DEBUG_USER("SM4 surface not supported.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!has_sm4_1_context(dev_priv)) अणु
-		अगर (req->svga3d_flags_upper_32_bits != 0)
+	if (!has_sm4_1_context(dev_priv)) {
+		if (req->svga3d_flags_upper_32_bits != 0)
 			ret = -EINVAL;
 
-		अगर (req->base.multisample_count != 0)
+		if (req->base.multisample_count != 0)
 			ret = -EINVAL;
 
-		अगर (req->multisample_pattern != SVGA3D_MS_PATTERN_NONE)
+		if (req->multisample_pattern != SVGA3D_MS_PATTERN_NONE)
 			ret = -EINVAL;
 
-		अगर (req->quality_level != SVGA3D_MS_QUALITY_NONE)
+		if (req->quality_level != SVGA3D_MS_QUALITY_NONE)
 			ret = -EINVAL;
 
-		अगर (ret) अणु
+		if (ret) {
 			VMW_DEBUG_USER("SM4.1 surface not supported.\n");
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	अगर (req->buffer_byte_stride > 0 && !has_sm5_context(dev_priv)) अणु
+	if (req->buffer_byte_stride > 0 && !has_sm5_context(dev_priv)) {
 		VMW_DEBUG_USER("SM5 surface not supported.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर ((svga3d_flags_64 & SVGA3D_SURFACE_MULTISAMPLE) &&
-	    req->base.multisample_count == 0) अणु
+	if ((svga3d_flags_64 & SVGA3D_SURFACE_MULTISAMPLE) &&
+	    req->base.multisample_count == 0) {
 		VMW_DEBUG_USER("Invalid sample count.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (req->base.mip_levels > DRM_VMW_MAX_MIP_LEVELS) अणु
+	if (req->base.mip_levels > DRM_VMW_MAX_MIP_LEVELS) {
 		VMW_DEBUG_USER("Invalid mip level.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (unlikely(vmw_user_surface_size == 0))
-		vmw_user_surface_size = tपंचांग_round_pot(माप(*user_srf)) +
+	if (unlikely(vmw_user_surface_size == 0))
+		vmw_user_surface_size = ttm_round_pot(sizeof(*user_srf)) +
 			VMW_IDA_ACC_SIZE + TTM_OBJ_EXTRA_SIZE;
 
 	size = vmw_user_surface_size;
 
 	metadata.flags = svga3d_flags_64;
-	metadata.क्रमmat = req->base.क्रमmat;
+	metadata.format = req->base.format;
 	metadata.mip_levels[0] = req->base.mip_levels;
 	metadata.multisample_count = req->base.multisample_count;
 	metadata.multisample_pattern = req->multisample_pattern;
@@ -1534,36 +1533,36 @@ vmw_gb_surface_define_पूर्णांकernal(काष्ठा drm_devic
 
 	/* Define a surface based on the parameters. */
 	ret = vmw_gb_surface_define(dev_priv, size, &metadata, &srf);
-	अगर (ret != 0) अणु
+	if (ret != 0) {
 		VMW_DEBUG_USER("Failed to define surface.\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	user_srf = container_of(srf, काष्ठा vmw_user_surface, srf);
-	अगर (drm_is_primary_client(file_priv))
+	user_srf = container_of(srf, struct vmw_user_surface, srf);
+	if (drm_is_primary_client(file_priv))
 		user_srf->master = drm_master_get(file_priv->master);
 
-	ret = tपंचांग_पढ़ो_lock(&dev_priv->reservation_sem, true);
-	अगर (unlikely(ret != 0))
-		वापस ret;
+	ret = ttm_read_lock(&dev_priv->reservation_sem, true);
+	if (unlikely(ret != 0))
+		return ret;
 
 	res = &user_srf->srf.res;
 
-	अगर (req->base.buffer_handle != SVGA3D_INVALID_ID) अणु
+	if (req->base.buffer_handle != SVGA3D_INVALID_ID) {
 		ret = vmw_user_bo_lookup(tfile, req->base.buffer_handle,
 					 &res->backup,
 					 &user_srf->backup_base);
-		अगर (ret == 0) अणु
-			अगर (res->backup->base.base.size < res->backup_size) अणु
+		if (ret == 0) {
+			if (res->backup->base.base.size < res->backup_size) {
 				VMW_DEBUG_USER("Surface backup buffer too small.\n");
 				vmw_bo_unreference(&res->backup);
 				ret = -EINVAL;
-				जाओ out_unlock;
-			पूर्ण अन्यथा अणु
+				goto out_unlock;
+			} else {
 				backup_handle = req->base.buffer_handle;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अगर (req->base.drm_surface_flags &
+			}
+		}
+	} else if (req->base.drm_surface_flags &
 		   (drm_vmw_surface_flag_create_buffer |
 		    drm_vmw_surface_flag_coherent))
 		ret = vmw_user_bo_alloc(dev_priv, tfile,
@@ -1574,119 +1573,119 @@ vmw_gb_surface_define_पूर्णांकernal(काष्ठा drm_devic
 					&res->backup,
 					&user_srf->backup_base);
 
-	अगर (unlikely(ret != 0)) अणु
+	if (unlikely(ret != 0)) {
 		vmw_resource_unreference(&res);
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	अगर (req->base.drm_surface_flags & drm_vmw_surface_flag_coherent) अणु
-		काष्ठा vmw_buffer_object *backup = res->backup;
+	if (req->base.drm_surface_flags & drm_vmw_surface_flag_coherent) {
+		struct vmw_buffer_object *backup = res->backup;
 
-		tपंचांग_bo_reserve(&backup->base, false, false, शून्य);
-		अगर (!res->func->dirty_alloc)
+		ttm_bo_reserve(&backup->base, false, false, NULL);
+		if (!res->func->dirty_alloc)
 			ret = -EINVAL;
-		अगर (!ret)
+		if (!ret)
 			ret = vmw_bo_dirty_add(backup);
-		अगर (!ret) अणु
+		if (!ret) {
 			res->coherent = true;
 			ret = res->func->dirty_alloc(res);
-		पूर्ण
-		tपंचांग_bo_unreserve(&backup->base);
-		अगर (ret) अणु
+		}
+		ttm_bo_unreserve(&backup->base);
+		if (ret) {
 			vmw_resource_unreference(&res);
-			जाओ out_unlock;
-		पूर्ण
+			goto out_unlock;
+		}
 
-	पूर्ण
+	}
 
-	पंचांगp = vmw_resource_reference(res);
-	ret = tपंचांग_prime_object_init(tfile, res->backup_size, &user_srf->prime,
+	tmp = vmw_resource_reference(res);
+	ret = ttm_prime_object_init(tfile, res->backup_size, &user_srf->prime,
 				    req->base.drm_surface_flags &
 				    drm_vmw_surface_flag_shareable,
 				    VMW_RES_SURFACE,
-				    &vmw_user_surface_base_release, शून्य);
+				    &vmw_user_surface_base_release, NULL);
 
-	अगर (unlikely(ret != 0)) अणु
-		vmw_resource_unreference(&पंचांगp);
+	if (unlikely(ret != 0)) {
+		vmw_resource_unreference(&tmp);
 		vmw_resource_unreference(&res);
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	rep->handle      = user_srf->prime.base.handle;
 	rep->backup_size = res->backup_size;
-	अगर (res->backup) अणु
+	if (res->backup) {
 		rep->buffer_map_handle =
 			drm_vma_node_offset_addr(&res->backup->base.base.vma_node);
 		rep->buffer_size = res->backup->base.base.size;
 		rep->buffer_handle = backup_handle;
-	पूर्ण अन्यथा अणु
+	} else {
 		rep->buffer_map_handle = 0;
 		rep->buffer_size = 0;
 		rep->buffer_handle = SVGA3D_INVALID_ID;
-	पूर्ण
+	}
 
 	vmw_resource_unreference(&res);
 
 out_unlock:
-	tपंचांग_पढ़ो_unlock(&dev_priv->reservation_sem);
-	वापस ret;
-पूर्ण
+	ttm_read_unlock(&dev_priv->reservation_sem);
+	return ret;
+}
 
 /**
- * vmw_gb_surface_reference_पूर्णांकernal - Ioctl function implementing
+ * vmw_gb_surface_reference_internal - Ioctl function implementing
  * the user surface reference functionality.
  *
- * @dev: Poपूर्णांकer to a काष्ठा drm_device.
- * @req: Poपूर्णांकer to user-space request surface arg.
- * @rep: Poपूर्णांकer to response to user-space.
- * @file_priv: Poपूर्णांकer to a drm file निजी काष्ठाure.
+ * @dev: Pointer to a struct drm_device.
+ * @req: Pointer to user-space request surface arg.
+ * @rep: Pointer to response to user-space.
+ * @file_priv: Pointer to a drm file private structure.
  */
-अटल पूर्णांक
-vmw_gb_surface_reference_पूर्णांकernal(काष्ठा drm_device *dev,
-				  काष्ठा drm_vmw_surface_arg *req,
-				  काष्ठा drm_vmw_gb_surface_ref_ext_rep *rep,
-				  काष्ठा drm_file *file_priv)
-अणु
-	काष्ठा vmw_निजी *dev_priv = vmw_priv(dev);
-	काष्ठा tपंचांग_object_file *tfile = vmw_fpriv(file_priv)->tfile;
-	काष्ठा vmw_surface *srf;
-	काष्ठा vmw_user_surface *user_srf;
-	काष्ठा vmw_surface_metadata *metadata;
-	काष्ठा tपंचांग_base_object *base;
-	uपूर्णांक32_t backup_handle;
-	पूर्णांक ret;
+static int
+vmw_gb_surface_reference_internal(struct drm_device *dev,
+				  struct drm_vmw_surface_arg *req,
+				  struct drm_vmw_gb_surface_ref_ext_rep *rep,
+				  struct drm_file *file_priv)
+{
+	struct vmw_private *dev_priv = vmw_priv(dev);
+	struct ttm_object_file *tfile = vmw_fpriv(file_priv)->tfile;
+	struct vmw_surface *srf;
+	struct vmw_user_surface *user_srf;
+	struct vmw_surface_metadata *metadata;
+	struct ttm_base_object *base;
+	uint32_t backup_handle;
+	int ret;
 
 	ret = vmw_surface_handle_reference(dev_priv, file_priv, req->sid,
 					   req->handle_type, &base);
-	अगर (unlikely(ret != 0))
-		वापस ret;
+	if (unlikely(ret != 0))
+		return ret;
 
-	user_srf = container_of(base, काष्ठा vmw_user_surface, prime.base);
+	user_srf = container_of(base, struct vmw_user_surface, prime.base);
 	srf = &user_srf->srf;
-	अगर (!srf->res.backup) अणु
+	if (!srf->res.backup) {
 		DRM_ERROR("Shared GB surface is missing a backup buffer.\n");
-		जाओ out_bad_resource;
-	पूर्ण
+		goto out_bad_resource;
+	}
 	metadata = &srf->metadata;
 
 	mutex_lock(&dev_priv->cmdbuf_mutex); /* Protect res->backup */
 	ret = vmw_user_bo_reference(tfile, srf->res.backup, &backup_handle);
 	mutex_unlock(&dev_priv->cmdbuf_mutex);
 
-	अगर (unlikely(ret != 0)) अणु
+	if (unlikely(ret != 0)) {
 		DRM_ERROR("Could not add a reference to a GB surface "
 			  "backup buffer.\n");
-		(व्योम) tपंचांग_ref_object_base_unref(tfile, base->handle,
+		(void) ttm_ref_object_base_unref(tfile, base->handle,
 						 TTM_REF_USAGE);
-		जाओ out_bad_resource;
-	पूर्ण
+		goto out_bad_resource;
+	}
 
 	rep->creq.base.svga3d_flags = SVGA3D_FLAGS_LOWER_32(metadata->flags);
-	rep->creq.base.क्रमmat = metadata->क्रमmat;
+	rep->creq.base.format = metadata->format;
 	rep->creq.base.mip_levels = metadata->mip_levels[0];
 	rep->creq.base.drm_surface_flags = 0;
 	rep->creq.base.multisample_count = metadata->multisample_count;
-	rep->creq.base.स्वतःgen_filter = metadata->स्वतःgen_filter;
+	rep->creq.base.autogen_filter = metadata->autogen_filter;
 	rep->creq.base.array_size = metadata->array_size;
 	rep->creq.base.buffer_handle = backup_handle;
 	rep->creq.base.base_size = metadata->base_size;
@@ -1705,10 +1704,10 @@ vmw_gb_surface_reference_पूर्णांकernal(काष्ठा drm_de
 	rep->creq.must_be_zero = 0;
 
 out_bad_resource:
-	tपंचांग_base_object_unref(&base);
+	ttm_base_object_unref(&base);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * vmw_subres_dirty_add - Add a dirty region to a subresource
@@ -1717,64 +1716,64 @@ out_bad_resource:
  * @loc_end: The location corresponding to the end of the region.
  *
  * As we are assuming that @loc_start and @loc_end represent a sequential
- * range of backing store memory, अगर the region spans multiple lines then
+ * range of backing store memory, if the region spans multiple lines then
  * regardless of the x coordinate, the full lines are dirtied.
- * Correspondingly अगर the region spans multiple z slices, then full rather
+ * Correspondingly if the region spans multiple z slices, then full rather
  * than partial z slices are dirtied.
  */
-अटल व्योम vmw_subres_dirty_add(काष्ठा vmw_surface_dirty *dirty,
-				 स्थिर काष्ठा svga3dsurface_loc *loc_start,
-				 स्थिर काष्ठा svga3dsurface_loc *loc_end)
-अणु
-	स्थिर काष्ठा svga3dsurface_cache *cache = &dirty->cache;
+static void vmw_subres_dirty_add(struct vmw_surface_dirty *dirty,
+				 const struct svga3dsurface_loc *loc_start,
+				 const struct svga3dsurface_loc *loc_end)
+{
+	const struct svga3dsurface_cache *cache = &dirty->cache;
 	SVGA3dBox *box = &dirty->boxes[loc_start->sub_resource];
 	u32 mip = loc_start->sub_resource % cache->num_mip_levels;
-	स्थिर काष्ठा drm_vmw_size *size = &cache->mip[mip].size;
+	const struct drm_vmw_size *size = &cache->mip[mip].size;
 	u32 box_c2 = box->z + box->d;
 
-	अगर (WARN_ON(loc_start->sub_resource >= dirty->num_subres))
-		वापस;
+	if (WARN_ON(loc_start->sub_resource >= dirty->num_subres))
+		return;
 
-	अगर (box->d == 0 || box->z > loc_start->z)
+	if (box->d == 0 || box->z > loc_start->z)
 		box->z = loc_start->z;
-	अगर (box_c2 < loc_end->z)
+	if (box_c2 < loc_end->z)
 		box->d = loc_end->z - box->z;
 
-	अगर (loc_start->z + 1 == loc_end->z) अणु
+	if (loc_start->z + 1 == loc_end->z) {
 		box_c2 = box->y + box->h;
-		अगर (box->h == 0 || box->y > loc_start->y)
+		if (box->h == 0 || box->y > loc_start->y)
 			box->y = loc_start->y;
-		अगर (box_c2 < loc_end->y)
+		if (box_c2 < loc_end->y)
 			box->h = loc_end->y - box->y;
 
-		अगर (loc_start->y + 1 == loc_end->y) अणु
+		if (loc_start->y + 1 == loc_end->y) {
 			box_c2 = box->x + box->w;
-			अगर (box->w == 0 || box->x > loc_start->x)
+			if (box->w == 0 || box->x > loc_start->x)
 				box->x = loc_start->x;
-			अगर (box_c2 < loc_end->x)
+			if (box_c2 < loc_end->x)
 				box->w = loc_end->x - box->x;
-		पूर्ण अन्यथा अणु
+		} else {
 			box->x = 0;
 			box->w = size->width;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		box->y = 0;
 		box->h = size->height;
 		box->x = 0;
 		box->w = size->width;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * vmw_subres_dirty_full - Mark a full subresource as dirty
  * @dirty: The surface's dirty tracker.
  * @subres: The subresource
  */
-अटल व्योम vmw_subres_dirty_full(काष्ठा vmw_surface_dirty *dirty, u32 subres)
-अणु
-	स्थिर काष्ठा svga3dsurface_cache *cache = &dirty->cache;
+static void vmw_subres_dirty_full(struct vmw_surface_dirty *dirty, u32 subres)
+{
+	const struct svga3dsurface_cache *cache = &dirty->cache;
 	u32 mip = subres % cache->num_mip_levels;
-	स्थिर काष्ठा drm_vmw_size *size = &cache->mip[mip].size;
+	const struct drm_vmw_size *size = &cache->mip[mip].size;
 	SVGA3dBox *box = &dirty->boxes[subres];
 
 	box->x = 0;
@@ -1783,410 +1782,410 @@ out_bad_resource:
 	box->w = size->width;
 	box->h = size->height;
 	box->d = size->depth;
-पूर्ण
+}
 
 /*
- * vmw_surface_tex_dirty_add_range - The dirty_add_range callback क्रम texture
+ * vmw_surface_tex_dirty_add_range - The dirty_add_range callback for texture
  * surfaces.
  */
-अटल व्योम vmw_surface_tex_dirty_range_add(काष्ठा vmw_resource *res,
-					    माप_प्रकार start, माप_प्रकार end)
-अणु
-	काष्ठा vmw_surface_dirty *dirty =
-		(काष्ठा vmw_surface_dirty *) res->dirty;
-	माप_प्रकार backup_end = res->backup_offset + res->backup_size;
-	काष्ठा svga3dsurface_loc loc1, loc2;
-	स्थिर काष्ठा svga3dsurface_cache *cache;
+static void vmw_surface_tex_dirty_range_add(struct vmw_resource *res,
+					    size_t start, size_t end)
+{
+	struct vmw_surface_dirty *dirty =
+		(struct vmw_surface_dirty *) res->dirty;
+	size_t backup_end = res->backup_offset + res->backup_size;
+	struct svga3dsurface_loc loc1, loc2;
+	const struct svga3dsurface_cache *cache;
 
-	start = max_t(माप_प्रकार, start, res->backup_offset) - res->backup_offset;
+	start = max_t(size_t, start, res->backup_offset) - res->backup_offset;
 	end = min(end, backup_end) - res->backup_offset;
 	cache = &dirty->cache;
 	svga3dsurface_get_loc(cache, &loc1, start);
 	svga3dsurface_get_loc(cache, &loc2, end - 1);
 	svga3dsurface_inc_loc(cache, &loc2);
 
-	अगर (loc1.sub_resource + 1 == loc2.sub_resource) अणु
+	if (loc1.sub_resource + 1 == loc2.sub_resource) {
 		/* Dirty range covers a single sub-resource */
 		vmw_subres_dirty_add(dirty, &loc1, &loc2);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Dirty range covers multiple sub-resources */
-		काष्ठा svga3dsurface_loc loc_min, loc_max;
+		struct svga3dsurface_loc loc_min, loc_max;
 		u32 sub_res;
 
 		svga3dsurface_max_loc(cache, loc1.sub_resource, &loc_max);
 		vmw_subres_dirty_add(dirty, &loc1, &loc_max);
 		svga3dsurface_min_loc(cache, loc2.sub_resource - 1, &loc_min);
 		vmw_subres_dirty_add(dirty, &loc_min, &loc2);
-		क्रम (sub_res = loc1.sub_resource + 1;
+		for (sub_res = loc1.sub_resource + 1;
 		     sub_res < loc2.sub_resource - 1; ++sub_res)
 			vmw_subres_dirty_full(dirty, sub_res);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * vmw_surface_tex_dirty_add_range - The dirty_add_range callback क्रम buffer
+ * vmw_surface_tex_dirty_add_range - The dirty_add_range callback for buffer
  * surfaces.
  */
-अटल व्योम vmw_surface_buf_dirty_range_add(काष्ठा vmw_resource *res,
-					    माप_प्रकार start, माप_प्रकार end)
-अणु
-	काष्ठा vmw_surface_dirty *dirty =
-		(काष्ठा vmw_surface_dirty *) res->dirty;
-	स्थिर काष्ठा svga3dsurface_cache *cache = &dirty->cache;
-	माप_प्रकार backup_end = res->backup_offset + cache->mip_chain_bytes;
+static void vmw_surface_buf_dirty_range_add(struct vmw_resource *res,
+					    size_t start, size_t end)
+{
+	struct vmw_surface_dirty *dirty =
+		(struct vmw_surface_dirty *) res->dirty;
+	const struct svga3dsurface_cache *cache = &dirty->cache;
+	size_t backup_end = res->backup_offset + cache->mip_chain_bytes;
 	SVGA3dBox *box = &dirty->boxes[0];
 	u32 box_c2;
 
 	box->h = box->d = 1;
-	start = max_t(माप_प्रकार, start, res->backup_offset) - res->backup_offset;
+	start = max_t(size_t, start, res->backup_offset) - res->backup_offset;
 	end = min(end, backup_end) - res->backup_offset;
 	box_c2 = box->x + box->w;
-	अगर (box->w == 0 || box->x > start)
+	if (box->w == 0 || box->x > start)
 		box->x = start;
-	अगर (box_c2 < end)
+	if (box_c2 < end)
 		box->w = end - box->x;
-पूर्ण
+}
 
 /*
- * vmw_surface_tex_dirty_add_range - The dirty_add_range callback क्रम surfaces
+ * vmw_surface_tex_dirty_add_range - The dirty_add_range callback for surfaces
  */
-अटल व्योम vmw_surface_dirty_range_add(काष्ठा vmw_resource *res, माप_प्रकार start,
-					माप_प्रकार end)
-अणु
-	काष्ठा vmw_surface *srf = vmw_res_to_srf(res);
+static void vmw_surface_dirty_range_add(struct vmw_resource *res, size_t start,
+					size_t end)
+{
+	struct vmw_surface *srf = vmw_res_to_srf(res);
 
-	अगर (WARN_ON(end <= res->backup_offset ||
+	if (WARN_ON(end <= res->backup_offset ||
 		    start >= res->backup_offset + res->backup_size))
-		वापस;
+		return;
 
-	अगर (srf->metadata.क्रमmat == SVGA3D_BUFFER)
+	if (srf->metadata.format == SVGA3D_BUFFER)
 		vmw_surface_buf_dirty_range_add(res, start, end);
-	अन्यथा
+	else
 		vmw_surface_tex_dirty_range_add(res, start, end);
-पूर्ण
+}
 
 /*
  * vmw_surface_dirty_sync - The surface's dirty_sync callback.
  */
-अटल पूर्णांक vmw_surface_dirty_sync(काष्ठा vmw_resource *res)
-अणु
-	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
+static int vmw_surface_dirty_sync(struct vmw_resource *res)
+{
+	struct vmw_private *dev_priv = res->dev_priv;
 	bool has_dx = 0;
 	u32 i, num_dirty;
-	काष्ठा vmw_surface_dirty *dirty =
-		(काष्ठा vmw_surface_dirty *) res->dirty;
-	माप_प्रकार alloc_size;
-	स्थिर काष्ठा svga3dsurface_cache *cache = &dirty->cache;
-	काष्ठा अणु
+	struct vmw_surface_dirty *dirty =
+		(struct vmw_surface_dirty *) res->dirty;
+	size_t alloc_size;
+	const struct svga3dsurface_cache *cache = &dirty->cache;
+	struct {
 		SVGA3dCmdHeader header;
 		SVGA3dCmdDXUpdateSubResource body;
-	पूर्ण *cmd1;
-	काष्ठा अणु
+	} *cmd1;
+	struct {
 		SVGA3dCmdHeader header;
 		SVGA3dCmdUpdateGBImage body;
-	पूर्ण *cmd2;
-	व्योम *cmd;
+	} *cmd2;
+	void *cmd;
 
 	num_dirty = 0;
-	क्रम (i = 0; i < dirty->num_subres; ++i) अणु
-		स्थिर SVGA3dBox *box = &dirty->boxes[i];
+	for (i = 0; i < dirty->num_subres; ++i) {
+		const SVGA3dBox *box = &dirty->boxes[i];
 
-		अगर (box->d)
+		if (box->d)
 			num_dirty++;
-	पूर्ण
+	}
 
-	अगर (!num_dirty)
-		जाओ out;
+	if (!num_dirty)
+		goto out;
 
-	alloc_size = num_dirty * ((has_dx) ? माप(*cmd1) : माप(*cmd2));
+	alloc_size = num_dirty * ((has_dx) ? sizeof(*cmd1) : sizeof(*cmd2));
 	cmd = VMW_CMD_RESERVE(dev_priv, alloc_size);
-	अगर (!cmd)
-		वापस -ENOMEM;
+	if (!cmd)
+		return -ENOMEM;
 
 	cmd1 = cmd;
 	cmd2 = cmd;
 
-	क्रम (i = 0; i < dirty->num_subres; ++i) अणु
-		स्थिर SVGA3dBox *box = &dirty->boxes[i];
+	for (i = 0; i < dirty->num_subres; ++i) {
+		const SVGA3dBox *box = &dirty->boxes[i];
 
-		अगर (!box->d)
-			जारी;
+		if (!box->d)
+			continue;
 
 		/*
 		 * DX_UPDATE_SUBRESOURCE is aware of array surfaces.
 		 * UPDATE_GB_IMAGE is not.
 		 */
-		अगर (has_dx) अणु
+		if (has_dx) {
 			cmd1->header.id = SVGA_3D_CMD_DX_UPDATE_SUBRESOURCE;
-			cmd1->header.size = माप(cmd1->body);
+			cmd1->header.size = sizeof(cmd1->body);
 			cmd1->body.sid = res->id;
 			cmd1->body.subResource = i;
 			cmd1->body.box = *box;
 			cmd1++;
-		पूर्ण अन्यथा अणु
+		} else {
 			cmd2->header.id = SVGA_3D_CMD_UPDATE_GB_IMAGE;
-			cmd2->header.size = माप(cmd2->body);
+			cmd2->header.size = sizeof(cmd2->body);
 			cmd2->body.image.sid = res->id;
 			cmd2->body.image.face = i / cache->num_mip_levels;
 			cmd2->body.image.mipmap = i -
 				(cache->num_mip_levels * cmd2->body.image.face);
 			cmd2->body.box = *box;
 			cmd2++;
-		पूर्ण
+		}
 
-	पूर्ण
+	}
 	vmw_cmd_commit(dev_priv, alloc_size);
  out:
-	स_रखो(&dirty->boxes[0], 0, माप(dirty->boxes[0]) *
+	memset(&dirty->boxes[0], 0, sizeof(dirty->boxes[0]) *
 	       dirty->num_subres);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * vmw_surface_dirty_alloc - The surface's dirty_alloc callback.
  */
-अटल पूर्णांक vmw_surface_dirty_alloc(काष्ठा vmw_resource *res)
-अणु
-	काष्ठा vmw_surface *srf = vmw_res_to_srf(res);
-	स्थिर काष्ठा vmw_surface_metadata *metadata = &srf->metadata;
-	काष्ठा vmw_surface_dirty *dirty;
+static int vmw_surface_dirty_alloc(struct vmw_resource *res)
+{
+	struct vmw_surface *srf = vmw_res_to_srf(res);
+	const struct vmw_surface_metadata *metadata = &srf->metadata;
+	struct vmw_surface_dirty *dirty;
 	u32 num_layers = 1;
 	u32 num_mip;
 	u32 num_subres;
 	u32 num_samples;
-	माप_प्रकार dirty_size, acc_size;
-	अटल काष्ठा tपंचांग_operation_ctx ctx = अणु
-		.पूर्णांकerruptible = false,
-		.no_रुको_gpu = false
-	पूर्ण;
-	पूर्णांक ret;
+	size_t dirty_size, acc_size;
+	static struct ttm_operation_ctx ctx = {
+		.interruptible = false,
+		.no_wait_gpu = false
+	};
+	int ret;
 
-	अगर (metadata->array_size)
+	if (metadata->array_size)
 		num_layers = metadata->array_size;
-	अन्यथा अगर (metadata->flags & SVGA3D_SURFACE_CUBEMAP)
+	else if (metadata->flags & SVGA3D_SURFACE_CUBEMAP)
 		num_layers *= SVGA3D_MAX_SURFACE_FACES;
 
 	num_mip = metadata->mip_levels[0];
-	अगर (!num_mip)
+	if (!num_mip)
 		num_mip = 1;
 
 	num_subres = num_layers * num_mip;
-	dirty_size = काष्ठा_size(dirty, boxes, num_subres);
-	acc_size = tपंचांग_round_pot(dirty_size);
-	ret = tपंचांग_mem_global_alloc(vmw_mem_glob(res->dev_priv),
+	dirty_size = struct_size(dirty, boxes, num_subres);
+	acc_size = ttm_round_pot(dirty_size);
+	ret = ttm_mem_global_alloc(vmw_mem_glob(res->dev_priv),
 				   acc_size, &ctx);
-	अगर (ret) अणु
+	if (ret) {
 		VMW_DEBUG_USER("Out of graphics memory for surface "
 			       "dirty tracker.\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	dirty = kvzalloc(dirty_size, GFP_KERNEL);
-	अगर (!dirty) अणु
+	if (!dirty) {
 		ret = -ENOMEM;
-		जाओ out_no_dirty;
-	पूर्ण
+		goto out_no_dirty;
+	}
 
 	num_samples = max_t(u32, 1, metadata->multisample_count);
-	ret = svga3dsurface_setup_cache(&metadata->base_size, metadata->क्रमmat,
+	ret = svga3dsurface_setup_cache(&metadata->base_size, metadata->format,
 					num_mip, num_layers, num_samples,
 					&dirty->cache);
-	अगर (ret)
-		जाओ out_no_cache;
+	if (ret)
+		goto out_no_cache;
 
 	dirty->num_subres = num_subres;
 	dirty->size = acc_size;
-	res->dirty = (काष्ठा vmw_resource_dirty *) dirty;
+	res->dirty = (struct vmw_resource_dirty *) dirty;
 
-	वापस 0;
+	return 0;
 
 out_no_cache:
-	kvमुक्त(dirty);
+	kvfree(dirty);
 out_no_dirty:
-	tपंचांग_mem_global_मुक्त(vmw_mem_glob(res->dev_priv), acc_size);
-	वापस ret;
-पूर्ण
+	ttm_mem_global_free(vmw_mem_glob(res->dev_priv), acc_size);
+	return ret;
+}
 
 /*
- * vmw_surface_dirty_मुक्त - The surface's dirty_मुक्त callback
+ * vmw_surface_dirty_free - The surface's dirty_free callback
  */
-अटल व्योम vmw_surface_dirty_मुक्त(काष्ठा vmw_resource *res)
-अणु
-	काष्ठा vmw_surface_dirty *dirty =
-		(काष्ठा vmw_surface_dirty *) res->dirty;
-	माप_प्रकार acc_size = dirty->size;
+static void vmw_surface_dirty_free(struct vmw_resource *res)
+{
+	struct vmw_surface_dirty *dirty =
+		(struct vmw_surface_dirty *) res->dirty;
+	size_t acc_size = dirty->size;
 
-	kvमुक्त(dirty);
-	tपंचांग_mem_global_मुक्त(vmw_mem_glob(res->dev_priv), acc_size);
-	res->dirty = शून्य;
-पूर्ण
+	kvfree(dirty);
+	ttm_mem_global_free(vmw_mem_glob(res->dev_priv), acc_size);
+	res->dirty = NULL;
+}
 
 /*
  * vmw_surface_clean - The surface's clean callback
  */
-अटल पूर्णांक vmw_surface_clean(काष्ठा vmw_resource *res)
-अणु
-	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
-	माप_प्रकार alloc_size;
-	काष्ठा अणु
+static int vmw_surface_clean(struct vmw_resource *res)
+{
+	struct vmw_private *dev_priv = res->dev_priv;
+	size_t alloc_size;
+	struct {
 		SVGA3dCmdHeader header;
 		SVGA3dCmdReadbackGBSurface body;
-	पूर्ण *cmd;
+	} *cmd;
 
-	alloc_size = माप(*cmd);
+	alloc_size = sizeof(*cmd);
 	cmd = VMW_CMD_RESERVE(dev_priv, alloc_size);
-	अगर (!cmd)
-		वापस -ENOMEM;
+	if (!cmd)
+		return -ENOMEM;
 
 	cmd->header.id = SVGA_3D_CMD_READBACK_GB_SURFACE;
-	cmd->header.size = माप(cmd->body);
+	cmd->header.size = sizeof(cmd->body);
 	cmd->body.sid = res->id;
 	vmw_cmd_commit(dev_priv, alloc_size);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * vmw_gb_surface_define - Define a निजी GB surface
+ * vmw_gb_surface_define - Define a private GB surface
  *
- * @dev_priv: Poपूर्णांकer to a device निजी.
+ * @dev_priv: Pointer to a device private.
  * @user_accounting_size:  Used to track user-space memory usage, set
- *                         to 0 क्रम kernel mode only memory
+ *                         to 0 for kernel mode only memory
  * @metadata: Metadata representing the surface to create.
- * @user_srf_out: allocated user_srf. Set to शून्य on failure.
+ * @user_srf_out: allocated user_srf. Set to NULL on failure.
  *
  * GB surfaces allocated by this function will not have a user mode handle, and
  * thus will only be visible to vmwgfx.  For optimization reasons the
  * surface may later be given a user mode handle by another function to make
  * it available to user mode drivers.
  */
-पूर्णांक vmw_gb_surface_define(काष्ठा vmw_निजी *dev_priv,
-			  uपूर्णांक32_t user_accounting_size,
-			  स्थिर काष्ठा vmw_surface_metadata *req,
-			  काष्ठा vmw_surface **srf_out)
-अणु
-	काष्ठा vmw_surface_metadata *metadata;
-	काष्ठा vmw_user_surface *user_srf;
-	काष्ठा vmw_surface *srf;
-	काष्ठा tपंचांग_operation_ctx ctx = अणु
-		.पूर्णांकerruptible = true,
-		.no_रुको_gpu = false
-	पूर्ण;
+int vmw_gb_surface_define(struct vmw_private *dev_priv,
+			  uint32_t user_accounting_size,
+			  const struct vmw_surface_metadata *req,
+			  struct vmw_surface **srf_out)
+{
+	struct vmw_surface_metadata *metadata;
+	struct vmw_user_surface *user_srf;
+	struct vmw_surface *srf;
+	struct ttm_operation_ctx ctx = {
+		.interruptible = true,
+		.no_wait_gpu = false
+	};
 	u32 sample_count = 1;
 	u32 num_layers = 1;
-	पूर्णांक ret;
+	int ret;
 
-	*srf_out = शून्य;
+	*srf_out = NULL;
 
-	अगर (req->scanout) अणु
-		अगर (!svga3dsurface_is_screen_target_क्रमmat(req->क्रमmat)) अणु
+	if (req->scanout) {
+		if (!svga3dsurface_is_screen_target_format(req->format)) {
 			VMW_DEBUG_USER("Invalid Screen Target surface format.");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (req->base_size.width > dev_priv->texture_max_width ||
-		    req->base_size.height > dev_priv->texture_max_height) अणु
+		if (req->base_size.width > dev_priv->texture_max_width ||
+		    req->base_size.height > dev_priv->texture_max_height) {
 			VMW_DEBUG_USER("%ux%u\n, exceed max surface size %ux%u",
 				       req->base_size.width,
 				       req->base_size.height,
 				       dev_priv->texture_max_width,
 				       dev_priv->texture_max_height);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		स्थिर काष्ठा svga3d_surface_desc *desc =
-			svga3dsurface_get_desc(req->क्रमmat);
+			return -EINVAL;
+		}
+	} else {
+		const struct svga3d_surface_desc *desc =
+			svga3dsurface_get_desc(req->format);
 
-		अगर (desc->block_desc == SVGA3DBLOCKDESC_NONE) अणु
+		if (desc->block_desc == SVGA3DBLOCKDESC_NONE) {
 			VMW_DEBUG_USER("Invalid surface format.\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	अगर (req->स्वतःgen_filter != SVGA3D_TEX_FILTER_NONE)
-		वापस -EINVAL;
+	if (req->autogen_filter != SVGA3D_TEX_FILTER_NONE)
+		return -EINVAL;
 
-	अगर (req->num_sizes != 1)
-		वापस -EINVAL;
+	if (req->num_sizes != 1)
+		return -EINVAL;
 
-	अगर (req->sizes != शून्य)
-		वापस -EINVAL;
+	if (req->sizes != NULL)
+		return -EINVAL;
 
-	ret = tपंचांग_पढ़ो_lock(&dev_priv->reservation_sem, true);
-	अगर (unlikely(ret != 0))
-		वापस ret;
+	ret = ttm_read_lock(&dev_priv->reservation_sem, true);
+	if (unlikely(ret != 0))
+		return ret;
 
-	ret = tपंचांग_mem_global_alloc(vmw_mem_glob(dev_priv),
+	ret = ttm_mem_global_alloc(vmw_mem_glob(dev_priv),
 				   user_accounting_size, &ctx);
-	अगर (ret != 0) अणु
-		अगर (ret != -ERESTARTSYS)
+	if (ret != 0) {
+		if (ret != -ERESTARTSYS)
 			DRM_ERROR("Out of graphics memory for surface.\n");
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	user_srf = kzalloc(माप(*user_srf), GFP_KERNEL);
-	अगर (unlikely(!user_srf)) अणु
+	user_srf = kzalloc(sizeof(*user_srf), GFP_KERNEL);
+	if (unlikely(!user_srf)) {
 		ret = -ENOMEM;
-		जाओ out_no_user_srf;
-	पूर्ण
+		goto out_no_user_srf;
+	}
 
 	*srf_out  = &user_srf->srf;
 	user_srf->size = user_accounting_size;
 	user_srf->prime.base.shareable = false;
-	user_srf->prime.base.tfile = शून्य;
+	user_srf->prime.base.tfile = NULL;
 
 	srf = &user_srf->srf;
 	srf->metadata = *req;
-	srf->offsets = शून्य;
+	srf->offsets = NULL;
 
 	metadata = &srf->metadata;
 
-	अगर (metadata->array_size)
+	if (metadata->array_size)
 		num_layers = req->array_size;
-	अन्यथा अगर (metadata->flags & SVGA3D_SURFACE_CUBEMAP)
+	else if (metadata->flags & SVGA3D_SURFACE_CUBEMAP)
 		num_layers = SVGA3D_MAX_SURFACE_FACES;
 
-	अगर (metadata->flags & SVGA3D_SURFACE_MULTISAMPLE)
+	if (metadata->flags & SVGA3D_SURFACE_MULTISAMPLE)
 		sample_count = metadata->multisample_count;
 
 	srf->res.backup_size =
-		svga3dsurface_get_serialized_size_extended(metadata->क्रमmat,
+		svga3dsurface_get_serialized_size_extended(metadata->format,
 							   metadata->base_size,
 							   metadata->mip_levels[0],
 							   num_layers,
 							   sample_count);
 
-	अगर (metadata->flags & SVGA3D_SURFACE_BIND_STREAM_OUTPUT)
-		srf->res.backup_size += माप(SVGA3dDXSOState);
+	if (metadata->flags & SVGA3D_SURFACE_BIND_STREAM_OUTPUT)
+		srf->res.backup_size += sizeof(SVGA3dDXSOState);
 
 	/*
-	 * Don't set SVGA3D_SURFACE_SCREENTARGET flag क्रम a scanout surface with
+	 * Don't set SVGA3D_SURFACE_SCREENTARGET flag for a scanout surface with
 	 * size greater than STDU max width/height. This is really a workaround
 	 * to support creation of big framebuffer requested by some user-space
-	 * क्रम whole topology. That big framebuffer won't really be used क्रम
+	 * for whole topology. That big framebuffer won't really be used for
 	 * binding with screen target as during prepare_fb a separate surface is
 	 * created so it's safe to ignore SVGA3D_SURFACE_SCREENTARGET flag.
 	 */
-	अगर (dev_priv->active_display_unit == vmw_du_screen_target &&
+	if (dev_priv->active_display_unit == vmw_du_screen_target &&
 	    metadata->scanout &&
 	    metadata->base_size.width <= dev_priv->stdu_max_width &&
 	    metadata->base_size.height <= dev_priv->stdu_max_height)
 		metadata->flags |= SVGA3D_SURFACE_SCREENTARGET;
 
 	/*
-	 * From this poपूर्णांक, the generic resource management functions
+	 * From this point, the generic resource management functions
 	 * destroy the object on failure.
 	 */
-	ret = vmw_surface_init(dev_priv, srf, vmw_user_surface_मुक्त);
+	ret = vmw_surface_init(dev_priv, srf, vmw_user_surface_free);
 
-	tपंचांग_पढ़ो_unlock(&dev_priv->reservation_sem);
-	वापस ret;
+	ttm_read_unlock(&dev_priv->reservation_sem);
+	return ret;
 
 out_no_user_srf:
-	tपंचांग_mem_global_मुक्त(vmw_mem_glob(dev_priv), user_accounting_size);
+	ttm_mem_global_free(vmw_mem_glob(dev_priv), user_accounting_size);
 
 out_unlock:
-	tपंचांग_पढ़ो_unlock(&dev_priv->reservation_sem);
-	वापस ret;
-पूर्ण
+	ttm_read_unlock(&dev_priv->reservation_sem);
+	return ret;
+}

@@ -1,23 +1,22 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#समावेश <यंत्र/assembler.h>
-#समावेश <यंत्र/unwind.h>
+/* SPDX-License-Identifier: GPL-2.0 */
+#include <asm/assembler.h>
+#include <asm/unwind.h>
 
-#अगर __LINUX_ARM_ARCH__ >= 6
+#if __LINUX_ARM_ARCH__ >= 6
 	.macro	bitop, name, instr
-ENTRY(	\नame		)
+ENTRY(	\name		)
 UNWIND(	.fnstart	)
 	ands	ip, r1, #3
-	strbne	r1, [ip]		@ निश्चित word-aligned
+	strbne	r1, [ip]		@ assert word-aligned
 	mov	r2, #1
 	and	r3, r0, #31		@ Get bit offset
 	mov	r0, r0, lsr #5
 	add	r1, r1, r0, lsl #2	@ Get word offset
-#अगर __LINUX_ARM_ARCH__ >= 7 && defined(CONFIG_SMP)
+#if __LINUX_ARM_ARCH__ >= 7 && defined(CONFIG_SMP)
 	.arch_extension	mp
 	ALT_SMP(W(pldw)	[r1])
 	ALT_UP(W(nop))
-#पूर्ण_अगर
+#endif
 	mov	r3, r2, lsl r3
 1:	ldrex	r2, [r1]
 	\instr	r2, r2, r3
@@ -26,25 +25,25 @@ UNWIND(	.fnstart	)
 	bne	1b
 	bx	lr
 UNWIND(	.fnend		)
-ENDPROC(\नame		)
+ENDPROC(\name		)
 	.endm
 
 	.macro	testop, name, instr, store
-ENTRY(	\नame		)
+ENTRY(	\name		)
 UNWIND(	.fnstart	)
 	ands	ip, r1, #3
-	strbne	r1, [ip]		@ निश्चित word-aligned
+	strbne	r1, [ip]		@ assert word-aligned
 	mov	r2, #1
 	and	r3, r0, #31		@ Get bit offset
 	mov	r0, r0, lsr #5
 	add	r1, r1, r0, lsl #2	@ Get word offset
 	mov	r3, r2, lsl r3		@ create mask
 	smp_dmb
-#अगर __LINUX_ARM_ARCH__ >= 7 && defined(CONFIG_SMP)
+#if __LINUX_ARM_ARCH__ >= 7 && defined(CONFIG_SMP)
 	.arch_extension	mp
 	ALT_SMP(W(pldw)	[r1])
 	ALT_UP(W(nop))
-#पूर्ण_अगर
+#endif
 1:	ldrex	r2, [r1]
 	ands	r0, r2, r3		@ save old value of bit
 	\instr	r2, r2, r3		@ toggle bit
@@ -56,14 +55,14 @@ UNWIND(	.fnstart	)
 	movne	r0, #1
 2:	bx	lr
 UNWIND(	.fnend		)
-ENDPROC(\नame		)
+ENDPROC(\name		)
 	.endm
-#अन्यथा
+#else
 	.macro	bitop, name, instr
-ENTRY(	\नame		)
+ENTRY(	\name		)
 UNWIND(	.fnstart	)
 	ands	ip, r1, #3
-	strbne	r1, [ip]		@ निश्चित word-aligned
+	strbne	r1, [ip]		@ assert word-aligned
 	and	r2, r0, #31
 	mov	r0, r0, lsr #5
 	mov	r3, #1
@@ -75,22 +74,22 @@ UNWIND(	.fnstart	)
 	restore_irqs ip
 	ret	lr
 UNWIND(	.fnend		)
-ENDPROC(\नame		)
+ENDPROC(\name		)
 	.endm
 
 /**
  * testop - implement a test_and_xxx_bit operation.
- * @instr: operational inकाष्ठाion
- * @store: store inकाष्ठाion
+ * @instr: operational instruction
+ * @store: store instruction
  *
- * Note: we can trivially conditionalise the store inकाष्ठाion
- * to aव्योम dirtying the data cache.
+ * Note: we can trivially conditionalise the store instruction
+ * to avoid dirtying the data cache.
  */
 	.macro	testop, name, instr, store
-ENTRY(	\नame		)
+ENTRY(	\name		)
 UNWIND(	.fnstart	)
 	ands	ip, r1, #3
-	strbne	r1, [ip]		@ निश्चित word-aligned
+	strbne	r1, [ip]		@ assert word-aligned
 	and	r3, r0, #31
 	mov	r0, r0, lsr #5
 	save_and_disable_irqs ip
@@ -103,6 +102,6 @@ UNWIND(	.fnstart	)
 	restore_irqs ip
 	ret	lr
 UNWIND(	.fnend		)
-ENDPROC(\नame		)
+ENDPROC(\name		)
 	.endm
-#पूर्ण_अगर
+#endif

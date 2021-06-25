@@ -1,31 +1,30 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2007 Lemote Inc. & Institute of Computing Technology
  * Author: Fuxin Zhang, zhangfx@lemote.com
  */
-#समावेश <linux/export.h>
-#समावेश <linux/init.h>
+#include <linux/export.h>
+#include <linux/init.h>
 
-#समावेश <यंत्र/wbflush.h>
-#समावेश <यंत्र/bootinfo.h>
+#include <asm/wbflush.h>
+#include <asm/bootinfo.h>
 
-#समावेश <loongson.h>
+#include <loongson.h>
 
-अटल व्योम wbflush_loongson(व्योम)
-अणु
-	यंत्र(".set\tpush\n\t"
+static void wbflush_loongson(void)
+{
+	asm(".set\tpush\n\t"
 	    ".set\tnoreorder\n\t"
 	    ".set mips3\n\t"
 	    "sync\n\t"
 	    "nop\n\t"
 	    ".set\tpop\n\t"
 	    ".set mips0\n\t");
-पूर्ण
+}
 
-व्योम (*__wbflush)(व्योम) = wbflush_loongson;
+void (*__wbflush)(void) = wbflush_loongson;
 EXPORT_SYMBOL(__wbflush);
 
-व्योम __init plat_mem_setup(व्योम)
-अणु
-पूर्ण
+void __init plat_mem_setup(void)
+{
+}

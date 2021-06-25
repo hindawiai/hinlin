@@ -1,33 +1,32 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2019 Facebook
-#समावेश <linux/bpf.h>
-#समावेश <bpf/bpf_helpers.h>
-#घोषणा barrier() __यंत्र__ __अस्थिर__("": : :"memory")
+#include <linux/bpf.h>
+#include <bpf/bpf_helpers.h>
+#define barrier() __asm__ __volatile__("": : :"memory")
 
-अक्षर _license[] SEC("license") = "GPL";
+char _license[] SEC("license") = "GPL";
 
 SEC("socket")
-पूर्णांक जबतक_true(अस्थिर काष्ठा __sk_buff* skb)
-अणु
-	पूर्णांक i = 0;
+int while_true(volatile struct __sk_buff* skb)
+{
+	int i = 0;
 
-	जबतक (1) अणु
-		अगर (skb->len)
+	while (1) {
+		if (skb->len)
 			i += 3;
-		अन्यथा
+		else
 			i += 7;
-		अगर (i == 9)
-			अवरोध;
+		if (i == 9)
+			break;
 		barrier();
-		अगर (i == 10)
-			अवरोध;
+		if (i == 10)
+			break;
 		barrier();
-		अगर (i == 13)
-			अवरोध;
+		if (i == 13)
+			break;
 		barrier();
-		अगर (i == 14)
-			अवरोध;
-	पूर्ण
-	वापस i;
-पूर्ण
+		if (i == 14)
+			break;
+	}
+	return i;
+}

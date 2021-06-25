@@ -1,278 +1,277 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __LINUX_NETLINK_H
-#घोषणा __LINUX_NETLINK_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __LINUX_NETLINK_H
+#define __LINUX_NETLINK_H
 
 
-#समावेश <linux/capability.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/export.h>
-#समावेश <net/scm.h>
-#समावेश <uapi/linux/netlink.h>
+#include <linux/capability.h>
+#include <linux/skbuff.h>
+#include <linux/export.h>
+#include <net/scm.h>
+#include <uapi/linux/netlink.h>
 
-काष्ठा net;
+struct net;
 
-व्योम करो_trace_netlink_extack(स्थिर अक्षर *msg);
+void do_trace_netlink_extack(const char *msg);
 
-अटल अंतरभूत काष्ठा nlmsghdr *nlmsg_hdr(स्थिर काष्ठा sk_buff *skb)
-अणु
-	वापस (काष्ठा nlmsghdr *)skb->data;
-पूर्ण
+static inline struct nlmsghdr *nlmsg_hdr(const struct sk_buff *skb)
+{
+	return (struct nlmsghdr *)skb->data;
+}
 
-क्रमागत netlink_skb_flags अणु
+enum netlink_skb_flags {
 	NETLINK_SKB_DST		= 0x8,	/* Dst set in sendto or sendmsg */
-पूर्ण;
+};
 
-काष्ठा netlink_skb_parms अणु
-	काष्ठा scm_creds	creds;		/* Skb credentials	*/
+struct netlink_skb_parms {
+	struct scm_creds	creds;		/* Skb credentials	*/
 	__u32			portid;
 	__u32			dst_group;
 	__u32			flags;
-	काष्ठा sock		*sk;
+	struct sock		*sk;
 	bool			nsid_is_set;
-	पूर्णांक			nsid;
-पूर्ण;
+	int			nsid;
+};
 
-#घोषणा NETLINK_CB(skb)		(*(काष्ठा netlink_skb_parms*)&((skb)->cb))
-#घोषणा NETLINK_CREDS(skb)	(&NETLINK_CB((skb)).creds)
+#define NETLINK_CB(skb)		(*(struct netlink_skb_parms*)&((skb)->cb))
+#define NETLINK_CREDS(skb)	(&NETLINK_CB((skb)).creds)
 
 
-व्योम netlink_table_grab(व्योम);
-व्योम netlink_table_ungrab(व्योम);
+void netlink_table_grab(void);
+void netlink_table_ungrab(void);
 
-#घोषणा NL_CFG_F_NONROOT_RECV	(1 << 0)
-#घोषणा NL_CFG_F_NONROOT_SEND	(1 << 1)
+#define NL_CFG_F_NONROOT_RECV	(1 << 0)
+#define NL_CFG_F_NONROOT_SEND	(1 << 1)
 
 /* optional Netlink kernel configuration parameters */
-काष्ठा netlink_kernel_cfg अणु
-	अचिन्हित पूर्णांक	groups;
-	अचिन्हित पूर्णांक	flags;
-	व्योम		(*input)(काष्ठा sk_buff *skb);
-	काष्ठा mutex	*cb_mutex;
-	पूर्णांक		(*bind)(काष्ठा net *net, पूर्णांक group);
-	व्योम		(*unbind)(काष्ठा net *net, पूर्णांक group);
-	bool		(*compare)(काष्ठा net *net, काष्ठा sock *sk);
-पूर्ण;
+struct netlink_kernel_cfg {
+	unsigned int	groups;
+	unsigned int	flags;
+	void		(*input)(struct sk_buff *skb);
+	struct mutex	*cb_mutex;
+	int		(*bind)(struct net *net, int group);
+	void		(*unbind)(struct net *net, int group);
+	bool		(*compare)(struct net *net, struct sock *sk);
+};
 
-काष्ठा sock *__netlink_kernel_create(काष्ठा net *net, पूर्णांक unit,
-					    काष्ठा module *module,
-					    काष्ठा netlink_kernel_cfg *cfg);
-अटल अंतरभूत काष्ठा sock *
-netlink_kernel_create(काष्ठा net *net, पूर्णांक unit, काष्ठा netlink_kernel_cfg *cfg)
-अणु
-	वापस __netlink_kernel_create(net, unit, THIS_MODULE, cfg);
-पूर्ण
+struct sock *__netlink_kernel_create(struct net *net, int unit,
+					    struct module *module,
+					    struct netlink_kernel_cfg *cfg);
+static inline struct sock *
+netlink_kernel_create(struct net *net, int unit, struct netlink_kernel_cfg *cfg)
+{
+	return __netlink_kernel_create(net, unit, THIS_MODULE, cfg);
+}
 
-/* this can be increased when necessary - करोn't expose to userland */
-#घोषणा NETLINK_MAX_COOKIE_LEN	20
+/* this can be increased when necessary - don't expose to userland */
+#define NETLINK_MAX_COOKIE_LEN	20
 
 /**
- * काष्ठा netlink_ext_ack - netlink extended ACK report काष्ठा
- * @_msg: message string to report - करोn't access directly, use
+ * struct netlink_ext_ack - netlink extended ACK report struct
+ * @_msg: message string to report - don't access directly, use
  *	%NL_SET_ERR_MSG
  * @bad_attr: attribute with error
- * @policy: policy क्रम a bad attribute
- * @cookie: cookie data to वापस to userspace (क्रम success)
+ * @policy: policy for a bad attribute
+ * @cookie: cookie data to return to userspace (for success)
  * @cookie_len: actual cookie data length
  */
-काष्ठा netlink_ext_ack अणु
-	स्थिर अक्षर *_msg;
-	स्थिर काष्ठा nlattr *bad_attr;
-	स्थिर काष्ठा nla_policy *policy;
+struct netlink_ext_ack {
+	const char *_msg;
+	const struct nlattr *bad_attr;
+	const struct nla_policy *policy;
 	u8 cookie[NETLINK_MAX_COOKIE_LEN];
 	u8 cookie_len;
-पूर्ण;
+};
 
 /* Always use this macro, this allows later putting the
- * message पूर्णांकo a separate section or such क्रम things
+ * message into a separate section or such for things
  * like translation or listing all possible messages.
- * Currently string क्रमmatting is not supported (due
+ * Currently string formatting is not supported (due
  * to the lack of an output buffer.)
  */
-#घोषणा NL_SET_ERR_MSG(extack, msg) करो अणु		\
-	अटल स्थिर अक्षर __msg[] = msg;		\
-	काष्ठा netlink_ext_ack *__extack = (extack);	\
+#define NL_SET_ERR_MSG(extack, msg) do {		\
+	static const char __msg[] = msg;		\
+	struct netlink_ext_ack *__extack = (extack);	\
 							\
-	करो_trace_netlink_extack(__msg);			\
+	do_trace_netlink_extack(__msg);			\
 							\
-	अगर (__extack)					\
+	if (__extack)					\
 		__extack->_msg = __msg;			\
-पूर्ण जबतक (0)
+} while (0)
 
-#घोषणा NL_SET_ERR_MSG_MOD(extack, msg)			\
+#define NL_SET_ERR_MSG_MOD(extack, msg)			\
 	NL_SET_ERR_MSG((extack), KBUILD_MODNAME ": " msg)
 
-#घोषणा NL_SET_BAD_ATTR_POLICY(extack, attr, pol) करो अणु	\
-	अगर ((extack)) अणु					\
+#define NL_SET_BAD_ATTR_POLICY(extack, attr, pol) do {	\
+	if ((extack)) {					\
 		(extack)->bad_attr = (attr);		\
 		(extack)->policy = (pol);		\
-	पूर्ण						\
-पूर्ण जबतक (0)
+	}						\
+} while (0)
 
-#घोषणा NL_SET_BAD_ATTR(extack, attr) NL_SET_BAD_ATTR_POLICY(extack, attr, शून्य)
+#define NL_SET_BAD_ATTR(extack, attr) NL_SET_BAD_ATTR_POLICY(extack, attr, NULL)
 
-#घोषणा NL_SET_ERR_MSG_ATTR_POL(extack, attr, pol, msg) करो अणु	\
-	अटल स्थिर अक्षर __msg[] = msg;			\
-	काष्ठा netlink_ext_ack *__extack = (extack);		\
+#define NL_SET_ERR_MSG_ATTR_POL(extack, attr, pol, msg) do {	\
+	static const char __msg[] = msg;			\
+	struct netlink_ext_ack *__extack = (extack);		\
 								\
-	करो_trace_netlink_extack(__msg);				\
+	do_trace_netlink_extack(__msg);				\
 								\
-	अगर (__extack) अणु						\
+	if (__extack) {						\
 		__extack->_msg = __msg;				\
 		__extack->bad_attr = (attr);			\
 		__extack->policy = (pol);			\
-	पूर्ण							\
-पूर्ण जबतक (0)
+	}							\
+} while (0)
 
-#घोषणा NL_SET_ERR_MSG_ATTR(extack, attr, msg)		\
-	NL_SET_ERR_MSG_ATTR_POL(extack, attr, शून्य, msg)
+#define NL_SET_ERR_MSG_ATTR(extack, attr, msg)		\
+	NL_SET_ERR_MSG_ATTR_POL(extack, attr, NULL, msg)
 
-अटल अंतरभूत व्योम nl_set_extack_cookie_u64(काष्ठा netlink_ext_ack *extack,
+static inline void nl_set_extack_cookie_u64(struct netlink_ext_ack *extack,
 					    u64 cookie)
-अणु
-	अगर (!extack)
-		वापस;
-	स_नकल(extack->cookie, &cookie, माप(cookie));
-	extack->cookie_len = माप(cookie);
-पूर्ण
+{
+	if (!extack)
+		return;
+	memcpy(extack->cookie, &cookie, sizeof(cookie));
+	extack->cookie_len = sizeof(cookie);
+}
 
-अटल अंतरभूत व्योम nl_set_extack_cookie_u32(काष्ठा netlink_ext_ack *extack,
+static inline void nl_set_extack_cookie_u32(struct netlink_ext_ack *extack,
 					    u32 cookie)
-अणु
-	अगर (!extack)
-		वापस;
-	स_नकल(extack->cookie, &cookie, माप(cookie));
-	extack->cookie_len = माप(cookie);
-पूर्ण
+{
+	if (!extack)
+		return;
+	memcpy(extack->cookie, &cookie, sizeof(cookie));
+	extack->cookie_len = sizeof(cookie);
+}
 
-व्योम netlink_kernel_release(काष्ठा sock *sk);
-पूर्णांक __netlink_change_ngroups(काष्ठा sock *sk, अचिन्हित पूर्णांक groups);
-पूर्णांक netlink_change_ngroups(काष्ठा sock *sk, अचिन्हित पूर्णांक groups);
-व्योम __netlink_clear_multicast_users(काष्ठा sock *sk, अचिन्हित पूर्णांक group);
-व्योम netlink_ack(काष्ठा sk_buff *in_skb, काष्ठा nlmsghdr *nlh, पूर्णांक err,
-		 स्थिर काष्ठा netlink_ext_ack *extack);
-पूर्णांक netlink_has_listeners(काष्ठा sock *sk, अचिन्हित पूर्णांक group);
-bool netlink_strict_get_check(काष्ठा sk_buff *skb);
+void netlink_kernel_release(struct sock *sk);
+int __netlink_change_ngroups(struct sock *sk, unsigned int groups);
+int netlink_change_ngroups(struct sock *sk, unsigned int groups);
+void __netlink_clear_multicast_users(struct sock *sk, unsigned int group);
+void netlink_ack(struct sk_buff *in_skb, struct nlmsghdr *nlh, int err,
+		 const struct netlink_ext_ack *extack);
+int netlink_has_listeners(struct sock *sk, unsigned int group);
+bool netlink_strict_get_check(struct sk_buff *skb);
 
-पूर्णांक netlink_unicast(काष्ठा sock *ssk, काष्ठा sk_buff *skb, __u32 portid, पूर्णांक nonblock);
-पूर्णांक netlink_broadcast(काष्ठा sock *ssk, काष्ठा sk_buff *skb, __u32 portid,
+int netlink_unicast(struct sock *ssk, struct sk_buff *skb, __u32 portid, int nonblock);
+int netlink_broadcast(struct sock *ssk, struct sk_buff *skb, __u32 portid,
 		      __u32 group, gfp_t allocation);
-पूर्णांक netlink_broadcast_filtered(काष्ठा sock *ssk, काष्ठा sk_buff *skb,
+int netlink_broadcast_filtered(struct sock *ssk, struct sk_buff *skb,
 			       __u32 portid, __u32 group, gfp_t allocation,
-			       पूर्णांक (*filter)(काष्ठा sock *dsk, काष्ठा sk_buff *skb, व्योम *data),
-			       व्योम *filter_data);
-पूर्णांक netlink_set_err(काष्ठा sock *ssk, __u32 portid, __u32 group, पूर्णांक code);
-पूर्णांक netlink_रेजिस्टर_notअगरier(काष्ठा notअगरier_block *nb);
-पूर्णांक netlink_unरेजिस्टर_notअगरier(काष्ठा notअगरier_block *nb);
+			       int (*filter)(struct sock *dsk, struct sk_buff *skb, void *data),
+			       void *filter_data);
+int netlink_set_err(struct sock *ssk, __u32 portid, __u32 group, int code);
+int netlink_register_notifier(struct notifier_block *nb);
+int netlink_unregister_notifier(struct notifier_block *nb);
 
 /* finegrained unicast helpers: */
-काष्ठा sock *netlink_माला_लोockbyfilp(काष्ठा file *filp);
-पूर्णांक netlink_attachskb(काष्ठा sock *sk, काष्ठा sk_buff *skb,
-		      दीर्घ *समयo, काष्ठा sock *ssk);
-व्योम netlink_detachskb(काष्ठा sock *sk, काष्ठा sk_buff *skb);
-पूर्णांक netlink_sendskb(काष्ठा sock *sk, काष्ठा sk_buff *skb);
+struct sock *netlink_getsockbyfilp(struct file *filp);
+int netlink_attachskb(struct sock *sk, struct sk_buff *skb,
+		      long *timeo, struct sock *ssk);
+void netlink_detachskb(struct sock *sk, struct sk_buff *skb);
+int netlink_sendskb(struct sock *sk, struct sk_buff *skb);
 
-अटल अंतरभूत काष्ठा sk_buff *
-netlink_skb_clone(काष्ठा sk_buff *skb, gfp_t gfp_mask)
-अणु
-	काष्ठा sk_buff *nskb;
+static inline struct sk_buff *
+netlink_skb_clone(struct sk_buff *skb, gfp_t gfp_mask)
+{
+	struct sk_buff *nskb;
 
 	nskb = skb_clone(skb, gfp_mask);
-	अगर (!nskb)
-		वापस शून्य;
+	if (!nskb)
+		return NULL;
 
-	/* This is a large skb, set deकाष्ठाor callback to release head */
-	अगर (is_vदो_स्मृति_addr(skb->head))
-		nskb->deकाष्ठाor = skb->deकाष्ठाor;
+	/* This is a large skb, set destructor callback to release head */
+	if (is_vmalloc_addr(skb->head))
+		nskb->destructor = skb->destructor;
 
-	वापस nskb;
-पूर्ण
+	return nskb;
+}
 
 /*
- *	skb should fit one page. This choice is good क्रम headerless दो_स्मृति.
- *	But we should limit to 8K so that userspace करोes not have to
- *	use enormous buffer sizes on recvmsg() calls just to aव्योम
+ *	skb should fit one page. This choice is good for headerless malloc.
+ *	But we should limit to 8K so that userspace does not have to
+ *	use enormous buffer sizes on recvmsg() calls just to avoid
  *	MSG_TRUNC when PAGE_SIZE is very large.
  */
-#अगर PAGE_SIZE < 8192UL
-#घोषणा NLMSG_GOODSIZE	SKB_WITH_OVERHEAD(PAGE_SIZE)
-#अन्यथा
-#घोषणा NLMSG_GOODSIZE	SKB_WITH_OVERHEAD(8192UL)
-#पूर्ण_अगर
+#if PAGE_SIZE < 8192UL
+#define NLMSG_GOODSIZE	SKB_WITH_OVERHEAD(PAGE_SIZE)
+#else
+#define NLMSG_GOODSIZE	SKB_WITH_OVERHEAD(8192UL)
+#endif
 
-#घोषणा NLMSG_DEFAULT_SIZE (NLMSG_GOODSIZE - NLMSG_HDRLEN)
+#define NLMSG_DEFAULT_SIZE (NLMSG_GOODSIZE - NLMSG_HDRLEN)
 
 
-काष्ठा netlink_callback अणु
-	काष्ठा sk_buff		*skb;
-	स्थिर काष्ठा nlmsghdr	*nlh;
-	पूर्णांक			(*dump)(काष्ठा sk_buff * skb,
-					काष्ठा netlink_callback *cb);
-	पूर्णांक			(*करोne)(काष्ठा netlink_callback *cb);
-	व्योम			*data;
-	/* the module that dump function beदीर्घ to */
-	काष्ठा module		*module;
-	काष्ठा netlink_ext_ack	*extack;
+struct netlink_callback {
+	struct sk_buff		*skb;
+	const struct nlmsghdr	*nlh;
+	int			(*dump)(struct sk_buff * skb,
+					struct netlink_callback *cb);
+	int			(*done)(struct netlink_callback *cb);
+	void			*data;
+	/* the module that dump function belong to */
+	struct module		*module;
+	struct netlink_ext_ack	*extack;
 	u16			family;
 	u16			answer_flags;
 	u32			min_dump_alloc;
-	अचिन्हित पूर्णांक		prev_seq, seq;
+	unsigned int		prev_seq, seq;
 	bool			strict_check;
-	जोड़ अणु
+	union {
 		u8		ctx[48];
 
-		/* args is deprecated. Cast a काष्ठा over ctx instead
-		 * क्रम proper type safety.
+		/* args is deprecated. Cast a struct over ctx instead
+		 * for proper type safety.
 		 */
-		दीर्घ		args[6];
-	पूर्ण;
-पूर्ण;
+		long		args[6];
+	};
+};
 
-काष्ठा netlink_notअगरy अणु
-	काष्ठा net *net;
+struct netlink_notify {
+	struct net *net;
 	u32 portid;
-	पूर्णांक protocol;
-पूर्ण;
+	int protocol;
+};
 
-काष्ठा nlmsghdr *
-__nlmsg_put(काष्ठा sk_buff *skb, u32 portid, u32 seq, पूर्णांक type, पूर्णांक len, पूर्णांक flags);
+struct nlmsghdr *
+__nlmsg_put(struct sk_buff *skb, u32 portid, u32 seq, int type, int len, int flags);
 
-काष्ठा netlink_dump_control अणु
-	पूर्णांक (*start)(काष्ठा netlink_callback *);
-	पूर्णांक (*dump)(काष्ठा sk_buff *skb, काष्ठा netlink_callback *);
-	पूर्णांक (*करोne)(काष्ठा netlink_callback *);
-	व्योम *data;
-	काष्ठा module *module;
+struct netlink_dump_control {
+	int (*start)(struct netlink_callback *);
+	int (*dump)(struct sk_buff *skb, struct netlink_callback *);
+	int (*done)(struct netlink_callback *);
+	void *data;
+	struct module *module;
 	u32 min_dump_alloc;
-पूर्ण;
+};
 
-पूर्णांक __netlink_dump_start(काष्ठा sock *ssk, काष्ठा sk_buff *skb,
-				स्थिर काष्ठा nlmsghdr *nlh,
-				काष्ठा netlink_dump_control *control);
-अटल अंतरभूत पूर्णांक netlink_dump_start(काष्ठा sock *ssk, काष्ठा sk_buff *skb,
-				     स्थिर काष्ठा nlmsghdr *nlh,
-				     काष्ठा netlink_dump_control *control)
-अणु
-	अगर (!control->module)
+int __netlink_dump_start(struct sock *ssk, struct sk_buff *skb,
+				const struct nlmsghdr *nlh,
+				struct netlink_dump_control *control);
+static inline int netlink_dump_start(struct sock *ssk, struct sk_buff *skb,
+				     const struct nlmsghdr *nlh,
+				     struct netlink_dump_control *control)
+{
+	if (!control->module)
 		control->module = THIS_MODULE;
 
-	वापस __netlink_dump_start(ssk, skb, nlh, control);
-पूर्ण
+	return __netlink_dump_start(ssk, skb, nlh, control);
+}
 
-काष्ठा netlink_tap अणु
-	काष्ठा net_device *dev;
-	काष्ठा module *module;
-	काष्ठा list_head list;
-पूर्ण;
+struct netlink_tap {
+	struct net_device *dev;
+	struct module *module;
+	struct list_head list;
+};
 
-पूर्णांक netlink_add_tap(काष्ठा netlink_tap *nt);
-पूर्णांक netlink_हटाओ_tap(काष्ठा netlink_tap *nt);
+int netlink_add_tap(struct netlink_tap *nt);
+int netlink_remove_tap(struct netlink_tap *nt);
 
-bool __netlink_ns_capable(स्थिर काष्ठा netlink_skb_parms *nsp,
-			  काष्ठा user_namespace *ns, पूर्णांक cap);
-bool netlink_ns_capable(स्थिर काष्ठा sk_buff *skb,
-			काष्ठा user_namespace *ns, पूर्णांक cap);
-bool netlink_capable(स्थिर काष्ठा sk_buff *skb, पूर्णांक cap);
-bool netlink_net_capable(स्थिर काष्ठा sk_buff *skb, पूर्णांक cap);
+bool __netlink_ns_capable(const struct netlink_skb_parms *nsp,
+			  struct user_namespace *ns, int cap);
+bool netlink_ns_capable(const struct sk_buff *skb,
+			struct user_namespace *ns, int cap);
+bool netlink_capable(const struct sk_buff *skb, int cap);
+bool netlink_net_capable(const struct sk_buff *skb, int cap);
 
-#पूर्ण_अगर	/* __LINUX_NETLINK_H */
+#endif	/* __LINUX_NETLINK_H */

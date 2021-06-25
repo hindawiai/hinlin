@@ -1,29 +1,28 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _XEN_MMU_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _XEN_MMU_H
 
-#समावेश <linux/linkage.h>
-#समावेश <यंत्र/page.h>
+#include <linux/linkage.h>
+#include <asm/page.h>
 
-क्रमागत pt_level अणु
+enum pt_level {
 	PT_PGD,
 	PT_P4D,
 	PT_PUD,
 	PT_PMD,
 	PT_PTE
-पूर्ण;
+};
 
 
-bool __set_phys_to_machine(अचिन्हित दीर्घ pfn, अचिन्हित दीर्घ mfn);
+bool __set_phys_to_machine(unsigned long pfn, unsigned long mfn);
 
-व्योम set_pte_mfn(अचिन्हित दीर्घ vaddr, अचिन्हित दीर्घ pfn, pgprot_t flags);
+void set_pte_mfn(unsigned long vaddr, unsigned long pfn, pgprot_t flags);
 
-pte_t xen_ptep_modअगरy_prot_start(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr, pte_t *ptep);
-व्योम  xen_ptep_modअगरy_prot_commit(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr,
+pte_t xen_ptep_modify_prot_start(struct vm_area_struct *vma, unsigned long addr, pte_t *ptep);
+void  xen_ptep_modify_prot_commit(struct vm_area_struct *vma, unsigned long addr,
 				  pte_t *ptep, pte_t pte);
 
-अचिन्हित दीर्घ xen_पढ़ो_cr2_direct(व्योम);
+unsigned long xen_read_cr2_direct(void);
 
-बाह्य व्योम xen_init_mmu_ops(व्योम);
-बाह्य व्योम xen_hvm_init_mmu_ops(व्योम);
-#पूर्ण_अगर	/* _XEN_MMU_H */
+extern void xen_init_mmu_ops(void);
+extern void xen_hvm_init_mmu_ops(void);
+#endif	/* _XEN_MMU_H */

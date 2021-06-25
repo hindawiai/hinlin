@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- * Handling of a sram zone क्रम bestcomm
+ * Handling of a sram zone for bestcomm
  *
  *
  * Copyright (C) 2007 Sylvain Munaut <tnt@246tNt.com>
@@ -10,46 +9,46 @@
  * kind, whether express or implied.
  */
 
-#अगर_अघोषित __BESTCOMM_SRAM_H__
-#घोषणा __BESTCOMM_SRAM_H__
+#ifndef __BESTCOMM_SRAM_H__
+#define __BESTCOMM_SRAM_H__
 
-#समावेश <यंत्र/rheap.h>
-#समावेश <यंत्र/mmu.h>
-#समावेश <linux/spinlock.h>
+#include <asm/rheap.h>
+#include <asm/mmu.h>
+#include <linux/spinlock.h>
 
 
-/* Structure used पूर्णांकernally */
-	/* The पूर्णांकernals are here क्रम the अंतरभूत functions
-	 * sake, certainly not क्रम the user to mess with !
+/* Structure used internally */
+	/* The internals are here for the inline functions
+	 * sake, certainly not for the user to mess with !
 	 */
-काष्ठा bcom_sram अणु
+struct bcom_sram {
 	phys_addr_t		 base_phys;
-	व्योम 			*base_virt;
-	अचिन्हित पूर्णांक		 size;
+	void 			*base_virt;
+	unsigned int		 size;
 	rh_info_t		*rh;
 	spinlock_t		 lock;
-पूर्ण;
+};
 
-बाह्य काष्ठा bcom_sram *bcom_sram;
+extern struct bcom_sram *bcom_sram;
 
 
 /* Public API */
-बाह्य पूर्णांक  bcom_sram_init(काष्ठा device_node *sram_node, अक्षर *owner);
-बाह्य व्योम bcom_sram_cleanup(व्योम);
+extern int  bcom_sram_init(struct device_node *sram_node, char *owner);
+extern void bcom_sram_cleanup(void);
 
-बाह्य व्योम* bcom_sram_alloc(पूर्णांक size, पूर्णांक align, phys_addr_t *phys);
-बाह्य व्योम  bcom_sram_मुक्त(व्योम *ptr);
+extern void* bcom_sram_alloc(int size, int align, phys_addr_t *phys);
+extern void  bcom_sram_free(void *ptr);
 
-अटल अंतरभूत phys_addr_t bcom_sram_va2pa(व्योम *va) अणु
-	वापस bcom_sram->base_phys +
-		(अचिन्हित दीर्घ)(va - bcom_sram->base_virt);
-पूर्ण
+static inline phys_addr_t bcom_sram_va2pa(void *va) {
+	return bcom_sram->base_phys +
+		(unsigned long)(va - bcom_sram->base_virt);
+}
 
-अटल अंतरभूत व्योम *bcom_sram_pa2va(phys_addr_t pa) अणु
-	वापस bcom_sram->base_virt +
-		(अचिन्हित दीर्घ)(pa - bcom_sram->base_phys);
-पूर्ण
+static inline void *bcom_sram_pa2va(phys_addr_t pa) {
+	return bcom_sram->base_virt +
+		(unsigned long)(pa - bcom_sram->base_phys);
+}
 
 
-#पूर्ण_अगर  /* __BESTCOMM_SRAM_H__ */
+#endif  /* __BESTCOMM_SRAM_H__ */
 

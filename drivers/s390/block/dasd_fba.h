@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Author(s)......: Holger Smolinski <Holger.Smolinski@de.ibm.com>
  * Bugreports.to..: <Linux390@de.ibm.com>
@@ -7,61 +6,61 @@
  *
  */
 
-#अगर_अघोषित DASD_FBA_H
-#घोषणा DASD_FBA_H
+#ifndef DASD_FBA_H
+#define DASD_FBA_H
 
 /*
  * Maximum number of blocks to be chained
  */
-#घोषणा DASD_FBA_MAX_BLOCKS		96
+#define DASD_FBA_MAX_BLOCKS		96
 
-काष्ठा DE_fba_data अणु
-	काष्ठा अणु
-		अचिन्हित अक्षर perm:2;	/* Permissions on this extent */
-		अचिन्हित अक्षर zero:2;	/* Must be zero */
-		अचिन्हित अक्षर da:1;	/* usually zero */
-		अचिन्हित अक्षर diag:1;	/* allow diagnose */
-		अचिन्हित अक्षर zero2:2;	/* zero */
-	पूर्ण __attribute__ ((packed)) mask;
+struct DE_fba_data {
+	struct {
+		unsigned char perm:2;	/* Permissions on this extent */
+		unsigned char zero:2;	/* Must be zero */
+		unsigned char da:1;	/* usually zero */
+		unsigned char diag:1;	/* allow diagnose */
+		unsigned char zero2:2;	/* zero */
+	} __attribute__ ((packed)) mask;
 	__u8 zero;		/* Must be zero */
 	__u16 blk_size;		/* Blocksize */
 	__u32 ext_loc;		/* Extent locator */
 	__u32 ext_beg;		/* logical number of block 0 in extent */
 	__u32 ext_end;		/* logocal number of last block in extent */
-पूर्ण __attribute__ ((packed));
+} __attribute__ ((packed));
 
-काष्ठा LO_fba_data अणु
-	काष्ठा अणु
-		अचिन्हित अक्षर zero:4;
-		अचिन्हित अक्षर cmd:4;
-	पूर्ण __attribute__ ((packed)) operation;
+struct LO_fba_data {
+	struct {
+		unsigned char zero:4;
+		unsigned char cmd:4;
+	} __attribute__ ((packed)) operation;
 	__u8 auxiliary;
 	__u16 blk_ct;
 	__u32 blk_nr;
-पूर्ण __attribute__ ((packed));
+} __attribute__ ((packed));
 
-काष्ठा dasd_fba_अक्षरacteristics अणु
-	जोड़ अणु
+struct dasd_fba_characteristics {
+	union {
 		__u8 c;
-		काष्ठा अणु
-			अचिन्हित अक्षर reserved:1;
-			अचिन्हित अक्षर overrunnable:1;
-			अचिन्हित अक्षर burst_byte:1;
-			अचिन्हित अक्षर data_chain:1;
-			अचिन्हित अक्षर zeros:4;
-		पूर्ण __attribute__ ((packed)) bits;
-	पूर्ण __attribute__ ((packed)) mode;
-	जोड़ अणु
+		struct {
+			unsigned char reserved:1;
+			unsigned char overrunnable:1;
+			unsigned char burst_byte:1;
+			unsigned char data_chain:1;
+			unsigned char zeros:4;
+		} __attribute__ ((packed)) bits;
+	} __attribute__ ((packed)) mode;
+	union {
 		__u8 c;
-		काष्ठा अणु
-			अचिन्हित अक्षर zero0:1;
-			अचिन्हित अक्षर removable:1;
-			अचिन्हित अक्षर shared:1;
-			अचिन्हित अक्षर zero1:1;
-			अचिन्हित अक्षर mam:1;
-			अचिन्हित अक्षर zeros:3;
-		पूर्ण __attribute__ ((packed)) bits;
-	पूर्ण __attribute__ ((packed)) features;
+		struct {
+			unsigned char zero0:1;
+			unsigned char removable:1;
+			unsigned char shared:1;
+			unsigned char zero1:1;
+			unsigned char mam:1;
+			unsigned char zeros:3;
+		} __attribute__ ((packed)) bits;
+	} __attribute__ ((packed)) features;
 	__u8 dev_class;
 	__u8 unit_type;
 	__u16 blk_size;
@@ -73,6 +72,6 @@
 	__u16 blk_ce;
 	__u32 reserved2;
 	__u16 reserved3;
-पूर्ण __attribute__ ((packed));
+} __attribute__ ((packed));
 
-#पूर्ण_अगर				/* DASD_FBA_H */
+#endif				/* DASD_FBA_H */

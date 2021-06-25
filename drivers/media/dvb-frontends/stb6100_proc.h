@@ -1,116 +1,115 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
 	STB6100 Silicon Tuner wrapper
 	Copyright (C)2009 Igor M. Liplianin (liplianin@me.by)
 
 */
 
-#समावेश <linux/dvb/frontend.h>
-#समावेश <media/dvb_frontend.h>
+#include <linux/dvb/frontend.h>
+#include <media/dvb_frontend.h>
 
-अटल पूर्णांक stb6100_get_freq(काष्ठा dvb_frontend *fe, u32 *frequency)
-अणु
-	काष्ठा dvb_frontend_ops	*frontend_ops = &fe->ops;
-	काष्ठा dvb_tuner_ops	*tuner_ops = &frontend_ops->tuner_ops;
-	पूर्णांक err = 0;
+static int stb6100_get_freq(struct dvb_frontend *fe, u32 *frequency)
+{
+	struct dvb_frontend_ops	*frontend_ops = &fe->ops;
+	struct dvb_tuner_ops	*tuner_ops = &frontend_ops->tuner_ops;
+	int err = 0;
 
-	अगर (tuner_ops->get_frequency) अणु
-		अगर (frontend_ops->i2c_gate_ctrl)
+	if (tuner_ops->get_frequency) {
+		if (frontend_ops->i2c_gate_ctrl)
 			frontend_ops->i2c_gate_ctrl(fe, 1);
 
 		err = tuner_ops->get_frequency(fe, frequency);
-		अगर (err < 0) अणु
-			prपूर्णांकk("%s: Invalid parameter\n", __func__);
-			वापस err;
-		पूर्ण
+		if (err < 0) {
+			printk("%s: Invalid parameter\n", __func__);
+			return err;
+		}
 
-		अगर (frontend_ops->i2c_gate_ctrl)
+		if (frontend_ops->i2c_gate_ctrl)
 			frontend_ops->i2c_gate_ctrl(fe, 0);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक stb6100_set_freq(काष्ठा dvb_frontend *fe, u32 frequency)
-अणु
-	काष्ठा dvb_frontend_ops	*frontend_ops = &fe->ops;
-	काष्ठा dvb_tuner_ops	*tuner_ops = &frontend_ops->tuner_ops;
-	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
+static int stb6100_set_freq(struct dvb_frontend *fe, u32 frequency)
+{
+	struct dvb_frontend_ops	*frontend_ops = &fe->ops;
+	struct dvb_tuner_ops	*tuner_ops = &frontend_ops->tuner_ops;
+	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
 	u32 bw = c->bandwidth_hz;
-	पूर्णांक err = 0;
+	int err = 0;
 
 	c->frequency = frequency;
 	c->bandwidth_hz = 0;		/* Don't adjust the bandwidth */
 
-	अगर (tuner_ops->set_params) अणु
-		अगर (frontend_ops->i2c_gate_ctrl)
+	if (tuner_ops->set_params) {
+		if (frontend_ops->i2c_gate_ctrl)
 			frontend_ops->i2c_gate_ctrl(fe, 1);
 
 		err = tuner_ops->set_params(fe);
 		c->bandwidth_hz = bw;
-		अगर (err < 0) अणु
-			prपूर्णांकk("%s: Invalid parameter\n", __func__);
-			वापस err;
-		पूर्ण
+		if (err < 0) {
+			printk("%s: Invalid parameter\n", __func__);
+			return err;
+		}
 
-		अगर (frontend_ops->i2c_gate_ctrl)
+		if (frontend_ops->i2c_gate_ctrl)
 			frontend_ops->i2c_gate_ctrl(fe, 0);
 
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक stb6100_get_bandw(काष्ठा dvb_frontend *fe, u32 *bandwidth)
-अणु
-	काष्ठा dvb_frontend_ops	*frontend_ops = &fe->ops;
-	काष्ठा dvb_tuner_ops	*tuner_ops = &frontend_ops->tuner_ops;
-	पूर्णांक err = 0;
+static int stb6100_get_bandw(struct dvb_frontend *fe, u32 *bandwidth)
+{
+	struct dvb_frontend_ops	*frontend_ops = &fe->ops;
+	struct dvb_tuner_ops	*tuner_ops = &frontend_ops->tuner_ops;
+	int err = 0;
 
-	अगर (tuner_ops->get_bandwidth) अणु
-		अगर (frontend_ops->i2c_gate_ctrl)
+	if (tuner_ops->get_bandwidth) {
+		if (frontend_ops->i2c_gate_ctrl)
 			frontend_ops->i2c_gate_ctrl(fe, 1);
 
 		err = tuner_ops->get_bandwidth(fe, bandwidth);
-		अगर (err < 0) अणु
-			prपूर्णांकk(KERN_ERR "%s: Invalid parameter\n", __func__);
-			वापस err;
-		पूर्ण
+		if (err < 0) {
+			printk(KERN_ERR "%s: Invalid parameter\n", __func__);
+			return err;
+		}
 
-		अगर (frontend_ops->i2c_gate_ctrl)
+		if (frontend_ops->i2c_gate_ctrl)
 			frontend_ops->i2c_gate_ctrl(fe, 0);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक stb6100_set_bandw(काष्ठा dvb_frontend *fe, u32 bandwidth)
-अणु
-	काष्ठा dvb_frontend_ops	*frontend_ops = &fe->ops;
-	काष्ठा dvb_tuner_ops	*tuner_ops = &frontend_ops->tuner_ops;
-	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
+static int stb6100_set_bandw(struct dvb_frontend *fe, u32 bandwidth)
+{
+	struct dvb_frontend_ops	*frontend_ops = &fe->ops;
+	struct dvb_tuner_ops	*tuner_ops = &frontend_ops->tuner_ops;
+	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
 	u32 freq = c->frequency;
-	पूर्णांक err = 0;
+	int err = 0;
 
 	c->bandwidth_hz = bandwidth;
 	c->frequency = 0;		/* Don't adjust the frequency */
 
-	अगर (tuner_ops->set_params) अणु
-		अगर (frontend_ops->i2c_gate_ctrl)
+	if (tuner_ops->set_params) {
+		if (frontend_ops->i2c_gate_ctrl)
 			frontend_ops->i2c_gate_ctrl(fe, 1);
 
 		err = tuner_ops->set_params(fe);
 		c->frequency = freq;
-		अगर (err < 0) अणु
-			prपूर्णांकk(KERN_ERR "%s: Invalid parameter\n", __func__);
-			वापस err;
-		पूर्ण
+		if (err < 0) {
+			printk(KERN_ERR "%s: Invalid parameter\n", __func__);
+			return err;
+		}
 
-		अगर (frontend_ops->i2c_gate_ctrl)
+		if (frontend_ops->i2c_gate_ctrl)
 			frontend_ops->i2c_gate_ctrl(fe, 0);
 
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

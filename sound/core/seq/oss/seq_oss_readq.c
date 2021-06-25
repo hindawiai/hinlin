@@ -1,25 +1,24 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * OSS compatible sequencer driver
  *
- * seq_oss_पढ़ोq.c - MIDI input queue
+ * seq_oss_readq.c - MIDI input queue
  *
  * Copyright (C) 1998,99 Takashi Iwai <tiwai@suse.de>
  */
 
-#समावेश "seq_oss_readq.h"
-#समावेश "seq_oss_event.h"
-#समावेश <sound/seq_oss_legacy.h>
-#समावेश "../seq_lock.h"
-#समावेश <linux/रुको.h>
-#समावेश <linux/slab.h>
+#include "seq_oss_readq.h"
+#include "seq_oss_event.h"
+#include <sound/seq_oss_legacy.h>
+#include "../seq_lock.h"
+#include <linux/wait.h>
+#include <linux/slab.h>
 
 /*
- * स्थिरants
+ * constants
  */
-//#घोषणा SNDRV_SEQ_OSS_MAX_TIMEOUT	(अचिन्हित दीर्घ)(-1)
-#घोषणा SNDRV_SEQ_OSS_MAX_TIMEOUT	(HZ * 3600)
+//#define SNDRV_SEQ_OSS_MAX_TIMEOUT	(unsigned long)(-1)
+#define SNDRV_SEQ_OSS_MAX_TIMEOUT	(HZ * 3600)
 
 
 /*
@@ -28,128 +27,128 @@
 
 
 /*
- * create a पढ़ो queue
+ * create a read queue
  */
-काष्ठा seq_oss_पढ़ोq *
-snd_seq_oss_पढ़ोq_new(काष्ठा seq_oss_devinfo *dp, पूर्णांक maxlen)
-अणु
-	काष्ठा seq_oss_पढ़ोq *q;
+struct seq_oss_readq *
+snd_seq_oss_readq_new(struct seq_oss_devinfo *dp, int maxlen)
+{
+	struct seq_oss_readq *q;
 
-	q = kzalloc(माप(*q), GFP_KERNEL);
-	अगर (!q)
-		वापस शून्य;
+	q = kzalloc(sizeof(*q), GFP_KERNEL);
+	if (!q)
+		return NULL;
 
-	q->q = kसुस्मृति(maxlen, माप(जोड़ evrec), GFP_KERNEL);
-	अगर (!q->q) अणु
-		kमुक्त(q);
-		वापस शून्य;
-	पूर्ण
+	q->q = kcalloc(maxlen, sizeof(union evrec), GFP_KERNEL);
+	if (!q->q) {
+		kfree(q);
+		return NULL;
+	}
 
 	q->maxlen = maxlen;
 	q->qlen = 0;
 	q->head = q->tail = 0;
-	init_रुकोqueue_head(&q->midi_sleep);
+	init_waitqueue_head(&q->midi_sleep);
 	spin_lock_init(&q->lock);
-	q->pre_event_समयout = SNDRV_SEQ_OSS_MAX_TIMEOUT;
-	q->input_समय = (अचिन्हित दीर्घ)-1;
+	q->pre_event_timeout = SNDRV_SEQ_OSS_MAX_TIMEOUT;
+	q->input_time = (unsigned long)-1;
 
-	वापस q;
-पूर्ण
-
-/*
- * delete the पढ़ो queue
- */
-व्योम
-snd_seq_oss_पढ़ोq_delete(काष्ठा seq_oss_पढ़ोq *q)
-अणु
-	अगर (q) अणु
-		kमुक्त(q->q);
-		kमुक्त(q);
-	पूर्ण
-पूर्ण
+	return q;
+}
 
 /*
- * reset the पढ़ो queue
+ * delete the read queue
  */
-व्योम
-snd_seq_oss_पढ़ोq_clear(काष्ठा seq_oss_पढ़ोq *q)
-अणु
-	अगर (q->qlen) अणु
+void
+snd_seq_oss_readq_delete(struct seq_oss_readq *q)
+{
+	if (q) {
+		kfree(q->q);
+		kfree(q);
+	}
+}
+
+/*
+ * reset the read queue
+ */
+void
+snd_seq_oss_readq_clear(struct seq_oss_readq *q)
+{
+	if (q->qlen) {
 		q->qlen = 0;
 		q->head = q->tail = 0;
-	पूर्ण
-	/* अगर someone sleeping, wake'em up */
+	}
+	/* if someone sleeping, wake'em up */
 	wake_up(&q->midi_sleep);
-	q->input_समय = (अचिन्हित दीर्घ)-1;
-पूर्ण
+	q->input_time = (unsigned long)-1;
+}
 
 /*
  * put a midi byte
  */
-पूर्णांक
-snd_seq_oss_पढ़ोq_माला_दो(काष्ठा seq_oss_पढ़ोq *q, पूर्णांक dev, अचिन्हित अक्षर *data, पूर्णांक len)
-अणु
-	जोड़ evrec rec;
-	पूर्णांक result;
+int
+snd_seq_oss_readq_puts(struct seq_oss_readq *q, int dev, unsigned char *data, int len)
+{
+	union evrec rec;
+	int result;
 
-	स_रखो(&rec, 0, माप(rec));
+	memset(&rec, 0, sizeof(rec));
 	rec.c[0] = SEQ_MIDIPUTC;
 	rec.c[2] = dev;
 
-	जबतक (len-- > 0) अणु
+	while (len-- > 0) {
 		rec.c[1] = *data++;
-		result = snd_seq_oss_पढ़ोq_put_event(q, &rec);
-		अगर (result < 0)
-			वापस result;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		result = snd_seq_oss_readq_put_event(q, &rec);
+		if (result < 0)
+			return result;
+	}
+	return 0;
+}
 
 /*
  * put MIDI sysex bytes; the event buffer may be chained, thus it has
  * to be expanded via snd_seq_dump_var_event().
  */
-काष्ठा पढ़ोq_sysex_ctx अणु
-	काष्ठा seq_oss_पढ़ोq *पढ़ोq;
-	पूर्णांक dev;
-पूर्ण;
+struct readq_sysex_ctx {
+	struct seq_oss_readq *readq;
+	int dev;
+};
 
-अटल पूर्णांक पढ़ोq_dump_sysex(व्योम *ptr, व्योम *buf, पूर्णांक count)
-अणु
-	काष्ठा पढ़ोq_sysex_ctx *ctx = ptr;
+static int readq_dump_sysex(void *ptr, void *buf, int count)
+{
+	struct readq_sysex_ctx *ctx = ptr;
 
-	वापस snd_seq_oss_पढ़ोq_माला_दो(ctx->पढ़ोq, ctx->dev, buf, count);
-पूर्ण
+	return snd_seq_oss_readq_puts(ctx->readq, ctx->dev, buf, count);
+}
 
-पूर्णांक snd_seq_oss_पढ़ोq_sysex(काष्ठा seq_oss_पढ़ोq *q, पूर्णांक dev,
-			    काष्ठा snd_seq_event *ev)
-अणु
-	काष्ठा पढ़ोq_sysex_ctx ctx = अणु
-		.पढ़ोq = q,
+int snd_seq_oss_readq_sysex(struct seq_oss_readq *q, int dev,
+			    struct snd_seq_event *ev)
+{
+	struct readq_sysex_ctx ctx = {
+		.readq = q,
 		.dev = dev
-	पूर्ण;
+	};
 
-	अगर ((ev->flags & SNDRV_SEQ_EVENT_LENGTH_MASK) != SNDRV_SEQ_EVENT_LENGTH_VARIABLE)
-		वापस 0;
-	वापस snd_seq_dump_var_event(ev, पढ़ोq_dump_sysex, &ctx);
-पूर्ण
+	if ((ev->flags & SNDRV_SEQ_EVENT_LENGTH_MASK) != SNDRV_SEQ_EVENT_LENGTH_VARIABLE)
+		return 0;
+	return snd_seq_dump_var_event(ev, readq_dump_sysex, &ctx);
+}
 
 /*
  * copy an event to input queue:
- * वापस zero अगर enqueued
+ * return zero if enqueued
  */
-पूर्णांक
-snd_seq_oss_पढ़ोq_put_event(काष्ठा seq_oss_पढ़ोq *q, जोड़ evrec *ev)
-अणु
-	अचिन्हित दीर्घ flags;
+int
+snd_seq_oss_readq_put_event(struct seq_oss_readq *q, union evrec *ev)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&q->lock, flags);
-	अगर (q->qlen >= q->maxlen - 1) अणु
+	if (q->qlen >= q->maxlen - 1) {
 		spin_unlock_irqrestore(&q->lock, flags);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	स_नकल(&q->q[q->tail], ev, माप(*ev));
+	memcpy(&q->q[q->tail], ev, sizeof(*ev));
 	q->tail = (q->tail + 1) % q->maxlen;
 	q->qlen++;
 
@@ -158,94 +157,94 @@ snd_seq_oss_पढ़ोq_put_event(काष्ठा seq_oss_पढ़ोq *q,
 
 	spin_unlock_irqrestore(&q->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /*
  * pop queue
  * caller must hold lock
  */
-पूर्णांक
-snd_seq_oss_पढ़ोq_pick(काष्ठा seq_oss_पढ़ोq *q, जोड़ evrec *rec)
-अणु
-	अगर (q->qlen == 0)
-		वापस -EAGAIN;
-	स_नकल(rec, &q->q[q->head], माप(*rec));
-	वापस 0;
-पूर्ण
+int
+snd_seq_oss_readq_pick(struct seq_oss_readq *q, union evrec *rec)
+{
+	if (q->qlen == 0)
+		return -EAGAIN;
+	memcpy(rec, &q->q[q->head], sizeof(*rec));
+	return 0;
+}
 
 /*
- * sleep until पढ़ोy
+ * sleep until ready
  */
-व्योम
-snd_seq_oss_पढ़ोq_रुको(काष्ठा seq_oss_पढ़ोq *q)
-अणु
-	रुको_event_पूर्णांकerruptible_समयout(q->midi_sleep,
+void
+snd_seq_oss_readq_wait(struct seq_oss_readq *q)
+{
+	wait_event_interruptible_timeout(q->midi_sleep,
 					 (q->qlen > 0 || q->head == q->tail),
-					 q->pre_event_समयout);
-पूर्ण
+					 q->pre_event_timeout);
+}
 
 /*
  * drain one record
  * caller must hold lock
  */
-व्योम
-snd_seq_oss_पढ़ोq_मुक्त(काष्ठा seq_oss_पढ़ोq *q)
-अणु
-	अगर (q->qlen > 0) अणु
+void
+snd_seq_oss_readq_free(struct seq_oss_readq *q)
+{
+	if (q->qlen > 0) {
 		q->head = (q->head + 1) % q->maxlen;
 		q->qlen--;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * polling/select:
- * वापस non-zero अगर पढ़ोq is not empty.
+ * return non-zero if readq is not empty.
  */
-अचिन्हित पूर्णांक
-snd_seq_oss_पढ़ोq_poll(काष्ठा seq_oss_पढ़ोq *q, काष्ठा file *file, poll_table *रुको)
-अणु
-	poll_रुको(file, &q->midi_sleep, रुको);
-	वापस q->qlen;
-पूर्ण
+unsigned int
+snd_seq_oss_readq_poll(struct seq_oss_readq *q, struct file *file, poll_table *wait)
+{
+	poll_wait(file, &q->midi_sleep, wait);
+	return q->qlen;
+}
 
 /*
- * put a बारtamp
+ * put a timestamp
  */
-पूर्णांक
-snd_seq_oss_पढ़ोq_put_बारtamp(काष्ठा seq_oss_पढ़ोq *q, अचिन्हित दीर्घ curt, पूर्णांक seq_mode)
-अणु
-	अगर (curt != q->input_समय) अणु
-		जोड़ evrec rec;
-		स_रखो(&rec, 0, माप(rec));
-		चयन (seq_mode) अणु
-		हाल SNDRV_SEQ_OSS_MODE_SYNTH:
+int
+snd_seq_oss_readq_put_timestamp(struct seq_oss_readq *q, unsigned long curt, int seq_mode)
+{
+	if (curt != q->input_time) {
+		union evrec rec;
+		memset(&rec, 0, sizeof(rec));
+		switch (seq_mode) {
+		case SNDRV_SEQ_OSS_MODE_SYNTH:
 			rec.echo = (curt << 8) | SEQ_WAIT;
-			snd_seq_oss_पढ़ोq_put_event(q, &rec);
-			अवरोध;
-		हाल SNDRV_SEQ_OSS_MODE_MUSIC:
+			snd_seq_oss_readq_put_event(q, &rec);
+			break;
+		case SNDRV_SEQ_OSS_MODE_MUSIC:
 			rec.t.code = EV_TIMING;
 			rec.t.cmd = TMR_WAIT_ABS;
-			rec.t.समय = curt;
-			snd_seq_oss_पढ़ोq_put_event(q, &rec);
-			अवरोध;
-		पूर्ण
-		q->input_समय = curt;
-	पूर्ण
-	वापस 0;
-पूर्ण
+			rec.t.time = curt;
+			snd_seq_oss_readq_put_event(q, &rec);
+			break;
+		}
+		q->input_time = curt;
+	}
+	return 0;
+}
 
 
-#अगर_घोषित CONFIG_SND_PROC_FS
+#ifdef CONFIG_SND_PROC_FS
 /*
- * proc पूर्णांकerface
+ * proc interface
  */
-व्योम
-snd_seq_oss_पढ़ोq_info_पढ़ो(काष्ठा seq_oss_पढ़ोq *q, काष्ठा snd_info_buffer *buf)
-अणु
-	snd_iम_लिखो(buf, "  read queue [%s] length = %d : tick = %ld\n",
-		    (रुकोqueue_active(&q->midi_sleep) ? "sleeping":"running"),
-		    q->qlen, q->input_समय);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_SND_PROC_FS */
+void
+snd_seq_oss_readq_info_read(struct seq_oss_readq *q, struct snd_info_buffer *buf)
+{
+	snd_iprintf(buf, "  read queue [%s] length = %d : tick = %ld\n",
+		    (waitqueue_active(&q->midi_sleep) ? "sleeping":"running"),
+		    q->qlen, q->input_time);
+}
+#endif /* CONFIG_SND_PROC_FS */

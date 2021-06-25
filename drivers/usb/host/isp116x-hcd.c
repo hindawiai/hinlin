@@ -1,13 +1,12 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * ISP116x HCD (Host Controller Driver) क्रम USB.
+ * ISP116x HCD (Host Controller Driver) for USB.
  *
- * Derived from the SL811 HCD, rewritten क्रम ISP116x.
+ * Derived from the SL811 HCD, rewritten for ISP116x.
  * Copyright (C) 2005 Olav Kongas <ok@artecdesign.ee>
  *
  * Portions:
- * Copyright (C) 2004 Psion Teklogix (क्रम NetBook PRO)
+ * Copyright (C) 2004 Psion Teklogix (for NetBook PRO)
  * Copyright (C) 2004 David Brownell
  *
  * Periodic scheduling is based on Roman's OHCI code
@@ -22,12 +21,12 @@
  * The driver passes all usbtests 1-14.
  *
  * Suspending/resuming of root hub via sysfs works. Remote wakeup works too.
- * And suspending/resuming of platक्रमm device works too. Suspend/resume
+ * And suspending/resuming of platform device works too. Suspend/resume
  * via HCD operations vector is not implemented.
  *
  * Iso transfer support is not implemented. Adding this would include
  * implementing recovery from the failure to service the processed ITL
- * fअगरo ram in समय, which will involve chip reset.
+ * fifo ram in time, which will involve chip reset.
  *
  * TODO:
  + More testing of suspend/resume.
@@ -35,272 +34,272 @@
 
 /*
   ISP116x chips require certain delays between accesses to its
-  रेजिस्टरs. The following timing options exist.
+  registers. The following timing options exist.
 
   1. Configure your memory controller (the best)
-  2. Implement platक्रमm-specअगरic delay function possibly
+  2. Implement platform-specific delay function possibly
   combined with configuring the memory controller; see
-  include/linux/usb-isp116x.h क्रम more info. Some broken
+  include/linux/usb-isp116x.h for more info. Some broken
   memory controllers line LH7A400 SMC need this. Also,
-  uncomment क्रम that to work the following
+  uncomment for that to work the following
   USE_PLATFORM_DELAY macro.
   3. Use ndelay (easiest, poorest). For that, uncomment
   the following USE_NDELAY macro.
 */
-#घोषणा USE_PLATFORM_DELAY
-//#घोषणा USE_NDELAY
+#define USE_PLATFORM_DELAY
+//#define USE_NDELAY
 
-//#घोषणा DEBUG
-//#घोषणा VERBOSE
-/* Transfer descriptors. See dump_ptd() क्रम prपूर्णांकout क्रमmat  */
-//#घोषणा PTD_TRACE
+//#define DEBUG
+//#define VERBOSE
+/* Transfer descriptors. See dump_ptd() for printout format  */
+//#define PTD_TRACE
 /* enqueuing/finishing log of urbs */
-//#घोषणा URB_TRACE
+//#define URB_TRACE
 
-#समावेश <linux/module.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/list.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/usb/isp116x.h>
-#समावेश <linux/usb/hcd.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/module.h>
+#include <linux/delay.h>
+#include <linux/debugfs.h>
+#include <linux/seq_file.h>
+#include <linux/errno.h>
+#include <linux/list.h>
+#include <linux/slab.h>
+#include <linux/usb.h>
+#include <linux/usb/isp116x.h>
+#include <linux/usb/hcd.h>
+#include <linux/platform_device.h>
 
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/byteorder.h>
+#include <asm/io.h>
+#include <asm/irq.h>
+#include <asm/byteorder.h>
 
-#समावेश "isp116x.h"
+#include "isp116x.h"
 
-#घोषणा DRIVER_VERSION	"03 Nov 2005"
-#घोषणा DRIVER_DESC	"ISP116x USB Host Controller Driver"
+#define DRIVER_VERSION	"03 Nov 2005"
+#define DRIVER_DESC	"ISP116x USB Host Controller Driver"
 
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_LICENSE("GPL");
 
-अटल स्थिर अक्षर hcd_name[] = "isp116x-hcd";
+static const char hcd_name[] = "isp116x-hcd";
 
 /*-----------------------------------------------------------------*/
 
 /*
-  Write len bytes to fअगरo, pad till 32-bit boundary
+  Write len bytes to fifo, pad till 32-bit boundary
  */
-अटल व्योम ग_लिखो_ptddata_to_fअगरo(काष्ठा isp116x *isp116x, व्योम *buf, पूर्णांक len)
-अणु
+static void write_ptddata_to_fifo(struct isp116x *isp116x, void *buf, int len)
+{
 	u8 *dp = (u8 *) buf;
 	u16 *dp2 = (u16 *) buf;
 	u16 w;
-	पूर्णांक quot = len % 4;
+	int quot = len % 4;
 
-	/* buffer is alपढ़ोy in 'usb data order', which is LE. */
-	/* When पढ़ोing buffer as u16, we have to take care byte order */
-	/* करोesn't get mixed up */
+	/* buffer is already in 'usb data order', which is LE. */
+	/* When reading buffer as u16, we have to take care byte order */
+	/* doesn't get mixed up */
 
-	अगर ((अचिन्हित दीर्घ)dp2 & 1) अणु
+	if ((unsigned long)dp2 & 1) {
 		/* not aligned */
-		क्रम (; len > 1; len -= 2) अणु
+		for (; len > 1; len -= 2) {
 			w = *dp++;
 			w |= *dp++ << 8;
-			isp116x_raw_ग_लिखो_data16(isp116x, w);
-		पूर्ण
-		अगर (len)
-			isp116x_ग_लिखो_data16(isp116x, (u16) * dp);
-	पूर्ण अन्यथा अणु
+			isp116x_raw_write_data16(isp116x, w);
+		}
+		if (len)
+			isp116x_write_data16(isp116x, (u16) * dp);
+	} else {
 		/* aligned */
-		क्रम (; len > 1; len -= 2) अणु
+		for (; len > 1; len -= 2) {
 			/* Keep byte order ! */
-			isp116x_raw_ग_लिखो_data16(isp116x, cpu_to_le16(*dp2++));
-		पूर्ण
+			isp116x_raw_write_data16(isp116x, cpu_to_le16(*dp2++));
+		}
 
-		अगर (len)
-			isp116x_ग_लिखो_data16(isp116x, 0xff & *((u8 *) dp2));
-	पूर्ण
-	अगर (quot == 1 || quot == 2)
-		isp116x_raw_ग_लिखो_data16(isp116x, 0);
-पूर्ण
+		if (len)
+			isp116x_write_data16(isp116x, 0xff & *((u8 *) dp2));
+	}
+	if (quot == 1 || quot == 2)
+		isp116x_raw_write_data16(isp116x, 0);
+}
 
 /*
-  Read len bytes from fअगरo and then पढ़ो till 32-bit boundary.
+  Read len bytes from fifo and then read till 32-bit boundary.
  */
-अटल व्योम पढ़ो_ptddata_from_fअगरo(काष्ठा isp116x *isp116x, व्योम *buf, पूर्णांक len)
-अणु
+static void read_ptddata_from_fifo(struct isp116x *isp116x, void *buf, int len)
+{
 	u8 *dp = (u8 *) buf;
 	u16 *dp2 = (u16 *) buf;
 	u16 w;
-	पूर्णांक quot = len % 4;
+	int quot = len % 4;
 
-	/* buffer is alपढ़ोy in 'usb data order', which is LE. */
-	/* When पढ़ोing buffer as u16, we have to take care byte order */
-	/* करोesn't get mixed up */
+	/* buffer is already in 'usb data order', which is LE. */
+	/* When reading buffer as u16, we have to take care byte order */
+	/* doesn't get mixed up */
 
-	अगर ((अचिन्हित दीर्घ)dp2 & 1) अणु
+	if ((unsigned long)dp2 & 1) {
 		/* not aligned */
-		क्रम (; len > 1; len -= 2) अणु
-			w = isp116x_raw_पढ़ो_data16(isp116x);
+		for (; len > 1; len -= 2) {
+			w = isp116x_raw_read_data16(isp116x);
 			*dp++ = w & 0xff;
 			*dp++ = (w >> 8) & 0xff;
-		पूर्ण
+		}
 
-		अगर (len)
-			*dp = 0xff & isp116x_पढ़ो_data16(isp116x);
-	पूर्ण अन्यथा अणु
+		if (len)
+			*dp = 0xff & isp116x_read_data16(isp116x);
+	} else {
 		/* aligned */
-		क्रम (; len > 1; len -= 2) अणु
+		for (; len > 1; len -= 2) {
 			/* Keep byte order! */
-			*dp2++ = le16_to_cpu(isp116x_raw_पढ़ो_data16(isp116x));
-		पूर्ण
+			*dp2++ = le16_to_cpu(isp116x_raw_read_data16(isp116x));
+		}
 
-		अगर (len)
-			*(u8 *) dp2 = 0xff & isp116x_पढ़ो_data16(isp116x);
-	पूर्ण
-	अगर (quot == 1 || quot == 2)
-		isp116x_raw_पढ़ो_data16(isp116x);
-पूर्ण
+		if (len)
+			*(u8 *) dp2 = 0xff & isp116x_read_data16(isp116x);
+	}
+	if (quot == 1 || quot == 2)
+		isp116x_raw_read_data16(isp116x);
+}
 
 /*
-  Write ptd's and data क्रम scheduled transfers पूर्णांकo
-  the fअगरo ram. Fअगरo must be empty and पढ़ोy.
+  Write ptd's and data for scheduled transfers into
+  the fifo ram. Fifo must be empty and ready.
 */
-अटल व्योम pack_fअगरo(काष्ठा isp116x *isp116x)
-अणु
-	काष्ठा isp116x_ep *ep;
-	काष्ठा ptd *ptd;
-	पूर्णांक buflen = isp116x->atl_last_dir == PTD_सूची_IN
+static void pack_fifo(struct isp116x *isp116x)
+{
+	struct isp116x_ep *ep;
+	struct ptd *ptd;
+	int buflen = isp116x->atl_last_dir == PTD_DIR_IN
 	    ? isp116x->atl_bufshrt : isp116x->atl_buflen;
 
-	isp116x_ग_लिखो_reg16(isp116x, HCuPINT, HCuPINT_AIIEOT);
-	isp116x_ग_लिखो_reg16(isp116x, HCXFERCTR, buflen);
-	isp116x_ग_लिखो_addr(isp116x, HCATLPORT | ISP116x_WRITE_OFFSET);
-	क्रम (ep = isp116x->atl_active; ep; ep = ep->active) अणु
+	isp116x_write_reg16(isp116x, HCuPINT, HCuPINT_AIIEOT);
+	isp116x_write_reg16(isp116x, HCXFERCTR, buflen);
+	isp116x_write_addr(isp116x, HCATLPORT | ISP116x_WRITE_OFFSET);
+	for (ep = isp116x->atl_active; ep; ep = ep->active) {
 		ptd = &ep->ptd;
 		dump_ptd(ptd);
 		dump_ptd_out_data(ptd, ep->data);
-		isp116x_ग_लिखो_data16(isp116x, ptd->count);
-		isp116x_ग_लिखो_data16(isp116x, ptd->mps);
-		isp116x_ग_लिखो_data16(isp116x, ptd->len);
-		isp116x_ग_लिखो_data16(isp116x, ptd->faddr);
-		buflen -= माप(काष्ठा ptd);
-		/* Skip writing data क्रम last IN PTD */
-		अगर (ep->active || (isp116x->atl_last_dir != PTD_सूची_IN)) अणु
-			ग_लिखो_ptddata_to_fअगरo(isp116x, ep->data, ep->length);
+		isp116x_write_data16(isp116x, ptd->count);
+		isp116x_write_data16(isp116x, ptd->mps);
+		isp116x_write_data16(isp116x, ptd->len);
+		isp116x_write_data16(isp116x, ptd->faddr);
+		buflen -= sizeof(struct ptd);
+		/* Skip writing data for last IN PTD */
+		if (ep->active || (isp116x->atl_last_dir != PTD_DIR_IN)) {
+			write_ptddata_to_fifo(isp116x, ep->data, ep->length);
 			buflen -= ALIGN(ep->length, 4);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	BUG_ON(buflen);
-पूर्ण
+}
 
 /*
-  Read the processed ptd's and data from fअगरo ram back to
-  URBs' buffers. Fअगरo must be full and करोne
+  Read the processed ptd's and data from fifo ram back to
+  URBs' buffers. Fifo must be full and done
 */
-अटल व्योम unpack_fअगरo(काष्ठा isp116x *isp116x)
-अणु
-	काष्ठा isp116x_ep *ep;
-	काष्ठा ptd *ptd;
-	पूर्णांक buflen = isp116x->atl_last_dir == PTD_सूची_IN
+static void unpack_fifo(struct isp116x *isp116x)
+{
+	struct isp116x_ep *ep;
+	struct ptd *ptd;
+	int buflen = isp116x->atl_last_dir == PTD_DIR_IN
 	    ? isp116x->atl_buflen : isp116x->atl_bufshrt;
 
-	isp116x_ग_लिखो_reg16(isp116x, HCuPINT, HCuPINT_AIIEOT);
-	isp116x_ग_लिखो_reg16(isp116x, HCXFERCTR, buflen);
-	isp116x_ग_लिखो_addr(isp116x, HCATLPORT);
-	क्रम (ep = isp116x->atl_active; ep; ep = ep->active) अणु
+	isp116x_write_reg16(isp116x, HCuPINT, HCuPINT_AIIEOT);
+	isp116x_write_reg16(isp116x, HCXFERCTR, buflen);
+	isp116x_write_addr(isp116x, HCATLPORT);
+	for (ep = isp116x->atl_active; ep; ep = ep->active) {
 		ptd = &ep->ptd;
-		ptd->count = isp116x_पढ़ो_data16(isp116x);
-		ptd->mps = isp116x_पढ़ो_data16(isp116x);
-		ptd->len = isp116x_पढ़ो_data16(isp116x);
-		ptd->faddr = isp116x_पढ़ो_data16(isp116x);
-		buflen -= माप(काष्ठा ptd);
-		/* Skip पढ़ोing data क्रम last Setup or Out PTD */
-		अगर (ep->active || (isp116x->atl_last_dir == PTD_सूची_IN)) अणु
-			पढ़ो_ptddata_from_fअगरo(isp116x, ep->data, ep->length);
+		ptd->count = isp116x_read_data16(isp116x);
+		ptd->mps = isp116x_read_data16(isp116x);
+		ptd->len = isp116x_read_data16(isp116x);
+		ptd->faddr = isp116x_read_data16(isp116x);
+		buflen -= sizeof(struct ptd);
+		/* Skip reading data for last Setup or Out PTD */
+		if (ep->active || (isp116x->atl_last_dir == PTD_DIR_IN)) {
+			read_ptddata_from_fifo(isp116x, ep->data, ep->length);
 			buflen -= ALIGN(ep->length, 4);
-		पूर्ण
+		}
 		dump_ptd(ptd);
 		dump_ptd_in_data(ptd, ep->data);
-	पूर्ण
+	}
 	BUG_ON(buflen);
-पूर्ण
+}
 
 /*---------------------------------------------------------------*/
 
 /*
   Set up PTD's.
 */
-अटल व्योम preproc_atl_queue(काष्ठा isp116x *isp116x)
-अणु
-	काष्ठा isp116x_ep *ep;
-	काष्ठा urb *urb;
-	काष्ठा ptd *ptd;
+static void preproc_atl_queue(struct isp116x *isp116x)
+{
+	struct isp116x_ep *ep;
+	struct urb *urb;
+	struct ptd *ptd;
 	u16 len;
 
-	क्रम (ep = isp116x->atl_active; ep; ep = ep->active) अणु
-		u16 toggle = 0, dir = PTD_सूची_SETUP;
+	for (ep = isp116x->atl_active; ep; ep = ep->active) {
+		u16 toggle = 0, dir = PTD_DIR_SETUP;
 
 		BUG_ON(list_empty(&ep->hep->urb_list));
 		urb = container_of(ep->hep->urb_list.next,
-				   काष्ठा urb, urb_list);
+				   struct urb, urb_list);
 		ptd = &ep->ptd;
 		len = ep->length;
-		ep->data = (अचिन्हित अक्षर *)urb->transfer_buffer
+		ep->data = (unsigned char *)urb->transfer_buffer
 		    + urb->actual_length;
 
-		चयन (ep->nextpid) अणु
-		हाल USB_PID_IN:
+		switch (ep->nextpid) {
+		case USB_PID_IN:
 			toggle = usb_gettoggle(urb->dev, ep->epnum, 0);
-			dir = PTD_सूची_IN;
-			अवरोध;
-		हाल USB_PID_OUT:
+			dir = PTD_DIR_IN;
+			break;
+		case USB_PID_OUT:
 			toggle = usb_gettoggle(urb->dev, ep->epnum, 1);
-			dir = PTD_सूची_OUT;
-			अवरोध;
-		हाल USB_PID_SETUP:
-			len = माप(काष्ठा usb_ctrlrequest);
+			dir = PTD_DIR_OUT;
+			break;
+		case USB_PID_SETUP:
+			len = sizeof(struct usb_ctrlrequest);
 			ep->data = urb->setup_packet;
-			अवरोध;
-		हाल USB_PID_ACK:
+			break;
+		case USB_PID_ACK:
 			toggle = 1;
 			len = 0;
 			dir = (urb->transfer_buffer_length
 			       && usb_pipein(urb->pipe))
-			    ? PTD_सूची_OUT : PTD_सूची_IN;
-			अवरोध;
-		शेष:
+			    ? PTD_DIR_OUT : PTD_DIR_IN;
+			break;
+		default:
 			ERR("%s %d: ep->nextpid %d\n", __func__, __LINE__,
 			    ep->nextpid);
 			BUG();
-		पूर्ण
+		}
 
 		ptd->count = PTD_CC_MSK | PTD_ACTIVE_MSK | PTD_TOGGLE(toggle);
 		ptd->mps = PTD_MPS(ep->maxpacket)
 		    | PTD_SPD(urb->dev->speed == USB_SPEED_LOW)
 		    | PTD_EP(ep->epnum);
-		ptd->len = PTD_LEN(len) | PTD_सूची(dir);
+		ptd->len = PTD_LEN(len) | PTD_DIR(dir);
 		ptd->faddr = PTD_FA(usb_pipedevice(urb->pipe));
-		अगर (!ep->active) अणु
+		if (!ep->active) {
 			ptd->mps |= PTD_LAST_MSK;
 			isp116x->atl_last_dir = dir;
-		पूर्ण
-		isp116x->atl_bufshrt = माप(काष्ठा ptd) + isp116x->atl_buflen;
+		}
+		isp116x->atl_bufshrt = sizeof(struct ptd) + isp116x->atl_buflen;
 		isp116x->atl_buflen = isp116x->atl_bufshrt + ALIGN(len, 4);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
-  Take करोne or failed requests out of schedule. Give back
+  Take done or failed requests out of schedule. Give back
   processed urbs.
 */
-अटल व्योम finish_request(काष्ठा isp116x *isp116x, काष्ठा isp116x_ep *ep,
-			   काष्ठा urb *urb, पूर्णांक status)
+static void finish_request(struct isp116x *isp116x, struct isp116x_ep *ep,
+			   struct urb *urb, int status)
 __releases(isp116x->lock) __acquires(isp116x->lock)
-अणु
-	अचिन्हित i;
+{
+	unsigned i;
 
 	ep->error_count = 0;
 
-	अगर (usb_pipecontrol(urb->pipe))
+	if (usb_pipecontrol(urb->pipe))
 		ep->nextpid = USB_PID_SETUP;
 
 	urb_dbg(urb, "Finish");
@@ -310,225 +309,225 @@ __releases(isp116x->lock) __acquires(isp116x->lock)
 	usb_hcd_giveback_urb(isp116x_to_hcd(isp116x), urb, status);
 	spin_lock(&isp116x->lock);
 
-	/* take idle endpoपूर्णांकs out of the schedule */
-	अगर (!list_empty(&ep->hep->urb_list))
-		वापस;
+	/* take idle endpoints out of the schedule */
+	if (!list_empty(&ep->hep->urb_list))
+		return;
 
 	/* async deschedule */
-	अगर (!list_empty(&ep->schedule)) अणु
+	if (!list_empty(&ep->schedule)) {
 		list_del_init(&ep->schedule);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* periodic deschedule */
 	DBG("deschedule qh%d/%p branch %d\n", ep->period, ep, ep->branch);
-	क्रम (i = ep->branch; i < PERIODIC_SIZE; i += ep->period) अणु
-		काष्ठा isp116x_ep *temp;
-		काष्ठा isp116x_ep **prev = &isp116x->periodic[i];
+	for (i = ep->branch; i < PERIODIC_SIZE; i += ep->period) {
+		struct isp116x_ep *temp;
+		struct isp116x_ep **prev = &isp116x->periodic[i];
 
-		जबतक (*prev && ((temp = *prev) != ep))
+		while (*prev && ((temp = *prev) != ep))
 			prev = &temp->next;
-		अगर (*prev)
+		if (*prev)
 			*prev = ep->next;
 		isp116x->load[i] -= ep->load;
-	पूर्ण
+	}
 	ep->branch = PERIODIC_SIZE;
 	isp116x_to_hcd(isp116x)->self.bandwidth_allocated -=
 	    ep->load / ep->period;
 
-	/* चयन irq type? */
-	अगर (!--isp116x->periodic_count) अणु
+	/* switch irq type? */
+	if (!--isp116x->periodic_count) {
 		isp116x->irqenb &= ~HCuPINT_SOF;
 		isp116x->irqenb |= HCuPINT_ATL;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
   Analyze transfer results, handle partial transfers and errors
 */
-अटल व्योम postproc_atl_queue(काष्ठा isp116x *isp116x)
-अणु
-	काष्ठा isp116x_ep *ep;
-	काष्ठा urb *urb;
-	काष्ठा usb_device *udev;
-	काष्ठा ptd *ptd;
-	पूर्णांक लघु_not_ok;
-	पूर्णांक status;
+static void postproc_atl_queue(struct isp116x *isp116x)
+{
+	struct isp116x_ep *ep;
+	struct urb *urb;
+	struct usb_device *udev;
+	struct ptd *ptd;
+	int short_not_ok;
+	int status;
 	u8 cc;
 
-	क्रम (ep = isp116x->atl_active; ep; ep = ep->active) अणु
+	for (ep = isp116x->atl_active; ep; ep = ep->active) {
 		BUG_ON(list_empty(&ep->hep->urb_list));
 		urb =
-		    container_of(ep->hep->urb_list.next, काष्ठा urb, urb_list);
+		    container_of(ep->hep->urb_list.next, struct urb, urb_list);
 		udev = urb->dev;
 		ptd = &ep->ptd;
 		cc = PTD_GET_CC(ptd);
-		लघु_not_ok = 1;
+		short_not_ok = 1;
 		status = -EINPROGRESS;
 
 		/* Data underrun is special. For allowed underrun
-		   we clear the error and जारी as normal. For
-		   क्रमbidden underrun we finish the DATA stage
-		   immediately जबतक क्रम control transfer,
-		   we करो a STATUS stage. */
-		अगर (cc == TD_DATAUNDERRUN) अणु
-			अगर (!(urb->transfer_flags & URB_SHORT_NOT_OK) ||
-					usb_pipecontrol(urb->pipe)) अणु
+		   we clear the error and continue as normal. For
+		   forbidden underrun we finish the DATA stage
+		   immediately while for control transfer,
+		   we do a STATUS stage. */
+		if (cc == TD_DATAUNDERRUN) {
+			if (!(urb->transfer_flags & URB_SHORT_NOT_OK) ||
+					usb_pipecontrol(urb->pipe)) {
 				DBG("Allowed or control data underrun\n");
 				cc = TD_CC_NOERROR;
-				लघु_not_ok = 0;
-			पूर्ण अन्यथा अणु
+				short_not_ok = 0;
+			} else {
 				ep->error_count = 1;
 				usb_settoggle(udev, ep->epnum,
 					      ep->nextpid == USB_PID_OUT,
 					      PTD_GET_TOGGLE(ptd));
 				urb->actual_length += PTD_GET_COUNT(ptd);
 				status = cc_to_error[TD_DATAUNDERRUN];
-				जाओ करोne;
-			पूर्ण
-		पूर्ण
+				goto done;
+			}
+		}
 
-		अगर (cc != TD_CC_NOERROR && cc != TD_NOTACCESSED
+		if (cc != TD_CC_NOERROR && cc != TD_NOTACCESSED
 		    && (++ep->error_count >= 3 || cc == TD_CC_STALL
-			|| cc == TD_DATAOVERRUN)) अणु
+			|| cc == TD_DATAOVERRUN)) {
 			status = cc_to_error[cc];
-			अगर (ep->nextpid == USB_PID_ACK)
+			if (ep->nextpid == USB_PID_ACK)
 				ep->nextpid = 0;
-			जाओ करोne;
-		पूर्ण
-		/* According to usb spec, zero-length Int transfer संकेतs
-		   finishing of the urb. Hey, करोes this apply only
-		   क्रम IN endpoपूर्णांकs? */
-		अगर (usb_pipeपूर्णांक(urb->pipe) && !PTD_GET_LEN(ptd)) अणु
+			goto done;
+		}
+		/* According to usb spec, zero-length Int transfer signals
+		   finishing of the urb. Hey, does this apply only
+		   for IN endpoints? */
+		if (usb_pipeint(urb->pipe) && !PTD_GET_LEN(ptd)) {
 			status = 0;
-			जाओ करोne;
-		पूर्ण
+			goto done;
+		}
 
 		/* Relax after previously failed, but later succeeded
 		   or correctly NAK'ed retransmission attempt */
-		अगर (ep->error_count
+		if (ep->error_count
 		    && (cc == TD_CC_NOERROR || cc == TD_NOTACCESSED))
 			ep->error_count = 0;
 
-		/* Take पूर्णांकo account idiosyncracies of the isp116x chip
-		   regarding toggle bit क्रम failed transfers */
-		अगर (ep->nextpid == USB_PID_OUT)
+		/* Take into account idiosyncracies of the isp116x chip
+		   regarding toggle bit for failed transfers */
+		if (ep->nextpid == USB_PID_OUT)
 			usb_settoggle(udev, ep->epnum, 1, PTD_GET_TOGGLE(ptd)
 				      ^ (ep->error_count > 0));
-		अन्यथा अगर (ep->nextpid == USB_PID_IN)
+		else if (ep->nextpid == USB_PID_IN)
 			usb_settoggle(udev, ep->epnum, 0, PTD_GET_TOGGLE(ptd)
 				      ^ (ep->error_count > 0));
 
-		चयन (ep->nextpid) अणु
-		हाल USB_PID_IN:
-		हाल USB_PID_OUT:
+		switch (ep->nextpid) {
+		case USB_PID_IN:
+		case USB_PID_OUT:
 			urb->actual_length += PTD_GET_COUNT(ptd);
-			अगर (PTD_GET_ACTIVE(ptd)
+			if (PTD_GET_ACTIVE(ptd)
 			    || (cc != TD_CC_NOERROR && cc < 0x0E))
-				अवरोध;
-			अगर (urb->transfer_buffer_length != urb->actual_length) अणु
-				अगर (लघु_not_ok)
-					अवरोध;
-			पूर्ण अन्यथा अणु
-				अगर (urb->transfer_flags & URB_ZERO_PACKET
+				break;
+			if (urb->transfer_buffer_length != urb->actual_length) {
+				if (short_not_ok)
+					break;
+			} else {
+				if (urb->transfer_flags & URB_ZERO_PACKET
 				    && ep->nextpid == USB_PID_OUT
-				    && !(PTD_GET_COUNT(ptd) % ep->maxpacket)) अणु
+				    && !(PTD_GET_COUNT(ptd) % ep->maxpacket)) {
 					DBG("Zero packet requested\n");
-					अवरोध;
-				पूर्ण
-			पूर्ण
-			/* All data क्रम this URB is transferred, let's finish */
-			अगर (usb_pipecontrol(urb->pipe))
+					break;
+				}
+			}
+			/* All data for this URB is transferred, let's finish */
+			if (usb_pipecontrol(urb->pipe))
 				ep->nextpid = USB_PID_ACK;
-			अन्यथा
+			else
 				status = 0;
-			अवरोध;
-		हाल USB_PID_SETUP:
-			अगर (PTD_GET_ACTIVE(ptd)
+			break;
+		case USB_PID_SETUP:
+			if (PTD_GET_ACTIVE(ptd)
 			    || (cc != TD_CC_NOERROR && cc < 0x0E))
-				अवरोध;
-			अगर (urb->transfer_buffer_length == urb->actual_length)
+				break;
+			if (urb->transfer_buffer_length == urb->actual_length)
 				ep->nextpid = USB_PID_ACK;
-			अन्यथा अगर (usb_pipeout(urb->pipe)) अणु
+			else if (usb_pipeout(urb->pipe)) {
 				usb_settoggle(udev, 0, 1, 1);
 				ep->nextpid = USB_PID_OUT;
-			पूर्ण अन्यथा अणु
+			} else {
 				usb_settoggle(udev, 0, 0, 1);
 				ep->nextpid = USB_PID_IN;
-			पूर्ण
-			अवरोध;
-		हाल USB_PID_ACK:
-			अगर (PTD_GET_ACTIVE(ptd)
+			}
+			break;
+		case USB_PID_ACK:
+			if (PTD_GET_ACTIVE(ptd)
 			    || (cc != TD_CC_NOERROR && cc < 0x0E))
-				अवरोध;
+				break;
 			status = 0;
 			ep->nextpid = 0;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			BUG();
-		पूर्ण
+		}
 
- करोne:
-		अगर (status != -EINPROGRESS || urb->unlinked)
+ done:
+		if (status != -EINPROGRESS || urb->unlinked)
 			finish_request(isp116x, ep, urb, status);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
   Scan transfer lists, schedule transfers, send data off
   to chip.
  */
-अटल व्योम start_atl_transfers(काष्ठा isp116x *isp116x)
-अणु
-	काष्ठा isp116x_ep *last_ep = शून्य, *ep;
-	काष्ठा urb *urb;
+static void start_atl_transfers(struct isp116x *isp116x)
+{
+	struct isp116x_ep *last_ep = NULL, *ep;
+	struct urb *urb;
 	u16 load = 0;
-	पूर्णांक len, index, speed, byte_समय;
+	int len, index, speed, byte_time;
 
-	अगर (atomic_पढ़ो(&isp116x->atl_finishing))
-		वापस;
+	if (atomic_read(&isp116x->atl_finishing))
+		return;
 
-	अगर (!HC_IS_RUNNING(isp116x_to_hcd(isp116x)->state))
-		वापस;
+	if (!HC_IS_RUNNING(isp116x_to_hcd(isp116x)->state))
+		return;
 
 	/* FIFO not empty? */
-	अगर (isp116x_पढ़ो_reg16(isp116x, HCBUFSTAT) & HCBUFSTAT_ATL_FULL)
-		वापस;
+	if (isp116x_read_reg16(isp116x, HCBUFSTAT) & HCBUFSTAT_ATL_FULL)
+		return;
 
-	isp116x->atl_active = शून्य;
+	isp116x->atl_active = NULL;
 	isp116x->atl_buflen = isp116x->atl_bufshrt = 0;
 
-	/* Schedule पूर्णांक transfers */
-	अगर (isp116x->periodic_count) अणु
+	/* Schedule int transfers */
+	if (isp116x->periodic_count) {
 		isp116x->fmindex = index =
 		    (isp116x->fmindex + 1) & (PERIODIC_SIZE - 1);
 		load = isp116x->load[index];
-		अगर (load) अणु
-			/* Bring all पूर्णांक transfers क्रम this frame
-			   पूर्णांकo the active queue */
+		if (load) {
+			/* Bring all int transfers for this frame
+			   into the active queue */
 			isp116x->atl_active = last_ep =
 			    isp116x->periodic[index];
-			जबतक (last_ep->next)
+			while (last_ep->next)
 				last_ep = (last_ep->active = last_ep->next);
-			last_ep->active = शून्य;
-		पूर्ण
-	पूर्ण
+			last_ep->active = NULL;
+		}
+	}
 
 	/* Schedule control/bulk transfers */
-	list_क्रम_each_entry(ep, &isp116x->async, schedule) अणु
+	list_for_each_entry(ep, &isp116x->async, schedule) {
 		urb = container_of(ep->hep->urb_list.next,
-				   काष्ठा urb, urb_list);
+				   struct urb, urb_list);
 		speed = urb->dev->speed;
-		byte_समय = speed == USB_SPEED_LOW
+		byte_time = speed == USB_SPEED_LOW
 		    ? BYTE_TIME_LOWSPEED : BYTE_TIME_FULLSPEED;
 
-		अगर (ep->nextpid == USB_PID_SETUP) अणु
-			len = माप(काष्ठा usb_ctrlrequest);
-		पूर्ण अन्यथा अगर (ep->nextpid == USB_PID_ACK) अणु
+		if (ep->nextpid == USB_PID_SETUP) {
+			len = sizeof(struct usb_ctrlrequest);
+		} else if (ep->nextpid == USB_PID_ACK) {
 			len = 0;
-		पूर्ण अन्यथा अणु
-			/* Find current मुक्त length ... */
-			len = (MAX_LOAD_LIMIT - load) / byte_समय;
+		} else {
+			/* Find current free length ... */
+			len = (MAX_LOAD_LIMIT - load) / byte_time;
 
 			/* ... then limit it to configured max size ... */
 			len = min(len, speed == USB_SPEED_LOW ?
@@ -536,421 +535,421 @@ __releases(isp116x->lock) __acquires(isp116x->lock)
 				  MAX_TRANSFER_SIZE_FULLSPEED);
 
 			/* ... and finally cut to the multiple of MaxPacketSize,
-			   or to the real length अगर there's enough room. */
-			अगर (len <
+			   or to the real length if there's enough room. */
+			if (len <
 			    (urb->transfer_buffer_length -
-			     urb->actual_length)) अणु
+			     urb->actual_length)) {
 				len -= len % ep->maxpacket;
-				अगर (!len)
-					जारी;
-			पूर्ण अन्यथा
+				if (!len)
+					continue;
+			} else
 				len = urb->transfer_buffer_length -
 				    urb->actual_length;
 			BUG_ON(len < 0);
-		पूर्ण
+		}
 
-		load += len * byte_समय;
-		अगर (load > MAX_LOAD_LIMIT)
-			अवरोध;
+		load += len * byte_time;
+		if (load > MAX_LOAD_LIMIT)
+			break;
 
-		ep->active = शून्य;
+		ep->active = NULL;
 		ep->length = len;
-		अगर (last_ep)
+		if (last_ep)
 			last_ep->active = ep;
-		अन्यथा
+		else
 			isp116x->atl_active = ep;
 		last_ep = ep;
-	पूर्ण
+	}
 
-	/* Aव्योम starving of endpoपूर्णांकs */
-	अगर ((&isp116x->async)->next != (&isp116x->async)->prev)
+	/* Avoid starving of endpoints */
+	if ((&isp116x->async)->next != (&isp116x->async)->prev)
 		list_move(&isp116x->async, (&isp116x->async)->next);
 
-	अगर (isp116x->atl_active) अणु
+	if (isp116x->atl_active) {
 		preproc_atl_queue(isp116x);
-		pack_fअगरo(isp116x);
-	पूर्ण
-पूर्ण
+		pack_fifo(isp116x);
+	}
+}
 
 /*
   Finish the processed transfers
 */
-अटल व्योम finish_atl_transfers(काष्ठा isp116x *isp116x)
-अणु
-	अगर (!isp116x->atl_active)
-		वापस;
-	/* Fअगरo not पढ़ोy? */
-	अगर (!(isp116x_पढ़ो_reg16(isp116x, HCBUFSTAT) & HCBUFSTAT_ATL_DONE))
-		वापस;
+static void finish_atl_transfers(struct isp116x *isp116x)
+{
+	if (!isp116x->atl_active)
+		return;
+	/* Fifo not ready? */
+	if (!(isp116x_read_reg16(isp116x, HCBUFSTAT) & HCBUFSTAT_ATL_DONE))
+		return;
 
 	atomic_inc(&isp116x->atl_finishing);
-	unpack_fअगरo(isp116x);
+	unpack_fifo(isp116x);
 	postproc_atl_queue(isp116x);
 	atomic_dec(&isp116x->atl_finishing);
-पूर्ण
+}
 
-अटल irqवापस_t isp116x_irq(काष्ठा usb_hcd *hcd)
-अणु
-	काष्ठा isp116x *isp116x = hcd_to_isp116x(hcd);
+static irqreturn_t isp116x_irq(struct usb_hcd *hcd)
+{
+	struct isp116x *isp116x = hcd_to_isp116x(hcd);
 	u16 irqstat;
-	irqवापस_t ret = IRQ_NONE;
+	irqreturn_t ret = IRQ_NONE;
 
 	spin_lock(&isp116x->lock);
-	isp116x_ग_लिखो_reg16(isp116x, HCuPINTENB, 0);
-	irqstat = isp116x_पढ़ो_reg16(isp116x, HCuPINT);
-	isp116x_ग_लिखो_reg16(isp116x, HCuPINT, irqstat);
+	isp116x_write_reg16(isp116x, HCuPINTENB, 0);
+	irqstat = isp116x_read_reg16(isp116x, HCuPINT);
+	isp116x_write_reg16(isp116x, HCuPINT, irqstat);
 
-	अगर (irqstat & (HCuPINT_ATL | HCuPINT_SOF)) अणु
+	if (irqstat & (HCuPINT_ATL | HCuPINT_SOF)) {
 		ret = IRQ_HANDLED;
 		finish_atl_transfers(isp116x);
-	पूर्ण
+	}
 
-	अगर (irqstat & HCuPINT_OPR) अणु
-		u32 पूर्णांकstat = isp116x_पढ़ो_reg32(isp116x, HCINTSTAT);
-		isp116x_ग_लिखो_reg32(isp116x, HCINTSTAT, पूर्णांकstat);
-		अगर (पूर्णांकstat & HCINT_UE) अणु
+	if (irqstat & HCuPINT_OPR) {
+		u32 intstat = isp116x_read_reg32(isp116x, HCINTSTAT);
+		isp116x_write_reg32(isp116x, HCINTSTAT, intstat);
+		if (intstat & HCINT_UE) {
 			ERR("Unrecoverable error, HC is dead!\n");
-			/* IRQ's are off, we करो no DMA,
-			   perfectly पढ़ोy to die ... */
+			/* IRQ's are off, we do no DMA,
+			   perfectly ready to die ... */
 			hcd->state = HC_STATE_HALT;
 			usb_hc_died(hcd);
 			ret = IRQ_HANDLED;
-			जाओ करोne;
-		पूर्ण
-		अगर (पूर्णांकstat & HCINT_RHSC)
+			goto done;
+		}
+		if (intstat & HCINT_RHSC)
 			/* When root hub or any of its ports is going
 			   to come out of suspend, it may take more
-			   than 10ms क्रम status bits to stabilize. */
-			mod_समयr(&hcd->rh_समयr, jअगरfies
-				  + msecs_to_jअगरfies(20) + 1);
-		अगर (पूर्णांकstat & HCINT_RD) अणु
+			   than 10ms for status bits to stabilize. */
+			mod_timer(&hcd->rh_timer, jiffies
+				  + msecs_to_jiffies(20) + 1);
+		if (intstat & HCINT_RD) {
 			DBG("---- remote wakeup\n");
 			usb_hcd_resume_root_hub(hcd);
-		पूर्ण
+		}
 		irqstat &= ~HCuPINT_OPR;
 		ret = IRQ_HANDLED;
-	पूर्ण
+	}
 
-	अगर (irqstat & (HCuPINT_ATL | HCuPINT_SOF)) अणु
+	if (irqstat & (HCuPINT_ATL | HCuPINT_SOF)) {
 		start_atl_transfers(isp116x);
-	पूर्ण
+	}
 
-	isp116x_ग_लिखो_reg16(isp116x, HCuPINTENB, isp116x->irqenb);
-      करोne:
+	isp116x_write_reg16(isp116x, HCuPINTENB, isp116x->irqenb);
+      done:
 	spin_unlock(&isp116x->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*-----------------------------------------------------------------*/
 
-/* usb 1.1 says max 90% of a frame is available क्रम periodic transfers.
- * this driver करोesn't promise that much since it's got to handle an
- * IRQ per packet; irq handling latencies also use up that समय.
+/* usb 1.1 says max 90% of a frame is available for periodic transfers.
+ * this driver doesn't promise that much since it's got to handle an
+ * IRQ per packet; irq handling latencies also use up that time.
  */
 
 /* out of 1000 us */
-#घोषणा	MAX_PERIODIC_LOAD	600
-अटल पूर्णांक balance(काष्ठा isp116x *isp116x, u16 period, u16 load)
-अणु
-	पूर्णांक i, branch = -ENOSPC;
+#define	MAX_PERIODIC_LOAD	600
+static int balance(struct isp116x *isp116x, u16 period, u16 load)
+{
+	int i, branch = -ENOSPC;
 
-	/* search क्रम the least loaded schedule branch of that period
+	/* search for the least loaded schedule branch of that period
 	   which has enough bandwidth left unreserved. */
-	क्रम (i = 0; i < period; i++) अणु
-		अगर (branch < 0 || isp116x->load[branch] > isp116x->load[i]) अणु
-			पूर्णांक j;
+	for (i = 0; i < period; i++) {
+		if (branch < 0 || isp116x->load[branch] > isp116x->load[i]) {
+			int j;
 
-			क्रम (j = i; j < PERIODIC_SIZE; j += period) अणु
-				अगर ((isp116x->load[j] + load)
+			for (j = i; j < PERIODIC_SIZE; j += period) {
+				if ((isp116x->load[j] + load)
 				    > MAX_PERIODIC_LOAD)
-					अवरोध;
-			पूर्ण
-			अगर (j < PERIODIC_SIZE)
-				जारी;
+					break;
+			}
+			if (j < PERIODIC_SIZE)
+				continue;
 			branch = i;
-		पूर्ण
-	पूर्ण
-	वापस branch;
-पूर्ण
+		}
+	}
+	return branch;
+}
 
-/* NB! ALL the code above this poपूर्णांक runs with isp116x->lock
+/* NB! ALL the code above this point runs with isp116x->lock
    held, irqs off
 */
 
 /*-----------------------------------------------------------------*/
 
-अटल पूर्णांक isp116x_urb_enqueue(काष्ठा usb_hcd *hcd,
-			       काष्ठा urb *urb,
+static int isp116x_urb_enqueue(struct usb_hcd *hcd,
+			       struct urb *urb,
 			       gfp_t mem_flags)
-अणु
-	काष्ठा isp116x *isp116x = hcd_to_isp116x(hcd);
-	काष्ठा usb_device *udev = urb->dev;
-	अचिन्हित पूर्णांक pipe = urb->pipe;
-	पूर्णांक is_out = !usb_pipein(pipe);
-	पूर्णांक type = usb_pipetype(pipe);
-	पूर्णांक epnum = usb_pipeendpoपूर्णांक(pipe);
-	काष्ठा usb_host_endpoपूर्णांक *hep = urb->ep;
-	काष्ठा isp116x_ep *ep = शून्य;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक i;
-	पूर्णांक ret = 0;
+{
+	struct isp116x *isp116x = hcd_to_isp116x(hcd);
+	struct usb_device *udev = urb->dev;
+	unsigned int pipe = urb->pipe;
+	int is_out = !usb_pipein(pipe);
+	int type = usb_pipetype(pipe);
+	int epnum = usb_pipeendpoint(pipe);
+	struct usb_host_endpoint *hep = urb->ep;
+	struct isp116x_ep *ep = NULL;
+	unsigned long flags;
+	int i;
+	int ret = 0;
 
 	urb_dbg(urb, "Enqueue");
 
-	अगर (type == PIPE_ISOCHRONOUS) अणु
+	if (type == PIPE_ISOCHRONOUS) {
 		ERR("Isochronous transfers not supported\n");
 		urb_dbg(urb, "Refused to enqueue");
-		वापस -ENXIO;
-	पूर्ण
-	/* aव्योम all allocations within spinlocks: request or endpoपूर्णांक */
-	अगर (!hep->hcpriv) अणु
-		ep = kzalloc(माप *ep, mem_flags);
-		अगर (!ep)
-			वापस -ENOMEM;
-	पूर्ण
+		return -ENXIO;
+	}
+	/* avoid all allocations within spinlocks: request or endpoint */
+	if (!hep->hcpriv) {
+		ep = kzalloc(sizeof *ep, mem_flags);
+		if (!ep)
+			return -ENOMEM;
+	}
 
 	spin_lock_irqsave(&isp116x->lock, flags);
-	अगर (!HC_IS_RUNNING(hcd->state)) अणु
-		kमुक्त(ep);
+	if (!HC_IS_RUNNING(hcd->state)) {
+		kfree(ep);
 		ret = -ENODEV;
-		जाओ fail_not_linked;
-	पूर्ण
+		goto fail_not_linked;
+	}
 	ret = usb_hcd_link_urb_to_ep(hcd, urb);
-	अगर (ret) अणु
-		kमुक्त(ep);
-		जाओ fail_not_linked;
-	पूर्ण
+	if (ret) {
+		kfree(ep);
+		goto fail_not_linked;
+	}
 
-	अगर (hep->hcpriv)
+	if (hep->hcpriv)
 		ep = hep->hcpriv;
-	अन्यथा अणु
+	else {
 		INIT_LIST_HEAD(&ep->schedule);
 		ep->udev = udev;
 		ep->epnum = epnum;
 		ep->maxpacket = usb_maxpacket(udev, urb->pipe, is_out);
 		usb_settoggle(udev, epnum, is_out, 0);
 
-		अगर (type == PIPE_CONTROL) अणु
+		if (type == PIPE_CONTROL) {
 			ep->nextpid = USB_PID_SETUP;
-		पूर्ण अन्यथा अगर (is_out) अणु
+		} else if (is_out) {
 			ep->nextpid = USB_PID_OUT;
-		पूर्ण अन्यथा अणु
+		} else {
 			ep->nextpid = USB_PID_IN;
-		पूर्ण
+		}
 
-		अगर (urb->पूर्णांकerval) अणु
+		if (urb->interval) {
 			/*
 			   With INT URBs submitted, the driver works with SOF
-			   पूर्णांकerrupt enabled and ATL पूर्णांकerrupt disabled. After
-			   the PTDs are written to fअगरo ram, the chip starts
-			   fअगरo processing and usb transfers after the next
-			   SOF and जारीs until the transfers are finished
-			   (succeeded or failed) or the frame ends. Thereक्रमe,
+			   interrupt enabled and ATL interrupt disabled. After
+			   the PTDs are written to fifo ram, the chip starts
+			   fifo processing and usb transfers after the next
+			   SOF and continues until the transfers are finished
+			   (succeeded or failed) or the frame ends. Therefore,
 			   the transfers occur only in every second frame,
-			   जबतक fअगरo पढ़ोing/writing and data processing
+			   while fifo reading/writing and data processing
 			   occur in every other second frame. */
-			अगर (urb->पूर्णांकerval < 2)
-				urb->पूर्णांकerval = 2;
-			अगर (urb->पूर्णांकerval > 2 * PERIODIC_SIZE)
-				urb->पूर्णांकerval = 2 * PERIODIC_SIZE;
-			ep->period = urb->पूर्णांकerval >> 1;
+			if (urb->interval < 2)
+				urb->interval = 2;
+			if (urb->interval > 2 * PERIODIC_SIZE)
+				urb->interval = 2 * PERIODIC_SIZE;
+			ep->period = urb->interval >> 1;
 			ep->branch = PERIODIC_SIZE;
-			ep->load = usb_calc_bus_समय(udev->speed,
+			ep->load = usb_calc_bus_time(udev->speed,
 						     !is_out,
 						     (type == PIPE_ISOCHRONOUS),
 						     usb_maxpacket(udev, pipe,
 								   is_out)) /
 			    1000;
-		पूर्ण
+		}
 		hep->hcpriv = ep;
 		ep->hep = hep;
-	पूर्ण
+	}
 
-	/* maybe put endpoपूर्णांक पूर्णांकo schedule */
-	चयन (type) अणु
-	हाल PIPE_CONTROL:
-	हाल PIPE_BULK:
-		अगर (list_empty(&ep->schedule))
+	/* maybe put endpoint into schedule */
+	switch (type) {
+	case PIPE_CONTROL:
+	case PIPE_BULK:
+		if (list_empty(&ep->schedule))
 			list_add_tail(&ep->schedule, &isp116x->async);
-		अवरोध;
-	हाल PIPE_INTERRUPT:
-		urb->पूर्णांकerval = ep->period;
+		break;
+	case PIPE_INTERRUPT:
+		urb->interval = ep->period;
 		ep->length = min_t(u32, ep->maxpacket,
 				 urb->transfer_buffer_length);
 
-		/* urb submitted क्रम alपढ़ोy existing endpoपूर्णांक */
-		अगर (ep->branch < PERIODIC_SIZE)
-			अवरोध;
+		/* urb submitted for already existing endpoint */
+		if (ep->branch < PERIODIC_SIZE)
+			break;
 
 		ep->branch = ret = balance(isp116x, ep->period, ep->load);
-		अगर (ret < 0)
-			जाओ fail;
+		if (ret < 0)
+			goto fail;
 		ret = 0;
 
 		urb->start_frame = (isp116x->fmindex & (PERIODIC_SIZE - 1))
 		    + ep->branch;
 
-		/* sort each schedule branch by period (slow beक्रमe fast)
+		/* sort each schedule branch by period (slow before fast)
 		   to share the faster parts of the tree without needing
 		   dummy/placeholder nodes */
 		DBG("schedule qh%d/%p branch %d\n", ep->period, ep, ep->branch);
-		क्रम (i = ep->branch; i < PERIODIC_SIZE; i += ep->period) अणु
-			काष्ठा isp116x_ep **prev = &isp116x->periodic[i];
-			काष्ठा isp116x_ep *here = *prev;
+		for (i = ep->branch; i < PERIODIC_SIZE; i += ep->period) {
+			struct isp116x_ep **prev = &isp116x->periodic[i];
+			struct isp116x_ep *here = *prev;
 
-			जबतक (here && ep != here) अणु
-				अगर (ep->period > here->period)
-					अवरोध;
+			while (here && ep != here) {
+				if (ep->period > here->period)
+					break;
 				prev = &here->next;
 				here = *prev;
-			पूर्ण
-			अगर (ep != here) अणु
+			}
+			if (ep != here) {
 				ep->next = here;
 				*prev = ep;
-			पूर्ण
+			}
 			isp116x->load[i] += ep->load;
-		पूर्ण
+		}
 		hcd->self.bandwidth_allocated += ep->load / ep->period;
 
-		/* चयन over to SOFपूर्णांक */
-		अगर (!isp116x->periodic_count++) अणु
+		/* switch over to SOFint */
+		if (!isp116x->periodic_count++) {
 			isp116x->irqenb &= ~HCuPINT_ATL;
 			isp116x->irqenb |= HCuPINT_SOF;
-			isp116x_ग_लिखो_reg16(isp116x, HCuPINTENB,
+			isp116x_write_reg16(isp116x, HCuPINTENB,
 					    isp116x->irqenb);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	urb->hcpriv = hep;
 	start_atl_transfers(isp116x);
 
       fail:
-	अगर (ret)
+	if (ret)
 		usb_hcd_unlink_urb_from_ep(hcd, urb);
       fail_not_linked:
 	spin_unlock_irqrestore(&isp116x->lock, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
    Dequeue URBs.
 */
-अटल पूर्णांक isp116x_urb_dequeue(काष्ठा usb_hcd *hcd, काष्ठा urb *urb,
-		पूर्णांक status)
-अणु
-	काष्ठा isp116x *isp116x = hcd_to_isp116x(hcd);
-	काष्ठा usb_host_endpoपूर्णांक *hep;
-	काष्ठा isp116x_ep *ep, *ep_act;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक rc;
+static int isp116x_urb_dequeue(struct usb_hcd *hcd, struct urb *urb,
+		int status)
+{
+	struct isp116x *isp116x = hcd_to_isp116x(hcd);
+	struct usb_host_endpoint *hep;
+	struct isp116x_ep *ep, *ep_act;
+	unsigned long flags;
+	int rc;
 
 	spin_lock_irqsave(&isp116x->lock, flags);
 	rc = usb_hcd_check_unlink_urb(hcd, urb, status);
-	अगर (rc)
-		जाओ करोne;
+	if (rc)
+		goto done;
 
 	hep = urb->hcpriv;
 	ep = hep->hcpriv;
 	WARN_ON(hep != ep->hep);
 
 	/* In front of queue? */
-	अगर (ep->hep->urb_list.next == &urb->urb_list)
+	if (ep->hep->urb_list.next == &urb->urb_list)
 		/* active? */
-		क्रम (ep_act = isp116x->atl_active; ep_act;
+		for (ep_act = isp116x->atl_active; ep_act;
 		     ep_act = ep_act->active)
-			अगर (ep_act == ep) अणु
+			if (ep_act == ep) {
 				VDBG("dequeue, urb %p active; wait for irq\n",
 				     urb);
-				urb = शून्य;
-				अवरोध;
-			पूर्ण
+				urb = NULL;
+				break;
+			}
 
-	अगर (urb)
+	if (urb)
 		finish_request(isp116x, ep, urb, status);
- करोne:
+ done:
 	spin_unlock_irqrestore(&isp116x->lock, flags);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम isp116x_endpoपूर्णांक_disable(काष्ठा usb_hcd *hcd,
-				     काष्ठा usb_host_endpoपूर्णांक *hep)
-अणु
-	पूर्णांक i;
-	काष्ठा isp116x_ep *ep = hep->hcpriv;
+static void isp116x_endpoint_disable(struct usb_hcd *hcd,
+				     struct usb_host_endpoint *hep)
+{
+	int i;
+	struct isp116x_ep *ep = hep->hcpriv;
 
-	अगर (!ep)
-		वापस;
+	if (!ep)
+		return;
 
-	/* assume we'd just रुको क्रम the irq */
-	क्रम (i = 0; i < 100 && !list_empty(&hep->urb_list); i++)
+	/* assume we'd just wait for the irq */
+	for (i = 0; i < 100 && !list_empty(&hep->urb_list); i++)
 		msleep(3);
-	अगर (!list_empty(&hep->urb_list))
+	if (!list_empty(&hep->urb_list))
 		WARNING("ep %p not empty?\n", ep);
 
-	kमुक्त(ep);
-	hep->hcpriv = शून्य;
-पूर्ण
+	kfree(ep);
+	hep->hcpriv = NULL;
+}
 
-अटल पूर्णांक isp116x_get_frame(काष्ठा usb_hcd *hcd)
-अणु
-	काष्ठा isp116x *isp116x = hcd_to_isp116x(hcd);
+static int isp116x_get_frame(struct usb_hcd *hcd)
+{
+	struct isp116x *isp116x = hcd_to_isp116x(hcd);
 	u32 fmnum;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	spin_lock_irqsave(&isp116x->lock, flags);
-	fmnum = isp116x_पढ़ो_reg32(isp116x, HCFMNUM);
+	fmnum = isp116x_read_reg32(isp116x, HCFMNUM);
 	spin_unlock_irqrestore(&isp116x->lock, flags);
-	वापस (पूर्णांक)fmnum;
-पूर्ण
+	return (int)fmnum;
+}
 
 /*
-  Adapted from ohci-hub.c. Currently we करोn't support स्वतःsuspend.
+  Adapted from ohci-hub.c. Currently we don't support autosuspend.
 */
-अटल पूर्णांक isp116x_hub_status_data(काष्ठा usb_hcd *hcd, अक्षर *buf)
-अणु
-	काष्ठा isp116x *isp116x = hcd_to_isp116x(hcd);
-	पूर्णांक ports, i, changed = 0;
-	अचिन्हित दीर्घ flags;
+static int isp116x_hub_status_data(struct usb_hcd *hcd, char *buf)
+{
+	struct isp116x *isp116x = hcd_to_isp116x(hcd);
+	int ports, i, changed = 0;
+	unsigned long flags;
 
-	अगर (!HC_IS_RUNNING(hcd->state))
-		वापस -ESHUTDOWN;
+	if (!HC_IS_RUNNING(hcd->state))
+		return -ESHUTDOWN;
 
-	/* Report no status change now, अगर we are scheduled to be
+	/* Report no status change now, if we are scheduled to be
 	   called later */
-	अगर (समयr_pending(&hcd->rh_समयr))
-		वापस 0;
+	if (timer_pending(&hcd->rh_timer))
+		return 0;
 
 	ports = isp116x->rhdesca & RH_A_NDP;
 	spin_lock_irqsave(&isp116x->lock, flags);
-	isp116x->rhstatus = isp116x_पढ़ो_reg32(isp116x, HCRHSTATUS);
-	अगर (isp116x->rhstatus & (RH_HS_LPSC | RH_HS_OCIC))
+	isp116x->rhstatus = isp116x_read_reg32(isp116x, HCRHSTATUS);
+	if (isp116x->rhstatus & (RH_HS_LPSC | RH_HS_OCIC))
 		buf[0] = changed = 1;
-	अन्यथा
+	else
 		buf[0] = 0;
 
-	क्रम (i = 0; i < ports; i++) अणु
-		u32 status = isp116x_पढ़ो_reg32(isp116x, i ? HCRHPORT2 : HCRHPORT1);
+	for (i = 0; i < ports; i++) {
+		u32 status = isp116x_read_reg32(isp116x, i ? HCRHPORT2 : HCRHPORT1);
 
-		अगर (status & (RH_PS_CSC | RH_PS_PESC | RH_PS_PSSC
-			      | RH_PS_OCIC | RH_PS_PRSC)) अणु
+		if (status & (RH_PS_CSC | RH_PS_PESC | RH_PS_PSSC
+			      | RH_PS_OCIC | RH_PS_PRSC)) {
 			changed = 1;
 			buf[0] |= 1 << (i + 1);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock_irqrestore(&isp116x->lock, flags);
-	वापस changed;
-पूर्ण
+	return changed;
+}
 
-अटल व्योम isp116x_hub_descriptor(काष्ठा isp116x *isp116x,
-				   काष्ठा usb_hub_descriptor *desc)
-अणु
+static void isp116x_hub_descriptor(struct isp116x *isp116x,
+				   struct usb_hub_descriptor *desc)
+{
 	u32 reg = isp116x->rhdesca;
 
 	desc->bDescriptorType = USB_DT_HUB;
 	desc->bDescLength = 9;
 	desc->bHubContrCurrent = 0;
 	desc->bNbrPorts = (u8) (reg & 0x3);
-	/* Power चयनing, device type, overcurrent. */
+	/* Power switching, device type, overcurrent. */
 	desc->wHubCharacteristics = cpu_to_le16((u16) ((reg >> 8) &
 						       (HUB_CHAR_LPSM |
 							HUB_CHAR_COMPOUND |
@@ -959,526 +958,526 @@ __releases(isp116x->lock) __acquires(isp116x->lock)
 	/* ports removable, and legacy PortPwrCtrlMask */
 	desc->u.hs.DeviceRemovable[0] = 0;
 	desc->u.hs.DeviceRemovable[1] = ~0;
-पूर्ण
+}
 
-/* Perक्रमm reset of a given port.
+/* Perform reset of a given port.
    It would be great to just start the reset and let the
-   USB core to clear the reset in due समय. However,
-   root hub ports should be reset क्रम at least 50 ms, जबतक
-   our chip stays in reset क्रम about 10 ms. I.e., we must
+   USB core to clear the reset in due time. However,
+   root hub ports should be reset for at least 50 ms, while
+   our chip stays in reset for about 10 ms. I.e., we must
    repeatedly reset it ourself here.
 */
-अटल अंतरभूत व्योम root_port_reset(काष्ठा isp116x *isp116x, अचिन्हित port)
-अणु
-	u32 पंचांगp;
-	अचिन्हित दीर्घ flags, t;
+static inline void root_port_reset(struct isp116x *isp116x, unsigned port)
+{
+	u32 tmp;
+	unsigned long flags, t;
 
 	/* Root hub reset should be 50 ms, but some devices
-	   want it even दीर्घer. */
-	t = jअगरfies + msecs_to_jअगरfies(100);
+	   want it even longer. */
+	t = jiffies + msecs_to_jiffies(100);
 
-	जबतक (समय_beक्रमe(jअगरfies, t)) अणु
+	while (time_before(jiffies, t)) {
 		spin_lock_irqsave(&isp116x->lock, flags);
 		/* spin until any current reset finishes */
-		क्रम (;;) अणु
-			पंचांगp = isp116x_पढ़ो_reg32(isp116x, port ?
+		for (;;) {
+			tmp = isp116x_read_reg32(isp116x, port ?
 						 HCRHPORT2 : HCRHPORT1);
-			अगर (!(पंचांगp & RH_PS_PRS))
-				अवरोध;
+			if (!(tmp & RH_PS_PRS))
+				break;
 			udelay(500);
-		पूर्ण
+		}
 		/* Don't reset a disconnected port */
-		अगर (!(पंचांगp & RH_PS_CCS)) अणु
+		if (!(tmp & RH_PS_CCS)) {
 			spin_unlock_irqrestore(&isp116x->lock, flags);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		/* Reset lasts 10ms (claims datasheet) */
-		isp116x_ग_लिखो_reg32(isp116x, port ? HCRHPORT2 :
+		isp116x_write_reg32(isp116x, port ? HCRHPORT2 :
 				    HCRHPORT1, (RH_PS_PRS));
 		spin_unlock_irqrestore(&isp116x->lock, flags);
 		msleep(10);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* Adapted from ohci-hub.c */
-अटल पूर्णांक isp116x_hub_control(काष्ठा usb_hcd *hcd,
+static int isp116x_hub_control(struct usb_hcd *hcd,
 			       u16 typeReq,
-			       u16 wValue, u16 wIndex, अक्षर *buf, u16 wLength)
-अणु
-	काष्ठा isp116x *isp116x = hcd_to_isp116x(hcd);
-	पूर्णांक ret = 0;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ports = isp116x->rhdesca & RH_A_NDP;
-	u32 पंचांगp = 0;
+			       u16 wValue, u16 wIndex, char *buf, u16 wLength)
+{
+	struct isp116x *isp116x = hcd_to_isp116x(hcd);
+	int ret = 0;
+	unsigned long flags;
+	int ports = isp116x->rhdesca & RH_A_NDP;
+	u32 tmp = 0;
 
-	चयन (typeReq) अणु
-	हाल ClearHubFeature:
+	switch (typeReq) {
+	case ClearHubFeature:
 		DBG("ClearHubFeature: ");
-		चयन (wValue) अणु
-		हाल C_HUB_OVER_CURRENT:
+		switch (wValue) {
+		case C_HUB_OVER_CURRENT:
 			DBG("C_HUB_OVER_CURRENT\n");
 			spin_lock_irqsave(&isp116x->lock, flags);
-			isp116x_ग_लिखो_reg32(isp116x, HCRHSTATUS, RH_HS_OCIC);
+			isp116x_write_reg32(isp116x, HCRHSTATUS, RH_HS_OCIC);
 			spin_unlock_irqrestore(&isp116x->lock, flags);
 			fallthrough;
-		हाल C_HUB_LOCAL_POWER:
+		case C_HUB_LOCAL_POWER:
 			DBG("C_HUB_LOCAL_POWER\n");
-			अवरोध;
-		शेष:
-			जाओ error;
-		पूर्ण
-		अवरोध;
-	हाल SetHubFeature:
+			break;
+		default:
+			goto error;
+		}
+		break;
+	case SetHubFeature:
 		DBG("SetHubFeature: ");
-		चयन (wValue) अणु
-		हाल C_HUB_OVER_CURRENT:
-		हाल C_HUB_LOCAL_POWER:
+		switch (wValue) {
+		case C_HUB_OVER_CURRENT:
+		case C_HUB_LOCAL_POWER:
 			DBG("C_HUB_OVER_CURRENT or C_HUB_LOCAL_POWER\n");
-			अवरोध;
-		शेष:
-			जाओ error;
-		पूर्ण
-		अवरोध;
-	हाल GetHubDescriptor:
+			break;
+		default:
+			goto error;
+		}
+		break;
+	case GetHubDescriptor:
 		DBG("GetHubDescriptor\n");
 		isp116x_hub_descriptor(isp116x,
-				       (काष्ठा usb_hub_descriptor *)buf);
-		अवरोध;
-	हाल GetHubStatus:
+				       (struct usb_hub_descriptor *)buf);
+		break;
+	case GetHubStatus:
 		DBG("GetHubStatus\n");
 		*(__le32 *) buf = 0;
-		अवरोध;
-	हाल GetPortStatus:
+		break;
+	case GetPortStatus:
 		DBG("GetPortStatus\n");
-		अगर (!wIndex || wIndex > ports)
-			जाओ error;
+		if (!wIndex || wIndex > ports)
+			goto error;
 		spin_lock_irqsave(&isp116x->lock, flags);
-		पंचांगp = isp116x_पढ़ो_reg32(isp116x, (--wIndex) ? HCRHPORT2 : HCRHPORT1);
+		tmp = isp116x_read_reg32(isp116x, (--wIndex) ? HCRHPORT2 : HCRHPORT1);
 		spin_unlock_irqrestore(&isp116x->lock, flags);
-		*(__le32 *) buf = cpu_to_le32(पंचांगp);
-		DBG("GetPortStatus: port[%d]  %08x\n", wIndex + 1, पंचांगp);
-		अवरोध;
-	हाल ClearPortFeature:
+		*(__le32 *) buf = cpu_to_le32(tmp);
+		DBG("GetPortStatus: port[%d]  %08x\n", wIndex + 1, tmp);
+		break;
+	case ClearPortFeature:
 		DBG("ClearPortFeature: ");
-		अगर (!wIndex || wIndex > ports)
-			जाओ error;
+		if (!wIndex || wIndex > ports)
+			goto error;
 		wIndex--;
 
-		चयन (wValue) अणु
-		हाल USB_PORT_FEAT_ENABLE:
+		switch (wValue) {
+		case USB_PORT_FEAT_ENABLE:
 			DBG("USB_PORT_FEAT_ENABLE\n");
-			पंचांगp = RH_PS_CCS;
-			अवरोध;
-		हाल USB_PORT_FEAT_C_ENABLE:
+			tmp = RH_PS_CCS;
+			break;
+		case USB_PORT_FEAT_C_ENABLE:
 			DBG("USB_PORT_FEAT_C_ENABLE\n");
-			पंचांगp = RH_PS_PESC;
-			अवरोध;
-		हाल USB_PORT_FEAT_SUSPEND:
+			tmp = RH_PS_PESC;
+			break;
+		case USB_PORT_FEAT_SUSPEND:
 			DBG("USB_PORT_FEAT_SUSPEND\n");
-			पंचांगp = RH_PS_POCI;
-			अवरोध;
-		हाल USB_PORT_FEAT_C_SUSPEND:
+			tmp = RH_PS_POCI;
+			break;
+		case USB_PORT_FEAT_C_SUSPEND:
 			DBG("USB_PORT_FEAT_C_SUSPEND\n");
-			पंचांगp = RH_PS_PSSC;
-			अवरोध;
-		हाल USB_PORT_FEAT_POWER:
+			tmp = RH_PS_PSSC;
+			break;
+		case USB_PORT_FEAT_POWER:
 			DBG("USB_PORT_FEAT_POWER\n");
-			पंचांगp = RH_PS_LSDA;
-			अवरोध;
-		हाल USB_PORT_FEAT_C_CONNECTION:
+			tmp = RH_PS_LSDA;
+			break;
+		case USB_PORT_FEAT_C_CONNECTION:
 			DBG("USB_PORT_FEAT_C_CONNECTION\n");
-			पंचांगp = RH_PS_CSC;
-			अवरोध;
-		हाल USB_PORT_FEAT_C_OVER_CURRENT:
+			tmp = RH_PS_CSC;
+			break;
+		case USB_PORT_FEAT_C_OVER_CURRENT:
 			DBG("USB_PORT_FEAT_C_OVER_CURRENT\n");
-			पंचांगp = RH_PS_OCIC;
-			अवरोध;
-		हाल USB_PORT_FEAT_C_RESET:
+			tmp = RH_PS_OCIC;
+			break;
+		case USB_PORT_FEAT_C_RESET:
 			DBG("USB_PORT_FEAT_C_RESET\n");
-			पंचांगp = RH_PS_PRSC;
-			अवरोध;
-		शेष:
-			जाओ error;
-		पूर्ण
+			tmp = RH_PS_PRSC;
+			break;
+		default:
+			goto error;
+		}
 		spin_lock_irqsave(&isp116x->lock, flags);
-		isp116x_ग_लिखो_reg32(isp116x, wIndex
-				    ? HCRHPORT2 : HCRHPORT1, पंचांगp);
+		isp116x_write_reg32(isp116x, wIndex
+				    ? HCRHPORT2 : HCRHPORT1, tmp);
 		spin_unlock_irqrestore(&isp116x->lock, flags);
-		अवरोध;
-	हाल SetPortFeature:
+		break;
+	case SetPortFeature:
 		DBG("SetPortFeature: ");
-		अगर (!wIndex || wIndex > ports)
-			जाओ error;
+		if (!wIndex || wIndex > ports)
+			goto error;
 		wIndex--;
-		चयन (wValue) अणु
-		हाल USB_PORT_FEAT_SUSPEND:
+		switch (wValue) {
+		case USB_PORT_FEAT_SUSPEND:
 			DBG("USB_PORT_FEAT_SUSPEND\n");
 			spin_lock_irqsave(&isp116x->lock, flags);
-			isp116x_ग_लिखो_reg32(isp116x, wIndex
+			isp116x_write_reg32(isp116x, wIndex
 					    ? HCRHPORT2 : HCRHPORT1, RH_PS_PSS);
 			spin_unlock_irqrestore(&isp116x->lock, flags);
-			अवरोध;
-		हाल USB_PORT_FEAT_POWER:
+			break;
+		case USB_PORT_FEAT_POWER:
 			DBG("USB_PORT_FEAT_POWER\n");
 			spin_lock_irqsave(&isp116x->lock, flags);
-			isp116x_ग_लिखो_reg32(isp116x, wIndex
+			isp116x_write_reg32(isp116x, wIndex
 					    ? HCRHPORT2 : HCRHPORT1, RH_PS_PPS);
 			spin_unlock_irqrestore(&isp116x->lock, flags);
-			अवरोध;
-		हाल USB_PORT_FEAT_RESET:
+			break;
+		case USB_PORT_FEAT_RESET:
 			DBG("USB_PORT_FEAT_RESET\n");
 			root_port_reset(isp116x, wIndex);
-			अवरोध;
-		शेष:
-			जाओ error;
-		पूर्ण
-		अवरोध;
+			break;
+		default:
+			goto error;
+		}
+		break;
 
-	शेष:
+	default:
 	      error:
 		/* "protocol stall" on error */
 		DBG("PROTOCOL STALL\n");
 		ret = -EPIPE;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
 /*-----------------------------------------------------------------*/
 
-#अगर_घोषित CONFIG_DEBUG_FS
+#ifdef CONFIG_DEBUG_FS
 
-अटल व्योम dump_irq(काष्ठा seq_file *s, अक्षर *label, u16 mask)
-अणु
-	seq_म_लिखो(s, "%s %04x%s%s%s%s%s%s\n", label, mask,
+static void dump_irq(struct seq_file *s, char *label, u16 mask)
+{
+	seq_printf(s, "%s %04x%s%s%s%s%s%s\n", label, mask,
 		   mask & HCuPINT_CLKRDY ? " clkrdy" : "",
 		   mask & HCuPINT_SUSP ? " susp" : "",
 		   mask & HCuPINT_OPR ? " opr" : "",
 		   mask & HCuPINT_AIIEOT ? " eot" : "",
 		   mask & HCuPINT_ATL ? " atl" : "",
 		   mask & HCuPINT_SOF ? " sof" : "");
-पूर्ण
+}
 
-अटल व्योम dump_पूर्णांक(काष्ठा seq_file *s, अक्षर *label, u32 mask)
-अणु
-	seq_म_लिखो(s, "%s %08x%s%s%s%s%s%s%s\n", label, mask,
+static void dump_int(struct seq_file *s, char *label, u32 mask)
+{
+	seq_printf(s, "%s %08x%s%s%s%s%s%s%s\n", label, mask,
 		   mask & HCINT_MIE ? " MIE" : "",
 		   mask & HCINT_RHSC ? " rhsc" : "",
 		   mask & HCINT_FNO ? " fno" : "",
 		   mask & HCINT_UE ? " ue" : "",
 		   mask & HCINT_RD ? " rd" : "",
 		   mask & HCINT_SF ? " sof" : "", mask & HCINT_SO ? " so" : "");
-पूर्ण
+}
 
-अटल पूर्णांक isp116x_debug_show(काष्ठा seq_file *s, व्योम *unused)
-अणु
-	काष्ठा isp116x *isp116x = s->निजी;
+static int isp116x_debug_show(struct seq_file *s, void *unused)
+{
+	struct isp116x *isp116x = s->private;
 
-	seq_म_लिखो(s, "%s\n%s version %s\n",
+	seq_printf(s, "%s\n%s version %s\n",
 		   isp116x_to_hcd(isp116x)->product_desc, hcd_name,
 		   DRIVER_VERSION);
 
-	अगर (HC_IS_SUSPENDED(isp116x_to_hcd(isp116x)->state)) अणु
-		seq_म_लिखो(s, "HCD is suspended\n");
-		वापस 0;
-	पूर्ण
-	अगर (!HC_IS_RUNNING(isp116x_to_hcd(isp116x)->state)) अणु
-		seq_म_लिखो(s, "HCD not running\n");
-		वापस 0;
-	पूर्ण
+	if (HC_IS_SUSPENDED(isp116x_to_hcd(isp116x)->state)) {
+		seq_printf(s, "HCD is suspended\n");
+		return 0;
+	}
+	if (!HC_IS_RUNNING(isp116x_to_hcd(isp116x)->state)) {
+		seq_printf(s, "HCD not running\n");
+		return 0;
+	}
 
 	spin_lock_irq(&isp116x->lock);
-	dump_irq(s, "hc_irq_enable", isp116x_पढ़ो_reg16(isp116x, HCuPINTENB));
-	dump_irq(s, "hc_irq_status", isp116x_पढ़ो_reg16(isp116x, HCuPINT));
-	dump_पूर्णांक(s, "hc_int_enable", isp116x_पढ़ो_reg32(isp116x, HCINTENB));
-	dump_पूर्णांक(s, "hc_int_status", isp116x_पढ़ो_reg32(isp116x, HCINTSTAT));
+	dump_irq(s, "hc_irq_enable", isp116x_read_reg16(isp116x, HCuPINTENB));
+	dump_irq(s, "hc_irq_status", isp116x_read_reg16(isp116x, HCuPINT));
+	dump_int(s, "hc_int_enable", isp116x_read_reg32(isp116x, HCINTENB));
+	dump_int(s, "hc_int_status", isp116x_read_reg32(isp116x, HCINTSTAT));
 	isp116x_show_regs_seq(isp116x, s);
 	spin_unlock_irq(&isp116x->lock);
-	seq_म_लिखो(s, "\n");
+	seq_printf(s, "\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 DEFINE_SHOW_ATTRIBUTE(isp116x_debug);
 
-अटल व्योम create_debug_file(काष्ठा isp116x *isp116x)
-अणु
+static void create_debug_file(struct isp116x *isp116x)
+{
 	debugfs_create_file(hcd_name, S_IRUGO, usb_debug_root, isp116x,
 			    &isp116x_debug_fops);
-पूर्ण
+}
 
-अटल व्योम हटाओ_debug_file(काष्ठा isp116x *isp116x)
-अणु
-	debugfs_हटाओ(debugfs_lookup(hcd_name, usb_debug_root));
-पूर्ण
+static void remove_debug_file(struct isp116x *isp116x)
+{
+	debugfs_remove(debugfs_lookup(hcd_name, usb_debug_root));
+}
 
-#अन्यथा
+#else
 
-अटल अंतरभूत व्योम create_debug_file(काष्ठा isp116x *isp116x) अणु पूर्ण
-अटल अंतरभूत व्योम हटाओ_debug_file(काष्ठा isp116x *isp116x) अणु पूर्ण
+static inline void create_debug_file(struct isp116x *isp116x) { }
+static inline void remove_debug_file(struct isp116x *isp116x) { }
 
-#पूर्ण_अगर				/* CONFIG_DEBUG_FS */
+#endif				/* CONFIG_DEBUG_FS */
 
 /*-----------------------------------------------------------------*/
 
 /*
   Software reset - can be called from any contect.
 */
-अटल पूर्णांक isp116x_sw_reset(काष्ठा isp116x *isp116x)
-अणु
-	पूर्णांक retries = 15;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = 0;
+static int isp116x_sw_reset(struct isp116x *isp116x)
+{
+	int retries = 15;
+	unsigned long flags;
+	int ret = 0;
 
 	spin_lock_irqsave(&isp116x->lock, flags);
-	isp116x_ग_लिखो_reg16(isp116x, HCSWRES, HCSWRES_MAGIC);
-	isp116x_ग_लिखो_reg32(isp116x, HCCMDSTAT, HCCMDSTAT_HCR);
-	जबतक (--retries) अणु
+	isp116x_write_reg16(isp116x, HCSWRES, HCSWRES_MAGIC);
+	isp116x_write_reg32(isp116x, HCCMDSTAT, HCCMDSTAT_HCR);
+	while (--retries) {
 		/* It usually resets within 1 ms */
 		mdelay(1);
-		अगर (!(isp116x_पढ़ो_reg32(isp116x, HCCMDSTAT) & HCCMDSTAT_HCR))
-			अवरोध;
-	पूर्ण
-	अगर (!retries) अणु
+		if (!(isp116x_read_reg32(isp116x, HCCMDSTAT) & HCCMDSTAT_HCR))
+			break;
+	}
+	if (!retries) {
 		ERR("Software reset timeout\n");
 		ret = -ETIME;
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&isp116x->lock, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक isp116x_reset(काष्ठा usb_hcd *hcd)
-अणु
-	काष्ठा isp116x *isp116x = hcd_to_isp116x(hcd);
-	अचिन्हित दीर्घ t;
+static int isp116x_reset(struct usb_hcd *hcd)
+{
+	struct isp116x *isp116x = hcd_to_isp116x(hcd);
+	unsigned long t;
 	u16 clkrdy = 0;
-	पूर्णांक ret, समयout = 15 /* ms */ ;
+	int ret, timeout = 15 /* ms */ ;
 
 	ret = isp116x_sw_reset(isp116x);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	t = jअगरfies + msecs_to_jअगरfies(समयout);
-	जबतक (समय_beक्रमe_eq(jअगरfies, t)) अणु
+	t = jiffies + msecs_to_jiffies(timeout);
+	while (time_before_eq(jiffies, t)) {
 		msleep(4);
 		spin_lock_irq(&isp116x->lock);
-		clkrdy = isp116x_पढ़ो_reg16(isp116x, HCuPINT) & HCuPINT_CLKRDY;
+		clkrdy = isp116x_read_reg16(isp116x, HCuPINT) & HCuPINT_CLKRDY;
 		spin_unlock_irq(&isp116x->lock);
-		अगर (clkrdy)
-			अवरोध;
-	पूर्ण
-	अगर (!clkrdy) अणु
-		ERR("Clock not ready after %dms\n", समयout);
-		/* After sw_reset the घड़ी won't report to be पढ़ोy, अगर
+		if (clkrdy)
+			break;
+	}
+	if (!clkrdy) {
+		ERR("Clock not ready after %dms\n", timeout);
+		/* After sw_reset the clock won't report to be ready, if
 		   H_WAKEUP pin is high. */
 		ERR("Please make sure that the H_WAKEUP pin is pulled low!\n");
 		ret = -ENODEV;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल व्योम isp116x_stop(काष्ठा usb_hcd *hcd)
-अणु
-	काष्ठा isp116x *isp116x = hcd_to_isp116x(hcd);
-	अचिन्हित दीर्घ flags;
+static void isp116x_stop(struct usb_hcd *hcd)
+{
+	struct isp116x *isp116x = hcd_to_isp116x(hcd);
+	unsigned long flags;
 	u32 val;
 
 	spin_lock_irqsave(&isp116x->lock, flags);
-	isp116x_ग_लिखो_reg16(isp116x, HCuPINTENB, 0);
+	isp116x_write_reg16(isp116x, HCuPINTENB, 0);
 
 	/* Switch off ports' power, some devices don't come up
 	   after next 'insmod' without this */
-	val = isp116x_पढ़ो_reg32(isp116x, HCRHDESCA);
+	val = isp116x_read_reg32(isp116x, HCRHDESCA);
 	val &= ~(RH_A_NPS | RH_A_PSM);
-	isp116x_ग_लिखो_reg32(isp116x, HCRHDESCA, val);
-	isp116x_ग_लिखो_reg32(isp116x, HCRHSTATUS, RH_HS_LPS);
+	isp116x_write_reg32(isp116x, HCRHDESCA, val);
+	isp116x_write_reg32(isp116x, HCRHSTATUS, RH_HS_LPS);
 	spin_unlock_irqrestore(&isp116x->lock, flags);
 
 	isp116x_sw_reset(isp116x);
-पूर्ण
+}
 
 /*
   Configure the chip. The chip must be successfully reset by now.
 */
-अटल पूर्णांक isp116x_start(काष्ठा usb_hcd *hcd)
-अणु
-	काष्ठा isp116x *isp116x = hcd_to_isp116x(hcd);
-	काष्ठा isp116x_platक्रमm_data *board = isp116x->board;
+static int isp116x_start(struct usb_hcd *hcd)
+{
+	struct isp116x *isp116x = hcd_to_isp116x(hcd);
+	struct isp116x_platform_data *board = isp116x->board;
 	u32 val;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	spin_lock_irqsave(&isp116x->lock, flags);
 
-	/* clear पूर्णांकerrupt status and disable all पूर्णांकerrupt sources */
-	isp116x_ग_लिखो_reg16(isp116x, HCuPINT, 0xff);
-	isp116x_ग_लिखो_reg16(isp116x, HCuPINTENB, 0);
+	/* clear interrupt status and disable all interrupt sources */
+	isp116x_write_reg16(isp116x, HCuPINT, 0xff);
+	isp116x_write_reg16(isp116x, HCuPINTENB, 0);
 
-	val = isp116x_पढ़ो_reg16(isp116x, HCCHIPID);
-	अगर ((val & HCCHIPID_MASK) != HCCHIPID_MAGIC) अणु
+	val = isp116x_read_reg16(isp116x, HCCHIPID);
+	if ((val & HCCHIPID_MASK) != HCCHIPID_MAGIC) {
 		ERR("Invalid chip ID %04x\n", val);
 		spin_unlock_irqrestore(&isp116x->lock, flags);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	/* To be हटाओd in future */
+	/* To be removed in future */
 	hcd->uses_new_polling = 1;
 
-	isp116x_ग_लिखो_reg16(isp116x, HCITLBUFLEN, ISP116x_ITL_बफ_मानE);
-	isp116x_ग_लिखो_reg16(isp116x, HCATLBUFLEN, ISP116x_ATL_बफ_मानE);
+	isp116x_write_reg16(isp116x, HCITLBUFLEN, ISP116x_ITL_BUFSIZE);
+	isp116x_write_reg16(isp116x, HCATLBUFLEN, ISP116x_ATL_BUFSIZE);
 
 	/* ----- HW conf */
 	val = HCHWCFG_INT_ENABLE | HCHWCFG_DBWIDTH(1);
-	अगर (board->sel15Kres)
+	if (board->sel15Kres)
 		val |= HCHWCFG_15KRSEL;
-	/* Remote wakeup won't work without working घड़ी */
-	अगर (board->remote_wakeup_enable)
+	/* Remote wakeup won't work without working clock */
+	if (board->remote_wakeup_enable)
 		val |= HCHWCFG_CLKNOTSTOP;
-	अगर (board->oc_enable)
+	if (board->oc_enable)
 		val |= HCHWCFG_ANALOG_OC;
-	अगर (board->पूर्णांक_act_high)
+	if (board->int_act_high)
 		val |= HCHWCFG_INT_POL;
-	अगर (board->पूर्णांक_edge_triggered)
+	if (board->int_edge_triggered)
 		val |= HCHWCFG_INT_TRIGGER;
-	isp116x_ग_लिखो_reg16(isp116x, HCHWCFG, val);
+	isp116x_write_reg16(isp116x, HCHWCFG, val);
 
 	/* ----- Root hub conf */
 	val = (25 << 24) & RH_A_POTPGT;
-	/* AN10003_1.pdf recommends RH_A_NPS (no घातer चयनing) to
-	   be always set. Yet, instead, we request inभागidual port
-	   घातer चयनing. */
+	/* AN10003_1.pdf recommends RH_A_NPS (no power switching) to
+	   be always set. Yet, instead, we request individual port
+	   power switching. */
 	val |= RH_A_PSM;
 	/* Report overcurrent per port */
 	val |= RH_A_OCPM;
-	isp116x_ग_लिखो_reg32(isp116x, HCRHDESCA, val);
-	isp116x->rhdesca = isp116x_पढ़ो_reg32(isp116x, HCRHDESCA);
+	isp116x_write_reg32(isp116x, HCRHDESCA, val);
+	isp116x->rhdesca = isp116x_read_reg32(isp116x, HCRHDESCA);
 
 	val = RH_B_PPCM;
-	isp116x_ग_लिखो_reg32(isp116x, HCRHDESCB, val);
-	isp116x->rhdescb = isp116x_पढ़ो_reg32(isp116x, HCRHDESCB);
+	isp116x_write_reg32(isp116x, HCRHDESCB, val);
+	isp116x->rhdescb = isp116x_read_reg32(isp116x, HCRHDESCB);
 
 	val = 0;
-	अगर (board->remote_wakeup_enable) अणु
-		अगर (!device_can_wakeup(hcd->self.controller))
+	if (board->remote_wakeup_enable) {
+		if (!device_can_wakeup(hcd->self.controller))
 			device_init_wakeup(hcd->self.controller, 1);
 		val |= RH_HS_DRWE;
-	पूर्ण
-	isp116x_ग_लिखो_reg32(isp116x, HCRHSTATUS, val);
-	isp116x->rhstatus = isp116x_पढ़ो_reg32(isp116x, HCRHSTATUS);
+	}
+	isp116x_write_reg32(isp116x, HCRHSTATUS, val);
+	isp116x->rhstatus = isp116x_read_reg32(isp116x, HCRHSTATUS);
 
-	isp116x_ग_लिखो_reg32(isp116x, HCFMINTVL, 0x27782edf);
+	isp116x_write_reg32(isp116x, HCFMINTVL, 0x27782edf);
 
 	hcd->state = HC_STATE_RUNNING;
 
-	/* Set up पूर्णांकerrupts */
-	isp116x->पूर्णांकenb = HCINT_MIE | HCINT_RHSC | HCINT_UE;
-	अगर (board->remote_wakeup_enable)
-		isp116x->पूर्णांकenb |= HCINT_RD;
+	/* Set up interrupts */
+	isp116x->intenb = HCINT_MIE | HCINT_RHSC | HCINT_UE;
+	if (board->remote_wakeup_enable)
+		isp116x->intenb |= HCINT_RD;
 	isp116x->irqenb = HCuPINT_ATL | HCuPINT_OPR;	/* | HCuPINT_SUSP; */
-	isp116x_ग_लिखो_reg32(isp116x, HCINTENB, isp116x->पूर्णांकenb);
-	isp116x_ग_लिखो_reg16(isp116x, HCuPINTENB, isp116x->irqenb);
+	isp116x_write_reg32(isp116x, HCINTENB, isp116x->intenb);
+	isp116x_write_reg16(isp116x, HCuPINTENB, isp116x->irqenb);
 
 	/* Go operational */
 	val = HCCONTROL_USB_OPER;
-	अगर (board->remote_wakeup_enable)
+	if (board->remote_wakeup_enable)
 		val |= HCCONTROL_RWE;
-	isp116x_ग_लिखो_reg32(isp116x, HCCONTROL, val);
+	isp116x_write_reg32(isp116x, HCCONTROL, val);
 
-	/* Disable ports to aव्योम race in device क्रमागतeration */
-	isp116x_ग_लिखो_reg32(isp116x, HCRHPORT1, RH_PS_CCS);
-	isp116x_ग_लिखो_reg32(isp116x, HCRHPORT2, RH_PS_CCS);
+	/* Disable ports to avoid race in device enumeration */
+	isp116x_write_reg32(isp116x, HCRHPORT1, RH_PS_CCS);
+	isp116x_write_reg32(isp116x, HCRHPORT2, RH_PS_CCS);
 
 	isp116x_show_regs_log(isp116x);
 	spin_unlock_irqrestore(&isp116x->lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित	CONFIG_PM
+#ifdef	CONFIG_PM
 
-अटल पूर्णांक isp116x_bus_suspend(काष्ठा usb_hcd *hcd)
-अणु
-	काष्ठा isp116x *isp116x = hcd_to_isp116x(hcd);
-	अचिन्हित दीर्घ flags;
+static int isp116x_bus_suspend(struct usb_hcd *hcd)
+{
+	struct isp116x *isp116x = hcd_to_isp116x(hcd);
+	unsigned long flags;
 	u32 val;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	spin_lock_irqsave(&isp116x->lock, flags);
-	val = isp116x_पढ़ो_reg32(isp116x, HCCONTROL);
+	val = isp116x_read_reg32(isp116x, HCCONTROL);
 
-	चयन (val & HCCONTROL_HCFS) अणु
-	हाल HCCONTROL_USB_OPER:
+	switch (val & HCCONTROL_HCFS) {
+	case HCCONTROL_USB_OPER:
 		spin_unlock_irqrestore(&isp116x->lock, flags);
 		val &= (~HCCONTROL_HCFS & ~HCCONTROL_RWE);
 		val |= HCCONTROL_USB_SUSPEND;
-		अगर (hcd->self.root_hub->करो_remote_wakeup)
+		if (hcd->self.root_hub->do_remote_wakeup)
 			val |= HCCONTROL_RWE;
-		/* Wait क्रम usb transfers to finish */
+		/* Wait for usb transfers to finish */
 		msleep(2);
 		spin_lock_irqsave(&isp116x->lock, flags);
-		isp116x_ग_लिखो_reg32(isp116x, HCCONTROL, val);
+		isp116x_write_reg32(isp116x, HCCONTROL, val);
 		spin_unlock_irqrestore(&isp116x->lock, flags);
-		/* Wait क्रम devices to suspend */
+		/* Wait for devices to suspend */
 		msleep(5);
-		अवरोध;
-	हाल HCCONTROL_USB_RESUME:
-		isp116x_ग_लिखो_reg32(isp116x, HCCONTROL,
+		break;
+	case HCCONTROL_USB_RESUME:
+		isp116x_write_reg32(isp116x, HCCONTROL,
 				    (val & ~HCCONTROL_HCFS) |
 				    HCCONTROL_USB_RESET);
 		fallthrough;
-	हाल HCCONTROL_USB_RESET:
+	case HCCONTROL_USB_RESET:
 		ret = -EBUSY;
 		fallthrough;
-	शेष:		/* HCCONTROL_USB_SUSPEND */
+	default:		/* HCCONTROL_USB_SUSPEND */
 		spin_unlock_irqrestore(&isp116x->lock, flags);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक isp116x_bus_resume(काष्ठा usb_hcd *hcd)
-अणु
-	काष्ठा isp116x *isp116x = hcd_to_isp116x(hcd);
+static int isp116x_bus_resume(struct usb_hcd *hcd)
+{
+	struct isp116x *isp116x = hcd_to_isp116x(hcd);
 	u32 val;
 
 	msleep(5);
 	spin_lock_irq(&isp116x->lock);
 
-	val = isp116x_पढ़ो_reg32(isp116x, HCCONTROL);
-	चयन (val & HCCONTROL_HCFS) अणु
-	हाल HCCONTROL_USB_SUSPEND:
+	val = isp116x_read_reg32(isp116x, HCCONTROL);
+	switch (val & HCCONTROL_HCFS) {
+	case HCCONTROL_USB_SUSPEND:
 		val &= ~HCCONTROL_HCFS;
 		val |= HCCONTROL_USB_RESUME;
-		isp116x_ग_लिखो_reg32(isp116x, HCCONTROL, val);
-		अवरोध;
-	हाल HCCONTROL_USB_RESUME:
-		अवरोध;
-	हाल HCCONTROL_USB_OPER:
+		isp116x_write_reg32(isp116x, HCCONTROL, val);
+		break;
+	case HCCONTROL_USB_RESUME:
+		break;
+	case HCCONTROL_USB_OPER:
 		spin_unlock_irq(&isp116x->lock);
-		वापस 0;
-	शेष:
+		return 0;
+	default:
 		/* HCCONTROL_USB_RESET: this may happen, when during
-		   suspension the HC lost घातer. Reinitialize completely */
+		   suspension the HC lost power. Reinitialize completely */
 		spin_unlock_irq(&isp116x->lock);
 		DBG("Chip has been reset while suspended. Reinit from scratch.\n");
 		isp116x_reset(hcd);
 		isp116x_start(hcd);
 		isp116x_hub_control(hcd, SetPortFeature,
-				    USB_PORT_FEAT_POWER, 1, शून्य, 0);
-		अगर ((isp116x->rhdesca & RH_A_NDP) == 2)
+				    USB_PORT_FEAT_POWER, 1, NULL, 0);
+		if ((isp116x->rhdesca & RH_A_NDP) == 2)
 			isp116x_hub_control(hcd, SetPortFeature,
-					    USB_PORT_FEAT_POWER, 2, शून्य, 0);
-		वापस 0;
-	पूर्ण
+					    USB_PORT_FEAT_POWER, 2, NULL, 0);
+		return 0;
+	}
 
 	val = isp116x->rhdesca & RH_A_NDP;
-	जबतक (val--) अणु
+	while (val--) {
 		u32 stat =
-		    isp116x_पढ़ो_reg32(isp116x, val ? HCRHPORT2 : HCRHPORT1);
-		/* क्रमce global, not selective, resume */
-		अगर (!(stat & RH_PS_PSS))
-			जारी;
+		    isp116x_read_reg32(isp116x, val ? HCRHPORT2 : HCRHPORT1);
+		/* force global, not selective, resume */
+		if (!(stat & RH_PS_PSS))
+			continue;
 		DBG("%s: Resuming port %d\n", __func__, val);
-		isp116x_ग_लिखो_reg32(isp116x, RH_PS_POCI, val
+		isp116x_write_reg32(isp116x, RH_PS_POCI, val
 				    ? HCRHPORT2 : HCRHPORT1);
-	पूर्ण
+	}
 	spin_unlock_irq(&isp116x->lock);
 
 	hcd->state = HC_STATE_RESUMING;
@@ -1486,26 +1485,26 @@ DEFINE_SHOW_ATTRIBUTE(isp116x_debug);
 
 	/* Go operational */
 	spin_lock_irq(&isp116x->lock);
-	val = isp116x_पढ़ो_reg32(isp116x, HCCONTROL);
-	isp116x_ग_लिखो_reg32(isp116x, HCCONTROL,
+	val = isp116x_read_reg32(isp116x, HCCONTROL);
+	isp116x_write_reg32(isp116x, HCCONTROL,
 			    (val & ~HCCONTROL_HCFS) | HCCONTROL_USB_OPER);
 	spin_unlock_irq(&isp116x->lock);
 	hcd->state = HC_STATE_RUNNING;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अन्यथा
+#else
 
-#घोषणा	isp116x_bus_suspend	शून्य
-#घोषणा	isp116x_bus_resume	शून्य
+#define	isp116x_bus_suspend	NULL
+#define	isp116x_bus_resume	NULL
 
-#पूर्ण_अगर
+#endif
 
-अटल स्थिर काष्ठा hc_driver isp116x_hc_driver = अणु
+static const struct hc_driver isp116x_hc_driver = {
 	.description = hcd_name,
 	.product_desc = "ISP116x Host Controller",
-	.hcd_priv_size = माप(काष्ठा isp116x),
+	.hcd_priv_size = sizeof(struct isp116x),
 
 	.irq = isp116x_irq,
 	.flags = HCD_USB11,
@@ -1516,7 +1515,7 @@ DEFINE_SHOW_ATTRIBUTE(isp116x_debug);
 
 	.urb_enqueue = isp116x_urb_enqueue,
 	.urb_dequeue = isp116x_urb_dequeue,
-	.endpoपूर्णांक_disable = isp116x_endpoपूर्णांक_disable,
+	.endpoint_disable = isp116x_endpoint_disable,
 
 	.get_frame_number = isp116x_get_frame,
 
@@ -1524,89 +1523,89 @@ DEFINE_SHOW_ATTRIBUTE(isp116x_debug);
 	.hub_control = isp116x_hub_control,
 	.bus_suspend = isp116x_bus_suspend,
 	.bus_resume = isp116x_bus_resume,
-पूर्ण;
+};
 
 /*----------------------------------------------------------------*/
 
-अटल पूर्णांक isp116x_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा usb_hcd *hcd = platक्रमm_get_drvdata(pdev);
-	काष्ठा isp116x *isp116x;
-	काष्ठा resource *res;
+static int isp116x_remove(struct platform_device *pdev)
+{
+	struct usb_hcd *hcd = platform_get_drvdata(pdev);
+	struct isp116x *isp116x;
+	struct resource *res;
 
-	अगर (!hcd)
-		वापस 0;
+	if (!hcd)
+		return 0;
 	isp116x = hcd_to_isp116x(hcd);
-	हटाओ_debug_file(isp116x);
-	usb_हटाओ_hcd(hcd);
+	remove_debug_file(isp116x);
+	usb_remove_hcd(hcd);
 
 	iounmap(isp116x->data_reg);
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 1);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 1);
 	release_mem_region(res->start, 2);
 	iounmap(isp116x->addr_reg);
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	release_mem_region(res->start, 2);
 
 	usb_put_hcd(hcd);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक isp116x_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा usb_hcd *hcd;
-	काष्ठा isp116x *isp116x;
-	काष्ठा resource *addr, *data, *ires;
-	व्योम __iomem *addr_reg;
-	व्योम __iomem *data_reg;
-	पूर्णांक irq;
-	पूर्णांक ret = 0;
-	अचिन्हित दीर्घ irqflags;
+static int isp116x_probe(struct platform_device *pdev)
+{
+	struct usb_hcd *hcd;
+	struct isp116x *isp116x;
+	struct resource *addr, *data, *ires;
+	void __iomem *addr_reg;
+	void __iomem *data_reg;
+	int irq;
+	int ret = 0;
+	unsigned long irqflags;
 
-	अगर (usb_disabled())
-		वापस -ENODEV;
+	if (usb_disabled())
+		return -ENODEV;
 
-	अगर (pdev->num_resources < 3) अणु
+	if (pdev->num_resources < 3) {
 		ret = -ENODEV;
-		जाओ err1;
-	पूर्ण
+		goto err1;
+	}
 
-	data = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	addr = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 1);
-	ires = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, 0);
+	data = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	addr = platform_get_resource(pdev, IORESOURCE_MEM, 1);
+	ires = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
 
-	अगर (!addr || !data || !ires) अणु
+	if (!addr || !data || !ires) {
 		ret = -ENODEV;
-		जाओ err1;
-	पूर्ण
+		goto err1;
+	}
 
 	irq = ires->start;
 	irqflags = ires->flags & IRQF_TRIGGER_MASK;
 
-	अगर (!request_mem_region(addr->start, 2, hcd_name)) अणु
+	if (!request_mem_region(addr->start, 2, hcd_name)) {
 		ret = -EBUSY;
-		जाओ err1;
-	पूर्ण
+		goto err1;
+	}
 	addr_reg = ioremap(addr->start, resource_size(addr));
-	अगर (addr_reg == शून्य) अणु
+	if (addr_reg == NULL) {
 		ret = -ENOMEM;
-		जाओ err2;
-	पूर्ण
-	अगर (!request_mem_region(data->start, 2, hcd_name)) अणु
+		goto err2;
+	}
+	if (!request_mem_region(data->start, 2, hcd_name)) {
 		ret = -EBUSY;
-		जाओ err3;
-	पूर्ण
+		goto err3;
+	}
 	data_reg = ioremap(data->start, resource_size(data));
-	अगर (data_reg == शून्य) अणु
+	if (data_reg == NULL) {
 		ret = -ENOMEM;
-		जाओ err4;
-	पूर्ण
+		goto err4;
+	}
 
 	/* allocate and initialize hcd */
 	hcd = usb_create_hcd(&isp116x_hc_driver, &pdev->dev, dev_name(&pdev->dev));
-	अगर (!hcd) अणु
+	if (!hcd) {
 		ret = -ENOMEM;
-		जाओ err5;
-	पूर्ण
+		goto err5;
+	}
 	/* this rsrc_start is bogus */
 	hcd->rsrc_start = addr->start;
 	isp116x = hcd_to_isp116x(hcd);
@@ -1616,28 +1615,28 @@ DEFINE_SHOW_ATTRIBUTE(isp116x_debug);
 	INIT_LIST_HEAD(&isp116x->async);
 	isp116x->board = dev_get_platdata(&pdev->dev);
 
-	अगर (!isp116x->board) अणु
+	if (!isp116x->board) {
 		ERR("Platform data structure not initialized\n");
 		ret = -ENODEV;
-		जाओ err6;
-	पूर्ण
-	अगर (isp116x_check_platक्रमm_delay(isp116x)) अणु
+		goto err6;
+	}
+	if (isp116x_check_platform_delay(isp116x)) {
 		ERR("USE_PLATFORM_DELAY defined, but delay function not "
 		    "implemented.\n");
 		ERR("See comments in drivers/usb/host/isp116x-hcd.c\n");
 		ret = -ENODEV;
-		जाओ err6;
-	पूर्ण
+		goto err6;
+	}
 
 	ret = usb_add_hcd(hcd, irq, irqflags);
-	अगर (ret)
-		जाओ err6;
+	if (ret)
+		goto err6;
 
 	device_wakeup_enable(hcd->self.controller);
 
 	create_debug_file(isp116x);
 
-	वापस 0;
+	return 0;
 
       err6:
 	usb_put_hcd(hcd);
@@ -1651,46 +1650,46 @@ DEFINE_SHOW_ATTRIBUTE(isp116x_debug);
 	release_mem_region(addr->start, 2);
       err1:
 	ERR("init error, %d\n", ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर_घोषित	CONFIG_PM
+#ifdef	CONFIG_PM
 /*
-  Suspend of platक्रमm device
+  Suspend of platform device
 */
-अटल पूर्णांक isp116x_suspend(काष्ठा platक्रमm_device *dev, pm_message_t state)
-अणु
+static int isp116x_suspend(struct platform_device *dev, pm_message_t state)
+{
 	VDBG("%s: state %x\n", __func__, state.event);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
-  Resume platक्रमm device
+  Resume platform device
 */
-अटल पूर्णांक isp116x_resume(काष्ठा platक्रमm_device *dev)
-अणु
+static int isp116x_resume(struct platform_device *dev)
+{
 	VDBG("%s\n", __func__);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अन्यथा
+#else
 
-#घोषणा	isp116x_suspend    शून्य
-#घोषणा	isp116x_resume     शून्य
+#define	isp116x_suspend    NULL
+#define	isp116x_resume     NULL
 
-#पूर्ण_अगर
+#endif
 
 /* work with hotplug and coldplug */
 MODULE_ALIAS("platform:isp116x-hcd");
 
-अटल काष्ठा platक्रमm_driver isp116x_driver = अणु
+static struct platform_driver isp116x_driver = {
 	.probe = isp116x_probe,
-	.हटाओ = isp116x_हटाओ,
+	.remove = isp116x_remove,
 	.suspend = isp116x_suspend,
 	.resume = isp116x_resume,
-	.driver = अणु
+	.driver = {
 		.name = hcd_name,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(isp116x_driver);
+module_platform_driver(isp116x_driver);

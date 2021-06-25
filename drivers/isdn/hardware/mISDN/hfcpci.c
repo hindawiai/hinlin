@@ -1,12 +1,11 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *
- * hfcpci.c     low level driver क्रम CCD's hfc-pci based cards
+ * hfcpci.c     low level driver for CCD's hfc-pci based cards
  *
  * Author     Werner Cornelius (werner@isdn4linux.de)
- *            based on existing driver क्रम CCD hfc ISA cards
- *            type approval valid क्रम HFC-S PCI A based card
+ *            based on existing driver for CCD hfc ISA cards
+ *            type approval valid for HFC-S PCI A based card
  *
  * Copyright 1999  by Werner Cornelius (werner@isdn-development.de)
  * Copyright 2008  by Karsten Keil <kkeil@novell.com>
@@ -14,46 +13,46 @@
  * Module options:
  *
  * debug:
- *	NOTE: only one poll value must be given क्रम all cards
- *	See hfc_pci.h क्रम debug flags.
+ *	NOTE: only one poll value must be given for all cards
+ *	See hfc_pci.h for debug flags.
  *
  * poll:
- *	NOTE: only one poll value must be given क्रम all cards
- *	Give the number of samples क्रम each fअगरo process.
- *	By शेष 128 is used. Decrease to reduce delay, increase to
- *	reduce cpu load. If unsure, करोn't mess with it!
- *	A value of 128 will use controller's पूर्णांकerrupt. Other values will
- *	use kernel समयr, because the controller will not allow lower values
+ *	NOTE: only one poll value must be given for all cards
+ *	Give the number of samples for each fifo process.
+ *	By default 128 is used. Decrease to reduce delay, increase to
+ *	reduce cpu load. If unsure, don't mess with it!
+ *	A value of 128 will use controller's interrupt. Other values will
+ *	use kernel timer, because the controller will not allow lower values
  *	than 128.
- *	Also note that the value depends on the kernel समयr frequency.
+ *	Also note that the value depends on the kernel timer frequency.
  *	If kernel uses a frequency of 1000 Hz, steps of 8 samples are possible.
  *	If the kernel uses 100 Hz, steps of 80 samples are possible.
  *	If the kernel uses 300 Hz, steps of about 26 samples are possible.
  */
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/mISDNhw.h>
-#समावेश <linux/slab.h>
+#include <linux/interrupt.h>
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/delay.h>
+#include <linux/mISDNhw.h>
+#include <linux/slab.h>
 
-#समावेश "hfc_pci.h"
+#include "hfc_pci.h"
 
-अटल स्थिर अक्षर *hfcpci_revision = "2.0";
+static const char *hfcpci_revision = "2.0";
 
-अटल पूर्णांक HFC_cnt;
-अटल uपूर्णांक debug;
-अटल uपूर्णांक poll, tics;
-अटल काष्ठा समयr_list hfc_tl;
-अटल अचिन्हित दीर्घ hfc_jअगरfies;
+static int HFC_cnt;
+static uint debug;
+static uint poll, tics;
+static struct timer_list hfc_tl;
+static unsigned long hfc_jiffies;
 
 MODULE_AUTHOR("Karsten Keil");
 MODULE_LICENSE("GPL");
-module_param(debug, uपूर्णांक, S_IRUGO | S_IWUSR);
-module_param(poll, uपूर्णांक, S_IRUGO | S_IWUSR);
+module_param(debug, uint, S_IRUGO | S_IWUSR);
+module_param(poll, uint, S_IRUGO | S_IWUSR);
 
-क्रमागत अणु
+enum {
 	HFC_CCD_2BD0,
 	HFC_CCD_B000,
 	HFC_CCD_B006,
@@ -77,136 +76,136 @@ module_param(poll, uपूर्णांक, S_IRUGO | S_IWUSR);
 	HFC_DIGI_DF_M_A,
 	HFC_ABOCOM_2BD1,
 	HFC_SITECOM_DC105V2,
-पूर्ण;
+};
 
-काष्ठा hfcPCI_hw अणु
-	अचिन्हित अक्षर		cirm;
-	अचिन्हित अक्षर		cपंचांगt;
-	अचिन्हित अक्षर		clkdel;
-	अचिन्हित अक्षर		states;
-	अचिन्हित अक्षर		conn;
-	अचिन्हित अक्षर		mst_m;
-	अचिन्हित अक्षर		पूर्णांक_m1;
-	अचिन्हित अक्षर		पूर्णांक_m2;
-	अचिन्हित अक्षर		sctrl;
-	अचिन्हित अक्षर		sctrl_r;
-	अचिन्हित अक्षर		sctrl_e;
-	अचिन्हित अक्षर		trm;
-	अचिन्हित अक्षर		fअगरo_en;
-	अचिन्हित अक्षर		bswapped;
-	अचिन्हित अक्षर		protocol;
-	पूर्णांक			nt_समयr;
-	अचिन्हित अक्षर __iomem	*pci_io; /* start of PCI IO memory */
+struct hfcPCI_hw {
+	unsigned char		cirm;
+	unsigned char		ctmt;
+	unsigned char		clkdel;
+	unsigned char		states;
+	unsigned char		conn;
+	unsigned char		mst_m;
+	unsigned char		int_m1;
+	unsigned char		int_m2;
+	unsigned char		sctrl;
+	unsigned char		sctrl_r;
+	unsigned char		sctrl_e;
+	unsigned char		trm;
+	unsigned char		fifo_en;
+	unsigned char		bswapped;
+	unsigned char		protocol;
+	int			nt_timer;
+	unsigned char __iomem	*pci_io; /* start of PCI IO memory */
 	dma_addr_t		dmahandle;
-	व्योम			*fअगरos; /* FIFO memory */
-	पूर्णांक			last_bfअगरo_cnt[2];
-	/* marker saving last b-fअगरo frame count */
-	काष्ठा समयr_list	समयr;
-पूर्ण;
+	void			*fifos; /* FIFO memory */
+	int			last_bfifo_cnt[2];
+	/* marker saving last b-fifo frame count */
+	struct timer_list	timer;
+};
 
-#घोषणा	HFC_CFG_MASTER		1
-#घोषणा HFC_CFG_SLAVE		2
-#घोषणा	HFC_CFG_PCM		3
-#घोषणा HFC_CFG_2HFC		4
-#घोषणा HFC_CFG_SLAVEHFC	5
-#घोषणा HFC_CFG_NEG_F0		6
-#घोषणा HFC_CFG_SW_DD_DU	7
+#define	HFC_CFG_MASTER		1
+#define HFC_CFG_SLAVE		2
+#define	HFC_CFG_PCM		3
+#define HFC_CFG_2HFC		4
+#define HFC_CFG_SLAVEHFC	5
+#define HFC_CFG_NEG_F0		6
+#define HFC_CFG_SW_DD_DU	7
 
-#घोषणा FLG_HFC_TIMER_T1	16
-#घोषणा FLG_HFC_TIMER_T3	17
+#define FLG_HFC_TIMER_T1	16
+#define FLG_HFC_TIMER_T3	17
 
-#घोषणा NT_T1_COUNT	1120	/* number of 3.125ms पूर्णांकerrupts (3.5s) */
-#घोषणा NT_T3_COUNT	31	/* number of 3.125ms पूर्णांकerrupts (97 ms) */
-#घोषणा CLKDEL_TE	0x0e	/* CLKDEL in TE mode */
-#घोषणा CLKDEL_NT	0x6c	/* CLKDEL in NT mode */
+#define NT_T1_COUNT	1120	/* number of 3.125ms interrupts (3.5s) */
+#define NT_T3_COUNT	31	/* number of 3.125ms interrupts (97 ms) */
+#define CLKDEL_TE	0x0e	/* CLKDEL in TE mode */
+#define CLKDEL_NT	0x6c	/* CLKDEL in NT mode */
 
 
-काष्ठा hfc_pci अणु
-	u_अक्षर			subtype;
-	u_अक्षर			chanlimit;
-	u_अक्षर			initकरोne;
-	u_दीर्घ			cfg;
-	u_पूर्णांक			irq;
-	u_पूर्णांक			irqcnt;
-	काष्ठा pci_dev		*pdev;
-	काष्ठा hfcPCI_hw	hw;
+struct hfc_pci {
+	u_char			subtype;
+	u_char			chanlimit;
+	u_char			initdone;
+	u_long			cfg;
+	u_int			irq;
+	u_int			irqcnt;
+	struct pci_dev		*pdev;
+	struct hfcPCI_hw	hw;
 	spinlock_t		lock;	/* card lock */
-	काष्ठा dchannel		dch;
-	काष्ठा bchannel		bch[2];
-पूर्ण;
+	struct dchannel		dch;
+	struct bchannel		bch[2];
+};
 
 /* Interface functions */
-अटल व्योम
-enable_hwirq(काष्ठा hfc_pci *hc)
-अणु
-	hc->hw.पूर्णांक_m2 |= HFCPCI_IRQ_ENABLE;
-	Write_hfc(hc, HFCPCI_INT_M2, hc->hw.पूर्णांक_m2);
-पूर्ण
+static void
+enable_hwirq(struct hfc_pci *hc)
+{
+	hc->hw.int_m2 |= HFCPCI_IRQ_ENABLE;
+	Write_hfc(hc, HFCPCI_INT_M2, hc->hw.int_m2);
+}
 
-अटल व्योम
-disable_hwirq(काष्ठा hfc_pci *hc)
-अणु
-	hc->hw.पूर्णांक_m2 &= ~((u_अक्षर)HFCPCI_IRQ_ENABLE);
-	Write_hfc(hc, HFCPCI_INT_M2, hc->hw.पूर्णांक_m2);
-पूर्ण
+static void
+disable_hwirq(struct hfc_pci *hc)
+{
+	hc->hw.int_m2 &= ~((u_char)HFCPCI_IRQ_ENABLE);
+	Write_hfc(hc, HFCPCI_INT_M2, hc->hw.int_m2);
+}
 
 /*
- * मुक्त hardware resources used by driver
+ * free hardware resources used by driver
  */
-अटल व्योम
-release_io_hfcpci(काष्ठा hfc_pci *hc)
-अणु
+static void
+release_io_hfcpci(struct hfc_pci *hc)
+{
 	/* disable memory mapped ports + busmaster */
-	pci_ग_लिखो_config_word(hc->pdev, PCI_COMMAND, 0);
-	del_समयr(&hc->hw.समयr);
-	dma_मुक्त_coherent(&hc->pdev->dev, 0x8000, hc->hw.fअगरos,
+	pci_write_config_word(hc->pdev, PCI_COMMAND, 0);
+	del_timer(&hc->hw.timer);
+	dma_free_coherent(&hc->pdev->dev, 0x8000, hc->hw.fifos,
 			  hc->hw.dmahandle);
 	iounmap(hc->hw.pci_io);
-पूर्ण
+}
 
 /*
  * set mode (NT or TE)
  */
-अटल व्योम
-hfcpci_seपंचांगode(काष्ठा hfc_pci *hc)
-अणु
-	अगर (hc->hw.protocol == ISDN_P_NT_S0) अणु
-		hc->hw.clkdel = CLKDEL_NT;	/* ST-Bit delay क्रम NT-Mode */
+static void
+hfcpci_setmode(struct hfc_pci *hc)
+{
+	if (hc->hw.protocol == ISDN_P_NT_S0) {
+		hc->hw.clkdel = CLKDEL_NT;	/* ST-Bit delay for NT-Mode */
 		hc->hw.sctrl |= SCTRL_MODE_NT;	/* NT-MODE */
 		hc->hw.states = 1;		/* G1 */
-	पूर्ण अन्यथा अणु
-		hc->hw.clkdel = CLKDEL_TE;	/* ST-Bit delay क्रम TE-Mode */
+	} else {
+		hc->hw.clkdel = CLKDEL_TE;	/* ST-Bit delay for TE-Mode */
 		hc->hw.sctrl &= ~SCTRL_MODE_NT;	/* TE-MODE */
 		hc->hw.states = 2;		/* F2 */
-	पूर्ण
+	}
 	Write_hfc(hc, HFCPCI_CLKDEL, hc->hw.clkdel);
 	Write_hfc(hc, HFCPCI_STATES, HFCPCI_LOAD_STATE | hc->hw.states);
 	udelay(10);
 	Write_hfc(hc, HFCPCI_STATES, hc->hw.states | 0x40); /* Deactivate */
 	Write_hfc(hc, HFCPCI_SCTRL, hc->hw.sctrl);
-पूर्ण
+}
 
 /*
  * function called to reset the HFC PCI chip. A complete software reset of chip
- * and fअगरos is करोne.
+ * and fifos is done.
  */
-अटल व्योम
-reset_hfcpci(काष्ठा hfc_pci *hc)
-अणु
-	u_अक्षर	val;
-	पूर्णांक	cnt = 0;
+static void
+reset_hfcpci(struct hfc_pci *hc)
+{
+	u_char	val;
+	int	cnt = 0;
 
-	prपूर्णांकk(KERN_DEBUG "reset_hfcpci: entered\n");
+	printk(KERN_DEBUG "reset_hfcpci: entered\n");
 	val = Read_hfc(hc, HFCPCI_CHIP_ID);
-	prपूर्णांकk(KERN_INFO "HFC_PCI: resetting HFC ChipId(%x)\n", val);
+	printk(KERN_INFO "HFC_PCI: resetting HFC ChipId(%x)\n", val);
 	/* enable memory mapped ports, disable busmaster */
-	pci_ग_लिखो_config_word(hc->pdev, PCI_COMMAND, PCI_ENA_MEMIO);
+	pci_write_config_word(hc->pdev, PCI_COMMAND, PCI_ENA_MEMIO);
 	disable_hwirq(hc);
 	/* enable memory ports + busmaster */
-	pci_ग_लिखो_config_word(hc->pdev, PCI_COMMAND,
+	pci_write_config_word(hc->pdev, PCI_COMMAND,
 			      PCI_ENA_MEMIO + PCI_ENA_MASTER);
 	val = Read_hfc(hc, HFCPCI_STATUS);
-	prपूर्णांकk(KERN_DEBUG "HFC-PCI status(%x) before reset\n", val);
+	printk(KERN_DEBUG "HFC-PCI status(%x) before reset\n", val);
 	hc->hw.cirm = HFCPCI_RESET;	/* Reset On */
 	Write_hfc(hc, HFCPCI_CIRM, hc->hw.cirm);
 	set_current_state(TASK_UNINTERRUPTIBLE);
@@ -214,691 +213,691 @@ reset_hfcpci(काष्ठा hfc_pci *hc)
 	hc->hw.cirm = 0;		/* Reset Off */
 	Write_hfc(hc, HFCPCI_CIRM, hc->hw.cirm);
 	val = Read_hfc(hc, HFCPCI_STATUS);
-	prपूर्णांकk(KERN_DEBUG "HFC-PCI status(%x) after reset\n", val);
-	जबतक (cnt < 50000) अणु /* max 50000 us */
+	printk(KERN_DEBUG "HFC-PCI status(%x) after reset\n", val);
+	while (cnt < 50000) { /* max 50000 us */
 		udelay(5);
 		cnt += 5;
 		val = Read_hfc(hc, HFCPCI_STATUS);
-		अगर (!(val & 2))
-			अवरोध;
-	पूर्ण
-	prपूर्णांकk(KERN_DEBUG "HFC-PCI status(%x) after %dus\n", val, cnt);
+		if (!(val & 2))
+			break;
+	}
+	printk(KERN_DEBUG "HFC-PCI status(%x) after %dus\n", val, cnt);
 
-	hc->hw.fअगरo_en = 0x30;	/* only D fअगरos enabled */
+	hc->hw.fifo_en = 0x30;	/* only D fifos enabled */
 
 	hc->hw.bswapped = 0;	/* no exchange */
-	hc->hw.cपंचांगt = HFCPCI_TIM3_125 | HFCPCI_AUTO_TIMER;
+	hc->hw.ctmt = HFCPCI_TIM3_125 | HFCPCI_AUTO_TIMER;
 	hc->hw.trm = HFCPCI_BTRANS_THRESMASK; /* no echo connect , threshold */
 	hc->hw.sctrl = 0x40;	/* set tx_lo mode, error in datasheet ! */
 	hc->hw.sctrl_r = 0;
 	hc->hw.sctrl_e = HFCPCI_AUTO_AWAKE;	/* S/T Auto awake */
 	hc->hw.mst_m = 0;
-	अगर (test_bit(HFC_CFG_MASTER, &hc->cfg))
+	if (test_bit(HFC_CFG_MASTER, &hc->cfg))
 		hc->hw.mst_m |= HFCPCI_MASTER;	/* HFC Master Mode */
-	अगर (test_bit(HFC_CFG_NEG_F0, &hc->cfg))
+	if (test_bit(HFC_CFG_NEG_F0, &hc->cfg))
 		hc->hw.mst_m |= HFCPCI_F0_NEGATIV;
-	Write_hfc(hc, HFCPCI_FIFO_EN, hc->hw.fअगरo_en);
+	Write_hfc(hc, HFCPCI_FIFO_EN, hc->hw.fifo_en);
 	Write_hfc(hc, HFCPCI_TRM, hc->hw.trm);
 	Write_hfc(hc, HFCPCI_SCTRL_E, hc->hw.sctrl_e);
-	Write_hfc(hc, HFCPCI_CTMT, hc->hw.cपंचांगt);
+	Write_hfc(hc, HFCPCI_CTMT, hc->hw.ctmt);
 
-	hc->hw.पूर्णांक_m1 = HFCPCI_INTS_DTRANS | HFCPCI_INTS_DREC |
+	hc->hw.int_m1 = HFCPCI_INTS_DTRANS | HFCPCI_INTS_DREC |
 		HFCPCI_INTS_L1STATE | HFCPCI_INTS_TIMER;
-	Write_hfc(hc, HFCPCI_INT_M1, hc->hw.पूर्णांक_m1);
+	Write_hfc(hc, HFCPCI_INT_M1, hc->hw.int_m1);
 
-	/* Clear alपढ़ोy pending पूर्णांकs */
+	/* Clear already pending ints */
 	val = Read_hfc(hc, HFCPCI_INT_S1);
 
 	/* set NT/TE mode */
-	hfcpci_seपंचांगode(hc);
+	hfcpci_setmode(hc);
 
 	Write_hfc(hc, HFCPCI_MST_MODE, hc->hw.mst_m);
 	Write_hfc(hc, HFCPCI_SCTRL_R, hc->hw.sctrl_r);
 
 	/*
 	 * Init GCI/IOM2 in master mode
-	 * Slots 0 and 1 are set क्रम B-chan 1 and 2
+	 * Slots 0 and 1 are set for B-chan 1 and 2
 	 * D- and monitor/CI channel are not enabled
-	 * STIO1 is used as output क्रम data, B1+B2 from ST->IOM+HFC
+	 * STIO1 is used as output for data, B1+B2 from ST->IOM+HFC
 	 * STIO2 is used as data input, B1+B2 from IOM->ST
 	 * ST B-channel send disabled -> continuous 1s
 	 * The IOM slots are always enabled
 	 */
-	अगर (test_bit(HFC_CFG_PCM, &hc->cfg)) अणु
+	if (test_bit(HFC_CFG_PCM, &hc->cfg)) {
 		/* set data flow directions: connect B1,B2: HFC to/from PCM */
 		hc->hw.conn = 0x09;
-	पूर्ण अन्यथा अणु
+	} else {
 		hc->hw.conn = 0x36;	/* set data flow directions */
-		अगर (test_bit(HFC_CFG_SW_DD_DU, &hc->cfg)) अणु
+		if (test_bit(HFC_CFG_SW_DD_DU, &hc->cfg)) {
 			Write_hfc(hc, HFCPCI_B1_SSL, 0xC0);
 			Write_hfc(hc, HFCPCI_B2_SSL, 0xC1);
 			Write_hfc(hc, HFCPCI_B1_RSL, 0xC0);
 			Write_hfc(hc, HFCPCI_B2_RSL, 0xC1);
-		पूर्ण अन्यथा अणु
+		} else {
 			Write_hfc(hc, HFCPCI_B1_SSL, 0x80);
 			Write_hfc(hc, HFCPCI_B2_SSL, 0x81);
 			Write_hfc(hc, HFCPCI_B1_RSL, 0x80);
 			Write_hfc(hc, HFCPCI_B2_RSL, 0x81);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	Write_hfc(hc, HFCPCI_CONNECT, hc->hw.conn);
 	val = Read_hfc(hc, HFCPCI_INT_S2);
-पूर्ण
+}
 
 /*
- * Timer function called when kernel समयr expires
+ * Timer function called when kernel timer expires
  */
-अटल व्योम
-hfcpci_Timer(काष्ठा समयr_list *t)
-अणु
-	काष्ठा hfc_pci *hc = from_समयr(hc, t, hw.समयr);
-	hc->hw.समयr.expires = jअगरfies + 75;
+static void
+hfcpci_Timer(struct timer_list *t)
+{
+	struct hfc_pci *hc = from_timer(hc, t, hw.timer);
+	hc->hw.timer.expires = jiffies + 75;
 	/* WD RESET */
 /*
- *	WriteReg(hc, HFCD_DATA, HFCD_CTMT, hc->hw.cपंचांगt | 0x80);
- *	add_समयr(&hc->hw.समयr);
+ *	WriteReg(hc, HFCD_DATA, HFCD_CTMT, hc->hw.ctmt | 0x80);
+ *	add_timer(&hc->hw.timer);
  */
-पूर्ण
+}
 
 
 /*
  * select a b-channel entry matching and active
  */
-अटल काष्ठा bchannel *
-Sel_BCS(काष्ठा hfc_pci *hc, पूर्णांक channel)
-अणु
-	अगर (test_bit(FLG_ACTIVE, &hc->bch[0].Flags) &&
+static struct bchannel *
+Sel_BCS(struct hfc_pci *hc, int channel)
+{
+	if (test_bit(FLG_ACTIVE, &hc->bch[0].Flags) &&
 	    (hc->bch[0].nr & channel))
-		वापस &hc->bch[0];
-	अन्यथा अगर (test_bit(FLG_ACTIVE, &hc->bch[1].Flags) &&
+		return &hc->bch[0];
+	else if (test_bit(FLG_ACTIVE, &hc->bch[1].Flags) &&
 		 (hc->bch[1].nr & channel))
-		वापस &hc->bch[1];
-	अन्यथा
-		वापस शून्य;
-पूर्ण
+		return &hc->bch[1];
+	else
+		return NULL;
+}
 
 /*
- * clear the desired B-channel rx fअगरo
+ * clear the desired B-channel rx fifo
  */
-अटल व्योम
-hfcpci_clear_fअगरo_rx(काष्ठा hfc_pci *hc, पूर्णांक fअगरo)
-अणु
-	u_अक्षर		fअगरo_state;
-	काष्ठा bzfअगरo	*bzr;
+static void
+hfcpci_clear_fifo_rx(struct hfc_pci *hc, int fifo)
+{
+	u_char		fifo_state;
+	struct bzfifo	*bzr;
 
-	अगर (fअगरo) अणु
-		bzr = &((जोड़ fअगरo_area *)(hc->hw.fअगरos))->b_chans.rxbz_b2;
-		fअगरo_state = hc->hw.fअगरo_en & HFCPCI_FIFOEN_B2RX;
-	पूर्ण अन्यथा अणु
-		bzr = &((जोड़ fअगरo_area *)(hc->hw.fअगरos))->b_chans.rxbz_b1;
-		fअगरo_state = hc->hw.fअगरo_en & HFCPCI_FIFOEN_B1RX;
-	पूर्ण
-	अगर (fअगरo_state)
-		hc->hw.fअगरo_en ^= fअगरo_state;
-	Write_hfc(hc, HFCPCI_FIFO_EN, hc->hw.fअगरo_en);
-	hc->hw.last_bfअगरo_cnt[fअगरo] = 0;
+	if (fifo) {
+		bzr = &((union fifo_area *)(hc->hw.fifos))->b_chans.rxbz_b2;
+		fifo_state = hc->hw.fifo_en & HFCPCI_FIFOEN_B2RX;
+	} else {
+		bzr = &((union fifo_area *)(hc->hw.fifos))->b_chans.rxbz_b1;
+		fifo_state = hc->hw.fifo_en & HFCPCI_FIFOEN_B1RX;
+	}
+	if (fifo_state)
+		hc->hw.fifo_en ^= fifo_state;
+	Write_hfc(hc, HFCPCI_FIFO_EN, hc->hw.fifo_en);
+	hc->hw.last_bfifo_cnt[fifo] = 0;
 	bzr->f1 = MAX_B_FRAMES;
-	bzr->f2 = bzr->f1;	/* init F poपूर्णांकers to reमुख्य स्थिरant */
+	bzr->f2 = bzr->f1;	/* init F pointers to remain constant */
 	bzr->za[MAX_B_FRAMES].z1 = cpu_to_le16(B_FIFO_SIZE + B_SUB_VAL - 1);
 	bzr->za[MAX_B_FRAMES].z2 = cpu_to_le16(
 		le16_to_cpu(bzr->za[MAX_B_FRAMES].z1));
-	अगर (fअगरo_state)
-		hc->hw.fअगरo_en |= fअगरo_state;
-	Write_hfc(hc, HFCPCI_FIFO_EN, hc->hw.fअगरo_en);
-पूर्ण
+	if (fifo_state)
+		hc->hw.fifo_en |= fifo_state;
+	Write_hfc(hc, HFCPCI_FIFO_EN, hc->hw.fifo_en);
+}
 
 /*
- * clear the desired B-channel tx fअगरo
+ * clear the desired B-channel tx fifo
  */
-अटल व्योम hfcpci_clear_fअगरo_tx(काष्ठा hfc_pci *hc, पूर्णांक fअगरo)
-अणु
-	u_अक्षर		fअगरo_state;
-	काष्ठा bzfअगरo	*bzt;
+static void hfcpci_clear_fifo_tx(struct hfc_pci *hc, int fifo)
+{
+	u_char		fifo_state;
+	struct bzfifo	*bzt;
 
-	अगर (fअगरo) अणु
-		bzt = &((जोड़ fअगरo_area *)(hc->hw.fअगरos))->b_chans.txbz_b2;
-		fअगरo_state = hc->hw.fअगरo_en & HFCPCI_FIFOEN_B2TX;
-	पूर्ण अन्यथा अणु
-		bzt = &((जोड़ fअगरo_area *)(hc->hw.fअगरos))->b_chans.txbz_b1;
-		fअगरo_state = hc->hw.fअगरo_en & HFCPCI_FIFOEN_B1TX;
-	पूर्ण
-	अगर (fअगरo_state)
-		hc->hw.fअगरo_en ^= fअगरo_state;
-	Write_hfc(hc, HFCPCI_FIFO_EN, hc->hw.fअगरo_en);
-	अगर (hc->bch[fअगरo].debug & DEBUG_HW_BCHANNEL)
-		prपूर्णांकk(KERN_DEBUG "hfcpci_clear_fifo_tx%d f1(%x) f2(%x) "
+	if (fifo) {
+		bzt = &((union fifo_area *)(hc->hw.fifos))->b_chans.txbz_b2;
+		fifo_state = hc->hw.fifo_en & HFCPCI_FIFOEN_B2TX;
+	} else {
+		bzt = &((union fifo_area *)(hc->hw.fifos))->b_chans.txbz_b1;
+		fifo_state = hc->hw.fifo_en & HFCPCI_FIFOEN_B1TX;
+	}
+	if (fifo_state)
+		hc->hw.fifo_en ^= fifo_state;
+	Write_hfc(hc, HFCPCI_FIFO_EN, hc->hw.fifo_en);
+	if (hc->bch[fifo].debug & DEBUG_HW_BCHANNEL)
+		printk(KERN_DEBUG "hfcpci_clear_fifo_tx%d f1(%x) f2(%x) "
 		       "z1(%x) z2(%x) state(%x)\n",
-		       fअगरo, bzt->f1, bzt->f2,
+		       fifo, bzt->f1, bzt->f2,
 		       le16_to_cpu(bzt->za[MAX_B_FRAMES].z1),
 		       le16_to_cpu(bzt->za[MAX_B_FRAMES].z2),
-		       fअगरo_state);
+		       fifo_state);
 	bzt->f2 = MAX_B_FRAMES;
-	bzt->f1 = bzt->f2;	/* init F poपूर्णांकers to reमुख्य स्थिरant */
+	bzt->f1 = bzt->f2;	/* init F pointers to remain constant */
 	bzt->za[MAX_B_FRAMES].z1 = cpu_to_le16(B_FIFO_SIZE + B_SUB_VAL - 1);
 	bzt->za[MAX_B_FRAMES].z2 = cpu_to_le16(B_FIFO_SIZE + B_SUB_VAL - 2);
-	अगर (fअगरo_state)
-		hc->hw.fअगरo_en |= fअगरo_state;
-	Write_hfc(hc, HFCPCI_FIFO_EN, hc->hw.fअगरo_en);
-	अगर (hc->bch[fअगरo].debug & DEBUG_HW_BCHANNEL)
-		prपूर्णांकk(KERN_DEBUG
+	if (fifo_state)
+		hc->hw.fifo_en |= fifo_state;
+	Write_hfc(hc, HFCPCI_FIFO_EN, hc->hw.fifo_en);
+	if (hc->bch[fifo].debug & DEBUG_HW_BCHANNEL)
+		printk(KERN_DEBUG
 		       "hfcpci_clear_fifo_tx%d f1(%x) f2(%x) z1(%x) z2(%x)\n",
-		       fअगरo, bzt->f1, bzt->f2,
+		       fifo, bzt->f1, bzt->f2,
 		       le16_to_cpu(bzt->za[MAX_B_FRAMES].z1),
 		       le16_to_cpu(bzt->za[MAX_B_FRAMES].z2));
-पूर्ण
+}
 
 /*
- * पढ़ो a complete B-frame out of the buffer
+ * read a complete B-frame out of the buffer
  */
-अटल व्योम
-hfcpci_empty_bfअगरo(काष्ठा bchannel *bch, काष्ठा bzfअगरo *bz,
-		   u_अक्षर *bdata, पूर्णांक count)
-अणु
-	u_अक्षर		*ptr, *ptr1, new_f2;
-	पूर्णांक		maxlen, new_z2;
-	काष्ठा zt	*zp;
+static void
+hfcpci_empty_bfifo(struct bchannel *bch, struct bzfifo *bz,
+		   u_char *bdata, int count)
+{
+	u_char		*ptr, *ptr1, new_f2;
+	int		maxlen, new_z2;
+	struct zt	*zp;
 
-	अगर ((bch->debug & DEBUG_HW_BCHANNEL) && !(bch->debug & DEBUG_HW_BFIFO))
-		prपूर्णांकk(KERN_DEBUG "hfcpci_empty_fifo\n");
-	zp = &bz->za[bz->f2];	/* poपूर्णांक to Z-Regs */
-	new_z2 = le16_to_cpu(zp->z2) + count;	/* new position in fअगरo */
-	अगर (new_z2 >= (B_FIFO_SIZE + B_SUB_VAL))
+	if ((bch->debug & DEBUG_HW_BCHANNEL) && !(bch->debug & DEBUG_HW_BFIFO))
+		printk(KERN_DEBUG "hfcpci_empty_fifo\n");
+	zp = &bz->za[bz->f2];	/* point to Z-Regs */
+	new_z2 = le16_to_cpu(zp->z2) + count;	/* new position in fifo */
+	if (new_z2 >= (B_FIFO_SIZE + B_SUB_VAL))
 		new_z2 -= B_FIFO_SIZE;	/* buffer wrap */
 	new_f2 = (bz->f2 + 1) & MAX_B_FRAMES;
-	अगर ((count > MAX_DATA_SIZE + 3) || (count < 4) ||
-	    (*(bdata + (le16_to_cpu(zp->z1) - B_SUB_VAL)))) अणु
-		अगर (bch->debug & DEBUG_HW)
-			prपूर्णांकk(KERN_DEBUG "hfcpci_empty_fifo: incoming packet "
+	if ((count > MAX_DATA_SIZE + 3) || (count < 4) ||
+	    (*(bdata + (le16_to_cpu(zp->z1) - B_SUB_VAL)))) {
+		if (bch->debug & DEBUG_HW)
+			printk(KERN_DEBUG "hfcpci_empty_fifo: incoming packet "
 			       "invalid length %d or crc\n", count);
-#अगर_घोषित ERROR_STATISTIC
+#ifdef ERROR_STATISTIC
 		bch->err_inv++;
-#पूर्ण_अगर
+#endif
 		bz->za[new_f2].z2 = cpu_to_le16(new_z2);
 		bz->f2 = new_f2;	/* next buffer */
-	पूर्ण अन्यथा अणु
+	} else {
 		bch->rx_skb = mI_alloc_skb(count - 3, GFP_ATOMIC);
-		अगर (!bch->rx_skb) अणु
-			prपूर्णांकk(KERN_WARNING "HFCPCI: receive out of memory\n");
-			वापस;
-		पूर्ण
+		if (!bch->rx_skb) {
+			printk(KERN_WARNING "HFCPCI: receive out of memory\n");
+			return;
+		}
 		count -= 3;
 		ptr = skb_put(bch->rx_skb, count);
 
-		अगर (le16_to_cpu(zp->z2) + count <= B_FIFO_SIZE + B_SUB_VAL)
+		if (le16_to_cpu(zp->z2) + count <= B_FIFO_SIZE + B_SUB_VAL)
 			maxlen = count;		/* complete transfer */
-		अन्यथा
+		else
 			maxlen = B_FIFO_SIZE + B_SUB_VAL -
 				le16_to_cpu(zp->z2);	/* maximum */
 
 		ptr1 = bdata + (le16_to_cpu(zp->z2) - B_SUB_VAL);
 		/* start of data */
-		स_नकल(ptr, ptr1, maxlen);	/* copy data */
+		memcpy(ptr, ptr1, maxlen);	/* copy data */
 		count -= maxlen;
 
-		अगर (count) अणु	/* rest reमुख्यing */
+		if (count) {	/* rest remaining */
 			ptr += maxlen;
 			ptr1 = bdata;	/* start of buffer */
-			स_नकल(ptr, ptr1, count);	/* rest */
-		पूर्ण
+			memcpy(ptr, ptr1, count);	/* rest */
+		}
 		bz->za[new_f2].z2 = cpu_to_le16(new_z2);
 		bz->f2 = new_f2;	/* next buffer */
 		recv_Bchannel(bch, MISDN_ID_ANY, false);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * D-channel receive procedure
  */
-अटल पूर्णांक
-receive_dmsg(काष्ठा hfc_pci *hc)
-अणु
-	काष्ठा dchannel	*dch = &hc->dch;
-	पूर्णांक		maxlen;
-	पूर्णांक		rcnt, total;
-	पूर्णांक		count = 5;
-	u_अक्षर		*ptr, *ptr1;
-	काष्ठा dfअगरo	*df;
-	काष्ठा zt	*zp;
+static int
+receive_dmsg(struct hfc_pci *hc)
+{
+	struct dchannel	*dch = &hc->dch;
+	int		maxlen;
+	int		rcnt, total;
+	int		count = 5;
+	u_char		*ptr, *ptr1;
+	struct dfifo	*df;
+	struct zt	*zp;
 
-	df = &((जोड़ fअगरo_area *)(hc->hw.fअगरos))->d_chan.d_rx;
-	जबतक (((df->f1 & D_FREG_MASK) != (df->f2 & D_FREG_MASK)) && count--) अणु
+	df = &((union fifo_area *)(hc->hw.fifos))->d_chan.d_rx;
+	while (((df->f1 & D_FREG_MASK) != (df->f2 & D_FREG_MASK)) && count--) {
 		zp = &df->za[df->f2 & D_FREG_MASK];
 		rcnt = le16_to_cpu(zp->z1) - le16_to_cpu(zp->z2);
-		अगर (rcnt < 0)
+		if (rcnt < 0)
 			rcnt += D_FIFO_SIZE;
 		rcnt++;
-		अगर (dch->debug & DEBUG_HW_DCHANNEL)
-			prपूर्णांकk(KERN_DEBUG
+		if (dch->debug & DEBUG_HW_DCHANNEL)
+			printk(KERN_DEBUG
 			       "hfcpci recd f1(%d) f2(%d) z1(%x) z2(%x) cnt(%d)\n",
 			       df->f1, df->f2,
 			       le16_to_cpu(zp->z1),
 			       le16_to_cpu(zp->z2),
 			       rcnt);
 
-		अगर ((rcnt > MAX_DFRAME_LEN + 3) || (rcnt < 4) ||
-		    (df->data[le16_to_cpu(zp->z1)])) अणु
-			अगर (dch->debug & DEBUG_HW)
-				prपूर्णांकk(KERN_DEBUG
+		if ((rcnt > MAX_DFRAME_LEN + 3) || (rcnt < 4) ||
+		    (df->data[le16_to_cpu(zp->z1)])) {
+			if (dch->debug & DEBUG_HW)
+				printk(KERN_DEBUG
 				       "empty_fifo hfcpci packet inv. len "
 				       "%d or crc %d\n",
 				       rcnt,
 				       df->data[le16_to_cpu(zp->z1)]);
-#अगर_घोषित ERROR_STATISTIC
+#ifdef ERROR_STATISTIC
 			cs->err_rx++;
-#पूर्ण_अगर
+#endif
 			df->f2 = ((df->f2 + 1) & MAX_D_FRAMES) |
 				(MAX_D_FRAMES + 1);	/* next buffer */
 			df->za[df->f2 & D_FREG_MASK].z2 =
 				cpu_to_le16((le16_to_cpu(zp->z2) + rcnt) &
 					    (D_FIFO_SIZE - 1));
-		पूर्ण अन्यथा अणु
+		} else {
 			dch->rx_skb = mI_alloc_skb(rcnt - 3, GFP_ATOMIC);
-			अगर (!dch->rx_skb) अणु
-				prपूर्णांकk(KERN_WARNING
+			if (!dch->rx_skb) {
+				printk(KERN_WARNING
 				       "HFC-PCI: D receive out of memory\n");
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			total = rcnt;
 			rcnt -= 3;
 			ptr = skb_put(dch->rx_skb, rcnt);
 
-			अगर (le16_to_cpu(zp->z2) + rcnt <= D_FIFO_SIZE)
+			if (le16_to_cpu(zp->z2) + rcnt <= D_FIFO_SIZE)
 				maxlen = rcnt;	/* complete transfer */
-			अन्यथा
+			else
 				maxlen = D_FIFO_SIZE - le16_to_cpu(zp->z2);
 			/* maximum */
 
 			ptr1 = df->data + le16_to_cpu(zp->z2);
 			/* start of data */
-			स_नकल(ptr, ptr1, maxlen);	/* copy data */
+			memcpy(ptr, ptr1, maxlen);	/* copy data */
 			rcnt -= maxlen;
 
-			अगर (rcnt) अणु	/* rest reमुख्यing */
+			if (rcnt) {	/* rest remaining */
 				ptr += maxlen;
 				ptr1 = df->data;	/* start of buffer */
-				स_नकल(ptr, ptr1, rcnt);	/* rest */
-			पूर्ण
+				memcpy(ptr, ptr1, rcnt);	/* rest */
+			}
 			df->f2 = ((df->f2 + 1) & MAX_D_FRAMES) |
 				(MAX_D_FRAMES + 1);	/* next buffer */
 			df->za[df->f2 & D_FREG_MASK].z2 = cpu_to_le16((
 									      le16_to_cpu(zp->z2) + total) & (D_FIFO_SIZE - 1));
 			recv_Dchannel(dch);
-		पूर्ण
-	पूर्ण
-	वापस 1;
-पूर्ण
+		}
+	}
+	return 1;
+}
 
 /*
- * check क्रम transparent receive data and पढ़ो max one 'poll' size अगर avail
+ * check for transparent receive data and read max one 'poll' size if avail
  */
-अटल व्योम
-hfcpci_empty_fअगरo_trans(काष्ठा bchannel *bch, काष्ठा bzfअगरo *rxbz,
-			काष्ठा bzfअगरo *txbz, u_अक्षर *bdata)
-अणु
+static void
+hfcpci_empty_fifo_trans(struct bchannel *bch, struct bzfifo *rxbz,
+			struct bzfifo *txbz, u_char *bdata)
+{
 	__le16	*z1r, *z2r, *z1t, *z2t;
-	पूर्णांक	new_z2, fcnt_rx, fcnt_tx, maxlen;
-	u_अक्षर	*ptr, *ptr1;
+	int	new_z2, fcnt_rx, fcnt_tx, maxlen;
+	u_char	*ptr, *ptr1;
 
-	z1r = &rxbz->za[MAX_B_FRAMES].z1;	/* poपूर्णांकer to z reg */
+	z1r = &rxbz->za[MAX_B_FRAMES].z1;	/* pointer to z reg */
 	z2r = z1r + 1;
 	z1t = &txbz->za[MAX_B_FRAMES].z1;
 	z2t = z1t + 1;
 
 	fcnt_rx = le16_to_cpu(*z1r) - le16_to_cpu(*z2r);
-	अगर (!fcnt_rx)
-		वापस;	/* no data avail */
+	if (!fcnt_rx)
+		return;	/* no data avail */
 
-	अगर (fcnt_rx <= 0)
+	if (fcnt_rx <= 0)
 		fcnt_rx += B_FIFO_SIZE;	/* bytes actually buffered */
-	new_z2 = le16_to_cpu(*z2r) + fcnt_rx;	/* new position in fअगरo */
-	अगर (new_z2 >= (B_FIFO_SIZE + B_SUB_VAL))
+	new_z2 = le16_to_cpu(*z2r) + fcnt_rx;	/* new position in fifo */
+	if (new_z2 >= (B_FIFO_SIZE + B_SUB_VAL))
 		new_z2 -= B_FIFO_SIZE;	/* buffer wrap */
 
 	fcnt_tx = le16_to_cpu(*z2t) - le16_to_cpu(*z1t);
-	अगर (fcnt_tx <= 0)
+	if (fcnt_tx <= 0)
 		fcnt_tx += B_FIFO_SIZE;
-	/* fcnt_tx contains available bytes in tx-fअगरo */
+	/* fcnt_tx contains available bytes in tx-fifo */
 	fcnt_tx = B_FIFO_SIZE - fcnt_tx;
-	/* reमुख्यing bytes to send (bytes in tx-fअगरo) */
+	/* remaining bytes to send (bytes in tx-fifo) */
 
-	अगर (test_bit(FLG_RX_OFF, &bch->Flags)) अणु
+	if (test_bit(FLG_RX_OFF, &bch->Flags)) {
 		bch->dropcnt += fcnt_rx;
 		*z2r = cpu_to_le16(new_z2);
-		वापस;
-	पूर्ण
+		return;
+	}
 	maxlen = bchannel_get_rxbuf(bch, fcnt_rx);
-	अगर (maxlen < 0) अणु
+	if (maxlen < 0) {
 		pr_warn("B%d: No bufferspace for %d bytes\n", bch->nr, fcnt_rx);
-	पूर्ण अन्यथा अणु
+	} else {
 		ptr = skb_put(bch->rx_skb, fcnt_rx);
-		अगर (le16_to_cpu(*z2r) + fcnt_rx <= B_FIFO_SIZE + B_SUB_VAL)
+		if (le16_to_cpu(*z2r) + fcnt_rx <= B_FIFO_SIZE + B_SUB_VAL)
 			maxlen = fcnt_rx;	/* complete transfer */
-		अन्यथा
+		else
 			maxlen = B_FIFO_SIZE + B_SUB_VAL - le16_to_cpu(*z2r);
 		/* maximum */
 
 		ptr1 = bdata + (le16_to_cpu(*z2r) - B_SUB_VAL);
 		/* start of data */
-		स_नकल(ptr, ptr1, maxlen);	/* copy data */
+		memcpy(ptr, ptr1, maxlen);	/* copy data */
 		fcnt_rx -= maxlen;
 
-		अगर (fcnt_rx) अणु	/* rest reमुख्यing */
+		if (fcnt_rx) {	/* rest remaining */
 			ptr += maxlen;
 			ptr1 = bdata;	/* start of buffer */
-			स_नकल(ptr, ptr1, fcnt_rx);	/* rest */
-		पूर्ण
-		recv_Bchannel(bch, fcnt_tx, false); /* bch, id, !क्रमce */
-	पूर्ण
+			memcpy(ptr, ptr1, fcnt_rx);	/* rest */
+		}
+		recv_Bchannel(bch, fcnt_tx, false); /* bch, id, !force */
+	}
 	*z2r = cpu_to_le16(new_z2);		/* new position */
-पूर्ण
+}
 
 /*
- * B-channel मुख्य receive routine
+ * B-channel main receive routine
  */
-अटल व्योम
-मुख्य_rec_hfcpci(काष्ठा bchannel *bch)
-अणु
-	काष्ठा hfc_pci	*hc = bch->hw;
-	पूर्णांक		rcnt, real_fअगरo;
-	पूर्णांक		receive = 0, count = 5;
-	काष्ठा bzfअगरo	*txbz, *rxbz;
-	u_अक्षर		*bdata;
-	काष्ठा zt	*zp;
+static void
+main_rec_hfcpci(struct bchannel *bch)
+{
+	struct hfc_pci	*hc = bch->hw;
+	int		rcnt, real_fifo;
+	int		receive = 0, count = 5;
+	struct bzfifo	*txbz, *rxbz;
+	u_char		*bdata;
+	struct zt	*zp;
 
-	अगर ((bch->nr & 2) && (!hc->hw.bswapped)) अणु
-		rxbz = &((जोड़ fअगरo_area *)(hc->hw.fअगरos))->b_chans.rxbz_b2;
-		txbz = &((जोड़ fअगरo_area *)(hc->hw.fअगरos))->b_chans.txbz_b2;
-		bdata = ((जोड़ fअगरo_area *)(hc->hw.fअगरos))->b_chans.rxdat_b2;
-		real_fअगरo = 1;
-	पूर्ण अन्यथा अणु
-		rxbz = &((जोड़ fअगरo_area *)(hc->hw.fअगरos))->b_chans.rxbz_b1;
-		txbz = &((जोड़ fअगरo_area *)(hc->hw.fअगरos))->b_chans.txbz_b1;
-		bdata = ((जोड़ fअगरo_area *)(hc->hw.fअगरos))->b_chans.rxdat_b1;
-		real_fअगरo = 0;
-	पूर्ण
+	if ((bch->nr & 2) && (!hc->hw.bswapped)) {
+		rxbz = &((union fifo_area *)(hc->hw.fifos))->b_chans.rxbz_b2;
+		txbz = &((union fifo_area *)(hc->hw.fifos))->b_chans.txbz_b2;
+		bdata = ((union fifo_area *)(hc->hw.fifos))->b_chans.rxdat_b2;
+		real_fifo = 1;
+	} else {
+		rxbz = &((union fifo_area *)(hc->hw.fifos))->b_chans.rxbz_b1;
+		txbz = &((union fifo_area *)(hc->hw.fifos))->b_chans.txbz_b1;
+		bdata = ((union fifo_area *)(hc->hw.fifos))->b_chans.rxdat_b1;
+		real_fifo = 0;
+	}
 Begin:
 	count--;
-	अगर (rxbz->f1 != rxbz->f2) अणु
-		अगर (bch->debug & DEBUG_HW_BCHANNEL)
-			prपूर्णांकk(KERN_DEBUG "hfcpci rec ch(%x) f1(%d) f2(%d)\n",
+	if (rxbz->f1 != rxbz->f2) {
+		if (bch->debug & DEBUG_HW_BCHANNEL)
+			printk(KERN_DEBUG "hfcpci rec ch(%x) f1(%d) f2(%d)\n",
 			       bch->nr, rxbz->f1, rxbz->f2);
 		zp = &rxbz->za[rxbz->f2];
 
 		rcnt = le16_to_cpu(zp->z1) - le16_to_cpu(zp->z2);
-		अगर (rcnt < 0)
+		if (rcnt < 0)
 			rcnt += B_FIFO_SIZE;
 		rcnt++;
-		अगर (bch->debug & DEBUG_HW_BCHANNEL)
-			prपूर्णांकk(KERN_DEBUG
+		if (bch->debug & DEBUG_HW_BCHANNEL)
+			printk(KERN_DEBUG
 			       "hfcpci rec ch(%x) z1(%x) z2(%x) cnt(%d)\n",
 			       bch->nr, le16_to_cpu(zp->z1),
 			       le16_to_cpu(zp->z2), rcnt);
-		hfcpci_empty_bfअगरo(bch, rxbz, bdata, rcnt);
+		hfcpci_empty_bfifo(bch, rxbz, bdata, rcnt);
 		rcnt = rxbz->f1 - rxbz->f2;
-		अगर (rcnt < 0)
+		if (rcnt < 0)
 			rcnt += MAX_B_FRAMES + 1;
-		अगर (hc->hw.last_bfअगरo_cnt[real_fअगरo] > rcnt + 1) अणु
+		if (hc->hw.last_bfifo_cnt[real_fifo] > rcnt + 1) {
 			rcnt = 0;
-			hfcpci_clear_fअगरo_rx(hc, real_fअगरo);
-		पूर्ण
-		hc->hw.last_bfअगरo_cnt[real_fअगरo] = rcnt;
-		अगर (rcnt > 1)
+			hfcpci_clear_fifo_rx(hc, real_fifo);
+		}
+		hc->hw.last_bfifo_cnt[real_fifo] = rcnt;
+		if (rcnt > 1)
 			receive = 1;
-		अन्यथा
+		else
 			receive = 0;
-	पूर्ण अन्यथा अगर (test_bit(FLG_TRANSPARENT, &bch->Flags)) अणु
-		hfcpci_empty_fअगरo_trans(bch, rxbz, txbz, bdata);
-		वापस;
-	पूर्ण अन्यथा
+	} else if (test_bit(FLG_TRANSPARENT, &bch->Flags)) {
+		hfcpci_empty_fifo_trans(bch, rxbz, txbz, bdata);
+		return;
+	} else
 		receive = 0;
-	अगर (count && receive)
-		जाओ Begin;
+	if (count && receive)
+		goto Begin;
 
-पूर्ण
+}
 
 /*
  * D-channel send routine
  */
-अटल व्योम
-hfcpci_fill_dfअगरo(काष्ठा hfc_pci *hc)
-अणु
-	काष्ठा dchannel	*dch = &hc->dch;
-	पूर्णांक		fcnt;
-	पूर्णांक		count, new_z1, maxlen;
-	काष्ठा dfअगरo	*df;
-	u_अक्षर		*src, *dst, new_f1;
+static void
+hfcpci_fill_dfifo(struct hfc_pci *hc)
+{
+	struct dchannel	*dch = &hc->dch;
+	int		fcnt;
+	int		count, new_z1, maxlen;
+	struct dfifo	*df;
+	u_char		*src, *dst, new_f1;
 
-	अगर ((dch->debug & DEBUG_HW_DCHANNEL) && !(dch->debug & DEBUG_HW_DFIFO))
-		prपूर्णांकk(KERN_DEBUG "%s\n", __func__);
+	if ((dch->debug & DEBUG_HW_DCHANNEL) && !(dch->debug & DEBUG_HW_DFIFO))
+		printk(KERN_DEBUG "%s\n", __func__);
 
-	अगर (!dch->tx_skb)
-		वापस;
+	if (!dch->tx_skb)
+		return;
 	count = dch->tx_skb->len - dch->tx_idx;
-	अगर (count <= 0)
-		वापस;
-	df = &((जोड़ fअगरo_area *) (hc->hw.fअगरos))->d_chan.d_tx;
+	if (count <= 0)
+		return;
+	df = &((union fifo_area *) (hc->hw.fifos))->d_chan.d_tx;
 
-	अगर (dch->debug & DEBUG_HW_DFIFO)
-		prपूर्णांकk(KERN_DEBUG "%s:f1(%d) f2(%d) z1(f1)(%x)\n", __func__,
+	if (dch->debug & DEBUG_HW_DFIFO)
+		printk(KERN_DEBUG "%s:f1(%d) f2(%d) z1(f1)(%x)\n", __func__,
 		       df->f1, df->f2,
 		       le16_to_cpu(df->za[df->f1 & D_FREG_MASK].z1));
 	fcnt = df->f1 - df->f2;	/* frame count actually buffered */
-	अगर (fcnt < 0)
-		fcnt += (MAX_D_FRAMES + 1);	/* अगर wrap around */
-	अगर (fcnt > (MAX_D_FRAMES - 1)) अणु
-		अगर (dch->debug & DEBUG_HW_DCHANNEL)
-			prपूर्णांकk(KERN_DEBUG
+	if (fcnt < 0)
+		fcnt += (MAX_D_FRAMES + 1);	/* if wrap around */
+	if (fcnt > (MAX_D_FRAMES - 1)) {
+		if (dch->debug & DEBUG_HW_DCHANNEL)
+			printk(KERN_DEBUG
 			       "hfcpci_fill_Dfifo more as 14 frames\n");
-#अगर_घोषित ERROR_STATISTIC
+#ifdef ERROR_STATISTIC
 		cs->err_tx++;
-#पूर्ण_अगर
-		वापस;
-	पूर्ण
-	/* now determine मुक्त bytes in FIFO buffer */
+#endif
+		return;
+	}
+	/* now determine free bytes in FIFO buffer */
 	maxlen = le16_to_cpu(df->za[df->f2 & D_FREG_MASK].z2) -
 		le16_to_cpu(df->za[df->f1 & D_FREG_MASK].z1) - 1;
-	अगर (maxlen <= 0)
+	if (maxlen <= 0)
 		maxlen += D_FIFO_SIZE;	/* count now contains available bytes */
 
-	अगर (dch->debug & DEBUG_HW_DCHANNEL)
-		prपूर्णांकk(KERN_DEBUG "hfcpci_fill_Dfifo count(%d/%d)\n",
+	if (dch->debug & DEBUG_HW_DCHANNEL)
+		printk(KERN_DEBUG "hfcpci_fill_Dfifo count(%d/%d)\n",
 		       count, maxlen);
-	अगर (count > maxlen) अणु
-		अगर (dch->debug & DEBUG_HW_DCHANNEL)
-			prपूर्णांकk(KERN_DEBUG "hfcpci_fill_Dfifo no fifo mem\n");
-		वापस;
-	पूर्ण
+	if (count > maxlen) {
+		if (dch->debug & DEBUG_HW_DCHANNEL)
+			printk(KERN_DEBUG "hfcpci_fill_Dfifo no fifo mem\n");
+		return;
+	}
 	new_z1 = (le16_to_cpu(df->za[df->f1 & D_FREG_MASK].z1) + count) &
 		(D_FIFO_SIZE - 1);
 	new_f1 = ((df->f1 + 1) & D_FREG_MASK) | (D_FREG_MASK + 1);
-	src = dch->tx_skb->data + dch->tx_idx;	/* source poपूर्णांकer */
+	src = dch->tx_skb->data + dch->tx_idx;	/* source pointer */
 	dst = df->data + le16_to_cpu(df->za[df->f1 & D_FREG_MASK].z1);
 	maxlen = D_FIFO_SIZE - le16_to_cpu(df->za[df->f1 & D_FREG_MASK].z1);
-	/* end fअगरo */
-	अगर (maxlen > count)
+	/* end fifo */
+	if (maxlen > count)
 		maxlen = count;	/* limit size */
-	स_नकल(dst, src, maxlen);	/* first copy */
+	memcpy(dst, src, maxlen);	/* first copy */
 
-	count -= maxlen;	/* reमुख्यing bytes */
-	अगर (count) अणु
+	count -= maxlen;	/* remaining bytes */
+	if (count) {
 		dst = df->data;	/* start of buffer */
 		src += maxlen;	/* new position */
-		स_नकल(dst, src, count);
-	पूर्ण
+		memcpy(dst, src, count);
+	}
 	df->za[new_f1 & D_FREG_MASK].z1 = cpu_to_le16(new_z1);
-	/* क्रम next buffer */
+	/* for next buffer */
 	df->za[df->f1 & D_FREG_MASK].z1 = cpu_to_le16(new_z1);
 	/* new pos actual buffer */
 	df->f1 = new_f1;	/* next frame */
 	dch->tx_idx = dch->tx_skb->len;
-पूर्ण
+}
 
 /*
  * B-channel send routine
  */
-अटल व्योम
-hfcpci_fill_fअगरo(काष्ठा bchannel *bch)
-अणु
-	काष्ठा hfc_pci	*hc = bch->hw;
-	पूर्णांक		maxlen, fcnt;
-	पूर्णांक		count, new_z1;
-	काष्ठा bzfअगरo	*bz;
-	u_अक्षर		*bdata;
-	u_अक्षर		new_f1, *src, *dst;
+static void
+hfcpci_fill_fifo(struct bchannel *bch)
+{
+	struct hfc_pci	*hc = bch->hw;
+	int		maxlen, fcnt;
+	int		count, new_z1;
+	struct bzfifo	*bz;
+	u_char		*bdata;
+	u_char		new_f1, *src, *dst;
 	__le16 *z1t, *z2t;
 
-	अगर ((bch->debug & DEBUG_HW_BCHANNEL) && !(bch->debug & DEBUG_HW_BFIFO))
-		prपूर्णांकk(KERN_DEBUG "%s\n", __func__);
-	अगर ((!bch->tx_skb) || bch->tx_skb->len == 0) अणु
-		अगर (!test_bit(FLG_FILLEMPTY, &bch->Flags) &&
+	if ((bch->debug & DEBUG_HW_BCHANNEL) && !(bch->debug & DEBUG_HW_BFIFO))
+		printk(KERN_DEBUG "%s\n", __func__);
+	if ((!bch->tx_skb) || bch->tx_skb->len == 0) {
+		if (!test_bit(FLG_FILLEMPTY, &bch->Flags) &&
 		    !test_bit(FLG_TRANSPARENT, &bch->Flags))
-			वापस;
+			return;
 		count = HFCPCI_FILLEMPTY;
-	पूर्ण अन्यथा अणु
+	} else {
 		count = bch->tx_skb->len - bch->tx_idx;
-	पूर्ण
-	अगर ((bch->nr & 2) && (!hc->hw.bswapped)) अणु
-		bz = &((जोड़ fअगरo_area *)(hc->hw.fअगरos))->b_chans.txbz_b2;
-		bdata = ((जोड़ fअगरo_area *)(hc->hw.fअगरos))->b_chans.txdat_b2;
-	पूर्ण अन्यथा अणु
-		bz = &((जोड़ fअगरo_area *)(hc->hw.fअगरos))->b_chans.txbz_b1;
-		bdata = ((जोड़ fअगरo_area *)(hc->hw.fअगरos))->b_chans.txdat_b1;
-	पूर्ण
+	}
+	if ((bch->nr & 2) && (!hc->hw.bswapped)) {
+		bz = &((union fifo_area *)(hc->hw.fifos))->b_chans.txbz_b2;
+		bdata = ((union fifo_area *)(hc->hw.fifos))->b_chans.txdat_b2;
+	} else {
+		bz = &((union fifo_area *)(hc->hw.fifos))->b_chans.txbz_b1;
+		bdata = ((union fifo_area *)(hc->hw.fifos))->b_chans.txdat_b1;
+	}
 
-	अगर (test_bit(FLG_TRANSPARENT, &bch->Flags)) अणु
+	if (test_bit(FLG_TRANSPARENT, &bch->Flags)) {
 		z1t = &bz->za[MAX_B_FRAMES].z1;
 		z2t = z1t + 1;
-		अगर (bch->debug & DEBUG_HW_BCHANNEL)
-			prपूर्णांकk(KERN_DEBUG "hfcpci_fill_fifo_trans ch(%x) "
+		if (bch->debug & DEBUG_HW_BCHANNEL)
+			printk(KERN_DEBUG "hfcpci_fill_fifo_trans ch(%x) "
 			       "cnt(%d) z1(%x) z2(%x)\n", bch->nr, count,
 			       le16_to_cpu(*z1t), le16_to_cpu(*z2t));
 		fcnt = le16_to_cpu(*z2t) - le16_to_cpu(*z1t);
-		अगर (fcnt <= 0)
+		if (fcnt <= 0)
 			fcnt += B_FIFO_SIZE;
-		अगर (test_bit(FLG_FILLEMPTY, &bch->Flags)) अणु
-			/* fcnt contains available bytes in fअगरo */
-			अगर (count > fcnt)
+		if (test_bit(FLG_FILLEMPTY, &bch->Flags)) {
+			/* fcnt contains available bytes in fifo */
+			if (count > fcnt)
 				count = fcnt;
 			new_z1 = le16_to_cpu(*z1t) + count;
 			/* new buffer Position */
-			अगर (new_z1 >= (B_FIFO_SIZE + B_SUB_VAL))
+			if (new_z1 >= (B_FIFO_SIZE + B_SUB_VAL))
 				new_z1 -= B_FIFO_SIZE;	/* buffer wrap */
 			dst = bdata + (le16_to_cpu(*z1t) - B_SUB_VAL);
 			maxlen = (B_FIFO_SIZE + B_SUB_VAL) - le16_to_cpu(*z1t);
-			/* end of fअगरo */
-			अगर (bch->debug & DEBUG_HW_BFIFO)
-				prपूर्णांकk(KERN_DEBUG "hfcpci_FFt fillempty "
+			/* end of fifo */
+			if (bch->debug & DEBUG_HW_BFIFO)
+				printk(KERN_DEBUG "hfcpci_FFt fillempty "
 				       "fcnt(%d) maxl(%d) nz1(%x) dst(%p)\n",
 				       fcnt, maxlen, new_z1, dst);
-			अगर (maxlen > count)
+			if (maxlen > count)
 				maxlen = count;		/* limit size */
-			स_रखो(dst, bch->fill[0], maxlen); /* first copy */
-			count -= maxlen;		/* reमुख्यing bytes */
-			अगर (count) अणु
+			memset(dst, bch->fill[0], maxlen); /* first copy */
+			count -= maxlen;		/* remaining bytes */
+			if (count) {
 				dst = bdata;		/* start of buffer */
-				स_रखो(dst, bch->fill[0], count);
-			पूर्ण
+				memset(dst, bch->fill[0], count);
+			}
 			*z1t = cpu_to_le16(new_z1);	/* now send data */
-			वापस;
-		पूर्ण
-		/* fcnt contains available bytes in fअगरo */
+			return;
+		}
+		/* fcnt contains available bytes in fifo */
 		fcnt = B_FIFO_SIZE - fcnt;
-		/* reमुख्यing bytes to send (bytes in fअगरo) */
+		/* remaining bytes to send (bytes in fifo) */
 
 	next_t_frame:
 		count = bch->tx_skb->len - bch->tx_idx;
 		/* maximum fill shall be poll*2 */
-		अगर (count > (poll << 1) - fcnt)
+		if (count > (poll << 1) - fcnt)
 			count = (poll << 1) - fcnt;
-		अगर (count <= 0)
-			वापस;
-		/* data is suitable क्रम fअगरo */
+		if (count <= 0)
+			return;
+		/* data is suitable for fifo */
 		new_z1 = le16_to_cpu(*z1t) + count;
 		/* new buffer Position */
-		अगर (new_z1 >= (B_FIFO_SIZE + B_SUB_VAL))
+		if (new_z1 >= (B_FIFO_SIZE + B_SUB_VAL))
 			new_z1 -= B_FIFO_SIZE;	/* buffer wrap */
 		src = bch->tx_skb->data + bch->tx_idx;
-		/* source poपूर्णांकer */
+		/* source pointer */
 		dst = bdata + (le16_to_cpu(*z1t) - B_SUB_VAL);
 		maxlen = (B_FIFO_SIZE + B_SUB_VAL) - le16_to_cpu(*z1t);
-		/* end of fअगरo */
-		अगर (bch->debug & DEBUG_HW_BFIFO)
-			prपूर्णांकk(KERN_DEBUG "hfcpci_FFt fcnt(%d) "
+		/* end of fifo */
+		if (bch->debug & DEBUG_HW_BFIFO)
+			printk(KERN_DEBUG "hfcpci_FFt fcnt(%d) "
 			       "maxl(%d) nz1(%x) dst(%p)\n",
 			       fcnt, maxlen, new_z1, dst);
 		fcnt += count;
 		bch->tx_idx += count;
-		अगर (maxlen > count)
+		if (maxlen > count)
 			maxlen = count;		/* limit size */
-		स_नकल(dst, src, maxlen);	/* first copy */
-		count -= maxlen;	/* reमुख्यing bytes */
-		अगर (count) अणु
+		memcpy(dst, src, maxlen);	/* first copy */
+		count -= maxlen;	/* remaining bytes */
+		if (count) {
 			dst = bdata;	/* start of buffer */
 			src += maxlen;	/* new position */
-			स_नकल(dst, src, count);
-		पूर्ण
+			memcpy(dst, src, count);
+		}
 		*z1t = cpu_to_le16(new_z1);	/* now send data */
-		अगर (bch->tx_idx < bch->tx_skb->len)
-			वापस;
-		dev_kमुक्त_skb(bch->tx_skb);
-		अगर (get_next_bframe(bch))
-			जाओ next_t_frame;
-		वापस;
-	पूर्ण
-	अगर (bch->debug & DEBUG_HW_BCHANNEL)
-		prपूर्णांकk(KERN_DEBUG
+		if (bch->tx_idx < bch->tx_skb->len)
+			return;
+		dev_kfree_skb(bch->tx_skb);
+		if (get_next_bframe(bch))
+			goto next_t_frame;
+		return;
+	}
+	if (bch->debug & DEBUG_HW_BCHANNEL)
+		printk(KERN_DEBUG
 		       "%s: ch(%x) f1(%d) f2(%d) z1(f1)(%x)\n",
 		       __func__, bch->nr, bz->f1, bz->f2,
 		       bz->za[bz->f1].z1);
 	fcnt = bz->f1 - bz->f2;	/* frame count actually buffered */
-	अगर (fcnt < 0)
-		fcnt += (MAX_B_FRAMES + 1);	/* अगर wrap around */
-	अगर (fcnt > (MAX_B_FRAMES - 1)) अणु
-		अगर (bch->debug & DEBUG_HW_BCHANNEL)
-			prपूर्णांकk(KERN_DEBUG
+	if (fcnt < 0)
+		fcnt += (MAX_B_FRAMES + 1);	/* if wrap around */
+	if (fcnt > (MAX_B_FRAMES - 1)) {
+		if (bch->debug & DEBUG_HW_BCHANNEL)
+			printk(KERN_DEBUG
 			       "hfcpci_fill_Bfifo more as 14 frames\n");
-		वापस;
-	पूर्ण
-	/* now determine मुक्त bytes in FIFO buffer */
+		return;
+	}
+	/* now determine free bytes in FIFO buffer */
 	maxlen = le16_to_cpu(bz->za[bz->f2].z2) -
 		le16_to_cpu(bz->za[bz->f1].z1) - 1;
-	अगर (maxlen <= 0)
+	if (maxlen <= 0)
 		maxlen += B_FIFO_SIZE;	/* count now contains available bytes */
 
-	अगर (bch->debug & DEBUG_HW_BCHANNEL)
-		prपूर्णांकk(KERN_DEBUG "hfcpci_fill_fifo ch(%x) count(%d/%d)\n",
+	if (bch->debug & DEBUG_HW_BCHANNEL)
+		printk(KERN_DEBUG "hfcpci_fill_fifo ch(%x) count(%d/%d)\n",
 		       bch->nr, count, maxlen);
 
-	अगर (maxlen < count) अणु
-		अगर (bch->debug & DEBUG_HW_BCHANNEL)
-			prपूर्णांकk(KERN_DEBUG "hfcpci_fill_fifo no fifo mem\n");
-		वापस;
-	पूर्ण
+	if (maxlen < count) {
+		if (bch->debug & DEBUG_HW_BCHANNEL)
+			printk(KERN_DEBUG "hfcpci_fill_fifo no fifo mem\n");
+		return;
+	}
 	new_z1 = le16_to_cpu(bz->za[bz->f1].z1) + count;
 	/* new buffer Position */
-	अगर (new_z1 >= (B_FIFO_SIZE + B_SUB_VAL))
+	if (new_z1 >= (B_FIFO_SIZE + B_SUB_VAL))
 		new_z1 -= B_FIFO_SIZE;	/* buffer wrap */
 
 	new_f1 = ((bz->f1 + 1) & MAX_B_FRAMES);
-	src = bch->tx_skb->data + bch->tx_idx;	/* source poपूर्णांकer */
+	src = bch->tx_skb->data + bch->tx_idx;	/* source pointer */
 	dst = bdata + (le16_to_cpu(bz->za[bz->f1].z1) - B_SUB_VAL);
 	maxlen = (B_FIFO_SIZE + B_SUB_VAL) - le16_to_cpu(bz->za[bz->f1].z1);
-	/* end fअगरo */
-	अगर (maxlen > count)
+	/* end fifo */
+	if (maxlen > count)
 		maxlen = count;	/* limit size */
-	स_नकल(dst, src, maxlen);	/* first copy */
+	memcpy(dst, src, maxlen);	/* first copy */
 
-	count -= maxlen;	/* reमुख्यing bytes */
-	अगर (count) अणु
+	count -= maxlen;	/* remaining bytes */
+	if (count) {
 		dst = bdata;	/* start of buffer */
 		src += maxlen;	/* new position */
-		स_नकल(dst, src, count);
-	पूर्ण
-	bz->za[new_f1].z1 = cpu_to_le16(new_z1);	/* क्रम next buffer */
+		memcpy(dst, src, count);
+	}
+	bz->za[new_f1].z1 = cpu_to_le16(new_z1);	/* for next buffer */
 	bz->f1 = new_f1;	/* next frame */
-	dev_kमुक्त_skb(bch->tx_skb);
+	dev_kfree_skb(bch->tx_skb);
 	get_next_bframe(bch);
-पूर्ण
+}
 
 
 
@@ -906,945 +905,945 @@ hfcpci_fill_fअगरo(काष्ठा bchannel *bch)
  * handle L1 state changes TE
  */
 
-अटल व्योम
-ph_state_te(काष्ठा dchannel *dch)
-अणु
-	अगर (dch->debug)
-		prपूर्णांकk(KERN_DEBUG "%s: TE newstate %x\n",
+static void
+ph_state_te(struct dchannel *dch)
+{
+	if (dch->debug)
+		printk(KERN_DEBUG "%s: TE newstate %x\n",
 		       __func__, dch->state);
-	चयन (dch->state) अणु
-	हाल 0:
+	switch (dch->state) {
+	case 0:
 		l1_event(dch->l1, HW_RESET_IND);
-		अवरोध;
-	हाल 3:
+		break;
+	case 3:
 		l1_event(dch->l1, HW_DEACT_IND);
-		अवरोध;
-	हाल 5:
-	हाल 8:
+		break;
+	case 5:
+	case 8:
 		l1_event(dch->l1, ANYSIGNAL);
-		अवरोध;
-	हाल 6:
+		break;
+	case 6:
 		l1_event(dch->l1, INFO2);
-		अवरोध;
-	हाल 7:
+		break;
+	case 7:
 		l1_event(dch->l1, INFO4_P8);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
 /*
  * handle L1 state changes NT
  */
 
-अटल व्योम
-handle_nt_समयr3(काष्ठा dchannel *dch) अणु
-	काष्ठा hfc_pci	*hc = dch->hw;
+static void
+handle_nt_timer3(struct dchannel *dch) {
+	struct hfc_pci	*hc = dch->hw;
 
 	test_and_clear_bit(FLG_HFC_TIMER_T3, &dch->Flags);
-	hc->hw.पूर्णांक_m1 &= ~HFCPCI_INTS_TIMER;
-	Write_hfc(hc, HFCPCI_INT_M1, hc->hw.पूर्णांक_m1);
-	hc->hw.nt_समयr = 0;
+	hc->hw.int_m1 &= ~HFCPCI_INTS_TIMER;
+	Write_hfc(hc, HFCPCI_INT_M1, hc->hw.int_m1);
+	hc->hw.nt_timer = 0;
 	test_and_set_bit(FLG_ACTIVE, &dch->Flags);
-	अगर (test_bit(HFC_CFG_MASTER, &hc->cfg))
+	if (test_bit(HFC_CFG_MASTER, &hc->cfg))
 		hc->hw.mst_m |= HFCPCI_MASTER;
 	Write_hfc(hc, HFCPCI_MST_MODE, hc->hw.mst_m);
 	_queue_data(&dch->dev.D, PH_ACTIVATE_IND,
-		    MISDN_ID_ANY, 0, शून्य, GFP_ATOMIC);
-पूर्ण
+		    MISDN_ID_ANY, 0, NULL, GFP_ATOMIC);
+}
 
-अटल व्योम
-ph_state_nt(काष्ठा dchannel *dch)
-अणु
-	काष्ठा hfc_pci	*hc = dch->hw;
+static void
+ph_state_nt(struct dchannel *dch)
+{
+	struct hfc_pci	*hc = dch->hw;
 
-	अगर (dch->debug)
-		prपूर्णांकk(KERN_DEBUG "%s: NT newstate %x\n",
+	if (dch->debug)
+		printk(KERN_DEBUG "%s: NT newstate %x\n",
 		       __func__, dch->state);
-	चयन (dch->state) अणु
-	हाल 2:
-		अगर (hc->hw.nt_समयr < 0) अणु
-			hc->hw.nt_समयr = 0;
+	switch (dch->state) {
+	case 2:
+		if (hc->hw.nt_timer < 0) {
+			hc->hw.nt_timer = 0;
 			test_and_clear_bit(FLG_HFC_TIMER_T3, &dch->Flags);
 			test_and_clear_bit(FLG_HFC_TIMER_T1, &dch->Flags);
-			hc->hw.पूर्णांक_m1 &= ~HFCPCI_INTS_TIMER;
-			Write_hfc(hc, HFCPCI_INT_M1, hc->hw.पूर्णांक_m1);
-			/* Clear alपढ़ोy pending पूर्णांकs */
-			(व्योम) Read_hfc(hc, HFCPCI_INT_S1);
+			hc->hw.int_m1 &= ~HFCPCI_INTS_TIMER;
+			Write_hfc(hc, HFCPCI_INT_M1, hc->hw.int_m1);
+			/* Clear already pending ints */
+			(void) Read_hfc(hc, HFCPCI_INT_S1);
 			Write_hfc(hc, HFCPCI_STATES, 4 | HFCPCI_LOAD_STATE);
 			udelay(10);
 			Write_hfc(hc, HFCPCI_STATES, 4);
 			dch->state = 4;
-		पूर्ण अन्यथा अगर (hc->hw.nt_समयr == 0) अणु
-			hc->hw.पूर्णांक_m1 |= HFCPCI_INTS_TIMER;
-			Write_hfc(hc, HFCPCI_INT_M1, hc->hw.पूर्णांक_m1);
-			hc->hw.nt_समयr = NT_T1_COUNT;
-			hc->hw.cपंचांगt &= ~HFCPCI_AUTO_TIMER;
-			hc->hw.cपंचांगt |= HFCPCI_TIM3_125;
-			Write_hfc(hc, HFCPCI_CTMT, hc->hw.cपंचांगt |
+		} else if (hc->hw.nt_timer == 0) {
+			hc->hw.int_m1 |= HFCPCI_INTS_TIMER;
+			Write_hfc(hc, HFCPCI_INT_M1, hc->hw.int_m1);
+			hc->hw.nt_timer = NT_T1_COUNT;
+			hc->hw.ctmt &= ~HFCPCI_AUTO_TIMER;
+			hc->hw.ctmt |= HFCPCI_TIM3_125;
+			Write_hfc(hc, HFCPCI_CTMT, hc->hw.ctmt |
 				  HFCPCI_CLTIMER);
 			test_and_clear_bit(FLG_HFC_TIMER_T3, &dch->Flags);
 			test_and_set_bit(FLG_HFC_TIMER_T1, &dch->Flags);
 			/* allow G2 -> G3 transition */
 			Write_hfc(hc, HFCPCI_STATES, 2 | HFCPCI_NT_G2_G3);
-		पूर्ण अन्यथा अणु
+		} else {
 			Write_hfc(hc, HFCPCI_STATES, 2 | HFCPCI_NT_G2_G3);
-		पूर्ण
-		अवरोध;
-	हाल 1:
-		hc->hw.nt_समयr = 0;
+		}
+		break;
+	case 1:
+		hc->hw.nt_timer = 0;
 		test_and_clear_bit(FLG_HFC_TIMER_T3, &dch->Flags);
 		test_and_clear_bit(FLG_HFC_TIMER_T1, &dch->Flags);
-		hc->hw.पूर्णांक_m1 &= ~HFCPCI_INTS_TIMER;
-		Write_hfc(hc, HFCPCI_INT_M1, hc->hw.पूर्णांक_m1);
+		hc->hw.int_m1 &= ~HFCPCI_INTS_TIMER;
+		Write_hfc(hc, HFCPCI_INT_M1, hc->hw.int_m1);
 		test_and_clear_bit(FLG_ACTIVE, &dch->Flags);
 		hc->hw.mst_m &= ~HFCPCI_MASTER;
 		Write_hfc(hc, HFCPCI_MST_MODE, hc->hw.mst_m);
 		test_and_clear_bit(FLG_L2_ACTIVATED, &dch->Flags);
 		_queue_data(&dch->dev.D, PH_DEACTIVATE_IND,
-			    MISDN_ID_ANY, 0, शून्य, GFP_ATOMIC);
-		अवरोध;
-	हाल 4:
-		hc->hw.nt_समयr = 0;
+			    MISDN_ID_ANY, 0, NULL, GFP_ATOMIC);
+		break;
+	case 4:
+		hc->hw.nt_timer = 0;
 		test_and_clear_bit(FLG_HFC_TIMER_T3, &dch->Flags);
 		test_and_clear_bit(FLG_HFC_TIMER_T1, &dch->Flags);
-		hc->hw.पूर्णांक_m1 &= ~HFCPCI_INTS_TIMER;
-		Write_hfc(hc, HFCPCI_INT_M1, hc->hw.पूर्णांक_m1);
-		अवरोध;
-	हाल 3:
-		अगर (!test_and_set_bit(FLG_HFC_TIMER_T3, &dch->Flags)) अणु
-			अगर (!test_and_clear_bit(FLG_L2_ACTIVATED,
-						&dch->Flags)) अणु
-				handle_nt_समयr3(dch);
-				अवरोध;
-			पूर्ण
+		hc->hw.int_m1 &= ~HFCPCI_INTS_TIMER;
+		Write_hfc(hc, HFCPCI_INT_M1, hc->hw.int_m1);
+		break;
+	case 3:
+		if (!test_and_set_bit(FLG_HFC_TIMER_T3, &dch->Flags)) {
+			if (!test_and_clear_bit(FLG_L2_ACTIVATED,
+						&dch->Flags)) {
+				handle_nt_timer3(dch);
+				break;
+			}
 			test_and_clear_bit(FLG_HFC_TIMER_T1, &dch->Flags);
-			hc->hw.पूर्णांक_m1 |= HFCPCI_INTS_TIMER;
-			Write_hfc(hc, HFCPCI_INT_M1, hc->hw.पूर्णांक_m1);
-			hc->hw.nt_समयr = NT_T3_COUNT;
-			hc->hw.cपंचांगt &= ~HFCPCI_AUTO_TIMER;
-			hc->hw.cपंचांगt |= HFCPCI_TIM3_125;
-			Write_hfc(hc, HFCPCI_CTMT, hc->hw.cपंचांगt |
+			hc->hw.int_m1 |= HFCPCI_INTS_TIMER;
+			Write_hfc(hc, HFCPCI_INT_M1, hc->hw.int_m1);
+			hc->hw.nt_timer = NT_T3_COUNT;
+			hc->hw.ctmt &= ~HFCPCI_AUTO_TIMER;
+			hc->hw.ctmt |= HFCPCI_TIM3_125;
+			Write_hfc(hc, HFCPCI_CTMT, hc->hw.ctmt |
 				  HFCPCI_CLTIMER);
-		पूर्ण
-		अवरोध;
-	पूर्ण
-पूर्ण
+		}
+		break;
+	}
+}
 
-अटल व्योम
-ph_state(काष्ठा dchannel *dch)
-अणु
-	काष्ठा hfc_pci	*hc = dch->hw;
+static void
+ph_state(struct dchannel *dch)
+{
+	struct hfc_pci	*hc = dch->hw;
 
-	अगर (hc->hw.protocol == ISDN_P_NT_S0) अणु
-		अगर (test_bit(FLG_HFC_TIMER_T3, &dch->Flags) &&
-		    hc->hw.nt_समयr < 0)
-			handle_nt_समयr3(dch);
-		अन्यथा
+	if (hc->hw.protocol == ISDN_P_NT_S0) {
+		if (test_bit(FLG_HFC_TIMER_T3, &dch->Flags) &&
+		    hc->hw.nt_timer < 0)
+			handle_nt_timer3(dch);
+		else
 			ph_state_nt(dch);
-	पूर्ण अन्यथा
+	} else
 		ph_state_te(dch);
-पूर्ण
+}
 
 /*
  * Layer 1 callback function
  */
-अटल पूर्णांक
-hfc_l1callback(काष्ठा dchannel *dch, u_पूर्णांक cmd)
-अणु
-	काष्ठा hfc_pci		*hc = dch->hw;
+static int
+hfc_l1callback(struct dchannel *dch, u_int cmd)
+{
+	struct hfc_pci		*hc = dch->hw;
 
-	चयन (cmd) अणु
-	हाल INFO3_P8:
-	हाल INFO3_P10:
-		अगर (test_bit(HFC_CFG_MASTER, &hc->cfg))
+	switch (cmd) {
+	case INFO3_P8:
+	case INFO3_P10:
+		if (test_bit(HFC_CFG_MASTER, &hc->cfg))
 			hc->hw.mst_m |= HFCPCI_MASTER;
 		Write_hfc(hc, HFCPCI_MST_MODE, hc->hw.mst_m);
-		अवरोध;
-	हाल HW_RESET_REQ:
+		break;
+	case HW_RESET_REQ:
 		Write_hfc(hc, HFCPCI_STATES, HFCPCI_LOAD_STATE | 3);
 		/* HFC ST 3 */
 		udelay(6);
 		Write_hfc(hc, HFCPCI_STATES, 3);	/* HFC ST 2 */
-		अगर (test_bit(HFC_CFG_MASTER, &hc->cfg))
+		if (test_bit(HFC_CFG_MASTER, &hc->cfg))
 			hc->hw.mst_m |= HFCPCI_MASTER;
 		Write_hfc(hc, HFCPCI_MST_MODE, hc->hw.mst_m);
 		Write_hfc(hc, HFCPCI_STATES, HFCPCI_ACTIVATE |
 			  HFCPCI_DO_ACTION);
 		l1_event(dch->l1, HW_POWERUP_IND);
-		अवरोध;
-	हाल HW_DEACT_REQ:
+		break;
+	case HW_DEACT_REQ:
 		hc->hw.mst_m &= ~HFCPCI_MASTER;
 		Write_hfc(hc, HFCPCI_MST_MODE, hc->hw.mst_m);
 		skb_queue_purge(&dch->squeue);
-		अगर (dch->tx_skb) अणु
-			dev_kमुक्त_skb(dch->tx_skb);
-			dch->tx_skb = शून्य;
-		पूर्ण
+		if (dch->tx_skb) {
+			dev_kfree_skb(dch->tx_skb);
+			dch->tx_skb = NULL;
+		}
 		dch->tx_idx = 0;
-		अगर (dch->rx_skb) अणु
-			dev_kमुक्त_skb(dch->rx_skb);
-			dch->rx_skb = शून्य;
-		पूर्ण
+		if (dch->rx_skb) {
+			dev_kfree_skb(dch->rx_skb);
+			dch->rx_skb = NULL;
+		}
 		test_and_clear_bit(FLG_TX_BUSY, &dch->Flags);
-		अगर (test_and_clear_bit(FLG_BUSY_TIMER, &dch->Flags))
-			del_समयr(&dch->समयr);
-		अवरोध;
-	हाल HW_POWERUP_REQ:
+		if (test_and_clear_bit(FLG_BUSY_TIMER, &dch->Flags))
+			del_timer(&dch->timer);
+		break;
+	case HW_POWERUP_REQ:
 		Write_hfc(hc, HFCPCI_STATES, HFCPCI_DO_ACTION);
-		अवरोध;
-	हाल PH_ACTIVATE_IND:
+		break;
+	case PH_ACTIVATE_IND:
 		test_and_set_bit(FLG_ACTIVE, &dch->Flags);
-		_queue_data(&dch->dev.D, cmd, MISDN_ID_ANY, 0, शून्य,
+		_queue_data(&dch->dev.D, cmd, MISDN_ID_ANY, 0, NULL,
 			    GFP_ATOMIC);
-		अवरोध;
-	हाल PH_DEACTIVATE_IND:
+		break;
+	case PH_DEACTIVATE_IND:
 		test_and_clear_bit(FLG_ACTIVE, &dch->Flags);
-		_queue_data(&dch->dev.D, cmd, MISDN_ID_ANY, 0, शून्य,
+		_queue_data(&dch->dev.D, cmd, MISDN_ID_ANY, 0, NULL,
 			    GFP_ATOMIC);
-		अवरोध;
-	शेष:
-		अगर (dch->debug & DEBUG_HW)
-			prपूर्णांकk(KERN_DEBUG "%s: unknown command %x\n",
+		break;
+	default:
+		if (dch->debug & DEBUG_HW)
+			printk(KERN_DEBUG "%s: unknown command %x\n",
 			       __func__, cmd);
-		वापस -1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -1;
+	}
+	return 0;
+}
 
 /*
  * Interrupt handler
  */
-अटल अंतरभूत व्योम
-tx_birq(काष्ठा bchannel *bch)
-अणु
-	अगर (bch->tx_skb && bch->tx_idx < bch->tx_skb->len)
-		hfcpci_fill_fअगरo(bch);
-	अन्यथा अणु
-		dev_kमुक्त_skb(bch->tx_skb);
-		अगर (get_next_bframe(bch))
-			hfcpci_fill_fअगरo(bch);
-	पूर्ण
-पूर्ण
+static inline void
+tx_birq(struct bchannel *bch)
+{
+	if (bch->tx_skb && bch->tx_idx < bch->tx_skb->len)
+		hfcpci_fill_fifo(bch);
+	else {
+		dev_kfree_skb(bch->tx_skb);
+		if (get_next_bframe(bch))
+			hfcpci_fill_fifo(bch);
+	}
+}
 
-अटल अंतरभूत व्योम
-tx_dirq(काष्ठा dchannel *dch)
-अणु
-	अगर (dch->tx_skb && dch->tx_idx < dch->tx_skb->len)
-		hfcpci_fill_dfअगरo(dch->hw);
-	अन्यथा अणु
-		dev_kमुक्त_skb(dch->tx_skb);
-		अगर (get_next_dframe(dch))
-			hfcpci_fill_dfअगरo(dch->hw);
-	पूर्ण
-पूर्ण
+static inline void
+tx_dirq(struct dchannel *dch)
+{
+	if (dch->tx_skb && dch->tx_idx < dch->tx_skb->len)
+		hfcpci_fill_dfifo(dch->hw);
+	else {
+		dev_kfree_skb(dch->tx_skb);
+		if (get_next_dframe(dch))
+			hfcpci_fill_dfifo(dch->hw);
+	}
+}
 
-अटल irqवापस_t
-hfcpci_पूर्णांक(पूर्णांक पूर्णांकno, व्योम *dev_id)
-अणु
-	काष्ठा hfc_pci	*hc = dev_id;
-	u_अक्षर		exval;
-	काष्ठा bchannel	*bch;
-	u_अक्षर		val, stat;
+static irqreturn_t
+hfcpci_int(int intno, void *dev_id)
+{
+	struct hfc_pci	*hc = dev_id;
+	u_char		exval;
+	struct bchannel	*bch;
+	u_char		val, stat;
 
 	spin_lock(&hc->lock);
-	अगर (!(hc->hw.पूर्णांक_m2 & 0x08)) अणु
+	if (!(hc->hw.int_m2 & 0x08)) {
 		spin_unlock(&hc->lock);
-		वापस IRQ_NONE; /* not initialised */
-	पूर्ण
+		return IRQ_NONE; /* not initialised */
+	}
 	stat = Read_hfc(hc, HFCPCI_STATUS);
-	अगर (HFCPCI_ANYINT & stat) अणु
+	if (HFCPCI_ANYINT & stat) {
 		val = Read_hfc(hc, HFCPCI_INT_S1);
-		अगर (hc->dch.debug & DEBUG_HW_DCHANNEL)
-			prपूर्णांकk(KERN_DEBUG
+		if (hc->dch.debug & DEBUG_HW_DCHANNEL)
+			printk(KERN_DEBUG
 			       "HFC-PCI: stat(%02x) s1(%02x)\n", stat, val);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* shared */
 		spin_unlock(&hc->lock);
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 	hc->irqcnt++;
 
-	अगर (hc->dch.debug & DEBUG_HW_DCHANNEL)
-		prपूर्णांकk(KERN_DEBUG "HFC-PCI irq %x\n", val);
-	val &= hc->hw.पूर्णांक_m1;
-	अगर (val & 0x40) अणु	/* state machine irq */
+	if (hc->dch.debug & DEBUG_HW_DCHANNEL)
+		printk(KERN_DEBUG "HFC-PCI irq %x\n", val);
+	val &= hc->hw.int_m1;
+	if (val & 0x40) {	/* state machine irq */
 		exval = Read_hfc(hc, HFCPCI_STATES) & 0xf;
-		अगर (hc->dch.debug & DEBUG_HW_DCHANNEL)
-			prपूर्णांकk(KERN_DEBUG "ph_state chg %d->%d\n",
+		if (hc->dch.debug & DEBUG_HW_DCHANNEL)
+			printk(KERN_DEBUG "ph_state chg %d->%d\n",
 			       hc->dch.state, exval);
 		hc->dch.state = exval;
 		schedule_event(&hc->dch, FLG_PHCHANGE);
 		val &= ~0x40;
-	पूर्ण
-	अगर (val & 0x80) अणु	/* समयr irq */
-		अगर (hc->hw.protocol == ISDN_P_NT_S0) अणु
-			अगर ((--hc->hw.nt_समयr) < 0)
+	}
+	if (val & 0x80) {	/* timer irq */
+		if (hc->hw.protocol == ISDN_P_NT_S0) {
+			if ((--hc->hw.nt_timer) < 0)
 				schedule_event(&hc->dch, FLG_PHCHANGE);
-		पूर्ण
+		}
 		val &= ~0x80;
-		Write_hfc(hc, HFCPCI_CTMT, hc->hw.cपंचांगt | HFCPCI_CLTIMER);
-	पूर्ण
-	अगर (val & 0x08) अणु	/* B1 rx */
+		Write_hfc(hc, HFCPCI_CTMT, hc->hw.ctmt | HFCPCI_CLTIMER);
+	}
+	if (val & 0x08) {	/* B1 rx */
 		bch = Sel_BCS(hc, hc->hw.bswapped ? 2 : 1);
-		अगर (bch)
-			मुख्य_rec_hfcpci(bch);
-		अन्यथा अगर (hc->dch.debug)
-			prपूर्णांकk(KERN_DEBUG "hfcpci spurious 0x08 IRQ\n");
-	पूर्ण
-	अगर (val & 0x10) अणु	/* B2 rx */
+		if (bch)
+			main_rec_hfcpci(bch);
+		else if (hc->dch.debug)
+			printk(KERN_DEBUG "hfcpci spurious 0x08 IRQ\n");
+	}
+	if (val & 0x10) {	/* B2 rx */
 		bch = Sel_BCS(hc, 2);
-		अगर (bch)
-			मुख्य_rec_hfcpci(bch);
-		अन्यथा अगर (hc->dch.debug)
-			prपूर्णांकk(KERN_DEBUG "hfcpci spurious 0x10 IRQ\n");
-	पूर्ण
-	अगर (val & 0x01) अणु	/* B1 tx */
+		if (bch)
+			main_rec_hfcpci(bch);
+		else if (hc->dch.debug)
+			printk(KERN_DEBUG "hfcpci spurious 0x10 IRQ\n");
+	}
+	if (val & 0x01) {	/* B1 tx */
 		bch = Sel_BCS(hc, hc->hw.bswapped ? 2 : 1);
-		अगर (bch)
+		if (bch)
 			tx_birq(bch);
-		अन्यथा अगर (hc->dch.debug)
-			prपूर्णांकk(KERN_DEBUG "hfcpci spurious 0x01 IRQ\n");
-	पूर्ण
-	अगर (val & 0x02) अणु	/* B2 tx */
+		else if (hc->dch.debug)
+			printk(KERN_DEBUG "hfcpci spurious 0x01 IRQ\n");
+	}
+	if (val & 0x02) {	/* B2 tx */
 		bch = Sel_BCS(hc, 2);
-		अगर (bch)
+		if (bch)
 			tx_birq(bch);
-		अन्यथा अगर (hc->dch.debug)
-			prपूर्णांकk(KERN_DEBUG "hfcpci spurious 0x02 IRQ\n");
-	पूर्ण
-	अगर (val & 0x20)		/* D rx */
+		else if (hc->dch.debug)
+			printk(KERN_DEBUG "hfcpci spurious 0x02 IRQ\n");
+	}
+	if (val & 0x20)		/* D rx */
 		receive_dmsg(hc);
-	अगर (val & 0x04) अणु	/* D tx */
-		अगर (test_and_clear_bit(FLG_BUSY_TIMER, &hc->dch.Flags))
-			del_समयr(&hc->dch.समयr);
+	if (val & 0x04) {	/* D tx */
+		if (test_and_clear_bit(FLG_BUSY_TIMER, &hc->dch.Flags))
+			del_timer(&hc->dch.timer);
 		tx_dirq(&hc->dch);
-	पूर्ण
+	}
 	spin_unlock(&hc->lock);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /*
- * समयr callback क्रम D-chan busy resolution. Currently no function
+ * timer callback for D-chan busy resolution. Currently no function
  */
-अटल व्योम
-hfcpci_dbusy_समयr(काष्ठा समयr_list *t)
-अणु
-पूर्ण
+static void
+hfcpci_dbusy_timer(struct timer_list *t)
+{
+}
 
 /*
- * activate/deactivate hardware क्रम selected channels and mode
+ * activate/deactivate hardware for selected channels and mode
  */
-अटल पूर्णांक
-mode_hfcpci(काष्ठा bchannel *bch, पूर्णांक bc, पूर्णांक protocol)
-अणु
-	काष्ठा hfc_pci	*hc = bch->hw;
-	पूर्णांक		fअगरo2;
-	u_अक्षर		rx_slot = 0, tx_slot = 0, pcm_mode;
+static int
+mode_hfcpci(struct bchannel *bch, int bc, int protocol)
+{
+	struct hfc_pci	*hc = bch->hw;
+	int		fifo2;
+	u_char		rx_slot = 0, tx_slot = 0, pcm_mode;
 
-	अगर (bch->debug & DEBUG_HW_BCHANNEL)
-		prपूर्णांकk(KERN_DEBUG
+	if (bch->debug & DEBUG_HW_BCHANNEL)
+		printk(KERN_DEBUG
 		       "HFCPCI bchannel protocol %x-->%x ch %x-->%x\n",
 		       bch->state, protocol, bch->nr, bc);
 
-	fअगरo2 = bc;
+	fifo2 = bc;
 	pcm_mode = (bc >> 24) & 0xff;
-	अगर (pcm_mode) अणु /* PCM SLOT USE */
-		अगर (!test_bit(HFC_CFG_PCM, &hc->cfg))
-			prपूर्णांकk(KERN_WARNING
+	if (pcm_mode) { /* PCM SLOT USE */
+		if (!test_bit(HFC_CFG_PCM, &hc->cfg))
+			printk(KERN_WARNING
 			       "%s: pcm channel id without HFC_CFG_PCM\n",
 			       __func__);
 		rx_slot = (bc >> 8) & 0xff;
 		tx_slot = (bc >> 16) & 0xff;
 		bc = bc & 0xff;
-	पूर्ण अन्यथा अगर (test_bit(HFC_CFG_PCM, &hc->cfg) && (protocol > ISDN_P_NONE))
-		prपूर्णांकk(KERN_WARNING "%s: no pcm channel id but HFC_CFG_PCM\n",
+	} else if (test_bit(HFC_CFG_PCM, &hc->cfg) && (protocol > ISDN_P_NONE))
+		printk(KERN_WARNING "%s: no pcm channel id but HFC_CFG_PCM\n",
 		       __func__);
-	अगर (hc->chanlimit > 1) अणु
+	if (hc->chanlimit > 1) {
 		hc->hw.bswapped = 0;	/* B1 and B2 normal mode */
 		hc->hw.sctrl_e &= ~0x80;
-	पूर्ण अन्यथा अणु
-		अगर (bc & 2) अणु
-			अगर (protocol != ISDN_P_NONE) अणु
+	} else {
+		if (bc & 2) {
+			if (protocol != ISDN_P_NONE) {
 				hc->hw.bswapped = 1; /* B1 and B2 exchanged */
 				hc->hw.sctrl_e |= 0x80;
-			पूर्ण अन्यथा अणु
+			} else {
 				hc->hw.bswapped = 0; /* B1 and B2 normal mode */
 				hc->hw.sctrl_e &= ~0x80;
-			पूर्ण
-			fअगरo2 = 1;
-		पूर्ण अन्यथा अणु
+			}
+			fifo2 = 1;
+		} else {
 			hc->hw.bswapped = 0;	/* B1 and B2 normal mode */
 			hc->hw.sctrl_e &= ~0x80;
-		पूर्ण
-	पूर्ण
-	चयन (protocol) अणु
-	हाल (-1): /* used क्रम init */
+		}
+	}
+	switch (protocol) {
+	case (-1): /* used for init */
 		bch->state = -1;
 		bch->nr = bc;
 		fallthrough;
-	हाल (ISDN_P_NONE):
-		अगर (bch->state == ISDN_P_NONE)
-			वापस 0;
-		अगर (bc & 2) अणु
+	case (ISDN_P_NONE):
+		if (bch->state == ISDN_P_NONE)
+			return 0;
+		if (bc & 2) {
 			hc->hw.sctrl &= ~SCTRL_B2_ENA;
 			hc->hw.sctrl_r &= ~SCTRL_B2_ENA;
-		पूर्ण अन्यथा अणु
+		} else {
 			hc->hw.sctrl &= ~SCTRL_B1_ENA;
 			hc->hw.sctrl_r &= ~SCTRL_B1_ENA;
-		पूर्ण
-		अगर (fअगरo2 & 2) अणु
-			hc->hw.fअगरo_en &= ~HFCPCI_FIFOEN_B2;
-			hc->hw.पूर्णांक_m1 &= ~(HFCPCI_INTS_B2TRANS |
+		}
+		if (fifo2 & 2) {
+			hc->hw.fifo_en &= ~HFCPCI_FIFOEN_B2;
+			hc->hw.int_m1 &= ~(HFCPCI_INTS_B2TRANS |
 					   HFCPCI_INTS_B2REC);
-		पूर्ण अन्यथा अणु
-			hc->hw.fअगरo_en &= ~HFCPCI_FIFOEN_B1;
-			hc->hw.पूर्णांक_m1 &= ~(HFCPCI_INTS_B1TRANS |
+		} else {
+			hc->hw.fifo_en &= ~HFCPCI_FIFOEN_B1;
+			hc->hw.int_m1 &= ~(HFCPCI_INTS_B1TRANS |
 					   HFCPCI_INTS_B1REC);
-		पूर्ण
-#अगर_घोषित REVERSE_BITORDER
-		अगर (bch->nr & 2)
+		}
+#ifdef REVERSE_BITORDER
+		if (bch->nr & 2)
 			hc->hw.cirm &= 0x7f;
-		अन्यथा
+		else
 			hc->hw.cirm &= 0xbf;
-#पूर्ण_अगर
+#endif
 		bch->state = ISDN_P_NONE;
 		bch->nr = bc;
 		test_and_clear_bit(FLG_HDLC, &bch->Flags);
 		test_and_clear_bit(FLG_TRANSPARENT, &bch->Flags);
-		अवरोध;
-	हाल (ISDN_P_B_RAW):
+		break;
+	case (ISDN_P_B_RAW):
 		bch->state = protocol;
 		bch->nr = bc;
-		hfcpci_clear_fअगरo_rx(hc, (fअगरo2 & 2) ? 1 : 0);
-		hfcpci_clear_fअगरo_tx(hc, (fअगरo2 & 2) ? 1 : 0);
-		अगर (bc & 2) अणु
+		hfcpci_clear_fifo_rx(hc, (fifo2 & 2) ? 1 : 0);
+		hfcpci_clear_fifo_tx(hc, (fifo2 & 2) ? 1 : 0);
+		if (bc & 2) {
 			hc->hw.sctrl |= SCTRL_B2_ENA;
 			hc->hw.sctrl_r |= SCTRL_B2_ENA;
-#अगर_घोषित REVERSE_BITORDER
+#ifdef REVERSE_BITORDER
 			hc->hw.cirm |= 0x80;
-#पूर्ण_अगर
-		पूर्ण अन्यथा अणु
+#endif
+		} else {
 			hc->hw.sctrl |= SCTRL_B1_ENA;
 			hc->hw.sctrl_r |= SCTRL_B1_ENA;
-#अगर_घोषित REVERSE_BITORDER
+#ifdef REVERSE_BITORDER
 			hc->hw.cirm |= 0x40;
-#पूर्ण_अगर
-		पूर्ण
-		अगर (fअगरo2 & 2) अणु
-			hc->hw.fअगरo_en |= HFCPCI_FIFOEN_B2;
-			अगर (!tics)
-				hc->hw.पूर्णांक_m1 |= (HFCPCI_INTS_B2TRANS |
+#endif
+		}
+		if (fifo2 & 2) {
+			hc->hw.fifo_en |= HFCPCI_FIFOEN_B2;
+			if (!tics)
+				hc->hw.int_m1 |= (HFCPCI_INTS_B2TRANS |
 						  HFCPCI_INTS_B2REC);
-			hc->hw.cपंचांगt |= 2;
+			hc->hw.ctmt |= 2;
 			hc->hw.conn &= ~0x18;
-		पूर्ण अन्यथा अणु
-			hc->hw.fअगरo_en |= HFCPCI_FIFOEN_B1;
-			अगर (!tics)
-				hc->hw.पूर्णांक_m1 |= (HFCPCI_INTS_B1TRANS |
+		} else {
+			hc->hw.fifo_en |= HFCPCI_FIFOEN_B1;
+			if (!tics)
+				hc->hw.int_m1 |= (HFCPCI_INTS_B1TRANS |
 						  HFCPCI_INTS_B1REC);
-			hc->hw.cपंचांगt |= 1;
+			hc->hw.ctmt |= 1;
 			hc->hw.conn &= ~0x03;
-		पूर्ण
+		}
 		test_and_set_bit(FLG_TRANSPARENT, &bch->Flags);
-		अवरोध;
-	हाल (ISDN_P_B_HDLC):
+		break;
+	case (ISDN_P_B_HDLC):
 		bch->state = protocol;
 		bch->nr = bc;
-		hfcpci_clear_fअगरo_rx(hc, (fअगरo2 & 2) ? 1 : 0);
-		hfcpci_clear_fअगरo_tx(hc, (fअगरo2 & 2) ? 1 : 0);
-		अगर (bc & 2) अणु
+		hfcpci_clear_fifo_rx(hc, (fifo2 & 2) ? 1 : 0);
+		hfcpci_clear_fifo_tx(hc, (fifo2 & 2) ? 1 : 0);
+		if (bc & 2) {
 			hc->hw.sctrl |= SCTRL_B2_ENA;
 			hc->hw.sctrl_r |= SCTRL_B2_ENA;
-		पूर्ण अन्यथा अणु
+		} else {
 			hc->hw.sctrl |= SCTRL_B1_ENA;
 			hc->hw.sctrl_r |= SCTRL_B1_ENA;
-		पूर्ण
-		अगर (fअगरo2 & 2) अणु
-			hc->hw.last_bfअगरo_cnt[1] = 0;
-			hc->hw.fअगरo_en |= HFCPCI_FIFOEN_B2;
-			hc->hw.पूर्णांक_m1 |= (HFCPCI_INTS_B2TRANS |
+		}
+		if (fifo2 & 2) {
+			hc->hw.last_bfifo_cnt[1] = 0;
+			hc->hw.fifo_en |= HFCPCI_FIFOEN_B2;
+			hc->hw.int_m1 |= (HFCPCI_INTS_B2TRANS |
 					  HFCPCI_INTS_B2REC);
-			hc->hw.cपंचांगt &= ~2;
+			hc->hw.ctmt &= ~2;
 			hc->hw.conn &= ~0x18;
-		पूर्ण अन्यथा अणु
-			hc->hw.last_bfअगरo_cnt[0] = 0;
-			hc->hw.fअगरo_en |= HFCPCI_FIFOEN_B1;
-			hc->hw.पूर्णांक_m1 |= (HFCPCI_INTS_B1TRANS |
+		} else {
+			hc->hw.last_bfifo_cnt[0] = 0;
+			hc->hw.fifo_en |= HFCPCI_FIFOEN_B1;
+			hc->hw.int_m1 |= (HFCPCI_INTS_B1TRANS |
 					  HFCPCI_INTS_B1REC);
-			hc->hw.cपंचांगt &= ~1;
+			hc->hw.ctmt &= ~1;
 			hc->hw.conn &= ~0x03;
-		पूर्ण
+		}
 		test_and_set_bit(FLG_HDLC, &bch->Flags);
-		अवरोध;
-	शेष:
-		prपूर्णांकk(KERN_DEBUG "prot not known %x\n", protocol);
-		वापस -ENOPROTOOPT;
-	पूर्ण
-	अगर (test_bit(HFC_CFG_PCM, &hc->cfg)) अणु
-		अगर ((protocol == ISDN_P_NONE) ||
-		    (protocol == -1)) अणु	/* init हाल */
+		break;
+	default:
+		printk(KERN_DEBUG "prot not known %x\n", protocol);
+		return -ENOPROTOOPT;
+	}
+	if (test_bit(HFC_CFG_PCM, &hc->cfg)) {
+		if ((protocol == ISDN_P_NONE) ||
+		    (protocol == -1)) {	/* init case */
 			rx_slot = 0;
 			tx_slot = 0;
-		पूर्ण अन्यथा अणु
-			अगर (test_bit(HFC_CFG_SW_DD_DU, &hc->cfg)) अणु
+		} else {
+			if (test_bit(HFC_CFG_SW_DD_DU, &hc->cfg)) {
 				rx_slot |= 0xC0;
 				tx_slot |= 0xC0;
-			पूर्ण अन्यथा अणु
+			} else {
 				rx_slot |= 0x80;
 				tx_slot |= 0x80;
-			पूर्ण
-		पूर्ण
-		अगर (bc & 2) अणु
+			}
+		}
+		if (bc & 2) {
 			hc->hw.conn &= 0xc7;
 			hc->hw.conn |= 0x08;
-			prपूर्णांकk(KERN_DEBUG "%s: Write_hfc: B2_SSL 0x%x\n",
+			printk(KERN_DEBUG "%s: Write_hfc: B2_SSL 0x%x\n",
 			       __func__, tx_slot);
-			prपूर्णांकk(KERN_DEBUG "%s: Write_hfc: B2_RSL 0x%x\n",
+			printk(KERN_DEBUG "%s: Write_hfc: B2_RSL 0x%x\n",
 			       __func__, rx_slot);
 			Write_hfc(hc, HFCPCI_B2_SSL, tx_slot);
 			Write_hfc(hc, HFCPCI_B2_RSL, rx_slot);
-		पूर्ण अन्यथा अणु
+		} else {
 			hc->hw.conn &= 0xf8;
 			hc->hw.conn |= 0x01;
-			prपूर्णांकk(KERN_DEBUG "%s: Write_hfc: B1_SSL 0x%x\n",
+			printk(KERN_DEBUG "%s: Write_hfc: B1_SSL 0x%x\n",
 			       __func__, tx_slot);
-			prपूर्णांकk(KERN_DEBUG "%s: Write_hfc: B1_RSL 0x%x\n",
+			printk(KERN_DEBUG "%s: Write_hfc: B1_RSL 0x%x\n",
 			       __func__, rx_slot);
 			Write_hfc(hc, HFCPCI_B1_SSL, tx_slot);
 			Write_hfc(hc, HFCPCI_B1_RSL, rx_slot);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	Write_hfc(hc, HFCPCI_SCTRL_E, hc->hw.sctrl_e);
-	Write_hfc(hc, HFCPCI_INT_M1, hc->hw.पूर्णांक_m1);
-	Write_hfc(hc, HFCPCI_FIFO_EN, hc->hw.fअगरo_en);
+	Write_hfc(hc, HFCPCI_INT_M1, hc->hw.int_m1);
+	Write_hfc(hc, HFCPCI_FIFO_EN, hc->hw.fifo_en);
 	Write_hfc(hc, HFCPCI_SCTRL, hc->hw.sctrl);
 	Write_hfc(hc, HFCPCI_SCTRL_R, hc->hw.sctrl_r);
-	Write_hfc(hc, HFCPCI_CTMT, hc->hw.cपंचांगt);
+	Write_hfc(hc, HFCPCI_CTMT, hc->hw.ctmt);
 	Write_hfc(hc, HFCPCI_CONNECT, hc->hw.conn);
-#अगर_घोषित REVERSE_BITORDER
+#ifdef REVERSE_BITORDER
 	Write_hfc(hc, HFCPCI_CIRM, hc->hw.cirm);
-#पूर्ण_अगर
-	वापस 0;
-पूर्ण
+#endif
+	return 0;
+}
 
-अटल पूर्णांक
-set_hfcpci_rxtest(काष्ठा bchannel *bch, पूर्णांक protocol, पूर्णांक chan)
-अणु
-	काष्ठा hfc_pci	*hc = bch->hw;
+static int
+set_hfcpci_rxtest(struct bchannel *bch, int protocol, int chan)
+{
+	struct hfc_pci	*hc = bch->hw;
 
-	अगर (bch->debug & DEBUG_HW_BCHANNEL)
-		prपूर्णांकk(KERN_DEBUG
+	if (bch->debug & DEBUG_HW_BCHANNEL)
+		printk(KERN_DEBUG
 		       "HFCPCI bchannel test rx protocol %x-->%x ch %x-->%x\n",
 		       bch->state, protocol, bch->nr, chan);
-	अगर (bch->nr != chan) अणु
-		prपूर्णांकk(KERN_DEBUG
+	if (bch->nr != chan) {
+		printk(KERN_DEBUG
 		       "HFCPCI rxtest wrong channel parameter %x/%x\n",
 		       bch->nr, chan);
-		वापस -EINVAL;
-	पूर्ण
-	चयन (protocol) अणु
-	हाल (ISDN_P_B_RAW):
+		return -EINVAL;
+	}
+	switch (protocol) {
+	case (ISDN_P_B_RAW):
 		bch->state = protocol;
-		hfcpci_clear_fअगरo_rx(hc, (chan & 2) ? 1 : 0);
-		अगर (chan & 2) अणु
+		hfcpci_clear_fifo_rx(hc, (chan & 2) ? 1 : 0);
+		if (chan & 2) {
 			hc->hw.sctrl_r |= SCTRL_B2_ENA;
-			hc->hw.fअगरo_en |= HFCPCI_FIFOEN_B2RX;
-			अगर (!tics)
-				hc->hw.पूर्णांक_m1 |= HFCPCI_INTS_B2REC;
-			hc->hw.cपंचांगt |= 2;
+			hc->hw.fifo_en |= HFCPCI_FIFOEN_B2RX;
+			if (!tics)
+				hc->hw.int_m1 |= HFCPCI_INTS_B2REC;
+			hc->hw.ctmt |= 2;
 			hc->hw.conn &= ~0x18;
-#अगर_घोषित REVERSE_BITORDER
+#ifdef REVERSE_BITORDER
 			hc->hw.cirm |= 0x80;
-#पूर्ण_अगर
-		पूर्ण अन्यथा अणु
+#endif
+		} else {
 			hc->hw.sctrl_r |= SCTRL_B1_ENA;
-			hc->hw.fअगरo_en |= HFCPCI_FIFOEN_B1RX;
-			अगर (!tics)
-				hc->hw.पूर्णांक_m1 |= HFCPCI_INTS_B1REC;
-			hc->hw.cपंचांगt |= 1;
+			hc->hw.fifo_en |= HFCPCI_FIFOEN_B1RX;
+			if (!tics)
+				hc->hw.int_m1 |= HFCPCI_INTS_B1REC;
+			hc->hw.ctmt |= 1;
 			hc->hw.conn &= ~0x03;
-#अगर_घोषित REVERSE_BITORDER
+#ifdef REVERSE_BITORDER
 			hc->hw.cirm |= 0x40;
-#पूर्ण_अगर
-		पूर्ण
-		अवरोध;
-	हाल (ISDN_P_B_HDLC):
+#endif
+		}
+		break;
+	case (ISDN_P_B_HDLC):
 		bch->state = protocol;
-		hfcpci_clear_fअगरo_rx(hc, (chan & 2) ? 1 : 0);
-		अगर (chan & 2) अणु
+		hfcpci_clear_fifo_rx(hc, (chan & 2) ? 1 : 0);
+		if (chan & 2) {
 			hc->hw.sctrl_r |= SCTRL_B2_ENA;
-			hc->hw.last_bfअगरo_cnt[1] = 0;
-			hc->hw.fअगरo_en |= HFCPCI_FIFOEN_B2RX;
-			hc->hw.पूर्णांक_m1 |= HFCPCI_INTS_B2REC;
-			hc->hw.cपंचांगt &= ~2;
+			hc->hw.last_bfifo_cnt[1] = 0;
+			hc->hw.fifo_en |= HFCPCI_FIFOEN_B2RX;
+			hc->hw.int_m1 |= HFCPCI_INTS_B2REC;
+			hc->hw.ctmt &= ~2;
 			hc->hw.conn &= ~0x18;
-		पूर्ण अन्यथा अणु
+		} else {
 			hc->hw.sctrl_r |= SCTRL_B1_ENA;
-			hc->hw.last_bfअगरo_cnt[0] = 0;
-			hc->hw.fअगरo_en |= HFCPCI_FIFOEN_B1RX;
-			hc->hw.पूर्णांक_m1 |= HFCPCI_INTS_B1REC;
-			hc->hw.cपंचांगt &= ~1;
+			hc->hw.last_bfifo_cnt[0] = 0;
+			hc->hw.fifo_en |= HFCPCI_FIFOEN_B1RX;
+			hc->hw.int_m1 |= HFCPCI_INTS_B1REC;
+			hc->hw.ctmt &= ~1;
 			hc->hw.conn &= ~0x03;
-		पूर्ण
-		अवरोध;
-	शेष:
-		prपूर्णांकk(KERN_DEBUG "prot not known %x\n", protocol);
-		वापस -ENOPROTOOPT;
-	पूर्ण
-	Write_hfc(hc, HFCPCI_INT_M1, hc->hw.पूर्णांक_m1);
-	Write_hfc(hc, HFCPCI_FIFO_EN, hc->hw.fअगरo_en);
+		}
+		break;
+	default:
+		printk(KERN_DEBUG "prot not known %x\n", protocol);
+		return -ENOPROTOOPT;
+	}
+	Write_hfc(hc, HFCPCI_INT_M1, hc->hw.int_m1);
+	Write_hfc(hc, HFCPCI_FIFO_EN, hc->hw.fifo_en);
 	Write_hfc(hc, HFCPCI_SCTRL_R, hc->hw.sctrl_r);
-	Write_hfc(hc, HFCPCI_CTMT, hc->hw.cपंचांगt);
+	Write_hfc(hc, HFCPCI_CTMT, hc->hw.ctmt);
 	Write_hfc(hc, HFCPCI_CONNECT, hc->hw.conn);
-#अगर_घोषित REVERSE_BITORDER
+#ifdef REVERSE_BITORDER
 	Write_hfc(hc, HFCPCI_CIRM, hc->hw.cirm);
-#पूर्ण_अगर
-	वापस 0;
-पूर्ण
+#endif
+	return 0;
+}
 
-अटल व्योम
-deactivate_bchannel(काष्ठा bchannel *bch)
-अणु
-	काष्ठा hfc_pci	*hc = bch->hw;
-	u_दीर्घ		flags;
+static void
+deactivate_bchannel(struct bchannel *bch)
+{
+	struct hfc_pci	*hc = bch->hw;
+	u_long		flags;
 
 	spin_lock_irqsave(&hc->lock, flags);
 	mISDN_clear_bchannel(bch);
 	mode_hfcpci(bch, bch->nr, ISDN_P_NONE);
 	spin_unlock_irqrestore(&hc->lock, flags);
-पूर्ण
+}
 
 /*
  * Layer 1 B-channel hardware access
  */
-अटल पूर्णांक
-channel_bctrl(काष्ठा bchannel *bch, काष्ठा mISDN_ctrl_req *cq)
-अणु
-	वापस mISDN_ctrl_bchannel(bch, cq);
-पूर्ण
-अटल पूर्णांक
-hfc_bctrl(काष्ठा mISDNchannel *ch, u_पूर्णांक cmd, व्योम *arg)
-अणु
-	काष्ठा bchannel	*bch = container_of(ch, काष्ठा bchannel, ch);
-	काष्ठा hfc_pci	*hc = bch->hw;
-	पूर्णांक		ret = -EINVAL;
-	u_दीर्घ		flags;
+static int
+channel_bctrl(struct bchannel *bch, struct mISDN_ctrl_req *cq)
+{
+	return mISDN_ctrl_bchannel(bch, cq);
+}
+static int
+hfc_bctrl(struct mISDNchannel *ch, u_int cmd, void *arg)
+{
+	struct bchannel	*bch = container_of(ch, struct bchannel, ch);
+	struct hfc_pci	*hc = bch->hw;
+	int		ret = -EINVAL;
+	u_long		flags;
 
-	अगर (bch->debug & DEBUG_HW)
-		prपूर्णांकk(KERN_DEBUG "%s: cmd:%x %p\n", __func__, cmd, arg);
-	चयन (cmd) अणु
-	हाल HW_TESTRX_RAW:
+	if (bch->debug & DEBUG_HW)
+		printk(KERN_DEBUG "%s: cmd:%x %p\n", __func__, cmd, arg);
+	switch (cmd) {
+	case HW_TESTRX_RAW:
 		spin_lock_irqsave(&hc->lock, flags);
-		ret = set_hfcpci_rxtest(bch, ISDN_P_B_RAW, (पूर्णांक)(दीर्घ)arg);
+		ret = set_hfcpci_rxtest(bch, ISDN_P_B_RAW, (int)(long)arg);
 		spin_unlock_irqrestore(&hc->lock, flags);
-		अवरोध;
-	हाल HW_TESTRX_HDLC:
+		break;
+	case HW_TESTRX_HDLC:
 		spin_lock_irqsave(&hc->lock, flags);
-		ret = set_hfcpci_rxtest(bch, ISDN_P_B_HDLC, (पूर्णांक)(दीर्घ)arg);
+		ret = set_hfcpci_rxtest(bch, ISDN_P_B_HDLC, (int)(long)arg);
 		spin_unlock_irqrestore(&hc->lock, flags);
-		अवरोध;
-	हाल HW_TESTRX_OFF:
+		break;
+	case HW_TESTRX_OFF:
 		spin_lock_irqsave(&hc->lock, flags);
 		mode_hfcpci(bch, bch->nr, ISDN_P_NONE);
 		spin_unlock_irqrestore(&hc->lock, flags);
 		ret = 0;
-		अवरोध;
-	हाल CLOSE_CHANNEL:
+		break;
+	case CLOSE_CHANNEL:
 		test_and_clear_bit(FLG_OPEN, &bch->Flags);
 		deactivate_bchannel(bch);
 		ch->protocol = ISDN_P_NONE;
-		ch->peer = शून्य;
+		ch->peer = NULL;
 		module_put(THIS_MODULE);
 		ret = 0;
-		अवरोध;
-	हाल CONTROL_CHANNEL:
+		break;
+	case CONTROL_CHANNEL:
 		ret = channel_bctrl(bch, arg);
-		अवरोध;
-	शेष:
-		prपूर्णांकk(KERN_WARNING "%s: unknown prim(%x)\n",
+		break;
+	default:
+		printk(KERN_WARNING "%s: unknown prim(%x)\n",
 		       __func__, cmd);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
 /*
  * Layer2 -> Layer 1 Dchannel data
  */
-अटल पूर्णांक
-hfcpci_l2l1D(काष्ठा mISDNchannel *ch, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा mISDNdevice	*dev = container_of(ch, काष्ठा mISDNdevice, D);
-	काष्ठा dchannel		*dch = container_of(dev, काष्ठा dchannel, dev);
-	काष्ठा hfc_pci		*hc = dch->hw;
-	पूर्णांक			ret = -EINVAL;
-	काष्ठा mISDNhead	*hh = mISDN_HEAD_P(skb);
-	अचिन्हित पूर्णांक		id;
-	u_दीर्घ			flags;
+static int
+hfcpci_l2l1D(struct mISDNchannel *ch, struct sk_buff *skb)
+{
+	struct mISDNdevice	*dev = container_of(ch, struct mISDNdevice, D);
+	struct dchannel		*dch = container_of(dev, struct dchannel, dev);
+	struct hfc_pci		*hc = dch->hw;
+	int			ret = -EINVAL;
+	struct mISDNhead	*hh = mISDN_HEAD_P(skb);
+	unsigned int		id;
+	u_long			flags;
 
-	चयन (hh->prim) अणु
-	हाल PH_DATA_REQ:
+	switch (hh->prim) {
+	case PH_DATA_REQ:
 		spin_lock_irqsave(&hc->lock, flags);
 		ret = dchannel_senddata(dch, skb);
-		अगर (ret > 0) अणु /* direct TX */
-			id = hh->id; /* skb can be मुक्तd */
-			hfcpci_fill_dfअगरo(dch->hw);
+		if (ret > 0) { /* direct TX */
+			id = hh->id; /* skb can be freed */
+			hfcpci_fill_dfifo(dch->hw);
 			ret = 0;
 			spin_unlock_irqrestore(&hc->lock, flags);
-			queue_ch_frame(ch, PH_DATA_CNF, id, शून्य);
-		पूर्ण अन्यथा
+			queue_ch_frame(ch, PH_DATA_CNF, id, NULL);
+		} else
 			spin_unlock_irqrestore(&hc->lock, flags);
-		वापस ret;
-	हाल PH_ACTIVATE_REQ:
+		return ret;
+	case PH_ACTIVATE_REQ:
 		spin_lock_irqsave(&hc->lock, flags);
-		अगर (hc->hw.protocol == ISDN_P_NT_S0) अणु
+		if (hc->hw.protocol == ISDN_P_NT_S0) {
 			ret = 0;
-			अगर (test_bit(HFC_CFG_MASTER, &hc->cfg))
+			if (test_bit(HFC_CFG_MASTER, &hc->cfg))
 				hc->hw.mst_m |= HFCPCI_MASTER;
 			Write_hfc(hc, HFCPCI_MST_MODE, hc->hw.mst_m);
-			अगर (test_bit(FLG_ACTIVE, &dch->Flags)) अणु
+			if (test_bit(FLG_ACTIVE, &dch->Flags)) {
 				spin_unlock_irqrestore(&hc->lock, flags);
 				_queue_data(&dch->dev.D, PH_ACTIVATE_IND,
-					    MISDN_ID_ANY, 0, शून्य, GFP_ATOMIC);
-				अवरोध;
-			पूर्ण
+					    MISDN_ID_ANY, 0, NULL, GFP_ATOMIC);
+				break;
+			}
 			test_and_set_bit(FLG_L2_ACTIVATED, &dch->Flags);
 			Write_hfc(hc, HFCPCI_STATES, HFCPCI_ACTIVATE |
 				  HFCPCI_DO_ACTION | 1);
-		पूर्ण अन्यथा
+		} else
 			ret = l1_event(dch->l1, hh->prim);
 		spin_unlock_irqrestore(&hc->lock, flags);
-		अवरोध;
-	हाल PH_DEACTIVATE_REQ:
+		break;
+	case PH_DEACTIVATE_REQ:
 		test_and_clear_bit(FLG_L2_ACTIVATED, &dch->Flags);
 		spin_lock_irqsave(&hc->lock, flags);
-		अगर (hc->hw.protocol == ISDN_P_NT_S0) अणु
+		if (hc->hw.protocol == ISDN_P_NT_S0) {
 			/* prepare deactivation */
 			Write_hfc(hc, HFCPCI_STATES, 0x40);
 			skb_queue_purge(&dch->squeue);
-			अगर (dch->tx_skb) अणु
-				dev_kमुक्त_skb(dch->tx_skb);
-				dch->tx_skb = शून्य;
-			पूर्ण
+			if (dch->tx_skb) {
+				dev_kfree_skb(dch->tx_skb);
+				dch->tx_skb = NULL;
+			}
 			dch->tx_idx = 0;
-			अगर (dch->rx_skb) अणु
-				dev_kमुक्त_skb(dch->rx_skb);
-				dch->rx_skb = शून्य;
-			पूर्ण
+			if (dch->rx_skb) {
+				dev_kfree_skb(dch->rx_skb);
+				dch->rx_skb = NULL;
+			}
 			test_and_clear_bit(FLG_TX_BUSY, &dch->Flags);
-			अगर (test_and_clear_bit(FLG_BUSY_TIMER, &dch->Flags))
-				del_समयr(&dch->समयr);
-#अगर_घोषित FIXME
-			अगर (test_and_clear_bit(FLG_L1_BUSY, &dch->Flags))
+			if (test_and_clear_bit(FLG_BUSY_TIMER, &dch->Flags))
+				del_timer(&dch->timer);
+#ifdef FIXME
+			if (test_and_clear_bit(FLG_L1_BUSY, &dch->Flags))
 				dchannel_sched_event(&hc->dch, D_CLEARBUSY);
-#पूर्ण_अगर
+#endif
 			hc->hw.mst_m &= ~HFCPCI_MASTER;
 			Write_hfc(hc, HFCPCI_MST_MODE, hc->hw.mst_m);
 			ret = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			ret = l1_event(dch->l1, hh->prim);
-		पूर्ण
+		}
 		spin_unlock_irqrestore(&hc->lock, flags);
-		अवरोध;
-	पूर्ण
-	अगर (!ret)
-		dev_kमुक्त_skb(skb);
-	वापस ret;
-पूर्ण
+		break;
+	}
+	if (!ret)
+		dev_kfree_skb(skb);
+	return ret;
+}
 
 /*
  * Layer2 -> Layer 1 Bchannel data
  */
-अटल पूर्णांक
-hfcpci_l2l1B(काष्ठा mISDNchannel *ch, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा bchannel		*bch = container_of(ch, काष्ठा bchannel, ch);
-	काष्ठा hfc_pci		*hc = bch->hw;
-	पूर्णांक			ret = -EINVAL;
-	काष्ठा mISDNhead	*hh = mISDN_HEAD_P(skb);
-	अचिन्हित दीर्घ		flags;
+static int
+hfcpci_l2l1B(struct mISDNchannel *ch, struct sk_buff *skb)
+{
+	struct bchannel		*bch = container_of(ch, struct bchannel, ch);
+	struct hfc_pci		*hc = bch->hw;
+	int			ret = -EINVAL;
+	struct mISDNhead	*hh = mISDN_HEAD_P(skb);
+	unsigned long		flags;
 
-	चयन (hh->prim) अणु
-	हाल PH_DATA_REQ:
+	switch (hh->prim) {
+	case PH_DATA_REQ:
 		spin_lock_irqsave(&hc->lock, flags);
 		ret = bchannel_senddata(bch, skb);
-		अगर (ret > 0) अणु /* direct TX */
-			hfcpci_fill_fअगरo(bch);
+		if (ret > 0) { /* direct TX */
+			hfcpci_fill_fifo(bch);
 			ret = 0;
-		पूर्ण
+		}
 		spin_unlock_irqrestore(&hc->lock, flags);
-		वापस ret;
-	हाल PH_ACTIVATE_REQ:
+		return ret;
+	case PH_ACTIVATE_REQ:
 		spin_lock_irqsave(&hc->lock, flags);
-		अगर (!test_and_set_bit(FLG_ACTIVE, &bch->Flags))
+		if (!test_and_set_bit(FLG_ACTIVE, &bch->Flags))
 			ret = mode_hfcpci(bch, bch->nr, ch->protocol);
-		अन्यथा
+		else
 			ret = 0;
 		spin_unlock_irqrestore(&hc->lock, flags);
-		अगर (!ret)
+		if (!ret)
 			_queue_data(ch, PH_ACTIVATE_IND, MISDN_ID_ANY, 0,
-				    शून्य, GFP_KERNEL);
-		अवरोध;
-	हाल PH_DEACTIVATE_REQ:
+				    NULL, GFP_KERNEL);
+		break;
+	case PH_DEACTIVATE_REQ:
 		deactivate_bchannel(bch);
 		_queue_data(ch, PH_DEACTIVATE_IND, MISDN_ID_ANY, 0,
-			    शून्य, GFP_KERNEL);
+			    NULL, GFP_KERNEL);
 		ret = 0;
-		अवरोध;
-	पूर्ण
-	अगर (!ret)
-		dev_kमुक्त_skb(skb);
-	वापस ret;
-पूर्ण
+		break;
+	}
+	if (!ret)
+		dev_kfree_skb(skb);
+	return ret;
+}
 
 /*
- * called क्रम card init message
+ * called for card init message
  */
 
-अटल व्योम
-inithfcpci(काष्ठा hfc_pci *hc)
-अणु
-	prपूर्णांकk(KERN_DEBUG "inithfcpci: entered\n");
-	समयr_setup(&hc->dch.समयr, hfcpci_dbusy_समयr, 0);
+static void
+inithfcpci(struct hfc_pci *hc)
+{
+	printk(KERN_DEBUG "inithfcpci: entered\n");
+	timer_setup(&hc->dch.timer, hfcpci_dbusy_timer, 0);
 	hc->chanlimit = 2;
 	mode_hfcpci(&hc->bch[0], 1, -1);
 	mode_hfcpci(&hc->bch[1], 2, -1);
-पूर्ण
+}
 
 
-अटल पूर्णांक
-init_card(काष्ठा hfc_pci *hc)
-अणु
-	पूर्णांक	cnt = 3;
-	u_दीर्घ	flags;
+static int
+init_card(struct hfc_pci *hc)
+{
+	int	cnt = 3;
+	u_long	flags;
 
-	prपूर्णांकk(KERN_DEBUG "init_card: entered\n");
+	printk(KERN_DEBUG "init_card: entered\n");
 
 
 	spin_lock_irqsave(&hc->lock, flags);
 	disable_hwirq(hc);
 	spin_unlock_irqrestore(&hc->lock, flags);
-	अगर (request_irq(hc->irq, hfcpci_पूर्णांक, IRQF_SHARED, "HFC PCI", hc)) अणु
-		prपूर्णांकk(KERN_WARNING
+	if (request_irq(hc->irq, hfcpci_int, IRQF_SHARED, "HFC PCI", hc)) {
+		printk(KERN_WARNING
 		       "mISDN: couldn't get interrupt %d\n", hc->irq);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 	spin_lock_irqsave(&hc->lock, flags);
 	reset_hfcpci(hc);
-	जबतक (cnt) अणु
+	while (cnt) {
 		inithfcpci(hc);
 		/*
 		 * Finally enable IRQ output
-		 * this is only allowed, अगर an IRQ routine is alपढ़ोy
-		 * established क्रम this HFC, so करोn't करो that earlier
+		 * this is only allowed, if an IRQ routine is already
+		 * established for this HFC, so don't do that earlier
 		 */
 		enable_hwirq(hc);
 		spin_unlock_irqrestore(&hc->lock, flags);
 		/* Timeout 80ms */
 		set_current_state(TASK_UNINTERRUPTIBLE);
-		schedule_समयout((80 * HZ) / 1000);
-		prपूर्णांकk(KERN_INFO "HFC PCI: IRQ %d count %d\n",
+		schedule_timeout((80 * HZ) / 1000);
+		printk(KERN_INFO "HFC PCI: IRQ %d count %d\n",
 		       hc->irq, hc->irqcnt);
-		/* now चयन समयr पूर्णांकerrupt off */
+		/* now switch timer interrupt off */
 		spin_lock_irqsave(&hc->lock, flags);
-		hc->hw.पूर्णांक_m1 &= ~HFCPCI_INTS_TIMER;
-		Write_hfc(hc, HFCPCI_INT_M1, hc->hw.पूर्णांक_m1);
+		hc->hw.int_m1 &= ~HFCPCI_INTS_TIMER;
+		Write_hfc(hc, HFCPCI_INT_M1, hc->hw.int_m1);
 		/* reinit mode reg */
 		Write_hfc(hc, HFCPCI_MST_MODE, hc->hw.mst_m);
-		अगर (!hc->irqcnt) अणु
-			prपूर्णांकk(KERN_WARNING
+		if (!hc->irqcnt) {
+			printk(KERN_WARNING
 			       "HFC PCI: IRQ(%d) getting no interrupts "
 			       "during init %d\n", hc->irq, 4 - cnt);
-			अगर (cnt == 1)
-				अवरोध;
-			अन्यथा अणु
+			if (cnt == 1)
+				break;
+			else {
 				reset_hfcpci(hc);
 				cnt--;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			spin_unlock_irqrestore(&hc->lock, flags);
-			hc->initकरोne = 1;
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			hc->initdone = 1;
+			return 0;
+		}
+	}
 	disable_hwirq(hc);
 	spin_unlock_irqrestore(&hc->lock, flags);
-	मुक्त_irq(hc->irq, hc);
-	वापस -EIO;
-पूर्ण
+	free_irq(hc->irq, hc);
+	return -EIO;
+}
 
-अटल पूर्णांक
-channel_ctrl(काष्ठा hfc_pci *hc, काष्ठा mISDN_ctrl_req *cq)
-अणु
-	पूर्णांक	ret = 0;
-	u_अक्षर	slot;
+static int
+channel_ctrl(struct hfc_pci *hc, struct mISDN_ctrl_req *cq)
+{
+	int	ret = 0;
+	u_char	slot;
 
-	चयन (cq->op) अणु
-	हाल MISDN_CTRL_GETOP:
+	switch (cq->op) {
+	case MISDN_CTRL_GETOP:
 		cq->op = MISDN_CTRL_LOOP | MISDN_CTRL_CONNECT |
 			 MISDN_CTRL_DISCONNECT | MISDN_CTRL_L1_TIMER3;
-		अवरोध;
-	हाल MISDN_CTRL_LOOP:
+		break;
+	case MISDN_CTRL_LOOP:
 		/* channel 0 disabled loop */
-		अगर (cq->channel < 0 || cq->channel > 2) अणु
+		if (cq->channel < 0 || cq->channel > 2) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
-		अगर (cq->channel & 1) अणु
-			अगर (test_bit(HFC_CFG_SW_DD_DU, &hc->cfg))
+			break;
+		}
+		if (cq->channel & 1) {
+			if (test_bit(HFC_CFG_SW_DD_DU, &hc->cfg))
 				slot = 0xC0;
-			अन्यथा
+			else
 				slot = 0x80;
-			prपूर्णांकk(KERN_DEBUG "%s: Write_hfc: B1_SSL/RSL 0x%x\n",
+			printk(KERN_DEBUG "%s: Write_hfc: B1_SSL/RSL 0x%x\n",
 			       __func__, slot);
 			Write_hfc(hc, HFCPCI_B1_SSL, slot);
 			Write_hfc(hc, HFCPCI_B1_RSL, slot);
 			hc->hw.conn = (hc->hw.conn & ~7) | 6;
 			Write_hfc(hc, HFCPCI_CONNECT, hc->hw.conn);
-		पूर्ण
-		अगर (cq->channel & 2) अणु
-			अगर (test_bit(HFC_CFG_SW_DD_DU, &hc->cfg))
+		}
+		if (cq->channel & 2) {
+			if (test_bit(HFC_CFG_SW_DD_DU, &hc->cfg))
 				slot = 0xC1;
-			अन्यथा
+			else
 				slot = 0x81;
-			prपूर्णांकk(KERN_DEBUG "%s: Write_hfc: B2_SSL/RSL 0x%x\n",
+			printk(KERN_DEBUG "%s: Write_hfc: B2_SSL/RSL 0x%x\n",
 			       __func__, slot);
 			Write_hfc(hc, HFCPCI_B2_SSL, slot);
 			Write_hfc(hc, HFCPCI_B2_RSL, slot);
 			hc->hw.conn = (hc->hw.conn & ~0x38) | 0x30;
 			Write_hfc(hc, HFCPCI_CONNECT, hc->hw.conn);
-		पूर्ण
-		अगर (cq->channel & 3)
+		}
+		if (cq->channel & 3)
 			hc->hw.trm |= 0x80;	/* enable IOM-loop */
-		अन्यथा अणु
+		else {
 			hc->hw.conn = (hc->hw.conn & ~0x3f) | 0x09;
 			Write_hfc(hc, HFCPCI_CONNECT, hc->hw.conn);
 			hc->hw.trm &= 0x7f;	/* disable IOM-loop */
-		पूर्ण
+		}
 		Write_hfc(hc, HFCPCI_TRM, hc->hw.trm);
-		अवरोध;
-	हाल MISDN_CTRL_CONNECT:
-		अगर (cq->channel == cq->p1) अणु
+		break;
+	case MISDN_CTRL_CONNECT:
+		if (cq->channel == cq->p1) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
-		अगर (cq->channel < 1 || cq->channel > 2 ||
-		    cq->p1 < 1 || cq->p1 > 2) अणु
+			break;
+		}
+		if (cq->channel < 1 || cq->channel > 2 ||
+		    cq->p1 < 1 || cq->p1 > 2) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
-		अगर (test_bit(HFC_CFG_SW_DD_DU, &hc->cfg))
+			break;
+		}
+		if (test_bit(HFC_CFG_SW_DD_DU, &hc->cfg))
 			slot = 0xC0;
-		अन्यथा
+		else
 			slot = 0x80;
-		prपूर्णांकk(KERN_DEBUG "%s: Write_hfc: B1_SSL/RSL 0x%x\n",
+		printk(KERN_DEBUG "%s: Write_hfc: B1_SSL/RSL 0x%x\n",
 		       __func__, slot);
 		Write_hfc(hc, HFCPCI_B1_SSL, slot);
 		Write_hfc(hc, HFCPCI_B2_RSL, slot);
-		अगर (test_bit(HFC_CFG_SW_DD_DU, &hc->cfg))
+		if (test_bit(HFC_CFG_SW_DD_DU, &hc->cfg))
 			slot = 0xC1;
-		अन्यथा
+		else
 			slot = 0x81;
-		prपूर्णांकk(KERN_DEBUG "%s: Write_hfc: B2_SSL/RSL 0x%x\n",
+		printk(KERN_DEBUG "%s: Write_hfc: B2_SSL/RSL 0x%x\n",
 		       __func__, slot);
 		Write_hfc(hc, HFCPCI_B2_SSL, slot);
 		Write_hfc(hc, HFCPCI_B1_RSL, slot);
@@ -1852,232 +1851,232 @@ channel_ctrl(काष्ठा hfc_pci *hc, काष्ठा mISDN_ctrl_req *
 		Write_hfc(hc, HFCPCI_CONNECT, hc->hw.conn);
 		hc->hw.trm |= 0x80;
 		Write_hfc(hc, HFCPCI_TRM, hc->hw.trm);
-		अवरोध;
-	हाल MISDN_CTRL_DISCONNECT:
+		break;
+	case MISDN_CTRL_DISCONNECT:
 		hc->hw.conn = (hc->hw.conn & ~0x3f) | 0x09;
 		Write_hfc(hc, HFCPCI_CONNECT, hc->hw.conn);
 		hc->hw.trm &= 0x7f;	/* disable IOM-loop */
-		अवरोध;
-	हाल MISDN_CTRL_L1_TIMER3:
+		break;
+	case MISDN_CTRL_L1_TIMER3:
 		ret = l1_event(hc->dch.l1, HW_TIMER3_VALUE | (cq->p1 & 0xff));
-		अवरोध;
-	शेष:
-		prपूर्णांकk(KERN_WARNING "%s: unknown Op %x\n",
+		break;
+	default:
+		printk(KERN_WARNING "%s: unknown Op %x\n",
 		       __func__, cq->op);
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
-	वापस ret;
-पूर्ण
+		break;
+	}
+	return ret;
+}
 
-अटल पूर्णांक
-खोलो_dchannel(काष्ठा hfc_pci *hc, काष्ठा mISDNchannel *ch,
-	      काष्ठा channel_req *rq)
-अणु
-	पूर्णांक err = 0;
+static int
+open_dchannel(struct hfc_pci *hc, struct mISDNchannel *ch,
+	      struct channel_req *rq)
+{
+	int err = 0;
 
-	अगर (debug & DEBUG_HW_OPEN)
-		prपूर्णांकk(KERN_DEBUG "%s: dev(%d) open from %p\n", __func__,
-		       hc->dch.dev.id, __builtin_वापस_address(0));
-	अगर (rq->protocol == ISDN_P_NONE)
-		वापस -EINVAL;
-	अगर (rq->adr.channel == 1) अणु
+	if (debug & DEBUG_HW_OPEN)
+		printk(KERN_DEBUG "%s: dev(%d) open from %p\n", __func__,
+		       hc->dch.dev.id, __builtin_return_address(0));
+	if (rq->protocol == ISDN_P_NONE)
+		return -EINVAL;
+	if (rq->adr.channel == 1) {
 		/* TODO: E-Channel */
-		वापस -EINVAL;
-	पूर्ण
-	अगर (!hc->initकरोne) अणु
-		अगर (rq->protocol == ISDN_P_TE_S0) अणु
+		return -EINVAL;
+	}
+	if (!hc->initdone) {
+		if (rq->protocol == ISDN_P_TE_S0) {
 			err = create_l1(&hc->dch, hfc_l1callback);
-			अगर (err)
-				वापस err;
-		पूर्ण
+			if (err)
+				return err;
+		}
 		hc->hw.protocol = rq->protocol;
 		ch->protocol = rq->protocol;
 		err = init_card(hc);
-		अगर (err)
-			वापस err;
-	पूर्ण अन्यथा अणु
-		अगर (rq->protocol != ch->protocol) अणु
-			अगर (hc->hw.protocol == ISDN_P_TE_S0)
+		if (err)
+			return err;
+	} else {
+		if (rq->protocol != ch->protocol) {
+			if (hc->hw.protocol == ISDN_P_TE_S0)
 				l1_event(hc->dch.l1, CLOSE_CHANNEL);
-			अगर (rq->protocol == ISDN_P_TE_S0) अणु
+			if (rq->protocol == ISDN_P_TE_S0) {
 				err = create_l1(&hc->dch, hfc_l1callback);
-				अगर (err)
-					वापस err;
-			पूर्ण
+				if (err)
+					return err;
+			}
 			hc->hw.protocol = rq->protocol;
 			ch->protocol = rq->protocol;
-			hfcpci_seपंचांगode(hc);
-		पूर्ण
-	पूर्ण
+			hfcpci_setmode(hc);
+		}
+	}
 
-	अगर (((ch->protocol == ISDN_P_NT_S0) && (hc->dch.state == 3)) ||
-	    ((ch->protocol == ISDN_P_TE_S0) && (hc->dch.state == 7))) अणु
+	if (((ch->protocol == ISDN_P_NT_S0) && (hc->dch.state == 3)) ||
+	    ((ch->protocol == ISDN_P_TE_S0) && (hc->dch.state == 7))) {
 		_queue_data(ch, PH_ACTIVATE_IND, MISDN_ID_ANY,
-			    0, शून्य, GFP_KERNEL);
-	पूर्ण
+			    0, NULL, GFP_KERNEL);
+	}
 	rq->ch = ch;
-	अगर (!try_module_get(THIS_MODULE))
-		prपूर्णांकk(KERN_WARNING "%s:cannot get module\n", __func__);
-	वापस 0;
-पूर्ण
+	if (!try_module_get(THIS_MODULE))
+		printk(KERN_WARNING "%s:cannot get module\n", __func__);
+	return 0;
+}
 
-अटल पूर्णांक
-खोलो_bchannel(काष्ठा hfc_pci *hc, काष्ठा channel_req *rq)
-अणु
-	काष्ठा bchannel		*bch;
+static int
+open_bchannel(struct hfc_pci *hc, struct channel_req *rq)
+{
+	struct bchannel		*bch;
 
-	अगर (rq->adr.channel == 0 || rq->adr.channel > 2)
-		वापस -EINVAL;
-	अगर (rq->protocol == ISDN_P_NONE)
-		वापस -EINVAL;
+	if (rq->adr.channel == 0 || rq->adr.channel > 2)
+		return -EINVAL;
+	if (rq->protocol == ISDN_P_NONE)
+		return -EINVAL;
 	bch = &hc->bch[rq->adr.channel - 1];
-	अगर (test_and_set_bit(FLG_OPEN, &bch->Flags))
-		वापस -EBUSY; /* b-channel can be only खोलो once */
+	if (test_and_set_bit(FLG_OPEN, &bch->Flags))
+		return -EBUSY; /* b-channel can be only open once */
 	bch->ch.protocol = rq->protocol;
 	rq->ch = &bch->ch; /* TODO: E-channel */
-	अगर (!try_module_get(THIS_MODULE))
-		prपूर्णांकk(KERN_WARNING "%s:cannot get module\n", __func__);
-	वापस 0;
-पूर्ण
+	if (!try_module_get(THIS_MODULE))
+		printk(KERN_WARNING "%s:cannot get module\n", __func__);
+	return 0;
+}
 
 /*
  * device control function
  */
-अटल पूर्णांक
-hfc_dctrl(काष्ठा mISDNchannel *ch, u_पूर्णांक cmd, व्योम *arg)
-अणु
-	काष्ठा mISDNdevice	*dev = container_of(ch, काष्ठा mISDNdevice, D);
-	काष्ठा dchannel		*dch = container_of(dev, काष्ठा dchannel, dev);
-	काष्ठा hfc_pci		*hc = dch->hw;
-	काष्ठा channel_req	*rq;
-	पूर्णांक			err = 0;
+static int
+hfc_dctrl(struct mISDNchannel *ch, u_int cmd, void *arg)
+{
+	struct mISDNdevice	*dev = container_of(ch, struct mISDNdevice, D);
+	struct dchannel		*dch = container_of(dev, struct dchannel, dev);
+	struct hfc_pci		*hc = dch->hw;
+	struct channel_req	*rq;
+	int			err = 0;
 
-	अगर (dch->debug & DEBUG_HW)
-		prपूर्णांकk(KERN_DEBUG "%s: cmd:%x %p\n",
+	if (dch->debug & DEBUG_HW)
+		printk(KERN_DEBUG "%s: cmd:%x %p\n",
 		       __func__, cmd, arg);
-	चयन (cmd) अणु
-	हाल OPEN_CHANNEL:
+	switch (cmd) {
+	case OPEN_CHANNEL:
 		rq = arg;
-		अगर ((rq->protocol == ISDN_P_TE_S0) ||
+		if ((rq->protocol == ISDN_P_TE_S0) ||
 		    (rq->protocol == ISDN_P_NT_S0))
-			err = खोलो_dchannel(hc, ch, rq);
-		अन्यथा
-			err = खोलो_bchannel(hc, rq);
-		अवरोध;
-	हाल CLOSE_CHANNEL:
-		अगर (debug & DEBUG_HW_OPEN)
-			prपूर्णांकk(KERN_DEBUG "%s: dev(%d) close from %p\n",
+			err = open_dchannel(hc, ch, rq);
+		else
+			err = open_bchannel(hc, rq);
+		break;
+	case CLOSE_CHANNEL:
+		if (debug & DEBUG_HW_OPEN)
+			printk(KERN_DEBUG "%s: dev(%d) close from %p\n",
 			       __func__, hc->dch.dev.id,
-			       __builtin_वापस_address(0));
+			       __builtin_return_address(0));
 		module_put(THIS_MODULE);
-		अवरोध;
-	हाल CONTROL_CHANNEL:
+		break;
+	case CONTROL_CHANNEL:
 		err = channel_ctrl(hc, arg);
-		अवरोध;
-	शेष:
-		अगर (dch->debug & DEBUG_HW)
-			prपूर्णांकk(KERN_DEBUG "%s: unknown command %x\n",
+		break;
+	default:
+		if (dch->debug & DEBUG_HW)
+			printk(KERN_DEBUG "%s: unknown command %x\n",
 			       __func__, cmd);
-		वापस -EINVAL;
-	पूर्ण
-	वापस err;
-पूर्ण
+		return -EINVAL;
+	}
+	return err;
+}
 
-अटल पूर्णांक
-setup_hw(काष्ठा hfc_pci *hc)
-अणु
-	व्योम	*buffer;
+static int
+setup_hw(struct hfc_pci *hc)
+{
+	void	*buffer;
 
-	prपूर्णांकk(KERN_INFO "mISDN: HFC-PCI driver %s\n", hfcpci_revision);
+	printk(KERN_INFO "mISDN: HFC-PCI driver %s\n", hfcpci_revision);
 	hc->hw.cirm = 0;
 	hc->dch.state = 0;
 	pci_set_master(hc->pdev);
-	अगर (!hc->irq) अणु
-		prपूर्णांकk(KERN_WARNING "HFC-PCI: No IRQ for PCI card found\n");
-		वापस 1;
-	पूर्ण
+	if (!hc->irq) {
+		printk(KERN_WARNING "HFC-PCI: No IRQ for PCI card found\n");
+		return 1;
+	}
 	hc->hw.pci_io =
-		(अक्षर __iomem *)(अचिन्हित दीर्घ)hc->pdev->resource[1].start;
+		(char __iomem *)(unsigned long)hc->pdev->resource[1].start;
 
-	अगर (!hc->hw.pci_io) अणु
-		prपूर्णांकk(KERN_WARNING "HFC-PCI: No IO-Mem for PCI card found\n");
-		वापस 1;
-	पूर्ण
-	/* Allocate memory क्रम FIFOS */
+	if (!hc->hw.pci_io) {
+		printk(KERN_WARNING "HFC-PCI: No IO-Mem for PCI card found\n");
+		return 1;
+	}
+	/* Allocate memory for FIFOS */
 	/* the memory needs to be on a 32k boundary within the first 4G */
 	dma_set_mask(&hc->pdev->dev, 0xFFFF8000);
 	buffer = dma_alloc_coherent(&hc->pdev->dev, 0x8000, &hc->hw.dmahandle,
 				    GFP_KERNEL);
-	/* We silently assume the address is okay अगर nonzero */
-	अगर (!buffer) अणु
-		prपूर्णांकk(KERN_WARNING
+	/* We silently assume the address is okay if nonzero */
+	if (!buffer) {
+		printk(KERN_WARNING
 		       "HFC-PCI: Error allocating memory for FIFO!\n");
-		वापस 1;
-	पूर्ण
-	hc->hw.fअगरos = buffer;
-	pci_ग_लिखो_config_dword(hc->pdev, 0x80, hc->hw.dmahandle);
-	hc->hw.pci_io = ioremap((uदीर्घ) hc->hw.pci_io, 256);
-	अगर (unlikely(!hc->hw.pci_io)) अणु
-		prपूर्णांकk(KERN_WARNING
+		return 1;
+	}
+	hc->hw.fifos = buffer;
+	pci_write_config_dword(hc->pdev, 0x80, hc->hw.dmahandle);
+	hc->hw.pci_io = ioremap((ulong) hc->hw.pci_io, 256);
+	if (unlikely(!hc->hw.pci_io)) {
+		printk(KERN_WARNING
 		       "HFC-PCI: Error in ioremap for PCI!\n");
-		dma_मुक्त_coherent(&hc->pdev->dev, 0x8000, hc->hw.fअगरos,
+		dma_free_coherent(&hc->pdev->dev, 0x8000, hc->hw.fifos,
 				  hc->hw.dmahandle);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	prपूर्णांकk(KERN_INFO
+	printk(KERN_INFO
 	       "HFC-PCI: defined at mem %#lx fifo %p(%pad) IRQ %d HZ %d\n",
-	       (u_दीर्घ) hc->hw.pci_io, hc->hw.fअगरos,
+	       (u_long) hc->hw.pci_io, hc->hw.fifos,
 	       &hc->hw.dmahandle, hc->irq, HZ);
 
 	/* enable memory mapped ports, disable busmaster */
-	pci_ग_लिखो_config_word(hc->pdev, PCI_COMMAND, PCI_ENA_MEMIO);
-	hc->hw.पूर्णांक_m2 = 0;
+	pci_write_config_word(hc->pdev, PCI_COMMAND, PCI_ENA_MEMIO);
+	hc->hw.int_m2 = 0;
 	disable_hwirq(hc);
-	hc->hw.पूर्णांक_m1 = 0;
-	Write_hfc(hc, HFCPCI_INT_M1, hc->hw.पूर्णांक_m1);
-	/* At this poपूर्णांक the needed PCI config is करोne */
-	/* fअगरos are still not enabled */
-	समयr_setup(&hc->hw.समयr, hfcpci_Timer, 0);
-	/* शेष PCM master */
+	hc->hw.int_m1 = 0;
+	Write_hfc(hc, HFCPCI_INT_M1, hc->hw.int_m1);
+	/* At this point the needed PCI config is done */
+	/* fifos are still not enabled */
+	timer_setup(&hc->hw.timer, hfcpci_Timer, 0);
+	/* default PCM master */
 	test_and_set_bit(HFC_CFG_MASTER, &hc->cfg);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-release_card(काष्ठा hfc_pci *hc) अणु
-	u_दीर्घ	flags;
+static void
+release_card(struct hfc_pci *hc) {
+	u_long	flags;
 
 	spin_lock_irqsave(&hc->lock, flags);
-	hc->hw.पूर्णांक_m2 = 0; /* पूर्णांकerrupt output off ! */
+	hc->hw.int_m2 = 0; /* interrupt output off ! */
 	disable_hwirq(hc);
 	mode_hfcpci(&hc->bch[0], 1, ISDN_P_NONE);
 	mode_hfcpci(&hc->bch[1], 2, ISDN_P_NONE);
-	अगर (hc->dch.समयr.function != शून्य) अणु
-		del_समयr(&hc->dch.समयr);
-		hc->dch.समयr.function = शून्य;
-	पूर्ण
+	if (hc->dch.timer.function != NULL) {
+		del_timer(&hc->dch.timer);
+		hc->dch.timer.function = NULL;
+	}
 	spin_unlock_irqrestore(&hc->lock, flags);
-	अगर (hc->hw.protocol == ISDN_P_TE_S0)
+	if (hc->hw.protocol == ISDN_P_TE_S0)
 		l1_event(hc->dch.l1, CLOSE_CHANNEL);
-	अगर (hc->initकरोne)
-		मुक्त_irq(hc->irq, hc);
-	release_io_hfcpci(hc); /* must release after मुक्त_irq! */
-	mISDN_unरेजिस्टर_device(&hc->dch.dev);
-	mISDN_मुक्तbchannel(&hc->bch[1]);
-	mISDN_मुक्तbchannel(&hc->bch[0]);
-	mISDN_मुक्तdchannel(&hc->dch);
-	pci_set_drvdata(hc->pdev, शून्य);
-	kमुक्त(hc);
-पूर्ण
+	if (hc->initdone)
+		free_irq(hc->irq, hc);
+	release_io_hfcpci(hc); /* must release after free_irq! */
+	mISDN_unregister_device(&hc->dch.dev);
+	mISDN_freebchannel(&hc->bch[1]);
+	mISDN_freebchannel(&hc->bch[0]);
+	mISDN_freedchannel(&hc->dch);
+	pci_set_drvdata(hc->pdev, NULL);
+	kfree(hc);
+}
 
-अटल पूर्णांक
-setup_card(काष्ठा hfc_pci *card)
-अणु
-	पूर्णांक		err = -EINVAL;
-	u_पूर्णांक		i;
-	अक्षर		name[MISDN_MAX_IDLEN];
+static int
+setup_card(struct hfc_pci *card)
+{
+	int		err = -EINVAL;
+	u_int		i;
+	char		name[MISDN_MAX_IDLEN];
 
 	card->dch.debug = debug;
 	spin_lock_init(&card->lock);
@@ -2089,7 +2088,7 @@ setup_card(काष्ठा hfc_pci *card)
 	card->dch.dev.D.send = hfcpci_l2l1D;
 	card->dch.dev.D.ctrl = hfc_dctrl;
 	card->dch.dev.nrbchan = 2;
-	क्रम (i = 0; i < 2; i++) अणु
+	for (i = 0; i < 2; i++) {
 		card->bch[i].nr = i + 1;
 		set_channelmap(i + 1, card->dch.dev.channelmap);
 		card->bch[i].debug = debug;
@@ -2099,256 +2098,256 @@ setup_card(काष्ठा hfc_pci *card)
 		card->bch[i].ch.ctrl = hfc_bctrl;
 		card->bch[i].ch.nr = i + 1;
 		list_add(&card->bch[i].ch.list, &card->dch.dev.bchannels);
-	पूर्ण
+	}
 	err = setup_hw(card);
-	अगर (err)
-		जाओ error;
-	snम_लिखो(name, MISDN_MAX_IDLEN - 1, "hfc-pci.%d", HFC_cnt + 1);
-	err = mISDN_रेजिस्टर_device(&card->dch.dev, &card->pdev->dev, name);
-	अगर (err)
-		जाओ error;
+	if (err)
+		goto error;
+	snprintf(name, MISDN_MAX_IDLEN - 1, "hfc-pci.%d", HFC_cnt + 1);
+	err = mISDN_register_device(&card->dch.dev, &card->pdev->dev, name);
+	if (err)
+		goto error;
 	HFC_cnt++;
-	prपूर्णांकk(KERN_INFO "HFC %d cards installed\n", HFC_cnt);
-	वापस 0;
+	printk(KERN_INFO "HFC %d cards installed\n", HFC_cnt);
+	return 0;
 error:
-	mISDN_मुक्तbchannel(&card->bch[1]);
-	mISDN_मुक्तbchannel(&card->bch[0]);
-	mISDN_मुक्तdchannel(&card->dch);
-	kमुक्त(card);
-	वापस err;
-पूर्ण
+	mISDN_freebchannel(&card->bch[1]);
+	mISDN_freebchannel(&card->bch[0]);
+	mISDN_freedchannel(&card->dch);
+	kfree(card);
+	return err;
+}
 
-/* निजी data in the PCI devices list */
-काष्ठा _hfc_map अणु
-	u_पूर्णांक	subtype;
-	u_पूर्णांक	flag;
-	अक्षर	*name;
-पूर्ण;
+/* private data in the PCI devices list */
+struct _hfc_map {
+	u_int	subtype;
+	u_int	flag;
+	char	*name;
+};
 
-अटल स्थिर काष्ठा _hfc_map hfc_map[] =
-अणु
-	अणुHFC_CCD_2BD0, 0, "CCD/Billion/Asuscom 2BD0"पूर्ण,
-	अणुHFC_CCD_B000, 0, "Billion B000"पूर्ण,
-	अणुHFC_CCD_B006, 0, "Billion B006"पूर्ण,
-	अणुHFC_CCD_B007, 0, "Billion B007"पूर्ण,
-	अणुHFC_CCD_B008, 0, "Billion B008"पूर्ण,
-	अणुHFC_CCD_B009, 0, "Billion B009"पूर्ण,
-	अणुHFC_CCD_B00A, 0, "Billion B00A"पूर्ण,
-	अणुHFC_CCD_B00B, 0, "Billion B00B"पूर्ण,
-	अणुHFC_CCD_B00C, 0, "Billion B00C"पूर्ण,
-	अणुHFC_CCD_B100, 0, "Seyeon B100"पूर्ण,
-	अणुHFC_CCD_B700, 0, "Primux II S0 B700"पूर्ण,
-	अणुHFC_CCD_B701, 0, "Primux II S0 NT B701"पूर्ण,
-	अणुHFC_ABOCOM_2BD1, 0, "Abocom/Magitek 2BD1"पूर्ण,
-	अणुHFC_ASUS_0675, 0, "Asuscom/Askey 675"पूर्ण,
-	अणुHFC_BERKOM_TCONCEPT, 0, "German telekom T-Concept"पूर्ण,
-	अणुHFC_BERKOM_A1T, 0, "German telekom A1T"पूर्ण,
-	अणुHFC_ANIGMA_MC145575, 0, "Motorola MC145575"पूर्ण,
-	अणुHFC_ZOLTRIX_2BD0, 0, "Zoltrix 2BD0"पूर्ण,
-	अणुHFC_DIGI_DF_M_IOM2_E, 0,
-	 "Digi International DataFire Micro V IOM2 (Europe)"पूर्ण,
-	अणुHFC_DIGI_DF_M_E, 0,
-	 "Digi International DataFire Micro V (Europe)"पूर्ण,
-	अणुHFC_DIGI_DF_M_IOM2_A, 0,
-	 "Digi International DataFire Micro V IOM2 (North America)"पूर्ण,
-	अणुHFC_DIGI_DF_M_A, 0,
-	 "Digi International DataFire Micro V (North America)"पूर्ण,
-	अणुHFC_SITECOM_DC105V2, 0, "Sitecom Connectivity DC-105 ISDN TA"पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct _hfc_map hfc_map[] =
+{
+	{HFC_CCD_2BD0, 0, "CCD/Billion/Asuscom 2BD0"},
+	{HFC_CCD_B000, 0, "Billion B000"},
+	{HFC_CCD_B006, 0, "Billion B006"},
+	{HFC_CCD_B007, 0, "Billion B007"},
+	{HFC_CCD_B008, 0, "Billion B008"},
+	{HFC_CCD_B009, 0, "Billion B009"},
+	{HFC_CCD_B00A, 0, "Billion B00A"},
+	{HFC_CCD_B00B, 0, "Billion B00B"},
+	{HFC_CCD_B00C, 0, "Billion B00C"},
+	{HFC_CCD_B100, 0, "Seyeon B100"},
+	{HFC_CCD_B700, 0, "Primux II S0 B700"},
+	{HFC_CCD_B701, 0, "Primux II S0 NT B701"},
+	{HFC_ABOCOM_2BD1, 0, "Abocom/Magitek 2BD1"},
+	{HFC_ASUS_0675, 0, "Asuscom/Askey 675"},
+	{HFC_BERKOM_TCONCEPT, 0, "German telekom T-Concept"},
+	{HFC_BERKOM_A1T, 0, "German telekom A1T"},
+	{HFC_ANIGMA_MC145575, 0, "Motorola MC145575"},
+	{HFC_ZOLTRIX_2BD0, 0, "Zoltrix 2BD0"},
+	{HFC_DIGI_DF_M_IOM2_E, 0,
+	 "Digi International DataFire Micro V IOM2 (Europe)"},
+	{HFC_DIGI_DF_M_E, 0,
+	 "Digi International DataFire Micro V (Europe)"},
+	{HFC_DIGI_DF_M_IOM2_A, 0,
+	 "Digi International DataFire Micro V IOM2 (North America)"},
+	{HFC_DIGI_DF_M_A, 0,
+	 "Digi International DataFire Micro V (North America)"},
+	{HFC_SITECOM_DC105V2, 0, "Sitecom Connectivity DC-105 ISDN TA"},
+	{},
+};
 
-अटल स्थिर काष्ठा pci_device_id hfc_ids[] =
-अणु
-	अणु PCI_VDEVICE(CCD, PCI_DEVICE_ID_CCD_2BD0),
-	  (अचिन्हित दीर्घ) &hfc_map[0] पूर्ण,
-	अणु PCI_VDEVICE(CCD, PCI_DEVICE_ID_CCD_B000),
-	  (अचिन्हित दीर्घ) &hfc_map[1] पूर्ण,
-	अणु PCI_VDEVICE(CCD, PCI_DEVICE_ID_CCD_B006),
-	  (अचिन्हित दीर्घ) &hfc_map[2] पूर्ण,
-	अणु PCI_VDEVICE(CCD, PCI_DEVICE_ID_CCD_B007),
-	  (अचिन्हित दीर्घ) &hfc_map[3] पूर्ण,
-	अणु PCI_VDEVICE(CCD, PCI_DEVICE_ID_CCD_B008),
-	  (अचिन्हित दीर्घ) &hfc_map[4] पूर्ण,
-	अणु PCI_VDEVICE(CCD, PCI_DEVICE_ID_CCD_B009),
-	  (अचिन्हित दीर्घ) &hfc_map[5] पूर्ण,
-	अणु PCI_VDEVICE(CCD, PCI_DEVICE_ID_CCD_B00A),
-	  (अचिन्हित दीर्घ) &hfc_map[6] पूर्ण,
-	अणु PCI_VDEVICE(CCD, PCI_DEVICE_ID_CCD_B00B),
-	  (अचिन्हित दीर्घ) &hfc_map[7] पूर्ण,
-	अणु PCI_VDEVICE(CCD, PCI_DEVICE_ID_CCD_B00C),
-	  (अचिन्हित दीर्घ) &hfc_map[8] पूर्ण,
-	अणु PCI_VDEVICE(CCD, PCI_DEVICE_ID_CCD_B100),
-	  (अचिन्हित दीर्घ) &hfc_map[9] पूर्ण,
-	अणु PCI_VDEVICE(CCD, PCI_DEVICE_ID_CCD_B700),
-	  (अचिन्हित दीर्घ) &hfc_map[10] पूर्ण,
-	अणु PCI_VDEVICE(CCD, PCI_DEVICE_ID_CCD_B701),
-	  (अचिन्हित दीर्घ) &hfc_map[11] पूर्ण,
-	अणु PCI_VDEVICE(ABOCOM, PCI_DEVICE_ID_ABOCOM_2BD1),
-	  (अचिन्हित दीर्घ) &hfc_map[12] पूर्ण,
-	अणु PCI_VDEVICE(ASUSTEK, PCI_DEVICE_ID_ASUSTEK_0675),
-	  (अचिन्हित दीर्घ) &hfc_map[13] पूर्ण,
-	अणु PCI_VDEVICE(BERKOM, PCI_DEVICE_ID_BERKOM_T_CONCEPT),
-	  (अचिन्हित दीर्घ) &hfc_map[14] पूर्ण,
-	अणु PCI_VDEVICE(BERKOM, PCI_DEVICE_ID_BERKOM_A1T),
-	  (अचिन्हित दीर्घ) &hfc_map[15] पूर्ण,
-	अणु PCI_VDEVICE(ANIGMA, PCI_DEVICE_ID_ANIGMA_MC145575),
-	  (अचिन्हित दीर्घ) &hfc_map[16] पूर्ण,
-	अणु PCI_VDEVICE(ZOLTRIX, PCI_DEVICE_ID_ZOLTRIX_2BD0),
-	  (अचिन्हित दीर्घ) &hfc_map[17] पूर्ण,
-	अणु PCI_VDEVICE(DIGI, PCI_DEVICE_ID_DIGI_DF_M_IOM2_E),
-	  (अचिन्हित दीर्घ) &hfc_map[18] पूर्ण,
-	अणु PCI_VDEVICE(DIGI, PCI_DEVICE_ID_DIGI_DF_M_E),
-	  (अचिन्हित दीर्घ) &hfc_map[19] पूर्ण,
-	अणु PCI_VDEVICE(DIGI, PCI_DEVICE_ID_DIGI_DF_M_IOM2_A),
-	  (अचिन्हित दीर्घ) &hfc_map[20] पूर्ण,
-	अणु PCI_VDEVICE(DIGI, PCI_DEVICE_ID_DIGI_DF_M_A),
-	  (अचिन्हित दीर्घ) &hfc_map[21] पूर्ण,
-	अणु PCI_VDEVICE(SITECOM, PCI_DEVICE_ID_SITECOM_DC105V2),
-	  (अचिन्हित दीर्घ) &hfc_map[22] पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct pci_device_id hfc_ids[] =
+{
+	{ PCI_VDEVICE(CCD, PCI_DEVICE_ID_CCD_2BD0),
+	  (unsigned long) &hfc_map[0] },
+	{ PCI_VDEVICE(CCD, PCI_DEVICE_ID_CCD_B000),
+	  (unsigned long) &hfc_map[1] },
+	{ PCI_VDEVICE(CCD, PCI_DEVICE_ID_CCD_B006),
+	  (unsigned long) &hfc_map[2] },
+	{ PCI_VDEVICE(CCD, PCI_DEVICE_ID_CCD_B007),
+	  (unsigned long) &hfc_map[3] },
+	{ PCI_VDEVICE(CCD, PCI_DEVICE_ID_CCD_B008),
+	  (unsigned long) &hfc_map[4] },
+	{ PCI_VDEVICE(CCD, PCI_DEVICE_ID_CCD_B009),
+	  (unsigned long) &hfc_map[5] },
+	{ PCI_VDEVICE(CCD, PCI_DEVICE_ID_CCD_B00A),
+	  (unsigned long) &hfc_map[6] },
+	{ PCI_VDEVICE(CCD, PCI_DEVICE_ID_CCD_B00B),
+	  (unsigned long) &hfc_map[7] },
+	{ PCI_VDEVICE(CCD, PCI_DEVICE_ID_CCD_B00C),
+	  (unsigned long) &hfc_map[8] },
+	{ PCI_VDEVICE(CCD, PCI_DEVICE_ID_CCD_B100),
+	  (unsigned long) &hfc_map[9] },
+	{ PCI_VDEVICE(CCD, PCI_DEVICE_ID_CCD_B700),
+	  (unsigned long) &hfc_map[10] },
+	{ PCI_VDEVICE(CCD, PCI_DEVICE_ID_CCD_B701),
+	  (unsigned long) &hfc_map[11] },
+	{ PCI_VDEVICE(ABOCOM, PCI_DEVICE_ID_ABOCOM_2BD1),
+	  (unsigned long) &hfc_map[12] },
+	{ PCI_VDEVICE(ASUSTEK, PCI_DEVICE_ID_ASUSTEK_0675),
+	  (unsigned long) &hfc_map[13] },
+	{ PCI_VDEVICE(BERKOM, PCI_DEVICE_ID_BERKOM_T_CONCEPT),
+	  (unsigned long) &hfc_map[14] },
+	{ PCI_VDEVICE(BERKOM, PCI_DEVICE_ID_BERKOM_A1T),
+	  (unsigned long) &hfc_map[15] },
+	{ PCI_VDEVICE(ANIGMA, PCI_DEVICE_ID_ANIGMA_MC145575),
+	  (unsigned long) &hfc_map[16] },
+	{ PCI_VDEVICE(ZOLTRIX, PCI_DEVICE_ID_ZOLTRIX_2BD0),
+	  (unsigned long) &hfc_map[17] },
+	{ PCI_VDEVICE(DIGI, PCI_DEVICE_ID_DIGI_DF_M_IOM2_E),
+	  (unsigned long) &hfc_map[18] },
+	{ PCI_VDEVICE(DIGI, PCI_DEVICE_ID_DIGI_DF_M_E),
+	  (unsigned long) &hfc_map[19] },
+	{ PCI_VDEVICE(DIGI, PCI_DEVICE_ID_DIGI_DF_M_IOM2_A),
+	  (unsigned long) &hfc_map[20] },
+	{ PCI_VDEVICE(DIGI, PCI_DEVICE_ID_DIGI_DF_M_A),
+	  (unsigned long) &hfc_map[21] },
+	{ PCI_VDEVICE(SITECOM, PCI_DEVICE_ID_SITECOM_DC105V2),
+	  (unsigned long) &hfc_map[22] },
+	{},
+};
 
-अटल पूर्णांक
-hfc_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
-अणु
-	पूर्णांक		err = -ENOMEM;
-	काष्ठा hfc_pci	*card;
-	काष्ठा _hfc_map	*m = (काष्ठा _hfc_map *)ent->driver_data;
+static int
+hfc_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
+{
+	int		err = -ENOMEM;
+	struct hfc_pci	*card;
+	struct _hfc_map	*m = (struct _hfc_map *)ent->driver_data;
 
-	card = kzalloc(माप(काष्ठा hfc_pci), GFP_KERNEL);
-	अगर (!card) अणु
-		prपूर्णांकk(KERN_ERR "No kmem for HFC card\n");
-		वापस err;
-	पूर्ण
+	card = kzalloc(sizeof(struct hfc_pci), GFP_KERNEL);
+	if (!card) {
+		printk(KERN_ERR "No kmem for HFC card\n");
+		return err;
+	}
 	card->pdev = pdev;
 	card->subtype = m->subtype;
 	err = pci_enable_device(pdev);
-	अगर (err) अणु
-		kमुक्त(card);
-		वापस err;
-	पूर्ण
+	if (err) {
+		kfree(card);
+		return err;
+	}
 
-	prपूर्णांकk(KERN_INFO "mISDN_hfcpci: found adapter %s at %s\n",
+	printk(KERN_INFO "mISDN_hfcpci: found adapter %s at %s\n",
 	       m->name, pci_name(pdev));
 
 	card->irq = pdev->irq;
 	pci_set_drvdata(pdev, card);
 	err = setup_card(card);
-	अगर (err)
-		pci_set_drvdata(pdev, शून्य);
-	वापस err;
-पूर्ण
+	if (err)
+		pci_set_drvdata(pdev, NULL);
+	return err;
+}
 
-अटल व्योम
-hfc_हटाओ_pci(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा hfc_pci	*card = pci_get_drvdata(pdev);
+static void
+hfc_remove_pci(struct pci_dev *pdev)
+{
+	struct hfc_pci	*card = pci_get_drvdata(pdev);
 
-	अगर (card)
+	if (card)
 		release_card(card);
-	अन्यथा
-		अगर (debug)
-			prपूर्णांकk(KERN_DEBUG "%s: drvdata already removed\n",
+	else
+		if (debug)
+			printk(KERN_DEBUG "%s: drvdata already removed\n",
 			       __func__);
-पूर्ण
+}
 
 
-अटल काष्ठा pci_driver hfc_driver = अणु
+static struct pci_driver hfc_driver = {
 	.name = "hfcpci",
 	.probe = hfc_probe,
-	.हटाओ = hfc_हटाओ_pci,
+	.remove = hfc_remove_pci,
 	.id_table = hfc_ids,
-पूर्ण;
+};
 
-अटल पूर्णांक
-_hfcpci_softirq(काष्ठा device *dev, व्योम *unused)
-अणु
-	काष्ठा hfc_pci  *hc = dev_get_drvdata(dev);
-	काष्ठा bchannel *bch;
-	अगर (hc == शून्य)
-		वापस 0;
+static int
+_hfcpci_softirq(struct device *dev, void *unused)
+{
+	struct hfc_pci  *hc = dev_get_drvdata(dev);
+	struct bchannel *bch;
+	if (hc == NULL)
+		return 0;
 
-	अगर (hc->hw.पूर्णांक_m2 & HFCPCI_IRQ_ENABLE) अणु
+	if (hc->hw.int_m2 & HFCPCI_IRQ_ENABLE) {
 		spin_lock(&hc->lock);
 		bch = Sel_BCS(hc, hc->hw.bswapped ? 2 : 1);
-		अगर (bch && bch->state == ISDN_P_B_RAW) अणु /* B1 rx&tx */
-			मुख्य_rec_hfcpci(bch);
+		if (bch && bch->state == ISDN_P_B_RAW) { /* B1 rx&tx */
+			main_rec_hfcpci(bch);
 			tx_birq(bch);
-		पूर्ण
+		}
 		bch = Sel_BCS(hc, hc->hw.bswapped ? 1 : 2);
-		अगर (bch && bch->state == ISDN_P_B_RAW) अणु /* B2 rx&tx */
-			मुख्य_rec_hfcpci(bch);
+		if (bch && bch->state == ISDN_P_B_RAW) { /* B2 rx&tx */
+			main_rec_hfcpci(bch);
 			tx_birq(bch);
-		पूर्ण
+		}
 		spin_unlock(&hc->lock);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल व्योम
-hfcpci_softirq(काष्ठा समयr_list *unused)
-अणु
-	WARN_ON_ONCE(driver_क्रम_each_device(&hfc_driver.driver, शून्य, शून्य,
+static void
+hfcpci_softirq(struct timer_list *unused)
+{
+	WARN_ON_ONCE(driver_for_each_device(&hfc_driver.driver, NULL, NULL,
 				      _hfcpci_softirq) != 0);
 
-	/* अगर next event would be in the past ... */
-	अगर ((s32)(hfc_jअगरfies + tics - jअगरfies) <= 0)
-		hfc_jअगरfies = jअगरfies + 1;
-	अन्यथा
-		hfc_jअगरfies += tics;
-	hfc_tl.expires = hfc_jअगरfies;
-	add_समयr(&hfc_tl);
-पूर्ण
+	/* if next event would be in the past ... */
+	if ((s32)(hfc_jiffies + tics - jiffies) <= 0)
+		hfc_jiffies = jiffies + 1;
+	else
+		hfc_jiffies += tics;
+	hfc_tl.expires = hfc_jiffies;
+	add_timer(&hfc_tl);
+}
 
-अटल पूर्णांक __init
-HFC_init(व्योम)
-अणु
-	पूर्णांक		err;
+static int __init
+HFC_init(void)
+{
+	int		err;
 
-	अगर (!poll)
+	if (!poll)
 		poll = HFCPCI_BTRANS_THRESHOLD;
 
-	अगर (poll != HFCPCI_BTRANS_THRESHOLD) अणु
+	if (poll != HFCPCI_BTRANS_THRESHOLD) {
 		tics = (poll * HZ) / 8000;
-		अगर (tics < 1)
+		if (tics < 1)
 			tics = 1;
 		poll = (tics * 8000) / HZ;
-		अगर (poll > 256 || poll < 8) अणु
-			prपूर्णांकk(KERN_ERR "%s: Wrong poll value %d not in range "
+		if (poll > 256 || poll < 8) {
+			printk(KERN_ERR "%s: Wrong poll value %d not in range "
 			       "of 8..256.\n", __func__, poll);
 			err = -EINVAL;
-			वापस err;
-		पूर्ण
-	पूर्ण
-	अगर (poll != HFCPCI_BTRANS_THRESHOLD) अणु
-		prपूर्णांकk(KERN_INFO "%s: Using alternative poll value of %d\n",
+			return err;
+		}
+	}
+	if (poll != HFCPCI_BTRANS_THRESHOLD) {
+		printk(KERN_INFO "%s: Using alternative poll value of %d\n",
 		       __func__, poll);
-		समयr_setup(&hfc_tl, hfcpci_softirq, 0);
-		hfc_tl.expires = jअगरfies + tics;
-		hfc_jअगरfies = hfc_tl.expires;
-		add_समयr(&hfc_tl);
-	पूर्ण अन्यथा
-		tics = 0; /* indicate the use of controller's समयr */
+		timer_setup(&hfc_tl, hfcpci_softirq, 0);
+		hfc_tl.expires = jiffies + tics;
+		hfc_jiffies = hfc_tl.expires;
+		add_timer(&hfc_tl);
+	} else
+		tics = 0; /* indicate the use of controller's timer */
 
-	err = pci_रेजिस्टर_driver(&hfc_driver);
-	अगर (err) अणु
-		अगर (समयr_pending(&hfc_tl))
-			del_समयr(&hfc_tl);
-	पूर्ण
+	err = pci_register_driver(&hfc_driver);
+	if (err) {
+		if (timer_pending(&hfc_tl))
+			del_timer(&hfc_tl);
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम __निकास
-HFC_cleanup(व्योम)
-अणु
-	अगर (समयr_pending(&hfc_tl))
-		del_समयr(&hfc_tl);
+static void __exit
+HFC_cleanup(void)
+{
+	if (timer_pending(&hfc_tl))
+		del_timer(&hfc_tl);
 
-	pci_unरेजिस्टर_driver(&hfc_driver);
-पूर्ण
+	pci_unregister_driver(&hfc_driver);
+}
 
 module_init(HFC_init);
-module_निकास(HFC_cleanup);
+module_exit(HFC_cleanup);
 
 MODULE_DEVICE_TABLE(pci, hfc_ids);

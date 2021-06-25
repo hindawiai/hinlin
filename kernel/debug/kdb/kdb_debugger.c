@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Created by: Jason Wessel <jason.wessel@windriver.com>
  *
@@ -9,170 +8,170 @@
  * warranty of any kind, whether express or implied.
  */
 
-#समावेश <linux/kgdb.h>
-#समावेश <linux/kdb.h>
-#समावेश <linux/kdebug.h>
-#समावेश <linux/export.h>
-#समावेश <linux/hardirq.h>
-#समावेश "kdb_private.h"
-#समावेश "../debug_core.h"
+#include <linux/kgdb.h>
+#include <linux/kdb.h>
+#include <linux/kdebug.h>
+#include <linux/export.h>
+#include <linux/hardirq.h>
+#include "kdb_private.h"
+#include "../debug_core.h"
 
 /*
- * KDB पूर्णांकerface to KGDB पूर्णांकernals
+ * KDB interface to KGDB internals
  */
-get_अक्षर_func kdb_poll_funcs[] = अणु
-	dbg_io_get_अक्षर,
-	शून्य,
-	शून्य,
-	शून्य,
-	शून्य,
-	शून्य,
-पूर्ण;
+get_char_func kdb_poll_funcs[] = {
+	dbg_io_get_char,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+};
 EXPORT_SYMBOL_GPL(kdb_poll_funcs);
 
-पूर्णांक kdb_poll_idx = 1;
+int kdb_poll_idx = 1;
 EXPORT_SYMBOL_GPL(kdb_poll_idx);
 
-अटल काष्ठा kgdb_state *kdb_ks;
+static struct kgdb_state *kdb_ks;
 
-पूर्णांक kdb_common_init_state(काष्ठा kgdb_state *ks)
-अणु
-	kdb_initial_cpu = atomic_पढ़ो(&kgdb_active);
+int kdb_common_init_state(struct kgdb_state *ks)
+{
+	kdb_initial_cpu = atomic_read(&kgdb_active);
 	kdb_current_task = kgdb_info[ks->cpu].task;
 	kdb_current_regs = kgdb_info[ks->cpu].debuggerinfo;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक kdb_common_deinit_state(व्योम)
-अणु
+int kdb_common_deinit_state(void)
+{
 	kdb_initial_cpu = -1;
-	kdb_current_task = शून्य;
-	kdb_current_regs = शून्य;
-	वापस 0;
-पूर्ण
+	kdb_current_task = NULL;
+	kdb_current_regs = NULL;
+	return 0;
+}
 
-पूर्णांक kdb_stub(काष्ठा kgdb_state *ks)
-अणु
-	पूर्णांक error = 0;
+int kdb_stub(struct kgdb_state *ks)
+{
+	int error = 0;
 	kdb_bp_t *bp;
-	अचिन्हित दीर्घ addr = kgdb_arch_pc(ks->ex_vector, ks->linux_regs);
+	unsigned long addr = kgdb_arch_pc(ks->ex_vector, ks->linux_regs);
 	kdb_reason_t reason = KDB_REASON_OOPS;
 	kdb_dbtrap_t db_result = KDB_DB_NOBPT;
-	पूर्णांक i;
+	int i;
 
 	kdb_ks = ks;
-	अगर (KDB_STATE(REENTRY)) अणु
+	if (KDB_STATE(REENTRY)) {
 		reason = KDB_REASON_SWITCH;
 		KDB_STATE_CLEAR(REENTRY);
-		addr = inकाष्ठाion_poपूर्णांकer(ks->linux_regs);
-	पूर्ण
+		addr = instruction_pointer(ks->linux_regs);
+	}
 	ks->pass_exception = 0;
-	अगर (atomic_पढ़ो(&kgdb_setting_अवरोधpoपूर्णांक))
+	if (atomic_read(&kgdb_setting_breakpoint))
 		reason = KDB_REASON_KEYBOARD;
 
-	अगर (ks->err_code == KDB_REASON_SYSTEM_NMI && ks->signo == SIGTRAP)
+	if (ks->err_code == KDB_REASON_SYSTEM_NMI && ks->signo == SIGTRAP)
 		reason = KDB_REASON_SYSTEM_NMI;
 
-	अन्यथा अगर (in_nmi())
+	else if (in_nmi())
 		reason = KDB_REASON_NMI;
 
-	क्रम (i = 0, bp = kdb_अवरोधpoपूर्णांकs; i < KDB_MAXBPT; i++, bp++) अणु
-		अगर ((bp->bp_enabled) && (bp->bp_addr == addr)) अणु
+	for (i = 0, bp = kdb_breakpoints; i < KDB_MAXBPT; i++, bp++) {
+		if ((bp->bp_enabled) && (bp->bp_addr == addr)) {
 			reason = KDB_REASON_BREAK;
 			db_result = KDB_DB_BPT;
-			अगर (addr != inकाष्ठाion_poपूर्णांकer(ks->linux_regs))
+			if (addr != instruction_pointer(ks->linux_regs))
 				kgdb_arch_set_pc(ks->linux_regs, addr);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (reason == KDB_REASON_BREAK || reason == KDB_REASON_SWITCH) अणु
-		क्रम (i = 0, bp = kdb_अवरोधpoपूर्णांकs; i < KDB_MAXBPT; i++, bp++) अणु
-			अगर (bp->bp_मुक्त)
-				जारी;
-			अगर (bp->bp_addr == addr) अणु
+			break;
+		}
+	}
+	if (reason == KDB_REASON_BREAK || reason == KDB_REASON_SWITCH) {
+		for (i = 0, bp = kdb_breakpoints; i < KDB_MAXBPT; i++, bp++) {
+			if (bp->bp_free)
+				continue;
+			if (bp->bp_addr == addr) {
 				bp->bp_delay = 1;
 				bp->bp_delayed = 1;
 	/*
 	 * SSBPT is set when the kernel debugger must single step a
-	 * task in order to re-establish an inकाष्ठाion अवरोधpoपूर्णांक
-	 * which uses the inकाष्ठाion replacement mechanism.  It is
-	 * cleared by any action that हटाओs the need to single-step
-	 * the अवरोधpoपूर्णांक.
+	 * task in order to re-establish an instruction breakpoint
+	 * which uses the instruction replacement mechanism.  It is
+	 * cleared by any action that removes the need to single-step
+	 * the breakpoint.
 	 */
 				reason = KDB_REASON_BREAK;
 				db_result = KDB_DB_BPT;
 				KDB_STATE_SET(SSBPT);
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 
-	अगर (reason != KDB_REASON_BREAK && ks->ex_vector == 0 &&
-		ks->signo == SIGTRAP) अणु
+	if (reason != KDB_REASON_BREAK && ks->ex_vector == 0 &&
+		ks->signo == SIGTRAP) {
 		reason = KDB_REASON_SSTEP;
 		db_result = KDB_DB_BPT;
-	पूर्ण
+	}
 	/* Set initial kdb state variables */
 	KDB_STATE_CLEAR(KGDB_TRANS);
 	kdb_common_init_state(ks);
-	/* Remove any अवरोधpoपूर्णांकs as needed by kdb and clear single step */
-	kdb_bp_हटाओ();
+	/* Remove any breakpoints as needed by kdb and clear single step */
+	kdb_bp_remove();
 	KDB_STATE_CLEAR(DOING_SS);
 	KDB_STATE_SET(PAGER);
-	अगर (ks->err_code == DIE_OOPS || reason == KDB_REASON_OOPS) अणु
+	if (ks->err_code == DIE_OOPS || reason == KDB_REASON_OOPS) {
 		ks->pass_exception = 1;
 		KDB_FLAG_SET(CATASTROPHIC);
-	पूर्ण
-	/* set CATASTROPHIC अगर the प्रणाली contains unresponsive processors */
-	क्रम_each_online_cpu(i)
-		अगर (!kgdb_info[i].enter_kgdb)
+	}
+	/* set CATASTROPHIC if the system contains unresponsive processors */
+	for_each_online_cpu(i)
+		if (!kgdb_info[i].enter_kgdb)
 			KDB_FLAG_SET(CATASTROPHIC);
-	अगर (KDB_STATE(SSBPT) && reason == KDB_REASON_SSTEP) अणु
+	if (KDB_STATE(SSBPT) && reason == KDB_REASON_SSTEP) {
 		KDB_STATE_CLEAR(SSBPT);
 		KDB_STATE_CLEAR(DOING_SS);
-	पूर्ण अन्यथा अणु
-		/* Start kdb मुख्य loop */
-		error = kdb_मुख्य_loop(KDB_REASON_ENTER, reason,
+	} else {
+		/* Start kdb main loop */
+		error = kdb_main_loop(KDB_REASON_ENTER, reason,
 				      ks->err_code, db_result, ks->linux_regs);
-	पूर्ण
+	}
 	/*
-	 * Upon निकास from the kdb मुख्य loop setup अवरोध poपूर्णांकs and restart
-	 * the प्रणाली based on the requested जारी state
+	 * Upon exit from the kdb main loop setup break points and restart
+	 * the system based on the requested continue state
 	 */
 	kdb_common_deinit_state();
 	KDB_STATE_CLEAR(PAGER);
 	kdbnearsym_cleanup();
-	अगर (error == KDB_CMD_KGDB) अणु
-		अगर (KDB_STATE(DOING_KGDB))
+	if (error == KDB_CMD_KGDB) {
+		if (KDB_STATE(DOING_KGDB))
 			KDB_STATE_CLEAR(DOING_KGDB);
-		वापस DBG_PASS_EVENT;
-	पूर्ण
+		return DBG_PASS_EVENT;
+	}
 	kdb_bp_install(ks->linux_regs);
-	/* Set the निकास state to a single step or a जारी */
-	अगर (KDB_STATE(DOING_SS))
+	/* Set the exit state to a single step or a continue */
+	if (KDB_STATE(DOING_SS))
 		gdbstub_state(ks, "s");
-	अन्यथा
+	else
 		gdbstub_state(ks, "c");
 
 	KDB_FLAG_CLEAR(CATASTROPHIC);
 
-	/* Invoke arch specअगरic exception handling prior to प्रणाली resume */
+	/* Invoke arch specific exception handling prior to system resume */
 	kgdb_info[ks->cpu].ret_state = gdbstub_state(ks, "e");
-	अगर (ks->pass_exception)
+	if (ks->pass_exception)
 		kgdb_info[ks->cpu].ret_state = 1;
-	अगर (error == KDB_CMD_CPU) अणु
+	if (error == KDB_CMD_CPU) {
 		KDB_STATE_SET(REENTRY);
 		/*
 		 * Force clear the single step bit because kdb emulates this
-		 * dअगरferently vs the gdbstub
+		 * differently vs the gdbstub
 		 */
 		kgdb_single_step = 0;
-		वापस DBG_SWITCH_CPU_EVENT;
-	पूर्ण
-	वापस kgdb_info[ks->cpu].ret_state;
-पूर्ण
+		return DBG_SWITCH_CPU_EVENT;
+	}
+	return kgdb_info[ks->cpu].ret_state;
+}
 
-व्योम kdb_gdb_state_pass(अक्षर *buf)
-अणु
+void kdb_gdb_state_pass(char *buf)
+{
 	gdbstub_state(kdb_ks, buf);
-पूर्ण
+}

@@ -1,9 +1,8 @@
-<शैली गुरु>
 /*
  * Copyright 2008-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright 2007 Nuova Systems, Inc.  All rights reserved.
  *
- * This program is मुक्त software; you may redistribute it and/or modअगरy
+ * This program is free software; you may redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; version 2 of the License.
  *
@@ -17,30 +16,30 @@
  * SOFTWARE.
  */
 
-#अगर_अघोषित _VNIC_RSS_H_
-#घोषणा _VNIC_RSS_H_
+#ifndef _VNIC_RSS_H_
+#define _VNIC_RSS_H_
 
 /* RSS key array */
 
-#घोषणा ENIC_RSS_BYTES_PER_KEY	10
-#घोषणा ENIC_RSS_KEYS		4
-#घोषणा ENIC_RSS_LEN		(ENIC_RSS_BYTES_PER_KEY * ENIC_RSS_KEYS)
+#define ENIC_RSS_BYTES_PER_KEY	10
+#define ENIC_RSS_KEYS		4
+#define ENIC_RSS_LEN		(ENIC_RSS_BYTES_PER_KEY * ENIC_RSS_KEYS)
 
-जोड़ vnic_rss_key अणु
-	काष्ठा अणु
+union vnic_rss_key {
+	struct {
 		u8 b[ENIC_RSS_BYTES_PER_KEY];
 		u8 b_pad[6];
-	पूर्ण key[ENIC_RSS_KEYS];
+	} key[ENIC_RSS_KEYS];
 	u64 raw[8];
-पूर्ण;
+};
 
 /* RSS cpu array */
-जोड़ vnic_rss_cpu अणु
-	काष्ठा अणु
+union vnic_rss_cpu {
+	struct {
 		u8 b[4] ;
 		u8 b_pad[4];
-	पूर्ण cpu[32];
+	} cpu[32];
 	u64 raw[32];
-पूर्ण;
+};
 
-#पूर्ण_अगर /* _VNIC_RSS_H_ */
+#endif /* _VNIC_RSS_H_ */

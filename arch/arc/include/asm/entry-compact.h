@@ -1,86 +1,85 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2014-15 Synopsys, Inc. (www.synopsys.com)
  * Copyright (C) 2004, 2007-2010, 2011-2012 Synopsys, Inc. (www.synopsys.com)
  *
  * Vineetg: March 2009 (Supporting 2 levels of Interrupts)
- *  Stack चयनing code can no दीर्घer reliably rely on the fact that
- *  अगर we are NOT in user mode, stack is चयनed to kernel mode.
- *  e.g. L2 IRQ पूर्णांकerrupted a L1 ISR which had not yet completed
- *  it's prologue including stack चयनing from user mode
+ *  Stack switching code can no longer reliably rely on the fact that
+ *  if we are NOT in user mode, stack is switched to kernel mode.
+ *  e.g. L2 IRQ interrupted a L1 ISR which had not yet completed
+ *  it's prologue including stack switching from user mode
  *
  * Vineetg: Aug 28th 2008: Bug #94984
  *  -Zero Overhead Loop Context shd be cleared when entering IRQ/EXcp/Trap
- *   Normally CPU करोes this स्वतःmatically, however when करोing FAKE rtie,
- *   we also need to explicitly करो this. The problem in macros
+ *   Normally CPU does this automatically, however when doing FAKE rtie,
+ *   we also need to explicitly do this. The problem in macros
  *   FAKE_RET_FROM_EXCPN and FAKE_RET_FROM_EXCPN_LOCK_IRQ was that this bit
  *   was being "CLEARED" rather then "SET". Actually "SET" clears ZOL context
  *
  * Vineetg: May 5th 2008
- *  -Modअगरied CALLEE_REG save/restore macros to handle the fact that
+ *  -Modified CALLEE_REG save/restore macros to handle the fact that
  *      r25 contains the kernel current task ptr
- *  - Defined Stack Switching Macro to be reused in all पूर्णांकr/excp hdlrs
- *  - Shaved off 11 inकाष्ठाions from RESTORE_ALL_INT1 by using the
+ *  - Defined Stack Switching Macro to be reused in all intr/excp hdlrs
+ *  - Shaved off 11 instructions from RESTORE_ALL_INT1 by using the
  *      address Write back load ld.ab instead of seperate ld/add instn
  *
  * Amit Bhor, Sameer Dhavale: Codito Technologies 2004
  */
 
-#अगर_अघोषित __ASM_ARC_ENTRY_COMPACT_H
-#घोषणा __ASM_ARC_ENTRY_COMPACT_H
+#ifndef __ASM_ARC_ENTRY_COMPACT_H
+#define __ASM_ARC_ENTRY_COMPACT_H
 
-#समावेश <यंत्र/यंत्र-offsets.h>
-#समावेश <यंत्र/irqflags-compact.h>
-#समावेश <यंत्र/thपढ़ो_info.h>	/* For THREAD_SIZE */
+#include <asm/asm-offsets.h>
+#include <asm/irqflags-compact.h>
+#include <asm/thread_info.h>	/* For THREAD_SIZE */
 
 /*--------------------------------------------------------------
- * Switch to Kernel Mode stack अगर SP poपूर्णांकs to User Mode stack
+ * Switch to Kernel Mode stack if SP points to User Mode stack
  *
  * Entry   : r9 contains pre-IRQ/exception/trap status32
  * Exit    : SP set to K mode stack
- *           SP at the समय of entry (K/U) saved @ pt_regs->sp
+ *           SP at the time of entry (K/U) saved @ pt_regs->sp
  * Clobbers: r9
  *-------------------------------------------------------------*/
 
 .macro SWITCH_TO_KERNEL_STK
 
-	/* User Mode when this happened ? Yes: Proceed to चयन stack */
+	/* User Mode when this happened ? Yes: Proceed to switch stack */
 	bbit1   r9, STATUS_U_BIT, 88f
 
-	/* OK we were alपढ़ोy in kernel mode when this event happened, thus can
-	 * assume SP is kernel mode SP. _NO_ need to करो any stack चयनing
+	/* OK we were already in kernel mode when this event happened, thus can
+	 * assume SP is kernel mode SP. _NO_ need to do any stack switching
 	 */
 
-#अगर_घोषित CONFIG_ARC_COMPACT_IRQ_LEVELS
+#ifdef CONFIG_ARC_COMPACT_IRQ_LEVELS
 	/* However....
-	 * If Level 2 Interrupts enabled, we may end up with a corner हाल:
+	 * If Level 2 Interrupts enabled, we may end up with a corner case:
 	 * 1. User Task executing
-	 * 2. L1 IRQ taken, ISR starts (CPU स्वतः-चयनed to KERNEL mode)
-	 * 3. But beक्रमe it could चयन SP from USER to KERNEL stack
+	 * 2. L1 IRQ taken, ISR starts (CPU auto-switched to KERNEL mode)
+	 * 3. But before it could switch SP from USER to KERNEL stack
 	 *      a L2 IRQ "Interrupts" L1
 	 * Thay way although L2 IRQ happened in Kernel mode, stack is still
-	 * not चयनed.
-	 * To handle this, we may need to चयन stack even अगर in kernel mode
+	 * not switched.
+	 * To handle this, we may need to switch stack even if in kernel mode
 	 * provided SP has values in range of USER mode stack ( < 0x7000_0000 )
 	 */
 	brlo sp, VMALLOC_START, 88f
 
 	/* TODO: vineetg:
-	 * We need to be a bit more cautious here. What अगर a kernel bug in
+	 * We need to be a bit more cautious here. What if a kernel bug in
 	 * L1 ISR, caused SP to go whaco (some small value which looks like
 	 * USER stk) and then we take L2 ISR.
 	 * Above brlo alone would treat it as a valid L1-L2 scenario
 	 * instead of shouting around
 	 * The only feasible way is to make sure this L2 happened in
 	 * L1 prelogue ONLY i.e. ilink2 is less than a pre-set marker in
-	 * L1 ISR beक्रमe it चयनes stack
+	 * L1 ISR before it switches stack
 	 */
 
-#पूर्ण_अगर
+#endif
 
-    /*------Intr/Ecxp happened in kernel mode, SP alपढ़ोy setup ------ */
-	/* save it nevertheless @ pt_regs->sp क्रम unअगरormity */
+    /*------Intr/Ecxp happened in kernel mode, SP already setup ------ */
+	/* save it nevertheless @ pt_regs->sp for uniformity */
 
 	b.d	66f
 	st	sp, [sp, PT_sp - SZ_PT_REGS]
@@ -95,13 +94,13 @@
 	/* save U mode SP @ pt_regs->sp */
 	st	sp, [r9, PT_sp - SZ_PT_REGS]
 
-	/* final SP चयन */
+	/* final SP switch */
 	mov	sp, r9
 66:
 .endm
 
 /*------------------------------------------------------------
- * "FAKE" a rtie to वापस from CPU Exception context
+ * "FAKE" a rtie to return from CPU Exception context
  * This is to re-enable Exceptions within exception
  * Look at EV_ProtV to see how this is actually used
  *-------------------------------------------------------------*/
@@ -120,32 +119,32 @@
 
 /*--------------------------------------------------------------
  * For early Exception/ISR Prologue, a core reg is temporarily needed to
- * code the rest of prolog (stack चयनing). This is करोne by stashing
- * it to memory (non-SMP हाल) or SCRATCH0 Aux Reg (SMP).
+ * code the rest of prolog (stack switching). This is done by stashing
+ * it to memory (non-SMP case) or SCRATCH0 Aux Reg (SMP).
  *
- * Beक्रमe saving the full regfile - this reg is restored back, only
+ * Before saving the full regfile - this reg is restored back, only
  * to be saved again on kernel mode stack, as part of pt_regs.
  *-------------------------------------------------------------*/
 .macro PROLOG_FREEUP_REG	reg, mem
-#अगर_अघोषित ARC_USE_SCRATCH_REG
-	sr  \लeg, [ARC_REG_SCRATCH_DATA0]
-#अन्यथा
-	st  \लeg, [\mem]
-#पूर्ण_अगर
+#ifndef ARC_USE_SCRATCH_REG
+	sr  \reg, [ARC_REG_SCRATCH_DATA0]
+#else
+	st  \reg, [\mem]
+#endif
 .endm
 
 .macro PROLOG_RESTORE_REG	reg, mem
-#अगर_अघोषित ARC_USE_SCRATCH_REG
-	lr  \लeg, [ARC_REG_SCRATCH_DATA0]
-#अन्यथा
-	ld  \लeg, [\mem]
-#पूर्ण_अगर
+#ifndef ARC_USE_SCRATCH_REG
+	lr  \reg, [ARC_REG_SCRATCH_DATA0]
+#else
+	ld  \reg, [\mem]
+#endif
 .endm
 
 /*--------------------------------------------------------------
  * Exception Entry prologue
- * -Switches stack to K mode (अगर not alपढ़ोy)
- * -Saves the रेजिस्टर file
+ * -Switches stack to K mode (if not already)
+ * -Saves the register file
  *
  * After this it is safe to call the "C" handlers
  *-------------------------------------------------------------*/
@@ -154,27 +153,27 @@
 	/* Need at least 1 reg to code the early exception prologue */
 	PROLOG_FREEUP_REG r9, @ex_saved_reg1
 
-	/* U/K mode at समय of exception (stack not चयनed अगर alपढ़ोy K) */
+	/* U/K mode at time of exception (stack not switched if already K) */
 	lr  r9, [erstatus]
 
-	/* ARC700 करोesn't provide स्वतः-stack चयनing */
+	/* ARC700 doesn't provide auto-stack switching */
 	SWITCH_TO_KERNEL_STK
 
-#अगर_घोषित CONFIG_ARC_CURR_IN_REG
+#ifdef CONFIG_ARC_CURR_IN_REG
 	/* Treat r25 as scratch reg (save on stack) and load with "current" */
 	PUSH    r25
 	GET_CURR_TASK_ON_CPU   r25
-#अन्यथा
+#else
 	sub     sp, sp, 4
-#पूर्ण_अगर
+#endif
 
-	st.a	r0, [sp, -8]    /* orig_r0 needed क्रम syscall (skip ECR slot) */
-	sub	sp, sp, 4	/* skip pt_regs->sp, alपढ़ोy saved above */
+	st.a	r0, [sp, -8]    /* orig_r0 needed for syscall (skip ECR slot) */
+	sub	sp, sp, 4	/* skip pt_regs->sp, already saved above */
 
 	/* Restore r9 used to code the early prologue */
 	PROLOG_RESTORE_REG  r9, @ex_saved_reg1
 
-	/* now we are पढ़ोy to save the regfile */
+	/* now we are ready to save the regfile */
 	SAVE_R0_TO_R12
 	PUSH	gp
 	PUSH	fp
@@ -191,14 +190,14 @@
 .endm
 
 /*--------------------------------------------------------------
- * Restore all रेजिस्टरs used by प्रणाली call or Exceptions
- * SP should always be poपूर्णांकing to the next मुक्त stack element
+ * Restore all registers used by system call or Exceptions
+ * SP should always be pointing to the next free stack element
  * when entering this macro.
  *
  * NOTE:
  *
  * It is recommended that lp_count/ilink1/ilink2 not be used as a dest reg
- * क्रम memory load operations. If used in that way पूर्णांकerrupts are deffered
+ * for memory load operations. If used in that way interrupts are deffered
  * by hardware and that is not good.
  *-------------------------------------------------------------*/
 .macro EXCEPTION_EPILOGUE
@@ -217,41 +216,41 @@
 	POP	gp
 	RESTORE_R12_TO_R0
 
-#अगर_घोषित CONFIG_ARC_CURR_IN_REG
+#ifdef CONFIG_ARC_CURR_IN_REG
 	ld	r25, [sp, 12]
-#पूर्ण_अगर
+#endif
 	ld  sp, [sp] /* restore original sp */
-	/* orig_r0, ECR, user_r25 skipped स्वतःmatically */
+	/* orig_r0, ECR, user_r25 skipped automatically */
 .endm
 
-/* Dummy ECR values क्रम Interrupts */
-#घोषणा event_IRQ1		0x0031abcd
-#घोषणा event_IRQ2		0x0032abcd
+/* Dummy ECR values for Interrupts */
+#define event_IRQ1		0x0031abcd
+#define event_IRQ2		0x0032abcd
 
 .macro INTERRUPT_PROLOGUE  LVL
 
-	/* मुक्त up r9 as scratchpad */
-	PROLOG_FREEUP_REG r9, @पूर्णांक\LVL\()_saved_reg
+	/* free up r9 as scratchpad */
+	PROLOG_FREEUP_REG r9, @int\LVL\()_saved_reg
 
-	/* Which mode (user/kernel) was the प्रणाली in when पूर्णांकr occurred */
+	/* Which mode (user/kernel) was the system in when intr occurred */
 	lr  r9, [status32_l\LVL\()]
 
 	SWITCH_TO_KERNEL_STK
 
-#अगर_घोषित CONFIG_ARC_CURR_IN_REG
+#ifdef CONFIG_ARC_CURR_IN_REG
 	/* Treat r25 as scratch reg (save on stack) and load with "current" */
 	PUSH    r25
 	GET_CURR_TASK_ON_CPU   r25
-#अन्यथा
+#else
 	sub     sp, sp, 4
-#पूर्ण_अगर
+#endif
 
 	PUSH	0x003\LVL\()abcd    /* Dummy ECR */
 	sub	sp, sp, 8	    /* skip orig_r0 (not needed)
-				       skip pt_regs->sp, alपढ़ोy saved above */
+				       skip pt_regs->sp, already saved above */
 
 	/* Restore r9 used to code the early prologue */
-	PROLOG_RESTORE_REG  r9, @पूर्णांक\LVL\()_saved_reg
+	PROLOG_RESTORE_REG  r9, @int\LVL\()_saved_reg
 
 	SAVE_R0_TO_R12
 	PUSH	gp
@@ -267,12 +266,12 @@
 .endm
 
 /*--------------------------------------------------------------
- * Restore all रेजिस्टरs used by पूर्णांकerrupt handlers.
+ * Restore all registers used by interrupt handlers.
  *
  * NOTE:
  *
  * It is recommended that lp_count/ilink1/ilink2 not be used as a dest reg
- * क्रम memory load operations. If used in that way पूर्णांकerrupts are deffered
+ * for memory load operations. If used in that way interrupts are deffered
  * by hardware and that is not good.
  *-------------------------------------------------------------*/
 .macro INTERRUPT_EPILOGUE  LVL
@@ -291,23 +290,23 @@
 	POP	gp
 	RESTORE_R12_TO_R0
 
-#अगर_घोषित CONFIG_ARC_CURR_IN_REG
+#ifdef CONFIG_ARC_CURR_IN_REG
 	ld	r25, [sp, 12]
-#पूर्ण_अगर
+#endif
 	ld  sp, [sp] /* restore original sp */
-	/* orig_r0, ECR, user_r25 skipped स्वतःmatically */
+	/* orig_r0, ECR, user_r25 skipped automatically */
 .endm
 
-/* Get thपढ़ो_info of "current" tsk */
+/* Get thread_info of "current" tsk */
 .macro GET_CURR_THR_INFO_FROM_SP  reg
-	bic \लeg, sp, (THREAD_SIZE - 1)
+	bic \reg, sp, (THREAD_SIZE - 1)
 .endm
 
 /* Get CPU-ID of this core */
 .macro  GET_CPU_ID  reg
-	lr  \लeg, [identity]
-	lsr \लeg, \लeg, 8
-	bmsk \लeg, \लeg, 7
+	lr  \reg, [identity]
+	lsr \reg, \reg, 8
+	bmsk \reg, \reg, 7
 .endm
 
-#पूर्ण_अगर  /* __ASM_ARC_ENTRY_COMPACT_H */
+#endif  /* __ASM_ARC_ENTRY_COMPACT_H */

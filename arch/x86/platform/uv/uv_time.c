@@ -1,78 +1,77 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * SGI RTC घड़ी/समयr routines.
+ * SGI RTC clock/timer routines.
  *
  *  (C) Copyright 2020 Hewlett Packard Enterprise Development LP
  *  Copyright (c) 2009-2013 Silicon Graphics, Inc.  All Rights Reserved.
  *  Copyright (c) Dimitri Sivanich
  */
-#समावेश <linux/घड़ीchips.h>
-#समावेश <linux/slab.h>
+#include <linux/clockchips.h>
+#include <linux/slab.h>
 
-#समावेश <यंत्र/uv/uv_mmrs.h>
-#समावेश <यंत्र/uv/uv_hub.h>
-#समावेश <यंत्र/uv/मूलप्रण.स>
-#समावेश <यंत्र/uv/uv.h>
-#समावेश <यंत्र/apic.h>
-#समावेश <यंत्र/cpu.h>
+#include <asm/uv/uv_mmrs.h>
+#include <asm/uv/uv_hub.h>
+#include <asm/uv/bios.h>
+#include <asm/uv/uv.h>
+#include <asm/apic.h>
+#include <asm/cpu.h>
 
-#घोषणा RTC_NAME		"sgi_rtc"
+#define RTC_NAME		"sgi_rtc"
 
-अटल u64 uv_पढ़ो_rtc(काष्ठा घड़ीsource *cs);
-अटल पूर्णांक uv_rtc_next_event(अचिन्हित दीर्घ, काष्ठा घड़ी_event_device *);
-अटल पूर्णांक uv_rtc_shutकरोwn(काष्ठा घड़ी_event_device *evt);
+static u64 uv_read_rtc(struct clocksource *cs);
+static int uv_rtc_next_event(unsigned long, struct clock_event_device *);
+static int uv_rtc_shutdown(struct clock_event_device *evt);
 
-अटल काष्ठा घड़ीsource घड़ीsource_uv = अणु
+static struct clocksource clocksource_uv = {
 	.name		= RTC_NAME,
 	.rating		= 299,
-	.पढ़ो		= uv_पढ़ो_rtc,
+	.read		= uv_read_rtc,
 	.mask		= (u64)UVH_RTC_REAL_TIME_CLOCK_MASK,
 	.flags		= CLOCK_SOURCE_IS_CONTINUOUS,
-पूर्ण;
+};
 
-अटल काष्ठा घड़ी_event_device घड़ी_event_device_uv = अणु
+static struct clock_event_device clock_event_device_uv = {
 	.name			= RTC_NAME,
 	.features		= CLOCK_EVT_FEAT_ONESHOT,
-	.shअगरt			= 20,
+	.shift			= 20,
 	.rating			= 400,
 	.irq			= -1,
 	.set_next_event		= uv_rtc_next_event,
-	.set_state_shutकरोwn	= uv_rtc_shutकरोwn,
-	.event_handler		= शून्य,
-पूर्ण;
+	.set_state_shutdown	= uv_rtc_shutdown,
+	.event_handler		= NULL,
+};
 
-अटल DEFINE_PER_CPU(काष्ठा घड़ी_event_device, cpu_ced);
+static DEFINE_PER_CPU(struct clock_event_device, cpu_ced);
 
 /* There is one of these allocated per node */
-काष्ठा uv_rtc_समयr_head अणु
+struct uv_rtc_timer_head {
 	spinlock_t	lock;
-	/* next cpu रुकोing क्रम समयr, local node relative: */
-	पूर्णांक		next_cpu;
+	/* next cpu waiting for timer, local node relative: */
+	int		next_cpu;
 	/* number of cpus on this node: */
-	पूर्णांक		ncpus;
-	काष्ठा अणु
-		पूर्णांक	lcpu;		/* प्रणालीwide logical cpu number */
-		u64	expires;	/* next समयr expiration क्रम this cpu */
-	पूर्ण cpu[];
-पूर्ण;
+	int		ncpus;
+	struct {
+		int	lcpu;		/* systemwide logical cpu number */
+		u64	expires;	/* next timer expiration for this cpu */
+	} cpu[];
+};
 
 /*
- * Access to uv_rtc_समयr_head via blade id.
+ * Access to uv_rtc_timer_head via blade id.
  */
-अटल काष्ठा uv_rtc_समयr_head		**blade_info __पढ़ो_mostly;
+static struct uv_rtc_timer_head		**blade_info __read_mostly;
 
-अटल पूर्णांक				uv_rtc_evt_enable;
+static int				uv_rtc_evt_enable;
 
 /*
- * Hardware पूर्णांकerface routines
+ * Hardware interface routines
  */
 
 /* Send IPIs to another node */
-अटल व्योम uv_rtc_send_IPI(पूर्णांक cpu)
-अणु
-	अचिन्हित दीर्घ apicid, val;
-	पूर्णांक pnode;
+static void uv_rtc_send_IPI(int cpu)
+{
+	unsigned long apicid, val;
+	int pnode;
 
 	apicid = cpu_physical_id(cpu);
 	pnode = uv_apicid_to_pnode(apicid);
@@ -80,134 +79,134 @@
 	      (apicid << UVH_IPI_INT_APIC_ID_SHFT) |
 	      (X86_PLATFORM_IPI_VECTOR << UVH_IPI_INT_VECTOR_SHFT);
 
-	uv_ग_लिखो_global_mmr64(pnode, UVH_IPI_INT, val);
-पूर्ण
+	uv_write_global_mmr64(pnode, UVH_IPI_INT, val);
+}
 
-/* Check क्रम an RTC पूर्णांकerrupt pending */
-अटल पूर्णांक uv_पूर्णांकr_pending(पूर्णांक pnode)
-अणु
-	वापस uv_पढ़ो_global_mmr64(pnode, UVH_EVENT_OCCURRED2) &
+/* Check for an RTC interrupt pending */
+static int uv_intr_pending(int pnode)
+{
+	return uv_read_global_mmr64(pnode, UVH_EVENT_OCCURRED2) &
 		UVH_EVENT_OCCURRED2_RTC_1_MASK;
-पूर्ण
+}
 
-/* Setup पूर्णांकerrupt and वापस non-zero अगर early expiration occurred. */
-अटल पूर्णांक uv_setup_पूर्णांकr(पूर्णांक cpu, u64 expires)
-अणु
+/* Setup interrupt and return non-zero if early expiration occurred. */
+static int uv_setup_intr(int cpu, u64 expires)
+{
 	u64 val;
-	अचिन्हित दीर्घ apicid = cpu_physical_id(cpu);
-	पूर्णांक pnode = uv_cpu_to_pnode(cpu);
+	unsigned long apicid = cpu_physical_id(cpu);
+	int pnode = uv_cpu_to_pnode(cpu);
 
-	uv_ग_लिखो_global_mmr64(pnode, UVH_RTC1_INT_CONFIG,
+	uv_write_global_mmr64(pnode, UVH_RTC1_INT_CONFIG,
 		UVH_RTC1_INT_CONFIG_M_MASK);
-	uv_ग_लिखो_global_mmr64(pnode, UVH_INT_CMPB, -1L);
+	uv_write_global_mmr64(pnode, UVH_INT_CMPB, -1L);
 
-	uv_ग_लिखो_global_mmr64(pnode, UVH_EVENT_OCCURRED2_ALIAS,
+	uv_write_global_mmr64(pnode, UVH_EVENT_OCCURRED2_ALIAS,
 			      UVH_EVENT_OCCURRED2_RTC_1_MASK);
 
 	val = (X86_PLATFORM_IPI_VECTOR << UVH_RTC1_INT_CONFIG_VECTOR_SHFT) |
 		((u64)apicid << UVH_RTC1_INT_CONFIG_APIC_ID_SHFT);
 
 	/* Set configuration */
-	uv_ग_लिखो_global_mmr64(pnode, UVH_RTC1_INT_CONFIG, val);
+	uv_write_global_mmr64(pnode, UVH_RTC1_INT_CONFIG, val);
 	/* Initialize comparator value */
-	uv_ग_लिखो_global_mmr64(pnode, UVH_INT_CMPB, expires);
+	uv_write_global_mmr64(pnode, UVH_INT_CMPB, expires);
 
-	अगर (uv_पढ़ो_rtc(शून्य) <= expires)
-		वापस 0;
+	if (uv_read_rtc(NULL) <= expires)
+		return 0;
 
-	वापस !uv_पूर्णांकr_pending(pnode);
-पूर्ण
+	return !uv_intr_pending(pnode);
+}
 
 /*
- * Per-cpu समयr tracking routines
+ * Per-cpu timer tracking routines
  */
 
-अटल __init व्योम uv_rtc_deallocate_समयrs(व्योम)
-अणु
-	पूर्णांक bid;
+static __init void uv_rtc_deallocate_timers(void)
+{
+	int bid;
 
-	क्रम_each_possible_blade(bid) अणु
-		kमुक्त(blade_info[bid]);
-	पूर्ण
-	kमुक्त(blade_info);
-पूर्ण
+	for_each_possible_blade(bid) {
+		kfree(blade_info[bid]);
+	}
+	kfree(blade_info);
+}
 
-/* Allocate per-node list of cpu समयr expiration बार. */
-अटल __init पूर्णांक uv_rtc_allocate_समयrs(व्योम)
-अणु
-	पूर्णांक cpu;
+/* Allocate per-node list of cpu timer expiration times. */
+static __init int uv_rtc_allocate_timers(void)
+{
+	int cpu;
 
-	blade_info = kसुस्मृति(uv_possible_blades, माप(व्योम *), GFP_KERNEL);
-	अगर (!blade_info)
-		वापस -ENOMEM;
+	blade_info = kcalloc(uv_possible_blades, sizeof(void *), GFP_KERNEL);
+	if (!blade_info)
+		return -ENOMEM;
 
-	क्रम_each_present_cpu(cpu) अणु
-		पूर्णांक nid = cpu_to_node(cpu);
-		पूर्णांक bid = uv_cpu_to_blade_id(cpu);
-		पूर्णांक bcpu = uv_cpu_blade_processor_id(cpu);
-		काष्ठा uv_rtc_समयr_head *head = blade_info[bid];
+	for_each_present_cpu(cpu) {
+		int nid = cpu_to_node(cpu);
+		int bid = uv_cpu_to_blade_id(cpu);
+		int bcpu = uv_cpu_blade_processor_id(cpu);
+		struct uv_rtc_timer_head *head = blade_info[bid];
 
-		अगर (!head) अणु
-			head = kदो_स्मृति_node(काष्ठा_size(head, cpu,
+		if (!head) {
+			head = kmalloc_node(struct_size(head, cpu,
 				uv_blade_nr_possible_cpus(bid)),
 				GFP_KERNEL, nid);
-			अगर (!head) अणु
-				uv_rtc_deallocate_समयrs();
-				वापस -ENOMEM;
-			पूर्ण
+			if (!head) {
+				uv_rtc_deallocate_timers();
+				return -ENOMEM;
+			}
 			spin_lock_init(&head->lock);
 			head->ncpus = uv_blade_nr_possible_cpus(bid);
 			head->next_cpu = -1;
 			blade_info[bid] = head;
-		पूर्ण
+		}
 
 		head->cpu[bcpu].lcpu = cpu;
-		head->cpu[bcpu].expires = ULदीर्घ_उच्च;
-	पूर्ण
+		head->cpu[bcpu].expires = ULLONG_MAX;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Find and set the next expiring समयr.  */
-अटल व्योम uv_rtc_find_next_समयr(काष्ठा uv_rtc_समयr_head *head, पूर्णांक pnode)
-अणु
-	u64 lowest = ULदीर्घ_उच्च;
-	पूर्णांक c, bcpu = -1;
+/* Find and set the next expiring timer.  */
+static void uv_rtc_find_next_timer(struct uv_rtc_timer_head *head, int pnode)
+{
+	u64 lowest = ULLONG_MAX;
+	int c, bcpu = -1;
 
 	head->next_cpu = -1;
-	क्रम (c = 0; c < head->ncpus; c++) अणु
+	for (c = 0; c < head->ncpus; c++) {
 		u64 exp = head->cpu[c].expires;
-		अगर (exp < lowest) अणु
+		if (exp < lowest) {
 			bcpu = c;
 			lowest = exp;
-		पूर्ण
-	पूर्ण
-	अगर (bcpu >= 0) अणु
+		}
+	}
+	if (bcpu >= 0) {
 		head->next_cpu = bcpu;
 		c = head->cpu[bcpu].lcpu;
-		अगर (uv_setup_पूर्णांकr(c, lowest))
-			/* If we didn't set it up in समय, trigger */
+		if (uv_setup_intr(c, lowest))
+			/* If we didn't set it up in time, trigger */
 			uv_rtc_send_IPI(c);
-	पूर्ण अन्यथा अणु
-		uv_ग_लिखो_global_mmr64(pnode, UVH_RTC1_INT_CONFIG,
+	} else {
+		uv_write_global_mmr64(pnode, UVH_RTC1_INT_CONFIG,
 			UVH_RTC1_INT_CONFIG_M_MASK);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Set expiration समय क्रम current cpu.
+ * Set expiration time for current cpu.
  *
- * Returns 1 अगर we missed the expiration समय.
+ * Returns 1 if we missed the expiration time.
  */
-अटल पूर्णांक uv_rtc_set_समयr(पूर्णांक cpu, u64 expires)
-अणु
-	पूर्णांक pnode = uv_cpu_to_pnode(cpu);
-	पूर्णांक bid = uv_cpu_to_blade_id(cpu);
-	काष्ठा uv_rtc_समयr_head *head = blade_info[bid];
-	पूर्णांक bcpu = uv_cpu_blade_processor_id(cpu);
+static int uv_rtc_set_timer(int cpu, u64 expires)
+{
+	int pnode = uv_cpu_to_pnode(cpu);
+	int bid = uv_cpu_to_blade_id(cpu);
+	struct uv_rtc_timer_head *head = blade_info[bid];
+	int bcpu = uv_cpu_blade_processor_id(cpu);
 	u64 *t = &head->cpu[bcpu].expires;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक next_cpu;
+	unsigned long flags;
+	int next_cpu;
 
 	spin_lock_irqsave(&head->lock, flags);
 
@@ -215,180 +214,180 @@
 	*t = expires;
 
 	/* Will this one be next to go off? */
-	अगर (next_cpu < 0 || bcpu == next_cpu ||
-			expires < head->cpu[next_cpu].expires) अणु
+	if (next_cpu < 0 || bcpu == next_cpu ||
+			expires < head->cpu[next_cpu].expires) {
 		head->next_cpu = bcpu;
-		अगर (uv_setup_पूर्णांकr(cpu, expires)) अणु
-			*t = ULदीर्घ_उच्च;
-			uv_rtc_find_next_समयr(head, pnode);
+		if (uv_setup_intr(cpu, expires)) {
+			*t = ULLONG_MAX;
+			uv_rtc_find_next_timer(head, pnode);
 			spin_unlock_irqrestore(&head->lock, flags);
-			वापस -ETIME;
-		पूर्ण
-	पूर्ण
+			return -ETIME;
+		}
+	}
 
 	spin_unlock_irqrestore(&head->lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Unset expiration समय क्रम current cpu.
+ * Unset expiration time for current cpu.
  *
- * Returns 1 अगर this समयr was pending.
+ * Returns 1 if this timer was pending.
  */
-अटल पूर्णांक uv_rtc_unset_समयr(पूर्णांक cpu, पूर्णांक क्रमce)
-अणु
-	पूर्णांक pnode = uv_cpu_to_pnode(cpu);
-	पूर्णांक bid = uv_cpu_to_blade_id(cpu);
-	काष्ठा uv_rtc_समयr_head *head = blade_info[bid];
-	पूर्णांक bcpu = uv_cpu_blade_processor_id(cpu);
+static int uv_rtc_unset_timer(int cpu, int force)
+{
+	int pnode = uv_cpu_to_pnode(cpu);
+	int bid = uv_cpu_to_blade_id(cpu);
+	struct uv_rtc_timer_head *head = blade_info[bid];
+	int bcpu = uv_cpu_blade_processor_id(cpu);
 	u64 *t = &head->cpu[bcpu].expires;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक rc = 0;
+	unsigned long flags;
+	int rc = 0;
 
 	spin_lock_irqsave(&head->lock, flags);
 
-	अगर ((head->next_cpu == bcpu && uv_पढ़ो_rtc(शून्य) >= *t) || क्रमce)
+	if ((head->next_cpu == bcpu && uv_read_rtc(NULL) >= *t) || force)
 		rc = 1;
 
-	अगर (rc) अणु
-		*t = ULदीर्घ_उच्च;
-		/* Was the hardware setup क्रम this समयr? */
-		अगर (head->next_cpu == bcpu)
-			uv_rtc_find_next_समयr(head, pnode);
-	पूर्ण
+	if (rc) {
+		*t = ULLONG_MAX;
+		/* Was the hardware setup for this timer? */
+		if (head->next_cpu == bcpu)
+			uv_rtc_find_next_timer(head, pnode);
+	}
 
 	spin_unlock_irqrestore(&head->lock, flags);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 
 /*
- * Kernel पूर्णांकerface routines.
+ * Kernel interface routines.
  */
 
 /*
  * Read the RTC.
  *
- * Starting with HUB rev 2.0, the UV RTC रेजिस्टर is replicated across all
- * cachelines of it's own page.  This allows faster simultaneous पढ़ोs
+ * Starting with HUB rev 2.0, the UV RTC register is replicated across all
+ * cachelines of it's own page.  This allows faster simultaneous reads
  * from a given socket.
  */
-अटल u64 uv_पढ़ो_rtc(काष्ठा घड़ीsource *cs)
-अणु
-	अचिन्हित दीर्घ offset;
+static u64 uv_read_rtc(struct clocksource *cs)
+{
+	unsigned long offset;
 
-	अगर (uv_get_min_hub_revision_id() == 1)
+	if (uv_get_min_hub_revision_id() == 1)
 		offset = 0;
-	अन्यथा
+	else
 		offset = (uv_blade_processor_id() * L1_CACHE_BYTES) % PAGE_SIZE;
 
-	वापस (u64)uv_पढ़ो_local_mmr(UVH_RTC | offset);
-पूर्ण
+	return (u64)uv_read_local_mmr(UVH_RTC | offset);
+}
 
 /*
  * Program the next event, relative to now
  */
-अटल पूर्णांक uv_rtc_next_event(अचिन्हित दीर्घ delta,
-			     काष्ठा घड़ी_event_device *ced)
-अणु
-	पूर्णांक ced_cpu = cpumask_first(ced->cpumask);
+static int uv_rtc_next_event(unsigned long delta,
+			     struct clock_event_device *ced)
+{
+	int ced_cpu = cpumask_first(ced->cpumask);
 
-	वापस uv_rtc_set_समयr(ced_cpu, delta + uv_पढ़ो_rtc(शून्य));
-पूर्ण
+	return uv_rtc_set_timer(ced_cpu, delta + uv_read_rtc(NULL));
+}
 
 /*
- * Shutकरोwn the RTC समयr
+ * Shutdown the RTC timer
  */
-अटल पूर्णांक uv_rtc_shutकरोwn(काष्ठा घड़ी_event_device *evt)
-अणु
-	पूर्णांक ced_cpu = cpumask_first(evt->cpumask);
+static int uv_rtc_shutdown(struct clock_event_device *evt)
+{
+	int ced_cpu = cpumask_first(evt->cpumask);
 
-	uv_rtc_unset_समयr(ced_cpu, 1);
-	वापस 0;
-पूर्ण
+	uv_rtc_unset_timer(ced_cpu, 1);
+	return 0;
+}
 
-अटल व्योम uv_rtc_पूर्णांकerrupt(व्योम)
-अणु
-	पूर्णांक cpu = smp_processor_id();
-	काष्ठा घड़ी_event_device *ced = &per_cpu(cpu_ced, cpu);
+static void uv_rtc_interrupt(void)
+{
+	int cpu = smp_processor_id();
+	struct clock_event_device *ced = &per_cpu(cpu_ced, cpu);
 
-	अगर (!ced || !ced->event_handler)
-		वापस;
+	if (!ced || !ced->event_handler)
+		return;
 
-	अगर (uv_rtc_unset_समयr(cpu, 0) != 1)
-		वापस;
+	if (uv_rtc_unset_timer(cpu, 0) != 1)
+		return;
 
 	ced->event_handler(ced);
-पूर्ण
+}
 
-अटल पूर्णांक __init uv_enable_evt_rtc(अक्षर *str)
-अणु
+static int __init uv_enable_evt_rtc(char *str)
+{
 	uv_rtc_evt_enable = 1;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 __setup("uvrtcevt", uv_enable_evt_rtc);
 
-अटल __init व्योम uv_rtc_रेजिस्टर_घड़ीevents(काष्ठा work_काष्ठा *dummy)
-अणु
-	काष्ठा घड़ी_event_device *ced = this_cpu_ptr(&cpu_ced);
+static __init void uv_rtc_register_clockevents(struct work_struct *dummy)
+{
+	struct clock_event_device *ced = this_cpu_ptr(&cpu_ced);
 
-	*ced = घड़ी_event_device_uv;
+	*ced = clock_event_device_uv;
 	ced->cpumask = cpumask_of(smp_processor_id());
-	घड़ीevents_रेजिस्टर_device(ced);
-पूर्ण
+	clockevents_register_device(ced);
+}
 
-अटल __init पूर्णांक uv_rtc_setup_घड़ी(व्योम)
-अणु
-	पूर्णांक rc;
+static __init int uv_rtc_setup_clock(void)
+{
+	int rc;
 
-	अगर (!is_uv_प्रणाली())
-		वापस -ENODEV;
+	if (!is_uv_system())
+		return -ENODEV;
 
-	rc = घड़ीsource_रेजिस्टर_hz(&घड़ीsource_uv, sn_rtc_cycles_per_second);
-	अगर (rc)
-		prपूर्णांकk(KERN_INFO "UV RTC clocksource failed rc %d\n", rc);
-	अन्यथा
-		prपूर्णांकk(KERN_INFO "UV RTC clocksource registered freq %lu MHz\n",
-			sn_rtc_cycles_per_second/(अचिन्हित दीर्घ)1E6);
+	rc = clocksource_register_hz(&clocksource_uv, sn_rtc_cycles_per_second);
+	if (rc)
+		printk(KERN_INFO "UV RTC clocksource failed rc %d\n", rc);
+	else
+		printk(KERN_INFO "UV RTC clocksource registered freq %lu MHz\n",
+			sn_rtc_cycles_per_second/(unsigned long)1E6);
 
-	अगर (rc || !uv_rtc_evt_enable || x86_platक्रमm_ipi_callback)
-		वापस rc;
+	if (rc || !uv_rtc_evt_enable || x86_platform_ipi_callback)
+		return rc;
 
-	/* Setup and रेजिस्टर घड़ीevents */
-	rc = uv_rtc_allocate_समयrs();
-	अगर (rc)
-		जाओ error;
+	/* Setup and register clockevents */
+	rc = uv_rtc_allocate_timers();
+	if (rc)
+		goto error;
 
-	x86_platक्रमm_ipi_callback = uv_rtc_पूर्णांकerrupt;
+	x86_platform_ipi_callback = uv_rtc_interrupt;
 
-	घड़ी_event_device_uv.mult = भाग_sc(sn_rtc_cycles_per_second,
-				NSEC_PER_SEC, घड़ी_event_device_uv.shअगरt);
+	clock_event_device_uv.mult = div_sc(sn_rtc_cycles_per_second,
+				NSEC_PER_SEC, clock_event_device_uv.shift);
 
-	घड़ी_event_device_uv.min_delta_ns = NSEC_PER_SEC /
+	clock_event_device_uv.min_delta_ns = NSEC_PER_SEC /
 						sn_rtc_cycles_per_second;
-	घड़ी_event_device_uv.min_delta_ticks = 1;
+	clock_event_device_uv.min_delta_ticks = 1;
 
-	घड़ी_event_device_uv.max_delta_ns = घड़ीsource_uv.mask *
+	clock_event_device_uv.max_delta_ns = clocksource_uv.mask *
 				(NSEC_PER_SEC / sn_rtc_cycles_per_second);
-	घड़ी_event_device_uv.max_delta_ticks = घड़ीsource_uv.mask;
+	clock_event_device_uv.max_delta_ticks = clocksource_uv.mask;
 
-	rc = schedule_on_each_cpu(uv_rtc_रेजिस्टर_घड़ीevents);
-	अगर (rc) अणु
-		x86_platक्रमm_ipi_callback = शून्य;
-		uv_rtc_deallocate_समयrs();
-		जाओ error;
-	पूर्ण
+	rc = schedule_on_each_cpu(uv_rtc_register_clockevents);
+	if (rc) {
+		x86_platform_ipi_callback = NULL;
+		uv_rtc_deallocate_timers();
+		goto error;
+	}
 
-	prपूर्णांकk(KERN_INFO "UV RTC clockevents registered\n");
+	printk(KERN_INFO "UV RTC clockevents registered\n");
 
-	वापस 0;
+	return 0;
 
 error:
-	घड़ीsource_unरेजिस्टर(&घड़ीsource_uv);
-	prपूर्णांकk(KERN_INFO "UV RTC clockevents failed rc %d\n", rc);
+	clocksource_unregister(&clocksource_uv);
+	printk(KERN_INFO "UV RTC clockevents failed rc %d\n", rc);
 
-	वापस rc;
-पूर्ण
-arch_initcall(uv_rtc_setup_घड़ी);
+	return rc;
+}
+arch_initcall(uv_rtc_setup_clock);

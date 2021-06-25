@@ -1,16 +1,15 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * linux/lib/zlib_deflate/deflate_syms.c
  *
- * Exported symbols क्रम the deflate functionality.
+ * Exported symbols for the deflate functionality.
  *
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
+#include <linux/module.h>
+#include <linux/init.h>
 
-#समावेश <linux/zlib.h>
+#include <linux/zlib.h>
 
 EXPORT_SYMBOL(zlib_deflate_workspacesize);
 EXPORT_SYMBOL(zlib_deflate_dfltcc_enabled);

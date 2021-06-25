@@ -1,217 +1,216 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2008 Christoph Hellwig.
  * Portions Copyright (C) 2000-2008 Silicon Graphics, Inc.
  */
 
-#समावेश "xfs.h"
-#समावेश "xfs_shared.h"
-#समावेश "xfs_format.h"
-#समावेश "xfs_log_format.h"
-#समावेश "xfs_da_format.h"
-#समावेश "xfs_trans_resv.h"
-#समावेश "xfs_mount.h"
-#समावेश "xfs_inode.h"
-#समावेश "xfs_attr.h"
-#समावेश "xfs_acl.h"
-#समावेश "xfs_da_btree.h"
+#include "xfs.h"
+#include "xfs_shared.h"
+#include "xfs_format.h"
+#include "xfs_log_format.h"
+#include "xfs_da_format.h"
+#include "xfs_trans_resv.h"
+#include "xfs_mount.h"
+#include "xfs_inode.h"
+#include "xfs_attr.h"
+#include "xfs_acl.h"
+#include "xfs_da_btree.h"
 
-#समावेश <linux/posix_acl_xattr.h>
+#include <linux/posix_acl_xattr.h>
 
 
-अटल पूर्णांक
-xfs_xattr_get(स्थिर काष्ठा xattr_handler *handler, काष्ठा dentry *unused,
-		काष्ठा inode *inode, स्थिर अक्षर *name, व्योम *value, माप_प्रकार size)
-अणु
-	काष्ठा xfs_da_args	args = अणु
+static int
+xfs_xattr_get(const struct xattr_handler *handler, struct dentry *unused,
+		struct inode *inode, const char *name, void *value, size_t size)
+{
+	struct xfs_da_args	args = {
 		.dp		= XFS_I(inode),
 		.attr_filter	= handler->flags,
 		.name		= name,
-		.namelen	= म_माप(name),
+		.namelen	= strlen(name),
 		.value		= value,
 		.valuelen	= size,
-	पूर्ण;
-	पूर्णांक			error;
+	};
+	int			error;
 
 	error = xfs_attr_get(&args);
-	अगर (error)
-		वापस error;
-	वापस args.valuelen;
-पूर्ण
+	if (error)
+		return error;
+	return args.valuelen;
+}
 
-अटल पूर्णांक
-xfs_xattr_set(स्थिर काष्ठा xattr_handler *handler,
-	      काष्ठा user_namespace *mnt_userns, काष्ठा dentry *unused,
-	      काष्ठा inode *inode, स्थिर अक्षर *name, स्थिर व्योम *value,
-	      माप_प्रकार size, पूर्णांक flags)
-अणु
-	काष्ठा xfs_da_args	args = अणु
+static int
+xfs_xattr_set(const struct xattr_handler *handler,
+	      struct user_namespace *mnt_userns, struct dentry *unused,
+	      struct inode *inode, const char *name, const void *value,
+	      size_t size, int flags)
+{
+	struct xfs_da_args	args = {
 		.dp		= XFS_I(inode),
 		.attr_filter	= handler->flags,
 		.attr_flags	= flags,
 		.name		= name,
-		.namelen	= म_माप(name),
-		.value		= (व्योम *)value,
+		.namelen	= strlen(name),
+		.value		= (void *)value,
 		.valuelen	= size,
-	पूर्ण;
-	पूर्णांक			error;
+	};
+	int			error;
 
 	error = xfs_attr_set(&args);
-	अगर (!error && (handler->flags & XFS_ATTR_ROOT))
-		xfs_क्रमget_acl(inode, name);
-	वापस error;
-पूर्ण
+	if (!error && (handler->flags & XFS_ATTR_ROOT))
+		xfs_forget_acl(inode, name);
+	return error;
+}
 
-अटल स्थिर काष्ठा xattr_handler xfs_xattr_user_handler = अणु
+static const struct xattr_handler xfs_xattr_user_handler = {
 	.prefix	= XATTR_USER_PREFIX,
 	.flags	= 0, /* no flags implies user namespace */
 	.get	= xfs_xattr_get,
 	.set	= xfs_xattr_set,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा xattr_handler xfs_xattr_trusted_handler = अणु
+static const struct xattr_handler xfs_xattr_trusted_handler = {
 	.prefix	= XATTR_TRUSTED_PREFIX,
 	.flags	= XFS_ATTR_ROOT,
 	.get	= xfs_xattr_get,
 	.set	= xfs_xattr_set,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा xattr_handler xfs_xattr_security_handler = अणु
+static const struct xattr_handler xfs_xattr_security_handler = {
 	.prefix	= XATTR_SECURITY_PREFIX,
 	.flags	= XFS_ATTR_SECURE,
 	.get	= xfs_xattr_get,
 	.set	= xfs_xattr_set,
-पूर्ण;
+};
 
-स्थिर काष्ठा xattr_handler *xfs_xattr_handlers[] = अणु
+const struct xattr_handler *xfs_xattr_handlers[] = {
 	&xfs_xattr_user_handler,
 	&xfs_xattr_trusted_handler,
 	&xfs_xattr_security_handler,
-#अगर_घोषित CONFIG_XFS_POSIX_ACL
+#ifdef CONFIG_XFS_POSIX_ACL
 	&posix_acl_access_xattr_handler,
-	&posix_acl_शेष_xattr_handler,
-#पूर्ण_अगर
-	शून्य
-पूर्ण;
+	&posix_acl_default_xattr_handler,
+#endif
+	NULL
+};
 
-अटल व्योम
+static void
 __xfs_xattr_put_listent(
-	काष्ठा xfs_attr_list_context *context,
-	अक्षर *prefix,
-	पूर्णांक prefix_len,
-	अचिन्हित अक्षर *name,
-	पूर्णांक namelen)
-अणु
-	अक्षर *offset;
-	पूर्णांक arraytop;
+	struct xfs_attr_list_context *context,
+	char *prefix,
+	int prefix_len,
+	unsigned char *name,
+	int namelen)
+{
+	char *offset;
+	int arraytop;
 
-	अगर (context->count < 0 || context->seen_enough)
-		वापस;
+	if (context->count < 0 || context->seen_enough)
+		return;
 
-	अगर (!context->buffer)
-		जाओ compute_size;
+	if (!context->buffer)
+		goto compute_size;
 
 	arraytop = context->count + prefix_len + namelen + 1;
-	अगर (arraytop > context->firstu) अणु
+	if (arraytop > context->firstu) {
 		context->count = -1;	/* insufficient space */
 		context->seen_enough = 1;
-		वापस;
-	पूर्ण
+		return;
+	}
 	offset = context->buffer + context->count;
-	म_नकलन(offset, prefix, prefix_len);
+	strncpy(offset, prefix, prefix_len);
 	offset += prefix_len;
-	म_नकलन(offset, (अक्षर *)name, namelen);			/* real name */
+	strncpy(offset, (char *)name, namelen);			/* real name */
 	offset += namelen;
 	*offset = '\0';
 
 compute_size:
 	context->count += prefix_len + namelen + 1;
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल व्योम
+static void
 xfs_xattr_put_listent(
-	काष्ठा xfs_attr_list_context *context,
-	पूर्णांक		flags,
-	अचिन्हित अक्षर	*name,
-	पूर्णांक		namelen,
-	पूर्णांक		valuelen)
-अणु
-	अक्षर *prefix;
-	पूर्णांक prefix_len;
+	struct xfs_attr_list_context *context,
+	int		flags,
+	unsigned char	*name,
+	int		namelen,
+	int		valuelen)
+{
+	char *prefix;
+	int prefix_len;
 
 	ASSERT(context->count >= 0);
 
-	अगर (flags & XFS_ATTR_ROOT) अणु
-#अगर_घोषित CONFIG_XFS_POSIX_ACL
-		अगर (namelen == SGI_ACL_खाता_SIZE &&
-		    म_भेदन(name, SGI_ACL_खाता,
-			    SGI_ACL_खाता_SIZE) == 0) अणु
+	if (flags & XFS_ATTR_ROOT) {
+#ifdef CONFIG_XFS_POSIX_ACL
+		if (namelen == SGI_ACL_FILE_SIZE &&
+		    strncmp(name, SGI_ACL_FILE,
+			    SGI_ACL_FILE_SIZE) == 0) {
 			__xfs_xattr_put_listent(
 					context, XATTR_SYSTEM_PREFIX,
 					XATTR_SYSTEM_PREFIX_LEN,
 					XATTR_POSIX_ACL_ACCESS,
-					म_माप(XATTR_POSIX_ACL_ACCESS));
-		पूर्ण अन्यथा अगर (namelen == SGI_ACL_DEFAULT_SIZE &&
-			 म_भेदन(name, SGI_ACL_DEFAULT,
-				 SGI_ACL_DEFAULT_SIZE) == 0) अणु
+					strlen(XATTR_POSIX_ACL_ACCESS));
+		} else if (namelen == SGI_ACL_DEFAULT_SIZE &&
+			 strncmp(name, SGI_ACL_DEFAULT,
+				 SGI_ACL_DEFAULT_SIZE) == 0) {
 			__xfs_xattr_put_listent(
 					context, XATTR_SYSTEM_PREFIX,
 					XATTR_SYSTEM_PREFIX_LEN,
 					XATTR_POSIX_ACL_DEFAULT,
-					म_माप(XATTR_POSIX_ACL_DEFAULT));
-		पूर्ण
-#पूर्ण_अगर
+					strlen(XATTR_POSIX_ACL_DEFAULT));
+		}
+#endif
 
 		/*
-		 * Only show root namespace entries अगर we are actually allowed to
+		 * Only show root namespace entries if we are actually allowed to
 		 * see them.
 		 */
-		अगर (!capable(CAP_SYS_ADMIN))
-			वापस;
+		if (!capable(CAP_SYS_ADMIN))
+			return;
 
 		prefix = XATTR_TRUSTED_PREFIX;
 		prefix_len = XATTR_TRUSTED_PREFIX_LEN;
-	पूर्ण अन्यथा अगर (flags & XFS_ATTR_SECURE) अणु
+	} else if (flags & XFS_ATTR_SECURE) {
 		prefix = XATTR_SECURITY_PREFIX;
 		prefix_len = XATTR_SECURITY_PREFIX_LEN;
-	पूर्ण अन्यथा अणु
+	} else {
 		prefix = XATTR_USER_PREFIX;
 		prefix_len = XATTR_USER_PREFIX_LEN;
-	पूर्ण
+	}
 
 	__xfs_xattr_put_listent(context, prefix, prefix_len, name,
 				namelen);
-	वापस;
-पूर्ण
+	return;
+}
 
-sमाप_प्रकार
+ssize_t
 xfs_vn_listxattr(
-	काष्ठा dentry	*dentry,
-	अक्षर		*data,
-	माप_प्रकार		size)
-अणु
-	काष्ठा xfs_attr_list_context context;
-	काष्ठा inode	*inode = d_inode(dentry);
-	पूर्णांक		error;
+	struct dentry	*dentry,
+	char		*data,
+	size_t		size)
+{
+	struct xfs_attr_list_context context;
+	struct inode	*inode = d_inode(dentry);
+	int		error;
 
 	/*
-	 * First पढ़ो the regular on-disk attributes.
+	 * First read the regular on-disk attributes.
 	 */
-	स_रखो(&context, 0, माप(context));
+	memset(&context, 0, sizeof(context));
 	context.dp = XFS_I(inode);
 	context.resynch = 1;
-	context.buffer = size ? data : शून्य;
+	context.buffer = size ? data : NULL;
 	context.bufsize = size;
 	context.firstu = context.bufsize;
 	context.put_listent = xfs_xattr_put_listent;
 
 	error = xfs_attr_list(&context);
-	अगर (error)
-		वापस error;
-	अगर (context.count < 0)
-		वापस -दुस्फल;
+	if (error)
+		return error;
+	if (context.count < 0)
+		return -ERANGE;
 
-	वापस context.count;
-पूर्ण
+	return context.count;
+}

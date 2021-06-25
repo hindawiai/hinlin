@@ -1,95 +1,94 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- *  Atheros AR71xx/AR724x/AR913x specअगरic पूर्णांकerrupt handling
+ *  Atheros AR71xx/AR724x/AR913x specific interrupt handling
  *
- *  Copyright (C) 2015 Alban Bedel <albeu@मुक्त.fr>
+ *  Copyright (C) 2015 Alban Bedel <albeu@free.fr>
  *  Copyright (C) 2010-2011 Jaiganesh Narayanan <jnarayanan@atheros.com>
- *  Copyright (C) 2008-2011 Gabor Juhos <juhosg@खोलोwrt.org>
- *  Copyright (C) 2008 Imre Kaloz <kaloz@खोलोwrt.org>
+ *  Copyright (C) 2008-2011 Gabor Juhos <juhosg@openwrt.org>
+ *  Copyright (C) 2008 Imre Kaloz <kaloz@openwrt.org>
  *
  *  Parts of this file are based on Atheros' 2.6.15/2.6.31 BSP
  */
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irqchip.h>
-#समावेश <linux/of.h>
+#include <linux/interrupt.h>
+#include <linux/irqchip.h>
+#include <linux/of.h>
 
-#समावेश <यंत्र/irq_cpu.h>
-#समावेश <यंत्र/mach-ath79/ath79.h>
+#include <asm/irq_cpu.h>
+#include <asm/mach-ath79/ath79.h>
 
 /*
- * The IP2/IP3 lines are tied to a PCI/WMAC/USB device. Drivers क्रम
+ * The IP2/IP3 lines are tied to a PCI/WMAC/USB device. Drivers for
  * these devices typically allocate coherent DMA memory, however the
  * DMA controller may still have some unsynchronized data in the FIFO.
  * Issue a flush in the handlers to ensure that the driver sees
  * the update.
  *
- * This array map the पूर्णांकerrupt lines to the DDR ग_लिखो buffer channels.
+ * This array map the interrupt lines to the DDR write buffer channels.
  */
 
-अटल अचिन्हित irq_wb_chan[8] = अणु
+static unsigned irq_wb_chan[8] = {
 	-1, -1, -1, -1, -1, -1, -1, -1,
-पूर्ण;
+};
 
-यंत्रlinkage व्योम plat_irq_dispatch(व्योम)
-अणु
-	अचिन्हित दीर्घ pending;
-	पूर्णांक irq;
+asmlinkage void plat_irq_dispatch(void)
+{
+	unsigned long pending;
+	int irq;
 
-	pending = पढ़ो_c0_status() & पढ़ो_c0_cause() & ST0_IM;
+	pending = read_c0_status() & read_c0_cause() & ST0_IM;
 
-	अगर (!pending) अणु
-		spurious_पूर्णांकerrupt();
-		वापस;
-	पूर्ण
+	if (!pending) {
+		spurious_interrupt();
+		return;
+	}
 
 	pending >>= CAUSEB_IP;
-	जबतक (pending) अणु
+	while (pending) {
 		irq = fls(pending) - 1;
-		अगर (irq < ARRAY_SIZE(irq_wb_chan) && irq_wb_chan[irq] != -1)
+		if (irq < ARRAY_SIZE(irq_wb_chan) && irq_wb_chan[irq] != -1)
 			ath79_ddr_wb_flush(irq_wb_chan[irq]);
-		करो_IRQ(MIPS_CPU_IRQ_BASE + irq);
+		do_IRQ(MIPS_CPU_IRQ_BASE + irq);
 		pending &= ~BIT(irq);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक __init ar79_cpu_पूर्णांकc_of_init(
-	काष्ठा device_node *node, काष्ठा device_node *parent)
-अणु
-	पूर्णांक err, i, count;
+static int __init ar79_cpu_intc_of_init(
+	struct device_node *node, struct device_node *parent)
+{
+	int err, i, count;
 
 	/* Fill the irq_wb_chan table */
 	count = of_count_phandle_with_args(
 		node, "qca,ddr-wb-channels", "#qca,ddr-wb-channel-cells");
 
-	क्रम (i = 0; i < count; i++) अणु
-		काष्ठा of_phandle_args args;
+	for (i = 0; i < count; i++) {
+		struct of_phandle_args args;
 		u32 irq = i;
 
-		of_property_पढ़ो_u32_index(
+		of_property_read_u32_index(
 			node, "qca,ddr-wb-channel-interrupts", i, &irq);
-		अगर (irq >= ARRAY_SIZE(irq_wb_chan))
-			जारी;
+		if (irq >= ARRAY_SIZE(irq_wb_chan))
+			continue;
 
 		err = of_parse_phandle_with_args(
 			node, "qca,ddr-wb-channels",
 			"#qca,ddr-wb-channel-cells",
 			i, &args);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
 		irq_wb_chan[irq] = args.args[0];
-	पूर्ण
+	}
 
-	वापस mips_cpu_irq_of_init(node, parent);
-पूर्ण
-IRQCHIP_DECLARE(ar79_cpu_पूर्णांकc, "qca,ar7100-cpu-intc",
-		ar79_cpu_पूर्णांकc_of_init);
+	return mips_cpu_irq_of_init(node, parent);
+}
+IRQCHIP_DECLARE(ar79_cpu_intc, "qca,ar7100-cpu-intc",
+		ar79_cpu_intc_of_init);
 
-व्योम __init ath79_cpu_irq_init(अचिन्हित irq_wb_chan2, अचिन्हित irq_wb_chan3)
-अणु
+void __init ath79_cpu_irq_init(unsigned irq_wb_chan2, unsigned irq_wb_chan3)
+{
 	irq_wb_chan[2] = irq_wb_chan2;
 	irq_wb_chan[3] = irq_wb_chan3;
 	mips_cpu_irq_init();
-पूर्ण
+}

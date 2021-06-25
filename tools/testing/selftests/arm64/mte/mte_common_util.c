@@ -1,347 +1,346 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2020 ARM Limited
 
-#समावेश <fcntl.h>
-#समावेश <sched.h>
-#समावेश <संकेत.स>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <unistd.h>
+#include <fcntl.h>
+#include <sched.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
-#समावेश <linux/auxvec.h>
-#समावेश <sys/auxv.h>
-#समावेश <sys/mman.h>
-#समावेश <sys/prctl.h>
+#include <linux/auxvec.h>
+#include <sys/auxv.h>
+#include <sys/mman.h>
+#include <sys/prctl.h>
 
-#समावेश <यंत्र/hwcap.h>
+#include <asm/hwcap.h>
 
-#समावेश "kselftest.h"
-#समावेश "mte_common_util.h"
-#समावेश "mte_def.h"
+#include "kselftest.h"
+#include "mte_common_util.h"
+#include "mte_def.h"
 
-#घोषणा INIT_BUFFER_SIZE       256
+#define INIT_BUFFER_SIZE       256
 
-काष्ठा mte_fault_cxt cur_mte_cxt;
-अटल अचिन्हित पूर्णांक mte_cur_mode;
-अटल अचिन्हित पूर्णांक mte_cur_pstate_tco;
+struct mte_fault_cxt cur_mte_cxt;
+static unsigned int mte_cur_mode;
+static unsigned int mte_cur_pstate_tco;
 
-व्योम mte_शेष_handler(पूर्णांक signum, siginfo_t *si, व्योम *uc)
-अणु
-	अचिन्हित दीर्घ addr = (अचिन्हित दीर्घ)si->si_addr;
+void mte_default_handler(int signum, siginfo_t *si, void *uc)
+{
+	unsigned long addr = (unsigned long)si->si_addr;
 
-	अगर (signum == संक_अंश) अणु
-#अगर_घोषित DEBUG
-		ksft_prपूर्णांक_msg("INFO: SIGSEGV signal at pc=%lx, fault addr=%lx, si_code=%lx\n",
+	if (signum == SIGSEGV) {
+#ifdef DEBUG
+		ksft_print_msg("INFO: SIGSEGV signal at pc=%lx, fault addr=%lx, si_code=%lx\n",
 				((ucontext_t *)uc)->uc_mcontext.pc, addr, si->si_code);
-#पूर्ण_अगर
-		अगर (si->si_code == SEGV_MTEAERR) अणु
-			अगर (cur_mte_cxt.trig_si_code == si->si_code)
+#endif
+		if (si->si_code == SEGV_MTEAERR) {
+			if (cur_mte_cxt.trig_si_code == si->si_code)
 				cur_mte_cxt.fault_valid = true;
-			वापस;
-		पूर्ण
-		/* Compare the context क्रम precise error */
-		अन्यथा अगर (si->si_code == SEGV_MTESERR) अणु
-			अगर (cur_mte_cxt.trig_si_code == si->si_code &&
+			return;
+		}
+		/* Compare the context for precise error */
+		else if (si->si_code == SEGV_MTESERR) {
+			if (cur_mte_cxt.trig_si_code == si->si_code &&
 			    ((cur_mte_cxt.trig_range >= 0 &&
 			      addr >= MT_CLEAR_TAG(cur_mte_cxt.trig_addr) &&
 			      addr <= (MT_CLEAR_TAG(cur_mte_cxt.trig_addr) + cur_mte_cxt.trig_range)) ||
 			     (cur_mte_cxt.trig_range < 0 &&
 			      addr <= MT_CLEAR_TAG(cur_mte_cxt.trig_addr) &&
-			      addr >= (MT_CLEAR_TAG(cur_mte_cxt.trig_addr) + cur_mte_cxt.trig_range)))) अणु
+			      addr >= (MT_CLEAR_TAG(cur_mte_cxt.trig_addr) + cur_mte_cxt.trig_range)))) {
 				cur_mte_cxt.fault_valid = true;
 				/* Adjust the pc by 4 */
 				((ucontext_t *)uc)->uc_mcontext.pc += 4;
-			पूर्ण अन्यथा अणु
-				ksft_prपूर्णांक_msg("Invalid MTE synchronous exception caught!\n");
-				निकास(1);
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			ksft_prपूर्णांक_msg("Unknown SIGSEGV exception caught!\n");
-			निकास(1);
-		पूर्ण
-	पूर्ण अन्यथा अगर (signum == SIGBUS) अणु
-		ksft_prपूर्णांक_msg("INFO: SIGBUS signal at pc=%lx, fault addr=%lx, si_code=%lx\n",
+			} else {
+				ksft_print_msg("Invalid MTE synchronous exception caught!\n");
+				exit(1);
+			}
+		} else {
+			ksft_print_msg("Unknown SIGSEGV exception caught!\n");
+			exit(1);
+		}
+	} else if (signum == SIGBUS) {
+		ksft_print_msg("INFO: SIGBUS signal at pc=%lx, fault addr=%lx, si_code=%lx\n",
 				((ucontext_t *)uc)->uc_mcontext.pc, addr, si->si_code);
-		अगर ((cur_mte_cxt.trig_range >= 0 &&
+		if ((cur_mte_cxt.trig_range >= 0 &&
 		     addr >= MT_CLEAR_TAG(cur_mte_cxt.trig_addr) &&
 		     addr <= (MT_CLEAR_TAG(cur_mte_cxt.trig_addr) + cur_mte_cxt.trig_range)) ||
 		    (cur_mte_cxt.trig_range < 0 &&
 		     addr <= MT_CLEAR_TAG(cur_mte_cxt.trig_addr) &&
-		     addr >= (MT_CLEAR_TAG(cur_mte_cxt.trig_addr) + cur_mte_cxt.trig_range))) अणु
+		     addr >= (MT_CLEAR_TAG(cur_mte_cxt.trig_addr) + cur_mte_cxt.trig_range))) {
 			cur_mte_cxt.fault_valid = true;
 			/* Adjust the pc by 4 */
 			((ucontext_t *)uc)->uc_mcontext.pc += 4;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-व्योम mte_रेजिस्टर_संकेत(पूर्णांक संकेत, व्योम (*handler)(पूर्णांक, siginfo_t *, व्योम *))
-अणु
-	काष्ठा sigaction sa;
+void mte_register_signal(int signal, void (*handler)(int, siginfo_t *, void *))
+{
+	struct sigaction sa;
 
 	sa.sa_sigaction = handler;
 	sa.sa_flags = SA_SIGINFO;
 	sigemptyset(&sa.sa_mask);
-	sigaction(संकेत, &sa, शून्य);
-पूर्ण
+	sigaction(signal, &sa, NULL);
+}
 
-व्योम mte_रुको_after_trig(व्योम)
-अणु
+void mte_wait_after_trig(void)
+{
 	sched_yield();
-पूर्ण
+}
 
-व्योम *mte_insert_tags(व्योम *ptr, माप_प्रकार size)
-अणु
-	व्योम *tag_ptr;
-	पूर्णांक align_size;
+void *mte_insert_tags(void *ptr, size_t size)
+{
+	void *tag_ptr;
+	int align_size;
 
-	अगर (!ptr || (अचिन्हित दीर्घ)(ptr) & MT_ALIGN_GRANULE) अणु
-		ksft_prपूर्णांक_msg("FAIL: Addr=%lx: invalid\n", ptr);
-		वापस शून्य;
-	पूर्ण
+	if (!ptr || (unsigned long)(ptr) & MT_ALIGN_GRANULE) {
+		ksft_print_msg("FAIL: Addr=%lx: invalid\n", ptr);
+		return NULL;
+	}
 	align_size = MT_ALIGN_UP(size);
-	tag_ptr = mte_insert_अक्रमom_tag(ptr);
+	tag_ptr = mte_insert_random_tag(ptr);
 	mte_set_tag_address_range(tag_ptr, align_size);
-	वापस tag_ptr;
-पूर्ण
+	return tag_ptr;
+}
 
-व्योम mte_clear_tags(व्योम *ptr, माप_प्रकार size)
-अणु
-	अगर (!ptr || (अचिन्हित दीर्घ)(ptr) & MT_ALIGN_GRANULE) अणु
-		ksft_prपूर्णांक_msg("FAIL: Addr=%lx: invalid\n", ptr);
-		वापस;
-	पूर्ण
+void mte_clear_tags(void *ptr, size_t size)
+{
+	if (!ptr || (unsigned long)(ptr) & MT_ALIGN_GRANULE) {
+		ksft_print_msg("FAIL: Addr=%lx: invalid\n", ptr);
+		return;
+	}
 	size = MT_ALIGN_UP(size);
-	ptr = (व्योम *)MT_CLEAR_TAG((अचिन्हित दीर्घ)ptr);
+	ptr = (void *)MT_CLEAR_TAG((unsigned long)ptr);
 	mte_clear_tag_address_range(ptr, size);
-पूर्ण
+}
 
-अटल व्योम *__mte_allocate_memory_range(माप_प्रकार size, पूर्णांक mem_type, पूर्णांक mapping,
-					 माप_प्रकार range_beक्रमe, माप_प्रकार range_after,
-					 bool tags, पूर्णांक fd)
-अणु
-	व्योम *ptr;
-	पूर्णांक prot_flag, map_flag;
-	माप_प्रकार entire_size = size + range_beक्रमe + range_after;
+static void *__mte_allocate_memory_range(size_t size, int mem_type, int mapping,
+					 size_t range_before, size_t range_after,
+					 bool tags, int fd)
+{
+	void *ptr;
+	int prot_flag, map_flag;
+	size_t entire_size = size + range_before + range_after;
 
-	अगर (mem_type != USE_MALLOC && mem_type != USE_MMAP &&
-	    mem_type != USE_MPROTECT) अणु
-		ksft_prपूर्णांक_msg("FAIL: Invalid allocate request\n");
-		वापस शून्य;
-	पूर्ण
-	अगर (mem_type == USE_MALLOC)
-		वापस दो_स्मृति(entire_size) + range_beक्रमe;
+	if (mem_type != USE_MALLOC && mem_type != USE_MMAP &&
+	    mem_type != USE_MPROTECT) {
+		ksft_print_msg("FAIL: Invalid allocate request\n");
+		return NULL;
+	}
+	if (mem_type == USE_MALLOC)
+		return malloc(entire_size) + range_before;
 
 	prot_flag = PROT_READ | PROT_WRITE;
-	अगर (mem_type == USE_MMAP)
+	if (mem_type == USE_MMAP)
 		prot_flag |= PROT_MTE;
 
 	map_flag = mapping;
-	अगर (fd == -1)
+	if (fd == -1)
 		map_flag = MAP_ANONYMOUS | map_flag;
-	अगर (!(mapping & MAP_SHARED))
+	if (!(mapping & MAP_SHARED))
 		map_flag |= MAP_PRIVATE;
-	ptr = mmap(शून्य, entire_size, prot_flag, map_flag, fd, 0);
-	अगर (ptr == MAP_FAILED) अणु
-		ksft_prपूर्णांक_msg("FAIL: mmap allocation\n");
-		वापस शून्य;
-	पूर्ण
-	अगर (mem_type == USE_MPROTECT) अणु
-		अगर (mprotect(ptr, entire_size, prot_flag | PROT_MTE)) अणु
+	ptr = mmap(NULL, entire_size, prot_flag, map_flag, fd, 0);
+	if (ptr == MAP_FAILED) {
+		ksft_print_msg("FAIL: mmap allocation\n");
+		return NULL;
+	}
+	if (mem_type == USE_MPROTECT) {
+		if (mprotect(ptr, entire_size, prot_flag | PROT_MTE)) {
 			munmap(ptr, size);
-			ksft_prपूर्णांक_msg("FAIL: mprotect PROT_MTE property\n");
-			वापस शून्य;
-		पूर्ण
-	पूर्ण
-	अगर (tags)
-		ptr = mte_insert_tags(ptr + range_beक्रमe, size);
-	वापस ptr;
-पूर्ण
+			ksft_print_msg("FAIL: mprotect PROT_MTE property\n");
+			return NULL;
+		}
+	}
+	if (tags)
+		ptr = mte_insert_tags(ptr + range_before, size);
+	return ptr;
+}
 
-व्योम *mte_allocate_memory_tag_range(माप_प्रकार size, पूर्णांक mem_type, पूर्णांक mapping,
-				    माप_प्रकार range_beक्रमe, माप_प्रकार range_after)
-अणु
-	वापस __mte_allocate_memory_range(size, mem_type, mapping, range_beक्रमe,
+void *mte_allocate_memory_tag_range(size_t size, int mem_type, int mapping,
+				    size_t range_before, size_t range_after)
+{
+	return __mte_allocate_memory_range(size, mem_type, mapping, range_before,
 					   range_after, true, -1);
-पूर्ण
+}
 
-व्योम *mte_allocate_memory(माप_प्रकार size, पूर्णांक mem_type, पूर्णांक mapping, bool tags)
-अणु
-	वापस __mte_allocate_memory_range(size, mem_type, mapping, 0, 0, tags, -1);
-पूर्ण
+void *mte_allocate_memory(size_t size, int mem_type, int mapping, bool tags)
+{
+	return __mte_allocate_memory_range(size, mem_type, mapping, 0, 0, tags, -1);
+}
 
-व्योम *mte_allocate_file_memory(माप_प्रकार size, पूर्णांक mem_type, पूर्णांक mapping, bool tags, पूर्णांक fd)
-अणु
-	पूर्णांक index;
-	अक्षर buffer[INIT_BUFFER_SIZE];
+void *mte_allocate_file_memory(size_t size, int mem_type, int mapping, bool tags, int fd)
+{
+	int index;
+	char buffer[INIT_BUFFER_SIZE];
 
-	अगर (mem_type != USE_MPROTECT && mem_type != USE_MMAP) अणु
-		ksft_prपूर्णांक_msg("FAIL: Invalid mmap file request\n");
-		वापस शून्य;
-	पूर्ण
-	/* Initialize the file क्रम mappable size */
-	lseek(fd, 0, शुरू_से);
-	क्रम (index = INIT_BUFFER_SIZE; index < size; index += INIT_BUFFER_SIZE) अणु
-		अगर (ग_लिखो(fd, buffer, INIT_BUFFER_SIZE) != INIT_BUFFER_SIZE) अणु
-			लिखो_त्रुटि("initialising buffer");
-			वापस शून्य;
-		पूर्ण
-	पूर्ण
+	if (mem_type != USE_MPROTECT && mem_type != USE_MMAP) {
+		ksft_print_msg("FAIL: Invalid mmap file request\n");
+		return NULL;
+	}
+	/* Initialize the file for mappable size */
+	lseek(fd, 0, SEEK_SET);
+	for (index = INIT_BUFFER_SIZE; index < size; index += INIT_BUFFER_SIZE) {
+		if (write(fd, buffer, INIT_BUFFER_SIZE) != INIT_BUFFER_SIZE) {
+			perror("initialising buffer");
+			return NULL;
+		}
+	}
 	index -= INIT_BUFFER_SIZE;
-	अगर (ग_लिखो(fd, buffer, size - index) != size - index) अणु
-		लिखो_त्रुटि("initialising buffer");
-		वापस शून्य;
-	पूर्ण
-	वापस __mte_allocate_memory_range(size, mem_type, mapping, 0, 0, tags, fd);
-पूर्ण
+	if (write(fd, buffer, size - index) != size - index) {
+		perror("initialising buffer");
+		return NULL;
+	}
+	return __mte_allocate_memory_range(size, mem_type, mapping, 0, 0, tags, fd);
+}
 
-व्योम *mte_allocate_file_memory_tag_range(माप_प्रकार size, पूर्णांक mem_type, पूर्णांक mapping,
-					 माप_प्रकार range_beक्रमe, माप_प्रकार range_after, पूर्णांक fd)
-अणु
-	पूर्णांक index;
-	अक्षर buffer[INIT_BUFFER_SIZE];
-	पूर्णांक map_size = size + range_beक्रमe + range_after;
+void *mte_allocate_file_memory_tag_range(size_t size, int mem_type, int mapping,
+					 size_t range_before, size_t range_after, int fd)
+{
+	int index;
+	char buffer[INIT_BUFFER_SIZE];
+	int map_size = size + range_before + range_after;
 
-	अगर (mem_type != USE_MPROTECT && mem_type != USE_MMAP) अणु
-		ksft_prपूर्णांक_msg("FAIL: Invalid mmap file request\n");
-		वापस शून्य;
-	पूर्ण
-	/* Initialize the file क्रम mappable size */
-	lseek(fd, 0, शुरू_से);
-	क्रम (index = INIT_BUFFER_SIZE; index < map_size; index += INIT_BUFFER_SIZE)
-		अगर (ग_लिखो(fd, buffer, INIT_BUFFER_SIZE) != INIT_BUFFER_SIZE) अणु
-			लिखो_त्रुटि("initialising buffer");
-			वापस शून्य;
-		पूर्ण
+	if (mem_type != USE_MPROTECT && mem_type != USE_MMAP) {
+		ksft_print_msg("FAIL: Invalid mmap file request\n");
+		return NULL;
+	}
+	/* Initialize the file for mappable size */
+	lseek(fd, 0, SEEK_SET);
+	for (index = INIT_BUFFER_SIZE; index < map_size; index += INIT_BUFFER_SIZE)
+		if (write(fd, buffer, INIT_BUFFER_SIZE) != INIT_BUFFER_SIZE) {
+			perror("initialising buffer");
+			return NULL;
+		}
 	index -= INIT_BUFFER_SIZE;
-	अगर (ग_लिखो(fd, buffer, map_size - index) != map_size - index) अणु
-		लिखो_त्रुटि("initialising buffer");
-		वापस शून्य;
-	पूर्ण
-	वापस __mte_allocate_memory_range(size, mem_type, mapping, range_beक्रमe,
+	if (write(fd, buffer, map_size - index) != map_size - index) {
+		perror("initialising buffer");
+		return NULL;
+	}
+	return __mte_allocate_memory_range(size, mem_type, mapping, range_before,
 					   range_after, true, fd);
-पूर्ण
+}
 
-अटल व्योम __mte_मुक्त_memory_range(व्योम *ptr, माप_प्रकार size, पूर्णांक mem_type,
-				    माप_प्रकार range_beक्रमe, माप_प्रकार range_after, bool tags)
-अणु
-	चयन (mem_type) अणु
-	हाल USE_MALLOC:
-		मुक्त(ptr - range_beक्रमe);
-		अवरोध;
-	हाल USE_MMAP:
-	हाल USE_MPROTECT:
-		अगर (tags)
+static void __mte_free_memory_range(void *ptr, size_t size, int mem_type,
+				    size_t range_before, size_t range_after, bool tags)
+{
+	switch (mem_type) {
+	case USE_MALLOC:
+		free(ptr - range_before);
+		break;
+	case USE_MMAP:
+	case USE_MPROTECT:
+		if (tags)
 			mte_clear_tags(ptr, size);
-		munmap(ptr - range_beक्रमe, size + range_beक्रमe + range_after);
-		अवरोध;
-	शेष:
-		ksft_prपूर्णांक_msg("FAIL: Invalid free request\n");
-		अवरोध;
-	पूर्ण
-पूर्ण
+		munmap(ptr - range_before, size + range_before + range_after);
+		break;
+	default:
+		ksft_print_msg("FAIL: Invalid free request\n");
+		break;
+	}
+}
 
-व्योम mte_मुक्त_memory_tag_range(व्योम *ptr, माप_प्रकार size, पूर्णांक mem_type,
-			       माप_प्रकार range_beक्रमe, माप_प्रकार range_after)
-अणु
-	__mte_मुक्त_memory_range(ptr, size, mem_type, range_beक्रमe, range_after, true);
-पूर्ण
+void mte_free_memory_tag_range(void *ptr, size_t size, int mem_type,
+			       size_t range_before, size_t range_after)
+{
+	__mte_free_memory_range(ptr, size, mem_type, range_before, range_after, true);
+}
 
-व्योम mte_मुक्त_memory(व्योम *ptr, माप_प्रकार size, पूर्णांक mem_type, bool tags)
-अणु
-	__mte_मुक्त_memory_range(ptr, size, mem_type, 0, 0, tags);
-पूर्ण
+void mte_free_memory(void *ptr, size_t size, int mem_type, bool tags)
+{
+	__mte_free_memory_range(ptr, size, mem_type, 0, 0, tags);
+}
 
-व्योम mte_initialize_current_context(पूर्णांक mode, uपूर्णांकptr_t ptr, sमाप_प्रकार range)
-अणु
+void mte_initialize_current_context(int mode, uintptr_t ptr, ssize_t range)
+{
 	cur_mte_cxt.fault_valid = false;
 	cur_mte_cxt.trig_addr = ptr;
 	cur_mte_cxt.trig_range = range;
-	अगर (mode == MTE_SYNC_ERR)
+	if (mode == MTE_SYNC_ERR)
 		cur_mte_cxt.trig_si_code = SEGV_MTESERR;
-	अन्यथा अगर (mode == MTE_ASYNC_ERR)
+	else if (mode == MTE_ASYNC_ERR)
 		cur_mte_cxt.trig_si_code = SEGV_MTEAERR;
-	अन्यथा
+	else
 		cur_mte_cxt.trig_si_code = 0;
-पूर्ण
+}
 
-पूर्णांक mte_चयन_mode(पूर्णांक mte_option, अचिन्हित दीर्घ incl_mask)
-अणु
-	अचिन्हित दीर्घ en = 0;
+int mte_switch_mode(int mte_option, unsigned long incl_mask)
+{
+	unsigned long en = 0;
 
-	अगर (!(mte_option == MTE_SYNC_ERR || mte_option == MTE_ASYNC_ERR ||
-	      mte_option == MTE_NONE_ERR || incl_mask <= MTE_ALLOW_NON_ZERO_TAG)) अणु
-		ksft_prपूर्णांक_msg("FAIL: Invalid mte config option\n");
-		वापस -EINVAL;
-	पूर्ण
+	if (!(mte_option == MTE_SYNC_ERR || mte_option == MTE_ASYNC_ERR ||
+	      mte_option == MTE_NONE_ERR || incl_mask <= MTE_ALLOW_NON_ZERO_TAG)) {
+		ksft_print_msg("FAIL: Invalid mte config option\n");
+		return -EINVAL;
+	}
 	en = PR_TAGGED_ADDR_ENABLE;
-	अगर (mte_option == MTE_SYNC_ERR)
+	if (mte_option == MTE_SYNC_ERR)
 		en |= PR_MTE_TCF_SYNC;
-	अन्यथा अगर (mte_option == MTE_ASYNC_ERR)
+	else if (mte_option == MTE_ASYNC_ERR)
 		en |= PR_MTE_TCF_ASYNC;
-	अन्यथा अगर (mte_option == MTE_NONE_ERR)
+	else if (mte_option == MTE_NONE_ERR)
 		en |= PR_MTE_TCF_NONE;
 
 	en |= (incl_mask << PR_MTE_TAG_SHIFT);
 	/* Enable address tagging ABI, mte error reporting mode and tag inclusion mask. */
-	अगर (prctl(PR_SET_TAGGED_ADDR_CTRL, en, 0, 0, 0) != 0) अणु
-		ksft_prपूर्णांक_msg("FAIL:prctl PR_SET_TAGGED_ADDR_CTRL for mte mode\n");
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	if (prctl(PR_SET_TAGGED_ADDR_CTRL, en, 0, 0, 0) != 0) {
+		ksft_print_msg("FAIL:prctl PR_SET_TAGGED_ADDR_CTRL for mte mode\n");
+		return -EINVAL;
+	}
+	return 0;
+}
 
-पूर्णांक mte_शेष_setup(व्योम)
-अणु
-	अचिन्हित दीर्घ hwcaps2 = getauxval(AT_HWCAP2);
-	अचिन्हित दीर्घ en = 0;
-	पूर्णांक ret;
+int mte_default_setup(void)
+{
+	unsigned long hwcaps2 = getauxval(AT_HWCAP2);
+	unsigned long en = 0;
+	int ret;
 
-	अगर (!(hwcaps2 & HWCAP2_MTE)) अणु
-		ksft_prपूर्णांक_msg("FAIL: MTE features unavailable\n");
-		वापस KSFT_SKIP;
-	पूर्ण
+	if (!(hwcaps2 & HWCAP2_MTE)) {
+		ksft_print_msg("FAIL: MTE features unavailable\n");
+		return KSFT_SKIP;
+	}
 	/* Get current mte mode */
 	ret = prctl(PR_GET_TAGGED_ADDR_CTRL, en, 0, 0, 0);
-	अगर (ret < 0) अणु
-		ksft_prपूर्णांक_msg("FAIL:prctl PR_GET_TAGGED_ADDR_CTRL with error =%d\n", ret);
-		वापस KSFT_FAIL;
-	पूर्ण
-	अगर (ret & PR_MTE_TCF_SYNC)
+	if (ret < 0) {
+		ksft_print_msg("FAIL:prctl PR_GET_TAGGED_ADDR_CTRL with error =%d\n", ret);
+		return KSFT_FAIL;
+	}
+	if (ret & PR_MTE_TCF_SYNC)
 		mte_cur_mode = MTE_SYNC_ERR;
-	अन्यथा अगर (ret & PR_MTE_TCF_ASYNC)
+	else if (ret & PR_MTE_TCF_ASYNC)
 		mte_cur_mode = MTE_ASYNC_ERR;
-	अन्यथा अगर (ret & PR_MTE_TCF_NONE)
+	else if (ret & PR_MTE_TCF_NONE)
 		mte_cur_mode = MTE_NONE_ERR;
 
 	mte_cur_pstate_tco = mte_get_pstate_tco();
 	/* Disable PSTATE.TCO */
 	mte_disable_pstate_tco();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम mte_restore_setup(व्योम)
-अणु
-	mte_चयन_mode(mte_cur_mode, MTE_ALLOW_NON_ZERO_TAG);
-	अगर (mte_cur_pstate_tco == MT_PSTATE_TCO_EN)
+void mte_restore_setup(void)
+{
+	mte_switch_mode(mte_cur_mode, MTE_ALLOW_NON_ZERO_TAG);
+	if (mte_cur_pstate_tco == MT_PSTATE_TCO_EN)
 		mte_enable_pstate_tco();
-	अन्यथा अगर (mte_cur_pstate_tco == MT_PSTATE_TCO_DIS)
+	else if (mte_cur_pstate_tco == MT_PSTATE_TCO_DIS)
 		mte_disable_pstate_tco();
-पूर्ण
+}
 
-पूर्णांक create_temp_file(व्योम)
-अणु
-	पूर्णांक fd;
-	अक्षर filename[] = "/dev/shm/tmp_XXXXXX";
+int create_temp_file(void)
+{
+	int fd;
+	char filename[] = "/dev/shm/tmp_XXXXXX";
 
-	/* Create a file in the पंचांगpfs fileप्रणाली */
+	/* Create a file in the tmpfs filesystem */
 	fd = mkstemp(&filename[0]);
-	अगर (fd == -1) अणु
-		लिखो_त्रुटि(filename);
-		ksft_prपूर्णांक_msg("FAIL: Unable to open temporary file\n");
-		वापस 0;
-	पूर्ण
+	if (fd == -1) {
+		perror(filename);
+		ksft_print_msg("FAIL: Unable to open temporary file\n");
+		return 0;
+	}
 	unlink(&filename[0]);
-	वापस fd;
-पूर्ण
+	return fd;
+}

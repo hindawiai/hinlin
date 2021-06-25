@@ -1,45 +1,44 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-2-Clause)
+// SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
 /* Copyright (C) 2017-2018 Netronome Systems, Inc. */
 
-#समावेश "nfpcore/nfp_cpp.h"
-#समावेश "nfpcore/nfp_nsp.h"
-#समावेश "nfp_app.h"
-#समावेश "nfp_main.h"
-#समावेश "nfp_net.h"
-#समावेश "nfp_port.h"
+#include "nfpcore/nfp_cpp.h"
+#include "nfpcore/nfp_nsp.h"
+#include "nfp_app.h"
+#include "nfp_main.h"
+#include "nfp_net.h"
+#include "nfp_port.h"
 
-पूर्णांक nfp_app_nic_vnic_init_phy_port(काष्ठा nfp_pf *pf, काष्ठा nfp_app *app,
-				   काष्ठा nfp_net *nn, अचिन्हित पूर्णांक id)
-अणु
-	पूर्णांक err;
+int nfp_app_nic_vnic_init_phy_port(struct nfp_pf *pf, struct nfp_app *app,
+				   struct nfp_net *nn, unsigned int id)
+{
+	int err;
 
-	अगर (!pf->eth_tbl)
-		वापस 0;
+	if (!pf->eth_tbl)
+		return 0;
 
 	nn->port = nfp_port_alloc(app, NFP_PORT_PHYS_PORT, nn->dp.netdev);
-	अगर (IS_ERR(nn->port))
-		वापस PTR_ERR(nn->port);
+	if (IS_ERR(nn->port))
+		return PTR_ERR(nn->port);
 
 	err = nfp_port_init_phy_port(pf, app, nn->port, id);
-	अगर (err) अणु
-		nfp_port_मुक्त(nn->port);
-		वापस err;
-	पूर्ण
+	if (err) {
+		nfp_port_free(nn->port);
+		return err;
+	}
 
-	वापस nn->port->type == NFP_PORT_INVALID;
-पूर्ण
+	return nn->port->type == NFP_PORT_INVALID;
+}
 
-पूर्णांक nfp_app_nic_vnic_alloc(काष्ठा nfp_app *app, काष्ठा nfp_net *nn,
-			   अचिन्हित पूर्णांक id)
-अणु
-	पूर्णांक err;
+int nfp_app_nic_vnic_alloc(struct nfp_app *app, struct nfp_net *nn,
+			   unsigned int id)
+{
+	int err;
 
 	err = nfp_app_nic_vnic_init_phy_port(app->pf, app, nn, id);
-	अगर (err)
-		वापस err < 0 ? err : 0;
+	if (err)
+		return err < 0 ? err : 0;
 
 	nfp_net_get_mac_addr(app->pf, nn->dp.netdev, nn->port);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

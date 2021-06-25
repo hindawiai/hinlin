@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2008 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,21 +22,21 @@
  * Author: Dave Airlie
  */
 
-#अगर_अघोषित ATOM_TYPES_H
-#घोषणा ATOM_TYPES_H
+#ifndef ATOM_TYPES_H
+#define ATOM_TYPES_H
 
 /* sync atom types to kernel types */
 
-प्रकार uपूर्णांक16_t USHORT;
-प्रकार uपूर्णांक32_t ULONG;
-प्रकार uपूर्णांक8_t UCHAR;
+typedef uint16_t USHORT;
+typedef uint32_t ULONG;
+typedef uint8_t UCHAR;
 
 
-#अगर_अघोषित ATOM_BIG_ENDIAN
-#अगर defined(__BIG_ENDIAN)
-#घोषणा ATOM_BIG_ENDIAN 1
-#अन्यथा
-#घोषणा ATOM_BIG_ENDIAN 0
-#पूर्ण_अगर
-#पूर्ण_अगर
-#पूर्ण_अगर
+#ifndef ATOM_BIG_ENDIAN
+#if defined(__BIG_ENDIAN)
+#define ATOM_BIG_ENDIAN 1
+#else
+#define ATOM_BIG_ENDIAN 0
+#endif
+#endif
+#endif

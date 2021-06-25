@@ -1,212 +1,211 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  Driver क्रम Freescale's 3-Axis Accelerometer MMA8450
+ *  Driver for Freescale's 3-Axis Accelerometer MMA8450
  *
  *  Copyright (C) 2011 Freescale Semiconductor, Inc. All Rights Reserved.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/input.h>
-#समावेश <linux/of_device.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/delay.h>
+#include <linux/i2c.h>
+#include <linux/input.h>
+#include <linux/of_device.h>
 
-#घोषणा MMA8450_DRV_NAME	"mma8450"
+#define MMA8450_DRV_NAME	"mma8450"
 
-#घोषणा MODE_CHANGE_DELAY_MS	100
-#घोषणा POLL_INTERVAL		100
-#घोषणा POLL_INTERVAL_MAX	500
+#define MODE_CHANGE_DELAY_MS	100
+#define POLL_INTERVAL		100
+#define POLL_INTERVAL_MAX	500
 
-/* रेजिस्टर definitions */
-#घोषणा MMA8450_STATUS		0x00
-#घोषणा MMA8450_STATUS_ZXYDR	0x08
+/* register definitions */
+#define MMA8450_STATUS		0x00
+#define MMA8450_STATUS_ZXYDR	0x08
 
-#घोषणा MMA8450_OUT_X8		0x01
-#घोषणा MMA8450_OUT_Y8		0x02
-#घोषणा MMA8450_OUT_Z8		0x03
+#define MMA8450_OUT_X8		0x01
+#define MMA8450_OUT_Y8		0x02
+#define MMA8450_OUT_Z8		0x03
 
-#घोषणा MMA8450_OUT_X_LSB	0x05
-#घोषणा MMA8450_OUT_X_MSB	0x06
-#घोषणा MMA8450_OUT_Y_LSB	0x07
-#घोषणा MMA8450_OUT_Y_MSB	0x08
-#घोषणा MMA8450_OUT_Z_LSB	0x09
-#घोषणा MMA8450_OUT_Z_MSB	0x0a
+#define MMA8450_OUT_X_LSB	0x05
+#define MMA8450_OUT_X_MSB	0x06
+#define MMA8450_OUT_Y_LSB	0x07
+#define MMA8450_OUT_Y_MSB	0x08
+#define MMA8450_OUT_Z_LSB	0x09
+#define MMA8450_OUT_Z_MSB	0x0a
 
-#घोषणा MMA8450_XYZ_DATA_CFG	0x16
+#define MMA8450_XYZ_DATA_CFG	0x16
 
-#घोषणा MMA8450_CTRL_REG1	0x38
-#घोषणा MMA8450_CTRL_REG2	0x39
+#define MMA8450_CTRL_REG1	0x38
+#define MMA8450_CTRL_REG2	0x39
 
-अटल पूर्णांक mma8450_पढ़ो(काष्ठा i2c_client *c, अचिन्हित पूर्णांक off)
-अणु
-	पूर्णांक ret;
+static int mma8450_read(struct i2c_client *c, unsigned int off)
+{
+	int ret;
 
-	ret = i2c_smbus_पढ़ो_byte_data(c, off);
-	अगर (ret < 0)
+	ret = i2c_smbus_read_byte_data(c, off);
+	if (ret < 0)
 		dev_err(&c->dev,
 			"failed to read register 0x%02x, error %d\n",
 			off, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mma8450_ग_लिखो(काष्ठा i2c_client *c, अचिन्हित पूर्णांक off, u8 v)
-अणु
-	पूर्णांक error;
+static int mma8450_write(struct i2c_client *c, unsigned int off, u8 v)
+{
+	int error;
 
-	error = i2c_smbus_ग_लिखो_byte_data(c, off, v);
-	अगर (error < 0) अणु
+	error = i2c_smbus_write_byte_data(c, off, v);
+	if (error < 0) {
 		dev_err(&c->dev,
 			"failed to write to register 0x%02x, error %d\n",
 			off, error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mma8450_पढ़ो_block(काष्ठा i2c_client *c, अचिन्हित पूर्णांक off,
-			      u8 *buf, माप_प्रकार size)
-अणु
-	पूर्णांक err;
+static int mma8450_read_block(struct i2c_client *c, unsigned int off,
+			      u8 *buf, size_t size)
+{
+	int err;
 
-	err = i2c_smbus_पढ़ो_i2c_block_data(c, off, size, buf);
-	अगर (err < 0) अणु
+	err = i2c_smbus_read_i2c_block_data(c, off, size, buf);
+	if (err < 0) {
 		dev_err(&c->dev,
 			"failed to read block data at 0x%02x, error %d\n",
 			MMA8450_OUT_X_LSB, err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mma8450_poll(काष्ठा input_dev *input)
-अणु
-	काष्ठा i2c_client *c = input_get_drvdata(input);
-	पूर्णांक x, y, z;
-	पूर्णांक ret;
+static void mma8450_poll(struct input_dev *input)
+{
+	struct i2c_client *c = input_get_drvdata(input);
+	int x, y, z;
+	int ret;
 	u8 buf[6];
 
-	ret = mma8450_पढ़ो(c, MMA8450_STATUS);
-	अगर (ret < 0)
-		वापस;
+	ret = mma8450_read(c, MMA8450_STATUS);
+	if (ret < 0)
+		return;
 
-	अगर (!(ret & MMA8450_STATUS_ZXYDR))
-		वापस;
+	if (!(ret & MMA8450_STATUS_ZXYDR))
+		return;
 
-	ret = mma8450_पढ़ो_block(c, MMA8450_OUT_X_LSB, buf, माप(buf));
-	अगर (ret < 0)
-		वापस;
+	ret = mma8450_read_block(c, MMA8450_OUT_X_LSB, buf, sizeof(buf));
+	if (ret < 0)
+		return;
 
-	x = ((पूर्णांक)(s8)buf[1] << 4) | (buf[0] & 0xf);
-	y = ((पूर्णांक)(s8)buf[3] << 4) | (buf[2] & 0xf);
-	z = ((पूर्णांक)(s8)buf[5] << 4) | (buf[4] & 0xf);
+	x = ((int)(s8)buf[1] << 4) | (buf[0] & 0xf);
+	y = ((int)(s8)buf[3] << 4) | (buf[2] & 0xf);
+	z = ((int)(s8)buf[5] << 4) | (buf[4] & 0xf);
 
-	input_report_असल(input, ABS_X, x);
-	input_report_असल(input, ABS_Y, y);
-	input_report_असल(input, ABS_Z, z);
+	input_report_abs(input, ABS_X, x);
+	input_report_abs(input, ABS_Y, y);
+	input_report_abs(input, ABS_Z, z);
 	input_sync(input);
-पूर्ण
+}
 
 /* Initialize the MMA8450 chip */
-अटल पूर्णांक mma8450_खोलो(काष्ठा input_dev *input)
-अणु
-	काष्ठा i2c_client *c = input_get_drvdata(input);
-	पूर्णांक err;
+static int mma8450_open(struct input_dev *input)
+{
+	struct i2c_client *c = input_get_drvdata(input);
+	int err;
 
 	/* enable all events from X/Y/Z, no FIFO */
-	err = mma8450_ग_लिखो(c, MMA8450_XYZ_DATA_CFG, 0x07);
-	अगर (err)
-		वापस err;
+	err = mma8450_write(c, MMA8450_XYZ_DATA_CFG, 0x07);
+	if (err)
+		return err;
 
 	/*
 	 * Sleep mode poll rate - 50Hz
 	 * System output data rate - 400Hz
 	 * Full scale selection - Active, +/- 2G
 	 */
-	err = mma8450_ग_लिखो(c, MMA8450_CTRL_REG1, 0x01);
-	अगर (err)
-		वापस err;
+	err = mma8450_write(c, MMA8450_CTRL_REG1, 0x01);
+	if (err)
+		return err;
 
 	msleep(MODE_CHANGE_DELAY_MS);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mma8450_बंद(काष्ठा input_dev *input)
-अणु
-	काष्ठा i2c_client *c = input_get_drvdata(input);
+static void mma8450_close(struct input_dev *input)
+{
+	struct i2c_client *c = input_get_drvdata(input);
 
-	mma8450_ग_लिखो(c, MMA8450_CTRL_REG1, 0x00);
-	mma8450_ग_लिखो(c, MMA8450_CTRL_REG2, 0x01);
-पूर्ण
+	mma8450_write(c, MMA8450_CTRL_REG1, 0x00);
+	mma8450_write(c, MMA8450_CTRL_REG2, 0x01);
+}
 
 /*
- * I2C init/probing/निकास functions
+ * I2C init/probing/exit functions
  */
-अटल पूर्णांक mma8450_probe(काष्ठा i2c_client *c,
-			 स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा input_dev *input;
-	पूर्णांक err;
+static int mma8450_probe(struct i2c_client *c,
+			 const struct i2c_device_id *id)
+{
+	struct input_dev *input;
+	int err;
 
 	input = devm_input_allocate_device(&c->dev);
-	अगर (!input)
-		वापस -ENOMEM;
+	if (!input)
+		return -ENOMEM;
 
 	input_set_drvdata(input, c);
 
 	input->name = MMA8450_DRV_NAME;
 	input->id.bustype = BUS_I2C;
 
-	input->खोलो = mma8450_खोलो;
-	input->बंद = mma8450_बंद;
+	input->open = mma8450_open;
+	input->close = mma8450_close;
 
-	input_set_असल_params(input, ABS_X, -2048, 2047, 32, 32);
-	input_set_असल_params(input, ABS_Y, -2048, 2047, 32, 32);
-	input_set_असल_params(input, ABS_Z, -2048, 2047, 32, 32);
+	input_set_abs_params(input, ABS_X, -2048, 2047, 32, 32);
+	input_set_abs_params(input, ABS_Y, -2048, 2047, 32, 32);
+	input_set_abs_params(input, ABS_Z, -2048, 2047, 32, 32);
 
 	err = input_setup_polling(input, mma8450_poll);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&c->dev, "failed to set up polling\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	input_set_poll_पूर्णांकerval(input, POLL_INTERVAL);
-	input_set_max_poll_पूर्णांकerval(input, POLL_INTERVAL_MAX);
+	input_set_poll_interval(input, POLL_INTERVAL);
+	input_set_max_poll_interval(input, POLL_INTERVAL_MAX);
 
-	err = input_रेजिस्टर_device(input);
-	अगर (err) अणु
+	err = input_register_device(input);
+	if (err) {
 		dev_err(&c->dev, "failed to register input device\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id mma8450_id[] = अणु
-	अणु MMA8450_DRV_NAME, 0 पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct i2c_device_id mma8450_id[] = {
+	{ MMA8450_DRV_NAME, 0 },
+	{ },
+};
 MODULE_DEVICE_TABLE(i2c, mma8450_id);
 
-अटल स्थिर काष्ठा of_device_id mma8450_dt_ids[] = अणु
-	अणु .compatible = "fsl,mma8450", पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id mma8450_dt_ids[] = {
+	{ .compatible = "fsl,mma8450", },
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, mma8450_dt_ids);
 
-अटल काष्ठा i2c_driver mma8450_driver = अणु
-	.driver = अणु
+static struct i2c_driver mma8450_driver = {
+	.driver = {
 		.name	= MMA8450_DRV_NAME,
 		.of_match_table = mma8450_dt_ids,
-	पूर्ण,
+	},
 	.probe		= mma8450_probe,
 	.id_table	= mma8450_id,
-पूर्ण;
+};
 
 module_i2c_driver(mma8450_driver);
 

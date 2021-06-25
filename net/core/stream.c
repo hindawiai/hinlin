@@ -1,216 +1,215 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *     SUCS NET3:
  *
- *     Generic stream handling routines. These are generic क्रम most
+ *     Generic stream handling routines. These are generic for most
  *     protocols. Even IP. Tonight 8-).
  *     This is used because TCP, LLC (others too) layer all have mostly
  *     identical sendmsg() and recvmsg() code.
  *     So we (will) share it here.
  *
- *     Authors:        Arnalकरो Carvalho de Melo <acme@conectiva.com.br>
+ *     Authors:        Arnaldo Carvalho de Melo <acme@conectiva.com.br>
  *                     (from old tcp.c code)
  *                     Alan Cox <alan@lxorguk.ukuu.org.uk> (Borrowed comments 8-))
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/net.h>
-#समावेश <linux/संकेत.स>
-#समावेश <linux/tcp.h>
-#समावेश <linux/रुको.h>
-#समावेश <net/sock.h>
+#include <linux/module.h>
+#include <linux/sched/signal.h>
+#include <linux/net.h>
+#include <linux/signal.h>
+#include <linux/tcp.h>
+#include <linux/wait.h>
+#include <net/sock.h>
 
 /**
- * sk_stream_ग_लिखो_space - stream socket ग_लिखो_space callback.
+ * sk_stream_write_space - stream socket write_space callback.
  * @sk: socket
  *
- * FIXME: ग_लिखो proper description
+ * FIXME: write proper description
  */
-व्योम sk_stream_ग_लिखो_space(काष्ठा sock *sk)
-अणु
-	काष्ठा socket *sock = sk->sk_socket;
-	काष्ठा socket_wq *wq;
+void sk_stream_write_space(struct sock *sk)
+{
+	struct socket *sock = sk->sk_socket;
+	struct socket_wq *wq;
 
-	अगर (__sk_stream_is_ग_लिखोable(sk, 1) && sock) अणु
+	if (__sk_stream_is_writeable(sk, 1) && sock) {
 		clear_bit(SOCK_NOSPACE, &sock->flags);
 
-		rcu_पढ़ो_lock();
+		rcu_read_lock();
 		wq = rcu_dereference(sk->sk_wq);
-		अगर (skwq_has_sleeper(wq))
-			wake_up_पूर्णांकerruptible_poll(&wq->रुको, EPOLLOUT |
+		if (skwq_has_sleeper(wq))
+			wake_up_interruptible_poll(&wq->wait, EPOLLOUT |
 						EPOLLWRNORM | EPOLLWRBAND);
-		अगर (wq && wq->fasync_list && !(sk->sk_shutकरोwn & SEND_SHUTDOWN))
+		if (wq && wq->fasync_list && !(sk->sk_shutdown & SEND_SHUTDOWN))
 			sock_wake_async(wq, SOCK_WAKE_SPACE, POLL_OUT);
-		rcu_पढ़ो_unlock();
-	पूर्ण
-पूर्ण
+		rcu_read_unlock();
+	}
+}
 
 /**
- * sk_stream_रुको_connect - Wait क्रम a socket to get पूर्णांकo the connected state
- * @sk: sock to रुको on
- * @समयo_p: क्रम how दीर्घ to रुको
+ * sk_stream_wait_connect - Wait for a socket to get into the connected state
+ * @sk: sock to wait on
+ * @timeo_p: for how long to wait
  *
  * Must be called with the socket locked.
  */
-पूर्णांक sk_stream_रुको_connect(काष्ठा sock *sk, दीर्घ *समयo_p)
-अणु
-	DEFINE_WAIT_FUNC(रुको, woken_wake_function);
-	काष्ठा task_काष्ठा *tsk = current;
-	पूर्णांक करोne;
+int sk_stream_wait_connect(struct sock *sk, long *timeo_p)
+{
+	DEFINE_WAIT_FUNC(wait, woken_wake_function);
+	struct task_struct *tsk = current;
+	int done;
 
-	करो अणु
-		पूर्णांक err = sock_error(sk);
-		अगर (err)
-			वापस err;
-		अगर ((1 << sk->sk_state) & ~(TCPF_SYN_SENT | TCPF_SYN_RECV))
-			वापस -EPIPE;
-		अगर (!*समयo_p)
-			वापस -EAGAIN;
-		अगर (संकेत_pending(tsk))
-			वापस sock_पूर्णांकr_त्रुटि_सं(*समयo_p);
+	do {
+		int err = sock_error(sk);
+		if (err)
+			return err;
+		if ((1 << sk->sk_state) & ~(TCPF_SYN_SENT | TCPF_SYN_RECV))
+			return -EPIPE;
+		if (!*timeo_p)
+			return -EAGAIN;
+		if (signal_pending(tsk))
+			return sock_intr_errno(*timeo_p);
 
-		add_रुको_queue(sk_sleep(sk), &रुको);
-		sk->sk_ग_लिखो_pending++;
-		करोne = sk_रुको_event(sk, समयo_p,
+		add_wait_queue(sk_sleep(sk), &wait);
+		sk->sk_write_pending++;
+		done = sk_wait_event(sk, timeo_p,
 				     !sk->sk_err &&
 				     !((1 << sk->sk_state) &
-				       ~(TCPF_ESTABLISHED | TCPF_CLOSE_WAIT)), &रुको);
-		हटाओ_रुको_queue(sk_sleep(sk), &रुको);
-		sk->sk_ग_लिखो_pending--;
-	पूर्ण जबतक (!करोne);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(sk_stream_रुको_connect);
+				       ~(TCPF_ESTABLISHED | TCPF_CLOSE_WAIT)), &wait);
+		remove_wait_queue(sk_sleep(sk), &wait);
+		sk->sk_write_pending--;
+	} while (!done);
+	return 0;
+}
+EXPORT_SYMBOL(sk_stream_wait_connect);
 
 /**
- * sk_stream_closing - Return 1 अगर we still have things to send in our buffers.
- * @sk: socket to verअगरy
+ * sk_stream_closing - Return 1 if we still have things to send in our buffers.
+ * @sk: socket to verify
  */
-अटल अंतरभूत पूर्णांक sk_stream_closing(काष्ठा sock *sk)
-अणु
-	वापस (1 << sk->sk_state) &
+static inline int sk_stream_closing(struct sock *sk)
+{
+	return (1 << sk->sk_state) &
 	       (TCPF_FIN_WAIT1 | TCPF_CLOSING | TCPF_LAST_ACK);
-पूर्ण
+}
 
-व्योम sk_stream_रुको_बंद(काष्ठा sock *sk, दीर्घ समयout)
-अणु
-	अगर (समयout) अणु
-		DEFINE_WAIT_FUNC(रुको, woken_wake_function);
+void sk_stream_wait_close(struct sock *sk, long timeout)
+{
+	if (timeout) {
+		DEFINE_WAIT_FUNC(wait, woken_wake_function);
 
-		add_रुको_queue(sk_sleep(sk), &रुको);
+		add_wait_queue(sk_sleep(sk), &wait);
 
-		करो अणु
-			अगर (sk_रुको_event(sk, &समयout, !sk_stream_closing(sk), &रुको))
-				अवरोध;
-		पूर्ण जबतक (!संकेत_pending(current) && समयout);
+		do {
+			if (sk_wait_event(sk, &timeout, !sk_stream_closing(sk), &wait))
+				break;
+		} while (!signal_pending(current) && timeout);
 
-		हटाओ_रुको_queue(sk_sleep(sk), &रुको);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL(sk_stream_रुको_बंद);
+		remove_wait_queue(sk_sleep(sk), &wait);
+	}
+}
+EXPORT_SYMBOL(sk_stream_wait_close);
 
 /**
- * sk_stream_रुको_memory - Wait क्रम more memory क्रम a socket
- * @sk: socket to रुको क्रम memory
- * @समयo_p: क्रम how दीर्घ
+ * sk_stream_wait_memory - Wait for more memory for a socket
+ * @sk: socket to wait for memory
+ * @timeo_p: for how long
  */
-पूर्णांक sk_stream_रुको_memory(काष्ठा sock *sk, दीर्घ *समयo_p)
-अणु
-	पूर्णांक err = 0;
-	दीर्घ vm_रुको = 0;
-	दीर्घ current_समयo = *समयo_p;
-	DEFINE_WAIT_FUNC(रुको, woken_wake_function);
+int sk_stream_wait_memory(struct sock *sk, long *timeo_p)
+{
+	int err = 0;
+	long vm_wait = 0;
+	long current_timeo = *timeo_p;
+	DEFINE_WAIT_FUNC(wait, woken_wake_function);
 
-	अगर (sk_stream_memory_मुक्त(sk))
-		current_समयo = vm_रुको = (pअक्रमom_u32() % (HZ / 5)) + 2;
+	if (sk_stream_memory_free(sk))
+		current_timeo = vm_wait = (prandom_u32() % (HZ / 5)) + 2;
 
-	add_रुको_queue(sk_sleep(sk), &रुको);
+	add_wait_queue(sk_sleep(sk), &wait);
 
-	जबतक (1) अणु
+	while (1) {
 		sk_set_bit(SOCKWQ_ASYNC_NOSPACE, sk);
 
-		अगर (sk->sk_err || (sk->sk_shutकरोwn & SEND_SHUTDOWN))
-			जाओ करो_error;
-		अगर (!*समयo_p)
-			जाओ करो_eagain;
-		अगर (संकेत_pending(current))
-			जाओ करो_पूर्णांकerrupted;
+		if (sk->sk_err || (sk->sk_shutdown & SEND_SHUTDOWN))
+			goto do_error;
+		if (!*timeo_p)
+			goto do_eagain;
+		if (signal_pending(current))
+			goto do_interrupted;
 		sk_clear_bit(SOCKWQ_ASYNC_NOSPACE, sk);
-		अगर (sk_stream_memory_मुक्त(sk) && !vm_रुको)
-			अवरोध;
+		if (sk_stream_memory_free(sk) && !vm_wait)
+			break;
 
 		set_bit(SOCK_NOSPACE, &sk->sk_socket->flags);
-		sk->sk_ग_लिखो_pending++;
-		sk_रुको_event(sk, &current_समयo, sk->sk_err ||
-						  (sk->sk_shutकरोwn & SEND_SHUTDOWN) ||
-						  (sk_stream_memory_मुक्त(sk) &&
-						  !vm_रुको), &रुको);
-		sk->sk_ग_लिखो_pending--;
+		sk->sk_write_pending++;
+		sk_wait_event(sk, &current_timeo, sk->sk_err ||
+						  (sk->sk_shutdown & SEND_SHUTDOWN) ||
+						  (sk_stream_memory_free(sk) &&
+						  !vm_wait), &wait);
+		sk->sk_write_pending--;
 
-		अगर (vm_रुको) अणु
-			vm_रुको -= current_समयo;
-			current_समयo = *समयo_p;
-			अगर (current_समयo != MAX_SCHEDULE_TIMEOUT &&
-			    (current_समयo -= vm_रुको) < 0)
-				current_समयo = 0;
-			vm_रुको = 0;
-		पूर्ण
-		*समयo_p = current_समयo;
-	पूर्ण
+		if (vm_wait) {
+			vm_wait -= current_timeo;
+			current_timeo = *timeo_p;
+			if (current_timeo != MAX_SCHEDULE_TIMEOUT &&
+			    (current_timeo -= vm_wait) < 0)
+				current_timeo = 0;
+			vm_wait = 0;
+		}
+		*timeo_p = current_timeo;
+	}
 out:
-	हटाओ_रुको_queue(sk_sleep(sk), &रुको);
-	वापस err;
+	remove_wait_queue(sk_sleep(sk), &wait);
+	return err;
 
-करो_error:
+do_error:
 	err = -EPIPE;
-	जाओ out;
-करो_eagain:
-	/* Make sure that whenever EAGAIN is वापसed, EPOLLOUT event can
+	goto out;
+do_eagain:
+	/* Make sure that whenever EAGAIN is returned, EPOLLOUT event can
 	 * be generated later.
 	 * When TCP receives ACK packets that make room, tcp_check_space()
-	 * only calls tcp_new_space() अगर SOCK_NOSPACE is set.
+	 * only calls tcp_new_space() if SOCK_NOSPACE is set.
 	 */
 	set_bit(SOCK_NOSPACE, &sk->sk_socket->flags);
 	err = -EAGAIN;
-	जाओ out;
-करो_पूर्णांकerrupted:
-	err = sock_पूर्णांकr_त्रुटि_सं(*समयo_p);
-	जाओ out;
-पूर्ण
-EXPORT_SYMBOL(sk_stream_रुको_memory);
+	goto out;
+do_interrupted:
+	err = sock_intr_errno(*timeo_p);
+	goto out;
+}
+EXPORT_SYMBOL(sk_stream_wait_memory);
 
-पूर्णांक sk_stream_error(काष्ठा sock *sk, पूर्णांक flags, पूर्णांक err)
-अणु
-	अगर (err == -EPIPE)
+int sk_stream_error(struct sock *sk, int flags, int err)
+{
+	if (err == -EPIPE)
 		err = sock_error(sk) ? : -EPIPE;
-	अगर (err == -EPIPE && !(flags & MSG_NOSIGNAL))
+	if (err == -EPIPE && !(flags & MSG_NOSIGNAL))
 		send_sig(SIGPIPE, current, 0);
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL(sk_stream_error);
 
-व्योम sk_stream_समाप्त_queues(काष्ठा sock *sk)
-अणु
-	/* First the पढ़ो buffer. */
+void sk_stream_kill_queues(struct sock *sk)
+{
+	/* First the read buffer. */
 	__skb_queue_purge(&sk->sk_receive_queue);
 
 	/* Next, the error queue. */
 	__skb_queue_purge(&sk->sk_error_queue);
 
-	/* Next, the ग_लिखो queue. */
-	WARN_ON(!skb_queue_empty(&sk->sk_ग_लिखो_queue));
+	/* Next, the write queue. */
+	WARN_ON(!skb_queue_empty(&sk->sk_write_queue));
 
-	/* Account क्रम वापसed memory. */
+	/* Account for returned memory. */
 	sk_mem_reclaim(sk);
 
 	WARN_ON(sk->sk_wmem_queued);
-	WARN_ON(sk->sk_क्रमward_alloc);
+	WARN_ON(sk->sk_forward_alloc);
 
-	/* It is _impossible_ क्रम the backlog to contain anything
+	/* It is _impossible_ for the backlog to contain anything
 	 * when we get here.  All user references to this socket
 	 * have gone away, only the net layer knows can touch it.
 	 */
-पूर्ण
-EXPORT_SYMBOL(sk_stream_समाप्त_queues);
+}
+EXPORT_SYMBOL(sk_stream_kill_queues);

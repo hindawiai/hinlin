@@ -1,167 +1,166 @@
-<शैली गुरु>
 /*
  * dslm.c
  * Simple Disk Sleep Monitor
  *  by Bartek Kania
  * Licensed under the GPL
  */
-#समावेश <unistd.h>
-#समावेश <मानककोष.स>
-#समावेश <मानकपन.स>
-#समावेश <fcntl.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <समय.स>
-#समावेश <माला.स>
-#समावेश <संकेत.स>
-#समावेश <sys/ioctl.h>
-#समावेश <linux/hdreg.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <time.h>
+#include <string.h>
+#include <signal.h>
+#include <sys/ioctl.h>
+#include <linux/hdreg.h>
 
-#अगर_घोषित DEBUG
-#घोषणा D(x) x
-#अन्यथा
-#घोषणा D(x)
-#पूर्ण_अगर
+#ifdef DEBUG
+#define D(x) x
+#else
+#define D(x)
+#endif
 
-पूर्णांक endit = 0;
+int endit = 0;
 
-/* Check अगर the disk is in घातersave-mode
+/* Check if the disk is in powersave-mode
  * Most of the code is stolen from hdparm.
  * 1 = active, 0 = standby/sleep, -1 = unknown */
-अटल पूर्णांक check_घातermode(पूर्णांक fd)
-अणु
-    अचिन्हित अक्षर args[4] = अणुWIN_CHECKPOWERMODE1,0,0,0पूर्ण;
-    पूर्णांक state;
+static int check_powermode(int fd)
+{
+    unsigned char args[4] = {WIN_CHECKPOWERMODE1,0,0,0};
+    int state;
 
-    अगर (ioctl(fd, HDIO_DRIVE_CMD, &args)
+    if (ioctl(fd, HDIO_DRIVE_CMD, &args)
 	&& (args[0] = WIN_CHECKPOWERMODE2) /* try again with 0x98 */
-	&& ioctl(fd, HDIO_DRIVE_CMD, &args)) अणु
-	अगर (त्रुटि_सं != EIO || args[0] != 0 || args[1] != 0) अणु
+	&& ioctl(fd, HDIO_DRIVE_CMD, &args)) {
+	if (errno != EIO || args[0] != 0 || args[1] != 0) {
 	    state = -1; /* "unknown"; */
-	पूर्ण अन्यथा
+	} else
 	    state = 0; /* "sleeping"; */
-    पूर्ण अन्यथा अणु
+    } else {
 	state = (args[2] == 255) ? 1 : 0;
-    पूर्ण
-    D(म_लिखो(" drive state is:  %d\n", state));
+    }
+    D(printf(" drive state is:  %d\n", state));
 
-    वापस state;
-पूर्ण
+    return state;
+}
 
-अटल अक्षर *state_name(पूर्णांक i)
-अणु
-    अगर (i == -1) वापस "unknown";
-    अगर (i == 0) वापस "sleeping";
-    अगर (i == 1) वापस "active";
+static char *state_name(int i)
+{
+    if (i == -1) return "unknown";
+    if (i == 0) return "sleeping";
+    if (i == 1) return "active";
 
-    वापस "internal error";
-पूर्ण
+    return "internal error";
+}
 
-अटल अक्षर *myस_समय(समय_प्रकार समय)
-अणु
-    अक्षर *ts = स_समय(&समय);
-    ts[म_माप(ts) - 1] = 0;
+static char *myctime(time_t time)
+{
+    char *ts = ctime(&time);
+    ts[strlen(ts) - 1] = 0;
 
-    वापस ts;
-पूर्ण
+    return ts;
+}
 
-अटल व्योम measure(पूर्णांक fd)
-अणु
-    समय_प्रकार start_समय;
-    पूर्णांक last_state;
-    समय_प्रकार last_समय;
-    पूर्णांक curr_state;
-    समय_प्रकार curr_समय = 0;
-    समय_प्रकार समय_dअगरf;
-    समय_प्रकार active_समय = 0;
-    समय_प्रकार sleep_समय = 0;
-    समय_प्रकार unknown_समय = 0;
-    समय_प्रकार total_समय = 0;
-    पूर्णांक changes = 0;
-    भग्न पंचांगp;
+static void measure(int fd)
+{
+    time_t start_time;
+    int last_state;
+    time_t last_time;
+    int curr_state;
+    time_t curr_time = 0;
+    time_t time_diff;
+    time_t active_time = 0;
+    time_t sleep_time = 0;
+    time_t unknown_time = 0;
+    time_t total_time = 0;
+    int changes = 0;
+    float tmp;
 
-    म_लिखो("Starting measurements\n");
+    printf("Starting measurements\n");
 
-    last_state = check_घातermode(fd);
-    start_समय = last_समय = समय(0);
-    म_लिखो("  System is in state %s\n\n", state_name(last_state));
+    last_state = check_powermode(fd);
+    start_time = last_time = time(0);
+    printf("  System is in state %s\n\n", state_name(last_state));
 
-    जबतक(!endit) अणु
+    while(!endit) {
 	sleep(1);
-	curr_state = check_घातermode(fd);
+	curr_state = check_powermode(fd);
 
-	अगर (curr_state != last_state || endit) अणु
+	if (curr_state != last_state || endit) {
 	    changes++;
-	    curr_समय = समय(0);
-	    समय_dअगरf = curr_समय - last_समय;
+	    curr_time = time(0);
+	    time_diff = curr_time - last_time;
 
-	    अगर (last_state == 1) active_समय += समय_dअगरf;
-	    अन्यथा अगर (last_state == 0) sleep_समय += समय_dअगरf;
-	    अन्यथा unknown_समय += समय_dअगरf;
+	    if (last_state == 1) active_time += time_diff;
+	    else if (last_state == 0) sleep_time += time_diff;
+	    else unknown_time += time_diff;
 
 	    last_state = curr_state;
-	    last_समय = curr_समय;
+	    last_time = curr_time;
 
-	    म_लिखो("%s: State-change to %s\n", myस_समय(curr_समय),
+	    printf("%s: State-change to %s\n", myctime(curr_time),
 		   state_name(curr_state));
-	पूर्ण
-    पूर्ण
-    changes--; /* Compensate क्रम संक_विघ्न */
+	}
+    }
+    changes--; /* Compensate for SIGINT */
 
-    total_समय = समय(0) - start_समय;
-    म_लिखो("\nTotal running time:  %lus\n", curr_समय - start_समय);
-    म_लिखो(" State changed %d times\n", changes);
+    total_time = time(0) - start_time;
+    printf("\nTotal running time:  %lus\n", curr_time - start_time);
+    printf(" State changed %d times\n", changes);
 
-    पंचांगp = (भग्न)sleep_समय / (भग्न)total_समय * 100;
-    म_लिखो(" Time in sleep state:   %lus (%.2f%%)\n", sleep_समय, पंचांगp);
-    पंचांगp = (भग्न)active_समय / (भग्न)total_समय * 100;
-    म_लिखो(" Time in active state:  %lus (%.2f%%)\n", active_समय, पंचांगp);
-    पंचांगp = (भग्न)unknown_समय / (भग्न)total_समय * 100;
-    म_लिखो(" Time in unknown state: %lus (%.2f%%)\n", unknown_समय, पंचांगp);
-पूर्ण
+    tmp = (float)sleep_time / (float)total_time * 100;
+    printf(" Time in sleep state:   %lus (%.2f%%)\n", sleep_time, tmp);
+    tmp = (float)active_time / (float)total_time * 100;
+    printf(" Time in active state:  %lus (%.2f%%)\n", active_time, tmp);
+    tmp = (float)unknown_time / (float)total_time * 100;
+    printf(" Time in unknown state: %lus (%.2f%%)\n", unknown_time, tmp);
+}
 
-अटल व्योम ender(पूर्णांक s)
-अणु
+static void ender(int s)
+{
     endit = 1;
-पूर्ण
+}
 
-अटल व्योम usage(व्योम)
-अणु
-    माला_दो("usage: dslm [-w <time>] <disk>");
-    निकास(0);
-पूर्ण
+static void usage(void)
+{
+    puts("usage: dslm [-w <time>] <disk>");
+    exit(0);
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-    पूर्णांक fd;
-    अक्षर *disk = 0;
-    पूर्णांक settle_समय = 60;
+int main(int argc, char **argv)
+{
+    int fd;
+    char *disk = 0;
+    int settle_time = 60;
 
     /* Parse the simple command-line */
-    अगर (argc == 2)
+    if (argc == 2)
 	disk = argv[1];
-    अन्यथा अगर (argc == 4) अणु
-	settle_समय = म_से_प(argv[2]);
+    else if (argc == 4) {
+	settle_time = atoi(argv[2]);
 	disk = argv[3];
-    पूर्ण अन्यथा
+    } else
 	usage();
 
-    अगर (!(fd = खोलो(disk, O_RDONLY|O_NONBLOCK))) अणु
-	म_लिखो("Can't open %s, because: %s\n", disk, म_त्रुटि(त्रुटि_सं));
-	निकास(-1);
-    पूर्ण
+    if (!(fd = open(disk, O_RDONLY|O_NONBLOCK))) {
+	printf("Can't open %s, because: %s\n", disk, strerror(errno));
+	exit(-1);
+    }
 
-    अगर (settle_समय) अणु
-	म_लिखो("Waiting %d seconds for the system to settle down to "
-	       "'normal'\n", settle_समय);
-	sleep(settle_समय);
-    पूर्ण अन्यथा
-	माला_दो("Not waiting for system to settle down");
+    if (settle_time) {
+	printf("Waiting %d seconds for the system to settle down to "
+	       "'normal'\n", settle_time);
+	sleep(settle_time);
+    } else
+	puts("Not waiting for system to settle down");
 
-    संकेत(संक_विघ्न, ender);
+    signal(SIGINT, ender);
 
     measure(fd);
 
-    बंद(fd);
+    close(fd);
 
-    वापस 0;
-पूर्ण
+    return 0;
+}

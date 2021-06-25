@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *
  * arch/arm/probes/decode-arm.c
@@ -9,123 +8,123 @@
  * Copyright (C) 2006, 2007 Motorola Inc.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/ptrace.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/stddef.h>
+#include <linux/ptrace.h>
 
-#समावेश "decode.h"
-#समावेश "decode-arm.h"
+#include "decode.h"
+#include "decode-arm.h"
 
-#घोषणा sign_extend(x, signbit) ((x) | (0 - ((x) & (1 << (signbit)))))
+#define sign_extend(x, signbit) ((x) | (0 - ((x) & (1 << (signbit)))))
 
-#घोषणा branch_displacement(insn) sign_extend(((insn) & 0xffffff) << 2, 25)
+#define branch_displacement(insn) sign_extend(((insn) & 0xffffff) << 2, 25)
 
 /*
- * To aव्योम the complications of mimicing single-stepping on a
+ * To avoid the complications of mimicing single-stepping on a
  * processor without a Next-PC or a single-step mode, and to
- * aव्योम having to deal with the side-effects of boosting, we
- * simulate or emulate (almost) all ARM inकाष्ठाions.
+ * avoid having to deal with the side-effects of boosting, we
+ * simulate or emulate (almost) all ARM instructions.
  *
- * "Simulation" is where the inकाष्ठाion's behavior is duplicated in
- * C code.  "Emulation" is where the original inकाष्ठाion is rewritten
- * and executed, often by altering its रेजिस्टरs.
+ * "Simulation" is where the instruction's behavior is duplicated in
+ * C code.  "Emulation" is where the original instruction is rewritten
+ * and executed, often by altering its registers.
  *
- * By having all behavior of the kprobe'd inकाष्ठाion completed beक्रमe
- * वापसing from the kprobe_handler(), all locks (scheduler and
- * पूर्णांकerrupt) can safely be released.  There is no need क्रम secondary
- * अवरोधpoपूर्णांकs, no race with MP or preemptable kernels, nor having to
- * clean up resources counts at a later समय impacting overall प्रणाली
- * perक्रमmance.  By rewriting the inकाष्ठाion, only the minimum रेजिस्टरs
- * need to be loaded and saved back optimizing perक्रमmance.
+ * By having all behavior of the kprobe'd instruction completed before
+ * returning from the kprobe_handler(), all locks (scheduler and
+ * interrupt) can safely be released.  There is no need for secondary
+ * breakpoints, no race with MP or preemptable kernels, nor having to
+ * clean up resources counts at a later time impacting overall system
+ * performance.  By rewriting the instruction, only the minimum registers
+ * need to be loaded and saved back optimizing performance.
  *
- * Calling the insnslot_*_rwflags version of a function करोesn't hurt
+ * Calling the insnslot_*_rwflags version of a function doesn't hurt
  * anything even when the CPSR flags aren't updated by the
- * inकाष्ठाion.  It's just a little slower in वापस क्रम saving
- * a little space by not having a duplicate function that करोesn't
- * update the flags.  (The same optimization can be said क्रम
- * inकाष्ठाions that करो or करोn't perक्रमm रेजिस्टर ग_लिखोback)
- * Also, inकाष्ठाions can either पढ़ो the flags, only ग_लिखो the
- * flags, or पढ़ो and ग_लिखो the flags.  To save combinations
- * rather than क्रम sheer perक्रमmance, flag functions just assume
- * पढ़ो and ग_लिखो of flags.
+ * instruction.  It's just a little slower in return for saving
+ * a little space by not having a duplicate function that doesn't
+ * update the flags.  (The same optimization can be said for
+ * instructions that do or don't perform register writeback)
+ * Also, instructions can either read the flags, only write the
+ * flags, or read and write the flags.  To save combinations
+ * rather than for sheer performance, flag functions just assume
+ * read and write of flags.
  */
 
-व्योम __kprobes simulate_bbl(probes_opcode_t insn,
-		काष्ठा arch_probes_insn *asi, काष्ठा pt_regs *regs)
-अणु
-	दीर्घ iaddr = (दीर्घ) regs->ARM_pc - 4;
-	पूर्णांक disp  = branch_displacement(insn);
+void __kprobes simulate_bbl(probes_opcode_t insn,
+		struct arch_probes_insn *asi, struct pt_regs *regs)
+{
+	long iaddr = (long) regs->ARM_pc - 4;
+	int disp  = branch_displacement(insn);
 
-	अगर (insn & (1 << 24))
+	if (insn & (1 << 24))
 		regs->ARM_lr = iaddr + 4;
 
 	regs->ARM_pc = iaddr + 8 + disp;
-पूर्ण
+}
 
-व्योम __kprobes simulate_blx1(probes_opcode_t insn,
-		काष्ठा arch_probes_insn *asi, काष्ठा pt_regs *regs)
-अणु
-	दीर्घ iaddr = (दीर्घ) regs->ARM_pc - 4;
-	पूर्णांक disp = branch_displacement(insn);
+void __kprobes simulate_blx1(probes_opcode_t insn,
+		struct arch_probes_insn *asi, struct pt_regs *regs)
+{
+	long iaddr = (long) regs->ARM_pc - 4;
+	int disp = branch_displacement(insn);
 
 	regs->ARM_lr = iaddr + 4;
 	regs->ARM_pc = iaddr + 8 + disp + ((insn >> 23) & 0x2);
 	regs->ARM_cpsr |= PSR_T_BIT;
-पूर्ण
+}
 
-व्योम __kprobes simulate_blx2bx(probes_opcode_t insn,
-		काष्ठा arch_probes_insn *asi, काष्ठा pt_regs *regs)
-अणु
-	पूर्णांक rm = insn & 0xf;
-	दीर्घ rmv = regs->uregs[rm];
+void __kprobes simulate_blx2bx(probes_opcode_t insn,
+		struct arch_probes_insn *asi, struct pt_regs *regs)
+{
+	int rm = insn & 0xf;
+	long rmv = regs->uregs[rm];
 
-	अगर (insn & (1 << 5))
-		regs->ARM_lr = (दीर्घ) regs->ARM_pc;
+	if (insn & (1 << 5))
+		regs->ARM_lr = (long) regs->ARM_pc;
 
 	regs->ARM_pc = rmv & ~0x1;
 	regs->ARM_cpsr &= ~PSR_T_BIT;
-	अगर (rmv & 0x1)
+	if (rmv & 0x1)
 		regs->ARM_cpsr |= PSR_T_BIT;
-पूर्ण
+}
 
-व्योम __kprobes simulate_mrs(probes_opcode_t insn,
-		काष्ठा arch_probes_insn *asi, काष्ठा pt_regs *regs)
-अणु
-	पूर्णांक rd = (insn >> 12) & 0xf;
-	अचिन्हित दीर्घ mask = 0xf8ff03df; /* Mask out execution state */
+void __kprobes simulate_mrs(probes_opcode_t insn,
+		struct arch_probes_insn *asi, struct pt_regs *regs)
+{
+	int rd = (insn >> 12) & 0xf;
+	unsigned long mask = 0xf8ff03df; /* Mask out execution state */
 	regs->uregs[rd] = regs->ARM_cpsr & mask;
-पूर्ण
+}
 
-व्योम __kprobes simulate_mov_ipsp(probes_opcode_t insn,
-		काष्ठा arch_probes_insn *asi, काष्ठा pt_regs *regs)
-अणु
+void __kprobes simulate_mov_ipsp(probes_opcode_t insn,
+		struct arch_probes_insn *asi, struct pt_regs *regs)
+{
 	regs->uregs[12] = regs->uregs[13];
-पूर्ण
+}
 
 /*
- * For the inकाष्ठाion masking and comparisons in all the "space_*"
+ * For the instruction masking and comparisons in all the "space_*"
  * functions below, Do _not_ rearrange the order of tests unless
- * you're very, very sure of what you are करोing.  For the sake of
- * efficiency, the masks क्रम some tests someबार assume other test
- * have been करोne prior to them so the number of patterns to test
- * क्रम an inकाष्ठाion set can be as broad as possible to reduce the
+ * you're very, very sure of what you are doing.  For the sake of
+ * efficiency, the masks for some tests sometimes assume other test
+ * have been done prior to them so the number of patterns to test
+ * for an instruction set can be as broad as possible to reduce the
  * number of tests needed.
  */
 
-अटल स्थिर जोड़ decode_item arm_1111_table[] = अणु
-	/* Unconditional inकाष्ठाions					*/
+static const union decode_item arm_1111_table[] = {
+	/* Unconditional instructions					*/
 
-	/* memory hपूर्णांक		1111 0100 x001 xxxx xxxx xxxx xxxx xxxx */
+	/* memory hint		1111 0100 x001 xxxx xxxx xxxx xxxx xxxx */
 	/* PLDI (immediate)	1111 0100 x101 xxxx xxxx xxxx xxxx xxxx */
 	/* PLDW (immediate)	1111 0101 x001 xxxx xxxx xxxx xxxx xxxx */
 	/* PLD (immediate)	1111 0101 x101 xxxx xxxx xxxx xxxx xxxx */
 	DECODE_SIMULATE	(0xfe300000, 0xf4100000, PROBES_PRELOAD_IMM),
 
-	/* memory hपूर्णांक		1111 0110 x001 xxxx xxxx xxxx xxx0 xxxx */
-	/* PLDI (रेजिस्टर)	1111 0110 x101 xxxx xxxx xxxx xxx0 xxxx */
-	/* PLDW (रेजिस्टर)	1111 0111 x001 xxxx xxxx xxxx xxx0 xxxx */
-	/* PLD (रेजिस्टर)	1111 0111 x101 xxxx xxxx xxxx xxx0 xxxx */
+	/* memory hint		1111 0110 x001 xxxx xxxx xxxx xxx0 xxxx */
+	/* PLDI (register)	1111 0110 x101 xxxx xxxx xxxx xxx0 xxxx */
+	/* PLDW (register)	1111 0111 x001 xxxx xxxx xxxx xxx0 xxxx */
+	/* PLD (register)	1111 0111 x101 xxxx xxxx xxxx xxx0 xxxx */
 	DECODE_SIMULATE	(0xfe300010, 0xf6100000, PROBES_PRELOAD_REG),
 
 	/* BLX (immediate)	1111 101x xxxx xxxx xxxx xxxx xxxx xxxx */
@@ -136,7 +135,7 @@
 	/* SRS			1111 100x x1x0 xxxx xxxx xxxx xxxx xxxx */
 	/* RFE			1111 100x x0x1 xxxx xxxx xxxx xxxx xxxx */
 
-	/* Coprocessor inकाष्ठाions... */
+	/* Coprocessor instructions... */
 	/* MCRR2		1111 1100 0100 xxxx xxxx xxxx xxxx xxxx */
 	/* MRRC2		1111 1100 0101 xxxx xxxx xxxx xxxx xxxx */
 	/* LDC2			1111 110x xxx1 xxxx xxxx xxxx xxxx xxxx */
@@ -145,12 +144,12 @@
 	/* MCR2			1111 1110 xxx0 xxxx xxxx xxxx xxx1 xxxx */
 	/* MRC2			1111 1110 xxx1 xxxx xxxx xxxx xxx1 xxxx */
 
-	/* Other unallocated inकाष्ठाions...				*/
+	/* Other unallocated instructions...				*/
 	DECODE_END
-पूर्ण;
+};
 
-अटल स्थिर जोड़ decode_item arm_cccc_0001_0xx0____0xxx_table[] = अणु
-	/* Miscellaneous inकाष्ठाions					*/
+static const union decode_item arm_cccc_0001_0xx0____0xxx_table[] = {
+	/* Miscellaneous instructions					*/
 
 	/* MRS cpsr		cccc 0001 0000 xxxx xxxx xxxx 0000 xxxx */
 	DECODE_SIMULATEX(0x0ff000f0, 0x01000000, PROBES_MRS,
@@ -159,7 +158,7 @@
 	/* BX			cccc 0001 0010 xxxx xxxx xxxx 0001 xxxx */
 	DECODE_SIMULATE	(0x0ff000f0, 0x01200010, PROBES_BRANCH_REG),
 
-	/* BLX (रेजिस्टर)	cccc 0001 0010 xxxx xxxx xxxx 0011 xxxx */
+	/* BLX (register)	cccc 0001 0010 xxxx xxxx xxxx 0011 xxxx */
 	DECODE_SIMULATEX(0x0ff000f0, 0x01200030, PROBES_BRANCH_REG,
 						 REGS(0, 0, 0, 0, NOPC)),
 
@@ -179,11 +178,11 @@
 	/* MRS spsr		cccc 0001 0100 xxxx xxxx xxxx 0000 xxxx */
 	/* BKPT			1110 0001 0010 xxxx xxxx xxxx 0111 xxxx */
 	/* SMC			cccc 0001 0110 xxxx xxxx xxxx 0111 xxxx */
-	/* And unallocated inकाष्ठाions...				*/
+	/* And unallocated instructions...				*/
 	DECODE_END
-पूर्ण;
+};
 
-अटल स्थिर जोड़ decode_item arm_cccc_0001_0xx0____1xx0_table[] = अणु
+static const union decode_item arm_cccc_0001_0xx0____1xx0_table[] = {
 	/* Halfword multiply and multiply-accumulate			*/
 
 	/* SMLALxy		cccc 0001 0100 xxxx xxxx xxxx 1xx0 xxxx */
@@ -203,9 +202,9 @@
 						 REGS(NOPC, NOPC, NOPC, 0, NOPC)),
 
 	DECODE_END
-पूर्ण;
+};
 
-अटल स्थिर जोड़ decode_item arm_cccc_0000_____1001_table[] = अणु
+static const union decode_item arm_cccc_0000_____1001_table[] = {
 	/* Multiply and multiply-accumulate				*/
 
 	/* MUL			cccc 0000 0000 xxxx xxxx xxxx 1001 xxxx */
@@ -234,24 +233,24 @@
 						 REGS(NOPC, NOPC, NOPC, 0, NOPC)),
 
 	DECODE_END
-पूर्ण;
+};
 
-अटल स्थिर जोड़ decode_item arm_cccc_0001_____1001_table[] = अणु
+static const union decode_item arm_cccc_0001_____1001_table[] = {
 	/* Synchronization primitives					*/
 
-#अगर __LINUX_ARM_ARCH__ < 6
+#if __LINUX_ARM_ARCH__ < 6
 	/* Deprecated on ARMv6 and may be UNDEFINED on v7		*/
 	/* SMP/SWPB		cccc 0001 0x00 xxxx xxxx xxxx 1001 xxxx */
 	DECODE_EMULATEX	(0x0fb000f0, 0x01000090, PROBES_SWP,
 						 REGS(NOPC, NOPC, 0, 0, NOPC)),
-#पूर्ण_अगर
-	/* LDREX/STREXअणु,D,B,Hपूर्ण	cccc 0001 1xxx xxxx xxxx xxxx 1001 xxxx */
-	/* And unallocated inकाष्ठाions...				*/
+#endif
+	/* LDREX/STREX{,D,B,H}	cccc 0001 1xxx xxxx xxxx xxxx 1001 xxxx */
+	/* And unallocated instructions...				*/
 	DECODE_END
-पूर्ण;
+};
 
-अटल स्थिर जोड़ decode_item arm_cccc_000x_____1xx1_table[] = अणु
-	/* Extra load/store inकाष्ठाions				*/
+static const union decode_item arm_cccc_000x_____1xx1_table[] = {
+	/* Extra load/store instructions				*/
 
 	/* STRHT		cccc 0000 xx10 xxxx xxxx xxxx 1011 xxxx */
 	/* ???			cccc 0000 xx10 xxxx xxxx xxxx 11x1 xxxx */
@@ -260,11 +259,11 @@
 	/* LDRSHT		cccc 0000 xx11 xxxx xxxx xxxx 1111 xxxx */
 	DECODE_REJECT	(0x0f200090, 0x00200090),
 
-	/* LDRD/STRD lr,pc,अणु...	cccc 000x x0x0 xxxx 111x xxxx 1101 xxxx */
+	/* LDRD/STRD lr,pc,{...	cccc 000x x0x0 xxxx 111x xxxx 1101 xxxx */
 	DECODE_REJECT	(0x0e10e0d0, 0x0000e0d0),
 
-	/* LDRD (रेजिस्टर)	cccc 000x x0x0 xxxx xxxx xxxx 1101 xxxx */
-	/* STRD (रेजिस्टर)	cccc 000x x0x0 xxxx xxxx xxxx 1111 xxxx */
+	/* LDRD (register)	cccc 000x x0x0 xxxx xxxx xxxx 1101 xxxx */
+	/* STRD (register)	cccc 000x x0x0 xxxx xxxx xxxx 1111 xxxx */
 	DECODE_EMULATEX	(0x0e5000d0, 0x000000d0, PROBES_LDRSTRD,
 						 REGS(NOPCWB, NOPCX, 0, 0, NOPC)),
 
@@ -273,13 +272,13 @@
 	DECODE_EMULATEX	(0x0e5000d0, 0x004000d0, PROBES_LDRSTRD,
 						 REGS(NOPCWB, NOPCX, 0, 0, 0)),
 
-	/* STRH (रेजिस्टर)	cccc 000x x0x0 xxxx xxxx xxxx 1011 xxxx */
+	/* STRH (register)	cccc 000x x0x0 xxxx xxxx xxxx 1011 xxxx */
 	DECODE_EMULATEX	(0x0e5000f0, 0x000000b0, PROBES_STORE_EXTRA,
 						 REGS(NOPCWB, NOPC, 0, 0, NOPC)),
 
-	/* LDRH (रेजिस्टर)	cccc 000x x0x1 xxxx xxxx xxxx 1011 xxxx */
-	/* LDRSB (रेजिस्टर)	cccc 000x x0x1 xxxx xxxx xxxx 1101 xxxx */
-	/* LDRSH (रेजिस्टर)	cccc 000x x0x1 xxxx xxxx xxxx 1111 xxxx */
+	/* LDRH (register)	cccc 000x x0x1 xxxx xxxx xxxx 1011 xxxx */
+	/* LDRSB (register)	cccc 000x x0x1 xxxx xxxx xxxx 1101 xxxx */
+	/* LDRSH (register)	cccc 000x x0x1 xxxx xxxx xxxx 1111 xxxx */
 	DECODE_EMULATEX	(0x0e500090, 0x00100090, PROBES_LOAD_EXTRA,
 						 REGS(NOPCWB, NOPC, 0, 0, NOPC)),
 
@@ -294,10 +293,10 @@
 						 REGS(NOPCWB, NOPC, 0, 0, 0)),
 
 	DECODE_END
-पूर्ण;
+};
 
-अटल स्थिर जोड़ decode_item arm_cccc_000x_table[] = अणु
-	/* Data-processing (रेजिस्टर)					*/
+static const union decode_item arm_cccc_000x_table[] = {
+	/* Data-processing (register)					*/
 
 	/* <op>S PC, ...	cccc 000x xxx1 xxxx 1111 xxxx xxxx xxxx */
 	DECODE_REJECT	(0x0e10f000, 0x0010f000),
@@ -305,60 +304,60 @@
 	/* MOV IP, SP		1110 0001 1010 0000 1100 0000 0000 1101 */
 	DECODE_SIMULATE	(0xffffffff, 0xe1a0c00d, PROBES_MOV_IP_SP),
 
-	/* TST (रेजिस्टर)	cccc 0001 0001 xxxx xxxx xxxx xxx0 xxxx */
-	/* TEQ (रेजिस्टर)	cccc 0001 0011 xxxx xxxx xxxx xxx0 xxxx */
-	/* CMP (रेजिस्टर)	cccc 0001 0101 xxxx xxxx xxxx xxx0 xxxx */
-	/* CMN (रेजिस्टर)	cccc 0001 0111 xxxx xxxx xxxx xxx0 xxxx */
+	/* TST (register)	cccc 0001 0001 xxxx xxxx xxxx xxx0 xxxx */
+	/* TEQ (register)	cccc 0001 0011 xxxx xxxx xxxx xxx0 xxxx */
+	/* CMP (register)	cccc 0001 0101 xxxx xxxx xxxx xxx0 xxxx */
+	/* CMN (register)	cccc 0001 0111 xxxx xxxx xxxx xxx0 xxxx */
 	DECODE_EMULATEX	(0x0f900010, 0x01100000, PROBES_DATA_PROCESSING_REG,
 						 REGS(ANY, 0, 0, 0, ANY)),
 
-	/* MOV (रेजिस्टर)	cccc 0001 101x xxxx xxxx xxxx xxx0 xxxx */
-	/* MVN (रेजिस्टर)	cccc 0001 111x xxxx xxxx xxxx xxx0 xxxx */
+	/* MOV (register)	cccc 0001 101x xxxx xxxx xxxx xxx0 xxxx */
+	/* MVN (register)	cccc 0001 111x xxxx xxxx xxxx xxx0 xxxx */
 	DECODE_EMULATEX	(0x0fa00010, 0x01a00000, PROBES_DATA_PROCESSING_REG,
 						 REGS(0, ANY, 0, 0, ANY)),
 
-	/* AND (रेजिस्टर)	cccc 0000 000x xxxx xxxx xxxx xxx0 xxxx */
-	/* EOR (रेजिस्टर)	cccc 0000 001x xxxx xxxx xxxx xxx0 xxxx */
-	/* SUB (रेजिस्टर)	cccc 0000 010x xxxx xxxx xxxx xxx0 xxxx */
-	/* RSB (रेजिस्टर)	cccc 0000 011x xxxx xxxx xxxx xxx0 xxxx */
-	/* ADD (रेजिस्टर)	cccc 0000 100x xxxx xxxx xxxx xxx0 xxxx */
-	/* ADC (रेजिस्टर)	cccc 0000 101x xxxx xxxx xxxx xxx0 xxxx */
-	/* SBC (रेजिस्टर)	cccc 0000 110x xxxx xxxx xxxx xxx0 xxxx */
-	/* RSC (रेजिस्टर)	cccc 0000 111x xxxx xxxx xxxx xxx0 xxxx */
-	/* ORR (रेजिस्टर)	cccc 0001 100x xxxx xxxx xxxx xxx0 xxxx */
-	/* BIC (रेजिस्टर)	cccc 0001 110x xxxx xxxx xxxx xxx0 xxxx */
+	/* AND (register)	cccc 0000 000x xxxx xxxx xxxx xxx0 xxxx */
+	/* EOR (register)	cccc 0000 001x xxxx xxxx xxxx xxx0 xxxx */
+	/* SUB (register)	cccc 0000 010x xxxx xxxx xxxx xxx0 xxxx */
+	/* RSB (register)	cccc 0000 011x xxxx xxxx xxxx xxx0 xxxx */
+	/* ADD (register)	cccc 0000 100x xxxx xxxx xxxx xxx0 xxxx */
+	/* ADC (register)	cccc 0000 101x xxxx xxxx xxxx xxx0 xxxx */
+	/* SBC (register)	cccc 0000 110x xxxx xxxx xxxx xxx0 xxxx */
+	/* RSC (register)	cccc 0000 111x xxxx xxxx xxxx xxx0 xxxx */
+	/* ORR (register)	cccc 0001 100x xxxx xxxx xxxx xxx0 xxxx */
+	/* BIC (register)	cccc 0001 110x xxxx xxxx xxxx xxx0 xxxx */
 	DECODE_EMULATEX	(0x0e000010, 0x00000000, PROBES_DATA_PROCESSING_REG,
 						 REGS(ANY, ANY, 0, 0, ANY)),
 
-	/* TST (reg-shअगरt reg)	cccc 0001 0001 xxxx xxxx xxxx 0xx1 xxxx */
-	/* TEQ (reg-shअगरt reg)	cccc 0001 0011 xxxx xxxx xxxx 0xx1 xxxx */
-	/* CMP (reg-shअगरt reg)	cccc 0001 0101 xxxx xxxx xxxx 0xx1 xxxx */
-	/* CMN (reg-shअगरt reg)	cccc 0001 0111 xxxx xxxx xxxx 0xx1 xxxx */
+	/* TST (reg-shift reg)	cccc 0001 0001 xxxx xxxx xxxx 0xx1 xxxx */
+	/* TEQ (reg-shift reg)	cccc 0001 0011 xxxx xxxx xxxx 0xx1 xxxx */
+	/* CMP (reg-shift reg)	cccc 0001 0101 xxxx xxxx xxxx 0xx1 xxxx */
+	/* CMN (reg-shift reg)	cccc 0001 0111 xxxx xxxx xxxx 0xx1 xxxx */
 	DECODE_EMULATEX	(0x0f900090, 0x01100010, PROBES_DATA_PROCESSING_REG,
 						 REGS(NOPC, 0, NOPC, 0, NOPC)),
 
-	/* MOV (reg-shअगरt reg)	cccc 0001 101x xxxx xxxx xxxx 0xx1 xxxx */
-	/* MVN (reg-shअगरt reg)	cccc 0001 111x xxxx xxxx xxxx 0xx1 xxxx */
+	/* MOV (reg-shift reg)	cccc 0001 101x xxxx xxxx xxxx 0xx1 xxxx */
+	/* MVN (reg-shift reg)	cccc 0001 111x xxxx xxxx xxxx 0xx1 xxxx */
 	DECODE_EMULATEX	(0x0fa00090, 0x01a00010, PROBES_DATA_PROCESSING_REG,
 						 REGS(0, NOPC, NOPC, 0, NOPC)),
 
-	/* AND (reg-shअगरt reg)	cccc 0000 000x xxxx xxxx xxxx 0xx1 xxxx */
-	/* EOR (reg-shअगरt reg)	cccc 0000 001x xxxx xxxx xxxx 0xx1 xxxx */
-	/* SUB (reg-shअगरt reg)	cccc 0000 010x xxxx xxxx xxxx 0xx1 xxxx */
-	/* RSB (reg-shअगरt reg)	cccc 0000 011x xxxx xxxx xxxx 0xx1 xxxx */
-	/* ADD (reg-shअगरt reg)	cccc 0000 100x xxxx xxxx xxxx 0xx1 xxxx */
-	/* ADC (reg-shअगरt reg)	cccc 0000 101x xxxx xxxx xxxx 0xx1 xxxx */
-	/* SBC (reg-shअगरt reg)	cccc 0000 110x xxxx xxxx xxxx 0xx1 xxxx */
-	/* RSC (reg-shअगरt reg)	cccc 0000 111x xxxx xxxx xxxx 0xx1 xxxx */
-	/* ORR (reg-shअगरt reg)	cccc 0001 100x xxxx xxxx xxxx 0xx1 xxxx */
-	/* BIC (reg-shअगरt reg)	cccc 0001 110x xxxx xxxx xxxx 0xx1 xxxx */
+	/* AND (reg-shift reg)	cccc 0000 000x xxxx xxxx xxxx 0xx1 xxxx */
+	/* EOR (reg-shift reg)	cccc 0000 001x xxxx xxxx xxxx 0xx1 xxxx */
+	/* SUB (reg-shift reg)	cccc 0000 010x xxxx xxxx xxxx 0xx1 xxxx */
+	/* RSB (reg-shift reg)	cccc 0000 011x xxxx xxxx xxxx 0xx1 xxxx */
+	/* ADD (reg-shift reg)	cccc 0000 100x xxxx xxxx xxxx 0xx1 xxxx */
+	/* ADC (reg-shift reg)	cccc 0000 101x xxxx xxxx xxxx 0xx1 xxxx */
+	/* SBC (reg-shift reg)	cccc 0000 110x xxxx xxxx xxxx 0xx1 xxxx */
+	/* RSC (reg-shift reg)	cccc 0000 111x xxxx xxxx xxxx 0xx1 xxxx */
+	/* ORR (reg-shift reg)	cccc 0001 100x xxxx xxxx xxxx 0xx1 xxxx */
+	/* BIC (reg-shift reg)	cccc 0001 110x xxxx xxxx xxxx 0xx1 xxxx */
 	DECODE_EMULATEX	(0x0e000090, 0x00000010, PROBES_DATA_PROCESSING_REG,
 						 REGS(NOPC, NOPC, NOPC, 0, NOPC)),
 
 	DECODE_END
-पूर्ण;
+};
 
-अटल स्थिर जोड़ decode_item arm_cccc_001x_table[] = अणु
+static const union decode_item arm_cccc_001x_table[] = {
 	/* Data-processing (immediate)					*/
 
 	/* MOVW			cccc 0011 0000 xxxx xxxx xxxx xxxx xxxx */
@@ -375,7 +374,7 @@
 	/* WFI			cccc 0011 0010 0000 xxxx xxxx 0000 0011 */
 	DECODE_SIMULATE	(0x0fff00fc, 0x03200000, PROBES_WFE),
 	/* DBG			cccc 0011 0010 0000 xxxx xxxx ffff xxxx */
-	/* unallocated hपूर्णांकs	cccc 0011 0010 0000 xxxx xxxx xxxx xxxx */
+	/* unallocated hints	cccc 0011 0010 0000 xxxx xxxx xxxx xxxx */
 	/* MSR (immediate)	cccc 0011 0x10 xxxx xxxx xxxx xxxx xxxx */
 	DECODE_REJECT	(0x0fb00000, 0x03200000),
 
@@ -408,10 +407,10 @@
 						 REGS(ANY, ANY, 0, 0, 0)),
 
 	DECODE_END
-पूर्ण;
+};
 
-अटल स्थिर जोड़ decode_item arm_cccc_0110_____xxx1_table[] = अणु
-	/* Media inकाष्ठाions						*/
+static const union decode_item arm_cccc_0110_____xxx1_table[] = {
+	/* Media instructions						*/
 
 	/* SEL			cccc 0110 1000 xxxx xxxx xxxx 1011 xxxx */
 	DECODE_EMULATEX	(0x0ff000f0, 0x068000b0, PROBES_SATURATE,
@@ -505,10 +504,10 @@
 						 REGS(NOPCX, NOPC, 0, 0, NOPC)),
 
 	DECODE_END
-पूर्ण;
+};
 
-अटल स्थिर जोड़ decode_item arm_cccc_0111_____xxx1_table[] = अणु
-	/* Media inकाष्ठाions						*/
+static const union decode_item arm_cccc_0111_____xxx1_table[] = {
+	/* Media instructions						*/
 
 	/* UNDEFINED		cccc 0111 1111 xxxx xxxx xxxx 1111 xxxx */
 	DECODE_REJECT	(0x0ff000f0, 0x07f000f0),
@@ -554,10 +553,10 @@
 						 REGS(0, NOPC, 0, 0, NOPCX)),
 
 	DECODE_END
-पूर्ण;
+};
 
-अटल स्थिर जोड़ decode_item arm_cccc_01xx_table[] = अणु
-	/* Load/store word and अचिन्हित byte				*/
+static const union decode_item arm_cccc_01xx_table[] = {
+	/* Load/store word and unsigned byte				*/
 
 	/* LDRB/STRB pc,[...]	cccc 01xx x0xx xxxx xxxx xxxx xxxx xxxx */
 	DECODE_REJECT	(0x0c40f000, 0x0440f000),
@@ -578,41 +577,41 @@
 	DECODE_EMULATEX	(0x0e100000, 0x04100000, PROBES_LOAD,
 						 REGS(NOPCWB, ANY, 0, 0, 0)),
 
-	/* STR (रेजिस्टर)	cccc 011x x0x0 xxxx xxxx xxxx xxxx xxxx */
-	/* STRB (रेजिस्टर)	cccc 011x x1x0 xxxx xxxx xxxx xxxx xxxx */
+	/* STR (register)	cccc 011x x0x0 xxxx xxxx xxxx xxxx xxxx */
+	/* STRB (register)	cccc 011x x1x0 xxxx xxxx xxxx xxxx xxxx */
 	DECODE_EMULATEX	(0x0e100000, 0x06000000, PROBES_STORE,
 						 REGS(NOPCWB, ANY, 0, 0, NOPC)),
 
-	/* LDR (रेजिस्टर)	cccc 011x x0x1 xxxx xxxx xxxx xxxx xxxx */
-	/* LDRB (रेजिस्टर)	cccc 011x x1x1 xxxx xxxx xxxx xxxx xxxx */
+	/* LDR (register)	cccc 011x x0x1 xxxx xxxx xxxx xxxx xxxx */
+	/* LDRB (register)	cccc 011x x1x1 xxxx xxxx xxxx xxxx xxxx */
 	DECODE_EMULATEX	(0x0e100000, 0x06100000, PROBES_LOAD,
 						 REGS(NOPCWB, ANY, 0, 0, NOPC)),
 
 	DECODE_END
-पूर्ण;
+};
 
-अटल स्थिर जोड़ decode_item arm_cccc_100x_table[] = अणु
-	/* Block data transfer inकाष्ठाions				*/
+static const union decode_item arm_cccc_100x_table[] = {
+	/* Block data transfer instructions				*/
 
 	/* LDM			cccc 100x x0x1 xxxx xxxx xxxx xxxx xxxx */
 	/* STM			cccc 100x x0x0 xxxx xxxx xxxx xxxx xxxx */
 	DECODE_CUSTOM	(0x0e400000, 0x08000000, PROBES_LDMSTM),
 
-	/* STM (user रेजिस्टरs)	cccc 100x x1x0 xxxx xxxx xxxx xxxx xxxx */
-	/* LDM (user रेजिस्टरs)	cccc 100x x1x1 xxxx 0xxx xxxx xxxx xxxx */
+	/* STM (user registers)	cccc 100x x1x0 xxxx xxxx xxxx xxxx xxxx */
+	/* LDM (user registers)	cccc 100x x1x1 xxxx 0xxx xxxx xxxx xxxx */
 	/* LDM (exception ret)	cccc 100x x1x1 xxxx 1xxx xxxx xxxx xxxx */
 	DECODE_END
-पूर्ण;
+};
 
-स्थिर जोड़ decode_item probes_decode_arm_table[] = अणु
+const union decode_item probes_decode_arm_table[] = {
 	/*
-	 * Unconditional inकाष्ठाions
+	 * Unconditional instructions
 	 *			1111 xxxx xxxx xxxx xxxx xxxx xxxx xxxx
 	 */
 	DECODE_TABLE	(0xf0000000, 0xf0000000, arm_1111_table),
 
 	/*
-	 * Miscellaneous inकाष्ठाions
+	 * Miscellaneous instructions
 	 *			cccc 0001 0xx0 xxxx xxxx xxxx 0xxx xxxx
 	 */
 	DECODE_TABLE	(0x0f900080, 0x01000000, arm_cccc_0001_0xx0____0xxx_table),
@@ -636,15 +635,15 @@
 	DECODE_TABLE	(0x0f0000f0, 0x01000090, arm_cccc_0001_____1001_table),
 
 	/*
-	 * Extra load/store inकाष्ठाions
+	 * Extra load/store instructions
 	 *			cccc 000x xxxx xxxx xxxx xxxx 1xx1 xxxx
 	 */
 	DECODE_TABLE	(0x0e000090, 0x00000090, arm_cccc_000x_____1xx1_table),
 
 	/*
-	 * Data-processing (रेजिस्टर)
+	 * Data-processing (register)
 	 *			cccc 000x xxxx xxxx xxxx xxxx xxx0 xxxx
-	 * Data-processing (रेजिस्टर-shअगरted रेजिस्टर)
+	 * Data-processing (register-shifted register)
 	 *			cccc 000x xxxx xxxx xxxx xxxx 0xx1 xxxx
 	 */
 	DECODE_TABLE	(0x0e000000, 0x00000000, arm_cccc_000x_table),
@@ -656,20 +655,20 @@
 	DECODE_TABLE	(0x0e000000, 0x02000000, arm_cccc_001x_table),
 
 	/*
-	 * Media inकाष्ठाions
+	 * Media instructions
 	 *			cccc 011x xxxx xxxx xxxx xxxx xxx1 xxxx
 	 */
 	DECODE_TABLE	(0x0f000010, 0x06000010, arm_cccc_0110_____xxx1_table),
 	DECODE_TABLE	(0x0f000010, 0x07000010, arm_cccc_0111_____xxx1_table),
 
 	/*
-	 * Load/store word and अचिन्हित byte
+	 * Load/store word and unsigned byte
 	 *			cccc 01xx xxxx xxxx xxxx xxxx xxxx xxxx
 	 */
 	DECODE_TABLE	(0x0c000000, 0x04000000, arm_cccc_01xx_table),
 
 	/*
-	 * Block data transfer inकाष्ठाions
+	 * Block data transfer instructions
 	 *			cccc 100x xxxx xxxx xxxx xxxx xxxx xxxx
 	 */
 	DECODE_TABLE	(0x0e000000, 0x08000000, arm_cccc_100x_table),
@@ -679,7 +678,7 @@
 	DECODE_SIMULATE	(0x0e000000, 0x0a000000, PROBES_BRANCH),
 
 	/*
-	 * Supervisor Call, and coprocessor inकाष्ठाions
+	 * Supervisor Call, and coprocessor instructions
 	 */
 
 	/* MCRR			cccc 1100 0100 xxxx xxxx xxxx xxxx xxxx */
@@ -693,37 +692,37 @@
 	DECODE_REJECT	(0x0c000000, 0x0c000000),
 
 	DECODE_END
-पूर्ण;
-#अगर_घोषित CONFIG_ARM_KPROBES_TEST_MODULE
+};
+#ifdef CONFIG_ARM_KPROBES_TEST_MODULE
 EXPORT_SYMBOL_GPL(probes_decode_arm_table);
-#पूर्ण_अगर
+#endif
 
-अटल व्योम __kprobes arm_singlestep(probes_opcode_t insn,
-		काष्ठा arch_probes_insn *asi, काष्ठा pt_regs *regs)
-अणु
+static void __kprobes arm_singlestep(probes_opcode_t insn,
+		struct arch_probes_insn *asi, struct pt_regs *regs)
+{
 	regs->ARM_pc += 4;
 	asi->insn_handler(insn, asi, regs);
-पूर्ण
+}
 
 /* Return:
- *   INSN_REJECTED     If inकाष्ठाion is one not allowed to kprobe,
- *   INSN_GOOD         If inकाष्ठाion is supported and uses inकाष्ठाion slot,
- *   INSN_GOOD_NO_SLOT If inकाष्ठाion is supported but करोesn't use its slot.
+ *   INSN_REJECTED     If instruction is one not allowed to kprobe,
+ *   INSN_GOOD         If instruction is supported and uses instruction slot,
+ *   INSN_GOOD_NO_SLOT If instruction is supported but doesn't use its slot.
  *
- * For inकाष्ठाions we करोn't want to kprobe (INSN_REJECTED वापस result):
- *   These are generally ones that modअगरy the processor state making
- *   them "hard" to simulate such as चयनes processor modes or
+ * For instructions we don't want to kprobe (INSN_REJECTED return result):
+ *   These are generally ones that modify the processor state making
+ *   them "hard" to simulate such as switches processor modes or
  *   make accesses in alternate modes.  Any of these could be simulated
- *   अगर the work was put पूर्णांकo it, but low वापस considering they
+ *   if the work was put into it, but low return considering they
  *   should also be very rare.
  */
-क्रमागत probes_insn __kprobes
-arm_probes_decode_insn(probes_opcode_t insn, काष्ठा arch_probes_insn *asi,
-		       bool emulate, स्थिर जोड़ decode_action *actions,
-		       स्थिर काष्ठा decode_checker *checkers[])
-अणु
+enum probes_insn __kprobes
+arm_probes_decode_insn(probes_opcode_t insn, struct arch_probes_insn *asi,
+		       bool emulate, const union decode_action *actions,
+		       const struct decode_checker *checkers[])
+{
 	asi->insn_singlestep = arm_singlestep;
 	asi->insn_check_cc = probes_condition_checks[insn>>28];
-	वापस probes_decode_insn(insn, asi, probes_decode_arm_table, false,
+	return probes_decode_insn(insn, asi, probes_decode_arm_table, false,
 				  emulate, actions, checkers);
-पूर्ण
+}

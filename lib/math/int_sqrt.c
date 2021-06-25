@@ -1,72 +1,71 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2013 Davidlohr Bueso <davidlohr.bueso@hp.com>
  *
- *  Based on the shअगरt-and-subtract algorithm क्रम computing पूर्णांकeger
+ *  Based on the shift-and-subtract algorithm for computing integer
  *  square root from Guy L. Steele.
  */
 
-#समावेश <linux/export.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/सीमा.स>
-#समावेश <linux/गणित.स>
+#include <linux/export.h>
+#include <linux/bitops.h>
+#include <linux/limits.h>
+#include <linux/math.h>
 
 /**
- * पूर्णांक_वर्ग_मूल - computes the पूर्णांकeger square root
- * @x: पूर्णांकeger of which to calculate the वर्ग_मूल
+ * int_sqrt - computes the integer square root
+ * @x: integer of which to calculate the sqrt
  *
- * Computes: न्यूनमान(वर्ग_मूल(x))
+ * Computes: floor(sqrt(x))
  */
-अचिन्हित दीर्घ पूर्णांक_वर्ग_मूल(अचिन्हित दीर्घ x)
-अणु
-	अचिन्हित दीर्घ b, m, y = 0;
+unsigned long int_sqrt(unsigned long x)
+{
+	unsigned long b, m, y = 0;
 
-	अगर (x <= 1)
-		वापस x;
+	if (x <= 1)
+		return x;
 
 	m = 1UL << (__fls(x) & ~1UL);
-	जबतक (m != 0) अणु
+	while (m != 0) {
 		b = y + m;
 		y >>= 1;
 
-		अगर (x >= b) अणु
+		if (x >= b) {
 			x -= b;
 			y += m;
-		पूर्ण
+		}
 		m >>= 2;
-	पूर्ण
+	}
 
-	वापस y;
-पूर्ण
-EXPORT_SYMBOL(पूर्णांक_वर्ग_मूल);
+	return y;
+}
+EXPORT_SYMBOL(int_sqrt);
 
-#अगर BITS_PER_LONG < 64
+#if BITS_PER_LONG < 64
 /**
- * पूर्णांक_वर्ग_मूल64 - strongly typed पूर्णांक_वर्ग_मूल function when minimum 64 bit input
+ * int_sqrt64 - strongly typed int_sqrt function when minimum 64 bit input
  * is expected.
- * @x: 64bit पूर्णांकeger of which to calculate the वर्ग_मूल
+ * @x: 64bit integer of which to calculate the sqrt
  */
-u32 पूर्णांक_वर्ग_मूल64(u64 x)
-अणु
+u32 int_sqrt64(u64 x)
+{
 	u64 b, m, y = 0;
 
-	अगर (x <= अच_दीर्घ_उच्च)
-		वापस पूर्णांक_वर्ग_मूल((अचिन्हित दीर्घ) x);
+	if (x <= ULONG_MAX)
+		return int_sqrt((unsigned long) x);
 
 	m = 1ULL << ((fls64(x) - 1) & ~1ULL);
-	जबतक (m != 0) अणु
+	while (m != 0) {
 		b = y + m;
 		y >>= 1;
 
-		अगर (x >= b) अणु
+		if (x >= b) {
 			x -= b;
 			y += m;
-		पूर्ण
+		}
 		m >>= 2;
-	पूर्ण
+	}
 
-	वापस y;
-पूर्ण
-EXPORT_SYMBOL(पूर्णांक_वर्ग_मूल64);
-#पूर्ण_अगर
+	return y;
+}
+EXPORT_SYMBOL(int_sqrt64);
+#endif

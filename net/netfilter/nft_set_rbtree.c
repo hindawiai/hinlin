@@ -1,631 +1,630 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2008-2009 Patrick McHardy <kaber@trash.net>
  *
  * Development of this code funded by Astaro AG (http://www.astaro.com/)
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/list.h>
-#समावेश <linux/rbtree.h>
-#समावेश <linux/netlink.h>
-#समावेश <linux/netfilter.h>
-#समावेश <linux/netfilter/nf_tables.h>
-#समावेश <net/netfilter/nf_tables_core.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/list.h>
+#include <linux/rbtree.h>
+#include <linux/netlink.h>
+#include <linux/netfilter.h>
+#include <linux/netfilter/nf_tables.h>
+#include <net/netfilter/nf_tables_core.h>
 
-काष्ठा nft_rbtree अणु
-	काष्ठा rb_root		root;
+struct nft_rbtree {
+	struct rb_root		root;
 	rwlock_t		lock;
 	seqcount_rwlock_t	count;
-	काष्ठा delayed_work	gc_work;
-पूर्ण;
+	struct delayed_work	gc_work;
+};
 
-काष्ठा nft_rbtree_elem अणु
-	काष्ठा rb_node		node;
-	काष्ठा nft_set_ext	ext;
-पूर्ण;
+struct nft_rbtree_elem {
+	struct rb_node		node;
+	struct nft_set_ext	ext;
+};
 
-अटल bool nft_rbtree_पूर्णांकerval_end(स्थिर काष्ठा nft_rbtree_elem *rbe)
-अणु
-	वापस nft_set_ext_exists(&rbe->ext, NFT_SET_EXT_FLAGS) &&
+static bool nft_rbtree_interval_end(const struct nft_rbtree_elem *rbe)
+{
+	return nft_set_ext_exists(&rbe->ext, NFT_SET_EXT_FLAGS) &&
 	       (*nft_set_ext_flags(&rbe->ext) & NFT_SET_ELEM_INTERVAL_END);
-पूर्ण
+}
 
-अटल bool nft_rbtree_पूर्णांकerval_start(स्थिर काष्ठा nft_rbtree_elem *rbe)
-अणु
-	वापस !nft_rbtree_पूर्णांकerval_end(rbe);
-पूर्ण
+static bool nft_rbtree_interval_start(const struct nft_rbtree_elem *rbe)
+{
+	return !nft_rbtree_interval_end(rbe);
+}
 
-अटल bool nft_rbtree_equal(स्थिर काष्ठा nft_set *set, स्थिर व्योम *this,
-			     स्थिर काष्ठा nft_rbtree_elem *पूर्णांकerval)
-अणु
-	वापस स_भेद(this, nft_set_ext_key(&पूर्णांकerval->ext), set->klen) == 0;
-पूर्ण
+static bool nft_rbtree_equal(const struct nft_set *set, const void *this,
+			     const struct nft_rbtree_elem *interval)
+{
+	return memcmp(this, nft_set_ext_key(&interval->ext), set->klen) == 0;
+}
 
-अटल bool __nft_rbtree_lookup(स्थिर काष्ठा net *net, स्थिर काष्ठा nft_set *set,
-				स्थिर u32 *key, स्थिर काष्ठा nft_set_ext **ext,
-				अचिन्हित पूर्णांक seq)
-अणु
-	काष्ठा nft_rbtree *priv = nft_set_priv(set);
-	स्थिर काष्ठा nft_rbtree_elem *rbe, *पूर्णांकerval = शून्य;
+static bool __nft_rbtree_lookup(const struct net *net, const struct nft_set *set,
+				const u32 *key, const struct nft_set_ext **ext,
+				unsigned int seq)
+{
+	struct nft_rbtree *priv = nft_set_priv(set);
+	const struct nft_rbtree_elem *rbe, *interval = NULL;
 	u8 genmask = nft_genmask_cur(net);
-	स्थिर काष्ठा rb_node *parent;
-	स्थिर व्योम *this;
-	पूर्णांक d;
+	const struct rb_node *parent;
+	const void *this;
+	int d;
 
 	parent = rcu_dereference_raw(priv->root.rb_node);
-	जबतक (parent != शून्य) अणु
-		अगर (पढ़ो_seqcount_retry(&priv->count, seq))
-			वापस false;
+	while (parent != NULL) {
+		if (read_seqcount_retry(&priv->count, seq))
+			return false;
 
-		rbe = rb_entry(parent, काष्ठा nft_rbtree_elem, node);
+		rbe = rb_entry(parent, struct nft_rbtree_elem, node);
 
 		this = nft_set_ext_key(&rbe->ext);
-		d = स_भेद(this, key, set->klen);
-		अगर (d < 0) अणु
+		d = memcmp(this, key, set->klen);
+		if (d < 0) {
 			parent = rcu_dereference_raw(parent->rb_left);
-			अगर (पूर्णांकerval &&
-			    nft_rbtree_equal(set, this, पूर्णांकerval) &&
-			    nft_rbtree_पूर्णांकerval_end(rbe) &&
-			    nft_rbtree_पूर्णांकerval_start(पूर्णांकerval))
-				जारी;
-			पूर्णांकerval = rbe;
-		पूर्ण अन्यथा अगर (d > 0)
+			if (interval &&
+			    nft_rbtree_equal(set, this, interval) &&
+			    nft_rbtree_interval_end(rbe) &&
+			    nft_rbtree_interval_start(interval))
+				continue;
+			interval = rbe;
+		} else if (d > 0)
 			parent = rcu_dereference_raw(parent->rb_right);
-		अन्यथा अणु
-			अगर (!nft_set_elem_active(&rbe->ext, genmask)) अणु
+		else {
+			if (!nft_set_elem_active(&rbe->ext, genmask)) {
 				parent = rcu_dereference_raw(parent->rb_left);
-				जारी;
-			पूर्ण
+				continue;
+			}
 
-			अगर (nft_set_elem_expired(&rbe->ext))
-				वापस false;
+			if (nft_set_elem_expired(&rbe->ext))
+				return false;
 
-			अगर (nft_rbtree_पूर्णांकerval_end(rbe)) अणु
-				अगर (nft_set_is_anonymous(set))
-					वापस false;
+			if (nft_rbtree_interval_end(rbe)) {
+				if (nft_set_is_anonymous(set))
+					return false;
 				parent = rcu_dereference_raw(parent->rb_left);
-				पूर्णांकerval = शून्य;
-				जारी;
-			पूर्ण
+				interval = NULL;
+				continue;
+			}
 
 			*ext = &rbe->ext;
-			वापस true;
-		पूर्ण
-	पूर्ण
+			return true;
+		}
+	}
 
-	अगर (set->flags & NFT_SET_INTERVAL && पूर्णांकerval != शून्य &&
-	    nft_set_elem_active(&पूर्णांकerval->ext, genmask) &&
-	    !nft_set_elem_expired(&पूर्णांकerval->ext) &&
-	    nft_rbtree_पूर्णांकerval_start(पूर्णांकerval)) अणु
-		*ext = &पूर्णांकerval->ext;
-		वापस true;
-	पूर्ण
+	if (set->flags & NFT_SET_INTERVAL && interval != NULL &&
+	    nft_set_elem_active(&interval->ext, genmask) &&
+	    !nft_set_elem_expired(&interval->ext) &&
+	    nft_rbtree_interval_start(interval)) {
+		*ext = &interval->ext;
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool nft_rbtree_lookup(स्थिर काष्ठा net *net, स्थिर काष्ठा nft_set *set,
-			      स्थिर u32 *key, स्थिर काष्ठा nft_set_ext **ext)
-अणु
-	काष्ठा nft_rbtree *priv = nft_set_priv(set);
-	अचिन्हित पूर्णांक seq = पढ़ो_seqcount_begin(&priv->count);
+static bool nft_rbtree_lookup(const struct net *net, const struct nft_set *set,
+			      const u32 *key, const struct nft_set_ext **ext)
+{
+	struct nft_rbtree *priv = nft_set_priv(set);
+	unsigned int seq = read_seqcount_begin(&priv->count);
 	bool ret;
 
 	ret = __nft_rbtree_lookup(net, set, key, ext, seq);
-	अगर (ret || !पढ़ो_seqcount_retry(&priv->count, seq))
-		वापस ret;
+	if (ret || !read_seqcount_retry(&priv->count, seq))
+		return ret;
 
-	पढ़ो_lock_bh(&priv->lock);
-	seq = पढ़ो_seqcount_begin(&priv->count);
+	read_lock_bh(&priv->lock);
+	seq = read_seqcount_begin(&priv->count);
 	ret = __nft_rbtree_lookup(net, set, key, ext, seq);
-	पढ़ो_unlock_bh(&priv->lock);
+	read_unlock_bh(&priv->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल bool __nft_rbtree_get(स्थिर काष्ठा net *net, स्थिर काष्ठा nft_set *set,
-			     स्थिर u32 *key, काष्ठा nft_rbtree_elem **elem,
-			     अचिन्हित पूर्णांक seq, अचिन्हित पूर्णांक flags, u8 genmask)
-अणु
-	काष्ठा nft_rbtree_elem *rbe, *पूर्णांकerval = शून्य;
-	काष्ठा nft_rbtree *priv = nft_set_priv(set);
-	स्थिर काष्ठा rb_node *parent;
-	स्थिर व्योम *this;
-	पूर्णांक d;
+static bool __nft_rbtree_get(const struct net *net, const struct nft_set *set,
+			     const u32 *key, struct nft_rbtree_elem **elem,
+			     unsigned int seq, unsigned int flags, u8 genmask)
+{
+	struct nft_rbtree_elem *rbe, *interval = NULL;
+	struct nft_rbtree *priv = nft_set_priv(set);
+	const struct rb_node *parent;
+	const void *this;
+	int d;
 
 	parent = rcu_dereference_raw(priv->root.rb_node);
-	जबतक (parent != शून्य) अणु
-		अगर (पढ़ो_seqcount_retry(&priv->count, seq))
-			वापस false;
+	while (parent != NULL) {
+		if (read_seqcount_retry(&priv->count, seq))
+			return false;
 
-		rbe = rb_entry(parent, काष्ठा nft_rbtree_elem, node);
+		rbe = rb_entry(parent, struct nft_rbtree_elem, node);
 
 		this = nft_set_ext_key(&rbe->ext);
-		d = स_भेद(this, key, set->klen);
-		अगर (d < 0) अणु
+		d = memcmp(this, key, set->klen);
+		if (d < 0) {
 			parent = rcu_dereference_raw(parent->rb_left);
-			अगर (!(flags & NFT_SET_ELEM_INTERVAL_END))
-				पूर्णांकerval = rbe;
-		पूर्ण अन्यथा अगर (d > 0) अणु
+			if (!(flags & NFT_SET_ELEM_INTERVAL_END))
+				interval = rbe;
+		} else if (d > 0) {
 			parent = rcu_dereference_raw(parent->rb_right);
-			अगर (flags & NFT_SET_ELEM_INTERVAL_END)
-				पूर्णांकerval = rbe;
-		पूर्ण अन्यथा अणु
-			अगर (!nft_set_elem_active(&rbe->ext, genmask)) अणु
+			if (flags & NFT_SET_ELEM_INTERVAL_END)
+				interval = rbe;
+		} else {
+			if (!nft_set_elem_active(&rbe->ext, genmask)) {
 				parent = rcu_dereference_raw(parent->rb_left);
-				जारी;
-			पूर्ण
+				continue;
+			}
 
-			अगर (nft_set_elem_expired(&rbe->ext))
-				वापस false;
+			if (nft_set_elem_expired(&rbe->ext))
+				return false;
 
-			अगर (!nft_set_ext_exists(&rbe->ext, NFT_SET_EXT_FLAGS) ||
+			if (!nft_set_ext_exists(&rbe->ext, NFT_SET_EXT_FLAGS) ||
 			    (*nft_set_ext_flags(&rbe->ext) & NFT_SET_ELEM_INTERVAL_END) ==
-			    (flags & NFT_SET_ELEM_INTERVAL_END)) अणु
+			    (flags & NFT_SET_ELEM_INTERVAL_END)) {
 				*elem = rbe;
-				वापस true;
-			पूर्ण
+				return true;
+			}
 
-			अगर (nft_rbtree_पूर्णांकerval_end(rbe))
-				पूर्णांकerval = शून्य;
+			if (nft_rbtree_interval_end(rbe))
+				interval = NULL;
 
 			parent = rcu_dereference_raw(parent->rb_left);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (set->flags & NFT_SET_INTERVAL && पूर्णांकerval != शून्य &&
-	    nft_set_elem_active(&पूर्णांकerval->ext, genmask) &&
-	    !nft_set_elem_expired(&पूर्णांकerval->ext) &&
-	    ((!nft_rbtree_पूर्णांकerval_end(पूर्णांकerval) &&
+	if (set->flags & NFT_SET_INTERVAL && interval != NULL &&
+	    nft_set_elem_active(&interval->ext, genmask) &&
+	    !nft_set_elem_expired(&interval->ext) &&
+	    ((!nft_rbtree_interval_end(interval) &&
 	      !(flags & NFT_SET_ELEM_INTERVAL_END)) ||
-	     (nft_rbtree_पूर्णांकerval_end(पूर्णांकerval) &&
-	      (flags & NFT_SET_ELEM_INTERVAL_END)))) अणु
-		*elem = पूर्णांकerval;
-		वापस true;
-	पूर्ण
+	     (nft_rbtree_interval_end(interval) &&
+	      (flags & NFT_SET_ELEM_INTERVAL_END)))) {
+		*elem = interval;
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल व्योम *nft_rbtree_get(स्थिर काष्ठा net *net, स्थिर काष्ठा nft_set *set,
-			    स्थिर काष्ठा nft_set_elem *elem, अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा nft_rbtree *priv = nft_set_priv(set);
-	अचिन्हित पूर्णांक seq = पढ़ो_seqcount_begin(&priv->count);
-	काष्ठा nft_rbtree_elem *rbe = ERR_PTR(-ENOENT);
-	स्थिर u32 *key = (स्थिर u32 *)&elem->key.val;
+static void *nft_rbtree_get(const struct net *net, const struct nft_set *set,
+			    const struct nft_set_elem *elem, unsigned int flags)
+{
+	struct nft_rbtree *priv = nft_set_priv(set);
+	unsigned int seq = read_seqcount_begin(&priv->count);
+	struct nft_rbtree_elem *rbe = ERR_PTR(-ENOENT);
+	const u32 *key = (const u32 *)&elem->key.val;
 	u8 genmask = nft_genmask_cur(net);
 	bool ret;
 
 	ret = __nft_rbtree_get(net, set, key, &rbe, seq, flags, genmask);
-	अगर (ret || !पढ़ो_seqcount_retry(&priv->count, seq))
-		वापस rbe;
+	if (ret || !read_seqcount_retry(&priv->count, seq))
+		return rbe;
 
-	पढ़ो_lock_bh(&priv->lock);
-	seq = पढ़ो_seqcount_begin(&priv->count);
+	read_lock_bh(&priv->lock);
+	seq = read_seqcount_begin(&priv->count);
 	ret = __nft_rbtree_get(net, set, key, &rbe, seq, flags, genmask);
-	अगर (!ret)
+	if (!ret)
 		rbe = ERR_PTR(-ENOENT);
-	पढ़ो_unlock_bh(&priv->lock);
+	read_unlock_bh(&priv->lock);
 
-	वापस rbe;
-पूर्ण
+	return rbe;
+}
 
-अटल पूर्णांक __nft_rbtree_insert(स्थिर काष्ठा net *net, स्थिर काष्ठा nft_set *set,
-			       काष्ठा nft_rbtree_elem *new,
-			       काष्ठा nft_set_ext **ext)
-अणु
+static int __nft_rbtree_insert(const struct net *net, const struct nft_set *set,
+			       struct nft_rbtree_elem *new,
+			       struct nft_set_ext **ext)
+{
 	bool overlap = false, dup_end_left = false, dup_end_right = false;
-	काष्ठा nft_rbtree *priv = nft_set_priv(set);
+	struct nft_rbtree *priv = nft_set_priv(set);
 	u8 genmask = nft_genmask_next(net);
-	काष्ठा nft_rbtree_elem *rbe;
-	काष्ठा rb_node *parent, **p;
-	पूर्णांक d;
+	struct nft_rbtree_elem *rbe;
+	struct rb_node *parent, **p;
+	int d;
 
-	/* Detect overlaps as we descend the tree. Set the flag in these हालs:
+	/* Detect overlaps as we descend the tree. Set the flag in these cases:
 	 *
-	 * a1. _ _ __>|  ?_ _ __|  (insert end beक्रमe existing end)
+	 * a1. _ _ __>|  ?_ _ __|  (insert end before existing end)
 	 * a2. _ _ ___|  ?_ _ _>|  (insert end after existing end)
-	 * a3. _ _ ___? >|_ _ __|  (insert start beक्रमe existing end)
+	 * a3. _ _ ___? >|_ _ __|  (insert start before existing end)
 	 *
-	 * and clear it later on, as we eventually reach the poपूर्णांकs indicated by
+	 * and clear it later on, as we eventually reach the points indicated by
 	 * '?' above, in the cases described below. We'll always meet these
-	 * later, locally, due to tree ordering, and overlaps क्रम the पूर्णांकervals
-	 * that are the बंदst together are always evaluated last.
+	 * later, locally, due to tree ordering, and overlaps for the intervals
+	 * that are the closest together are always evaluated last.
 	 *
-	 * b1. _ _ __>|  !_ _ __|  (insert end beक्रमe existing start)
+	 * b1. _ _ __>|  !_ _ __|  (insert end before existing start)
 	 * b2. _ _ ___|  !_ _ _>|  (insert end after existing start)
 	 * b3. _ _ ___! >|_ _ __|  (insert start after existing end, as a leaf)
 	 *            '--' no nodes falling in this range
-	 * b4.          >|_ _   !  (insert start beक्रमe existing start)
+	 * b4.          >|_ _   !  (insert start before existing start)
 	 *
 	 * Case a3. resolves to b3.:
-	 * - अगर the inserted start element is the lefपंचांगost, because the '0'
+	 * - if the inserted start element is the leftmost, because the '0'
 	 *   element in the tree serves as end element
-	 * - otherwise, अगर an existing end is found immediately to the left. If
+	 * - otherwise, if an existing end is found immediately to the left. If
 	 *   there are existing nodes in between, we need to further descend the
-	 *   tree beक्रमe we can conclude the new start isn't causing an overlap
+	 *   tree before we can conclude the new start isn't causing an overlap
 	 *
-	 * or to b4., which, preceded by a3., means we alपढ़ोy traversed one or
-	 * more existing पूर्णांकervals entirely, from the right.
+	 * or to b4., which, preceded by a3., means we already traversed one or
+	 * more existing intervals entirely, from the right.
 	 *
-	 * For a new, righपंचांगost pair of elements, we'll hit हालs b3. and b2.,
+	 * For a new, rightmost pair of elements, we'll hit cases b3. and b2.,
 	 * in that order.
 	 *
-	 * The flag is also cleared in two special हालs:
+	 * The flag is also cleared in two special cases:
 	 *
-	 * b5. |__ _ _!|<_ _ _   (insert start right beक्रमe existing end)
+	 * b5. |__ _ _!|<_ _ _   (insert start right before existing end)
 	 * b6. |__ _ >|!__ _ _   (insert end right after existing start)
 	 *
 	 * which always happen as last step and imply that no further
 	 * overlapping is possible.
 	 *
-	 * Another special हाल comes from the fact that start elements matching
-	 * an alपढ़ोy existing start element are allowed: insertion is not
-	 * perक्रमmed but we वापस -EEXIST in that हाल, and the error will be
-	 * cleared by the caller अगर NLM_F_EXCL is not present in the request.
-	 * This way, request क्रम insertion of an exact overlap isn't reported as
-	 * error to userspace अगर not desired.
+	 * Another special case comes from the fact that start elements matching
+	 * an already existing start element are allowed: insertion is not
+	 * performed but we return -EEXIST in that case, and the error will be
+	 * cleared by the caller if NLM_F_EXCL is not present in the request.
+	 * This way, request for insertion of an exact overlap isn't reported as
+	 * error to userspace if not desired.
 	 *
-	 * However, अगर the existing start matches a pre-existing start, but the
-	 * end element करोesn't match the corresponding pre-existing end element,
+	 * However, if the existing start matches a pre-existing start, but the
+	 * end element doesn't match the corresponding pre-existing end element,
 	 * we need to report a partial overlap. This is a local condition that
-	 * can be noticed without need क्रम a tracking flag, by checking क्रम a
-	 * local duplicated end क्रम a corresponding start, from left and right,
+	 * can be noticed without need for a tracking flag, by checking for a
+	 * local duplicated end for a corresponding start, from left and right,
 	 * separately.
 	 */
 
-	parent = शून्य;
+	parent = NULL;
 	p = &priv->root.rb_node;
-	जबतक (*p != शून्य) अणु
+	while (*p != NULL) {
 		parent = *p;
-		rbe = rb_entry(parent, काष्ठा nft_rbtree_elem, node);
-		d = स_भेद(nft_set_ext_key(&rbe->ext),
+		rbe = rb_entry(parent, struct nft_rbtree_elem, node);
+		d = memcmp(nft_set_ext_key(&rbe->ext),
 			   nft_set_ext_key(&new->ext),
 			   set->klen);
-		अगर (d < 0) अणु
+		if (d < 0) {
 			p = &parent->rb_left;
 
-			अगर (nft_rbtree_पूर्णांकerval_start(new)) अणु
-				अगर (nft_rbtree_पूर्णांकerval_end(rbe) &&
+			if (nft_rbtree_interval_start(new)) {
+				if (nft_rbtree_interval_end(rbe) &&
 				    nft_set_elem_active(&rbe->ext, genmask) &&
 				    !nft_set_elem_expired(&rbe->ext) && !*p)
 					overlap = false;
-			पूर्ण अन्यथा अणु
-				अगर (dup_end_left && !*p)
-					वापस -ENOTEMPTY;
+			} else {
+				if (dup_end_left && !*p)
+					return -ENOTEMPTY;
 
-				overlap = nft_rbtree_पूर्णांकerval_end(rbe) &&
+				overlap = nft_rbtree_interval_end(rbe) &&
 					  nft_set_elem_active(&rbe->ext,
 							      genmask) &&
 					  !nft_set_elem_expired(&rbe->ext);
 
-				अगर (overlap) अणु
+				if (overlap) {
 					dup_end_right = true;
-					जारी;
-				पूर्ण
-			पूर्ण
-		पूर्ण अन्यथा अगर (d > 0) अणु
+					continue;
+				}
+			}
+		} else if (d > 0) {
 			p = &parent->rb_right;
 
-			अगर (nft_rbtree_पूर्णांकerval_end(new)) अणु
-				अगर (dup_end_right && !*p)
-					वापस -ENOTEMPTY;
+			if (nft_rbtree_interval_end(new)) {
+				if (dup_end_right && !*p)
+					return -ENOTEMPTY;
 
-				overlap = nft_rbtree_पूर्णांकerval_end(rbe) &&
+				overlap = nft_rbtree_interval_end(rbe) &&
 					  nft_set_elem_active(&rbe->ext,
 							      genmask) &&
 					  !nft_set_elem_expired(&rbe->ext);
 
-				अगर (overlap) अणु
+				if (overlap) {
 					dup_end_left = true;
-					जारी;
-				पूर्ण
-			पूर्ण अन्यथा अगर (nft_set_elem_active(&rbe->ext, genmask) &&
-				   !nft_set_elem_expired(&rbe->ext)) अणु
-				overlap = nft_rbtree_पूर्णांकerval_end(rbe);
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (nft_rbtree_पूर्णांकerval_end(rbe) &&
-			    nft_rbtree_पूर्णांकerval_start(new)) अणु
+					continue;
+				}
+			} else if (nft_set_elem_active(&rbe->ext, genmask) &&
+				   !nft_set_elem_expired(&rbe->ext)) {
+				overlap = nft_rbtree_interval_end(rbe);
+			}
+		} else {
+			if (nft_rbtree_interval_end(rbe) &&
+			    nft_rbtree_interval_start(new)) {
 				p = &parent->rb_left;
 
-				अगर (nft_set_elem_active(&rbe->ext, genmask) &&
+				if (nft_set_elem_active(&rbe->ext, genmask) &&
 				    !nft_set_elem_expired(&rbe->ext))
 					overlap = false;
-			पूर्ण अन्यथा अगर (nft_rbtree_पूर्णांकerval_start(rbe) &&
-				   nft_rbtree_पूर्णांकerval_end(new)) अणु
+			} else if (nft_rbtree_interval_start(rbe) &&
+				   nft_rbtree_interval_end(new)) {
 				p = &parent->rb_right;
 
-				अगर (nft_set_elem_active(&rbe->ext, genmask) &&
+				if (nft_set_elem_active(&rbe->ext, genmask) &&
 				    !nft_set_elem_expired(&rbe->ext))
 					overlap = false;
-			पूर्ण अन्यथा अगर (nft_set_elem_active(&rbe->ext, genmask) &&
-				   !nft_set_elem_expired(&rbe->ext)) अणु
+			} else if (nft_set_elem_active(&rbe->ext, genmask) &&
+				   !nft_set_elem_expired(&rbe->ext)) {
 				*ext = &rbe->ext;
-				वापस -EEXIST;
-			पूर्ण अन्यथा अणु
+				return -EEXIST;
+			} else {
 				p = &parent->rb_left;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		dup_end_left = dup_end_right = false;
-	पूर्ण
+	}
 
-	अगर (overlap)
-		वापस -ENOTEMPTY;
+	if (overlap)
+		return -ENOTEMPTY;
 
 	rb_link_node_rcu(&new->node, parent, p);
 	rb_insert_color(&new->node, &priv->root);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nft_rbtree_insert(स्थिर काष्ठा net *net, स्थिर काष्ठा nft_set *set,
-			     स्थिर काष्ठा nft_set_elem *elem,
-			     काष्ठा nft_set_ext **ext)
-अणु
-	काष्ठा nft_rbtree *priv = nft_set_priv(set);
-	काष्ठा nft_rbtree_elem *rbe = elem->priv;
-	पूर्णांक err;
+static int nft_rbtree_insert(const struct net *net, const struct nft_set *set,
+			     const struct nft_set_elem *elem,
+			     struct nft_set_ext **ext)
+{
+	struct nft_rbtree *priv = nft_set_priv(set);
+	struct nft_rbtree_elem *rbe = elem->priv;
+	int err;
 
-	ग_लिखो_lock_bh(&priv->lock);
-	ग_लिखो_seqcount_begin(&priv->count);
+	write_lock_bh(&priv->lock);
+	write_seqcount_begin(&priv->count);
 	err = __nft_rbtree_insert(net, set, rbe, ext);
-	ग_लिखो_seqcount_end(&priv->count);
-	ग_लिखो_unlock_bh(&priv->lock);
+	write_seqcount_end(&priv->count);
+	write_unlock_bh(&priv->lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम nft_rbtree_हटाओ(स्थिर काष्ठा net *net,
-			      स्थिर काष्ठा nft_set *set,
-			      स्थिर काष्ठा nft_set_elem *elem)
-अणु
-	काष्ठा nft_rbtree *priv = nft_set_priv(set);
-	काष्ठा nft_rbtree_elem *rbe = elem->priv;
+static void nft_rbtree_remove(const struct net *net,
+			      const struct nft_set *set,
+			      const struct nft_set_elem *elem)
+{
+	struct nft_rbtree *priv = nft_set_priv(set);
+	struct nft_rbtree_elem *rbe = elem->priv;
 
-	ग_लिखो_lock_bh(&priv->lock);
-	ग_लिखो_seqcount_begin(&priv->count);
+	write_lock_bh(&priv->lock);
+	write_seqcount_begin(&priv->count);
 	rb_erase(&rbe->node, &priv->root);
-	ग_लिखो_seqcount_end(&priv->count);
-	ग_लिखो_unlock_bh(&priv->lock);
-पूर्ण
+	write_seqcount_end(&priv->count);
+	write_unlock_bh(&priv->lock);
+}
 
-अटल व्योम nft_rbtree_activate(स्थिर काष्ठा net *net,
-				स्थिर काष्ठा nft_set *set,
-				स्थिर काष्ठा nft_set_elem *elem)
-अणु
-	काष्ठा nft_rbtree_elem *rbe = elem->priv;
+static void nft_rbtree_activate(const struct net *net,
+				const struct nft_set *set,
+				const struct nft_set_elem *elem)
+{
+	struct nft_rbtree_elem *rbe = elem->priv;
 
 	nft_set_elem_change_active(net, set, &rbe->ext);
 	nft_set_elem_clear_busy(&rbe->ext);
-पूर्ण
+}
 
-अटल bool nft_rbtree_flush(स्थिर काष्ठा net *net,
-			     स्थिर काष्ठा nft_set *set, व्योम *priv)
-अणु
-	काष्ठा nft_rbtree_elem *rbe = priv;
+static bool nft_rbtree_flush(const struct net *net,
+			     const struct nft_set *set, void *priv)
+{
+	struct nft_rbtree_elem *rbe = priv;
 
-	अगर (!nft_set_elem_mark_busy(&rbe->ext) ||
-	    !nft_is_active(net, &rbe->ext)) अणु
+	if (!nft_set_elem_mark_busy(&rbe->ext) ||
+	    !nft_is_active(net, &rbe->ext)) {
 		nft_set_elem_change_active(net, set, &rbe->ext);
-		वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+		return true;
+	}
+	return false;
+}
 
-अटल व्योम *nft_rbtree_deactivate(स्थिर काष्ठा net *net,
-				   स्थिर काष्ठा nft_set *set,
-				   स्थिर काष्ठा nft_set_elem *elem)
-अणु
-	स्थिर काष्ठा nft_rbtree *priv = nft_set_priv(set);
-	स्थिर काष्ठा rb_node *parent = priv->root.rb_node;
-	काष्ठा nft_rbtree_elem *rbe, *this = elem->priv;
+static void *nft_rbtree_deactivate(const struct net *net,
+				   const struct nft_set *set,
+				   const struct nft_set_elem *elem)
+{
+	const struct nft_rbtree *priv = nft_set_priv(set);
+	const struct rb_node *parent = priv->root.rb_node;
+	struct nft_rbtree_elem *rbe, *this = elem->priv;
 	u8 genmask = nft_genmask_next(net);
-	पूर्णांक d;
+	int d;
 
-	जबतक (parent != शून्य) अणु
-		rbe = rb_entry(parent, काष्ठा nft_rbtree_elem, node);
+	while (parent != NULL) {
+		rbe = rb_entry(parent, struct nft_rbtree_elem, node);
 
-		d = स_भेद(nft_set_ext_key(&rbe->ext), &elem->key.val,
+		d = memcmp(nft_set_ext_key(&rbe->ext), &elem->key.val,
 					   set->klen);
-		अगर (d < 0)
+		if (d < 0)
 			parent = parent->rb_left;
-		अन्यथा अगर (d > 0)
+		else if (d > 0)
 			parent = parent->rb_right;
-		अन्यथा अणु
-			अगर (nft_rbtree_पूर्णांकerval_end(rbe) &&
-			    nft_rbtree_पूर्णांकerval_start(this)) अणु
+		else {
+			if (nft_rbtree_interval_end(rbe) &&
+			    nft_rbtree_interval_start(this)) {
 				parent = parent->rb_left;
-				जारी;
-			पूर्ण अन्यथा अगर (nft_rbtree_पूर्णांकerval_start(rbe) &&
-				   nft_rbtree_पूर्णांकerval_end(this)) अणु
+				continue;
+			} else if (nft_rbtree_interval_start(rbe) &&
+				   nft_rbtree_interval_end(this)) {
 				parent = parent->rb_right;
-				जारी;
-			पूर्ण अन्यथा अगर (!nft_set_elem_active(&rbe->ext, genmask)) अणु
+				continue;
+			} else if (!nft_set_elem_active(&rbe->ext, genmask)) {
 				parent = parent->rb_left;
-				जारी;
-			पूर्ण
+				continue;
+			}
 			nft_rbtree_flush(net, set, rbe);
-			वापस rbe;
-		पूर्ण
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+			return rbe;
+		}
+	}
+	return NULL;
+}
 
-अटल व्योम nft_rbtree_walk(स्थिर काष्ठा nft_ctx *ctx,
-			    काष्ठा nft_set *set,
-			    काष्ठा nft_set_iter *iter)
-अणु
-	काष्ठा nft_rbtree *priv = nft_set_priv(set);
-	काष्ठा nft_rbtree_elem *rbe;
-	काष्ठा nft_set_elem elem;
-	काष्ठा rb_node *node;
+static void nft_rbtree_walk(const struct nft_ctx *ctx,
+			    struct nft_set *set,
+			    struct nft_set_iter *iter)
+{
+	struct nft_rbtree *priv = nft_set_priv(set);
+	struct nft_rbtree_elem *rbe;
+	struct nft_set_elem elem;
+	struct rb_node *node;
 
-	पढ़ो_lock_bh(&priv->lock);
-	क्रम (node = rb_first(&priv->root); node != शून्य; node = rb_next(node)) अणु
-		rbe = rb_entry(node, काष्ठा nft_rbtree_elem, node);
+	read_lock_bh(&priv->lock);
+	for (node = rb_first(&priv->root); node != NULL; node = rb_next(node)) {
+		rbe = rb_entry(node, struct nft_rbtree_elem, node);
 
-		अगर (iter->count < iter->skip)
-			जाओ cont;
-		अगर (nft_set_elem_expired(&rbe->ext))
-			जाओ cont;
-		अगर (!nft_set_elem_active(&rbe->ext, iter->genmask))
-			जाओ cont;
+		if (iter->count < iter->skip)
+			goto cont;
+		if (nft_set_elem_expired(&rbe->ext))
+			goto cont;
+		if (!nft_set_elem_active(&rbe->ext, iter->genmask))
+			goto cont;
 
 		elem.priv = rbe;
 
 		iter->err = iter->fn(ctx, set, iter, &elem);
-		अगर (iter->err < 0) अणु
-			पढ़ो_unlock_bh(&priv->lock);
-			वापस;
-		पूर्ण
+		if (iter->err < 0) {
+			read_unlock_bh(&priv->lock);
+			return;
+		}
 cont:
 		iter->count++;
-	पूर्ण
-	पढ़ो_unlock_bh(&priv->lock);
-पूर्ण
+	}
+	read_unlock_bh(&priv->lock);
+}
 
-अटल व्योम nft_rbtree_gc(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा nft_rbtree_elem *rbe, *rbe_end = शून्य, *rbe_prev = शून्य;
-	काष्ठा nft_set_gc_batch *gcb = शून्य;
-	काष्ठा nft_rbtree *priv;
-	काष्ठा rb_node *node;
-	काष्ठा nft_set *set;
+static void nft_rbtree_gc(struct work_struct *work)
+{
+	struct nft_rbtree_elem *rbe, *rbe_end = NULL, *rbe_prev = NULL;
+	struct nft_set_gc_batch *gcb = NULL;
+	struct nft_rbtree *priv;
+	struct rb_node *node;
+	struct nft_set *set;
 
-	priv = container_of(work, काष्ठा nft_rbtree, gc_work.work);
+	priv = container_of(work, struct nft_rbtree, gc_work.work);
 	set  = nft_set_container_of(priv);
 
-	ग_लिखो_lock_bh(&priv->lock);
-	ग_लिखो_seqcount_begin(&priv->count);
-	क्रम (node = rb_first(&priv->root); node != शून्य; node = rb_next(node)) अणु
-		rbe = rb_entry(node, काष्ठा nft_rbtree_elem, node);
+	write_lock_bh(&priv->lock);
+	write_seqcount_begin(&priv->count);
+	for (node = rb_first(&priv->root); node != NULL; node = rb_next(node)) {
+		rbe = rb_entry(node, struct nft_rbtree_elem, node);
 
-		अगर (nft_rbtree_पूर्णांकerval_end(rbe)) अणु
+		if (nft_rbtree_interval_end(rbe)) {
 			rbe_end = rbe;
-			जारी;
-		पूर्ण
-		अगर (!nft_set_elem_expired(&rbe->ext))
-			जारी;
-		अगर (nft_set_elem_mark_busy(&rbe->ext))
-			जारी;
+			continue;
+		}
+		if (!nft_set_elem_expired(&rbe->ext))
+			continue;
+		if (nft_set_elem_mark_busy(&rbe->ext))
+			continue;
 
-		अगर (rbe_prev) अणु
+		if (rbe_prev) {
 			rb_erase(&rbe_prev->node, &priv->root);
-			rbe_prev = शून्य;
-		पूर्ण
+			rbe_prev = NULL;
+		}
 		gcb = nft_set_gc_batch_check(set, gcb, GFP_ATOMIC);
-		अगर (!gcb)
-			अवरोध;
+		if (!gcb)
+			break;
 
 		atomic_dec(&set->nelems);
 		nft_set_gc_batch_add(gcb, rbe);
 		rbe_prev = rbe;
 
-		अगर (rbe_end) अणु
+		if (rbe_end) {
 			atomic_dec(&set->nelems);
 			nft_set_gc_batch_add(gcb, rbe_end);
 			rb_erase(&rbe_end->node, &priv->root);
-			rbe_end = शून्य;
-		पूर्ण
+			rbe_end = NULL;
+		}
 		node = rb_next(node);
-		अगर (!node)
-			अवरोध;
-	पूर्ण
-	अगर (rbe_prev)
+		if (!node)
+			break;
+	}
+	if (rbe_prev)
 		rb_erase(&rbe_prev->node, &priv->root);
-	ग_लिखो_seqcount_end(&priv->count);
-	ग_लिखो_unlock_bh(&priv->lock);
+	write_seqcount_end(&priv->count);
+	write_unlock_bh(&priv->lock);
 
 	rbe = nft_set_catchall_gc(set);
-	अगर (rbe) अणु
+	if (rbe) {
 		gcb = nft_set_gc_batch_check(set, gcb, GFP_ATOMIC);
-		अगर (gcb)
+		if (gcb)
 			nft_set_gc_batch_add(gcb, rbe);
-	पूर्ण
+	}
 	nft_set_gc_batch_complete(gcb);
 
-	queue_delayed_work(प्रणाली_घातer_efficient_wq, &priv->gc_work,
-			   nft_set_gc_पूर्णांकerval(set));
-पूर्ण
+	queue_delayed_work(system_power_efficient_wq, &priv->gc_work,
+			   nft_set_gc_interval(set));
+}
 
-अटल u64 nft_rbtree_privsize(स्थिर काष्ठा nlattr * स्थिर nla[],
-			       स्थिर काष्ठा nft_set_desc *desc)
-अणु
-	वापस माप(काष्ठा nft_rbtree);
-पूर्ण
+static u64 nft_rbtree_privsize(const struct nlattr * const nla[],
+			       const struct nft_set_desc *desc)
+{
+	return sizeof(struct nft_rbtree);
+}
 
-अटल पूर्णांक nft_rbtree_init(स्थिर काष्ठा nft_set *set,
-			   स्थिर काष्ठा nft_set_desc *desc,
-			   स्थिर काष्ठा nlattr * स्थिर nla[])
-अणु
-	काष्ठा nft_rbtree *priv = nft_set_priv(set);
+static int nft_rbtree_init(const struct nft_set *set,
+			   const struct nft_set_desc *desc,
+			   const struct nlattr * const nla[])
+{
+	struct nft_rbtree *priv = nft_set_priv(set);
 
 	rwlock_init(&priv->lock);
 	seqcount_rwlock_init(&priv->count, &priv->lock);
 	priv->root = RB_ROOT;
 
 	INIT_DEFERRABLE_WORK(&priv->gc_work, nft_rbtree_gc);
-	अगर (set->flags & NFT_SET_TIMEOUT)
-		queue_delayed_work(प्रणाली_घातer_efficient_wq, &priv->gc_work,
-				   nft_set_gc_पूर्णांकerval(set));
+	if (set->flags & NFT_SET_TIMEOUT)
+		queue_delayed_work(system_power_efficient_wq, &priv->gc_work,
+				   nft_set_gc_interval(set));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम nft_rbtree_destroy(स्थिर काष्ठा nft_set *set)
-अणु
-	काष्ठा nft_rbtree *priv = nft_set_priv(set);
-	काष्ठा nft_rbtree_elem *rbe;
-	काष्ठा rb_node *node;
+static void nft_rbtree_destroy(const struct nft_set *set)
+{
+	struct nft_rbtree *priv = nft_set_priv(set);
+	struct nft_rbtree_elem *rbe;
+	struct rb_node *node;
 
 	cancel_delayed_work_sync(&priv->gc_work);
 	rcu_barrier();
-	जबतक ((node = priv->root.rb_node) != शून्य) अणु
+	while ((node = priv->root.rb_node) != NULL) {
 		rb_erase(node, &priv->root);
-		rbe = rb_entry(node, काष्ठा nft_rbtree_elem, node);
+		rbe = rb_entry(node, struct nft_rbtree_elem, node);
 		nft_set_elem_destroy(set, rbe, true);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल bool nft_rbtree_estimate(स्थिर काष्ठा nft_set_desc *desc, u32 features,
-				काष्ठा nft_set_estimate *est)
-अणु
-	अगर (desc->field_count > 1)
-		वापस false;
+static bool nft_rbtree_estimate(const struct nft_set_desc *desc, u32 features,
+				struct nft_set_estimate *est)
+{
+	if (desc->field_count > 1)
+		return false;
 
-	अगर (desc->size)
-		est->size = माप(काष्ठा nft_rbtree) +
-			    desc->size * माप(काष्ठा nft_rbtree_elem);
-	अन्यथा
+	if (desc->size)
+		est->size = sizeof(struct nft_rbtree) +
+			    desc->size * sizeof(struct nft_rbtree_elem);
+	else
 		est->size = ~0;
 
 	est->lookup = NFT_SET_CLASS_O_LOG_N;
 	est->space  = NFT_SET_CLASS_O_N;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-स्थिर काष्ठा nft_set_type nft_set_rbtree_type = अणु
+const struct nft_set_type nft_set_rbtree_type = {
 	.features	= NFT_SET_INTERVAL | NFT_SET_MAP | NFT_SET_OBJECT | NFT_SET_TIMEOUT,
-	.ops		= अणु
+	.ops		= {
 		.privsize	= nft_rbtree_privsize,
-		.elemsize	= दुरत्व(काष्ठा nft_rbtree_elem, ext),
+		.elemsize	= offsetof(struct nft_rbtree_elem, ext),
 		.estimate	= nft_rbtree_estimate,
 		.init		= nft_rbtree_init,
 		.destroy	= nft_rbtree_destroy,
 		.insert		= nft_rbtree_insert,
-		.हटाओ		= nft_rbtree_हटाओ,
+		.remove		= nft_rbtree_remove,
 		.deactivate	= nft_rbtree_deactivate,
 		.flush		= nft_rbtree_flush,
 		.activate	= nft_rbtree_activate,
 		.lookup		= nft_rbtree_lookup,
 		.walk		= nft_rbtree_walk,
 		.get		= nft_rbtree_get,
-	पूर्ण,
-पूर्ण;
+	},
+};

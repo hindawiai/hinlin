@@ -1,170 +1,169 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *	linux/arch/alpha/kernel/pci_iommu.c
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/memblock.h>
-#समावेश <linux/export.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/log2.h>
-#समावेश <linux/dma-map-ops.h>
-#समावेश <linux/iommu-helper.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/pci.h>
+#include <linux/gfp.h>
+#include <linux/memblock.h>
+#include <linux/export.h>
+#include <linux/scatterlist.h>
+#include <linux/log2.h>
+#include <linux/dma-map-ops.h>
+#include <linux/iommu-helper.h>
 
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/hwrpb.h>
+#include <asm/io.h>
+#include <asm/hwrpb.h>
 
-#समावेश "proto.h"
-#समावेश "pci_impl.h"
+#include "proto.h"
+#include "pci_impl.h"
 
 
-#घोषणा DEBUG_ALLOC 0
-#अगर DEBUG_ALLOC > 0
-# define DBGA(args...)		prपूर्णांकk(KERN_DEBUG args)
-#अन्यथा
+#define DEBUG_ALLOC 0
+#if DEBUG_ALLOC > 0
+# define DBGA(args...)		printk(KERN_DEBUG args)
+#else
 # define DBGA(args...)
-#पूर्ण_अगर
-#अगर DEBUG_ALLOC > 1
-# define DBGA2(args...)		prपूर्णांकk(KERN_DEBUG args)
-#अन्यथा
+#endif
+#if DEBUG_ALLOC > 1
+# define DBGA2(args...)		printk(KERN_DEBUG args)
+#else
 # define DBGA2(args...)
-#पूर्ण_अगर
+#endif
 
-#घोषणा DEBUG_NOसूचीECT 0
+#define DEBUG_NODIRECT 0
 
-#घोषणा ISA_DMA_MASK		0x00ffffff
+#define ISA_DMA_MASK		0x00ffffff
 
-अटल अंतरभूत अचिन्हित दीर्घ
-mk_iommu_pte(अचिन्हित दीर्घ paddr)
-अणु
-	वापस (paddr >> (PAGE_SHIFT-1)) | 1;
-पूर्ण
+static inline unsigned long
+mk_iommu_pte(unsigned long paddr)
+{
+	return (paddr >> (PAGE_SHIFT-1)) | 1;
+}
 
-/* Return the minimum of MAX or the first घातer of two larger
-   than मुख्य memory.  */
+/* Return the minimum of MAX or the first power of two larger
+   than main memory.  */
 
-अचिन्हित दीर्घ
-size_क्रम_memory(अचिन्हित दीर्घ max)
-अणु
-	अचिन्हित दीर्घ mem = max_low_pfn << PAGE_SHIFT;
-	अगर (mem < max)
-		max = roundup_घात_of_two(mem);
-	वापस max;
-पूर्ण
+unsigned long
+size_for_memory(unsigned long max)
+{
+	unsigned long mem = max_low_pfn << PAGE_SHIFT;
+	if (mem < max)
+		max = roundup_pow_of_two(mem);
+	return max;
+}
 
-काष्ठा pci_iommu_arena * __init
-iommu_arena_new_node(पूर्णांक nid, काष्ठा pci_controller *hose, dma_addr_t base,
-		     अचिन्हित दीर्घ winकरोw_size, अचिन्हित दीर्घ align)
-अणु
-	अचिन्हित दीर्घ mem_size;
-	काष्ठा pci_iommu_arena *arena;
+struct pci_iommu_arena * __init
+iommu_arena_new_node(int nid, struct pci_controller *hose, dma_addr_t base,
+		     unsigned long window_size, unsigned long align)
+{
+	unsigned long mem_size;
+	struct pci_iommu_arena *arena;
 
-	mem_size = winकरोw_size / (PAGE_SIZE / माप(अचिन्हित दीर्घ));
+	mem_size = window_size / (PAGE_SIZE / sizeof(unsigned long));
 
 	/* Note that the TLB lookup logic uses bitwise concatenation,
 	   not addition, so the required arena alignment is based on
-	   the size of the winकरोw.  Retain the align parameter so that
-	   particular प्रणालीs can over-align the arena.  */
-	अगर (align < mem_size)
+	   the size of the window.  Retain the align parameter so that
+	   particular systems can over-align the arena.  */
+	if (align < mem_size)
 		align = mem_size;
 
 
-#अगर_घोषित CONFIG_DISCONTIGMEM
+#ifdef CONFIG_DISCONTIGMEM
 
-	arena = memblock_alloc_node(माप(*arena), align, nid);
-	अगर (!NODE_DATA(nid) || !arena) अणु
-		prपूर्णांकk("%s: couldn't allocate arena from node %d\n"
+	arena = memblock_alloc_node(sizeof(*arena), align, nid);
+	if (!NODE_DATA(nid) || !arena) {
+		printk("%s: couldn't allocate arena from node %d\n"
 		       "    falling back to system-wide allocation\n",
 		       __func__, nid);
-		arena = memblock_alloc(माप(*arena), SMP_CACHE_BYTES);
-		अगर (!arena)
+		arena = memblock_alloc(sizeof(*arena), SMP_CACHE_BYTES);
+		if (!arena)
 			panic("%s: Failed to allocate %zu bytes\n", __func__,
-			      माप(*arena));
-	पूर्ण
+			      sizeof(*arena));
+	}
 
-	arena->ptes = memblock_alloc_node(माप(*arena), align, nid);
-	अगर (!NODE_DATA(nid) || !arena->ptes) अणु
-		prपूर्णांकk("%s: couldn't allocate arena ptes from node %d\n"
+	arena->ptes = memblock_alloc_node(sizeof(*arena), align, nid);
+	if (!NODE_DATA(nid) || !arena->ptes) {
+		printk("%s: couldn't allocate arena ptes from node %d\n"
 		       "    falling back to system-wide allocation\n",
 		       __func__, nid);
 		arena->ptes = memblock_alloc(mem_size, align);
-		अगर (!arena->ptes)
+		if (!arena->ptes)
 			panic("%s: Failed to allocate %lu bytes align=0x%lx\n",
 			      __func__, mem_size, align);
-	पूर्ण
+	}
 
-#अन्यथा /* CONFIG_DISCONTIGMEM */
+#else /* CONFIG_DISCONTIGMEM */
 
-	arena = memblock_alloc(माप(*arena), SMP_CACHE_BYTES);
-	अगर (!arena)
+	arena = memblock_alloc(sizeof(*arena), SMP_CACHE_BYTES);
+	if (!arena)
 		panic("%s: Failed to allocate %zu bytes\n", __func__,
-		      माप(*arena));
+		      sizeof(*arena));
 	arena->ptes = memblock_alloc(mem_size, align);
-	अगर (!arena->ptes)
+	if (!arena->ptes)
 		panic("%s: Failed to allocate %lu bytes align=0x%lx\n",
 		      __func__, mem_size, align);
 
-#पूर्ण_अगर /* CONFIG_DISCONTIGMEM */
+#endif /* CONFIG_DISCONTIGMEM */
 
 	spin_lock_init(&arena->lock);
 	arena->hose = hose;
 	arena->dma_base = base;
-	arena->size = winकरोw_size;
+	arena->size = window_size;
 	arena->next_entry = 0;
 
 	/* Align allocations to a multiple of a page size.  Not needed
 	   unless there are chip bugs.  */
 	arena->align_entry = 1;
 
-	वापस arena;
-पूर्ण
+	return arena;
+}
 
-काष्ठा pci_iommu_arena * __init
-iommu_arena_new(काष्ठा pci_controller *hose, dma_addr_t base,
-		अचिन्हित दीर्घ winकरोw_size, अचिन्हित दीर्घ align)
-अणु
-	वापस iommu_arena_new_node(0, hose, base, winकरोw_size, align);
-पूर्ण
+struct pci_iommu_arena * __init
+iommu_arena_new(struct pci_controller *hose, dma_addr_t base,
+		unsigned long window_size, unsigned long align)
+{
+	return iommu_arena_new_node(0, hose, base, window_size, align);
+}
 
 /* Must be called with the arena lock held */
-अटल दीर्घ
-iommu_arena_find_pages(काष्ठा device *dev, काष्ठा pci_iommu_arena *arena,
-		       दीर्घ n, दीर्घ mask)
-अणु
-	अचिन्हित दीर्घ *ptes;
-	दीर्घ i, p, nent;
-	पूर्णांक pass = 0;
-	अचिन्हित दीर्घ base;
-	अचिन्हित दीर्घ boundary_size;
+static long
+iommu_arena_find_pages(struct device *dev, struct pci_iommu_arena *arena,
+		       long n, long mask)
+{
+	unsigned long *ptes;
+	long i, p, nent;
+	int pass = 0;
+	unsigned long base;
+	unsigned long boundary_size;
 
 	base = arena->dma_base >> PAGE_SHIFT;
 	boundary_size = dma_get_seg_boundary_nr_pages(dev, PAGE_SHIFT);
 
-	/* Search क्रमward क्रम the first mask-aligned sequence of N मुक्त ptes */
+	/* Search forward for the first mask-aligned sequence of N free ptes */
 	ptes = arena->ptes;
 	nent = arena->size >> PAGE_SHIFT;
 	p = ALIGN(arena->next_entry, mask + 1);
 	i = 0;
 
 again:
-	जबतक (i < n && p+i < nent) अणु
-		अगर (!i && iommu_is_span_boundary(p, n, base, boundary_size)) अणु
+	while (i < n && p+i < nent) {
+		if (!i && iommu_is_span_boundary(p, n, base, boundary_size)) {
 			p = ALIGN(p + 1, mask + 1);
-			जाओ again;
-		पूर्ण
+			goto again;
+		}
 
-		अगर (ptes[p+i])
+		if (ptes[p+i])
 			p = ALIGN(p + i + 1, mask + 1), i = 0;
-		अन्यथा
+		else
 			i = i + 1;
-	पूर्ण
+	}
 
-	अगर (i < n) अणु
-		अगर (pass < 1) अणु
+	if (i < n) {
+		if (pass < 1) {
 			/*
 			 * Reached the end.  Flush the TLB and restart
 			 * the search from the beginning.
@@ -174,349 +173,349 @@ again:
 			pass++;
 			p = 0;
 			i = 0;
-			जाओ again;
-		पूर्ण अन्यथा
-			वापस -1;
-	पूर्ण
+			goto again;
+		} else
+			return -1;
+	}
 
 	/* Success. It's the responsibility of the caller to mark them
-	   in use beक्रमe releasing the lock */
-	वापस p;
-पूर्ण
+	   in use before releasing the lock */
+	return p;
+}
 
-अटल दीर्घ
-iommu_arena_alloc(काष्ठा device *dev, काष्ठा pci_iommu_arena *arena, दीर्घ n,
-		  अचिन्हित पूर्णांक align)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित दीर्घ *ptes;
-	दीर्घ i, p, mask;
+static long
+iommu_arena_alloc(struct device *dev, struct pci_iommu_arena *arena, long n,
+		  unsigned int align)
+{
+	unsigned long flags;
+	unsigned long *ptes;
+	long i, p, mask;
 
 	spin_lock_irqsave(&arena->lock, flags);
 
-	/* Search क्रम N empty ptes */
+	/* Search for N empty ptes */
 	ptes = arena->ptes;
 	mask = max(align, arena->align_entry) - 1;
 	p = iommu_arena_find_pages(dev, arena, n, mask);
-	अगर (p < 0) अणु
+	if (p < 0) {
 		spin_unlock_irqrestore(&arena->lock, flags);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	/* Success.  Mark them all in use, ie not zero and invalid
-	   क्रम the iommu tlb that could load them from under us.
-	   The chip specअगरic bits will fill this in with something
-	   kosher when we वापस.  */
-	क्रम (i = 0; i < n; ++i)
+	   for the iommu tlb that could load them from under us.
+	   The chip specific bits will fill this in with something
+	   kosher when we return.  */
+	for (i = 0; i < n; ++i)
 		ptes[p+i] = IOMMU_INVALID_PTE;
 
 	arena->next_entry = p + n;
 	spin_unlock_irqrestore(&arena->lock, flags);
 
-	वापस p;
-पूर्ण
+	return p;
+}
 
-अटल व्योम
-iommu_arena_मुक्त(काष्ठा pci_iommu_arena *arena, दीर्घ ofs, दीर्घ n)
-अणु
-	अचिन्हित दीर्घ *p;
-	दीर्घ i;
+static void
+iommu_arena_free(struct pci_iommu_arena *arena, long ofs, long n)
+{
+	unsigned long *p;
+	long i;
 
 	p = arena->ptes + ofs;
-	क्रम (i = 0; i < n; ++i)
+	for (i = 0; i < n; ++i)
 		p[i] = 0;
-पूर्ण
+}
 
 /*
- * True अगर the machine supports DAC addressing, and DEV can
+ * True if the machine supports DAC addressing, and DEV can
  * make use of it given MASK.
  */
-अटल पूर्णांक pci_dac_dma_supported(काष्ठा pci_dev *dev, u64 mask)
-अणु
+static int pci_dac_dma_supported(struct pci_dev *dev, u64 mask)
+{
 	dma_addr_t dac_offset = alpha_mv.pci_dac_offset;
-	पूर्णांक ok = 1;
+	int ok = 1;
 
-	/* If this is not set, the machine करोesn't support DAC at all.  */
-	अगर (dac_offset == 0)
+	/* If this is not set, the machine doesn't support DAC at all.  */
+	if (dac_offset == 0)
 		ok = 0;
 
 	/* The device has to be able to address our DAC bit.  */
-	अगर ((dac_offset & dev->dma_mask) != dac_offset)
+	if ((dac_offset & dev->dma_mask) != dac_offset)
 		ok = 0;
 
 	/* If both conditions above are met, we are fine. */
 	DBGA("pci_dac_dma_supported %s from %ps\n",
-	     ok ? "yes" : "no", __builtin_वापस_address(0));
+	     ok ? "yes" : "no", __builtin_return_address(0));
 
-	वापस ok;
-पूर्ण
+	return ok;
+}
 
-/* Map a single buffer of the indicated size क्रम PCI DMA in streaming
-   mode.  The 32-bit PCI bus mastering address to use is वापसed.
+/* Map a single buffer of the indicated size for PCI DMA in streaming
+   mode.  The 32-bit PCI bus mastering address to use is returned.
    Once the device is given the dma address, the device owns this memory
-   until either pci_unmap_single or pci_dma_sync_single is perक्रमmed.  */
+   until either pci_unmap_single or pci_dma_sync_single is performed.  */
 
-अटल dma_addr_t
-pci_map_single_1(काष्ठा pci_dev *pdev, व्योम *cpu_addr, माप_प्रकार size,
-		 पूर्णांक dac_allowed)
-अणु
-	काष्ठा pci_controller *hose = pdev ? pdev->sysdata : pci_isa_hose;
+static dma_addr_t
+pci_map_single_1(struct pci_dev *pdev, void *cpu_addr, size_t size,
+		 int dac_allowed)
+{
+	struct pci_controller *hose = pdev ? pdev->sysdata : pci_isa_hose;
 	dma_addr_t max_dma = pdev ? pdev->dma_mask : ISA_DMA_MASK;
-	काष्ठा pci_iommu_arena *arena;
-	दीर्घ npages, dma_ofs, i;
-	अचिन्हित दीर्घ paddr;
+	struct pci_iommu_arena *arena;
+	long npages, dma_ofs, i;
+	unsigned long paddr;
 	dma_addr_t ret;
-	अचिन्हित पूर्णांक align = 0;
-	काष्ठा device *dev = pdev ? &pdev->dev : शून्य;
+	unsigned int align = 0;
+	struct device *dev = pdev ? &pdev->dev : NULL;
 
 	paddr = __pa(cpu_addr);
 
-#अगर !DEBUG_NOसूचीECT
-	/* First check to see अगर we can use the direct map winकरोw.  */
-	अगर (paddr + size + __direct_map_base - 1 <= max_dma
-	    && paddr + size <= __direct_map_size) अणु
+#if !DEBUG_NODIRECT
+	/* First check to see if we can use the direct map window.  */
+	if (paddr + size + __direct_map_base - 1 <= max_dma
+	    && paddr + size <= __direct_map_size) {
 		ret = paddr + __direct_map_base;
 
 		DBGA2("pci_map_single: [%p,%zx] -> direct %llx from %ps\n",
-		      cpu_addr, size, ret, __builtin_वापस_address(0));
+		      cpu_addr, size, ret, __builtin_return_address(0));
 
-		वापस ret;
-	पूर्ण
-#पूर्ण_अगर
+		return ret;
+	}
+#endif
 
-	/* Next, use DAC अगर selected earlier.  */
-	अगर (dac_allowed) अणु
+	/* Next, use DAC if selected earlier.  */
+	if (dac_allowed) {
 		ret = paddr + alpha_mv.pci_dac_offset;
 
 		DBGA2("pci_map_single: [%p,%zx] -> DAC %llx from %ps\n",
-		      cpu_addr, size, ret, __builtin_वापस_address(0));
+		      cpu_addr, size, ret, __builtin_return_address(0));
 
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* If the machine करोesn't define a pci_tbi routine, we have to
-	   assume it करोesn't support sg mapping, and, since we tried to
+	/* If the machine doesn't define a pci_tbi routine, we have to
+	   assume it doesn't support sg mapping, and, since we tried to
 	   use direct_map above, it now must be considered an error. */
-	अगर (! alpha_mv.mv_pci_tbi) अणु
-		prपूर्णांकk_once(KERN_WARNING "pci_map_single: no HW sg\n");
-		वापस DMA_MAPPING_ERROR;
-	पूर्ण
+	if (! alpha_mv.mv_pci_tbi) {
+		printk_once(KERN_WARNING "pci_map_single: no HW sg\n");
+		return DMA_MAPPING_ERROR;
+	}
 
 	arena = hose->sg_pci;
-	अगर (!arena || arena->dma_base + arena->size - 1 > max_dma)
+	if (!arena || arena->dma_base + arena->size - 1 > max_dma)
 		arena = hose->sg_isa;
 
 	npages = iommu_num_pages(paddr, size, PAGE_SIZE);
 
-	/* Force allocation to 64KB boundary क्रम ISA bridges. */
-	अगर (pdev && pdev == isa_bridge)
+	/* Force allocation to 64KB boundary for ISA bridges. */
+	if (pdev && pdev == isa_bridge)
 		align = 8;
 	dma_ofs = iommu_arena_alloc(dev, arena, npages, align);
-	अगर (dma_ofs < 0) अणु
-		prपूर्णांकk(KERN_WARNING "pci_map_single failed: "
+	if (dma_ofs < 0) {
+		printk(KERN_WARNING "pci_map_single failed: "
 		       "could not allocate dma page tables\n");
-		वापस DMA_MAPPING_ERROR;
-	पूर्ण
+		return DMA_MAPPING_ERROR;
+	}
 
 	paddr &= PAGE_MASK;
-	क्रम (i = 0; i < npages; ++i, paddr += PAGE_SIZE)
+	for (i = 0; i < npages; ++i, paddr += PAGE_SIZE)
 		arena->ptes[i + dma_ofs] = mk_iommu_pte(paddr);
 
 	ret = arena->dma_base + dma_ofs * PAGE_SIZE;
-	ret += (अचिन्हित दीर्घ)cpu_addr & ~PAGE_MASK;
+	ret += (unsigned long)cpu_addr & ~PAGE_MASK;
 
 	DBGA2("pci_map_single: [%p,%zx] np %ld -> sg %llx from %ps\n",
-	      cpu_addr, size, npages, ret, __builtin_वापस_address(0));
+	      cpu_addr, size, npages, ret, __builtin_return_address(0));
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Helper क्रम generic DMA-mapping functions. */
-अटल काष्ठा pci_dev *alpha_gendev_to_pci(काष्ठा device *dev)
-अणु
-	अगर (dev && dev_is_pci(dev))
-		वापस to_pci_dev(dev);
+/* Helper for generic DMA-mapping functions. */
+static struct pci_dev *alpha_gendev_to_pci(struct device *dev)
+{
+	if (dev && dev_is_pci(dev))
+		return to_pci_dev(dev);
 
-	/* Assume that non-PCI devices asking क्रम DMA are either ISA or EISA,
+	/* Assume that non-PCI devices asking for DMA are either ISA or EISA,
 	   BUG() otherwise. */
 	BUG_ON(!isa_bridge);
 
 	/* Assume non-busmaster ISA DMA when dma_mask is not set (the ISA
 	   bridge is bus master then). */
-	अगर (!dev || !dev->dma_mask || !*dev->dma_mask)
-		वापस isa_bridge;
+	if (!dev || !dev->dma_mask || !*dev->dma_mask)
+		return isa_bridge;
 
-	/* For EISA bus masters, वापस isa_bridge (it might have smaller
+	/* For EISA bus masters, return isa_bridge (it might have smaller
 	   dma_mask due to wiring limitations). */
-	अगर (*dev->dma_mask >= isa_bridge->dma_mask)
-		वापस isa_bridge;
+	if (*dev->dma_mask >= isa_bridge->dma_mask)
+		return isa_bridge;
 
 	/* This assumes ISA bus master with dma_mask 0xffffff. */
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल dma_addr_t alpha_pci_map_page(काष्ठा device *dev, काष्ठा page *page,
-				     अचिन्हित दीर्घ offset, माप_प्रकार size,
-				     क्रमागत dma_data_direction dir,
-				     अचिन्हित दीर्घ attrs)
-अणु
-	काष्ठा pci_dev *pdev = alpha_gendev_to_pci(dev);
-	पूर्णांक dac_allowed;
+static dma_addr_t alpha_pci_map_page(struct device *dev, struct page *page,
+				     unsigned long offset, size_t size,
+				     enum dma_data_direction dir,
+				     unsigned long attrs)
+{
+	struct pci_dev *pdev = alpha_gendev_to_pci(dev);
+	int dac_allowed;
 
 	BUG_ON(dir == PCI_DMA_NONE);
 
 	dac_allowed = pdev ? pci_dac_dma_supported(pdev, pdev->dma_mask) : 0; 
-	वापस pci_map_single_1(pdev, (अक्षर *)page_address(page) + offset, 
+	return pci_map_single_1(pdev, (char *)page_address(page) + offset, 
 				size, dac_allowed);
-पूर्ण
+}
 
 /* Unmap a single streaming mode DMA translation.  The DMA_ADDR and
-   SIZE must match what was provided क्रम in a previous pci_map_single
-   call.  All other usages are undefined.  After this call, पढ़ोs by
+   SIZE must match what was provided for in a previous pci_map_single
+   call.  All other usages are undefined.  After this call, reads by
    the cpu to the buffer are guaranteed to see whatever the device
    wrote there.  */
 
-अटल व्योम alpha_pci_unmap_page(काष्ठा device *dev, dma_addr_t dma_addr,
-				 माप_प्रकार size, क्रमागत dma_data_direction dir,
-				 अचिन्हित दीर्घ attrs)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा pci_dev *pdev = alpha_gendev_to_pci(dev);
-	काष्ठा pci_controller *hose = pdev ? pdev->sysdata : pci_isa_hose;
-	काष्ठा pci_iommu_arena *arena;
-	दीर्घ dma_ofs, npages;
+static void alpha_pci_unmap_page(struct device *dev, dma_addr_t dma_addr,
+				 size_t size, enum dma_data_direction dir,
+				 unsigned long attrs)
+{
+	unsigned long flags;
+	struct pci_dev *pdev = alpha_gendev_to_pci(dev);
+	struct pci_controller *hose = pdev ? pdev->sysdata : pci_isa_hose;
+	struct pci_iommu_arena *arena;
+	long dma_ofs, npages;
 
 	BUG_ON(dir == PCI_DMA_NONE);
 
-	अगर (dma_addr >= __direct_map_base
-	    && dma_addr < __direct_map_base + __direct_map_size) अणु
-		/* Nothing to करो.  */
+	if (dma_addr >= __direct_map_base
+	    && dma_addr < __direct_map_base + __direct_map_size) {
+		/* Nothing to do.  */
 
 		DBGA2("pci_unmap_single: direct [%llx,%zx] from %ps\n",
-		      dma_addr, size, __builtin_वापस_address(0));
+		      dma_addr, size, __builtin_return_address(0));
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (dma_addr > 0xffffffff) अणु
+	if (dma_addr > 0xffffffff) {
 		DBGA2("pci64_unmap_single: DAC [%llx,%zx] from %ps\n",
-		      dma_addr, size, __builtin_वापस_address(0));
-		वापस;
-	पूर्ण
+		      dma_addr, size, __builtin_return_address(0));
+		return;
+	}
 
 	arena = hose->sg_pci;
-	अगर (!arena || dma_addr < arena->dma_base)
+	if (!arena || dma_addr < arena->dma_base)
 		arena = hose->sg_isa;
 
 	dma_ofs = (dma_addr - arena->dma_base) >> PAGE_SHIFT;
-	अगर (dma_ofs * PAGE_SIZE >= arena->size) अणु
-		prपूर्णांकk(KERN_ERR "Bogus pci_unmap_single: dma_addr %llx "
+	if (dma_ofs * PAGE_SIZE >= arena->size) {
+		printk(KERN_ERR "Bogus pci_unmap_single: dma_addr %llx "
 		       " base %llx size %x\n",
 		       dma_addr, arena->dma_base, arena->size);
-		वापस;
+		return;
 		BUG();
-	पूर्ण
+	}
 
 	npages = iommu_num_pages(dma_addr, size, PAGE_SIZE);
 
 	spin_lock_irqsave(&arena->lock, flags);
 
-	iommu_arena_मुक्त(arena, dma_ofs, npages);
+	iommu_arena_free(arena, dma_ofs, npages);
 
-        /* If we're freeing ptes above the `next_entry' poपूर्णांकer (they
-           may have snuck back पूर्णांकo the TLB since the last wrap flush),
-           we need to flush the TLB beक्रमe पुनः_स्मृतिating the latter.  */
-	अगर (dma_ofs >= arena->next_entry)
+        /* If we're freeing ptes above the `next_entry' pointer (they
+           may have snuck back into the TLB since the last wrap flush),
+           we need to flush the TLB before reallocating the latter.  */
+	if (dma_ofs >= arena->next_entry)
 		alpha_mv.mv_pci_tbi(hose, dma_addr, dma_addr + size - 1);
 
 	spin_unlock_irqrestore(&arena->lock, flags);
 
 	DBGA2("pci_unmap_single: sg [%llx,%zx] np %ld from %ps\n",
-	      dma_addr, size, npages, __builtin_वापस_address(0));
-पूर्ण
+	      dma_addr, size, npages, __builtin_return_address(0));
+}
 
-/* Allocate and map kernel buffer using consistent mode DMA क्रम PCI
-   device.  Returns non-शून्य cpu-view poपूर्णांकer to the buffer अगर
+/* Allocate and map kernel buffer using consistent mode DMA for PCI
+   device.  Returns non-NULL cpu-view pointer to the buffer if
    successful and sets *DMA_ADDRP to the pci side dma address as well,
-   अन्यथा DMA_ADDRP is undefined.  */
+   else DMA_ADDRP is undefined.  */
 
-अटल व्योम *alpha_pci_alloc_coherent(काष्ठा device *dev, माप_प्रकार size,
+static void *alpha_pci_alloc_coherent(struct device *dev, size_t size,
 				      dma_addr_t *dma_addrp, gfp_t gfp,
-				      अचिन्हित दीर्घ attrs)
-अणु
-	काष्ठा pci_dev *pdev = alpha_gendev_to_pci(dev);
-	व्योम *cpu_addr;
-	दीर्घ order = get_order(size);
+				      unsigned long attrs)
+{
+	struct pci_dev *pdev = alpha_gendev_to_pci(dev);
+	void *cpu_addr;
+	long order = get_order(size);
 
 	gfp &= ~GFP_DMA;
 
 try_again:
-	cpu_addr = (व्योम *)__get_मुक्त_pages(gfp | __GFP_ZERO, order);
-	अगर (! cpu_addr) अणु
-		prपूर्णांकk(KERN_INFO "pci_alloc_consistent: "
+	cpu_addr = (void *)__get_free_pages(gfp | __GFP_ZERO, order);
+	if (! cpu_addr) {
+		printk(KERN_INFO "pci_alloc_consistent: "
 		       "get_free_pages failed from %ps\n",
-			__builtin_वापस_address(0));
+			__builtin_return_address(0));
 		/* ??? Really atomic allocation?  Otherwise we could play
-		   with vदो_स्मृति and sg अगर we can't find contiguous memory.  */
-		वापस शून्य;
-	पूर्ण
-	स_रखो(cpu_addr, 0, size);
+		   with vmalloc and sg if we can't find contiguous memory.  */
+		return NULL;
+	}
+	memset(cpu_addr, 0, size);
 
 	*dma_addrp = pci_map_single_1(pdev, cpu_addr, size, 0);
-	अगर (*dma_addrp == DMA_MAPPING_ERROR) अणु
-		मुक्त_pages((अचिन्हित दीर्घ)cpu_addr, order);
-		अगर (alpha_mv.mv_pci_tbi || (gfp & GFP_DMA))
-			वापस शून्य;
-		/* The address करोesn't fit required mask and we
-		   करो not have iommu. Try again with GFP_DMA. */
+	if (*dma_addrp == DMA_MAPPING_ERROR) {
+		free_pages((unsigned long)cpu_addr, order);
+		if (alpha_mv.mv_pci_tbi || (gfp & GFP_DMA))
+			return NULL;
+		/* The address doesn't fit required mask and we
+		   do not have iommu. Try again with GFP_DMA. */
 		gfp |= GFP_DMA;
-		जाओ try_again;
-	पूर्ण
+		goto try_again;
+	}
 
 	DBGA2("pci_alloc_consistent: %zx -> [%p,%llx] from %ps\n",
-	      size, cpu_addr, *dma_addrp, __builtin_वापस_address(0));
+	      size, cpu_addr, *dma_addrp, __builtin_return_address(0));
 
-	वापस cpu_addr;
-पूर्ण
+	return cpu_addr;
+}
 
 /* Free and unmap a consistent DMA buffer.  CPU_ADDR and DMA_ADDR must
-   be values that were वापसed from pci_alloc_consistent.  SIZE must
-   be the same as what as passed पूर्णांकo pci_alloc_consistent.
+   be values that were returned from pci_alloc_consistent.  SIZE must
+   be the same as what as passed into pci_alloc_consistent.
    References to the memory and mappings associated with CPU_ADDR or
    DMA_ADDR past this call are illegal.  */
 
-अटल व्योम alpha_pci_मुक्त_coherent(काष्ठा device *dev, माप_प्रकार size,
-				    व्योम *cpu_addr, dma_addr_t dma_addr,
-				    अचिन्हित दीर्घ attrs)
-अणु
-	काष्ठा pci_dev *pdev = alpha_gendev_to_pci(dev);
-	pci_unmap_single(pdev, dma_addr, size, PCI_DMA_BIसूचीECTIONAL);
-	मुक्त_pages((अचिन्हित दीर्घ)cpu_addr, get_order(size));
+static void alpha_pci_free_coherent(struct device *dev, size_t size,
+				    void *cpu_addr, dma_addr_t dma_addr,
+				    unsigned long attrs)
+{
+	struct pci_dev *pdev = alpha_gendev_to_pci(dev);
+	pci_unmap_single(pdev, dma_addr, size, PCI_DMA_BIDIRECTIONAL);
+	free_pages((unsigned long)cpu_addr, get_order(size));
 
 	DBGA2("pci_free_consistent: [%llx,%zx] from %ps\n",
-	      dma_addr, size, __builtin_वापस_address(0));
-पूर्ण
+	      dma_addr, size, __builtin_return_address(0));
+}
 
-/* Classअगरy the elements of the scatterlist.  Write dma_address
+/* Classify the elements of the scatterlist.  Write dma_address
    of each element with:
 	0   : Followers all physically adjacent.
-	1   : Followers all भवly adjacent.
+	1   : Followers all virtually adjacent.
 	-1  : Not leader, physically adjacent to previous.
-	-2  : Not leader, भवly adjacent to previous.
+	-2  : Not leader, virtually adjacent to previous.
    Write dma_length of each leader with the combined lengths of
    the mergable followers.  */
 
-#घोषणा SG_ENT_VIRT_ADDRESS(SG) (sg_virt((SG)))
-#घोषणा SG_ENT_PHYS_ADDRESS(SG) __pa(SG_ENT_VIRT_ADDRESS(SG))
+#define SG_ENT_VIRT_ADDRESS(SG) (sg_virt((SG)))
+#define SG_ENT_PHYS_ADDRESS(SG) __pa(SG_ENT_VIRT_ADDRESS(SG))
 
-अटल व्योम
-sg_classअगरy(काष्ठा device *dev, काष्ठा scatterlist *sg, काष्ठा scatterlist *end,
-	    पूर्णांक virt_ok)
-अणु
-	अचिन्हित दीर्घ next_paddr;
-	काष्ठा scatterlist *leader;
-	दीर्घ leader_flag, leader_length;
-	अचिन्हित पूर्णांक max_seg_size;
+static void
+sg_classify(struct device *dev, struct scatterlist *sg, struct scatterlist *end,
+	    int virt_ok)
+{
+	unsigned long next_paddr;
+	struct scatterlist *leader;
+	long leader_flag, leader_length;
+	unsigned int max_seg_size;
 
 	leader = sg;
 	leader_flag = 0;
@@ -525,94 +524,94 @@ sg_classअगरy(काष्ठा device *dev, काष्ठा scatterlis
 
 	/* we will not marge sg without device. */
 	max_seg_size = dev ? dma_get_max_seg_size(dev) : 0;
-	क्रम (++sg; sg < end; ++sg) अणु
-		अचिन्हित दीर्घ addr, len;
+	for (++sg; sg < end; ++sg) {
+		unsigned long addr, len;
 		addr = SG_ENT_PHYS_ADDRESS(sg);
 		len = sg->length;
 
-		अगर (leader_length + len > max_seg_size)
-			जाओ new_segment;
+		if (leader_length + len > max_seg_size)
+			goto new_segment;
 
-		अगर (next_paddr == addr) अणु
+		if (next_paddr == addr) {
 			sg->dma_address = -1;
 			leader_length += len;
-		पूर्ण अन्यथा अगर (((next_paddr | addr) & ~PAGE_MASK) == 0 && virt_ok) अणु
+		} else if (((next_paddr | addr) & ~PAGE_MASK) == 0 && virt_ok) {
 			sg->dma_address = -2;
 			leader_flag = 1;
 			leader_length += len;
-		पूर्ण अन्यथा अणु
+		} else {
 new_segment:
 			leader->dma_address = leader_flag;
 			leader->dma_length = leader_length;
 			leader = sg;
 			leader_flag = 0;
 			leader_length = len;
-		पूर्ण
+		}
 
 		next_paddr = addr + len;
-	पूर्ण
+	}
 
 	leader->dma_address = leader_flag;
 	leader->dma_length = leader_length;
-पूर्ण
+}
 
 /* Given a scatterlist leader, choose an allocation method and fill
    in the blanks.  */
 
-अटल पूर्णांक
-sg_fill(काष्ठा device *dev, काष्ठा scatterlist *leader, काष्ठा scatterlist *end,
-	काष्ठा scatterlist *out, काष्ठा pci_iommu_arena *arena,
-	dma_addr_t max_dma, पूर्णांक dac_allowed)
-अणु
-	अचिन्हित दीर्घ paddr = SG_ENT_PHYS_ADDRESS(leader);
-	दीर्घ size = leader->dma_length;
-	काष्ठा scatterlist *sg;
-	अचिन्हित दीर्घ *ptes;
-	दीर्घ npages, dma_ofs, i;
+static int
+sg_fill(struct device *dev, struct scatterlist *leader, struct scatterlist *end,
+	struct scatterlist *out, struct pci_iommu_arena *arena,
+	dma_addr_t max_dma, int dac_allowed)
+{
+	unsigned long paddr = SG_ENT_PHYS_ADDRESS(leader);
+	long size = leader->dma_length;
+	struct scatterlist *sg;
+	unsigned long *ptes;
+	long npages, dma_ofs, i;
 
-#अगर !DEBUG_NOसूचीECT
+#if !DEBUG_NODIRECT
 	/* If everything is physically contiguous, and the addresses
-	   fall पूर्णांकo the direct-map winकरोw, use it.  */
-	अगर (leader->dma_address == 0
+	   fall into the direct-map window, use it.  */
+	if (leader->dma_address == 0
 	    && paddr + size + __direct_map_base - 1 <= max_dma
-	    && paddr + size <= __direct_map_size) अणु
+	    && paddr + size <= __direct_map_size) {
 		out->dma_address = paddr + __direct_map_base;
 		out->dma_length = size;
 
 		DBGA("    sg_fill: [%p,%lx] -> direct %llx\n",
 		     __va(paddr), size, out->dma_address);
 
-		वापस 0;
-	पूर्ण
-#पूर्ण_अगर
+		return 0;
+	}
+#endif
 
 	/* If physically contiguous and DAC is available, use it.  */
-	अगर (leader->dma_address == 0 && dac_allowed) अणु
+	if (leader->dma_address == 0 && dac_allowed) {
 		out->dma_address = paddr + alpha_mv.pci_dac_offset;
 		out->dma_length = size;
 
 		DBGA("    sg_fill: [%p,%lx] -> DAC %llx\n",
 		     __va(paddr), size, out->dma_address);
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* Otherwise, we'll use the iommu to make the pages भवly
+	/* Otherwise, we'll use the iommu to make the pages virtually
 	   contiguous.  */
 
 	paddr &= ~PAGE_MASK;
 	npages = iommu_num_pages(paddr, size, PAGE_SIZE);
 	dma_ofs = iommu_arena_alloc(dev, arena, npages, 0);
-	अगर (dma_ofs < 0) अणु
+	if (dma_ofs < 0) {
 		/* If we attempted a direct map above but failed, die.  */
-		अगर (leader->dma_address == 0)
-			वापस -1;
+		if (leader->dma_address == 0)
+			return -1;
 
-		/* Otherwise, अवरोध up the reमुख्यing भवly contiguous
-		   hunks पूर्णांकo inभागidual direct maps and retry.  */
-		sg_classअगरy(dev, leader, end, 0);
-		वापस sg_fill(dev, leader, end, out, arena, max_dma, dac_allowed);
-	पूर्ण
+		/* Otherwise, break up the remaining virtually contiguous
+		   hunks into individual direct maps and retry.  */
+		sg_classify(dev, leader, end, 0);
+		return sg_fill(dev, leader, end, out, arena, max_dma, dac_allowed);
+	}
 
 	out->dma_address = arena->dma_base + dma_ofs*PAGE_SIZE + paddr;
 	out->dma_length = size;
@@ -620,332 +619,332 @@ sg_fill(काष्ठा device *dev, काष्ठा scatterlist *leader, 
 	DBGA("    sg_fill: [%p,%lx] -> sg %llx np %ld\n",
 	     __va(paddr), size, out->dma_address, npages);
 
-	/* All भवly contiguous.  We need to find the length of each
+	/* All virtually contiguous.  We need to find the length of each
 	   physically contiguous subsegment to fill in the ptes.  */
 	ptes = &arena->ptes[dma_ofs];
 	sg = leader;
-	करो अणु
-#अगर DEBUG_ALLOC > 0
-		काष्ठा scatterlist *last_sg = sg;
-#पूर्ण_अगर
+	do {
+#if DEBUG_ALLOC > 0
+		struct scatterlist *last_sg = sg;
+#endif
 
 		size = sg->length;
 		paddr = SG_ENT_PHYS_ADDRESS(sg);
 
-		जबतक (sg+1 < end && (पूर्णांक) sg[1].dma_address == -1) अणु
+		while (sg+1 < end && (int) sg[1].dma_address == -1) {
 			size += sg[1].length;
 			sg = sg_next(sg);
-		पूर्ण
+		}
 
 		npages = iommu_num_pages(paddr, size, PAGE_SIZE);
 
 		paddr &= PAGE_MASK;
-		क्रम (i = 0; i < npages; ++i, paddr += PAGE_SIZE)
+		for (i = 0; i < npages; ++i, paddr += PAGE_SIZE)
 			*ptes++ = mk_iommu_pte(paddr);
 
-#अगर DEBUG_ALLOC > 0
+#if DEBUG_ALLOC > 0
 		DBGA("    (%ld) [%p,%x] np %ld\n",
 		     last_sg - leader, SG_ENT_VIRT_ADDRESS(last_sg),
 		     last_sg->length, npages);
-		जबतक (++last_sg <= sg) अणु
+		while (++last_sg <= sg) {
 			DBGA("        (%ld) [%p,%x] cont\n",
 			     last_sg - leader, SG_ENT_VIRT_ADDRESS(last_sg),
 			     last_sg->length);
-		पूर्ण
-#पूर्ण_अगर
-	पूर्ण जबतक (++sg < end && (पूर्णांक) sg->dma_address < 0);
+		}
+#endif
+	} while (++sg < end && (int) sg->dma_address < 0);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक alpha_pci_map_sg(काष्ठा device *dev, काष्ठा scatterlist *sg,
-			    पूर्णांक nents, क्रमागत dma_data_direction dir,
-			    अचिन्हित दीर्घ attrs)
-अणु
-	काष्ठा pci_dev *pdev = alpha_gendev_to_pci(dev);
-	काष्ठा scatterlist *start, *end, *out;
-	काष्ठा pci_controller *hose;
-	काष्ठा pci_iommu_arena *arena;
+static int alpha_pci_map_sg(struct device *dev, struct scatterlist *sg,
+			    int nents, enum dma_data_direction dir,
+			    unsigned long attrs)
+{
+	struct pci_dev *pdev = alpha_gendev_to_pci(dev);
+	struct scatterlist *start, *end, *out;
+	struct pci_controller *hose;
+	struct pci_iommu_arena *arena;
 	dma_addr_t max_dma;
-	पूर्णांक dac_allowed;
+	int dac_allowed;
 
 	BUG_ON(dir == PCI_DMA_NONE);
 
 	dac_allowed = dev ? pci_dac_dma_supported(pdev, pdev->dma_mask) : 0;
 
 	/* Fast path single entry scatterlists.  */
-	अगर (nents == 1) अणु
+	if (nents == 1) {
 		sg->dma_length = sg->length;
 		sg->dma_address
 		  = pci_map_single_1(pdev, SG_ENT_VIRT_ADDRESS(sg),
 				     sg->length, dac_allowed);
-		वापस sg->dma_address != DMA_MAPPING_ERROR;
-	पूर्ण
+		return sg->dma_address != DMA_MAPPING_ERROR;
+	}
 
 	start = sg;
 	end = sg + nents;
 
-	/* First, prepare inक्रमmation about the entries.  */
-	sg_classअगरy(dev, sg, end, alpha_mv.mv_pci_tbi != 0);
+	/* First, prepare information about the entries.  */
+	sg_classify(dev, sg, end, alpha_mv.mv_pci_tbi != 0);
 
 	/* Second, figure out where we're going to map things.  */
-	अगर (alpha_mv.mv_pci_tbi) अणु
+	if (alpha_mv.mv_pci_tbi) {
 		hose = pdev ? pdev->sysdata : pci_isa_hose;
 		max_dma = pdev ? pdev->dma_mask : ISA_DMA_MASK;
 		arena = hose->sg_pci;
-		अगर (!arena || arena->dma_base + arena->size - 1 > max_dma)
+		if (!arena || arena->dma_base + arena->size - 1 > max_dma)
 			arena = hose->sg_isa;
-	पूर्ण अन्यथा अणु
+	} else {
 		max_dma = -1;
-		arena = शून्य;
-		hose = शून्य;
-	पूर्ण
+		arena = NULL;
+		hose = NULL;
+	}
 
 	/* Third, iterate over the scatterlist leaders and allocate
 	   dma space as needed.  */
-	क्रम (out = sg; sg < end; ++sg) अणु
-		अगर ((पूर्णांक) sg->dma_address < 0)
-			जारी;
-		अगर (sg_fill(dev, sg, end, out, arena, max_dma, dac_allowed) < 0)
-			जाओ error;
+	for (out = sg; sg < end; ++sg) {
+		if ((int) sg->dma_address < 0)
+			continue;
+		if (sg_fill(dev, sg, end, out, arena, max_dma, dac_allowed) < 0)
+			goto error;
 		out++;
-	पूर्ण
+	}
 
-	/* Mark the end of the list क्रम pci_unmap_sg.  */
-	अगर (out < end)
+	/* Mark the end of the list for pci_unmap_sg.  */
+	if (out < end)
 		out->dma_length = 0;
 
-	अगर (out - start == 0)
-		prपूर्णांकk(KERN_WARNING "pci_map_sg failed: no entries?\n");
+	if (out - start == 0)
+		printk(KERN_WARNING "pci_map_sg failed: no entries?\n");
 	DBGA("pci_map_sg: %ld entries\n", out - start);
 
-	वापस out - start;
+	return out - start;
 
  error:
-	prपूर्णांकk(KERN_WARNING "pci_map_sg failed: "
+	printk(KERN_WARNING "pci_map_sg failed: "
 	       "could not allocate dma page tables\n");
 
-	/* Some allocation failed जबतक mapping the scatterlist
+	/* Some allocation failed while mapping the scatterlist
 	   entries.  Unmap them now.  */
-	अगर (out > start)
+	if (out > start)
 		pci_unmap_sg(pdev, start, out - start, dir);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Unmap a set of streaming mode DMA translations.  Again, cpu पढ़ो
-   rules concerning calls here are the same as क्रम pci_unmap_single()
+/* Unmap a set of streaming mode DMA translations.  Again, cpu read
+   rules concerning calls here are the same as for pci_unmap_single()
    above.  */
 
-अटल व्योम alpha_pci_unmap_sg(काष्ठा device *dev, काष्ठा scatterlist *sg,
-			       पूर्णांक nents, क्रमागत dma_data_direction dir,
-			       अचिन्हित दीर्घ attrs)
-अणु
-	काष्ठा pci_dev *pdev = alpha_gendev_to_pci(dev);
-	अचिन्हित दीर्घ flags;
-	काष्ठा pci_controller *hose;
-	काष्ठा pci_iommu_arena *arena;
-	काष्ठा scatterlist *end;
+static void alpha_pci_unmap_sg(struct device *dev, struct scatterlist *sg,
+			       int nents, enum dma_data_direction dir,
+			       unsigned long attrs)
+{
+	struct pci_dev *pdev = alpha_gendev_to_pci(dev);
+	unsigned long flags;
+	struct pci_controller *hose;
+	struct pci_iommu_arena *arena;
+	struct scatterlist *end;
 	dma_addr_t max_dma;
 	dma_addr_t fbeg, fend;
 
 	BUG_ON(dir == PCI_DMA_NONE);
 
-	अगर (! alpha_mv.mv_pci_tbi)
-		वापस;
+	if (! alpha_mv.mv_pci_tbi)
+		return;
 
 	hose = pdev ? pdev->sysdata : pci_isa_hose;
 	max_dma = pdev ? pdev->dma_mask : ISA_DMA_MASK;
 	arena = hose->sg_pci;
-	अगर (!arena || arena->dma_base + arena->size - 1 > max_dma)
+	if (!arena || arena->dma_base + arena->size - 1 > max_dma)
 		arena = hose->sg_isa;
 
 	fbeg = -1, fend = 0;
 
 	spin_lock_irqsave(&arena->lock, flags);
 
-	क्रम (end = sg + nents; sg < end; ++sg) अणु
+	for (end = sg + nents; sg < end; ++sg) {
 		dma_addr_t addr;
-		माप_प्रकार size;
-		दीर्घ npages, ofs;
+		size_t size;
+		long npages, ofs;
 		dma_addr_t tend;
 
 		addr = sg->dma_address;
 		size = sg->dma_length;
-		अगर (!size)
-			अवरोध;
+		if (!size)
+			break;
 
-		अगर (addr > 0xffffffff) अणु
-			/* It's a DAC address -- nothing to करो.  */
+		if (addr > 0xffffffff) {
+			/* It's a DAC address -- nothing to do.  */
 			DBGA("    (%ld) DAC [%llx,%zx]\n",
 			      sg - end + nents, addr, size);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (addr >= __direct_map_base
-		    && addr < __direct_map_base + __direct_map_size) अणु
-			/* Nothing to करो.  */
+		if (addr >= __direct_map_base
+		    && addr < __direct_map_base + __direct_map_size) {
+			/* Nothing to do.  */
 			DBGA("    (%ld) direct [%llx,%zx]\n",
 			      sg - end + nents, addr, size);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		DBGA("    (%ld) sg [%llx,%zx]\n",
 		     sg - end + nents, addr, size);
 
 		npages = iommu_num_pages(addr, size, PAGE_SIZE);
 		ofs = (addr - arena->dma_base) >> PAGE_SHIFT;
-		iommu_arena_मुक्त(arena, ofs, npages);
+		iommu_arena_free(arena, ofs, npages);
 
 		tend = addr + size - 1;
-		अगर (fbeg > addr) fbeg = addr;
-		अगर (fend < tend) fend = tend;
-	पूर्ण
+		if (fbeg > addr) fbeg = addr;
+		if (fend < tend) fend = tend;
+	}
 
-        /* If we're freeing ptes above the `next_entry' poपूर्णांकer (they
-           may have snuck back पूर्णांकo the TLB since the last wrap flush),
-           we need to flush the TLB beक्रमe पुनः_स्मृतिating the latter.  */
-	अगर ((fend - arena->dma_base) >> PAGE_SHIFT >= arena->next_entry)
+        /* If we're freeing ptes above the `next_entry' pointer (they
+           may have snuck back into the TLB since the last wrap flush),
+           we need to flush the TLB before reallocating the latter.  */
+	if ((fend - arena->dma_base) >> PAGE_SHIFT >= arena->next_entry)
 		alpha_mv.mv_pci_tbi(hose, fbeg, fend);
 
 	spin_unlock_irqrestore(&arena->lock, flags);
 
 	DBGA("pci_unmap_sg: %ld entries\n", nents - (end - sg));
-पूर्ण
+}
 
 /* Return whether the given PCI device DMA address mask can be
    supported properly.  */
 
-अटल पूर्णांक alpha_pci_supported(काष्ठा device *dev, u64 mask)
-अणु
-	काष्ठा pci_dev *pdev = alpha_gendev_to_pci(dev);
-	काष्ठा pci_controller *hose;
-	काष्ठा pci_iommu_arena *arena;
+static int alpha_pci_supported(struct device *dev, u64 mask)
+{
+	struct pci_dev *pdev = alpha_gendev_to_pci(dev);
+	struct pci_controller *hose;
+	struct pci_iommu_arena *arena;
 
 	/* If there exists a direct map, and the mask fits either
-	   the entire direct mapped space or the total प्रणाली memory as
-	   shअगरted by the map base */
-	अगर (__direct_map_size != 0
+	   the entire direct mapped space or the total system memory as
+	   shifted by the map base */
+	if (__direct_map_size != 0
 	    && (__direct_map_base + __direct_map_size - 1 <= mask ||
 		__direct_map_base + (max_low_pfn << PAGE_SHIFT) - 1 <= mask))
-		वापस 1;
+		return 1;
 
 	/* Check that we have a scatter-gather arena that fits.  */
 	hose = pdev ? pdev->sysdata : pci_isa_hose;
 	arena = hose->sg_isa;
-	अगर (arena && arena->dma_base + arena->size - 1 <= mask)
-		वापस 1;
+	if (arena && arena->dma_base + arena->size - 1 <= mask)
+		return 1;
 	arena = hose->sg_pci;
-	अगर (arena && arena->dma_base + arena->size - 1 <= mask)
-		वापस 1;
+	if (arena && arena->dma_base + arena->size - 1 <= mask)
+		return 1;
 
 	/* As last resort try ZONE_DMA.  */
-	अगर (!__direct_map_base && MAX_DMA_ADDRESS - IDENT_ADDR - 1 <= mask)
-		वापस 1;
+	if (!__direct_map_base && MAX_DMA_ADDRESS - IDENT_ADDR - 1 <= mask)
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /*
  * AGP GART extensions to the IOMMU
  */
-पूर्णांक
-iommu_reserve(काष्ठा pci_iommu_arena *arena, दीर्घ pg_count, दीर्घ align_mask) 
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित दीर्घ *ptes;
-	दीर्घ i, p;
+int
+iommu_reserve(struct pci_iommu_arena *arena, long pg_count, long align_mask) 
+{
+	unsigned long flags;
+	unsigned long *ptes;
+	long i, p;
 
-	अगर (!arena) वापस -EINVAL;
+	if (!arena) return -EINVAL;
 
 	spin_lock_irqsave(&arena->lock, flags);
 
-	/* Search क्रम N empty ptes.  */
+	/* Search for N empty ptes.  */
 	ptes = arena->ptes;
-	p = iommu_arena_find_pages(शून्य, arena, pg_count, align_mask);
-	अगर (p < 0) अणु
+	p = iommu_arena_find_pages(NULL, arena, pg_count, align_mask);
+	if (p < 0) {
 		spin_unlock_irqrestore(&arena->lock, flags);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	/* Success.  Mark them all reserved (ie not zero and invalid)
-	   क्रम the iommu tlb that could load them from under us.
+	   for the iommu tlb that could load them from under us.
 	   They will be filled in with valid bits by _bind() */
-	क्रम (i = 0; i < pg_count; ++i)
+	for (i = 0; i < pg_count; ++i)
 		ptes[p+i] = IOMMU_RESERVED_PTE;
 
 	arena->next_entry = p + pg_count;
 	spin_unlock_irqrestore(&arena->lock, flags);
 
-	वापस p;
-पूर्ण
+	return p;
+}
 
-पूर्णांक 
-iommu_release(काष्ठा pci_iommu_arena *arena, दीर्घ pg_start, दीर्घ pg_count)
-अणु
-	अचिन्हित दीर्घ *ptes;
-	दीर्घ i;
+int 
+iommu_release(struct pci_iommu_arena *arena, long pg_start, long pg_count)
+{
+	unsigned long *ptes;
+	long i;
 
-	अगर (!arena) वापस -EINVAL;
+	if (!arena) return -EINVAL;
 
 	ptes = arena->ptes;
 
 	/* Make sure they're all reserved first... */
-	क्रम(i = pg_start; i < pg_start + pg_count; i++)
-		अगर (ptes[i] != IOMMU_RESERVED_PTE)
-			वापस -EBUSY;
+	for(i = pg_start; i < pg_start + pg_count; i++)
+		if (ptes[i] != IOMMU_RESERVED_PTE)
+			return -EBUSY;
 
-	iommu_arena_मुक्त(arena, pg_start, pg_count);
-	वापस 0;
-पूर्ण
+	iommu_arena_free(arena, pg_start, pg_count);
+	return 0;
+}
 
-पूर्णांक
-iommu_bind(काष्ठा pci_iommu_arena *arena, दीर्घ pg_start, दीर्घ pg_count, 
-	   काष्ठा page **pages)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित दीर्घ *ptes;
-	दीर्घ i, j;
+int
+iommu_bind(struct pci_iommu_arena *arena, long pg_start, long pg_count, 
+	   struct page **pages)
+{
+	unsigned long flags;
+	unsigned long *ptes;
+	long i, j;
 
-	अगर (!arena) वापस -EINVAL;
+	if (!arena) return -EINVAL;
 	
 	spin_lock_irqsave(&arena->lock, flags);
 
 	ptes = arena->ptes;
 
-	क्रम(j = pg_start; j < pg_start + pg_count; j++) अणु
-		अगर (ptes[j] != IOMMU_RESERVED_PTE) अणु
+	for(j = pg_start; j < pg_start + pg_count; j++) {
+		if (ptes[j] != IOMMU_RESERVED_PTE) {
 			spin_unlock_irqrestore(&arena->lock, flags);
-			वापस -EBUSY;
-		पूर्ण
-	पूर्ण
+			return -EBUSY;
+		}
+	}
 		
-	क्रम(i = 0, j = pg_start; i < pg_count; i++, j++)
+	for(i = 0, j = pg_start; i < pg_count; i++, j++)
 		ptes[j] = mk_iommu_pte(page_to_phys(pages[i]));
 
 	spin_unlock_irqrestore(&arena->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक
-iommu_unbind(काष्ठा pci_iommu_arena *arena, दीर्घ pg_start, दीर्घ pg_count)
-अणु
-	अचिन्हित दीर्घ *p;
-	दीर्घ i;
+int
+iommu_unbind(struct pci_iommu_arena *arena, long pg_start, long pg_count)
+{
+	unsigned long *p;
+	long i;
 
-	अगर (!arena) वापस -EINVAL;
+	if (!arena) return -EINVAL;
 
 	p = arena->ptes + pg_start;
-	क्रम(i = 0; i < pg_count; i++)
+	for(i = 0; i < pg_count; i++)
 		p[i] = IOMMU_RESERVED_PTE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा dma_map_ops alpha_pci_ops = अणु
+const struct dma_map_ops alpha_pci_ops = {
 	.alloc			= alpha_pci_alloc_coherent,
-	.मुक्त			= alpha_pci_मुक्त_coherent,
+	.free			= alpha_pci_free_coherent,
 	.map_page		= alpha_pci_map_page,
 	.unmap_page		= alpha_pci_unmap_page,
 	.map_sg			= alpha_pci_map_sg,
@@ -954,6 +953,6 @@ iommu_unbind(काष्ठा pci_iommu_arena *arena, दीर्घ pg_start
 	.mmap			= dma_common_mmap,
 	.get_sgtable		= dma_common_get_sgtable,
 	.alloc_pages		= dma_common_alloc_pages,
-	.मुक्त_pages		= dma_common_मुक्त_pages,
-पूर्ण;
+	.free_pages		= dma_common_free_pages,
+};
 EXPORT_SYMBOL(alpha_pci_ops);

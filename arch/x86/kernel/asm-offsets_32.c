@@ -1,25 +1,24 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#अगर_अघोषित __LINUX_KBUILD_H
+// SPDX-License-Identifier: GPL-2.0
+#ifndef __LINUX_KBUILD_H
 # error "Please do not build this file directly, build asm-offsets.c instead"
-#पूर्ण_अगर
+#endif
 
-#समावेश <linux/efi.h>
+#include <linux/efi.h>
 
-#समावेश <यंत्र/ucontext.h>
+#include <asm/ucontext.h>
 
-/* workaround क्रम a warning with -Wmissing-prototypes */
-व्योम foo(व्योम);
+/* workaround for a warning with -Wmissing-prototypes */
+void foo(void);
 
-व्योम foo(व्योम)
-अणु
+void foo(void)
+{
 	OFFSET(CPUINFO_x86, cpuinfo_x86, x86);
-	OFFSET(CPUINFO_x86_venकरोr, cpuinfo_x86, x86_venकरोr);
+	OFFSET(CPUINFO_x86_vendor, cpuinfo_x86, x86_vendor);
 	OFFSET(CPUINFO_x86_model, cpuinfo_x86, x86_model);
 	OFFSET(CPUINFO_x86_stepping, cpuinfo_x86, x86_stepping);
 	OFFSET(CPUINFO_cpuid_level, cpuinfo_x86, cpuid_level);
 	OFFSET(CPUINFO_x86_capability, cpuinfo_x86, x86_capability);
-	OFFSET(CPUINFO_x86_venकरोr_id, cpuinfo_x86, x86_venकरोr_id);
+	OFFSET(CPUINFO_x86_vendor_id, cpuinfo_x86, x86_vendor_id);
 	BLANK();
 
 	OFFSET(PT_EBX, pt_regs, bx);
@@ -46,14 +45,14 @@
 
 	/*
 	 * Offset from the entry stack to task stack stored in TSS. Kernel entry
-	 * happens on the per-cpu entry-stack, and the यंत्र code चयनes to the
-	 * task-stack poपूर्णांकer stored in x86_tss.sp1, which is a copy of
-	 * task->thपढ़ो.sp0 where entry code can find it.
+	 * happens on the per-cpu entry-stack, and the asm code switches to the
+	 * task-stack pointer stored in x86_tss.sp1, which is a copy of
+	 * task->thread.sp0 where entry code can find it.
 	 */
 	DEFINE(TSS_entry2task_stack,
-	       दुरत्व(काष्ठा cpu_entry_area, tss.x86_tss.sp1) -
-	       दुरत्वend(काष्ठा cpu_entry_area, entry_stack_page.stack));
+	       offsetof(struct cpu_entry_area, tss.x86_tss.sp1) -
+	       offsetofend(struct cpu_entry_area, entry_stack_page.stack));
 
 	BLANK();
-	DEFINE(EFI_svam, दुरत्व(efi_runसमय_services_t, set_भव_address_map));
-पूर्ण
+	DEFINE(EFI_svam, offsetof(efi_runtime_services_t, set_virtual_address_map));
+}

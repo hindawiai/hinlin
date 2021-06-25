@@ -1,93 +1,92 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 //
-// ALSA SoC Audio driver क्रम CS47L85 codec
+// ALSA SoC Audio driver for CS47L85 codec
 //
 // Copyright (C) 2015-2019 Cirrus Logic, Inc. and
 //                         Cirrus Logic International Semiconductor Ltd.
 //
 
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/device.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/init.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/regmap.h>
-#समावेश <sound/core.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/pcm_params.h>
-#समावेश <sound/soc.h>
-#समावेश <sound/tlv.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/device.h>
+#include <linux/delay.h>
+#include <linux/init.h>
+#include <linux/pm.h>
+#include <linux/pm_runtime.h>
+#include <linux/regmap.h>
+#include <sound/core.h>
+#include <sound/pcm.h>
+#include <sound/pcm_params.h>
+#include <sound/soc.h>
+#include <sound/tlv.h>
 
-#समावेश <linux/irqchip/irq-madera.h>
-#समावेश <linux/mfd/madera/core.h>
-#समावेश <linux/mfd/madera/रेजिस्टरs.h>
+#include <linux/irqchip/irq-madera.h>
+#include <linux/mfd/madera/core.h>
+#include <linux/mfd/madera/registers.h>
 
-#समावेश "madera.h"
-#समावेश "wm_adsp.h"
+#include "madera.h"
+#include "wm_adsp.h"
 
-#घोषणा DRV_NAME "cs47l85-codec"
+#define DRV_NAME "cs47l85-codec"
 
-#घोषणा CS47L85_NUM_ADSP	7
-#घोषणा CS47L85_MONO_OUTPUTS	4
+#define CS47L85_NUM_ADSP	7
+#define CS47L85_MONO_OUTPUTS	4
 
-काष्ठा cs47l85 अणु
-	काष्ठा madera_priv core;
-	काष्ठा madera_fll fll[3];
-पूर्ण;
+struct cs47l85 {
+	struct madera_priv core;
+	struct madera_fll fll[3];
+};
 
-अटल स्थिर काष्ठा wm_adsp_region cs47l85_dsp1_regions[] = अणु
-	अणु .type = WMFW_ADSP2_PM, .base = 0x080000 पूर्ण,
-	अणु .type = WMFW_ADSP2_ZM, .base = 0x0e0000 पूर्ण,
-	अणु .type = WMFW_ADSP2_XM, .base = 0x0a0000 पूर्ण,
-	अणु .type = WMFW_ADSP2_YM, .base = 0x0c0000 पूर्ण,
-पूर्ण;
+static const struct wm_adsp_region cs47l85_dsp1_regions[] = {
+	{ .type = WMFW_ADSP2_PM, .base = 0x080000 },
+	{ .type = WMFW_ADSP2_ZM, .base = 0x0e0000 },
+	{ .type = WMFW_ADSP2_XM, .base = 0x0a0000 },
+	{ .type = WMFW_ADSP2_YM, .base = 0x0c0000 },
+};
 
-अटल स्थिर काष्ठा wm_adsp_region cs47l85_dsp2_regions[] = अणु
-	अणु .type = WMFW_ADSP2_PM, .base = 0x100000 पूर्ण,
-	अणु .type = WMFW_ADSP2_ZM, .base = 0x160000 पूर्ण,
-	अणु .type = WMFW_ADSP2_XM, .base = 0x120000 पूर्ण,
-	अणु .type = WMFW_ADSP2_YM, .base = 0x140000 पूर्ण,
-पूर्ण;
+static const struct wm_adsp_region cs47l85_dsp2_regions[] = {
+	{ .type = WMFW_ADSP2_PM, .base = 0x100000 },
+	{ .type = WMFW_ADSP2_ZM, .base = 0x160000 },
+	{ .type = WMFW_ADSP2_XM, .base = 0x120000 },
+	{ .type = WMFW_ADSP2_YM, .base = 0x140000 },
+};
 
-अटल स्थिर काष्ठा wm_adsp_region cs47l85_dsp3_regions[] = अणु
-	अणु .type = WMFW_ADSP2_PM, .base = 0x180000 पूर्ण,
-	अणु .type = WMFW_ADSP2_ZM, .base = 0x1e0000 पूर्ण,
-	अणु .type = WMFW_ADSP2_XM, .base = 0x1a0000 पूर्ण,
-	अणु .type = WMFW_ADSP2_YM, .base = 0x1c0000 पूर्ण,
-पूर्ण;
+static const struct wm_adsp_region cs47l85_dsp3_regions[] = {
+	{ .type = WMFW_ADSP2_PM, .base = 0x180000 },
+	{ .type = WMFW_ADSP2_ZM, .base = 0x1e0000 },
+	{ .type = WMFW_ADSP2_XM, .base = 0x1a0000 },
+	{ .type = WMFW_ADSP2_YM, .base = 0x1c0000 },
+};
 
-अटल स्थिर काष्ठा wm_adsp_region cs47l85_dsp4_regions[] = अणु
-	अणु .type = WMFW_ADSP2_PM, .base = 0x200000 पूर्ण,
-	अणु .type = WMFW_ADSP2_ZM, .base = 0x260000 पूर्ण,
-	अणु .type = WMFW_ADSP2_XM, .base = 0x220000 पूर्ण,
-	अणु .type = WMFW_ADSP2_YM, .base = 0x240000 पूर्ण,
-पूर्ण;
+static const struct wm_adsp_region cs47l85_dsp4_regions[] = {
+	{ .type = WMFW_ADSP2_PM, .base = 0x200000 },
+	{ .type = WMFW_ADSP2_ZM, .base = 0x260000 },
+	{ .type = WMFW_ADSP2_XM, .base = 0x220000 },
+	{ .type = WMFW_ADSP2_YM, .base = 0x240000 },
+};
 
-अटल स्थिर काष्ठा wm_adsp_region cs47l85_dsp5_regions[] = अणु
-	अणु .type = WMFW_ADSP2_PM, .base = 0x280000 पूर्ण,
-	अणु .type = WMFW_ADSP2_ZM, .base = 0x2e0000 पूर्ण,
-	अणु .type = WMFW_ADSP2_XM, .base = 0x2a0000 पूर्ण,
-	अणु .type = WMFW_ADSP2_YM, .base = 0x2c0000 पूर्ण,
-पूर्ण;
+static const struct wm_adsp_region cs47l85_dsp5_regions[] = {
+	{ .type = WMFW_ADSP2_PM, .base = 0x280000 },
+	{ .type = WMFW_ADSP2_ZM, .base = 0x2e0000 },
+	{ .type = WMFW_ADSP2_XM, .base = 0x2a0000 },
+	{ .type = WMFW_ADSP2_YM, .base = 0x2c0000 },
+};
 
-अटल स्थिर काष्ठा wm_adsp_region cs47l85_dsp6_regions[] = अणु
-	अणु .type = WMFW_ADSP2_PM, .base = 0x300000 पूर्ण,
-	अणु .type = WMFW_ADSP2_ZM, .base = 0x360000 पूर्ण,
-	अणु .type = WMFW_ADSP2_XM, .base = 0x320000 पूर्ण,
-	अणु .type = WMFW_ADSP2_YM, .base = 0x340000 पूर्ण,
-पूर्ण;
+static const struct wm_adsp_region cs47l85_dsp6_regions[] = {
+	{ .type = WMFW_ADSP2_PM, .base = 0x300000 },
+	{ .type = WMFW_ADSP2_ZM, .base = 0x360000 },
+	{ .type = WMFW_ADSP2_XM, .base = 0x320000 },
+	{ .type = WMFW_ADSP2_YM, .base = 0x340000 },
+};
 
-अटल स्थिर काष्ठा wm_adsp_region cs47l85_dsp7_regions[] = अणु
-	अणु .type = WMFW_ADSP2_PM, .base = 0x380000 पूर्ण,
-	अणु .type = WMFW_ADSP2_ZM, .base = 0x3e0000 पूर्ण,
-	अणु .type = WMFW_ADSP2_XM, .base = 0x3a0000 पूर्ण,
-	अणु .type = WMFW_ADSP2_YM, .base = 0x3c0000 पूर्ण,
-पूर्ण;
+static const struct wm_adsp_region cs47l85_dsp7_regions[] = {
+	{ .type = WMFW_ADSP2_PM, .base = 0x380000 },
+	{ .type = WMFW_ADSP2_ZM, .base = 0x3e0000 },
+	{ .type = WMFW_ADSP2_XM, .base = 0x3a0000 },
+	{ .type = WMFW_ADSP2_YM, .base = 0x3c0000 },
+};
 
-अटल स्थिर काष्ठा wm_adsp_region *cs47l85_dsp_regions[] = अणु
+static const struct wm_adsp_region *cs47l85_dsp_regions[] = {
 	cs47l85_dsp1_regions,
 	cs47l85_dsp2_regions,
 	cs47l85_dsp3_regions,
@@ -95,9 +94,9 @@
 	cs47l85_dsp5_regions,
 	cs47l85_dsp6_regions,
 	cs47l85_dsp7_regions,
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक wm_adsp2_control_bases[] = अणु
+static const unsigned int wm_adsp2_control_bases[] = {
 	MADERA_DSP1_CONFIG_1,
 	MADERA_DSP2_CONFIG_1,
 	MADERA_DSP3_CONFIG_1,
@@ -105,44 +104,44 @@
 	MADERA_DSP5_CONFIG_1,
 	MADERA_DSP6_CONFIG_1,
 	MADERA_DSP7_CONFIG_1,
-पूर्ण;
+};
 
-अटल पूर्णांक cs47l85_adsp_घातer_ev(काष्ठा snd_soc_dapm_widget *w,
-				 काष्ठा snd_kcontrol *kcontrol,
-				 पूर्णांक event)
-अणु
-	काष्ठा snd_soc_component *component =
+static int cs47l85_adsp_power_ev(struct snd_soc_dapm_widget *w,
+				 struct snd_kcontrol *kcontrol,
+				 int event)
+{
+	struct snd_soc_component *component =
 		snd_soc_dapm_to_component(w->dapm);
-	काष्ठा cs47l85 *cs47l85 = snd_soc_component_get_drvdata(component);
-	काष्ठा madera_priv *priv = &cs47l85->core;
-	काष्ठा madera *madera = priv->madera;
-	अचिन्हित पूर्णांक freq;
-	पूर्णांक ret;
+	struct cs47l85 *cs47l85 = snd_soc_component_get_drvdata(component);
+	struct madera_priv *priv = &cs47l85->core;
+	struct madera *madera = priv->madera;
+	unsigned int freq;
+	int ret;
 
-	ret = regmap_पढ़ो(madera->regmap, MADERA_DSP_CLOCK_1, &freq);
-	अगर (ret != 0) अणु
+	ret = regmap_read(madera->regmap, MADERA_DSP_CLOCK_1, &freq);
+	if (ret != 0) {
 		dev_err(madera->dev,
 			"Failed to read MADERA_DSP_CLOCK_1: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	freq &= MADERA_DSP_CLK_FREQ_LEGACY_MASK;
 	freq >>= MADERA_DSP_CLK_FREQ_LEGACY_SHIFT;
 
-	चयन (event) अणु
-	हाल SND_SOC_DAPM_PRE_PMU:
-		ret = madera_set_adsp_clk(&cs47l85->core, w->shअगरt, freq);
-		अगर (ret)
-			वापस ret;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+	switch (event) {
+	case SND_SOC_DAPM_PRE_PMU:
+		ret = madera_set_adsp_clk(&cs47l85->core, w->shift, freq);
+		if (ret)
+			return ret;
+		break;
+	default:
+		break;
+	}
 
-	वापस wm_adsp_early_event(w, kcontrol, event);
-पूर्ण
+	return wm_adsp_early_event(w, kcontrol, event);
+}
 
-#घोषणा CS47L85_NG_SRC(name, base) \
+#define CS47L85_NG_SRC(name, base) \
 	SOC_SINGLE(name " NG HPOUT1L Switch",  base,  0, 1, 0), \
 	SOC_SINGLE(name " NG HPOUT1R Switch",  base,  1, 1, 0), \
 	SOC_SINGLE(name " NG HPOUT2L Switch",  base,  2, 1, 0), \
@@ -156,111 +155,111 @@
 	SOC_SINGLE(name " NG SPKDAT2L Switch", base, 10, 1, 0), \
 	SOC_SINGLE(name " NG SPKDAT2R Switch", base, 11, 1, 0)
 
-#घोषणा CS47L85_RXANC_INPUT_ROUTES(widget, name) \
-	अणु widget, शून्य, name " NG Mux" पूर्ण, \
-	अणु name " NG Internal", शून्य, "RXANC NG Clock" पूर्ण, \
-	अणु name " NG Internal", शून्य, name " Channel" पूर्ण, \
-	अणु name " NG External", शून्य, "RXANC NG External Clock" पूर्ण, \
-	अणु name " NG External", शून्य, name " Channel" पूर्ण, \
-	अणु name " NG Mux", "None", name " Channel" पूर्ण, \
-	अणु name " NG Mux", "Internal", name " NG Internal" पूर्ण, \
-	अणु name " NG Mux", "External", name " NG External" पूर्ण, \
-	अणु name " Channel", "Left", name " Left Input" पूर्ण, \
-	अणु name " Channel", "Combine", name " Left Input" पूर्ण, \
-	अणु name " Channel", "Right", name " Right Input" पूर्ण, \
-	अणु name " Channel", "Combine", name " Right Input" पूर्ण, \
-	अणु name " Left Input", "IN1", "IN1L" पूर्ण, \
-	अणु name " Right Input", "IN1", "IN1R" पूर्ण, \
-	अणु name " Left Input", "IN2", "IN2L" पूर्ण, \
-	अणु name " Right Input", "IN2", "IN2R" पूर्ण, \
-	अणु name " Left Input", "IN3", "IN3L" पूर्ण, \
-	अणु name " Right Input", "IN3", "IN3R" पूर्ण, \
-	अणु name " Left Input", "IN4", "IN4L" पूर्ण, \
-	अणु name " Right Input", "IN4", "IN4R" पूर्ण, \
-	अणु name " Left Input", "IN5", "IN5L" पूर्ण, \
-	अणु name " Right Input", "IN5", "IN5R" पूर्ण, \
-	अणु name " Left Input", "IN6", "IN6L" पूर्ण, \
-	अणु name " Right Input", "IN6", "IN6R" पूर्ण
+#define CS47L85_RXANC_INPUT_ROUTES(widget, name) \
+	{ widget, NULL, name " NG Mux" }, \
+	{ name " NG Internal", NULL, "RXANC NG Clock" }, \
+	{ name " NG Internal", NULL, name " Channel" }, \
+	{ name " NG External", NULL, "RXANC NG External Clock" }, \
+	{ name " NG External", NULL, name " Channel" }, \
+	{ name " NG Mux", "None", name " Channel" }, \
+	{ name " NG Mux", "Internal", name " NG Internal" }, \
+	{ name " NG Mux", "External", name " NG External" }, \
+	{ name " Channel", "Left", name " Left Input" }, \
+	{ name " Channel", "Combine", name " Left Input" }, \
+	{ name " Channel", "Right", name " Right Input" }, \
+	{ name " Channel", "Combine", name " Right Input" }, \
+	{ name " Left Input", "IN1", "IN1L" }, \
+	{ name " Right Input", "IN1", "IN1R" }, \
+	{ name " Left Input", "IN2", "IN2L" }, \
+	{ name " Right Input", "IN2", "IN2R" }, \
+	{ name " Left Input", "IN3", "IN3L" }, \
+	{ name " Right Input", "IN3", "IN3R" }, \
+	{ name " Left Input", "IN4", "IN4L" }, \
+	{ name " Right Input", "IN4", "IN4R" }, \
+	{ name " Left Input", "IN5", "IN5L" }, \
+	{ name " Right Input", "IN5", "IN5R" }, \
+	{ name " Left Input", "IN6", "IN6L" }, \
+	{ name " Right Input", "IN6", "IN6R" }
 
-#घोषणा CS47L85_RXANC_OUTPUT_ROUTES(widget, name) \
-	अणु widget, शून्य, name " ANC Source" पूर्ण, \
-	अणु name " ANC Source", "RXANCL", "RXANCL" पूर्ण, \
-	अणु name " ANC Source", "RXANCR", "RXANCR" पूर्ण
+#define CS47L85_RXANC_OUTPUT_ROUTES(widget, name) \
+	{ widget, NULL, name " ANC Source" }, \
+	{ name " ANC Source", "RXANCL", "RXANCL" }, \
+	{ name " ANC Source", "RXANCR", "RXANCR" }
 
-अटल व्योम cs47l85_hp_post_enable(काष्ठा snd_soc_dapm_widget *w)
-अणु
-	काष्ठा snd_soc_component *component =
+static void cs47l85_hp_post_enable(struct snd_soc_dapm_widget *w)
+{
+	struct snd_soc_component *component =
 		snd_soc_dapm_to_component(w->dapm);
-	अचिन्हित पूर्णांक val;
+	unsigned int val;
 
-	चयन (w->shअगरt) अणु
-	हाल MADERA_OUT1L_ENA_SHIFT:
-	हाल MADERA_OUT1R_ENA_SHIFT:
-		val = snd_soc_component_पढ़ो(component, MADERA_OUTPUT_ENABLES_1);
+	switch (w->shift) {
+	case MADERA_OUT1L_ENA_SHIFT:
+	case MADERA_OUT1R_ENA_SHIFT:
+		val = snd_soc_component_read(component, MADERA_OUTPUT_ENABLES_1);
 		val &= (MADERA_OUT1L_ENA | MADERA_OUT1R_ENA);
 
-		अगर (val != (MADERA_OUT1L_ENA | MADERA_OUT1R_ENA))
-			अवरोध;
+		if (val != (MADERA_OUT1L_ENA | MADERA_OUT1R_ENA))
+			break;
 
 		snd_soc_component_update_bits(component,
 					      MADERA_EDRE_HP_STEREO_CONTROL,
 					      0x0001, 1);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-अटल व्योम cs47l85_hp_post_disable(काष्ठा snd_soc_dapm_widget *w)
-अणु
-	काष्ठा snd_soc_component *component =
+static void cs47l85_hp_post_disable(struct snd_soc_dapm_widget *w)
+{
+	struct snd_soc_component *component =
 		snd_soc_dapm_to_component(w->dapm);
 
-	चयन (w->shअगरt) अणु
-	हाल MADERA_OUT1L_ENA_SHIFT:
-		snd_soc_component_ग_लिखो(component, MADERA_DCS_HP1L_CONTROL,
+	switch (w->shift) {
+	case MADERA_OUT1L_ENA_SHIFT:
+		snd_soc_component_write(component, MADERA_DCS_HP1L_CONTROL,
 					0x2006);
-		अवरोध;
-	हाल MADERA_OUT1R_ENA_SHIFT:
-		snd_soc_component_ग_लिखो(component, MADERA_DCS_HP1R_CONTROL,
+		break;
+	case MADERA_OUT1R_ENA_SHIFT:
+		snd_soc_component_write(component, MADERA_DCS_HP1R_CONTROL,
 					0x2006);
-		अवरोध;
-	शेष:
-		वापस;
-	पूर्ण
+		break;
+	default:
+		return;
+	}
 
-	/* Only get to here क्रम OUT1L and OUT1R */
+	/* Only get to here for OUT1L and OUT1R */
 	snd_soc_component_update_bits(component,
 				      MADERA_EDRE_HP_STEREO_CONTROL,
 				      0x0001, 0);
-पूर्ण
+}
 
-अटल पूर्णांक cs47l85_hp_ev(काष्ठा snd_soc_dapm_widget *w,
-			 काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
-अणु
-	पूर्णांक ret;
+static int cs47l85_hp_ev(struct snd_soc_dapm_widget *w,
+			 struct snd_kcontrol *kcontrol, int event)
+{
+	int ret;
 
-	चयन (event) अणु
-	हाल SND_SOC_DAPM_PRE_PMU:
-	हाल SND_SOC_DAPM_PRE_PMD:
-		वापस madera_hp_ev(w, kcontrol, event);
-	हाल SND_SOC_DAPM_POST_PMU:
+	switch (event) {
+	case SND_SOC_DAPM_PRE_PMU:
+	case SND_SOC_DAPM_PRE_PMD:
+		return madera_hp_ev(w, kcontrol, event);
+	case SND_SOC_DAPM_POST_PMU:
 		ret = madera_hp_ev(w, kcontrol, event);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
 		cs47l85_hp_post_enable(w);
-		वापस 0;
-	हाल SND_SOC_DAPM_POST_PMD:
+		return 0;
+	case SND_SOC_DAPM_POST_PMD:
 		ret = madera_hp_ev(w, kcontrol, event);
 		cs47l85_hp_post_disable(w);
-		वापस ret;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		return ret;
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new cs47l85_snd_controls[] = अणु
+static const struct snd_kcontrol_new cs47l85_snd_controls[] = {
 SOC_ENUM("IN1 OSR", madera_in_dmic_osr[0]),
 SOC_ENUM("IN2 OSR", madera_in_dmic_osr[1]),
 SOC_ENUM("IN3 OSR", madera_in_dmic_osr[2]),
@@ -281,7 +280,7 @@ SOC_SINGLE_RANGE_TLV("IN3L Volume", MADERA_IN3L_CONTROL,
 SOC_SINGLE_RANGE_TLV("IN3R Volume", MADERA_IN3R_CONTROL,
 		     MADERA_IN3R_PGA_VOL_SHIFT, 0x40, 0x5f, 0, madera_ana_tlv),
 
-SOC_ENUM("IN HPF Cutoff Frequency", madera_in_hpf_cut_क्रमागत),
+SOC_ENUM("IN HPF Cutoff Frequency", madera_in_hpf_cut_enum),
 
 SOC_SINGLE("IN1L HPF Switch", MADERA_IN1L_CONTROL,
 	   MADERA_IN1L_HPF_SHIFT, 1, 0),
@@ -589,7 +588,7 @@ WM_ADSP_FW_CONTROL("DSP4", 3),
 WM_ADSP_FW_CONTROL("DSP5", 4),
 WM_ADSP_FW_CONTROL("DSP6", 5),
 WM_ADSP_FW_CONTROL("DSP7", 6),
-पूर्ण;
+};
 
 MADERA_MIXER_ENUMS(EQ1, MADERA_EQ1MIX_INPUT_1_SOURCE);
 MADERA_MIXER_ENUMS(EQ2, MADERA_EQ2MIX_INPUT_1_SOURCE);
@@ -727,45 +726,45 @@ MADERA_MUX_ENUMS(ISRC4INT2, MADERA_ISRC4INT2MIX_INPUT_1_SOURCE);
 MADERA_MUX_ENUMS(ISRC4DEC1, MADERA_ISRC4DEC1MIX_INPUT_1_SOURCE);
 MADERA_MUX_ENUMS(ISRC4DEC2, MADERA_ISRC4DEC2MIX_INPUT_1_SOURCE);
 
-अटल स्थिर अक्षर * स्थिर cs47l85_aec_loopback_texts[] = अणु
+static const char * const cs47l85_aec_loopback_texts[] = {
 	"HPOUT1L", "HPOUT1R", "HPOUT2L", "HPOUT2R", "HPOUT3L", "HPOUT3R",
 	"SPKOUTL", "SPKOUTR", "SPKDAT1L", "SPKDAT1R", "SPKDAT2L", "SPKDAT2R",
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक cs47l85_aec_loopback_values[] = अणु
+static const unsigned int cs47l85_aec_loopback_values[] = {
 	0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा soc_क्रमागत cs47l85_aec1_loopback =
+static const struct soc_enum cs47l85_aec1_loopback =
 	SOC_VALUE_ENUM_SINGLE(MADERA_DAC_AEC_CONTROL_1,
 			      MADERA_AEC1_LOOPBACK_SRC_SHIFT, 0xf,
 			      ARRAY_SIZE(cs47l85_aec_loopback_texts),
 			      cs47l85_aec_loopback_texts,
 			      cs47l85_aec_loopback_values);
 
-अटल स्थिर काष्ठा soc_क्रमागत cs47l85_aec2_loopback =
+static const struct soc_enum cs47l85_aec2_loopback =
 	SOC_VALUE_ENUM_SINGLE(MADERA_DAC_AEC_CONTROL_2,
 			      MADERA_AEC2_LOOPBACK_SRC_SHIFT, 0xf,
 			      ARRAY_SIZE(cs47l85_aec_loopback_texts),
 			      cs47l85_aec_loopback_texts,
 			      cs47l85_aec_loopback_values);
 
-अटल स्थिर काष्ठा snd_kcontrol_new cs47l85_aec_loopback_mux[] = अणु
+static const struct snd_kcontrol_new cs47l85_aec_loopback_mux[] = {
 	SOC_DAPM_ENUM("AEC1 Loopback", cs47l85_aec1_loopback),
 	SOC_DAPM_ENUM("AEC2 Loopback", cs47l85_aec2_loopback),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new cs47l85_anc_input_mux[] = अणु
+static const struct snd_kcontrol_new cs47l85_anc_input_mux[] = {
 	SOC_DAPM_ENUM("RXANCL Input", madera_anc_input_src[0]),
 	SOC_DAPM_ENUM("RXANCL Channel", madera_anc_input_src[1]),
 	SOC_DAPM_ENUM("RXANCR Input", madera_anc_input_src[2]),
 	SOC_DAPM_ENUM("RXANCR Channel", madera_anc_input_src[3]),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new cs47l85_anc_ng_mux =
-	SOC_DAPM_ENUM("RXANC NG Source", madera_anc_ng_क्रमागत);
+static const struct snd_kcontrol_new cs47l85_anc_ng_mux =
+	SOC_DAPM_ENUM("RXANC NG Source", madera_anc_ng_enum);
 
-अटल स्थिर काष्ठा snd_kcontrol_new cs47l85_output_anc_src[] = अणु
+static const struct snd_kcontrol_new cs47l85_output_anc_src[] = {
 	SOC_DAPM_ENUM("HPOUT1L ANC Source", madera_output_anc_src[0]),
 	SOC_DAPM_ENUM("HPOUT1R ANC Source", madera_output_anc_src[1]),
 	SOC_DAPM_ENUM("HPOUT2L ANC Source", madera_output_anc_src[2]),
@@ -778,9 +777,9 @@ MADERA_MUX_ENUMS(ISRC4DEC2, MADERA_ISRC4DEC2MIX_INPUT_1_SOURCE);
 	SOC_DAPM_ENUM("SPKDAT1R ANC Source", madera_output_anc_src[9]),
 	SOC_DAPM_ENUM("SPKDAT2L ANC Source", madera_output_anc_src[10]),
 	SOC_DAPM_ENUM("SPKDAT2R ANC Source", madera_output_anc_src[11]),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_widget cs47l85_dapm_widमाला_लो[] = अणु
+static const struct snd_soc_dapm_widget cs47l85_dapm_widgets[] = {
 SND_SOC_DAPM_SUPPLY("SYSCLK", MADERA_SYSTEM_CLOCK_1, MADERA_SYSCLK_ENA_SHIFT,
 		    0, madera_sysclk_ev,
 		    SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
@@ -789,9 +788,9 @@ SND_SOC_DAPM_SUPPLY("ASYNCCLK", MADERA_ASYNC_CLOCK_1,
 		    MADERA_ASYNC_CLK_ENA_SHIFT, 0, madera_clk_ev,
 		    SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 SND_SOC_DAPM_SUPPLY("OPCLK", MADERA_OUTPUT_SYSTEM_CLOCK,
-		    MADERA_OPCLK_ENA_SHIFT, 0, शून्य, 0),
+		    MADERA_OPCLK_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_SUPPLY("ASYNCOPCLK", MADERA_OUTPUT_ASYNC_CLOCK,
-		    MADERA_OPCLK_ASYNC_ENA_SHIFT, 0, शून्य, 0),
+		    MADERA_OPCLK_ASYNC_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_SUPPLY("DSPCLK", MADERA_DSP_CLOCK_1, MADERA_DSP_CLK_ENA_SHIFT,
 		    0, madera_clk_ev,
 		    SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
@@ -806,101 +805,101 @@ SND_SOC_DAPM_REGULATOR_SUPPLY("SPKVDDL", 0, 0),
 SND_SOC_DAPM_REGULATOR_SUPPLY("SPKVDDR", 0, 0),
 
 SND_SOC_DAPM_SUPPLY("MICBIAS1", MADERA_MIC_BIAS_CTRL_1,
-		    MADERA_MICB1_ENA_SHIFT, 0, शून्य, 0),
+		    MADERA_MICB1_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_SUPPLY("MICBIAS2", MADERA_MIC_BIAS_CTRL_2,
-		    MADERA_MICB1_ENA_SHIFT, 0, शून्य, 0),
+		    MADERA_MICB1_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_SUPPLY("MICBIAS3", MADERA_MIC_BIAS_CTRL_3,
-		    MADERA_MICB1_ENA_SHIFT, 0, शून्य, 0),
+		    MADERA_MICB1_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_SUPPLY("MICBIAS4", MADERA_MIC_BIAS_CTRL_4,
-		    MADERA_MICB1_ENA_SHIFT, 0, शून्य, 0),
+		    MADERA_MICB1_ENA_SHIFT, 0, NULL, 0),
 
 SND_SOC_DAPM_SUPPLY("FXCLK", SND_SOC_NOPM,
 		    MADERA_DOM_GRP_FX, 0,
-		    madera_करोमुख्य_clk_ev,
+		    madera_domain_clk_ev,
 		    SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 SND_SOC_DAPM_SUPPLY("ASRC1CLK", SND_SOC_NOPM,
 		    MADERA_DOM_GRP_ASRC1, 0,
-		    madera_करोमुख्य_clk_ev,
+		    madera_domain_clk_ev,
 		    SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 SND_SOC_DAPM_SUPPLY("ASRC2CLK", SND_SOC_NOPM,
 		    MADERA_DOM_GRP_ASRC2, 0,
-		    madera_करोमुख्य_clk_ev,
+		    madera_domain_clk_ev,
 		    SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 SND_SOC_DAPM_SUPPLY("ISRC1CLK", SND_SOC_NOPM,
 		    MADERA_DOM_GRP_ISRC1, 0,
-		    madera_करोमुख्य_clk_ev,
+		    madera_domain_clk_ev,
 		    SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 SND_SOC_DAPM_SUPPLY("ISRC2CLK", SND_SOC_NOPM,
 		    MADERA_DOM_GRP_ISRC2, 0,
-		    madera_करोमुख्य_clk_ev,
+		    madera_domain_clk_ev,
 		    SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 SND_SOC_DAPM_SUPPLY("ISRC3CLK", SND_SOC_NOPM,
 		    MADERA_DOM_GRP_ISRC3, 0,
-		    madera_करोमुख्य_clk_ev,
+		    madera_domain_clk_ev,
 		    SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 SND_SOC_DAPM_SUPPLY("ISRC4CLK", SND_SOC_NOPM,
 		    MADERA_DOM_GRP_ISRC4, 0,
-		    madera_करोमुख्य_clk_ev,
+		    madera_domain_clk_ev,
 		    SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 SND_SOC_DAPM_SUPPLY("OUTCLK", SND_SOC_NOPM,
 		    MADERA_DOM_GRP_OUT, 0,
-		    madera_करोमुख्य_clk_ev,
+		    madera_domain_clk_ev,
 		    SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 SND_SOC_DAPM_SUPPLY("SPDCLK", SND_SOC_NOPM,
 		    MADERA_DOM_GRP_SPD, 0,
-		    madera_करोमुख्य_clk_ev,
+		    madera_domain_clk_ev,
 		    SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 SND_SOC_DAPM_SUPPLY("DSP1CLK", SND_SOC_NOPM,
 		    MADERA_DOM_GRP_DSP1, 0,
-		    madera_करोमुख्य_clk_ev,
+		    madera_domain_clk_ev,
 		    SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 SND_SOC_DAPM_SUPPLY("DSP2CLK", SND_SOC_NOPM,
 		    MADERA_DOM_GRP_DSP2, 0,
-		    madera_करोमुख्य_clk_ev,
+		    madera_domain_clk_ev,
 		    SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 SND_SOC_DAPM_SUPPLY("DSP3CLK", SND_SOC_NOPM,
 		    MADERA_DOM_GRP_DSP3, 0,
-		    madera_करोमुख्य_clk_ev,
+		    madera_domain_clk_ev,
 		    SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 SND_SOC_DAPM_SUPPLY("DSP4CLK", SND_SOC_NOPM,
 		    MADERA_DOM_GRP_DSP4, 0,
-		    madera_करोमुख्य_clk_ev,
+		    madera_domain_clk_ev,
 		    SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 SND_SOC_DAPM_SUPPLY("DSP5CLK", SND_SOC_NOPM,
 		    MADERA_DOM_GRP_DSP5, 0,
-		    madera_करोमुख्य_clk_ev,
+		    madera_domain_clk_ev,
 		    SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 SND_SOC_DAPM_SUPPLY("DSP6CLK", SND_SOC_NOPM,
 		    MADERA_DOM_GRP_DSP6, 0,
-		    madera_करोमुख्य_clk_ev,
+		    madera_domain_clk_ev,
 		    SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 SND_SOC_DAPM_SUPPLY("DSP7CLK", SND_SOC_NOPM,
 		    MADERA_DOM_GRP_DSP7, 0,
-		    madera_करोमुख्य_clk_ev,
+		    madera_domain_clk_ev,
 		    SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 SND_SOC_DAPM_SUPPLY("AIF1TXCLK", SND_SOC_NOPM,
 		    MADERA_DOM_GRP_AIF1, 0,
-		    madera_करोमुख्य_clk_ev,
+		    madera_domain_clk_ev,
 		    SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 SND_SOC_DAPM_SUPPLY("AIF2TXCLK", SND_SOC_NOPM,
 		    MADERA_DOM_GRP_AIF2, 0,
-		    madera_करोमुख्य_clk_ev,
+		    madera_domain_clk_ev,
 		    SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 SND_SOC_DAPM_SUPPLY("AIF3TXCLK", SND_SOC_NOPM,
 		    MADERA_DOM_GRP_AIF3, 0,
-		    madera_करोमुख्य_clk_ev,
+		    madera_domain_clk_ev,
 		    SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 SND_SOC_DAPM_SUPPLY("AIF4TXCLK", SND_SOC_NOPM,
 		    MADERA_DOM_GRP_AIF4, 0,
-		    madera_करोमुख्य_clk_ev,
+		    madera_domain_clk_ev,
 		    SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 SND_SOC_DAPM_SUPPLY("SLIMBUSCLK", SND_SOC_NOPM,
 		    MADERA_DOM_GRP_SLIMBUS, 0,
-		    madera_करोमुख्य_clk_ev,
+		    madera_domain_clk_ev,
 		    SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 SND_SOC_DAPM_SUPPLY("PWMCLK", SND_SOC_NOPM,
 		    MADERA_DOM_GRP_PWM, 0,
-		    madera_करोमुख्य_clk_ev,
+		    madera_domain_clk_ev,
 		    SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 
 SND_SOC_DAPM_SUPPLY("RXANC NG External Clock", SND_SOC_NOPM,
@@ -958,15 +957,15 @@ SND_SOC_DAPM_OUTPUT("DRC2 Signal Activity"),
 SND_SOC_DAPM_OUTPUT("DSP Trigger Out"),
 
 SND_SOC_DAPM_PGA("PWM1 Driver", MADERA_PWM_DRIVE_1, MADERA_PWM1_ENA_SHIFT,
-		 0, शून्य, 0),
+		 0, NULL, 0),
 SND_SOC_DAPM_PGA("PWM2 Driver", MADERA_PWM_DRIVE_1, MADERA_PWM2_ENA_SHIFT,
-		 0, शून्य, 0),
+		 0, NULL, 0),
 
-SND_SOC_DAPM_PGA("RXANCL NG External", SND_SOC_NOPM, 0, 0, शून्य, 0),
-SND_SOC_DAPM_PGA("RXANCR NG External", SND_SOC_NOPM, 0, 0, शून्य, 0),
+SND_SOC_DAPM_PGA("RXANCL NG External", SND_SOC_NOPM, 0, 0, NULL, 0),
+SND_SOC_DAPM_PGA("RXANCR NG External", SND_SOC_NOPM, 0, 0, NULL, 0),
 
-SND_SOC_DAPM_PGA("RXANCL NG Internal", SND_SOC_NOPM, 0, 0, शून्य, 0),
-SND_SOC_DAPM_PGA("RXANCR NG Internal", SND_SOC_NOPM, 0, 0, शून्य, 0),
+SND_SOC_DAPM_PGA("RXANCL NG Internal", SND_SOC_NOPM, 0, 0, NULL, 0),
+SND_SOC_DAPM_PGA("RXANCR NG Internal", SND_SOC_NOPM, 0, 0, NULL, 0),
 
 SND_SOC_DAPM_MUX("RXANCL Left Input", SND_SOC_NOPM, 0, 0,
 		 &cs47l85_anc_input_mux[0]),
@@ -984,10 +983,10 @@ SND_SOC_DAPM_MUX("RXANCR Channel", SND_SOC_NOPM, 0, 0,
 SND_SOC_DAPM_MUX("RXANCR NG Mux", SND_SOC_NOPM, 0, 0, &cs47l85_anc_ng_mux),
 
 SND_SOC_DAPM_PGA_E("RXANCL", SND_SOC_NOPM, MADERA_CLK_L_ENA_SET_SHIFT,
-		   0, शून्य, 0, madera_anc_ev,
+		   0, NULL, 0, madera_anc_ev,
 		   SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMD),
 SND_SOC_DAPM_PGA_E("RXANCR", SND_SOC_NOPM, MADERA_CLK_R_ENA_SET_SHIFT,
-		   0, शून्य, 0, madera_anc_ev,
+		   0, NULL, 0, madera_anc_ev,
 		   SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMD),
 
 SND_SOC_DAPM_MUX("HPOUT1L ANC Source", SND_SOC_NOPM, 0, 0,
@@ -1015,136 +1014,136 @@ SND_SOC_DAPM_MUX("SPKDAT2L ANC Source", SND_SOC_NOPM, 0, 0,
 SND_SOC_DAPM_MUX("SPKDAT2R ANC Source", SND_SOC_NOPM, 0, 0,
 		 &cs47l85_output_anc_src[11]),
 
-SND_SOC_DAPM_AIF_OUT("AIF1TX1", शून्य, 0,
+SND_SOC_DAPM_AIF_OUT("AIF1TX1", NULL, 0,
 		     MADERA_AIF1_TX_ENABLES, MADERA_AIF1TX1_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_OUT("AIF1TX2", शून्य, 1,
+SND_SOC_DAPM_AIF_OUT("AIF1TX2", NULL, 1,
 		     MADERA_AIF1_TX_ENABLES, MADERA_AIF1TX2_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_OUT("AIF1TX3", शून्य, 2,
+SND_SOC_DAPM_AIF_OUT("AIF1TX3", NULL, 2,
 		     MADERA_AIF1_TX_ENABLES, MADERA_AIF1TX3_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_OUT("AIF1TX4", शून्य, 3,
+SND_SOC_DAPM_AIF_OUT("AIF1TX4", NULL, 3,
 		     MADERA_AIF1_TX_ENABLES, MADERA_AIF1TX4_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_OUT("AIF1TX5", शून्य, 4,
+SND_SOC_DAPM_AIF_OUT("AIF1TX5", NULL, 4,
 		     MADERA_AIF1_TX_ENABLES, MADERA_AIF1TX5_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_OUT("AIF1TX6", शून्य, 5,
+SND_SOC_DAPM_AIF_OUT("AIF1TX6", NULL, 5,
 		     MADERA_AIF1_TX_ENABLES, MADERA_AIF1TX6_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_OUT("AIF1TX7", शून्य, 6,
+SND_SOC_DAPM_AIF_OUT("AIF1TX7", NULL, 6,
 		     MADERA_AIF1_TX_ENABLES, MADERA_AIF1TX7_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_OUT("AIF1TX8", शून्य, 7,
+SND_SOC_DAPM_AIF_OUT("AIF1TX8", NULL, 7,
 		     MADERA_AIF1_TX_ENABLES, MADERA_AIF1TX8_ENA_SHIFT, 0),
 
-SND_SOC_DAPM_AIF_OUT("AIF2TX1", शून्य, 0,
+SND_SOC_DAPM_AIF_OUT("AIF2TX1", NULL, 0,
 		     MADERA_AIF2_TX_ENABLES, MADERA_AIF2TX1_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_OUT("AIF2TX2", शून्य, 1,
+SND_SOC_DAPM_AIF_OUT("AIF2TX2", NULL, 1,
 		     MADERA_AIF2_TX_ENABLES, MADERA_AIF2TX2_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_OUT("AIF2TX3", शून्य, 2,
+SND_SOC_DAPM_AIF_OUT("AIF2TX3", NULL, 2,
 		     MADERA_AIF2_TX_ENABLES, MADERA_AIF2TX3_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_OUT("AIF2TX4", शून्य, 3,
+SND_SOC_DAPM_AIF_OUT("AIF2TX4", NULL, 3,
 		     MADERA_AIF2_TX_ENABLES, MADERA_AIF2TX4_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_OUT("AIF2TX5", शून्य, 4,
+SND_SOC_DAPM_AIF_OUT("AIF2TX5", NULL, 4,
 		     MADERA_AIF2_TX_ENABLES, MADERA_AIF2TX5_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_OUT("AIF2TX6", शून्य, 5,
+SND_SOC_DAPM_AIF_OUT("AIF2TX6", NULL, 5,
 		     MADERA_AIF2_TX_ENABLES, MADERA_AIF2TX6_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_OUT("AIF2TX7", शून्य, 6,
+SND_SOC_DAPM_AIF_OUT("AIF2TX7", NULL, 6,
 		     MADERA_AIF2_TX_ENABLES, MADERA_AIF2TX7_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_OUT("AIF2TX8", शून्य, 7,
+SND_SOC_DAPM_AIF_OUT("AIF2TX8", NULL, 7,
 		     MADERA_AIF2_TX_ENABLES, MADERA_AIF2TX8_ENA_SHIFT, 0),
 
-SND_SOC_DAPM_AIF_OUT("SLIMTX1", शून्य, 0,
+SND_SOC_DAPM_AIF_OUT("SLIMTX1", NULL, 0,
 		     MADERA_SLIMBUS_TX_CHANNEL_ENABLE,
 		     MADERA_SLIMTX1_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_OUT("SLIMTX2", शून्य, 1,
+SND_SOC_DAPM_AIF_OUT("SLIMTX2", NULL, 1,
 		     MADERA_SLIMBUS_TX_CHANNEL_ENABLE,
 		     MADERA_SLIMTX2_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_OUT("SLIMTX3", शून्य, 2,
+SND_SOC_DAPM_AIF_OUT("SLIMTX3", NULL, 2,
 		     MADERA_SLIMBUS_TX_CHANNEL_ENABLE,
 		     MADERA_SLIMTX3_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_OUT("SLIMTX4", शून्य, 3,
+SND_SOC_DAPM_AIF_OUT("SLIMTX4", NULL, 3,
 		     MADERA_SLIMBUS_TX_CHANNEL_ENABLE,
 		     MADERA_SLIMTX4_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_OUT("SLIMTX5", शून्य, 4,
+SND_SOC_DAPM_AIF_OUT("SLIMTX5", NULL, 4,
 		     MADERA_SLIMBUS_TX_CHANNEL_ENABLE,
 		     MADERA_SLIMTX5_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_OUT("SLIMTX6", शून्य, 5,
+SND_SOC_DAPM_AIF_OUT("SLIMTX6", NULL, 5,
 		     MADERA_SLIMBUS_TX_CHANNEL_ENABLE,
 		     MADERA_SLIMTX6_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_OUT("SLIMTX7", शून्य, 6,
+SND_SOC_DAPM_AIF_OUT("SLIMTX7", NULL, 6,
 		     MADERA_SLIMBUS_TX_CHANNEL_ENABLE,
 		     MADERA_SLIMTX7_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_OUT("SLIMTX8", शून्य, 7,
+SND_SOC_DAPM_AIF_OUT("SLIMTX8", NULL, 7,
 		     MADERA_SLIMBUS_TX_CHANNEL_ENABLE,
 		     MADERA_SLIMTX8_ENA_SHIFT, 0),
 
-SND_SOC_DAPM_AIF_OUT("AIF3TX1", शून्य, 0,
+SND_SOC_DAPM_AIF_OUT("AIF3TX1", NULL, 0,
 		     MADERA_AIF3_TX_ENABLES, MADERA_AIF3TX1_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_OUT("AIF3TX2", शून्य, 1,
+SND_SOC_DAPM_AIF_OUT("AIF3TX2", NULL, 1,
 		     MADERA_AIF3_TX_ENABLES, MADERA_AIF3TX2_ENA_SHIFT, 0),
 
-SND_SOC_DAPM_AIF_OUT("AIF4TX1", शून्य, 0,
+SND_SOC_DAPM_AIF_OUT("AIF4TX1", NULL, 0,
 		     MADERA_AIF4_TX_ENABLES, MADERA_AIF4TX1_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_OUT("AIF4TX2", शून्य, 1,
+SND_SOC_DAPM_AIF_OUT("AIF4TX2", NULL, 1,
 		     MADERA_AIF4_TX_ENABLES, MADERA_AIF4TX2_ENA_SHIFT, 0),
 
 SND_SOC_DAPM_PGA_E("OUT1L", SND_SOC_NOPM,
-		   MADERA_OUT1L_ENA_SHIFT, 0, शून्य, 0, cs47l85_hp_ev,
+		   MADERA_OUT1L_ENA_SHIFT, 0, NULL, 0, cs47l85_hp_ev,
 		   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD |
 		   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU),
 SND_SOC_DAPM_PGA_E("OUT1R", SND_SOC_NOPM,
-		   MADERA_OUT1R_ENA_SHIFT, 0, शून्य, 0, cs47l85_hp_ev,
+		   MADERA_OUT1R_ENA_SHIFT, 0, NULL, 0, cs47l85_hp_ev,
 		   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD |
 		   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU),
 SND_SOC_DAPM_PGA_E("OUT2L", MADERA_OUTPUT_ENABLES_1,
-		   MADERA_OUT2L_ENA_SHIFT, 0, शून्य, 0, madera_out_ev,
+		   MADERA_OUT2L_ENA_SHIFT, 0, NULL, 0, madera_out_ev,
 		   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD |
 		   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU),
 SND_SOC_DAPM_PGA_E("OUT2R", MADERA_OUTPUT_ENABLES_1,
-		   MADERA_OUT2R_ENA_SHIFT, 0, शून्य, 0, madera_out_ev,
+		   MADERA_OUT2R_ENA_SHIFT, 0, NULL, 0, madera_out_ev,
 		   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD |
 		   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU),
 SND_SOC_DAPM_PGA_E("OUT3L", MADERA_OUTPUT_ENABLES_1,
-		   MADERA_OUT3L_ENA_SHIFT, 0, शून्य, 0, madera_out_ev,
+		   MADERA_OUT3L_ENA_SHIFT, 0, NULL, 0, madera_out_ev,
 		   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD |
 		   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU),
 SND_SOC_DAPM_PGA_E("OUT3R", MADERA_OUTPUT_ENABLES_1,
-		   MADERA_OUT3R_ENA_SHIFT, 0, शून्य, 0, madera_out_ev,
+		   MADERA_OUT3R_ENA_SHIFT, 0, NULL, 0, madera_out_ev,
 		   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD |
 		   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU),
 SND_SOC_DAPM_PGA_E("OUT4L", SND_SOC_NOPM,
-		   MADERA_OUT4L_ENA_SHIFT, 0, शून्य, 0, madera_spk_ev,
+		   MADERA_OUT4L_ENA_SHIFT, 0, NULL, 0, madera_spk_ev,
 		   SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMD),
 SND_SOC_DAPM_PGA_E("OUT4R", SND_SOC_NOPM,
-		   MADERA_OUT4R_ENA_SHIFT, 0, शून्य, 0, madera_spk_ev,
+		   MADERA_OUT4R_ENA_SHIFT, 0, NULL, 0, madera_spk_ev,
 		   SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMD),
 SND_SOC_DAPM_PGA_E("OUT5L", MADERA_OUTPUT_ENABLES_1,
-		   MADERA_OUT5L_ENA_SHIFT, 0, शून्य, 0, madera_out_ev,
+		   MADERA_OUT5L_ENA_SHIFT, 0, NULL, 0, madera_out_ev,
 		   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMU),
 SND_SOC_DAPM_PGA_E("OUT5R", MADERA_OUTPUT_ENABLES_1,
-		   MADERA_OUT5R_ENA_SHIFT, 0, शून्य, 0, madera_out_ev,
+		   MADERA_OUT5R_ENA_SHIFT, 0, NULL, 0, madera_out_ev,
 		   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMU),
 SND_SOC_DAPM_PGA_E("OUT6L", MADERA_OUTPUT_ENABLES_1,
-		   MADERA_OUT6L_ENA_SHIFT, 0, शून्य, 0, madera_out_ev,
+		   MADERA_OUT6L_ENA_SHIFT, 0, NULL, 0, madera_out_ev,
 		   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMU),
 SND_SOC_DAPM_PGA_E("OUT6R", MADERA_OUTPUT_ENABLES_1,
-		   MADERA_OUT6R_ENA_SHIFT, 0, शून्य, 0, madera_out_ev,
+		   MADERA_OUT6R_ENA_SHIFT, 0, NULL, 0, madera_out_ev,
 		   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMU),
 
 SND_SOC_DAPM_PGA("SPD1TX1", MADERA_SPD1_TX_CONTROL,
-		 MADERA_SPD1_VAL1_SHIFT, 0, शून्य, 0),
+		 MADERA_SPD1_VAL1_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_PGA("SPD1TX2", MADERA_SPD1_TX_CONTROL,
-		 MADERA_SPD1_VAL2_SHIFT, 0, शून्य, 0),
+		 MADERA_SPD1_VAL2_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_OUT_DRV("SPD1", MADERA_SPD1_TX_CONTROL,
-		     MADERA_SPD1_ENA_SHIFT, 0, शून्य, 0),
+		     MADERA_SPD1_ENA_SHIFT, 0, NULL, 0),
 
 /*
- * Input mux widमाला_लो arranged in order of sources in MADERA_MIXER_INPUT_ROUTES
+ * Input mux widgets arranged in order of sources in MADERA_MIXER_INPUT_ROUTES
  * to take advantage of cache lookup in DAPM
  */
 SND_SOC_DAPM_PGA("Noise Generator", MADERA_COMFORT_NOISE_GENERATOR,
-		 MADERA_NOISE_GEN_ENA_SHIFT, 0, शून्य, 0),
+		 MADERA_NOISE_GEN_ENA_SHIFT, 0, NULL, 0),
 
 SND_SOC_DAPM_PGA("Tone Generator 1", MADERA_TONE_GENERATOR_1,
-		 MADERA_TONE1_ENA_SHIFT, 0, शून्य, 0),
+		 MADERA_TONE1_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_PGA("Tone Generator 2", MADERA_TONE_GENERATOR_1,
-		 MADERA_TONE2_ENA_SHIFT, 0, शून्य, 0),
+		 MADERA_TONE2_ENA_SHIFT, 0, NULL, 0),
 
 SND_SOC_DAPM_SIGGEN("HAPTICS"),
 
@@ -1156,229 +1155,229 @@ SND_SOC_DAPM_MUX("AEC2 Loopback", MADERA_DAC_AEC_CONTROL_2,
 		 &cs47l85_aec_loopback_mux[1]),
 
 SND_SOC_DAPM_PGA_E("IN1L", MADERA_INPUT_ENABLES, MADERA_IN1L_ENA_SHIFT,
-		   0, शून्य, 0, madera_in_ev,
+		   0, NULL, 0, madera_in_ev,
 		   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD |
 		   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU),
 SND_SOC_DAPM_PGA_E("IN1R", MADERA_INPUT_ENABLES, MADERA_IN1R_ENA_SHIFT,
-		   0, शून्य, 0, madera_in_ev,
+		   0, NULL, 0, madera_in_ev,
 		   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD |
 		   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU),
 SND_SOC_DAPM_PGA_E("IN2L", MADERA_INPUT_ENABLES, MADERA_IN2L_ENA_SHIFT,
-		   0, शून्य, 0, madera_in_ev,
+		   0, NULL, 0, madera_in_ev,
 		   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD |
 		   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU),
 SND_SOC_DAPM_PGA_E("IN2R", MADERA_INPUT_ENABLES, MADERA_IN2R_ENA_SHIFT,
-		   0, शून्य, 0, madera_in_ev,
+		   0, NULL, 0, madera_in_ev,
 		   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD |
 		   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU),
 SND_SOC_DAPM_PGA_E("IN3L", MADERA_INPUT_ENABLES, MADERA_IN3L_ENA_SHIFT,
-		   0, शून्य, 0, madera_in_ev,
+		   0, NULL, 0, madera_in_ev,
 		   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD |
 		   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU),
 SND_SOC_DAPM_PGA_E("IN3R", MADERA_INPUT_ENABLES, MADERA_IN3R_ENA_SHIFT,
-		   0, शून्य, 0, madera_in_ev,
+		   0, NULL, 0, madera_in_ev,
 		   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD |
 		   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU),
 SND_SOC_DAPM_PGA_E("IN4L", MADERA_INPUT_ENABLES, MADERA_IN4L_ENA_SHIFT,
-		   0, शून्य, 0, madera_in_ev,
+		   0, NULL, 0, madera_in_ev,
 		   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD |
 		   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU),
 SND_SOC_DAPM_PGA_E("IN4R", MADERA_INPUT_ENABLES, MADERA_IN4R_ENA_SHIFT,
-		   0, शून्य, 0, madera_in_ev,
+		   0, NULL, 0, madera_in_ev,
 		   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD |
 		   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU),
 SND_SOC_DAPM_PGA_E("IN5L", MADERA_INPUT_ENABLES, MADERA_IN5L_ENA_SHIFT,
-		   0, शून्य, 0, madera_in_ev,
+		   0, NULL, 0, madera_in_ev,
 		   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD |
 		   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU),
 SND_SOC_DAPM_PGA_E("IN5R", MADERA_INPUT_ENABLES, MADERA_IN5R_ENA_SHIFT,
-		   0, शून्य, 0, madera_in_ev,
+		   0, NULL, 0, madera_in_ev,
 		   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD |
 		   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU),
 SND_SOC_DAPM_PGA_E("IN6L", MADERA_INPUT_ENABLES, MADERA_IN6L_ENA_SHIFT,
-		   0, शून्य, 0, madera_in_ev,
+		   0, NULL, 0, madera_in_ev,
 		   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD |
 		   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU),
 SND_SOC_DAPM_PGA_E("IN6R", MADERA_INPUT_ENABLES, MADERA_IN6R_ENA_SHIFT,
-		   0, शून्य, 0, madera_in_ev,
+		   0, NULL, 0, madera_in_ev,
 		   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD |
 		   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU),
 
-SND_SOC_DAPM_AIF_IN("AIF1RX1", शून्य, 0,
+SND_SOC_DAPM_AIF_IN("AIF1RX1", NULL, 0,
 		    MADERA_AIF1_RX_ENABLES, MADERA_AIF1RX1_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_IN("AIF1RX2", शून्य, 1,
+SND_SOC_DAPM_AIF_IN("AIF1RX2", NULL, 1,
 		    MADERA_AIF1_RX_ENABLES, MADERA_AIF1RX2_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_IN("AIF1RX3", शून्य, 2,
+SND_SOC_DAPM_AIF_IN("AIF1RX3", NULL, 2,
 		    MADERA_AIF1_RX_ENABLES, MADERA_AIF1RX3_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_IN("AIF1RX4", शून्य, 3,
+SND_SOC_DAPM_AIF_IN("AIF1RX4", NULL, 3,
 		    MADERA_AIF1_RX_ENABLES, MADERA_AIF1RX4_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_IN("AIF1RX5", शून्य, 4,
+SND_SOC_DAPM_AIF_IN("AIF1RX5", NULL, 4,
 		    MADERA_AIF1_RX_ENABLES, MADERA_AIF1RX5_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_IN("AIF1RX6", शून्य, 5,
+SND_SOC_DAPM_AIF_IN("AIF1RX6", NULL, 5,
 		    MADERA_AIF1_RX_ENABLES, MADERA_AIF1RX6_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_IN("AIF1RX7", शून्य, 6,
+SND_SOC_DAPM_AIF_IN("AIF1RX7", NULL, 6,
 		    MADERA_AIF1_RX_ENABLES, MADERA_AIF1RX7_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_IN("AIF1RX8", शून्य, 7,
+SND_SOC_DAPM_AIF_IN("AIF1RX8", NULL, 7,
 		    MADERA_AIF1_RX_ENABLES, MADERA_AIF1RX8_ENA_SHIFT, 0),
 
-SND_SOC_DAPM_AIF_IN("AIF2RX1", शून्य, 0,
+SND_SOC_DAPM_AIF_IN("AIF2RX1", NULL, 0,
 		    MADERA_AIF2_RX_ENABLES, MADERA_AIF2RX1_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_IN("AIF2RX2", शून्य, 1,
+SND_SOC_DAPM_AIF_IN("AIF2RX2", NULL, 1,
 		    MADERA_AIF2_RX_ENABLES, MADERA_AIF2RX2_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_IN("AIF2RX3", शून्य, 2,
+SND_SOC_DAPM_AIF_IN("AIF2RX3", NULL, 2,
 		    MADERA_AIF2_RX_ENABLES, MADERA_AIF2RX3_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_IN("AIF2RX4", शून्य, 3,
+SND_SOC_DAPM_AIF_IN("AIF2RX4", NULL, 3,
 		    MADERA_AIF2_RX_ENABLES, MADERA_AIF2RX4_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_IN("AIF2RX5", शून्य, 4,
+SND_SOC_DAPM_AIF_IN("AIF2RX5", NULL, 4,
 		    MADERA_AIF2_RX_ENABLES, MADERA_AIF2RX5_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_IN("AIF2RX6", शून्य, 5,
+SND_SOC_DAPM_AIF_IN("AIF2RX6", NULL, 5,
 		    MADERA_AIF2_RX_ENABLES, MADERA_AIF2RX6_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_IN("AIF2RX7", शून्य, 6,
+SND_SOC_DAPM_AIF_IN("AIF2RX7", NULL, 6,
 		    MADERA_AIF2_RX_ENABLES, MADERA_AIF2RX7_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_IN("AIF2RX8", शून्य, 7,
+SND_SOC_DAPM_AIF_IN("AIF2RX8", NULL, 7,
 		    MADERA_AIF2_RX_ENABLES, MADERA_AIF2RX8_ENA_SHIFT, 0),
 
-SND_SOC_DAPM_AIF_IN("AIF3RX1", शून्य, 0,
+SND_SOC_DAPM_AIF_IN("AIF3RX1", NULL, 0,
 		    MADERA_AIF3_RX_ENABLES, MADERA_AIF3RX1_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_IN("AIF3RX2", शून्य, 1,
+SND_SOC_DAPM_AIF_IN("AIF3RX2", NULL, 1,
 		    MADERA_AIF3_RX_ENABLES, MADERA_AIF3RX2_ENA_SHIFT, 0),
 
-SND_SOC_DAPM_AIF_IN("AIF4RX1", शून्य, 0,
+SND_SOC_DAPM_AIF_IN("AIF4RX1", NULL, 0,
 		    MADERA_AIF4_RX_ENABLES, MADERA_AIF4RX1_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_IN("AIF4RX2", शून्य, 1,
+SND_SOC_DAPM_AIF_IN("AIF4RX2", NULL, 1,
 		    MADERA_AIF4_RX_ENABLES, MADERA_AIF4RX2_ENA_SHIFT, 0),
 
-SND_SOC_DAPM_AIF_IN("SLIMRX1", शून्य, 0,
+SND_SOC_DAPM_AIF_IN("SLIMRX1", NULL, 0,
 		    MADERA_SLIMBUS_RX_CHANNEL_ENABLE,
 		    MADERA_SLIMRX1_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_IN("SLIMRX2", शून्य, 1,
+SND_SOC_DAPM_AIF_IN("SLIMRX2", NULL, 1,
 		    MADERA_SLIMBUS_RX_CHANNEL_ENABLE,
 		    MADERA_SLIMRX2_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_IN("SLIMRX3", शून्य, 2,
+SND_SOC_DAPM_AIF_IN("SLIMRX3", NULL, 2,
 		    MADERA_SLIMBUS_RX_CHANNEL_ENABLE,
 		    MADERA_SLIMRX3_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_IN("SLIMRX4", शून्य, 3,
+SND_SOC_DAPM_AIF_IN("SLIMRX4", NULL, 3,
 		    MADERA_SLIMBUS_RX_CHANNEL_ENABLE,
 		    MADERA_SLIMRX4_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_IN("SLIMRX5", शून्य, 4,
+SND_SOC_DAPM_AIF_IN("SLIMRX5", NULL, 4,
 		    MADERA_SLIMBUS_RX_CHANNEL_ENABLE,
 		    MADERA_SLIMRX5_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_IN("SLIMRX6", शून्य, 5,
+SND_SOC_DAPM_AIF_IN("SLIMRX6", NULL, 5,
 		    MADERA_SLIMBUS_RX_CHANNEL_ENABLE,
 		    MADERA_SLIMRX6_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_IN("SLIMRX7", शून्य, 6,
+SND_SOC_DAPM_AIF_IN("SLIMRX7", NULL, 6,
 		    MADERA_SLIMBUS_RX_CHANNEL_ENABLE,
 		    MADERA_SLIMRX7_ENA_SHIFT, 0),
-SND_SOC_DAPM_AIF_IN("SLIMRX8", शून्य, 7,
+SND_SOC_DAPM_AIF_IN("SLIMRX8", NULL, 7,
 		    MADERA_SLIMBUS_RX_CHANNEL_ENABLE,
 		    MADERA_SLIMRX8_ENA_SHIFT, 0),
 
-SND_SOC_DAPM_PGA("EQ1", MADERA_EQ1_1, MADERA_EQ1_ENA_SHIFT, 0, शून्य, 0),
-SND_SOC_DAPM_PGA("EQ2", MADERA_EQ2_1, MADERA_EQ2_ENA_SHIFT, 0, शून्य, 0),
-SND_SOC_DAPM_PGA("EQ3", MADERA_EQ3_1, MADERA_EQ3_ENA_SHIFT, 0, शून्य, 0),
-SND_SOC_DAPM_PGA("EQ4", MADERA_EQ4_1, MADERA_EQ4_ENA_SHIFT, 0, शून्य, 0),
+SND_SOC_DAPM_PGA("EQ1", MADERA_EQ1_1, MADERA_EQ1_ENA_SHIFT, 0, NULL, 0),
+SND_SOC_DAPM_PGA("EQ2", MADERA_EQ2_1, MADERA_EQ2_ENA_SHIFT, 0, NULL, 0),
+SND_SOC_DAPM_PGA("EQ3", MADERA_EQ3_1, MADERA_EQ3_ENA_SHIFT, 0, NULL, 0),
+SND_SOC_DAPM_PGA("EQ4", MADERA_EQ4_1, MADERA_EQ4_ENA_SHIFT, 0, NULL, 0),
 
 SND_SOC_DAPM_PGA("DRC1L", MADERA_DRC1_CTRL1, MADERA_DRC1L_ENA_SHIFT, 0,
-		 शून्य, 0),
+		 NULL, 0),
 SND_SOC_DAPM_PGA("DRC1R", MADERA_DRC1_CTRL1, MADERA_DRC1R_ENA_SHIFT, 0,
-		 शून्य, 0),
+		 NULL, 0),
 SND_SOC_DAPM_PGA("DRC2L", MADERA_DRC2_CTRL1, MADERA_DRC2L_ENA_SHIFT, 0,
-		 शून्य, 0),
+		 NULL, 0),
 SND_SOC_DAPM_PGA("DRC2R", MADERA_DRC2_CTRL1, MADERA_DRC2R_ENA_SHIFT, 0,
-		 शून्य, 0),
+		 NULL, 0),
 
 SND_SOC_DAPM_PGA("LHPF1", MADERA_HPLPF1_1, MADERA_LHPF1_ENA_SHIFT, 0,
-		 शून्य, 0),
+		 NULL, 0),
 SND_SOC_DAPM_PGA("LHPF2", MADERA_HPLPF2_1, MADERA_LHPF2_ENA_SHIFT, 0,
-		 शून्य, 0),
+		 NULL, 0),
 SND_SOC_DAPM_PGA("LHPF3", MADERA_HPLPF3_1, MADERA_LHPF3_ENA_SHIFT, 0,
-		 शून्य, 0),
+		 NULL, 0),
 SND_SOC_DAPM_PGA("LHPF4", MADERA_HPLPF4_1, MADERA_LHPF4_ENA_SHIFT, 0,
-		 शून्य, 0),
+		 NULL, 0),
 
 SND_SOC_DAPM_PGA("ASRC1IN1L", MADERA_ASRC1_ENABLE, MADERA_ASRC1_IN1L_ENA_SHIFT,
-		 0, शून्य, 0),
+		 0, NULL, 0),
 SND_SOC_DAPM_PGA("ASRC1IN1R", MADERA_ASRC1_ENABLE, MADERA_ASRC1_IN1R_ENA_SHIFT,
-		 0, शून्य, 0),
+		 0, NULL, 0),
 SND_SOC_DAPM_PGA("ASRC1IN2L", MADERA_ASRC1_ENABLE, MADERA_ASRC1_IN2L_ENA_SHIFT,
-		 0, शून्य, 0),
+		 0, NULL, 0),
 SND_SOC_DAPM_PGA("ASRC1IN2R", MADERA_ASRC1_ENABLE, MADERA_ASRC1_IN2R_ENA_SHIFT,
-		 0, शून्य, 0),
+		 0, NULL, 0),
 
 SND_SOC_DAPM_PGA("ASRC2IN1L", MADERA_ASRC2_ENABLE, MADERA_ASRC2_IN1L_ENA_SHIFT,
-		 0, शून्य, 0),
+		 0, NULL, 0),
 SND_SOC_DAPM_PGA("ASRC2IN1R", MADERA_ASRC2_ENABLE, MADERA_ASRC2_IN1R_ENA_SHIFT,
-		 0, शून्य, 0),
+		 0, NULL, 0),
 SND_SOC_DAPM_PGA("ASRC2IN2L", MADERA_ASRC2_ENABLE, MADERA_ASRC2_IN2L_ENA_SHIFT,
-		 0, शून्य, 0),
+		 0, NULL, 0),
 SND_SOC_DAPM_PGA("ASRC2IN2R", MADERA_ASRC2_ENABLE, MADERA_ASRC2_IN2R_ENA_SHIFT,
-		 0, शून्य, 0),
+		 0, NULL, 0),
 
 SND_SOC_DAPM_PGA("ISRC1DEC1", MADERA_ISRC_1_CTRL_3,
-		 MADERA_ISRC1_DEC1_ENA_SHIFT, 0, शून्य, 0),
+		 MADERA_ISRC1_DEC1_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_PGA("ISRC1DEC2", MADERA_ISRC_1_CTRL_3,
-		 MADERA_ISRC1_DEC2_ENA_SHIFT, 0, शून्य, 0),
+		 MADERA_ISRC1_DEC2_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_PGA("ISRC1DEC3", MADERA_ISRC_1_CTRL_3,
-		 MADERA_ISRC1_DEC3_ENA_SHIFT, 0, शून्य, 0),
+		 MADERA_ISRC1_DEC3_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_PGA("ISRC1DEC4", MADERA_ISRC_1_CTRL_3,
-		 MADERA_ISRC1_DEC4_ENA_SHIFT, 0, शून्य, 0),
+		 MADERA_ISRC1_DEC4_ENA_SHIFT, 0, NULL, 0),
 
 SND_SOC_DAPM_PGA("ISRC1INT1", MADERA_ISRC_1_CTRL_3,
-		 MADERA_ISRC1_INT1_ENA_SHIFT, 0, शून्य, 0),
+		 MADERA_ISRC1_INT1_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_PGA("ISRC1INT2", MADERA_ISRC_1_CTRL_3,
-		 MADERA_ISRC1_INT2_ENA_SHIFT, 0, शून्य, 0),
+		 MADERA_ISRC1_INT2_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_PGA("ISRC1INT3", MADERA_ISRC_1_CTRL_3,
-		 MADERA_ISRC1_INT3_ENA_SHIFT, 0, शून्य, 0),
+		 MADERA_ISRC1_INT3_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_PGA("ISRC1INT4", MADERA_ISRC_1_CTRL_3,
-		 MADERA_ISRC1_INT4_ENA_SHIFT, 0, शून्य, 0),
+		 MADERA_ISRC1_INT4_ENA_SHIFT, 0, NULL, 0),
 
 SND_SOC_DAPM_PGA("ISRC2DEC1", MADERA_ISRC_2_CTRL_3,
-		 MADERA_ISRC2_DEC1_ENA_SHIFT, 0, शून्य, 0),
+		 MADERA_ISRC2_DEC1_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_PGA("ISRC2DEC2", MADERA_ISRC_2_CTRL_3,
-		 MADERA_ISRC2_DEC2_ENA_SHIFT, 0, शून्य, 0),
+		 MADERA_ISRC2_DEC2_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_PGA("ISRC2DEC3", MADERA_ISRC_2_CTRL_3,
-		 MADERA_ISRC2_DEC3_ENA_SHIFT, 0, शून्य, 0),
+		 MADERA_ISRC2_DEC3_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_PGA("ISRC2DEC4", MADERA_ISRC_2_CTRL_3,
-		 MADERA_ISRC2_DEC4_ENA_SHIFT, 0, शून्य, 0),
+		 MADERA_ISRC2_DEC4_ENA_SHIFT, 0, NULL, 0),
 
 SND_SOC_DAPM_PGA("ISRC2INT1", MADERA_ISRC_2_CTRL_3,
-		 MADERA_ISRC2_INT1_ENA_SHIFT, 0, शून्य, 0),
+		 MADERA_ISRC2_INT1_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_PGA("ISRC2INT2", MADERA_ISRC_2_CTRL_3,
-		 MADERA_ISRC2_INT2_ENA_SHIFT, 0, शून्य, 0),
+		 MADERA_ISRC2_INT2_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_PGA("ISRC2INT3", MADERA_ISRC_2_CTRL_3,
-		 MADERA_ISRC2_INT3_ENA_SHIFT, 0, शून्य, 0),
+		 MADERA_ISRC2_INT3_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_PGA("ISRC2INT4", MADERA_ISRC_2_CTRL_3,
-		 MADERA_ISRC2_INT4_ENA_SHIFT, 0, शून्य, 0),
+		 MADERA_ISRC2_INT4_ENA_SHIFT, 0, NULL, 0),
 
 SND_SOC_DAPM_PGA("ISRC3DEC1", MADERA_ISRC_3_CTRL_3,
-		 MADERA_ISRC3_DEC1_ENA_SHIFT, 0, शून्य, 0),
+		 MADERA_ISRC3_DEC1_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_PGA("ISRC3DEC2", MADERA_ISRC_3_CTRL_3,
-		 MADERA_ISRC3_DEC2_ENA_SHIFT, 0, शून्य, 0),
+		 MADERA_ISRC3_DEC2_ENA_SHIFT, 0, NULL, 0),
 
 SND_SOC_DAPM_PGA("ISRC3INT1", MADERA_ISRC_3_CTRL_3,
-		 MADERA_ISRC3_INT1_ENA_SHIFT, 0, शून्य, 0),
+		 MADERA_ISRC3_INT1_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_PGA("ISRC3INT2", MADERA_ISRC_3_CTRL_3,
-		 MADERA_ISRC3_INT2_ENA_SHIFT, 0, शून्य, 0),
+		 MADERA_ISRC3_INT2_ENA_SHIFT, 0, NULL, 0),
 
 SND_SOC_DAPM_PGA("ISRC4DEC1", MADERA_ISRC_4_CTRL_3,
-		 MADERA_ISRC4_DEC1_ENA_SHIFT, 0, शून्य, 0),
+		 MADERA_ISRC4_DEC1_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_PGA("ISRC4DEC2", MADERA_ISRC_4_CTRL_3,
-		 MADERA_ISRC4_DEC2_ENA_SHIFT, 0, शून्य, 0),
+		 MADERA_ISRC4_DEC2_ENA_SHIFT, 0, NULL, 0),
 
 SND_SOC_DAPM_PGA("ISRC4INT1", MADERA_ISRC_4_CTRL_3,
-		 MADERA_ISRC4_INT1_ENA_SHIFT, 0, शून्य, 0),
+		 MADERA_ISRC4_INT1_ENA_SHIFT, 0, NULL, 0),
 SND_SOC_DAPM_PGA("ISRC4INT2", MADERA_ISRC_4_CTRL_3,
-		 MADERA_ISRC4_INT2_ENA_SHIFT, 0, शून्य, 0),
+		 MADERA_ISRC4_INT2_ENA_SHIFT, 0, NULL, 0),
 
-WM_ADSP2("DSP1", 0, cs47l85_adsp_घातer_ev),
-WM_ADSP2("DSP2", 1, cs47l85_adsp_घातer_ev),
-WM_ADSP2("DSP3", 2, cs47l85_adsp_घातer_ev),
-WM_ADSP2("DSP4", 3, cs47l85_adsp_घातer_ev),
-WM_ADSP2("DSP5", 4, cs47l85_adsp_घातer_ev),
-WM_ADSP2("DSP6", 5, cs47l85_adsp_घातer_ev),
-WM_ADSP2("DSP7", 6, cs47l85_adsp_घातer_ev),
+WM_ADSP2("DSP1", 0, cs47l85_adsp_power_ev),
+WM_ADSP2("DSP2", 1, cs47l85_adsp_power_ev),
+WM_ADSP2("DSP3", 2, cs47l85_adsp_power_ev),
+WM_ADSP2("DSP4", 3, cs47l85_adsp_power_ev),
+WM_ADSP2("DSP5", 4, cs47l85_adsp_power_ev),
+WM_ADSP2("DSP6", 5, cs47l85_adsp_power_ev),
+WM_ADSP2("DSP7", 6, cs47l85_adsp_power_ev),
 
-/* End of ordered input mux widमाला_लो */
+/* End of ordered input mux widgets */
 
 MADERA_MIXER_WIDGETS(EQ1, "EQ1"),
 MADERA_MIXER_WIDGETS(EQ2, "EQ2"),
@@ -1533,487 +1532,487 @@ SND_SOC_DAPM_OUTPUT("SPKDAT2R"),
 SND_SOC_DAPM_OUTPUT("SPDIF1"),
 
 SND_SOC_DAPM_OUTPUT("MICSUPP"),
-पूर्ण;
+};
 
-#घोषणा MADERA_MIXER_INPUT_ROUTES(name)	\
-	अणु name, "Noise Generator", "Noise Generator" पूर्ण, \
-	अणु name, "Tone Generator 1", "Tone Generator 1" पूर्ण, \
-	अणु name, "Tone Generator 2", "Tone Generator 2" पूर्ण, \
-	अणु name, "Haptics", "HAPTICS" पूर्ण, \
-	अणु name, "AEC1", "AEC1 Loopback" पूर्ण, \
-	अणु name, "AEC2", "AEC2 Loopback" पूर्ण, \
-	अणु name, "IN1L", "IN1L" पूर्ण, \
-	अणु name, "IN1R", "IN1R" पूर्ण, \
-	अणु name, "IN2L", "IN2L" पूर्ण, \
-	अणु name, "IN2R", "IN2R" पूर्ण, \
-	अणु name, "IN3L", "IN3L" पूर्ण, \
-	अणु name, "IN3R", "IN3R" पूर्ण, \
-	अणु name, "IN4L", "IN4L" पूर्ण, \
-	अणु name, "IN4R", "IN4R" पूर्ण, \
-	अणु name, "IN5L", "IN5L" पूर्ण, \
-	अणु name, "IN5R", "IN5R" पूर्ण, \
-	अणु name, "IN6L", "IN6L" पूर्ण, \
-	अणु name, "IN6R", "IN6R" पूर्ण, \
-	अणु name, "AIF1RX1", "AIF1RX1" पूर्ण, \
-	अणु name, "AIF1RX2", "AIF1RX2" पूर्ण, \
-	अणु name, "AIF1RX3", "AIF1RX3" पूर्ण, \
-	अणु name, "AIF1RX4", "AIF1RX4" पूर्ण, \
-	अणु name, "AIF1RX5", "AIF1RX5" पूर्ण, \
-	अणु name, "AIF1RX6", "AIF1RX6" पूर्ण, \
-	अणु name, "AIF1RX7", "AIF1RX7" पूर्ण, \
-	अणु name, "AIF1RX8", "AIF1RX8" पूर्ण, \
-	अणु name, "AIF2RX1", "AIF2RX1" पूर्ण, \
-	अणु name, "AIF2RX2", "AIF2RX2" पूर्ण, \
-	अणु name, "AIF2RX3", "AIF2RX3" पूर्ण, \
-	अणु name, "AIF2RX4", "AIF2RX4" पूर्ण, \
-	अणु name, "AIF2RX5", "AIF2RX5" पूर्ण, \
-	अणु name, "AIF2RX6", "AIF2RX6" पूर्ण, \
-	अणु name, "AIF2RX7", "AIF2RX7" पूर्ण, \
-	अणु name, "AIF2RX8", "AIF2RX8" पूर्ण, \
-	अणु name, "AIF3RX1", "AIF3RX1" पूर्ण, \
-	अणु name, "AIF3RX2", "AIF3RX2" पूर्ण, \
-	अणु name, "AIF4RX1", "AIF4RX1" पूर्ण, \
-	अणु name, "AIF4RX2", "AIF4RX2" पूर्ण, \
-	अणु name, "SLIMRX1", "SLIMRX1" पूर्ण, \
-	अणु name, "SLIMRX2", "SLIMRX2" पूर्ण, \
-	अणु name, "SLIMRX3", "SLIMRX3" पूर्ण, \
-	अणु name, "SLIMRX4", "SLIMRX4" पूर्ण, \
-	अणु name, "SLIMRX5", "SLIMRX5" पूर्ण, \
-	अणु name, "SLIMRX6", "SLIMRX6" पूर्ण, \
-	अणु name, "SLIMRX7", "SLIMRX7" पूर्ण, \
-	अणु name, "SLIMRX8", "SLIMRX8" पूर्ण, \
-	अणु name, "EQ1", "EQ1" पूर्ण, \
-	अणु name, "EQ2", "EQ2" पूर्ण, \
-	अणु name, "EQ3", "EQ3" पूर्ण, \
-	अणु name, "EQ4", "EQ4" पूर्ण, \
-	अणु name, "DRC1L", "DRC1L" पूर्ण, \
-	अणु name, "DRC1R", "DRC1R" पूर्ण, \
-	अणु name, "DRC2L", "DRC2L" पूर्ण, \
-	अणु name, "DRC2R", "DRC2R" पूर्ण, \
-	अणु name, "LHPF1", "LHPF1" पूर्ण, \
-	अणु name, "LHPF2", "LHPF2" पूर्ण, \
-	अणु name, "LHPF3", "LHPF3" पूर्ण, \
-	अणु name, "LHPF4", "LHPF4" पूर्ण, \
-	अणु name, "ASRC1IN1L", "ASRC1IN1L" पूर्ण, \
-	अणु name, "ASRC1IN1R", "ASRC1IN1R" पूर्ण, \
-	अणु name, "ASRC1IN2L", "ASRC1IN2L" पूर्ण, \
-	अणु name, "ASRC1IN2R", "ASRC1IN2R" पूर्ण, \
-	अणु name, "ASRC2IN1L", "ASRC2IN1L" पूर्ण, \
-	अणु name, "ASRC2IN1R", "ASRC2IN1R" पूर्ण, \
-	अणु name, "ASRC2IN2L", "ASRC2IN2L" पूर्ण, \
-	अणु name, "ASRC2IN2R", "ASRC2IN2R" पूर्ण, \
-	अणु name, "ISRC1DEC1", "ISRC1DEC1" पूर्ण, \
-	अणु name, "ISRC1DEC2", "ISRC1DEC2" पूर्ण, \
-	अणु name, "ISRC1DEC3", "ISRC1DEC3" पूर्ण, \
-	अणु name, "ISRC1DEC4", "ISRC1DEC4" पूर्ण, \
-	अणु name, "ISRC1INT1", "ISRC1INT1" पूर्ण, \
-	अणु name, "ISRC1INT2", "ISRC1INT2" पूर्ण, \
-	अणु name, "ISRC1INT3", "ISRC1INT3" पूर्ण, \
-	अणु name, "ISRC1INT4", "ISRC1INT4" पूर्ण, \
-	अणु name, "ISRC2DEC1", "ISRC2DEC1" पूर्ण, \
-	अणु name, "ISRC2DEC2", "ISRC2DEC2" पूर्ण, \
-	अणु name, "ISRC2DEC3", "ISRC2DEC3" पूर्ण, \
-	अणु name, "ISRC2DEC4", "ISRC2DEC4" पूर्ण, \
-	अणु name, "ISRC2INT1", "ISRC2INT1" पूर्ण, \
-	अणु name, "ISRC2INT2", "ISRC2INT2" पूर्ण, \
-	अणु name, "ISRC2INT3", "ISRC2INT3" पूर्ण, \
-	अणु name, "ISRC2INT4", "ISRC2INT4" पूर्ण, \
-	अणु name, "ISRC3DEC1", "ISRC3DEC1" पूर्ण, \
-	अणु name, "ISRC3DEC2", "ISRC3DEC2" पूर्ण, \
-	अणु name, "ISRC3INT1", "ISRC3INT1" पूर्ण, \
-	अणु name, "ISRC3INT2", "ISRC3INT2" पूर्ण, \
-	अणु name, "ISRC4DEC1", "ISRC4DEC1" पूर्ण, \
-	अणु name, "ISRC4DEC2", "ISRC4DEC2" पूर्ण, \
-	अणु name, "ISRC4INT1", "ISRC4INT1" पूर्ण, \
-	अणु name, "ISRC4INT2", "ISRC4INT2" पूर्ण, \
-	अणु name, "DSP1.1", "DSP1" पूर्ण, \
-	अणु name, "DSP1.2", "DSP1" पूर्ण, \
-	अणु name, "DSP1.3", "DSP1" पूर्ण, \
-	अणु name, "DSP1.4", "DSP1" पूर्ण, \
-	अणु name, "DSP1.5", "DSP1" पूर्ण, \
-	अणु name, "DSP1.6", "DSP1" पूर्ण, \
-	अणु name, "DSP2.1", "DSP2" पूर्ण, \
-	अणु name, "DSP2.2", "DSP2" पूर्ण, \
-	अणु name, "DSP2.3", "DSP2" पूर्ण, \
-	अणु name, "DSP2.4", "DSP2" पूर्ण, \
-	अणु name, "DSP2.5", "DSP2" पूर्ण, \
-	अणु name, "DSP2.6", "DSP2" पूर्ण, \
-	अणु name, "DSP3.1", "DSP3" पूर्ण, \
-	अणु name, "DSP3.2", "DSP3" पूर्ण, \
-	अणु name, "DSP3.3", "DSP3" पूर्ण, \
-	अणु name, "DSP3.4", "DSP3" पूर्ण, \
-	अणु name, "DSP3.5", "DSP3" पूर्ण, \
-	अणु name, "DSP3.6", "DSP3" पूर्ण, \
-	अणु name, "DSP4.1", "DSP4" पूर्ण, \
-	अणु name, "DSP4.2", "DSP4" पूर्ण, \
-	अणु name, "DSP4.3", "DSP4" पूर्ण, \
-	अणु name, "DSP4.4", "DSP4" पूर्ण, \
-	अणु name, "DSP4.5", "DSP4" पूर्ण, \
-	अणु name, "DSP4.6", "DSP4" पूर्ण, \
-	अणु name, "DSP5.1", "DSP5" पूर्ण, \
-	अणु name, "DSP5.2", "DSP5" पूर्ण, \
-	अणु name, "DSP5.3", "DSP5" पूर्ण, \
-	अणु name, "DSP5.4", "DSP5" पूर्ण, \
-	अणु name, "DSP5.5", "DSP5" पूर्ण, \
-	अणु name, "DSP5.6", "DSP5" पूर्ण, \
-	अणु name, "DSP6.1", "DSP6" पूर्ण, \
-	अणु name, "DSP6.2", "DSP6" पूर्ण, \
-	अणु name, "DSP6.3", "DSP6" पूर्ण, \
-	अणु name, "DSP6.4", "DSP6" पूर्ण, \
-	अणु name, "DSP6.5", "DSP6" पूर्ण, \
-	अणु name, "DSP6.6", "DSP6" पूर्ण, \
-	अणु name, "DSP7.1", "DSP7" पूर्ण, \
-	अणु name, "DSP7.2", "DSP7" पूर्ण, \
-	अणु name, "DSP7.3", "DSP7" पूर्ण, \
-	अणु name, "DSP7.4", "DSP7" पूर्ण, \
-	अणु name, "DSP7.5", "DSP7" पूर्ण, \
-	अणु name, "DSP7.6", "DSP7" पूर्ण
+#define MADERA_MIXER_INPUT_ROUTES(name)	\
+	{ name, "Noise Generator", "Noise Generator" }, \
+	{ name, "Tone Generator 1", "Tone Generator 1" }, \
+	{ name, "Tone Generator 2", "Tone Generator 2" }, \
+	{ name, "Haptics", "HAPTICS" }, \
+	{ name, "AEC1", "AEC1 Loopback" }, \
+	{ name, "AEC2", "AEC2 Loopback" }, \
+	{ name, "IN1L", "IN1L" }, \
+	{ name, "IN1R", "IN1R" }, \
+	{ name, "IN2L", "IN2L" }, \
+	{ name, "IN2R", "IN2R" }, \
+	{ name, "IN3L", "IN3L" }, \
+	{ name, "IN3R", "IN3R" }, \
+	{ name, "IN4L", "IN4L" }, \
+	{ name, "IN4R", "IN4R" }, \
+	{ name, "IN5L", "IN5L" }, \
+	{ name, "IN5R", "IN5R" }, \
+	{ name, "IN6L", "IN6L" }, \
+	{ name, "IN6R", "IN6R" }, \
+	{ name, "AIF1RX1", "AIF1RX1" }, \
+	{ name, "AIF1RX2", "AIF1RX2" }, \
+	{ name, "AIF1RX3", "AIF1RX3" }, \
+	{ name, "AIF1RX4", "AIF1RX4" }, \
+	{ name, "AIF1RX5", "AIF1RX5" }, \
+	{ name, "AIF1RX6", "AIF1RX6" }, \
+	{ name, "AIF1RX7", "AIF1RX7" }, \
+	{ name, "AIF1RX8", "AIF1RX8" }, \
+	{ name, "AIF2RX1", "AIF2RX1" }, \
+	{ name, "AIF2RX2", "AIF2RX2" }, \
+	{ name, "AIF2RX3", "AIF2RX3" }, \
+	{ name, "AIF2RX4", "AIF2RX4" }, \
+	{ name, "AIF2RX5", "AIF2RX5" }, \
+	{ name, "AIF2RX6", "AIF2RX6" }, \
+	{ name, "AIF2RX7", "AIF2RX7" }, \
+	{ name, "AIF2RX8", "AIF2RX8" }, \
+	{ name, "AIF3RX1", "AIF3RX1" }, \
+	{ name, "AIF3RX2", "AIF3RX2" }, \
+	{ name, "AIF4RX1", "AIF4RX1" }, \
+	{ name, "AIF4RX2", "AIF4RX2" }, \
+	{ name, "SLIMRX1", "SLIMRX1" }, \
+	{ name, "SLIMRX2", "SLIMRX2" }, \
+	{ name, "SLIMRX3", "SLIMRX3" }, \
+	{ name, "SLIMRX4", "SLIMRX4" }, \
+	{ name, "SLIMRX5", "SLIMRX5" }, \
+	{ name, "SLIMRX6", "SLIMRX6" }, \
+	{ name, "SLIMRX7", "SLIMRX7" }, \
+	{ name, "SLIMRX8", "SLIMRX8" }, \
+	{ name, "EQ1", "EQ1" }, \
+	{ name, "EQ2", "EQ2" }, \
+	{ name, "EQ3", "EQ3" }, \
+	{ name, "EQ4", "EQ4" }, \
+	{ name, "DRC1L", "DRC1L" }, \
+	{ name, "DRC1R", "DRC1R" }, \
+	{ name, "DRC2L", "DRC2L" }, \
+	{ name, "DRC2R", "DRC2R" }, \
+	{ name, "LHPF1", "LHPF1" }, \
+	{ name, "LHPF2", "LHPF2" }, \
+	{ name, "LHPF3", "LHPF3" }, \
+	{ name, "LHPF4", "LHPF4" }, \
+	{ name, "ASRC1IN1L", "ASRC1IN1L" }, \
+	{ name, "ASRC1IN1R", "ASRC1IN1R" }, \
+	{ name, "ASRC1IN2L", "ASRC1IN2L" }, \
+	{ name, "ASRC1IN2R", "ASRC1IN2R" }, \
+	{ name, "ASRC2IN1L", "ASRC2IN1L" }, \
+	{ name, "ASRC2IN1R", "ASRC2IN1R" }, \
+	{ name, "ASRC2IN2L", "ASRC2IN2L" }, \
+	{ name, "ASRC2IN2R", "ASRC2IN2R" }, \
+	{ name, "ISRC1DEC1", "ISRC1DEC1" }, \
+	{ name, "ISRC1DEC2", "ISRC1DEC2" }, \
+	{ name, "ISRC1DEC3", "ISRC1DEC3" }, \
+	{ name, "ISRC1DEC4", "ISRC1DEC4" }, \
+	{ name, "ISRC1INT1", "ISRC1INT1" }, \
+	{ name, "ISRC1INT2", "ISRC1INT2" }, \
+	{ name, "ISRC1INT3", "ISRC1INT3" }, \
+	{ name, "ISRC1INT4", "ISRC1INT4" }, \
+	{ name, "ISRC2DEC1", "ISRC2DEC1" }, \
+	{ name, "ISRC2DEC2", "ISRC2DEC2" }, \
+	{ name, "ISRC2DEC3", "ISRC2DEC3" }, \
+	{ name, "ISRC2DEC4", "ISRC2DEC4" }, \
+	{ name, "ISRC2INT1", "ISRC2INT1" }, \
+	{ name, "ISRC2INT2", "ISRC2INT2" }, \
+	{ name, "ISRC2INT3", "ISRC2INT3" }, \
+	{ name, "ISRC2INT4", "ISRC2INT4" }, \
+	{ name, "ISRC3DEC1", "ISRC3DEC1" }, \
+	{ name, "ISRC3DEC2", "ISRC3DEC2" }, \
+	{ name, "ISRC3INT1", "ISRC3INT1" }, \
+	{ name, "ISRC3INT2", "ISRC3INT2" }, \
+	{ name, "ISRC4DEC1", "ISRC4DEC1" }, \
+	{ name, "ISRC4DEC2", "ISRC4DEC2" }, \
+	{ name, "ISRC4INT1", "ISRC4INT1" }, \
+	{ name, "ISRC4INT2", "ISRC4INT2" }, \
+	{ name, "DSP1.1", "DSP1" }, \
+	{ name, "DSP1.2", "DSP1" }, \
+	{ name, "DSP1.3", "DSP1" }, \
+	{ name, "DSP1.4", "DSP1" }, \
+	{ name, "DSP1.5", "DSP1" }, \
+	{ name, "DSP1.6", "DSP1" }, \
+	{ name, "DSP2.1", "DSP2" }, \
+	{ name, "DSP2.2", "DSP2" }, \
+	{ name, "DSP2.3", "DSP2" }, \
+	{ name, "DSP2.4", "DSP2" }, \
+	{ name, "DSP2.5", "DSP2" }, \
+	{ name, "DSP2.6", "DSP2" }, \
+	{ name, "DSP3.1", "DSP3" }, \
+	{ name, "DSP3.2", "DSP3" }, \
+	{ name, "DSP3.3", "DSP3" }, \
+	{ name, "DSP3.4", "DSP3" }, \
+	{ name, "DSP3.5", "DSP3" }, \
+	{ name, "DSP3.6", "DSP3" }, \
+	{ name, "DSP4.1", "DSP4" }, \
+	{ name, "DSP4.2", "DSP4" }, \
+	{ name, "DSP4.3", "DSP4" }, \
+	{ name, "DSP4.4", "DSP4" }, \
+	{ name, "DSP4.5", "DSP4" }, \
+	{ name, "DSP4.6", "DSP4" }, \
+	{ name, "DSP5.1", "DSP5" }, \
+	{ name, "DSP5.2", "DSP5" }, \
+	{ name, "DSP5.3", "DSP5" }, \
+	{ name, "DSP5.4", "DSP5" }, \
+	{ name, "DSP5.5", "DSP5" }, \
+	{ name, "DSP5.6", "DSP5" }, \
+	{ name, "DSP6.1", "DSP6" }, \
+	{ name, "DSP6.2", "DSP6" }, \
+	{ name, "DSP6.3", "DSP6" }, \
+	{ name, "DSP6.4", "DSP6" }, \
+	{ name, "DSP6.5", "DSP6" }, \
+	{ name, "DSP6.6", "DSP6" }, \
+	{ name, "DSP7.1", "DSP7" }, \
+	{ name, "DSP7.2", "DSP7" }, \
+	{ name, "DSP7.3", "DSP7" }, \
+	{ name, "DSP7.4", "DSP7" }, \
+	{ name, "DSP7.5", "DSP7" }, \
+	{ name, "DSP7.6", "DSP7" }
 
-अटल स्थिर काष्ठा snd_soc_dapm_route cs47l85_dapm_routes[] = अणु
-	/* Internal घड़ी करोमुख्यs */
-	अणु "EQ1", शून्य, "FXCLK" पूर्ण,
-	अणु "EQ2", शून्य, "FXCLK" पूर्ण,
-	अणु "EQ3", शून्य, "FXCLK" पूर्ण,
-	अणु "EQ4", शून्य, "FXCLK" पूर्ण,
-	अणु "DRC1L", शून्य, "FXCLK" पूर्ण,
-	अणु "DRC1R", शून्य, "FXCLK" पूर्ण,
-	अणु "DRC2L", शून्य, "FXCLK" पूर्ण,
-	अणु "DRC2R", शून्य, "FXCLK" पूर्ण,
-	अणु "LHPF1", शून्य, "FXCLK" पूर्ण,
-	अणु "LHPF2", शून्य, "FXCLK" पूर्ण,
-	अणु "LHPF3", शून्य, "FXCLK" पूर्ण,
-	अणु "LHPF4", शून्य, "FXCLK" पूर्ण,
-	अणु "PWM1 Mixer", शून्य, "PWMCLK" पूर्ण,
-	अणु "PWM2 Mixer", शून्य, "PWMCLK" पूर्ण,
-	अणु "OUT1L", शून्य, "OUTCLK" पूर्ण,
-	अणु "OUT1R", शून्य, "OUTCLK" पूर्ण,
-	अणु "OUT2L", शून्य, "OUTCLK" पूर्ण,
-	अणु "OUT2R", शून्य, "OUTCLK" पूर्ण,
-	अणु "OUT3L", शून्य, "OUTCLK" पूर्ण,
-	अणु "OUT3R", शून्य, "OUTCLK" पूर्ण,
-	अणु "OUT4L", शून्य, "OUTCLK" पूर्ण,
-	अणु "OUT4R", शून्य, "OUTCLK" पूर्ण,
-	अणु "OUT5L", शून्य, "OUTCLK" पूर्ण,
-	अणु "OUT5R", शून्य, "OUTCLK" पूर्ण,
-	अणु "OUT6L", शून्य, "OUTCLK" पूर्ण,
-	अणु "OUT6R", शून्य, "OUTCLK" पूर्ण,
-	अणु "AIF1TX1", शून्य, "AIF1TXCLK" पूर्ण,
-	अणु "AIF1TX2", शून्य, "AIF1TXCLK" पूर्ण,
-	अणु "AIF1TX3", शून्य, "AIF1TXCLK" पूर्ण,
-	अणु "AIF1TX4", शून्य, "AIF1TXCLK" पूर्ण,
-	अणु "AIF1TX5", शून्य, "AIF1TXCLK" पूर्ण,
-	अणु "AIF1TX6", शून्य, "AIF1TXCLK" पूर्ण,
-	अणु "AIF1TX7", शून्य, "AIF1TXCLK" पूर्ण,
-	अणु "AIF1TX8", शून्य, "AIF1TXCLK" पूर्ण,
-	अणु "AIF2TX1", शून्य, "AIF2TXCLK" पूर्ण,
-	अणु "AIF2TX2", शून्य, "AIF2TXCLK" पूर्ण,
-	अणु "AIF2TX3", शून्य, "AIF2TXCLK" पूर्ण,
-	अणु "AIF2TX4", शून्य, "AIF2TXCLK" पूर्ण,
-	अणु "AIF2TX5", शून्य, "AIF2TXCLK" पूर्ण,
-	अणु "AIF2TX6", शून्य, "AIF2TXCLK" पूर्ण,
-	अणु "AIF2TX7", शून्य, "AIF2TXCLK" पूर्ण,
-	अणु "AIF2TX8", शून्य, "AIF2TXCLK" पूर्ण,
-	अणु "AIF3TX1", शून्य, "AIF3TXCLK" पूर्ण,
-	अणु "AIF3TX2", शून्य, "AIF3TXCLK" पूर्ण,
-	अणु "AIF4TX1", शून्य, "AIF4TXCLK" पूर्ण,
-	अणु "AIF4TX2", शून्य, "AIF4TXCLK" पूर्ण,
-	अणु "SLIMTX1", शून्य, "SLIMBUSCLK" पूर्ण,
-	अणु "SLIMTX2", शून्य, "SLIMBUSCLK" पूर्ण,
-	अणु "SLIMTX3", शून्य, "SLIMBUSCLK" पूर्ण,
-	अणु "SLIMTX4", शून्य, "SLIMBUSCLK" पूर्ण,
-	अणु "SLIMTX5", शून्य, "SLIMBUSCLK" पूर्ण,
-	अणु "SLIMTX6", शून्य, "SLIMBUSCLK" पूर्ण,
-	अणु "SLIMTX7", शून्य, "SLIMBUSCLK" पूर्ण,
-	अणु "SLIMTX8", शून्य, "SLIMBUSCLK" पूर्ण,
-	अणु "SPD1TX1", शून्य, "SPDCLK" पूर्ण,
-	अणु "SPD1TX2", शून्य, "SPDCLK" पूर्ण,
-	अणु "DSP1", शून्य, "DSP1CLK" पूर्ण,
-	अणु "DSP2", शून्य, "DSP2CLK" पूर्ण,
-	अणु "DSP3", शून्य, "DSP3CLK" पूर्ण,
-	अणु "DSP4", शून्य, "DSP4CLK" पूर्ण,
-	अणु "DSP5", शून्य, "DSP5CLK" पूर्ण,
-	अणु "DSP6", शून्य, "DSP6CLK" पूर्ण,
-	अणु "DSP7", शून्य, "DSP7CLK" पूर्ण,
-	अणु "ISRC1DEC1", शून्य, "ISRC1CLK" पूर्ण,
-	अणु "ISRC1DEC2", शून्य, "ISRC1CLK" पूर्ण,
-	अणु "ISRC1DEC3", शून्य, "ISRC1CLK" पूर्ण,
-	अणु "ISRC1DEC4", शून्य, "ISRC1CLK" पूर्ण,
-	अणु "ISRC1INT1", शून्य, "ISRC1CLK" पूर्ण,
-	अणु "ISRC1INT2", शून्य, "ISRC1CLK" पूर्ण,
-	अणु "ISRC1INT3", शून्य, "ISRC1CLK" पूर्ण,
-	अणु "ISRC1INT4", शून्य, "ISRC1CLK" पूर्ण,
-	अणु "ISRC2DEC1", शून्य, "ISRC2CLK" पूर्ण,
-	अणु "ISRC2DEC2", शून्य, "ISRC2CLK" पूर्ण,
-	अणु "ISRC2DEC3", शून्य, "ISRC2CLK" पूर्ण,
-	अणु "ISRC2DEC4", शून्य, "ISRC2CLK" पूर्ण,
-	अणु "ISRC2INT1", शून्य, "ISRC2CLK" पूर्ण,
-	अणु "ISRC2INT2", शून्य, "ISRC2CLK" पूर्ण,
-	अणु "ISRC2INT3", शून्य, "ISRC2CLK" पूर्ण,
-	अणु "ISRC2INT4", शून्य, "ISRC2CLK" पूर्ण,
-	अणु "ISRC3DEC1", शून्य, "ISRC3CLK" पूर्ण,
-	अणु "ISRC3DEC2", शून्य, "ISRC3CLK" पूर्ण,
-	अणु "ISRC3INT1", शून्य, "ISRC3CLK" पूर्ण,
-	अणु "ISRC3INT2", शून्य, "ISRC3CLK" पूर्ण,
-	अणु "ISRC4DEC1", शून्य, "ISRC4CLK" पूर्ण,
-	अणु "ISRC4DEC2", शून्य, "ISRC4CLK" पूर्ण,
-	अणु "ISRC4INT1", शून्य, "ISRC4CLK" पूर्ण,
-	अणु "ISRC4INT2", शून्य, "ISRC4CLK" पूर्ण,
-	अणु "ASRC1IN1L", शून्य, "ASRC1CLK" पूर्ण,
-	अणु "ASRC1IN1R", शून्य, "ASRC1CLK" पूर्ण,
-	अणु "ASRC1IN2L", शून्य, "ASRC1CLK" पूर्ण,
-	अणु "ASRC1IN2R", शून्य, "ASRC1CLK" पूर्ण,
-	अणु "ASRC2IN1L", शून्य, "ASRC2CLK" पूर्ण,
-	अणु "ASRC2IN1R", शून्य, "ASRC2CLK" पूर्ण,
-	अणु "ASRC2IN2L", शून्य, "ASRC2CLK" पूर्ण,
-	अणु "ASRC2IN2R", शून्य, "ASRC2CLK" पूर्ण,
+static const struct snd_soc_dapm_route cs47l85_dapm_routes[] = {
+	/* Internal clock domains */
+	{ "EQ1", NULL, "FXCLK" },
+	{ "EQ2", NULL, "FXCLK" },
+	{ "EQ3", NULL, "FXCLK" },
+	{ "EQ4", NULL, "FXCLK" },
+	{ "DRC1L", NULL, "FXCLK" },
+	{ "DRC1R", NULL, "FXCLK" },
+	{ "DRC2L", NULL, "FXCLK" },
+	{ "DRC2R", NULL, "FXCLK" },
+	{ "LHPF1", NULL, "FXCLK" },
+	{ "LHPF2", NULL, "FXCLK" },
+	{ "LHPF3", NULL, "FXCLK" },
+	{ "LHPF4", NULL, "FXCLK" },
+	{ "PWM1 Mixer", NULL, "PWMCLK" },
+	{ "PWM2 Mixer", NULL, "PWMCLK" },
+	{ "OUT1L", NULL, "OUTCLK" },
+	{ "OUT1R", NULL, "OUTCLK" },
+	{ "OUT2L", NULL, "OUTCLK" },
+	{ "OUT2R", NULL, "OUTCLK" },
+	{ "OUT3L", NULL, "OUTCLK" },
+	{ "OUT3R", NULL, "OUTCLK" },
+	{ "OUT4L", NULL, "OUTCLK" },
+	{ "OUT4R", NULL, "OUTCLK" },
+	{ "OUT5L", NULL, "OUTCLK" },
+	{ "OUT5R", NULL, "OUTCLK" },
+	{ "OUT6L", NULL, "OUTCLK" },
+	{ "OUT6R", NULL, "OUTCLK" },
+	{ "AIF1TX1", NULL, "AIF1TXCLK" },
+	{ "AIF1TX2", NULL, "AIF1TXCLK" },
+	{ "AIF1TX3", NULL, "AIF1TXCLK" },
+	{ "AIF1TX4", NULL, "AIF1TXCLK" },
+	{ "AIF1TX5", NULL, "AIF1TXCLK" },
+	{ "AIF1TX6", NULL, "AIF1TXCLK" },
+	{ "AIF1TX7", NULL, "AIF1TXCLK" },
+	{ "AIF1TX8", NULL, "AIF1TXCLK" },
+	{ "AIF2TX1", NULL, "AIF2TXCLK" },
+	{ "AIF2TX2", NULL, "AIF2TXCLK" },
+	{ "AIF2TX3", NULL, "AIF2TXCLK" },
+	{ "AIF2TX4", NULL, "AIF2TXCLK" },
+	{ "AIF2TX5", NULL, "AIF2TXCLK" },
+	{ "AIF2TX6", NULL, "AIF2TXCLK" },
+	{ "AIF2TX7", NULL, "AIF2TXCLK" },
+	{ "AIF2TX8", NULL, "AIF2TXCLK" },
+	{ "AIF3TX1", NULL, "AIF3TXCLK" },
+	{ "AIF3TX2", NULL, "AIF3TXCLK" },
+	{ "AIF4TX1", NULL, "AIF4TXCLK" },
+	{ "AIF4TX2", NULL, "AIF4TXCLK" },
+	{ "SLIMTX1", NULL, "SLIMBUSCLK" },
+	{ "SLIMTX2", NULL, "SLIMBUSCLK" },
+	{ "SLIMTX3", NULL, "SLIMBUSCLK" },
+	{ "SLIMTX4", NULL, "SLIMBUSCLK" },
+	{ "SLIMTX5", NULL, "SLIMBUSCLK" },
+	{ "SLIMTX6", NULL, "SLIMBUSCLK" },
+	{ "SLIMTX7", NULL, "SLIMBUSCLK" },
+	{ "SLIMTX8", NULL, "SLIMBUSCLK" },
+	{ "SPD1TX1", NULL, "SPDCLK" },
+	{ "SPD1TX2", NULL, "SPDCLK" },
+	{ "DSP1", NULL, "DSP1CLK" },
+	{ "DSP2", NULL, "DSP2CLK" },
+	{ "DSP3", NULL, "DSP3CLK" },
+	{ "DSP4", NULL, "DSP4CLK" },
+	{ "DSP5", NULL, "DSP5CLK" },
+	{ "DSP6", NULL, "DSP6CLK" },
+	{ "DSP7", NULL, "DSP7CLK" },
+	{ "ISRC1DEC1", NULL, "ISRC1CLK" },
+	{ "ISRC1DEC2", NULL, "ISRC1CLK" },
+	{ "ISRC1DEC3", NULL, "ISRC1CLK" },
+	{ "ISRC1DEC4", NULL, "ISRC1CLK" },
+	{ "ISRC1INT1", NULL, "ISRC1CLK" },
+	{ "ISRC1INT2", NULL, "ISRC1CLK" },
+	{ "ISRC1INT3", NULL, "ISRC1CLK" },
+	{ "ISRC1INT4", NULL, "ISRC1CLK" },
+	{ "ISRC2DEC1", NULL, "ISRC2CLK" },
+	{ "ISRC2DEC2", NULL, "ISRC2CLK" },
+	{ "ISRC2DEC3", NULL, "ISRC2CLK" },
+	{ "ISRC2DEC4", NULL, "ISRC2CLK" },
+	{ "ISRC2INT1", NULL, "ISRC2CLK" },
+	{ "ISRC2INT2", NULL, "ISRC2CLK" },
+	{ "ISRC2INT3", NULL, "ISRC2CLK" },
+	{ "ISRC2INT4", NULL, "ISRC2CLK" },
+	{ "ISRC3DEC1", NULL, "ISRC3CLK" },
+	{ "ISRC3DEC2", NULL, "ISRC3CLK" },
+	{ "ISRC3INT1", NULL, "ISRC3CLK" },
+	{ "ISRC3INT2", NULL, "ISRC3CLK" },
+	{ "ISRC4DEC1", NULL, "ISRC4CLK" },
+	{ "ISRC4DEC2", NULL, "ISRC4CLK" },
+	{ "ISRC4INT1", NULL, "ISRC4CLK" },
+	{ "ISRC4INT2", NULL, "ISRC4CLK" },
+	{ "ASRC1IN1L", NULL, "ASRC1CLK" },
+	{ "ASRC1IN1R", NULL, "ASRC1CLK" },
+	{ "ASRC1IN2L", NULL, "ASRC1CLK" },
+	{ "ASRC1IN2R", NULL, "ASRC1CLK" },
+	{ "ASRC2IN1L", NULL, "ASRC2CLK" },
+	{ "ASRC2IN1R", NULL, "ASRC2CLK" },
+	{ "ASRC2IN2L", NULL, "ASRC2CLK" },
+	{ "ASRC2IN2R", NULL, "ASRC2CLK" },
 
-	अणु "AIF2 Capture", शून्य, "DBVDD2" पूर्ण,
-	अणु "AIF2 Playback", शून्य, "DBVDD2" पूर्ण,
+	{ "AIF2 Capture", NULL, "DBVDD2" },
+	{ "AIF2 Playback", NULL, "DBVDD2" },
 
-	अणु "AIF3 Capture", शून्य, "DBVDD3" पूर्ण,
-	अणु "AIF3 Playback", शून्य, "DBVDD3" पूर्ण,
+	{ "AIF3 Capture", NULL, "DBVDD3" },
+	{ "AIF3 Playback", NULL, "DBVDD3" },
 
-	अणु "AIF4 Capture", शून्य, "DBVDD3" पूर्ण,
-	अणु "AIF4 Playback", शून्य, "DBVDD3" पूर्ण,
+	{ "AIF4 Capture", NULL, "DBVDD3" },
+	{ "AIF4 Playback", NULL, "DBVDD3" },
 
-	अणु "OUT1L", शून्य, "CPVDD1" पूर्ण,
-	अणु "OUT1L", शून्य, "CPVDD2" पूर्ण,
-	अणु "OUT1R", शून्य, "CPVDD1" पूर्ण,
-	अणु "OUT1R", शून्य, "CPVDD2" पूर्ण,
-	अणु "OUT2L", शून्य, "CPVDD1" पूर्ण,
-	अणु "OUT2L", शून्य, "CPVDD2" पूर्ण,
-	अणु "OUT2R", शून्य, "CPVDD1" पूर्ण,
-	अणु "OUT2R", शून्य, "CPVDD2" पूर्ण,
-	अणु "OUT3L", शून्य, "CPVDD1" पूर्ण,
-	अणु "OUT3L", शून्य, "CPVDD2" पूर्ण,
-	अणु "OUT3R", शून्य, "CPVDD1" पूर्ण,
-	अणु "OUT3R", शून्य, "CPVDD2" पूर्ण,
+	{ "OUT1L", NULL, "CPVDD1" },
+	{ "OUT1L", NULL, "CPVDD2" },
+	{ "OUT1R", NULL, "CPVDD1" },
+	{ "OUT1R", NULL, "CPVDD2" },
+	{ "OUT2L", NULL, "CPVDD1" },
+	{ "OUT2L", NULL, "CPVDD2" },
+	{ "OUT2R", NULL, "CPVDD1" },
+	{ "OUT2R", NULL, "CPVDD2" },
+	{ "OUT3L", NULL, "CPVDD1" },
+	{ "OUT3L", NULL, "CPVDD2" },
+	{ "OUT3R", NULL, "CPVDD1" },
+	{ "OUT3R", NULL, "CPVDD2" },
 
-	अणु "OUT4L", शून्य, "SPKVDDL" पूर्ण,
-	अणु "OUT4R", शून्य, "SPKVDDR" पूर्ण,
+	{ "OUT4L", NULL, "SPKVDDL" },
+	{ "OUT4R", NULL, "SPKVDDR" },
 
-	अणु "OUT1L", शून्य, "SYSCLK" पूर्ण,
-	अणु "OUT1R", शून्य, "SYSCLK" पूर्ण,
-	अणु "OUT2L", शून्य, "SYSCLK" पूर्ण,
-	अणु "OUT2R", शून्य, "SYSCLK" पूर्ण,
-	अणु "OUT3L", शून्य, "SYSCLK" पूर्ण,
-	अणु "OUT3R", शून्य, "SYSCLK" पूर्ण,
-	अणु "OUT4L", शून्य, "SYSCLK" पूर्ण,
-	अणु "OUT4R", शून्य, "SYSCLK" पूर्ण,
-	अणु "OUT5L", शून्य, "SYSCLK" पूर्ण,
-	अणु "OUT5R", शून्य, "SYSCLK" पूर्ण,
-	अणु "OUT6L", शून्य, "SYSCLK" पूर्ण,
-	अणु "OUT6R", शून्य, "SYSCLK" पूर्ण,
+	{ "OUT1L", NULL, "SYSCLK" },
+	{ "OUT1R", NULL, "SYSCLK" },
+	{ "OUT2L", NULL, "SYSCLK" },
+	{ "OUT2R", NULL, "SYSCLK" },
+	{ "OUT3L", NULL, "SYSCLK" },
+	{ "OUT3R", NULL, "SYSCLK" },
+	{ "OUT4L", NULL, "SYSCLK" },
+	{ "OUT4R", NULL, "SYSCLK" },
+	{ "OUT5L", NULL, "SYSCLK" },
+	{ "OUT5R", NULL, "SYSCLK" },
+	{ "OUT6L", NULL, "SYSCLK" },
+	{ "OUT6R", NULL, "SYSCLK" },
 
-	अणु "SPD1", शून्य, "SYSCLK" पूर्ण,
-	अणु "SPD1", शून्य, "SPD1TX1" पूर्ण,
-	अणु "SPD1", शून्य, "SPD1TX2" पूर्ण,
+	{ "SPD1", NULL, "SYSCLK" },
+	{ "SPD1", NULL, "SPD1TX1" },
+	{ "SPD1", NULL, "SPD1TX2" },
 
-	अणु "IN1L", शून्य, "SYSCLK" पूर्ण,
-	अणु "IN1R", शून्य, "SYSCLK" पूर्ण,
-	अणु "IN2L", शून्य, "SYSCLK" पूर्ण,
-	अणु "IN2R", शून्य, "SYSCLK" पूर्ण,
-	अणु "IN3L", शून्य, "SYSCLK" पूर्ण,
-	अणु "IN3R", शून्य, "SYSCLK" पूर्ण,
-	अणु "IN4L", शून्य, "SYSCLK" पूर्ण,
-	अणु "IN4R", शून्य, "SYSCLK" पूर्ण,
-	अणु "IN5L", शून्य, "SYSCLK" पूर्ण,
-	अणु "IN5R", शून्य, "SYSCLK" पूर्ण,
-	अणु "IN6L", शून्य, "SYSCLK" पूर्ण,
-	अणु "IN6R", शून्य, "SYSCLK" पूर्ण,
+	{ "IN1L", NULL, "SYSCLK" },
+	{ "IN1R", NULL, "SYSCLK" },
+	{ "IN2L", NULL, "SYSCLK" },
+	{ "IN2R", NULL, "SYSCLK" },
+	{ "IN3L", NULL, "SYSCLK" },
+	{ "IN3R", NULL, "SYSCLK" },
+	{ "IN4L", NULL, "SYSCLK" },
+	{ "IN4R", NULL, "SYSCLK" },
+	{ "IN5L", NULL, "SYSCLK" },
+	{ "IN5R", NULL, "SYSCLK" },
+	{ "IN6L", NULL, "SYSCLK" },
+	{ "IN6R", NULL, "SYSCLK" },
 
-	अणु "IN4L", शून्य, "DBVDD4" पूर्ण,
-	अणु "IN4R", शून्य, "DBVDD4" पूर्ण,
-	अणु "IN5L", शून्य, "DBVDD4" पूर्ण,
-	अणु "IN5R", शून्य, "DBVDD4" पूर्ण,
-	अणु "IN6L", शून्य, "DBVDD4" पूर्ण,
-	अणु "IN6R", शून्य, "DBVDD4" पूर्ण,
+	{ "IN4L", NULL, "DBVDD4" },
+	{ "IN4R", NULL, "DBVDD4" },
+	{ "IN5L", NULL, "DBVDD4" },
+	{ "IN5R", NULL, "DBVDD4" },
+	{ "IN6L", NULL, "DBVDD4" },
+	{ "IN6R", NULL, "DBVDD4" },
 
-	अणु "ASRC1IN1L", शून्य, "SYSCLK" पूर्ण,
-	अणु "ASRC1IN1R", शून्य, "SYSCLK" पूर्ण,
-	अणु "ASRC1IN2L", शून्य, "SYSCLK" पूर्ण,
-	अणु "ASRC1IN2R", शून्य, "SYSCLK" पूर्ण,
-	अणु "ASRC2IN1L", शून्य, "SYSCLK" पूर्ण,
-	अणु "ASRC2IN1R", शून्य, "SYSCLK" पूर्ण,
-	अणु "ASRC2IN2L", शून्य, "SYSCLK" पूर्ण,
-	अणु "ASRC2IN2R", शून्य, "SYSCLK" पूर्ण,
+	{ "ASRC1IN1L", NULL, "SYSCLK" },
+	{ "ASRC1IN1R", NULL, "SYSCLK" },
+	{ "ASRC1IN2L", NULL, "SYSCLK" },
+	{ "ASRC1IN2R", NULL, "SYSCLK" },
+	{ "ASRC2IN1L", NULL, "SYSCLK" },
+	{ "ASRC2IN1R", NULL, "SYSCLK" },
+	{ "ASRC2IN2L", NULL, "SYSCLK" },
+	{ "ASRC2IN2R", NULL, "SYSCLK" },
 
-	अणु "ASRC1IN1L", शून्य, "ASYNCCLK" पूर्ण,
-	अणु "ASRC1IN1R", शून्य, "ASYNCCLK" पूर्ण,
-	अणु "ASRC1IN2L", शून्य, "ASYNCCLK" पूर्ण,
-	अणु "ASRC1IN2R", शून्य, "ASYNCCLK" पूर्ण,
-	अणु "ASRC2IN1L", शून्य, "ASYNCCLK" पूर्ण,
-	अणु "ASRC2IN1R", शून्य, "ASYNCCLK" पूर्ण,
-	अणु "ASRC2IN2L", शून्य, "ASYNCCLK" पूर्ण,
-	अणु "ASRC2IN2R", शून्य, "ASYNCCLK" पूर्ण,
+	{ "ASRC1IN1L", NULL, "ASYNCCLK" },
+	{ "ASRC1IN1R", NULL, "ASYNCCLK" },
+	{ "ASRC1IN2L", NULL, "ASYNCCLK" },
+	{ "ASRC1IN2R", NULL, "ASYNCCLK" },
+	{ "ASRC2IN1L", NULL, "ASYNCCLK" },
+	{ "ASRC2IN1R", NULL, "ASYNCCLK" },
+	{ "ASRC2IN2L", NULL, "ASYNCCLK" },
+	{ "ASRC2IN2R", NULL, "ASYNCCLK" },
 
-	अणु "MICBIAS1", शून्य, "MICVDD" पूर्ण,
-	अणु "MICBIAS2", शून्य, "MICVDD" पूर्ण,
-	अणु "MICBIAS3", शून्य, "MICVDD" पूर्ण,
-	अणु "MICBIAS4", शून्य, "MICVDD" पूर्ण,
+	{ "MICBIAS1", NULL, "MICVDD" },
+	{ "MICBIAS2", NULL, "MICVDD" },
+	{ "MICBIAS3", NULL, "MICVDD" },
+	{ "MICBIAS4", NULL, "MICVDD" },
 
-	अणु "Noise Generator", शून्य, "SYSCLK" पूर्ण,
-	अणु "Tone Generator 1", शून्य, "SYSCLK" पूर्ण,
-	अणु "Tone Generator 2", शून्य, "SYSCLK" पूर्ण,
+	{ "Noise Generator", NULL, "SYSCLK" },
+	{ "Tone Generator 1", NULL, "SYSCLK" },
+	{ "Tone Generator 2", NULL, "SYSCLK" },
 
-	अणु "Noise Generator", शून्य, "NOISE" पूर्ण,
-	अणु "Tone Generator 1", शून्य, "TONE" पूर्ण,
-	अणु "Tone Generator 2", शून्य, "TONE" पूर्ण,
+	{ "Noise Generator", NULL, "NOISE" },
+	{ "Tone Generator 1", NULL, "TONE" },
+	{ "Tone Generator 2", NULL, "TONE" },
 
-	अणु "AIF1 Capture", शून्य, "AIF1TX1" पूर्ण,
-	अणु "AIF1 Capture", शून्य, "AIF1TX2" पूर्ण,
-	अणु "AIF1 Capture", शून्य, "AIF1TX3" पूर्ण,
-	अणु "AIF1 Capture", शून्य, "AIF1TX4" पूर्ण,
-	अणु "AIF1 Capture", शून्य, "AIF1TX5" पूर्ण,
-	अणु "AIF1 Capture", शून्य, "AIF1TX6" पूर्ण,
-	अणु "AIF1 Capture", शून्य, "AIF1TX7" पूर्ण,
-	अणु "AIF1 Capture", शून्य, "AIF1TX8" पूर्ण,
+	{ "AIF1 Capture", NULL, "AIF1TX1" },
+	{ "AIF1 Capture", NULL, "AIF1TX2" },
+	{ "AIF1 Capture", NULL, "AIF1TX3" },
+	{ "AIF1 Capture", NULL, "AIF1TX4" },
+	{ "AIF1 Capture", NULL, "AIF1TX5" },
+	{ "AIF1 Capture", NULL, "AIF1TX6" },
+	{ "AIF1 Capture", NULL, "AIF1TX7" },
+	{ "AIF1 Capture", NULL, "AIF1TX8" },
 
-	अणु "AIF1RX1", शून्य, "AIF1 Playback" पूर्ण,
-	अणु "AIF1RX2", शून्य, "AIF1 Playback" पूर्ण,
-	अणु "AIF1RX3", शून्य, "AIF1 Playback" पूर्ण,
-	अणु "AIF1RX4", शून्य, "AIF1 Playback" पूर्ण,
-	अणु "AIF1RX5", शून्य, "AIF1 Playback" पूर्ण,
-	अणु "AIF1RX6", शून्य, "AIF1 Playback" पूर्ण,
-	अणु "AIF1RX7", शून्य, "AIF1 Playback" पूर्ण,
-	अणु "AIF1RX8", शून्य, "AIF1 Playback" पूर्ण,
+	{ "AIF1RX1", NULL, "AIF1 Playback" },
+	{ "AIF1RX2", NULL, "AIF1 Playback" },
+	{ "AIF1RX3", NULL, "AIF1 Playback" },
+	{ "AIF1RX4", NULL, "AIF1 Playback" },
+	{ "AIF1RX5", NULL, "AIF1 Playback" },
+	{ "AIF1RX6", NULL, "AIF1 Playback" },
+	{ "AIF1RX7", NULL, "AIF1 Playback" },
+	{ "AIF1RX8", NULL, "AIF1 Playback" },
 
-	अणु "AIF2 Capture", शून्य, "AIF2TX1" पूर्ण,
-	अणु "AIF2 Capture", शून्य, "AIF2TX2" पूर्ण,
-	अणु "AIF2 Capture", शून्य, "AIF2TX3" पूर्ण,
-	अणु "AIF2 Capture", शून्य, "AIF2TX4" पूर्ण,
-	अणु "AIF2 Capture", शून्य, "AIF2TX5" पूर्ण,
-	अणु "AIF2 Capture", शून्य, "AIF2TX6" पूर्ण,
-	अणु "AIF2 Capture", शून्य, "AIF2TX7" पूर्ण,
-	अणु "AIF2 Capture", शून्य, "AIF2TX8" पूर्ण,
+	{ "AIF2 Capture", NULL, "AIF2TX1" },
+	{ "AIF2 Capture", NULL, "AIF2TX2" },
+	{ "AIF2 Capture", NULL, "AIF2TX3" },
+	{ "AIF2 Capture", NULL, "AIF2TX4" },
+	{ "AIF2 Capture", NULL, "AIF2TX5" },
+	{ "AIF2 Capture", NULL, "AIF2TX6" },
+	{ "AIF2 Capture", NULL, "AIF2TX7" },
+	{ "AIF2 Capture", NULL, "AIF2TX8" },
 
-	अणु "AIF2RX1", शून्य, "AIF2 Playback" पूर्ण,
-	अणु "AIF2RX2", शून्य, "AIF2 Playback" पूर्ण,
-	अणु "AIF2RX3", शून्य, "AIF2 Playback" पूर्ण,
-	अणु "AIF2RX4", शून्य, "AIF2 Playback" पूर्ण,
-	अणु "AIF2RX5", शून्य, "AIF2 Playback" पूर्ण,
-	अणु "AIF2RX6", शून्य, "AIF2 Playback" पूर्ण,
-	अणु "AIF2RX7", शून्य, "AIF2 Playback" पूर्ण,
-	अणु "AIF2RX8", शून्य, "AIF2 Playback" पूर्ण,
+	{ "AIF2RX1", NULL, "AIF2 Playback" },
+	{ "AIF2RX2", NULL, "AIF2 Playback" },
+	{ "AIF2RX3", NULL, "AIF2 Playback" },
+	{ "AIF2RX4", NULL, "AIF2 Playback" },
+	{ "AIF2RX5", NULL, "AIF2 Playback" },
+	{ "AIF2RX6", NULL, "AIF2 Playback" },
+	{ "AIF2RX7", NULL, "AIF2 Playback" },
+	{ "AIF2RX8", NULL, "AIF2 Playback" },
 
-	अणु "AIF3 Capture", शून्य, "AIF3TX1" पूर्ण,
-	अणु "AIF3 Capture", शून्य, "AIF3TX2" पूर्ण,
+	{ "AIF3 Capture", NULL, "AIF3TX1" },
+	{ "AIF3 Capture", NULL, "AIF3TX2" },
 
-	अणु "AIF3RX1", शून्य, "AIF3 Playback" पूर्ण,
-	अणु "AIF3RX2", शून्य, "AIF3 Playback" पूर्ण,
+	{ "AIF3RX1", NULL, "AIF3 Playback" },
+	{ "AIF3RX2", NULL, "AIF3 Playback" },
 
-	अणु "AIF4 Capture", शून्य, "AIF4TX1" पूर्ण,
-	अणु "AIF4 Capture", शून्य, "AIF4TX2" पूर्ण,
+	{ "AIF4 Capture", NULL, "AIF4TX1" },
+	{ "AIF4 Capture", NULL, "AIF4TX2" },
 
-	अणु "AIF4RX1", शून्य, "AIF4 Playback" पूर्ण,
-	अणु "AIF4RX2", शून्य, "AIF4 Playback" पूर्ण,
+	{ "AIF4RX1", NULL, "AIF4 Playback" },
+	{ "AIF4RX2", NULL, "AIF4 Playback" },
 
-	अणु "Slim1 Capture", शून्य, "SLIMTX1" पूर्ण,
-	अणु "Slim1 Capture", शून्य, "SLIMTX2" पूर्ण,
-	अणु "Slim1 Capture", शून्य, "SLIMTX3" पूर्ण,
-	अणु "Slim1 Capture", शून्य, "SLIMTX4" पूर्ण,
+	{ "Slim1 Capture", NULL, "SLIMTX1" },
+	{ "Slim1 Capture", NULL, "SLIMTX2" },
+	{ "Slim1 Capture", NULL, "SLIMTX3" },
+	{ "Slim1 Capture", NULL, "SLIMTX4" },
 
-	अणु "SLIMRX1", शून्य, "Slim1 Playback" पूर्ण,
-	अणु "SLIMRX2", शून्य, "Slim1 Playback" पूर्ण,
-	अणु "SLIMRX3", शून्य, "Slim1 Playback" पूर्ण,
-	अणु "SLIMRX4", शून्य, "Slim1 Playback" पूर्ण,
+	{ "SLIMRX1", NULL, "Slim1 Playback" },
+	{ "SLIMRX2", NULL, "Slim1 Playback" },
+	{ "SLIMRX3", NULL, "Slim1 Playback" },
+	{ "SLIMRX4", NULL, "Slim1 Playback" },
 
-	अणु "Slim2 Capture", शून्य, "SLIMTX5" पूर्ण,
-	अणु "Slim2 Capture", शून्य, "SLIMTX6" पूर्ण,
+	{ "Slim2 Capture", NULL, "SLIMTX5" },
+	{ "Slim2 Capture", NULL, "SLIMTX6" },
 
-	अणु "SLIMRX5", शून्य, "Slim2 Playback" पूर्ण,
-	अणु "SLIMRX6", शून्य, "Slim2 Playback" पूर्ण,
+	{ "SLIMRX5", NULL, "Slim2 Playback" },
+	{ "SLIMRX6", NULL, "Slim2 Playback" },
 
-	अणु "Slim3 Capture", शून्य, "SLIMTX7" पूर्ण,
-	अणु "Slim3 Capture", शून्य, "SLIMTX8" पूर्ण,
+	{ "Slim3 Capture", NULL, "SLIMTX7" },
+	{ "Slim3 Capture", NULL, "SLIMTX8" },
 
-	अणु "SLIMRX7", शून्य, "Slim3 Playback" पूर्ण,
-	अणु "SLIMRX8", शून्य, "Slim3 Playback" पूर्ण,
+	{ "SLIMRX7", NULL, "Slim3 Playback" },
+	{ "SLIMRX8", NULL, "Slim3 Playback" },
 
-	अणु "AIF1 Playback", शून्य, "SYSCLK" पूर्ण,
-	अणु "AIF2 Playback", शून्य, "SYSCLK" पूर्ण,
-	अणु "AIF3 Playback", शून्य, "SYSCLK" पूर्ण,
-	अणु "AIF4 Playback", शून्य, "SYSCLK" पूर्ण,
-	अणु "Slim1 Playback", शून्य, "SYSCLK" पूर्ण,
-	अणु "Slim2 Playback", शून्य, "SYSCLK" पूर्ण,
-	अणु "Slim3 Playback", शून्य, "SYSCLK" पूर्ण,
+	{ "AIF1 Playback", NULL, "SYSCLK" },
+	{ "AIF2 Playback", NULL, "SYSCLK" },
+	{ "AIF3 Playback", NULL, "SYSCLK" },
+	{ "AIF4 Playback", NULL, "SYSCLK" },
+	{ "Slim1 Playback", NULL, "SYSCLK" },
+	{ "Slim2 Playback", NULL, "SYSCLK" },
+	{ "Slim3 Playback", NULL, "SYSCLK" },
 
-	अणु "AIF1 Capture", शून्य, "SYSCLK" पूर्ण,
-	अणु "AIF2 Capture", शून्य, "SYSCLK" पूर्ण,
-	अणु "AIF3 Capture", शून्य, "SYSCLK" पूर्ण,
-	अणु "AIF4 Capture", शून्य, "SYSCLK" पूर्ण,
-	अणु "Slim1 Capture", शून्य, "SYSCLK" पूर्ण,
-	अणु "Slim2 Capture", शून्य, "SYSCLK" पूर्ण,
-	अणु "Slim3 Capture", शून्य, "SYSCLK" पूर्ण,
+	{ "AIF1 Capture", NULL, "SYSCLK" },
+	{ "AIF2 Capture", NULL, "SYSCLK" },
+	{ "AIF3 Capture", NULL, "SYSCLK" },
+	{ "AIF4 Capture", NULL, "SYSCLK" },
+	{ "Slim1 Capture", NULL, "SYSCLK" },
+	{ "Slim2 Capture", NULL, "SYSCLK" },
+	{ "Slim3 Capture", NULL, "SYSCLK" },
 
-	अणु "Voice Control DSP", शून्य, "DSP6" पूर्ण,
+	{ "Voice Control DSP", NULL, "DSP6" },
 
-	अणु "Audio Trace DSP", शून्य, "DSP1" पूर्ण,
+	{ "Audio Trace DSP", NULL, "DSP1" },
 
-	अणु "IN1L Analog Mux", "A", "IN1ALN" पूर्ण,
-	अणु "IN1L Analog Mux", "A", "IN1ALP" पूर्ण,
-	अणु "IN1L Analog Mux", "B", "IN1BN" पूर्ण,
-	अणु "IN1L Analog Mux", "B", "IN1BP" पूर्ण,
+	{ "IN1L Analog Mux", "A", "IN1ALN" },
+	{ "IN1L Analog Mux", "A", "IN1ALP" },
+	{ "IN1L Analog Mux", "B", "IN1BN" },
+	{ "IN1L Analog Mux", "B", "IN1BP" },
 
-	अणु "IN1L Mode", "Analog", "IN1L Analog Mux" पूर्ण,
-	अणु "IN1R Mode", "Analog", "IN1RN" पूर्ण,
-	अणु "IN1R Mode", "Analog", "IN1RP" पूर्ण,
+	{ "IN1L Mode", "Analog", "IN1L Analog Mux" },
+	{ "IN1R Mode", "Analog", "IN1RN" },
+	{ "IN1R Mode", "Analog", "IN1RP" },
 
-	अणु "IN1L Mode", "Digital", "IN1ALN" पूर्ण,
-	अणु "IN1L Mode", "Digital", "IN1RN" पूर्ण,
-	अणु "IN1R Mode", "Digital", "IN1ALN" पूर्ण,
-	अणु "IN1R Mode", "Digital", "IN1RN" पूर्ण,
+	{ "IN1L Mode", "Digital", "IN1ALN" },
+	{ "IN1L Mode", "Digital", "IN1RN" },
+	{ "IN1R Mode", "Digital", "IN1ALN" },
+	{ "IN1R Mode", "Digital", "IN1RN" },
 
-	अणु "IN1L", शून्य, "IN1L Mode" पूर्ण,
-	अणु "IN1R", शून्य, "IN1R Mode" पूर्ण,
+	{ "IN1L", NULL, "IN1L Mode" },
+	{ "IN1R", NULL, "IN1R Mode" },
 
-	अणु "IN2L Analog Mux", "A", "IN2ALN" पूर्ण,
-	अणु "IN2L Analog Mux", "A", "IN2ALP" पूर्ण,
-	अणु "IN2L Analog Mux", "B", "IN2BLN" पूर्ण,
-	अणु "IN2L Analog Mux", "B", "IN2BLP" पूर्ण,
-	अणु "IN2R Analog Mux", "A", "IN2ARN" पूर्ण,
-	अणु "IN2R Analog Mux", "A", "IN2ARP" पूर्ण,
-	अणु "IN2R Analog Mux", "B", "IN2BRN" पूर्ण,
-	अणु "IN2R Analog Mux", "B", "IN2BRP" पूर्ण,
+	{ "IN2L Analog Mux", "A", "IN2ALN" },
+	{ "IN2L Analog Mux", "A", "IN2ALP" },
+	{ "IN2L Analog Mux", "B", "IN2BLN" },
+	{ "IN2L Analog Mux", "B", "IN2BLP" },
+	{ "IN2R Analog Mux", "A", "IN2ARN" },
+	{ "IN2R Analog Mux", "A", "IN2ARP" },
+	{ "IN2R Analog Mux", "B", "IN2BRN" },
+	{ "IN2R Analog Mux", "B", "IN2BRP" },
 
-	अणु "IN2L Mode", "Analog", "IN2L Analog Mux" पूर्ण,
-	अणु "IN2R Mode", "Analog", "IN2R Analog Mux" पूर्ण,
+	{ "IN2L Mode", "Analog", "IN2L Analog Mux" },
+	{ "IN2R Mode", "Analog", "IN2R Analog Mux" },
 
-	अणु "IN2L Mode", "Digital", "IN2ALN" पूर्ण,
-	अणु "IN2L Mode", "Digital", "IN2ARN" पूर्ण,
-	अणु "IN2R Mode", "Digital", "IN2ALN" पूर्ण,
-	अणु "IN2R Mode", "Digital", "IN2ARN" पूर्ण,
+	{ "IN2L Mode", "Digital", "IN2ALN" },
+	{ "IN2L Mode", "Digital", "IN2ARN" },
+	{ "IN2R Mode", "Digital", "IN2ALN" },
+	{ "IN2R Mode", "Digital", "IN2ARN" },
 
-	अणु "IN2L", शून्य, "IN2L Mode" पूर्ण,
-	अणु "IN2R", शून्य, "IN2R Mode" पूर्ण,
+	{ "IN2L", NULL, "IN2L Mode" },
+	{ "IN2R", NULL, "IN2R Mode" },
 
-	अणु "IN3L Mode", "Analog", "IN3LN" पूर्ण,
-	अणु "IN3L Mode", "Analog", "IN3LP" पूर्ण,
-	अणु "IN3R Mode", "Analog", "IN3RN" पूर्ण,
-	अणु "IN3R Mode", "Analog", "IN3RP" पूर्ण,
+	{ "IN3L Mode", "Analog", "IN3LN" },
+	{ "IN3L Mode", "Analog", "IN3LP" },
+	{ "IN3R Mode", "Analog", "IN3RN" },
+	{ "IN3R Mode", "Analog", "IN3RP" },
 
-	अणु "IN3L Mode", "Digital", "IN3LN" पूर्ण,
-	अणु "IN3L Mode", "Digital", "IN3RN" पूर्ण,
-	अणु "IN3R Mode", "Digital", "IN3LN" पूर्ण,
-	अणु "IN3R Mode", "Digital", "IN3RN" पूर्ण,
+	{ "IN3L Mode", "Digital", "IN3LN" },
+	{ "IN3L Mode", "Digital", "IN3RN" },
+	{ "IN3R Mode", "Digital", "IN3LN" },
+	{ "IN3R Mode", "Digital", "IN3RN" },
 
-	अणु "IN3L", शून्य, "IN3L Mode" पूर्ण,
-	अणु "IN3R", शून्य, "IN3R Mode" पूर्ण,
+	{ "IN3L", NULL, "IN3L Mode" },
+	{ "IN3R", NULL, "IN3R Mode" },
 
-	अणु "IN4L", शून्य, "DMICCLK4" पूर्ण,
-	अणु "IN4L", शून्य, "DMICDAT4" पूर्ण,
-	अणु "IN4R", शून्य, "DMICCLK4" पूर्ण,
-	अणु "IN4R", शून्य, "DMICDAT4" पूर्ण,
+	{ "IN4L", NULL, "DMICCLK4" },
+	{ "IN4L", NULL, "DMICDAT4" },
+	{ "IN4R", NULL, "DMICCLK4" },
+	{ "IN4R", NULL, "DMICDAT4" },
 
-	अणु "IN5L", शून्य, "DMICCLK5" पूर्ण,
-	अणु "IN5L", शून्य, "DMICDAT5" पूर्ण,
-	अणु "IN5R", शून्य, "DMICCLK5" पूर्ण,
-	अणु "IN5R", शून्य, "DMICDAT5" पूर्ण,
+	{ "IN5L", NULL, "DMICCLK5" },
+	{ "IN5L", NULL, "DMICDAT5" },
+	{ "IN5R", NULL, "DMICCLK5" },
+	{ "IN5R", NULL, "DMICDAT5" },
 
-	अणु "IN6L", शून्य, "DMICCLK6" पूर्ण,
-	अणु "IN6L", शून्य, "DMICDAT6" पूर्ण,
-	अणु "IN6R", शून्य, "DMICCLK6" पूर्ण,
-	अणु "IN6R", शून्य, "DMICDAT6" पूर्ण,
+	{ "IN6L", NULL, "DMICCLK6" },
+	{ "IN6L", NULL, "DMICDAT6" },
+	{ "IN6R", NULL, "DMICCLK6" },
+	{ "IN6R", NULL, "DMICDAT6" },
 
 	MADERA_MIXER_ROUTES("OUT1L", "HPOUT1L"),
 	MADERA_MIXER_ROUTES("OUT1R", "HPOUT1R"),
@@ -2100,21 +2099,21 @@ SND_SOC_DAPM_OUTPUT("MICSUPP"),
 	MADERA_DSP_ROUTES("DSP6"),
 	MADERA_DSP_ROUTES("DSP7"),
 
-	अणु "DSP Trigger Out", शून्य, "DSP1 Trigger Output" पूर्ण,
-	अणु "DSP Trigger Out", शून्य, "DSP2 Trigger Output" पूर्ण,
-	अणु "DSP Trigger Out", शून्य, "DSP3 Trigger Output" पूर्ण,
-	अणु "DSP Trigger Out", शून्य, "DSP4 Trigger Output" पूर्ण,
-	अणु "DSP Trigger Out", शून्य, "DSP5 Trigger Output" पूर्ण,
-	अणु "DSP Trigger Out", शून्य, "DSP6 Trigger Output" पूर्ण,
-	अणु "DSP Trigger Out", शून्य, "DSP7 Trigger Output" पूर्ण,
+	{ "DSP Trigger Out", NULL, "DSP1 Trigger Output" },
+	{ "DSP Trigger Out", NULL, "DSP2 Trigger Output" },
+	{ "DSP Trigger Out", NULL, "DSP3 Trigger Output" },
+	{ "DSP Trigger Out", NULL, "DSP4 Trigger Output" },
+	{ "DSP Trigger Out", NULL, "DSP5 Trigger Output" },
+	{ "DSP Trigger Out", NULL, "DSP6 Trigger Output" },
+	{ "DSP Trigger Out", NULL, "DSP7 Trigger Output" },
 
-	अणु "DSP1 Trigger Output", "Switch", "DSP1" पूर्ण,
-	अणु "DSP2 Trigger Output", "Switch", "DSP2" पूर्ण,
-	अणु "DSP3 Trigger Output", "Switch", "DSP3" पूर्ण,
-	अणु "DSP4 Trigger Output", "Switch", "DSP4" पूर्ण,
-	अणु "DSP5 Trigger Output", "Switch", "DSP5" पूर्ण,
-	अणु "DSP6 Trigger Output", "Switch", "DSP6" पूर्ण,
-	अणु "DSP7 Trigger Output", "Switch", "DSP7" पूर्ण,
+	{ "DSP1 Trigger Output", "Switch", "DSP1" },
+	{ "DSP2 Trigger Output", "Switch", "DSP2" },
+	{ "DSP3 Trigger Output", "Switch", "DSP3" },
+	{ "DSP4 Trigger Output", "Switch", "DSP4" },
+	{ "DSP5 Trigger Output", "Switch", "DSP5" },
+	{ "DSP6 Trigger Output", "Switch", "DSP6" },
+	{ "DSP7 Trigger Output", "Switch", "DSP7" },
 
 	MADERA_MUX_ROUTES("ISRC1INT1", "ISRC1INT1"),
 	MADERA_MUX_ROUTES("ISRC1INT2", "ISRC1INT2"),
@@ -2148,50 +2147,50 @@ SND_SOC_DAPM_OUTPUT("MICSUPP"),
 	MADERA_MUX_ROUTES("ISRC4DEC1", "ISRC4DEC1"),
 	MADERA_MUX_ROUTES("ISRC4DEC2", "ISRC4DEC2"),
 
-	अणु "AEC1 Loopback", "HPOUT1L", "OUT1L" पूर्ण,
-	अणु "AEC1 Loopback", "HPOUT1R", "OUT1R" पूर्ण,
-	अणु "AEC2 Loopback", "HPOUT1L", "OUT1L" पूर्ण,
-	अणु "AEC2 Loopback", "HPOUT1R", "OUT1R" पूर्ण,
-	अणु "HPOUT1L", शून्य, "OUT1L" पूर्ण,
-	अणु "HPOUT1R", शून्य, "OUT1R" पूर्ण,
+	{ "AEC1 Loopback", "HPOUT1L", "OUT1L" },
+	{ "AEC1 Loopback", "HPOUT1R", "OUT1R" },
+	{ "AEC2 Loopback", "HPOUT1L", "OUT1L" },
+	{ "AEC2 Loopback", "HPOUT1R", "OUT1R" },
+	{ "HPOUT1L", NULL, "OUT1L" },
+	{ "HPOUT1R", NULL, "OUT1R" },
 
-	अणु "AEC1 Loopback", "HPOUT2L", "OUT2L" पूर्ण,
-	अणु "AEC1 Loopback", "HPOUT2R", "OUT2R" पूर्ण,
-	अणु "AEC2 Loopback", "HPOUT2L", "OUT2L" पूर्ण,
-	अणु "AEC2 Loopback", "HPOUT2R", "OUT2R" पूर्ण,
-	अणु "HPOUT2L", शून्य, "OUT2L" पूर्ण,
-	अणु "HPOUT2R", शून्य, "OUT2R" पूर्ण,
+	{ "AEC1 Loopback", "HPOUT2L", "OUT2L" },
+	{ "AEC1 Loopback", "HPOUT2R", "OUT2R" },
+	{ "AEC2 Loopback", "HPOUT2L", "OUT2L" },
+	{ "AEC2 Loopback", "HPOUT2R", "OUT2R" },
+	{ "HPOUT2L", NULL, "OUT2L" },
+	{ "HPOUT2R", NULL, "OUT2R" },
 
-	अणु "AEC1 Loopback", "HPOUT3L", "OUT3L" पूर्ण,
-	अणु "AEC1 Loopback", "HPOUT3R", "OUT3R" पूर्ण,
-	अणु "AEC2 Loopback", "HPOUT3L", "OUT3L" पूर्ण,
-	अणु "AEC2 Loopback", "HPOUT3R", "OUT3R" पूर्ण,
-	अणु "HPOUT3L", शून्य, "OUT3L" पूर्ण,
-	अणु "HPOUT3R", शून्य, "OUT3R" पूर्ण,
+	{ "AEC1 Loopback", "HPOUT3L", "OUT3L" },
+	{ "AEC1 Loopback", "HPOUT3R", "OUT3R" },
+	{ "AEC2 Loopback", "HPOUT3L", "OUT3L" },
+	{ "AEC2 Loopback", "HPOUT3R", "OUT3R" },
+	{ "HPOUT3L", NULL, "OUT3L" },
+	{ "HPOUT3R", NULL, "OUT3R" },
 
-	अणु "AEC1 Loopback", "SPKOUTL", "OUT4L" पूर्ण,
-	अणु "AEC2 Loopback", "SPKOUTL", "OUT4L" पूर्ण,
-	अणु "SPKOUTLN", शून्य, "OUT4L" पूर्ण,
-	अणु "SPKOUTLP", शून्य, "OUT4L" पूर्ण,
+	{ "AEC1 Loopback", "SPKOUTL", "OUT4L" },
+	{ "AEC2 Loopback", "SPKOUTL", "OUT4L" },
+	{ "SPKOUTLN", NULL, "OUT4L" },
+	{ "SPKOUTLP", NULL, "OUT4L" },
 
-	अणु "AEC1 Loopback", "SPKOUTR", "OUT4R" पूर्ण,
-	अणु "AEC2 Loopback", "SPKOUTR", "OUT4R" पूर्ण,
-	अणु "SPKOUTRN", शून्य, "OUT4R" पूर्ण,
-	अणु "SPKOUTRP", शून्य, "OUT4R" पूर्ण,
+	{ "AEC1 Loopback", "SPKOUTR", "OUT4R" },
+	{ "AEC2 Loopback", "SPKOUTR", "OUT4R" },
+	{ "SPKOUTRN", NULL, "OUT4R" },
+	{ "SPKOUTRP", NULL, "OUT4R" },
 
-	अणु "AEC1 Loopback", "SPKDAT1L", "OUT5L" पूर्ण,
-	अणु "AEC1 Loopback", "SPKDAT1R", "OUT5R" पूर्ण,
-	अणु "AEC2 Loopback", "SPKDAT1L", "OUT5L" पूर्ण,
-	अणु "AEC2 Loopback", "SPKDAT1R", "OUT5R" पूर्ण,
-	अणु "SPKDAT1L", शून्य, "OUT5L" पूर्ण,
-	अणु "SPKDAT1R", शून्य, "OUT5R" पूर्ण,
+	{ "AEC1 Loopback", "SPKDAT1L", "OUT5L" },
+	{ "AEC1 Loopback", "SPKDAT1R", "OUT5R" },
+	{ "AEC2 Loopback", "SPKDAT1L", "OUT5L" },
+	{ "AEC2 Loopback", "SPKDAT1R", "OUT5R" },
+	{ "SPKDAT1L", NULL, "OUT5L" },
+	{ "SPKDAT1R", NULL, "OUT5R" },
 
-	अणु "AEC1 Loopback", "SPKDAT2L", "OUT6L" पूर्ण,
-	अणु "AEC1 Loopback", "SPKDAT2R", "OUT6R" पूर्ण,
-	अणु "AEC2 Loopback", "SPKDAT2L", "OUT6L" पूर्ण,
-	अणु "AEC2 Loopback", "SPKDAT2R", "OUT6R" पूर्ण,
-	अणु "SPKDAT2L", शून्य, "OUT6L" पूर्ण,
-	अणु "SPKDAT2R", शून्य, "OUT6R" पूर्ण,
+	{ "AEC1 Loopback", "SPKDAT2L", "OUT6L" },
+	{ "AEC1 Loopback", "SPKDAT2R", "OUT6R" },
+	{ "AEC2 Loopback", "SPKDAT2L", "OUT6L" },
+	{ "AEC2 Loopback", "SPKDAT2R", "OUT6R" },
+	{ "SPKDAT2L", NULL, "OUT6L" },
+	{ "SPKDAT2R", NULL, "OUT6R" },
 
 	CS47L85_RXANC_INPUT_ROUTES("RXANCL", "RXANCL"),
 	CS47L85_RXANC_INPUT_ROUTES("RXANCR", "RXANCR"),
@@ -2209,294 +2208,294 @@ SND_SOC_DAPM_OUTPUT("MICSUPP"),
 	CS47L85_RXANC_OUTPUT_ROUTES("OUT6L", "SPKDAT2L"),
 	CS47L85_RXANC_OUTPUT_ROUTES("OUT6R", "SPKDAT2R"),
 
-	अणु "SPDIF1", शून्य, "SPD1" पूर्ण,
+	{ "SPDIF1", NULL, "SPD1" },
 
-	अणु "MICSUPP", शून्य, "SYSCLK" पूर्ण,
+	{ "MICSUPP", NULL, "SYSCLK" },
 
-	अणु "DRC1 Signal Activity", शून्य, "DRC1 Activity Output" पूर्ण,
-	अणु "DRC2 Signal Activity", शून्य, "DRC2 Activity Output" पूर्ण,
-	अणु "DRC1 Activity Output", "Switch", "DRC1L" पूर्ण,
-	अणु "DRC1 Activity Output", "Switch", "DRC1R" पूर्ण,
-	अणु "DRC2 Activity Output", "Switch", "DRC2L" पूर्ण,
-	अणु "DRC2 Activity Output", "Switch", "DRC2R" पूर्ण,
-पूर्ण;
+	{ "DRC1 Signal Activity", NULL, "DRC1 Activity Output" },
+	{ "DRC2 Signal Activity", NULL, "DRC2 Activity Output" },
+	{ "DRC1 Activity Output", "Switch", "DRC1L" },
+	{ "DRC1 Activity Output", "Switch", "DRC1R" },
+	{ "DRC2 Activity Output", "Switch", "DRC2L" },
+	{ "DRC2 Activity Output", "Switch", "DRC2R" },
+};
 
-अटल पूर्णांक cs47l85_set_fll(काष्ठा snd_soc_component *component, पूर्णांक fll_id,
-			   पूर्णांक source, अचिन्हित पूर्णांक fref, अचिन्हित पूर्णांक fout)
-अणु
-	काष्ठा cs47l85 *cs47l85 = snd_soc_component_get_drvdata(component);
+static int cs47l85_set_fll(struct snd_soc_component *component, int fll_id,
+			   int source, unsigned int fref, unsigned int fout)
+{
+	struct cs47l85 *cs47l85 = snd_soc_component_get_drvdata(component);
 
-	चयन (fll_id) अणु
-	हाल MADERA_FLL1_REFCLK:
-		वापस madera_set_fll_refclk(&cs47l85->fll[0], source, fref,
+	switch (fll_id) {
+	case MADERA_FLL1_REFCLK:
+		return madera_set_fll_refclk(&cs47l85->fll[0], source, fref,
 					     fout);
-	हाल MADERA_FLL2_REFCLK:
-		वापस madera_set_fll_refclk(&cs47l85->fll[1], source, fref,
+	case MADERA_FLL2_REFCLK:
+		return madera_set_fll_refclk(&cs47l85->fll[1], source, fref,
 					     fout);
-	हाल MADERA_FLL3_REFCLK:
-		वापस madera_set_fll_refclk(&cs47l85->fll[2], source, fref,
+	case MADERA_FLL3_REFCLK:
+		return madera_set_fll_refclk(&cs47l85->fll[2], source, fref,
 					     fout);
-	हाल MADERA_FLL1_SYNCCLK:
-		वापस madera_set_fll_syncclk(&cs47l85->fll[0], source, fref,
+	case MADERA_FLL1_SYNCCLK:
+		return madera_set_fll_syncclk(&cs47l85->fll[0], source, fref,
 					      fout);
-	हाल MADERA_FLL2_SYNCCLK:
-		वापस madera_set_fll_syncclk(&cs47l85->fll[1], source, fref,
+	case MADERA_FLL2_SYNCCLK:
+		return madera_set_fll_syncclk(&cs47l85->fll[1], source, fref,
 					      fout);
-	हाल MADERA_FLL3_SYNCCLK:
-		वापस madera_set_fll_syncclk(&cs47l85->fll[2], source, fref,
+	case MADERA_FLL3_SYNCCLK:
+		return madera_set_fll_syncclk(&cs47l85->fll[2], source, fref,
 					      fout);
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल काष्ठा snd_soc_dai_driver cs47l85_dai[] = अणु
-	अणु
+static struct snd_soc_dai_driver cs47l85_dai[] = {
+	{
 		.name = "cs47l85-aif1",
 		.id = 1,
 		.base = MADERA_AIF1_BCLK_CTRL,
-		.playback = अणु
+		.playback = {
 			.stream_name = "AIF1 Playback",
 			.channels_min = 1,
 			.channels_max = 8,
 			.rates = MADERA_RATES,
-			.क्रमmats = MADERA_FORMATS,
-		पूर्ण,
-		.capture = अणु
+			.formats = MADERA_FORMATS,
+		},
+		.capture = {
 			.stream_name = "AIF1 Capture",
 			.channels_min = 1,
 			.channels_max = 8,
 			.rates = MADERA_RATES,
-			.क्रमmats = MADERA_FORMATS,
-		 पूर्ण,
+			.formats = MADERA_FORMATS,
+		 },
 		.ops = &madera_dai_ops,
 		.symmetric_rate = 1,
 		.symmetric_sample_bits = 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "cs47l85-aif2",
 		.id = 2,
 		.base = MADERA_AIF2_BCLK_CTRL,
-		.playback = अणु
+		.playback = {
 			.stream_name = "AIF2 Playback",
 			.channels_min = 1,
 			.channels_max = 8,
 			.rates = MADERA_RATES,
-			.क्रमmats = MADERA_FORMATS,
-		पूर्ण,
-		.capture = अणु
+			.formats = MADERA_FORMATS,
+		},
+		.capture = {
 			.stream_name = "AIF2 Capture",
 			.channels_min = 1,
 			.channels_max = 8,
 			.rates = MADERA_RATES,
-			.क्रमmats = MADERA_FORMATS,
-		 पूर्ण,
+			.formats = MADERA_FORMATS,
+		 },
 		.ops = &madera_dai_ops,
 		.symmetric_rate = 1,
 		.symmetric_sample_bits = 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "cs47l85-aif3",
 		.id = 3,
 		.base = MADERA_AIF3_BCLK_CTRL,
-		.playback = अणु
+		.playback = {
 			.stream_name = "AIF3 Playback",
 			.channels_min = 1,
 			.channels_max = 2,
 			.rates = MADERA_RATES,
-			.क्रमmats = MADERA_FORMATS,
-		पूर्ण,
-		.capture = अणु
+			.formats = MADERA_FORMATS,
+		},
+		.capture = {
 			.stream_name = "AIF3 Capture",
 			.channels_min = 1,
 			.channels_max = 2,
 			.rates = MADERA_RATES,
-			.क्रमmats = MADERA_FORMATS,
-		 पूर्ण,
+			.formats = MADERA_FORMATS,
+		 },
 		.ops = &madera_dai_ops,
 		.symmetric_rate = 1,
 		.symmetric_sample_bits = 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "cs47l85-aif4",
 		.id = 4,
 		.base = MADERA_AIF4_BCLK_CTRL,
-		.playback = अणु
+		.playback = {
 			.stream_name = "AIF4 Playback",
 			.channels_min = 1,
 			.channels_max = 2,
 			.rates = MADERA_RATES,
-			.क्रमmats = MADERA_FORMATS,
-		पूर्ण,
-		.capture = अणु
+			.formats = MADERA_FORMATS,
+		},
+		.capture = {
 			.stream_name = "AIF4 Capture",
 			.channels_min = 1,
 			.channels_max = 2,
 			.rates = MADERA_RATES,
-			.क्रमmats = MADERA_FORMATS,
-		 पूर्ण,
+			.formats = MADERA_FORMATS,
+		 },
 		.ops = &madera_dai_ops,
 		.symmetric_rate = 1,
 		.symmetric_sample_bits = 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "cs47l85-slim1",
 		.id = 5,
-		.playback = अणु
+		.playback = {
 			.stream_name = "Slim1 Playback",
 			.channels_min = 1,
 			.channels_max = 4,
 			.rates = MADERA_RATES,
-			.क्रमmats = MADERA_FORMATS,
-		पूर्ण,
-		.capture = अणु
+			.formats = MADERA_FORMATS,
+		},
+		.capture = {
 			.stream_name = "Slim1 Capture",
 			.channels_min = 1,
 			.channels_max = 4,
 			.rates = MADERA_RATES,
-			.क्रमmats = MADERA_FORMATS,
-		 पूर्ण,
+			.formats = MADERA_FORMATS,
+		 },
 		.ops = &madera_simple_dai_ops,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "cs47l85-slim2",
 		.id = 6,
-		.playback = अणु
+		.playback = {
 			.stream_name = "Slim2 Playback",
 			.channels_min = 1,
 			.channels_max = 2,
 			.rates = MADERA_RATES,
-			.क्रमmats = MADERA_FORMATS,
-		पूर्ण,
-		.capture = अणु
+			.formats = MADERA_FORMATS,
+		},
+		.capture = {
 			.stream_name = "Slim2 Capture",
 			.channels_min = 1,
 			.channels_max = 2,
 			.rates = MADERA_RATES,
-			.क्रमmats = MADERA_FORMATS,
-		 पूर्ण,
+			.formats = MADERA_FORMATS,
+		 },
 		.ops = &madera_simple_dai_ops,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "cs47l85-slim3",
 		.id = 7,
-		.playback = अणु
+		.playback = {
 			.stream_name = "Slim3 Playback",
 			.channels_min = 1,
 			.channels_max = 2,
 			.rates = MADERA_RATES,
-			.क्रमmats = MADERA_FORMATS,
-		पूर्ण,
-		.capture = अणु
+			.formats = MADERA_FORMATS,
+		},
+		.capture = {
 			.stream_name = "Slim3 Capture",
 			.channels_min = 1,
 			.channels_max = 2,
 			.rates = MADERA_RATES,
-			.क्रमmats = MADERA_FORMATS,
-		 पूर्ण,
+			.formats = MADERA_FORMATS,
+		 },
 		.ops = &madera_simple_dai_ops,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "cs47l85-cpu-voicectrl",
-		.capture = अणु
+		.capture = {
 			.stream_name = "Voice Control CPU",
 			.channels_min = 1,
 			.channels_max = 1,
 			.rates = MADERA_RATES,
-			.क्रमmats = MADERA_FORMATS,
-		पूर्ण,
+			.formats = MADERA_FORMATS,
+		},
 		.compress_new = &snd_soc_new_compress,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "cs47l85-dsp-voicectrl",
-		.capture = अणु
+		.capture = {
 			.stream_name = "Voice Control DSP",
 			.channels_min = 1,
 			.channels_max = 1,
 			.rates = MADERA_RATES,
-			.क्रमmats = MADERA_FORMATS,
-		पूर्ण,
-	पूर्ण,
-	अणु
+			.formats = MADERA_FORMATS,
+		},
+	},
+	{
 		.name = "cs47l85-cpu-trace",
-		.capture = अणु
+		.capture = {
 			.stream_name = "Audio Trace CPU",
 			.channels_min = 1,
 			.channels_max = 6,
 			.rates = MADERA_RATES,
-			.क्रमmats = MADERA_FORMATS,
-		पूर्ण,
+			.formats = MADERA_FORMATS,
+		},
 		.compress_new = &snd_soc_new_compress,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "cs47l85-dsp-trace",
-		.capture = अणु
+		.capture = {
 			.stream_name = "Audio Trace DSP",
 			.channels_min = 1,
 			.channels_max = 6,
 			.rates = MADERA_RATES,
-			.क्रमmats = MADERA_FORMATS,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+			.formats = MADERA_FORMATS,
+		},
+	},
+};
 
-अटल पूर्णांक cs47l85_खोलो(काष्ठा snd_soc_component *component,
-			काष्ठा snd_compr_stream *stream)
-अणु
-	काष्ठा snd_soc_pcm_runसमय *rtd = stream->निजी_data;
-	काष्ठा cs47l85 *cs47l85 = snd_soc_component_get_drvdata(component);
-	काष्ठा madera_priv *priv = &cs47l85->core;
-	काष्ठा madera *madera = priv->madera;
-	पूर्णांक n_adsp;
+static int cs47l85_open(struct snd_soc_component *component,
+			struct snd_compr_stream *stream)
+{
+	struct snd_soc_pcm_runtime *rtd = stream->private_data;
+	struct cs47l85 *cs47l85 = snd_soc_component_get_drvdata(component);
+	struct madera_priv *priv = &cs47l85->core;
+	struct madera *madera = priv->madera;
+	int n_adsp;
 
-	अगर (म_भेद(asoc_rtd_to_codec(rtd, 0)->name, "cs47l85-dsp-voicectrl") == 0) अणु
+	if (strcmp(asoc_rtd_to_codec(rtd, 0)->name, "cs47l85-dsp-voicectrl") == 0) {
 		n_adsp = 5;
-	पूर्ण अन्यथा अगर (म_भेद(asoc_rtd_to_codec(rtd, 0)->name, "cs47l85-dsp-trace") == 0) अणु
+	} else if (strcmp(asoc_rtd_to_codec(rtd, 0)->name, "cs47l85-dsp-trace") == 0) {
 		n_adsp = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_err(madera->dev,
 			"No suitable compressed stream for DAI '%s'\n",
 			asoc_rtd_to_codec(rtd, 0)->name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस wm_adsp_compr_खोलो(&priv->adsp[n_adsp], stream);
-पूर्ण
+	return wm_adsp_compr_open(&priv->adsp[n_adsp], stream);
+}
 
-अटल irqवापस_t cs47l85_adsp2_irq(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा cs47l85 *cs47l85 = data;
-	काष्ठा madera_priv *priv = &cs47l85->core;
-	काष्ठा madera *madera = priv->madera;
-	काष्ठा madera_voice_trigger_info trig_info;
-	पूर्णांक serviced = 0;
-	पूर्णांक i, ret;
+static irqreturn_t cs47l85_adsp2_irq(int irq, void *data)
+{
+	struct cs47l85 *cs47l85 = data;
+	struct madera_priv *priv = &cs47l85->core;
+	struct madera *madera = priv->madera;
+	struct madera_voice_trigger_info trig_info;
+	int serviced = 0;
+	int i, ret;
 
-	क्रम (i = 0; i < CS47L85_NUM_ADSP; ++i) अणु
+	for (i = 0; i < CS47L85_NUM_ADSP; ++i) {
 		ret = wm_adsp_compr_handle_irq(&priv->adsp[i]);
-		अगर (ret != -ENODEV)
+		if (ret != -ENODEV)
 			serviced++;
-		अगर (ret == WM_ADSP_COMPR_VOICE_TRIGGER) अणु
+		if (ret == WM_ADSP_COMPR_VOICE_TRIGGER) {
 			trig_info.core_num = i + 1;
-			blocking_notअगरier_call_chain(&madera->notअगरier,
+			blocking_notifier_call_chain(&madera->notifier,
 						MADERA_NOTIFY_VOICE_TRIGGER,
 						&trig_info);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!serviced) अणु
+	if (!serviced) {
 		dev_err(madera->dev, "Spurious compressed data IRQ\n");
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक cs47l85_component_probe(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा cs47l85 *cs47l85 = snd_soc_component_get_drvdata(component);
-	काष्ठा madera *madera = cs47l85->core.madera;
-	पूर्णांक i, ret;
+static int cs47l85_component_probe(struct snd_soc_component *component)
+{
+	struct cs47l85 *cs47l85 = snd_soc_component_get_drvdata(component);
+	struct madera *madera = cs47l85->core.madera;
+	int i, ret;
 
 	snd_soc_component_init_regmap(component, madera->regmap);
 
@@ -2504,46 +2503,46 @@ SND_SOC_DAPM_OUTPUT("MICSUPP"),
 	madera->dapm = snd_soc_component_get_dapm(component);
 	mutex_unlock(&madera->dapm_ptr_lock);
 
-	ret = madera_init_inमाला_दो(component);
-	अगर (ret)
-		वापस ret;
+	ret = madera_init_inputs(component);
+	if (ret)
+		return ret;
 
-	ret = madera_init_outमाला_दो(component, शून्य, CS47L85_MONO_OUTPUTS,
+	ret = madera_init_outputs(component, NULL, CS47L85_MONO_OUTPUTS,
 				  CS47L85_MONO_OUTPUTS);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	snd_soc_component_disable_pin(component, "HAPTICS");
 
 	ret = snd_soc_add_component_controls(component,
 					     madera_adsp_rate_controls,
 					     CS47L85_NUM_ADSP);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	क्रम (i = 0; i < CS47L85_NUM_ADSP; i++)
+	for (i = 0; i < CS47L85_NUM_ADSP; i++)
 		wm_adsp2_component_probe(&cs47l85->core.adsp[i], component);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम cs47l85_component_हटाओ(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा cs47l85 *cs47l85 = snd_soc_component_get_drvdata(component);
-	काष्ठा madera *madera = cs47l85->core.madera;
-	पूर्णांक i;
+static void cs47l85_component_remove(struct snd_soc_component *component)
+{
+	struct cs47l85 *cs47l85 = snd_soc_component_get_drvdata(component);
+	struct madera *madera = cs47l85->core.madera;
+	int i;
 
 	mutex_lock(&madera->dapm_ptr_lock);
-	madera->dapm = शून्य;
+	madera->dapm = NULL;
 	mutex_unlock(&madera->dapm_ptr_lock);
 
-	क्रम (i = 0; i < CS47L85_NUM_ADSP; i++)
-		wm_adsp2_component_हटाओ(&cs47l85->core.adsp[i], component);
-पूर्ण
+	for (i = 0; i < CS47L85_NUM_ADSP; i++)
+		wm_adsp2_component_remove(&cs47l85->core.adsp[i], component);
+}
 
-#घोषणा MADERA_DIG_VU 0x0200
+#define MADERA_DIG_VU 0x0200
 
-अटल स्थिर अचिन्हित पूर्णांक cs47l85_digital_vu[] = अणु
+static const unsigned int cs47l85_digital_vu[] = {
 	MADERA_DAC_DIGITAL_VOLUME_1L,
 	MADERA_DAC_DIGITAL_VOLUME_1R,
 	MADERA_DAC_DIGITAL_VOLUME_2L,
@@ -2556,82 +2555,82 @@ SND_SOC_DAPM_OUTPUT("MICSUPP"),
 	MADERA_DAC_DIGITAL_VOLUME_5R,
 	MADERA_DAC_DIGITAL_VOLUME_6L,
 	MADERA_DAC_DIGITAL_VOLUME_6R,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_compress_ops cs47l85_compress_ops = अणु
-	.खोलो = &cs47l85_खोलो,
-	.मुक्त = &wm_adsp_compr_मुक्त,
+static const struct snd_compress_ops cs47l85_compress_ops = {
+	.open = &cs47l85_open,
+	.free = &wm_adsp_compr_free,
 	.set_params = &wm_adsp_compr_set_params,
 	.get_caps = &wm_adsp_compr_get_caps,
 	.trigger = &wm_adsp_compr_trigger,
-	.poपूर्णांकer = &wm_adsp_compr_poपूर्णांकer,
+	.pointer = &wm_adsp_compr_pointer,
 	.copy = &wm_adsp_compr_copy,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_component_driver soc_component_dev_cs47l85 = अणु
+static const struct snd_soc_component_driver soc_component_dev_cs47l85 = {
 	.probe			= &cs47l85_component_probe,
-	.हटाओ			= &cs47l85_component_हटाओ,
+	.remove			= &cs47l85_component_remove,
 	.set_sysclk		= &madera_set_sysclk,
 	.set_pll		= &cs47l85_set_fll,
 	.name			= DRV_NAME,
 	.compress_ops		= &cs47l85_compress_ops,
 	.controls		= cs47l85_snd_controls,
 	.num_controls		= ARRAY_SIZE(cs47l85_snd_controls),
-	.dapm_widमाला_लो		= cs47l85_dapm_widमाला_लो,
-	.num_dapm_widमाला_लो	= ARRAY_SIZE(cs47l85_dapm_widमाला_लो),
+	.dapm_widgets		= cs47l85_dapm_widgets,
+	.num_dapm_widgets	= ARRAY_SIZE(cs47l85_dapm_widgets),
 	.dapm_routes		= cs47l85_dapm_routes,
 	.num_dapm_routes	= ARRAY_SIZE(cs47l85_dapm_routes),
-	.use_pmकरोwn_समय	= 1,
+	.use_pmdown_time	= 1,
 	.endianness		= 1,
 	.non_legacy_dai_naming	= 1,
-पूर्ण;
+};
 
-अटल पूर्णांक cs47l85_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा madera *madera = dev_get_drvdata(pdev->dev.parent);
-	काष्ठा cs47l85 *cs47l85;
-	पूर्णांक i, ret;
+static int cs47l85_probe(struct platform_device *pdev)
+{
+	struct madera *madera = dev_get_drvdata(pdev->dev.parent);
+	struct cs47l85 *cs47l85;
+	int i, ret;
 
 	BUILD_BUG_ON(ARRAY_SIZE(cs47l85_dai) > MADERA_MAX_DAI);
 
-	/* quick निकास अगर Madera irqchip driver hasn't completed probe */
-	अगर (!madera->irq_dev) अणु
+	/* quick exit if Madera irqchip driver hasn't completed probe */
+	if (!madera->irq_dev) {
 		dev_dbg(&pdev->dev, "irqchip driver not ready\n");
-		वापस -EPROBE_DEFER;
-	पूर्ण
+		return -EPROBE_DEFER;
+	}
 
-	cs47l85 = devm_kzalloc(&pdev->dev, माप(काष्ठा cs47l85),
+	cs47l85 = devm_kzalloc(&pdev->dev, sizeof(struct cs47l85),
 			       GFP_KERNEL);
-	अगर (!cs47l85)
-		वापस -ENOMEM;
+	if (!cs47l85)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, cs47l85);
+	platform_set_drvdata(pdev, cs47l85);
 
 	cs47l85->core.madera = madera;
 	cs47l85->core.dev = &pdev->dev;
-	cs47l85->core.num_inमाला_दो = 12;
+	cs47l85->core.num_inputs = 12;
 
 	ret = madera_core_init(&cs47l85->core);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = madera_init_overheat(&cs47l85->core);
-	अगर (ret)
-		जाओ error_core;
+	if (ret)
+		goto error_core;
 
 	ret = madera_request_irq(madera, MADERA_IRQ_DSP_IRQ1,
 				 "ADSP2 Compressed IRQ", cs47l85_adsp2_irq,
 				 cs47l85);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "Failed to request DSP IRQ: %d\n", ret);
-		जाओ error_overheat;
-	पूर्ण
+		goto error_overheat;
+	}
 
 	ret = madera_set_irq_wake(madera, MADERA_IRQ_DSP_IRQ1, 1);
-	अगर (ret)
+	if (ret)
 		dev_warn(&pdev->dev, "Failed to set DSP IRQ wake: %d\n", ret);
 
-	क्रम (i = 0; i < CS47L85_NUM_ADSP; i++) अणु
+	for (i = 0; i < CS47L85_NUM_ADSP; i++) {
 		cs47l85->core.adsp[i].part = "cs47l85";
 		cs47l85->core.adsp[i].num = i + 1;
 		cs47l85->core.adsp[i].type = WMFW_ADSP2;
@@ -2645,12 +2644,12 @@ SND_SOC_DAPM_OUTPUT("MICSUPP"),
 			ARRAY_SIZE(cs47l85_dsp1_regions);
 
 		ret = wm_adsp2_init(&cs47l85->core.adsp[i]);
-		अगर (ret) अणु
-			क्रम (--i; i >= 0; --i)
-				wm_adsp2_हटाओ(&cs47l85->core.adsp[i]);
-			जाओ error_dsp_irq;
-		पूर्ण
-	पूर्ण
+		if (ret) {
+			for (--i; i >= 0; --i)
+				wm_adsp2_remove(&cs47l85->core.adsp[i]);
+			goto error_dsp_irq;
+		}
+	}
 
 	madera_init_fll(madera, 1, MADERA_FLL1_CONTROL_1 - 1,
 			&cs47l85->fll[0]);
@@ -2659,71 +2658,71 @@ SND_SOC_DAPM_OUTPUT("MICSUPP"),
 	madera_init_fll(madera, 3, MADERA_FLL3_CONTROL_1 - 1,
 			&cs47l85->fll[2]);
 
-	क्रम (i = 0; i < ARRAY_SIZE(cs47l85_dai); i++)
+	for (i = 0; i < ARRAY_SIZE(cs47l85_dai); i++)
 		madera_init_dai(&cs47l85->core, i);
 
 	/* Latch volume update bits */
-	क्रम (i = 0; i < ARRAY_SIZE(cs47l85_digital_vu); i++)
+	for (i = 0; i < ARRAY_SIZE(cs47l85_digital_vu); i++)
 		regmap_update_bits(madera->regmap, cs47l85_digital_vu[i],
 				   MADERA_DIG_VU, MADERA_DIG_VU);
 
-	pm_runसमय_enable(&pdev->dev);
-	pm_runसमय_idle(&pdev->dev);
+	pm_runtime_enable(&pdev->dev);
+	pm_runtime_idle(&pdev->dev);
 
-	ret = devm_snd_soc_रेजिस्टर_component(&pdev->dev,
+	ret = devm_snd_soc_register_component(&pdev->dev,
 					      &soc_component_dev_cs47l85,
 					      cs47l85_dai,
 					      ARRAY_SIZE(cs47l85_dai));
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&pdev->dev, "Failed to register component: %d\n", ret);
-		जाओ error_pm_runसमय;
-	पूर्ण
+		goto error_pm_runtime;
+	}
 
-	वापस ret;
+	return ret;
 
-error_pm_runसमय:
-	pm_runसमय_disable(&pdev->dev);
+error_pm_runtime:
+	pm_runtime_disable(&pdev->dev);
 
-	क्रम (i = 0; i < CS47L85_NUM_ADSP; i++)
-		wm_adsp2_हटाओ(&cs47l85->core.adsp[i]);
+	for (i = 0; i < CS47L85_NUM_ADSP; i++)
+		wm_adsp2_remove(&cs47l85->core.adsp[i]);
 error_dsp_irq:
 	madera_set_irq_wake(madera, MADERA_IRQ_DSP_IRQ1, 0);
-	madera_मुक्त_irq(madera, MADERA_IRQ_DSP_IRQ1, cs47l85);
+	madera_free_irq(madera, MADERA_IRQ_DSP_IRQ1, cs47l85);
 error_overheat:
-	madera_मुक्त_overheat(&cs47l85->core);
+	madera_free_overheat(&cs47l85->core);
 error_core:
-	madera_core_मुक्त(&cs47l85->core);
+	madera_core_free(&cs47l85->core);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cs47l85_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा cs47l85 *cs47l85 = platक्रमm_get_drvdata(pdev);
-	पूर्णांक i;
+static int cs47l85_remove(struct platform_device *pdev)
+{
+	struct cs47l85 *cs47l85 = platform_get_drvdata(pdev);
+	int i;
 
-	pm_runसमय_disable(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
 
-	क्रम (i = 0; i < CS47L85_NUM_ADSP; i++)
-		wm_adsp2_हटाओ(&cs47l85->core.adsp[i]);
+	for (i = 0; i < CS47L85_NUM_ADSP; i++)
+		wm_adsp2_remove(&cs47l85->core.adsp[i]);
 
 	madera_set_irq_wake(cs47l85->core.madera, MADERA_IRQ_DSP_IRQ1, 0);
-	madera_मुक्त_irq(cs47l85->core.madera, MADERA_IRQ_DSP_IRQ1, cs47l85);
-	madera_मुक्त_overheat(&cs47l85->core);
-	madera_core_मुक्त(&cs47l85->core);
+	madera_free_irq(cs47l85->core.madera, MADERA_IRQ_DSP_IRQ1, cs47l85);
+	madera_free_overheat(&cs47l85->core);
+	madera_core_free(&cs47l85->core);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver cs47l85_codec_driver = अणु
-	.driver = अणु
+static struct platform_driver cs47l85_codec_driver = {
+	.driver = {
 		.name = "cs47l85-codec",
-	पूर्ण,
+	},
 	.probe = &cs47l85_probe,
-	.हटाओ = &cs47l85_हटाओ,
-पूर्ण;
+	.remove = &cs47l85_remove,
+};
 
-module_platक्रमm_driver(cs47l85_codec_driver);
+module_platform_driver(cs47l85_codec_driver);
 
 MODULE_SOFTDEP("pre: madera irq-madera arizona-micsupp");
 MODULE_DESCRIPTION("ASoC CS47L85 driver");

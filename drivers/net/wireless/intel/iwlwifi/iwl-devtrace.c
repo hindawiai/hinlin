@@ -1,26 +1,25 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /******************************************************************************
  *
  * Copyright(c) 2009 - 2014 Intel Corporation. All rights reserved.
  * Copyright (C) 2018 Intel Corporation
  *
- * Contact Inक्रमmation:
- *  Intel Linux Wireless <linuxwअगरi@पूर्णांकel.com>
+ * Contact Information:
+ *  Intel Linux Wireless <linuxwifi@intel.com>
  * Intel Corporation, 5200 N.E. Elam Young Parkway, Hillsboro, OR 97124-6497
  *
  *****************************************************************************/
 
-#समावेश <linux/module.h>
+#include <linux/module.h>
 
-/* sparse करोesn't like tracepoपूर्णांक macros */
-#अगर_अघोषित __CHECKER__
-#समावेश "iwl-trans.h"
+/* sparse doesn't like tracepoint macros */
+#ifndef __CHECKER__
+#include "iwl-trans.h"
 
-#घोषणा CREATE_TRACE_POINTS
-#समावेश "iwl-devtrace.h"
+#define CREATE_TRACE_POINTS
+#include "iwl-devtrace.h"
 
-EXPORT_TRACEPOINT_SYMBOL(iwlwअगरi_dev_ucode_event);
-EXPORT_TRACEPOINT_SYMBOL(iwlwअगरi_dev_ucode_cont_event);
-EXPORT_TRACEPOINT_SYMBOL(iwlwअगरi_dev_ucode_wrap_event);
-#पूर्ण_अगर
+EXPORT_TRACEPOINT_SYMBOL(iwlwifi_dev_ucode_event);
+EXPORT_TRACEPOINT_SYMBOL(iwlwifi_dev_ucode_cont_event);
+EXPORT_TRACEPOINT_SYMBOL(iwlwifi_dev_ucode_wrap_event);
+#endif

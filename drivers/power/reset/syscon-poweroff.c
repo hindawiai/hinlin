@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Generic Syscon Poweroff Driver
  *
@@ -7,97 +6,97 @@
  * Author: Moritz Fischer <moritz.fischer@ettus.com>
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/regmap.h>
+#include <linux/delay.h>
+#include <linux/io.h>
+#include <linux/notifier.h>
+#include <linux/mfd/syscon.h>
+#include <linux/of_address.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
+#include <linux/pm.h>
+#include <linux/regmap.h>
 
-अटल काष्ठा regmap *map;
-अटल u32 offset;
-अटल u32 value;
-अटल u32 mask;
+static struct regmap *map;
+static u32 offset;
+static u32 value;
+static u32 mask;
 
-अटल व्योम syscon_घातeroff(व्योम)
-अणु
-	/* Issue the घातeroff */
+static void syscon_poweroff(void)
+{
+	/* Issue the poweroff */
 	regmap_update_bits(map, offset, mask, value);
 
 	mdelay(1000);
 
 	pr_emerg("Unable to poweroff system\n");
-पूर्ण
+}
 
-अटल पूर्णांक syscon_घातeroff_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक mask_err, value_err;
+static int syscon_poweroff_probe(struct platform_device *pdev)
+{
+	int mask_err, value_err;
 
 	map = syscon_regmap_lookup_by_phandle(pdev->dev.of_node, "regmap");
-	अगर (IS_ERR(map)) अणु
+	if (IS_ERR(map)) {
 		dev_err(&pdev->dev, "unable to get syscon");
-		वापस PTR_ERR(map);
-	पूर्ण
+		return PTR_ERR(map);
+	}
 
-	अगर (of_property_पढ़ो_u32(pdev->dev.of_node, "offset", &offset)) अणु
+	if (of_property_read_u32(pdev->dev.of_node, "offset", &offset)) {
 		dev_err(&pdev->dev, "unable to read 'offset'");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	value_err = of_property_पढ़ो_u32(pdev->dev.of_node, "value", &value);
-	mask_err = of_property_पढ़ो_u32(pdev->dev.of_node, "mask", &mask);
-	अगर (value_err && mask_err) अणु
+	value_err = of_property_read_u32(pdev->dev.of_node, "value", &value);
+	mask_err = of_property_read_u32(pdev->dev.of_node, "mask", &mask);
+	if (value_err && mask_err) {
 		dev_err(&pdev->dev, "unable to read 'value' and 'mask'");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (value_err) अणु
+	if (value_err) {
 		/* support old binding */
 		value = mask;
 		mask = 0xFFFFFFFF;
-	पूर्ण अन्यथा अगर (mask_err) अणु
+	} else if (mask_err) {
 		/* support value without mask*/
 		mask = 0xFFFFFFFF;
-	पूर्ण
+	}
 
-	अगर (pm_घातer_off) अणु
+	if (pm_power_off) {
 		dev_err(&pdev->dev, "pm_power_off already claimed for %ps",
-			pm_घातer_off);
-		वापस -EBUSY;
-	पूर्ण
+			pm_power_off);
+		return -EBUSY;
+	}
 
-	pm_घातer_off = syscon_घातeroff;
+	pm_power_off = syscon_poweroff;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक syscon_घातeroff_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	अगर (pm_घातer_off == syscon_घातeroff)
-		pm_घातer_off = शून्य;
+static int syscon_poweroff_remove(struct platform_device *pdev)
+{
+	if (pm_power_off == syscon_poweroff)
+		pm_power_off = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id syscon_घातeroff_of_match[] = अणु
-	अणु .compatible = "syscon-poweroff" पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id syscon_poweroff_of_match[] = {
+	{ .compatible = "syscon-poweroff" },
+	{}
+};
 
-अटल काष्ठा platक्रमm_driver syscon_घातeroff_driver = अणु
-	.probe = syscon_घातeroff_probe,
-	.हटाओ = syscon_घातeroff_हटाओ,
-	.driver = अणु
+static struct platform_driver syscon_poweroff_driver = {
+	.probe = syscon_poweroff_probe,
+	.remove = syscon_poweroff_remove,
+	.driver = {
 		.name = "syscon-poweroff",
-		.of_match_table = syscon_घातeroff_of_match,
-	पूर्ण,
-पूर्ण;
+		.of_match_table = syscon_poweroff_of_match,
+	},
+};
 
-अटल पूर्णांक __init syscon_घातeroff_रेजिस्टर(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&syscon_घातeroff_driver);
-पूर्ण
-device_initcall(syscon_घातeroff_रेजिस्टर);
+static int __init syscon_poweroff_register(void)
+{
+	return platform_driver_register(&syscon_poweroff_driver);
+}
+device_initcall(syscon_poweroff_register);

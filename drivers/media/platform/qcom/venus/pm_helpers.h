@@ -1,67 +1,66 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /* Copyright (C) 2019 Linaro Ltd. */
-#अगर_अघोषित __VENUS_PM_HELPERS_H__
-#घोषणा __VENUS_PM_HELPERS_H__
+#ifndef __VENUS_PM_HELPERS_H__
+#define __VENUS_PM_HELPERS_H__
 
-काष्ठा device;
-काष्ठा venus_core;
+struct device;
+struct venus_core;
 
-#घोषणा POWER_ON	1
-#घोषणा POWER_OFF	0
+#define POWER_ON	1
+#define POWER_OFF	0
 
-काष्ठा venus_pm_ops अणु
-	पूर्णांक (*core_get)(काष्ठा venus_core *core);
-	व्योम (*core_put)(काष्ठा venus_core *core);
-	पूर्णांक (*core_घातer)(काष्ठा venus_core *core, पूर्णांक on);
+struct venus_pm_ops {
+	int (*core_get)(struct venus_core *core);
+	void (*core_put)(struct venus_core *core);
+	int (*core_power)(struct venus_core *core, int on);
 
-	पूर्णांक (*vdec_get)(काष्ठा device *dev);
-	व्योम (*vdec_put)(काष्ठा device *dev);
-	पूर्णांक (*vdec_घातer)(काष्ठा device *dev, पूर्णांक on);
+	int (*vdec_get)(struct device *dev);
+	void (*vdec_put)(struct device *dev);
+	int (*vdec_power)(struct device *dev, int on);
 
-	पूर्णांक (*venc_get)(काष्ठा device *dev);
-	व्योम (*venc_put)(काष्ठा device *dev);
-	पूर्णांक (*venc_घातer)(काष्ठा device *dev, पूर्णांक on);
+	int (*venc_get)(struct device *dev);
+	void (*venc_put)(struct device *dev);
+	int (*venc_power)(struct device *dev, int on);
 
-	पूर्णांक (*coreid_घातer)(काष्ठा venus_inst *inst, पूर्णांक on);
+	int (*coreid_power)(struct venus_inst *inst, int on);
 
-	पूर्णांक (*load_scale)(काष्ठा venus_inst *inst);
-पूर्ण;
+	int (*load_scale)(struct venus_inst *inst);
+};
 
-स्थिर काष्ठा venus_pm_ops *venus_pm_get(क्रमागत hfi_version version);
+const struct venus_pm_ops *venus_pm_get(enum hfi_version version);
 
-अटल अंतरभूत पूर्णांक venus_pm_load_scale(काष्ठा venus_inst *inst)
-अणु
-	काष्ठा venus_core *core = inst->core;
+static inline int venus_pm_load_scale(struct venus_inst *inst)
+{
+	struct venus_core *core = inst->core;
 
-	अगर (!core->pm_ops || !core->pm_ops->load_scale)
-		वापस 0;
+	if (!core->pm_ops || !core->pm_ops->load_scale)
+		return 0;
 
-	वापस core->pm_ops->load_scale(inst);
-पूर्ण
+	return core->pm_ops->load_scale(inst);
+}
 
-अटल अंतरभूत पूर्णांक venus_pm_acquire_core(काष्ठा venus_inst *inst)
-अणु
-	काष्ठा venus_core *core = inst->core;
-	स्थिर काष्ठा venus_pm_ops *pm_ops = core->pm_ops;
-	पूर्णांक ret = 0;
+static inline int venus_pm_acquire_core(struct venus_inst *inst)
+{
+	struct venus_core *core = inst->core;
+	const struct venus_pm_ops *pm_ops = core->pm_ops;
+	int ret = 0;
 
-	अगर (pm_ops && pm_ops->coreid_घातer)
-		ret = pm_ops->coreid_घातer(inst, POWER_ON);
+	if (pm_ops && pm_ops->coreid_power)
+		ret = pm_ops->coreid_power(inst, POWER_ON);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत पूर्णांक venus_pm_release_core(काष्ठा venus_inst *inst)
-अणु
-	काष्ठा venus_core *core = inst->core;
-	स्थिर काष्ठा venus_pm_ops *pm_ops = core->pm_ops;
-	पूर्णांक ret = 0;
+static inline int venus_pm_release_core(struct venus_inst *inst)
+{
+	struct venus_core *core = inst->core;
+	const struct venus_pm_ops *pm_ops = core->pm_ops;
+	int ret = 0;
 
-	अगर (pm_ops && pm_ops->coreid_घातer)
-		ret = pm_ops->coreid_घातer(inst, POWER_OFF);
+	if (pm_ops && pm_ops->coreid_power)
+		ret = pm_ops->coreid_power(inst, POWER_OFF);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#पूर्ण_अगर
+#endif

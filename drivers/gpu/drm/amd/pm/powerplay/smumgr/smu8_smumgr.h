@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,20 +20,20 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#अगर_अघोषित _SMU8_SMUMGR_H_
-#घोषणा _SMU8_SMUMGR_H_
+#ifndef _SMU8_SMUMGR_H_
+#define _SMU8_SMUMGR_H_
 
 
-#घोषणा MAX_NUM_FIRMWARE                        8
-#घोषणा MAX_NUM_SCRATCH                         11
-#घोषणा SMU8_SCRATCH_SIZE_NONGFX_CLOCKGATING      1024
-#घोषणा SMU8_SCRATCH_SIZE_NONGFX_GOLDENSETTING    2048
-#घोषणा SMU8_SCRATCH_SIZE_SDMA_METADATA           1024
-#घोषणा SMU8_SCRATCH_SIZE_IH                      ((2*256+1)*4)
+#define MAX_NUM_FIRMWARE                        8
+#define MAX_NUM_SCRATCH                         11
+#define SMU8_SCRATCH_SIZE_NONGFX_CLOCKGATING      1024
+#define SMU8_SCRATCH_SIZE_NONGFX_GOLDENSETTING    2048
+#define SMU8_SCRATCH_SIZE_SDMA_METADATA           1024
+#define SMU8_SCRATCH_SIZE_IH                      ((2*256+1)*4)
 
-#घोषणा SMU_EnabledFeatureScoreboard_SclkDpmOn    0x00200000
+#define SMU_EnabledFeatureScoreboard_SclkDpmOn    0x00200000
 
-क्रमागत smu8_scratch_entry अणु
+enum smu8_scratch_entry {
 	SMU8_SCRATCH_ENTRY_UCODE_ID_SDMA0 = 0,
 	SMU8_SCRATCH_ENTRY_UCODE_ID_SDMA1,
 	SMU8_SCRATCH_ENTRY_UCODE_ID_CP_CE,
@@ -57,44 +56,44 @@
 	SMU8_SCRATCH_ENTRY_DATA_ID_SDMA_START,
 	SMU8_SCRATCH_ENTRY_DATA_ID_IH_REGISTERS,
 	SMU8_SCRATCH_ENTRY_SMU8_FUSION_CLKTABLE
-पूर्ण;
+};
 
-काष्ठा smu8_buffer_entry अणु
-	uपूर्णांक32_t data_size;
-	uपूर्णांक64_t mc_addr;
-	व्योम *kaddr;
-	क्रमागत smu8_scratch_entry firmware_ID;
-	काष्ठा amdgpu_bo *handle; /* as bo handle used when release bo */
-पूर्ण;
+struct smu8_buffer_entry {
+	uint32_t data_size;
+	uint64_t mc_addr;
+	void *kaddr;
+	enum smu8_scratch_entry firmware_ID;
+	struct amdgpu_bo *handle; /* as bo handle used when release bo */
+};
 
-काष्ठा smu8_रेजिस्टर_index_data_pair अणु
-	uपूर्णांक32_t offset;
-	uपूर्णांक32_t value;
-पूर्ण;
+struct smu8_register_index_data_pair {
+	uint32_t offset;
+	uint32_t value;
+};
 
-काष्ठा smu8_ih_meta_data अणु
-	uपूर्णांक32_t command;
-	काष्ठा smu8_रेजिस्टर_index_data_pair रेजिस्टर_index_value_pair[1];
-पूर्ण;
+struct smu8_ih_meta_data {
+	uint32_t command;
+	struct smu8_register_index_data_pair register_index_value_pair[1];
+};
 
-काष्ठा smu8_smumgr अणु
-	uपूर्णांक8_t driver_buffer_length;
-	uपूर्णांक8_t scratch_buffer_length;
-	uपूर्णांक16_t toc_entry_used_count;
-	uपूर्णांक16_t toc_entry_initialize_index;
-	uपूर्णांक16_t toc_entry_घातer_profiling_index;
-	uपूर्णांक16_t toc_entry_aram;
-	uपूर्णांक16_t toc_entry_ih_रेजिस्टर_restore_task_index;
-	uपूर्णांक16_t toc_entry_घड़ी_प्रकारable;
-	uपूर्णांक16_t ih_रेजिस्टर_restore_task_size;
-	uपूर्णांक16_t smu_buffer_used_bytes;
+struct smu8_smumgr {
+	uint8_t driver_buffer_length;
+	uint8_t scratch_buffer_length;
+	uint16_t toc_entry_used_count;
+	uint16_t toc_entry_initialize_index;
+	uint16_t toc_entry_power_profiling_index;
+	uint16_t toc_entry_aram;
+	uint16_t toc_entry_ih_register_restore_task_index;
+	uint16_t toc_entry_clock_table;
+	uint16_t ih_register_restore_task_size;
+	uint16_t smu_buffer_used_bytes;
 
-	काष्ठा smu8_buffer_entry toc_buffer;
-	काष्ठा smu8_buffer_entry smu_buffer;
-	काष्ठा smu8_buffer_entry firmware_buffer;
-	काष्ठा smu8_buffer_entry driver_buffer[MAX_NUM_FIRMWARE];
-	काष्ठा smu8_buffer_entry meta_data_buffer[MAX_NUM_FIRMWARE];
-	काष्ठा smu8_buffer_entry scratch_buffer[MAX_NUM_SCRATCH];
-पूर्ण;
+	struct smu8_buffer_entry toc_buffer;
+	struct smu8_buffer_entry smu_buffer;
+	struct smu8_buffer_entry firmware_buffer;
+	struct smu8_buffer_entry driver_buffer[MAX_NUM_FIRMWARE];
+	struct smu8_buffer_entry meta_data_buffer[MAX_NUM_FIRMWARE];
+	struct smu8_buffer_entry scratch_buffer[MAX_NUM_SCRATCH];
+};
 
-#पूर्ण_अगर
+#endif

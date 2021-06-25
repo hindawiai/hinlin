@@ -1,26 +1,25 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2002 Roman Zippel <zippel@linux-m68k.org>
  */
 
-#समावेश <प्रकार.स>
-#समावेश <सीमा.स>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <समय.स>
-#समावेश <unistd.h>
-#समावेश <getopt.h>
-#समावेश <sys/समय.स>
-#समावेश <त्रुटिसं.स>
+#include <ctype.h>
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
+#include <getopt.h>
+#include <sys/time.h>
+#include <errno.h>
 
-#समावेश "lkc.h"
+#include "lkc.h"
 
-अटल व्योम conf(काष्ठा menu *menu);
-अटल व्योम check_conf(काष्ठा menu *menu);
+static void conf(struct menu *menu);
+static void check_conf(struct menu *menu);
 
-क्रमागत input_mode अणु
+enum input_mode {
 	oldaskconfig,
 	syncconfig,
 	oldconfig,
@@ -28,7 +27,7 @@
 	allyesconfig,
 	allmodconfig,
 	alldefconfig,
-	अक्रमconfig,
+	randconfig,
 	defconfig,
 	savedefconfig,
 	listnewconfig,
@@ -36,895 +35,895 @@
 	olddefconfig,
 	yes2modconfig,
 	mod2yesconfig,
-पूर्ण;
-अटल क्रमागत input_mode input_mode = oldaskconfig;
-अटल पूर्णांक input_mode_opt;
-अटल पूर्णांक indent = 1;
-अटल पूर्णांक tty_stdio;
-अटल पूर्णांक sync_kconfig;
-अटल पूर्णांक conf_cnt;
-अटल अक्षर line[PATH_MAX];
-अटल काष्ठा menu *rootEntry;
+};
+static enum input_mode input_mode = oldaskconfig;
+static int input_mode_opt;
+static int indent = 1;
+static int tty_stdio;
+static int sync_kconfig;
+static int conf_cnt;
+static char line[PATH_MAX];
+static struct menu *rootEntry;
 
-अटल व्योम prपूर्णांक_help(काष्ठा menu *menu)
-अणु
-	काष्ठा gstr help = str_new();
+static void print_help(struct menu *menu)
+{
+	struct gstr help = str_new();
 
 	menu_get_ext_help(menu, &help);
 
-	म_लिखो("\n%s\n", str_get(&help));
-	str_मुक्त(&help);
-पूर्ण
+	printf("\n%s\n", str_get(&help));
+	str_free(&help);
+}
 
-अटल व्योम strip(अक्षर *str)
-अणु
-	अक्षर *p = str;
-	पूर्णांक l;
+static void strip(char *str)
+{
+	char *p = str;
+	int l;
 
-	जबतक ((है_खाली(*p)))
+	while ((isspace(*p)))
 		p++;
-	l = म_माप(p);
-	अगर (p != str)
-		स_हटाओ(str, p, l + 1);
-	अगर (!l)
-		वापस;
+	l = strlen(p);
+	if (p != str)
+		memmove(str, p, l + 1);
+	if (!l)
+		return;
 	p = str + l - 1;
-	जबतक ((है_खाली(*p)))
+	while ((isspace(*p)))
 		*p-- = 0;
-पूर्ण
+}
 
-/* Helper function to facilitate ख_माला_लो() by Jean Sacren. */
-अटल व्योम xख_माला_लो(अक्षर *str, पूर्णांक size, खाता *in)
-अणु
-	अगर (!ख_माला_लो(str, size, in))
-		ख_लिखो(मानक_त्रुटि, "\nError in reading or end of file.\n");
+/* Helper function to facilitate fgets() by Jean Sacren. */
+static void xfgets(char *str, int size, FILE *in)
+{
+	if (!fgets(str, size, in))
+		fprintf(stderr, "\nError in reading or end of file.\n");
 
-	अगर (!tty_stdio)
-		म_लिखो("%s", str);
-पूर्ण
+	if (!tty_stdio)
+		printf("%s", str);
+}
 
-अटल व्योम set_अक्रमconfig_seed(व्योम)
-अणु
-	अचिन्हित पूर्णांक seed;
-	अक्षर *env;
+static void set_randconfig_seed(void)
+{
+	unsigned int seed;
+	char *env;
 	bool seed_set = false;
 
-	env = दो_पर्या("KCONFIG_SEED");
-	अगर (env && *env) अणु
-		अक्षर *endp;
+	env = getenv("KCONFIG_SEED");
+	if (env && *env) {
+		char *endp;
 
-		seed = म_से_दीर्घ(env, &endp, 0);
-		अगर (*endp == '\0')
+		seed = strtol(env, &endp, 0);
+		if (*endp == '\0')
 			seed_set = true;
-	पूर्ण
+	}
 
-	अगर (!seed_set) अणु
-		काष्ठा समयval now;
+	if (!seed_set) {
+		struct timeval now;
 
 		/*
-		 * Use microseconds derived seed, compensate क्रम प्रणालीs where it may
+		 * Use microseconds derived seed, compensate for systems where it may
 		 * be zero.
 		 */
-		समय_लोofday(&now, शून्य);
+		gettimeofday(&now, NULL);
 		seed = (now.tv_sec + 1) * (now.tv_usec + 1);
-	पूर्ण
+	}
 
-	म_लिखो("KCONFIG_SEED=0x%X\n", seed);
-	बेक्रम(seed);
-पूर्ण
+	printf("KCONFIG_SEED=0x%X\n", seed);
+	srand(seed);
+}
 
-अटल bool अक्रमomize_choice_values(काष्ठा symbol *csym)
-अणु
-	काष्ठा property *prop;
-	काष्ठा symbol *sym;
-	काष्ठा expr *e;
-	पूर्णांक cnt, def;
+static bool randomize_choice_values(struct symbol *csym)
+{
+	struct property *prop;
+	struct symbol *sym;
+	struct expr *e;
+	int cnt, def;
 
 	/*
 	 * If choice is mod then we may have more items selected
-	 * and अगर no then no-one.
-	 * In both हालs stop.
+	 * and if no then no-one.
+	 * In both cases stop.
 	 */
-	अगर (csym->curr.tri != yes)
-		वापस false;
+	if (csym->curr.tri != yes)
+		return false;
 
 	prop = sym_get_choice_prop(csym);
 
 	/* count entries in choice block */
 	cnt = 0;
-	expr_list_क्रम_each_sym(prop->expr, e, sym)
+	expr_list_for_each_sym(prop->expr, e, sym)
 		cnt++;
 
 	/*
-	 * find a अक्रमom value and set it to yes,
+	 * find a random value and set it to yes,
 	 * set the rest to no so we have only one set
 	 */
-	def = अक्रम() % cnt;
+	def = rand() % cnt;
 
 	cnt = 0;
-	expr_list_क्रम_each_sym(prop->expr, e, sym) अणु
-		अगर (def == cnt++) अणु
+	expr_list_for_each_sym(prop->expr, e, sym) {
+		if (def == cnt++) {
 			sym->def[S_DEF_USER].tri = yes;
 			csym->def[S_DEF_USER].val = sym;
-		पूर्ण अन्यथा अणु
+		} else {
 			sym->def[S_DEF_USER].tri = no;
-		पूर्ण
+		}
 		sym->flags |= SYMBOL_DEF_USER;
 		/* clear VALID to get value calculated */
 		sym->flags &= ~SYMBOL_VALID;
-	पूर्ण
+	}
 	csym->flags |= SYMBOL_DEF_USER;
 	/* clear VALID to get value calculated */
 	csym->flags &= ~SYMBOL_VALID;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-क्रमागत conf_def_mode अणु
-	def_शेष,
+enum conf_def_mode {
+	def_default,
 	def_yes,
 	def_mod,
 	def_y2m,
 	def_m2y,
 	def_no,
-	def_अक्रमom
-पूर्ण;
+	def_random
+};
 
-अटल bool conf_set_all_new_symbols(क्रमागत conf_def_mode mode)
-अणु
-	काष्ठा symbol *sym, *csym;
-	पूर्णांक i, cnt;
+static bool conf_set_all_new_symbols(enum conf_def_mode mode)
+{
+	struct symbol *sym, *csym;
+	int i, cnt;
 	/*
-	 * can't go as the शेष in चयन-हाल below, otherwise gcc whines
+	 * can't go as the default in switch-case below, otherwise gcc whines
 	 * about -Wmaybe-uninitialized
 	 */
-	पूर्णांक pby = 50; /* probability of bool     = y */
-	पूर्णांक pty = 33; /* probability of tristate = y */
-	पूर्णांक pपंचांग = 33; /* probability of tristate = m */
+	int pby = 50; /* probability of bool     = y */
+	int pty = 33; /* probability of tristate = y */
+	int ptm = 33; /* probability of tristate = m */
 	bool has_changed = false;
 
-	अगर (mode == def_अक्रमom) अणु
-		पूर्णांक n, p[3];
-		अक्षर *env = दो_पर्या("KCONFIG_PROBABILITY");
+	if (mode == def_random) {
+		int n, p[3];
+		char *env = getenv("KCONFIG_PROBABILITY");
 
 		n = 0;
-		जबतक (env && *env) अणु
-			अक्षर *endp;
-			पूर्णांक पंचांगp = म_से_दीर्घ(env, &endp, 10);
+		while (env && *env) {
+			char *endp;
+			int tmp = strtol(env, &endp, 10);
 
-			अगर (पंचांगp >= 0 && पंचांगp <= 100) अणु
-				p[n++] = पंचांगp;
-			पूर्ण अन्यथा अणु
-				त्रुटि_सं = दुस्फल;
-				लिखो_त्रुटि("KCONFIG_PROBABILITY");
-				निकास(1);
-			पूर्ण
+			if (tmp >= 0 && tmp <= 100) {
+				p[n++] = tmp;
+			} else {
+				errno = ERANGE;
+				perror("KCONFIG_PROBABILITY");
+				exit(1);
+			}
 			env = (*endp == ':') ? endp + 1 : endp;
-			अगर (n >= 3)
-				अवरोध;
-		पूर्ण
-		चयन (n) अणु
-		हाल 1:
+			if (n >= 3)
+				break;
+		}
+		switch (n) {
+		case 1:
 			pby = p[0];
-			pपंचांग = pby / 2;
-			pty = pby - pपंचांग;
-			अवरोध;
-		हाल 2:
+			ptm = pby / 2;
+			pty = pby - ptm;
+			break;
+		case 2:
 			pty = p[0];
-			pपंचांग = p[1];
-			pby = pty + pपंचांग;
-			अवरोध;
-		हाल 3:
+			ptm = p[1];
+			pby = pty + ptm;
+			break;
+		case 3:
 			pby = p[0];
 			pty = p[1];
-			pपंचांग = p[2];
-			अवरोध;
-		पूर्ण
+			ptm = p[2];
+			break;
+		}
 
-		अगर (pty + pपंचांग > 100) अणु
-			त्रुटि_सं = दुस्फल;
-			लिखो_त्रुटि("KCONFIG_PROBABILITY");
-			निकास(1);
-		पूर्ण
-	पूर्ण
+		if (pty + ptm > 100) {
+			errno = ERANGE;
+			perror("KCONFIG_PROBABILITY");
+			exit(1);
+		}
+	}
 
-	क्रम_all_symbols(i, sym) अणु
-		अगर (sym_has_value(sym) || sym->flags & SYMBOL_VALID)
-			जारी;
-		चयन (sym_get_type(sym)) अणु
-		हाल S_BOOLEAN:
-		हाल S_TRISTATE:
+	for_all_symbols(i, sym) {
+		if (sym_has_value(sym) || sym->flags & SYMBOL_VALID)
+			continue;
+		switch (sym_get_type(sym)) {
+		case S_BOOLEAN:
+		case S_TRISTATE:
 			has_changed = true;
-			चयन (mode) अणु
-			हाल def_yes:
+			switch (mode) {
+			case def_yes:
 				sym->def[S_DEF_USER].tri = yes;
-				अवरोध;
-			हाल def_mod:
+				break;
+			case def_mod:
 				sym->def[S_DEF_USER].tri = mod;
-				अवरोध;
-			हाल def_no:
+				break;
+			case def_no:
 				sym->def[S_DEF_USER].tri = no;
-				अवरोध;
-			हाल def_अक्रमom:
+				break;
+			case def_random:
 				sym->def[S_DEF_USER].tri = no;
-				cnt = अक्रम() % 100;
-				अगर (sym->type == S_TRISTATE) अणु
-					अगर (cnt < pty)
+				cnt = rand() % 100;
+				if (sym->type == S_TRISTATE) {
+					if (cnt < pty)
 						sym->def[S_DEF_USER].tri = yes;
-					अन्यथा अगर (cnt < pty + pपंचांग)
+					else if (cnt < pty + ptm)
 						sym->def[S_DEF_USER].tri = mod;
-				पूर्ण अन्यथा अगर (cnt < pby)
+				} else if (cnt < pby)
 					sym->def[S_DEF_USER].tri = yes;
-				अवरोध;
-			शेष:
-				जारी;
-			पूर्ण
-			अगर (!(sym_is_choice(sym) && mode == def_अक्रमom))
+				break;
+			default:
+				continue;
+			}
+			if (!(sym_is_choice(sym) && mode == def_random))
 				sym->flags |= SYMBOL_DEF_USER;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
+			break;
+		default:
+			break;
+		}
 
-	पूर्ण
+	}
 
 	sym_clear_all_valid();
 
 	/*
-	 * We have dअगरferent type of choice blocks.
+	 * We have different type of choice blocks.
 	 * If curr.tri equals to mod then we can select several
 	 * choice symbols in one block.
-	 * In this हाल we करो nothing.
+	 * In this case we do nothing.
 	 * If curr.tri equals yes then only one symbol can be
 	 * selected in a choice block and we set it to yes,
 	 * and the rest to no.
 	 */
-	अगर (mode != def_अक्रमom) अणु
-		क्रम_all_symbols(i, csym) अणु
-			अगर ((sym_is_choice(csym) && !sym_has_value(csym)) ||
+	if (mode != def_random) {
+		for_all_symbols(i, csym) {
+			if ((sym_is_choice(csym) && !sym_has_value(csym)) ||
 			    sym_is_choice_value(csym))
 				csym->flags |= SYMBOL_NEED_SET_CHOICE_VALUES;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्रम_all_symbols(i, csym) अणु
-		अगर (sym_has_value(csym) || !sym_is_choice(csym))
-			जारी;
+	for_all_symbols(i, csym) {
+		if (sym_has_value(csym) || !sym_is_choice(csym))
+			continue;
 
 		sym_calc_value(csym);
-		अगर (mode == def_अक्रमom)
-			has_changed |= अक्रमomize_choice_values(csym);
-		अन्यथा अणु
+		if (mode == def_random)
+			has_changed |= randomize_choice_values(csym);
+		else {
 			set_all_choice_values(csym);
 			has_changed = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस has_changed;
-पूर्ण
+	return has_changed;
+}
 
-अटल व्योम conf_reग_लिखो_mod_or_yes(क्रमागत conf_def_mode mode)
-अणु
-	काष्ठा symbol *sym;
-	पूर्णांक i;
+static void conf_rewrite_mod_or_yes(enum conf_def_mode mode)
+{
+	struct symbol *sym;
+	int i;
 	tristate old_val = (mode == def_y2m) ? yes : mod;
 	tristate new_val = (mode == def_y2m) ? mod : yes;
 
-	क्रम_all_symbols(i, sym) अणु
-		अगर (sym_get_type(sym) == S_TRISTATE &&
+	for_all_symbols(i, sym) {
+		if (sym_get_type(sym) == S_TRISTATE &&
 		    sym->def[S_DEF_USER].tri == old_val)
 			sym->def[S_DEF_USER].tri = new_val;
-	पूर्ण
+	}
 	sym_clear_all_valid();
-पूर्ण
+}
 
-अटल पूर्णांक conf_askvalue(काष्ठा symbol *sym, स्थिर अक्षर *def)
-अणु
-	अगर (!sym_has_value(sym))
-		म_लिखो("(NEW) ");
+static int conf_askvalue(struct symbol *sym, const char *def)
+{
+	if (!sym_has_value(sym))
+		printf("(NEW) ");
 
 	line[0] = '\n';
 	line[1] = 0;
 
-	अगर (!sym_is_changeable(sym)) अणु
-		म_लिखो("%s\n", def);
+	if (!sym_is_changeable(sym)) {
+		printf("%s\n", def);
 		line[0] = '\n';
 		line[1] = 0;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	चयन (input_mode) अणु
-	हाल oldconfig:
-	हाल syncconfig:
-		अगर (sym_has_value(sym)) अणु
-			म_लिखो("%s\n", def);
-			वापस 0;
-		पूर्ण
+	switch (input_mode) {
+	case oldconfig:
+	case syncconfig:
+		if (sym_has_value(sym)) {
+			printf("%s\n", def);
+			return 0;
+		}
 		/* fall through */
-	शेष:
-		ख_साफ(मानक_निकास);
-		xख_माला_लो(line, माप(line), मानक_निवेश);
-		अवरोध;
-	पूर्ण
+	default:
+		fflush(stdout);
+		xfgets(line, sizeof(line), stdin);
+		break;
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक conf_string(काष्ठा menu *menu)
-अणु
-	काष्ठा symbol *sym = menu->sym;
-	स्थिर अक्षर *def;
+static int conf_string(struct menu *menu)
+{
+	struct symbol *sym = menu->sym;
+	const char *def;
 
-	जबतक (1) अणु
-		म_लिखो("%*s%s ", indent - 1, "", menu->prompt->text);
-		म_लिखो("(%s) ", sym->name);
+	while (1) {
+		printf("%*s%s ", indent - 1, "", menu->prompt->text);
+		printf("(%s) ", sym->name);
 		def = sym_get_string_value(sym);
-		अगर (def)
-			म_लिखो("[%s] ", def);
-		अगर (!conf_askvalue(sym, def))
-			वापस 0;
-		चयन (line[0]) अणु
-		हाल '\n':
-			अवरोध;
-		हाल '?':
-			/* prपूर्णांक help */
-			अगर (line[1] == '\n') अणु
-				prपूर्णांक_help(menu);
-				def = शून्य;
-				अवरोध;
-			पूर्ण
+		if (def)
+			printf("[%s] ", def);
+		if (!conf_askvalue(sym, def))
+			return 0;
+		switch (line[0]) {
+		case '\n':
+			break;
+		case '?':
+			/* print help */
+			if (line[1] == '\n') {
+				print_help(menu);
+				def = NULL;
+				break;
+			}
 			/* fall through */
-		शेष:
-			line[म_माप(line)-1] = 0;
+		default:
+			line[strlen(line)-1] = 0;
 			def = line;
-		पूर्ण
-		अगर (def && sym_set_string_value(sym, def))
-			वापस 0;
-	पूर्ण
-पूर्ण
+		}
+		if (def && sym_set_string_value(sym, def))
+			return 0;
+	}
+}
 
-अटल पूर्णांक conf_sym(काष्ठा menu *menu)
-अणु
-	काष्ठा symbol *sym = menu->sym;
+static int conf_sym(struct menu *menu)
+{
+	struct symbol *sym = menu->sym;
 	tristate oldval, newval;
 
-	जबतक (1) अणु
-		म_लिखो("%*s%s ", indent - 1, "", menu->prompt->text);
-		अगर (sym->name)
-			म_लिखो("(%s) ", sym->name);
-		अक्षर_दो('[');
+	while (1) {
+		printf("%*s%s ", indent - 1, "", menu->prompt->text);
+		if (sym->name)
+			printf("(%s) ", sym->name);
+		putchar('[');
 		oldval = sym_get_tristate_value(sym);
-		चयन (oldval) अणु
-		हाल no:
-			अक्षर_दो('N');
-			अवरोध;
-		हाल mod:
-			अक्षर_दो('M');
-			अवरोध;
-		हाल yes:
-			अक्षर_दो('Y');
-			अवरोध;
-		पूर्ण
-		अगर (oldval != no && sym_tristate_within_range(sym, no))
-			म_लिखो("/n");
-		अगर (oldval != mod && sym_tristate_within_range(sym, mod))
-			म_लिखो("/m");
-		अगर (oldval != yes && sym_tristate_within_range(sym, yes))
-			म_लिखो("/y");
-		म_लिखो("/?] ");
-		अगर (!conf_askvalue(sym, sym_get_string_value(sym)))
-			वापस 0;
+		switch (oldval) {
+		case no:
+			putchar('N');
+			break;
+		case mod:
+			putchar('M');
+			break;
+		case yes:
+			putchar('Y');
+			break;
+		}
+		if (oldval != no && sym_tristate_within_range(sym, no))
+			printf("/n");
+		if (oldval != mod && sym_tristate_within_range(sym, mod))
+			printf("/m");
+		if (oldval != yes && sym_tristate_within_range(sym, yes))
+			printf("/y");
+		printf("/?] ");
+		if (!conf_askvalue(sym, sym_get_string_value(sym)))
+			return 0;
 		strip(line);
 
-		चयन (line[0]) अणु
-		हाल 'n':
-		हाल 'N':
+		switch (line[0]) {
+		case 'n':
+		case 'N':
 			newval = no;
-			अगर (!line[1] || !म_भेद(&line[1], "o"))
-				अवरोध;
-			जारी;
-		हाल 'm':
-		हाल 'M':
+			if (!line[1] || !strcmp(&line[1], "o"))
+				break;
+			continue;
+		case 'm':
+		case 'M':
 			newval = mod;
-			अगर (!line[1])
-				अवरोध;
-			जारी;
-		हाल 'y':
-		हाल 'Y':
+			if (!line[1])
+				break;
+			continue;
+		case 'y':
+		case 'Y':
 			newval = yes;
-			अगर (!line[1] || !म_भेद(&line[1], "es"))
-				अवरोध;
-			जारी;
-		हाल 0:
+			if (!line[1] || !strcmp(&line[1], "es"))
+				break;
+			continue;
+		case 0:
 			newval = oldval;
-			अवरोध;
-		हाल '?':
-			जाओ help;
-		शेष:
-			जारी;
-		पूर्ण
-		अगर (sym_set_tristate_value(sym, newval))
-			वापस 0;
+			break;
+		case '?':
+			goto help;
+		default:
+			continue;
+		}
+		if (sym_set_tristate_value(sym, newval))
+			return 0;
 help:
-		prपूर्णांक_help(menu);
-	पूर्ण
-पूर्ण
+		print_help(menu);
+	}
+}
 
-अटल पूर्णांक conf_choice(काष्ठा menu *menu)
-अणु
-	काष्ठा symbol *sym, *def_sym;
-	काष्ठा menu *child;
+static int conf_choice(struct menu *menu)
+{
+	struct symbol *sym, *def_sym;
+	struct menu *child;
 	bool is_new;
 
 	sym = menu->sym;
 	is_new = !sym_has_value(sym);
-	अगर (sym_is_changeable(sym)) अणु
+	if (sym_is_changeable(sym)) {
 		conf_sym(menu);
 		sym_calc_value(sym);
-		चयन (sym_get_tristate_value(sym)) अणु
-		हाल no:
-			वापस 1;
-		हाल mod:
-			वापस 0;
-		हाल yes:
-			अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		चयन (sym_get_tristate_value(sym)) अणु
-		हाल no:
-			वापस 1;
-		हाल mod:
-			म_लिखो("%*s%s\n", indent - 1, "", menu_get_prompt(menu));
-			वापस 0;
-		हाल yes:
-			अवरोध;
-		पूर्ण
-	पूर्ण
+		switch (sym_get_tristate_value(sym)) {
+		case no:
+			return 1;
+		case mod:
+			return 0;
+		case yes:
+			break;
+		}
+	} else {
+		switch (sym_get_tristate_value(sym)) {
+		case no:
+			return 1;
+		case mod:
+			printf("%*s%s\n", indent - 1, "", menu_get_prompt(menu));
+			return 0;
+		case yes:
+			break;
+		}
+	}
 
-	जबतक (1) अणु
-		पूर्णांक cnt, def;
+	while (1) {
+		int cnt, def;
 
-		म_लिखो("%*s%s\n", indent - 1, "", menu_get_prompt(menu));
+		printf("%*s%s\n", indent - 1, "", menu_get_prompt(menu));
 		def_sym = sym_get_choice_value(sym);
 		cnt = def = 0;
 		line[0] = 0;
-		क्रम (child = menu->list; child; child = child->next) अणु
-			अगर (!menu_is_visible(child))
-				जारी;
-			अगर (!child->sym) अणु
-				म_लिखो("%*c %s\n", indent, '*', menu_get_prompt(child));
-				जारी;
-			पूर्ण
+		for (child = menu->list; child; child = child->next) {
+			if (!menu_is_visible(child))
+				continue;
+			if (!child->sym) {
+				printf("%*c %s\n", indent, '*', menu_get_prompt(child));
+				continue;
+			}
 			cnt++;
-			अगर (child->sym == def_sym) अणु
+			if (child->sym == def_sym) {
 				def = cnt;
-				म_लिखो("%*c", indent, '>');
-			पूर्ण अन्यथा
-				म_लिखो("%*c", indent, ' ');
-			म_लिखो(" %d. %s", cnt, menu_get_prompt(child));
-			अगर (child->sym->name)
-				म_लिखो(" (%s)", child->sym->name);
-			अगर (!sym_has_value(child->sym))
-				म_लिखो(" (NEW)");
-			म_लिखो("\n");
-		पूर्ण
-		म_लिखो("%*schoice", indent - 1, "");
-		अगर (cnt == 1) अणु
-			म_लिखो("[1]: 1\n");
-			जाओ conf_childs;
-		पूर्ण
-		म_लिखो("[1-%d?]: ", cnt);
-		चयन (input_mode) अणु
-		हाल oldconfig:
-		हाल syncconfig:
-			अगर (!is_new) अणु
+				printf("%*c", indent, '>');
+			} else
+				printf("%*c", indent, ' ');
+			printf(" %d. %s", cnt, menu_get_prompt(child));
+			if (child->sym->name)
+				printf(" (%s)", child->sym->name);
+			if (!sym_has_value(child->sym))
+				printf(" (NEW)");
+			printf("\n");
+		}
+		printf("%*schoice", indent - 1, "");
+		if (cnt == 1) {
+			printf("[1]: 1\n");
+			goto conf_childs;
+		}
+		printf("[1-%d?]: ", cnt);
+		switch (input_mode) {
+		case oldconfig:
+		case syncconfig:
+			if (!is_new) {
 				cnt = def;
-				म_लिखो("%d\n", cnt);
-				अवरोध;
-			पूर्ण
+				printf("%d\n", cnt);
+				break;
+			}
 			/* fall through */
-		हाल oldaskconfig:
-			ख_साफ(मानक_निकास);
-			xख_माला_लो(line, माप(line), मानक_निवेश);
+		case oldaskconfig:
+			fflush(stdout);
+			xfgets(line, sizeof(line), stdin);
 			strip(line);
-			अगर (line[0] == '?') अणु
-				prपूर्णांक_help(menu);
-				जारी;
-			पूर्ण
-			अगर (!line[0])
+			if (line[0] == '?') {
+				print_help(menu);
+				continue;
+			}
+			if (!line[0])
 				cnt = def;
-			अन्यथा अगर (है_अंक(line[0]))
-				cnt = म_से_प(line);
-			अन्यथा
-				जारी;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
+			else if (isdigit(line[0]))
+				cnt = atoi(line);
+			else
+				continue;
+			break;
+		default:
+			break;
+		}
 
 	conf_childs:
-		क्रम (child = menu->list; child; child = child->next) अणु
-			अगर (!child->sym || !menu_is_visible(child))
-				जारी;
-			अगर (!--cnt)
-				अवरोध;
-		पूर्ण
-		अगर (!child)
-			जारी;
-		अगर (line[0] && line[म_माप(line) - 1] == '?') अणु
-			prपूर्णांक_help(child);
-			जारी;
-		पूर्ण
+		for (child = menu->list; child; child = child->next) {
+			if (!child->sym || !menu_is_visible(child))
+				continue;
+			if (!--cnt)
+				break;
+		}
+		if (!child)
+			continue;
+		if (line[0] && line[strlen(line) - 1] == '?') {
+			print_help(child);
+			continue;
+		}
 		sym_set_choice_value(sym, child->sym);
-		क्रम (child = child->list; child; child = child->next) अणु
+		for (child = child->list; child; child = child->next) {
 			indent += 2;
 			conf(child);
 			indent -= 2;
-		पूर्ण
-		वापस 1;
-	पूर्ण
-पूर्ण
+		}
+		return 1;
+	}
+}
 
-अटल व्योम conf(काष्ठा menu *menu)
-अणु
-	काष्ठा symbol *sym;
-	काष्ठा property *prop;
-	काष्ठा menu *child;
+static void conf(struct menu *menu)
+{
+	struct symbol *sym;
+	struct property *prop;
+	struct menu *child;
 
-	अगर (!menu_is_visible(menu))
-		वापस;
+	if (!menu_is_visible(menu))
+		return;
 
 	sym = menu->sym;
 	prop = menu->prompt;
-	अगर (prop) अणु
-		स्थिर अक्षर *prompt;
+	if (prop) {
+		const char *prompt;
 
-		चयन (prop->type) अणु
-		हाल P_MENU:
+		switch (prop->type) {
+		case P_MENU:
 			/*
 			 * Except in oldaskconfig mode, we show only menus that
 			 * contain new symbols.
 			 */
-			अगर (input_mode != oldaskconfig && rootEntry != menu) अणु
+			if (input_mode != oldaskconfig && rootEntry != menu) {
 				check_conf(menu);
-				वापस;
-			पूर्ण
+				return;
+			}
 			/* fall through */
-		हाल P_COMMENT:
+		case P_COMMENT:
 			prompt = menu_get_prompt(menu);
-			अगर (prompt)
-				म_लिखो("%*c\n%*c %s\n%*c\n",
+			if (prompt)
+				printf("%*c\n%*c %s\n%*c\n",
 					indent, '*',
 					indent, '*', prompt,
 					indent, '*');
-		शेष:
+		default:
 			;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!sym)
-		जाओ conf_childs;
+	if (!sym)
+		goto conf_childs;
 
-	अगर (sym_is_choice(sym)) अणु
+	if (sym_is_choice(sym)) {
 		conf_choice(menu);
-		अगर (sym->curr.tri != mod)
-			वापस;
-		जाओ conf_childs;
-	पूर्ण
+		if (sym->curr.tri != mod)
+			return;
+		goto conf_childs;
+	}
 
-	चयन (sym->type) अणु
-	हाल S_INT:
-	हाल S_HEX:
-	हाल S_STRING:
+	switch (sym->type) {
+	case S_INT:
+	case S_HEX:
+	case S_STRING:
 		conf_string(menu);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		conf_sym(menu);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 conf_childs:
-	अगर (sym)
+	if (sym)
 		indent += 2;
-	क्रम (child = menu->list; child; child = child->next)
+	for (child = menu->list; child; child = child->next)
 		conf(child);
-	अगर (sym)
+	if (sym)
 		indent -= 2;
-पूर्ण
+}
 
-अटल व्योम check_conf(काष्ठा menu *menu)
-अणु
-	काष्ठा symbol *sym;
-	काष्ठा menu *child;
+static void check_conf(struct menu *menu)
+{
+	struct symbol *sym;
+	struct menu *child;
 
-	अगर (!menu_is_visible(menu))
-		वापस;
+	if (!menu_is_visible(menu))
+		return;
 
 	sym = menu->sym;
-	अगर (sym && !sym_has_value(sym) &&
+	if (sym && !sym_has_value(sym) &&
 	    (sym_is_changeable(sym) ||
-	     (sym_is_choice(sym) && sym_get_tristate_value(sym) == yes))) अणु
+	     (sym_is_choice(sym) && sym_get_tristate_value(sym) == yes))) {
 
-		चयन (input_mode) अणु
-		हाल listnewconfig:
-			अगर (sym->name) अणु
-				स्थिर अक्षर *str;
+		switch (input_mode) {
+		case listnewconfig:
+			if (sym->name) {
+				const char *str;
 
-				अगर (sym->type == S_STRING) अणु
+				if (sym->type == S_STRING) {
 					str = sym_get_string_value(sym);
 					str = sym_escape_string_value(str);
-					म_लिखो("%s%s=%s\n", CONFIG_, sym->name, str);
-					मुक्त((व्योम *)str);
-				पूर्ण अन्यथा अणु
+					printf("%s%s=%s\n", CONFIG_, sym->name, str);
+					free((void *)str);
+				} else {
 					str = sym_get_string_value(sym);
-					म_लिखो("%s%s=%s\n", CONFIG_, sym->name, str);
-				पूर्ण
-			पूर्ण
-			अवरोध;
-		हाल helpnewconfig:
-			म_लिखो("-----\n");
-			prपूर्णांक_help(menu);
-			म_लिखो("-----\n");
-			अवरोध;
-		शेष:
-			अगर (!conf_cnt++)
-				म_लिखो("*\n* Restart config...\n*\n");
+					printf("%s%s=%s\n", CONFIG_, sym->name, str);
+				}
+			}
+			break;
+		case helpnewconfig:
+			printf("-----\n");
+			print_help(menu);
+			printf("-----\n");
+			break;
+		default:
+			if (!conf_cnt++)
+				printf("*\n* Restart config...\n*\n");
 			rootEntry = menu_get_parent_menu(menu);
 			conf(rootEntry);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	क्रम (child = menu->list; child; child = child->next)
+	for (child = menu->list; child; child = child->next)
 		check_conf(child);
-पूर्ण
+}
 
-अटल काष्ठा option दीर्घ_opts[] = अणु
-	अणु"help",          no_argument,       शून्य,            'h'पूर्ण,
-	अणु"silent",        no_argument,       शून्य,            's'पूर्ण,
-	अणु"oldaskconfig",  no_argument,       &input_mode_opt, oldaskconfigपूर्ण,
-	अणु"oldconfig",     no_argument,       &input_mode_opt, oldconfigपूर्ण,
-	अणु"syncconfig",    no_argument,       &input_mode_opt, syncconfigपूर्ण,
-	अणु"defconfig",     required_argument, &input_mode_opt, defconfigपूर्ण,
-	अणु"savedefconfig", required_argument, &input_mode_opt, savedefconfigपूर्ण,
-	अणु"allnoconfig",   no_argument,       &input_mode_opt, allnoconfigपूर्ण,
-	अणु"allyesconfig",  no_argument,       &input_mode_opt, allyesconfigपूर्ण,
-	अणु"allmodconfig",  no_argument,       &input_mode_opt, allmodconfigपूर्ण,
-	अणु"alldefconfig",  no_argument,       &input_mode_opt, alldefconfigपूर्ण,
-	अणु"randconfig",    no_argument,       &input_mode_opt, अक्रमconfigपूर्ण,
-	अणु"listnewconfig", no_argument,       &input_mode_opt, listnewconfigपूर्ण,
-	अणु"helpnewconfig", no_argument,       &input_mode_opt, helpnewconfigपूर्ण,
-	अणु"olddefconfig",  no_argument,       &input_mode_opt, olddefconfigपूर्ण,
-	अणु"yes2modconfig", no_argument,       &input_mode_opt, yes2modconfigपूर्ण,
-	अणु"mod2yesconfig", no_argument,       &input_mode_opt, mod2yesconfigपूर्ण,
-	अणुशून्य, 0, शून्य, 0पूर्ण
-पूर्ण;
+static struct option long_opts[] = {
+	{"help",          no_argument,       NULL,            'h'},
+	{"silent",        no_argument,       NULL,            's'},
+	{"oldaskconfig",  no_argument,       &input_mode_opt, oldaskconfig},
+	{"oldconfig",     no_argument,       &input_mode_opt, oldconfig},
+	{"syncconfig",    no_argument,       &input_mode_opt, syncconfig},
+	{"defconfig",     required_argument, &input_mode_opt, defconfig},
+	{"savedefconfig", required_argument, &input_mode_opt, savedefconfig},
+	{"allnoconfig",   no_argument,       &input_mode_opt, allnoconfig},
+	{"allyesconfig",  no_argument,       &input_mode_opt, allyesconfig},
+	{"allmodconfig",  no_argument,       &input_mode_opt, allmodconfig},
+	{"alldefconfig",  no_argument,       &input_mode_opt, alldefconfig},
+	{"randconfig",    no_argument,       &input_mode_opt, randconfig},
+	{"listnewconfig", no_argument,       &input_mode_opt, listnewconfig},
+	{"helpnewconfig", no_argument,       &input_mode_opt, helpnewconfig},
+	{"olddefconfig",  no_argument,       &input_mode_opt, olddefconfig},
+	{"yes2modconfig", no_argument,       &input_mode_opt, yes2modconfig},
+	{"mod2yesconfig", no_argument,       &input_mode_opt, mod2yesconfig},
+	{NULL, 0, NULL, 0}
+};
 
-अटल व्योम conf_usage(स्थिर अक्षर *progname)
-अणु
-	म_लिखो("Usage: %s [options] <kconfig-file>\n", progname);
-	म_लिखो("\n");
-	म_लिखो("Generic options:\n");
-	म_लिखो("  -h, --help              Print this message and exit.\n");
-	म_लिखो("  -s, --silent            Do not print log.\n");
-	म_लिखो("\n");
-	म_लिखो("Mode options:\n");
-	म_लिखो("  --listnewconfig         List new options\n");
-	म_लिखो("  --helpnewconfig         List new options and help text\n");
-	म_लिखो("  --oldaskconfig          Start a new configuration using a line-oriented program\n");
-	म_लिखो("  --oldconfig             Update a configuration using a provided .config as base\n");
-	म_लिखो("  --syncconfig            Similar to oldconfig but generates configuration in\n"
+static void conf_usage(const char *progname)
+{
+	printf("Usage: %s [options] <kconfig-file>\n", progname);
+	printf("\n");
+	printf("Generic options:\n");
+	printf("  -h, --help              Print this message and exit.\n");
+	printf("  -s, --silent            Do not print log.\n");
+	printf("\n");
+	printf("Mode options:\n");
+	printf("  --listnewconfig         List new options\n");
+	printf("  --helpnewconfig         List new options and help text\n");
+	printf("  --oldaskconfig          Start a new configuration using a line-oriented program\n");
+	printf("  --oldconfig             Update a configuration using a provided .config as base\n");
+	printf("  --syncconfig            Similar to oldconfig but generates configuration in\n"
 	       "                          include/{generated/,config/}\n");
-	म_लिखो("  --olddefconfig          Same as oldconfig but sets new symbols to their default value\n");
-	म_लिखो("  --defconfig <file>      New config with default defined in <file>\n");
-	म_लिखो("  --savedefconfig <file>  Save the minimal current configuration to <file>\n");
-	म_लिखो("  --allnoconfig           New config where all options are answered with no\n");
-	म_लिखो("  --allyesconfig          New config where all options are answered with yes\n");
-	म_लिखो("  --allmodconfig          New config where all options are answered with mod\n");
-	म_लिखो("  --alldefconfig          New config with all symbols set to default\n");
-	म_लिखो("  --randconfig            New config with random answer to all options\n");
-	म_लिखो("  --yes2modconfig         Change answers from yes to mod if possible\n");
-	म_लिखो("  --mod2yesconfig         Change answers from mod to yes if possible\n");
-	म_लिखो("  (If none of the above is given, --oldaskconfig is the default)\n");
-पूर्ण
+	printf("  --olddefconfig          Same as oldconfig but sets new symbols to their default value\n");
+	printf("  --defconfig <file>      New config with default defined in <file>\n");
+	printf("  --savedefconfig <file>  Save the minimal current configuration to <file>\n");
+	printf("  --allnoconfig           New config where all options are answered with no\n");
+	printf("  --allyesconfig          New config where all options are answered with yes\n");
+	printf("  --allmodconfig          New config where all options are answered with mod\n");
+	printf("  --alldefconfig          New config with all symbols set to default\n");
+	printf("  --randconfig            New config with random answer to all options\n");
+	printf("  --yes2modconfig         Change answers from yes to mod if possible\n");
+	printf("  --mod2yesconfig         Change answers from mod to yes if possible\n");
+	printf("  (If none of the above is given, --oldaskconfig is the default)\n");
+}
 
-पूर्णांक मुख्य(पूर्णांक ac, अक्षर **av)
-अणु
-	स्थिर अक्षर *progname = av[0];
-	पूर्णांक opt;
-	स्थिर अक्षर *name, *defconfig_file = शून्य /* gcc uninit */;
-	पूर्णांक no_conf_ग_लिखो = 0;
+int main(int ac, char **av)
+{
+	const char *progname = av[0];
+	int opt;
+	const char *name, *defconfig_file = NULL /* gcc uninit */;
+	int no_conf_write = 0;
 
 	tty_stdio = isatty(0) && isatty(1);
 
-	जबतक ((opt = getopt_दीर्घ(ac, av, "hs", दीर्घ_opts, शून्य)) != -1) अणु
-		चयन (opt) अणु
-		हाल 'h':
+	while ((opt = getopt_long(ac, av, "hs", long_opts, NULL)) != -1) {
+		switch (opt) {
+		case 'h':
 			conf_usage(progname);
-			निकास(1);
-			अवरोध;
-		हाल 's':
-			conf_set_message_callback(शून्य);
-			अवरोध;
-		हाल 0:
+			exit(1);
+			break;
+		case 's':
+			conf_set_message_callback(NULL);
+			break;
+		case 0:
 			input_mode = input_mode_opt;
-			चयन (input_mode) अणु
-			हाल syncconfig:
+			switch (input_mode) {
+			case syncconfig:
 				/*
 				 * syncconfig is invoked during the build stage.
 				 * Suppress distracting
 				 *   "configuration written to ..."
 				 */
-				conf_set_message_callback(शून्य);
+				conf_set_message_callback(NULL);
 				sync_kconfig = 1;
-				अवरोध;
-			हाल defconfig:
-			हाल savedefconfig:
+				break;
+			case defconfig:
+			case savedefconfig:
 				defconfig_file = optarg;
-				अवरोध;
-			हाल अक्रमconfig:
-				set_अक्रमconfig_seed();
-				अवरोध;
-			शेष:
-				अवरोध;
-			पूर्ण
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (ac == optind) अणु
-		ख_लिखो(मानक_त्रुटि, "%s: Kconfig file missing\n", av[0]);
+				break;
+			case randconfig:
+				set_randconfig_seed();
+				break;
+			default:
+				break;
+			}
+		default:
+			break;
+		}
+	}
+	if (ac == optind) {
+		fprintf(stderr, "%s: Kconfig file missing\n", av[0]);
 		conf_usage(progname);
-		निकास(1);
-	पूर्ण
+		exit(1);
+	}
 	conf_parse(av[optind]);
-	//zconfdump(मानक_निकास);
+	//zconfdump(stdout);
 
-	चयन (input_mode) अणु
-	हाल defconfig:
-		अगर (conf_पढ़ो(defconfig_file)) अणु
-			ख_लिखो(मानक_त्रुटि,
+	switch (input_mode) {
+	case defconfig:
+		if (conf_read(defconfig_file)) {
+			fprintf(stderr,
 				"***\n"
 				  "*** Can't find default configuration \"%s\"!\n"
 				  "***\n",
 				defconfig_file);
-			निकास(1);
-		पूर्ण
-		अवरोध;
-	हाल savedefconfig:
-	हाल syncconfig:
-	हाल oldaskconfig:
-	हाल oldconfig:
-	हाल listnewconfig:
-	हाल helpnewconfig:
-	हाल olddefconfig:
-	हाल yes2modconfig:
-	हाल mod2yesconfig:
-		conf_पढ़ो(शून्य);
-		अवरोध;
-	हाल allnoconfig:
-	हाल allyesconfig:
-	हाल allmodconfig:
-	हाल alldefconfig:
-	हाल अक्रमconfig:
-		name = दो_पर्या("KCONFIG_ALLCONFIG");
-		अगर (!name)
-			अवरोध;
-		अगर ((म_भेद(name, "") != 0) && (म_भेद(name, "1") != 0)) अणु
-			अगर (conf_पढ़ो_simple(name, S_DEF_USER)) अणु
-				ख_लिखो(मानक_त्रुटि,
+			exit(1);
+		}
+		break;
+	case savedefconfig:
+	case syncconfig:
+	case oldaskconfig:
+	case oldconfig:
+	case listnewconfig:
+	case helpnewconfig:
+	case olddefconfig:
+	case yes2modconfig:
+	case mod2yesconfig:
+		conf_read(NULL);
+		break;
+	case allnoconfig:
+	case allyesconfig:
+	case allmodconfig:
+	case alldefconfig:
+	case randconfig:
+		name = getenv("KCONFIG_ALLCONFIG");
+		if (!name)
+			break;
+		if ((strcmp(name, "") != 0) && (strcmp(name, "1") != 0)) {
+			if (conf_read_simple(name, S_DEF_USER)) {
+				fprintf(stderr,
 					"*** Can't read seed configuration \"%s\"!\n",
 					name);
-				निकास(1);
-			पूर्ण
-			अवरोध;
-		पूर्ण
-		चयन (input_mode) अणु
-		हाल allnoconfig:	name = "allno.config"; अवरोध;
-		हाल allyesconfig:	name = "allyes.config"; अवरोध;
-		हाल allmodconfig:	name = "allmod.config"; अवरोध;
-		हाल alldefconfig:	name = "alldef.config"; अवरोध;
-		हाल अक्रमconfig:	name = "allrandom.config"; अवरोध;
-		शेष: अवरोध;
-		पूर्ण
-		अगर (conf_पढ़ो_simple(name, S_DEF_USER) &&
-		    conf_पढ़ो_simple("all.config", S_DEF_USER)) अणु
-			ख_लिखो(मानक_त्रुटि,
+				exit(1);
+			}
+			break;
+		}
+		switch (input_mode) {
+		case allnoconfig:	name = "allno.config"; break;
+		case allyesconfig:	name = "allyes.config"; break;
+		case allmodconfig:	name = "allmod.config"; break;
+		case alldefconfig:	name = "alldef.config"; break;
+		case randconfig:	name = "allrandom.config"; break;
+		default: break;
+		}
+		if (conf_read_simple(name, S_DEF_USER) &&
+		    conf_read_simple("all.config", S_DEF_USER)) {
+			fprintf(stderr,
 				"*** KCONFIG_ALLCONFIG set, but no \"%s\" or \"all.config\" file found\n",
 				name);
-			निकास(1);
-		पूर्ण
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+			exit(1);
+		}
+		break;
+	default:
+		break;
+	}
 
-	अगर (sync_kconfig) अणु
-		name = दो_पर्या("KCONFIG_NOSILENTUPDATE");
-		अगर (name && *name) अणु
-			अगर (conf_get_changed()) अणु
-				ख_लिखो(मानक_त्रुटि,
+	if (sync_kconfig) {
+		name = getenv("KCONFIG_NOSILENTUPDATE");
+		if (name && *name) {
+			if (conf_get_changed()) {
+				fprintf(stderr,
 					"\n*** The configuration requires explicit update.\n\n");
-				वापस 1;
-			पूर्ण
-			no_conf_ग_लिखो = 1;
-		पूर्ण
-	पूर्ण
+				return 1;
+			}
+			no_conf_write = 1;
+		}
+	}
 
-	चयन (input_mode) अणु
-	हाल allnoconfig:
+	switch (input_mode) {
+	case allnoconfig:
 		conf_set_all_new_symbols(def_no);
-		अवरोध;
-	हाल allyesconfig:
+		break;
+	case allyesconfig:
 		conf_set_all_new_symbols(def_yes);
-		अवरोध;
-	हाल allmodconfig:
+		break;
+	case allmodconfig:
 		conf_set_all_new_symbols(def_mod);
-		अवरोध;
-	हाल alldefconfig:
-		conf_set_all_new_symbols(def_शेष);
-		अवरोध;
-	हाल अक्रमconfig:
-		/* Really nothing to करो in this loop */
-		जबतक (conf_set_all_new_symbols(def_अक्रमom)) ;
-		अवरोध;
-	हाल defconfig:
-		conf_set_all_new_symbols(def_शेष);
-		अवरोध;
-	हाल savedefconfig:
-		अवरोध;
-	हाल yes2modconfig:
-		conf_reग_लिखो_mod_or_yes(def_y2m);
-		अवरोध;
-	हाल mod2yesconfig:
-		conf_reग_लिखो_mod_or_yes(def_m2y);
-		अवरोध;
-	हाल oldaskconfig:
-		rootEntry = &rooपंचांगenu;
-		conf(&rooपंचांगenu);
+		break;
+	case alldefconfig:
+		conf_set_all_new_symbols(def_default);
+		break;
+	case randconfig:
+		/* Really nothing to do in this loop */
+		while (conf_set_all_new_symbols(def_random)) ;
+		break;
+	case defconfig:
+		conf_set_all_new_symbols(def_default);
+		break;
+	case savedefconfig:
+		break;
+	case yes2modconfig:
+		conf_rewrite_mod_or_yes(def_y2m);
+		break;
+	case mod2yesconfig:
+		conf_rewrite_mod_or_yes(def_m2y);
+		break;
+	case oldaskconfig:
+		rootEntry = &rootmenu;
+		conf(&rootmenu);
 		input_mode = oldconfig;
 		/* fall through */
-	हाल oldconfig:
-	हाल listnewconfig:
-	हाल helpnewconfig:
-	हाल syncconfig:
+	case oldconfig:
+	case listnewconfig:
+	case helpnewconfig:
+	case syncconfig:
 		/* Update until a loop caused no more changes */
-		करो अणु
+		do {
 			conf_cnt = 0;
-			check_conf(&rooपंचांगenu);
-		पूर्ण जबतक (conf_cnt);
-		अवरोध;
-	हाल olddefconfig:
-	शेष:
-		अवरोध;
-	पूर्ण
+			check_conf(&rootmenu);
+		} while (conf_cnt);
+		break;
+	case olddefconfig:
+	default:
+		break;
+	}
 
-	अगर (input_mode == savedefconfig) अणु
-		अगर (conf_ग_लिखो_defconfig(defconfig_file)) अणु
-			ख_लिखो(मानक_त्रुटि, "n*** Error while saving defconfig to: %s\n\n",
+	if (input_mode == savedefconfig) {
+		if (conf_write_defconfig(defconfig_file)) {
+			fprintf(stderr, "n*** Error while saving defconfig to: %s\n\n",
 				defconfig_file);
-			वापस 1;
-		पूर्ण
-	पूर्ण अन्यथा अगर (input_mode != listnewconfig && input_mode != helpnewconfig) अणु
-		अगर (!no_conf_ग_लिखो && conf_ग_लिखो(शून्य)) अणु
-			ख_लिखो(मानक_त्रुटि, "\n*** Error during writing of the configuration.\n\n");
-			निकास(1);
-		पूर्ण
+			return 1;
+		}
+	} else if (input_mode != listnewconfig && input_mode != helpnewconfig) {
+		if (!no_conf_write && conf_write(NULL)) {
+			fprintf(stderr, "\n*** Error during writing of the configuration.\n\n");
+			exit(1);
+		}
 
 		/*
-		 * Create स्वतः.conf अगर it करोes not exist.
+		 * Create auto.conf if it does not exist.
 		 * This prevents GNU Make 4.1 or older from emitting
 		 * "include/config/auto.conf: No such file or directory"
 		 * in the top-level Makefile
 		 *
-		 * syncconfig always creates or updates स्वतः.conf because it is
+		 * syncconfig always creates or updates auto.conf because it is
 		 * used during the build.
 		 */
-		अगर (conf_ग_लिखो_स्वतःconf(sync_kconfig) && sync_kconfig) अणु
-			ख_लिखो(मानक_त्रुटि,
+		if (conf_write_autoconf(sync_kconfig) && sync_kconfig) {
+			fprintf(stderr,
 				"\n*** Error during sync of the configuration.\n\n");
-			वापस 1;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return 1;
+		}
+	}
+	return 0;
+}

@@ -1,23 +1,22 @@
-<शैली गुरु>
 /******************************************************************************
  * xenbus_xs.c
  *
- * This is the kernel equivalent of the "xs" library.  We करोn't need everything
- * and we use xenbus_comms क्रम communication.
+ * This is the kernel equivalent of the "xs" library.  We don't need everything
+ * and we use xenbus_comms for communication.
  *
  * Copyright (C) 2005 Rusty Russell, IBM Corporation
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of the GNU General Public License version 2
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version 2
  * as published by the Free Software Foundation; or, when distributed
- * separately from the Linux kernel or incorporated पूर्णांकo other
+ * separately from the Linux kernel or incorporated into other
  * software packages, subject to the following license:
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a copy
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this source file (the "Software"), to deal in the Software without
- * restriction, including without limitation the rights to use, copy, modअगरy,
+ * restriction, including without limitation the rights to use, copy, modify,
  * merge, publish, distribute, sublicense, and/or sell copies of the Software,
- * and to permit persons to whom the Software is furnished to करो so, subject to
+ * and to permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
@@ -32,258 +31,258 @@
  * IN THE SOFTWARE.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/unistd.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/types.h>
-#समावेश <linux/uपन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/err.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/fcntl.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/reboot.h>
-#समावेश <linux/rwsem.h>
-#समावेश <linux/mutex.h>
-#समावेश <यंत्र/xen/hypervisor.h>
-#समावेश <xen/xenbus.h>
-#समावेश <xen/xen.h>
-#समावेश "xenbus.h"
+#include <linux/unistd.h>
+#include <linux/errno.h>
+#include <linux/types.h>
+#include <linux/uio.h>
+#include <linux/kernel.h>
+#include <linux/string.h>
+#include <linux/err.h>
+#include <linux/slab.h>
+#include <linux/fcntl.h>
+#include <linux/kthread.h>
+#include <linux/reboot.h>
+#include <linux/rwsem.h>
+#include <linux/mutex.h>
+#include <asm/xen/hypervisor.h>
+#include <xen/xenbus.h>
+#include <xen/xen.h>
+#include "xenbus.h"
 
 /*
  * Framework to protect suspend/resume handling against normal Xenstore
  * message handling:
- * During suspend/resume there must be no खोलो transaction and no pending
+ * During suspend/resume there must be no open transaction and no pending
  * Xenstore request.
- * New watch events happening in this समय can be ignored by firing all watches
+ * New watch events happening in this time can be ignored by firing all watches
  * after resume.
  */
 
-/* Lock protecting enter/निकास critical region. */
-अटल DEFINE_SPINLOCK(xs_state_lock);
-/* Number of users in critical region (रक्षित by xs_state_lock). */
-अटल अचिन्हित पूर्णांक xs_state_users;
-/* Suspend handler रुकोing or alपढ़ोy active (रक्षित by xs_state_lock)? */
-अटल पूर्णांक xs_suspend_active;
-/* Unique Xenstore request id (रक्षित by xs_state_lock). */
-अटल uपूर्णांक32_t xs_request_id;
+/* Lock protecting enter/exit critical region. */
+static DEFINE_SPINLOCK(xs_state_lock);
+/* Number of users in critical region (protected by xs_state_lock). */
+static unsigned int xs_state_users;
+/* Suspend handler waiting or already active (protected by xs_state_lock)? */
+static int xs_suspend_active;
+/* Unique Xenstore request id (protected by xs_state_lock). */
+static uint32_t xs_request_id;
 
-/* Wait queue क्रम all callers रुकोing क्रम critical region to become usable. */
-अटल DECLARE_WAIT_QUEUE_HEAD(xs_state_enter_wq);
-/* Wait queue क्रम suspend handling रुकोing क्रम critical region being empty. */
-अटल DECLARE_WAIT_QUEUE_HEAD(xs_state_निकास_wq);
+/* Wait queue for all callers waiting for critical region to become usable. */
+static DECLARE_WAIT_QUEUE_HEAD(xs_state_enter_wq);
+/* Wait queue for suspend handling waiting for critical region being empty. */
+static DECLARE_WAIT_QUEUE_HEAD(xs_state_exit_wq);
 
-/* List of रेजिस्टरed watches, and a lock to protect it. */
-अटल LIST_HEAD(watches);
-अटल DEFINE_SPINLOCK(watches_lock);
+/* List of registered watches, and a lock to protect it. */
+static LIST_HEAD(watches);
+static DEFINE_SPINLOCK(watches_lock);
 
 /* List of pending watch callback events, and a lock to protect it. */
-अटल LIST_HEAD(watch_events);
-अटल DEFINE_SPINLOCK(watch_events_lock);
+static LIST_HEAD(watch_events);
+static DEFINE_SPINLOCK(watch_events_lock);
 
-/* Protect watch (de)रेजिस्टर against save/restore. */
-अटल DECLARE_RWSEM(xs_watch_rwsem);
+/* Protect watch (de)register against save/restore. */
+static DECLARE_RWSEM(xs_watch_rwsem);
 
 /*
- * Details of the xenwatch callback kernel thपढ़ो. The thपढ़ो रुकोs on the
- * watch_events_रुकोq क्रम work to करो (queued on watch_events list). When it
- * wakes up it acquires the xenwatch_mutex beक्रमe पढ़ोing the list and
+ * Details of the xenwatch callback kernel thread. The thread waits on the
+ * watch_events_waitq for work to do (queued on watch_events list). When it
+ * wakes up it acquires the xenwatch_mutex before reading the list and
  * carrying out work.
  */
-अटल pid_t xenwatch_pid;
-अटल DEFINE_MUTEX(xenwatch_mutex);
-अटल DECLARE_WAIT_QUEUE_HEAD(watch_events_रुकोq);
+static pid_t xenwatch_pid;
+static DEFINE_MUTEX(xenwatch_mutex);
+static DECLARE_WAIT_QUEUE_HEAD(watch_events_waitq);
 
-अटल व्योम xs_suspend_enter(व्योम)
-अणु
+static void xs_suspend_enter(void)
+{
 	spin_lock(&xs_state_lock);
 	xs_suspend_active++;
 	spin_unlock(&xs_state_lock);
-	रुको_event(xs_state_निकास_wq, xs_state_users == 0);
-पूर्ण
+	wait_event(xs_state_exit_wq, xs_state_users == 0);
+}
 
-अटल व्योम xs_suspend_निकास(व्योम)
-अणु
+static void xs_suspend_exit(void)
+{
 	xb_dev_generation_id++;
 	spin_lock(&xs_state_lock);
 	xs_suspend_active--;
 	spin_unlock(&xs_state_lock);
 	wake_up_all(&xs_state_enter_wq);
-पूर्ण
+}
 
-अटल uपूर्णांक32_t xs_request_enter(काष्ठा xb_req_data *req)
-अणु
-	uपूर्णांक32_t rq_id;
+static uint32_t xs_request_enter(struct xb_req_data *req)
+{
+	uint32_t rq_id;
 
 	req->type = req->msg.type;
 
 	spin_lock(&xs_state_lock);
 
-	जबतक (!xs_state_users && xs_suspend_active) अणु
+	while (!xs_state_users && xs_suspend_active) {
 		spin_unlock(&xs_state_lock);
-		रुको_event(xs_state_enter_wq, xs_suspend_active == 0);
+		wait_event(xs_state_enter_wq, xs_suspend_active == 0);
 		spin_lock(&xs_state_lock);
-	पूर्ण
+	}
 
-	अगर (req->type == XS_TRANSACTION_START && !req->user_req)
+	if (req->type == XS_TRANSACTION_START && !req->user_req)
 		xs_state_users++;
 	xs_state_users++;
 	rq_id = xs_request_id++;
 
 	spin_unlock(&xs_state_lock);
 
-	वापस rq_id;
-पूर्ण
+	return rq_id;
+}
 
-व्योम xs_request_निकास(काष्ठा xb_req_data *req)
-अणु
+void xs_request_exit(struct xb_req_data *req)
+{
 	spin_lock(&xs_state_lock);
 	xs_state_users--;
-	अगर ((req->type == XS_TRANSACTION_START && req->msg.type == XS_ERROR) ||
+	if ((req->type == XS_TRANSACTION_START && req->msg.type == XS_ERROR) ||
 	    (req->type == XS_TRANSACTION_END && !req->user_req &&
 	     !WARN_ON_ONCE(req->msg.type == XS_ERROR &&
-			   !म_भेद(req->body, "ENOENT"))))
+			   !strcmp(req->body, "ENOENT"))))
 		xs_state_users--;
 	spin_unlock(&xs_state_lock);
 
-	अगर (xs_suspend_active && !xs_state_users)
-		wake_up(&xs_state_निकास_wq);
-पूर्ण
+	if (xs_suspend_active && !xs_state_users)
+		wake_up(&xs_state_exit_wq);
+}
 
-अटल पूर्णांक get_error(स्थिर अक्षर *errorstring)
-अणु
-	अचिन्हित पूर्णांक i;
+static int get_error(const char *errorstring)
+{
+	unsigned int i;
 
-	क्रम (i = 0; म_भेद(errorstring, xsd_errors[i].errstring) != 0; i++) अणु
-		अगर (i == ARRAY_SIZE(xsd_errors) - 1) अणु
+	for (i = 0; strcmp(errorstring, xsd_errors[i].errstring) != 0; i++) {
+		if (i == ARRAY_SIZE(xsd_errors) - 1) {
 			pr_warn("xen store gave: unknown error %s\n",
 				errorstring);
-			वापस EINVAL;
-		पूर्ण
-	पूर्ण
-	वापस xsd_errors[i].errnum;
-पूर्ण
+			return EINVAL;
+		}
+	}
+	return xsd_errors[i].errnum;
+}
 
-अटल bool xenbus_ok(व्योम)
-अणु
-	चयन (xen_store_करोमुख्य_type) अणु
-	हाल XS_LOCAL:
-		चयन (प्रणाली_state) अणु
-		हाल SYSTEM_POWER_OFF:
-		हाल SYSTEM_RESTART:
-		हाल SYSTEM_HALT:
-			वापस false;
-		शेष:
-			अवरोध;
-		पूर्ण
-		वापस true;
-	हाल XS_PV:
-	हाल XS_HVM:
-		/* FIXME: Could check that the remote करोमुख्य is alive,
-		 * but it is normally initial करोमुख्य. */
-		वापस true;
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस false;
-पूर्ण
+static bool xenbus_ok(void)
+{
+	switch (xen_store_domain_type) {
+	case XS_LOCAL:
+		switch (system_state) {
+		case SYSTEM_POWER_OFF:
+		case SYSTEM_RESTART:
+		case SYSTEM_HALT:
+			return false;
+		default:
+			break;
+		}
+		return true;
+	case XS_PV:
+	case XS_HVM:
+		/* FIXME: Could check that the remote domain is alive,
+		 * but it is normally initial domain. */
+		return true;
+	default:
+		break;
+	}
+	return false;
+}
 
-अटल bool test_reply(काष्ठा xb_req_data *req)
-अणु
-	अगर (req->state == xb_req_state_got_reply || !xenbus_ok()) अणु
-		/* पढ़ो req->state beक्रमe all other fields */
+static bool test_reply(struct xb_req_data *req)
+{
+	if (req->state == xb_req_state_got_reply || !xenbus_ok()) {
+		/* read req->state before all other fields */
 		virt_rmb();
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	/* Make sure to reपढ़ो req->state each समय. */
+	/* Make sure to reread req->state each time. */
 	barrier();
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल व्योम *पढ़ो_reply(काष्ठा xb_req_data *req)
-अणु
-	करो अणु
-		रुको_event(req->wq, test_reply(req));
+static void *read_reply(struct xb_req_data *req)
+{
+	do {
+		wait_event(req->wq, test_reply(req));
 
-		अगर (!xenbus_ok())
+		if (!xenbus_ok())
 			/*
-			 * If we are in the process of being shut-करोwn there is
-			 * no poपूर्णांक of trying to contact XenBus - it is either
-			 * समाप्तed (xenstored application) or the other करोमुख्य
-			 * has been समाप्तed or is unreachable.
+			 * If we are in the process of being shut-down there is
+			 * no point of trying to contact XenBus - it is either
+			 * killed (xenstored application) or the other domain
+			 * has been killed or is unreachable.
 			 */
-			वापस ERR_PTR(-EIO);
-		अगर (req->err)
-			वापस ERR_PTR(req->err);
+			return ERR_PTR(-EIO);
+		if (req->err)
+			return ERR_PTR(req->err);
 
-	पूर्ण जबतक (req->state != xb_req_state_got_reply);
+	} while (req->state != xb_req_state_got_reply);
 
-	वापस req->body;
-पूर्ण
+	return req->body;
+}
 
-अटल व्योम xs_send(काष्ठा xb_req_data *req, काष्ठा xsd_sockmsg *msg)
-अणु
-	bool notअगरy;
+static void xs_send(struct xb_req_data *req, struct xsd_sockmsg *msg)
+{
+	bool notify;
 
 	req->msg = *msg;
 	req->err = 0;
 	req->state = xb_req_state_queued;
-	init_रुकोqueue_head(&req->wq);
+	init_waitqueue_head(&req->wq);
 
 	/* Save the caller req_id and restore it later in the reply */
 	req->caller_req_id = req->msg.req_id;
 	req->msg.req_id = xs_request_enter(req);
 
-	mutex_lock(&xb_ग_लिखो_mutex);
-	list_add_tail(&req->list, &xb_ग_लिखो_list);
-	notअगरy = list_is_singular(&xb_ग_लिखो_list);
-	mutex_unlock(&xb_ग_लिखो_mutex);
+	mutex_lock(&xb_write_mutex);
+	list_add_tail(&req->list, &xb_write_list);
+	notify = list_is_singular(&xb_write_list);
+	mutex_unlock(&xb_write_mutex);
 
-	अगर (notअगरy)
-		wake_up(&xb_रुकोq);
-पूर्ण
+	if (notify)
+		wake_up(&xb_waitq);
+}
 
-अटल व्योम *xs_रुको_क्रम_reply(काष्ठा xb_req_data *req, काष्ठा xsd_sockmsg *msg)
-अणु
-	व्योम *ret;
+static void *xs_wait_for_reply(struct xb_req_data *req, struct xsd_sockmsg *msg)
+{
+	void *ret;
 
-	ret = पढ़ो_reply(req);
+	ret = read_reply(req);
 
-	xs_request_निकास(req);
+	xs_request_exit(req);
 
 	msg->type = req->msg.type;
 	msg->len = req->msg.len;
 
-	mutex_lock(&xb_ग_लिखो_mutex);
-	अगर (req->state == xb_req_state_queued ||
-	    req->state == xb_req_state_रुको_reply)
-		req->state = xb_req_state_पातed;
-	अन्यथा
-		kमुक्त(req);
-	mutex_unlock(&xb_ग_लिखो_mutex);
+	mutex_lock(&xb_write_mutex);
+	if (req->state == xb_req_state_queued ||
+	    req->state == xb_req_state_wait_reply)
+		req->state = xb_req_state_aborted;
+	else
+		kfree(req);
+	mutex_unlock(&xb_write_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम xs_wake_up(काष्ठा xb_req_data *req)
-अणु
+static void xs_wake_up(struct xb_req_data *req)
+{
 	wake_up(&req->wq);
-पूर्ण
+}
 
-पूर्णांक xenbus_dev_request_and_reply(काष्ठा xsd_sockmsg *msg, व्योम *par)
-अणु
-	काष्ठा xb_req_data *req;
-	काष्ठा kvec *vec;
+int xenbus_dev_request_and_reply(struct xsd_sockmsg *msg, void *par)
+{
+	struct xb_req_data *req;
+	struct kvec *vec;
 
-	req = kदो_स्मृति(माप(*req) + माप(*vec), GFP_KERNEL);
-	अगर (!req)
-		वापस -ENOMEM;
+	req = kmalloc(sizeof(*req) + sizeof(*vec), GFP_KERNEL);
+	if (!req)
+		return -ENOMEM;
 
-	vec = (काष्ठा kvec *)(req + 1);
+	vec = (struct kvec *)(req + 1);
 	vec->iov_len = msg->len;
 	vec->iov_base = msg + 1;
 
@@ -295,26 +294,26 @@
 
 	xs_send(req, msg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(xenbus_dev_request_and_reply);
 
-/* Send message to xs, get kदो_स्मृति'ed reply.  ERR_PTR() on error. */
-अटल व्योम *xs_talkv(काष्ठा xenbus_transaction t,
-		      क्रमागत xsd_sockmsg_type type,
-		      स्थिर काष्ठा kvec *iovec,
-		      अचिन्हित पूर्णांक num_vecs,
-		      अचिन्हित पूर्णांक *len)
-अणु
-	काष्ठा xb_req_data *req;
-	काष्ठा xsd_sockmsg msg;
-	व्योम *ret = शून्य;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक err;
+/* Send message to xs, get kmalloc'ed reply.  ERR_PTR() on error. */
+static void *xs_talkv(struct xenbus_transaction t,
+		      enum xsd_sockmsg_type type,
+		      const struct kvec *iovec,
+		      unsigned int num_vecs,
+		      unsigned int *len)
+{
+	struct xb_req_data *req;
+	struct xsd_sockmsg msg;
+	void *ret = NULL;
+	unsigned int i;
+	int err;
 
-	req = kदो_स्मृति(माप(*req), GFP_NOIO | __GFP_HIGH);
-	अगर (!req)
-		वापस ERR_PTR(-ENOMEM);
+	req = kmalloc(sizeof(*req), GFP_NOIO | __GFP_HIGH);
+	if (!req)
+		return ERR_PTR(-ENOMEM);
 
 	req->vec = iovec;
 	req->num_vecs = num_vecs;
@@ -325,454 +324,454 @@ EXPORT_SYMBOL(xenbus_dev_request_and_reply);
 	msg.tx_id = t.id;
 	msg.type = type;
 	msg.len = 0;
-	क्रम (i = 0; i < num_vecs; i++)
+	for (i = 0; i < num_vecs; i++)
 		msg.len += iovec[i].iov_len;
 
 	xs_send(req, &msg);
 
-	ret = xs_रुको_क्रम_reply(req, &msg);
-	अगर (len)
+	ret = xs_wait_for_reply(req, &msg);
+	if (len)
 		*len = msg.len;
 
-	अगर (IS_ERR(ret))
-		वापस ret;
+	if (IS_ERR(ret))
+		return ret;
 
-	अगर (msg.type == XS_ERROR) अणु
+	if (msg.type == XS_ERROR) {
 		err = get_error(ret);
-		kमुक्त(ret);
-		वापस ERR_PTR(-err);
-	पूर्ण
+		kfree(ret);
+		return ERR_PTR(-err);
+	}
 
-	अगर (msg.type != type) अणु
+	if (msg.type != type) {
 		pr_warn_ratelimited("unexpected type [%d], expected [%d]\n",
 				    msg.type, type);
-		kमुक्त(ret);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
-	वापस ret;
-पूर्ण
+		kfree(ret);
+		return ERR_PTR(-EINVAL);
+	}
+	return ret;
+}
 
-/* Simplअगरied version of xs_talkv: single message. */
-अटल व्योम *xs_single(काष्ठा xenbus_transaction t,
-		       क्रमागत xsd_sockmsg_type type,
-		       स्थिर अक्षर *string,
-		       अचिन्हित पूर्णांक *len)
-अणु
-	काष्ठा kvec iovec;
+/* Simplified version of xs_talkv: single message. */
+static void *xs_single(struct xenbus_transaction t,
+		       enum xsd_sockmsg_type type,
+		       const char *string,
+		       unsigned int *len)
+{
+	struct kvec iovec;
 
-	iovec.iov_base = (व्योम *)string;
-	iovec.iov_len = म_माप(string) + 1;
-	वापस xs_talkv(t, type, &iovec, 1, len);
-पूर्ण
+	iovec.iov_base = (void *)string;
+	iovec.iov_len = strlen(string) + 1;
+	return xs_talkv(t, type, &iovec, 1, len);
+}
 
-/* Many commands only need an ack, करोn't care what it says. */
-अटल पूर्णांक xs_error(अक्षर *reply)
-अणु
-	अगर (IS_ERR(reply))
-		वापस PTR_ERR(reply);
-	kमुक्त(reply);
-	वापस 0;
-पूर्ण
+/* Many commands only need an ack, don't care what it says. */
+static int xs_error(char *reply)
+{
+	if (IS_ERR(reply))
+		return PTR_ERR(reply);
+	kfree(reply);
+	return 0;
+}
 
-अटल अचिन्हित पूर्णांक count_strings(स्थिर अक्षर *strings, अचिन्हित पूर्णांक len)
-अणु
-	अचिन्हित पूर्णांक num;
-	स्थिर अक्षर *p;
+static unsigned int count_strings(const char *strings, unsigned int len)
+{
+	unsigned int num;
+	const char *p;
 
-	क्रम (p = strings, num = 0; p < strings + len; p += म_माप(p) + 1)
+	for (p = strings, num = 0; p < strings + len; p += strlen(p) + 1)
 		num++;
 
-	वापस num;
-पूर्ण
+	return num;
+}
 
-/* Return the path to dir with /name appended. Buffer must be kमुक्त()'ed. */
-अटल अक्षर *join(स्थिर अक्षर *dir, स्थिर अक्षर *name)
-अणु
-	अक्षर *buffer;
+/* Return the path to dir with /name appended. Buffer must be kfree()'ed. */
+static char *join(const char *dir, const char *name)
+{
+	char *buffer;
 
-	अगर (म_माप(name) == 0)
-		buffer = kaप्र_लिखो(GFP_NOIO | __GFP_HIGH, "%s", dir);
-	अन्यथा
-		buffer = kaप्र_लिखो(GFP_NOIO | __GFP_HIGH, "%s/%s", dir, name);
-	वापस (!buffer) ? ERR_PTR(-ENOMEM) : buffer;
-पूर्ण
+	if (strlen(name) == 0)
+		buffer = kasprintf(GFP_NOIO | __GFP_HIGH, "%s", dir);
+	else
+		buffer = kasprintf(GFP_NOIO | __GFP_HIGH, "%s/%s", dir, name);
+	return (!buffer) ? ERR_PTR(-ENOMEM) : buffer;
+}
 
-अटल अक्षर **split(अक्षर *strings, अचिन्हित पूर्णांक len, अचिन्हित पूर्णांक *num)
-अणु
-	अक्षर *p, **ret;
+static char **split(char *strings, unsigned int len, unsigned int *num)
+{
+	char *p, **ret;
 
 	/* Count the strings. */
 	*num = count_strings(strings, len);
 
-	/* Transfer to one big alloc क्रम easy मुक्तing. */
-	ret = kदो_स्मृति(*num * माप(अक्षर *) + len, GFP_NOIO | __GFP_HIGH);
-	अगर (!ret) अणु
-		kमुक्त(strings);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
-	स_नकल(&ret[*num], strings, len);
-	kमुक्त(strings);
+	/* Transfer to one big alloc for easy freeing. */
+	ret = kmalloc(*num * sizeof(char *) + len, GFP_NOIO | __GFP_HIGH);
+	if (!ret) {
+		kfree(strings);
+		return ERR_PTR(-ENOMEM);
+	}
+	memcpy(&ret[*num], strings, len);
+	kfree(strings);
 
-	strings = (अक्षर *)&ret[*num];
-	क्रम (p = strings, *num = 0; p < strings + len; p += म_माप(p) + 1)
+	strings = (char *)&ret[*num];
+	for (p = strings, *num = 0; p < strings + len; p += strlen(p) + 1)
 		ret[(*num)++] = p;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अक्षर **xenbus_directory(काष्ठा xenbus_transaction t,
-			स्थिर अक्षर *dir, स्थिर अक्षर *node, अचिन्हित पूर्णांक *num)
-अणु
-	अक्षर *strings, *path;
-	अचिन्हित पूर्णांक len;
+char **xenbus_directory(struct xenbus_transaction t,
+			const char *dir, const char *node, unsigned int *num)
+{
+	char *strings, *path;
+	unsigned int len;
 
 	path = join(dir, node);
-	अगर (IS_ERR(path))
-		वापस (अक्षर **)path;
+	if (IS_ERR(path))
+		return (char **)path;
 
-	strings = xs_single(t, XS_सूचीECTORY, path, &len);
-	kमुक्त(path);
-	अगर (IS_ERR(strings))
-		वापस (अक्षर **)strings;
+	strings = xs_single(t, XS_DIRECTORY, path, &len);
+	kfree(path);
+	if (IS_ERR(strings))
+		return (char **)strings;
 
-	वापस split(strings, len, num);
-पूर्ण
+	return split(strings, len, num);
+}
 EXPORT_SYMBOL_GPL(xenbus_directory);
 
-/* Check अगर a path exists. Return 1 अगर it करोes. */
-पूर्णांक xenbus_exists(काष्ठा xenbus_transaction t,
-		  स्थिर अक्षर *dir, स्थिर अक्षर *node)
-अणु
-	अक्षर **d;
-	पूर्णांक dir_n;
+/* Check if a path exists. Return 1 if it does. */
+int xenbus_exists(struct xenbus_transaction t,
+		  const char *dir, const char *node)
+{
+	char **d;
+	int dir_n;
 
 	d = xenbus_directory(t, dir, node, &dir_n);
-	अगर (IS_ERR(d))
-		वापस 0;
-	kमुक्त(d);
-	वापस 1;
-पूर्ण
+	if (IS_ERR(d))
+		return 0;
+	kfree(d);
+	return 1;
+}
 EXPORT_SYMBOL_GPL(xenbus_exists);
 
 /* Get the value of a single file.
- * Returns a kदो_स्मृतिed value: call मुक्त() on it after use.
+ * Returns a kmalloced value: call free() on it after use.
  * len indicates length in bytes.
  */
-व्योम *xenbus_पढ़ो(काष्ठा xenbus_transaction t,
-		  स्थिर अक्षर *dir, स्थिर अक्षर *node, अचिन्हित पूर्णांक *len)
-अणु
-	अक्षर *path;
-	व्योम *ret;
+void *xenbus_read(struct xenbus_transaction t,
+		  const char *dir, const char *node, unsigned int *len)
+{
+	char *path;
+	void *ret;
 
 	path = join(dir, node);
-	अगर (IS_ERR(path))
-		वापस (व्योम *)path;
+	if (IS_ERR(path))
+		return (void *)path;
 
 	ret = xs_single(t, XS_READ, path, len);
-	kमुक्त(path);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(xenbus_पढ़ो);
+	kfree(path);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(xenbus_read);
 
 /* Write the value of a single file.
  * Returns -err on failure.
  */
-पूर्णांक xenbus_ग_लिखो(काष्ठा xenbus_transaction t,
-		 स्थिर अक्षर *dir, स्थिर अक्षर *node, स्थिर अक्षर *string)
-अणु
-	स्थिर अक्षर *path;
-	काष्ठा kvec iovec[2];
-	पूर्णांक ret;
+int xenbus_write(struct xenbus_transaction t,
+		 const char *dir, const char *node, const char *string)
+{
+	const char *path;
+	struct kvec iovec[2];
+	int ret;
 
 	path = join(dir, node);
-	अगर (IS_ERR(path))
-		वापस PTR_ERR(path);
+	if (IS_ERR(path))
+		return PTR_ERR(path);
 
-	iovec[0].iov_base = (व्योम *)path;
-	iovec[0].iov_len = म_माप(path) + 1;
-	iovec[1].iov_base = (व्योम *)string;
-	iovec[1].iov_len = म_माप(string);
+	iovec[0].iov_base = (void *)path;
+	iovec[0].iov_len = strlen(path) + 1;
+	iovec[1].iov_base = (void *)string;
+	iovec[1].iov_len = strlen(string);
 
-	ret = xs_error(xs_talkv(t, XS_WRITE, iovec, ARRAY_SIZE(iovec), शून्य));
-	kमुक्त(path);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(xenbus_ग_लिखो);
+	ret = xs_error(xs_talkv(t, XS_WRITE, iovec, ARRAY_SIZE(iovec), NULL));
+	kfree(path);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(xenbus_write);
 
 /* Create a new directory. */
-पूर्णांक xenbus_सूची_गढ़ो(काष्ठा xenbus_transaction t,
-		 स्थिर अक्षर *dir, स्थिर अक्षर *node)
-अणु
-	अक्षर *path;
-	पूर्णांक ret;
+int xenbus_mkdir(struct xenbus_transaction t,
+		 const char *dir, const char *node)
+{
+	char *path;
+	int ret;
 
 	path = join(dir, node);
-	अगर (IS_ERR(path))
-		वापस PTR_ERR(path);
+	if (IS_ERR(path))
+		return PTR_ERR(path);
 
-	ret = xs_error(xs_single(t, XS_MKसूची, path, शून्य));
-	kमुक्त(path);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(xenbus_सूची_गढ़ो);
+	ret = xs_error(xs_single(t, XS_MKDIR, path, NULL));
+	kfree(path);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(xenbus_mkdir);
 
 /* Destroy a file or directory (directories must be empty). */
-पूर्णांक xenbus_rm(काष्ठा xenbus_transaction t, स्थिर अक्षर *dir, स्थिर अक्षर *node)
-अणु
-	अक्षर *path;
-	पूर्णांक ret;
+int xenbus_rm(struct xenbus_transaction t, const char *dir, const char *node)
+{
+	char *path;
+	int ret;
 
 	path = join(dir, node);
-	अगर (IS_ERR(path))
-		वापस PTR_ERR(path);
+	if (IS_ERR(path))
+		return PTR_ERR(path);
 
-	ret = xs_error(xs_single(t, XS_RM, path, शून्य));
-	kमुक्त(path);
-	वापस ret;
-पूर्ण
+	ret = xs_error(xs_single(t, XS_RM, path, NULL));
+	kfree(path);
+	return ret;
+}
 EXPORT_SYMBOL_GPL(xenbus_rm);
 
 /* Start a transaction: changes by others will not be seen during this
  * transaction, and changes will not be visible to others until end.
  */
-पूर्णांक xenbus_transaction_start(काष्ठा xenbus_transaction *t)
-अणु
-	अक्षर *id_str;
+int xenbus_transaction_start(struct xenbus_transaction *t)
+{
+	char *id_str;
 
-	id_str = xs_single(XBT_NIL, XS_TRANSACTION_START, "", शून्य);
-	अगर (IS_ERR(id_str))
-		वापस PTR_ERR(id_str);
+	id_str = xs_single(XBT_NIL, XS_TRANSACTION_START, "", NULL);
+	if (IS_ERR(id_str))
+		return PTR_ERR(id_str);
 
-	t->id = simple_म_से_अदीर्घ(id_str, शून्य, 0);
-	kमुक्त(id_str);
-	वापस 0;
-पूर्ण
+	t->id = simple_strtoul(id_str, NULL, 0);
+	kfree(id_str);
+	return 0;
+}
 EXPORT_SYMBOL_GPL(xenbus_transaction_start);
 
 /* End a transaction.
- * If abanकरोn is true, transaction is discarded instead of committed.
+ * If abandon is true, transaction is discarded instead of committed.
  */
-पूर्णांक xenbus_transaction_end(काष्ठा xenbus_transaction t, पूर्णांक पात)
-अणु
-	अक्षर पातstr[2];
+int xenbus_transaction_end(struct xenbus_transaction t, int abort)
+{
+	char abortstr[2];
 
-	अगर (पात)
-		म_नकल(पातstr, "F");
-	अन्यथा
-		म_नकल(पातstr, "T");
+	if (abort)
+		strcpy(abortstr, "F");
+	else
+		strcpy(abortstr, "T");
 
-	वापस xs_error(xs_single(t, XS_TRANSACTION_END, पातstr, शून्य));
-पूर्ण
+	return xs_error(xs_single(t, XS_TRANSACTION_END, abortstr, NULL));
+}
 EXPORT_SYMBOL_GPL(xenbus_transaction_end);
 
-/* Single पढ़ो and म_पूछो: वापसs -त्रुटि_सं or num scanned. */
-पूर्णांक xenbus_म_पूछो(काष्ठा xenbus_transaction t,
-		 स्थिर अक्षर *dir, स्थिर अक्षर *node, स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची ap;
-	पूर्णांक ret;
-	अक्षर *val;
+/* Single read and scanf: returns -errno or num scanned. */
+int xenbus_scanf(struct xenbus_transaction t,
+		 const char *dir, const char *node, const char *fmt, ...)
+{
+	va_list ap;
+	int ret;
+	char *val;
 
-	val = xenbus_पढ़ो(t, dir, node, शून्य);
-	अगर (IS_ERR(val))
-		वापस PTR_ERR(val);
+	val = xenbus_read(t, dir, node, NULL);
+	if (IS_ERR(val))
+		return PTR_ERR(val);
 
-	बहु_शुरू(ap, fmt);
-	ret = vमाला_पूछो(val, fmt, ap);
-	बहु_पूर्ण(ap);
-	kमुक्त(val);
-	/* Distinctive त्रुटि_सं. */
-	अगर (ret == 0)
-		वापस -दुस्फल;
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(xenbus_म_पूछो);
+	va_start(ap, fmt);
+	ret = vsscanf(val, fmt, ap);
+	va_end(ap);
+	kfree(val);
+	/* Distinctive errno. */
+	if (ret == 0)
+		return -ERANGE;
+	return ret;
+}
+EXPORT_SYMBOL_GPL(xenbus_scanf);
 
-/* Read an (optional) अचिन्हित value. */
-अचिन्हित पूर्णांक xenbus_पढ़ो_अचिन्हित(स्थिर अक्षर *dir, स्थिर अक्षर *node,
-				  अचिन्हित पूर्णांक शेष_val)
-अणु
-	अचिन्हित पूर्णांक val;
-	पूर्णांक ret;
+/* Read an (optional) unsigned value. */
+unsigned int xenbus_read_unsigned(const char *dir, const char *node,
+				  unsigned int default_val)
+{
+	unsigned int val;
+	int ret;
 
-	ret = xenbus_म_पूछो(XBT_NIL, dir, node, "%u", &val);
-	अगर (ret <= 0)
-		val = शेष_val;
+	ret = xenbus_scanf(XBT_NIL, dir, node, "%u", &val);
+	if (ret <= 0)
+		val = default_val;
 
-	वापस val;
-पूर्ण
-EXPORT_SYMBOL_GPL(xenbus_पढ़ो_अचिन्हित);
+	return val;
+}
+EXPORT_SYMBOL_GPL(xenbus_read_unsigned);
 
-/* Single म_लिखो and ग_लिखो: वापसs -त्रुटि_सं or 0. */
-पूर्णांक xenbus_म_लिखो(काष्ठा xenbus_transaction t,
-		  स्थिर अक्षर *dir, स्थिर अक्षर *node, स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची ap;
-	पूर्णांक ret;
-	अक्षर *buf;
+/* Single printf and write: returns -errno or 0. */
+int xenbus_printf(struct xenbus_transaction t,
+		  const char *dir, const char *node, const char *fmt, ...)
+{
+	va_list ap;
+	int ret;
+	char *buf;
 
-	बहु_शुरू(ap, fmt);
-	buf = kvaप्र_लिखो(GFP_NOIO | __GFP_HIGH, fmt, ap);
-	बहु_पूर्ण(ap);
+	va_start(ap, fmt);
+	buf = kvasprintf(GFP_NOIO | __GFP_HIGH, fmt, ap);
+	va_end(ap);
 
-	अगर (!buf)
-		वापस -ENOMEM;
+	if (!buf)
+		return -ENOMEM;
 
-	ret = xenbus_ग_लिखो(t, dir, node, buf);
+	ret = xenbus_write(t, dir, node, buf);
 
-	kमुक्त(buf);
+	kfree(buf);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(xenbus_म_लिखो);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(xenbus_printf);
 
-/* Takes tuples of names, म_पूछो-style args, and व्योम **, शून्य terminated. */
-पूर्णांक xenbus_gather(काष्ठा xenbus_transaction t, स्थिर अक्षर *dir, ...)
-अणु
-	बहु_सूची ap;
-	स्थिर अक्षर *name;
-	पूर्णांक ret = 0;
+/* Takes tuples of names, scanf-style args, and void **, NULL terminated. */
+int xenbus_gather(struct xenbus_transaction t, const char *dir, ...)
+{
+	va_list ap;
+	const char *name;
+	int ret = 0;
 
-	बहु_शुरू(ap, dir);
-	जबतक (ret == 0 && (name = बहु_तर्क(ap, अक्षर *)) != शून्य) अणु
-		स्थिर अक्षर *fmt = बहु_तर्क(ap, अक्षर *);
-		व्योम *result = बहु_तर्क(ap, व्योम *);
-		अक्षर *p;
+	va_start(ap, dir);
+	while (ret == 0 && (name = va_arg(ap, char *)) != NULL) {
+		const char *fmt = va_arg(ap, char *);
+		void *result = va_arg(ap, void *);
+		char *p;
 
-		p = xenbus_पढ़ो(t, dir, name, शून्य);
-		अगर (IS_ERR(p)) अणु
+		p = xenbus_read(t, dir, name, NULL);
+		if (IS_ERR(p)) {
 			ret = PTR_ERR(p);
-			अवरोध;
-		पूर्ण
-		अगर (fmt) अणु
-			अगर (माला_पूछो(p, fmt, result) == 0)
+			break;
+		}
+		if (fmt) {
+			if (sscanf(p, fmt, result) == 0)
 				ret = -EINVAL;
-			kमुक्त(p);
-		पूर्ण अन्यथा
-			*(अक्षर **)result = p;
-	पूर्ण
-	बहु_पूर्ण(ap);
-	वापस ret;
-पूर्ण
+			kfree(p);
+		} else
+			*(char **)result = p;
+	}
+	va_end(ap);
+	return ret;
+}
 EXPORT_SYMBOL_GPL(xenbus_gather);
 
-अटल पूर्णांक xs_watch(स्थिर अक्षर *path, स्थिर अक्षर *token)
-अणु
-	काष्ठा kvec iov[2];
+static int xs_watch(const char *path, const char *token)
+{
+	struct kvec iov[2];
 
-	iov[0].iov_base = (व्योम *)path;
-	iov[0].iov_len = म_माप(path) + 1;
-	iov[1].iov_base = (व्योम *)token;
-	iov[1].iov_len = म_माप(token) + 1;
+	iov[0].iov_base = (void *)path;
+	iov[0].iov_len = strlen(path) + 1;
+	iov[1].iov_base = (void *)token;
+	iov[1].iov_len = strlen(token) + 1;
 
-	वापस xs_error(xs_talkv(XBT_NIL, XS_WATCH, iov,
-				 ARRAY_SIZE(iov), शून्य));
-पूर्ण
+	return xs_error(xs_talkv(XBT_NIL, XS_WATCH, iov,
+				 ARRAY_SIZE(iov), NULL));
+}
 
-अटल पूर्णांक xs_unwatch(स्थिर अक्षर *path, स्थिर अक्षर *token)
-अणु
-	काष्ठा kvec iov[2];
+static int xs_unwatch(const char *path, const char *token)
+{
+	struct kvec iov[2];
 
-	iov[0].iov_base = (अक्षर *)path;
-	iov[0].iov_len = म_माप(path) + 1;
-	iov[1].iov_base = (अक्षर *)token;
-	iov[1].iov_len = म_माप(token) + 1;
+	iov[0].iov_base = (char *)path;
+	iov[0].iov_len = strlen(path) + 1;
+	iov[1].iov_base = (char *)token;
+	iov[1].iov_len = strlen(token) + 1;
 
-	वापस xs_error(xs_talkv(XBT_NIL, XS_UNWATCH, iov,
-				 ARRAY_SIZE(iov), शून्य));
-पूर्ण
+	return xs_error(xs_talkv(XBT_NIL, XS_UNWATCH, iov,
+				 ARRAY_SIZE(iov), NULL));
+}
 
-अटल काष्ठा xenbus_watch *find_watch(स्थिर अक्षर *token)
-अणु
-	काष्ठा xenbus_watch *i, *cmp;
+static struct xenbus_watch *find_watch(const char *token)
+{
+	struct xenbus_watch *i, *cmp;
 
-	cmp = (व्योम *)simple_म_से_अदीर्घ(token, शून्य, 16);
+	cmp = (void *)simple_strtoul(token, NULL, 16);
 
-	list_क्रम_each_entry(i, &watches, list)
-		अगर (i == cmp)
-			वापस i;
+	list_for_each_entry(i, &watches, list)
+		if (i == cmp)
+			return i;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-पूर्णांक xs_watch_msg(काष्ठा xs_watch_event *event)
-अणु
-	अगर (count_strings(event->body, event->len) != 2) अणु
-		kमुक्त(event);
-		वापस -EINVAL;
-	पूर्ण
-	event->path = (स्थिर अक्षर *)event->body;
-	event->token = (स्थिर अक्षर *)म_अक्षर(event->body, '\0') + 1;
+int xs_watch_msg(struct xs_watch_event *event)
+{
+	if (count_strings(event->body, event->len) != 2) {
+		kfree(event);
+		return -EINVAL;
+	}
+	event->path = (const char *)event->body;
+	event->token = (const char *)strchr(event->body, '\0') + 1;
 
 	spin_lock(&watches_lock);
 	event->handle = find_watch(event->token);
-	अगर (event->handle != शून्य &&
+	if (event->handle != NULL &&
 			(!event->handle->will_handle ||
 			 event->handle->will_handle(event->handle,
-				 event->path, event->token))) अणु
+				 event->path, event->token))) {
 		spin_lock(&watch_events_lock);
 		list_add_tail(&event->list, &watch_events);
 		event->handle->nr_pending++;
-		wake_up(&watch_events_रुकोq);
+		wake_up(&watch_events_waitq);
 		spin_unlock(&watch_events_lock);
-	पूर्ण अन्यथा
-		kमुक्त(event);
+	} else
+		kfree(event);
 	spin_unlock(&watches_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Certain older XenBus toolstack cannot handle पढ़ोing values that are
- * not populated. Some Xen 3.4 installation are incapable of करोing this
- * so अगर we are running on anything older than 4 करो not attempt to पढ़ो
- * control/platक्रमm-feature-xs_reset_watches.
+ * Certain older XenBus toolstack cannot handle reading values that are
+ * not populated. Some Xen 3.4 installation are incapable of doing this
+ * so if we are running on anything older than 4 do not attempt to read
+ * control/platform-feature-xs_reset_watches.
  */
-अटल bool xen_strict_xenbus_quirk(व्योम)
-अणु
-#अगर_घोषित CONFIG_X86
-	uपूर्णांक32_t eax, ebx, ecx, edx, base;
+static bool xen_strict_xenbus_quirk(void)
+{
+#ifdef CONFIG_X86
+	uint32_t eax, ebx, ecx, edx, base;
 
 	base = xen_cpuid_base();
 	cpuid(base + 1, &eax, &ebx, &ecx, &edx);
 
-	अगर ((eax >> 16) < 4)
-		वापस true;
-#पूर्ण_अगर
-	वापस false;
+	if ((eax >> 16) < 4)
+		return true;
+#endif
+	return false;
 
-पूर्ण
-अटल व्योम xs_reset_watches(व्योम)
-अणु
-	पूर्णांक err;
+}
+static void xs_reset_watches(void)
+{
+	int err;
 
-	अगर (!xen_hvm_करोमुख्य() || xen_initial_करोमुख्य())
-		वापस;
+	if (!xen_hvm_domain() || xen_initial_domain())
+		return;
 
-	अगर (xen_strict_xenbus_quirk())
-		वापस;
+	if (xen_strict_xenbus_quirk())
+		return;
 
-	अगर (!xenbus_पढ़ो_अचिन्हित("control",
+	if (!xenbus_read_unsigned("control",
 				  "platform-feature-xs_reset_watches", 0))
-		वापस;
+		return;
 
-	err = xs_error(xs_single(XBT_NIL, XS_RESET_WATCHES, "", शून्य));
-	अगर (err && err != -EEXIST)
+	err = xs_error(xs_single(XBT_NIL, XS_RESET_WATCHES, "", NULL));
+	if (err && err != -EEXIST)
 		pr_warn("xs_reset_watches failed: %d\n", err);
-पूर्ण
+}
 
 /* Register callback to watch this node. */
-पूर्णांक रेजिस्टर_xenbus_watch(काष्ठा xenbus_watch *watch)
-अणु
-	/* Poपूर्णांकer in ascii is the token. */
-	अक्षर token[माप(watch) * 2 + 1];
-	पूर्णांक err;
+int register_xenbus_watch(struct xenbus_watch *watch)
+{
+	/* Pointer in ascii is the token. */
+	char token[sizeof(watch) * 2 + 1];
+	int err;
 
-	प्र_लिखो(token, "%lX", (दीर्घ)watch);
+	sprintf(token, "%lX", (long)watch);
 
 	watch->nr_pending = 0;
 
-	करोwn_पढ़ो(&xs_watch_rwsem);
+	down_read(&xs_watch_rwsem);
 
 	spin_lock(&watches_lock);
 	BUG_ON(find_watch(token));
@@ -781,27 +780,27 @@ EXPORT_SYMBOL_GPL(xenbus_gather);
 
 	err = xs_watch(watch->node, token);
 
-	अगर (err) अणु
+	if (err) {
 		spin_lock(&watches_lock);
 		list_del(&watch->list);
 		spin_unlock(&watches_lock);
-	पूर्ण
+	}
 
-	up_पढ़ो(&xs_watch_rwsem);
+	up_read(&xs_watch_rwsem);
 
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL_GPL(रेजिस्टर_xenbus_watch);
+	return err;
+}
+EXPORT_SYMBOL_GPL(register_xenbus_watch);
 
-व्योम unरेजिस्टर_xenbus_watch(काष्ठा xenbus_watch *watch)
-अणु
-	काष्ठा xs_watch_event *event, *पंचांगp;
-	अक्षर token[माप(watch) * 2 + 1];
-	पूर्णांक err;
+void unregister_xenbus_watch(struct xenbus_watch *watch)
+{
+	struct xs_watch_event *event, *tmp;
+	char token[sizeof(watch) * 2 + 1];
+	int err;
 
-	प्र_लिखो(token, "%lX", (दीर्घ)watch);
+	sprintf(token, "%lX", (long)watch);
 
-	करोwn_पढ़ो(&xs_watch_rwsem);
+	down_read(&xs_watch_rwsem);
 
 	spin_lock(&watches_lock);
 	BUG_ON(!find_watch(token));
@@ -809,149 +808,149 @@ EXPORT_SYMBOL_GPL(रेजिस्टर_xenbus_watch);
 	spin_unlock(&watches_lock);
 
 	err = xs_unwatch(watch->node, token);
-	अगर (err)
+	if (err)
 		pr_warn("Failed to release watch %s: %i\n", watch->node, err);
 
-	up_पढ़ो(&xs_watch_rwsem);
+	up_read(&xs_watch_rwsem);
 
 	/* Make sure there are no callbacks running currently (unless
 	   its us) */
-	अगर (current->pid != xenwatch_pid)
+	if (current->pid != xenwatch_pid)
 		mutex_lock(&xenwatch_mutex);
 
 	/* Cancel pending watch events. */
 	spin_lock(&watch_events_lock);
-	अगर (watch->nr_pending) अणु
-		list_क्रम_each_entry_safe(event, पंचांगp, &watch_events, list) अणु
-			अगर (event->handle != watch)
-				जारी;
+	if (watch->nr_pending) {
+		list_for_each_entry_safe(event, tmp, &watch_events, list) {
+			if (event->handle != watch)
+				continue;
 			list_del(&event->list);
-			kमुक्त(event);
-		पूर्ण
+			kfree(event);
+		}
 		watch->nr_pending = 0;
-	पूर्ण
+	}
 	spin_unlock(&watch_events_lock);
 
-	अगर (current->pid != xenwatch_pid)
+	if (current->pid != xenwatch_pid)
 		mutex_unlock(&xenwatch_mutex);
-पूर्ण
-EXPORT_SYMBOL_GPL(unरेजिस्टर_xenbus_watch);
+}
+EXPORT_SYMBOL_GPL(unregister_xenbus_watch);
 
-व्योम xs_suspend(व्योम)
-अणु
+void xs_suspend(void)
+{
 	xs_suspend_enter();
 
-	करोwn_ग_लिखो(&xs_watch_rwsem);
+	down_write(&xs_watch_rwsem);
 	mutex_lock(&xs_response_mutex);
-पूर्ण
+}
 
-व्योम xs_resume(व्योम)
-अणु
-	काष्ठा xenbus_watch *watch;
-	अक्षर token[माप(watch) * 2 + 1];
+void xs_resume(void)
+{
+	struct xenbus_watch *watch;
+	char token[sizeof(watch) * 2 + 1];
 
 	xb_init_comms();
 
 	mutex_unlock(&xs_response_mutex);
 
-	xs_suspend_निकास();
+	xs_suspend_exit();
 
-	/* No need क्रम watches_lock: the xs_watch_rwsem is sufficient. */
-	list_क्रम_each_entry(watch, &watches, list) अणु
-		प्र_लिखो(token, "%lX", (दीर्घ)watch);
+	/* No need for watches_lock: the xs_watch_rwsem is sufficient. */
+	list_for_each_entry(watch, &watches, list) {
+		sprintf(token, "%lX", (long)watch);
 		xs_watch(watch->node, token);
-	पूर्ण
+	}
 
-	up_ग_लिखो(&xs_watch_rwsem);
-पूर्ण
+	up_write(&xs_watch_rwsem);
+}
 
-व्योम xs_suspend_cancel(व्योम)
-अणु
+void xs_suspend_cancel(void)
+{
 	mutex_unlock(&xs_response_mutex);
-	up_ग_लिखो(&xs_watch_rwsem);
+	up_write(&xs_watch_rwsem);
 
-	xs_suspend_निकास();
-पूर्ण
+	xs_suspend_exit();
+}
 
-अटल पूर्णांक xenwatch_thपढ़ो(व्योम *unused)
-अणु
-	काष्ठा xs_watch_event *event;
+static int xenwatch_thread(void *unused)
+{
+	struct xs_watch_event *event;
 
 	xenwatch_pid = current->pid;
 
-	क्रम (;;) अणु
-		रुको_event_पूर्णांकerruptible(watch_events_रुकोq,
+	for (;;) {
+		wait_event_interruptible(watch_events_waitq,
 					 !list_empty(&watch_events));
 
-		अगर (kthपढ़ो_should_stop())
-			अवरोध;
+		if (kthread_should_stop())
+			break;
 
 		mutex_lock(&xenwatch_mutex);
 
 		spin_lock(&watch_events_lock);
 		event = list_first_entry_or_null(&watch_events,
-				काष्ठा xs_watch_event, list);
-		अगर (event) अणु
+				struct xs_watch_event, list);
+		if (event) {
 			list_del(&event->list);
 			event->handle->nr_pending--;
-		पूर्ण
+		}
 		spin_unlock(&watch_events_lock);
 
-		अगर (event) अणु
+		if (event) {
 			event->handle->callback(event->handle, event->path,
 						event->token);
-			kमुक्त(event);
-		पूर्ण
+			kfree(event);
+		}
 
 		mutex_unlock(&xenwatch_mutex);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Wake up all thपढ़ोs रुकोing क्रम a xenstore reply. In हाल of shutकरोwn all
- * pending replies will be marked as "aborted" in order to let the रुकोers
- * वापस in spite of xenstore possibly no दीर्घer being able to reply. This
- * will aव्योम blocking shutकरोwn by a thपढ़ो रुकोing क्रम xenstore but being
- * necessary क्रम shutकरोwn processing to proceed.
+ * Wake up all threads waiting for a xenstore reply. In case of shutdown all
+ * pending replies will be marked as "aborted" in order to let the waiters
+ * return in spite of xenstore possibly no longer being able to reply. This
+ * will avoid blocking shutdown by a thread waiting for xenstore but being
+ * necessary for shutdown processing to proceed.
  */
-अटल पूर्णांक xs_reboot_notअगरy(काष्ठा notअगरier_block *nb,
-			    अचिन्हित दीर्घ code, व्योम *unused)
-अणु
-	काष्ठा xb_req_data *req;
+static int xs_reboot_notify(struct notifier_block *nb,
+			    unsigned long code, void *unused)
+{
+	struct xb_req_data *req;
 
-	mutex_lock(&xb_ग_लिखो_mutex);
-	list_क्रम_each_entry(req, &xs_reply_list, list)
+	mutex_lock(&xb_write_mutex);
+	list_for_each_entry(req, &xs_reply_list, list)
 		wake_up(&req->wq);
-	list_क्रम_each_entry(req, &xb_ग_लिखो_list, list)
+	list_for_each_entry(req, &xb_write_list, list)
 		wake_up(&req->wq);
-	mutex_unlock(&xb_ग_लिखो_mutex);
-	वापस NOTIFY_DONE;
-पूर्ण
+	mutex_unlock(&xb_write_mutex);
+	return NOTIFY_DONE;
+}
 
-अटल काष्ठा notअगरier_block xs_reboot_nb = अणु
-	.notअगरier_call = xs_reboot_notअगरy,
-पूर्ण;
+static struct notifier_block xs_reboot_nb = {
+	.notifier_call = xs_reboot_notify,
+};
 
-पूर्णांक xs_init(व्योम)
-अणु
-	पूर्णांक err;
-	काष्ठा task_काष्ठा *task;
+int xs_init(void)
+{
+	int err;
+	struct task_struct *task;
 
-	रेजिस्टर_reboot_notअगरier(&xs_reboot_nb);
+	register_reboot_notifier(&xs_reboot_nb);
 
 	/* Initialize the shared memory rings to talk to xenstored */
 	err = xb_init_comms();
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	task = kthपढ़ो_run(xenwatch_thपढ़ो, शून्य, "xenwatch");
-	अगर (IS_ERR(task))
-		वापस PTR_ERR(task);
+	task = kthread_run(xenwatch_thread, NULL, "xenwatch");
+	if (IS_ERR(task))
+		return PTR_ERR(task);
 
-	/* shutकरोwn watches क्रम kexec boot */
+	/* shutdown watches for kexec boot */
 	xs_reset_watches();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

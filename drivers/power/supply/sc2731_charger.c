@@ -1,541 +1,540 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-// Copyright (C) 2018 Spपढ़ोtrum Communications Inc.
+// SPDX-License-Identifier: GPL-2.0
+// Copyright (C) 2018 Spreadtrum Communications Inc.
 
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/घातer_supply.h>
-#समावेश <linux/usb/phy.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/of.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/power_supply.h>
+#include <linux/usb/phy.h>
+#include <linux/regmap.h>
+#include <linux/notifier.h>
+#include <linux/of.h>
 
-/* PMIC global रेजिस्टरs definition */
-#घोषणा SC2731_CHARGE_STATUS		0xedc
-#घोषणा SC2731_CHARGE_FULL		BIT(4)
-#घोषणा SC2731_MODULE_EN1		0xc0c
-#घोषणा SC2731_CHARGE_EN		BIT(5)
+/* PMIC global registers definition */
+#define SC2731_CHARGE_STATUS		0xedc
+#define SC2731_CHARGE_FULL		BIT(4)
+#define SC2731_MODULE_EN1		0xc0c
+#define SC2731_CHARGE_EN		BIT(5)
 
-/* SC2731 चयन अक्षरger रेजिस्टरs definition */
-#घोषणा SC2731_CHG_CFG0			0x0
-#घोषणा SC2731_CHG_CFG1			0x4
-#घोषणा SC2731_CHG_CFG2			0x8
-#घोषणा SC2731_CHG_CFG3			0xc
-#घोषणा SC2731_CHG_CFG4			0x10
-#घोषणा SC2731_CHG_CFG5			0x28
+/* SC2731 switch charger registers definition */
+#define SC2731_CHG_CFG0			0x0
+#define SC2731_CHG_CFG1			0x4
+#define SC2731_CHG_CFG2			0x8
+#define SC2731_CHG_CFG3			0xc
+#define SC2731_CHG_CFG4			0x10
+#define SC2731_CHG_CFG5			0x28
 
-/* SC2731_CHG_CFG0 रेजिस्टर definition */
-#घोषणा SC2731_PRECHG_RNG_SHIFT		11
-#घोषणा SC2731_PRECHG_RNG_MASK		GENMASK(12, 11)
+/* SC2731_CHG_CFG0 register definition */
+#define SC2731_PRECHG_RNG_SHIFT		11
+#define SC2731_PRECHG_RNG_MASK		GENMASK(12, 11)
 
-#घोषणा SC2731_TERMINATION_VOL_MASK	GENMASK(2, 1)
-#घोषणा SC2731_TERMINATION_VOL_SHIFT	1
-#घोषणा SC2731_TERMINATION_VOL_CAL_MASK	GENMASK(8, 3)
-#घोषणा SC2731_TERMINATION_VOL_CAL_SHIFT	3
-#घोषणा SC2731_TERMINATION_CUR_MASK	GENMASK(2, 0)
+#define SC2731_TERMINATION_VOL_MASK	GENMASK(2, 1)
+#define SC2731_TERMINATION_VOL_SHIFT	1
+#define SC2731_TERMINATION_VOL_CAL_MASK	GENMASK(8, 3)
+#define SC2731_TERMINATION_VOL_CAL_SHIFT	3
+#define SC2731_TERMINATION_CUR_MASK	GENMASK(2, 0)
 
-#घोषणा SC2731_CC_EN			BIT(13)
-#घोषणा SC2731_CHARGER_PD		BIT(0)
+#define SC2731_CC_EN			BIT(13)
+#define SC2731_CHARGER_PD		BIT(0)
 
-/* SC2731_CHG_CFG1 रेजिस्टर definition */
-#घोषणा SC2731_CUR_MASK			GENMASK(5, 0)
+/* SC2731_CHG_CFG1 register definition */
+#define SC2731_CUR_MASK			GENMASK(5, 0)
 
-/* SC2731_CHG_CFG5 रेजिस्टर definition */
-#घोषणा SC2731_CUR_LIMIT_SHIFT		8
-#घोषणा SC2731_CUR_LIMIT_MASK		GENMASK(9, 8)
+/* SC2731_CHG_CFG5 register definition */
+#define SC2731_CUR_LIMIT_SHIFT		8
+#define SC2731_CUR_LIMIT_MASK		GENMASK(9, 8)
 
 /* Default current definition (unit is mA) */
-#घोषणा SC2731_CURRENT_LIMIT_100	100
-#घोषणा SC2731_CURRENT_LIMIT_500	500
-#घोषणा SC2731_CURRENT_LIMIT_900	900
-#घोषणा SC2731_CURRENT_LIMIT_2000	2000
-#घोषणा SC2731_CURRENT_PRECHG		450
-#घोषणा SC2731_CURRENT_STEP		50
+#define SC2731_CURRENT_LIMIT_100	100
+#define SC2731_CURRENT_LIMIT_500	500
+#define SC2731_CURRENT_LIMIT_900	900
+#define SC2731_CURRENT_LIMIT_2000	2000
+#define SC2731_CURRENT_PRECHG		450
+#define SC2731_CURRENT_STEP		50
 
-काष्ठा sc2731_अक्षरger_info अणु
-	काष्ठा device *dev;
-	काष्ठा regmap *regmap;
-	काष्ठा usb_phy *usb_phy;
-	काष्ठा notअगरier_block usb_notअगरy;
-	काष्ठा घातer_supply *psy_usb;
-	काष्ठा work_काष्ठा work;
-	काष्ठा mutex lock;
-	bool अक्षरging;
+struct sc2731_charger_info {
+	struct device *dev;
+	struct regmap *regmap;
+	struct usb_phy *usb_phy;
+	struct notifier_block usb_notify;
+	struct power_supply *psy_usb;
+	struct work_struct work;
+	struct mutex lock;
+	bool charging;
 	u32 base;
 	u32 limit;
-पूर्ण;
+};
 
-अटल व्योम sc2731_अक्षरger_stop_अक्षरge(काष्ठा sc2731_अक्षरger_info *info)
-अणु
+static void sc2731_charger_stop_charge(struct sc2731_charger_info *info)
+{
 	regmap_update_bits(info->regmap, info->base + SC2731_CHG_CFG0,
 			   SC2731_CC_EN, 0);
 
 	regmap_update_bits(info->regmap, info->base + SC2731_CHG_CFG0,
 			   SC2731_CHARGER_PD, SC2731_CHARGER_PD);
-पूर्ण
+}
 
-अटल पूर्णांक sc2731_अक्षरger_start_अक्षरge(काष्ठा sc2731_अक्षरger_info *info)
-अणु
-	पूर्णांक ret;
+static int sc2731_charger_start_charge(struct sc2731_charger_info *info)
+{
+	int ret;
 
-	/* Enable अक्षरger स्थिरant current mode */
+	/* Enable charger constant current mode */
 	ret = regmap_update_bits(info->regmap, info->base + SC2731_CHG_CFG0,
 				 SC2731_CC_EN, SC2731_CC_EN);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* Start अक्षरging */
-	वापस regmap_update_bits(info->regmap, info->base + SC2731_CHG_CFG0,
+	/* Start charging */
+	return regmap_update_bits(info->regmap, info->base + SC2731_CHG_CFG0,
 				  SC2731_CHARGER_PD, 0);
-पूर्ण
+}
 
-अटल पूर्णांक sc2731_अक्षरger_set_current_limit(काष्ठा sc2731_अक्षरger_info *info,
+static int sc2731_charger_set_current_limit(struct sc2731_charger_info *info,
 					    u32 limit)
-अणु
+{
 	u32 val;
 
-	अगर (limit <= SC2731_CURRENT_LIMIT_100)
+	if (limit <= SC2731_CURRENT_LIMIT_100)
 		val = 0;
-	अन्यथा अगर (limit <= SC2731_CURRENT_LIMIT_500)
+	else if (limit <= SC2731_CURRENT_LIMIT_500)
 		val = 3;
-	अन्यथा अगर (limit <= SC2731_CURRENT_LIMIT_900)
+	else if (limit <= SC2731_CURRENT_LIMIT_900)
 		val = 2;
-	अन्यथा
+	else
 		val = 1;
 
-	वापस regmap_update_bits(info->regmap, info->base + SC2731_CHG_CFG5,
+	return regmap_update_bits(info->regmap, info->base + SC2731_CHG_CFG5,
 				  SC2731_CUR_LIMIT_MASK,
 				  val << SC2731_CUR_LIMIT_SHIFT);
-पूर्ण
+}
 
-अटल पूर्णांक sc2731_अक्षरger_set_current(काष्ठा sc2731_अक्षरger_info *info, u32 cur)
-अणु
+static int sc2731_charger_set_current(struct sc2731_charger_info *info, u32 cur)
+{
 	u32 val;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (cur > SC2731_CURRENT_LIMIT_2000)
+	if (cur > SC2731_CURRENT_LIMIT_2000)
 		cur = SC2731_CURRENT_LIMIT_2000;
-	अन्यथा अगर (cur < SC2731_CURRENT_PRECHG)
+	else if (cur < SC2731_CURRENT_PRECHG)
 		cur = SC2731_CURRENT_PRECHG;
 
 	/* Calculate the step value, each step is 50 mA */
 	val = (cur - SC2731_CURRENT_PRECHG) / SC2731_CURRENT_STEP;
 
-	/* Set pre-अक्षरge current as 450 mA */
+	/* Set pre-charge current as 450 mA */
 	ret = regmap_update_bits(info->regmap, info->base + SC2731_CHG_CFG0,
 				 SC2731_PRECHG_RNG_MASK,
 				 0x3 << SC2731_PRECHG_RNG_SHIFT);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस regmap_update_bits(info->regmap, info->base + SC2731_CHG_CFG1,
+	return regmap_update_bits(info->regmap, info->base + SC2731_CHG_CFG1,
 				  SC2731_CUR_MASK, val);
-पूर्ण
+}
 
-अटल पूर्णांक sc2731_अक्षरger_get_status(काष्ठा sc2731_अक्षरger_info *info)
-अणु
+static int sc2731_charger_get_status(struct sc2731_charger_info *info)
+{
 	u32 val;
-	पूर्णांक ret;
+	int ret;
 
-	ret = regmap_पढ़ो(info->regmap, SC2731_CHARGE_STATUS, &val);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(info->regmap, SC2731_CHARGE_STATUS, &val);
+	if (ret)
+		return ret;
 
-	अगर (val & SC2731_CHARGE_FULL)
-		वापस POWER_SUPPLY_STATUS_FULL;
+	if (val & SC2731_CHARGE_FULL)
+		return POWER_SUPPLY_STATUS_FULL;
 
-	वापस POWER_SUPPLY_STATUS_CHARGING;
-पूर्ण
+	return POWER_SUPPLY_STATUS_CHARGING;
+}
 
-अटल पूर्णांक sc2731_अक्षरger_get_current(काष्ठा sc2731_अक्षरger_info *info,
+static int sc2731_charger_get_current(struct sc2731_charger_info *info,
 				      u32 *cur)
-अणु
-	पूर्णांक ret;
+{
+	int ret;
 	u32 val;
 
-	ret = regmap_पढ़ो(info->regmap, info->base + SC2731_CHG_CFG1, &val);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(info->regmap, info->base + SC2731_CHG_CFG1, &val);
+	if (ret)
+		return ret;
 
 	val &= SC2731_CUR_MASK;
 	*cur = val * SC2731_CURRENT_STEP + SC2731_CURRENT_PRECHG;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sc2731_अक्षरger_get_current_limit(काष्ठा sc2731_अक्षरger_info *info,
+static int sc2731_charger_get_current_limit(struct sc2731_charger_info *info,
 					    u32 *cur)
-अणु
-	पूर्णांक ret;
+{
+	int ret;
 	u32 val;
 
-	ret = regmap_पढ़ो(info->regmap, info->base + SC2731_CHG_CFG5, &val);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(info->regmap, info->base + SC2731_CHG_CFG5, &val);
+	if (ret)
+		return ret;
 
 	val = (val & SC2731_CUR_LIMIT_MASK) >> SC2731_CUR_LIMIT_SHIFT;
 
-	चयन (val) अणु
-	हाल 0:
+	switch (val) {
+	case 0:
 		*cur = SC2731_CURRENT_LIMIT_100;
-		अवरोध;
+		break;
 
-	हाल 1:
+	case 1:
 		*cur = SC2731_CURRENT_LIMIT_2000;
-		अवरोध;
+		break;
 
-	हाल 2:
+	case 2:
 		*cur = SC2731_CURRENT_LIMIT_900;
-		अवरोध;
+		break;
 
-	हाल 3:
+	case 3:
 		*cur = SC2731_CURRENT_LIMIT_500;
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-sc2731_अक्षरger_usb_set_property(काष्ठा घातer_supply *psy,
-				क्रमागत घातer_supply_property psp,
-				स्थिर जोड़ घातer_supply_propval *val)
-अणु
-	काष्ठा sc2731_अक्षरger_info *info = घातer_supply_get_drvdata(psy);
-	पूर्णांक ret;
+static int
+sc2731_charger_usb_set_property(struct power_supply *psy,
+				enum power_supply_property psp,
+				const union power_supply_propval *val)
+{
+	struct sc2731_charger_info *info = power_supply_get_drvdata(psy);
+	int ret;
 
 	mutex_lock(&info->lock);
 
-	अगर (!info->अक्षरging) अणु
+	if (!info->charging) {
 		mutex_unlock(&info->lock);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT:
-		ret = sc2731_अक्षरger_set_current(info, val->पूर्णांकval / 1000);
-		अगर (ret < 0)
+	switch (psp) {
+	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT:
+		ret = sc2731_charger_set_current(info, val->intval / 1000);
+		if (ret < 0)
 			dev_err(info->dev, "set charge current failed\n");
-		अवरोध;
+		break;
 
-	हाल POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT:
-		ret = sc2731_अक्षरger_set_current_limit(info,
-						       val->पूर्णांकval / 1000);
-		अगर (ret < 0)
+	case POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT:
+		ret = sc2731_charger_set_current_limit(info,
+						       val->intval / 1000);
+		if (ret < 0)
 			dev_err(info->dev, "set input current limit failed\n");
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		ret = -EINVAL;
-	पूर्ण
+	}
 
 	mutex_unlock(&info->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sc2731_अक्षरger_usb_get_property(काष्ठा घातer_supply *psy,
-					   क्रमागत घातer_supply_property psp,
-					   जोड़ घातer_supply_propval *val)
-अणु
-	काष्ठा sc2731_अक्षरger_info *info = घातer_supply_get_drvdata(psy);
-	पूर्णांक ret = 0;
+static int sc2731_charger_usb_get_property(struct power_supply *psy,
+					   enum power_supply_property psp,
+					   union power_supply_propval *val)
+{
+	struct sc2731_charger_info *info = power_supply_get_drvdata(psy);
+	int ret = 0;
 	u32 cur;
 
 	mutex_lock(&info->lock);
 
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_STATUS:
-		अगर (info->अक्षरging)
-			val->पूर्णांकval = sc2731_अक्षरger_get_status(info);
-		अन्यथा
-			val->पूर्णांकval = POWER_SUPPLY_STATUS_NOT_CHARGING;
-		अवरोध;
+	switch (psp) {
+	case POWER_SUPPLY_PROP_STATUS:
+		if (info->charging)
+			val->intval = sc2731_charger_get_status(info);
+		else
+			val->intval = POWER_SUPPLY_STATUS_NOT_CHARGING;
+		break;
 
-	हाल POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT:
-		अगर (!info->अक्षरging) अणु
-			val->पूर्णांकval = 0;
-		पूर्ण अन्यथा अणु
-			ret = sc2731_अक्षरger_get_current(info, &cur);
-			अगर (ret)
-				जाओ out;
+	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT:
+		if (!info->charging) {
+			val->intval = 0;
+		} else {
+			ret = sc2731_charger_get_current(info, &cur);
+			if (ret)
+				goto out;
 
-			val->पूर्णांकval = cur * 1000;
-		पूर्ण
-		अवरोध;
+			val->intval = cur * 1000;
+		}
+		break;
 
-	हाल POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT:
-		अगर (!info->अक्षरging) अणु
-			val->पूर्णांकval = 0;
-		पूर्ण अन्यथा अणु
-			ret = sc2731_अक्षरger_get_current_limit(info, &cur);
-			अगर (ret)
-				जाओ out;
+	case POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT:
+		if (!info->charging) {
+			val->intval = 0;
+		} else {
+			ret = sc2731_charger_get_current_limit(info, &cur);
+			if (ret)
+				goto out;
 
-			val->पूर्णांकval = cur * 1000;
-		पूर्ण
-		अवरोध;
+			val->intval = cur * 1000;
+		}
+		break;
 
-	शेष:
+	default:
 		ret = -EINVAL;
-	पूर्ण
+	}
 
 out:
 	mutex_unlock(&info->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sc2731_अक्षरger_property_is_ग_लिखोable(काष्ठा घातer_supply *psy,
-						क्रमागत घातer_supply_property psp)
-अणु
-	पूर्णांक ret;
+static int sc2731_charger_property_is_writeable(struct power_supply *psy,
+						enum power_supply_property psp)
+{
+	int ret;
 
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT:
-	हाल POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT:
+	switch (psp) {
+	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT:
+	case POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT:
 		ret = 1;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		ret = 0;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल क्रमागत घातer_supply_property sc2731_usb_props[] = अणु
+static enum power_supply_property sc2731_usb_props[] = {
 	POWER_SUPPLY_PROP_STATUS,
 	POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT,
 	POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा घातer_supply_desc sc2731_अक्षरger_desc = अणु
+static const struct power_supply_desc sc2731_charger_desc = {
 	.name			= "sc2731_charger",
 	.type			= POWER_SUPPLY_TYPE_USB,
 	.properties		= sc2731_usb_props,
 	.num_properties		= ARRAY_SIZE(sc2731_usb_props),
-	.get_property		= sc2731_अक्षरger_usb_get_property,
-	.set_property		= sc2731_अक्षरger_usb_set_property,
-	.property_is_ग_लिखोable	= sc2731_अक्षरger_property_is_ग_लिखोable,
-पूर्ण;
+	.get_property		= sc2731_charger_usb_get_property,
+	.set_property		= sc2731_charger_usb_set_property,
+	.property_is_writeable	= sc2731_charger_property_is_writeable,
+};
 
-अटल व्योम sc2731_अक्षरger_work(काष्ठा work_काष्ठा *data)
-अणु
-	काष्ठा sc2731_अक्षरger_info *info =
-		container_of(data, काष्ठा sc2731_अक्षरger_info, work);
-	पूर्णांक ret;
+static void sc2731_charger_work(struct work_struct *data)
+{
+	struct sc2731_charger_info *info =
+		container_of(data, struct sc2731_charger_info, work);
+	int ret;
 
 	mutex_lock(&info->lock);
 
-	अगर (info->limit > 0 && !info->अक्षरging) अणु
-		/* set current limitation and start to अक्षरge */
-		ret = sc2731_अक्षरger_set_current_limit(info, info->limit);
-		अगर (ret)
-			जाओ out;
+	if (info->limit > 0 && !info->charging) {
+		/* set current limitation and start to charge */
+		ret = sc2731_charger_set_current_limit(info, info->limit);
+		if (ret)
+			goto out;
 
-		ret = sc2731_अक्षरger_set_current(info, info->limit);
-		अगर (ret)
-			जाओ out;
+		ret = sc2731_charger_set_current(info, info->limit);
+		if (ret)
+			goto out;
 
-		ret = sc2731_अक्षरger_start_अक्षरge(info);
-		अगर (ret)
-			जाओ out;
+		ret = sc2731_charger_start_charge(info);
+		if (ret)
+			goto out;
 
-		info->अक्षरging = true;
-	पूर्ण अन्यथा अगर (!info->limit && info->अक्षरging) अणु
-		/* Stop अक्षरging */
-		info->अक्षरging = false;
-		sc2731_अक्षरger_stop_अक्षरge(info);
-	पूर्ण
+		info->charging = true;
+	} else if (!info->limit && info->charging) {
+		/* Stop charging */
+		info->charging = false;
+		sc2731_charger_stop_charge(info);
+	}
 
 out:
 	mutex_unlock(&info->lock);
-पूर्ण
+}
 
-अटल पूर्णांक sc2731_अक्षरger_usb_change(काष्ठा notअगरier_block *nb,
-				     अचिन्हित दीर्घ limit, व्योम *data)
-अणु
-	काष्ठा sc2731_अक्षरger_info *info =
-		container_of(nb, काष्ठा sc2731_अक्षरger_info, usb_notअगरy);
+static int sc2731_charger_usb_change(struct notifier_block *nb,
+				     unsigned long limit, void *data)
+{
+	struct sc2731_charger_info *info =
+		container_of(nb, struct sc2731_charger_info, usb_notify);
 
 	info->limit = limit;
 
 	schedule_work(&info->work);
 
-	वापस NOTIFY_OK;
-पूर्ण
+	return NOTIFY_OK;
+}
 
-अटल पूर्णांक sc2731_अक्षरger_hw_init(काष्ठा sc2731_अक्षरger_info *info)
-अणु
-	काष्ठा घातer_supply_battery_info bat_info = अणु पूर्ण;
+static int sc2731_charger_hw_init(struct sc2731_charger_info *info)
+{
+	struct power_supply_battery_info bat_info = { };
 	u32 term_currrent, term_voltage, cur_val, vol_val;
-	पूर्णांक ret;
+	int ret;
 
-	/* Enable अक्षरger module */
+	/* Enable charger module */
 	ret = regmap_update_bits(info->regmap, SC2731_MODULE_EN1,
 				 SC2731_CHARGE_EN, SC2731_CHARGE_EN);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = घातer_supply_get_battery_info(info->psy_usb, &bat_info);
-	अगर (ret) अणु
+	ret = power_supply_get_battery_info(info->psy_usb, &bat_info);
+	if (ret) {
 		dev_warn(info->dev, "no battery information is supplied\n");
 
 		/*
-		 * If no battery inक्रमmation is supplied, we should set
-		 * शेष अक्षरge termination current to 120 mA, and शेष
-		 * अक्षरge termination voltage to 4.35V.
+		 * If no battery information is supplied, we should set
+		 * default charge termination current to 120 mA, and default
+		 * charge termination voltage to 4.35V.
 		 */
 		cur_val = 0x2;
 		vol_val = 0x1;
-	पूर्ण अन्यथा अणु
-		term_currrent = bat_info.अक्षरge_term_current_ua / 1000;
+	} else {
+		term_currrent = bat_info.charge_term_current_ua / 1000;
 
-		अगर (term_currrent <= 90)
+		if (term_currrent <= 90)
 			cur_val = 0;
-		अन्यथा अगर (term_currrent >= 265)
+		else if (term_currrent >= 265)
 			cur_val = 0x7;
-		अन्यथा
+		else
 			cur_val = ((term_currrent - 90) / 25) + 1;
 
-		term_voltage = bat_info.स्थिरant_अक्षरge_voltage_max_uv / 1000;
+		term_voltage = bat_info.constant_charge_voltage_max_uv / 1000;
 
-		अगर (term_voltage > 4500)
+		if (term_voltage > 4500)
 			term_voltage = 4500;
 
-		अगर (term_voltage > 4200)
+		if (term_voltage > 4200)
 			vol_val = (term_voltage - 4200) / 100;
-		अन्यथा
+		else
 			vol_val = 0;
 
-		घातer_supply_put_battery_info(info->psy_usb, &bat_info);
-	पूर्ण
+		power_supply_put_battery_info(info->psy_usb, &bat_info);
+	}
 
-	/* Set अक्षरge termination current */
+	/* Set charge termination current */
 	ret = regmap_update_bits(info->regmap, info->base + SC2731_CHG_CFG2,
 				 SC2731_TERMINATION_CUR_MASK, cur_val);
-	अगर (ret)
-		जाओ error;
+	if (ret)
+		goto error;
 
-	/* Set अक्षरge termination voltage */
+	/* Set charge termination voltage */
 	ret = regmap_update_bits(info->regmap, info->base + SC2731_CHG_CFG0,
 				 SC2731_TERMINATION_VOL_MASK |
 				 SC2731_TERMINATION_VOL_CAL_MASK,
 				 (vol_val << SC2731_TERMINATION_VOL_SHIFT) |
 				 (0x6 << SC2731_TERMINATION_VOL_CAL_SHIFT));
-	अगर (ret)
-		जाओ error;
+	if (ret)
+		goto error;
 
-	वापस 0;
+	return 0;
 
 error:
 	regmap_update_bits(info->regmap, SC2731_MODULE_EN1, SC2731_CHARGE_EN, 0);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम sc2731_अक्षरger_detect_status(काष्ठा sc2731_अक्षरger_info *info)
-अणु
-	अचिन्हित पूर्णांक min, max;
+static void sc2731_charger_detect_status(struct sc2731_charger_info *info)
+{
+	unsigned int min, max;
 
 	/*
-	 * If the USB अक्षरger status has been USB_CHARGER_PRESENT beक्रमe
-	 * रेजिस्टरing the notअगरier, we should start to अक्षरge with getting
-	 * the अक्षरge current.
+	 * If the USB charger status has been USB_CHARGER_PRESENT before
+	 * registering the notifier, we should start to charge with getting
+	 * the charge current.
 	 */
-	अगर (info->usb_phy->chg_state != USB_CHARGER_PRESENT)
-		वापस;
+	if (info->usb_phy->chg_state != USB_CHARGER_PRESENT)
+		return;
 
-	usb_phy_get_अक्षरger_current(info->usb_phy, &min, &max);
+	usb_phy_get_charger_current(info->usb_phy, &min, &max);
 	info->limit = min;
 
 	schedule_work(&info->work);
-पूर्ण
+}
 
-अटल पूर्णांक sc2731_अक्षरger_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *np = pdev->dev.of_node;
-	काष्ठा sc2731_अक्षरger_info *info;
-	काष्ठा घातer_supply_config अक्षरger_cfg = अणु पूर्ण;
-	पूर्णांक ret;
+static int sc2731_charger_probe(struct platform_device *pdev)
+{
+	struct device_node *np = pdev->dev.of_node;
+	struct sc2731_charger_info *info;
+	struct power_supply_config charger_cfg = { };
+	int ret;
 
-	info = devm_kzalloc(&pdev->dev, माप(*info), GFP_KERNEL);
-	अगर (!info)
-		वापस -ENOMEM;
+	info = devm_kzalloc(&pdev->dev, sizeof(*info), GFP_KERNEL);
+	if (!info)
+		return -ENOMEM;
 
 	mutex_init(&info->lock);
 	info->dev = &pdev->dev;
-	INIT_WORK(&info->work, sc2731_अक्षरger_work);
+	INIT_WORK(&info->work, sc2731_charger_work);
 
-	info->regmap = dev_get_regmap(pdev->dev.parent, शून्य);
-	अगर (!info->regmap) अणु
+	info->regmap = dev_get_regmap(pdev->dev.parent, NULL);
+	if (!info->regmap) {
 		dev_err(&pdev->dev, "failed to get charger regmap\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	ret = of_property_पढ़ो_u32(np, "reg", &info->base);
-	अगर (ret) अणु
+	ret = of_property_read_u32(np, "reg", &info->base);
+	if (ret) {
 		dev_err(&pdev->dev, "failed to get register address\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अक्षरger_cfg.drv_data = info;
-	अक्षरger_cfg.of_node = np;
-	info->psy_usb = devm_घातer_supply_रेजिस्टर(&pdev->dev,
-						   &sc2731_अक्षरger_desc,
-						   &अक्षरger_cfg);
-	अगर (IS_ERR(info->psy_usb)) अणु
+	charger_cfg.drv_data = info;
+	charger_cfg.of_node = np;
+	info->psy_usb = devm_power_supply_register(&pdev->dev,
+						   &sc2731_charger_desc,
+						   &charger_cfg);
+	if (IS_ERR(info->psy_usb)) {
 		dev_err(&pdev->dev, "failed to register power supply\n");
-		वापस PTR_ERR(info->psy_usb);
-	पूर्ण
+		return PTR_ERR(info->psy_usb);
+	}
 
-	ret = sc2731_अक्षरger_hw_init(info);
-	अगर (ret)
-		वापस ret;
+	ret = sc2731_charger_hw_init(info);
+	if (ret)
+		return ret;
 
 	info->usb_phy = devm_usb_get_phy_by_phandle(&pdev->dev, "phys", 0);
-	अगर (IS_ERR(info->usb_phy)) अणु
+	if (IS_ERR(info->usb_phy)) {
 		dev_err(&pdev->dev, "failed to find USB phy\n");
-		वापस PTR_ERR(info->usb_phy);
-	पूर्ण
+		return PTR_ERR(info->usb_phy);
+	}
 
-	info->usb_notअगरy.notअगरier_call = sc2731_अक्षरger_usb_change;
-	ret = usb_रेजिस्टर_notअगरier(info->usb_phy, &info->usb_notअगरy);
-	अगर (ret) अणु
+	info->usb_notify.notifier_call = sc2731_charger_usb_change;
+	ret = usb_register_notifier(info->usb_phy, &info->usb_notify);
+	if (ret) {
 		dev_err(&pdev->dev, "failed to register notifier: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	sc2731_अक्षरger_detect_status(info);
+	sc2731_charger_detect_status(info);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sc2731_अक्षरger_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sc2731_अक्षरger_info *info = platक्रमm_get_drvdata(pdev);
+static int sc2731_charger_remove(struct platform_device *pdev)
+{
+	struct sc2731_charger_info *info = platform_get_drvdata(pdev);
 
-	usb_unरेजिस्टर_notअगरier(info->usb_phy, &info->usb_notअगरy);
+	usb_unregister_notifier(info->usb_phy, &info->usb_notify);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id sc2731_अक्षरger_of_match[] = अणु
-	अणु .compatible = "sprd,sc2731-charger", पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id sc2731_charger_of_match[] = {
+	{ .compatible = "sprd,sc2731-charger", },
+	{ }
+};
 
-अटल काष्ठा platक्रमm_driver sc2731_अक्षरger_driver = अणु
-	.driver = अणु
+static struct platform_driver sc2731_charger_driver = {
+	.driver = {
 		.name = "sc2731-charger",
-		.of_match_table = sc2731_अक्षरger_of_match,
-	पूर्ण,
-	.probe = sc2731_अक्षरger_probe,
-	.हटाओ = sc2731_अक्षरger_हटाओ,
-पूर्ण;
+		.of_match_table = sc2731_charger_of_match,
+	},
+	.probe = sc2731_charger_probe,
+	.remove = sc2731_charger_remove,
+};
 
-module_platक्रमm_driver(sc2731_अक्षरger_driver);
+module_platform_driver(sc2731_charger_driver);
 
 MODULE_DESCRIPTION("Spreadtrum SC2731 Charger Driver");
 MODULE_LICENSE("GPL v2");

@@ -1,636 +1,635 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
- *  Routines क्रम control of GF1 chip (PCM things)
+ *  Routines for control of GF1 chip (PCM things)
  *
- *  InterWave chips supports पूर्णांकerleaved DMA, but this feature isn't used in
+ *  InterWave chips supports interleaved DMA, but this feature isn't used in
  *  this code.
  *  
- *  This code emulates स्वतःinit DMA transfer क्रम playback, recording by GF1
- *  chip करोesn't support स्वतःinit DMA.
+ *  This code emulates autoinit DMA transfer for playback, recording by GF1
+ *  chip doesn't support autoinit DMA.
  */
 
-#समावेश <यंत्र/dma.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sched/संकेत.स>
+#include <asm/dma.h>
+#include <linux/slab.h>
+#include <linux/sched/signal.h>
 
-#समावेश <sound/core.h>
-#समावेश <sound/control.h>
-#समावेश <sound/gus.h>
-#समावेश <sound/pcm_params.h>
-#समावेश "gus_tables.h"
+#include <sound/core.h>
+#include <sound/control.h>
+#include <sound/gus.h>
+#include <sound/pcm_params.h>
+#include "gus_tables.h"
 
 /* maximum rate */
 
-#घोषणा SNDRV_GF1_PCM_RATE		48000
+#define SNDRV_GF1_PCM_RATE		48000
 
-#घोषणा SNDRV_GF1_PCM_PFLG_NONE		0
-#घोषणा SNDRV_GF1_PCM_PFLG_ACTIVE	(1<<0)
-#घोषणा SNDRV_GF1_PCM_PFLG_NEUTRAL	(2<<0)
+#define SNDRV_GF1_PCM_PFLG_NONE		0
+#define SNDRV_GF1_PCM_PFLG_ACTIVE	(1<<0)
+#define SNDRV_GF1_PCM_PFLG_NEUTRAL	(2<<0)
 
-काष्ठा gus_pcm_निजी अणु
-	काष्ठा snd_gus_card * gus;
-	काष्ठा snd_pcm_substream *substream;
+struct gus_pcm_private {
+	struct snd_gus_card * gus;
+	struct snd_pcm_substream *substream;
 	spinlock_t lock;
-	अचिन्हित पूर्णांक voices;
-	काष्ठा snd_gus_voice *pvoices[2];
-	अचिन्हित पूर्णांक memory;
-	अचिन्हित लघु flags;
-	अचिन्हित अक्षर voice_ctrl, ramp_ctrl;
-	अचिन्हित पूर्णांक bpos;
-	अचिन्हित पूर्णांक blocks;
-	अचिन्हित पूर्णांक block_size;
-	अचिन्हित पूर्णांक dma_size;
-	रुको_queue_head_t sleep;
+	unsigned int voices;
+	struct snd_gus_voice *pvoices[2];
+	unsigned int memory;
+	unsigned short flags;
+	unsigned char voice_ctrl, ramp_ctrl;
+	unsigned int bpos;
+	unsigned int blocks;
+	unsigned int block_size;
+	unsigned int dma_size;
+	wait_queue_head_t sleep;
 	atomic_t dma_count;
-	पूर्णांक final_volume;
-पूर्ण;
+	int final_volume;
+};
 
-अटल व्योम snd_gf1_pcm_block_change_ack(काष्ठा snd_gus_card * gus, व्योम *निजी_data)
-अणु
-	काष्ठा gus_pcm_निजी *pcmp = निजी_data;
+static void snd_gf1_pcm_block_change_ack(struct snd_gus_card * gus, void *private_data)
+{
+	struct gus_pcm_private *pcmp = private_data;
 
-	अगर (pcmp) अणु
+	if (pcmp) {
 		atomic_dec(&pcmp->dma_count);
 		wake_up(&pcmp->sleep);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक snd_gf1_pcm_block_change(काष्ठा snd_pcm_substream *substream,
-				    अचिन्हित पूर्णांक offset,
-				    अचिन्हित पूर्णांक addr,
-				    अचिन्हित पूर्णांक count)
-अणु
-	काष्ठा snd_gf1_dma_block block;
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा gus_pcm_निजी *pcmp = runसमय->निजी_data;
+static int snd_gf1_pcm_block_change(struct snd_pcm_substream *substream,
+				    unsigned int offset,
+				    unsigned int addr,
+				    unsigned int count)
+{
+	struct snd_gf1_dma_block block;
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct gus_pcm_private *pcmp = runtime->private_data;
 
 	count += offset & 31;
 	offset &= ~31;
 	/*
-	snd_prपूर्णांकk(KERN_DEBUG "block change - offset = 0x%x, count = 0x%x\n",
+	snd_printk(KERN_DEBUG "block change - offset = 0x%x, count = 0x%x\n",
 		   offset, count);
 	*/
-	स_रखो(&block, 0, माप(block));
+	memset(&block, 0, sizeof(block));
 	block.cmd = SNDRV_GF1_DMA_IRQ;
-	अगर (snd_pcm_क्रमmat_अचिन्हित(runसमय->क्रमmat))
+	if (snd_pcm_format_unsigned(runtime->format))
 		block.cmd |= SNDRV_GF1_DMA_UNSIGNED;
-	अगर (snd_pcm_क्रमmat_width(runसमय->क्रमmat) == 16)
+	if (snd_pcm_format_width(runtime->format) == 16)
 		block.cmd |= SNDRV_GF1_DMA_16BIT;
 	block.addr = addr & ~31;
-	block.buffer = runसमय->dma_area + offset;
-	block.buf_addr = runसमय->dma_addr + offset;
+	block.buffer = runtime->dma_area + offset;
+	block.buf_addr = runtime->dma_addr + offset;
 	block.count = count;
-	block.निजी_data = pcmp;
+	block.private_data = pcmp;
 	block.ack = snd_gf1_pcm_block_change_ack;
-	अगर (!snd_gf1_dma_transfer_block(pcmp->gus, &block, 0, 0))
+	if (!snd_gf1_dma_transfer_block(pcmp->gus, &block, 0, 0))
 		atomic_inc(&pcmp->dma_count);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम snd_gf1_pcm_trigger_up(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा gus_pcm_निजी *pcmp = runसमय->निजी_data;
-	काष्ठा snd_gus_card * gus = pcmp->gus;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित अक्षर voice_ctrl, ramp_ctrl;
-	अचिन्हित लघु rate;
-	अचिन्हित पूर्णांक curr, begin, end;
-	अचिन्हित लघु vol;
-	अचिन्हित अक्षर pan;
-	अचिन्हित पूर्णांक voice;
+static void snd_gf1_pcm_trigger_up(struct snd_pcm_substream *substream)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct gus_pcm_private *pcmp = runtime->private_data;
+	struct snd_gus_card * gus = pcmp->gus;
+	unsigned long flags;
+	unsigned char voice_ctrl, ramp_ctrl;
+	unsigned short rate;
+	unsigned int curr, begin, end;
+	unsigned short vol;
+	unsigned char pan;
+	unsigned int voice;
 
 	spin_lock_irqsave(&pcmp->lock, flags);
-	अगर (pcmp->flags & SNDRV_GF1_PCM_PFLG_ACTIVE) अणु
+	if (pcmp->flags & SNDRV_GF1_PCM_PFLG_ACTIVE) {
 		spin_unlock_irqrestore(&pcmp->lock, flags);
-		वापस;
-	पूर्ण
+		return;
+	}
 	pcmp->flags |= SNDRV_GF1_PCM_PFLG_ACTIVE;
 	pcmp->final_volume = 0;
 	spin_unlock_irqrestore(&pcmp->lock, flags);
-	rate = snd_gf1_translate_freq(gus, runसमय->rate << 4);
+	rate = snd_gf1_translate_freq(gus, runtime->rate << 4);
 	/* enable WAVE IRQ */
-	voice_ctrl = snd_pcm_क्रमmat_width(runसमय->क्रमmat) == 16 ? 0x24 : 0x20;
+	voice_ctrl = snd_pcm_format_width(runtime->format) == 16 ? 0x24 : 0x20;
 	/* enable RAMP IRQ + rollover */
 	ramp_ctrl = 0x24;
-	अगर (pcmp->blocks == 1) अणु
+	if (pcmp->blocks == 1) {
 		voice_ctrl |= 0x08;	/* loop enable */
 		ramp_ctrl &= ~0x04;	/* disable rollover */
-	पूर्ण
-	क्रम (voice = 0; voice < pcmp->voices; voice++) अणु
-		begin = pcmp->memory + voice * (pcmp->dma_size / runसमय->channels);
-		curr = begin + (pcmp->bpos * pcmp->block_size) / runसमय->channels;
-		end = curr + (pcmp->block_size / runसमय->channels);
-		end -= snd_pcm_क्रमmat_width(runसमय->क्रमmat) == 16 ? 2 : 1;
+	}
+	for (voice = 0; voice < pcmp->voices; voice++) {
+		begin = pcmp->memory + voice * (pcmp->dma_size / runtime->channels);
+		curr = begin + (pcmp->bpos * pcmp->block_size) / runtime->channels;
+		end = curr + (pcmp->block_size / runtime->channels);
+		end -= snd_pcm_format_width(runtime->format) == 16 ? 2 : 1;
 		/*
-		snd_prपूर्णांकk(KERN_DEBUG "init: curr=0x%x, begin=0x%x, end=0x%x, "
+		snd_printk(KERN_DEBUG "init: curr=0x%x, begin=0x%x, end=0x%x, "
 			   "ctrl=0x%x, ramp=0x%x, rate=0x%x\n",
 			   curr, begin, end, voice_ctrl, ramp_ctrl, rate);
 		*/
-		pan = runसमय->channels == 2 ? (!voice ? 1 : 14) : 8;
+		pan = runtime->channels == 2 ? (!voice ? 1 : 14) : 8;
 		vol = !voice ? gus->gf1.pcm_volume_level_left : gus->gf1.pcm_volume_level_right;
 		spin_lock_irqsave(&gus->reg_lock, flags);
 		snd_gf1_select_voice(gus, pcmp->pvoices[voice]->number);
-		snd_gf1_ग_लिखो8(gus, SNDRV_GF1_VB_PAN, pan);
-		snd_gf1_ग_लिखो16(gus, SNDRV_GF1_VW_FREQUENCY, rate);
-		snd_gf1_ग_लिखो_addr(gus, SNDRV_GF1_VA_START, begin << 4, voice_ctrl & 4);
-		snd_gf1_ग_लिखो_addr(gus, SNDRV_GF1_VA_END, end << 4, voice_ctrl & 4);
-		snd_gf1_ग_लिखो_addr(gus, SNDRV_GF1_VA_CURRENT, curr << 4, voice_ctrl & 4);
-		snd_gf1_ग_लिखो16(gus, SNDRV_GF1_VW_VOLUME, SNDRV_GF1_MIN_VOLUME << 4);
-		snd_gf1_ग_लिखो8(gus, SNDRV_GF1_VB_VOLUME_RATE, 0x2f);
-		snd_gf1_ग_लिखो8(gus, SNDRV_GF1_VB_VOLUME_START, SNDRV_GF1_MIN_OFFSET);
-		snd_gf1_ग_लिखो8(gus, SNDRV_GF1_VB_VOLUME_END, vol >> 8);
-		snd_gf1_ग_लिखो8(gus, SNDRV_GF1_VB_VOLUME_CONTROL, ramp_ctrl);
-		अगर (!gus->gf1.enh_mode) अणु
+		snd_gf1_write8(gus, SNDRV_GF1_VB_PAN, pan);
+		snd_gf1_write16(gus, SNDRV_GF1_VW_FREQUENCY, rate);
+		snd_gf1_write_addr(gus, SNDRV_GF1_VA_START, begin << 4, voice_ctrl & 4);
+		snd_gf1_write_addr(gus, SNDRV_GF1_VA_END, end << 4, voice_ctrl & 4);
+		snd_gf1_write_addr(gus, SNDRV_GF1_VA_CURRENT, curr << 4, voice_ctrl & 4);
+		snd_gf1_write16(gus, SNDRV_GF1_VW_VOLUME, SNDRV_GF1_MIN_VOLUME << 4);
+		snd_gf1_write8(gus, SNDRV_GF1_VB_VOLUME_RATE, 0x2f);
+		snd_gf1_write8(gus, SNDRV_GF1_VB_VOLUME_START, SNDRV_GF1_MIN_OFFSET);
+		snd_gf1_write8(gus, SNDRV_GF1_VB_VOLUME_END, vol >> 8);
+		snd_gf1_write8(gus, SNDRV_GF1_VB_VOLUME_CONTROL, ramp_ctrl);
+		if (!gus->gf1.enh_mode) {
 			snd_gf1_delay(gus);
-			snd_gf1_ग_लिखो8(gus, SNDRV_GF1_VB_VOLUME_CONTROL, ramp_ctrl);
-		पूर्ण
+			snd_gf1_write8(gus, SNDRV_GF1_VB_VOLUME_CONTROL, ramp_ctrl);
+		}
 		spin_unlock_irqrestore(&gus->reg_lock, flags);
-	पूर्ण
+	}
 	spin_lock_irqsave(&gus->reg_lock, flags);
-	क्रम (voice = 0; voice < pcmp->voices; voice++) अणु
+	for (voice = 0; voice < pcmp->voices; voice++) {
 		snd_gf1_select_voice(gus, pcmp->pvoices[voice]->number);
-		अगर (gus->gf1.enh_mode)
-			snd_gf1_ग_लिखो8(gus, SNDRV_GF1_VB_MODE, 0x00);	/* deactivate voice */
-		snd_gf1_ग_लिखो8(gus, SNDRV_GF1_VB_ADDRESS_CONTROL, voice_ctrl);
+		if (gus->gf1.enh_mode)
+			snd_gf1_write8(gus, SNDRV_GF1_VB_MODE, 0x00);	/* deactivate voice */
+		snd_gf1_write8(gus, SNDRV_GF1_VB_ADDRESS_CONTROL, voice_ctrl);
 		voice_ctrl &= ~0x20;
-	पूर्ण
+	}
 	voice_ctrl |= 0x20;
-	अगर (!gus->gf1.enh_mode) अणु
+	if (!gus->gf1.enh_mode) {
 		snd_gf1_delay(gus);
-		क्रम (voice = 0; voice < pcmp->voices; voice++) अणु
+		for (voice = 0; voice < pcmp->voices; voice++) {
 			snd_gf1_select_voice(gus, pcmp->pvoices[voice]->number);
-			snd_gf1_ग_लिखो8(gus, SNDRV_GF1_VB_ADDRESS_CONTROL, voice_ctrl);
-			voice_ctrl &= ~0x20;	/* disable IRQ क्रम next voice */
-		पूर्ण
-	पूर्ण
+			snd_gf1_write8(gus, SNDRV_GF1_VB_ADDRESS_CONTROL, voice_ctrl);
+			voice_ctrl &= ~0x20;	/* disable IRQ for next voice */
+		}
+	}
 	spin_unlock_irqrestore(&gus->reg_lock, flags);
-पूर्ण
+}
 
-अटल व्योम snd_gf1_pcm_पूर्णांकerrupt_wave(काष्ठा snd_gus_card * gus,
-				       काष्ठा snd_gus_voice *pvoice)
-अणु
-	काष्ठा gus_pcm_निजी * pcmp;
-	काष्ठा snd_pcm_runसमय *runसमय;
-	अचिन्हित अक्षर voice_ctrl, ramp_ctrl;
-	अचिन्हित पूर्णांक idx;
-	अचिन्हित पूर्णांक end, step;
+static void snd_gf1_pcm_interrupt_wave(struct snd_gus_card * gus,
+				       struct snd_gus_voice *pvoice)
+{
+	struct gus_pcm_private * pcmp;
+	struct snd_pcm_runtime *runtime;
+	unsigned char voice_ctrl, ramp_ctrl;
+	unsigned int idx;
+	unsigned int end, step;
 
-	अगर (!pvoice->निजी_data) अणु
-		snd_prपूर्णांकd("snd_gf1_pcm: unknown wave irq?\n");
+	if (!pvoice->private_data) {
+		snd_printd("snd_gf1_pcm: unknown wave irq?\n");
 		snd_gf1_smart_stop_voice(gus, pvoice->number);
-		वापस;
-	पूर्ण
-	pcmp = pvoice->निजी_data;
-	अगर (pcmp == शून्य) अणु
-		snd_prपूर्णांकd("snd_gf1_pcm: unknown wave irq?\n");
+		return;
+	}
+	pcmp = pvoice->private_data;
+	if (pcmp == NULL) {
+		snd_printd("snd_gf1_pcm: unknown wave irq?\n");
 		snd_gf1_smart_stop_voice(gus, pvoice->number);
-		वापस;
-	पूर्ण		
+		return;
+	}		
 	gus = pcmp->gus;
-	runसमय = pcmp->substream->runसमय;
+	runtime = pcmp->substream->runtime;
 
 	spin_lock(&gus->reg_lock);
 	snd_gf1_select_voice(gus, pvoice->number);
-	voice_ctrl = snd_gf1_पढ़ो8(gus, SNDRV_GF1_VB_ADDRESS_CONTROL) & ~0x8b;
-	ramp_ctrl = (snd_gf1_पढ़ो8(gus, SNDRV_GF1_VB_VOLUME_CONTROL) & ~0xa4) | 0x03;
-#अगर 0
+	voice_ctrl = snd_gf1_read8(gus, SNDRV_GF1_VB_ADDRESS_CONTROL) & ~0x8b;
+	ramp_ctrl = (snd_gf1_read8(gus, SNDRV_GF1_VB_VOLUME_CONTROL) & ~0xa4) | 0x03;
+#if 0
 	snd_gf1_select_voice(gus, pvoice->number);
-	prपूर्णांकk(KERN_DEBUG "position = 0x%x\n",
-	       (snd_gf1_पढ़ो_addr(gus, SNDRV_GF1_VA_CURRENT, voice_ctrl & 4) >> 4));
+	printk(KERN_DEBUG "position = 0x%x\n",
+	       (snd_gf1_read_addr(gus, SNDRV_GF1_VA_CURRENT, voice_ctrl & 4) >> 4));
 	snd_gf1_select_voice(gus, pcmp->pvoices[1]->number);
-	prपूर्णांकk(KERN_DEBUG "position = 0x%x\n",
-	       (snd_gf1_पढ़ो_addr(gus, SNDRV_GF1_VA_CURRENT, voice_ctrl & 4) >> 4));
+	printk(KERN_DEBUG "position = 0x%x\n",
+	       (snd_gf1_read_addr(gus, SNDRV_GF1_VA_CURRENT, voice_ctrl & 4) >> 4));
 	snd_gf1_select_voice(gus, pvoice->number);
-#पूर्ण_अगर
+#endif
 	pcmp->bpos++;
 	pcmp->bpos %= pcmp->blocks;
-	अगर (pcmp->bpos + 1 >= pcmp->blocks) अणु	/* last block? */
+	if (pcmp->bpos + 1 >= pcmp->blocks) {	/* last block? */
 		voice_ctrl |= 0x08;	/* enable loop */
-	पूर्ण अन्यथा अणु
+	} else {
 		ramp_ctrl |= 0x04;	/* enable rollover */
-	पूर्ण
-	end = pcmp->memory + (((pcmp->bpos + 1) * pcmp->block_size) / runसमय->channels);
+	}
+	end = pcmp->memory + (((pcmp->bpos + 1) * pcmp->block_size) / runtime->channels);
 	end -= voice_ctrl & 4 ? 2 : 1;
-	step = pcmp->dma_size / runसमय->channels;
+	step = pcmp->dma_size / runtime->channels;
 	voice_ctrl |= 0x20;
-	अगर (!pcmp->final_volume) अणु
+	if (!pcmp->final_volume) {
 		ramp_ctrl |= 0x20;
 		ramp_ctrl &= ~0x03;
-	पूर्ण
-	क्रम (idx = 0; idx < pcmp->voices; idx++, end += step) अणु
+	}
+	for (idx = 0; idx < pcmp->voices; idx++, end += step) {
 		snd_gf1_select_voice(gus, pcmp->pvoices[idx]->number);
-		snd_gf1_ग_लिखो_addr(gus, SNDRV_GF1_VA_END, end << 4, voice_ctrl & 4);
-		snd_gf1_ग_लिखो8(gus, SNDRV_GF1_VB_ADDRESS_CONTROL, voice_ctrl);
-		snd_gf1_ग_लिखो8(gus, SNDRV_GF1_VB_VOLUME_CONTROL, ramp_ctrl);
+		snd_gf1_write_addr(gus, SNDRV_GF1_VA_END, end << 4, voice_ctrl & 4);
+		snd_gf1_write8(gus, SNDRV_GF1_VB_ADDRESS_CONTROL, voice_ctrl);
+		snd_gf1_write8(gus, SNDRV_GF1_VB_VOLUME_CONTROL, ramp_ctrl);
 		voice_ctrl &= ~0x20;
-	पूर्ण
-	अगर (!gus->gf1.enh_mode) अणु
+	}
+	if (!gus->gf1.enh_mode) {
 		snd_gf1_delay(gus);
 		voice_ctrl |= 0x20;
-		क्रम (idx = 0; idx < pcmp->voices; idx++) अणु
+		for (idx = 0; idx < pcmp->voices; idx++) {
 			snd_gf1_select_voice(gus, pcmp->pvoices[idx]->number);
-			snd_gf1_ग_लिखो8(gus, SNDRV_GF1_VB_ADDRESS_CONTROL, voice_ctrl);
-			snd_gf1_ग_लिखो8(gus, SNDRV_GF1_VB_VOLUME_CONTROL, ramp_ctrl);
+			snd_gf1_write8(gus, SNDRV_GF1_VB_ADDRESS_CONTROL, voice_ctrl);
+			snd_gf1_write8(gus, SNDRV_GF1_VB_VOLUME_CONTROL, ramp_ctrl);
 			voice_ctrl &= ~0x20;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock(&gus->reg_lock);
 
 	snd_pcm_period_elapsed(pcmp->substream);
-#अगर 0
-	अगर ((runसमय->flags & SNDRV_PCM_FLG_MMAP) &&
-	    *runसमय->state == SNDRV_PCM_STATE_RUNNING) अणु
+#if 0
+	if ((runtime->flags & SNDRV_PCM_FLG_MMAP) &&
+	    *runtime->state == SNDRV_PCM_STATE_RUNNING) {
 		end = pcmp->bpos * pcmp->block_size;
-		अगर (runसमय->channels > 1) अणु
+		if (runtime->channels > 1) {
 			snd_gf1_pcm_block_change(pcmp->substream, end, pcmp->memory + (end / 2), pcmp->block_size / 2);
 			snd_gf1_pcm_block_change(pcmp->substream, end + (pcmp->block_size / 2), pcmp->memory + (pcmp->dma_size / 2) + (end / 2), pcmp->block_size / 2);
-		पूर्ण अन्यथा अणु
+		} else {
 			snd_gf1_pcm_block_change(pcmp->substream, end, pcmp->memory + end, pcmp->block_size);
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
-पूर्ण
+		}
+	}
+#endif
+}
 
-अटल व्योम snd_gf1_pcm_पूर्णांकerrupt_volume(काष्ठा snd_gus_card * gus,
-					 काष्ठा snd_gus_voice * pvoice)
-अणु
-	अचिन्हित लघु vol;
-	पूर्णांक cvoice;
-	काष्ठा gus_pcm_निजी *pcmp = pvoice->निजी_data;
+static void snd_gf1_pcm_interrupt_volume(struct snd_gus_card * gus,
+					 struct snd_gus_voice * pvoice)
+{
+	unsigned short vol;
+	int cvoice;
+	struct gus_pcm_private *pcmp = pvoice->private_data;
 
 	/* stop ramp, but leave rollover bit untouched */
 	spin_lock(&gus->reg_lock);
 	snd_gf1_select_voice(gus, pvoice->number);
 	snd_gf1_ctrl_stop(gus, SNDRV_GF1_VB_VOLUME_CONTROL);
 	spin_unlock(&gus->reg_lock);
-	अगर (pcmp == शून्य)
-		वापस;
+	if (pcmp == NULL)
+		return;
 	/* are we active? */
-	अगर (!(pcmp->flags & SNDRV_GF1_PCM_PFLG_ACTIVE))
-		वापस;
+	if (!(pcmp->flags & SNDRV_GF1_PCM_PFLG_ACTIVE))
+		return;
 	/* load real volume - better precision */
 	cvoice = pcmp->pvoices[0] == pvoice ? 0 : 1;
-	अगर (pcmp->substream == शून्य)
-		वापस;
+	if (pcmp->substream == NULL)
+		return;
 	vol = !cvoice ? gus->gf1.pcm_volume_level_left : gus->gf1.pcm_volume_level_right;
 	spin_lock(&gus->reg_lock);
 	snd_gf1_select_voice(gus, pvoice->number);
-	snd_gf1_ग_लिखो16(gus, SNDRV_GF1_VW_VOLUME, vol);
+	snd_gf1_write16(gus, SNDRV_GF1_VW_VOLUME, vol);
 	pcmp->final_volume = 1;
 	spin_unlock(&gus->reg_lock);
-पूर्ण
+}
 
-अटल व्योम snd_gf1_pcm_volume_change(काष्ठा snd_gus_card * gus)
-अणु
-पूर्ण
+static void snd_gf1_pcm_volume_change(struct snd_gus_card * gus)
+{
+}
 
-अटल पूर्णांक snd_gf1_pcm_poke_block(काष्ठा snd_gus_card *gus, अचिन्हित अक्षर *buf,
-				  अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
-				  पूर्णांक w16, पूर्णांक invert)
-अणु
-	अचिन्हित पूर्णांक len;
-	अचिन्हित दीर्घ flags;
+static int snd_gf1_pcm_poke_block(struct snd_gus_card *gus, unsigned char *buf,
+				  unsigned int pos, unsigned int count,
+				  int w16, int invert)
+{
+	unsigned int len;
+	unsigned long flags;
 
 	/*
-	prपूर्णांकk(KERN_DEBUG
+	printk(KERN_DEBUG
 	       "poke block; buf = 0x%x, pos = %i, count = %i, port = 0x%x\n",
-	       (पूर्णांक)buf, pos, count, gus->gf1.port);
+	       (int)buf, pos, count, gus->gf1.port);
 	*/
-	जबतक (count > 0) अणु
+	while (count > 0) {
 		len = count;
-		अगर (len > 512)		/* limit, to allow IRQ */
+		if (len > 512)		/* limit, to allow IRQ */
 			len = 512;
 		count -= len;
-		अगर (gus->पूर्णांकerwave) अणु
+		if (gus->interwave) {
 			spin_lock_irqsave(&gus->reg_lock, flags);
-			snd_gf1_ग_लिखो8(gus, SNDRV_GF1_GB_MEMORY_CONTROL, 0x01 | (invert ? 0x08 : 0x00));
+			snd_gf1_write8(gus, SNDRV_GF1_GB_MEMORY_CONTROL, 0x01 | (invert ? 0x08 : 0x00));
 			snd_gf1_dram_addr(gus, pos);
-			अगर (w16) अणु
+			if (w16) {
 				outb(SNDRV_GF1_GW_DRAM_IO16, GUSP(gus, GF1REGSEL));
 				outsw(GUSP(gus, GF1DATALOW), buf, len >> 1);
-			पूर्ण अन्यथा अणु
+			} else {
 				outsb(GUSP(gus, DRAM), buf, len);
-			पूर्ण
+			}
 			spin_unlock_irqrestore(&gus->reg_lock, flags);
 			buf += 512;
 			pos += 512;
-		पूर्ण अन्यथा अणु
+		} else {
 			invert = invert ? 0x80 : 0x00;
-			अगर (w16) अणु
+			if (w16) {
 				len >>= 1;
-				जबतक (len--) अणु
+				while (len--) {
 					snd_gf1_poke(gus, pos++, *buf++);
 					snd_gf1_poke(gus, pos++, *buf++ ^ invert);
-				पूर्ण
-			पूर्ण अन्यथा अणु
-				जबतक (len--)
+				}
+			} else {
+				while (len--)
 					snd_gf1_poke(gus, pos++, *buf++ ^ invert);
-			पूर्ण
-		पूर्ण
-		अगर (count > 0 && !in_पूर्णांकerrupt()) अणु
-			schedule_समयout_पूर्णांकerruptible(1);
-			अगर (संकेत_pending(current))
-				वापस -EAGAIN;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			}
+		}
+		if (count > 0 && !in_interrupt()) {
+			schedule_timeout_interruptible(1);
+			if (signal_pending(current))
+				return -EAGAIN;
+		}
+	}
+	return 0;
+}
 
-अटल पूर्णांक get_bpos(काष्ठा gus_pcm_निजी *pcmp, पूर्णांक voice, अचिन्हित पूर्णांक pos,
-		    अचिन्हित पूर्णांक len)
-अणु
-	अचिन्हित पूर्णांक bpos = pos + (voice * (pcmp->dma_size / 2));
-	अगर (snd_BUG_ON(bpos > pcmp->dma_size))
-		वापस -EIO;
-	अगर (snd_BUG_ON(bpos + len > pcmp->dma_size))
-		वापस -EIO;
-	वापस bpos;
-पूर्ण
+static int get_bpos(struct gus_pcm_private *pcmp, int voice, unsigned int pos,
+		    unsigned int len)
+{
+	unsigned int bpos = pos + (voice * (pcmp->dma_size / 2));
+	if (snd_BUG_ON(bpos > pcmp->dma_size))
+		return -EIO;
+	if (snd_BUG_ON(bpos + len > pcmp->dma_size))
+		return -EIO;
+	return bpos;
+}
 
-अटल पूर्णांक playback_copy_ack(काष्ठा snd_pcm_substream *substream,
-			     अचिन्हित पूर्णांक bpos, अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा gus_pcm_निजी *pcmp = runसमय->निजी_data;
-	काष्ठा snd_gus_card *gus = pcmp->gus;
-	पूर्णांक w16, invert;
+static int playback_copy_ack(struct snd_pcm_substream *substream,
+			     unsigned int bpos, unsigned int len)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct gus_pcm_private *pcmp = runtime->private_data;
+	struct snd_gus_card *gus = pcmp->gus;
+	int w16, invert;
 
-	अगर (len > 32)
-		वापस snd_gf1_pcm_block_change(substream, bpos,
+	if (len > 32)
+		return snd_gf1_pcm_block_change(substream, bpos,
 						pcmp->memory + bpos, len);
 
-	w16 = (snd_pcm_क्रमmat_width(runसमय->क्रमmat) == 16);
-	invert = snd_pcm_क्रमmat_अचिन्हित(runसमय->क्रमmat);
-	वापस snd_gf1_pcm_poke_block(gus, runसमय->dma_area + bpos,
+	w16 = (snd_pcm_format_width(runtime->format) == 16);
+	invert = snd_pcm_format_unsigned(runtime->format);
+	return snd_gf1_pcm_poke_block(gus, runtime->dma_area + bpos,
 				      pcmp->memory + bpos, len, w16, invert);
-पूर्ण
+}
 
-अटल पूर्णांक snd_gf1_pcm_playback_copy(काष्ठा snd_pcm_substream *substream,
-				     पूर्णांक voice, अचिन्हित दीर्घ pos,
-				     व्योम __user *src, अचिन्हित दीर्घ count)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा gus_pcm_निजी *pcmp = runसमय->निजी_data;
-	अचिन्हित पूर्णांक len = count;
-	पूर्णांक bpos;
-
-	bpos = get_bpos(pcmp, voice, pos, len);
-	अगर (bpos < 0)
-		वापस pos;
-	अगर (copy_from_user(runसमय->dma_area + bpos, src, len))
-		वापस -EFAULT;
-	वापस playback_copy_ack(substream, bpos, len);
-पूर्ण
-
-अटल पूर्णांक snd_gf1_pcm_playback_copy_kernel(काष्ठा snd_pcm_substream *substream,
-					    पूर्णांक voice, अचिन्हित दीर्घ pos,
-					    व्योम *src, अचिन्हित दीर्घ count)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा gus_pcm_निजी *pcmp = runसमय->निजी_data;
-	अचिन्हित पूर्णांक len = count;
-	पूर्णांक bpos;
+static int snd_gf1_pcm_playback_copy(struct snd_pcm_substream *substream,
+				     int voice, unsigned long pos,
+				     void __user *src, unsigned long count)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct gus_pcm_private *pcmp = runtime->private_data;
+	unsigned int len = count;
+	int bpos;
 
 	bpos = get_bpos(pcmp, voice, pos, len);
-	अगर (bpos < 0)
-		वापस pos;
-	स_नकल(runसमय->dma_area + bpos, src, len);
-	वापस playback_copy_ack(substream, bpos, len);
-पूर्ण
+	if (bpos < 0)
+		return pos;
+	if (copy_from_user(runtime->dma_area + bpos, src, len))
+		return -EFAULT;
+	return playback_copy_ack(substream, bpos, len);
+}
 
-अटल पूर्णांक snd_gf1_pcm_playback_silence(काष्ठा snd_pcm_substream *substream,
-					पूर्णांक voice, अचिन्हित दीर्घ pos,
-					अचिन्हित दीर्घ count)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा gus_pcm_निजी *pcmp = runसमय->निजी_data;
-	अचिन्हित पूर्णांक len = count;
-	पूर्णांक bpos;
+static int snd_gf1_pcm_playback_copy_kernel(struct snd_pcm_substream *substream,
+					    int voice, unsigned long pos,
+					    void *src, unsigned long count)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct gus_pcm_private *pcmp = runtime->private_data;
+	unsigned int len = count;
+	int bpos;
+
+	bpos = get_bpos(pcmp, voice, pos, len);
+	if (bpos < 0)
+		return pos;
+	memcpy(runtime->dma_area + bpos, src, len);
+	return playback_copy_ack(substream, bpos, len);
+}
+
+static int snd_gf1_pcm_playback_silence(struct snd_pcm_substream *substream,
+					int voice, unsigned long pos,
+					unsigned long count)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct gus_pcm_private *pcmp = runtime->private_data;
+	unsigned int len = count;
+	int bpos;
 	
 	bpos = get_bpos(pcmp, voice, pos, len);
-	अगर (bpos < 0)
-		वापस pos;
-	snd_pcm_क्रमmat_set_silence(runसमय->क्रमmat, runसमय->dma_area + bpos,
-				   bytes_to_samples(runसमय, count));
-	वापस playback_copy_ack(substream, bpos, len);
-पूर्ण
+	if (bpos < 0)
+		return pos;
+	snd_pcm_format_set_silence(runtime->format, runtime->dma_area + bpos,
+				   bytes_to_samples(runtime, count));
+	return playback_copy_ack(substream, bpos, len);
+}
 
-अटल पूर्णांक snd_gf1_pcm_playback_hw_params(काष्ठा snd_pcm_substream *substream,
-					  काष्ठा snd_pcm_hw_params *hw_params)
-अणु
-	काष्ठा snd_gus_card *gus = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा gus_pcm_निजी *pcmp = runसमय->निजी_data;
+static int snd_gf1_pcm_playback_hw_params(struct snd_pcm_substream *substream,
+					  struct snd_pcm_hw_params *hw_params)
+{
+	struct snd_gus_card *gus = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct gus_pcm_private *pcmp = runtime->private_data;
 
-	अगर (runसमय->buffer_changed) अणु
-		काष्ठा snd_gf1_mem_block *block;
-		अगर (pcmp->memory > 0) अणु
-			snd_gf1_mem_मुक्त(&gus->gf1.mem_alloc, pcmp->memory);
+	if (runtime->buffer_changed) {
+		struct snd_gf1_mem_block *block;
+		if (pcmp->memory > 0) {
+			snd_gf1_mem_free(&gus->gf1.mem_alloc, pcmp->memory);
 			pcmp->memory = 0;
-		पूर्ण
-		अगर ((block = snd_gf1_mem_alloc(&gus->gf1.mem_alloc,
+		}
+		if ((block = snd_gf1_mem_alloc(&gus->gf1.mem_alloc,
 		                               SNDRV_GF1_MEM_OWNER_DRIVER,
 					       "GF1 PCM",
-		                               runसमय->dma_bytes, 1, 32,
-		                               शून्य)) == शून्य)
-			वापस -ENOMEM;
+		                               runtime->dma_bytes, 1, 32,
+		                               NULL)) == NULL)
+			return -ENOMEM;
 		pcmp->memory = block->ptr;
-	पूर्ण
+	}
 	pcmp->voices = params_channels(hw_params);
-	अगर (pcmp->pvoices[0] == शून्य) अणु
-		अगर ((pcmp->pvoices[0] = snd_gf1_alloc_voice(pcmp->gus, SNDRV_GF1_VOICE_TYPE_PCM, 0, 0)) == शून्य)
-			वापस -ENOMEM;
-		pcmp->pvoices[0]->handler_wave = snd_gf1_pcm_पूर्णांकerrupt_wave;
-		pcmp->pvoices[0]->handler_volume = snd_gf1_pcm_पूर्णांकerrupt_volume;
+	if (pcmp->pvoices[0] == NULL) {
+		if ((pcmp->pvoices[0] = snd_gf1_alloc_voice(pcmp->gus, SNDRV_GF1_VOICE_TYPE_PCM, 0, 0)) == NULL)
+			return -ENOMEM;
+		pcmp->pvoices[0]->handler_wave = snd_gf1_pcm_interrupt_wave;
+		pcmp->pvoices[0]->handler_volume = snd_gf1_pcm_interrupt_volume;
 		pcmp->pvoices[0]->volume_change = snd_gf1_pcm_volume_change;
-		pcmp->pvoices[0]->निजी_data = pcmp;
-	पूर्ण
-	अगर (pcmp->voices > 1 && pcmp->pvoices[1] == शून्य) अणु
-		अगर ((pcmp->pvoices[1] = snd_gf1_alloc_voice(pcmp->gus, SNDRV_GF1_VOICE_TYPE_PCM, 0, 0)) == शून्य)
-			वापस -ENOMEM;
-		pcmp->pvoices[1]->handler_wave = snd_gf1_pcm_पूर्णांकerrupt_wave;
-		pcmp->pvoices[1]->handler_volume = snd_gf1_pcm_पूर्णांकerrupt_volume;
+		pcmp->pvoices[0]->private_data = pcmp;
+	}
+	if (pcmp->voices > 1 && pcmp->pvoices[1] == NULL) {
+		if ((pcmp->pvoices[1] = snd_gf1_alloc_voice(pcmp->gus, SNDRV_GF1_VOICE_TYPE_PCM, 0, 0)) == NULL)
+			return -ENOMEM;
+		pcmp->pvoices[1]->handler_wave = snd_gf1_pcm_interrupt_wave;
+		pcmp->pvoices[1]->handler_volume = snd_gf1_pcm_interrupt_volume;
 		pcmp->pvoices[1]->volume_change = snd_gf1_pcm_volume_change;
-		pcmp->pvoices[1]->निजी_data = pcmp;
-	पूर्ण अन्यथा अगर (pcmp->voices == 1) अणु
-		अगर (pcmp->pvoices[1]) अणु
-			snd_gf1_मुक्त_voice(pcmp->gus, pcmp->pvoices[1]);
-			pcmp->pvoices[1] = शून्य;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		pcmp->pvoices[1]->private_data = pcmp;
+	} else if (pcmp->voices == 1) {
+		if (pcmp->pvoices[1]) {
+			snd_gf1_free_voice(pcmp->gus, pcmp->pvoices[1]);
+			pcmp->pvoices[1] = NULL;
+		}
+	}
+	return 0;
+}
 
-अटल पूर्णांक snd_gf1_pcm_playback_hw_मुक्त(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा gus_pcm_निजी *pcmp = runसमय->निजी_data;
+static int snd_gf1_pcm_playback_hw_free(struct snd_pcm_substream *substream)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct gus_pcm_private *pcmp = runtime->private_data;
 
-	अगर (pcmp->pvoices[0]) अणु
-		snd_gf1_मुक्त_voice(pcmp->gus, pcmp->pvoices[0]);
-		pcmp->pvoices[0] = शून्य;
-	पूर्ण
-	अगर (pcmp->pvoices[1]) अणु
-		snd_gf1_मुक्त_voice(pcmp->gus, pcmp->pvoices[1]);
-		pcmp->pvoices[1] = शून्य;
-	पूर्ण
-	अगर (pcmp->memory > 0) अणु
-		snd_gf1_mem_मुक्त(&pcmp->gus->gf1.mem_alloc, pcmp->memory);
+	if (pcmp->pvoices[0]) {
+		snd_gf1_free_voice(pcmp->gus, pcmp->pvoices[0]);
+		pcmp->pvoices[0] = NULL;
+	}
+	if (pcmp->pvoices[1]) {
+		snd_gf1_free_voice(pcmp->gus, pcmp->pvoices[1]);
+		pcmp->pvoices[1] = NULL;
+	}
+	if (pcmp->memory > 0) {
+		snd_gf1_mem_free(&pcmp->gus->gf1.mem_alloc, pcmp->memory);
 		pcmp->memory = 0;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक snd_gf1_pcm_playback_prepare(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा gus_pcm_निजी *pcmp = runसमय->निजी_data;
+static int snd_gf1_pcm_playback_prepare(struct snd_pcm_substream *substream)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct gus_pcm_private *pcmp = runtime->private_data;
 
 	pcmp->bpos = 0;
 	pcmp->dma_size = snd_pcm_lib_buffer_bytes(substream);
 	pcmp->block_size = snd_pcm_lib_period_bytes(substream);
 	pcmp->blocks = pcmp->dma_size / pcmp->block_size;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_gf1_pcm_playback_trigger(काष्ठा snd_pcm_substream *substream,
-					पूर्णांक cmd)
-अणु
-	काष्ठा snd_gus_card *gus = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा gus_pcm_निजी *pcmp = runसमय->निजी_data;
-	पूर्णांक voice;
+static int snd_gf1_pcm_playback_trigger(struct snd_pcm_substream *substream,
+					int cmd)
+{
+	struct snd_gus_card *gus = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct gus_pcm_private *pcmp = runtime->private_data;
+	int voice;
 
-	अगर (cmd == SNDRV_PCM_TRIGGER_START) अणु
+	if (cmd == SNDRV_PCM_TRIGGER_START) {
 		snd_gf1_pcm_trigger_up(substream);
-	पूर्ण अन्यथा अगर (cmd == SNDRV_PCM_TRIGGER_STOP) अणु
+	} else if (cmd == SNDRV_PCM_TRIGGER_STOP) {
 		spin_lock(&pcmp->lock);
 		pcmp->flags &= ~SNDRV_GF1_PCM_PFLG_ACTIVE;
 		spin_unlock(&pcmp->lock);
 		voice = pcmp->pvoices[0]->number;
 		snd_gf1_stop_voices(gus, voice, voice);
-		अगर (pcmp->pvoices[1]) अणु
+		if (pcmp->pvoices[1]) {
 			voice = pcmp->pvoices[1]->number;
 			snd_gf1_stop_voices(gus, voice, voice);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+	} else {
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल snd_pcm_uframes_t snd_gf1_pcm_playback_poपूर्णांकer(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_gus_card *gus = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा gus_pcm_निजी *pcmp = runसमय->निजी_data;
-	अचिन्हित पूर्णांक pos;
-	अचिन्हित अक्षर voice_ctrl;
+static snd_pcm_uframes_t snd_gf1_pcm_playback_pointer(struct snd_pcm_substream *substream)
+{
+	struct snd_gus_card *gus = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct gus_pcm_private *pcmp = runtime->private_data;
+	unsigned int pos;
+	unsigned char voice_ctrl;
 
 	pos = 0;
 	spin_lock(&gus->reg_lock);
-	अगर (pcmp->flags & SNDRV_GF1_PCM_PFLG_ACTIVE) अणु
+	if (pcmp->flags & SNDRV_GF1_PCM_PFLG_ACTIVE) {
 		snd_gf1_select_voice(gus, pcmp->pvoices[0]->number);
-		voice_ctrl = snd_gf1_पढ़ो8(gus, SNDRV_GF1_VB_ADDRESS_CONTROL);
-		pos = (snd_gf1_पढ़ो_addr(gus, SNDRV_GF1_VA_CURRENT, voice_ctrl & 4) >> 4) - pcmp->memory;
-		अगर (substream->runसमय->channels > 1)
+		voice_ctrl = snd_gf1_read8(gus, SNDRV_GF1_VB_ADDRESS_CONTROL);
+		pos = (snd_gf1_read_addr(gus, SNDRV_GF1_VA_CURRENT, voice_ctrl & 4) >> 4) - pcmp->memory;
+		if (substream->runtime->channels > 1)
 			pos <<= 1;
-		pos = bytes_to_frames(runसमय, pos);
-	पूर्ण
+		pos = bytes_to_frames(runtime, pos);
+	}
 	spin_unlock(&gus->reg_lock);
-	वापस pos;
-पूर्ण
+	return pos;
+}
 
-अटल स्थिर काष्ठा snd_ratnum घड़ी = अणु
+static const struct snd_ratnum clock = {
 	.num = 9878400/16,
 	.den_min = 2,
 	.den_max = 257,
 	.den_step = 1,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_pcm_hw_स्थिरraपूर्णांक_ratnums hw_स्थिरraपूर्णांकs_घड़ीs  = अणु
+static const struct snd_pcm_hw_constraint_ratnums hw_constraints_clocks  = {
 	.nrats = 1,
-	.rats = &घड़ी,
-पूर्ण;
+	.rats = &clock,
+};
 
-अटल पूर्णांक snd_gf1_pcm_capture_hw_params(काष्ठा snd_pcm_substream *substream,
-					 काष्ठा snd_pcm_hw_params *hw_params)
-अणु
-	काष्ठा snd_gus_card *gus = snd_pcm_substream_chip(substream);
+static int snd_gf1_pcm_capture_hw_params(struct snd_pcm_substream *substream,
+					 struct snd_pcm_hw_params *hw_params)
+{
+	struct snd_gus_card *gus = snd_pcm_substream_chip(substream);
 
 	gus->c_dma_size = params_buffer_bytes(hw_params);
 	gus->c_period_size = params_period_bytes(hw_params);
 	gus->c_pos = 0;
 	gus->gf1.pcm_rcntrl_reg = 0x21;		/* IRQ at end, enable & start */
-	अगर (params_channels(hw_params) > 1)
+	if (params_channels(hw_params) > 1)
 		gus->gf1.pcm_rcntrl_reg |= 2;
-	अगर (gus->gf1.dma2 > 3)
+	if (gus->gf1.dma2 > 3)
 		gus->gf1.pcm_rcntrl_reg |= 4;
-	अगर (snd_pcm_क्रमmat_अचिन्हित(params_क्रमmat(hw_params)))
+	if (snd_pcm_format_unsigned(params_format(hw_params)))
 		gus->gf1.pcm_rcntrl_reg |= 0x80;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_gf1_pcm_capture_prepare(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_gus_card *gus = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+static int snd_gf1_pcm_capture_prepare(struct snd_pcm_substream *substream)
+{
+	struct snd_gus_card *gus = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
 
-	snd_gf1_i_ग_लिखो8(gus, SNDRV_GF1_GB_RECORD_RATE, runसमय->rate_den - 2);
-	snd_gf1_i_ग_लिखो8(gus, SNDRV_GF1_GB_REC_DMA_CONTROL, 0);	/* disable sampling */
+	snd_gf1_i_write8(gus, SNDRV_GF1_GB_RECORD_RATE, runtime->rate_den - 2);
+	snd_gf1_i_write8(gus, SNDRV_GF1_GB_REC_DMA_CONTROL, 0);	/* disable sampling */
 	snd_gf1_i_look8(gus, SNDRV_GF1_GB_REC_DMA_CONTROL);	/* Sampling Control Register */
-	snd_dma_program(gus->gf1.dma2, runसमय->dma_addr, gus->c_period_size, DMA_MODE_READ);
-	वापस 0;
-पूर्ण
+	snd_dma_program(gus->gf1.dma2, runtime->dma_addr, gus->c_period_size, DMA_MODE_READ);
+	return 0;
+}
 
-अटल पूर्णांक snd_gf1_pcm_capture_trigger(काष्ठा snd_pcm_substream *substream,
-				       पूर्णांक cmd)
-अणु
-	काष्ठा snd_gus_card *gus = snd_pcm_substream_chip(substream);
-	पूर्णांक val;
+static int snd_gf1_pcm_capture_trigger(struct snd_pcm_substream *substream,
+				       int cmd)
+{
+	struct snd_gus_card *gus = snd_pcm_substream_chip(substream);
+	int val;
 	
-	अगर (cmd == SNDRV_PCM_TRIGGER_START) अणु
+	if (cmd == SNDRV_PCM_TRIGGER_START) {
 		val = gus->gf1.pcm_rcntrl_reg;
-	पूर्ण अन्यथा अगर (cmd == SNDRV_PCM_TRIGGER_STOP) अणु
+	} else if (cmd == SNDRV_PCM_TRIGGER_STOP) {
 		val = 0;
-	पूर्ण अन्यथा अणु
-		वापस -EINVAL;
-	पूर्ण
+	} else {
+		return -EINVAL;
+	}
 
 	spin_lock(&gus->reg_lock);
-	snd_gf1_ग_लिखो8(gus, SNDRV_GF1_GB_REC_DMA_CONTROL, val);
+	snd_gf1_write8(gus, SNDRV_GF1_GB_REC_DMA_CONTROL, val);
 	snd_gf1_look8(gus, SNDRV_GF1_GB_REC_DMA_CONTROL);
 	spin_unlock(&gus->reg_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल snd_pcm_uframes_t snd_gf1_pcm_capture_poपूर्णांकer(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_gus_card *gus = snd_pcm_substream_chip(substream);
-	पूर्णांक pos = snd_dma_poपूर्णांकer(gus->gf1.dma2, gus->c_period_size);
-	pos = bytes_to_frames(substream->runसमय, (gus->c_pos + pos) % gus->c_dma_size);
-	वापस pos;
-पूर्ण
+static snd_pcm_uframes_t snd_gf1_pcm_capture_pointer(struct snd_pcm_substream *substream)
+{
+	struct snd_gus_card *gus = snd_pcm_substream_chip(substream);
+	int pos = snd_dma_pointer(gus->gf1.dma2, gus->c_period_size);
+	pos = bytes_to_frames(substream->runtime, (gus->c_pos + pos) % gus->c_dma_size);
+	return pos;
+}
 
-अटल व्योम snd_gf1_pcm_पूर्णांकerrupt_dma_पढ़ो(काष्ठा snd_gus_card * gus)
-अणु
-	snd_gf1_i_ग_लिखो8(gus, SNDRV_GF1_GB_REC_DMA_CONTROL, 0);	/* disable sampling */
+static void snd_gf1_pcm_interrupt_dma_read(struct snd_gus_card * gus)
+{
+	snd_gf1_i_write8(gus, SNDRV_GF1_GB_REC_DMA_CONTROL, 0);	/* disable sampling */
 	snd_gf1_i_look8(gus, SNDRV_GF1_GB_REC_DMA_CONTROL);	/* Sampling Control Register */
-	अगर (gus->pcm_cap_substream != शून्य) अणु
+	if (gus->pcm_cap_substream != NULL) {
 		snd_gf1_pcm_capture_prepare(gus->pcm_cap_substream); 
 		snd_gf1_pcm_capture_trigger(gus->pcm_cap_substream, SNDRV_PCM_TRIGGER_START);
 		gus->c_pos += gus->c_period_size;
 		snd_pcm_period_elapsed(gus->pcm_cap_substream);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल स्थिर काष्ठा snd_pcm_hardware snd_gf1_pcm_playback =
-अणु
+static const struct snd_pcm_hardware snd_gf1_pcm_playback =
+{
 	.info =			SNDRV_PCM_INFO_NONINTERLEAVED,
-	.क्रमmats		= (SNDRV_PCM_FMTBIT_S8 | SNDRV_PCM_FMTBIT_U8 |
+	.formats		= (SNDRV_PCM_FMTBIT_S8 | SNDRV_PCM_FMTBIT_U8 |
 				 SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_U16_LE),
 	.rates =		SNDRV_PCM_RATE_CONTINUOUS | SNDRV_PCM_RATE_8000_48000,
 	.rate_min =		5510,
@@ -642,14 +641,14 @@
 	.period_bytes_max =	(128*1024),
 	.periods_min =		1,
 	.periods_max =		1024,
-	.fअगरo_size =		0,
-पूर्ण;
+	.fifo_size =		0,
+};
 
-अटल स्थिर काष्ठा snd_pcm_hardware snd_gf1_pcm_capture =
-अणु
+static const struct snd_pcm_hardware snd_gf1_pcm_capture =
+{
 	.info =			(SNDRV_PCM_INFO_MMAP | SNDRV_PCM_INFO_INTERLEAVED |
 				 SNDRV_PCM_INFO_MMAP_VALID),
-	.क्रमmats =		SNDRV_PCM_FMTBIT_S8 | SNDRV_PCM_FMTBIT_U8,
+	.formats =		SNDRV_PCM_FMTBIT_S8 | SNDRV_PCM_FMTBIT_U8,
 	.rates =		SNDRV_PCM_RATE_CONTINUOUS | SNDRV_PCM_RATE_8000_44100,
 	.rate_min =		5510,
 	.rate_max =		44100,
@@ -660,117 +659,117 @@
 	.period_bytes_max =	(128*1024),
 	.periods_min =		1,
 	.periods_max =		1024,
-	.fअगरo_size =		0,
-पूर्ण;
+	.fifo_size =		0,
+};
 
-अटल व्योम snd_gf1_pcm_playback_मुक्त(काष्ठा snd_pcm_runसमय *runसमय)
-अणु
-	kमुक्त(runसमय->निजी_data);
-पूर्ण
+static void snd_gf1_pcm_playback_free(struct snd_pcm_runtime *runtime)
+{
+	kfree(runtime->private_data);
+}
 
-अटल पूर्णांक snd_gf1_pcm_playback_खोलो(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा gus_pcm_निजी *pcmp;
-	काष्ठा snd_gus_card *gus = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	पूर्णांक err;
+static int snd_gf1_pcm_playback_open(struct snd_pcm_substream *substream)
+{
+	struct gus_pcm_private *pcmp;
+	struct snd_gus_card *gus = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	int err;
 
-	pcmp = kzalloc(माप(*pcmp), GFP_KERNEL);
-	अगर (pcmp == शून्य)
-		वापस -ENOMEM;
+	pcmp = kzalloc(sizeof(*pcmp), GFP_KERNEL);
+	if (pcmp == NULL)
+		return -ENOMEM;
 	pcmp->gus = gus;
 	spin_lock_init(&pcmp->lock);
-	init_रुकोqueue_head(&pcmp->sleep);
+	init_waitqueue_head(&pcmp->sleep);
 	atomic_set(&pcmp->dma_count, 0);
 
-	runसमय->निजी_data = pcmp;
-	runसमय->निजी_मुक्त = snd_gf1_pcm_playback_मुक्त;
+	runtime->private_data = pcmp;
+	runtime->private_free = snd_gf1_pcm_playback_free;
 
-#अगर 0
-	prपूर्णांकk(KERN_DEBUG "playback.buffer = 0x%lx, gf1.pcm_buffer = 0x%lx\n",
-	       (दीर्घ) pcm->playback.buffer, (दीर्घ) gus->gf1.pcm_buffer);
-#पूर्ण_अगर
-	अगर ((err = snd_gf1_dma_init(gus)) < 0)
-		वापस err;
+#if 0
+	printk(KERN_DEBUG "playback.buffer = 0x%lx, gf1.pcm_buffer = 0x%lx\n",
+	       (long) pcm->playback.buffer, (long) gus->gf1.pcm_buffer);
+#endif
+	if ((err = snd_gf1_dma_init(gus)) < 0)
+		return err;
 	pcmp->flags = SNDRV_GF1_PCM_PFLG_NONE;
 	pcmp->substream = substream;
-	runसमय->hw = snd_gf1_pcm_playback;
-	snd_pcm_limit_isa_dma_size(gus->gf1.dma1, &runसमय->hw.buffer_bytes_max);
-	snd_pcm_limit_isa_dma_size(gus->gf1.dma1, &runसमय->hw.period_bytes_max);
-	snd_pcm_hw_स्थिरraपूर्णांक_step(runसमय, 0, SNDRV_PCM_HW_PARAM_PERIOD_BYTES, 64);
-	वापस 0;
-पूर्ण
+	runtime->hw = snd_gf1_pcm_playback;
+	snd_pcm_limit_isa_dma_size(gus->gf1.dma1, &runtime->hw.buffer_bytes_max);
+	snd_pcm_limit_isa_dma_size(gus->gf1.dma1, &runtime->hw.period_bytes_max);
+	snd_pcm_hw_constraint_step(runtime, 0, SNDRV_PCM_HW_PARAM_PERIOD_BYTES, 64);
+	return 0;
+}
 
-अटल पूर्णांक snd_gf1_pcm_playback_बंद(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_gus_card *gus = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा gus_pcm_निजी *pcmp = runसमय->निजी_data;
+static int snd_gf1_pcm_playback_close(struct snd_pcm_substream *substream)
+{
+	struct snd_gus_card *gus = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct gus_pcm_private *pcmp = runtime->private_data;
 	
-	अगर (!रुको_event_समयout(pcmp->sleep, (atomic_पढ़ो(&pcmp->dma_count) <= 0), 2*HZ))
-		snd_prपूर्णांकk(KERN_ERR "gf1 pcm - serious DMA problem\n");
+	if (!wait_event_timeout(pcmp->sleep, (atomic_read(&pcmp->dma_count) <= 0), 2*HZ))
+		snd_printk(KERN_ERR "gf1 pcm - serious DMA problem\n");
 
-	snd_gf1_dma_करोne(gus);	
-	वापस 0;
-पूर्ण
+	snd_gf1_dma_done(gus);	
+	return 0;
+}
 
-अटल पूर्णांक snd_gf1_pcm_capture_खोलो(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा snd_gus_card *gus = snd_pcm_substream_chip(substream);
+static int snd_gf1_pcm_capture_open(struct snd_pcm_substream *substream)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct snd_gus_card *gus = snd_pcm_substream_chip(substream);
 
-	gus->gf1.पूर्णांकerrupt_handler_dma_पढ़ो = snd_gf1_pcm_पूर्णांकerrupt_dma_पढ़ो;
+	gus->gf1.interrupt_handler_dma_read = snd_gf1_pcm_interrupt_dma_read;
 	gus->pcm_cap_substream = substream;
-	substream->runसमय->hw = snd_gf1_pcm_capture;
-	snd_pcm_limit_isa_dma_size(gus->gf1.dma2, &runसमय->hw.buffer_bytes_max);
-	snd_pcm_limit_isa_dma_size(gus->gf1.dma2, &runसमय->hw.period_bytes_max);
-	snd_pcm_hw_स्थिरraपूर्णांक_ratnums(runसमय, 0, SNDRV_PCM_HW_PARAM_RATE,
-				      &hw_स्थिरraपूर्णांकs_घड़ीs);
-	वापस 0;
-पूर्ण
+	substream->runtime->hw = snd_gf1_pcm_capture;
+	snd_pcm_limit_isa_dma_size(gus->gf1.dma2, &runtime->hw.buffer_bytes_max);
+	snd_pcm_limit_isa_dma_size(gus->gf1.dma2, &runtime->hw.period_bytes_max);
+	snd_pcm_hw_constraint_ratnums(runtime, 0, SNDRV_PCM_HW_PARAM_RATE,
+				      &hw_constraints_clocks);
+	return 0;
+}
 
-अटल पूर्णांक snd_gf1_pcm_capture_बंद(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_gus_card *gus = snd_pcm_substream_chip(substream);
+static int snd_gf1_pcm_capture_close(struct snd_pcm_substream *substream)
+{
+	struct snd_gus_card *gus = snd_pcm_substream_chip(substream);
 
-	gus->pcm_cap_substream = शून्य;
-	snd_gf1_set_शेष_handlers(gus, SNDRV_GF1_HANDLER_DMA_READ);
-	वापस 0;
-पूर्ण
+	gus->pcm_cap_substream = NULL;
+	snd_gf1_set_default_handlers(gus, SNDRV_GF1_HANDLER_DMA_READ);
+	return 0;
+}
 
-अटल पूर्णांक snd_gf1_pcm_volume_info(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int snd_gf1_pcm_volume_info(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 2;
-	uinfo->value.पूर्णांकeger.min = 0;
-	uinfo->value.पूर्णांकeger.max = 127;
-	वापस 0;
-पूर्ण
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = 127;
+	return 0;
+}
 
-अटल पूर्णांक snd_gf1_pcm_volume_get(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_gus_card *gus = snd_kcontrol_chip(kcontrol);
-	अचिन्हित दीर्घ flags;
+static int snd_gf1_pcm_volume_get(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_gus_card *gus = snd_kcontrol_chip(kcontrol);
+	unsigned long flags;
 	
 	spin_lock_irqsave(&gus->pcm_volume_level_lock, flags);
-	ucontrol->value.पूर्णांकeger.value[0] = gus->gf1.pcm_volume_level_left1;
-	ucontrol->value.पूर्णांकeger.value[1] = gus->gf1.pcm_volume_level_right1;
+	ucontrol->value.integer.value[0] = gus->gf1.pcm_volume_level_left1;
+	ucontrol->value.integer.value[1] = gus->gf1.pcm_volume_level_right1;
 	spin_unlock_irqrestore(&gus->pcm_volume_level_lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_gf1_pcm_volume_put(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_gus_card *gus = snd_kcontrol_chip(kcontrol);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक change;
-	अचिन्हित पूर्णांक idx;
-	अचिन्हित लघु val1, val2, vol;
-	काष्ठा gus_pcm_निजी *pcmp;
-	काष्ठा snd_gus_voice *pvoice;
+static int snd_gf1_pcm_volume_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_gus_card *gus = snd_kcontrol_chip(kcontrol);
+	unsigned long flags;
+	int change;
+	unsigned int idx;
+	unsigned short val1, val2, vol;
+	struct gus_pcm_private *pcmp;
+	struct snd_gus_voice *pvoice;
 	
-	val1 = ucontrol->value.पूर्णांकeger.value[0] & 127;
-	val2 = ucontrol->value.पूर्णांकeger.value[1] & 127;
+	val1 = ucontrol->value.integer.value[0] & 127;
+	val2 = ucontrol->value.integer.value[1] & 127;
 	spin_lock_irqsave(&gus->pcm_volume_level_lock, flags);
 	change = val1 != gus->gf1.pcm_volume_level_left1 ||
 	         val2 != gus->gf1.pcm_volume_level_right1;
@@ -781,118 +780,118 @@
 	spin_unlock_irqrestore(&gus->pcm_volume_level_lock, flags);
 	/* are we active? */
 	spin_lock_irqsave(&gus->voice_alloc, flags);
-	क्रम (idx = 0; idx < 32; idx++) अणु
+	for (idx = 0; idx < 32; idx++) {
 		pvoice = &gus->gf1.voices[idx];
-		अगर (!pvoice->pcm)
-			जारी;
-		pcmp = pvoice->निजी_data;
-		अगर (!(pcmp->flags & SNDRV_GF1_PCM_PFLG_ACTIVE))
-			जारी;
+		if (!pvoice->pcm)
+			continue;
+		pcmp = pvoice->private_data;
+		if (!(pcmp->flags & SNDRV_GF1_PCM_PFLG_ACTIVE))
+			continue;
 		/* load real volume - better precision */
 		spin_lock(&gus->reg_lock);
 		snd_gf1_select_voice(gus, pvoice->number);
 		snd_gf1_ctrl_stop(gus, SNDRV_GF1_VB_VOLUME_CONTROL);
 		vol = pvoice == pcmp->pvoices[0] ? gus->gf1.pcm_volume_level_left : gus->gf1.pcm_volume_level_right;
-		snd_gf1_ग_लिखो16(gus, SNDRV_GF1_VW_VOLUME, vol);
+		snd_gf1_write16(gus, SNDRV_GF1_VW_VOLUME, vol);
 		pcmp->final_volume = 1;
 		spin_unlock(&gus->reg_lock);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&gus->voice_alloc, flags);
-	वापस change;
-पूर्ण
+	return change;
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_gf1_pcm_volume_control =
-अणु
-	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+static const struct snd_kcontrol_new snd_gf1_pcm_volume_control =
+{
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name = "PCM Playback Volume",
 	.info = snd_gf1_pcm_volume_info,
 	.get = snd_gf1_pcm_volume_get,
 	.put = snd_gf1_pcm_volume_put
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_gf1_pcm_volume_control1 =
-अणु
-	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+static const struct snd_kcontrol_new snd_gf1_pcm_volume_control1 =
+{
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name = "GPCM Playback Volume",
 	.info = snd_gf1_pcm_volume_info,
 	.get = snd_gf1_pcm_volume_get,
 	.put = snd_gf1_pcm_volume_put
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_pcm_ops snd_gf1_pcm_playback_ops = अणु
-	.खोलो =		snd_gf1_pcm_playback_खोलो,
-	.बंद =	snd_gf1_pcm_playback_बंद,
+static const struct snd_pcm_ops snd_gf1_pcm_playback_ops = {
+	.open =		snd_gf1_pcm_playback_open,
+	.close =	snd_gf1_pcm_playback_close,
 	.hw_params =	snd_gf1_pcm_playback_hw_params,
-	.hw_मुक्त =	snd_gf1_pcm_playback_hw_मुक्त,
+	.hw_free =	snd_gf1_pcm_playback_hw_free,
 	.prepare =	snd_gf1_pcm_playback_prepare,
 	.trigger =	snd_gf1_pcm_playback_trigger,
-	.poपूर्णांकer =	snd_gf1_pcm_playback_poपूर्णांकer,
+	.pointer =	snd_gf1_pcm_playback_pointer,
 	.copy_user =	snd_gf1_pcm_playback_copy,
 	.copy_kernel =	snd_gf1_pcm_playback_copy_kernel,
 	.fill_silence =	snd_gf1_pcm_playback_silence,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_pcm_ops snd_gf1_pcm_capture_ops = अणु
-	.खोलो =		snd_gf1_pcm_capture_खोलो,
-	.बंद =	snd_gf1_pcm_capture_बंद,
+static const struct snd_pcm_ops snd_gf1_pcm_capture_ops = {
+	.open =		snd_gf1_pcm_capture_open,
+	.close =	snd_gf1_pcm_capture_close,
 	.hw_params =	snd_gf1_pcm_capture_hw_params,
 	.prepare =	snd_gf1_pcm_capture_prepare,
 	.trigger =	snd_gf1_pcm_capture_trigger,
-	.poपूर्णांकer =	snd_gf1_pcm_capture_poपूर्णांकer,
-पूर्ण;
+	.pointer =	snd_gf1_pcm_capture_pointer,
+};
 
-पूर्णांक snd_gf1_pcm_new(काष्ठा snd_gus_card *gus, पूर्णांक pcm_dev, पूर्णांक control_index)
-अणु
-	काष्ठा snd_card *card;
-	काष्ठा snd_kcontrol *kctl;
-	काष्ठा snd_pcm *pcm;
-	काष्ठा snd_pcm_substream *substream;
-	पूर्णांक capture, err;
+int snd_gf1_pcm_new(struct snd_gus_card *gus, int pcm_dev, int control_index)
+{
+	struct snd_card *card;
+	struct snd_kcontrol *kctl;
+	struct snd_pcm *pcm;
+	struct snd_pcm_substream *substream;
+	int capture, err;
 
 	card = gus->card;
-	capture = !gus->पूर्णांकerwave && !gus->ess_flag && !gus->ace_flag ? 1 : 0;
+	capture = !gus->interwave && !gus->ess_flag && !gus->ace_flag ? 1 : 0;
 	err = snd_pcm_new(card,
-			  gus->पूर्णांकerwave ? "AMD InterWave" : "GF1",
+			  gus->interwave ? "AMD InterWave" : "GF1",
 			  pcm_dev,
 			  gus->gf1.pcm_channels / 2,
 			  capture,
 			  &pcm);
-	अगर (err < 0)
-		वापस err;
-	pcm->निजी_data = gus;
+	if (err < 0)
+		return err;
+	pcm->private_data = gus;
 	/* playback setup */
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_PLAYBACK, &snd_gf1_pcm_playback_ops);
 
-	क्रम (substream = pcm->streams[SNDRV_PCM_STREAM_PLAYBACK].substream; substream; substream = substream->next)
+	for (substream = pcm->streams[SNDRV_PCM_STREAM_PLAYBACK].substream; substream; substream = substream->next)
 		snd_pcm_set_managed_buffer(substream, SNDRV_DMA_TYPE_DEV,
 					   card->dev,
 					   64*1024, gus->gf1.dma1 > 3 ? 128*1024 : 64*1024);
 	
 	pcm->info_flags = 0;
 	pcm->dev_subclass = SNDRV_PCM_SUBCLASS_GENERIC_MIX;
-	अगर (capture) अणु
+	if (capture) {
 		snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_CAPTURE, &snd_gf1_pcm_capture_ops);
-		अगर (gus->gf1.dma2 == gus->gf1.dma1)
+		if (gus->gf1.dma2 == gus->gf1.dma1)
 			pcm->info_flags |= SNDRV_PCM_INFO_HALF_DUPLEX;
 		snd_pcm_set_managed_buffer(pcm->streams[SNDRV_PCM_STREAM_CAPTURE].substream,
 					   SNDRV_DMA_TYPE_DEV, card->dev,
 					   64*1024, gus->gf1.dma2 > 3 ? 128*1024 : 64*1024);
-	पूर्ण
-	म_नकल(pcm->name, pcm->id);
-	अगर (gus->पूर्णांकerwave) अणु
-		प्र_लिखो(pcm->name + म_माप(pcm->name), " rev %c", gus->revision + 'A');
-	पूर्ण
-	म_जोड़ो(pcm->name, " (synth)");
+	}
+	strcpy(pcm->name, pcm->id);
+	if (gus->interwave) {
+		sprintf(pcm->name + strlen(pcm->name), " rev %c", gus->revision + 'A');
+	}
+	strcat(pcm->name, " (synth)");
 	gus->pcm = pcm;
 
-	अगर (gus->codec_flag)
+	if (gus->codec_flag)
 		kctl = snd_ctl_new1(&snd_gf1_pcm_volume_control1, gus);
-	अन्यथा
+	else
 		kctl = snd_ctl_new1(&snd_gf1_pcm_volume_control, gus);
-	अगर ((err = snd_ctl_add(card, kctl)) < 0)
-		वापस err;
+	if ((err = snd_ctl_add(card, kctl)) < 0)
+		return err;
 	kctl->id.index = control_index;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 

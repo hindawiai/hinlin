@@ -1,18 +1,17 @@
-<शैली गुरु>
 /* ADJ_FREQ Skew consistency test
  *		by: john stultz (johnstul@us.ibm.com)
  *		(C) Copyright IBM 2012
  *		Licensed under the GPLv2
  *
  *  NOTE: This is a meta-test which cranks the ADJ_FREQ knob back
- *  and क्रमth and watches क्रम consistency problems. Thus this test requires
+ *  and forth and watches for consistency problems. Thus this test requires
  *  that the inconsistency-check tests be present in the same directory it
  *  is run from.
  *
  *  To build:
  *	$ gcc skew_consistency.c -o skew_consistency -lrt
  *
- *   This program is मुक्त software: you can redistribute it and/or modअगरy
+ *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
  *   the Free Software Foundation, either version 2 of the License, or
  *   (at your option) any later version.
@@ -20,59 +19,59 @@
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License क्रम more details.
+ *   GNU General Public License for more details.
  */
 
 
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <unistd.h>
-#समावेश <sys/समय.स>
-#समावेश <sys/समयx.h>
-#समावेश <समय.स>
-#समावेश <sys/types.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <fcntl.h>
-#समावेश <माला.स>
-#समावेश <sys/रुको.h>
-#समावेश "../kselftest.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/time.h>
+#include <sys/timex.h>
+#include <time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <string.h>
+#include <sys/wait.h>
+#include "../kselftest.h"
 
-#घोषणा NSEC_PER_SEC 1000000000LL
+#define NSEC_PER_SEC 1000000000LL
 
-पूर्णांक मुख्य(पूर्णांक argv, अक्षर **argc)
-अणु
-	काष्ठा समयx tx;
-	पूर्णांक ret, ppm;
+int main(int argv, char **argc)
+{
+	struct timex tx;
+	int ret, ppm;
 	pid_t pid;
 
 
-	म_लिखो("Running Asynchronous Frequency Changing Tests...\n");
+	printf("Running Asynchronous Frequency Changing Tests...\n");
 
-	pid = विभाजन();
-	अगर (!pid)
-		वापस प्रणाली("./inconsistency-check -c 1 -t 600");
+	pid = fork();
+	if (!pid)
+		return system("./inconsistency-check -c 1 -t 600");
 
 	ppm = 500;
 	ret = 0;
 
-	जबतक (pid != रुकोpid(pid, &ret, WNOHANG)) अणु
+	while (pid != waitpid(pid, &ret, WNOHANG)) {
 		ppm = -ppm;
 		tx.modes = ADJ_FREQUENCY;
 		tx.freq = ppm << 16;
-		adjसमयx(&tx);
+		adjtimex(&tx);
 		usleep(500000);
-	पूर्ण
+	}
 
 	/* Set things back */
 	tx.modes = ADJ_FREQUENCY;
 	tx.offset = 0;
-	adjसमयx(&tx);
+	adjtimex(&tx);
 
 
-	अगर (ret) अणु
-		म_लिखो("[FAILED]\n");
-		वापस ksft_निकास_fail();
-	पूर्ण
-	म_लिखो("[OK]\n");
-	वापस ksft_निकास_pass();
-पूर्ण
+	if (ret) {
+		printf("[FAILED]\n");
+		return ksft_exit_fail();
+	}
+	printf("[OK]\n");
+	return ksft_exit_pass();
+}

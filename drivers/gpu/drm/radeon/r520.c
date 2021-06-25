@@ -1,15 +1,14 @@
-<शैली गुरु>
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
  * Copyright 2009 Jerome Glisse.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -27,32 +26,32 @@
  *          Jerome Glisse
  */
 
-#समावेश "radeon.h"
-#समावेश "radeon_asic.h"
-#समावेश "atom.h"
-#समावेश "r520d.h"
+#include "radeon.h"
+#include "radeon_asic.h"
+#include "atom.h"
+#include "r520d.h"
 
-/* This files gather functions specअगरics to: r520,rv530,rv560,rv570,r580 */
+/* This files gather functions specifics to: r520,rv530,rv560,rv570,r580 */
 
-पूर्णांक r520_mc_रुको_क्रम_idle(काष्ठा radeon_device *rdev)
-अणु
-	अचिन्हित i;
-	uपूर्णांक32_t पंचांगp;
+int r520_mc_wait_for_idle(struct radeon_device *rdev)
+{
+	unsigned i;
+	uint32_t tmp;
 
-	क्रम (i = 0; i < rdev->usec_समयout; i++) अणु
-		/* पढ़ो MC_STATUS */
-		पंचांगp = RREG32_MC(R520_MC_STATUS);
-		अगर (पंचांगp & R520_MC_STATUS_IDLE) अणु
-			वापस 0;
-		पूर्ण
+	for (i = 0; i < rdev->usec_timeout; i++) {
+		/* read MC_STATUS */
+		tmp = RREG32_MC(R520_MC_STATUS);
+		if (tmp & R520_MC_STATUS_IDLE) {
+			return 0;
+		}
 		udelay(1);
-	पूर्ण
-	वापस -1;
-पूर्ण
+	}
+	return -1;
+}
 
-अटल व्योम r520_gpu_init(काष्ठा radeon_device *rdev)
-अणु
-	अचिन्हित pipe_select_current, gb_pipe_select, पंचांगp;
+static void r520_gpu_init(struct radeon_device *rdev)
+{
+	unsigned pipe_select_current, gb_pipe_select, tmp;
 
 	rv515_vga_render_disable(rdev);
 	/*
@@ -75,73 +74,73 @@
 	 * GA_ENHANCE			0x4274
 	 * SU_REG_DEST			0x42C8
 	 */
-	/* workaround क्रम RV530 */
-	अगर (rdev->family == CHIP_RV530) अणु
+	/* workaround for RV530 */
+	if (rdev->family == CHIP_RV530) {
 		WREG32(0x4128, 0xFF);
-	पूर्ण
+	}
 	r420_pipes_init(rdev);
 	gb_pipe_select = RREG32(R400_GB_PIPE_SELECT);
-	पंचांगp = RREG32(R300_DST_PIPE_CONFIG);
-	pipe_select_current = (पंचांगp >> 2) & 3;
-	पंचांगp = (1 << pipe_select_current) |
+	tmp = RREG32(R300_DST_PIPE_CONFIG);
+	pipe_select_current = (tmp >> 2) & 3;
+	tmp = (1 << pipe_select_current) |
 	      (((gb_pipe_select >> 8) & 0xF) << 4);
-	WREG32_PLL(0x000D, पंचांगp);
-	अगर (r520_mc_रुको_क्रम_idle(rdev)) अणु
+	WREG32_PLL(0x000D, tmp);
+	if (r520_mc_wait_for_idle(rdev)) {
 		pr_warn("Failed to wait MC idle while programming pipes. Bad things might happen.\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम r520_vram_get_type(काष्ठा radeon_device *rdev)
-अणु
-	uपूर्णांक32_t पंचांगp;
+static void r520_vram_get_type(struct radeon_device *rdev)
+{
+	uint32_t tmp;
 
 	rdev->mc.vram_width = 128;
 	rdev->mc.vram_is_ddr = true;
-	पंचांगp = RREG32_MC(R520_MC_CNTL0);
-	चयन ((पंचांगp & R520_MEM_NUM_CHANNELS_MASK) >> R520_MEM_NUM_CHANNELS_SHIFT) अणु
-	हाल 0:
+	tmp = RREG32_MC(R520_MC_CNTL0);
+	switch ((tmp & R520_MEM_NUM_CHANNELS_MASK) >> R520_MEM_NUM_CHANNELS_SHIFT) {
+	case 0:
 		rdev->mc.vram_width = 32;
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		rdev->mc.vram_width = 64;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		rdev->mc.vram_width = 128;
-		अवरोध;
-	हाल 3:
+		break;
+	case 3:
 		rdev->mc.vram_width = 256;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		rdev->mc.vram_width = 128;
-		अवरोध;
-	पूर्ण
-	अगर (पंचांगp & R520_MC_CHANNEL_SIZE)
+		break;
+	}
+	if (tmp & R520_MC_CHANNEL_SIZE)
 		rdev->mc.vram_width *= 2;
-पूर्ण
+}
 
-अटल व्योम r520_mc_init(काष्ठा radeon_device *rdev)
-अणु
+static void r520_mc_init(struct radeon_device *rdev)
+{
 
 	r520_vram_get_type(rdev);
 	r100_vram_init_sizes(rdev);
 	radeon_vram_location(rdev, &rdev->mc, 0);
 	rdev->mc.gtt_base_align = 0;
-	अगर (!(rdev->flags & RADEON_IS_AGP))
+	if (!(rdev->flags & RADEON_IS_AGP))
 		radeon_gtt_location(rdev, &rdev->mc);
 	radeon_update_bandwidth_info(rdev);
-पूर्ण
+}
 
-अटल व्योम r520_mc_program(काष्ठा radeon_device *rdev)
-अणु
-	काष्ठा rv515_mc_save save;
+static void r520_mc_program(struct radeon_device *rdev)
+{
+	struct rv515_mc_save save;
 
 	/* Stops all mc clients */
 	rv515_mc_stop(rdev, &save);
 
-	/* Wait क्रम mc idle */
-	अगर (r520_mc_रुको_क्रम_idle(rdev))
+	/* Wait for mc idle */
+	if (r520_mc_wait_for_idle(rdev))
 		dev_warn(rdev->dev, "Wait MC idle timeout before updating MC.\n");
-	/* Write VRAM size in हाल we are limiting it */
+	/* Write VRAM size in case we are limiting it */
 	WREG32(R_0000F8_CONFIG_MEMSIZE, rdev->mc.real_vram_size);
 	/* Program MC, should be a 32bits limited address space */
 	WREG32_MC(R_000004_MC_FB_LOCATION,
@@ -149,175 +148,175 @@
 			S_000004_MC_FB_TOP(rdev->mc.vram_end >> 16));
 	WREG32(R_000134_HDP_FB_LOCATION,
 		S_000134_HDP_FB_START(rdev->mc.vram_start >> 16));
-	अगर (rdev->flags & RADEON_IS_AGP) अणु
+	if (rdev->flags & RADEON_IS_AGP) {
 		WREG32_MC(R_000005_MC_AGP_LOCATION,
 			S_000005_MC_AGP_START(rdev->mc.gtt_start >> 16) |
 			S_000005_MC_AGP_TOP(rdev->mc.gtt_end >> 16));
 		WREG32_MC(R_000006_AGP_BASE, lower_32_bits(rdev->mc.agp_base));
 		WREG32_MC(R_000007_AGP_BASE_2,
 			S_000007_AGP_BASE_ADDR_2(upper_32_bits(rdev->mc.agp_base)));
-	पूर्ण अन्यथा अणु
+	} else {
 		WREG32_MC(R_000005_MC_AGP_LOCATION, 0xFFFFFFFF);
 		WREG32_MC(R_000006_AGP_BASE, 0);
 		WREG32_MC(R_000007_AGP_BASE_2, 0);
-	पूर्ण
+	}
 
 	rv515_mc_resume(rdev, &save);
-पूर्ण
+}
 
-अटल पूर्णांक r520_startup(काष्ठा radeon_device *rdev)
-अणु
-	पूर्णांक r;
+static int r520_startup(struct radeon_device *rdev)
+{
+	int r;
 
 	r520_mc_program(rdev);
-	/* Resume घड़ी */
-	rv515_घड़ी_startup(rdev);
+	/* Resume clock */
+	rv515_clock_startup(rdev);
 	/* Initialize GPU configuration (# pipes, ...) */
 	r520_gpu_init(rdev);
 	/* Initialize GART (initialize after TTM so we can allocate
 	 * memory through TTM but finalize after TTM) */
-	अगर (rdev->flags & RADEON_IS_PCIE) अणु
+	if (rdev->flags & RADEON_IS_PCIE) {
 		r = rv370_pcie_gart_enable(rdev);
-		अगर (r)
-			वापस r;
-	पूर्ण
+		if (r)
+			return r;
+	}
 
 	/* allocate wb buffer */
 	r = radeon_wb_init(rdev);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	r = radeon_fence_driver_start_ring(rdev, RADEON_RING_TYPE_GFX_INDEX);
-	अगर (r) अणु
+	if (r) {
 		dev_err(rdev->dev, "failed initializing CP fences (%d).\n", r);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
 	/* Enable IRQ */
-	अगर (!rdev->irq.installed) अणु
+	if (!rdev->irq.installed) {
 		r = radeon_irq_kms_init(rdev);
-		अगर (r)
-			वापस r;
-	पूर्ण
+		if (r)
+			return r;
+	}
 
 	rs600_irq_set(rdev);
 	rdev->config.r300.hdp_cntl = RREG32(RADEON_HOST_PATH_CNTL);
 	/* 1M ring buffer */
 	r = r100_cp_init(rdev, 1024 * 1024);
-	अगर (r) अणु
+	if (r) {
 		dev_err(rdev->dev, "failed initializing CP (%d).\n", r);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
 	r = radeon_ib_pool_init(rdev);
-	अगर (r) अणु
+	if (r) {
 		dev_err(rdev->dev, "IB initialization failed (%d).\n", r);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक r520_resume(काष्ठा radeon_device *rdev)
-अणु
-	पूर्णांक r;
+int r520_resume(struct radeon_device *rdev)
+{
+	int r;
 
 	/* Make sur GART are not working */
-	अगर (rdev->flags & RADEON_IS_PCIE)
+	if (rdev->flags & RADEON_IS_PCIE)
 		rv370_pcie_gart_disable(rdev);
-	/* Resume घड़ी beक्रमe करोing reset */
-	rv515_घड़ी_startup(rdev);
-	/* Reset gpu beक्रमe posting otherwise ATOM will enter infinite loop */
-	अगर (radeon_asic_reset(rdev)) अणु
+	/* Resume clock before doing reset */
+	rv515_clock_startup(rdev);
+	/* Reset gpu before posting otherwise ATOM will enter infinite loop */
+	if (radeon_asic_reset(rdev)) {
 		dev_warn(rdev->dev, "GPU reset failed ! (0xE40=0x%08X, 0x7C0=0x%08X)\n",
 			RREG32(R_000E40_RBBM_STATUS),
 			RREG32(R_0007C0_CP_STAT));
-	पूर्ण
+	}
 	/* post */
 	atom_asic_init(rdev->mode_info.atom_context);
-	/* Resume घड़ी after posting */
-	rv515_घड़ी_startup(rdev);
-	/* Initialize surface रेजिस्टरs */
+	/* Resume clock after posting */
+	rv515_clock_startup(rdev);
+	/* Initialize surface registers */
 	radeon_surface_init(rdev);
 
 	rdev->accel_working = true;
 	r = r520_startup(rdev);
-	अगर (r) अणु
+	if (r) {
 		rdev->accel_working = false;
-	पूर्ण
-	वापस r;
-पूर्ण
+	}
+	return r;
+}
 
-पूर्णांक r520_init(काष्ठा radeon_device *rdev)
-अणु
-	पूर्णांक r;
+int r520_init(struct radeon_device *rdev)
+{
+	int r;
 
-	/* Initialize scratch रेजिस्टरs */
+	/* Initialize scratch registers */
 	radeon_scratch_init(rdev);
-	/* Initialize surface रेजिस्टरs */
+	/* Initialize surface registers */
 	radeon_surface_init(rdev);
-	/* restore some रेजिस्टर to sane शेषs */
+	/* restore some register to sane defaults */
 	r100_restore_sanity(rdev);
 	/* TODO: disable VGA need to use VGA request */
 	/* BIOS*/
-	अगर (!radeon_get_bios(rdev)) अणु
-		अगर (ASIC_IS_AVIVO(rdev))
-			वापस -EINVAL;
-	पूर्ण
-	अगर (rdev->is_atom_bios) अणु
+	if (!radeon_get_bios(rdev)) {
+		if (ASIC_IS_AVIVO(rdev))
+			return -EINVAL;
+	}
+	if (rdev->is_atom_bios) {
 		r = radeon_atombios_init(rdev);
-		अगर (r)
-			वापस r;
-	पूर्ण अन्यथा अणु
+		if (r)
+			return r;
+	} else {
 		dev_err(rdev->dev, "Expecting atombios for RV515 GPU\n");
-		वापस -EINVAL;
-	पूर्ण
-	/* Reset gpu beक्रमe posting otherwise ATOM will enter infinite loop */
-	अगर (radeon_asic_reset(rdev)) अणु
+		return -EINVAL;
+	}
+	/* Reset gpu before posting otherwise ATOM will enter infinite loop */
+	if (radeon_asic_reset(rdev)) {
 		dev_warn(rdev->dev,
 			"GPU reset failed ! (0xE40=0x%08X, 0x7C0=0x%08X)\n",
 			RREG32(R_000E40_RBBM_STATUS),
 			RREG32(R_0007C0_CP_STAT));
-	पूर्ण
-	/* check अगर cards are posted or not */
-	अगर (radeon_boot_test_post_card(rdev) == false)
-		वापस -EINVAL;
+	}
+	/* check if cards are posted or not */
+	if (radeon_boot_test_post_card(rdev) == false)
+		return -EINVAL;
 
-	अगर (!radeon_card_posted(rdev) && rdev->bios) अणु
+	if (!radeon_card_posted(rdev) && rdev->bios) {
 		DRM_INFO("GPU not posted. posting now...\n");
 		atom_asic_init(rdev->mode_info.atom_context);
-	पूर्ण
-	/* Initialize घड़ीs */
-	radeon_get_घड़ी_info(rdev->ddev);
+	}
+	/* Initialize clocks */
+	radeon_get_clock_info(rdev->ddev);
 	/* initialize AGP */
-	अगर (rdev->flags & RADEON_IS_AGP) अणु
+	if (rdev->flags & RADEON_IS_AGP) {
 		r = radeon_agp_init(rdev);
-		अगर (r) अणु
+		if (r) {
 			radeon_agp_disable(rdev);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	/* initialize memory controller */
 	r520_mc_init(rdev);
 	rv515_debugfs(rdev);
 	/* Fence driver */
 	r = radeon_fence_driver_init(rdev);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 	/* Memory manager */
 	r = radeon_bo_init(rdev);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 	r = rv370_pcie_gart_init(rdev);
-	अगर (r)
-		वापस r;
-	rv515_set_safe_रेजिस्टरs(rdev);
+	if (r)
+		return r;
+	rv515_set_safe_registers(rdev);
 
-	/* Initialize घातer management */
+	/* Initialize power management */
 	radeon_pm_init(rdev);
 
 	rdev->accel_working = true;
 	r = r520_startup(rdev);
-	अगर (r) अणु
+	if (r) {
 		/* Somethings want wront with the accel init stop accel */
 		dev_err(rdev->dev, "Disabling GPU acceleration\n");
 		r100_cp_fini(rdev);
@@ -327,6 +326,6 @@
 		rv370_pcie_gart_fini(rdev);
 		radeon_agp_fini(rdev);
 		rdev->accel_working = false;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}

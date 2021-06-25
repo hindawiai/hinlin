@@ -1,208 +1,207 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2004-2011 Atheros Communications Inc.
  * Copyright (c) 2011-2012 Qualcomm Atheros, Inc.
  *
- * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#समावेश "core.h"
+#include "core.h"
 
-#समावेश <linux/skbuff.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/export.h>
+#include <linux/skbuff.h>
+#include <linux/fs.h>
+#include <linux/vmalloc.h>
+#include <linux/export.h>
 
-#समावेश "debug.h"
-#समावेश "target.h"
+#include "debug.h"
+#include "target.h"
 
-काष्ठा ath6kl_fwlog_slot अणु
-	__le32 बारtamp;
+struct ath6kl_fwlog_slot {
+	__le32 timestamp;
 	__le32 length;
 
 	/* max ATH6KL_FWLOG_PAYLOAD_SIZE bytes */
 	u8 payload[];
-पूर्ण;
+};
 
-#घोषणा ATH6KL_FWLOG_MAX_ENTRIES 20
+#define ATH6KL_FWLOG_MAX_ENTRIES 20
 
-#घोषणा ATH6KL_FWLOG_VALID_MASK 0x1ffff
+#define ATH6KL_FWLOG_VALID_MASK 0x1ffff
 
-व्योम ath6kl_prपूर्णांकk(स्थिर अक्षर *level, स्थिर अक्षर *fmt, ...)
-अणु
-	काष्ठा va_क्रमmat vaf;
-	बहु_सूची args;
+void ath6kl_printk(const char *level, const char *fmt, ...)
+{
+	struct va_format vaf;
+	va_list args;
 
-	बहु_शुरू(args, fmt);
+	va_start(args, fmt);
 
 	vaf.fmt = fmt;
 	vaf.va = &args;
 
-	prपूर्णांकk("%sath6kl: %pV", level, &vaf);
+	printk("%sath6kl: %pV", level, &vaf);
 
-	बहु_पूर्ण(args);
-पूर्ण
-EXPORT_SYMBOL(ath6kl_prपूर्णांकk);
+	va_end(args);
+}
+EXPORT_SYMBOL(ath6kl_printk);
 
-व्योम ath6kl_info(स्थिर अक्षर *fmt, ...)
-अणु
-	काष्ठा va_क्रमmat vaf = अणु
+void ath6kl_info(const char *fmt, ...)
+{
+	struct va_format vaf = {
 		.fmt = fmt,
-	पूर्ण;
-	बहु_सूची args;
+	};
+	va_list args;
 
-	बहु_शुरू(args, fmt);
+	va_start(args, fmt);
 	vaf.va = &args;
-	ath6kl_prपूर्णांकk(KERN_INFO, "%pV", &vaf);
+	ath6kl_printk(KERN_INFO, "%pV", &vaf);
 	trace_ath6kl_log_info(&vaf);
-	बहु_पूर्ण(args);
-पूर्ण
+	va_end(args);
+}
 EXPORT_SYMBOL(ath6kl_info);
 
-व्योम ath6kl_err(स्थिर अक्षर *fmt, ...)
-अणु
-	काष्ठा va_क्रमmat vaf = अणु
+void ath6kl_err(const char *fmt, ...)
+{
+	struct va_format vaf = {
 		.fmt = fmt,
-	पूर्ण;
-	बहु_सूची args;
+	};
+	va_list args;
 
-	बहु_शुरू(args, fmt);
+	va_start(args, fmt);
 	vaf.va = &args;
-	ath6kl_prपूर्णांकk(KERN_ERR, "%pV", &vaf);
+	ath6kl_printk(KERN_ERR, "%pV", &vaf);
 	trace_ath6kl_log_err(&vaf);
-	बहु_पूर्ण(args);
-पूर्ण
+	va_end(args);
+}
 EXPORT_SYMBOL(ath6kl_err);
 
-व्योम ath6kl_warn(स्थिर अक्षर *fmt, ...)
-अणु
-	काष्ठा va_क्रमmat vaf = अणु
+void ath6kl_warn(const char *fmt, ...)
+{
+	struct va_format vaf = {
 		.fmt = fmt,
-	पूर्ण;
-	बहु_सूची args;
+	};
+	va_list args;
 
-	बहु_शुरू(args, fmt);
+	va_start(args, fmt);
 	vaf.va = &args;
-	ath6kl_prपूर्णांकk(KERN_WARNING, "%pV", &vaf);
+	ath6kl_printk(KERN_WARNING, "%pV", &vaf);
 	trace_ath6kl_log_warn(&vaf);
-	बहु_पूर्ण(args);
-पूर्ण
+	va_end(args);
+}
 EXPORT_SYMBOL(ath6kl_warn);
 
-पूर्णांक ath6kl_पढ़ो_tgt_stats(काष्ठा ath6kl *ar, काष्ठा ath6kl_vअगर *vअगर)
-अणु
-	दीर्घ left;
+int ath6kl_read_tgt_stats(struct ath6kl *ar, struct ath6kl_vif *vif)
+{
+	long left;
 
-	अगर (करोwn_पूर्णांकerruptible(&ar->sem))
-		वापस -EBUSY;
+	if (down_interruptible(&ar->sem))
+		return -EBUSY;
 
-	set_bit(STATS_UPDATE_PEND, &vअगर->flags);
+	set_bit(STATS_UPDATE_PEND, &vif->flags);
 
-	अगर (ath6kl_wmi_get_stats_cmd(ar->wmi, 0)) अणु
+	if (ath6kl_wmi_get_stats_cmd(ar->wmi, 0)) {
 		up(&ar->sem);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	left = रुको_event_पूर्णांकerruptible_समयout(ar->event_wq,
+	left = wait_event_interruptible_timeout(ar->event_wq,
 						!test_bit(STATS_UPDATE_PEND,
-						&vअगर->flags), WMI_TIMEOUT);
+						&vif->flags), WMI_TIMEOUT);
 
 	up(&ar->sem);
 
-	अगर (left <= 0)
-		वापस -ETIMEDOUT;
+	if (left <= 0)
+		return -ETIMEDOUT;
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(ath6kl_पढ़ो_tgt_stats);
+	return 0;
+}
+EXPORT_SYMBOL(ath6kl_read_tgt_stats);
 
-#अगर_घोषित CONFIG_ATH6KL_DEBUG
+#ifdef CONFIG_ATH6KL_DEBUG
 
-व्योम ath6kl_dbg(क्रमागत ATH6K_DEBUG_MASK mask, स्थिर अक्षर *fmt, ...)
-अणु
-	काष्ठा va_क्रमmat vaf;
-	बहु_सूची args;
+void ath6kl_dbg(enum ATH6K_DEBUG_MASK mask, const char *fmt, ...)
+{
+	struct va_format vaf;
+	va_list args;
 
-	बहु_शुरू(args, fmt);
+	va_start(args, fmt);
 
 	vaf.fmt = fmt;
 	vaf.va = &args;
 
-	अगर (debug_mask & mask)
-		ath6kl_prपूर्णांकk(KERN_DEBUG, "%pV", &vaf);
+	if (debug_mask & mask)
+		ath6kl_printk(KERN_DEBUG, "%pV", &vaf);
 
 	trace_ath6kl_log_dbg(mask, &vaf);
 
-	बहु_पूर्ण(args);
-पूर्ण
+	va_end(args);
+}
 EXPORT_SYMBOL(ath6kl_dbg);
 
-व्योम ath6kl_dbg_dump(क्रमागत ATH6K_DEBUG_MASK mask,
-		     स्थिर अक्षर *msg, स्थिर अक्षर *prefix,
-		     स्थिर व्योम *buf, माप_प्रकार len)
-अणु
-	अगर (debug_mask & mask) अणु
-		अगर (msg)
+void ath6kl_dbg_dump(enum ATH6K_DEBUG_MASK mask,
+		     const char *msg, const char *prefix,
+		     const void *buf, size_t len)
+{
+	if (debug_mask & mask) {
+		if (msg)
 			ath6kl_dbg(mask, "%s\n", msg);
 
-		prपूर्णांक_hex_dump_bytes(prefix, DUMP_PREFIX_OFFSET, buf, len);
-	पूर्ण
+		print_hex_dump_bytes(prefix, DUMP_PREFIX_OFFSET, buf, len);
+	}
 
-	/* tracing code करोesn't like null strings :/ */
+	/* tracing code doesn't like null strings :/ */
 	trace_ath6kl_log_dbg_dump(msg ? msg : "", prefix ? prefix : "",
 				  buf, len);
-पूर्ण
+}
 EXPORT_SYMBOL(ath6kl_dbg_dump);
 
-#घोषणा REG_OUTPUT_LEN_PER_LINE	25
-#घोषणा REGTYPE_STR_LEN		100
+#define REG_OUTPUT_LEN_PER_LINE	25
+#define REGTYPE_STR_LEN		100
 
-काष्ठा ath6kl_diag_reg_info अणु
+struct ath6kl_diag_reg_info {
 	u32 reg_start;
 	u32 reg_end;
-	स्थिर अक्षर *reg_info;
-पूर्ण;
+	const char *reg_info;
+};
 
-अटल स्थिर काष्ठा ath6kl_diag_reg_info diag_reg[] = अणु
-	अणु 0x20000, 0x200fc, "General DMA and Rx registers" पूर्ण,
-	अणु 0x28000, 0x28900, "MAC PCU register & keycache" पूर्ण,
-	अणु 0x20800, 0x20a40, "QCU" पूर्ण,
-	अणु 0x21000, 0x212f0, "DCU" पूर्ण,
-	अणु 0x4000,  0x42e4, "RTC" पूर्ण,
-	अणु 0x540000, 0x540000 + (256 * 1024), "RAM" पूर्ण,
-	अणु 0x29800, 0x2B210, "Base Band" पूर्ण,
-	अणु 0x1C000, 0x1C748, "Analog" पूर्ण,
-पूर्ण;
+static const struct ath6kl_diag_reg_info diag_reg[] = {
+	{ 0x20000, 0x200fc, "General DMA and Rx registers" },
+	{ 0x28000, 0x28900, "MAC PCU register & keycache" },
+	{ 0x20800, 0x20a40, "QCU" },
+	{ 0x21000, 0x212f0, "DCU" },
+	{ 0x4000,  0x42e4, "RTC" },
+	{ 0x540000, 0x540000 + (256 * 1024), "RAM" },
+	{ 0x29800, 0x2B210, "Base Band" },
+	{ 0x1C000, 0x1C748, "Analog" },
+};
 
-व्योम ath6kl_dump_रेजिस्टरs(काष्ठा ath6kl_device *dev,
-			   काष्ठा ath6kl_irq_proc_रेजिस्टरs *irq_proc_reg,
-			   काष्ठा ath6kl_irq_enable_reg *irq_enable_reg)
-अणु
+void ath6kl_dump_registers(struct ath6kl_device *dev,
+			   struct ath6kl_irq_proc_registers *irq_proc_reg,
+			   struct ath6kl_irq_enable_reg *irq_enable_reg)
+{
 	ath6kl_dbg(ATH6KL_DBG_IRQ, ("<------- Register Table -------->\n"));
 
-	अगर (irq_proc_reg != शून्य) अणु
+	if (irq_proc_reg != NULL) {
 		ath6kl_dbg(ATH6KL_DBG_IRQ,
 			   "Host Int status:           0x%x\n",
-			   irq_proc_reg->host_पूर्णांक_status);
+			   irq_proc_reg->host_int_status);
 		ath6kl_dbg(ATH6KL_DBG_IRQ,
 			   "CPU Int status:            0x%x\n",
-			   irq_proc_reg->cpu_पूर्णांक_status);
+			   irq_proc_reg->cpu_int_status);
 		ath6kl_dbg(ATH6KL_DBG_IRQ,
 			   "Error Int status:          0x%x\n",
-			   irq_proc_reg->error_पूर्णांक_status);
+			   irq_proc_reg->error_int_status);
 		ath6kl_dbg(ATH6KL_DBG_IRQ,
 			   "Counter Int status:        0x%x\n",
-			   irq_proc_reg->counter_पूर्णांक_status);
+			   irq_proc_reg->counter_int_status);
 		ath6kl_dbg(ATH6KL_DBG_IRQ,
 			   "Mbox Frame:                0x%x\n",
 			   irq_proc_reg->mbox_frame);
@@ -216,14 +215,14 @@ EXPORT_SYMBOL(ath6kl_dbg_dump);
 			   "Rx Lookahead 1:            0x%x\n",
 			   irq_proc_reg->rx_lkahd[1]);
 
-		अगर (dev->ar->mbox_info.gmbox_addr != 0) अणु
+		if (dev->ar->mbox_info.gmbox_addr != 0) {
 			/*
 			 * If the target supports GMBOX hardware, dump some
 			 * additional state.
 			 */
 			ath6kl_dbg(ATH6KL_DBG_IRQ,
 				   "GMBOX Host Int status 2:   0x%x\n",
-				   irq_proc_reg->host_पूर्णांक_status2);
+				   irq_proc_reg->host_int_status2);
 			ath6kl_dbg(ATH6KL_DBG_IRQ,
 				   "GMBOX RX Avail:            0x%x\n",
 				   irq_proc_reg->gmbox_rx_avail);
@@ -233,24 +232,24 @@ EXPORT_SYMBOL(ath6kl_dbg_dump);
 			ath6kl_dbg(ATH6KL_DBG_IRQ,
 				   "GMBOX lookahead alias 1:   0x%x\n",
 				   irq_proc_reg->rx_gmbox_lkahd_alias[1]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (irq_enable_reg != शून्य) अणु
+	if (irq_enable_reg != NULL) {
 		ath6kl_dbg(ATH6KL_DBG_IRQ,
 			   "Int status Enable:         0x%x\n",
-			   irq_enable_reg->पूर्णांक_status_en);
+			   irq_enable_reg->int_status_en);
 		ath6kl_dbg(ATH6KL_DBG_IRQ, "Counter Int status Enable: 0x%x\n",
-			   irq_enable_reg->cntr_पूर्णांक_status_en);
-	पूर्ण
+			   irq_enable_reg->cntr_int_status_en);
+	}
 	ath6kl_dbg(ATH6KL_DBG_IRQ, "<------------------------------->\n");
-पूर्ण
+}
 
-अटल व्योम dump_cred_dist(काष्ठा htc_endpoपूर्णांक_credit_dist *ep_dist)
-अणु
+static void dump_cred_dist(struct htc_endpoint_credit_dist *ep_dist)
+{
 	ath6kl_dbg(ATH6KL_DBG_CREDIT,
 		   "--- endpoint: %d  svc_id: 0x%X ---\n",
-		   ep_dist->endpoपूर्णांक, ep_dist->svc_id);
+		   ep_dist->endpoint, ep_dist->svc_id);
 	ath6kl_dbg(ATH6KL_DBG_CREDIT, " dist_flags     : 0x%X\n",
 		   ep_dist->dist_flags);
 	ath6kl_dbg(ATH6KL_DBG_CREDIT, " cred_norm      : %d\n",
@@ -273,89 +272,89 @@ EXPORT_SYMBOL(ath6kl_dbg_dump);
 		   get_queue_depth(&ep_dist->htc_ep->txq));
 	ath6kl_dbg(ATH6KL_DBG_CREDIT,
 		   "----------------------------------\n");
-पूर्ण
+}
 
 /* FIXME: move to htc.c */
-व्योम dump_cred_dist_stats(काष्ठा htc_target *target)
-अणु
-	काष्ठा htc_endpoपूर्णांक_credit_dist *ep_list;
+void dump_cred_dist_stats(struct htc_target *target)
+{
+	struct htc_endpoint_credit_dist *ep_list;
 
-	list_क्रम_each_entry(ep_list, &target->cred_dist_list, list)
+	list_for_each_entry(ep_list, &target->cred_dist_list, list)
 		dump_cred_dist(ep_list);
 
 	ath6kl_dbg(ATH6KL_DBG_CREDIT,
 		   "credit distribution total %d free %d\n",
 		   target->credit_info->total_avail_credits,
-		   target->credit_info->cur_मुक्त_credits);
-पूर्ण
+		   target->credit_info->cur_free_credits);
+}
 
-व्योम ath6kl_debug_war(काष्ठा ath6kl *ar, क्रमागत ath6kl_war war)
-अणु
-	चयन (war) अणु
-	हाल ATH6KL_WAR_INVALID_RATE:
+void ath6kl_debug_war(struct ath6kl *ar, enum ath6kl_war war)
+{
+	switch (war) {
+	case ATH6KL_WAR_INVALID_RATE:
 		ar->debug.war_stats.invalid_rate++;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल sमाप_प्रकार पढ़ो_file_war_stats(काष्ठा file *file, अक्षर __user *user_buf,
-				   माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा ath6kl *ar = file->निजी_data;
-	अक्षर *buf;
-	अचिन्हित पूर्णांक len = 0, buf_len = 1500;
-	sमाप_प्रकार ret_cnt;
+static ssize_t read_file_war_stats(struct file *file, char __user *user_buf,
+				   size_t count, loff_t *ppos)
+{
+	struct ath6kl *ar = file->private_data;
+	char *buf;
+	unsigned int len = 0, buf_len = 1500;
+	ssize_t ret_cnt;
 
 	buf = kzalloc(buf_len, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	if (!buf)
+		return -ENOMEM;
 
-	len += scnम_लिखो(buf + len, buf_len - len, "\n");
-	len += scnम_लिखो(buf + len, buf_len - len, "%25s\n",
+	len += scnprintf(buf + len, buf_len - len, "\n");
+	len += scnprintf(buf + len, buf_len - len, "%25s\n",
 			 "Workaround stats");
-	len += scnम_लिखो(buf + len, buf_len - len, "%25s\n\n",
+	len += scnprintf(buf + len, buf_len - len, "%25s\n\n",
 			 "=================");
-	len += scnम_लिखो(buf + len, buf_len - len, "%20s %10u\n",
+	len += scnprintf(buf + len, buf_len - len, "%20s %10u\n",
 			 "Invalid rates", ar->debug.war_stats.invalid_rate);
 
-	अगर (WARN_ON(len > buf_len))
+	if (WARN_ON(len > buf_len))
 		len = buf_len;
 
-	ret_cnt = simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, len);
+	ret_cnt = simple_read_from_buffer(user_buf, count, ppos, buf, len);
 
-	kमुक्त(buf);
-	वापस ret_cnt;
-पूर्ण
+	kfree(buf);
+	return ret_cnt;
+}
 
-अटल स्थिर काष्ठा file_operations fops_war_stats = अणु
-	.पढ़ो = पढ़ो_file_war_stats,
-	.खोलो = simple_खोलो,
+static const struct file_operations fops_war_stats = {
+	.read = read_file_war_stats,
+	.open = simple_open,
 	.owner = THIS_MODULE,
-	.llseek = शेष_llseek,
-पूर्ण;
+	.llseek = default_llseek,
+};
 
-व्योम ath6kl_debug_fwlog_event(काष्ठा ath6kl *ar, स्थिर व्योम *buf, माप_प्रकार len)
-अणु
-	काष्ठा ath6kl_fwlog_slot *slot;
-	काष्ठा sk_buff *skb;
-	माप_प्रकार slot_len;
+void ath6kl_debug_fwlog_event(struct ath6kl *ar, const void *buf, size_t len)
+{
+	struct ath6kl_fwlog_slot *slot;
+	struct sk_buff *skb;
+	size_t slot_len;
 
-	अगर (WARN_ON(len > ATH6KL_FWLOG_PAYLOAD_SIZE))
-		वापस;
+	if (WARN_ON(len > ATH6KL_FWLOG_PAYLOAD_SIZE))
+		return;
 
-	slot_len = माप(*slot) + ATH6KL_FWLOG_PAYLOAD_SIZE;
+	slot_len = sizeof(*slot) + ATH6KL_FWLOG_PAYLOAD_SIZE;
 
 	skb = alloc_skb(slot_len, GFP_KERNEL);
-	अगर (!skb)
-		वापस;
+	if (!skb)
+		return;
 
 	slot = skb_put(skb, slot_len);
-	slot->बारtamp = cpu_to_le32(jअगरfies);
+	slot->timestamp = cpu_to_le32(jiffies);
 	slot->length = cpu_to_le32(len);
-	स_नकल(slot->payload, buf, len);
+	memcpy(slot->payload, buf, len);
 
 	/* Need to pad each record to fixed length ATH6KL_FWLOG_PAYLOAD_SIZE */
-	स_रखो(slot->payload + len, 0, ATH6KL_FWLOG_PAYLOAD_SIZE - len);
+	memset(slot->payload + len, 0, ATH6KL_FWLOG_PAYLOAD_SIZE - len);
 
 	spin_lock(&ar->debug.fwlog_queue.lock);
 
@@ -363,445 +362,445 @@ EXPORT_SYMBOL(ath6kl_dbg_dump);
 	complete(&ar->debug.fwlog_completion);
 
 	/* drop oldest entries */
-	जबतक (skb_queue_len(&ar->debug.fwlog_queue) >
-	       ATH6KL_FWLOG_MAX_ENTRIES) अणु
+	while (skb_queue_len(&ar->debug.fwlog_queue) >
+	       ATH6KL_FWLOG_MAX_ENTRIES) {
 		skb = __skb_dequeue(&ar->debug.fwlog_queue);
-		kमुक्त_skb(skb);
-	पूर्ण
+		kfree_skb(skb);
+	}
 
 	spin_unlock(&ar->debug.fwlog_queue.lock);
 
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल पूर्णांक ath6kl_fwlog_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा ath6kl *ar = inode->i_निजी;
+static int ath6kl_fwlog_open(struct inode *inode, struct file *file)
+{
+	struct ath6kl *ar = inode->i_private;
 
-	अगर (ar->debug.fwlog_खोलो)
-		वापस -EBUSY;
+	if (ar->debug.fwlog_open)
+		return -EBUSY;
 
-	ar->debug.fwlog_खोलो = true;
+	ar->debug.fwlog_open = true;
 
-	file->निजी_data = inode->i_निजी;
-	वापस 0;
-पूर्ण
+	file->private_data = inode->i_private;
+	return 0;
+}
 
-अटल पूर्णांक ath6kl_fwlog_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा ath6kl *ar = inode->i_निजी;
+static int ath6kl_fwlog_release(struct inode *inode, struct file *file)
+{
+	struct ath6kl *ar = inode->i_private;
 
-	ar->debug.fwlog_खोलो = false;
+	ar->debug.fwlog_open = false;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार ath6kl_fwlog_पढ़ो(काष्ठा file *file, अक्षर __user *user_buf,
-				 माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा ath6kl *ar = file->निजी_data;
-	काष्ठा sk_buff *skb;
-	sमाप_प्रकार ret_cnt;
-	माप_प्रकार len = 0;
-	अक्षर *buf;
+static ssize_t ath6kl_fwlog_read(struct file *file, char __user *user_buf,
+				 size_t count, loff_t *ppos)
+{
+	struct ath6kl *ar = file->private_data;
+	struct sk_buff *skb;
+	ssize_t ret_cnt;
+	size_t len = 0;
+	char *buf;
 
-	buf = vदो_स्मृति(count);
-	अगर (!buf)
-		वापस -ENOMEM;
+	buf = vmalloc(count);
+	if (!buf)
+		return -ENOMEM;
 
-	/* पढ़ो undelivered logs from firmware */
-	ath6kl_पढ़ो_fwlogs(ar);
+	/* read undelivered logs from firmware */
+	ath6kl_read_fwlogs(ar);
 
 	spin_lock(&ar->debug.fwlog_queue.lock);
 
-	जबतक ((skb = __skb_dequeue(&ar->debug.fwlog_queue))) अणु
-		अगर (skb->len > count - len) अणु
+	while ((skb = __skb_dequeue(&ar->debug.fwlog_queue))) {
+		if (skb->len > count - len) {
 			/* not enough space, put skb back and leave */
 			__skb_queue_head(&ar->debug.fwlog_queue, skb);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 
-		स_नकल(buf + len, skb->data, skb->len);
+		memcpy(buf + len, skb->data, skb->len);
 		len += skb->len;
 
-		kमुक्त_skb(skb);
-	पूर्ण
+		kfree_skb(skb);
+	}
 
 	spin_unlock(&ar->debug.fwlog_queue.lock);
 
-	/* FIXME: what to करो अगर len == 0? */
+	/* FIXME: what to do if len == 0? */
 
-	ret_cnt = simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, len);
+	ret_cnt = simple_read_from_buffer(user_buf, count, ppos, buf, len);
 
-	vमुक्त(buf);
+	vfree(buf);
 
-	वापस ret_cnt;
-पूर्ण
+	return ret_cnt;
+}
 
-अटल स्थिर काष्ठा file_operations fops_fwlog = अणु
-	.खोलो = ath6kl_fwlog_खोलो,
+static const struct file_operations fops_fwlog = {
+	.open = ath6kl_fwlog_open,
 	.release = ath6kl_fwlog_release,
-	.पढ़ो = ath6kl_fwlog_पढ़ो,
+	.read = ath6kl_fwlog_read,
 	.owner = THIS_MODULE,
-	.llseek = शेष_llseek,
-पूर्ण;
+	.llseek = default_llseek,
+};
 
-अटल sमाप_प्रकार ath6kl_fwlog_block_पढ़ो(काष्ठा file *file,
-				       अक्षर __user *user_buf,
-				       माप_प्रकार count,
+static ssize_t ath6kl_fwlog_block_read(struct file *file,
+				       char __user *user_buf,
+				       size_t count,
 				       loff_t *ppos)
-अणु
-	काष्ठा ath6kl *ar = file->निजी_data;
-	काष्ठा sk_buff *skb;
-	sमाप_प्रकार ret_cnt;
-	माप_प्रकार len = 0, not_copied;
-	अक्षर *buf;
-	पूर्णांक ret;
+{
+	struct ath6kl *ar = file->private_data;
+	struct sk_buff *skb;
+	ssize_t ret_cnt;
+	size_t len = 0, not_copied;
+	char *buf;
+	int ret;
 
-	buf = vदो_स्मृति(count);
-	अगर (!buf)
-		वापस -ENOMEM;
+	buf = vmalloc(count);
+	if (!buf)
+		return -ENOMEM;
 
 	spin_lock(&ar->debug.fwlog_queue.lock);
 
-	अगर (skb_queue_len(&ar->debug.fwlog_queue) == 0) अणु
+	if (skb_queue_len(&ar->debug.fwlog_queue) == 0) {
 		/* we must init under queue lock */
 		init_completion(&ar->debug.fwlog_completion);
 
 		spin_unlock(&ar->debug.fwlog_queue.lock);
 
-		ret = रुको_क्रम_completion_पूर्णांकerruptible(
+		ret = wait_for_completion_interruptible(
 			&ar->debug.fwlog_completion);
-		अगर (ret == -ERESTARTSYS) अणु
-			vमुक्त(buf);
-			वापस ret;
-		पूर्ण
+		if (ret == -ERESTARTSYS) {
+			vfree(buf);
+			return ret;
+		}
 
 		spin_lock(&ar->debug.fwlog_queue.lock);
-	पूर्ण
+	}
 
-	जबतक ((skb = __skb_dequeue(&ar->debug.fwlog_queue))) अणु
-		अगर (skb->len > count - len) अणु
+	while ((skb = __skb_dequeue(&ar->debug.fwlog_queue))) {
+		if (skb->len > count - len) {
 			/* not enough space, put skb back and leave */
 			__skb_queue_head(&ar->debug.fwlog_queue, skb);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 
-		स_नकल(buf + len, skb->data, skb->len);
+		memcpy(buf + len, skb->data, skb->len);
 		len += skb->len;
 
-		kमुक्त_skb(skb);
-	पूर्ण
+		kfree_skb(skb);
+	}
 
 	spin_unlock(&ar->debug.fwlog_queue.lock);
 
-	/* FIXME: what to करो अगर len == 0? */
+	/* FIXME: what to do if len == 0? */
 
 	not_copied = copy_to_user(user_buf, buf, len);
-	अगर (not_copied != 0) अणु
+	if (not_copied != 0) {
 		ret_cnt = -EFAULT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	*ppos = *ppos + len;
 
 	ret_cnt = len;
 
 out:
-	vमुक्त(buf);
+	vfree(buf);
 
-	वापस ret_cnt;
-पूर्ण
+	return ret_cnt;
+}
 
-अटल स्थिर काष्ठा file_operations fops_fwlog_block = अणु
-	.खोलो = ath6kl_fwlog_खोलो,
+static const struct file_operations fops_fwlog_block = {
+	.open = ath6kl_fwlog_open,
 	.release = ath6kl_fwlog_release,
-	.पढ़ो = ath6kl_fwlog_block_पढ़ो,
+	.read = ath6kl_fwlog_block_read,
 	.owner = THIS_MODULE,
-	.llseek = शेष_llseek,
-पूर्ण;
+	.llseek = default_llseek,
+};
 
-अटल sमाप_प्रकार ath6kl_fwlog_mask_पढ़ो(काष्ठा file *file, अक्षर __user *user_buf,
-				      माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा ath6kl *ar = file->निजी_data;
-	अक्षर buf[16];
-	पूर्णांक len;
+static ssize_t ath6kl_fwlog_mask_read(struct file *file, char __user *user_buf,
+				      size_t count, loff_t *ppos)
+{
+	struct ath6kl *ar = file->private_data;
+	char buf[16];
+	int len;
 
-	len = snम_लिखो(buf, माप(buf), "0x%x\n", ar->debug.fwlog_mask);
+	len = snprintf(buf, sizeof(buf), "0x%x\n", ar->debug.fwlog_mask);
 
-	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, len);
-पूर्ण
+	return simple_read_from_buffer(user_buf, count, ppos, buf, len);
+}
 
-अटल sमाप_प्रकार ath6kl_fwlog_mask_ग_लिखो(काष्ठा file *file,
-				       स्थिर अक्षर __user *user_buf,
-				       माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा ath6kl *ar = file->निजी_data;
-	पूर्णांक ret;
+static ssize_t ath6kl_fwlog_mask_write(struct file *file,
+				       const char __user *user_buf,
+				       size_t count, loff_t *ppos)
+{
+	struct ath6kl *ar = file->private_data;
+	int ret;
 
 	ret = kstrtou32_from_user(user_buf, count, 0, &ar->debug.fwlog_mask);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = ath6kl_wmi_config_debug_module_cmd(ar->wmi,
 						 ATH6KL_FWLOG_VALID_MASK,
 						 ar->debug.fwlog_mask);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा file_operations fops_fwlog_mask = अणु
-	.खोलो = simple_खोलो,
-	.पढ़ो = ath6kl_fwlog_mask_पढ़ो,
-	.ग_लिखो = ath6kl_fwlog_mask_ग_लिखो,
+static const struct file_operations fops_fwlog_mask = {
+	.open = simple_open,
+	.read = ath6kl_fwlog_mask_read,
+	.write = ath6kl_fwlog_mask_write,
 	.owner = THIS_MODULE,
-	.llseek = शेष_llseek,
-पूर्ण;
+	.llseek = default_llseek,
+};
 
-अटल sमाप_प्रकार पढ़ो_file_tgt_stats(काष्ठा file *file, अक्षर __user *user_buf,
-				   माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा ath6kl *ar = file->निजी_data;
-	काष्ठा ath6kl_vअगर *vअगर;
-	काष्ठा target_stats *tgt_stats;
-	अक्षर *buf;
-	अचिन्हित पूर्णांक len = 0, buf_len = 1500;
-	पूर्णांक i;
-	sमाप_प्रकार ret_cnt;
-	पूर्णांक rv;
+static ssize_t read_file_tgt_stats(struct file *file, char __user *user_buf,
+				   size_t count, loff_t *ppos)
+{
+	struct ath6kl *ar = file->private_data;
+	struct ath6kl_vif *vif;
+	struct target_stats *tgt_stats;
+	char *buf;
+	unsigned int len = 0, buf_len = 1500;
+	int i;
+	ssize_t ret_cnt;
+	int rv;
 
-	vअगर = ath6kl_vअगर_first(ar);
-	अगर (!vअगर)
-		वापस -EIO;
+	vif = ath6kl_vif_first(ar);
+	if (!vif)
+		return -EIO;
 
 	buf = kzalloc(buf_len, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	if (!buf)
+		return -ENOMEM;
 
-	rv = ath6kl_पढ़ो_tgt_stats(ar, vअगर);
-	अगर (rv < 0) अणु
-		kमुक्त(buf);
-		वापस rv;
-	पूर्ण
+	rv = ath6kl_read_tgt_stats(ar, vif);
+	if (rv < 0) {
+		kfree(buf);
+		return rv;
+	}
 
-	tgt_stats = &vअगर->target_stats;
+	tgt_stats = &vif->target_stats;
 
-	len += scnम_लिखो(buf + len, buf_len - len, "\n");
-	len += scnम_लिखो(buf + len, buf_len - len, "%25s\n",
+	len += scnprintf(buf + len, buf_len - len, "\n");
+	len += scnprintf(buf + len, buf_len - len, "%25s\n",
 			 "Target Tx stats");
-	len += scnम_लिखो(buf + len, buf_len - len, "%25s\n\n",
+	len += scnprintf(buf + len, buf_len - len, "%25s\n\n",
 			 "=================");
-	len += scnम_लिखो(buf + len, buf_len - len, "%20s %10llu\n",
+	len += scnprintf(buf + len, buf_len - len, "%20s %10llu\n",
 			 "Ucast packets", tgt_stats->tx_ucast_pkt);
-	len += scnम_लिखो(buf + len, buf_len - len, "%20s %10llu\n",
+	len += scnprintf(buf + len, buf_len - len, "%20s %10llu\n",
 			 "Bcast packets", tgt_stats->tx_bcast_pkt);
-	len += scnम_लिखो(buf + len, buf_len - len, "%20s %10llu\n",
+	len += scnprintf(buf + len, buf_len - len, "%20s %10llu\n",
 			 "Ucast byte", tgt_stats->tx_ucast_byte);
-	len += scnम_लिखो(buf + len, buf_len - len, "%20s %10llu\n",
+	len += scnprintf(buf + len, buf_len - len, "%20s %10llu\n",
 			 "Bcast byte", tgt_stats->tx_bcast_byte);
-	len += scnम_लिखो(buf + len, buf_len - len, "%20s %10llu\n",
+	len += scnprintf(buf + len, buf_len - len, "%20s %10llu\n",
 			 "Rts success cnt", tgt_stats->tx_rts_success_cnt);
-	क्रम (i = 0; i < 4; i++)
-		len += scnम_लिखो(buf + len, buf_len - len,
+	for (i = 0; i < 4; i++)
+		len += scnprintf(buf + len, buf_len - len,
 				 "%18s %d %10llu\n", "PER on ac",
 				 i, tgt_stats->tx_pkt_per_ac[i]);
-	len += scnम_लिखो(buf + len, buf_len - len, "%20s %10llu\n",
+	len += scnprintf(buf + len, buf_len - len, "%20s %10llu\n",
 			 "Error", tgt_stats->tx_err);
-	len += scnम_लिखो(buf + len, buf_len - len, "%20s %10llu\n",
+	len += scnprintf(buf + len, buf_len - len, "%20s %10llu\n",
 			 "Fail count", tgt_stats->tx_fail_cnt);
-	len += scnम_लिखो(buf + len, buf_len - len, "%20s %10llu\n",
+	len += scnprintf(buf + len, buf_len - len, "%20s %10llu\n",
 			 "Retry count", tgt_stats->tx_retry_cnt);
-	len += scnम_लिखो(buf + len, buf_len - len, "%20s %10llu\n",
+	len += scnprintf(buf + len, buf_len - len, "%20s %10llu\n",
 			 "Multi retry cnt", tgt_stats->tx_mult_retry_cnt);
-	len += scnम_लिखो(buf + len, buf_len - len, "%20s %10llu\n",
+	len += scnprintf(buf + len, buf_len - len, "%20s %10llu\n",
 			 "Rts fail cnt", tgt_stats->tx_rts_fail_cnt);
-	len += scnम_लिखो(buf + len, buf_len - len, "%25s %10llu\n\n",
+	len += scnprintf(buf + len, buf_len - len, "%25s %10llu\n\n",
 			 "TKIP counter measure used",
 			 tgt_stats->tkip_cnter_measures_invoked);
 
-	len += scnम_लिखो(buf + len, buf_len - len, "%25s\n",
+	len += scnprintf(buf + len, buf_len - len, "%25s\n",
 			 "Target Rx stats");
-	len += scnम_लिखो(buf + len, buf_len - len, "%25s\n",
+	len += scnprintf(buf + len, buf_len - len, "%25s\n",
 			 "=================");
 
-	len += scnम_लिखो(buf + len, buf_len - len, "%20s %10llu\n",
+	len += scnprintf(buf + len, buf_len - len, "%20s %10llu\n",
 			 "Ucast packets", tgt_stats->rx_ucast_pkt);
-	len += scnम_लिखो(buf + len, buf_len - len, "%20s %10d\n",
+	len += scnprintf(buf + len, buf_len - len, "%20s %10d\n",
 			 "Ucast Rate", tgt_stats->rx_ucast_rate);
-	len += scnम_लिखो(buf + len, buf_len - len, "%20s %10llu\n",
+	len += scnprintf(buf + len, buf_len - len, "%20s %10llu\n",
 			 "Bcast packets", tgt_stats->rx_bcast_pkt);
-	len += scnम_लिखो(buf + len, buf_len - len, "%20s %10llu\n",
+	len += scnprintf(buf + len, buf_len - len, "%20s %10llu\n",
 			 "Ucast byte", tgt_stats->rx_ucast_byte);
-	len += scnम_लिखो(buf + len, buf_len - len, "%20s %10llu\n",
+	len += scnprintf(buf + len, buf_len - len, "%20s %10llu\n",
 			 "Bcast byte", tgt_stats->rx_bcast_byte);
-	len += scnम_लिखो(buf + len, buf_len - len, "%20s %10llu\n",
+	len += scnprintf(buf + len, buf_len - len, "%20s %10llu\n",
 			 "Fragmented pkt", tgt_stats->rx_frgment_pkt);
-	len += scnम_लिखो(buf + len, buf_len - len, "%20s %10llu\n",
+	len += scnprintf(buf + len, buf_len - len, "%20s %10llu\n",
 			 "Error", tgt_stats->rx_err);
-	len += scnम_लिखो(buf + len, buf_len - len, "%20s %10llu\n",
+	len += scnprintf(buf + len, buf_len - len, "%20s %10llu\n",
 			 "CRC Err", tgt_stats->rx_crc_err);
-	len += scnम_लिखो(buf + len, buf_len - len, "%20s %10llu\n",
+	len += scnprintf(buf + len, buf_len - len, "%20s %10llu\n",
 			 "Key cache miss", tgt_stats->rx_key_cache_miss);
-	len += scnम_लिखो(buf + len, buf_len - len, "%20s %10llu\n",
+	len += scnprintf(buf + len, buf_len - len, "%20s %10llu\n",
 			 "Decrypt Err", tgt_stats->rx_decrypt_err);
-	len += scnम_लिखो(buf + len, buf_len - len, "%20s %10llu\n",
+	len += scnprintf(buf + len, buf_len - len, "%20s %10llu\n",
 			 "Duplicate frame", tgt_stats->rx_dupl_frame);
-	len += scnम_लिखो(buf + len, buf_len - len, "%20s %10llu\n",
+	len += scnprintf(buf + len, buf_len - len, "%20s %10llu\n",
 			 "Tkip Mic failure", tgt_stats->tkip_local_mic_fail);
-	len += scnम_लिखो(buf + len, buf_len - len, "%20s %10llu\n",
+	len += scnprintf(buf + len, buf_len - len, "%20s %10llu\n",
 			 "TKIP format err", tgt_stats->tkip_fmt_err);
-	len += scnम_लिखो(buf + len, buf_len - len, "%20s %10llu\n",
+	len += scnprintf(buf + len, buf_len - len, "%20s %10llu\n",
 			 "CCMP format Err", tgt_stats->ccmp_fmt_err);
-	len += scnम_लिखो(buf + len, buf_len - len, "%20s %10llu\n\n",
+	len += scnprintf(buf + len, buf_len - len, "%20s %10llu\n\n",
 			 "CCMP Replay Err", tgt_stats->ccmp_replays);
 
-	len += scnम_लिखो(buf + len, buf_len - len, "%25s\n",
+	len += scnprintf(buf + len, buf_len - len, "%25s\n",
 			 "Misc Target stats");
-	len += scnम_लिखो(buf + len, buf_len - len, "%25s\n",
+	len += scnprintf(buf + len, buf_len - len, "%25s\n",
 			 "=================");
-	len += scnम_लिखो(buf + len, buf_len - len, "%20s %10llu\n",
+	len += scnprintf(buf + len, buf_len - len, "%20s %10llu\n",
 			 "Beacon Miss count", tgt_stats->cs_bmiss_cnt);
-	len += scnम_लिखो(buf + len, buf_len - len, "%20s %10llu\n",
+	len += scnprintf(buf + len, buf_len - len, "%20s %10llu\n",
 			 "Num Connects", tgt_stats->cs_connect_cnt);
-	len += scnम_लिखो(buf + len, buf_len - len, "%20s %10llu\n",
+	len += scnprintf(buf + len, buf_len - len, "%20s %10llu\n",
 			 "Num disconnects", tgt_stats->cs_discon_cnt);
-	len += scnम_लिखो(buf + len, buf_len - len, "%20s %10d\n",
+	len += scnprintf(buf + len, buf_len - len, "%20s %10d\n",
 			 "Beacon avg rssi", tgt_stats->cs_ave_beacon_rssi);
-	len += scnम_लिखो(buf + len, buf_len - len, "%20s %10d\n",
+	len += scnprintf(buf + len, buf_len - len, "%20s %10d\n",
 			 "ARP pkt received", tgt_stats->arp_received);
-	len += scnम_लिखो(buf + len, buf_len - len, "%20s %10d\n",
+	len += scnprintf(buf + len, buf_len - len, "%20s %10d\n",
 			 "ARP pkt matched", tgt_stats->arp_matched);
-	len += scnम_लिखो(buf + len, buf_len - len, "%20s %10d\n",
+	len += scnprintf(buf + len, buf_len - len, "%20s %10d\n",
 			 "ARP pkt replied", tgt_stats->arp_replied);
 
-	अगर (len > buf_len)
+	if (len > buf_len)
 		len = buf_len;
 
-	ret_cnt = simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, len);
+	ret_cnt = simple_read_from_buffer(user_buf, count, ppos, buf, len);
 
-	kमुक्त(buf);
-	वापस ret_cnt;
-पूर्ण
+	kfree(buf);
+	return ret_cnt;
+}
 
-अटल स्थिर काष्ठा file_operations fops_tgt_stats = अणु
-	.पढ़ो = पढ़ो_file_tgt_stats,
-	.खोलो = simple_खोलो,
+static const struct file_operations fops_tgt_stats = {
+	.read = read_file_tgt_stats,
+	.open = simple_open,
 	.owner = THIS_MODULE,
-	.llseek = शेष_llseek,
-पूर्ण;
+	.llseek = default_llseek,
+};
 
-#घोषणा prपूर्णांक_credit_info(fmt_str, ep_list_field)		\
-	(len += scnम_लिखो(buf + len, buf_len - len, fmt_str,	\
+#define print_credit_info(fmt_str, ep_list_field)		\
+	(len += scnprintf(buf + len, buf_len - len, fmt_str,	\
 			 ep_list->ep_list_field))
-#घोषणा CREDIT_INFO_DISPLAY_STRING_LEN	200
-#घोषणा CREDIT_INFO_LEN	128
+#define CREDIT_INFO_DISPLAY_STRING_LEN	200
+#define CREDIT_INFO_LEN	128
 
-अटल sमाप_प्रकार पढ़ो_file_credit_dist_stats(काष्ठा file *file,
-					   अक्षर __user *user_buf,
-					   माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा ath6kl *ar = file->निजी_data;
-	काष्ठा htc_target *target = ar->htc_target;
-	काष्ठा htc_endpoपूर्णांक_credit_dist *ep_list;
-	अक्षर *buf;
-	अचिन्हित पूर्णांक buf_len, len = 0;
-	sमाप_प्रकार ret_cnt;
+static ssize_t read_file_credit_dist_stats(struct file *file,
+					   char __user *user_buf,
+					   size_t count, loff_t *ppos)
+{
+	struct ath6kl *ar = file->private_data;
+	struct htc_target *target = ar->htc_target;
+	struct htc_endpoint_credit_dist *ep_list;
+	char *buf;
+	unsigned int buf_len, len = 0;
+	ssize_t ret_cnt;
 
 	buf_len = CREDIT_INFO_DISPLAY_STRING_LEN +
 		  get_queue_depth(&target->cred_dist_list) * CREDIT_INFO_LEN;
 	buf = kzalloc(buf_len, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	if (!buf)
+		return -ENOMEM;
 
-	len += scnम_लिखो(buf + len, buf_len - len, "%25s%5d\n",
+	len += scnprintf(buf + len, buf_len - len, "%25s%5d\n",
 			 "Total Avail Credits: ",
 			 target->credit_info->total_avail_credits);
-	len += scnम_लिखो(buf + len, buf_len - len, "%25s%5d\n",
+	len += scnprintf(buf + len, buf_len - len, "%25s%5d\n",
 			 "Free credits :",
-			 target->credit_info->cur_मुक्त_credits);
+			 target->credit_info->cur_free_credits);
 
-	len += scnम_लिखो(buf + len, buf_len - len,
+	len += scnprintf(buf + len, buf_len - len,
 			 " Epid  Flags    Cred_norm  Cred_min  Credits  Cred_assngd"
 			 "  Seek_cred  Cred_sz  Cred_per_msg  Cred_to_dist"
 			 "  qdepth\n");
 
-	list_क्रम_each_entry(ep_list, &target->cred_dist_list, list) अणु
-		prपूर्णांक_credit_info("  %2d", endpoपूर्णांक);
-		prपूर्णांक_credit_info("%10x", dist_flags);
-		prपूर्णांक_credit_info("%8d", cred_norm);
-		prपूर्णांक_credit_info("%9d", cred_min);
-		prपूर्णांक_credit_info("%9d", credits);
-		prपूर्णांक_credit_info("%10d", cred_assngd);
-		prपूर्णांक_credit_info("%13d", seek_cred);
-		prपूर्णांक_credit_info("%12d", cred_sz);
-		prपूर्णांक_credit_info("%9d", cred_per_msg);
-		prपूर्णांक_credit_info("%14d", cred_to_dist);
-		len += scnम_लिखो(buf + len, buf_len - len, "%12d\n",
+	list_for_each_entry(ep_list, &target->cred_dist_list, list) {
+		print_credit_info("  %2d", endpoint);
+		print_credit_info("%10x", dist_flags);
+		print_credit_info("%8d", cred_norm);
+		print_credit_info("%9d", cred_min);
+		print_credit_info("%9d", credits);
+		print_credit_info("%10d", cred_assngd);
+		print_credit_info("%13d", seek_cred);
+		print_credit_info("%12d", cred_sz);
+		print_credit_info("%9d", cred_per_msg);
+		print_credit_info("%14d", cred_to_dist);
+		len += scnprintf(buf + len, buf_len - len, "%12d\n",
 				 get_queue_depth(&ep_list->htc_ep->txq));
-	पूर्ण
+	}
 
-	अगर (len > buf_len)
+	if (len > buf_len)
 		len = buf_len;
 
-	ret_cnt = simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, len);
-	kमुक्त(buf);
-	वापस ret_cnt;
-पूर्ण
+	ret_cnt = simple_read_from_buffer(user_buf, count, ppos, buf, len);
+	kfree(buf);
+	return ret_cnt;
+}
 
-अटल स्थिर काष्ठा file_operations fops_credit_dist_stats = अणु
-	.पढ़ो = पढ़ो_file_credit_dist_stats,
-	.खोलो = simple_खोलो,
+static const struct file_operations fops_credit_dist_stats = {
+	.read = read_file_credit_dist_stats,
+	.open = simple_open,
 	.owner = THIS_MODULE,
-	.llseek = शेष_llseek,
-पूर्ण;
+	.llseek = default_llseek,
+};
 
-अटल अचिन्हित पूर्णांक prपूर्णांक_endpoपूर्णांक_stat(काष्ठा htc_target *target, अक्षर *buf,
-					अचिन्हित पूर्णांक buf_len, अचिन्हित पूर्णांक len,
-					पूर्णांक offset, स्थिर अक्षर *name)
-अणु
-	पूर्णांक i;
-	काष्ठा htc_endpoपूर्णांक_stats *ep_st;
+static unsigned int print_endpoint_stat(struct htc_target *target, char *buf,
+					unsigned int buf_len, unsigned int len,
+					int offset, const char *name)
+{
+	int i;
+	struct htc_endpoint_stats *ep_st;
 	u32 *counter;
 
-	len += scnम_लिखो(buf + len, buf_len - len, "%s:", name);
-	क्रम (i = 0; i < ENDPOपूर्णांक_उच्च; i++) अणु
-		ep_st = &target->endpoपूर्णांक[i].ep_st;
+	len += scnprintf(buf + len, buf_len - len, "%s:", name);
+	for (i = 0; i < ENDPOINT_MAX; i++) {
+		ep_st = &target->endpoint[i].ep_st;
 		counter = ((u32 *) ep_st) + (offset / 4);
-		len += scnम_लिखो(buf + len, buf_len - len, " %u", *counter);
-	पूर्ण
-	len += scnम_लिखो(buf + len, buf_len - len, "\n");
+		len += scnprintf(buf + len, buf_len - len, " %u", *counter);
+	}
+	len += scnprintf(buf + len, buf_len - len, "\n");
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल sमाप_प्रकार ath6kl_endpoपूर्णांक_stats_पढ़ो(काष्ठा file *file,
-					  अक्षर __user *user_buf,
-					  माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा ath6kl *ar = file->निजी_data;
-	काष्ठा htc_target *target = ar->htc_target;
-	अक्षर *buf;
-	अचिन्हित पूर्णांक buf_len, len = 0;
-	sमाप_प्रकार ret_cnt;
+static ssize_t ath6kl_endpoint_stats_read(struct file *file,
+					  char __user *user_buf,
+					  size_t count, loff_t *ppos)
+{
+	struct ath6kl *ar = file->private_data;
+	struct htc_target *target = ar->htc_target;
+	char *buf;
+	unsigned int buf_len, len = 0;
+	ssize_t ret_cnt;
 
-	buf_len = माप(काष्ठा htc_endpoपूर्णांक_stats) / माप(u32) *
-		(25 + ENDPOपूर्णांक_उच्च * 11);
-	buf = kदो_स्मृति(buf_len, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	buf_len = sizeof(struct htc_endpoint_stats) / sizeof(u32) *
+		(25 + ENDPOINT_MAX * 11);
+	buf = kmalloc(buf_len, GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
 
-#घोषणा EPSTAT(name)							\
-	करो अणु								\
-		len = prपूर्णांक_endpoपूर्णांक_stat(target, buf, buf_len, len,	\
-					  दुरत्व(काष्ठा htc_endpoपूर्णांक_stats, \
+#define EPSTAT(name)							\
+	do {								\
+		len = print_endpoint_stat(target, buf, buf_len, len,	\
+					  offsetof(struct htc_endpoint_stats, \
 						   name),		\
 					  #name);			\
-	पूर्ण जबतक (0)
+	} while (0)
 
 	EPSTAT(cred_low_indicate);
 	EPSTAT(tx_issued);
@@ -824,989 +823,989 @@ out:
 	EPSTAT(rx_bundle_from_hdr);
 	EPSTAT(rx_alloc_thresh_hit);
 	EPSTAT(rxalloc_thresh_byte);
-#अघोषित EPSTAT
+#undef EPSTAT
 
-	अगर (len > buf_len)
+	if (len > buf_len)
 		len = buf_len;
 
-	ret_cnt = simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, len);
-	kमुक्त(buf);
-	वापस ret_cnt;
-पूर्ण
+	ret_cnt = simple_read_from_buffer(user_buf, count, ppos, buf, len);
+	kfree(buf);
+	return ret_cnt;
+}
 
-अटल sमाप_प्रकार ath6kl_endpoपूर्णांक_stats_ग_लिखो(काष्ठा file *file,
-					   स्थिर अक्षर __user *user_buf,
-					   माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा ath6kl *ar = file->निजी_data;
-	काष्ठा htc_target *target = ar->htc_target;
-	पूर्णांक ret, i;
+static ssize_t ath6kl_endpoint_stats_write(struct file *file,
+					   const char __user *user_buf,
+					   size_t count, loff_t *ppos)
+{
+	struct ath6kl *ar = file->private_data;
+	struct htc_target *target = ar->htc_target;
+	int ret, i;
 	u32 val;
-	काष्ठा htc_endpoपूर्णांक_stats *ep_st;
+	struct htc_endpoint_stats *ep_st;
 
 	ret = kstrtou32_from_user(user_buf, count, 0, &val);
-	अगर (ret)
-		वापस ret;
-	अगर (val == 0) अणु
-		क्रम (i = 0; i < ENDPOपूर्णांक_उच्च; i++) अणु
-			ep_st = &target->endpoपूर्णांक[i].ep_st;
-			स_रखो(ep_st, 0, माप(*ep_st));
-		पूर्ण
-	पूर्ण
+	if (ret)
+		return ret;
+	if (val == 0) {
+		for (i = 0; i < ENDPOINT_MAX; i++) {
+			ep_st = &target->endpoint[i].ep_st;
+			memset(ep_st, 0, sizeof(*ep_st));
+		}
+	}
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा file_operations fops_endpoपूर्णांक_stats = अणु
-	.खोलो = simple_खोलो,
-	.पढ़ो = ath6kl_endpoपूर्णांक_stats_पढ़ो,
-	.ग_लिखो = ath6kl_endpoपूर्णांक_stats_ग_लिखो,
+static const struct file_operations fops_endpoint_stats = {
+	.open = simple_open,
+	.read = ath6kl_endpoint_stats_read,
+	.write = ath6kl_endpoint_stats_write,
 	.owner = THIS_MODULE,
-	.llseek = शेष_llseek,
-पूर्ण;
+	.llseek = default_llseek,
+};
 
-अटल अचिन्हित दीर्घ ath6kl_get_num_reg(व्योम)
-अणु
-	पूर्णांक i;
-	अचिन्हित दीर्घ n_reg = 0;
+static unsigned long ath6kl_get_num_reg(void)
+{
+	int i;
+	unsigned long n_reg = 0;
 
-	क्रम (i = 0; i < ARRAY_SIZE(diag_reg); i++)
+	for (i = 0; i < ARRAY_SIZE(diag_reg); i++)
 		n_reg = n_reg +
 		     (diag_reg[i].reg_end - diag_reg[i].reg_start) / 4 + 1;
 
-	वापस n_reg;
-पूर्ण
+	return n_reg;
+}
 
-अटल bool ath6kl_dbg_is_diag_reg_valid(u32 reg_addr)
-अणु
-	पूर्णांक i;
+static bool ath6kl_dbg_is_diag_reg_valid(u32 reg_addr)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(diag_reg); i++) अणु
-		अगर (reg_addr >= diag_reg[i].reg_start &&
+	for (i = 0; i < ARRAY_SIZE(diag_reg); i++) {
+		if (reg_addr >= diag_reg[i].reg_start &&
 		    reg_addr <= diag_reg[i].reg_end)
-			वापस true;
-	पूर्ण
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल sमाप_प्रकार ath6kl_regपढ़ो_पढ़ो(काष्ठा file *file, अक्षर __user *user_buf,
-				    माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा ath6kl *ar = file->निजी_data;
+static ssize_t ath6kl_regread_read(struct file *file, char __user *user_buf,
+				    size_t count, loff_t *ppos)
+{
+	struct ath6kl *ar = file->private_data;
 	u8 buf[50];
-	अचिन्हित पूर्णांक len = 0;
+	unsigned int len = 0;
 
-	अगर (ar->debug.dbgfs_diag_reg)
-		len += scnम_लिखो(buf + len, माप(buf) - len, "0x%x\n",
+	if (ar->debug.dbgfs_diag_reg)
+		len += scnprintf(buf + len, sizeof(buf) - len, "0x%x\n",
 				ar->debug.dbgfs_diag_reg);
-	अन्यथा
-		len += scnम_लिखो(buf + len, माप(buf) - len,
+	else
+		len += scnprintf(buf + len, sizeof(buf) - len,
 				 "All diag registers\n");
 
-	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, len);
-पूर्ण
+	return simple_read_from_buffer(user_buf, count, ppos, buf, len);
+}
 
-अटल sमाप_प्रकार ath6kl_regपढ़ो_ग_लिखो(काष्ठा file *file,
-				    स्थिर अक्षर __user *user_buf,
-				    माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा ath6kl *ar = file->निजी_data;
-	अचिन्हित दीर्घ reg_addr;
+static ssize_t ath6kl_regread_write(struct file *file,
+				    const char __user *user_buf,
+				    size_t count, loff_t *ppos)
+{
+	struct ath6kl *ar = file->private_data;
+	unsigned long reg_addr;
 
-	अगर (kम_से_अदीर्घ_from_user(user_buf, count, 0, &reg_addr))
-		वापस -EINVAL;
+	if (kstrtoul_from_user(user_buf, count, 0, &reg_addr))
+		return -EINVAL;
 
-	अगर ((reg_addr % 4) != 0)
-		वापस -EINVAL;
+	if ((reg_addr % 4) != 0)
+		return -EINVAL;
 
-	अगर (reg_addr && !ath6kl_dbg_is_diag_reg_valid(reg_addr))
-		वापस -EINVAL;
+	if (reg_addr && !ath6kl_dbg_is_diag_reg_valid(reg_addr))
+		return -EINVAL;
 
 	ar->debug.dbgfs_diag_reg = reg_addr;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा file_operations fops_diag_reg_पढ़ो = अणु
-	.पढ़ो = ath6kl_regपढ़ो_पढ़ो,
-	.ग_लिखो = ath6kl_regपढ़ो_ग_लिखो,
-	.खोलो = simple_खोलो,
+static const struct file_operations fops_diag_reg_read = {
+	.read = ath6kl_regread_read,
+	.write = ath6kl_regread_write,
+	.open = simple_open,
 	.owner = THIS_MODULE,
-	.llseek = शेष_llseek,
-पूर्ण;
+	.llseek = default_llseek,
+};
 
-अटल पूर्णांक ath6kl_regdump_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा ath6kl *ar = inode->i_निजी;
+static int ath6kl_regdump_open(struct inode *inode, struct file *file)
+{
+	struct ath6kl *ar = inode->i_private;
 	u8 *buf;
-	अचिन्हित दीर्घ पूर्णांक reg_len;
-	अचिन्हित पूर्णांक len = 0, n_reg;
+	unsigned long int reg_len;
+	unsigned int len = 0, n_reg;
 	u32 addr;
 	__le32 reg_val;
-	पूर्णांक i, status;
+	int i, status;
 
-	/* Dump all the रेजिस्टरs अगर no रेजिस्टर is specअगरied */
-	अगर (!ar->debug.dbgfs_diag_reg)
+	/* Dump all the registers if no register is specified */
+	if (!ar->debug.dbgfs_diag_reg)
 		n_reg = ath6kl_get_num_reg();
-	अन्यथा
+	else
 		n_reg = 1;
 
 	reg_len = n_reg * REG_OUTPUT_LEN_PER_LINE;
-	अगर (n_reg > 1)
+	if (n_reg > 1)
 		reg_len += REGTYPE_STR_LEN;
 
-	buf = vदो_स्मृति(reg_len);
-	अगर (!buf)
-		वापस -ENOMEM;
+	buf = vmalloc(reg_len);
+	if (!buf)
+		return -ENOMEM;
 
-	अगर (n_reg == 1) अणु
+	if (n_reg == 1) {
 		addr = ar->debug.dbgfs_diag_reg;
 
-		status = ath6kl_diag_पढ़ो32(ar,
+		status = ath6kl_diag_read32(ar,
 				TARG_VTOP(ar->target_type, addr),
 				(u32 *)&reg_val);
-		अगर (status)
-			जाओ fail_reg_पढ़ो;
+		if (status)
+			goto fail_reg_read;
 
-		len += scnम_लिखो(buf + len, reg_len - len,
+		len += scnprintf(buf + len, reg_len - len,
 				 "0x%06x 0x%08x\n", addr, le32_to_cpu(reg_val));
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(diag_reg); i++) अणु
-		len += scnम_लिखो(buf + len, reg_len - len,
+	for (i = 0; i < ARRAY_SIZE(diag_reg); i++) {
+		len += scnprintf(buf + len, reg_len - len,
 				"%s\n", diag_reg[i].reg_info);
-		क्रम (addr = diag_reg[i].reg_start;
-		     addr <= diag_reg[i].reg_end; addr += 4) अणु
-			status = ath6kl_diag_पढ़ो32(ar,
+		for (addr = diag_reg[i].reg_start;
+		     addr <= diag_reg[i].reg_end; addr += 4) {
+			status = ath6kl_diag_read32(ar,
 					TARG_VTOP(ar->target_type, addr),
 					(u32 *)&reg_val);
-			अगर (status)
-				जाओ fail_reg_पढ़ो;
+			if (status)
+				goto fail_reg_read;
 
-			len += scnम_लिखो(buf + len, reg_len - len,
+			len += scnprintf(buf + len, reg_len - len,
 					"0x%06x 0x%08x\n",
 					addr, le32_to_cpu(reg_val));
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-करोne:
-	file->निजी_data = buf;
-	वापस 0;
+done:
+	file->private_data = buf;
+	return 0;
 
-fail_reg_पढ़ो:
+fail_reg_read:
 	ath6kl_warn("Unable to read memory:%u\n", addr);
-	vमुक्त(buf);
-	वापस -EIO;
-पूर्ण
+	vfree(buf);
+	return -EIO;
+}
 
-अटल sमाप_प्रकार ath6kl_regdump_पढ़ो(काष्ठा file *file, अक्षर __user *user_buf,
-				  माप_प्रकार count, loff_t *ppos)
-अणु
-	u8 *buf = file->निजी_data;
-	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, म_माप(buf));
-पूर्ण
+static ssize_t ath6kl_regdump_read(struct file *file, char __user *user_buf,
+				  size_t count, loff_t *ppos)
+{
+	u8 *buf = file->private_data;
+	return simple_read_from_buffer(user_buf, count, ppos, buf, strlen(buf));
+}
 
-अटल पूर्णांक ath6kl_regdump_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	vमुक्त(file->निजी_data);
-	वापस 0;
-पूर्ण
+static int ath6kl_regdump_release(struct inode *inode, struct file *file)
+{
+	vfree(file->private_data);
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations fops_reg_dump = अणु
-	.खोलो = ath6kl_regdump_खोलो,
-	.पढ़ो = ath6kl_regdump_पढ़ो,
+static const struct file_operations fops_reg_dump = {
+	.open = ath6kl_regdump_open,
+	.read = ath6kl_regdump_read,
 	.release = ath6kl_regdump_release,
 	.owner = THIS_MODULE,
-	.llseek = शेष_llseek,
-पूर्ण;
+	.llseek = default_llseek,
+};
 
-अटल sमाप_प्रकार ath6kl_lrssi_roam_ग_लिखो(काष्ठा file *file,
-				       स्थिर अक्षर __user *user_buf,
-				       माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा ath6kl *ar = file->निजी_data;
-	अचिन्हित दीर्घ lrssi_roam_threshold;
-	पूर्णांक ret;
+static ssize_t ath6kl_lrssi_roam_write(struct file *file,
+				       const char __user *user_buf,
+				       size_t count, loff_t *ppos)
+{
+	struct ath6kl *ar = file->private_data;
+	unsigned long lrssi_roam_threshold;
+	int ret;
 
-	अगर (kम_से_अदीर्घ_from_user(user_buf, count, 0, &lrssi_roam_threshold))
-		वापस -EINVAL;
+	if (kstrtoul_from_user(user_buf, count, 0, &lrssi_roam_threshold))
+		return -EINVAL;
 
 	ar->lrssi_roam_threshold = lrssi_roam_threshold;
 
 	ret = ath6kl_wmi_set_roam_lrssi_cmd(ar->wmi, ar->lrssi_roam_threshold);
 
-	अगर (ret)
-		वापस ret;
-	वापस count;
-पूर्ण
+	if (ret)
+		return ret;
+	return count;
+}
 
-अटल sमाप_प्रकार ath6kl_lrssi_roam_पढ़ो(काष्ठा file *file,
-				      अक्षर __user *user_buf,
-				      माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा ath6kl *ar = file->निजी_data;
-	अक्षर buf[32];
-	अचिन्हित पूर्णांक len;
+static ssize_t ath6kl_lrssi_roam_read(struct file *file,
+				      char __user *user_buf,
+				      size_t count, loff_t *ppos)
+{
+	struct ath6kl *ar = file->private_data;
+	char buf[32];
+	unsigned int len;
 
-	len = snम_लिखो(buf, माप(buf), "%u\n", ar->lrssi_roam_threshold);
+	len = snprintf(buf, sizeof(buf), "%u\n", ar->lrssi_roam_threshold);
 
-	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, len);
-पूर्ण
+	return simple_read_from_buffer(user_buf, count, ppos, buf, len);
+}
 
-अटल स्थिर काष्ठा file_operations fops_lrssi_roam_threshold = अणु
-	.पढ़ो = ath6kl_lrssi_roam_पढ़ो,
-	.ग_लिखो = ath6kl_lrssi_roam_ग_लिखो,
-	.खोलो = simple_खोलो,
+static const struct file_operations fops_lrssi_roam_threshold = {
+	.read = ath6kl_lrssi_roam_read,
+	.write = ath6kl_lrssi_roam_write,
+	.open = simple_open,
 	.owner = THIS_MODULE,
-	.llseek = शेष_llseek,
-पूर्ण;
+	.llseek = default_llseek,
+};
 
-अटल sमाप_प्रकार ath6kl_regग_लिखो_पढ़ो(काष्ठा file *file,
-				    अक्षर __user *user_buf,
-				    माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा ath6kl *ar = file->निजी_data;
+static ssize_t ath6kl_regwrite_read(struct file *file,
+				    char __user *user_buf,
+				    size_t count, loff_t *ppos)
+{
+	struct ath6kl *ar = file->private_data;
 	u8 buf[32];
-	अचिन्हित पूर्णांक len = 0;
+	unsigned int len = 0;
 
-	len = scnम_लिखो(buf, माप(buf), "Addr: 0x%x Val: 0x%x\n",
+	len = scnprintf(buf, sizeof(buf), "Addr: 0x%x Val: 0x%x\n",
 			ar->debug.diag_reg_addr_wr, ar->debug.diag_reg_val_wr);
 
-	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, len);
-पूर्ण
+	return simple_read_from_buffer(user_buf, count, ppos, buf, len);
+}
 
-अटल sमाप_प्रकार ath6kl_regग_लिखो_ग_लिखो(काष्ठा file *file,
-				     स्थिर अक्षर __user *user_buf,
-				     माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा ath6kl *ar = file->निजी_data;
-	अक्षर buf[32];
-	अक्षर *sptr, *token;
-	अचिन्हित पूर्णांक len = 0;
+static ssize_t ath6kl_regwrite_write(struct file *file,
+				     const char __user *user_buf,
+				     size_t count, loff_t *ppos)
+{
+	struct ath6kl *ar = file->private_data;
+	char buf[32];
+	char *sptr, *token;
+	unsigned int len = 0;
 	u32 reg_addr, reg_val;
 
-	len = min(count, माप(buf) - 1);
-	अगर (copy_from_user(buf, user_buf, len))
-		वापस -EFAULT;
+	len = min(count, sizeof(buf) - 1);
+	if (copy_from_user(buf, user_buf, len))
+		return -EFAULT;
 
 	buf[len] = '\0';
 	sptr = buf;
 
 	token = strsep(&sptr, "=");
-	अगर (!token)
-		वापस -EINVAL;
+	if (!token)
+		return -EINVAL;
 
-	अगर (kstrtou32(token, 0, &reg_addr))
-		वापस -EINVAL;
+	if (kstrtou32(token, 0, &reg_addr))
+		return -EINVAL;
 
-	अगर (!ath6kl_dbg_is_diag_reg_valid(reg_addr))
-		वापस -EINVAL;
+	if (!ath6kl_dbg_is_diag_reg_valid(reg_addr))
+		return -EINVAL;
 
-	अगर (kstrtou32(sptr, 0, &reg_val))
-		वापस -EINVAL;
+	if (kstrtou32(sptr, 0, &reg_val))
+		return -EINVAL;
 
 	ar->debug.diag_reg_addr_wr = reg_addr;
 	ar->debug.diag_reg_val_wr = reg_val;
 
-	अगर (ath6kl_diag_ग_लिखो32(ar, ar->debug.diag_reg_addr_wr,
+	if (ath6kl_diag_write32(ar, ar->debug.diag_reg_addr_wr,
 				cpu_to_le32(ar->debug.diag_reg_val_wr)))
-		वापस -EIO;
+		return -EIO;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा file_operations fops_diag_reg_ग_लिखो = अणु
-	.पढ़ो = ath6kl_regग_लिखो_पढ़ो,
-	.ग_लिखो = ath6kl_regग_लिखो_ग_लिखो,
-	.खोलो = simple_खोलो,
+static const struct file_operations fops_diag_reg_write = {
+	.read = ath6kl_regwrite_read,
+	.write = ath6kl_regwrite_write,
+	.open = simple_open,
 	.owner = THIS_MODULE,
-	.llseek = शेष_llseek,
-पूर्ण;
+	.llseek = default_llseek,
+};
 
-पूर्णांक ath6kl_debug_roam_tbl_event(काष्ठा ath6kl *ar, स्थिर व्योम *buf,
-				माप_प्रकार len)
-अणु
-	स्थिर काष्ठा wmi_target_roam_tbl *tbl;
+int ath6kl_debug_roam_tbl_event(struct ath6kl *ar, const void *buf,
+				size_t len)
+{
+	const struct wmi_target_roam_tbl *tbl;
 	u16 num_entries;
 
-	अगर (len < माप(*tbl))
-		वापस -EINVAL;
+	if (len < sizeof(*tbl))
+		return -EINVAL;
 
-	tbl = (स्थिर काष्ठा wmi_target_roam_tbl *) buf;
+	tbl = (const struct wmi_target_roam_tbl *) buf;
 	num_entries = le16_to_cpu(tbl->num_entries);
-	अगर (काष्ठा_size(tbl, info, num_entries) > len)
-		वापस -EINVAL;
+	if (struct_size(tbl, info, num_entries) > len)
+		return -EINVAL;
 
-	अगर (ar->debug.roam_tbl == शून्य ||
-	    ar->debug.roam_tbl_len < (अचिन्हित पूर्णांक) len) अणु
-		kमुक्त(ar->debug.roam_tbl);
-		ar->debug.roam_tbl = kदो_स्मृति(len, GFP_ATOMIC);
-		अगर (ar->debug.roam_tbl == शून्य)
-			वापस -ENOMEM;
-	पूर्ण
+	if (ar->debug.roam_tbl == NULL ||
+	    ar->debug.roam_tbl_len < (unsigned int) len) {
+		kfree(ar->debug.roam_tbl);
+		ar->debug.roam_tbl = kmalloc(len, GFP_ATOMIC);
+		if (ar->debug.roam_tbl == NULL)
+			return -ENOMEM;
+	}
 
-	स_नकल(ar->debug.roam_tbl, buf, len);
+	memcpy(ar->debug.roam_tbl, buf, len);
 	ar->debug.roam_tbl_len = len;
 
-	अगर (test_bit(ROAM_TBL_PEND, &ar->flag)) अणु
+	if (test_bit(ROAM_TBL_PEND, &ar->flag)) {
 		clear_bit(ROAM_TBL_PEND, &ar->flag);
 		wake_up(&ar->event_wq);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार ath6kl_roam_table_पढ़ो(काष्ठा file *file, अक्षर __user *user_buf,
-				      माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा ath6kl *ar = file->निजी_data;
-	पूर्णांक ret;
-	दीर्घ left;
-	काष्ठा wmi_target_roam_tbl *tbl;
+static ssize_t ath6kl_roam_table_read(struct file *file, char __user *user_buf,
+				      size_t count, loff_t *ppos)
+{
+	struct ath6kl *ar = file->private_data;
+	int ret;
+	long left;
+	struct wmi_target_roam_tbl *tbl;
 	u16 num_entries, i;
-	अक्षर *buf;
-	अचिन्हित पूर्णांक len, buf_len;
-	sमाप_प्रकार ret_cnt;
+	char *buf;
+	unsigned int len, buf_len;
+	ssize_t ret_cnt;
 
-	अगर (करोwn_पूर्णांकerruptible(&ar->sem))
-		वापस -EBUSY;
+	if (down_interruptible(&ar->sem))
+		return -EBUSY;
 
 	set_bit(ROAM_TBL_PEND, &ar->flag);
 
 	ret = ath6kl_wmi_get_roam_tbl_cmd(ar->wmi);
-	अगर (ret) अणु
+	if (ret) {
 		up(&ar->sem);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	left = रुको_event_पूर्णांकerruptible_समयout(
+	left = wait_event_interruptible_timeout(
 		ar->event_wq, !test_bit(ROAM_TBL_PEND, &ar->flag), WMI_TIMEOUT);
 	up(&ar->sem);
 
-	अगर (left <= 0)
-		वापस -ETIMEDOUT;
+	if (left <= 0)
+		return -ETIMEDOUT;
 
-	अगर (ar->debug.roam_tbl == शून्य)
-		वापस -ENOMEM;
+	if (ar->debug.roam_tbl == NULL)
+		return -ENOMEM;
 
-	tbl = (काष्ठा wmi_target_roam_tbl *) ar->debug.roam_tbl;
+	tbl = (struct wmi_target_roam_tbl *) ar->debug.roam_tbl;
 	num_entries = le16_to_cpu(tbl->num_entries);
 
 	buf_len = 100 + num_entries * 100;
 	buf = kzalloc(buf_len, GFP_KERNEL);
-	अगर (buf == शून्य)
-		वापस -ENOMEM;
+	if (buf == NULL)
+		return -ENOMEM;
 	len = 0;
-	len += scnम_लिखो(buf + len, buf_len - len,
+	len += scnprintf(buf + len, buf_len - len,
 			 "roam_mode=%u\n\n"
 			 "# roam_util bssid rssi rssidt last_rssi util bias\n",
 			 le16_to_cpu(tbl->roam_mode));
 
-	क्रम (i = 0; i < num_entries; i++) अणु
-		काष्ठा wmi_bss_roam_info *info = &tbl->info[i];
-		len += scnम_लिखो(buf + len, buf_len - len,
+	for (i = 0; i < num_entries; i++) {
+		struct wmi_bss_roam_info *info = &tbl->info[i];
+		len += scnprintf(buf + len, buf_len - len,
 				 "%d %pM %d %d %d %d %d\n",
 				 a_sle32_to_cpu(info->roam_util), info->bssid,
 				 info->rssi, info->rssidt, info->last_rssi,
 				 info->util, info->bias);
-	पूर्ण
+	}
 
-	अगर (len > buf_len)
+	if (len > buf_len)
 		len = buf_len;
 
-	ret_cnt = simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, len);
+	ret_cnt = simple_read_from_buffer(user_buf, count, ppos, buf, len);
 
-	kमुक्त(buf);
-	वापस ret_cnt;
-पूर्ण
+	kfree(buf);
+	return ret_cnt;
+}
 
-अटल स्थिर काष्ठा file_operations fops_roam_table = अणु
-	.पढ़ो = ath6kl_roam_table_पढ़ो,
-	.खोलो = simple_खोलो,
+static const struct file_operations fops_roam_table = {
+	.read = ath6kl_roam_table_read,
+	.open = simple_open,
 	.owner = THIS_MODULE,
-	.llseek = शेष_llseek,
-पूर्ण;
+	.llseek = default_llseek,
+};
 
-अटल sमाप_प्रकार ath6kl_क्रमce_roam_ग_लिखो(काष्ठा file *file,
-				       स्थिर अक्षर __user *user_buf,
-				       माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा ath6kl *ar = file->निजी_data;
-	पूर्णांक ret;
-	अक्षर buf[20];
-	माप_प्रकार len;
+static ssize_t ath6kl_force_roam_write(struct file *file,
+				       const char __user *user_buf,
+				       size_t count, loff_t *ppos)
+{
+	struct ath6kl *ar = file->private_data;
+	int ret;
+	char buf[20];
+	size_t len;
 	u8 bssid[ETH_ALEN];
 
-	len = min(count, माप(buf) - 1);
-	अगर (copy_from_user(buf, user_buf, len))
-		वापस -EFAULT;
+	len = min(count, sizeof(buf) - 1);
+	if (copy_from_user(buf, user_buf, len))
+		return -EFAULT;
 	buf[len] = '\0';
 
-	अगर (!mac_pton(buf, bssid))
-		वापस -EINVAL;
+	if (!mac_pton(buf, bssid))
+		return -EINVAL;
 
-	ret = ath6kl_wmi_क्रमce_roam_cmd(ar->wmi, bssid);
-	अगर (ret)
-		वापस ret;
+	ret = ath6kl_wmi_force_roam_cmd(ar->wmi, bssid);
+	if (ret)
+		return ret;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा file_operations fops_क्रमce_roam = अणु
-	.ग_लिखो = ath6kl_क्रमce_roam_ग_लिखो,
-	.खोलो = simple_खोलो,
+static const struct file_operations fops_force_roam = {
+	.write = ath6kl_force_roam_write,
+	.open = simple_open,
 	.owner = THIS_MODULE,
-	.llseek = शेष_llseek,
-पूर्ण;
+	.llseek = default_llseek,
+};
 
-अटल sमाप_प्रकार ath6kl_roam_mode_ग_लिखो(काष्ठा file *file,
-				      स्थिर अक्षर __user *user_buf,
-				      माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा ath6kl *ar = file->निजी_data;
-	पूर्णांक ret;
-	अक्षर buf[20];
-	माप_प्रकार len;
-	क्रमागत wmi_roam_mode mode;
+static ssize_t ath6kl_roam_mode_write(struct file *file,
+				      const char __user *user_buf,
+				      size_t count, loff_t *ppos)
+{
+	struct ath6kl *ar = file->private_data;
+	int ret;
+	char buf[20];
+	size_t len;
+	enum wmi_roam_mode mode;
 
-	len = min(count, माप(buf) - 1);
-	अगर (copy_from_user(buf, user_buf, len))
-		वापस -EFAULT;
+	len = min(count, sizeof(buf) - 1);
+	if (copy_from_user(buf, user_buf, len))
+		return -EFAULT;
 	buf[len] = '\0';
-	अगर (len > 0 && buf[len - 1] == '\n')
+	if (len > 0 && buf[len - 1] == '\n')
 		buf[len - 1] = '\0';
 
-	अगर (strहालcmp(buf, "default") == 0)
+	if (strcasecmp(buf, "default") == 0)
 		mode = WMI_DEFAULT_ROAM_MODE;
-	अन्यथा अगर (strहालcmp(buf, "bssbias") == 0)
+	else if (strcasecmp(buf, "bssbias") == 0)
 		mode = WMI_HOST_BIAS_ROAM_MODE;
-	अन्यथा अगर (strहालcmp(buf, "lock") == 0)
+	else if (strcasecmp(buf, "lock") == 0)
 		mode = WMI_LOCK_BSS_MODE;
-	अन्यथा
-		वापस -EINVAL;
+	else
+		return -EINVAL;
 
 	ret = ath6kl_wmi_set_roam_mode_cmd(ar->wmi, mode);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा file_operations fops_roam_mode = अणु
-	.ग_लिखो = ath6kl_roam_mode_ग_लिखो,
-	.खोलो = simple_खोलो,
+static const struct file_operations fops_roam_mode = {
+	.write = ath6kl_roam_mode_write,
+	.open = simple_open,
 	.owner = THIS_MODULE,
-	.llseek = शेष_llseek,
-पूर्ण;
+	.llseek = default_llseek,
+};
 
-व्योम ath6kl_debug_set_keepalive(काष्ठा ath6kl *ar, u8 keepalive)
-अणु
+void ath6kl_debug_set_keepalive(struct ath6kl *ar, u8 keepalive)
+{
 	ar->debug.keepalive = keepalive;
-पूर्ण
+}
 
-अटल sमाप_प्रकार ath6kl_keepalive_पढ़ो(काष्ठा file *file, अक्षर __user *user_buf,
-				     माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा ath6kl *ar = file->निजी_data;
-	अक्षर buf[16];
-	पूर्णांक len;
+static ssize_t ath6kl_keepalive_read(struct file *file, char __user *user_buf,
+				     size_t count, loff_t *ppos)
+{
+	struct ath6kl *ar = file->private_data;
+	char buf[16];
+	int len;
 
-	len = snम_लिखो(buf, माप(buf), "%u\n", ar->debug.keepalive);
+	len = snprintf(buf, sizeof(buf), "%u\n", ar->debug.keepalive);
 
-	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, len);
-पूर्ण
+	return simple_read_from_buffer(user_buf, count, ppos, buf, len);
+}
 
-अटल sमाप_प्रकार ath6kl_keepalive_ग_लिखो(काष्ठा file *file,
-				      स्थिर अक्षर __user *user_buf,
-				      माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा ath6kl *ar = file->निजी_data;
-	पूर्णांक ret;
+static ssize_t ath6kl_keepalive_write(struct file *file,
+				      const char __user *user_buf,
+				      size_t count, loff_t *ppos)
+{
+	struct ath6kl *ar = file->private_data;
+	int ret;
 	u8 val;
 
 	ret = kstrtou8_from_user(user_buf, count, 0, &val);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = ath6kl_wmi_set_keepalive_cmd(ar->wmi, 0, val);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा file_operations fops_keepalive = अणु
-	.खोलो = simple_खोलो,
-	.पढ़ो = ath6kl_keepalive_पढ़ो,
-	.ग_लिखो = ath6kl_keepalive_ग_लिखो,
+static const struct file_operations fops_keepalive = {
+	.open = simple_open,
+	.read = ath6kl_keepalive_read,
+	.write = ath6kl_keepalive_write,
 	.owner = THIS_MODULE,
-	.llseek = शेष_llseek,
-पूर्ण;
+	.llseek = default_llseek,
+};
 
-व्योम ath6kl_debug_set_disconnect_समयout(काष्ठा ath6kl *ar, u8 समयout)
-अणु
-	ar->debug.disc_समयout = समयout;
-पूर्ण
+void ath6kl_debug_set_disconnect_timeout(struct ath6kl *ar, u8 timeout)
+{
+	ar->debug.disc_timeout = timeout;
+}
 
-अटल sमाप_प्रकार ath6kl_disconnect_समयout_पढ़ो(काष्ठा file *file,
-					      अक्षर __user *user_buf,
-					      माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा ath6kl *ar = file->निजी_data;
-	अक्षर buf[16];
-	पूर्णांक len;
+static ssize_t ath6kl_disconnect_timeout_read(struct file *file,
+					      char __user *user_buf,
+					      size_t count, loff_t *ppos)
+{
+	struct ath6kl *ar = file->private_data;
+	char buf[16];
+	int len;
 
-	len = snम_लिखो(buf, माप(buf), "%u\n", ar->debug.disc_समयout);
+	len = snprintf(buf, sizeof(buf), "%u\n", ar->debug.disc_timeout);
 
-	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, len);
-पूर्ण
+	return simple_read_from_buffer(user_buf, count, ppos, buf, len);
+}
 
-अटल sमाप_प्रकार ath6kl_disconnect_समयout_ग_लिखो(काष्ठा file *file,
-					       स्थिर अक्षर __user *user_buf,
-					       माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा ath6kl *ar = file->निजी_data;
-	पूर्णांक ret;
+static ssize_t ath6kl_disconnect_timeout_write(struct file *file,
+					       const char __user *user_buf,
+					       size_t count, loff_t *ppos)
+{
+	struct ath6kl *ar = file->private_data;
+	int ret;
 	u8 val;
 
 	ret = kstrtou8_from_user(user_buf, count, 0, &val);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = ath6kl_wmi_disस_समयout_cmd(ar->wmi, 0, val);
-	अगर (ret)
-		वापस ret;
+	ret = ath6kl_wmi_disctimeout_cmd(ar->wmi, 0, val);
+	if (ret)
+		return ret;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा file_operations fops_disconnect_समयout = अणु
-	.खोलो = simple_खोलो,
-	.पढ़ो = ath6kl_disconnect_समयout_पढ़ो,
-	.ग_लिखो = ath6kl_disconnect_समयout_ग_लिखो,
+static const struct file_operations fops_disconnect_timeout = {
+	.open = simple_open,
+	.read = ath6kl_disconnect_timeout_read,
+	.write = ath6kl_disconnect_timeout_write,
 	.owner = THIS_MODULE,
-	.llseek = शेष_llseek,
-पूर्ण;
+	.llseek = default_llseek,
+};
 
-अटल sमाप_प्रकार ath6kl_create_qos_ग_लिखो(काष्ठा file *file,
-						स्थिर अक्षर __user *user_buf,
-						माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा ath6kl *ar = file->निजी_data;
-	काष्ठा ath6kl_vअगर *vअगर;
-	अक्षर buf[200];
-	sमाप_प्रकार len;
-	अक्षर *sptr, *token;
-	काष्ठा wmi_create_pstream_cmd pstream;
+static ssize_t ath6kl_create_qos_write(struct file *file,
+						const char __user *user_buf,
+						size_t count, loff_t *ppos)
+{
+	struct ath6kl *ar = file->private_data;
+	struct ath6kl_vif *vif;
+	char buf[200];
+	ssize_t len;
+	char *sptr, *token;
+	struct wmi_create_pstream_cmd pstream;
 	u32 val32;
 	u16 val16;
 
-	vअगर = ath6kl_vअगर_first(ar);
-	अगर (!vअगर)
-		वापस -EIO;
+	vif = ath6kl_vif_first(ar);
+	if (!vif)
+		return -EIO;
 
-	len = min(count, माप(buf) - 1);
-	अगर (copy_from_user(buf, user_buf, len))
-		वापस -EFAULT;
+	len = min(count, sizeof(buf) - 1);
+	if (copy_from_user(buf, user_buf, len))
+		return -EFAULT;
 	buf[len] = '\0';
 	sptr = buf;
 
 	token = strsep(&sptr, " ");
-	अगर (!token)
-		वापस -EINVAL;
-	अगर (kstrtou8(token, 0, &pstream.user_pri))
-		वापस -EINVAL;
+	if (!token)
+		return -EINVAL;
+	if (kstrtou8(token, 0, &pstream.user_pri))
+		return -EINVAL;
 
 	token = strsep(&sptr, " ");
-	अगर (!token)
-		वापस -EINVAL;
-	अगर (kstrtou8(token, 0, &pstream.traffic_direc))
-		वापस -EINVAL;
+	if (!token)
+		return -EINVAL;
+	if (kstrtou8(token, 0, &pstream.traffic_direc))
+		return -EINVAL;
 
 	token = strsep(&sptr, " ");
-	अगर (!token)
-		वापस -EINVAL;
-	अगर (kstrtou8(token, 0, &pstream.traffic_class))
-		वापस -EINVAL;
+	if (!token)
+		return -EINVAL;
+	if (kstrtou8(token, 0, &pstream.traffic_class))
+		return -EINVAL;
 
 	token = strsep(&sptr, " ");
-	अगर (!token)
-		वापस -EINVAL;
-	अगर (kstrtou8(token, 0, &pstream.traffic_type))
-		वापस -EINVAL;
+	if (!token)
+		return -EINVAL;
+	if (kstrtou8(token, 0, &pstream.traffic_type))
+		return -EINVAL;
 
 	token = strsep(&sptr, " ");
-	अगर (!token)
-		वापस -EINVAL;
-	अगर (kstrtou8(token, 0, &pstream.voice_psc_cap))
-		वापस -EINVAL;
+	if (!token)
+		return -EINVAL;
+	if (kstrtou8(token, 0, &pstream.voice_psc_cap))
+		return -EINVAL;
 
 	token = strsep(&sptr, " ");
-	अगर (!token)
-		वापस -EINVAL;
-	अगर (kstrtou32(token, 0, &val32))
-		वापस -EINVAL;
-	pstream.min_service_पूर्णांक = cpu_to_le32(val32);
+	if (!token)
+		return -EINVAL;
+	if (kstrtou32(token, 0, &val32))
+		return -EINVAL;
+	pstream.min_service_int = cpu_to_le32(val32);
 
 	token = strsep(&sptr, " ");
-	अगर (!token)
-		वापस -EINVAL;
-	अगर (kstrtou32(token, 0, &val32))
-		वापस -EINVAL;
-	pstream.max_service_पूर्णांक = cpu_to_le32(val32);
+	if (!token)
+		return -EINVAL;
+	if (kstrtou32(token, 0, &val32))
+		return -EINVAL;
+	pstream.max_service_int = cpu_to_le32(val32);
 
 	token = strsep(&sptr, " ");
-	अगर (!token)
-		वापस -EINVAL;
-	अगर (kstrtou32(token, 0, &val32))
-		वापस -EINVAL;
-	pstream.inactivity_पूर्णांक = cpu_to_le32(val32);
+	if (!token)
+		return -EINVAL;
+	if (kstrtou32(token, 0, &val32))
+		return -EINVAL;
+	pstream.inactivity_int = cpu_to_le32(val32);
 
 	token = strsep(&sptr, " ");
-	अगर (!token)
-		वापस -EINVAL;
-	अगर (kstrtou32(token, 0, &val32))
-		वापस -EINVAL;
-	pstream.suspension_पूर्णांक = cpu_to_le32(val32);
+	if (!token)
+		return -EINVAL;
+	if (kstrtou32(token, 0, &val32))
+		return -EINVAL;
+	pstream.suspension_int = cpu_to_le32(val32);
 
 	token = strsep(&sptr, " ");
-	अगर (!token)
-		वापस -EINVAL;
-	अगर (kstrtou32(token, 0, &val32))
-		वापस -EINVAL;
-	pstream.service_start_समय = cpu_to_le32(val32);
+	if (!token)
+		return -EINVAL;
+	if (kstrtou32(token, 0, &val32))
+		return -EINVAL;
+	pstream.service_start_time = cpu_to_le32(val32);
 
 	token = strsep(&sptr, " ");
-	अगर (!token)
-		वापस -EINVAL;
-	अगर (kstrtou8(token, 0, &pstream.tsid))
-		वापस -EINVAL;
+	if (!token)
+		return -EINVAL;
+	if (kstrtou8(token, 0, &pstream.tsid))
+		return -EINVAL;
 
 	token = strsep(&sptr, " ");
-	अगर (!token)
-		वापस -EINVAL;
-	अगर (kstrtou16(token, 0, &val16))
-		वापस -EINVAL;
+	if (!token)
+		return -EINVAL;
+	if (kstrtou16(token, 0, &val16))
+		return -EINVAL;
 	pstream.nominal_msdu = cpu_to_le16(val16);
 
 	token = strsep(&sptr, " ");
-	अगर (!token)
-		वापस -EINVAL;
-	अगर (kstrtou16(token, 0, &val16))
-		वापस -EINVAL;
+	if (!token)
+		return -EINVAL;
+	if (kstrtou16(token, 0, &val16))
+		return -EINVAL;
 	pstream.max_msdu = cpu_to_le16(val16);
 
 	token = strsep(&sptr, " ");
-	अगर (!token)
-		वापस -EINVAL;
-	अगर (kstrtou32(token, 0, &val32))
-		वापस -EINVAL;
+	if (!token)
+		return -EINVAL;
+	if (kstrtou32(token, 0, &val32))
+		return -EINVAL;
 	pstream.min_data_rate = cpu_to_le32(val32);
 
 	token = strsep(&sptr, " ");
-	अगर (!token)
-		वापस -EINVAL;
-	अगर (kstrtou32(token, 0, &val32))
-		वापस -EINVAL;
+	if (!token)
+		return -EINVAL;
+	if (kstrtou32(token, 0, &val32))
+		return -EINVAL;
 	pstream.mean_data_rate = cpu_to_le32(val32);
 
 	token = strsep(&sptr, " ");
-	अगर (!token)
-		वापस -EINVAL;
-	अगर (kstrtou32(token, 0, &val32))
-		वापस -EINVAL;
+	if (!token)
+		return -EINVAL;
+	if (kstrtou32(token, 0, &val32))
+		return -EINVAL;
 	pstream.peak_data_rate = cpu_to_le32(val32);
 
 	token = strsep(&sptr, " ");
-	अगर (!token)
-		वापस -EINVAL;
-	अगर (kstrtou32(token, 0, &val32))
-		वापस -EINVAL;
+	if (!token)
+		return -EINVAL;
+	if (kstrtou32(token, 0, &val32))
+		return -EINVAL;
 	pstream.max_burst_size = cpu_to_le32(val32);
 
 	token = strsep(&sptr, " ");
-	अगर (!token)
-		वापस -EINVAL;
-	अगर (kstrtou32(token, 0, &val32))
-		वापस -EINVAL;
+	if (!token)
+		return -EINVAL;
+	if (kstrtou32(token, 0, &val32))
+		return -EINVAL;
 	pstream.delay_bound = cpu_to_le32(val32);
 
 	token = strsep(&sptr, " ");
-	अगर (!token)
-		वापस -EINVAL;
-	अगर (kstrtou32(token, 0, &val32))
-		वापस -EINVAL;
+	if (!token)
+		return -EINVAL;
+	if (kstrtou32(token, 0, &val32))
+		return -EINVAL;
 	pstream.min_phy_rate = cpu_to_le32(val32);
 
 	token = strsep(&sptr, " ");
-	अगर (!token)
-		वापस -EINVAL;
-	अगर (kstrtou32(token, 0, &val32))
-		वापस -EINVAL;
+	if (!token)
+		return -EINVAL;
+	if (kstrtou32(token, 0, &val32))
+		return -EINVAL;
 	pstream.sba = cpu_to_le32(val32);
 
 	token = strsep(&sptr, " ");
-	अगर (!token)
-		वापस -EINVAL;
-	अगर (kstrtou32(token, 0, &val32))
-		वापस -EINVAL;
-	pstream.medium_समय = cpu_to_le32(val32);
+	if (!token)
+		return -EINVAL;
+	if (kstrtou32(token, 0, &val32))
+		return -EINVAL;
+	pstream.medium_time = cpu_to_le32(val32);
 
 	pstream.nominal_phy = le32_to_cpu(pstream.min_phy_rate) / 1000000;
 
-	ath6kl_wmi_create_pstream_cmd(ar->wmi, vअगर->fw_vअगर_idx, &pstream);
+	ath6kl_wmi_create_pstream_cmd(ar->wmi, vif->fw_vif_idx, &pstream);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा file_operations fops_create_qos = अणु
-	.ग_लिखो = ath6kl_create_qos_ग_लिखो,
-	.खोलो = simple_खोलो,
+static const struct file_operations fops_create_qos = {
+	.write = ath6kl_create_qos_write,
+	.open = simple_open,
 	.owner = THIS_MODULE,
-	.llseek = शेष_llseek,
-पूर्ण;
+	.llseek = default_llseek,
+};
 
-अटल sमाप_प्रकार ath6kl_delete_qos_ग_लिखो(काष्ठा file *file,
-				स्थिर अक्षर __user *user_buf,
-				माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा ath6kl *ar = file->निजी_data;
-	काष्ठा ath6kl_vअगर *vअगर;
-	अक्षर buf[100];
-	sमाप_प्रकार len;
-	अक्षर *sptr, *token;
+static ssize_t ath6kl_delete_qos_write(struct file *file,
+				const char __user *user_buf,
+				size_t count, loff_t *ppos)
+{
+	struct ath6kl *ar = file->private_data;
+	struct ath6kl_vif *vif;
+	char buf[100];
+	ssize_t len;
+	char *sptr, *token;
 	u8 traffic_class;
 	u8 tsid;
 
-	vअगर = ath6kl_vअगर_first(ar);
-	अगर (!vअगर)
-		वापस -EIO;
+	vif = ath6kl_vif_first(ar);
+	if (!vif)
+		return -EIO;
 
-	len = min(count, माप(buf) - 1);
-	अगर (copy_from_user(buf, user_buf, len))
-		वापस -EFAULT;
+	len = min(count, sizeof(buf) - 1);
+	if (copy_from_user(buf, user_buf, len))
+		return -EFAULT;
 	buf[len] = '\0';
 	sptr = buf;
 
 	token = strsep(&sptr, " ");
-	अगर (!token)
-		वापस -EINVAL;
-	अगर (kstrtou8(token, 0, &traffic_class))
-		वापस -EINVAL;
+	if (!token)
+		return -EINVAL;
+	if (kstrtou8(token, 0, &traffic_class))
+		return -EINVAL;
 
 	token = strsep(&sptr, " ");
-	अगर (!token)
-		वापस -EINVAL;
-	अगर (kstrtou8(token, 0, &tsid))
-		वापस -EINVAL;
+	if (!token)
+		return -EINVAL;
+	if (kstrtou8(token, 0, &tsid))
+		return -EINVAL;
 
-	ath6kl_wmi_delete_pstream_cmd(ar->wmi, vअगर->fw_vअगर_idx,
+	ath6kl_wmi_delete_pstream_cmd(ar->wmi, vif->fw_vif_idx,
 				      traffic_class, tsid);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा file_operations fops_delete_qos = अणु
-	.ग_लिखो = ath6kl_delete_qos_ग_लिखो,
-	.खोलो = simple_खोलो,
+static const struct file_operations fops_delete_qos = {
+	.write = ath6kl_delete_qos_write,
+	.open = simple_open,
 	.owner = THIS_MODULE,
-	.llseek = शेष_llseek,
-पूर्ण;
+	.llseek = default_llseek,
+};
 
-अटल sमाप_प्रकार ath6kl_bgscan_पूर्णांक_ग_लिखो(काष्ठा file *file,
-				स्थिर अक्षर __user *user_buf,
-				माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा ath6kl *ar = file->निजी_data;
-	काष्ठा ath6kl_vअगर *vअगर;
-	u16 bgscan_पूर्णांक;
-	अक्षर buf[32];
-	sमाप_प्रकार len;
+static ssize_t ath6kl_bgscan_int_write(struct file *file,
+				const char __user *user_buf,
+				size_t count, loff_t *ppos)
+{
+	struct ath6kl *ar = file->private_data;
+	struct ath6kl_vif *vif;
+	u16 bgscan_int;
+	char buf[32];
+	ssize_t len;
 
-	vअगर = ath6kl_vअगर_first(ar);
-	अगर (!vअगर)
-		वापस -EIO;
+	vif = ath6kl_vif_first(ar);
+	if (!vif)
+		return -EIO;
 
-	len = min(count, माप(buf) - 1);
-	अगर (copy_from_user(buf, user_buf, len))
-		वापस -EFAULT;
+	len = min(count, sizeof(buf) - 1);
+	if (copy_from_user(buf, user_buf, len))
+		return -EFAULT;
 
 	buf[len] = '\0';
-	अगर (kstrtou16(buf, 0, &bgscan_पूर्णांक))
-		वापस -EINVAL;
+	if (kstrtou16(buf, 0, &bgscan_int))
+		return -EINVAL;
 
-	अगर (bgscan_पूर्णांक == 0)
-		bgscan_पूर्णांक = 0xffff;
+	if (bgscan_int == 0)
+		bgscan_int = 0xffff;
 
-	vअगर->bg_scan_period = bgscan_पूर्णांक;
+	vif->bg_scan_period = bgscan_int;
 
-	ath6kl_wmi_scanparams_cmd(ar->wmi, 0, 0, 0, bgscan_पूर्णांक, 0, 0, 0, 3,
+	ath6kl_wmi_scanparams_cmd(ar->wmi, 0, 0, 0, bgscan_int, 0, 0, 0, 3,
 				  0, 0, 0);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा file_operations fops_bgscan_पूर्णांक = अणु
-	.ग_लिखो = ath6kl_bgscan_पूर्णांक_ग_लिखो,
-	.खोलो = simple_खोलो,
+static const struct file_operations fops_bgscan_int = {
+	.write = ath6kl_bgscan_int_write,
+	.open = simple_open,
 	.owner = THIS_MODULE,
-	.llseek = शेष_llseek,
-पूर्ण;
+	.llseek = default_llseek,
+};
 
-अटल sमाप_प्रकार ath6kl_listen_पूर्णांक_ग_लिखो(काष्ठा file *file,
-				       स्थिर अक्षर __user *user_buf,
-				       माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा ath6kl *ar = file->निजी_data;
-	काष्ठा ath6kl_vअगर *vअगर;
-	u16 listen_पूर्णांकerval;
-	अक्षर buf[32];
-	sमाप_प्रकार len;
+static ssize_t ath6kl_listen_int_write(struct file *file,
+				       const char __user *user_buf,
+				       size_t count, loff_t *ppos)
+{
+	struct ath6kl *ar = file->private_data;
+	struct ath6kl_vif *vif;
+	u16 listen_interval;
+	char buf[32];
+	ssize_t len;
 
-	vअगर = ath6kl_vअगर_first(ar);
-	अगर (!vअगर)
-		वापस -EIO;
+	vif = ath6kl_vif_first(ar);
+	if (!vif)
+		return -EIO;
 
-	len = min(count, माप(buf) - 1);
-	अगर (copy_from_user(buf, user_buf, len))
-		वापस -EFAULT;
+	len = min(count, sizeof(buf) - 1);
+	if (copy_from_user(buf, user_buf, len))
+		return -EFAULT;
 
 	buf[len] = '\0';
-	अगर (kstrtou16(buf, 0, &listen_पूर्णांकerval))
-		वापस -EINVAL;
+	if (kstrtou16(buf, 0, &listen_interval))
+		return -EINVAL;
 
-	अगर ((listen_पूर्णांकerval < 15) || (listen_पूर्णांकerval > 3000))
-		वापस -EINVAL;
+	if ((listen_interval < 15) || (listen_interval > 3000))
+		return -EINVAL;
 
-	vअगर->listen_पूर्णांकvl_t = listen_पूर्णांकerval;
-	ath6kl_wmi_listenपूर्णांकerval_cmd(ar->wmi, vअगर->fw_vअगर_idx,
-				      vअगर->listen_पूर्णांकvl_t, 0);
+	vif->listen_intvl_t = listen_interval;
+	ath6kl_wmi_listeninterval_cmd(ar->wmi, vif->fw_vif_idx,
+				      vif->listen_intvl_t, 0);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार ath6kl_listen_पूर्णांक_पढ़ो(काष्ठा file *file,
-				      अक्षर __user *user_buf,
-				      माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा ath6kl *ar = file->निजी_data;
-	काष्ठा ath6kl_vअगर *vअगर;
-	अक्षर buf[32];
-	पूर्णांक len;
+static ssize_t ath6kl_listen_int_read(struct file *file,
+				      char __user *user_buf,
+				      size_t count, loff_t *ppos)
+{
+	struct ath6kl *ar = file->private_data;
+	struct ath6kl_vif *vif;
+	char buf[32];
+	int len;
 
-	vअगर = ath6kl_vअगर_first(ar);
-	अगर (!vअगर)
-		वापस -EIO;
+	vif = ath6kl_vif_first(ar);
+	if (!vif)
+		return -EIO;
 
-	len = scnम_लिखो(buf, माप(buf), "%u\n", vअगर->listen_पूर्णांकvl_t);
+	len = scnprintf(buf, sizeof(buf), "%u\n", vif->listen_intvl_t);
 
-	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, len);
-पूर्ण
+	return simple_read_from_buffer(user_buf, count, ppos, buf, len);
+}
 
-अटल स्थिर काष्ठा file_operations fops_listen_पूर्णांक = अणु
-	.पढ़ो = ath6kl_listen_पूर्णांक_पढ़ो,
-	.ग_लिखो = ath6kl_listen_पूर्णांक_ग_लिखो,
-	.खोलो = simple_खोलो,
+static const struct file_operations fops_listen_int = {
+	.read = ath6kl_listen_int_read,
+	.write = ath6kl_listen_int_write,
+	.open = simple_open,
 	.owner = THIS_MODULE,
-	.llseek = शेष_llseek,
-पूर्ण;
+	.llseek = default_llseek,
+};
 
-अटल sमाप_प्रकार ath6kl_घातer_params_ग_लिखो(काष्ठा file *file,
-						स्थिर अक्षर __user *user_buf,
-						माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा ath6kl *ar = file->निजी_data;
+static ssize_t ath6kl_power_params_write(struct file *file,
+						const char __user *user_buf,
+						size_t count, loff_t *ppos)
+{
+	struct ath6kl *ar = file->private_data;
 	u8 buf[100];
-	अचिन्हित पूर्णांक len = 0;
-	अक्षर *sptr, *token;
+	unsigned int len = 0;
+	char *sptr, *token;
 	u16 idle_period, ps_poll_num, dtim,
 		tx_wakeup, num_tx;
 
-	len = min(count, माप(buf) - 1);
-	अगर (copy_from_user(buf, user_buf, len))
-		वापस -EFAULT;
+	len = min(count, sizeof(buf) - 1);
+	if (copy_from_user(buf, user_buf, len))
+		return -EFAULT;
 	buf[len] = '\0';
 	sptr = buf;
 
 	token = strsep(&sptr, " ");
-	अगर (!token)
-		वापस -EINVAL;
-	अगर (kstrtou16(token, 0, &idle_period))
-		वापस -EINVAL;
+	if (!token)
+		return -EINVAL;
+	if (kstrtou16(token, 0, &idle_period))
+		return -EINVAL;
 
 	token = strsep(&sptr, " ");
-	अगर (!token)
-		वापस -EINVAL;
-	अगर (kstrtou16(token, 0, &ps_poll_num))
-		वापस -EINVAL;
+	if (!token)
+		return -EINVAL;
+	if (kstrtou16(token, 0, &ps_poll_num))
+		return -EINVAL;
 
 	token = strsep(&sptr, " ");
-	अगर (!token)
-		वापस -EINVAL;
-	अगर (kstrtou16(token, 0, &dtim))
-		वापस -EINVAL;
+	if (!token)
+		return -EINVAL;
+	if (kstrtou16(token, 0, &dtim))
+		return -EINVAL;
 
 	token = strsep(&sptr, " ");
-	अगर (!token)
-		वापस -EINVAL;
-	अगर (kstrtou16(token, 0, &tx_wakeup))
-		वापस -EINVAL;
+	if (!token)
+		return -EINVAL;
+	if (kstrtou16(token, 0, &tx_wakeup))
+		return -EINVAL;
 
 	token = strsep(&sptr, " ");
-	अगर (!token)
-		वापस -EINVAL;
-	अगर (kstrtou16(token, 0, &num_tx))
-		वापस -EINVAL;
+	if (!token)
+		return -EINVAL;
+	if (kstrtou16(token, 0, &num_tx))
+		return -EINVAL;
 
 	ath6kl_wmi_pmparams_cmd(ar->wmi, 0, idle_period, ps_poll_num,
 				dtim, tx_wakeup, num_tx, 0);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा file_operations fops_घातer_params = अणु
-	.ग_लिखो = ath6kl_घातer_params_ग_लिखो,
-	.खोलो = simple_खोलो,
+static const struct file_operations fops_power_params = {
+	.write = ath6kl_power_params_write,
+	.open = simple_open,
 	.owner = THIS_MODULE,
-	.llseek = शेष_llseek,
-पूर्ण;
+	.llseek = default_llseek,
+};
 
-व्योम ath6kl_debug_init(काष्ठा ath6kl *ar)
-अणु
+void ath6kl_debug_init(struct ath6kl *ar)
+{
 	skb_queue_head_init(&ar->debug.fwlog_queue);
 	init_completion(&ar->debug.fwlog_completion);
 
 	/*
-	 * Actually we are lying here but करोn't know how to पढ़ो the mask
+	 * Actually we are lying here but don't know how to read the mask
 	 * value from the firmware.
 	 */
 	ar->debug.fwlog_mask = 0;
-पूर्ण
+}
 
 /*
  * Initialisation needs to happen in two stages as fwlog events can come
- * beक्रमe cfg80211 is initialised, and debugfs depends on cfg80211
+ * before cfg80211 is initialised, and debugfs depends on cfg80211
  * initialisation.
  */
-पूर्णांक ath6kl_debug_init_fs(काष्ठा ath6kl *ar)
-अणु
+int ath6kl_debug_init_fs(struct ath6kl *ar)
+{
 	ar->debugfs_phy = debugfs_create_dir("ath6kl",
 					     ar->wiphy->debugfsdir);
-	अगर (!ar->debugfs_phy)
-		वापस -ENOMEM;
+	if (!ar->debugfs_phy)
+		return -ENOMEM;
 
 	debugfs_create_file("tgt_stats", 0400, ar->debugfs_phy, ar,
 			    &fops_tgt_stats);
 
-	अगर (ar->hअगर_type == ATH6KL_HIF_TYPE_SDIO)
+	if (ar->hif_type == ATH6KL_HIF_TYPE_SDIO)
 		debugfs_create_file("credit_dist_stats", 0400,
 				    ar->debugfs_phy, ar,
 				    &fops_credit_dist_stats);
 
 	debugfs_create_file("endpoint_stats", 0600,
-			    ar->debugfs_phy, ar, &fops_endpoपूर्णांक_stats);
+			    ar->debugfs_phy, ar, &fops_endpoint_stats);
 
 	debugfs_create_file("fwlog", 0400, ar->debugfs_phy, ar, &fops_fwlog);
 
@@ -1817,7 +1816,7 @@ fail_reg_पढ़ो:
 			    ar, &fops_fwlog_mask);
 
 	debugfs_create_file("reg_addr", 0600, ar->debugfs_phy, ar,
-			    &fops_diag_reg_पढ़ो);
+			    &fops_diag_reg_read);
 
 	debugfs_create_file("reg_dump", 0400, ar->debugfs_phy, ar,
 			    &fops_reg_dump);
@@ -1826,7 +1825,7 @@ fail_reg_पढ़ो:
 			    ar->debugfs_phy, ar, &fops_lrssi_roam_threshold);
 
 	debugfs_create_file("reg_write", 0600,
-			    ar->debugfs_phy, ar, &fops_diag_reg_ग_लिखो);
+			    ar->debugfs_phy, ar, &fops_diag_reg_write);
 
 	debugfs_create_file("war_stats", 0400, ar->debugfs_phy, ar,
 			    &fops_war_stats);
@@ -1835,7 +1834,7 @@ fail_reg_पढ़ो:
 			    &fops_roam_table);
 
 	debugfs_create_file("force_roam", 0200, ar->debugfs_phy, ar,
-			    &fops_क्रमce_roam);
+			    &fops_force_roam);
 
 	debugfs_create_file("roam_mode", 0200, ar->debugfs_phy, ar,
 			    &fops_roam_mode);
@@ -1844,7 +1843,7 @@ fail_reg_पढ़ो:
 			    &fops_keepalive);
 
 	debugfs_create_file("disconnect_timeout", 0600,
-			    ar->debugfs_phy, ar, &fops_disconnect_समयout);
+			    ar->debugfs_phy, ar, &fops_disconnect_timeout);
 
 	debugfs_create_file("create_qos", 0200, ar->debugfs_phy, ar,
 			    &fops_create_qos);
@@ -1853,22 +1852,22 @@ fail_reg_पढ़ो:
 			    &fops_delete_qos);
 
 	debugfs_create_file("bgscan_interval", 0200,
-			    ar->debugfs_phy, ar, &fops_bgscan_पूर्णांक);
+			    ar->debugfs_phy, ar, &fops_bgscan_int);
 
 	debugfs_create_file("listen_interval", 0600,
-			    ar->debugfs_phy, ar, &fops_listen_पूर्णांक);
+			    ar->debugfs_phy, ar, &fops_listen_int);
 
 	debugfs_create_file("power_params", 0200, ar->debugfs_phy, ar,
-			    &fops_घातer_params);
+			    &fops_power_params);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम ath6kl_debug_cleanup(काष्ठा ath6kl *ar)
-अणु
+void ath6kl_debug_cleanup(struct ath6kl *ar)
+{
 	skb_queue_purge(&ar->debug.fwlog_queue);
 	complete(&ar->debug.fwlog_completion);
-	kमुक्त(ar->debug.roam_tbl);
-पूर्ण
+	kfree(ar->debug.roam_tbl);
+}
 
-#पूर्ण_अगर
+#endif

@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * net/sched/cls_u32.c	Ugly (or Universal) 32bit key Packet Classअगरier.
+ * net/sched/cls_u32.c	Ugly (or Universal) 32bit key Packet Classifier.
  *
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  *
@@ -9,354 +8,354 @@
  *	with a set of 32bit key/mask pairs at every node.
  *	Nodes reference next level hash tables etc.
  *
- *	This scheme is the best universal classअगरier I managed to
+ *	This scheme is the best universal classifier I managed to
  *	invent; it is not super-fast, but it is not slow (provided you
  *	program it correctly), and general enough.  And its relative
  *	speed grows as the number of rules becomes larger.
  *
- *	It seems that it represents the best middle poपूर्णांक between
+ *	It seems that it represents the best middle point between
  *	speed and manageability both by human and by machine.
  *
- *	It is especially useful क्रम link sharing combined with QoS;
- *	pure RSVP करोesn't need such a general approach and can use
+ *	It is especially useful for link sharing combined with QoS;
+ *	pure RSVP doesn't need such a general approach and can use
  *	much simpler (and faster) schemes, sort of cls_rsvp.c.
  *
  *	nfmark match added by Catalin(ux aka Dino) BOIE <catab at umbrella.ro>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/percpu.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/biपंचांगap.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/hash.h>
-#समावेश <net/netlink.h>
-#समावेश <net/act_api.h>
-#समावेश <net/pkt_cls.h>
-#समावेश <linux/idr.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/string.h>
+#include <linux/errno.h>
+#include <linux/percpu.h>
+#include <linux/rtnetlink.h>
+#include <linux/skbuff.h>
+#include <linux/bitmap.h>
+#include <linux/netdevice.h>
+#include <linux/hash.h>
+#include <net/netlink.h>
+#include <net/act_api.h>
+#include <net/pkt_cls.h>
+#include <linux/idr.h>
 
-काष्ठा tc_u_knode अणु
-	काष्ठा tc_u_knode __rcu	*next;
+struct tc_u_knode {
+	struct tc_u_knode __rcu	*next;
 	u32			handle;
-	काष्ठा tc_u_hnode __rcu	*ht_up;
-	काष्ठा tcf_exts		exts;
-	पूर्णांक			अगरindex;
-	u8			fshअगरt;
-	काष्ठा tcf_result	res;
-	काष्ठा tc_u_hnode __rcu	*ht_करोwn;
-#अगर_घोषित CONFIG_CLS_U32_PERF
-	काष्ठा tc_u32_pcnt __percpu *pf;
-#पूर्ण_अगर
+	struct tc_u_hnode __rcu	*ht_up;
+	struct tcf_exts		exts;
+	int			ifindex;
+	u8			fshift;
+	struct tcf_result	res;
+	struct tc_u_hnode __rcu	*ht_down;
+#ifdef CONFIG_CLS_U32_PERF
+	struct tc_u32_pcnt __percpu *pf;
+#endif
 	u32			flags;
-	अचिन्हित पूर्णांक		in_hw_count;
-#अगर_घोषित CONFIG_CLS_U32_MARK
+	unsigned int		in_hw_count;
+#ifdef CONFIG_CLS_U32_MARK
 	u32			val;
 	u32			mask;
 	u32 __percpu		*pcpu_success;
-#पूर्ण_अगर
-	काष्ठा rcu_work		rwork;
-	/* The 'sel' field MUST be the last field in काष्ठाure to allow क्रम
-	 * tc_u32_keys allocated at end of काष्ठाure.
+#endif
+	struct rcu_work		rwork;
+	/* The 'sel' field MUST be the last field in structure to allow for
+	 * tc_u32_keys allocated at end of structure.
 	 */
-	काष्ठा tc_u32_sel	sel;
-पूर्ण;
+	struct tc_u32_sel	sel;
+};
 
-काष्ठा tc_u_hnode अणु
-	काष्ठा tc_u_hnode __rcu	*next;
+struct tc_u_hnode {
+	struct tc_u_hnode __rcu	*next;
 	u32			handle;
 	u32			prio;
-	पूर्णांक			refcnt;
-	अचिन्हित पूर्णांक		भागisor;
-	काष्ठा idr		handle_idr;
+	int			refcnt;
+	unsigned int		divisor;
+	struct idr		handle_idr;
 	bool			is_root;
-	काष्ठा rcu_head		rcu;
+	struct rcu_head		rcu;
 	u32			flags;
-	/* The 'ht' field MUST be the last field in काष्ठाure to allow क्रम
-	 * more entries allocated at end of काष्ठाure.
+	/* The 'ht' field MUST be the last field in structure to allow for
+	 * more entries allocated at end of structure.
 	 */
-	काष्ठा tc_u_knode __rcu	*ht[];
-पूर्ण;
+	struct tc_u_knode __rcu	*ht[];
+};
 
-काष्ठा tc_u_common अणु
-	काष्ठा tc_u_hnode __rcu	*hlist;
-	व्योम			*ptr;
-	पूर्णांक			refcnt;
-	काष्ठा idr		handle_idr;
-	काष्ठा hlist_node	hnode;
-	दीर्घ			knodes;
-पूर्ण;
+struct tc_u_common {
+	struct tc_u_hnode __rcu	*hlist;
+	void			*ptr;
+	int			refcnt;
+	struct idr		handle_idr;
+	struct hlist_node	hnode;
+	long			knodes;
+};
 
-अटल अंतरभूत अचिन्हित पूर्णांक u32_hash_fold(__be32 key,
-					 स्थिर काष्ठा tc_u32_sel *sel,
-					 u8 fshअगरt)
-अणु
-	अचिन्हित पूर्णांक h = ntohl(key & sel->hmask) >> fshअगरt;
+static inline unsigned int u32_hash_fold(__be32 key,
+					 const struct tc_u32_sel *sel,
+					 u8 fshift)
+{
+	unsigned int h = ntohl(key & sel->hmask) >> fshift;
 
-	वापस h;
-पूर्ण
+	return h;
+}
 
-अटल पूर्णांक u32_classअगरy(काष्ठा sk_buff *skb, स्थिर काष्ठा tcf_proto *tp,
-			काष्ठा tcf_result *res)
-अणु
-	काष्ठा अणु
-		काष्ठा tc_u_knode *knode;
-		अचिन्हित पूर्णांक	  off;
-	पूर्ण stack[TC_U32_MAXDEPTH];
+static int u32_classify(struct sk_buff *skb, const struct tcf_proto *tp,
+			struct tcf_result *res)
+{
+	struct {
+		struct tc_u_knode *knode;
+		unsigned int	  off;
+	} stack[TC_U32_MAXDEPTH];
 
-	काष्ठा tc_u_hnode *ht = rcu_dereference_bh(tp->root);
-	अचिन्हित पूर्णांक off = skb_network_offset(skb);
-	काष्ठा tc_u_knode *n;
-	पूर्णांक sdepth = 0;
-	पूर्णांक off2 = 0;
-	पूर्णांक sel = 0;
-#अगर_घोषित CONFIG_CLS_U32_PERF
-	पूर्णांक j;
-#पूर्ण_अगर
-	पूर्णांक i, r;
+	struct tc_u_hnode *ht = rcu_dereference_bh(tp->root);
+	unsigned int off = skb_network_offset(skb);
+	struct tc_u_knode *n;
+	int sdepth = 0;
+	int off2 = 0;
+	int sel = 0;
+#ifdef CONFIG_CLS_U32_PERF
+	int j;
+#endif
+	int i, r;
 
 next_ht:
 	n = rcu_dereference_bh(ht->ht[sel]);
 
 next_knode:
-	अगर (n) अणु
-		काष्ठा tc_u32_key *key = n->sel.keys;
+	if (n) {
+		struct tc_u32_key *key = n->sel.keys;
 
-#अगर_घोषित CONFIG_CLS_U32_PERF
+#ifdef CONFIG_CLS_U32_PERF
 		__this_cpu_inc(n->pf->rcnt);
 		j = 0;
-#पूर्ण_अगर
+#endif
 
-		अगर (tc_skip_sw(n->flags)) अणु
+		if (tc_skip_sw(n->flags)) {
 			n = rcu_dereference_bh(n->next);
-			जाओ next_knode;
-		पूर्ण
+			goto next_knode;
+		}
 
-#अगर_घोषित CONFIG_CLS_U32_MARK
-		अगर ((skb->mark & n->mask) != n->val) अणु
+#ifdef CONFIG_CLS_U32_MARK
+		if ((skb->mark & n->mask) != n->val) {
 			n = rcu_dereference_bh(n->next);
-			जाओ next_knode;
-		पूर्ण अन्यथा अणु
+			goto next_knode;
+		} else {
 			__this_cpu_inc(*n->pcpu_success);
-		पूर्ण
-#पूर्ण_अगर
+		}
+#endif
 
-		क्रम (i = n->sel.nkeys; i > 0; i--, key++) अणु
-			पूर्णांक toff = off + key->off + (off2 & key->offmask);
+		for (i = n->sel.nkeys; i > 0; i--, key++) {
+			int toff = off + key->off + (off2 & key->offmask);
 			__be32 *data, hdata;
 
-			अगर (skb_headroom(skb) + toff > पूर्णांक_उच्च)
-				जाओ out;
+			if (skb_headroom(skb) + toff > INT_MAX)
+				goto out;
 
-			data = skb_header_poपूर्णांकer(skb, toff, 4, &hdata);
-			अगर (!data)
-				जाओ out;
-			अगर ((*data ^ key->val) & key->mask) अणु
+			data = skb_header_pointer(skb, toff, 4, &hdata);
+			if (!data)
+				goto out;
+			if ((*data ^ key->val) & key->mask) {
 				n = rcu_dereference_bh(n->next);
-				जाओ next_knode;
-			पूर्ण
-#अगर_घोषित CONFIG_CLS_U32_PERF
+				goto next_knode;
+			}
+#ifdef CONFIG_CLS_U32_PERF
 			__this_cpu_inc(n->pf->kcnts[j]);
 			j++;
-#पूर्ण_अगर
-		पूर्ण
+#endif
+		}
 
-		ht = rcu_dereference_bh(n->ht_करोwn);
-		अगर (!ht) अणु
+		ht = rcu_dereference_bh(n->ht_down);
+		if (!ht) {
 check_terminal:
-			अगर (n->sel.flags & TC_U32_TERMINAL) अणु
+			if (n->sel.flags & TC_U32_TERMINAL) {
 
 				*res = n->res;
-				अगर (!tcf_match_indev(skb, n->अगरindex)) अणु
+				if (!tcf_match_indev(skb, n->ifindex)) {
 					n = rcu_dereference_bh(n->next);
-					जाओ next_knode;
-				पूर्ण
-#अगर_घोषित CONFIG_CLS_U32_PERF
+					goto next_knode;
+				}
+#ifdef CONFIG_CLS_U32_PERF
 				__this_cpu_inc(n->pf->rhit);
-#पूर्ण_अगर
+#endif
 				r = tcf_exts_exec(skb, &n->exts, res);
-				अगर (r < 0) अणु
+				if (r < 0) {
 					n = rcu_dereference_bh(n->next);
-					जाओ next_knode;
-				पूर्ण
+					goto next_knode;
+				}
 
-				वापस r;
-			पूर्ण
+				return r;
+			}
 			n = rcu_dereference_bh(n->next);
-			जाओ next_knode;
-		पूर्ण
+			goto next_knode;
+		}
 
 		/* PUSH */
-		अगर (sdepth >= TC_U32_MAXDEPTH)
-			जाओ deadloop;
+		if (sdepth >= TC_U32_MAXDEPTH)
+			goto deadloop;
 		stack[sdepth].knode = n;
 		stack[sdepth].off = off;
 		sdepth++;
 
-		ht = rcu_dereference_bh(n->ht_करोwn);
+		ht = rcu_dereference_bh(n->ht_down);
 		sel = 0;
-		अगर (ht->भागisor) अणु
+		if (ht->divisor) {
 			__be32 *data, hdata;
 
-			data = skb_header_poपूर्णांकer(skb, off + n->sel.hoff, 4,
+			data = skb_header_pointer(skb, off + n->sel.hoff, 4,
 						  &hdata);
-			अगर (!data)
-				जाओ out;
-			sel = ht->भागisor & u32_hash_fold(*data, &n->sel,
-							  n->fshअगरt);
-		पूर्ण
-		अगर (!(n->sel.flags & (TC_U32_VAROFFSET | TC_U32_OFFSET | TC_U32_EAT)))
-			जाओ next_ht;
+			if (!data)
+				goto out;
+			sel = ht->divisor & u32_hash_fold(*data, &n->sel,
+							  n->fshift);
+		}
+		if (!(n->sel.flags & (TC_U32_VAROFFSET | TC_U32_OFFSET | TC_U32_EAT)))
+			goto next_ht;
 
-		अगर (n->sel.flags & (TC_U32_OFFSET | TC_U32_VAROFFSET)) अणु
+		if (n->sel.flags & (TC_U32_OFFSET | TC_U32_VAROFFSET)) {
 			off2 = n->sel.off + 3;
-			अगर (n->sel.flags & TC_U32_VAROFFSET) अणु
+			if (n->sel.flags & TC_U32_VAROFFSET) {
 				__be16 *data, hdata;
 
-				data = skb_header_poपूर्णांकer(skb,
+				data = skb_header_pointer(skb,
 							  off + n->sel.offoff,
 							  2, &hdata);
-				अगर (!data)
-					जाओ out;
+				if (!data)
+					goto out;
 				off2 += ntohs(n->sel.offmask & *data) >>
-					n->sel.offshअगरt;
-			पूर्ण
+					n->sel.offshift;
+			}
 			off2 &= ~3;
-		पूर्ण
-		अगर (n->sel.flags & TC_U32_EAT) अणु
+		}
+		if (n->sel.flags & TC_U32_EAT) {
 			off += off2;
 			off2 = 0;
-		पूर्ण
+		}
 
-		अगर (off < skb->len)
-			जाओ next_ht;
-	पूर्ण
+		if (off < skb->len)
+			goto next_ht;
+	}
 
 	/* POP */
-	अगर (sdepth--) अणु
+	if (sdepth--) {
 		n = stack[sdepth].knode;
 		ht = rcu_dereference_bh(n->ht_up);
 		off = stack[sdepth].off;
-		जाओ check_terminal;
-	पूर्ण
+		goto check_terminal;
+	}
 out:
-	वापस -1;
+	return -1;
 
 deadloop:
 	net_warn_ratelimited("cls_u32: dead loop\n");
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल काष्ठा tc_u_hnode *u32_lookup_ht(काष्ठा tc_u_common *tp_c, u32 handle)
-अणु
-	काष्ठा tc_u_hnode *ht;
+static struct tc_u_hnode *u32_lookup_ht(struct tc_u_common *tp_c, u32 handle)
+{
+	struct tc_u_hnode *ht;
 
-	क्रम (ht = rtnl_dereference(tp_c->hlist);
+	for (ht = rtnl_dereference(tp_c->hlist);
 	     ht;
 	     ht = rtnl_dereference(ht->next))
-		अगर (ht->handle == handle)
-			अवरोध;
+		if (ht->handle == handle)
+			break;
 
-	वापस ht;
-पूर्ण
+	return ht;
+}
 
-अटल काष्ठा tc_u_knode *u32_lookup_key(काष्ठा tc_u_hnode *ht, u32 handle)
-अणु
-	अचिन्हित पूर्णांक sel;
-	काष्ठा tc_u_knode *n = शून्य;
+static struct tc_u_knode *u32_lookup_key(struct tc_u_hnode *ht, u32 handle)
+{
+	unsigned int sel;
+	struct tc_u_knode *n = NULL;
 
 	sel = TC_U32_HASH(handle);
-	अगर (sel > ht->भागisor)
-		जाओ out;
+	if (sel > ht->divisor)
+		goto out;
 
-	क्रम (n = rtnl_dereference(ht->ht[sel]);
+	for (n = rtnl_dereference(ht->ht[sel]);
 	     n;
 	     n = rtnl_dereference(n->next))
-		अगर (n->handle == handle)
-			अवरोध;
+		if (n->handle == handle)
+			break;
 out:
-	वापस n;
-पूर्ण
+	return n;
+}
 
 
-अटल व्योम *u32_get(काष्ठा tcf_proto *tp, u32 handle)
-अणु
-	काष्ठा tc_u_hnode *ht;
-	काष्ठा tc_u_common *tp_c = tp->data;
+static void *u32_get(struct tcf_proto *tp, u32 handle)
+{
+	struct tc_u_hnode *ht;
+	struct tc_u_common *tp_c = tp->data;
 
-	अगर (TC_U32_HTID(handle) == TC_U32_ROOT)
+	if (TC_U32_HTID(handle) == TC_U32_ROOT)
 		ht = rtnl_dereference(tp->root);
-	अन्यथा
+	else
 		ht = u32_lookup_ht(tp_c, TC_U32_HTID(handle));
 
-	अगर (!ht)
-		वापस शून्य;
+	if (!ht)
+		return NULL;
 
-	अगर (TC_U32_KEY(handle) == 0)
-		वापस ht;
+	if (TC_U32_KEY(handle) == 0)
+		return ht;
 
-	वापस u32_lookup_key(ht, handle);
-पूर्ण
+	return u32_lookup_key(ht, handle);
+}
 
 /* Protected by rtnl lock */
-अटल u32 gen_new_htid(काष्ठा tc_u_common *tp_c, काष्ठा tc_u_hnode *ptr)
-अणु
-	पूर्णांक id = idr_alloc_cyclic(&tp_c->handle_idr, ptr, 1, 0x7FF, GFP_KERNEL);
-	अगर (id < 0)
-		वापस 0;
-	वापस (id | 0x800U) << 20;
-पूर्ण
+static u32 gen_new_htid(struct tc_u_common *tp_c, struct tc_u_hnode *ptr)
+{
+	int id = idr_alloc_cyclic(&tp_c->handle_idr, ptr, 1, 0x7FF, GFP_KERNEL);
+	if (id < 0)
+		return 0;
+	return (id | 0x800U) << 20;
+}
 
-अटल काष्ठा hlist_head *tc_u_common_hash;
+static struct hlist_head *tc_u_common_hash;
 
-#घोषणा U32_HASH_SHIFT 10
-#घोषणा U32_HASH_SIZE (1 << U32_HASH_SHIFT)
+#define U32_HASH_SHIFT 10
+#define U32_HASH_SIZE (1 << U32_HASH_SHIFT)
 
-अटल व्योम *tc_u_common_ptr(स्थिर काष्ठा tcf_proto *tp)
-अणु
-	काष्ठा tcf_block *block = tp->chain->block;
+static void *tc_u_common_ptr(const struct tcf_proto *tp)
+{
+	struct tcf_block *block = tp->chain->block;
 
 	/* The block sharing is currently supported only
-	 * क्रम classless qdiscs. In that हाल we use block
-	 * क्रम tc_u_common identअगरication. In हाल the
-	 * block is not shared, block->q is a valid poपूर्णांकer
-	 * and we can use that. That works क्रम classful qdiscs.
+	 * for classless qdiscs. In that case we use block
+	 * for tc_u_common identification. In case the
+	 * block is not shared, block->q is a valid pointer
+	 * and we can use that. That works for classful qdiscs.
 	 */
-	अगर (tcf_block_shared(block))
-		वापस block;
-	अन्यथा
-		वापस block->q;
-पूर्ण
+	if (tcf_block_shared(block))
+		return block;
+	else
+		return block->q;
+}
 
-अटल काष्ठा hlist_head *tc_u_hash(व्योम *key)
-अणु
-	वापस tc_u_common_hash + hash_ptr(key, U32_HASH_SHIFT);
-पूर्ण
+static struct hlist_head *tc_u_hash(void *key)
+{
+	return tc_u_common_hash + hash_ptr(key, U32_HASH_SHIFT);
+}
 
-अटल काष्ठा tc_u_common *tc_u_common_find(व्योम *key)
-अणु
-	काष्ठा tc_u_common *tc;
-	hlist_क्रम_each_entry(tc, tc_u_hash(key), hnode) अणु
-		अगर (tc->ptr == key)
-			वापस tc;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+static struct tc_u_common *tc_u_common_find(void *key)
+{
+	struct tc_u_common *tc;
+	hlist_for_each_entry(tc, tc_u_hash(key), hnode) {
+		if (tc->ptr == key)
+			return tc;
+	}
+	return NULL;
+}
 
-अटल पूर्णांक u32_init(काष्ठा tcf_proto *tp)
-अणु
-	काष्ठा tc_u_hnode *root_ht;
-	व्योम *key = tc_u_common_ptr(tp);
-	काष्ठा tc_u_common *tp_c = tc_u_common_find(key);
+static int u32_init(struct tcf_proto *tp)
+{
+	struct tc_u_hnode *root_ht;
+	void *key = tc_u_common_ptr(tp);
+	struct tc_u_common *tp_c = tc_u_common_find(key);
 
-	root_ht = kzalloc(काष्ठा_size(root_ht, ht, 1), GFP_KERNEL);
-	अगर (root_ht == शून्य)
-		वापस -ENOBUFS;
+	root_ht = kzalloc(struct_size(root_ht, ht, 1), GFP_KERNEL);
+	if (root_ht == NULL)
+		return -ENOBUFS;
 
 	root_ht->refcnt++;
 	root_ht->handle = tp_c ? gen_new_htid(tp_c, root_ht) : 0x80000000;
@@ -364,160 +363,160 @@ out:
 	root_ht->is_root = true;
 	idr_init(&root_ht->handle_idr);
 
-	अगर (tp_c == शून्य) अणु
-		tp_c = kzalloc(काष्ठा_size(tp_c, hlist->ht, 1), GFP_KERNEL);
-		अगर (tp_c == शून्य) अणु
-			kमुक्त(root_ht);
-			वापस -ENOBUFS;
-		पूर्ण
+	if (tp_c == NULL) {
+		tp_c = kzalloc(struct_size(tp_c, hlist->ht, 1), GFP_KERNEL);
+		if (tp_c == NULL) {
+			kfree(root_ht);
+			return -ENOBUFS;
+		}
 		tp_c->ptr = key;
 		INIT_HLIST_NODE(&tp_c->hnode);
 		idr_init(&tp_c->handle_idr);
 
 		hlist_add_head(&tp_c->hnode, tc_u_hash(key));
-	पूर्ण
+	}
 
 	tp_c->refcnt++;
 	RCU_INIT_POINTER(root_ht->next, tp_c->hlist);
-	rcu_assign_poपूर्णांकer(tp_c->hlist, root_ht);
+	rcu_assign_pointer(tp_c->hlist, root_ht);
 
 	root_ht->refcnt++;
-	rcu_assign_poपूर्णांकer(tp->root, root_ht);
+	rcu_assign_pointer(tp->root, root_ht);
 	tp->data = tp_c;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक u32_destroy_key(काष्ठा tc_u_knode *n, bool मुक्त_pf)
-अणु
-	काष्ठा tc_u_hnode *ht = rtnl_dereference(n->ht_करोwn);
+static int u32_destroy_key(struct tc_u_knode *n, bool free_pf)
+{
+	struct tc_u_hnode *ht = rtnl_dereference(n->ht_down);
 
 	tcf_exts_destroy(&n->exts);
 	tcf_exts_put_net(&n->exts);
-	अगर (ht && --ht->refcnt == 0)
-		kमुक्त(ht);
-#अगर_घोषित CONFIG_CLS_U32_PERF
-	अगर (मुक्त_pf)
-		मुक्त_percpu(n->pf);
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_CLS_U32_MARK
-	अगर (मुक्त_pf)
-		मुक्त_percpu(n->pcpu_success);
-#पूर्ण_अगर
-	kमुक्त(n);
-	वापस 0;
-पूर्ण
+	if (ht && --ht->refcnt == 0)
+		kfree(ht);
+#ifdef CONFIG_CLS_U32_PERF
+	if (free_pf)
+		free_percpu(n->pf);
+#endif
+#ifdef CONFIG_CLS_U32_MARK
+	if (free_pf)
+		free_percpu(n->pcpu_success);
+#endif
+	kfree(n);
+	return 0;
+}
 
-/* u32_delete_key_rcu should be called when मुक्त'ing a copied
+/* u32_delete_key_rcu should be called when free'ing a copied
  * version of a tc_u_knode obtained from u32_init_knode(). When
  * copies are obtained from u32_init_knode() the statistics are
- * shared between the old and new copies to allow पढ़ोers to
- * जारी to update the statistics during the copy. To support
- * this the u32_delete_key_rcu variant करोes not मुक्त the percpu
+ * shared between the old and new copies to allow readers to
+ * continue to update the statistics during the copy. To support
+ * this the u32_delete_key_rcu variant does not free the percpu
  * statistics.
  */
-अटल व्योम u32_delete_key_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा tc_u_knode *key = container_of(to_rcu_work(work),
-					      काष्ठा tc_u_knode,
+static void u32_delete_key_work(struct work_struct *work)
+{
+	struct tc_u_knode *key = container_of(to_rcu_work(work),
+					      struct tc_u_knode,
 					      rwork);
 	rtnl_lock();
 	u32_destroy_key(key, false);
 	rtnl_unlock();
-पूर्ण
+}
 
-/* u32_delete_key_मुक्तpf_rcu is the rcu callback variant
- * that मुक्त's the entire काष्ठाure including the statistics
- * percpu variables. Only use this अगर the key is not a copy
- * वापसed by u32_init_knode(). See u32_delete_key_rcu()
- * क्रम the variant that should be used with keys वापस from
+/* u32_delete_key_freepf_rcu is the rcu callback variant
+ * that free's the entire structure including the statistics
+ * percpu variables. Only use this if the key is not a copy
+ * returned by u32_init_knode(). See u32_delete_key_rcu()
+ * for the variant that should be used with keys return from
  * u32_init_knode()
  */
-अटल व्योम u32_delete_key_मुक्तpf_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा tc_u_knode *key = container_of(to_rcu_work(work),
-					      काष्ठा tc_u_knode,
+static void u32_delete_key_freepf_work(struct work_struct *work)
+{
+	struct tc_u_knode *key = container_of(to_rcu_work(work),
+					      struct tc_u_knode,
 					      rwork);
 	rtnl_lock();
 	u32_destroy_key(key, true);
 	rtnl_unlock();
-पूर्ण
+}
 
-अटल पूर्णांक u32_delete_key(काष्ठा tcf_proto *tp, काष्ठा tc_u_knode *key)
-अणु
-	काष्ठा tc_u_common *tp_c = tp->data;
-	काष्ठा tc_u_knode __rcu **kp;
-	काष्ठा tc_u_knode *pkp;
-	काष्ठा tc_u_hnode *ht = rtnl_dereference(key->ht_up);
+static int u32_delete_key(struct tcf_proto *tp, struct tc_u_knode *key)
+{
+	struct tc_u_common *tp_c = tp->data;
+	struct tc_u_knode __rcu **kp;
+	struct tc_u_knode *pkp;
+	struct tc_u_hnode *ht = rtnl_dereference(key->ht_up);
 
-	अगर (ht) अणु
+	if (ht) {
 		kp = &ht->ht[TC_U32_HASH(key->handle)];
-		क्रम (pkp = rtnl_dereference(*kp); pkp;
-		     kp = &pkp->next, pkp = rtnl_dereference(*kp)) अणु
-			अगर (pkp == key) अणु
+		for (pkp = rtnl_dereference(*kp); pkp;
+		     kp = &pkp->next, pkp = rtnl_dereference(*kp)) {
+			if (pkp == key) {
 				RCU_INIT_POINTER(*kp, key->next);
 				tp_c->knodes--;
 
 				tcf_unbind_filter(tp, &key->res);
-				idr_हटाओ(&ht->handle_idr, key->handle);
+				idr_remove(&ht->handle_idr, key->handle);
 				tcf_exts_get_net(&key->exts);
-				tcf_queue_work(&key->rwork, u32_delete_key_मुक्तpf_work);
-				वापस 0;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				tcf_queue_work(&key->rwork, u32_delete_key_freepf_work);
+				return 0;
+			}
+		}
+	}
 	WARN_ON(1);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम u32_clear_hw_hnode(काष्ठा tcf_proto *tp, काष्ठा tc_u_hnode *h,
-			       काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा tcf_block *block = tp->chain->block;
-	काष्ठा tc_cls_u32_offload cls_u32 = अणुपूर्ण;
+static void u32_clear_hw_hnode(struct tcf_proto *tp, struct tc_u_hnode *h,
+			       struct netlink_ext_ack *extack)
+{
+	struct tcf_block *block = tp->chain->block;
+	struct tc_cls_u32_offload cls_u32 = {};
 
 	tc_cls_common_offload_init(&cls_u32.common, tp, h->flags, extack);
 	cls_u32.command = TC_CLSU32_DELETE_HNODE;
-	cls_u32.hnode.भागisor = h->भागisor;
+	cls_u32.hnode.divisor = h->divisor;
 	cls_u32.hnode.handle = h->handle;
 	cls_u32.hnode.prio = h->prio;
 
 	tc_setup_cb_call(block, TC_SETUP_CLSU32, &cls_u32, false, true);
-पूर्ण
+}
 
-अटल पूर्णांक u32_replace_hw_hnode(काष्ठा tcf_proto *tp, काष्ठा tc_u_hnode *h,
-				u32 flags, काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा tcf_block *block = tp->chain->block;
-	काष्ठा tc_cls_u32_offload cls_u32 = अणुपूर्ण;
+static int u32_replace_hw_hnode(struct tcf_proto *tp, struct tc_u_hnode *h,
+				u32 flags, struct netlink_ext_ack *extack)
+{
+	struct tcf_block *block = tp->chain->block;
+	struct tc_cls_u32_offload cls_u32 = {};
 	bool skip_sw = tc_skip_sw(flags);
 	bool offloaded = false;
-	पूर्णांक err;
+	int err;
 
 	tc_cls_common_offload_init(&cls_u32.common, tp, flags, extack);
 	cls_u32.command = TC_CLSU32_NEW_HNODE;
-	cls_u32.hnode.भागisor = h->भागisor;
+	cls_u32.hnode.divisor = h->divisor;
 	cls_u32.hnode.handle = h->handle;
 	cls_u32.hnode.prio = h->prio;
 
 	err = tc_setup_cb_call(block, TC_SETUP_CLSU32, &cls_u32, skip_sw, true);
-	अगर (err < 0) अणु
-		u32_clear_hw_hnode(tp, h, शून्य);
-		वापस err;
-	पूर्ण अन्यथा अगर (err > 0) अणु
+	if (err < 0) {
+		u32_clear_hw_hnode(tp, h, NULL);
+		return err;
+	} else if (err > 0) {
 		offloaded = true;
-	पूर्ण
+	}
 
-	अगर (skip_sw && !offloaded)
-		वापस -EINVAL;
+	if (skip_sw && !offloaded)
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम u32_हटाओ_hw_knode(काष्ठा tcf_proto *tp, काष्ठा tc_u_knode *n,
-				काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा tcf_block *block = tp->chain->block;
-	काष्ठा tc_cls_u32_offload cls_u32 = अणुपूर्ण;
+static void u32_remove_hw_knode(struct tcf_proto *tp, struct tc_u_knode *n,
+				struct netlink_ext_ack *extack)
+{
+	struct tcf_block *block = tp->chain->block;
+	struct tc_cls_u32_offload cls_u32 = {};
 
 	tc_cls_common_offload_init(&cls_u32.common, tp, n->flags, extack);
 	cls_u32.command = TC_CLSU32_DELETE_KNODE;
@@ -525,856 +524,856 @@ out:
 
 	tc_setup_cb_destroy(block, tp, TC_SETUP_CLSU32, &cls_u32, false,
 			    &n->flags, &n->in_hw_count, true);
-पूर्ण
+}
 
-अटल पूर्णांक u32_replace_hw_knode(काष्ठा tcf_proto *tp, काष्ठा tc_u_knode *n,
-				u32 flags, काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा tc_u_hnode *ht = rtnl_dereference(n->ht_करोwn);
-	काष्ठा tcf_block *block = tp->chain->block;
-	काष्ठा tc_cls_u32_offload cls_u32 = अणुपूर्ण;
+static int u32_replace_hw_knode(struct tcf_proto *tp, struct tc_u_knode *n,
+				u32 flags, struct netlink_ext_ack *extack)
+{
+	struct tc_u_hnode *ht = rtnl_dereference(n->ht_down);
+	struct tcf_block *block = tp->chain->block;
+	struct tc_cls_u32_offload cls_u32 = {};
 	bool skip_sw = tc_skip_sw(flags);
-	पूर्णांक err;
+	int err;
 
 	tc_cls_common_offload_init(&cls_u32.common, tp, flags, extack);
 	cls_u32.command = TC_CLSU32_REPLACE_KNODE;
 	cls_u32.knode.handle = n->handle;
-	cls_u32.knode.fshअगरt = n->fshअगरt;
-#अगर_घोषित CONFIG_CLS_U32_MARK
+	cls_u32.knode.fshift = n->fshift;
+#ifdef CONFIG_CLS_U32_MARK
 	cls_u32.knode.val = n->val;
 	cls_u32.knode.mask = n->mask;
-#अन्यथा
+#else
 	cls_u32.knode.val = 0;
 	cls_u32.knode.mask = 0;
-#पूर्ण_अगर
+#endif
 	cls_u32.knode.sel = &n->sel;
 	cls_u32.knode.res = &n->res;
 	cls_u32.knode.exts = &n->exts;
-	अगर (n->ht_करोwn)
+	if (n->ht_down)
 		cls_u32.knode.link_handle = ht->handle;
 
 	err = tc_setup_cb_add(block, tp, TC_SETUP_CLSU32, &cls_u32, skip_sw,
 			      &n->flags, &n->in_hw_count, true);
-	अगर (err) अणु
-		u32_हटाओ_hw_knode(tp, n, शून्य);
-		वापस err;
-	पूर्ण
+	if (err) {
+		u32_remove_hw_knode(tp, n, NULL);
+		return err;
+	}
 
-	अगर (skip_sw && !(n->flags & TCA_CLS_FLAGS_IN_HW))
-		वापस -EINVAL;
+	if (skip_sw && !(n->flags & TCA_CLS_FLAGS_IN_HW))
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम u32_clear_hnode(काष्ठा tcf_proto *tp, काष्ठा tc_u_hnode *ht,
-			    काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा tc_u_common *tp_c = tp->data;
-	काष्ठा tc_u_knode *n;
-	अचिन्हित पूर्णांक h;
+static void u32_clear_hnode(struct tcf_proto *tp, struct tc_u_hnode *ht,
+			    struct netlink_ext_ack *extack)
+{
+	struct tc_u_common *tp_c = tp->data;
+	struct tc_u_knode *n;
+	unsigned int h;
 
-	क्रम (h = 0; h <= ht->भागisor; h++) अणु
-		जबतक ((n = rtnl_dereference(ht->ht[h])) != शून्य) अणु
+	for (h = 0; h <= ht->divisor; h++) {
+		while ((n = rtnl_dereference(ht->ht[h])) != NULL) {
 			RCU_INIT_POINTER(ht->ht[h],
 					 rtnl_dereference(n->next));
 			tp_c->knodes--;
 			tcf_unbind_filter(tp, &n->res);
-			u32_हटाओ_hw_knode(tp, n, extack);
-			idr_हटाओ(&ht->handle_idr, n->handle);
-			अगर (tcf_exts_get_net(&n->exts))
-				tcf_queue_work(&n->rwork, u32_delete_key_मुक्तpf_work);
-			अन्यथा
+			u32_remove_hw_knode(tp, n, extack);
+			idr_remove(&ht->handle_idr, n->handle);
+			if (tcf_exts_get_net(&n->exts))
+				tcf_queue_work(&n->rwork, u32_delete_key_freepf_work);
+			else
 				u32_destroy_key(n, true);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक u32_destroy_hnode(काष्ठा tcf_proto *tp, काष्ठा tc_u_hnode *ht,
-			     काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा tc_u_common *tp_c = tp->data;
-	काष्ठा tc_u_hnode __rcu **hn;
-	काष्ठा tc_u_hnode *phn;
+static int u32_destroy_hnode(struct tcf_proto *tp, struct tc_u_hnode *ht,
+			     struct netlink_ext_ack *extack)
+{
+	struct tc_u_common *tp_c = tp->data;
+	struct tc_u_hnode __rcu **hn;
+	struct tc_u_hnode *phn;
 
 	WARN_ON(--ht->refcnt);
 
 	u32_clear_hnode(tp, ht, extack);
 
 	hn = &tp_c->hlist;
-	क्रम (phn = rtnl_dereference(*hn);
+	for (phn = rtnl_dereference(*hn);
 	     phn;
-	     hn = &phn->next, phn = rtnl_dereference(*hn)) अणु
-		अगर (phn == ht) अणु
+	     hn = &phn->next, phn = rtnl_dereference(*hn)) {
+		if (phn == ht) {
 			u32_clear_hw_hnode(tp, ht, extack);
 			idr_destroy(&ht->handle_idr);
-			idr_हटाओ(&tp_c->handle_idr, ht->handle);
+			idr_remove(&tp_c->handle_idr, ht->handle);
 			RCU_INIT_POINTER(*hn, ht->next);
-			kमुक्त_rcu(ht, rcu);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			kfree_rcu(ht, rcu);
+			return 0;
+		}
+	}
 
-	वापस -ENOENT;
-पूर्ण
+	return -ENOENT;
+}
 
-अटल व्योम u32_destroy(काष्ठा tcf_proto *tp, bool rtnl_held,
-			काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा tc_u_common *tp_c = tp->data;
-	काष्ठा tc_u_hnode *root_ht = rtnl_dereference(tp->root);
+static void u32_destroy(struct tcf_proto *tp, bool rtnl_held,
+			struct netlink_ext_ack *extack)
+{
+	struct tc_u_common *tp_c = tp->data;
+	struct tc_u_hnode *root_ht = rtnl_dereference(tp->root);
 
-	WARN_ON(root_ht == शून्य);
+	WARN_ON(root_ht == NULL);
 
-	अगर (root_ht && --root_ht->refcnt == 1)
+	if (root_ht && --root_ht->refcnt == 1)
 		u32_destroy_hnode(tp, root_ht, extack);
 
-	अगर (--tp_c->refcnt == 0) अणु
-		काष्ठा tc_u_hnode *ht;
+	if (--tp_c->refcnt == 0) {
+		struct tc_u_hnode *ht;
 
 		hlist_del(&tp_c->hnode);
 
-		जबतक ((ht = rtnl_dereference(tp_c->hlist)) != शून्य) अणु
+		while ((ht = rtnl_dereference(tp_c->hlist)) != NULL) {
 			u32_clear_hnode(tp, ht, extack);
 			RCU_INIT_POINTER(tp_c->hlist, ht->next);
 
-			/* u32_destroy_key() will later मुक्त ht क्रम us, अगर it's
+			/* u32_destroy_key() will later free ht for us, if it's
 			 * still referenced by some knode
 			 */
-			अगर (--ht->refcnt == 0)
-				kमुक्त_rcu(ht, rcu);
-		पूर्ण
+			if (--ht->refcnt == 0)
+				kfree_rcu(ht, rcu);
+		}
 
 		idr_destroy(&tp_c->handle_idr);
-		kमुक्त(tp_c);
-	पूर्ण
+		kfree(tp_c);
+	}
 
-	tp->data = शून्य;
-पूर्ण
+	tp->data = NULL;
+}
 
-अटल पूर्णांक u32_delete(काष्ठा tcf_proto *tp, व्योम *arg, bool *last,
-		      bool rtnl_held, काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा tc_u_hnode *ht = arg;
-	काष्ठा tc_u_common *tp_c = tp->data;
-	पूर्णांक ret = 0;
+static int u32_delete(struct tcf_proto *tp, void *arg, bool *last,
+		      bool rtnl_held, struct netlink_ext_ack *extack)
+{
+	struct tc_u_hnode *ht = arg;
+	struct tc_u_common *tp_c = tp->data;
+	int ret = 0;
 
-	अगर (TC_U32_KEY(ht->handle)) अणु
-		u32_हटाओ_hw_knode(tp, (काष्ठा tc_u_knode *)ht, extack);
-		ret = u32_delete_key(tp, (काष्ठा tc_u_knode *)ht);
-		जाओ out;
-	पूर्ण
+	if (TC_U32_KEY(ht->handle)) {
+		u32_remove_hw_knode(tp, (struct tc_u_knode *)ht, extack);
+		ret = u32_delete_key(tp, (struct tc_u_knode *)ht);
+		goto out;
+	}
 
-	अगर (ht->is_root) अणु
+	if (ht->is_root) {
 		NL_SET_ERR_MSG_MOD(extack, "Not allowed to delete root node");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (ht->refcnt == 1) अणु
+	if (ht->refcnt == 1) {
 		u32_destroy_hnode(tp, ht, extack);
-	पूर्ण अन्यथा अणु
+	} else {
 		NL_SET_ERR_MSG_MOD(extack, "Can not delete in-use filter");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 out:
 	*last = tp_c->refcnt == 1 && tp_c->knodes == 0;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल u32 gen_new_kid(काष्ठा tc_u_hnode *ht, u32 htid)
-अणु
+static u32 gen_new_kid(struct tc_u_hnode *ht, u32 htid)
+{
 	u32 index = htid | 0x800;
 	u32 max = htid | 0xFFF;
 
-	अगर (idr_alloc_u32(&ht->handle_idr, शून्य, &index, max, GFP_KERNEL)) अणु
+	if (idr_alloc_u32(&ht->handle_idr, NULL, &index, max, GFP_KERNEL)) {
 		index = htid + 1;
-		अगर (idr_alloc_u32(&ht->handle_idr, शून्य, &index, max,
+		if (idr_alloc_u32(&ht->handle_idr, NULL, &index, max,
 				 GFP_KERNEL))
 			index = max;
-	पूर्ण
+	}
 
-	वापस index;
-पूर्ण
+	return index;
+}
 
-अटल स्थिर काष्ठा nla_policy u32_policy[TCA_U32_MAX + 1] = अणु
-	[TCA_U32_CLASSID]	= अणु .type = NLA_U32 पूर्ण,
-	[TCA_U32_HASH]		= अणु .type = NLA_U32 पूर्ण,
-	[TCA_U32_LINK]		= अणु .type = NLA_U32 पूर्ण,
-	[TCA_U32_DIVISOR]	= अणु .type = NLA_U32 पूर्ण,
-	[TCA_U32_SEL]		= अणु .len = माप(काष्ठा tc_u32_sel) पूर्ण,
-	[TCA_U32_INDEV]		= अणु .type = NLA_STRING, .len = IFNAMSIZ पूर्ण,
-	[TCA_U32_MARK]		= अणु .len = माप(काष्ठा tc_u32_mark) पूर्ण,
-	[TCA_U32_FLAGS]		= अणु .type = NLA_U32 पूर्ण,
-पूर्ण;
+static const struct nla_policy u32_policy[TCA_U32_MAX + 1] = {
+	[TCA_U32_CLASSID]	= { .type = NLA_U32 },
+	[TCA_U32_HASH]		= { .type = NLA_U32 },
+	[TCA_U32_LINK]		= { .type = NLA_U32 },
+	[TCA_U32_DIVISOR]	= { .type = NLA_U32 },
+	[TCA_U32_SEL]		= { .len = sizeof(struct tc_u32_sel) },
+	[TCA_U32_INDEV]		= { .type = NLA_STRING, .len = IFNAMSIZ },
+	[TCA_U32_MARK]		= { .len = sizeof(struct tc_u32_mark) },
+	[TCA_U32_FLAGS]		= { .type = NLA_U32 },
+};
 
-अटल पूर्णांक u32_set_parms(काष्ठा net *net, काष्ठा tcf_proto *tp,
-			 अचिन्हित दीर्घ base,
-			 काष्ठा tc_u_knode *n, काष्ठा nlattr **tb,
-			 काष्ठा nlattr *est, bool ovr,
-			 काष्ठा netlink_ext_ack *extack)
-अणु
-	पूर्णांक err;
+static int u32_set_parms(struct net *net, struct tcf_proto *tp,
+			 unsigned long base,
+			 struct tc_u_knode *n, struct nlattr **tb,
+			 struct nlattr *est, bool ovr,
+			 struct netlink_ext_ack *extack)
+{
+	int err;
 
 	err = tcf_exts_validate(net, tp, tb, est, &n->exts, ovr, true, extack);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	अगर (tb[TCA_U32_LINK]) अणु
+	if (tb[TCA_U32_LINK]) {
 		u32 handle = nla_get_u32(tb[TCA_U32_LINK]);
-		काष्ठा tc_u_hnode *ht_करोwn = शून्य, *ht_old;
+		struct tc_u_hnode *ht_down = NULL, *ht_old;
 
-		अगर (TC_U32_KEY(handle)) अणु
+		if (TC_U32_KEY(handle)) {
 			NL_SET_ERR_MSG_MOD(extack, "u32 Link handle must be a hash table");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (handle) अणु
-			ht_करोwn = u32_lookup_ht(tp->data, handle);
+		if (handle) {
+			ht_down = u32_lookup_ht(tp->data, handle);
 
-			अगर (!ht_करोwn) अणु
+			if (!ht_down) {
 				NL_SET_ERR_MSG_MOD(extack, "Link hash table not found");
-				वापस -EINVAL;
-			पूर्ण
-			अगर (ht_करोwn->is_root) अणु
+				return -EINVAL;
+			}
+			if (ht_down->is_root) {
 				NL_SET_ERR_MSG_MOD(extack, "Not linking to root node");
-				वापस -EINVAL;
-			पूर्ण
-			ht_करोwn->refcnt++;
-		पूर्ण
+				return -EINVAL;
+			}
+			ht_down->refcnt++;
+		}
 
-		ht_old = rtnl_dereference(n->ht_करोwn);
-		rcu_assign_poपूर्णांकer(n->ht_करोwn, ht_करोwn);
+		ht_old = rtnl_dereference(n->ht_down);
+		rcu_assign_pointer(n->ht_down, ht_down);
 
-		अगर (ht_old)
+		if (ht_old)
 			ht_old->refcnt--;
-	पूर्ण
-	अगर (tb[TCA_U32_CLASSID]) अणु
+	}
+	if (tb[TCA_U32_CLASSID]) {
 		n->res.classid = nla_get_u32(tb[TCA_U32_CLASSID]);
 		tcf_bind_filter(tp, &n->res, base);
-	पूर्ण
+	}
 
-	अगर (tb[TCA_U32_INDEV]) अणु
-		पूर्णांक ret;
+	if (tb[TCA_U32_INDEV]) {
+		int ret;
 		ret = tcf_change_indev(net, tb[TCA_U32_INDEV], extack);
-		अगर (ret < 0)
-			वापस -EINVAL;
-		n->अगरindex = ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (ret < 0)
+			return -EINVAL;
+		n->ifindex = ret;
+	}
+	return 0;
+}
 
-अटल व्योम u32_replace_knode(काष्ठा tcf_proto *tp, काष्ठा tc_u_common *tp_c,
-			      काष्ठा tc_u_knode *n)
-अणु
-	काष्ठा tc_u_knode __rcu **ins;
-	काष्ठा tc_u_knode *pins;
-	काष्ठा tc_u_hnode *ht;
+static void u32_replace_knode(struct tcf_proto *tp, struct tc_u_common *tp_c,
+			      struct tc_u_knode *n)
+{
+	struct tc_u_knode __rcu **ins;
+	struct tc_u_knode *pins;
+	struct tc_u_hnode *ht;
 
-	अगर (TC_U32_HTID(n->handle) == TC_U32_ROOT)
+	if (TC_U32_HTID(n->handle) == TC_U32_ROOT)
 		ht = rtnl_dereference(tp->root);
-	अन्यथा
+	else
 		ht = u32_lookup_ht(tp_c, TC_U32_HTID(n->handle));
 
 	ins = &ht->ht[TC_U32_HASH(n->handle)];
 
-	/* The node must always exist क्रम it to be replaced अगर this is not the
-	 * हाल then something went very wrong अन्यथाwhere.
+	/* The node must always exist for it to be replaced if this is not the
+	 * case then something went very wrong elsewhere.
 	 */
-	क्रम (pins = rtnl_dereference(*ins); ;
+	for (pins = rtnl_dereference(*ins); ;
 	     ins = &pins->next, pins = rtnl_dereference(*ins))
-		अगर (pins->handle == n->handle)
-			अवरोध;
+		if (pins->handle == n->handle)
+			break;
 
 	idr_replace(&ht->handle_idr, n, n->handle);
 	RCU_INIT_POINTER(n->next, pins->next);
-	rcu_assign_poपूर्णांकer(*ins, n);
-पूर्ण
+	rcu_assign_pointer(*ins, n);
+}
 
-अटल काष्ठा tc_u_knode *u32_init_knode(काष्ठा net *net, काष्ठा tcf_proto *tp,
-					 काष्ठा tc_u_knode *n)
-अणु
-	काष्ठा tc_u_hnode *ht = rtnl_dereference(n->ht_करोwn);
-	काष्ठा tc_u32_sel *s = &n->sel;
-	काष्ठा tc_u_knode *new;
+static struct tc_u_knode *u32_init_knode(struct net *net, struct tcf_proto *tp,
+					 struct tc_u_knode *n)
+{
+	struct tc_u_hnode *ht = rtnl_dereference(n->ht_down);
+	struct tc_u32_sel *s = &n->sel;
+	struct tc_u_knode *new;
 
-	new = kzalloc(काष्ठा_size(new, sel.keys, s->nkeys), GFP_KERNEL);
-	अगर (!new)
-		वापस शून्य;
+	new = kzalloc(struct_size(new, sel.keys, s->nkeys), GFP_KERNEL);
+	if (!new)
+		return NULL;
 
 	RCU_INIT_POINTER(new->next, n->next);
 	new->handle = n->handle;
 	RCU_INIT_POINTER(new->ht_up, n->ht_up);
 
-	new->अगरindex = n->अगरindex;
-	new->fshअगरt = n->fshअगरt;
+	new->ifindex = n->ifindex;
+	new->fshift = n->fshift;
 	new->res = n->res;
 	new->flags = n->flags;
-	RCU_INIT_POINTER(new->ht_करोwn, ht);
+	RCU_INIT_POINTER(new->ht_down, ht);
 
-	/* bump reference count as दीर्घ as we hold poपूर्णांकer to काष्ठाure */
-	अगर (ht)
+	/* bump reference count as long as we hold pointer to structure */
+	if (ht)
 		ht->refcnt++;
 
-#अगर_घोषित CONFIG_CLS_U32_PERF
-	/* Statistics may be incremented by पढ़ोers during update
+#ifdef CONFIG_CLS_U32_PERF
+	/* Statistics may be incremented by readers during update
 	 * so we must keep them in tact. When the node is later destroyed
-	 * a special destroy call must be made to not मुक्त the pf memory.
+	 * a special destroy call must be made to not free the pf memory.
 	 */
 	new->pf = n->pf;
-#पूर्ण_अगर
+#endif
 
-#अगर_घोषित CONFIG_CLS_U32_MARK
+#ifdef CONFIG_CLS_U32_MARK
 	new->val = n->val;
 	new->mask = n->mask;
-	/* Similarly success statistics must be moved as poपूर्णांकers */
+	/* Similarly success statistics must be moved as pointers */
 	new->pcpu_success = n->pcpu_success;
-#पूर्ण_अगर
-	स_नकल(&new->sel, s, काष्ठा_size(s, keys, s->nkeys));
+#endif
+	memcpy(&new->sel, s, struct_size(s, keys, s->nkeys));
 
-	अगर (tcf_exts_init(&new->exts, net, TCA_U32_ACT, TCA_U32_POLICE)) अणु
-		kमुक्त(new);
-		वापस शून्य;
-	पूर्ण
+	if (tcf_exts_init(&new->exts, net, TCA_U32_ACT, TCA_U32_POLICE)) {
+		kfree(new);
+		return NULL;
+	}
 
-	वापस new;
-पूर्ण
+	return new;
+}
 
-अटल पूर्णांक u32_change(काष्ठा net *net, काष्ठा sk_buff *in_skb,
-		      काष्ठा tcf_proto *tp, अचिन्हित दीर्घ base, u32 handle,
-		      काष्ठा nlattr **tca, व्योम **arg, bool ovr, bool rtnl_held,
-		      काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा tc_u_common *tp_c = tp->data;
-	काष्ठा tc_u_hnode *ht;
-	काष्ठा tc_u_knode *n;
-	काष्ठा tc_u32_sel *s;
-	काष्ठा nlattr *opt = tca[TCA_OPTIONS];
-	काष्ठा nlattr *tb[TCA_U32_MAX + 1];
+static int u32_change(struct net *net, struct sk_buff *in_skb,
+		      struct tcf_proto *tp, unsigned long base, u32 handle,
+		      struct nlattr **tca, void **arg, bool ovr, bool rtnl_held,
+		      struct netlink_ext_ack *extack)
+{
+	struct tc_u_common *tp_c = tp->data;
+	struct tc_u_hnode *ht;
+	struct tc_u_knode *n;
+	struct tc_u32_sel *s;
+	struct nlattr *opt = tca[TCA_OPTIONS];
+	struct nlattr *tb[TCA_U32_MAX + 1];
 	u32 htid, flags = 0;
-	माप_प्रकार sel_size;
-	पूर्णांक err;
+	size_t sel_size;
+	int err;
 
-	अगर (!opt) अणु
-		अगर (handle) अणु
+	if (!opt) {
+		if (handle) {
 			NL_SET_ERR_MSG_MOD(extack, "Filter handle requires options");
-			वापस -EINVAL;
-		पूर्ण अन्यथा अणु
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		} else {
+			return 0;
+		}
+	}
 
 	err = nla_parse_nested_deprecated(tb, TCA_U32_MAX, opt, u32_policy,
 					  extack);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	अगर (tb[TCA_U32_FLAGS]) अणु
+	if (tb[TCA_U32_FLAGS]) {
 		flags = nla_get_u32(tb[TCA_U32_FLAGS]);
-		अगर (!tc_flags_valid(flags)) अणु
+		if (!tc_flags_valid(flags)) {
 			NL_SET_ERR_MSG_MOD(extack, "Invalid filter flags");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
 	n = *arg;
-	अगर (n) अणु
-		काष्ठा tc_u_knode *new;
+	if (n) {
+		struct tc_u_knode *new;
 
-		अगर (TC_U32_KEY(n->handle) == 0) अणु
+		if (TC_U32_KEY(n->handle) == 0) {
 			NL_SET_ERR_MSG_MOD(extack, "Key node id cannot be zero");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर ((n->flags ^ flags) &
-		    ~(TCA_CLS_FLAGS_IN_HW | TCA_CLS_FLAGS_NOT_IN_HW)) अणु
+		if ((n->flags ^ flags) &
+		    ~(TCA_CLS_FLAGS_IN_HW | TCA_CLS_FLAGS_NOT_IN_HW)) {
 			NL_SET_ERR_MSG_MOD(extack, "Key node flags do not match passed flags");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		new = u32_init_knode(net, tp, n);
-		अगर (!new)
-			वापस -ENOMEM;
+		if (!new)
+			return -ENOMEM;
 
 		err = u32_set_parms(net, tp, base, new, tb,
 				    tca[TCA_RATE], ovr, extack);
 
-		अगर (err) अणु
+		if (err) {
 			u32_destroy_key(new, false);
-			वापस err;
-		पूर्ण
+			return err;
+		}
 
 		err = u32_replace_hw_knode(tp, new, flags, extack);
-		अगर (err) अणु
+		if (err) {
 			u32_destroy_key(new, false);
-			वापस err;
-		पूर्ण
+			return err;
+		}
 
-		अगर (!tc_in_hw(new->flags))
+		if (!tc_in_hw(new->flags))
 			new->flags |= TCA_CLS_FLAGS_NOT_IN_HW;
 
 		u32_replace_knode(tp, tp_c, new);
 		tcf_unbind_filter(tp, &n->res);
 		tcf_exts_get_net(&n->exts);
 		tcf_queue_work(&n->rwork, u32_delete_key_work);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (tb[TCA_U32_DIVISOR]) अणु
-		अचिन्हित पूर्णांक भागisor = nla_get_u32(tb[TCA_U32_DIVISOR]);
+	if (tb[TCA_U32_DIVISOR]) {
+		unsigned int divisor = nla_get_u32(tb[TCA_U32_DIVISOR]);
 
-		अगर (!is_घातer_of_2(भागisor)) अणु
+		if (!is_power_of_2(divisor)) {
 			NL_SET_ERR_MSG_MOD(extack, "Divisor is not a power of 2");
-			वापस -EINVAL;
-		पूर्ण
-		अगर (भागisor-- > 0x100) अणु
+			return -EINVAL;
+		}
+		if (divisor-- > 0x100) {
 			NL_SET_ERR_MSG_MOD(extack, "Exceeded maximum 256 hash buckets");
-			वापस -EINVAL;
-		पूर्ण
-		अगर (TC_U32_KEY(handle)) अणु
+			return -EINVAL;
+		}
+		if (TC_U32_KEY(handle)) {
 			NL_SET_ERR_MSG_MOD(extack, "Divisor can only be used on a hash table");
-			वापस -EINVAL;
-		पूर्ण
-		ht = kzalloc(काष्ठा_size(ht, ht, भागisor + 1), GFP_KERNEL);
-		अगर (ht == शून्य)
-			वापस -ENOBUFS;
-		अगर (handle == 0) अणु
+			return -EINVAL;
+		}
+		ht = kzalloc(struct_size(ht, ht, divisor + 1), GFP_KERNEL);
+		if (ht == NULL)
+			return -ENOBUFS;
+		if (handle == 0) {
 			handle = gen_new_htid(tp->data, ht);
-			अगर (handle == 0) अणु
-				kमुक्त(ht);
-				वापस -ENOMEM;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			if (handle == 0) {
+				kfree(ht);
+				return -ENOMEM;
+			}
+		} else {
 			err = idr_alloc_u32(&tp_c->handle_idr, ht, &handle,
 					    handle, GFP_KERNEL);
-			अगर (err) अणु
-				kमुक्त(ht);
-				वापस err;
-			पूर्ण
-		पूर्ण
+			if (err) {
+				kfree(ht);
+				return err;
+			}
+		}
 		ht->refcnt = 1;
-		ht->भागisor = भागisor;
+		ht->divisor = divisor;
 		ht->handle = handle;
 		ht->prio = tp->prio;
 		idr_init(&ht->handle_idr);
 		ht->flags = flags;
 
 		err = u32_replace_hw_hnode(tp, ht, flags, extack);
-		अगर (err) अणु
-			idr_हटाओ(&tp_c->handle_idr, handle);
-			kमुक्त(ht);
-			वापस err;
-		पूर्ण
+		if (err) {
+			idr_remove(&tp_c->handle_idr, handle);
+			kfree(ht);
+			return err;
+		}
 
 		RCU_INIT_POINTER(ht->next, tp_c->hlist);
-		rcu_assign_poपूर्णांकer(tp_c->hlist, ht);
+		rcu_assign_pointer(tp_c->hlist, ht);
 		*arg = ht;
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (tb[TCA_U32_HASH]) अणु
+	if (tb[TCA_U32_HASH]) {
 		htid = nla_get_u32(tb[TCA_U32_HASH]);
-		अगर (TC_U32_HTID(htid) == TC_U32_ROOT) अणु
+		if (TC_U32_HTID(htid) == TC_U32_ROOT) {
 			ht = rtnl_dereference(tp->root);
 			htid = ht->handle;
-		पूर्ण अन्यथा अणु
+		} else {
 			ht = u32_lookup_ht(tp->data, TC_U32_HTID(htid));
-			अगर (!ht) अणु
+			if (!ht) {
 				NL_SET_ERR_MSG_MOD(extack, "Specified hash table not found");
-				वापस -EINVAL;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
+				return -EINVAL;
+			}
+		}
+	} else {
 		ht = rtnl_dereference(tp->root);
 		htid = ht->handle;
-	पूर्ण
+	}
 
-	अगर (ht->भागisor < TC_U32_HASH(htid)) अणु
+	if (ht->divisor < TC_U32_HASH(htid)) {
 		NL_SET_ERR_MSG_MOD(extack, "Specified hash table buckets exceed configured value");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (handle) अणु
-		अगर (TC_U32_HTID(handle) && TC_U32_HTID(handle ^ htid)) अणु
+	if (handle) {
+		if (TC_U32_HTID(handle) && TC_U32_HTID(handle ^ htid)) {
 			NL_SET_ERR_MSG_MOD(extack, "Handle specified hash table address mismatch");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		handle = htid | TC_U32_NODE(handle);
-		err = idr_alloc_u32(&ht->handle_idr, शून्य, &handle, handle,
+		err = idr_alloc_u32(&ht->handle_idr, NULL, &handle, handle,
 				    GFP_KERNEL);
-		अगर (err)
-			वापस err;
-	पूर्ण अन्यथा
+		if (err)
+			return err;
+	} else
 		handle = gen_new_kid(ht, htid);
 
-	अगर (tb[TCA_U32_SEL] == शून्य) अणु
+	if (tb[TCA_U32_SEL] == NULL) {
 		NL_SET_ERR_MSG_MOD(extack, "Selector not specified");
 		err = -EINVAL;
-		जाओ erridr;
-	पूर्ण
+		goto erridr;
+	}
 
 	s = nla_data(tb[TCA_U32_SEL]);
-	sel_size = काष्ठा_size(s, keys, s->nkeys);
-	अगर (nla_len(tb[TCA_U32_SEL]) < sel_size) अणु
+	sel_size = struct_size(s, keys, s->nkeys);
+	if (nla_len(tb[TCA_U32_SEL]) < sel_size) {
 		err = -EINVAL;
-		जाओ erridr;
-	पूर्ण
+		goto erridr;
+	}
 
-	n = kzalloc(काष्ठा_size(n, sel.keys, s->nkeys), GFP_KERNEL);
-	अगर (n == शून्य) अणु
+	n = kzalloc(struct_size(n, sel.keys, s->nkeys), GFP_KERNEL);
+	if (n == NULL) {
 		err = -ENOBUFS;
-		जाओ erridr;
-	पूर्ण
+		goto erridr;
+	}
 
-#अगर_घोषित CONFIG_CLS_U32_PERF
-	n->pf = __alloc_percpu(काष्ठा_size(n->pf, kcnts, s->nkeys),
-			       __alignof__(काष्ठा tc_u32_pcnt));
-	अगर (!n->pf) अणु
+#ifdef CONFIG_CLS_U32_PERF
+	n->pf = __alloc_percpu(struct_size(n->pf, kcnts, s->nkeys),
+			       __alignof__(struct tc_u32_pcnt));
+	if (!n->pf) {
 		err = -ENOBUFS;
-		जाओ errमुक्त;
-	पूर्ण
-#पूर्ण_अगर
+		goto errfree;
+	}
+#endif
 
-	स_नकल(&n->sel, s, sel_size);
+	memcpy(&n->sel, s, sel_size);
 	RCU_INIT_POINTER(n->ht_up, ht);
 	n->handle = handle;
-	n->fshअगरt = s->hmask ? ffs(ntohl(s->hmask)) - 1 : 0;
+	n->fshift = s->hmask ? ffs(ntohl(s->hmask)) - 1 : 0;
 	n->flags = flags;
 
 	err = tcf_exts_init(&n->exts, net, TCA_U32_ACT, TCA_U32_POLICE);
-	अगर (err < 0)
-		जाओ errout;
+	if (err < 0)
+		goto errout;
 
-#अगर_घोषित CONFIG_CLS_U32_MARK
+#ifdef CONFIG_CLS_U32_MARK
 	n->pcpu_success = alloc_percpu(u32);
-	अगर (!n->pcpu_success) अणु
+	if (!n->pcpu_success) {
 		err = -ENOMEM;
-		जाओ errout;
-	पूर्ण
+		goto errout;
+	}
 
-	अगर (tb[TCA_U32_MARK]) अणु
-		काष्ठा tc_u32_mark *mark;
+	if (tb[TCA_U32_MARK]) {
+		struct tc_u32_mark *mark;
 
 		mark = nla_data(tb[TCA_U32_MARK]);
 		n->val = mark->val;
 		n->mask = mark->mask;
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
 	err = u32_set_parms(net, tp, base, n, tb, tca[TCA_RATE], ovr,
 			    extack);
-	अगर (err == 0) अणु
-		काष्ठा tc_u_knode __rcu **ins;
-		काष्ठा tc_u_knode *pins;
+	if (err == 0) {
+		struct tc_u_knode __rcu **ins;
+		struct tc_u_knode *pins;
 
 		err = u32_replace_hw_knode(tp, n, flags, extack);
-		अगर (err)
-			जाओ errhw;
+		if (err)
+			goto errhw;
 
-		अगर (!tc_in_hw(n->flags))
+		if (!tc_in_hw(n->flags))
 			n->flags |= TCA_CLS_FLAGS_NOT_IN_HW;
 
 		ins = &ht->ht[TC_U32_HASH(handle)];
-		क्रम (pins = rtnl_dereference(*ins); pins;
+		for (pins = rtnl_dereference(*ins); pins;
 		     ins = &pins->next, pins = rtnl_dereference(*ins))
-			अगर (TC_U32_NODE(handle) < TC_U32_NODE(pins->handle))
-				अवरोध;
+			if (TC_U32_NODE(handle) < TC_U32_NODE(pins->handle))
+				break;
 
 		RCU_INIT_POINTER(n->next, pins);
-		rcu_assign_poपूर्णांकer(*ins, n);
+		rcu_assign_pointer(*ins, n);
 		tp_c->knodes++;
 		*arg = n;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 errhw:
-#अगर_घोषित CONFIG_CLS_U32_MARK
-	मुक्त_percpu(n->pcpu_success);
-#पूर्ण_अगर
+#ifdef CONFIG_CLS_U32_MARK
+	free_percpu(n->pcpu_success);
+#endif
 
 errout:
 	tcf_exts_destroy(&n->exts);
-#अगर_घोषित CONFIG_CLS_U32_PERF
-errमुक्त:
-	मुक्त_percpu(n->pf);
-#पूर्ण_अगर
-	kमुक्त(n);
+#ifdef CONFIG_CLS_U32_PERF
+errfree:
+	free_percpu(n->pf);
+#endif
+	kfree(n);
 erridr:
-	idr_हटाओ(&ht->handle_idr, handle);
-	वापस err;
-पूर्ण
+	idr_remove(&ht->handle_idr, handle);
+	return err;
+}
 
-अटल व्योम u32_walk(काष्ठा tcf_proto *tp, काष्ठा tcf_walker *arg,
+static void u32_walk(struct tcf_proto *tp, struct tcf_walker *arg,
 		     bool rtnl_held)
-अणु
-	काष्ठा tc_u_common *tp_c = tp->data;
-	काष्ठा tc_u_hnode *ht;
-	काष्ठा tc_u_knode *n;
-	अचिन्हित पूर्णांक h;
+{
+	struct tc_u_common *tp_c = tp->data;
+	struct tc_u_hnode *ht;
+	struct tc_u_knode *n;
+	unsigned int h;
 
-	अगर (arg->stop)
-		वापस;
+	if (arg->stop)
+		return;
 
-	क्रम (ht = rtnl_dereference(tp_c->hlist);
+	for (ht = rtnl_dereference(tp_c->hlist);
 	     ht;
-	     ht = rtnl_dereference(ht->next)) अणु
-		अगर (ht->prio != tp->prio)
-			जारी;
-		अगर (arg->count >= arg->skip) अणु
-			अगर (arg->fn(tp, ht, arg) < 0) अणु
+	     ht = rtnl_dereference(ht->next)) {
+		if (ht->prio != tp->prio)
+			continue;
+		if (arg->count >= arg->skip) {
+			if (arg->fn(tp, ht, arg) < 0) {
 				arg->stop = 1;
-				वापस;
-			पूर्ण
-		पूर्ण
+				return;
+			}
+		}
 		arg->count++;
-		क्रम (h = 0; h <= ht->भागisor; h++) अणु
-			क्रम (n = rtnl_dereference(ht->ht[h]);
+		for (h = 0; h <= ht->divisor; h++) {
+			for (n = rtnl_dereference(ht->ht[h]);
 			     n;
-			     n = rtnl_dereference(n->next)) अणु
-				अगर (arg->count < arg->skip) अणु
+			     n = rtnl_dereference(n->next)) {
+				if (arg->count < arg->skip) {
 					arg->count++;
-					जारी;
-				पूर्ण
-				अगर (arg->fn(tp, n, arg) < 0) अणु
+					continue;
+				}
+				if (arg->fn(tp, n, arg) < 0) {
 					arg->stop = 1;
-					वापस;
-				पूर्ण
+					return;
+				}
 				arg->count++;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
-अटल पूर्णांक u32_reoffload_hnode(काष्ठा tcf_proto *tp, काष्ठा tc_u_hnode *ht,
-			       bool add, flow_setup_cb_t *cb, व्योम *cb_priv,
-			       काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा tc_cls_u32_offload cls_u32 = अणुपूर्ण;
-	पूर्णांक err;
+static int u32_reoffload_hnode(struct tcf_proto *tp, struct tc_u_hnode *ht,
+			       bool add, flow_setup_cb_t *cb, void *cb_priv,
+			       struct netlink_ext_ack *extack)
+{
+	struct tc_cls_u32_offload cls_u32 = {};
+	int err;
 
 	tc_cls_common_offload_init(&cls_u32.common, tp, ht->flags, extack);
 	cls_u32.command = add ? TC_CLSU32_NEW_HNODE : TC_CLSU32_DELETE_HNODE;
-	cls_u32.hnode.भागisor = ht->भागisor;
+	cls_u32.hnode.divisor = ht->divisor;
 	cls_u32.hnode.handle = ht->handle;
 	cls_u32.hnode.prio = ht->prio;
 
 	err = cb(TC_SETUP_CLSU32, &cls_u32, cb_priv);
-	अगर (err && add && tc_skip_sw(ht->flags))
-		वापस err;
+	if (err && add && tc_skip_sw(ht->flags))
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक u32_reoffload_knode(काष्ठा tcf_proto *tp, काष्ठा tc_u_knode *n,
-			       bool add, flow_setup_cb_t *cb, व्योम *cb_priv,
-			       काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा tc_u_hnode *ht = rtnl_dereference(n->ht_करोwn);
-	काष्ठा tcf_block *block = tp->chain->block;
-	काष्ठा tc_cls_u32_offload cls_u32 = अणुपूर्ण;
+static int u32_reoffload_knode(struct tcf_proto *tp, struct tc_u_knode *n,
+			       bool add, flow_setup_cb_t *cb, void *cb_priv,
+			       struct netlink_ext_ack *extack)
+{
+	struct tc_u_hnode *ht = rtnl_dereference(n->ht_down);
+	struct tcf_block *block = tp->chain->block;
+	struct tc_cls_u32_offload cls_u32 = {};
 
 	tc_cls_common_offload_init(&cls_u32.common, tp, n->flags, extack);
 	cls_u32.command = add ?
 		TC_CLSU32_REPLACE_KNODE : TC_CLSU32_DELETE_KNODE;
 	cls_u32.knode.handle = n->handle;
 
-	अगर (add) अणु
-		cls_u32.knode.fshअगरt = n->fshअगरt;
-#अगर_घोषित CONFIG_CLS_U32_MARK
+	if (add) {
+		cls_u32.knode.fshift = n->fshift;
+#ifdef CONFIG_CLS_U32_MARK
 		cls_u32.knode.val = n->val;
 		cls_u32.knode.mask = n->mask;
-#अन्यथा
+#else
 		cls_u32.knode.val = 0;
 		cls_u32.knode.mask = 0;
-#पूर्ण_अगर
+#endif
 		cls_u32.knode.sel = &n->sel;
 		cls_u32.knode.res = &n->res;
 		cls_u32.knode.exts = &n->exts;
-		अगर (n->ht_करोwn)
+		if (n->ht_down)
 			cls_u32.knode.link_handle = ht->handle;
-	पूर्ण
+	}
 
-	वापस tc_setup_cb_reoffload(block, tp, add, cb, TC_SETUP_CLSU32,
+	return tc_setup_cb_reoffload(block, tp, add, cb, TC_SETUP_CLSU32,
 				     &cls_u32, cb_priv, &n->flags,
 				     &n->in_hw_count);
-पूर्ण
+}
 
-अटल पूर्णांक u32_reoffload(काष्ठा tcf_proto *tp, bool add, flow_setup_cb_t *cb,
-			 व्योम *cb_priv, काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा tc_u_common *tp_c = tp->data;
-	काष्ठा tc_u_hnode *ht;
-	काष्ठा tc_u_knode *n;
-	अचिन्हित पूर्णांक h;
-	पूर्णांक err;
+static int u32_reoffload(struct tcf_proto *tp, bool add, flow_setup_cb_t *cb,
+			 void *cb_priv, struct netlink_ext_ack *extack)
+{
+	struct tc_u_common *tp_c = tp->data;
+	struct tc_u_hnode *ht;
+	struct tc_u_knode *n;
+	unsigned int h;
+	int err;
 
-	क्रम (ht = rtnl_dereference(tp_c->hlist);
+	for (ht = rtnl_dereference(tp_c->hlist);
 	     ht;
-	     ht = rtnl_dereference(ht->next)) अणु
-		अगर (ht->prio != tp->prio)
-			जारी;
+	     ht = rtnl_dereference(ht->next)) {
+		if (ht->prio != tp->prio)
+			continue;
 
 		/* When adding filters to a new dev, try to offload the
-		 * hashtable first. When removing, करो the filters beक्रमe the
+		 * hashtable first. When removing, do the filters before the
 		 * hashtable.
 		 */
-		अगर (add && !tc_skip_hw(ht->flags)) अणु
+		if (add && !tc_skip_hw(ht->flags)) {
 			err = u32_reoffload_hnode(tp, ht, add, cb, cb_priv,
 						  extack);
-			अगर (err)
-				वापस err;
-		पूर्ण
+			if (err)
+				return err;
+		}
 
-		क्रम (h = 0; h <= ht->भागisor; h++) अणु
-			क्रम (n = rtnl_dereference(ht->ht[h]);
+		for (h = 0; h <= ht->divisor; h++) {
+			for (n = rtnl_dereference(ht->ht[h]);
 			     n;
-			     n = rtnl_dereference(n->next)) अणु
-				अगर (tc_skip_hw(n->flags))
-					जारी;
+			     n = rtnl_dereference(n->next)) {
+				if (tc_skip_hw(n->flags))
+					continue;
 
 				err = u32_reoffload_knode(tp, n, add, cb,
 							  cb_priv, extack);
-				अगर (err)
-					वापस err;
-			पूर्ण
-		पूर्ण
+				if (err)
+					return err;
+			}
+		}
 
-		अगर (!add && !tc_skip_hw(ht->flags))
+		if (!add && !tc_skip_hw(ht->flags))
 			u32_reoffload_hnode(tp, ht, add, cb, cb_priv, extack);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम u32_bind_class(व्योम *fh, u32 classid, अचिन्हित दीर्घ cl, व्योम *q,
-			   अचिन्हित दीर्घ base)
-अणु
-	काष्ठा tc_u_knode *n = fh;
+static void u32_bind_class(void *fh, u32 classid, unsigned long cl, void *q,
+			   unsigned long base)
+{
+	struct tc_u_knode *n = fh;
 
-	अगर (n && n->res.classid == classid) अणु
-		अगर (cl)
+	if (n && n->res.classid == classid) {
+		if (cl)
 			__tcf_bind_filter(q, &n->res, base);
-		अन्यथा
+		else
 			__tcf_unbind_filter(q, &n->res);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक u32_dump(काष्ठा net *net, काष्ठा tcf_proto *tp, व्योम *fh,
-		    काष्ठा sk_buff *skb, काष्ठा tcmsg *t, bool rtnl_held)
-अणु
-	काष्ठा tc_u_knode *n = fh;
-	काष्ठा tc_u_hnode *ht_up, *ht_करोwn;
-	काष्ठा nlattr *nest;
+static int u32_dump(struct net *net, struct tcf_proto *tp, void *fh,
+		    struct sk_buff *skb, struct tcmsg *t, bool rtnl_held)
+{
+	struct tc_u_knode *n = fh;
+	struct tc_u_hnode *ht_up, *ht_down;
+	struct nlattr *nest;
 
-	अगर (n == शून्य)
-		वापस skb->len;
+	if (n == NULL)
+		return skb->len;
 
 	t->tcm_handle = n->handle;
 
 	nest = nla_nest_start_noflag(skb, TCA_OPTIONS);
-	अगर (nest == शून्य)
-		जाओ nla_put_failure;
+	if (nest == NULL)
+		goto nla_put_failure;
 
-	अगर (TC_U32_KEY(n->handle) == 0) अणु
-		काष्ठा tc_u_hnode *ht = fh;
-		u32 भागisor = ht->भागisor + 1;
+	if (TC_U32_KEY(n->handle) == 0) {
+		struct tc_u_hnode *ht = fh;
+		u32 divisor = ht->divisor + 1;
 
-		अगर (nla_put_u32(skb, TCA_U32_DIVISOR, भागisor))
-			जाओ nla_put_failure;
-	पूर्ण अन्यथा अणु
-#अगर_घोषित CONFIG_CLS_U32_PERF
-		काष्ठा tc_u32_pcnt *gpf;
-		पूर्णांक cpu;
-#पूर्ण_अगर
+		if (nla_put_u32(skb, TCA_U32_DIVISOR, divisor))
+			goto nla_put_failure;
+	} else {
+#ifdef CONFIG_CLS_U32_PERF
+		struct tc_u32_pcnt *gpf;
+		int cpu;
+#endif
 
-		अगर (nla_put(skb, TCA_U32_SEL, काष्ठा_size(&n->sel, keys, n->sel.nkeys),
+		if (nla_put(skb, TCA_U32_SEL, struct_size(&n->sel, keys, n->sel.nkeys),
 			    &n->sel))
-			जाओ nla_put_failure;
+			goto nla_put_failure;
 
 		ht_up = rtnl_dereference(n->ht_up);
-		अगर (ht_up) अणु
+		if (ht_up) {
 			u32 htid = n->handle & 0xFFFFF000;
-			अगर (nla_put_u32(skb, TCA_U32_HASH, htid))
-				जाओ nla_put_failure;
-		पूर्ण
-		अगर (n->res.classid &&
+			if (nla_put_u32(skb, TCA_U32_HASH, htid))
+				goto nla_put_failure;
+		}
+		if (n->res.classid &&
 		    nla_put_u32(skb, TCA_U32_CLASSID, n->res.classid))
-			जाओ nla_put_failure;
+			goto nla_put_failure;
 
-		ht_करोwn = rtnl_dereference(n->ht_करोwn);
-		अगर (ht_करोwn &&
-		    nla_put_u32(skb, TCA_U32_LINK, ht_करोwn->handle))
-			जाओ nla_put_failure;
+		ht_down = rtnl_dereference(n->ht_down);
+		if (ht_down &&
+		    nla_put_u32(skb, TCA_U32_LINK, ht_down->handle))
+			goto nla_put_failure;
 
-		अगर (n->flags && nla_put_u32(skb, TCA_U32_FLAGS, n->flags))
-			जाओ nla_put_failure;
+		if (n->flags && nla_put_u32(skb, TCA_U32_FLAGS, n->flags))
+			goto nla_put_failure;
 
-#अगर_घोषित CONFIG_CLS_U32_MARK
-		अगर ((n->val || n->mask)) अणु
-			काष्ठा tc_u32_mark mark = अणु.val = n->val,
+#ifdef CONFIG_CLS_U32_MARK
+		if ((n->val || n->mask)) {
+			struct tc_u32_mark mark = {.val = n->val,
 						   .mask = n->mask,
-						   .success = 0पूर्ण;
-			पूर्णांक cpum;
+						   .success = 0};
+			int cpum;
 
-			क्रम_each_possible_cpu(cpum) अणु
+			for_each_possible_cpu(cpum) {
 				__u32 cnt = *per_cpu_ptr(n->pcpu_success, cpum);
 
 				mark.success += cnt;
-			पूर्ण
+			}
 
-			अगर (nla_put(skb, TCA_U32_MARK, माप(mark), &mark))
-				जाओ nla_put_failure;
-		पूर्ण
-#पूर्ण_अगर
+			if (nla_put(skb, TCA_U32_MARK, sizeof(mark), &mark))
+				goto nla_put_failure;
+		}
+#endif
 
-		अगर (tcf_exts_dump(skb, &n->exts) < 0)
-			जाओ nla_put_failure;
+		if (tcf_exts_dump(skb, &n->exts) < 0)
+			goto nla_put_failure;
 
-		अगर (n->अगरindex) अणु
-			काष्ठा net_device *dev;
-			dev = __dev_get_by_index(net, n->अगरindex);
-			अगर (dev && nla_put_string(skb, TCA_U32_INDEV, dev->name))
-				जाओ nla_put_failure;
-		पूर्ण
-#अगर_घोषित CONFIG_CLS_U32_PERF
-		gpf = kzalloc(काष्ठा_size(gpf, kcnts, n->sel.nkeys), GFP_KERNEL);
-		अगर (!gpf)
-			जाओ nla_put_failure;
+		if (n->ifindex) {
+			struct net_device *dev;
+			dev = __dev_get_by_index(net, n->ifindex);
+			if (dev && nla_put_string(skb, TCA_U32_INDEV, dev->name))
+				goto nla_put_failure;
+		}
+#ifdef CONFIG_CLS_U32_PERF
+		gpf = kzalloc(struct_size(gpf, kcnts, n->sel.nkeys), GFP_KERNEL);
+		if (!gpf)
+			goto nla_put_failure;
 
-		क्रम_each_possible_cpu(cpu) अणु
-			पूर्णांक i;
-			काष्ठा tc_u32_pcnt *pf = per_cpu_ptr(n->pf, cpu);
+		for_each_possible_cpu(cpu) {
+			int i;
+			struct tc_u32_pcnt *pf = per_cpu_ptr(n->pf, cpu);
 
 			gpf->rcnt += pf->rcnt;
 			gpf->rhit += pf->rhit;
-			क्रम (i = 0; i < n->sel.nkeys; i++)
+			for (i = 0; i < n->sel.nkeys; i++)
 				gpf->kcnts[i] += pf->kcnts[i];
-		पूर्ण
+		}
 
-		अगर (nla_put_64bit(skb, TCA_U32_PCNT, काष्ठा_size(gpf, kcnts, n->sel.nkeys),
-				  gpf, TCA_U32_PAD)) अणु
-			kमुक्त(gpf);
-			जाओ nla_put_failure;
-		पूर्ण
-		kमुक्त(gpf);
-#पूर्ण_अगर
-	पूर्ण
+		if (nla_put_64bit(skb, TCA_U32_PCNT, struct_size(gpf, kcnts, n->sel.nkeys),
+				  gpf, TCA_U32_PAD)) {
+			kfree(gpf);
+			goto nla_put_failure;
+		}
+		kfree(gpf);
+#endif
+	}
 
 	nla_nest_end(skb, nest);
 
-	अगर (TC_U32_KEY(n->handle))
-		अगर (tcf_exts_dump_stats(skb, &n->exts) < 0)
-			जाओ nla_put_failure;
-	वापस skb->len;
+	if (TC_U32_KEY(n->handle))
+		if (tcf_exts_dump_stats(skb, &n->exts) < 0)
+			goto nla_put_failure;
+	return skb->len;
 
 nla_put_failure:
 	nla_nest_cancel(skb, nest);
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल काष्ठा tcf_proto_ops cls_u32_ops __पढ़ो_mostly = अणु
+static struct tcf_proto_ops cls_u32_ops __read_mostly = {
 	.kind		=	"u32",
-	.classअगरy	=	u32_classअगरy,
+	.classify	=	u32_classify,
 	.init		=	u32_init,
 	.destroy	=	u32_destroy,
 	.get		=	u32_get,
@@ -1385,41 +1384,41 @@ nla_put_failure:
 	.dump		=	u32_dump,
 	.bind_class	=	u32_bind_class,
 	.owner		=	THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक __init init_u32(व्योम)
-अणु
-	पूर्णांक i, ret;
+static int __init init_u32(void)
+{
+	int i, ret;
 
 	pr_info("u32 classifier\n");
-#अगर_घोषित CONFIG_CLS_U32_PERF
+#ifdef CONFIG_CLS_U32_PERF
 	pr_info("    Performance counters on\n");
-#पूर्ण_अगर
+#endif
 	pr_info("    input device check on\n");
-#अगर_घोषित CONFIG_NET_CLS_ACT
+#ifdef CONFIG_NET_CLS_ACT
 	pr_info("    Actions configured\n");
-#पूर्ण_अगर
-	tc_u_common_hash = kvदो_स्मृति_array(U32_HASH_SIZE,
-					  माप(काष्ठा hlist_head),
+#endif
+	tc_u_common_hash = kvmalloc_array(U32_HASH_SIZE,
+					  sizeof(struct hlist_head),
 					  GFP_KERNEL);
-	अगर (!tc_u_common_hash)
-		वापस -ENOMEM;
+	if (!tc_u_common_hash)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < U32_HASH_SIZE; i++)
+	for (i = 0; i < U32_HASH_SIZE; i++)
 		INIT_HLIST_HEAD(&tc_u_common_hash[i]);
 
-	ret = रेजिस्टर_tcf_proto_ops(&cls_u32_ops);
-	अगर (ret)
-		kvमुक्त(tc_u_common_hash);
-	वापस ret;
-पूर्ण
+	ret = register_tcf_proto_ops(&cls_u32_ops);
+	if (ret)
+		kvfree(tc_u_common_hash);
+	return ret;
+}
 
-अटल व्योम __निकास निकास_u32(व्योम)
-अणु
-	unरेजिस्टर_tcf_proto_ops(&cls_u32_ops);
-	kvमुक्त(tc_u_common_hash);
-पूर्ण
+static void __exit exit_u32(void)
+{
+	unregister_tcf_proto_ops(&cls_u32_ops);
+	kvfree(tc_u_common_hash);
+}
 
 module_init(init_u32)
-module_निकास(निकास_u32)
+module_exit(exit_u32)
 MODULE_LICENSE("GPL");

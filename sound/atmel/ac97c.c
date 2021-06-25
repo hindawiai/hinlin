@@ -1,68 +1,67 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Driver क्रम Aपंचांगel AC97C
+ * Driver for Atmel AC97C
  *
- * Copyright (C) 2005-2009 Aपंचांगel Corporation
+ * Copyright (C) 2005-2009 Atmel Corporation
  */
-#समावेश <linux/clk.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/biपंचांगap.h>
-#समावेश <linux/device.h>
-#समावेश <linux/aपंचांगel_pdc.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/types.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
+#include <linux/clk.h>
+#include <linux/delay.h>
+#include <linux/bitmap.h>
+#include <linux/device.h>
+#include <linux/atmel_pdc.h>
+#include <linux/gpio/consumer.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/mutex.h>
+#include <linux/types.h>
+#include <linux/io.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
 
-#समावेश <sound/core.h>
-#समावेश <sound/initval.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/pcm_params.h>
-#समावेश <sound/ac97_codec.h>
-#समावेश <sound/meदो_स्मृति.h>
+#include <sound/core.h>
+#include <sound/initval.h>
+#include <sound/pcm.h>
+#include <sound/pcm_params.h>
+#include <sound/ac97_codec.h>
+#include <sound/memalloc.h>
 
-#समावेश "ac97c.h"
+#include "ac97c.h"
 
-/* Serialize access to खोलोed variable */
-अटल DEFINE_MUTEX(खोलोed_mutex);
+/* Serialize access to opened variable */
+static DEFINE_MUTEX(opened_mutex);
 
-काष्ठा aपंचांगel_ac97c अणु
-	काष्ठा clk			*pclk;
-	काष्ठा platक्रमm_device		*pdev;
+struct atmel_ac97c {
+	struct clk			*pclk;
+	struct platform_device		*pdev;
 
-	काष्ठा snd_pcm_substream	*playback_substream;
-	काष्ठा snd_pcm_substream	*capture_substream;
-	काष्ठा snd_card			*card;
-	काष्ठा snd_pcm			*pcm;
-	काष्ठा snd_ac97			*ac97;
-	काष्ठा snd_ac97_bus		*ac97_bus;
+	struct snd_pcm_substream	*playback_substream;
+	struct snd_pcm_substream	*capture_substream;
+	struct snd_card			*card;
+	struct snd_pcm			*pcm;
+	struct snd_ac97			*ac97;
+	struct snd_ac97_bus		*ac97_bus;
 
-	u64				cur_क्रमmat;
-	अचिन्हित पूर्णांक			cur_rate;
-	पूर्णांक				playback_period, capture_period;
-	/* Serialize access to खोलोed variable */
+	u64				cur_format;
+	unsigned int			cur_rate;
+	int				playback_period, capture_period;
+	/* Serialize access to opened variable */
 	spinlock_t			lock;
-	व्योम __iomem			*regs;
-	पूर्णांक				irq;
-	पूर्णांक				खोलोed;
-	काष्ठा gpio_desc		*reset_pin;
-पूर्ण;
+	void __iomem			*regs;
+	int				irq;
+	int				opened;
+	struct gpio_desc		*reset_pin;
+};
 
-#घोषणा get_chip(card) ((काष्ठा aपंचांगel_ac97c *)(card)->निजी_data)
+#define get_chip(card) ((struct atmel_ac97c *)(card)->private_data)
 
-#घोषणा ac97c_ग_लिखोl(chip, reg, val)			\
-	__raw_ग_लिखोl((val), (chip)->regs + AC97C_##reg)
-#घोषणा ac97c_पढ़ोl(chip, reg)				\
-	__raw_पढ़ोl((chip)->regs + AC97C_##reg)
+#define ac97c_writel(chip, reg, val)			\
+	__raw_writel((val), (chip)->regs + AC97C_##reg)
+#define ac97c_readl(chip, reg)				\
+	__raw_readl((chip)->regs + AC97C_##reg)
 
-अटल स्थिर काष्ठा snd_pcm_hardware aपंचांगel_ac97c_hw = अणु
+static const struct snd_pcm_hardware atmel_ac97c_hw = {
 	.info			= (SNDRV_PCM_INFO_MMAP
 				  | SNDRV_PCM_INFO_MMAP_VALID
 				  | SNDRV_PCM_INFO_INTERLEAVED
@@ -70,7 +69,7 @@
 				  | SNDRV_PCM_INFO_JOINT_DUPLEX
 				  | SNDRV_PCM_INFO_RESUME
 				  | SNDRV_PCM_INFO_PAUSE),
-	.क्रमmats		= (SNDRV_PCM_FMTBIT_S16_BE
+	.formats		= (SNDRV_PCM_FMTBIT_S16_BE
 				  | SNDRV_PCM_FMTBIT_S16_LE),
 	.rates			= (SNDRV_PCM_RATE_CONTINUOUS),
 	.rate_min		= 4000,
@@ -82,399 +81,399 @@
 	.period_bytes_max	= 4096,
 	.periods_min		= 6,
 	.periods_max		= 64,
-पूर्ण;
+};
 
-अटल पूर्णांक aपंचांगel_ac97c_playback_खोलो(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा aपंचांगel_ac97c *chip = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+static int atmel_ac97c_playback_open(struct snd_pcm_substream *substream)
+{
+	struct atmel_ac97c *chip = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
 
-	mutex_lock(&खोलोed_mutex);
-	chip->खोलोed++;
-	runसमय->hw = aपंचांगel_ac97c_hw;
-	अगर (chip->cur_rate) अणु
-		runसमय->hw.rate_min = chip->cur_rate;
-		runसमय->hw.rate_max = chip->cur_rate;
-	पूर्ण
-	अगर (chip->cur_क्रमmat)
-		runसमय->hw.क्रमmats = pcm_क्रमmat_to_bits(chip->cur_क्रमmat);
-	mutex_unlock(&खोलोed_mutex);
+	mutex_lock(&opened_mutex);
+	chip->opened++;
+	runtime->hw = atmel_ac97c_hw;
+	if (chip->cur_rate) {
+		runtime->hw.rate_min = chip->cur_rate;
+		runtime->hw.rate_max = chip->cur_rate;
+	}
+	if (chip->cur_format)
+		runtime->hw.formats = pcm_format_to_bits(chip->cur_format);
+	mutex_unlock(&opened_mutex);
 	chip->playback_substream = substream;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक aपंचांगel_ac97c_capture_खोलो(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा aपंचांगel_ac97c *chip = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+static int atmel_ac97c_capture_open(struct snd_pcm_substream *substream)
+{
+	struct atmel_ac97c *chip = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
 
-	mutex_lock(&खोलोed_mutex);
-	chip->खोलोed++;
-	runसमय->hw = aपंचांगel_ac97c_hw;
-	अगर (chip->cur_rate) अणु
-		runसमय->hw.rate_min = chip->cur_rate;
-		runसमय->hw.rate_max = chip->cur_rate;
-	पूर्ण
-	अगर (chip->cur_क्रमmat)
-		runसमय->hw.क्रमmats = pcm_क्रमmat_to_bits(chip->cur_क्रमmat);
-	mutex_unlock(&खोलोed_mutex);
+	mutex_lock(&opened_mutex);
+	chip->opened++;
+	runtime->hw = atmel_ac97c_hw;
+	if (chip->cur_rate) {
+		runtime->hw.rate_min = chip->cur_rate;
+		runtime->hw.rate_max = chip->cur_rate;
+	}
+	if (chip->cur_format)
+		runtime->hw.formats = pcm_format_to_bits(chip->cur_format);
+	mutex_unlock(&opened_mutex);
 	chip->capture_substream = substream;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक aपंचांगel_ac97c_playback_बंद(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा aपंचांगel_ac97c *chip = snd_pcm_substream_chip(substream);
+static int atmel_ac97c_playback_close(struct snd_pcm_substream *substream)
+{
+	struct atmel_ac97c *chip = snd_pcm_substream_chip(substream);
 
-	mutex_lock(&खोलोed_mutex);
-	chip->खोलोed--;
-	अगर (!chip->खोलोed) अणु
+	mutex_lock(&opened_mutex);
+	chip->opened--;
+	if (!chip->opened) {
 		chip->cur_rate = 0;
-		chip->cur_क्रमmat = 0;
-	पूर्ण
-	mutex_unlock(&खोलोed_mutex);
+		chip->cur_format = 0;
+	}
+	mutex_unlock(&opened_mutex);
 
-	chip->playback_substream = शून्य;
+	chip->playback_substream = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक aपंचांगel_ac97c_capture_बंद(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा aपंचांगel_ac97c *chip = snd_pcm_substream_chip(substream);
+static int atmel_ac97c_capture_close(struct snd_pcm_substream *substream)
+{
+	struct atmel_ac97c *chip = snd_pcm_substream_chip(substream);
 
-	mutex_lock(&खोलोed_mutex);
-	chip->खोलोed--;
-	अगर (!chip->खोलोed) अणु
+	mutex_lock(&opened_mutex);
+	chip->opened--;
+	if (!chip->opened) {
 		chip->cur_rate = 0;
-		chip->cur_क्रमmat = 0;
-	पूर्ण
-	mutex_unlock(&खोलोed_mutex);
+		chip->cur_format = 0;
+	}
+	mutex_unlock(&opened_mutex);
 
-	chip->capture_substream = शून्य;
+	chip->capture_substream = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक aपंचांगel_ac97c_playback_hw_params(काष्ठा snd_pcm_substream *substream,
-		काष्ठा snd_pcm_hw_params *hw_params)
-अणु
-	काष्ठा aपंचांगel_ac97c *chip = snd_pcm_substream_chip(substream);
+static int atmel_ac97c_playback_hw_params(struct snd_pcm_substream *substream,
+		struct snd_pcm_hw_params *hw_params)
+{
+	struct atmel_ac97c *chip = snd_pcm_substream_chip(substream);
 
 	/* Set restrictions to params. */
-	mutex_lock(&खोलोed_mutex);
+	mutex_lock(&opened_mutex);
 	chip->cur_rate = params_rate(hw_params);
-	chip->cur_क्रमmat = params_क्रमmat(hw_params);
-	mutex_unlock(&खोलोed_mutex);
+	chip->cur_format = params_format(hw_params);
+	mutex_unlock(&opened_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक aपंचांगel_ac97c_capture_hw_params(काष्ठा snd_pcm_substream *substream,
-		काष्ठा snd_pcm_hw_params *hw_params)
-अणु
-	काष्ठा aपंचांगel_ac97c *chip = snd_pcm_substream_chip(substream);
+static int atmel_ac97c_capture_hw_params(struct snd_pcm_substream *substream,
+		struct snd_pcm_hw_params *hw_params)
+{
+	struct atmel_ac97c *chip = snd_pcm_substream_chip(substream);
 
 	/* Set restrictions to params. */
-	mutex_lock(&खोलोed_mutex);
+	mutex_lock(&opened_mutex);
 	chip->cur_rate = params_rate(hw_params);
-	chip->cur_क्रमmat = params_क्रमmat(hw_params);
-	mutex_unlock(&खोलोed_mutex);
+	chip->cur_format = params_format(hw_params);
+	mutex_unlock(&opened_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक aपंचांगel_ac97c_playback_prepare(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा aपंचांगel_ac97c *chip = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	पूर्णांक block_size = frames_to_bytes(runसमय, runसमय->period_size);
-	अचिन्हित दीर्घ word = ac97c_पढ़ोl(chip, OCA);
-	पूर्णांक retval;
+static int atmel_ac97c_playback_prepare(struct snd_pcm_substream *substream)
+{
+	struct atmel_ac97c *chip = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	int block_size = frames_to_bytes(runtime, runtime->period_size);
+	unsigned long word = ac97c_readl(chip, OCA);
+	int retval;
 
 	chip->playback_period = 0;
 	word &= ~(AC97C_CH_MASK(PCM_LEFT) | AC97C_CH_MASK(PCM_RIGHT));
 
 	/* assign channels to AC97C channel A */
-	चयन (runसमय->channels) अणु
-	हाल 1:
+	switch (runtime->channels) {
+	case 1:
 		word |= AC97C_CH_ASSIGN(PCM_LEFT, A);
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		word |= AC97C_CH_ASSIGN(PCM_LEFT, A)
 			| AC97C_CH_ASSIGN(PCM_RIGHT, A);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		/* TODO: support more than two channels */
-		वापस -EINVAL;
-	पूर्ण
-	ac97c_ग_लिखोl(chip, OCA, word);
+		return -EINVAL;
+	}
+	ac97c_writel(chip, OCA, word);
 
-	/* configure sample क्रमmat and size */
-	word = ac97c_पढ़ोl(chip, CAMR);
-	अगर (chip->खोलोed <= 1)
+	/* configure sample format and size */
+	word = ac97c_readl(chip, CAMR);
+	if (chip->opened <= 1)
 		word = AC97C_CMR_DMAEN | AC97C_CMR_SIZE_16;
-	अन्यथा
+	else
 		word |= AC97C_CMR_DMAEN | AC97C_CMR_SIZE_16;
 
-	चयन (runसमय->क्रमmat) अणु
-	हाल SNDRV_PCM_FORMAT_S16_LE:
-		अवरोध;
-	हाल SNDRV_PCM_FORMAT_S16_BE:
+	switch (runtime->format) {
+	case SNDRV_PCM_FORMAT_S16_LE:
+		break;
+	case SNDRV_PCM_FORMAT_S16_BE:
 		word &= ~(AC97C_CMR_CEM_LITTLE);
-		अवरोध;
-	शेष:
-		word = ac97c_पढ़ोl(chip, OCA);
+		break;
+	default:
+		word = ac97c_readl(chip, OCA);
 		word &= ~(AC97C_CH_MASK(PCM_LEFT) | AC97C_CH_MASK(PCM_RIGHT));
-		ac97c_ग_लिखोl(chip, OCA, word);
-		वापस -EINVAL;
-	पूर्ण
+		ac97c_writel(chip, OCA, word);
+		return -EINVAL;
+	}
 
-	/* Enable underrun पूर्णांकerrupt on channel A */
+	/* Enable underrun interrupt on channel A */
 	word |= AC97C_CSR_UNRUN;
 
-	ac97c_ग_लिखोl(chip, CAMR, word);
+	ac97c_writel(chip, CAMR, word);
 
-	/* Enable channel A event पूर्णांकerrupt */
-	word = ac97c_पढ़ोl(chip, IMR);
+	/* Enable channel A event interrupt */
+	word = ac97c_readl(chip, IMR);
 	word |= AC97C_SR_CAEVT;
-	ac97c_ग_लिखोl(chip, IER, word);
+	ac97c_writel(chip, IER, word);
 
-	/* set variable rate अगर needed */
-	अगर (runसमय->rate != 48000) अणु
-		word = ac97c_पढ़ोl(chip, MR);
+	/* set variable rate if needed */
+	if (runtime->rate != 48000) {
+		word = ac97c_readl(chip, MR);
 		word |= AC97C_MR_VRA;
-		ac97c_ग_लिखोl(chip, MR, word);
-	पूर्ण अन्यथा अणु
-		word = ac97c_पढ़ोl(chip, MR);
+		ac97c_writel(chip, MR, word);
+	} else {
+		word = ac97c_readl(chip, MR);
 		word &= ~(AC97C_MR_VRA);
-		ac97c_ग_लिखोl(chip, MR, word);
-	पूर्ण
+		ac97c_writel(chip, MR, word);
+	}
 
 	retval = snd_ac97_set_rate(chip->ac97, AC97_PCM_FRONT_DAC_RATE,
-			runसमय->rate);
-	अगर (retval)
+			runtime->rate);
+	if (retval)
 		dev_dbg(&chip->pdev->dev, "could not set rate %d Hz\n",
-				runसमय->rate);
+				runtime->rate);
 
 	/* Initialize and start the PDC */
-	ग_लिखोl(runसमय->dma_addr, chip->regs + ATMEL_PDC_TPR);
-	ग_लिखोl(block_size / 2, chip->regs + ATMEL_PDC_TCR);
-	ग_लिखोl(runसमय->dma_addr + block_size, chip->regs + ATMEL_PDC_TNPR);
-	ग_लिखोl(block_size / 2, chip->regs + ATMEL_PDC_TNCR);
+	writel(runtime->dma_addr, chip->regs + ATMEL_PDC_TPR);
+	writel(block_size / 2, chip->regs + ATMEL_PDC_TCR);
+	writel(runtime->dma_addr + block_size, chip->regs + ATMEL_PDC_TNPR);
+	writel(block_size / 2, chip->regs + ATMEL_PDC_TNCR);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक aपंचांगel_ac97c_capture_prepare(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा aपंचांगel_ac97c *chip = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	पूर्णांक block_size = frames_to_bytes(runसमय, runसमय->period_size);
-	अचिन्हित दीर्घ word = ac97c_पढ़ोl(chip, ICA);
-	पूर्णांक retval;
+static int atmel_ac97c_capture_prepare(struct snd_pcm_substream *substream)
+{
+	struct atmel_ac97c *chip = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	int block_size = frames_to_bytes(runtime, runtime->period_size);
+	unsigned long word = ac97c_readl(chip, ICA);
+	int retval;
 
 	chip->capture_period = 0;
 	word &= ~(AC97C_CH_MASK(PCM_LEFT) | AC97C_CH_MASK(PCM_RIGHT));
 
 	/* assign channels to AC97C channel A */
-	चयन (runसमय->channels) अणु
-	हाल 1:
+	switch (runtime->channels) {
+	case 1:
 		word |= AC97C_CH_ASSIGN(PCM_LEFT, A);
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		word |= AC97C_CH_ASSIGN(PCM_LEFT, A)
 			| AC97C_CH_ASSIGN(PCM_RIGHT, A);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		/* TODO: support more than two channels */
-		वापस -EINVAL;
-	पूर्ण
-	ac97c_ग_लिखोl(chip, ICA, word);
+		return -EINVAL;
+	}
+	ac97c_writel(chip, ICA, word);
 
-	/* configure sample क्रमmat and size */
-	word = ac97c_पढ़ोl(chip, CAMR);
-	अगर (chip->खोलोed <= 1)
+	/* configure sample format and size */
+	word = ac97c_readl(chip, CAMR);
+	if (chip->opened <= 1)
 		word = AC97C_CMR_DMAEN | AC97C_CMR_SIZE_16;
-	अन्यथा
+	else
 		word |= AC97C_CMR_DMAEN | AC97C_CMR_SIZE_16;
 
-	चयन (runसमय->क्रमmat) अणु
-	हाल SNDRV_PCM_FORMAT_S16_LE:
-		अवरोध;
-	हाल SNDRV_PCM_FORMAT_S16_BE:
+	switch (runtime->format) {
+	case SNDRV_PCM_FORMAT_S16_LE:
+		break;
+	case SNDRV_PCM_FORMAT_S16_BE:
 		word &= ~(AC97C_CMR_CEM_LITTLE);
-		अवरोध;
-	शेष:
-		word = ac97c_पढ़ोl(chip, ICA);
+		break;
+	default:
+		word = ac97c_readl(chip, ICA);
 		word &= ~(AC97C_CH_MASK(PCM_LEFT) | AC97C_CH_MASK(PCM_RIGHT));
-		ac97c_ग_लिखोl(chip, ICA, word);
-		वापस -EINVAL;
-	पूर्ण
+		ac97c_writel(chip, ICA, word);
+		return -EINVAL;
+	}
 
-	/* Enable overrun पूर्णांकerrupt on channel A */
+	/* Enable overrun interrupt on channel A */
 	word |= AC97C_CSR_OVRUN;
 
-	ac97c_ग_लिखोl(chip, CAMR, word);
+	ac97c_writel(chip, CAMR, word);
 
-	/* Enable channel A event पूर्णांकerrupt */
-	word = ac97c_पढ़ोl(chip, IMR);
+	/* Enable channel A event interrupt */
+	word = ac97c_readl(chip, IMR);
 	word |= AC97C_SR_CAEVT;
-	ac97c_ग_लिखोl(chip, IER, word);
+	ac97c_writel(chip, IER, word);
 
-	/* set variable rate अगर needed */
-	अगर (runसमय->rate != 48000) अणु
-		word = ac97c_पढ़ोl(chip, MR);
+	/* set variable rate if needed */
+	if (runtime->rate != 48000) {
+		word = ac97c_readl(chip, MR);
 		word |= AC97C_MR_VRA;
-		ac97c_ग_लिखोl(chip, MR, word);
-	पूर्ण अन्यथा अणु
-		word = ac97c_पढ़ोl(chip, MR);
+		ac97c_writel(chip, MR, word);
+	} else {
+		word = ac97c_readl(chip, MR);
 		word &= ~(AC97C_MR_VRA);
-		ac97c_ग_लिखोl(chip, MR, word);
-	पूर्ण
+		ac97c_writel(chip, MR, word);
+	}
 
 	retval = snd_ac97_set_rate(chip->ac97, AC97_PCM_LR_ADC_RATE,
-			runसमय->rate);
-	अगर (retval)
+			runtime->rate);
+	if (retval)
 		dev_dbg(&chip->pdev->dev, "could not set rate %d Hz\n",
-				runसमय->rate);
+				runtime->rate);
 
 	/* Initialize and start the PDC */
-	ग_लिखोl(runसमय->dma_addr, chip->regs + ATMEL_PDC_RPR);
-	ग_लिखोl(block_size / 2, chip->regs + ATMEL_PDC_RCR);
-	ग_लिखोl(runसमय->dma_addr + block_size, chip->regs + ATMEL_PDC_RNPR);
-	ग_लिखोl(block_size / 2, chip->regs + ATMEL_PDC_RNCR);
+	writel(runtime->dma_addr, chip->regs + ATMEL_PDC_RPR);
+	writel(block_size / 2, chip->regs + ATMEL_PDC_RCR);
+	writel(runtime->dma_addr + block_size, chip->regs + ATMEL_PDC_RNPR);
+	writel(block_size / 2, chip->regs + ATMEL_PDC_RNCR);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक
-aपंचांगel_ac97c_playback_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd)
-अणु
-	काष्ठा aपंचांगel_ac97c *chip = snd_pcm_substream_chip(substream);
-	अचिन्हित दीर्घ camr, ptcr = 0;
+static int
+atmel_ac97c_playback_trigger(struct snd_pcm_substream *substream, int cmd)
+{
+	struct atmel_ac97c *chip = snd_pcm_substream_chip(substream);
+	unsigned long camr, ptcr = 0;
 
-	camr = ac97c_पढ़ोl(chip, CAMR);
+	camr = ac97c_readl(chip, CAMR);
 
-	चयन (cmd) अणु
-	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-	हाल SNDRV_PCM_TRIGGER_RESUME:
-	हाल SNDRV_PCM_TRIGGER_START:
+	switch (cmd) {
+	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+	case SNDRV_PCM_TRIGGER_RESUME:
+	case SNDRV_PCM_TRIGGER_START:
 		ptcr = ATMEL_PDC_TXTEN;
 		camr |= AC97C_CMR_CENA | AC97C_CSR_ENDTX;
-		अवरोध;
-	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
-	हाल SNDRV_PCM_TRIGGER_SUSPEND:
-	हाल SNDRV_PCM_TRIGGER_STOP:
+		break;
+	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+	case SNDRV_PCM_TRIGGER_SUSPEND:
+	case SNDRV_PCM_TRIGGER_STOP:
 		ptcr |= ATMEL_PDC_TXTDIS;
-		अगर (chip->खोलोed <= 1)
+		if (chip->opened <= 1)
 			camr &= ~AC97C_CMR_CENA;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	ac97c_ग_लिखोl(chip, CAMR, camr);
-	ग_लिखोl(ptcr, chip->regs + ATMEL_PDC_PTCR);
-	वापस 0;
-पूर्ण
+	ac97c_writel(chip, CAMR, camr);
+	writel(ptcr, chip->regs + ATMEL_PDC_PTCR);
+	return 0;
+}
 
-अटल पूर्णांक
-aपंचांगel_ac97c_capture_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd)
-अणु
-	काष्ठा aपंचांगel_ac97c *chip = snd_pcm_substream_chip(substream);
-	अचिन्हित दीर्घ camr, ptcr = 0;
+static int
+atmel_ac97c_capture_trigger(struct snd_pcm_substream *substream, int cmd)
+{
+	struct atmel_ac97c *chip = snd_pcm_substream_chip(substream);
+	unsigned long camr, ptcr = 0;
 
-	camr = ac97c_पढ़ोl(chip, CAMR);
-	ptcr = पढ़ोl(chip->regs + ATMEL_PDC_PTSR);
+	camr = ac97c_readl(chip, CAMR);
+	ptcr = readl(chip->regs + ATMEL_PDC_PTSR);
 
-	चयन (cmd) अणु
-	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-	हाल SNDRV_PCM_TRIGGER_RESUME:
-	हाल SNDRV_PCM_TRIGGER_START:
+	switch (cmd) {
+	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+	case SNDRV_PCM_TRIGGER_RESUME:
+	case SNDRV_PCM_TRIGGER_START:
 		ptcr = ATMEL_PDC_RXTEN;
 		camr |= AC97C_CMR_CENA | AC97C_CSR_ENDRX;
-		अवरोध;
-	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
-	हाल SNDRV_PCM_TRIGGER_SUSPEND:
-	हाल SNDRV_PCM_TRIGGER_STOP:
+		break;
+	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+	case SNDRV_PCM_TRIGGER_SUSPEND:
+	case SNDRV_PCM_TRIGGER_STOP:
 		ptcr |= ATMEL_PDC_RXTDIS;
-		अगर (chip->खोलोed <= 1)
+		if (chip->opened <= 1)
 			camr &= ~AC97C_CMR_CENA;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	ac97c_ग_लिखोl(chip, CAMR, camr);
-	ग_लिखोl(ptcr, chip->regs + ATMEL_PDC_PTCR);
-	वापस 0;
-पूर्ण
+	ac97c_writel(chip, CAMR, camr);
+	writel(ptcr, chip->regs + ATMEL_PDC_PTCR);
+	return 0;
+}
 
-अटल snd_pcm_uframes_t
-aपंचांगel_ac97c_playback_poपूर्णांकer(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा aपंचांगel_ac97c	*chip = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय	*runसमय = substream->runसमय;
+static snd_pcm_uframes_t
+atmel_ac97c_playback_pointer(struct snd_pcm_substream *substream)
+{
+	struct atmel_ac97c	*chip = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime	*runtime = substream->runtime;
 	snd_pcm_uframes_t	frames;
-	अचिन्हित दीर्घ		bytes;
+	unsigned long		bytes;
 
-	bytes = पढ़ोl(chip->regs + ATMEL_PDC_TPR);
-	bytes -= runसमय->dma_addr;
+	bytes = readl(chip->regs + ATMEL_PDC_TPR);
+	bytes -= runtime->dma_addr;
 
-	frames = bytes_to_frames(runसमय, bytes);
-	अगर (frames >= runसमय->buffer_size)
-		frames -= runसमय->buffer_size;
-	वापस frames;
-पूर्ण
+	frames = bytes_to_frames(runtime, bytes);
+	if (frames >= runtime->buffer_size)
+		frames -= runtime->buffer_size;
+	return frames;
+}
 
-अटल snd_pcm_uframes_t
-aपंचांगel_ac97c_capture_poपूर्णांकer(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा aपंचांगel_ac97c	*chip = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय	*runसमय = substream->runसमय;
+static snd_pcm_uframes_t
+atmel_ac97c_capture_pointer(struct snd_pcm_substream *substream)
+{
+	struct atmel_ac97c	*chip = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime	*runtime = substream->runtime;
 	snd_pcm_uframes_t	frames;
-	अचिन्हित दीर्घ		bytes;
+	unsigned long		bytes;
 
-	bytes = पढ़ोl(chip->regs + ATMEL_PDC_RPR);
-	bytes -= runसमय->dma_addr;
+	bytes = readl(chip->regs + ATMEL_PDC_RPR);
+	bytes -= runtime->dma_addr;
 
-	frames = bytes_to_frames(runसमय, bytes);
-	अगर (frames >= runसमय->buffer_size)
-		frames -= runसमय->buffer_size;
-	वापस frames;
-पूर्ण
+	frames = bytes_to_frames(runtime, bytes);
+	if (frames >= runtime->buffer_size)
+		frames -= runtime->buffer_size;
+	return frames;
+}
 
-अटल स्थिर काष्ठा snd_pcm_ops aपंचांगel_ac97_playback_ops = अणु
-	.खोलो		= aपंचांगel_ac97c_playback_खोलो,
-	.बंद		= aपंचांगel_ac97c_playback_बंद,
-	.hw_params	= aपंचांगel_ac97c_playback_hw_params,
-	.prepare	= aपंचांगel_ac97c_playback_prepare,
-	.trigger	= aपंचांगel_ac97c_playback_trigger,
-	.poपूर्णांकer	= aपंचांगel_ac97c_playback_poपूर्णांकer,
-पूर्ण;
+static const struct snd_pcm_ops atmel_ac97_playback_ops = {
+	.open		= atmel_ac97c_playback_open,
+	.close		= atmel_ac97c_playback_close,
+	.hw_params	= atmel_ac97c_playback_hw_params,
+	.prepare	= atmel_ac97c_playback_prepare,
+	.trigger	= atmel_ac97c_playback_trigger,
+	.pointer	= atmel_ac97c_playback_pointer,
+};
 
-अटल स्थिर काष्ठा snd_pcm_ops aपंचांगel_ac97_capture_ops = अणु
-	.खोलो		= aपंचांगel_ac97c_capture_खोलो,
-	.बंद		= aपंचांगel_ac97c_capture_बंद,
-	.hw_params	= aपंचांगel_ac97c_capture_hw_params,
-	.prepare	= aपंचांगel_ac97c_capture_prepare,
-	.trigger	= aपंचांगel_ac97c_capture_trigger,
-	.poपूर्णांकer	= aपंचांगel_ac97c_capture_poपूर्णांकer,
-पूर्ण;
+static const struct snd_pcm_ops atmel_ac97_capture_ops = {
+	.open		= atmel_ac97c_capture_open,
+	.close		= atmel_ac97c_capture_close,
+	.hw_params	= atmel_ac97c_capture_hw_params,
+	.prepare	= atmel_ac97c_capture_prepare,
+	.trigger	= atmel_ac97c_capture_trigger,
+	.pointer	= atmel_ac97c_capture_pointer,
+};
 
-अटल irqवापस_t aपंचांगel_ac97c_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev)
-अणु
-	काष्ठा aपंचांगel_ac97c	*chip  = (काष्ठा aपंचांगel_ac97c *)dev;
-	irqवापस_t		retval = IRQ_NONE;
-	u32			sr     = ac97c_पढ़ोl(chip, SR);
-	u32			casr   = ac97c_पढ़ोl(chip, CASR);
-	u32			cosr   = ac97c_पढ़ोl(chip, COSR);
-	u32			camr   = ac97c_पढ़ोl(chip, CAMR);
+static irqreturn_t atmel_ac97c_interrupt(int irq, void *dev)
+{
+	struct atmel_ac97c	*chip  = (struct atmel_ac97c *)dev;
+	irqreturn_t		retval = IRQ_NONE;
+	u32			sr     = ac97c_readl(chip, SR);
+	u32			casr   = ac97c_readl(chip, CASR);
+	u32			cosr   = ac97c_readl(chip, COSR);
+	u32			camr   = ac97c_readl(chip, CAMR);
 
-	अगर (sr & AC97C_SR_CAEVT) अणु
-		काष्ठा snd_pcm_runसमय *runसमय;
-		पूर्णांक offset, next_period, block_size;
+	if (sr & AC97C_SR_CAEVT) {
+		struct snd_pcm_runtime *runtime;
+		int offset, next_period, block_size;
 		dev_dbg(&chip->pdev->dev, "channel A event%s%s%s%s%s%s\n",
 			(casr & AC97C_CSR_OVRUN)   ? " OVRUN"   : "",
 			(casr & AC97C_CSR_RXRDY)   ? " RXRDY"   : "",
@@ -482,45 +481,45 @@ aपंचांगel_ac97c_capture_poपूर्णांकer(काष्ठ
 			(casr & AC97C_CSR_TXEMPTY) ? " TXEMPTY" : "",
 			(casr & AC97C_CSR_TXRDY)   ? " TXRDY"   : "",
 			!casr                      ? " NONE"    : "");
-		अगर ((casr & camr) & AC97C_CSR_ENDTX) अणु
-			runसमय = chip->playback_substream->runसमय;
-			block_size = frames_to_bytes(runसमय, runसमय->period_size);
+		if ((casr & camr) & AC97C_CSR_ENDTX) {
+			runtime = chip->playback_substream->runtime;
+			block_size = frames_to_bytes(runtime, runtime->period_size);
 			chip->playback_period++;
 
-			अगर (chip->playback_period == runसमय->periods)
+			if (chip->playback_period == runtime->periods)
 				chip->playback_period = 0;
 			next_period = chip->playback_period + 1;
-			अगर (next_period == runसमय->periods)
+			if (next_period == runtime->periods)
 				next_period = 0;
 
 			offset = block_size * next_period;
 
-			ग_लिखोl(runसमय->dma_addr + offset, chip->regs + ATMEL_PDC_TNPR);
-			ग_लिखोl(block_size / 2, chip->regs + ATMEL_PDC_TNCR);
+			writel(runtime->dma_addr + offset, chip->regs + ATMEL_PDC_TNPR);
+			writel(block_size / 2, chip->regs + ATMEL_PDC_TNCR);
 
 			snd_pcm_period_elapsed(chip->playback_substream);
-		पूर्ण
-		अगर ((casr & camr) & AC97C_CSR_ENDRX) अणु
-			runसमय = chip->capture_substream->runसमय;
-			block_size = frames_to_bytes(runसमय, runसमय->period_size);
+		}
+		if ((casr & camr) & AC97C_CSR_ENDRX) {
+			runtime = chip->capture_substream->runtime;
+			block_size = frames_to_bytes(runtime, runtime->period_size);
 			chip->capture_period++;
 
-			अगर (chip->capture_period == runसमय->periods)
+			if (chip->capture_period == runtime->periods)
 				chip->capture_period = 0;
 			next_period = chip->capture_period + 1;
-			अगर (next_period == runसमय->periods)
+			if (next_period == runtime->periods)
 				next_period = 0;
 
 			offset = block_size * next_period;
 
-			ग_लिखोl(runसमय->dma_addr + offset, chip->regs + ATMEL_PDC_RNPR);
-			ग_लिखोl(block_size / 2, chip->regs + ATMEL_PDC_RNCR);
+			writel(runtime->dma_addr + offset, chip->regs + ATMEL_PDC_RNPR);
+			writel(block_size / 2, chip->regs + ATMEL_PDC_RNCR);
 			snd_pcm_period_elapsed(chip->capture_substream);
-		पूर्ण
+		}
 		retval = IRQ_HANDLED;
-	पूर्ण
+	}
 
-	अगर (sr & AC97C_SR_COEVT) अणु
+	if (sr & AC97C_SR_COEVT) {
 		dev_info(&chip->pdev->dev, "codec channel event%s%s%s%s%s\n",
 			 (cosr & AC97C_CSR_OVRUN)   ? " OVRUN"   : "",
 			 (cosr & AC97C_CSR_RXRDY)   ? " RXRDY"   : "",
@@ -528,351 +527,351 @@ aपंचांगel_ac97c_capture_poपूर्णांकer(काष्ठ
 			 (cosr & AC97C_CSR_TXRDY)   ? " TXRDY"   : "",
 			 !cosr                      ? " NONE"    : "");
 		retval = IRQ_HANDLED;
-	पूर्ण
+	}
 
-	अगर (retval == IRQ_NONE) अणु
+	if (retval == IRQ_NONE) {
 		dev_err(&chip->pdev->dev, "spurious interrupt sr 0x%08x "
 				"casr 0x%08x cosr 0x%08x\n", sr, casr, cosr);
-	पूर्ण
+	}
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल स्थिर काष्ठा ac97_pcm at91_ac97_pcm_defs[] = अणु
+static const struct ac97_pcm at91_ac97_pcm_defs[] = {
 	/* Playback */
-	अणु
+	{
 		.exclusive = 1,
-		.r = अणु अणु
+		.r = { {
 			.slots = ((1 << AC97_SLOT_PCM_LEFT)
 				  | (1 << AC97_SLOT_PCM_RIGHT)),
-		पूर्ण पूर्ण,
-	पूर्ण,
+		} },
+	},
 	/* PCM in */
-	अणु
+	{
 		.stream = 1,
 		.exclusive = 1,
-		.r = अणु अणु
+		.r = { {
 			.slots = ((1 << AC97_SLOT_PCM_LEFT)
 					| (1 << AC97_SLOT_PCM_RIGHT)),
-		पूर्ण पूर्ण
-	पूर्ण,
+		} }
+	},
 	/* Mic in */
-	अणु
+	{
 		.stream = 1,
 		.exclusive = 1,
-		.r = अणु अणु
+		.r = { {
 			.slots = (1<<AC97_SLOT_MIC),
-		पूर्ण पूर्ण
-	पूर्ण,
-पूर्ण;
+		} }
+	},
+};
 
-अटल पूर्णांक aपंचांगel_ac97c_pcm_new(काष्ठा aपंचांगel_ac97c *chip)
-अणु
-	काष्ठा snd_pcm		*pcm;
-	काष्ठा snd_pcm_hardware	hw = aपंचांगel_ac97c_hw;
-	पूर्णांक			retval;
+static int atmel_ac97c_pcm_new(struct atmel_ac97c *chip)
+{
+	struct snd_pcm		*pcm;
+	struct snd_pcm_hardware	hw = atmel_ac97c_hw;
+	int			retval;
 
 	retval = snd_ac97_pcm_assign(chip->ac97_bus,
 				     ARRAY_SIZE(at91_ac97_pcm_defs),
 				     at91_ac97_pcm_defs);
-	अगर (retval)
-		वापस retval;
+	if (retval)
+		return retval;
 
-	retval = snd_pcm_new(chip->card, chip->card->लघुname, 0, 1, 1, &pcm);
-	अगर (retval)
-		वापस retval;
+	retval = snd_pcm_new(chip->card, chip->card->shortname, 0, 1, 1, &pcm);
+	if (retval)
+		return retval;
 
-	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_CAPTURE, &aपंचांगel_ac97_capture_ops);
-	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_PLAYBACK, &aपंचांगel_ac97_playback_ops);
+	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_CAPTURE, &atmel_ac97_capture_ops);
+	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_PLAYBACK, &atmel_ac97_playback_ops);
 
 	snd_pcm_set_managed_buffer_all(pcm, SNDRV_DMA_TYPE_DEV,
 			&chip->pdev->dev, hw.periods_min * hw.period_bytes_min,
 			hw.buffer_bytes_max);
 
-	pcm->निजी_data = chip;
+	pcm->private_data = chip;
 	pcm->info_flags = 0;
-	म_नकल(pcm->name, chip->card->लघुname);
+	strcpy(pcm->name, chip->card->shortname);
 	chip->pcm = pcm;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक aपंचांगel_ac97c_mixer_new(काष्ठा aपंचांगel_ac97c *chip)
-अणु
-	काष्ठा snd_ac97_ढाँचा ढाँचा;
-	स_रखो(&ढाँचा, 0, माप(ढाँचा));
-	ढाँचा.निजी_data = chip;
-	वापस snd_ac97_mixer(chip->ac97_bus, &ढाँचा, &chip->ac97);
-पूर्ण
+static int atmel_ac97c_mixer_new(struct atmel_ac97c *chip)
+{
+	struct snd_ac97_template template;
+	memset(&template, 0, sizeof(template));
+	template.private_data = chip;
+	return snd_ac97_mixer(chip->ac97_bus, &template, &chip->ac97);
+}
 
-अटल व्योम aपंचांगel_ac97c_ग_लिखो(काष्ठा snd_ac97 *ac97, अचिन्हित लघु reg,
-		अचिन्हित लघु val)
-अणु
-	काष्ठा aपंचांगel_ac97c *chip = get_chip(ac97);
-	अचिन्हित दीर्घ word;
-	पूर्णांक समयout = 40;
+static void atmel_ac97c_write(struct snd_ac97 *ac97, unsigned short reg,
+		unsigned short val)
+{
+	struct atmel_ac97c *chip = get_chip(ac97);
+	unsigned long word;
+	int timeout = 40;
 
 	word = (reg & 0x7f) << 16 | val;
 
-	करो अणु
-		अगर (ac97c_पढ़ोl(chip, COSR) & AC97C_CSR_TXRDY) अणु
-			ac97c_ग_लिखोl(chip, COTHR, word);
-			वापस;
-		पूर्ण
+	do {
+		if (ac97c_readl(chip, COSR) & AC97C_CSR_TXRDY) {
+			ac97c_writel(chip, COTHR, word);
+			return;
+		}
 		udelay(1);
-	पूर्ण जबतक (--समयout);
+	} while (--timeout);
 
 	dev_dbg(&chip->pdev->dev, "codec write timeout\n");
-पूर्ण
+}
 
-अटल अचिन्हित लघु aपंचांगel_ac97c_पढ़ो(काष्ठा snd_ac97 *ac97,
-		अचिन्हित लघु reg)
-अणु
-	काष्ठा aपंचांगel_ac97c *chip = get_chip(ac97);
-	अचिन्हित दीर्घ word;
-	पूर्णांक समयout = 40;
-	पूर्णांक ग_लिखो = 10;
+static unsigned short atmel_ac97c_read(struct snd_ac97 *ac97,
+		unsigned short reg)
+{
+	struct atmel_ac97c *chip = get_chip(ac97);
+	unsigned long word;
+	int timeout = 40;
+	int write = 10;
 
 	word = (0x80 | (reg & 0x7f)) << 16;
 
-	अगर ((ac97c_पढ़ोl(chip, COSR) & AC97C_CSR_RXRDY) != 0)
-		ac97c_पढ़ोl(chip, CORHR);
+	if ((ac97c_readl(chip, COSR) & AC97C_CSR_RXRDY) != 0)
+		ac97c_readl(chip, CORHR);
 
-retry_ग_लिखो:
-	समयout = 40;
+retry_write:
+	timeout = 40;
 
-	करो अणु
-		अगर ((ac97c_पढ़ोl(chip, COSR) & AC97C_CSR_TXRDY) != 0) अणु
-			ac97c_ग_लिखोl(chip, COTHR, word);
-			जाओ पढ़ो_reg;
-		पूर्ण
+	do {
+		if ((ac97c_readl(chip, COSR) & AC97C_CSR_TXRDY) != 0) {
+			ac97c_writel(chip, COTHR, word);
+			goto read_reg;
+		}
 		udelay(10);
-	पूर्ण जबतक (--समयout);
+	} while (--timeout);
 
-	अगर (!--ग_लिखो)
-		जाओ समयd_out;
-	जाओ retry_ग_लिखो;
+	if (!--write)
+		goto timed_out;
+	goto retry_write;
 
-पढ़ो_reg:
-	करो अणु
-		अगर ((ac97c_पढ़ोl(chip, COSR) & AC97C_CSR_RXRDY) != 0) अणु
-			अचिन्हित लघु val = ac97c_पढ़ोl(chip, CORHR);
-			वापस val;
-		पूर्ण
+read_reg:
+	do {
+		if ((ac97c_readl(chip, COSR) & AC97C_CSR_RXRDY) != 0) {
+			unsigned short val = ac97c_readl(chip, CORHR);
+			return val;
+		}
 		udelay(10);
-	पूर्ण जबतक (--समयout);
+	} while (--timeout);
 
-	अगर (!--ग_लिखो)
-		जाओ समयd_out;
-	जाओ retry_ग_लिखो;
+	if (!--write)
+		goto timed_out;
+	goto retry_write;
 
-समयd_out:
+timed_out:
 	dev_dbg(&chip->pdev->dev, "codec read timeout\n");
-	वापस 0xffff;
-पूर्ण
+	return 0xffff;
+}
 
-अटल व्योम aपंचांगel_ac97c_reset(काष्ठा aपंचांगel_ac97c *chip)
-अणु
-	ac97c_ग_लिखोl(chip, MR,   0);
-	ac97c_ग_लिखोl(chip, MR,   AC97C_MR_ENA);
-	ac97c_ग_लिखोl(chip, CAMR, 0);
-	ac97c_ग_लिखोl(chip, COMR, 0);
+static void atmel_ac97c_reset(struct atmel_ac97c *chip)
+{
+	ac97c_writel(chip, MR,   0);
+	ac97c_writel(chip, MR,   AC97C_MR_ENA);
+	ac97c_writel(chip, CAMR, 0);
+	ac97c_writel(chip, COMR, 0);
 
-	अगर (!IS_ERR(chip->reset_pin)) अणु
+	if (!IS_ERR(chip->reset_pin)) {
 		gpiod_set_value(chip->reset_pin, 0);
-		/* AC97 v2.2 specअगरications says minimum 1 us. */
+		/* AC97 v2.2 specifications says minimum 1 us. */
 		udelay(2);
 		gpiod_set_value(chip->reset_pin, 1);
-	पूर्ण अन्यथा अणु
-		ac97c_ग_लिखोl(chip, MR, AC97C_MR_WRST | AC97C_MR_ENA);
+	} else {
+		ac97c_writel(chip, MR, AC97C_MR_WRST | AC97C_MR_ENA);
 		udelay(2);
-		ac97c_ग_लिखोl(chip, MR, AC97C_MR_ENA);
-	पूर्ण
-पूर्ण
+		ac97c_writel(chip, MR, AC97C_MR_ENA);
+	}
+}
 
-अटल स्थिर काष्ठा of_device_id aपंचांगel_ac97c_dt_ids[] = अणु
-	अणु .compatible = "atmel,at91sam9263-ac97c", पूर्ण,
-	अणु पूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(of, aपंचांगel_ac97c_dt_ids);
+static const struct of_device_id atmel_ac97c_dt_ids[] = {
+	{ .compatible = "atmel,at91sam9263-ac97c", },
+	{ }
+};
+MODULE_DEVICE_TABLE(of, atmel_ac97c_dt_ids);
 
-अटल पूर्णांक aपंचांगel_ac97c_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device			*dev = &pdev->dev;
-	काष्ठा snd_card			*card;
-	काष्ठा aपंचांगel_ac97c		*chip;
-	काष्ठा resource			*regs;
-	काष्ठा clk			*pclk;
-	अटल स्थिर काष्ठा snd_ac97_bus_ops	ops = अणु
-		.ग_लिखो	= aपंचांगel_ac97c_ग_लिखो,
-		.पढ़ो	= aपंचांगel_ac97c_पढ़ो,
-	पूर्ण;
-	पूर्णांक				retval;
-	पूर्णांक				irq;
+static int atmel_ac97c_probe(struct platform_device *pdev)
+{
+	struct device			*dev = &pdev->dev;
+	struct snd_card			*card;
+	struct atmel_ac97c		*chip;
+	struct resource			*regs;
+	struct clk			*pclk;
+	static const struct snd_ac97_bus_ops	ops = {
+		.write	= atmel_ac97c_write,
+		.read	= atmel_ac97c_read,
+	};
+	int				retval;
+	int				irq;
 
-	regs = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!regs) अणु
+	regs = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!regs) {
 		dev_dbg(&pdev->dev, "no memory resource\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0) अणु
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0) {
 		dev_dbg(&pdev->dev, "could not get irq: %d\n", irq);
-		वापस irq;
-	पूर्ण
+		return irq;
+	}
 
 	pclk = clk_get(&pdev->dev, "ac97_clk");
-	अगर (IS_ERR(pclk)) अणु
+	if (IS_ERR(pclk)) {
 		dev_dbg(&pdev->dev, "no peripheral clock\n");
-		वापस PTR_ERR(pclk);
-	पूर्ण
+		return PTR_ERR(pclk);
+	}
 	retval = clk_prepare_enable(pclk);
-	अगर (retval)
-		जाओ err_prepare_enable;
+	if (retval)
+		goto err_prepare_enable;
 
 	retval = snd_card_new(&pdev->dev, SNDRV_DEFAULT_IDX1,
 			      SNDRV_DEFAULT_STR1, THIS_MODULE,
-			      माप(काष्ठा aपंचांगel_ac97c), &card);
-	अगर (retval) अणु
+			      sizeof(struct atmel_ac97c), &card);
+	if (retval) {
 		dev_dbg(&pdev->dev, "could not create sound card device\n");
-		जाओ err_snd_card_new;
-	पूर्ण
+		goto err_snd_card_new;
+	}
 
 	chip = get_chip(card);
 
-	retval = request_irq(irq, aपंचांगel_ac97c_पूर्णांकerrupt, 0, "AC97C", chip);
-	अगर (retval) अणु
+	retval = request_irq(irq, atmel_ac97c_interrupt, 0, "AC97C", chip);
+	if (retval) {
 		dev_dbg(&pdev->dev, "unable to request irq %d\n", irq);
-		जाओ err_request_irq;
-	पूर्ण
+		goto err_request_irq;
+	}
 	chip->irq = irq;
 
 	spin_lock_init(&chip->lock);
 
-	म_नकल(card->driver, "Atmel AC97C");
-	म_नकल(card->लघुname, "Atmel AC97C");
-	प्र_लिखो(card->दीर्घname, "Atmel AC97 controller");
+	strcpy(card->driver, "Atmel AC97C");
+	strcpy(card->shortname, "Atmel AC97C");
+	sprintf(card->longname, "Atmel AC97 controller");
 
 	chip->card = card;
 	chip->pclk = pclk;
 	chip->pdev = pdev;
 	chip->regs = ioremap(regs->start, resource_size(regs));
 
-	अगर (!chip->regs) अणु
+	if (!chip->regs) {
 		dev_dbg(&pdev->dev, "could not remap register memory\n");
 		retval = -ENOMEM;
-		जाओ err_ioremap;
-	पूर्ण
+		goto err_ioremap;
+	}
 
 	chip->reset_pin = devm_gpiod_get_index(dev, "ac97", 2, GPIOD_OUT_HIGH);
-	अगर (IS_ERR(chip->reset_pin))
+	if (IS_ERR(chip->reset_pin))
 		dev_dbg(dev, "reset pin not available\n");
 
-	aपंचांगel_ac97c_reset(chip);
+	atmel_ac97c_reset(chip);
 
-	/* Enable overrun पूर्णांकerrupt from codec channel */
-	ac97c_ग_लिखोl(chip, COMR, AC97C_CSR_OVRUN);
-	ac97c_ग_लिखोl(chip, IER, ac97c_पढ़ोl(chip, IMR) | AC97C_SR_COEVT);
+	/* Enable overrun interrupt from codec channel */
+	ac97c_writel(chip, COMR, AC97C_CSR_OVRUN);
+	ac97c_writel(chip, IER, ac97c_readl(chip, IMR) | AC97C_SR_COEVT);
 
 	retval = snd_ac97_bus(card, 0, &ops, chip, &chip->ac97_bus);
-	अगर (retval) अणु
+	if (retval) {
 		dev_dbg(&pdev->dev, "could not register on ac97 bus\n");
-		जाओ err_ac97_bus;
-	पूर्ण
+		goto err_ac97_bus;
+	}
 
-	retval = aपंचांगel_ac97c_mixer_new(chip);
-	अगर (retval) अणु
+	retval = atmel_ac97c_mixer_new(chip);
+	if (retval) {
 		dev_dbg(&pdev->dev, "could not register ac97 mixer\n");
-		जाओ err_ac97_bus;
-	पूर्ण
+		goto err_ac97_bus;
+	}
 
-	retval = aपंचांगel_ac97c_pcm_new(chip);
-	अगर (retval) अणु
+	retval = atmel_ac97c_pcm_new(chip);
+	if (retval) {
 		dev_dbg(&pdev->dev, "could not register ac97 pcm device\n");
-		जाओ err_ac97_bus;
-	पूर्ण
+		goto err_ac97_bus;
+	}
 
-	retval = snd_card_रेजिस्टर(card);
-	अगर (retval) अणु
+	retval = snd_card_register(card);
+	if (retval) {
 		dev_dbg(&pdev->dev, "could not register sound card\n");
-		जाओ err_ac97_bus;
-	पूर्ण
+		goto err_ac97_bus;
+	}
 
-	platक्रमm_set_drvdata(pdev, card);
+	platform_set_drvdata(pdev, card);
 
 	dev_info(&pdev->dev, "Atmel AC97 controller at 0x%p, irq = %d\n",
 			chip->regs, irq);
 
-	वापस 0;
+	return 0;
 
 err_ac97_bus:
 	iounmap(chip->regs);
 err_ioremap:
-	मुक्त_irq(irq, chip);
+	free_irq(irq, chip);
 err_request_irq:
-	snd_card_मुक्त(card);
+	snd_card_free(card);
 err_snd_card_new:
 	clk_disable_unprepare(pclk);
 err_prepare_enable:
 	clk_put(pclk);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक aपंचांगel_ac97c_suspend(काष्ठा device *pdev)
-अणु
-	काष्ठा snd_card *card = dev_get_drvdata(pdev);
-	काष्ठा aपंचांगel_ac97c *chip = card->निजी_data;
+#ifdef CONFIG_PM_SLEEP
+static int atmel_ac97c_suspend(struct device *pdev)
+{
+	struct snd_card *card = dev_get_drvdata(pdev);
+	struct atmel_ac97c *chip = card->private_data;
 
 	clk_disable_unprepare(chip->pclk);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक aपंचांगel_ac97c_resume(काष्ठा device *pdev)
-अणु
-	काष्ठा snd_card *card = dev_get_drvdata(pdev);
-	काष्ठा aपंचांगel_ac97c *chip = card->निजी_data;
-	पूर्णांक ret = clk_prepare_enable(chip->pclk);
+static int atmel_ac97c_resume(struct device *pdev)
+{
+	struct snd_card *card = dev_get_drvdata(pdev);
+	struct atmel_ac97c *chip = card->private_data;
+	int ret = clk_prepare_enable(chip->pclk);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल SIMPLE_DEV_PM_OPS(aपंचांगel_ac97c_pm, aपंचांगel_ac97c_suspend, aपंचांगel_ac97c_resume);
-#घोषणा ATMEL_AC97C_PM_OPS	&aपंचांगel_ac97c_pm
-#अन्यथा
-#घोषणा ATMEL_AC97C_PM_OPS	शून्य
-#पूर्ण_अगर
+static SIMPLE_DEV_PM_OPS(atmel_ac97c_pm, atmel_ac97c_suspend, atmel_ac97c_resume);
+#define ATMEL_AC97C_PM_OPS	&atmel_ac97c_pm
+#else
+#define ATMEL_AC97C_PM_OPS	NULL
+#endif
 
-अटल पूर्णांक aपंचांगel_ac97c_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा snd_card *card = platक्रमm_get_drvdata(pdev);
-	काष्ठा aपंचांगel_ac97c *chip = get_chip(card);
+static int atmel_ac97c_remove(struct platform_device *pdev)
+{
+	struct snd_card *card = platform_get_drvdata(pdev);
+	struct atmel_ac97c *chip = get_chip(card);
 
-	ac97c_ग_लिखोl(chip, CAMR, 0);
-	ac97c_ग_लिखोl(chip, COMR, 0);
-	ac97c_ग_लिखोl(chip, MR,   0);
+	ac97c_writel(chip, CAMR, 0);
+	ac97c_writel(chip, COMR, 0);
+	ac97c_writel(chip, MR,   0);
 
 	clk_disable_unprepare(chip->pclk);
 	clk_put(chip->pclk);
 	iounmap(chip->regs);
-	मुक्त_irq(chip->irq, chip);
+	free_irq(chip->irq, chip);
 
-	snd_card_मुक्त(card);
+	snd_card_free(card);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver aपंचांगel_ac97c_driver = अणु
-	.probe		= aपंचांगel_ac97c_probe,
-	.हटाओ		= aपंचांगel_ac97c_हटाओ,
-	.driver		= अणु
+static struct platform_driver atmel_ac97c_driver = {
+	.probe		= atmel_ac97c_probe,
+	.remove		= atmel_ac97c_remove,
+	.driver		= {
 		.name	= "atmel_ac97c",
 		.pm	= ATMEL_AC97C_PM_OPS,
-		.of_match_table = aपंचांगel_ac97c_dt_ids,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(aपंचांगel_ac97c_driver);
+		.of_match_table = atmel_ac97c_dt_ids,
+	},
+};
+module_platform_driver(atmel_ac97c_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Driver for Atmel AC97 controller");

@@ -1,11 +1,10 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Industrial I/O driver क्रम Microchip digital potentiometers
+ * Industrial I/O driver for Microchip digital potentiometers
  * Copyright (c) 2018  Axentia Technologies AB
  * Author: Peter Rosin <peda@axentia.se>
  *
- * Datasheet: http://www.microchip.com/करोwnloads/en/DeviceDoc/22147a.pdf
+ * Datasheet: http://www.microchip.com/downloads/en/DeviceDoc/22147a.pdf
  *
  * DEVID	#Wipers	#Positions	Resistor Opts (kOhm)
  * mcp4017	1	128		5, 10, 50, 100
@@ -13,116 +12,116 @@
  * mcp4019	1	128		5, 10, 50, 100
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <linux/property.h>
+#include <linux/err.h>
+#include <linux/i2c.h>
+#include <linux/iio/iio.h>
+#include <linux/module.h>
+#include <linux/mod_devicetable.h>
+#include <linux/property.h>
 
-#घोषणा MCP4018_WIPER_MAX 127
+#define MCP4018_WIPER_MAX 127
 
-काष्ठा mcp4018_cfg अणु
-	पूर्णांक kohms;
-पूर्ण;
+struct mcp4018_cfg {
+	int kohms;
+};
 
-क्रमागत mcp4018_type अणु
+enum mcp4018_type {
 	MCP4018_502,
 	MCP4018_103,
 	MCP4018_503,
 	MCP4018_104,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mcp4018_cfg mcp4018_cfg[] = अणु
-	[MCP4018_502] = अणु .kohms =   5, पूर्ण,
-	[MCP4018_103] = अणु .kohms =  10, पूर्ण,
-	[MCP4018_503] = अणु .kohms =  50, पूर्ण,
-	[MCP4018_104] = अणु .kohms = 100, पूर्ण,
-पूर्ण;
+static const struct mcp4018_cfg mcp4018_cfg[] = {
+	[MCP4018_502] = { .kohms =   5, },
+	[MCP4018_103] = { .kohms =  10, },
+	[MCP4018_503] = { .kohms =  50, },
+	[MCP4018_104] = { .kohms = 100, },
+};
 
-काष्ठा mcp4018_data अणु
-	काष्ठा i2c_client *client;
-	स्थिर काष्ठा mcp4018_cfg *cfg;
-पूर्ण;
+struct mcp4018_data {
+	struct i2c_client *client;
+	const struct mcp4018_cfg *cfg;
+};
 
-अटल स्थिर काष्ठा iio_chan_spec mcp4018_channel = अणु
+static const struct iio_chan_spec mcp4018_channel = {
 	.type = IIO_RESISTANCE,
 	.indexed = 1,
 	.output = 1,
 	.channel = 0,
 	.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),
 	.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE),
-पूर्ण;
+};
 
-अटल पूर्णांक mcp4018_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
-			    काष्ठा iio_chan_spec स्थिर *chan,
-			    पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
-अणु
-	काष्ठा mcp4018_data *data = iio_priv(indio_dev);
+static int mcp4018_read_raw(struct iio_dev *indio_dev,
+			    struct iio_chan_spec const *chan,
+			    int *val, int *val2, long mask)
+{
+	struct mcp4018_data *data = iio_priv(indio_dev);
 	s32 ret;
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_RAW:
-		ret = i2c_smbus_पढ़ो_byte(data->client);
-		अगर (ret < 0)
-			वापस ret;
+	switch (mask) {
+	case IIO_CHAN_INFO_RAW:
+		ret = i2c_smbus_read_byte(data->client);
+		if (ret < 0)
+			return ret;
 		*val = ret;
-		वापस IIO_VAL_INT;
-	हाल IIO_CHAN_INFO_SCALE:
+		return IIO_VAL_INT;
+	case IIO_CHAN_INFO_SCALE:
 		*val = 1000 * data->cfg->kohms;
 		*val2 = MCP4018_WIPER_MAX;
-		वापस IIO_VAL_FRACTIONAL;
-	पूर्ण
+		return IIO_VAL_FRACTIONAL;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक mcp4018_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
-			     काष्ठा iio_chan_spec स्थिर *chan,
-			     पूर्णांक val, पूर्णांक val2, दीर्घ mask)
-अणु
-	काष्ठा mcp4018_data *data = iio_priv(indio_dev);
+static int mcp4018_write_raw(struct iio_dev *indio_dev,
+			     struct iio_chan_spec const *chan,
+			     int val, int val2, long mask)
+{
+	struct mcp4018_data *data = iio_priv(indio_dev);
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_RAW:
-		अगर (val > MCP4018_WIPER_MAX || val < 0)
-			वापस -EINVAL;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (mask) {
+	case IIO_CHAN_INFO_RAW:
+		if (val > MCP4018_WIPER_MAX || val < 0)
+			return -EINVAL;
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस i2c_smbus_ग_लिखो_byte(data->client, val);
-पूर्ण
+	return i2c_smbus_write_byte(data->client, val);
+}
 
-अटल स्थिर काष्ठा iio_info mcp4018_info = अणु
-	.पढ़ो_raw = mcp4018_पढ़ो_raw,
-	.ग_लिखो_raw = mcp4018_ग_लिखो_raw,
-पूर्ण;
+static const struct iio_info mcp4018_info = {
+	.read_raw = mcp4018_read_raw,
+	.write_raw = mcp4018_write_raw,
+};
 
-अटल स्थिर काष्ठा i2c_device_id mcp4018_id[] = अणु
-	अणु "mcp4017-502", MCP4018_502 पूर्ण,
-	अणु "mcp4017-103", MCP4018_103 पूर्ण,
-	अणु "mcp4017-503", MCP4018_503 पूर्ण,
-	अणु "mcp4017-104", MCP4018_104 पूर्ण,
-	अणु "mcp4018-502", MCP4018_502 पूर्ण,
-	अणु "mcp4018-103", MCP4018_103 पूर्ण,
-	अणु "mcp4018-503", MCP4018_503 पूर्ण,
-	अणु "mcp4018-104", MCP4018_104 पूर्ण,
-	अणु "mcp4019-502", MCP4018_502 पूर्ण,
-	अणु "mcp4019-103", MCP4018_103 पूर्ण,
-	अणु "mcp4019-503", MCP4018_503 पूर्ण,
-	अणु "mcp4019-104", MCP4018_104 पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct i2c_device_id mcp4018_id[] = {
+	{ "mcp4017-502", MCP4018_502 },
+	{ "mcp4017-103", MCP4018_103 },
+	{ "mcp4017-503", MCP4018_503 },
+	{ "mcp4017-104", MCP4018_104 },
+	{ "mcp4018-502", MCP4018_502 },
+	{ "mcp4018-103", MCP4018_103 },
+	{ "mcp4018-503", MCP4018_503 },
+	{ "mcp4018-104", MCP4018_104 },
+	{ "mcp4019-502", MCP4018_502 },
+	{ "mcp4019-103", MCP4018_103 },
+	{ "mcp4019-503", MCP4018_503 },
+	{ "mcp4019-104", MCP4018_104 },
+	{}
+};
 MODULE_DEVICE_TABLE(i2c, mcp4018_id);
 
-#घोषणा MCP4018_COMPATIBLE(of_compatible, cfg) अणु	\
+#define MCP4018_COMPATIBLE(of_compatible, cfg) {	\
 	.compatible = of_compatible,			\
 	.data = &mcp4018_cfg[cfg],			\
-पूर्ण
+}
 
-अटल स्थिर काष्ठा of_device_id mcp4018_of_match[] = अणु
+static const struct of_device_id mcp4018_of_match[] = {
 	MCP4018_COMPATIBLE("microchip,mcp4017-502", MCP4018_502),
 	MCP4018_COMPATIBLE("microchip,mcp4017-103", MCP4018_103),
 	MCP4018_COMPATIBLE("microchip,mcp4017-503", MCP4018_503),
@@ -135,31 +134,31 @@ MODULE_DEVICE_TABLE(i2c, mcp4018_id);
 	MCP4018_COMPATIBLE("microchip,mcp4019-103", MCP4018_103),
 	MCP4018_COMPATIBLE("microchip,mcp4019-503", MCP4018_503),
 	MCP4018_COMPATIBLE("microchip,mcp4019-104", MCP4018_104),
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, mcp4018_of_match);
 
-अटल पूर्णांक mcp4018_probe(काष्ठा i2c_client *client)
-अणु
-	काष्ठा device *dev = &client->dev;
-	काष्ठा mcp4018_data *data;
-	काष्ठा iio_dev *indio_dev;
+static int mcp4018_probe(struct i2c_client *client)
+{
+	struct device *dev = &client->dev;
+	struct mcp4018_data *data;
+	struct iio_dev *indio_dev;
 
-	अगर (!i2c_check_functionality(client->adapter,
-				     I2C_FUNC_SMBUS_BYTE)) अणु
+	if (!i2c_check_functionality(client->adapter,
+				     I2C_FUNC_SMBUS_BYTE)) {
 		dev_err(dev, "SMBUS Byte transfers not supported\n");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	indio_dev = devm_iio_device_alloc(dev, माप(*data));
-	अगर (!indio_dev)
-		वापस -ENOMEM;
+	indio_dev = devm_iio_device_alloc(dev, sizeof(*data));
+	if (!indio_dev)
+		return -ENOMEM;
 	data = iio_priv(indio_dev);
 	i2c_set_clientdata(client, indio_dev);
 	data->client = client;
 
 	data->cfg = device_get_match_data(dev);
-	अगर (!data->cfg)
+	if (!data->cfg)
 		data->cfg = &mcp4018_cfg[i2c_match_id(mcp4018_id, client)->driver_data];
 
 	indio_dev->info = &mcp4018_info;
@@ -167,17 +166,17 @@ MODULE_DEVICE_TABLE(of, mcp4018_of_match);
 	indio_dev->num_channels = 1;
 	indio_dev->name = client->name;
 
-	वापस devm_iio_device_रेजिस्टर(dev, indio_dev);
-पूर्ण
+	return devm_iio_device_register(dev, indio_dev);
+}
 
-अटल काष्ठा i2c_driver mcp4018_driver = अणु
-	.driver = अणु
+static struct i2c_driver mcp4018_driver = {
+	.driver = {
 		.name	= "mcp4018",
 		.of_match_table = mcp4018_of_match,
-	पूर्ण,
+	},
 	.probe_new	= mcp4018_probe,
 	.id_table	= mcp4018_id,
-पूर्ण;
+};
 
 module_i2c_driver(mcp4018_driver);
 

@@ -1,144 +1,143 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * USB Serial Console driver
  *
- * Copyright (C) 2001 - 2002 Greg Kroah-Harपंचांगan (greg@kroah.com)
+ * Copyright (C) 2001 - 2002 Greg Kroah-Hartman (greg@kroah.com)
  *
- * Thanks to Randy Dunlap क्रम the original version of this code.
+ * Thanks to Randy Dunlap for the original version of this code.
  *
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/console.h>
-#समावेश <linux/serial.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/usb/serial.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/tty.h>
+#include <linux/console.h>
+#include <linux/serial.h>
+#include <linux/usb.h>
+#include <linux/usb/serial.h>
 
-काष्ठा usbcons_info अणु
-	पूर्णांक			magic;
-	पूर्णांक			अवरोध_flag;
-	काष्ठा usb_serial_port	*port;
-पूर्ण;
+struct usbcons_info {
+	int			magic;
+	int			break_flag;
+	struct usb_serial_port	*port;
+};
 
-अटल काष्ठा usbcons_info usbcons_info;
-अटल काष्ठा console usbcons;
+static struct usbcons_info usbcons_info;
+static struct console usbcons;
 
 /*
  * ------------------------------------------------------------
  * USB Serial console driver
  *
- * Much of the code here is copied from drivers/अक्षर/serial.c
+ * Much of the code here is copied from drivers/char/serial.c
  * and implements a phony serial console in the same way that
- * serial.c करोes so that in हाल some software queries it,
+ * serial.c does so that in case some software queries it,
  * it will get the same results.
  *
- * Things that are dअगरferent from the way the serial port code
- * करोes things, is that we call the lower level usb-serial
+ * Things that are different from the way the serial port code
+ * does things, is that we call the lower level usb-serial
  * driver code to initialize the device, and we set the initial
  * console speeds based on the command line arguments.
  * ------------------------------------------------------------
  */
 
-अटल स्थिर काष्ठा tty_operations usb_console_fake_tty_ops = अणु
-पूर्ण;
+static const struct tty_operations usb_console_fake_tty_ops = {
+};
 
 /*
  * The parsing of the command line works exactly like the
- * serial.c code, except that the specअगरier is "ttyUSB" instead
+ * serial.c code, except that the specifier is "ttyUSB" instead
  * of "ttyS".
  */
-अटल पूर्णांक usb_console_setup(काष्ठा console *co, अक्षर *options)
-अणु
-	काष्ठा usbcons_info *info = &usbcons_info;
-	पूर्णांक baud = 9600;
-	पूर्णांक bits = 8;
-	पूर्णांक parity = 'n';
-	पूर्णांक करोflow = 0;
-	पूर्णांक cflag = CREAD | HUPCL | CLOCAL;
-	अक्षर *s;
-	काष्ठा usb_serial *serial;
-	काष्ठा usb_serial_port *port;
-	पूर्णांक retval;
-	काष्ठा tty_काष्ठा *tty = शून्य;
-	काष्ठा ktermios dummy;
+static int usb_console_setup(struct console *co, char *options)
+{
+	struct usbcons_info *info = &usbcons_info;
+	int baud = 9600;
+	int bits = 8;
+	int parity = 'n';
+	int doflow = 0;
+	int cflag = CREAD | HUPCL | CLOCAL;
+	char *s;
+	struct usb_serial *serial;
+	struct usb_serial_port *port;
+	int retval;
+	struct tty_struct *tty = NULL;
+	struct ktermios dummy;
 
-	अगर (options) अणु
-		baud = simple_म_से_अदीर्घ(options, शून्य, 10);
+	if (options) {
+		baud = simple_strtoul(options, NULL, 10);
 		s = options;
-		जबतक (*s >= '0' && *s <= '9')
+		while (*s >= '0' && *s <= '9')
 			s++;
-		अगर (*s)
+		if (*s)
 			parity = *s++;
-		अगर (*s)
+		if (*s)
 			bits   = *s++ - '0';
-		अगर (*s)
-			करोflow = (*s++ == 'r');
-	पूर्ण
+		if (*s)
+			doflow = (*s++ == 'r');
+	}
 
-	/* Sane शेष */
-	अगर (baud == 0)
+	/* Sane default */
+	if (baud == 0)
 		baud = 9600;
 
-	चयन (bits) अणु
-	हाल 7:
+	switch (bits) {
+	case 7:
 		cflag |= CS7;
-		अवरोध;
-	शेष:
-	हाल 8:
+		break;
+	default:
+	case 8:
 		cflag |= CS8;
-		अवरोध;
-	पूर्ण
-	चयन (parity) अणु
-	हाल 'o': case 'O':
+		break;
+	}
+	switch (parity) {
+	case 'o': case 'O':
 		cflag |= PARODD;
-		अवरोध;
-	हाल 'e': case 'E':
+		break;
+	case 'e': case 'E':
 		cflag |= PARENB;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (करोflow)
+	if (doflow)
 		cflag |= CRTSCTS;
 
 	/*
-	 * no need to check the index here: अगर the index is wrong, console
+	 * no need to check the index here: if the index is wrong, console
 	 * code won't call us
 	 */
 	port = usb_serial_port_get_by_minor(co->index);
-	अगर (port == शून्य) अणु
+	if (port == NULL) {
 		/* no device is connected yet, sorry :( */
 		pr_err("No USB device connected to ttyUSB%i\n", co->index);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	serial = port->serial;
 
-	retval = usb_स्वतःpm_get_पूर्णांकerface(serial->पूर्णांकerface);
-	अगर (retval)
-		जाओ error_get_पूर्णांकerface;
+	retval = usb_autopm_get_interface(serial->interface);
+	if (retval)
+		goto error_get_interface;
 
-	tty_port_tty_set(&port->port, शून्य);
+	tty_port_tty_set(&port->port, NULL);
 
 	info->port = port;
 
 	++port->port.count;
-	अगर (!tty_port_initialized(&port->port)) अणु
-		अगर (serial->type->set_termios) अणु
+	if (!tty_port_initialized(&port->port)) {
+		if (serial->type->set_termios) {
 			/*
 			 * allocate a fake tty so the driver can initialize
-			 * the termios काष्ठाure, then later call set_termios to
+			 * the termios structure, then later call set_termios to
 			 * configure according to command line arguments
 			 */
-			tty = kzalloc(माप(*tty), GFP_KERNEL);
-			अगर (!tty) अणु
+			tty = kzalloc(sizeof(*tty), GFP_KERNEL);
+			if (!tty) {
 				retval = -ENOMEM;
-				जाओ reset_खोलो_count;
-			पूर्ण
+				goto reset_open_count;
+			}
 			kref_init(&tty->kref);
 			tty->driver = usb_serial_tty_driver;
 			tty->index = co->index;
@@ -150,156 +149,156 @@
 			tty->ops = &usb_console_fake_tty_ops;
 			tty_init_termios(tty);
 			tty_port_tty_set(&port->port, tty);
-		पूर्ण
+		}
 
-		/* only call the device specअगरic खोलो अगर this
-		 * is the first समय the port is खोलोed */
-		retval = serial->type->खोलो(शून्य, port);
-		अगर (retval) अणु
+		/* only call the device specific open if this
+		 * is the first time the port is opened */
+		retval = serial->type->open(NULL, port);
+		if (retval) {
 			dev_err(&port->dev, "could not open USB console port\n");
-			जाओ fail;
-		पूर्ण
+			goto fail;
+		}
 
-		अगर (serial->type->set_termios) अणु
+		if (serial->type->set_termios) {
 			tty->termios.c_cflag = cflag;
 			tty_termios_encode_baud_rate(&tty->termios, baud, baud);
-			स_रखो(&dummy, 0, माप(काष्ठा ktermios));
+			memset(&dummy, 0, sizeof(struct ktermios));
 			serial->type->set_termios(tty, port, &dummy);
 
-			tty_port_tty_set(&port->port, शून्य);
+			tty_port_tty_set(&port->port, NULL);
 			tty_save_termios(tty);
 			tty_kref_put(tty);
-		पूर्ण
+		}
 		tty_port_set_initialized(&port->port, 1);
-	पूर्ण
+	}
 	/* Now that any required fake tty operations are completed restore
 	 * the tty port count */
 	--port->port.count;
 	/* The console is special in terms of closing the device so
-	 * indicate this port is now acting as a प्रणाली console. */
+	 * indicate this port is now acting as a system console. */
 	port->port.console = 1;
 
 	mutex_unlock(&serial->disc_mutex);
-	वापस retval;
+	return retval;
 
  fail:
-	tty_port_tty_set(&port->port, शून्य);
+	tty_port_tty_set(&port->port, NULL);
 	tty_kref_put(tty);
- reset_खोलो_count:
+ reset_open_count:
 	port->port.count = 0;
-	info->port = शून्य;
-	usb_स्वतःpm_put_पूर्णांकerface(serial->पूर्णांकerface);
- error_get_पूर्णांकerface:
+	info->port = NULL;
+	usb_autopm_put_interface(serial->interface);
+ error_get_interface:
 	usb_serial_put(serial);
 	mutex_unlock(&serial->disc_mutex);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल व्योम usb_console_ग_लिखो(काष्ठा console *co,
-					स्थिर अक्षर *buf, अचिन्हित count)
-अणु
-	अटल काष्ठा usbcons_info *info = &usbcons_info;
-	काष्ठा usb_serial_port *port = info->port;
-	काष्ठा usb_serial *serial;
-	पूर्णांक retval = -ENODEV;
+static void usb_console_write(struct console *co,
+					const char *buf, unsigned count)
+{
+	static struct usbcons_info *info = &usbcons_info;
+	struct usb_serial_port *port = info->port;
+	struct usb_serial *serial;
+	int retval = -ENODEV;
 
-	अगर (!port || port->serial->dev->state == USB_STATE_NOTATTACHED)
-		वापस;
+	if (!port || port->serial->dev->state == USB_STATE_NOTATTACHED)
+		return;
 	serial = port->serial;
 
-	अगर (count == 0)
-		वापस;
+	if (count == 0)
+		return;
 
 	dev_dbg(&port->dev, "%s - %d byte(s)\n", __func__, count);
 
-	अगर (!port->port.console) अणु
+	if (!port->port.console) {
 		dev_dbg(&port->dev, "%s - port not opened\n", __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	जबतक (count) अणु
-		अचिन्हित पूर्णांक i;
-		अचिन्हित पूर्णांक lf;
-		/* search क्रम LF so we can insert CR अगर necessary */
-		क्रम (i = 0, lf = 0 ; i < count ; i++) अणु
-			अगर (*(buf + i) == 10) अणु
+	while (count) {
+		unsigned int i;
+		unsigned int lf;
+		/* search for LF so we can insert CR if necessary */
+		for (i = 0, lf = 0 ; i < count ; i++) {
+			if (*(buf + i) == 10) {
 				lf = 1;
 				i++;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		/* pass on to the driver specअगरic version of this function अगर
+				break;
+			}
+		}
+		/* pass on to the driver specific version of this function if
 		   it is available */
-		retval = serial->type->ग_लिखो(शून्य, port, buf, i);
+		retval = serial->type->write(NULL, port, buf, i);
 		dev_dbg(&port->dev, "%s - write: %d\n", __func__, retval);
-		अगर (lf) अणु
+		if (lf) {
 			/* append CR after LF */
-			अचिन्हित अक्षर cr = 13;
-			retval = serial->type->ग_लिखो(शून्य, port, &cr, 1);
+			unsigned char cr = 13;
+			retval = serial->type->write(NULL, port, &cr, 1);
 			dev_dbg(&port->dev, "%s - write cr: %d\n",
 							__func__, retval);
-		पूर्ण
+		}
 		buf += i;
 		count -= i;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल काष्ठा tty_driver *usb_console_device(काष्ठा console *co, पूर्णांक *index)
-अणु
-	काष्ठा tty_driver **p = (काष्ठा tty_driver **)co->data;
+static struct tty_driver *usb_console_device(struct console *co, int *index)
+{
+	struct tty_driver **p = (struct tty_driver **)co->data;
 
-	अगर (!*p)
-		वापस शून्य;
+	if (!*p)
+		return NULL;
 
 	*index = co->index;
-	वापस *p;
-पूर्ण
+	return *p;
+}
 
-अटल काष्ठा console usbcons = अणु
+static struct console usbcons = {
 	.name =		"ttyUSB",
-	.ग_लिखो =	usb_console_ग_लिखो,
+	.write =	usb_console_write,
 	.device =	usb_console_device,
 	.setup =	usb_console_setup,
 	.flags =	CON_PRINTBUFFER,
 	.index =	-1,
 	.data = 	&usb_serial_tty_driver,
-पूर्ण;
+};
 
-व्योम usb_serial_console_disconnect(काष्ठा usb_serial *serial)
-अणु
-	अगर (serial->port[0] && serial->port[0] == usbcons_info.port) अणु
-		usb_serial_console_निकास();
+void usb_serial_console_disconnect(struct usb_serial *serial)
+{
+	if (serial->port[0] && serial->port[0] == usbcons_info.port) {
+		usb_serial_console_exit();
 		usb_serial_put(serial);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम usb_serial_console_init(पूर्णांक minor)
-अणु
-	अगर (minor == 0) अणु
+void usb_serial_console_init(int minor)
+{
+	if (minor == 0) {
 		/*
-		 * Call रेजिस्टर_console() अगर this is the first device plugged
+		 * Call register_console() if this is the first device plugged
 		 * in.  If we call it earlier, then the callback to
 		 * console_setup() will fail, as there is not a device seen by
-		 * the USB subप्रणाली yet.
+		 * the USB subsystem yet.
 		 */
 		/*
 		 * Register console.
 		 * NOTES:
 		 * console_setup() is called (back) immediately (from
-		 * रेजिस्टर_console). console_ग_लिखो() is called immediately
-		 * from रेजिस्टर_console अगरf CON_PRINTBUFFER is set in flags.
+		 * register_console). console_write() is called immediately
+		 * from register_console iff CON_PRINTBUFFER is set in flags.
 		 */
 		pr_debug("registering the USB serial console.\n");
-		रेजिस्टर_console(&usbcons);
-	पूर्ण
-पूर्ण
+		register_console(&usbcons);
+	}
+}
 
-व्योम usb_serial_console_निकास(व्योम)
-अणु
-	अगर (usbcons_info.port) अणु
-		unरेजिस्टर_console(&usbcons);
+void usb_serial_console_exit(void)
+{
+	if (usbcons_info.port) {
+		unregister_console(&usbcons);
 		usbcons_info.port->port.console = 0;
-		usbcons_info.port = शून्य;
-	पूर्ण
-पूर्ण
+		usbcons_info.port = NULL;
+	}
+}
 

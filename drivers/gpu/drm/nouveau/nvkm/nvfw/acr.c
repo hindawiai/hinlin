@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2019 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,23 +19,23 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#समावेश <core/subdev.h>
-#समावेश <nvfw/acr.h>
+#include <core/subdev.h>
+#include <nvfw/acr.h>
 
-व्योम
-wpr_header_dump(काष्ठा nvkm_subdev *subdev, स्थिर काष्ठा wpr_header *hdr)
-अणु
+void
+wpr_header_dump(struct nvkm_subdev *subdev, const struct wpr_header *hdr)
+{
 	nvkm_debug(subdev, "wprHeader\n");
 	nvkm_debug(subdev, "\tfalconID      : %d\n", hdr->falcon_id);
 	nvkm_debug(subdev, "\tlsbOffset     : 0x%x\n", hdr->lsb_offset);
 	nvkm_debug(subdev, "\tbootstrapOwner: %d\n", hdr->bootstrap_owner);
 	nvkm_debug(subdev, "\tlazyBootstrap : %d\n", hdr->lazy_bootstrap);
 	nvkm_debug(subdev, "\tstatus        : %d\n", hdr->status);
-पूर्ण
+}
 
-व्योम
-wpr_header_v1_dump(काष्ठा nvkm_subdev *subdev, स्थिर काष्ठा wpr_header_v1 *hdr)
-अणु
+void
+wpr_header_v1_dump(struct nvkm_subdev *subdev, const struct wpr_header_v1 *hdr)
+{
 	nvkm_debug(subdev, "wprHeader\n");
 	nvkm_debug(subdev, "\tfalconID      : %d\n", hdr->falcon_id);
 	nvkm_debug(subdev, "\tlsbOffset     : 0x%x\n", hdr->lsb_offset);
@@ -44,11 +43,11 @@ wpr_header_v1_dump(काष्ठा nvkm_subdev *subdev, स्थिर क�
 	nvkm_debug(subdev, "\tlazyBootstrap : %d\n", hdr->lazy_bootstrap);
 	nvkm_debug(subdev, "\tbinVersion    : %d\n", hdr->bin_version);
 	nvkm_debug(subdev, "\tstatus        : %d\n", hdr->status);
-पूर्ण
+}
 
-अटल व्योम
-lsb_header_tail_dump(काष्ठा nvkm_subdev *subdev, काष्ठा lsb_header_tail *hdr)
-अणु
+static void
+lsb_header_tail_dump(struct nvkm_subdev *subdev, struct lsb_header_tail *hdr)
+{
 	nvkm_debug(subdev, "lsbHeader\n");
 	nvkm_debug(subdev, "\tucodeOff      : 0x%x\n", hdr->ucode_off);
 	nvkm_debug(subdev, "\tucodeSize     : 0x%x\n", hdr->ucode_size);
@@ -62,24 +61,24 @@ lsb_header_tail_dump(काष्ठा nvkm_subdev *subdev, काष्ठा 
 	nvkm_debug(subdev, "\tappDataOff    : 0x%x\n", hdr->app_data_off);
 	nvkm_debug(subdev, "\tappDataSize   : 0x%x\n", hdr->app_data_size);
 	nvkm_debug(subdev, "\tflags         : 0x%x\n", hdr->flags);
-पूर्ण
+}
 
-व्योम
-lsb_header_dump(काष्ठा nvkm_subdev *subdev, काष्ठा lsb_header *hdr)
-अणु
+void
+lsb_header_dump(struct nvkm_subdev *subdev, struct lsb_header *hdr)
+{
 	lsb_header_tail_dump(subdev, &hdr->tail);
-पूर्ण
+}
 
-व्योम
-lsb_header_v1_dump(काष्ठा nvkm_subdev *subdev, काष्ठा lsb_header_v1 *hdr)
-अणु
+void
+lsb_header_v1_dump(struct nvkm_subdev *subdev, struct lsb_header_v1 *hdr)
+{
 	lsb_header_tail_dump(subdev, &hdr->tail);
-पूर्ण
+}
 
-व्योम
-flcn_acr_desc_dump(काष्ठा nvkm_subdev *subdev, काष्ठा flcn_acr_desc *hdr)
-अणु
-	पूर्णांक i;
+void
+flcn_acr_desc_dump(struct nvkm_subdev *subdev, struct flcn_acr_desc *hdr)
+{
+	int i;
 
 	nvkm_debug(subdev, "acrDesc\n");
 	nvkm_debug(subdev, "\twprRegionId  : %d\n", hdr->wpr_region_id);
@@ -89,7 +88,7 @@ flcn_acr_desc_dump(काष्ठा nvkm_subdev *subdev, काष्ठा fl
 	nvkm_debug(subdev, "\tnoRegions    : %d\n",
 		   hdr->regions.no_regions);
 
-	क्रम (i = 0; i < ARRAY_SIZE(hdr->regions.region_props); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(hdr->regions.region_props); i++) {
 		nvkm_debug(subdev, "\tregion[%d]    :\n", i);
 		nvkm_debug(subdev, "\t  startAddr  : 0x%x\n",
 			   hdr->regions.region_props[i].start_addr);
@@ -98,12 +97,12 @@ flcn_acr_desc_dump(काष्ठा nvkm_subdev *subdev, काष्ठा fl
 		nvkm_debug(subdev, "\t  regionId   : %d\n",
 			   hdr->regions.region_props[i].region_id);
 		nvkm_debug(subdev, "\t  readMask   : 0x%x\n",
-			   hdr->regions.region_props[i].पढ़ो_mask);
+			   hdr->regions.region_props[i].read_mask);
 		nvkm_debug(subdev, "\t  writeMask  : 0x%x\n",
-			   hdr->regions.region_props[i].ग_लिखो_mask);
+			   hdr->regions.region_props[i].write_mask);
 		nvkm_debug(subdev, "\t  clientMask : 0x%x\n",
 			   hdr->regions.region_props[i].client_mask);
-	पूर्ण
+	}
 
 	nvkm_debug(subdev, "\tucodeBlobSize: %d\n",
 		   hdr->ucode_blob_size);
@@ -117,12 +116,12 @@ flcn_acr_desc_dump(काष्ठा nvkm_subdev *subdev, काष्ठा fl
 		   hdr->vpr_desc.vpr_end);
 	nvkm_debug(subdev, "\thdcpPolicies : 0x%x\n",
 		   hdr->vpr_desc.hdcp_policies);
-पूर्ण
+}
 
-व्योम
-flcn_acr_desc_v1_dump(काष्ठा nvkm_subdev *subdev, काष्ठा flcn_acr_desc_v1 *hdr)
-अणु
-	पूर्णांक i;
+void
+flcn_acr_desc_v1_dump(struct nvkm_subdev *subdev, struct flcn_acr_desc_v1 *hdr)
+{
+	int i;
 
 	nvkm_debug(subdev, "acrDesc\n");
 	nvkm_debug(subdev, "\twprRegionId         : %d\n", hdr->wpr_region_id);
@@ -132,7 +131,7 @@ flcn_acr_desc_v1_dump(काष्ठा nvkm_subdev *subdev, काष्ठा
 	nvkm_debug(subdev, "\tnoRegions           : %d\n",
 		   hdr->regions.no_regions);
 
-	क्रम (i = 0; i < ARRAY_SIZE(hdr->regions.region_props); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(hdr->regions.region_props); i++) {
 		nvkm_debug(subdev, "\tregion[%d]           :\n", i);
 		nvkm_debug(subdev, "\t  startAddr         : 0x%x\n",
 			   hdr->regions.region_props[i].start_addr);
@@ -141,14 +140,14 @@ flcn_acr_desc_v1_dump(काष्ठा nvkm_subdev *subdev, काष्ठा
 		nvkm_debug(subdev, "\t  regionId          : %d\n",
 			   hdr->regions.region_props[i].region_id);
 		nvkm_debug(subdev, "\t  readMask          : 0x%x\n",
-			   hdr->regions.region_props[i].पढ़ो_mask);
+			   hdr->regions.region_props[i].read_mask);
 		nvkm_debug(subdev, "\t  writeMask         : 0x%x\n",
-			   hdr->regions.region_props[i].ग_लिखो_mask);
+			   hdr->regions.region_props[i].write_mask);
 		nvkm_debug(subdev, "\t  clientMask        : 0x%x\n",
 			   hdr->regions.region_props[i].client_mask);
 		nvkm_debug(subdev, "\t  shadowMemStartAddr: 0x%x\n",
-			   hdr->regions.region_props[i].shaकरोw_mem_start_addr);
-	पूर्ण
+			   hdr->regions.region_props[i].shadow_mem_start_addr);
+	}
 
 	nvkm_debug(subdev, "\tucodeBlobSize       : %d\n",
 		   hdr->ucode_blob_size);
@@ -162,4 +161,4 @@ flcn_acr_desc_v1_dump(काष्ठा nvkm_subdev *subdev, काष्ठा
 		   hdr->vpr_desc.vpr_end);
 	nvkm_debug(subdev, "\thdcpPolicies        : 0x%x\n",
 		   hdr->vpr_desc.hdcp_policies);
-पूर्ण
+}

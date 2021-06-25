@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause */
+/* SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause */
 /*
  * Copyright (c) 2014-2017 Oracle.  All rights reserved.
  * Copyright (c) 2003-2007 Network Appliance, Inc. All rights reserved.
@@ -7,31 +6,31 @@
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the BSD-type
+ * COPYING in the main directory of this source tree, or the BSD-type
  * license below:
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
  * are met:
  *
  *      Redistributions of source code must retain the above copyright
  *      notice, this list of conditions and the following disclaimer.
  *
- *      Redistributions in binary क्रमm must reproduce the above
+ *      Redistributions in binary form must reproduce the above
  *      copyright notice, this list of conditions and the following
- *      disclaimer in the करोcumentation and/or other materials provided
+ *      disclaimer in the documentation and/or other materials provided
  *      with the distribution.
  *
  *      Neither the name of the Network Appliance, Inc. nor the names of
- *      its contributors may be used to enकरोrse or promote products
- *      derived from this software without specअगरic prior written
+ *      its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written
  *      permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -40,257 +39,257 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#अगर_अघोषित _LINUX_SUNRPC_XPRT_RDMA_H
-#घोषणा _LINUX_SUNRPC_XPRT_RDMA_H
+#ifndef _LINUX_SUNRPC_XPRT_RDMA_H
+#define _LINUX_SUNRPC_XPRT_RDMA_H
 
-#समावेश <linux/रुको.h> 		/* रुको_queue_head_t, etc */
-#समावेश <linux/spinlock.h> 		/* spinlock_t, etc */
-#समावेश <linux/atomic.h>		/* atomic_t, etc */
-#समावेश <linux/kref.h>			/* काष्ठा kref */
-#समावेश <linux/workqueue.h>		/* काष्ठा work_काष्ठा */
-#समावेश <linux/llist.h>
+#include <linux/wait.h> 		/* wait_queue_head_t, etc */
+#include <linux/spinlock.h> 		/* spinlock_t, etc */
+#include <linux/atomic.h>		/* atomic_t, etc */
+#include <linux/kref.h>			/* struct kref */
+#include <linux/workqueue.h>		/* struct work_struct */
+#include <linux/llist.h>
 
-#समावेश <rdma/rdma_cm.h>		/* RDMA connection api */
-#समावेश <rdma/ib_verbs.h>		/* RDMA verbs api */
+#include <rdma/rdma_cm.h>		/* RDMA connection api */
+#include <rdma/ib_verbs.h>		/* RDMA verbs api */
 
-#समावेश <linux/sunrpc/clnt.h> 		/* rpc_xprt */
-#समावेश <linux/sunrpc/rpc_rdma_cid.h> 	/* completion IDs */
-#समावेश <linux/sunrpc/rpc_rdma.h> 	/* RPC/RDMA protocol */
-#समावेश <linux/sunrpc/xprtrdma.h> 	/* xprt parameters */
+#include <linux/sunrpc/clnt.h> 		/* rpc_xprt */
+#include <linux/sunrpc/rpc_rdma_cid.h> 	/* completion IDs */
+#include <linux/sunrpc/rpc_rdma.h> 	/* RPC/RDMA protocol */
+#include <linux/sunrpc/xprtrdma.h> 	/* xprt parameters */
 
-#घोषणा RDMA_RESOLVE_TIMEOUT	(5000)	/* 5 seconds */
-#घोषणा RDMA_CONNECT_RETRY_MAX	(2)	/* retries अगर no listener backlog */
+#define RDMA_RESOLVE_TIMEOUT	(5000)	/* 5 seconds */
+#define RDMA_CONNECT_RETRY_MAX	(2)	/* retries if no listener backlog */
 
-#घोषणा RPCRDMA_BIND_TO		(60U * HZ)
-#घोषणा RPCRDMA_INIT_REEST_TO	(5U * HZ)
-#घोषणा RPCRDMA_MAX_REEST_TO	(30U * HZ)
-#घोषणा RPCRDMA_IDLE_DISC_TO	(5U * 60 * HZ)
+#define RPCRDMA_BIND_TO		(60U * HZ)
+#define RPCRDMA_INIT_REEST_TO	(5U * HZ)
+#define RPCRDMA_MAX_REEST_TO	(30U * HZ)
+#define RPCRDMA_IDLE_DISC_TO	(5U * 60 * HZ)
 
 /*
- * RDMA Endpoपूर्णांक -- connection endpoपूर्णांक details
+ * RDMA Endpoint -- connection endpoint details
  */
-काष्ठा rpcrdma_ep अणु
-	काष्ठा kref		re_kref;
-	काष्ठा rdma_cm_id 	*re_id;
-	काष्ठा ib_pd		*re_pd;
-	अचिन्हित पूर्णांक		re_max_rdma_segs;
-	अचिन्हित पूर्णांक		re_max_fr_depth;
+struct rpcrdma_ep {
+	struct kref		re_kref;
+	struct rdma_cm_id 	*re_id;
+	struct ib_pd		*re_pd;
+	unsigned int		re_max_rdma_segs;
+	unsigned int		re_max_fr_depth;
 	bool			re_implicit_roundup;
-	क्रमागत ib_mr_type		re_mrtype;
-	काष्ठा completion	re_करोne;
-	अचिन्हित पूर्णांक		re_send_count;
-	अचिन्हित पूर्णांक		re_send_batch;
-	अचिन्हित पूर्णांक		re_max_अंतरभूत_send;
-	अचिन्हित पूर्णांक		re_max_अंतरभूत_recv;
-	पूर्णांक			re_async_rc;
-	पूर्णांक			re_connect_status;
+	enum ib_mr_type		re_mrtype;
+	struct completion	re_done;
+	unsigned int		re_send_count;
+	unsigned int		re_send_batch;
+	unsigned int		re_max_inline_send;
+	unsigned int		re_max_inline_recv;
+	int			re_async_rc;
+	int			re_connect_status;
 	atomic_t		re_receiving;
-	atomic_t		re_क्रमce_disconnect;
-	काष्ठा ib_qp_init_attr	re_attr;
-	रुको_queue_head_t       re_connect_रुको;
-	काष्ठा rpc_xprt		*re_xprt;
-	काष्ठा rpcrdma_connect_निजी
-				re_cm_निजी;
-	काष्ठा rdma_conn_param	re_remote_cma;
-	पूर्णांक			re_receive_count;
-	अचिन्हित पूर्णांक		re_max_requests; /* depends on device */
-	अचिन्हित पूर्णांक		re_अंतरभूत_send;	/* negotiated */
-	अचिन्हित पूर्णांक		re_अंतरभूत_recv;	/* negotiated */
+	atomic_t		re_force_disconnect;
+	struct ib_qp_init_attr	re_attr;
+	wait_queue_head_t       re_connect_wait;
+	struct rpc_xprt		*re_xprt;
+	struct rpcrdma_connect_private
+				re_cm_private;
+	struct rdma_conn_param	re_remote_cma;
+	int			re_receive_count;
+	unsigned int		re_max_requests; /* depends on device */
+	unsigned int		re_inline_send;	/* negotiated */
+	unsigned int		re_inline_recv;	/* negotiated */
 
 	atomic_t		re_completion_ids;
-पूर्ण;
+};
 
-/* Pre-allocate extra Work Requests क्रम handling reverse-direction
+/* Pre-allocate extra Work Requests for handling reverse-direction
  * Receives and Sends. This is a fixed value because the Work Queues
- * are allocated when the क्रमward channel is set up, दीर्घ beक्रमe the
- * backchannel is provisioned. This value is two बार
+ * are allocated when the forward channel is set up, long before the
+ * backchannel is provisioned. This value is two times
  * NFS4_DEF_CB_SLOT_TABLE_SIZE.
  */
-#अगर defined(CONFIG_SUNRPC_BACKCHANNEL)
-#घोषणा RPCRDMA_BACKWARD_WRS (32)
-#अन्यथा
-#घोषणा RPCRDMA_BACKWARD_WRS (0)
-#पूर्ण_अगर
+#if defined(CONFIG_SUNRPC_BACKCHANNEL)
+#define RPCRDMA_BACKWARD_WRS (32)
+#else
+#define RPCRDMA_BACKWARD_WRS (0)
+#endif
 
-/* Registered buffer -- रेजिस्टरed kदो_स्मृति'd memory क्रम RDMA SEND/RECV
+/* Registered buffer -- registered kmalloc'd memory for RDMA SEND/RECV
  */
 
-काष्ठा rpcrdma_regbuf अणु
-	काष्ठा ib_sge		rg_iov;
-	काष्ठा ib_device	*rg_device;
-	क्रमागत dma_data_direction	rg_direction;
-	व्योम			*rg_data;
-पूर्ण;
+struct rpcrdma_regbuf {
+	struct ib_sge		rg_iov;
+	struct ib_device	*rg_device;
+	enum dma_data_direction	rg_direction;
+	void			*rg_data;
+};
 
-अटल अंतरभूत u64 rdmab_addr(काष्ठा rpcrdma_regbuf *rb)
-अणु
-	वापस rb->rg_iov.addr;
-पूर्ण
+static inline u64 rdmab_addr(struct rpcrdma_regbuf *rb)
+{
+	return rb->rg_iov.addr;
+}
 
-अटल अंतरभूत u32 rdmab_length(काष्ठा rpcrdma_regbuf *rb)
-अणु
-	वापस rb->rg_iov.length;
-पूर्ण
+static inline u32 rdmab_length(struct rpcrdma_regbuf *rb)
+{
+	return rb->rg_iov.length;
+}
 
-अटल अंतरभूत u32 rdmab_lkey(काष्ठा rpcrdma_regbuf *rb)
-अणु
-	वापस rb->rg_iov.lkey;
-पूर्ण
+static inline u32 rdmab_lkey(struct rpcrdma_regbuf *rb)
+{
+	return rb->rg_iov.lkey;
+}
 
-अटल अंतरभूत काष्ठा ib_device *rdmab_device(काष्ठा rpcrdma_regbuf *rb)
-अणु
-	वापस rb->rg_device;
-पूर्ण
+static inline struct ib_device *rdmab_device(struct rpcrdma_regbuf *rb)
+{
+	return rb->rg_device;
+}
 
-अटल अंतरभूत व्योम *rdmab_data(स्थिर काष्ठा rpcrdma_regbuf *rb)
-अणु
-	वापस rb->rg_data;
-पूर्ण
+static inline void *rdmab_data(const struct rpcrdma_regbuf *rb)
+{
+	return rb->rg_data;
+}
 
-#घोषणा RPCRDMA_DEF_GFP		(GFP_NOIO | __GFP_NOWARN)
+#define RPCRDMA_DEF_GFP		(GFP_NOIO | __GFP_NOWARN)
 
-/* To ensure a transport can always make क्रमward progress,
+/* To ensure a transport can always make forward progress,
  * the number of RDMA segments allowed in header chunk lists
  * is capped at 16. This prevents less-capable devices from
- * overrunning the Send buffer जबतक building chunk lists.
+ * overrunning the Send buffer while building chunk lists.
  *
  * Elements of the Read list take up more room than the
- * Write list or Reply chunk. 16 पढ़ो segments means the
+ * Write list or Reply chunk. 16 read segments means the
  * chunk lists cannot consume more than
  *
- * ((16 + 2) * पढ़ो segment size) + 1 XDR words,
+ * ((16 + 2) * read segment size) + 1 XDR words,
  *
  * or about 400 bytes. The fixed part of the header is
- * another 24 bytes. Thus when the अंतरभूत threshold is
- * 1024 bytes, at least 600 bytes are available क्रम RPC
+ * another 24 bytes. Thus when the inline threshold is
+ * 1024 bytes, at least 600 bytes are available for RPC
  * message bodies.
  */
-क्रमागत अणु
+enum {
 	RPCRDMA_MAX_HDR_SEGS = 16,
-पूर्ण;
+};
 
 /*
- * काष्ठा rpcrdma_rep -- this काष्ठाure encapsulates state required
+ * struct rpcrdma_rep -- this structure encapsulates state required
  * to receive and complete an RPC Reply, asychronously. It needs
  * several pieces of state:
  *
- *   o receive buffer and ib_sge (करोnated to provider)
+ *   o receive buffer and ib_sge (donated to provider)
  *   o status of receive (success or not, length, inv rkey)
  *   o bookkeeping state to get run by reply handler (XDR stream)
  *
- * These काष्ठाures are allocated during transport initialization.
+ * These structures are allocated during transport initialization.
  * N of these are associated with a transport instance, managed by
- * काष्ठा rpcrdma_buffer. N is the max number of outstanding RPCs.
+ * struct rpcrdma_buffer. N is the max number of outstanding RPCs.
  */
 
-काष्ठा rpcrdma_rep अणु
-	काष्ठा ib_cqe		rr_cqe;
-	काष्ठा rpc_rdma_cid	rr_cid;
+struct rpcrdma_rep {
+	struct ib_cqe		rr_cqe;
+	struct rpc_rdma_cid	rr_cid;
 
 	__be32			rr_xid;
 	__be32			rr_vers;
 	__be32			rr_proc;
-	पूर्णांक			rr_wc_flags;
+	int			rr_wc_flags;
 	u32			rr_inv_rkey;
 	bool			rr_temp;
-	काष्ठा rpcrdma_regbuf	*rr_rdmabuf;
-	काष्ठा rpcrdma_xprt	*rr_rxprt;
-	काष्ठा rpc_rqst		*rr_rqst;
-	काष्ठा xdr_buf		rr_hdrbuf;
-	काष्ठा xdr_stream	rr_stream;
-	काष्ठा llist_node	rr_node;
-	काष्ठा ib_recv_wr	rr_recv_wr;
-	काष्ठा list_head	rr_all;
-पूर्ण;
+	struct rpcrdma_regbuf	*rr_rdmabuf;
+	struct rpcrdma_xprt	*rr_rxprt;
+	struct rpc_rqst		*rr_rqst;
+	struct xdr_buf		rr_hdrbuf;
+	struct xdr_stream	rr_stream;
+	struct llist_node	rr_node;
+	struct ib_recv_wr	rr_recv_wr;
+	struct list_head	rr_all;
+};
 
 /* To reduce the rate at which a transport invokes ib_post_recv
- * (and thus the hardware करोorbell rate), xprtrdma posts Receive
+ * (and thus the hardware doorbell rate), xprtrdma posts Receive
  * WRs in batches.
  *
  * Setting this to zero disables Receive post batching.
  */
-क्रमागत अणु
+enum {
 	RPCRDMA_MAX_RECV_BATCH = 7,
-पूर्ण;
+};
 
-/* काष्ठा rpcrdma_sendctx - DMA mapped SGEs to unmap after Send completes
+/* struct rpcrdma_sendctx - DMA mapped SGEs to unmap after Send completes
  */
-काष्ठा rpcrdma_req;
-काष्ठा rpcrdma_sendctx अणु
-	काष्ठा ib_cqe		sc_cqe;
-	काष्ठा rpc_rdma_cid	sc_cid;
-	काष्ठा rpcrdma_req	*sc_req;
-	अचिन्हित पूर्णांक		sc_unmap_count;
-	काष्ठा ib_sge		sc_sges[];
-पूर्ण;
+struct rpcrdma_req;
+struct rpcrdma_sendctx {
+	struct ib_cqe		sc_cqe;
+	struct rpc_rdma_cid	sc_cid;
+	struct rpcrdma_req	*sc_req;
+	unsigned int		sc_unmap_count;
+	struct ib_sge		sc_sges[];
+};
 
 /*
- * काष्ठा rpcrdma_mr - बाह्यal memory region metadata
+ * struct rpcrdma_mr - external memory region metadata
  *
- * An बाह्यal memory region is any buffer or page that is रेजिस्टरed
- * on the fly (ie, not pre-रेजिस्टरed).
+ * An external memory region is any buffer or page that is registered
+ * on the fly (ie, not pre-registered).
  */
-काष्ठा rpcrdma_req;
-काष्ठा rpcrdma_mr अणु
-	काष्ठा list_head	mr_list;
-	काष्ठा rpcrdma_req	*mr_req;
+struct rpcrdma_req;
+struct rpcrdma_mr {
+	struct list_head	mr_list;
+	struct rpcrdma_req	*mr_req;
 
-	काष्ठा ib_mr		*mr_ibmr;
-	काष्ठा ib_device	*mr_device;
-	काष्ठा scatterlist	*mr_sg;
-	पूर्णांक			mr_nents;
-	क्रमागत dma_data_direction	mr_dir;
-	काष्ठा ib_cqe		mr_cqe;
-	काष्ठा completion	mr_linv_करोne;
-	जोड़ अणु
-		काष्ठा ib_reg_wr	mr_regwr;
-		काष्ठा ib_send_wr	mr_invwr;
-	पूर्ण;
-	काष्ठा rpcrdma_xprt	*mr_xprt;
+	struct ib_mr		*mr_ibmr;
+	struct ib_device	*mr_device;
+	struct scatterlist	*mr_sg;
+	int			mr_nents;
+	enum dma_data_direction	mr_dir;
+	struct ib_cqe		mr_cqe;
+	struct completion	mr_linv_done;
+	union {
+		struct ib_reg_wr	mr_regwr;
+		struct ib_send_wr	mr_invwr;
+	};
+	struct rpcrdma_xprt	*mr_xprt;
 	u32			mr_handle;
 	u32			mr_length;
 	u64			mr_offset;
-	काष्ठा list_head	mr_all;
-	काष्ठा rpc_rdma_cid	mr_cid;
-पूर्ण;
+	struct list_head	mr_all;
+	struct rpc_rdma_cid	mr_cid;
+};
 
 /*
- * काष्ठा rpcrdma_req -- काष्ठाure central to the request/reply sequence.
+ * struct rpcrdma_req -- structure central to the request/reply sequence.
  *
  * N of these are associated with a transport instance, and stored in
- * काष्ठा rpcrdma_buffer. N is the max number of outstanding requests.
+ * struct rpcrdma_buffer. N is the max number of outstanding requests.
  *
- * It includes pre-रेजिस्टरed buffer memory क्रम send AND recv.
- * The recv buffer, however, is not owned by this काष्ठाure, and
+ * It includes pre-registered buffer memory for send AND recv.
+ * The recv buffer, however, is not owned by this structure, and
  * is "donated" to the hardware when a recv is posted. When a
  * reply is handled, the recv buffer used is given back to the
- * काष्ठा rpcrdma_req associated with the request.
+ * struct rpcrdma_req associated with the request.
  *
- * In addition to the basic memory, this काष्ठाure includes an array
- * of iovs क्रम send operations. The reason is that the iovs passed to
- * ib_post_अणुsend,recvपूर्ण must not be modअगरied until the work request
+ * In addition to the basic memory, this structure includes an array
+ * of iovs for send operations. The reason is that the iovs passed to
+ * ib_post_{send,recv} must not be modified until the work request
  * completes.
  */
 
 /* Maximum number of page-sized "segments" per chunk list to be
- * रेजिस्टरed or invalidated. Must handle a Reply chunk:
+ * registered or invalidated. Must handle a Reply chunk:
  */
-क्रमागत अणु
+enum {
 	RPCRDMA_MAX_IOV_SEGS	= 3,
 	RPCRDMA_MAX_DATA_SEGS	= ((1 * 1024 * 1024) / PAGE_SIZE) + 1,
 	RPCRDMA_MAX_SEGS	= RPCRDMA_MAX_DATA_SEGS +
 				  RPCRDMA_MAX_IOV_SEGS,
-पूर्ण;
+};
 
-/* Arguments क्रम DMA mapping and registration */
-काष्ठा rpcrdma_mr_seg अणु
+/* Arguments for DMA mapping and registration */
+struct rpcrdma_mr_seg {
 	u32		mr_len;		/* length of segment */
-	काष्ठा page	*mr_page;	/* underlying काष्ठा page */
+	struct page	*mr_page;	/* underlying struct page */
 	u64		mr_offset;	/* IN: page offset, OUT: iova */
-पूर्ण;
+};
 
 /* The Send SGE array is provisioned to send a maximum size
- * अंतरभूत request:
+ * inline request:
  * - RPC-over-RDMA header
  * - xdr_buf head iovec
  * - RPCRDMA_MAX_INLINE bytes, in pages
@@ -299,77 +298,77 @@
  * The actual number of array elements consumed by each RPC
  * depends on the device's max_sge limit.
  */
-क्रमागत अणु
+enum {
 	RPCRDMA_MIN_SEND_SGES = 3,
 	RPCRDMA_MAX_PAGE_SGES = RPCRDMA_MAX_INLINE >> PAGE_SHIFT,
 	RPCRDMA_MAX_SEND_SGES = 1 + 1 + RPCRDMA_MAX_PAGE_SGES + 1,
-पूर्ण;
+};
 
-काष्ठा rpcrdma_buffer;
-काष्ठा rpcrdma_req अणु
-	काष्ठा list_head	rl_list;
-	काष्ठा rpc_rqst		rl_slot;
-	काष्ठा rpcrdma_rep	*rl_reply;
-	काष्ठा xdr_stream	rl_stream;
-	काष्ठा xdr_buf		rl_hdrbuf;
-	काष्ठा ib_send_wr	rl_wr;
-	काष्ठा rpcrdma_sendctx	*rl_sendctx;
-	काष्ठा rpcrdma_regbuf	*rl_rdmabuf;	/* xprt header */
-	काष्ठा rpcrdma_regbuf	*rl_sendbuf;	/* rq_snd_buf */
-	काष्ठा rpcrdma_regbuf	*rl_recvbuf;	/* rq_rcv_buf */
+struct rpcrdma_buffer;
+struct rpcrdma_req {
+	struct list_head	rl_list;
+	struct rpc_rqst		rl_slot;
+	struct rpcrdma_rep	*rl_reply;
+	struct xdr_stream	rl_stream;
+	struct xdr_buf		rl_hdrbuf;
+	struct ib_send_wr	rl_wr;
+	struct rpcrdma_sendctx	*rl_sendctx;
+	struct rpcrdma_regbuf	*rl_rdmabuf;	/* xprt header */
+	struct rpcrdma_regbuf	*rl_sendbuf;	/* rq_snd_buf */
+	struct rpcrdma_regbuf	*rl_recvbuf;	/* rq_rcv_buf */
 
-	काष्ठा list_head	rl_all;
-	काष्ठा kref		rl_kref;
+	struct list_head	rl_all;
+	struct kref		rl_kref;
 
-	काष्ठा list_head	rl_मुक्त_mrs;
-	काष्ठा list_head	rl_रेजिस्टरed;
-	काष्ठा rpcrdma_mr_seg	rl_segments[RPCRDMA_MAX_SEGS];
-पूर्ण;
+	struct list_head	rl_free_mrs;
+	struct list_head	rl_registered;
+	struct rpcrdma_mr_seg	rl_segments[RPCRDMA_MAX_SEGS];
+};
 
-अटल अंतरभूत काष्ठा rpcrdma_req *
-rpcr_to_rdmar(स्थिर काष्ठा rpc_rqst *rqst)
-अणु
-	वापस container_of(rqst, काष्ठा rpcrdma_req, rl_slot);
-पूर्ण
+static inline struct rpcrdma_req *
+rpcr_to_rdmar(const struct rpc_rqst *rqst)
+{
+	return container_of(rqst, struct rpcrdma_req, rl_slot);
+}
 
-अटल अंतरभूत व्योम
-rpcrdma_mr_push(काष्ठा rpcrdma_mr *mr, काष्ठा list_head *list)
-अणु
+static inline void
+rpcrdma_mr_push(struct rpcrdma_mr *mr, struct list_head *list)
+{
 	list_add(&mr->mr_list, list);
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा rpcrdma_mr *
-rpcrdma_mr_pop(काष्ठा list_head *list)
-अणु
-	काष्ठा rpcrdma_mr *mr;
+static inline struct rpcrdma_mr *
+rpcrdma_mr_pop(struct list_head *list)
+{
+	struct rpcrdma_mr *mr;
 
-	mr = list_first_entry_or_null(list, काष्ठा rpcrdma_mr, mr_list);
-	अगर (mr)
+	mr = list_first_entry_or_null(list, struct rpcrdma_mr, mr_list);
+	if (mr)
 		list_del_init(&mr->mr_list);
-	वापस mr;
-पूर्ण
+	return mr;
+}
 
 /*
- * काष्ठा rpcrdma_buffer -- holds list/queue of pre-रेजिस्टरed memory क्रम
- * अंतरभूत requests/replies, and client/server credits.
+ * struct rpcrdma_buffer -- holds list/queue of pre-registered memory for
+ * inline requests/replies, and client/server credits.
  *
  * One of these is associated with a transport instance
  */
-काष्ठा rpcrdma_buffer अणु
+struct rpcrdma_buffer {
 	spinlock_t		rb_lock;
-	काष्ठा list_head	rb_send_bufs;
-	काष्ठा list_head	rb_mrs;
+	struct list_head	rb_send_bufs;
+	struct list_head	rb_mrs;
 
-	अचिन्हित दीर्घ		rb_sc_head;
-	अचिन्हित दीर्घ		rb_sc_tail;
-	अचिन्हित दीर्घ		rb_sc_last;
-	काष्ठा rpcrdma_sendctx	**rb_sc_ctxs;
+	unsigned long		rb_sc_head;
+	unsigned long		rb_sc_tail;
+	unsigned long		rb_sc_last;
+	struct rpcrdma_sendctx	**rb_sc_ctxs;
 
-	काष्ठा list_head	rb_allreqs;
-	काष्ठा list_head	rb_all_mrs;
-	काष्ठा list_head	rb_all_reps;
+	struct list_head	rb_allreqs;
+	struct list_head	rb_all_mrs;
+	struct list_head	rb_all_reps;
 
-	काष्ठा llist_head	rb_मुक्त_reps;
+	struct llist_head	rb_free_reps;
 
 	__be32			rb_max_requests;
 	u32			rb_credits;	/* most recent credit grant */
@@ -377,222 +376,222 @@ rpcrdma_mr_pop(काष्ठा list_head *list)
 	u32			rb_bc_srv_max_requests;
 	u32			rb_bc_max_requests;
 
-	काष्ठा work_काष्ठा	rb_refresh_worker;
-पूर्ण;
+	struct work_struct	rb_refresh_worker;
+};
 
 /*
- * Statistics क्रम RPCRDMA
+ * Statistics for RPCRDMA
  */
-काष्ठा rpcrdma_stats अणु
+struct rpcrdma_stats {
 	/* accessed when sending a call */
-	अचिन्हित दीर्घ		पढ़ो_chunk_count;
-	अचिन्हित दीर्घ		ग_लिखो_chunk_count;
-	अचिन्हित दीर्घ		reply_chunk_count;
-	अचिन्हित दीर्घ दीर्घ	total_rdma_request;
+	unsigned long		read_chunk_count;
+	unsigned long		write_chunk_count;
+	unsigned long		reply_chunk_count;
+	unsigned long long	total_rdma_request;
 
 	/* rarely accessed error counters */
-	अचिन्हित दीर्घ दीर्घ	pullup_copy_count;
-	अचिन्हित दीर्घ		hardway_रेजिस्टर_count;
-	अचिन्हित दीर्घ		failed_marshal_count;
-	अचिन्हित दीर्घ		bad_reply_count;
-	अचिन्हित दीर्घ		mrs_recycled;
-	अचिन्हित दीर्घ		mrs_orphaned;
-	अचिन्हित दीर्घ		mrs_allocated;
-	अचिन्हित दीर्घ		empty_sendctx_q;
+	unsigned long long	pullup_copy_count;
+	unsigned long		hardway_register_count;
+	unsigned long		failed_marshal_count;
+	unsigned long		bad_reply_count;
+	unsigned long		mrs_recycled;
+	unsigned long		mrs_orphaned;
+	unsigned long		mrs_allocated;
+	unsigned long		empty_sendctx_q;
 
 	/* accessed when receiving a reply */
-	अचिन्हित दीर्घ दीर्घ	total_rdma_reply;
-	अचिन्हित दीर्घ दीर्घ	fixup_copy_count;
-	अचिन्हित दीर्घ		reply_रुकोs_क्रम_send;
-	अचिन्हित दीर्घ		local_inv_needed;
-	अचिन्हित दीर्घ		nomsg_call_count;
-	अचिन्हित दीर्घ		bcall_count;
-पूर्ण;
+	unsigned long long	total_rdma_reply;
+	unsigned long long	fixup_copy_count;
+	unsigned long		reply_waits_for_send;
+	unsigned long		local_inv_needed;
+	unsigned long		nomsg_call_count;
+	unsigned long		bcall_count;
+};
 
 /*
- * RPCRDMA transport -- encapsulates the काष्ठाures above क्रम
- * पूर्णांकegration with RPC.
+ * RPCRDMA transport -- encapsulates the structures above for
+ * integration with RPC.
  *
- * The contained काष्ठाures are embedded, not poपूर्णांकers,
- * क्रम convenience. This काष्ठाure need not be visible बाह्यally.
+ * The contained structures are embedded, not pointers,
+ * for convenience. This structure need not be visible externally.
  *
  * It is allocated and initialized during mount, and released
  * during unmount.
  */
-काष्ठा rpcrdma_xprt अणु
-	काष्ठा rpc_xprt		rx_xprt;
-	काष्ठा rpcrdma_ep	*rx_ep;
-	काष्ठा rpcrdma_buffer	rx_buf;
-	काष्ठा delayed_work	rx_connect_worker;
-	काष्ठा rpc_समयout	rx_समयout;
-	काष्ठा rpcrdma_stats	rx_stats;
-पूर्ण;
+struct rpcrdma_xprt {
+	struct rpc_xprt		rx_xprt;
+	struct rpcrdma_ep	*rx_ep;
+	struct rpcrdma_buffer	rx_buf;
+	struct delayed_work	rx_connect_worker;
+	struct rpc_timeout	rx_timeout;
+	struct rpcrdma_stats	rx_stats;
+};
 
-#घोषणा rpcx_to_rdmax(x) container_of(x, काष्ठा rpcrdma_xprt, rx_xprt)
+#define rpcx_to_rdmax(x) container_of(x, struct rpcrdma_xprt, rx_xprt)
 
-अटल अंतरभूत स्थिर अक्षर *
-rpcrdma_addrstr(स्थिर काष्ठा rpcrdma_xprt *r_xprt)
-अणु
-	वापस r_xprt->rx_xprt.address_strings[RPC_DISPLAY_ADDR];
-पूर्ण
+static inline const char *
+rpcrdma_addrstr(const struct rpcrdma_xprt *r_xprt)
+{
+	return r_xprt->rx_xprt.address_strings[RPC_DISPLAY_ADDR];
+}
 
-अटल अंतरभूत स्थिर अक्षर *
-rpcrdma_portstr(स्थिर काष्ठा rpcrdma_xprt *r_xprt)
-अणु
-	वापस r_xprt->rx_xprt.address_strings[RPC_DISPLAY_PORT];
-पूर्ण
+static inline const char *
+rpcrdma_portstr(const struct rpcrdma_xprt *r_xprt)
+{
+	return r_xprt->rx_xprt.address_strings[RPC_DISPLAY_PORT];
+}
 
-/* Setting this to 0 ensures पूर्णांकeroperability with early servers.
- * Setting this to 1 enhances certain unaligned पढ़ो/ग_लिखो perक्रमmance.
+/* Setting this to 0 ensures interoperability with early servers.
+ * Setting this to 1 enhances certain unaligned read/write performance.
  * Default is 0, see sysctl entry and rpc_rdma.c rpcrdma_convert_iovs() */
-बाह्य पूर्णांक xprt_rdma_pad_optimize;
+extern int xprt_rdma_pad_optimize;
 
-/* This setting controls the hunt क्रम a supported memory
+/* This setting controls the hunt for a supported memory
  * registration strategy.
  */
-बाह्य अचिन्हित पूर्णांक xprt_rdma_memreg_strategy;
+extern unsigned int xprt_rdma_memreg_strategy;
 
 /*
- * Endpoपूर्णांक calls - xprtrdma/verbs.c
+ * Endpoint calls - xprtrdma/verbs.c
  */
-व्योम rpcrdma_flush_disconnect(काष्ठा rpcrdma_xprt *r_xprt, काष्ठा ib_wc *wc);
-पूर्णांक rpcrdma_xprt_connect(काष्ठा rpcrdma_xprt *r_xprt);
-व्योम rpcrdma_xprt_disconnect(काष्ठा rpcrdma_xprt *r_xprt);
+void rpcrdma_flush_disconnect(struct rpcrdma_xprt *r_xprt, struct ib_wc *wc);
+int rpcrdma_xprt_connect(struct rpcrdma_xprt *r_xprt);
+void rpcrdma_xprt_disconnect(struct rpcrdma_xprt *r_xprt);
 
-पूर्णांक rpcrdma_post_sends(काष्ठा rpcrdma_xprt *r_xprt, काष्ठा rpcrdma_req *req);
-व्योम rpcrdma_post_recvs(काष्ठा rpcrdma_xprt *r_xprt, पूर्णांक needed, bool temp);
+int rpcrdma_post_sends(struct rpcrdma_xprt *r_xprt, struct rpcrdma_req *req);
+void rpcrdma_post_recvs(struct rpcrdma_xprt *r_xprt, int needed, bool temp);
 
 /*
  * Buffer calls - xprtrdma/verbs.c
  */
-काष्ठा rpcrdma_req *rpcrdma_req_create(काष्ठा rpcrdma_xprt *r_xprt, माप_प्रकार size,
+struct rpcrdma_req *rpcrdma_req_create(struct rpcrdma_xprt *r_xprt, size_t size,
 				       gfp_t flags);
-पूर्णांक rpcrdma_req_setup(काष्ठा rpcrdma_xprt *r_xprt, काष्ठा rpcrdma_req *req);
-व्योम rpcrdma_req_destroy(काष्ठा rpcrdma_req *req);
-पूर्णांक rpcrdma_buffer_create(काष्ठा rpcrdma_xprt *);
-व्योम rpcrdma_buffer_destroy(काष्ठा rpcrdma_buffer *);
-काष्ठा rpcrdma_sendctx *rpcrdma_sendctx_get_locked(काष्ठा rpcrdma_xprt *r_xprt);
+int rpcrdma_req_setup(struct rpcrdma_xprt *r_xprt, struct rpcrdma_req *req);
+void rpcrdma_req_destroy(struct rpcrdma_req *req);
+int rpcrdma_buffer_create(struct rpcrdma_xprt *);
+void rpcrdma_buffer_destroy(struct rpcrdma_buffer *);
+struct rpcrdma_sendctx *rpcrdma_sendctx_get_locked(struct rpcrdma_xprt *r_xprt);
 
-काष्ठा rpcrdma_mr *rpcrdma_mr_get(काष्ठा rpcrdma_xprt *r_xprt);
-व्योम rpcrdma_mrs_refresh(काष्ठा rpcrdma_xprt *r_xprt);
+struct rpcrdma_mr *rpcrdma_mr_get(struct rpcrdma_xprt *r_xprt);
+void rpcrdma_mrs_refresh(struct rpcrdma_xprt *r_xprt);
 
-काष्ठा rpcrdma_req *rpcrdma_buffer_get(काष्ठा rpcrdma_buffer *);
-व्योम rpcrdma_buffer_put(काष्ठा rpcrdma_buffer *buffers,
-			काष्ठा rpcrdma_req *req);
-व्योम rpcrdma_rep_put(काष्ठा rpcrdma_buffer *buf, काष्ठा rpcrdma_rep *rep);
-व्योम rpcrdma_reply_put(काष्ठा rpcrdma_buffer *buffers, काष्ठा rpcrdma_req *req);
+struct rpcrdma_req *rpcrdma_buffer_get(struct rpcrdma_buffer *);
+void rpcrdma_buffer_put(struct rpcrdma_buffer *buffers,
+			struct rpcrdma_req *req);
+void rpcrdma_rep_put(struct rpcrdma_buffer *buf, struct rpcrdma_rep *rep);
+void rpcrdma_reply_put(struct rpcrdma_buffer *buffers, struct rpcrdma_req *req);
 
-bool rpcrdma_regbuf_पुनः_स्मृति(काष्ठा rpcrdma_regbuf *rb, माप_प्रकार size,
+bool rpcrdma_regbuf_realloc(struct rpcrdma_regbuf *rb, size_t size,
 			    gfp_t flags);
-bool __rpcrdma_regbuf_dma_map(काष्ठा rpcrdma_xprt *r_xprt,
-			      काष्ठा rpcrdma_regbuf *rb);
+bool __rpcrdma_regbuf_dma_map(struct rpcrdma_xprt *r_xprt,
+			      struct rpcrdma_regbuf *rb);
 
 /**
- * rpcrdma_regbuf_is_mapped - check अगर buffer is DMA mapped
+ * rpcrdma_regbuf_is_mapped - check if buffer is DMA mapped
  *
- * Returns true अगर the buffer is now mapped to rb->rg_device.
+ * Returns true if the buffer is now mapped to rb->rg_device.
  */
-अटल अंतरभूत bool rpcrdma_regbuf_is_mapped(काष्ठा rpcrdma_regbuf *rb)
-अणु
-	वापस rb->rg_device != शून्य;
-पूर्ण
+static inline bool rpcrdma_regbuf_is_mapped(struct rpcrdma_regbuf *rb)
+{
+	return rb->rg_device != NULL;
+}
 
 /**
  * rpcrdma_regbuf_dma_map - DMA-map a regbuf
  * @r_xprt: controlling transport instance
  * @rb: regbuf to be mapped
  *
- * Returns true अगर the buffer is currently DMA mapped.
+ * Returns true if the buffer is currently DMA mapped.
  */
-अटल अंतरभूत bool rpcrdma_regbuf_dma_map(काष्ठा rpcrdma_xprt *r_xprt,
-					  काष्ठा rpcrdma_regbuf *rb)
-अणु
-	अगर (likely(rpcrdma_regbuf_is_mapped(rb)))
-		वापस true;
-	वापस __rpcrdma_regbuf_dma_map(r_xprt, rb);
-पूर्ण
+static inline bool rpcrdma_regbuf_dma_map(struct rpcrdma_xprt *r_xprt,
+					  struct rpcrdma_regbuf *rb)
+{
+	if (likely(rpcrdma_regbuf_is_mapped(rb)))
+		return true;
+	return __rpcrdma_regbuf_dma_map(r_xprt, rb);
+}
 
 /*
- * Wrappers क्रम chunk registration, shared by पढ़ो/ग_लिखो chunk code.
+ * Wrappers for chunk registration, shared by read/write chunk code.
  */
 
-अटल अंतरभूत क्रमागत dma_data_direction
+static inline enum dma_data_direction
 rpcrdma_data_dir(bool writing)
-अणु
-	वापस writing ? DMA_FROM_DEVICE : DMA_TO_DEVICE;
-पूर्ण
+{
+	return writing ? DMA_FROM_DEVICE : DMA_TO_DEVICE;
+}
 
 /* Memory registration calls xprtrdma/frwr_ops.c
  */
-व्योम frwr_reset(काष्ठा rpcrdma_req *req);
-पूर्णांक frwr_query_device(काष्ठा rpcrdma_ep *ep, स्थिर काष्ठा ib_device *device);
-पूर्णांक frwr_mr_init(काष्ठा rpcrdma_xprt *r_xprt, काष्ठा rpcrdma_mr *mr);
-व्योम frwr_mr_release(काष्ठा rpcrdma_mr *mr);
-काष्ठा rpcrdma_mr_seg *frwr_map(काष्ठा rpcrdma_xprt *r_xprt,
-				काष्ठा rpcrdma_mr_seg *seg,
-				पूर्णांक nsegs, bool writing, __be32 xid,
-				काष्ठा rpcrdma_mr *mr);
-पूर्णांक frwr_send(काष्ठा rpcrdma_xprt *r_xprt, काष्ठा rpcrdma_req *req);
-व्योम frwr_reminv(काष्ठा rpcrdma_rep *rep, काष्ठा list_head *mrs);
-व्योम frwr_unmap_sync(काष्ठा rpcrdma_xprt *r_xprt, काष्ठा rpcrdma_req *req);
-व्योम frwr_unmap_async(काष्ठा rpcrdma_xprt *r_xprt, काष्ठा rpcrdma_req *req);
+void frwr_reset(struct rpcrdma_req *req);
+int frwr_query_device(struct rpcrdma_ep *ep, const struct ib_device *device);
+int frwr_mr_init(struct rpcrdma_xprt *r_xprt, struct rpcrdma_mr *mr);
+void frwr_mr_release(struct rpcrdma_mr *mr);
+struct rpcrdma_mr_seg *frwr_map(struct rpcrdma_xprt *r_xprt,
+				struct rpcrdma_mr_seg *seg,
+				int nsegs, bool writing, __be32 xid,
+				struct rpcrdma_mr *mr);
+int frwr_send(struct rpcrdma_xprt *r_xprt, struct rpcrdma_req *req);
+void frwr_reminv(struct rpcrdma_rep *rep, struct list_head *mrs);
+void frwr_unmap_sync(struct rpcrdma_xprt *r_xprt, struct rpcrdma_req *req);
+void frwr_unmap_async(struct rpcrdma_xprt *r_xprt, struct rpcrdma_req *req);
 
 /*
  * RPC/RDMA protocol calls - xprtrdma/rpc_rdma.c
  */
 
-क्रमागत rpcrdma_chunktype अणु
+enum rpcrdma_chunktype {
 	rpcrdma_noch = 0,
 	rpcrdma_noch_pullup,
 	rpcrdma_noch_mapped,
-	rpcrdma_पढ़ोch,
-	rpcrdma_aपढ़ोch,
-	rpcrdma_ग_लिखोch,
+	rpcrdma_readch,
+	rpcrdma_areadch,
+	rpcrdma_writech,
 	rpcrdma_replych
-पूर्ण;
+};
 
-पूर्णांक rpcrdma_prepare_send_sges(काष्ठा rpcrdma_xprt *r_xprt,
-			      काष्ठा rpcrdma_req *req, u32 hdrlen,
-			      काष्ठा xdr_buf *xdr,
-			      क्रमागत rpcrdma_chunktype rtype);
-व्योम rpcrdma_sendctx_unmap(काष्ठा rpcrdma_sendctx *sc);
-पूर्णांक rpcrdma_marshal_req(काष्ठा rpcrdma_xprt *r_xprt, काष्ठा rpc_rqst *rqst);
-व्योम rpcrdma_set_max_header_sizes(काष्ठा rpcrdma_ep *ep);
-व्योम rpcrdma_reset_cwnd(काष्ठा rpcrdma_xprt *r_xprt);
-व्योम rpcrdma_complete_rqst(काष्ठा rpcrdma_rep *rep);
-व्योम rpcrdma_unpin_rqst(काष्ठा rpcrdma_rep *rep);
-व्योम rpcrdma_reply_handler(काष्ठा rpcrdma_rep *rep);
+int rpcrdma_prepare_send_sges(struct rpcrdma_xprt *r_xprt,
+			      struct rpcrdma_req *req, u32 hdrlen,
+			      struct xdr_buf *xdr,
+			      enum rpcrdma_chunktype rtype);
+void rpcrdma_sendctx_unmap(struct rpcrdma_sendctx *sc);
+int rpcrdma_marshal_req(struct rpcrdma_xprt *r_xprt, struct rpc_rqst *rqst);
+void rpcrdma_set_max_header_sizes(struct rpcrdma_ep *ep);
+void rpcrdma_reset_cwnd(struct rpcrdma_xprt *r_xprt);
+void rpcrdma_complete_rqst(struct rpcrdma_rep *rep);
+void rpcrdma_unpin_rqst(struct rpcrdma_rep *rep);
+void rpcrdma_reply_handler(struct rpcrdma_rep *rep);
 
-अटल अंतरभूत व्योम rpcrdma_set_xdrlen(काष्ठा xdr_buf *xdr, माप_प्रकार len)
-अणु
+static inline void rpcrdma_set_xdrlen(struct xdr_buf *xdr, size_t len)
+{
 	xdr->head[0].iov_len = len;
 	xdr->len = len;
-पूर्ण
+}
 
 /* RPC/RDMA module init - xprtrdma/transport.c
  */
-बाह्य अचिन्हित पूर्णांक xprt_rdma_max_अंतरभूत_पढ़ो;
-बाह्य अचिन्हित पूर्णांक xprt_rdma_max_अंतरभूत_ग_लिखो;
-व्योम xprt_rdma_क्रमmat_addresses(काष्ठा rpc_xprt *xprt, काष्ठा sockaddr *sap);
-व्योम xprt_rdma_मुक्त_addresses(काष्ठा rpc_xprt *xprt);
-व्योम xprt_rdma_बंद(काष्ठा rpc_xprt *xprt);
-व्योम xprt_rdma_prपूर्णांक_stats(काष्ठा rpc_xprt *xprt, काष्ठा seq_file *seq);
-पूर्णांक xprt_rdma_init(व्योम);
-व्योम xprt_rdma_cleanup(व्योम);
+extern unsigned int xprt_rdma_max_inline_read;
+extern unsigned int xprt_rdma_max_inline_write;
+void xprt_rdma_format_addresses(struct rpc_xprt *xprt, struct sockaddr *sap);
+void xprt_rdma_free_addresses(struct rpc_xprt *xprt);
+void xprt_rdma_close(struct rpc_xprt *xprt);
+void xprt_rdma_print_stats(struct rpc_xprt *xprt, struct seq_file *seq);
+int xprt_rdma_init(void);
+void xprt_rdma_cleanup(void);
 
 /* Backchannel calls - xprtrdma/backchannel.c
  */
-#अगर defined(CONFIG_SUNRPC_BACKCHANNEL)
-पूर्णांक xprt_rdma_bc_setup(काष्ठा rpc_xprt *, अचिन्हित पूर्णांक);
-माप_प्रकार xprt_rdma_bc_maxpayload(काष्ठा rpc_xprt *);
-अचिन्हित पूर्णांक xprt_rdma_bc_max_slots(काष्ठा rpc_xprt *);
-पूर्णांक rpcrdma_bc_post_recv(काष्ठा rpcrdma_xprt *, अचिन्हित पूर्णांक);
-व्योम rpcrdma_bc_receive_call(काष्ठा rpcrdma_xprt *, काष्ठा rpcrdma_rep *);
-पूर्णांक xprt_rdma_bc_send_reply(काष्ठा rpc_rqst *rqst);
-व्योम xprt_rdma_bc_मुक्त_rqst(काष्ठा rpc_rqst *);
-व्योम xprt_rdma_bc_destroy(काष्ठा rpc_xprt *, अचिन्हित पूर्णांक);
-#पूर्ण_अगर	/* CONFIG_SUNRPC_BACKCHANNEL */
+#if defined(CONFIG_SUNRPC_BACKCHANNEL)
+int xprt_rdma_bc_setup(struct rpc_xprt *, unsigned int);
+size_t xprt_rdma_bc_maxpayload(struct rpc_xprt *);
+unsigned int xprt_rdma_bc_max_slots(struct rpc_xprt *);
+int rpcrdma_bc_post_recv(struct rpcrdma_xprt *, unsigned int);
+void rpcrdma_bc_receive_call(struct rpcrdma_xprt *, struct rpcrdma_rep *);
+int xprt_rdma_bc_send_reply(struct rpc_rqst *rqst);
+void xprt_rdma_bc_free_rqst(struct rpc_rqst *);
+void xprt_rdma_bc_destroy(struct rpc_xprt *, unsigned int);
+#endif	/* CONFIG_SUNRPC_BACKCHANNEL */
 
-बाह्य काष्ठा xprt_class xprt_rdma_bc;
+extern struct xprt_class xprt_rdma_bc;
 
-#पूर्ण_अगर				/* _LINUX_SUNRPC_XPRT_RDMA_H */
+#endif				/* _LINUX_SUNRPC_XPRT_RDMA_H */

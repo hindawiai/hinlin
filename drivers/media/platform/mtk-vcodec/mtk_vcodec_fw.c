@@ -1,68 +1,67 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#समावेश "mtk_vcodec_fw.h"
-#समावेश "mtk_vcodec_fw_priv.h"
-#समावेश "mtk_vcodec_util.h"
-#समावेश "mtk_vcodec_drv.h"
+#include "mtk_vcodec_fw.h"
+#include "mtk_vcodec_fw_priv.h"
+#include "mtk_vcodec_util.h"
+#include "mtk_vcodec_drv.h"
 
-काष्ठा mtk_vcodec_fw *mtk_vcodec_fw_select(काष्ठा mtk_vcodec_dev *dev,
-					   क्रमागत mtk_vcodec_fw_type type,
-					   क्रमागत mtk_vcodec_fw_use fw_use)
-अणु
-	चयन (type) अणु
-	हाल VPU:
-		वापस mtk_vcodec_fw_vpu_init(dev, fw_use);
-	हाल SCP:
-		वापस mtk_vcodec_fw_scp_init(dev);
-	शेष:
+struct mtk_vcodec_fw *mtk_vcodec_fw_select(struct mtk_vcodec_dev *dev,
+					   enum mtk_vcodec_fw_type type,
+					   enum mtk_vcodec_fw_use fw_use)
+{
+	switch (type) {
+	case VPU:
+		return mtk_vcodec_fw_vpu_init(dev, fw_use);
+	case SCP:
+		return mtk_vcodec_fw_scp_init(dev);
+	default:
 		mtk_v4l2_err("invalid vcodec fw type");
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
-पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
+}
 EXPORT_SYMBOL_GPL(mtk_vcodec_fw_select);
 
-व्योम mtk_vcodec_fw_release(काष्ठा mtk_vcodec_fw *fw)
-अणु
+void mtk_vcodec_fw_release(struct mtk_vcodec_fw *fw)
+{
 	fw->ops->release(fw);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(mtk_vcodec_fw_release);
 
-पूर्णांक mtk_vcodec_fw_load_firmware(काष्ठा mtk_vcodec_fw *fw)
-अणु
-	वापस fw->ops->load_firmware(fw);
-पूर्ण
+int mtk_vcodec_fw_load_firmware(struct mtk_vcodec_fw *fw)
+{
+	return fw->ops->load_firmware(fw);
+}
 EXPORT_SYMBOL_GPL(mtk_vcodec_fw_load_firmware);
 
-अचिन्हित पूर्णांक mtk_vcodec_fw_get_vdec_capa(काष्ठा mtk_vcodec_fw *fw)
-अणु
-	वापस fw->ops->get_vdec_capa(fw);
-पूर्ण
+unsigned int mtk_vcodec_fw_get_vdec_capa(struct mtk_vcodec_fw *fw)
+{
+	return fw->ops->get_vdec_capa(fw);
+}
 EXPORT_SYMBOL_GPL(mtk_vcodec_fw_get_vdec_capa);
 
-अचिन्हित पूर्णांक mtk_vcodec_fw_get_venc_capa(काष्ठा mtk_vcodec_fw *fw)
-अणु
-	वापस fw->ops->get_venc_capa(fw);
-पूर्ण
+unsigned int mtk_vcodec_fw_get_venc_capa(struct mtk_vcodec_fw *fw)
+{
+	return fw->ops->get_venc_capa(fw);
+}
 EXPORT_SYMBOL_GPL(mtk_vcodec_fw_get_venc_capa);
 
-व्योम *mtk_vcodec_fw_map_dm_addr(काष्ठा mtk_vcodec_fw *fw, u32 mem_addr)
-अणु
-	वापस fw->ops->map_dm_addr(fw, mem_addr);
-पूर्ण
+void *mtk_vcodec_fw_map_dm_addr(struct mtk_vcodec_fw *fw, u32 mem_addr)
+{
+	return fw->ops->map_dm_addr(fw, mem_addr);
+}
 EXPORT_SYMBOL_GPL(mtk_vcodec_fw_map_dm_addr);
 
-पूर्णांक mtk_vcodec_fw_ipi_रेजिस्टर(काष्ठा mtk_vcodec_fw *fw, पूर्णांक id,
+int mtk_vcodec_fw_ipi_register(struct mtk_vcodec_fw *fw, int id,
 			       mtk_vcodec_ipi_handler handler,
-			       स्थिर अक्षर *name, व्योम *priv)
-अणु
-	वापस fw->ops->ipi_रेजिस्टर(fw, id, handler, name, priv);
-पूर्ण
-EXPORT_SYMBOL_GPL(mtk_vcodec_fw_ipi_रेजिस्टर);
+			       const char *name, void *priv)
+{
+	return fw->ops->ipi_register(fw, id, handler, name, priv);
+}
+EXPORT_SYMBOL_GPL(mtk_vcodec_fw_ipi_register);
 
-पूर्णांक mtk_vcodec_fw_ipi_send(काष्ठा mtk_vcodec_fw *fw, पूर्णांक id, व्योम *buf,
-			   अचिन्हित पूर्णांक len, अचिन्हित पूर्णांक रुको)
-अणु
-	वापस fw->ops->ipi_send(fw, id, buf, len, रुको);
-पूर्ण
+int mtk_vcodec_fw_ipi_send(struct mtk_vcodec_fw *fw, int id, void *buf,
+			   unsigned int len, unsigned int wait)
+{
+	return fw->ops->ipi_send(fw, id, buf, len, wait);
+}
 EXPORT_SYMBOL_GPL(mtk_vcodec_fw_ipi_send);

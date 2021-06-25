@@ -1,24 +1,23 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित DW_HDMI_AUDIO_H
-#घोषणा DW_HDMI_AUDIO_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef DW_HDMI_AUDIO_H
+#define DW_HDMI_AUDIO_H
 
-काष्ठा dw_hdmi;
+struct dw_hdmi;
 
-काष्ठा dw_hdmi_audio_data अणु
+struct dw_hdmi_audio_data {
 	phys_addr_t phys;
-	व्योम __iomem *base;
-	पूर्णांक irq;
-	काष्ठा dw_hdmi *hdmi;
+	void __iomem *base;
+	int irq;
+	struct dw_hdmi *hdmi;
 	u8 *eld;
-पूर्ण;
+};
 
-काष्ठा dw_hdmi_i2s_audio_data अणु
-	काष्ठा dw_hdmi *hdmi;
+struct dw_hdmi_i2s_audio_data {
+	struct dw_hdmi *hdmi;
 	u8 *eld;
 
-	व्योम (*ग_लिखो)(काष्ठा dw_hdmi *hdmi, u8 val, पूर्णांक offset);
-	u8 (*पढ़ो)(काष्ठा dw_hdmi *hdmi, पूर्णांक offset);
-पूर्ण;
+	void (*write)(struct dw_hdmi *hdmi, u8 val, int offset);
+	u8 (*read)(struct dw_hdmi *hdmi, int offset);
+};
 
-#पूर्ण_अगर
+#endif

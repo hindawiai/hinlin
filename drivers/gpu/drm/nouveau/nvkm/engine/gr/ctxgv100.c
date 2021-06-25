@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2018 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,60 +19,60 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#समावेश "ctxgf100.h"
+#include "ctxgf100.h"
 
 /*******************************************************************************
  * PGRAPH context implementation
  ******************************************************************************/
 
-स्थिर काष्ठा gf100_gr_init
-gv100_grctx_init_sw_veid_bundle_init_0[] = अणु
-	अणु 0x00001000, 64, 0x00100000, 0x00000008 पूर्ण,
-	अणु 0x00000941, 64, 0x00100000, 0x00000000 पूर्ण,
-	अणु 0x0000097e, 64, 0x00100000, 0x00000000 पूर्ण,
-	अणु 0x0000097f, 64, 0x00100000, 0x00000100 पूर्ण,
-	अणु 0x0000035c, 64, 0x00100000, 0x00000000 पूर्ण,
-	अणु 0x0000035d, 64, 0x00100000, 0x00000000 पूर्ण,
-	अणु 0x00000a08, 64, 0x00100000, 0x00000000 पूर्ण,
-	अणु 0x00000a09, 64, 0x00100000, 0x00000000 पूर्ण,
-	अणु 0x00000a0a, 64, 0x00100000, 0x00000000 पूर्ण,
-	अणु 0x00000352, 64, 0x00100000, 0x00000000 पूर्ण,
-	अणु 0x00000353, 64, 0x00100000, 0x00000000 पूर्ण,
-	अणु 0x00000358, 64, 0x00100000, 0x00000000 पूर्ण,
-	अणु 0x00000359, 64, 0x00100000, 0x00000000 पूर्ण,
-	अणु 0x00000370, 64, 0x00100000, 0x00000000 पूर्ण,
-	अणु 0x00000371, 64, 0x00100000, 0x00000000 पूर्ण,
-	अणु 0x00000372, 64, 0x00100000, 0x000fffff पूर्ण,
-	अणु 0x00000366, 64, 0x00100000, 0x00000000 पूर्ण,
-	अणु 0x00000367, 64, 0x00100000, 0x00000000 पूर्ण,
-	अणु 0x00000368, 64, 0x00100000, 0x00000fff पूर्ण,
-	अणु 0x00000623, 64, 0x00100000, 0x00000000 पूर्ण,
-	अणु 0x00000624, 64, 0x00100000, 0x00000000 पूर्ण,
-	अणु 0x0001e100,  1, 0x00000001, 0x02000001 पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+const struct gf100_gr_init
+gv100_grctx_init_sw_veid_bundle_init_0[] = {
+	{ 0x00001000, 64, 0x00100000, 0x00000008 },
+	{ 0x00000941, 64, 0x00100000, 0x00000000 },
+	{ 0x0000097e, 64, 0x00100000, 0x00000000 },
+	{ 0x0000097f, 64, 0x00100000, 0x00000100 },
+	{ 0x0000035c, 64, 0x00100000, 0x00000000 },
+	{ 0x0000035d, 64, 0x00100000, 0x00000000 },
+	{ 0x00000a08, 64, 0x00100000, 0x00000000 },
+	{ 0x00000a09, 64, 0x00100000, 0x00000000 },
+	{ 0x00000a0a, 64, 0x00100000, 0x00000000 },
+	{ 0x00000352, 64, 0x00100000, 0x00000000 },
+	{ 0x00000353, 64, 0x00100000, 0x00000000 },
+	{ 0x00000358, 64, 0x00100000, 0x00000000 },
+	{ 0x00000359, 64, 0x00100000, 0x00000000 },
+	{ 0x00000370, 64, 0x00100000, 0x00000000 },
+	{ 0x00000371, 64, 0x00100000, 0x00000000 },
+	{ 0x00000372, 64, 0x00100000, 0x000fffff },
+	{ 0x00000366, 64, 0x00100000, 0x00000000 },
+	{ 0x00000367, 64, 0x00100000, 0x00000000 },
+	{ 0x00000368, 64, 0x00100000, 0x00000fff },
+	{ 0x00000623, 64, 0x00100000, 0x00000000 },
+	{ 0x00000624, 64, 0x00100000, 0x00000000 },
+	{ 0x0001e100,  1, 0x00000001, 0x02000001 },
+	{}
+};
 
-अटल स्थिर काष्ठा gf100_gr_pack
-gv100_grctx_pack_sw_veid_bundle_init[] = अणु
-	अणु gv100_grctx_init_sw_veid_bundle_init_0 पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct gf100_gr_pack
+gv100_grctx_pack_sw_veid_bundle_init[] = {
+	{ gv100_grctx_init_sw_veid_bundle_init_0 },
+	{}
+};
 
-व्योम
-gv100_grctx_generate_attrib(काष्ठा gf100_grctx *info)
-अणु
-	काष्ठा gf100_gr *gr = info->gr;
-	स्थिर काष्ठा gf100_grctx_func *grctx = gr->func->grctx;
-	स्थिर u32  alpha = grctx->alpha_nr;
-	स्थिर u32 attrib = grctx->attrib_nr;
-	स्थिर u32   gfxp = grctx->gfxp_nr;
-	स्थिर पूर्णांक s = 12;
+void
+gv100_grctx_generate_attrib(struct gf100_grctx *info)
+{
+	struct gf100_gr *gr = info->gr;
+	const struct gf100_grctx_func *grctx = gr->func->grctx;
+	const u32  alpha = grctx->alpha_nr;
+	const u32 attrib = grctx->attrib_nr;
+	const u32   gfxp = grctx->gfxp_nr;
+	const int s = 12;
 	u32 size = grctx->alpha_nr_max * gr->tpc_total;
 	u32 ao = 0;
 	u32 bo = ao + size;
-	पूर्णांक gpc, ppc, b, n = 0;
+	int gpc, ppc, b, n = 0;
 
-	क्रम (gpc = 0; gpc < gr->gpc_nr; gpc++)
+	for (gpc = 0; gpc < gr->gpc_nr; gpc++)
 		size += grctx->gfxp_nr * gr->ppc_nr[gpc] * gr->ppc_tpc_max;
 	size = ((size * 0x20) + 127) & ~127;
 	b = mmio_vram(info, size, (1 << s), false);
@@ -86,15 +85,15 @@ gv100_grctx_generate_attrib(काष्ठा gf100_grctx *info)
 	mmio_wr32(info, 0x405830, attrib);
 	mmio_wr32(info, 0x40585c, alpha);
 
-	क्रम (gpc = 0; gpc < gr->gpc_nr; gpc++) अणु
-		क्रम (ppc = 0; ppc < gr->ppc_nr[gpc]; ppc++, n++) अणु
-			स्थिर u32 as =  alpha * gr->ppc_tpc_nr[gpc][ppc];
-			स्थिर u32 bs = attrib * gr->ppc_tpc_max;
-			स्थिर u32 gs =   gfxp * gr->ppc_tpc_max;
-			स्थिर u32 u = 0x418ea0 + (n * 0x04);
-			स्थिर u32 o = PPC_UNIT(gpc, ppc, 0);
-			अगर (!(gr->ppc_mask[gpc] & (1 << ppc)))
-				जारी;
+	for (gpc = 0; gpc < gr->gpc_nr; gpc++) {
+		for (ppc = 0; ppc < gr->ppc_nr[gpc]; ppc++, n++) {
+			const u32 as =  alpha * gr->ppc_tpc_nr[gpc][ppc];
+			const u32 bs = attrib * gr->ppc_tpc_max;
+			const u32 gs =   gfxp * gr->ppc_tpc_max;
+			const u32 u = 0x418ea0 + (n * 0x04);
+			const u32 o = PPC_UNIT(gpc, ppc, 0);
+			if (!(gr->ppc_mask[gpc] & (1 << ppc)))
+				continue;
 			mmio_wr32(info, o + 0xc0, gs);
 			mmio_wr32(info, o + 0xf4, bo);
 			mmio_wr32(info, o + 0xf0, bs);
@@ -103,35 +102,35 @@ gv100_grctx_generate_attrib(काष्ठा gf100_grctx *info)
 			mmio_wr32(info, o + 0xf8, ao);
 			ao += grctx->alpha_nr_max * gr->ppc_tpc_nr[gpc][ppc];
 			mmio_wr32(info, u, bs);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	mmio_wr32(info, 0x4181e4, 0x00000100);
 	mmio_wr32(info, 0x41befc, 0x00000100);
-पूर्ण
+}
 
-व्योम
-gv100_grctx_generate_rop_mapping(काष्ठा gf100_gr *gr)
-अणु
-	काष्ठा nvkm_device *device = gr->base.engine.subdev.device;
+void
+gv100_grctx_generate_rop_mapping(struct gf100_gr *gr)
+{
+	struct nvkm_device *device = gr->base.engine.subdev.device;
 	u32 data;
-	पूर्णांक i, j;
+	int i, j;
 
-	/* Pack tile map पूर्णांकo रेजिस्टर क्रमmat. */
+	/* Pack tile map into register format. */
 	nvkm_wr32(device, 0x418bb8, (gr->tpc_total << 8) |
 				     gr->screen_tile_row_offset);
-	क्रम (i = 0; i < 11; i++) अणु
-		क्रम (data = 0, j = 0; j < 6; j++)
+	for (i = 0; i < 11; i++) {
+		for (data = 0, j = 0; j < 6; j++)
 			data |= (gr->tile[i * 6 + j] & 0x1f) << (j * 5);
 		nvkm_wr32(device, 0x418b08 + (i * 4), data);
 		nvkm_wr32(device, 0x41bf00 + (i * 4), data);
 		nvkm_wr32(device, 0x40780c + (i * 4), data);
-	पूर्ण
+	}
 
 	/* GPC_BROADCAST.TP_BROADCAST */
 	nvkm_wr32(device, 0x41bfd0, (gr->tpc_total << 8) |
 				     gr->screen_tile_row_offset);
-	क्रम (i = 0, j = 1; i < 5; i++, j += 4) अणु
+	for (i = 0, j = 1; i < 5; i++, j += 4) {
 		u8 v19 = (1 << (j + 0)) % gr->tpc_total;
 		u8 v20 = (1 << (j + 1)) % gr->tpc_total;
 		u8 v21 = (1 << (j + 2)) % gr->tpc_total;
@@ -140,62 +139,62 @@ gv100_grctx_generate_rop_mapping(काष्ठा gf100_gr *gr)
 						      (v21 << 16) |
 						      (v20 <<  8) |
 						       v19);
-	पूर्ण
+	}
 
 	/* UNK78xx */
 	nvkm_wr32(device, 0x4078bc, (gr->tpc_total << 8) |
 				     gr->screen_tile_row_offset);
-पूर्ण
+}
 
-व्योम
-gv100_grctx_generate_r400088(काष्ठा gf100_gr *gr, bool on)
-अणु
-	काष्ठा nvkm_device *device = gr->base.engine.subdev.device;
+void
+gv100_grctx_generate_r400088(struct gf100_gr *gr, bool on)
+{
+	struct nvkm_device *device = gr->base.engine.subdev.device;
 	nvkm_mask(device, 0x400088, 0x00060000, on ? 0x00060000 : 0x00000000);
-पूर्ण
+}
 
-अटल व्योम
-gv100_grctx_generate_sm_id(काष्ठा gf100_gr *gr, पूर्णांक gpc, पूर्णांक tpc, पूर्णांक sm)
-अणु
-	काष्ठा nvkm_device *device = gr->base.engine.subdev.device;
+static void
+gv100_grctx_generate_sm_id(struct gf100_gr *gr, int gpc, int tpc, int sm)
+{
+	struct nvkm_device *device = gr->base.engine.subdev.device;
 	nvkm_wr32(device, TPC_UNIT(gpc, tpc, 0x608), sm);
 	nvkm_wr32(device, GPC_UNIT(gpc, 0x0c10 + tpc * 4), sm);
 	nvkm_wr32(device, TPC_UNIT(gpc, tpc, 0x088), sm);
-पूर्ण
+}
 
-व्योम
-gv100_grctx_generate_unkn(काष्ठा gf100_gr *gr)
-अणु
-	काष्ठा nvkm_device *device = gr->base.engine.subdev.device;
+void
+gv100_grctx_generate_unkn(struct gf100_gr *gr)
+{
+	struct nvkm_device *device = gr->base.engine.subdev.device;
 	nvkm_mask(device, 0x41980c, 0x00000010, 0x00000010);
 	nvkm_mask(device, 0x41be08, 0x00000004, 0x00000004);
 	nvkm_mask(device, 0x4064c0, 0x80000000, 0x80000000);
 	nvkm_mask(device, 0x405800, 0x08000000, 0x08000000);
 	nvkm_mask(device, 0x419c00, 0x00000008, 0x00000008);
-पूर्ण
+}
 
-व्योम
-gv100_grctx_unkn88c(काष्ठा gf100_gr *gr, bool on)
-अणु
-	काष्ठा nvkm_device *device = gr->base.engine.subdev.device;
-	स्थिर u32 mask = 0x00000010, data = on ? mask : 0x00000000;
+void
+gv100_grctx_unkn88c(struct gf100_gr *gr, bool on)
+{
+	struct nvkm_device *device = gr->base.engine.subdev.device;
+	const u32 mask = 0x00000010, data = on ? mask : 0x00000000;
 	nvkm_mask(device, 0x40988c, mask, data);
 	nvkm_rd32(device, 0x40988c);
 	nvkm_mask(device, 0x41a88c, mask, data);
 	nvkm_rd32(device, 0x41a88c);
 	nvkm_mask(device, 0x408a14, mask, data);
 	nvkm_rd32(device, 0x408a14);
-पूर्ण
+}
 
-स्थिर काष्ठा gf100_grctx_func
-gv100_grctx = अणु
+const struct gf100_grctx_func
+gv100_grctx = {
 	.unkn88c = gv100_grctx_unkn88c,
-	.मुख्य = gf100_grctx_generate_मुख्य,
+	.main = gf100_grctx_generate_main,
 	.unkn = gv100_grctx_generate_unkn,
 	.sw_veid_bundle_init = gv100_grctx_pack_sw_veid_bundle_init,
 	.bundle = gm107_grctx_generate_bundle,
 	.bundle_size = 0x3000,
-	.bundle_min_gpm_fअगरo_depth = 0x180,
+	.bundle_min_gpm_fifo_depth = 0x180,
 	.bundle_token_limit = 0x1680,
 	.pagepool = gp100_grctx_generate_pagepool,
 	.pagepool_size = 0x20000,
@@ -212,4 +211,4 @@ gv100_grctx = अणु
 	.gpc_tpc_nr = gk104_grctx_generate_gpc_tpc_nr,
 	.smid_config = gp100_grctx_generate_smid_config,
 	.r400088 = gv100_grctx_generate_r400088,
-पूर्ण;
+};

@@ -1,82 +1,81 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
-// Keyboard backlight LED driver क्रम ChromeOS
+// SPDX-License-Identifier: GPL-2.0+
+// Keyboard backlight LED driver for ChromeOS
 //
 // Copyright (C) 2012 Google, Inc.
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/leds.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/err.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
+#include <linux/acpi.h>
+#include <linux/leds.h>
+#include <linux/delay.h>
+#include <linux/err.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
 
 /* Keyboard LED ACPI Device must be defined in firmware */
-#घोषणा ACPI_KEYBOARD_BACKLIGHT_DEVICE	"\\_SB.KBLT"
-#घोषणा ACPI_KEYBOARD_BACKLIGHT_READ	ACPI_KEYBOARD_BACKLIGHT_DEVICE ".KBQC"
-#घोषणा ACPI_KEYBOARD_BACKLIGHT_WRITE	ACPI_KEYBOARD_BACKLIGHT_DEVICE ".KBCM"
+#define ACPI_KEYBOARD_BACKLIGHT_DEVICE	"\\_SB.KBLT"
+#define ACPI_KEYBOARD_BACKLIGHT_READ	ACPI_KEYBOARD_BACKLIGHT_DEVICE ".KBQC"
+#define ACPI_KEYBOARD_BACKLIGHT_WRITE	ACPI_KEYBOARD_BACKLIGHT_DEVICE ".KBCM"
 
-#घोषणा ACPI_KEYBOARD_BACKLIGHT_MAX		100
+#define ACPI_KEYBOARD_BACKLIGHT_MAX		100
 
-अटल व्योम keyboard_led_set_brightness(काष्ठा led_classdev *cdev,
-					क्रमागत led_brightness brightness)
-अणु
-	जोड़ acpi_object param;
-	काष्ठा acpi_object_list input;
+static void keyboard_led_set_brightness(struct led_classdev *cdev,
+					enum led_brightness brightness)
+{
+	union acpi_object param;
+	struct acpi_object_list input;
 	acpi_status status;
 
 	param.type = ACPI_TYPE_INTEGER;
-	param.पूर्णांकeger.value = brightness;
+	param.integer.value = brightness;
 	input.count = 1;
-	input.poपूर्णांकer = &param;
+	input.pointer = &param;
 
-	status = acpi_evaluate_object(शून्य, ACPI_KEYBOARD_BACKLIGHT_WRITE,
-				      &input, शून्य);
-	अगर (ACPI_FAILURE(status))
+	status = acpi_evaluate_object(NULL, ACPI_KEYBOARD_BACKLIGHT_WRITE,
+				      &input, NULL);
+	if (ACPI_FAILURE(status))
 		dev_err(cdev->dev, "Error setting keyboard LED value: %d\n",
 			status);
-पूर्ण
+}
 
-अटल क्रमागत led_brightness
-keyboard_led_get_brightness(काष्ठा led_classdev *cdev)
-अणु
-	अचिन्हित दीर्घ दीर्घ brightness;
+static enum led_brightness
+keyboard_led_get_brightness(struct led_classdev *cdev)
+{
+	unsigned long long brightness;
 	acpi_status status;
 
-	status = acpi_evaluate_पूर्णांकeger(शून्य, ACPI_KEYBOARD_BACKLIGHT_READ,
-				       शून्य, &brightness);
-	अगर (ACPI_FAILURE(status)) अणु
+	status = acpi_evaluate_integer(NULL, ACPI_KEYBOARD_BACKLIGHT_READ,
+				       NULL, &brightness);
+	if (ACPI_FAILURE(status)) {
 		dev_err(cdev->dev, "Error getting keyboard LED value: %d\n",
 			status);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस brightness;
-पूर्ण
+	return brightness;
+}
 
-अटल पूर्णांक keyboard_led_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा led_classdev *cdev;
+static int keyboard_led_probe(struct platform_device *pdev)
+{
+	struct led_classdev *cdev;
 	acpi_handle handle;
 	acpi_status status;
-	पूर्णांक error;
+	int error;
 
-	/* Look क्रम the keyboard LED ACPI Device */
+	/* Look for the keyboard LED ACPI Device */
 	status = acpi_get_handle(ACPI_ROOT_OBJECT,
 				 ACPI_KEYBOARD_BACKLIGHT_DEVICE,
 				 &handle);
-	अगर (ACPI_FAILURE(status)) अणु
+	if (ACPI_FAILURE(status)) {
 		dev_err(&pdev->dev, "Unable to find ACPI device %s: %d\n",
 			ACPI_KEYBOARD_BACKLIGHT_DEVICE, status);
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
-	cdev = devm_kzalloc(&pdev->dev, माप(*cdev), GFP_KERNEL);
-	अगर (!cdev)
-		वापस -ENOMEM;
+	cdev = devm_kzalloc(&pdev->dev, sizeof(*cdev), GFP_KERNEL);
+	if (!cdev)
+		return -ENOMEM;
 
 	cdev->name = "chromeos::kbd_backlight";
 	cdev->max_brightness = ACPI_KEYBOARD_BACKLIGHT_MAX;
@@ -84,27 +83,27 @@ keyboard_led_get_brightness(काष्ठा led_classdev *cdev)
 	cdev->brightness_set = keyboard_led_set_brightness;
 	cdev->brightness_get = keyboard_led_get_brightness;
 
-	error = devm_led_classdev_रेजिस्टर(&pdev->dev, cdev);
-	अगर (error)
-		वापस error;
+	error = devm_led_classdev_register(&pdev->dev, cdev);
+	if (error)
+		return error;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा acpi_device_id keyboard_led_id[] = अणु
-	अणु "GOOG0002", 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct acpi_device_id keyboard_led_id[] = {
+	{ "GOOG0002", 0 },
+	{ }
+};
 MODULE_DEVICE_TABLE(acpi, keyboard_led_id);
 
-अटल काष्ठा platक्रमm_driver keyboard_led_driver = अणु
-	.driver		= अणु
+static struct platform_driver keyboard_led_driver = {
+	.driver		= {
 		.name	= "chromeos-keyboard-leds",
 		.acpi_match_table = ACPI_PTR(keyboard_led_id),
-	पूर्ण,
+	},
 	.probe		= keyboard_led_probe,
-पूर्ण;
-module_platक्रमm_driver(keyboard_led_driver);
+};
+module_platform_driver(keyboard_led_driver);
 
 MODULE_AUTHOR("Simon Que <sque@chromium.org>");
 MODULE_DESCRIPTION("ChromeOS Keyboard backlight LED Driver");

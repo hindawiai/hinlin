@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  *  sync allocation tests
  *  Copyright 2015-2016 Collabora Ltd.
@@ -7,12 +6,12 @@
  *
  *  Copyright 2012 Google, Inc
  *
- *  Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- *  copy of this software and associated करोcumentation files (the "Software"),
+ *  Permission is hereby granted, free of charge, to any person obtaining a
+ *  copy of this software and associated documentation files (the "Software"),
  *  to deal in the Software without restriction, including without limitation
- *  the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ *  the rights to use, copy, modify, merge, publish, distribute, sublicense,
  *  and/or sell copies of the Software, and to permit persons to whom the
- *  Software is furnished to करो so, subject to the following conditions:
+ *  Software is furnished to do so, subject to the following conditions:
  *
  *  The above copyright notice and this permission notice shall be included in
  *  all copies or substantial portions of the Software.
@@ -26,50 +25,50 @@
  *  OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#समावेश "sync.h"
-#समावेश "sw_sync.h"
-#समावेश "synctest.h"
+#include "sync.h"
+#include "sw_sync.h"
+#include "synctest.h"
 
-पूर्णांक test_alloc_समयline(व्योम)
-अणु
-	पूर्णांक समयline, valid;
+int test_alloc_timeline(void)
+{
+	int timeline, valid;
 
-	समयline = sw_sync_समयline_create();
-	valid = sw_sync_समयline_is_valid(समयline);
+	timeline = sw_sync_timeline_create();
+	valid = sw_sync_timeline_is_valid(timeline);
 	ASSERT(valid, "Failure allocating timeline\n");
 
-	sw_sync_समयline_destroy(समयline);
-	वापस 0;
-पूर्ण
+	sw_sync_timeline_destroy(timeline);
+	return 0;
+}
 
-पूर्णांक test_alloc_fence(व्योम)
-अणु
-	पूर्णांक समयline, fence, valid;
+int test_alloc_fence(void)
+{
+	int timeline, fence, valid;
 
-	समयline = sw_sync_समयline_create();
-	valid = sw_sync_समयline_is_valid(समयline);
+	timeline = sw_sync_timeline_create();
+	valid = sw_sync_timeline_is_valid(timeline);
 	ASSERT(valid, "Failure allocating timeline\n");
 
-	fence = sw_sync_fence_create(समयline, "allocFence", 1);
+	fence = sw_sync_fence_create(timeline, "allocFence", 1);
 	valid = sw_sync_fence_is_valid(fence);
 	ASSERT(valid, "Failure allocating fence\n");
 
 	sw_sync_fence_destroy(fence);
-	sw_sync_समयline_destroy(समयline);
-	वापस 0;
-पूर्ण
+	sw_sync_timeline_destroy(timeline);
+	return 0;
+}
 
-पूर्णांक test_alloc_fence_negative(व्योम)
-अणु
-	पूर्णांक fence, समयline;
+int test_alloc_fence_negative(void)
+{
+	int fence, timeline;
 
-	समयline = sw_sync_समयline_create();
-	ASSERT(समयline > 0, "Failure allocating timeline\n");
+	timeline = sw_sync_timeline_create();
+	ASSERT(timeline > 0, "Failure allocating timeline\n");
 
 	fence = sw_sync_fence_create(-1, "fence", 1);
 	ASSERT(fence < 0, "Success allocating negative fence\n");
 
 	sw_sync_fence_destroy(fence);
-	sw_sync_समयline_destroy(समयline);
-	वापस 0;
-पूर्ण
+	sw_sync_timeline_destroy(timeline);
+	return 0;
+}

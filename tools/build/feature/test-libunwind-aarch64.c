@@ -1,28 +1,27 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <libunwind-aarch64.h>
-#समावेश <मानककोष.स>
+// SPDX-License-Identifier: GPL-2.0
+#include <libunwind-aarch64.h>
+#include <stdlib.h>
 
-बाह्य पूर्णांक UNW_OBJ(dwarf_search_unwind_table) (unw_addr_space_t as,
+extern int UNW_OBJ(dwarf_search_unwind_table) (unw_addr_space_t as,
 					       unw_word_t ip,
 					       unw_dyn_info_t *di,
 					       unw_proc_info_t *pi,
-					       पूर्णांक need_unwind_info, व्योम *arg);
+					       int need_unwind_info, void *arg);
 
-#घोषणा dwarf_search_unwind_table UNW_OBJ(dwarf_search_unwind_table)
+#define dwarf_search_unwind_table UNW_OBJ(dwarf_search_unwind_table)
 
-अटल unw_accessors_t accessors;
+static unw_accessors_t accessors;
 
-पूर्णांक मुख्य(व्योम)
-अणु
+int main(void)
+{
 	unw_addr_space_t addr_space;
 
 	addr_space = unw_create_addr_space(&accessors, 0);
-	अगर (addr_space)
-		वापस 0;
+	if (addr_space)
+		return 0;
 
-	unw_init_remote(शून्य, addr_space, शून्य);
-	dwarf_search_unwind_table(addr_space, 0, शून्य, शून्य, 0, शून्य);
+	unw_init_remote(NULL, addr_space, NULL);
+	dwarf_search_unwind_table(addr_space, 0, NULL, NULL, 0, NULL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

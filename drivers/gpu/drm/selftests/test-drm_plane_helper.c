@@ -1,102 +1,101 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Test हालs क्रम the drm_plane_helper functions
+ * Test cases for the drm_plane_helper functions
  */
 
-#घोषणा pr_fmt(fmt) "drm_plane_helper: " fmt
+#define pr_fmt(fmt) "drm_plane_helper: " fmt
 
-#समावेश <drm/drm_atomic_helper.h>
-#समावेश <drm/drm_plane_helper.h>
-#समावेश <drm/drm_modes.h>
+#include <drm/drm_atomic_helper.h>
+#include <drm/drm_plane_helper.h>
+#include <drm/drm_modes.h>
 
-#समावेश "test-drm_modeset_common.h"
+#include "test-drm_modeset_common.h"
 
-अटल व्योम set_src(काष्ठा drm_plane_state *plane_state,
-		    अचिन्हित src_x, अचिन्हित src_y,
-		    अचिन्हित src_w, अचिन्हित src_h)
-अणु
+static void set_src(struct drm_plane_state *plane_state,
+		    unsigned src_x, unsigned src_y,
+		    unsigned src_w, unsigned src_h)
+{
 	plane_state->src_x = src_x;
 	plane_state->src_y = src_y;
 	plane_state->src_w = src_w;
 	plane_state->src_h = src_h;
-पूर्ण
+}
 
-अटल bool check_src_eq(काष्ठा drm_plane_state *plane_state,
-			 अचिन्हित src_x, अचिन्हित src_y,
-			 अचिन्हित src_w, अचिन्हित src_h)
-अणु
-	अगर (plane_state->src.x1 < 0) अणु
+static bool check_src_eq(struct drm_plane_state *plane_state,
+			 unsigned src_x, unsigned src_y,
+			 unsigned src_w, unsigned src_h)
+{
+	if (plane_state->src.x1 < 0) {
 		pr_err("src x coordinate %x should never be below 0.\n", plane_state->src.x1);
-		drm_rect_debug_prपूर्णांक("src: ", &plane_state->src, true);
-		वापस false;
-	पूर्ण
-	अगर (plane_state->src.y1 < 0) अणु
+		drm_rect_debug_print("src: ", &plane_state->src, true);
+		return false;
+	}
+	if (plane_state->src.y1 < 0) {
 		pr_err("src y coordinate %x should never be below 0.\n", plane_state->src.y1);
-		drm_rect_debug_prपूर्णांक("src: ", &plane_state->src, true);
-		वापस false;
-	पूर्ण
+		drm_rect_debug_print("src: ", &plane_state->src, true);
+		return false;
+	}
 
-	अगर (plane_state->src.x1 != src_x ||
+	if (plane_state->src.x1 != src_x ||
 	    plane_state->src.y1 != src_y ||
 	    drm_rect_width(&plane_state->src) != src_w ||
-	    drm_rect_height(&plane_state->src) != src_h) अणु
-		drm_rect_debug_prपूर्णांक("src: ", &plane_state->src, true);
-		वापस false;
-	पूर्ण
+	    drm_rect_height(&plane_state->src) != src_h) {
+		drm_rect_debug_print("src: ", &plane_state->src, true);
+		return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम set_crtc(काष्ठा drm_plane_state *plane_state,
-		     पूर्णांक crtc_x, पूर्णांक crtc_y,
-		     अचिन्हित crtc_w, अचिन्हित crtc_h)
-अणु
+static void set_crtc(struct drm_plane_state *plane_state,
+		     int crtc_x, int crtc_y,
+		     unsigned crtc_w, unsigned crtc_h)
+{
 	plane_state->crtc_x = crtc_x;
 	plane_state->crtc_y = crtc_y;
 	plane_state->crtc_w = crtc_w;
 	plane_state->crtc_h = crtc_h;
-पूर्ण
+}
 
-अटल bool check_crtc_eq(काष्ठा drm_plane_state *plane_state,
-			  पूर्णांक crtc_x, पूर्णांक crtc_y,
-			  अचिन्हित crtc_w, अचिन्हित crtc_h)
-अणु
-	अगर (plane_state->dst.x1 != crtc_x ||
+static bool check_crtc_eq(struct drm_plane_state *plane_state,
+			  int crtc_x, int crtc_y,
+			  unsigned crtc_w, unsigned crtc_h)
+{
+	if (plane_state->dst.x1 != crtc_x ||
 	    plane_state->dst.y1 != crtc_y ||
 	    drm_rect_width(&plane_state->dst) != crtc_w ||
-	    drm_rect_height(&plane_state->dst) != crtc_h) अणु
-		drm_rect_debug_prपूर्णांक("dst: ", &plane_state->dst, false);
+	    drm_rect_height(&plane_state->dst) != crtc_h) {
+		drm_rect_debug_print("dst: ", &plane_state->dst, false);
 
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-पूर्णांक igt_check_plane_state(व्योम *ignored)
-अणु
-	पूर्णांक ret;
+int igt_check_plane_state(void *ignored)
+{
+	int ret;
 
-	स्थिर काष्ठा drm_crtc_state crtc_state = अणु
+	const struct drm_crtc_state crtc_state = {
 		.crtc = ZERO_SIZE_PTR,
 		.enable = true,
 		.active = true,
-		.mode = अणु
+		.mode = {
 			DRM_MODE("1024x768", 0, 65000, 1024, 1048,
 				1184, 1344, 0, 768, 771, 777, 806, 0,
 				DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC)
-		पूर्ण,
-	पूर्ण;
-	काष्ठा drm_framebuffer fb = अणु
+		},
+	};
+	struct drm_framebuffer fb = {
 		.width = 2048,
 		.height = 2048
-	पूर्ण;
-	काष्ठा drm_plane_state plane_state = अणु
+	};
+	struct drm_plane_state plane_state = {
 		.crtc = ZERO_SIZE_PTR,
 		.fb = &fb,
 		.rotation = DRM_MODE_ROTATE_0
-	पूर्ण;
+	};
 
 	/* Simple clipping, no scaling. */
 	set_src(&plane_state, 0, 0, fb.width << 16, fb.height << 16);
@@ -216,5 +215,5 @@
 	FAIL_ON(!check_src_eq(&plane_state, 0x3fffe, 0x3fffe, 1024 << 16, 768 << 16));
 	FAIL_ON(!check_crtc_eq(&plane_state, 0, 0, 1024, 768));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

@@ -1,32 +1,31 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/sched.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/mm.h>
-#समावेश <linux/nmi.h>
-#समावेश <linux/swap.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/spinlock.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/sched.h>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/mm.h>
+#include <linux/nmi.h>
+#include <linux/swap.h>
+#include <linux/smp.h>
+#include <linux/highmem.h>
+#include <linux/pagemap.h>
+#include <linux/spinlock.h>
 
-#समावेश <यंत्र/cpu_entry_area.h>
-#समावेश <यंत्र/fixmap.h>
-#समावेश <यंत्र/e820/api.h>
-#समावेश <यंत्र/tlb.h>
-#समावेश <यंत्र/tlbflush.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <linux/vदो_स्मृति.h>
+#include <asm/cpu_entry_area.h>
+#include <asm/fixmap.h>
+#include <asm/e820/api.h>
+#include <asm/tlb.h>
+#include <asm/tlbflush.h>
+#include <asm/io.h>
+#include <linux/vmalloc.h>
 
-अचिन्हित पूर्णांक __VMALLOC_RESERVE = 128 << 20;
+unsigned int __VMALLOC_RESERVE = 128 << 20;
 
 /*
- * Associate a भव page frame with a given physical page frame 
- * and protection flags क्रम that frame.
+ * Associate a virtual page frame with a given physical page frame 
+ * and protection flags for that frame.
  */ 
-व्योम set_pte_vaddr(अचिन्हित दीर्घ vaddr, pte_t pteval)
-अणु
+void set_pte_vaddr(unsigned long vaddr, pte_t pteval)
+{
 	pgd_t *pgd;
 	p4d_t *p4d;
 	pud_t *pud;
@@ -34,29 +33,29 @@
 	pte_t *pte;
 
 	pgd = swapper_pg_dir + pgd_index(vaddr);
-	अगर (pgd_none(*pgd)) अणु
+	if (pgd_none(*pgd)) {
 		BUG();
-		वापस;
-	पूर्ण
+		return;
+	}
 	p4d = p4d_offset(pgd, vaddr);
-	अगर (p4d_none(*p4d)) अणु
+	if (p4d_none(*p4d)) {
 		BUG();
-		वापस;
-	पूर्ण
+		return;
+	}
 	pud = pud_offset(p4d, vaddr);
-	अगर (pud_none(*pud)) अणु
+	if (pud_none(*pud)) {
 		BUG();
-		वापस;
-	पूर्ण
+		return;
+	}
 	pmd = pmd_offset(pud, vaddr);
-	अगर (pmd_none(*pmd)) अणु
+	if (pmd_none(*pmd)) {
 		BUG();
-		वापस;
-	पूर्ण
+		return;
+	}
 	pte = pte_offset_kernel(pmd, vaddr);
-	अगर (!pte_none(pteval))
+	if (!pte_none(pteval))
 		set_pte_at(&init_mm, vaddr, pte, pteval);
-	अन्यथा
+	else
 		pte_clear(&init_mm, vaddr, pte);
 
 	/*
@@ -64,42 +63,42 @@
 	 * (PGE mappings get flushed as well)
 	 */
 	flush_tlb_one_kernel(vaddr);
-पूर्ण
+}
 
-अचिन्हित दीर्घ __FIXADDR_TOP = 0xfffff000;
+unsigned long __FIXADDR_TOP = 0xfffff000;
 EXPORT_SYMBOL(__FIXADDR_TOP);
 
 /*
- * vदो_स्मृति=size क्रमces the vदो_स्मृति area to be exactly 'size'
+ * vmalloc=size forces the vmalloc area to be exactly 'size'
  * bytes. This can be used to increase (or decrease) the
- * vदो_स्मृति area - the शेष is 128m.
+ * vmalloc area - the default is 128m.
  */
-अटल पूर्णांक __init parse_vदो_स्मृति(अक्षर *arg)
-अणु
-	अगर (!arg)
-		वापस -EINVAL;
+static int __init parse_vmalloc(char *arg)
+{
+	if (!arg)
+		return -EINVAL;
 
 	/* Add VMALLOC_OFFSET to the parsed value due to vm area guard hole*/
 	__VMALLOC_RESERVE = memparse(arg, &arg) + VMALLOC_OFFSET;
-	वापस 0;
-पूर्ण
-early_param("vmalloc", parse_vदो_स्मृति);
+	return 0;
+}
+early_param("vmalloc", parse_vmalloc);
 
 /*
  * reservetop=size reserves a hole at the top of the kernel address space which
- * a hypervisor can load पूर्णांकo later.  Needed क्रम dynamically loaded hypervisors,
- * so relocating the fixmap can be करोne beक्रमe paging initialization.
+ * a hypervisor can load into later.  Needed for dynamically loaded hypervisors,
+ * so relocating the fixmap can be done before paging initialization.
  */
-अटल पूर्णांक __init parse_reservetop(अक्षर *arg)
-अणु
-	अचिन्हित दीर्घ address;
+static int __init parse_reservetop(char *arg)
+{
+	unsigned long address;
 
-	अगर (!arg)
-		वापस -EINVAL;
+	if (!arg)
+		return -EINVAL;
 
 	address = memparse(arg, &arg);
 	reserve_top_address(address);
 	early_ioremap_init();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 early_param("reservetop", parse_reservetop);

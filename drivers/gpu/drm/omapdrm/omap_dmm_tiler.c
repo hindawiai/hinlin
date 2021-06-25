@@ -1,146 +1,145 @@
-<शैली गुरु>
 /*
- * DMM IOMMU driver support functions क्रम TI OMAP processors.
+ * DMM IOMMU driver support functions for TI OMAP processors.
  *
  * Copyright (C) 2011 Texas Instruments Incorporated - https://www.ti.com/
  * Author: Rob Clark <rob@ti.com>
  *         Andy Gross <andy.gross@ti.com>
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of the GNU General Public License as
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
  * published by the Free Software Foundation version 2.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License क्रम more details.
+ * GNU General Public License for more details.
  */
 
-#समावेश <linux/completion.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/list.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h> /* platक्रमm_device() */
-#समावेश <linux/sched.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/रुको.h>
+#include <linux/completion.h>
+#include <linux/delay.h>
+#include <linux/dma-mapping.h>
+#include <linux/dmaengine.h>
+#include <linux/errno.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/list.h>
+#include <linux/mm.h>
+#include <linux/module.h>
+#include <linux/platform_device.h> /* platform_device() */
+#include <linux/sched.h>
+#include <linux/seq_file.h>
+#include <linux/slab.h>
+#include <linux/time.h>
+#include <linux/vmalloc.h>
+#include <linux/wait.h>
 
-#समावेश "omap_dmm_tiler.h"
-#समावेश "omap_dmm_priv.h"
+#include "omap_dmm_tiler.h"
+#include "omap_dmm_priv.h"
 
-#घोषणा DMM_DRIVER_NAME "dmm"
+#define DMM_DRIVER_NAME "dmm"
 
-/* mappings क्रम associating views to luts */
-अटल काष्ठा tcm *containers[TILFMT_NFORMATS];
-अटल काष्ठा dmm *omap_dmm;
+/* mappings for associating views to luts */
+static struct tcm *containers[TILFMT_NFORMATS];
+static struct dmm *omap_dmm;
 
-#अगर defined(CONFIG_OF)
-अटल स्थिर काष्ठा of_device_id dmm_of_match[];
-#पूर्ण_अगर
+#if defined(CONFIG_OF)
+static const struct of_device_id dmm_of_match[];
+#endif
 
-/* global spinlock क्रम protecting lists */
-अटल DEFINE_SPINLOCK(list_lock);
+/* global spinlock for protecting lists */
+static DEFINE_SPINLOCK(list_lock);
 
 /* Geometry table */
-#घोषणा GEOM(xshअगरt, yshअगरt, bytes_per_pixel) अणु \
-		.x_shft = (xshअगरt), \
-		.y_shft = (yshअगरt), \
+#define GEOM(xshift, yshift, bytes_per_pixel) { \
+		.x_shft = (xshift), \
+		.y_shft = (yshift), \
 		.cpp    = (bytes_per_pixel), \
-		.slot_w = 1 << (SLOT_WIDTH_BITS - (xshअगरt)), \
-		.slot_h = 1 << (SLOT_HEIGHT_BITS - (yshअगरt)), \
-	पूर्ण
+		.slot_w = 1 << (SLOT_WIDTH_BITS - (xshift)), \
+		.slot_h = 1 << (SLOT_HEIGHT_BITS - (yshift)), \
+	}
 
-अटल स्थिर काष्ठा अणु
+static const struct {
 	u32 x_shft;	/* unused X-bits (as part of bpp) */
 	u32 y_shft;	/* unused Y-bits (as part of bpp) */
-	u32 cpp;		/* bytes/अक्षरs per pixel */
+	u32 cpp;		/* bytes/chars per pixel */
 	u32 slot_w;	/* width of each slot (in pixels) */
 	u32 slot_h;	/* height of each slot (in pixels) */
-पूर्ण geom[TILFMT_NFORMATS] = अणु
+} geom[TILFMT_NFORMATS] = {
 	[TILFMT_8BIT]  = GEOM(0, 0, 1),
 	[TILFMT_16BIT] = GEOM(0, 1, 2),
 	[TILFMT_32BIT] = GEOM(1, 1, 4),
 	[TILFMT_PAGE]  = GEOM(SLOT_WIDTH_BITS, SLOT_HEIGHT_BITS, 1),
-पूर्ण;
+};
 
 
-/* lookup table क्रम रेजिस्टरs w/ per-engine instances */
-अटल स्थिर u32 reg[][4] = अणु
-	[PAT_STATUS] = अणुDMM_PAT_STATUS__0, DMM_PAT_STATUS__1,
-			DMM_PAT_STATUS__2, DMM_PAT_STATUS__3पूर्ण,
-	[PAT_DESCR]  = अणुDMM_PAT_DESCR__0, DMM_PAT_DESCR__1,
-			DMM_PAT_DESCR__2, DMM_PAT_DESCR__3पूर्ण,
-पूर्ण;
+/* lookup table for registers w/ per-engine instances */
+static const u32 reg[][4] = {
+	[PAT_STATUS] = {DMM_PAT_STATUS__0, DMM_PAT_STATUS__1,
+			DMM_PAT_STATUS__2, DMM_PAT_STATUS__3},
+	[PAT_DESCR]  = {DMM_PAT_DESCR__0, DMM_PAT_DESCR__1,
+			DMM_PAT_DESCR__2, DMM_PAT_DESCR__3},
+};
 
-अटल पूर्णांक dmm_dma_copy(काष्ठा dmm *dmm, dma_addr_t src, dma_addr_t dst)
-अणु
-	काष्ठा dma_async_tx_descriptor *tx;
-	क्रमागत dma_status status;
+static int dmm_dma_copy(struct dmm *dmm, dma_addr_t src, dma_addr_t dst)
+{
+	struct dma_async_tx_descriptor *tx;
+	enum dma_status status;
 	dma_cookie_t cookie;
 
-	tx = dmaengine_prep_dma_स_नकल(dmm->wa_dma_chan, dst, src, 4, 0);
-	अगर (!tx) अणु
+	tx = dmaengine_prep_dma_memcpy(dmm->wa_dma_chan, dst, src, 4, 0);
+	if (!tx) {
 		dev_err(dmm->dev, "Failed to prepare DMA memcpy\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	cookie = tx->tx_submit(tx);
-	अगर (dma_submit_error(cookie)) अणु
+	if (dma_submit_error(cookie)) {
 		dev_err(dmm->dev, "Failed to do DMA tx_submit\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	status = dma_sync_रुको(dmm->wa_dma_chan, cookie);
-	अगर (status != DMA_COMPLETE)
+	status = dma_sync_wait(dmm->wa_dma_chan, cookie);
+	if (status != DMA_COMPLETE)
 		dev_err(dmm->dev, "i878 wa DMA copy failure\n");
 
 	dmaengine_terminate_all(dmm->wa_dma_chan);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u32 dmm_पढ़ो_wa(काष्ठा dmm *dmm, u32 reg)
-अणु
+static u32 dmm_read_wa(struct dmm *dmm, u32 reg)
+{
 	dma_addr_t src, dst;
-	पूर्णांक r;
+	int r;
 
 	src = dmm->phys_base + reg;
 	dst = dmm->wa_dma_handle;
 
 	r = dmm_dma_copy(dmm, src, dst);
-	अगर (r) अणु
+	if (r) {
 		dev_err(dmm->dev, "sDMA read transfer timeout\n");
-		वापस पढ़ोl(dmm->base + reg);
-	पूर्ण
+		return readl(dmm->base + reg);
+	}
 
 	/*
-	 * As per i878 workaround, the DMA is used to access the DMM रेजिस्टरs.
-	 * Make sure that the पढ़ोl is not moved by the compiler or the CPU
+	 * As per i878 workaround, the DMA is used to access the DMM registers.
+	 * Make sure that the readl is not moved by the compiler or the CPU
 	 * earlier than the DMA finished writing the value to memory.
 	 */
 	rmb();
-	वापस पढ़ोl(dmm->wa_dma_data);
-पूर्ण
+	return readl(dmm->wa_dma_data);
+}
 
-अटल व्योम dmm_ग_लिखो_wa(काष्ठा dmm *dmm, u32 val, u32 reg)
-अणु
+static void dmm_write_wa(struct dmm *dmm, u32 val, u32 reg)
+{
 	dma_addr_t src, dst;
-	पूर्णांक r;
+	int r;
 
-	ग_लिखोl(val, dmm->wa_dma_data);
+	writel(val, dmm->wa_dma_data);
 	/*
-	 * As per i878 workaround, the DMA is used to access the DMM रेजिस्टरs.
-	 * Make sure that the ग_लिखोl is not moved by the compiler or the CPU, so
-	 * the data will be in place beक्रमe we start the DMA to करो the actual
-	 * रेजिस्टर ग_लिखो.
+	 * As per i878 workaround, the DMA is used to access the DMM registers.
+	 * Make sure that the writel is not moved by the compiler or the CPU, so
+	 * the data will be in place before we start the DMA to do the actual
+	 * register write.
 	 */
 	wmb();
 
@@ -148,80 +147,80 @@
 	dst = dmm->phys_base + reg;
 
 	r = dmm_dma_copy(dmm, src, dst);
-	अगर (r) अणु
+	if (r) {
 		dev_err(dmm->dev, "sDMA write transfer timeout\n");
-		ग_लिखोl(val, dmm->base + reg);
-	पूर्ण
-पूर्ण
+		writel(val, dmm->base + reg);
+	}
+}
 
-अटल u32 dmm_पढ़ो(काष्ठा dmm *dmm, u32 reg)
-अणु
-	अगर (dmm->dmm_workaround) अणु
+static u32 dmm_read(struct dmm *dmm, u32 reg)
+{
+	if (dmm->dmm_workaround) {
 		u32 v;
-		अचिन्हित दीर्घ flags;
+		unsigned long flags;
 
 		spin_lock_irqsave(&dmm->wa_lock, flags);
-		v = dmm_पढ़ो_wa(dmm, reg);
+		v = dmm_read_wa(dmm, reg);
 		spin_unlock_irqrestore(&dmm->wa_lock, flags);
 
-		वापस v;
-	पूर्ण अन्यथा अणु
-		वापस पढ़ोl(dmm->base + reg);
-	पूर्ण
-पूर्ण
+		return v;
+	} else {
+		return readl(dmm->base + reg);
+	}
+}
 
-अटल व्योम dmm_ग_लिखो(काष्ठा dmm *dmm, u32 val, u32 reg)
-अणु
-	अगर (dmm->dmm_workaround) अणु
-		अचिन्हित दीर्घ flags;
+static void dmm_write(struct dmm *dmm, u32 val, u32 reg)
+{
+	if (dmm->dmm_workaround) {
+		unsigned long flags;
 
 		spin_lock_irqsave(&dmm->wa_lock, flags);
-		dmm_ग_लिखो_wa(dmm, val, reg);
+		dmm_write_wa(dmm, val, reg);
 		spin_unlock_irqrestore(&dmm->wa_lock, flags);
-	पूर्ण अन्यथा अणु
-		ग_लिखोl(val, dmm->base + reg);
-	पूर्ण
-पूर्ण
+	} else {
+		writel(val, dmm->base + reg);
+	}
+}
 
-अटल पूर्णांक dmm_workaround_init(काष्ठा dmm *dmm)
-अणु
+static int dmm_workaround_init(struct dmm *dmm)
+{
 	dma_cap_mask_t mask;
 
 	spin_lock_init(&dmm->wa_lock);
 
-	dmm->wa_dma_data = dma_alloc_coherent(dmm->dev,  माप(u32),
+	dmm->wa_dma_data = dma_alloc_coherent(dmm->dev,  sizeof(u32),
 					      &dmm->wa_dma_handle, GFP_KERNEL);
-	अगर (!dmm->wa_dma_data)
-		वापस -ENOMEM;
+	if (!dmm->wa_dma_data)
+		return -ENOMEM;
 
 	dma_cap_zero(mask);
 	dma_cap_set(DMA_MEMCPY, mask);
 
-	dmm->wa_dma_chan = dma_request_channel(mask, शून्य, शून्य);
-	अगर (!dmm->wa_dma_chan) अणु
-		dma_मुक्त_coherent(dmm->dev, 4, dmm->wa_dma_data, dmm->wa_dma_handle);
-		वापस -ENODEV;
-	पूर्ण
+	dmm->wa_dma_chan = dma_request_channel(mask, NULL, NULL);
+	if (!dmm->wa_dma_chan) {
+		dma_free_coherent(dmm->dev, 4, dmm->wa_dma_data, dmm->wa_dma_handle);
+		return -ENODEV;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम dmm_workaround_uninit(काष्ठा dmm *dmm)
-अणु
+static void dmm_workaround_uninit(struct dmm *dmm)
+{
 	dma_release_channel(dmm->wa_dma_chan);
 
-	dma_मुक्त_coherent(dmm->dev, 4, dmm->wa_dma_data, dmm->wa_dma_handle);
-पूर्ण
+	dma_free_coherent(dmm->dev, 4, dmm->wa_dma_data, dmm->wa_dma_handle);
+}
 
 /* simple allocator to grab next 16 byte aligned memory from txn */
-अटल व्योम *alloc_dma(काष्ठा dmm_txn *txn, माप_प्रकार sz, dma_addr_t *pa)
-अणु
-	व्योम *ptr;
-	काष्ठा refill_engine *engine = txn->engine_handle;
+static void *alloc_dma(struct dmm_txn *txn, size_t sz, dma_addr_t *pa)
+{
+	void *ptr;
+	struct refill_engine *engine = txn->engine_handle;
 
 	/* dmm programming requires 16 byte aligned addresses */
 	txn->current_pa = round_up(txn->current_pa, 16);
-	txn->current_va = (व्योम *)round_up((दीर्घ)txn->current_va, 16);
+	txn->current_va = (void *)round_up((long)txn->current_va, 16);
 
 	ptr = txn->current_va;
 	*pa = txn->current_pa;
@@ -231,106 +230,106 @@
 
 	BUG_ON((txn->current_va - engine->refill_va) > REFILL_BUFFER_SIZE);
 
-	वापस ptr;
-पूर्ण
+	return ptr;
+}
 
-/* check status and spin until रुको_mask comes true */
-अटल पूर्णांक रुको_status(काष्ठा refill_engine *engine, u32 रुको_mask)
-अणु
-	काष्ठा dmm *dmm = engine->dmm;
+/* check status and spin until wait_mask comes true */
+static int wait_status(struct refill_engine *engine, u32 wait_mask)
+{
+	struct dmm *dmm = engine->dmm;
 	u32 r = 0, err, i;
 
 	i = DMM_FIXED_RETRY_COUNT;
-	जबतक (true) अणु
-		r = dmm_पढ़ो(dmm, reg[PAT_STATUS][engine->id]);
+	while (true) {
+		r = dmm_read(dmm, reg[PAT_STATUS][engine->id]);
 		err = r & DMM_PATSTATUS_ERR;
-		अगर (err) अणु
+		if (err) {
 			dev_err(dmm->dev,
 				"%s: error (engine%d). PAT_STATUS: 0x%08x\n",
 				__func__, engine->id, r);
-			वापस -EFAULT;
-		पूर्ण
+			return -EFAULT;
+		}
 
-		अगर ((r & रुको_mask) == रुको_mask)
-			अवरोध;
+		if ((r & wait_mask) == wait_mask)
+			break;
 
-		अगर (--i == 0) अणु
+		if (--i == 0) {
 			dev_err(dmm->dev,
 				"%s: timeout (engine%d). PAT_STATUS: 0x%08x\n",
 				__func__, engine->id, r);
-			वापस -ETIMEDOUT;
-		पूर्ण
+			return -ETIMEDOUT;
+		}
 
 		udelay(1);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम release_engine(काष्ठा refill_engine *engine)
-अणु
-	अचिन्हित दीर्घ flags;
+static void release_engine(struct refill_engine *engine)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&list_lock, flags);
 	list_add(&engine->idle_node, &omap_dmm->idle_head);
 	spin_unlock_irqrestore(&list_lock, flags);
 
 	atomic_inc(&omap_dmm->engine_counter);
-	wake_up_पूर्णांकerruptible(&omap_dmm->engine_queue);
-पूर्ण
+	wake_up_interruptible(&omap_dmm->engine_queue);
+}
 
-अटल irqवापस_t omap_dmm_irq_handler(पूर्णांक irq, व्योम *arg)
-अणु
-	काष्ठा dmm *dmm = arg;
-	u32 status = dmm_पढ़ो(dmm, DMM_PAT_IRQSTATUS);
-	पूर्णांक i;
+static irqreturn_t omap_dmm_irq_handler(int irq, void *arg)
+{
+	struct dmm *dmm = arg;
+	u32 status = dmm_read(dmm, DMM_PAT_IRQSTATUS);
+	int i;
 
 	/* ack IRQ */
-	dmm_ग_लिखो(dmm, status, DMM_PAT_IRQSTATUS);
+	dmm_write(dmm, status, DMM_PAT_IRQSTATUS);
 
-	क्रम (i = 0; i < dmm->num_engines; i++) अणु
-		अगर (status & DMM_IRQSTAT_ERR_MASK)
+	for (i = 0; i < dmm->num_engines; i++) {
+		if (status & DMM_IRQSTAT_ERR_MASK)
 			dev_err(dmm->dev,
 				"irq error(engine%d): IRQSTAT 0x%02x\n",
 				i, status & 0xff);
 
-		अगर (status & DMM_IRQSTAT_LST) अणु
-			अगर (dmm->engines[i].async)
+		if (status & DMM_IRQSTAT_LST) {
+			if (dmm->engines[i].async)
 				release_engine(&dmm->engines[i]);
 
 			complete(&dmm->engines[i].compl);
-		पूर्ण
+		}
 
 		status >>= 8;
-	पूर्ण
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /*
- * Get a handle क्रम a DMM transaction
+ * Get a handle for a DMM transaction
  */
-अटल काष्ठा dmm_txn *dmm_txn_init(काष्ठा dmm *dmm, काष्ठा tcm *tcm)
-अणु
-	काष्ठा dmm_txn *txn = शून्य;
-	काष्ठा refill_engine *engine = शून्य;
-	पूर्णांक ret;
-	अचिन्हित दीर्घ flags;
+static struct dmm_txn *dmm_txn_init(struct dmm *dmm, struct tcm *tcm)
+{
+	struct dmm_txn *txn = NULL;
+	struct refill_engine *engine = NULL;
+	int ret;
+	unsigned long flags;
 
 
-	/* रुको until an engine is available */
-	ret = रुको_event_पूर्णांकerruptible(omap_dmm->engine_queue,
+	/* wait until an engine is available */
+	ret = wait_event_interruptible(omap_dmm->engine_queue,
 		atomic_add_unless(&omap_dmm->engine_counter, -1, 0));
-	अगर (ret)
-		वापस ERR_PTR(ret);
+	if (ret)
+		return ERR_PTR(ret);
 
 	/* grab an idle engine */
 	spin_lock_irqsave(&list_lock, flags);
-	अगर (!list_empty(&dmm->idle_head)) अणु
-		engine = list_entry(dmm->idle_head.next, काष्ठा refill_engine,
+	if (!list_empty(&dmm->idle_head)) {
+		engine = list_entry(dmm->idle_head.next, struct refill_engine,
 					idle_node);
 		list_del(&engine->idle_node);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&list_lock, flags);
 
 	BUG_ON(!engine);
@@ -338,31 +337,31 @@
 	txn = &engine->txn;
 	engine->tcm = tcm;
 	txn->engine_handle = engine;
-	txn->last_pat = शून्य;
+	txn->last_pat = NULL;
 	txn->current_va = engine->refill_va;
 	txn->current_pa = engine->refill_pa;
 
-	वापस txn;
-पूर्ण
+	return txn;
+}
 
 /*
- * Add region to DMM transaction.  If pages or pages[i] is शून्य, then the
+ * Add region to DMM transaction.  If pages or pages[i] is NULL, then the
  * corresponding slot is cleared (ie. dummy_pa is programmed)
  */
-अटल व्योम dmm_txn_append(काष्ठा dmm_txn *txn, काष्ठा pat_area *area,
-		काष्ठा page **pages, u32 npages, u32 roll)
-अणु
+static void dmm_txn_append(struct dmm_txn *txn, struct pat_area *area,
+		struct page **pages, u32 npages, u32 roll)
+{
 	dma_addr_t pat_pa = 0, data_pa = 0;
 	u32 *data;
-	काष्ठा pat *pat;
-	काष्ठा refill_engine *engine = txn->engine_handle;
-	पूर्णांक columns = (1 + area->x1 - area->x0);
-	पूर्णांक rows = (1 + area->y1 - area->y0);
-	पूर्णांक i = columns*rows;
+	struct pat *pat;
+	struct refill_engine *engine = txn->engine_handle;
+	int columns = (1 + area->x1 - area->x0);
+	int rows = (1 + area->y1 - area->y0);
+	int i = columns*rows;
 
-	pat = alloc_dma(txn, माप(*pat), &pat_pa);
+	pat = alloc_dma(txn, sizeof(*pat), &pat_pa);
 
-	अगर (txn->last_pat)
+	if (txn->last_pat)
 		txn->last_pat->next_pa = (u32)pat_pa;
 
 	pat->area = *area;
@@ -371,42 +370,42 @@
 	pat->area.y0 += engine->tcm->y_offset;
 	pat->area.y1 += engine->tcm->y_offset;
 
-	pat->ctrl = (काष्ठा pat_ctrl)अणु
+	pat->ctrl = (struct pat_ctrl){
 			.start = 1,
 			.lut_id = engine->tcm->lut_id,
-		पूर्ण;
+		};
 
 	data = alloc_dma(txn, 4*i, &data_pa);
-	/* FIXME: what अगर data_pa is more than 32-bit ? */
+	/* FIXME: what if data_pa is more than 32-bit ? */
 	pat->data_pa = data_pa;
 
-	जबतक (i--) अणु
-		पूर्णांक n = i + roll;
-		अगर (n >= npages)
+	while (i--) {
+		int n = i + roll;
+		if (n >= npages)
 			n -= npages;
 		data[i] = (pages && pages[n]) ?
 			page_to_phys(pages[n]) : engine->dmm->dummy_pa;
-	पूर्ण
+	}
 
 	txn->last_pat = pat;
 
-	वापस;
-पूर्ण
+	return;
+}
 
 /*
  * Commit the DMM transaction.
  */
-अटल पूर्णांक dmm_txn_commit(काष्ठा dmm_txn *txn, bool रुको)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा refill_engine *engine = txn->engine_handle;
-	काष्ठा dmm *dmm = engine->dmm;
+static int dmm_txn_commit(struct dmm_txn *txn, bool wait)
+{
+	int ret = 0;
+	struct refill_engine *engine = txn->engine_handle;
+	struct dmm *dmm = engine->dmm;
 
-	अगर (!txn->last_pat) अणु
+	if (!txn->last_pat) {
 		dev_err(engine->dmm->dev, "need at least one txn\n");
 		ret = -EINVAL;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
 	txn->last_pat->next_pa = 0;
 	/* ensure that the written descriptors are visible to DMM */
@@ -414,137 +413,137 @@
 
 	/*
 	 * NOTE: the wmb() above should be enough, but there seems to be a bug
-	 * in OMAP's memory barrier implementation, which in some rare हालs may
-	 * cause the ग_लिखोs not to be observable after wmb().
+	 * in OMAP's memory barrier implementation, which in some rare cases may
+	 * cause the writes not to be observable after wmb().
 	 */
 
-	/* पढ़ो back to ensure the data is in RAM */
-	पढ़ोl(&txn->last_pat->next_pa);
+	/* read back to ensure the data is in RAM */
+	readl(&txn->last_pat->next_pa);
 
-	/* ग_लिखो to PAT_DESCR to clear out any pending transaction */
-	dmm_ग_लिखो(dmm, 0x0, reg[PAT_DESCR][engine->id]);
+	/* write to PAT_DESCR to clear out any pending transaction */
+	dmm_write(dmm, 0x0, reg[PAT_DESCR][engine->id]);
 
-	/* रुको क्रम engine पढ़ोy: */
-	ret = रुको_status(engine, DMM_PATSTATUS_READY);
-	अगर (ret) अणु
+	/* wait for engine ready: */
+	ret = wait_status(engine, DMM_PATSTATUS_READY);
+	if (ret) {
 		ret = -EFAULT;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
 	/* mark whether it is async to denote list management in IRQ handler */
-	engine->async = रुको ? false : true;
+	engine->async = wait ? false : true;
 	reinit_completion(&engine->compl);
-	/* verअगरy that the irq handler sees the 'async' and completion value */
+	/* verify that the irq handler sees the 'async' and completion value */
 	smp_mb();
 
 	/* kick reload */
-	dmm_ग_लिखो(dmm, engine->refill_pa, reg[PAT_DESCR][engine->id]);
+	dmm_write(dmm, engine->refill_pa, reg[PAT_DESCR][engine->id]);
 
-	अगर (रुको) अणु
-		अगर (!रुको_क्रम_completion_समयout(&engine->compl,
-				msecs_to_jअगरfies(100))) अणु
+	if (wait) {
+		if (!wait_for_completion_timeout(&engine->compl,
+				msecs_to_jiffies(100))) {
 			dev_err(dmm->dev, "timed out waiting for done\n");
 			ret = -ETIMEDOUT;
-			जाओ cleanup;
-		पूर्ण
+			goto cleanup;
+		}
 
-		/* Check the engine status beक्रमe जारी */
-		ret = रुको_status(engine, DMM_PATSTATUS_READY |
+		/* Check the engine status before continue */
+		ret = wait_status(engine, DMM_PATSTATUS_READY |
 				  DMM_PATSTATUS_VALID | DMM_PATSTATUS_DONE);
-	पूर्ण
+	}
 
 cleanup:
-	/* only place engine back on list अगर we are करोne with it */
-	अगर (ret || रुको)
+	/* only place engine back on list if we are done with it */
+	if (ret || wait)
 		release_engine(engine);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * DMM programming
  */
-अटल पूर्णांक fill(काष्ठा tcm_area *area, काष्ठा page **pages,
-		u32 npages, u32 roll, bool रुको)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा tcm_area slice, area_s;
-	काष्ठा dmm_txn *txn;
+static int fill(struct tcm_area *area, struct page **pages,
+		u32 npages, u32 roll, bool wait)
+{
+	int ret = 0;
+	struct tcm_area slice, area_s;
+	struct dmm_txn *txn;
 
 	/*
 	 * FIXME
 	 *
-	 * Asynchronous fill करोes not work reliably, as the driver करोes not
+	 * Asynchronous fill does not work reliably, as the driver does not
 	 * handle errors in the async code paths. The fill operation may
 	 * silently fail, leading to leaking DMM engines, which may eventually
-	 * lead to deadlock अगर we run out of DMM engines.
+	 * lead to deadlock if we run out of DMM engines.
 	 *
 	 * For now, always set 'wait' so that we only use sync fills. Async
 	 * fills should be fixed, or alternatively we could decide to only
-	 * support sync fills and so the whole async code path could be हटाओd.
+	 * support sync fills and so the whole async code path could be removed.
 	 */
 
-	रुको = true;
+	wait = true;
 
 	txn = dmm_txn_init(omap_dmm, area->tcm);
-	अगर (IS_ERR_OR_शून्य(txn))
-		वापस -ENOMEM;
+	if (IS_ERR_OR_NULL(txn))
+		return -ENOMEM;
 
-	tcm_क्रम_each_slice(slice, *area, area_s) अणु
-		काष्ठा pat_area p_area = अणु
+	tcm_for_each_slice(slice, *area, area_s) {
+		struct pat_area p_area = {
 				.x0 = slice.p0.x,  .y0 = slice.p0.y,
 				.x1 = slice.p1.x,  .y1 = slice.p1.y,
-		पूर्ण;
+		};
 
 		dmm_txn_append(txn, &p_area, pages, npages, roll);
 
-		roll += tcm_माप(slice);
-	पूर्ण
+		roll += tcm_sizeof(slice);
+	}
 
-	ret = dmm_txn_commit(txn, रुको);
+	ret = dmm_txn_commit(txn, wait);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Pin/unpin
  */
 
-/* note: slots क्रम which pages[i] == शून्य are filled w/ dummy page
+/* note: slots for which pages[i] == NULL are filled w/ dummy page
  */
-पूर्णांक tiler_pin(काष्ठा tiler_block *block, काष्ठा page **pages,
-		u32 npages, u32 roll, bool रुको)
-अणु
-	पूर्णांक ret;
+int tiler_pin(struct tiler_block *block, struct page **pages,
+		u32 npages, u32 roll, bool wait)
+{
+	int ret;
 
-	ret = fill(&block->area, pages, npages, roll, रुको);
+	ret = fill(&block->area, pages, npages, roll, wait);
 
-	अगर (ret)
+	if (ret)
 		tiler_unpin(block);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक tiler_unpin(काष्ठा tiler_block *block)
-अणु
-	वापस fill(&block->area, शून्य, 0, 0, false);
-पूर्ण
+int tiler_unpin(struct tiler_block *block)
+{
+	return fill(&block->area, NULL, 0, 0, false);
+}
 
 /*
  * Reserve/release
  */
-काष्ठा tiler_block *tiler_reserve_2d(क्रमागत tiler_fmt fmt, u16 w,
+struct tiler_block *tiler_reserve_2d(enum tiler_fmt fmt, u16 w,
 		u16 h, u16 align)
-अणु
-	काष्ठा tiler_block *block;
+{
+	struct tiler_block *block;
 	u32 min_align = 128;
-	पूर्णांक ret;
-	अचिन्हित दीर्घ flags;
+	int ret;
+	unsigned long flags;
 	u32 slot_bytes;
 
-	block = kzalloc(माप(*block), GFP_KERNEL);
-	अगर (!block)
-		वापस ERR_PTR(-ENOMEM);
+	block = kzalloc(sizeof(*block), GFP_KERNEL);
+	if (!block)
+		return ERR_PTR(-ENOMEM);
 
 	BUG_ON(!validfmt(fmt));
 
@@ -562,86 +561,86 @@ cleanup:
 
 	ret = tcm_reserve_2d(containers[fmt], w, h, align, -1, slot_bytes,
 			&block->area);
-	अगर (ret) अणु
-		kमुक्त(block);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+	if (ret) {
+		kfree(block);
+		return ERR_PTR(-ENOMEM);
+	}
 
 	/* add to allocation list */
 	spin_lock_irqsave(&list_lock, flags);
 	list_add(&block->alloc_node, &omap_dmm->alloc_head);
 	spin_unlock_irqrestore(&list_lock, flags);
 
-	वापस block;
-पूर्ण
+	return block;
+}
 
-काष्ठा tiler_block *tiler_reserve_1d(माप_प्रकार size)
-अणु
-	काष्ठा tiler_block *block = kzalloc(माप(*block), GFP_KERNEL);
-	पूर्णांक num_pages = (size + PAGE_SIZE - 1) >> PAGE_SHIFT;
-	अचिन्हित दीर्घ flags;
+struct tiler_block *tiler_reserve_1d(size_t size)
+{
+	struct tiler_block *block = kzalloc(sizeof(*block), GFP_KERNEL);
+	int num_pages = (size + PAGE_SIZE - 1) >> PAGE_SHIFT;
+	unsigned long flags;
 
-	अगर (!block)
-		वापस ERR_PTR(-ENOMEM);
+	if (!block)
+		return ERR_PTR(-ENOMEM);
 
 	block->fmt = TILFMT_PAGE;
 
-	अगर (tcm_reserve_1d(containers[TILFMT_PAGE], num_pages,
-				&block->area)) अणु
-		kमुक्त(block);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+	if (tcm_reserve_1d(containers[TILFMT_PAGE], num_pages,
+				&block->area)) {
+		kfree(block);
+		return ERR_PTR(-ENOMEM);
+	}
 
 	spin_lock_irqsave(&list_lock, flags);
 	list_add(&block->alloc_node, &omap_dmm->alloc_head);
 	spin_unlock_irqrestore(&list_lock, flags);
 
-	वापस block;
-पूर्ण
+	return block;
+}
 
-/* note: अगर you have pin'd pages, you should have already unpin'd first! */
-पूर्णांक tiler_release(काष्ठा tiler_block *block)
-अणु
-	पूर्णांक ret = tcm_मुक्त(&block->area);
-	अचिन्हित दीर्घ flags;
+/* note: if you have pin'd pages, you should have already unpin'd first! */
+int tiler_release(struct tiler_block *block)
+{
+	int ret = tcm_free(&block->area);
+	unsigned long flags;
 
-	अगर (block->area.tcm)
+	if (block->area.tcm)
 		dev_err(omap_dmm->dev, "failed to release block\n");
 
 	spin_lock_irqsave(&list_lock, flags);
 	list_del(&block->alloc_node);
 	spin_unlock_irqrestore(&list_lock, flags);
 
-	kमुक्त(block);
-	वापस ret;
-पूर्ण
+	kfree(block);
+	return ret;
+}
 
 /*
  * Utils
  */
 
 /* calculate the tiler space address of a pixel in a view orientation...
- * below description copied from the display subप्रणाली section of TRM:
+ * below description copied from the display subsystem section of TRM:
  *
  * When the TILER is addressed, the bits:
- *   [28:27] = 0x0 क्रम 8-bit tiled
- *             0x1 क्रम 16-bit tiled
- *             0x2 क्रम 32-bit tiled
- *             0x3 क्रम page mode
- *   [31:29] = 0x0 क्रम 0-degree view
- *             0x1 क्रम 180-degree view + mirroring
- *             0x2 क्रम 0-degree view + mirroring
- *             0x3 क्रम 180-degree view
- *             0x4 क्रम 270-degree view + mirroring
- *             0x5 क्रम 270-degree view
- *             0x6 क्रम 90-degree view
- *             0x7 क्रम 90-degree view + mirroring
+ *   [28:27] = 0x0 for 8-bit tiled
+ *             0x1 for 16-bit tiled
+ *             0x2 for 32-bit tiled
+ *             0x3 for page mode
+ *   [31:29] = 0x0 for 0-degree view
+ *             0x1 for 180-degree view + mirroring
+ *             0x2 for 0-degree view + mirroring
+ *             0x3 for 180-degree view
+ *             0x4 for 270-degree view + mirroring
+ *             0x5 for 270-degree view
+ *             0x6 for 90-degree view
+ *             0x7 for 90-degree view + mirroring
  * Otherwise the bits indicated the corresponding bit address to access
  * the SDRAM.
  */
-अटल u32 tiler_get_address(क्रमागत tiler_fmt fmt, u32 orient, u32 x, u32 y)
-अणु
-	u32 x_bits, y_bits, पंचांगp, x_mask, y_mask, alignment;
+static u32 tiler_get_address(enum tiler_fmt fmt, u32 orient, u32 x, u32 y)
+{
+	u32 x_bits, y_bits, tmp, x_mask, y_mask, alignment;
 
 	x_bits = CONT_WIDTH_BITS - geom[fmt].x_shft;
 	y_bits = CONT_HEIGHT_BITS - geom[fmt].y_shft;
@@ -651,200 +650,200 @@ cleanup:
 	x_mask = MASK(x_bits);
 	y_mask = MASK(y_bits);
 
-	अगर (x < 0 || x > x_mask || y < 0 || y > y_mask) अणु
+	if (x < 0 || x > x_mask || y < 0 || y > y_mask) {
 		DBG("invalid coords: %u < 0 || %u > %u || %u < 0 || %u > %u",
 				x, x, x_mask, y, y, y_mask);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* account क्रम mirroring */
-	अगर (orient & MASK_X_INVERT)
+	/* account for mirroring */
+	if (orient & MASK_X_INVERT)
 		x ^= x_mask;
-	अगर (orient & MASK_Y_INVERT)
+	if (orient & MASK_Y_INVERT)
 		y ^= y_mask;
 
 	/* get coordinate address */
-	अगर (orient & MASK_XY_FLIP)
-		पंचांगp = ((x << y_bits) + y);
-	अन्यथा
-		पंचांगp = ((y << x_bits) + x);
+	if (orient & MASK_XY_FLIP)
+		tmp = ((x << y_bits) + y);
+	else
+		tmp = ((y << x_bits) + x);
 
-	वापस TIL_ADDR((पंचांगp << alignment), orient, fmt);
-पूर्ण
+	return TIL_ADDR((tmp << alignment), orient, fmt);
+}
 
-dma_addr_t tiler_ssptr(काष्ठा tiler_block *block)
-अणु
+dma_addr_t tiler_ssptr(struct tiler_block *block)
+{
 	BUG_ON(!validfmt(block->fmt));
 
-	वापस TILVIEW_8BIT + tiler_get_address(block->fmt, 0,
+	return TILVIEW_8BIT + tiler_get_address(block->fmt, 0,
 			block->area.p0.x * geom[block->fmt].slot_w,
 			block->area.p0.y * geom[block->fmt].slot_h);
-पूर्ण
+}
 
-dma_addr_t tiler_tsptr(काष्ठा tiler_block *block, u32 orient,
+dma_addr_t tiler_tsptr(struct tiler_block *block, u32 orient,
 		u32 x, u32 y)
-अणु
-	काष्ठा tcm_pt *p = &block->area.p0;
+{
+	struct tcm_pt *p = &block->area.p0;
 	BUG_ON(!validfmt(block->fmt));
 
-	वापस tiler_get_address(block->fmt, orient,
+	return tiler_get_address(block->fmt, orient,
 			(p->x * geom[block->fmt].slot_w) + x,
 			(p->y * geom[block->fmt].slot_h) + y);
-पूर्ण
+}
 
-व्योम tiler_align(क्रमागत tiler_fmt fmt, u16 *w, u16 *h)
-अणु
+void tiler_align(enum tiler_fmt fmt, u16 *w, u16 *h)
+{
 	BUG_ON(!validfmt(fmt));
 	*w = round_up(*w, geom[fmt].slot_w);
 	*h = round_up(*h, geom[fmt].slot_h);
-पूर्ण
+}
 
-u32 tiler_stride(क्रमागत tiler_fmt fmt, u32 orient)
-अणु
+u32 tiler_stride(enum tiler_fmt fmt, u32 orient)
+{
 	BUG_ON(!validfmt(fmt));
 
-	अगर (orient & MASK_XY_FLIP)
-		वापस 1 << (CONT_HEIGHT_BITS + geom[fmt].x_shft);
-	अन्यथा
-		वापस 1 << (CONT_WIDTH_BITS + geom[fmt].y_shft);
-पूर्ण
+	if (orient & MASK_XY_FLIP)
+		return 1 << (CONT_HEIGHT_BITS + geom[fmt].x_shft);
+	else
+		return 1 << (CONT_WIDTH_BITS + geom[fmt].y_shft);
+}
 
-माप_प्रकार tiler_size(क्रमागत tiler_fmt fmt, u16 w, u16 h)
-अणु
+size_t tiler_size(enum tiler_fmt fmt, u16 w, u16 h)
+{
 	tiler_align(fmt, &w, &h);
-	वापस geom[fmt].cpp * w * h;
-पूर्ण
+	return geom[fmt].cpp * w * h;
+}
 
-माप_प्रकार tiler_vsize(क्रमागत tiler_fmt fmt, u16 w, u16 h)
-अणु
+size_t tiler_vsize(enum tiler_fmt fmt, u16 w, u16 h)
+{
 	BUG_ON(!validfmt(fmt));
-	वापस round_up(geom[fmt].cpp * w, PAGE_SIZE) * h;
-पूर्ण
+	return round_up(geom[fmt].cpp * w, PAGE_SIZE) * h;
+}
 
-u32 tiler_get_cpu_cache_flags(व्योम)
-अणु
-	वापस omap_dmm->plat_data->cpu_cache_flags;
-पूर्ण
+u32 tiler_get_cpu_cache_flags(void)
+{
+	return omap_dmm->plat_data->cpu_cache_flags;
+}
 
-bool dmm_is_available(व्योम)
-अणु
-	वापस omap_dmm ? true : false;
-पूर्ण
+bool dmm_is_available(void)
+{
+	return omap_dmm ? true : false;
+}
 
-अटल पूर्णांक omap_dmm_हटाओ(काष्ठा platक्रमm_device *dev)
-अणु
-	काष्ठा tiler_block *block, *_block;
-	पूर्णांक i;
-	अचिन्हित दीर्घ flags;
+static int omap_dmm_remove(struct platform_device *dev)
+{
+	struct tiler_block *block, *_block;
+	int i;
+	unsigned long flags;
 
-	अगर (omap_dmm) अणु
-		/* Disable all enabled पूर्णांकerrupts */
-		dmm_ग_लिखो(omap_dmm, 0x7e7e7e7e, DMM_PAT_IRQENABLE_CLR);
-		मुक्त_irq(omap_dmm->irq, omap_dmm);
+	if (omap_dmm) {
+		/* Disable all enabled interrupts */
+		dmm_write(omap_dmm, 0x7e7e7e7e, DMM_PAT_IRQENABLE_CLR);
+		free_irq(omap_dmm->irq, omap_dmm);
 
-		/* मुक्त all area regions */
+		/* free all area regions */
 		spin_lock_irqsave(&list_lock, flags);
-		list_क्रम_each_entry_safe(block, _block, &omap_dmm->alloc_head,
-					alloc_node) अणु
+		list_for_each_entry_safe(block, _block, &omap_dmm->alloc_head,
+					alloc_node) {
 			list_del(&block->alloc_node);
-			kमुक्त(block);
-		पूर्ण
+			kfree(block);
+		}
 		spin_unlock_irqrestore(&list_lock, flags);
 
-		क्रम (i = 0; i < omap_dmm->num_lut; i++)
-			अगर (omap_dmm->tcm && omap_dmm->tcm[i])
+		for (i = 0; i < omap_dmm->num_lut; i++)
+			if (omap_dmm->tcm && omap_dmm->tcm[i])
 				omap_dmm->tcm[i]->deinit(omap_dmm->tcm[i]);
-		kमुक्त(omap_dmm->tcm);
+		kfree(omap_dmm->tcm);
 
-		kमुक्त(omap_dmm->engines);
-		अगर (omap_dmm->refill_va)
-			dma_मुक्त_wc(omap_dmm->dev,
+		kfree(omap_dmm->engines);
+		if (omap_dmm->refill_va)
+			dma_free_wc(omap_dmm->dev,
 				    REFILL_BUFFER_SIZE * omap_dmm->num_engines,
 				    omap_dmm->refill_va, omap_dmm->refill_pa);
-		अगर (omap_dmm->dummy_page)
-			__मुक्त_page(omap_dmm->dummy_page);
+		if (omap_dmm->dummy_page)
+			__free_page(omap_dmm->dummy_page);
 
-		अगर (omap_dmm->dmm_workaround)
+		if (omap_dmm->dmm_workaround)
 			dmm_workaround_uninit(omap_dmm);
 
 		iounmap(omap_dmm->base);
-		kमुक्त(omap_dmm);
-		omap_dmm = शून्य;
-	पूर्ण
+		kfree(omap_dmm);
+		omap_dmm = NULL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक omap_dmm_probe(काष्ठा platक्रमm_device *dev)
-अणु
-	पूर्णांक ret = -EFAULT, i;
-	काष्ठा tcm_area area = अणु0पूर्ण;
+static int omap_dmm_probe(struct platform_device *dev)
+{
+	int ret = -EFAULT, i;
+	struct tcm_area area = {0};
 	u32 hwinfo, pat_geom;
-	काष्ठा resource *mem;
+	struct resource *mem;
 
-	omap_dmm = kzalloc(माप(*omap_dmm), GFP_KERNEL);
-	अगर (!omap_dmm)
-		जाओ fail;
+	omap_dmm = kzalloc(sizeof(*omap_dmm), GFP_KERNEL);
+	if (!omap_dmm)
+		goto fail;
 
 	/* initialize lists */
 	INIT_LIST_HEAD(&omap_dmm->alloc_head);
 	INIT_LIST_HEAD(&omap_dmm->idle_head);
 
-	init_रुकोqueue_head(&omap_dmm->engine_queue);
+	init_waitqueue_head(&omap_dmm->engine_queue);
 
-	अगर (dev->dev.of_node) अणु
-		स्थिर काष्ठा of_device_id *match;
+	if (dev->dev.of_node) {
+		const struct of_device_id *match;
 
 		match = of_match_node(dmm_of_match, dev->dev.of_node);
-		अगर (!match) अणु
+		if (!match) {
 			dev_err(&dev->dev, "failed to find matching device node\n");
 			ret = -ENODEV;
-			जाओ fail;
-		पूर्ण
+			goto fail;
+		}
 
 		omap_dmm->plat_data = match->data;
-	पूर्ण
+	}
 
 	/* lookup hwmod data - base address and irq */
-	mem = platक्रमm_get_resource(dev, IORESOURCE_MEM, 0);
-	अगर (!mem) अणु
+	mem = platform_get_resource(dev, IORESOURCE_MEM, 0);
+	if (!mem) {
 		dev_err(&dev->dev, "failed to get base address resource\n");
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	omap_dmm->phys_base = mem->start;
 	omap_dmm->base = ioremap(mem->start, SZ_2K);
 
-	अगर (!omap_dmm->base) अणु
+	if (!omap_dmm->base) {
 		dev_err(&dev->dev, "failed to get dmm base address\n");
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	omap_dmm->irq = platक्रमm_get_irq(dev, 0);
-	अगर (omap_dmm->irq < 0) अणु
+	omap_dmm->irq = platform_get_irq(dev, 0);
+	if (omap_dmm->irq < 0) {
 		dev_err(&dev->dev, "failed to get IRQ resource\n");
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	omap_dmm->dev = &dev->dev;
 
-	अगर (of_machine_is_compatible("ti,dra7")) अणु
+	if (of_machine_is_compatible("ti,dra7")) {
 		/*
 		 * DRA7 Errata i878 says that MPU should not be used to access
-		 * RAM and DMM at the same समय. As it's not possible to prevent
+		 * RAM and DMM at the same time. As it's not possible to prevent
 		 * MPU accessing RAM, we need to access DMM via a proxy.
 		 */
-		अगर (!dmm_workaround_init(omap_dmm)) अणु
+		if (!dmm_workaround_init(omap_dmm)) {
 			omap_dmm->dmm_workaround = true;
 			dev_info(&dev->dev,
 				"workaround for errata i878 in use\n");
-		पूर्ण अन्यथा अणु
+		} else {
 			dev_warn(&dev->dev,
 				 "failed to initialize work-around for i878\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	hwinfo = dmm_पढ़ो(omap_dmm, DMM_PAT_HWINFO);
+	hwinfo = dmm_read(omap_dmm, DMM_PAT_HWINFO);
 	omap_dmm->num_engines = (hwinfo >> 24) & 0x1F;
 	omap_dmm->num_lut = (hwinfo >> 16) & 0x1F;
 	omap_dmm->container_width = 256;
@@ -852,35 +851,35 @@ bool dmm_is_available(व्योम)
 
 	atomic_set(&omap_dmm->engine_counter, omap_dmm->num_engines);
 
-	/* पढ़ो out actual LUT width and height */
-	pat_geom = dmm_पढ़ो(omap_dmm, DMM_PAT_GEOMETRY);
+	/* read out actual LUT width and height */
+	pat_geom = dmm_read(omap_dmm, DMM_PAT_GEOMETRY);
 	omap_dmm->lut_width = ((pat_geom >> 16) & 0xF) << 5;
 	omap_dmm->lut_height = ((pat_geom >> 24) & 0xF) << 5;
 
-	/* increment LUT by one अगर on OMAP5 */
-	/* LUT has twice the height, and is split पूर्णांकo a separate container */
-	अगर (omap_dmm->lut_height != omap_dmm->container_height)
+	/* increment LUT by one if on OMAP5 */
+	/* LUT has twice the height, and is split into a separate container */
+	if (omap_dmm->lut_height != omap_dmm->container_height)
 		omap_dmm->num_lut++;
 
-	/* initialize DMM रेजिस्टरs */
-	dmm_ग_लिखो(omap_dmm, 0x88888888, DMM_PAT_VIEW__0);
-	dmm_ग_लिखो(omap_dmm, 0x88888888, DMM_PAT_VIEW__1);
-	dmm_ग_लिखो(omap_dmm, 0x80808080, DMM_PAT_VIEW_MAP__0);
-	dmm_ग_लिखो(omap_dmm, 0x80000000, DMM_PAT_VIEW_MAP_BASE);
-	dmm_ग_लिखो(omap_dmm, 0x88888888, DMM_TILER_OR__0);
-	dmm_ग_लिखो(omap_dmm, 0x88888888, DMM_TILER_OR__1);
+	/* initialize DMM registers */
+	dmm_write(omap_dmm, 0x88888888, DMM_PAT_VIEW__0);
+	dmm_write(omap_dmm, 0x88888888, DMM_PAT_VIEW__1);
+	dmm_write(omap_dmm, 0x80808080, DMM_PAT_VIEW_MAP__0);
+	dmm_write(omap_dmm, 0x80000000, DMM_PAT_VIEW_MAP_BASE);
+	dmm_write(omap_dmm, 0x88888888, DMM_TILER_OR__0);
+	dmm_write(omap_dmm, 0x88888888, DMM_TILER_OR__1);
 
 	omap_dmm->dummy_page = alloc_page(GFP_KERNEL | __GFP_DMA32);
-	अगर (!omap_dmm->dummy_page) अणु
+	if (!omap_dmm->dummy_page) {
 		dev_err(&dev->dev, "could not allocate dummy page\n");
 		ret = -ENOMEM;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	/* set dma mask क्रम device */
+	/* set dma mask for device */
 	ret = dma_set_coherent_mask(&dev->dev, DMA_BIT_MASK(32));
-	अगर (ret)
-		जाओ fail;
+	if (ret)
+		goto fail;
 
 	omap_dmm->dummy_pa = page_to_phys(omap_dmm->dummy_page);
 
@@ -888,21 +887,21 @@ bool dmm_is_available(व्योम)
 	omap_dmm->refill_va = dma_alloc_wc(&dev->dev,
 					   REFILL_BUFFER_SIZE * omap_dmm->num_engines,
 					   &omap_dmm->refill_pa, GFP_KERNEL);
-	अगर (!omap_dmm->refill_va) अणु
+	if (!omap_dmm->refill_va) {
 		dev_err(&dev->dev, "could not allocate refill memory\n");
 		ret = -ENOMEM;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	/* alloc engines */
-	omap_dmm->engines = kसुस्मृति(omap_dmm->num_engines,
-				    माप(*omap_dmm->engines), GFP_KERNEL);
-	अगर (!omap_dmm->engines) अणु
+	omap_dmm->engines = kcalloc(omap_dmm->num_engines,
+				    sizeof(*omap_dmm->engines), GFP_KERNEL);
+	if (!omap_dmm->engines) {
 		ret = -ENOMEM;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	क्रम (i = 0; i < omap_dmm->num_engines; i++) अणु
+	for (i = 0; i < omap_dmm->num_engines; i++) {
 		omap_dmm->engines[i].id = i;
 		omap_dmm->engines[i].dmm = omap_dmm;
 		omap_dmm->engines[i].refill_va = omap_dmm->refill_va +
@@ -912,325 +911,325 @@ bool dmm_is_available(व्योम)
 		init_completion(&omap_dmm->engines[i].compl);
 
 		list_add(&omap_dmm->engines[i].idle_node, &omap_dmm->idle_head);
-	पूर्ण
+	}
 
-	omap_dmm->tcm = kसुस्मृति(omap_dmm->num_lut, माप(*omap_dmm->tcm),
+	omap_dmm->tcm = kcalloc(omap_dmm->num_lut, sizeof(*omap_dmm->tcm),
 				GFP_KERNEL);
-	अगर (!omap_dmm->tcm) अणु
+	if (!omap_dmm->tcm) {
 		ret = -ENOMEM;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	/* init containers */
 	/* Each LUT is associated with a TCM (container manager).  We use the
-	   lut_id to denote the lut_id used to identअगरy the correct LUT क्रम
+	   lut_id to denote the lut_id used to identify the correct LUT for
 	   programming during reill operations */
-	क्रम (i = 0; i < omap_dmm->num_lut; i++) अणु
+	for (i = 0; i < omap_dmm->num_lut; i++) {
 		omap_dmm->tcm[i] = sita_init(omap_dmm->container_width,
 						omap_dmm->container_height);
 
-		अगर (!omap_dmm->tcm[i]) अणु
+		if (!omap_dmm->tcm[i]) {
 			dev_err(&dev->dev, "failed to allocate container\n");
 			ret = -ENOMEM;
-			जाओ fail;
-		पूर्ण
+			goto fail;
+		}
 
 		omap_dmm->tcm[i]->lut_id = i;
-	पूर्ण
+	}
 
 	/* assign access mode containers to applicable tcm container */
-	/* OMAP 4 has 1 container क्रम all 4 views */
-	/* OMAP 5 has 2 containers, 1 क्रम 2D and 1 क्रम 1D */
+	/* OMAP 4 has 1 container for all 4 views */
+	/* OMAP 5 has 2 containers, 1 for 2D and 1 for 1D */
 	containers[TILFMT_8BIT] = omap_dmm->tcm[0];
 	containers[TILFMT_16BIT] = omap_dmm->tcm[0];
 	containers[TILFMT_32BIT] = omap_dmm->tcm[0];
 
-	अगर (omap_dmm->container_height != omap_dmm->lut_height) अणु
-		/* second LUT is used क्रम PAGE mode.  Programming must use
+	if (omap_dmm->container_height != omap_dmm->lut_height) {
+		/* second LUT is used for PAGE mode.  Programming must use
 		   y offset that is added to all y coordinates.  LUT id is still
 		   0, because it is the same LUT, just the upper 128 lines */
 		containers[TILFMT_PAGE] = omap_dmm->tcm[1];
 		omap_dmm->tcm[1]->y_offset = OMAP5_LUT_OFFSET;
 		omap_dmm->tcm[1]->lut_id = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		containers[TILFMT_PAGE] = omap_dmm->tcm[0];
-	पूर्ण
+	}
 
-	area = (काष्ठा tcm_area) अणु
-		.tcm = शून्य,
+	area = (struct tcm_area) {
+		.tcm = NULL,
 		.p1.x = omap_dmm->container_width - 1,
 		.p1.y = omap_dmm->container_height - 1,
-	पूर्ण;
+	};
 
 	ret = request_irq(omap_dmm->irq, omap_dmm_irq_handler, IRQF_SHARED,
 				"omap_dmm_irq_handler", omap_dmm);
 
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&dev->dev, "couldn't register IRQ %d, error %d\n",
 			omap_dmm->irq, ret);
 		omap_dmm->irq = -1;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	/* Enable all पूर्णांकerrupts क्रम each refill engine except
-	 * ERR_LUT_MISS<n> (which is just advisory, and we करोn't care
+	/* Enable all interrupts for each refill engine except
+	 * ERR_LUT_MISS<n> (which is just advisory, and we don't care
 	 * about because we want to be able to refill live scanout
-	 * buffers क्रम accelerated pan/scroll) and FILL_DSC<n> which
-	 * we just generally करोn't care about.
+	 * buffers for accelerated pan/scroll) and FILL_DSC<n> which
+	 * we just generally don't care about.
 	 */
-	dmm_ग_लिखो(omap_dmm, 0x7e7e7e7e, DMM_PAT_IRQENABLE_SET);
+	dmm_write(omap_dmm, 0x7e7e7e7e, DMM_PAT_IRQENABLE_SET);
 
 	/* initialize all LUTs to dummy page entries */
-	क्रम (i = 0; i < omap_dmm->num_lut; i++) अणु
+	for (i = 0; i < omap_dmm->num_lut; i++) {
 		area.tcm = omap_dmm->tcm[i];
-		अगर (fill(&area, शून्य, 0, 0, true))
+		if (fill(&area, NULL, 0, 0, true))
 			dev_err(omap_dmm->dev, "refill failed");
-	पूर्ण
+	}
 
 	dev_info(omap_dmm->dev, "initialized all PAT entries\n");
 
-	वापस 0;
+	return 0;
 
 fail:
-	अगर (omap_dmm_हटाओ(dev))
+	if (omap_dmm_remove(dev))
 		dev_err(&dev->dev, "cleanup failed\n");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * debugfs support
  */
 
-#अगर_घोषित CONFIG_DEBUG_FS
+#ifdef CONFIG_DEBUG_FS
 
-अटल स्थिर अक्षर *alphabet = "abcdefghijklmnopqrstuvwxyz"
+static const char *alphabet = "abcdefghijklmnopqrstuvwxyz"
 				"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-अटल स्थिर अक्षर *special = ".,:;'\"`~!^-+";
+static const char *special = ".,:;'\"`~!^-+";
 
-अटल व्योम fill_map(अक्षर **map, पूर्णांक xभाग, पूर्णांक yभाग, काष्ठा tcm_area *a,
-							अक्षर c, bool ovw)
-अणु
-	पूर्णांक x, y;
-	क्रम (y = a->p0.y / yभाग; y <= a->p1.y / yभाग; y++)
-		क्रम (x = a->p0.x / xभाग; x <= a->p1.x / xभाग; x++)
-			अगर (map[y][x] == ' ' || ovw)
+static void fill_map(char **map, int xdiv, int ydiv, struct tcm_area *a,
+							char c, bool ovw)
+{
+	int x, y;
+	for (y = a->p0.y / ydiv; y <= a->p1.y / ydiv; y++)
+		for (x = a->p0.x / xdiv; x <= a->p1.x / xdiv; x++)
+			if (map[y][x] == ' ' || ovw)
 				map[y][x] = c;
-पूर्ण
+}
 
-अटल व्योम fill_map_pt(अक्षर **map, पूर्णांक xभाग, पूर्णांक yभाग, काष्ठा tcm_pt *p,
-									अक्षर c)
-अणु
-	map[p->y / yभाग][p->x / xभाग] = c;
-पूर्ण
+static void fill_map_pt(char **map, int xdiv, int ydiv, struct tcm_pt *p,
+									char c)
+{
+	map[p->y / ydiv][p->x / xdiv] = c;
+}
 
-अटल अक्षर पढ़ो_map_pt(अक्षर **map, पूर्णांक xभाग, पूर्णांक yभाग, काष्ठा tcm_pt *p)
-अणु
-	वापस map[p->y / yभाग][p->x / xभाग];
-पूर्ण
+static char read_map_pt(char **map, int xdiv, int ydiv, struct tcm_pt *p)
+{
+	return map[p->y / ydiv][p->x / xdiv];
+}
 
-अटल पूर्णांक map_width(पूर्णांक xभाग, पूर्णांक x0, पूर्णांक x1)
-अणु
-	वापस (x1 / xभाग) - (x0 / xभाग) + 1;
-पूर्ण
+static int map_width(int xdiv, int x0, int x1)
+{
+	return (x1 / xdiv) - (x0 / xdiv) + 1;
+}
 
-अटल व्योम text_map(अक्षर **map, पूर्णांक xभाग, अक्षर *nice, पूर्णांक yd, पूर्णांक x0, पूर्णांक x1)
-अणु
-	अक्षर *p = map[yd] + (x0 / xभाग);
-	पूर्णांक w = (map_width(xभाग, x0, x1) - म_माप(nice)) / 2;
-	अगर (w >= 0) अणु
+static void text_map(char **map, int xdiv, char *nice, int yd, int x0, int x1)
+{
+	char *p = map[yd] + (x0 / xdiv);
+	int w = (map_width(xdiv, x0, x1) - strlen(nice)) / 2;
+	if (w >= 0) {
 		p += w;
-		जबतक (*nice)
+		while (*nice)
 			*p++ = *nice++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम map_1d_info(अक्षर **map, पूर्णांक xभाग, पूर्णांक yभाग, अक्षर *nice,
-							काष्ठा tcm_area *a)
-अणु
-	प्र_लिखो(nice, "%dK", tcm_माप(*a) * 4);
-	अगर (a->p0.y + 1 < a->p1.y) अणु
-		text_map(map, xभाग, nice, (a->p0.y + a->p1.y) / 2 / yभाग, 0,
+static void map_1d_info(char **map, int xdiv, int ydiv, char *nice,
+							struct tcm_area *a)
+{
+	sprintf(nice, "%dK", tcm_sizeof(*a) * 4);
+	if (a->p0.y + 1 < a->p1.y) {
+		text_map(map, xdiv, nice, (a->p0.y + a->p1.y) / 2 / ydiv, 0,
 							256 - 1);
-	पूर्ण अन्यथा अगर (a->p0.y < a->p1.y) अणु
-		अगर (म_माप(nice) < map_width(xभाग, a->p0.x, 256 - 1))
-			text_map(map, xभाग, nice, a->p0.y / yभाग,
-					a->p0.x + xभाग,	256 - 1);
-		अन्यथा अगर (म_माप(nice) < map_width(xभाग, 0, a->p1.x))
-			text_map(map, xभाग, nice, a->p1.y / yभाग,
-					0, a->p1.y - xभाग);
-	पूर्ण अन्यथा अगर (म_माप(nice) + 1 < map_width(xभाग, a->p0.x, a->p1.x)) अणु
-		text_map(map, xभाग, nice, a->p0.y / yभाग, a->p0.x, a->p1.x);
-	पूर्ण
-पूर्ण
+	} else if (a->p0.y < a->p1.y) {
+		if (strlen(nice) < map_width(xdiv, a->p0.x, 256 - 1))
+			text_map(map, xdiv, nice, a->p0.y / ydiv,
+					a->p0.x + xdiv,	256 - 1);
+		else if (strlen(nice) < map_width(xdiv, 0, a->p1.x))
+			text_map(map, xdiv, nice, a->p1.y / ydiv,
+					0, a->p1.y - xdiv);
+	} else if (strlen(nice) + 1 < map_width(xdiv, a->p0.x, a->p1.x)) {
+		text_map(map, xdiv, nice, a->p0.y / ydiv, a->p0.x, a->p1.x);
+	}
+}
 
-अटल व्योम map_2d_info(अक्षर **map, पूर्णांक xभाग, पूर्णांक yभाग, अक्षर *nice,
-							काष्ठा tcm_area *a)
-अणु
-	प्र_लिखो(nice, "(%d*%d)", tcm_awidth(*a), tcm_aheight(*a));
-	अगर (म_माप(nice) + 1 < map_width(xभाग, a->p0.x, a->p1.x))
-		text_map(map, xभाग, nice, (a->p0.y + a->p1.y) / 2 / yभाग,
+static void map_2d_info(char **map, int xdiv, int ydiv, char *nice,
+							struct tcm_area *a)
+{
+	sprintf(nice, "(%d*%d)", tcm_awidth(*a), tcm_aheight(*a));
+	if (strlen(nice) + 1 < map_width(xdiv, a->p0.x, a->p1.x))
+		text_map(map, xdiv, nice, (a->p0.y + a->p1.y) / 2 / ydiv,
 							a->p0.x, a->p1.x);
-पूर्ण
+}
 
-पूर्णांक tiler_map_show(काष्ठा seq_file *s, व्योम *arg)
-अणु
-	पूर्णांक xभाग = 2, yभाग = 1;
-	अक्षर **map = शून्य, *global_map;
-	काष्ठा tiler_block *block;
-	काष्ठा tcm_area a, p;
-	पूर्णांक i;
-	स्थिर अक्षर *m2d = alphabet;
-	स्थिर अक्षर *a2d = special;
-	स्थिर अक्षर *m2dp = m2d, *a2dp = a2d;
-	अक्षर nice[128];
-	पूर्णांक h_adj;
-	पूर्णांक w_adj;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक lut_idx;
+int tiler_map_show(struct seq_file *s, void *arg)
+{
+	int xdiv = 2, ydiv = 1;
+	char **map = NULL, *global_map;
+	struct tiler_block *block;
+	struct tcm_area a, p;
+	int i;
+	const char *m2d = alphabet;
+	const char *a2d = special;
+	const char *m2dp = m2d, *a2dp = a2d;
+	char nice[128];
+	int h_adj;
+	int w_adj;
+	unsigned long flags;
+	int lut_idx;
 
 
-	अगर (!omap_dmm) अणु
-		/* early वापस अगर dmm/tiler device is not initialized */
-		वापस 0;
-	पूर्ण
+	if (!omap_dmm) {
+		/* early return if dmm/tiler device is not initialized */
+		return 0;
+	}
 
-	h_adj = omap_dmm->container_height / yभाग;
-	w_adj = omap_dmm->container_width / xभाग;
+	h_adj = omap_dmm->container_height / ydiv;
+	w_adj = omap_dmm->container_width / xdiv;
 
-	map = kदो_स्मृति_array(h_adj, माप(*map), GFP_KERNEL);
-	global_map = kदो_स्मृति_array(w_adj + 1, h_adj, GFP_KERNEL);
+	map = kmalloc_array(h_adj, sizeof(*map), GFP_KERNEL);
+	global_map = kmalloc_array(w_adj + 1, h_adj, GFP_KERNEL);
 
-	अगर (!map || !global_map)
-		जाओ error;
+	if (!map || !global_map)
+		goto error;
 
-	क्रम (lut_idx = 0; lut_idx < omap_dmm->num_lut; lut_idx++) अणु
-		स_रखो(map, 0, h_adj * माप(*map));
-		स_रखो(global_map, ' ', (w_adj + 1) * h_adj);
+	for (lut_idx = 0; lut_idx < omap_dmm->num_lut; lut_idx++) {
+		memset(map, 0, h_adj * sizeof(*map));
+		memset(global_map, ' ', (w_adj + 1) * h_adj);
 
-		क्रम (i = 0; i < omap_dmm->container_height; i++) अणु
+		for (i = 0; i < omap_dmm->container_height; i++) {
 			map[i] = global_map + i * (w_adj + 1);
 			map[i][w_adj] = 0;
-		पूर्ण
+		}
 
 		spin_lock_irqsave(&list_lock, flags);
 
-		list_क्रम_each_entry(block, &omap_dmm->alloc_head, alloc_node) अणु
-			अगर (block->area.tcm == omap_dmm->tcm[lut_idx]) अणु
-				अगर (block->fmt != TILFMT_PAGE) अणु
-					fill_map(map, xभाग, yभाग, &block->area,
+		list_for_each_entry(block, &omap_dmm->alloc_head, alloc_node) {
+			if (block->area.tcm == omap_dmm->tcm[lut_idx]) {
+				if (block->fmt != TILFMT_PAGE) {
+					fill_map(map, xdiv, ydiv, &block->area,
 						*m2dp, true);
-					अगर (!*++a2dp)
+					if (!*++a2dp)
 						a2dp = a2d;
-					अगर (!*++m2dp)
+					if (!*++m2dp)
 						m2dp = m2d;
-					map_2d_info(map, xभाग, yभाग, nice,
+					map_2d_info(map, xdiv, ydiv, nice,
 							&block->area);
-				पूर्ण अन्यथा अणु
-					bool start = पढ़ो_map_pt(map, xभाग,
-						yभाग, &block->area.p0) == ' ';
-					bool end = पढ़ो_map_pt(map, xभाग, yभाग,
+				} else {
+					bool start = read_map_pt(map, xdiv,
+						ydiv, &block->area.p0) == ' ';
+					bool end = read_map_pt(map, xdiv, ydiv,
 							&block->area.p1) == ' ';
 
-					tcm_क्रम_each_slice(a, block->area, p)
-						fill_map(map, xभाग, yभाग, &a,
+					tcm_for_each_slice(a, block->area, p)
+						fill_map(map, xdiv, ydiv, &a,
 							'=', true);
-					fill_map_pt(map, xभाग, yभाग,
+					fill_map_pt(map, xdiv, ydiv,
 							&block->area.p0,
 							start ? '<' : 'X');
-					fill_map_pt(map, xभाग, yभाग,
+					fill_map_pt(map, xdiv, ydiv,
 							&block->area.p1,
 							end ? '>' : 'X');
-					map_1d_info(map, xभाग, yभाग, nice,
+					map_1d_info(map, xdiv, ydiv, nice,
 							&block->area);
-				पूर्ण
-			पूर्ण
-		पूर्ण
+				}
+			}
+		}
 
 		spin_unlock_irqrestore(&list_lock, flags);
 
-		अगर (s) अणु
-			seq_म_लिखो(s, "CONTAINER %d DUMP BEGIN\n", lut_idx);
-			क्रम (i = 0; i < 128; i++)
-				seq_म_लिखो(s, "%03d:%s\n", i, map[i]);
-			seq_म_लिखो(s, "CONTAINER %d DUMP END\n", lut_idx);
-		पूर्ण अन्यथा अणु
+		if (s) {
+			seq_printf(s, "CONTAINER %d DUMP BEGIN\n", lut_idx);
+			for (i = 0; i < 128; i++)
+				seq_printf(s, "%03d:%s\n", i, map[i]);
+			seq_printf(s, "CONTAINER %d DUMP END\n", lut_idx);
+		} else {
 			dev_dbg(omap_dmm->dev, "CONTAINER %d DUMP BEGIN\n",
 				lut_idx);
-			क्रम (i = 0; i < 128; i++)
+			for (i = 0; i < 128; i++)
 				dev_dbg(omap_dmm->dev, "%03d:%s\n", i, map[i]);
 			dev_dbg(omap_dmm->dev, "CONTAINER %d DUMP END\n",
 				lut_idx);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 error:
-	kमुक्त(map);
-	kमुक्त(global_map);
+	kfree(map);
+	kfree(global_map);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक omap_dmm_resume(काष्ठा device *dev)
-अणु
-	काष्ठा tcm_area area;
-	पूर्णांक i;
+#ifdef CONFIG_PM_SLEEP
+static int omap_dmm_resume(struct device *dev)
+{
+	struct tcm_area area;
+	int i;
 
-	अगर (!omap_dmm)
-		वापस -ENODEV;
+	if (!omap_dmm)
+		return -ENODEV;
 
-	area = (काष्ठा tcm_area) अणु
-		.tcm = शून्य,
+	area = (struct tcm_area) {
+		.tcm = NULL,
 		.p1.x = omap_dmm->container_width - 1,
 		.p1.y = omap_dmm->container_height - 1,
-	पूर्ण;
+	};
 
 	/* initialize all LUTs to dummy page entries */
-	क्रम (i = 0; i < omap_dmm->num_lut; i++) अणु
+	for (i = 0; i < omap_dmm->num_lut; i++) {
 		area.tcm = omap_dmm->tcm[i];
-		अगर (fill(&area, शून्य, 0, 0, true))
+		if (fill(&area, NULL, 0, 0, true))
 			dev_err(dev, "refill failed");
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(omap_dmm_pm_ops, शून्य, omap_dmm_resume);
+static SIMPLE_DEV_PM_OPS(omap_dmm_pm_ops, NULL, omap_dmm_resume);
 
-#अगर defined(CONFIG_OF)
-अटल स्थिर काष्ठा dmm_platक्रमm_data dmm_omap4_platक्रमm_data = अणु
+#if defined(CONFIG_OF)
+static const struct dmm_platform_data dmm_omap4_platform_data = {
 	.cpu_cache_flags = OMAP_BO_WC,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा dmm_platक्रमm_data dmm_omap5_platक्रमm_data = अणु
+static const struct dmm_platform_data dmm_omap5_platform_data = {
 	.cpu_cache_flags = OMAP_BO_UNCACHED,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id dmm_of_match[] = अणु
-	अणु
+static const struct of_device_id dmm_of_match[] = {
+	{
 		.compatible = "ti,omap4-dmm",
-		.data = &dmm_omap4_platक्रमm_data,
-	पूर्ण,
-	अणु
+		.data = &dmm_omap4_platform_data,
+	},
+	{
 		.compatible = "ti,omap5-dmm",
-		.data = &dmm_omap5_platक्रमm_data,
-	पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
-#पूर्ण_अगर
+		.data = &dmm_omap5_platform_data,
+	},
+	{},
+};
+#endif
 
-काष्ठा platक्रमm_driver omap_dmm_driver = अणु
+struct platform_driver omap_dmm_driver = {
 	.probe = omap_dmm_probe,
-	.हटाओ = omap_dmm_हटाओ,
-	.driver = अणु
+	.remove = omap_dmm_remove,
+	.driver = {
 		.owner = THIS_MODULE,
 		.name = DMM_DRIVER_NAME,
 		.of_match_table = of_match_ptr(dmm_of_match),
 		.pm = &omap_dmm_pm_ops,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Andy Gross <andy.gross@ti.com>");

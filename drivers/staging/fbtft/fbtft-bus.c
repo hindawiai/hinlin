@@ -1,237 +1,236 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/export.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/spi/spi.h>
-#समावेश "fbtft.h"
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/export.h>
+#include <linux/errno.h>
+#include <linux/gpio/consumer.h>
+#include <linux/spi/spi.h>
+#include "fbtft.h"
 
 /*****************************************************************************
  *
- *   व्योम (*ग_लिखो_reg)(काष्ठा fbtft_par *par, पूर्णांक len, ...);
+ *   void (*write_reg)(struct fbtft_par *par, int len, ...);
  *
  *****************************************************************************/
 
-#घोषणा define_fbtft_ग_लिखो_reg(func, buffer_type, data_type, modअगरier)        \
-व्योम func(काष्ठा fbtft_par *par, पूर्णांक len, ...)                                \
-अणु                                                                             \
-	बहु_सूची args;                                                         \
-	पूर्णांक i, ret;                                                           \
-	पूर्णांक offset = 0;                                                       \
+#define define_fbtft_write_reg(func, buffer_type, data_type, modifier)        \
+void func(struct fbtft_par *par, int len, ...)                                \
+{                                                                             \
+	va_list args;                                                         \
+	int i, ret;                                                           \
+	int offset = 0;                                                       \
 	buffer_type *buf = (buffer_type *)par->buf;                           \
 									      \
-	अगर (unlikely(par->debug & DEBUG_WRITE_REGISTER)) अणु                    \
-		बहु_शुरू(args, len);                                          \
-		क्रम (i = 0; i < len; i++) अणु                                   \
-			buf[i] = modअगरier((data_type)बहु_तर्क(args,             \
-							    अचिन्हित पूर्णांक));   \
-		पूर्ण                                                             \
-		बहु_पूर्ण(args);                                                 \
+	if (unlikely(par->debug & DEBUG_WRITE_REGISTER)) {                    \
+		va_start(args, len);                                          \
+		for (i = 0; i < len; i++) {                                   \
+			buf[i] = modifier((data_type)va_arg(args,             \
+							    unsigned int));   \
+		}                                                             \
+		va_end(args);                                                 \
 		fbtft_par_dbg_hex(DEBUG_WRITE_REGISTER, par,                  \
 				  par->info->device, buffer_type, buf, len,   \
 				  "%s: ", __func__);                          \
-	पूर्ण                                                                     \
+	}                                                                     \
 									      \
-	बहु_शुरू(args, len);                                                  \
+	va_start(args, len);                                                  \
 									      \
-	अगर (par->startbyte) अणु                                                 \
+	if (par->startbyte) {                                                 \
 		*(u8 *)par->buf = par->startbyte;                             \
 		buf = (buffer_type *)(par->buf + 1);                          \
 		offset = 1;                                                   \
-	पूर्ण                                                                     \
+	}                                                                     \
 									      \
-	*buf = modअगरier((data_type)बहु_तर्क(args, अचिन्हित पूर्णांक));               \
-	ret = fbtft_ग_लिखो_buf_dc(par, par->buf, माप(data_type) + offset,   \
+	*buf = modifier((data_type)va_arg(args, unsigned int));               \
+	ret = fbtft_write_buf_dc(par, par->buf, sizeof(data_type) + offset,   \
 				 0);                                          \
-	अगर (ret < 0)							      \
-		जाओ out;						      \
+	if (ret < 0)							      \
+		goto out;						      \
 	len--;                                                                \
 									      \
-	अगर (par->startbyte)                                                   \
+	if (par->startbyte)                                                   \
 		*(u8 *)par->buf = par->startbyte | 0x2;                       \
 									      \
-	अगर (len) अणु                                                            \
+	if (len) {                                                            \
 		i = len;                                                      \
-		जबतक (i--)						      \
-			*buf++ = modअगरier((data_type)बहु_तर्क(args,             \
-							    अचिन्हित पूर्णांक));   \
-		fbtft_ग_लिखो_buf_dc(par, par->buf,			      \
-				   len * (माप(data_type) + offset), 1);    \
-	पूर्ण                                                                     \
+		while (i--)						      \
+			*buf++ = modifier((data_type)va_arg(args,             \
+							    unsigned int));   \
+		fbtft_write_buf_dc(par, par->buf,			      \
+				   len * (sizeof(data_type) + offset), 1);    \
+	}                                                                     \
 out:									      \
-	बहु_पूर्ण(args);                                                         \
-पूर्ण                                                                             \
+	va_end(args);                                                         \
+}                                                                             \
 EXPORT_SYMBOL(func);
 
-define_fbtft_ग_लिखो_reg(fbtft_ग_लिखो_reg8_bus8, u8, u8, )
-define_fbtft_ग_लिखो_reg(fbtft_ग_लिखो_reg16_bus8, __be16, u16, cpu_to_be16)
-define_fbtft_ग_लिखो_reg(fbtft_ग_लिखो_reg16_bus16, u16, u16, )
+define_fbtft_write_reg(fbtft_write_reg8_bus8, u8, u8, )
+define_fbtft_write_reg(fbtft_write_reg16_bus8, __be16, u16, cpu_to_be16)
+define_fbtft_write_reg(fbtft_write_reg16_bus16, u16, u16, )
 
-व्योम fbtft_ग_लिखो_reg8_bus9(काष्ठा fbtft_par *par, पूर्णांक len, ...)
-अणु
-	बहु_सूची args;
-	पूर्णांक i, ret;
-	पूर्णांक pad = 0;
+void fbtft_write_reg8_bus9(struct fbtft_par *par, int len, ...)
+{
+	va_list args;
+	int i, ret;
+	int pad = 0;
 	u16 *buf = (u16 *)par->buf;
 
-	अगर (unlikely(par->debug & DEBUG_WRITE_REGISTER)) अणु
-		बहु_शुरू(args, len);
-		क्रम (i = 0; i < len; i++)
-			*(((u8 *)buf) + i) = (u8)बहु_तर्क(args, अचिन्हित पूर्णांक);
-		बहु_पूर्ण(args);
+	if (unlikely(par->debug & DEBUG_WRITE_REGISTER)) {
+		va_start(args, len);
+		for (i = 0; i < len; i++)
+			*(((u8 *)buf) + i) = (u8)va_arg(args, unsigned int);
+		va_end(args);
 		fbtft_par_dbg_hex(DEBUG_WRITE_REGISTER, par,
 				  par->info->device, u8, buf, len, "%s: ",
 				  __func__);
-	पूर्ण
-	अगर (len <= 0)
-		वापस;
+	}
+	if (len <= 0)
+		return;
 
-	अगर (par->spi && (par->spi->bits_per_word == 8)) अणु
+	if (par->spi && (par->spi->bits_per_word == 8)) {
 		/* we're emulating 9-bit, pad start of buffer with no-ops
 		 * (assuming here that zero is a no-op)
 		 */
 		pad = (len % 4) ? 4 - (len % 4) : 0;
-		क्रम (i = 0; i < pad; i++)
+		for (i = 0; i < pad; i++)
 			*buf++ = 0x000;
-	पूर्ण
+	}
 
-	बहु_शुरू(args, len);
-	*buf++ = (u8)बहु_तर्क(args, अचिन्हित पूर्णांक);
+	va_start(args, len);
+	*buf++ = (u8)va_arg(args, unsigned int);
 	i = len - 1;
-	जबतक (i--) अणु
-		*buf = (u8)बहु_तर्क(args, अचिन्हित पूर्णांक);
+	while (i--) {
+		*buf = (u8)va_arg(args, unsigned int);
 		*buf++ |= 0x100; /* dc=1 */
-	पूर्ण
-	बहु_पूर्ण(args);
-	ret = par->fbtftops.ग_लिखो(par, par->buf, (len + pad) * माप(u16));
-	अगर (ret < 0) अणु
+	}
+	va_end(args);
+	ret = par->fbtftops.write(par, par->buf, (len + pad) * sizeof(u16));
+	if (ret < 0) {
 		dev_err(par->info->device,
 			"write() failed and returned %d\n", ret);
-		वापस;
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL(fbtft_ग_लिखो_reg8_bus9);
+		return;
+	}
+}
+EXPORT_SYMBOL(fbtft_write_reg8_bus9);
 
 /*****************************************************************************
  *
- *   पूर्णांक (*ग_लिखो_vmem)(काष्ठा fbtft_par *par);
+ *   int (*write_vmem)(struct fbtft_par *par);
  *
  *****************************************************************************/
 
 /* 16 bit pixel over 8-bit databus */
-पूर्णांक fbtft_ग_लिखो_vmem16_bus8(काष्ठा fbtft_par *par, माप_प्रकार offset, माप_प्रकार len)
-अणु
+int fbtft_write_vmem16_bus8(struct fbtft_par *par, size_t offset, size_t len)
+{
 	u16 *vmem16;
 	__be16 *txbuf16 = par->txbuf.buf;
-	माप_प्रकार reमुख्य;
-	माप_प्रकार to_copy;
-	माप_प्रकार tx_array_size;
-	पूर्णांक i;
-	पूर्णांक ret = 0;
-	माप_प्रकार startbyte_size = 0;
+	size_t remain;
+	size_t to_copy;
+	size_t tx_array_size;
+	int i;
+	int ret = 0;
+	size_t startbyte_size = 0;
 
 	fbtft_par_dbg(DEBUG_WRITE_VMEM, par, "%s(offset=%zu, len=%zu)\n",
 		      __func__, offset, len);
 
-	reमुख्य = len / 2;
+	remain = len / 2;
 	vmem16 = (u16 *)(par->info->screen_buffer + offset);
 
-	अगर (par->gpio.dc)
+	if (par->gpio.dc)
 		gpiod_set_value(par->gpio.dc, 1);
 
-	/* non buffered ग_लिखो */
-	अगर (!par->txbuf.buf)
-		वापस par->fbtftops.ग_लिखो(par, vmem16, len);
+	/* non buffered write */
+	if (!par->txbuf.buf)
+		return par->fbtftops.write(par, vmem16, len);
 
-	/* buffered ग_लिखो */
+	/* buffered write */
 	tx_array_size = par->txbuf.len / 2;
 
-	अगर (par->startbyte) अणु
+	if (par->startbyte) {
 		txbuf16 = par->txbuf.buf + 1;
 		tx_array_size -= 2;
 		*(u8 *)(par->txbuf.buf) = par->startbyte | 0x2;
 		startbyte_size = 1;
-	पूर्ण
+	}
 
-	जबतक (reमुख्य) अणु
-		to_copy = min(tx_array_size, reमुख्य);
+	while (remain) {
+		to_copy = min(tx_array_size, remain);
 		dev_dbg(par->info->device, "to_copy=%zu, remain=%zu\n",
-			to_copy, reमुख्य - to_copy);
+			to_copy, remain - to_copy);
 
-		क्रम (i = 0; i < to_copy; i++)
+		for (i = 0; i < to_copy; i++)
 			txbuf16[i] = cpu_to_be16(vmem16[i]);
 
 		vmem16 = vmem16 + to_copy;
-		ret = par->fbtftops.ग_लिखो(par, par->txbuf.buf,
+		ret = par->fbtftops.write(par, par->txbuf.buf,
 						startbyte_size + to_copy * 2);
-		अगर (ret < 0)
-			वापस ret;
-		reमुख्य -= to_copy;
-	पूर्ण
+		if (ret < 0)
+			return ret;
+		remain -= to_copy;
+	}
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(fbtft_ग_लिखो_vmem16_bus8);
+	return ret;
+}
+EXPORT_SYMBOL(fbtft_write_vmem16_bus8);
 
 /* 16 bit pixel over 9-bit SPI bus: dc + high byte, dc + low byte */
-पूर्णांक fbtft_ग_लिखो_vmem16_bus9(काष्ठा fbtft_par *par, माप_प्रकार offset, माप_प्रकार len)
-अणु
+int fbtft_write_vmem16_bus9(struct fbtft_par *par, size_t offset, size_t len)
+{
 	u8 *vmem8;
 	u16 *txbuf16 = par->txbuf.buf;
-	माप_प्रकार reमुख्य;
-	माप_प्रकार to_copy;
-	माप_प्रकार tx_array_size;
-	पूर्णांक i;
-	पूर्णांक ret = 0;
+	size_t remain;
+	size_t to_copy;
+	size_t tx_array_size;
+	int i;
+	int ret = 0;
 
 	fbtft_par_dbg(DEBUG_WRITE_VMEM, par, "%s(offset=%zu, len=%zu)\n",
 		      __func__, offset, len);
 
-	अगर (!par->txbuf.buf) अणु
+	if (!par->txbuf.buf) {
 		dev_err(par->info->device, "%s: txbuf.buf is NULL\n", __func__);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	reमुख्य = len;
+	remain = len;
 	vmem8 = par->info->screen_buffer + offset;
 
 	tx_array_size = par->txbuf.len / 2;
 
-	जबतक (reमुख्य) अणु
-		to_copy = min(tx_array_size, reमुख्य);
+	while (remain) {
+		to_copy = min(tx_array_size, remain);
 		dev_dbg(par->info->device, "to_copy=%zu, remain=%zu\n",
-			to_copy, reमुख्य - to_copy);
+			to_copy, remain - to_copy);
 
-#अगर_घोषित __LITTLE_ENDIAN
-		क्रम (i = 0; i < to_copy; i += 2) अणु
+#ifdef __LITTLE_ENDIAN
+		for (i = 0; i < to_copy; i += 2) {
 			txbuf16[i]     = 0x0100 | vmem8[i + 1];
 			txbuf16[i + 1] = 0x0100 | vmem8[i];
-		पूर्ण
-#अन्यथा
-		क्रम (i = 0; i < to_copy; i++)
+		}
+#else
+		for (i = 0; i < to_copy; i++)
 			txbuf16[i]   = 0x0100 | vmem8[i];
-#पूर्ण_अगर
+#endif
 		vmem8 = vmem8 + to_copy;
-		ret = par->fbtftops.ग_लिखो(par, par->txbuf.buf, to_copy * 2);
-		अगर (ret < 0)
-			वापस ret;
-		reमुख्य -= to_copy;
-	पूर्ण
+		ret = par->fbtftops.write(par, par->txbuf.buf, to_copy * 2);
+		if (ret < 0)
+			return ret;
+		remain -= to_copy;
+	}
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(fbtft_ग_लिखो_vmem16_bus9);
+	return ret;
+}
+EXPORT_SYMBOL(fbtft_write_vmem16_bus9);
 
-पूर्णांक fbtft_ग_लिखो_vmem8_bus8(काष्ठा fbtft_par *par, माप_प्रकार offset, माप_प्रकार len)
-अणु
+int fbtft_write_vmem8_bus8(struct fbtft_par *par, size_t offset, size_t len)
+{
 	dev_err(par->info->device, "%s: function not implemented\n", __func__);
-	वापस -1;
-पूर्ण
-EXPORT_SYMBOL(fbtft_ग_लिखो_vmem8_bus8);
+	return -1;
+}
+EXPORT_SYMBOL(fbtft_write_vmem8_bus8);
 
 /* 16 bit pixel over 16-bit databus */
-पूर्णांक fbtft_ग_लिखो_vmem16_bus16(काष्ठा fbtft_par *par, माप_प्रकार offset, माप_प्रकार len)
-अणु
+int fbtft_write_vmem16_bus16(struct fbtft_par *par, size_t offset, size_t len)
+{
 	u16 *vmem16;
 
 	fbtft_par_dbg(DEBUG_WRITE_VMEM, par, "%s(offset=%zu, len=%zu)\n",
@@ -239,7 +238,7 @@ EXPORT_SYMBOL(fbtft_ग_लिखो_vmem8_bus8);
 
 	vmem16 = (u16 *)(par->info->screen_buffer + offset);
 
-	/* no need क्रम buffered ग_लिखो with 16-bit bus */
-	वापस fbtft_ग_लिखो_buf_dc(par, vmem16, len, 1);
-पूर्ण
-EXPORT_SYMBOL(fbtft_ग_लिखो_vmem16_bus16);
+	/* no need for buffered write with 16-bit bus */
+	return fbtft_write_buf_dc(par, vmem16, len, 1);
+}
+EXPORT_SYMBOL(fbtft_write_vmem16_bus16);

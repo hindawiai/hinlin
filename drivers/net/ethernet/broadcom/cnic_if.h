@@ -1,56 +1,55 @@
-<शैली गुरु>
-/* cnic_अगर.h: QLogic cnic core network driver.
+/* cnic_if.h: QLogic cnic core network driver.
  *
  * Copyright (c) 2006-2014 Broadcom Corporation
  * Copyright (c) 2014-2015 QLogic Corporation
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation.
  *
  */
 
 
-#अगर_अघोषित CNIC_IF_H
-#घोषणा CNIC_IF_H
+#ifndef CNIC_IF_H
+#define CNIC_IF_H
 
-#समावेश "bnx2x/bnx2x_mfw_req.h"
+#include "bnx2x/bnx2x_mfw_req.h"
 
-#घोषणा CNIC_MODULE_VERSION	"2.5.22"
-#घोषणा CNIC_MODULE_RELDATE	"July 20, 2015"
+#define CNIC_MODULE_VERSION	"2.5.22"
+#define CNIC_MODULE_RELDATE	"July 20, 2015"
 
-#घोषणा CNIC_ULP_RDMA		0
-#घोषणा CNIC_ULP_ISCSI		1
-#घोषणा CNIC_ULP_FCOE		2
-#घोषणा CNIC_ULP_L4		3
-#घोषणा MAX_CNIC_ULP_TYPE_EXT	3
-#घोषणा MAX_CNIC_ULP_TYPE	4
+#define CNIC_ULP_RDMA		0
+#define CNIC_ULP_ISCSI		1
+#define CNIC_ULP_FCOE		2
+#define CNIC_ULP_L4		3
+#define MAX_CNIC_ULP_TYPE_EXT	3
+#define MAX_CNIC_ULP_TYPE	4
 
-/* Use CPU native page size up to 16K क्रम cnic ring sizes.  */
-#अगर (PAGE_SHIFT > 14)
-#घोषणा CNIC_PAGE_BITS	14
-#अन्यथा
-#घोषणा CNIC_PAGE_BITS	PAGE_SHIFT
-#पूर्ण_अगर
-#घोषणा CNIC_PAGE_SIZE	(1 << (CNIC_PAGE_BITS))
-#घोषणा CNIC_PAGE_ALIGN(addr) ALIGN(addr, CNIC_PAGE_SIZE)
-#घोषणा CNIC_PAGE_MASK	(~((CNIC_PAGE_SIZE) - 1))
+/* Use CPU native page size up to 16K for cnic ring sizes.  */
+#if (PAGE_SHIFT > 14)
+#define CNIC_PAGE_BITS	14
+#else
+#define CNIC_PAGE_BITS	PAGE_SHIFT
+#endif
+#define CNIC_PAGE_SIZE	(1 << (CNIC_PAGE_BITS))
+#define CNIC_PAGE_ALIGN(addr) ALIGN(addr, CNIC_PAGE_SIZE)
+#define CNIC_PAGE_MASK	(~((CNIC_PAGE_SIZE) - 1))
 
-काष्ठा kwqe अणु
+struct kwqe {
 	u32 kwqe_op_flag;
 
-#घोषणा KWQE_QID_SHIFT		8
-#घोषणा KWQE_OPCODE_MASK	0x00ff0000
-#घोषणा KWQE_OPCODE_SHIFT	16
-#घोषणा KWQE_OPCODE(x)		((x & KWQE_OPCODE_MASK) >> KWQE_OPCODE_SHIFT)
-#घोषणा KWQE_LAYER_MASK			0x70000000
-#घोषणा KWQE_LAYER_SHIFT		28
-#घोषणा KWQE_FLAGS_LAYER_MASK_L2	(2<<28)
-#घोषणा KWQE_FLAGS_LAYER_MASK_L3	(3<<28)
-#घोषणा KWQE_FLAGS_LAYER_MASK_L4	(4<<28)
-#घोषणा KWQE_FLAGS_LAYER_MASK_L5_RDMA	(5<<28)
-#घोषणा KWQE_FLAGS_LAYER_MASK_L5_ISCSI	(6<<28)
-#घोषणा KWQE_FLAGS_LAYER_MASK_L5_FCOE	(7<<28)
+#define KWQE_QID_SHIFT		8
+#define KWQE_OPCODE_MASK	0x00ff0000
+#define KWQE_OPCODE_SHIFT	16
+#define KWQE_OPCODE(x)		((x & KWQE_OPCODE_MASK) >> KWQE_OPCODE_SHIFT)
+#define KWQE_LAYER_MASK			0x70000000
+#define KWQE_LAYER_SHIFT		28
+#define KWQE_FLAGS_LAYER_MASK_L2	(2<<28)
+#define KWQE_FLAGS_LAYER_MASK_L3	(3<<28)
+#define KWQE_FLAGS_LAYER_MASK_L4	(4<<28)
+#define KWQE_FLAGS_LAYER_MASK_L5_RDMA	(5<<28)
+#define KWQE_FLAGS_LAYER_MASK_L5_ISCSI	(6<<28)
+#define KWQE_FLAGS_LAYER_MASK_L5_FCOE	(7<<28)
 
 	u32 kwqe_info0;
 	u32 kwqe_info1;
@@ -59,16 +58,16 @@
 	u32 kwqe_info4;
 	u32 kwqe_info5;
 	u32 kwqe_info6;
-पूर्ण;
+};
 
-काष्ठा kwqe_16 अणु
+struct kwqe_16 {
 	u32 kwqe_info0;
 	u32 kwqe_info1;
 	u32 kwqe_info2;
 	u32 kwqe_info3;
-पूर्ण;
+};
 
-काष्ठा kcqe अणु
+struct kcqe {
 	u32 kcqe_info0;
 	u32 kcqe_info1;
 	u32 kcqe_info2;
@@ -77,145 +76,145 @@
 	u32 kcqe_info5;
 	u32 kcqe_info6;
 	u32 kcqe_op_flag;
-		#घोषणा KCQE_RAMROD_COMPLETION		(0x1<<27) /* Everest */
-		#घोषणा KCQE_FLAGS_LAYER_MASK		(0x7<<28)
-		#घोषणा KCQE_FLAGS_LAYER_MASK_MISC	(0<<28)
-		#घोषणा KCQE_FLAGS_LAYER_MASK_L2	(2<<28)
-		#घोषणा KCQE_FLAGS_LAYER_MASK_L3	(3<<28)
-		#घोषणा KCQE_FLAGS_LAYER_MASK_L4	(4<<28)
-		#घोषणा KCQE_FLAGS_LAYER_MASK_L5_RDMA	(5<<28)
-		#घोषणा KCQE_FLAGS_LAYER_MASK_L5_ISCSI	(6<<28)
-		#घोषणा KCQE_FLAGS_LAYER_MASK_L5_FCOE	(7<<28)
-		#घोषणा KCQE_FLAGS_NEXT 		(1<<31)
-		#घोषणा KCQE_FLAGS_OPCODE_MASK		(0xff<<16)
-		#घोषणा KCQE_FLAGS_OPCODE_SHIFT		(16)
-		#घोषणा KCQE_OPCODE(op)			\
+		#define KCQE_RAMROD_COMPLETION		(0x1<<27) /* Everest */
+		#define KCQE_FLAGS_LAYER_MASK		(0x7<<28)
+		#define KCQE_FLAGS_LAYER_MASK_MISC	(0<<28)
+		#define KCQE_FLAGS_LAYER_MASK_L2	(2<<28)
+		#define KCQE_FLAGS_LAYER_MASK_L3	(3<<28)
+		#define KCQE_FLAGS_LAYER_MASK_L4	(4<<28)
+		#define KCQE_FLAGS_LAYER_MASK_L5_RDMA	(5<<28)
+		#define KCQE_FLAGS_LAYER_MASK_L5_ISCSI	(6<<28)
+		#define KCQE_FLAGS_LAYER_MASK_L5_FCOE	(7<<28)
+		#define KCQE_FLAGS_NEXT 		(1<<31)
+		#define KCQE_FLAGS_OPCODE_MASK		(0xff<<16)
+		#define KCQE_FLAGS_OPCODE_SHIFT		(16)
+		#define KCQE_OPCODE(op)			\
 		(((op) & KCQE_FLAGS_OPCODE_MASK) >> KCQE_FLAGS_OPCODE_SHIFT)
-पूर्ण;
+};
 
-#घोषणा MAX_CNIC_CTL_DATA	64
-#घोषणा MAX_DRV_CTL_DATA	64
+#define MAX_CNIC_CTL_DATA	64
+#define MAX_DRV_CTL_DATA	64
 
-#घोषणा CNIC_CTL_STOP_CMD		1
-#घोषणा CNIC_CTL_START_CMD		2
-#घोषणा CNIC_CTL_COMPLETION_CMD		3
-#घोषणा CNIC_CTL_STOP_ISCSI_CMD		4
-#घोषणा CNIC_CTL_FCOE_STATS_GET_CMD	5
-#घोषणा CNIC_CTL_ISCSI_STATS_GET_CMD	6
+#define CNIC_CTL_STOP_CMD		1
+#define CNIC_CTL_START_CMD		2
+#define CNIC_CTL_COMPLETION_CMD		3
+#define CNIC_CTL_STOP_ISCSI_CMD		4
+#define CNIC_CTL_FCOE_STATS_GET_CMD	5
+#define CNIC_CTL_ISCSI_STATS_GET_CMD	6
 
-#घोषणा DRV_CTL_IO_WR_CMD		0x101
-#घोषणा DRV_CTL_IO_RD_CMD		0x102
-#घोषणा DRV_CTL_CTX_WR_CMD		0x103
-#घोषणा DRV_CTL_CTXTBL_WR_CMD		0x104
-#घोषणा DRV_CTL_RET_L5_SPQ_CREDIT_CMD	0x105
-#घोषणा DRV_CTL_START_L2_CMD		0x106
-#घोषणा DRV_CTL_STOP_L2_CMD		0x107
-#घोषणा DRV_CTL_RET_L2_SPQ_CREDIT_CMD	0x10c
-#घोषणा DRV_CTL_ISCSI_STOPPED_CMD	0x10d
-#घोषणा DRV_CTL_ULP_REGISTER_CMD	0x10e
-#घोषणा DRV_CTL_ULP_UNREGISTER_CMD	0x10f
+#define DRV_CTL_IO_WR_CMD		0x101
+#define DRV_CTL_IO_RD_CMD		0x102
+#define DRV_CTL_CTX_WR_CMD		0x103
+#define DRV_CTL_CTXTBL_WR_CMD		0x104
+#define DRV_CTL_RET_L5_SPQ_CREDIT_CMD	0x105
+#define DRV_CTL_START_L2_CMD		0x106
+#define DRV_CTL_STOP_L2_CMD		0x107
+#define DRV_CTL_RET_L2_SPQ_CREDIT_CMD	0x10c
+#define DRV_CTL_ISCSI_STOPPED_CMD	0x10d
+#define DRV_CTL_ULP_REGISTER_CMD	0x10e
+#define DRV_CTL_ULP_UNREGISTER_CMD	0x10f
 
-काष्ठा cnic_ctl_completion अणु
+struct cnic_ctl_completion {
 	u32	cid;
 	u8	opcode;
 	u8	error;
-पूर्ण;
+};
 
-काष्ठा cnic_ctl_info अणु
-	पूर्णांक	cmd;
-	जोड़ अणु
-		काष्ठा cnic_ctl_completion comp;
-		अक्षर bytes[MAX_CNIC_CTL_DATA];
-	पूर्ण data;
-पूर्ण;
+struct cnic_ctl_info {
+	int	cmd;
+	union {
+		struct cnic_ctl_completion comp;
+		char bytes[MAX_CNIC_CTL_DATA];
+	} data;
+};
 
-काष्ठा drv_ctl_spq_credit अणु
+struct drv_ctl_spq_credit {
 	u32	credit_count;
-पूर्ण;
+};
 
-काष्ठा drv_ctl_io अणु
+struct drv_ctl_io {
 	u32		cid_addr;
 	u32		offset;
 	u32		data;
 	dma_addr_t	dma_addr;
-पूर्ण;
+};
 
-काष्ठा drv_ctl_l2_ring अणु
+struct drv_ctl_l2_ring {
 	u32		client_id;
 	u32		cid;
-पूर्ण;
+};
 
-काष्ठा drv_ctl_रेजिस्टर_data अणु
-	पूर्णांक ulp_type;
-	काष्ठा fcoe_capabilities fcoe_features;
-पूर्ण;
+struct drv_ctl_register_data {
+	int ulp_type;
+	struct fcoe_capabilities fcoe_features;
+};
 
-काष्ठा drv_ctl_info अणु
-	पूर्णांक	cmd;
-	पूर्णांक     drv_state;
-#घोषणा DRV_NOP		0
-#घोषणा DRV_ACTIVE	1
-#घोषणा DRV_INACTIVE	2
-#घोषणा DRV_UNLOADED	3
-	जोड़ अणु
-		काष्ठा drv_ctl_spq_credit credit;
-		काष्ठा drv_ctl_io io;
-		काष्ठा drv_ctl_l2_ring ring;
-		पूर्णांक ulp_type;
-		काष्ठा drv_ctl_रेजिस्टर_data रेजिस्टर_data;
-		अक्षर bytes[MAX_DRV_CTL_DATA];
-	पूर्ण data;
-पूर्ण;
+struct drv_ctl_info {
+	int	cmd;
+	int     drv_state;
+#define DRV_NOP		0
+#define DRV_ACTIVE	1
+#define DRV_INACTIVE	2
+#define DRV_UNLOADED	3
+	union {
+		struct drv_ctl_spq_credit credit;
+		struct drv_ctl_io io;
+		struct drv_ctl_l2_ring ring;
+		int ulp_type;
+		struct drv_ctl_register_data register_data;
+		char bytes[MAX_DRV_CTL_DATA];
+	} data;
+};
 
-#घोषणा MAX_NPIV_ENTRIES 64
-#घोषणा FC_NPIV_WWN_SIZE 8
+#define MAX_NPIV_ENTRIES 64
+#define FC_NPIV_WWN_SIZE 8
 
-काष्ठा cnic_fc_npiv_tbl अणु
+struct cnic_fc_npiv_tbl {
 	u8 wwpn[MAX_NPIV_ENTRIES][FC_NPIV_WWN_SIZE];
 	u8 wwnn[MAX_NPIV_ENTRIES][FC_NPIV_WWN_SIZE];
 	u32 count;
-पूर्ण;
+};
 
-काष्ठा cnic_ops अणु
-	काष्ठा module	*cnic_owner;
-	/* Calls to these functions are रक्षित by RCU.  When
-	 * unरेजिस्टरing, we रुको क्रम any calls to complete beक्रमe
+struct cnic_ops {
+	struct module	*cnic_owner;
+	/* Calls to these functions are protected by RCU.  When
+	 * unregistering, we wait for any calls to complete before
 	 * continuing.
 	 */
-	पूर्णांक		(*cnic_handler)(व्योम *, व्योम *);
-	पूर्णांक		(*cnic_ctl)(व्योम *, काष्ठा cnic_ctl_info *);
-पूर्ण;
+	int		(*cnic_handler)(void *, void *);
+	int		(*cnic_ctl)(void *, struct cnic_ctl_info *);
+};
 
-#घोषणा MAX_CNIC_VEC	8
+#define MAX_CNIC_VEC	8
 
-काष्ठा cnic_irq अणु
-	अचिन्हित पूर्णांक	vector;
-	व्योम		*status_blk;
+struct cnic_irq {
+	unsigned int	vector;
+	void		*status_blk;
 	u32		status_blk_num;
 	u32		status_blk_num2;
 	u32		irq_flags;
-#घोषणा CNIC_IRQ_FL_MSIX		0x00000001
-पूर्ण;
+#define CNIC_IRQ_FL_MSIX		0x00000001
+};
 
-काष्ठा cnic_eth_dev अणु
-	काष्ठा module	*drv_owner;
+struct cnic_eth_dev {
+	struct module	*drv_owner;
 	u32		drv_state;
-#घोषणा CNIC_DRV_STATE_REGD		0x00000001
-#घोषणा CNIC_DRV_STATE_USING_MSIX	0x00000002
-#घोषणा CNIC_DRV_STATE_NO_ISCSI_OOO	0x00000004
-#घोषणा CNIC_DRV_STATE_NO_ISCSI		0x00000008
-#घोषणा CNIC_DRV_STATE_NO_FCOE		0x00000010
-#घोषणा CNIC_DRV_STATE_HANDLES_IRQ	0x00000020
+#define CNIC_DRV_STATE_REGD		0x00000001
+#define CNIC_DRV_STATE_USING_MSIX	0x00000002
+#define CNIC_DRV_STATE_NO_ISCSI_OOO	0x00000004
+#define CNIC_DRV_STATE_NO_ISCSI		0x00000008
+#define CNIC_DRV_STATE_NO_FCOE		0x00000010
+#define CNIC_DRV_STATE_HANDLES_IRQ	0x00000020
 	u32		chip_id;
 	u32		max_kwqe_pending;
-	काष्ठा pci_dev	*pdev;
-	व्योम __iomem	*io_base;
-	व्योम __iomem	*io_base2;
-	स्थिर व्योम	*iro_arr;
+	struct pci_dev	*pdev;
+	void __iomem	*io_base;
+	void __iomem	*io_base2;
+	const void	*iro_arr;
 
 	u32		ctx_tbl_offset;
 	u32		ctx_tbl_len;
-	पूर्णांक		ctx_blk_size;
+	int		ctx_blk_size;
 	u32		starting_cid;
 	u32		max_iscsi_conn;
 	u32		max_fcoe_conn;
@@ -231,51 +230,51 @@
 	u16		iscsi_l2_cid;
 	u8		iscsi_mac[ETH_ALEN];
 
-	पूर्णांक		num_irq;
-	काष्ठा cnic_irq	irq_arr[MAX_CNIC_VEC];
-	पूर्णांक		(*drv_रेजिस्टर_cnic)(काष्ठा net_device *,
-					     काष्ठा cnic_ops *, व्योम *);
-	पूर्णांक		(*drv_unरेजिस्टर_cnic)(काष्ठा net_device *);
-	पूर्णांक		(*drv_submit_kwqes_32)(काष्ठा net_device *,
-					       काष्ठा kwqe *[], u32);
-	पूर्णांक		(*drv_submit_kwqes_16)(काष्ठा net_device *,
-					       काष्ठा kwqe_16 *[], u32);
-	पूर्णांक		(*drv_ctl)(काष्ठा net_device *, काष्ठा drv_ctl_info *);
-	पूर्णांक		(*drv_get_fc_npiv_tbl)(काष्ठा net_device *,
-					       काष्ठा cnic_fc_npiv_tbl *);
-	अचिन्हित दीर्घ	reserved1[2];
-	जोड़ drv_info_to_mcp	*addr_drv_info_to_mcp;
-पूर्ण;
+	int		num_irq;
+	struct cnic_irq	irq_arr[MAX_CNIC_VEC];
+	int		(*drv_register_cnic)(struct net_device *,
+					     struct cnic_ops *, void *);
+	int		(*drv_unregister_cnic)(struct net_device *);
+	int		(*drv_submit_kwqes_32)(struct net_device *,
+					       struct kwqe *[], u32);
+	int		(*drv_submit_kwqes_16)(struct net_device *,
+					       struct kwqe_16 *[], u32);
+	int		(*drv_ctl)(struct net_device *, struct drv_ctl_info *);
+	int		(*drv_get_fc_npiv_tbl)(struct net_device *,
+					       struct cnic_fc_npiv_tbl *);
+	unsigned long	reserved1[2];
+	union drv_info_to_mcp	*addr_drv_info_to_mcp;
+};
 
-काष्ठा cnic_sockaddr अणु
-	जोड़ अणु
-		काष्ठा sockaddr_in	v4;
-		काष्ठा sockaddr_in6	v6;
-	पूर्ण local;
-	जोड़ अणु
-		काष्ठा sockaddr_in	v4;
-		काष्ठा sockaddr_in6	v6;
-	पूर्ण remote;
-पूर्ण;
+struct cnic_sockaddr {
+	union {
+		struct sockaddr_in	v4;
+		struct sockaddr_in6	v6;
+	} local;
+	union {
+		struct sockaddr_in	v4;
+		struct sockaddr_in6	v6;
+	} remote;
+};
 
-काष्ठा cnic_sock अणु
-	काष्ठा cnic_dev *dev;
-	व्योम	*context;
+struct cnic_sock {
+	struct cnic_dev *dev;
+	void	*context;
 	u32	src_ip[4];
 	u32	dst_ip[4];
 	u16	src_port;
 	u16	dst_port;
 	u16	vlan_id;
-	अचिन्हित अक्षर old_ha[ETH_ALEN];
-	अचिन्हित अक्षर ha[ETH_ALEN];
+	unsigned char old_ha[ETH_ALEN];
+	unsigned char ha[ETH_ALEN];
 	u32	mtu;
 	u32	cid;
 	u32	l5_cid;
 	u32	pg_cid;
-	पूर्णांक	ulp_type;
+	int	ulp_type;
 
-	u32	ka_समयout;
-	u32	ka_पूर्णांकerval;
+	u32	ka_timeout;
+	u32	ka_interval;
 	u8	ka_max_probe_count;
 	u8	tos;
 	u8	ttl;
@@ -284,106 +283,106 @@
 	u32	snd_buf;
 	u32	seed;
 
-	अचिन्हित दीर्घ	tcp_flags;
-#घोषणा SK_TCP_NO_DELAY_ACK	0x1
-#घोषणा SK_TCP_KEEP_ALIVE	0x2
-#घोषणा SK_TCP_NAGLE		0x4
-#घोषणा SK_TCP_TIMESTAMP	0x8
-#घोषणा SK_TCP_SACK		0x10
-#घोषणा SK_TCP_SEG_SCALING	0x20
-	अचिन्हित दीर्घ	flags;
-#घोषणा SK_F_INUSE		0
-#घोषणा SK_F_OFFLD_COMPLETE	1
-#घोषणा SK_F_OFFLD_SCHED	2
-#घोषणा SK_F_PG_OFFLD_COMPLETE	3
-#घोषणा SK_F_CONNECT_START	4
-#घोषणा SK_F_IPV6		5
-#घोषणा SK_F_CLOSING		7
-#घोषणा SK_F_HW_ERR		8
+	unsigned long	tcp_flags;
+#define SK_TCP_NO_DELAY_ACK	0x1
+#define SK_TCP_KEEP_ALIVE	0x2
+#define SK_TCP_NAGLE		0x4
+#define SK_TCP_TIMESTAMP	0x8
+#define SK_TCP_SACK		0x10
+#define SK_TCP_SEG_SCALING	0x20
+	unsigned long	flags;
+#define SK_F_INUSE		0
+#define SK_F_OFFLD_COMPLETE	1
+#define SK_F_OFFLD_SCHED	2
+#define SK_F_PG_OFFLD_COMPLETE	3
+#define SK_F_CONNECT_START	4
+#define SK_F_IPV6		5
+#define SK_F_CLOSING		7
+#define SK_F_HW_ERR		8
 
 	atomic_t ref_count;
 	u32 state;
-	काष्ठा kwqe kwqe1;
-	काष्ठा kwqe kwqe2;
-	काष्ठा kwqe kwqe3;
-पूर्ण;
+	struct kwqe kwqe1;
+	struct kwqe kwqe2;
+	struct kwqe kwqe3;
+};
 
-काष्ठा cnic_dev अणु
-	काष्ठा net_device	*netdev;
-	काष्ठा pci_dev		*pcidev;
-	व्योम __iomem		*regview;
-	काष्ठा list_head	list;
+struct cnic_dev {
+	struct net_device	*netdev;
+	struct pci_dev		*pcidev;
+	void __iomem		*regview;
+	struct list_head	list;
 
-	पूर्णांक (*रेजिस्टर_device)(काष्ठा cnic_dev *dev, पूर्णांक ulp_type,
-			       व्योम *ulp_ctx);
-	पूर्णांक (*unरेजिस्टर_device)(काष्ठा cnic_dev *dev, पूर्णांक ulp_type);
-	पूर्णांक (*submit_kwqes)(काष्ठा cnic_dev *dev, काष्ठा kwqe *wqes[],
+	int (*register_device)(struct cnic_dev *dev, int ulp_type,
+			       void *ulp_ctx);
+	int (*unregister_device)(struct cnic_dev *dev, int ulp_type);
+	int (*submit_kwqes)(struct cnic_dev *dev, struct kwqe *wqes[],
 				u32 num_wqes);
-	पूर्णांक (*submit_kwqes_16)(काष्ठा cnic_dev *dev, काष्ठा kwqe_16 *wqes[],
+	int (*submit_kwqes_16)(struct cnic_dev *dev, struct kwqe_16 *wqes[],
 				u32 num_wqes);
 
-	पूर्णांक (*cm_create)(काष्ठा cnic_dev *, पूर्णांक, u32, u32, काष्ठा cnic_sock **,
-			 व्योम *);
-	पूर्णांक (*cm_destroy)(काष्ठा cnic_sock *);
-	पूर्णांक (*cm_connect)(काष्ठा cnic_sock *, काष्ठा cnic_sockaddr *);
-	पूर्णांक (*cm_पात)(काष्ठा cnic_sock *);
-	पूर्णांक (*cm_बंद)(काष्ठा cnic_sock *);
-	काष्ठा cnic_dev *(*cm_select_dev)(काष्ठा sockaddr_in *, पूर्णांक ulp_type);
-	पूर्णांक (*iscsi_nl_msg_recv)(काष्ठा cnic_dev *dev, u32 msg_type,
-				 अक्षर *data, u16 data_size);
-	पूर्णांक (*get_fc_npiv_tbl)(काष्ठा cnic_dev *, काष्ठा cnic_fc_npiv_tbl *);
-	अचिन्हित दीर्घ	flags;
-#घोषणा CNIC_F_CNIC_UP		1
-#घोषणा CNIC_F_BNX2_CLASS	3
-#घोषणा CNIC_F_BNX2X_CLASS	4
+	int (*cm_create)(struct cnic_dev *, int, u32, u32, struct cnic_sock **,
+			 void *);
+	int (*cm_destroy)(struct cnic_sock *);
+	int (*cm_connect)(struct cnic_sock *, struct cnic_sockaddr *);
+	int (*cm_abort)(struct cnic_sock *);
+	int (*cm_close)(struct cnic_sock *);
+	struct cnic_dev *(*cm_select_dev)(struct sockaddr_in *, int ulp_type);
+	int (*iscsi_nl_msg_recv)(struct cnic_dev *dev, u32 msg_type,
+				 char *data, u16 data_size);
+	int (*get_fc_npiv_tbl)(struct cnic_dev *, struct cnic_fc_npiv_tbl *);
+	unsigned long	flags;
+#define CNIC_F_CNIC_UP		1
+#define CNIC_F_BNX2_CLASS	3
+#define CNIC_F_BNX2X_CLASS	4
 	atomic_t	ref_count;
 	u8		mac_addr[ETH_ALEN];
 
-	पूर्णांक		max_iscsi_conn;
-	पूर्णांक		max_fcoe_conn;
-	पूर्णांक		max_rdma_conn;
+	int		max_iscsi_conn;
+	int		max_fcoe_conn;
+	int		max_rdma_conn;
 
-	पूर्णांक		max_fcoe_exchanges;
+	int		max_fcoe_exchanges;
 
-	जोड़ drv_info_to_mcp	*stats_addr;
-	काष्ठा fcoe_capabilities	*fcoe_cap;
+	union drv_info_to_mcp	*stats_addr;
+	struct fcoe_capabilities	*fcoe_cap;
 
-	व्योम		*cnic_priv;
-पूर्ण;
+	void		*cnic_priv;
+};
 
-#घोषणा CNIC_WR(dev, off, val)		ग_लिखोl(val, dev->regview + off)
-#घोषणा CNIC_WR16(dev, off, val)	ग_लिखोw(val, dev->regview + off)
-#घोषणा CNIC_WR8(dev, off, val)		ग_लिखोb(val, dev->regview + off)
-#घोषणा CNIC_RD(dev, off)		पढ़ोl(dev->regview + off)
-#घोषणा CNIC_RD16(dev, off)		पढ़ोw(dev->regview + off)
+#define CNIC_WR(dev, off, val)		writel(val, dev->regview + off)
+#define CNIC_WR16(dev, off, val)	writew(val, dev->regview + off)
+#define CNIC_WR8(dev, off, val)		writeb(val, dev->regview + off)
+#define CNIC_RD(dev, off)		readl(dev->regview + off)
+#define CNIC_RD16(dev, off)		readw(dev->regview + off)
 
-काष्ठा cnic_ulp_ops अणु
-	/* Calls to these functions are रक्षित by RCU.  When
-	 * unरेजिस्टरing, we रुको क्रम any calls to complete beक्रमe
+struct cnic_ulp_ops {
+	/* Calls to these functions are protected by RCU.  When
+	 * unregistering, we wait for any calls to complete before
 	 * continuing.
 	 */
 
-	व्योम (*cnic_init)(काष्ठा cnic_dev *dev);
-	व्योम (*cnic_निकास)(काष्ठा cnic_dev *dev);
-	व्योम (*cnic_start)(व्योम *ulp_ctx);
-	व्योम (*cnic_stop)(व्योम *ulp_ctx);
-	व्योम (*indicate_kcqes)(व्योम *ulp_ctx, काष्ठा kcqe *cqes[],
+	void (*cnic_init)(struct cnic_dev *dev);
+	void (*cnic_exit)(struct cnic_dev *dev);
+	void (*cnic_start)(void *ulp_ctx);
+	void (*cnic_stop)(void *ulp_ctx);
+	void (*indicate_kcqes)(void *ulp_ctx, struct kcqe *cqes[],
 				u32 num_cqes);
-	व्योम (*indicate_netevent)(व्योम *ulp_ctx, अचिन्हित दीर्घ event, u16 vid);
-	व्योम (*cm_connect_complete)(काष्ठा cnic_sock *);
-	व्योम (*cm_बंद_complete)(काष्ठा cnic_sock *);
-	व्योम (*cm_पात_complete)(काष्ठा cnic_sock *);
-	व्योम (*cm_remote_बंद)(काष्ठा cnic_sock *);
-	व्योम (*cm_remote_पात)(काष्ठा cnic_sock *);
-	पूर्णांक (*iscsi_nl_send_msg)(व्योम *ulp_ctx, u32 msg_type,
-				  अक्षर *data, u16 data_size);
-	पूर्णांक (*cnic_get_stats)(व्योम *ulp_ctx);
-	काष्ठा module *owner;
+	void (*indicate_netevent)(void *ulp_ctx, unsigned long event, u16 vid);
+	void (*cm_connect_complete)(struct cnic_sock *);
+	void (*cm_close_complete)(struct cnic_sock *);
+	void (*cm_abort_complete)(struct cnic_sock *);
+	void (*cm_remote_close)(struct cnic_sock *);
+	void (*cm_remote_abort)(struct cnic_sock *);
+	int (*iscsi_nl_send_msg)(void *ulp_ctx, u32 msg_type,
+				  char *data, u16 data_size);
+	int (*cnic_get_stats)(void *ulp_ctx);
+	struct module *owner;
 	atomic_t ref_count;
-पूर्ण;
+};
 
-पूर्णांक cnic_रेजिस्टर_driver(पूर्णांक ulp_type, काष्ठा cnic_ulp_ops *ulp_ops);
+int cnic_register_driver(int ulp_type, struct cnic_ulp_ops *ulp_ops);
 
-पूर्णांक cnic_unरेजिस्टर_driver(पूर्णांक ulp_type);
+int cnic_unregister_driver(int ulp_type);
 
-#पूर्ण_अगर
+#endif

@@ -1,28 +1,27 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_SYSTEM percpu
+/* SPDX-License-Identifier: GPL-2.0 */
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM percpu
 
-#अगर !defined(_TRACE_PERCPU_H) || defined(TRACE_HEADER_MULTI_READ)
-#घोषणा _TRACE_PERCPU_H
+#if !defined(_TRACE_PERCPU_H) || defined(TRACE_HEADER_MULTI_READ)
+#define _TRACE_PERCPU_H
 
-#समावेश <linux/tracepoपूर्णांक.h>
+#include <linux/tracepoint.h>
 
 TRACE_EVENT(percpu_alloc_percpu,
 
-	TP_PROTO(bool reserved, bool is_atomic, माप_प्रकार size,
-		 माप_प्रकार align, व्योम *base_addr, पूर्णांक off, व्योम __percpu *ptr),
+	TP_PROTO(bool reserved, bool is_atomic, size_t size,
+		 size_t align, void *base_addr, int off, void __percpu *ptr),
 
 	TP_ARGS(reserved, is_atomic, size, align, base_addr, off, ptr),
 
 	TP_STRUCT__entry(
 		__field(	bool,			reserved	)
 		__field(	bool,			is_atomic	)
-		__field(	माप_प्रकार,			size		)
-		__field(	माप_प्रकार,			align		)
-		__field(	व्योम *,			base_addr	)
-		__field(	पूर्णांक,			off		)
-		__field(	व्योम __percpu *,	ptr		)
+		__field(	size_t,			size		)
+		__field(	size_t,			align		)
+		__field(	void *,			base_addr	)
+		__field(	int,			off		)
+		__field(	void __percpu *,	ptr		)
 	),
 
 	TP_fast_assign(
@@ -35,22 +34,22 @@ TRACE_EVENT(percpu_alloc_percpu,
 		__entry->ptr		= ptr;
 	),
 
-	TP_prपूर्णांकk("reserved=%d is_atomic=%d size=%zu align=%zu base_addr=%p off=%d ptr=%p",
+	TP_printk("reserved=%d is_atomic=%d size=%zu align=%zu base_addr=%p off=%d ptr=%p",
 		  __entry->reserved, __entry->is_atomic,
 		  __entry->size, __entry->align,
 		  __entry->base_addr, __entry->off, __entry->ptr)
 );
 
-TRACE_EVENT(percpu_मुक्त_percpu,
+TRACE_EVENT(percpu_free_percpu,
 
-	TP_PROTO(व्योम *base_addr, पूर्णांक off, व्योम __percpu *ptr),
+	TP_PROTO(void *base_addr, int off, void __percpu *ptr),
 
 	TP_ARGS(base_addr, off, ptr),
 
 	TP_STRUCT__entry(
-		__field(	व्योम *,			base_addr	)
-		__field(	पूर्णांक,			off		)
-		__field(	व्योम __percpu *,	ptr		)
+		__field(	void *,			base_addr	)
+		__field(	int,			off		)
+		__field(	void __percpu *,	ptr		)
 	),
 
 	TP_fast_assign(
@@ -59,21 +58,21 @@ TRACE_EVENT(percpu_मुक्त_percpu,
 		__entry->ptr		= ptr;
 	),
 
-	TP_prपूर्णांकk("base_addr=%p off=%d ptr=%p",
+	TP_printk("base_addr=%p off=%d ptr=%p",
 		__entry->base_addr, __entry->off, __entry->ptr)
 );
 
 TRACE_EVENT(percpu_alloc_percpu_fail,
 
-	TP_PROTO(bool reserved, bool is_atomic, माप_प्रकार size, माप_प्रकार align),
+	TP_PROTO(bool reserved, bool is_atomic, size_t size, size_t align),
 
 	TP_ARGS(reserved, is_atomic, size, align),
 
 	TP_STRUCT__entry(
 		__field(	bool,	reserved	)
 		__field(	bool,	is_atomic	)
-		__field(	माप_प्रकार,	size		)
-		__field(	माप_प्रकार, align		)
+		__field(	size_t,	size		)
+		__field(	size_t, align		)
 	),
 
 	TP_fast_assign(
@@ -83,45 +82,45 @@ TRACE_EVENT(percpu_alloc_percpu_fail,
 		__entry->align		= align;
 	),
 
-	TP_prपूर्णांकk("reserved=%d is_atomic=%d size=%zu align=%zu",
+	TP_printk("reserved=%d is_atomic=%d size=%zu align=%zu",
 		  __entry->reserved, __entry->is_atomic,
 		  __entry->size, __entry->align)
 );
 
 TRACE_EVENT(percpu_create_chunk,
 
-	TP_PROTO(व्योम *base_addr),
+	TP_PROTO(void *base_addr),
 
 	TP_ARGS(base_addr),
 
 	TP_STRUCT__entry(
-		__field(	व्योम *, base_addr	)
+		__field(	void *, base_addr	)
 	),
 
 	TP_fast_assign(
 		__entry->base_addr	= base_addr;
 	),
 
-	TP_prपूर्णांकk("base_addr=%p", __entry->base_addr)
+	TP_printk("base_addr=%p", __entry->base_addr)
 );
 
 TRACE_EVENT(percpu_destroy_chunk,
 
-	TP_PROTO(व्योम *base_addr),
+	TP_PROTO(void *base_addr),
 
 	TP_ARGS(base_addr),
 
 	TP_STRUCT__entry(
-		__field(	व्योम *,	base_addr	)
+		__field(	void *,	base_addr	)
 	),
 
 	TP_fast_assign(
 		__entry->base_addr	= base_addr;
 	),
 
-	TP_prपूर्णांकk("base_addr=%p", __entry->base_addr)
+	TP_printk("base_addr=%p", __entry->base_addr)
 );
 
-#पूर्ण_अगर /* _TRACE_PERCPU_H */
+#endif /* _TRACE_PERCPU_H */
 
-#समावेश <trace/define_trace.h>
+#include <trace/define_trace.h>

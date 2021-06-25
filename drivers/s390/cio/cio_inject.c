@@ -1,115 +1,114 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- *   CIO inject पूर्णांकerface
+ *   CIO inject interface
  *
  *    Copyright IBM Corp. 2021
  *    Author(s): Vineeth Vijayan <vneethv@linux.ibm.com>
  */
 
-#घोषणा KMSG_COMPONENT "cio"
-#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#define KMSG_COMPONENT "cio"
+#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/debugfs.h>
-#समावेश <यंत्र/chpid.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/mm.h>
+#include <linux/debugfs.h>
+#include <asm/chpid.h>
 
-#समावेश "cio_inject.h"
-#समावेश "cio_debug.h"
+#include "cio_inject.h"
+#include "cio_debug.h"
 
-अटल DEFINE_SPINLOCK(crw_inject_lock);
+static DEFINE_SPINLOCK(crw_inject_lock);
 DEFINE_STATIC_KEY_FALSE(cio_inject_enabled);
-अटल काष्ठा crw *crw_inject_data;
+static struct crw *crw_inject_data;
 
 /**
- * crw_inject : Initiate the artअगरicial CRW inject
+ * crw_inject : Initiate the artificial CRW inject
  * @crw: The data which needs to be injected as new CRW.
  *
- * The CRW handler is called, which will use the provided artअगरicial
+ * The CRW handler is called, which will use the provided artificial
  * data instead of the CRW from the underlying hardware.
  *
  * Return: 0 on success
  */
-अटल पूर्णांक crw_inject(काष्ठा crw *crw)
-अणु
-	पूर्णांक rc = 0;
-	काष्ठा crw *copy;
-	अचिन्हित दीर्घ flags;
+static int crw_inject(struct crw *crw)
+{
+	int rc = 0;
+	struct crw *copy;
+	unsigned long flags;
 
-	copy = kmemdup(crw, माप(*crw), GFP_KERNEL);
-	अगर (!copy)
-		वापस -ENOMEM;
+	copy = kmemdup(crw, sizeof(*crw), GFP_KERNEL);
+	if (!copy)
+		return -ENOMEM;
 
 	spin_lock_irqsave(&crw_inject_lock, flags);
-	अगर (crw_inject_data) अणु
-		kमुक्त(copy);
+	if (crw_inject_data) {
+		kfree(copy);
 		rc = -EBUSY;
-	पूर्ण अन्यथा अणु
+	} else {
 		crw_inject_data = copy;
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&crw_inject_lock, flags);
 
-	अगर (!rc)
+	if (!rc)
 		crw_handle_channel_report();
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
- * stcrw_get_injected: Copy the artअगरicial CRW data to CRW काष्ठा.
- * @crw: The target CRW poपूर्णांकer.
+ * stcrw_get_injected: Copy the artificial CRW data to CRW struct.
+ * @crw: The target CRW pointer.
  *
- * Retrieve an injected CRW data. Return 0 on success, 1 अगर no
- * injected-CRW is available. The function reproduces the वापस
+ * Retrieve an injected CRW data. Return 0 on success, 1 if no
+ * injected-CRW is available. The function reproduces the return
  * code of the actual STCRW function.
  */
-पूर्णांक stcrw_get_injected(काष्ठा crw *crw)
-अणु
-	पूर्णांक rc = 1;
-	अचिन्हित दीर्घ flags;
+int stcrw_get_injected(struct crw *crw)
+{
+	int rc = 1;
+	unsigned long flags;
 
 	spin_lock_irqsave(&crw_inject_lock, flags);
-	अगर (crw_inject_data) अणु
-		स_नकल(crw, crw_inject_data, माप(*crw));
-		kमुक्त(crw_inject_data);
-		crw_inject_data = शून्य;
+	if (crw_inject_data) {
+		memcpy(crw, crw_inject_data, sizeof(*crw));
+		kfree(crw_inject_data);
+		crw_inject_data = NULL;
 		rc = 0;
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&crw_inject_lock, flags);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-/* The debugfs ग_लिखो handler क्रम crw_inject nodes operation */
-अटल sमाप_प्रकार crw_inject_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
-				माप_प्रकार lbuf, loff_t *ppos)
-अणु
+/* The debugfs write handler for crw_inject nodes operation */
+static ssize_t crw_inject_write(struct file *file, const char __user *buf,
+				size_t lbuf, loff_t *ppos)
+{
 	u32 slct, oflw, chn, rsc, anc, erc, rsid;
-	काष्ठा crw crw;
-	अक्षर *buffer;
-	पूर्णांक rc;
+	struct crw crw;
+	char *buffer;
+	int rc;
 
-	अगर (!अटल_branch_likely(&cio_inject_enabled)) अणु
+	if (!static_branch_likely(&cio_inject_enabled)) {
 		pr_warn("CIO inject is not enabled - ignoring CRW inject\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	buffer = vmemdup_user(buf, lbuf);
-	अगर (IS_ERR(buffer))
-		वापस -ENOMEM;
+	if (IS_ERR(buffer))
+		return -ENOMEM;
 
-	rc = माला_पूछो(buffer, "%x %x %x %x %x %x %x", &slct, &oflw, &chn, &rsc, &anc,
+	rc = sscanf(buffer, "%x %x %x %x %x %x %x", &slct, &oflw, &chn, &rsc, &anc,
 		    &erc, &rsid);
 
-	kvमुक्त(buffer);
-	अगर (rc != 7) अणु
+	kvfree(buffer);
+	if (rc != 7) {
 		pr_warn("crw_inject: Invalid format (need <solicited> <overflow> <chaining> <rsc> <ancillary> <erc> <rsid>)\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	स_रखो(&crw, 0, माप(crw));
+	memset(&crw, 0, sizeof(crw));
 	crw.slct = slct;
 	crw.oflw = oflw;
 	crw.chn = chn;
@@ -119,54 +118,54 @@ DEFINE_STATIC_KEY_FALSE(cio_inject_enabled);
 	crw.rsid = rsid;
 
 	rc = crw_inject(&crw);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	वापस lbuf;
-पूर्ण
+	return lbuf;
+}
 
-/* Debugfs ग_लिखो handler क्रम inject_enable node*/
-अटल sमाप_प्रकार enable_inject_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
-				   माप_प्रकार lbuf, loff_t *ppos)
-अणु
-	अचिन्हित दीर्घ en = 0;
-	पूर्णांक rc;
+/* Debugfs write handler for inject_enable node*/
+static ssize_t enable_inject_write(struct file *file, const char __user *buf,
+				   size_t lbuf, loff_t *ppos)
+{
+	unsigned long en = 0;
+	int rc;
 
-	rc = kम_से_अदीर्घ_from_user(buf, lbuf, 10, &en);
-	अगर (rc)
-		वापस rc;
+	rc = kstrtoul_from_user(buf, lbuf, 10, &en);
+	if (rc)
+		return rc;
 
-	चयन (en) अणु
-	हाल 0:
-		अटल_branch_disable(&cio_inject_enabled);
-		अवरोध;
-	हाल 1:
-		अटल_branch_enable(&cio_inject_enabled);
-		अवरोध;
-	पूर्ण
+	switch (en) {
+	case 0:
+		static_branch_disable(&cio_inject_enabled);
+		break;
+	case 1:
+		static_branch_enable(&cio_inject_enabled);
+		break;
+	}
 
-	वापस lbuf;
-पूर्ण
+	return lbuf;
+}
 
-अटल स्थिर काष्ठा file_operations crw_fops = अणु
+static const struct file_operations crw_fops = {
 	.owner = THIS_MODULE,
-	.ग_लिखो = crw_inject_ग_लिखो,
-पूर्ण;
+	.write = crw_inject_write,
+};
 
-अटल स्थिर काष्ठा file_operations cio_en_fops = अणु
+static const struct file_operations cio_en_fops = {
 	.owner = THIS_MODULE,
-	.ग_लिखो = enable_inject_ग_लिखो,
-पूर्ण;
+	.write = enable_inject_write,
+};
 
-अटल पूर्णांक __init cio_inject_init(व्योम)
-अणु
-	/* enable_inject node enables the अटल branching */
+static int __init cio_inject_init(void)
+{
+	/* enable_inject node enables the static branching */
 	debugfs_create_file("enable_inject", 0200, cio_debugfs_dir,
-			    शून्य, &cio_en_fops);
+			    NULL, &cio_en_fops);
 
 	debugfs_create_file("crw_inject", 0200, cio_debugfs_dir,
-			    शून्य, &crw_fops);
-	वापस 0;
-पूर्ण
+			    NULL, &crw_fops);
+	return 0;
+}
 
 device_initcall(cio_inject_init);

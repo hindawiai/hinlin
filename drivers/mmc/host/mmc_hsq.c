@@ -1,50 +1,49 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *
- * MMC software queue support based on command queue पूर्णांकerfaces
+ * MMC software queue support based on command queue interfaces
  *
  * Copyright (C) 2019 Linaro, Inc.
  * Author: Baolin Wang <baolin.wang@linaro.org>
  */
 
-#समावेश <linux/mmc/card.h>
-#समावेश <linux/mmc/host.h>
-#समावेश <linux/module.h>
+#include <linux/mmc/card.h>
+#include <linux/mmc/host.h>
+#include <linux/module.h>
 
-#समावेश "mmc_hsq.h"
+#include "mmc_hsq.h"
 
-#घोषणा HSQ_NUM_SLOTS	64
-#घोषणा HSQ_INVALID_TAG	HSQ_NUM_SLOTS
+#define HSQ_NUM_SLOTS	64
+#define HSQ_INVALID_TAG	HSQ_NUM_SLOTS
 
-अटल व्योम mmc_hsq_retry_handler(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा mmc_hsq *hsq = container_of(work, काष्ठा mmc_hsq, retry_work);
-	काष्ठा mmc_host *mmc = hsq->mmc;
+static void mmc_hsq_retry_handler(struct work_struct *work)
+{
+	struct mmc_hsq *hsq = container_of(work, struct mmc_hsq, retry_work);
+	struct mmc_host *mmc = hsq->mmc;
 
 	mmc->ops->request(mmc, hsq->mrq);
-पूर्ण
+}
 
-अटल व्योम mmc_hsq_pump_requests(काष्ठा mmc_hsq *hsq)
-अणु
-	काष्ठा mmc_host *mmc = hsq->mmc;
-	काष्ठा hsq_slot *slot;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = 0;
+static void mmc_hsq_pump_requests(struct mmc_hsq *hsq)
+{
+	struct mmc_host *mmc = hsq->mmc;
+	struct hsq_slot *slot;
+	unsigned long flags;
+	int ret = 0;
 
 	spin_lock_irqsave(&hsq->lock, flags);
 
-	/* Make sure we are not alपढ़ोy running a request now */
-	अगर (hsq->mrq) अणु
+	/* Make sure we are not already running a request now */
+	if (hsq->mrq) {
 		spin_unlock_irqrestore(&hsq->lock, flags);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* Make sure there are reमुख्य requests need to pump */
-	अगर (!hsq->qcnt || !hsq->enabled) अणु
+	/* Make sure there are remain requests need to pump */
+	if (!hsq->qcnt || !hsq->enabled) {
 		spin_unlock_irqrestore(&hsq->lock, flags);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	slot = &hsq->slot[hsq->next_tag];
 	hsq->mrq = slot->mrq;
@@ -52,86 +51,86 @@
 
 	spin_unlock_irqrestore(&hsq->lock, flags);
 
-	अगर (mmc->ops->request_atomic)
+	if (mmc->ops->request_atomic)
 		ret = mmc->ops->request_atomic(mmc, hsq->mrq);
-	अन्यथा
+	else
 		mmc->ops->request(mmc, hsq->mrq);
 
 	/*
-	 * If वापसing BUSY from request_atomic(), which means the card
+	 * If returning BUSY from request_atomic(), which means the card
 	 * may be busy now, and we should change to non-atomic context to
-	 * try again क्रम this unusual हाल, to aव्योम समय-consuming operations
+	 * try again for this unusual case, to avoid time-consuming operations
 	 * in the atomic context.
 	 *
-	 * Note: we just give a warning क्रम other error हालs, since the host
+	 * Note: we just give a warning for other error cases, since the host
 	 * driver will handle them.
 	 */
-	अगर (ret == -EBUSY)
+	if (ret == -EBUSY)
 		schedule_work(&hsq->retry_work);
-	अन्यथा
+	else
 		WARN_ON_ONCE(ret);
-पूर्ण
+}
 
-अटल व्योम mmc_hsq_update_next_tag(काष्ठा mmc_hsq *hsq, पूर्णांक reमुख्यs)
-अणु
-	काष्ठा hsq_slot *slot;
-	पूर्णांक tag;
+static void mmc_hsq_update_next_tag(struct mmc_hsq *hsq, int remains)
+{
+	struct hsq_slot *slot;
+	int tag;
 
 	/*
-	 * If there are no reमुख्य requests in software queue, then set a invalid
+	 * If there are no remain requests in software queue, then set a invalid
 	 * tag.
 	 */
-	अगर (!reमुख्यs) अणु
+	if (!remains) {
 		hsq->next_tag = HSQ_INVALID_TAG;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
-	 * Increasing the next tag and check अगर the corresponding request is
-	 * available, अगर yes, then we found a candidate request.
+	 * Increasing the next tag and check if the corresponding request is
+	 * available, if yes, then we found a candidate request.
 	 */
-	अगर (++hsq->next_tag != HSQ_INVALID_TAG) अणु
+	if (++hsq->next_tag != HSQ_INVALID_TAG) {
 		slot = &hsq->slot[hsq->next_tag];
-		अगर (slot->mrq)
-			वापस;
-	पूर्ण
+		if (slot->mrq)
+			return;
+	}
 
 	/* Othersie we should iterate all slots to find a available tag. */
-	क्रम (tag = 0; tag < HSQ_NUM_SLOTS; tag++) अणु
+	for (tag = 0; tag < HSQ_NUM_SLOTS; tag++) {
 		slot = &hsq->slot[tag];
-		अगर (slot->mrq)
-			अवरोध;
-	पूर्ण
+		if (slot->mrq)
+			break;
+	}
 
-	अगर (tag == HSQ_NUM_SLOTS)
+	if (tag == HSQ_NUM_SLOTS)
 		tag = HSQ_INVALID_TAG;
 
 	hsq->next_tag = tag;
-पूर्ण
+}
 
-अटल व्योम mmc_hsq_post_request(काष्ठा mmc_hsq *hsq)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक reमुख्यs;
+static void mmc_hsq_post_request(struct mmc_hsq *hsq)
+{
+	unsigned long flags;
+	int remains;
 
 	spin_lock_irqsave(&hsq->lock, flags);
 
-	reमुख्यs = hsq->qcnt;
-	hsq->mrq = शून्य;
+	remains = hsq->qcnt;
+	hsq->mrq = NULL;
 
 	/* Update the next available tag to be queued. */
-	mmc_hsq_update_next_tag(hsq, reमुख्यs);
+	mmc_hsq_update_next_tag(hsq, remains);
 
-	अगर (hsq->रुकोing_क्रम_idle && !reमुख्यs) अणु
-		hsq->रुकोing_क्रम_idle = false;
-		wake_up(&hsq->रुको_queue);
-	पूर्ण
+	if (hsq->waiting_for_idle && !remains) {
+		hsq->waiting_for_idle = false;
+		wake_up(&hsq->wait_queue);
+	}
 
 	/* Do not pump new request in recovery mode. */
-	अगर (hsq->recovery_halt) अणु
+	if (hsq->recovery_halt) {
 		spin_unlock_irqrestore(&hsq->lock, flags);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	spin_unlock_irqrestore(&hsq->lock, flags);
 
@@ -139,102 +138,102 @@
 	  * Try to pump new request to host controller as fast as possible,
 	  * after completing previous request.
 	  */
-	अगर (reमुख्यs > 0)
+	if (remains > 0)
 		mmc_hsq_pump_requests(hsq);
-पूर्ण
+}
 
 /**
- * mmc_hsq_finalize_request - finalize one request अगर the request is करोne
+ * mmc_hsq_finalize_request - finalize one request if the request is done
  * @mmc: the host controller
  * @mrq: the request need to be finalized
  *
- * Return true अगर we finalized the corresponding request in software queue,
- * otherwise वापस false.
+ * Return true if we finalized the corresponding request in software queue,
+ * otherwise return false.
  */
-bool mmc_hsq_finalize_request(काष्ठा mmc_host *mmc, काष्ठा mmc_request *mrq)
-अणु
-	काष्ठा mmc_hsq *hsq = mmc->cqe_निजी;
-	अचिन्हित दीर्घ flags;
+bool mmc_hsq_finalize_request(struct mmc_host *mmc, struct mmc_request *mrq)
+{
+	struct mmc_hsq *hsq = mmc->cqe_private;
+	unsigned long flags;
 
 	spin_lock_irqsave(&hsq->lock, flags);
 
-	अगर (!hsq->enabled || !hsq->mrq || hsq->mrq != mrq) अणु
+	if (!hsq->enabled || !hsq->mrq || hsq->mrq != mrq) {
 		spin_unlock_irqrestore(&hsq->lock, flags);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	/*
-	 * Clear current completed slot request to make a room क्रम new request.
+	 * Clear current completed slot request to make a room for new request.
 	 */
-	hsq->slot[hsq->next_tag].mrq = शून्य;
+	hsq->slot[hsq->next_tag].mrq = NULL;
 
 	spin_unlock_irqrestore(&hsq->lock, flags);
 
-	mmc_cqe_request_करोne(mmc, hsq->mrq);
+	mmc_cqe_request_done(mmc, hsq->mrq);
 
 	mmc_hsq_post_request(hsq);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 EXPORT_SYMBOL_GPL(mmc_hsq_finalize_request);
 
-अटल व्योम mmc_hsq_recovery_start(काष्ठा mmc_host *mmc)
-अणु
-	काष्ठा mmc_hsq *hsq = mmc->cqe_निजी;
-	अचिन्हित दीर्घ flags;
+static void mmc_hsq_recovery_start(struct mmc_host *mmc)
+{
+	struct mmc_hsq *hsq = mmc->cqe_private;
+	unsigned long flags;
 
 	spin_lock_irqsave(&hsq->lock, flags);
 
 	hsq->recovery_halt = true;
 
 	spin_unlock_irqrestore(&hsq->lock, flags);
-पूर्ण
+}
 
-अटल व्योम mmc_hsq_recovery_finish(काष्ठा mmc_host *mmc)
-अणु
-	काष्ठा mmc_hsq *hsq = mmc->cqe_निजी;
-	पूर्णांक reमुख्यs;
+static void mmc_hsq_recovery_finish(struct mmc_host *mmc)
+{
+	struct mmc_hsq *hsq = mmc->cqe_private;
+	int remains;
 
 	spin_lock_irq(&hsq->lock);
 
 	hsq->recovery_halt = false;
-	reमुख्यs = hsq->qcnt;
+	remains = hsq->qcnt;
 
 	spin_unlock_irq(&hsq->lock);
 
 	/*
-	 * Try to pump new request अगर there are request pending in software
+	 * Try to pump new request if there are request pending in software
 	 * queue after finishing recovery.
 	 */
-	अगर (reमुख्यs > 0)
+	if (remains > 0)
 		mmc_hsq_pump_requests(hsq);
-पूर्ण
+}
 
-अटल पूर्णांक mmc_hsq_request(काष्ठा mmc_host *mmc, काष्ठा mmc_request *mrq)
-अणु
-	काष्ठा mmc_hsq *hsq = mmc->cqe_निजी;
-	पूर्णांक tag = mrq->tag;
+static int mmc_hsq_request(struct mmc_host *mmc, struct mmc_request *mrq)
+{
+	struct mmc_hsq *hsq = mmc->cqe_private;
+	int tag = mrq->tag;
 
 	spin_lock_irq(&hsq->lock);
 
-	अगर (!hsq->enabled) अणु
+	if (!hsq->enabled) {
 		spin_unlock_irq(&hsq->lock);
-		वापस -ESHUTDOWN;
-	पूर्ण
+		return -ESHUTDOWN;
+	}
 
 	/* Do not queue any new requests in recovery mode. */
-	अगर (hsq->recovery_halt) अणु
+	if (hsq->recovery_halt) {
 		spin_unlock_irq(&hsq->lock);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	hsq->slot[tag].mrq = mrq;
 
 	/*
-	 * Set the next tag as current request tag अगर no available
+	 * Set the next tag as current request tag if no available
 	 * next tag.
 	 */
-	अगर (hsq->next_tag == HSQ_INVALID_TAG)
+	if (hsq->next_tag == HSQ_INVALID_TAG)
 		hsq->next_tag = tag;
 
 	hsq->qcnt++;
@@ -243,17 +242,17 @@ EXPORT_SYMBOL_GPL(mmc_hsq_finalize_request);
 
 	mmc_hsq_pump_requests(hsq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mmc_hsq_post_req(काष्ठा mmc_host *mmc, काष्ठा mmc_request *mrq)
-अणु
-	अगर (mmc->ops->post_req)
+static void mmc_hsq_post_req(struct mmc_host *mmc, struct mmc_request *mrq)
+{
+	if (mmc->ops->post_req)
 		mmc->ops->post_req(mmc, mrq, 0);
-पूर्ण
+}
 
-अटल bool mmc_hsq_queue_is_idle(काष्ठा mmc_hsq *hsq, पूर्णांक *ret)
-अणु
+static bool mmc_hsq_queue_is_idle(struct mmc_hsq *hsq, int *ret)
+{
 	bool is_idle;
 
 	spin_lock_irq(&hsq->lock);
@@ -262,114 +261,114 @@ EXPORT_SYMBOL_GPL(mmc_hsq_finalize_request);
 		hsq->recovery_halt;
 
 	*ret = hsq->recovery_halt ? -EBUSY : 0;
-	hsq->रुकोing_क्रम_idle = !is_idle;
+	hsq->waiting_for_idle = !is_idle;
 
 	spin_unlock_irq(&hsq->lock);
 
-	वापस is_idle;
-पूर्ण
+	return is_idle;
+}
 
-अटल पूर्णांक mmc_hsq_रुको_क्रम_idle(काष्ठा mmc_host *mmc)
-अणु
-	काष्ठा mmc_hsq *hsq = mmc->cqe_निजी;
-	पूर्णांक ret;
+static int mmc_hsq_wait_for_idle(struct mmc_host *mmc)
+{
+	struct mmc_hsq *hsq = mmc->cqe_private;
+	int ret;
 
-	रुको_event(hsq->रुको_queue,
+	wait_event(hsq->wait_queue,
 		   mmc_hsq_queue_is_idle(hsq, &ret));
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम mmc_hsq_disable(काष्ठा mmc_host *mmc)
-अणु
-	काष्ठा mmc_hsq *hsq = mmc->cqe_निजी;
-	u32 समयout = 500;
-	पूर्णांक ret;
+static void mmc_hsq_disable(struct mmc_host *mmc)
+{
+	struct mmc_hsq *hsq = mmc->cqe_private;
+	u32 timeout = 500;
+	int ret;
 
 	spin_lock_irq(&hsq->lock);
 
-	अगर (!hsq->enabled) अणु
+	if (!hsq->enabled) {
 		spin_unlock_irq(&hsq->lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	spin_unlock_irq(&hsq->lock);
 
-	ret = रुको_event_समयout(hsq->रुको_queue,
+	ret = wait_event_timeout(hsq->wait_queue,
 				 mmc_hsq_queue_is_idle(hsq, &ret),
-				 msecs_to_jअगरfies(समयout));
-	अगर (ret == 0) अणु
+				 msecs_to_jiffies(timeout));
+	if (ret == 0) {
 		pr_warn("could not stop mmc software queue\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	spin_lock_irq(&hsq->lock);
 
 	hsq->enabled = false;
 
 	spin_unlock_irq(&hsq->lock);
-पूर्ण
+}
 
-अटल पूर्णांक mmc_hsq_enable(काष्ठा mmc_host *mmc, काष्ठा mmc_card *card)
-अणु
-	काष्ठा mmc_hsq *hsq = mmc->cqe_निजी;
+static int mmc_hsq_enable(struct mmc_host *mmc, struct mmc_card *card)
+{
+	struct mmc_hsq *hsq = mmc->cqe_private;
 
 	spin_lock_irq(&hsq->lock);
 
-	अगर (hsq->enabled) अणु
+	if (hsq->enabled) {
 		spin_unlock_irq(&hsq->lock);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	hsq->enabled = true;
 
 	spin_unlock_irq(&hsq->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा mmc_cqe_ops mmc_hsq_ops = अणु
+static const struct mmc_cqe_ops mmc_hsq_ops = {
 	.cqe_enable = mmc_hsq_enable,
 	.cqe_disable = mmc_hsq_disable,
 	.cqe_request = mmc_hsq_request,
 	.cqe_post_req = mmc_hsq_post_req,
-	.cqe_रुको_क्रम_idle = mmc_hsq_रुको_क्रम_idle,
+	.cqe_wait_for_idle = mmc_hsq_wait_for_idle,
 	.cqe_recovery_start = mmc_hsq_recovery_start,
 	.cqe_recovery_finish = mmc_hsq_recovery_finish,
-पूर्ण;
+};
 
-पूर्णांक mmc_hsq_init(काष्ठा mmc_hsq *hsq, काष्ठा mmc_host *mmc)
-अणु
+int mmc_hsq_init(struct mmc_hsq *hsq, struct mmc_host *mmc)
+{
 	hsq->num_slots = HSQ_NUM_SLOTS;
 	hsq->next_tag = HSQ_INVALID_TAG;
 
-	hsq->slot = devm_kसुस्मृति(mmc_dev(mmc), hsq->num_slots,
-				 माप(काष्ठा hsq_slot), GFP_KERNEL);
-	अगर (!hsq->slot)
-		वापस -ENOMEM;
+	hsq->slot = devm_kcalloc(mmc_dev(mmc), hsq->num_slots,
+				 sizeof(struct hsq_slot), GFP_KERNEL);
+	if (!hsq->slot)
+		return -ENOMEM;
 
 	hsq->mmc = mmc;
-	hsq->mmc->cqe_निजी = hsq;
+	hsq->mmc->cqe_private = hsq;
 	mmc->cqe_ops = &mmc_hsq_ops;
 
 	INIT_WORK(&hsq->retry_work, mmc_hsq_retry_handler);
 	spin_lock_init(&hsq->lock);
-	init_रुकोqueue_head(&hsq->रुको_queue);
+	init_waitqueue_head(&hsq->wait_queue);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(mmc_hsq_init);
 
-व्योम mmc_hsq_suspend(काष्ठा mmc_host *mmc)
-अणु
+void mmc_hsq_suspend(struct mmc_host *mmc)
+{
 	mmc_hsq_disable(mmc);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(mmc_hsq_suspend);
 
-पूर्णांक mmc_hsq_resume(काष्ठा mmc_host *mmc)
-अणु
-	वापस mmc_hsq_enable(mmc, शून्य);
-पूर्ण
+int mmc_hsq_resume(struct mmc_host *mmc)
+{
+	return mmc_hsq_enable(mmc, NULL);
+}
 EXPORT_SYMBOL_GPL(mmc_hsq_resume);
 
 MODULE_DESCRIPTION("MMC Host Software Queue support");

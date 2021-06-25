@@ -1,29 +1,28 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /* Kernel cryptographic api.
 * cast5.c - Cast5 cipher algorithm (rfc2144).
 *
 * Derived from GnuPG implementation of cast5.
 *
 * Major Changes.
-*	Complete conक्रमmance to rfc2144.
+*	Complete conformance to rfc2144.
 *	Supports key size from 40 to 128 bits.
 *
 * Copyright (C) 1998, 1999, 2000, 2001 Free Software Foundation, Inc.
-* Copyright (C) 2003 Kartikey Mahendra Bhatt <kartik_me@hoपंचांगail.com>.
+* Copyright (C) 2003 Kartikey Mahendra Bhatt <kartik_me@hotmail.com>.
 */
 
 
-#समावेश <यंत्र/unaligned.h>
-#समावेश <linux/init.h>
-#समावेश <linux/crypto.h>
-#समावेश <linux/module.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/माला.स>
-#समावेश <linux/types.h>
-#समावेश <crypto/cast5.h>
+#include <asm/unaligned.h>
+#include <linux/init.h>
+#include <linux/crypto.h>
+#include <linux/module.h>
+#include <linux/errno.h>
+#include <linux/string.h>
+#include <linux/types.h>
+#include <crypto/cast5.h>
 
-अटल स्थिर u32 s5[256] = अणु
+static const u32 s5[256] = {
 	0x7ec90c04, 0x2c6e74b9, 0x9b0e66df, 0xa6337911, 0xb86a7fff,
 	0x1dd358f5, 0x44dd9d44, 0x1731167f,
 	0x08fbf1fa, 0xe7f511cc, 0xd2051b00, 0x735aba00, 0x2ab722d8,
@@ -88,8 +87,8 @@
 	0xeeb9491d, 0x34010718, 0xbb30cab8,
 	0xe822fe15, 0x88570983, 0x750e6249, 0xda627e55, 0x5e76ffa8,
 	0xb1534546, 0x6d47de08, 0xefe9e7d4
-पूर्ण;
-अटल स्थिर u32 s6[256] = अणु
+};
+static const u32 s6[256] = {
 	0xf6fa8f9d, 0x2cac6ce1, 0x4ca34867, 0xe2337f7c, 0x95db08e7,
 	0x016843b4, 0xeced5cbc, 0x325553ac,
 	0xbf9f0960, 0xdfa1e2ed, 0x83f0579d, 0x63ed86b9, 0x1ab6a6b8,
@@ -154,8 +153,8 @@
 	0xf544edeb, 0xb0e93524, 0xbebb8fbd,
 	0xa2d762cf, 0x49c92f54, 0x38b5f331, 0x7128a454, 0x48392905,
 	0xa65b1db8, 0x851c97bd, 0xd675cf2f
-पूर्ण;
-अटल स्थिर u32 s7[256] = अणु
+};
+static const u32 s7[256] = {
 	0x85e04019, 0x332bf567, 0x662dbfff, 0xcfc65693, 0x2a8d7f6f,
 	0xab9bc912, 0xde6008a1, 0x2028da1f,
 	0x0227bce7, 0x4d642916, 0x18fac300, 0x50f18b82, 0x2cb2cb11,
@@ -220,8 +219,8 @@
 	0x3d40f021, 0xc3c0bdae, 0x4958c24c,
 	0x518f36b2, 0x84b1d370, 0x0fedce83, 0x878ddada, 0xf2a279c7,
 	0x94e01be8, 0x90716f4b, 0x954b8aa3
-पूर्ण;
-अटल स्थिर u32 sb8[256] = अणु
+};
+static const u32 sb8[256] = {
 	0xe216300d, 0xbbddfffc, 0xa7ebdabd, 0x35648095, 0x7789f8b7,
 	0xe6c1121b, 0x0e241600, 0x052ce8b5,
 	0x11a9cfb0, 0xe5952f11, 0xece7990a, 0x9386d174, 0x2a42931c,
@@ -286,23 +285,23 @@
 	0x0d2059d1, 0xa466bb1e, 0xf8da0a82,
 	0x04f19130, 0xba6e4ec0, 0x99265164, 0x1ee7230d, 0x50b2ad80,
 	0xeaee6801, 0x8db2a283, 0xea8bf59e
-पूर्ण;
+};
 
-#घोषणा s1 cast_s1
-#घोषणा s2 cast_s2
-#घोषणा s3 cast_s3
-#घोषणा s4 cast_s4
+#define s1 cast_s1
+#define s2 cast_s2
+#define s3 cast_s3
+#define s4 cast_s4
 
-#घोषणा F1(D, m, r)  ((I = ((m) + (D))), (I = rol32(I, (r))),   \
+#define F1(D, m, r)  ((I = ((m) + (D))), (I = rol32(I, (r))),   \
 	(((s1[I >> 24] ^ s2[(I>>16)&0xff]) - s3[(I>>8)&0xff]) + s4[I&0xff]))
-#घोषणा F2(D, m, r)  ((I = ((m) ^ (D))), (I = rol32(I, (r))),   \
+#define F2(D, m, r)  ((I = ((m) ^ (D))), (I = rol32(I, (r))),   \
 	(((s1[I >> 24] - s2[(I>>16)&0xff]) + s3[(I>>8)&0xff]) ^ s4[I&0xff]))
-#घोषणा F3(D, m, r)  ((I = ((m) - (D))), (I = rol32(I, (r))),   \
+#define F3(D, m, r)  ((I = ((m) - (D))), (I = rol32(I, (r))),   \
 	(((s1[I >> 24] + s2[(I>>16)&0xff]) ^ s3[(I>>8)&0xff]) - s4[I&0xff]))
 
 
-व्योम __cast5_encrypt(काष्ठा cast5_ctx *c, u8 *outbuf, स्थिर u8 *inbuf)
-अणु
+void __cast5_encrypt(struct cast5_ctx *c, u8 *outbuf, const u8 *inbuf)
+{
 	u32 l, r, t;
 	u32 I;			/* used by the Fx macros */
 	u32 *Km;
@@ -311,13 +310,13 @@
 	Km = c->Km;
 	Kr = c->Kr;
 
-	/* (L0,R0) <-- (m1...m64).  (Split the plaपूर्णांकext पूर्णांकo left and
+	/* (L0,R0) <-- (m1...m64).  (Split the plaintext into left and
 	 * right 32-bit halves L0 = m1...m32 and R0 = m33...m64.)
 	 */
 	l = get_unaligned_be32(inbuf);
 	r = get_unaligned_be32(inbuf + 4);
 
-	/* (16 rounds) क्रम i from 1 to 16, compute Li and Ri as follows:
+	/* (16 rounds) for i from 1 to 16, compute Li and Ri as follows:
 	 *  Li = Ri-1;
 	 *  Ri = Li-1 ^ f(Ri-1,Kmi,Kri), where f is defined in Section 2.2
 	 * Rounds 1, 4, 7, 10, 13, and 16 use f function Type 1.
@@ -337,27 +336,27 @@
 	t = l; l = r; r = t ^ F1(r, Km[9], Kr[9]);
 	t = l; l = r; r = t ^ F2(r, Km[10], Kr[10]);
 	t = l; l = r; r = t ^ F3(r, Km[11], Kr[11]);
-	अगर (!(c->rr)) अणु
+	if (!(c->rr)) {
 		t = l; l = r; r = t ^ F1(r, Km[12], Kr[12]);
 		t = l; l = r; r = t ^ F2(r, Km[13], Kr[13]);
 		t = l; l = r; r = t ^ F3(r, Km[14], Kr[14]);
 		t = l; l = r; r = t ^ F1(r, Km[15], Kr[15]);
-	पूर्ण
+	}
 
 	/* c1...c64 <-- (R16,L16).  (Exchange final blocks L16, R16 and
-	 *  concatenate to क्रमm the ciphertext.) */
+	 *  concatenate to form the ciphertext.) */
 	put_unaligned_be32(r, outbuf);
 	put_unaligned_be32(l, outbuf + 4);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(__cast5_encrypt);
 
-अटल व्योम cast5_encrypt(काष्ठा crypto_tfm *tfm, u8 *outbuf, स्थिर u8 *inbuf)
-अणु
+static void cast5_encrypt(struct crypto_tfm *tfm, u8 *outbuf, const u8 *inbuf)
+{
 	__cast5_encrypt(crypto_tfm_ctx(tfm), outbuf, inbuf);
-पूर्ण
+}
 
-व्योम __cast5_decrypt(काष्ठा cast5_ctx *c, u8 *outbuf, स्थिर u8 *inbuf)
-अणु
+void __cast5_decrypt(struct cast5_ctx *c, u8 *outbuf, const u8 *inbuf)
+{
 	u32 l, r, t;
 	u32 I;
 	u32 *Km;
@@ -369,12 +368,12 @@ EXPORT_SYMBOL_GPL(__cast5_encrypt);
 	l = get_unaligned_be32(inbuf);
 	r = get_unaligned_be32(inbuf + 4);
 
-	अगर (!(c->rr)) अणु
+	if (!(c->rr)) {
 		t = l; l = r; r = t ^ F1(r, Km[15], Kr[15]);
 		t = l; l = r; r = t ^ F3(r, Km[14], Kr[14]);
 		t = l; l = r; r = t ^ F2(r, Km[13], Kr[13]);
 		t = l; l = r; r = t ^ F1(r, Km[12], Kr[12]);
-	पूर्ण
+	}
 	t = l; l = r; r = t ^ F3(r, Km[11], Kr[11]);
 	t = l; l = r; r = t ^ F2(r, Km[10], Kr[10]);
 	t = l; l = r; r = t ^ F1(r, Km[9], Kr[9]);
@@ -390,19 +389,19 @@ EXPORT_SYMBOL_GPL(__cast5_encrypt);
 
 	put_unaligned_be32(r, outbuf);
 	put_unaligned_be32(l, outbuf + 4);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(__cast5_decrypt);
 
-अटल व्योम cast5_decrypt(काष्ठा crypto_tfm *tfm, u8 *outbuf, स्थिर u8 *inbuf)
-अणु
+static void cast5_decrypt(struct crypto_tfm *tfm, u8 *outbuf, const u8 *inbuf)
+{
 	__cast5_decrypt(crypto_tfm_ctx(tfm), outbuf, inbuf);
-पूर्ण
+}
 
-अटल व्योम key_schedule(u32 *x, u32 *z, u32 *k)
-अणु
+static void key_schedule(u32 *x, u32 *z, u32 *k)
+{
 
-#घोषणा xi(i)   ((x[(i)/4] >> (8*(3-((i)%4)))) & 0xff)
-#घोषणा zi(i)   ((z[(i)/4] >> (8*(3-((i)%4)))) & 0xff)
+#define xi(i)   ((x[(i)/4] >> (8*(3-((i)%4)))) & 0xff)
+#define zi(i)   ((z[(i)/4] >> (8*(3-((i)%4)))) & 0xff)
 
 	z[0] = x[0] ^ s5[xi(13)] ^ s6[xi(15)] ^ s7[xi(12)] ^ sb8[xi(14)] ^
 	    s7[xi(8)];
@@ -468,15 +467,15 @@ EXPORT_SYMBOL_GPL(__cast5_decrypt);
 	k[15] = s5[xi(14)] ^ s6[xi(15)] ^ s7[xi(1)] ^ sb8[xi(0)] ^
 	    sb8[xi(13)];
 
-#अघोषित xi
-#अघोषित zi
-पूर्ण
+#undef xi
+#undef zi
+}
 
 
-पूर्णांक cast5_setkey(काष्ठा crypto_tfm *tfm, स्थिर u8 *key, अचिन्हित पूर्णांक key_len)
-अणु
-	काष्ठा cast5_ctx *c = crypto_tfm_ctx(tfm);
-	पूर्णांक i;
+int cast5_setkey(struct crypto_tfm *tfm, const u8 *key, unsigned int key_len)
+{
+	struct cast5_ctx *c = crypto_tfm_ctx(tfm);
+	int i;
 	u32 x[4];
 	u32 z[4];
 	u32 k[16];
@@ -484,8 +483,8 @@ EXPORT_SYMBOL_GPL(__cast5_decrypt);
 
 	c->rr = key_len <= 10 ? 1 : 0;
 
-	स_रखो(p_key, 0, 16);
-	स_नकल(p_key, key, key_len);
+	memset(p_key, 0, 16);
+	memcpy(p_key, key, key_len);
 
 
 	x[0] = be32_to_cpu(p_key[0]);
@@ -494,46 +493,46 @@ EXPORT_SYMBOL_GPL(__cast5_decrypt);
 	x[3] = be32_to_cpu(p_key[3]);
 
 	key_schedule(x, z, k);
-	क्रम (i = 0; i < 16; i++)
+	for (i = 0; i < 16; i++)
 		c->Km[i] = k[i];
 	key_schedule(x, z, k);
-	क्रम (i = 0; i < 16; i++)
+	for (i = 0; i < 16; i++)
 		c->Kr[i] = k[i] & 0x1f;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(cast5_setkey);
 
-अटल काष्ठा crypto_alg alg = अणु
+static struct crypto_alg alg = {
 	.cra_name		= "cast5",
 	.cra_driver_name	= "cast5-generic",
 	.cra_priority		= 100,
 	.cra_flags		= CRYPTO_ALG_TYPE_CIPHER,
 	.cra_blocksize		= CAST5_BLOCK_SIZE,
-	.cra_ctxsize		= माप(काष्ठा cast5_ctx),
+	.cra_ctxsize		= sizeof(struct cast5_ctx),
 	.cra_module		= THIS_MODULE,
-	.cra_u			= अणु
-		.cipher = अणु
+	.cra_u			= {
+		.cipher = {
 			.cia_min_keysize = CAST5_MIN_KEY_SIZE,
 			.cia_max_keysize = CAST5_MAX_KEY_SIZE,
 			.cia_setkey  = cast5_setkey,
 			.cia_encrypt = cast5_encrypt,
 			.cia_decrypt = cast5_decrypt
-		पूर्ण
-	पूर्ण
-पूर्ण;
+		}
+	}
+};
 
-अटल पूर्णांक __init cast5_mod_init(व्योम)
-अणु
-	वापस crypto_रेजिस्टर_alg(&alg);
-पूर्ण
+static int __init cast5_mod_init(void)
+{
+	return crypto_register_alg(&alg);
+}
 
-अटल व्योम __निकास cast5_mod_fini(व्योम)
-अणु
-	crypto_unरेजिस्टर_alg(&alg);
-पूर्ण
+static void __exit cast5_mod_fini(void)
+{
+	crypto_unregister_alg(&alg);
+}
 
 subsys_initcall(cast5_mod_init);
-module_निकास(cast5_mod_fini);
+module_exit(cast5_mod_fini);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Cast5 Cipher Algorithm");

@@ -1,151 +1,150 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/init.h>
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/console.h>
-#समावेश <linux/rtc.h>
-#समावेश <linux/vt_kern.h>
-#समावेश <linux/पूर्णांकerrupt.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/init.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/tty.h>
+#include <linux/console.h>
+#include <linux/rtc.h>
+#include <linux/vt_kern.h>
+#include <linux/interrupt.h>
 
-#समावेश <यंत्र/setup.h>
-#समावेश <यंत्र/bootinfo.h>
-#समावेश <यंत्र/bootinfo-apollo.h>
-#समावेश <यंत्र/byteorder.h>
-#समावेश <यंत्र/apollohw.h>
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/machdep.h>
+#include <asm/setup.h>
+#include <asm/bootinfo.h>
+#include <asm/bootinfo-apollo.h>
+#include <asm/byteorder.h>
+#include <asm/apollohw.h>
+#include <asm/irq.h>
+#include <asm/machdep.h>
 
-u_दीर्घ sio01_physaddr;
-u_दीर्घ sio23_physaddr;
-u_दीर्घ rtc_physaddr;
-u_दीर्घ pica_physaddr;
-u_दीर्घ picb_physaddr;
-u_दीर्घ cpuctrl_physaddr;
-u_दीर्घ समयr_physaddr;
-u_दीर्घ apollo_model;
+u_long sio01_physaddr;
+u_long sio23_physaddr;
+u_long rtc_physaddr;
+u_long pica_physaddr;
+u_long picb_physaddr;
+u_long cpuctrl_physaddr;
+u_long timer_physaddr;
+u_long apollo_model;
 
-बाह्य व्योम dn_sched_init(व्योम);
-बाह्य व्योम dn_init_IRQ(व्योम);
-बाह्य पूर्णांक dn_dummy_hwclk(पूर्णांक, काष्ठा rtc_समय *);
-बाह्य व्योम dn_dummy_reset(व्योम);
-#अगर_घोषित CONFIG_HEARTBEAT
-अटल व्योम dn_heartbeat(पूर्णांक on);
-#पूर्ण_अगर
-अटल irqवापस_t dn_समयr_पूर्णांक(पूर्णांक irq,व्योम *);
-अटल व्योम dn_get_model(अक्षर *model);
-अटल स्थिर अक्षर *apollo_models[] = अणु
+extern void dn_sched_init(void);
+extern void dn_init_IRQ(void);
+extern int dn_dummy_hwclk(int, struct rtc_time *);
+extern void dn_dummy_reset(void);
+#ifdef CONFIG_HEARTBEAT
+static void dn_heartbeat(int on);
+#endif
+static irqreturn_t dn_timer_int(int irq,void *);
+static void dn_get_model(char *model);
+static const char *apollo_models[] = {
 	[APOLLO_DN3000-APOLLO_DN3000] = "DN3000 (Otter)",
 	[APOLLO_DN3010-APOLLO_DN3000] = "DN3010 (Otter)",
 	[APOLLO_DN3500-APOLLO_DN3000] = "DN3500 (Cougar II)",
 	[APOLLO_DN4000-APOLLO_DN3000] = "DN4000 (Mink)",
 	[APOLLO_DN4500-APOLLO_DN3000] = "DN4500 (Roadrunner)"
-पूर्ण;
+};
 
-पूर्णांक __init apollo_parse_bootinfo(स्थिर काष्ठा bi_record *record)
-अणु
-	पूर्णांक unknown = 0;
-	स्थिर व्योम *data = record->data;
+int __init apollo_parse_bootinfo(const struct bi_record *record)
+{
+	int unknown = 0;
+	const void *data = record->data;
 
-	चयन (be16_to_cpu(record->tag)) अणु
-	हाल BI_APOLLO_MODEL:
+	switch (be16_to_cpu(record->tag)) {
+	case BI_APOLLO_MODEL:
 		apollo_model = be32_to_cpup(data);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		 unknown=1;
-	पूर्ण
+	}
 
-	वापस unknown;
-पूर्ण
+	return unknown;
+}
 
-अटल व्योम __init dn_setup_model(व्योम)
-अणु
+static void __init dn_setup_model(void)
+{
 	pr_info("Apollo hardware found: [%s]\n",
 		apollo_models[apollo_model - APOLLO_DN3000]);
 
-	चयन(apollo_model) अणु
-		हाल APOLLO_UNKNOWN:
+	switch(apollo_model) {
+		case APOLLO_UNKNOWN:
 			panic("Unknown apollo model");
-			अवरोध;
-		हाल APOLLO_DN3000:
-		हाल APOLLO_DN3010:
+			break;
+		case APOLLO_DN3000:
+		case APOLLO_DN3010:
 			sio01_physaddr=SAU8_SIO01_PHYSADDR;
 			rtc_physaddr=SAU8_RTC_PHYSADDR;
 			pica_physaddr=SAU8_PICA;
 			picb_physaddr=SAU8_PICB;
 			cpuctrl_physaddr=SAU8_CPUCTRL;
-			समयr_physaddr=SAU8_TIMER;
-			अवरोध;
-		हाल APOLLO_DN4000:
+			timer_physaddr=SAU8_TIMER;
+			break;
+		case APOLLO_DN4000:
 			sio01_physaddr=SAU7_SIO01_PHYSADDR;
 			sio23_physaddr=SAU7_SIO23_PHYSADDR;
 			rtc_physaddr=SAU7_RTC_PHYSADDR;
 			pica_physaddr=SAU7_PICA;
 			picb_physaddr=SAU7_PICB;
 			cpuctrl_physaddr=SAU7_CPUCTRL;
-			समयr_physaddr=SAU7_TIMER;
-			अवरोध;
-		हाल APOLLO_DN4500:
+			timer_physaddr=SAU7_TIMER;
+			break;
+		case APOLLO_DN4500:
 			panic("Apollo model not yet supported");
-			अवरोध;
-		हाल APOLLO_DN3500:
+			break;
+		case APOLLO_DN3500:
 			sio01_physaddr=SAU7_SIO01_PHYSADDR;
 			sio23_physaddr=SAU7_SIO23_PHYSADDR;
 			rtc_physaddr=SAU7_RTC_PHYSADDR;
 			pica_physaddr=SAU7_PICA;
 			picb_physaddr=SAU7_PICB;
 			cpuctrl_physaddr=SAU7_CPUCTRL;
-			समयr_physaddr=SAU7_TIMER;
-			अवरोध;
-		शेष:
+			timer_physaddr=SAU7_TIMER;
+			break;
+		default:
 			panic("Undefined apollo model");
-			अवरोध;
-	पूर्ण
+			break;
+	}
 
 
-पूर्ण
+}
 
-पूर्णांक dn_serial_console_रुको_key(काष्ठा console *co) अणु
+int dn_serial_console_wait_key(struct console *co) {
 
-	जबतक(!(sio01.srb_csrb & 1))
+	while(!(sio01.srb_csrb & 1))
 		barrier();
-	वापस sio01.rhrb_thrb;
-पूर्ण
+	return sio01.rhrb_thrb;
+}
 
-व्योम dn_serial_console_ग_लिखो (काष्ठा console *co, स्थिर अक्षर *str,अचिन्हित पूर्णांक count)
-अणु
-   जबतक(count--) अणु
-	अगर (*str == '\n') अणु
-	sio01.rhrb_thrb = (अचिन्हित अक्षर)'\r';
-	जबतक (!(sio01.srb_csrb & 0x4))
+void dn_serial_console_write (struct console *co, const char *str,unsigned int count)
+{
+   while(count--) {
+	if (*str == '\n') {
+	sio01.rhrb_thrb = (unsigned char)'\r';
+	while (!(sio01.srb_csrb & 0x4))
                 ;
-	पूर्ण
-    sio01.rhrb_thrb = (अचिन्हित अक्षर)*str++;
-    जबतक (!(sio01.srb_csrb & 0x4))
+	}
+    sio01.rhrb_thrb = (unsigned char)*str++;
+    while (!(sio01.srb_csrb & 0x4))
             ;
-  पूर्ण
-पूर्ण
+  }
+}
 
-व्योम dn_serial_prपूर्णांक (स्थिर अक्षर *str)
-अणु
-    जबतक (*str) अणु
-        अगर (*str == '\n') अणु
-            sio01.rhrb_thrb = (अचिन्हित अक्षर)'\r';
-            जबतक (!(sio01.srb_csrb & 0x4))
+void dn_serial_print (const char *str)
+{
+    while (*str) {
+        if (*str == '\n') {
+            sio01.rhrb_thrb = (unsigned char)'\r';
+            while (!(sio01.srb_csrb & 0x4))
                 ;
-        पूर्ण
-        sio01.rhrb_thrb = (अचिन्हित अक्षर)*str++;
-        जबतक (!(sio01.srb_csrb & 0x4))
+        }
+        sio01.rhrb_thrb = (unsigned char)*str++;
+        while (!(sio01.srb_csrb & 0x4))
             ;
-    पूर्ण
-पूर्ण
+    }
+}
 
-व्योम __init config_apollo(व्योम)
-अणु
-	पूर्णांक i;
+void __init config_apollo(void)
+{
+	int i;
 
 	dn_setup_model();
 
@@ -153,117 +152,117 @@ u_दीर्घ apollo_model;
 	mach_init_IRQ=dn_init_IRQ;
 	mach_hwclk           = dn_dummy_hwclk; /* */
 	mach_reset	     = dn_dummy_reset;  /* */
-#अगर_घोषित CONFIG_HEARTBEAT
+#ifdef CONFIG_HEARTBEAT
 	mach_heartbeat = dn_heartbeat;
-#पूर्ण_अगर
+#endif
 	mach_get_model       = dn_get_model;
 
 	cpuctrl=0xaa00;
 
 	/* clear DMA translation table */
-	क्रम(i=0;i<0x400;i++)
+	for(i=0;i<0x400;i++)
 		addr_xlat_map[i]=0;
 
-पूर्ण
+}
 
-irqवापस_t dn_समयr_पूर्णांक(पूर्णांक irq, व्योम *dev_id)
-अणु
-	अस्थिर अचिन्हित अक्षर x;
+irqreturn_t dn_timer_int(int irq, void *dev_id)
+{
+	volatile unsigned char x;
 
-	legacy_समयr_tick(1);
-	समयr_heartbeat();
+	legacy_timer_tick(1);
+	timer_heartbeat();
 
-	x = *(अस्थिर अचिन्हित अक्षर *)(apollo_समयr + 3);
-	x = *(अस्थिर अचिन्हित अक्षर *)(apollo_समयr + 5);
+	x = *(volatile unsigned char *)(apollo_timer + 3);
+	x = *(volatile unsigned char *)(apollo_timer + 5);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-व्योम dn_sched_init(व्योम)
-अणु
-	/* program समयr 1 */
-	*(अस्थिर अचिन्हित अक्षर *)(apollo_समयr + 3) = 0x01;
-	*(अस्थिर अचिन्हित अक्षर *)(apollo_समयr + 1) = 0x40;
-	*(अस्थिर अचिन्हित अक्षर *)(apollo_समयr + 5) = 0x09;
-	*(अस्थिर अचिन्हित अक्षर *)(apollo_समयr + 7) = 0xc4;
+void dn_sched_init(void)
+{
+	/* program timer 1 */
+	*(volatile unsigned char *)(apollo_timer + 3) = 0x01;
+	*(volatile unsigned char *)(apollo_timer + 1) = 0x40;
+	*(volatile unsigned char *)(apollo_timer + 5) = 0x09;
+	*(volatile unsigned char *)(apollo_timer + 7) = 0xc4;
 
 	/* enable IRQ of PIC B */
-	*(अस्थिर अचिन्हित अक्षर *)(pica+1)&=(~8);
+	*(volatile unsigned char *)(pica+1)&=(~8);
 
-#अगर 0
+#if 0
 	pr_info("*(0x10803) %02x\n",
-		*(अस्थिर अचिन्हित अक्षर *)(apollo_समयr + 0x3));
+		*(volatile unsigned char *)(apollo_timer + 0x3));
 	pr_info("*(0x10803) %02x\n",
-		*(अस्थिर अचिन्हित अक्षर *)(apollo_समयr + 0x3));
-#पूर्ण_अगर
+		*(volatile unsigned char *)(apollo_timer + 0x3));
+#endif
 
-	अगर (request_irq(IRQ_APOLLO, dn_समयr_पूर्णांक, 0, "time", शून्य))
+	if (request_irq(IRQ_APOLLO, dn_timer_int, 0, "time", NULL))
 		pr_err("Couldn't register timer interrupt\n");
-पूर्ण
+}
 
-पूर्णांक dn_dummy_hwclk(पूर्णांक op, काष्ठा rtc_समय *t) अणु
+int dn_dummy_hwclk(int op, struct rtc_time *t) {
 
 
-  अगर(!op) अणु /* पढ़ो */
-    t->पंचांग_sec=rtc->second;
-    t->पंचांग_min=rtc->minute;
-    t->पंचांग_hour=rtc->hours;
-    t->पंचांग_mday=rtc->day_of_month;
-    t->पंचांग_wday=rtc->day_of_week;
-    t->पंचांग_mon = rtc->month - 1;
-    t->पंचांग_year=rtc->year;
-    अगर (t->पंचांग_year < 70)
-	t->पंचांग_year += 100;
-  पूर्ण अन्यथा अणु
-    rtc->second=t->पंचांग_sec;
-    rtc->minute=t->पंचांग_min;
-    rtc->hours=t->पंचांग_hour;
-    rtc->day_of_month=t->पंचांग_mday;
-    अगर(t->पंचांग_wday!=-1)
-      rtc->day_of_week=t->पंचांग_wday;
-    rtc->month = t->पंचांग_mon + 1;
-    rtc->year = t->पंचांग_year % 100;
-  पूर्ण
+  if(!op) { /* read */
+    t->tm_sec=rtc->second;
+    t->tm_min=rtc->minute;
+    t->tm_hour=rtc->hours;
+    t->tm_mday=rtc->day_of_month;
+    t->tm_wday=rtc->day_of_week;
+    t->tm_mon = rtc->month - 1;
+    t->tm_year=rtc->year;
+    if (t->tm_year < 70)
+	t->tm_year += 100;
+  } else {
+    rtc->second=t->tm_sec;
+    rtc->minute=t->tm_min;
+    rtc->hours=t->tm_hour;
+    rtc->day_of_month=t->tm_mday;
+    if(t->tm_wday!=-1)
+      rtc->day_of_week=t->tm_wday;
+    rtc->month = t->tm_mon + 1;
+    rtc->year = t->tm_year % 100;
+  }
 
-  वापस 0;
+  return 0;
 
-पूर्ण
+}
 
-व्योम dn_dummy_reset(व्योम) अणु
+void dn_dummy_reset(void) {
 
-  dn_serial_prपूर्णांक("The end !\n");
+  dn_serial_print("The end !\n");
 
-  क्रम(;;);
+  for(;;);
 
-पूर्ण
+}
 
-व्योम dn_dummy_रुकोbut(व्योम) अणु
+void dn_dummy_waitbut(void) {
 
-  dn_serial_prपूर्णांक("waitbut\n");
+  dn_serial_print("waitbut\n");
 
-पूर्ण
+}
 
-अटल व्योम dn_get_model(अक्षर *model)
-अणु
-    म_नकल(model, "Apollo ");
-    अगर (apollo_model >= APOLLO_DN3000 && apollo_model <= APOLLO_DN4500)
-        म_जोड़ो(model, apollo_models[apollo_model - APOLLO_DN3000]);
-पूर्ण
+static void dn_get_model(char *model)
+{
+    strcpy(model, "Apollo ");
+    if (apollo_model >= APOLLO_DN3000 && apollo_model <= APOLLO_DN4500)
+        strcat(model, apollo_models[apollo_model - APOLLO_DN3000]);
+}
 
-#अगर_घोषित CONFIG_HEARTBEAT
-अटल पूर्णांक dn_cpuctrl=0xff00;
+#ifdef CONFIG_HEARTBEAT
+static int dn_cpuctrl=0xff00;
 
-अटल व्योम dn_heartbeat(पूर्णांक on) अणु
+static void dn_heartbeat(int on) {
 
-	अगर(on) अणु
+	if(on) {
 		dn_cpuctrl&=~0x100;
 		cpuctrl=dn_cpuctrl;
-	पूर्ण
-	अन्यथा अणु
+	}
+	else {
 		dn_cpuctrl&=~0x100;
 		dn_cpuctrl|=0x100;
 		cpuctrl=dn_cpuctrl;
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर
+	}
+}
+#endif
 

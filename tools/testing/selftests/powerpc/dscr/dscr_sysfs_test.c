@@ -1,101 +1,100 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * POWER Data Stream Control Register (DSCR) sysfs पूर्णांकerface test
+ * POWER Data Stream Control Register (DSCR) sysfs interface test
  *
- * This test updates to प्रणाली wide DSCR शेष through the sysfs पूर्णांकerface
- * and then verअगरies that all the CPU specअगरic DSCR शेषs are updated as
- * well verअगरied from their sysfs पूर्णांकerfaces.
+ * This test updates to system wide DSCR default through the sysfs interface
+ * and then verifies that all the CPU specific DSCR defaults are updated as
+ * well verified from their sysfs interfaces.
  *
  * Copyright 2015, Anshuman Khandual, IBM Corporation.
  */
-#समावेश "dscr.h"
+#include "dscr.h"
 
-अटल पूर्णांक check_cpu_dscr_शेष(अक्षर *file, अचिन्हित दीर्घ val)
-अणु
-	अक्षर buf[10];
-	पूर्णांक fd, rc;
+static int check_cpu_dscr_default(char *file, unsigned long val)
+{
+	char buf[10];
+	int fd, rc;
 
-	fd = खोलो(file, O_RDWR);
-	अगर (fd == -1) अणु
-		लिखो_त्रुटि("open() failed");
-		वापस 1;
-	पूर्ण
+	fd = open(file, O_RDWR);
+	if (fd == -1) {
+		perror("open() failed");
+		return 1;
+	}
 
-	rc = पढ़ो(fd, buf, माप(buf));
-	अगर (rc == -1) अणु
-		लिखो_त्रुटि("read() failed");
-		वापस 1;
-	पूर्ण
-	बंद(fd);
+	rc = read(fd, buf, sizeof(buf));
+	if (rc == -1) {
+		perror("read() failed");
+		return 1;
+	}
+	close(fd);
 
 	buf[rc] = '\0';
-	अगर (म_से_दीर्घ(buf, शून्य, 16) != val) अणु
-		म_लिखो("DSCR match failed: %ld (system) %ld (cpu)\n",
-					val, म_से_दीर्घ(buf, शून्य, 16));
-		वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	if (strtol(buf, NULL, 16) != val) {
+		printf("DSCR match failed: %ld (system) %ld (cpu)\n",
+					val, strtol(buf, NULL, 16));
+		return 1;
+	}
+	return 0;
+}
 
-अटल पूर्णांक check_all_cpu_dscr_शेषs(अचिन्हित दीर्घ val)
-अणु
-	सूची *sysfs;
-	काष्ठा dirent *dp;
-	अक्षर file[LEN_MAX];
+static int check_all_cpu_dscr_defaults(unsigned long val)
+{
+	DIR *sysfs;
+	struct dirent *dp;
+	char file[LEN_MAX];
 
-	sysfs = सूची_खोलो(CPU_PATH);
-	अगर (!sysfs) अणु
-		लिखो_त्रुटि("opendir() failed");
-		वापस 1;
-	पूर्ण
+	sysfs = opendir(CPU_PATH);
+	if (!sysfs) {
+		perror("opendir() failed");
+		return 1;
+	}
 
-	जबतक ((dp = सूची_पढ़ो(sysfs))) अणु
-		पूर्णांक len;
+	while ((dp = readdir(sysfs))) {
+		int len;
 
-		अगर (!(dp->d_type & DT_सूची))
-			जारी;
-		अगर (!म_भेद(dp->d_name, "cpuidle"))
-			जारी;
-		अगर (!म_माला(dp->d_name, "cpu"))
-			जारी;
+		if (!(dp->d_type & DT_DIR))
+			continue;
+		if (!strcmp(dp->d_name, "cpuidle"))
+			continue;
+		if (!strstr(dp->d_name, "cpu"))
+			continue;
 
-		len = snम_लिखो(file, LEN_MAX, "%s%s/dscr", CPU_PATH, dp->d_name);
-		अगर (len >= LEN_MAX)
-			जारी;
-		अगर (access(file, F_OK))
-			जारी;
+		len = snprintf(file, LEN_MAX, "%s%s/dscr", CPU_PATH, dp->d_name);
+		if (len >= LEN_MAX)
+			continue;
+		if (access(file, F_OK))
+			continue;
 
-		अगर (check_cpu_dscr_शेष(file, val))
-			वापस 1;
-	पूर्ण
-	बंद_सूची(sysfs);
-	वापस 0;
-पूर्ण
+		if (check_cpu_dscr_default(file, val))
+			return 1;
+	}
+	closedir(sysfs);
+	return 0;
+}
 
-पूर्णांक dscr_sysfs(व्योम)
-अणु
-	अचिन्हित दीर्घ orig_dscr_शेष;
-	पूर्णांक i, j;
+int dscr_sysfs(void)
+{
+	unsigned long orig_dscr_default;
+	int i, j;
 
 	SKIP_IF(!have_hwcap2(PPC_FEATURE2_DSCR));
 
-	orig_dscr_शेष = get_शेष_dscr();
-	क्रम (i = 0; i < COUNT; i++) अणु
-		क्रम (j = 0; j < DSCR_MAX; j++) अणु
-			set_शेष_dscr(j);
-			अगर (check_all_cpu_dscr_शेषs(j))
-				जाओ fail;
-		पूर्ण
-	पूर्ण
-	set_शेष_dscr(orig_dscr_शेष);
-	वापस 0;
+	orig_dscr_default = get_default_dscr();
+	for (i = 0; i < COUNT; i++) {
+		for (j = 0; j < DSCR_MAX; j++) {
+			set_default_dscr(j);
+			if (check_all_cpu_dscr_defaults(j))
+				goto fail;
+		}
+	}
+	set_default_dscr(orig_dscr_default);
+	return 0;
 fail:
-	set_शेष_dscr(orig_dscr_शेष);
-	वापस 1;
-पूर्ण
+	set_default_dscr(orig_dscr_default);
+	return 1;
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
-	वापस test_harness(dscr_sysfs, "dscr_sysfs_test");
-पूर्ण
+int main(int argc, char *argv[])
+{
+	return test_harness(dscr_sysfs, "dscr_sysfs_test");
+}

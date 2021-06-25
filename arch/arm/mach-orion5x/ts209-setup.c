@@ -1,37 +1,36 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * QNAP TS-109/TS-209 Board Setup
  *
- * Maपूर्णांकainer: Byron Bradley <byron.bbradley@gmail.com>
+ * Maintainer: Byron Bradley <byron.bbradley@gmail.com>
  */
-#समावेश <linux/gpपन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/mtd/physmap.h>
-#समावेश <linux/mtd/rawnand.h>
-#समावेश <linux/mv643xx_eth.h>
-#समावेश <linux/gpio_keys.h>
-#समावेश <linux/input.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/serial_reg.h>
-#समावेश <linux/ata_platक्रमm.h>
-#समावेश <यंत्र/mach-types.h>
-#समावेश <यंत्र/mach/arch.h>
-#समावेश <यंत्र/mach/pci.h>
-#समावेश "common.h"
-#समावेश "mpp.h"
-#समावेश "orion5x.h"
-#समावेश "tsx09-common.h"
+#include <linux/gpio.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/platform_device.h>
+#include <linux/pci.h>
+#include <linux/irq.h>
+#include <linux/mtd/physmap.h>
+#include <linux/mtd/rawnand.h>
+#include <linux/mv643xx_eth.h>
+#include <linux/gpio_keys.h>
+#include <linux/input.h>
+#include <linux/i2c.h>
+#include <linux/serial_reg.h>
+#include <linux/ata_platform.h>
+#include <asm/mach-types.h>
+#include <asm/mach/arch.h>
+#include <asm/mach/pci.h>
+#include "common.h"
+#include "mpp.h"
+#include "orion5x.h"
+#include "tsx09-common.h"
 
-#घोषणा QNAP_TS209_NOR_BOOT_BASE 0xf4000000
-#घोषणा QNAP_TS209_NOR_BOOT_SIZE SZ_8M
+#define QNAP_TS209_NOR_BOOT_BASE 0xf4000000
+#define QNAP_TS209_NOR_BOOT_SIZE SZ_8M
 
 /****************************************************************************
- * 8MiB NOR flash. The काष्ठा mtd_partition is not in the same order as the
+ * 8MiB NOR flash. The struct mtd_partition is not in the same order as the
  *     partitions on the device because we want to keep compatibility with
  *     existing QNAP firmware.
  *
@@ -39,146 +38,146 @@
  *  [2] 0x00000000-0x00200000 : "Kernel"
  *  [3] 0x00200000-0x00600000 : "RootFS1"
  *  [4] 0x00600000-0x00700000 : "RootFS2"
- *  [6] 0x00700000-0x00760000 : "NAS Config" (पढ़ो-only)
+ *  [6] 0x00700000-0x00760000 : "NAS Config" (read-only)
  *  [5] 0x00760000-0x00780000 : "U-Boot Config"
- *  [1] 0x00780000-0x00800000 : "U-Boot" (पढ़ो-only)
+ *  [1] 0x00780000-0x00800000 : "U-Boot" (read-only)
  ***************************************************************************/
-अटल काष्ठा mtd_partition qnap_ts209_partitions[] = अणु
-	अणु
+static struct mtd_partition qnap_ts209_partitions[] = {
+	{
 		.name		= "U-Boot",
 		.size		= 0x00080000,
 		.offset		= 0x00780000,
 		.mask_flags	= MTD_WRITEABLE,
-	पूर्ण, अणु
+	}, {
 		.name		= "Kernel",
 		.size		= 0x00200000,
 		.offset		= 0,
-	पूर्ण, अणु
+	}, {
 		.name		= "RootFS1",
 		.size		= 0x00400000,
 		.offset		= 0x00200000,
-	पूर्ण, अणु
+	}, {
 		.name		= "RootFS2",
 		.size		= 0x00100000,
 		.offset		= 0x00600000,
-	पूर्ण, अणु
+	}, {
 		.name		= "U-Boot Config",
 		.size		= 0x00020000,
 		.offset		= 0x00760000,
-	पूर्ण, अणु
+	}, {
 		.name		= "NAS Config",
 		.size		= 0x00060000,
 		.offset		= 0x00700000,
 		.mask_flags	= MTD_WRITEABLE,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा physmap_flash_data qnap_ts209_nor_flash_data = अणु
+static struct physmap_flash_data qnap_ts209_nor_flash_data = {
 	.width		= 1,
 	.parts		= qnap_ts209_partitions,
 	.nr_parts	= ARRAY_SIZE(qnap_ts209_partitions)
-पूर्ण;
+};
 
-अटल काष्ठा resource qnap_ts209_nor_flash_resource = अणु
+static struct resource qnap_ts209_nor_flash_resource = {
 	.flags	= IORESOURCE_MEM,
 	.start	= QNAP_TS209_NOR_BOOT_BASE,
 	.end	= QNAP_TS209_NOR_BOOT_BASE + QNAP_TS209_NOR_BOOT_SIZE - 1,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device qnap_ts209_nor_flash = अणु
+static struct platform_device qnap_ts209_nor_flash = {
 	.name		= "physmap-flash",
 	.id		= 0,
-	.dev		= अणु
-		.platक्रमm_data	= &qnap_ts209_nor_flash_data,
-	पूर्ण,
+	.dev		= {
+		.platform_data	= &qnap_ts209_nor_flash_data,
+	},
 	.resource	= &qnap_ts209_nor_flash_resource,
 	.num_resources	= 1,
-पूर्ण;
+};
 
 /*****************************************************************************
  * PCI
  ****************************************************************************/
 
-#घोषणा QNAP_TS209_PCI_SLOT0_OFFS	7
-#घोषणा QNAP_TS209_PCI_SLOT0_IRQ_PIN	6
-#घोषणा QNAP_TS209_PCI_SLOT1_IRQ_PIN	7
+#define QNAP_TS209_PCI_SLOT0_OFFS	7
+#define QNAP_TS209_PCI_SLOT0_IRQ_PIN	6
+#define QNAP_TS209_PCI_SLOT1_IRQ_PIN	7
 
-अटल व्योम __init qnap_ts209_pci_preinit(व्योम)
-अणु
-	पूर्णांक pin;
+static void __init qnap_ts209_pci_preinit(void)
+{
+	int pin;
 
 	/*
 	 * Configure PCI GPIO IRQ pins
 	 */
 	pin = QNAP_TS209_PCI_SLOT0_IRQ_PIN;
-	अगर (gpio_request(pin, "PCI Int1") == 0) अणु
-		अगर (gpio_direction_input(pin) == 0) अणु
+	if (gpio_request(pin, "PCI Int1") == 0) {
+		if (gpio_direction_input(pin) == 0) {
 			irq_set_irq_type(gpio_to_irq(pin), IRQ_TYPE_LEVEL_LOW);
-		पूर्ण अन्यथा अणु
-			prपूर्णांकk(KERN_ERR "qnap_ts209_pci_preinit failed to "
+		} else {
+			printk(KERN_ERR "qnap_ts209_pci_preinit failed to "
 					"set_irq_type pin %d\n", pin);
-			gpio_मुक्त(pin);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		prपूर्णांकk(KERN_ERR "qnap_ts209_pci_preinit failed to gpio_request "
+			gpio_free(pin);
+		}
+	} else {
+		printk(KERN_ERR "qnap_ts209_pci_preinit failed to gpio_request "
 				"%d\n", pin);
-	पूर्ण
+	}
 
 	pin = QNAP_TS209_PCI_SLOT1_IRQ_PIN;
-	अगर (gpio_request(pin, "PCI Int2") == 0) अणु
-		अगर (gpio_direction_input(pin) == 0) अणु
+	if (gpio_request(pin, "PCI Int2") == 0) {
+		if (gpio_direction_input(pin) == 0) {
 			irq_set_irq_type(gpio_to_irq(pin), IRQ_TYPE_LEVEL_LOW);
-		पूर्ण अन्यथा अणु
-			prपूर्णांकk(KERN_ERR "qnap_ts209_pci_preinit failed "
+		} else {
+			printk(KERN_ERR "qnap_ts209_pci_preinit failed "
 					"to set_irq_type pin %d\n", pin);
-			gpio_मुक्त(pin);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		prपूर्णांकk(KERN_ERR "qnap_ts209_pci_preinit failed to gpio_request "
+			gpio_free(pin);
+		}
+	} else {
+		printk(KERN_ERR "qnap_ts209_pci_preinit failed to gpio_request "
 				"%d\n", pin);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक __init qnap_ts209_pci_map_irq(स्थिर काष्ठा pci_dev *dev, u8 slot,
+static int __init qnap_ts209_pci_map_irq(const struct pci_dev *dev, u8 slot,
 	u8 pin)
-अणु
-	पूर्णांक irq;
+{
+	int irq;
 
 	/*
-	 * Check क्रम devices with hard-wired IRQs.
+	 * Check for devices with hard-wired IRQs.
 	 */
 	irq = orion5x_pci_map_irq(dev, slot, pin);
-	अगर (irq != -1)
-		वापस irq;
+	if (irq != -1)
+		return irq;
 
 	/*
 	 * PCI IRQs are connected via GPIOs.
 	 */
-	चयन (slot - QNAP_TS209_PCI_SLOT0_OFFS) अणु
-	हाल 0:
-		वापस gpio_to_irq(QNAP_TS209_PCI_SLOT0_IRQ_PIN);
-	हाल 1:
-		वापस gpio_to_irq(QNAP_TS209_PCI_SLOT1_IRQ_PIN);
-	शेष:
-		वापस -1;
-	पूर्ण
-पूर्ण
+	switch (slot - QNAP_TS209_PCI_SLOT0_OFFS) {
+	case 0:
+		return gpio_to_irq(QNAP_TS209_PCI_SLOT0_IRQ_PIN);
+	case 1:
+		return gpio_to_irq(QNAP_TS209_PCI_SLOT1_IRQ_PIN);
+	default:
+		return -1;
+	}
+}
 
-अटल काष्ठा hw_pci qnap_ts209_pci __initdata = अणु
+static struct hw_pci qnap_ts209_pci __initdata = {
 	.nr_controllers	= 2,
 	.preinit	= qnap_ts209_pci_preinit,
 	.setup		= orion5x_pci_sys_setup,
 	.scan		= orion5x_pci_sys_scan_bus,
 	.map_irq	= qnap_ts209_pci_map_irq,
-पूर्ण;
+};
 
-अटल पूर्णांक __init qnap_ts209_pci_init(व्योम)
-अणु
-	अगर (machine_is_ts209())
+static int __init qnap_ts209_pci_init(void)
+{
+	if (machine_is_ts209())
 		pci_common_init(&qnap_ts209_pci);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 subsys_initcall(qnap_ts209_pci_init);
 
@@ -186,64 +185,64 @@ subsys_initcall(qnap_ts209_pci_init);
  * RTC S35390A on I2C bus
  ****************************************************************************/
 
-#घोषणा TS209_RTC_GPIO	3
+#define TS209_RTC_GPIO	3
 
-अटल काष्ठा i2c_board_info __initdata qnap_ts209_i2c_rtc = अणु
+static struct i2c_board_info __initdata qnap_ts209_i2c_rtc = {
 	I2C_BOARD_INFO("s35390a", 0x30),
 	.irq	= 0,
-पूर्ण;
+};
 
 /****************************************************************************
  * GPIO Attached Keys
  *     Power button is attached to the PIC microcontroller
  ****************************************************************************/
 
-#घोषणा QNAP_TS209_GPIO_KEY_MEDIA	1
-#घोषणा QNAP_TS209_GPIO_KEY_RESET	2
+#define QNAP_TS209_GPIO_KEY_MEDIA	1
+#define QNAP_TS209_GPIO_KEY_RESET	2
 
-अटल काष्ठा gpio_keys_button qnap_ts209_buttons[] = अणु
-	अणु
+static struct gpio_keys_button qnap_ts209_buttons[] = {
+	{
 		.code		= KEY_COPY,
 		.gpio		= QNAP_TS209_GPIO_KEY_MEDIA,
 		.desc		= "USB Copy Button",
 		.active_low	= 1,
-	पूर्ण, अणु
+	}, {
 		.code		= KEY_RESTART,
 		.gpio		= QNAP_TS209_GPIO_KEY_RESET,
 		.desc		= "Reset Button",
 		.active_low	= 1,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा gpio_keys_platक्रमm_data qnap_ts209_button_data = अणु
+static struct gpio_keys_platform_data qnap_ts209_button_data = {
 	.buttons	= qnap_ts209_buttons,
 	.nbuttons	= ARRAY_SIZE(qnap_ts209_buttons),
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device qnap_ts209_button_device = अणु
+static struct platform_device qnap_ts209_button_device = {
 	.name		= "gpio-keys",
 	.id		= -1,
 	.num_resources	= 0,
-	.dev		= अणु
-		.platक्रमm_data	= &qnap_ts209_button_data,
-	पूर्ण,
-पूर्ण;
+	.dev		= {
+		.platform_data	= &qnap_ts209_button_data,
+	},
+};
 
 /*****************************************************************************
  * SATA
  ****************************************************************************/
-अटल काष्ठा mv_sata_platक्रमm_data qnap_ts209_sata_data = अणु
+static struct mv_sata_platform_data qnap_ts209_sata_data = {
 	.n_ports	= 2,
-पूर्ण;
+};
 
 /*****************************************************************************
 
  * General Setup
  ****************************************************************************/
-अटल अचिन्हित पूर्णांक ts209_mpp_modes[] __initdata = अणु
+static unsigned int ts209_mpp_modes[] __initdata = {
 	MPP0_UNUSED,
 	MPP1_GPIO,		/* USB copy button */
-	MPP2_GPIO,		/* Load शेषs button */
+	MPP2_GPIO,		/* Load defaults button */
 	MPP3_GPIO,		/* GPIO RTC */
 	MPP4_UNUSED,
 	MPP5_UNUSED,
@@ -262,10 +261,10 @@ subsys_initcall(qnap_ts209_pci_init);
 	MPP18_GPIO,		/* SW_RST */
 	MPP19_UNUSED,
 	0,
-पूर्ण;
+};
 
-अटल व्योम __init qnap_ts209_init(व्योम)
-अणु
+static void __init qnap_ts209_init(void)
+{
 	/*
 	 * Setup basic Orion functions. Need to be called early.
 	 */
@@ -274,8 +273,8 @@ subsys_initcall(qnap_ts209_pci_init);
 	orion5x_mpp_conf(ts209_mpp_modes);
 
 	/*
-	 * MPP[20] PCI घड़ी 0
-	 * MPP[21] PCI घड़ी 1
+	 * MPP[20] PCI clock 0
+	 * MPP[21] PCI clock 1
 	 * MPP[22] USB 0 over current
 	 * MPP[23-25] Reserved
 	 */
@@ -283,11 +282,11 @@ subsys_initcall(qnap_ts209_pci_init);
 	/*
 	 * Configure peripherals.
 	 */
-	mvebu_mbus_add_winकरोw_by_id(ORION_MBUS_DEVBUS_BOOT_TARGET,
+	mvebu_mbus_add_window_by_id(ORION_MBUS_DEVBUS_BOOT_TARGET,
 				    ORION_MBUS_DEVBUS_BOOT_ATTR,
 				    QNAP_TS209_NOR_BOOT_BASE,
 				    QNAP_TS209_NOR_BOOT_SIZE);
-	platक्रमm_device_रेजिस्टर(&qnap_ts209_nor_flash);
+	platform_device_register(&qnap_ts209_nor_flash);
 
 	orion5x_ehci0_init();
 	orion5x_ehci1_init();
@@ -301,32 +300,32 @@ subsys_initcall(qnap_ts209_pci_init);
 	orion5x_uart1_init();
 	orion5x_xor_init();
 
-	platक्रमm_device_रेजिस्टर(&qnap_ts209_button_device);
+	platform_device_register(&qnap_ts209_button_device);
 
-	/* Get RTC IRQ and रेजिस्टर the chip */
-	अगर (gpio_request(TS209_RTC_GPIO, "rtc") == 0) अणु
-		अगर (gpio_direction_input(TS209_RTC_GPIO) == 0)
+	/* Get RTC IRQ and register the chip */
+	if (gpio_request(TS209_RTC_GPIO, "rtc") == 0) {
+		if (gpio_direction_input(TS209_RTC_GPIO) == 0)
 			qnap_ts209_i2c_rtc.irq = gpio_to_irq(TS209_RTC_GPIO);
-		अन्यथा
-			gpio_मुक्त(TS209_RTC_GPIO);
-	पूर्ण
-	अगर (qnap_ts209_i2c_rtc.irq == 0)
+		else
+			gpio_free(TS209_RTC_GPIO);
+	}
+	if (qnap_ts209_i2c_rtc.irq == 0)
 		pr_warn("qnap_ts209_init: failed to get RTC IRQ\n");
-	i2c_रेजिस्टर_board_info(0, &qnap_ts209_i2c_rtc, 1);
+	i2c_register_board_info(0, &qnap_ts209_i2c_rtc, 1);
 
-	/* रेजिस्टर tsx09 specअगरic घातer-off method */
-	pm_घातer_off = qnap_tsx09_घातer_off;
-पूर्ण
+	/* register tsx09 specific power-off method */
+	pm_power_off = qnap_tsx09_power_off;
+}
 
 MACHINE_START(TS209, "QNAP TS-109/TS-209")
-	/* Maपूर्णांकainer: Byron Bradley <byron.bbradley@gmail.com> */
+	/* Maintainer: Byron Bradley <byron.bbradley@gmail.com> */
 	.atag_offset	= 0x100,
 	.nr_irqs	= ORION5X_NR_IRQS,
 	.init_machine	= qnap_ts209_init,
 	.map_io		= orion5x_map_io,
 	.init_early	= orion5x_init_early,
 	.init_irq	= orion5x_init_irq,
-	.init_समय	= orion5x_समयr_init,
+	.init_time	= orion5x_timer_init,
 	.fixup		= tag_fixup_mem32,
 	.restart	= orion5x_restart,
 MACHINE_END

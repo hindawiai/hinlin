@@ -1,182 +1,181 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /* The industrial I/O core, trigger handling functions
  *
  * Copyright (c) 2008 Jonathan Cameron
  */
-#समावेश <linux/irq.h>
-#समावेश <linux/module.h>
-#समावेश <linux/atomic.h>
+#include <linux/irq.h>
+#include <linux/module.h>
+#include <linux/atomic.h>
 
-#अगर_अघोषित _IIO_TRIGGER_H_
-#घोषणा _IIO_TRIGGER_H_
+#ifndef _IIO_TRIGGER_H_
+#define _IIO_TRIGGER_H_
 
-#अगर_घोषित CONFIG_IIO_TRIGGER
-काष्ठा iio_subirq अणु
+#ifdef CONFIG_IIO_TRIGGER
+struct iio_subirq {
 	bool enabled;
-पूर्ण;
+};
 
-काष्ठा iio_dev;
-काष्ठा iio_trigger;
+struct iio_dev;
+struct iio_trigger;
 
 /**
- * काष्ठा iio_trigger_ops - operations काष्ठाure क्रम an iio_trigger.
- * @set_trigger_state:	चयन on/off the trigger on demand
+ * struct iio_trigger_ops - operations structure for an iio_trigger.
+ * @set_trigger_state:	switch on/off the trigger on demand
  * @reenable:		function to reenable the trigger when the
- *			use count is zero (may be शून्य)
+ *			use count is zero (may be NULL)
  * @validate_device:	function to validate the device when the
- *			current trigger माला_लो changed.
+ *			current trigger gets changed.
  *
- * This is typically अटल स्थिर within a driver and shared by
+ * This is typically static const within a driver and shared by
  * instances of a given device.
  **/
-काष्ठा iio_trigger_ops अणु
-	पूर्णांक (*set_trigger_state)(काष्ठा iio_trigger *trig, bool state);
-	व्योम (*reenable)(काष्ठा iio_trigger *trig);
-	पूर्णांक (*validate_device)(काष्ठा iio_trigger *trig,
-			       काष्ठा iio_dev *indio_dev);
-पूर्ण;
+struct iio_trigger_ops {
+	int (*set_trigger_state)(struct iio_trigger *trig, bool state);
+	void (*reenable)(struct iio_trigger *trig);
+	int (*validate_device)(struct iio_trigger *trig,
+			       struct iio_dev *indio_dev);
+};
 
 
 /**
- * काष्ठा iio_trigger - industrial I/O trigger device
- * @ops:		[DRIVER] operations काष्ठाure
+ * struct iio_trigger - industrial I/O trigger device
+ * @ops:		[DRIVER] operations structure
  * @owner:		[INTERN] owner of this driver module
  * @id:			[INTERN] unique id number
  * @name:		[DRIVER] unique name
- * @dev:		[DRIVER] associated device (अगर relevant)
- * @list:		[INTERN] used in मुख्यtenance of global trigger list
- * @alloc_list:		[DRIVER] used क्रम driver specअगरic trigger list
- * @use_count:		[INTERN] use count क्रम the trigger.
+ * @dev:		[DRIVER] associated device (if relevant)
+ * @list:		[INTERN] used in maintenance of global trigger list
+ * @alloc_list:		[DRIVER] used for driver specific trigger list
+ * @use_count:		[INTERN] use count for the trigger.
  * @subirq_chip:	[INTERN] associate 'virtual' irq chip.
- * @subirq_base:	[INTERN] base number क्रम irqs provided by trigger.
- * @subirqs:		[INTERN] inक्रमmation about the 'child' irqs.
- * @pool:		[INTERN] biपंचांगap of irqs currently in use.
+ * @subirq_base:	[INTERN] base number for irqs provided by trigger.
+ * @subirqs:		[INTERN] information about the 'child' irqs.
+ * @pool:		[INTERN] bitmap of irqs currently in use.
  * @pool_lock:		[INTERN] protection of the irq pool.
- * @attached_own_device:[INTERN] अगर we are using our own device as trigger,
- *			i.e. अगर we रेजिस्टरed a poll function to the same
+ * @attached_own_device:[INTERN] if we are using our own device as trigger,
+ *			i.e. if we registered a poll function to the same
  *			device as the one providing the trigger.
  **/
-काष्ठा iio_trigger अणु
-	स्थिर काष्ठा iio_trigger_ops	*ops;
-	काष्ठा module			*owner;
-	पूर्णांक				id;
-	स्थिर अक्षर			*name;
-	काष्ठा device			dev;
+struct iio_trigger {
+	const struct iio_trigger_ops	*ops;
+	struct module			*owner;
+	int				id;
+	const char			*name;
+	struct device			dev;
 
-	काष्ठा list_head		list;
-	काष्ठा list_head		alloc_list;
+	struct list_head		list;
+	struct list_head		alloc_list;
 	atomic_t			use_count;
 
-	काष्ठा irq_chip			subirq_chip;
-	पूर्णांक				subirq_base;
+	struct irq_chip			subirq_chip;
+	int				subirq_base;
 
-	काष्ठा iio_subirq subirqs[CONFIG_IIO_CONSUMERS_PER_TRIGGER];
-	अचिन्हित दीर्घ pool[BITS_TO_LONGS(CONFIG_IIO_CONSUMERS_PER_TRIGGER)];
-	काष्ठा mutex			pool_lock;
+	struct iio_subirq subirqs[CONFIG_IIO_CONSUMERS_PER_TRIGGER];
+	unsigned long pool[BITS_TO_LONGS(CONFIG_IIO_CONSUMERS_PER_TRIGGER)];
+	struct mutex			pool_lock;
 	bool				attached_own_device;
-पूर्ण;
+};
 
 
-अटल अंतरभूत काष्ठा iio_trigger *to_iio_trigger(काष्ठा device *d)
-अणु
-	वापस container_of(d, काष्ठा iio_trigger, dev);
-पूर्ण
+static inline struct iio_trigger *to_iio_trigger(struct device *d)
+{
+	return container_of(d, struct iio_trigger, dev);
+}
 
-अटल अंतरभूत व्योम iio_trigger_put(काष्ठा iio_trigger *trig)
-अणु
+static inline void iio_trigger_put(struct iio_trigger *trig)
+{
 	module_put(trig->owner);
 	put_device(&trig->dev);
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा iio_trigger *iio_trigger_get(काष्ठा iio_trigger *trig)
-अणु
+static inline struct iio_trigger *iio_trigger_get(struct iio_trigger *trig)
+{
 	get_device(&trig->dev);
 	__module_get(trig->owner);
 
-	वापस trig;
-पूर्ण
+	return trig;
+}
 
 /**
  * iio_trigger_set_drvdata() - Set trigger driver data
- * @trig: IIO trigger काष्ठाure
- * @data: Driver specअगरic data
+ * @trig: IIO trigger structure
+ * @data: Driver specific data
  *
- * Allows to attach an arbitrary poपूर्णांकer to an IIO trigger, which can later be
+ * Allows to attach an arbitrary pointer to an IIO trigger, which can later be
  * retrieved by iio_trigger_get_drvdata().
  */
-अटल अंतरभूत व्योम iio_trigger_set_drvdata(काष्ठा iio_trigger *trig, व्योम *data)
-अणु
+static inline void iio_trigger_set_drvdata(struct iio_trigger *trig, void *data)
+{
 	dev_set_drvdata(&trig->dev, data);
-पूर्ण
+}
 
 /**
  * iio_trigger_get_drvdata() - Get trigger driver data
- * @trig: IIO trigger काष्ठाure
+ * @trig: IIO trigger structure
  *
  * Returns the data previously set with iio_trigger_set_drvdata()
  */
-अटल अंतरभूत व्योम *iio_trigger_get_drvdata(काष्ठा iio_trigger *trig)
-अणु
-	वापस dev_get_drvdata(&trig->dev);
-पूर्ण
+static inline void *iio_trigger_get_drvdata(struct iio_trigger *trig)
+{
+	return dev_get_drvdata(&trig->dev);
+}
 
 /**
- * iio_trigger_रेजिस्टर() - रेजिस्टर a trigger with the IIO core
- * @trig_info:	trigger to be रेजिस्टरed
+ * iio_trigger_register() - register a trigger with the IIO core
+ * @trig_info:	trigger to be registered
  **/
-#घोषणा iio_trigger_रेजिस्टर(trig_info) \
-	__iio_trigger_रेजिस्टर((trig_info), THIS_MODULE)
-पूर्णांक __iio_trigger_रेजिस्टर(काष्ठा iio_trigger *trig_info,
-			   काष्ठा module *this_mod);
+#define iio_trigger_register(trig_info) \
+	__iio_trigger_register((trig_info), THIS_MODULE)
+int __iio_trigger_register(struct iio_trigger *trig_info,
+			   struct module *this_mod);
 
-#घोषणा devm_iio_trigger_रेजिस्टर(dev, trig_info) \
-	__devm_iio_trigger_रेजिस्टर((dev), (trig_info), THIS_MODULE)
-पूर्णांक __devm_iio_trigger_रेजिस्टर(काष्ठा device *dev,
-				काष्ठा iio_trigger *trig_info,
-				काष्ठा module *this_mod);
+#define devm_iio_trigger_register(dev, trig_info) \
+	__devm_iio_trigger_register((dev), (trig_info), THIS_MODULE)
+int __devm_iio_trigger_register(struct device *dev,
+				struct iio_trigger *trig_info,
+				struct module *this_mod);
 
 /**
- * iio_trigger_unरेजिस्टर() - unरेजिस्टर a trigger from the core
- * @trig_info:	trigger to be unरेजिस्टरed
+ * iio_trigger_unregister() - unregister a trigger from the core
+ * @trig_info:	trigger to be unregistered
  **/
-व्योम iio_trigger_unरेजिस्टर(काष्ठा iio_trigger *trig_info);
+void iio_trigger_unregister(struct iio_trigger *trig_info);
 
 /**
  * iio_trigger_set_immutable() - set an immutable trigger on destination
  *
- * @indio_dev: IIO device काष्ठाure containing the device
+ * @indio_dev: IIO device structure containing the device
  * @trig: trigger to assign to device
  *
  **/
-पूर्णांक iio_trigger_set_immutable(काष्ठा iio_dev *indio_dev, काष्ठा iio_trigger *trig);
+int iio_trigger_set_immutable(struct iio_dev *indio_dev, struct iio_trigger *trig);
 
 /**
  * iio_trigger_poll() - called on a trigger occurring
  * @trig:	trigger which occurred
  *
- * Typically called in relevant hardware पूर्णांकerrupt handler.
+ * Typically called in relevant hardware interrupt handler.
  **/
-व्योम iio_trigger_poll(काष्ठा iio_trigger *trig);
-व्योम iio_trigger_poll_chained(काष्ठा iio_trigger *trig);
+void iio_trigger_poll(struct iio_trigger *trig);
+void iio_trigger_poll_chained(struct iio_trigger *trig);
 
-irqवापस_t iio_trigger_generic_data_rdy_poll(पूर्णांक irq, व्योम *निजी);
+irqreturn_t iio_trigger_generic_data_rdy_poll(int irq, void *private);
 
-__म_लिखो(2, 3)
-काष्ठा iio_trigger *iio_trigger_alloc(काष्ठा device *parent, स्थिर अक्षर *fmt, ...);
-व्योम iio_trigger_मुक्त(काष्ठा iio_trigger *trig);
+__printf(2, 3)
+struct iio_trigger *iio_trigger_alloc(struct device *parent, const char *fmt, ...);
+void iio_trigger_free(struct iio_trigger *trig);
 
 /**
- * iio_trigger_using_own() - tells us अगर we use our own HW trigger ourselves
+ * iio_trigger_using_own() - tells us if we use our own HW trigger ourselves
  * @indio_dev:  device to check
  */
-bool iio_trigger_using_own(काष्ठा iio_dev *indio_dev);
+bool iio_trigger_using_own(struct iio_dev *indio_dev);
 
-पूर्णांक iio_trigger_validate_own_device(काष्ठा iio_trigger *trig,
-				     काष्ठा iio_dev *indio_dev);
+int iio_trigger_validate_own_device(struct iio_trigger *trig,
+				     struct iio_dev *indio_dev);
 
-#अन्यथा
-काष्ठा iio_trigger;
-काष्ठा iio_trigger_ops;
-#पूर्ण_अगर
-#पूर्ण_अगर /* _IIO_TRIGGER_H_ */
+#else
+struct iio_trigger;
+struct iio_trigger_ops;
+#endif
+#endif /* _IIO_TRIGGER_H_ */

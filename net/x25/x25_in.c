@@ -1,10 +1,9 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *	X.25 Packet Layer release 002
  *
- *	This is ALPHA test software. This code may अवरोध your machine,
- *	अक्रमomly fail to work with new releases, misbehave and/or generally
+ *	This is ALPHA test software. This code may break your machine,
+ *	randomly fail to work with new releases, misbehave and/or generally
  *	screw up. It might even work.
  *
  *	This code REQUIRES 2.1.15 or higher
@@ -12,43 +11,43 @@
  *	History
  *	X.25 001	Jonathan Naylor	  Started coding.
  *	X.25 002	Jonathan Naylor	  Centralised disconnection code.
- *					  New समयr architecture.
+ *					  New timer architecture.
  *	2000-03-20	Daniela Squassoni Disabling/enabling of facilities
  *					  negotiation.
- *	2000-11-10	Henner Eisen	  Check and reset क्रम out-of-sequence
+ *	2000-11-10	Henner Eisen	  Check and reset for out-of-sequence
  *					  i-frames.
  */
 
-#घोषणा pr_fmt(fmt) "X25: " fmt
+#define pr_fmt(fmt) "X25: " fmt
 
-#समावेश <linux/slab.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/skbuff.h>
-#समावेश <net/sock.h>
-#समावेश <net/tcp_states.h>
-#समावेश <net/x25.h>
+#include <linux/slab.h>
+#include <linux/errno.h>
+#include <linux/kernel.h>
+#include <linux/string.h>
+#include <linux/skbuff.h>
+#include <net/sock.h>
+#include <net/tcp_states.h>
+#include <net/x25.h>
 
-अटल पूर्णांक x25_queue_rx_frame(काष्ठा sock *sk, काष्ठा sk_buff *skb, पूर्णांक more)
-अणु
-	काष्ठा sk_buff *skbo, *skbn = skb;
-	काष्ठा x25_sock *x25 = x25_sk(sk);
+static int x25_queue_rx_frame(struct sock *sk, struct sk_buff *skb, int more)
+{
+	struct sk_buff *skbo, *skbn = skb;
+	struct x25_sock *x25 = x25_sk(sk);
 
-	अगर (more) अणु
+	if (more) {
 		x25->fraglen += skb->len;
 		skb_queue_tail(&x25->fragment_queue, skb);
 		skb_set_owner_r(skb, sk);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (!more && x25->fraglen > 0) अणु	/* End of fragment */
-		पूर्णांक len = x25->fraglen + skb->len;
+	if (!more && x25->fraglen > 0) {	/* End of fragment */
+		int len = x25->fraglen + skb->len;
 
-		अगर ((skbn = alloc_skb(len, GFP_ATOMIC)) == शून्य)अणु
-			kमुक्त_skb(skb);
-			वापस 1;
-		पूर्ण
+		if ((skbn = alloc_skb(len, GFP_ATOMIC)) == NULL){
+			kfree_skb(skb);
+			return 1;
+		}
 
 		skb_queue_tail(&x25->fragment_queue, skb);
 
@@ -57,44 +56,44 @@
 		skbo = skb_dequeue(&x25->fragment_queue);
 		skb_copy_from_linear_data(skbo, skb_put(skbn, skbo->len),
 					  skbo->len);
-		kमुक्त_skb(skbo);
+		kfree_skb(skbo);
 
-		जबतक ((skbo =
-			skb_dequeue(&x25->fragment_queue)) != शून्य) अणु
+		while ((skbo =
+			skb_dequeue(&x25->fragment_queue)) != NULL) {
 			skb_pull(skbo, (x25->neighbour->extended) ?
 					X25_EXT_MIN_LEN : X25_STD_MIN_LEN);
 			skb_copy_from_linear_data(skbo,
 						  skb_put(skbn, skbo->len),
 						  skbo->len);
-			kमुक्त_skb(skbo);
-		पूर्ण
+			kfree_skb(skbo);
+		}
 
 		x25->fraglen = 0;
-	पूर्ण
+	}
 
 	skb_set_owner_r(skbn, sk);
 	skb_queue_tail(&sk->sk_receive_queue, skbn);
-	अगर (!sock_flag(sk, SOCK_DEAD))
-		sk->sk_data_पढ़ोy(sk);
+	if (!sock_flag(sk, SOCK_DEAD))
+		sk->sk_data_ready(sk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * State machine क्रम state 1, Aरुकोing Call Accepted State.
- * The handling of the समयr(s) is in file x25_समयr.c.
+ * State machine for state 1, Awaiting Call Accepted State.
+ * The handling of the timer(s) is in file x25_timer.c.
  * Handling of state 0 and connection release is in af_x25.c.
  */
-अटल पूर्णांक x25_state1_machine(काष्ठा sock *sk, काष्ठा sk_buff *skb, पूर्णांक frametype)
-अणु
-	काष्ठा x25_address source_addr, dest_addr;
-	पूर्णांक len;
-	काष्ठा x25_sock *x25 = x25_sk(sk);
+static int x25_state1_machine(struct sock *sk, struct sk_buff *skb, int frametype)
+{
+	struct x25_address source_addr, dest_addr;
+	int len;
+	struct x25_sock *x25 = x25_sk(sk);
 
-	चयन (frametype) अणु
-	हाल X25_CALL_ACCEPTED: अणु
+	switch (frametype) {
+	case X25_CALL_ACCEPTED: {
 
-		x25_stop_समयr(sk);
+		x25_stop_timer(sk);
 		x25->condition = 0x00;
 		x25->vs        = 0;
 		x25->va        = 0;
@@ -105,254 +104,254 @@
 		/*
 		 *	Parse the data in the frame.
 		 */
-		अगर (!pskb_may_pull(skb, X25_STD_MIN_LEN))
-			जाओ out_clear;
+		if (!pskb_may_pull(skb, X25_STD_MIN_LEN))
+			goto out_clear;
 		skb_pull(skb, X25_STD_MIN_LEN);
 
 		len = x25_parse_address_block(skb, &source_addr,
 					      &dest_addr);
-		अगर (len > 0)
+		if (len > 0)
 			skb_pull(skb, len);
-		अन्यथा अगर (len < 0)
-			जाओ out_clear;
+		else if (len < 0)
+			goto out_clear;
 
 		len = x25_parse_facilities(skb, &x25->facilities,
 					   &x25->dte_facilities,
 					   &x25->vc_facil_mask);
-		अगर (len > 0)
+		if (len > 0)
 			skb_pull(skb, len);
-		अन्यथा अगर (len < 0)
-			जाओ out_clear;
+		else if (len < 0)
+			goto out_clear;
 		/*
 		 *	Copy any Call User Data.
 		 */
-		अगर (skb->len > 0) अणु
-			अगर (skb->len > X25_MAX_CUD_LEN)
-				जाओ out_clear;
+		if (skb->len > 0) {
+			if (skb->len > X25_MAX_CUD_LEN)
+				goto out_clear;
 
 			skb_copy_bits(skb, 0, x25->calluserdata.cuddata,
 				skb->len);
 			x25->calluserdata.cudlength = skb->len;
-		पूर्ण
-		अगर (!sock_flag(sk, SOCK_DEAD))
+		}
+		if (!sock_flag(sk, SOCK_DEAD))
 			sk->sk_state_change(sk);
-		अवरोध;
-	पूर्ण
-	हाल X25_CALL_REQUEST:
+		break;
+	}
+	case X25_CALL_REQUEST:
 		/* call collision */
 		x25->causediag.cause      = 0x01;
 		x25->causediag.diagnostic = 0x48;
 
-		x25_ग_लिखो_पूर्णांकernal(sk, X25_CLEAR_REQUEST);
+		x25_write_internal(sk, X25_CLEAR_REQUEST);
 		x25_disconnect(sk, EISCONN, 0x01, 0x48);
-		अवरोध;
+		break;
 
-	हाल X25_CLEAR_REQUEST:
-		अगर (!pskb_may_pull(skb, X25_STD_MIN_LEN + 2))
-			जाओ out_clear;
+	case X25_CLEAR_REQUEST:
+		if (!pskb_may_pull(skb, X25_STD_MIN_LEN + 2))
+			goto out_clear;
 
-		x25_ग_लिखो_पूर्णांकernal(sk, X25_CLEAR_CONFIRMATION);
+		x25_write_internal(sk, X25_CLEAR_CONFIRMATION);
 		x25_disconnect(sk, ECONNREFUSED, skb->data[3], skb->data[4]);
-		अवरोध;
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
-	वापस 0;
+	return 0;
 
 out_clear:
-	x25_ग_लिखो_पूर्णांकernal(sk, X25_CLEAR_REQUEST);
+	x25_write_internal(sk, X25_CLEAR_REQUEST);
 	x25->state = X25_STATE_2;
-	x25_start_t23समयr(sk);
-	वापस 0;
-पूर्ण
+	x25_start_t23timer(sk);
+	return 0;
+}
 
 /*
- * State machine क्रम state 2, Aरुकोing Clear Confirmation State.
- * The handling of the समयr(s) is in file x25_समयr.c
+ * State machine for state 2, Awaiting Clear Confirmation State.
+ * The handling of the timer(s) is in file x25_timer.c
  * Handling of state 0 and connection release is in af_x25.c.
  */
-अटल पूर्णांक x25_state2_machine(काष्ठा sock *sk, काष्ठा sk_buff *skb, पूर्णांक frametype)
-अणु
-	चयन (frametype) अणु
+static int x25_state2_machine(struct sock *sk, struct sk_buff *skb, int frametype)
+{
+	switch (frametype) {
 
-		हाल X25_CLEAR_REQUEST:
-			अगर (!pskb_may_pull(skb, X25_STD_MIN_LEN + 2))
-				जाओ out_clear;
+		case X25_CLEAR_REQUEST:
+			if (!pskb_may_pull(skb, X25_STD_MIN_LEN + 2))
+				goto out_clear;
 
-			x25_ग_लिखो_पूर्णांकernal(sk, X25_CLEAR_CONFIRMATION);
+			x25_write_internal(sk, X25_CLEAR_CONFIRMATION);
 			x25_disconnect(sk, 0, skb->data[3], skb->data[4]);
-			अवरोध;
+			break;
 
-		हाल X25_CLEAR_CONFIRMATION:
+		case X25_CLEAR_CONFIRMATION:
 			x25_disconnect(sk, 0, 0, 0);
-			अवरोध;
+			break;
 
-		शेष:
-			अवरोध;
-	पूर्ण
+		default:
+			break;
+	}
 
-	वापस 0;
+	return 0;
 
 out_clear:
-	x25_ग_लिखो_पूर्णांकernal(sk, X25_CLEAR_REQUEST);
-	x25_start_t23समयr(sk);
-	वापस 0;
-पूर्ण
+	x25_write_internal(sk, X25_CLEAR_REQUEST);
+	x25_start_t23timer(sk);
+	return 0;
+}
 
 /*
- * State machine क्रम state 3, Connected State.
- * The handling of the समयr(s) is in file x25_समयr.c
+ * State machine for state 3, Connected State.
+ * The handling of the timer(s) is in file x25_timer.c
  * Handling of state 0 and connection release is in af_x25.c.
  */
-अटल पूर्णांक x25_state3_machine(काष्ठा sock *sk, काष्ठा sk_buff *skb, पूर्णांक frametype, पूर्णांक ns, पूर्णांक nr, पूर्णांक q, पूर्णांक d, पूर्णांक m)
-अणु
-	पूर्णांक queued = 0;
-	पूर्णांक modulus;
-	काष्ठा x25_sock *x25 = x25_sk(sk);
+static int x25_state3_machine(struct sock *sk, struct sk_buff *skb, int frametype, int ns, int nr, int q, int d, int m)
+{
+	int queued = 0;
+	int modulus;
+	struct x25_sock *x25 = x25_sk(sk);
 
 	modulus = (x25->neighbour->extended) ? X25_EMODULUS : X25_SMODULUS;
 
-	चयन (frametype) अणु
+	switch (frametype) {
 
-		हाल X25_RESET_REQUEST:
-			x25_ग_लिखो_पूर्णांकernal(sk, X25_RESET_CONFIRMATION);
-			x25_stop_समयr(sk);
+		case X25_RESET_REQUEST:
+			x25_write_internal(sk, X25_RESET_CONFIRMATION);
+			x25_stop_timer(sk);
 			x25->condition = 0x00;
 			x25->vs        = 0;
 			x25->vr        = 0;
 			x25->va        = 0;
 			x25->vl        = 0;
 			x25_requeue_frames(sk);
-			अवरोध;
+			break;
 
-		हाल X25_CLEAR_REQUEST:
-			अगर (!pskb_may_pull(skb, X25_STD_MIN_LEN + 2))
-				जाओ out_clear;
+		case X25_CLEAR_REQUEST:
+			if (!pskb_may_pull(skb, X25_STD_MIN_LEN + 2))
+				goto out_clear;
 
-			x25_ग_लिखो_पूर्णांकernal(sk, X25_CLEAR_CONFIRMATION);
+			x25_write_internal(sk, X25_CLEAR_CONFIRMATION);
 			x25_disconnect(sk, 0, skb->data[3], skb->data[4]);
-			अवरोध;
+			break;
 
-		हाल X25_RR:
-		हाल X25_RNR:
-			अगर (!x25_validate_nr(sk, nr)) अणु
+		case X25_RR:
+		case X25_RNR:
+			if (!x25_validate_nr(sk, nr)) {
 				x25_clear_queues(sk);
-				x25_ग_लिखो_पूर्णांकernal(sk, X25_RESET_REQUEST);
-				x25_start_t22समयr(sk);
+				x25_write_internal(sk, X25_RESET_REQUEST);
+				x25_start_t22timer(sk);
 				x25->condition = 0x00;
 				x25->vs        = 0;
 				x25->vr        = 0;
 				x25->va        = 0;
 				x25->vl        = 0;
 				x25->state     = X25_STATE_4;
-			पूर्ण अन्यथा अणु
+			} else {
 				x25_frames_acked(sk, nr);
-				अगर (frametype == X25_RNR) अणु
+				if (frametype == X25_RNR) {
 					x25->condition |= X25_COND_PEER_RX_BUSY;
-				पूर्ण अन्यथा अणु
+				} else {
 					x25->condition &= ~X25_COND_PEER_RX_BUSY;
-				पूर्ण
-			पूर्ण
-			अवरोध;
+				}
+			}
+			break;
 
-		हाल X25_DATA:	/* XXX */
+		case X25_DATA:	/* XXX */
 			x25->condition &= ~X25_COND_PEER_RX_BUSY;
-			अगर ((ns != x25->vr) || !x25_validate_nr(sk, nr)) अणु
+			if ((ns != x25->vr) || !x25_validate_nr(sk, nr)) {
 				x25_clear_queues(sk);
-				x25_ग_लिखो_पूर्णांकernal(sk, X25_RESET_REQUEST);
-				x25_start_t22समयr(sk);
+				x25_write_internal(sk, X25_RESET_REQUEST);
+				x25_start_t22timer(sk);
 				x25->condition = 0x00;
 				x25->vs        = 0;
 				x25->vr        = 0;
 				x25->va        = 0;
 				x25->vl        = 0;
 				x25->state     = X25_STATE_4;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			x25_frames_acked(sk, nr);
-			अगर (ns == x25->vr) अणु
-				अगर (x25_queue_rx_frame(sk, skb, m) == 0) अणु
+			if (ns == x25->vr) {
+				if (x25_queue_rx_frame(sk, skb, m) == 0) {
 					x25->vr = (x25->vr + 1) % modulus;
 					queued = 1;
-				पूर्ण अन्यथा अणु
+				} else {
 					/* Should never happen */
 					x25_clear_queues(sk);
-					x25_ग_लिखो_पूर्णांकernal(sk, X25_RESET_REQUEST);
-					x25_start_t22समयr(sk);
+					x25_write_internal(sk, X25_RESET_REQUEST);
+					x25_start_t22timer(sk);
 					x25->condition = 0x00;
 					x25->vs        = 0;
 					x25->vr        = 0;
 					x25->va        = 0;
 					x25->vl        = 0;
 					x25->state     = X25_STATE_4;
-					अवरोध;
-				पूर्ण
-				अगर (atomic_पढ़ो(&sk->sk_rmem_alloc) >
+					break;
+				}
+				if (atomic_read(&sk->sk_rmem_alloc) >
 				    (sk->sk_rcvbuf >> 1))
 					x25->condition |= X25_COND_OWN_RX_BUSY;
-			पूर्ण
+			}
 			/*
-			 *	If the winकरोw is full Ack it immediately, अन्यथा
-			 *	start the holdback समयr.
+			 *	If the window is full Ack it immediately, else
+			 *	start the holdback timer.
 			 */
-			अगर (((x25->vl + x25->facilities.winsize_in) % modulus) == x25->vr) अणु
+			if (((x25->vl + x25->facilities.winsize_in) % modulus) == x25->vr) {
 				x25->condition &= ~X25_COND_ACK_PENDING;
-				x25_stop_समयr(sk);
+				x25_stop_timer(sk);
 				x25_enquiry_response(sk);
-			पूर्ण अन्यथा अणु
+			} else {
 				x25->condition |= X25_COND_ACK_PENDING;
-				x25_start_t2समयr(sk);
-			पूर्ण
-			अवरोध;
+				x25_start_t2timer(sk);
+			}
+			break;
 
-		हाल X25_INTERRUPT_CONFIRMATION:
+		case X25_INTERRUPT_CONFIRMATION:
 			clear_bit(X25_INTERRUPT_FLAG, &x25->flags);
-			अवरोध;
+			break;
 
-		हाल X25_INTERRUPT:
-			अगर (sock_flag(sk, SOCK_URGINLINE))
+		case X25_INTERRUPT:
+			if (sock_flag(sk, SOCK_URGINLINE))
 				queued = !sock_queue_rcv_skb(sk, skb);
-			अन्यथा अणु
+			else {
 				skb_set_owner_r(skb, sk);
-				skb_queue_tail(&x25->पूर्णांकerrupt_in_queue, skb);
+				skb_queue_tail(&x25->interrupt_in_queue, skb);
 				queued = 1;
-			पूर्ण
+			}
 			sk_send_sigurg(sk);
-			x25_ग_लिखो_पूर्णांकernal(sk, X25_INTERRUPT_CONFIRMATION);
-			अवरोध;
+			x25_write_internal(sk, X25_INTERRUPT_CONFIRMATION);
+			break;
 
-		शेष:
+		default:
 			pr_warn("unknown %02X in state 3\n", frametype);
-			अवरोध;
-	पूर्ण
+			break;
+	}
 
-	वापस queued;
+	return queued;
 
 out_clear:
-	x25_ग_लिखो_पूर्णांकernal(sk, X25_CLEAR_REQUEST);
+	x25_write_internal(sk, X25_CLEAR_REQUEST);
 	x25->state = X25_STATE_2;
-	x25_start_t23समयr(sk);
-	वापस 0;
-पूर्ण
+	x25_start_t23timer(sk);
+	return 0;
+}
 
 /*
- * State machine क्रम state 4, Aरुकोing Reset Confirmation State.
- * The handling of the समयr(s) is in file x25_समयr.c
+ * State machine for state 4, Awaiting Reset Confirmation State.
+ * The handling of the timer(s) is in file x25_timer.c
  * Handling of state 0 and connection release is in af_x25.c.
  */
-अटल पूर्णांक x25_state4_machine(काष्ठा sock *sk, काष्ठा sk_buff *skb, पूर्णांक frametype)
-अणु
-	काष्ठा x25_sock *x25 = x25_sk(sk);
+static int x25_state4_machine(struct sock *sk, struct sk_buff *skb, int frametype)
+{
+	struct x25_sock *x25 = x25_sk(sk);
 
-	चयन (frametype) अणु
+	switch (frametype) {
 
-		हाल X25_RESET_REQUEST:
-			x25_ग_लिखो_पूर्णांकernal(sk, X25_RESET_CONFIRMATION);
+		case X25_RESET_REQUEST:
+			x25_write_internal(sk, X25_RESET_CONFIRMATION);
 			fallthrough;
-		हाल X25_RESET_CONFIRMATION: अणु
-			x25_stop_समयr(sk);
+		case X25_RESET_CONFIRMATION: {
+			x25_stop_timer(sk);
 			x25->condition = 0x00;
 			x25->va        = 0;
 			x25->vr        = 0;
@@ -360,98 +359,98 @@ out_clear:
 			x25->vl        = 0;
 			x25->state     = X25_STATE_3;
 			x25_requeue_frames(sk);
-			अवरोध;
-		पूर्ण
-		हाल X25_CLEAR_REQUEST:
-			अगर (!pskb_may_pull(skb, X25_STD_MIN_LEN + 2))
-				जाओ out_clear;
+			break;
+		}
+		case X25_CLEAR_REQUEST:
+			if (!pskb_may_pull(skb, X25_STD_MIN_LEN + 2))
+				goto out_clear;
 
-			x25_ग_लिखो_पूर्णांकernal(sk, X25_CLEAR_CONFIRMATION);
+			x25_write_internal(sk, X25_CLEAR_CONFIRMATION);
 			x25_disconnect(sk, 0, skb->data[3], skb->data[4]);
-			अवरोध;
+			break;
 
-		शेष:
-			अवरोध;
-	पूर्ण
+		default:
+			break;
+	}
 
-	वापस 0;
+	return 0;
 
 out_clear:
-	x25_ग_लिखो_पूर्णांकernal(sk, X25_CLEAR_REQUEST);
+	x25_write_internal(sk, X25_CLEAR_REQUEST);
 	x25->state = X25_STATE_2;
-	x25_start_t23समयr(sk);
-	वापस 0;
-पूर्ण
+	x25_start_t23timer(sk);
+	return 0;
+}
 
 /*
- * State machine क्रम state 5, Call Accepted / Call Connected pending (X25_ACCPT_APPRV_FLAG).
- * The handling of the समयr(s) is in file x25_समयr.c
+ * State machine for state 5, Call Accepted / Call Connected pending (X25_ACCPT_APPRV_FLAG).
+ * The handling of the timer(s) is in file x25_timer.c
  * Handling of state 0 and connection release is in af_x25.c.
  */
-अटल पूर्णांक x25_state5_machine(काष्ठा sock *sk, काष्ठा sk_buff *skb, पूर्णांक frametype)
-अणु
-	काष्ठा x25_sock *x25 = x25_sk(sk);
+static int x25_state5_machine(struct sock *sk, struct sk_buff *skb, int frametype)
+{
+	struct x25_sock *x25 = x25_sk(sk);
 
-	चयन (frametype) अणु
-		हाल X25_CLEAR_REQUEST:
-			अगर (!pskb_may_pull(skb, X25_STD_MIN_LEN + 2)) अणु
-				x25_ग_लिखो_पूर्णांकernal(sk, X25_CLEAR_REQUEST);
+	switch (frametype) {
+		case X25_CLEAR_REQUEST:
+			if (!pskb_may_pull(skb, X25_STD_MIN_LEN + 2)) {
+				x25_write_internal(sk, X25_CLEAR_REQUEST);
 				x25->state = X25_STATE_2;
-				x25_start_t23समयr(sk);
-				वापस 0;
-			पूर्ण
+				x25_start_t23timer(sk);
+				return 0;
+			}
 
-			x25_ग_लिखो_पूर्णांकernal(sk, X25_CLEAR_CONFIRMATION);
+			x25_write_internal(sk, X25_CLEAR_CONFIRMATION);
 			x25_disconnect(sk, 0, skb->data[3], skb->data[4]);
-			अवरोध;
+			break;
 
-		शेष:
-			अवरोध;
-	पूर्ण
+		default:
+			break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Higher level upcall क्रम a LAPB frame */
-पूर्णांक x25_process_rx_frame(काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा x25_sock *x25 = x25_sk(sk);
-	पूर्णांक queued = 0, frametype, ns, nr, q, d, m;
+/* Higher level upcall for a LAPB frame */
+int x25_process_rx_frame(struct sock *sk, struct sk_buff *skb)
+{
+	struct x25_sock *x25 = x25_sk(sk);
+	int queued = 0, frametype, ns, nr, q, d, m;
 
-	अगर (x25->state == X25_STATE_0)
-		वापस 0;
+	if (x25->state == X25_STATE_0)
+		return 0;
 
 	frametype = x25_decode(sk, skb, &ns, &nr, &q, &d, &m);
 
-	चयन (x25->state) अणु
-	हाल X25_STATE_1:
+	switch (x25->state) {
+	case X25_STATE_1:
 		queued = x25_state1_machine(sk, skb, frametype);
-		अवरोध;
-	हाल X25_STATE_2:
+		break;
+	case X25_STATE_2:
 		queued = x25_state2_machine(sk, skb, frametype);
-		अवरोध;
-	हाल X25_STATE_3:
+		break;
+	case X25_STATE_3:
 		queued = x25_state3_machine(sk, skb, frametype, ns, nr, q, d, m);
-		अवरोध;
-	हाल X25_STATE_4:
+		break;
+	case X25_STATE_4:
 		queued = x25_state4_machine(sk, skb, frametype);
-		अवरोध;
-	हाल X25_STATE_5:
+		break;
+	case X25_STATE_5:
 		queued = x25_state5_machine(sk, skb, frametype);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	x25_kick(sk);
 
-	वापस queued;
-पूर्ण
+	return queued;
+}
 
-पूर्णांक x25_backlog_rcv(काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
-	पूर्णांक queued = x25_process_rx_frame(sk, skb);
+int x25_backlog_rcv(struct sock *sk, struct sk_buff *skb)
+{
+	int queued = x25_process_rx_frame(sk, skb);
 
-	अगर (!queued)
-		kमुक्त_skb(skb);
+	if (!queued)
+		kfree_skb(skb);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

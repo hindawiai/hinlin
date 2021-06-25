@@ -1,56 +1,55 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_CONTEXT_TRACKING_STATE_H
-#घोषणा _LINUX_CONTEXT_TRACKING_STATE_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_CONTEXT_TRACKING_STATE_H
+#define _LINUX_CONTEXT_TRACKING_STATE_H
 
-#समावेश <linux/percpu.h>
-#समावेश <linux/अटल_key.h>
+#include <linux/percpu.h>
+#include <linux/static_key.h>
 
-काष्ठा context_tracking अणु
+struct context_tracking {
 	/*
 	 * When active is false, probes are unset in order
 	 * to minimize overhead: TIF flags are cleared
-	 * and calls to user_enter/निकास are ignored. This
-	 * may be further optimized using अटल keys.
+	 * and calls to user_enter/exit are ignored. This
+	 * may be further optimized using static keys.
 	 */
 	bool active;
-	पूर्णांक recursion;
-	क्रमागत ctx_state अणु
-		CONTEXT_DISABLED = -1,	/* वापसed by ct_state() अगर unknown */
+	int recursion;
+	enum ctx_state {
+		CONTEXT_DISABLED = -1,	/* returned by ct_state() if unknown */
 		CONTEXT_KERNEL = 0,
 		CONTEXT_USER,
 		CONTEXT_GUEST,
-	पूर्ण state;
-पूर्ण;
+	} state;
+};
 
-#अगर_घोषित CONFIG_CONTEXT_TRACKING
-बाह्य काष्ठा अटल_key_false context_tracking_key;
-DECLARE_PER_CPU(काष्ठा context_tracking, context_tracking);
+#ifdef CONFIG_CONTEXT_TRACKING
+extern struct static_key_false context_tracking_key;
+DECLARE_PER_CPU(struct context_tracking, context_tracking);
 
-अटल __always_अंतरभूत bool context_tracking_enabled(व्योम)
-अणु
-	वापस अटल_branch_unlikely(&context_tracking_key);
-पूर्ण
+static __always_inline bool context_tracking_enabled(void)
+{
+	return static_branch_unlikely(&context_tracking_key);
+}
 
-अटल __always_अंतरभूत bool context_tracking_enabled_cpu(पूर्णांक cpu)
-अणु
-	वापस context_tracking_enabled() && per_cpu(context_tracking.active, cpu);
-पूर्ण
+static __always_inline bool context_tracking_enabled_cpu(int cpu)
+{
+	return context_tracking_enabled() && per_cpu(context_tracking.active, cpu);
+}
 
-अटल अंतरभूत bool context_tracking_enabled_this_cpu(व्योम)
-अणु
-	वापस context_tracking_enabled() && __this_cpu_पढ़ो(context_tracking.active);
-पूर्ण
+static inline bool context_tracking_enabled_this_cpu(void)
+{
+	return context_tracking_enabled() && __this_cpu_read(context_tracking.active);
+}
 
-अटल __always_अंतरभूत bool context_tracking_in_user(व्योम)
-अणु
-	वापस __this_cpu_पढ़ो(context_tracking.state) == CONTEXT_USER;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत bool context_tracking_in_user(व्योम) अणु वापस false; पूर्ण
-अटल अंतरभूत bool context_tracking_enabled(व्योम) अणु वापस false; पूर्ण
-अटल अंतरभूत bool context_tracking_enabled_cpu(पूर्णांक cpu) अणु वापस false; पूर्ण
-अटल अंतरभूत bool context_tracking_enabled_this_cpu(व्योम) अणु वापस false; पूर्ण
-#पूर्ण_अगर /* CONFIG_CONTEXT_TRACKING */
+static __always_inline bool context_tracking_in_user(void)
+{
+	return __this_cpu_read(context_tracking.state) == CONTEXT_USER;
+}
+#else
+static inline bool context_tracking_in_user(void) { return false; }
+static inline bool context_tracking_enabled(void) { return false; }
+static inline bool context_tracking_enabled_cpu(int cpu) { return false; }
+static inline bool context_tracking_enabled_this_cpu(void) { return false; }
+#endif /* CONFIG_CONTEXT_TRACKING */
 
-#पूर्ण_अगर
+#endif

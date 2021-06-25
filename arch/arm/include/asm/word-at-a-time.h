@@ -1,76 +1,75 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_ARM_WORD_AT_A_TIME_H
-#घोषणा __ASM_ARM_WORD_AT_A_TIME_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_ARM_WORD_AT_A_TIME_H
+#define __ASM_ARM_WORD_AT_A_TIME_H
 
-#अगर_अघोषित __ARMEB__
+#ifndef __ARMEB__
 
 /*
- * Little-endian word-at-a-समय zero byte handling.
+ * Little-endian word-at-a-time zero byte handling.
  * Heavily based on the x86 algorithm.
  */
-#समावेश <linux/kernel.h>
+#include <linux/kernel.h>
 
-काष्ठा word_at_a_समय अणु
-	स्थिर अचिन्हित दीर्घ one_bits, high_bits;
-पूर्ण;
+struct word_at_a_time {
+	const unsigned long one_bits, high_bits;
+};
 
-#घोषणा WORD_AT_A_TIME_CONSTANTS अणु REPEAT_BYTE(0x01), REPEAT_BYTE(0x80) पूर्ण
+#define WORD_AT_A_TIME_CONSTANTS { REPEAT_BYTE(0x01), REPEAT_BYTE(0x80) }
 
-अटल अंतरभूत अचिन्हित दीर्घ has_zero(अचिन्हित दीर्घ a, अचिन्हित दीर्घ *bits,
-				     स्थिर काष्ठा word_at_a_समय *c)
-अणु
-	अचिन्हित दीर्घ mask = ((a - c->one_bits) & ~a) & c->high_bits;
+static inline unsigned long has_zero(unsigned long a, unsigned long *bits,
+				     const struct word_at_a_time *c)
+{
+	unsigned long mask = ((a - c->one_bits) & ~a) & c->high_bits;
 	*bits = mask;
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
-#घोषणा prep_zero_mask(a, bits, c) (bits)
+#define prep_zero_mask(a, bits, c) (bits)
 
-अटल अंतरभूत अचिन्हित दीर्घ create_zero_mask(अचिन्हित दीर्घ bits)
-अणु
+static inline unsigned long create_zero_mask(unsigned long bits)
+{
 	bits = (bits - 1) & ~bits;
-	वापस bits >> 7;
-पूर्ण
+	return bits >> 7;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ find_zero(अचिन्हित दीर्घ mask)
-अणु
-	अचिन्हित दीर्घ ret;
+static inline unsigned long find_zero(unsigned long mask)
+{
+	unsigned long ret;
 
-#अगर __LINUX_ARM_ARCH__ >= 5
+#if __LINUX_ARM_ARCH__ >= 5
 	/* We have clz available. */
 	ret = fls(mask) >> 3;
-#अन्यथा
+#else
 	/* (000000 0000ff 00ffff ffffff) -> ( 1 1 2 3 ) */
 	ret = (0x0ff0001 + mask) >> 23;
-	/* Fix the 1 क्रम 00 हाल */
+	/* Fix the 1 for 00 case */
 	ret &= mask;
-#पूर्ण_अगर
+#endif
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#घोषणा zero_bytemask(mask) (mask)
+#define zero_bytemask(mask) (mask)
 
-#अन्यथा	/* __ARMEB__ */
-#समावेश <यंत्र-generic/word-at-a-समय.स>
-#पूर्ण_अगर
+#else	/* __ARMEB__ */
+#include <asm-generic/word-at-a-time.h>
+#endif
 
-#अगर_घोषित CONFIG_DCACHE_WORD_ACCESS
+#ifdef CONFIG_DCACHE_WORD_ACCESS
 
 /*
  * Load an unaligned word from kernel space.
  *
- * In the (very unlikely) हाल of the word being a page-crosser
+ * In the (very unlikely) case of the word being a page-crosser
  * and the next page not being mapped, take the exception and
- * वापस zeroes in the non-existing part.
+ * return zeroes in the non-existing part.
  */
-अटल अंतरभूत अचिन्हित दीर्घ load_unaligned_zeropad(स्थिर व्योम *addr)
-अणु
-	अचिन्हित दीर्घ ret, offset;
+static inline unsigned long load_unaligned_zeropad(const void *addr)
+{
+	unsigned long ret, offset;
 
-	/* Load word from unaligned poपूर्णांकer addr */
-	यंत्र(
+	/* Load word from unaligned pointer addr */
+	asm(
 	"1:	ldr	%0, [%2]\n"
 	"2:\n"
 	"	.pushsection .text.fixup,\"ax\"\n"
@@ -79,11 +78,11 @@
 	"	bic	%2, %2, #0x3\n"
 	"	ldr	%0, [%2]\n"
 	"	lsl	%1, %1, #0x3\n"
-#अगर_अघोषित __ARMEB__
+#ifndef __ARMEB__
 	"	lsr	%0, %0, %1\n"
-#अन्यथा
+#else
 	"	lsl	%0, %0, %1\n"
-#पूर्ण_अगर
+#endif
 	"	b	2b\n"
 	"	.popsection\n"
 	"	.pushsection __ex_table,\"a\"\n"
@@ -91,10 +90,10 @@
 	"	.long	1b, 3b\n"
 	"	.popsection"
 	: "=&r" (ret), "=&r" (offset)
-	: "r" (addr), "Qo" (*(अचिन्हित दीर्घ *)addr));
+	: "r" (addr), "Qo" (*(unsigned long *)addr));
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#पूर्ण_अगर	/* DCACHE_WORD_ACCESS */
-#पूर्ण_अगर /* __ASM_ARM_WORD_AT_A_TIME_H */
+#endif	/* DCACHE_WORD_ACCESS */
+#endif /* __ASM_ARM_WORD_AT_A_TIME_H */

@@ -1,22 +1,21 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __XEN_PMU_H
-#घोषणा __XEN_PMU_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __XEN_PMU_H
+#define __XEN_PMU_H
 
-#समावेश <xen/पूर्णांकerface/xenpmu.h>
+#include <xen/interface/xenpmu.h>
 
-irqवापस_t xen_pmu_irq_handler(पूर्णांक irq, व्योम *dev_id);
-#अगर_घोषित CONFIG_XEN_HAVE_VPMU
-व्योम xen_pmu_init(पूर्णांक cpu);
-व्योम xen_pmu_finish(पूर्णांक cpu);
-#अन्यथा
-अटल अंतरभूत व्योम xen_pmu_init(पूर्णांक cpu) अणुपूर्ण
-अटल अंतरभूत व्योम xen_pmu_finish(पूर्णांक cpu) अणुपूर्ण
-#पूर्ण_अगर
-bool is_xen_pmu(पूर्णांक cpu);
-bool pmu_msr_पढ़ो(अचिन्हित पूर्णांक msr, uपूर्णांक64_t *val, पूर्णांक *err);
-bool pmu_msr_ग_लिखो(अचिन्हित पूर्णांक msr, uपूर्णांक32_t low, uपूर्णांक32_t high, पूर्णांक *err);
-पूर्णांक pmu_apic_update(uपूर्णांक32_t reg);
-अचिन्हित दीर्घ दीर्घ xen_पढ़ो_pmc(पूर्णांक counter);
+irqreturn_t xen_pmu_irq_handler(int irq, void *dev_id);
+#ifdef CONFIG_XEN_HAVE_VPMU
+void xen_pmu_init(int cpu);
+void xen_pmu_finish(int cpu);
+#else
+static inline void xen_pmu_init(int cpu) {}
+static inline void xen_pmu_finish(int cpu) {}
+#endif
+bool is_xen_pmu(int cpu);
+bool pmu_msr_read(unsigned int msr, uint64_t *val, int *err);
+bool pmu_msr_write(unsigned int msr, uint32_t low, uint32_t high, int *err);
+int pmu_apic_update(uint32_t reg);
+unsigned long long xen_read_pmc(int counter);
 
-#पूर्ण_अगर /* __XEN_PMU_H */
+#endif /* __XEN_PMU_H */

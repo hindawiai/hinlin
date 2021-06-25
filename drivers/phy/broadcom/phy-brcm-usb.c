@@ -1,493 +1,492 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * phy-brcm-usb.c - Broadcom USB Phy Driver
  *
  * Copyright (C) 2015-2017 Broadcom
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/phy/phy.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/soc/brcmstb/brcmstb.h>
-#समावेश <dt-bindings/phy/phy.h>
-#समावेश <linux/mfd/syscon.h>
+#include <linux/clk.h>
+#include <linux/delay.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/phy/phy.h>
+#include <linux/platform_device.h>
+#include <linux/interrupt.h>
+#include <linux/soc/brcmstb/brcmstb.h>
+#include <dt-bindings/phy/phy.h>
+#include <linux/mfd/syscon.h>
 
-#समावेश "phy-brcm-usb-init.h"
+#include "phy-brcm-usb-init.h"
 
-अटल DEFINE_MUTEX(sysfs_lock);
+static DEFINE_MUTEX(sysfs_lock);
 
-क्रमागत brcm_usb_phy_id अणु
+enum brcm_usb_phy_id {
 	BRCM_USB_PHY_2_0 = 0,
 	BRCM_USB_PHY_3_0,
 	BRCM_USB_PHY_ID_MAX
-पूर्ण;
+};
 
-काष्ठा value_to_name_map अणु
-	पूर्णांक value;
-	स्थिर अक्षर *name;
-पूर्ण;
+struct value_to_name_map {
+	int value;
+	const char *name;
+};
 
-काष्ठा match_chip_info अणु
-	व्योम (*init_func)(काष्ठा brcm_usb_init_params *params);
+struct match_chip_info {
+	void (*init_func)(struct brcm_usb_init_params *params);
 	u8 required_regs[BRCM_REGS_MAX + 1];
 	u8 optional_reg;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा value_to_name_map brcm_dr_mode_to_name[] = अणु
-	अणु USB_CTLR_MODE_HOST, "host" पूर्ण,
-	अणु USB_CTLR_MODE_DEVICE, "peripheral" पूर्ण,
-	अणु USB_CTLR_MODE_DRD, "drd" पूर्ण,
-	अणु USB_CTLR_MODE_TYPEC_PD, "typec-pd" पूर्ण
-पूर्ण;
+static const struct value_to_name_map brcm_dr_mode_to_name[] = {
+	{ USB_CTLR_MODE_HOST, "host" },
+	{ USB_CTLR_MODE_DEVICE, "peripheral" },
+	{ USB_CTLR_MODE_DRD, "drd" },
+	{ USB_CTLR_MODE_TYPEC_PD, "typec-pd" }
+};
 
-अटल स्थिर काष्ठा value_to_name_map brcm_dual_mode_to_name[] = अणु
-	अणु 0, "host" पूर्ण,
-	अणु 1, "device" पूर्ण,
-	अणु 2, "auto" पूर्ण,
-पूर्ण;
+static const struct value_to_name_map brcm_dual_mode_to_name[] = {
+	{ 0, "host" },
+	{ 1, "device" },
+	{ 2, "auto" },
+};
 
-काष्ठा brcm_usb_phy अणु
-	काष्ठा phy *phy;
-	अचिन्हित पूर्णांक id;
+struct brcm_usb_phy {
+	struct phy *phy;
+	unsigned int id;
 	bool inited;
-पूर्ण;
+};
 
-काष्ठा brcm_usb_phy_data अणु
-	काष्ठा  brcm_usb_init_params ini;
+struct brcm_usb_phy_data {
+	struct  brcm_usb_init_params ini;
 	bool			has_eohci;
 	bool			has_xhci;
-	काष्ठा clk		*usb_20_clk;
-	काष्ठा clk		*usb_30_clk;
-	काष्ठा clk		*suspend_clk;
-	काष्ठा mutex		mutex;	/* serialize phy init */
-	पूर्णांक			init_count;
-	पूर्णांक			wake_irq;
-	काष्ठा brcm_usb_phy	phys[BRCM_USB_PHY_ID_MAX];
-पूर्ण;
+	struct clk		*usb_20_clk;
+	struct clk		*usb_30_clk;
+	struct clk		*suspend_clk;
+	struct mutex		mutex;	/* serialize phy init */
+	int			init_count;
+	int			wake_irq;
+	struct brcm_usb_phy	phys[BRCM_USB_PHY_ID_MAX];
+};
 
-अटल s8 *node_reg_names[BRCM_REGS_MAX] = अणु
+static s8 *node_reg_names[BRCM_REGS_MAX] = {
 	"crtl", "xhci_ec", "xhci_gbl", "usb_phy", "usb_mdio", "bdc_ec"
-पूर्ण;
+};
 
-अटल irqवापस_t brcm_usb_phy_wake_isr(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा phy *gphy = dev_id;
+static irqreturn_t brcm_usb_phy_wake_isr(int irq, void *dev_id)
+{
+	struct phy *gphy = dev_id;
 
 	pm_wakeup_event(&gphy->dev, 0);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक brcm_usb_phy_init(काष्ठा phy *gphy)
-अणु
-	काष्ठा brcm_usb_phy *phy = phy_get_drvdata(gphy);
-	काष्ठा brcm_usb_phy_data *priv =
-		container_of(phy, काष्ठा brcm_usb_phy_data, phys[phy->id]);
+static int brcm_usb_phy_init(struct phy *gphy)
+{
+	struct brcm_usb_phy *phy = phy_get_drvdata(gphy);
+	struct brcm_usb_phy_data *priv =
+		container_of(phy, struct brcm_usb_phy_data, phys[phy->id]);
 
 	/*
-	 * Use a lock to make sure a second caller रुकोs until
-	 * the base phy is inited beक्रमe using it.
+	 * Use a lock to make sure a second caller waits until
+	 * the base phy is inited before using it.
 	 */
 	mutex_lock(&priv->mutex);
-	अगर (priv->init_count++ == 0) अणु
+	if (priv->init_count++ == 0) {
 		clk_prepare_enable(priv->usb_20_clk);
 		clk_prepare_enable(priv->usb_30_clk);
 		clk_prepare_enable(priv->suspend_clk);
 		brcm_usb_init_common(&priv->ini);
-	पूर्ण
+	}
 	mutex_unlock(&priv->mutex);
-	अगर (phy->id == BRCM_USB_PHY_2_0)
+	if (phy->id == BRCM_USB_PHY_2_0)
 		brcm_usb_init_eohci(&priv->ini);
-	अन्यथा अगर (phy->id == BRCM_USB_PHY_3_0)
+	else if (phy->id == BRCM_USB_PHY_3_0)
 		brcm_usb_init_xhci(&priv->ini);
 	phy->inited = true;
 	dev_dbg(&gphy->dev, "INIT, id: %d, total: %d\n", phy->id,
 		priv->init_count);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक brcm_usb_phy_निकास(काष्ठा phy *gphy)
-अणु
-	काष्ठा brcm_usb_phy *phy = phy_get_drvdata(gphy);
-	काष्ठा brcm_usb_phy_data *priv =
-		container_of(phy, काष्ठा brcm_usb_phy_data, phys[phy->id]);
+static int brcm_usb_phy_exit(struct phy *gphy)
+{
+	struct brcm_usb_phy *phy = phy_get_drvdata(gphy);
+	struct brcm_usb_phy_data *priv =
+		container_of(phy, struct brcm_usb_phy_data, phys[phy->id]);
 
 	dev_dbg(&gphy->dev, "EXIT\n");
-	अगर (phy->id == BRCM_USB_PHY_2_0)
+	if (phy->id == BRCM_USB_PHY_2_0)
 		brcm_usb_uninit_eohci(&priv->ini);
-	अगर (phy->id == BRCM_USB_PHY_3_0)
+	if (phy->id == BRCM_USB_PHY_3_0)
 		brcm_usb_uninit_xhci(&priv->ini);
 
-	/* If both xhci and eohci are gone, reset everything अन्यथा */
+	/* If both xhci and eohci are gone, reset everything else */
 	mutex_lock(&priv->mutex);
-	अगर (--priv->init_count == 0) अणु
+	if (--priv->init_count == 0) {
 		brcm_usb_uninit_common(&priv->ini);
 		clk_disable_unprepare(priv->usb_20_clk);
 		clk_disable_unprepare(priv->usb_30_clk);
 		clk_disable_unprepare(priv->suspend_clk);
-	पूर्ण
+	}
 	mutex_unlock(&priv->mutex);
 	phy->inited = false;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा phy_ops brcm_usb_phy_ops = अणु
+static const struct phy_ops brcm_usb_phy_ops = {
 	.init		= brcm_usb_phy_init,
-	.निकास		= brcm_usb_phy_निकास,
+	.exit		= brcm_usb_phy_exit,
 	.owner		= THIS_MODULE,
-पूर्ण;
+};
 
-अटल काष्ठा phy *brcm_usb_phy_xlate(काष्ठा device *dev,
-				      काष्ठा of_phandle_args *args)
-अणु
-	काष्ठा brcm_usb_phy_data *data = dev_get_drvdata(dev);
+static struct phy *brcm_usb_phy_xlate(struct device *dev,
+				      struct of_phandle_args *args)
+{
+	struct brcm_usb_phy_data *data = dev_get_drvdata(dev);
 
 	/*
-	 * values 0 and 1 are क्रम backward compatibility with
+	 * values 0 and 1 are for backward compatibility with
 	 * device tree nodes from older bootloaders.
 	 */
-	चयन (args->args[0]) अणु
-	हाल 0:
-	हाल PHY_TYPE_USB2:
-		अगर (data->phys[BRCM_USB_PHY_2_0].phy)
-			वापस data->phys[BRCM_USB_PHY_2_0].phy;
+	switch (args->args[0]) {
+	case 0:
+	case PHY_TYPE_USB2:
+		if (data->phys[BRCM_USB_PHY_2_0].phy)
+			return data->phys[BRCM_USB_PHY_2_0].phy;
 		dev_warn(dev, "Error, 2.0 Phy not found\n");
-		अवरोध;
-	हाल 1:
-	हाल PHY_TYPE_USB3:
-		अगर (data->phys[BRCM_USB_PHY_3_0].phy)
-			वापस data->phys[BRCM_USB_PHY_3_0].phy;
+		break;
+	case 1:
+	case PHY_TYPE_USB3:
+		if (data->phys[BRCM_USB_PHY_3_0].phy)
+			return data->phys[BRCM_USB_PHY_3_0].phy;
 		dev_warn(dev, "Error, 3.0 Phy not found\n");
-		अवरोध;
-	पूर्ण
-	वापस ERR_PTR(-ENODEV);
-पूर्ण
+		break;
+	}
+	return ERR_PTR(-ENODEV);
+}
 
-अटल पूर्णांक name_to_value(स्थिर काष्ठा value_to_name_map *table, पूर्णांक count,
-			 स्थिर अक्षर *name, पूर्णांक *value)
-अणु
-	पूर्णांक x;
+static int name_to_value(const struct value_to_name_map *table, int count,
+			 const char *name, int *value)
+{
+	int x;
 
 	*value = 0;
-	क्रम (x = 0; x < count; x++) अणु
-		अगर (sysfs_streq(name, table[x].name)) अणु
+	for (x = 0; x < count; x++) {
+		if (sysfs_streq(name, table[x].name)) {
 			*value = x;
-			वापस 0;
-		पूर्ण
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+			return 0;
+		}
+	}
+	return -EINVAL;
+}
 
-अटल स्थिर अक्षर *value_to_name(स्थिर काष्ठा value_to_name_map *table, पूर्णांक count,
-				 पूर्णांक value)
-अणु
-	अगर (value >= count)
-		वापस "unknown";
-	वापस table[value].name;
-पूर्ण
+static const char *value_to_name(const struct value_to_name_map *table, int count,
+				 int value)
+{
+	if (value >= count)
+		return "unknown";
+	return table[value].name;
+}
 
-अटल sमाप_प्रकार dr_mode_show(काष्ठा device *dev,
-			    काष्ठा device_attribute *attr,
-			    अक्षर *buf)
-अणु
-	काष्ठा brcm_usb_phy_data *priv = dev_get_drvdata(dev);
+static ssize_t dr_mode_show(struct device *dev,
+			    struct device_attribute *attr,
+			    char *buf)
+{
+	struct brcm_usb_phy_data *priv = dev_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%s\n",
+	return sprintf(buf, "%s\n",
 		value_to_name(&brcm_dr_mode_to_name[0],
 			      ARRAY_SIZE(brcm_dr_mode_to_name),
 			      priv->ini.mode));
-पूर्ण
-अटल DEVICE_ATTR_RO(dr_mode);
+}
+static DEVICE_ATTR_RO(dr_mode);
 
-अटल sमाप_प्रकार dual_select_store(काष्ठा device *dev,
-				 काष्ठा device_attribute *attr,
-				 स्थिर अक्षर *buf, माप_प्रकार len)
-अणु
-	काष्ठा brcm_usb_phy_data *priv = dev_get_drvdata(dev);
-	पूर्णांक value;
-	पूर्णांक res;
+static ssize_t dual_select_store(struct device *dev,
+				 struct device_attribute *attr,
+				 const char *buf, size_t len)
+{
+	struct brcm_usb_phy_data *priv = dev_get_drvdata(dev);
+	int value;
+	int res;
 
 	mutex_lock(&sysfs_lock);
 	res = name_to_value(&brcm_dual_mode_to_name[0],
 			    ARRAY_SIZE(brcm_dual_mode_to_name), buf, &value);
-	अगर (!res) अणु
+	if (!res) {
 		brcm_usb_set_dual_select(&priv->ini, value);
 		res = len;
-	पूर्ण
+	}
 	mutex_unlock(&sysfs_lock);
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल sमाप_प्रकार dual_select_show(काष्ठा device *dev,
-				काष्ठा device_attribute *attr,
-				अक्षर *buf)
-अणु
-	काष्ठा brcm_usb_phy_data *priv = dev_get_drvdata(dev);
-	पूर्णांक value;
+static ssize_t dual_select_show(struct device *dev,
+				struct device_attribute *attr,
+				char *buf)
+{
+	struct brcm_usb_phy_data *priv = dev_get_drvdata(dev);
+	int value;
 
 	mutex_lock(&sysfs_lock);
 	value = brcm_usb_get_dual_select(&priv->ini);
 	mutex_unlock(&sysfs_lock);
-	वापस प्र_लिखो(buf, "%s\n",
+	return sprintf(buf, "%s\n",
 		value_to_name(&brcm_dual_mode_to_name[0],
 			      ARRAY_SIZE(brcm_dual_mode_to_name),
 			      value));
-पूर्ण
-अटल DEVICE_ATTR_RW(dual_select);
+}
+static DEVICE_ATTR_RW(dual_select);
 
-अटल काष्ठा attribute *brcm_usb_phy_attrs[] = अणु
+static struct attribute *brcm_usb_phy_attrs[] = {
 	&dev_attr_dr_mode.attr,
 	&dev_attr_dual_select.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group brcm_usb_phy_group = अणु
+static const struct attribute_group brcm_usb_phy_group = {
 	.attrs = brcm_usb_phy_attrs,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा match_chip_info chip_info_7216 = अणु
+static const struct match_chip_info chip_info_7216 = {
 	.init_func = &brcm_usb_dvr_init_7216,
-	.required_regs = अणु
+	.required_regs = {
 		BRCM_REGS_CTRL,
 		BRCM_REGS_XHCI_EC,
 		BRCM_REGS_XHCI_GBL,
 		-1,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा match_chip_info chip_info_7211b0 = अणु
+static const struct match_chip_info chip_info_7211b0 = {
 	.init_func = &brcm_usb_dvr_init_7211b0,
-	.required_regs = अणु
+	.required_regs = {
 		BRCM_REGS_CTRL,
 		BRCM_REGS_XHCI_EC,
 		BRCM_REGS_XHCI_GBL,
 		BRCM_REGS_USB_PHY,
 		BRCM_REGS_USB_MDIO,
 		-1,
-	पूर्ण,
+	},
 	.optional_reg = BRCM_REGS_BDC_EC,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा match_chip_info chip_info_7445 = अणु
+static const struct match_chip_info chip_info_7445 = {
 	.init_func = &brcm_usb_dvr_init_7445,
-	.required_regs = अणु
+	.required_regs = {
 		BRCM_REGS_CTRL,
 		BRCM_REGS_XHCI_EC,
 		-1,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा of_device_id brcm_usb_dt_ids[] = अणु
-	अणु
+static const struct of_device_id brcm_usb_dt_ids[] = {
+	{
 		.compatible = "brcm,bcm4908-usb-phy",
 		.data = &chip_info_7445,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "brcm,bcm7216-usb-phy",
 		.data = &chip_info_7216,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "brcm,bcm7211-usb-phy",
 		.data = &chip_info_7211b0,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "brcm,brcmstb-usb-phy",
 		.data = &chip_info_7445,
-	पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+	},
+	{ /* sentinel */ }
+};
 
-अटल पूर्णांक brcm_usb_get_regs(काष्ठा platक्रमm_device *pdev,
-			     क्रमागत brcmusb_reg_sel regs,
-			     काष्ठा  brcm_usb_init_params *ini,
+static int brcm_usb_get_regs(struct platform_device *pdev,
+			     enum brcmusb_reg_sel regs,
+			     struct  brcm_usb_init_params *ini,
 			     bool optional)
-अणु
-	काष्ठा resource *res;
+{
+	struct resource *res;
 
 	/* Older DT nodes have ctrl and optional xhci_ec by index only */
-	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM,
+	res = platform_get_resource_byname(pdev, IORESOURCE_MEM,
 						node_reg_names[regs]);
-	अगर (res == शून्य) अणु
-		अगर (regs == BRCM_REGS_CTRL) अणु
-			res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-		पूर्ण अन्यथा अगर (regs == BRCM_REGS_XHCI_EC) अणु
-			res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 1);
-			/* XHCI_EC रेजिस्टरs are optional */
-			अगर (res == शून्य)
-				वापस 0;
-		पूर्ण
-		अगर (res == शून्य) अणु
-			अगर (optional) अणु
+	if (res == NULL) {
+		if (regs == BRCM_REGS_CTRL) {
+			res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+		} else if (regs == BRCM_REGS_XHCI_EC) {
+			res = platform_get_resource(pdev, IORESOURCE_MEM, 1);
+			/* XHCI_EC registers are optional */
+			if (res == NULL)
+				return 0;
+		}
+		if (res == NULL) {
+			if (optional) {
 				dev_dbg(&pdev->dev,
 					"Optional reg %s not found\n",
 					node_reg_names[regs]);
-				वापस 0;
-			पूर्ण
+				return 0;
+			}
 			dev_err(&pdev->dev, "can't get %s base addr\n",
 				node_reg_names[regs]);
-			वापस 1;
-		पूर्ण
-	पूर्ण
+			return 1;
+		}
+	}
 	ini->regs[regs] = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(ini->regs[regs])) अणु
+	if (IS_ERR(ini->regs[regs])) {
 		dev_err(&pdev->dev, "can't map %s register space\n",
 			node_reg_names[regs]);
-		वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return 1;
+	}
+	return 0;
+}
 
-अटल पूर्णांक brcm_usb_phy_dvr_init(काष्ठा platक्रमm_device *pdev,
-				 काष्ठा brcm_usb_phy_data *priv,
-				 काष्ठा device_node *dn)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा phy *gphy = शून्य;
-	पूर्णांक err;
+static int brcm_usb_phy_dvr_init(struct platform_device *pdev,
+				 struct brcm_usb_phy_data *priv,
+				 struct device_node *dn)
+{
+	struct device *dev = &pdev->dev;
+	struct phy *gphy = NULL;
+	int err;
 
 	priv->usb_20_clk = of_clk_get_by_name(dn, "sw_usb");
-	अगर (IS_ERR(priv->usb_20_clk)) अणु
-		अगर (PTR_ERR(priv->usb_20_clk) == -EPROBE_DEFER)
-			वापस -EPROBE_DEFER;
+	if (IS_ERR(priv->usb_20_clk)) {
+		if (PTR_ERR(priv->usb_20_clk) == -EPROBE_DEFER)
+			return -EPROBE_DEFER;
 		dev_info(dev, "Clock not found in Device Tree\n");
-		priv->usb_20_clk = शून्य;
-	पूर्ण
+		priv->usb_20_clk = NULL;
+	}
 	err = clk_prepare_enable(priv->usb_20_clk);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (priv->has_eohci) अणु
-		gphy = devm_phy_create(dev, शून्य, &brcm_usb_phy_ops);
-		अगर (IS_ERR(gphy)) अणु
+	if (priv->has_eohci) {
+		gphy = devm_phy_create(dev, NULL, &brcm_usb_phy_ops);
+		if (IS_ERR(gphy)) {
 			dev_err(dev, "failed to create EHCI/OHCI PHY\n");
-			वापस PTR_ERR(gphy);
-		पूर्ण
+			return PTR_ERR(gphy);
+		}
 		priv->phys[BRCM_USB_PHY_2_0].phy = gphy;
 		priv->phys[BRCM_USB_PHY_2_0].id = BRCM_USB_PHY_2_0;
 		phy_set_drvdata(gphy, &priv->phys[BRCM_USB_PHY_2_0]);
-	पूर्ण
+	}
 
-	अगर (priv->has_xhci) अणु
-		gphy = devm_phy_create(dev, शून्य, &brcm_usb_phy_ops);
-		अगर (IS_ERR(gphy)) अणु
+	if (priv->has_xhci) {
+		gphy = devm_phy_create(dev, NULL, &brcm_usb_phy_ops);
+		if (IS_ERR(gphy)) {
 			dev_err(dev, "failed to create XHCI PHY\n");
-			वापस PTR_ERR(gphy);
-		पूर्ण
+			return PTR_ERR(gphy);
+		}
 		priv->phys[BRCM_USB_PHY_3_0].phy = gphy;
 		priv->phys[BRCM_USB_PHY_3_0].id = BRCM_USB_PHY_3_0;
 		phy_set_drvdata(gphy, &priv->phys[BRCM_USB_PHY_3_0]);
 
 		priv->usb_30_clk = of_clk_get_by_name(dn, "sw_usb3");
-		अगर (IS_ERR(priv->usb_30_clk)) अणु
-			अगर (PTR_ERR(priv->usb_30_clk) == -EPROBE_DEFER)
-				वापस -EPROBE_DEFER;
+		if (IS_ERR(priv->usb_30_clk)) {
+			if (PTR_ERR(priv->usb_30_clk) == -EPROBE_DEFER)
+				return -EPROBE_DEFER;
 			dev_info(dev,
 				 "USB3.0 clock not found in Device Tree\n");
-			priv->usb_30_clk = शून्य;
-		पूर्ण
+			priv->usb_30_clk = NULL;
+		}
 		err = clk_prepare_enable(priv->usb_30_clk);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
 	priv->suspend_clk = clk_get(dev, "usb0_freerun");
-	अगर (IS_ERR(priv->suspend_clk)) अणु
-		अगर (PTR_ERR(priv->suspend_clk) == -EPROBE_DEFER)
-			वापस -EPROBE_DEFER;
+	if (IS_ERR(priv->suspend_clk)) {
+		if (PTR_ERR(priv->suspend_clk) == -EPROBE_DEFER)
+			return -EPROBE_DEFER;
 		dev_err(dev, "Suspend Clock not found in Device Tree\n");
-		priv->suspend_clk = शून्य;
-	पूर्ण
+		priv->suspend_clk = NULL;
+	}
 
-	priv->wake_irq = platक्रमm_get_irq_byname(pdev, "wake");
-	अगर (priv->wake_irq < 0)
-		priv->wake_irq = platक्रमm_get_irq_byname(pdev, "wakeup");
-	अगर (priv->wake_irq >= 0) अणु
+	priv->wake_irq = platform_get_irq_byname(pdev, "wake");
+	if (priv->wake_irq < 0)
+		priv->wake_irq = platform_get_irq_byname(pdev, "wakeup");
+	if (priv->wake_irq >= 0) {
 		err = devm_request_irq(dev, priv->wake_irq,
 				       brcm_usb_phy_wake_isr, 0,
 				       dev_name(dev), gphy);
-		अगर (err < 0)
-			वापस err;
+		if (err < 0)
+			return err;
 		device_set_wakeup_capable(dev, 1);
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_info(dev,
 			 "Wake interrupt missing, system wake not supported\n");
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक brcm_usb_phy_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा brcm_usb_phy_data *priv;
-	काष्ठा phy_provider *phy_provider;
-	काष्ठा device_node *dn = pdev->dev.of_node;
-	पूर्णांक err;
-	स्थिर अक्षर *mode;
-	स्थिर काष्ठा match_chip_info *info;
-	काष्ठा regmap *rmap;
-	पूर्णांक x;
+static int brcm_usb_phy_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct brcm_usb_phy_data *priv;
+	struct phy_provider *phy_provider;
+	struct device_node *dn = pdev->dev.of_node;
+	int err;
+	const char *mode;
+	const struct match_chip_info *info;
+	struct regmap *rmap;
+	int x;
 
-	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
-	platक्रमm_set_drvdata(pdev, priv);
+	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
+	platform_set_drvdata(pdev, priv);
 
 	priv->ini.family_id = brcmstb_get_family_id();
 	priv->ini.product_id = brcmstb_get_product_id();
 
 	info = of_device_get_match_data(&pdev->dev);
-	अगर (!info)
-		वापस -ENOENT;
+	if (!info)
+		return -ENOENT;
 
 	info->init_func(&priv->ini);
 
 	dev_dbg(dev, "Best mapping table is for %s\n",
 		priv->ini.family_name);
 
-	of_property_पढ़ो_u32(dn, "brcm,ipp", &priv->ini.ipp);
-	of_property_पढ़ो_u32(dn, "brcm,ioc", &priv->ini.ioc);
+	of_property_read_u32(dn, "brcm,ipp", &priv->ini.ipp);
+	of_property_read_u32(dn, "brcm,ioc", &priv->ini.ioc);
 
 	priv->ini.mode = USB_CTLR_MODE_HOST;
-	err = of_property_पढ़ो_string(dn, "dr_mode", &mode);
-	अगर (err == 0) अणु
+	err = of_property_read_string(dn, "dr_mode", &mode);
+	if (err == 0) {
 		name_to_value(&brcm_dr_mode_to_name[0],
 			      ARRAY_SIZE(brcm_dr_mode_to_name),
 			mode, &priv->ini.mode);
-	पूर्ण
-	अगर (of_property_पढ़ो_bool(dn, "brcm,has-xhci"))
+	}
+	if (of_property_read_bool(dn, "brcm,has-xhci"))
 		priv->has_xhci = true;
-	अगर (of_property_पढ़ो_bool(dn, "brcm,has-eohci"))
+	if (of_property_read_bool(dn, "brcm,has-eohci"))
 		priv->has_eohci = true;
 
-	क्रम (x = 0; x < BRCM_REGS_MAX; x++) अणु
-		अगर (info->required_regs[x] >= BRCM_REGS_MAX)
-			अवरोध;
+	for (x = 0; x < BRCM_REGS_MAX; x++) {
+		if (info->required_regs[x] >= BRCM_REGS_MAX)
+			break;
 
 		err = brcm_usb_get_regs(pdev, info->required_regs[x],
 					&priv->ini, false);
-		अगर (err)
-			वापस -EINVAL;
-	पूर्ण
-	अगर (info->optional_reg) अणु
+		if (err)
+			return -EINVAL;
+	}
+	if (info->optional_reg) {
 		err = brcm_usb_get_regs(pdev, info->optional_reg,
 					&priv->ini, true);
-		अगर (err)
-			वापस -EINVAL;
-	पूर्ण
+		if (err)
+			return -EINVAL;
+	}
 
 	err = brcm_usb_phy_dvr_init(pdev, priv, dn);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	mutex_init(&priv->mutex);
 
@@ -495,80 +494,80 @@
 	brcm_usb_init_ipp(&priv->ini);
 
 	/*
-	 * Create sysfs entries क्रम mode.
-	 * Remove "dual_select" attribute अगर not in dual mode
+	 * Create sysfs entries for mode.
+	 * Remove "dual_select" attribute if not in dual mode
 	 */
-	अगर (priv->ini.mode != USB_CTLR_MODE_DRD)
-		brcm_usb_phy_attrs[1] = शून्य;
+	if (priv->ini.mode != USB_CTLR_MODE_DRD)
+		brcm_usb_phy_attrs[1] = NULL;
 	err = sysfs_create_group(&dev->kobj, &brcm_usb_phy_group);
-	अगर (err)
+	if (err)
 		dev_warn(dev, "Error creating sysfs attributes\n");
 
-	/* Get piarbctl syscon अगर it exists */
+	/* Get piarbctl syscon if it exists */
 	rmap = syscon_regmap_lookup_by_phandle(dev->of_node,
 						 "syscon-piarbctl");
-	अगर (IS_ERR(rmap))
+	if (IS_ERR(rmap))
 		rmap = syscon_regmap_lookup_by_phandle(dev->of_node,
 						       "brcm,syscon-piarbctl");
-	अगर (!IS_ERR(rmap))
+	if (!IS_ERR(rmap))
 		priv->ini.syscon_piarbctl = rmap;
 
 	/* start with everything off */
-	अगर (priv->has_xhci)
+	if (priv->has_xhci)
 		brcm_usb_uninit_xhci(&priv->ini);
-	अगर (priv->has_eohci)
+	if (priv->has_eohci)
 		brcm_usb_uninit_eohci(&priv->ini);
 	brcm_usb_uninit_common(&priv->ini);
 	clk_disable_unprepare(priv->usb_20_clk);
 	clk_disable_unprepare(priv->usb_30_clk);
 
-	phy_provider = devm_of_phy_provider_रेजिस्टर(dev, brcm_usb_phy_xlate);
+	phy_provider = devm_of_phy_provider_register(dev, brcm_usb_phy_xlate);
 
-	वापस PTR_ERR_OR_ZERO(phy_provider);
-पूर्ण
+	return PTR_ERR_OR_ZERO(phy_provider);
+}
 
-अटल पूर्णांक brcm_usb_phy_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	sysfs_हटाओ_group(&pdev->dev.kobj, &brcm_usb_phy_group);
+static int brcm_usb_phy_remove(struct platform_device *pdev)
+{
+	sysfs_remove_group(&pdev->dev.kobj, &brcm_usb_phy_group);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक brcm_usb_phy_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा brcm_usb_phy_data *priv = dev_get_drvdata(dev);
+#ifdef CONFIG_PM_SLEEP
+static int brcm_usb_phy_suspend(struct device *dev)
+{
+	struct brcm_usb_phy_data *priv = dev_get_drvdata(dev);
 
-	अगर (priv->init_count) अणु
+	if (priv->init_count) {
 		priv->ini.wake_enabled = device_may_wakeup(dev);
-		अगर (priv->phys[BRCM_USB_PHY_3_0].inited)
+		if (priv->phys[BRCM_USB_PHY_3_0].inited)
 			brcm_usb_uninit_xhci(&priv->ini);
-		अगर (priv->phys[BRCM_USB_PHY_2_0].inited)
+		if (priv->phys[BRCM_USB_PHY_2_0].inited)
 			brcm_usb_uninit_eohci(&priv->ini);
 		brcm_usb_uninit_common(&priv->ini);
 
 		/*
-		 * Handle the घड़ीs unless needed क्रम wake. This has
-		 * to work क्रम both older XHCI->3.0-clks, EOHCI->2.0-clks
+		 * Handle the clocks unless needed for wake. This has
+		 * to work for both older XHCI->3.0-clks, EOHCI->2.0-clks
 		 * and newer XHCI->2.0-clks/3.0-clks.
 		 */
 
-		अगर (!priv->ini.suspend_with_घड़ीs) अणु
-			अगर (priv->phys[BRCM_USB_PHY_3_0].inited)
+		if (!priv->ini.suspend_with_clocks) {
+			if (priv->phys[BRCM_USB_PHY_3_0].inited)
 				clk_disable_unprepare(priv->usb_30_clk);
-			अगर (priv->phys[BRCM_USB_PHY_2_0].inited ||
+			if (priv->phys[BRCM_USB_PHY_2_0].inited ||
 			    !priv->has_eohci)
 				clk_disable_unprepare(priv->usb_20_clk);
-		पूर्ण
-		अगर (priv->wake_irq >= 0)
+		}
+		if (priv->wake_irq >= 0)
 			enable_irq_wake(priv->wake_irq);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक brcm_usb_phy_resume(काष्ठा device *dev)
-अणु
-	काष्ठा brcm_usb_phy_data *priv = dev_get_drvdata(dev);
+static int brcm_usb_phy_resume(struct device *dev)
+{
+	struct brcm_usb_phy_data *priv = dev_get_drvdata(dev);
 
 	clk_prepare_enable(priv->usb_20_clk);
 	clk_prepare_enable(priv->usb_30_clk);
@@ -578,55 +577,55 @@
 	 * Initialize anything that was previously initialized.
 	 * Uninitialize anything that wasn't previously initialized.
 	 */
-	अगर (priv->init_count) अणु
-		अगर (priv->wake_irq >= 0)
+	if (priv->init_count) {
+		if (priv->wake_irq >= 0)
 			disable_irq_wake(priv->wake_irq);
 		brcm_usb_init_common(&priv->ini);
-		अगर (priv->phys[BRCM_USB_PHY_2_0].inited) अणु
+		if (priv->phys[BRCM_USB_PHY_2_0].inited) {
 			brcm_usb_init_eohci(&priv->ini);
-		पूर्ण अन्यथा अगर (priv->has_eohci) अणु
+		} else if (priv->has_eohci) {
 			brcm_usb_uninit_eohci(&priv->ini);
 			clk_disable_unprepare(priv->usb_20_clk);
-		पूर्ण
-		अगर (priv->phys[BRCM_USB_PHY_3_0].inited) अणु
+		}
+		if (priv->phys[BRCM_USB_PHY_3_0].inited) {
 			brcm_usb_init_xhci(&priv->ini);
-		पूर्ण अन्यथा अगर (priv->has_xhci) अणु
+		} else if (priv->has_xhci) {
 			brcm_usb_uninit_xhci(&priv->ini);
 			clk_disable_unprepare(priv->usb_30_clk);
-			अगर (!priv->has_eohci)
+			if (!priv->has_eohci)
 				clk_disable_unprepare(priv->usb_20_clk);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (priv->has_xhci)
+		}
+	} else {
+		if (priv->has_xhci)
 			brcm_usb_uninit_xhci(&priv->ini);
-		अगर (priv->has_eohci)
+		if (priv->has_eohci)
 			brcm_usb_uninit_eohci(&priv->ini);
 		brcm_usb_uninit_common(&priv->ini);
 		clk_disable_unprepare(priv->usb_20_clk);
 		clk_disable_unprepare(priv->usb_30_clk);
-	पूर्ण
+	}
 	priv->ini.wake_enabled = false;
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PM_SLEEP */
+	return 0;
+}
+#endif /* CONFIG_PM_SLEEP */
 
-अटल स्थिर काष्ठा dev_pm_ops brcm_usb_phy_pm_ops = अणु
+static const struct dev_pm_ops brcm_usb_phy_pm_ops = {
 	SET_LATE_SYSTEM_SLEEP_PM_OPS(brcm_usb_phy_suspend, brcm_usb_phy_resume)
-पूर्ण;
+};
 
 MODULE_DEVICE_TABLE(of, brcm_usb_dt_ids);
 
-अटल काष्ठा platक्रमm_driver brcm_usb_driver = अणु
+static struct platform_driver brcm_usb_driver = {
 	.probe		= brcm_usb_phy_probe,
-	.हटाओ		= brcm_usb_phy_हटाओ,
-	.driver		= अणु
+	.remove		= brcm_usb_phy_remove,
+	.driver		= {
 		.name	= "brcmstb-usb-phy",
 		.pm = &brcm_usb_phy_pm_ops,
 		.of_match_table = brcm_usb_dt_ids,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(brcm_usb_driver);
+module_platform_driver(brcm_usb_driver);
 
 MODULE_ALIAS("platform:brcmstb-usb-phy");
 MODULE_AUTHOR("Al Cooper <acooper@broadcom.com>");

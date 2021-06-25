@@ -1,201 +1,200 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Stack dumping functions
  *
  *  Copyright IBM Corp. 1999, 2013
  */
 
-#समावेश <linux/kallsyms.h>
-#समावेश <linux/hardirq.h>
-#समावेश <linux/kprobes.h>
-#समावेश <linux/utsname.h>
-#समावेश <linux/export.h>
-#समावेश <linux/kdebug.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/module.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/debug.h>
-#समावेश <linux/sched/task_stack.h>
-#समावेश <यंत्र/processor.h>
-#समावेश <यंत्र/debug.h>
-#समावेश <यंत्र/dis.h>
-#समावेश <यंत्र/ipl.h>
-#समावेश <यंत्र/unwind.h>
+#include <linux/kallsyms.h>
+#include <linux/hardirq.h>
+#include <linux/kprobes.h>
+#include <linux/utsname.h>
+#include <linux/export.h>
+#include <linux/kdebug.h>
+#include <linux/ptrace.h>
+#include <linux/mm.h>
+#include <linux/module.h>
+#include <linux/sched.h>
+#include <linux/sched/debug.h>
+#include <linux/sched/task_stack.h>
+#include <asm/processor.h>
+#include <asm/debug.h>
+#include <asm/dis.h>
+#include <asm/ipl.h>
+#include <asm/unwind.h>
 
-स्थिर अक्षर *stack_type_name(क्रमागत stack_type type)
-अणु
-	चयन (type) अणु
-	हाल STACK_TYPE_TASK:
-		वापस "task";
-	हाल STACK_TYPE_IRQ:
-		वापस "irq";
-	हाल STACK_TYPE_NODAT:
-		वापस "nodat";
-	हाल STACK_TYPE_RESTART:
-		वापस "restart";
-	शेष:
-		वापस "unknown";
-	पूर्ण
-पूर्ण
+const char *stack_type_name(enum stack_type type)
+{
+	switch (type) {
+	case STACK_TYPE_TASK:
+		return "task";
+	case STACK_TYPE_IRQ:
+		return "irq";
+	case STACK_TYPE_NODAT:
+		return "nodat";
+	case STACK_TYPE_RESTART:
+		return "restart";
+	default:
+		return "unknown";
+	}
+}
 EXPORT_SYMBOL_GPL(stack_type_name);
 
-अटल अंतरभूत bool in_stack(अचिन्हित दीर्घ sp, काष्ठा stack_info *info,
-			    क्रमागत stack_type type, अचिन्हित दीर्घ low,
-			    अचिन्हित दीर्घ high)
-अणु
-	अगर (sp < low || sp >= high)
-		वापस false;
+static inline bool in_stack(unsigned long sp, struct stack_info *info,
+			    enum stack_type type, unsigned long low,
+			    unsigned long high)
+{
+	if (sp < low || sp >= high)
+		return false;
 	info->type = type;
 	info->begin = low;
 	info->end = high;
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool in_task_stack(अचिन्हित दीर्घ sp, काष्ठा task_काष्ठा *task,
-			  काष्ठा stack_info *info)
-अणु
-	अचिन्हित दीर्घ stack;
+static bool in_task_stack(unsigned long sp, struct task_struct *task,
+			  struct stack_info *info)
+{
+	unsigned long stack;
 
-	stack = (अचिन्हित दीर्घ) task_stack_page(task);
-	वापस in_stack(sp, info, STACK_TYPE_TASK, stack, stack + THREAD_SIZE);
-पूर्ण
+	stack = (unsigned long) task_stack_page(task);
+	return in_stack(sp, info, STACK_TYPE_TASK, stack, stack + THREAD_SIZE);
+}
 
-अटल bool in_irq_stack(अचिन्हित दीर्घ sp, काष्ठा stack_info *info)
-अणु
-	अचिन्हित दीर्घ frame_size, top;
+static bool in_irq_stack(unsigned long sp, struct stack_info *info)
+{
+	unsigned long frame_size, top;
 
-	frame_size = STACK_FRAME_OVERHEAD + माप(काष्ठा pt_regs);
+	frame_size = STACK_FRAME_OVERHEAD + sizeof(struct pt_regs);
 	top = S390_lowcore.async_stack + frame_size;
-	वापस in_stack(sp, info, STACK_TYPE_IRQ, top - THREAD_SIZE, top);
-पूर्ण
+	return in_stack(sp, info, STACK_TYPE_IRQ, top - THREAD_SIZE, top);
+}
 
-अटल bool in_nodat_stack(अचिन्हित दीर्घ sp, काष्ठा stack_info *info)
-अणु
-	अचिन्हित दीर्घ frame_size, top;
+static bool in_nodat_stack(unsigned long sp, struct stack_info *info)
+{
+	unsigned long frame_size, top;
 
-	frame_size = STACK_FRAME_OVERHEAD + माप(काष्ठा pt_regs);
+	frame_size = STACK_FRAME_OVERHEAD + sizeof(struct pt_regs);
 	top = S390_lowcore.nodat_stack + frame_size;
-	वापस in_stack(sp, info, STACK_TYPE_NODAT, top - THREAD_SIZE, top);
-पूर्ण
+	return in_stack(sp, info, STACK_TYPE_NODAT, top - THREAD_SIZE, top);
+}
 
-अटल bool in_mcck_stack(अचिन्हित दीर्घ sp, काष्ठा stack_info *info)
-अणु
-	अचिन्हित दीर्घ frame_size, top;
+static bool in_mcck_stack(unsigned long sp, struct stack_info *info)
+{
+	unsigned long frame_size, top;
 
-	frame_size = STACK_FRAME_OVERHEAD + माप(काष्ठा pt_regs);
+	frame_size = STACK_FRAME_OVERHEAD + sizeof(struct pt_regs);
 	top = S390_lowcore.mcck_stack + frame_size;
-	वापस in_stack(sp, info, STACK_TYPE_MCCK, top - THREAD_SIZE, top);
-पूर्ण
+	return in_stack(sp, info, STACK_TYPE_MCCK, top - THREAD_SIZE, top);
+}
 
-अटल bool in_restart_stack(अचिन्हित दीर्घ sp, काष्ठा stack_info *info)
-अणु
-	अचिन्हित दीर्घ frame_size, top;
+static bool in_restart_stack(unsigned long sp, struct stack_info *info)
+{
+	unsigned long frame_size, top;
 
-	frame_size = STACK_FRAME_OVERHEAD + माप(काष्ठा pt_regs);
+	frame_size = STACK_FRAME_OVERHEAD + sizeof(struct pt_regs);
 	top = S390_lowcore.restart_stack + frame_size;
-	वापस in_stack(sp, info, STACK_TYPE_RESTART, top - THREAD_SIZE, top);
-पूर्ण
+	return in_stack(sp, info, STACK_TYPE_RESTART, top - THREAD_SIZE, top);
+}
 
-पूर्णांक get_stack_info(अचिन्हित दीर्घ sp, काष्ठा task_काष्ठा *task,
-		   काष्ठा stack_info *info, अचिन्हित दीर्घ *visit_mask)
-अणु
-	अगर (!sp)
-		जाओ unknown;
+int get_stack_info(unsigned long sp, struct task_struct *task,
+		   struct stack_info *info, unsigned long *visit_mask)
+{
+	if (!sp)
+		goto unknown;
 
 	/* Sanity check: ABI requires SP to be aligned 8 bytes. */
-	अगर (sp & 0x7)
-		जाओ unknown;
+	if (sp & 0x7)
+		goto unknown;
 
 	/* Check per-task stack */
-	अगर (in_task_stack(sp, task, info))
-		जाओ recursion_check;
+	if (in_task_stack(sp, task, info))
+		goto recursion_check;
 
-	अगर (task != current)
-		जाओ unknown;
+	if (task != current)
+		goto unknown;
 
 	/* Check per-cpu stacks */
-	अगर (!in_irq_stack(sp, info) &&
+	if (!in_irq_stack(sp, info) &&
 	    !in_nodat_stack(sp, info) &&
 	    !in_restart_stack(sp, info) &&
 	    !in_mcck_stack(sp, info))
-		जाओ unknown;
+		goto unknown;
 
 recursion_check:
 	/*
-	 * Make sure we करोn't iterate through any given stack more than once.
-	 * If it comes up a second समय then there's something wrong going on:
-	 * just अवरोध out and report an unknown stack type.
+	 * Make sure we don't iterate through any given stack more than once.
+	 * If it comes up a second time then there's something wrong going on:
+	 * just break out and report an unknown stack type.
 	 */
-	अगर (*visit_mask & (1UL << info->type))
-		जाओ unknown;
+	if (*visit_mask & (1UL << info->type))
+		goto unknown;
 	*visit_mask |= 1UL << info->type;
-	वापस 0;
+	return 0;
 unknown:
 	info->type = STACK_TYPE_UNKNOWN;
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-व्योम show_stack(काष्ठा task_काष्ठा *task, अचिन्हित दीर्घ *stack,
-		       स्थिर अक्षर *loglvl)
-अणु
-	काष्ठा unwind_state state;
+void show_stack(struct task_struct *task, unsigned long *stack,
+		       const char *loglvl)
+{
+	struct unwind_state state;
 
-	prपूर्णांकk("%sCall Trace:\n", loglvl);
-	unwind_क्रम_each_frame(&state, task, शून्य, (अचिन्हित दीर्घ) stack)
-		prपूर्णांकk(state.reliable ? "%s [<%016lx>] %pSR \n" :
+	printk("%sCall Trace:\n", loglvl);
+	unwind_for_each_frame(&state, task, NULL, (unsigned long) stack)
+		printk(state.reliable ? "%s [<%016lx>] %pSR \n" :
 					"%s([<%016lx>] %pSR)\n",
-		       loglvl, state.ip, (व्योम *) state.ip);
+		       loglvl, state.ip, (void *) state.ip);
 	debug_show_held_locks(task ? : current);
-पूर्ण
+}
 
-अटल व्योम show_last_अवरोधing_event(काष्ठा pt_regs *regs)
-अणु
-	prपूर्णांकk("Last Breaking-Event-Address:\n");
-	prपूर्णांकk(" [<%016lx>] %pSR\n", regs->args[0], (व्योम *)regs->args[0]);
-पूर्ण
+static void show_last_breaking_event(struct pt_regs *regs)
+{
+	printk("Last Breaking-Event-Address:\n");
+	printk(" [<%016lx>] %pSR\n", regs->args[0], (void *)regs->args[0]);
+}
 
-व्योम show_रेजिस्टरs(काष्ठा pt_regs *regs)
-अणु
-	काष्ठा psw_bits *psw = &psw_bits(regs->psw);
-	अक्षर *mode;
+void show_registers(struct pt_regs *regs)
+{
+	struct psw_bits *psw = &psw_bits(regs->psw);
+	char *mode;
 
 	mode = user_mode(regs) ? "User" : "Krnl";
-	prपूर्णांकk("%s PSW : %px %px", mode, (व्योम *)regs->psw.mask, (व्योम *)regs->psw.addr);
-	अगर (!user_mode(regs))
-		pr_cont(" (%pSR)", (व्योम *)regs->psw.addr);
+	printk("%s PSW : %px %px", mode, (void *)regs->psw.mask, (void *)regs->psw.addr);
+	if (!user_mode(regs))
+		pr_cont(" (%pSR)", (void *)regs->psw.addr);
 	pr_cont("\n");
-	prपूर्णांकk("           R:%x T:%x IO:%x EX:%x Key:%x M:%x W:%x "
+	printk("           R:%x T:%x IO:%x EX:%x Key:%x M:%x W:%x "
 	       "P:%x AS:%x CC:%x PM:%x", psw->per, psw->dat, psw->io, psw->ext,
-	       psw->key, psw->mcheck, psw->रुको, psw->pstate, psw->as, psw->cc, psw->pm);
+	       psw->key, psw->mcheck, psw->wait, psw->pstate, psw->as, psw->cc, psw->pm);
 	pr_cont(" RI:%x EA:%x\n", psw->ri, psw->eaba);
-	prपूर्णांकk("%s GPRS: %016lx %016lx %016lx %016lx\n", mode,
+	printk("%s GPRS: %016lx %016lx %016lx %016lx\n", mode,
 	       regs->gprs[0], regs->gprs[1], regs->gprs[2], regs->gprs[3]);
-	prपूर्णांकk("           %016lx %016lx %016lx %016lx\n",
+	printk("           %016lx %016lx %016lx %016lx\n",
 	       regs->gprs[4], regs->gprs[5], regs->gprs[6], regs->gprs[7]);
-	prपूर्णांकk("           %016lx %016lx %016lx %016lx\n",
+	printk("           %016lx %016lx %016lx %016lx\n",
 	       regs->gprs[8], regs->gprs[9], regs->gprs[10], regs->gprs[11]);
-	prपूर्णांकk("           %016lx %016lx %016lx %016lx\n",
+	printk("           %016lx %016lx %016lx %016lx\n",
 	       regs->gprs[12], regs->gprs[13], regs->gprs[14], regs->gprs[15]);
 	show_code(regs);
-पूर्ण
+}
 
-व्योम show_regs(काष्ठा pt_regs *regs)
-अणु
-	show_regs_prपूर्णांक_info(KERN_DEFAULT);
-	show_रेजिस्टरs(regs);
-	/* Show stack backtrace अगर pt_regs is from kernel mode */
-	अगर (!user_mode(regs))
-		show_stack(शून्य, (अचिन्हित दीर्घ *) regs->gprs[15], KERN_DEFAULT);
-	show_last_अवरोधing_event(regs);
-पूर्ण
+void show_regs(struct pt_regs *regs)
+{
+	show_regs_print_info(KERN_DEFAULT);
+	show_registers(regs);
+	/* Show stack backtrace if pt_regs is from kernel mode */
+	if (!user_mode(regs))
+		show_stack(NULL, (unsigned long *) regs->gprs[15], KERN_DEFAULT);
+	show_last_breaking_event(regs);
+}
 
-अटल DEFINE_SPINLOCK(die_lock);
+static DEFINE_SPINLOCK(die_lock);
 
-व्योम die(काष्ठा pt_regs *regs, स्थिर अक्षर *str)
-अणु
-	अटल पूर्णांक die_counter;
+void die(struct pt_regs *regs, const char *str)
+{
+	static int die_counter;
 
 	oops_enter();
 	lgr_info_log();
@@ -203,27 +202,27 @@ unknown:
 	console_verbose();
 	spin_lock_irq(&die_lock);
 	bust_spinlocks(1);
-	prपूर्णांकk("%s: %04x ilc:%d [#%d] ", str, regs->पूर्णांक_code & 0xffff,
-	       regs->पूर्णांक_code >> 17, ++die_counter);
-#अगर_घोषित CONFIG_PREEMPT
+	printk("%s: %04x ilc:%d [#%d] ", str, regs->int_code & 0xffff,
+	       regs->int_code >> 17, ++die_counter);
+#ifdef CONFIG_PREEMPT
 	pr_cont("PREEMPT ");
-#या_अगर defined(CONFIG_PREEMPT_RT)
+#elif defined(CONFIG_PREEMPT_RT)
 	pr_cont("PREEMPT_RT ");
-#पूर्ण_अगर
+#endif
 	pr_cont("SMP ");
-	अगर (debug_pagealloc_enabled())
+	if (debug_pagealloc_enabled())
 		pr_cont("DEBUG_PAGEALLOC");
 	pr_cont("\n");
-	notअगरy_die(DIE_OOPS, str, regs, 0, regs->पूर्णांक_code & 0xffff, संक_अंश);
-	prपूर्णांक_modules();
+	notify_die(DIE_OOPS, str, regs, 0, regs->int_code & 0xffff, SIGSEGV);
+	print_modules();
 	show_regs(regs);
 	bust_spinlocks(0);
-	add_taपूर्णांक(TAINT_DIE, LOCKDEP_NOW_UNRELIABLE);
+	add_taint(TAINT_DIE, LOCKDEP_NOW_UNRELIABLE);
 	spin_unlock_irq(&die_lock);
-	अगर (in_पूर्णांकerrupt())
+	if (in_interrupt())
 		panic("Fatal exception in interrupt");
-	अगर (panic_on_oops)
+	if (panic_on_oops)
 		panic("Fatal exception: panic_on_oops");
-	oops_निकास();
-	करो_निकास(संक_अंश);
-पूर्ण
+	oops_exit();
+	do_exit(SIGSEGV);
+}

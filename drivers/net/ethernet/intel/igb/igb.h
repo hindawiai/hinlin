@@ -1,223 +1,222 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* Copyright(c) 2007 - 2018 Intel Corporation. */
 
-/* Linux PRO/1000 Ethernet Driver मुख्य header file */
+/* Linux PRO/1000 Ethernet Driver main header file */
 
-#अगर_अघोषित _IGB_H_
-#घोषणा _IGB_H_
+#ifndef _IGB_H_
+#define _IGB_H_
 
-#समावेश "e1000_mac.h"
-#समावेश "e1000_82575.h"
+#include "e1000_mac.h"
+#include "e1000_82575.h"
 
-#समावेश <linux/समयcounter.h>
-#समावेश <linux/net_tstamp.h>
-#समावेश <linux/ptp_घड़ी_kernel.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/अगर_vlan.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/i2c-algo-bit.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/mdपन.स>
+#include <linux/timecounter.h>
+#include <linux/net_tstamp.h>
+#include <linux/ptp_clock_kernel.h>
+#include <linux/bitops.h>
+#include <linux/if_vlan.h>
+#include <linux/i2c.h>
+#include <linux/i2c-algo-bit.h>
+#include <linux/pci.h>
+#include <linux/mdio.h>
 
-#समावेश <net/xdp.h>
+#include <net/xdp.h>
 
-काष्ठा igb_adapter;
+struct igb_adapter;
 
-#घोषणा E1000_PCS_CFG_IGN_SD	1
+#define E1000_PCS_CFG_IGN_SD	1
 
 /* Interrupt defines */
-#घोषणा IGB_START_ITR		648 /* ~6000 पूर्णांकs/sec */
-#घोषणा IGB_4K_ITR		980
-#घोषणा IGB_20K_ITR		196
-#घोषणा IGB_70K_ITR		56
+#define IGB_START_ITR		648 /* ~6000 ints/sec */
+#define IGB_4K_ITR		980
+#define IGB_20K_ITR		196
+#define IGB_70K_ITR		56
 
 /* TX/RX descriptor defines */
-#घोषणा IGB_DEFAULT_TXD		256
-#घोषणा IGB_DEFAULT_TX_WORK	128
-#घोषणा IGB_MIN_TXD		80
-#घोषणा IGB_MAX_TXD		4096
+#define IGB_DEFAULT_TXD		256
+#define IGB_DEFAULT_TX_WORK	128
+#define IGB_MIN_TXD		80
+#define IGB_MAX_TXD		4096
 
-#घोषणा IGB_DEFAULT_RXD		256
-#घोषणा IGB_MIN_RXD		80
-#घोषणा IGB_MAX_RXD		4096
+#define IGB_DEFAULT_RXD		256
+#define IGB_MIN_RXD		80
+#define IGB_MAX_RXD		4096
 
-#घोषणा IGB_DEFAULT_ITR		3 /* dynamic */
-#घोषणा IGB_MAX_ITR_USECS	10000
-#घोषणा IGB_MIN_ITR_USECS	10
-#घोषणा NON_Q_VECTORS		1
-#घोषणा MAX_Q_VECTORS		8
-#घोषणा MAX_MSIX_ENTRIES	10
+#define IGB_DEFAULT_ITR		3 /* dynamic */
+#define IGB_MAX_ITR_USECS	10000
+#define IGB_MIN_ITR_USECS	10
+#define NON_Q_VECTORS		1
+#define MAX_Q_VECTORS		8
+#define MAX_MSIX_ENTRIES	10
 
 /* Transmit and receive queues */
-#घोषणा IGB_MAX_RX_QUEUES	8
-#घोषणा IGB_MAX_RX_QUEUES_82575	4
-#घोषणा IGB_MAX_RX_QUEUES_I211	2
-#घोषणा IGB_MAX_TX_QUEUES	8
-#घोषणा IGB_MAX_VF_MC_ENTRIES	30
-#घोषणा IGB_MAX_VF_FUNCTIONS	8
-#घोषणा IGB_MAX_VFTA_ENTRIES	128
-#घोषणा IGB_82576_VF_DEV_ID	0x10CA
-#घोषणा IGB_I350_VF_DEV_ID	0x1520
+#define IGB_MAX_RX_QUEUES	8
+#define IGB_MAX_RX_QUEUES_82575	4
+#define IGB_MAX_RX_QUEUES_I211	2
+#define IGB_MAX_TX_QUEUES	8
+#define IGB_MAX_VF_MC_ENTRIES	30
+#define IGB_MAX_VF_FUNCTIONS	8
+#define IGB_MAX_VFTA_ENTRIES	128
+#define IGB_82576_VF_DEV_ID	0x10CA
+#define IGB_I350_VF_DEV_ID	0x1520
 
 /* NVM version defines */
-#घोषणा IGB_MAJOR_MASK		0xF000
-#घोषणा IGB_MINOR_MASK		0x0FF0
-#घोषणा IGB_BUILD_MASK		0x000F
-#घोषणा IGB_COMB_VER_MASK	0x00FF
-#घोषणा IGB_MAJOR_SHIFT		12
-#घोषणा IGB_MINOR_SHIFT		4
-#घोषणा IGB_COMB_VER_SHFT	8
-#घोषणा IGB_NVM_VER_INVALID	0xFFFF
-#घोषणा IGB_ETRACK_SHIFT	16
-#घोषणा NVM_ETRACK_WORD		0x0042
-#घोषणा NVM_COMB_VER_OFF	0x0083
-#घोषणा NVM_COMB_VER_PTR	0x003d
+#define IGB_MAJOR_MASK		0xF000
+#define IGB_MINOR_MASK		0x0FF0
+#define IGB_BUILD_MASK		0x000F
+#define IGB_COMB_VER_MASK	0x00FF
+#define IGB_MAJOR_SHIFT		12
+#define IGB_MINOR_SHIFT		4
+#define IGB_COMB_VER_SHFT	8
+#define IGB_NVM_VER_INVALID	0xFFFF
+#define IGB_ETRACK_SHIFT	16
+#define NVM_ETRACK_WORD		0x0042
+#define NVM_COMB_VER_OFF	0x0083
+#define NVM_COMB_VER_PTR	0x003d
 
-/* Transmit and receive latency (क्रम PTP बारtamps) */
-#घोषणा IGB_I210_TX_LATENCY_10		9542
-#घोषणा IGB_I210_TX_LATENCY_100		1024
-#घोषणा IGB_I210_TX_LATENCY_1000	178
-#घोषणा IGB_I210_RX_LATENCY_10		20662
-#घोषणा IGB_I210_RX_LATENCY_100		2213
-#घोषणा IGB_I210_RX_LATENCY_1000	448
+/* Transmit and receive latency (for PTP timestamps) */
+#define IGB_I210_TX_LATENCY_10		9542
+#define IGB_I210_TX_LATENCY_100		1024
+#define IGB_I210_TX_LATENCY_1000	178
+#define IGB_I210_RX_LATENCY_10		20662
+#define IGB_I210_RX_LATENCY_100		2213
+#define IGB_I210_RX_LATENCY_1000	448
 
 /* XDP */
-#घोषणा IGB_XDP_PASS		0
-#घोषणा IGB_XDP_CONSUMED	BIT(0)
-#घोषणा IGB_XDP_TX		BIT(1)
-#घोषणा IGB_XDP_REसूची		BIT(2)
+#define IGB_XDP_PASS		0
+#define IGB_XDP_CONSUMED	BIT(0)
+#define IGB_XDP_TX		BIT(1)
+#define IGB_XDP_REDIR		BIT(2)
 
-काष्ठा vf_data_storage अणु
-	अचिन्हित अक्षर vf_mac_addresses[ETH_ALEN];
+struct vf_data_storage {
+	unsigned char vf_mac_addresses[ETH_ALEN];
 	u16 vf_mc_hashes[IGB_MAX_VF_MC_ENTRIES];
 	u16 num_vf_mc_hashes;
 	u32 flags;
-	अचिन्हित दीर्घ last_nack;
+	unsigned long last_nack;
 	u16 pf_vlan; /* When set, guest VLAN config not allowed. */
 	u16 pf_qos;
 	u16 tx_rate;
 	bool spoofchk_enabled;
 	bool trusted;
-पूर्ण;
+};
 
-/* Number of unicast MAC filters reserved क्रम the PF in the RAR रेजिस्टरs */
-#घोषणा IGB_PF_MAC_FILTERS_RESERVED	3
+/* Number of unicast MAC filters reserved for the PF in the RAR registers */
+#define IGB_PF_MAC_FILTERS_RESERVED	3
 
-काष्ठा vf_mac_filter अणु
-	काष्ठा list_head l;
-	पूर्णांक vf;
-	bool मुक्त;
+struct vf_mac_filter {
+	struct list_head l;
+	int vf;
+	bool free;
 	u8 vf_mac[ETH_ALEN];
-पूर्ण;
+};
 
-#घोषणा IGB_VF_FLAG_CTS            0x00000001 /* VF is clear to send data */
-#घोषणा IGB_VF_FLAG_UNI_PROMISC    0x00000002 /* VF has unicast promisc */
-#घोषणा IGB_VF_FLAG_MULTI_PROMISC  0x00000004 /* VF has multicast promisc */
-#घोषणा IGB_VF_FLAG_PF_SET_MAC     0x00000008 /* PF has set MAC address */
+#define IGB_VF_FLAG_CTS            0x00000001 /* VF is clear to send data */
+#define IGB_VF_FLAG_UNI_PROMISC    0x00000002 /* VF has unicast promisc */
+#define IGB_VF_FLAG_MULTI_PROMISC  0x00000004 /* VF has multicast promisc */
+#define IGB_VF_FLAG_PF_SET_MAC     0x00000008 /* PF has set MAC address */
 
 /* RX descriptor control thresholds.
- * PTHRESH - MAC will consider prefetch अगर it has fewer than this number of
+ * PTHRESH - MAC will consider prefetch if it has fewer than this number of
  *           descriptors available in its onboard memory.
  *           Setting this to 0 disables RX descriptor prefetch.
- * HTHRESH - MAC will only prefetch अगर there are at least this many descriptors
+ * HTHRESH - MAC will only prefetch if there are at least this many descriptors
  *           available in host memory.
  *           If PTHRESH is 0, this should also be 0.
- * WTHRESH - RX descriptor ग_लिखोback threshold - MAC will delay writing back
- *           descriptors until either it has this many to ग_लिखो back, or the
- *           ITR समयr expires.
+ * WTHRESH - RX descriptor writeback threshold - MAC will delay writing back
+ *           descriptors until either it has this many to write back, or the
+ *           ITR timer expires.
  */
-#घोषणा IGB_RX_PTHRESH	((hw->mac.type == e1000_i354) ? 12 : 8)
-#घोषणा IGB_RX_HTHRESH	8
-#घोषणा IGB_TX_PTHRESH	((hw->mac.type == e1000_i354) ? 20 : 8)
-#घोषणा IGB_TX_HTHRESH	1
-#घोषणा IGB_RX_WTHRESH	((hw->mac.type == e1000_82576 && \
+#define IGB_RX_PTHRESH	((hw->mac.type == e1000_i354) ? 12 : 8)
+#define IGB_RX_HTHRESH	8
+#define IGB_TX_PTHRESH	((hw->mac.type == e1000_i354) ? 20 : 8)
+#define IGB_TX_HTHRESH	1
+#define IGB_RX_WTHRESH	((hw->mac.type == e1000_82576 && \
 			  (adapter->flags & IGB_FLAG_HAS_MSIX)) ? 1 : 4)
-#घोषणा IGB_TX_WTHRESH	((hw->mac.type == e1000_82576 && \
+#define IGB_TX_WTHRESH	((hw->mac.type == e1000_82576 && \
 			  (adapter->flags & IGB_FLAG_HAS_MSIX)) ? 1 : 16)
 
 /* this is the size past which hardware will drop packets when setting LPE=0 */
-#घोषणा MAXIMUM_ETHERNET_VLAN_SIZE 1522
+#define MAXIMUM_ETHERNET_VLAN_SIZE 1522
 
-#घोषणा IGB_ETH_PKT_HDR_PAD	(ETH_HLEN + ETH_FCS_LEN + (VLAN_HLEN * 2))
+#define IGB_ETH_PKT_HDR_PAD	(ETH_HLEN + ETH_FCS_LEN + (VLAN_HLEN * 2))
 
 /* Supported Rx Buffer Sizes */
-#घोषणा IGB_RXBUFFER_256	256
-#घोषणा IGB_RXBUFFER_1536	1536
-#घोषणा IGB_RXBUFFER_2048	2048
-#घोषणा IGB_RXBUFFER_3072	3072
-#घोषणा IGB_RX_HDR_LEN		IGB_RXBUFFER_256
-#घोषणा IGB_TS_HDR_LEN		16
+#define IGB_RXBUFFER_256	256
+#define IGB_RXBUFFER_1536	1536
+#define IGB_RXBUFFER_2048	2048
+#define IGB_RXBUFFER_3072	3072
+#define IGB_RX_HDR_LEN		IGB_RXBUFFER_256
+#define IGB_TS_HDR_LEN		16
 
-/* Attempt to maximize the headroom available क्रम incoming frames.  We
- * use a 2K buffer क्रम receives and need 1536/1534 to store the data क्रम
+/* Attempt to maximize the headroom available for incoming frames.  We
+ * use a 2K buffer for receives and need 1536/1534 to store the data for
  * the frame.  This leaves us with 512 bytes of room.  From that we need
- * to deduct the space needed क्रम the shared info and the padding needed
+ * to deduct the space needed for the shared info and the padding needed
  * to IP align the frame.
  *
  * Note: For cache line sizes 256 or larger this value is going to end
- *	 up negative.  In these हालs we should fall back to the 3K
+ *	 up negative.  In these cases we should fall back to the 3K
  *	 buffers.
  */
-#अगर (PAGE_SIZE < 8192)
-#घोषणा IGB_MAX_FRAME_BUILD_SKB (IGB_RXBUFFER_1536 - NET_IP_ALIGN)
-#घोषणा IGB_2K_TOO_SMALL_WITH_PADDING \
+#if (PAGE_SIZE < 8192)
+#define IGB_MAX_FRAME_BUILD_SKB (IGB_RXBUFFER_1536 - NET_IP_ALIGN)
+#define IGB_2K_TOO_SMALL_WITH_PADDING \
 ((NET_SKB_PAD + IGB_TS_HDR_LEN + IGB_RXBUFFER_1536) > SKB_WITH_OVERHEAD(IGB_RXBUFFER_2048))
 
-अटल अंतरभूत पूर्णांक igb_compute_pad(पूर्णांक rx_buf_len)
-अणु
-	पूर्णांक page_size, pad_size;
+static inline int igb_compute_pad(int rx_buf_len)
+{
+	int page_size, pad_size;
 
 	page_size = ALIGN(rx_buf_len, PAGE_SIZE / 2);
 	pad_size = SKB_WITH_OVERHEAD(page_size) - rx_buf_len;
 
-	वापस pad_size;
-पूर्ण
+	return pad_size;
+}
 
-अटल अंतरभूत पूर्णांक igb_skb_pad(व्योम)
-अणु
-	पूर्णांक rx_buf_len;
+static inline int igb_skb_pad(void)
+{
+	int rx_buf_len;
 
 	/* If a 2K buffer cannot handle a standard Ethernet frame then
-	 * optimize padding क्रम a 3K buffer instead of a 1.5K buffer.
+	 * optimize padding for a 3K buffer instead of a 1.5K buffer.
 	 *
-	 * For a 3K buffer we need to add enough padding to allow क्रम
-	 * tailroom due to NET_IP_ALIGN possibly shअगरting us out of
+	 * For a 3K buffer we need to add enough padding to allow for
+	 * tailroom due to NET_IP_ALIGN possibly shifting us out of
 	 * cache-line alignment.
 	 */
-	अगर (IGB_2K_TOO_SMALL_WITH_PADDING)
+	if (IGB_2K_TOO_SMALL_WITH_PADDING)
 		rx_buf_len = IGB_RXBUFFER_3072 + SKB_DATA_ALIGN(NET_IP_ALIGN);
-	अन्यथा
+	else
 		rx_buf_len = IGB_RXBUFFER_1536;
 
-	/* अगर needed make room क्रम NET_IP_ALIGN */
+	/* if needed make room for NET_IP_ALIGN */
 	rx_buf_len -= NET_IP_ALIGN;
 
-	वापस igb_compute_pad(rx_buf_len);
-पूर्ण
+	return igb_compute_pad(rx_buf_len);
+}
 
-#घोषणा IGB_SKB_PAD	igb_skb_pad()
-#अन्यथा
-#घोषणा IGB_SKB_PAD	(NET_SKB_PAD + NET_IP_ALIGN)
-#पूर्ण_अगर
+#define IGB_SKB_PAD	igb_skb_pad()
+#else
+#define IGB_SKB_PAD	(NET_SKB_PAD + NET_IP_ALIGN)
+#endif
 
-/* How many Rx Buffers करो we bundle पूर्णांकo one ग_लिखो to the hardware ? */
-#घोषणा IGB_RX_BUFFER_WRITE	16 /* Must be घातer of 2 */
+/* How many Rx Buffers do we bundle into one write to the hardware ? */
+#define IGB_RX_BUFFER_WRITE	16 /* Must be power of 2 */
 
-#घोषणा IGB_RX_DMA_ATTR \
+#define IGB_RX_DMA_ATTR \
 	(DMA_ATTR_SKIP_CPU_SYNC | DMA_ATTR_WEAK_ORDERING)
 
-#घोषणा AUTO_ALL_MODES		0
-#घोषणा IGB_EEPROM_APME		0x0400
+#define AUTO_ALL_MODES		0
+#define IGB_EEPROM_APME		0x0400
 
-#अगर_अघोषित IGB_MASTER_SLAVE
+#ifndef IGB_MASTER_SLAVE
 /* Switch to override PHY master/slave setting */
-#घोषणा IGB_MASTER_SLAVE	e1000_ms_hw_शेष
-#पूर्ण_अगर
+#define IGB_MASTER_SLAVE	e1000_ms_hw_default
+#endif
 
-#घोषणा IGB_MNG_VLAN_NONE	-1
+#define IGB_MNG_VLAN_NONE	-1
 
-क्रमागत igb_tx_flags अणु
+enum igb_tx_flags {
 	/* cmd_type flags */
 	IGB_TX_FLAGS_VLAN	= 0x01,
 	IGB_TX_FLAGS_TSO	= 0x02,
@@ -226,280 +225,280 @@
 	/* olinfo flags */
 	IGB_TX_FLAGS_IPV4	= 0x10,
 	IGB_TX_FLAGS_CSUM	= 0x20,
-पूर्ण;
+};
 
 /* VLAN info */
-#घोषणा IGB_TX_FLAGS_VLAN_MASK	0xffff0000
-#घोषणा IGB_TX_FLAGS_VLAN_SHIFT	16
+#define IGB_TX_FLAGS_VLAN_MASK	0xffff0000
+#define IGB_TX_FLAGS_VLAN_SHIFT	16
 
-/* The largest size we can ग_लिखो to the descriptor is 65535.  In order to
- * मुख्यtain a घातer of two alignment we have to limit ourselves to 32K.
+/* The largest size we can write to the descriptor is 65535.  In order to
+ * maintain a power of two alignment we have to limit ourselves to 32K.
  */
-#घोषणा IGB_MAX_TXD_PWR	15
-#घोषणा IGB_MAX_DATA_PER_TXD	(1u << IGB_MAX_TXD_PWR)
+#define IGB_MAX_TXD_PWR	15
+#define IGB_MAX_DATA_PER_TXD	(1u << IGB_MAX_TXD_PWR)
 
-/* Tx Descriptors needed, worst हाल */
-#घोषणा TXD_USE_COUNT(S) DIV_ROUND_UP((S), IGB_MAX_DATA_PER_TXD)
-#घोषणा DESC_NEEDED (MAX_SKB_FRAGS + 4)
+/* Tx Descriptors needed, worst case */
+#define TXD_USE_COUNT(S) DIV_ROUND_UP((S), IGB_MAX_DATA_PER_TXD)
+#define DESC_NEEDED (MAX_SKB_FRAGS + 4)
 
 /* EEPROM byte offsets */
-#घोषणा IGB_SFF_8472_SWAP		0x5C
-#घोषणा IGB_SFF_8472_COMP		0x5E
+#define IGB_SFF_8472_SWAP		0x5C
+#define IGB_SFF_8472_COMP		0x5E
 
-/* Biपंचांगasks */
-#घोषणा IGB_SFF_ADDRESSING_MODE		0x4
-#घोषणा IGB_SFF_8472_UNSUP		0x00
+/* Bitmasks */
+#define IGB_SFF_ADDRESSING_MODE		0x4
+#define IGB_SFF_8472_UNSUP		0x00
 
 /* TX resources are shared between XDP and netstack
  * and we need to tag the buffer type to distinguish them
  */
-क्रमागत igb_tx_buf_type अणु
+enum igb_tx_buf_type {
 	IGB_TYPE_SKB = 0,
 	IGB_TYPE_XDP,
-पूर्ण;
+};
 
-/* wrapper around a poपूर्णांकer to a socket buffer,
- * so a DMA handle can be stored aदीर्घ with the buffer
+/* wrapper around a pointer to a socket buffer,
+ * so a DMA handle can be stored along with the buffer
  */
-काष्ठा igb_tx_buffer अणु
-	जोड़ e1000_adv_tx_desc *next_to_watch;
-	अचिन्हित दीर्घ समय_stamp;
-	क्रमागत igb_tx_buf_type type;
-	जोड़ अणु
-		काष्ठा sk_buff *skb;
-		काष्ठा xdp_frame *xdpf;
-	पूर्ण;
-	अचिन्हित पूर्णांक bytecount;
+struct igb_tx_buffer {
+	union e1000_adv_tx_desc *next_to_watch;
+	unsigned long time_stamp;
+	enum igb_tx_buf_type type;
+	union {
+		struct sk_buff *skb;
+		struct xdp_frame *xdpf;
+	};
+	unsigned int bytecount;
 	u16 gso_segs;
 	__be16 protocol;
 
 	DEFINE_DMA_UNMAP_ADDR(dma);
 	DEFINE_DMA_UNMAP_LEN(len);
 	u32 tx_flags;
-पूर्ण;
+};
 
-काष्ठा igb_rx_buffer अणु
+struct igb_rx_buffer {
 	dma_addr_t dma;
-	काष्ठा page *page;
-#अगर (BITS_PER_LONG > 32) || (PAGE_SIZE >= 65536)
+	struct page *page;
+#if (BITS_PER_LONG > 32) || (PAGE_SIZE >= 65536)
 	__u32 page_offset;
-#अन्यथा
+#else
 	__u16 page_offset;
-#पूर्ण_अगर
+#endif
 	__u16 pagecnt_bias;
-पूर्ण;
+};
 
-काष्ठा igb_tx_queue_stats अणु
+struct igb_tx_queue_stats {
 	u64 packets;
 	u64 bytes;
 	u64 restart_queue;
 	u64 restart_queue2;
-पूर्ण;
+};
 
-काष्ठा igb_rx_queue_stats अणु
+struct igb_rx_queue_stats {
 	u64 packets;
 	u64 bytes;
 	u64 drops;
 	u64 csum_err;
 	u64 alloc_failed;
-पूर्ण;
+};
 
-काष्ठा igb_ring_container अणु
-	काष्ठा igb_ring *ring;		/* poपूर्णांकer to linked list of rings */
-	अचिन्हित पूर्णांक total_bytes;	/* total bytes processed this पूर्णांक */
-	अचिन्हित पूर्णांक total_packets;	/* total packets processed this पूर्णांक */
-	u16 work_limit;			/* total work allowed per पूर्णांकerrupt */
+struct igb_ring_container {
+	struct igb_ring *ring;		/* pointer to linked list of rings */
+	unsigned int total_bytes;	/* total bytes processed this int */
+	unsigned int total_packets;	/* total packets processed this int */
+	u16 work_limit;			/* total work allowed per interrupt */
 	u8 count;			/* total number of rings in vector */
-	u8 itr;				/* current ITR setting क्रम ring */
-पूर्ण;
+	u8 itr;				/* current ITR setting for ring */
+};
 
-काष्ठा igb_ring अणु
-	काष्ठा igb_q_vector *q_vector;	/* backlink to q_vector */
-	काष्ठा net_device *netdev;	/* back poपूर्णांकer to net_device */
-	काष्ठा bpf_prog *xdp_prog;
-	काष्ठा device *dev;		/* device poपूर्णांकer क्रम dma mapping */
-	जोड़ अणु				/* array of buffer info काष्ठाs */
-		काष्ठा igb_tx_buffer *tx_buffer_info;
-		काष्ठा igb_rx_buffer *rx_buffer_info;
-	पूर्ण;
-	व्योम *desc;			/* descriptor ring memory */
-	अचिन्हित दीर्घ flags;		/* ring specअगरic flags */
-	व्योम __iomem *tail;		/* poपूर्णांकer to ring tail रेजिस्टर */
+struct igb_ring {
+	struct igb_q_vector *q_vector;	/* backlink to q_vector */
+	struct net_device *netdev;	/* back pointer to net_device */
+	struct bpf_prog *xdp_prog;
+	struct device *dev;		/* device pointer for dma mapping */
+	union {				/* array of buffer info structs */
+		struct igb_tx_buffer *tx_buffer_info;
+		struct igb_rx_buffer *rx_buffer_info;
+	};
+	void *desc;			/* descriptor ring memory */
+	unsigned long flags;		/* ring specific flags */
+	void __iomem *tail;		/* pointer to ring tail register */
 	dma_addr_t dma;			/* phys address of the ring */
-	अचिन्हित पूर्णांक  size;		/* length of desc. ring in bytes */
+	unsigned int  size;		/* length of desc. ring in bytes */
 
 	u16 count;			/* number of desc. in the ring */
 	u8 queue_index;			/* logical index of the ring*/
 	u8 reg_idx;			/* physical index of the ring */
-	bool launchसमय_enable;		/* true अगर LaunchTime is enabled */
-	bool cbs_enable;		/* indicates अगर CBS is enabled */
+	bool launchtime_enable;		/* true if LaunchTime is enabled */
+	bool cbs_enable;		/* indicates if CBS is enabled */
 	s32 idleslope;			/* idleSlope in kbps */
 	s32 sendslope;			/* sendSlope in kbps */
 	s32 hicredit;			/* hiCredit in bytes */
 	s32 locredit;			/* loCredit in bytes */
 
-	/* everything past this poपूर्णांक are written often */
+	/* everything past this point are written often */
 	u16 next_to_clean;
 	u16 next_to_use;
 	u16 next_to_alloc;
 
-	जोड़ अणु
+	union {
 		/* TX */
-		काष्ठा अणु
-			काष्ठा igb_tx_queue_stats tx_stats;
-			काष्ठा u64_stats_sync tx_syncp;
-			काष्ठा u64_stats_sync tx_syncp2;
-		पूर्ण;
+		struct {
+			struct igb_tx_queue_stats tx_stats;
+			struct u64_stats_sync tx_syncp;
+			struct u64_stats_sync tx_syncp2;
+		};
 		/* RX */
-		काष्ठा अणु
-			काष्ठा sk_buff *skb;
-			काष्ठा igb_rx_queue_stats rx_stats;
-			काष्ठा u64_stats_sync rx_syncp;
-		पूर्ण;
-	पूर्ण;
-	काष्ठा xdp_rxq_info xdp_rxq;
-पूर्ण ____cacheline_पूर्णांकernodealigned_in_smp;
+		struct {
+			struct sk_buff *skb;
+			struct igb_rx_queue_stats rx_stats;
+			struct u64_stats_sync rx_syncp;
+		};
+	};
+	struct xdp_rxq_info xdp_rxq;
+} ____cacheline_internodealigned_in_smp;
 
-काष्ठा igb_q_vector अणु
-	काष्ठा igb_adapter *adapter;	/* backlink */
-	पूर्णांक cpu;			/* CPU क्रम DCA */
+struct igb_q_vector {
+	struct igb_adapter *adapter;	/* backlink */
+	int cpu;			/* CPU for DCA */
 	u32 eims_value;			/* EIMS mask value */
 
 	u16 itr_val;
 	u8 set_itr;
-	व्योम __iomem *itr_रेजिस्टर;
+	void __iomem *itr_register;
 
-	काष्ठा igb_ring_container rx, tx;
+	struct igb_ring_container rx, tx;
 
-	काष्ठा napi_काष्ठा napi;
-	काष्ठा rcu_head rcu;	/* to aव्योम race with update stats on मुक्त */
-	अक्षर name[IFNAMSIZ + 9];
+	struct napi_struct napi;
+	struct rcu_head rcu;	/* to avoid race with update stats on free */
+	char name[IFNAMSIZ + 9];
 
-	/* क्रम dynamic allocation of rings associated with this q_vector */
-	काष्ठा igb_ring ring[] ____cacheline_पूर्णांकernodealigned_in_smp;
-पूर्ण;
+	/* for dynamic allocation of rings associated with this q_vector */
+	struct igb_ring ring[] ____cacheline_internodealigned_in_smp;
+};
 
-क्रमागत e1000_ring_flags_t अणु
+enum e1000_ring_flags_t {
 	IGB_RING_FLAG_RX_3K_BUFFER,
 	IGB_RING_FLAG_RX_BUILD_SKB_ENABLED,
 	IGB_RING_FLAG_RX_SCTP_CSUM,
 	IGB_RING_FLAG_RX_LB_VLAN_BSWAP,
 	IGB_RING_FLAG_TX_CTX_IDX,
 	IGB_RING_FLAG_TX_DETECT_HANG
-पूर्ण;
+};
 
-#घोषणा ring_uses_large_buffer(ring) \
+#define ring_uses_large_buffer(ring) \
 	test_bit(IGB_RING_FLAG_RX_3K_BUFFER, &(ring)->flags)
-#घोषणा set_ring_uses_large_buffer(ring) \
+#define set_ring_uses_large_buffer(ring) \
 	set_bit(IGB_RING_FLAG_RX_3K_BUFFER, &(ring)->flags)
-#घोषणा clear_ring_uses_large_buffer(ring) \
+#define clear_ring_uses_large_buffer(ring) \
 	clear_bit(IGB_RING_FLAG_RX_3K_BUFFER, &(ring)->flags)
 
-#घोषणा ring_uses_build_skb(ring) \
+#define ring_uses_build_skb(ring) \
 	test_bit(IGB_RING_FLAG_RX_BUILD_SKB_ENABLED, &(ring)->flags)
-#घोषणा set_ring_build_skb_enabled(ring) \
+#define set_ring_build_skb_enabled(ring) \
 	set_bit(IGB_RING_FLAG_RX_BUILD_SKB_ENABLED, &(ring)->flags)
-#घोषणा clear_ring_build_skb_enabled(ring) \
+#define clear_ring_build_skb_enabled(ring) \
 	clear_bit(IGB_RING_FLAG_RX_BUILD_SKB_ENABLED, &(ring)->flags)
 
-अटल अंतरभूत अचिन्हित पूर्णांक igb_rx_bufsz(काष्ठा igb_ring *ring)
-अणु
-#अगर (PAGE_SIZE < 8192)
-	अगर (ring_uses_large_buffer(ring))
-		वापस IGB_RXBUFFER_3072;
+static inline unsigned int igb_rx_bufsz(struct igb_ring *ring)
+{
+#if (PAGE_SIZE < 8192)
+	if (ring_uses_large_buffer(ring))
+		return IGB_RXBUFFER_3072;
 
-	अगर (ring_uses_build_skb(ring))
-		वापस IGB_MAX_FRAME_BUILD_SKB;
-#पूर्ण_अगर
-	वापस IGB_RXBUFFER_2048;
-पूर्ण
+	if (ring_uses_build_skb(ring))
+		return IGB_MAX_FRAME_BUILD_SKB;
+#endif
+	return IGB_RXBUFFER_2048;
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक igb_rx_pg_order(काष्ठा igb_ring *ring)
-अणु
-#अगर (PAGE_SIZE < 8192)
-	अगर (ring_uses_large_buffer(ring))
-		वापस 1;
-#पूर्ण_अगर
-	वापस 0;
-पूर्ण
+static inline unsigned int igb_rx_pg_order(struct igb_ring *ring)
+{
+#if (PAGE_SIZE < 8192)
+	if (ring_uses_large_buffer(ring))
+		return 1;
+#endif
+	return 0;
+}
 
-#घोषणा igb_rx_pg_size(_ring) (PAGE_SIZE << igb_rx_pg_order(_ring))
+#define igb_rx_pg_size(_ring) (PAGE_SIZE << igb_rx_pg_order(_ring))
 
-#घोषणा IGB_TXD_DCMD (E1000_ADVTXD_DCMD_EOP | E1000_ADVTXD_DCMD_RS)
+#define IGB_TXD_DCMD (E1000_ADVTXD_DCMD_EOP | E1000_ADVTXD_DCMD_RS)
 
-#घोषणा IGB_RX_DESC(R, i)	\
-	(&(((जोड़ e1000_adv_rx_desc *)((R)->desc))[i]))
-#घोषणा IGB_TX_DESC(R, i)	\
-	(&(((जोड़ e1000_adv_tx_desc *)((R)->desc))[i]))
-#घोषणा IGB_TX_CTXTDESC(R, i)	\
-	(&(((काष्ठा e1000_adv_tx_context_desc *)((R)->desc))[i]))
+#define IGB_RX_DESC(R, i)	\
+	(&(((union e1000_adv_rx_desc *)((R)->desc))[i]))
+#define IGB_TX_DESC(R, i)	\
+	(&(((union e1000_adv_tx_desc *)((R)->desc))[i]))
+#define IGB_TX_CTXTDESC(R, i)	\
+	(&(((struct e1000_adv_tx_context_desc *)((R)->desc))[i]))
 
 /* igb_test_staterr - tests bits within Rx descriptor status and error fields */
-अटल अंतरभूत __le32 igb_test_staterr(जोड़ e1000_adv_rx_desc *rx_desc,
-				      स्थिर u32 stat_err_bits)
-अणु
-	वापस rx_desc->wb.upper.status_error & cpu_to_le32(stat_err_bits);
-पूर्ण
+static inline __le32 igb_test_staterr(union e1000_adv_rx_desc *rx_desc,
+				      const u32 stat_err_bits)
+{
+	return rx_desc->wb.upper.status_error & cpu_to_le32(stat_err_bits);
+}
 
-/* igb_desc_unused - calculate अगर we have unused descriptors */
-अटल अंतरभूत पूर्णांक igb_desc_unused(काष्ठा igb_ring *ring)
-अणु
-	अगर (ring->next_to_clean > ring->next_to_use)
-		वापस ring->next_to_clean - ring->next_to_use - 1;
+/* igb_desc_unused - calculate if we have unused descriptors */
+static inline int igb_desc_unused(struct igb_ring *ring)
+{
+	if (ring->next_to_clean > ring->next_to_use)
+		return ring->next_to_clean - ring->next_to_use - 1;
 
-	वापस ring->count + ring->next_to_clean - ring->next_to_use - 1;
-पूर्ण
+	return ring->count + ring->next_to_clean - ring->next_to_use - 1;
+}
 
-#अगर_घोषित CONFIG_IGB_HWMON
+#ifdef CONFIG_IGB_HWMON
 
-#घोषणा IGB_HWMON_TYPE_LOC	0
-#घोषणा IGB_HWMON_TYPE_TEMP	1
-#घोषणा IGB_HWMON_TYPE_CAUTION	2
-#घोषणा IGB_HWMON_TYPE_MAX	3
+#define IGB_HWMON_TYPE_LOC	0
+#define IGB_HWMON_TYPE_TEMP	1
+#define IGB_HWMON_TYPE_CAUTION	2
+#define IGB_HWMON_TYPE_MAX	3
 
-काष्ठा hwmon_attr अणु
-	काष्ठा device_attribute dev_attr;
-	काष्ठा e1000_hw *hw;
-	काष्ठा e1000_thermal_diode_data *sensor;
-	अक्षर name[12];
-	पूर्ण;
+struct hwmon_attr {
+	struct device_attribute dev_attr;
+	struct e1000_hw *hw;
+	struct e1000_thermal_diode_data *sensor;
+	char name[12];
+	};
 
-काष्ठा hwmon_buff अणु
-	काष्ठा attribute_group group;
-	स्थिर काष्ठा attribute_group *groups[2];
-	काष्ठा attribute *attrs[E1000_MAX_SENSORS * 4 + 1];
-	काष्ठा hwmon_attr hwmon_list[E1000_MAX_SENSORS * 4];
-	अचिन्हित पूर्णांक n_hwmon;
-	पूर्ण;
-#पूर्ण_अगर
+struct hwmon_buff {
+	struct attribute_group group;
+	const struct attribute_group *groups[2];
+	struct attribute *attrs[E1000_MAX_SENSORS * 4 + 1];
+	struct hwmon_attr hwmon_list[E1000_MAX_SENSORS * 4];
+	unsigned int n_hwmon;
+	};
+#endif
 
-/* The number of L2 ether-type filter रेजिस्टरs, Index 3 is reserved
- * क्रम PTP 1588 बारtamp
+/* The number of L2 ether-type filter registers, Index 3 is reserved
+ * for PTP 1588 timestamp
  */
-#घोषणा MAX_ETYPE_FILTER	(4 - 1)
-/* ETQF filter list: one अटल filter per filter consumer. This is
- * to aव्योम filter collisions later. Add new filters here!!
+#define MAX_ETYPE_FILTER	(4 - 1)
+/* ETQF filter list: one static filter per filter consumer. This is
+ * to avoid filter collisions later. Add new filters here!!
  *
  * Current filters:		Filter 3
  */
-#घोषणा IGB_ETQF_FILTER_1588	3
+#define IGB_ETQF_FILTER_1588	3
 
-#घोषणा IGB_N_EXTTS	2
-#घोषणा IGB_N_PEROUT	2
-#घोषणा IGB_N_SDP	4
-#घोषणा IGB_RETA_SIZE	128
+#define IGB_N_EXTTS	2
+#define IGB_N_PEROUT	2
+#define IGB_N_SDP	4
+#define IGB_RETA_SIZE	128
 
-क्रमागत igb_filter_match_flags अणु
+enum igb_filter_match_flags {
 	IGB_FILTER_FLAG_ETHER_TYPE = 0x1,
 	IGB_FILTER_FLAG_VLAN_TCI   = 0x2,
 	IGB_FILTER_FLAG_SRC_MAC_ADDR   = 0x4,
 	IGB_FILTER_FLAG_DST_MAC_ADDR   = 0x8,
-पूर्ण;
+};
 
-#घोषणा IGB_MAX_RXNFC_FILTERS 16
+#define IGB_MAX_RXNFC_FILTERS 16
 
-/* RX network flow classअगरication data काष्ठाure */
-काष्ठा igb_nfc_input अणु
+/* RX network flow classification data structure */
+struct igb_nfc_input {
 	/* Byte layout in order, all values with MSB first:
 	 * match_flags - 1 byte
 	 * etype - 2 bytes
@@ -510,40 +509,40 @@
 	__be16 vlan_tci;
 	u8 src_addr[ETH_ALEN];
 	u8 dst_addr[ETH_ALEN];
-पूर्ण;
+};
 
-काष्ठा igb_nfc_filter अणु
-	काष्ठा hlist_node nfc_node;
-	काष्ठा igb_nfc_input filter;
-	अचिन्हित दीर्घ cookie;
+struct igb_nfc_filter {
+	struct hlist_node nfc_node;
+	struct igb_nfc_input filter;
+	unsigned long cookie;
 	u16 etype_reg_index;
 	u16 sw_idx;
 	u16 action;
-पूर्ण;
+};
 
-काष्ठा igb_mac_addr अणु
+struct igb_mac_addr {
 	u8 addr[ETH_ALEN];
 	u8 queue;
-	u8 state; /* biपंचांगask */
-पूर्ण;
+	u8 state; /* bitmask */
+};
 
-#घोषणा IGB_MAC_STATE_DEFAULT	0x1
-#घोषणा IGB_MAC_STATE_IN_USE	0x2
-#घोषणा IGB_MAC_STATE_SRC_ADDR	0x4
-#घोषणा IGB_MAC_STATE_QUEUE_STEERING 0x8
+#define IGB_MAC_STATE_DEFAULT	0x1
+#define IGB_MAC_STATE_IN_USE	0x2
+#define IGB_MAC_STATE_SRC_ADDR	0x4
+#define IGB_MAC_STATE_QUEUE_STEERING 0x8
 
-/* board specअगरic निजी data काष्ठाure */
-काष्ठा igb_adapter अणु
-	अचिन्हित दीर्घ active_vlans[BITS_TO_LONGS(VLAN_N_VID)];
+/* board specific private data structure */
+struct igb_adapter {
+	unsigned long active_vlans[BITS_TO_LONGS(VLAN_N_VID)];
 
-	काष्ठा net_device *netdev;
-	काष्ठा bpf_prog *xdp_prog;
+	struct net_device *netdev;
+	struct bpf_prog *xdp_prog;
 
-	अचिन्हित दीर्घ state;
-	अचिन्हित पूर्णांक flags;
+	unsigned long state;
+	unsigned int flags;
 
-	अचिन्हित पूर्णांक num_q_vectors;
-	काष्ठा msix_entry msix_entries[MAX_MSIX_ENTRIES];
+	unsigned int num_q_vectors;
+	struct msix_entry msix_entries[MAX_MSIX_ENTRIES];
 
 	/* Interrupt Throttle Rate */
 	u32 rx_itr_setting;
@@ -553,19 +552,19 @@
 
 	/* TX */
 	u16 tx_work_limit;
-	u32 tx_समयout_count;
-	पूर्णांक num_tx_queues;
-	काष्ठा igb_ring *tx_ring[16];
+	u32 tx_timeout_count;
+	int num_tx_queues;
+	struct igb_ring *tx_ring[16];
 
 	/* RX */
-	पूर्णांक num_rx_queues;
-	काष्ठा igb_ring *rx_ring[16];
+	int num_rx_queues;
+	struct igb_ring *rx_ring[16];
 
 	u32 max_frame_size;
 	u32 min_frame_size;
 
-	काष्ठा समयr_list watchकरोg_समयr;
-	काष्ठा समयr_list phy_info_समयr;
+	struct timer_list watchdog_timer;
+	struct timer_list phy_info_timer;
 
 	u16 mng_vlan_id;
 	u32 bd_number;
@@ -574,236 +573,236 @@
 	u16 link_speed;
 	u16 link_duplex;
 
-	u8 __iomem *io_addr; /* Mainly क्रम iounmap use */
+	u8 __iomem *io_addr; /* Mainly for iounmap use */
 
-	काष्ठा work_काष्ठा reset_task;
-	काष्ठा work_काष्ठा watchकरोg_task;
-	bool fc_स्वतःneg;
-	u8  tx_समयout_factor;
-	काष्ठा समयr_list blink_समयr;
-	अचिन्हित दीर्घ led_status;
+	struct work_struct reset_task;
+	struct work_struct watchdog_task;
+	bool fc_autoneg;
+	u8  tx_timeout_factor;
+	struct timer_list blink_timer;
+	unsigned long led_status;
 
-	/* OS defined काष्ठाs */
-	काष्ठा pci_dev *pdev;
+	/* OS defined structs */
+	struct pci_dev *pdev;
 
 	spinlock_t stats64_lock;
-	काष्ठा rtnl_link_stats64 stats64;
+	struct rtnl_link_stats64 stats64;
 
-	/* काष्ठाs defined in e1000_hw.h */
-	काष्ठा e1000_hw hw;
-	काष्ठा e1000_hw_stats stats;
-	काष्ठा e1000_phy_info phy_info;
+	/* structs defined in e1000_hw.h */
+	struct e1000_hw hw;
+	struct e1000_hw_stats stats;
+	struct e1000_phy_info phy_info;
 
 	u32 test_icr;
-	काष्ठा igb_ring test_tx_ring;
-	काष्ठा igb_ring test_rx_ring;
+	struct igb_ring test_tx_ring;
+	struct igb_ring test_rx_ring;
 
-	पूर्णांक msg_enable;
+	int msg_enable;
 
-	काष्ठा igb_q_vector *q_vector[MAX_Q_VECTORS];
+	struct igb_q_vector *q_vector[MAX_Q_VECTORS];
 	u32 eims_enable_mask;
 	u32 eims_other;
 
 	/* to not mess up cache alignment, always add to the bottom */
 	u16 tx_ring_count;
 	u16 rx_ring_count;
-	अचिन्हित पूर्णांक vfs_allocated_count;
-	काष्ठा vf_data_storage *vf_data;
-	पूर्णांक vf_rate_link_speed;
+	unsigned int vfs_allocated_count;
+	struct vf_data_storage *vf_data;
+	int vf_rate_link_speed;
 	u32 rss_queues;
 	u32 wvbr;
-	u32 *shaकरोw_vfta;
+	u32 *shadow_vfta;
 
-	काष्ठा ptp_घड़ी *ptp_घड़ी;
-	काष्ठा ptp_घड़ी_info ptp_caps;
-	काष्ठा delayed_work ptp_overflow_work;
-	काष्ठा work_काष्ठा ptp_tx_work;
-	काष्ठा sk_buff *ptp_tx_skb;
-	काष्ठा hwtstamp_config tstamp_config;
-	अचिन्हित दीर्घ ptp_tx_start;
-	अचिन्हित दीर्घ last_rx_ptp_check;
-	अचिन्हित दीर्घ last_rx_बारtamp;
-	अचिन्हित पूर्णांक ptp_flags;
-	spinlock_t पंचांगreg_lock;
-	काष्ठा cyclecounter cc;
-	काष्ठा समयcounter tc;
-	u32 tx_hwtstamp_समयouts;
+	struct ptp_clock *ptp_clock;
+	struct ptp_clock_info ptp_caps;
+	struct delayed_work ptp_overflow_work;
+	struct work_struct ptp_tx_work;
+	struct sk_buff *ptp_tx_skb;
+	struct hwtstamp_config tstamp_config;
+	unsigned long ptp_tx_start;
+	unsigned long last_rx_ptp_check;
+	unsigned long last_rx_timestamp;
+	unsigned int ptp_flags;
+	spinlock_t tmreg_lock;
+	struct cyclecounter cc;
+	struct timecounter tc;
+	u32 tx_hwtstamp_timeouts;
 	u32 tx_hwtstamp_skipped;
 	u32 rx_hwtstamp_cleared;
 	bool pps_sys_wrap_on;
 
-	काष्ठा ptp_pin_desc sdp_config[IGB_N_SDP];
-	काष्ठा अणु
-		काष्ठा बारpec64 start;
-		काष्ठा बारpec64 period;
-	पूर्ण perout[IGB_N_PEROUT];
+	struct ptp_pin_desc sdp_config[IGB_N_SDP];
+	struct {
+		struct timespec64 start;
+		struct timespec64 period;
+	} perout[IGB_N_PEROUT];
 
-	अक्षर fw_version[32];
-#अगर_घोषित CONFIG_IGB_HWMON
-	काष्ठा hwmon_buff *igb_hwmon_buff;
+	char fw_version[32];
+#ifdef CONFIG_IGB_HWMON
+	struct hwmon_buff *igb_hwmon_buff;
 	bool ets;
-#पूर्ण_अगर
-	काष्ठा i2c_algo_bit_data i2c_algo;
-	काष्ठा i2c_adapter i2c_adap;
-	काष्ठा i2c_client *i2c_client;
+#endif
+	struct i2c_algo_bit_data i2c_algo;
+	struct i2c_adapter i2c_adap;
+	struct i2c_client *i2c_client;
 	u32 rss_indir_tbl_init;
 	u8 rss_indir_tbl[IGB_RETA_SIZE];
 
-	अचिन्हित दीर्घ link_check_समयout;
-	पूर्णांक copper_tries;
-	काष्ठा e1000_info ei;
+	unsigned long link_check_timeout;
+	int copper_tries;
+	struct e1000_info ei;
 	u16 eee_advert;
 
-	/* RX network flow classअगरication support */
-	काष्ठा hlist_head nfc_filter_list;
-	काष्ठा hlist_head cls_flower_list;
-	अचिन्हित पूर्णांक nfc_filter_count;
-	/* lock क्रम RX network flow classअगरication filter */
+	/* RX network flow classification support */
+	struct hlist_head nfc_filter_list;
+	struct hlist_head cls_flower_list;
+	unsigned int nfc_filter_count;
+	/* lock for RX network flow classification filter */
 	spinlock_t nfc_lock;
-	bool etype_biपंचांगap[MAX_ETYPE_FILTER];
+	bool etype_bitmap[MAX_ETYPE_FILTER];
 
-	काष्ठा igb_mac_addr *mac_table;
-	काष्ठा vf_mac_filter vf_macs;
-	काष्ठा vf_mac_filter *vf_mac_list;
-पूर्ण;
+	struct igb_mac_addr *mac_table;
+	struct vf_mac_filter vf_macs;
+	struct vf_mac_filter *vf_mac_list;
+};
 
 /* flags controlling PTP/1588 function */
-#घोषणा IGB_PTP_ENABLED		BIT(0)
-#घोषणा IGB_PTP_OVERFLOW_CHECK	BIT(1)
+#define IGB_PTP_ENABLED		BIT(0)
+#define IGB_PTP_OVERFLOW_CHECK	BIT(1)
 
-#घोषणा IGB_FLAG_HAS_MSI		BIT(0)
-#घोषणा IGB_FLAG_DCA_ENABLED		BIT(1)
-#घोषणा IGB_FLAG_QUAD_PORT_A		BIT(2)
-#घोषणा IGB_FLAG_QUEUE_PAIRS		BIT(3)
-#घोषणा IGB_FLAG_DMAC			BIT(4)
-#घोषणा IGB_FLAG_RSS_FIELD_IPV4_UDP	BIT(6)
-#घोषणा IGB_FLAG_RSS_FIELD_IPV6_UDP	BIT(7)
-#घोषणा IGB_FLAG_WOL_SUPPORTED		BIT(8)
-#घोषणा IGB_FLAG_NEED_LINK_UPDATE	BIT(9)
-#घोषणा IGB_FLAG_MEDIA_RESET		BIT(10)
-#घोषणा IGB_FLAG_MAS_CAPABLE		BIT(11)
-#घोषणा IGB_FLAG_MAS_ENABLE		BIT(12)
-#घोषणा IGB_FLAG_HAS_MSIX		BIT(13)
-#घोषणा IGB_FLAG_EEE			BIT(14)
-#घोषणा IGB_FLAG_VLAN_PROMISC		BIT(15)
-#घोषणा IGB_FLAG_RX_LEGACY		BIT(16)
-#घोषणा IGB_FLAG_FQTSS			BIT(17)
+#define IGB_FLAG_HAS_MSI		BIT(0)
+#define IGB_FLAG_DCA_ENABLED		BIT(1)
+#define IGB_FLAG_QUAD_PORT_A		BIT(2)
+#define IGB_FLAG_QUEUE_PAIRS		BIT(3)
+#define IGB_FLAG_DMAC			BIT(4)
+#define IGB_FLAG_RSS_FIELD_IPV4_UDP	BIT(6)
+#define IGB_FLAG_RSS_FIELD_IPV6_UDP	BIT(7)
+#define IGB_FLAG_WOL_SUPPORTED		BIT(8)
+#define IGB_FLAG_NEED_LINK_UPDATE	BIT(9)
+#define IGB_FLAG_MEDIA_RESET		BIT(10)
+#define IGB_FLAG_MAS_CAPABLE		BIT(11)
+#define IGB_FLAG_MAS_ENABLE		BIT(12)
+#define IGB_FLAG_HAS_MSIX		BIT(13)
+#define IGB_FLAG_EEE			BIT(14)
+#define IGB_FLAG_VLAN_PROMISC		BIT(15)
+#define IGB_FLAG_RX_LEGACY		BIT(16)
+#define IGB_FLAG_FQTSS			BIT(17)
 
 /* Media Auto Sense */
-#घोषणा IGB_MAS_ENABLE_0		0X0001
-#घोषणा IGB_MAS_ENABLE_1		0X0002
-#घोषणा IGB_MAS_ENABLE_2		0X0004
-#घोषणा IGB_MAS_ENABLE_3		0X0008
+#define IGB_MAS_ENABLE_0		0X0001
+#define IGB_MAS_ENABLE_1		0X0002
+#define IGB_MAS_ENABLE_2		0X0004
+#define IGB_MAS_ENABLE_3		0X0008
 
 /* DMA Coalescing defines */
-#घोषणा IGB_MIN_TXPBSIZE	20408
-#घोषणा IGB_TX_BUF_4096		4096
-#घोषणा IGB_DMCTLX_DCFLUSH_DIS	0x80000000  /* Disable DMA Coal Flush */
+#define IGB_MIN_TXPBSIZE	20408
+#define IGB_TX_BUF_4096		4096
+#define IGB_DMCTLX_DCFLUSH_DIS	0x80000000  /* Disable DMA Coal Flush */
 
-#घोषणा IGB_82576_TSYNC_SHIFT	19
-क्रमागत e1000_state_t अणु
+#define IGB_82576_TSYNC_SHIFT	19
+enum e1000_state_t {
 	__IGB_TESTING,
 	__IGB_RESETTING,
 	__IGB_DOWN,
 	__IGB_PTP_TX_IN_PROGRESS,
-पूर्ण;
+};
 
-क्रमागत igb_boards अणु
+enum igb_boards {
 	board_82575,
-पूर्ण;
+};
 
-बाह्य अक्षर igb_driver_name[];
+extern char igb_driver_name[];
 
-पूर्णांक igb_xmit_xdp_ring(काष्ठा igb_adapter *adapter,
-		      काष्ठा igb_ring *ring,
-		      काष्ठा xdp_frame *xdpf);
-पूर्णांक igb_खोलो(काष्ठा net_device *netdev);
-पूर्णांक igb_बंद(काष्ठा net_device *netdev);
-पूर्णांक igb_up(काष्ठा igb_adapter *);
-व्योम igb_करोwn(काष्ठा igb_adapter *);
-व्योम igb_reinit_locked(काष्ठा igb_adapter *);
-व्योम igb_reset(काष्ठा igb_adapter *);
-पूर्णांक igb_reinit_queues(काष्ठा igb_adapter *);
-व्योम igb_ग_लिखो_rss_indir_tbl(काष्ठा igb_adapter *);
-पूर्णांक igb_set_spd_dplx(काष्ठा igb_adapter *, u32, u8);
-पूर्णांक igb_setup_tx_resources(काष्ठा igb_ring *);
-पूर्णांक igb_setup_rx_resources(काष्ठा igb_ring *);
-व्योम igb_मुक्त_tx_resources(काष्ठा igb_ring *);
-व्योम igb_मुक्त_rx_resources(काष्ठा igb_ring *);
-व्योम igb_configure_tx_ring(काष्ठा igb_adapter *, काष्ठा igb_ring *);
-व्योम igb_configure_rx_ring(काष्ठा igb_adapter *, काष्ठा igb_ring *);
-व्योम igb_setup_tctl(काष्ठा igb_adapter *);
-व्योम igb_setup_rctl(काष्ठा igb_adapter *);
-व्योम igb_setup_srrctl(काष्ठा igb_adapter *, काष्ठा igb_ring *);
-netdev_tx_t igb_xmit_frame_ring(काष्ठा sk_buff *, काष्ठा igb_ring *);
-व्योम igb_alloc_rx_buffers(काष्ठा igb_ring *, u16);
-व्योम igb_update_stats(काष्ठा igb_adapter *);
-bool igb_has_link(काष्ठा igb_adapter *adapter);
-व्योम igb_set_ethtool_ops(काष्ठा net_device *);
-व्योम igb_घातer_up_link(काष्ठा igb_adapter *);
-व्योम igb_set_fw_version(काष्ठा igb_adapter *);
-व्योम igb_ptp_init(काष्ठा igb_adapter *adapter);
-व्योम igb_ptp_stop(काष्ठा igb_adapter *adapter);
-व्योम igb_ptp_reset(काष्ठा igb_adapter *adapter);
-व्योम igb_ptp_suspend(काष्ठा igb_adapter *adapter);
-व्योम igb_ptp_rx_hang(काष्ठा igb_adapter *adapter);
-व्योम igb_ptp_tx_hang(काष्ठा igb_adapter *adapter);
-व्योम igb_ptp_rx_rgtstamp(काष्ठा igb_q_vector *q_vector, काष्ठा sk_buff *skb);
-पूर्णांक igb_ptp_rx_pktstamp(काष्ठा igb_q_vector *q_vector, व्योम *va,
-			kसमय_प्रकार *बारtamp);
-पूर्णांक igb_ptp_set_ts_config(काष्ठा net_device *netdev, काष्ठा अगरreq *अगरr);
-पूर्णांक igb_ptp_get_ts_config(काष्ठा net_device *netdev, काष्ठा अगरreq *अगरr);
-व्योम igb_set_flag_queue_pairs(काष्ठा igb_adapter *, स्थिर u32);
-अचिन्हित पूर्णांक igb_get_max_rss_queues(काष्ठा igb_adapter *);
-#अगर_घोषित CONFIG_IGB_HWMON
-व्योम igb_sysfs_निकास(काष्ठा igb_adapter *adapter);
-पूर्णांक igb_sysfs_init(काष्ठा igb_adapter *adapter);
-#पूर्ण_अगर
-अटल अंतरभूत s32 igb_reset_phy(काष्ठा e1000_hw *hw)
-अणु
-	अगर (hw->phy.ops.reset)
-		वापस hw->phy.ops.reset(hw);
+int igb_xmit_xdp_ring(struct igb_adapter *adapter,
+		      struct igb_ring *ring,
+		      struct xdp_frame *xdpf);
+int igb_open(struct net_device *netdev);
+int igb_close(struct net_device *netdev);
+int igb_up(struct igb_adapter *);
+void igb_down(struct igb_adapter *);
+void igb_reinit_locked(struct igb_adapter *);
+void igb_reset(struct igb_adapter *);
+int igb_reinit_queues(struct igb_adapter *);
+void igb_write_rss_indir_tbl(struct igb_adapter *);
+int igb_set_spd_dplx(struct igb_adapter *, u32, u8);
+int igb_setup_tx_resources(struct igb_ring *);
+int igb_setup_rx_resources(struct igb_ring *);
+void igb_free_tx_resources(struct igb_ring *);
+void igb_free_rx_resources(struct igb_ring *);
+void igb_configure_tx_ring(struct igb_adapter *, struct igb_ring *);
+void igb_configure_rx_ring(struct igb_adapter *, struct igb_ring *);
+void igb_setup_tctl(struct igb_adapter *);
+void igb_setup_rctl(struct igb_adapter *);
+void igb_setup_srrctl(struct igb_adapter *, struct igb_ring *);
+netdev_tx_t igb_xmit_frame_ring(struct sk_buff *, struct igb_ring *);
+void igb_alloc_rx_buffers(struct igb_ring *, u16);
+void igb_update_stats(struct igb_adapter *);
+bool igb_has_link(struct igb_adapter *adapter);
+void igb_set_ethtool_ops(struct net_device *);
+void igb_power_up_link(struct igb_adapter *);
+void igb_set_fw_version(struct igb_adapter *);
+void igb_ptp_init(struct igb_adapter *adapter);
+void igb_ptp_stop(struct igb_adapter *adapter);
+void igb_ptp_reset(struct igb_adapter *adapter);
+void igb_ptp_suspend(struct igb_adapter *adapter);
+void igb_ptp_rx_hang(struct igb_adapter *adapter);
+void igb_ptp_tx_hang(struct igb_adapter *adapter);
+void igb_ptp_rx_rgtstamp(struct igb_q_vector *q_vector, struct sk_buff *skb);
+int igb_ptp_rx_pktstamp(struct igb_q_vector *q_vector, void *va,
+			ktime_t *timestamp);
+int igb_ptp_set_ts_config(struct net_device *netdev, struct ifreq *ifr);
+int igb_ptp_get_ts_config(struct net_device *netdev, struct ifreq *ifr);
+void igb_set_flag_queue_pairs(struct igb_adapter *, const u32);
+unsigned int igb_get_max_rss_queues(struct igb_adapter *);
+#ifdef CONFIG_IGB_HWMON
+void igb_sysfs_exit(struct igb_adapter *adapter);
+int igb_sysfs_init(struct igb_adapter *adapter);
+#endif
+static inline s32 igb_reset_phy(struct e1000_hw *hw)
+{
+	if (hw->phy.ops.reset)
+		return hw->phy.ops.reset(hw);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत s32 igb_पढ़ो_phy_reg(काष्ठा e1000_hw *hw, u32 offset, u16 *data)
-अणु
-	अगर (hw->phy.ops.पढ़ो_reg)
-		वापस hw->phy.ops.पढ़ो_reg(hw, offset, data);
+static inline s32 igb_read_phy_reg(struct e1000_hw *hw, u32 offset, u16 *data)
+{
+	if (hw->phy.ops.read_reg)
+		return hw->phy.ops.read_reg(hw, offset, data);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत s32 igb_ग_लिखो_phy_reg(काष्ठा e1000_hw *hw, u32 offset, u16 data)
-अणु
-	अगर (hw->phy.ops.ग_लिखो_reg)
-		वापस hw->phy.ops.ग_लिखो_reg(hw, offset, data);
+static inline s32 igb_write_phy_reg(struct e1000_hw *hw, u32 offset, u16 data)
+{
+	if (hw->phy.ops.write_reg)
+		return hw->phy.ops.write_reg(hw, offset, data);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत s32 igb_get_phy_info(काष्ठा e1000_hw *hw)
-अणु
-	अगर (hw->phy.ops.get_phy_info)
-		वापस hw->phy.ops.get_phy_info(hw);
+static inline s32 igb_get_phy_info(struct e1000_hw *hw)
+{
+	if (hw->phy.ops.get_phy_info)
+		return hw->phy.ops.get_phy_info(hw);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत काष्ठा netdev_queue *txring_txq(स्थिर काष्ठा igb_ring *tx_ring)
-अणु
-	वापस netdev_get_tx_queue(tx_ring->netdev, tx_ring->queue_index);
-पूर्ण
+static inline struct netdev_queue *txring_txq(const struct igb_ring *tx_ring)
+{
+	return netdev_get_tx_queue(tx_ring->netdev, tx_ring->queue_index);
+}
 
-पूर्णांक igb_add_filter(काष्ठा igb_adapter *adapter,
-		   काष्ठा igb_nfc_filter *input);
-पूर्णांक igb_erase_filter(काष्ठा igb_adapter *adapter,
-		     काष्ठा igb_nfc_filter *input);
+int igb_add_filter(struct igb_adapter *adapter,
+		   struct igb_nfc_filter *input);
+int igb_erase_filter(struct igb_adapter *adapter,
+		     struct igb_nfc_filter *input);
 
-पूर्णांक igb_add_mac_steering_filter(काष्ठा igb_adapter *adapter,
-				स्थिर u8 *addr, u8 queue, u8 flags);
-पूर्णांक igb_del_mac_steering_filter(काष्ठा igb_adapter *adapter,
-				स्थिर u8 *addr, u8 queue, u8 flags);
+int igb_add_mac_steering_filter(struct igb_adapter *adapter,
+				const u8 *addr, u8 queue, u8 flags);
+int igb_del_mac_steering_filter(struct igb_adapter *adapter,
+				const u8 *addr, u8 queue, u8 flags);
 
-#पूर्ण_अगर /* _IGB_H_ */
+#endif /* _IGB_H_ */

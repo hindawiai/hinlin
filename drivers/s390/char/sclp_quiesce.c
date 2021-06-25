@@ -1,31 +1,30 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- *     संकेत quiesce handler
+ *     signal quiesce handler
  *
  *  Copyright IBM Corp. 1999, 2004
  *  Author(s): Martin Schwidefsky <schwidefsky@de.ibm.com>
  *             Peter Oberparleiter <peter.oberparleiter@de.ibm.com>
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/cpumask.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/init.h>
-#समावेश <linux/reboot.h>
-#समावेश <linux/atomic.h>
-#समावेश <यंत्र/ptrace.h>
-#समावेश <यंत्र/smp.h>
+#include <linux/types.h>
+#include <linux/cpumask.h>
+#include <linux/smp.h>
+#include <linux/init.h>
+#include <linux/reboot.h>
+#include <linux/atomic.h>
+#include <asm/ptrace.h>
+#include <asm/smp.h>
 
-#समावेश "sclp.h"
+#include "sclp.h"
 
-अटल व्योम (*old_machine_restart)(अक्षर *);
-अटल व्योम (*old_machine_halt)(व्योम);
-अटल व्योम (*old_machine_घातer_off)(व्योम);
+static void (*old_machine_restart)(char *);
+static void (*old_machine_halt)(void);
+static void (*old_machine_power_off)(void);
 
-/* Shutकरोwn handler. Signal completion of shutकरोwn by loading special PSW. */
-अटल व्योम करो_machine_quiesce(व्योम)
-अणु
+/* Shutdown handler. Signal completion of shutdown by loading special PSW. */
+static void do_machine_quiesce(void)
+{
 	psw_t quiesce_psw;
 
 	smp_send_stop();
@@ -33,52 +32,52 @@
 		PSW_MASK_BASE | PSW_MASK_EA | PSW_MASK_BA | PSW_MASK_WAIT;
 	quiesce_psw.addr = 0xfff;
 	__load_psw(quiesce_psw);
-पूर्ण
+}
 
-/* Handler क्रम quiesce event. Start shutकरोwn procedure. */
-अटल व्योम sclp_quiesce_handler(काष्ठा evbuf_header *evbuf)
-अणु
-	अगर (_machine_restart != (व्योम *) करो_machine_quiesce) अणु
+/* Handler for quiesce event. Start shutdown procedure. */
+static void sclp_quiesce_handler(struct evbuf_header *evbuf)
+{
+	if (_machine_restart != (void *) do_machine_quiesce) {
 		old_machine_restart = _machine_restart;
 		old_machine_halt = _machine_halt;
-		old_machine_घातer_off = _machine_घातer_off;
-		_machine_restart = (व्योम *) करो_machine_quiesce;
-		_machine_halt = करो_machine_quiesce;
-		_machine_घातer_off = करो_machine_quiesce;
-	पूर्ण
+		old_machine_power_off = _machine_power_off;
+		_machine_restart = (void *) do_machine_quiesce;
+		_machine_halt = do_machine_quiesce;
+		_machine_power_off = do_machine_quiesce;
+	}
 	ctrl_alt_del();
-पूर्ण
+}
 
-/* Unकरो machine restart/halt/घातer_off modअगरication on resume */
-अटल व्योम sclp_quiesce_pm_event(काष्ठा sclp_रेजिस्टर *reg,
-				  क्रमागत sclp_pm_event sclp_pm_event)
-अणु
-	चयन (sclp_pm_event) अणु
-	हाल SCLP_PM_EVENT_RESTORE:
-		अगर (old_machine_restart) अणु
+/* Undo machine restart/halt/power_off modification on resume */
+static void sclp_quiesce_pm_event(struct sclp_register *reg,
+				  enum sclp_pm_event sclp_pm_event)
+{
+	switch (sclp_pm_event) {
+	case SCLP_PM_EVENT_RESTORE:
+		if (old_machine_restart) {
 			_machine_restart = old_machine_restart;
 			_machine_halt = old_machine_halt;
-			_machine_घातer_off = old_machine_घातer_off;
-			old_machine_restart = शून्य;
-			old_machine_halt = शून्य;
-			old_machine_घातer_off = शून्य;
-		पूर्ण
-		अवरोध;
-	हाल SCLP_PM_EVENT_FREEZE:
-	हाल SCLP_PM_EVENT_THAW:
-		अवरोध;
-	पूर्ण
-पूर्ण
+			_machine_power_off = old_machine_power_off;
+			old_machine_restart = NULL;
+			old_machine_halt = NULL;
+			old_machine_power_off = NULL;
+		}
+		break;
+	case SCLP_PM_EVENT_FREEZE:
+	case SCLP_PM_EVENT_THAW:
+		break;
+	}
+}
 
-अटल काष्ठा sclp_रेजिस्टर sclp_quiesce_event = अणु
+static struct sclp_register sclp_quiesce_event = {
 	.receive_mask = EVTYP_SIGQUIESCE_MASK,
 	.receiver_fn = sclp_quiesce_handler,
 	.pm_event_fn = sclp_quiesce_pm_event
-पूर्ण;
+};
 
 /* Initialize quiesce driver. */
-अटल पूर्णांक __init sclp_quiesce_init(व्योम)
-अणु
-	वापस sclp_रेजिस्टर(&sclp_quiesce_event);
-पूर्ण
+static int __init sclp_quiesce_init(void)
+{
+	return sclp_register(&sclp_quiesce_event);
+}
 device_initcall(sclp_quiesce_init);

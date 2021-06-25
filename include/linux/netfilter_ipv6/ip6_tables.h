@@ -1,9 +1,8 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * 25-Jul-1998 Major changes to allow क्रम ip chain table
+ * 25-Jul-1998 Major changes to allow for ip chain table
  *
- * 3-Jan-2000 Named tables to allow packet selection क्रम dअगरferent uses.
+ * 3-Jan-2000 Named tables to allow packet selection for different uses.
  */
 
 /*
@@ -13,45 +12,45 @@
  * 	flags are stored in host byte order (of course).
  * 	Port numbers are stored in HOST byte order.
  */
-#अगर_अघोषित _IP6_TABLES_H
-#घोषणा _IP6_TABLES_H
+#ifndef _IP6_TABLES_H
+#define _IP6_TABLES_H
 
-#समावेश <linux/अगर.h>
-#समावेश <linux/in6.h>
-#समावेश <linux/init.h>
-#समावेश <linux/ipv6.h>
-#समावेश <linux/skbuff.h>
-#समावेश <uapi/linux/netfilter_ipv6/ip6_tables.h>
+#include <linux/if.h>
+#include <linux/in6.h>
+#include <linux/init.h>
+#include <linux/ipv6.h>
+#include <linux/skbuff.h>
+#include <uapi/linux/netfilter_ipv6/ip6_tables.h>
 
-बाह्य व्योम *ip6t_alloc_initial_table(स्थिर काष्ठा xt_table *);
+extern void *ip6t_alloc_initial_table(const struct xt_table *);
 
-पूर्णांक ip6t_रेजिस्टर_table(काष्ठा net *net, स्थिर काष्ठा xt_table *table,
-			स्थिर काष्ठा ip6t_replace *repl,
-			स्थिर काष्ठा nf_hook_ops *ops);
-व्योम ip6t_unरेजिस्टर_table_pre_निकास(काष्ठा net *net, स्थिर अक्षर *name);
-व्योम ip6t_unरेजिस्टर_table_निकास(काष्ठा net *net, स्थिर अक्षर *name);
-बाह्य अचिन्हित पूर्णांक ip6t_करो_table(काष्ठा sk_buff *skb,
-				  स्थिर काष्ठा nf_hook_state *state,
-				  काष्ठा xt_table *table);
+int ip6t_register_table(struct net *net, const struct xt_table *table,
+			const struct ip6t_replace *repl,
+			const struct nf_hook_ops *ops);
+void ip6t_unregister_table_pre_exit(struct net *net, const char *name);
+void ip6t_unregister_table_exit(struct net *net, const char *name);
+extern unsigned int ip6t_do_table(struct sk_buff *skb,
+				  const struct nf_hook_state *state,
+				  struct xt_table *table);
 
-#अगर_घोषित CONFIG_NETFILTER_XTABLES_COMPAT
-#समावेश <net/compat.h>
+#ifdef CONFIG_NETFILTER_XTABLES_COMPAT
+#include <net/compat.h>
 
-काष्ठा compat_ip6t_entry अणु
-	काष्ठा ip6t_ip6 ipv6;
-	compat_uपूर्णांक_t nfcache;
+struct compat_ip6t_entry {
+	struct ip6t_ip6 ipv6;
+	compat_uint_t nfcache;
 	__u16 target_offset;
 	__u16 next_offset;
-	compat_uपूर्णांक_t comefrom;
-	काष्ठा compat_xt_counters counters;
-	अचिन्हित अक्षर elems[];
-पूर्ण;
+	compat_uint_t comefrom;
+	struct compat_xt_counters counters;
+	unsigned char elems[];
+};
 
-अटल अंतरभूत काष्ठा xt_entry_target *
-compat_ip6t_get_target(काष्ठा compat_ip6t_entry *e)
-अणु
-	वापस (व्योम *)e + e->target_offset;
-पूर्ण
+static inline struct xt_entry_target *
+compat_ip6t_get_target(struct compat_ip6t_entry *e)
+{
+	return (void *)e + e->target_offset;
+}
 
-#पूर्ण_अगर /* CONFIG_COMPAT */
-#पूर्ण_अगर /* _IP6_TABLES_H */
+#endif /* CONFIG_COMPAT */
+#endif /* _IP6_TABLES_H */

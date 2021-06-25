@@ -1,440 +1,439 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * PCM समयr handling on ctxfi
+ * PCM timer handling on ctxfi
  */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/math64.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <sound/core.h>
-#समावेश <sound/pcm.h>
-#समावेश "ctatc.h"
-#समावेश "cthardware.h"
-#समावेश "cttimer.h"
+#include <linux/slab.h>
+#include <linux/math64.h>
+#include <linux/moduleparam.h>
+#include <sound/core.h>
+#include <sound/pcm.h>
+#include "ctatc.h"
+#include "cthardware.h"
+#include "cttimer.h"
 
-अटल bool use_प्रणाली_समयr;
-MODULE_PARM_DESC(use_प्रणाली_समयr, "Force to use system-timer");
-module_param(use_प्रणाली_समयr, bool, 0444);
+static bool use_system_timer;
+MODULE_PARM_DESC(use_system_timer, "Force to use system-timer");
+module_param(use_system_timer, bool, 0444);
 
-काष्ठा ct_समयr_ops अणु
-	व्योम (*init)(काष्ठा ct_समयr_instance *);
-	व्योम (*prepare)(काष्ठा ct_समयr_instance *);
-	व्योम (*start)(काष्ठा ct_समयr_instance *);
-	व्योम (*stop)(काष्ठा ct_समयr_instance *);
-	व्योम (*मुक्त_instance)(काष्ठा ct_समयr_instance *);
-	व्योम (*पूर्णांकerrupt)(काष्ठा ct_समयr *);
-	व्योम (*मुक्त_global)(काष्ठा ct_समयr *);
-पूर्ण;
+struct ct_timer_ops {
+	void (*init)(struct ct_timer_instance *);
+	void (*prepare)(struct ct_timer_instance *);
+	void (*start)(struct ct_timer_instance *);
+	void (*stop)(struct ct_timer_instance *);
+	void (*free_instance)(struct ct_timer_instance *);
+	void (*interrupt)(struct ct_timer *);
+	void (*free_global)(struct ct_timer *);
+};
 
-/* समयr instance -- asचिन्हित to each PCM stream */
-काष्ठा ct_समयr_instance अणु
+/* timer instance -- assigned to each PCM stream */
+struct ct_timer_instance {
 	spinlock_t lock;
-	काष्ठा ct_समयr *समयr_base;
-	काष्ठा ct_atc_pcm *apcm;
-	काष्ठा snd_pcm_substream *substream;
-	काष्ठा समयr_list समयr;
-	काष्ठा list_head instance_list;
-	काष्ठा list_head running_list;
-	अचिन्हित पूर्णांक position;
-	अचिन्हित पूर्णांक frag_count;
-	अचिन्हित पूर्णांक running:1;
-	अचिन्हित पूर्णांक need_update:1;
-पूर्ण;
+	struct ct_timer *timer_base;
+	struct ct_atc_pcm *apcm;
+	struct snd_pcm_substream *substream;
+	struct timer_list timer;
+	struct list_head instance_list;
+	struct list_head running_list;
+	unsigned int position;
+	unsigned int frag_count;
+	unsigned int running:1;
+	unsigned int need_update:1;
+};
 
-/* समयr instance manager */
-काष्ठा ct_समयr अणु
-	spinlock_t lock;		/* global समयr lock (क्रम xfiसमयr) */
-	spinlock_t list_lock;		/* lock क्रम instance list */
-	काष्ठा ct_atc *atc;
-	स्थिर काष्ठा ct_समयr_ops *ops;
-	काष्ठा list_head instance_head;
-	काष्ठा list_head running_head;
-	अचिन्हित पूर्णांक wc;		/* current wallघड़ी */
-	अचिन्हित पूर्णांक irq_handling:1;	/* in IRQ handling */
-	अचिन्हित पूर्णांक reprogram:1;	/* need to reprogram the पूर्णांकernval */
-	अचिन्हित पूर्णांक running:1;		/* global समयr running */
-पूर्ण;
+/* timer instance manager */
+struct ct_timer {
+	spinlock_t lock;		/* global timer lock (for xfitimer) */
+	spinlock_t list_lock;		/* lock for instance list */
+	struct ct_atc *atc;
+	const struct ct_timer_ops *ops;
+	struct list_head instance_head;
+	struct list_head running_head;
+	unsigned int wc;		/* current wallclock */
+	unsigned int irq_handling:1;	/* in IRQ handling */
+	unsigned int reprogram:1;	/* need to reprogram the internval */
+	unsigned int running:1;		/* global timer running */
+};
 
 
 /*
- * प्रणाली-समयr-based updates
+ * system-timer-based updates
  */
 
-अटल व्योम ct_sysसमयr_callback(काष्ठा समयr_list *t)
-अणु
-	काष्ठा ct_समयr_instance *ti = from_समयr(ti, t, समयr);
-	काष्ठा snd_pcm_substream *substream = ti->substream;
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा ct_atc_pcm *apcm = ti->apcm;
-	अचिन्हित पूर्णांक period_size = runसमय->period_size;
-	अचिन्हित पूर्णांक buffer_size = runसमय->buffer_size;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक position, dist, पूर्णांकerval;
+static void ct_systimer_callback(struct timer_list *t)
+{
+	struct ct_timer_instance *ti = from_timer(ti, t, timer);
+	struct snd_pcm_substream *substream = ti->substream;
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct ct_atc_pcm *apcm = ti->apcm;
+	unsigned int period_size = runtime->period_size;
+	unsigned int buffer_size = runtime->buffer_size;
+	unsigned long flags;
+	unsigned int position, dist, interval;
 
-	position = substream->ops->poपूर्णांकer(substream);
+	position = substream->ops->pointer(substream);
 	dist = (position + buffer_size - ti->position) % buffer_size;
-	अगर (dist >= period_size ||
-	    position / period_size != ti->position / period_size) अणु
-		apcm->पूर्णांकerrupt(apcm);
+	if (dist >= period_size ||
+	    position / period_size != ti->position / period_size) {
+		apcm->interrupt(apcm);
 		ti->position = position;
-	पूर्ण
-	/* Add extra HZ*5/1000 to aव्योम overrun issue when recording
-	 * at 8kHz in 8-bit क्रमmat or at 88kHz in 24-bit क्रमmat. */
-	पूर्णांकerval = ((period_size - (position % period_size))
-		   * HZ + (runसमय->rate - 1)) / runसमय->rate + HZ * 5 / 1000;
+	}
+	/* Add extra HZ*5/1000 to avoid overrun issue when recording
+	 * at 8kHz in 8-bit format or at 88kHz in 24-bit format. */
+	interval = ((period_size - (position % period_size))
+		   * HZ + (runtime->rate - 1)) / runtime->rate + HZ * 5 / 1000;
 	spin_lock_irqsave(&ti->lock, flags);
-	अगर (ti->running)
-		mod_समयr(&ti->समयr, jअगरfies + पूर्णांकerval);
+	if (ti->running)
+		mod_timer(&ti->timer, jiffies + interval);
 	spin_unlock_irqrestore(&ti->lock, flags);
-पूर्ण
+}
 
-अटल व्योम ct_sysसमयr_init(काष्ठा ct_समयr_instance *ti)
-अणु
-	समयr_setup(&ti->समयr, ct_sysसमयr_callback, 0);
-पूर्ण
+static void ct_systimer_init(struct ct_timer_instance *ti)
+{
+	timer_setup(&ti->timer, ct_systimer_callback, 0);
+}
 
-अटल व्योम ct_sysसमयr_start(काष्ठा ct_समयr_instance *ti)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = ti->substream->runसमय;
-	अचिन्हित दीर्घ flags;
+static void ct_systimer_start(struct ct_timer_instance *ti)
+{
+	struct snd_pcm_runtime *runtime = ti->substream->runtime;
+	unsigned long flags;
 
 	spin_lock_irqsave(&ti->lock, flags);
 	ti->running = 1;
-	mod_समयr(&ti->समयr,
-		  jअगरfies + (runसमय->period_size * HZ +
-			     (runसमय->rate - 1)) / runसमय->rate);
+	mod_timer(&ti->timer,
+		  jiffies + (runtime->period_size * HZ +
+			     (runtime->rate - 1)) / runtime->rate);
 	spin_unlock_irqrestore(&ti->lock, flags);
-पूर्ण
+}
 
-अटल व्योम ct_sysसमयr_stop(काष्ठा ct_समयr_instance *ti)
-अणु
-	अचिन्हित दीर्घ flags;
+static void ct_systimer_stop(struct ct_timer_instance *ti)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&ti->lock, flags);
 	ti->running = 0;
-	del_समयr(&ti->समयr);
+	del_timer(&ti->timer);
 	spin_unlock_irqrestore(&ti->lock, flags);
-पूर्ण
+}
 
-अटल व्योम ct_sysसमयr_prepare(काष्ठा ct_समयr_instance *ti)
-अणु
-	ct_sysसमयr_stop(ti);
-	try_to_del_समयr_sync(&ti->समयr);
-पूर्ण
+static void ct_systimer_prepare(struct ct_timer_instance *ti)
+{
+	ct_systimer_stop(ti);
+	try_to_del_timer_sync(&ti->timer);
+}
 
-#घोषणा ct_sysसमयr_मुक्त	ct_sysसमयr_prepare
+#define ct_systimer_free	ct_systimer_prepare
 
-अटल स्थिर काष्ठा ct_समयr_ops ct_sysसमयr_ops = अणु
-	.init = ct_sysसमयr_init,
-	.मुक्त_instance = ct_sysसमयr_मुक्त,
-	.prepare = ct_sysसमयr_prepare,
-	.start = ct_sysसमयr_start,
-	.stop = ct_sysसमयr_stop,
-पूर्ण;
+static const struct ct_timer_ops ct_systimer_ops = {
+	.init = ct_systimer_init,
+	.free_instance = ct_systimer_free,
+	.prepare = ct_systimer_prepare,
+	.start = ct_systimer_start,
+	.stop = ct_systimer_stop,
+};
 
 
 /*
- * Handling multiple streams using a global emu20k1 समयr irq
+ * Handling multiple streams using a global emu20k1 timer irq
  */
 
-#घोषणा CT_TIMER_FREQ	48000
-#घोषणा MIN_TICKS	1
-#घोषणा MAX_TICKS	((1 << 13) - 1)
+#define CT_TIMER_FREQ	48000
+#define MIN_TICKS	1
+#define MAX_TICKS	((1 << 13) - 1)
 
-अटल व्योम ct_xfiसमयr_irq_rearm(काष्ठा ct_समयr *aसमयr, पूर्णांक ticks)
-अणु
-	काष्ठा hw *hw = aसमयr->atc->hw;
-	अगर (ticks > MAX_TICKS)
+static void ct_xfitimer_irq_rearm(struct ct_timer *atimer, int ticks)
+{
+	struct hw *hw = atimer->atc->hw;
+	if (ticks > MAX_TICKS)
 		ticks = MAX_TICKS;
-	hw->set_समयr_tick(hw, ticks);
-	अगर (!aसमयr->running)
-		hw->set_समयr_irq(hw, 1);
-	aसमयr->running = 1;
-पूर्ण
+	hw->set_timer_tick(hw, ticks);
+	if (!atimer->running)
+		hw->set_timer_irq(hw, 1);
+	atimer->running = 1;
+}
 
-अटल व्योम ct_xfiसमयr_irq_stop(काष्ठा ct_समयr *aसमयr)
-अणु
-	अगर (aसमयr->running) अणु
-		काष्ठा hw *hw = aसमयr->atc->hw;
-		hw->set_समयr_irq(hw, 0);
-		hw->set_समयr_tick(hw, 0);
-		aसमयr->running = 0;
-	पूर्ण
-पूर्ण
+static void ct_xfitimer_irq_stop(struct ct_timer *atimer)
+{
+	if (atimer->running) {
+		struct hw *hw = atimer->atc->hw;
+		hw->set_timer_irq(hw, 0);
+		hw->set_timer_tick(hw, 0);
+		atimer->running = 0;
+	}
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक ct_xfiसमयr_get_wc(काष्ठा ct_समयr *aसमयr)
-अणु
-	काष्ठा hw *hw = aसमयr->atc->hw;
-	वापस hw->get_wc(hw);
-पूर्ण
+static inline unsigned int ct_xfitimer_get_wc(struct ct_timer *atimer)
+{
+	struct hw *hw = atimer->atc->hw;
+	return hw->get_wc(hw);
+}
 
 /*
- * reprogram the समयr पूर्णांकerval;
- * checks the running instance list and determines the next समयr पूर्णांकerval.
- * also updates the each stream position, वापसs the number of streams
+ * reprogram the timer interval;
+ * checks the running instance list and determines the next timer interval.
+ * also updates the each stream position, returns the number of streams
  * to call snd_pcm_period_elapsed() appropriately
  *
  * call this inside the lock and irq disabled
  */
-अटल पूर्णांक ct_xfiसमयr_reprogram(काष्ठा ct_समयr *aसमयr, पूर्णांक can_update)
-अणु
-	काष्ठा ct_समयr_instance *ti;
-	अचिन्हित पूर्णांक min_पूर्णांकr = (अचिन्हित पूर्णांक)-1;
-	पूर्णांक updates = 0;
-	अचिन्हित पूर्णांक wc, dअगरf;
+static int ct_xfitimer_reprogram(struct ct_timer *atimer, int can_update)
+{
+	struct ct_timer_instance *ti;
+	unsigned int min_intr = (unsigned int)-1;
+	int updates = 0;
+	unsigned int wc, diff;
 
-	अगर (list_empty(&aसमयr->running_head)) अणु
-		ct_xfiसमयr_irq_stop(aसमयr);
-		aसमयr->reprogram = 0; /* clear flag */
-		वापस 0;
-	पूर्ण
+	if (list_empty(&atimer->running_head)) {
+		ct_xfitimer_irq_stop(atimer);
+		atimer->reprogram = 0; /* clear flag */
+		return 0;
+	}
 
-	wc = ct_xfiसमयr_get_wc(aसमयr);
-	dअगरf = wc - aसमयr->wc;
-	aसमयr->wc = wc;
-	list_क्रम_each_entry(ti, &aसमयr->running_head, running_list) अणु
-		अगर (ti->frag_count > dअगरf)
-			ti->frag_count -= dअगरf;
-		अन्यथा अणु
-			अचिन्हित पूर्णांक pos;
-			अचिन्हित पूर्णांक period_size, rate;
+	wc = ct_xfitimer_get_wc(atimer);
+	diff = wc - atimer->wc;
+	atimer->wc = wc;
+	list_for_each_entry(ti, &atimer->running_head, running_list) {
+		if (ti->frag_count > diff)
+			ti->frag_count -= diff;
+		else {
+			unsigned int pos;
+			unsigned int period_size, rate;
 
-			period_size = ti->substream->runसमय->period_size;
-			rate = ti->substream->runसमय->rate;
-			pos = ti->substream->ops->poपूर्णांकer(ti->substream);
-			अगर (pos / period_size != ti->position / period_size) अणु
+			period_size = ti->substream->runtime->period_size;
+			rate = ti->substream->runtime->rate;
+			pos = ti->substream->ops->pointer(ti->substream);
+			if (pos / period_size != ti->position / period_size) {
 				ti->need_update = 1;
 				ti->position = pos;
 				updates++;
-			पूर्ण
+			}
 			pos %= period_size;
 			pos = period_size - pos;
-			ti->frag_count = भाग_u64((u64)pos * CT_TIMER_FREQ +
+			ti->frag_count = div_u64((u64)pos * CT_TIMER_FREQ +
 						 rate - 1, rate);
-		पूर्ण
-		अगर (ti->need_update && !can_update)
-			min_पूर्णांकr = 0; /* pending to the next irq */
-		अगर (ti->frag_count < min_पूर्णांकr)
-			min_पूर्णांकr = ti->frag_count;
-	पूर्ण
+		}
+		if (ti->need_update && !can_update)
+			min_intr = 0; /* pending to the next irq */
+		if (ti->frag_count < min_intr)
+			min_intr = ti->frag_count;
+	}
 
-	अगर (min_पूर्णांकr < MIN_TICKS)
-		min_पूर्णांकr = MIN_TICKS;
-	ct_xfiसमयr_irq_rearm(aसमयr, min_पूर्णांकr);
-	aसमयr->reprogram = 0; /* clear flag */
-	वापस updates;
-पूर्ण
+	if (min_intr < MIN_TICKS)
+		min_intr = MIN_TICKS;
+	ct_xfitimer_irq_rearm(atimer, min_intr);
+	atimer->reprogram = 0; /* clear flag */
+	return updates;
+}
 
-/* look through the instance list and call period_elapsed अगर needed */
-अटल व्योम ct_xfiसमयr_check_period(काष्ठा ct_समयr *aसमयr)
-अणु
-	काष्ठा ct_समयr_instance *ti;
-	अचिन्हित दीर्घ flags;
+/* look through the instance list and call period_elapsed if needed */
+static void ct_xfitimer_check_period(struct ct_timer *atimer)
+{
+	struct ct_timer_instance *ti;
+	unsigned long flags;
 
-	spin_lock_irqsave(&aसमयr->list_lock, flags);
-	list_क्रम_each_entry(ti, &aसमयr->instance_head, instance_list) अणु
-		अगर (ti->running && ti->need_update) अणु
+	spin_lock_irqsave(&atimer->list_lock, flags);
+	list_for_each_entry(ti, &atimer->instance_head, instance_list) {
+		if (ti->running && ti->need_update) {
 			ti->need_update = 0;
-			ti->apcm->पूर्णांकerrupt(ti->apcm);
-		पूर्ण
-	पूर्ण
-	spin_unlock_irqrestore(&aसमयr->list_lock, flags);
-पूर्ण
+			ti->apcm->interrupt(ti->apcm);
+		}
+	}
+	spin_unlock_irqrestore(&atimer->list_lock, flags);
+}
 
-/* Handle समयr-पूर्णांकerrupt */
-अटल व्योम ct_xfiसमयr_callback(काष्ठा ct_समयr *aसमयr)
-अणु
-	पूर्णांक update;
-	अचिन्हित दीर्घ flags;
+/* Handle timer-interrupt */
+static void ct_xfitimer_callback(struct ct_timer *atimer)
+{
+	int update;
+	unsigned long flags;
 
-	spin_lock_irqsave(&aसमयr->lock, flags);
-	aसमयr->irq_handling = 1;
-	करो अणु
-		update = ct_xfiसमयr_reprogram(aसमयr, 1);
-		spin_unlock(&aसमयr->lock);
-		अगर (update)
-			ct_xfiसमयr_check_period(aसमयr);
-		spin_lock(&aसमयr->lock);
-	पूर्ण जबतक (aसमयr->reprogram);
-	aसमयr->irq_handling = 0;
-	spin_unlock_irqrestore(&aसमयr->lock, flags);
-पूर्ण
+	spin_lock_irqsave(&atimer->lock, flags);
+	atimer->irq_handling = 1;
+	do {
+		update = ct_xfitimer_reprogram(atimer, 1);
+		spin_unlock(&atimer->lock);
+		if (update)
+			ct_xfitimer_check_period(atimer);
+		spin_lock(&atimer->lock);
+	} while (atimer->reprogram);
+	atimer->irq_handling = 0;
+	spin_unlock_irqrestore(&atimer->lock, flags);
+}
 
-अटल व्योम ct_xfiसमयr_prepare(काष्ठा ct_समयr_instance *ti)
-अणु
-	ti->frag_count = ti->substream->runसमय->period_size;
+static void ct_xfitimer_prepare(struct ct_timer_instance *ti)
+{
+	ti->frag_count = ti->substream->runtime->period_size;
 	ti->running = 0;
 	ti->need_update = 0;
-पूर्ण
+}
 
 
-/* start/stop the समयr */
-अटल व्योम ct_xfiसमयr_update(काष्ठा ct_समयr *aसमयr)
-अणु
-	अचिन्हित दीर्घ flags;
+/* start/stop the timer */
+static void ct_xfitimer_update(struct ct_timer *atimer)
+{
+	unsigned long flags;
 
-	spin_lock_irqsave(&aसमयr->lock, flags);
-	अगर (aसमयr->irq_handling) अणु
+	spin_lock_irqsave(&atimer->lock, flags);
+	if (atimer->irq_handling) {
 		/* reached from IRQ handler; let it handle later */
-		aसमयr->reprogram = 1;
-		spin_unlock_irqrestore(&aसमयr->lock, flags);
-		वापस;
-	पूर्ण
+		atimer->reprogram = 1;
+		spin_unlock_irqrestore(&atimer->lock, flags);
+		return;
+	}
 
-	ct_xfiसमयr_irq_stop(aसमयr);
-	ct_xfiसमयr_reprogram(aसमयr, 0);
-	spin_unlock_irqrestore(&aसमयr->lock, flags);
-पूर्ण
+	ct_xfitimer_irq_stop(atimer);
+	ct_xfitimer_reprogram(atimer, 0);
+	spin_unlock_irqrestore(&atimer->lock, flags);
+}
 
-अटल व्योम ct_xfiसमयr_start(काष्ठा ct_समयr_instance *ti)
-अणु
-	काष्ठा ct_समयr *aसमयr = ti->समयr_base;
-	अचिन्हित दीर्घ flags;
+static void ct_xfitimer_start(struct ct_timer_instance *ti)
+{
+	struct ct_timer *atimer = ti->timer_base;
+	unsigned long flags;
 
-	spin_lock_irqsave(&aसमयr->lock, flags);
-	अगर (list_empty(&ti->running_list))
-		aसमयr->wc = ct_xfiसमयr_get_wc(aसमयr);
+	spin_lock_irqsave(&atimer->lock, flags);
+	if (list_empty(&ti->running_list))
+		atimer->wc = ct_xfitimer_get_wc(atimer);
 	ti->running = 1;
 	ti->need_update = 0;
-	list_add(&ti->running_list, &aसमयr->running_head);
-	spin_unlock_irqrestore(&aसमयr->lock, flags);
-	ct_xfiसमयr_update(aसमयr);
-पूर्ण
+	list_add(&ti->running_list, &atimer->running_head);
+	spin_unlock_irqrestore(&atimer->lock, flags);
+	ct_xfitimer_update(atimer);
+}
 
-अटल व्योम ct_xfiसमयr_stop(काष्ठा ct_समयr_instance *ti)
-अणु
-	काष्ठा ct_समयr *aसमयr = ti->समयr_base;
-	अचिन्हित दीर्घ flags;
+static void ct_xfitimer_stop(struct ct_timer_instance *ti)
+{
+	struct ct_timer *atimer = ti->timer_base;
+	unsigned long flags;
 
-	spin_lock_irqsave(&aसमयr->lock, flags);
+	spin_lock_irqsave(&atimer->lock, flags);
 	list_del_init(&ti->running_list);
 	ti->running = 0;
-	spin_unlock_irqrestore(&aसमयr->lock, flags);
-	ct_xfiसमयr_update(aसमयr);
-पूर्ण
+	spin_unlock_irqrestore(&atimer->lock, flags);
+	ct_xfitimer_update(atimer);
+}
 
-अटल व्योम ct_xfiसमयr_मुक्त_global(काष्ठा ct_समयr *aसमयr)
-अणु
-	ct_xfiसमयr_irq_stop(aसमयr);
-पूर्ण
+static void ct_xfitimer_free_global(struct ct_timer *atimer)
+{
+	ct_xfitimer_irq_stop(atimer);
+}
 
-अटल स्थिर काष्ठा ct_समयr_ops ct_xfiसमयr_ops = अणु
-	.prepare = ct_xfiसमयr_prepare,
-	.start = ct_xfiसमयr_start,
-	.stop = ct_xfiसमयr_stop,
-	.पूर्णांकerrupt = ct_xfiसमयr_callback,
-	.मुक्त_global = ct_xfiसमयr_मुक्त_global,
-पूर्ण;
+static const struct ct_timer_ops ct_xfitimer_ops = {
+	.prepare = ct_xfitimer_prepare,
+	.start = ct_xfitimer_start,
+	.stop = ct_xfitimer_stop,
+	.interrupt = ct_xfitimer_callback,
+	.free_global = ct_xfitimer_free_global,
+};
 
 /*
- * समयr instance
+ * timer instance
  */
 
-काष्ठा ct_समयr_instance *
-ct_समयr_instance_new(काष्ठा ct_समयr *aसमयr, काष्ठा ct_atc_pcm *apcm)
-अणु
-	काष्ठा ct_समयr_instance *ti;
+struct ct_timer_instance *
+ct_timer_instance_new(struct ct_timer *atimer, struct ct_atc_pcm *apcm)
+{
+	struct ct_timer_instance *ti;
 
-	ti = kzalloc(माप(*ti), GFP_KERNEL);
-	अगर (!ti)
-		वापस शून्य;
+	ti = kzalloc(sizeof(*ti), GFP_KERNEL);
+	if (!ti)
+		return NULL;
 	spin_lock_init(&ti->lock);
 	INIT_LIST_HEAD(&ti->instance_list);
 	INIT_LIST_HEAD(&ti->running_list);
-	ti->समयr_base = aसमयr;
+	ti->timer_base = atimer;
 	ti->apcm = apcm;
 	ti->substream = apcm->substream;
-	अगर (aसमयr->ops->init)
-		aसमयr->ops->init(ti);
+	if (atimer->ops->init)
+		atimer->ops->init(ti);
 
-	spin_lock_irq(&aसमयr->list_lock);
-	list_add(&ti->instance_list, &aसमयr->instance_head);
-	spin_unlock_irq(&aसमयr->list_lock);
+	spin_lock_irq(&atimer->list_lock);
+	list_add(&ti->instance_list, &atimer->instance_head);
+	spin_unlock_irq(&atimer->list_lock);
 
-	वापस ti;
-पूर्ण
+	return ti;
+}
 
-व्योम ct_समयr_prepare(काष्ठा ct_समयr_instance *ti)
-अणु
-	अगर (ti->समयr_base->ops->prepare)
-		ti->समयr_base->ops->prepare(ti);
+void ct_timer_prepare(struct ct_timer_instance *ti)
+{
+	if (ti->timer_base->ops->prepare)
+		ti->timer_base->ops->prepare(ti);
 	ti->position = 0;
 	ti->running = 0;
-पूर्ण
+}
 
-व्योम ct_समयr_start(काष्ठा ct_समयr_instance *ti)
-अणु
-	काष्ठा ct_समयr *aसमयr = ti->समयr_base;
-	aसमयr->ops->start(ti);
-पूर्ण
+void ct_timer_start(struct ct_timer_instance *ti)
+{
+	struct ct_timer *atimer = ti->timer_base;
+	atimer->ops->start(ti);
+}
 
-व्योम ct_समयr_stop(काष्ठा ct_समयr_instance *ti)
-अणु
-	काष्ठा ct_समयr *aसमयr = ti->समयr_base;
-	aसमयr->ops->stop(ti);
-पूर्ण
+void ct_timer_stop(struct ct_timer_instance *ti)
+{
+	struct ct_timer *atimer = ti->timer_base;
+	atimer->ops->stop(ti);
+}
 
-व्योम ct_समयr_instance_मुक्त(काष्ठा ct_समयr_instance *ti)
-अणु
-	काष्ठा ct_समयr *aसमयr = ti->समयr_base;
+void ct_timer_instance_free(struct ct_timer_instance *ti)
+{
+	struct ct_timer *atimer = ti->timer_base;
 
-	aसमयr->ops->stop(ti); /* to be sure */
-	अगर (aसमयr->ops->मुक्त_instance)
-		aसमयr->ops->मुक्त_instance(ti);
+	atimer->ops->stop(ti); /* to be sure */
+	if (atimer->ops->free_instance)
+		atimer->ops->free_instance(ti);
 
-	spin_lock_irq(&aसमयr->list_lock);
+	spin_lock_irq(&atimer->list_lock);
 	list_del(&ti->instance_list);
-	spin_unlock_irq(&aसमयr->list_lock);
+	spin_unlock_irq(&atimer->list_lock);
 
-	kमुक्त(ti);
-पूर्ण
+	kfree(ti);
+}
 
 /*
- * समयr manager
+ * timer manager
  */
 
-अटल व्योम ct_समयr_पूर्णांकerrupt(व्योम *data, अचिन्हित पूर्णांक status)
-अणु
-	काष्ठा ct_समयr *समयr = data;
+static void ct_timer_interrupt(void *data, unsigned int status)
+{
+	struct ct_timer *timer = data;
 
-	/* Interval समयr पूर्णांकerrupt */
-	अगर ((status & IT_INT) && समयr->ops->पूर्णांकerrupt)
-		समयr->ops->पूर्णांकerrupt(समयr);
-पूर्ण
+	/* Interval timer interrupt */
+	if ((status & IT_INT) && timer->ops->interrupt)
+		timer->ops->interrupt(timer);
+}
 
-काष्ठा ct_समयr *ct_समयr_new(काष्ठा ct_atc *atc)
-अणु
-	काष्ठा ct_समयr *aसमयr;
-	काष्ठा hw *hw;
+struct ct_timer *ct_timer_new(struct ct_atc *atc)
+{
+	struct ct_timer *atimer;
+	struct hw *hw;
 
-	aसमयr = kzalloc(माप(*aसमयr), GFP_KERNEL);
-	अगर (!aसमयr)
-		वापस शून्य;
-	spin_lock_init(&aसमयr->lock);
-	spin_lock_init(&aसमयr->list_lock);
-	INIT_LIST_HEAD(&aसमयr->instance_head);
-	INIT_LIST_HEAD(&aसमयr->running_head);
-	aसमयr->atc = atc;
+	atimer = kzalloc(sizeof(*atimer), GFP_KERNEL);
+	if (!atimer)
+		return NULL;
+	spin_lock_init(&atimer->lock);
+	spin_lock_init(&atimer->list_lock);
+	INIT_LIST_HEAD(&atimer->instance_head);
+	INIT_LIST_HEAD(&atimer->running_head);
+	atimer->atc = atc;
 	hw = atc->hw;
-	अगर (!use_प्रणाली_समयr && hw->set_समयr_irq) अणु
+	if (!use_system_timer && hw->set_timer_irq) {
 		dev_info(atc->card->dev, "Use xfi-native timer\n");
-		aसमयr->ops = &ct_xfiसमयr_ops;
-		hw->irq_callback_data = aसमयr;
-		hw->irq_callback = ct_समयr_पूर्णांकerrupt;
-	पूर्ण अन्यथा अणु
+		atimer->ops = &ct_xfitimer_ops;
+		hw->irq_callback_data = atimer;
+		hw->irq_callback = ct_timer_interrupt;
+	} else {
 		dev_info(atc->card->dev, "Use system timer\n");
-		aसमयr->ops = &ct_sysसमयr_ops;
-	पूर्ण
-	वापस aसमयr;
-पूर्ण
+		atimer->ops = &ct_systimer_ops;
+	}
+	return atimer;
+}
 
-व्योम ct_समयr_मुक्त(काष्ठा ct_समयr *aसमयr)
-अणु
-	काष्ठा hw *hw = aसमयr->atc->hw;
-	hw->irq_callback = शून्य;
-	अगर (aसमयr->ops->मुक्त_global)
-		aसमयr->ops->मुक्त_global(aसमयr);
-	kमुक्त(aसमयr);
-पूर्ण
+void ct_timer_free(struct ct_timer *atimer)
+{
+	struct hw *hw = atimer->atc->hw;
+	hw->irq_callback = NULL;
+	if (atimer->ops->free_global)
+		atimer->ops->free_global(atimer);
+	kfree(atimer);
+}
 

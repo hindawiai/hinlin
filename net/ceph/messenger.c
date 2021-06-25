@@ -1,36 +1,35 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/ceph/ceph_debug.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/ceph/ceph_debug.h>
 
-#समावेश <linux/crc32c.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/inet.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/net.h>
-#समावेश <linux/nsproxy.h>
-#समावेश <linux/sched/mm.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/socket.h>
-#समावेश <linux/माला.स>
-#अगर_घोषित	CONFIG_BLOCK
-#समावेश <linux/bपन.स>
-#पूर्ण_अगर	/* CONFIG_BLOCK */
-#समावेश <linux/dns_resolver.h>
-#समावेश <net/tcp.h>
+#include <linux/crc32c.h>
+#include <linux/ctype.h>
+#include <linux/highmem.h>
+#include <linux/inet.h>
+#include <linux/kthread.h>
+#include <linux/net.h>
+#include <linux/nsproxy.h>
+#include <linux/sched/mm.h>
+#include <linux/slab.h>
+#include <linux/socket.h>
+#include <linux/string.h>
+#ifdef	CONFIG_BLOCK
+#include <linux/bio.h>
+#endif	/* CONFIG_BLOCK */
+#include <linux/dns_resolver.h>
+#include <net/tcp.h>
 
-#समावेश <linux/ceph/ceph_features.h>
-#समावेश <linux/ceph/libceph.h>
-#समावेश <linux/ceph/messenger.h>
-#समावेश <linux/ceph/decode.h>
-#समावेश <linux/ceph/pagelist.h>
-#समावेश <linux/export.h>
+#include <linux/ceph/ceph_features.h>
+#include <linux/ceph/libceph.h>
+#include <linux/ceph/messenger.h>
+#include <linux/ceph/decode.h>
+#include <linux/ceph/pagelist.h>
+#include <linux/export.h>
 
 /*
  * Ceph uses the messenger to exchange ceph_msg messages with other
- * hosts in the प्रणाली.  The messenger provides ordered and reliable
+ * hosts in the system.  The messenger provides ordered and reliable
  * delivery.  We tolerate TCP disconnects by reconnecting (with
- * exponential backoff) in the हाल of a fault (disconnection, bad
+ * exponential backoff) in the case of a fault (disconnection, bad
  * crc, protocol error).  Acks allow sent messages to be discarded by
  * the sender.
  */
@@ -38,7 +37,7 @@
 /*
  * We track the state of the socket on a given connection using
  * values defined below.  The transition to a new socket state is
- * handled by a function which verअगरies we aren't coming from an
+ * handled by a function which verifies we aren't coming from an
  * unexpected state.
  *
  *      --------
@@ -53,12 +52,12 @@
  *       |       \ con_sock_state_connecting()
  *       |        ----------------------
  *       |                              \
- *       + con_sock_state_बंदd()       \
+ *       + con_sock_state_closed()       \
  *       |+---------------------------    \
  *       | \                          \    \
  *       |  -----------                \    \
  *       |  | CLOSING |  socket event;  \    \
- *       |  -----------  aरुको बंद     \    \
+ *       |  -----------  await close     \    \
  *       |       ^                        \   |
  *       |       |                         \  |
  *       |       + con_sock_state_closing() \ |
@@ -74,175 +73,175 @@
  *      | CONNECTED |  TCP connection established
  *      -------------
  *
- * State values क्रम ceph_connection->sock_state; NEW is assumed to be 0.
+ * State values for ceph_connection->sock_state; NEW is assumed to be 0.
  */
 
-#घोषणा CON_SOCK_STATE_NEW		0	/* -> CLOSED */
-#घोषणा CON_SOCK_STATE_CLOSED		1	/* -> CONNECTING */
-#घोषणा CON_SOCK_STATE_CONNECTING	2	/* -> CONNECTED or -> CLOSING */
-#घोषणा CON_SOCK_STATE_CONNECTED	3	/* -> CLOSING or -> CLOSED */
-#घोषणा CON_SOCK_STATE_CLOSING		4	/* -> CLOSED */
+#define CON_SOCK_STATE_NEW		0	/* -> CLOSED */
+#define CON_SOCK_STATE_CLOSED		1	/* -> CONNECTING */
+#define CON_SOCK_STATE_CONNECTING	2	/* -> CONNECTED or -> CLOSING */
+#define CON_SOCK_STATE_CONNECTED	3	/* -> CLOSING or -> CLOSED */
+#define CON_SOCK_STATE_CLOSING		4	/* -> CLOSED */
 
-अटल bool con_flag_valid(अचिन्हित दीर्घ con_flag)
-अणु
-	चयन (con_flag) अणु
-	हाल CEPH_CON_F_LOSSYTX:
-	हाल CEPH_CON_F_KEEPALIVE_PENDING:
-	हाल CEPH_CON_F_WRITE_PENDING:
-	हाल CEPH_CON_F_SOCK_CLOSED:
-	हाल CEPH_CON_F_BACKOFF:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool con_flag_valid(unsigned long con_flag)
+{
+	switch (con_flag) {
+	case CEPH_CON_F_LOSSYTX:
+	case CEPH_CON_F_KEEPALIVE_PENDING:
+	case CEPH_CON_F_WRITE_PENDING:
+	case CEPH_CON_F_SOCK_CLOSED:
+	case CEPH_CON_F_BACKOFF:
+		return true;
+	default:
+		return false;
+	}
+}
 
-व्योम ceph_con_flag_clear(काष्ठा ceph_connection *con, अचिन्हित दीर्घ con_flag)
-अणु
+void ceph_con_flag_clear(struct ceph_connection *con, unsigned long con_flag)
+{
 	BUG_ON(!con_flag_valid(con_flag));
 
 	clear_bit(con_flag, &con->flags);
-पूर्ण
+}
 
-व्योम ceph_con_flag_set(काष्ठा ceph_connection *con, अचिन्हित दीर्घ con_flag)
-अणु
+void ceph_con_flag_set(struct ceph_connection *con, unsigned long con_flag)
+{
 	BUG_ON(!con_flag_valid(con_flag));
 
 	set_bit(con_flag, &con->flags);
-पूर्ण
+}
 
-bool ceph_con_flag_test(काष्ठा ceph_connection *con, अचिन्हित दीर्घ con_flag)
-अणु
+bool ceph_con_flag_test(struct ceph_connection *con, unsigned long con_flag)
+{
 	BUG_ON(!con_flag_valid(con_flag));
 
-	वापस test_bit(con_flag, &con->flags);
-पूर्ण
+	return test_bit(con_flag, &con->flags);
+}
 
-bool ceph_con_flag_test_and_clear(काष्ठा ceph_connection *con,
-				  अचिन्हित दीर्घ con_flag)
-अणु
+bool ceph_con_flag_test_and_clear(struct ceph_connection *con,
+				  unsigned long con_flag)
+{
 	BUG_ON(!con_flag_valid(con_flag));
 
-	वापस test_and_clear_bit(con_flag, &con->flags);
-पूर्ण
+	return test_and_clear_bit(con_flag, &con->flags);
+}
 
-bool ceph_con_flag_test_and_set(काष्ठा ceph_connection *con,
-				अचिन्हित दीर्घ con_flag)
-अणु
+bool ceph_con_flag_test_and_set(struct ceph_connection *con,
+				unsigned long con_flag)
+{
 	BUG_ON(!con_flag_valid(con_flag));
 
-	वापस test_and_set_bit(con_flag, &con->flags);
-पूर्ण
+	return test_and_set_bit(con_flag, &con->flags);
+}
 
-/* Slab caches क्रम frequently-allocated काष्ठाures */
+/* Slab caches for frequently-allocated structures */
 
-अटल काष्ठा kmem_cache	*ceph_msg_cache;
+static struct kmem_cache	*ceph_msg_cache;
 
-#अगर_घोषित CONFIG_LOCKDEP
-अटल काष्ठा lock_class_key socket_class;
-#पूर्ण_अगर
+#ifdef CONFIG_LOCKDEP
+static struct lock_class_key socket_class;
+#endif
 
-अटल व्योम queue_con(काष्ठा ceph_connection *con);
-अटल व्योम cancel_con(काष्ठा ceph_connection *con);
-अटल व्योम ceph_con_workfn(काष्ठा work_काष्ठा *);
-अटल व्योम con_fault(काष्ठा ceph_connection *con);
+static void queue_con(struct ceph_connection *con);
+static void cancel_con(struct ceph_connection *con);
+static void ceph_con_workfn(struct work_struct *);
+static void con_fault(struct ceph_connection *con);
 
 /*
- * Nicely render a sockaddr as a string.  An array of क्रमmatted
+ * Nicely render a sockaddr as a string.  An array of formatted
  * strings is used, to approximate reentrancy.
  */
-#घोषणा ADDR_STR_COUNT_LOG	5	/* log2(# address strings in array) */
-#घोषणा ADDR_STR_COUNT		(1 << ADDR_STR_COUNT_LOG)
-#घोषणा ADDR_STR_COUNT_MASK	(ADDR_STR_COUNT - 1)
-#घोषणा MAX_ADDR_STR_LEN	64	/* 54 is enough */
+#define ADDR_STR_COUNT_LOG	5	/* log2(# address strings in array) */
+#define ADDR_STR_COUNT		(1 << ADDR_STR_COUNT_LOG)
+#define ADDR_STR_COUNT_MASK	(ADDR_STR_COUNT - 1)
+#define MAX_ADDR_STR_LEN	64	/* 54 is enough */
 
-अटल अक्षर addr_str[ADDR_STR_COUNT][MAX_ADDR_STR_LEN];
-अटल atomic_t addr_str_seq = ATOMIC_INIT(0);
+static char addr_str[ADDR_STR_COUNT][MAX_ADDR_STR_LEN];
+static atomic_t addr_str_seq = ATOMIC_INIT(0);
 
-काष्ठा page *ceph_zero_page;		/* used in certain error हालs */
+struct page *ceph_zero_page;		/* used in certain error cases */
 
-स्थिर अक्षर *ceph_pr_addr(स्थिर काष्ठा ceph_entity_addr *addr)
-अणु
-	पूर्णांक i;
-	अक्षर *s;
-	काष्ठा sockaddr_storage ss = addr->in_addr; /* align */
-	काष्ठा sockaddr_in *in4 = (काष्ठा sockaddr_in *)&ss;
-	काष्ठा sockaddr_in6 *in6 = (काष्ठा sockaddr_in6 *)&ss;
+const char *ceph_pr_addr(const struct ceph_entity_addr *addr)
+{
+	int i;
+	char *s;
+	struct sockaddr_storage ss = addr->in_addr; /* align */
+	struct sockaddr_in *in4 = (struct sockaddr_in *)&ss;
+	struct sockaddr_in6 *in6 = (struct sockaddr_in6 *)&ss;
 
-	i = atomic_inc_वापस(&addr_str_seq) & ADDR_STR_COUNT_MASK;
+	i = atomic_inc_return(&addr_str_seq) & ADDR_STR_COUNT_MASK;
 	s = addr_str[i];
 
-	चयन (ss.ss_family) अणु
-	हाल AF_INET:
-		snम_लिखो(s, MAX_ADDR_STR_LEN, "(%d)%pI4:%hu",
+	switch (ss.ss_family) {
+	case AF_INET:
+		snprintf(s, MAX_ADDR_STR_LEN, "(%d)%pI4:%hu",
 			 le32_to_cpu(addr->type), &in4->sin_addr,
 			 ntohs(in4->sin_port));
-		अवरोध;
+		break;
 
-	हाल AF_INET6:
-		snम_लिखो(s, MAX_ADDR_STR_LEN, "(%d)[%pI6c]:%hu",
+	case AF_INET6:
+		snprintf(s, MAX_ADDR_STR_LEN, "(%d)[%pI6c]:%hu",
 			 le32_to_cpu(addr->type), &in6->sin6_addr,
 			 ntohs(in6->sin6_port));
-		अवरोध;
+		break;
 
-	शेष:
-		snम_लिखो(s, MAX_ADDR_STR_LEN, "(unknown sockaddr family %hu)",
+	default:
+		snprintf(s, MAX_ADDR_STR_LEN, "(unknown sockaddr family %hu)",
 			 ss.ss_family);
-	पूर्ण
+	}
 
-	वापस s;
-पूर्ण
+	return s;
+}
 EXPORT_SYMBOL(ceph_pr_addr);
 
-व्योम ceph_encode_my_addr(काष्ठा ceph_messenger *msgr)
-अणु
-	अगर (!ceph_msgr2(from_msgr(msgr))) अणु
-		स_नकल(&msgr->my_enc_addr, &msgr->inst.addr,
-		       माप(msgr->my_enc_addr));
+void ceph_encode_my_addr(struct ceph_messenger *msgr)
+{
+	if (!ceph_msgr2(from_msgr(msgr))) {
+		memcpy(&msgr->my_enc_addr, &msgr->inst.addr,
+		       sizeof(msgr->my_enc_addr));
 		ceph_encode_banner_addr(&msgr->my_enc_addr);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * work queue क्रम all पढ़ोing and writing to/from the socket.
+ * work queue for all reading and writing to/from the socket.
  */
-अटल काष्ठा workqueue_काष्ठा *ceph_msgr_wq;
+static struct workqueue_struct *ceph_msgr_wq;
 
-अटल पूर्णांक ceph_msgr_slab_init(व्योम)
-अणु
+static int ceph_msgr_slab_init(void)
+{
 	BUG_ON(ceph_msg_cache);
 	ceph_msg_cache = KMEM_CACHE(ceph_msg, 0);
-	अगर (!ceph_msg_cache)
-		वापस -ENOMEM;
+	if (!ceph_msg_cache)
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ceph_msgr_slab_निकास(व्योम)
-अणु
+static void ceph_msgr_slab_exit(void)
+{
 	BUG_ON(!ceph_msg_cache);
 	kmem_cache_destroy(ceph_msg_cache);
-	ceph_msg_cache = शून्य;
-पूर्ण
+	ceph_msg_cache = NULL;
+}
 
-अटल व्योम _ceph_msgr_निकास(व्योम)
-अणु
-	अगर (ceph_msgr_wq) अणु
+static void _ceph_msgr_exit(void)
+{
+	if (ceph_msgr_wq) {
 		destroy_workqueue(ceph_msgr_wq);
-		ceph_msgr_wq = शून्य;
-	पूर्ण
+		ceph_msgr_wq = NULL;
+	}
 
 	BUG_ON(!ceph_zero_page);
 	put_page(ceph_zero_page);
-	ceph_zero_page = शून्य;
+	ceph_zero_page = NULL;
 
-	ceph_msgr_slab_निकास();
-पूर्ण
+	ceph_msgr_slab_exit();
+}
 
-पूर्णांक __init ceph_msgr_init(व्योम)
-अणु
-	अगर (ceph_msgr_slab_init())
-		वापस -ENOMEM;
+int __init ceph_msgr_init(void)
+{
+	if (ceph_msgr_slab_init())
+		return -ENOMEM;
 
 	BUG_ON(ceph_zero_page);
 	ceph_zero_page = ZERO_PAGE(0);
@@ -250,175 +249,175 @@ EXPORT_SYMBOL(ceph_pr_addr);
 
 	/*
 	 * The number of active work items is limited by the number of
-	 * connections, so leave @max_active at शेष.
+	 * connections, so leave @max_active at default.
 	 */
 	ceph_msgr_wq = alloc_workqueue("ceph-msgr", WQ_MEM_RECLAIM, 0);
-	अगर (ceph_msgr_wq)
-		वापस 0;
+	if (ceph_msgr_wq)
+		return 0;
 
 	pr_err("msgr_init failed to create workqueue\n");
-	_ceph_msgr_निकास();
+	_ceph_msgr_exit();
 
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-व्योम ceph_msgr_निकास(व्योम)
-अणु
-	BUG_ON(ceph_msgr_wq == शून्य);
+void ceph_msgr_exit(void)
+{
+	BUG_ON(ceph_msgr_wq == NULL);
 
-	_ceph_msgr_निकास();
-पूर्ण
+	_ceph_msgr_exit();
+}
 
-व्योम ceph_msgr_flush(व्योम)
-अणु
+void ceph_msgr_flush(void)
+{
 	flush_workqueue(ceph_msgr_wq);
-पूर्ण
+}
 EXPORT_SYMBOL(ceph_msgr_flush);
 
 /* Connection socket state transition functions */
 
-अटल व्योम con_sock_state_init(काष्ठा ceph_connection *con)
-अणु
-	पूर्णांक old_state;
+static void con_sock_state_init(struct ceph_connection *con)
+{
+	int old_state;
 
 	old_state = atomic_xchg(&con->sock_state, CON_SOCK_STATE_CLOSED);
-	अगर (WARN_ON(old_state != CON_SOCK_STATE_NEW))
-		prपूर्णांकk("%s: unexpected old state %d\n", __func__, old_state);
-	करोut("%s con %p sock %d -> %d\n", __func__, con, old_state,
+	if (WARN_ON(old_state != CON_SOCK_STATE_NEW))
+		printk("%s: unexpected old state %d\n", __func__, old_state);
+	dout("%s con %p sock %d -> %d\n", __func__, con, old_state,
 	     CON_SOCK_STATE_CLOSED);
-पूर्ण
+}
 
-अटल व्योम con_sock_state_connecting(काष्ठा ceph_connection *con)
-अणु
-	पूर्णांक old_state;
+static void con_sock_state_connecting(struct ceph_connection *con)
+{
+	int old_state;
 
 	old_state = atomic_xchg(&con->sock_state, CON_SOCK_STATE_CONNECTING);
-	अगर (WARN_ON(old_state != CON_SOCK_STATE_CLOSED))
-		prपूर्णांकk("%s: unexpected old state %d\n", __func__, old_state);
-	करोut("%s con %p sock %d -> %d\n", __func__, con, old_state,
+	if (WARN_ON(old_state != CON_SOCK_STATE_CLOSED))
+		printk("%s: unexpected old state %d\n", __func__, old_state);
+	dout("%s con %p sock %d -> %d\n", __func__, con, old_state,
 	     CON_SOCK_STATE_CONNECTING);
-पूर्ण
+}
 
-अटल व्योम con_sock_state_connected(काष्ठा ceph_connection *con)
-अणु
-	पूर्णांक old_state;
+static void con_sock_state_connected(struct ceph_connection *con)
+{
+	int old_state;
 
 	old_state = atomic_xchg(&con->sock_state, CON_SOCK_STATE_CONNECTED);
-	अगर (WARN_ON(old_state != CON_SOCK_STATE_CONNECTING))
-		prपूर्णांकk("%s: unexpected old state %d\n", __func__, old_state);
-	करोut("%s con %p sock %d -> %d\n", __func__, con, old_state,
+	if (WARN_ON(old_state != CON_SOCK_STATE_CONNECTING))
+		printk("%s: unexpected old state %d\n", __func__, old_state);
+	dout("%s con %p sock %d -> %d\n", __func__, con, old_state,
 	     CON_SOCK_STATE_CONNECTED);
-पूर्ण
+}
 
-अटल व्योम con_sock_state_closing(काष्ठा ceph_connection *con)
-अणु
-	पूर्णांक old_state;
+static void con_sock_state_closing(struct ceph_connection *con)
+{
+	int old_state;
 
 	old_state = atomic_xchg(&con->sock_state, CON_SOCK_STATE_CLOSING);
-	अगर (WARN_ON(old_state != CON_SOCK_STATE_CONNECTING &&
+	if (WARN_ON(old_state != CON_SOCK_STATE_CONNECTING &&
 			old_state != CON_SOCK_STATE_CONNECTED &&
 			old_state != CON_SOCK_STATE_CLOSING))
-		prपूर्णांकk("%s: unexpected old state %d\n", __func__, old_state);
-	करोut("%s con %p sock %d -> %d\n", __func__, con, old_state,
+		printk("%s: unexpected old state %d\n", __func__, old_state);
+	dout("%s con %p sock %d -> %d\n", __func__, con, old_state,
 	     CON_SOCK_STATE_CLOSING);
-पूर्ण
+}
 
-अटल व्योम con_sock_state_बंदd(काष्ठा ceph_connection *con)
-अणु
-	पूर्णांक old_state;
+static void con_sock_state_closed(struct ceph_connection *con)
+{
+	int old_state;
 
 	old_state = atomic_xchg(&con->sock_state, CON_SOCK_STATE_CLOSED);
-	अगर (WARN_ON(old_state != CON_SOCK_STATE_CONNECTED &&
+	if (WARN_ON(old_state != CON_SOCK_STATE_CONNECTED &&
 		    old_state != CON_SOCK_STATE_CLOSING &&
 		    old_state != CON_SOCK_STATE_CONNECTING &&
 		    old_state != CON_SOCK_STATE_CLOSED))
-		prपूर्णांकk("%s: unexpected old state %d\n", __func__, old_state);
-	करोut("%s con %p sock %d -> %d\n", __func__, con, old_state,
+		printk("%s: unexpected old state %d\n", __func__, old_state);
+	dout("%s con %p sock %d -> %d\n", __func__, con, old_state,
 	     CON_SOCK_STATE_CLOSED);
-पूर्ण
+}
 
 /*
  * socket callback functions
  */
 
 /* data available on socket, or listen socket received a connect */
-अटल व्योम ceph_sock_data_पढ़ोy(काष्ठा sock *sk)
-अणु
-	काष्ठा ceph_connection *con = sk->sk_user_data;
-	अगर (atomic_पढ़ो(&con->msgr->stopping)) अणु
-		वापस;
-	पूर्ण
+static void ceph_sock_data_ready(struct sock *sk)
+{
+	struct ceph_connection *con = sk->sk_user_data;
+	if (atomic_read(&con->msgr->stopping)) {
+		return;
+	}
 
-	अगर (sk->sk_state != TCP_CLOSE_WAIT) अणु
-		करोut("%s %p state = %d, queueing work\n", __func__,
+	if (sk->sk_state != TCP_CLOSE_WAIT) {
+		dout("%s %p state = %d, queueing work\n", __func__,
 		     con, con->state);
 		queue_con(con);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* socket has buffer space क्रम writing */
-अटल व्योम ceph_sock_ग_लिखो_space(काष्ठा sock *sk)
-अणु
-	काष्ठा ceph_connection *con = sk->sk_user_data;
+/* socket has buffer space for writing */
+static void ceph_sock_write_space(struct sock *sk)
+{
+	struct ceph_connection *con = sk->sk_user_data;
 
-	/* only queue to workqueue अगर there is data we want to ग_लिखो,
+	/* only queue to workqueue if there is data we want to write,
 	 * and there is sufficient space in the socket buffer to accept
-	 * more data.  clear SOCK_NOSPACE so that ceph_sock_ग_लिखो_space()
-	 * करोesn't get called again until try_ग_लिखो() fills the socket
+	 * more data.  clear SOCK_NOSPACE so that ceph_sock_write_space()
+	 * doesn't get called again until try_write() fills the socket
 	 * buffer. See net/ipv4/tcp_input.c:tcp_check_space()
-	 * and net/core/stream.c:sk_stream_ग_लिखो_space().
+	 * and net/core/stream.c:sk_stream_write_space().
 	 */
-	अगर (ceph_con_flag_test(con, CEPH_CON_F_WRITE_PENDING)) अणु
-		अगर (sk_stream_is_ग_लिखोable(sk)) अणु
-			करोut("%s %p queueing write work\n", __func__, con);
+	if (ceph_con_flag_test(con, CEPH_CON_F_WRITE_PENDING)) {
+		if (sk_stream_is_writeable(sk)) {
+			dout("%s %p queueing write work\n", __func__, con);
 			clear_bit(SOCK_NOSPACE, &sk->sk_socket->flags);
 			queue_con(con);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		करोut("%s %p nothing to write\n", __func__, con);
-	पूर्ण
-पूर्ण
+		}
+	} else {
+		dout("%s %p nothing to write\n", __func__, con);
+	}
+}
 
 /* socket's state has changed */
-अटल व्योम ceph_sock_state_change(काष्ठा sock *sk)
-अणु
-	काष्ठा ceph_connection *con = sk->sk_user_data;
+static void ceph_sock_state_change(struct sock *sk)
+{
+	struct ceph_connection *con = sk->sk_user_data;
 
-	करोut("%s %p state = %d sk_state = %u\n", __func__,
+	dout("%s %p state = %d sk_state = %u\n", __func__,
 	     con, con->state, sk->sk_state);
 
-	चयन (sk->sk_state) अणु
-	हाल TCP_CLOSE:
-		करोut("%s TCP_CLOSE\n", __func__);
+	switch (sk->sk_state) {
+	case TCP_CLOSE:
+		dout("%s TCP_CLOSE\n", __func__);
 		fallthrough;
-	हाल TCP_CLOSE_WAIT:
-		करोut("%s TCP_CLOSE_WAIT\n", __func__);
+	case TCP_CLOSE_WAIT:
+		dout("%s TCP_CLOSE_WAIT\n", __func__);
 		con_sock_state_closing(con);
 		ceph_con_flag_set(con, CEPH_CON_F_SOCK_CLOSED);
 		queue_con(con);
-		अवरोध;
-	हाल TCP_ESTABLISHED:
-		करोut("%s TCP_ESTABLISHED\n", __func__);
+		break;
+	case TCP_ESTABLISHED:
+		dout("%s TCP_ESTABLISHED\n", __func__);
 		con_sock_state_connected(con);
 		queue_con(con);
-		अवरोध;
-	शेष:	/* Everything अन्यथा is unपूर्णांकeresting */
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:	/* Everything else is uninteresting */
+		break;
+	}
+}
 
 /*
  * set up socket callbacks
  */
-अटल व्योम set_sock_callbacks(काष्ठा socket *sock,
-			       काष्ठा ceph_connection *con)
-अणु
-	काष्ठा sock *sk = sock->sk;
+static void set_sock_callbacks(struct socket *sock,
+			       struct ceph_connection *con)
+{
+	struct sock *sk = sock->sk;
 	sk->sk_user_data = con;
-	sk->sk_data_पढ़ोy = ceph_sock_data_पढ़ोy;
-	sk->sk_ग_लिखो_space = ceph_sock_ग_लिखो_space;
+	sk->sk_data_ready = ceph_sock_data_ready;
+	sk->sk_write_space = ceph_sock_write_space;
 	sk->sk_state_change = ceph_sock_state_change;
-पूर्ण
+}
 
 
 /*
@@ -428,146 +427,146 @@ EXPORT_SYMBOL(ceph_msgr_flush);
 /*
  * initiate connection to a remote socket.
  */
-पूर्णांक ceph_tcp_connect(काष्ठा ceph_connection *con)
-अणु
-	काष्ठा sockaddr_storage ss = con->peer_addr.in_addr; /* align */
-	काष्ठा socket *sock;
-	अचिन्हित पूर्णांक noio_flag;
-	पूर्णांक ret;
+int ceph_tcp_connect(struct ceph_connection *con)
+{
+	struct sockaddr_storage ss = con->peer_addr.in_addr; /* align */
+	struct socket *sock;
+	unsigned int noio_flag;
+	int ret;
 
-	करोut("%s con %p peer_addr %s\n", __func__, con,
+	dout("%s con %p peer_addr %s\n", __func__, con,
 	     ceph_pr_addr(&con->peer_addr));
 	BUG_ON(con->sock);
 
 	/* sock_create_kern() allocates with GFP_KERNEL */
-	noio_flag = meदो_स्मृति_noio_save();
-	ret = sock_create_kern(पढ़ो_pnet(&con->msgr->net), ss.ss_family,
+	noio_flag = memalloc_noio_save();
+	ret = sock_create_kern(read_pnet(&con->msgr->net), ss.ss_family,
 			       SOCK_STREAM, IPPROTO_TCP, &sock);
-	meदो_स्मृति_noio_restore(noio_flag);
-	अगर (ret)
-		वापस ret;
+	memalloc_noio_restore(noio_flag);
+	if (ret)
+		return ret;
 	sock->sk->sk_allocation = GFP_NOFS;
 
-#अगर_घोषित CONFIG_LOCKDEP
+#ifdef CONFIG_LOCKDEP
 	lockdep_set_class(&sock->sk->sk_lock, &socket_class);
-#पूर्ण_अगर
+#endif
 
 	set_sock_callbacks(sock, con);
 
 	con_sock_state_connecting(con);
-	ret = sock->ops->connect(sock, (काष्ठा sockaddr *)&ss, माप(ss),
+	ret = sock->ops->connect(sock, (struct sockaddr *)&ss, sizeof(ss),
 				 O_NONBLOCK);
-	अगर (ret == -EINPROGRESS) अणु
-		करोut("connect %s EINPROGRESS sk_state = %u\n",
+	if (ret == -EINPROGRESS) {
+		dout("connect %s EINPROGRESS sk_state = %u\n",
 		     ceph_pr_addr(&con->peer_addr),
 		     sock->sk->sk_state);
-	पूर्ण अन्यथा अगर (ret < 0) अणु
+	} else if (ret < 0) {
 		pr_err("connect %s error %d\n",
 		       ceph_pr_addr(&con->peer_addr), ret);
 		sock_release(sock);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (ceph_test_opt(from_msgr(con->msgr), TCP_NODELAY))
+	if (ceph_test_opt(from_msgr(con->msgr), TCP_NODELAY))
 		tcp_sock_set_nodelay(sock->sk);
 
 	con->sock = sock;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Shutकरोwn/बंद the socket क्रम the given connection.
+ * Shutdown/close the socket for the given connection.
  */
-पूर्णांक ceph_con_बंद_socket(काष्ठा ceph_connection *con)
-अणु
-	पूर्णांक rc = 0;
+int ceph_con_close_socket(struct ceph_connection *con)
+{
+	int rc = 0;
 
-	करोut("%s con %p sock %p\n", __func__, con, con->sock);
-	अगर (con->sock) अणु
-		rc = con->sock->ops->shutकरोwn(con->sock, SHUT_RDWR);
+	dout("%s con %p sock %p\n", __func__, con, con->sock);
+	if (con->sock) {
+		rc = con->sock->ops->shutdown(con->sock, SHUT_RDWR);
 		sock_release(con->sock);
-		con->sock = शून्य;
-	पूर्ण
+		con->sock = NULL;
+	}
 
 	/*
-	 * Forcibly clear the SOCK_CLOSED flag.  It माला_लो set
+	 * Forcibly clear the SOCK_CLOSED flag.  It gets set
 	 * independent of the connection mutex, and we could have
-	 * received a socket बंद event beक्रमe we had the chance to
-	 * shut the socket करोwn.
+	 * received a socket close event before we had the chance to
+	 * shut the socket down.
 	 */
 	ceph_con_flag_clear(con, CEPH_CON_F_SOCK_CLOSED);
 
-	con_sock_state_बंदd(con);
-	वापस rc;
-पूर्ण
+	con_sock_state_closed(con);
+	return rc;
+}
 
-अटल व्योम ceph_con_reset_protocol(काष्ठा ceph_connection *con)
-अणु
-	करोut("%s con %p\n", __func__, con);
+static void ceph_con_reset_protocol(struct ceph_connection *con)
+{
+	dout("%s con %p\n", __func__, con);
 
-	ceph_con_बंद_socket(con);
-	अगर (con->in_msg) अणु
+	ceph_con_close_socket(con);
+	if (con->in_msg) {
 		WARN_ON(con->in_msg->con != con);
 		ceph_msg_put(con->in_msg);
-		con->in_msg = शून्य;
-	पूर्ण
-	अगर (con->out_msg) अणु
+		con->in_msg = NULL;
+	}
+	if (con->out_msg) {
 		WARN_ON(con->out_msg->con != con);
 		ceph_msg_put(con->out_msg);
-		con->out_msg = शून्य;
-	पूर्ण
+		con->out_msg = NULL;
+	}
 
-	अगर (ceph_msgr2(from_msgr(con->msgr)))
+	if (ceph_msgr2(from_msgr(con->msgr)))
 		ceph_con_v2_reset_protocol(con);
-	अन्यथा
+	else
 		ceph_con_v1_reset_protocol(con);
-पूर्ण
+}
 
 /*
  * Reset a connection.  Discard all incoming and outgoing messages
  * and clear *_seq state.
  */
-अटल व्योम ceph_msg_हटाओ(काष्ठा ceph_msg *msg)
-अणु
+static void ceph_msg_remove(struct ceph_msg *msg)
+{
 	list_del_init(&msg->list_head);
 
 	ceph_msg_put(msg);
-पूर्ण
+}
 
-अटल व्योम ceph_msg_हटाओ_list(काष्ठा list_head *head)
-अणु
-	जबतक (!list_empty(head)) अणु
-		काष्ठा ceph_msg *msg = list_first_entry(head, काष्ठा ceph_msg,
+static void ceph_msg_remove_list(struct list_head *head)
+{
+	while (!list_empty(head)) {
+		struct ceph_msg *msg = list_first_entry(head, struct ceph_msg,
 							list_head);
-		ceph_msg_हटाओ(msg);
-	पूर्ण
-पूर्ण
+		ceph_msg_remove(msg);
+	}
+}
 
-व्योम ceph_con_reset_session(काष्ठा ceph_connection *con)
-अणु
-	करोut("%s con %p\n", __func__, con);
+void ceph_con_reset_session(struct ceph_connection *con)
+{
+	dout("%s con %p\n", __func__, con);
 
 	WARN_ON(con->in_msg);
 	WARN_ON(con->out_msg);
-	ceph_msg_हटाओ_list(&con->out_queue);
-	ceph_msg_हटाओ_list(&con->out_sent);
+	ceph_msg_remove_list(&con->out_queue);
+	ceph_msg_remove_list(&con->out_sent);
 	con->out_seq = 0;
 	con->in_seq = 0;
 	con->in_seq_acked = 0;
 
-	अगर (ceph_msgr2(from_msgr(con->msgr)))
+	if (ceph_msgr2(from_msgr(con->msgr)))
 		ceph_con_v2_reset_session(con);
-	अन्यथा
+	else
 		ceph_con_v1_reset_session(con);
-पूर्ण
+}
 
 /*
- * mark a peer करोwn.  drop any खोलो connections.
+ * mark a peer down.  drop any open connections.
  */
-व्योम ceph_con_बंद(काष्ठा ceph_connection *con)
-अणु
+void ceph_con_close(struct ceph_connection *con)
+{
 	mutex_lock(&con->mutex);
-	करोut("con_close %p peer %s\n", con, ceph_pr_addr(&con->peer_addr));
+	dout("con_close %p peer %s\n", con, ceph_pr_addr(&con->peer_addr));
 	con->state = CEPH_CON_S_CLOSED;
 
 	ceph_con_flag_clear(con, CEPH_CON_F_LOSSYTX);  /* so we retry next
@@ -580,18 +579,18 @@ EXPORT_SYMBOL(ceph_msgr_flush);
 	ceph_con_reset_session(con);
 	cancel_con(con);
 	mutex_unlock(&con->mutex);
-पूर्ण
-EXPORT_SYMBOL(ceph_con_बंद);
+}
+EXPORT_SYMBOL(ceph_con_close);
 
 /*
- * Reखोलो a बंदd connection, with a new peer address.
+ * Reopen a closed connection, with a new peer address.
  */
-व्योम ceph_con_खोलो(काष्ठा ceph_connection *con,
+void ceph_con_open(struct ceph_connection *con,
 		   __u8 entity_type, __u64 entity_num,
-		   काष्ठा ceph_entity_addr *addr)
-अणु
+		   struct ceph_entity_addr *addr)
+{
 	mutex_lock(&con->mutex);
-	करोut("con_open %p %s\n", con, ceph_pr_addr(addr));
+	dout("con_open %p %s\n", con, ceph_pr_addr(addr));
 
 	WARN_ON(con->state != CEPH_CON_S_CLOSED);
 	con->state = CEPH_CON_S_PREOPEN;
@@ -599,34 +598,34 @@ EXPORT_SYMBOL(ceph_con_बंद);
 	con->peer_name.type = (__u8) entity_type;
 	con->peer_name.num = cpu_to_le64(entity_num);
 
-	स_नकल(&con->peer_addr, addr, माप(*addr));
+	memcpy(&con->peer_addr, addr, sizeof(*addr));
 	con->delay = 0;      /* reset backoff memory */
 	mutex_unlock(&con->mutex);
 	queue_con(con);
-पूर्ण
-EXPORT_SYMBOL(ceph_con_खोलो);
+}
+EXPORT_SYMBOL(ceph_con_open);
 
 /*
- * वापस true अगर this connection ever successfully खोलोed
+ * return true if this connection ever successfully opened
  */
-bool ceph_con_खोलोed(काष्ठा ceph_connection *con)
-अणु
-	अगर (ceph_msgr2(from_msgr(con->msgr)))
-		वापस ceph_con_v2_खोलोed(con);
+bool ceph_con_opened(struct ceph_connection *con)
+{
+	if (ceph_msgr2(from_msgr(con->msgr)))
+		return ceph_con_v2_opened(con);
 
-	वापस ceph_con_v1_खोलोed(con);
-पूर्ण
+	return ceph_con_v1_opened(con);
+}
 
 /*
  * initialize a new connection.
  */
-व्योम ceph_con_init(काष्ठा ceph_connection *con, व्योम *निजी,
-	स्थिर काष्ठा ceph_connection_operations *ops,
-	काष्ठा ceph_messenger *msgr)
-अणु
-	करोut("con_init %p\n", con);
-	स_रखो(con, 0, माप(*con));
-	con->निजी = निजी;
+void ceph_con_init(struct ceph_connection *con, void *private,
+	const struct ceph_connection_operations *ops,
+	struct ceph_messenger *msgr)
+{
+	dout("con_init %p\n", con);
+	memset(con, 0, sizeof(*con));
+	con->private = private;
 	con->ops = ops;
 	con->msgr = msgr;
 
@@ -638,205 +637,205 @@ bool ceph_con_खोलोed(काष्ठा ceph_connection *con)
 	INIT_DELAYED_WORK(&con->work, ceph_con_workfn);
 
 	con->state = CEPH_CON_S_CLOSED;
-पूर्ण
+}
 EXPORT_SYMBOL(ceph_con_init);
 
 /*
- * We मुख्यtain a global counter to order connection attempts.  Get
+ * We maintain a global counter to order connection attempts.  Get
  * a unique seq greater than @gt.
  */
-u32 ceph_get_global_seq(काष्ठा ceph_messenger *msgr, u32 gt)
-अणु
+u32 ceph_get_global_seq(struct ceph_messenger *msgr, u32 gt)
+{
 	u32 ret;
 
 	spin_lock(&msgr->global_seq_lock);
-	अगर (msgr->global_seq < gt)
+	if (msgr->global_seq < gt)
 		msgr->global_seq = gt;
 	ret = ++msgr->global_seq;
 	spin_unlock(&msgr->global_seq_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Discard messages that have been acked by the server.
  */
-व्योम ceph_con_discard_sent(काष्ठा ceph_connection *con, u64 ack_seq)
-अणु
-	काष्ठा ceph_msg *msg;
+void ceph_con_discard_sent(struct ceph_connection *con, u64 ack_seq)
+{
+	struct ceph_msg *msg;
 	u64 seq;
 
-	करोut("%s con %p ack_seq %llu\n", __func__, con, ack_seq);
-	जबतक (!list_empty(&con->out_sent)) अणु
-		msg = list_first_entry(&con->out_sent, काष्ठा ceph_msg,
+	dout("%s con %p ack_seq %llu\n", __func__, con, ack_seq);
+	while (!list_empty(&con->out_sent)) {
+		msg = list_first_entry(&con->out_sent, struct ceph_msg,
 				       list_head);
 		WARN_ON(msg->needs_out_seq);
 		seq = le64_to_cpu(msg->hdr.seq);
-		अगर (seq > ack_seq)
-			अवरोध;
+		if (seq > ack_seq)
+			break;
 
-		करोut("%s con %p discarding msg %p seq %llu\n", __func__, con,
+		dout("%s con %p discarding msg %p seq %llu\n", __func__, con,
 		     msg, seq);
-		ceph_msg_हटाओ(msg);
-	पूर्ण
-पूर्ण
+		ceph_msg_remove(msg);
+	}
+}
 
 /*
  * Discard messages that have been requeued in con_fault(), up to
- * reconnect_seq.  This aव्योमs gratuitously resending messages that
+ * reconnect_seq.  This avoids gratuitously resending messages that
  * the server had received and handled prior to reconnect.
  */
-व्योम ceph_con_discard_requeued(काष्ठा ceph_connection *con, u64 reconnect_seq)
-अणु
-	काष्ठा ceph_msg *msg;
+void ceph_con_discard_requeued(struct ceph_connection *con, u64 reconnect_seq)
+{
+	struct ceph_msg *msg;
 	u64 seq;
 
-	करोut("%s con %p reconnect_seq %llu\n", __func__, con, reconnect_seq);
-	जबतक (!list_empty(&con->out_queue)) अणु
-		msg = list_first_entry(&con->out_queue, काष्ठा ceph_msg,
+	dout("%s con %p reconnect_seq %llu\n", __func__, con, reconnect_seq);
+	while (!list_empty(&con->out_queue)) {
+		msg = list_first_entry(&con->out_queue, struct ceph_msg,
 				       list_head);
-		अगर (msg->needs_out_seq)
-			अवरोध;
+		if (msg->needs_out_seq)
+			break;
 		seq = le64_to_cpu(msg->hdr.seq);
-		अगर (seq > reconnect_seq)
-			अवरोध;
+		if (seq > reconnect_seq)
+			break;
 
-		करोut("%s con %p discarding msg %p seq %llu\n", __func__, con,
+		dout("%s con %p discarding msg %p seq %llu\n", __func__, con,
 		     msg, seq);
-		ceph_msg_हटाओ(msg);
-	पूर्ण
-पूर्ण
+		ceph_msg_remove(msg);
+	}
+}
 
-#अगर_घोषित CONFIG_BLOCK
+#ifdef CONFIG_BLOCK
 
 /*
- * For a bio data item, a piece is whatever reमुख्यs of the next
+ * For a bio data item, a piece is whatever remains of the next
  * entry in the current bio iovec, or the first entry in the next
  * bio in the list.
  */
-अटल व्योम ceph_msg_data_bio_cursor_init(काष्ठा ceph_msg_data_cursor *cursor,
-					माप_प्रकार length)
-अणु
-	काष्ठा ceph_msg_data *data = cursor->data;
-	काष्ठा ceph_bio_iter *it = &cursor->bio_iter;
+static void ceph_msg_data_bio_cursor_init(struct ceph_msg_data_cursor *cursor,
+					size_t length)
+{
+	struct ceph_msg_data *data = cursor->data;
+	struct ceph_bio_iter *it = &cursor->bio_iter;
 
-	cursor->resid = min_t(माप_प्रकार, length, data->bio_length);
+	cursor->resid = min_t(size_t, length, data->bio_length);
 	*it = data->bio_pos;
-	अगर (cursor->resid < it->iter.bi_size)
+	if (cursor->resid < it->iter.bi_size)
 		it->iter.bi_size = cursor->resid;
 
 	BUG_ON(cursor->resid < bio_iter_len(it->bio, it->iter));
 	cursor->last_piece = cursor->resid == bio_iter_len(it->bio, it->iter);
-पूर्ण
+}
 
-अटल काष्ठा page *ceph_msg_data_bio_next(काष्ठा ceph_msg_data_cursor *cursor,
-						माप_प्रकार *page_offset,
-						माप_प्रकार *length)
-अणु
-	काष्ठा bio_vec bv = bio_iter_iovec(cursor->bio_iter.bio,
+static struct page *ceph_msg_data_bio_next(struct ceph_msg_data_cursor *cursor,
+						size_t *page_offset,
+						size_t *length)
+{
+	struct bio_vec bv = bio_iter_iovec(cursor->bio_iter.bio,
 					   cursor->bio_iter.iter);
 
 	*page_offset = bv.bv_offset;
 	*length = bv.bv_len;
-	वापस bv.bv_page;
-पूर्ण
+	return bv.bv_page;
+}
 
-अटल bool ceph_msg_data_bio_advance(काष्ठा ceph_msg_data_cursor *cursor,
-					माप_प्रकार bytes)
-अणु
-	काष्ठा ceph_bio_iter *it = &cursor->bio_iter;
-	काष्ठा page *page = bio_iter_page(it->bio, it->iter);
+static bool ceph_msg_data_bio_advance(struct ceph_msg_data_cursor *cursor,
+					size_t bytes)
+{
+	struct ceph_bio_iter *it = &cursor->bio_iter;
+	struct page *page = bio_iter_page(it->bio, it->iter);
 
 	BUG_ON(bytes > cursor->resid);
 	BUG_ON(bytes > bio_iter_len(it->bio, it->iter));
 	cursor->resid -= bytes;
 	bio_advance_iter(it->bio, &it->iter, bytes);
 
-	अगर (!cursor->resid) अणु
+	if (!cursor->resid) {
 		BUG_ON(!cursor->last_piece);
-		वापस false;   /* no more data */
-	पूर्ण
+		return false;   /* no more data */
+	}
 
-	अगर (!bytes || (it->iter.bi_size && it->iter.bi_bvec_करोne &&
+	if (!bytes || (it->iter.bi_size && it->iter.bi_bvec_done &&
 		       page == bio_iter_page(it->bio, it->iter)))
-		वापस false;	/* more bytes to process in this segment */
+		return false;	/* more bytes to process in this segment */
 
-	अगर (!it->iter.bi_size) अणु
+	if (!it->iter.bi_size) {
 		it->bio = it->bio->bi_next;
 		it->iter = it->bio->bi_iter;
-		अगर (cursor->resid < it->iter.bi_size)
+		if (cursor->resid < it->iter.bi_size)
 			it->iter.bi_size = cursor->resid;
-	पूर्ण
+	}
 
 	BUG_ON(cursor->last_piece);
 	BUG_ON(cursor->resid < bio_iter_len(it->bio, it->iter));
 	cursor->last_piece = cursor->resid == bio_iter_len(it->bio, it->iter);
-	वापस true;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_BLOCK */
+	return true;
+}
+#endif /* CONFIG_BLOCK */
 
-अटल व्योम ceph_msg_data_bvecs_cursor_init(काष्ठा ceph_msg_data_cursor *cursor,
-					माप_प्रकार length)
-अणु
-	काष्ठा ceph_msg_data *data = cursor->data;
-	काष्ठा bio_vec *bvecs = data->bvec_pos.bvecs;
+static void ceph_msg_data_bvecs_cursor_init(struct ceph_msg_data_cursor *cursor,
+					size_t length)
+{
+	struct ceph_msg_data *data = cursor->data;
+	struct bio_vec *bvecs = data->bvec_pos.bvecs;
 
-	cursor->resid = min_t(माप_प्रकार, length, data->bvec_pos.iter.bi_size);
+	cursor->resid = min_t(size_t, length, data->bvec_pos.iter.bi_size);
 	cursor->bvec_iter = data->bvec_pos.iter;
 	cursor->bvec_iter.bi_size = cursor->resid;
 
 	BUG_ON(cursor->resid < bvec_iter_len(bvecs, cursor->bvec_iter));
 	cursor->last_piece =
 	    cursor->resid == bvec_iter_len(bvecs, cursor->bvec_iter);
-पूर्ण
+}
 
-अटल काष्ठा page *ceph_msg_data_bvecs_next(काष्ठा ceph_msg_data_cursor *cursor,
-						माप_प्रकार *page_offset,
-						माप_प्रकार *length)
-अणु
-	काष्ठा bio_vec bv = bvec_iter_bvec(cursor->data->bvec_pos.bvecs,
+static struct page *ceph_msg_data_bvecs_next(struct ceph_msg_data_cursor *cursor,
+						size_t *page_offset,
+						size_t *length)
+{
+	struct bio_vec bv = bvec_iter_bvec(cursor->data->bvec_pos.bvecs,
 					   cursor->bvec_iter);
 
 	*page_offset = bv.bv_offset;
 	*length = bv.bv_len;
-	वापस bv.bv_page;
-पूर्ण
+	return bv.bv_page;
+}
 
-अटल bool ceph_msg_data_bvecs_advance(काष्ठा ceph_msg_data_cursor *cursor,
-					माप_प्रकार bytes)
-अणु
-	काष्ठा bio_vec *bvecs = cursor->data->bvec_pos.bvecs;
-	काष्ठा page *page = bvec_iter_page(bvecs, cursor->bvec_iter);
+static bool ceph_msg_data_bvecs_advance(struct ceph_msg_data_cursor *cursor,
+					size_t bytes)
+{
+	struct bio_vec *bvecs = cursor->data->bvec_pos.bvecs;
+	struct page *page = bvec_iter_page(bvecs, cursor->bvec_iter);
 
 	BUG_ON(bytes > cursor->resid);
 	BUG_ON(bytes > bvec_iter_len(bvecs, cursor->bvec_iter));
 	cursor->resid -= bytes;
 	bvec_iter_advance(bvecs, &cursor->bvec_iter, bytes);
 
-	अगर (!cursor->resid) अणु
+	if (!cursor->resid) {
 		BUG_ON(!cursor->last_piece);
-		वापस false;   /* no more data */
-	पूर्ण
+		return false;   /* no more data */
+	}
 
-	अगर (!bytes || (cursor->bvec_iter.bi_bvec_करोne &&
+	if (!bytes || (cursor->bvec_iter.bi_bvec_done &&
 		       page == bvec_iter_page(bvecs, cursor->bvec_iter)))
-		वापस false;	/* more bytes to process in this segment */
+		return false;	/* more bytes to process in this segment */
 
 	BUG_ON(cursor->last_piece);
 	BUG_ON(cursor->resid < bvec_iter_len(bvecs, cursor->bvec_iter));
 	cursor->last_piece =
 	    cursor->resid == bvec_iter_len(bvecs, cursor->bvec_iter);
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
  * For a page array, a piece comes from the first page in the array
- * that has not alपढ़ोy been fully consumed.
+ * that has not already been fully consumed.
  */
-अटल व्योम ceph_msg_data_pages_cursor_init(काष्ठा ceph_msg_data_cursor *cursor,
-					माप_प्रकार length)
-अणु
-	काष्ठा ceph_msg_data *data = cursor->data;
-	पूर्णांक page_count;
+static void ceph_msg_data_pages_cursor_init(struct ceph_msg_data_cursor *cursor,
+					size_t length)
+{
+	struct ceph_msg_data *data = cursor->data;
+	int page_count;
 
 	BUG_ON(data->type != CEPH_MSG_DATA_PAGES);
 
@@ -844,20 +843,20 @@ u32 ceph_get_global_seq(काष्ठा ceph_messenger *msgr, u32 gt)
 	BUG_ON(!data->length);
 
 	cursor->resid = min(length, data->length);
-	page_count = calc_pages_क्रम(data->alignment, (u64)data->length);
+	page_count = calc_pages_for(data->alignment, (u64)data->length);
 	cursor->page_offset = data->alignment & ~PAGE_MASK;
 	cursor->page_index = 0;
-	BUG_ON(page_count > (पूर्णांक)अच_लघु_उच्च);
-	cursor->page_count = (अचिन्हित लघु)page_count;
+	BUG_ON(page_count > (int)USHRT_MAX);
+	cursor->page_count = (unsigned short)page_count;
 	BUG_ON(length > SIZE_MAX - cursor->page_offset);
 	cursor->last_piece = cursor->page_offset + cursor->resid <= PAGE_SIZE;
-पूर्ण
+}
 
-अटल काष्ठा page *
-ceph_msg_data_pages_next(काष्ठा ceph_msg_data_cursor *cursor,
-					माप_प्रकार *page_offset, माप_प्रकार *length)
-अणु
-	काष्ठा ceph_msg_data *data = cursor->data;
+static struct page *
+ceph_msg_data_pages_next(struct ceph_msg_data_cursor *cursor,
+					size_t *page_offset, size_t *length)
+{
+	struct ceph_msg_data *data = cursor->data;
 
 	BUG_ON(data->type != CEPH_MSG_DATA_PAGES);
 
@@ -865,17 +864,17 @@ ceph_msg_data_pages_next(काष्ठा ceph_msg_data_cursor *cursor,
 	BUG_ON(cursor->page_offset >= PAGE_SIZE);
 
 	*page_offset = cursor->page_offset;
-	अगर (cursor->last_piece)
+	if (cursor->last_piece)
 		*length = cursor->resid;
-	अन्यथा
+	else
 		*length = PAGE_SIZE - *page_offset;
 
-	वापस data->pages[cursor->page_index];
-पूर्ण
+	return data->pages[cursor->page_index];
+}
 
-अटल bool ceph_msg_data_pages_advance(काष्ठा ceph_msg_data_cursor *cursor,
-						माप_प्रकार bytes)
-अणु
+static bool ceph_msg_data_pages_advance(struct ceph_msg_data_cursor *cursor,
+						size_t bytes)
+{
 	BUG_ON(cursor->data->type != CEPH_MSG_DATA_PAGES);
 
 	BUG_ON(cursor->page_offset + bytes > PAGE_SIZE);
@@ -884,56 +883,56 @@ ceph_msg_data_pages_next(काष्ठा ceph_msg_data_cursor *cursor,
 
 	cursor->resid -= bytes;
 	cursor->page_offset = (cursor->page_offset + bytes) & ~PAGE_MASK;
-	अगर (!bytes || cursor->page_offset)
-		वापस false;	/* more bytes to process in the current page */
+	if (!bytes || cursor->page_offset)
+		return false;	/* more bytes to process in the current page */
 
-	अगर (!cursor->resid)
-		वापस false;   /* no more data */
+	if (!cursor->resid)
+		return false;   /* no more data */
 
-	/* Move on to the next page; offset is alपढ़ोy at 0 */
+	/* Move on to the next page; offset is already at 0 */
 
 	BUG_ON(cursor->page_index >= cursor->page_count);
 	cursor->page_index++;
 	cursor->last_piece = cursor->resid <= PAGE_SIZE;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
- * For a pagelist, a piece is whatever reमुख्यs to be consumed in the
+ * For a pagelist, a piece is whatever remains to be consumed in the
  * first page in the list, or the front of the next page.
  */
-अटल व्योम
-ceph_msg_data_pagelist_cursor_init(काष्ठा ceph_msg_data_cursor *cursor,
-					माप_प्रकार length)
-अणु
-	काष्ठा ceph_msg_data *data = cursor->data;
-	काष्ठा ceph_pagelist *pagelist;
-	काष्ठा page *page;
+static void
+ceph_msg_data_pagelist_cursor_init(struct ceph_msg_data_cursor *cursor,
+					size_t length)
+{
+	struct ceph_msg_data *data = cursor->data;
+	struct ceph_pagelist *pagelist;
+	struct page *page;
 
 	BUG_ON(data->type != CEPH_MSG_DATA_PAGELIST);
 
 	pagelist = data->pagelist;
 	BUG_ON(!pagelist);
 
-	अगर (!length)
-		वापस;		/* pagelist can be asचिन्हित but empty */
+	if (!length)
+		return;		/* pagelist can be assigned but empty */
 
 	BUG_ON(list_empty(&pagelist->head));
-	page = list_first_entry(&pagelist->head, काष्ठा page, lru);
+	page = list_first_entry(&pagelist->head, struct page, lru);
 
 	cursor->resid = min(length, pagelist->length);
 	cursor->page = page;
 	cursor->offset = 0;
 	cursor->last_piece = cursor->resid <= PAGE_SIZE;
-पूर्ण
+}
 
-अटल काष्ठा page *
-ceph_msg_data_pagelist_next(काष्ठा ceph_msg_data_cursor *cursor,
-				माप_प्रकार *page_offset, माप_प्रकार *length)
-अणु
-	काष्ठा ceph_msg_data *data = cursor->data;
-	काष्ठा ceph_pagelist *pagelist;
+static struct page *
+ceph_msg_data_pagelist_next(struct ceph_msg_data_cursor *cursor,
+				size_t *page_offset, size_t *length)
+{
+	struct ceph_msg_data *data = cursor->data;
+	struct ceph_pagelist *pagelist;
 
 	BUG_ON(data->type != CEPH_MSG_DATA_PAGELIST);
 
@@ -945,19 +944,19 @@ ceph_msg_data_pagelist_next(काष्ठा ceph_msg_data_cursor *cursor,
 
 	/* offset of first page in pagelist is always 0 */
 	*page_offset = cursor->offset & ~PAGE_MASK;
-	अगर (cursor->last_piece)
+	if (cursor->last_piece)
 		*length = cursor->resid;
-	अन्यथा
+	else
 		*length = PAGE_SIZE - *page_offset;
 
-	वापस cursor->page;
-पूर्ण
+	return cursor->page;
+}
 
-अटल bool ceph_msg_data_pagelist_advance(काष्ठा ceph_msg_data_cursor *cursor,
-						माप_प्रकार bytes)
-अणु
-	काष्ठा ceph_msg_data *data = cursor->data;
-	काष्ठा ceph_pagelist *pagelist;
+static bool ceph_msg_data_pagelist_advance(struct ceph_msg_data_cursor *cursor,
+						size_t bytes)
+{
+	struct ceph_msg_data *data = cursor->data;
+	struct ceph_pagelist *pagelist;
 
 	BUG_ON(data->type != CEPH_MSG_DATA_PAGELIST);
 
@@ -972,11 +971,11 @@ ceph_msg_data_pagelist_next(काष्ठा ceph_msg_data_cursor *cursor,
 	cursor->resid -= bytes;
 	cursor->offset += bytes;
 	/* offset of first page in pagelist is always 0 */
-	अगर (!bytes || cursor->offset & ~PAGE_MASK)
-		वापस false;	/* more bytes to process in the current page */
+	if (!bytes || cursor->offset & ~PAGE_MASK)
+		return false;	/* more bytes to process in the current page */
 
-	अगर (!cursor->resid)
-		वापस false;   /* no more data */
+	if (!cursor->resid)
+		return false;   /* no more data */
 
 	/* Move on to the next page */
 
@@ -984,47 +983,47 @@ ceph_msg_data_pagelist_next(काष्ठा ceph_msg_data_cursor *cursor,
 	cursor->page = list_next_entry(cursor->page, lru);
 	cursor->last_piece = cursor->resid <= PAGE_SIZE;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
  * Message data is handled (sent or received) in pieces, where each
  * piece resides on a single page.  The network layer might not
  * consume an entire piece at once.  A data item's cursor keeps
- * track of which piece is next to process and how much reमुख्यs to
+ * track of which piece is next to process and how much remains to
  * be processed in that piece.  It also tracks whether the current
  * piece is the last one in the data item.
  */
-अटल व्योम __ceph_msg_data_cursor_init(काष्ठा ceph_msg_data_cursor *cursor)
-अणु
-	माप_प्रकार length = cursor->total_resid;
+static void __ceph_msg_data_cursor_init(struct ceph_msg_data_cursor *cursor)
+{
+	size_t length = cursor->total_resid;
 
-	चयन (cursor->data->type) अणु
-	हाल CEPH_MSG_DATA_PAGELIST:
+	switch (cursor->data->type) {
+	case CEPH_MSG_DATA_PAGELIST:
 		ceph_msg_data_pagelist_cursor_init(cursor, length);
-		अवरोध;
-	हाल CEPH_MSG_DATA_PAGES:
+		break;
+	case CEPH_MSG_DATA_PAGES:
 		ceph_msg_data_pages_cursor_init(cursor, length);
-		अवरोध;
-#अगर_घोषित CONFIG_BLOCK
-	हाल CEPH_MSG_DATA_BIO:
+		break;
+#ifdef CONFIG_BLOCK
+	case CEPH_MSG_DATA_BIO:
 		ceph_msg_data_bio_cursor_init(cursor, length);
-		अवरोध;
-#पूर्ण_अगर /* CONFIG_BLOCK */
-	हाल CEPH_MSG_DATA_BVECS:
+		break;
+#endif /* CONFIG_BLOCK */
+	case CEPH_MSG_DATA_BVECS:
 		ceph_msg_data_bvecs_cursor_init(cursor, length);
-		अवरोध;
-	हाल CEPH_MSG_DATA_NONE:
-	शेष:
+		break;
+	case CEPH_MSG_DATA_NONE:
+	default:
 		/* BUG(); */
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	cursor->need_crc = true;
-पूर्ण
+}
 
-व्योम ceph_msg_data_cursor_init(काष्ठा ceph_msg_data_cursor *cursor,
-			       काष्ठा ceph_msg *msg, माप_प्रकार length)
-अणु
+void ceph_msg_data_cursor_init(struct ceph_msg_data_cursor *cursor,
+			       struct ceph_msg *msg, size_t length)
+{
 	BUG_ON(!length);
 	BUG_ON(length > msg->data_length);
 	BUG_ON(!msg->num_data_items);
@@ -1033,287 +1032,287 @@ ceph_msg_data_pagelist_next(काष्ठा ceph_msg_data_cursor *cursor,
 	cursor->data = msg->data;
 
 	__ceph_msg_data_cursor_init(cursor);
-पूर्ण
+}
 
 /*
- * Return the page containing the next piece to process क्रम a given
+ * Return the page containing the next piece to process for a given
  * data item, and supply the page offset and length of that piece.
  * Indicate whether this is the last piece in this data item.
  */
-काष्ठा page *ceph_msg_data_next(काष्ठा ceph_msg_data_cursor *cursor,
-				माप_प्रकार *page_offset, माप_प्रकार *length,
+struct page *ceph_msg_data_next(struct ceph_msg_data_cursor *cursor,
+				size_t *page_offset, size_t *length,
 				bool *last_piece)
-अणु
-	काष्ठा page *page;
+{
+	struct page *page;
 
-	चयन (cursor->data->type) अणु
-	हाल CEPH_MSG_DATA_PAGELIST:
+	switch (cursor->data->type) {
+	case CEPH_MSG_DATA_PAGELIST:
 		page = ceph_msg_data_pagelist_next(cursor, page_offset, length);
-		अवरोध;
-	हाल CEPH_MSG_DATA_PAGES:
+		break;
+	case CEPH_MSG_DATA_PAGES:
 		page = ceph_msg_data_pages_next(cursor, page_offset, length);
-		अवरोध;
-#अगर_घोषित CONFIG_BLOCK
-	हाल CEPH_MSG_DATA_BIO:
+		break;
+#ifdef CONFIG_BLOCK
+	case CEPH_MSG_DATA_BIO:
 		page = ceph_msg_data_bio_next(cursor, page_offset, length);
-		अवरोध;
-#पूर्ण_अगर /* CONFIG_BLOCK */
-	हाल CEPH_MSG_DATA_BVECS:
+		break;
+#endif /* CONFIG_BLOCK */
+	case CEPH_MSG_DATA_BVECS:
 		page = ceph_msg_data_bvecs_next(cursor, page_offset, length);
-		अवरोध;
-	हाल CEPH_MSG_DATA_NONE:
-	शेष:
-		page = शून्य;
-		अवरोध;
-	पूर्ण
+		break;
+	case CEPH_MSG_DATA_NONE:
+	default:
+		page = NULL;
+		break;
+	}
 
 	BUG_ON(!page);
 	BUG_ON(*page_offset + *length > PAGE_SIZE);
 	BUG_ON(!*length);
 	BUG_ON(*length > cursor->resid);
-	अगर (last_piece)
+	if (last_piece)
 		*last_piece = cursor->last_piece;
 
-	वापस page;
-पूर्ण
+	return page;
+}
 
 /*
- * Returns true अगर the result moves the cursor on to the next piece
+ * Returns true if the result moves the cursor on to the next piece
  * of the data item.
  */
-व्योम ceph_msg_data_advance(काष्ठा ceph_msg_data_cursor *cursor, माप_प्रकार bytes)
-अणु
+void ceph_msg_data_advance(struct ceph_msg_data_cursor *cursor, size_t bytes)
+{
 	bool new_piece;
 
 	BUG_ON(bytes > cursor->resid);
-	चयन (cursor->data->type) अणु
-	हाल CEPH_MSG_DATA_PAGELIST:
+	switch (cursor->data->type) {
+	case CEPH_MSG_DATA_PAGELIST:
 		new_piece = ceph_msg_data_pagelist_advance(cursor, bytes);
-		अवरोध;
-	हाल CEPH_MSG_DATA_PAGES:
+		break;
+	case CEPH_MSG_DATA_PAGES:
 		new_piece = ceph_msg_data_pages_advance(cursor, bytes);
-		अवरोध;
-#अगर_घोषित CONFIG_BLOCK
-	हाल CEPH_MSG_DATA_BIO:
+		break;
+#ifdef CONFIG_BLOCK
+	case CEPH_MSG_DATA_BIO:
 		new_piece = ceph_msg_data_bio_advance(cursor, bytes);
-		अवरोध;
-#पूर्ण_अगर /* CONFIG_BLOCK */
-	हाल CEPH_MSG_DATA_BVECS:
+		break;
+#endif /* CONFIG_BLOCK */
+	case CEPH_MSG_DATA_BVECS:
 		new_piece = ceph_msg_data_bvecs_advance(cursor, bytes);
-		अवरोध;
-	हाल CEPH_MSG_DATA_NONE:
-	शेष:
+		break;
+	case CEPH_MSG_DATA_NONE:
+	default:
 		BUG();
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	cursor->total_resid -= bytes;
 
-	अगर (!cursor->resid && cursor->total_resid) अणु
+	if (!cursor->resid && cursor->total_resid) {
 		WARN_ON(!cursor->last_piece);
 		cursor->data++;
 		__ceph_msg_data_cursor_init(cursor);
 		new_piece = true;
-	पूर्ण
+	}
 	cursor->need_crc = new_piece;
-पूर्ण
+}
 
-u32 ceph_crc32c_page(u32 crc, काष्ठा page *page, अचिन्हित पूर्णांक page_offset,
-		     अचिन्हित पूर्णांक length)
-अणु
-	अक्षर *kaddr;
+u32 ceph_crc32c_page(u32 crc, struct page *page, unsigned int page_offset,
+		     unsigned int length)
+{
+	char *kaddr;
 
 	kaddr = kmap(page);
-	BUG_ON(kaddr == शून्य);
+	BUG_ON(kaddr == NULL);
 	crc = crc32c(crc, kaddr + page_offset, length);
 	kunmap(page);
 
-	वापस crc;
-पूर्ण
+	return crc;
+}
 
-bool ceph_addr_is_blank(स्थिर काष्ठा ceph_entity_addr *addr)
-अणु
-	काष्ठा sockaddr_storage ss = addr->in_addr; /* align */
-	काष्ठा in_addr *addr4 = &((काष्ठा sockaddr_in *)&ss)->sin_addr;
-	काष्ठा in6_addr *addr6 = &((काष्ठा sockaddr_in6 *)&ss)->sin6_addr;
+bool ceph_addr_is_blank(const struct ceph_entity_addr *addr)
+{
+	struct sockaddr_storage ss = addr->in_addr; /* align */
+	struct in_addr *addr4 = &((struct sockaddr_in *)&ss)->sin_addr;
+	struct in6_addr *addr6 = &((struct sockaddr_in6 *)&ss)->sin6_addr;
 
-	चयन (ss.ss_family) अणु
-	हाल AF_INET:
-		वापस addr4->s_addr == htonl(INADDR_ANY);
-	हाल AF_INET6:
-		वापस ipv6_addr_any(addr6);
-	शेष:
-		वापस true;
-	पूर्ण
-पूर्ण
+	switch (ss.ss_family) {
+	case AF_INET:
+		return addr4->s_addr == htonl(INADDR_ANY);
+	case AF_INET6:
+		return ipv6_addr_any(addr6);
+	default:
+		return true;
+	}
+}
 
-पूर्णांक ceph_addr_port(स्थिर काष्ठा ceph_entity_addr *addr)
-अणु
-	चयन (get_unaligned(&addr->in_addr.ss_family)) अणु
-	हाल AF_INET:
-		वापस ntohs(get_unaligned(&((काष्ठा sockaddr_in *)&addr->in_addr)->sin_port));
-	हाल AF_INET6:
-		वापस ntohs(get_unaligned(&((काष्ठा sockaddr_in6 *)&addr->in_addr)->sin6_port));
-	पूर्ण
-	वापस 0;
-पूर्ण
+int ceph_addr_port(const struct ceph_entity_addr *addr)
+{
+	switch (get_unaligned(&addr->in_addr.ss_family)) {
+	case AF_INET:
+		return ntohs(get_unaligned(&((struct sockaddr_in *)&addr->in_addr)->sin_port));
+	case AF_INET6:
+		return ntohs(get_unaligned(&((struct sockaddr_in6 *)&addr->in_addr)->sin6_port));
+	}
+	return 0;
+}
 
-व्योम ceph_addr_set_port(काष्ठा ceph_entity_addr *addr, पूर्णांक p)
-अणु
-	चयन (get_unaligned(&addr->in_addr.ss_family)) अणु
-	हाल AF_INET:
-		put_unaligned(htons(p), &((काष्ठा sockaddr_in *)&addr->in_addr)->sin_port);
-		अवरोध;
-	हाल AF_INET6:
-		put_unaligned(htons(p), &((काष्ठा sockaddr_in6 *)&addr->in_addr)->sin6_port);
-		अवरोध;
-	पूर्ण
-पूर्ण
+void ceph_addr_set_port(struct ceph_entity_addr *addr, int p)
+{
+	switch (get_unaligned(&addr->in_addr.ss_family)) {
+	case AF_INET:
+		put_unaligned(htons(p), &((struct sockaddr_in *)&addr->in_addr)->sin_port);
+		break;
+	case AF_INET6:
+		put_unaligned(htons(p), &((struct sockaddr_in6 *)&addr->in_addr)->sin6_port);
+		break;
+	}
+}
 
 /*
  * Unlike other *_pton function semantics, zero indicates success.
  */
-अटल पूर्णांक ceph_pton(स्थिर अक्षर *str, माप_प्रकार len, काष्ठा ceph_entity_addr *addr,
-		अक्षर delim, स्थिर अक्षर **ipend)
-अणु
-	स_रखो(&addr->in_addr, 0, माप(addr->in_addr));
+static int ceph_pton(const char *str, size_t len, struct ceph_entity_addr *addr,
+		char delim, const char **ipend)
+{
+	memset(&addr->in_addr, 0, sizeof(addr->in_addr));
 
-	अगर (in4_pton(str, len, (u8 *)&((काष्ठा sockaddr_in *)&addr->in_addr)->sin_addr.s_addr, delim, ipend)) अणु
+	if (in4_pton(str, len, (u8 *)&((struct sockaddr_in *)&addr->in_addr)->sin_addr.s_addr, delim, ipend)) {
 		put_unaligned(AF_INET, &addr->in_addr.ss_family);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (in6_pton(str, len, (u8 *)&((काष्ठा sockaddr_in6 *)&addr->in_addr)->sin6_addr.s6_addr, delim, ipend)) अणु
+	if (in6_pton(str, len, (u8 *)&((struct sockaddr_in6 *)&addr->in_addr)->sin6_addr.s6_addr, delim, ipend)) {
 		put_unaligned(AF_INET6, &addr->in_addr.ss_family);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 /*
  * Extract hostname string and resolve using kernel DNS facility.
  */
-#अगर_घोषित CONFIG_CEPH_LIB_USE_DNS_RESOLVER
-अटल पूर्णांक ceph_dns_resolve_name(स्थिर अक्षर *name, माप_प्रकार namelen,
-		काष्ठा ceph_entity_addr *addr, अक्षर delim, स्थिर अक्षर **ipend)
-अणु
-	स्थिर अक्षर *end, *delim_p;
-	अक्षर *colon_p, *ip_addr = शून्य;
-	पूर्णांक ip_len, ret;
+#ifdef CONFIG_CEPH_LIB_USE_DNS_RESOLVER
+static int ceph_dns_resolve_name(const char *name, size_t namelen,
+		struct ceph_entity_addr *addr, char delim, const char **ipend)
+{
+	const char *end, *delim_p;
+	char *colon_p, *ip_addr = NULL;
+	int ip_len, ret;
 
 	/*
 	 * The end of the hostname occurs immediately preceding the delimiter or
 	 * the port marker (':') where the delimiter takes precedence.
 	 */
-	delim_p = स_प्रथम(name, delim, namelen);
-	colon_p = स_प्रथम(name, ':', namelen);
+	delim_p = memchr(name, delim, namelen);
+	colon_p = memchr(name, ':', namelen);
 
-	अगर (delim_p && colon_p)
+	if (delim_p && colon_p)
 		end = delim_p < colon_p ? delim_p : colon_p;
-	अन्यथा अगर (!delim_p && colon_p)
+	else if (!delim_p && colon_p)
 		end = colon_p;
-	अन्यथा अणु
+	else {
 		end = delim_p;
-		अगर (!end) /* हाल: hostname:/ */
+		if (!end) /* case: hostname:/ */
 			end = name + namelen;
-	पूर्ण
+	}
 
-	अगर (end <= name)
-		वापस -EINVAL;
+	if (end <= name)
+		return -EINVAL;
 
-	/* करो dns_resolve upcall */
+	/* do dns_resolve upcall */
 	ip_len = dns_query(current->nsproxy->net_ns,
-			   शून्य, name, end - name, शून्य, &ip_addr, शून्य, false);
-	अगर (ip_len > 0)
-		ret = ceph_pton(ip_addr, ip_len, addr, -1, शून्य);
-	अन्यथा
+			   NULL, name, end - name, NULL, &ip_addr, NULL, false);
+	if (ip_len > 0)
+		ret = ceph_pton(ip_addr, ip_len, addr, -1, NULL);
+	else
 		ret = -ESRCH;
 
-	kमुक्त(ip_addr);
+	kfree(ip_addr);
 
 	*ipend = end;
 
-	pr_info("resolve '%.*s' (ret=%d): %s\n", (पूर्णांक)(end - name), name,
+	pr_info("resolve '%.*s' (ret=%d): %s\n", (int)(end - name), name,
 			ret, ret ? "failed" : ceph_pr_addr(addr));
 
-	वापस ret;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत पूर्णांक ceph_dns_resolve_name(स्थिर अक्षर *name, माप_प्रकार namelen,
-		काष्ठा ceph_entity_addr *addr, अक्षर delim, स्थिर अक्षर **ipend)
-अणु
-	वापस -EINVAL;
-पूर्ण
-#पूर्ण_अगर
+	return ret;
+}
+#else
+static inline int ceph_dns_resolve_name(const char *name, size_t namelen,
+		struct ceph_entity_addr *addr, char delim, const char **ipend)
+{
+	return -EINVAL;
+}
+#endif
 
 /*
  * Parse a server name (IP or hostname). If a valid IP address is not found
  * then try to extract a hostname to resolve using userspace DNS upcall.
  */
-अटल पूर्णांक ceph_parse_server_name(स्थिर अक्षर *name, माप_प्रकार namelen,
-		काष्ठा ceph_entity_addr *addr, अक्षर delim, स्थिर अक्षर **ipend)
-अणु
-	पूर्णांक ret;
+static int ceph_parse_server_name(const char *name, size_t namelen,
+		struct ceph_entity_addr *addr, char delim, const char **ipend)
+{
+	int ret;
 
 	ret = ceph_pton(name, namelen, addr, delim, ipend);
-	अगर (ret)
+	if (ret)
 		ret = ceph_dns_resolve_name(name, namelen, addr, delim, ipend);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Parse an ip[:port] list पूर्णांकo an addr array.  Use the शेष
- * monitor port अगर a port isn't specअगरied.
+ * Parse an ip[:port] list into an addr array.  Use the default
+ * monitor port if a port isn't specified.
  */
-पूर्णांक ceph_parse_ips(स्थिर अक्षर *c, स्थिर अक्षर *end,
-		   काष्ठा ceph_entity_addr *addr,
-		   पूर्णांक max_count, पूर्णांक *count)
-अणु
-	पूर्णांक i, ret = -EINVAL;
-	स्थिर अक्षर *p = c;
+int ceph_parse_ips(const char *c, const char *end,
+		   struct ceph_entity_addr *addr,
+		   int max_count, int *count)
+{
+	int i, ret = -EINVAL;
+	const char *p = c;
 
-	करोut("parse_ips on '%.*s'\n", (पूर्णांक)(end-c), c);
-	क्रम (i = 0; i < max_count; i++) अणु
-		स्थिर अक्षर *ipend;
-		पूर्णांक port;
-		अक्षर delim = ',';
+	dout("parse_ips on '%.*s'\n", (int)(end-c), c);
+	for (i = 0; i < max_count; i++) {
+		const char *ipend;
+		int port;
+		char delim = ',';
 
-		अगर (*p == '[') अणु
+		if (*p == '[') {
 			delim = ']';
 			p++;
-		पूर्ण
+		}
 
 		ret = ceph_parse_server_name(p, end - p, &addr[i], delim, &ipend);
-		अगर (ret)
-			जाओ bad;
+		if (ret)
+			goto bad;
 		ret = -EINVAL;
 
 		p = ipend;
 
-		अगर (delim == ']') अणु
-			अगर (*p != ']') अणु
-				करोut("missing matching ']'\n");
-				जाओ bad;
-			पूर्ण
+		if (delim == ']') {
+			if (*p != ']') {
+				dout("missing matching ']'\n");
+				goto bad;
+			}
 			p++;
-		पूर्ण
+		}
 
 		/* port? */
-		अगर (p < end && *p == ':') अणु
+		if (p < end && *p == ':') {
 			port = 0;
 			p++;
-			जबतक (p < end && *p >= '0' && *p <= '9') अणु
+			while (p < end && *p >= '0' && *p <= '9') {
 				port = (port * 10) + (*p - '0');
 				p++;
-			पूर्ण
-			अगर (port == 0)
+			}
+			if (port == 0)
 				port = CEPH_MON_PORT;
-			अन्यथा अगर (port > 65535)
-				जाओ bad;
-		पूर्ण अन्यथा अणु
+			else if (port > 65535)
+				goto bad;
+		} else {
 			port = CEPH_MON_PORT;
-		पूर्ण
+		}
 
 		ceph_addr_set_port(&addr[i], port);
 		/*
@@ -1321,52 +1320,52 @@ bool ceph_addr_is_blank(स्थिर काष्ठा ceph_entity_addr *add
 		 * option, but options are normally parsed after mon
 		 * addresses.  Rather than complicating parsing, set
 		 * to LEGACY and override in build_initial_monmap()
-		 * क्रम mon addresses and ceph_messenger_init() क्रम
+		 * for mon addresses and ceph_messenger_init() for
 		 * ip option.
 		 */
 		addr[i].type = CEPH_ENTITY_ADDR_TYPE_LEGACY;
 		addr[i].nonce = 0;
 
-		करोut("parse_ips got %s\n", ceph_pr_addr(&addr[i]));
+		dout("parse_ips got %s\n", ceph_pr_addr(&addr[i]));
 
-		अगर (p == end)
-			अवरोध;
-		अगर (*p != ',')
-			जाओ bad;
+		if (p == end)
+			break;
+		if (*p != ',')
+			goto bad;
 		p++;
-	पूर्ण
+	}
 
-	अगर (p != end)
-		जाओ bad;
+	if (p != end)
+		goto bad;
 
-	अगर (count)
+	if (count)
 		*count = i + 1;
-	वापस 0;
+	return 0;
 
 bad:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Process message.  This happens in the worker thपढ़ो.  The callback should
- * be careful not to करो anything that रुकोs on other incoming messages or it
+ * Process message.  This happens in the worker thread.  The callback should
+ * be careful not to do anything that waits on other incoming messages or it
  * may deadlock.
  */
-व्योम ceph_con_process_message(काष्ठा ceph_connection *con)
-अणु
-	काष्ठा ceph_msg *msg = con->in_msg;
+void ceph_con_process_message(struct ceph_connection *con)
+{
+	struct ceph_msg *msg = con->in_msg;
 
 	BUG_ON(con->in_msg->con != con);
-	con->in_msg = शून्य;
+	con->in_msg = NULL;
 
-	/* अगर first message, set peer_name */
-	अगर (con->peer_name.type == 0)
+	/* if first message, set peer_name */
+	if (con->peer_name.type == 0)
 		con->peer_name = msg->hdr.src;
 
 	con->in_seq++;
 	mutex_unlock(&con->mutex);
 
-	करोut("===== %p %llu from %s%lld %d=%s len %d+%d+%d (%u %u %u) =====\n",
+	dout("===== %p %llu from %s%lld %d=%s len %d+%d+%d (%u %u %u) =====\n",
 	     msg, le64_to_cpu(msg->hdr.seq),
 	     ENTITY_NAME(msg->hdr.src),
 	     le16_to_cpu(msg->hdr.type),
@@ -1378,57 +1377,57 @@ bad:
 	con->ops->dispatch(con, msg);
 
 	mutex_lock(&con->mutex);
-पूर्ण
+}
 
 /*
- * Atomically queue work on a connection after the specअगरied delay.
- * Bump @con reference to aव्योम races with connection tearकरोwn.
- * Returns 0 अगर work was queued, or an error code otherwise.
+ * Atomically queue work on a connection after the specified delay.
+ * Bump @con reference to avoid races with connection teardown.
+ * Returns 0 if work was queued, or an error code otherwise.
  */
-अटल पूर्णांक queue_con_delay(काष्ठा ceph_connection *con, अचिन्हित दीर्घ delay)
-अणु
-	अगर (!con->ops->get(con)) अणु
-		करोut("%s %p ref count 0\n", __func__, con);
-		वापस -ENOENT;
-	पूर्ण
+static int queue_con_delay(struct ceph_connection *con, unsigned long delay)
+{
+	if (!con->ops->get(con)) {
+		dout("%s %p ref count 0\n", __func__, con);
+		return -ENOENT;
+	}
 
-	अगर (delay >= HZ)
-		delay = round_jअगरfies_relative(delay);
+	if (delay >= HZ)
+		delay = round_jiffies_relative(delay);
 
-	करोut("%s %p %lu\n", __func__, con, delay);
-	अगर (!queue_delayed_work(ceph_msgr_wq, &con->work, delay)) अणु
-		करोut("%s %p - already queued\n", __func__, con);
+	dout("%s %p %lu\n", __func__, con, delay);
+	if (!queue_delayed_work(ceph_msgr_wq, &con->work, delay)) {
+		dout("%s %p - already queued\n", __func__, con);
 		con->ops->put(con);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम queue_con(काष्ठा ceph_connection *con)
-अणु
-	(व्योम) queue_con_delay(con, 0);
-पूर्ण
+static void queue_con(struct ceph_connection *con)
+{
+	(void) queue_con_delay(con, 0);
+}
 
-अटल व्योम cancel_con(काष्ठा ceph_connection *con)
-अणु
-	अगर (cancel_delayed_work(&con->work)) अणु
-		करोut("%s %p\n", __func__, con);
+static void cancel_con(struct ceph_connection *con)
+{
+	if (cancel_delayed_work(&con->work)) {
+		dout("%s %p\n", __func__, con);
 		con->ops->put(con);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल bool con_sock_बंदd(काष्ठा ceph_connection *con)
-अणु
-	अगर (!ceph_con_flag_test_and_clear(con, CEPH_CON_F_SOCK_CLOSED))
-		वापस false;
+static bool con_sock_closed(struct ceph_connection *con)
+{
+	if (!ceph_con_flag_test_and_clear(con, CEPH_CON_F_SOCK_CLOSED))
+		return false;
 
-#घोषणा CASE(x)								\
-	हाल CEPH_CON_S_ ## x:						\
+#define CASE(x)								\
+	case CEPH_CON_S_ ## x:						\
 		con->error_msg = "socket closed (con state " #x ")";	\
-		अवरोध;
+		break;
 
-	चयन (con->state) अणु
+	switch (con->state) {
 	CASE(CLOSED);
 	CASE(PREOPEN);
 	CASE(V1_BANNER);
@@ -1442,247 +1441,247 @@ bad:
 	CASE(V2_SESSION_RECONNECT);
 	CASE(OPEN);
 	CASE(STANDBY);
-	शेष:
+	default:
 		BUG();
-	पूर्ण
-#अघोषित CASE
+	}
+#undef CASE
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool con_backoff(काष्ठा ceph_connection *con)
-अणु
-	पूर्णांक ret;
+static bool con_backoff(struct ceph_connection *con)
+{
+	int ret;
 
-	अगर (!ceph_con_flag_test_and_clear(con, CEPH_CON_F_BACKOFF))
-		वापस false;
+	if (!ceph_con_flag_test_and_clear(con, CEPH_CON_F_BACKOFF))
+		return false;
 
 	ret = queue_con_delay(con, con->delay);
-	अगर (ret) अणु
-		करोut("%s: con %p FAILED to back off %lu\n", __func__,
+	if (ret) {
+		dout("%s: con %p FAILED to back off %lu\n", __func__,
 			con, con->delay);
 		BUG_ON(ret == -ENOENT);
 		ceph_con_flag_set(con, CEPH_CON_F_BACKOFF);
-	पूर्ण
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /* Finish fault handling; con->mutex must *not* be held here */
 
-अटल व्योम con_fault_finish(काष्ठा ceph_connection *con)
-अणु
-	करोut("%s %p\n", __func__, con);
+static void con_fault_finish(struct ceph_connection *con)
+{
+	dout("%s %p\n", __func__, con);
 
 	/*
-	 * in हाल we faulted due to authentication, invalidate our
+	 * in case we faulted due to authentication, invalidate our
 	 * current tickets so that we can get new ones.
 	 */
-	अगर (con->v1.auth_retry) अणु
-		करोut("auth_retry %d, invalidating\n", con->v1.auth_retry);
-		अगर (con->ops->invalidate_authorizer)
+	if (con->v1.auth_retry) {
+		dout("auth_retry %d, invalidating\n", con->v1.auth_retry);
+		if (con->ops->invalidate_authorizer)
 			con->ops->invalidate_authorizer(con);
 		con->v1.auth_retry = 0;
-	पूर्ण
+	}
 
-	अगर (con->ops->fault)
+	if (con->ops->fault)
 		con->ops->fault(con);
-पूर्ण
+}
 
 /*
- * Do some work on a connection.  Drop a connection ref when we're करोne.
+ * Do some work on a connection.  Drop a connection ref when we're done.
  */
-अटल व्योम ceph_con_workfn(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ceph_connection *con = container_of(work, काष्ठा ceph_connection,
+static void ceph_con_workfn(struct work_struct *work)
+{
+	struct ceph_connection *con = container_of(work, struct ceph_connection,
 						   work.work);
 	bool fault;
 
 	mutex_lock(&con->mutex);
-	जबतक (true) अणु
-		पूर्णांक ret;
+	while (true) {
+		int ret;
 
-		अगर ((fault = con_sock_बंदd(con))) अणु
-			करोut("%s: con %p SOCK_CLOSED\n", __func__, con);
-			अवरोध;
-		पूर्ण
-		अगर (con_backoff(con)) अणु
-			करोut("%s: con %p BACKOFF\n", __func__, con);
-			अवरोध;
-		पूर्ण
-		अगर (con->state == CEPH_CON_S_STANDBY) अणु
-			करोut("%s: con %p STANDBY\n", __func__, con);
-			अवरोध;
-		पूर्ण
-		अगर (con->state == CEPH_CON_S_CLOSED) अणु
-			करोut("%s: con %p CLOSED\n", __func__, con);
+		if ((fault = con_sock_closed(con))) {
+			dout("%s: con %p SOCK_CLOSED\n", __func__, con);
+			break;
+		}
+		if (con_backoff(con)) {
+			dout("%s: con %p BACKOFF\n", __func__, con);
+			break;
+		}
+		if (con->state == CEPH_CON_S_STANDBY) {
+			dout("%s: con %p STANDBY\n", __func__, con);
+			break;
+		}
+		if (con->state == CEPH_CON_S_CLOSED) {
+			dout("%s: con %p CLOSED\n", __func__, con);
 			BUG_ON(con->sock);
-			अवरोध;
-		पूर्ण
-		अगर (con->state == CEPH_CON_S_PREOPEN) अणु
-			करोut("%s: con %p PREOPEN\n", __func__, con);
+			break;
+		}
+		if (con->state == CEPH_CON_S_PREOPEN) {
+			dout("%s: con %p PREOPEN\n", __func__, con);
 			BUG_ON(con->sock);
-		पूर्ण
+		}
 
-		अगर (ceph_msgr2(from_msgr(con->msgr)))
-			ret = ceph_con_v2_try_पढ़ो(con);
-		अन्यथा
-			ret = ceph_con_v1_try_पढ़ो(con);
-		अगर (ret < 0) अणु
-			अगर (ret == -EAGAIN)
-				जारी;
-			अगर (!con->error_msg)
+		if (ceph_msgr2(from_msgr(con->msgr)))
+			ret = ceph_con_v2_try_read(con);
+		else
+			ret = ceph_con_v1_try_read(con);
+		if (ret < 0) {
+			if (ret == -EAGAIN)
+				continue;
+			if (!con->error_msg)
 				con->error_msg = "socket error on read";
 			fault = true;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (ceph_msgr2(from_msgr(con->msgr)))
-			ret = ceph_con_v2_try_ग_लिखो(con);
-		अन्यथा
-			ret = ceph_con_v1_try_ग_लिखो(con);
-		अगर (ret < 0) अणु
-			अगर (ret == -EAGAIN)
-				जारी;
-			अगर (!con->error_msg)
+		if (ceph_msgr2(from_msgr(con->msgr)))
+			ret = ceph_con_v2_try_write(con);
+		else
+			ret = ceph_con_v1_try_write(con);
+		if (ret < 0) {
+			if (ret == -EAGAIN)
+				continue;
+			if (!con->error_msg)
 				con->error_msg = "socket error on write";
 			fault = true;
-		पूर्ण
+		}
 
-		अवरोध;	/* If we make it to here, we're करोne */
-	पूर्ण
-	अगर (fault)
+		break;	/* If we make it to here, we're done */
+	}
+	if (fault)
 		con_fault(con);
 	mutex_unlock(&con->mutex);
 
-	अगर (fault)
+	if (fault)
 		con_fault_finish(con);
 
 	con->ops->put(con);
-पूर्ण
+}
 
 /*
  * Generic error/fault handler.  A retry mechanism is used with
  * exponential backoff
  */
-अटल व्योम con_fault(काष्ठा ceph_connection *con)
-अणु
-	करोut("fault %p state %d to peer %s\n",
+static void con_fault(struct ceph_connection *con)
+{
+	dout("fault %p state %d to peer %s\n",
 	     con, con->state, ceph_pr_addr(&con->peer_addr));
 
 	pr_warn("%s%lld %s %s\n", ENTITY_NAME(con->peer_name),
 		ceph_pr_addr(&con->peer_addr), con->error_msg);
-	con->error_msg = शून्य;
+	con->error_msg = NULL;
 
 	WARN_ON(con->state == CEPH_CON_S_STANDBY ||
 		con->state == CEPH_CON_S_CLOSED);
 
 	ceph_con_reset_protocol(con);
 
-	अगर (ceph_con_flag_test(con, CEPH_CON_F_LOSSYTX)) अणु
-		करोut("fault on LOSSYTX channel, marking CLOSED\n");
+	if (ceph_con_flag_test(con, CEPH_CON_F_LOSSYTX)) {
+		dout("fault on LOSSYTX channel, marking CLOSED\n");
 		con->state = CEPH_CON_S_CLOSED;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Requeue anything that hasn't been acked */
 	list_splice_init(&con->out_sent, &con->out_queue);
 
 	/* If there are no messages queued or keepalive pending, place
 	 * the connection in a STANDBY state */
-	अगर (list_empty(&con->out_queue) &&
-	    !ceph_con_flag_test(con, CEPH_CON_F_KEEPALIVE_PENDING)) अणु
-		करोut("fault %p setting STANDBY clearing WRITE_PENDING\n", con);
+	if (list_empty(&con->out_queue) &&
+	    !ceph_con_flag_test(con, CEPH_CON_F_KEEPALIVE_PENDING)) {
+		dout("fault %p setting STANDBY clearing WRITE_PENDING\n", con);
 		ceph_con_flag_clear(con, CEPH_CON_F_WRITE_PENDING);
 		con->state = CEPH_CON_S_STANDBY;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* retry after a delay. */
 		con->state = CEPH_CON_S_PREOPEN;
-		अगर (!con->delay) अणु
+		if (!con->delay) {
 			con->delay = BASE_DELAY_INTERVAL;
-		पूर्ण अन्यथा अगर (con->delay < MAX_DELAY_INTERVAL) अणु
+		} else if (con->delay < MAX_DELAY_INTERVAL) {
 			con->delay *= 2;
-			अगर (con->delay > MAX_DELAY_INTERVAL)
+			if (con->delay > MAX_DELAY_INTERVAL)
 				con->delay = MAX_DELAY_INTERVAL;
-		पूर्ण
+		}
 		ceph_con_flag_set(con, CEPH_CON_F_BACKOFF);
 		queue_con(con);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम ceph_messenger_reset_nonce(काष्ठा ceph_messenger *msgr)
-अणु
+void ceph_messenger_reset_nonce(struct ceph_messenger *msgr)
+{
 	u32 nonce = le32_to_cpu(msgr->inst.addr.nonce) + 1000000;
 	msgr->inst.addr.nonce = cpu_to_le32(nonce);
 	ceph_encode_my_addr(msgr);
-पूर्ण
+}
 
 /*
  * initialize a new messenger instance
  */
-व्योम ceph_messenger_init(काष्ठा ceph_messenger *msgr,
-			 काष्ठा ceph_entity_addr *myaddr)
-अणु
+void ceph_messenger_init(struct ceph_messenger *msgr,
+			 struct ceph_entity_addr *myaddr)
+{
 	spin_lock_init(&msgr->global_seq_lock);
 
-	अगर (myaddr) अणु
-		स_नकल(&msgr->inst.addr.in_addr, &myaddr->in_addr,
-		       माप(msgr->inst.addr.in_addr));
+	if (myaddr) {
+		memcpy(&msgr->inst.addr.in_addr, &myaddr->in_addr,
+		       sizeof(msgr->inst.addr.in_addr));
 		ceph_addr_set_port(&msgr->inst.addr, 0);
-	पूर्ण
+	}
 
 	/*
-	 * Since nautilus, clients are identअगरied using type ANY.
+	 * Since nautilus, clients are identified using type ANY.
 	 * For msgr1, ceph_encode_banner_addr() munges it to NONE.
 	 */
 	msgr->inst.addr.type = CEPH_ENTITY_ADDR_TYPE_ANY;
 
-	/* generate a अक्रमom non-zero nonce */
-	करो अणु
-		get_अक्रमom_bytes(&msgr->inst.addr.nonce,
-				 माप(msgr->inst.addr.nonce));
-	पूर्ण जबतक (!msgr->inst.addr.nonce);
+	/* generate a random non-zero nonce */
+	do {
+		get_random_bytes(&msgr->inst.addr.nonce,
+				 sizeof(msgr->inst.addr.nonce));
+	} while (!msgr->inst.addr.nonce);
 	ceph_encode_my_addr(msgr);
 
 	atomic_set(&msgr->stopping, 0);
-	ग_लिखो_pnet(&msgr->net, get_net(current->nsproxy->net_ns));
+	write_pnet(&msgr->net, get_net(current->nsproxy->net_ns));
 
-	करोut("%s %p\n", __func__, msgr);
-पूर्ण
+	dout("%s %p\n", __func__, msgr);
+}
 
-व्योम ceph_messenger_fini(काष्ठा ceph_messenger *msgr)
-अणु
-	put_net(पढ़ो_pnet(&msgr->net));
-पूर्ण
+void ceph_messenger_fini(struct ceph_messenger *msgr)
+{
+	put_net(read_pnet(&msgr->net));
+}
 
-अटल व्योम msg_con_set(काष्ठा ceph_msg *msg, काष्ठा ceph_connection *con)
-अणु
-	अगर (msg->con)
+static void msg_con_set(struct ceph_msg *msg, struct ceph_connection *con)
+{
+	if (msg->con)
 		msg->con->ops->put(msg->con);
 
-	msg->con = con ? con->ops->get(con) : शून्य;
+	msg->con = con ? con->ops->get(con) : NULL;
 	BUG_ON(msg->con != con);
-पूर्ण
+}
 
-अटल व्योम clear_standby(काष्ठा ceph_connection *con)
-अणु
+static void clear_standby(struct ceph_connection *con)
+{
 	/* come back from STANDBY? */
-	अगर (con->state == CEPH_CON_S_STANDBY) अणु
-		करोut("clear_standby %p and ++connect_seq\n", con);
+	if (con->state == CEPH_CON_S_STANDBY) {
+		dout("clear_standby %p and ++connect_seq\n", con);
 		con->state = CEPH_CON_S_PREOPEN;
 		con->v1.connect_seq++;
 		WARN_ON(ceph_con_flag_test(con, CEPH_CON_F_WRITE_PENDING));
 		WARN_ON(ceph_con_flag_test(con, CEPH_CON_F_KEEPALIVE_PENDING));
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Queue up an outgoing message on the given connection.
  *
  * Consumes a ref on @msg.
  */
-व्योम ceph_con_send(काष्ठा ceph_connection *con, काष्ठा ceph_msg *msg)
-अणु
+void ceph_con_send(struct ceph_connection *con, struct ceph_msg *msg)
+{
 	/* set src+dst */
 	msg->hdr.src = con->msgr->inst.name;
 	BUG_ON(msg->front.iov_len != le32_to_cpu(msg->hdr.front_len));
@@ -1690,18 +1689,18 @@ bad:
 
 	mutex_lock(&con->mutex);
 
-	अगर (con->state == CEPH_CON_S_CLOSED) अणु
-		करोut("con_send %p closed, dropping %p\n", con, msg);
+	if (con->state == CEPH_CON_S_CLOSED) {
+		dout("con_send %p closed, dropping %p\n", con, msg);
 		ceph_msg_put(msg);
 		mutex_unlock(&con->mutex);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	msg_con_set(msg, con);
 
 	BUG_ON(!list_empty(&msg->list_head));
 	list_add_tail(&msg->list_head, &con->out_queue);
-	करोut("----- %p to %s%lld %d=%s len %d+%d+%d -----\n", msg,
+	dout("----- %p to %s%lld %d=%s len %d+%d+%d -----\n", msg,
 	     ENTITY_NAME(con->peer_name), le16_to_cpu(msg->hdr.type),
 	     ceph_msg_type_name(le16_to_cpu(msg->hdr.type)),
 	     le32_to_cpu(msg->hdr.front_len),
@@ -1711,133 +1710,133 @@ bad:
 	clear_standby(con);
 	mutex_unlock(&con->mutex);
 
-	/* अगर there wasn't anything रुकोing to send beक्रमe, queue
+	/* if there wasn't anything waiting to send before, queue
 	 * new work */
-	अगर (!ceph_con_flag_test_and_set(con, CEPH_CON_F_WRITE_PENDING))
+	if (!ceph_con_flag_test_and_set(con, CEPH_CON_F_WRITE_PENDING))
 		queue_con(con);
-पूर्ण
+}
 EXPORT_SYMBOL(ceph_con_send);
 
 /*
- * Revoke a message that was previously queued क्रम send
+ * Revoke a message that was previously queued for send
  */
-व्योम ceph_msg_revoke(काष्ठा ceph_msg *msg)
-अणु
-	काष्ठा ceph_connection *con = msg->con;
+void ceph_msg_revoke(struct ceph_msg *msg)
+{
+	struct ceph_connection *con = msg->con;
 
-	अगर (!con) अणु
-		करोut("%s msg %p null con\n", __func__, msg);
-		वापस;		/* Message not in our possession */
-	पूर्ण
+	if (!con) {
+		dout("%s msg %p null con\n", __func__, msg);
+		return;		/* Message not in our possession */
+	}
 
 	mutex_lock(&con->mutex);
-	अगर (list_empty(&msg->list_head)) अणु
+	if (list_empty(&msg->list_head)) {
 		WARN_ON(con->out_msg == msg);
-		करोut("%s con %p msg %p not linked\n", __func__, con, msg);
+		dout("%s con %p msg %p not linked\n", __func__, con, msg);
 		mutex_unlock(&con->mutex);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	करोut("%s con %p msg %p was linked\n", __func__, con, msg);
+	dout("%s con %p msg %p was linked\n", __func__, con, msg);
 	msg->hdr.seq = 0;
-	ceph_msg_हटाओ(msg);
+	ceph_msg_remove(msg);
 
-	अगर (con->out_msg == msg) अणु
+	if (con->out_msg == msg) {
 		WARN_ON(con->state != CEPH_CON_S_OPEN);
-		करोut("%s con %p msg %p was sending\n", __func__, con, msg);
-		अगर (ceph_msgr2(from_msgr(con->msgr)))
+		dout("%s con %p msg %p was sending\n", __func__, con, msg);
+		if (ceph_msgr2(from_msgr(con->msgr)))
 			ceph_con_v2_revoke(con);
-		अन्यथा
+		else
 			ceph_con_v1_revoke(con);
 		ceph_msg_put(con->out_msg);
-		con->out_msg = शून्य;
-	पूर्ण अन्यथा अणु
-		करोut("%s con %p msg %p not current, out_msg %p\n", __func__,
+		con->out_msg = NULL;
+	} else {
+		dout("%s con %p msg %p not current, out_msg %p\n", __func__,
 		     con, msg, con->out_msg);
-	पूर्ण
+	}
 	mutex_unlock(&con->mutex);
-पूर्ण
+}
 
 /*
- * Revoke a message that we may be पढ़ोing data पूर्णांकo
+ * Revoke a message that we may be reading data into
  */
-व्योम ceph_msg_revoke_incoming(काष्ठा ceph_msg *msg)
-अणु
-	काष्ठा ceph_connection *con = msg->con;
+void ceph_msg_revoke_incoming(struct ceph_msg *msg)
+{
+	struct ceph_connection *con = msg->con;
 
-	अगर (!con) अणु
-		करोut("%s msg %p null con\n", __func__, msg);
-		वापस;		/* Message not in our possession */
-	पूर्ण
+	if (!con) {
+		dout("%s msg %p null con\n", __func__, msg);
+		return;		/* Message not in our possession */
+	}
 
 	mutex_lock(&con->mutex);
-	अगर (con->in_msg == msg) अणु
+	if (con->in_msg == msg) {
 		WARN_ON(con->state != CEPH_CON_S_OPEN);
-		करोut("%s con %p msg %p was recving\n", __func__, con, msg);
-		अगर (ceph_msgr2(from_msgr(con->msgr)))
+		dout("%s con %p msg %p was recving\n", __func__, con, msg);
+		if (ceph_msgr2(from_msgr(con->msgr)))
 			ceph_con_v2_revoke_incoming(con);
-		अन्यथा
+		else
 			ceph_con_v1_revoke_incoming(con);
 		ceph_msg_put(con->in_msg);
-		con->in_msg = शून्य;
-	पूर्ण अन्यथा अणु
-		करोut("%s con %p msg %p not current, in_msg %p\n", __func__,
+		con->in_msg = NULL;
+	} else {
+		dout("%s con %p msg %p not current, in_msg %p\n", __func__,
 		     con, msg, con->in_msg);
-	पूर्ण
+	}
 	mutex_unlock(&con->mutex);
-पूर्ण
+}
 
 /*
  * Queue a keepalive byte to ensure the tcp connection is alive.
  */
-व्योम ceph_con_keepalive(काष्ठा ceph_connection *con)
-अणु
-	करोut("con_keepalive %p\n", con);
+void ceph_con_keepalive(struct ceph_connection *con)
+{
+	dout("con_keepalive %p\n", con);
 	mutex_lock(&con->mutex);
 	clear_standby(con);
 	ceph_con_flag_set(con, CEPH_CON_F_KEEPALIVE_PENDING);
 	mutex_unlock(&con->mutex);
 
-	अगर (!ceph_con_flag_test_and_set(con, CEPH_CON_F_WRITE_PENDING))
+	if (!ceph_con_flag_test_and_set(con, CEPH_CON_F_WRITE_PENDING))
 		queue_con(con);
-पूर्ण
+}
 EXPORT_SYMBOL(ceph_con_keepalive);
 
-bool ceph_con_keepalive_expired(काष्ठा ceph_connection *con,
-			       अचिन्हित दीर्घ पूर्णांकerval)
-अणु
-	अगर (पूर्णांकerval > 0 &&
-	    (con->peer_features & CEPH_FEATURE_MSGR_KEEPALIVE2)) अणु
-		काष्ठा बारpec64 now;
-		काष्ठा बारpec64 ts;
-		kसमय_get_real_ts64(&now);
-		jअगरfies_to_बारpec64(पूर्णांकerval, &ts);
-		ts = बारpec64_add(con->last_keepalive_ack, ts);
-		वापस बारpec64_compare(&now, &ts) >= 0;
-	पूर्ण
-	वापस false;
-पूर्ण
+bool ceph_con_keepalive_expired(struct ceph_connection *con,
+			       unsigned long interval)
+{
+	if (interval > 0 &&
+	    (con->peer_features & CEPH_FEATURE_MSGR_KEEPALIVE2)) {
+		struct timespec64 now;
+		struct timespec64 ts;
+		ktime_get_real_ts64(&now);
+		jiffies_to_timespec64(interval, &ts);
+		ts = timespec64_add(con->last_keepalive_ack, ts);
+		return timespec64_compare(&now, &ts) >= 0;
+	}
+	return false;
+}
 
-अटल काष्ठा ceph_msg_data *ceph_msg_data_add(काष्ठा ceph_msg *msg)
-अणु
+static struct ceph_msg_data *ceph_msg_data_add(struct ceph_msg *msg)
+{
 	BUG_ON(msg->num_data_items >= msg->max_data_items);
-	वापस &msg->data[msg->num_data_items++];
-पूर्ण
+	return &msg->data[msg->num_data_items++];
+}
 
-अटल व्योम ceph_msg_data_destroy(काष्ठा ceph_msg_data *data)
-अणु
-	अगर (data->type == CEPH_MSG_DATA_PAGES && data->own_pages) अणु
-		पूर्णांक num_pages = calc_pages_क्रम(data->alignment, data->length);
+static void ceph_msg_data_destroy(struct ceph_msg_data *data)
+{
+	if (data->type == CEPH_MSG_DATA_PAGES && data->own_pages) {
+		int num_pages = calc_pages_for(data->alignment, data->length);
 		ceph_release_page_vector(data->pages, num_pages);
-	पूर्ण अन्यथा अगर (data->type == CEPH_MSG_DATA_PAGELIST) अणु
+	} else if (data->type == CEPH_MSG_DATA_PAGELIST) {
 		ceph_pagelist_release(data->pagelist);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम ceph_msg_data_add_pages(काष्ठा ceph_msg *msg, काष्ठा page **pages,
-			     माप_प्रकार length, माप_प्रकार alignment, bool own_pages)
-अणु
-	काष्ठा ceph_msg_data *data;
+void ceph_msg_data_add_pages(struct ceph_msg *msg, struct page **pages,
+			     size_t length, size_t alignment, bool own_pages)
+{
+	struct ceph_msg_data *data;
 
 	BUG_ON(!pages);
 	BUG_ON(!length);
@@ -1850,13 +1849,13 @@ bool ceph_con_keepalive_expired(काष्ठा ceph_connection *con,
 	data->own_pages = own_pages;
 
 	msg->data_length += length;
-पूर्ण
+}
 EXPORT_SYMBOL(ceph_msg_data_add_pages);
 
-व्योम ceph_msg_data_add_pagelist(काष्ठा ceph_msg *msg,
-				काष्ठा ceph_pagelist *pagelist)
-अणु
-	काष्ठा ceph_msg_data *data;
+void ceph_msg_data_add_pagelist(struct ceph_msg *msg,
+				struct ceph_pagelist *pagelist)
+{
+	struct ceph_msg_data *data;
 
 	BUG_ON(!pagelist);
 	BUG_ON(!pagelist->length);
@@ -1867,14 +1866,14 @@ EXPORT_SYMBOL(ceph_msg_data_add_pages);
 	data->pagelist = pagelist;
 
 	msg->data_length += pagelist->length;
-पूर्ण
+}
 EXPORT_SYMBOL(ceph_msg_data_add_pagelist);
 
-#अगर_घोषित	CONFIG_BLOCK
-व्योम ceph_msg_data_add_bio(काष्ठा ceph_msg *msg, काष्ठा ceph_bio_iter *bio_pos,
+#ifdef	CONFIG_BLOCK
+void ceph_msg_data_add_bio(struct ceph_msg *msg, struct ceph_bio_iter *bio_pos,
 			   u32 length)
-अणु
-	काष्ठा ceph_msg_data *data;
+{
+	struct ceph_msg_data *data;
 
 	data = ceph_msg_data_add(msg);
 	data->type = CEPH_MSG_DATA_BIO;
@@ -1882,35 +1881,35 @@ EXPORT_SYMBOL(ceph_msg_data_add_pagelist);
 	data->bio_length = length;
 
 	msg->data_length += length;
-पूर्ण
+}
 EXPORT_SYMBOL(ceph_msg_data_add_bio);
-#पूर्ण_अगर	/* CONFIG_BLOCK */
+#endif	/* CONFIG_BLOCK */
 
-व्योम ceph_msg_data_add_bvecs(काष्ठा ceph_msg *msg,
-			     काष्ठा ceph_bvec_iter *bvec_pos)
-अणु
-	काष्ठा ceph_msg_data *data;
+void ceph_msg_data_add_bvecs(struct ceph_msg *msg,
+			     struct ceph_bvec_iter *bvec_pos)
+{
+	struct ceph_msg_data *data;
 
 	data = ceph_msg_data_add(msg);
 	data->type = CEPH_MSG_DATA_BVECS;
 	data->bvec_pos = *bvec_pos;
 
 	msg->data_length += bvec_pos->iter.bi_size;
-पूर्ण
+}
 EXPORT_SYMBOL(ceph_msg_data_add_bvecs);
 
 /*
- * स्थिरruct a new message with given type, size
+ * construct a new message with given type, size
  * the new msg has a ref count of 1.
  */
-काष्ठा ceph_msg *ceph_msg_new2(पूर्णांक type, पूर्णांक front_len, पूर्णांक max_data_items,
+struct ceph_msg *ceph_msg_new2(int type, int front_len, int max_data_items,
 			       gfp_t flags, bool can_fail)
-अणु
-	काष्ठा ceph_msg *m;
+{
+	struct ceph_msg *m;
 
 	m = kmem_cache_zalloc(ceph_msg_cache, flags);
-	अगर (m == शून्य)
-		जाओ out;
+	if (m == NULL)
+		goto out;
 
 	m->hdr.type = cpu_to_le16(type);
 	m->hdr.priority = cpu_to_le16(CEPH_MSG_PRIO_DEFAULT);
@@ -1920,143 +1919,143 @@ EXPORT_SYMBOL(ceph_msg_data_add_bvecs);
 	kref_init(&m->kref);
 
 	/* front */
-	अगर (front_len) अणु
-		m->front.iov_base = ceph_kvदो_स्मृति(front_len, flags);
-		अगर (m->front.iov_base == शून्य) अणु
-			करोut("ceph_msg_new can't allocate %d bytes\n",
+	if (front_len) {
+		m->front.iov_base = ceph_kvmalloc(front_len, flags);
+		if (m->front.iov_base == NULL) {
+			dout("ceph_msg_new can't allocate %d bytes\n",
 			     front_len);
-			जाओ out2;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		m->front.iov_base = शून्य;
-	पूर्ण
+			goto out2;
+		}
+	} else {
+		m->front.iov_base = NULL;
+	}
 	m->front_alloc_len = m->front.iov_len = front_len;
 
-	अगर (max_data_items) अणु
-		m->data = kदो_स्मृति_array(max_data_items, माप(*m->data),
+	if (max_data_items) {
+		m->data = kmalloc_array(max_data_items, sizeof(*m->data),
 					flags);
-		अगर (!m->data)
-			जाओ out2;
+		if (!m->data)
+			goto out2;
 
 		m->max_data_items = max_data_items;
-	पूर्ण
+	}
 
-	करोut("ceph_msg_new %p front %d\n", m, front_len);
-	वापस m;
+	dout("ceph_msg_new %p front %d\n", m, front_len);
+	return m;
 
 out2:
 	ceph_msg_put(m);
 out:
-	अगर (!can_fail) अणु
+	if (!can_fail) {
 		pr_err("msg_new can't create type %d front %d\n", type,
 		       front_len);
 		WARN_ON(1);
-	पूर्ण अन्यथा अणु
-		करोut("msg_new can't create type %d front %d\n", type,
+	} else {
+		dout("msg_new can't create type %d front %d\n", type,
 		     front_len);
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	}
+	return NULL;
+}
 EXPORT_SYMBOL(ceph_msg_new2);
 
-काष्ठा ceph_msg *ceph_msg_new(पूर्णांक type, पूर्णांक front_len, gfp_t flags,
+struct ceph_msg *ceph_msg_new(int type, int front_len, gfp_t flags,
 			      bool can_fail)
-अणु
-	वापस ceph_msg_new2(type, front_len, 0, flags, can_fail);
-पूर्ण
+{
+	return ceph_msg_new2(type, front_len, 0, flags, can_fail);
+}
 EXPORT_SYMBOL(ceph_msg_new);
 
 /*
- * Allocate "middle" portion of a message, अगर it is needed and wasn't
- * allocated by alloc_msg.  This allows us to पढ़ो a small fixed-size
+ * Allocate "middle" portion of a message, if it is needed and wasn't
+ * allocated by alloc_msg.  This allows us to read a small fixed-size
  * per-type header in the front and then gracefully fail (i.e.,
  * propagate the error to the caller based on info in the front) when
  * the middle is too large.
  */
-अटल पूर्णांक ceph_alloc_middle(काष्ठा ceph_connection *con, काष्ठा ceph_msg *msg)
-अणु
-	पूर्णांक type = le16_to_cpu(msg->hdr.type);
-	पूर्णांक middle_len = le32_to_cpu(msg->hdr.middle_len);
+static int ceph_alloc_middle(struct ceph_connection *con, struct ceph_msg *msg)
+{
+	int type = le16_to_cpu(msg->hdr.type);
+	int middle_len = le32_to_cpu(msg->hdr.middle_len);
 
-	करोut("alloc_middle %p type %d %s middle_len %d\n", msg, type,
+	dout("alloc_middle %p type %d %s middle_len %d\n", msg, type,
 	     ceph_msg_type_name(type), middle_len);
 	BUG_ON(!middle_len);
 	BUG_ON(msg->middle);
 
 	msg->middle = ceph_buffer_new(middle_len, GFP_NOFS);
-	अगर (!msg->middle)
-		वापस -ENOMEM;
-	वापस 0;
-पूर्ण
+	if (!msg->middle)
+		return -ENOMEM;
+	return 0;
+}
 
 /*
- * Allocate a message क्रम receiving an incoming message on a
+ * Allocate a message for receiving an incoming message on a
  * connection, and save the result in con->in_msg.  Uses the
- * connection's निजी alloc_msg op अगर available.
+ * connection's private alloc_msg op if available.
  *
  * Returns 0 on success, or a negative error code.
  *
- * On success, अगर we set *skip = 1:
+ * On success, if we set *skip = 1:
  *  - the next message should be skipped and ignored.
- *  - con->in_msg == शून्य
- * or अगर we set *skip = 0:
+ *  - con->in_msg == NULL
+ * or if we set *skip = 0:
  *  - con->in_msg is non-null.
  * On error (ENOMEM, EAGAIN, ...),
- *  - con->in_msg == शून्य
+ *  - con->in_msg == NULL
  */
-पूर्णांक ceph_con_in_msg_alloc(काष्ठा ceph_connection *con,
-			  काष्ठा ceph_msg_header *hdr, पूर्णांक *skip)
-अणु
-	पूर्णांक middle_len = le32_to_cpu(hdr->middle_len);
-	काष्ठा ceph_msg *msg;
-	पूर्णांक ret = 0;
+int ceph_con_in_msg_alloc(struct ceph_connection *con,
+			  struct ceph_msg_header *hdr, int *skip)
+{
+	int middle_len = le32_to_cpu(hdr->middle_len);
+	struct ceph_msg *msg;
+	int ret = 0;
 
-	BUG_ON(con->in_msg != शून्य);
+	BUG_ON(con->in_msg != NULL);
 	BUG_ON(!con->ops->alloc_msg);
 
 	mutex_unlock(&con->mutex);
 	msg = con->ops->alloc_msg(con, hdr, skip);
 	mutex_lock(&con->mutex);
-	अगर (con->state != CEPH_CON_S_OPEN) अणु
-		अगर (msg)
+	if (con->state != CEPH_CON_S_OPEN) {
+		if (msg)
 			ceph_msg_put(msg);
-		वापस -EAGAIN;
-	पूर्ण
-	अगर (msg) अणु
+		return -EAGAIN;
+	}
+	if (msg) {
 		BUG_ON(*skip);
 		msg_con_set(msg, con);
 		con->in_msg = msg;
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
-		 * Null message poपूर्णांकer means either we should skip
+		 * Null message pointer means either we should skip
 		 * this message or we couldn't allocate memory.  The
-		 * क्रमmer is not an error.
+		 * former is not an error.
 		 */
-		अगर (*skip)
-			वापस 0;
+		if (*skip)
+			return 0;
 
 		con->error_msg = "error allocating memory for incoming message";
-		वापस -ENOMEM;
-	पूर्ण
-	स_नकल(&con->in_msg->hdr, hdr, माप(*hdr));
+		return -ENOMEM;
+	}
+	memcpy(&con->in_msg->hdr, hdr, sizeof(*hdr));
 
-	अगर (middle_len && !con->in_msg->middle) अणु
+	if (middle_len && !con->in_msg->middle) {
 		ret = ceph_alloc_middle(con, con->in_msg);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			ceph_msg_put(con->in_msg);
-			con->in_msg = शून्य;
-		पूर्ण
-	पूर्ण
+			con->in_msg = NULL;
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम ceph_con_get_out_msg(काष्ठा ceph_connection *con)
-अणु
-	काष्ठा ceph_msg *msg;
+void ceph_con_get_out_msg(struct ceph_connection *con)
+{
+	struct ceph_msg *msg;
 
 	BUG_ON(list_empty(&con->out_queue));
-	msg = list_first_entry(&con->out_queue, काष्ठा ceph_msg, list_head);
+	msg = list_first_entry(&con->out_queue, struct ceph_msg, list_head);
 	WARN_ON(msg->con != con);
 
 	/*
@@ -2066,95 +2065,95 @@ EXPORT_SYMBOL(ceph_msg_new);
 	list_move_tail(&msg->list_head, &con->out_sent);
 
 	/*
-	 * Only assign outgoing seq # अगर we haven't sent this message
+	 * Only assign outgoing seq # if we haven't sent this message
 	 * yet.  If it is requeued, resend with it's original seq.
 	 */
-	अगर (msg->needs_out_seq) अणु
+	if (msg->needs_out_seq) {
 		msg->hdr.seq = cpu_to_le64(++con->out_seq);
 		msg->needs_out_seq = false;
 
-		अगर (con->ops->reencode_message)
+		if (con->ops->reencode_message)
 			con->ops->reencode_message(msg);
-	पूर्ण
+	}
 
 	/*
-	 * Get a ref क्रम out_msg.  It is put when we are करोne sending the
-	 * message or in हाल of a fault.
+	 * Get a ref for out_msg.  It is put when we are done sending the
+	 * message or in case of a fault.
 	 */
 	WARN_ON(con->out_msg);
 	con->out_msg = ceph_msg_get(msg);
-पूर्ण
+}
 
 /*
- * Free a generically kदो_स्मृति'd message.
+ * Free a generically kmalloc'd message.
  */
-अटल व्योम ceph_msg_मुक्त(काष्ठा ceph_msg *m)
-अणु
-	करोut("%s %p\n", __func__, m);
-	kvमुक्त(m->front.iov_base);
-	kमुक्त(m->data);
-	kmem_cache_मुक्त(ceph_msg_cache, m);
-पूर्ण
+static void ceph_msg_free(struct ceph_msg *m)
+{
+	dout("%s %p\n", __func__, m);
+	kvfree(m->front.iov_base);
+	kfree(m->data);
+	kmem_cache_free(ceph_msg_cache, m);
+}
 
-अटल व्योम ceph_msg_release(काष्ठा kref *kref)
-अणु
-	काष्ठा ceph_msg *m = container_of(kref, काष्ठा ceph_msg, kref);
-	पूर्णांक i;
+static void ceph_msg_release(struct kref *kref)
+{
+	struct ceph_msg *m = container_of(kref, struct ceph_msg, kref);
+	int i;
 
-	करोut("%s %p\n", __func__, m);
+	dout("%s %p\n", __func__, m);
 	WARN_ON(!list_empty(&m->list_head));
 
-	msg_con_set(m, शून्य);
+	msg_con_set(m, NULL);
 
-	/* drop middle, data, अगर any */
-	अगर (m->middle) अणु
+	/* drop middle, data, if any */
+	if (m->middle) {
 		ceph_buffer_put(m->middle);
-		m->middle = शून्य;
-	पूर्ण
+		m->middle = NULL;
+	}
 
-	क्रम (i = 0; i < m->num_data_items; i++)
+	for (i = 0; i < m->num_data_items; i++)
 		ceph_msg_data_destroy(&m->data[i]);
 
-	अगर (m->pool)
+	if (m->pool)
 		ceph_msgpool_put(m->pool, m);
-	अन्यथा
-		ceph_msg_मुक्त(m);
-पूर्ण
+	else
+		ceph_msg_free(m);
+}
 
-काष्ठा ceph_msg *ceph_msg_get(काष्ठा ceph_msg *msg)
-अणु
-	करोut("%s %p (was %d)\n", __func__, msg,
-	     kref_पढ़ो(&msg->kref));
+struct ceph_msg *ceph_msg_get(struct ceph_msg *msg)
+{
+	dout("%s %p (was %d)\n", __func__, msg,
+	     kref_read(&msg->kref));
 	kref_get(&msg->kref);
-	वापस msg;
-पूर्ण
+	return msg;
+}
 EXPORT_SYMBOL(ceph_msg_get);
 
-व्योम ceph_msg_put(काष्ठा ceph_msg *msg)
-अणु
-	करोut("%s %p (was %d)\n", __func__, msg,
-	     kref_पढ़ो(&msg->kref));
+void ceph_msg_put(struct ceph_msg *msg)
+{
+	dout("%s %p (was %d)\n", __func__, msg,
+	     kref_read(&msg->kref));
 	kref_put(&msg->kref, ceph_msg_release);
-पूर्ण
+}
 EXPORT_SYMBOL(ceph_msg_put);
 
-व्योम ceph_msg_dump(काष्ठा ceph_msg *msg)
-अणु
+void ceph_msg_dump(struct ceph_msg *msg)
+{
 	pr_debug("msg_dump %p (front_alloc_len %d length %zd)\n", msg,
 		 msg->front_alloc_len, msg->data_length);
-	prपूर्णांक_hex_dump(KERN_DEBUG, "header: ",
+	print_hex_dump(KERN_DEBUG, "header: ",
 		       DUMP_PREFIX_OFFSET, 16, 1,
-		       &msg->hdr, माप(msg->hdr), true);
-	prपूर्णांक_hex_dump(KERN_DEBUG, " front: ",
+		       &msg->hdr, sizeof(msg->hdr), true);
+	print_hex_dump(KERN_DEBUG, " front: ",
 		       DUMP_PREFIX_OFFSET, 16, 1,
 		       msg->front.iov_base, msg->front.iov_len, true);
-	अगर (msg->middle)
-		prपूर्णांक_hex_dump(KERN_DEBUG, "middle: ",
+	if (msg->middle)
+		print_hex_dump(KERN_DEBUG, "middle: ",
 			       DUMP_PREFIX_OFFSET, 16, 1,
 			       msg->middle->vec.iov_base,
 			       msg->middle->vec.iov_len, true);
-	prपूर्णांक_hex_dump(KERN_DEBUG, "footer: ",
+	print_hex_dump(KERN_DEBUG, "footer: ",
 		       DUMP_PREFIX_OFFSET, 16, 1,
-		       &msg->footer, माप(msg->footer), true);
-पूर्ण
+		       &msg->footer, sizeof(msg->footer), true);
+}
 EXPORT_SYMBOL(ceph_msg_dump);

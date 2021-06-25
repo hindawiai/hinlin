@@ -1,197 +1,196 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) Sistina Software, Inc.  1997-2003 All rights reserved.
  * Copyright (C) 2004-2006 Red Hat, Inc.  All rights reserved.
  */
 
-#समावेश <linux/spinlock.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/buffer_head.h>
-#समावेश <linux/exportfs.h>
-#समावेश <linux/gfs2_ondisk.h>
-#समावेश <linux/crc32.h>
+#include <linux/spinlock.h>
+#include <linux/completion.h>
+#include <linux/buffer_head.h>
+#include <linux/exportfs.h>
+#include <linux/gfs2_ondisk.h>
+#include <linux/crc32.h>
 
-#समावेश "gfs2.h"
-#समावेश "incore.h"
-#समावेश "dir.h"
-#समावेश "glock.h"
-#समावेश "glops.h"
-#समावेश "inode.h"
-#समावेश "super.h"
-#समावेश "rgrp.h"
-#समावेश "util.h"
+#include "gfs2.h"
+#include "incore.h"
+#include "dir.h"
+#include "glock.h"
+#include "glops.h"
+#include "inode.h"
+#include "super.h"
+#include "rgrp.h"
+#include "util.h"
 
-#घोषणा GFS2_SMALL_FH_SIZE 4
-#घोषणा GFS2_LARGE_FH_SIZE 8
-#घोषणा GFS2_OLD_FH_SIZE 10
+#define GFS2_SMALL_FH_SIZE 4
+#define GFS2_LARGE_FH_SIZE 8
+#define GFS2_OLD_FH_SIZE 10
 
-अटल पूर्णांक gfs2_encode_fh(काष्ठा inode *inode, __u32 *p, पूर्णांक *len,
-			  काष्ठा inode *parent)
-अणु
-	__be32 *fh = (__क्रमce __be32 *)p;
-	काष्ठा super_block *sb = inode->i_sb;
-	काष्ठा gfs2_inode *ip = GFS2_I(inode);
+static int gfs2_encode_fh(struct inode *inode, __u32 *p, int *len,
+			  struct inode *parent)
+{
+	__be32 *fh = (__force __be32 *)p;
+	struct super_block *sb = inode->i_sb;
+	struct gfs2_inode *ip = GFS2_I(inode);
 
-	अगर (parent && (*len < GFS2_LARGE_FH_SIZE)) अणु
+	if (parent && (*len < GFS2_LARGE_FH_SIZE)) {
 		*len = GFS2_LARGE_FH_SIZE;
-		वापस खाताID_INVALID;
-	पूर्ण अन्यथा अगर (*len < GFS2_SMALL_FH_SIZE) अणु
+		return FILEID_INVALID;
+	} else if (*len < GFS2_SMALL_FH_SIZE) {
 		*len = GFS2_SMALL_FH_SIZE;
-		वापस खाताID_INVALID;
-	पूर्ण
+		return FILEID_INVALID;
+	}
 
-	fh[0] = cpu_to_be32(ip->i_no_क्रमmal_ino >> 32);
-	fh[1] = cpu_to_be32(ip->i_no_क्रमmal_ino & 0xFFFFFFFF);
+	fh[0] = cpu_to_be32(ip->i_no_formal_ino >> 32);
+	fh[1] = cpu_to_be32(ip->i_no_formal_ino & 0xFFFFFFFF);
 	fh[2] = cpu_to_be32(ip->i_no_addr >> 32);
 	fh[3] = cpu_to_be32(ip->i_no_addr & 0xFFFFFFFF);
 	*len = GFS2_SMALL_FH_SIZE;
 
-	अगर (!parent || inode == d_inode(sb->s_root))
-		वापस *len;
+	if (!parent || inode == d_inode(sb->s_root))
+		return *len;
 
 	ip = GFS2_I(parent);
 
-	fh[4] = cpu_to_be32(ip->i_no_क्रमmal_ino >> 32);
-	fh[5] = cpu_to_be32(ip->i_no_क्रमmal_ino & 0xFFFFFFFF);
+	fh[4] = cpu_to_be32(ip->i_no_formal_ino >> 32);
+	fh[5] = cpu_to_be32(ip->i_no_formal_ino & 0xFFFFFFFF);
 	fh[6] = cpu_to_be32(ip->i_no_addr >> 32);
 	fh[7] = cpu_to_be32(ip->i_no_addr & 0xFFFFFFFF);
 	*len = GFS2_LARGE_FH_SIZE;
 
-	वापस *len;
-पूर्ण
+	return *len;
+}
 
-काष्ठा get_name_filldir अणु
-	काष्ठा dir_context ctx;
-	काष्ठा gfs2_inum_host inum;
-	अक्षर *name;
-पूर्ण;
+struct get_name_filldir {
+	struct dir_context ctx;
+	struct gfs2_inum_host inum;
+	char *name;
+};
 
-अटल पूर्णांक get_name_filldir(काष्ठा dir_context *ctx, स्थिर अक्षर *name,
-			    पूर्णांक length, loff_t offset, u64 inum,
-			    अचिन्हित पूर्णांक type)
-अणु
-	काष्ठा get_name_filldir *gnfd =
-		container_of(ctx, काष्ठा get_name_filldir, ctx);
+static int get_name_filldir(struct dir_context *ctx, const char *name,
+			    int length, loff_t offset, u64 inum,
+			    unsigned int type)
+{
+	struct get_name_filldir *gnfd =
+		container_of(ctx, struct get_name_filldir, ctx);
 
-	अगर (inum != gnfd->inum.no_addr)
-		वापस 0;
+	if (inum != gnfd->inum.no_addr)
+		return 0;
 
-	स_नकल(gnfd->name, name, length);
+	memcpy(gnfd->name, name, length);
 	gnfd->name[length] = 0;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक gfs2_get_name(काष्ठा dentry *parent, अक्षर *name,
-			 काष्ठा dentry *child)
-अणु
-	काष्ठा inode *dir = d_inode(parent);
-	काष्ठा inode *inode = d_inode(child);
-	काष्ठा gfs2_inode *dip, *ip;
-	काष्ठा get_name_filldir gnfd = अणु
+static int gfs2_get_name(struct dentry *parent, char *name,
+			 struct dentry *child)
+{
+	struct inode *dir = d_inode(parent);
+	struct inode *inode = d_inode(child);
+	struct gfs2_inode *dip, *ip;
+	struct get_name_filldir gnfd = {
 		.ctx.actor = get_name_filldir,
 		.name = name
-	पूर्ण;
-	काष्ठा gfs2_holder gh;
-	पूर्णांक error;
-	काष्ठा file_ra_state f_ra = अणु .start = 0 पूर्ण;
+	};
+	struct gfs2_holder gh;
+	int error;
+	struct file_ra_state f_ra = { .start = 0 };
 
-	अगर (!dir)
-		वापस -EINVAL;
+	if (!dir)
+		return -EINVAL;
 
-	अगर (!S_ISसूची(dir->i_mode) || !inode)
-		वापस -EINVAL;
+	if (!S_ISDIR(dir->i_mode) || !inode)
+		return -EINVAL;
 
 	dip = GFS2_I(dir);
 	ip = GFS2_I(inode);
 
 	*name = 0;
 	gnfd.inum.no_addr = ip->i_no_addr;
-	gnfd.inum.no_क्रमmal_ino = ip->i_no_क्रमmal_ino;
+	gnfd.inum.no_formal_ino = ip->i_no_formal_ino;
 
 	error = gfs2_glock_nq_init(dip->i_gl, LM_ST_SHARED, 0, &gh);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	error = gfs2_dir_पढ़ो(dir, &gnfd.ctx, &f_ra);
+	error = gfs2_dir_read(dir, &gnfd.ctx, &f_ra);
 
 	gfs2_glock_dq_uninit(&gh);
 
-	अगर (!error && !*name)
+	if (!error && !*name)
 		error = -ENOENT;
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल काष्ठा dentry *gfs2_get_parent(काष्ठा dentry *child)
-अणु
-	वापस d_obtain_alias(gfs2_lookupi(d_inode(child), &gfs2_qकरोtकरोt, 1));
-पूर्ण
+static struct dentry *gfs2_get_parent(struct dentry *child)
+{
+	return d_obtain_alias(gfs2_lookupi(d_inode(child), &gfs2_qdotdot, 1));
+}
 
-अटल काष्ठा dentry *gfs2_get_dentry(काष्ठा super_block *sb,
-				      काष्ठा gfs2_inum_host *inum)
-अणु
-	काष्ठा gfs2_sbd *sdp = sb->s_fs_info;
-	काष्ठा inode *inode;
+static struct dentry *gfs2_get_dentry(struct super_block *sb,
+				      struct gfs2_inum_host *inum)
+{
+	struct gfs2_sbd *sdp = sb->s_fs_info;
+	struct inode *inode;
 
-	अगर (!inum->no_क्रमmal_ino)
-		वापस ERR_PTR(-ESTALE);
-	inode = gfs2_lookup_by_inum(sdp, inum->no_addr, inum->no_क्रमmal_ino,
+	if (!inum->no_formal_ino)
+		return ERR_PTR(-ESTALE);
+	inode = gfs2_lookup_by_inum(sdp, inum->no_addr, inum->no_formal_ino,
 				    GFS2_BLKST_DINODE);
-	अगर (IS_ERR(inode))
-		वापस ERR_CAST(inode);
-	वापस d_obtain_alias(inode);
-पूर्ण
+	if (IS_ERR(inode))
+		return ERR_CAST(inode);
+	return d_obtain_alias(inode);
+}
 
-अटल काष्ठा dentry *gfs2_fh_to_dentry(काष्ठा super_block *sb, काष्ठा fid *fid,
-		पूर्णांक fh_len, पूर्णांक fh_type)
-अणु
-	काष्ठा gfs2_inum_host this;
-	__be32 *fh = (__क्रमce __be32 *)fid->raw;
+static struct dentry *gfs2_fh_to_dentry(struct super_block *sb, struct fid *fid,
+		int fh_len, int fh_type)
+{
+	struct gfs2_inum_host this;
+	__be32 *fh = (__force __be32 *)fid->raw;
 
-	चयन (fh_type) अणु
-	हाल GFS2_SMALL_FH_SIZE:
-	हाल GFS2_LARGE_FH_SIZE:
-	हाल GFS2_OLD_FH_SIZE:
-		अगर (fh_len < GFS2_SMALL_FH_SIZE)
-			वापस शून्य;
-		this.no_क्रमmal_ino = ((u64)be32_to_cpu(fh[0])) << 32;
-		this.no_क्रमmal_ino |= be32_to_cpu(fh[1]);
+	switch (fh_type) {
+	case GFS2_SMALL_FH_SIZE:
+	case GFS2_LARGE_FH_SIZE:
+	case GFS2_OLD_FH_SIZE:
+		if (fh_len < GFS2_SMALL_FH_SIZE)
+			return NULL;
+		this.no_formal_ino = ((u64)be32_to_cpu(fh[0])) << 32;
+		this.no_formal_ino |= be32_to_cpu(fh[1]);
 		this.no_addr = ((u64)be32_to_cpu(fh[2])) << 32;
 		this.no_addr |= be32_to_cpu(fh[3]);
-		वापस gfs2_get_dentry(sb, &this);
-	शेष:
-		वापस शून्य;
-	पूर्ण
-पूर्ण
+		return gfs2_get_dentry(sb, &this);
+	default:
+		return NULL;
+	}
+}
 
-अटल काष्ठा dentry *gfs2_fh_to_parent(काष्ठा super_block *sb, काष्ठा fid *fid,
-		पूर्णांक fh_len, पूर्णांक fh_type)
-अणु
-	काष्ठा gfs2_inum_host parent;
-	__be32 *fh = (__क्रमce __be32 *)fid->raw;
+static struct dentry *gfs2_fh_to_parent(struct super_block *sb, struct fid *fid,
+		int fh_len, int fh_type)
+{
+	struct gfs2_inum_host parent;
+	__be32 *fh = (__force __be32 *)fid->raw;
 
-	चयन (fh_type) अणु
-	हाल GFS2_LARGE_FH_SIZE:
-	हाल GFS2_OLD_FH_SIZE:
-		अगर (fh_len < GFS2_LARGE_FH_SIZE)
-			वापस शून्य;
-		parent.no_क्रमmal_ino = ((u64)be32_to_cpu(fh[4])) << 32;
-		parent.no_क्रमmal_ino |= be32_to_cpu(fh[5]);
+	switch (fh_type) {
+	case GFS2_LARGE_FH_SIZE:
+	case GFS2_OLD_FH_SIZE:
+		if (fh_len < GFS2_LARGE_FH_SIZE)
+			return NULL;
+		parent.no_formal_ino = ((u64)be32_to_cpu(fh[4])) << 32;
+		parent.no_formal_ino |= be32_to_cpu(fh[5]);
 		parent.no_addr = ((u64)be32_to_cpu(fh[6])) << 32;
 		parent.no_addr |= be32_to_cpu(fh[7]);
-		वापस gfs2_get_dentry(sb, &parent);
-	शेष:
-		वापस शून्य;
-	पूर्ण
-पूर्ण
+		return gfs2_get_dentry(sb, &parent);
+	default:
+		return NULL;
+	}
+}
 
-स्थिर काष्ठा export_operations gfs2_export_ops = अणु
+const struct export_operations gfs2_export_ops = {
 	.encode_fh = gfs2_encode_fh,
 	.fh_to_dentry = gfs2_fh_to_dentry,
 	.fh_to_parent = gfs2_fh_to_parent,
 	.get_name = gfs2_get_name,
 	.get_parent = gfs2_get_parent,
-पूर्ण;
+};
 

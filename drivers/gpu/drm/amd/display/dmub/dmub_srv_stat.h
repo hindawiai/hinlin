@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2020 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,19 +23,19 @@
  *
  */
 
-#अगर_अघोषित _DMUB_SRV_STAT_H_
-#घोषणा _DMUB_SRV_STAT_H_
+#ifndef _DMUB_SRV_STAT_H_
+#define _DMUB_SRV_STAT_H_
 
 /**
  * DOC: DMUB_SRV STAT Interface
  *
- * These पूर्णांकerfaces are called without acquiring DAL and DC locks.
- * Hence, there is limitations on whese पूर्णांकerfaces can access. Only
- * variables exclusively defined क्रम these पूर्णांकerfaces can be modअगरied.
+ * These interfaces are called without acquiring DAL and DC locks.
+ * Hence, there is limitations on whese interfaces can access. Only
+ * variables exclusively defined for these interfaces can be modified.
  */
-#समावेश "dmub_srv.h"
+#include "dmub_srv.h"
 
-क्रमागत dmub_status dmub_srv_stat_get_notअगरication(काष्ठा dmub_srv *dmub,
-						काष्ठा dmub_notअगरication *notअगरy);
+enum dmub_status dmub_srv_stat_get_notification(struct dmub_srv *dmub,
+						struct dmub_notification *notify);
 
-#पूर्ण_अगर /* _DMUB_SRV_STAT_H_ */
+#endif /* _DMUB_SRV_STAT_H_ */

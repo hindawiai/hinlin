@@ -1,23 +1,22 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __LINUX_IIO_KFIFO_BUF_H__
-#घोषणा __LINUX_IIO_KFIFO_BUF_H__
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __LINUX_IIO_KFIFO_BUF_H__
+#define __LINUX_IIO_KFIFO_BUF_H__
 
-काष्ठा iio_buffer;
-काष्ठा iio_buffer_setup_ops;
-काष्ठा iio_dev;
-काष्ठा device;
+struct iio_buffer;
+struct iio_buffer_setup_ops;
+struct iio_dev;
+struct device;
 
-काष्ठा iio_buffer *iio_kfअगरo_allocate(व्योम);
-व्योम iio_kfअगरo_मुक्त(काष्ठा iio_buffer *r);
+struct iio_buffer *iio_kfifo_allocate(void);
+void iio_kfifo_free(struct iio_buffer *r);
 
-पूर्णांक devm_iio_kfअगरo_buffer_setup_ext(काष्ठा device *dev,
-				    काष्ठा iio_dev *indio_dev,
-				    पूर्णांक mode_flags,
-				    स्थिर काष्ठा iio_buffer_setup_ops *setup_ops,
-				    स्थिर काष्ठा attribute **buffer_attrs);
+int devm_iio_kfifo_buffer_setup_ext(struct device *dev,
+				    struct iio_dev *indio_dev,
+				    int mode_flags,
+				    const struct iio_buffer_setup_ops *setup_ops,
+				    const struct attribute **buffer_attrs);
 
-#घोषणा devm_iio_kfअगरo_buffer_setup(dev, indio_dev, mode_flags, setup_ops)	\
-	devm_iio_kfअगरo_buffer_setup_ext((dev), (indio_dev), (mode_flags), (setup_ops), शून्य)
+#define devm_iio_kfifo_buffer_setup(dev, indio_dev, mode_flags, setup_ops)	\
+	devm_iio_kfifo_buffer_setup_ext((dev), (indio_dev), (mode_flags), (setup_ops), NULL)
 
-#पूर्ण_अगर
+#endif

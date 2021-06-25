@@ -1,50 +1,49 @@
-<शैली गुरु>
 /*
- * arch/arm/mach-करोve/pcie.c
+ * arch/arm/mach-dove/pcie.c
  *
- * PCIe functions क्रम Marvell Dove 88AP510 SoC
+ * PCIe functions for Marvell Dove 88AP510 SoC
  *
  * This file is licensed under the terms of the GNU General Public
  * License version 2. This program is licensed "as is" without any
  * warranty of any kind, whether express or implied.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/clk.h>
-#समावेश <video/vga.h>
-#समावेश <यंत्र/mach/pci.h>
-#समावेश <यंत्र/mach/arch.h>
-#समावेश <यंत्र/setup.h>
-#समावेश <यंत्र/delay.h>
-#समावेश <plat/pcie.h>
-#समावेश <plat/addr-map.h>
-#समावेश "irqs.h"
-#समावेश "bridge-regs.h"
-#समावेश "common.h"
+#include <linux/kernel.h>
+#include <linux/pci.h>
+#include <linux/clk.h>
+#include <video/vga.h>
+#include <asm/mach/pci.h>
+#include <asm/mach/arch.h>
+#include <asm/setup.h>
+#include <asm/delay.h>
+#include <plat/pcie.h>
+#include <plat/addr-map.h>
+#include "irqs.h"
+#include "bridge-regs.h"
+#include "common.h"
 
-काष्ठा pcie_port अणु
+struct pcie_port {
 	u8			index;
 	u8			root_bus_nr;
-	व्योम __iomem		*base;
+	void __iomem		*base;
 	spinlock_t		conf_lock;
-	अक्षर			mem_space_name[16];
-	काष्ठा resource		res;
-पूर्ण;
+	char			mem_space_name[16];
+	struct resource		res;
+};
 
-अटल काष्ठा pcie_port pcie_port[2];
-अटल पूर्णांक num_pcie_ports;
+static struct pcie_port pcie_port[2];
+static int num_pcie_ports;
 
 
-अटल पूर्णांक __init करोve_pcie_setup(पूर्णांक nr, काष्ठा pci_sys_data *sys)
-अणु
-	काष्ठा pcie_port *pp;
+static int __init dove_pcie_setup(int nr, struct pci_sys_data *sys)
+{
+	struct pcie_port *pp;
 
-	अगर (nr >= num_pcie_ports)
-		वापस 0;
+	if (nr >= num_pcie_ports)
+		return 0;
 
 	pp = &pcie_port[nr];
-	sys->निजी_data = pp;
+	sys->private_data = pp;
 	pp->root_bus_nr = sys->busnr;
 
 	/*
@@ -54,171 +53,171 @@
 
 	orion_pcie_setup(pp->base);
 
-	अगर (pp->index == 0)
+	if (pp->index == 0)
 		pci_ioremap_io(sys->busnr * SZ_64K, DOVE_PCIE0_IO_PHYS_BASE);
-	अन्यथा
+	else
 		pci_ioremap_io(sys->busnr * SZ_64K, DOVE_PCIE1_IO_PHYS_BASE);
 
 	/*
 	 * IORESOURCE_MEM
 	 */
-	snम_लिखो(pp->mem_space_name, माप(pp->mem_space_name),
+	snprintf(pp->mem_space_name, sizeof(pp->mem_space_name),
 		 "PCIe %d MEM", pp->index);
-	pp->mem_space_name[माप(pp->mem_space_name) - 1] = 0;
+	pp->mem_space_name[sizeof(pp->mem_space_name) - 1] = 0;
 	pp->res.name = pp->mem_space_name;
-	अगर (pp->index == 0) अणु
+	if (pp->index == 0) {
 		pp->res.start = DOVE_PCIE0_MEM_PHYS_BASE;
 		pp->res.end = pp->res.start + DOVE_PCIE0_MEM_SIZE - 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		pp->res.start = DOVE_PCIE1_MEM_PHYS_BASE;
 		pp->res.end = pp->res.start + DOVE_PCIE1_MEM_SIZE - 1;
-	पूर्ण
+	}
 	pp->res.flags = IORESOURCE_MEM;
-	अगर (request_resource(&iomem_resource, &pp->res))
+	if (request_resource(&iomem_resource, &pp->res))
 		panic("Request PCIe Memory resource failed\n");
 	pci_add_resource_offset(&sys->resources, &pp->res, sys->mem_offset);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक pcie_valid_config(काष्ठा pcie_port *pp, पूर्णांक bus, पूर्णांक dev)
-अणु
+static int pcie_valid_config(struct pcie_port *pp, int bus, int dev)
+{
 	/*
 	 * Don't go out when trying to access nonexisting devices
 	 * on the local bus.
 	 */
-	अगर (bus == pp->root_bus_nr && dev > 1)
-		वापस 0;
+	if (bus == pp->root_bus_nr && dev > 1)
+		return 0;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक pcie_rd_conf(काष्ठा pci_bus *bus, u32 devfn, पूर्णांक where,
-			पूर्णांक size, u32 *val)
-अणु
-	काष्ठा pci_sys_data *sys = bus->sysdata;
-	काष्ठा pcie_port *pp = sys->निजी_data;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+static int pcie_rd_conf(struct pci_bus *bus, u32 devfn, int where,
+			int size, u32 *val)
+{
+	struct pci_sys_data *sys = bus->sysdata;
+	struct pcie_port *pp = sys->private_data;
+	unsigned long flags;
+	int ret;
 
-	अगर (pcie_valid_config(pp, bus->number, PCI_SLOT(devfn)) == 0) अणु
+	if (pcie_valid_config(pp, bus->number, PCI_SLOT(devfn)) == 0) {
 		*val = 0xffffffff;
-		वापस PCIBIOS_DEVICE_NOT_FOUND;
-	पूर्ण
+		return PCIBIOS_DEVICE_NOT_FOUND;
+	}
 
 	spin_lock_irqsave(&pp->conf_lock, flags);
 	ret = orion_pcie_rd_conf(pp->base, bus, devfn, where, size, val);
 	spin_unlock_irqrestore(&pp->conf_lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक pcie_wr_conf(काष्ठा pci_bus *bus, u32 devfn,
-			पूर्णांक where, पूर्णांक size, u32 val)
-अणु
-	काष्ठा pci_sys_data *sys = bus->sysdata;
-	काष्ठा pcie_port *pp = sys->निजी_data;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+static int pcie_wr_conf(struct pci_bus *bus, u32 devfn,
+			int where, int size, u32 val)
+{
+	struct pci_sys_data *sys = bus->sysdata;
+	struct pcie_port *pp = sys->private_data;
+	unsigned long flags;
+	int ret;
 
-	अगर (pcie_valid_config(pp, bus->number, PCI_SLOT(devfn)) == 0)
-		वापस PCIBIOS_DEVICE_NOT_FOUND;
+	if (pcie_valid_config(pp, bus->number, PCI_SLOT(devfn)) == 0)
+		return PCIBIOS_DEVICE_NOT_FOUND;
 
 	spin_lock_irqsave(&pp->conf_lock, flags);
 	ret = orion_pcie_wr_conf(pp->base, bus, devfn, where, size, val);
 	spin_unlock_irqrestore(&pp->conf_lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा pci_ops pcie_ops = अणु
-	.पढ़ो = pcie_rd_conf,
-	.ग_लिखो = pcie_wr_conf,
-पूर्ण;
+static struct pci_ops pcie_ops = {
+	.read = pcie_rd_conf,
+	.write = pcie_wr_conf,
+};
 
-अटल व्योम rc_pci_fixup(काष्ठा pci_dev *dev)
-अणु
+static void rc_pci_fixup(struct pci_dev *dev)
+{
 	/*
-	 * Prevent क्रमागतeration of root complex.
+	 * Prevent enumeration of root complex.
 	 */
-	अगर (dev->bus->parent == शून्य && dev->devfn == 0) अणु
-		पूर्णांक i;
+	if (dev->bus->parent == NULL && dev->devfn == 0) {
+		int i;
 
-		क्रम (i = 0; i < DEVICE_COUNT_RESOURCE; i++) अणु
+		for (i = 0; i < DEVICE_COUNT_RESOURCE; i++) {
 			dev->resource[i].start = 0;
 			dev->resource[i].end   = 0;
 			dev->resource[i].flags = 0;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 DECLARE_PCI_FIXUP_HEADER(PCI_VENDOR_ID_MARVELL, PCI_ANY_ID, rc_pci_fixup);
 
-अटल पूर्णांक __init
-करोve_pcie_scan_bus(पूर्णांक nr, काष्ठा pci_host_bridge *bridge)
-अणु
-	काष्ठा pci_sys_data *sys = pci_host_bridge_priv(bridge);
+static int __init
+dove_pcie_scan_bus(int nr, struct pci_host_bridge *bridge)
+{
+	struct pci_sys_data *sys = pci_host_bridge_priv(bridge);
 
-	अगर (nr >= num_pcie_ports) अणु
+	if (nr >= num_pcie_ports) {
 		BUG();
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	list_splice_init(&sys->resources, &bridge->winकरोws);
-	bridge->dev.parent = शून्य;
+	list_splice_init(&sys->resources, &bridge->windows);
+	bridge->dev.parent = NULL;
 	bridge->sysdata = sys;
 	bridge->busnr = sys->busnr;
 	bridge->ops = &pcie_ops;
 
-	वापस pci_scan_root_bus_bridge(bridge);
-पूर्ण
+	return pci_scan_root_bus_bridge(bridge);
+}
 
-अटल पूर्णांक __init करोve_pcie_map_irq(स्थिर काष्ठा pci_dev *dev, u8 slot, u8 pin)
-अणु
-	काष्ठा pci_sys_data *sys = dev->sysdata;
-	काष्ठा pcie_port *pp = sys->निजी_data;
+static int __init dove_pcie_map_irq(const struct pci_dev *dev, u8 slot, u8 pin)
+{
+	struct pci_sys_data *sys = dev->sysdata;
+	struct pcie_port *pp = sys->private_data;
 
-	वापस pp->index ? IRQ_DOVE_PCIE1 : IRQ_DOVE_PCIE0;
-पूर्ण
+	return pp->index ? IRQ_DOVE_PCIE1 : IRQ_DOVE_PCIE0;
+}
 
-अटल काष्ठा hw_pci करोve_pci __initdata = अणु
+static struct hw_pci dove_pci __initdata = {
 	.nr_controllers	= 2,
-	.setup		= करोve_pcie_setup,
-	.scan		= करोve_pcie_scan_bus,
-	.map_irq	= करोve_pcie_map_irq,
-पूर्ण;
+	.setup		= dove_pcie_setup,
+	.scan		= dove_pcie_scan_bus,
+	.map_irq	= dove_pcie_map_irq,
+};
 
-अटल व्योम __init add_pcie_port(पूर्णांक index, व्योम __iomem *base)
-अणु
-	prपूर्णांकk(KERN_INFO "Dove PCIe port %d: ", index);
+static void __init add_pcie_port(int index, void __iomem *base)
+{
+	printk(KERN_INFO "Dove PCIe port %d: ", index);
 
-	अगर (orion_pcie_link_up(base)) अणु
-		काष्ठा pcie_port *pp = &pcie_port[num_pcie_ports++];
-		काष्ठा clk *clk = clk_get_sys("pcie", (index ? "1" : "0"));
+	if (orion_pcie_link_up(base)) {
+		struct pcie_port *pp = &pcie_port[num_pcie_ports++];
+		struct clk *clk = clk_get_sys("pcie", (index ? "1" : "0"));
 
-		अगर (!IS_ERR(clk))
+		if (!IS_ERR(clk))
 			clk_prepare_enable(clk);
 
-		prपूर्णांकk(KERN_INFO "link up\n");
+		printk(KERN_INFO "link up\n");
 
 		pp->index = index;
 		pp->root_bus_nr = -1;
 		pp->base = base;
 		spin_lock_init(&pp->conf_lock);
-		स_रखो(&pp->res, 0, माप(pp->res));
-	पूर्ण अन्यथा अणु
-		prपूर्णांकk(KERN_INFO "link down, ignoring\n");
-	पूर्ण
-पूर्ण
+		memset(&pp->res, 0, sizeof(pp->res));
+	} else {
+		printk(KERN_INFO "link down, ignoring\n");
+	}
+}
 
-व्योम __init करोve_pcie_init(पूर्णांक init_port0, पूर्णांक init_port1)
-अणु
+void __init dove_pcie_init(int init_port0, int init_port1)
+{
 	vga_base = DOVE_PCIE0_MEM_PHYS_BASE;
 
-	अगर (init_port0)
+	if (init_port0)
 		add_pcie_port(0, DOVE_PCIE0_VIRT_BASE);
 
-	अगर (init_port1)
+	if (init_port1)
 		add_pcie_port(1, DOVE_PCIE1_VIRT_BASE);
 
-	pci_common_init(&करोve_pci);
-पूर्ण
+	pci_common_init(&dove_pci);
+}

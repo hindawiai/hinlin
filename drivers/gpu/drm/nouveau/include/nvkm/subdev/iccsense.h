@@ -1,20 +1,19 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
-#अगर_अघोषित __NVKM_ICCSENSE_H__
-#घोषणा __NVKM_ICCSENSE_H__
+/* SPDX-License-Identifier: MIT */
+#ifndef __NVKM_ICCSENSE_H__
+#define __NVKM_ICCSENSE_H__
 
-#समावेश <core/subdev.h>
+#include <core/subdev.h>
 
-काष्ठा nvkm_iccsense अणु
-	काष्ठा nvkm_subdev subdev;
+struct nvkm_iccsense {
+	struct nvkm_subdev subdev;
 	bool data_valid;
-	काष्ठा list_head sensors;
-	काष्ठा list_head rails;
+	struct list_head sensors;
+	struct list_head rails;
 
-	u32 घातer_w_max;
-	u32 घातer_w_crit;
-पूर्ण;
+	u32 power_w_max;
+	u32 power_w_crit;
+};
 
-पूर्णांक gf100_iccsense_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक, काष्ठा nvkm_iccsense **);
-पूर्णांक nvkm_iccsense_पढ़ो_all(काष्ठा nvkm_iccsense *iccsense);
-#पूर्ण_अगर
+int gf100_iccsense_new(struct nvkm_device *, enum nvkm_subdev_type, int, struct nvkm_iccsense **);
+int nvkm_iccsense_read_all(struct nvkm_iccsense *iccsense);
+#endif

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  *	mxuport.c - MOXA UPort series driver
  *
@@ -13,175 +12,175 @@
  *	16 ports : UPort 1610-16, UPort 1650-16
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/firmware.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/serial.h>
-#समावेश <linux/serial_reg.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/tty_driver.h>
-#समावेश <linux/tty_flip.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/usb/serial.h>
-#समावेश <यंत्र/unaligned.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/firmware.h>
+#include <linux/jiffies.h>
+#include <linux/serial.h>
+#include <linux/serial_reg.h>
+#include <linux/slab.h>
+#include <linux/tty.h>
+#include <linux/tty_driver.h>
+#include <linux/tty_flip.h>
+#include <linux/uaccess.h>
+#include <linux/usb.h>
+#include <linux/usb/serial.h>
+#include <asm/unaligned.h>
 
-/* Definitions क्रम the venकरोr ID and device ID */
-#घोषणा MX_USBSERIAL_VID	0x110A
-#घोषणा MX_UPORT1250_PID	0x1250
-#घोषणा MX_UPORT1251_PID	0x1251
-#घोषणा MX_UPORT1410_PID	0x1410
-#घोषणा MX_UPORT1450_PID	0x1450
-#घोषणा MX_UPORT1451_PID	0x1451
-#घोषणा MX_UPORT1618_PID	0x1618
-#घोषणा MX_UPORT1658_PID	0x1658
-#घोषणा MX_UPORT1613_PID	0x1613
-#घोषणा MX_UPORT1653_PID	0x1653
+/* Definitions for the vendor ID and device ID */
+#define MX_USBSERIAL_VID	0x110A
+#define MX_UPORT1250_PID	0x1250
+#define MX_UPORT1251_PID	0x1251
+#define MX_UPORT1410_PID	0x1410
+#define MX_UPORT1450_PID	0x1450
+#define MX_UPORT1451_PID	0x1451
+#define MX_UPORT1618_PID	0x1618
+#define MX_UPORT1658_PID	0x1658
+#define MX_UPORT1613_PID	0x1613
+#define MX_UPORT1653_PID	0x1653
 
-/* Definitions क्रम USB info */
-#घोषणा HEADER_SIZE		4
-#घोषणा EVENT_LENGTH		8
-#घोषणा DOWN_BLOCK_SIZE		64
+/* Definitions for USB info */
+#define HEADER_SIZE		4
+#define EVENT_LENGTH		8
+#define DOWN_BLOCK_SIZE		64
 
-/* Definitions क्रम firmware info */
-#घोषणा VER_ADDR_1		0x20
-#घोषणा VER_ADDR_2		0x24
-#घोषणा VER_ADDR_3		0x28
+/* Definitions for firmware info */
+#define VER_ADDR_1		0x20
+#define VER_ADDR_2		0x24
+#define VER_ADDR_3		0x28
 
-/* Definitions क्रम USB venकरोr request */
-#घोषणा RQ_VENDOR_NONE			0x00
-#घोषणा RQ_VENDOR_SET_BAUD		0x01 /* Set baud rate */
-#घोषणा RQ_VENDOR_SET_LINE		0x02 /* Set line status */
-#घोषणा RQ_VENDOR_SET_CHARS		0x03 /* Set Xon/Xoff अक्षरs */
-#घोषणा RQ_VENDOR_SET_RTS		0x04 /* Set RTS */
-#घोषणा RQ_VENDOR_SET_DTR		0x05 /* Set DTR */
-#घोषणा RQ_VENDOR_SET_XONXOFF		0x06 /* Set स्वतः Xon/Xoff */
-#घोषणा RQ_VENDOR_SET_RX_HOST_EN	0x07 /* Set RX host enable */
-#घोषणा RQ_VENDOR_SET_OPEN		0x08 /* Set खोलो/बंद port */
-#घोषणा RQ_VENDOR_PURGE			0x09 /* Purge Rx/Tx buffer */
-#घोषणा RQ_VENDOR_SET_MCR		0x0A /* Set MCR रेजिस्टर */
-#घोषणा RQ_VENDOR_SET_BREAK		0x0B /* Set Break संकेत */
+/* Definitions for USB vendor request */
+#define RQ_VENDOR_NONE			0x00
+#define RQ_VENDOR_SET_BAUD		0x01 /* Set baud rate */
+#define RQ_VENDOR_SET_LINE		0x02 /* Set line status */
+#define RQ_VENDOR_SET_CHARS		0x03 /* Set Xon/Xoff chars */
+#define RQ_VENDOR_SET_RTS		0x04 /* Set RTS */
+#define RQ_VENDOR_SET_DTR		0x05 /* Set DTR */
+#define RQ_VENDOR_SET_XONXOFF		0x06 /* Set auto Xon/Xoff */
+#define RQ_VENDOR_SET_RX_HOST_EN	0x07 /* Set RX host enable */
+#define RQ_VENDOR_SET_OPEN		0x08 /* Set open/close port */
+#define RQ_VENDOR_PURGE			0x09 /* Purge Rx/Tx buffer */
+#define RQ_VENDOR_SET_MCR		0x0A /* Set MCR register */
+#define RQ_VENDOR_SET_BREAK		0x0B /* Set Break signal */
 
-#घोषणा RQ_VENDOR_START_FW_DOWN		0x0C /* Start firmware करोwnload */
-#घोषणा RQ_VENDOR_STOP_FW_DOWN		0x0D /* Stop firmware करोwnload */
-#घोषणा RQ_VENDOR_QUERY_FW_READY	0x0E /* Query अगर new firmware पढ़ोy */
+#define RQ_VENDOR_START_FW_DOWN		0x0C /* Start firmware download */
+#define RQ_VENDOR_STOP_FW_DOWN		0x0D /* Stop firmware download */
+#define RQ_VENDOR_QUERY_FW_READY	0x0E /* Query if new firmware ready */
 
-#घोषणा RQ_VENDOR_SET_FIFO_DISABLE	0x0F /* Set fअगरo disable */
-#घोषणा RQ_VENDOR_SET_INTERFACE		0x10 /* Set पूर्णांकerface */
-#घोषणा RQ_VENDOR_SET_HIGH_PERFOR	0x11 /* Set hi-perक्रमmance */
+#define RQ_VENDOR_SET_FIFO_DISABLE	0x0F /* Set fifo disable */
+#define RQ_VENDOR_SET_INTERFACE		0x10 /* Set interface */
+#define RQ_VENDOR_SET_HIGH_PERFOR	0x11 /* Set hi-performance */
 
-#घोषणा RQ_VENDOR_ERASE_BLOCK		0x12 /* Erase flash block */
-#घोषणा RQ_VENDOR_WRITE_PAGE		0x13 /* Write flash page */
-#घोषणा RQ_VENDOR_PREPARE_WRITE		0x14 /* Prepare ग_लिखो flash */
-#घोषणा RQ_VENDOR_CONFIRM_WRITE		0x15 /* Confirm ग_लिखो flash */
-#घोषणा RQ_VENDOR_LOCATE		0x16 /* Locate the device */
+#define RQ_VENDOR_ERASE_BLOCK		0x12 /* Erase flash block */
+#define RQ_VENDOR_WRITE_PAGE		0x13 /* Write flash page */
+#define RQ_VENDOR_PREPARE_WRITE		0x14 /* Prepare write flash */
+#define RQ_VENDOR_CONFIRM_WRITE		0x15 /* Confirm write flash */
+#define RQ_VENDOR_LOCATE		0x16 /* Locate the device */
 
-#घोषणा RQ_VENDOR_START_ROM_DOWN	0x17 /* Start firmware करोwnload */
-#घोषणा RQ_VENDOR_ROM_DATA		0x18 /* Rom file data */
-#घोषणा RQ_VENDOR_STOP_ROM_DOWN		0x19 /* Stop firmware करोwnload */
-#घोषणा RQ_VENDOR_FW_DATA		0x20 /* Firmware data */
+#define RQ_VENDOR_START_ROM_DOWN	0x17 /* Start firmware download */
+#define RQ_VENDOR_ROM_DATA		0x18 /* Rom file data */
+#define RQ_VENDOR_STOP_ROM_DOWN		0x19 /* Stop firmware download */
+#define RQ_VENDOR_FW_DATA		0x20 /* Firmware data */
 
-#घोषणा RQ_VENDOR_RESET_DEVICE		0x23 /* Try to reset the device */
-#घोषणा RQ_VENDOR_QUERY_FW_CONFIG	0x24
+#define RQ_VENDOR_RESET_DEVICE		0x23 /* Try to reset the device */
+#define RQ_VENDOR_QUERY_FW_CONFIG	0x24
 
-#घोषणा RQ_VENDOR_GET_VERSION		0x81 /* Get firmware version */
-#घोषणा RQ_VENDOR_GET_PAGE		0x82 /* Read flash page */
-#घोषणा RQ_VENDOR_GET_ROM_PROC		0x83 /* Get ROM process state */
+#define RQ_VENDOR_GET_VERSION		0x81 /* Get firmware version */
+#define RQ_VENDOR_GET_PAGE		0x82 /* Read flash page */
+#define RQ_VENDOR_GET_ROM_PROC		0x83 /* Get ROM process state */
 
-#घोषणा RQ_VENDOR_GET_INQUEUE		0x84 /* Data in input buffer */
-#घोषणा RQ_VENDOR_GET_OUTQUEUE		0x85 /* Data in output buffer */
+#define RQ_VENDOR_GET_INQUEUE		0x84 /* Data in input buffer */
+#define RQ_VENDOR_GET_OUTQUEUE		0x85 /* Data in output buffer */
 
-#घोषणा RQ_VENDOR_GET_MSR		0x86 /* Get modem status रेजिस्टर */
+#define RQ_VENDOR_GET_MSR		0x86 /* Get modem status register */
 
-/* Definitions क्रम UPort event type */
-#घोषणा UPORT_EVENT_NONE		0 /* None */
-#घोषणा UPORT_EVENT_TXBUF_THRESHOLD	1 /* Tx buffer threshold */
-#घोषणा UPORT_EVENT_SEND_NEXT		2 /* Send next */
-#घोषणा UPORT_EVENT_MSR			3 /* Modem status */
-#घोषणा UPORT_EVENT_LSR			4 /* Line status */
-#घोषणा UPORT_EVENT_MCR			5 /* Modem control */
+/* Definitions for UPort event type */
+#define UPORT_EVENT_NONE		0 /* None */
+#define UPORT_EVENT_TXBUF_THRESHOLD	1 /* Tx buffer threshold */
+#define UPORT_EVENT_SEND_NEXT		2 /* Send next */
+#define UPORT_EVENT_MSR			3 /* Modem status */
+#define UPORT_EVENT_LSR			4 /* Line status */
+#define UPORT_EVENT_MCR			5 /* Modem control */
 
-/* Definitions क्रम serial event type */
-#घोषणा SERIAL_EV_CTS			0x0008	/* CTS changed state */
-#घोषणा SERIAL_EV_DSR			0x0010	/* DSR changed state */
-#घोषणा SERIAL_EV_RLSD			0x0020	/* RLSD changed state */
+/* Definitions for serial event type */
+#define SERIAL_EV_CTS			0x0008	/* CTS changed state */
+#define SERIAL_EV_DSR			0x0010	/* DSR changed state */
+#define SERIAL_EV_RLSD			0x0020	/* RLSD changed state */
 
-/* Definitions क्रम modem control event type */
-#घोषणा SERIAL_EV_XOFF			0x40	/* XOFF received */
+/* Definitions for modem control event type */
+#define SERIAL_EV_XOFF			0x40	/* XOFF received */
 
-/* Definitions क्रम line control of communication */
-#घोषणा MX_WORDLENGTH_5			5
-#घोषणा MX_WORDLENGTH_6			6
-#घोषणा MX_WORDLENGTH_7			7
-#घोषणा MX_WORDLENGTH_8			8
+/* Definitions for line control of communication */
+#define MX_WORDLENGTH_5			5
+#define MX_WORDLENGTH_6			6
+#define MX_WORDLENGTH_7			7
+#define MX_WORDLENGTH_8			8
 
-#घोषणा MX_PARITY_NONE			0
-#घोषणा MX_PARITY_ODD			1
-#घोषणा MX_PARITY_EVEN			2
-#घोषणा MX_PARITY_MARK			3
-#घोषणा MX_PARITY_SPACE			4
+#define MX_PARITY_NONE			0
+#define MX_PARITY_ODD			1
+#define MX_PARITY_EVEN			2
+#define MX_PARITY_MARK			3
+#define MX_PARITY_SPACE			4
 
-#घोषणा MX_STOP_BITS_1			0
-#घोषणा MX_STOP_BITS_1_5		1
-#घोषणा MX_STOP_BITS_2			2
+#define MX_STOP_BITS_1			0
+#define MX_STOP_BITS_1_5		1
+#define MX_STOP_BITS_2			2
 
-#घोषणा MX_RTS_DISABLE			0x0
-#घोषणा MX_RTS_ENABLE			0x1
-#घोषणा MX_RTS_HW			0x2
-#घोषणा MX_RTS_NO_CHANGE		0x3 /* Flag, not valid रेजिस्टर value*/
+#define MX_RTS_DISABLE			0x0
+#define MX_RTS_ENABLE			0x1
+#define MX_RTS_HW			0x2
+#define MX_RTS_NO_CHANGE		0x3 /* Flag, not valid register value*/
 
-#घोषणा MX_INT_RS232			0
-#घोषणा MX_INT_2W_RS485			1
-#घोषणा MX_INT_RS422			2
-#घोषणा MX_INT_4W_RS485			3
+#define MX_INT_RS232			0
+#define MX_INT_2W_RS485			1
+#define MX_INT_RS422			2
+#define MX_INT_4W_RS485			3
 
-/* Definitions क्रम holding reason */
-#घोषणा MX_WAIT_FOR_CTS			0x0001
-#घोषणा MX_WAIT_FOR_DSR			0x0002
-#घोषणा MX_WAIT_FOR_DCD			0x0004
-#घोषणा MX_WAIT_FOR_XON			0x0008
-#घोषणा MX_WAIT_FOR_START_TX		0x0010
-#घोषणा MX_WAIT_FOR_UNTHROTTLE		0x0020
-#घोषणा MX_WAIT_FOR_LOW_WATER		0x0040
-#घोषणा MX_WAIT_FOR_SEND_NEXT		0x0080
+/* Definitions for holding reason */
+#define MX_WAIT_FOR_CTS			0x0001
+#define MX_WAIT_FOR_DSR			0x0002
+#define MX_WAIT_FOR_DCD			0x0004
+#define MX_WAIT_FOR_XON			0x0008
+#define MX_WAIT_FOR_START_TX		0x0010
+#define MX_WAIT_FOR_UNTHROTTLE		0x0020
+#define MX_WAIT_FOR_LOW_WATER		0x0040
+#define MX_WAIT_FOR_SEND_NEXT		0x0080
 
-#घोषणा MX_UPORT_2_PORT			BIT(0)
-#घोषणा MX_UPORT_4_PORT			BIT(1)
-#घोषणा MX_UPORT_8_PORT			BIT(2)
-#घोषणा MX_UPORT_16_PORT		BIT(3)
+#define MX_UPORT_2_PORT			BIT(0)
+#define MX_UPORT_4_PORT			BIT(1)
+#define MX_UPORT_8_PORT			BIT(2)
+#define MX_UPORT_16_PORT		BIT(3)
 
-/* This काष्ठाure holds all of the local port inक्रमmation */
-काष्ठा mxuport_port अणु
+/* This structure holds all of the local port information */
+struct mxuport_port {
 	u8 mcr_state;		/* Last MCR state */
 	u8 msr_state;		/* Last MSR state */
-	काष्ठा mutex mutex;	/* Protects mcr_state */
+	struct mutex mutex;	/* Protects mcr_state */
 	spinlock_t spinlock;	/* Protects msr_state */
-पूर्ण;
+};
 
 /* Table of devices that work with this driver */
-अटल स्थिर काष्ठा usb_device_id mxuport_idtable[] = अणु
-	अणु USB_DEVICE(MX_USBSERIAL_VID, MX_UPORT1250_PID),
-	  .driver_info = MX_UPORT_2_PORT पूर्ण,
-	अणु USB_DEVICE(MX_USBSERIAL_VID, MX_UPORT1251_PID),
-	  .driver_info = MX_UPORT_2_PORT पूर्ण,
-	अणु USB_DEVICE(MX_USBSERIAL_VID, MX_UPORT1410_PID),
-	  .driver_info = MX_UPORT_4_PORT पूर्ण,
-	अणु USB_DEVICE(MX_USBSERIAL_VID, MX_UPORT1450_PID),
-	  .driver_info = MX_UPORT_4_PORT पूर्ण,
-	अणु USB_DEVICE(MX_USBSERIAL_VID, MX_UPORT1451_PID),
-	  .driver_info = MX_UPORT_4_PORT पूर्ण,
-	अणु USB_DEVICE(MX_USBSERIAL_VID, MX_UPORT1618_PID),
-	  .driver_info = MX_UPORT_8_PORT पूर्ण,
-	अणु USB_DEVICE(MX_USBSERIAL_VID, MX_UPORT1658_PID),
-	  .driver_info = MX_UPORT_8_PORT पूर्ण,
-	अणु USB_DEVICE(MX_USBSERIAL_VID, MX_UPORT1613_PID),
-	  .driver_info = MX_UPORT_16_PORT पूर्ण,
-	अणु USB_DEVICE(MX_USBSERIAL_VID, MX_UPORT1653_PID),
-	  .driver_info = MX_UPORT_16_PORT पूर्ण,
-	अणुपूर्ण			/* Terminating entry */
-पूर्ण;
+static const struct usb_device_id mxuport_idtable[] = {
+	{ USB_DEVICE(MX_USBSERIAL_VID, MX_UPORT1250_PID),
+	  .driver_info = MX_UPORT_2_PORT },
+	{ USB_DEVICE(MX_USBSERIAL_VID, MX_UPORT1251_PID),
+	  .driver_info = MX_UPORT_2_PORT },
+	{ USB_DEVICE(MX_USBSERIAL_VID, MX_UPORT1410_PID),
+	  .driver_info = MX_UPORT_4_PORT },
+	{ USB_DEVICE(MX_USBSERIAL_VID, MX_UPORT1450_PID),
+	  .driver_info = MX_UPORT_4_PORT },
+	{ USB_DEVICE(MX_USBSERIAL_VID, MX_UPORT1451_PID),
+	  .driver_info = MX_UPORT_4_PORT },
+	{ USB_DEVICE(MX_USBSERIAL_VID, MX_UPORT1618_PID),
+	  .driver_info = MX_UPORT_8_PORT },
+	{ USB_DEVICE(MX_USBSERIAL_VID, MX_UPORT1658_PID),
+	  .driver_info = MX_UPORT_8_PORT },
+	{ USB_DEVICE(MX_USBSERIAL_VID, MX_UPORT1613_PID),
+	  .driver_info = MX_UPORT_16_PORT },
+	{ USB_DEVICE(MX_USBSERIAL_VID, MX_UPORT1653_PID),
+	  .driver_info = MX_UPORT_16_PORT },
+	{}			/* Terminating entry */
+};
 
 MODULE_DEVICE_TABLE(usb, mxuport_idtable);
 
@@ -190,13 +189,13 @@ MODULE_DEVICE_TABLE(usb, mxuport_idtable);
  * bytes of data in the message. Return the number of bytes in the
  * buffer.
  */
-अटल पूर्णांक mxuport_prepare_ग_लिखो_buffer(काष्ठा usb_serial_port *port,
-					व्योम *dest, माप_प्रकार size)
-अणु
+static int mxuport_prepare_write_buffer(struct usb_serial_port *port,
+					void *dest, size_t size)
+{
 	u8 *buf = dest;
-	पूर्णांक count;
+	int count;
 
-	count = kfअगरo_out_locked(&port->ग_लिखो_fअगरo, buf + HEADER_SIZE,
+	count = kfifo_out_locked(&port->write_fifo, buf + HEADER_SIZE,
 				 size - HEADER_SIZE,
 				 &port->lock);
 
@@ -206,142 +205,142 @@ MODULE_DEVICE_TABLE(usb, mxuport_idtable);
 	dev_dbg(&port->dev, "%s - size %zd count %d\n", __func__,
 		size, count);
 
-	वापस count + HEADER_SIZE;
-पूर्ण
+	return count + HEADER_SIZE;
+}
 
 /* Read the given buffer in from the control pipe. */
-अटल पूर्णांक mxuport_recv_ctrl_urb(काष्ठा usb_serial *serial,
+static int mxuport_recv_ctrl_urb(struct usb_serial *serial,
 				 u8 request, u16 value, u16 index,
-				 u8 *data, माप_प्रकार size)
-अणु
-	पूर्णांक status;
+				 u8 *data, size_t size)
+{
+	int status;
 
 	status = usb_control_msg(serial->dev,
 				 usb_rcvctrlpipe(serial->dev, 0),
 				 request,
-				 (USB_सूची_IN | USB_TYPE_VENDOR |
+				 (USB_DIR_IN | USB_TYPE_VENDOR |
 				  USB_RECIP_DEVICE), value, index,
 				 data, size,
 				 USB_CTRL_GET_TIMEOUT);
-	अगर (status < 0) अणु
-		dev_err(&serial->पूर्णांकerface->dev,
+	if (status < 0) {
+		dev_err(&serial->interface->dev,
 			"%s - usb_control_msg failed (%d)\n",
 			__func__, status);
-		वापस status;
-	पूर्ण
+		return status;
+	}
 
-	अगर (status != size) अणु
-		dev_err(&serial->पूर्णांकerface->dev,
+	if (status != size) {
+		dev_err(&serial->interface->dev,
 			"%s - short read (%d / %zd)\n",
 			__func__, status, size);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /* Write the given buffer out to the control pipe.  */
-अटल पूर्णांक mxuport_send_ctrl_data_urb(काष्ठा usb_serial *serial,
+static int mxuport_send_ctrl_data_urb(struct usb_serial *serial,
 				      u8 request,
 				      u16 value, u16 index,
-				      u8 *data, माप_प्रकार size)
-अणु
-	पूर्णांक status;
+				      u8 *data, size_t size)
+{
+	int status;
 
 	status = usb_control_msg(serial->dev,
 				 usb_sndctrlpipe(serial->dev, 0),
 				 request,
-				 (USB_सूची_OUT | USB_TYPE_VENDOR |
+				 (USB_DIR_OUT | USB_TYPE_VENDOR |
 				  USB_RECIP_DEVICE), value, index,
 				 data, size,
 				 USB_CTRL_SET_TIMEOUT);
-	अगर (status < 0) अणु
-		dev_err(&serial->पूर्णांकerface->dev,
+	if (status < 0) {
+		dev_err(&serial->interface->dev,
 			"%s - usb_control_msg failed (%d)\n",
 			__func__, status);
-		वापस status;
-	पूर्ण
+		return status;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Send a venकरोr request without any data */
-अटल पूर्णांक mxuport_send_ctrl_urb(काष्ठा usb_serial *serial,
+/* Send a vendor request without any data */
+static int mxuport_send_ctrl_urb(struct usb_serial *serial,
 				 u8 request, u16 value, u16 index)
-अणु
-	वापस mxuport_send_ctrl_data_urb(serial, request, value, index,
-					  शून्य, 0);
-पूर्ण
+{
+	return mxuport_send_ctrl_data_urb(serial, request, value, index,
+					  NULL, 0);
+}
 
 /*
  * mxuport_throttle - throttle function of driver
  *
  * This function is called by the tty driver when it wants to stop the
- * data being पढ़ो from the port. Since all the data comes over one
- * bulk in endpoपूर्णांक, we cannot stop submitting urbs by setting
- * port->throttle. Instead tell the device to stop sending us data क्रम
+ * data being read from the port. Since all the data comes over one
+ * bulk in endpoint, we cannot stop submitting urbs by setting
+ * port->throttle. Instead tell the device to stop sending us data for
  * the port.
  */
-अटल व्योम mxuport_throttle(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा usb_serial_port *port = tty->driver_data;
-	काष्ठा usb_serial *serial = port->serial;
+static void mxuport_throttle(struct tty_struct *tty)
+{
+	struct usb_serial_port *port = tty->driver_data;
+	struct usb_serial *serial = port->serial;
 
 	dev_dbg(&port->dev, "%s\n", __func__);
 
 	mxuport_send_ctrl_urb(serial, RQ_VENDOR_SET_RX_HOST_EN,
 			      0, port->port_number);
-पूर्ण
+}
 
 /*
  * mxuport_unthrottle - unthrottle function of driver
  *
  * This function is called by the tty driver when it wants to resume
- * the data being पढ़ो from the port. Tell the device it can resume
+ * the data being read from the port. Tell the device it can resume
  * sending us received data from the port.
  */
-अटल व्योम mxuport_unthrottle(काष्ठा tty_काष्ठा *tty)
-अणु
+static void mxuport_unthrottle(struct tty_struct *tty)
+{
 
-	काष्ठा usb_serial_port *port = tty->driver_data;
-	काष्ठा usb_serial *serial = port->serial;
+	struct usb_serial_port *port = tty->driver_data;
+	struct usb_serial *serial = port->serial;
 
 	dev_dbg(&port->dev, "%s\n", __func__);
 
 	mxuport_send_ctrl_urb(serial, RQ_VENDOR_SET_RX_HOST_EN,
 			      1, port->port_number);
-पूर्ण
+}
 
 /*
- * Processes one chunk of data received क्रम a port.  Mostly a copy of
- * usb_serial_generic_process_पढ़ो_urb().
+ * Processes one chunk of data received for a port.  Mostly a copy of
+ * usb_serial_generic_process_read_urb().
  */
-अटल व्योम mxuport_process_पढ़ो_urb_data(काष्ठा usb_serial_port *port,
-					  अक्षर *data, पूर्णांक size)
-अणु
-	पूर्णांक i;
+static void mxuport_process_read_urb_data(struct usb_serial_port *port,
+					  char *data, int size)
+{
+	int i;
 
-	अगर (port->sysrq) अणु
-		क्रम (i = 0; i < size; i++, data++) अणु
-			अगर (!usb_serial_handle_sysrq_अक्षर(port, *data))
-				tty_insert_flip_अक्षर(&port->port, *data,
+	if (port->sysrq) {
+		for (i = 0; i < size; i++, data++) {
+			if (!usb_serial_handle_sysrq_char(port, *data))
+				tty_insert_flip_char(&port->port, *data,
 						     TTY_NORMAL);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		tty_insert_flip_string(&port->port, data, size);
-	पूर्ण
+	}
 	tty_flip_buffer_push(&port->port);
-पूर्ण
+}
 
-अटल व्योम mxuport_msr_event(काष्ठा usb_serial_port *port, u8 buf[4])
-अणु
-	काष्ठा mxuport_port *mxport = usb_get_serial_port_data(port);
+static void mxuport_msr_event(struct usb_serial_port *port, u8 buf[4])
+{
+	struct mxuport_port *mxport = usb_get_serial_port_data(port);
 	u8 rcv_msr_hold = buf[2] & 0xF0;
 	u16 rcv_msr_event = get_unaligned_be16(buf);
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
-	अगर (rcv_msr_event == 0)
-		वापस;
+	if (rcv_msr_event == 0)
+		return;
 
 	/* Update MSR status */
 	spin_lock_irqsave(&mxport->spinlock, flags);
@@ -349,393 +348,393 @@ MODULE_DEVICE_TABLE(usb, mxuport_idtable);
 	dev_dbg(&port->dev, "%s - current MSR status = 0x%x\n",
 		__func__, mxport->msr_state);
 
-	अगर (rcv_msr_hold & UART_MSR_CTS) अणु
+	if (rcv_msr_hold & UART_MSR_CTS) {
 		mxport->msr_state |= UART_MSR_CTS;
 		dev_dbg(&port->dev, "%s - CTS high\n", __func__);
-	पूर्ण अन्यथा अणु
+	} else {
 		mxport->msr_state &= ~UART_MSR_CTS;
 		dev_dbg(&port->dev, "%s - CTS low\n", __func__);
-	पूर्ण
+	}
 
-	अगर (rcv_msr_hold & UART_MSR_DSR) अणु
+	if (rcv_msr_hold & UART_MSR_DSR) {
 		mxport->msr_state |= UART_MSR_DSR;
 		dev_dbg(&port->dev, "%s - DSR high\n", __func__);
-	पूर्ण अन्यथा अणु
+	} else {
 		mxport->msr_state &= ~UART_MSR_DSR;
 		dev_dbg(&port->dev, "%s - DSR low\n", __func__);
-	पूर्ण
+	}
 
-	अगर (rcv_msr_hold & UART_MSR_DCD) अणु
+	if (rcv_msr_hold & UART_MSR_DCD) {
 		mxport->msr_state |= UART_MSR_DCD;
 		dev_dbg(&port->dev, "%s - DCD high\n", __func__);
-	पूर्ण अन्यथा अणु
+	} else {
 		mxport->msr_state &= ~UART_MSR_DCD;
 		dev_dbg(&port->dev, "%s - DCD low\n", __func__);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&mxport->spinlock, flags);
 
-	अगर (rcv_msr_event &
-	    (SERIAL_EV_CTS | SERIAL_EV_DSR | SERIAL_EV_RLSD)) अणु
+	if (rcv_msr_event &
+	    (SERIAL_EV_CTS | SERIAL_EV_DSR | SERIAL_EV_RLSD)) {
 
-		अगर (rcv_msr_event & SERIAL_EV_CTS) अणु
+		if (rcv_msr_event & SERIAL_EV_CTS) {
 			port->icount.cts++;
 			dev_dbg(&port->dev, "%s - CTS change\n", __func__);
-		पूर्ण
+		}
 
-		अगर (rcv_msr_event & SERIAL_EV_DSR) अणु
+		if (rcv_msr_event & SERIAL_EV_DSR) {
 			port->icount.dsr++;
 			dev_dbg(&port->dev, "%s - DSR change\n", __func__);
-		पूर्ण
+		}
 
-		अगर (rcv_msr_event & SERIAL_EV_RLSD) अणु
+		if (rcv_msr_event & SERIAL_EV_RLSD) {
 			port->icount.dcd++;
 			dev_dbg(&port->dev, "%s - DCD change\n", __func__);
-		पूर्ण
-		wake_up_पूर्णांकerruptible(&port->port.delta_msr_रुको);
-	पूर्ण
-पूर्ण
+		}
+		wake_up_interruptible(&port->port.delta_msr_wait);
+	}
+}
 
-अटल व्योम mxuport_lsr_event(काष्ठा usb_serial_port *port, u8 buf[4])
-अणु
+static void mxuport_lsr_event(struct usb_serial_port *port, u8 buf[4])
+{
 	u8 lsr_event = buf[2];
 
-	अगर (lsr_event & UART_LSR_BI) अणु
+	if (lsr_event & UART_LSR_BI) {
 		port->icount.brk++;
 		dev_dbg(&port->dev, "%s - break error\n", __func__);
-	पूर्ण
+	}
 
-	अगर (lsr_event & UART_LSR_FE) अणु
+	if (lsr_event & UART_LSR_FE) {
 		port->icount.frame++;
 		dev_dbg(&port->dev, "%s - frame error\n", __func__);
-	पूर्ण
+	}
 
-	अगर (lsr_event & UART_LSR_PE) अणु
+	if (lsr_event & UART_LSR_PE) {
 		port->icount.parity++;
 		dev_dbg(&port->dev, "%s - parity error\n", __func__);
-	पूर्ण
+	}
 
-	अगर (lsr_event & UART_LSR_OE) अणु
+	if (lsr_event & UART_LSR_OE) {
 		port->icount.overrun++;
 		dev_dbg(&port->dev, "%s - overrun error\n", __func__);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * When something पूर्णांकeresting happens, modem control lines XON/XOFF
+ * When something interesting happens, modem control lines XON/XOFF
  * etc, the device sends an event. Process these events.
  */
-अटल व्योम mxuport_process_पढ़ो_urb_event(काष्ठा usb_serial_port *port,
+static void mxuport_process_read_urb_event(struct usb_serial_port *port,
 					   u8 buf[4], u32 event)
-अणु
+{
 	dev_dbg(&port->dev, "%s - receive event : %04x\n", __func__, event);
 
-	चयन (event) अणु
-	हाल UPORT_EVENT_SEND_NEXT:
+	switch (event) {
+	case UPORT_EVENT_SEND_NEXT:
 		/*
 		 * Sent as part of the flow control on device buffers.
 		 * Not currently used.
 		 */
-		अवरोध;
-	हाल UPORT_EVENT_MSR:
+		break;
+	case UPORT_EVENT_MSR:
 		mxuport_msr_event(port, buf);
-		अवरोध;
-	हाल UPORT_EVENT_LSR:
+		break;
+	case UPORT_EVENT_LSR:
 		mxuport_lsr_event(port, buf);
-		अवरोध;
-	हाल UPORT_EVENT_MCR:
+		break;
+	case UPORT_EVENT_MCR:
 		/*
 		 * Event to indicate a change in XON/XOFF from the
-		 * peer.  Currently not used. We just जारी
-		 * sending the device data and it will buffer it अगर
-		 * needed. This event could be used क्रम flow control
+		 * peer.  Currently not used. We just continue
+		 * sending the device data and it will buffer it if
+		 * needed. This event could be used for flow control
 		 * between the host and the device.
 		 */
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_dbg(&port->dev, "Unexpected event\n");
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
 /*
- * One URB can contain data क्रम multiple ports. Demultiplex the data,
- * checking the port exists, is खोलोed and the message is valid.
+ * One URB can contain data for multiple ports. Demultiplex the data,
+ * checking the port exists, is opened and the message is valid.
  */
-अटल व्योम mxuport_process_पढ़ो_urb_demux_data(काष्ठा urb *urb)
-अणु
-	काष्ठा usb_serial_port *port = urb->context;
-	काष्ठा usb_serial *serial = port->serial;
+static void mxuport_process_read_urb_demux_data(struct urb *urb)
+{
+	struct usb_serial_port *port = urb->context;
+	struct usb_serial *serial = port->serial;
 	u8 *data = urb->transfer_buffer;
 	u8 *end = data + urb->actual_length;
-	काष्ठा usb_serial_port *demux_port;
+	struct usb_serial_port *demux_port;
 	u8 *ch;
 	u16 rcv_port;
 	u16 rcv_len;
 
-	जबतक (data < end) अणु
-		अगर (data + HEADER_SIZE > end) अणु
+	while (data < end) {
+		if (data + HEADER_SIZE > end) {
 			dev_warn(&port->dev, "%s - message with short header\n",
 				 __func__);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		rcv_port = get_unaligned_be16(data);
-		अगर (rcv_port >= serial->num_ports) अणु
+		if (rcv_port >= serial->num_ports) {
 			dev_warn(&port->dev, "%s - message for invalid port\n",
 				 __func__);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		demux_port = serial->port[rcv_port];
 		rcv_len = get_unaligned_be16(data + 2);
-		अगर (!rcv_len || data + HEADER_SIZE + rcv_len > end) अणु
+		if (!rcv_len || data + HEADER_SIZE + rcv_len > end) {
 			dev_warn(&port->dev, "%s - short data\n", __func__);
-			वापस;
-		पूर्ण
+			return;
+		}
 
-		अगर (tty_port_initialized(&demux_port->port)) अणु
+		if (tty_port_initialized(&demux_port->port)) {
 			ch = data + HEADER_SIZE;
-			mxuport_process_पढ़ो_urb_data(demux_port, ch, rcv_len);
-		पूर्ण अन्यथा अणु
+			mxuport_process_read_urb_data(demux_port, ch, rcv_len);
+		} else {
 			dev_dbg(&demux_port->dev, "%s - data for closed port\n",
 				__func__);
-		पूर्ण
+		}
 		data += HEADER_SIZE + rcv_len;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * One URB can contain events क्रम multiple ports. Demultiplex the event,
- * checking the port exists, and is खोलोed.
+ * One URB can contain events for multiple ports. Demultiplex the event,
+ * checking the port exists, and is opened.
  */
-अटल व्योम mxuport_process_पढ़ो_urb_demux_event(काष्ठा urb *urb)
-अणु
-	काष्ठा usb_serial_port *port = urb->context;
-	काष्ठा usb_serial *serial = port->serial;
+static void mxuport_process_read_urb_demux_event(struct urb *urb)
+{
+	struct usb_serial_port *port = urb->context;
+	struct usb_serial *serial = port->serial;
 	u8 *data = urb->transfer_buffer;
 	u8 *end = data + urb->actual_length;
-	काष्ठा usb_serial_port *demux_port;
+	struct usb_serial_port *demux_port;
 	u8 *ch;
 	u16 rcv_port;
 	u16 rcv_event;
 
-	जबतक (data < end) अणु
-		अगर (data + EVENT_LENGTH > end) अणु
+	while (data < end) {
+		if (data + EVENT_LENGTH > end) {
 			dev_warn(&port->dev, "%s - message with short event\n",
 				 __func__);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		rcv_port = get_unaligned_be16(data);
-		अगर (rcv_port >= serial->num_ports) अणु
+		if (rcv_port >= serial->num_ports) {
 			dev_warn(&port->dev, "%s - message for invalid port\n",
 				 __func__);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		demux_port = serial->port[rcv_port];
-		अगर (tty_port_initialized(&demux_port->port)) अणु
+		if (tty_port_initialized(&demux_port->port)) {
 			ch = data + HEADER_SIZE;
 			rcv_event = get_unaligned_be16(data + 2);
-			mxuport_process_पढ़ो_urb_event(demux_port, ch,
+			mxuport_process_read_urb_event(demux_port, ch,
 						       rcv_event);
-		पूर्ण अन्यथा अणु
+		} else {
 			dev_dbg(&demux_port->dev,
 				"%s - event for closed port\n", __func__);
-		पूर्ण
+		}
 		data += EVENT_LENGTH;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * This is called when we have received data on the bulk in
- * endpoपूर्णांक. Depending on which port it was received on, it can
+ * endpoint. Depending on which port it was received on, it can
  * contain serial data or events.
  */
-अटल व्योम mxuport_process_पढ़ो_urb(काष्ठा urb *urb)
-अणु
-	काष्ठा usb_serial_port *port = urb->context;
-	काष्ठा usb_serial *serial = port->serial;
+static void mxuport_process_read_urb(struct urb *urb)
+{
+	struct usb_serial_port *port = urb->context;
+	struct usb_serial *serial = port->serial;
 
-	अगर (port == serial->port[0])
-		mxuport_process_पढ़ो_urb_demux_data(urb);
+	if (port == serial->port[0])
+		mxuport_process_read_urb_demux_data(urb);
 
-	अगर (port == serial->port[1])
-		mxuport_process_पढ़ो_urb_demux_event(urb);
-पूर्ण
+	if (port == serial->port[1])
+		mxuport_process_read_urb_demux_event(urb);
+}
 
 /*
  * Ask the device how many bytes it has queued to be sent out. If
- * there are none, वापस true.
+ * there are none, return true.
  */
-अटल bool mxuport_tx_empty(काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा usb_serial *serial = port->serial;
+static bool mxuport_tx_empty(struct usb_serial_port *port)
+{
+	struct usb_serial *serial = port->serial;
 	bool is_empty = true;
 	u32 txlen;
 	u8 *len_buf;
-	पूर्णांक err;
+	int err;
 
 	len_buf = kzalloc(4, GFP_KERNEL);
-	अगर (!len_buf)
-		जाओ out;
+	if (!len_buf)
+		goto out;
 
 	err = mxuport_recv_ctrl_urb(serial, RQ_VENDOR_GET_OUTQUEUE, 0,
 				    port->port_number, len_buf, 4);
-	अगर (err < 0)
-		जाओ out;
+	if (err < 0)
+		goto out;
 
 	txlen = get_unaligned_be32(len_buf);
 	dev_dbg(&port->dev, "%s - tx len = %u\n", __func__, txlen);
 
-	अगर (txlen != 0)
+	if (txlen != 0)
 		is_empty = false;
 
 out:
-	kमुक्त(len_buf);
-	वापस is_empty;
-पूर्ण
+	kfree(len_buf);
+	return is_empty;
+}
 
-अटल पूर्णांक mxuport_set_mcr(काष्ठा usb_serial_port *port, u8 mcr_state)
-अणु
-	काष्ठा usb_serial *serial = port->serial;
-	पूर्णांक err;
+static int mxuport_set_mcr(struct usb_serial_port *port, u8 mcr_state)
+{
+	struct usb_serial *serial = port->serial;
+	int err;
 
 	dev_dbg(&port->dev, "%s - %02x\n", __func__, mcr_state);
 
 	err = mxuport_send_ctrl_urb(serial, RQ_VENDOR_SET_MCR,
 				    mcr_state, port->port_number);
-	अगर (err)
+	if (err)
 		dev_err(&port->dev, "%s - failed to change MCR\n", __func__);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक mxuport_set_dtr(काष्ठा usb_serial_port *port, पूर्णांक on)
-अणु
-	काष्ठा mxuport_port *mxport = usb_get_serial_port_data(port);
-	काष्ठा usb_serial *serial = port->serial;
-	पूर्णांक err;
+static int mxuport_set_dtr(struct usb_serial_port *port, int on)
+{
+	struct mxuport_port *mxport = usb_get_serial_port_data(port);
+	struct usb_serial *serial = port->serial;
+	int err;
 
 	mutex_lock(&mxport->mutex);
 
 	err = mxuport_send_ctrl_urb(serial, RQ_VENDOR_SET_DTR,
 				    !!on, port->port_number);
-	अगर (!err) अणु
-		अगर (on)
+	if (!err) {
+		if (on)
 			mxport->mcr_state |= UART_MCR_DTR;
-		अन्यथा
+		else
 			mxport->mcr_state &= ~UART_MCR_DTR;
-	पूर्ण
+	}
 
 	mutex_unlock(&mxport->mutex);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक mxuport_set_rts(काष्ठा usb_serial_port *port, u8 state)
-अणु
-	काष्ठा mxuport_port *mxport = usb_get_serial_port_data(port);
-	काष्ठा usb_serial *serial = port->serial;
-	पूर्णांक err;
+static int mxuport_set_rts(struct usb_serial_port *port, u8 state)
+{
+	struct mxuport_port *mxport = usb_get_serial_port_data(port);
+	struct usb_serial *serial = port->serial;
+	int err;
 	u8 mcr_state;
 
 	mutex_lock(&mxport->mutex);
 	mcr_state = mxport->mcr_state;
 
-	चयन (state) अणु
-	हाल MX_RTS_DISABLE:
+	switch (state) {
+	case MX_RTS_DISABLE:
 		mcr_state &= ~UART_MCR_RTS;
-		अवरोध;
-	हाल MX_RTS_ENABLE:
+		break;
+	case MX_RTS_ENABLE:
 		mcr_state |= UART_MCR_RTS;
-		अवरोध;
-	हाल MX_RTS_HW:
+		break;
+	case MX_RTS_HW:
 		/*
-		 * Do not update mxport->mcr_state when करोing hardware
+		 * Do not update mxport->mcr_state when doing hardware
 		 * flow control.
 		 */
-		अवरोध;
-	शेष:
+		break;
+	default:
 		/*
 		 * Should not happen, but somebody might try passing
 		 * MX_RTS_NO_CHANGE, which is not valid.
 		 */
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	err = mxuport_send_ctrl_urb(serial, RQ_VENDOR_SET_RTS,
 				    state, port->port_number);
-	अगर (!err)
+	if (!err)
 		mxport->mcr_state = mcr_state;
 
 out:
 	mutex_unlock(&mxport->mutex);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम mxuport_dtr_rts(काष्ठा usb_serial_port *port, पूर्णांक on)
-अणु
-	काष्ठा mxuport_port *mxport = usb_get_serial_port_data(port);
+static void mxuport_dtr_rts(struct usb_serial_port *port, int on)
+{
+	struct mxuport_port *mxport = usb_get_serial_port_data(port);
 	u8 mcr_state;
-	पूर्णांक err;
+	int err;
 
 	mutex_lock(&mxport->mutex);
 	mcr_state = mxport->mcr_state;
 
-	अगर (on)
+	if (on)
 		mcr_state |= (UART_MCR_RTS | UART_MCR_DTR);
-	अन्यथा
+	else
 		mcr_state &= ~(UART_MCR_RTS | UART_MCR_DTR);
 
 	err = mxuport_set_mcr(port, mcr_state);
-	अगर (!err)
+	if (!err)
 		mxport->mcr_state = mcr_state;
 
 	mutex_unlock(&mxport->mutex);
-पूर्ण
+}
 
-अटल पूर्णांक mxuport_tiocmset(काष्ठा tty_काष्ठा *tty, अचिन्हित पूर्णांक set,
-			    अचिन्हित पूर्णांक clear)
-अणु
-	काष्ठा usb_serial_port *port = tty->driver_data;
-	काष्ठा mxuport_port *mxport = usb_get_serial_port_data(port);
-	पूर्णांक err;
+static int mxuport_tiocmset(struct tty_struct *tty, unsigned int set,
+			    unsigned int clear)
+{
+	struct usb_serial_port *port = tty->driver_data;
+	struct mxuport_port *mxport = usb_get_serial_port_data(port);
+	int err;
 	u8 mcr_state;
 
 	mutex_lock(&mxport->mutex);
 	mcr_state = mxport->mcr_state;
 
-	अगर (set & TIOCM_RTS)
+	if (set & TIOCM_RTS)
 		mcr_state |= UART_MCR_RTS;
 
-	अगर (set & TIOCM_DTR)
+	if (set & TIOCM_DTR)
 		mcr_state |= UART_MCR_DTR;
 
-	अगर (clear & TIOCM_RTS)
+	if (clear & TIOCM_RTS)
 		mcr_state &= ~UART_MCR_RTS;
 
-	अगर (clear & TIOCM_DTR)
+	if (clear & TIOCM_DTR)
 		mcr_state &= ~UART_MCR_DTR;
 
 	err = mxuport_set_mcr(port, mcr_state);
-	अगर (!err)
+	if (!err)
 		mxport->mcr_state = mcr_state;
 
 	mutex_unlock(&mxport->mutex);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक mxuport_tiocmget(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा mxuport_port *mxport;
-	काष्ठा usb_serial_port *port = tty->driver_data;
-	अचिन्हित पूर्णांक result;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक msr;
-	अचिन्हित पूर्णांक mcr;
+static int mxuport_tiocmget(struct tty_struct *tty)
+{
+	struct mxuport_port *mxport;
+	struct usb_serial_port *port = tty->driver_data;
+	unsigned int result;
+	unsigned long flags;
+	unsigned int msr;
+	unsigned int mcr;
 
 	mxport = usb_get_serial_port_data(port);
 
@@ -757,27 +756,27 @@ out:
 
 	dev_dbg(&port->dev, "%s - 0x%04x\n", __func__, result);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक mxuport_set_termios_flow(काष्ठा tty_काष्ठा *tty,
-				    काष्ठा ktermios *old_termios,
-				    काष्ठा usb_serial_port *port,
-				    काष्ठा usb_serial *serial)
-अणु
+static int mxuport_set_termios_flow(struct tty_struct *tty,
+				    struct ktermios *old_termios,
+				    struct usb_serial_port *port,
+				    struct usb_serial *serial)
+{
 	u8 xon = START_CHAR(tty);
 	u8 xoff = STOP_CHAR(tty);
-	पूर्णांक enable;
-	पूर्णांक err;
+	int enable;
+	int err;
 	u8 *buf;
 	u8 rts;
 
-	buf = kदो_स्मृति(2, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	buf = kmalloc(2, GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
 
 	/* S/W flow control settings */
-	अगर (I_IXOFF(tty) || I_IXON(tty)) अणु
+	if (I_IXOFF(tty) || I_IXON(tty)) {
 		enable = 1;
 		buf[0] = xon;
 		buf[1] = xoff;
@@ -785,115 +784,115 @@ out:
 		err = mxuport_send_ctrl_data_urb(serial, RQ_VENDOR_SET_CHARS,
 						 0, port->port_number,
 						 buf, 2);
-		अगर (err)
-			जाओ out;
+		if (err)
+			goto out;
 
 		dev_dbg(&port->dev, "%s - XON = 0x%02x, XOFF = 0x%02x\n",
 			__func__, xon, xoff);
-	पूर्ण अन्यथा अणु
+	} else {
 		enable = 0;
-	पूर्ण
+	}
 
 	err = mxuport_send_ctrl_urb(serial, RQ_VENDOR_SET_XONXOFF,
 				    enable, port->port_number);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	rts = MX_RTS_NO_CHANGE;
 
 	/* H/W flow control settings */
-	अगर (!old_termios ||
-	    C_CRTSCTS(tty) != (old_termios->c_cflag & CRTSCTS)) अणु
-		अगर (C_CRTSCTS(tty))
+	if (!old_termios ||
+	    C_CRTSCTS(tty) != (old_termios->c_cflag & CRTSCTS)) {
+		if (C_CRTSCTS(tty))
 			rts = MX_RTS_HW;
-		अन्यथा
+		else
 			rts = MX_RTS_ENABLE;
-	पूर्ण
+	}
 
-	अगर (C_BAUD(tty)) अणु
-		अगर (old_termios && (old_termios->c_cflag & CBAUD) == B0) अणु
+	if (C_BAUD(tty)) {
+		if (old_termios && (old_termios->c_cflag & CBAUD) == B0) {
 			/* Raise DTR and RTS */
-			अगर (C_CRTSCTS(tty))
+			if (C_CRTSCTS(tty))
 				rts = MX_RTS_HW;
-			अन्यथा
+			else
 				rts = MX_RTS_ENABLE;
 			mxuport_set_dtr(port, 1);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		/* Drop DTR and RTS */
 		rts = MX_RTS_DISABLE;
 		mxuport_set_dtr(port, 0);
-	पूर्ण
+	}
 
-	अगर (rts != MX_RTS_NO_CHANGE)
+	if (rts != MX_RTS_NO_CHANGE)
 		err = mxuport_set_rts(port, rts);
 
 out:
-	kमुक्त(buf);
-	वापस err;
-पूर्ण
+	kfree(buf);
+	return err;
+}
 
-अटल व्योम mxuport_set_termios(काष्ठा tty_काष्ठा *tty,
-				काष्ठा usb_serial_port *port,
-				काष्ठा ktermios *old_termios)
-अणु
-	काष्ठा usb_serial *serial = port->serial;
+static void mxuport_set_termios(struct tty_struct *tty,
+				struct usb_serial_port *port,
+				struct ktermios *old_termios)
+{
+	struct usb_serial *serial = port->serial;
 	u8 *buf;
 	u8 data_bits;
 	u8 stop_bits;
 	u8 parity;
-	पूर्णांक baud;
-	पूर्णांक err;
+	int baud;
+	int err;
 
-	अगर (old_termios &&
+	if (old_termios &&
 	    !tty_termios_hw_change(&tty->termios, old_termios) &&
-	    tty->termios.c_अगरlag == old_termios->c_अगरlag) अणु
+	    tty->termios.c_iflag == old_termios->c_iflag) {
 		dev_dbg(&port->dev, "%s - nothing to change\n", __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	buf = kदो_स्मृति(4, GFP_KERNEL);
-	अगर (!buf)
-		वापस;
+	buf = kmalloc(4, GFP_KERNEL);
+	if (!buf)
+		return;
 
 	/* Set data bit of termios */
-	चयन (C_CSIZE(tty)) अणु
-	हाल CS5:
+	switch (C_CSIZE(tty)) {
+	case CS5:
 		data_bits = MX_WORDLENGTH_5;
-		अवरोध;
-	हाल CS6:
+		break;
+	case CS6:
 		data_bits = MX_WORDLENGTH_6;
-		अवरोध;
-	हाल CS7:
+		break;
+	case CS7:
 		data_bits = MX_WORDLENGTH_7;
-		अवरोध;
-	हाल CS8:
-	शेष:
+		break;
+	case CS8:
+	default:
 		data_bits = MX_WORDLENGTH_8;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	/* Set parity of termios */
-	अगर (C_PARENB(tty)) अणु
-		अगर (C_CMSPAR(tty)) अणु
-			अगर (C_PARODD(tty))
+	if (C_PARENB(tty)) {
+		if (C_CMSPAR(tty)) {
+			if (C_PARODD(tty))
 				parity = MX_PARITY_MARK;
-			अन्यथा
+			else
 				parity = MX_PARITY_SPACE;
-		पूर्ण अन्यथा अणु
-			अगर (C_PARODD(tty))
+		} else {
+			if (C_PARODD(tty))
 				parity = MX_PARITY_ODD;
-			अन्यथा
+			else
 				parity = MX_PARITY_EVEN;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		parity = MX_PARITY_NONE;
-	पूर्ण
+	}
 
 	/* Set stop bit of termios */
-	अगर (C_CSTOPB(tty))
+	if (C_CSTOPB(tty))
 		stop_bits = MX_STOP_BITS_2;
-	अन्यथा
+	else
 		stop_bits = MX_STOP_BITS_1;
 
 	buf[0] = data_bits;
@@ -903,15 +902,15 @@ out:
 
 	err = mxuport_send_ctrl_data_urb(serial, RQ_VENDOR_SET_LINE,
 					 0, port->port_number, buf, 4);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	err = mxuport_set_termios_flow(tty, old_termios, port, serial);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	baud = tty_get_baud_rate(tty);
-	अगर (!baud)
+	if (!baud)
 		baud = 9600;
 
 	/* Note: Little Endian */
@@ -920,8 +919,8 @@ out:
 	err = mxuport_send_ctrl_data_urb(serial, RQ_VENDOR_SET_BAUD,
 					 0, port->port_number,
 					 buf, 4);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	dev_dbg(&port->dev, "baud_rate	: %d\n", baud);
 	dev_dbg(&port->dev, "data_bits	: %d\n", data_bits);
@@ -929,359 +928,359 @@ out:
 	dev_dbg(&port->dev, "stop_bits	: %d\n", stop_bits);
 
 out:
-	kमुक्त(buf);
-पूर्ण
+	kfree(buf);
+}
 
 /*
  * Determine how many ports this device has dynamically.  It will be
- * called after the probe() callback is called, but beक्रमe attach().
+ * called after the probe() callback is called, but before attach().
  */
-अटल पूर्णांक mxuport_calc_num_ports(काष्ठा usb_serial *serial,
-					काष्ठा usb_serial_endpoपूर्णांकs *epds)
-अणु
-	अचिन्हित दीर्घ features = (अचिन्हित दीर्घ)usb_get_serial_data(serial);
-	पूर्णांक num_ports;
-	पूर्णांक i;
+static int mxuport_calc_num_ports(struct usb_serial *serial,
+					struct usb_serial_endpoints *epds)
+{
+	unsigned long features = (unsigned long)usb_get_serial_data(serial);
+	int num_ports;
+	int i;
 
-	अगर (features & MX_UPORT_2_PORT) अणु
+	if (features & MX_UPORT_2_PORT) {
 		num_ports = 2;
-	पूर्ण अन्यथा अगर (features & MX_UPORT_4_PORT) अणु
+	} else if (features & MX_UPORT_4_PORT) {
 		num_ports = 4;
-	पूर्ण अन्यथा अगर (features & MX_UPORT_8_PORT) अणु
+	} else if (features & MX_UPORT_8_PORT) {
 		num_ports = 8;
-	पूर्ण अन्यथा अगर (features & MX_UPORT_16_PORT) अणु
+	} else if (features & MX_UPORT_16_PORT) {
 		num_ports = 16;
-	पूर्ण अन्यथा अणु
-		dev_warn(&serial->पूर्णांकerface->dev,
+	} else {
+		dev_warn(&serial->interface->dev,
 				"unknown device, assuming two ports\n");
 		num_ports = 2;
-	पूर्ण
+	}
 
 	/*
-	 * Setup bulk-out endpoपूर्णांक multiplexing. All ports share the same
-	 * bulk-out endpoपूर्णांक.
+	 * Setup bulk-out endpoint multiplexing. All ports share the same
+	 * bulk-out endpoint.
 	 */
 	BUILD_BUG_ON(ARRAY_SIZE(epds->bulk_out) < 16);
 
-	क्रम (i = 1; i < num_ports; ++i)
+	for (i = 1; i < num_ports; ++i)
 		epds->bulk_out[i] = epds->bulk_out[0];
 
 	epds->num_bulk_out = num_ports;
 
-	वापस num_ports;
-पूर्ण
+	return num_ports;
+}
 
 /* Get the version of the firmware currently running. */
-अटल पूर्णांक mxuport_get_fw_version(काष्ठा usb_serial *serial, u32 *version)
-अणु
+static int mxuport_get_fw_version(struct usb_serial *serial, u32 *version)
+{
 	u8 *ver_buf;
-	पूर्णांक err;
+	int err;
 
 	ver_buf = kzalloc(4, GFP_KERNEL);
-	अगर (!ver_buf)
-		वापस -ENOMEM;
+	if (!ver_buf)
+		return -ENOMEM;
 
 	/* Get firmware version from SDRAM */
 	err = mxuport_recv_ctrl_urb(serial, RQ_VENDOR_GET_VERSION, 0, 0,
 				    ver_buf, 4);
-	अगर (err != 4) अणु
+	if (err != 4) {
 		err = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	*version = (ver_buf[0] << 16) | (ver_buf[1] << 8) | ver_buf[2];
 	err = 0;
 out:
-	kमुक्त(ver_buf);
-	वापस err;
-पूर्ण
+	kfree(ver_buf);
+	return err;
+}
 
-/* Given a firmware blob, करोwnload it to the device. */
-अटल पूर्णांक mxuport_करोwnload_fw(काष्ठा usb_serial *serial,
-			       स्थिर काष्ठा firmware *fw_p)
-अणु
+/* Given a firmware blob, download it to the device. */
+static int mxuport_download_fw(struct usb_serial *serial,
+			       const struct firmware *fw_p)
+{
 	u8 *fw_buf;
-	माप_प्रकार txlen;
-	माप_प्रकार fwidx;
-	पूर्णांक err;
+	size_t txlen;
+	size_t fwidx;
+	int err;
 
-	fw_buf = kदो_स्मृति(DOWN_BLOCK_SIZE, GFP_KERNEL);
-	अगर (!fw_buf)
-		वापस -ENOMEM;
+	fw_buf = kmalloc(DOWN_BLOCK_SIZE, GFP_KERNEL);
+	if (!fw_buf)
+		return -ENOMEM;
 
-	dev_dbg(&serial->पूर्णांकerface->dev, "Starting firmware download...\n");
+	dev_dbg(&serial->interface->dev, "Starting firmware download...\n");
 	err = mxuport_send_ctrl_urb(serial, RQ_VENDOR_START_FW_DOWN, 0, 0);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	fwidx = 0;
-	करो अणु
-		txlen = min_t(माप_प्रकार, (fw_p->size - fwidx), DOWN_BLOCK_SIZE);
+	do {
+		txlen = min_t(size_t, (fw_p->size - fwidx), DOWN_BLOCK_SIZE);
 
-		स_नकल(fw_buf, &fw_p->data[fwidx], txlen);
+		memcpy(fw_buf, &fw_p->data[fwidx], txlen);
 		err = mxuport_send_ctrl_data_urb(serial, RQ_VENDOR_FW_DATA,
 						 0, 0, fw_buf, txlen);
-		अगर (err) अणु
+		if (err) {
 			mxuport_send_ctrl_urb(serial, RQ_VENDOR_STOP_FW_DOWN,
 					      0, 0);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		fwidx += txlen;
 		usleep_range(1000, 2000);
 
-	पूर्ण जबतक (fwidx < fw_p->size);
+	} while (fwidx < fw_p->size);
 
 	msleep(1000);
 	err = mxuport_send_ctrl_urb(serial, RQ_VENDOR_STOP_FW_DOWN, 0, 0);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	msleep(1000);
 	err = mxuport_send_ctrl_urb(serial, RQ_VENDOR_QUERY_FW_READY, 0, 0);
 
 out:
-	kमुक्त(fw_buf);
-	वापस err;
-पूर्ण
+	kfree(fw_buf);
+	return err;
+}
 
-अटल पूर्णांक mxuport_probe(काष्ठा usb_serial *serial,
-			 स्थिर काष्ठा usb_device_id *id)
-अणु
+static int mxuport_probe(struct usb_serial *serial,
+			 const struct usb_device_id *id)
+{
 	u16 productid = le16_to_cpu(serial->dev->descriptor.idProduct);
-	स्थिर काष्ठा firmware *fw_p = शून्य;
+	const struct firmware *fw_p = NULL;
 	u32 version;
-	पूर्णांक local_ver;
-	अक्षर buf[32];
-	पूर्णांक err;
+	int local_ver;
+	char buf[32];
+	int err;
 
 	/* Load our firmware */
 	err = mxuport_send_ctrl_urb(serial, RQ_VENDOR_QUERY_FW_CONFIG, 0, 0);
-	अगर (err) अणु
+	if (err) {
 		mxuport_send_ctrl_urb(serial, RQ_VENDOR_RESET_DEVICE, 0, 0);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	err = mxuport_get_fw_version(serial, &version);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	dev_dbg(&serial->पूर्णांकerface->dev, "Device firmware version v%x.%x.%x\n",
+	dev_dbg(&serial->interface->dev, "Device firmware version v%x.%x.%x\n",
 		(version & 0xff0000) >> 16,
 		(version & 0xff00) >> 8,
 		(version & 0xff));
 
-	snम_लिखो(buf, माप(buf) - 1, "moxa/moxa-%04x.fw", productid);
+	snprintf(buf, sizeof(buf) - 1, "moxa/moxa-%04x.fw", productid);
 
-	err = request_firmware(&fw_p, buf, &serial->पूर्णांकerface->dev);
-	अगर (err) अणु
-		dev_warn(&serial->पूर्णांकerface->dev, "Firmware %s not found\n",
+	err = request_firmware(&fw_p, buf, &serial->interface->dev);
+	if (err) {
+		dev_warn(&serial->interface->dev, "Firmware %s not found\n",
 			 buf);
 
-		/* Use the firmware alपढ़ोy in the device */
+		/* Use the firmware already in the device */
 		err = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		local_ver = ((fw_p->data[VER_ADDR_1] << 16) |
 			     (fw_p->data[VER_ADDR_2] << 8) |
 			     fw_p->data[VER_ADDR_3]);
-		dev_dbg(&serial->पूर्णांकerface->dev,
+		dev_dbg(&serial->interface->dev,
 			"Available firmware version v%x.%x.%x\n",
 			fw_p->data[VER_ADDR_1], fw_p->data[VER_ADDR_2],
 			fw_p->data[VER_ADDR_3]);
-		अगर (local_ver > version) अणु
-			err = mxuport_करोwnload_fw(serial, fw_p);
-			अगर (err)
-				जाओ out;
+		if (local_ver > version) {
+			err = mxuport_download_fw(serial, fw_p);
+			if (err)
+				goto out;
 			err  = mxuport_get_fw_version(serial, &version);
-			अगर (err < 0)
-				जाओ out;
-		पूर्ण
-	पूर्ण
+			if (err < 0)
+				goto out;
+		}
+	}
 
-	dev_info(&serial->पूर्णांकerface->dev,
+	dev_info(&serial->interface->dev,
 		 "Using device firmware version v%x.%x.%x\n",
 		 (version & 0xff0000) >> 16,
 		 (version & 0xff00) >> 8,
 		 (version & 0xff));
 
 	/*
-	 * Contains the features of this hardware. Store away क्रम
+	 * Contains the features of this hardware. Store away for
 	 * later use, eg, number of ports.
 	 */
-	usb_set_serial_data(serial, (व्योम *)id->driver_info);
+	usb_set_serial_data(serial, (void *)id->driver_info);
 out:
-	अगर (fw_p)
+	if (fw_p)
 		release_firmware(fw_p);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 
-अटल पूर्णांक mxuport_port_probe(काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा usb_serial *serial = port->serial;
-	काष्ठा mxuport_port *mxport;
-	पूर्णांक err;
+static int mxuport_port_probe(struct usb_serial_port *port)
+{
+	struct usb_serial *serial = port->serial;
+	struct mxuport_port *mxport;
+	int err;
 
-	mxport = devm_kzalloc(&port->dev, माप(काष्ठा mxuport_port),
+	mxport = devm_kzalloc(&port->dev, sizeof(struct mxuport_port),
 			      GFP_KERNEL);
-	अगर (!mxport)
-		वापस -ENOMEM;
+	if (!mxport)
+		return -ENOMEM;
 
 	mutex_init(&mxport->mutex);
 	spin_lock_init(&mxport->spinlock);
 
-	/* Set the port निजी data */
+	/* Set the port private data */
 	usb_set_serial_port_data(port, mxport);
 
 	/* Set FIFO (Enable) */
 	err = mxuport_send_ctrl_urb(serial, RQ_VENDOR_SET_FIFO_DISABLE,
 				    0, port->port_number);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	/* Set transmission mode (Hi-Perक्रमmance) */
+	/* Set transmission mode (Hi-Performance) */
 	err = mxuport_send_ctrl_urb(serial, RQ_VENDOR_SET_HIGH_PERFOR,
 				    0, port->port_number);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	/* Set पूर्णांकerface (RS-232) */
-	वापस mxuport_send_ctrl_urb(serial, RQ_VENDOR_SET_INTERFACE,
+	/* Set interface (RS-232) */
+	return mxuport_send_ctrl_urb(serial, RQ_VENDOR_SET_INTERFACE,
 				     MX_INT_RS232,
 				     port->port_number);
-पूर्ण
+}
 
-अटल पूर्णांक mxuport_attach(काष्ठा usb_serial *serial)
-अणु
-	काष्ठा usb_serial_port *port0 = serial->port[0];
-	काष्ठा usb_serial_port *port1 = serial->port[1];
-	पूर्णांक err;
+static int mxuport_attach(struct usb_serial *serial)
+{
+	struct usb_serial_port *port0 = serial->port[0];
+	struct usb_serial_port *port1 = serial->port[1];
+	int err;
 
 	/*
 	 * All data from the ports is received on the first bulk in
-	 * endpoपूर्णांक, with a multiplex header. The second bulk in is
-	 * used क्रम events.
+	 * endpoint, with a multiplex header. The second bulk in is
+	 * used for events.
 	 *
-	 * Start to पढ़ो from the device.
+	 * Start to read from the device.
 	 */
-	err = usb_serial_generic_submit_पढ़ो_urbs(port0, GFP_KERNEL);
-	अगर (err)
-		वापस err;
+	err = usb_serial_generic_submit_read_urbs(port0, GFP_KERNEL);
+	if (err)
+		return err;
 
-	err = usb_serial_generic_submit_पढ़ो_urbs(port1, GFP_KERNEL);
-	अगर (err) अणु
-		usb_serial_generic_बंद(port0);
-		वापस err;
-	पूर्ण
+	err = usb_serial_generic_submit_read_urbs(port1, GFP_KERNEL);
+	if (err) {
+		usb_serial_generic_close(port0);
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mxuport_release(काष्ठा usb_serial *serial)
-अणु
-	काष्ठा usb_serial_port *port0 = serial->port[0];
-	काष्ठा usb_serial_port *port1 = serial->port[1];
+static void mxuport_release(struct usb_serial *serial)
+{
+	struct usb_serial_port *port0 = serial->port[0];
+	struct usb_serial_port *port1 = serial->port[1];
 
-	usb_serial_generic_बंद(port1);
-	usb_serial_generic_बंद(port0);
-पूर्ण
+	usb_serial_generic_close(port1);
+	usb_serial_generic_close(port0);
+}
 
-अटल पूर्णांक mxuport_खोलो(काष्ठा tty_काष्ठा *tty, काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा mxuport_port *mxport = usb_get_serial_port_data(port);
-	काष्ठा usb_serial *serial = port->serial;
-	पूर्णांक err;
+static int mxuport_open(struct tty_struct *tty, struct usb_serial_port *port)
+{
+	struct mxuport_port *mxport = usb_get_serial_port_data(port);
+	struct usb_serial *serial = port->serial;
+	int err;
 
 	/* Set receive host (enable) */
 	err = mxuport_send_ctrl_urb(serial, RQ_VENDOR_SET_RX_HOST_EN,
 				    1, port->port_number);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = mxuport_send_ctrl_urb(serial, RQ_VENDOR_SET_OPEN,
 				    1, port->port_number);
-	अगर (err) अणु
+	if (err) {
 		mxuport_send_ctrl_urb(serial, RQ_VENDOR_SET_RX_HOST_EN,
 				      0, port->port_number);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	/* Initial port termios */
-	अगर (tty)
-		mxuport_set_termios(tty, port, शून्य);
+	if (tty)
+		mxuport_set_termios(tty, port, NULL);
 
 	/*
 	 * TODO: use RQ_VENDOR_GET_MSR, once we know what it
-	 * वापसs.
+	 * returns.
 	 */
 	mxport->msr_state = 0;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम mxuport_बंद(काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा usb_serial *serial = port->serial;
+static void mxuport_close(struct usb_serial_port *port)
+{
+	struct usb_serial *serial = port->serial;
 
 	mxuport_send_ctrl_urb(serial, RQ_VENDOR_SET_OPEN, 0,
 			      port->port_number);
 
 	mxuport_send_ctrl_urb(serial, RQ_VENDOR_SET_RX_HOST_EN, 0,
 			      port->port_number);
-पूर्ण
+}
 
-/* Send a अवरोध to the port. */
-अटल व्योम mxuport_अवरोध_ctl(काष्ठा tty_काष्ठा *tty, पूर्णांक अवरोध_state)
-अणु
-	काष्ठा usb_serial_port *port = tty->driver_data;
-	काष्ठा usb_serial *serial = port->serial;
-	पूर्णांक enable;
+/* Send a break to the port. */
+static void mxuport_break_ctl(struct tty_struct *tty, int break_state)
+{
+	struct usb_serial_port *port = tty->driver_data;
+	struct usb_serial *serial = port->serial;
+	int enable;
 
-	अगर (अवरोध_state == -1) अणु
+	if (break_state == -1) {
 		enable = 1;
 		dev_dbg(&port->dev, "%s - sending break\n", __func__);
-	पूर्ण अन्यथा अणु
+	} else {
 		enable = 0;
 		dev_dbg(&port->dev, "%s - clearing break\n", __func__);
-	पूर्ण
+	}
 
 	mxuport_send_ctrl_urb(serial, RQ_VENDOR_SET_BREAK,
 			      enable, port->port_number);
-पूर्ण
+}
 
-अटल पूर्णांक mxuport_resume(काष्ठा usb_serial *serial)
-अणु
-	काष्ठा usb_serial_port *port;
-	पूर्णांक c = 0;
-	पूर्णांक i;
-	पूर्णांक r;
+static int mxuport_resume(struct usb_serial *serial)
+{
+	struct usb_serial_port *port;
+	int c = 0;
+	int i;
+	int r;
 
-	क्रम (i = 0; i < 2; i++) अणु
+	for (i = 0; i < 2; i++) {
 		port = serial->port[i];
 
-		r = usb_serial_generic_submit_पढ़ो_urbs(port, GFP_NOIO);
-		अगर (r < 0)
+		r = usb_serial_generic_submit_read_urbs(port, GFP_NOIO);
+		if (r < 0)
 			c++;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < serial->num_ports; i++) अणु
+	for (i = 0; i < serial->num_ports; i++) {
 		port = serial->port[i];
-		अगर (!tty_port_initialized(&port->port))
-			जारी;
+		if (!tty_port_initialized(&port->port))
+			continue;
 
-		r = usb_serial_generic_ग_लिखो_start(port, GFP_NOIO);
-		अगर (r < 0)
+		r = usb_serial_generic_write_start(port, GFP_NOIO);
+		if (r < 0)
 			c++;
-	पूर्ण
+	}
 
-	वापस c ? -EIO : 0;
-पूर्ण
+	return c ? -EIO : 0;
+}
 
-अटल काष्ठा usb_serial_driver mxuport_device = अणु
-	.driver = अणु
+static struct usb_serial_driver mxuport_device = {
+	.driver = {
 		.owner =	THIS_MODULE,
 		.name =		"mxuport",
-	पूर्ण,
+	},
 	.description		= "MOXA UPort",
 	.id_table		= mxuport_idtable,
 	.num_bulk_in		= 2,
@@ -1291,26 +1290,26 @@ out:
 	.attach			= mxuport_attach,
 	.release		= mxuport_release,
 	.calc_num_ports		= mxuport_calc_num_ports,
-	.खोलो			= mxuport_खोलो,
-	.बंद			= mxuport_बंद,
+	.open			= mxuport_open,
+	.close			= mxuport_close,
 	.set_termios		= mxuport_set_termios,
-	.अवरोध_ctl		= mxuport_अवरोध_ctl,
+	.break_ctl		= mxuport_break_ctl,
 	.tx_empty		= mxuport_tx_empty,
-	.tiocmiरुको		= usb_serial_generic_tiocmiरुको,
+	.tiocmiwait		= usb_serial_generic_tiocmiwait,
 	.get_icount		= usb_serial_generic_get_icount,
 	.throttle		= mxuport_throttle,
 	.unthrottle		= mxuport_unthrottle,
 	.tiocmget		= mxuport_tiocmget,
 	.tiocmset		= mxuport_tiocmset,
 	.dtr_rts		= mxuport_dtr_rts,
-	.process_पढ़ो_urb	= mxuport_process_पढ़ो_urb,
-	.prepare_ग_लिखो_buffer	= mxuport_prepare_ग_लिखो_buffer,
+	.process_read_urb	= mxuport_process_read_urb,
+	.prepare_write_buffer	= mxuport_prepare_write_buffer,
 	.resume			= mxuport_resume,
-पूर्ण;
+};
 
-अटल काष्ठा usb_serial_driver *स्थिर serial_drivers[] = अणु
-	&mxuport_device, शून्य
-पूर्ण;
+static struct usb_serial_driver *const serial_drivers[] = {
+	&mxuport_device, NULL
+};
 
 module_usb_serial_driver(serial_drivers, mxuport_idtable);
 

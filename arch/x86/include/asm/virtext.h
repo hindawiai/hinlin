@@ -1,83 +1,82 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
-/* CPU भवization extensions handling
+/* SPDX-License-Identifier: GPL-2.0-only */
+/* CPU virtualization extensions handling
  *
- * This should carry the code क्रम handling CPU भवization extensions
+ * This should carry the code for handling CPU virtualization extensions
  * that needs to live in the kernel core.
  *
- * Author: Eduarकरो Habkost <ehabkost@redhat.com>
+ * Author: Eduardo Habkost <ehabkost@redhat.com>
  *
  * Copyright (C) 2008, Red Hat Inc.
  *
  * Contains code from KVM, Copyright (C) 2006 Qumranet, Inc.
  */
-#अगर_अघोषित _ASM_X86_VIRTEX_H
-#घोषणा _ASM_X86_VIRTEX_H
+#ifndef _ASM_X86_VIRTEX_H
+#define _ASM_X86_VIRTEX_H
 
-#समावेश <यंत्र/processor.h>
+#include <asm/processor.h>
 
-#समावेश <यंत्र/vmx.h>
-#समावेश <यंत्र/svm.h>
-#समावेश <यंत्र/tlbflush.h>
+#include <asm/vmx.h>
+#include <asm/svm.h>
+#include <asm/tlbflush.h>
 
 /*
  * VMX functions:
  */
 
-अटल अंतरभूत पूर्णांक cpu_has_vmx(व्योम)
-अणु
-	अचिन्हित दीर्घ ecx = cpuid_ecx(1);
-	वापस test_bit(5, &ecx); /* CPUID.1:ECX.VMX[bit 5] -> VT */
-पूर्ण
+static inline int cpu_has_vmx(void)
+{
+	unsigned long ecx = cpuid_ecx(1);
+	return test_bit(5, &ecx); /* CPUID.1:ECX.VMX[bit 5] -> VT */
+}
 
 
 /**
  * cpu_vmxoff() - Disable VMX on the current CPU
  *
- * Disable VMX and clear CR4.VMXE (even अगर VMXOFF faults)
+ * Disable VMX and clear CR4.VMXE (even if VMXOFF faults)
  *
- * Note, VMXOFF causes a #UD अगर the CPU is !post-VMXON, but it's impossible to
+ * Note, VMXOFF causes a #UD if the CPU is !post-VMXON, but it's impossible to
  * atomically track post-VMXON state, e.g. this may be called in NMI context.
  * Eat all faults as all other faults on VMXOFF faults are mode related, i.e.
  * faults are guaranteed to be due to the !post-VMXON check unless the CPU is
  * magically in RM, VM86, compat mode, or at CPL>0.
  */
-अटल अंतरभूत पूर्णांक cpu_vmxoff(व्योम)
-अणु
-	यंत्र_अस्थिर_जाओ("1: vmxoff\n\t"
+static inline int cpu_vmxoff(void)
+{
+	asm_volatile_goto("1: vmxoff\n\t"
 			  _ASM_EXTABLE(1b, %l[fault])
 			  ::: "cc", "memory" : fault);
 
 	cr4_clear_bits(X86_CR4_VMXE);
-	वापस 0;
+	return 0;
 
 fault:
 	cr4_clear_bits(X86_CR4_VMXE);
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
-अटल अंतरभूत पूर्णांक cpu_vmx_enabled(व्योम)
-अणु
-	वापस __पढ़ो_cr4() & X86_CR4_VMXE;
-पूर्ण
+static inline int cpu_vmx_enabled(void)
+{
+	return __read_cr4() & X86_CR4_VMXE;
+}
 
-/** Disable VMX अगर it is enabled on the current CPU
+/** Disable VMX if it is enabled on the current CPU
  *
- * You shouldn't call this अगर cpu_has_vmx() वापसs 0.
+ * You shouldn't call this if cpu_has_vmx() returns 0.
  */
-अटल अंतरभूत व्योम __cpu_emergency_vmxoff(व्योम)
-अणु
-	अगर (cpu_vmx_enabled())
+static inline void __cpu_emergency_vmxoff(void)
+{
+	if (cpu_vmx_enabled())
 		cpu_vmxoff();
-पूर्ण
+}
 
-/** Disable VMX अगर it is supported and enabled on the current CPU
+/** Disable VMX if it is supported and enabled on the current CPU
  */
-अटल अंतरभूत व्योम cpu_emergency_vmxoff(व्योम)
-अणु
-	अगर (cpu_has_vmx())
+static inline void cpu_emergency_vmxoff(void)
+{
+	if (cpu_has_vmx())
 		__cpu_emergency_vmxoff();
-पूर्ण
+}
 
 
 
@@ -86,56 +85,56 @@ fault:
  * SVM functions:
  */
 
-/** Check अगर the CPU has SVM support
+/** Check if the CPU has SVM support
  *
  * You can use the 'msg' arg to get a message describing the problem,
- * अगर the function वापसs zero. Simply pass शून्य अगर you are not पूर्णांकerested
- * on the messages; gcc should take care of not generating code क्रम
- * the messages on this हाल.
+ * if the function returns zero. Simply pass NULL if you are not interested
+ * on the messages; gcc should take care of not generating code for
+ * the messages on this case.
  */
-अटल अंतरभूत पूर्णांक cpu_has_svm(स्थिर अक्षर **msg)
-अणु
-	अगर (boot_cpu_data.x86_venकरोr != X86_VENDOR_AMD &&
-	    boot_cpu_data.x86_venकरोr != X86_VENDOR_HYGON) अणु
-		अगर (msg)
+static inline int cpu_has_svm(const char **msg)
+{
+	if (boot_cpu_data.x86_vendor != X86_VENDOR_AMD &&
+	    boot_cpu_data.x86_vendor != X86_VENDOR_HYGON) {
+		if (msg)
 			*msg = "not amd or hygon";
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (boot_cpu_data.extended_cpuid_level < SVM_CPUID_FUNC) अणु
-		अगर (msg)
+	if (boot_cpu_data.extended_cpuid_level < SVM_CPUID_FUNC) {
+		if (msg)
 			*msg = "can't execute cpuid_8000000a";
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (!boot_cpu_has(X86_FEATURE_SVM)) अणु
-		अगर (msg)
+	if (!boot_cpu_has(X86_FEATURE_SVM)) {
+		if (msg)
 			*msg = "svm not available";
-		वापस 0;
-	पूर्ण
-	वापस 1;
-पूर्ण
+		return 0;
+	}
+	return 1;
+}
 
 
 /** Disable SVM on the current CPU
  *
- * You should call this only अगर cpu_has_svm() वापसed true.
+ * You should call this only if cpu_has_svm() returned true.
  */
-अटल अंतरभूत व्योम cpu_svm_disable(व्योम)
-अणु
-	uपूर्णांक64_t efer;
+static inline void cpu_svm_disable(void)
+{
+	uint64_t efer;
 
 	wrmsrl(MSR_VM_HSAVE_PA, 0);
 	rdmsrl(MSR_EFER, efer);
 	wrmsrl(MSR_EFER, efer & ~EFER_SVME);
-पूर्ण
+}
 
-/** Makes sure SVM is disabled, अगर it is supported on the CPU
+/** Makes sure SVM is disabled, if it is supported on the CPU
  */
-अटल अंतरभूत व्योम cpu_emergency_svm_disable(व्योम)
-अणु
-	अगर (cpu_has_svm(शून्य))
+static inline void cpu_emergency_svm_disable(void)
+{
+	if (cpu_has_svm(NULL))
 		cpu_svm_disable();
-पूर्ण
+}
 
-#पूर्ण_अगर /* _ASM_X86_VIRTEX_H */
+#endif /* _ASM_X86_VIRTEX_H */

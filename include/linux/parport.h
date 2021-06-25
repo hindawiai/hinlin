@@ -1,133 +1,132 @@
-<शैली गुरु>
 /*
- * Any part of this program may be used in करोcuments licensed under
+ * Any part of this program may be used in documents licensed under
  * the GNU Free Documentation License, Version 1.1 or any later version
  * published by the Free Software Foundation.
  */
-#अगर_अघोषित _PARPORT_H_
-#घोषणा _PARPORT_H_
+#ifndef _PARPORT_H_
+#define _PARPORT_H_
 
 
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/irqवापस.h>
-#समावेश <linux/semaphore.h>
-#समावेश <linux/device.h>
-#समावेश <यंत्र/ptrace.h>
-#समावेश <uapi/linux/parport.h>
+#include <linux/jiffies.h>
+#include <linux/proc_fs.h>
+#include <linux/spinlock.h>
+#include <linux/wait.h>
+#include <linux/irqreturn.h>
+#include <linux/semaphore.h>
+#include <linux/device.h>
+#include <asm/ptrace.h>
+#include <uapi/linux/parport.h>
 
 /* Define this later. */
-काष्ठा parport;
-काष्ठा pardevice;
+struct parport;
+struct pardevice;
 
-काष्ठा pc_parport_state अणु
-	अचिन्हित पूर्णांक ctr;
-	अचिन्हित पूर्णांक ecr;
-पूर्ण;
+struct pc_parport_state {
+	unsigned int ctr;
+	unsigned int ecr;
+};
 
-काष्ठा ax_parport_state अणु
-	अचिन्हित पूर्णांक ctr;
-	अचिन्हित पूर्णांक ecr;
-	अचिन्हित पूर्णांक dcsr;
-पूर्ण;
+struct ax_parport_state {
+	unsigned int ctr;
+	unsigned int ecr;
+	unsigned int dcsr;
+};
 
 /* used by both parport_amiga and parport_mfc3 */
-काष्ठा amiga_parport_state अणु
-       अचिन्हित अक्षर data;     /* ciaa.prb */
-       अचिन्हित अक्षर datadir;  /* ciaa.ddrb */
-       अचिन्हित अक्षर status;   /* ciab.pra & 7 */
-       अचिन्हित अक्षर statusdir;/* ciab.ddrb & 7 */
-पूर्ण;
+struct amiga_parport_state {
+       unsigned char data;     /* ciaa.prb */
+       unsigned char datadir;  /* ciaa.ddrb */
+       unsigned char status;   /* ciab.pra & 7 */
+       unsigned char statusdir;/* ciab.ddrb & 7 */
+};
 
-काष्ठा ax88796_parport_state अणु
-	अचिन्हित अक्षर cpr;
-पूर्ण;
+struct ax88796_parport_state {
+	unsigned char cpr;
+};
 
-काष्ठा ip32_parport_state अणु
-	अचिन्हित पूर्णांक dcr;
-	अचिन्हित पूर्णांक ecr;
-पूर्ण;
+struct ip32_parport_state {
+	unsigned int dcr;
+	unsigned int ecr;
+};
 
-काष्ठा parport_state अणु
-	जोड़ अणु
-		काष्ठा pc_parport_state pc;
+struct parport_state {
+	union {
+		struct pc_parport_state pc;
 		/* ARC has no state. */
-		काष्ठा ax_parport_state ax;
-		काष्ठा amiga_parport_state amiga;
-		काष्ठा ax88796_parport_state ax88796;
+		struct ax_parport_state ax;
+		struct amiga_parport_state amiga;
+		struct ax88796_parport_state ax88796;
 		/* Atari has not state. */
-		काष्ठा ip32_parport_state ip32;
-		व्योम *misc; 
-	पूर्ण u;
-पूर्ण;
+		struct ip32_parport_state ip32;
+		void *misc; 
+	} u;
+};
 
-काष्ठा parport_operations अणु
-	/* IBM PC-style भव रेजिस्टरs. */
-	व्योम (*ग_लिखो_data)(काष्ठा parport *, अचिन्हित अक्षर);
-	अचिन्हित अक्षर (*पढ़ो_data)(काष्ठा parport *);
+struct parport_operations {
+	/* IBM PC-style virtual registers. */
+	void (*write_data)(struct parport *, unsigned char);
+	unsigned char (*read_data)(struct parport *);
 
-	व्योम (*ग_लिखो_control)(काष्ठा parport *, अचिन्हित अक्षर);
-	अचिन्हित अक्षर (*पढ़ो_control)(काष्ठा parport *);
-	अचिन्हित अक्षर (*frob_control)(काष्ठा parport *, अचिन्हित अक्षर mask,
-				      अचिन्हित अक्षर val);
+	void (*write_control)(struct parport *, unsigned char);
+	unsigned char (*read_control)(struct parport *);
+	unsigned char (*frob_control)(struct parport *, unsigned char mask,
+				      unsigned char val);
 
-	अचिन्हित अक्षर (*पढ़ो_status)(काष्ठा parport *);
+	unsigned char (*read_status)(struct parport *);
 
 	/* IRQs. */
-	व्योम (*enable_irq)(काष्ठा parport *);
-	व्योम (*disable_irq)(काष्ठा parport *);
+	void (*enable_irq)(struct parport *);
+	void (*disable_irq)(struct parport *);
 
 	/* Data direction. */
-	व्योम (*data_क्रमward) (काष्ठा parport *);
-	व्योम (*data_reverse) (काष्ठा parport *);
+	void (*data_forward) (struct parport *);
+	void (*data_reverse) (struct parport *);
 
 	/* For core parport code. */
-	व्योम (*init_state)(काष्ठा pardevice *, काष्ठा parport_state *);
-	व्योम (*save_state)(काष्ठा parport *, काष्ठा parport_state *);
-	व्योम (*restore_state)(काष्ठा parport *, काष्ठा parport_state *);
+	void (*init_state)(struct pardevice *, struct parport_state *);
+	void (*save_state)(struct parport *, struct parport_state *);
+	void (*restore_state)(struct parport *, struct parport_state *);
 
-	/* Block पढ़ो/ग_लिखो */
-	माप_प्रकार (*epp_ग_लिखो_data) (काष्ठा parport *port, स्थिर व्योम *buf,
-				  माप_प्रकार len, पूर्णांक flags);
-	माप_प्रकार (*epp_पढ़ो_data) (काष्ठा parport *port, व्योम *buf, माप_प्रकार len,
-				 पूर्णांक flags);
-	माप_प्रकार (*epp_ग_लिखो_addr) (काष्ठा parport *port, स्थिर व्योम *buf,
-				  माप_प्रकार len, पूर्णांक flags);
-	माप_प्रकार (*epp_पढ़ो_addr) (काष्ठा parport *port, व्योम *buf, माप_प्रकार len,
-				 पूर्णांक flags);
+	/* Block read/write */
+	size_t (*epp_write_data) (struct parport *port, const void *buf,
+				  size_t len, int flags);
+	size_t (*epp_read_data) (struct parport *port, void *buf, size_t len,
+				 int flags);
+	size_t (*epp_write_addr) (struct parport *port, const void *buf,
+				  size_t len, int flags);
+	size_t (*epp_read_addr) (struct parport *port, void *buf, size_t len,
+				 int flags);
 
-	माप_प्रकार (*ecp_ग_लिखो_data) (काष्ठा parport *port, स्थिर व्योम *buf,
-				  माप_प्रकार len, पूर्णांक flags);
-	माप_प्रकार (*ecp_पढ़ो_data) (काष्ठा parport *port, व्योम *buf, माप_प्रकार len,
-				 पूर्णांक flags);
-	माप_प्रकार (*ecp_ग_लिखो_addr) (काष्ठा parport *port, स्थिर व्योम *buf,
-				  माप_प्रकार len, पूर्णांक flags);
+	size_t (*ecp_write_data) (struct parport *port, const void *buf,
+				  size_t len, int flags);
+	size_t (*ecp_read_data) (struct parport *port, void *buf, size_t len,
+				 int flags);
+	size_t (*ecp_write_addr) (struct parport *port, const void *buf,
+				  size_t len, int flags);
 
-	माप_प्रकार (*compat_ग_लिखो_data) (काष्ठा parport *port, स्थिर व्योम *buf,
-				     माप_प्रकार len, पूर्णांक flags);
-	माप_प्रकार (*nibble_पढ़ो_data) (काष्ठा parport *port, व्योम *buf,
-				    माप_प्रकार len, पूर्णांक flags);
-	माप_प्रकार (*byte_पढ़ो_data) (काष्ठा parport *port, व्योम *buf,
-				  माप_प्रकार len, पूर्णांक flags);
-	काष्ठा module *owner;
-पूर्ण;
+	size_t (*compat_write_data) (struct parport *port, const void *buf,
+				     size_t len, int flags);
+	size_t (*nibble_read_data) (struct parport *port, void *buf,
+				    size_t len, int flags);
+	size_t (*byte_read_data) (struct parport *port, void *buf,
+				  size_t len, int flags);
+	struct module *owner;
+};
 
-काष्ठा parport_device_info अणु
+struct parport_device_info {
 	parport_device_class class;
-	स्थिर अक्षर *class_name;
-	स्थिर अक्षर *mfr;
-	स्थिर अक्षर *model;
-	स्थिर अक्षर *cmdset;
-	स्थिर अक्षर *description;
-पूर्ण;
+	const char *class_name;
+	const char *mfr;
+	const char *model;
+	const char *cmdset;
+	const char *description;
+};
 
 /* Each device can have two callback functions:
  *  1) a preemption function, called by the resource manager to request
  *     that the driver relinquish control of the port.  The driver should
- *     वापस zero अगर it agrees to release the port, and nonzero अगर it 
- *     refuses.  Do not call parport_release() - the kernel will करो this
+ *     return zero if it agrees to release the port, and nonzero if it 
+ *     refuses.  Do not call parport_release() - the kernel will do this
  *     implicitly.
  *
  *  2) a wake-up function, called by the resource manager to tell drivers
@@ -136,37 +135,37 @@
  */
 
 /* A parallel port device */
-काष्ठा pardevice अणु
-	स्थिर अक्षर *name;
-	काष्ठा parport *port;
-	पूर्णांक daisy;
-	पूर्णांक (*preempt)(व्योम *);
-	व्योम (*wakeup)(व्योम *);
-	व्योम *निजी;
-	व्योम (*irq_func)(व्योम *);
-	अचिन्हित पूर्णांक flags;
-	काष्ठा pardevice *next;
-	काष्ठा pardevice *prev;
-	काष्ठा device dev;
+struct pardevice {
+	const char *name;
+	struct parport *port;
+	int daisy;
+	int (*preempt)(void *);
+	void (*wakeup)(void *);
+	void *private;
+	void (*irq_func)(void *);
+	unsigned int flags;
+	struct pardevice *next;
+	struct pardevice *prev;
+	struct device dev;
 	bool devmodel;
-	काष्ठा parport_state *state;     /* saved status over preemption */
-	रुको_queue_head_t रुको_q;
-	अचिन्हित दीर्घ पूर्णांक समय;
-	अचिन्हित दीर्घ पूर्णांक बारlice;
-	अस्थिर दीर्घ पूर्णांक समयout;
-	अचिन्हित दीर्घ रुकोing;		 /* दीर्घ req'd क्रम set_bit --RR */
-	काष्ठा pardevice *रुकोprev;
-	काष्ठा pardevice *रुकोnext;
-	व्योम * sysctl_table;
-पूर्ण;
+	struct parport_state *state;     /* saved status over preemption */
+	wait_queue_head_t wait_q;
+	unsigned long int time;
+	unsigned long int timeslice;
+	volatile long int timeout;
+	unsigned long waiting;		 /* long req'd for set_bit --RR */
+	struct pardevice *waitprev;
+	struct pardevice *waitnext;
+	void * sysctl_table;
+};
 
-#घोषणा to_pardevice(n) container_of(n, काष्ठा pardevice, dev)
+#define to_pardevice(n) container_of(n, struct pardevice, dev)
 
-/* IEEE1284 inक्रमmation */
+/* IEEE1284 information */
 
 /* IEEE1284 phases. These are exposed to userland through ppdev IOCTL
- * PP[GS]ETPHASE, so करो not change existing values. */
-क्रमागत ieee1284_phase अणु
+ * PP[GS]ETPHASE, so do not change existing values. */
+enum ieee1284_phase {
 	IEEE1284_PH_FWD_DATA,
 	IEEE1284_PH_FWD_IDLE,
 	IEEE1284_PH_TERMINATE,
@@ -178,379 +177,379 @@
 	IEEE1284_PH_ECP_SETUP,
 	IEEE1284_PH_ECP_FWD_TO_REV,
 	IEEE1284_PH_ECP_REV_TO_FWD,
-	IEEE1284_PH_ECP_सूची_UNKNOWN,
-पूर्ण;
-काष्ठा ieee1284_info अणु
-	पूर्णांक mode;
-	अस्थिर क्रमागत ieee1284_phase phase;
-	काष्ठा semaphore irq;
-पूर्ण;
+	IEEE1284_PH_ECP_DIR_UNKNOWN,
+};
+struct ieee1284_info {
+	int mode;
+	volatile enum ieee1284_phase phase;
+	struct semaphore irq;
+};
 
 /* A parallel port */
-काष्ठा parport अणु
-	अचिन्हित दीर्घ base;	/* base address */
-	अचिन्हित दीर्घ base_hi;  /* base address (hi - ECR) */
-	अचिन्हित पूर्णांक size;	/* IO extent */
-	स्थिर अक्षर *name;
-	अचिन्हित पूर्णांक modes;
-	पूर्णांक irq;		/* पूर्णांकerrupt (or -1 क्रम none) */
-	पूर्णांक dma;
-	पूर्णांक muxport;		/* which muxport (अगर any) this is */
-	पूर्णांक portnum;		/* which physical parallel port (not mux) */
-	काष्ठा device *dev;	/* Physical device associated with IO/DMA.
-				 * This may unक्रमtulately be null अगर the
+struct parport {
+	unsigned long base;	/* base address */
+	unsigned long base_hi;  /* base address (hi - ECR) */
+	unsigned int size;	/* IO extent */
+	const char *name;
+	unsigned int modes;
+	int irq;		/* interrupt (or -1 for none) */
+	int dma;
+	int muxport;		/* which muxport (if any) this is */
+	int portnum;		/* which physical parallel port (not mux) */
+	struct device *dev;	/* Physical device associated with IO/DMA.
+				 * This may unfortulately be null if the
 				 * port has a legacy driver.
 				 */
-	काष्ठा device bus_dev;	/* to link with the bus */
-	काष्ठा parport *physport;
-				/* If this is a non-शेष mux
+	struct device bus_dev;	/* to link with the bus */
+	struct parport *physport;
+				/* If this is a non-default mux
 				   parport, i.e. we're a clone of a real
-				   physical port, this is a poपूर्णांकer to that
-				   port. The locking is only करोne in the
+				   physical port, this is a pointer to that
+				   port. The locking is only done in the
 				   real port.  For a clone port, the
-				   following काष्ठाure members are
+				   following structure members are
 				   meaningless: devices, cad, muxsel,
-				   रुकोhead, रुकोtail, flags, pdir,
+				   waithead, waittail, flags, pdir,
 				   dev, ieee1284, *_lock.
 
-				   It this is a शेष mux parport, or
-				   there is no mux involved, this poपूर्णांकs to
+				   It this is a default mux parport, or
+				   there is no mux involved, this points to
 				   ourself. */
 
-	काष्ठा pardevice *devices;
-	काष्ठा pardevice *cad;	/* port owner */
-	पूर्णांक daisy;		/* currently selected daisy addr */
-	पूर्णांक muxsel;		/* currently selected mux port */
+	struct pardevice *devices;
+	struct pardevice *cad;	/* port owner */
+	int daisy;		/* currently selected daisy addr */
+	int muxsel;		/* currently selected mux port */
 
-	काष्ठा pardevice *रुकोhead;
-	काष्ठा pardevice *रुकोtail;
+	struct pardevice *waithead;
+	struct pardevice *waittail;
 
-	काष्ठा list_head list;
-	काष्ठा समयr_list समयr;
-	अचिन्हित पूर्णांक flags;
+	struct list_head list;
+	struct timer_list timer;
+	unsigned int flags;
 
-	व्योम *sysctl_table;
-	काष्ठा parport_device_info probe_info[5]; /* 0-3 + non-IEEE1284.3 */
-	काष्ठा ieee1284_info ieee1284;
+	void *sysctl_table;
+	struct parport_device_info probe_info[5]; /* 0-3 + non-IEEE1284.3 */
+	struct ieee1284_info ieee1284;
 
-	काष्ठा parport_operations *ops;
-	व्योम *निजी_data;     /* क्रम lowlevel driver */
+	struct parport_operations *ops;
+	void *private_data;     /* for lowlevel driver */
 
-	पूर्णांक number;		/* port index - the `n' in `parportn' */
+	int number;		/* port index - the `n' in `parportn' */
 	spinlock_t pardevice_lock;
-	spinlock_t रुकोlist_lock;
+	spinlock_t waitlist_lock;
 	rwlock_t cad_lock;
 
-	पूर्णांक spपूर्णांकime;
+	int spintime;
 	atomic_t ref_count;
 
-	अचिन्हित दीर्घ devflags;
-#घोषणा PARPORT_DEVPROC_REGISTERED	0
-	काष्ठा pardevice *proc_device;	/* Currently रेजिस्टर proc device */
+	unsigned long devflags;
+#define PARPORT_DEVPROC_REGISTERED	0
+	struct pardevice *proc_device;	/* Currently register proc device */
 
-	काष्ठा list_head full_list;
-	काष्ठा parport *slaves[3];
-पूर्ण;
+	struct list_head full_list;
+	struct parport *slaves[3];
+};
 
-#घोषणा to_parport_dev(n) container_of(n, काष्ठा parport, bus_dev)
+#define to_parport_dev(n) container_of(n, struct parport, bus_dev)
 
-#घोषणा DEFAULT_SPIN_TIME 500 /* us */
+#define DEFAULT_SPIN_TIME 500 /* us */
 
-काष्ठा parport_driver अणु
-	स्थिर अक्षर *name;
-	व्योम (*attach) (काष्ठा parport *);
-	व्योम (*detach) (काष्ठा parport *);
-	व्योम (*match_port)(काष्ठा parport *);
-	पूर्णांक (*probe)(काष्ठा pardevice *);
-	काष्ठा device_driver driver;
+struct parport_driver {
+	const char *name;
+	void (*attach) (struct parport *);
+	void (*detach) (struct parport *);
+	void (*match_port)(struct parport *);
+	int (*probe)(struct pardevice *);
+	struct device_driver driver;
 	bool devmodel;
-	काष्ठा list_head list;
-पूर्ण;
+	struct list_head list;
+};
 
-#घोषणा to_parport_driver(n) container_of(n, काष्ठा parport_driver, driver)
+#define to_parport_driver(n) container_of(n, struct parport_driver, driver)
 
-पूर्णांक parport_bus_init(व्योम);
-व्योम parport_bus_निकास(व्योम);
+int parport_bus_init(void);
+void parport_bus_exit(void);
 
-/* parport_रेजिस्टर_port रेजिस्टरs a new parallel port at the given
-   address (अगर one करोes not alपढ़ोy exist) and वापसs a poपूर्णांकer to it.
-   This entails claiming the I/O region, IRQ and DMA.  शून्य is वापसed
-   अगर initialisation fails. */
-काष्ठा parport *parport_रेजिस्टर_port(अचिन्हित दीर्घ base, पूर्णांक irq, पूर्णांक dma,
-				      काष्ठा parport_operations *ops);
+/* parport_register_port registers a new parallel port at the given
+   address (if one does not already exist) and returns a pointer to it.
+   This entails claiming the I/O region, IRQ and DMA.  NULL is returned
+   if initialisation fails. */
+struct parport *parport_register_port(unsigned long base, int irq, int dma,
+				      struct parport_operations *ops);
 
-/* Once a रेजिस्टरed port is पढ़ोy क्रम high-level drivers to use, the
-   low-level driver that रेजिस्टरed it should announce it.  This will
+/* Once a registered port is ready for high-level drivers to use, the
+   low-level driver that registered it should announce it.  This will
    call the high-level drivers' attach() functions (after things like
    determining the IEEE 1284.3 topology of the port and collecting
    DeviceIDs). */
-व्योम parport_announce_port (काष्ठा parport *port);
+void parport_announce_port (struct parport *port);
 
-/* Unरेजिस्टर a port. */
-बाह्य व्योम parport_हटाओ_port(काष्ठा parport *port);
+/* Unregister a port. */
+extern void parport_remove_port(struct parport *port);
 
 /* Register a new high-level driver. */
 
-पूर्णांक __must_check __parport_रेजिस्टर_driver(काष्ठा parport_driver *,
-					   काष्ठा module *,
-					   स्थिर अक्षर *mod_name);
+int __must_check __parport_register_driver(struct parport_driver *,
+					   struct module *,
+					   const char *mod_name);
 /*
- * parport_रेजिस्टर_driver must be a macro so that KBUILD_MODNAME can
+ * parport_register_driver must be a macro so that KBUILD_MODNAME can
  * be expanded
  */
 
 /**
- *	parport_रेजिस्टर_driver - रेजिस्टर a parallel port device driver
- *	@driver: काष्ठाure describing the driver
+ *	parport_register_driver - register a parallel port device driver
+ *	@driver: structure describing the driver
  *
  *	This can be called by a parallel port device driver in order
- *	to receive notअगरications about ports being found in the
- *	प्रणाली, as well as ports no दीर्घer available.
+ *	to receive notifications about ports being found in the
+ *	system, as well as ports no longer available.
  *
  *	If devmodel is true then the new device model is used
- *	क्रम registration.
+ *	for registration.
  *
- *	The @driver काष्ठाure is allocated by the caller and must not be
- *	deallocated until after calling parport_unरेजिस्टर_driver().
+ *	The @driver structure is allocated by the caller and must not be
+ *	deallocated until after calling parport_unregister_driver().
  *
  *	If using the non device model:
  *	The driver's attach() function may block.  The port that
- *	attach() is given will be valid क्रम the duration of the
- *	callback, but अगर the driver wants to take a copy of the
- *	poपूर्णांकer it must call parport_get_port() to करो so.  Calling
- *	parport_रेजिस्टर_device() on that port will करो this क्रम you.
+ *	attach() is given will be valid for the duration of the
+ *	callback, but if the driver wants to take a copy of the
+ *	pointer it must call parport_get_port() to do so.  Calling
+ *	parport_register_device() on that port will do this for you.
  *
  *	The driver's detach() function may block.  The port that
- *	detach() is given will be valid क्रम the duration of the
- *	callback, but अगर the driver wants to take a copy of the
- *	poपूर्णांकer it must call parport_get_port() to करो so.
+ *	detach() is given will be valid for the duration of the
+ *	callback, but if the driver wants to take a copy of the
+ *	pointer it must call parport_get_port() to do so.
  *
  *
  *	Returns 0 on success. The non device model will always succeeds.
- *	but the new device model can fail and will वापस the error code.
+ *	but the new device model can fail and will return the error code.
  **/
-#घोषणा parport_रेजिस्टर_driver(driver)             \
-	__parport_रेजिस्टर_driver(driver, THIS_MODULE, KBUILD_MODNAME)
+#define parport_register_driver(driver)             \
+	__parport_register_driver(driver, THIS_MODULE, KBUILD_MODNAME)
 
-/* Unरेजिस्टर a high-level driver. */
-व्योम parport_unरेजिस्टर_driver(काष्ठा parport_driver *);
+/* Unregister a high-level driver. */
+void parport_unregister_driver(struct parport_driver *);
 
 /**
- * module_parport_driver() - Helper macro क्रम रेजिस्टरing a modular parport driver
- * @__parport_driver: काष्ठा parport_driver to be used
+ * module_parport_driver() - Helper macro for registering a modular parport driver
+ * @__parport_driver: struct parport_driver to be used
  *
- * Helper macro क्रम parport drivers which करो not करो anything special in module
- * init and निकास. This eliminates a lot of boilerplate. Each module may only
- * use this macro once, and calling it replaces module_init() and module_निकास().
+ * Helper macro for parport drivers which do not do anything special in module
+ * init and exit. This eliminates a lot of boilerplate. Each module may only
+ * use this macro once, and calling it replaces module_init() and module_exit().
  */
-#घोषणा module_parport_driver(__parport_driver) \
-	module_driver(__parport_driver, parport_रेजिस्टर_driver, parport_unरेजिस्टर_driver)
+#define module_parport_driver(__parport_driver) \
+	module_driver(__parport_driver, parport_register_driver, parport_unregister_driver)
 
-/* If parport_रेजिस्टर_driver करोesn't fit your needs, perhaps
- * parport_find_xxx करोes. */
-बाह्य काष्ठा parport *parport_find_number (पूर्णांक);
-बाह्य काष्ठा parport *parport_find_base (अचिन्हित दीर्घ);
+/* If parport_register_driver doesn't fit your needs, perhaps
+ * parport_find_xxx does. */
+extern struct parport *parport_find_number (int);
+extern struct parport *parport_find_base (unsigned long);
 
-/* generic irq handler, अगर it suits your needs */
-बाह्य irqवापस_t parport_irq_handler(पूर्णांक irq, व्योम *dev_id);
+/* generic irq handler, if it suits your needs */
+extern irqreturn_t parport_irq_handler(int irq, void *dev_id);
 
-/* Reference counting क्रम ports. */
-बाह्य काष्ठा parport *parport_get_port (काष्ठा parport *);
-बाह्य व्योम parport_put_port (काष्ठा parport *);
-व्योम parport_del_port(काष्ठा parport *);
+/* Reference counting for ports. */
+extern struct parport *parport_get_port (struct parport *);
+extern void parport_put_port (struct parport *);
+void parport_del_port(struct parport *);
 
-काष्ठा pardev_cb अणु
-	पूर्णांक (*preempt)(व्योम *);
-	व्योम (*wakeup)(व्योम *);
-	व्योम *निजी;
-	व्योम (*irq_func)(व्योम *);
-	अचिन्हित पूर्णांक flags;
-पूर्ण;
+struct pardev_cb {
+	int (*preempt)(void *);
+	void (*wakeup)(void *);
+	void *private;
+	void (*irq_func)(void *);
+	unsigned int flags;
+};
 
 /*
- * parport_रेजिस्टर_dev_model declares that a device is connected to a
+ * parport_register_dev_model declares that a device is connected to a
  * port, and tells the kernel all it needs to know.
  */
-काष्ठा pardevice *
-parport_रेजिस्टर_dev_model(काष्ठा parport *port, स्थिर अक्षर *name,
-			   स्थिर काष्ठा pardev_cb *par_dev_cb, पूर्णांक cnt);
+struct pardevice *
+parport_register_dev_model(struct parport *port, const char *name,
+			   const struct pardev_cb *par_dev_cb, int cnt);
 
-/* parport_unरेजिस्टर unlinks a device from the chain. */
-बाह्य व्योम parport_unरेजिस्टर_device(काष्ठा pardevice *dev);
+/* parport_unregister unlinks a device from the chain. */
+extern void parport_unregister_device(struct pardevice *dev);
 
-/* parport_claim tries to gain ownership of the port क्रम a particular
-   driver.  This may fail (वापस non-zero) अगर another driver is busy.
-   If this driver has रेजिस्टरed an पूर्णांकerrupt handler, it will be
+/* parport_claim tries to gain ownership of the port for a particular
+   driver.  This may fail (return non-zero) if another driver is busy.
+   If this driver has registered an interrupt handler, it will be
    enabled.  */
-बाह्य पूर्णांक parport_claim(काष्ठा pardevice *dev);
+extern int parport_claim(struct pardevice *dev);
 
-/* parport_claim_or_block is the same, but sleeps अगर the port cannot
-   be claimed.  Return value is 1 अगर it slept, 0 normally and -त्रुटि_सं
+/* parport_claim_or_block is the same, but sleeps if the port cannot
+   be claimed.  Return value is 1 if it slept, 0 normally and -errno
    on error.  */
-बाह्य पूर्णांक parport_claim_or_block(काष्ठा pardevice *dev);
+extern int parport_claim_or_block(struct pardevice *dev);
 
 /* parport_release reverses a previous parport_claim.  This can never
    fail, though the effects are undefined (except that they are bad)
-   अगर you didn't previously own the port.  Once you have released the
+   if you didn't previously own the port.  Once you have released the
    port you should make sure that neither your code nor the hardware
    on the port tries to initiate any communication without first
    re-claiming the port.  If you mess with the port state (enabling
-   ECP क्रम example) you should clean up beक्रमe releasing the port. */
+   ECP for example) you should clean up before releasing the port. */
 
-बाह्य व्योम parport_release(काष्ठा pardevice *dev);
+extern void parport_release(struct pardevice *dev);
 
 /**
  * parport_yield - relinquish a parallel port temporarily
  * @dev: a device on the parallel port
  *
- * This function relinquishes the port अगर it would be helpful to other
- * drivers to करो so.  Afterwards it tries to reclaim the port using
- * parport_claim(), and the वापस value is the same as क्रम
+ * This function relinquishes the port if it would be helpful to other
+ * drivers to do so.  Afterwards it tries to reclaim the port using
+ * parport_claim(), and the return value is the same as for
  * parport_claim().  If it fails, the port is left unclaimed and it is
  * the driver's responsibility to reclaim the port.
  *
- * The parport_yield() and parport_yield_blocking() functions are क्रम
- * marking poपूर्णांकs in the driver at which other drivers may claim the
+ * The parport_yield() and parport_yield_blocking() functions are for
+ * marking points in the driver at which other drivers may claim the
  * port and use their devices.  Yielding the port is similar to
  * releasing it and reclaiming it, but is more efficient because no
- * action is taken अगर there are no other devices needing the port.  In
- * fact, nothing is करोne even अगर there are other devices रुकोing but
- * the current device is still within its "timeslice".  The शेष
- * बारlice is half a second, but it can be adjusted via the /proc
- * पूर्णांकerface.
+ * action is taken if there are no other devices needing the port.  In
+ * fact, nothing is done even if there are other devices waiting but
+ * the current device is still within its "timeslice".  The default
+ * timeslice is half a second, but it can be adjusted via the /proc
+ * interface.
  **/
-अटल __अंतरभूत__ पूर्णांक parport_yield(काष्ठा pardevice *dev)
-अणु
-	अचिन्हित दीर्घ पूर्णांक बारlip = (jअगरfies - dev->समय);
-	अगर ((dev->port->रुकोhead == शून्य) || (बारlip < dev->बारlice))
-		वापस 0;
+static __inline__ int parport_yield(struct pardevice *dev)
+{
+	unsigned long int timeslip = (jiffies - dev->time);
+	if ((dev->port->waithead == NULL) || (timeslip < dev->timeslice))
+		return 0;
 	parport_release(dev);
-	वापस parport_claim(dev);
-पूर्ण
+	return parport_claim(dev);
+}
 
 /**
  * parport_yield_blocking - relinquish a parallel port temporarily
  * @dev: a device on the parallel port
  *
- * This function relinquishes the port अगर it would be helpful to other
- * drivers to करो so.  Afterwards it tries to reclaim the port using
- * parport_claim_or_block(), and the वापस value is the same as क्रम
+ * This function relinquishes the port if it would be helpful to other
+ * drivers to do so.  Afterwards it tries to reclaim the port using
+ * parport_claim_or_block(), and the return value is the same as for
  * parport_claim_or_block().
  **/
-अटल __अंतरभूत__ पूर्णांक parport_yield_blocking(काष्ठा pardevice *dev)
-अणु
-	अचिन्हित दीर्घ पूर्णांक बारlip = (jअगरfies - dev->समय);
-	अगर ((dev->port->रुकोhead == शून्य) || (बारlip < dev->बारlice))
-		वापस 0;
+static __inline__ int parport_yield_blocking(struct pardevice *dev)
+{
+	unsigned long int timeslip = (jiffies - dev->time);
+	if ((dev->port->waithead == NULL) || (timeslip < dev->timeslice))
+		return 0;
 	parport_release(dev);
-	वापस parport_claim_or_block(dev);
-पूर्ण
+	return parport_claim_or_block(dev);
+}
 
-/* Flags used to identअगरy what a device करोes. */
-#घोषणा PARPORT_DEV_TRAN		0	/* WARNING !! DEPRECATED !! */
-#घोषणा PARPORT_DEV_LURK		(1<<0)	/* WARNING !! DEPRECATED !! */
-#घोषणा PARPORT_DEV_EXCL		(1<<1)	/* Need exclusive access. */
+/* Flags used to identify what a device does. */
+#define PARPORT_DEV_TRAN		0	/* WARNING !! DEPRECATED !! */
+#define PARPORT_DEV_LURK		(1<<0)	/* WARNING !! DEPRECATED !! */
+#define PARPORT_DEV_EXCL		(1<<1)	/* Need exclusive access. */
 
-#घोषणा PARPORT_FLAG_EXCL		(1<<1)	/* EXCL driver रेजिस्टरed. */
+#define PARPORT_FLAG_EXCL		(1<<1)	/* EXCL driver registered. */
 
 /* IEEE1284 functions */
-बाह्य व्योम parport_ieee1284_पूर्णांकerrupt (व्योम *);
-बाह्य पूर्णांक parport_negotiate (काष्ठा parport *, पूर्णांक mode);
-बाह्य sमाप_प्रकार parport_ग_लिखो (काष्ठा parport *, स्थिर व्योम *buf, माप_प्रकार len);
-बाह्य sमाप_प्रकार parport_पढ़ो (काष्ठा parport *, व्योम *buf, माप_प्रकार len);
+extern void parport_ieee1284_interrupt (void *);
+extern int parport_negotiate (struct parport *, int mode);
+extern ssize_t parport_write (struct parport *, const void *buf, size_t len);
+extern ssize_t parport_read (struct parport *, void *buf, size_t len);
 
-#घोषणा PARPORT_INACTIVITY_O_NONBLOCK 1
-बाह्य दीर्घ parport_set_समयout (काष्ठा pardevice *, दीर्घ inactivity);
+#define PARPORT_INACTIVITY_O_NONBLOCK 1
+extern long parport_set_timeout (struct pardevice *, long inactivity);
 
-बाह्य पूर्णांक parport_रुको_event (काष्ठा parport *, दीर्घ समयout);
-बाह्य पूर्णांक parport_रुको_peripheral (काष्ठा parport *port,
-				    अचिन्हित अक्षर mask,
-				    अचिन्हित अक्षर val);
-बाह्य पूर्णांक parport_poll_peripheral (काष्ठा parport *port,
-				    अचिन्हित अक्षर mask,
-				    अचिन्हित अक्षर val,
-				    पूर्णांक usec);
+extern int parport_wait_event (struct parport *, long timeout);
+extern int parport_wait_peripheral (struct parport *port,
+				    unsigned char mask,
+				    unsigned char val);
+extern int parport_poll_peripheral (struct parport *port,
+				    unsigned char mask,
+				    unsigned char val,
+				    int usec);
 
 /* For architectural drivers */
-बाह्य माप_प्रकार parport_ieee1284_ग_लिखो_compat (काष्ठा parport *,
-					     स्थिर व्योम *, माप_प्रकार, पूर्णांक);
-बाह्य माप_प्रकार parport_ieee1284_पढ़ो_nibble (काष्ठा parport *,
-					    व्योम *, माप_प्रकार, पूर्णांक);
-बाह्य माप_प्रकार parport_ieee1284_पढ़ो_byte (काष्ठा parport *,
-					  व्योम *, माप_प्रकार, पूर्णांक);
-बाह्य माप_प्रकार parport_ieee1284_ecp_पढ़ो_data (काष्ठा parport *,
-					      व्योम *, माप_प्रकार, पूर्णांक);
-बाह्य माप_प्रकार parport_ieee1284_ecp_ग_लिखो_data (काष्ठा parport *,
-					       स्थिर व्योम *, माप_प्रकार, पूर्णांक);
-बाह्य माप_प्रकार parport_ieee1284_ecp_ग_लिखो_addr (काष्ठा parport *,
-					       स्थिर व्योम *, माप_प्रकार, पूर्णांक);
-बाह्य माप_प्रकार parport_ieee1284_epp_ग_लिखो_data (काष्ठा parport *,
-					       स्थिर व्योम *, माप_प्रकार, पूर्णांक);
-बाह्य माप_प्रकार parport_ieee1284_epp_पढ़ो_data (काष्ठा parport *,
-					      व्योम *, माप_प्रकार, पूर्णांक);
-बाह्य माप_प्रकार parport_ieee1284_epp_ग_लिखो_addr (काष्ठा parport *,
-					       स्थिर व्योम *, माप_प्रकार, पूर्णांक);
-बाह्य माप_प्रकार parport_ieee1284_epp_पढ़ो_addr (काष्ठा parport *,
-					      व्योम *, माप_प्रकार, पूर्णांक);
+extern size_t parport_ieee1284_write_compat (struct parport *,
+					     const void *, size_t, int);
+extern size_t parport_ieee1284_read_nibble (struct parport *,
+					    void *, size_t, int);
+extern size_t parport_ieee1284_read_byte (struct parport *,
+					  void *, size_t, int);
+extern size_t parport_ieee1284_ecp_read_data (struct parport *,
+					      void *, size_t, int);
+extern size_t parport_ieee1284_ecp_write_data (struct parport *,
+					       const void *, size_t, int);
+extern size_t parport_ieee1284_ecp_write_addr (struct parport *,
+					       const void *, size_t, int);
+extern size_t parport_ieee1284_epp_write_data (struct parport *,
+					       const void *, size_t, int);
+extern size_t parport_ieee1284_epp_read_data (struct parport *,
+					      void *, size_t, int);
+extern size_t parport_ieee1284_epp_write_addr (struct parport *,
+					       const void *, size_t, int);
+extern size_t parport_ieee1284_epp_read_addr (struct parport *,
+					      void *, size_t, int);
 
 /* IEEE1284.3 functions */
-#घोषणा daisy_dev_name "Device ID probe"
-बाह्य पूर्णांक parport_daisy_init (काष्ठा parport *port);
-बाह्य व्योम parport_daisy_fini (काष्ठा parport *port);
-बाह्य काष्ठा pardevice *parport_खोलो (पूर्णांक devnum, स्थिर अक्षर *name);
-बाह्य व्योम parport_बंद (काष्ठा pardevice *dev);
-बाह्य sमाप_प्रकार parport_device_id (पूर्णांक devnum, अक्षर *buffer, माप_प्रकार len);
-बाह्य व्योम parport_daisy_deselect_all (काष्ठा parport *port);
-बाह्य पूर्णांक parport_daisy_select (काष्ठा parport *port, पूर्णांक daisy, पूर्णांक mode);
+#define daisy_dev_name "Device ID probe"
+extern int parport_daisy_init (struct parport *port);
+extern void parport_daisy_fini (struct parport *port);
+extern struct pardevice *parport_open (int devnum, const char *name);
+extern void parport_close (struct pardevice *dev);
+extern ssize_t parport_device_id (int devnum, char *buffer, size_t len);
+extern void parport_daisy_deselect_all (struct parport *port);
+extern int parport_daisy_select (struct parport *port, int daisy, int mode);
 
 /* Lowlevel drivers _can_ call this support function to handle irqs.  */
-अटल अंतरभूत व्योम parport_generic_irq(काष्ठा parport *port)
-अणु
-	parport_ieee1284_पूर्णांकerrupt (port);
-	पढ़ो_lock(&port->cad_lock);
-	अगर (port->cad && port->cad->irq_func)
-		port->cad->irq_func(port->cad->निजी);
-	पढ़ो_unlock(&port->cad_lock);
-पूर्ण
+static inline void parport_generic_irq(struct parport *port)
+{
+	parport_ieee1284_interrupt (port);
+	read_lock(&port->cad_lock);
+	if (port->cad && port->cad->irq_func)
+		port->cad->irq_func(port->cad->private);
+	read_unlock(&port->cad_lock);
+}
 
 /* Prototypes from parport_procfs */
-बाह्य पूर्णांक parport_proc_रेजिस्टर(काष्ठा parport *pp);
-बाह्य पूर्णांक parport_proc_unरेजिस्टर(काष्ठा parport *pp);
-बाह्य पूर्णांक parport_device_proc_रेजिस्टर(काष्ठा pardevice *device);
-बाह्य पूर्णांक parport_device_proc_unरेजिस्टर(काष्ठा pardevice *device);
+extern int parport_proc_register(struct parport *pp);
+extern int parport_proc_unregister(struct parport *pp);
+extern int parport_device_proc_register(struct pardevice *device);
+extern int parport_device_proc_unregister(struct pardevice *device);
 
 /* If PC hardware is the only type supported, we can optimise a bit.  */
-#अगर !defined(CONFIG_PARPORT_NOT_PC)
+#if !defined(CONFIG_PARPORT_NOT_PC)
 
-#समावेश <linux/parport_pc.h>
-#घोषणा parport_ग_लिखो_data(p,x)            parport_pc_ग_लिखो_data(p,x)
-#घोषणा parport_पढ़ो_data(p)               parport_pc_पढ़ो_data(p)
-#घोषणा parport_ग_लिखो_control(p,x)         parport_pc_ग_लिखो_control(p,x)
-#घोषणा parport_पढ़ो_control(p)            parport_pc_पढ़ो_control(p)
-#घोषणा parport_frob_control(p,m,v)        parport_pc_frob_control(p,m,v)
-#घोषणा parport_पढ़ो_status(p)             parport_pc_पढ़ो_status(p)
-#घोषणा parport_enable_irq(p)              parport_pc_enable_irq(p)
-#घोषणा parport_disable_irq(p)             parport_pc_disable_irq(p)
-#घोषणा parport_data_क्रमward(p)            parport_pc_data_क्रमward(p)
-#घोषणा parport_data_reverse(p)            parport_pc_data_reverse(p)
+#include <linux/parport_pc.h>
+#define parport_write_data(p,x)            parport_pc_write_data(p,x)
+#define parport_read_data(p)               parport_pc_read_data(p)
+#define parport_write_control(p,x)         parport_pc_write_control(p,x)
+#define parport_read_control(p)            parport_pc_read_control(p)
+#define parport_frob_control(p,m,v)        parport_pc_frob_control(p,m,v)
+#define parport_read_status(p)             parport_pc_read_status(p)
+#define parport_enable_irq(p)              parport_pc_enable_irq(p)
+#define parport_disable_irq(p)             parport_pc_disable_irq(p)
+#define parport_data_forward(p)            parport_pc_data_forward(p)
+#define parport_data_reverse(p)            parport_pc_data_reverse(p)
 
-#अन्यथा  /*  !CONFIG_PARPORT_NOT_PC  */
+#else  /*  !CONFIG_PARPORT_NOT_PC  */
 
 /* Generic operations vector through the dispatch table. */
-#घोषणा parport_ग_लिखो_data(p,x)            (p)->ops->ग_लिखो_data(p,x)
-#घोषणा parport_पढ़ो_data(p)               (p)->ops->पढ़ो_data(p)
-#घोषणा parport_ग_लिखो_control(p,x)         (p)->ops->ग_लिखो_control(p,x)
-#घोषणा parport_पढ़ो_control(p)            (p)->ops->पढ़ो_control(p)
-#घोषणा parport_frob_control(p,m,v)        (p)->ops->frob_control(p,m,v)
-#घोषणा parport_पढ़ो_status(p)             (p)->ops->पढ़ो_status(p)
-#घोषणा parport_enable_irq(p)              (p)->ops->enable_irq(p)
-#घोषणा parport_disable_irq(p)             (p)->ops->disable_irq(p)
-#घोषणा parport_data_क्रमward(p)            (p)->ops->data_क्रमward(p)
-#घोषणा parport_data_reverse(p)            (p)->ops->data_reverse(p)
+#define parport_write_data(p,x)            (p)->ops->write_data(p,x)
+#define parport_read_data(p)               (p)->ops->read_data(p)
+#define parport_write_control(p,x)         (p)->ops->write_control(p,x)
+#define parport_read_control(p)            (p)->ops->read_control(p)
+#define parport_frob_control(p,m,v)        (p)->ops->frob_control(p,m,v)
+#define parport_read_status(p)             (p)->ops->read_status(p)
+#define parport_enable_irq(p)              (p)->ops->enable_irq(p)
+#define parport_disable_irq(p)             (p)->ops->disable_irq(p)
+#define parport_data_forward(p)            (p)->ops->data_forward(p)
+#define parport_data_reverse(p)            (p)->ops->data_reverse(p)
 
-#पूर्ण_अगर /*  !CONFIG_PARPORT_NOT_PC  */
+#endif /*  !CONFIG_PARPORT_NOT_PC  */
 
-बाह्य अचिन्हित दीर्घ parport_शेष_बारlice;
-बाह्य पूर्णांक parport_शेष_spपूर्णांकime;
+extern unsigned long parport_default_timeslice;
+extern int parport_default_spintime;
 
-#पूर्ण_अगर /* _PARPORT_H_ */
+#endif /* _PARPORT_H_ */

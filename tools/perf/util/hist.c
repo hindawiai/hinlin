@@ -1,190 +1,189 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश "callchain.h"
-#समावेश "debug.h"
-#समावेश "dso.h"
-#समावेश "build-id.h"
-#समावेश "hist.h"
-#समावेश "map.h"
-#समावेश "map_symbol.h"
-#समावेश "branch.h"
-#समावेश "mem-events.h"
-#समावेश "session.h"
-#समावेश "namespaces.h"
-#समावेश "cgroup.h"
-#समावेश "sort.h"
-#समावेश "units.h"
-#समावेश "evlist.h"
-#समावेश "evsel.h"
-#समावेश "annotate.h"
-#समावेश "srcline.h"
-#समावेश "symbol.h"
-#समावेश "thread.h"
-#समावेश "block-info.h"
-#समावेश "ui/progress.h"
-#समावेश <त्रुटिसं.स>
-#समावेश <गणित.स>
-#समावेश <पूर्णांकtypes.h>
-#समावेश <sys/param.h>
-#समावेश <linux/rbtree.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/समय64.h>
-#समावेश <linux/zभाग.स>
+// SPDX-License-Identifier: GPL-2.0
+#include "callchain.h"
+#include "debug.h"
+#include "dso.h"
+#include "build-id.h"
+#include "hist.h"
+#include "map.h"
+#include "map_symbol.h"
+#include "branch.h"
+#include "mem-events.h"
+#include "session.h"
+#include "namespaces.h"
+#include "cgroup.h"
+#include "sort.h"
+#include "units.h"
+#include "evlist.h"
+#include "evsel.h"
+#include "annotate.h"
+#include "srcline.h"
+#include "symbol.h"
+#include "thread.h"
+#include "block-info.h"
+#include "ui/progress.h"
+#include <errno.h>
+#include <math.h>
+#include <inttypes.h>
+#include <sys/param.h>
+#include <linux/rbtree.h>
+#include <linux/string.h>
+#include <linux/time64.h>
+#include <linux/zalloc.h>
 
-अटल bool hists__filter_entry_by_dso(काष्ठा hists *hists,
-				       काष्ठा hist_entry *he);
-अटल bool hists__filter_entry_by_thपढ़ो(काष्ठा hists *hists,
-					  काष्ठा hist_entry *he);
-अटल bool hists__filter_entry_by_symbol(काष्ठा hists *hists,
-					  काष्ठा hist_entry *he);
-अटल bool hists__filter_entry_by_socket(काष्ठा hists *hists,
-					  काष्ठा hist_entry *he);
+static bool hists__filter_entry_by_dso(struct hists *hists,
+				       struct hist_entry *he);
+static bool hists__filter_entry_by_thread(struct hists *hists,
+					  struct hist_entry *he);
+static bool hists__filter_entry_by_symbol(struct hists *hists,
+					  struct hist_entry *he);
+static bool hists__filter_entry_by_socket(struct hists *hists,
+					  struct hist_entry *he);
 
-u16 hists__col_len(काष्ठा hists *hists, क्रमागत hist_column col)
-अणु
-	वापस hists->col_len[col];
-पूर्ण
+u16 hists__col_len(struct hists *hists, enum hist_column col)
+{
+	return hists->col_len[col];
+}
 
-व्योम hists__set_col_len(काष्ठा hists *hists, क्रमागत hist_column col, u16 len)
-अणु
+void hists__set_col_len(struct hists *hists, enum hist_column col, u16 len)
+{
 	hists->col_len[col] = len;
-पूर्ण
+}
 
-bool hists__new_col_len(काष्ठा hists *hists, क्रमागत hist_column col, u16 len)
-अणु
-	अगर (len > hists__col_len(hists, col)) अणु
+bool hists__new_col_len(struct hists *hists, enum hist_column col, u16 len)
+{
+	if (len > hists__col_len(hists, col)) {
 		hists__set_col_len(hists, col, len);
-		वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+		return true;
+	}
+	return false;
+}
 
-व्योम hists__reset_col_len(काष्ठा hists *hists)
-अणु
-	क्रमागत hist_column col;
+void hists__reset_col_len(struct hists *hists)
+{
+	enum hist_column col;
 
-	क्रम (col = 0; col < HISTC_NR_COLS; ++col)
+	for (col = 0; col < HISTC_NR_COLS; ++col)
 		hists__set_col_len(hists, col, 0);
-पूर्ण
+}
 
-अटल व्योम hists__set_unres_dso_col_len(काष्ठा hists *hists, पूर्णांक dso)
-अणु
-	स्थिर अचिन्हित पूर्णांक unresolved_col_width = BITS_PER_LONG / 4;
+static void hists__set_unres_dso_col_len(struct hists *hists, int dso)
+{
+	const unsigned int unresolved_col_width = BITS_PER_LONG / 4;
 
-	अगर (hists__col_len(hists, dso) < unresolved_col_width &&
+	if (hists__col_len(hists, dso) < unresolved_col_width &&
 	    !symbol_conf.col_width_list_str && !symbol_conf.field_sep &&
 	    !symbol_conf.dso_list)
 		hists__set_col_len(hists, dso, unresolved_col_width);
-पूर्ण
+}
 
-व्योम hists__calc_col_len(काष्ठा hists *hists, काष्ठा hist_entry *h)
-अणु
-	स्थिर अचिन्हित पूर्णांक unresolved_col_width = BITS_PER_LONG / 4;
-	पूर्णांक symlen;
+void hists__calc_col_len(struct hists *hists, struct hist_entry *h)
+{
+	const unsigned int unresolved_col_width = BITS_PER_LONG / 4;
+	int symlen;
 	u16 len;
 
-	अगर (h->block_info)
-		वापस;
+	if (h->block_info)
+		return;
 	/*
-	 * +4 accounts क्रम '[x] ' priv level info
-	 * +2 accounts क्रम 0x prefix on raw addresses
-	 * +3 accounts क्रम ' y ' symtab origin info
+	 * +4 accounts for '[x] ' priv level info
+	 * +2 accounts for 0x prefix on raw addresses
+	 * +3 accounts for ' y ' symtab origin info
 	 */
-	अगर (h->ms.sym) अणु
+	if (h->ms.sym) {
 		symlen = h->ms.sym->namelen + 4;
-		अगर (verbose > 0)
+		if (verbose > 0)
 			symlen += BITS_PER_LONG / 4 + 2 + 3;
 		hists__new_col_len(hists, HISTC_SYMBOL, symlen);
-	पूर्ण अन्यथा अणु
+	} else {
 		symlen = unresolved_col_width + 4 + 2;
 		hists__new_col_len(hists, HISTC_SYMBOL, symlen);
 		hists__set_unres_dso_col_len(hists, HISTC_DSO);
-	पूर्ण
+	}
 
-	len = thपढ़ो__comm_len(h->thपढ़ो);
-	अगर (hists__new_col_len(hists, HISTC_COMM, len))
+	len = thread__comm_len(h->thread);
+	if (hists__new_col_len(hists, HISTC_COMM, len))
 		hists__set_col_len(hists, HISTC_THREAD, len + 8);
 
-	अगर (h->ms.map) अणु
+	if (h->ms.map) {
 		len = dso__name_len(h->ms.map->dso);
 		hists__new_col_len(hists, HISTC_DSO, len);
-	पूर्ण
+	}
 
-	अगर (h->parent)
+	if (h->parent)
 		hists__new_col_len(hists, HISTC_PARENT, h->parent->namelen);
 
-	अगर (h->branch_info) अणु
-		अगर (h->branch_info->from.ms.sym) अणु
-			symlen = (पूर्णांक)h->branch_info->from.ms.sym->namelen + 4;
-			अगर (verbose > 0)
+	if (h->branch_info) {
+		if (h->branch_info->from.ms.sym) {
+			symlen = (int)h->branch_info->from.ms.sym->namelen + 4;
+			if (verbose > 0)
 				symlen += BITS_PER_LONG / 4 + 2 + 3;
 			hists__new_col_len(hists, HISTC_SYMBOL_FROM, symlen);
 
 			symlen = dso__name_len(h->branch_info->from.ms.map->dso);
 			hists__new_col_len(hists, HISTC_DSO_FROM, symlen);
-		पूर्ण अन्यथा अणु
+		} else {
 			symlen = unresolved_col_width + 4 + 2;
 			hists__new_col_len(hists, HISTC_SYMBOL_FROM, symlen);
 			hists__set_unres_dso_col_len(hists, HISTC_DSO_FROM);
-		पूर्ण
+		}
 
-		अगर (h->branch_info->to.ms.sym) अणु
-			symlen = (पूर्णांक)h->branch_info->to.ms.sym->namelen + 4;
-			अगर (verbose > 0)
+		if (h->branch_info->to.ms.sym) {
+			symlen = (int)h->branch_info->to.ms.sym->namelen + 4;
+			if (verbose > 0)
 				symlen += BITS_PER_LONG / 4 + 2 + 3;
 			hists__new_col_len(hists, HISTC_SYMBOL_TO, symlen);
 
 			symlen = dso__name_len(h->branch_info->to.ms.map->dso);
 			hists__new_col_len(hists, HISTC_DSO_TO, symlen);
-		पूर्ण अन्यथा अणु
+		} else {
 			symlen = unresolved_col_width + 4 + 2;
 			hists__new_col_len(hists, HISTC_SYMBOL_TO, symlen);
 			hists__set_unres_dso_col_len(hists, HISTC_DSO_TO);
-		पूर्ण
+		}
 
-		अगर (h->branch_info->srcline_from)
+		if (h->branch_info->srcline_from)
 			hists__new_col_len(hists, HISTC_SRCLINE_FROM,
-					म_माप(h->branch_info->srcline_from));
-		अगर (h->branch_info->srcline_to)
+					strlen(h->branch_info->srcline_from));
+		if (h->branch_info->srcline_to)
 			hists__new_col_len(hists, HISTC_SRCLINE_TO,
-					म_माप(h->branch_info->srcline_to));
-	पूर्ण
+					strlen(h->branch_info->srcline_to));
+	}
 
-	अगर (h->mem_info) अणु
-		अगर (h->mem_info->daddr.ms.sym) अणु
-			symlen = (पूर्णांक)h->mem_info->daddr.ms.sym->namelen + 4
+	if (h->mem_info) {
+		if (h->mem_info->daddr.ms.sym) {
+			symlen = (int)h->mem_info->daddr.ms.sym->namelen + 4
 			       + unresolved_col_width + 2;
 			hists__new_col_len(hists, HISTC_MEM_DADDR_SYMBOL,
 					   symlen);
 			hists__new_col_len(hists, HISTC_MEM_DCACHELINE,
 					   symlen + 1);
-		पूर्ण अन्यथा अणु
+		} else {
 			symlen = unresolved_col_width + 4 + 2;
 			hists__new_col_len(hists, HISTC_MEM_DADDR_SYMBOL,
 					   symlen);
 			hists__new_col_len(hists, HISTC_MEM_DCACHELINE,
 					   symlen);
-		पूर्ण
+		}
 
-		अगर (h->mem_info->iaddr.ms.sym) अणु
-			symlen = (पूर्णांक)h->mem_info->iaddr.ms.sym->namelen + 4
+		if (h->mem_info->iaddr.ms.sym) {
+			symlen = (int)h->mem_info->iaddr.ms.sym->namelen + 4
 			       + unresolved_col_width + 2;
 			hists__new_col_len(hists, HISTC_MEM_IADDR_SYMBOL,
 					   symlen);
-		पूर्ण अन्यथा अणु
+		} else {
 			symlen = unresolved_col_width + 4 + 2;
 			hists__new_col_len(hists, HISTC_MEM_IADDR_SYMBOL,
 					   symlen);
-		पूर्ण
+		}
 
-		अगर (h->mem_info->daddr.ms.map) अणु
+		if (h->mem_info->daddr.ms.map) {
 			symlen = dso__name_len(h->mem_info->daddr.ms.map->dso);
 			hists__new_col_len(hists, HISTC_MEM_DADDR_DSO,
 					   symlen);
-		पूर्ण अन्यथा अणु
+		} else {
 			symlen = unresolved_col_width + 4 + 2;
 			hists__set_unres_dso_col_len(hists, HISTC_MEM_DADDR_DSO);
-		पूर्ण
+		}
 
 		hists__new_col_len(hists, HISTC_MEM_PHYS_DADDR,
 				   unresolved_col_width + 4 + 2);
@@ -192,12 +191,12 @@ bool hists__new_col_len(काष्ठा hists *hists, क्रमागत h
 		hists__new_col_len(hists, HISTC_MEM_DATA_PAGE_SIZE,
 				   unresolved_col_width + 4 + 2);
 
-	पूर्ण अन्यथा अणु
+	} else {
 		symlen = unresolved_col_width + 4 + 2;
 		hists__new_col_len(hists, HISTC_MEM_DADDR_SYMBOL, symlen);
 		hists__new_col_len(hists, HISTC_MEM_IADDR_SYMBOL, symlen);
 		hists__set_unres_dso_col_len(hists, HISTC_MEM_DADDR_DSO);
-	पूर्ण
+	}
 
 	hists__new_col_len(hists, HISTC_CGROUP, 6);
 	hists__new_col_len(hists, HISTC_CGROUP_ID, 20);
@@ -213,96 +212,96 @@ bool hists__new_col_len(काष्ठा hists *hists, क्रमागत h
 	hists__new_col_len(hists, HISTC_LOCAL_INS_LAT, 13);
 	hists__new_col_len(hists, HISTC_GLOBAL_INS_LAT, 13);
 	hists__new_col_len(hists, HISTC_P_STAGE_CYC, 13);
-	अगर (symbol_conf.nanosecs)
+	if (symbol_conf.nanosecs)
 		hists__new_col_len(hists, HISTC_TIME, 16);
-	अन्यथा
+	else
 		hists__new_col_len(hists, HISTC_TIME, 12);
 	hists__new_col_len(hists, HISTC_CODE_PAGE_SIZE, 6);
 
-	अगर (h->srcline) अणु
-		len = MAX(म_माप(h->srcline), म_माप(sort_srcline.se_header));
+	if (h->srcline) {
+		len = MAX(strlen(h->srcline), strlen(sort_srcline.se_header));
 		hists__new_col_len(hists, HISTC_SRCLINE, len);
-	पूर्ण
+	}
 
-	अगर (h->srcfile)
-		hists__new_col_len(hists, HISTC_SRCखाता, म_माप(h->srcfile));
+	if (h->srcfile)
+		hists__new_col_len(hists, HISTC_SRCFILE, strlen(h->srcfile));
 
-	अगर (h->transaction)
+	if (h->transaction)
 		hists__new_col_len(hists, HISTC_TRANSACTION,
 				   hist_entry__transaction_len());
 
-	अगर (h->trace_output)
-		hists__new_col_len(hists, HISTC_TRACE, म_माप(h->trace_output));
+	if (h->trace_output)
+		hists__new_col_len(hists, HISTC_TRACE, strlen(h->trace_output));
 
-	अगर (h->cgroup) अणु
-		स्थिर अक्षर *cgrp_name = "unknown";
-		काष्ठा cgroup *cgrp = cgroup__find(h->ms.maps->machine->env,
+	if (h->cgroup) {
+		const char *cgrp_name = "unknown";
+		struct cgroup *cgrp = cgroup__find(h->ms.maps->machine->env,
 						   h->cgroup);
-		अगर (cgrp != शून्य)
+		if (cgrp != NULL)
 			cgrp_name = cgrp->name;
 
-		hists__new_col_len(hists, HISTC_CGROUP, म_माप(cgrp_name));
-	पूर्ण
-पूर्ण
+		hists__new_col_len(hists, HISTC_CGROUP, strlen(cgrp_name));
+	}
+}
 
-व्योम hists__output_recalc_col_len(काष्ठा hists *hists, पूर्णांक max_rows)
-अणु
-	काष्ठा rb_node *next = rb_first_cached(&hists->entries);
-	काष्ठा hist_entry *n;
-	पूर्णांक row = 0;
+void hists__output_recalc_col_len(struct hists *hists, int max_rows)
+{
+	struct rb_node *next = rb_first_cached(&hists->entries);
+	struct hist_entry *n;
+	int row = 0;
 
 	hists__reset_col_len(hists);
 
-	जबतक (next && row++ < max_rows) अणु
-		n = rb_entry(next, काष्ठा hist_entry, rb_node);
-		अगर (!n->filtered)
+	while (next && row++ < max_rows) {
+		n = rb_entry(next, struct hist_entry, rb_node);
+		if (!n->filtered)
 			hists__calc_col_len(hists, n);
 		next = rb_next(&n->rb_node);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम he_stat__add_cpumode_period(काष्ठा he_stat *he_stat,
-					अचिन्हित पूर्णांक cpumode, u64 period)
-अणु
-	चयन (cpumode) अणु
-	हाल PERF_RECORD_MISC_KERNEL:
+static void he_stat__add_cpumode_period(struct he_stat *he_stat,
+					unsigned int cpumode, u64 period)
+{
+	switch (cpumode) {
+	case PERF_RECORD_MISC_KERNEL:
 		he_stat->period_sys += period;
-		अवरोध;
-	हाल PERF_RECORD_MISC_USER:
+		break;
+	case PERF_RECORD_MISC_USER:
 		he_stat->period_us += period;
-		अवरोध;
-	हाल PERF_RECORD_MISC_GUEST_KERNEL:
+		break;
+	case PERF_RECORD_MISC_GUEST_KERNEL:
 		he_stat->period_guest_sys += period;
-		अवरोध;
-	हाल PERF_RECORD_MISC_GUEST_USER:
+		break;
+	case PERF_RECORD_MISC_GUEST_USER:
 		he_stat->period_guest_us += period;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-अटल दीर्घ hist_समय(अचिन्हित दीर्घ hसमय)
-अणु
-	अचिन्हित दीर्घ समय_quantum = symbol_conf.समय_quantum;
-	अगर (समय_quantum)
-		वापस (hसमय / समय_quantum) * समय_quantum;
-	वापस hसमय;
-पूर्ण
+static long hist_time(unsigned long htime)
+{
+	unsigned long time_quantum = symbol_conf.time_quantum;
+	if (time_quantum)
+		return (htime / time_quantum) * time_quantum;
+	return htime;
+}
 
-अटल व्योम he_stat__add_period(काष्ठा he_stat *he_stat, u64 period,
+static void he_stat__add_period(struct he_stat *he_stat, u64 period,
 				u64 weight, u64 ins_lat, u64 p_stage_cyc)
-अणु
+{
 
 	he_stat->period		+= period;
 	he_stat->weight		+= weight;
 	he_stat->nr_events	+= 1;
 	he_stat->ins_lat	+= ins_lat;
 	he_stat->p_stage_cyc	+= p_stage_cyc;
-पूर्ण
+}
 
-अटल व्योम he_stat__add_stat(काष्ठा he_stat *dest, काष्ठा he_stat *src)
-अणु
+static void he_stat__add_stat(struct he_stat *dest, struct he_stat *src)
+{
 	dest->period		+= src->period;
 	dest->period_sys	+= src->period_sys;
 	dest->period_us		+= src->period_us;
@@ -312,303 +311,303 @@ bool hists__new_col_len(काष्ठा hists *hists, क्रमागत h
 	dest->weight		+= src->weight;
 	dest->ins_lat		+= src->ins_lat;
 	dest->p_stage_cyc		+= src->p_stage_cyc;
-पूर्ण
+}
 
-अटल व्योम he_stat__decay(काष्ठा he_stat *he_stat)
-अणु
+static void he_stat__decay(struct he_stat *he_stat)
+{
 	he_stat->period = (he_stat->period * 7) / 8;
 	he_stat->nr_events = (he_stat->nr_events * 7) / 8;
-	/* XXX need decay क्रम weight too? */
-पूर्ण
+	/* XXX need decay for weight too? */
+}
 
-अटल व्योम hists__delete_entry(काष्ठा hists *hists, काष्ठा hist_entry *he);
+static void hists__delete_entry(struct hists *hists, struct hist_entry *he);
 
-अटल bool hists__decay_entry(काष्ठा hists *hists, काष्ठा hist_entry *he)
-अणु
+static bool hists__decay_entry(struct hists *hists, struct hist_entry *he)
+{
 	u64 prev_period = he->stat.period;
-	u64 dअगरf;
+	u64 diff;
 
-	अगर (prev_period == 0)
-		वापस true;
+	if (prev_period == 0)
+		return true;
 
 	he_stat__decay(&he->stat);
-	अगर (symbol_conf.cumulate_callchain)
+	if (symbol_conf.cumulate_callchain)
 		he_stat__decay(he->stat_acc);
 	decay_callchain(he->callchain);
 
-	dअगरf = prev_period - he->stat.period;
+	diff = prev_period - he->stat.period;
 
-	अगर (!he->depth) अणु
-		hists->stats.total_period -= dअगरf;
-		अगर (!he->filtered)
-			hists->stats.total_non_filtered_period -= dअगरf;
-	पूर्ण
+	if (!he->depth) {
+		hists->stats.total_period -= diff;
+		if (!he->filtered)
+			hists->stats.total_non_filtered_period -= diff;
+	}
 
-	अगर (!he->leaf) अणु
-		काष्ठा hist_entry *child;
-		काष्ठा rb_node *node = rb_first_cached(&he->hroot_out);
-		जबतक (node) अणु
-			child = rb_entry(node, काष्ठा hist_entry, rb_node);
+	if (!he->leaf) {
+		struct hist_entry *child;
+		struct rb_node *node = rb_first_cached(&he->hroot_out);
+		while (node) {
+			child = rb_entry(node, struct hist_entry, rb_node);
 			node = rb_next(node);
 
-			अगर (hists__decay_entry(hists, child))
+			if (hists__decay_entry(hists, child))
 				hists__delete_entry(hists, child);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस he->stat.period == 0;
-पूर्ण
+	return he->stat.period == 0;
+}
 
-अटल व्योम hists__delete_entry(काष्ठा hists *hists, काष्ठा hist_entry *he)
-अणु
-	काष्ठा rb_root_cached *root_in;
-	काष्ठा rb_root_cached *root_out;
+static void hists__delete_entry(struct hists *hists, struct hist_entry *he)
+{
+	struct rb_root_cached *root_in;
+	struct rb_root_cached *root_out;
 
-	अगर (he->parent_he) अणु
+	if (he->parent_he) {
 		root_in  = &he->parent_he->hroot_in;
 		root_out = &he->parent_he->hroot_out;
-	पूर्ण अन्यथा अणु
-		अगर (hists__has(hists, need_collapse))
+	} else {
+		if (hists__has(hists, need_collapse))
 			root_in = &hists->entries_collapsed;
-		अन्यथा
+		else
 			root_in = hists->entries_in;
 		root_out = &hists->entries;
-	पूर्ण
+	}
 
 	rb_erase_cached(&he->rb_node_in, root_in);
 	rb_erase_cached(&he->rb_node, root_out);
 
 	--hists->nr_entries;
-	अगर (!he->filtered)
+	if (!he->filtered)
 		--hists->nr_non_filtered_entries;
 
 	hist_entry__delete(he);
-पूर्ण
+}
 
-व्योम hists__decay_entries(काष्ठा hists *hists, bool zap_user, bool zap_kernel)
-अणु
-	काष्ठा rb_node *next = rb_first_cached(&hists->entries);
-	काष्ठा hist_entry *n;
+void hists__decay_entries(struct hists *hists, bool zap_user, bool zap_kernel)
+{
+	struct rb_node *next = rb_first_cached(&hists->entries);
+	struct hist_entry *n;
 
-	जबतक (next) अणु
-		n = rb_entry(next, काष्ठा hist_entry, rb_node);
+	while (next) {
+		n = rb_entry(next, struct hist_entry, rb_node);
 		next = rb_next(&n->rb_node);
-		अगर (((zap_user && n->level == '.') ||
+		if (((zap_user && n->level == '.') ||
 		     (zap_kernel && n->level != '.') ||
-		     hists__decay_entry(hists, n))) अणु
+		     hists__decay_entry(hists, n))) {
 			hists__delete_entry(hists, n);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-व्योम hists__delete_entries(काष्ठा hists *hists)
-अणु
-	काष्ठा rb_node *next = rb_first_cached(&hists->entries);
-	काष्ठा hist_entry *n;
+void hists__delete_entries(struct hists *hists)
+{
+	struct rb_node *next = rb_first_cached(&hists->entries);
+	struct hist_entry *n;
 
-	जबतक (next) अणु
-		n = rb_entry(next, काष्ठा hist_entry, rb_node);
+	while (next) {
+		n = rb_entry(next, struct hist_entry, rb_node);
 		next = rb_next(&n->rb_node);
 
 		hists__delete_entry(hists, n);
-	पूर्ण
-पूर्ण
+	}
+}
 
-काष्ठा hist_entry *hists__get_entry(काष्ठा hists *hists, पूर्णांक idx)
-अणु
-	काष्ठा rb_node *next = rb_first_cached(&hists->entries);
-	काष्ठा hist_entry *n;
-	पूर्णांक i = 0;
+struct hist_entry *hists__get_entry(struct hists *hists, int idx)
+{
+	struct rb_node *next = rb_first_cached(&hists->entries);
+	struct hist_entry *n;
+	int i = 0;
 
-	जबतक (next) अणु
-		n = rb_entry(next, काष्ठा hist_entry, rb_node);
-		अगर (i == idx)
-			वापस n;
+	while (next) {
+		n = rb_entry(next, struct hist_entry, rb_node);
+		if (i == idx)
+			return n;
 
 		next = rb_next(&n->rb_node);
 		i++;
-	पूर्ण
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /*
  * histogram, sorted on item, collects periods
  */
 
-अटल पूर्णांक hist_entry__init(काष्ठा hist_entry *he,
-			    काष्ठा hist_entry *ढाँचा,
+static int hist_entry__init(struct hist_entry *he,
+			    struct hist_entry *template,
 			    bool sample_self,
-			    माप_प्रकार callchain_size)
-अणु
-	*he = *ढाँचा;
+			    size_t callchain_size)
+{
+	*he = *template;
 	he->callchain_size = callchain_size;
 
-	अगर (symbol_conf.cumulate_callchain) अणु
-		he->stat_acc = दो_स्मृति(माप(he->stat));
-		अगर (he->stat_acc == शून्य)
-			वापस -ENOMEM;
-		स_नकल(he->stat_acc, &he->stat, माप(he->stat));
-		अगर (!sample_self)
-			स_रखो(&he->stat, 0, माप(he->stat));
-	पूर्ण
+	if (symbol_conf.cumulate_callchain) {
+		he->stat_acc = malloc(sizeof(he->stat));
+		if (he->stat_acc == NULL)
+			return -ENOMEM;
+		memcpy(he->stat_acc, &he->stat, sizeof(he->stat));
+		if (!sample_self)
+			memset(&he->stat, 0, sizeof(he->stat));
+	}
 
 	map__get(he->ms.map);
 
-	अगर (he->branch_info) अणु
+	if (he->branch_info) {
 		/*
 		 * This branch info is (a part of) allocated from
-		 * sample__resolve_bstack() and will be मुक्तd after
+		 * sample__resolve_bstack() and will be freed after
 		 * adding new entries.  So we need to save a copy.
 		 */
-		he->branch_info = दो_स्मृति(माप(*he->branch_info));
-		अगर (he->branch_info == शून्य)
-			जाओ err;
+		he->branch_info = malloc(sizeof(*he->branch_info));
+		if (he->branch_info == NULL)
+			goto err;
 
-		स_नकल(he->branch_info, ढाँचा->branch_info,
-		       माप(*he->branch_info));
+		memcpy(he->branch_info, template->branch_info,
+		       sizeof(*he->branch_info));
 
 		map__get(he->branch_info->from.ms.map);
 		map__get(he->branch_info->to.ms.map);
-	पूर्ण
+	}
 
-	अगर (he->mem_info) अणु
+	if (he->mem_info) {
 		map__get(he->mem_info->iaddr.ms.map);
 		map__get(he->mem_info->daddr.ms.map);
-	पूर्ण
+	}
 
-	अगर (hist_entry__has_callchains(he) && symbol_conf.use_callchain)
+	if (hist_entry__has_callchains(he) && symbol_conf.use_callchain)
 		callchain_init(he->callchain);
 
-	अगर (he->raw_data) अणु
+	if (he->raw_data) {
 		he->raw_data = memdup(he->raw_data, he->raw_size);
-		अगर (he->raw_data == शून्य)
-			जाओ err_infos;
-	पूर्ण
+		if (he->raw_data == NULL)
+			goto err_infos;
+	}
 
-	अगर (he->srcline) अणु
+	if (he->srcline) {
 		he->srcline = strdup(he->srcline);
-		अगर (he->srcline == शून्य)
-			जाओ err_rawdata;
-	पूर्ण
+		if (he->srcline == NULL)
+			goto err_rawdata;
+	}
 
-	अगर (symbol_conf.res_sample) अणु
-		he->res_samples = सुस्मृति(माप(काष्ठा res_sample),
+	if (symbol_conf.res_sample) {
+		he->res_samples = calloc(sizeof(struct res_sample),
 					symbol_conf.res_sample);
-		अगर (!he->res_samples)
-			जाओ err_srcline;
-	पूर्ण
+		if (!he->res_samples)
+			goto err_srcline;
+	}
 
 	INIT_LIST_HEAD(&he->pairs.node);
-	thपढ़ो__get(he->thपढ़ो);
+	thread__get(he->thread);
 	he->hroot_in  = RB_ROOT_CACHED;
 	he->hroot_out = RB_ROOT_CACHED;
 
-	अगर (!symbol_conf.report_hierarchy)
+	if (!symbol_conf.report_hierarchy)
 		he->leaf = true;
 
-	वापस 0;
+	return 0;
 
 err_srcline:
-	zमुक्त(&he->srcline);
+	zfree(&he->srcline);
 
 err_rawdata:
-	zमुक्त(&he->raw_data);
+	zfree(&he->raw_data);
 
 err_infos:
-	अगर (he->branch_info) अणु
+	if (he->branch_info) {
 		map__put(he->branch_info->from.ms.map);
 		map__put(he->branch_info->to.ms.map);
-		zमुक्त(&he->branch_info);
-	पूर्ण
-	अगर (he->mem_info) अणु
+		zfree(&he->branch_info);
+	}
+	if (he->mem_info) {
 		map__put(he->mem_info->iaddr.ms.map);
 		map__put(he->mem_info->daddr.ms.map);
-	पूर्ण
+	}
 err:
 	map__zput(he->ms.map);
-	zमुक्त(&he->stat_acc);
-	वापस -ENOMEM;
-पूर्ण
+	zfree(&he->stat_acc);
+	return -ENOMEM;
+}
 
-अटल व्योम *hist_entry__zalloc(माप_प्रकार size)
-अणु
-	वापस zalloc(size + माप(काष्ठा hist_entry));
-पूर्ण
+static void *hist_entry__zalloc(size_t size)
+{
+	return zalloc(size + sizeof(struct hist_entry));
+}
 
-अटल व्योम hist_entry__मुक्त(व्योम *ptr)
-अणु
-	मुक्त(ptr);
-पूर्ण
+static void hist_entry__free(void *ptr)
+{
+	free(ptr);
+}
 
-अटल काष्ठा hist_entry_ops शेष_ops = अणु
+static struct hist_entry_ops default_ops = {
 	.new	= hist_entry__zalloc,
-	.मुक्त	= hist_entry__मुक्त,
-पूर्ण;
+	.free	= hist_entry__free,
+};
 
-अटल काष्ठा hist_entry *hist_entry__new(काष्ठा hist_entry *ढाँचा,
+static struct hist_entry *hist_entry__new(struct hist_entry *template,
 					  bool sample_self)
-अणु
-	काष्ठा hist_entry_ops *ops = ढाँचा->ops;
-	माप_प्रकार callchain_size = 0;
-	काष्ठा hist_entry *he;
-	पूर्णांक err = 0;
+{
+	struct hist_entry_ops *ops = template->ops;
+	size_t callchain_size = 0;
+	struct hist_entry *he;
+	int err = 0;
 
-	अगर (!ops)
-		ops = ढाँचा->ops = &शेष_ops;
+	if (!ops)
+		ops = template->ops = &default_ops;
 
-	अगर (symbol_conf.use_callchain)
-		callchain_size = माप(काष्ठा callchain_root);
+	if (symbol_conf.use_callchain)
+		callchain_size = sizeof(struct callchain_root);
 
 	he = ops->new(callchain_size);
-	अगर (he) अणु
-		err = hist_entry__init(he, ढाँचा, sample_self, callchain_size);
-		अगर (err) अणु
-			ops->मुक्त(he);
-			he = शून्य;
-		पूर्ण
-	पूर्ण
+	if (he) {
+		err = hist_entry__init(he, template, sample_self, callchain_size);
+		if (err) {
+			ops->free(he);
+			he = NULL;
+		}
+	}
 
-	वापस he;
-पूर्ण
+	return he;
+}
 
-अटल u8 symbol__parent_filter(स्थिर काष्ठा symbol *parent)
-अणु
-	अगर (symbol_conf.exclude_other && parent == शून्य)
-		वापस 1 << HIST_FILTER__PARENT;
-	वापस 0;
-पूर्ण
+static u8 symbol__parent_filter(const struct symbol *parent)
+{
+	if (symbol_conf.exclude_other && parent == NULL)
+		return 1 << HIST_FILTER__PARENT;
+	return 0;
+}
 
-अटल व्योम hist_entry__add_callchain_period(काष्ठा hist_entry *he, u64 period)
-अणु
-	अगर (!hist_entry__has_callchains(he) || !symbol_conf.use_callchain)
-		वापस;
+static void hist_entry__add_callchain_period(struct hist_entry *he, u64 period)
+{
+	if (!hist_entry__has_callchains(he) || !symbol_conf.use_callchain)
+		return;
 
 	he->hists->callchain_period += period;
-	अगर (!he->filtered)
+	if (!he->filtered)
 		he->hists->callchain_non_filtered_period += period;
-पूर्ण
+}
 
-अटल काष्ठा hist_entry *hists__findnew_entry(काष्ठा hists *hists,
-					       काष्ठा hist_entry *entry,
-					       काष्ठा addr_location *al,
+static struct hist_entry *hists__findnew_entry(struct hists *hists,
+					       struct hist_entry *entry,
+					       struct addr_location *al,
 					       bool sample_self)
-अणु
-	काष्ठा rb_node **p;
-	काष्ठा rb_node *parent = शून्य;
-	काष्ठा hist_entry *he;
-	पूर्णांक64_t cmp;
+{
+	struct rb_node **p;
+	struct rb_node *parent = NULL;
+	struct hist_entry *he;
+	int64_t cmp;
 	u64 period = entry->stat.period;
 	u64 weight = entry->stat.weight;
 	u64 ins_lat = entry->stat.ins_lat;
 	u64 p_stage_cyc = entry->stat.p_stage_cyc;
-	bool lefपंचांगost = true;
+	bool leftmost = true;
 
 	p = &hists->entries_in->rb_root.rb_node;
 
-	जबतक (*p != शून्य) अणु
+	while (*p != NULL) {
 		parent = *p;
-		he = rb_entry(parent, काष्ठा hist_entry, rb_node_in);
+		he = rb_entry(parent, struct hist_entry, rb_node_in);
 
 		/*
 		 * Make sure that it receives arguments in a same order as
@@ -618,12 +617,12 @@ err:
 		 */
 		cmp = hist_entry__cmp(he, entry);
 
-		अगर (!cmp) अणु
-			अगर (sample_self) अणु
+		if (!cmp) {
+			if (sample_self) {
 				he_stat__add_period(&he->stat, period, weight, ins_lat, p_stage_cyc);
 				hist_entry__add_callchain_period(he, period);
-			पूर्ण
-			अगर (symbol_conf.cumulate_callchain)
+			}
+			if (symbol_conf.cumulate_callchain)
 				he_stat__add_period(he->stat_acc, period, weight, ins_lat, p_stage_cyc);
 
 			/*
@@ -640,104 +639,104 @@ err:
 			 * mis-adjust symbol addresses when computing
 			 * the history counter to increment.
 			 */
-			अगर (he->ms.map != entry->ms.map) अणु
+			if (he->ms.map != entry->ms.map) {
 				map__put(he->ms.map);
 				he->ms.map = map__get(entry->ms.map);
-			पूर्ण
-			जाओ out;
-		पूर्ण
+			}
+			goto out;
+		}
 
-		अगर (cmp < 0)
+		if (cmp < 0)
 			p = &(*p)->rb_left;
-		अन्यथा अणु
+		else {
 			p = &(*p)->rb_right;
-			lefपंचांगost = false;
-		पूर्ण
-	पूर्ण
+			leftmost = false;
+		}
+	}
 
 	he = hist_entry__new(entry, sample_self);
-	अगर (!he)
-		वापस शून्य;
+	if (!he)
+		return NULL;
 
-	अगर (sample_self)
+	if (sample_self)
 		hist_entry__add_callchain_period(he, period);
 	hists->nr_entries++;
 
 	rb_link_node(&he->rb_node_in, parent, p);
-	rb_insert_color_cached(&he->rb_node_in, hists->entries_in, lefपंचांगost);
+	rb_insert_color_cached(&he->rb_node_in, hists->entries_in, leftmost);
 out:
-	अगर (sample_self)
+	if (sample_self)
 		he_stat__add_cpumode_period(&he->stat, al->cpumode, period);
-	अगर (symbol_conf.cumulate_callchain)
+	if (symbol_conf.cumulate_callchain)
 		he_stat__add_cpumode_period(he->stat_acc, al->cpumode, period);
-	वापस he;
-पूर्ण
+	return he;
+}
 
-अटल अचिन्हित अक्रमom_max(अचिन्हित high)
-अणु
-	अचिन्हित thresh = -high % high;
-	क्रम (;;) अणु
-		अचिन्हित r = अक्रमom();
-		अगर (r >= thresh)
-			वापस r % high;
-	पूर्ण
-पूर्ण
+static unsigned random_max(unsigned high)
+{
+	unsigned thresh = -high % high;
+	for (;;) {
+		unsigned r = random();
+		if (r >= thresh)
+			return r % high;
+	}
+}
 
-अटल व्योम hists__res_sample(काष्ठा hist_entry *he, काष्ठा perf_sample *sample)
-अणु
-	काष्ठा res_sample *r;
-	पूर्णांक j;
+static void hists__res_sample(struct hist_entry *he, struct perf_sample *sample)
+{
+	struct res_sample *r;
+	int j;
 
-	अगर (he->num_res < symbol_conf.res_sample) अणु
+	if (he->num_res < symbol_conf.res_sample) {
 		j = he->num_res++;
-	पूर्ण अन्यथा अणु
-		j = अक्रमom_max(symbol_conf.res_sample);
-	पूर्ण
+	} else {
+		j = random_max(symbol_conf.res_sample);
+	}
 	r = &he->res_samples[j];
-	r->समय = sample->समय;
+	r->time = sample->time;
 	r->cpu = sample->cpu;
 	r->tid = sample->tid;
-पूर्ण
+}
 
-अटल काष्ठा hist_entry*
-__hists__add_entry(काष्ठा hists *hists,
-		   काष्ठा addr_location *al,
-		   काष्ठा symbol *sym_parent,
-		   काष्ठा branch_info *bi,
-		   काष्ठा mem_info *mi,
-		   काष्ठा block_info *block_info,
-		   काष्ठा perf_sample *sample,
+static struct hist_entry*
+__hists__add_entry(struct hists *hists,
+		   struct addr_location *al,
+		   struct symbol *sym_parent,
+		   struct branch_info *bi,
+		   struct mem_info *mi,
+		   struct block_info *block_info,
+		   struct perf_sample *sample,
 		   bool sample_self,
-		   काष्ठा hist_entry_ops *ops)
-अणु
-	काष्ठा namespaces *ns = thपढ़ो__namespaces(al->thपढ़ो);
-	काष्ठा hist_entry entry = अणु
-		.thपढ़ो	= al->thपढ़ो,
-		.comm = thपढ़ो__comm(al->thपढ़ो),
-		.cgroup_id = अणु
+		   struct hist_entry_ops *ops)
+{
+	struct namespaces *ns = thread__namespaces(al->thread);
+	struct hist_entry entry = {
+		.thread	= al->thread,
+		.comm = thread__comm(al->thread),
+		.cgroup_id = {
 			.dev = ns ? ns->link_info[CGROUP_NS_INDEX].dev : 0,
 			.ino = ns ? ns->link_info[CGROUP_NS_INDEX].ino : 0,
-		पूर्ण,
+		},
 		.cgroup = sample->cgroup,
-		.ms = अणु
+		.ms = {
 			.maps	= al->maps,
 			.map	= al->map,
 			.sym	= al->sym,
-		पूर्ण,
-		.srcline = (अक्षर *) al->srcline,
+		},
+		.srcline = (char *) al->srcline,
 		.socket	 = al->socket,
 		.cpu	 = al->cpu,
 		.cpumode = al->cpumode,
 		.ip	 = al->addr,
 		.level	 = al->level,
 		.code_page_size = sample->code_page_size,
-		.stat = अणु
+		.stat = {
 			.nr_events = 1,
 			.period	= sample->period,
 			.weight = sample->weight,
 			.ins_lat = sample->ins_lat,
 			.p_stage_cyc = sample->p_stage_cyc,
-		पूर्ण,
+		},
 		.parent = sym_parent,
 		.filtered = symbol__parent_filter(sym_parent) | al->filtered,
 		.hists	= hists,
@@ -748,131 +747,131 @@ __hists__add_entry(काष्ठा hists *hists,
 		.raw_data = sample->raw_data,
 		.raw_size = sample->raw_size,
 		.ops = ops,
-		.समय = hist_समय(sample->समय),
-	पूर्ण, *he = hists__findnew_entry(hists, &entry, al, sample_self);
+		.time = hist_time(sample->time),
+	}, *he = hists__findnew_entry(hists, &entry, al, sample_self);
 
-	अगर (!hists->has_callchains && he && he->callchain_size != 0)
+	if (!hists->has_callchains && he && he->callchain_size != 0)
 		hists->has_callchains = true;
-	अगर (he && symbol_conf.res_sample)
+	if (he && symbol_conf.res_sample)
 		hists__res_sample(he, sample);
-	वापस he;
-पूर्ण
+	return he;
+}
 
-काष्ठा hist_entry *hists__add_entry(काष्ठा hists *hists,
-				    काष्ठा addr_location *al,
-				    काष्ठा symbol *sym_parent,
-				    काष्ठा branch_info *bi,
-				    काष्ठा mem_info *mi,
-				    काष्ठा perf_sample *sample,
+struct hist_entry *hists__add_entry(struct hists *hists,
+				    struct addr_location *al,
+				    struct symbol *sym_parent,
+				    struct branch_info *bi,
+				    struct mem_info *mi,
+				    struct perf_sample *sample,
 				    bool sample_self)
-अणु
-	वापस __hists__add_entry(hists, al, sym_parent, bi, mi, शून्य,
-				  sample, sample_self, शून्य);
-पूर्ण
+{
+	return __hists__add_entry(hists, al, sym_parent, bi, mi, NULL,
+				  sample, sample_self, NULL);
+}
 
-काष्ठा hist_entry *hists__add_entry_ops(काष्ठा hists *hists,
-					काष्ठा hist_entry_ops *ops,
-					काष्ठा addr_location *al,
-					काष्ठा symbol *sym_parent,
-					काष्ठा branch_info *bi,
-					काष्ठा mem_info *mi,
-					काष्ठा perf_sample *sample,
+struct hist_entry *hists__add_entry_ops(struct hists *hists,
+					struct hist_entry_ops *ops,
+					struct addr_location *al,
+					struct symbol *sym_parent,
+					struct branch_info *bi,
+					struct mem_info *mi,
+					struct perf_sample *sample,
 					bool sample_self)
-अणु
-	वापस __hists__add_entry(hists, al, sym_parent, bi, mi, शून्य,
+{
+	return __hists__add_entry(hists, al, sym_parent, bi, mi, NULL,
 				  sample, sample_self, ops);
-पूर्ण
+}
 
-काष्ठा hist_entry *hists__add_entry_block(काष्ठा hists *hists,
-					  काष्ठा addr_location *al,
-					  काष्ठा block_info *block_info)
-अणु
-	काष्ठा hist_entry entry = अणु
+struct hist_entry *hists__add_entry_block(struct hists *hists,
+					  struct addr_location *al,
+					  struct block_info *block_info)
+{
+	struct hist_entry entry = {
 		.block_info = block_info,
 		.hists = hists,
-		.ms = अणु
+		.ms = {
 			.maps = al->maps,
 			.map = al->map,
 			.sym = al->sym,
-		पूर्ण,
-	पूर्ण, *he = hists__findnew_entry(hists, &entry, al, false);
+		},
+	}, *he = hists__findnew_entry(hists, &entry, al, false);
 
-	वापस he;
-पूर्ण
+	return he;
+}
 
-अटल पूर्णांक
-iter_next_nop_entry(काष्ठा hist_entry_iter *iter __maybe_unused,
-		    काष्ठा addr_location *al __maybe_unused)
-अणु
-	वापस 0;
-पूर्ण
+static int
+iter_next_nop_entry(struct hist_entry_iter *iter __maybe_unused,
+		    struct addr_location *al __maybe_unused)
+{
+	return 0;
+}
 
-अटल पूर्णांक
-iter_add_next_nop_entry(काष्ठा hist_entry_iter *iter __maybe_unused,
-			काष्ठा addr_location *al __maybe_unused)
-अणु
-	वापस 0;
-पूर्ण
+static int
+iter_add_next_nop_entry(struct hist_entry_iter *iter __maybe_unused,
+			struct addr_location *al __maybe_unused)
+{
+	return 0;
+}
 
-अटल पूर्णांक
-iter_prepare_mem_entry(काष्ठा hist_entry_iter *iter, काष्ठा addr_location *al)
-अणु
-	काष्ठा perf_sample *sample = iter->sample;
-	काष्ठा mem_info *mi;
+static int
+iter_prepare_mem_entry(struct hist_entry_iter *iter, struct addr_location *al)
+{
+	struct perf_sample *sample = iter->sample;
+	struct mem_info *mi;
 
 	mi = sample__resolve_mem(sample, al);
-	अगर (mi == शून्य)
-		वापस -ENOMEM;
+	if (mi == NULL)
+		return -ENOMEM;
 
 	iter->priv = mi;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-iter_add_single_mem_entry(काष्ठा hist_entry_iter *iter, काष्ठा addr_location *al)
-अणु
+static int
+iter_add_single_mem_entry(struct hist_entry_iter *iter, struct addr_location *al)
+{
 	u64 cost;
-	काष्ठा mem_info *mi = iter->priv;
-	काष्ठा hists *hists = evsel__hists(iter->evsel);
-	काष्ठा perf_sample *sample = iter->sample;
-	काष्ठा hist_entry *he;
+	struct mem_info *mi = iter->priv;
+	struct hists *hists = evsel__hists(iter->evsel);
+	struct perf_sample *sample = iter->sample;
+	struct hist_entry *he;
 
-	अगर (mi == शून्य)
-		वापस -EINVAL;
+	if (mi == NULL)
+		return -EINVAL;
 
 	cost = sample->weight;
-	अगर (!cost)
+	if (!cost)
 		cost = 1;
 
 	/*
 	 * must pass period=weight in order to get the correct
 	 * sorting from hists__collapse_resort() which is solely
-	 * based on periods. We want sorting be करोne on nr_events * weight
+	 * based on periods. We want sorting be done on nr_events * weight
 	 * and this is indirectly achieved by passing period=weight here
 	 * and the he_stat__add_period() function.
 	 */
 	sample->period = cost;
 
-	he = hists__add_entry(hists, al, iter->parent, शून्य, mi,
+	he = hists__add_entry(hists, al, iter->parent, NULL, mi,
 			      sample, true);
-	अगर (!he)
-		वापस -ENOMEM;
+	if (!he)
+		return -ENOMEM;
 
 	iter->he = he;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-iter_finish_mem_entry(काष्ठा hist_entry_iter *iter,
-		      काष्ठा addr_location *al __maybe_unused)
-अणु
-	काष्ठा evsel *evsel = iter->evsel;
-	काष्ठा hists *hists = evsel__hists(evsel);
-	काष्ठा hist_entry *he = iter->he;
-	पूर्णांक err = -EINVAL;
+static int
+iter_finish_mem_entry(struct hist_entry_iter *iter,
+		      struct addr_location *al __maybe_unused)
+{
+	struct evsel *evsel = iter->evsel;
+	struct hists *hists = evsel__hists(evsel);
+	struct hist_entry *he = iter->he;
+	int err = -EINVAL;
 
-	अगर (he == शून्य)
-		जाओ out;
+	if (he == NULL)
+		goto out;
 
 	hists__inc_nr_samples(hists, he->filtered);
 
@@ -880,184 +879,184 @@ iter_finish_mem_entry(काष्ठा hist_entry_iter *iter,
 
 out:
 	/*
-	 * We करोn't need to मुक्त iter->priv (mem_info) here since the mem info
-	 * was either alपढ़ोy मुक्तd in hists__findnew_entry() or passed to a
+	 * We don't need to free iter->priv (mem_info) here since the mem info
+	 * was either already freed in hists__findnew_entry() or passed to a
 	 * new hist entry by hist_entry__new().
 	 */
-	iter->priv = शून्य;
+	iter->priv = NULL;
 
-	iter->he = शून्य;
-	वापस err;
-पूर्ण
+	iter->he = NULL;
+	return err;
+}
 
-अटल पूर्णांक
-iter_prepare_branch_entry(काष्ठा hist_entry_iter *iter, काष्ठा addr_location *al)
-अणु
-	काष्ठा branch_info *bi;
-	काष्ठा perf_sample *sample = iter->sample;
+static int
+iter_prepare_branch_entry(struct hist_entry_iter *iter, struct addr_location *al)
+{
+	struct branch_info *bi;
+	struct perf_sample *sample = iter->sample;
 
 	bi = sample__resolve_bstack(sample, al);
-	अगर (!bi)
-		वापस -ENOMEM;
+	if (!bi)
+		return -ENOMEM;
 
 	iter->curr = 0;
 	iter->total = sample->branch_stack->nr;
 
 	iter->priv = bi;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-iter_add_single_branch_entry(काष्ठा hist_entry_iter *iter __maybe_unused,
-			     काष्ठा addr_location *al __maybe_unused)
-अणु
-	वापस 0;
-पूर्ण
+static int
+iter_add_single_branch_entry(struct hist_entry_iter *iter __maybe_unused,
+			     struct addr_location *al __maybe_unused)
+{
+	return 0;
+}
 
-अटल पूर्णांक
-iter_next_branch_entry(काष्ठा hist_entry_iter *iter, काष्ठा addr_location *al)
-अणु
-	काष्ठा branch_info *bi = iter->priv;
-	पूर्णांक i = iter->curr;
+static int
+iter_next_branch_entry(struct hist_entry_iter *iter, struct addr_location *al)
+{
+	struct branch_info *bi = iter->priv;
+	int i = iter->curr;
 
-	अगर (bi == शून्य)
-		वापस 0;
+	if (bi == NULL)
+		return 0;
 
-	अगर (iter->curr >= iter->total)
-		वापस 0;
+	if (iter->curr >= iter->total)
+		return 0;
 
 	al->maps = bi[i].to.ms.maps;
 	al->map = bi[i].to.ms.map;
 	al->sym = bi[i].to.ms.sym;
 	al->addr = bi[i].to.addr;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक
-iter_add_next_branch_entry(काष्ठा hist_entry_iter *iter, काष्ठा addr_location *al)
-अणु
-	काष्ठा branch_info *bi;
-	काष्ठा evsel *evsel = iter->evsel;
-	काष्ठा hists *hists = evsel__hists(evsel);
-	काष्ठा perf_sample *sample = iter->sample;
-	काष्ठा hist_entry *he = शून्य;
-	पूर्णांक i = iter->curr;
-	पूर्णांक err = 0;
+static int
+iter_add_next_branch_entry(struct hist_entry_iter *iter, struct addr_location *al)
+{
+	struct branch_info *bi;
+	struct evsel *evsel = iter->evsel;
+	struct hists *hists = evsel__hists(evsel);
+	struct perf_sample *sample = iter->sample;
+	struct hist_entry *he = NULL;
+	int i = iter->curr;
+	int err = 0;
 
 	bi = iter->priv;
 
-	अगर (iter->hide_unresolved && !(bi[i].from.ms.sym && bi[i].to.ms.sym))
-		जाओ out;
+	if (iter->hide_unresolved && !(bi[i].from.ms.sym && bi[i].to.ms.sym))
+		goto out;
 
 	/*
 	 * The report shows the percentage of total branches captured
-	 * and not events sampled. Thus we use a pseuकरो period of 1.
+	 * and not events sampled. Thus we use a pseudo period of 1.
 	 */
 	sample->period = 1;
 	sample->weight = bi->flags.cycles ? bi->flags.cycles : 1;
 
-	he = hists__add_entry(hists, al, iter->parent, &bi[i], शून्य,
+	he = hists__add_entry(hists, al, iter->parent, &bi[i], NULL,
 			      sample, true);
-	अगर (he == शून्य)
-		वापस -ENOMEM;
+	if (he == NULL)
+		return -ENOMEM;
 
 	hists__inc_nr_samples(hists, he->filtered);
 
 out:
 	iter->he = he;
 	iter->curr++;
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक
-iter_finish_branch_entry(काष्ठा hist_entry_iter *iter,
-			 काष्ठा addr_location *al __maybe_unused)
-अणु
-	zमुक्त(&iter->priv);
-	iter->he = शून्य;
+static int
+iter_finish_branch_entry(struct hist_entry_iter *iter,
+			 struct addr_location *al __maybe_unused)
+{
+	zfree(&iter->priv);
+	iter->he = NULL;
 
-	वापस iter->curr >= iter->total ? 0 : -1;
-पूर्ण
+	return iter->curr >= iter->total ? 0 : -1;
+}
 
-अटल पूर्णांक
-iter_prepare_normal_entry(काष्ठा hist_entry_iter *iter __maybe_unused,
-			  काष्ठा addr_location *al __maybe_unused)
-अणु
-	वापस 0;
-पूर्ण
+static int
+iter_prepare_normal_entry(struct hist_entry_iter *iter __maybe_unused,
+			  struct addr_location *al __maybe_unused)
+{
+	return 0;
+}
 
-अटल पूर्णांक
-iter_add_single_normal_entry(काष्ठा hist_entry_iter *iter, काष्ठा addr_location *al)
-अणु
-	काष्ठा evsel *evsel = iter->evsel;
-	काष्ठा perf_sample *sample = iter->sample;
-	काष्ठा hist_entry *he;
+static int
+iter_add_single_normal_entry(struct hist_entry_iter *iter, struct addr_location *al)
+{
+	struct evsel *evsel = iter->evsel;
+	struct perf_sample *sample = iter->sample;
+	struct hist_entry *he;
 
-	he = hists__add_entry(evsel__hists(evsel), al, iter->parent, शून्य, शून्य,
+	he = hists__add_entry(evsel__hists(evsel), al, iter->parent, NULL, NULL,
 			      sample, true);
-	अगर (he == शून्य)
-		वापस -ENOMEM;
+	if (he == NULL)
+		return -ENOMEM;
 
 	iter->he = he;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-iter_finish_normal_entry(काष्ठा hist_entry_iter *iter,
-			 काष्ठा addr_location *al __maybe_unused)
-अणु
-	काष्ठा hist_entry *he = iter->he;
-	काष्ठा evsel *evsel = iter->evsel;
-	काष्ठा perf_sample *sample = iter->sample;
+static int
+iter_finish_normal_entry(struct hist_entry_iter *iter,
+			 struct addr_location *al __maybe_unused)
+{
+	struct hist_entry *he = iter->he;
+	struct evsel *evsel = iter->evsel;
+	struct perf_sample *sample = iter->sample;
 
-	अगर (he == शून्य)
-		वापस 0;
+	if (he == NULL)
+		return 0;
 
-	iter->he = शून्य;
+	iter->he = NULL;
 
 	hists__inc_nr_samples(evsel__hists(evsel), he->filtered);
 
-	वापस hist_entry__append_callchain(he, sample);
-पूर्ण
+	return hist_entry__append_callchain(he, sample);
+}
 
-अटल पूर्णांक
-iter_prepare_cumulative_entry(काष्ठा hist_entry_iter *iter,
-			      काष्ठा addr_location *al __maybe_unused)
-अणु
-	काष्ठा hist_entry **he_cache;
+static int
+iter_prepare_cumulative_entry(struct hist_entry_iter *iter,
+			      struct addr_location *al __maybe_unused)
+{
+	struct hist_entry **he_cache;
 
 	callchain_cursor_commit(&callchain_cursor);
 
 	/*
-	 * This is क्रम detecting cycles or recursions so that they're
-	 * cumulated only one समय to prevent entries more than 100%
+	 * This is for detecting cycles or recursions so that they're
+	 * cumulated only one time to prevent entries more than 100%
 	 * overhead.
 	 */
-	he_cache = दो_स्मृति(माप(*he_cache) * (callchain_cursor.nr + 1));
-	अगर (he_cache == शून्य)
-		वापस -ENOMEM;
+	he_cache = malloc(sizeof(*he_cache) * (callchain_cursor.nr + 1));
+	if (he_cache == NULL)
+		return -ENOMEM;
 
 	iter->priv = he_cache;
 	iter->curr = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-iter_add_single_cumulative_entry(काष्ठा hist_entry_iter *iter,
-				 काष्ठा addr_location *al)
-अणु
-	काष्ठा evsel *evsel = iter->evsel;
-	काष्ठा hists *hists = evsel__hists(evsel);
-	काष्ठा perf_sample *sample = iter->sample;
-	काष्ठा hist_entry **he_cache = iter->priv;
-	काष्ठा hist_entry *he;
-	पूर्णांक err = 0;
+static int
+iter_add_single_cumulative_entry(struct hist_entry_iter *iter,
+				 struct addr_location *al)
+{
+	struct evsel *evsel = iter->evsel;
+	struct hists *hists = evsel__hists(evsel);
+	struct perf_sample *sample = iter->sample;
+	struct hist_entry **he_cache = iter->priv;
+	struct hist_entry *he;
+	int err = 0;
 
-	he = hists__add_entry(hists, al, iter->parent, शून्य, शून्य,
+	he = hists__add_entry(hists, al, iter->parent, NULL, NULL,
 			      sample, true);
-	अगर (he == शून्य)
-		वापस -ENOMEM;
+	if (he == NULL)
+		return -ENOMEM;
 
 	iter->he = he;
 	he_cache[iter->curr++] = he;
@@ -1072,592 +1071,592 @@ iter_add_single_cumulative_entry(काष्ठा hist_entry_iter *iter,
 
 	hists__inc_nr_samples(hists, he->filtered);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक
-iter_next_cumulative_entry(काष्ठा hist_entry_iter *iter,
-			   काष्ठा addr_location *al)
-अणु
-	काष्ठा callchain_cursor_node *node;
+static int
+iter_next_cumulative_entry(struct hist_entry_iter *iter,
+			   struct addr_location *al)
+{
+	struct callchain_cursor_node *node;
 
 	node = callchain_cursor_current(&callchain_cursor);
-	अगर (node == शून्य)
-		वापस 0;
+	if (node == NULL)
+		return 0;
 
-	वापस fill_callchain_info(al, node, iter->hide_unresolved);
-पूर्ण
+	return fill_callchain_info(al, node, iter->hide_unresolved);
+}
 
-अटल bool
-hist_entry__fast__sym_dअगरf(काष्ठा hist_entry *left,
-			   काष्ठा hist_entry *right)
-अणु
-	काष्ठा symbol *sym_l = left->ms.sym;
-	काष्ठा symbol *sym_r = right->ms.sym;
+static bool
+hist_entry__fast__sym_diff(struct hist_entry *left,
+			   struct hist_entry *right)
+{
+	struct symbol *sym_l = left->ms.sym;
+	struct symbol *sym_r = right->ms.sym;
 
-	अगर (!sym_l && !sym_r)
-		वापस left->ip != right->ip;
+	if (!sym_l && !sym_r)
+		return left->ip != right->ip;
 
-	वापस !!_sort__sym_cmp(sym_l, sym_r);
-पूर्ण
+	return !!_sort__sym_cmp(sym_l, sym_r);
+}
 
 
-अटल पूर्णांक
-iter_add_next_cumulative_entry(काष्ठा hist_entry_iter *iter,
-			       काष्ठा addr_location *al)
-अणु
-	काष्ठा evsel *evsel = iter->evsel;
-	काष्ठा perf_sample *sample = iter->sample;
-	काष्ठा hist_entry **he_cache = iter->priv;
-	काष्ठा hist_entry *he;
-	काष्ठा hist_entry he_पंचांगp = अणु
+static int
+iter_add_next_cumulative_entry(struct hist_entry_iter *iter,
+			       struct addr_location *al)
+{
+	struct evsel *evsel = iter->evsel;
+	struct perf_sample *sample = iter->sample;
+	struct hist_entry **he_cache = iter->priv;
+	struct hist_entry *he;
+	struct hist_entry he_tmp = {
 		.hists = evsel__hists(evsel),
 		.cpu = al->cpu,
-		.thपढ़ो = al->thपढ़ो,
-		.comm = thपढ़ो__comm(al->thपढ़ो),
+		.thread = al->thread,
+		.comm = thread__comm(al->thread),
 		.ip = al->addr,
-		.ms = अणु
+		.ms = {
 			.maps = al->maps,
 			.map = al->map,
 			.sym = al->sym,
-		पूर्ण,
-		.srcline = (अक्षर *) al->srcline,
+		},
+		.srcline = (char *) al->srcline,
 		.parent = iter->parent,
 		.raw_data = sample->raw_data,
 		.raw_size = sample->raw_size,
-	पूर्ण;
-	पूर्णांक i;
-	काष्ठा callchain_cursor cursor;
-	bool fast = hists__has(he_पंचांगp.hists, sym);
+	};
+	int i;
+	struct callchain_cursor cursor;
+	bool fast = hists__has(he_tmp.hists, sym);
 
 	callchain_cursor_snapshot(&cursor, &callchain_cursor);
 
 	callchain_cursor_advance(&callchain_cursor);
 
 	/*
-	 * Check अगर there's duplicate entries in the callchain.
+	 * Check if there's duplicate entries in the callchain.
 	 * It's possible that it has cycles or recursive calls.
 	 */
-	क्रम (i = 0; i < iter->curr; i++) अणु
+	for (i = 0; i < iter->curr; i++) {
 		/*
-		 * For most हालs, there are no duplicate entries in callchain.
-		 * The symbols are usually dअगरferent. Do a quick check क्रम
+		 * For most cases, there are no duplicate entries in callchain.
+		 * The symbols are usually different. Do a quick check for
 		 * symbols first.
 		 */
-		अगर (fast && hist_entry__fast__sym_dअगरf(he_cache[i], &he_पंचांगp))
-			जारी;
+		if (fast && hist_entry__fast__sym_diff(he_cache[i], &he_tmp))
+			continue;
 
-		अगर (hist_entry__cmp(he_cache[i], &he_पंचांगp) == 0) अणु
-			/* to aव्योम calling callback function */
-			iter->he = शून्य;
-			वापस 0;
-		पूर्ण
-	पूर्ण
+		if (hist_entry__cmp(he_cache[i], &he_tmp) == 0) {
+			/* to avoid calling callback function */
+			iter->he = NULL;
+			return 0;
+		}
+	}
 
-	he = hists__add_entry(evsel__hists(evsel), al, iter->parent, शून्य, शून्य,
+	he = hists__add_entry(evsel__hists(evsel), al, iter->parent, NULL, NULL,
 			      sample, false);
-	अगर (he == शून्य)
-		वापस -ENOMEM;
+	if (he == NULL)
+		return -ENOMEM;
 
 	iter->he = he;
 	he_cache[iter->curr++] = he;
 
-	अगर (hist_entry__has_callchains(he) && symbol_conf.use_callchain)
+	if (hist_entry__has_callchains(he) && symbol_conf.use_callchain)
 		callchain_append(he->callchain, &cursor, sample->period);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-iter_finish_cumulative_entry(काष्ठा hist_entry_iter *iter,
-			     काष्ठा addr_location *al __maybe_unused)
-अणु
-	zमुक्त(&iter->priv);
-	iter->he = शून्य;
+static int
+iter_finish_cumulative_entry(struct hist_entry_iter *iter,
+			     struct addr_location *al __maybe_unused)
+{
+	zfree(&iter->priv);
+	iter->he = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा hist_iter_ops hist_iter_mem = अणु
+const struct hist_iter_ops hist_iter_mem = {
 	.prepare_entry 		= iter_prepare_mem_entry,
 	.add_single_entry 	= iter_add_single_mem_entry,
 	.next_entry 		= iter_next_nop_entry,
 	.add_next_entry 	= iter_add_next_nop_entry,
 	.finish_entry 		= iter_finish_mem_entry,
-पूर्ण;
+};
 
-स्थिर काष्ठा hist_iter_ops hist_iter_branch = अणु
+const struct hist_iter_ops hist_iter_branch = {
 	.prepare_entry 		= iter_prepare_branch_entry,
 	.add_single_entry 	= iter_add_single_branch_entry,
 	.next_entry 		= iter_next_branch_entry,
 	.add_next_entry 	= iter_add_next_branch_entry,
 	.finish_entry 		= iter_finish_branch_entry,
-पूर्ण;
+};
 
-स्थिर काष्ठा hist_iter_ops hist_iter_normal = अणु
+const struct hist_iter_ops hist_iter_normal = {
 	.prepare_entry 		= iter_prepare_normal_entry,
 	.add_single_entry 	= iter_add_single_normal_entry,
 	.next_entry 		= iter_next_nop_entry,
 	.add_next_entry 	= iter_add_next_nop_entry,
 	.finish_entry 		= iter_finish_normal_entry,
-पूर्ण;
+};
 
-स्थिर काष्ठा hist_iter_ops hist_iter_cumulative = अणु
+const struct hist_iter_ops hist_iter_cumulative = {
 	.prepare_entry 		= iter_prepare_cumulative_entry,
 	.add_single_entry 	= iter_add_single_cumulative_entry,
 	.next_entry 		= iter_next_cumulative_entry,
 	.add_next_entry 	= iter_add_next_cumulative_entry,
 	.finish_entry 		= iter_finish_cumulative_entry,
-पूर्ण;
+};
 
-पूर्णांक hist_entry_iter__add(काष्ठा hist_entry_iter *iter, काष्ठा addr_location *al,
-			 पूर्णांक max_stack_depth, व्योम *arg)
-अणु
-	पूर्णांक err, err2;
-	काष्ठा map *alm = शून्य;
+int hist_entry_iter__add(struct hist_entry_iter *iter, struct addr_location *al,
+			 int max_stack_depth, void *arg)
+{
+	int err, err2;
+	struct map *alm = NULL;
 
-	अगर (al)
+	if (al)
 		alm = map__get(al->map);
 
 	err = sample__resolve_callchain(iter->sample, &callchain_cursor, &iter->parent,
 					iter->evsel, al, max_stack_depth);
-	अगर (err) अणु
+	if (err) {
 		map__put(alm);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	err = iter->ops->prepare_entry(iter, al);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	err = iter->ops->add_single_entry(iter, al);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
-	अगर (iter->he && iter->add_entry_cb) अणु
+	if (iter->he && iter->add_entry_cb) {
 		err = iter->add_entry_cb(iter, al, true, arg);
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		if (err)
+			goto out;
+	}
 
-	जबतक (iter->ops->next_entry(iter, al)) अणु
+	while (iter->ops->next_entry(iter, al)) {
 		err = iter->ops->add_next_entry(iter, al);
-		अगर (err)
-			अवरोध;
+		if (err)
+			break;
 
-		अगर (iter->he && iter->add_entry_cb) अणु
+		if (iter->he && iter->add_entry_cb) {
 			err = iter->add_entry_cb(iter, al, false, arg);
-			अगर (err)
-				जाओ out;
-		पूर्ण
-	पूर्ण
+			if (err)
+				goto out;
+		}
+	}
 
 out:
 	err2 = iter->ops->finish_entry(iter, al);
-	अगर (!err)
+	if (!err)
 		err = err2;
 
 	map__put(alm);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक64_t
-hist_entry__cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	काष्ठा hists *hists = left->hists;
-	काष्ठा perf_hpp_fmt *fmt;
-	पूर्णांक64_t cmp = 0;
+int64_t
+hist_entry__cmp(struct hist_entry *left, struct hist_entry *right)
+{
+	struct hists *hists = left->hists;
+	struct perf_hpp_fmt *fmt;
+	int64_t cmp = 0;
 
-	hists__क्रम_each_sort_list(hists, fmt) अणु
-		अगर (perf_hpp__is_dynamic_entry(fmt) &&
+	hists__for_each_sort_list(hists, fmt) {
+		if (perf_hpp__is_dynamic_entry(fmt) &&
 		    !perf_hpp__defined_dynamic_entry(fmt, hists))
-			जारी;
+			continue;
 
 		cmp = fmt->cmp(fmt, left, right);
-		अगर (cmp)
-			अवरोध;
-	पूर्ण
+		if (cmp)
+			break;
+	}
 
-	वापस cmp;
-पूर्ण
+	return cmp;
+}
 
-पूर्णांक64_t
-hist_entry__collapse(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	काष्ठा hists *hists = left->hists;
-	काष्ठा perf_hpp_fmt *fmt;
-	पूर्णांक64_t cmp = 0;
+int64_t
+hist_entry__collapse(struct hist_entry *left, struct hist_entry *right)
+{
+	struct hists *hists = left->hists;
+	struct perf_hpp_fmt *fmt;
+	int64_t cmp = 0;
 
-	hists__क्रम_each_sort_list(hists, fmt) अणु
-		अगर (perf_hpp__is_dynamic_entry(fmt) &&
+	hists__for_each_sort_list(hists, fmt) {
+		if (perf_hpp__is_dynamic_entry(fmt) &&
 		    !perf_hpp__defined_dynamic_entry(fmt, hists))
-			जारी;
+			continue;
 
 		cmp = fmt->collapse(fmt, left, right);
-		अगर (cmp)
-			अवरोध;
-	पूर्ण
+		if (cmp)
+			break;
+	}
 
-	वापस cmp;
-पूर्ण
+	return cmp;
+}
 
-व्योम hist_entry__delete(काष्ठा hist_entry *he)
-अणु
-	काष्ठा hist_entry_ops *ops = he->ops;
+void hist_entry__delete(struct hist_entry *he)
+{
+	struct hist_entry_ops *ops = he->ops;
 
-	thपढ़ो__zput(he->thपढ़ो);
+	thread__zput(he->thread);
 	map__zput(he->ms.map);
 
-	अगर (he->branch_info) अणु
+	if (he->branch_info) {
 		map__zput(he->branch_info->from.ms.map);
 		map__zput(he->branch_info->to.ms.map);
-		मुक्त_srcline(he->branch_info->srcline_from);
-		मुक्त_srcline(he->branch_info->srcline_to);
-		zमुक्त(&he->branch_info);
-	पूर्ण
+		free_srcline(he->branch_info->srcline_from);
+		free_srcline(he->branch_info->srcline_to);
+		zfree(&he->branch_info);
+	}
 
-	अगर (he->mem_info) अणु
+	if (he->mem_info) {
 		map__zput(he->mem_info->iaddr.ms.map);
 		map__zput(he->mem_info->daddr.ms.map);
 		mem_info__zput(he->mem_info);
-	पूर्ण
+	}
 
-	अगर (he->block_info)
+	if (he->block_info)
 		block_info__zput(he->block_info);
 
-	zमुक्त(&he->res_samples);
-	zमुक्त(&he->stat_acc);
-	मुक्त_srcline(he->srcline);
-	अगर (he->srcfile && he->srcfile[0])
-		zमुक्त(&he->srcfile);
-	मुक्त_callchain(he->callchain);
-	zमुक्त(&he->trace_output);
-	zमुक्त(&he->raw_data);
-	ops->मुक्त(he);
-पूर्ण
+	zfree(&he->res_samples);
+	zfree(&he->stat_acc);
+	free_srcline(he->srcline);
+	if (he->srcfile && he->srcfile[0])
+		zfree(&he->srcfile);
+	free_callchain(he->callchain);
+	zfree(&he->trace_output);
+	zfree(&he->raw_data);
+	ops->free(he);
+}
 
 /*
  * If this is not the last column, then we need to pad it according to the
- * pre-calculated max length क्रम this column, otherwise करोn't bother adding
- * spaces because that would अवरोध viewing this with, क्रम instance, 'less',
- * that would show tons of trailing spaces when a दीर्घ C++ demangled method
+ * pre-calculated max length for this column, otherwise don't bother adding
+ * spaces because that would break viewing this with, for instance, 'less',
+ * that would show tons of trailing spaces when a long C++ demangled method
  * names is sampled.
 */
-पूर्णांक hist_entry__snम_लिखो_alignment(काष्ठा hist_entry *he, काष्ठा perf_hpp *hpp,
-				   काष्ठा perf_hpp_fmt *fmt, पूर्णांक prपूर्णांकed)
-अणु
-	अगर (!list_is_last(&fmt->list, &he->hists->hpp_list->fields)) अणु
-		स्थिर पूर्णांक width = fmt->width(fmt, hpp, he->hists);
-		अगर (prपूर्णांकed < width) अणु
-			advance_hpp(hpp, prपूर्णांकed);
-			prपूर्णांकed = scnम_लिखो(hpp->buf, hpp->size, "%-*s", width - prपूर्णांकed, " ");
-		पूर्ण
-	पूर्ण
+int hist_entry__snprintf_alignment(struct hist_entry *he, struct perf_hpp *hpp,
+				   struct perf_hpp_fmt *fmt, int printed)
+{
+	if (!list_is_last(&fmt->list, &he->hists->hpp_list->fields)) {
+		const int width = fmt->width(fmt, hpp, he->hists);
+		if (printed < width) {
+			advance_hpp(hpp, printed);
+			printed = scnprintf(hpp->buf, hpp->size, "%-*s", width - printed, " ");
+		}
+	}
 
-	वापस prपूर्णांकed;
-पूर्ण
+	return printed;
+}
 
 /*
  * collapse the histogram
  */
 
-अटल व्योम hists__apply_filters(काष्ठा hists *hists, काष्ठा hist_entry *he);
-अटल व्योम hists__हटाओ_entry_filter(काष्ठा hists *hists, काष्ठा hist_entry *he,
-				       क्रमागत hist_filter type);
+static void hists__apply_filters(struct hists *hists, struct hist_entry *he);
+static void hists__remove_entry_filter(struct hists *hists, struct hist_entry *he,
+				       enum hist_filter type);
 
-प्रकार bool (*fmt_chk_fn)(काष्ठा perf_hpp_fmt *fmt);
+typedef bool (*fmt_chk_fn)(struct perf_hpp_fmt *fmt);
 
-अटल bool check_thपढ़ो_entry(काष्ठा perf_hpp_fmt *fmt)
-अणु
-	वापस perf_hpp__is_thपढ़ो_entry(fmt) || perf_hpp__is_comm_entry(fmt);
-पूर्ण
+static bool check_thread_entry(struct perf_hpp_fmt *fmt)
+{
+	return perf_hpp__is_thread_entry(fmt) || perf_hpp__is_comm_entry(fmt);
+}
 
-अटल व्योम hist_entry__check_and_हटाओ_filter(काष्ठा hist_entry *he,
-						क्रमागत hist_filter type,
+static void hist_entry__check_and_remove_filter(struct hist_entry *he,
+						enum hist_filter type,
 						fmt_chk_fn check)
-अणु
-	काष्ठा perf_hpp_fmt *fmt;
+{
+	struct perf_hpp_fmt *fmt;
 	bool type_match = false;
-	काष्ठा hist_entry *parent = he->parent_he;
+	struct hist_entry *parent = he->parent_he;
 
-	चयन (type) अणु
-	हाल HIST_FILTER__THREAD:
-		अगर (symbol_conf.comm_list == शून्य &&
-		    symbol_conf.pid_list == शून्य &&
-		    symbol_conf.tid_list == शून्य)
-			वापस;
-		अवरोध;
-	हाल HIST_FILTER__DSO:
-		अगर (symbol_conf.dso_list == शून्य)
-			वापस;
-		अवरोध;
-	हाल HIST_FILTER__SYMBOL:
-		अगर (symbol_conf.sym_list == शून्य)
-			वापस;
-		अवरोध;
-	हाल HIST_FILTER__PARENT:
-	हाल HIST_FILTER__GUEST:
-	हाल HIST_FILTER__HOST:
-	हाल HIST_FILTER__SOCKET:
-	हाल HIST_FILTER__C2C:
-	शेष:
-		वापस;
-	पूर्ण
+	switch (type) {
+	case HIST_FILTER__THREAD:
+		if (symbol_conf.comm_list == NULL &&
+		    symbol_conf.pid_list == NULL &&
+		    symbol_conf.tid_list == NULL)
+			return;
+		break;
+	case HIST_FILTER__DSO:
+		if (symbol_conf.dso_list == NULL)
+			return;
+		break;
+	case HIST_FILTER__SYMBOL:
+		if (symbol_conf.sym_list == NULL)
+			return;
+		break;
+	case HIST_FILTER__PARENT:
+	case HIST_FILTER__GUEST:
+	case HIST_FILTER__HOST:
+	case HIST_FILTER__SOCKET:
+	case HIST_FILTER__C2C:
+	default:
+		return;
+	}
 
-	/* अगर it's filtered by own fmt, it has to have filter bits */
-	perf_hpp_list__क्रम_each_क्रमmat(he->hpp_list, fmt) अणु
-		अगर (check(fmt)) अणु
+	/* if it's filtered by own fmt, it has to have filter bits */
+	perf_hpp_list__for_each_format(he->hpp_list, fmt) {
+		if (check(fmt)) {
 			type_match = true;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (type_match) अणु
+	if (type_match) {
 		/*
-		 * If the filter is क्रम current level entry, propagate
+		 * If the filter is for current level entry, propagate
 		 * filter marker to parents.  The marker bit was
-		 * alपढ़ोy set by शेष so it only needs to clear
+		 * already set by default so it only needs to clear
 		 * non-filtered entries.
 		 */
-		अगर (!(he->filtered & (1 << type))) अणु
-			जबतक (parent) अणु
+		if (!(he->filtered & (1 << type))) {
+			while (parent) {
 				parent->filtered &= ~(1 << type);
 				parent = parent->parent_he;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			}
+		}
+	} else {
 		/*
-		 * If current entry करोesn't have matching क्रमmats, set
-		 * filter marker क्रम upper level entries.  it will be
-		 * cleared अगर its lower level entries is not filtered.
+		 * If current entry doesn't have matching formats, set
+		 * filter marker for upper level entries.  it will be
+		 * cleared if its lower level entries is not filtered.
 		 *
 		 * For lower-level entries, it inherits parent's
 		 * filter bit so that lower level entries of a
 		 * non-filtered entry won't set the filter marker.
 		 */
-		अगर (parent == शून्य)
+		if (parent == NULL)
 			he->filtered |= (1 << type);
-		अन्यथा
+		else
 			he->filtered |= (parent->filtered & (1 << type));
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम hist_entry__apply_hierarchy_filters(काष्ठा hist_entry *he)
-अणु
-	hist_entry__check_and_हटाओ_filter(he, HIST_FILTER__THREAD,
-					    check_thपढ़ो_entry);
+static void hist_entry__apply_hierarchy_filters(struct hist_entry *he)
+{
+	hist_entry__check_and_remove_filter(he, HIST_FILTER__THREAD,
+					    check_thread_entry);
 
-	hist_entry__check_and_हटाओ_filter(he, HIST_FILTER__DSO,
+	hist_entry__check_and_remove_filter(he, HIST_FILTER__DSO,
 					    perf_hpp__is_dso_entry);
 
-	hist_entry__check_and_हटाओ_filter(he, HIST_FILTER__SYMBOL,
+	hist_entry__check_and_remove_filter(he, HIST_FILTER__SYMBOL,
 					    perf_hpp__is_sym_entry);
 
 	hists__apply_filters(he->hists, he);
-पूर्ण
+}
 
-अटल काष्ठा hist_entry *hierarchy_insert_entry(काष्ठा hists *hists,
-						 काष्ठा rb_root_cached *root,
-						 काष्ठा hist_entry *he,
-						 काष्ठा hist_entry *parent_he,
-						 काष्ठा perf_hpp_list *hpp_list)
-अणु
-	काष्ठा rb_node **p = &root->rb_root.rb_node;
-	काष्ठा rb_node *parent = शून्य;
-	काष्ठा hist_entry *iter, *new;
-	काष्ठा perf_hpp_fmt *fmt;
-	पूर्णांक64_t cmp;
-	bool lefपंचांगost = true;
+static struct hist_entry *hierarchy_insert_entry(struct hists *hists,
+						 struct rb_root_cached *root,
+						 struct hist_entry *he,
+						 struct hist_entry *parent_he,
+						 struct perf_hpp_list *hpp_list)
+{
+	struct rb_node **p = &root->rb_root.rb_node;
+	struct rb_node *parent = NULL;
+	struct hist_entry *iter, *new;
+	struct perf_hpp_fmt *fmt;
+	int64_t cmp;
+	bool leftmost = true;
 
-	जबतक (*p != शून्य) अणु
+	while (*p != NULL) {
 		parent = *p;
-		iter = rb_entry(parent, काष्ठा hist_entry, rb_node_in);
+		iter = rb_entry(parent, struct hist_entry, rb_node_in);
 
 		cmp = 0;
-		perf_hpp_list__क्रम_each_sort_list(hpp_list, fmt) अणु
+		perf_hpp_list__for_each_sort_list(hpp_list, fmt) {
 			cmp = fmt->collapse(fmt, iter, he);
-			अगर (cmp)
-				अवरोध;
-		पूर्ण
+			if (cmp)
+				break;
+		}
 
-		अगर (!cmp) अणु
+		if (!cmp) {
 			he_stat__add_stat(&iter->stat, &he->stat);
-			वापस iter;
-		पूर्ण
+			return iter;
+		}
 
-		अगर (cmp < 0)
+		if (cmp < 0)
 			p = &parent->rb_left;
-		अन्यथा अणु
+		else {
 			p = &parent->rb_right;
-			lefपंचांगost = false;
-		पूर्ण
-	पूर्ण
+			leftmost = false;
+		}
+	}
 
 	new = hist_entry__new(he, true);
-	अगर (new == शून्य)
-		वापस शून्य;
+	if (new == NULL)
+		return NULL;
 
 	hists->nr_entries++;
 
-	/* save related क्रमmat list क्रम output */
+	/* save related format list for output */
 	new->hpp_list = hpp_list;
 	new->parent_he = parent_he;
 
 	hist_entry__apply_hierarchy_filters(new);
 
 	/* some fields are now passed to 'new' */
-	perf_hpp_list__क्रम_each_sort_list(hpp_list, fmt) अणु
-		अगर (perf_hpp__is_trace_entry(fmt) || perf_hpp__is_dynamic_entry(fmt))
-			he->trace_output = शून्य;
-		अन्यथा
-			new->trace_output = शून्य;
+	perf_hpp_list__for_each_sort_list(hpp_list, fmt) {
+		if (perf_hpp__is_trace_entry(fmt) || perf_hpp__is_dynamic_entry(fmt))
+			he->trace_output = NULL;
+		else
+			new->trace_output = NULL;
 
-		अगर (perf_hpp__is_srcline_entry(fmt))
-			he->srcline = शून्य;
-		अन्यथा
-			new->srcline = शून्य;
+		if (perf_hpp__is_srcline_entry(fmt))
+			he->srcline = NULL;
+		else
+			new->srcline = NULL;
 
-		अगर (perf_hpp__is_srcfile_entry(fmt))
-			he->srcfile = शून्य;
-		अन्यथा
-			new->srcfile = शून्य;
-	पूर्ण
+		if (perf_hpp__is_srcfile_entry(fmt))
+			he->srcfile = NULL;
+		else
+			new->srcfile = NULL;
+	}
 
 	rb_link_node(&new->rb_node_in, parent, p);
-	rb_insert_color_cached(&new->rb_node_in, root, lefपंचांगost);
-	वापस new;
-पूर्ण
+	rb_insert_color_cached(&new->rb_node_in, root, leftmost);
+	return new;
+}
 
-अटल पूर्णांक hists__hierarchy_insert_entry(काष्ठा hists *hists,
-					 काष्ठा rb_root_cached *root,
-					 काष्ठा hist_entry *he)
-अणु
-	काष्ठा perf_hpp_list_node *node;
-	काष्ठा hist_entry *new_he = शून्य;
-	काष्ठा hist_entry *parent = शून्य;
-	पूर्णांक depth = 0;
-	पूर्णांक ret = 0;
+static int hists__hierarchy_insert_entry(struct hists *hists,
+					 struct rb_root_cached *root,
+					 struct hist_entry *he)
+{
+	struct perf_hpp_list_node *node;
+	struct hist_entry *new_he = NULL;
+	struct hist_entry *parent = NULL;
+	int depth = 0;
+	int ret = 0;
 
-	list_क्रम_each_entry(node, &hists->hpp_क्रमmats, list) अणु
+	list_for_each_entry(node, &hists->hpp_formats, list) {
 		/* skip period (overhead) and elided columns */
-		अगर (node->level == 0 || node->skip)
-			जारी;
+		if (node->level == 0 || node->skip)
+			continue;
 
-		/* insert copy of 'he' क्रम each fmt पूर्णांकo the hierarchy */
+		/* insert copy of 'he' for each fmt into the hierarchy */
 		new_he = hierarchy_insert_entry(hists, root, he, parent, &node->hpp);
-		अगर (new_he == शून्य) अणु
+		if (new_he == NULL) {
 			ret = -1;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		root = &new_he->hroot_in;
 		new_he->depth = depth++;
 		parent = new_he;
-	पूर्ण
+	}
 
-	अगर (new_he) अणु
+	if (new_he) {
 		new_he->leaf = true;
 
-		अगर (hist_entry__has_callchains(new_he) &&
-		    symbol_conf.use_callchain) अणु
+		if (hist_entry__has_callchains(new_he) &&
+		    symbol_conf.use_callchain) {
 			callchain_cursor_reset(&callchain_cursor);
-			अगर (callchain_merge(&callchain_cursor,
+			if (callchain_merge(&callchain_cursor,
 					    new_he->callchain,
 					    he->callchain) < 0)
 				ret = -1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* 'he' is no दीर्घer used */
+	/* 'he' is no longer used */
 	hist_entry__delete(he);
 
-	/* वापस 0 (or -1) since it alपढ़ोy applied filters */
-	वापस ret;
-पूर्ण
+	/* return 0 (or -1) since it already applied filters */
+	return ret;
+}
 
-अटल पूर्णांक hists__collapse_insert_entry(काष्ठा hists *hists,
-					काष्ठा rb_root_cached *root,
-					काष्ठा hist_entry *he)
-अणु
-	काष्ठा rb_node **p = &root->rb_root.rb_node;
-	काष्ठा rb_node *parent = शून्य;
-	काष्ठा hist_entry *iter;
-	पूर्णांक64_t cmp;
-	bool lefपंचांगost = true;
+static int hists__collapse_insert_entry(struct hists *hists,
+					struct rb_root_cached *root,
+					struct hist_entry *he)
+{
+	struct rb_node **p = &root->rb_root.rb_node;
+	struct rb_node *parent = NULL;
+	struct hist_entry *iter;
+	int64_t cmp;
+	bool leftmost = true;
 
-	अगर (symbol_conf.report_hierarchy)
-		वापस hists__hierarchy_insert_entry(hists, root, he);
+	if (symbol_conf.report_hierarchy)
+		return hists__hierarchy_insert_entry(hists, root, he);
 
-	जबतक (*p != शून्य) अणु
+	while (*p != NULL) {
 		parent = *p;
-		iter = rb_entry(parent, काष्ठा hist_entry, rb_node_in);
+		iter = rb_entry(parent, struct hist_entry, rb_node_in);
 
 		cmp = hist_entry__collapse(iter, he);
 
-		अगर (!cmp) अणु
-			पूर्णांक ret = 0;
+		if (!cmp) {
+			int ret = 0;
 
 			he_stat__add_stat(&iter->stat, &he->stat);
-			अगर (symbol_conf.cumulate_callchain)
+			if (symbol_conf.cumulate_callchain)
 				he_stat__add_stat(iter->stat_acc, he->stat_acc);
 
-			अगर (hist_entry__has_callchains(he) && symbol_conf.use_callchain) अणु
+			if (hist_entry__has_callchains(he) && symbol_conf.use_callchain) {
 				callchain_cursor_reset(&callchain_cursor);
-				अगर (callchain_merge(&callchain_cursor,
+				if (callchain_merge(&callchain_cursor,
 						    iter->callchain,
 						    he->callchain) < 0)
 					ret = -1;
-			पूर्ण
+			}
 			hist_entry__delete(he);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		अगर (cmp < 0)
+		if (cmp < 0)
 			p = &(*p)->rb_left;
-		अन्यथा अणु
+		else {
 			p = &(*p)->rb_right;
-			lefपंचांगost = false;
-		पूर्ण
-	पूर्ण
+			leftmost = false;
+		}
+	}
 	hists->nr_entries++;
 
 	rb_link_node(&he->rb_node_in, parent, p);
-	rb_insert_color_cached(&he->rb_node_in, root, lefपंचांगost);
-	वापस 1;
-पूर्ण
+	rb_insert_color_cached(&he->rb_node_in, root, leftmost);
+	return 1;
+}
 
-काष्ठा rb_root_cached *hists__get_rotate_entries_in(काष्ठा hists *hists)
-अणु
-	काष्ठा rb_root_cached *root;
+struct rb_root_cached *hists__get_rotate_entries_in(struct hists *hists)
+{
+	struct rb_root_cached *root;
 
-	pthपढ़ो_mutex_lock(&hists->lock);
+	pthread_mutex_lock(&hists->lock);
 
 	root = hists->entries_in;
-	अगर (++hists->entries_in > &hists->entries_in_array[1])
+	if (++hists->entries_in > &hists->entries_in_array[1])
 		hists->entries_in = &hists->entries_in_array[0];
 
-	pthपढ़ो_mutex_unlock(&hists->lock);
+	pthread_mutex_unlock(&hists->lock);
 
-	वापस root;
-पूर्ण
+	return root;
+}
 
-अटल व्योम hists__apply_filters(काष्ठा hists *hists, काष्ठा hist_entry *he)
-अणु
+static void hists__apply_filters(struct hists *hists, struct hist_entry *he)
+{
 	hists__filter_entry_by_dso(hists, he);
-	hists__filter_entry_by_thपढ़ो(hists, he);
+	hists__filter_entry_by_thread(hists, he);
 	hists__filter_entry_by_symbol(hists, he);
 	hists__filter_entry_by_socket(hists, he);
-पूर्ण
+}
 
-पूर्णांक hists__collapse_resort(काष्ठा hists *hists, काष्ठा ui_progress *prog)
-अणु
-	काष्ठा rb_root_cached *root;
-	काष्ठा rb_node *next;
-	काष्ठा hist_entry *n;
-	पूर्णांक ret;
+int hists__collapse_resort(struct hists *hists, struct ui_progress *prog)
+{
+	struct rb_root_cached *root;
+	struct rb_node *next;
+	struct hist_entry *n;
+	int ret;
 
-	अगर (!hists__has(hists, need_collapse))
-		वापस 0;
+	if (!hists__has(hists, need_collapse))
+		return 0;
 
 	hists->nr_entries = 0;
 
@@ -1665,82 +1664,82 @@ hist_entry__collapse(काष्ठा hist_entry *left, काष्ठा his
 
 	next = rb_first_cached(root);
 
-	जबतक (next) अणु
-		अगर (session_करोne())
-			अवरोध;
-		n = rb_entry(next, काष्ठा hist_entry, rb_node_in);
+	while (next) {
+		if (session_done())
+			break;
+		n = rb_entry(next, struct hist_entry, rb_node_in);
 		next = rb_next(&n->rb_node_in);
 
 		rb_erase_cached(&n->rb_node_in, root);
 		ret = hists__collapse_insert_entry(hists, &hists->entries_collapsed, n);
-		अगर (ret < 0)
-			वापस -1;
+		if (ret < 0)
+			return -1;
 
-		अगर (ret) अणु
+		if (ret) {
 			/*
-			 * If it wasn't combined with one of the entries alपढ़ोy
+			 * If it wasn't combined with one of the entries already
 			 * collapsed, we need to apply the filters that may have
 			 * been set by, say, the hist_browser.
 			 */
 			hists__apply_filters(hists, n);
-		पूर्ण
-		अगर (prog)
+		}
+		if (prog)
 			ui_progress__update(prog, 1);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक64_t hist_entry__sort(काष्ठा hist_entry *a, काष्ठा hist_entry *b)
-अणु
-	काष्ठा hists *hists = a->hists;
-	काष्ठा perf_hpp_fmt *fmt;
-	पूर्णांक64_t cmp = 0;
+static int64_t hist_entry__sort(struct hist_entry *a, struct hist_entry *b)
+{
+	struct hists *hists = a->hists;
+	struct perf_hpp_fmt *fmt;
+	int64_t cmp = 0;
 
-	hists__क्रम_each_sort_list(hists, fmt) अणु
-		अगर (perf_hpp__should_skip(fmt, a->hists))
-			जारी;
+	hists__for_each_sort_list(hists, fmt) {
+		if (perf_hpp__should_skip(fmt, a->hists))
+			continue;
 
 		cmp = fmt->sort(fmt, a, b);
-		अगर (cmp)
-			अवरोध;
-	पूर्ण
+		if (cmp)
+			break;
+	}
 
-	वापस cmp;
-पूर्ण
+	return cmp;
+}
 
-अटल व्योम hists__reset_filter_stats(काष्ठा hists *hists)
-अणु
+static void hists__reset_filter_stats(struct hists *hists)
+{
 	hists->nr_non_filtered_entries = 0;
 	hists->stats.total_non_filtered_period = 0;
-पूर्ण
+}
 
-व्योम hists__reset_stats(काष्ठा hists *hists)
-अणु
+void hists__reset_stats(struct hists *hists)
+{
 	hists->nr_entries = 0;
 	hists->stats.total_period = 0;
 
 	hists__reset_filter_stats(hists);
-पूर्ण
+}
 
-अटल व्योम hists__inc_filter_stats(काष्ठा hists *hists, काष्ठा hist_entry *h)
-अणु
+static void hists__inc_filter_stats(struct hists *hists, struct hist_entry *h)
+{
 	hists->nr_non_filtered_entries++;
 	hists->stats.total_non_filtered_period += h->stat.period;
-पूर्ण
+}
 
-व्योम hists__inc_stats(काष्ठा hists *hists, काष्ठा hist_entry *h)
-अणु
-	अगर (!h->filtered)
+void hists__inc_stats(struct hists *hists, struct hist_entry *h)
+{
+	if (!h->filtered)
 		hists__inc_filter_stats(hists, h);
 
 	hists->nr_entries++;
 	hists->stats.total_period += h->stat.period;
-पूर्ण
+}
 
-अटल व्योम hierarchy_recalc_total_periods(काष्ठा hists *hists)
-अणु
-	काष्ठा rb_node *node;
-	काष्ठा hist_entry *he;
+static void hierarchy_recalc_total_periods(struct hists *hists)
+{
+	struct rb_node *node;
+	struct hist_entry *he;
 
 	node = rb_first_cached(&hists->entries);
 
@@ -1752,159 +1751,159 @@ hist_entry__collapse(काष्ठा hist_entry *left, काष्ठा his
 	 * since lower level entries only see non-filtered entries
 	 * but upper level entries have sum of both entries.
 	 */
-	जबतक (node) अणु
-		he = rb_entry(node, काष्ठा hist_entry, rb_node);
+	while (node) {
+		he = rb_entry(node, struct hist_entry, rb_node);
 		node = rb_next(node);
 
 		hists->stats.total_period += he->stat.period;
-		अगर (!he->filtered)
+		if (!he->filtered)
 			hists->stats.total_non_filtered_period += he->stat.period;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम hierarchy_insert_output_entry(काष्ठा rb_root_cached *root,
-					  काष्ठा hist_entry *he)
-अणु
-	काष्ठा rb_node **p = &root->rb_root.rb_node;
-	काष्ठा rb_node *parent = शून्य;
-	काष्ठा hist_entry *iter;
-	काष्ठा perf_hpp_fmt *fmt;
-	bool lefपंचांगost = true;
+static void hierarchy_insert_output_entry(struct rb_root_cached *root,
+					  struct hist_entry *he)
+{
+	struct rb_node **p = &root->rb_root.rb_node;
+	struct rb_node *parent = NULL;
+	struct hist_entry *iter;
+	struct perf_hpp_fmt *fmt;
+	bool leftmost = true;
 
-	जबतक (*p != शून्य) अणु
+	while (*p != NULL) {
 		parent = *p;
-		iter = rb_entry(parent, काष्ठा hist_entry, rb_node);
+		iter = rb_entry(parent, struct hist_entry, rb_node);
 
-		अगर (hist_entry__sort(he, iter) > 0)
+		if (hist_entry__sort(he, iter) > 0)
 			p = &parent->rb_left;
-		अन्यथा अणु
+		else {
 			p = &parent->rb_right;
-			lefपंचांगost = false;
-		पूर्ण
-	पूर्ण
+			leftmost = false;
+		}
+	}
 
 	rb_link_node(&he->rb_node, parent, p);
-	rb_insert_color_cached(&he->rb_node, root, lefपंचांगost);
+	rb_insert_color_cached(&he->rb_node, root, leftmost);
 
 	/* update column width of dynamic entry */
-	perf_hpp_list__क्रम_each_sort_list(he->hpp_list, fmt) अणु
-		अगर (perf_hpp__is_dynamic_entry(fmt))
-			fmt->sort(fmt, he, शून्य);
-	पूर्ण
-पूर्ण
+	perf_hpp_list__for_each_sort_list(he->hpp_list, fmt) {
+		if (perf_hpp__is_dynamic_entry(fmt))
+			fmt->sort(fmt, he, NULL);
+	}
+}
 
-अटल व्योम hists__hierarchy_output_resort(काष्ठा hists *hists,
-					   काष्ठा ui_progress *prog,
-					   काष्ठा rb_root_cached *root_in,
-					   काष्ठा rb_root_cached *root_out,
+static void hists__hierarchy_output_resort(struct hists *hists,
+					   struct ui_progress *prog,
+					   struct rb_root_cached *root_in,
+					   struct rb_root_cached *root_out,
 					   u64 min_callchain_hits,
 					   bool use_callchain)
-अणु
-	काष्ठा rb_node *node;
-	काष्ठा hist_entry *he;
+{
+	struct rb_node *node;
+	struct hist_entry *he;
 
 	*root_out = RB_ROOT_CACHED;
 	node = rb_first_cached(root_in);
 
-	जबतक (node) अणु
-		he = rb_entry(node, काष्ठा hist_entry, rb_node_in);
+	while (node) {
+		he = rb_entry(node, struct hist_entry, rb_node_in);
 		node = rb_next(node);
 
 		hierarchy_insert_output_entry(root_out, he);
 
-		अगर (prog)
+		if (prog)
 			ui_progress__update(prog, 1);
 
 		hists->nr_entries++;
-		अगर (!he->filtered) अणु
+		if (!he->filtered) {
 			hists->nr_non_filtered_entries++;
 			hists__calc_col_len(hists, he);
-		पूर्ण
+		}
 
-		अगर (!he->leaf) अणु
+		if (!he->leaf) {
 			hists__hierarchy_output_resort(hists, prog,
 						       &he->hroot_in,
 						       &he->hroot_out,
 						       min_callchain_hits,
 						       use_callchain);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (!use_callchain)
-			जारी;
+		if (!use_callchain)
+			continue;
 
-		अगर (callchain_param.mode == CHAIN_GRAPH_REL) अणु
+		if (callchain_param.mode == CHAIN_GRAPH_REL) {
 			u64 total = he->stat.period;
 
-			अगर (symbol_conf.cumulate_callchain)
+			if (symbol_conf.cumulate_callchain)
 				total = he->stat_acc->period;
 
 			min_callchain_hits = total * (callchain_param.min_percent / 100);
-		पूर्ण
+		}
 
 		callchain_param.sort(&he->sorted_chain, he->callchain,
 				     min_callchain_hits, &callchain_param);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम __hists__insert_output_entry(काष्ठा rb_root_cached *entries,
-					 काष्ठा hist_entry *he,
+static void __hists__insert_output_entry(struct rb_root_cached *entries,
+					 struct hist_entry *he,
 					 u64 min_callchain_hits,
 					 bool use_callchain)
-अणु
-	काष्ठा rb_node **p = &entries->rb_root.rb_node;
-	काष्ठा rb_node *parent = शून्य;
-	काष्ठा hist_entry *iter;
-	काष्ठा perf_hpp_fmt *fmt;
-	bool lefपंचांगost = true;
+{
+	struct rb_node **p = &entries->rb_root.rb_node;
+	struct rb_node *parent = NULL;
+	struct hist_entry *iter;
+	struct perf_hpp_fmt *fmt;
+	bool leftmost = true;
 
-	अगर (use_callchain) अणु
-		अगर (callchain_param.mode == CHAIN_GRAPH_REL) अणु
+	if (use_callchain) {
+		if (callchain_param.mode == CHAIN_GRAPH_REL) {
 			u64 total = he->stat.period;
 
-			अगर (symbol_conf.cumulate_callchain)
+			if (symbol_conf.cumulate_callchain)
 				total = he->stat_acc->period;
 
 			min_callchain_hits = total * (callchain_param.min_percent / 100);
-		पूर्ण
+		}
 		callchain_param.sort(&he->sorted_chain, he->callchain,
 				      min_callchain_hits, &callchain_param);
-	पूर्ण
+	}
 
-	जबतक (*p != शून्य) अणु
+	while (*p != NULL) {
 		parent = *p;
-		iter = rb_entry(parent, काष्ठा hist_entry, rb_node);
+		iter = rb_entry(parent, struct hist_entry, rb_node);
 
-		अगर (hist_entry__sort(he, iter) > 0)
+		if (hist_entry__sort(he, iter) > 0)
 			p = &(*p)->rb_left;
-		अन्यथा अणु
+		else {
 			p = &(*p)->rb_right;
-			lefपंचांगost = false;
-		पूर्ण
-	पूर्ण
+			leftmost = false;
+		}
+	}
 
 	rb_link_node(&he->rb_node, parent, p);
-	rb_insert_color_cached(&he->rb_node, entries, lefपंचांगost);
+	rb_insert_color_cached(&he->rb_node, entries, leftmost);
 
-	perf_hpp_list__क्रम_each_sort_list(&perf_hpp_list, fmt) अणु
-		अगर (perf_hpp__is_dynamic_entry(fmt) &&
+	perf_hpp_list__for_each_sort_list(&perf_hpp_list, fmt) {
+		if (perf_hpp__is_dynamic_entry(fmt) &&
 		    perf_hpp__defined_dynamic_entry(fmt, he->hists))
-			fmt->sort(fmt, he, शून्य);  /* update column width */
-	पूर्ण
-पूर्ण
+			fmt->sort(fmt, he, NULL);  /* update column width */
+	}
+}
 
-अटल व्योम output_resort(काष्ठा hists *hists, काष्ठा ui_progress *prog,
+static void output_resort(struct hists *hists, struct ui_progress *prog,
 			  bool use_callchain, hists__resort_cb_t cb,
-			  व्योम *cb_arg)
-अणु
-	काष्ठा rb_root_cached *root;
-	काष्ठा rb_node *next;
-	काष्ठा hist_entry *n;
+			  void *cb_arg)
+{
+	struct rb_root_cached *root;
+	struct rb_node *next;
+	struct hist_entry *n;
 	u64 callchain_total;
 	u64 min_callchain_hits;
 
 	callchain_total = hists->callchain_period;
-	अगर (symbol_conf.filter_relative)
+	if (symbol_conf.filter_relative)
 		callchain_total = hists->callchain_non_filtered_period;
 
 	min_callchain_hits = callchain_total * (callchain_param.min_percent / 100);
@@ -1912,184 +1911,184 @@ hist_entry__collapse(काष्ठा hist_entry *left, काष्ठा his
 	hists__reset_stats(hists);
 	hists__reset_col_len(hists);
 
-	अगर (symbol_conf.report_hierarchy) अणु
+	if (symbol_conf.report_hierarchy) {
 		hists__hierarchy_output_resort(hists, prog,
 					       &hists->entries_collapsed,
 					       &hists->entries,
 					       min_callchain_hits,
 					       use_callchain);
 		hierarchy_recalc_total_periods(hists);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (hists__has(hists, need_collapse))
+	if (hists__has(hists, need_collapse))
 		root = &hists->entries_collapsed;
-	अन्यथा
+	else
 		root = hists->entries_in;
 
 	next = rb_first_cached(root);
 	hists->entries = RB_ROOT_CACHED;
 
-	जबतक (next) अणु
-		n = rb_entry(next, काष्ठा hist_entry, rb_node_in);
+	while (next) {
+		n = rb_entry(next, struct hist_entry, rb_node_in);
 		next = rb_next(&n->rb_node_in);
 
-		अगर (cb && cb(n, cb_arg))
-			जारी;
+		if (cb && cb(n, cb_arg))
+			continue;
 
 		__hists__insert_output_entry(&hists->entries, n, min_callchain_hits, use_callchain);
 		hists__inc_stats(hists, n);
 
-		अगर (!n->filtered)
+		if (!n->filtered)
 			hists__calc_col_len(hists, n);
 
-		अगर (prog)
+		if (prog)
 			ui_progress__update(prog, 1);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम evsel__output_resort_cb(काष्ठा evsel *evsel, काष्ठा ui_progress *prog,
-			     hists__resort_cb_t cb, व्योम *cb_arg)
-अणु
+void evsel__output_resort_cb(struct evsel *evsel, struct ui_progress *prog,
+			     hists__resort_cb_t cb, void *cb_arg)
+{
 	bool use_callchain;
 
-	अगर (evsel && symbol_conf.use_callchain && !symbol_conf.show_ref_callgraph)
+	if (evsel && symbol_conf.use_callchain && !symbol_conf.show_ref_callgraph)
 		use_callchain = evsel__has_callchain(evsel);
-	अन्यथा
+	else
 		use_callchain = symbol_conf.use_callchain;
 
 	use_callchain |= symbol_conf.show_branchflag_count;
 
 	output_resort(evsel__hists(evsel), prog, use_callchain, cb, cb_arg);
-पूर्ण
+}
 
-व्योम evsel__output_resort(काष्ठा evsel *evsel, काष्ठा ui_progress *prog)
-अणु
-	वापस evsel__output_resort_cb(evsel, prog, शून्य, शून्य);
-पूर्ण
+void evsel__output_resort(struct evsel *evsel, struct ui_progress *prog)
+{
+	return evsel__output_resort_cb(evsel, prog, NULL, NULL);
+}
 
-व्योम hists__output_resort(काष्ठा hists *hists, काष्ठा ui_progress *prog)
-अणु
-	output_resort(hists, prog, symbol_conf.use_callchain, शून्य, शून्य);
-पूर्ण
+void hists__output_resort(struct hists *hists, struct ui_progress *prog)
+{
+	output_resort(hists, prog, symbol_conf.use_callchain, NULL, NULL);
+}
 
-व्योम hists__output_resort_cb(काष्ठा hists *hists, काष्ठा ui_progress *prog,
+void hists__output_resort_cb(struct hists *hists, struct ui_progress *prog,
 			     hists__resort_cb_t cb)
-अणु
-	output_resort(hists, prog, symbol_conf.use_callchain, cb, शून्य);
-पूर्ण
+{
+	output_resort(hists, prog, symbol_conf.use_callchain, cb, NULL);
+}
 
-अटल bool can_जाओ_child(काष्ठा hist_entry *he, क्रमागत hierarchy_move_dir hmd)
-अणु
-	अगर (he->leaf || hmd == HMD_FORCE_SIBLING)
-		वापस false;
+static bool can_goto_child(struct hist_entry *he, enum hierarchy_move_dir hmd)
+{
+	if (he->leaf || hmd == HMD_FORCE_SIBLING)
+		return false;
 
-	अगर (he->unfolded || hmd == HMD_FORCE_CHILD)
-		वापस true;
+	if (he->unfolded || hmd == HMD_FORCE_CHILD)
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-काष्ठा rb_node *rb_hierarchy_last(काष्ठा rb_node *node)
-अणु
-	काष्ठा hist_entry *he = rb_entry(node, काष्ठा hist_entry, rb_node);
+struct rb_node *rb_hierarchy_last(struct rb_node *node)
+{
+	struct hist_entry *he = rb_entry(node, struct hist_entry, rb_node);
 
-	जबतक (can_जाओ_child(he, HMD_NORMAL)) अणु
+	while (can_goto_child(he, HMD_NORMAL)) {
 		node = rb_last(&he->hroot_out.rb_root);
-		he = rb_entry(node, काष्ठा hist_entry, rb_node);
-	पूर्ण
-	वापस node;
-पूर्ण
+		he = rb_entry(node, struct hist_entry, rb_node);
+	}
+	return node;
+}
 
-काष्ठा rb_node *__rb_hierarchy_next(काष्ठा rb_node *node, क्रमागत hierarchy_move_dir hmd)
-अणु
-	काष्ठा hist_entry *he = rb_entry(node, काष्ठा hist_entry, rb_node);
+struct rb_node *__rb_hierarchy_next(struct rb_node *node, enum hierarchy_move_dir hmd)
+{
+	struct hist_entry *he = rb_entry(node, struct hist_entry, rb_node);
 
-	अगर (can_जाओ_child(he, hmd))
+	if (can_goto_child(he, hmd))
 		node = rb_first_cached(&he->hroot_out);
-	अन्यथा
+	else
 		node = rb_next(node);
 
-	जबतक (node == शून्य) अणु
+	while (node == NULL) {
 		he = he->parent_he;
-		अगर (he == शून्य)
-			अवरोध;
+		if (he == NULL)
+			break;
 
 		node = rb_next(&he->rb_node);
-	पूर्ण
-	वापस node;
-पूर्ण
+	}
+	return node;
+}
 
-काष्ठा rb_node *rb_hierarchy_prev(काष्ठा rb_node *node)
-अणु
-	काष्ठा hist_entry *he = rb_entry(node, काष्ठा hist_entry, rb_node);
+struct rb_node *rb_hierarchy_prev(struct rb_node *node)
+{
+	struct hist_entry *he = rb_entry(node, struct hist_entry, rb_node);
 
 	node = rb_prev(node);
-	अगर (node)
-		वापस rb_hierarchy_last(node);
+	if (node)
+		return rb_hierarchy_last(node);
 
 	he = he->parent_he;
-	अगर (he == शून्य)
-		वापस शून्य;
+	if (he == NULL)
+		return NULL;
 
-	वापस &he->rb_node;
-पूर्ण
+	return &he->rb_node;
+}
 
-bool hist_entry__has_hierarchy_children(काष्ठा hist_entry *he, भग्न limit)
-अणु
-	काष्ठा rb_node *node;
-	काष्ठा hist_entry *child;
-	भग्न percent;
+bool hist_entry__has_hierarchy_children(struct hist_entry *he, float limit)
+{
+	struct rb_node *node;
+	struct hist_entry *child;
+	float percent;
 
-	अगर (he->leaf)
-		वापस false;
+	if (he->leaf)
+		return false;
 
 	node = rb_first_cached(&he->hroot_out);
-	child = rb_entry(node, काष्ठा hist_entry, rb_node);
+	child = rb_entry(node, struct hist_entry, rb_node);
 
-	जबतक (node && child->filtered) अणु
+	while (node && child->filtered) {
 		node = rb_next(node);
-		child = rb_entry(node, काष्ठा hist_entry, rb_node);
-	पूर्ण
+		child = rb_entry(node, struct hist_entry, rb_node);
+	}
 
-	अगर (node)
+	if (node)
 		percent = hist_entry__get_percent_limit(child);
-	अन्यथा
+	else
 		percent = 0;
 
-	वापस node && percent >= limit;
-पूर्ण
+	return node && percent >= limit;
+}
 
-अटल व्योम hists__हटाओ_entry_filter(काष्ठा hists *hists, काष्ठा hist_entry *h,
-				       क्रमागत hist_filter filter)
-अणु
+static void hists__remove_entry_filter(struct hists *hists, struct hist_entry *h,
+				       enum hist_filter filter)
+{
 	h->filtered &= ~(1 << filter);
 
-	अगर (symbol_conf.report_hierarchy) अणु
-		काष्ठा hist_entry *parent = h->parent_he;
+	if (symbol_conf.report_hierarchy) {
+		struct hist_entry *parent = h->parent_he;
 
-		जबतक (parent) अणु
+		while (parent) {
 			he_stat__add_stat(&parent->stat, &h->stat);
 
 			parent->filtered &= ~(1 << filter);
 
-			अगर (parent->filtered)
-				जाओ next;
+			if (parent->filtered)
+				goto next;
 
-			/* क्रमce fold unfiltered entry क्रम simplicity */
+			/* force fold unfiltered entry for simplicity */
 			parent->unfolded = false;
 			parent->has_no_entry = false;
 			parent->row_offset = 0;
 			parent->nr_rows = 0;
 next:
 			parent = parent->parent_he;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (h->filtered)
-		वापस;
+	if (h->filtered)
+		return;
 
-	/* क्रमce fold unfiltered entry क्रम simplicity */
+	/* force fold unfiltered entry for simplicity */
 	h->unfolded = false;
 	h->has_no_entry = false;
 	h->row_offset = 0;
@@ -2099,124 +2098,124 @@ next:
 
 	hists__inc_filter_stats(hists, h);
 	hists__calc_col_len(hists, h);
-पूर्ण
+}
 
 
-अटल bool hists__filter_entry_by_dso(काष्ठा hists *hists,
-				       काष्ठा hist_entry *he)
-अणु
-	अगर (hists->dso_filter != शून्य &&
-	    (he->ms.map == शून्य || he->ms.map->dso != hists->dso_filter)) अणु
+static bool hists__filter_entry_by_dso(struct hists *hists,
+				       struct hist_entry *he)
+{
+	if (hists->dso_filter != NULL &&
+	    (he->ms.map == NULL || he->ms.map->dso != hists->dso_filter)) {
 		he->filtered |= (1 << HIST_FILTER__DSO);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool hists__filter_entry_by_thपढ़ो(काष्ठा hists *hists,
-					  काष्ठा hist_entry *he)
-अणु
-	अगर (hists->thपढ़ो_filter != शून्य &&
-	    he->thपढ़ो != hists->thपढ़ो_filter) अणु
+static bool hists__filter_entry_by_thread(struct hists *hists,
+					  struct hist_entry *he)
+{
+	if (hists->thread_filter != NULL &&
+	    he->thread != hists->thread_filter) {
 		he->filtered |= (1 << HIST_FILTER__THREAD);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool hists__filter_entry_by_symbol(काष्ठा hists *hists,
-					  काष्ठा hist_entry *he)
-अणु
-	अगर (hists->symbol_filter_str != शून्य &&
-	    (!he->ms.sym || म_माला(he->ms.sym->name,
-				   hists->symbol_filter_str) == शून्य)) अणु
+static bool hists__filter_entry_by_symbol(struct hists *hists,
+					  struct hist_entry *he)
+{
+	if (hists->symbol_filter_str != NULL &&
+	    (!he->ms.sym || strstr(he->ms.sym->name,
+				   hists->symbol_filter_str) == NULL)) {
 		he->filtered |= (1 << HIST_FILTER__SYMBOL);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool hists__filter_entry_by_socket(काष्ठा hists *hists,
-					  काष्ठा hist_entry *he)
-अणु
-	अगर ((hists->socket_filter > -1) &&
-	    (he->socket != hists->socket_filter)) अणु
+static bool hists__filter_entry_by_socket(struct hists *hists,
+					  struct hist_entry *he)
+{
+	if ((hists->socket_filter > -1) &&
+	    (he->socket != hists->socket_filter)) {
 		he->filtered |= (1 << HIST_FILTER__SOCKET);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-प्रकार bool (*filter_fn_t)(काष्ठा hists *hists, काष्ठा hist_entry *he);
+typedef bool (*filter_fn_t)(struct hists *hists, struct hist_entry *he);
 
-अटल व्योम hists__filter_by_type(काष्ठा hists *hists, पूर्णांक type, filter_fn_t filter)
-अणु
-	काष्ठा rb_node *nd;
+static void hists__filter_by_type(struct hists *hists, int type, filter_fn_t filter)
+{
+	struct rb_node *nd;
 
 	hists->stats.nr_non_filtered_samples = 0;
 
 	hists__reset_filter_stats(hists);
 	hists__reset_col_len(hists);
 
-	क्रम (nd = rb_first_cached(&hists->entries); nd; nd = rb_next(nd)) अणु
-		काष्ठा hist_entry *h = rb_entry(nd, काष्ठा hist_entry, rb_node);
+	for (nd = rb_first_cached(&hists->entries); nd; nd = rb_next(nd)) {
+		struct hist_entry *h = rb_entry(nd, struct hist_entry, rb_node);
 
-		अगर (filter(hists, h))
-			जारी;
+		if (filter(hists, h))
+			continue;
 
-		hists__हटाओ_entry_filter(hists, h, type);
-	पूर्ण
-पूर्ण
+		hists__remove_entry_filter(hists, h, type);
+	}
+}
 
-अटल व्योम resort_filtered_entry(काष्ठा rb_root_cached *root,
-				  काष्ठा hist_entry *he)
-अणु
-	काष्ठा rb_node **p = &root->rb_root.rb_node;
-	काष्ठा rb_node *parent = शून्य;
-	काष्ठा hist_entry *iter;
-	काष्ठा rb_root_cached new_root = RB_ROOT_CACHED;
-	काष्ठा rb_node *nd;
-	bool lefपंचांगost = true;
+static void resort_filtered_entry(struct rb_root_cached *root,
+				  struct hist_entry *he)
+{
+	struct rb_node **p = &root->rb_root.rb_node;
+	struct rb_node *parent = NULL;
+	struct hist_entry *iter;
+	struct rb_root_cached new_root = RB_ROOT_CACHED;
+	struct rb_node *nd;
+	bool leftmost = true;
 
-	जबतक (*p != शून्य) अणु
+	while (*p != NULL) {
 		parent = *p;
-		iter = rb_entry(parent, काष्ठा hist_entry, rb_node);
+		iter = rb_entry(parent, struct hist_entry, rb_node);
 
-		अगर (hist_entry__sort(he, iter) > 0)
+		if (hist_entry__sort(he, iter) > 0)
 			p = &(*p)->rb_left;
-		अन्यथा अणु
+		else {
 			p = &(*p)->rb_right;
-			lefपंचांगost = false;
-		पूर्ण
-	पूर्ण
+			leftmost = false;
+		}
+	}
 
 	rb_link_node(&he->rb_node, parent, p);
-	rb_insert_color_cached(&he->rb_node, root, lefपंचांगost);
+	rb_insert_color_cached(&he->rb_node, root, leftmost);
 
-	अगर (he->leaf || he->filtered)
-		वापस;
+	if (he->leaf || he->filtered)
+		return;
 
 	nd = rb_first_cached(&he->hroot_out);
-	जबतक (nd) अणु
-		काष्ठा hist_entry *h = rb_entry(nd, काष्ठा hist_entry, rb_node);
+	while (nd) {
+		struct hist_entry *h = rb_entry(nd, struct hist_entry, rb_node);
 
 		nd = rb_next(nd);
 		rb_erase_cached(&h->rb_node, &he->hroot_out);
 
 		resort_filtered_entry(&new_root, h);
-	पूर्ण
+	}
 
 	he->hroot_out = new_root;
-पूर्ण
+}
 
-अटल व्योम hists__filter_hierarchy(काष्ठा hists *hists, पूर्णांक type, स्थिर व्योम *arg)
-अणु
-	काष्ठा rb_node *nd;
-	काष्ठा rb_root_cached new_root = RB_ROOT_CACHED;
+static void hists__filter_hierarchy(struct hists *hists, int type, const void *arg)
+{
+	struct rb_node *nd;
+	struct rb_root_cached new_root = RB_ROOT_CACHED;
 
 	hists->stats.nr_non_filtered_samples = 0;
 
@@ -2224,42 +2223,42 @@ next:
 	hists__reset_col_len(hists);
 
 	nd = rb_first_cached(&hists->entries);
-	जबतक (nd) अणु
-		काष्ठा hist_entry *h = rb_entry(nd, काष्ठा hist_entry, rb_node);
-		पूर्णांक ret;
+	while (nd) {
+		struct hist_entry *h = rb_entry(nd, struct hist_entry, rb_node);
+		int ret;
 
 		ret = hist_entry__filter(h, type, arg);
 
 		/*
-		 * हाल 1. non-matching type
+		 * case 1. non-matching type
 		 * zero out the period, set filter marker and move to child
 		 */
-		अगर (ret < 0) अणु
-			स_रखो(&h->stat, 0, माप(h->stat));
+		if (ret < 0) {
+			memset(&h->stat, 0, sizeof(h->stat));
 			h->filtered |= (1 << type);
 
 			nd = __rb_hierarchy_next(&h->rb_node, HMD_FORCE_CHILD);
-		पूर्ण
+		}
 		/*
-		 * हाल 2. matched type (filter out)
+		 * case 2. matched type (filter out)
 		 * set filter marker and move to next
 		 */
-		अन्यथा अगर (ret == 1) अणु
+		else if (ret == 1) {
 			h->filtered |= (1 << type);
 
 			nd = __rb_hierarchy_next(&h->rb_node, HMD_FORCE_SIBLING);
-		पूर्ण
+		}
 		/*
-		 * हाल 3. ok (not filtered)
+		 * case 3. ok (not filtered)
 		 * add period to hists and parents, erase the filter marker
 		 * and move to next sibling
 		 */
-		अन्यथा अणु
-			hists__हटाओ_entry_filter(hists, h, type);
+		else {
+			hists__remove_entry_filter(hists, h, type);
 
 			nd = __rb_hierarchy_next(&h->rb_node, HMD_FORCE_SIBLING);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	hierarchy_recalc_total_periods(hists);
 
@@ -2268,623 +2267,623 @@ next:
 	 * hierarchy can change periods in a upper hierarchy.
 	 */
 	nd = rb_first_cached(&hists->entries);
-	जबतक (nd) अणु
-		काष्ठा hist_entry *h = rb_entry(nd, काष्ठा hist_entry, rb_node);
+	while (nd) {
+		struct hist_entry *h = rb_entry(nd, struct hist_entry, rb_node);
 
 		nd = rb_next(nd);
 		rb_erase_cached(&h->rb_node, &hists->entries);
 
 		resort_filtered_entry(&new_root, h);
-	पूर्ण
+	}
 
 	hists->entries = new_root;
-पूर्ण
+}
 
-व्योम hists__filter_by_thपढ़ो(काष्ठा hists *hists)
-अणु
-	अगर (symbol_conf.report_hierarchy)
+void hists__filter_by_thread(struct hists *hists)
+{
+	if (symbol_conf.report_hierarchy)
 		hists__filter_hierarchy(hists, HIST_FILTER__THREAD,
-					hists->thपढ़ो_filter);
-	अन्यथा
+					hists->thread_filter);
+	else
 		hists__filter_by_type(hists, HIST_FILTER__THREAD,
-				      hists__filter_entry_by_thपढ़ो);
-पूर्ण
+				      hists__filter_entry_by_thread);
+}
 
-व्योम hists__filter_by_dso(काष्ठा hists *hists)
-अणु
-	अगर (symbol_conf.report_hierarchy)
+void hists__filter_by_dso(struct hists *hists)
+{
+	if (symbol_conf.report_hierarchy)
 		hists__filter_hierarchy(hists, HIST_FILTER__DSO,
 					hists->dso_filter);
-	अन्यथा
+	else
 		hists__filter_by_type(hists, HIST_FILTER__DSO,
 				      hists__filter_entry_by_dso);
-पूर्ण
+}
 
-व्योम hists__filter_by_symbol(काष्ठा hists *hists)
-अणु
-	अगर (symbol_conf.report_hierarchy)
+void hists__filter_by_symbol(struct hists *hists)
+{
+	if (symbol_conf.report_hierarchy)
 		hists__filter_hierarchy(hists, HIST_FILTER__SYMBOL,
 					hists->symbol_filter_str);
-	अन्यथा
+	else
 		hists__filter_by_type(hists, HIST_FILTER__SYMBOL,
 				      hists__filter_entry_by_symbol);
-पूर्ण
+}
 
-व्योम hists__filter_by_socket(काष्ठा hists *hists)
-अणु
-	अगर (symbol_conf.report_hierarchy)
+void hists__filter_by_socket(struct hists *hists)
+{
+	if (symbol_conf.report_hierarchy)
 		hists__filter_hierarchy(hists, HIST_FILTER__SOCKET,
 					&hists->socket_filter);
-	अन्यथा
+	else
 		hists__filter_by_type(hists, HIST_FILTER__SOCKET,
 				      hists__filter_entry_by_socket);
-पूर्ण
+}
 
-व्योम events_stats__inc(काष्ठा events_stats *stats, u32 type)
-अणु
+void events_stats__inc(struct events_stats *stats, u32 type)
+{
 	++stats->nr_events[0];
 	++stats->nr_events[type];
-पूर्ण
+}
 
-अटल व्योम hists_stats__inc(काष्ठा hists_stats *stats)
-अणु
+static void hists_stats__inc(struct hists_stats *stats)
+{
 	++stats->nr_samples;
-पूर्ण
+}
 
-व्योम hists__inc_nr_events(काष्ठा hists *hists)
-अणु
+void hists__inc_nr_events(struct hists *hists)
+{
 	hists_stats__inc(&hists->stats);
-पूर्ण
+}
 
-व्योम hists__inc_nr_samples(काष्ठा hists *hists, bool filtered)
-अणु
+void hists__inc_nr_samples(struct hists *hists, bool filtered)
+{
 	hists_stats__inc(&hists->stats);
-	अगर (!filtered)
+	if (!filtered)
 		hists->stats.nr_non_filtered_samples++;
-पूर्ण
+}
 
-अटल काष्ठा hist_entry *hists__add_dummy_entry(काष्ठा hists *hists,
-						 काष्ठा hist_entry *pair)
-अणु
-	काष्ठा rb_root_cached *root;
-	काष्ठा rb_node **p;
-	काष्ठा rb_node *parent = शून्य;
-	काष्ठा hist_entry *he;
-	पूर्णांक64_t cmp;
-	bool lefपंचांगost = true;
+static struct hist_entry *hists__add_dummy_entry(struct hists *hists,
+						 struct hist_entry *pair)
+{
+	struct rb_root_cached *root;
+	struct rb_node **p;
+	struct rb_node *parent = NULL;
+	struct hist_entry *he;
+	int64_t cmp;
+	bool leftmost = true;
 
-	अगर (hists__has(hists, need_collapse))
+	if (hists__has(hists, need_collapse))
 		root = &hists->entries_collapsed;
-	अन्यथा
+	else
 		root = hists->entries_in;
 
 	p = &root->rb_root.rb_node;
 
-	जबतक (*p != शून्य) अणु
+	while (*p != NULL) {
 		parent = *p;
-		he = rb_entry(parent, काष्ठा hist_entry, rb_node_in);
+		he = rb_entry(parent, struct hist_entry, rb_node_in);
 
 		cmp = hist_entry__collapse(he, pair);
 
-		अगर (!cmp)
-			जाओ out;
+		if (!cmp)
+			goto out;
 
-		अगर (cmp < 0)
+		if (cmp < 0)
 			p = &(*p)->rb_left;
-		अन्यथा अणु
+		else {
 			p = &(*p)->rb_right;
-			lefपंचांगost = false;
-		पूर्ण
-	पूर्ण
+			leftmost = false;
+		}
+	}
 
 	he = hist_entry__new(pair, true);
-	अगर (he) अणु
-		स_रखो(&he->stat, 0, माप(he->stat));
+	if (he) {
+		memset(&he->stat, 0, sizeof(he->stat));
 		he->hists = hists;
-		अगर (symbol_conf.cumulate_callchain)
-			स_रखो(he->stat_acc, 0, माप(he->stat));
+		if (symbol_conf.cumulate_callchain)
+			memset(he->stat_acc, 0, sizeof(he->stat));
 		rb_link_node(&he->rb_node_in, parent, p);
-		rb_insert_color_cached(&he->rb_node_in, root, lefपंचांगost);
+		rb_insert_color_cached(&he->rb_node_in, root, leftmost);
 		hists__inc_stats(hists, he);
 		he->dummy = true;
-	पूर्ण
+	}
 out:
-	वापस he;
-पूर्ण
+	return he;
+}
 
-अटल काष्ठा hist_entry *add_dummy_hierarchy_entry(काष्ठा hists *hists,
-						    काष्ठा rb_root_cached *root,
-						    काष्ठा hist_entry *pair)
-अणु
-	काष्ठा rb_node **p;
-	काष्ठा rb_node *parent = शून्य;
-	काष्ठा hist_entry *he;
-	काष्ठा perf_hpp_fmt *fmt;
-	bool lefपंचांगost = true;
+static struct hist_entry *add_dummy_hierarchy_entry(struct hists *hists,
+						    struct rb_root_cached *root,
+						    struct hist_entry *pair)
+{
+	struct rb_node **p;
+	struct rb_node *parent = NULL;
+	struct hist_entry *he;
+	struct perf_hpp_fmt *fmt;
+	bool leftmost = true;
 
 	p = &root->rb_root.rb_node;
-	जबतक (*p != शून्य) अणु
-		पूर्णांक64_t cmp = 0;
+	while (*p != NULL) {
+		int64_t cmp = 0;
 
 		parent = *p;
-		he = rb_entry(parent, काष्ठा hist_entry, rb_node_in);
+		he = rb_entry(parent, struct hist_entry, rb_node_in);
 
-		perf_hpp_list__क्रम_each_sort_list(he->hpp_list, fmt) अणु
+		perf_hpp_list__for_each_sort_list(he->hpp_list, fmt) {
 			cmp = fmt->collapse(fmt, he, pair);
-			अगर (cmp)
-				अवरोध;
-		पूर्ण
-		अगर (!cmp)
-			जाओ out;
+			if (cmp)
+				break;
+		}
+		if (!cmp)
+			goto out;
 
-		अगर (cmp < 0)
+		if (cmp < 0)
 			p = &parent->rb_left;
-		अन्यथा अणु
+		else {
 			p = &parent->rb_right;
-			lefपंचांगost = false;
-		पूर्ण
-	पूर्ण
+			leftmost = false;
+		}
+	}
 
 	he = hist_entry__new(pair, true);
-	अगर (he) अणु
+	if (he) {
 		rb_link_node(&he->rb_node_in, parent, p);
-		rb_insert_color_cached(&he->rb_node_in, root, lefपंचांगost);
+		rb_insert_color_cached(&he->rb_node_in, root, leftmost);
 
 		he->dummy = true;
 		he->hists = hists;
-		स_रखो(&he->stat, 0, माप(he->stat));
+		memset(&he->stat, 0, sizeof(he->stat));
 		hists__inc_stats(hists, he);
-	पूर्ण
+	}
 out:
-	वापस he;
-पूर्ण
+	return he;
+}
 
-अटल काष्ठा hist_entry *hists__find_entry(काष्ठा hists *hists,
-					    काष्ठा hist_entry *he)
-अणु
-	काष्ठा rb_node *n;
+static struct hist_entry *hists__find_entry(struct hists *hists,
+					    struct hist_entry *he)
+{
+	struct rb_node *n;
 
-	अगर (hists__has(hists, need_collapse))
+	if (hists__has(hists, need_collapse))
 		n = hists->entries_collapsed.rb_root.rb_node;
-	अन्यथा
+	else
 		n = hists->entries_in->rb_root.rb_node;
 
-	जबतक (n) अणु
-		काष्ठा hist_entry *iter = rb_entry(n, काष्ठा hist_entry, rb_node_in);
-		पूर्णांक64_t cmp = hist_entry__collapse(iter, he);
+	while (n) {
+		struct hist_entry *iter = rb_entry(n, struct hist_entry, rb_node_in);
+		int64_t cmp = hist_entry__collapse(iter, he);
 
-		अगर (cmp < 0)
+		if (cmp < 0)
 			n = n->rb_left;
-		अन्यथा अगर (cmp > 0)
+		else if (cmp > 0)
 			n = n->rb_right;
-		अन्यथा
-			वापस iter;
-	पूर्ण
+		else
+			return iter;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा hist_entry *hists__find_hierarchy_entry(काष्ठा rb_root_cached *root,
-						      काष्ठा hist_entry *he)
-अणु
-	काष्ठा rb_node *n = root->rb_root.rb_node;
+static struct hist_entry *hists__find_hierarchy_entry(struct rb_root_cached *root,
+						      struct hist_entry *he)
+{
+	struct rb_node *n = root->rb_root.rb_node;
 
-	जबतक (n) अणु
-		काष्ठा hist_entry *iter;
-		काष्ठा perf_hpp_fmt *fmt;
-		पूर्णांक64_t cmp = 0;
+	while (n) {
+		struct hist_entry *iter;
+		struct perf_hpp_fmt *fmt;
+		int64_t cmp = 0;
 
-		iter = rb_entry(n, काष्ठा hist_entry, rb_node_in);
-		perf_hpp_list__क्रम_each_sort_list(he->hpp_list, fmt) अणु
+		iter = rb_entry(n, struct hist_entry, rb_node_in);
+		perf_hpp_list__for_each_sort_list(he->hpp_list, fmt) {
 			cmp = fmt->collapse(fmt, iter, he);
-			अगर (cmp)
-				अवरोध;
-		पूर्ण
+			if (cmp)
+				break;
+		}
 
-		अगर (cmp < 0)
+		if (cmp < 0)
 			n = n->rb_left;
-		अन्यथा अगर (cmp > 0)
+		else if (cmp > 0)
 			n = n->rb_right;
-		अन्यथा
-			वापस iter;
-	पूर्ण
+		else
+			return iter;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम hists__match_hierarchy(काष्ठा rb_root_cached *leader_root,
-				   काष्ठा rb_root_cached *other_root)
-अणु
-	काष्ठा rb_node *nd;
-	काष्ठा hist_entry *pos, *pair;
+static void hists__match_hierarchy(struct rb_root_cached *leader_root,
+				   struct rb_root_cached *other_root)
+{
+	struct rb_node *nd;
+	struct hist_entry *pos, *pair;
 
-	क्रम (nd = rb_first_cached(leader_root); nd; nd = rb_next(nd)) अणु
-		pos  = rb_entry(nd, काष्ठा hist_entry, rb_node_in);
+	for (nd = rb_first_cached(leader_root); nd; nd = rb_next(nd)) {
+		pos  = rb_entry(nd, struct hist_entry, rb_node_in);
 		pair = hists__find_hierarchy_entry(other_root, pos);
 
-		अगर (pair) अणु
+		if (pair) {
 			hist_entry__add_pair(pair, pos);
 			hists__match_hierarchy(&pos->hroot_in, &pair->hroot_in);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*
- * Look क्रम pairs to link to the leader buckets (hist_entries):
+ * Look for pairs to link to the leader buckets (hist_entries):
  */
-व्योम hists__match(काष्ठा hists *leader, काष्ठा hists *other)
-अणु
-	काष्ठा rb_root_cached *root;
-	काष्ठा rb_node *nd;
-	काष्ठा hist_entry *pos, *pair;
+void hists__match(struct hists *leader, struct hists *other)
+{
+	struct rb_root_cached *root;
+	struct rb_node *nd;
+	struct hist_entry *pos, *pair;
 
-	अगर (symbol_conf.report_hierarchy) अणु
+	if (symbol_conf.report_hierarchy) {
 		/* hierarchy report always collapses entries */
-		वापस hists__match_hierarchy(&leader->entries_collapsed,
+		return hists__match_hierarchy(&leader->entries_collapsed,
 					      &other->entries_collapsed);
-	पूर्ण
+	}
 
-	अगर (hists__has(leader, need_collapse))
+	if (hists__has(leader, need_collapse))
 		root = &leader->entries_collapsed;
-	अन्यथा
+	else
 		root = leader->entries_in;
 
-	क्रम (nd = rb_first_cached(root); nd; nd = rb_next(nd)) अणु
-		pos  = rb_entry(nd, काष्ठा hist_entry, rb_node_in);
+	for (nd = rb_first_cached(root); nd; nd = rb_next(nd)) {
+		pos  = rb_entry(nd, struct hist_entry, rb_node_in);
 		pair = hists__find_entry(other, pos);
 
-		अगर (pair)
+		if (pair)
 			hist_entry__add_pair(pair, pos);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक hists__link_hierarchy(काष्ठा hists *leader_hists,
-				 काष्ठा hist_entry *parent,
-				 काष्ठा rb_root_cached *leader_root,
-				 काष्ठा rb_root_cached *other_root)
-अणु
-	काष्ठा rb_node *nd;
-	काष्ठा hist_entry *pos, *leader;
+static int hists__link_hierarchy(struct hists *leader_hists,
+				 struct hist_entry *parent,
+				 struct rb_root_cached *leader_root,
+				 struct rb_root_cached *other_root)
+{
+	struct rb_node *nd;
+	struct hist_entry *pos, *leader;
 
-	क्रम (nd = rb_first_cached(other_root); nd; nd = rb_next(nd)) अणु
-		pos = rb_entry(nd, काष्ठा hist_entry, rb_node_in);
+	for (nd = rb_first_cached(other_root); nd; nd = rb_next(nd)) {
+		pos = rb_entry(nd, struct hist_entry, rb_node_in);
 
-		अगर (hist_entry__has_pairs(pos)) अणु
+		if (hist_entry__has_pairs(pos)) {
 			bool found = false;
 
-			list_क्रम_each_entry(leader, &pos->pairs.head, pairs.node) अणु
-				अगर (leader->hists == leader_hists) अणु
+			list_for_each_entry(leader, &pos->pairs.head, pairs.node) {
+				if (leader->hists == leader_hists) {
 					found = true;
-					अवरोध;
-				पूर्ण
-			पूर्ण
-			अगर (!found)
-				वापस -1;
-		पूर्ण अन्यथा अणु
+					break;
+				}
+			}
+			if (!found)
+				return -1;
+		} else {
 			leader = add_dummy_hierarchy_entry(leader_hists,
 							   leader_root, pos);
-			अगर (leader == शून्य)
-				वापस -1;
+			if (leader == NULL)
+				return -1;
 
-			/* करो not poपूर्णांक parent in the pos */
+			/* do not point parent in the pos */
 			leader->parent_he = parent;
 
 			hist_entry__add_pair(pos, leader);
-		पूर्ण
+		}
 
-		अगर (!pos->leaf) अणु
-			अगर (hists__link_hierarchy(leader_hists, leader,
+		if (!pos->leaf) {
+			if (hists__link_hierarchy(leader_hists, leader,
 						  &leader->hroot_in,
 						  &pos->hroot_in) < 0)
-				वापस -1;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+				return -1;
+		}
+	}
+	return 0;
+}
 
 /*
- * Look क्रम entries in the other hists that are not present in the leader, अगर
+ * Look for entries in the other hists that are not present in the leader, if
  * we find them, just add a dummy entry on the leader hists, with period=0,
  * nr_events=0, to serve as the list header.
  */
-पूर्णांक hists__link(काष्ठा hists *leader, काष्ठा hists *other)
-अणु
-	काष्ठा rb_root_cached *root;
-	काष्ठा rb_node *nd;
-	काष्ठा hist_entry *pos, *pair;
+int hists__link(struct hists *leader, struct hists *other)
+{
+	struct rb_root_cached *root;
+	struct rb_node *nd;
+	struct hist_entry *pos, *pair;
 
-	अगर (symbol_conf.report_hierarchy) अणु
+	if (symbol_conf.report_hierarchy) {
 		/* hierarchy report always collapses entries */
-		वापस hists__link_hierarchy(leader, शून्य,
+		return hists__link_hierarchy(leader, NULL,
 					     &leader->entries_collapsed,
 					     &other->entries_collapsed);
-	पूर्ण
+	}
 
-	अगर (hists__has(other, need_collapse))
+	if (hists__has(other, need_collapse))
 		root = &other->entries_collapsed;
-	अन्यथा
+	else
 		root = other->entries_in;
 
-	क्रम (nd = rb_first_cached(root); nd; nd = rb_next(nd)) अणु
-		pos = rb_entry(nd, काष्ठा hist_entry, rb_node_in);
+	for (nd = rb_first_cached(root); nd; nd = rb_next(nd)) {
+		pos = rb_entry(nd, struct hist_entry, rb_node_in);
 
-		अगर (!hist_entry__has_pairs(pos)) अणु
+		if (!hist_entry__has_pairs(pos)) {
 			pair = hists__add_dummy_entry(leader, pos);
-			अगर (pair == शून्य)
-				वापस -1;
+			if (pair == NULL)
+				return -1;
 			hist_entry__add_pair(pos, pair);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hists__unlink(काष्ठा hists *hists)
-अणु
-	काष्ठा rb_root_cached *root;
-	काष्ठा rb_node *nd;
-	काष्ठा hist_entry *pos;
+int hists__unlink(struct hists *hists)
+{
+	struct rb_root_cached *root;
+	struct rb_node *nd;
+	struct hist_entry *pos;
 
-	अगर (hists__has(hists, need_collapse))
+	if (hists__has(hists, need_collapse))
 		root = &hists->entries_collapsed;
-	अन्यथा
+	else
 		root = hists->entries_in;
 
-	क्रम (nd = rb_first_cached(root); nd; nd = rb_next(nd)) अणु
-		pos = rb_entry(nd, काष्ठा hist_entry, rb_node_in);
+	for (nd = rb_first_cached(root); nd; nd = rb_next(nd)) {
+		pos = rb_entry(nd, struct hist_entry, rb_node_in);
 		list_del_init(&pos->pairs.node);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम hist__account_cycles(काष्ठा branch_stack *bs, काष्ठा addr_location *al,
-			  काष्ठा perf_sample *sample, bool nonany_branch_mode,
+void hist__account_cycles(struct branch_stack *bs, struct addr_location *al,
+			  struct perf_sample *sample, bool nonany_branch_mode,
 			  u64 *total_cycles)
-अणु
-	काष्ठा branch_info *bi;
-	काष्ठा branch_entry *entries = perf_sample__branch_entries(sample);
+{
+	struct branch_info *bi;
+	struct branch_entry *entries = perf_sample__branch_entries(sample);
 
 	/* If we have branch cycles always annotate them. */
-	अगर (bs && bs->nr && entries[0].flags.cycles) अणु
-		पूर्णांक i;
+	if (bs && bs->nr && entries[0].flags.cycles) {
+		int i;
 
 		bi = sample__resolve_bstack(sample, al);
-		अगर (bi) अणु
-			काष्ठा addr_map_symbol *prev = शून्य;
+		if (bi) {
+			struct addr_map_symbol *prev = NULL;
 
 			/*
 			 * Ignore errors, still want to process the
 			 * other entries.
 			 *
 			 * For non standard branch modes always
-			 * क्रमce no IPC (prev == शून्य)
+			 * force no IPC (prev == NULL)
 			 *
 			 * Note that perf stores branches reversed from
 			 * program order!
 			 */
-			क्रम (i = bs->nr - 1; i >= 0; i--) अणु
+			for (i = bs->nr - 1; i >= 0; i--) {
 				addr_map_symbol__account_cycles(&bi[i].from,
-					nonany_branch_mode ? शून्य : prev,
+					nonany_branch_mode ? NULL : prev,
 					bi[i].flags.cycles);
 				prev = &bi[i].to;
 
-				अगर (total_cycles)
+				if (total_cycles)
 					*total_cycles += bi[i].flags.cycles;
-			पूर्ण
-			मुक्त(bi);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+			free(bi);
+		}
+	}
+}
 
-माप_प्रकार evlist__ख_लिखो_nr_events(काष्ठा evlist *evlist, खाता *fp,
+size_t evlist__fprintf_nr_events(struct evlist *evlist, FILE *fp,
 				 bool skip_empty)
-अणु
-	काष्ठा evsel *pos;
-	माप_प्रकार ret = 0;
+{
+	struct evsel *pos;
+	size_t ret = 0;
 
-	evlist__क्रम_each_entry(evlist, pos) अणु
-		काष्ठा hists *hists = evsel__hists(pos);
+	evlist__for_each_entry(evlist, pos) {
+		struct hists *hists = evsel__hists(pos);
 
-		अगर (skip_empty && !hists->stats.nr_samples)
-			जारी;
+		if (skip_empty && !hists->stats.nr_samples)
+			continue;
 
-		ret += ख_लिखो(fp, "%s stats:\n", evsel__name(pos));
-		ret += ख_लिखो(fp, "%16s events: %10d\n",
+		ret += fprintf(fp, "%s stats:\n", evsel__name(pos));
+		ret += fprintf(fp, "%16s events: %10d\n",
 			       "SAMPLE", hists->stats.nr_samples);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
-u64 hists__total_period(काष्ठा hists *hists)
-अणु
-	वापस symbol_conf.filter_relative ? hists->stats.total_non_filtered_period :
+u64 hists__total_period(struct hists *hists)
+{
+	return symbol_conf.filter_relative ? hists->stats.total_non_filtered_period :
 		hists->stats.total_period;
-पूर्ण
+}
 
-पूर्णांक __hists__scnम_लिखो_title(काष्ठा hists *hists, अक्षर *bf, माप_प्रकार size, bool show_freq)
-अणु
-	अक्षर unit;
-	पूर्णांक prपूर्णांकed;
-	स्थिर काष्ठा dso *dso = hists->dso_filter;
-	काष्ठा thपढ़ो *thपढ़ो = hists->thपढ़ो_filter;
-	पूर्णांक socket_id = hists->socket_filter;
-	अचिन्हित दीर्घ nr_samples = hists->stats.nr_samples;
+int __hists__scnprintf_title(struct hists *hists, char *bf, size_t size, bool show_freq)
+{
+	char unit;
+	int printed;
+	const struct dso *dso = hists->dso_filter;
+	struct thread *thread = hists->thread_filter;
+	int socket_id = hists->socket_filter;
+	unsigned long nr_samples = hists->stats.nr_samples;
 	u64 nr_events = hists->stats.total_period;
-	काष्ठा evsel *evsel = hists_to_evsel(hists);
-	स्थिर अक्षर *ev_name = evsel__name(evsel);
-	अक्षर buf[512], sample_freq_str[64] = "";
-	माप_प्रकार buflen = माप(buf);
-	अक्षर ref[30] = " show reference callgraph, ";
+	struct evsel *evsel = hists_to_evsel(hists);
+	const char *ev_name = evsel__name(evsel);
+	char buf[512], sample_freq_str[64] = "";
+	size_t buflen = sizeof(buf);
+	char ref[30] = " show reference callgraph, ";
 	bool enable_ref = false;
 
-	अगर (symbol_conf.filter_relative) अणु
+	if (symbol_conf.filter_relative) {
 		nr_samples = hists->stats.nr_non_filtered_samples;
 		nr_events = hists->stats.total_non_filtered_period;
-	पूर्ण
+	}
 
-	अगर (evsel__is_group_event(evsel)) अणु
-		काष्ठा evsel *pos;
+	if (evsel__is_group_event(evsel)) {
+		struct evsel *pos;
 
 		evsel__group_desc(evsel, buf, buflen);
 		ev_name = buf;
 
-		क्रम_each_group_member(pos, evsel) अणु
-			काष्ठा hists *pos_hists = evsel__hists(pos);
+		for_each_group_member(pos, evsel) {
+			struct hists *pos_hists = evsel__hists(pos);
 
-			अगर (symbol_conf.filter_relative) अणु
+			if (symbol_conf.filter_relative) {
 				nr_samples += pos_hists->stats.nr_non_filtered_samples;
 				nr_events += pos_hists->stats.total_non_filtered_period;
-			पूर्ण अन्यथा अणु
+			} else {
 				nr_samples += pos_hists->stats.nr_samples;
 				nr_events += pos_hists->stats.total_period;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	अगर (symbol_conf.show_ref_callgraph &&
-	    म_माला(ev_name, "call-graph=no"))
+	if (symbol_conf.show_ref_callgraph &&
+	    strstr(ev_name, "call-graph=no"))
 		enable_ref = true;
 
-	अगर (show_freq)
-		scnम_लिखो(sample_freq_str, माप(sample_freq_str), " %d Hz,", evsel->core.attr.sample_freq);
+	if (show_freq)
+		scnprintf(sample_freq_str, sizeof(sample_freq_str), " %d Hz,", evsel->core.attr.sample_freq);
 
 	nr_samples = convert_unit(nr_samples, &unit);
-	prपूर्णांकed = scnम_लिखो(bf, size,
+	printed = scnprintf(bf, size,
 			   "Samples: %lu%c of event%s '%s',%s%sEvent count (approx.): %" PRIu64,
 			   nr_samples, unit, evsel->core.nr_members > 1 ? "s" : "",
 			   ev_name, sample_freq_str, enable_ref ? ref : " ", nr_events);
 
 
-	अगर (hists->uid_filter_str)
-		prपूर्णांकed += snम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed,
+	if (hists->uid_filter_str)
+		printed += snprintf(bf + printed, size - printed,
 				    ", UID: %s", hists->uid_filter_str);
-	अगर (thपढ़ो) अणु
-		अगर (hists__has(hists, thपढ़ो)) अणु
-			prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed,
+	if (thread) {
+		if (hists__has(hists, thread)) {
+			printed += scnprintf(bf + printed, size - printed,
 				    ", Thread: %s(%d)",
-				     (thपढ़ो->comm_set ? thपढ़ो__comm_str(thपढ़ो) : ""),
-				    thपढ़ो->tid);
-		पूर्ण अन्यथा अणु
-			prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed,
+				     (thread->comm_set ? thread__comm_str(thread) : ""),
+				    thread->tid);
+		} else {
+			printed += scnprintf(bf + printed, size - printed,
 				    ", Thread: %s",
-				     (thपढ़ो->comm_set ? thपढ़ो__comm_str(thपढ़ो) : ""));
-		पूर्ण
-	पूर्ण
-	अगर (dso)
-		prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed,
-				    ", DSO: %s", dso->लघु_name);
-	अगर (socket_id > -1)
-		prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed,
+				     (thread->comm_set ? thread__comm_str(thread) : ""));
+		}
+	}
+	if (dso)
+		printed += scnprintf(bf + printed, size - printed,
+				    ", DSO: %s", dso->short_name);
+	if (socket_id > -1)
+		printed += scnprintf(bf + printed, size - printed,
 				    ", Processor Socket: %d", socket_id);
 
-	वापस prपूर्णांकed;
-पूर्ण
+	return printed;
+}
 
-पूर्णांक parse_filter_percentage(स्थिर काष्ठा option *opt __maybe_unused,
-			    स्थिर अक्षर *arg, पूर्णांक unset __maybe_unused)
-अणु
-	अगर (!म_भेद(arg, "relative"))
+int parse_filter_percentage(const struct option *opt __maybe_unused,
+			    const char *arg, int unset __maybe_unused)
+{
+	if (!strcmp(arg, "relative"))
 		symbol_conf.filter_relative = true;
-	अन्यथा अगर (!म_भेद(arg, "absolute"))
+	else if (!strcmp(arg, "absolute"))
 		symbol_conf.filter_relative = false;
-	अन्यथा अणु
+	else {
 		pr_debug("Invalid percentage: %s\n", arg);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक perf_hist_config(स्थिर अक्षर *var, स्थिर अक्षर *value)
-अणु
-	अगर (!म_भेद(var, "hist.percentage"))
-		वापस parse_filter_percentage(शून्य, value, 0);
+int perf_hist_config(const char *var, const char *value)
+{
+	if (!strcmp(var, "hist.percentage"))
+		return parse_filter_percentage(NULL, value, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक __hists__init(काष्ठा hists *hists, काष्ठा perf_hpp_list *hpp_list)
-अणु
-	स_रखो(hists, 0, माप(*hists));
+int __hists__init(struct hists *hists, struct perf_hpp_list *hpp_list)
+{
+	memset(hists, 0, sizeof(*hists));
 	hists->entries_in_array[0] = hists->entries_in_array[1] = RB_ROOT_CACHED;
 	hists->entries_in = &hists->entries_in_array[0];
 	hists->entries_collapsed = RB_ROOT_CACHED;
 	hists->entries = RB_ROOT_CACHED;
-	pthपढ़ो_mutex_init(&hists->lock, शून्य);
+	pthread_mutex_init(&hists->lock, NULL);
 	hists->socket_filter = -1;
 	hists->hpp_list = hpp_list;
-	INIT_LIST_HEAD(&hists->hpp_क्रमmats);
-	वापस 0;
-पूर्ण
+	INIT_LIST_HEAD(&hists->hpp_formats);
+	return 0;
+}
 
-अटल व्योम hists__delete_reमुख्यing_entries(काष्ठा rb_root_cached *root)
-अणु
-	काष्ठा rb_node *node;
-	काष्ठा hist_entry *he;
+static void hists__delete_remaining_entries(struct rb_root_cached *root)
+{
+	struct rb_node *node;
+	struct hist_entry *he;
 
-	जबतक (!RB_EMPTY_ROOT(&root->rb_root)) अणु
+	while (!RB_EMPTY_ROOT(&root->rb_root)) {
 		node = rb_first_cached(root);
 		rb_erase_cached(node, root);
 
-		he = rb_entry(node, काष्ठा hist_entry, rb_node_in);
+		he = rb_entry(node, struct hist_entry, rb_node_in);
 		hist_entry__delete(he);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम hists__delete_all_entries(काष्ठा hists *hists)
-अणु
+static void hists__delete_all_entries(struct hists *hists)
+{
 	hists__delete_entries(hists);
-	hists__delete_reमुख्यing_entries(&hists->entries_in_array[0]);
-	hists__delete_reमुख्यing_entries(&hists->entries_in_array[1]);
-	hists__delete_reमुख्यing_entries(&hists->entries_collapsed);
-पूर्ण
+	hists__delete_remaining_entries(&hists->entries_in_array[0]);
+	hists__delete_remaining_entries(&hists->entries_in_array[1]);
+	hists__delete_remaining_entries(&hists->entries_collapsed);
+}
 
-अटल व्योम hists_evsel__निकास(काष्ठा evsel *evsel)
-अणु
-	काष्ठा hists *hists = evsel__hists(evsel);
-	काष्ठा perf_hpp_fmt *fmt, *pos;
-	काष्ठा perf_hpp_list_node *node, *पंचांगp;
+static void hists_evsel__exit(struct evsel *evsel)
+{
+	struct hists *hists = evsel__hists(evsel);
+	struct perf_hpp_fmt *fmt, *pos;
+	struct perf_hpp_list_node *node, *tmp;
 
 	hists__delete_all_entries(hists);
 
-	list_क्रम_each_entry_safe(node, पंचांगp, &hists->hpp_क्रमmats, list) अणु
-		perf_hpp_list__क्रम_each_क्रमmat_safe(&node->hpp, fmt, pos) अणु
+	list_for_each_entry_safe(node, tmp, &hists->hpp_formats, list) {
+		perf_hpp_list__for_each_format_safe(&node->hpp, fmt, pos) {
 			list_del_init(&fmt->list);
-			मुक्त(fmt);
-		पूर्ण
+			free(fmt);
+		}
 		list_del_init(&node->list);
-		मुक्त(node);
-	पूर्ण
-पूर्ण
+		free(node);
+	}
+}
 
-अटल पूर्णांक hists_evsel__init(काष्ठा evsel *evsel)
-अणु
-	काष्ठा hists *hists = evsel__hists(evsel);
+static int hists_evsel__init(struct evsel *evsel)
+{
+	struct hists *hists = evsel__hists(evsel);
 
 	__hists__init(hists, &perf_hpp_list);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * XXX We probably need a hists_evsel__निकास() to मुक्त the hist_entries
+ * XXX We probably need a hists_evsel__exit() to free the hist_entries
  * stored in the rbtree...
  */
 
-पूर्णांक hists__init(व्योम)
-अणु
-	पूर्णांक err = evsel__object_config(माप(काष्ठा hists_evsel),
-				       hists_evsel__init, hists_evsel__निकास);
-	अगर (err)
-		ख_माला_दो("FATAL ERROR: Couldn't setup hists class\n", मानक_त्रुटि);
+int hists__init(void)
+{
+	int err = evsel__object_config(sizeof(struct hists_evsel),
+				       hists_evsel__init, hists_evsel__exit);
+	if (err)
+		fputs("FATAL ERROR: Couldn't setup hists class\n", stderr);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम perf_hpp_list__init(काष्ठा perf_hpp_list *list)
-अणु
+void perf_hpp_list__init(struct perf_hpp_list *list)
+{
 	INIT_LIST_HEAD(&list->fields);
 	INIT_LIST_HEAD(&list->sorts);
-पूर्ण
+}

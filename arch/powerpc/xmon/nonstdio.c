@@ -1,189 +1,188 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 1996-2005 Paul Mackerras.
  */
-#समावेश <linux/माला.स>
-#समावेश <यंत्र/udbg.h>
-#समावेश <यंत्र/समय.स>
-#समावेश "nonstdio.h"
+#include <linux/string.h>
+#include <asm/udbg.h>
+#include <asm/time.h>
+#include "nonstdio.h"
 
-अटल bool paginating, paginate_skipping;
-अटल अचिन्हित दीर्घ paginate_lpp; /* Lines Per Page */
-अटल अचिन्हित दीर्घ paginate_pos;
+static bool paginating, paginate_skipping;
+static unsigned long paginate_lpp; /* Lines Per Page */
+static unsigned long paginate_pos;
 
-व्योम xmon_start_pagination(व्योम)
-अणु
+void xmon_start_pagination(void)
+{
 	paginating = true;
 	paginate_skipping = false;
 	paginate_pos = 0;
-पूर्ण
+}
 
-व्योम xmon_end_pagination(व्योम)
-अणु
+void xmon_end_pagination(void)
+{
 	paginating = false;
-पूर्ण
+}
 
-व्योम xmon_set_pagination_lpp(अचिन्हित दीर्घ lpp)
-अणु
+void xmon_set_pagination_lpp(unsigned long lpp)
+{
 	paginate_lpp = lpp;
-पूर्ण
+}
 
-अटल पूर्णांक xmon_पढ़ोअक्षर(व्योम)
-अणु
-	अगर (udbg_अ_लो)
-		वापस udbg_अ_लो();
-	वापस -1;
-पूर्ण
+static int xmon_readchar(void)
+{
+	if (udbg_getc)
+		return udbg_getc();
+	return -1;
+}
 
-अटल पूर्णांक xmon_ग_लिखो(स्थिर अक्षर *ptr, पूर्णांक nb)
-अणु
-	पूर्णांक rv = 0;
-	स्थिर अक्षर *p = ptr, *q;
-	स्थिर अक्षर msg[] = "[Hit a key (a:all, q:truncate, any:next page)]";
+static int xmon_write(const char *ptr, int nb)
+{
+	int rv = 0;
+	const char *p = ptr, *q;
+	const char msg[] = "[Hit a key (a:all, q:truncate, any:next page)]";
 
-	अगर (nb <= 0)
-		वापस rv;
+	if (nb <= 0)
+		return rv;
 
-	अगर (paginating && paginate_skipping)
-		वापस nb;
+	if (paginating && paginate_skipping)
+		return nb;
 
-	अगर (paginate_lpp) अणु
-		जबतक (paginating && (q = म_अक्षर(p, '\n'))) अणु
-			rv += udbg_ग_लिखो(p, q - p + 1);
+	if (paginate_lpp) {
+		while (paginating && (q = strchr(p, '\n'))) {
+			rv += udbg_write(p, q - p + 1);
 			p = q + 1;
 			paginate_pos++;
 
-			अगर (paginate_pos >= paginate_lpp) अणु
-				udbg_ग_लिखो(msg, म_माप(msg));
+			if (paginate_pos >= paginate_lpp) {
+				udbg_write(msg, strlen(msg));
 
-				चयन (xmon_पढ़ोअक्षर()) अणु
-				हाल 'a':
+				switch (xmon_readchar()) {
+				case 'a':
 					paginating = false;
-					अवरोध;
-				हाल 'q':
+					break;
+				case 'q':
 					paginate_skipping = true;
-					अवरोध;
-				शेष:
+					break;
+				default:
 					/* nothing */
-					अवरोध;
-				पूर्ण
+					break;
+				}
 
 				paginate_pos = 0;
-				udbg_ग_लिखो("\r\n", 2);
+				udbg_write("\r\n", 2);
 
-				अगर (paginate_skipping)
-					वापस nb;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				if (paginate_skipping)
+					return nb;
+			}
+		}
+	}
 
-	वापस rv + udbg_ग_लिखो(p, nb - (p - ptr));
-पूर्ण
+	return rv + udbg_write(p, nb - (p - ptr));
+}
 
-पूर्णांक xmon_अक्षर_दो(पूर्णांक c)
-अणु
-	अक्षर ch = c;
+int xmon_putchar(int c)
+{
+	char ch = c;
 
-	अगर (c == '\n')
-		xmon_अक्षर_दो('\r');
-	वापस xmon_ग_लिखो(&ch, 1) == 1? c: -1;
-पूर्ण
+	if (c == '\n')
+		xmon_putchar('\r');
+	return xmon_write(&ch, 1) == 1? c: -1;
+}
 
-अटल अक्षर line[256];
-अटल अक्षर *lineptr;
-अटल पूर्णांक lineleft;
+static char line[256];
+static char *lineptr;
+static int lineleft;
 
-अटल पूर्णांक xmon_अक्षर_लो(व्योम)
-अणु
-	पूर्णांक c;
+static int xmon_getchar(void)
+{
+	int c;
 
-	अगर (lineleft == 0) अणु
+	if (lineleft == 0) {
 		lineptr = line;
-		क्रम (;;) अणु
-			c = xmon_पढ़ोअक्षर();
-			अगर (c == -1 || c == 4)
-				अवरोध;
-			अगर (c == '\r' || c == '\n') अणु
+		for (;;) {
+			c = xmon_readchar();
+			if (c == -1 || c == 4)
+				break;
+			if (c == '\r' || c == '\n') {
 				*lineptr++ = '\n';
-				xmon_अक्षर_दो('\n');
-				अवरोध;
-			पूर्ण
-			चयन (c) अणु
-			हाल 0177:
-			हाल '\b':
-				अगर (lineptr > line) अणु
-					xmon_अक्षर_दो('\b');
-					xmon_अक्षर_दो(' ');
-					xmon_अक्षर_दो('\b');
+				xmon_putchar('\n');
+				break;
+			}
+			switch (c) {
+			case 0177:
+			case '\b':
+				if (lineptr > line) {
+					xmon_putchar('\b');
+					xmon_putchar(' ');
+					xmon_putchar('\b');
 					--lineptr;
-				पूर्ण
-				अवरोध;
-			हाल 'U' & 0x1F:
-				जबतक (lineptr > line) अणु
-					xmon_अक्षर_दो('\b');
-					xmon_अक्षर_दो(' ');
-					xmon_अक्षर_दो('\b');
+				}
+				break;
+			case 'U' & 0x1F:
+				while (lineptr > line) {
+					xmon_putchar('\b');
+					xmon_putchar(' ');
+					xmon_putchar('\b');
 					--lineptr;
-				पूर्ण
-				अवरोध;
-			शेष:
-				अगर (lineptr >= &line[माप(line) - 1])
-					xmon_अक्षर_दो('\a');
-				अन्यथा अणु
-					xmon_अक्षर_दो(c);
+				}
+				break;
+			default:
+				if (lineptr >= &line[sizeof(line) - 1])
+					xmon_putchar('\a');
+				else {
+					xmon_putchar(c);
 					*lineptr++ = c;
-				पूर्ण
-			पूर्ण
-		पूर्ण
+				}
+			}
+		}
 		lineleft = lineptr - line;
 		lineptr = line;
-	पूर्ण
-	अगर (lineleft == 0)
-		वापस -1;
+	}
+	if (lineleft == 0)
+		return -1;
 	--lineleft;
-	वापस *lineptr++;
-पूर्ण
+	return *lineptr++;
+}
 
-अक्षर *xmon_माला_लो(अक्षर *str, पूर्णांक nb)
-अणु
-	अक्षर *p;
-	पूर्णांक c;
+char *xmon_gets(char *str, int nb)
+{
+	char *p;
+	int c;
 
-	क्रम (p = str; p < str + nb - 1; ) अणु
-		c = xmon_अक्षर_लो();
-		अगर (c == -1) अणु
-			अगर (p == str)
-				वापस शून्य;
-			अवरोध;
-		पूर्ण
+	for (p = str; p < str + nb - 1; ) {
+		c = xmon_getchar();
+		if (c == -1) {
+			if (p == str)
+				return NULL;
+			break;
+		}
 		*p++ = c;
-		अगर (c == '\n')
-			अवरोध;
-	पूर्ण
+		if (c == '\n')
+			break;
+	}
 	*p = 0;
-	वापस str;
-पूर्ण
+	return str;
+}
 
-व्योम xmon_म_लिखो(स्थिर अक्षर *क्रमmat, ...)
-अणु
-	बहु_सूची args;
-	अटल अक्षर xmon_outbuf[1024];
-	पूर्णांक rc, n;
+void xmon_printf(const char *format, ...)
+{
+	va_list args;
+	static char xmon_outbuf[1024];
+	int rc, n;
 
-	बहु_शुरू(args, क्रमmat);
-	n = vsnम_लिखो(xmon_outbuf, माप(xmon_outbuf), क्रमmat, args);
-	बहु_पूर्ण(args);
+	va_start(args, format);
+	n = vsnprintf(xmon_outbuf, sizeof(xmon_outbuf), format, args);
+	va_end(args);
 
-	rc = xmon_ग_लिखो(xmon_outbuf, n);
+	rc = xmon_write(xmon_outbuf, n);
 
-	अगर (n && rc == 0) अणु
-		/* No udbg hooks, fallback to prपूर्णांकk() - dangerous */
+	if (n && rc == 0) {
+		/* No udbg hooks, fallback to printk() - dangerous */
 		pr_cont("%s", xmon_outbuf);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम xmon_माला_दो(स्थिर अक्षर *str)
-अणु
-	xmon_ग_लिखो(str, म_माप(str));
-पूर्ण
+void xmon_puts(const char *str)
+{
+	xmon_write(str, strlen(str));
+}

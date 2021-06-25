@@ -1,111 +1,110 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-बाह्य काष्ठा btree_geo btree_geo128;
+/* SPDX-License-Identifier: GPL-2.0 */
+extern struct btree_geo btree_geo128;
 
-काष्ठा btree_head128 अणु काष्ठा btree_head h; पूर्ण;
+struct btree_head128 { struct btree_head h; };
 
-अटल अंतरभूत व्योम btree_init_mempool128(काष्ठा btree_head128 *head,
+static inline void btree_init_mempool128(struct btree_head128 *head,
 					 mempool_t *mempool)
-अणु
+{
 	btree_init_mempool(&head->h, mempool);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक btree_init128(काष्ठा btree_head128 *head)
-अणु
-	वापस btree_init(&head->h);
-पूर्ण
+static inline int btree_init128(struct btree_head128 *head)
+{
+	return btree_init(&head->h);
+}
 
-अटल अंतरभूत व्योम btree_destroy128(काष्ठा btree_head128 *head)
-अणु
+static inline void btree_destroy128(struct btree_head128 *head)
+{
 	btree_destroy(&head->h);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम *btree_lookup128(काष्ठा btree_head128 *head, u64 k1, u64 k2)
-अणु
-	u64 key[2] = अणुk1, k2पूर्ण;
-	वापस btree_lookup(&head->h, &btree_geo128, (अचिन्हित दीर्घ *)&key);
-पूर्ण
+static inline void *btree_lookup128(struct btree_head128 *head, u64 k1, u64 k2)
+{
+	u64 key[2] = {k1, k2};
+	return btree_lookup(&head->h, &btree_geo128, (unsigned long *)&key);
+}
 
-अटल अंतरभूत व्योम *btree_get_prev128(काष्ठा btree_head128 *head,
+static inline void *btree_get_prev128(struct btree_head128 *head,
 				      u64 *k1, u64 *k2)
-अणु
-	u64 key[2] = अणु*k1, *k2पूर्ण;
-	व्योम *val;
+{
+	u64 key[2] = {*k1, *k2};
+	void *val;
 
 	val = btree_get_prev(&head->h, &btree_geo128,
-			     (अचिन्हित दीर्घ *)&key);
+			     (unsigned long *)&key);
 	*k1 = key[0];
 	*k2 = key[1];
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल अंतरभूत पूर्णांक btree_insert128(काष्ठा btree_head128 *head, u64 k1, u64 k2,
-				  व्योम *val, gfp_t gfp)
-अणु
-	u64 key[2] = अणुk1, k2पूर्ण;
-	वापस btree_insert(&head->h, &btree_geo128,
-			    (अचिन्हित दीर्घ *)&key, val, gfp);
-पूर्ण
+static inline int btree_insert128(struct btree_head128 *head, u64 k1, u64 k2,
+				  void *val, gfp_t gfp)
+{
+	u64 key[2] = {k1, k2};
+	return btree_insert(&head->h, &btree_geo128,
+			    (unsigned long *)&key, val, gfp);
+}
 
-अटल अंतरभूत पूर्णांक btree_update128(काष्ठा btree_head128 *head, u64 k1, u64 k2,
-				  व्योम *val)
-अणु
-	u64 key[2] = अणुk1, k2पूर्ण;
-	वापस btree_update(&head->h, &btree_geo128,
-			    (अचिन्हित दीर्घ *)&key, val);
-पूर्ण
+static inline int btree_update128(struct btree_head128 *head, u64 k1, u64 k2,
+				  void *val)
+{
+	u64 key[2] = {k1, k2};
+	return btree_update(&head->h, &btree_geo128,
+			    (unsigned long *)&key, val);
+}
 
-अटल अंतरभूत व्योम *btree_हटाओ128(काष्ठा btree_head128 *head, u64 k1, u64 k2)
-अणु
-	u64 key[2] = अणुk1, k2पूर्ण;
-	वापस btree_हटाओ(&head->h, &btree_geo128, (अचिन्हित दीर्घ *)&key);
-पूर्ण
+static inline void *btree_remove128(struct btree_head128 *head, u64 k1, u64 k2)
+{
+	u64 key[2] = {k1, k2};
+	return btree_remove(&head->h, &btree_geo128, (unsigned long *)&key);
+}
 
-अटल अंतरभूत व्योम *btree_last128(काष्ठा btree_head128 *head, u64 *k1, u64 *k2)
-अणु
+static inline void *btree_last128(struct btree_head128 *head, u64 *k1, u64 *k2)
+{
 	u64 key[2];
-	व्योम *val;
+	void *val;
 
-	val = btree_last(&head->h, &btree_geo128, (अचिन्हित दीर्घ *)&key[0]);
-	अगर (val) अणु
+	val = btree_last(&head->h, &btree_geo128, (unsigned long *)&key[0]);
+	if (val) {
 		*k1 = key[0];
 		*k2 = key[1];
-	पूर्ण
+	}
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल अंतरभूत पूर्णांक btree_merge128(काष्ठा btree_head128 *target,
-				 काष्ठा btree_head128 *victim,
+static inline int btree_merge128(struct btree_head128 *target,
+				 struct btree_head128 *victim,
 				 gfp_t gfp)
-अणु
-	वापस btree_merge(&target->h, &victim->h, &btree_geo128, gfp);
-पूर्ण
+{
+	return btree_merge(&target->h, &victim->h, &btree_geo128, gfp);
+}
 
-व्योम visitor128(व्योम *elem, अचिन्हित दीर्घ opaque, अचिन्हित दीर्घ *__key,
-		माप_प्रकार index, व्योम *__func);
+void visitor128(void *elem, unsigned long opaque, unsigned long *__key,
+		size_t index, void *__func);
 
-प्रकार व्योम (*visitor128_t)(व्योम *elem, अचिन्हित दीर्घ opaque,
-			     u64 key1, u64 key2, माप_प्रकार index);
+typedef void (*visitor128_t)(void *elem, unsigned long opaque,
+			     u64 key1, u64 key2, size_t index);
 
-अटल अंतरभूत माप_प्रकार btree_visitor128(काष्ठा btree_head128 *head,
-				      अचिन्हित दीर्घ opaque,
+static inline size_t btree_visitor128(struct btree_head128 *head,
+				      unsigned long opaque,
 				      visitor128_t func2)
-अणु
-	वापस btree_visitor(&head->h, &btree_geo128, opaque,
+{
+	return btree_visitor(&head->h, &btree_geo128, opaque,
 			     visitor128, func2);
-पूर्ण
+}
 
-अटल अंतरभूत माप_प्रकार btree_grim_visitor128(काष्ठा btree_head128 *head,
-					   अचिन्हित दीर्घ opaque,
+static inline size_t btree_grim_visitor128(struct btree_head128 *head,
+					   unsigned long opaque,
 					   visitor128_t func2)
-अणु
-	वापस btree_grim_visitor(&head->h, &btree_geo128, opaque,
+{
+	return btree_grim_visitor(&head->h, &btree_geo128, opaque,
 				  visitor128, func2);
-पूर्ण
+}
 
-#घोषणा btree_क्रम_each_safe128(head, k1, k2, val)	\
-	क्रम (val = btree_last128(head, &k1, &k2);	\
+#define btree_for_each_safe128(head, k1, k2, val)	\
+	for (val = btree_last128(head, &k1, &k2);	\
 	     val;					\
 	     val = btree_get_prev128(head, &k1, &k2))
 

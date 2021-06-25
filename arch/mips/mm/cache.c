@@ -1,167 +1,166 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 1994 - 2003, 06, 07 by Ralf Baechle (ralf@linux-mips.org)
  * Copyright (C) 2007 MIPS Technologies, Inc.
  */
-#समावेश <linux/fs.h>
-#समावेश <linux/fcntl.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/linkage.h>
-#समावेश <linux/export.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/pagemap.h>
+#include <linux/fs.h>
+#include <linux/fcntl.h>
+#include <linux/kernel.h>
+#include <linux/linkage.h>
+#include <linux/export.h>
+#include <linux/sched.h>
+#include <linux/syscalls.h>
+#include <linux/mm.h>
+#include <linux/highmem.h>
+#include <linux/pagemap.h>
 
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <यंत्र/processor.h>
-#समावेश <यंत्र/cpu.h>
-#समावेश <यंत्र/cpu-features.h>
-#समावेश <यंत्र/setup.h>
-#समावेश <यंत्र/pgtable.h>
+#include <asm/cacheflush.h>
+#include <asm/processor.h>
+#include <asm/cpu.h>
+#include <asm/cpu-features.h>
+#include <asm/setup.h>
+#include <asm/pgtable.h>
 
 /* Cache operations. */
-व्योम (*flush_cache_all)(व्योम);
-व्योम (*__flush_cache_all)(व्योम);
+void (*flush_cache_all)(void);
+void (*__flush_cache_all)(void);
 EXPORT_SYMBOL_GPL(__flush_cache_all);
-व्योम (*flush_cache_mm)(काष्ठा mm_काष्ठा *mm);
-व्योम (*flush_cache_range)(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ start,
-	अचिन्हित दीर्घ end);
-व्योम (*flush_cache_page)(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ page,
-	अचिन्हित दीर्घ pfn);
-व्योम (*flush_icache_range)(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end);
+void (*flush_cache_mm)(struct mm_struct *mm);
+void (*flush_cache_range)(struct vm_area_struct *vma, unsigned long start,
+	unsigned long end);
+void (*flush_cache_page)(struct vm_area_struct *vma, unsigned long page,
+	unsigned long pfn);
+void (*flush_icache_range)(unsigned long start, unsigned long end);
 EXPORT_SYMBOL_GPL(flush_icache_range);
-व्योम (*local_flush_icache_range)(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end);
+void (*local_flush_icache_range)(unsigned long start, unsigned long end);
 EXPORT_SYMBOL_GPL(local_flush_icache_range);
-व्योम (*__flush_icache_user_range)(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end);
-व्योम (*__local_flush_icache_user_range)(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end);
+void (*__flush_icache_user_range)(unsigned long start, unsigned long end);
+void (*__local_flush_icache_user_range)(unsigned long start, unsigned long end);
 EXPORT_SYMBOL_GPL(__local_flush_icache_user_range);
 
-व्योम (*__flush_cache_vmap)(व्योम);
-व्योम (*__flush_cache_vunmap)(व्योम);
+void (*__flush_cache_vmap)(void);
+void (*__flush_cache_vunmap)(void);
 
-व्योम (*__flush_kernel_vmap_range)(अचिन्हित दीर्घ vaddr, पूर्णांक size);
+void (*__flush_kernel_vmap_range)(unsigned long vaddr, int size);
 EXPORT_SYMBOL_GPL(__flush_kernel_vmap_range);
 
-/* MIPS specअगरic cache operations */
-व्योम (*local_flush_data_cache_page)(व्योम * addr);
-व्योम (*flush_data_cache_page)(अचिन्हित दीर्घ addr);
-व्योम (*flush_icache_all)(व्योम);
+/* MIPS specific cache operations */
+void (*local_flush_data_cache_page)(void * addr);
+void (*flush_data_cache_page)(unsigned long addr);
+void (*flush_icache_all)(void);
 
 EXPORT_SYMBOL_GPL(local_flush_data_cache_page);
 EXPORT_SYMBOL(flush_data_cache_page);
 EXPORT_SYMBOL(flush_icache_all);
 
-#अगर_घोषित CONFIG_DMA_NONCOHERENT
+#ifdef CONFIG_DMA_NONCOHERENT
 
 /* DMA cache operations. */
-व्योम (*_dma_cache_wback_inv)(अचिन्हित दीर्घ start, अचिन्हित दीर्घ size);
-व्योम (*_dma_cache_wback)(अचिन्हित दीर्घ start, अचिन्हित दीर्घ size);
-व्योम (*_dma_cache_inv)(अचिन्हित दीर्घ start, अचिन्हित दीर्घ size);
+void (*_dma_cache_wback_inv)(unsigned long start, unsigned long size);
+void (*_dma_cache_wback)(unsigned long start, unsigned long size);
+void (*_dma_cache_inv)(unsigned long start, unsigned long size);
 
-#पूर्ण_अगर /* CONFIG_DMA_NONCOHERENT */
+#endif /* CONFIG_DMA_NONCOHERENT */
 
 /*
- * We could optimize the हाल where the cache argument is not BCACHE but
+ * We could optimize the case where the cache argument is not BCACHE but
  * that seems very atypical use ...
  */
-SYSCALL_DEFINE3(cacheflush, अचिन्हित दीर्घ, addr, अचिन्हित दीर्घ, bytes,
-	अचिन्हित पूर्णांक, cache)
-अणु
-	अगर (bytes == 0)
-		वापस 0;
-	अगर (!access_ok((व्योम __user *) addr, bytes))
-		वापस -EFAULT;
+SYSCALL_DEFINE3(cacheflush, unsigned long, addr, unsigned long, bytes,
+	unsigned int, cache)
+{
+	if (bytes == 0)
+		return 0;
+	if (!access_ok((void __user *) addr, bytes))
+		return -EFAULT;
 
 	__flush_icache_user_range(addr, addr + bytes);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम __flush_dcache_page(काष्ठा page *page)
-अणु
-	काष्ठा address_space *mapping = page_mapping_file(page);
-	अचिन्हित दीर्घ addr;
+void __flush_dcache_page(struct page *page)
+{
+	struct address_space *mapping = page_mapping_file(page);
+	unsigned long addr;
 
-	अगर (mapping && !mapping_mapped(mapping)) अणु
+	if (mapping && !mapping_mapped(mapping)) {
 		SetPageDcacheDirty(page);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
-	 * We could delay the flush क्रम the !page_mapping हाल too.  But that
-	 * हाल is क्रम exec env/arg pages and those are %99 certainly going to
-	 * get faulted पूर्णांकo the tlb (and thus flushed) anyways.
+	 * We could delay the flush for the !page_mapping case too.  But that
+	 * case is for exec env/arg pages and those are %99 certainly going to
+	 * get faulted into the tlb (and thus flushed) anyways.
 	 */
-	अगर (PageHighMem(page))
-		addr = (अचिन्हित दीर्घ)kmap_atomic(page);
-	अन्यथा
-		addr = (अचिन्हित दीर्घ)page_address(page);
+	if (PageHighMem(page))
+		addr = (unsigned long)kmap_atomic(page);
+	else
+		addr = (unsigned long)page_address(page);
 
 	flush_data_cache_page(addr);
 
-	अगर (PageHighMem(page))
-		kunmap_atomic((व्योम *)addr);
-पूर्ण
+	if (PageHighMem(page))
+		kunmap_atomic((void *)addr);
+}
 
 EXPORT_SYMBOL(__flush_dcache_page);
 
-व्योम __flush_anon_page(काष्ठा page *page, अचिन्हित दीर्घ vmaddr)
-अणु
-	अचिन्हित दीर्घ addr = (अचिन्हित दीर्घ) page_address(page);
+void __flush_anon_page(struct page *page, unsigned long vmaddr)
+{
+	unsigned long addr = (unsigned long) page_address(page);
 
-	अगर (pages_करो_alias(addr, vmaddr)) अणु
-		अगर (page_mapcount(page) && !Page_dcache_dirty(page)) अणु
-			व्योम *kaddr;
+	if (pages_do_alias(addr, vmaddr)) {
+		if (page_mapcount(page) && !Page_dcache_dirty(page)) {
+			void *kaddr;
 
 			kaddr = kmap_coherent(page, vmaddr);
-			flush_data_cache_page((अचिन्हित दीर्घ)kaddr);
+			flush_data_cache_page((unsigned long)kaddr);
 			kunmap_coherent();
-		पूर्ण अन्यथा
+		} else
 			flush_data_cache_page(addr);
-	पूर्ण
-पूर्ण
+	}
+}
 
 EXPORT_SYMBOL(__flush_anon_page);
 
-व्योम __update_cache(अचिन्हित दीर्घ address, pte_t pte)
-अणु
-	काष्ठा page *page;
-	अचिन्हित दीर्घ pfn, addr;
-	पूर्णांक exec = !pte_no_exec(pte) && !cpu_has_ic_fills_f_dc;
+void __update_cache(unsigned long address, pte_t pte)
+{
+	struct page *page;
+	unsigned long pfn, addr;
+	int exec = !pte_no_exec(pte) && !cpu_has_ic_fills_f_dc;
 
 	pfn = pte_pfn(pte);
-	अगर (unlikely(!pfn_valid(pfn)))
-		वापस;
+	if (unlikely(!pfn_valid(pfn)))
+		return;
 	page = pfn_to_page(pfn);
-	अगर (Page_dcache_dirty(page)) अणु
-		अगर (PageHighMem(page))
-			addr = (अचिन्हित दीर्घ)kmap_atomic(page);
-		अन्यथा
-			addr = (अचिन्हित दीर्घ)page_address(page);
+	if (Page_dcache_dirty(page)) {
+		if (PageHighMem(page))
+			addr = (unsigned long)kmap_atomic(page);
+		else
+			addr = (unsigned long)page_address(page);
 
-		अगर (exec || pages_करो_alias(addr, address & PAGE_MASK))
+		if (exec || pages_do_alias(addr, address & PAGE_MASK))
 			flush_data_cache_page(addr);
 
-		अगर (PageHighMem(page))
-			kunmap_atomic((व्योम *)addr);
+		if (PageHighMem(page))
+			kunmap_atomic((void *)addr);
 
 		ClearPageDcacheDirty(page);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अचिन्हित दीर्घ _page_cachable_शेष;
-EXPORT_SYMBOL(_page_cachable_शेष);
+unsigned long _page_cachable_default;
+EXPORT_SYMBOL(_page_cachable_default);
 
-#घोषणा PM(p)	__pgprot(_page_cachable_शेष | (p))
+#define PM(p)	__pgprot(_page_cachable_default | (p))
 
-अटल अंतरभूत व्योम setup_protection_map(व्योम)
-अणु
+static inline void setup_protection_map(void)
+{
 	protection_map[0]  = PM(_PAGE_PRESENT | _PAGE_NO_EXEC | _PAGE_NO_READ);
 	protection_map[1]  = PM(_PAGE_PRESENT | _PAGE_NO_EXEC);
 	protection_map[2]  = PM(_PAGE_PRESENT | _PAGE_NO_EXEC | _PAGE_NO_READ);
@@ -180,33 +179,33 @@ EXPORT_SYMBOL(_page_cachable_शेष);
 	protection_map[13] = PM(_PAGE_PRESENT);
 	protection_map[14] = PM(_PAGE_PRESENT | _PAGE_WRITE);
 	protection_map[15] = PM(_PAGE_PRESENT | _PAGE_WRITE);
-पूर्ण
+}
 
-#अघोषित PM
+#undef PM
 
-व्योम cpu_cache_init(व्योम)
-अणु
-	अगर (cpu_has_3k_cache) अणु
-		बाह्य व्योम __weak r3k_cache_init(व्योम);
+void cpu_cache_init(void)
+{
+	if (cpu_has_3k_cache) {
+		extern void __weak r3k_cache_init(void);
 
 		r3k_cache_init();
-	पूर्ण
-	अगर (cpu_has_4k_cache) अणु
-		बाह्य व्योम __weak r4k_cache_init(व्योम);
+	}
+	if (cpu_has_4k_cache) {
+		extern void __weak r4k_cache_init(void);
 
 		r4k_cache_init();
-	पूर्ण
-	अगर (cpu_has_tx39_cache) अणु
-		बाह्य व्योम __weak tx39_cache_init(व्योम);
+	}
+	if (cpu_has_tx39_cache) {
+		extern void __weak tx39_cache_init(void);
 
 		tx39_cache_init();
-	पूर्ण
+	}
 
-	अगर (cpu_has_octeon_cache) अणु
-		बाह्य व्योम __weak octeon_cache_init(व्योम);
+	if (cpu_has_octeon_cache) {
+		extern void __weak octeon_cache_init(void);
 
 		octeon_cache_init();
-	पूर्ण
+	}
 
 	setup_protection_map();
-पूर्ण
+}

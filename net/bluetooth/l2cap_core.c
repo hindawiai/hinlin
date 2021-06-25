@@ -1,15 +1,14 @@
-<शैली गुरु>
 /*
-   BlueZ - Bluetooth protocol stack क्रम Linux
+   BlueZ - Bluetooth protocol stack for Linux
    Copyright (C) 2000-2001 Qualcomm Incorporated
-   Copyright (C) 2009-2010 Gustavo F. Paकरोvan <gustavo@paकरोvan.org>
+   Copyright (C) 2009-2010 Gustavo F. Padovan <gustavo@padovan.org>
    Copyright (C) 2010 Google Inc.
    Copyright (C) 2011 ProFUSION Embedded Systems
    Copyright (c) 2012 Code Aurora Forum.  All rights reserved.
 
    Written 2000,2001 by Maxim Krasnyansky <maxk@qualcomm.com>
 
-   This program is मुक्त software; you can redistribute it and/or modअगरy
+   This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License version 2 as
    published by the Free Software Foundation;
 
@@ -17,7 +16,7 @@
    OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF THIRD PARTY RIGHTS.
    IN NO EVENT SHALL THE COPYRIGHT HOLDER(S) AND AUTHOR(S) BE LIABLE FOR ANY
-   CLAIM, OR ANY SPECIAL INसूचीECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES
+   CLAIM, OR ANY SPECIAL INDIRECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES
    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
@@ -29,485 +28,485 @@
 
 /* Bluetooth L2CAP core. */
 
-#समावेश <linux/module.h>
+#include <linux/module.h>
 
-#समावेश <linux/debugfs.h>
-#समावेश <linux/crc16.h>
-#समावेश <linux/filter.h>
+#include <linux/debugfs.h>
+#include <linux/crc16.h>
+#include <linux/filter.h>
 
-#समावेश <net/bluetooth/bluetooth.h>
-#समावेश <net/bluetooth/hci_core.h>
-#समावेश <net/bluetooth/l2cap.h>
+#include <net/bluetooth/bluetooth.h>
+#include <net/bluetooth/hci_core.h>
+#include <net/bluetooth/l2cap.h>
 
-#समावेश "smp.h"
-#समावेश "a2mp.h"
-#समावेश "amp.h"
+#include "smp.h"
+#include "a2mp.h"
+#include "amp.h"
 
-#घोषणा LE_FLOWCTL_MAX_CREDITS 65535
+#define LE_FLOWCTL_MAX_CREDITS 65535
 
-bool disable_erपंचांग;
+bool disable_ertm;
 bool enable_ecred;
 
-अटल u32 l2cap_feat_mask = L2CAP_FEAT_FIXED_CHAN | L2CAP_FEAT_UCD;
+static u32 l2cap_feat_mask = L2CAP_FEAT_FIXED_CHAN | L2CAP_FEAT_UCD;
 
-अटल LIST_HEAD(chan_list);
-अटल DEFINE_RWLOCK(chan_list_lock);
+static LIST_HEAD(chan_list);
+static DEFINE_RWLOCK(chan_list_lock);
 
-अटल काष्ठा sk_buff *l2cap_build_cmd(काष्ठा l2cap_conn *conn,
-				       u8 code, u8 ident, u16 dlen, व्योम *data);
-अटल व्योम l2cap_send_cmd(काष्ठा l2cap_conn *conn, u8 ident, u8 code, u16 len,
-			   व्योम *data);
-अटल पूर्णांक l2cap_build_conf_req(काष्ठा l2cap_chan *chan, व्योम *data, माप_प्रकार data_size);
-अटल व्योम l2cap_send_disconn_req(काष्ठा l2cap_chan *chan, पूर्णांक err);
+static struct sk_buff *l2cap_build_cmd(struct l2cap_conn *conn,
+				       u8 code, u8 ident, u16 dlen, void *data);
+static void l2cap_send_cmd(struct l2cap_conn *conn, u8 ident, u8 code, u16 len,
+			   void *data);
+static int l2cap_build_conf_req(struct l2cap_chan *chan, void *data, size_t data_size);
+static void l2cap_send_disconn_req(struct l2cap_chan *chan, int err);
 
-अटल व्योम l2cap_tx(काष्ठा l2cap_chan *chan, काष्ठा l2cap_ctrl *control,
-		     काष्ठा sk_buff_head *skbs, u8 event);
+static void l2cap_tx(struct l2cap_chan *chan, struct l2cap_ctrl *control,
+		     struct sk_buff_head *skbs, u8 event);
 
-अटल अंतरभूत u8 bdaddr_type(u8 link_type, u8 bdaddr_type)
-अणु
-	अगर (link_type == LE_LINK) अणु
-		अगर (bdaddr_type == ADDR_LE_DEV_PUBLIC)
-			वापस BDADDR_LE_PUBLIC;
-		अन्यथा
-			वापस BDADDR_LE_RANDOM;
-	पूर्ण
+static inline u8 bdaddr_type(u8 link_type, u8 bdaddr_type)
+{
+	if (link_type == LE_LINK) {
+		if (bdaddr_type == ADDR_LE_DEV_PUBLIC)
+			return BDADDR_LE_PUBLIC;
+		else
+			return BDADDR_LE_RANDOM;
+	}
 
-	वापस BDADDR_BREDR;
-पूर्ण
+	return BDADDR_BREDR;
+}
 
-अटल अंतरभूत u8 bdaddr_src_type(काष्ठा hci_conn *hcon)
-अणु
-	वापस bdaddr_type(hcon->type, hcon->src_type);
-पूर्ण
+static inline u8 bdaddr_src_type(struct hci_conn *hcon)
+{
+	return bdaddr_type(hcon->type, hcon->src_type);
+}
 
-अटल अंतरभूत u8 bdaddr_dst_type(काष्ठा hci_conn *hcon)
-अणु
-	वापस bdaddr_type(hcon->type, hcon->dst_type);
-पूर्ण
+static inline u8 bdaddr_dst_type(struct hci_conn *hcon)
+{
+	return bdaddr_type(hcon->type, hcon->dst_type);
+}
 
 /* ---- L2CAP channels ---- */
 
-अटल काष्ठा l2cap_chan *__l2cap_get_chan_by_dcid(काष्ठा l2cap_conn *conn,
+static struct l2cap_chan *__l2cap_get_chan_by_dcid(struct l2cap_conn *conn,
 						   u16 cid)
-अणु
-	काष्ठा l2cap_chan *c;
+{
+	struct l2cap_chan *c;
 
-	list_क्रम_each_entry(c, &conn->chan_l, list) अणु
-		अगर (c->dcid == cid)
-			वापस c;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	list_for_each_entry(c, &conn->chan_l, list) {
+		if (c->dcid == cid)
+			return c;
+	}
+	return NULL;
+}
 
-अटल काष्ठा l2cap_chan *__l2cap_get_chan_by_scid(काष्ठा l2cap_conn *conn,
+static struct l2cap_chan *__l2cap_get_chan_by_scid(struct l2cap_conn *conn,
 						   u16 cid)
-अणु
-	काष्ठा l2cap_chan *c;
+{
+	struct l2cap_chan *c;
 
-	list_क्रम_each_entry(c, &conn->chan_l, list) अणु
-		अगर (c->scid == cid)
-			वापस c;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	list_for_each_entry(c, &conn->chan_l, list) {
+		if (c->scid == cid)
+			return c;
+	}
+	return NULL;
+}
 
 /* Find channel with given SCID.
  * Returns locked channel. */
-अटल काष्ठा l2cap_chan *l2cap_get_chan_by_scid(काष्ठा l2cap_conn *conn,
+static struct l2cap_chan *l2cap_get_chan_by_scid(struct l2cap_conn *conn,
 						 u16 cid)
-अणु
-	काष्ठा l2cap_chan *c;
+{
+	struct l2cap_chan *c;
 
 	mutex_lock(&conn->chan_lock);
 	c = __l2cap_get_chan_by_scid(conn, cid);
-	अगर (c)
+	if (c)
 		l2cap_chan_lock(c);
 	mutex_unlock(&conn->chan_lock);
 
-	वापस c;
-पूर्ण
+	return c;
+}
 
 /* Find channel with given DCID.
  * Returns locked channel.
  */
-अटल काष्ठा l2cap_chan *l2cap_get_chan_by_dcid(काष्ठा l2cap_conn *conn,
+static struct l2cap_chan *l2cap_get_chan_by_dcid(struct l2cap_conn *conn,
 						 u16 cid)
-अणु
-	काष्ठा l2cap_chan *c;
+{
+	struct l2cap_chan *c;
 
 	mutex_lock(&conn->chan_lock);
 	c = __l2cap_get_chan_by_dcid(conn, cid);
-	अगर (c)
+	if (c)
 		l2cap_chan_lock(c);
 	mutex_unlock(&conn->chan_lock);
 
-	वापस c;
-पूर्ण
+	return c;
+}
 
-अटल काष्ठा l2cap_chan *__l2cap_get_chan_by_ident(काष्ठा l2cap_conn *conn,
+static struct l2cap_chan *__l2cap_get_chan_by_ident(struct l2cap_conn *conn,
 						    u8 ident)
-अणु
-	काष्ठा l2cap_chan *c;
+{
+	struct l2cap_chan *c;
 
-	list_क्रम_each_entry(c, &conn->chan_l, list) अणु
-		अगर (c->ident == ident)
-			वापस c;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	list_for_each_entry(c, &conn->chan_l, list) {
+		if (c->ident == ident)
+			return c;
+	}
+	return NULL;
+}
 
-अटल काष्ठा l2cap_chan *l2cap_get_chan_by_ident(काष्ठा l2cap_conn *conn,
+static struct l2cap_chan *l2cap_get_chan_by_ident(struct l2cap_conn *conn,
 						  u8 ident)
-अणु
-	काष्ठा l2cap_chan *c;
+{
+	struct l2cap_chan *c;
 
 	mutex_lock(&conn->chan_lock);
 	c = __l2cap_get_chan_by_ident(conn, ident);
-	अगर (c)
+	if (c)
 		l2cap_chan_lock(c);
 	mutex_unlock(&conn->chan_lock);
 
-	वापस c;
-पूर्ण
+	return c;
+}
 
-अटल काष्ठा l2cap_chan *__l2cap_global_chan_by_addr(__le16 psm, bdaddr_t *src,
+static struct l2cap_chan *__l2cap_global_chan_by_addr(__le16 psm, bdaddr_t *src,
 						      u8 src_type)
-अणु
-	काष्ठा l2cap_chan *c;
+{
+	struct l2cap_chan *c;
 
-	list_क्रम_each_entry(c, &chan_list, global_l) अणु
-		अगर (src_type == BDADDR_BREDR && c->src_type != BDADDR_BREDR)
-			जारी;
+	list_for_each_entry(c, &chan_list, global_l) {
+		if (src_type == BDADDR_BREDR && c->src_type != BDADDR_BREDR)
+			continue;
 
-		अगर (src_type != BDADDR_BREDR && c->src_type == BDADDR_BREDR)
-			जारी;
+		if (src_type != BDADDR_BREDR && c->src_type == BDADDR_BREDR)
+			continue;
 
-		अगर (c->sport == psm && !bacmp(&c->src, src))
-			वापस c;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		if (c->sport == psm && !bacmp(&c->src, src))
+			return c;
+	}
+	return NULL;
+}
 
-पूर्णांक l2cap_add_psm(काष्ठा l2cap_chan *chan, bdaddr_t *src, __le16 psm)
-अणु
-	पूर्णांक err;
+int l2cap_add_psm(struct l2cap_chan *chan, bdaddr_t *src, __le16 psm)
+{
+	int err;
 
-	ग_लिखो_lock(&chan_list_lock);
+	write_lock(&chan_list_lock);
 
-	अगर (psm && __l2cap_global_chan_by_addr(psm, src, chan->src_type)) अणु
+	if (psm && __l2cap_global_chan_by_addr(psm, src, chan->src_type)) {
 		err = -EADDRINUSE;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (psm) अणु
+	if (psm) {
 		chan->psm = psm;
 		chan->sport = psm;
 		err = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		u16 p, start, end, incr;
 
-		अगर (chan->src_type == BDADDR_BREDR) अणु
+		if (chan->src_type == BDADDR_BREDR) {
 			start = L2CAP_PSM_DYN_START;
 			end = L2CAP_PSM_AUTO_END;
 			incr = 2;
-		पूर्ण अन्यथा अणु
+		} else {
 			start = L2CAP_PSM_LE_DYN_START;
 			end = L2CAP_PSM_LE_DYN_END;
 			incr = 1;
-		पूर्ण
+		}
 
 		err = -EINVAL;
-		क्रम (p = start; p <= end; p += incr)
-			अगर (!__l2cap_global_chan_by_addr(cpu_to_le16(p), src,
-							 chan->src_type)) अणु
+		for (p = start; p <= end; p += incr)
+			if (!__l2cap_global_chan_by_addr(cpu_to_le16(p), src,
+							 chan->src_type)) {
 				chan->psm   = cpu_to_le16(p);
 				chan->sport = cpu_to_le16(p);
 				err = 0;
-				अवरोध;
-			पूर्ण
-	पूर्ण
+				break;
+			}
+	}
 
-करोne:
-	ग_लिखो_unlock(&chan_list_lock);
-	वापस err;
-पूर्ण
+done:
+	write_unlock(&chan_list_lock);
+	return err;
+}
 EXPORT_SYMBOL_GPL(l2cap_add_psm);
 
-पूर्णांक l2cap_add_scid(काष्ठा l2cap_chan *chan,  __u16 scid)
-अणु
-	ग_लिखो_lock(&chan_list_lock);
+int l2cap_add_scid(struct l2cap_chan *chan,  __u16 scid)
+{
+	write_lock(&chan_list_lock);
 
-	/* Override the शेषs (which are क्रम conn-oriented) */
+	/* Override the defaults (which are for conn-oriented) */
 	chan->omtu = L2CAP_DEFAULT_MTU;
 	chan->chan_type = L2CAP_CHAN_FIXED;
 
 	chan->scid = scid;
 
-	ग_लिखो_unlock(&chan_list_lock);
+	write_unlock(&chan_list_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u16 l2cap_alloc_cid(काष्ठा l2cap_conn *conn)
-अणु
+static u16 l2cap_alloc_cid(struct l2cap_conn *conn)
+{
 	u16 cid, dyn_end;
 
-	अगर (conn->hcon->type == LE_LINK)
+	if (conn->hcon->type == LE_LINK)
 		dyn_end = L2CAP_CID_LE_DYN_END;
-	अन्यथा
+	else
 		dyn_end = L2CAP_CID_DYN_END;
 
-	क्रम (cid = L2CAP_CID_DYN_START; cid <= dyn_end; cid++) अणु
-		अगर (!__l2cap_get_chan_by_scid(conn, cid))
-			वापस cid;
-	पूर्ण
+	for (cid = L2CAP_CID_DYN_START; cid <= dyn_end; cid++) {
+		if (!__l2cap_get_chan_by_scid(conn, cid))
+			return cid;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम l2cap_state_change(काष्ठा l2cap_chan *chan, पूर्णांक state)
-अणु
+static void l2cap_state_change(struct l2cap_chan *chan, int state)
+{
 	BT_DBG("chan %p %s -> %s", chan, state_to_string(chan->state),
 	       state_to_string(state));
 
 	chan->state = state;
 	chan->ops->state_change(chan, state, 0);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम l2cap_state_change_and_error(काष्ठा l2cap_chan *chan,
-						पूर्णांक state, पूर्णांक err)
-अणु
+static inline void l2cap_state_change_and_error(struct l2cap_chan *chan,
+						int state, int err)
+{
 	chan->state = state;
 	chan->ops->state_change(chan, chan->state, err);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम l2cap_chan_set_err(काष्ठा l2cap_chan *chan, पूर्णांक err)
-अणु
+static inline void l2cap_chan_set_err(struct l2cap_chan *chan, int err)
+{
 	chan->ops->state_change(chan, chan->state, err);
-पूर्ण
+}
 
-अटल व्योम __set_retrans_समयr(काष्ठा l2cap_chan *chan)
-अणु
-	अगर (!delayed_work_pending(&chan->monitor_समयr) &&
-	    chan->retrans_समयout) अणु
-		l2cap_set_समयr(chan, &chan->retrans_समयr,
-				msecs_to_jअगरfies(chan->retrans_समयout));
-	पूर्ण
-पूर्ण
+static void __set_retrans_timer(struct l2cap_chan *chan)
+{
+	if (!delayed_work_pending(&chan->monitor_timer) &&
+	    chan->retrans_timeout) {
+		l2cap_set_timer(chan, &chan->retrans_timer,
+				msecs_to_jiffies(chan->retrans_timeout));
+	}
+}
 
-अटल व्योम __set_monitor_समयr(काष्ठा l2cap_chan *chan)
-अणु
-	__clear_retrans_समयr(chan);
-	अगर (chan->monitor_समयout) अणु
-		l2cap_set_समयr(chan, &chan->monitor_समयr,
-				msecs_to_jअगरfies(chan->monitor_समयout));
-	पूर्ण
-पूर्ण
+static void __set_monitor_timer(struct l2cap_chan *chan)
+{
+	__clear_retrans_timer(chan);
+	if (chan->monitor_timeout) {
+		l2cap_set_timer(chan, &chan->monitor_timer,
+				msecs_to_jiffies(chan->monitor_timeout));
+	}
+}
 
-अटल काष्ठा sk_buff *l2cap_erपंचांग_seq_in_queue(काष्ठा sk_buff_head *head,
+static struct sk_buff *l2cap_ertm_seq_in_queue(struct sk_buff_head *head,
 					       u16 seq)
-अणु
-	काष्ठा sk_buff *skb;
+{
+	struct sk_buff *skb;
 
-	skb_queue_walk(head, skb) अणु
-		अगर (bt_cb(skb)->l2cap.txseq == seq)
-			वापस skb;
-	पूर्ण
+	skb_queue_walk(head, skb) {
+		if (bt_cb(skb)->l2cap.txseq == seq)
+			return skb;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /* ---- L2CAP sequence number lists ---- */
 
-/* For ERTM, ordered lists of sequence numbers must be tracked क्रम
- * SREJ requests that are received and क्रम frames that are to be
+/* For ERTM, ordered lists of sequence numbers must be tracked for
+ * SREJ requests that are received and for frames that are to be
  * retransmitted. These seq_list functions implement a singly-linked
  * list in an array, where membership in the list can also be checked
- * in स्थिरant समय. Items can also be added to the tail of the list
- * and हटाओd from the head in स्थिरant समय, without further memory
- * allocs or मुक्तs.
+ * in constant time. Items can also be added to the tail of the list
+ * and removed from the head in constant time, without further memory
+ * allocs or frees.
  */
 
-अटल पूर्णांक l2cap_seq_list_init(काष्ठा l2cap_seq_list *seq_list, u16 size)
-अणु
-	माप_प्रकार alloc_size, i;
+static int l2cap_seq_list_init(struct l2cap_seq_list *seq_list, u16 size)
+{
+	size_t alloc_size, i;
 
-	/* Allocated size is a घातer of 2 to map sequence numbers
+	/* Allocated size is a power of 2 to map sequence numbers
 	 * (which may be up to 14 bits) in to a smaller array that is
-	 * sized क्रम the negotiated ERTM transmit winकरोws.
+	 * sized for the negotiated ERTM transmit windows.
 	 */
-	alloc_size = roundup_घात_of_two(size);
+	alloc_size = roundup_pow_of_two(size);
 
-	seq_list->list = kदो_स्मृति_array(alloc_size, माप(u16), GFP_KERNEL);
-	अगर (!seq_list->list)
-		वापस -ENOMEM;
+	seq_list->list = kmalloc_array(alloc_size, sizeof(u16), GFP_KERNEL);
+	if (!seq_list->list)
+		return -ENOMEM;
 
 	seq_list->mask = alloc_size - 1;
 	seq_list->head = L2CAP_SEQ_LIST_CLEAR;
 	seq_list->tail = L2CAP_SEQ_LIST_CLEAR;
-	क्रम (i = 0; i < alloc_size; i++)
+	for (i = 0; i < alloc_size; i++)
 		seq_list->list[i] = L2CAP_SEQ_LIST_CLEAR;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत व्योम l2cap_seq_list_मुक्त(काष्ठा l2cap_seq_list *seq_list)
-अणु
-	kमुक्त(seq_list->list);
-पूर्ण
+static inline void l2cap_seq_list_free(struct l2cap_seq_list *seq_list)
+{
+	kfree(seq_list->list);
+}
 
-अटल अंतरभूत bool l2cap_seq_list_contains(काष्ठा l2cap_seq_list *seq_list,
+static inline bool l2cap_seq_list_contains(struct l2cap_seq_list *seq_list,
 					   u16 seq)
-अणु
-	/* Constant-समय check क्रम list membership */
-	वापस seq_list->list[seq & seq_list->mask] != L2CAP_SEQ_LIST_CLEAR;
-पूर्ण
+{
+	/* Constant-time check for list membership */
+	return seq_list->list[seq & seq_list->mask] != L2CAP_SEQ_LIST_CLEAR;
+}
 
-अटल अंतरभूत u16 l2cap_seq_list_pop(काष्ठा l2cap_seq_list *seq_list)
-अणु
+static inline u16 l2cap_seq_list_pop(struct l2cap_seq_list *seq_list)
+{
 	u16 seq = seq_list->head;
 	u16 mask = seq_list->mask;
 
 	seq_list->head = seq_list->list[seq & mask];
 	seq_list->list[seq & mask] = L2CAP_SEQ_LIST_CLEAR;
 
-	अगर (seq_list->head == L2CAP_SEQ_LIST_TAIL) अणु
+	if (seq_list->head == L2CAP_SEQ_LIST_TAIL) {
 		seq_list->head = L2CAP_SEQ_LIST_CLEAR;
 		seq_list->tail = L2CAP_SEQ_LIST_CLEAR;
-	पूर्ण
+	}
 
-	वापस seq;
-पूर्ण
+	return seq;
+}
 
-अटल व्योम l2cap_seq_list_clear(काष्ठा l2cap_seq_list *seq_list)
-अणु
+static void l2cap_seq_list_clear(struct l2cap_seq_list *seq_list)
+{
 	u16 i;
 
-	अगर (seq_list->head == L2CAP_SEQ_LIST_CLEAR)
-		वापस;
+	if (seq_list->head == L2CAP_SEQ_LIST_CLEAR)
+		return;
 
-	क्रम (i = 0; i <= seq_list->mask; i++)
+	for (i = 0; i <= seq_list->mask; i++)
 		seq_list->list[i] = L2CAP_SEQ_LIST_CLEAR;
 
 	seq_list->head = L2CAP_SEQ_LIST_CLEAR;
 	seq_list->tail = L2CAP_SEQ_LIST_CLEAR;
-पूर्ण
+}
 
-अटल व्योम l2cap_seq_list_append(काष्ठा l2cap_seq_list *seq_list, u16 seq)
-अणु
+static void l2cap_seq_list_append(struct l2cap_seq_list *seq_list, u16 seq)
+{
 	u16 mask = seq_list->mask;
 
-	/* All appends happen in स्थिरant समय */
+	/* All appends happen in constant time */
 
-	अगर (seq_list->list[seq & mask] != L2CAP_SEQ_LIST_CLEAR)
-		वापस;
+	if (seq_list->list[seq & mask] != L2CAP_SEQ_LIST_CLEAR)
+		return;
 
-	अगर (seq_list->tail == L2CAP_SEQ_LIST_CLEAR)
+	if (seq_list->tail == L2CAP_SEQ_LIST_CLEAR)
 		seq_list->head = seq;
-	अन्यथा
+	else
 		seq_list->list[seq_list->tail & mask] = seq;
 
 	seq_list->tail = seq;
 	seq_list->list[seq & mask] = L2CAP_SEQ_LIST_TAIL;
-पूर्ण
+}
 
-अटल व्योम l2cap_chan_समयout(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा l2cap_chan *chan = container_of(work, काष्ठा l2cap_chan,
-					       chan_समयr.work);
-	काष्ठा l2cap_conn *conn = chan->conn;
-	पूर्णांक reason;
+static void l2cap_chan_timeout(struct work_struct *work)
+{
+	struct l2cap_chan *chan = container_of(work, struct l2cap_chan,
+					       chan_timer.work);
+	struct l2cap_conn *conn = chan->conn;
+	int reason;
 
 	BT_DBG("chan %p state %s", chan, state_to_string(chan->state));
 
 	mutex_lock(&conn->chan_lock);
-	/* __set_chan_समयr() calls l2cap_chan_hold(chan) जबतक scheduling
+	/* __set_chan_timer() calls l2cap_chan_hold(chan) while scheduling
 	 * this work. No need to call l2cap_chan_hold(chan) here again.
 	 */
 	l2cap_chan_lock(chan);
 
-	अगर (chan->state == BT_CONNECTED || chan->state == BT_CONFIG)
+	if (chan->state == BT_CONNECTED || chan->state == BT_CONFIG)
 		reason = ECONNREFUSED;
-	अन्यथा अगर (chan->state == BT_CONNECT &&
+	else if (chan->state == BT_CONNECT &&
 		 chan->sec_level != BT_SECURITY_SDP)
 		reason = ECONNREFUSED;
-	अन्यथा
+	else
 		reason = ETIMEDOUT;
 
-	l2cap_chan_बंद(chan, reason);
+	l2cap_chan_close(chan, reason);
 
-	chan->ops->बंद(chan);
+	chan->ops->close(chan);
 
 	l2cap_chan_unlock(chan);
 	l2cap_chan_put(chan);
 
 	mutex_unlock(&conn->chan_lock);
-पूर्ण
+}
 
-काष्ठा l2cap_chan *l2cap_chan_create(व्योम)
-अणु
-	काष्ठा l2cap_chan *chan;
+struct l2cap_chan *l2cap_chan_create(void)
+{
+	struct l2cap_chan *chan;
 
-	chan = kzalloc(माप(*chan), GFP_ATOMIC);
-	अगर (!chan)
-		वापस शून्य;
+	chan = kzalloc(sizeof(*chan), GFP_ATOMIC);
+	if (!chan)
+		return NULL;
 
 	skb_queue_head_init(&chan->tx_q);
 	skb_queue_head_init(&chan->srej_q);
 	mutex_init(&chan->lock);
 
-	/* Set शेष lock nesting level */
+	/* Set default lock nesting level */
 	atomic_set(&chan->nesting, L2CAP_NESTING_NORMAL);
 
-	ग_लिखो_lock(&chan_list_lock);
+	write_lock(&chan_list_lock);
 	list_add(&chan->global_l, &chan_list);
-	ग_लिखो_unlock(&chan_list_lock);
+	write_unlock(&chan_list_lock);
 
-	INIT_DELAYED_WORK(&chan->chan_समयr, l2cap_chan_समयout);
+	INIT_DELAYED_WORK(&chan->chan_timer, l2cap_chan_timeout);
 
 	chan->state = BT_OPEN;
 
 	kref_init(&chan->kref);
 
-	/* This flag is cleared in l2cap_chan_पढ़ोy() */
+	/* This flag is cleared in l2cap_chan_ready() */
 	set_bit(CONF_NOT_COMPLETE, &chan->conf_state);
 
 	BT_DBG("chan %p", chan);
 
-	वापस chan;
-पूर्ण
+	return chan;
+}
 EXPORT_SYMBOL_GPL(l2cap_chan_create);
 
-अटल व्योम l2cap_chan_destroy(काष्ठा kref *kref)
-अणु
-	काष्ठा l2cap_chan *chan = container_of(kref, काष्ठा l2cap_chan, kref);
+static void l2cap_chan_destroy(struct kref *kref)
+{
+	struct l2cap_chan *chan = container_of(kref, struct l2cap_chan, kref);
 
 	BT_DBG("chan %p", chan);
 
-	ग_लिखो_lock(&chan_list_lock);
+	write_lock(&chan_list_lock);
 	list_del(&chan->global_l);
-	ग_लिखो_unlock(&chan_list_lock);
+	write_unlock(&chan_list_lock);
 
-	kमुक्त(chan);
-पूर्ण
+	kfree(chan);
+}
 
-व्योम l2cap_chan_hold(काष्ठा l2cap_chan *c)
-अणु
-	BT_DBG("chan %p orig refcnt %u", c, kref_पढ़ो(&c->kref));
+void l2cap_chan_hold(struct l2cap_chan *c)
+{
+	BT_DBG("chan %p orig refcnt %u", c, kref_read(&c->kref));
 
 	kref_get(&c->kref);
-पूर्ण
+}
 
-व्योम l2cap_chan_put(काष्ठा l2cap_chan *c)
-अणु
-	BT_DBG("chan %p orig refcnt %u", c, kref_पढ़ो(&c->kref));
+void l2cap_chan_put(struct l2cap_chan *c)
+{
+	BT_DBG("chan %p orig refcnt %u", c, kref_read(&c->kref));
 
 	kref_put(&c->kref, l2cap_chan_destroy);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(l2cap_chan_put);
 
-व्योम l2cap_chan_set_शेषs(काष्ठा l2cap_chan *chan)
-अणु
+void l2cap_chan_set_defaults(struct l2cap_chan *chan)
+{
 	chan->fcs  = L2CAP_FCS_CRC16;
 	chan->max_tx = L2CAP_DEFAULT_MAX_TX;
 	chan->tx_win = L2CAP_DEFAULT_TX_WINDOW;
@@ -517,43 +516,43 @@ EXPORT_SYMBOL_GPL(l2cap_chan_put);
 	chan->ack_win = L2CAP_DEFAULT_TX_WINDOW;
 	chan->sec_level = BT_SECURITY_LOW;
 	chan->flush_to = L2CAP_DEFAULT_FLUSH_TO;
-	chan->retrans_समयout = L2CAP_DEFAULT_RETRANS_TO;
-	chan->monitor_समयout = L2CAP_DEFAULT_MONITOR_TO;
+	chan->retrans_timeout = L2CAP_DEFAULT_RETRANS_TO;
+	chan->monitor_timeout = L2CAP_DEFAULT_MONITOR_TO;
 
 	chan->conf_state = 0;
 	set_bit(CONF_NOT_COMPLETE, &chan->conf_state);
 
 	set_bit(FLAG_FORCE_ACTIVE, &chan->flags);
-पूर्ण
-EXPORT_SYMBOL_GPL(l2cap_chan_set_शेषs);
+}
+EXPORT_SYMBOL_GPL(l2cap_chan_set_defaults);
 
-अटल व्योम l2cap_le_flowctl_init(काष्ठा l2cap_chan *chan, u16 tx_credits)
-अणु
-	chan->sdu = शून्य;
-	chan->sdu_last_frag = शून्य;
+static void l2cap_le_flowctl_init(struct l2cap_chan *chan, u16 tx_credits)
+{
+	chan->sdu = NULL;
+	chan->sdu_last_frag = NULL;
 	chan->sdu_len = 0;
 	chan->tx_credits = tx_credits;
 	/* Derive MPS from connection MTU to stop HCI fragmentation */
 	chan->mps = min_t(u16, chan->imtu, chan->conn->mtu - L2CAP_HDR_SIZE);
-	/* Give enough credits क्रम a full packet */
+	/* Give enough credits for a full packet */
 	chan->rx_credits = (chan->imtu / chan->mps) + 1;
 
 	skb_queue_head_init(&chan->tx_q);
-पूर्ण
+}
 
-अटल व्योम l2cap_ecred_init(काष्ठा l2cap_chan *chan, u16 tx_credits)
-अणु
+static void l2cap_ecred_init(struct l2cap_chan *chan, u16 tx_credits)
+{
 	l2cap_le_flowctl_init(chan, tx_credits);
 
 	/* L2CAP implementations shall support a minimum MPS of 64 octets */
-	अगर (chan->mps < L2CAP_ECRED_MIN_MPS) अणु
+	if (chan->mps < L2CAP_ECRED_MIN_MPS) {
 		chan->mps = L2CAP_ECRED_MIN_MPS;
 		chan->rx_credits = (chan->imtu / chan->mps) + 1;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम __l2cap_chan_add(काष्ठा l2cap_conn *conn, काष्ठा l2cap_chan *chan)
-अणु
+void __l2cap_chan_add(struct l2cap_conn *conn, struct l2cap_chan *chan)
+{
 	BT_DBG("conn %p, psm 0x%2.2x, dcid 0x%4.4x", conn,
 	       __le16_to_cpu(chan->psm), chan->dcid);
 
@@ -561,176 +560,176 @@ EXPORT_SYMBOL_GPL(l2cap_chan_set_शेषs);
 
 	chan->conn = conn;
 
-	चयन (chan->chan_type) अणु
-	हाल L2CAP_CHAN_CONN_ORIENTED:
-		/* Alloc CID क्रम connection-oriented socket */
+	switch (chan->chan_type) {
+	case L2CAP_CHAN_CONN_ORIENTED:
+		/* Alloc CID for connection-oriented socket */
 		chan->scid = l2cap_alloc_cid(conn);
-		अगर (conn->hcon->type == ACL_LINK)
+		if (conn->hcon->type == ACL_LINK)
 			chan->omtu = L2CAP_DEFAULT_MTU;
-		अवरोध;
+		break;
 
-	हाल L2CAP_CHAN_CONN_LESS:
+	case L2CAP_CHAN_CONN_LESS:
 		/* Connectionless socket */
 		chan->scid = L2CAP_CID_CONN_LESS;
 		chan->dcid = L2CAP_CID_CONN_LESS;
 		chan->omtu = L2CAP_DEFAULT_MTU;
-		अवरोध;
+		break;
 
-	हाल L2CAP_CHAN_FIXED:
-		/* Caller will set CID and CID specअगरic MTU values */
-		अवरोध;
+	case L2CAP_CHAN_FIXED:
+		/* Caller will set CID and CID specific MTU values */
+		break;
 
-	शेष:
-		/* Raw socket can send/recv संकेतling messages only */
+	default:
+		/* Raw socket can send/recv signalling messages only */
 		chan->scid = L2CAP_CID_SIGNALING;
 		chan->dcid = L2CAP_CID_SIGNALING;
 		chan->omtu = L2CAP_DEFAULT_MTU;
-	पूर्ण
+	}
 
 	chan->local_id		= L2CAP_BESTEFFORT_ID;
 	chan->local_stype	= L2CAP_SERV_BESTEFFORT;
 	chan->local_msdu	= L2CAP_DEFAULT_MAX_SDU_SIZE;
-	chan->local_sdu_iसमय	= L2CAP_DEFAULT_SDU_ITIME;
+	chan->local_sdu_itime	= L2CAP_DEFAULT_SDU_ITIME;
 	chan->local_acc_lat	= L2CAP_DEFAULT_ACC_LAT;
 	chan->local_flush_to	= L2CAP_EFS_DEFAULT_FLUSH_TO;
 
 	l2cap_chan_hold(chan);
 
-	/* Only keep a reference क्रम fixed channels अगर they requested it */
-	अगर (chan->chan_type != L2CAP_CHAN_FIXED ||
+	/* Only keep a reference for fixed channels if they requested it */
+	if (chan->chan_type != L2CAP_CHAN_FIXED ||
 	    test_bit(FLAG_HOLD_HCI_CONN, &chan->flags))
 		hci_conn_hold(conn->hcon);
 
 	list_add(&chan->list, &conn->chan_l);
-पूर्ण
+}
 
-व्योम l2cap_chan_add(काष्ठा l2cap_conn *conn, काष्ठा l2cap_chan *chan)
-अणु
+void l2cap_chan_add(struct l2cap_conn *conn, struct l2cap_chan *chan)
+{
 	mutex_lock(&conn->chan_lock);
 	__l2cap_chan_add(conn, chan);
 	mutex_unlock(&conn->chan_lock);
-पूर्ण
+}
 
-व्योम l2cap_chan_del(काष्ठा l2cap_chan *chan, पूर्णांक err)
-अणु
-	काष्ठा l2cap_conn *conn = chan->conn;
+void l2cap_chan_del(struct l2cap_chan *chan, int err)
+{
+	struct l2cap_conn *conn = chan->conn;
 
-	__clear_chan_समयr(chan);
+	__clear_chan_timer(chan);
 
 	BT_DBG("chan %p, conn %p, err %d, state %s", chan, conn, err,
 	       state_to_string(chan->state));
 
-	chan->ops->tearकरोwn(chan, err);
+	chan->ops->teardown(chan, err);
 
-	अगर (conn) अणु
-		काष्ठा amp_mgr *mgr = conn->hcon->amp_mgr;
+	if (conn) {
+		struct amp_mgr *mgr = conn->hcon->amp_mgr;
 		/* Delete from channel list */
 		list_del(&chan->list);
 
 		l2cap_chan_put(chan);
 
-		chan->conn = शून्य;
+		chan->conn = NULL;
 
-		/* Reference was only held क्रम non-fixed channels or
+		/* Reference was only held for non-fixed channels or
 		 * fixed channels that explicitly requested it using the
 		 * FLAG_HOLD_HCI_CONN flag.
 		 */
-		अगर (chan->chan_type != L2CAP_CHAN_FIXED ||
+		if (chan->chan_type != L2CAP_CHAN_FIXED ||
 		    test_bit(FLAG_HOLD_HCI_CONN, &chan->flags))
 			hci_conn_drop(conn->hcon);
 
-		अगर (mgr && mgr->bredr_chan == chan)
-			mgr->bredr_chan = शून्य;
-	पूर्ण
+		if (mgr && mgr->bredr_chan == chan)
+			mgr->bredr_chan = NULL;
+	}
 
-	अगर (chan->hs_hchan) अणु
-		काष्ठा hci_chan *hs_hchan = chan->hs_hchan;
+	if (chan->hs_hchan) {
+		struct hci_chan *hs_hchan = chan->hs_hchan;
 
 		BT_DBG("chan %p disconnect hs_hchan %p", chan, hs_hchan);
 		amp_disconnect_logical_link(hs_hchan);
-	पूर्ण
+	}
 
-	अगर (test_bit(CONF_NOT_COMPLETE, &chan->conf_state))
-		वापस;
+	if (test_bit(CONF_NOT_COMPLETE, &chan->conf_state))
+		return;
 
-	चयन (chan->mode) अणु
-	हाल L2CAP_MODE_BASIC:
-		अवरोध;
+	switch (chan->mode) {
+	case L2CAP_MODE_BASIC:
+		break;
 
-	हाल L2CAP_MODE_LE_FLOWCTL:
-	हाल L2CAP_MODE_EXT_FLOWCTL:
+	case L2CAP_MODE_LE_FLOWCTL:
+	case L2CAP_MODE_EXT_FLOWCTL:
 		skb_queue_purge(&chan->tx_q);
-		अवरोध;
+		break;
 
-	हाल L2CAP_MODE_ERTM:
-		__clear_retrans_समयr(chan);
-		__clear_monitor_समयr(chan);
-		__clear_ack_समयr(chan);
+	case L2CAP_MODE_ERTM:
+		__clear_retrans_timer(chan);
+		__clear_monitor_timer(chan);
+		__clear_ack_timer(chan);
 
 		skb_queue_purge(&chan->srej_q);
 
-		l2cap_seq_list_मुक्त(&chan->srej_list);
-		l2cap_seq_list_मुक्त(&chan->retrans_list);
+		l2cap_seq_list_free(&chan->srej_list);
+		l2cap_seq_list_free(&chan->retrans_list);
 		fallthrough;
 
-	हाल L2CAP_MODE_STREAMING:
+	case L2CAP_MODE_STREAMING:
 		skb_queue_purge(&chan->tx_q);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 EXPORT_SYMBOL_GPL(l2cap_chan_del);
 
-अटल व्योम __l2cap_chan_list(काष्ठा l2cap_conn *conn, l2cap_chan_func_t func,
-			      व्योम *data)
-अणु
-	काष्ठा l2cap_chan *chan;
+static void __l2cap_chan_list(struct l2cap_conn *conn, l2cap_chan_func_t func,
+			      void *data)
+{
+	struct l2cap_chan *chan;
 
-	list_क्रम_each_entry(chan, &conn->chan_l, list) अणु
+	list_for_each_entry(chan, &conn->chan_l, list) {
 		func(chan, data);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम l2cap_chan_list(काष्ठा l2cap_conn *conn, l2cap_chan_func_t func,
-		     व्योम *data)
-अणु
-	अगर (!conn)
-		वापस;
+void l2cap_chan_list(struct l2cap_conn *conn, l2cap_chan_func_t func,
+		     void *data)
+{
+	if (!conn)
+		return;
 
 	mutex_lock(&conn->chan_lock);
 	__l2cap_chan_list(conn, func, data);
 	mutex_unlock(&conn->chan_lock);
-पूर्ण
+}
 
 EXPORT_SYMBOL_GPL(l2cap_chan_list);
 
-अटल व्योम l2cap_conn_update_id_addr(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा l2cap_conn *conn = container_of(work, काष्ठा l2cap_conn,
+static void l2cap_conn_update_id_addr(struct work_struct *work)
+{
+	struct l2cap_conn *conn = container_of(work, struct l2cap_conn,
 					       id_addr_update_work);
-	काष्ठा hci_conn *hcon = conn->hcon;
-	काष्ठा l2cap_chan *chan;
+	struct hci_conn *hcon = conn->hcon;
+	struct l2cap_chan *chan;
 
 	mutex_lock(&conn->chan_lock);
 
-	list_क्रम_each_entry(chan, &conn->chan_l, list) अणु
+	list_for_each_entry(chan, &conn->chan_l, list) {
 		l2cap_chan_lock(chan);
 		bacpy(&chan->dst, &hcon->dst);
 		chan->dst_type = bdaddr_dst_type(hcon);
 		l2cap_chan_unlock(chan);
-	पूर्ण
+	}
 
 	mutex_unlock(&conn->chan_lock);
-पूर्ण
+}
 
-अटल व्योम l2cap_chan_le_connect_reject(काष्ठा l2cap_chan *chan)
-अणु
-	काष्ठा l2cap_conn *conn = chan->conn;
-	काष्ठा l2cap_le_conn_rsp rsp;
+static void l2cap_chan_le_connect_reject(struct l2cap_chan *chan)
+{
+	struct l2cap_conn *conn = chan->conn;
+	struct l2cap_le_conn_rsp rsp;
 	u16 result;
 
-	अगर (test_bit(FLAG_DEFER_SETUP, &chan->flags))
+	if (test_bit(FLAG_DEFER_SETUP, &chan->flags))
 		result = L2CAP_CR_LE_AUTHORIZATION;
-	अन्यथा
+	else
 		result = L2CAP_CR_LE_BAD_PSM;
 
 	l2cap_state_change(chan, BT_DISCONN);
@@ -741,40 +740,40 @@ EXPORT_SYMBOL_GPL(l2cap_chan_list);
 	rsp.credits = cpu_to_le16(chan->rx_credits);
 	rsp.result  = cpu_to_le16(result);
 
-	l2cap_send_cmd(conn, chan->ident, L2CAP_LE_CONN_RSP, माप(rsp),
+	l2cap_send_cmd(conn, chan->ident, L2CAP_LE_CONN_RSP, sizeof(rsp),
 		       &rsp);
-पूर्ण
+}
 
-अटल व्योम l2cap_chan_ecred_connect_reject(काष्ठा l2cap_chan *chan)
-अणु
-	काष्ठा l2cap_conn *conn = chan->conn;
-	काष्ठा l2cap_ecred_conn_rsp rsp;
+static void l2cap_chan_ecred_connect_reject(struct l2cap_chan *chan)
+{
+	struct l2cap_conn *conn = chan->conn;
+	struct l2cap_ecred_conn_rsp rsp;
 	u16 result;
 
-	अगर (test_bit(FLAG_DEFER_SETUP, &chan->flags))
+	if (test_bit(FLAG_DEFER_SETUP, &chan->flags))
 		result = L2CAP_CR_LE_AUTHORIZATION;
-	अन्यथा
+	else
 		result = L2CAP_CR_LE_BAD_PSM;
 
 	l2cap_state_change(chan, BT_DISCONN);
 
-	स_रखो(&rsp, 0, माप(rsp));
+	memset(&rsp, 0, sizeof(rsp));
 
 	rsp.result  = cpu_to_le16(result);
 
-	l2cap_send_cmd(conn, chan->ident, L2CAP_LE_CONN_RSP, माप(rsp),
+	l2cap_send_cmd(conn, chan->ident, L2CAP_LE_CONN_RSP, sizeof(rsp),
 		       &rsp);
-पूर्ण
+}
 
-अटल व्योम l2cap_chan_connect_reject(काष्ठा l2cap_chan *chan)
-अणु
-	काष्ठा l2cap_conn *conn = chan->conn;
-	काष्ठा l2cap_conn_rsp rsp;
+static void l2cap_chan_connect_reject(struct l2cap_chan *chan)
+{
+	struct l2cap_conn *conn = chan->conn;
+	struct l2cap_conn_rsp rsp;
 	u16 result;
 
-	अगर (test_bit(FLAG_DEFER_SETUP, &chan->flags))
+	if (test_bit(FLAG_DEFER_SETUP, &chan->flags))
 		result = L2CAP_CR_SEC_BLOCK;
-	अन्यथा
+	else
 		result = L2CAP_CR_BAD_PSM;
 
 	l2cap_state_change(chan, BT_DISCONN);
@@ -784,132 +783,132 @@ EXPORT_SYMBOL_GPL(l2cap_chan_list);
 	rsp.result = cpu_to_le16(result);
 	rsp.status = cpu_to_le16(L2CAP_CS_NO_INFO);
 
-	l2cap_send_cmd(conn, chan->ident, L2CAP_CONN_RSP, माप(rsp), &rsp);
-पूर्ण
+	l2cap_send_cmd(conn, chan->ident, L2CAP_CONN_RSP, sizeof(rsp), &rsp);
+}
 
-व्योम l2cap_chan_बंद(काष्ठा l2cap_chan *chan, पूर्णांक reason)
-अणु
-	काष्ठा l2cap_conn *conn = chan->conn;
+void l2cap_chan_close(struct l2cap_chan *chan, int reason)
+{
+	struct l2cap_conn *conn = chan->conn;
 
 	BT_DBG("chan %p state %s", chan, state_to_string(chan->state));
 
-	चयन (chan->state) अणु
-	हाल BT_LISTEN:
-		chan->ops->tearकरोwn(chan, 0);
-		अवरोध;
+	switch (chan->state) {
+	case BT_LISTEN:
+		chan->ops->teardown(chan, 0);
+		break;
 
-	हाल BT_CONNECTED:
-	हाल BT_CONFIG:
-		अगर (chan->chan_type == L2CAP_CHAN_CONN_ORIENTED) अणु
-			__set_chan_समयr(chan, chan->ops->get_sndसमयo(chan));
+	case BT_CONNECTED:
+	case BT_CONFIG:
+		if (chan->chan_type == L2CAP_CHAN_CONN_ORIENTED) {
+			__set_chan_timer(chan, chan->ops->get_sndtimeo(chan));
 			l2cap_send_disconn_req(chan, reason);
-		पूर्ण अन्यथा
+		} else
 			l2cap_chan_del(chan, reason);
-		अवरोध;
+		break;
 
-	हाल BT_CONNECT2:
-		अगर (chan->chan_type == L2CAP_CHAN_CONN_ORIENTED) अणु
-			अगर (conn->hcon->type == ACL_LINK)
+	case BT_CONNECT2:
+		if (chan->chan_type == L2CAP_CHAN_CONN_ORIENTED) {
+			if (conn->hcon->type == ACL_LINK)
 				l2cap_chan_connect_reject(chan);
-			अन्यथा अगर (conn->hcon->type == LE_LINK) अणु
-				चयन (chan->mode) अणु
-				हाल L2CAP_MODE_LE_FLOWCTL:
+			else if (conn->hcon->type == LE_LINK) {
+				switch (chan->mode) {
+				case L2CAP_MODE_LE_FLOWCTL:
 					l2cap_chan_le_connect_reject(chan);
-					अवरोध;
-				हाल L2CAP_MODE_EXT_FLOWCTL:
+					break;
+				case L2CAP_MODE_EXT_FLOWCTL:
 					l2cap_chan_ecred_connect_reject(chan);
-					अवरोध;
-				पूर्ण
-			पूर्ण
-		पूर्ण
+					break;
+				}
+			}
+		}
 
 		l2cap_chan_del(chan, reason);
-		अवरोध;
+		break;
 
-	हाल BT_CONNECT:
-	हाल BT_DISCONN:
+	case BT_CONNECT:
+	case BT_DISCONN:
 		l2cap_chan_del(chan, reason);
-		अवरोध;
+		break;
 
-	शेष:
-		chan->ops->tearकरोwn(chan, 0);
-		अवरोध;
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL(l2cap_chan_बंद);
+	default:
+		chan->ops->teardown(chan, 0);
+		break;
+	}
+}
+EXPORT_SYMBOL(l2cap_chan_close);
 
-अटल अंतरभूत u8 l2cap_get_auth_type(काष्ठा l2cap_chan *chan)
-अणु
-	चयन (chan->chan_type) अणु
-	हाल L2CAP_CHAN_RAW:
-		चयन (chan->sec_level) अणु
-		हाल BT_SECURITY_HIGH:
-		हाल BT_SECURITY_FIPS:
-			वापस HCI_AT_DEDICATED_BONDING_MITM;
-		हाल BT_SECURITY_MEDIUM:
-			वापस HCI_AT_DEDICATED_BONDING;
-		शेष:
-			वापस HCI_AT_NO_BONDING;
-		पूर्ण
-		अवरोध;
-	हाल L2CAP_CHAN_CONN_LESS:
-		अगर (chan->psm == cpu_to_le16(L2CAP_PSM_3DSP)) अणु
-			अगर (chan->sec_level == BT_SECURITY_LOW)
+static inline u8 l2cap_get_auth_type(struct l2cap_chan *chan)
+{
+	switch (chan->chan_type) {
+	case L2CAP_CHAN_RAW:
+		switch (chan->sec_level) {
+		case BT_SECURITY_HIGH:
+		case BT_SECURITY_FIPS:
+			return HCI_AT_DEDICATED_BONDING_MITM;
+		case BT_SECURITY_MEDIUM:
+			return HCI_AT_DEDICATED_BONDING;
+		default:
+			return HCI_AT_NO_BONDING;
+		}
+		break;
+	case L2CAP_CHAN_CONN_LESS:
+		if (chan->psm == cpu_to_le16(L2CAP_PSM_3DSP)) {
+			if (chan->sec_level == BT_SECURITY_LOW)
 				chan->sec_level = BT_SECURITY_SDP;
-		पूर्ण
-		अगर (chan->sec_level == BT_SECURITY_HIGH ||
+		}
+		if (chan->sec_level == BT_SECURITY_HIGH ||
 		    chan->sec_level == BT_SECURITY_FIPS)
-			वापस HCI_AT_NO_BONDING_MITM;
-		अन्यथा
-			वापस HCI_AT_NO_BONDING;
-		अवरोध;
-	हाल L2CAP_CHAN_CONN_ORIENTED:
-		अगर (chan->psm == cpu_to_le16(L2CAP_PSM_SDP)) अणु
-			अगर (chan->sec_level == BT_SECURITY_LOW)
+			return HCI_AT_NO_BONDING_MITM;
+		else
+			return HCI_AT_NO_BONDING;
+		break;
+	case L2CAP_CHAN_CONN_ORIENTED:
+		if (chan->psm == cpu_to_le16(L2CAP_PSM_SDP)) {
+			if (chan->sec_level == BT_SECURITY_LOW)
 				chan->sec_level = BT_SECURITY_SDP;
 
-			अगर (chan->sec_level == BT_SECURITY_HIGH ||
+			if (chan->sec_level == BT_SECURITY_HIGH ||
 			    chan->sec_level == BT_SECURITY_FIPS)
-				वापस HCI_AT_NO_BONDING_MITM;
-			अन्यथा
-				वापस HCI_AT_NO_BONDING;
-		पूर्ण
+				return HCI_AT_NO_BONDING_MITM;
+			else
+				return HCI_AT_NO_BONDING;
+		}
 		fallthrough;
 
-	शेष:
-		चयन (chan->sec_level) अणु
-		हाल BT_SECURITY_HIGH:
-		हाल BT_SECURITY_FIPS:
-			वापस HCI_AT_GENERAL_BONDING_MITM;
-		हाल BT_SECURITY_MEDIUM:
-			वापस HCI_AT_GENERAL_BONDING;
-		शेष:
-			वापस HCI_AT_NO_BONDING;
-		पूर्ण
-		अवरोध;
-	पूर्ण
-पूर्ण
+	default:
+		switch (chan->sec_level) {
+		case BT_SECURITY_HIGH:
+		case BT_SECURITY_FIPS:
+			return HCI_AT_GENERAL_BONDING_MITM;
+		case BT_SECURITY_MEDIUM:
+			return HCI_AT_GENERAL_BONDING;
+		default:
+			return HCI_AT_NO_BONDING;
+		}
+		break;
+	}
+}
 
 /* Service level security */
-पूर्णांक l2cap_chan_check_security(काष्ठा l2cap_chan *chan, bool initiator)
-अणु
-	काष्ठा l2cap_conn *conn = chan->conn;
+int l2cap_chan_check_security(struct l2cap_chan *chan, bool initiator)
+{
+	struct l2cap_conn *conn = chan->conn;
 	__u8 auth_type;
 
-	अगर (conn->hcon->type == LE_LINK)
-		वापस smp_conn_security(conn->hcon, chan->sec_level);
+	if (conn->hcon->type == LE_LINK)
+		return smp_conn_security(conn->hcon, chan->sec_level);
 
 	auth_type = l2cap_get_auth_type(chan);
 
-	वापस hci_conn_security(conn->hcon, chan->sec_level, auth_type,
+	return hci_conn_security(conn->hcon, chan->sec_level, auth_type,
 				 initiator);
-पूर्ण
+}
 
-अटल u8 l2cap_get_ident(काष्ठा l2cap_conn *conn)
-अणु
+static u8 l2cap_get_ident(struct l2cap_conn *conn)
+{
 	u8 id;
 
-	/* Get next available identअगरicator.
+	/* Get next available identificator.
 	 *    1 - 128 are used by kernel.
 	 *  129 - 199 are reserved.
 	 *  200 - 254 are used by utilities like l2ping, etc.
@@ -917,85 +916,85 @@ EXPORT_SYMBOL(l2cap_chan_बंद);
 
 	mutex_lock(&conn->ident_lock);
 
-	अगर (++conn->tx_ident > 128)
+	if (++conn->tx_ident > 128)
 		conn->tx_ident = 1;
 
 	id = conn->tx_ident;
 
 	mutex_unlock(&conn->ident_lock);
 
-	वापस id;
-पूर्ण
+	return id;
+}
 
-अटल व्योम l2cap_send_cmd(काष्ठा l2cap_conn *conn, u8 ident, u8 code, u16 len,
-			   व्योम *data)
-अणु
-	काष्ठा sk_buff *skb = l2cap_build_cmd(conn, code, ident, len, data);
+static void l2cap_send_cmd(struct l2cap_conn *conn, u8 ident, u8 code, u16 len,
+			   void *data)
+{
+	struct sk_buff *skb = l2cap_build_cmd(conn, code, ident, len, data);
 	u8 flags;
 
 	BT_DBG("code 0x%2.2x", code);
 
-	अगर (!skb)
-		वापस;
+	if (!skb)
+		return;
 
-	/* Use NO_FLUSH अगर supported or we have an LE link (which करोes
-	 * not support स्वतः-flushing packets) */
-	अगर (lmp_no_flush_capable(conn->hcon->hdev) ||
+	/* Use NO_FLUSH if supported or we have an LE link (which does
+	 * not support auto-flushing packets) */
+	if (lmp_no_flush_capable(conn->hcon->hdev) ||
 	    conn->hcon->type == LE_LINK)
 		flags = ACL_START_NO_FLUSH;
-	अन्यथा
+	else
 		flags = ACL_START;
 
-	bt_cb(skb)->क्रमce_active = BT_POWER_FORCE_ACTIVE_ON;
+	bt_cb(skb)->force_active = BT_POWER_FORCE_ACTIVE_ON;
 	skb->priority = HCI_PRIO_MAX;
 
 	hci_send_acl(conn->hchan, skb, flags);
-पूर्ण
+}
 
-अटल bool __chan_is_moving(काष्ठा l2cap_chan *chan)
-अणु
-	वापस chan->move_state != L2CAP_MOVE_STABLE &&
+static bool __chan_is_moving(struct l2cap_chan *chan)
+{
+	return chan->move_state != L2CAP_MOVE_STABLE &&
 	       chan->move_state != L2CAP_MOVE_WAIT_PREPARE;
-पूर्ण
+}
 
-अटल व्योम l2cap_करो_send(काष्ठा l2cap_chan *chan, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा hci_conn *hcon = chan->conn->hcon;
+static void l2cap_do_send(struct l2cap_chan *chan, struct sk_buff *skb)
+{
+	struct hci_conn *hcon = chan->conn->hcon;
 	u16 flags;
 
 	BT_DBG("chan %p, skb %p len %d priority %u", chan, skb, skb->len,
 	       skb->priority);
 
-	अगर (chan->hs_hcon && !__chan_is_moving(chan)) अणु
-		अगर (chan->hs_hchan)
+	if (chan->hs_hcon && !__chan_is_moving(chan)) {
+		if (chan->hs_hchan)
 			hci_send_acl(chan->hs_hchan, skb, ACL_COMPLETE);
-		अन्यथा
-			kमुक्त_skb(skb);
+		else
+			kfree_skb(skb);
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* Use NO_FLUSH क्रम LE links (where this is the only option) or
-	 * अगर the BR/EDR link supports it and flushing has not been
+	/* Use NO_FLUSH for LE links (where this is the only option) or
+	 * if the BR/EDR link supports it and flushing has not been
 	 * explicitly requested (through FLAG_FLUSHABLE).
 	 */
-	अगर (hcon->type == LE_LINK ||
+	if (hcon->type == LE_LINK ||
 	    (!test_bit(FLAG_FLUSHABLE, &chan->flags) &&
 	     lmp_no_flush_capable(hcon->hdev)))
 		flags = ACL_START_NO_FLUSH;
-	अन्यथा
+	else
 		flags = ACL_START;
 
-	bt_cb(skb)->क्रमce_active = test_bit(FLAG_FORCE_ACTIVE, &chan->flags);
+	bt_cb(skb)->force_active = test_bit(FLAG_FORCE_ACTIVE, &chan->flags);
 	hci_send_acl(chan->conn->hchan, skb, flags);
-पूर्ण
+}
 
-अटल व्योम __unpack_enhanced_control(u16 enh, काष्ठा l2cap_ctrl *control)
-अणु
+static void __unpack_enhanced_control(u16 enh, struct l2cap_ctrl *control)
+{
 	control->reqseq = (enh & L2CAP_CTRL_REQSEQ) >> L2CAP_CTRL_REQSEQ_SHIFT;
 	control->final = (enh & L2CAP_CTRL_FINAL) >> L2CAP_CTRL_FINAL_SHIFT;
 
-	अगर (enh & L2CAP_CTRL_FRAME_TYPE) अणु
+	if (enh & L2CAP_CTRL_FRAME_TYPE) {
 		/* S-Frame */
 		control->sframe = 1;
 		control->poll = (enh & L2CAP_CTRL_POLL) >> L2CAP_CTRL_POLL_SHIFT;
@@ -1003,7 +1002,7 @@ EXPORT_SYMBOL(l2cap_chan_बंद);
 
 		control->sar = 0;
 		control->txseq = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* I-Frame */
 		control->sframe = 0;
 		control->sar = (enh & L2CAP_CTRL_SAR) >> L2CAP_CTRL_SAR_SHIFT;
@@ -1011,15 +1010,15 @@ EXPORT_SYMBOL(l2cap_chan_बंद);
 
 		control->poll = 0;
 		control->super = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम __unpack_extended_control(u32 ext, काष्ठा l2cap_ctrl *control)
-अणु
+static void __unpack_extended_control(u32 ext, struct l2cap_ctrl *control)
+{
 	control->reqseq = (ext & L2CAP_EXT_CTRL_REQSEQ) >> L2CAP_EXT_CTRL_REQSEQ_SHIFT;
 	control->final = (ext & L2CAP_EXT_CTRL_FINAL) >> L2CAP_EXT_CTRL_FINAL_SHIFT;
 
-	अगर (ext & L2CAP_EXT_CTRL_FRAME_TYPE) अणु
+	if (ext & L2CAP_EXT_CTRL_FRAME_TYPE) {
 		/* S-Frame */
 		control->sframe = 1;
 		control->poll = (ext & L2CAP_EXT_CTRL_POLL) >> L2CAP_EXT_CTRL_POLL_SHIFT;
@@ -1027,7 +1026,7 @@ EXPORT_SYMBOL(l2cap_chan_बंद);
 
 		control->sar = 0;
 		control->txseq = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* I-Frame */
 		control->sframe = 0;
 		control->sar = (ext & L2CAP_EXT_CTRL_SAR) >> L2CAP_EXT_CTRL_SAR_SHIFT;
@@ -1035,221 +1034,221 @@ EXPORT_SYMBOL(l2cap_chan_बंद);
 
 		control->poll = 0;
 		control->super = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम __unpack_control(काष्ठा l2cap_chan *chan,
-				    काष्ठा sk_buff *skb)
-अणु
-	अगर (test_bit(FLAG_EXT_CTRL, &chan->flags)) अणु
+static inline void __unpack_control(struct l2cap_chan *chan,
+				    struct sk_buff *skb)
+{
+	if (test_bit(FLAG_EXT_CTRL, &chan->flags)) {
 		__unpack_extended_control(get_unaligned_le32(skb->data),
 					  &bt_cb(skb)->l2cap);
 		skb_pull(skb, L2CAP_EXT_CTRL_SIZE);
-	पूर्ण अन्यथा अणु
+	} else {
 		__unpack_enhanced_control(get_unaligned_le16(skb->data),
 					  &bt_cb(skb)->l2cap);
 		skb_pull(skb, L2CAP_ENH_CTRL_SIZE);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल u32 __pack_extended_control(काष्ठा l2cap_ctrl *control)
-अणु
+static u32 __pack_extended_control(struct l2cap_ctrl *control)
+{
 	u32 packed;
 
 	packed = control->reqseq << L2CAP_EXT_CTRL_REQSEQ_SHIFT;
 	packed |= control->final << L2CAP_EXT_CTRL_FINAL_SHIFT;
 
-	अगर (control->sframe) अणु
+	if (control->sframe) {
 		packed |= control->poll << L2CAP_EXT_CTRL_POLL_SHIFT;
 		packed |= control->super << L2CAP_EXT_CTRL_SUPER_SHIFT;
 		packed |= L2CAP_EXT_CTRL_FRAME_TYPE;
-	पूर्ण अन्यथा अणु
+	} else {
 		packed |= control->sar << L2CAP_EXT_CTRL_SAR_SHIFT;
 		packed |= control->txseq << L2CAP_EXT_CTRL_TXSEQ_SHIFT;
-	पूर्ण
+	}
 
-	वापस packed;
-पूर्ण
+	return packed;
+}
 
-अटल u16 __pack_enhanced_control(काष्ठा l2cap_ctrl *control)
-अणु
+static u16 __pack_enhanced_control(struct l2cap_ctrl *control)
+{
 	u16 packed;
 
 	packed = control->reqseq << L2CAP_CTRL_REQSEQ_SHIFT;
 	packed |= control->final << L2CAP_CTRL_FINAL_SHIFT;
 
-	अगर (control->sframe) अणु
+	if (control->sframe) {
 		packed |= control->poll << L2CAP_CTRL_POLL_SHIFT;
 		packed |= control->super << L2CAP_CTRL_SUPER_SHIFT;
 		packed |= L2CAP_CTRL_FRAME_TYPE;
-	पूर्ण अन्यथा अणु
+	} else {
 		packed |= control->sar << L2CAP_CTRL_SAR_SHIFT;
 		packed |= control->txseq << L2CAP_CTRL_TXSEQ_SHIFT;
-	पूर्ण
+	}
 
-	वापस packed;
-पूर्ण
+	return packed;
+}
 
-अटल अंतरभूत व्योम __pack_control(काष्ठा l2cap_chan *chan,
-				  काष्ठा l2cap_ctrl *control,
-				  काष्ठा sk_buff *skb)
-अणु
-	अगर (test_bit(FLAG_EXT_CTRL, &chan->flags)) अणु
+static inline void __pack_control(struct l2cap_chan *chan,
+				  struct l2cap_ctrl *control,
+				  struct sk_buff *skb)
+{
+	if (test_bit(FLAG_EXT_CTRL, &chan->flags)) {
 		put_unaligned_le32(__pack_extended_control(control),
 				   skb->data + L2CAP_HDR_SIZE);
-	पूर्ण अन्यथा अणु
+	} else {
 		put_unaligned_le16(__pack_enhanced_control(control),
 				   skb->data + L2CAP_HDR_SIZE);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक __erपंचांग_hdr_size(काष्ठा l2cap_chan *chan)
-अणु
-	अगर (test_bit(FLAG_EXT_CTRL, &chan->flags))
-		वापस L2CAP_EXT_HDR_SIZE;
-	अन्यथा
-		वापस L2CAP_ENH_HDR_SIZE;
-पूर्ण
+static inline unsigned int __ertm_hdr_size(struct l2cap_chan *chan)
+{
+	if (test_bit(FLAG_EXT_CTRL, &chan->flags))
+		return L2CAP_EXT_HDR_SIZE;
+	else
+		return L2CAP_ENH_HDR_SIZE;
+}
 
-अटल काष्ठा sk_buff *l2cap_create_sframe_pdu(काष्ठा l2cap_chan *chan,
+static struct sk_buff *l2cap_create_sframe_pdu(struct l2cap_chan *chan,
 					       u32 control)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा l2cap_hdr *lh;
-	पूर्णांक hlen = __erपंचांग_hdr_size(chan);
+{
+	struct sk_buff *skb;
+	struct l2cap_hdr *lh;
+	int hlen = __ertm_hdr_size(chan);
 
-	अगर (chan->fcs == L2CAP_FCS_CRC16)
+	if (chan->fcs == L2CAP_FCS_CRC16)
 		hlen += L2CAP_FCS_SIZE;
 
 	skb = bt_skb_alloc(hlen, GFP_KERNEL);
 
-	अगर (!skb)
-		वापस ERR_PTR(-ENOMEM);
+	if (!skb)
+		return ERR_PTR(-ENOMEM);
 
 	lh = skb_put(skb, L2CAP_HDR_SIZE);
 	lh->len = cpu_to_le16(hlen - L2CAP_HDR_SIZE);
 	lh->cid = cpu_to_le16(chan->dcid);
 
-	अगर (test_bit(FLAG_EXT_CTRL, &chan->flags))
+	if (test_bit(FLAG_EXT_CTRL, &chan->flags))
 		put_unaligned_le32(control, skb_put(skb, L2CAP_EXT_CTRL_SIZE));
-	अन्यथा
+	else
 		put_unaligned_le16(control, skb_put(skb, L2CAP_ENH_CTRL_SIZE));
 
-	अगर (chan->fcs == L2CAP_FCS_CRC16) अणु
+	if (chan->fcs == L2CAP_FCS_CRC16) {
 		u16 fcs = crc16(0, (u8 *)skb->data, skb->len);
 		put_unaligned_le16(fcs, skb_put(skb, L2CAP_FCS_SIZE));
-	पूर्ण
+	}
 
 	skb->priority = HCI_PRIO_MAX;
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल व्योम l2cap_send_sframe(काष्ठा l2cap_chan *chan,
-			      काष्ठा l2cap_ctrl *control)
-अणु
-	काष्ठा sk_buff *skb;
+static void l2cap_send_sframe(struct l2cap_chan *chan,
+			      struct l2cap_ctrl *control)
+{
+	struct sk_buff *skb;
 	u32 control_field;
 
 	BT_DBG("chan %p, control %p", chan, control);
 
-	अगर (!control->sframe)
-		वापस;
+	if (!control->sframe)
+		return;
 
-	अगर (__chan_is_moving(chan))
-		वापस;
+	if (__chan_is_moving(chan))
+		return;
 
-	अगर (test_and_clear_bit(CONN_SEND_FBIT, &chan->conn_state) &&
+	if (test_and_clear_bit(CONN_SEND_FBIT, &chan->conn_state) &&
 	    !control->poll)
 		control->final = 1;
 
-	अगर (control->super == L2CAP_SUPER_RR)
+	if (control->super == L2CAP_SUPER_RR)
 		clear_bit(CONN_RNR_SENT, &chan->conn_state);
-	अन्यथा अगर (control->super == L2CAP_SUPER_RNR)
+	else if (control->super == L2CAP_SUPER_RNR)
 		set_bit(CONN_RNR_SENT, &chan->conn_state);
 
-	अगर (control->super != L2CAP_SUPER_SREJ) अणु
+	if (control->super != L2CAP_SUPER_SREJ) {
 		chan->last_acked_seq = control->reqseq;
-		__clear_ack_समयr(chan);
-	पूर्ण
+		__clear_ack_timer(chan);
+	}
 
 	BT_DBG("reqseq %d, final %d, poll %d, super %d", control->reqseq,
 	       control->final, control->poll, control->super);
 
-	अगर (test_bit(FLAG_EXT_CTRL, &chan->flags))
+	if (test_bit(FLAG_EXT_CTRL, &chan->flags))
 		control_field = __pack_extended_control(control);
-	अन्यथा
+	else
 		control_field = __pack_enhanced_control(control);
 
 	skb = l2cap_create_sframe_pdu(chan, control_field);
-	अगर (!IS_ERR(skb))
-		l2cap_करो_send(chan, skb);
-पूर्ण
+	if (!IS_ERR(skb))
+		l2cap_do_send(chan, skb);
+}
 
-अटल व्योम l2cap_send_rr_or_rnr(काष्ठा l2cap_chan *chan, bool poll)
-अणु
-	काष्ठा l2cap_ctrl control;
+static void l2cap_send_rr_or_rnr(struct l2cap_chan *chan, bool poll)
+{
+	struct l2cap_ctrl control;
 
 	BT_DBG("chan %p, poll %d", chan, poll);
 
-	स_रखो(&control, 0, माप(control));
+	memset(&control, 0, sizeof(control));
 	control.sframe = 1;
 	control.poll = poll;
 
-	अगर (test_bit(CONN_LOCAL_BUSY, &chan->conn_state))
+	if (test_bit(CONN_LOCAL_BUSY, &chan->conn_state))
 		control.super = L2CAP_SUPER_RNR;
-	अन्यथा
+	else
 		control.super = L2CAP_SUPER_RR;
 
 	control.reqseq = chan->buffer_seq;
 	l2cap_send_sframe(chan, &control);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक __l2cap_no_conn_pending(काष्ठा l2cap_chan *chan)
-अणु
-	अगर (chan->chan_type != L2CAP_CHAN_CONN_ORIENTED)
-		वापस true;
+static inline int __l2cap_no_conn_pending(struct l2cap_chan *chan)
+{
+	if (chan->chan_type != L2CAP_CHAN_CONN_ORIENTED)
+		return true;
 
-	वापस !test_bit(CONF_CONNECT_PEND, &chan->conf_state);
-पूर्ण
+	return !test_bit(CONF_CONNECT_PEND, &chan->conf_state);
+}
 
-अटल bool __amp_capable(काष्ठा l2cap_chan *chan)
-अणु
-	काष्ठा l2cap_conn *conn = chan->conn;
-	काष्ठा hci_dev *hdev;
+static bool __amp_capable(struct l2cap_chan *chan)
+{
+	struct l2cap_conn *conn = chan->conn;
+	struct hci_dev *hdev;
 	bool amp_available = false;
 
-	अगर (!(conn->local_fixed_chan & L2CAP_FC_A2MP))
-		वापस false;
+	if (!(conn->local_fixed_chan & L2CAP_FC_A2MP))
+		return false;
 
-	अगर (!(conn->remote_fixed_chan & L2CAP_FC_A2MP))
-		वापस false;
+	if (!(conn->remote_fixed_chan & L2CAP_FC_A2MP))
+		return false;
 
-	पढ़ो_lock(&hci_dev_list_lock);
-	list_क्रम_each_entry(hdev, &hci_dev_list, list) अणु
-		अगर (hdev->amp_type != AMP_TYPE_BREDR &&
-		    test_bit(HCI_UP, &hdev->flags)) अणु
+	read_lock(&hci_dev_list_lock);
+	list_for_each_entry(hdev, &hci_dev_list, list) {
+		if (hdev->amp_type != AMP_TYPE_BREDR &&
+		    test_bit(HCI_UP, &hdev->flags)) {
 			amp_available = true;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	पढ़ो_unlock(&hci_dev_list_lock);
+			break;
+		}
+	}
+	read_unlock(&hci_dev_list_lock);
 
-	अगर (chan->chan_policy == BT_CHANNEL_POLICY_AMP_PREFERRED)
-		वापस amp_available;
+	if (chan->chan_policy == BT_CHANNEL_POLICY_AMP_PREFERRED)
+		return amp_available;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool l2cap_check_efs(काष्ठा l2cap_chan *chan)
-अणु
+static bool l2cap_check_efs(struct l2cap_chan *chan)
+{
 	/* Check EFS parameters */
-	वापस true;
-पूर्ण
+	return true;
+}
 
-व्योम l2cap_send_conn_req(काष्ठा l2cap_chan *chan)
-अणु
-	काष्ठा l2cap_conn *conn = chan->conn;
-	काष्ठा l2cap_conn_req req;
+void l2cap_send_conn_req(struct l2cap_chan *chan)
+{
+	struct l2cap_conn *conn = chan->conn;
+	struct l2cap_conn_req req;
 
 	req.scid = cpu_to_le16(chan->scid);
 	req.psm  = chan->psm;
@@ -1258,12 +1257,12 @@ EXPORT_SYMBOL(l2cap_chan_बंद);
 
 	set_bit(CONF_CONNECT_PEND, &chan->conf_state);
 
-	l2cap_send_cmd(conn, chan->ident, L2CAP_CONN_REQ, माप(req), &req);
-पूर्ण
+	l2cap_send_cmd(conn, chan->ident, L2CAP_CONN_REQ, sizeof(req), &req);
+}
 
-अटल व्योम l2cap_send_create_chan_req(काष्ठा l2cap_chan *chan, u8 amp_id)
-अणु
-	काष्ठा l2cap_create_chan_req req;
+static void l2cap_send_create_chan_req(struct l2cap_chan *chan, u8 amp_id)
+{
+	struct l2cap_create_chan_req req;
 	req.scid = cpu_to_le16(chan->scid);
 	req.psm  = chan->psm;
 	req.amp_id = amp_id;
@@ -1271,29 +1270,29 @@ EXPORT_SYMBOL(l2cap_chan_बंद);
 	chan->ident = l2cap_get_ident(chan->conn);
 
 	l2cap_send_cmd(chan->conn, chan->ident, L2CAP_CREATE_CHAN_REQ,
-		       माप(req), &req);
-पूर्ण
+		       sizeof(req), &req);
+}
 
-अटल व्योम l2cap_move_setup(काष्ठा l2cap_chan *chan)
-अणु
-	काष्ठा sk_buff *skb;
+static void l2cap_move_setup(struct l2cap_chan *chan)
+{
+	struct sk_buff *skb;
 
 	BT_DBG("chan %p", chan);
 
-	अगर (chan->mode != L2CAP_MODE_ERTM)
-		वापस;
+	if (chan->mode != L2CAP_MODE_ERTM)
+		return;
 
-	__clear_retrans_समयr(chan);
-	__clear_monitor_समयr(chan);
-	__clear_ack_समयr(chan);
+	__clear_retrans_timer(chan);
+	__clear_monitor_timer(chan);
+	__clear_ack_timer(chan);
 
 	chan->retry_count = 0;
-	skb_queue_walk(&chan->tx_q, skb) अणु
-		अगर (bt_cb(skb)->l2cap.retries)
+	skb_queue_walk(&chan->tx_q, skb) {
+		if (bt_cb(skb)->l2cap.retries)
 			bt_cb(skb)->l2cap.retries = 1;
-		अन्यथा
-			अवरोध;
-	पूर्ण
+		else
+			break;
+	}
 
 	chan->expected_tx_seq = chan->buffer_seq;
 
@@ -1307,65 +1306,65 @@ EXPORT_SYMBOL(l2cap_chan_बंद);
 	chan->rx_state = L2CAP_RX_STATE_MOVE;
 
 	set_bit(CONN_REMOTE_BUSY, &chan->conn_state);
-पूर्ण
+}
 
-अटल व्योम l2cap_move_करोne(काष्ठा l2cap_chan *chan)
-अणु
+static void l2cap_move_done(struct l2cap_chan *chan)
+{
 	u8 move_role = chan->move_role;
 	BT_DBG("chan %p", chan);
 
 	chan->move_state = L2CAP_MOVE_STABLE;
 	chan->move_role = L2CAP_MOVE_ROLE_NONE;
 
-	अगर (chan->mode != L2CAP_MODE_ERTM)
-		वापस;
+	if (chan->mode != L2CAP_MODE_ERTM)
+		return;
 
-	चयन (move_role) अणु
-	हाल L2CAP_MOVE_ROLE_INITIATOR:
-		l2cap_tx(chan, शून्य, शून्य, L2CAP_EV_EXPLICIT_POLL);
+	switch (move_role) {
+	case L2CAP_MOVE_ROLE_INITIATOR:
+		l2cap_tx(chan, NULL, NULL, L2CAP_EV_EXPLICIT_POLL);
 		chan->rx_state = L2CAP_RX_STATE_WAIT_F;
-		अवरोध;
-	हाल L2CAP_MOVE_ROLE_RESPONDER:
+		break;
+	case L2CAP_MOVE_ROLE_RESPONDER:
 		chan->rx_state = L2CAP_RX_STATE_WAIT_P;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम l2cap_chan_पढ़ोy(काष्ठा l2cap_chan *chan)
-अणु
-	/* The channel may have alपढ़ोy been flagged as connected in
-	 * हाल of receiving data beक्रमe the L2CAP info req/rsp
+static void l2cap_chan_ready(struct l2cap_chan *chan)
+{
+	/* The channel may have already been flagged as connected in
+	 * case of receiving data before the L2CAP info req/rsp
 	 * procedure is complete.
 	 */
-	अगर (chan->state == BT_CONNECTED)
-		वापस;
+	if (chan->state == BT_CONNECTED)
+		return;
 
 	/* This clears all conf flags, including CONF_NOT_COMPLETE */
 	chan->conf_state = 0;
-	__clear_chan_समयr(chan);
+	__clear_chan_timer(chan);
 
-	चयन (chan->mode) अणु
-	हाल L2CAP_MODE_LE_FLOWCTL:
-	हाल L2CAP_MODE_EXT_FLOWCTL:
-		अगर (!chan->tx_credits)
+	switch (chan->mode) {
+	case L2CAP_MODE_LE_FLOWCTL:
+	case L2CAP_MODE_EXT_FLOWCTL:
+		if (!chan->tx_credits)
 			chan->ops->suspend(chan);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	chan->state = BT_CONNECTED;
 
-	chan->ops->पढ़ोy(chan);
-पूर्ण
+	chan->ops->ready(chan);
+}
 
-अटल व्योम l2cap_le_connect(काष्ठा l2cap_chan *chan)
-अणु
-	काष्ठा l2cap_conn *conn = chan->conn;
-	काष्ठा l2cap_le_conn_req req;
+static void l2cap_le_connect(struct l2cap_chan *chan)
+{
+	struct l2cap_conn *conn = chan->conn;
+	struct l2cap_le_conn_req req;
 
-	अगर (test_and_set_bit(FLAG_LE_CONN_REQ_SENT, &chan->flags))
-		वापस;
+	if (test_and_set_bit(FLAG_LE_CONN_REQ_SENT, &chan->flags))
+		return;
 
-	अगर (!chan->imtu)
+	if (!chan->imtu)
 		chan->imtu = chan->conn->mtu;
 
 	l2cap_le_flowctl_init(chan, 0);
@@ -1379,39 +1378,39 @@ EXPORT_SYMBOL(l2cap_chan_बंद);
 	chan->ident = l2cap_get_ident(conn);
 
 	l2cap_send_cmd(conn, chan->ident, L2CAP_LE_CONN_REQ,
-		       माप(req), &req);
-पूर्ण
+		       sizeof(req), &req);
+}
 
-काष्ठा l2cap_ecred_conn_data अणु
-	काष्ठा अणु
-		काष्ठा l2cap_ecred_conn_req req;
+struct l2cap_ecred_conn_data {
+	struct {
+		struct l2cap_ecred_conn_req req;
 		__le16 scid[5];
-	पूर्ण __packed pdu;
-	काष्ठा l2cap_chan *chan;
-	काष्ठा pid *pid;
-	पूर्णांक count;
-पूर्ण;
+	} __packed pdu;
+	struct l2cap_chan *chan;
+	struct pid *pid;
+	int count;
+};
 
-अटल व्योम l2cap_ecred_defer_connect(काष्ठा l2cap_chan *chan, व्योम *data)
-अणु
-	काष्ठा l2cap_ecred_conn_data *conn = data;
-	काष्ठा pid *pid;
+static void l2cap_ecred_defer_connect(struct l2cap_chan *chan, void *data)
+{
+	struct l2cap_ecred_conn_data *conn = data;
+	struct pid *pid;
 
-	अगर (chan == conn->chan)
-		वापस;
+	if (chan == conn->chan)
+		return;
 
-	अगर (!test_and_clear_bit(FLAG_DEFER_SETUP, &chan->flags))
-		वापस;
+	if (!test_and_clear_bit(FLAG_DEFER_SETUP, &chan->flags))
+		return;
 
 	pid = chan->ops->get_peer_pid(chan);
 
 	/* Only add deferred channels with the same PID/PSM */
-	अगर (conn->pid != pid || chan->psm != conn->chan->psm || chan->ident ||
+	if (conn->pid != pid || chan->psm != conn->chan->psm || chan->ident ||
 	    chan->mode != L2CAP_MODE_EXT_FLOWCTL || chan->state != BT_CONNECT)
-		वापस;
+		return;
 
-	अगर (test_and_set_bit(FLAG_ECRED_CONN_REQ_SENT, &chan->flags))
-		वापस;
+	if (test_and_set_bit(FLAG_ECRED_CONN_REQ_SENT, &chan->flags))
+		return;
 
 	l2cap_ecred_init(chan, 0);
 
@@ -1422,18 +1421,18 @@ EXPORT_SYMBOL(l2cap_chan_बंद);
 	conn->pdu.scid[conn->count] = cpu_to_le16(chan->scid);
 
 	conn->count++;
-पूर्ण
+}
 
-अटल व्योम l2cap_ecred_connect(काष्ठा l2cap_chan *chan)
-अणु
-	काष्ठा l2cap_conn *conn = chan->conn;
-	काष्ठा l2cap_ecred_conn_data data;
+static void l2cap_ecred_connect(struct l2cap_chan *chan)
+{
+	struct l2cap_conn *conn = chan->conn;
+	struct l2cap_ecred_conn_data data;
 
-	अगर (test_bit(FLAG_DEFER_SETUP, &chan->flags))
-		वापस;
+	if (test_bit(FLAG_DEFER_SETUP, &chan->flags))
+		return;
 
-	अगर (test_and_set_bit(FLAG_ECRED_CONN_REQ_SENT, &chan->flags))
-		वापस;
+	if (test_and_set_bit(FLAG_ECRED_CONN_REQ_SENT, &chan->flags))
+		return;
 
 	l2cap_ecred_init(chan, 0);
 
@@ -1453,599 +1452,599 @@ EXPORT_SYMBOL(l2cap_chan_बंद);
 	__l2cap_chan_list(conn, l2cap_ecred_defer_connect, &data);
 
 	l2cap_send_cmd(conn, chan->ident, L2CAP_ECRED_CONN_REQ,
-		       माप(data.pdu.req) + data.count * माप(__le16),
+		       sizeof(data.pdu.req) + data.count * sizeof(__le16),
 		       &data.pdu);
-पूर्ण
+}
 
-अटल व्योम l2cap_le_start(काष्ठा l2cap_chan *chan)
-अणु
-	काष्ठा l2cap_conn *conn = chan->conn;
+static void l2cap_le_start(struct l2cap_chan *chan)
+{
+	struct l2cap_conn *conn = chan->conn;
 
-	अगर (!smp_conn_security(conn->hcon, chan->sec_level))
-		वापस;
+	if (!smp_conn_security(conn->hcon, chan->sec_level))
+		return;
 
-	अगर (!chan->psm) अणु
-		l2cap_chan_पढ़ोy(chan);
-		वापस;
-	पूर्ण
+	if (!chan->psm) {
+		l2cap_chan_ready(chan);
+		return;
+	}
 
-	अगर (chan->state == BT_CONNECT) अणु
-		अगर (chan->mode == L2CAP_MODE_EXT_FLOWCTL)
+	if (chan->state == BT_CONNECT) {
+		if (chan->mode == L2CAP_MODE_EXT_FLOWCTL)
 			l2cap_ecred_connect(chan);
-		अन्यथा
+		else
 			l2cap_le_connect(chan);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम l2cap_start_connection(काष्ठा l2cap_chan *chan)
-अणु
-	अगर (__amp_capable(chan)) अणु
+static void l2cap_start_connection(struct l2cap_chan *chan)
+{
+	if (__amp_capable(chan)) {
 		BT_DBG("chan %p AMP capable: discover AMPs", chan);
 		a2mp_discover_amp(chan);
-	पूर्ण अन्यथा अगर (chan->conn->hcon->type == LE_LINK) अणु
+	} else if (chan->conn->hcon->type == LE_LINK) {
 		l2cap_le_start(chan);
-	पूर्ण अन्यथा अणु
+	} else {
 		l2cap_send_conn_req(chan);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम l2cap_request_info(काष्ठा l2cap_conn *conn)
-अणु
-	काष्ठा l2cap_info_req req;
+static void l2cap_request_info(struct l2cap_conn *conn)
+{
+	struct l2cap_info_req req;
 
-	अगर (conn->info_state & L2CAP_INFO_FEAT_MASK_REQ_SENT)
-		वापस;
+	if (conn->info_state & L2CAP_INFO_FEAT_MASK_REQ_SENT)
+		return;
 
 	req.type = cpu_to_le16(L2CAP_IT_FEAT_MASK);
 
 	conn->info_state |= L2CAP_INFO_FEAT_MASK_REQ_SENT;
 	conn->info_ident = l2cap_get_ident(conn);
 
-	schedule_delayed_work(&conn->info_समयr, L2CAP_INFO_TIMEOUT);
+	schedule_delayed_work(&conn->info_timer, L2CAP_INFO_TIMEOUT);
 
 	l2cap_send_cmd(conn, conn->info_ident, L2CAP_INFO_REQ,
-		       माप(req), &req);
-पूर्ण
+		       sizeof(req), &req);
+}
 
-अटल bool l2cap_check_enc_key_size(काष्ठा hci_conn *hcon)
-अणु
-	/* The minimum encryption key size needs to be enक्रमced by the
-	 * host stack beक्रमe establishing any L2CAP connections. The
-	 * specअगरication in theory allows a minimum of 1, but to align
+static bool l2cap_check_enc_key_size(struct hci_conn *hcon)
+{
+	/* The minimum encryption key size needs to be enforced by the
+	 * host stack before establishing any L2CAP connections. The
+	 * specification in theory allows a minimum of 1, but to align
 	 * BR/EDR and LE transports, a minimum of 7 is chosen.
 	 *
-	 * This check might also be called क्रम unencrypted connections
+	 * This check might also be called for unencrypted connections
 	 * that have no key size requirements. Ensure that the link is
-	 * actually encrypted beक्रमe enक्रमcing a key size.
+	 * actually encrypted before enforcing a key size.
 	 */
-	पूर्णांक min_key_size = hcon->hdev->min_enc_key_size;
+	int min_key_size = hcon->hdev->min_enc_key_size;
 
 	/* On FIPS security level, key size must be 16 bytes */
-	अगर (hcon->sec_level == BT_SECURITY_FIPS)
+	if (hcon->sec_level == BT_SECURITY_FIPS)
 		min_key_size = 16;
 
-	वापस (!test_bit(HCI_CONN_ENCRYPT, &hcon->flags) ||
+	return (!test_bit(HCI_CONN_ENCRYPT, &hcon->flags) ||
 		hcon->enc_key_size >= min_key_size);
-पूर्ण
+}
 
-अटल व्योम l2cap_करो_start(काष्ठा l2cap_chan *chan)
-अणु
-	काष्ठा l2cap_conn *conn = chan->conn;
+static void l2cap_do_start(struct l2cap_chan *chan)
+{
+	struct l2cap_conn *conn = chan->conn;
 
-	अगर (conn->hcon->type == LE_LINK) अणु
+	if (conn->hcon->type == LE_LINK) {
 		l2cap_le_start(chan);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!(conn->info_state & L2CAP_INFO_FEAT_MASK_REQ_SENT)) अणु
+	if (!(conn->info_state & L2CAP_INFO_FEAT_MASK_REQ_SENT)) {
 		l2cap_request_info(conn);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!(conn->info_state & L2CAP_INFO_FEAT_MASK_REQ_DONE))
-		वापस;
+	if (!(conn->info_state & L2CAP_INFO_FEAT_MASK_REQ_DONE))
+		return;
 
-	अगर (!l2cap_chan_check_security(chan, true) ||
+	if (!l2cap_chan_check_security(chan, true) ||
 	    !__l2cap_no_conn_pending(chan))
-		वापस;
+		return;
 
-	अगर (l2cap_check_enc_key_size(conn->hcon))
+	if (l2cap_check_enc_key_size(conn->hcon))
 		l2cap_start_connection(chan);
-	अन्यथा
-		__set_chan_समयr(chan, L2CAP_DISC_TIMEOUT);
-पूर्ण
+	else
+		__set_chan_timer(chan, L2CAP_DISC_TIMEOUT);
+}
 
-अटल अंतरभूत पूर्णांक l2cap_mode_supported(__u8 mode, __u32 feat_mask)
-अणु
+static inline int l2cap_mode_supported(__u8 mode, __u32 feat_mask)
+{
 	u32 local_feat_mask = l2cap_feat_mask;
-	अगर (!disable_erपंचांग)
+	if (!disable_ertm)
 		local_feat_mask |= L2CAP_FEAT_ERTM | L2CAP_FEAT_STREAMING;
 
-	चयन (mode) अणु
-	हाल L2CAP_MODE_ERTM:
-		वापस L2CAP_FEAT_ERTM & feat_mask & local_feat_mask;
-	हाल L2CAP_MODE_STREAMING:
-		वापस L2CAP_FEAT_STREAMING & feat_mask & local_feat_mask;
-	शेष:
-		वापस 0x00;
-	पूर्ण
-पूर्ण
+	switch (mode) {
+	case L2CAP_MODE_ERTM:
+		return L2CAP_FEAT_ERTM & feat_mask & local_feat_mask;
+	case L2CAP_MODE_STREAMING:
+		return L2CAP_FEAT_STREAMING & feat_mask & local_feat_mask;
+	default:
+		return 0x00;
+	}
+}
 
-अटल व्योम l2cap_send_disconn_req(काष्ठा l2cap_chan *chan, पूर्णांक err)
-अणु
-	काष्ठा l2cap_conn *conn = chan->conn;
-	काष्ठा l2cap_disconn_req req;
+static void l2cap_send_disconn_req(struct l2cap_chan *chan, int err)
+{
+	struct l2cap_conn *conn = chan->conn;
+	struct l2cap_disconn_req req;
 
-	अगर (!conn)
-		वापस;
+	if (!conn)
+		return;
 
-	अगर (chan->mode == L2CAP_MODE_ERTM && chan->state == BT_CONNECTED) अणु
-		__clear_retrans_समयr(chan);
-		__clear_monitor_समयr(chan);
-		__clear_ack_समयr(chan);
-	पूर्ण
+	if (chan->mode == L2CAP_MODE_ERTM && chan->state == BT_CONNECTED) {
+		__clear_retrans_timer(chan);
+		__clear_monitor_timer(chan);
+		__clear_ack_timer(chan);
+	}
 
-	अगर (chan->scid == L2CAP_CID_A2MP) अणु
+	if (chan->scid == L2CAP_CID_A2MP) {
 		l2cap_state_change(chan, BT_DISCONN);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	req.dcid = cpu_to_le16(chan->dcid);
 	req.scid = cpu_to_le16(chan->scid);
 	l2cap_send_cmd(conn, l2cap_get_ident(conn), L2CAP_DISCONN_REQ,
-		       माप(req), &req);
+		       sizeof(req), &req);
 
 	l2cap_state_change_and_error(chan, BT_DISCONN, err);
-पूर्ण
+}
 
 /* ---- L2CAP connections ---- */
-अटल व्योम l2cap_conn_start(काष्ठा l2cap_conn *conn)
-अणु
-	काष्ठा l2cap_chan *chan, *पंचांगp;
+static void l2cap_conn_start(struct l2cap_conn *conn)
+{
+	struct l2cap_chan *chan, *tmp;
 
 	BT_DBG("conn %p", conn);
 
 	mutex_lock(&conn->chan_lock);
 
-	list_क्रम_each_entry_safe(chan, पंचांगp, &conn->chan_l, list) अणु
+	list_for_each_entry_safe(chan, tmp, &conn->chan_l, list) {
 		l2cap_chan_lock(chan);
 
-		अगर (chan->chan_type != L2CAP_CHAN_CONN_ORIENTED) अणु
-			l2cap_chan_पढ़ोy(chan);
+		if (chan->chan_type != L2CAP_CHAN_CONN_ORIENTED) {
+			l2cap_chan_ready(chan);
 			l2cap_chan_unlock(chan);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (chan->state == BT_CONNECT) अणु
-			अगर (!l2cap_chan_check_security(chan, true) ||
-			    !__l2cap_no_conn_pending(chan)) अणु
+		if (chan->state == BT_CONNECT) {
+			if (!l2cap_chan_check_security(chan, true) ||
+			    !__l2cap_no_conn_pending(chan)) {
 				l2cap_chan_unlock(chan);
-				जारी;
-			पूर्ण
+				continue;
+			}
 
-			अगर (!l2cap_mode_supported(chan->mode, conn->feat_mask)
+			if (!l2cap_mode_supported(chan->mode, conn->feat_mask)
 			    && test_bit(CONF_STATE2_DEVICE,
-					&chan->conf_state)) अणु
-				l2cap_chan_बंद(chan, ECONNRESET);
+					&chan->conf_state)) {
+				l2cap_chan_close(chan, ECONNRESET);
 				l2cap_chan_unlock(chan);
-				जारी;
-			पूर्ण
+				continue;
+			}
 
-			अगर (l2cap_check_enc_key_size(conn->hcon))
+			if (l2cap_check_enc_key_size(conn->hcon))
 				l2cap_start_connection(chan);
-			अन्यथा
-				l2cap_chan_बंद(chan, ECONNREFUSED);
+			else
+				l2cap_chan_close(chan, ECONNREFUSED);
 
-		पूर्ण अन्यथा अगर (chan->state == BT_CONNECT2) अणु
-			काष्ठा l2cap_conn_rsp rsp;
-			अक्षर buf[128];
+		} else if (chan->state == BT_CONNECT2) {
+			struct l2cap_conn_rsp rsp;
+			char buf[128];
 			rsp.scid = cpu_to_le16(chan->dcid);
 			rsp.dcid = cpu_to_le16(chan->scid);
 
-			अगर (l2cap_chan_check_security(chan, false)) अणु
-				अगर (test_bit(FLAG_DEFER_SETUP, &chan->flags)) अणु
+			if (l2cap_chan_check_security(chan, false)) {
+				if (test_bit(FLAG_DEFER_SETUP, &chan->flags)) {
 					rsp.result = cpu_to_le16(L2CAP_CR_PEND);
 					rsp.status = cpu_to_le16(L2CAP_CS_AUTHOR_PEND);
 					chan->ops->defer(chan);
 
-				पूर्ण अन्यथा अणु
+				} else {
 					l2cap_state_change(chan, BT_CONFIG);
 					rsp.result = cpu_to_le16(L2CAP_CR_SUCCESS);
 					rsp.status = cpu_to_le16(L2CAP_CS_NO_INFO);
-				पूर्ण
-			पूर्ण अन्यथा अणु
+				}
+			} else {
 				rsp.result = cpu_to_le16(L2CAP_CR_PEND);
 				rsp.status = cpu_to_le16(L2CAP_CS_AUTHEN_PEND);
-			पूर्ण
+			}
 
 			l2cap_send_cmd(conn, chan->ident, L2CAP_CONN_RSP,
-				       माप(rsp), &rsp);
+				       sizeof(rsp), &rsp);
 
-			अगर (test_bit(CONF_REQ_SENT, &chan->conf_state) ||
-			    rsp.result != L2CAP_CR_SUCCESS) अणु
+			if (test_bit(CONF_REQ_SENT, &chan->conf_state) ||
+			    rsp.result != L2CAP_CR_SUCCESS) {
 				l2cap_chan_unlock(chan);
-				जारी;
-			पूर्ण
+				continue;
+			}
 
 			set_bit(CONF_REQ_SENT, &chan->conf_state);
 			l2cap_send_cmd(conn, l2cap_get_ident(conn), L2CAP_CONF_REQ,
-				       l2cap_build_conf_req(chan, buf, माप(buf)), buf);
+				       l2cap_build_conf_req(chan, buf, sizeof(buf)), buf);
 			chan->num_conf_req++;
-		पूर्ण
+		}
 
 		l2cap_chan_unlock(chan);
-	पूर्ण
+	}
 
 	mutex_unlock(&conn->chan_lock);
-पूर्ण
+}
 
-अटल व्योम l2cap_le_conn_पढ़ोy(काष्ठा l2cap_conn *conn)
-अणु
-	काष्ठा hci_conn *hcon = conn->hcon;
-	काष्ठा hci_dev *hdev = hcon->hdev;
+static void l2cap_le_conn_ready(struct l2cap_conn *conn)
+{
+	struct hci_conn *hcon = conn->hcon;
+	struct hci_dev *hdev = hcon->hdev;
 
 	BT_DBG("%s conn %p", hdev->name, conn);
 
-	/* For outgoing pairing which करोesn't necessarily have an
+	/* For outgoing pairing which doesn't necessarily have an
 	 * associated socket (e.g. mgmt_pair_device).
 	 */
-	अगर (hcon->out)
+	if (hcon->out)
 		smp_conn_security(hcon, hcon->pending_sec_level);
 
-	/* For LE slave connections, make sure the connection पूर्णांकerval
-	 * is in the range of the minimum and maximum पूर्णांकerval that has
-	 * been configured क्रम this connection. If not, then trigger
+	/* For LE slave connections, make sure the connection interval
+	 * is in the range of the minimum and maximum interval that has
+	 * been configured for this connection. If not, then trigger
 	 * the connection update procedure.
 	 */
-	अगर (hcon->role == HCI_ROLE_SLAVE &&
-	    (hcon->le_conn_पूर्णांकerval < hcon->le_conn_min_पूर्णांकerval ||
-	     hcon->le_conn_पूर्णांकerval > hcon->le_conn_max_पूर्णांकerval)) अणु
-		काष्ठा l2cap_conn_param_update_req req;
+	if (hcon->role == HCI_ROLE_SLAVE &&
+	    (hcon->le_conn_interval < hcon->le_conn_min_interval ||
+	     hcon->le_conn_interval > hcon->le_conn_max_interval)) {
+		struct l2cap_conn_param_update_req req;
 
-		req.min = cpu_to_le16(hcon->le_conn_min_पूर्णांकerval);
-		req.max = cpu_to_le16(hcon->le_conn_max_पूर्णांकerval);
+		req.min = cpu_to_le16(hcon->le_conn_min_interval);
+		req.max = cpu_to_le16(hcon->le_conn_max_interval);
 		req.latency = cpu_to_le16(hcon->le_conn_latency);
-		req.to_multiplier = cpu_to_le16(hcon->le_supv_समयout);
+		req.to_multiplier = cpu_to_le16(hcon->le_supv_timeout);
 
 		l2cap_send_cmd(conn, l2cap_get_ident(conn),
-			       L2CAP_CONN_PARAM_UPDATE_REQ, माप(req), &req);
-	पूर्ण
-पूर्ण
+			       L2CAP_CONN_PARAM_UPDATE_REQ, sizeof(req), &req);
+	}
+}
 
-अटल व्योम l2cap_conn_पढ़ोy(काष्ठा l2cap_conn *conn)
-अणु
-	काष्ठा l2cap_chan *chan;
-	काष्ठा hci_conn *hcon = conn->hcon;
+static void l2cap_conn_ready(struct l2cap_conn *conn)
+{
+	struct l2cap_chan *chan;
+	struct hci_conn *hcon = conn->hcon;
 
 	BT_DBG("conn %p", conn);
 
-	अगर (hcon->type == ACL_LINK)
+	if (hcon->type == ACL_LINK)
 		l2cap_request_info(conn);
 
 	mutex_lock(&conn->chan_lock);
 
-	list_क्रम_each_entry(chan, &conn->chan_l, list) अणु
+	list_for_each_entry(chan, &conn->chan_l, list) {
 
 		l2cap_chan_lock(chan);
 
-		अगर (chan->scid == L2CAP_CID_A2MP) अणु
+		if (chan->scid == L2CAP_CID_A2MP) {
 			l2cap_chan_unlock(chan);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (hcon->type == LE_LINK) अणु
+		if (hcon->type == LE_LINK) {
 			l2cap_le_start(chan);
-		पूर्ण अन्यथा अगर (chan->chan_type != L2CAP_CHAN_CONN_ORIENTED) अणु
-			अगर (conn->info_state & L2CAP_INFO_FEAT_MASK_REQ_DONE)
-				l2cap_chan_पढ़ोy(chan);
-		पूर्ण अन्यथा अगर (chan->state == BT_CONNECT) अणु
-			l2cap_करो_start(chan);
-		पूर्ण
+		} else if (chan->chan_type != L2CAP_CHAN_CONN_ORIENTED) {
+			if (conn->info_state & L2CAP_INFO_FEAT_MASK_REQ_DONE)
+				l2cap_chan_ready(chan);
+		} else if (chan->state == BT_CONNECT) {
+			l2cap_do_start(chan);
+		}
 
 		l2cap_chan_unlock(chan);
-	पूर्ण
+	}
 
 	mutex_unlock(&conn->chan_lock);
 
-	अगर (hcon->type == LE_LINK)
-		l2cap_le_conn_पढ़ोy(conn);
+	if (hcon->type == LE_LINK)
+		l2cap_le_conn_ready(conn);
 
 	queue_work(hcon->hdev->workqueue, &conn->pending_rx_work);
-पूर्ण
+}
 
-/* Notअगरy sockets that we cannot guaranty reliability anymore */
-अटल व्योम l2cap_conn_unreliable(काष्ठा l2cap_conn *conn, पूर्णांक err)
-अणु
-	काष्ठा l2cap_chan *chan;
+/* Notify sockets that we cannot guaranty reliability anymore */
+static void l2cap_conn_unreliable(struct l2cap_conn *conn, int err)
+{
+	struct l2cap_chan *chan;
 
 	BT_DBG("conn %p", conn);
 
 	mutex_lock(&conn->chan_lock);
 
-	list_क्रम_each_entry(chan, &conn->chan_l, list) अणु
-		अगर (test_bit(FLAG_FORCE_RELIABLE, &chan->flags))
+	list_for_each_entry(chan, &conn->chan_l, list) {
+		if (test_bit(FLAG_FORCE_RELIABLE, &chan->flags))
 			l2cap_chan_set_err(chan, err);
-	पूर्ण
+	}
 
 	mutex_unlock(&conn->chan_lock);
-पूर्ण
+}
 
-अटल व्योम l2cap_info_समयout(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा l2cap_conn *conn = container_of(work, काष्ठा l2cap_conn,
-					       info_समयr.work);
+static void l2cap_info_timeout(struct work_struct *work)
+{
+	struct l2cap_conn *conn = container_of(work, struct l2cap_conn,
+					       info_timer.work);
 
 	conn->info_state |= L2CAP_INFO_FEAT_MASK_REQ_DONE;
 	conn->info_ident = 0;
 
 	l2cap_conn_start(conn);
-पूर्ण
+}
 
 /*
  * l2cap_user
- * External modules can रेजिस्टर l2cap_user objects on l2cap_conn. The ->probe
- * callback is called during registration. The ->हटाओ callback is called
+ * External modules can register l2cap_user objects on l2cap_conn. The ->probe
+ * callback is called during registration. The ->remove callback is called
  * during unregistration.
- * An l2cap_user object can either be explicitly unरेजिस्टरed or when the
+ * An l2cap_user object can either be explicitly unregistered or when the
  * underlying l2cap_conn object is deleted. This guarantees that l2cap->hcon,
- * l2cap->hchan, .. are valid as दीर्घ as the हटाओ callback hasn't been called.
- * External modules must own a reference to the l2cap_conn object अगर they पूर्णांकend
- * to call l2cap_unरेजिस्टर_user(). The l2cap_conn object might get destroyed at
- * any समय अगर they करोn't.
+ * l2cap->hchan, .. are valid as long as the remove callback hasn't been called.
+ * External modules must own a reference to the l2cap_conn object if they intend
+ * to call l2cap_unregister_user(). The l2cap_conn object might get destroyed at
+ * any time if they don't.
  */
 
-पूर्णांक l2cap_रेजिस्टर_user(काष्ठा l2cap_conn *conn, काष्ठा l2cap_user *user)
-अणु
-	काष्ठा hci_dev *hdev = conn->hcon->hdev;
-	पूर्णांक ret;
+int l2cap_register_user(struct l2cap_conn *conn, struct l2cap_user *user)
+{
+	struct hci_dev *hdev = conn->hcon->hdev;
+	int ret;
 
-	/* We need to check whether l2cap_conn is रेजिस्टरed. If it is not, we
-	 * must not रेजिस्टर the l2cap_user. l2cap_conn_del() is unरेजिस्टरs
-	 * l2cap_conn objects, but करोesn't provide its own locking. Instead, it
+	/* We need to check whether l2cap_conn is registered. If it is not, we
+	 * must not register the l2cap_user. l2cap_conn_del() is unregisters
+	 * l2cap_conn objects, but doesn't provide its own locking. Instead, it
 	 * relies on the parent hci_conn object to be locked. This itself relies
 	 * on the hci_dev object to be locked. So we must lock the hci device
 	 * here, too. */
 
 	hci_dev_lock(hdev);
 
-	अगर (!list_empty(&user->list)) अणु
+	if (!list_empty(&user->list)) {
 		ret = -EINVAL;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	/* conn->hchan is शून्य after l2cap_conn_del() was called */
-	अगर (!conn->hchan) अणु
+	/* conn->hchan is NULL after l2cap_conn_del() was called */
+	if (!conn->hchan) {
 		ret = -ENODEV;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	ret = user->probe(conn, user);
-	अगर (ret)
-		जाओ out_unlock;
+	if (ret)
+		goto out_unlock;
 
 	list_add(&user->list, &conn->users);
 	ret = 0;
 
 out_unlock:
 	hci_dev_unlock(hdev);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(l2cap_रेजिस्टर_user);
+	return ret;
+}
+EXPORT_SYMBOL(l2cap_register_user);
 
-व्योम l2cap_unरेजिस्टर_user(काष्ठा l2cap_conn *conn, काष्ठा l2cap_user *user)
-अणु
-	काष्ठा hci_dev *hdev = conn->hcon->hdev;
+void l2cap_unregister_user(struct l2cap_conn *conn, struct l2cap_user *user)
+{
+	struct hci_dev *hdev = conn->hcon->hdev;
 
 	hci_dev_lock(hdev);
 
-	अगर (list_empty(&user->list))
-		जाओ out_unlock;
+	if (list_empty(&user->list))
+		goto out_unlock;
 
 	list_del_init(&user->list);
-	user->हटाओ(conn, user);
+	user->remove(conn, user);
 
 out_unlock:
 	hci_dev_unlock(hdev);
-पूर्ण
-EXPORT_SYMBOL(l2cap_unरेजिस्टर_user);
+}
+EXPORT_SYMBOL(l2cap_unregister_user);
 
-अटल व्योम l2cap_unरेजिस्टर_all_users(काष्ठा l2cap_conn *conn)
-अणु
-	काष्ठा l2cap_user *user;
+static void l2cap_unregister_all_users(struct l2cap_conn *conn)
+{
+	struct l2cap_user *user;
 
-	जबतक (!list_empty(&conn->users)) अणु
-		user = list_first_entry(&conn->users, काष्ठा l2cap_user, list);
+	while (!list_empty(&conn->users)) {
+		user = list_first_entry(&conn->users, struct l2cap_user, list);
 		list_del_init(&user->list);
-		user->हटाओ(conn, user);
-	पूर्ण
-पूर्ण
+		user->remove(conn, user);
+	}
+}
 
-अटल व्योम l2cap_conn_del(काष्ठा hci_conn *hcon, पूर्णांक err)
-अणु
-	काष्ठा l2cap_conn *conn = hcon->l2cap_data;
-	काष्ठा l2cap_chan *chan, *l;
+static void l2cap_conn_del(struct hci_conn *hcon, int err)
+{
+	struct l2cap_conn *conn = hcon->l2cap_data;
+	struct l2cap_chan *chan, *l;
 
-	अगर (!conn)
-		वापस;
+	if (!conn)
+		return;
 
 	BT_DBG("hcon %p conn %p, err %d", hcon, conn, err);
 
-	kमुक्त_skb(conn->rx_skb);
+	kfree_skb(conn->rx_skb);
 
 	skb_queue_purge(&conn->pending_rx);
 
 	/* We can not call flush_work(&conn->pending_rx_work) here since we
-	 * might block अगर we are running on a worker from the same workqueue
-	 * pending_rx_work is रुकोing on.
+	 * might block if we are running on a worker from the same workqueue
+	 * pending_rx_work is waiting on.
 	 */
-	अगर (work_pending(&conn->pending_rx_work))
+	if (work_pending(&conn->pending_rx_work))
 		cancel_work_sync(&conn->pending_rx_work);
 
-	अगर (work_pending(&conn->id_addr_update_work))
+	if (work_pending(&conn->id_addr_update_work))
 		cancel_work_sync(&conn->id_addr_update_work);
 
-	l2cap_unरेजिस्टर_all_users(conn);
+	l2cap_unregister_all_users(conn);
 
 	/* Force the connection to be immediately dropped */
-	hcon->disc_समयout = 0;
+	hcon->disc_timeout = 0;
 
 	mutex_lock(&conn->chan_lock);
 
 	/* Kill channels */
-	list_क्रम_each_entry_safe(chan, l, &conn->chan_l, list) अणु
+	list_for_each_entry_safe(chan, l, &conn->chan_l, list) {
 		l2cap_chan_hold(chan);
 		l2cap_chan_lock(chan);
 
 		l2cap_chan_del(chan, err);
 
-		chan->ops->बंद(chan);
+		chan->ops->close(chan);
 
 		l2cap_chan_unlock(chan);
 		l2cap_chan_put(chan);
-	पूर्ण
+	}
 
 	mutex_unlock(&conn->chan_lock);
 
 	hci_chan_del(conn->hchan);
 
-	अगर (conn->info_state & L2CAP_INFO_FEAT_MASK_REQ_SENT)
-		cancel_delayed_work_sync(&conn->info_समयr);
+	if (conn->info_state & L2CAP_INFO_FEAT_MASK_REQ_SENT)
+		cancel_delayed_work_sync(&conn->info_timer);
 
-	hcon->l2cap_data = शून्य;
-	conn->hchan = शून्य;
+	hcon->l2cap_data = NULL;
+	conn->hchan = NULL;
 	l2cap_conn_put(conn);
-पूर्ण
+}
 
-अटल व्योम l2cap_conn_मुक्त(काष्ठा kref *ref)
-अणु
-	काष्ठा l2cap_conn *conn = container_of(ref, काष्ठा l2cap_conn, ref);
+static void l2cap_conn_free(struct kref *ref)
+{
+	struct l2cap_conn *conn = container_of(ref, struct l2cap_conn, ref);
 
 	hci_conn_put(conn->hcon);
-	kमुक्त(conn);
-पूर्ण
+	kfree(conn);
+}
 
-काष्ठा l2cap_conn *l2cap_conn_get(काष्ठा l2cap_conn *conn)
-अणु
+struct l2cap_conn *l2cap_conn_get(struct l2cap_conn *conn)
+{
 	kref_get(&conn->ref);
-	वापस conn;
-पूर्ण
+	return conn;
+}
 EXPORT_SYMBOL(l2cap_conn_get);
 
-व्योम l2cap_conn_put(काष्ठा l2cap_conn *conn)
-अणु
-	kref_put(&conn->ref, l2cap_conn_मुक्त);
-पूर्ण
+void l2cap_conn_put(struct l2cap_conn *conn)
+{
+	kref_put(&conn->ref, l2cap_conn_free);
+}
 EXPORT_SYMBOL(l2cap_conn_put);
 
-/* ---- Socket पूर्णांकerface ---- */
+/* ---- Socket interface ---- */
 
 /* Find socket with psm and source / destination bdaddr.
- * Returns बंदst match.
+ * Returns closest match.
  */
-अटल काष्ठा l2cap_chan *l2cap_global_chan_by_psm(पूर्णांक state, __le16 psm,
+static struct l2cap_chan *l2cap_global_chan_by_psm(int state, __le16 psm,
 						   bdaddr_t *src,
 						   bdaddr_t *dst,
 						   u8 link_type)
-अणु
-	काष्ठा l2cap_chan *c, *c1 = शून्य;
+{
+	struct l2cap_chan *c, *c1 = NULL;
 
-	पढ़ो_lock(&chan_list_lock);
+	read_lock(&chan_list_lock);
 
-	list_क्रम_each_entry(c, &chan_list, global_l) अणु
-		अगर (state && c->state != state)
-			जारी;
+	list_for_each_entry(c, &chan_list, global_l) {
+		if (state && c->state != state)
+			continue;
 
-		अगर (link_type == ACL_LINK && c->src_type != BDADDR_BREDR)
-			जारी;
+		if (link_type == ACL_LINK && c->src_type != BDADDR_BREDR)
+			continue;
 
-		अगर (link_type == LE_LINK && c->src_type == BDADDR_BREDR)
-			जारी;
+		if (link_type == LE_LINK && c->src_type == BDADDR_BREDR)
+			continue;
 
-		अगर (c->psm == psm) अणु
-			पूर्णांक src_match, dst_match;
-			पूर्णांक src_any, dst_any;
+		if (c->psm == psm) {
+			int src_match, dst_match;
+			int src_any, dst_any;
 
 			/* Exact match. */
 			src_match = !bacmp(&c->src, src);
 			dst_match = !bacmp(&c->dst, dst);
-			अगर (src_match && dst_match) अणु
+			if (src_match && dst_match) {
 				l2cap_chan_hold(c);
-				पढ़ो_unlock(&chan_list_lock);
-				वापस c;
-			पूर्ण
+				read_unlock(&chan_list_lock);
+				return c;
+			}
 
 			/* Closest match */
 			src_any = !bacmp(&c->src, BDADDR_ANY);
 			dst_any = !bacmp(&c->dst, BDADDR_ANY);
-			अगर ((src_match && dst_any) || (src_any && dst_match) ||
+			if ((src_match && dst_any) || (src_any && dst_match) ||
 			    (src_any && dst_any))
 				c1 = c;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (c1)
+	if (c1)
 		l2cap_chan_hold(c1);
 
-	पढ़ो_unlock(&chan_list_lock);
+	read_unlock(&chan_list_lock);
 
-	वापस c1;
-पूर्ण
+	return c1;
+}
 
-अटल व्योम l2cap_monitor_समयout(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा l2cap_chan *chan = container_of(work, काष्ठा l2cap_chan,
-					       monitor_समयr.work);
-
-	BT_DBG("chan %p", chan);
-
-	l2cap_chan_lock(chan);
-
-	अगर (!chan->conn) अणु
-		l2cap_chan_unlock(chan);
-		l2cap_chan_put(chan);
-		वापस;
-	पूर्ण
-
-	l2cap_tx(chan, शून्य, शून्य, L2CAP_EV_MONITOR_TO);
-
-	l2cap_chan_unlock(chan);
-	l2cap_chan_put(chan);
-पूर्ण
-
-अटल व्योम l2cap_retrans_समयout(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा l2cap_chan *chan = container_of(work, काष्ठा l2cap_chan,
-					       retrans_समयr.work);
+static void l2cap_monitor_timeout(struct work_struct *work)
+{
+	struct l2cap_chan *chan = container_of(work, struct l2cap_chan,
+					       monitor_timer.work);
 
 	BT_DBG("chan %p", chan);
 
 	l2cap_chan_lock(chan);
 
-	अगर (!chan->conn) अणु
+	if (!chan->conn) {
 		l2cap_chan_unlock(chan);
 		l2cap_chan_put(chan);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	l2cap_tx(chan, शून्य, शून्य, L2CAP_EV_RETRANS_TO);
+	l2cap_tx(chan, NULL, NULL, L2CAP_EV_MONITOR_TO);
+
 	l2cap_chan_unlock(chan);
 	l2cap_chan_put(chan);
-पूर्ण
+}
 
-अटल व्योम l2cap_streaming_send(काष्ठा l2cap_chan *chan,
-				 काष्ठा sk_buff_head *skbs)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा l2cap_ctrl *control;
+static void l2cap_retrans_timeout(struct work_struct *work)
+{
+	struct l2cap_chan *chan = container_of(work, struct l2cap_chan,
+					       retrans_timer.work);
+
+	BT_DBG("chan %p", chan);
+
+	l2cap_chan_lock(chan);
+
+	if (!chan->conn) {
+		l2cap_chan_unlock(chan);
+		l2cap_chan_put(chan);
+		return;
+	}
+
+	l2cap_tx(chan, NULL, NULL, L2CAP_EV_RETRANS_TO);
+	l2cap_chan_unlock(chan);
+	l2cap_chan_put(chan);
+}
+
+static void l2cap_streaming_send(struct l2cap_chan *chan,
+				 struct sk_buff_head *skbs)
+{
+	struct sk_buff *skb;
+	struct l2cap_ctrl *control;
 
 	BT_DBG("chan %p, skbs %p", chan, skbs);
 
-	अगर (__chan_is_moving(chan))
-		वापस;
+	if (__chan_is_moving(chan))
+		return;
 
 	skb_queue_splice_tail_init(skbs, &chan->tx_q);
 
-	जबतक (!skb_queue_empty(&chan->tx_q)) अणु
+	while (!skb_queue_empty(&chan->tx_q)) {
 
 		skb = skb_dequeue(&chan->tx_q);
 
@@ -2057,47 +2056,47 @@ EXPORT_SYMBOL(l2cap_conn_put);
 
 		__pack_control(chan, control, skb);
 
-		अगर (chan->fcs == L2CAP_FCS_CRC16) अणु
+		if (chan->fcs == L2CAP_FCS_CRC16) {
 			u16 fcs = crc16(0, (u8 *) skb->data, skb->len);
 			put_unaligned_le16(fcs, skb_put(skb, L2CAP_FCS_SIZE));
-		पूर्ण
+		}
 
-		l2cap_करो_send(chan, skb);
+		l2cap_do_send(chan, skb);
 
 		BT_DBG("Sent txseq %u", control->txseq);
 
 		chan->next_tx_seq = __next_seq(chan, chan->next_tx_seq);
 		chan->frames_sent++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक l2cap_erपंचांग_send(काष्ठा l2cap_chan *chan)
-अणु
-	काष्ठा sk_buff *skb, *tx_skb;
-	काष्ठा l2cap_ctrl *control;
-	पूर्णांक sent = 0;
+static int l2cap_ertm_send(struct l2cap_chan *chan)
+{
+	struct sk_buff *skb, *tx_skb;
+	struct l2cap_ctrl *control;
+	int sent = 0;
 
 	BT_DBG("chan %p", chan);
 
-	अगर (chan->state != BT_CONNECTED)
-		वापस -ENOTCONN;
+	if (chan->state != BT_CONNECTED)
+		return -ENOTCONN;
 
-	अगर (test_bit(CONN_REMOTE_BUSY, &chan->conn_state))
-		वापस 0;
+	if (test_bit(CONN_REMOTE_BUSY, &chan->conn_state))
+		return 0;
 
-	अगर (__chan_is_moving(chan))
-		वापस 0;
+	if (__chan_is_moving(chan))
+		return 0;
 
-	जबतक (chan->tx_send_head &&
+	while (chan->tx_send_head &&
 	       chan->unacked_frames < chan->remote_tx_win &&
-	       chan->tx_state == L2CAP_TX_STATE_XMIT) अणु
+	       chan->tx_state == L2CAP_TX_STATE_XMIT) {
 
 		skb = chan->tx_send_head;
 
 		bt_cb(skb)->l2cap.retries = 1;
 		control = &bt_cb(skb)->l2cap;
 
-		अगर (test_and_clear_bit(CONN_SEND_FBIT, &chan->conn_state))
+		if (test_and_clear_bit(CONN_SEND_FBIT, &chan->conn_state))
 			control->final = 1;
 
 		control->reqseq = chan->buffer_seq;
@@ -2106,194 +2105,194 @@ EXPORT_SYMBOL(l2cap_conn_put);
 
 		__pack_control(chan, control, skb);
 
-		अगर (chan->fcs == L2CAP_FCS_CRC16) अणु
+		if (chan->fcs == L2CAP_FCS_CRC16) {
 			u16 fcs = crc16(0, (u8 *) skb->data, skb->len);
 			put_unaligned_le16(fcs, skb_put(skb, L2CAP_FCS_SIZE));
-		पूर्ण
+		}
 
-		/* Clone after data has been modअगरied. Data is assumed to be
-		   पढ़ो-only (क्रम locking purposes) on cloned sk_buffs.
+		/* Clone after data has been modified. Data is assumed to be
+		   read-only (for locking purposes) on cloned sk_buffs.
 		 */
 		tx_skb = skb_clone(skb, GFP_KERNEL);
 
-		अगर (!tx_skb)
-			अवरोध;
+		if (!tx_skb)
+			break;
 
-		__set_retrans_समयr(chan);
+		__set_retrans_timer(chan);
 
 		chan->next_tx_seq = __next_seq(chan, chan->next_tx_seq);
 		chan->unacked_frames++;
 		chan->frames_sent++;
 		sent++;
 
-		अगर (skb_queue_is_last(&chan->tx_q, skb))
-			chan->tx_send_head = शून्य;
-		अन्यथा
+		if (skb_queue_is_last(&chan->tx_q, skb))
+			chan->tx_send_head = NULL;
+		else
 			chan->tx_send_head = skb_queue_next(&chan->tx_q, skb);
 
-		l2cap_करो_send(chan, tx_skb);
+		l2cap_do_send(chan, tx_skb);
 		BT_DBG("Sent txseq %u", control->txseq);
-	पूर्ण
+	}
 
 	BT_DBG("Sent %d, %u unacked, %u in ERTM queue", sent,
 	       chan->unacked_frames, skb_queue_len(&chan->tx_q));
 
-	वापस sent;
-पूर्ण
+	return sent;
+}
 
-अटल व्योम l2cap_erपंचांग_resend(काष्ठा l2cap_chan *chan)
-अणु
-	काष्ठा l2cap_ctrl control;
-	काष्ठा sk_buff *skb;
-	काष्ठा sk_buff *tx_skb;
+static void l2cap_ertm_resend(struct l2cap_chan *chan)
+{
+	struct l2cap_ctrl control;
+	struct sk_buff *skb;
+	struct sk_buff *tx_skb;
 	u16 seq;
 
 	BT_DBG("chan %p", chan);
 
-	अगर (test_bit(CONN_REMOTE_BUSY, &chan->conn_state))
-		वापस;
+	if (test_bit(CONN_REMOTE_BUSY, &chan->conn_state))
+		return;
 
-	अगर (__chan_is_moving(chan))
-		वापस;
+	if (__chan_is_moving(chan))
+		return;
 
-	जबतक (chan->retrans_list.head != L2CAP_SEQ_LIST_CLEAR) अणु
+	while (chan->retrans_list.head != L2CAP_SEQ_LIST_CLEAR) {
 		seq = l2cap_seq_list_pop(&chan->retrans_list);
 
-		skb = l2cap_erपंचांग_seq_in_queue(&chan->tx_q, seq);
-		अगर (!skb) अणु
+		skb = l2cap_ertm_seq_in_queue(&chan->tx_q, seq);
+		if (!skb) {
 			BT_DBG("Error: Can't retransmit seq %d, frame missing",
 			       seq);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		bt_cb(skb)->l2cap.retries++;
 		control = bt_cb(skb)->l2cap;
 
-		अगर (chan->max_tx != 0 &&
-		    bt_cb(skb)->l2cap.retries > chan->max_tx) अणु
+		if (chan->max_tx != 0 &&
+		    bt_cb(skb)->l2cap.retries > chan->max_tx) {
 			BT_DBG("Retry limit exceeded (%d)", chan->max_tx);
 			l2cap_send_disconn_req(chan, ECONNRESET);
 			l2cap_seq_list_clear(&chan->retrans_list);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		control.reqseq = chan->buffer_seq;
-		अगर (test_and_clear_bit(CONN_SEND_FBIT, &chan->conn_state))
+		if (test_and_clear_bit(CONN_SEND_FBIT, &chan->conn_state))
 			control.final = 1;
-		अन्यथा
+		else
 			control.final = 0;
 
-		अगर (skb_cloned(skb)) अणु
-			/* Cloned sk_buffs are पढ़ो-only, so we need a
-			 * ग_लिखोable copy
+		if (skb_cloned(skb)) {
+			/* Cloned sk_buffs are read-only, so we need a
+			 * writeable copy
 			 */
 			tx_skb = skb_copy(skb, GFP_KERNEL);
-		पूर्ण अन्यथा अणु
+		} else {
 			tx_skb = skb_clone(skb, GFP_KERNEL);
-		पूर्ण
+		}
 
-		अगर (!tx_skb) अणु
+		if (!tx_skb) {
 			l2cap_seq_list_clear(&chan->retrans_list);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/* Update skb contents */
-		अगर (test_bit(FLAG_EXT_CTRL, &chan->flags)) अणु
+		if (test_bit(FLAG_EXT_CTRL, &chan->flags)) {
 			put_unaligned_le32(__pack_extended_control(&control),
 					   tx_skb->data + L2CAP_HDR_SIZE);
-		पूर्ण अन्यथा अणु
+		} else {
 			put_unaligned_le16(__pack_enhanced_control(&control),
 					   tx_skb->data + L2CAP_HDR_SIZE);
-		पूर्ण
+		}
 
 		/* Update FCS */
-		अगर (chan->fcs == L2CAP_FCS_CRC16) अणु
+		if (chan->fcs == L2CAP_FCS_CRC16) {
 			u16 fcs = crc16(0, (u8 *) tx_skb->data,
 					tx_skb->len - L2CAP_FCS_SIZE);
-			put_unaligned_le16(fcs, skb_tail_poपूर्णांकer(tx_skb) -
+			put_unaligned_le16(fcs, skb_tail_pointer(tx_skb) -
 						L2CAP_FCS_SIZE);
-		पूर्ण
+		}
 
-		l2cap_करो_send(chan, tx_skb);
+		l2cap_do_send(chan, tx_skb);
 
 		BT_DBG("Resent txseq %d", control.txseq);
 
 		chan->last_acked_seq = chan->buffer_seq;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम l2cap_retransmit(काष्ठा l2cap_chan *chan,
-			     काष्ठा l2cap_ctrl *control)
-अणु
+static void l2cap_retransmit(struct l2cap_chan *chan,
+			     struct l2cap_ctrl *control)
+{
 	BT_DBG("chan %p, control %p", chan, control);
 
 	l2cap_seq_list_append(&chan->retrans_list, control->reqseq);
-	l2cap_erपंचांग_resend(chan);
-पूर्ण
+	l2cap_ertm_resend(chan);
+}
 
-अटल व्योम l2cap_retransmit_all(काष्ठा l2cap_chan *chan,
-				 काष्ठा l2cap_ctrl *control)
-अणु
-	काष्ठा sk_buff *skb;
+static void l2cap_retransmit_all(struct l2cap_chan *chan,
+				 struct l2cap_ctrl *control)
+{
+	struct sk_buff *skb;
 
 	BT_DBG("chan %p, control %p", chan, control);
 
-	अगर (control->poll)
+	if (control->poll)
 		set_bit(CONN_SEND_FBIT, &chan->conn_state);
 
 	l2cap_seq_list_clear(&chan->retrans_list);
 
-	अगर (test_bit(CONN_REMOTE_BUSY, &chan->conn_state))
-		वापस;
+	if (test_bit(CONN_REMOTE_BUSY, &chan->conn_state))
+		return;
 
-	अगर (chan->unacked_frames) अणु
-		skb_queue_walk(&chan->tx_q, skb) अणु
-			अगर (bt_cb(skb)->l2cap.txseq == control->reqseq ||
+	if (chan->unacked_frames) {
+		skb_queue_walk(&chan->tx_q, skb) {
+			if (bt_cb(skb)->l2cap.txseq == control->reqseq ||
 			    skb == chan->tx_send_head)
-				अवरोध;
-		पूर्ण
+				break;
+		}
 
-		skb_queue_walk_from(&chan->tx_q, skb) अणु
-			अगर (skb == chan->tx_send_head)
-				अवरोध;
+		skb_queue_walk_from(&chan->tx_q, skb) {
+			if (skb == chan->tx_send_head)
+				break;
 
 			l2cap_seq_list_append(&chan->retrans_list,
 					      bt_cb(skb)->l2cap.txseq);
-		पूर्ण
+		}
 
-		l2cap_erपंचांग_resend(chan);
-	पूर्ण
-पूर्ण
+		l2cap_ertm_resend(chan);
+	}
+}
 
-अटल व्योम l2cap_send_ack(काष्ठा l2cap_chan *chan)
-अणु
-	काष्ठा l2cap_ctrl control;
+static void l2cap_send_ack(struct l2cap_chan *chan)
+{
+	struct l2cap_ctrl control;
 	u16 frames_to_ack = __seq_offset(chan, chan->buffer_seq,
 					 chan->last_acked_seq);
-	पूर्णांक threshold;
+	int threshold;
 
 	BT_DBG("chan %p last_acked_seq %d buffer_seq %d",
 	       chan, chan->last_acked_seq, chan->buffer_seq);
 
-	स_रखो(&control, 0, माप(control));
+	memset(&control, 0, sizeof(control));
 	control.sframe = 1;
 
-	अगर (test_bit(CONN_LOCAL_BUSY, &chan->conn_state) &&
-	    chan->rx_state == L2CAP_RX_STATE_RECV) अणु
-		__clear_ack_समयr(chan);
+	if (test_bit(CONN_LOCAL_BUSY, &chan->conn_state) &&
+	    chan->rx_state == L2CAP_RX_STATE_RECV) {
+		__clear_ack_timer(chan);
 		control.super = L2CAP_SUPER_RNR;
 		control.reqseq = chan->buffer_seq;
 		l2cap_send_sframe(chan, &control);
-	पूर्ण अन्यथा अणु
-		अगर (!test_bit(CONN_REMOTE_BUSY, &chan->conn_state)) अणु
-			l2cap_erपंचांग_send(chan);
+	} else {
+		if (!test_bit(CONN_REMOTE_BUSY, &chan->conn_state)) {
+			l2cap_ertm_send(chan);
 			/* If any i-frames were sent, they included an ack */
-			अगर (chan->buffer_seq == chan->last_acked_seq)
+			if (chan->buffer_seq == chan->last_acked_seq)
 				frames_to_ack = 0;
-		पूर्ण
+		}
 
-		/* Ack now अगर the winकरोw is 3/4ths full.
-		 * Calculate without mul or भाग
+		/* Ack now if the window is 3/4ths full.
+		 * Calculate without mul or div
 		 */
 		threshold = chan->ack_win;
 		threshold += threshold << 1;
@@ -2302,50 +2301,50 @@ EXPORT_SYMBOL(l2cap_conn_put);
 		BT_DBG("frames_to_ack %u, threshold %d", frames_to_ack,
 		       threshold);
 
-		अगर (frames_to_ack >= threshold) अणु
-			__clear_ack_समयr(chan);
+		if (frames_to_ack >= threshold) {
+			__clear_ack_timer(chan);
 			control.super = L2CAP_SUPER_RR;
 			control.reqseq = chan->buffer_seq;
 			l2cap_send_sframe(chan, &control);
 			frames_to_ack = 0;
-		पूर्ण
+		}
 
-		अगर (frames_to_ack)
-			__set_ack_समयr(chan);
-	पूर्ण
-पूर्ण
+		if (frames_to_ack)
+			__set_ack_timer(chan);
+	}
+}
 
-अटल अंतरभूत पूर्णांक l2cap_skbuff_fromiovec(काष्ठा l2cap_chan *chan,
-					 काष्ठा msghdr *msg, पूर्णांक len,
-					 पूर्णांक count, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा l2cap_conn *conn = chan->conn;
-	काष्ठा sk_buff **frag;
-	पूर्णांक sent = 0;
+static inline int l2cap_skbuff_fromiovec(struct l2cap_chan *chan,
+					 struct msghdr *msg, int len,
+					 int count, struct sk_buff *skb)
+{
+	struct l2cap_conn *conn = chan->conn;
+	struct sk_buff **frag;
+	int sent = 0;
 
-	अगर (!copy_from_iter_full(skb_put(skb, count), count, &msg->msg_iter))
-		वापस -EFAULT;
+	if (!copy_from_iter_full(skb_put(skb, count), count, &msg->msg_iter))
+		return -EFAULT;
 
 	sent += count;
 	len  -= count;
 
 	/* Continuation fragments (no L2CAP header) */
 	frag = &skb_shinfo(skb)->frag_list;
-	जबतक (len) अणु
-		काष्ठा sk_buff *पंचांगp;
+	while (len) {
+		struct sk_buff *tmp;
 
-		count = min_t(अचिन्हित पूर्णांक, conn->mtu, len);
+		count = min_t(unsigned int, conn->mtu, len);
 
-		पंचांगp = chan->ops->alloc_skb(chan, 0, count,
+		tmp = chan->ops->alloc_skb(chan, 0, count,
 					   msg->msg_flags & MSG_DONTWAIT);
-		अगर (IS_ERR(पंचांगp))
-			वापस PTR_ERR(पंचांगp);
+		if (IS_ERR(tmp))
+			return PTR_ERR(tmp);
 
-		*frag = पंचांगp;
+		*frag = tmp;
 
-		अगर (!copy_from_iter_full(skb_put(*frag, count), count,
+		if (!copy_from_iter_full(skb_put(*frag, count), count,
 				   &msg->msg_iter))
-			वापस -EFAULT;
+			return -EFAULT;
 
 		sent += count;
 		len  -= count;
@@ -2354,28 +2353,28 @@ EXPORT_SYMBOL(l2cap_conn_put);
 		skb->data_len += (*frag)->len;
 
 		frag = &(*frag)->next;
-	पूर्ण
+	}
 
-	वापस sent;
-पूर्ण
+	return sent;
+}
 
-अटल काष्ठा sk_buff *l2cap_create_connless_pdu(काष्ठा l2cap_chan *chan,
-						 काष्ठा msghdr *msg, माप_प्रकार len)
-अणु
-	काष्ठा l2cap_conn *conn = chan->conn;
-	काष्ठा sk_buff *skb;
-	पूर्णांक err, count, hlen = L2CAP_HDR_SIZE + L2CAP_PSMLEN_SIZE;
-	काष्ठा l2cap_hdr *lh;
+static struct sk_buff *l2cap_create_connless_pdu(struct l2cap_chan *chan,
+						 struct msghdr *msg, size_t len)
+{
+	struct l2cap_conn *conn = chan->conn;
+	struct sk_buff *skb;
+	int err, count, hlen = L2CAP_HDR_SIZE + L2CAP_PSMLEN_SIZE;
+	struct l2cap_hdr *lh;
 
 	BT_DBG("chan %p psm 0x%2.2x len %zu", chan,
 	       __le16_to_cpu(chan->psm), len);
 
-	count = min_t(अचिन्हित पूर्णांक, (conn->mtu - hlen), len);
+	count = min_t(unsigned int, (conn->mtu - hlen), len);
 
 	skb = chan->ops->alloc_skb(chan, hlen, count,
 				   msg->msg_flags & MSG_DONTWAIT);
-	अगर (IS_ERR(skb))
-		वापस skb;
+	if (IS_ERR(skb))
+		return skb;
 
 	/* Create L2CAP header */
 	lh = skb_put(skb, L2CAP_HDR_SIZE);
@@ -2384,29 +2383,29 @@ EXPORT_SYMBOL(l2cap_conn_put);
 	put_unaligned(chan->psm, (__le16 *) skb_put(skb, L2CAP_PSMLEN_SIZE));
 
 	err = l2cap_skbuff_fromiovec(chan, msg, len, count, skb);
-	अगर (unlikely(err < 0)) अणु
-		kमुक्त_skb(skb);
-		वापस ERR_PTR(err);
-	पूर्ण
-	वापस skb;
-पूर्ण
+	if (unlikely(err < 0)) {
+		kfree_skb(skb);
+		return ERR_PTR(err);
+	}
+	return skb;
+}
 
-अटल काष्ठा sk_buff *l2cap_create_basic_pdu(काष्ठा l2cap_chan *chan,
-					      काष्ठा msghdr *msg, माप_प्रकार len)
-अणु
-	काष्ठा l2cap_conn *conn = chan->conn;
-	काष्ठा sk_buff *skb;
-	पूर्णांक err, count;
-	काष्ठा l2cap_hdr *lh;
+static struct sk_buff *l2cap_create_basic_pdu(struct l2cap_chan *chan,
+					      struct msghdr *msg, size_t len)
+{
+	struct l2cap_conn *conn = chan->conn;
+	struct sk_buff *skb;
+	int err, count;
+	struct l2cap_hdr *lh;
 
 	BT_DBG("chan %p len %zu", chan, len);
 
-	count = min_t(अचिन्हित पूर्णांक, (conn->mtu - L2CAP_HDR_SIZE), len);
+	count = min_t(unsigned int, (conn->mtu - L2CAP_HDR_SIZE), len);
 
 	skb = chan->ops->alloc_skb(chan, L2CAP_HDR_SIZE, count,
 				   msg->msg_flags & MSG_DONTWAIT);
-	अगर (IS_ERR(skb))
-		वापस skb;
+	if (IS_ERR(skb))
+		return skb;
 
 	/* Create L2CAP header */
 	lh = skb_put(skb, L2CAP_HDR_SIZE);
@@ -2414,41 +2413,41 @@ EXPORT_SYMBOL(l2cap_conn_put);
 	lh->len = cpu_to_le16(len);
 
 	err = l2cap_skbuff_fromiovec(chan, msg, len, count, skb);
-	अगर (unlikely(err < 0)) अणु
-		kमुक्त_skb(skb);
-		वापस ERR_PTR(err);
-	पूर्ण
-	वापस skb;
-पूर्ण
+	if (unlikely(err < 0)) {
+		kfree_skb(skb);
+		return ERR_PTR(err);
+	}
+	return skb;
+}
 
-अटल काष्ठा sk_buff *l2cap_create_अगरrame_pdu(काष्ठा l2cap_chan *chan,
-					       काष्ठा msghdr *msg, माप_प्रकार len,
+static struct sk_buff *l2cap_create_iframe_pdu(struct l2cap_chan *chan,
+					       struct msghdr *msg, size_t len,
 					       u16 sdulen)
-अणु
-	काष्ठा l2cap_conn *conn = chan->conn;
-	काष्ठा sk_buff *skb;
-	पूर्णांक err, count, hlen;
-	काष्ठा l2cap_hdr *lh;
+{
+	struct l2cap_conn *conn = chan->conn;
+	struct sk_buff *skb;
+	int err, count, hlen;
+	struct l2cap_hdr *lh;
 
 	BT_DBG("chan %p len %zu", chan, len);
 
-	अगर (!conn)
-		वापस ERR_PTR(-ENOTCONN);
+	if (!conn)
+		return ERR_PTR(-ENOTCONN);
 
-	hlen = __erपंचांग_hdr_size(chan);
+	hlen = __ertm_hdr_size(chan);
 
-	अगर (sdulen)
+	if (sdulen)
 		hlen += L2CAP_SDULEN_SIZE;
 
-	अगर (chan->fcs == L2CAP_FCS_CRC16)
+	if (chan->fcs == L2CAP_FCS_CRC16)
 		hlen += L2CAP_FCS_SIZE;
 
-	count = min_t(अचिन्हित पूर्णांक, (conn->mtu - hlen), len);
+	count = min_t(unsigned int, (conn->mtu - hlen), len);
 
 	skb = chan->ops->alloc_skb(chan, hlen, count,
 				   msg->msg_flags & MSG_DONTWAIT);
-	अगर (IS_ERR(skb))
-		वापस skb;
+	if (IS_ERR(skb))
+		return skb;
 
 	/* Create L2CAP header */
 	lh = skb_put(skb, L2CAP_HDR_SIZE);
@@ -2456,32 +2455,32 @@ EXPORT_SYMBOL(l2cap_conn_put);
 	lh->len = cpu_to_le16(len + (hlen - L2CAP_HDR_SIZE));
 
 	/* Control header is populated later */
-	अगर (test_bit(FLAG_EXT_CTRL, &chan->flags))
+	if (test_bit(FLAG_EXT_CTRL, &chan->flags))
 		put_unaligned_le32(0, skb_put(skb, L2CAP_EXT_CTRL_SIZE));
-	अन्यथा
+	else
 		put_unaligned_le16(0, skb_put(skb, L2CAP_ENH_CTRL_SIZE));
 
-	अगर (sdulen)
+	if (sdulen)
 		put_unaligned_le16(sdulen, skb_put(skb, L2CAP_SDULEN_SIZE));
 
 	err = l2cap_skbuff_fromiovec(chan, msg, len, count, skb);
-	अगर (unlikely(err < 0)) अणु
-		kमुक्त_skb(skb);
-		वापस ERR_PTR(err);
-	पूर्ण
+	if (unlikely(err < 0)) {
+		kfree_skb(skb);
+		return ERR_PTR(err);
+	}
 
 	bt_cb(skb)->l2cap.fcs = chan->fcs;
 	bt_cb(skb)->l2cap.retries = 0;
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल पूर्णांक l2cap_segment_sdu(काष्ठा l2cap_chan *chan,
-			     काष्ठा sk_buff_head *seg_queue,
-			     काष्ठा msghdr *msg, माप_प्रकार len)
-अणु
-	काष्ठा sk_buff *skb;
+static int l2cap_segment_sdu(struct l2cap_chan *chan,
+			     struct sk_buff_head *seg_queue,
+			     struct msghdr *msg, size_t len)
+{
+	struct sk_buff *skb;
 	u16 sdu_len;
-	माप_प्रकार pdu_len;
+	size_t pdu_len;
 	u8 sar;
 
 	BT_DBG("chan %p, msg %p, len %zu", chan, msg, len);
@@ -2494,103 +2493,103 @@ EXPORT_SYMBOL(l2cap_conn_put);
 	/* PDU size is derived from the HCI MTU */
 	pdu_len = chan->conn->mtu;
 
-	/* Constrain PDU size क्रम BR/EDR connections */
-	अगर (!chan->hs_hcon)
-		pdu_len = min_t(माप_प्रकार, pdu_len, L2CAP_BREDR_MAX_PAYLOAD);
+	/* Constrain PDU size for BR/EDR connections */
+	if (!chan->hs_hcon)
+		pdu_len = min_t(size_t, pdu_len, L2CAP_BREDR_MAX_PAYLOAD);
 
-	/* Adjust क्रम largest possible L2CAP overhead. */
-	अगर (chan->fcs)
+	/* Adjust for largest possible L2CAP overhead. */
+	if (chan->fcs)
 		pdu_len -= L2CAP_FCS_SIZE;
 
-	pdu_len -= __erपंचांग_hdr_size(chan);
+	pdu_len -= __ertm_hdr_size(chan);
 
 	/* Remote device may have requested smaller PDUs */
-	pdu_len = min_t(माप_प्रकार, pdu_len, chan->remote_mps);
+	pdu_len = min_t(size_t, pdu_len, chan->remote_mps);
 
-	अगर (len <= pdu_len) अणु
+	if (len <= pdu_len) {
 		sar = L2CAP_SAR_UNSEGMENTED;
 		sdu_len = 0;
 		pdu_len = len;
-	पूर्ण अन्यथा अणु
+	} else {
 		sar = L2CAP_SAR_START;
 		sdu_len = len;
-	पूर्ण
+	}
 
-	जबतक (len > 0) अणु
-		skb = l2cap_create_अगरrame_pdu(chan, msg, pdu_len, sdu_len);
+	while (len > 0) {
+		skb = l2cap_create_iframe_pdu(chan, msg, pdu_len, sdu_len);
 
-		अगर (IS_ERR(skb)) अणु
+		if (IS_ERR(skb)) {
 			__skb_queue_purge(seg_queue);
-			वापस PTR_ERR(skb);
-		पूर्ण
+			return PTR_ERR(skb);
+		}
 
 		bt_cb(skb)->l2cap.sar = sar;
 		__skb_queue_tail(seg_queue, skb);
 
 		len -= pdu_len;
-		अगर (sdu_len)
+		if (sdu_len)
 			sdu_len = 0;
 
-		अगर (len <= pdu_len) अणु
+		if (len <= pdu_len) {
 			sar = L2CAP_SAR_END;
 			pdu_len = len;
-		पूर्ण अन्यथा अणु
+		} else {
 			sar = L2CAP_SAR_CONTINUE;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा sk_buff *l2cap_create_le_flowctl_pdu(काष्ठा l2cap_chan *chan,
-						   काष्ठा msghdr *msg,
-						   माप_प्रकार len, u16 sdulen)
-अणु
-	काष्ठा l2cap_conn *conn = chan->conn;
-	काष्ठा sk_buff *skb;
-	पूर्णांक err, count, hlen;
-	काष्ठा l2cap_hdr *lh;
+static struct sk_buff *l2cap_create_le_flowctl_pdu(struct l2cap_chan *chan,
+						   struct msghdr *msg,
+						   size_t len, u16 sdulen)
+{
+	struct l2cap_conn *conn = chan->conn;
+	struct sk_buff *skb;
+	int err, count, hlen;
+	struct l2cap_hdr *lh;
 
 	BT_DBG("chan %p len %zu", chan, len);
 
-	अगर (!conn)
-		वापस ERR_PTR(-ENOTCONN);
+	if (!conn)
+		return ERR_PTR(-ENOTCONN);
 
 	hlen = L2CAP_HDR_SIZE;
 
-	अगर (sdulen)
+	if (sdulen)
 		hlen += L2CAP_SDULEN_SIZE;
 
-	count = min_t(अचिन्हित पूर्णांक, (conn->mtu - hlen), len);
+	count = min_t(unsigned int, (conn->mtu - hlen), len);
 
 	skb = chan->ops->alloc_skb(chan, hlen, count,
 				   msg->msg_flags & MSG_DONTWAIT);
-	अगर (IS_ERR(skb))
-		वापस skb;
+	if (IS_ERR(skb))
+		return skb;
 
 	/* Create L2CAP header */
 	lh = skb_put(skb, L2CAP_HDR_SIZE);
 	lh->cid = cpu_to_le16(chan->dcid);
 	lh->len = cpu_to_le16(len + (hlen - L2CAP_HDR_SIZE));
 
-	अगर (sdulen)
+	if (sdulen)
 		put_unaligned_le16(sdulen, skb_put(skb, L2CAP_SDULEN_SIZE));
 
 	err = l2cap_skbuff_fromiovec(chan, msg, len, count, skb);
-	अगर (unlikely(err < 0)) अणु
-		kमुक्त_skb(skb);
-		वापस ERR_PTR(err);
-	पूर्ण
+	if (unlikely(err < 0)) {
+		kfree_skb(skb);
+		return ERR_PTR(err);
+	}
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल पूर्णांक l2cap_segment_le_sdu(काष्ठा l2cap_chan *chan,
-				काष्ठा sk_buff_head *seg_queue,
-				काष्ठा msghdr *msg, माप_प्रकार len)
-अणु
-	काष्ठा sk_buff *skb;
-	माप_प्रकार pdu_len;
+static int l2cap_segment_le_sdu(struct l2cap_chan *chan,
+				struct sk_buff_head *seg_queue,
+				struct msghdr *msg, size_t len)
+{
+	struct sk_buff *skb;
+	size_t pdu_len;
 	u16 sdu_len;
 
 	BT_DBG("chan %p, msg %p, len %zu", chan, msg, len);
@@ -2598,317 +2597,317 @@ EXPORT_SYMBOL(l2cap_conn_put);
 	sdu_len = len;
 	pdu_len = chan->remote_mps - L2CAP_SDULEN_SIZE;
 
-	जबतक (len > 0) अणु
-		अगर (len <= pdu_len)
+	while (len > 0) {
+		if (len <= pdu_len)
 			pdu_len = len;
 
 		skb = l2cap_create_le_flowctl_pdu(chan, msg, pdu_len, sdu_len);
-		अगर (IS_ERR(skb)) अणु
+		if (IS_ERR(skb)) {
 			__skb_queue_purge(seg_queue);
-			वापस PTR_ERR(skb);
-		पूर्ण
+			return PTR_ERR(skb);
+		}
 
 		__skb_queue_tail(seg_queue, skb);
 
 		len -= pdu_len;
 
-		अगर (sdu_len) अणु
+		if (sdu_len) {
 			sdu_len = 0;
 			pdu_len += L2CAP_SDULEN_SIZE;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम l2cap_le_flowctl_send(काष्ठा l2cap_chan *chan)
-अणु
-	पूर्णांक sent = 0;
+static void l2cap_le_flowctl_send(struct l2cap_chan *chan)
+{
+	int sent = 0;
 
 	BT_DBG("chan %p", chan);
 
-	जबतक (chan->tx_credits && !skb_queue_empty(&chan->tx_q)) अणु
-		l2cap_करो_send(chan, skb_dequeue(&chan->tx_q));
+	while (chan->tx_credits && !skb_queue_empty(&chan->tx_q)) {
+		l2cap_do_send(chan, skb_dequeue(&chan->tx_q));
 		chan->tx_credits--;
 		sent++;
-	पूर्ण
+	}
 
 	BT_DBG("Sent %d credits %u queued %u", sent, chan->tx_credits,
 	       skb_queue_len(&chan->tx_q));
-पूर्ण
+}
 
-पूर्णांक l2cap_chan_send(काष्ठा l2cap_chan *chan, काष्ठा msghdr *msg, माप_प्रकार len)
-अणु
-	काष्ठा sk_buff *skb;
-	पूर्णांक err;
-	काष्ठा sk_buff_head seg_queue;
+int l2cap_chan_send(struct l2cap_chan *chan, struct msghdr *msg, size_t len)
+{
+	struct sk_buff *skb;
+	int err;
+	struct sk_buff_head seg_queue;
 
-	अगर (!chan->conn)
-		वापस -ENOTCONN;
+	if (!chan->conn)
+		return -ENOTCONN;
 
 	/* Connectionless channel */
-	अगर (chan->chan_type == L2CAP_CHAN_CONN_LESS) अणु
+	if (chan->chan_type == L2CAP_CHAN_CONN_LESS) {
 		skb = l2cap_create_connless_pdu(chan, msg, len);
-		अगर (IS_ERR(skb))
-			वापस PTR_ERR(skb);
+		if (IS_ERR(skb))
+			return PTR_ERR(skb);
 
-		/* Channel lock is released beक्रमe requesting new skb and then
+		/* Channel lock is released before requesting new skb and then
 		 * reacquired thus we need to recheck channel state.
 		 */
-		अगर (chan->state != BT_CONNECTED) अणु
-			kमुक्त_skb(skb);
-			वापस -ENOTCONN;
-		पूर्ण
+		if (chan->state != BT_CONNECTED) {
+			kfree_skb(skb);
+			return -ENOTCONN;
+		}
 
-		l2cap_करो_send(chan, skb);
-		वापस len;
-	पूर्ण
+		l2cap_do_send(chan, skb);
+		return len;
+	}
 
-	चयन (chan->mode) अणु
-	हाल L2CAP_MODE_LE_FLOWCTL:
-	हाल L2CAP_MODE_EXT_FLOWCTL:
+	switch (chan->mode) {
+	case L2CAP_MODE_LE_FLOWCTL:
+	case L2CAP_MODE_EXT_FLOWCTL:
 		/* Check outgoing MTU */
-		अगर (len > chan->omtu)
-			वापस -EMSGSIZE;
+		if (len > chan->omtu)
+			return -EMSGSIZE;
 
 		__skb_queue_head_init(&seg_queue);
 
 		err = l2cap_segment_le_sdu(chan, &seg_queue, msg, len);
 
-		अगर (chan->state != BT_CONNECTED) अणु
+		if (chan->state != BT_CONNECTED) {
 			__skb_queue_purge(&seg_queue);
 			err = -ENOTCONN;
-		पूर्ण
+		}
 
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
 		skb_queue_splice_tail_init(&seg_queue, &chan->tx_q);
 
 		l2cap_le_flowctl_send(chan);
 
-		अगर (!chan->tx_credits)
+		if (!chan->tx_credits)
 			chan->ops->suspend(chan);
 
 		err = len;
 
-		अवरोध;
+		break;
 
-	हाल L2CAP_MODE_BASIC:
+	case L2CAP_MODE_BASIC:
 		/* Check outgoing MTU */
-		अगर (len > chan->omtu)
-			वापस -EMSGSIZE;
+		if (len > chan->omtu)
+			return -EMSGSIZE;
 
 		/* Create a basic PDU */
 		skb = l2cap_create_basic_pdu(chan, msg, len);
-		अगर (IS_ERR(skb))
-			वापस PTR_ERR(skb);
+		if (IS_ERR(skb))
+			return PTR_ERR(skb);
 
-		/* Channel lock is released beक्रमe requesting new skb and then
+		/* Channel lock is released before requesting new skb and then
 		 * reacquired thus we need to recheck channel state.
 		 */
-		अगर (chan->state != BT_CONNECTED) अणु
-			kमुक्त_skb(skb);
-			वापस -ENOTCONN;
-		पूर्ण
+		if (chan->state != BT_CONNECTED) {
+			kfree_skb(skb);
+			return -ENOTCONN;
+		}
 
-		l2cap_करो_send(chan, skb);
+		l2cap_do_send(chan, skb);
 		err = len;
-		अवरोध;
+		break;
 
-	हाल L2CAP_MODE_ERTM:
-	हाल L2CAP_MODE_STREAMING:
+	case L2CAP_MODE_ERTM:
+	case L2CAP_MODE_STREAMING:
 		/* Check outgoing MTU */
-		अगर (len > chan->omtu) अणु
+		if (len > chan->omtu) {
 			err = -EMSGSIZE;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		__skb_queue_head_init(&seg_queue);
 
-		/* Do segmentation beक्रमe calling in to the state machine,
-		 * since it's possible to block जबतक रुकोing क्रम memory
+		/* Do segmentation before calling in to the state machine,
+		 * since it's possible to block while waiting for memory
 		 * allocation.
 		 */
 		err = l2cap_segment_sdu(chan, &seg_queue, msg, len);
 
-		/* The channel could have been बंदd जबतक segmenting,
+		/* The channel could have been closed while segmenting,
 		 * check that it is still connected.
 		 */
-		अगर (chan->state != BT_CONNECTED) अणु
+		if (chan->state != BT_CONNECTED) {
 			__skb_queue_purge(&seg_queue);
 			err = -ENOTCONN;
-		पूर्ण
+		}
 
-		अगर (err)
-			अवरोध;
+		if (err)
+			break;
 
-		अगर (chan->mode == L2CAP_MODE_ERTM)
-			l2cap_tx(chan, शून्य, &seg_queue, L2CAP_EV_DATA_REQUEST);
-		अन्यथा
+		if (chan->mode == L2CAP_MODE_ERTM)
+			l2cap_tx(chan, NULL, &seg_queue, L2CAP_EV_DATA_REQUEST);
+		else
 			l2cap_streaming_send(chan, &seg_queue);
 
 		err = len;
 
-		/* If the skbs were not queued क्रम sending, they'll still be in
+		/* If the skbs were not queued for sending, they'll still be in
 		 * seg_queue and need to be purged.
 		 */
 		__skb_queue_purge(&seg_queue);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		BT_DBG("bad state %1.1x", chan->mode);
 		err = -EBADFD;
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL_GPL(l2cap_chan_send);
 
-अटल व्योम l2cap_send_srej(काष्ठा l2cap_chan *chan, u16 txseq)
-अणु
-	काष्ठा l2cap_ctrl control;
+static void l2cap_send_srej(struct l2cap_chan *chan, u16 txseq)
+{
+	struct l2cap_ctrl control;
 	u16 seq;
 
 	BT_DBG("chan %p, txseq %u", chan, txseq);
 
-	स_रखो(&control, 0, माप(control));
+	memset(&control, 0, sizeof(control));
 	control.sframe = 1;
 	control.super = L2CAP_SUPER_SREJ;
 
-	क्रम (seq = chan->expected_tx_seq; seq != txseq;
-	     seq = __next_seq(chan, seq)) अणु
-		अगर (!l2cap_erपंचांग_seq_in_queue(&chan->srej_q, seq)) अणु
+	for (seq = chan->expected_tx_seq; seq != txseq;
+	     seq = __next_seq(chan, seq)) {
+		if (!l2cap_ertm_seq_in_queue(&chan->srej_q, seq)) {
 			control.reqseq = seq;
 			l2cap_send_sframe(chan, &control);
 			l2cap_seq_list_append(&chan->srej_list, seq);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	chan->expected_tx_seq = __next_seq(chan, txseq);
-पूर्ण
+}
 
-अटल व्योम l2cap_send_srej_tail(काष्ठा l2cap_chan *chan)
-अणु
-	काष्ठा l2cap_ctrl control;
+static void l2cap_send_srej_tail(struct l2cap_chan *chan)
+{
+	struct l2cap_ctrl control;
 
 	BT_DBG("chan %p", chan);
 
-	अगर (chan->srej_list.tail == L2CAP_SEQ_LIST_CLEAR)
-		वापस;
+	if (chan->srej_list.tail == L2CAP_SEQ_LIST_CLEAR)
+		return;
 
-	स_रखो(&control, 0, माप(control));
+	memset(&control, 0, sizeof(control));
 	control.sframe = 1;
 	control.super = L2CAP_SUPER_SREJ;
 	control.reqseq = chan->srej_list.tail;
 	l2cap_send_sframe(chan, &control);
-पूर्ण
+}
 
-अटल व्योम l2cap_send_srej_list(काष्ठा l2cap_chan *chan, u16 txseq)
-अणु
-	काष्ठा l2cap_ctrl control;
+static void l2cap_send_srej_list(struct l2cap_chan *chan, u16 txseq)
+{
+	struct l2cap_ctrl control;
 	u16 initial_head;
 	u16 seq;
 
 	BT_DBG("chan %p, txseq %u", chan, txseq);
 
-	स_रखो(&control, 0, माप(control));
+	memset(&control, 0, sizeof(control));
 	control.sframe = 1;
 	control.super = L2CAP_SUPER_SREJ;
 
 	/* Capture initial list head to allow only one pass through the list. */
 	initial_head = chan->srej_list.head;
 
-	करो अणु
+	do {
 		seq = l2cap_seq_list_pop(&chan->srej_list);
-		अगर (seq == txseq || seq == L2CAP_SEQ_LIST_CLEAR)
-			अवरोध;
+		if (seq == txseq || seq == L2CAP_SEQ_LIST_CLEAR)
+			break;
 
 		control.reqseq = seq;
 		l2cap_send_sframe(chan, &control);
 		l2cap_seq_list_append(&chan->srej_list, seq);
-	पूर्ण जबतक (chan->srej_list.head != initial_head);
-पूर्ण
+	} while (chan->srej_list.head != initial_head);
+}
 
-अटल व्योम l2cap_process_reqseq(काष्ठा l2cap_chan *chan, u16 reqseq)
-अणु
-	काष्ठा sk_buff *acked_skb;
+static void l2cap_process_reqseq(struct l2cap_chan *chan, u16 reqseq)
+{
+	struct sk_buff *acked_skb;
 	u16 ackseq;
 
 	BT_DBG("chan %p, reqseq %u", chan, reqseq);
 
-	अगर (chan->unacked_frames == 0 || reqseq == chan->expected_ack_seq)
-		वापस;
+	if (chan->unacked_frames == 0 || reqseq == chan->expected_ack_seq)
+		return;
 
 	BT_DBG("expected_ack_seq %u, unacked_frames %u",
 	       chan->expected_ack_seq, chan->unacked_frames);
 
-	क्रम (ackseq = chan->expected_ack_seq; ackseq != reqseq;
-	     ackseq = __next_seq(chan, ackseq)) अणु
+	for (ackseq = chan->expected_ack_seq; ackseq != reqseq;
+	     ackseq = __next_seq(chan, ackseq)) {
 
-		acked_skb = l2cap_erपंचांग_seq_in_queue(&chan->tx_q, ackseq);
-		अगर (acked_skb) अणु
+		acked_skb = l2cap_ertm_seq_in_queue(&chan->tx_q, ackseq);
+		if (acked_skb) {
 			skb_unlink(acked_skb, &chan->tx_q);
-			kमुक्त_skb(acked_skb);
+			kfree_skb(acked_skb);
 			chan->unacked_frames--;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	chan->expected_ack_seq = reqseq;
 
-	अगर (chan->unacked_frames == 0)
-		__clear_retrans_समयr(chan);
+	if (chan->unacked_frames == 0)
+		__clear_retrans_timer(chan);
 
 	BT_DBG("unacked_frames %u", chan->unacked_frames);
-पूर्ण
+}
 
-अटल व्योम l2cap_पात_rx_srej_sent(काष्ठा l2cap_chan *chan)
-अणु
+static void l2cap_abort_rx_srej_sent(struct l2cap_chan *chan)
+{
 	BT_DBG("chan %p", chan);
 
 	chan->expected_tx_seq = chan->buffer_seq;
 	l2cap_seq_list_clear(&chan->srej_list);
 	skb_queue_purge(&chan->srej_q);
 	chan->rx_state = L2CAP_RX_STATE_RECV;
-पूर्ण
+}
 
-अटल व्योम l2cap_tx_state_xmit(काष्ठा l2cap_chan *chan,
-				काष्ठा l2cap_ctrl *control,
-				काष्ठा sk_buff_head *skbs, u8 event)
-अणु
+static void l2cap_tx_state_xmit(struct l2cap_chan *chan,
+				struct l2cap_ctrl *control,
+				struct sk_buff_head *skbs, u8 event)
+{
 	BT_DBG("chan %p, control %p, skbs %p, event %d", chan, control, skbs,
 	       event);
 
-	चयन (event) अणु
-	हाल L2CAP_EV_DATA_REQUEST:
-		अगर (chan->tx_send_head == शून्य)
+	switch (event) {
+	case L2CAP_EV_DATA_REQUEST:
+		if (chan->tx_send_head == NULL)
 			chan->tx_send_head = skb_peek(skbs);
 
 		skb_queue_splice_tail_init(skbs, &chan->tx_q);
-		l2cap_erपंचांग_send(chan);
-		अवरोध;
-	हाल L2CAP_EV_LOCAL_BUSY_DETECTED:
+		l2cap_ertm_send(chan);
+		break;
+	case L2CAP_EV_LOCAL_BUSY_DETECTED:
 		BT_DBG("Enter LOCAL_BUSY");
 		set_bit(CONN_LOCAL_BUSY, &chan->conn_state);
 
-		अगर (chan->rx_state == L2CAP_RX_STATE_SREJ_SENT) अणु
-			/* The SREJ_SENT state must be पातed अगर we are to
+		if (chan->rx_state == L2CAP_RX_STATE_SREJ_SENT) {
+			/* The SREJ_SENT state must be aborted if we are to
 			 * enter the LOCAL_BUSY state.
 			 */
-			l2cap_पात_rx_srej_sent(chan);
-		पूर्ण
+			l2cap_abort_rx_srej_sent(chan);
+		}
 
 		l2cap_send_ack(chan);
 
-		अवरोध;
-	हाल L2CAP_EV_LOCAL_BUSY_CLEAR:
+		break;
+	case L2CAP_EV_LOCAL_BUSY_CLEAR:
 		BT_DBG("Exit LOCAL_BUSY");
 		clear_bit(CONN_LOCAL_BUSY, &chan->conn_state);
 
-		अगर (test_bit(CONN_RNR_SENT, &chan->conn_state)) अणु
-			काष्ठा l2cap_ctrl local_control;
+		if (test_bit(CONN_RNR_SENT, &chan->conn_state)) {
+			struct l2cap_ctrl local_control;
 
-			स_रखो(&local_control, 0, माप(local_control));
+			memset(&local_control, 0, sizeof(local_control));
 			local_control.sframe = 1;
 			local_control.super = L2CAP_SUPER_RR;
 			local_control.poll = 1;
@@ -2916,69 +2915,69 @@ EXPORT_SYMBOL_GPL(l2cap_chan_send);
 			l2cap_send_sframe(chan, &local_control);
 
 			chan->retry_count = 1;
-			__set_monitor_समयr(chan);
+			__set_monitor_timer(chan);
 			chan->tx_state = L2CAP_TX_STATE_WAIT_F;
-		पूर्ण
-		अवरोध;
-	हाल L2CAP_EV_RECV_REQSEQ_AND_FBIT:
+		}
+		break;
+	case L2CAP_EV_RECV_REQSEQ_AND_FBIT:
 		l2cap_process_reqseq(chan, control->reqseq);
-		अवरोध;
-	हाल L2CAP_EV_EXPLICIT_POLL:
+		break;
+	case L2CAP_EV_EXPLICIT_POLL:
 		l2cap_send_rr_or_rnr(chan, 1);
 		chan->retry_count = 1;
-		__set_monitor_समयr(chan);
-		__clear_ack_समयr(chan);
+		__set_monitor_timer(chan);
+		__clear_ack_timer(chan);
 		chan->tx_state = L2CAP_TX_STATE_WAIT_F;
-		अवरोध;
-	हाल L2CAP_EV_RETRANS_TO:
+		break;
+	case L2CAP_EV_RETRANS_TO:
 		l2cap_send_rr_or_rnr(chan, 1);
 		chan->retry_count = 1;
-		__set_monitor_समयr(chan);
+		__set_monitor_timer(chan);
 		chan->tx_state = L2CAP_TX_STATE_WAIT_F;
-		अवरोध;
-	हाल L2CAP_EV_RECV_FBIT:
+		break;
+	case L2CAP_EV_RECV_FBIT:
 		/* Nothing to process */
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-अटल व्योम l2cap_tx_state_रुको_f(काष्ठा l2cap_chan *chan,
-				  काष्ठा l2cap_ctrl *control,
-				  काष्ठा sk_buff_head *skbs, u8 event)
-अणु
+static void l2cap_tx_state_wait_f(struct l2cap_chan *chan,
+				  struct l2cap_ctrl *control,
+				  struct sk_buff_head *skbs, u8 event)
+{
 	BT_DBG("chan %p, control %p, skbs %p, event %d", chan, control, skbs,
 	       event);
 
-	चयन (event) अणु
-	हाल L2CAP_EV_DATA_REQUEST:
-		अगर (chan->tx_send_head == शून्य)
+	switch (event) {
+	case L2CAP_EV_DATA_REQUEST:
+		if (chan->tx_send_head == NULL)
 			chan->tx_send_head = skb_peek(skbs);
-		/* Queue data, but करोn't send. */
+		/* Queue data, but don't send. */
 		skb_queue_splice_tail_init(skbs, &chan->tx_q);
-		अवरोध;
-	हाल L2CAP_EV_LOCAL_BUSY_DETECTED:
+		break;
+	case L2CAP_EV_LOCAL_BUSY_DETECTED:
 		BT_DBG("Enter LOCAL_BUSY");
 		set_bit(CONN_LOCAL_BUSY, &chan->conn_state);
 
-		अगर (chan->rx_state == L2CAP_RX_STATE_SREJ_SENT) अणु
-			/* The SREJ_SENT state must be पातed अगर we are to
+		if (chan->rx_state == L2CAP_RX_STATE_SREJ_SENT) {
+			/* The SREJ_SENT state must be aborted if we are to
 			 * enter the LOCAL_BUSY state.
 			 */
-			l2cap_पात_rx_srej_sent(chan);
-		पूर्ण
+			l2cap_abort_rx_srej_sent(chan);
+		}
 
 		l2cap_send_ack(chan);
 
-		अवरोध;
-	हाल L2CAP_EV_LOCAL_BUSY_CLEAR:
+		break;
+	case L2CAP_EV_LOCAL_BUSY_CLEAR:
 		BT_DBG("Exit LOCAL_BUSY");
 		clear_bit(CONN_LOCAL_BUSY, &chan->conn_state);
 
-		अगर (test_bit(CONN_RNR_SENT, &chan->conn_state)) अणु
-			काष्ठा l2cap_ctrl local_control;
-			स_रखो(&local_control, 0, माप(local_control));
+		if (test_bit(CONN_RNR_SENT, &chan->conn_state)) {
+			struct l2cap_ctrl local_control;
+			memset(&local_control, 0, sizeof(local_control));
 			local_control.sframe = 1;
 			local_control.super = L2CAP_SUPER_RR;
 			local_control.poll = 1;
@@ -2986,130 +2985,130 @@ EXPORT_SYMBOL_GPL(l2cap_chan_send);
 			l2cap_send_sframe(chan, &local_control);
 
 			chan->retry_count = 1;
-			__set_monitor_समयr(chan);
+			__set_monitor_timer(chan);
 			chan->tx_state = L2CAP_TX_STATE_WAIT_F;
-		पूर्ण
-		अवरोध;
-	हाल L2CAP_EV_RECV_REQSEQ_AND_FBIT:
+		}
+		break;
+	case L2CAP_EV_RECV_REQSEQ_AND_FBIT:
 		l2cap_process_reqseq(chan, control->reqseq);
 		fallthrough;
 
-	हाल L2CAP_EV_RECV_FBIT:
-		अगर (control && control->final) अणु
-			__clear_monitor_समयr(chan);
-			अगर (chan->unacked_frames > 0)
-				__set_retrans_समयr(chan);
+	case L2CAP_EV_RECV_FBIT:
+		if (control && control->final) {
+			__clear_monitor_timer(chan);
+			if (chan->unacked_frames > 0)
+				__set_retrans_timer(chan);
 			chan->retry_count = 0;
 			chan->tx_state = L2CAP_TX_STATE_XMIT;
 			BT_DBG("recv fbit tx_state 0x2.2%x", chan->tx_state);
-		पूर्ण
-		अवरोध;
-	हाल L2CAP_EV_EXPLICIT_POLL:
+		}
+		break;
+	case L2CAP_EV_EXPLICIT_POLL:
 		/* Ignore */
-		अवरोध;
-	हाल L2CAP_EV_MONITOR_TO:
-		अगर (chan->max_tx == 0 || chan->retry_count < chan->max_tx) अणु
+		break;
+	case L2CAP_EV_MONITOR_TO:
+		if (chan->max_tx == 0 || chan->retry_count < chan->max_tx) {
 			l2cap_send_rr_or_rnr(chan, 1);
-			__set_monitor_समयr(chan);
+			__set_monitor_timer(chan);
 			chan->retry_count++;
-		पूर्ण अन्यथा अणु
+		} else {
 			l2cap_send_disconn_req(chan, ECONNABORTED);
-		पूर्ण
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		}
+		break;
+	default:
+		break;
+	}
+}
 
-अटल व्योम l2cap_tx(काष्ठा l2cap_chan *chan, काष्ठा l2cap_ctrl *control,
-		     काष्ठा sk_buff_head *skbs, u8 event)
-अणु
+static void l2cap_tx(struct l2cap_chan *chan, struct l2cap_ctrl *control,
+		     struct sk_buff_head *skbs, u8 event)
+{
 	BT_DBG("chan %p, control %p, skbs %p, event %d, state %d",
 	       chan, control, skbs, event, chan->tx_state);
 
-	चयन (chan->tx_state) अणु
-	हाल L2CAP_TX_STATE_XMIT:
+	switch (chan->tx_state) {
+	case L2CAP_TX_STATE_XMIT:
 		l2cap_tx_state_xmit(chan, control, skbs, event);
-		अवरोध;
-	हाल L2CAP_TX_STATE_WAIT_F:
-		l2cap_tx_state_रुको_f(chan, control, skbs, event);
-		अवरोध;
-	शेष:
+		break;
+	case L2CAP_TX_STATE_WAIT_F:
+		l2cap_tx_state_wait_f(chan, control, skbs, event);
+		break;
+	default:
 		/* Ignore event */
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम l2cap_pass_to_tx(काष्ठा l2cap_chan *chan,
-			     काष्ठा l2cap_ctrl *control)
-अणु
+static void l2cap_pass_to_tx(struct l2cap_chan *chan,
+			     struct l2cap_ctrl *control)
+{
 	BT_DBG("chan %p, control %p", chan, control);
-	l2cap_tx(chan, control, शून्य, L2CAP_EV_RECV_REQSEQ_AND_FBIT);
-पूर्ण
+	l2cap_tx(chan, control, NULL, L2CAP_EV_RECV_REQSEQ_AND_FBIT);
+}
 
-अटल व्योम l2cap_pass_to_tx_fbit(काष्ठा l2cap_chan *chan,
-				  काष्ठा l2cap_ctrl *control)
-अणु
+static void l2cap_pass_to_tx_fbit(struct l2cap_chan *chan,
+				  struct l2cap_ctrl *control)
+{
 	BT_DBG("chan %p, control %p", chan, control);
-	l2cap_tx(chan, control, शून्य, L2CAP_EV_RECV_FBIT);
-पूर्ण
+	l2cap_tx(chan, control, NULL, L2CAP_EV_RECV_FBIT);
+}
 
 /* Copy frame to all raw sockets on that connection */
-अटल व्योम l2cap_raw_recv(काष्ठा l2cap_conn *conn, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा sk_buff *nskb;
-	काष्ठा l2cap_chan *chan;
+static void l2cap_raw_recv(struct l2cap_conn *conn, struct sk_buff *skb)
+{
+	struct sk_buff *nskb;
+	struct l2cap_chan *chan;
 
 	BT_DBG("conn %p", conn);
 
 	mutex_lock(&conn->chan_lock);
 
-	list_क्रम_each_entry(chan, &conn->chan_l, list) अणु
-		अगर (chan->chan_type != L2CAP_CHAN_RAW)
-			जारी;
+	list_for_each_entry(chan, &conn->chan_l, list) {
+		if (chan->chan_type != L2CAP_CHAN_RAW)
+			continue;
 
 		/* Don't send frame to the channel it came from */
-		अगर (bt_cb(skb)->l2cap.chan == chan)
-			जारी;
+		if (bt_cb(skb)->l2cap.chan == chan)
+			continue;
 
 		nskb = skb_clone(skb, GFP_KERNEL);
-		अगर (!nskb)
-			जारी;
-		अगर (chan->ops->recv(chan, nskb))
-			kमुक्त_skb(nskb);
-	पूर्ण
+		if (!nskb)
+			continue;
+		if (chan->ops->recv(chan, nskb))
+			kfree_skb(nskb);
+	}
 
 	mutex_unlock(&conn->chan_lock);
-पूर्ण
+}
 
-/* ---- L2CAP संकेतling commands ---- */
-अटल काष्ठा sk_buff *l2cap_build_cmd(काष्ठा l2cap_conn *conn, u8 code,
-				       u8 ident, u16 dlen, व्योम *data)
-अणु
-	काष्ठा sk_buff *skb, **frag;
-	काष्ठा l2cap_cmd_hdr *cmd;
-	काष्ठा l2cap_hdr *lh;
-	पूर्णांक len, count;
+/* ---- L2CAP signalling commands ---- */
+static struct sk_buff *l2cap_build_cmd(struct l2cap_conn *conn, u8 code,
+				       u8 ident, u16 dlen, void *data)
+{
+	struct sk_buff *skb, **frag;
+	struct l2cap_cmd_hdr *cmd;
+	struct l2cap_hdr *lh;
+	int len, count;
 
 	BT_DBG("conn %p, code 0x%2.2x, ident 0x%2.2x, len %u",
 	       conn, code, ident, dlen);
 
-	अगर (conn->mtu < L2CAP_HDR_SIZE + L2CAP_CMD_HDR_SIZE)
-		वापस शून्य;
+	if (conn->mtu < L2CAP_HDR_SIZE + L2CAP_CMD_HDR_SIZE)
+		return NULL;
 
 	len = L2CAP_HDR_SIZE + L2CAP_CMD_HDR_SIZE + dlen;
-	count = min_t(अचिन्हित पूर्णांक, conn->mtu, len);
+	count = min_t(unsigned int, conn->mtu, len);
 
 	skb = bt_skb_alloc(count, GFP_KERNEL);
-	अगर (!skb)
-		वापस शून्य;
+	if (!skb)
+		return NULL;
 
 	lh = skb_put(skb, L2CAP_HDR_SIZE);
 	lh->len = cpu_to_le16(L2CAP_CMD_HDR_SIZE + dlen);
 
-	अगर (conn->hcon->type == LE_LINK)
+	if (conn->hcon->type == LE_LINK)
 		lh->cid = cpu_to_le16(L2CAP_CID_LE_SIGNALING);
-	अन्यथा
+	else
 		lh->cid = cpu_to_le16(L2CAP_CID_SIGNALING);
 
 	cmd = skb_put(skb, L2CAP_CMD_HDR_SIZE);
@@ -3117,22 +3116,22 @@ EXPORT_SYMBOL_GPL(l2cap_chan_send);
 	cmd->ident = ident;
 	cmd->len   = cpu_to_le16(dlen);
 
-	अगर (dlen) अणु
+	if (dlen) {
 		count -= L2CAP_HDR_SIZE + L2CAP_CMD_HDR_SIZE;
 		skb_put_data(skb, data, count);
 		data += count;
-	पूर्ण
+	}
 
 	len -= skb->len;
 
 	/* Continuation fragments (no L2CAP header) */
 	frag = &skb_shinfo(skb)->frag_list;
-	जबतक (len) अणु
-		count = min_t(अचिन्हित पूर्णांक, conn->mtu, len);
+	while (len) {
+		count = min_t(unsigned int, conn->mtu, len);
 
 		*frag = bt_skb_alloc(count, GFP_KERNEL);
-		अगर (!*frag)
-			जाओ fail;
+		if (!*frag)
+			goto fail;
 
 		skb_put_data(*frag, data, count);
 
@@ -3140,20 +3139,20 @@ EXPORT_SYMBOL_GPL(l2cap_chan_send);
 		data += count;
 
 		frag = &(*frag)->next;
-	पूर्ण
+	}
 
-	वापस skb;
+	return skb;
 
 fail:
-	kमुक्त_skb(skb);
-	वापस शून्य;
-पूर्ण
+	kfree_skb(skb);
+	return NULL;
+}
 
-अटल अंतरभूत पूर्णांक l2cap_get_conf_opt(व्योम **ptr, पूर्णांक *type, पूर्णांक *olen,
-				     अचिन्हित दीर्घ *val)
-अणु
-	काष्ठा l2cap_conf_opt *opt = *ptr;
-	पूर्णांक len;
+static inline int l2cap_get_conf_opt(void **ptr, int *type, int *olen,
+				     unsigned long *val)
+{
+	struct l2cap_conf_opt *opt = *ptr;
+	int len;
 
 	len = L2CAP_CONF_OPT_SIZE + opt->len;
 	*ptr += len;
@@ -3161,96 +3160,96 @@ fail:
 	*type = opt->type;
 	*olen = opt->len;
 
-	चयन (opt->len) अणु
-	हाल 1:
+	switch (opt->len) {
+	case 1:
 		*val = *((u8 *) opt->val);
-		अवरोध;
+		break;
 
-	हाल 2:
+	case 2:
 		*val = get_unaligned_le16(opt->val);
-		अवरोध;
+		break;
 
-	हाल 4:
+	case 4:
 		*val = get_unaligned_le32(opt->val);
-		अवरोध;
+		break;
 
-	शेष:
-		*val = (अचिन्हित दीर्घ) opt->val;
-		अवरोध;
-	पूर्ण
+	default:
+		*val = (unsigned long) opt->val;
+		break;
+	}
 
 	BT_DBG("type 0x%2.2x len %u val 0x%lx", *type, opt->len, *val);
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल व्योम l2cap_add_conf_opt(व्योम **ptr, u8 type, u8 len, अचिन्हित दीर्घ val, माप_प्रकार size)
-अणु
-	काष्ठा l2cap_conf_opt *opt = *ptr;
+static void l2cap_add_conf_opt(void **ptr, u8 type, u8 len, unsigned long val, size_t size)
+{
+	struct l2cap_conf_opt *opt = *ptr;
 
 	BT_DBG("type 0x%2.2x len %u val 0x%lx", type, len, val);
 
-	अगर (size < L2CAP_CONF_OPT_SIZE + len)
-		वापस;
+	if (size < L2CAP_CONF_OPT_SIZE + len)
+		return;
 
 	opt->type = type;
 	opt->len  = len;
 
-	चयन (len) अणु
-	हाल 1:
+	switch (len) {
+	case 1:
 		*((u8 *) opt->val)  = val;
-		अवरोध;
+		break;
 
-	हाल 2:
+	case 2:
 		put_unaligned_le16(val, opt->val);
-		अवरोध;
+		break;
 
-	हाल 4:
+	case 4:
 		put_unaligned_le32(val, opt->val);
-		अवरोध;
+		break;
 
-	शेष:
-		स_नकल(opt->val, (व्योम *) val, len);
-		अवरोध;
-	पूर्ण
+	default:
+		memcpy(opt->val, (void *) val, len);
+		break;
+	}
 
 	*ptr += L2CAP_CONF_OPT_SIZE + len;
-पूर्ण
+}
 
-अटल व्योम l2cap_add_opt_efs(व्योम **ptr, काष्ठा l2cap_chan *chan, माप_प्रकार size)
-अणु
-	काष्ठा l2cap_conf_efs efs;
+static void l2cap_add_opt_efs(void **ptr, struct l2cap_chan *chan, size_t size)
+{
+	struct l2cap_conf_efs efs;
 
-	चयन (chan->mode) अणु
-	हाल L2CAP_MODE_ERTM:
+	switch (chan->mode) {
+	case L2CAP_MODE_ERTM:
 		efs.id		= chan->local_id;
 		efs.stype	= chan->local_stype;
 		efs.msdu	= cpu_to_le16(chan->local_msdu);
-		efs.sdu_iसमय	= cpu_to_le32(chan->local_sdu_iसमय);
+		efs.sdu_itime	= cpu_to_le32(chan->local_sdu_itime);
 		efs.acc_lat	= cpu_to_le32(L2CAP_DEFAULT_ACC_LAT);
 		efs.flush_to	= cpu_to_le32(L2CAP_EFS_DEFAULT_FLUSH_TO);
-		अवरोध;
+		break;
 
-	हाल L2CAP_MODE_STREAMING:
+	case L2CAP_MODE_STREAMING:
 		efs.id		= 1;
 		efs.stype	= L2CAP_SERV_BESTEFFORT;
 		efs.msdu	= cpu_to_le16(chan->local_msdu);
-		efs.sdu_iसमय	= cpu_to_le32(chan->local_sdu_iसमय);
+		efs.sdu_itime	= cpu_to_le32(chan->local_sdu_itime);
 		efs.acc_lat	= 0;
 		efs.flush_to	= 0;
-		अवरोध;
+		break;
 
-	शेष:
-		वापस;
-	पूर्ण
+	default:
+		return;
+	}
 
-	l2cap_add_conf_opt(ptr, L2CAP_CONF_EFS, माप(efs),
-			   (अचिन्हित दीर्घ) &efs, size);
-पूर्ण
+	l2cap_add_conf_opt(ptr, L2CAP_CONF_EFS, sizeof(efs),
+			   (unsigned long) &efs, size);
+}
 
-अटल व्योम l2cap_ack_समयout(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा l2cap_chan *chan = container_of(work, काष्ठा l2cap_chan,
-					       ack_समयr.work);
+static void l2cap_ack_timeout(struct work_struct *work)
+{
+	struct l2cap_chan *chan = container_of(work, struct l2cap_chan,
+					       ack_timer.work);
 	u16 frames_to_ack;
 
 	BT_DBG("chan %p", chan);
@@ -3260,16 +3259,16 @@ fail:
 	frames_to_ack = __seq_offset(chan, chan->buffer_seq,
 				     chan->last_acked_seq);
 
-	अगर (frames_to_ack)
+	if (frames_to_ack)
 		l2cap_send_rr_or_rnr(chan, 0);
 
 	l2cap_chan_unlock(chan);
 	l2cap_chan_put(chan);
-पूर्ण
+}
 
-पूर्णांक l2cap_erपंचांग_init(काष्ठा l2cap_chan *chan)
-अणु
-	पूर्णांक err;
+int l2cap_ertm_init(struct l2cap_chan *chan)
+{
+	int err;
 
 	chan->next_tx_seq = 0;
 	chan->expected_tx_seq = 0;
@@ -3278,8 +3277,8 @@ fail:
 	chan->buffer_seq = 0;
 	chan->frames_sent = 0;
 	chan->last_acked_seq = 0;
-	chan->sdu = शून्य;
-	chan->sdu_last_frag = शून्य;
+	chan->sdu = NULL;
+	chan->sdu_last_frag = NULL;
 	chan->sdu_len = 0;
 
 	skb_queue_head_init(&chan->tx_q);
@@ -3289,211 +3288,211 @@ fail:
 	chan->move_state = L2CAP_MOVE_STABLE;
 	chan->move_role = L2CAP_MOVE_ROLE_NONE;
 
-	अगर (chan->mode != L2CAP_MODE_ERTM)
-		वापस 0;
+	if (chan->mode != L2CAP_MODE_ERTM)
+		return 0;
 
 	chan->rx_state = L2CAP_RX_STATE_RECV;
 	chan->tx_state = L2CAP_TX_STATE_XMIT;
 
-	INIT_DELAYED_WORK(&chan->retrans_समयr, l2cap_retrans_समयout);
-	INIT_DELAYED_WORK(&chan->monitor_समयr, l2cap_monitor_समयout);
-	INIT_DELAYED_WORK(&chan->ack_समयr, l2cap_ack_समयout);
+	INIT_DELAYED_WORK(&chan->retrans_timer, l2cap_retrans_timeout);
+	INIT_DELAYED_WORK(&chan->monitor_timer, l2cap_monitor_timeout);
+	INIT_DELAYED_WORK(&chan->ack_timer, l2cap_ack_timeout);
 
 	skb_queue_head_init(&chan->srej_q);
 
 	err = l2cap_seq_list_init(&chan->srej_list, chan->tx_win);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	err = l2cap_seq_list_init(&chan->retrans_list, chan->remote_tx_win);
-	अगर (err < 0)
-		l2cap_seq_list_मुक्त(&chan->srej_list);
+	if (err < 0)
+		l2cap_seq_list_free(&chan->srej_list);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल अंतरभूत __u8 l2cap_select_mode(__u8 mode, __u16 remote_feat_mask)
-अणु
-	चयन (mode) अणु
-	हाल L2CAP_MODE_STREAMING:
-	हाल L2CAP_MODE_ERTM:
-		अगर (l2cap_mode_supported(mode, remote_feat_mask))
-			वापस mode;
+static inline __u8 l2cap_select_mode(__u8 mode, __u16 remote_feat_mask)
+{
+	switch (mode) {
+	case L2CAP_MODE_STREAMING:
+	case L2CAP_MODE_ERTM:
+		if (l2cap_mode_supported(mode, remote_feat_mask))
+			return mode;
 		fallthrough;
-	शेष:
-		वापस L2CAP_MODE_BASIC;
-	पूर्ण
-पूर्ण
+	default:
+		return L2CAP_MODE_BASIC;
+	}
+}
 
-अटल अंतरभूत bool __l2cap_ews_supported(काष्ठा l2cap_conn *conn)
-अणु
-	वापस ((conn->local_fixed_chan & L2CAP_FC_A2MP) &&
+static inline bool __l2cap_ews_supported(struct l2cap_conn *conn)
+{
+	return ((conn->local_fixed_chan & L2CAP_FC_A2MP) &&
 		(conn->feat_mask & L2CAP_FEAT_EXT_WINDOW));
-पूर्ण
+}
 
-अटल अंतरभूत bool __l2cap_efs_supported(काष्ठा l2cap_conn *conn)
-अणु
-	वापस ((conn->local_fixed_chan & L2CAP_FC_A2MP) &&
+static inline bool __l2cap_efs_supported(struct l2cap_conn *conn)
+{
+	return ((conn->local_fixed_chan & L2CAP_FC_A2MP) &&
 		(conn->feat_mask & L2CAP_FEAT_EXT_FLOW));
-पूर्ण
+}
 
-अटल व्योम __l2cap_set_erपंचांग_समयouts(काष्ठा l2cap_chan *chan,
-				      काष्ठा l2cap_conf_rfc *rfc)
-अणु
-	अगर (chan->local_amp_id != AMP_ID_BREDR && chan->hs_hcon) अणु
-		u64 erपंचांग_to = chan->hs_hcon->hdev->amp_be_flush_to;
+static void __l2cap_set_ertm_timeouts(struct l2cap_chan *chan,
+				      struct l2cap_conf_rfc *rfc)
+{
+	if (chan->local_amp_id != AMP_ID_BREDR && chan->hs_hcon) {
+		u64 ertm_to = chan->hs_hcon->hdev->amp_be_flush_to;
 
-		/* Class 1 devices have must have ERTM समयouts
+		/* Class 1 devices have must have ERTM timeouts
 		 * exceeding the Link Supervision Timeout.  The
-		 * शेष Link Supervision Timeout क्रम AMP
+		 * default Link Supervision Timeout for AMP
 		 * controllers is 10 seconds.
 		 *
-		 * Class 1 devices use 0xffffffff क्रम their
-		 * best-efक्रमt flush समयout, so the clamping logic
-		 * will result in a समयout that meets the above
-		 * requirement.  ERTM समयouts are 16-bit values, so
-		 * the maximum समयout is 65.535 seconds.
+		 * Class 1 devices use 0xffffffff for their
+		 * best-effort flush timeout, so the clamping logic
+		 * will result in a timeout that meets the above
+		 * requirement.  ERTM timeouts are 16-bit values, so
+		 * the maximum timeout is 65.535 seconds.
 		 */
 
-		/* Convert समयout to milliseconds and round */
-		erपंचांग_to = DIV_ROUND_UP_ULL(erपंचांग_to, 1000);
+		/* Convert timeout to milliseconds and round */
+		ertm_to = DIV_ROUND_UP_ULL(ertm_to, 1000);
 
-		/* This is the recommended क्रमmula क्रम class 2 devices
-		 * that start ERTM समयrs when packets are sent to the
+		/* This is the recommended formula for class 2 devices
+		 * that start ERTM timers when packets are sent to the
 		 * controller.
 		 */
-		erपंचांग_to = 3 * erपंचांग_to + 500;
+		ertm_to = 3 * ertm_to + 500;
 
-		अगर (erपंचांग_to > 0xffff)
-			erपंचांग_to = 0xffff;
+		if (ertm_to > 0xffff)
+			ertm_to = 0xffff;
 
-		rfc->retrans_समयout = cpu_to_le16((u16) erपंचांग_to);
-		rfc->monitor_समयout = rfc->retrans_समयout;
-	पूर्ण अन्यथा अणु
-		rfc->retrans_समयout = cpu_to_le16(L2CAP_DEFAULT_RETRANS_TO);
-		rfc->monitor_समयout = cpu_to_le16(L2CAP_DEFAULT_MONITOR_TO);
-	पूर्ण
-पूर्ण
+		rfc->retrans_timeout = cpu_to_le16((u16) ertm_to);
+		rfc->monitor_timeout = rfc->retrans_timeout;
+	} else {
+		rfc->retrans_timeout = cpu_to_le16(L2CAP_DEFAULT_RETRANS_TO);
+		rfc->monitor_timeout = cpu_to_le16(L2CAP_DEFAULT_MONITOR_TO);
+	}
+}
 
-अटल अंतरभूत व्योम l2cap_txwin_setup(काष्ठा l2cap_chan *chan)
-अणु
-	अगर (chan->tx_win > L2CAP_DEFAULT_TX_WINDOW &&
-	    __l2cap_ews_supported(chan->conn)) अणु
+static inline void l2cap_txwin_setup(struct l2cap_chan *chan)
+{
+	if (chan->tx_win > L2CAP_DEFAULT_TX_WINDOW &&
+	    __l2cap_ews_supported(chan->conn)) {
 		/* use extended control field */
 		set_bit(FLAG_EXT_CTRL, &chan->flags);
 		chan->tx_win_max = L2CAP_DEFAULT_EXT_WINDOW;
-	पूर्ण अन्यथा अणु
+	} else {
 		chan->tx_win = min_t(u16, chan->tx_win,
 				     L2CAP_DEFAULT_TX_WINDOW);
 		chan->tx_win_max = L2CAP_DEFAULT_TX_WINDOW;
-	पूर्ण
+	}
 	chan->ack_win = chan->tx_win;
-पूर्ण
+}
 
-अटल व्योम l2cap_mtu_स्वतः(काष्ठा l2cap_chan *chan)
-अणु
-	काष्ठा hci_conn *conn = chan->conn->hcon;
+static void l2cap_mtu_auto(struct l2cap_chan *chan)
+{
+	struct hci_conn *conn = chan->conn->hcon;
 
 	chan->imtu = L2CAP_DEFAULT_MIN_MTU;
 
-	/* The 2-DH1 packet has between 2 and 56 inक्रमmation bytes
+	/* The 2-DH1 packet has between 2 and 56 information bytes
 	 * (including the 2-byte payload header)
 	 */
-	अगर (!(conn->pkt_type & HCI_2DH1))
+	if (!(conn->pkt_type & HCI_2DH1))
 		chan->imtu = 54;
 
-	/* The 3-DH1 packet has between 2 and 85 inक्रमmation bytes
+	/* The 3-DH1 packet has between 2 and 85 information bytes
 	 * (including the 2-byte payload header)
 	 */
-	अगर (!(conn->pkt_type & HCI_3DH1))
+	if (!(conn->pkt_type & HCI_3DH1))
 		chan->imtu = 83;
 
-	/* The 2-DH3 packet has between 2 and 369 inक्रमmation bytes
+	/* The 2-DH3 packet has between 2 and 369 information bytes
 	 * (including the 2-byte payload header)
 	 */
-	अगर (!(conn->pkt_type & HCI_2DH3))
+	if (!(conn->pkt_type & HCI_2DH3))
 		chan->imtu = 367;
 
-	/* The 3-DH3 packet has between 2 and 554 inक्रमmation bytes
+	/* The 3-DH3 packet has between 2 and 554 information bytes
 	 * (including the 2-byte payload header)
 	 */
-	अगर (!(conn->pkt_type & HCI_3DH3))
+	if (!(conn->pkt_type & HCI_3DH3))
 		chan->imtu = 552;
 
-	/* The 2-DH5 packet has between 2 and 681 inक्रमmation bytes
+	/* The 2-DH5 packet has between 2 and 681 information bytes
 	 * (including the 2-byte payload header)
 	 */
-	अगर (!(conn->pkt_type & HCI_2DH5))
+	if (!(conn->pkt_type & HCI_2DH5))
 		chan->imtu = 679;
 
-	/* The 3-DH5 packet has between 2 and 1023 inक्रमmation bytes
+	/* The 3-DH5 packet has between 2 and 1023 information bytes
 	 * (including the 2-byte payload header)
 	 */
-	अगर (!(conn->pkt_type & HCI_3DH5))
+	if (!(conn->pkt_type & HCI_3DH5))
 		chan->imtu = 1021;
-पूर्ण
+}
 
-अटल पूर्णांक l2cap_build_conf_req(काष्ठा l2cap_chan *chan, व्योम *data, माप_प्रकार data_size)
-अणु
-	काष्ठा l2cap_conf_req *req = data;
-	काष्ठा l2cap_conf_rfc rfc = अणु .mode = chan->mode पूर्ण;
-	व्योम *ptr = req->data;
-	व्योम *endptr = data + data_size;
+static int l2cap_build_conf_req(struct l2cap_chan *chan, void *data, size_t data_size)
+{
+	struct l2cap_conf_req *req = data;
+	struct l2cap_conf_rfc rfc = { .mode = chan->mode };
+	void *ptr = req->data;
+	void *endptr = data + data_size;
 	u16 size;
 
 	BT_DBG("chan %p", chan);
 
-	अगर (chan->num_conf_req || chan->num_conf_rsp)
-		जाओ करोne;
+	if (chan->num_conf_req || chan->num_conf_rsp)
+		goto done;
 
-	चयन (chan->mode) अणु
-	हाल L2CAP_MODE_STREAMING:
-	हाल L2CAP_MODE_ERTM:
-		अगर (test_bit(CONF_STATE2_DEVICE, &chan->conf_state))
-			अवरोध;
+	switch (chan->mode) {
+	case L2CAP_MODE_STREAMING:
+	case L2CAP_MODE_ERTM:
+		if (test_bit(CONF_STATE2_DEVICE, &chan->conf_state))
+			break;
 
-		अगर (__l2cap_efs_supported(chan->conn))
+		if (__l2cap_efs_supported(chan->conn))
 			set_bit(FLAG_EFS_ENABLE, &chan->flags);
 
 		fallthrough;
-	शेष:
+	default:
 		chan->mode = l2cap_select_mode(rfc.mode, chan->conn->feat_mask);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-करोne:
-	अगर (chan->imtu != L2CAP_DEFAULT_MTU) अणु
-		अगर (!chan->imtu)
-			l2cap_mtu_स्वतः(chan);
+done:
+	if (chan->imtu != L2CAP_DEFAULT_MTU) {
+		if (!chan->imtu)
+			l2cap_mtu_auto(chan);
 		l2cap_add_conf_opt(&ptr, L2CAP_CONF_MTU, 2, chan->imtu,
 				   endptr - ptr);
-	पूर्ण
+	}
 
-	चयन (chan->mode) अणु
-	हाल L2CAP_MODE_BASIC:
-		अगर (disable_erपंचांग)
-			अवरोध;
+	switch (chan->mode) {
+	case L2CAP_MODE_BASIC:
+		if (disable_ertm)
+			break;
 
-		अगर (!(chan->conn->feat_mask & L2CAP_FEAT_ERTM) &&
+		if (!(chan->conn->feat_mask & L2CAP_FEAT_ERTM) &&
 		    !(chan->conn->feat_mask & L2CAP_FEAT_STREAMING))
-			अवरोध;
+			break;
 
 		rfc.mode            = L2CAP_MODE_BASIC;
 		rfc.txwin_size      = 0;
 		rfc.max_transmit    = 0;
-		rfc.retrans_समयout = 0;
-		rfc.monitor_समयout = 0;
+		rfc.retrans_timeout = 0;
+		rfc.monitor_timeout = 0;
 		rfc.max_pdu_size    = 0;
 
-		l2cap_add_conf_opt(&ptr, L2CAP_CONF_RFC, माप(rfc),
-				   (अचिन्हित दीर्घ) &rfc, endptr - ptr);
-		अवरोध;
+		l2cap_add_conf_opt(&ptr, L2CAP_CONF_RFC, sizeof(rfc),
+				   (unsigned long) &rfc, endptr - ptr);
+		break;
 
-	हाल L2CAP_MODE_ERTM:
+	case L2CAP_MODE_ERTM:
 		rfc.mode            = L2CAP_MODE_ERTM;
 		rfc.max_transmit    = chan->max_tx;
 
-		__l2cap_set_erपंचांग_समयouts(chan, &rfc);
+		__l2cap_set_ertm_timeouts(chan, &rfc);
 
 		size = min_t(u16, L2CAP_DEFAULT_MAX_PDU_SIZE, chan->conn->mtu -
 			     L2CAP_EXT_HDR_SIZE - L2CAP_SDULEN_SIZE -
@@ -3505,71 +3504,71 @@ fail:
 		rfc.txwin_size = min_t(u16, chan->tx_win,
 				       L2CAP_DEFAULT_TX_WINDOW);
 
-		l2cap_add_conf_opt(&ptr, L2CAP_CONF_RFC, माप(rfc),
-				   (अचिन्हित दीर्घ) &rfc, endptr - ptr);
+		l2cap_add_conf_opt(&ptr, L2CAP_CONF_RFC, sizeof(rfc),
+				   (unsigned long) &rfc, endptr - ptr);
 
-		अगर (test_bit(FLAG_EFS_ENABLE, &chan->flags))
+		if (test_bit(FLAG_EFS_ENABLE, &chan->flags))
 			l2cap_add_opt_efs(&ptr, chan, endptr - ptr);
 
-		अगर (test_bit(FLAG_EXT_CTRL, &chan->flags))
+		if (test_bit(FLAG_EXT_CTRL, &chan->flags))
 			l2cap_add_conf_opt(&ptr, L2CAP_CONF_EWS, 2,
 					   chan->tx_win, endptr - ptr);
 
-		अगर (chan->conn->feat_mask & L2CAP_FEAT_FCS)
-			अगर (chan->fcs == L2CAP_FCS_NONE ||
-			    test_bit(CONF_RECV_NO_FCS, &chan->conf_state)) अणु
+		if (chan->conn->feat_mask & L2CAP_FEAT_FCS)
+			if (chan->fcs == L2CAP_FCS_NONE ||
+			    test_bit(CONF_RECV_NO_FCS, &chan->conf_state)) {
 				chan->fcs = L2CAP_FCS_NONE;
 				l2cap_add_conf_opt(&ptr, L2CAP_CONF_FCS, 1,
 						   chan->fcs, endptr - ptr);
-			पूर्ण
-		अवरोध;
+			}
+		break;
 
-	हाल L2CAP_MODE_STREAMING:
+	case L2CAP_MODE_STREAMING:
 		l2cap_txwin_setup(chan);
 		rfc.mode            = L2CAP_MODE_STREAMING;
 		rfc.txwin_size      = 0;
 		rfc.max_transmit    = 0;
-		rfc.retrans_समयout = 0;
-		rfc.monitor_समयout = 0;
+		rfc.retrans_timeout = 0;
+		rfc.monitor_timeout = 0;
 
 		size = min_t(u16, L2CAP_DEFAULT_MAX_PDU_SIZE, chan->conn->mtu -
 			     L2CAP_EXT_HDR_SIZE - L2CAP_SDULEN_SIZE -
 			     L2CAP_FCS_SIZE);
 		rfc.max_pdu_size = cpu_to_le16(size);
 
-		l2cap_add_conf_opt(&ptr, L2CAP_CONF_RFC, माप(rfc),
-				   (अचिन्हित दीर्घ) &rfc, endptr - ptr);
+		l2cap_add_conf_opt(&ptr, L2CAP_CONF_RFC, sizeof(rfc),
+				   (unsigned long) &rfc, endptr - ptr);
 
-		अगर (test_bit(FLAG_EFS_ENABLE, &chan->flags))
+		if (test_bit(FLAG_EFS_ENABLE, &chan->flags))
 			l2cap_add_opt_efs(&ptr, chan, endptr - ptr);
 
-		अगर (chan->conn->feat_mask & L2CAP_FEAT_FCS)
-			अगर (chan->fcs == L2CAP_FCS_NONE ||
-			    test_bit(CONF_RECV_NO_FCS, &chan->conf_state)) अणु
+		if (chan->conn->feat_mask & L2CAP_FEAT_FCS)
+			if (chan->fcs == L2CAP_FCS_NONE ||
+			    test_bit(CONF_RECV_NO_FCS, &chan->conf_state)) {
 				chan->fcs = L2CAP_FCS_NONE;
 				l2cap_add_conf_opt(&ptr, L2CAP_CONF_FCS, 1,
 						   chan->fcs, endptr - ptr);
-			पूर्ण
-		अवरोध;
-	पूर्ण
+			}
+		break;
+	}
 
 	req->dcid  = cpu_to_le16(chan->dcid);
 	req->flags = cpu_to_le16(0);
 
-	वापस ptr - data;
-पूर्ण
+	return ptr - data;
+}
 
-अटल पूर्णांक l2cap_parse_conf_req(काष्ठा l2cap_chan *chan, व्योम *data, माप_प्रकार data_size)
-अणु
-	काष्ठा l2cap_conf_rsp *rsp = data;
-	व्योम *ptr = rsp->data;
-	व्योम *endptr = data + data_size;
-	व्योम *req = chan->conf_req;
-	पूर्णांक len = chan->conf_len;
-	पूर्णांक type, hपूर्णांक, olen;
-	अचिन्हित दीर्घ val;
-	काष्ठा l2cap_conf_rfc rfc = अणु .mode = L2CAP_MODE_BASIC पूर्ण;
-	काष्ठा l2cap_conf_efs efs;
+static int l2cap_parse_conf_req(struct l2cap_chan *chan, void *data, size_t data_size)
+{
+	struct l2cap_conf_rsp *rsp = data;
+	void *ptr = rsp->data;
+	void *endptr = data + data_size;
+	void *req = chan->conf_req;
+	int len = chan->conf_len;
+	int type, hint, olen;
+	unsigned long val;
+	struct l2cap_conf_rfc rfc = { .mode = L2CAP_MODE_BASIC };
+	struct l2cap_conf_efs efs;
 	u8 remote_efs = 0;
 	u16 mtu = L2CAP_DEFAULT_MTU;
 	u16 result = L2CAP_CONF_SUCCESS;
@@ -3577,149 +3576,149 @@ fail:
 
 	BT_DBG("chan %p", chan);
 
-	जबतक (len >= L2CAP_CONF_OPT_SIZE) अणु
+	while (len >= L2CAP_CONF_OPT_SIZE) {
 		len -= l2cap_get_conf_opt(&req, &type, &olen, &val);
-		अगर (len < 0)
-			अवरोध;
+		if (len < 0)
+			break;
 
-		hपूर्णांक  = type & L2CAP_CONF_HINT;
+		hint  = type & L2CAP_CONF_HINT;
 		type &= L2CAP_CONF_MASK;
 
-		चयन (type) अणु
-		हाल L2CAP_CONF_MTU:
-			अगर (olen != 2)
-				अवरोध;
+		switch (type) {
+		case L2CAP_CONF_MTU:
+			if (olen != 2)
+				break;
 			mtu = val;
-			अवरोध;
+			break;
 
-		हाल L2CAP_CONF_FLUSH_TO:
-			अगर (olen != 2)
-				अवरोध;
+		case L2CAP_CONF_FLUSH_TO:
+			if (olen != 2)
+				break;
 			chan->flush_to = val;
-			अवरोध;
+			break;
 
-		हाल L2CAP_CONF_QOS:
-			अवरोध;
+		case L2CAP_CONF_QOS:
+			break;
 
-		हाल L2CAP_CONF_RFC:
-			अगर (olen != माप(rfc))
-				अवरोध;
-			स_नकल(&rfc, (व्योम *) val, olen);
-			अवरोध;
+		case L2CAP_CONF_RFC:
+			if (olen != sizeof(rfc))
+				break;
+			memcpy(&rfc, (void *) val, olen);
+			break;
 
-		हाल L2CAP_CONF_FCS:
-			अगर (olen != 1)
-				अवरोध;
-			अगर (val == L2CAP_FCS_NONE)
+		case L2CAP_CONF_FCS:
+			if (olen != 1)
+				break;
+			if (val == L2CAP_FCS_NONE)
 				set_bit(CONF_RECV_NO_FCS, &chan->conf_state);
-			अवरोध;
+			break;
 
-		हाल L2CAP_CONF_EFS:
-			अगर (olen != माप(efs))
-				अवरोध;
+		case L2CAP_CONF_EFS:
+			if (olen != sizeof(efs))
+				break;
 			remote_efs = 1;
-			स_नकल(&efs, (व्योम *) val, olen);
-			अवरोध;
+			memcpy(&efs, (void *) val, olen);
+			break;
 
-		हाल L2CAP_CONF_EWS:
-			अगर (olen != 2)
-				अवरोध;
-			अगर (!(chan->conn->local_fixed_chan & L2CAP_FC_A2MP))
-				वापस -ECONNREFUSED;
+		case L2CAP_CONF_EWS:
+			if (olen != 2)
+				break;
+			if (!(chan->conn->local_fixed_chan & L2CAP_FC_A2MP))
+				return -ECONNREFUSED;
 			set_bit(FLAG_EXT_CTRL, &chan->flags);
 			set_bit(CONF_EWS_RECV, &chan->conf_state);
 			chan->tx_win_max = L2CAP_DEFAULT_EXT_WINDOW;
 			chan->remote_tx_win = val;
-			अवरोध;
+			break;
 
-		शेष:
-			अगर (hपूर्णांक)
-				अवरोध;
+		default:
+			if (hint)
+				break;
 			result = L2CAP_CONF_UNKNOWN;
-			l2cap_add_conf_opt(&ptr, (u8)type, माप(u8), type, endptr - ptr);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			l2cap_add_conf_opt(&ptr, (u8)type, sizeof(u8), type, endptr - ptr);
+			break;
+		}
+	}
 
-	अगर (chan->num_conf_rsp || chan->num_conf_req > 1)
-		जाओ करोne;
+	if (chan->num_conf_rsp || chan->num_conf_req > 1)
+		goto done;
 
-	चयन (chan->mode) अणु
-	हाल L2CAP_MODE_STREAMING:
-	हाल L2CAP_MODE_ERTM:
-		अगर (!test_bit(CONF_STATE2_DEVICE, &chan->conf_state)) अणु
+	switch (chan->mode) {
+	case L2CAP_MODE_STREAMING:
+	case L2CAP_MODE_ERTM:
+		if (!test_bit(CONF_STATE2_DEVICE, &chan->conf_state)) {
 			chan->mode = l2cap_select_mode(rfc.mode,
 						       chan->conn->feat_mask);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (remote_efs) अणु
-			अगर (__l2cap_efs_supported(chan->conn))
+		if (remote_efs) {
+			if (__l2cap_efs_supported(chan->conn))
 				set_bit(FLAG_EFS_ENABLE, &chan->flags);
-			अन्यथा
-				वापस -ECONNREFUSED;
-		पूर्ण
+			else
+				return -ECONNREFUSED;
+		}
 
-		अगर (chan->mode != rfc.mode)
-			वापस -ECONNREFUSED;
+		if (chan->mode != rfc.mode)
+			return -ECONNREFUSED;
 
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-करोne:
-	अगर (chan->mode != rfc.mode) अणु
+done:
+	if (chan->mode != rfc.mode) {
 		result = L2CAP_CONF_UNACCEPT;
 		rfc.mode = chan->mode;
 
-		अगर (chan->num_conf_rsp == 1)
-			वापस -ECONNREFUSED;
+		if (chan->num_conf_rsp == 1)
+			return -ECONNREFUSED;
 
-		l2cap_add_conf_opt(&ptr, L2CAP_CONF_RFC, माप(rfc),
-				   (अचिन्हित दीर्घ) &rfc, endptr - ptr);
-	पूर्ण
+		l2cap_add_conf_opt(&ptr, L2CAP_CONF_RFC, sizeof(rfc),
+				   (unsigned long) &rfc, endptr - ptr);
+	}
 
-	अगर (result == L2CAP_CONF_SUCCESS) अणु
+	if (result == L2CAP_CONF_SUCCESS) {
 		/* Configure output options and let the other side know
-		 * which ones we करोn't like. */
+		 * which ones we don't like. */
 
-		अगर (mtu < L2CAP_DEFAULT_MIN_MTU)
+		if (mtu < L2CAP_DEFAULT_MIN_MTU)
 			result = L2CAP_CONF_UNACCEPT;
-		अन्यथा अणु
+		else {
 			chan->omtu = mtu;
 			set_bit(CONF_MTU_DONE, &chan->conf_state);
-		पूर्ण
+		}
 		l2cap_add_conf_opt(&ptr, L2CAP_CONF_MTU, 2, chan->omtu, endptr - ptr);
 
-		अगर (remote_efs) अणु
-			अगर (chan->local_stype != L2CAP_SERV_NOTRAFIC &&
+		if (remote_efs) {
+			if (chan->local_stype != L2CAP_SERV_NOTRAFIC &&
 			    efs.stype != L2CAP_SERV_NOTRAFIC &&
-			    efs.stype != chan->local_stype) अणु
+			    efs.stype != chan->local_stype) {
 
 				result = L2CAP_CONF_UNACCEPT;
 
-				अगर (chan->num_conf_req >= 1)
-					वापस -ECONNREFUSED;
+				if (chan->num_conf_req >= 1)
+					return -ECONNREFUSED;
 
 				l2cap_add_conf_opt(&ptr, L2CAP_CONF_EFS,
-						   माप(efs),
-						   (अचिन्हित दीर्घ) &efs, endptr - ptr);
-			पूर्ण अन्यथा अणु
+						   sizeof(efs),
+						   (unsigned long) &efs, endptr - ptr);
+			} else {
 				/* Send PENDING Conf Rsp */
 				result = L2CAP_CONF_PENDING;
 				set_bit(CONF_LOC_CONF_PEND, &chan->conf_state);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		चयन (rfc.mode) अणु
-		हाल L2CAP_MODE_BASIC:
+		switch (rfc.mode) {
+		case L2CAP_MODE_BASIC:
 			chan->fcs = L2CAP_FCS_NONE;
 			set_bit(CONF_MODE_DONE, &chan->conf_state);
-			अवरोध;
+			break;
 
-		हाल L2CAP_MODE_ERTM:
-			अगर (!test_bit(CONF_EWS_RECV, &chan->conf_state))
+		case L2CAP_MODE_ERTM:
+			if (!test_bit(CONF_EWS_RECV, &chan->conf_state))
 				chan->remote_tx_win = rfc.txwin_size;
-			अन्यथा
+			else
 				rfc.txwin_size = L2CAP_DEFAULT_TX_WINDOW;
 
 			chan->remote_max_tx = rfc.max_transmit;
@@ -3730,14 +3729,14 @@ fail:
 			rfc.max_pdu_size = cpu_to_le16(size);
 			chan->remote_mps = size;
 
-			__l2cap_set_erपंचांग_समयouts(chan, &rfc);
+			__l2cap_set_ertm_timeouts(chan, &rfc);
 
 			set_bit(CONF_MODE_DONE, &chan->conf_state);
 
 			l2cap_add_conf_opt(&ptr, L2CAP_CONF_RFC,
-					   माप(rfc), (अचिन्हित दीर्घ) &rfc, endptr - ptr);
+					   sizeof(rfc), (unsigned long) &rfc, endptr - ptr);
 
-			अगर (test_bit(FLAG_EFS_ENABLE, &chan->flags)) अणु
+			if (test_bit(FLAG_EFS_ENABLE, &chan->flags)) {
 				chan->remote_id = efs.id;
 				chan->remote_stype = efs.stype;
 				chan->remote_msdu = le16_to_cpu(efs.msdu);
@@ -3745,15 +3744,15 @@ fail:
 					le32_to_cpu(efs.flush_to);
 				chan->remote_acc_lat =
 					le32_to_cpu(efs.acc_lat);
-				chan->remote_sdu_iसमय =
-					le32_to_cpu(efs.sdu_iसमय);
+				chan->remote_sdu_itime =
+					le32_to_cpu(efs.sdu_itime);
 				l2cap_add_conf_opt(&ptr, L2CAP_CONF_EFS,
-						   माप(efs),
-						   (अचिन्हित दीर्घ) &efs, endptr - ptr);
-			पूर्ण
-			अवरोध;
+						   sizeof(efs),
+						   (unsigned long) &efs, endptr - ptr);
+			}
+			break;
 
-		हाल L2CAP_MODE_STREAMING:
+		case L2CAP_MODE_STREAMING:
 			size = min_t(u16, le16_to_cpu(rfc.max_pdu_size),
 				     chan->conn->mtu - L2CAP_EXT_HDR_SIZE -
 				     L2CAP_SDULEN_SIZE - L2CAP_FCS_SIZE);
@@ -3762,151 +3761,151 @@ fail:
 
 			set_bit(CONF_MODE_DONE, &chan->conf_state);
 
-			l2cap_add_conf_opt(&ptr, L2CAP_CONF_RFC, माप(rfc),
-					   (अचिन्हित दीर्घ) &rfc, endptr - ptr);
+			l2cap_add_conf_opt(&ptr, L2CAP_CONF_RFC, sizeof(rfc),
+					   (unsigned long) &rfc, endptr - ptr);
 
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 			result = L2CAP_CONF_UNACCEPT;
 
-			स_रखो(&rfc, 0, माप(rfc));
+			memset(&rfc, 0, sizeof(rfc));
 			rfc.mode = chan->mode;
-		पूर्ण
+		}
 
-		अगर (result == L2CAP_CONF_SUCCESS)
+		if (result == L2CAP_CONF_SUCCESS)
 			set_bit(CONF_OUTPUT_DONE, &chan->conf_state);
-	पूर्ण
+	}
 	rsp->scid   = cpu_to_le16(chan->dcid);
 	rsp->result = cpu_to_le16(result);
 	rsp->flags  = cpu_to_le16(0);
 
-	वापस ptr - data;
-पूर्ण
+	return ptr - data;
+}
 
-अटल पूर्णांक l2cap_parse_conf_rsp(काष्ठा l2cap_chan *chan, व्योम *rsp, पूर्णांक len,
-				व्योम *data, माप_प्रकार size, u16 *result)
-अणु
-	काष्ठा l2cap_conf_req *req = data;
-	व्योम *ptr = req->data;
-	व्योम *endptr = data + size;
-	पूर्णांक type, olen;
-	अचिन्हित दीर्घ val;
-	काष्ठा l2cap_conf_rfc rfc = अणु .mode = L2CAP_MODE_BASIC पूर्ण;
-	काष्ठा l2cap_conf_efs efs;
+static int l2cap_parse_conf_rsp(struct l2cap_chan *chan, void *rsp, int len,
+				void *data, size_t size, u16 *result)
+{
+	struct l2cap_conf_req *req = data;
+	void *ptr = req->data;
+	void *endptr = data + size;
+	int type, olen;
+	unsigned long val;
+	struct l2cap_conf_rfc rfc = { .mode = L2CAP_MODE_BASIC };
+	struct l2cap_conf_efs efs;
 
 	BT_DBG("chan %p, rsp %p, len %d, req %p", chan, rsp, len, data);
 
-	जबतक (len >= L2CAP_CONF_OPT_SIZE) अणु
+	while (len >= L2CAP_CONF_OPT_SIZE) {
 		len -= l2cap_get_conf_opt(&rsp, &type, &olen, &val);
-		अगर (len < 0)
-			अवरोध;
+		if (len < 0)
+			break;
 
-		चयन (type) अणु
-		हाल L2CAP_CONF_MTU:
-			अगर (olen != 2)
-				अवरोध;
-			अगर (val < L2CAP_DEFAULT_MIN_MTU) अणु
+		switch (type) {
+		case L2CAP_CONF_MTU:
+			if (olen != 2)
+				break;
+			if (val < L2CAP_DEFAULT_MIN_MTU) {
 				*result = L2CAP_CONF_UNACCEPT;
 				chan->imtu = L2CAP_DEFAULT_MIN_MTU;
-			पूर्ण अन्यथा
+			} else
 				chan->imtu = val;
 			l2cap_add_conf_opt(&ptr, L2CAP_CONF_MTU, 2, chan->imtu,
 					   endptr - ptr);
-			अवरोध;
+			break;
 
-		हाल L2CAP_CONF_FLUSH_TO:
-			अगर (olen != 2)
-				अवरोध;
+		case L2CAP_CONF_FLUSH_TO:
+			if (olen != 2)
+				break;
 			chan->flush_to = val;
 			l2cap_add_conf_opt(&ptr, L2CAP_CONF_FLUSH_TO, 2,
 					   chan->flush_to, endptr - ptr);
-			अवरोध;
+			break;
 
-		हाल L2CAP_CONF_RFC:
-			अगर (olen != माप(rfc))
-				अवरोध;
-			स_नकल(&rfc, (व्योम *)val, olen);
-			अगर (test_bit(CONF_STATE2_DEVICE, &chan->conf_state) &&
+		case L2CAP_CONF_RFC:
+			if (olen != sizeof(rfc))
+				break;
+			memcpy(&rfc, (void *)val, olen);
+			if (test_bit(CONF_STATE2_DEVICE, &chan->conf_state) &&
 			    rfc.mode != chan->mode)
-				वापस -ECONNREFUSED;
+				return -ECONNREFUSED;
 			chan->fcs = 0;
-			l2cap_add_conf_opt(&ptr, L2CAP_CONF_RFC, माप(rfc),
-					   (अचिन्हित दीर्घ) &rfc, endptr - ptr);
-			अवरोध;
+			l2cap_add_conf_opt(&ptr, L2CAP_CONF_RFC, sizeof(rfc),
+					   (unsigned long) &rfc, endptr - ptr);
+			break;
 
-		हाल L2CAP_CONF_EWS:
-			अगर (olen != 2)
-				अवरोध;
+		case L2CAP_CONF_EWS:
+			if (olen != 2)
+				break;
 			chan->ack_win = min_t(u16, val, chan->ack_win);
 			l2cap_add_conf_opt(&ptr, L2CAP_CONF_EWS, 2,
 					   chan->tx_win, endptr - ptr);
-			अवरोध;
+			break;
 
-		हाल L2CAP_CONF_EFS:
-			अगर (olen != माप(efs))
-				अवरोध;
-			स_नकल(&efs, (व्योम *)val, olen);
-			अगर (chan->local_stype != L2CAP_SERV_NOTRAFIC &&
+		case L2CAP_CONF_EFS:
+			if (olen != sizeof(efs))
+				break;
+			memcpy(&efs, (void *)val, olen);
+			if (chan->local_stype != L2CAP_SERV_NOTRAFIC &&
 			    efs.stype != L2CAP_SERV_NOTRAFIC &&
 			    efs.stype != chan->local_stype)
-				वापस -ECONNREFUSED;
-			l2cap_add_conf_opt(&ptr, L2CAP_CONF_EFS, माप(efs),
-					   (अचिन्हित दीर्घ) &efs, endptr - ptr);
-			अवरोध;
+				return -ECONNREFUSED;
+			l2cap_add_conf_opt(&ptr, L2CAP_CONF_EFS, sizeof(efs),
+					   (unsigned long) &efs, endptr - ptr);
+			break;
 
-		हाल L2CAP_CONF_FCS:
-			अगर (olen != 1)
-				अवरोध;
-			अगर (*result == L2CAP_CONF_PENDING)
-				अगर (val == L2CAP_FCS_NONE)
+		case L2CAP_CONF_FCS:
+			if (olen != 1)
+				break;
+			if (*result == L2CAP_CONF_PENDING)
+				if (val == L2CAP_FCS_NONE)
 					set_bit(CONF_RECV_NO_FCS,
 						&chan->conf_state);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (chan->mode == L2CAP_MODE_BASIC && chan->mode != rfc.mode)
-		वापस -ECONNREFUSED;
+	if (chan->mode == L2CAP_MODE_BASIC && chan->mode != rfc.mode)
+		return -ECONNREFUSED;
 
 	chan->mode = rfc.mode;
 
-	अगर (*result == L2CAP_CONF_SUCCESS || *result == L2CAP_CONF_PENDING) अणु
-		चयन (rfc.mode) अणु
-		हाल L2CAP_MODE_ERTM:
-			chan->retrans_समयout = le16_to_cpu(rfc.retrans_समयout);
-			chan->monitor_समयout = le16_to_cpu(rfc.monitor_समयout);
+	if (*result == L2CAP_CONF_SUCCESS || *result == L2CAP_CONF_PENDING) {
+		switch (rfc.mode) {
+		case L2CAP_MODE_ERTM:
+			chan->retrans_timeout = le16_to_cpu(rfc.retrans_timeout);
+			chan->monitor_timeout = le16_to_cpu(rfc.monitor_timeout);
 			chan->mps    = le16_to_cpu(rfc.max_pdu_size);
-			अगर (!test_bit(FLAG_EXT_CTRL, &chan->flags))
+			if (!test_bit(FLAG_EXT_CTRL, &chan->flags))
 				chan->ack_win = min_t(u16, chan->ack_win,
 						      rfc.txwin_size);
 
-			अगर (test_bit(FLAG_EFS_ENABLE, &chan->flags)) अणु
+			if (test_bit(FLAG_EFS_ENABLE, &chan->flags)) {
 				chan->local_msdu = le16_to_cpu(efs.msdu);
-				chan->local_sdu_iसमय =
-					le32_to_cpu(efs.sdu_iसमय);
+				chan->local_sdu_itime =
+					le32_to_cpu(efs.sdu_itime);
 				chan->local_acc_lat = le32_to_cpu(efs.acc_lat);
 				chan->local_flush_to =
 					le32_to_cpu(efs.flush_to);
-			पूर्ण
-			अवरोध;
+			}
+			break;
 
-		हाल L2CAP_MODE_STREAMING:
+		case L2CAP_MODE_STREAMING:
 			chan->mps    = le16_to_cpu(rfc.max_pdu_size);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	req->dcid   = cpu_to_le16(chan->dcid);
 	req->flags  = cpu_to_le16(0);
 
-	वापस ptr - data;
-पूर्ण
+	return ptr - data;
+}
 
-अटल पूर्णांक l2cap_build_conf_rsp(काष्ठा l2cap_chan *chan, व्योम *data,
+static int l2cap_build_conf_rsp(struct l2cap_chan *chan, void *data,
 				u16 result, u16 flags)
-अणु
-	काष्ठा l2cap_conf_rsp *rsp = data;
-	व्योम *ptr = rsp->data;
+{
+	struct l2cap_conf_rsp *rsp = data;
+	void *ptr = rsp->data;
 
 	BT_DBG("chan %p", chan);
 
@@ -3914,13 +3913,13 @@ fail:
 	rsp->result = cpu_to_le16(result);
 	rsp->flags  = cpu_to_le16(flags);
 
-	वापस ptr - data;
-पूर्ण
+	return ptr - data;
+}
 
-व्योम __l2cap_le_connect_rsp_defer(काष्ठा l2cap_chan *chan)
-अणु
-	काष्ठा l2cap_le_conn_rsp rsp;
-	काष्ठा l2cap_conn *conn = chan->conn;
+void __l2cap_le_connect_rsp_defer(struct l2cap_chan *chan)
+{
+	struct l2cap_le_conn_rsp rsp;
+	struct l2cap_conn *conn = chan->conn;
 
 	BT_DBG("chan %p", chan);
 
@@ -3930,22 +3929,22 @@ fail:
 	rsp.credits = cpu_to_le16(chan->rx_credits);
 	rsp.result  = cpu_to_le16(L2CAP_CR_LE_SUCCESS);
 
-	l2cap_send_cmd(conn, chan->ident, L2CAP_LE_CONN_RSP, माप(rsp),
+	l2cap_send_cmd(conn, chan->ident, L2CAP_LE_CONN_RSP, sizeof(rsp),
 		       &rsp);
-पूर्ण
+}
 
-व्योम __l2cap_ecred_conn_rsp_defer(काष्ठा l2cap_chan *chan)
-अणु
-	काष्ठा अणु
-		काष्ठा l2cap_ecred_conn_rsp rsp;
+void __l2cap_ecred_conn_rsp_defer(struct l2cap_chan *chan)
+{
+	struct {
+		struct l2cap_ecred_conn_rsp rsp;
 		__le16 dcid[5];
-	पूर्ण __packed pdu;
-	काष्ठा l2cap_conn *conn = chan->conn;
+	} __packed pdu;
+	struct l2cap_conn *conn = chan->conn;
 	u16 ident = chan->ident;
-	पूर्णांक i = 0;
+	int i = 0;
 
-	अगर (!ident)
-		वापस;
+	if (!ident)
+		return;
 
 	BT_DBG("chan %p ident %d", chan, ident);
 
@@ -3956,27 +3955,27 @@ fail:
 
 	mutex_lock(&conn->chan_lock);
 
-	list_क्रम_each_entry(chan, &conn->chan_l, list) अणु
-		अगर (chan->ident != ident)
-			जारी;
+	list_for_each_entry(chan, &conn->chan_l, list) {
+		if (chan->ident != ident)
+			continue;
 
 		/* Reset ident so only one response is sent */
 		chan->ident = 0;
 
 		/* Include all channels pending with the same ident */
 		pdu.dcid[i++] = cpu_to_le16(chan->scid);
-	पूर्ण
+	}
 
 	mutex_unlock(&conn->chan_lock);
 
 	l2cap_send_cmd(conn, ident, L2CAP_ECRED_CONN_RSP,
-			माप(pdu.rsp) + i * माप(__le16), &pdu);
-पूर्ण
+			sizeof(pdu.rsp) + i * sizeof(__le16), &pdu);
+}
 
-व्योम __l2cap_connect_rsp_defer(काष्ठा l2cap_chan *chan)
-अणु
-	काष्ठा l2cap_conn_rsp rsp;
-	काष्ठा l2cap_conn *conn = chan->conn;
+void __l2cap_connect_rsp_defer(struct l2cap_chan *chan)
+{
+	struct l2cap_conn_rsp rsp;
+	struct l2cap_conn *conn = chan->conn;
 	u8 buf[128];
 	u8 rsp_code;
 
@@ -3985,161 +3984,161 @@ fail:
 	rsp.result = cpu_to_le16(L2CAP_CR_SUCCESS);
 	rsp.status = cpu_to_le16(L2CAP_CS_NO_INFO);
 
-	अगर (chan->hs_hcon)
+	if (chan->hs_hcon)
 		rsp_code = L2CAP_CREATE_CHAN_RSP;
-	अन्यथा
+	else
 		rsp_code = L2CAP_CONN_RSP;
 
 	BT_DBG("chan %p rsp_code %u", chan, rsp_code);
 
-	l2cap_send_cmd(conn, chan->ident, rsp_code, माप(rsp), &rsp);
+	l2cap_send_cmd(conn, chan->ident, rsp_code, sizeof(rsp), &rsp);
 
-	अगर (test_and_set_bit(CONF_REQ_SENT, &chan->conf_state))
-		वापस;
+	if (test_and_set_bit(CONF_REQ_SENT, &chan->conf_state))
+		return;
 
 	l2cap_send_cmd(conn, l2cap_get_ident(conn), L2CAP_CONF_REQ,
-		       l2cap_build_conf_req(chan, buf, माप(buf)), buf);
+		       l2cap_build_conf_req(chan, buf, sizeof(buf)), buf);
 	chan->num_conf_req++;
-पूर्ण
+}
 
-अटल व्योम l2cap_conf_rfc_get(काष्ठा l2cap_chan *chan, व्योम *rsp, पूर्णांक len)
-अणु
-	पूर्णांक type, olen;
-	अचिन्हित दीर्घ val;
-	/* Use sane शेष values in हाल a misbehaving remote device
-	 * did not send an RFC or extended winकरोw size option.
+static void l2cap_conf_rfc_get(struct l2cap_chan *chan, void *rsp, int len)
+{
+	int type, olen;
+	unsigned long val;
+	/* Use sane default values in case a misbehaving remote device
+	 * did not send an RFC or extended window size option.
 	 */
 	u16 txwin_ext = chan->ack_win;
-	काष्ठा l2cap_conf_rfc rfc = अणु
+	struct l2cap_conf_rfc rfc = {
 		.mode = chan->mode,
-		.retrans_समयout = cpu_to_le16(L2CAP_DEFAULT_RETRANS_TO),
-		.monitor_समयout = cpu_to_le16(L2CAP_DEFAULT_MONITOR_TO),
+		.retrans_timeout = cpu_to_le16(L2CAP_DEFAULT_RETRANS_TO),
+		.monitor_timeout = cpu_to_le16(L2CAP_DEFAULT_MONITOR_TO),
 		.max_pdu_size = cpu_to_le16(chan->imtu),
 		.txwin_size = min_t(u16, chan->ack_win, L2CAP_DEFAULT_TX_WINDOW),
-	पूर्ण;
+	};
 
 	BT_DBG("chan %p, rsp %p, len %d", chan, rsp, len);
 
-	अगर ((chan->mode != L2CAP_MODE_ERTM) && (chan->mode != L2CAP_MODE_STREAMING))
-		वापस;
+	if ((chan->mode != L2CAP_MODE_ERTM) && (chan->mode != L2CAP_MODE_STREAMING))
+		return;
 
-	जबतक (len >= L2CAP_CONF_OPT_SIZE) अणु
+	while (len >= L2CAP_CONF_OPT_SIZE) {
 		len -= l2cap_get_conf_opt(&rsp, &type, &olen, &val);
-		अगर (len < 0)
-			अवरोध;
+		if (len < 0)
+			break;
 
-		चयन (type) अणु
-		हाल L2CAP_CONF_RFC:
-			अगर (olen != माप(rfc))
-				अवरोध;
-			स_नकल(&rfc, (व्योम *)val, olen);
-			अवरोध;
-		हाल L2CAP_CONF_EWS:
-			अगर (olen != 2)
-				अवरोध;
+		switch (type) {
+		case L2CAP_CONF_RFC:
+			if (olen != sizeof(rfc))
+				break;
+			memcpy(&rfc, (void *)val, olen);
+			break;
+		case L2CAP_CONF_EWS:
+			if (olen != 2)
+				break;
 			txwin_ext = val;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	चयन (rfc.mode) अणु
-	हाल L2CAP_MODE_ERTM:
-		chan->retrans_समयout = le16_to_cpu(rfc.retrans_समयout);
-		chan->monitor_समयout = le16_to_cpu(rfc.monitor_समयout);
+	switch (rfc.mode) {
+	case L2CAP_MODE_ERTM:
+		chan->retrans_timeout = le16_to_cpu(rfc.retrans_timeout);
+		chan->monitor_timeout = le16_to_cpu(rfc.monitor_timeout);
 		chan->mps = le16_to_cpu(rfc.max_pdu_size);
-		अगर (test_bit(FLAG_EXT_CTRL, &chan->flags))
+		if (test_bit(FLAG_EXT_CTRL, &chan->flags))
 			chan->ack_win = min_t(u16, chan->ack_win, txwin_ext);
-		अन्यथा
+		else
 			chan->ack_win = min_t(u16, chan->ack_win,
 					      rfc.txwin_size);
-		अवरोध;
-	हाल L2CAP_MODE_STREAMING:
+		break;
+	case L2CAP_MODE_STREAMING:
 		chan->mps    = le16_to_cpu(rfc.max_pdu_size);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत पूर्णांक l2cap_command_rej(काष्ठा l2cap_conn *conn,
-				    काष्ठा l2cap_cmd_hdr *cmd, u16 cmd_len,
+static inline int l2cap_command_rej(struct l2cap_conn *conn,
+				    struct l2cap_cmd_hdr *cmd, u16 cmd_len,
 				    u8 *data)
-अणु
-	काष्ठा l2cap_cmd_rej_unk *rej = (काष्ठा l2cap_cmd_rej_unk *) data;
+{
+	struct l2cap_cmd_rej_unk *rej = (struct l2cap_cmd_rej_unk *) data;
 
-	अगर (cmd_len < माप(*rej))
-		वापस -EPROTO;
+	if (cmd_len < sizeof(*rej))
+		return -EPROTO;
 
-	अगर (rej->reason != L2CAP_REJ_NOT_UNDERSTOOD)
-		वापस 0;
+	if (rej->reason != L2CAP_REJ_NOT_UNDERSTOOD)
+		return 0;
 
-	अगर ((conn->info_state & L2CAP_INFO_FEAT_MASK_REQ_SENT) &&
-	    cmd->ident == conn->info_ident) अणु
-		cancel_delayed_work(&conn->info_समयr);
+	if ((conn->info_state & L2CAP_INFO_FEAT_MASK_REQ_SENT) &&
+	    cmd->ident == conn->info_ident) {
+		cancel_delayed_work(&conn->info_timer);
 
 		conn->info_state |= L2CAP_INFO_FEAT_MASK_REQ_DONE;
 		conn->info_ident = 0;
 
 		l2cap_conn_start(conn);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा l2cap_chan *l2cap_connect(काष्ठा l2cap_conn *conn,
-					काष्ठा l2cap_cmd_hdr *cmd,
+static struct l2cap_chan *l2cap_connect(struct l2cap_conn *conn,
+					struct l2cap_cmd_hdr *cmd,
 					u8 *data, u8 rsp_code, u8 amp_id)
-अणु
-	काष्ठा l2cap_conn_req *req = (काष्ठा l2cap_conn_req *) data;
-	काष्ठा l2cap_conn_rsp rsp;
-	काष्ठा l2cap_chan *chan = शून्य, *pchan;
-	पूर्णांक result, status = L2CAP_CS_NO_INFO;
+{
+	struct l2cap_conn_req *req = (struct l2cap_conn_req *) data;
+	struct l2cap_conn_rsp rsp;
+	struct l2cap_chan *chan = NULL, *pchan;
+	int result, status = L2CAP_CS_NO_INFO;
 
 	u16 dcid = 0, scid = __le16_to_cpu(req->scid);
 	__le16 psm = req->psm;
 
 	BT_DBG("psm 0x%2.2x scid 0x%4.4x", __le16_to_cpu(psm), scid);
 
-	/* Check अगर we have socket listening on psm */
+	/* Check if we have socket listening on psm */
 	pchan = l2cap_global_chan_by_psm(BT_LISTEN, psm, &conn->hcon->src,
 					 &conn->hcon->dst, ACL_LINK);
-	अगर (!pchan) अणु
+	if (!pchan) {
 		result = L2CAP_CR_BAD_PSM;
-		जाओ sendresp;
-	पूर्ण
+		goto sendresp;
+	}
 
 	mutex_lock(&conn->chan_lock);
 	l2cap_chan_lock(pchan);
 
-	/* Check अगर the ACL is secure enough (अगर not SDP) */
-	अगर (psm != cpu_to_le16(L2CAP_PSM_SDP) &&
-	    !hci_conn_check_link_mode(conn->hcon)) अणु
+	/* Check if the ACL is secure enough (if not SDP) */
+	if (psm != cpu_to_le16(L2CAP_PSM_SDP) &&
+	    !hci_conn_check_link_mode(conn->hcon)) {
 		conn->disc_reason = HCI_ERROR_AUTH_FAILURE;
 		result = L2CAP_CR_SEC_BLOCK;
-		जाओ response;
-	पूर्ण
+		goto response;
+	}
 
 	result = L2CAP_CR_NO_MEM;
 
-	/* Check क्रम valid dynamic CID range (as per Erratum 3253) */
-	अगर (scid < L2CAP_CID_DYN_START || scid > L2CAP_CID_DYN_END) अणु
+	/* Check for valid dynamic CID range (as per Erratum 3253) */
+	if (scid < L2CAP_CID_DYN_START || scid > L2CAP_CID_DYN_END) {
 		result = L2CAP_CR_INVALID_SCID;
-		जाओ response;
-	पूर्ण
+		goto response;
+	}
 
-	/* Check अगर we alपढ़ोy have channel with that dcid */
-	अगर (__l2cap_get_chan_by_dcid(conn, scid)) अणु
+	/* Check if we already have channel with that dcid */
+	if (__l2cap_get_chan_by_dcid(conn, scid)) {
 		result = L2CAP_CR_SCID_IN_USE;
-		जाओ response;
-	पूर्ण
+		goto response;
+	}
 
 	chan = pchan->ops->new_connection(pchan);
-	अगर (!chan)
-		जाओ response;
+	if (!chan)
+		goto response;
 
-	/* For certain devices (ex: HID mouse), support क्रम authentication,
-	 * pairing and bonding is optional. For such devices, inorder to aव्योम
-	 * the ACL alive क्रम too दीर्घ after L2CAP disconnection, reset the ACL
-	 * disc_समयout back to HCI_DISCONN_TIMEOUT during L2CAP connect.
+	/* For certain devices (ex: HID mouse), support for authentication,
+	 * pairing and bonding is optional. For such devices, inorder to avoid
+	 * the ACL alive for too long after L2CAP disconnection, reset the ACL
+	 * disc_timeout back to HCI_DISCONN_TIMEOUT during L2CAP connect.
 	 */
-	conn->hcon->disc_समयout = HCI_DISCONN_TIMEOUT;
+	conn->hcon->disc_timeout = HCI_DISCONN_TIMEOUT;
 
 	bacpy(&chan->src, &conn->hcon->src);
 	bacpy(&chan->dst, &conn->hcon->dst);
@@ -4153,41 +4152,41 @@ fail:
 
 	dcid = chan->scid;
 
-	__set_chan_समयr(chan, chan->ops->get_sndसमयo(chan));
+	__set_chan_timer(chan, chan->ops->get_sndtimeo(chan));
 
 	chan->ident = cmd->ident;
 
-	अगर (conn->info_state & L2CAP_INFO_FEAT_MASK_REQ_DONE) अणु
-		अगर (l2cap_chan_check_security(chan, false)) अणु
-			अगर (test_bit(FLAG_DEFER_SETUP, &chan->flags)) अणु
+	if (conn->info_state & L2CAP_INFO_FEAT_MASK_REQ_DONE) {
+		if (l2cap_chan_check_security(chan, false)) {
+			if (test_bit(FLAG_DEFER_SETUP, &chan->flags)) {
 				l2cap_state_change(chan, BT_CONNECT2);
 				result = L2CAP_CR_PEND;
 				status = L2CAP_CS_AUTHOR_PEND;
 				chan->ops->defer(chan);
-			पूर्ण अन्यथा अणु
-				/* Force pending result क्रम AMP controllers.
+			} else {
+				/* Force pending result for AMP controllers.
 				 * The connection will succeed after the
 				 * physical link is up.
 				 */
-				अगर (amp_id == AMP_ID_BREDR) अणु
+				if (amp_id == AMP_ID_BREDR) {
 					l2cap_state_change(chan, BT_CONFIG);
 					result = L2CAP_CR_SUCCESS;
-				पूर्ण अन्यथा अणु
+				} else {
 					l2cap_state_change(chan, BT_CONNECT2);
 					result = L2CAP_CR_PEND;
-				पूर्ण
+				}
 				status = L2CAP_CS_NO_INFO;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			l2cap_state_change(chan, BT_CONNECT2);
 			result = L2CAP_CR_PEND;
 			status = L2CAP_CS_AUTHEN_PEND;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		l2cap_state_change(chan, BT_CONNECT2);
 		result = L2CAP_CR_PEND;
 		status = L2CAP_CS_NO_INFO;
-	पूर्ण
+	}
 
 response:
 	l2cap_chan_unlock(pchan);
@@ -4199,64 +4198,64 @@ sendresp:
 	rsp.dcid   = cpu_to_le16(dcid);
 	rsp.result = cpu_to_le16(result);
 	rsp.status = cpu_to_le16(status);
-	l2cap_send_cmd(conn, cmd->ident, rsp_code, माप(rsp), &rsp);
+	l2cap_send_cmd(conn, cmd->ident, rsp_code, sizeof(rsp), &rsp);
 
-	अगर (result == L2CAP_CR_PEND && status == L2CAP_CS_NO_INFO) अणु
-		काष्ठा l2cap_info_req info;
+	if (result == L2CAP_CR_PEND && status == L2CAP_CS_NO_INFO) {
+		struct l2cap_info_req info;
 		info.type = cpu_to_le16(L2CAP_IT_FEAT_MASK);
 
 		conn->info_state |= L2CAP_INFO_FEAT_MASK_REQ_SENT;
 		conn->info_ident = l2cap_get_ident(conn);
 
-		schedule_delayed_work(&conn->info_समयr, L2CAP_INFO_TIMEOUT);
+		schedule_delayed_work(&conn->info_timer, L2CAP_INFO_TIMEOUT);
 
 		l2cap_send_cmd(conn, conn->info_ident, L2CAP_INFO_REQ,
-			       माप(info), &info);
-	पूर्ण
+			       sizeof(info), &info);
+	}
 
-	अगर (chan && !test_bit(CONF_REQ_SENT, &chan->conf_state) &&
-	    result == L2CAP_CR_SUCCESS) अणु
+	if (chan && !test_bit(CONF_REQ_SENT, &chan->conf_state) &&
+	    result == L2CAP_CR_SUCCESS) {
 		u8 buf[128];
 		set_bit(CONF_REQ_SENT, &chan->conf_state);
 		l2cap_send_cmd(conn, l2cap_get_ident(conn), L2CAP_CONF_REQ,
-			       l2cap_build_conf_req(chan, buf, माप(buf)), buf);
+			       l2cap_build_conf_req(chan, buf, sizeof(buf)), buf);
 		chan->num_conf_req++;
-	पूर्ण
+	}
 
-	वापस chan;
-पूर्ण
+	return chan;
+}
 
-अटल पूर्णांक l2cap_connect_req(काष्ठा l2cap_conn *conn,
-			     काष्ठा l2cap_cmd_hdr *cmd, u16 cmd_len, u8 *data)
-अणु
-	काष्ठा hci_dev *hdev = conn->hcon->hdev;
-	काष्ठा hci_conn *hcon = conn->hcon;
+static int l2cap_connect_req(struct l2cap_conn *conn,
+			     struct l2cap_cmd_hdr *cmd, u16 cmd_len, u8 *data)
+{
+	struct hci_dev *hdev = conn->hcon->hdev;
+	struct hci_conn *hcon = conn->hcon;
 
-	अगर (cmd_len < माप(काष्ठा l2cap_conn_req))
-		वापस -EPROTO;
+	if (cmd_len < sizeof(struct l2cap_conn_req))
+		return -EPROTO;
 
 	hci_dev_lock(hdev);
-	अगर (hci_dev_test_flag(hdev, HCI_MGMT) &&
+	if (hci_dev_test_flag(hdev, HCI_MGMT) &&
 	    !test_and_set_bit(HCI_CONN_MGMT_CONNECTED, &hcon->flags))
-		mgmt_device_connected(hdev, hcon, 0, शून्य, 0);
+		mgmt_device_connected(hdev, hcon, 0, NULL, 0);
 	hci_dev_unlock(hdev);
 
 	l2cap_connect(conn, cmd, data, L2CAP_CONN_RSP, 0);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक l2cap_connect_create_rsp(काष्ठा l2cap_conn *conn,
-				    काष्ठा l2cap_cmd_hdr *cmd, u16 cmd_len,
+static int l2cap_connect_create_rsp(struct l2cap_conn *conn,
+				    struct l2cap_cmd_hdr *cmd, u16 cmd_len,
 				    u8 *data)
-अणु
-	काष्ठा l2cap_conn_rsp *rsp = (काष्ठा l2cap_conn_rsp *) data;
+{
+	struct l2cap_conn_rsp *rsp = (struct l2cap_conn_rsp *) data;
 	u16 scid, dcid, result, status;
-	काष्ठा l2cap_chan *chan;
+	struct l2cap_chan *chan;
 	u8 req[128];
-	पूर्णांक err;
+	int err;
 
-	अगर (cmd_len < माप(*rsp))
-		वापस -EPROTO;
+	if (cmd_len < sizeof(*rsp))
+		return -EPROTO;
 
 	scid   = __le16_to_cpu(rsp->scid);
 	dcid   = __le16_to_cpu(rsp->dcid);
@@ -4268,71 +4267,71 @@ sendresp:
 
 	mutex_lock(&conn->chan_lock);
 
-	अगर (scid) अणु
+	if (scid) {
 		chan = __l2cap_get_chan_by_scid(conn, scid);
-		अगर (!chan) अणु
+		if (!chan) {
 			err = -EBADSLT;
-			जाओ unlock;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			goto unlock;
+		}
+	} else {
 		chan = __l2cap_get_chan_by_ident(conn, cmd->ident);
-		अगर (!chan) अणु
+		if (!chan) {
 			err = -EBADSLT;
-			जाओ unlock;
-		पूर्ण
-	पूर्ण
+			goto unlock;
+		}
+	}
 
 	err = 0;
 
 	l2cap_chan_lock(chan);
 
-	चयन (result) अणु
-	हाल L2CAP_CR_SUCCESS:
+	switch (result) {
+	case L2CAP_CR_SUCCESS:
 		l2cap_state_change(chan, BT_CONFIG);
 		chan->ident = 0;
 		chan->dcid = dcid;
 		clear_bit(CONF_CONNECT_PEND, &chan->conf_state);
 
-		अगर (test_and_set_bit(CONF_REQ_SENT, &chan->conf_state))
-			अवरोध;
+		if (test_and_set_bit(CONF_REQ_SENT, &chan->conf_state))
+			break;
 
 		l2cap_send_cmd(conn, l2cap_get_ident(conn), L2CAP_CONF_REQ,
-			       l2cap_build_conf_req(chan, req, माप(req)), req);
+			       l2cap_build_conf_req(chan, req, sizeof(req)), req);
 		chan->num_conf_req++;
-		अवरोध;
+		break;
 
-	हाल L2CAP_CR_PEND:
+	case L2CAP_CR_PEND:
 		set_bit(CONF_CONNECT_PEND, &chan->conf_state);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		l2cap_chan_del(chan, ECONNREFUSED);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	l2cap_chan_unlock(chan);
 
 unlock:
 	mutex_unlock(&conn->chan_lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल अंतरभूत व्योम set_शेष_fcs(काष्ठा l2cap_chan *chan)
-अणु
-	/* FCS is enabled only in ERTM or streaming mode, अगर one or both
+static inline void set_default_fcs(struct l2cap_chan *chan)
+{
+	/* FCS is enabled only in ERTM or streaming mode, if one or both
 	 * sides request it.
 	 */
-	अगर (chan->mode != L2CAP_MODE_ERTM && chan->mode != L2CAP_MODE_STREAMING)
+	if (chan->mode != L2CAP_MODE_ERTM && chan->mode != L2CAP_MODE_STREAMING)
 		chan->fcs = L2CAP_FCS_NONE;
-	अन्यथा अगर (!test_bit(CONF_RECV_NO_FCS, &chan->conf_state))
+	else if (!test_bit(CONF_RECV_NO_FCS, &chan->conf_state))
 		chan->fcs = L2CAP_FCS_CRC16;
-पूर्ण
+}
 
-अटल व्योम l2cap_send_efs_conf_rsp(काष्ठा l2cap_chan *chan, व्योम *data,
+static void l2cap_send_efs_conf_rsp(struct l2cap_chan *chan, void *data,
 				    u8 ident, u16 flags)
-अणु
-	काष्ठा l2cap_conn *conn = chan->conn;
+{
+	struct l2cap_conn *conn = chan->conn;
 
 	BT_DBG("conn %p chan %p ident %d flags 0x%4.4x", conn, chan, ident,
 	       flags);
@@ -4343,32 +4342,32 @@ unlock:
 	l2cap_send_cmd(conn, ident, L2CAP_CONF_RSP,
 		       l2cap_build_conf_rsp(chan, data,
 					    L2CAP_CONF_SUCCESS, flags), data);
-पूर्ण
+}
 
-अटल व्योम cmd_reject_invalid_cid(काष्ठा l2cap_conn *conn, u8 ident,
+static void cmd_reject_invalid_cid(struct l2cap_conn *conn, u8 ident,
 				   u16 scid, u16 dcid)
-अणु
-	काष्ठा l2cap_cmd_rej_cid rej;
+{
+	struct l2cap_cmd_rej_cid rej;
 
 	rej.reason = cpu_to_le16(L2CAP_REJ_INVALID_CID);
 	rej.scid = __cpu_to_le16(scid);
 	rej.dcid = __cpu_to_le16(dcid);
 
-	l2cap_send_cmd(conn, ident, L2CAP_COMMAND_REJ, माप(rej), &rej);
-पूर्ण
+	l2cap_send_cmd(conn, ident, L2CAP_COMMAND_REJ, sizeof(rej), &rej);
+}
 
-अटल अंतरभूत पूर्णांक l2cap_config_req(काष्ठा l2cap_conn *conn,
-				   काष्ठा l2cap_cmd_hdr *cmd, u16 cmd_len,
+static inline int l2cap_config_req(struct l2cap_conn *conn,
+				   struct l2cap_cmd_hdr *cmd, u16 cmd_len,
 				   u8 *data)
-अणु
-	काष्ठा l2cap_conf_req *req = (काष्ठा l2cap_conf_req *) data;
+{
+	struct l2cap_conf_req *req = (struct l2cap_conf_req *) data;
 	u16 dcid, flags;
 	u8 rsp[64];
-	काष्ठा l2cap_chan *chan;
-	पूर्णांक len, err = 0;
+	struct l2cap_chan *chan;
+	int len, err = 0;
 
-	अगर (cmd_len < माप(*req))
-		वापस -EPROTO;
+	if (cmd_len < sizeof(*req))
+		return -EPROTO;
 
 	dcid  = __le16_to_cpu(req->dcid);
 	flags = __le16_to_cpu(req->flags);
@@ -4376,45 +4375,45 @@ unlock:
 	BT_DBG("dcid 0x%4.4x flags 0x%2.2x", dcid, flags);
 
 	chan = l2cap_get_chan_by_scid(conn, dcid);
-	अगर (!chan) अणु
+	if (!chan) {
 		cmd_reject_invalid_cid(conn, cmd->ident, dcid, 0);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (chan->state != BT_CONFIG && chan->state != BT_CONNECT2 &&
-	    chan->state != BT_CONNECTED) अणु
+	if (chan->state != BT_CONFIG && chan->state != BT_CONNECT2 &&
+	    chan->state != BT_CONNECTED) {
 		cmd_reject_invalid_cid(conn, cmd->ident, chan->scid,
 				       chan->dcid);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	/* Reject अगर config buffer is too small. */
-	len = cmd_len - माप(*req);
-	अगर (chan->conf_len + len > माप(chan->conf_req)) अणु
+	/* Reject if config buffer is too small. */
+	len = cmd_len - sizeof(*req);
+	if (chan->conf_len + len > sizeof(chan->conf_req)) {
 		l2cap_send_cmd(conn, cmd->ident, L2CAP_CONF_RSP,
 			       l2cap_build_conf_rsp(chan, rsp,
 			       L2CAP_CONF_REJECT, flags), rsp);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	/* Store config. */
-	स_नकल(chan->conf_req + chan->conf_len, req->data, len);
+	memcpy(chan->conf_req + chan->conf_len, req->data, len);
 	chan->conf_len += len;
 
-	अगर (flags & L2CAP_CONF_FLAG_CONTINUATION) अणु
+	if (flags & L2CAP_CONF_FLAG_CONTINUATION) {
 		/* Incomplete config. Send empty response. */
 		l2cap_send_cmd(conn, cmd->ident, L2CAP_CONF_RSP,
 			       l2cap_build_conf_rsp(chan, rsp,
 			       L2CAP_CONF_SUCCESS, flags), rsp);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	/* Complete config. */
-	len = l2cap_parse_conf_req(chan, rsp, माप(rsp));
-	अगर (len < 0) अणु
+	len = l2cap_parse_conf_req(chan, rsp, sizeof(rsp));
+	if (len < 0) {
 		l2cap_send_disconn_req(chan, ECONNRESET);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	chan->ident = cmd->ident;
 	l2cap_send_cmd(conn, cmd->ident, L2CAP_CONF_RSP, len, rsp);
@@ -4423,62 +4422,62 @@ unlock:
 	/* Reset config buffer. */
 	chan->conf_len = 0;
 
-	अगर (!test_bit(CONF_OUTPUT_DONE, &chan->conf_state))
-		जाओ unlock;
+	if (!test_bit(CONF_OUTPUT_DONE, &chan->conf_state))
+		goto unlock;
 
-	अगर (test_bit(CONF_INPUT_DONE, &chan->conf_state)) अणु
-		set_शेष_fcs(chan);
+	if (test_bit(CONF_INPUT_DONE, &chan->conf_state)) {
+		set_default_fcs(chan);
 
-		अगर (chan->mode == L2CAP_MODE_ERTM ||
+		if (chan->mode == L2CAP_MODE_ERTM ||
 		    chan->mode == L2CAP_MODE_STREAMING)
-			err = l2cap_erपंचांग_init(chan);
+			err = l2cap_ertm_init(chan);
 
-		अगर (err < 0)
+		if (err < 0)
 			l2cap_send_disconn_req(chan, -err);
-		अन्यथा
-			l2cap_chan_पढ़ोy(chan);
+		else
+			l2cap_chan_ready(chan);
 
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर (!test_and_set_bit(CONF_REQ_SENT, &chan->conf_state)) अणु
+	if (!test_and_set_bit(CONF_REQ_SENT, &chan->conf_state)) {
 		u8 buf[64];
 		l2cap_send_cmd(conn, l2cap_get_ident(conn), L2CAP_CONF_REQ,
-			       l2cap_build_conf_req(chan, buf, माप(buf)), buf);
+			       l2cap_build_conf_req(chan, buf, sizeof(buf)), buf);
 		chan->num_conf_req++;
-	पूर्ण
+	}
 
 	/* Got Conf Rsp PENDING from remote side and assume we sent
 	   Conf Rsp PENDING in the code above */
-	अगर (test_bit(CONF_REM_CONF_PEND, &chan->conf_state) &&
-	    test_bit(CONF_LOC_CONF_PEND, &chan->conf_state)) अणु
+	if (test_bit(CONF_REM_CONF_PEND, &chan->conf_state) &&
+	    test_bit(CONF_LOC_CONF_PEND, &chan->conf_state)) {
 
 		/* check compatibility */
 
-		/* Send rsp क्रम BR/EDR channel */
-		अगर (!chan->hs_hcon)
+		/* Send rsp for BR/EDR channel */
+		if (!chan->hs_hcon)
 			l2cap_send_efs_conf_rsp(chan, rsp, cmd->ident, flags);
-		अन्यथा
+		else
 			chan->ident = cmd->ident;
-	पूर्ण
+	}
 
 unlock:
 	l2cap_chan_unlock(chan);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल अंतरभूत पूर्णांक l2cap_config_rsp(काष्ठा l2cap_conn *conn,
-				   काष्ठा l2cap_cmd_hdr *cmd, u16 cmd_len,
+static inline int l2cap_config_rsp(struct l2cap_conn *conn,
+				   struct l2cap_cmd_hdr *cmd, u16 cmd_len,
 				   u8 *data)
-अणु
-	काष्ठा l2cap_conf_rsp *rsp = (काष्ठा l2cap_conf_rsp *)data;
+{
+	struct l2cap_conf_rsp *rsp = (struct l2cap_conf_rsp *)data;
 	u16 scid, flags, result;
-	काष्ठा l2cap_chan *chan;
-	पूर्णांक len = cmd_len - माप(*rsp);
-	पूर्णांक err = 0;
+	struct l2cap_chan *chan;
+	int len = cmd_len - sizeof(*rsp);
+	int err = 0;
 
-	अगर (cmd_len < माप(*rsp))
-		वापस -EPROTO;
+	if (cmd_len < sizeof(*rsp))
+		return -EPROTO;
 
 	scid   = __le16_to_cpu(rsp->scid);
 	flags  = __le16_to_cpu(rsp->flags);
@@ -4488,110 +4487,110 @@ unlock:
 	       result, len);
 
 	chan = l2cap_get_chan_by_scid(conn, scid);
-	अगर (!chan)
-		वापस 0;
+	if (!chan)
+		return 0;
 
-	चयन (result) अणु
-	हाल L2CAP_CONF_SUCCESS:
+	switch (result) {
+	case L2CAP_CONF_SUCCESS:
 		l2cap_conf_rfc_get(chan, rsp->data, len);
 		clear_bit(CONF_REM_CONF_PEND, &chan->conf_state);
-		अवरोध;
+		break;
 
-	हाल L2CAP_CONF_PENDING:
+	case L2CAP_CONF_PENDING:
 		set_bit(CONF_REM_CONF_PEND, &chan->conf_state);
 
-		अगर (test_bit(CONF_LOC_CONF_PEND, &chan->conf_state)) अणु
-			अक्षर buf[64];
+		if (test_bit(CONF_LOC_CONF_PEND, &chan->conf_state)) {
+			char buf[64];
 
 			len = l2cap_parse_conf_rsp(chan, rsp->data, len,
-						   buf, माप(buf), &result);
-			अगर (len < 0) अणु
+						   buf, sizeof(buf), &result);
+			if (len < 0) {
 				l2cap_send_disconn_req(chan, ECONNRESET);
-				जाओ करोne;
-			पूर्ण
+				goto done;
+			}
 
-			अगर (!chan->hs_hcon) अणु
+			if (!chan->hs_hcon) {
 				l2cap_send_efs_conf_rsp(chan, buf, cmd->ident,
 							0);
-			पूर्ण अन्यथा अणु
-				अगर (l2cap_check_efs(chan)) अणु
+			} else {
+				if (l2cap_check_efs(chan)) {
 					amp_create_logical_link(chan);
 					chan->ident = cmd->ident;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-		जाओ करोne;
+				}
+			}
+		}
+		goto done;
 
-	हाल L2CAP_CONF_UNKNOWN:
-	हाल L2CAP_CONF_UNACCEPT:
-		अगर (chan->num_conf_rsp <= L2CAP_CONF_MAX_CONF_RSP) अणु
-			अक्षर req[64];
+	case L2CAP_CONF_UNKNOWN:
+	case L2CAP_CONF_UNACCEPT:
+		if (chan->num_conf_rsp <= L2CAP_CONF_MAX_CONF_RSP) {
+			char req[64];
 
-			अगर (len > माप(req) - माप(काष्ठा l2cap_conf_req)) अणु
+			if (len > sizeof(req) - sizeof(struct l2cap_conf_req)) {
 				l2cap_send_disconn_req(chan, ECONNRESET);
-				जाओ करोne;
-			पूर्ण
+				goto done;
+			}
 
 			/* throw out any old stored conf requests */
 			result = L2CAP_CONF_SUCCESS;
 			len = l2cap_parse_conf_rsp(chan, rsp->data, len,
-						   req, माप(req), &result);
-			अगर (len < 0) अणु
+						   req, sizeof(req), &result);
+			if (len < 0) {
 				l2cap_send_disconn_req(chan, ECONNRESET);
-				जाओ करोne;
-			पूर्ण
+				goto done;
+			}
 
 			l2cap_send_cmd(conn, l2cap_get_ident(conn),
 				       L2CAP_CONF_REQ, len, req);
 			chan->num_conf_req++;
-			अगर (result != L2CAP_CONF_SUCCESS)
-				जाओ करोne;
-			अवरोध;
-		पूर्ण
+			if (result != L2CAP_CONF_SUCCESS)
+				goto done;
+			break;
+		}
 		fallthrough;
 
-	शेष:
+	default:
 		l2cap_chan_set_err(chan, ECONNRESET);
 
-		__set_chan_समयr(chan, L2CAP_DISC_REJ_TIMEOUT);
+		__set_chan_timer(chan, L2CAP_DISC_REJ_TIMEOUT);
 		l2cap_send_disconn_req(chan, ECONNRESET);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (flags & L2CAP_CONF_FLAG_CONTINUATION)
-		जाओ करोne;
+	if (flags & L2CAP_CONF_FLAG_CONTINUATION)
+		goto done;
 
 	set_bit(CONF_INPUT_DONE, &chan->conf_state);
 
-	अगर (test_bit(CONF_OUTPUT_DONE, &chan->conf_state)) अणु
-		set_शेष_fcs(chan);
+	if (test_bit(CONF_OUTPUT_DONE, &chan->conf_state)) {
+		set_default_fcs(chan);
 
-		अगर (chan->mode == L2CAP_MODE_ERTM ||
+		if (chan->mode == L2CAP_MODE_ERTM ||
 		    chan->mode == L2CAP_MODE_STREAMING)
-			err = l2cap_erपंचांग_init(chan);
+			err = l2cap_ertm_init(chan);
 
-		अगर (err < 0)
+		if (err < 0)
 			l2cap_send_disconn_req(chan, -err);
-		अन्यथा
-			l2cap_chan_पढ़ोy(chan);
-	पूर्ण
+		else
+			l2cap_chan_ready(chan);
+	}
 
-करोne:
+done:
 	l2cap_chan_unlock(chan);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल अंतरभूत पूर्णांक l2cap_disconnect_req(काष्ठा l2cap_conn *conn,
-				       काष्ठा l2cap_cmd_hdr *cmd, u16 cmd_len,
+static inline int l2cap_disconnect_req(struct l2cap_conn *conn,
+				       struct l2cap_cmd_hdr *cmd, u16 cmd_len,
 				       u8 *data)
-अणु
-	काष्ठा l2cap_disconn_req *req = (काष्ठा l2cap_disconn_req *) data;
-	काष्ठा l2cap_disconn_rsp rsp;
+{
+	struct l2cap_disconn_req *req = (struct l2cap_disconn_req *) data;
+	struct l2cap_disconn_rsp rsp;
 	u16 dcid, scid;
-	काष्ठा l2cap_chan *chan;
+	struct l2cap_chan *chan;
 
-	अगर (cmd_len != माप(*req))
-		वापस -EPROTO;
+	if (cmd_len != sizeof(*req))
+		return -EPROTO;
 
 	scid = __le16_to_cpu(req->scid);
 	dcid = __le16_to_cpu(req->dcid);
@@ -4601,43 +4600,43 @@ unlock:
 	mutex_lock(&conn->chan_lock);
 
 	chan = __l2cap_get_chan_by_scid(conn, dcid);
-	अगर (!chan) अणु
+	if (!chan) {
 		mutex_unlock(&conn->chan_lock);
 		cmd_reject_invalid_cid(conn, cmd->ident, dcid, scid);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	l2cap_chan_hold(chan);
 	l2cap_chan_lock(chan);
 
 	rsp.dcid = cpu_to_le16(chan->scid);
 	rsp.scid = cpu_to_le16(chan->dcid);
-	l2cap_send_cmd(conn, cmd->ident, L2CAP_DISCONN_RSP, माप(rsp), &rsp);
+	l2cap_send_cmd(conn, cmd->ident, L2CAP_DISCONN_RSP, sizeof(rsp), &rsp);
 
-	chan->ops->set_shutकरोwn(chan);
+	chan->ops->set_shutdown(chan);
 
 	l2cap_chan_del(chan, ECONNRESET);
 
-	chan->ops->बंद(chan);
+	chan->ops->close(chan);
 
 	l2cap_chan_unlock(chan);
 	l2cap_chan_put(chan);
 
 	mutex_unlock(&conn->chan_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक l2cap_disconnect_rsp(काष्ठा l2cap_conn *conn,
-				       काष्ठा l2cap_cmd_hdr *cmd, u16 cmd_len,
+static inline int l2cap_disconnect_rsp(struct l2cap_conn *conn,
+				       struct l2cap_cmd_hdr *cmd, u16 cmd_len,
 				       u8 *data)
-अणु
-	काष्ठा l2cap_disconn_rsp *rsp = (काष्ठा l2cap_disconn_rsp *) data;
+{
+	struct l2cap_disconn_rsp *rsp = (struct l2cap_disconn_rsp *) data;
 	u16 dcid, scid;
-	काष्ठा l2cap_chan *chan;
+	struct l2cap_chan *chan;
 
-	अगर (cmd_len != माप(*rsp))
-		वापस -EPROTO;
+	if (cmd_len != sizeof(*rsp))
+		return -EPROTO;
 
 	scid = __le16_to_cpu(rsp->scid);
 	dcid = __le16_to_cpu(rsp->dcid);
@@ -4647,93 +4646,93 @@ unlock:
 	mutex_lock(&conn->chan_lock);
 
 	chan = __l2cap_get_chan_by_scid(conn, scid);
-	अगर (!chan) अणु
+	if (!chan) {
 		mutex_unlock(&conn->chan_lock);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	l2cap_chan_hold(chan);
 	l2cap_chan_lock(chan);
 
-	अगर (chan->state != BT_DISCONN) अणु
+	if (chan->state != BT_DISCONN) {
 		l2cap_chan_unlock(chan);
 		l2cap_chan_put(chan);
 		mutex_unlock(&conn->chan_lock);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	l2cap_chan_del(chan, 0);
 
-	chan->ops->बंद(chan);
+	chan->ops->close(chan);
 
 	l2cap_chan_unlock(chan);
 	l2cap_chan_put(chan);
 
 	mutex_unlock(&conn->chan_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक l2cap_inक्रमmation_req(काष्ठा l2cap_conn *conn,
-					काष्ठा l2cap_cmd_hdr *cmd, u16 cmd_len,
+static inline int l2cap_information_req(struct l2cap_conn *conn,
+					struct l2cap_cmd_hdr *cmd, u16 cmd_len,
 					u8 *data)
-अणु
-	काष्ठा l2cap_info_req *req = (काष्ठा l2cap_info_req *) data;
+{
+	struct l2cap_info_req *req = (struct l2cap_info_req *) data;
 	u16 type;
 
-	अगर (cmd_len != माप(*req))
-		वापस -EPROTO;
+	if (cmd_len != sizeof(*req))
+		return -EPROTO;
 
 	type = __le16_to_cpu(req->type);
 
 	BT_DBG("type 0x%4.4x", type);
 
-	अगर (type == L2CAP_IT_FEAT_MASK) अणु
+	if (type == L2CAP_IT_FEAT_MASK) {
 		u8 buf[8];
 		u32 feat_mask = l2cap_feat_mask;
-		काष्ठा l2cap_info_rsp *rsp = (काष्ठा l2cap_info_rsp *) buf;
+		struct l2cap_info_rsp *rsp = (struct l2cap_info_rsp *) buf;
 		rsp->type   = cpu_to_le16(L2CAP_IT_FEAT_MASK);
 		rsp->result = cpu_to_le16(L2CAP_IR_SUCCESS);
-		अगर (!disable_erपंचांग)
+		if (!disable_ertm)
 			feat_mask |= L2CAP_FEAT_ERTM | L2CAP_FEAT_STREAMING
 				| L2CAP_FEAT_FCS;
-		अगर (conn->local_fixed_chan & L2CAP_FC_A2MP)
+		if (conn->local_fixed_chan & L2CAP_FC_A2MP)
 			feat_mask |= L2CAP_FEAT_EXT_FLOW
 				| L2CAP_FEAT_EXT_WINDOW;
 
 		put_unaligned_le32(feat_mask, rsp->data);
-		l2cap_send_cmd(conn, cmd->ident, L2CAP_INFO_RSP, माप(buf),
+		l2cap_send_cmd(conn, cmd->ident, L2CAP_INFO_RSP, sizeof(buf),
 			       buf);
-	पूर्ण अन्यथा अगर (type == L2CAP_IT_FIXED_CHAN) अणु
+	} else if (type == L2CAP_IT_FIXED_CHAN) {
 		u8 buf[12];
-		काष्ठा l2cap_info_rsp *rsp = (काष्ठा l2cap_info_rsp *) buf;
+		struct l2cap_info_rsp *rsp = (struct l2cap_info_rsp *) buf;
 
 		rsp->type   = cpu_to_le16(L2CAP_IT_FIXED_CHAN);
 		rsp->result = cpu_to_le16(L2CAP_IR_SUCCESS);
 		rsp->data[0] = conn->local_fixed_chan;
-		स_रखो(rsp->data + 1, 0, 7);
-		l2cap_send_cmd(conn, cmd->ident, L2CAP_INFO_RSP, माप(buf),
+		memset(rsp->data + 1, 0, 7);
+		l2cap_send_cmd(conn, cmd->ident, L2CAP_INFO_RSP, sizeof(buf),
 			       buf);
-	पूर्ण अन्यथा अणु
-		काष्ठा l2cap_info_rsp rsp;
+	} else {
+		struct l2cap_info_rsp rsp;
 		rsp.type   = cpu_to_le16(type);
 		rsp.result = cpu_to_le16(L2CAP_IR_NOTSUPP);
-		l2cap_send_cmd(conn, cmd->ident, L2CAP_INFO_RSP, माप(rsp),
+		l2cap_send_cmd(conn, cmd->ident, L2CAP_INFO_RSP, sizeof(rsp),
 			       &rsp);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक l2cap_inक्रमmation_rsp(काष्ठा l2cap_conn *conn,
-					काष्ठा l2cap_cmd_hdr *cmd, u16 cmd_len,
+static inline int l2cap_information_rsp(struct l2cap_conn *conn,
+					struct l2cap_cmd_hdr *cmd, u16 cmd_len,
 					u8 *data)
-अणु
-	काष्ठा l2cap_info_rsp *rsp = (काष्ठा l2cap_info_rsp *) data;
+{
+	struct l2cap_info_rsp *rsp = (struct l2cap_info_rsp *) data;
 	u16 type, result;
 
-	अगर (cmd_len < माप(*rsp))
-		वापस -EPROTO;
+	if (cmd_len < sizeof(*rsp))
+		return -EPROTO;
 
 	type   = __le16_to_cpu(rsp->type);
 	result = __le16_to_cpu(rsp->result);
@@ -4741,68 +4740,68 @@ unlock:
 	BT_DBG("type 0x%4.4x result 0x%2.2x", type, result);
 
 	/* L2CAP Info req/rsp are unbound to channels, add extra checks */
-	अगर (cmd->ident != conn->info_ident ||
+	if (cmd->ident != conn->info_ident ||
 	    conn->info_state & L2CAP_INFO_FEAT_MASK_REQ_DONE)
-		वापस 0;
+		return 0;
 
-	cancel_delayed_work(&conn->info_समयr);
+	cancel_delayed_work(&conn->info_timer);
 
-	अगर (result != L2CAP_IR_SUCCESS) अणु
+	if (result != L2CAP_IR_SUCCESS) {
 		conn->info_state |= L2CAP_INFO_FEAT_MASK_REQ_DONE;
 		conn->info_ident = 0;
 
 		l2cap_conn_start(conn);
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	चयन (type) अणु
-	हाल L2CAP_IT_FEAT_MASK:
+	switch (type) {
+	case L2CAP_IT_FEAT_MASK:
 		conn->feat_mask = get_unaligned_le32(rsp->data);
 
-		अगर (conn->feat_mask & L2CAP_FEAT_FIXED_CHAN) अणु
-			काष्ठा l2cap_info_req req;
+		if (conn->feat_mask & L2CAP_FEAT_FIXED_CHAN) {
+			struct l2cap_info_req req;
 			req.type = cpu_to_le16(L2CAP_IT_FIXED_CHAN);
 
 			conn->info_ident = l2cap_get_ident(conn);
 
 			l2cap_send_cmd(conn, conn->info_ident,
-				       L2CAP_INFO_REQ, माप(req), &req);
-		पूर्ण अन्यथा अणु
+				       L2CAP_INFO_REQ, sizeof(req), &req);
+		} else {
 			conn->info_state |= L2CAP_INFO_FEAT_MASK_REQ_DONE;
 			conn->info_ident = 0;
 
 			l2cap_conn_start(conn);
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल L2CAP_IT_FIXED_CHAN:
+	case L2CAP_IT_FIXED_CHAN:
 		conn->remote_fixed_chan = rsp->data[0];
 		conn->info_state |= L2CAP_INFO_FEAT_MASK_REQ_DONE;
 		conn->info_ident = 0;
 
 		l2cap_conn_start(conn);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक l2cap_create_channel_req(काष्ठा l2cap_conn *conn,
-				    काष्ठा l2cap_cmd_hdr *cmd,
-				    u16 cmd_len, व्योम *data)
-अणु
-	काष्ठा l2cap_create_chan_req *req = data;
-	काष्ठा l2cap_create_chan_rsp rsp;
-	काष्ठा l2cap_chan *chan;
-	काष्ठा hci_dev *hdev;
+static int l2cap_create_channel_req(struct l2cap_conn *conn,
+				    struct l2cap_cmd_hdr *cmd,
+				    u16 cmd_len, void *data)
+{
+	struct l2cap_create_chan_req *req = data;
+	struct l2cap_create_chan_rsp rsp;
+	struct l2cap_chan *chan;
+	struct hci_dev *hdev;
 	u16 psm, scid;
 
-	अगर (cmd_len != माप(*req))
-		वापस -EPROTO;
+	if (cmd_len != sizeof(*req))
+		return -EPROTO;
 
-	अगर (!(conn->local_fixed_chan & L2CAP_FC_A2MP))
-		वापस -EINVAL;
+	if (!(conn->local_fixed_chan & L2CAP_FC_A2MP))
+		return -EINVAL;
 
 	psm = le16_to_cpu(req->psm);
 	scid = le16_to_cpu(req->scid);
@@ -4810,36 +4809,36 @@ unlock:
 	BT_DBG("psm 0x%2.2x, scid 0x%4.4x, amp_id %d", psm, scid, req->amp_id);
 
 	/* For controller id 0 make BR/EDR connection */
-	अगर (req->amp_id == AMP_ID_BREDR) अणु
+	if (req->amp_id == AMP_ID_BREDR) {
 		l2cap_connect(conn, cmd, data, L2CAP_CREATE_CHAN_RSP,
 			      req->amp_id);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* Validate AMP controller id */
 	hdev = hci_dev_get(req->amp_id);
-	अगर (!hdev)
-		जाओ error;
+	if (!hdev)
+		goto error;
 
-	अगर (hdev->dev_type != HCI_AMP || !test_bit(HCI_UP, &hdev->flags)) अणु
+	if (hdev->dev_type != HCI_AMP || !test_bit(HCI_UP, &hdev->flags)) {
 		hci_dev_put(hdev);
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	chan = l2cap_connect(conn, cmd, data, L2CAP_CREATE_CHAN_RSP,
 			     req->amp_id);
-	अगर (chan) अणु
-		काष्ठा amp_mgr *mgr = conn->hcon->amp_mgr;
-		काष्ठा hci_conn *hs_hcon;
+	if (chan) {
+		struct amp_mgr *mgr = conn->hcon->amp_mgr;
+		struct hci_conn *hs_hcon;
 
 		hs_hcon = hci_conn_hash_lookup_ba(hdev, AMP_LINK,
 						  &conn->hcon->dst);
-		अगर (!hs_hcon) अणु
+		if (!hs_hcon) {
 			hci_dev_put(hdev);
 			cmd_reject_invalid_cid(conn, cmd->ident, chan->scid,
 					       chan->dcid);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
 		BT_DBG("mgr %p bredr_chan %p hs_hcon %p", mgr, chan, hs_hcon);
 
@@ -4847,11 +4846,11 @@ unlock:
 		chan->hs_hcon = hs_hcon;
 		chan->fcs = L2CAP_FCS_NONE;
 		conn->mtu = hdev->block_mtu;
-	पूर्ण
+	}
 
 	hci_dev_put(hdev);
 
-	वापस 0;
+	return 0;
 
 error:
 	rsp.dcid = 0;
@@ -4860,14 +4859,14 @@ error:
 	rsp.status = cpu_to_le16(L2CAP_CS_NO_INFO);
 
 	l2cap_send_cmd(conn, cmd->ident, L2CAP_CREATE_CHAN_RSP,
-		       माप(rsp), &rsp);
+		       sizeof(rsp), &rsp);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम l2cap_send_move_chan_req(काष्ठा l2cap_chan *chan, u8 dest_amp_id)
-अणु
-	काष्ठा l2cap_move_chan_req req;
+static void l2cap_send_move_chan_req(struct l2cap_chan *chan, u8 dest_amp_id)
+{
+	struct l2cap_move_chan_req req;
 	u8 ident;
 
 	BT_DBG("chan %p, dest_amp_id %d", chan, dest_amp_id);
@@ -4878,15 +4877,15 @@ error:
 	req.icid = cpu_to_le16(chan->scid);
 	req.dest_amp_id = dest_amp_id;
 
-	l2cap_send_cmd(chan->conn, ident, L2CAP_MOVE_CHAN_REQ, माप(req),
+	l2cap_send_cmd(chan->conn, ident, L2CAP_MOVE_CHAN_REQ, sizeof(req),
 		       &req);
 
-	__set_chan_समयr(chan, L2CAP_MOVE_TIMEOUT);
-पूर्ण
+	__set_chan_timer(chan, L2CAP_MOVE_TIMEOUT);
+}
 
-अटल व्योम l2cap_send_move_chan_rsp(काष्ठा l2cap_chan *chan, u16 result)
-अणु
-	काष्ठा l2cap_move_chan_rsp rsp;
+static void l2cap_send_move_chan_rsp(struct l2cap_chan *chan, u16 result)
+{
+	struct l2cap_move_chan_rsp rsp;
 
 	BT_DBG("chan %p, result 0x%4.4x", chan, result);
 
@@ -4894,12 +4893,12 @@ error:
 	rsp.result = cpu_to_le16(result);
 
 	l2cap_send_cmd(chan->conn, chan->ident, L2CAP_MOVE_CHAN_RSP,
-		       माप(rsp), &rsp);
-पूर्ण
+		       sizeof(rsp), &rsp);
+}
 
-अटल व्योम l2cap_send_move_chan_cfm(काष्ठा l2cap_chan *chan, u16 result)
-अणु
-	काष्ठा l2cap_move_chan_cfm cfm;
+static void l2cap_send_move_chan_cfm(struct l2cap_chan *chan, u16 result)
+{
+	struct l2cap_move_chan_cfm cfm;
 
 	BT_DBG("chan %p, result 0x%4.4x", chan, result);
 
@@ -4909,14 +4908,14 @@ error:
 	cfm.result = cpu_to_le16(result);
 
 	l2cap_send_cmd(chan->conn, chan->ident, L2CAP_MOVE_CHAN_CFM,
-		       माप(cfm), &cfm);
+		       sizeof(cfm), &cfm);
 
-	__set_chan_समयr(chan, L2CAP_MOVE_TIMEOUT);
-पूर्ण
+	__set_chan_timer(chan, L2CAP_MOVE_TIMEOUT);
+}
 
-अटल व्योम l2cap_send_move_chan_cfm_icid(काष्ठा l2cap_conn *conn, u16 icid)
-अणु
-	काष्ठा l2cap_move_chan_cfm cfm;
+static void l2cap_send_move_chan_cfm_icid(struct l2cap_conn *conn, u16 icid)
+{
+	struct l2cap_move_chan_cfm cfm;
 
 	BT_DBG("conn %p, icid 0x%4.4x", conn, icid);
 
@@ -4924,543 +4923,543 @@ error:
 	cfm.result = cpu_to_le16(L2CAP_MC_UNCONFIRMED);
 
 	l2cap_send_cmd(conn, l2cap_get_ident(conn), L2CAP_MOVE_CHAN_CFM,
-		       माप(cfm), &cfm);
-पूर्ण
+		       sizeof(cfm), &cfm);
+}
 
-अटल व्योम l2cap_send_move_chan_cfm_rsp(काष्ठा l2cap_conn *conn, u8 ident,
+static void l2cap_send_move_chan_cfm_rsp(struct l2cap_conn *conn, u8 ident,
 					 u16 icid)
-अणु
-	काष्ठा l2cap_move_chan_cfm_rsp rsp;
+{
+	struct l2cap_move_chan_cfm_rsp rsp;
 
 	BT_DBG("icid 0x%4.4x", icid);
 
 	rsp.icid = cpu_to_le16(icid);
-	l2cap_send_cmd(conn, ident, L2CAP_MOVE_CHAN_CFM_RSP, माप(rsp), &rsp);
-पूर्ण
+	l2cap_send_cmd(conn, ident, L2CAP_MOVE_CHAN_CFM_RSP, sizeof(rsp), &rsp);
+}
 
-अटल व्योम __release_logical_link(काष्ठा l2cap_chan *chan)
-अणु
-	chan->hs_hchan = शून्य;
-	chan->hs_hcon = शून्य;
+static void __release_logical_link(struct l2cap_chan *chan)
+{
+	chan->hs_hchan = NULL;
+	chan->hs_hcon = NULL;
 
 	/* Placeholder - release the logical link */
-पूर्ण
+}
 
-अटल व्योम l2cap_logical_fail(काष्ठा l2cap_chan *chan)
-अणु
+static void l2cap_logical_fail(struct l2cap_chan *chan)
+{
 	/* Logical link setup failed */
-	अगर (chan->state != BT_CONNECTED) अणु
+	if (chan->state != BT_CONNECTED) {
 		/* Create channel failure, disconnect */
 		l2cap_send_disconn_req(chan, ECONNRESET);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	चयन (chan->move_role) अणु
-	हाल L2CAP_MOVE_ROLE_RESPONDER:
-		l2cap_move_करोne(chan);
+	switch (chan->move_role) {
+	case L2CAP_MOVE_ROLE_RESPONDER:
+		l2cap_move_done(chan);
 		l2cap_send_move_chan_rsp(chan, L2CAP_MR_NOT_SUPP);
-		अवरोध;
-	हाल L2CAP_MOVE_ROLE_INITIATOR:
-		अगर (chan->move_state == L2CAP_MOVE_WAIT_LOGICAL_COMP ||
-		    chan->move_state == L2CAP_MOVE_WAIT_LOGICAL_CFM) अणु
+		break;
+	case L2CAP_MOVE_ROLE_INITIATOR:
+		if (chan->move_state == L2CAP_MOVE_WAIT_LOGICAL_COMP ||
+		    chan->move_state == L2CAP_MOVE_WAIT_LOGICAL_CFM) {
 			/* Remote has only sent pending or
 			 * success responses, clean up
 			 */
-			l2cap_move_करोne(chan);
-		पूर्ण
+			l2cap_move_done(chan);
+		}
 
 		/* Other amp move states imply that the move
-		 * has alपढ़ोy पातed
+		 * has already aborted
 		 */
 		l2cap_send_move_chan_cfm(chan, L2CAP_MC_UNCONFIRMED);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम l2cap_logical_finish_create(काष्ठा l2cap_chan *chan,
-					काष्ठा hci_chan *hchan)
-अणु
-	काष्ठा l2cap_conf_rsp rsp;
+static void l2cap_logical_finish_create(struct l2cap_chan *chan,
+					struct hci_chan *hchan)
+{
+	struct l2cap_conf_rsp rsp;
 
 	chan->hs_hchan = hchan;
 	chan->hs_hcon->l2cap_data = chan->conn;
 
 	l2cap_send_efs_conf_rsp(chan, &rsp, chan->ident, 0);
 
-	अगर (test_bit(CONF_INPUT_DONE, &chan->conf_state)) अणु
-		पूर्णांक err;
+	if (test_bit(CONF_INPUT_DONE, &chan->conf_state)) {
+		int err;
 
-		set_शेष_fcs(chan);
+		set_default_fcs(chan);
 
-		err = l2cap_erपंचांग_init(chan);
-		अगर (err < 0)
+		err = l2cap_ertm_init(chan);
+		if (err < 0)
 			l2cap_send_disconn_req(chan, -err);
-		अन्यथा
-			l2cap_chan_पढ़ोy(chan);
-	पूर्ण
-पूर्ण
+		else
+			l2cap_chan_ready(chan);
+	}
+}
 
-अटल व्योम l2cap_logical_finish_move(काष्ठा l2cap_chan *chan,
-				      काष्ठा hci_chan *hchan)
-अणु
+static void l2cap_logical_finish_move(struct l2cap_chan *chan,
+				      struct hci_chan *hchan)
+{
 	chan->hs_hcon = hchan->conn;
 	chan->hs_hcon->l2cap_data = chan->conn;
 
 	BT_DBG("move_state %d", chan->move_state);
 
-	चयन (chan->move_state) अणु
-	हाल L2CAP_MOVE_WAIT_LOGICAL_COMP:
+	switch (chan->move_state) {
+	case L2CAP_MOVE_WAIT_LOGICAL_COMP:
 		/* Move confirm will be sent after a success
 		 * response is received
 		 */
 		chan->move_state = L2CAP_MOVE_WAIT_RSP_SUCCESS;
-		अवरोध;
-	हाल L2CAP_MOVE_WAIT_LOGICAL_CFM:
-		अगर (test_bit(CONN_LOCAL_BUSY, &chan->conn_state)) अणु
+		break;
+	case L2CAP_MOVE_WAIT_LOGICAL_CFM:
+		if (test_bit(CONN_LOCAL_BUSY, &chan->conn_state)) {
 			chan->move_state = L2CAP_MOVE_WAIT_LOCAL_BUSY;
-		पूर्ण अन्यथा अगर (chan->move_role == L2CAP_MOVE_ROLE_INITIATOR) अणु
+		} else if (chan->move_role == L2CAP_MOVE_ROLE_INITIATOR) {
 			chan->move_state = L2CAP_MOVE_WAIT_CONFIRM_RSP;
 			l2cap_send_move_chan_cfm(chan, L2CAP_MC_CONFIRMED);
-		पूर्ण अन्यथा अगर (chan->move_role == L2CAP_MOVE_ROLE_RESPONDER) अणु
+		} else if (chan->move_role == L2CAP_MOVE_ROLE_RESPONDER) {
 			chan->move_state = L2CAP_MOVE_WAIT_CONFIRM;
 			l2cap_send_move_chan_rsp(chan, L2CAP_MR_SUCCESS);
-		पूर्ण
-		अवरोध;
-	शेष:
-		/* Move was not in expected state, मुक्त the channel */
+		}
+		break;
+	default:
+		/* Move was not in expected state, free the channel */
 		__release_logical_link(chan);
 
 		chan->move_state = L2CAP_MOVE_STABLE;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* Call with chan locked */
-व्योम l2cap_logical_cfm(काष्ठा l2cap_chan *chan, काष्ठा hci_chan *hchan,
+void l2cap_logical_cfm(struct l2cap_chan *chan, struct hci_chan *hchan,
 		       u8 status)
-अणु
+{
 	BT_DBG("chan %p, hchan %p, status %d", chan, hchan, status);
 
-	अगर (status) अणु
+	if (status) {
 		l2cap_logical_fail(chan);
 		__release_logical_link(chan);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (chan->state != BT_CONNECTED) अणु
-		/* Ignore logical link अगर channel is on BR/EDR */
-		अगर (chan->local_amp_id != AMP_ID_BREDR)
+	if (chan->state != BT_CONNECTED) {
+		/* Ignore logical link if channel is on BR/EDR */
+		if (chan->local_amp_id != AMP_ID_BREDR)
 			l2cap_logical_finish_create(chan, hchan);
-	पूर्ण अन्यथा अणु
+	} else {
 		l2cap_logical_finish_move(chan, hchan);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम l2cap_move_start(काष्ठा l2cap_chan *chan)
-अणु
+void l2cap_move_start(struct l2cap_chan *chan)
+{
 	BT_DBG("chan %p", chan);
 
-	अगर (chan->local_amp_id == AMP_ID_BREDR) अणु
-		अगर (chan->chan_policy != BT_CHANNEL_POLICY_AMP_PREFERRED)
-			वापस;
+	if (chan->local_amp_id == AMP_ID_BREDR) {
+		if (chan->chan_policy != BT_CHANNEL_POLICY_AMP_PREFERRED)
+			return;
 		chan->move_role = L2CAP_MOVE_ROLE_INITIATOR;
 		chan->move_state = L2CAP_MOVE_WAIT_PREPARE;
 		/* Placeholder - start physical link setup */
-	पूर्ण अन्यथा अणु
+	} else {
 		chan->move_role = L2CAP_MOVE_ROLE_INITIATOR;
 		chan->move_state = L2CAP_MOVE_WAIT_RSP_SUCCESS;
 		chan->move_id = 0;
 		l2cap_move_setup(chan);
 		l2cap_send_move_chan_req(chan, 0);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम l2cap_करो_create(काष्ठा l2cap_chan *chan, पूर्णांक result,
+static void l2cap_do_create(struct l2cap_chan *chan, int result,
 			    u8 local_amp_id, u8 remote_amp_id)
-अणु
+{
 	BT_DBG("chan %p state %s %u -> %u", chan, state_to_string(chan->state),
 	       local_amp_id, remote_amp_id);
 
 	chan->fcs = L2CAP_FCS_NONE;
 
 	/* Outgoing channel on AMP */
-	अगर (chan->state == BT_CONNECT) अणु
-		अगर (result == L2CAP_CR_SUCCESS) अणु
+	if (chan->state == BT_CONNECT) {
+		if (result == L2CAP_CR_SUCCESS) {
 			chan->local_amp_id = local_amp_id;
 			l2cap_send_create_chan_req(chan, remote_amp_id);
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Revert to BR/EDR connect */
 			l2cap_send_conn_req(chan);
-		पूर्ण
+		}
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Incoming channel on AMP */
-	अगर (__l2cap_no_conn_pending(chan)) अणु
-		काष्ठा l2cap_conn_rsp rsp;
-		अक्षर buf[128];
+	if (__l2cap_no_conn_pending(chan)) {
+		struct l2cap_conn_rsp rsp;
+		char buf[128];
 		rsp.scid = cpu_to_le16(chan->dcid);
 		rsp.dcid = cpu_to_le16(chan->scid);
 
-		अगर (result == L2CAP_CR_SUCCESS) अणु
+		if (result == L2CAP_CR_SUCCESS) {
 			/* Send successful response */
 			rsp.result = cpu_to_le16(L2CAP_CR_SUCCESS);
 			rsp.status = cpu_to_le16(L2CAP_CS_NO_INFO);
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Send negative response */
 			rsp.result = cpu_to_le16(L2CAP_CR_NO_MEM);
 			rsp.status = cpu_to_le16(L2CAP_CS_NO_INFO);
-		पूर्ण
+		}
 
 		l2cap_send_cmd(chan->conn, chan->ident, L2CAP_CREATE_CHAN_RSP,
-			       माप(rsp), &rsp);
+			       sizeof(rsp), &rsp);
 
-		अगर (result == L2CAP_CR_SUCCESS) अणु
+		if (result == L2CAP_CR_SUCCESS) {
 			l2cap_state_change(chan, BT_CONFIG);
 			set_bit(CONF_REQ_SENT, &chan->conf_state);
 			l2cap_send_cmd(chan->conn, l2cap_get_ident(chan->conn),
 				       L2CAP_CONF_REQ,
-				       l2cap_build_conf_req(chan, buf, माप(buf)), buf);
+				       l2cap_build_conf_req(chan, buf, sizeof(buf)), buf);
 			chan->num_conf_req++;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम l2cap_करो_move_initiate(काष्ठा l2cap_chan *chan, u8 local_amp_id,
+static void l2cap_do_move_initiate(struct l2cap_chan *chan, u8 local_amp_id,
 				   u8 remote_amp_id)
-अणु
+{
 	l2cap_move_setup(chan);
 	chan->move_id = local_amp_id;
 	chan->move_state = L2CAP_MOVE_WAIT_RSP;
 
 	l2cap_send_move_chan_req(chan, remote_amp_id);
-पूर्ण
+}
 
-अटल व्योम l2cap_करो_move_respond(काष्ठा l2cap_chan *chan, पूर्णांक result)
-अणु
-	काष्ठा hci_chan *hchan = शून्य;
+static void l2cap_do_move_respond(struct l2cap_chan *chan, int result)
+{
+	struct hci_chan *hchan = NULL;
 
-	/* Placeholder - get hci_chan क्रम logical link */
+	/* Placeholder - get hci_chan for logical link */
 
-	अगर (hchan) अणु
-		अगर (hchan->state == BT_CONNECTED) अणु
-			/* Logical link is पढ़ोy to go */
+	if (hchan) {
+		if (hchan->state == BT_CONNECTED) {
+			/* Logical link is ready to go */
 			chan->hs_hcon = hchan->conn;
 			chan->hs_hcon->l2cap_data = chan->conn;
 			chan->move_state = L2CAP_MOVE_WAIT_CONFIRM;
 			l2cap_send_move_chan_rsp(chan, L2CAP_MR_SUCCESS);
 
 			l2cap_logical_cfm(chan, hchan, L2CAP_MR_SUCCESS);
-		पूर्ण अन्यथा अणु
-			/* Wait क्रम logical link to be पढ़ोy */
+		} else {
+			/* Wait for logical link to be ready */
 			chan->move_state = L2CAP_MOVE_WAIT_LOGICAL_CFM;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		/* Logical link not available */
 		l2cap_send_move_chan_rsp(chan, L2CAP_MR_NOT_ALLOWED);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम l2cap_करो_move_cancel(काष्ठा l2cap_chan *chan, पूर्णांक result)
-अणु
-	अगर (chan->move_role == L2CAP_MOVE_ROLE_RESPONDER) अणु
+static void l2cap_do_move_cancel(struct l2cap_chan *chan, int result)
+{
+	if (chan->move_role == L2CAP_MOVE_ROLE_RESPONDER) {
 		u8 rsp_result;
-		अगर (result == -EINVAL)
+		if (result == -EINVAL)
 			rsp_result = L2CAP_MR_BAD_ID;
-		अन्यथा
+		else
 			rsp_result = L2CAP_MR_NOT_ALLOWED;
 
 		l2cap_send_move_chan_rsp(chan, rsp_result);
-	पूर्ण
+	}
 
 	chan->move_role = L2CAP_MOVE_ROLE_NONE;
 	chan->move_state = L2CAP_MOVE_STABLE;
 
 	/* Restart data transmission */
-	l2cap_erपंचांग_send(chan);
-पूर्ण
+	l2cap_ertm_send(chan);
+}
 
 /* Invoke with locked chan */
-व्योम __l2cap_physical_cfm(काष्ठा l2cap_chan *chan, पूर्णांक result)
-अणु
+void __l2cap_physical_cfm(struct l2cap_chan *chan, int result)
+{
 	u8 local_amp_id = chan->local_amp_id;
 	u8 remote_amp_id = chan->remote_amp_id;
 
 	BT_DBG("chan %p, result %d, local_amp_id %d, remote_amp_id %d",
 	       chan, result, local_amp_id, remote_amp_id);
 
-	अगर (chan->state == BT_DISCONN || chan->state == BT_CLOSED)
-		वापस;
+	if (chan->state == BT_DISCONN || chan->state == BT_CLOSED)
+		return;
 
-	अगर (chan->state != BT_CONNECTED) अणु
-		l2cap_करो_create(chan, result, local_amp_id, remote_amp_id);
-	पूर्ण अन्यथा अगर (result != L2CAP_MR_SUCCESS) अणु
-		l2cap_करो_move_cancel(chan, result);
-	पूर्ण अन्यथा अणु
-		चयन (chan->move_role) अणु
-		हाल L2CAP_MOVE_ROLE_INITIATOR:
-			l2cap_करो_move_initiate(chan, local_amp_id,
+	if (chan->state != BT_CONNECTED) {
+		l2cap_do_create(chan, result, local_amp_id, remote_amp_id);
+	} else if (result != L2CAP_MR_SUCCESS) {
+		l2cap_do_move_cancel(chan, result);
+	} else {
+		switch (chan->move_role) {
+		case L2CAP_MOVE_ROLE_INITIATOR:
+			l2cap_do_move_initiate(chan, local_amp_id,
 					       remote_amp_id);
-			अवरोध;
-		हाल L2CAP_MOVE_ROLE_RESPONDER:
-			l2cap_करो_move_respond(chan, result);
-			अवरोध;
-		शेष:
-			l2cap_करो_move_cancel(chan, result);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		case L2CAP_MOVE_ROLE_RESPONDER:
+			l2cap_do_move_respond(chan, result);
+			break;
+		default:
+			l2cap_do_move_cancel(chan, result);
+			break;
+		}
+	}
+}
 
-अटल अंतरभूत पूर्णांक l2cap_move_channel_req(काष्ठा l2cap_conn *conn,
-					 काष्ठा l2cap_cmd_hdr *cmd,
-					 u16 cmd_len, व्योम *data)
-अणु
-	काष्ठा l2cap_move_chan_req *req = data;
-	काष्ठा l2cap_move_chan_rsp rsp;
-	काष्ठा l2cap_chan *chan;
+static inline int l2cap_move_channel_req(struct l2cap_conn *conn,
+					 struct l2cap_cmd_hdr *cmd,
+					 u16 cmd_len, void *data)
+{
+	struct l2cap_move_chan_req *req = data;
+	struct l2cap_move_chan_rsp rsp;
+	struct l2cap_chan *chan;
 	u16 icid = 0;
 	u16 result = L2CAP_MR_NOT_ALLOWED;
 
-	अगर (cmd_len != माप(*req))
-		वापस -EPROTO;
+	if (cmd_len != sizeof(*req))
+		return -EPROTO;
 
 	icid = le16_to_cpu(req->icid);
 
 	BT_DBG("icid 0x%4.4x, dest_amp_id %d", icid, req->dest_amp_id);
 
-	अगर (!(conn->local_fixed_chan & L2CAP_FC_A2MP))
-		वापस -EINVAL;
+	if (!(conn->local_fixed_chan & L2CAP_FC_A2MP))
+		return -EINVAL;
 
 	chan = l2cap_get_chan_by_dcid(conn, icid);
-	अगर (!chan) अणु
+	if (!chan) {
 		rsp.icid = cpu_to_le16(icid);
 		rsp.result = cpu_to_le16(L2CAP_MR_NOT_ALLOWED);
 		l2cap_send_cmd(conn, cmd->ident, L2CAP_MOVE_CHAN_RSP,
-			       माप(rsp), &rsp);
-		वापस 0;
-	पूर्ण
+			       sizeof(rsp), &rsp);
+		return 0;
+	}
 
 	chan->ident = cmd->ident;
 
-	अगर (chan->scid < L2CAP_CID_DYN_START ||
+	if (chan->scid < L2CAP_CID_DYN_START ||
 	    chan->chan_policy == BT_CHANNEL_POLICY_BREDR_ONLY ||
 	    (chan->mode != L2CAP_MODE_ERTM &&
-	     chan->mode != L2CAP_MODE_STREAMING)) अणु
+	     chan->mode != L2CAP_MODE_STREAMING)) {
 		result = L2CAP_MR_NOT_ALLOWED;
-		जाओ send_move_response;
-	पूर्ण
+		goto send_move_response;
+	}
 
-	अगर (chan->local_amp_id == req->dest_amp_id) अणु
+	if (chan->local_amp_id == req->dest_amp_id) {
 		result = L2CAP_MR_SAME_ID;
-		जाओ send_move_response;
-	पूर्ण
+		goto send_move_response;
+	}
 
-	अगर (req->dest_amp_id != AMP_ID_BREDR) अणु
-		काष्ठा hci_dev *hdev;
+	if (req->dest_amp_id != AMP_ID_BREDR) {
+		struct hci_dev *hdev;
 		hdev = hci_dev_get(req->dest_amp_id);
-		अगर (!hdev || hdev->dev_type != HCI_AMP ||
-		    !test_bit(HCI_UP, &hdev->flags)) अणु
-			अगर (hdev)
+		if (!hdev || hdev->dev_type != HCI_AMP ||
+		    !test_bit(HCI_UP, &hdev->flags)) {
+			if (hdev)
 				hci_dev_put(hdev);
 
 			result = L2CAP_MR_BAD_ID;
-			जाओ send_move_response;
-		पूर्ण
+			goto send_move_response;
+		}
 		hci_dev_put(hdev);
-	पूर्ण
+	}
 
 	/* Detect a move collision.  Only send a collision response
-	 * अगर this side has "lost", otherwise proceed with the move.
+	 * if this side has "lost", otherwise proceed with the move.
 	 * The winner has the larger bd_addr.
 	 */
-	अगर ((__chan_is_moving(chan) ||
+	if ((__chan_is_moving(chan) ||
 	     chan->move_role != L2CAP_MOVE_ROLE_NONE) &&
-	    bacmp(&conn->hcon->src, &conn->hcon->dst) > 0) अणु
+	    bacmp(&conn->hcon->src, &conn->hcon->dst) > 0) {
 		result = L2CAP_MR_COLLISION;
-		जाओ send_move_response;
-	पूर्ण
+		goto send_move_response;
+	}
 
 	chan->move_role = L2CAP_MOVE_ROLE_RESPONDER;
 	l2cap_move_setup(chan);
 	chan->move_id = req->dest_amp_id;
 
-	अगर (req->dest_amp_id == AMP_ID_BREDR) अणु
+	if (req->dest_amp_id == AMP_ID_BREDR) {
 		/* Moving to BR/EDR */
-		अगर (test_bit(CONN_LOCAL_BUSY, &chan->conn_state)) अणु
+		if (test_bit(CONN_LOCAL_BUSY, &chan->conn_state)) {
 			chan->move_state = L2CAP_MOVE_WAIT_LOCAL_BUSY;
 			result = L2CAP_MR_PEND;
-		पूर्ण अन्यथा अणु
+		} else {
 			chan->move_state = L2CAP_MOVE_WAIT_CONFIRM;
 			result = L2CAP_MR_SUCCESS;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		chan->move_state = L2CAP_MOVE_WAIT_PREPARE;
 		/* Placeholder - uncomment when amp functions are available */
 		/*amp_accept_physical(chan, req->dest_amp_id);*/
 		result = L2CAP_MR_PEND;
-	पूर्ण
+	}
 
 send_move_response:
 	l2cap_send_move_chan_rsp(chan, result);
 
 	l2cap_chan_unlock(chan);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम l2cap_move_जारी(काष्ठा l2cap_conn *conn, u16 icid, u16 result)
-अणु
-	काष्ठा l2cap_chan *chan;
-	काष्ठा hci_chan *hchan = शून्य;
+static void l2cap_move_continue(struct l2cap_conn *conn, u16 icid, u16 result)
+{
+	struct l2cap_chan *chan;
+	struct hci_chan *hchan = NULL;
 
 	chan = l2cap_get_chan_by_scid(conn, icid);
-	अगर (!chan) अणु
+	if (!chan) {
 		l2cap_send_move_chan_cfm_icid(conn, icid);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	__clear_chan_समयr(chan);
-	अगर (result == L2CAP_MR_PEND)
-		__set_chan_समयr(chan, L2CAP_MOVE_ERTX_TIMEOUT);
+	__clear_chan_timer(chan);
+	if (result == L2CAP_MR_PEND)
+		__set_chan_timer(chan, L2CAP_MOVE_ERTX_TIMEOUT);
 
-	चयन (chan->move_state) अणु
-	हाल L2CAP_MOVE_WAIT_LOGICAL_COMP:
+	switch (chan->move_state) {
+	case L2CAP_MOVE_WAIT_LOGICAL_COMP:
 		/* Move confirm will be sent when logical link
 		 * is complete.
 		 */
 		chan->move_state = L2CAP_MOVE_WAIT_LOGICAL_CFM;
-		अवरोध;
-	हाल L2CAP_MOVE_WAIT_RSP_SUCCESS:
-		अगर (result == L2CAP_MR_PEND) अणु
-			अवरोध;
-		पूर्ण अन्यथा अगर (test_bit(CONN_LOCAL_BUSY,
-				    &chan->conn_state)) अणु
+		break;
+	case L2CAP_MOVE_WAIT_RSP_SUCCESS:
+		if (result == L2CAP_MR_PEND) {
+			break;
+		} else if (test_bit(CONN_LOCAL_BUSY,
+				    &chan->conn_state)) {
 			chan->move_state = L2CAP_MOVE_WAIT_LOCAL_BUSY;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Logical link is up or moving to BR/EDR,
 			 * proceed with move
 			 */
 			chan->move_state = L2CAP_MOVE_WAIT_CONFIRM_RSP;
 			l2cap_send_move_chan_cfm(chan, L2CAP_MC_CONFIRMED);
-		पूर्ण
-		अवरोध;
-	हाल L2CAP_MOVE_WAIT_RSP:
+		}
+		break;
+	case L2CAP_MOVE_WAIT_RSP:
 		/* Moving to AMP */
-		अगर (result == L2CAP_MR_SUCCESS) अणु
-			/* Remote is पढ़ोy, send confirm immediately
-			 * after logical link is पढ़ोy
+		if (result == L2CAP_MR_SUCCESS) {
+			/* Remote is ready, send confirm immediately
+			 * after logical link is ready
 			 */
 			chan->move_state = L2CAP_MOVE_WAIT_LOGICAL_CFM;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Both logical link and move success
 			 * are required to confirm
 			 */
 			chan->move_state = L2CAP_MOVE_WAIT_LOGICAL_COMP;
-		पूर्ण
+		}
 
-		/* Placeholder - get hci_chan क्रम logical link */
-		अगर (!hchan) अणु
+		/* Placeholder - get hci_chan for logical link */
+		if (!hchan) {
 			/* Logical link not available */
 			l2cap_send_move_chan_cfm(chan, L2CAP_MC_UNCONFIRMED);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		/* If the logical link is not yet connected, करो not
+		/* If the logical link is not yet connected, do not
 		 * send confirmation.
 		 */
-		अगर (hchan->state != BT_CONNECTED)
-			अवरोध;
+		if (hchan->state != BT_CONNECTED)
+			break;
 
-		/* Logical link is alपढ़ोy पढ़ोy to go */
+		/* Logical link is already ready to go */
 
 		chan->hs_hcon = hchan->conn;
 		chan->hs_hcon->l2cap_data = chan->conn;
 
-		अगर (result == L2CAP_MR_SUCCESS) अणु
+		if (result == L2CAP_MR_SUCCESS) {
 			/* Can confirm now */
 			l2cap_send_move_chan_cfm(chan, L2CAP_MC_CONFIRMED);
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Now only need move success
 			 * to confirm
 			 */
 			chan->move_state = L2CAP_MOVE_WAIT_RSP_SUCCESS;
-		पूर्ण
+		}
 
 		l2cap_logical_cfm(chan, hchan, L2CAP_MR_SUCCESS);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		/* Any other amp move state means the move failed. */
 		chan->move_id = chan->local_amp_id;
-		l2cap_move_करोne(chan);
+		l2cap_move_done(chan);
 		l2cap_send_move_chan_cfm(chan, L2CAP_MC_UNCONFIRMED);
-	पूर्ण
+	}
 
 	l2cap_chan_unlock(chan);
-पूर्ण
+}
 
-अटल व्योम l2cap_move_fail(काष्ठा l2cap_conn *conn, u8 ident, u16 icid,
+static void l2cap_move_fail(struct l2cap_conn *conn, u8 ident, u16 icid,
 			    u16 result)
-अणु
-	काष्ठा l2cap_chan *chan;
+{
+	struct l2cap_chan *chan;
 
 	chan = l2cap_get_chan_by_ident(conn, ident);
-	अगर (!chan) अणु
+	if (!chan) {
 		/* Could not locate channel, icid is best guess */
 		l2cap_send_move_chan_cfm_icid(conn, icid);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	__clear_chan_समयr(chan);
+	__clear_chan_timer(chan);
 
-	अगर (chan->move_role == L2CAP_MOVE_ROLE_INITIATOR) अणु
-		अगर (result == L2CAP_MR_COLLISION) अणु
+	if (chan->move_role == L2CAP_MOVE_ROLE_INITIATOR) {
+		if (result == L2CAP_MR_COLLISION) {
 			chan->move_role = L2CAP_MOVE_ROLE_RESPONDER;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Cleanup - cancel move */
 			chan->move_id = chan->local_amp_id;
-			l2cap_move_करोne(chan);
-		पूर्ण
-	पूर्ण
+			l2cap_move_done(chan);
+		}
+	}
 
 	l2cap_send_move_chan_cfm(chan, L2CAP_MC_UNCONFIRMED);
 
 	l2cap_chan_unlock(chan);
-पूर्ण
+}
 
-अटल पूर्णांक l2cap_move_channel_rsp(काष्ठा l2cap_conn *conn,
-				  काष्ठा l2cap_cmd_hdr *cmd,
-				  u16 cmd_len, व्योम *data)
-अणु
-	काष्ठा l2cap_move_chan_rsp *rsp = data;
+static int l2cap_move_channel_rsp(struct l2cap_conn *conn,
+				  struct l2cap_cmd_hdr *cmd,
+				  u16 cmd_len, void *data)
+{
+	struct l2cap_move_chan_rsp *rsp = data;
 	u16 icid, result;
 
-	अगर (cmd_len != माप(*rsp))
-		वापस -EPROTO;
+	if (cmd_len != sizeof(*rsp))
+		return -EPROTO;
 
 	icid = le16_to_cpu(rsp->icid);
 	result = le16_to_cpu(rsp->result);
 
 	BT_DBG("icid 0x%4.4x, result 0x%4.4x", icid, result);
 
-	अगर (result == L2CAP_MR_SUCCESS || result == L2CAP_MR_PEND)
-		l2cap_move_जारी(conn, icid, result);
-	अन्यथा
+	if (result == L2CAP_MR_SUCCESS || result == L2CAP_MR_PEND)
+		l2cap_move_continue(conn, icid, result);
+	else
 		l2cap_move_fail(conn, cmd->ident, icid, result);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक l2cap_move_channel_confirm(काष्ठा l2cap_conn *conn,
-				      काष्ठा l2cap_cmd_hdr *cmd,
-				      u16 cmd_len, व्योम *data)
-अणु
-	काष्ठा l2cap_move_chan_cfm *cfm = data;
-	काष्ठा l2cap_chan *chan;
+static int l2cap_move_channel_confirm(struct l2cap_conn *conn,
+				      struct l2cap_cmd_hdr *cmd,
+				      u16 cmd_len, void *data)
+{
+	struct l2cap_move_chan_cfm *cfm = data;
+	struct l2cap_chan *chan;
 	u16 icid, result;
 
-	अगर (cmd_len != माप(*cfm))
-		वापस -EPROTO;
+	if (cmd_len != sizeof(*cfm))
+		return -EPROTO;
 
 	icid = le16_to_cpu(cfm->icid);
 	result = le16_to_cpu(cfm->result);
@@ -5468,83 +5467,83 @@ send_move_response:
 	BT_DBG("icid 0x%4.4x, result 0x%4.4x", icid, result);
 
 	chan = l2cap_get_chan_by_dcid(conn, icid);
-	अगर (!chan) अणु
-		/* Spec requires a response even अगर the icid was not found */
+	if (!chan) {
+		/* Spec requires a response even if the icid was not found */
 		l2cap_send_move_chan_cfm_rsp(conn, cmd->ident, icid);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (chan->move_state == L2CAP_MOVE_WAIT_CONFIRM) अणु
-		अगर (result == L2CAP_MC_CONFIRMED) अणु
+	if (chan->move_state == L2CAP_MOVE_WAIT_CONFIRM) {
+		if (result == L2CAP_MC_CONFIRMED) {
 			chan->local_amp_id = chan->move_id;
-			अगर (chan->local_amp_id == AMP_ID_BREDR)
+			if (chan->local_amp_id == AMP_ID_BREDR)
 				__release_logical_link(chan);
-		पूर्ण अन्यथा अणु
+		} else {
 			chan->move_id = chan->local_amp_id;
-		पूर्ण
+		}
 
-		l2cap_move_करोne(chan);
-	पूर्ण
+		l2cap_move_done(chan);
+	}
 
 	l2cap_send_move_chan_cfm_rsp(conn, cmd->ident, icid);
 
 	l2cap_chan_unlock(chan);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक l2cap_move_channel_confirm_rsp(काष्ठा l2cap_conn *conn,
-						 काष्ठा l2cap_cmd_hdr *cmd,
-						 u16 cmd_len, व्योम *data)
-अणु
-	काष्ठा l2cap_move_chan_cfm_rsp *rsp = data;
-	काष्ठा l2cap_chan *chan;
+static inline int l2cap_move_channel_confirm_rsp(struct l2cap_conn *conn,
+						 struct l2cap_cmd_hdr *cmd,
+						 u16 cmd_len, void *data)
+{
+	struct l2cap_move_chan_cfm_rsp *rsp = data;
+	struct l2cap_chan *chan;
 	u16 icid;
 
-	अगर (cmd_len != माप(*rsp))
-		वापस -EPROTO;
+	if (cmd_len != sizeof(*rsp))
+		return -EPROTO;
 
 	icid = le16_to_cpu(rsp->icid);
 
 	BT_DBG("icid 0x%4.4x", icid);
 
 	chan = l2cap_get_chan_by_scid(conn, icid);
-	अगर (!chan)
-		वापस 0;
+	if (!chan)
+		return 0;
 
-	__clear_chan_समयr(chan);
+	__clear_chan_timer(chan);
 
-	अगर (chan->move_state == L2CAP_MOVE_WAIT_CONFIRM_RSP) अणु
+	if (chan->move_state == L2CAP_MOVE_WAIT_CONFIRM_RSP) {
 		chan->local_amp_id = chan->move_id;
 
-		अगर (chan->local_amp_id == AMP_ID_BREDR && chan->hs_hchan)
+		if (chan->local_amp_id == AMP_ID_BREDR && chan->hs_hchan)
 			__release_logical_link(chan);
 
-		l2cap_move_करोne(chan);
-	पूर्ण
+		l2cap_move_done(chan);
+	}
 
 	l2cap_chan_unlock(chan);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक l2cap_conn_param_update_req(काष्ठा l2cap_conn *conn,
-					      काष्ठा l2cap_cmd_hdr *cmd,
+static inline int l2cap_conn_param_update_req(struct l2cap_conn *conn,
+					      struct l2cap_cmd_hdr *cmd,
 					      u16 cmd_len, u8 *data)
-अणु
-	काष्ठा hci_conn *hcon = conn->hcon;
-	काष्ठा l2cap_conn_param_update_req *req;
-	काष्ठा l2cap_conn_param_update_rsp rsp;
+{
+	struct hci_conn *hcon = conn->hcon;
+	struct l2cap_conn_param_update_req *req;
+	struct l2cap_conn_param_update_rsp rsp;
 	u16 min, max, latency, to_multiplier;
-	पूर्णांक err;
+	int err;
 
-	अगर (hcon->role != HCI_ROLE_MASTER)
-		वापस -EINVAL;
+	if (hcon->role != HCI_ROLE_MASTER)
+		return -EINVAL;
 
-	अगर (cmd_len != माप(काष्ठा l2cap_conn_param_update_req))
-		वापस -EPROTO;
+	if (cmd_len != sizeof(struct l2cap_conn_param_update_req))
+		return -EPROTO;
 
-	req = (काष्ठा l2cap_conn_param_update_req *) data;
+	req = (struct l2cap_conn_param_update_req *) data;
 	min		= __le16_to_cpu(req->min);
 	max		= __le16_to_cpu(req->max);
 	latency		= __le16_to_cpu(req->latency);
@@ -5553,43 +5552,43 @@ send_move_response:
 	BT_DBG("min 0x%4.4x max 0x%4.4x latency: 0x%4.4x Timeout: 0x%4.4x",
 	       min, max, latency, to_multiplier);
 
-	स_रखो(&rsp, 0, माप(rsp));
+	memset(&rsp, 0, sizeof(rsp));
 
 	err = hci_check_conn_params(min, max, latency, to_multiplier);
-	अगर (err)
+	if (err)
 		rsp.result = cpu_to_le16(L2CAP_CONN_PARAM_REJECTED);
-	अन्यथा
+	else
 		rsp.result = cpu_to_le16(L2CAP_CONN_PARAM_ACCEPTED);
 
 	l2cap_send_cmd(conn, cmd->ident, L2CAP_CONN_PARAM_UPDATE_RSP,
-		       माप(rsp), &rsp);
+		       sizeof(rsp), &rsp);
 
-	अगर (!err) अणु
-		u8 store_hपूर्णांक;
+	if (!err) {
+		u8 store_hint;
 
-		store_hपूर्णांक = hci_le_conn_update(hcon, min, max, latency,
+		store_hint = hci_le_conn_update(hcon, min, max, latency,
 						to_multiplier);
 		mgmt_new_conn_param(hcon->hdev, &hcon->dst, hcon->dst_type,
-				    store_hपूर्णांक, min, max, latency,
+				    store_hint, min, max, latency,
 				    to_multiplier);
 
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक l2cap_le_connect_rsp(काष्ठा l2cap_conn *conn,
-				काष्ठा l2cap_cmd_hdr *cmd, u16 cmd_len,
+static int l2cap_le_connect_rsp(struct l2cap_conn *conn,
+				struct l2cap_cmd_hdr *cmd, u16 cmd_len,
 				u8 *data)
-अणु
-	काष्ठा l2cap_le_conn_rsp *rsp = (काष्ठा l2cap_le_conn_rsp *) data;
-	काष्ठा hci_conn *hcon = conn->hcon;
+{
+	struct l2cap_le_conn_rsp *rsp = (struct l2cap_le_conn_rsp *) data;
+	struct hci_conn *hcon = conn->hcon;
 	u16 dcid, mtu, mps, credits, result;
-	काष्ठा l2cap_chan *chan;
-	पूर्णांक err, sec_level;
+	struct l2cap_chan *chan;
+	int err, sec_level;
 
-	अगर (cmd_len < माप(*rsp))
-		वापस -EPROTO;
+	if (cmd_len < sizeof(*rsp))
+		return -EPROTO;
 
 	dcid    = __le16_to_cpu(rsp->dcid);
 	mtu     = __le16_to_cpu(rsp->mtu);
@@ -5597,10 +5596,10 @@ send_move_response:
 	credits = __le16_to_cpu(rsp->credits);
 	result  = __le16_to_cpu(rsp->result);
 
-	अगर (result == L2CAP_CR_LE_SUCCESS && (mtu < 23 || mps < 23 ||
+	if (result == L2CAP_CR_LE_SUCCESS && (mtu < 23 || mps < 23 ||
 					   dcid < L2CAP_CID_DYN_START ||
 					   dcid > L2CAP_CID_LE_DYN_END))
-		वापस -EPROTO;
+		return -EPROTO;
 
 	BT_DBG("dcid 0x%4.4x mtu %u mps %u credits %u result 0x%2.2x",
 	       dcid, mtu, mps, credits, result);
@@ -5608,156 +5607,156 @@ send_move_response:
 	mutex_lock(&conn->chan_lock);
 
 	chan = __l2cap_get_chan_by_ident(conn, cmd->ident);
-	अगर (!chan) अणु
+	if (!chan) {
 		err = -EBADSLT;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	err = 0;
 
 	l2cap_chan_lock(chan);
 
-	चयन (result) अणु
-	हाल L2CAP_CR_LE_SUCCESS:
-		अगर (__l2cap_get_chan_by_dcid(conn, dcid)) अणु
+	switch (result) {
+	case L2CAP_CR_LE_SUCCESS:
+		if (__l2cap_get_chan_by_dcid(conn, dcid)) {
 			err = -EBADSLT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		chan->ident = 0;
 		chan->dcid = dcid;
 		chan->omtu = mtu;
 		chan->remote_mps = mps;
 		chan->tx_credits = credits;
-		l2cap_chan_पढ़ोy(chan);
-		अवरोध;
+		l2cap_chan_ready(chan);
+		break;
 
-	हाल L2CAP_CR_LE_AUTHENTICATION:
-	हाल L2CAP_CR_LE_ENCRYPTION:
-		/* If we alपढ़ोy have MITM protection we can't करो
+	case L2CAP_CR_LE_AUTHENTICATION:
+	case L2CAP_CR_LE_ENCRYPTION:
+		/* If we already have MITM protection we can't do
 		 * anything.
 		 */
-		अगर (hcon->sec_level > BT_SECURITY_MEDIUM) अणु
+		if (hcon->sec_level > BT_SECURITY_MEDIUM) {
 			l2cap_chan_del(chan, ECONNREFUSED);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		sec_level = hcon->sec_level + 1;
-		अगर (chan->sec_level < sec_level)
+		if (chan->sec_level < sec_level)
 			chan->sec_level = sec_level;
 
 		/* We'll need to send a new Connect Request */
 		clear_bit(FLAG_LE_CONN_REQ_SENT, &chan->flags);
 
 		smp_conn_security(hcon, chan->sec_level);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		l2cap_chan_del(chan, ECONNREFUSED);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	l2cap_chan_unlock(chan);
 
 unlock:
 	mutex_unlock(&conn->chan_lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल अंतरभूत पूर्णांक l2cap_bredr_sig_cmd(काष्ठा l2cap_conn *conn,
-				      काष्ठा l2cap_cmd_hdr *cmd, u16 cmd_len,
+static inline int l2cap_bredr_sig_cmd(struct l2cap_conn *conn,
+				      struct l2cap_cmd_hdr *cmd, u16 cmd_len,
 				      u8 *data)
-अणु
-	पूर्णांक err = 0;
+{
+	int err = 0;
 
-	चयन (cmd->code) अणु
-	हाल L2CAP_COMMAND_REJ:
+	switch (cmd->code) {
+	case L2CAP_COMMAND_REJ:
 		l2cap_command_rej(conn, cmd, cmd_len, data);
-		अवरोध;
+		break;
 
-	हाल L2CAP_CONN_REQ:
+	case L2CAP_CONN_REQ:
 		err = l2cap_connect_req(conn, cmd, cmd_len, data);
-		अवरोध;
+		break;
 
-	हाल L2CAP_CONN_RSP:
-	हाल L2CAP_CREATE_CHAN_RSP:
+	case L2CAP_CONN_RSP:
+	case L2CAP_CREATE_CHAN_RSP:
 		l2cap_connect_create_rsp(conn, cmd, cmd_len, data);
-		अवरोध;
+		break;
 
-	हाल L2CAP_CONF_REQ:
+	case L2CAP_CONF_REQ:
 		err = l2cap_config_req(conn, cmd, cmd_len, data);
-		अवरोध;
+		break;
 
-	हाल L2CAP_CONF_RSP:
+	case L2CAP_CONF_RSP:
 		l2cap_config_rsp(conn, cmd, cmd_len, data);
-		अवरोध;
+		break;
 
-	हाल L2CAP_DISCONN_REQ:
+	case L2CAP_DISCONN_REQ:
 		err = l2cap_disconnect_req(conn, cmd, cmd_len, data);
-		अवरोध;
+		break;
 
-	हाल L2CAP_DISCONN_RSP:
+	case L2CAP_DISCONN_RSP:
 		l2cap_disconnect_rsp(conn, cmd, cmd_len, data);
-		अवरोध;
+		break;
 
-	हाल L2CAP_ECHO_REQ:
+	case L2CAP_ECHO_REQ:
 		l2cap_send_cmd(conn, cmd->ident, L2CAP_ECHO_RSP, cmd_len, data);
-		अवरोध;
+		break;
 
-	हाल L2CAP_ECHO_RSP:
-		अवरोध;
+	case L2CAP_ECHO_RSP:
+		break;
 
-	हाल L2CAP_INFO_REQ:
-		err = l2cap_inक्रमmation_req(conn, cmd, cmd_len, data);
-		अवरोध;
+	case L2CAP_INFO_REQ:
+		err = l2cap_information_req(conn, cmd, cmd_len, data);
+		break;
 
-	हाल L2CAP_INFO_RSP:
-		l2cap_inक्रमmation_rsp(conn, cmd, cmd_len, data);
-		अवरोध;
+	case L2CAP_INFO_RSP:
+		l2cap_information_rsp(conn, cmd, cmd_len, data);
+		break;
 
-	हाल L2CAP_CREATE_CHAN_REQ:
+	case L2CAP_CREATE_CHAN_REQ:
 		err = l2cap_create_channel_req(conn, cmd, cmd_len, data);
-		अवरोध;
+		break;
 
-	हाल L2CAP_MOVE_CHAN_REQ:
+	case L2CAP_MOVE_CHAN_REQ:
 		err = l2cap_move_channel_req(conn, cmd, cmd_len, data);
-		अवरोध;
+		break;
 
-	हाल L2CAP_MOVE_CHAN_RSP:
+	case L2CAP_MOVE_CHAN_RSP:
 		l2cap_move_channel_rsp(conn, cmd, cmd_len, data);
-		अवरोध;
+		break;
 
-	हाल L2CAP_MOVE_CHAN_CFM:
+	case L2CAP_MOVE_CHAN_CFM:
 		err = l2cap_move_channel_confirm(conn, cmd, cmd_len, data);
-		अवरोध;
+		break;
 
-	हाल L2CAP_MOVE_CHAN_CFM_RSP:
+	case L2CAP_MOVE_CHAN_CFM_RSP:
 		l2cap_move_channel_confirm_rsp(conn, cmd, cmd_len, data);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		BT_ERR("Unknown BR/EDR signaling command 0x%2.2x", cmd->code);
 		err = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक l2cap_le_connect_req(काष्ठा l2cap_conn *conn,
-				काष्ठा l2cap_cmd_hdr *cmd, u16 cmd_len,
+static int l2cap_le_connect_req(struct l2cap_conn *conn,
+				struct l2cap_cmd_hdr *cmd, u16 cmd_len,
 				u8 *data)
-अणु
-	काष्ठा l2cap_le_conn_req *req = (काष्ठा l2cap_le_conn_req *) data;
-	काष्ठा l2cap_le_conn_rsp rsp;
-	काष्ठा l2cap_chan *chan, *pchan;
+{
+	struct l2cap_le_conn_req *req = (struct l2cap_le_conn_req *) data;
+	struct l2cap_le_conn_rsp rsp;
+	struct l2cap_chan *chan, *pchan;
 	u16 dcid, scid, credits, mtu, mps;
 	__le16 psm;
 	u8 result;
 
-	अगर (cmd_len != माप(*req))
-		वापस -EPROTO;
+	if (cmd_len != sizeof(*req))
+		return -EPROTO;
 
 	scid = __le16_to_cpu(req->scid);
 	mtu  = __le16_to_cpu(req->mtu);
@@ -5766,50 +5765,50 @@ unlock:
 	dcid = 0;
 	credits = 0;
 
-	अगर (mtu < 23 || mps < 23)
-		वापस -EPROTO;
+	if (mtu < 23 || mps < 23)
+		return -EPROTO;
 
 	BT_DBG("psm 0x%2.2x scid 0x%4.4x mtu %u mps %u", __le16_to_cpu(psm),
 	       scid, mtu, mps);
 
-	/* Check अगर we have socket listening on psm */
+	/* Check if we have socket listening on psm */
 	pchan = l2cap_global_chan_by_psm(BT_LISTEN, psm, &conn->hcon->src,
 					 &conn->hcon->dst, LE_LINK);
-	अगर (!pchan) अणु
+	if (!pchan) {
 		result = L2CAP_CR_LE_BAD_PSM;
-		chan = शून्य;
-		जाओ response;
-	पूर्ण
+		chan = NULL;
+		goto response;
+	}
 
 	mutex_lock(&conn->chan_lock);
 	l2cap_chan_lock(pchan);
 
-	अगर (!smp_sufficient_security(conn->hcon, pchan->sec_level,
-				     SMP_ALLOW_STK)) अणु
+	if (!smp_sufficient_security(conn->hcon, pchan->sec_level,
+				     SMP_ALLOW_STK)) {
 		result = L2CAP_CR_LE_AUTHENTICATION;
-		chan = शून्य;
-		जाओ response_unlock;
-	पूर्ण
+		chan = NULL;
+		goto response_unlock;
+	}
 
-	/* Check क्रम valid dynamic CID range */
-	अगर (scid < L2CAP_CID_DYN_START || scid > L2CAP_CID_LE_DYN_END) अणु
+	/* Check for valid dynamic CID range */
+	if (scid < L2CAP_CID_DYN_START || scid > L2CAP_CID_LE_DYN_END) {
 		result = L2CAP_CR_LE_INVALID_SCID;
-		chan = शून्य;
-		जाओ response_unlock;
-	पूर्ण
+		chan = NULL;
+		goto response_unlock;
+	}
 
-	/* Check अगर we alपढ़ोy have channel with that dcid */
-	अगर (__l2cap_get_chan_by_dcid(conn, scid)) अणु
+	/* Check if we already have channel with that dcid */
+	if (__l2cap_get_chan_by_dcid(conn, scid)) {
 		result = L2CAP_CR_LE_SCID_IN_USE;
-		chan = शून्य;
-		जाओ response_unlock;
-	पूर्ण
+		chan = NULL;
+		goto response_unlock;
+	}
 
 	chan = pchan->ops->new_connection(pchan);
-	अगर (!chan) अणु
+	if (!chan) {
 		result = L2CAP_CR_LE_NO_MEM;
-		जाओ response_unlock;
-	पूर्ण
+		goto response_unlock;
+	}
 
 	bacpy(&chan->src, &conn->hcon->src);
 	bacpy(&chan->dst, &conn->hcon->dst);
@@ -5827,186 +5826,186 @@ unlock:
 	dcid = chan->scid;
 	credits = chan->rx_credits;
 
-	__set_chan_समयr(chan, chan->ops->get_sndसमयo(chan));
+	__set_chan_timer(chan, chan->ops->get_sndtimeo(chan));
 
 	chan->ident = cmd->ident;
 
-	अगर (test_bit(FLAG_DEFER_SETUP, &chan->flags)) अणु
+	if (test_bit(FLAG_DEFER_SETUP, &chan->flags)) {
 		l2cap_state_change(chan, BT_CONNECT2);
 		/* The following result value is actually not defined
-		 * क्रम LE CoC but we use it to let the function know
-		 * that it should bail out after करोing its cleanup
+		 * for LE CoC but we use it to let the function know
+		 * that it should bail out after doing its cleanup
 		 * instead of sending a response.
 		 */
 		result = L2CAP_CR_PEND;
 		chan->ops->defer(chan);
-	पूर्ण अन्यथा अणु
-		l2cap_chan_पढ़ोy(chan);
+	} else {
+		l2cap_chan_ready(chan);
 		result = L2CAP_CR_LE_SUCCESS;
-	पूर्ण
+	}
 
 response_unlock:
 	l2cap_chan_unlock(pchan);
 	mutex_unlock(&conn->chan_lock);
 	l2cap_chan_put(pchan);
 
-	अगर (result == L2CAP_CR_PEND)
-		वापस 0;
+	if (result == L2CAP_CR_PEND)
+		return 0;
 
 response:
-	अगर (chan) अणु
+	if (chan) {
 		rsp.mtu = cpu_to_le16(chan->imtu);
 		rsp.mps = cpu_to_le16(chan->mps);
-	पूर्ण अन्यथा अणु
+	} else {
 		rsp.mtu = 0;
 		rsp.mps = 0;
-	पूर्ण
+	}
 
 	rsp.dcid    = cpu_to_le16(dcid);
 	rsp.credits = cpu_to_le16(credits);
 	rsp.result  = cpu_to_le16(result);
 
-	l2cap_send_cmd(conn, cmd->ident, L2CAP_LE_CONN_RSP, माप(rsp), &rsp);
+	l2cap_send_cmd(conn, cmd->ident, L2CAP_LE_CONN_RSP, sizeof(rsp), &rsp);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक l2cap_le_credits(काष्ठा l2cap_conn *conn,
-				   काष्ठा l2cap_cmd_hdr *cmd, u16 cmd_len,
+static inline int l2cap_le_credits(struct l2cap_conn *conn,
+				   struct l2cap_cmd_hdr *cmd, u16 cmd_len,
 				   u8 *data)
-अणु
-	काष्ठा l2cap_le_credits *pkt;
-	काष्ठा l2cap_chan *chan;
+{
+	struct l2cap_le_credits *pkt;
+	struct l2cap_chan *chan;
 	u16 cid, credits, max_credits;
 
-	अगर (cmd_len != माप(*pkt))
-		वापस -EPROTO;
+	if (cmd_len != sizeof(*pkt))
+		return -EPROTO;
 
-	pkt = (काष्ठा l2cap_le_credits *) data;
+	pkt = (struct l2cap_le_credits *) data;
 	cid	= __le16_to_cpu(pkt->cid);
 	credits	= __le16_to_cpu(pkt->credits);
 
 	BT_DBG("cid 0x%4.4x credits 0x%4.4x", cid, credits);
 
 	chan = l2cap_get_chan_by_dcid(conn, cid);
-	अगर (!chan)
-		वापस -EBADSLT;
+	if (!chan)
+		return -EBADSLT;
 
 	max_credits = LE_FLOWCTL_MAX_CREDITS - chan->tx_credits;
-	अगर (credits > max_credits) अणु
+	if (credits > max_credits) {
 		BT_ERR("LE credits overflow");
 		l2cap_send_disconn_req(chan, ECONNRESET);
 		l2cap_chan_unlock(chan);
 
-		/* Return 0 so that we करोn't trigger an unnecessary
+		/* Return 0 so that we don't trigger an unnecessary
 		 * command reject packet.
 		 */
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	chan->tx_credits += credits;
 
 	/* Resume sending */
 	l2cap_le_flowctl_send(chan);
 
-	अगर (chan->tx_credits)
+	if (chan->tx_credits)
 		chan->ops->resume(chan);
 
 	l2cap_chan_unlock(chan);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक l2cap_ecred_conn_req(काष्ठा l2cap_conn *conn,
-				       काष्ठा l2cap_cmd_hdr *cmd, u16 cmd_len,
+static inline int l2cap_ecred_conn_req(struct l2cap_conn *conn,
+				       struct l2cap_cmd_hdr *cmd, u16 cmd_len,
 				       u8 *data)
-अणु
-	काष्ठा l2cap_ecred_conn_req *req = (व्योम *) data;
-	काष्ठा अणु
-		काष्ठा l2cap_ecred_conn_rsp rsp;
+{
+	struct l2cap_ecred_conn_req *req = (void *) data;
+	struct {
+		struct l2cap_ecred_conn_rsp rsp;
 		__le16 dcid[L2CAP_ECRED_MAX_CID];
-	पूर्ण __packed pdu;
-	काष्ठा l2cap_chan *chan, *pchan;
+	} __packed pdu;
+	struct l2cap_chan *chan, *pchan;
 	u16 mtu, mps;
 	__le16 psm;
 	u8 result, len = 0;
-	पूर्णांक i, num_scid;
+	int i, num_scid;
 	bool defer = false;
 
-	अगर (!enable_ecred)
-		वापस -EINVAL;
+	if (!enable_ecred)
+		return -EINVAL;
 
-	अगर (cmd_len < माप(*req) || (cmd_len - माप(*req)) % माप(u16)) अणु
+	if (cmd_len < sizeof(*req) || (cmd_len - sizeof(*req)) % sizeof(u16)) {
 		result = L2CAP_CR_LE_INVALID_PARAMS;
-		जाओ response;
-	पूर्ण
+		goto response;
+	}
 
-	cmd_len -= माप(*req);
-	num_scid = cmd_len / माप(u16);
+	cmd_len -= sizeof(*req);
+	num_scid = cmd_len / sizeof(u16);
 
-	अगर (num_scid > ARRAY_SIZE(pdu.dcid)) अणु
+	if (num_scid > ARRAY_SIZE(pdu.dcid)) {
 		result = L2CAP_CR_LE_INVALID_PARAMS;
-		जाओ response;
-	पूर्ण
+		goto response;
+	}
 
 	mtu  = __le16_to_cpu(req->mtu);
 	mps  = __le16_to_cpu(req->mps);
 
-	अगर (mtu < L2CAP_ECRED_MIN_MTU || mps < L2CAP_ECRED_MIN_MPS) अणु
+	if (mtu < L2CAP_ECRED_MIN_MTU || mps < L2CAP_ECRED_MIN_MPS) {
 		result = L2CAP_CR_LE_UNACCEPT_PARAMS;
-		जाओ response;
-	पूर्ण
+		goto response;
+	}
 
 	psm  = req->psm;
 
 	BT_DBG("psm 0x%2.2x mtu %u mps %u", __le16_to_cpu(psm), mtu, mps);
 
-	स_रखो(&pdu, 0, माप(pdu));
+	memset(&pdu, 0, sizeof(pdu));
 
-	/* Check अगर we have socket listening on psm */
+	/* Check if we have socket listening on psm */
 	pchan = l2cap_global_chan_by_psm(BT_LISTEN, psm, &conn->hcon->src,
 					 &conn->hcon->dst, LE_LINK);
-	अगर (!pchan) अणु
+	if (!pchan) {
 		result = L2CAP_CR_LE_BAD_PSM;
-		जाओ response;
-	पूर्ण
+		goto response;
+	}
 
 	mutex_lock(&conn->chan_lock);
 	l2cap_chan_lock(pchan);
 
-	अगर (!smp_sufficient_security(conn->hcon, pchan->sec_level,
-				     SMP_ALLOW_STK)) अणु
+	if (!smp_sufficient_security(conn->hcon, pchan->sec_level,
+				     SMP_ALLOW_STK)) {
 		result = L2CAP_CR_LE_AUTHENTICATION;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	result = L2CAP_CR_LE_SUCCESS;
 
-	क्रम (i = 0; i < num_scid; i++) अणु
+	for (i = 0; i < num_scid; i++) {
 		u16 scid = __le16_to_cpu(req->scid[i]);
 
 		BT_DBG("scid[%d] 0x%4.4x", i, scid);
 
 		pdu.dcid[i] = 0x0000;
-		len += माप(*pdu.dcid);
+		len += sizeof(*pdu.dcid);
 
-		/* Check क्रम valid dynamic CID range */
-		अगर (scid < L2CAP_CID_DYN_START || scid > L2CAP_CID_LE_DYN_END) अणु
+		/* Check for valid dynamic CID range */
+		if (scid < L2CAP_CID_DYN_START || scid > L2CAP_CID_LE_DYN_END) {
 			result = L2CAP_CR_LE_INVALID_SCID;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		/* Check अगर we alपढ़ोy have channel with that dcid */
-		अगर (__l2cap_get_chan_by_dcid(conn, scid)) अणु
+		/* Check if we already have channel with that dcid */
+		if (__l2cap_get_chan_by_dcid(conn, scid)) {
 			result = L2CAP_CR_LE_SCID_IN_USE;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		chan = pchan->ops->new_connection(pchan);
-		अगर (!chan) अणु
+		if (!chan) {
 			result = L2CAP_CR_LE_NO_MEM;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		bacpy(&chan->src, &conn->hcon->src);
 		bacpy(&chan->dst, &conn->hcon->dst);
@@ -6022,26 +6021,26 @@ response:
 		l2cap_ecred_init(chan, __le16_to_cpu(req->credits));
 
 		/* Init response */
-		अगर (!pdu.rsp.credits) अणु
+		if (!pdu.rsp.credits) {
 			pdu.rsp.mtu = cpu_to_le16(chan->imtu);
 			pdu.rsp.mps = cpu_to_le16(chan->mps);
 			pdu.rsp.credits = cpu_to_le16(chan->rx_credits);
-		पूर्ण
+		}
 
 		pdu.dcid[i] = cpu_to_le16(chan->scid);
 
-		__set_chan_समयr(chan, chan->ops->get_sndसमयo(chan));
+		__set_chan_timer(chan, chan->ops->get_sndtimeo(chan));
 
 		chan->ident = cmd->ident;
 
-		अगर (test_bit(FLAG_DEFER_SETUP, &chan->flags)) अणु
+		if (test_bit(FLAG_DEFER_SETUP, &chan->flags)) {
 			l2cap_state_change(chan, BT_CONNECT2);
 			defer = true;
 			chan->ops->defer(chan);
-		पूर्ण अन्यथा अणु
-			l2cap_chan_पढ़ोy(chan);
-		पूर्ण
-	पूर्ण
+		} else {
+			l2cap_chan_ready(chan);
+		}
+	}
 
 unlock:
 	l2cap_chan_unlock(pchan);
@@ -6051,28 +6050,28 @@ unlock:
 response:
 	pdu.rsp.result = cpu_to_le16(result);
 
-	अगर (defer)
-		वापस 0;
+	if (defer)
+		return 0;
 
 	l2cap_send_cmd(conn, cmd->ident, L2CAP_ECRED_CONN_RSP,
-		       माप(pdu.rsp) + len, &pdu);
+		       sizeof(pdu.rsp) + len, &pdu);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक l2cap_ecred_conn_rsp(काष्ठा l2cap_conn *conn,
-				       काष्ठा l2cap_cmd_hdr *cmd, u16 cmd_len,
+static inline int l2cap_ecred_conn_rsp(struct l2cap_conn *conn,
+				       struct l2cap_cmd_hdr *cmd, u16 cmd_len,
 				       u8 *data)
-अणु
-	काष्ठा l2cap_ecred_conn_rsp *rsp = (व्योम *) data;
-	काष्ठा hci_conn *hcon = conn->hcon;
+{
+	struct l2cap_ecred_conn_rsp *rsp = (void *) data;
+	struct hci_conn *hcon = conn->hcon;
 	u16 mtu, mps, credits, result;
-	काष्ठा l2cap_chan *chan;
-	पूर्णांक err = 0, sec_level;
-	पूर्णांक i = 0;
+	struct l2cap_chan *chan;
+	int err = 0, sec_level;
+	int i = 0;
 
-	अगर (cmd_len < माप(*rsp))
-		वापस -EPROTO;
+	if (cmd_len < sizeof(*rsp))
+		return -EPROTO;
 
 	mtu     = __le16_to_cpu(rsp->mtu);
 	mps     = __le16_to_cpu(rsp->mps);
@@ -6084,35 +6083,35 @@ response:
 
 	mutex_lock(&conn->chan_lock);
 
-	cmd_len -= माप(*rsp);
+	cmd_len -= sizeof(*rsp);
 
-	list_क्रम_each_entry(chan, &conn->chan_l, list) अणु
+	list_for_each_entry(chan, &conn->chan_l, list) {
 		u16 dcid;
 
-		अगर (chan->ident != cmd->ident ||
+		if (chan->ident != cmd->ident ||
 		    chan->mode != L2CAP_MODE_EXT_FLOWCTL ||
 		    chan->state == BT_CONNECTED)
-			जारी;
+			continue;
 
 		l2cap_chan_lock(chan);
 
-		/* Check that there is a dcid क्रम each pending channel */
-		अगर (cmd_len < माप(dcid)) अणु
+		/* Check that there is a dcid for each pending channel */
+		if (cmd_len < sizeof(dcid)) {
 			l2cap_chan_del(chan, ECONNREFUSED);
 			l2cap_chan_unlock(chan);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		dcid = __le16_to_cpu(rsp->dcid[i++]);
-		cmd_len -= माप(u16);
+		cmd_len -= sizeof(u16);
 
 		BT_DBG("dcid[%d] 0x%4.4x", i, dcid);
 
-		/* Check अगर dcid is alपढ़ोy in use */
-		अगर (dcid && __l2cap_get_chan_by_dcid(conn, dcid)) अणु
+		/* Check if dcid is already in use */
+		if (dcid && __l2cap_get_chan_by_dcid(conn, dcid)) {
 			/* If a device receives a
 			 * L2CAP_CREDIT_BASED_CONNECTION_RSP packet with an
-			 * alपढ़ोy-asचिन्हित Destination CID, then both the
+			 * already-assigned Destination CID, then both the
 			 * original channel and the new channel shall be
 			 * immediately discarded and not used.
 			 */
@@ -6122,302 +6121,302 @@ response:
 			l2cap_chan_lock(chan);
 			l2cap_chan_del(chan, ECONNRESET);
 			l2cap_chan_unlock(chan);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		चयन (result) अणु
-		हाल L2CAP_CR_LE_AUTHENTICATION:
-		हाल L2CAP_CR_LE_ENCRYPTION:
-			/* If we alपढ़ोy have MITM protection we can't करो
+		switch (result) {
+		case L2CAP_CR_LE_AUTHENTICATION:
+		case L2CAP_CR_LE_ENCRYPTION:
+			/* If we already have MITM protection we can't do
 			 * anything.
 			 */
-			अगर (hcon->sec_level > BT_SECURITY_MEDIUM) अणु
+			if (hcon->sec_level > BT_SECURITY_MEDIUM) {
 				l2cap_chan_del(chan, ECONNREFUSED);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 			sec_level = hcon->sec_level + 1;
-			अगर (chan->sec_level < sec_level)
+			if (chan->sec_level < sec_level)
 				chan->sec_level = sec_level;
 
 			/* We'll need to send a new Connect Request */
 			clear_bit(FLAG_ECRED_CONN_REQ_SENT, &chan->flags);
 
 			smp_conn_security(hcon, chan->sec_level);
-			अवरोध;
+			break;
 
-		हाल L2CAP_CR_LE_BAD_PSM:
+		case L2CAP_CR_LE_BAD_PSM:
 			l2cap_chan_del(chan, ECONNREFUSED);
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 			/* If dcid was not set it means channels was refused */
-			अगर (!dcid) अणु
+			if (!dcid) {
 				l2cap_chan_del(chan, ECONNREFUSED);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 			chan->ident = 0;
 			chan->dcid = dcid;
 			chan->omtu = mtu;
 			chan->remote_mps = mps;
 			chan->tx_credits = credits;
-			l2cap_chan_पढ़ोy(chan);
-			अवरोध;
-		पूर्ण
+			l2cap_chan_ready(chan);
+			break;
+		}
 
 		l2cap_chan_unlock(chan);
-	पूर्ण
+	}
 
 	mutex_unlock(&conn->chan_lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल अंतरभूत पूर्णांक l2cap_ecred_reconf_req(काष्ठा l2cap_conn *conn,
-					 काष्ठा l2cap_cmd_hdr *cmd, u16 cmd_len,
+static inline int l2cap_ecred_reconf_req(struct l2cap_conn *conn,
+					 struct l2cap_cmd_hdr *cmd, u16 cmd_len,
 					 u8 *data)
-अणु
-	काष्ठा l2cap_ecred_reconf_req *req = (व्योम *) data;
-	काष्ठा l2cap_ecred_reconf_rsp rsp;
+{
+	struct l2cap_ecred_reconf_req *req = (void *) data;
+	struct l2cap_ecred_reconf_rsp rsp;
 	u16 mtu, mps, result;
-	काष्ठा l2cap_chan *chan;
-	पूर्णांक i, num_scid;
+	struct l2cap_chan *chan;
+	int i, num_scid;
 
-	अगर (!enable_ecred)
-		वापस -EINVAL;
+	if (!enable_ecred)
+		return -EINVAL;
 
-	अगर (cmd_len < माप(*req) || cmd_len - माप(*req) % माप(u16)) अणु
+	if (cmd_len < sizeof(*req) || cmd_len - sizeof(*req) % sizeof(u16)) {
 		result = L2CAP_CR_LE_INVALID_PARAMS;
-		जाओ respond;
-	पूर्ण
+		goto respond;
+	}
 
 	mtu = __le16_to_cpu(req->mtu);
 	mps = __le16_to_cpu(req->mps);
 
 	BT_DBG("mtu %u mps %u", mtu, mps);
 
-	अगर (mtu < L2CAP_ECRED_MIN_MTU) अणु
+	if (mtu < L2CAP_ECRED_MIN_MTU) {
 		result = L2CAP_RECONF_INVALID_MTU;
-		जाओ respond;
-	पूर्ण
+		goto respond;
+	}
 
-	अगर (mps < L2CAP_ECRED_MIN_MPS) अणु
+	if (mps < L2CAP_ECRED_MIN_MPS) {
 		result = L2CAP_RECONF_INVALID_MPS;
-		जाओ respond;
-	पूर्ण
+		goto respond;
+	}
 
-	cmd_len -= माप(*req);
-	num_scid = cmd_len / माप(u16);
+	cmd_len -= sizeof(*req);
+	num_scid = cmd_len / sizeof(u16);
 	result = L2CAP_RECONF_SUCCESS;
 
-	क्रम (i = 0; i < num_scid; i++) अणु
+	for (i = 0; i < num_scid; i++) {
 		u16 scid;
 
 		scid = __le16_to_cpu(req->scid[i]);
-		अगर (!scid)
-			वापस -EPROTO;
+		if (!scid)
+			return -EPROTO;
 
 		chan = __l2cap_get_chan_by_dcid(conn, scid);
-		अगर (!chan)
-			जारी;
+		if (!chan)
+			continue;
 
-		/* If the MTU value is decreased क्रम any of the included
+		/* If the MTU value is decreased for any of the included
 		 * channels, then the receiver shall disconnect all
 		 * included channels.
 		 */
-		अगर (chan->omtu > mtu) अणु
+		if (chan->omtu > mtu) {
 			BT_ERR("chan %p decreased MTU %u -> %u", chan,
 			       chan->omtu, mtu);
 			result = L2CAP_RECONF_INVALID_MTU;
-		पूर्ण
+		}
 
 		chan->omtu = mtu;
 		chan->remote_mps = mps;
-	पूर्ण
+	}
 
 respond:
 	rsp.result = cpu_to_le16(result);
 
-	l2cap_send_cmd(conn, cmd->ident, L2CAP_ECRED_RECONF_RSP, माप(rsp),
+	l2cap_send_cmd(conn, cmd->ident, L2CAP_ECRED_RECONF_RSP, sizeof(rsp),
 		       &rsp);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक l2cap_ecred_reconf_rsp(काष्ठा l2cap_conn *conn,
-					 काष्ठा l2cap_cmd_hdr *cmd, u16 cmd_len,
+static inline int l2cap_ecred_reconf_rsp(struct l2cap_conn *conn,
+					 struct l2cap_cmd_hdr *cmd, u16 cmd_len,
 					 u8 *data)
-अणु
-	काष्ठा l2cap_chan *chan;
-	काष्ठा l2cap_ecred_conn_rsp *rsp = (व्योम *) data;
+{
+	struct l2cap_chan *chan;
+	struct l2cap_ecred_conn_rsp *rsp = (void *) data;
 	u16 result;
 
-	अगर (cmd_len < माप(*rsp))
-		वापस -EPROTO;
+	if (cmd_len < sizeof(*rsp))
+		return -EPROTO;
 
 	result = __le16_to_cpu(rsp->result);
 
 	BT_DBG("result 0x%4.4x", rsp->result);
 
-	अगर (!result)
-		वापस 0;
+	if (!result)
+		return 0;
 
-	list_क्रम_each_entry(chan, &conn->chan_l, list) अणु
-		अगर (chan->ident != cmd->ident)
-			जारी;
+	list_for_each_entry(chan, &conn->chan_l, list) {
+		if (chan->ident != cmd->ident)
+			continue;
 
 		l2cap_chan_del(chan, ECONNRESET);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक l2cap_le_command_rej(काष्ठा l2cap_conn *conn,
-				       काष्ठा l2cap_cmd_hdr *cmd, u16 cmd_len,
+static inline int l2cap_le_command_rej(struct l2cap_conn *conn,
+				       struct l2cap_cmd_hdr *cmd, u16 cmd_len,
 				       u8 *data)
-अणु
-	काष्ठा l2cap_cmd_rej_unk *rej = (काष्ठा l2cap_cmd_rej_unk *) data;
-	काष्ठा l2cap_chan *chan;
+{
+	struct l2cap_cmd_rej_unk *rej = (struct l2cap_cmd_rej_unk *) data;
+	struct l2cap_chan *chan;
 
-	अगर (cmd_len < माप(*rej))
-		वापस -EPROTO;
+	if (cmd_len < sizeof(*rej))
+		return -EPROTO;
 
 	mutex_lock(&conn->chan_lock);
 
 	chan = __l2cap_get_chan_by_ident(conn, cmd->ident);
-	अगर (!chan)
-		जाओ करोne;
+	if (!chan)
+		goto done;
 
 	l2cap_chan_lock(chan);
 	l2cap_chan_del(chan, ECONNREFUSED);
 	l2cap_chan_unlock(chan);
 
-करोne:
+done:
 	mutex_unlock(&conn->chan_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक l2cap_le_sig_cmd(काष्ठा l2cap_conn *conn,
-				   काष्ठा l2cap_cmd_hdr *cmd, u16 cmd_len,
+static inline int l2cap_le_sig_cmd(struct l2cap_conn *conn,
+				   struct l2cap_cmd_hdr *cmd, u16 cmd_len,
 				   u8 *data)
-अणु
-	पूर्णांक err = 0;
+{
+	int err = 0;
 
-	चयन (cmd->code) अणु
-	हाल L2CAP_COMMAND_REJ:
+	switch (cmd->code) {
+	case L2CAP_COMMAND_REJ:
 		l2cap_le_command_rej(conn, cmd, cmd_len, data);
-		अवरोध;
+		break;
 
-	हाल L2CAP_CONN_PARAM_UPDATE_REQ:
+	case L2CAP_CONN_PARAM_UPDATE_REQ:
 		err = l2cap_conn_param_update_req(conn, cmd, cmd_len, data);
-		अवरोध;
+		break;
 
-	हाल L2CAP_CONN_PARAM_UPDATE_RSP:
-		अवरोध;
+	case L2CAP_CONN_PARAM_UPDATE_RSP:
+		break;
 
-	हाल L2CAP_LE_CONN_RSP:
+	case L2CAP_LE_CONN_RSP:
 		l2cap_le_connect_rsp(conn, cmd, cmd_len, data);
-		अवरोध;
+		break;
 
-	हाल L2CAP_LE_CONN_REQ:
+	case L2CAP_LE_CONN_REQ:
 		err = l2cap_le_connect_req(conn, cmd, cmd_len, data);
-		अवरोध;
+		break;
 
-	हाल L2CAP_LE_CREDITS:
+	case L2CAP_LE_CREDITS:
 		err = l2cap_le_credits(conn, cmd, cmd_len, data);
-		अवरोध;
+		break;
 
-	हाल L2CAP_ECRED_CONN_REQ:
+	case L2CAP_ECRED_CONN_REQ:
 		err = l2cap_ecred_conn_req(conn, cmd, cmd_len, data);
-		अवरोध;
+		break;
 
-	हाल L2CAP_ECRED_CONN_RSP:
+	case L2CAP_ECRED_CONN_RSP:
 		err = l2cap_ecred_conn_rsp(conn, cmd, cmd_len, data);
-		अवरोध;
+		break;
 
-	हाल L2CAP_ECRED_RECONF_REQ:
+	case L2CAP_ECRED_RECONF_REQ:
 		err = l2cap_ecred_reconf_req(conn, cmd, cmd_len, data);
-		अवरोध;
+		break;
 
-	हाल L2CAP_ECRED_RECONF_RSP:
+	case L2CAP_ECRED_RECONF_RSP:
 		err = l2cap_ecred_reconf_rsp(conn, cmd, cmd_len, data);
-		अवरोध;
+		break;
 
-	हाल L2CAP_DISCONN_REQ:
+	case L2CAP_DISCONN_REQ:
 		err = l2cap_disconnect_req(conn, cmd, cmd_len, data);
-		अवरोध;
+		break;
 
-	हाल L2CAP_DISCONN_RSP:
+	case L2CAP_DISCONN_RSP:
 		l2cap_disconnect_rsp(conn, cmd, cmd_len, data);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		BT_ERR("Unknown LE signaling command 0x%2.2x", cmd->code);
 		err = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल अंतरभूत व्योम l2cap_le_sig_channel(काष्ठा l2cap_conn *conn,
-					काष्ठा sk_buff *skb)
-अणु
-	काष्ठा hci_conn *hcon = conn->hcon;
-	काष्ठा l2cap_cmd_hdr *cmd;
+static inline void l2cap_le_sig_channel(struct l2cap_conn *conn,
+					struct sk_buff *skb)
+{
+	struct hci_conn *hcon = conn->hcon;
+	struct l2cap_cmd_hdr *cmd;
 	u16 len;
-	पूर्णांक err;
+	int err;
 
-	अगर (hcon->type != LE_LINK)
-		जाओ drop;
+	if (hcon->type != LE_LINK)
+		goto drop;
 
-	अगर (skb->len < L2CAP_CMD_HDR_SIZE)
-		जाओ drop;
+	if (skb->len < L2CAP_CMD_HDR_SIZE)
+		goto drop;
 
-	cmd = (व्योम *) skb->data;
+	cmd = (void *) skb->data;
 	skb_pull(skb, L2CAP_CMD_HDR_SIZE);
 
 	len = le16_to_cpu(cmd->len);
 
 	BT_DBG("code 0x%2.2x len %d id 0x%2.2x", cmd->code, len, cmd->ident);
 
-	अगर (len != skb->len || !cmd->ident) अणु
+	if (len != skb->len || !cmd->ident) {
 		BT_DBG("corrupted command");
-		जाओ drop;
-	पूर्ण
+		goto drop;
+	}
 
 	err = l2cap_le_sig_cmd(conn, cmd, len, skb->data);
-	अगर (err) अणु
-		काष्ठा l2cap_cmd_rej_unk rej;
+	if (err) {
+		struct l2cap_cmd_rej_unk rej;
 
 		BT_ERR("Wrong link type (%d)", err);
 
 		rej.reason = cpu_to_le16(L2CAP_REJ_NOT_UNDERSTOOD);
 		l2cap_send_cmd(conn, cmd->ident, L2CAP_COMMAND_REJ,
-			       माप(rej), &rej);
-	पूर्ण
+			       sizeof(rej), &rej);
+	}
 
 drop:
-	kमुक्त_skb(skb);
-पूर्ण
+	kfree_skb(skb);
+}
 
-अटल अंतरभूत व्योम l2cap_sig_channel(काष्ठा l2cap_conn *conn,
-				     काष्ठा sk_buff *skb)
-अणु
-	काष्ठा hci_conn *hcon = conn->hcon;
-	काष्ठा l2cap_cmd_hdr *cmd;
-	पूर्णांक err;
+static inline void l2cap_sig_channel(struct l2cap_conn *conn,
+				     struct sk_buff *skb)
+{
+	struct hci_conn *hcon = conn->hcon;
+	struct l2cap_cmd_hdr *cmd;
+	int err;
 
 	l2cap_raw_recv(conn, skb);
 
-	अगर (hcon->type != ACL_LINK)
-		जाओ drop;
+	if (hcon->type != ACL_LINK)
+		goto drop;
 
-	जबतक (skb->len >= L2CAP_CMD_HDR_SIZE) अणु
+	while (skb->len >= L2CAP_CMD_HDR_SIZE) {
 		u16 len;
 
-		cmd = (व्योम *) skb->data;
+		cmd = (void *) skb->data;
 		skb_pull(skb, L2CAP_CMD_HDR_SIZE);
 
 		len = le16_to_cpu(cmd->len);
@@ -6425,94 +6424,94 @@ drop:
 		BT_DBG("code 0x%2.2x len %d id 0x%2.2x", cmd->code, len,
 		       cmd->ident);
 
-		अगर (len > skb->len || !cmd->ident) अणु
+		if (len > skb->len || !cmd->ident) {
 			BT_DBG("corrupted command");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		err = l2cap_bredr_sig_cmd(conn, cmd, len, skb->data);
-		अगर (err) अणु
-			काष्ठा l2cap_cmd_rej_unk rej;
+		if (err) {
+			struct l2cap_cmd_rej_unk rej;
 
 			BT_ERR("Wrong link type (%d)", err);
 
 			rej.reason = cpu_to_le16(L2CAP_REJ_NOT_UNDERSTOOD);
 			l2cap_send_cmd(conn, cmd->ident, L2CAP_COMMAND_REJ,
-				       माप(rej), &rej);
-		पूर्ण
+				       sizeof(rej), &rej);
+		}
 
 		skb_pull(skb, len);
-	पूर्ण
+	}
 
 drop:
-	kमुक्त_skb(skb);
-पूर्ण
+	kfree_skb(skb);
+}
 
-अटल पूर्णांक l2cap_check_fcs(काष्ठा l2cap_chan *chan,  काष्ठा sk_buff *skb)
-अणु
+static int l2cap_check_fcs(struct l2cap_chan *chan,  struct sk_buff *skb)
+{
 	u16 our_fcs, rcv_fcs;
-	पूर्णांक hdr_size;
+	int hdr_size;
 
-	अगर (test_bit(FLAG_EXT_CTRL, &chan->flags))
+	if (test_bit(FLAG_EXT_CTRL, &chan->flags))
 		hdr_size = L2CAP_EXT_HDR_SIZE;
-	अन्यथा
+	else
 		hdr_size = L2CAP_ENH_HDR_SIZE;
 
-	अगर (chan->fcs == L2CAP_FCS_CRC16) अणु
+	if (chan->fcs == L2CAP_FCS_CRC16) {
 		skb_trim(skb, skb->len - L2CAP_FCS_SIZE);
 		rcv_fcs = get_unaligned_le16(skb->data + skb->len);
 		our_fcs = crc16(0, skb->data - hdr_size, skb->len + hdr_size);
 
-		अगर (our_fcs != rcv_fcs)
-			वापस -EBADMSG;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (our_fcs != rcv_fcs)
+			return -EBADMSG;
+	}
+	return 0;
+}
 
-अटल व्योम l2cap_send_i_or_rr_or_rnr(काष्ठा l2cap_chan *chan)
-अणु
-	काष्ठा l2cap_ctrl control;
+static void l2cap_send_i_or_rr_or_rnr(struct l2cap_chan *chan)
+{
+	struct l2cap_ctrl control;
 
 	BT_DBG("chan %p", chan);
 
-	स_रखो(&control, 0, माप(control));
+	memset(&control, 0, sizeof(control));
 	control.sframe = 1;
 	control.final = 1;
 	control.reqseq = chan->buffer_seq;
 	set_bit(CONN_SEND_FBIT, &chan->conn_state);
 
-	अगर (test_bit(CONN_LOCAL_BUSY, &chan->conn_state)) अणु
+	if (test_bit(CONN_LOCAL_BUSY, &chan->conn_state)) {
 		control.super = L2CAP_SUPER_RNR;
 		l2cap_send_sframe(chan, &control);
-	पूर्ण
+	}
 
-	अगर (test_and_clear_bit(CONN_REMOTE_BUSY, &chan->conn_state) &&
+	if (test_and_clear_bit(CONN_REMOTE_BUSY, &chan->conn_state) &&
 	    chan->unacked_frames > 0)
-		__set_retrans_समयr(chan);
+		__set_retrans_timer(chan);
 
-	/* Send pending अगरrames */
-	l2cap_erपंचांग_send(chan);
+	/* Send pending iframes */
+	l2cap_ertm_send(chan);
 
-	अगर (!test_bit(CONN_LOCAL_BUSY, &chan->conn_state) &&
-	    test_bit(CONN_SEND_FBIT, &chan->conn_state)) अणु
+	if (!test_bit(CONN_LOCAL_BUSY, &chan->conn_state) &&
+	    test_bit(CONN_SEND_FBIT, &chan->conn_state)) {
 		/* F-bit wasn't sent in an s-frame or i-frame yet, so
 		 * send it now.
 		 */
 		control.super = L2CAP_SUPER_RR;
 		l2cap_send_sframe(chan, &control);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम append_skb_frag(काष्ठा sk_buff *skb, काष्ठा sk_buff *new_frag,
-			    काष्ठा sk_buff **last_frag)
-अणु
+static void append_skb_frag(struct sk_buff *skb, struct sk_buff *new_frag,
+			    struct sk_buff **last_frag)
+{
 	/* skb->len reflects data in skb as well as all fragments
 	 * skb->data_len reflects only data in fragments
 	 */
-	अगर (!skb_has_frag_list(skb))
+	if (!skb_has_frag_list(skb))
 		skb_shinfo(skb)->frag_list = new_frag;
 
-	new_frag->next = शून्य;
+	new_frag->next = NULL;
 
 	(*last_frag)->next = new_frag;
 	*last_frag = new_frag;
@@ -6520,295 +6519,295 @@ drop:
 	skb->len += new_frag->len;
 	skb->data_len += new_frag->len;
 	skb->truesize += new_frag->truesize;
-पूर्ण
+}
 
-अटल पूर्णांक l2cap_reassemble_sdu(काष्ठा l2cap_chan *chan, काष्ठा sk_buff *skb,
-				काष्ठा l2cap_ctrl *control)
-अणु
-	पूर्णांक err = -EINVAL;
+static int l2cap_reassemble_sdu(struct l2cap_chan *chan, struct sk_buff *skb,
+				struct l2cap_ctrl *control)
+{
+	int err = -EINVAL;
 
-	चयन (control->sar) अणु
-	हाल L2CAP_SAR_UNSEGMENTED:
-		अगर (chan->sdu)
-			अवरोध;
+	switch (control->sar) {
+	case L2CAP_SAR_UNSEGMENTED:
+		if (chan->sdu)
+			break;
 
 		err = chan->ops->recv(chan, skb);
-		अवरोध;
+		break;
 
-	हाल L2CAP_SAR_START:
-		अगर (chan->sdu)
-			अवरोध;
+	case L2CAP_SAR_START:
+		if (chan->sdu)
+			break;
 
-		अगर (!pskb_may_pull(skb, L2CAP_SDULEN_SIZE))
-			अवरोध;
+		if (!pskb_may_pull(skb, L2CAP_SDULEN_SIZE))
+			break;
 
 		chan->sdu_len = get_unaligned_le16(skb->data);
 		skb_pull(skb, L2CAP_SDULEN_SIZE);
 
-		अगर (chan->sdu_len > chan->imtu) अणु
+		if (chan->sdu_len > chan->imtu) {
 			err = -EMSGSIZE;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (skb->len >= chan->sdu_len)
-			अवरोध;
+		if (skb->len >= chan->sdu_len)
+			break;
 
 		chan->sdu = skb;
 		chan->sdu_last_frag = skb;
 
-		skb = शून्य;
+		skb = NULL;
 		err = 0;
-		अवरोध;
+		break;
 
-	हाल L2CAP_SAR_CONTINUE:
-		अगर (!chan->sdu)
-			अवरोध;
+	case L2CAP_SAR_CONTINUE:
+		if (!chan->sdu)
+			break;
 
 		append_skb_frag(chan->sdu, skb,
 				&chan->sdu_last_frag);
-		skb = शून्य;
+		skb = NULL;
 
-		अगर (chan->sdu->len >= chan->sdu_len)
-			अवरोध;
+		if (chan->sdu->len >= chan->sdu_len)
+			break;
 
 		err = 0;
-		अवरोध;
+		break;
 
-	हाल L2CAP_SAR_END:
-		अगर (!chan->sdu)
-			अवरोध;
+	case L2CAP_SAR_END:
+		if (!chan->sdu)
+			break;
 
 		append_skb_frag(chan->sdu, skb,
 				&chan->sdu_last_frag);
-		skb = शून्य;
+		skb = NULL;
 
-		अगर (chan->sdu->len != chan->sdu_len)
-			अवरोध;
+		if (chan->sdu->len != chan->sdu_len)
+			break;
 
 		err = chan->ops->recv(chan, chan->sdu);
 
-		अगर (!err) अणु
+		if (!err) {
 			/* Reassembly complete */
-			chan->sdu = शून्य;
-			chan->sdu_last_frag = शून्य;
+			chan->sdu = NULL;
+			chan->sdu_last_frag = NULL;
 			chan->sdu_len = 0;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+		}
+		break;
+	}
 
-	अगर (err) अणु
-		kमुक्त_skb(skb);
-		kमुक्त_skb(chan->sdu);
-		chan->sdu = शून्य;
-		chan->sdu_last_frag = शून्य;
+	if (err) {
+		kfree_skb(skb);
+		kfree_skb(chan->sdu);
+		chan->sdu = NULL;
+		chan->sdu_last_frag = NULL;
 		chan->sdu_len = 0;
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक l2cap_resegment(काष्ठा l2cap_chan *chan)
-अणु
+static int l2cap_resegment(struct l2cap_chan *chan)
+{
 	/* Placeholder */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम l2cap_chan_busy(काष्ठा l2cap_chan *chan, पूर्णांक busy)
-अणु
+void l2cap_chan_busy(struct l2cap_chan *chan, int busy)
+{
 	u8 event;
 
-	अगर (chan->mode != L2CAP_MODE_ERTM)
-		वापस;
+	if (chan->mode != L2CAP_MODE_ERTM)
+		return;
 
 	event = busy ? L2CAP_EV_LOCAL_BUSY_DETECTED : L2CAP_EV_LOCAL_BUSY_CLEAR;
-	l2cap_tx(chan, शून्य, शून्य, event);
-पूर्ण
+	l2cap_tx(chan, NULL, NULL, event);
+}
 
-अटल पूर्णांक l2cap_rx_queued_अगरrames(काष्ठा l2cap_chan *chan)
-अणु
-	पूर्णांक err = 0;
+static int l2cap_rx_queued_iframes(struct l2cap_chan *chan)
+{
+	int err = 0;
 	/* Pass sequential frames to l2cap_reassemble_sdu()
 	 * until a gap is encountered.
 	 */
 
 	BT_DBG("chan %p", chan);
 
-	जबतक (!test_bit(CONN_LOCAL_BUSY, &chan->conn_state)) अणु
-		काष्ठा sk_buff *skb;
+	while (!test_bit(CONN_LOCAL_BUSY, &chan->conn_state)) {
+		struct sk_buff *skb;
 		BT_DBG("Searching for skb with txseq %d (queue len %d)",
 		       chan->buffer_seq, skb_queue_len(&chan->srej_q));
 
-		skb = l2cap_erपंचांग_seq_in_queue(&chan->srej_q, chan->buffer_seq);
+		skb = l2cap_ertm_seq_in_queue(&chan->srej_q, chan->buffer_seq);
 
-		अगर (!skb)
-			अवरोध;
+		if (!skb)
+			break;
 
 		skb_unlink(skb, &chan->srej_q);
 		chan->buffer_seq = __next_seq(chan, chan->buffer_seq);
 		err = l2cap_reassemble_sdu(chan, skb, &bt_cb(skb)->l2cap);
-		अगर (err)
-			अवरोध;
-	पूर्ण
+		if (err)
+			break;
+	}
 
-	अगर (skb_queue_empty(&chan->srej_q)) अणु
+	if (skb_queue_empty(&chan->srej_q)) {
 		chan->rx_state = L2CAP_RX_STATE_RECV;
 		l2cap_send_ack(chan);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम l2cap_handle_srej(काष्ठा l2cap_chan *chan,
-			      काष्ठा l2cap_ctrl *control)
-अणु
-	काष्ठा sk_buff *skb;
+static void l2cap_handle_srej(struct l2cap_chan *chan,
+			      struct l2cap_ctrl *control)
+{
+	struct sk_buff *skb;
 
 	BT_DBG("chan %p, control %p", chan, control);
 
-	अगर (control->reqseq == chan->next_tx_seq) अणु
+	if (control->reqseq == chan->next_tx_seq) {
 		BT_DBG("Invalid reqseq %d, disconnecting", control->reqseq);
 		l2cap_send_disconn_req(chan, ECONNRESET);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	skb = l2cap_erपंचांग_seq_in_queue(&chan->tx_q, control->reqseq);
+	skb = l2cap_ertm_seq_in_queue(&chan->tx_q, control->reqseq);
 
-	अगर (skb == शून्य) अणु
+	if (skb == NULL) {
 		BT_DBG("Seq %d not available for retransmission",
 		       control->reqseq);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (chan->max_tx != 0 && bt_cb(skb)->l2cap.retries >= chan->max_tx) अणु
+	if (chan->max_tx != 0 && bt_cb(skb)->l2cap.retries >= chan->max_tx) {
 		BT_DBG("Retry limit exceeded (%d)", chan->max_tx);
 		l2cap_send_disconn_req(chan, ECONNRESET);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	clear_bit(CONN_REMOTE_BUSY, &chan->conn_state);
 
-	अगर (control->poll) अणु
+	if (control->poll) {
 		l2cap_pass_to_tx(chan, control);
 
 		set_bit(CONN_SEND_FBIT, &chan->conn_state);
 		l2cap_retransmit(chan, control);
-		l2cap_erपंचांग_send(chan);
+		l2cap_ertm_send(chan);
 
-		अगर (chan->tx_state == L2CAP_TX_STATE_WAIT_F) अणु
+		if (chan->tx_state == L2CAP_TX_STATE_WAIT_F) {
 			set_bit(CONN_SREJ_ACT, &chan->conn_state);
 			chan->srej_save_reqseq = control->reqseq;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		l2cap_pass_to_tx_fbit(chan, control);
 
-		अगर (control->final) अणु
-			अगर (chan->srej_save_reqseq != control->reqseq ||
+		if (control->final) {
+			if (chan->srej_save_reqseq != control->reqseq ||
 			    !test_and_clear_bit(CONN_SREJ_ACT,
 						&chan->conn_state))
 				l2cap_retransmit(chan, control);
-		पूर्ण अन्यथा अणु
+		} else {
 			l2cap_retransmit(chan, control);
-			अगर (chan->tx_state == L2CAP_TX_STATE_WAIT_F) अणु
+			if (chan->tx_state == L2CAP_TX_STATE_WAIT_F) {
 				set_bit(CONN_SREJ_ACT, &chan->conn_state);
 				chan->srej_save_reqseq = control->reqseq;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
-अटल व्योम l2cap_handle_rej(काष्ठा l2cap_chan *chan,
-			     काष्ठा l2cap_ctrl *control)
-अणु
-	काष्ठा sk_buff *skb;
+static void l2cap_handle_rej(struct l2cap_chan *chan,
+			     struct l2cap_ctrl *control)
+{
+	struct sk_buff *skb;
 
 	BT_DBG("chan %p, control %p", chan, control);
 
-	अगर (control->reqseq == chan->next_tx_seq) अणु
+	if (control->reqseq == chan->next_tx_seq) {
 		BT_DBG("Invalid reqseq %d, disconnecting", control->reqseq);
 		l2cap_send_disconn_req(chan, ECONNRESET);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	skb = l2cap_erपंचांग_seq_in_queue(&chan->tx_q, control->reqseq);
+	skb = l2cap_ertm_seq_in_queue(&chan->tx_q, control->reqseq);
 
-	अगर (chan->max_tx && skb &&
-	    bt_cb(skb)->l2cap.retries >= chan->max_tx) अणु
+	if (chan->max_tx && skb &&
+	    bt_cb(skb)->l2cap.retries >= chan->max_tx) {
 		BT_DBG("Retry limit exceeded (%d)", chan->max_tx);
 		l2cap_send_disconn_req(chan, ECONNRESET);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	clear_bit(CONN_REMOTE_BUSY, &chan->conn_state);
 
 	l2cap_pass_to_tx(chan, control);
 
-	अगर (control->final) अणु
-		अगर (!test_and_clear_bit(CONN_REJ_ACT, &chan->conn_state))
+	if (control->final) {
+		if (!test_and_clear_bit(CONN_REJ_ACT, &chan->conn_state))
 			l2cap_retransmit_all(chan, control);
-	पूर्ण अन्यथा अणु
+	} else {
 		l2cap_retransmit_all(chan, control);
-		l2cap_erपंचांग_send(chan);
-		अगर (chan->tx_state == L2CAP_TX_STATE_WAIT_F)
+		l2cap_ertm_send(chan);
+		if (chan->tx_state == L2CAP_TX_STATE_WAIT_F)
 			set_bit(CONN_REJ_ACT, &chan->conn_state);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल u8 l2cap_classअगरy_txseq(काष्ठा l2cap_chan *chan, u16 txseq)
-अणु
+static u8 l2cap_classify_txseq(struct l2cap_chan *chan, u16 txseq)
+{
 	BT_DBG("chan %p, txseq %d", chan, txseq);
 
 	BT_DBG("last_acked_seq %d, expected_tx_seq %d", chan->last_acked_seq,
 	       chan->expected_tx_seq);
 
-	अगर (chan->rx_state == L2CAP_RX_STATE_SREJ_SENT) अणु
-		अगर (__seq_offset(chan, txseq, chan->last_acked_seq) >=
-		    chan->tx_win) अणु
+	if (chan->rx_state == L2CAP_RX_STATE_SREJ_SENT) {
+		if (__seq_offset(chan, txseq, chan->last_acked_seq) >=
+		    chan->tx_win) {
 			/* See notes below regarding "double poll" and
 			 * invalid packets.
 			 */
-			अगर (chan->tx_win <= ((chan->tx_win_max + 1) >> 1)) अणु
+			if (chan->tx_win <= ((chan->tx_win_max + 1) >> 1)) {
 				BT_DBG("Invalid/Ignore - after SREJ");
-				वापस L2CAP_TXSEQ_INVALID_IGNORE;
-			पूर्ण अन्यथा अणु
+				return L2CAP_TXSEQ_INVALID_IGNORE;
+			} else {
 				BT_DBG("Invalid - in window after SREJ sent");
-				वापस L2CAP_TXSEQ_INVALID;
-			पूर्ण
-		पूर्ण
+				return L2CAP_TXSEQ_INVALID;
+			}
+		}
 
-		अगर (chan->srej_list.head == txseq) अणु
+		if (chan->srej_list.head == txseq) {
 			BT_DBG("Expected SREJ");
-			वापस L2CAP_TXSEQ_EXPECTED_SREJ;
-		पूर्ण
+			return L2CAP_TXSEQ_EXPECTED_SREJ;
+		}
 
-		अगर (l2cap_erपंचांग_seq_in_queue(&chan->srej_q, txseq)) अणु
+		if (l2cap_ertm_seq_in_queue(&chan->srej_q, txseq)) {
 			BT_DBG("Duplicate SREJ - txseq already stored");
-			वापस L2CAP_TXSEQ_DUPLICATE_SREJ;
-		पूर्ण
+			return L2CAP_TXSEQ_DUPLICATE_SREJ;
+		}
 
-		अगर (l2cap_seq_list_contains(&chan->srej_list, txseq)) अणु
+		if (l2cap_seq_list_contains(&chan->srej_list, txseq)) {
 			BT_DBG("Unexpected SREJ - not requested");
-			वापस L2CAP_TXSEQ_UNEXPECTED_SREJ;
-		पूर्ण
-	पूर्ण
+			return L2CAP_TXSEQ_UNEXPECTED_SREJ;
+		}
+	}
 
-	अगर (chan->expected_tx_seq == txseq) अणु
-		अगर (__seq_offset(chan, txseq, chan->last_acked_seq) >=
-		    chan->tx_win) अणु
+	if (chan->expected_tx_seq == txseq) {
+		if (__seq_offset(chan, txseq, chan->last_acked_seq) >=
+		    chan->tx_win) {
 			BT_DBG("Invalid - txseq outside tx window");
-			वापस L2CAP_TXSEQ_INVALID;
-		पूर्ण अन्यथा अणु
+			return L2CAP_TXSEQ_INVALID;
+		} else {
 			BT_DBG("Expected");
-			वापस L2CAP_TXSEQ_EXPECTED;
-		पूर्ण
-	पूर्ण
+			return L2CAP_TXSEQ_EXPECTED;
+		}
+	}
 
-	अगर (__seq_offset(chan, txseq, chan->last_acked_seq) <
-	    __seq_offset(chan, chan->expected_tx_seq, chan->last_acked_seq)) अणु
+	if (__seq_offset(chan, txseq, chan->last_acked_seq) <
+	    __seq_offset(chan, chan->expected_tx_seq, chan->last_acked_seq)) {
 		BT_DBG("Duplicate - expected_tx_seq later than txseq");
-		वापस L2CAP_TXSEQ_DUPLICATE;
-	पूर्ण
+		return L2CAP_TXSEQ_DUPLICATE;
+	}
 
-	अगर (__seq_offset(chan, txseq, chan->last_acked_seq) >= chan->tx_win) अणु
+	if (__seq_offset(chan, txseq, chan->last_acked_seq) >= chan->tx_win) {
 		/* A source of invalid packets is a "double poll" condition,
 		 * where delays cause us to send multiple poll packets.  If
 		 * the remote stack receives and processes both polls,
@@ -6817,49 +6816,49 @@ drop:
 		 * with a sequence gap.  This would trigger an erroneous SREJ
 		 * request.
 		 *
-		 * Fortunately, this is impossible with a tx winकरोw that's
+		 * Fortunately, this is impossible with a tx window that's
 		 * less than half of the maximum sequence number, which allows
 		 * invalid frames to be safely ignored.
 		 *
-		 * With tx winकरोw sizes greater than half of the tx winकरोw
+		 * With tx window sizes greater than half of the tx window
 		 * maximum, the frame is invalid and cannot be ignored.  This
 		 * causes a disconnect.
 		 */
 
-		अगर (chan->tx_win <= ((chan->tx_win_max + 1) >> 1)) अणु
+		if (chan->tx_win <= ((chan->tx_win_max + 1) >> 1)) {
 			BT_DBG("Invalid/Ignore - txseq outside tx window");
-			वापस L2CAP_TXSEQ_INVALID_IGNORE;
-		पूर्ण अन्यथा अणु
+			return L2CAP_TXSEQ_INVALID_IGNORE;
+		} else {
 			BT_DBG("Invalid - txseq outside tx window");
-			वापस L2CAP_TXSEQ_INVALID;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return L2CAP_TXSEQ_INVALID;
+		}
+	} else {
 		BT_DBG("Unexpected - txseq indicates missing frames");
-		वापस L2CAP_TXSEQ_UNEXPECTED;
-	पूर्ण
-पूर्ण
+		return L2CAP_TXSEQ_UNEXPECTED;
+	}
+}
 
-अटल पूर्णांक l2cap_rx_state_recv(काष्ठा l2cap_chan *chan,
-			       काष्ठा l2cap_ctrl *control,
-			       काष्ठा sk_buff *skb, u8 event)
-अणु
-	पूर्णांक err = 0;
+static int l2cap_rx_state_recv(struct l2cap_chan *chan,
+			       struct l2cap_ctrl *control,
+			       struct sk_buff *skb, u8 event)
+{
+	int err = 0;
 	bool skb_in_use = false;
 
 	BT_DBG("chan %p, control %p, skb %p, event %d", chan, control, skb,
 	       event);
 
-	चयन (event) अणु
-	हाल L2CAP_EV_RECV_IFRAME:
-		चयन (l2cap_classअगरy_txseq(chan, control->txseq)) अणु
-		हाल L2CAP_TXSEQ_EXPECTED:
+	switch (event) {
+	case L2CAP_EV_RECV_IFRAME:
+		switch (l2cap_classify_txseq(chan, control->txseq)) {
+		case L2CAP_TXSEQ_EXPECTED:
 			l2cap_pass_to_tx(chan, control);
 
-			अगर (test_bit(CONN_LOCAL_BUSY, &chan->conn_state)) अणु
+			if (test_bit(CONN_LOCAL_BUSY, &chan->conn_state)) {
 				BT_DBG("Busy, discarding expected seq %d",
 				       control->txseq);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 			chan->expected_tx_seq = __next_seq(chan,
 							   control->txseq);
@@ -6868,37 +6867,37 @@ drop:
 			skb_in_use = true;
 
 			err = l2cap_reassemble_sdu(chan, skb, control);
-			अगर (err)
-				अवरोध;
+			if (err)
+				break;
 
-			अगर (control->final) अणु
-				अगर (!test_and_clear_bit(CONN_REJ_ACT,
-							&chan->conn_state)) अणु
+			if (control->final) {
+				if (!test_and_clear_bit(CONN_REJ_ACT,
+							&chan->conn_state)) {
 					control->final = 0;
 					l2cap_retransmit_all(chan, control);
-					l2cap_erपंचांग_send(chan);
-				पूर्ण
-			पूर्ण
+					l2cap_ertm_send(chan);
+				}
+			}
 
-			अगर (!test_bit(CONN_LOCAL_BUSY, &chan->conn_state))
+			if (!test_bit(CONN_LOCAL_BUSY, &chan->conn_state))
 				l2cap_send_ack(chan);
-			अवरोध;
-		हाल L2CAP_TXSEQ_UNEXPECTED:
+			break;
+		case L2CAP_TXSEQ_UNEXPECTED:
 			l2cap_pass_to_tx(chan, control);
 
 			/* Can't issue SREJ frames in the local busy state.
 			 * Drop this frame, it will be seen as missing
-			 * when local busy is निकासed.
+			 * when local busy is exited.
 			 */
-			अगर (test_bit(CONN_LOCAL_BUSY, &chan->conn_state)) अणु
+			if (test_bit(CONN_LOCAL_BUSY, &chan->conn_state)) {
 				BT_DBG("Busy, discarding unexpected seq %d",
 				       control->txseq);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 			/* There was a gap in the sequence, so an SREJ
-			 * must be sent क्रम each missing frame.  The
-			 * current frame is stored क्रम later use.
+			 * must be sent for each missing frame.  The
+			 * current frame is stored for later use.
 			 */
 			skb_queue_tail(&chan->srej_q, skb);
 			skb_in_use = true;
@@ -6910,85 +6909,85 @@ drop:
 			l2cap_send_srej(chan, control->txseq);
 
 			chan->rx_state = L2CAP_RX_STATE_SREJ_SENT;
-			अवरोध;
-		हाल L2CAP_TXSEQ_DUPLICATE:
+			break;
+		case L2CAP_TXSEQ_DUPLICATE:
 			l2cap_pass_to_tx(chan, control);
-			अवरोध;
-		हाल L2CAP_TXSEQ_INVALID_IGNORE:
-			अवरोध;
-		हाल L2CAP_TXSEQ_INVALID:
-		शेष:
+			break;
+		case L2CAP_TXSEQ_INVALID_IGNORE:
+			break;
+		case L2CAP_TXSEQ_INVALID:
+		default:
 			l2cap_send_disconn_req(chan, ECONNRESET);
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल L2CAP_EV_RECV_RR:
+			break;
+		}
+		break;
+	case L2CAP_EV_RECV_RR:
 		l2cap_pass_to_tx(chan, control);
-		अगर (control->final) अणु
+		if (control->final) {
 			clear_bit(CONN_REMOTE_BUSY, &chan->conn_state);
 
-			अगर (!test_and_clear_bit(CONN_REJ_ACT, &chan->conn_state) &&
-			    !__chan_is_moving(chan)) अणु
+			if (!test_and_clear_bit(CONN_REJ_ACT, &chan->conn_state) &&
+			    !__chan_is_moving(chan)) {
 				control->final = 0;
 				l2cap_retransmit_all(chan, control);
-			पूर्ण
+			}
 
-			l2cap_erपंचांग_send(chan);
-		पूर्ण अन्यथा अगर (control->poll) अणु
+			l2cap_ertm_send(chan);
+		} else if (control->poll) {
 			l2cap_send_i_or_rr_or_rnr(chan);
-		पूर्ण अन्यथा अणु
-			अगर (test_and_clear_bit(CONN_REMOTE_BUSY,
+		} else {
+			if (test_and_clear_bit(CONN_REMOTE_BUSY,
 					       &chan->conn_state) &&
 			    chan->unacked_frames)
-				__set_retrans_समयr(chan);
+				__set_retrans_timer(chan);
 
-			l2cap_erपंचांग_send(chan);
-		पूर्ण
-		अवरोध;
-	हाल L2CAP_EV_RECV_RNR:
+			l2cap_ertm_send(chan);
+		}
+		break;
+	case L2CAP_EV_RECV_RNR:
 		set_bit(CONN_REMOTE_BUSY, &chan->conn_state);
 		l2cap_pass_to_tx(chan, control);
-		अगर (control && control->poll) अणु
+		if (control && control->poll) {
 			set_bit(CONN_SEND_FBIT, &chan->conn_state);
 			l2cap_send_rr_or_rnr(chan, 0);
-		पूर्ण
-		__clear_retrans_समयr(chan);
+		}
+		__clear_retrans_timer(chan);
 		l2cap_seq_list_clear(&chan->retrans_list);
-		अवरोध;
-	हाल L2CAP_EV_RECV_REJ:
+		break;
+	case L2CAP_EV_RECV_REJ:
 		l2cap_handle_rej(chan, control);
-		अवरोध;
-	हाल L2CAP_EV_RECV_SREJ:
+		break;
+	case L2CAP_EV_RECV_SREJ:
 		l2cap_handle_srej(chan, control);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	अगर (skb && !skb_in_use) अणु
+	if (skb && !skb_in_use) {
 		BT_DBG("Freeing %p", skb);
-		kमुक्त_skb(skb);
-	पूर्ण
+		kfree_skb(skb);
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक l2cap_rx_state_srej_sent(काष्ठा l2cap_chan *chan,
-				    काष्ठा l2cap_ctrl *control,
-				    काष्ठा sk_buff *skb, u8 event)
-अणु
-	पूर्णांक err = 0;
+static int l2cap_rx_state_srej_sent(struct l2cap_chan *chan,
+				    struct l2cap_ctrl *control,
+				    struct sk_buff *skb, u8 event)
+{
+	int err = 0;
 	u16 txseq = control->txseq;
 	bool skb_in_use = false;
 
 	BT_DBG("chan %p, control %p, skb %p, event %d", chan, control, skb,
 	       event);
 
-	चयन (event) अणु
-	हाल L2CAP_EV_RECV_IFRAME:
-		चयन (l2cap_classअगरy_txseq(chan, txseq)) अणु
-		हाल L2CAP_TXSEQ_EXPECTED:
-			/* Keep frame क्रम reassembly later */
+	switch (event) {
+	case L2CAP_EV_RECV_IFRAME:
+		switch (l2cap_classify_txseq(chan, txseq)) {
+		case L2CAP_TXSEQ_EXPECTED:
+			/* Keep frame for reassembly later */
 			l2cap_pass_to_tx(chan, control);
 			skb_queue_tail(&chan->srej_q, skb);
 			skb_in_use = true;
@@ -6996,8 +6995,8 @@ drop:
 			       skb_queue_len(&chan->srej_q));
 
 			chan->expected_tx_seq = __next_seq(chan, txseq);
-			अवरोध;
-		हाल L2CAP_TXSEQ_EXPECTED_SREJ:
+			break;
+		case L2CAP_TXSEQ_EXPECTED_SREJ:
 			l2cap_seq_list_pop(&chan->srej_list);
 
 			l2cap_pass_to_tx(chan, control);
@@ -7006,14 +7005,14 @@ drop:
 			BT_DBG("Queued %p (queue len %d)", skb,
 			       skb_queue_len(&chan->srej_q));
 
-			err = l2cap_rx_queued_अगरrames(chan);
-			अगर (err)
-				अवरोध;
+			err = l2cap_rx_queued_iframes(chan);
+			if (err)
+				break;
 
-			अवरोध;
-		हाल L2CAP_TXSEQ_UNEXPECTED:
+			break;
+		case L2CAP_TXSEQ_UNEXPECTED:
 			/* Got a frame that can't be reassembled yet.
-			 * Save it क्रम later, and send SREJs to cover
+			 * Save it for later, and send SREJs to cover
 			 * the missing frames.
 			 */
 			skb_queue_tail(&chan->srej_q, skb);
@@ -7023,8 +7022,8 @@ drop:
 
 			l2cap_pass_to_tx(chan, control);
 			l2cap_send_srej(chan, control->txseq);
-			अवरोध;
-		हाल L2CAP_TXSEQ_UNEXPECTED_SREJ:
+			break;
+		case L2CAP_TXSEQ_UNEXPECTED_SREJ:
 			/* This frame was requested with an SREJ, but
 			 * some expected retransmitted frames are
 			 * missing.  Request retransmission of missing
@@ -7037,229 +7036,229 @@ drop:
 
 			l2cap_pass_to_tx(chan, control);
 			l2cap_send_srej_list(chan, control->txseq);
-			अवरोध;
-		हाल L2CAP_TXSEQ_DUPLICATE_SREJ:
-			/* We've alपढ़ोy queued this frame.  Drop this copy. */
+			break;
+		case L2CAP_TXSEQ_DUPLICATE_SREJ:
+			/* We've already queued this frame.  Drop this copy. */
 			l2cap_pass_to_tx(chan, control);
-			अवरोध;
-		हाल L2CAP_TXSEQ_DUPLICATE:
+			break;
+		case L2CAP_TXSEQ_DUPLICATE:
 			/* Expecting a later sequence number, so this frame
-			 * was alपढ़ोy received.  Ignore it completely.
+			 * was already received.  Ignore it completely.
 			 */
-			अवरोध;
-		हाल L2CAP_TXSEQ_INVALID_IGNORE:
-			अवरोध;
-		हाल L2CAP_TXSEQ_INVALID:
-		शेष:
+			break;
+		case L2CAP_TXSEQ_INVALID_IGNORE:
+			break;
+		case L2CAP_TXSEQ_INVALID:
+		default:
 			l2cap_send_disconn_req(chan, ECONNRESET);
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल L2CAP_EV_RECV_RR:
+			break;
+		}
+		break;
+	case L2CAP_EV_RECV_RR:
 		l2cap_pass_to_tx(chan, control);
-		अगर (control->final) अणु
+		if (control->final) {
 			clear_bit(CONN_REMOTE_BUSY, &chan->conn_state);
 
-			अगर (!test_and_clear_bit(CONN_REJ_ACT,
-						&chan->conn_state)) अणु
+			if (!test_and_clear_bit(CONN_REJ_ACT,
+						&chan->conn_state)) {
 				control->final = 0;
 				l2cap_retransmit_all(chan, control);
-			पूर्ण
+			}
 
-			l2cap_erपंचांग_send(chan);
-		पूर्ण अन्यथा अगर (control->poll) अणु
-			अगर (test_and_clear_bit(CONN_REMOTE_BUSY,
+			l2cap_ertm_send(chan);
+		} else if (control->poll) {
+			if (test_and_clear_bit(CONN_REMOTE_BUSY,
 					       &chan->conn_state) &&
-			    chan->unacked_frames) अणु
-				__set_retrans_समयr(chan);
-			पूर्ण
+			    chan->unacked_frames) {
+				__set_retrans_timer(chan);
+			}
 
 			set_bit(CONN_SEND_FBIT, &chan->conn_state);
 			l2cap_send_srej_tail(chan);
-		पूर्ण अन्यथा अणु
-			अगर (test_and_clear_bit(CONN_REMOTE_BUSY,
+		} else {
+			if (test_and_clear_bit(CONN_REMOTE_BUSY,
 					       &chan->conn_state) &&
 			    chan->unacked_frames)
-				__set_retrans_समयr(chan);
+				__set_retrans_timer(chan);
 
 			l2cap_send_ack(chan);
-		पूर्ण
-		अवरोध;
-	हाल L2CAP_EV_RECV_RNR:
+		}
+		break;
+	case L2CAP_EV_RECV_RNR:
 		set_bit(CONN_REMOTE_BUSY, &chan->conn_state);
 		l2cap_pass_to_tx(chan, control);
-		अगर (control->poll) अणु
+		if (control->poll) {
 			l2cap_send_srej_tail(chan);
-		पूर्ण अन्यथा अणु
-			काष्ठा l2cap_ctrl rr_control;
-			स_रखो(&rr_control, 0, माप(rr_control));
+		} else {
+			struct l2cap_ctrl rr_control;
+			memset(&rr_control, 0, sizeof(rr_control));
 			rr_control.sframe = 1;
 			rr_control.super = L2CAP_SUPER_RR;
 			rr_control.reqseq = chan->buffer_seq;
 			l2cap_send_sframe(chan, &rr_control);
-		पूर्ण
+		}
 
-		अवरोध;
-	हाल L2CAP_EV_RECV_REJ:
+		break;
+	case L2CAP_EV_RECV_REJ:
 		l2cap_handle_rej(chan, control);
-		अवरोध;
-	हाल L2CAP_EV_RECV_SREJ:
+		break;
+	case L2CAP_EV_RECV_SREJ:
 		l2cap_handle_srej(chan, control);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (skb && !skb_in_use) अणु
+	if (skb && !skb_in_use) {
 		BT_DBG("Freeing %p", skb);
-		kमुक्त_skb(skb);
-	पूर्ण
+		kfree_skb(skb);
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक l2cap_finish_move(काष्ठा l2cap_chan *chan)
-अणु
+static int l2cap_finish_move(struct l2cap_chan *chan)
+{
 	BT_DBG("chan %p", chan);
 
 	chan->rx_state = L2CAP_RX_STATE_RECV;
 
-	अगर (chan->hs_hcon)
+	if (chan->hs_hcon)
 		chan->conn->mtu = chan->hs_hcon->hdev->block_mtu;
-	अन्यथा
+	else
 		chan->conn->mtu = chan->conn->hcon->hdev->acl_mtu;
 
-	वापस l2cap_resegment(chan);
-पूर्ण
+	return l2cap_resegment(chan);
+}
 
-अटल पूर्णांक l2cap_rx_state_रुको_p(काष्ठा l2cap_chan *chan,
-				 काष्ठा l2cap_ctrl *control,
-				 काष्ठा sk_buff *skb, u8 event)
-अणु
-	पूर्णांक err;
+static int l2cap_rx_state_wait_p(struct l2cap_chan *chan,
+				 struct l2cap_ctrl *control,
+				 struct sk_buff *skb, u8 event)
+{
+	int err;
 
 	BT_DBG("chan %p, control %p, skb %p, event %d", chan, control, skb,
 	       event);
 
-	अगर (!control->poll)
-		वापस -EPROTO;
+	if (!control->poll)
+		return -EPROTO;
 
 	l2cap_process_reqseq(chan, control->reqseq);
 
-	अगर (!skb_queue_empty(&chan->tx_q))
+	if (!skb_queue_empty(&chan->tx_q))
 		chan->tx_send_head = skb_peek(&chan->tx_q);
-	अन्यथा
-		chan->tx_send_head = शून्य;
+	else
+		chan->tx_send_head = NULL;
 
-	/* Rewind next_tx_seq to the poपूर्णांक expected
+	/* Rewind next_tx_seq to the point expected
 	 * by the receiver.
 	 */
 	chan->next_tx_seq = control->reqseq;
 	chan->unacked_frames = 0;
 
 	err = l2cap_finish_move(chan);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	set_bit(CONN_SEND_FBIT, &chan->conn_state);
 	l2cap_send_i_or_rr_or_rnr(chan);
 
-	अगर (event == L2CAP_EV_RECV_IFRAME)
-		वापस -EPROTO;
+	if (event == L2CAP_EV_RECV_IFRAME)
+		return -EPROTO;
 
-	वापस l2cap_rx_state_recv(chan, control, शून्य, event);
-पूर्ण
+	return l2cap_rx_state_recv(chan, control, NULL, event);
+}
 
-अटल पूर्णांक l2cap_rx_state_रुको_f(काष्ठा l2cap_chan *chan,
-				 काष्ठा l2cap_ctrl *control,
-				 काष्ठा sk_buff *skb, u8 event)
-अणु
-	पूर्णांक err;
+static int l2cap_rx_state_wait_f(struct l2cap_chan *chan,
+				 struct l2cap_ctrl *control,
+				 struct sk_buff *skb, u8 event)
+{
+	int err;
 
-	अगर (!control->final)
-		वापस -EPROTO;
+	if (!control->final)
+		return -EPROTO;
 
 	clear_bit(CONN_REMOTE_BUSY, &chan->conn_state);
 
 	chan->rx_state = L2CAP_RX_STATE_RECV;
 	l2cap_process_reqseq(chan, control->reqseq);
 
-	अगर (!skb_queue_empty(&chan->tx_q))
+	if (!skb_queue_empty(&chan->tx_q))
 		chan->tx_send_head = skb_peek(&chan->tx_q);
-	अन्यथा
-		chan->tx_send_head = शून्य;
+	else
+		chan->tx_send_head = NULL;
 
-	/* Rewind next_tx_seq to the poपूर्णांक expected
+	/* Rewind next_tx_seq to the point expected
 	 * by the receiver.
 	 */
 	chan->next_tx_seq = control->reqseq;
 	chan->unacked_frames = 0;
 
-	अगर (chan->hs_hcon)
+	if (chan->hs_hcon)
 		chan->conn->mtu = chan->hs_hcon->hdev->block_mtu;
-	अन्यथा
+	else
 		chan->conn->mtu = chan->conn->hcon->hdev->acl_mtu;
 
 	err = l2cap_resegment(chan);
 
-	अगर (!err)
+	if (!err)
 		err = l2cap_rx_state_recv(chan, control, skb, event);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल bool __valid_reqseq(काष्ठा l2cap_chan *chan, u16 reqseq)
-अणु
-	/* Make sure reqseq is क्रम a packet that has been sent but not acked */
+static bool __valid_reqseq(struct l2cap_chan *chan, u16 reqseq)
+{
+	/* Make sure reqseq is for a packet that has been sent but not acked */
 	u16 unacked;
 
 	unacked = __seq_offset(chan, chan->next_tx_seq, chan->expected_ack_seq);
-	वापस __seq_offset(chan, chan->next_tx_seq, reqseq) <= unacked;
-पूर्ण
+	return __seq_offset(chan, chan->next_tx_seq, reqseq) <= unacked;
+}
 
-अटल पूर्णांक l2cap_rx(काष्ठा l2cap_chan *chan, काष्ठा l2cap_ctrl *control,
-		    काष्ठा sk_buff *skb, u8 event)
-अणु
-	पूर्णांक err = 0;
+static int l2cap_rx(struct l2cap_chan *chan, struct l2cap_ctrl *control,
+		    struct sk_buff *skb, u8 event)
+{
+	int err = 0;
 
 	BT_DBG("chan %p, control %p, skb %p, event %d, state %d", chan,
 	       control, skb, event, chan->rx_state);
 
-	अगर (__valid_reqseq(chan, control->reqseq)) अणु
-		चयन (chan->rx_state) अणु
-		हाल L2CAP_RX_STATE_RECV:
+	if (__valid_reqseq(chan, control->reqseq)) {
+		switch (chan->rx_state) {
+		case L2CAP_RX_STATE_RECV:
 			err = l2cap_rx_state_recv(chan, control, skb, event);
-			अवरोध;
-		हाल L2CAP_RX_STATE_SREJ_SENT:
+			break;
+		case L2CAP_RX_STATE_SREJ_SENT:
 			err = l2cap_rx_state_srej_sent(chan, control, skb,
 						       event);
-			अवरोध;
-		हाल L2CAP_RX_STATE_WAIT_P:
-			err = l2cap_rx_state_रुको_p(chan, control, skb, event);
-			अवरोध;
-		हाल L2CAP_RX_STATE_WAIT_F:
-			err = l2cap_rx_state_रुको_f(chan, control, skb, event);
-			अवरोध;
-		शेष:
-			/* shut it करोwn */
-			अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			break;
+		case L2CAP_RX_STATE_WAIT_P:
+			err = l2cap_rx_state_wait_p(chan, control, skb, event);
+			break;
+		case L2CAP_RX_STATE_WAIT_F:
+			err = l2cap_rx_state_wait_f(chan, control, skb, event);
+			break;
+		default:
+			/* shut it down */
+			break;
+		}
+	} else {
 		BT_DBG("Invalid reqseq %d (next_tx_seq %d, expected_ack_seq %d",
 		       control->reqseq, chan->next_tx_seq,
 		       chan->expected_ack_seq);
 		l2cap_send_disconn_req(chan, ECONNRESET);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक l2cap_stream_rx(काष्ठा l2cap_chan *chan, काष्ठा l2cap_ctrl *control,
-			   काष्ठा sk_buff *skb)
-अणु
+static int l2cap_stream_rx(struct l2cap_chan *chan, struct l2cap_ctrl *control,
+			   struct sk_buff *skb)
+{
 	BT_DBG("chan %p, control %p, skb %p, state %d", chan, control, skb,
 	       chan->rx_state);
 
-	अगर (l2cap_classअगरy_txseq(chan, control->txseq) ==
-	    L2CAP_TXSEQ_EXPECTED) अणु
+	if (l2cap_classify_txseq(chan, control->txseq) ==
+	    L2CAP_TXSEQ_EXPECTED) {
 		l2cap_pass_to_tx(chan, control);
 
 		BT_DBG("buffer_seq %u->%u", chan->buffer_seq,
@@ -7268,29 +7267,29 @@ drop:
 		chan->buffer_seq = __next_seq(chan, chan->buffer_seq);
 
 		l2cap_reassemble_sdu(chan, skb, control);
-	पूर्ण अन्यथा अणु
-		अगर (chan->sdu) अणु
-			kमुक्त_skb(chan->sdu);
-			chan->sdu = शून्य;
-		पूर्ण
-		chan->sdu_last_frag = शून्य;
+	} else {
+		if (chan->sdu) {
+			kfree_skb(chan->sdu);
+			chan->sdu = NULL;
+		}
+		chan->sdu_last_frag = NULL;
 		chan->sdu_len = 0;
 
-		अगर (skb) अणु
+		if (skb) {
 			BT_DBG("Freeing %p", skb);
-			kमुक्त_skb(skb);
-		पूर्ण
-	पूर्ण
+			kfree_skb(skb);
+		}
+	}
 
 	chan->last_acked_seq = control->txseq;
 	chan->expected_tx_seq = __next_seq(chan, control->txseq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक l2cap_data_rcv(काष्ठा l2cap_chan *chan, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा l2cap_ctrl *control = &bt_cb(skb)->l2cap;
+static int l2cap_data_rcv(struct l2cap_chan *chan, struct sk_buff *skb)
+{
+	struct l2cap_ctrl *control = &bt_cb(skb)->l2cap;
 	u16 len;
 	u8 event;
 
@@ -7301,29 +7300,29 @@ drop:
 	/*
 	 * We can just drop the corrupted I-frame here.
 	 * Receiver will miss it and start proper recovery
-	 * procedures and ask क्रम retransmission.
+	 * procedures and ask for retransmission.
 	 */
-	अगर (l2cap_check_fcs(chan, skb))
-		जाओ drop;
+	if (l2cap_check_fcs(chan, skb))
+		goto drop;
 
-	अगर (!control->sframe && control->sar == L2CAP_SAR_START)
+	if (!control->sframe && control->sar == L2CAP_SAR_START)
 		len -= L2CAP_SDULEN_SIZE;
 
-	अगर (chan->fcs == L2CAP_FCS_CRC16)
+	if (chan->fcs == L2CAP_FCS_CRC16)
 		len -= L2CAP_FCS_SIZE;
 
-	अगर (len > chan->mps) अणु
+	if (len > chan->mps) {
 		l2cap_send_disconn_req(chan, ECONNRESET);
-		जाओ drop;
-	पूर्ण
+		goto drop;
+	}
 
-	अगर (chan->ops->filter) अणु
-		अगर (chan->ops->filter(chan, skb))
-			जाओ drop;
-	पूर्ण
+	if (chan->ops->filter) {
+		if (chan->ops->filter(chan, skb))
+			goto drop;
+	}
 
-	अगर (!control->sframe) अणु
-		पूर्णांक err;
+	if (!control->sframe) {
+		int err;
 
 		BT_DBG("iframe sar %d, reqseq %d, final %d, txseq %d",
 		       control->sar, control->reqseq, control->final,
@@ -7332,122 +7331,122 @@ drop:
 		/* Validate F-bit - F=0 always valid, F=1 only
 		 * valid in TX WAIT_F
 		 */
-		अगर (control->final && chan->tx_state != L2CAP_TX_STATE_WAIT_F)
-			जाओ drop;
+		if (control->final && chan->tx_state != L2CAP_TX_STATE_WAIT_F)
+			goto drop;
 
-		अगर (chan->mode != L2CAP_MODE_STREAMING) अणु
+		if (chan->mode != L2CAP_MODE_STREAMING) {
 			event = L2CAP_EV_RECV_IFRAME;
 			err = l2cap_rx(chan, control, skb, event);
-		पूर्ण अन्यथा अणु
+		} else {
 			err = l2cap_stream_rx(chan, control, skb);
-		पूर्ण
+		}
 
-		अगर (err)
+		if (err)
 			l2cap_send_disconn_req(chan, ECONNRESET);
-	पूर्ण अन्यथा अणु
-		स्थिर u8 rx_func_to_event[4] = अणु
+	} else {
+		const u8 rx_func_to_event[4] = {
 			L2CAP_EV_RECV_RR, L2CAP_EV_RECV_REJ,
 			L2CAP_EV_RECV_RNR, L2CAP_EV_RECV_SREJ
-		पूर्ण;
+		};
 
 		/* Only I-frames are expected in streaming mode */
-		अगर (chan->mode == L2CAP_MODE_STREAMING)
-			जाओ drop;
+		if (chan->mode == L2CAP_MODE_STREAMING)
+			goto drop;
 
 		BT_DBG("sframe reqseq %d, final %d, poll %d, super %d",
 		       control->reqseq, control->final, control->poll,
 		       control->super);
 
-		अगर (len != 0) अणु
+		if (len != 0) {
 			BT_ERR("Trailing bytes: %d in sframe", len);
 			l2cap_send_disconn_req(chan, ECONNRESET);
-			जाओ drop;
-		पूर्ण
+			goto drop;
+		}
 
 		/* Validate F and P bits */
-		अगर (control->final && (control->poll ||
+		if (control->final && (control->poll ||
 				       chan->tx_state != L2CAP_TX_STATE_WAIT_F))
-			जाओ drop;
+			goto drop;
 
 		event = rx_func_to_event[control->super];
-		अगर (l2cap_rx(chan, control, skb, event))
+		if (l2cap_rx(chan, control, skb, event))
 			l2cap_send_disconn_req(chan, ECONNRESET);
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 drop:
-	kमुक्त_skb(skb);
-	वापस 0;
-पूर्ण
+	kfree_skb(skb);
+	return 0;
+}
 
-अटल व्योम l2cap_chan_le_send_credits(काष्ठा l2cap_chan *chan)
-अणु
-	काष्ठा l2cap_conn *conn = chan->conn;
-	काष्ठा l2cap_le_credits pkt;
-	u16 वापस_credits;
+static void l2cap_chan_le_send_credits(struct l2cap_chan *chan)
+{
+	struct l2cap_conn *conn = chan->conn;
+	struct l2cap_le_credits pkt;
+	u16 return_credits;
 
-	वापस_credits = (chan->imtu / chan->mps) + 1;
+	return_credits = (chan->imtu / chan->mps) + 1;
 
-	अगर (chan->rx_credits >= वापस_credits)
-		वापस;
+	if (chan->rx_credits >= return_credits)
+		return;
 
-	वापस_credits -= chan->rx_credits;
+	return_credits -= chan->rx_credits;
 
-	BT_DBG("chan %p returning %u credits to sender", chan, वापस_credits);
+	BT_DBG("chan %p returning %u credits to sender", chan, return_credits);
 
-	chan->rx_credits += वापस_credits;
+	chan->rx_credits += return_credits;
 
 	pkt.cid     = cpu_to_le16(chan->scid);
-	pkt.credits = cpu_to_le16(वापस_credits);
+	pkt.credits = cpu_to_le16(return_credits);
 
 	chan->ident = l2cap_get_ident(conn);
 
-	l2cap_send_cmd(conn, chan->ident, L2CAP_LE_CREDITS, माप(pkt), &pkt);
-पूर्ण
+	l2cap_send_cmd(conn, chan->ident, L2CAP_LE_CREDITS, sizeof(pkt), &pkt);
+}
 
-अटल पूर्णांक l2cap_ecred_recv(काष्ठा l2cap_chan *chan, काष्ठा sk_buff *skb)
-अणु
-	पूर्णांक err;
+static int l2cap_ecred_recv(struct l2cap_chan *chan, struct sk_buff *skb)
+{
+	int err;
 
 	BT_DBG("SDU reassemble complete: chan %p skb->len %u", chan, skb->len);
 
-	/* Wait recv to confirm reception beक्रमe updating the credits */
+	/* Wait recv to confirm reception before updating the credits */
 	err = chan->ops->recv(chan, skb);
 
 	/* Update credits whenever an SDU is received */
 	l2cap_chan_le_send_credits(chan);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक l2cap_ecred_data_rcv(काष्ठा l2cap_chan *chan, काष्ठा sk_buff *skb)
-अणु
-	पूर्णांक err;
+static int l2cap_ecred_data_rcv(struct l2cap_chan *chan, struct sk_buff *skb)
+{
+	int err;
 
-	अगर (!chan->rx_credits) अणु
+	if (!chan->rx_credits) {
 		BT_ERR("No credits to receive LE L2CAP data");
 		l2cap_send_disconn_req(chan, ECONNRESET);
-		वापस -ENOBUFS;
-	पूर्ण
+		return -ENOBUFS;
+	}
 
-	अगर (chan->imtu < skb->len) अणु
+	if (chan->imtu < skb->len) {
 		BT_ERR("Too big LE L2CAP PDU");
-		वापस -ENOBUFS;
-	पूर्ण
+		return -ENOBUFS;
+	}
 
 	chan->rx_credits--;
 	BT_DBG("rx_credits %u -> %u", chan->rx_credits + 1, chan->rx_credits);
 
-	/* Update अगर remote had run out of credits, this should only happens
-	 * अगर the remote is not using the entire MPS.
+	/* Update if remote had run out of credits, this should only happens
+	 * if the remote is not using the entire MPS.
 	 */
-	अगर (!chan->rx_credits)
+	if (!chan->rx_credits)
 		l2cap_chan_le_send_credits(chan);
 
 	err = 0;
 
-	अगर (!chan->sdu) अणु
+	if (!chan->sdu) {
 		u16 sdu_len;
 
 		sdu_len = get_unaligned_le16(skb->data);
@@ -7456,271 +7455,271 @@ drop:
 		BT_DBG("Start of new SDU. sdu_len %u skb->len %u imtu %u",
 		       sdu_len, skb->len, chan->imtu);
 
-		अगर (sdu_len > chan->imtu) अणु
+		if (sdu_len > chan->imtu) {
 			BT_ERR("Too big LE L2CAP SDU length received");
 			err = -EMSGSIZE;
-			जाओ failed;
-		पूर्ण
+			goto failed;
+		}
 
-		अगर (skb->len > sdu_len) अणु
+		if (skb->len > sdu_len) {
 			BT_ERR("Too much LE L2CAP data received");
 			err = -EINVAL;
-			जाओ failed;
-		पूर्ण
+			goto failed;
+		}
 
-		अगर (skb->len == sdu_len)
-			वापस l2cap_ecred_recv(chan, skb);
+		if (skb->len == sdu_len)
+			return l2cap_ecred_recv(chan, skb);
 
 		chan->sdu = skb;
 		chan->sdu_len = sdu_len;
 		chan->sdu_last_frag = skb;
 
-		/* Detect अगर remote is not able to use the selected MPS */
-		अगर (skb->len + L2CAP_SDULEN_SIZE < chan->mps) अणु
+		/* Detect if remote is not able to use the selected MPS */
+		if (skb->len + L2CAP_SDULEN_SIZE < chan->mps) {
 			u16 mps_len = skb->len + L2CAP_SDULEN_SIZE;
 
 			/* Adjust the number of credits */
 			BT_DBG("chan->mps %u -> %u", chan->mps, mps_len);
 			chan->mps = mps_len;
 			l2cap_chan_le_send_credits(chan);
-		पूर्ण
+		}
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	BT_DBG("SDU fragment. chan->sdu->len %u skb->len %u chan->sdu_len %u",
 	       chan->sdu->len, skb->len, chan->sdu_len);
 
-	अगर (chan->sdu->len + skb->len > chan->sdu_len) अणु
+	if (chan->sdu->len + skb->len > chan->sdu_len) {
 		BT_ERR("Too much LE L2CAP data received");
 		err = -EINVAL;
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
 	append_skb_frag(chan->sdu, skb, &chan->sdu_last_frag);
-	skb = शून्य;
+	skb = NULL;
 
-	अगर (chan->sdu->len == chan->sdu_len) अणु
+	if (chan->sdu->len == chan->sdu_len) {
 		err = l2cap_ecred_recv(chan, chan->sdu);
-		अगर (!err) अणु
-			chan->sdu = शून्य;
-			chan->sdu_last_frag = शून्य;
+		if (!err) {
+			chan->sdu = NULL;
+			chan->sdu_last_frag = NULL;
 			chan->sdu_len = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 failed:
-	अगर (err) अणु
-		kमुक्त_skb(skb);
-		kमुक्त_skb(chan->sdu);
-		chan->sdu = शून्य;
-		chan->sdu_last_frag = शून्य;
+	if (err) {
+		kfree_skb(skb);
+		kfree_skb(chan->sdu);
+		chan->sdu = NULL;
+		chan->sdu_last_frag = NULL;
 		chan->sdu_len = 0;
-	पूर्ण
+	}
 
-	/* We can't वापस an error here since we took care of the skb
-	 * मुक्तing पूर्णांकernally. An error वापस would cause the caller to
-	 * करो a द्विगुन-मुक्त of the skb.
+	/* We can't return an error here since we took care of the skb
+	 * freeing internally. An error return would cause the caller to
+	 * do a double-free of the skb.
 	 */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम l2cap_data_channel(काष्ठा l2cap_conn *conn, u16 cid,
-			       काष्ठा sk_buff *skb)
-अणु
-	काष्ठा l2cap_chan *chan;
+static void l2cap_data_channel(struct l2cap_conn *conn, u16 cid,
+			       struct sk_buff *skb)
+{
+	struct l2cap_chan *chan;
 
 	chan = l2cap_get_chan_by_scid(conn, cid);
-	अगर (!chan) अणु
-		अगर (cid == L2CAP_CID_A2MP) अणु
+	if (!chan) {
+		if (cid == L2CAP_CID_A2MP) {
 			chan = a2mp_channel_create(conn, skb);
-			अगर (!chan) अणु
-				kमुक्त_skb(skb);
-				वापस;
-			पूर्ण
+			if (!chan) {
+				kfree_skb(skb);
+				return;
+			}
 
 			l2cap_chan_lock(chan);
-		पूर्ण अन्यथा अणु
+		} else {
 			BT_DBG("unknown cid 0x%4.4x", cid);
-			/* Drop packet and वापस */
-			kमुक्त_skb(skb);
-			वापस;
-		पूर्ण
-	पूर्ण
+			/* Drop packet and return */
+			kfree_skb(skb);
+			return;
+		}
+	}
 
 	BT_DBG("chan %p, len %d", chan, skb->len);
 
-	/* If we receive data on a fixed channel beक्रमe the info req/rsp
-	 * procedure is करोne simply assume that the channel is supported
-	 * and mark it as पढ़ोy.
+	/* If we receive data on a fixed channel before the info req/rsp
+	 * procedure is done simply assume that the channel is supported
+	 * and mark it as ready.
 	 */
-	अगर (chan->chan_type == L2CAP_CHAN_FIXED)
-		l2cap_chan_पढ़ोy(chan);
+	if (chan->chan_type == L2CAP_CHAN_FIXED)
+		l2cap_chan_ready(chan);
 
-	अगर (chan->state != BT_CONNECTED)
-		जाओ drop;
+	if (chan->state != BT_CONNECTED)
+		goto drop;
 
-	चयन (chan->mode) अणु
-	हाल L2CAP_MODE_LE_FLOWCTL:
-	हाल L2CAP_MODE_EXT_FLOWCTL:
-		अगर (l2cap_ecred_data_rcv(chan, skb) < 0)
-			जाओ drop;
+	switch (chan->mode) {
+	case L2CAP_MODE_LE_FLOWCTL:
+	case L2CAP_MODE_EXT_FLOWCTL:
+		if (l2cap_ecred_data_rcv(chan, skb) < 0)
+			goto drop;
 
-		जाओ करोne;
+		goto done;
 
-	हाल L2CAP_MODE_BASIC:
+	case L2CAP_MODE_BASIC:
 		/* If socket recv buffers overflows we drop data here
 		 * which is *bad* because L2CAP has to be reliable.
-		 * But we करोn't have any other choice. L2CAP doesn't
+		 * But we don't have any other choice. L2CAP doesn't
 		 * provide flow control mechanism. */
 
-		अगर (chan->imtu < skb->len) अणु
+		if (chan->imtu < skb->len) {
 			BT_ERR("Dropping L2CAP data: receive buffer overflow");
-			जाओ drop;
-		पूर्ण
+			goto drop;
+		}
 
-		अगर (!chan->ops->recv(chan, skb))
-			जाओ करोne;
-		अवरोध;
+		if (!chan->ops->recv(chan, skb))
+			goto done;
+		break;
 
-	हाल L2CAP_MODE_ERTM:
-	हाल L2CAP_MODE_STREAMING:
+	case L2CAP_MODE_ERTM:
+	case L2CAP_MODE_STREAMING:
 		l2cap_data_rcv(chan, skb);
-		जाओ करोne;
+		goto done;
 
-	शेष:
+	default:
 		BT_DBG("chan %p: bad mode 0x%2.2x", chan, chan->mode);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 drop:
-	kमुक्त_skb(skb);
+	kfree_skb(skb);
 
-करोne:
+done:
 	l2cap_chan_unlock(chan);
-पूर्ण
+}
 
-अटल व्योम l2cap_conless_channel(काष्ठा l2cap_conn *conn, __le16 psm,
-				  काष्ठा sk_buff *skb)
-अणु
-	काष्ठा hci_conn *hcon = conn->hcon;
-	काष्ठा l2cap_chan *chan;
+static void l2cap_conless_channel(struct l2cap_conn *conn, __le16 psm,
+				  struct sk_buff *skb)
+{
+	struct hci_conn *hcon = conn->hcon;
+	struct l2cap_chan *chan;
 
-	अगर (hcon->type != ACL_LINK)
-		जाओ मुक्त_skb;
+	if (hcon->type != ACL_LINK)
+		goto free_skb;
 
 	chan = l2cap_global_chan_by_psm(0, psm, &hcon->src, &hcon->dst,
 					ACL_LINK);
-	अगर (!chan)
-		जाओ मुक्त_skb;
+	if (!chan)
+		goto free_skb;
 
 	BT_DBG("chan %p, len %d", chan, skb->len);
 
-	अगर (chan->state != BT_BOUND && chan->state != BT_CONNECTED)
-		जाओ drop;
+	if (chan->state != BT_BOUND && chan->state != BT_CONNECTED)
+		goto drop;
 
-	अगर (chan->imtu < skb->len)
-		जाओ drop;
+	if (chan->imtu < skb->len)
+		goto drop;
 
-	/* Store remote BD_ADDR and PSM क्रम msg_name */
+	/* Store remote BD_ADDR and PSM for msg_name */
 	bacpy(&bt_cb(skb)->l2cap.bdaddr, &hcon->dst);
 	bt_cb(skb)->l2cap.psm = psm;
 
-	अगर (!chan->ops->recv(chan, skb)) अणु
+	if (!chan->ops->recv(chan, skb)) {
 		l2cap_chan_put(chan);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 drop:
 	l2cap_chan_put(chan);
-मुक्त_skb:
-	kमुक्त_skb(skb);
-पूर्ण
+free_skb:
+	kfree_skb(skb);
+}
 
-अटल व्योम l2cap_recv_frame(काष्ठा l2cap_conn *conn, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा l2cap_hdr *lh = (व्योम *) skb->data;
-	काष्ठा hci_conn *hcon = conn->hcon;
+static void l2cap_recv_frame(struct l2cap_conn *conn, struct sk_buff *skb)
+{
+	struct l2cap_hdr *lh = (void *) skb->data;
+	struct hci_conn *hcon = conn->hcon;
 	u16 cid, len;
 	__le16 psm;
 
-	अगर (hcon->state != BT_CONNECTED) अणु
+	if (hcon->state != BT_CONNECTED) {
 		BT_DBG("queueing pending rx skb");
 		skb_queue_tail(&conn->pending_rx, skb);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	skb_pull(skb, L2CAP_HDR_SIZE);
 	cid = __le16_to_cpu(lh->cid);
 	len = __le16_to_cpu(lh->len);
 
-	अगर (len != skb->len) अणु
-		kमुक्त_skb(skb);
-		वापस;
-	पूर्ण
+	if (len != skb->len) {
+		kfree_skb(skb);
+		return;
+	}
 
 	/* Since we can't actively block incoming LE connections we must
 	 * at least ensure that we ignore incoming data from them.
 	 */
-	अगर (hcon->type == LE_LINK &&
+	if (hcon->type == LE_LINK &&
 	    hci_bdaddr_list_lookup(&hcon->hdev->blacklist, &hcon->dst,
-				   bdaddr_dst_type(hcon))) अणु
-		kमुक्त_skb(skb);
-		वापस;
-	पूर्ण
+				   bdaddr_dst_type(hcon))) {
+		kfree_skb(skb);
+		return;
+	}
 
 	BT_DBG("len %d, cid 0x%4.4x", len, cid);
 
-	चयन (cid) अणु
-	हाल L2CAP_CID_SIGNALING:
+	switch (cid) {
+	case L2CAP_CID_SIGNALING:
 		l2cap_sig_channel(conn, skb);
-		अवरोध;
+		break;
 
-	हाल L2CAP_CID_CONN_LESS:
+	case L2CAP_CID_CONN_LESS:
 		psm = get_unaligned((__le16 *) skb->data);
 		skb_pull(skb, L2CAP_PSMLEN_SIZE);
 		l2cap_conless_channel(conn, psm, skb);
-		अवरोध;
+		break;
 
-	हाल L2CAP_CID_LE_SIGNALING:
+	case L2CAP_CID_LE_SIGNALING:
 		l2cap_le_sig_channel(conn, skb);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		l2cap_data_channel(conn, cid, skb);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम process_pending_rx(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा l2cap_conn *conn = container_of(work, काष्ठा l2cap_conn,
+static void process_pending_rx(struct work_struct *work)
+{
+	struct l2cap_conn *conn = container_of(work, struct l2cap_conn,
 					       pending_rx_work);
-	काष्ठा sk_buff *skb;
+	struct sk_buff *skb;
 
 	BT_DBG("");
 
-	जबतक ((skb = skb_dequeue(&conn->pending_rx)))
+	while ((skb = skb_dequeue(&conn->pending_rx)))
 		l2cap_recv_frame(conn, skb);
-पूर्ण
+}
 
-अटल काष्ठा l2cap_conn *l2cap_conn_add(काष्ठा hci_conn *hcon)
-अणु
-	काष्ठा l2cap_conn *conn = hcon->l2cap_data;
-	काष्ठा hci_chan *hchan;
+static struct l2cap_conn *l2cap_conn_add(struct hci_conn *hcon)
+{
+	struct l2cap_conn *conn = hcon->l2cap_data;
+	struct hci_chan *hchan;
 
-	अगर (conn)
-		वापस conn;
+	if (conn)
+		return conn;
 
 	hchan = hci_chan_create(hcon);
-	अगर (!hchan)
-		वापस शून्य;
+	if (!hchan)
+		return NULL;
 
-	conn = kzalloc(माप(*conn), GFP_KERNEL);
-	अगर (!conn) अणु
+	conn = kzalloc(sizeof(*conn), GFP_KERNEL);
+	if (!conn) {
 		hci_chan_del(hchan);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	kref_init(&conn->ref);
 	hcon->l2cap_data = conn;
@@ -7729,27 +7728,27 @@ drop:
 
 	BT_DBG("hcon %p conn %p hchan %p", hcon, conn, hchan);
 
-	चयन (hcon->type) अणु
-	हाल LE_LINK:
-		अगर (hcon->hdev->le_mtu) अणु
+	switch (hcon->type) {
+	case LE_LINK:
+		if (hcon->hdev->le_mtu) {
 			conn->mtu = hcon->hdev->le_mtu;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		fallthrough;
-	शेष:
+	default:
 		conn->mtu = hcon->hdev->acl_mtu;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	conn->feat_mask = 0;
 
 	conn->local_fixed_chan = L2CAP_FC_SIG_BREDR | L2CAP_FC_CONNLESS;
 
-	अगर (hcon->type == ACL_LINK &&
+	if (hcon->type == ACL_LINK &&
 	    hci_dev_test_flag(hcon->hdev, HCI_HS_ENABLED))
 		conn->local_fixed_chan |= L2CAP_FC_A2MP;
 
-	अगर (hci_dev_test_flag(hcon->hdev, HCI_LE_ENABLED) &&
+	if (hci_dev_test_flag(hcon->hdev, HCI_LE_ENABLED) &&
 	    (bredr_sc_enabled(hcon->hdev) ||
 	     hci_dev_test_flag(hcon->hdev, HCI_FORCE_BREDR_SMP)))
 		conn->local_fixed_chan |= L2CAP_FC_SMP_BREDR;
@@ -7760,7 +7759,7 @@ drop:
 	INIT_LIST_HEAD(&conn->chan_l);
 	INIT_LIST_HEAD(&conn->users);
 
-	INIT_DELAYED_WORK(&conn->info_समयr, l2cap_info_समयout);
+	INIT_DELAYED_WORK(&conn->info_timer, l2cap_info_timeout);
 
 	skb_queue_head_init(&conn->pending_rx);
 	INIT_WORK(&conn->pending_rx_work, process_pending_rx);
@@ -7768,124 +7767,124 @@ drop:
 
 	conn->disc_reason = HCI_ERROR_REMOTE_USER_TERM;
 
-	वापस conn;
-पूर्ण
+	return conn;
+}
 
-अटल bool is_valid_psm(u16 psm, u8 dst_type)
-अणु
-	अगर (!psm)
-		वापस false;
+static bool is_valid_psm(u16 psm, u8 dst_type)
+{
+	if (!psm)
+		return false;
 
-	अगर (bdaddr_type_is_le(dst_type))
-		वापस (psm <= 0x00ff);
+	if (bdaddr_type_is_le(dst_type))
+		return (psm <= 0x00ff);
 
 	/* PSM must be odd and lsb of upper byte must be 0 */
-	वापस ((psm & 0x0101) == 0x0001);
-पूर्ण
+	return ((psm & 0x0101) == 0x0001);
+}
 
-काष्ठा l2cap_chan_data अणु
-	काष्ठा l2cap_chan *chan;
-	काष्ठा pid *pid;
-	पूर्णांक count;
-पूर्ण;
+struct l2cap_chan_data {
+	struct l2cap_chan *chan;
+	struct pid *pid;
+	int count;
+};
 
-अटल व्योम l2cap_chan_by_pid(काष्ठा l2cap_chan *chan, व्योम *data)
-अणु
-	काष्ठा l2cap_chan_data *d = data;
-	काष्ठा pid *pid;
+static void l2cap_chan_by_pid(struct l2cap_chan *chan, void *data)
+{
+	struct l2cap_chan_data *d = data;
+	struct pid *pid;
 
-	अगर (chan == d->chan)
-		वापस;
+	if (chan == d->chan)
+		return;
 
-	अगर (!test_bit(FLAG_DEFER_SETUP, &chan->flags))
-		वापस;
+	if (!test_bit(FLAG_DEFER_SETUP, &chan->flags))
+		return;
 
 	pid = chan->ops->get_peer_pid(chan);
 
 	/* Only count deferred channels with the same PID/PSM */
-	अगर (d->pid != pid || chan->psm != d->chan->psm || chan->ident ||
+	if (d->pid != pid || chan->psm != d->chan->psm || chan->ident ||
 	    chan->mode != L2CAP_MODE_EXT_FLOWCTL || chan->state != BT_CONNECT)
-		वापस;
+		return;
 
 	d->count++;
-पूर्ण
+}
 
-पूर्णांक l2cap_chan_connect(काष्ठा l2cap_chan *chan, __le16 psm, u16 cid,
+int l2cap_chan_connect(struct l2cap_chan *chan, __le16 psm, u16 cid,
 		       bdaddr_t *dst, u8 dst_type)
-अणु
-	काष्ठा l2cap_conn *conn;
-	काष्ठा hci_conn *hcon;
-	काष्ठा hci_dev *hdev;
-	पूर्णांक err;
+{
+	struct l2cap_conn *conn;
+	struct hci_conn *hcon;
+	struct hci_dev *hdev;
+	int err;
 
 	BT_DBG("%pMR -> %pMR (type %u) psm 0x%4.4x mode 0x%2.2x", &chan->src,
 	       dst, dst_type, __le16_to_cpu(psm), chan->mode);
 
 	hdev = hci_get_route(dst, &chan->src, chan->src_type);
-	अगर (!hdev)
-		वापस -EHOSTUNREACH;
+	if (!hdev)
+		return -EHOSTUNREACH;
 
 	hci_dev_lock(hdev);
 
-	अगर (!is_valid_psm(__le16_to_cpu(psm), dst_type) && !cid &&
-	    chan->chan_type != L2CAP_CHAN_RAW) अणु
+	if (!is_valid_psm(__le16_to_cpu(psm), dst_type) && !cid &&
+	    chan->chan_type != L2CAP_CHAN_RAW) {
 		err = -EINVAL;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (chan->chan_type == L2CAP_CHAN_CONN_ORIENTED && !psm) अणु
+	if (chan->chan_type == L2CAP_CHAN_CONN_ORIENTED && !psm) {
 		err = -EINVAL;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (chan->chan_type == L2CAP_CHAN_FIXED && !cid) अणु
+	if (chan->chan_type == L2CAP_CHAN_FIXED && !cid) {
 		err = -EINVAL;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	चयन (chan->mode) अणु
-	हाल L2CAP_MODE_BASIC:
-		अवरोध;
-	हाल L2CAP_MODE_LE_FLOWCTL:
-		अवरोध;
-	हाल L2CAP_MODE_EXT_FLOWCTL:
-		अगर (!enable_ecred) अणु
+	switch (chan->mode) {
+	case L2CAP_MODE_BASIC:
+		break;
+	case L2CAP_MODE_LE_FLOWCTL:
+		break;
+	case L2CAP_MODE_EXT_FLOWCTL:
+		if (!enable_ecred) {
 			err = -EOPNOTSUPP;
-			जाओ करोne;
-		पूर्ण
-		अवरोध;
-	हाल L2CAP_MODE_ERTM:
-	हाल L2CAP_MODE_STREAMING:
-		अगर (!disable_erपंचांग)
-			अवरोध;
+			goto done;
+		}
+		break;
+	case L2CAP_MODE_ERTM:
+	case L2CAP_MODE_STREAMING:
+		if (!disable_ertm)
+			break;
 		fallthrough;
-	शेष:
+	default:
 		err = -EOPNOTSUPP;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	चयन (chan->state) अणु
-	हाल BT_CONNECT:
-	हाल BT_CONNECT2:
-	हाल BT_CONFIG:
-		/* Alपढ़ोy connecting */
+	switch (chan->state) {
+	case BT_CONNECT:
+	case BT_CONNECT2:
+	case BT_CONFIG:
+		/* Already connecting */
 		err = 0;
-		जाओ करोne;
+		goto done;
 
-	हाल BT_CONNECTED:
-		/* Alपढ़ोy connected */
+	case BT_CONNECTED:
+		/* Already connected */
 		err = -EISCONN;
-		जाओ करोne;
+		goto done;
 
-	हाल BT_OPEN:
-	हाल BT_BOUND:
+	case BT_OPEN:
+	case BT_BOUND:
 		/* Can connect */
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		err = -EBADFD;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	/* Set destination address and psm */
 	bacpy(&chan->dst, dst);
@@ -7894,45 +7893,45 @@ drop:
 	chan->psm = psm;
 	chan->dcid = cid;
 
-	अगर (bdaddr_type_is_le(dst_type)) अणु
+	if (bdaddr_type_is_le(dst_type)) {
 		/* Convert from L2CAP channel address type to HCI address type
 		 */
-		अगर (dst_type == BDADDR_LE_PUBLIC)
+		if (dst_type == BDADDR_LE_PUBLIC)
 			dst_type = ADDR_LE_DEV_PUBLIC;
-		अन्यथा
+		else
 			dst_type = ADDR_LE_DEV_RANDOM;
 
-		अगर (hci_dev_test_flag(hdev, HCI_ADVERTISING))
+		if (hci_dev_test_flag(hdev, HCI_ADVERTISING))
 			hcon = hci_connect_le(hdev, dst, dst_type,
 					      chan->sec_level,
 					      HCI_LE_CONN_TIMEOUT,
-					      HCI_ROLE_SLAVE, शून्य);
-		अन्यथा
+					      HCI_ROLE_SLAVE, NULL);
+		else
 			hcon = hci_connect_le_scan(hdev, dst, dst_type,
 						   chan->sec_level,
 						   HCI_LE_CONN_TIMEOUT,
 						   CONN_REASON_L2CAP_CHAN);
 
-	पूर्ण अन्यथा अणु
+	} else {
 		u8 auth_type = l2cap_get_auth_type(chan);
 		hcon = hci_connect_acl(hdev, dst, chan->sec_level, auth_type,
 				       CONN_REASON_L2CAP_CHAN);
-	पूर्ण
+	}
 
-	अगर (IS_ERR(hcon)) अणु
+	if (IS_ERR(hcon)) {
 		err = PTR_ERR(hcon);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	conn = l2cap_conn_add(hcon);
-	अगर (!conn) अणु
+	if (!conn) {
 		hci_conn_drop(hcon);
 		err = -ENOMEM;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (chan->mode == L2CAP_MODE_EXT_FLOWCTL) अणु
-		काष्ठा l2cap_chan_data data;
+	if (chan->mode == L2CAP_MODE_EXT_FLOWCTL) {
+		struct l2cap_chan_data data;
 
 		data.chan = chan;
 		data.pid = chan->ops->get_peer_pid(chan);
@@ -7940,22 +7939,22 @@ drop:
 
 		l2cap_chan_list(conn, l2cap_chan_by_pid, &data);
 
-		/* Check अगर there isn't too many channels being connected */
-		अगर (data.count > L2CAP_ECRED_CONN_SCID_MAX) अणु
+		/* Check if there isn't too many channels being connected */
+		if (data.count > L2CAP_ECRED_CONN_SCID_MAX) {
 			hci_conn_drop(hcon);
 			err = -EPROTO;
-			जाओ करोne;
-		पूर्ण
-	पूर्ण
+			goto done;
+		}
+	}
 
 	mutex_lock(&conn->chan_lock);
 	l2cap_chan_lock(chan);
 
-	अगर (cid && __l2cap_get_chan_by_dcid(conn, cid)) अणु
+	if (cid && __l2cap_get_chan_by_dcid(conn, cid)) {
 		hci_conn_drop(hcon);
 		err = -EBUSY;
-		जाओ chan_unlock;
-	पूर्ण
+		goto chan_unlock;
+	}
 
 	/* Update source addr of the socket */
 	bacpy(&chan->src, &hcon->src);
@@ -7967,43 +7966,43 @@ drop:
 	hci_conn_drop(hcon);
 
 	l2cap_state_change(chan, BT_CONNECT);
-	__set_chan_समयr(chan, chan->ops->get_sndसमयo(chan));
+	__set_chan_timer(chan, chan->ops->get_sndtimeo(chan));
 
 	/* Release chan->sport so that it can be reused by other
-	 * sockets (as it's only used क्रम listening sockets).
+	 * sockets (as it's only used for listening sockets).
 	 */
-	ग_लिखो_lock(&chan_list_lock);
+	write_lock(&chan_list_lock);
 	chan->sport = 0;
-	ग_लिखो_unlock(&chan_list_lock);
+	write_unlock(&chan_list_lock);
 
-	अगर (hcon->state == BT_CONNECTED) अणु
-		अगर (chan->chan_type != L2CAP_CHAN_CONN_ORIENTED) अणु
-			__clear_chan_समयr(chan);
-			अगर (l2cap_chan_check_security(chan, true))
+	if (hcon->state == BT_CONNECTED) {
+		if (chan->chan_type != L2CAP_CHAN_CONN_ORIENTED) {
+			__clear_chan_timer(chan);
+			if (l2cap_chan_check_security(chan, true))
 				l2cap_state_change(chan, BT_CONNECTED);
-		पूर्ण अन्यथा
-			l2cap_करो_start(chan);
-	पूर्ण
+		} else
+			l2cap_do_start(chan);
+	}
 
 	err = 0;
 
 chan_unlock:
 	l2cap_chan_unlock(chan);
 	mutex_unlock(&conn->chan_lock);
-करोne:
+done:
 	hci_dev_unlock(hdev);
 	hci_dev_put(hdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL_GPL(l2cap_chan_connect);
 
-अटल व्योम l2cap_ecred_reconfigure(काष्ठा l2cap_chan *chan)
-अणु
-	काष्ठा l2cap_conn *conn = chan->conn;
-	काष्ठा अणु
-		काष्ठा l2cap_ecred_reconf_req req;
+static void l2cap_ecred_reconfigure(struct l2cap_chan *chan)
+{
+	struct l2cap_conn *conn = chan->conn;
+	struct {
+		struct l2cap_ecred_reconf_req req;
 		__le16 scid;
-	पूर्ण pdu;
+	} pdu;
 
 	pdu.req.mtu = cpu_to_le16(chan->imtu);
 	pdu.req.mps = cpu_to_le16(chan->mps);
@@ -8012,13 +8011,13 @@ EXPORT_SYMBOL_GPL(l2cap_chan_connect);
 	chan->ident = l2cap_get_ident(conn);
 
 	l2cap_send_cmd(conn, chan->ident, L2CAP_ECRED_RECONF_REQ,
-		       माप(pdu), &pdu);
-पूर्ण
+		       sizeof(pdu), &pdu);
+}
 
-पूर्णांक l2cap_chan_reconfigure(काष्ठा l2cap_chan *chan, __u16 mtu)
-अणु
-	अगर (chan->imtu > mtu)
-		वापस -EINVAL;
+int l2cap_chan_reconfigure(struct l2cap_chan *chan, __u16 mtu)
+{
+	if (chan->imtu > mtu)
+		return -EINVAL;
 
 	BT_DBG("chan %p mtu 0x%4.4x", chan, mtu);
 
@@ -8026,279 +8025,279 @@ EXPORT_SYMBOL_GPL(l2cap_chan_connect);
 
 	l2cap_ecred_reconfigure(chan);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* ---- L2CAP पूर्णांकerface with lower layer (HCI) ---- */
+/* ---- L2CAP interface with lower layer (HCI) ---- */
 
-पूर्णांक l2cap_connect_ind(काष्ठा hci_dev *hdev, bdaddr_t *bdaddr)
-अणु
-	पूर्णांक exact = 0, lm1 = 0, lm2 = 0;
-	काष्ठा l2cap_chan *c;
+int l2cap_connect_ind(struct hci_dev *hdev, bdaddr_t *bdaddr)
+{
+	int exact = 0, lm1 = 0, lm2 = 0;
+	struct l2cap_chan *c;
 
 	BT_DBG("hdev %s, bdaddr %pMR", hdev->name, bdaddr);
 
 	/* Find listening sockets and check their link_mode */
-	पढ़ो_lock(&chan_list_lock);
-	list_क्रम_each_entry(c, &chan_list, global_l) अणु
-		अगर (c->state != BT_LISTEN)
-			जारी;
+	read_lock(&chan_list_lock);
+	list_for_each_entry(c, &chan_list, global_l) {
+		if (c->state != BT_LISTEN)
+			continue;
 
-		अगर (!bacmp(&c->src, &hdev->bdaddr)) अणु
+		if (!bacmp(&c->src, &hdev->bdaddr)) {
 			lm1 |= HCI_LM_ACCEPT;
-			अगर (test_bit(FLAG_ROLE_SWITCH, &c->flags))
+			if (test_bit(FLAG_ROLE_SWITCH, &c->flags))
 				lm1 |= HCI_LM_MASTER;
 			exact++;
-		पूर्ण अन्यथा अगर (!bacmp(&c->src, BDADDR_ANY)) अणु
+		} else if (!bacmp(&c->src, BDADDR_ANY)) {
 			lm2 |= HCI_LM_ACCEPT;
-			अगर (test_bit(FLAG_ROLE_SWITCH, &c->flags))
+			if (test_bit(FLAG_ROLE_SWITCH, &c->flags))
 				lm2 |= HCI_LM_MASTER;
-		पूर्ण
-	पूर्ण
-	पढ़ो_unlock(&chan_list_lock);
+		}
+	}
+	read_unlock(&chan_list_lock);
 
-	वापस exact ? lm1 : lm2;
-पूर्ण
+	return exact ? lm1 : lm2;
+}
 
-/* Find the next fixed channel in BT_LISTEN state, जारी iteration
+/* Find the next fixed channel in BT_LISTEN state, continue iteration
  * from an existing channel in the list or from the beginning of the
- * global list (by passing शून्य as first parameter).
+ * global list (by passing NULL as first parameter).
  */
-अटल काष्ठा l2cap_chan *l2cap_global_fixed_chan(काष्ठा l2cap_chan *c,
-						  काष्ठा hci_conn *hcon)
-अणु
+static struct l2cap_chan *l2cap_global_fixed_chan(struct l2cap_chan *c,
+						  struct hci_conn *hcon)
+{
 	u8 src_type = bdaddr_src_type(hcon);
 
-	पढ़ो_lock(&chan_list_lock);
+	read_lock(&chan_list_lock);
 
-	अगर (c)
+	if (c)
 		c = list_next_entry(c, global_l);
-	अन्यथा
+	else
 		c = list_entry(chan_list.next, typeof(*c), global_l);
 
-	list_क्रम_each_entry_from(c, &chan_list, global_l) अणु
-		अगर (c->chan_type != L2CAP_CHAN_FIXED)
-			जारी;
-		अगर (c->state != BT_LISTEN)
-			जारी;
-		अगर (bacmp(&c->src, &hcon->src) && bacmp(&c->src, BDADDR_ANY))
-			जारी;
-		अगर (src_type != c->src_type)
-			जारी;
+	list_for_each_entry_from(c, &chan_list, global_l) {
+		if (c->chan_type != L2CAP_CHAN_FIXED)
+			continue;
+		if (c->state != BT_LISTEN)
+			continue;
+		if (bacmp(&c->src, &hcon->src) && bacmp(&c->src, BDADDR_ANY))
+			continue;
+		if (src_type != c->src_type)
+			continue;
 
 		l2cap_chan_hold(c);
-		पढ़ो_unlock(&chan_list_lock);
-		वापस c;
-	पूर्ण
+		read_unlock(&chan_list_lock);
+		return c;
+	}
 
-	पढ़ो_unlock(&chan_list_lock);
+	read_unlock(&chan_list_lock);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम l2cap_connect_cfm(काष्ठा hci_conn *hcon, u8 status)
-अणु
-	काष्ठा hci_dev *hdev = hcon->hdev;
-	काष्ठा l2cap_conn *conn;
-	काष्ठा l2cap_chan *pchan;
+static void l2cap_connect_cfm(struct hci_conn *hcon, u8 status)
+{
+	struct hci_dev *hdev = hcon->hdev;
+	struct l2cap_conn *conn;
+	struct l2cap_chan *pchan;
 	u8 dst_type;
 
-	अगर (hcon->type != ACL_LINK && hcon->type != LE_LINK)
-		वापस;
+	if (hcon->type != ACL_LINK && hcon->type != LE_LINK)
+		return;
 
 	BT_DBG("hcon %p bdaddr %pMR status %d", hcon, &hcon->dst, status);
 
-	अगर (status) अणु
-		l2cap_conn_del(hcon, bt_to_त्रुटि_सं(status));
-		वापस;
-	पूर्ण
+	if (status) {
+		l2cap_conn_del(hcon, bt_to_errno(status));
+		return;
+	}
 
 	conn = l2cap_conn_add(hcon);
-	अगर (!conn)
-		वापस;
+	if (!conn)
+		return;
 
 	dst_type = bdaddr_dst_type(hcon);
 
-	/* If device is blocked, करो not create channels क्रम it */
-	अगर (hci_bdaddr_list_lookup(&hdev->blacklist, &hcon->dst, dst_type))
-		वापस;
+	/* If device is blocked, do not create channels for it */
+	if (hci_bdaddr_list_lookup(&hdev->blacklist, &hcon->dst, dst_type))
+		return;
 
-	/* Find fixed channels and notअगरy them of the new connection. We
-	 * use multiple inभागidual lookups, continuing each समय where
+	/* Find fixed channels and notify them of the new connection. We
+	 * use multiple individual lookups, continuing each time where
 	 * we left off, because the list lock would prevent calling the
 	 * potentially sleeping l2cap_chan_lock() function.
 	 */
-	pchan = l2cap_global_fixed_chan(शून्य, hcon);
-	जबतक (pchan) अणु
-		काष्ठा l2cap_chan *chan, *next;
+	pchan = l2cap_global_fixed_chan(NULL, hcon);
+	while (pchan) {
+		struct l2cap_chan *chan, *next;
 
 		/* Client fixed channels should override server ones */
-		अगर (__l2cap_get_chan_by_dcid(conn, pchan->scid))
-			जाओ next;
+		if (__l2cap_get_chan_by_dcid(conn, pchan->scid))
+			goto next;
 
 		l2cap_chan_lock(pchan);
 		chan = pchan->ops->new_connection(pchan);
-		अगर (chan) अणु
+		if (chan) {
 			bacpy(&chan->src, &hcon->src);
 			bacpy(&chan->dst, &hcon->dst);
 			chan->src_type = bdaddr_src_type(hcon);
 			chan->dst_type = dst_type;
 
 			__l2cap_chan_add(conn, chan);
-		पूर्ण
+		}
 
 		l2cap_chan_unlock(pchan);
 next:
 		next = l2cap_global_fixed_chan(pchan, hcon);
 		l2cap_chan_put(pchan);
 		pchan = next;
-	पूर्ण
+	}
 
-	l2cap_conn_पढ़ोy(conn);
-पूर्ण
+	l2cap_conn_ready(conn);
+}
 
-पूर्णांक l2cap_disconn_ind(काष्ठा hci_conn *hcon)
-अणु
-	काष्ठा l2cap_conn *conn = hcon->l2cap_data;
+int l2cap_disconn_ind(struct hci_conn *hcon)
+{
+	struct l2cap_conn *conn = hcon->l2cap_data;
 
 	BT_DBG("hcon %p", hcon);
 
-	अगर (!conn)
-		वापस HCI_ERROR_REMOTE_USER_TERM;
-	वापस conn->disc_reason;
-पूर्ण
+	if (!conn)
+		return HCI_ERROR_REMOTE_USER_TERM;
+	return conn->disc_reason;
+}
 
-अटल व्योम l2cap_disconn_cfm(काष्ठा hci_conn *hcon, u8 reason)
-अणु
-	अगर (hcon->type != ACL_LINK && hcon->type != LE_LINK)
-		वापस;
+static void l2cap_disconn_cfm(struct hci_conn *hcon, u8 reason)
+{
+	if (hcon->type != ACL_LINK && hcon->type != LE_LINK)
+		return;
 
 	BT_DBG("hcon %p reason %d", hcon, reason);
 
-	l2cap_conn_del(hcon, bt_to_त्रुटि_सं(reason));
-पूर्ण
+	l2cap_conn_del(hcon, bt_to_errno(reason));
+}
 
-अटल अंतरभूत व्योम l2cap_check_encryption(काष्ठा l2cap_chan *chan, u8 encrypt)
-अणु
-	अगर (chan->chan_type != L2CAP_CHAN_CONN_ORIENTED)
-		वापस;
+static inline void l2cap_check_encryption(struct l2cap_chan *chan, u8 encrypt)
+{
+	if (chan->chan_type != L2CAP_CHAN_CONN_ORIENTED)
+		return;
 
-	अगर (encrypt == 0x00) अणु
-		अगर (chan->sec_level == BT_SECURITY_MEDIUM) अणु
-			__set_chan_समयr(chan, L2CAP_ENC_TIMEOUT);
-		पूर्ण अन्यथा अगर (chan->sec_level == BT_SECURITY_HIGH ||
+	if (encrypt == 0x00) {
+		if (chan->sec_level == BT_SECURITY_MEDIUM) {
+			__set_chan_timer(chan, L2CAP_ENC_TIMEOUT);
+		} else if (chan->sec_level == BT_SECURITY_HIGH ||
 			   chan->sec_level == BT_SECURITY_FIPS)
-			l2cap_chan_बंद(chan, ECONNREFUSED);
-	पूर्ण अन्यथा अणु
-		अगर (chan->sec_level == BT_SECURITY_MEDIUM)
-			__clear_chan_समयr(chan);
-	पूर्ण
-पूर्ण
+			l2cap_chan_close(chan, ECONNREFUSED);
+	} else {
+		if (chan->sec_level == BT_SECURITY_MEDIUM)
+			__clear_chan_timer(chan);
+	}
+}
 
-अटल व्योम l2cap_security_cfm(काष्ठा hci_conn *hcon, u8 status, u8 encrypt)
-अणु
-	काष्ठा l2cap_conn *conn = hcon->l2cap_data;
-	काष्ठा l2cap_chan *chan;
+static void l2cap_security_cfm(struct hci_conn *hcon, u8 status, u8 encrypt)
+{
+	struct l2cap_conn *conn = hcon->l2cap_data;
+	struct l2cap_chan *chan;
 
-	अगर (!conn)
-		वापस;
+	if (!conn)
+		return;
 
 	BT_DBG("conn %p status 0x%2.2x encrypt %u", conn, status, encrypt);
 
 	mutex_lock(&conn->chan_lock);
 
-	list_क्रम_each_entry(chan, &conn->chan_l, list) अणु
+	list_for_each_entry(chan, &conn->chan_l, list) {
 		l2cap_chan_lock(chan);
 
 		BT_DBG("chan %p scid 0x%4.4x state %s", chan, chan->scid,
 		       state_to_string(chan->state));
 
-		अगर (chan->scid == L2CAP_CID_A2MP) अणु
+		if (chan->scid == L2CAP_CID_A2MP) {
 			l2cap_chan_unlock(chan);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (!status && encrypt)
+		if (!status && encrypt)
 			chan->sec_level = hcon->sec_level;
 
-		अगर (!__l2cap_no_conn_pending(chan)) अणु
+		if (!__l2cap_no_conn_pending(chan)) {
 			l2cap_chan_unlock(chan);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (!status && (chan->state == BT_CONNECTED ||
-				chan->state == BT_CONFIG)) अणु
+		if (!status && (chan->state == BT_CONNECTED ||
+				chan->state == BT_CONFIG)) {
 			chan->ops->resume(chan);
 			l2cap_check_encryption(chan, encrypt);
 			l2cap_chan_unlock(chan);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (chan->state == BT_CONNECT) अणु
-			अगर (!status && l2cap_check_enc_key_size(hcon))
+		if (chan->state == BT_CONNECT) {
+			if (!status && l2cap_check_enc_key_size(hcon))
 				l2cap_start_connection(chan);
-			अन्यथा
-				__set_chan_समयr(chan, L2CAP_DISC_TIMEOUT);
-		पूर्ण अन्यथा अगर (chan->state == BT_CONNECT2 &&
+			else
+				__set_chan_timer(chan, L2CAP_DISC_TIMEOUT);
+		} else if (chan->state == BT_CONNECT2 &&
 			   !(chan->mode == L2CAP_MODE_EXT_FLOWCTL ||
-			     chan->mode == L2CAP_MODE_LE_FLOWCTL)) अणु
-			काष्ठा l2cap_conn_rsp rsp;
+			     chan->mode == L2CAP_MODE_LE_FLOWCTL)) {
+			struct l2cap_conn_rsp rsp;
 			__u16 res, stat;
 
-			अगर (!status && l2cap_check_enc_key_size(hcon)) अणु
-				अगर (test_bit(FLAG_DEFER_SETUP, &chan->flags)) अणु
+			if (!status && l2cap_check_enc_key_size(hcon)) {
+				if (test_bit(FLAG_DEFER_SETUP, &chan->flags)) {
 					res = L2CAP_CR_PEND;
 					stat = L2CAP_CS_AUTHOR_PEND;
 					chan->ops->defer(chan);
-				पूर्ण अन्यथा अणु
+				} else {
 					l2cap_state_change(chan, BT_CONFIG);
 					res = L2CAP_CR_SUCCESS;
 					stat = L2CAP_CS_NO_INFO;
-				पूर्ण
-			पूर्ण अन्यथा अणु
+				}
+			} else {
 				l2cap_state_change(chan, BT_DISCONN);
-				__set_chan_समयr(chan, L2CAP_DISC_TIMEOUT);
+				__set_chan_timer(chan, L2CAP_DISC_TIMEOUT);
 				res = L2CAP_CR_SEC_BLOCK;
 				stat = L2CAP_CS_NO_INFO;
-			पूर्ण
+			}
 
 			rsp.scid   = cpu_to_le16(chan->dcid);
 			rsp.dcid   = cpu_to_le16(chan->scid);
 			rsp.result = cpu_to_le16(res);
 			rsp.status = cpu_to_le16(stat);
 			l2cap_send_cmd(conn, chan->ident, L2CAP_CONN_RSP,
-				       माप(rsp), &rsp);
+				       sizeof(rsp), &rsp);
 
-			अगर (!test_bit(CONF_REQ_SENT, &chan->conf_state) &&
-			    res == L2CAP_CR_SUCCESS) अणु
-				अक्षर buf[128];
+			if (!test_bit(CONF_REQ_SENT, &chan->conf_state) &&
+			    res == L2CAP_CR_SUCCESS) {
+				char buf[128];
 				set_bit(CONF_REQ_SENT, &chan->conf_state);
 				l2cap_send_cmd(conn, l2cap_get_ident(conn),
 					       L2CAP_CONF_REQ,
-					       l2cap_build_conf_req(chan, buf, माप(buf)),
+					       l2cap_build_conf_req(chan, buf, sizeof(buf)),
 					       buf);
 				chan->num_conf_req++;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		l2cap_chan_unlock(chan);
-	पूर्ण
+	}
 
 	mutex_unlock(&conn->chan_lock);
-पूर्ण
+}
 
-/* Append fragment पूर्णांकo frame respecting the maximum len of rx_skb */
-अटल पूर्णांक l2cap_recv_frag(काष्ठा l2cap_conn *conn, काष्ठा sk_buff *skb,
+/* Append fragment into frame respecting the maximum len of rx_skb */
+static int l2cap_recv_frag(struct l2cap_conn *conn, struct sk_buff *skb,
 			   u16 len)
-अणु
-	अगर (!conn->rx_skb) अणु
-		/* Allocate skb क्रम the complete frame (with header) */
+{
+	if (!conn->rx_skb) {
+		/* Allocate skb for the complete frame (with header) */
 		conn->rx_skb = bt_skb_alloc(len, GFP_KERNEL);
-		अगर (!conn->rx_skb)
-			वापस -ENOMEM;
+		if (!conn->rx_skb)
+			return -ENOMEM;
 		/* Init rx_len */
 		conn->rx_len = len;
-	पूर्ण
+	}
 
 	/* Copy as much as the rx_skb can hold */
 	len = min_t(u16, len, skb->len);
@@ -8306,217 +8305,217 @@ next:
 	skb_pull(skb, len);
 	conn->rx_len -= len;
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल पूर्णांक l2cap_recv_len(काष्ठा l2cap_conn *conn, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा sk_buff *rx_skb;
-	पूर्णांक len;
+static int l2cap_recv_len(struct l2cap_conn *conn, struct sk_buff *skb)
+{
+	struct sk_buff *rx_skb;
+	int len;
 
 	/* Append just enough to complete the header */
 	len = l2cap_recv_frag(conn, skb, L2CAP_LEN_SIZE - conn->rx_skb->len);
 
-	/* If header could not be पढ़ो just जारी */
-	अगर (len < 0 || conn->rx_skb->len < L2CAP_LEN_SIZE)
-		वापस len;
+	/* If header could not be read just continue */
+	if (len < 0 || conn->rx_skb->len < L2CAP_LEN_SIZE)
+		return len;
 
 	rx_skb = conn->rx_skb;
 	len = get_unaligned_le16(rx_skb->data);
 
-	/* Check अगर rx_skb has enough space to received all fragments */
-	अगर (len + (L2CAP_HDR_SIZE - L2CAP_LEN_SIZE) <= skb_tailroom(rx_skb)) अणु
+	/* Check if rx_skb has enough space to received all fragments */
+	if (len + (L2CAP_HDR_SIZE - L2CAP_LEN_SIZE) <= skb_tailroom(rx_skb)) {
 		/* Update expected len */
 		conn->rx_len = len + (L2CAP_HDR_SIZE - L2CAP_LEN_SIZE);
-		वापस L2CAP_LEN_SIZE;
-	पूर्ण
+		return L2CAP_LEN_SIZE;
+	}
 
-	/* Reset conn->rx_skb since it will need to be पुनः_स्मृतिated in order to
+	/* Reset conn->rx_skb since it will need to be reallocated in order to
 	 * fit all fragments.
 	 */
-	conn->rx_skb = शून्य;
+	conn->rx_skb = NULL;
 
 	/* Reallocates rx_skb using the exact expected length */
 	len = l2cap_recv_frag(conn, rx_skb,
 			      len + (L2CAP_HDR_SIZE - L2CAP_LEN_SIZE));
-	kमुक्त_skb(rx_skb);
+	kfree_skb(rx_skb);
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल व्योम l2cap_recv_reset(काष्ठा l2cap_conn *conn)
-अणु
-	kमुक्त_skb(conn->rx_skb);
-	conn->rx_skb = शून्य;
+static void l2cap_recv_reset(struct l2cap_conn *conn)
+{
+	kfree_skb(conn->rx_skb);
+	conn->rx_skb = NULL;
 	conn->rx_len = 0;
-पूर्ण
+}
 
-व्योम l2cap_recv_acldata(काष्ठा hci_conn *hcon, काष्ठा sk_buff *skb, u16 flags)
-अणु
-	काष्ठा l2cap_conn *conn = hcon->l2cap_data;
-	पूर्णांक len;
+void l2cap_recv_acldata(struct hci_conn *hcon, struct sk_buff *skb, u16 flags)
+{
+	struct l2cap_conn *conn = hcon->l2cap_data;
+	int len;
 
-	/* For AMP controller करो not create l2cap conn */
-	अगर (!conn && hcon->hdev->dev_type != HCI_PRIMARY)
-		जाओ drop;
+	/* For AMP controller do not create l2cap conn */
+	if (!conn && hcon->hdev->dev_type != HCI_PRIMARY)
+		goto drop;
 
-	अगर (!conn)
+	if (!conn)
 		conn = l2cap_conn_add(hcon);
 
-	अगर (!conn)
-		जाओ drop;
+	if (!conn)
+		goto drop;
 
 	BT_DBG("conn %p len %u flags 0x%x", conn, skb->len, flags);
 
-	चयन (flags) अणु
-	हाल ACL_START:
-	हाल ACL_START_NO_FLUSH:
-	हाल ACL_COMPLETE:
-		अगर (conn->rx_skb) अणु
+	switch (flags) {
+	case ACL_START:
+	case ACL_START_NO_FLUSH:
+	case ACL_COMPLETE:
+		if (conn->rx_skb) {
 			BT_ERR("Unexpected start frame (len %d)", skb->len);
 			l2cap_recv_reset(conn);
 			l2cap_conn_unreliable(conn, ECOMM);
-		पूर्ण
+		}
 
 		/* Start fragment may not contain the L2CAP length so just
 		 * copy the initial byte when that happens and use conn->mtu as
 		 * expected length.
 		 */
-		अगर (skb->len < L2CAP_LEN_SIZE) अणु
-			अगर (l2cap_recv_frag(conn, skb, conn->mtu) < 0)
-				जाओ drop;
-			वापस;
-		पूर्ण
+		if (skb->len < L2CAP_LEN_SIZE) {
+			if (l2cap_recv_frag(conn, skb, conn->mtu) < 0)
+				goto drop;
+			return;
+		}
 
 		len = get_unaligned_le16(skb->data) + L2CAP_HDR_SIZE;
 
-		अगर (len == skb->len) अणु
+		if (len == skb->len) {
 			/* Complete frame received */
 			l2cap_recv_frame(conn, skb);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		BT_DBG("Start: total len %d, frag len %u", len, skb->len);
 
-		अगर (skb->len > len) अणु
+		if (skb->len > len) {
 			BT_ERR("Frame is too long (len %u, expected len %d)",
 			       skb->len, len);
 			l2cap_conn_unreliable(conn, ECOMM);
-			जाओ drop;
-		पूर्ण
+			goto drop;
+		}
 
-		/* Append fragment पूर्णांकo frame (with header) */
-		अगर (l2cap_recv_frag(conn, skb, len) < 0)
-			जाओ drop;
+		/* Append fragment into frame (with header) */
+		if (l2cap_recv_frag(conn, skb, len) < 0)
+			goto drop;
 
-		अवरोध;
+		break;
 
-	हाल ACL_CONT:
+	case ACL_CONT:
 		BT_DBG("Cont: frag len %u (expecting %u)", skb->len, conn->rx_len);
 
-		अगर (!conn->rx_skb) अणु
+		if (!conn->rx_skb) {
 			BT_ERR("Unexpected continuation frame (len %d)", skb->len);
 			l2cap_conn_unreliable(conn, ECOMM);
-			जाओ drop;
-		पूर्ण
+			goto drop;
+		}
 
-		/* Complete the L2CAP length अगर it has not been पढ़ो */
-		अगर (conn->rx_skb->len < L2CAP_LEN_SIZE) अणु
-			अगर (l2cap_recv_len(conn, skb) < 0) अणु
+		/* Complete the L2CAP length if it has not been read */
+		if (conn->rx_skb->len < L2CAP_LEN_SIZE) {
+			if (l2cap_recv_len(conn, skb) < 0) {
 				l2cap_conn_unreliable(conn, ECOMM);
-				जाओ drop;
-			पूर्ण
+				goto drop;
+			}
 
-			/* Header still could not be पढ़ो just जारी */
-			अगर (conn->rx_skb->len < L2CAP_LEN_SIZE)
-				वापस;
-		पूर्ण
+			/* Header still could not be read just continue */
+			if (conn->rx_skb->len < L2CAP_LEN_SIZE)
+				return;
+		}
 
-		अगर (skb->len > conn->rx_len) अणु
+		if (skb->len > conn->rx_len) {
 			BT_ERR("Fragment is too long (len %u, expected %u)",
 			       skb->len, conn->rx_len);
 			l2cap_recv_reset(conn);
 			l2cap_conn_unreliable(conn, ECOMM);
-			जाओ drop;
-		पूर्ण
+			goto drop;
+		}
 
-		/* Append fragment पूर्णांकo frame (with header) */
+		/* Append fragment into frame (with header) */
 		l2cap_recv_frag(conn, skb, skb->len);
 
-		अगर (!conn->rx_len) अणु
+		if (!conn->rx_len) {
 			/* Complete frame received. l2cap_recv_frame
 			 * takes ownership of the skb so set the global
-			 * rx_skb poपूर्णांकer to शून्य first.
+			 * rx_skb pointer to NULL first.
 			 */
-			काष्ठा sk_buff *rx_skb = conn->rx_skb;
-			conn->rx_skb = शून्य;
+			struct sk_buff *rx_skb = conn->rx_skb;
+			conn->rx_skb = NULL;
 			l2cap_recv_frame(conn, rx_skb);
-		पूर्ण
-		अवरोध;
-	पूर्ण
+		}
+		break;
+	}
 
 drop:
-	kमुक्त_skb(skb);
-पूर्ण
+	kfree_skb(skb);
+}
 
-अटल काष्ठा hci_cb l2cap_cb = अणु
+static struct hci_cb l2cap_cb = {
 	.name		= "L2CAP",
 	.connect_cfm	= l2cap_connect_cfm,
 	.disconn_cfm	= l2cap_disconn_cfm,
 	.security_cfm	= l2cap_security_cfm,
-पूर्ण;
+};
 
-अटल पूर्णांक l2cap_debugfs_show(काष्ठा seq_file *f, व्योम *p)
-अणु
-	काष्ठा l2cap_chan *c;
+static int l2cap_debugfs_show(struct seq_file *f, void *p)
+{
+	struct l2cap_chan *c;
 
-	पढ़ो_lock(&chan_list_lock);
+	read_lock(&chan_list_lock);
 
-	list_क्रम_each_entry(c, &chan_list, global_l) अणु
-		seq_म_लिखो(f, "%pMR (%u) %pMR (%u) %d %d 0x%4.4x 0x%4.4x %d %d %d %d\n",
+	list_for_each_entry(c, &chan_list, global_l) {
+		seq_printf(f, "%pMR (%u) %pMR (%u) %d %d 0x%4.4x 0x%4.4x %d %d %d %d\n",
 			   &c->src, c->src_type, &c->dst, c->dst_type,
 			   c->state, __le16_to_cpu(c->psm),
 			   c->scid, c->dcid, c->imtu, c->omtu,
 			   c->sec_level, c->mode);
-	पूर्ण
+	}
 
-	पढ़ो_unlock(&chan_list_lock);
+	read_unlock(&chan_list_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 DEFINE_SHOW_ATTRIBUTE(l2cap_debugfs);
 
-अटल काष्ठा dentry *l2cap_debugfs;
+static struct dentry *l2cap_debugfs;
 
-पूर्णांक __init l2cap_init(व्योम)
-अणु
-	पूर्णांक err;
+int __init l2cap_init(void)
+{
+	int err;
 
 	err = l2cap_init_sockets();
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	hci_रेजिस्टर_cb(&l2cap_cb);
+	hci_register_cb(&l2cap_cb);
 
-	अगर (IS_ERR_OR_शून्य(bt_debugfs))
-		वापस 0;
+	if (IS_ERR_OR_NULL(bt_debugfs))
+		return 0;
 
 	l2cap_debugfs = debugfs_create_file("l2cap", 0444, bt_debugfs,
-					    शून्य, &l2cap_debugfs_fops);
+					    NULL, &l2cap_debugfs_fops);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम l2cap_निकास(व्योम)
-अणु
-	debugfs_हटाओ(l2cap_debugfs);
-	hci_unरेजिस्टर_cb(&l2cap_cb);
+void l2cap_exit(void)
+{
+	debugfs_remove(l2cap_debugfs);
+	hci_unregister_cb(&l2cap_cb);
 	l2cap_cleanup_sockets();
-पूर्ण
+}
 
-module_param(disable_erपंचांग, bool, 0644);
-MODULE_PARM_DESC(disable_erपंचांग, "Disable enhanced retransmission mode");
+module_param(disable_ertm, bool, 0644);
+MODULE_PARM_DESC(disable_ertm, "Disable enhanced retransmission mode");
 
 module_param(enable_ecred, bool, 0644);
 MODULE_PARM_DESC(enable_ecred, "Enable enhanced credit flow control mode");

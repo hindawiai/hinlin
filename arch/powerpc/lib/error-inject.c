@@ -1,17 +1,16 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 
-#समावेश <linux/error-injection.h>
-#समावेश <linux/kprobes.h>
-#समावेश <linux/uaccess.h>
+#include <linux/error-injection.h>
+#include <linux/kprobes.h>
+#include <linux/uaccess.h>
 
-व्योम override_function_with_वापस(काष्ठा pt_regs *regs)
-अणु
+void override_function_with_return(struct pt_regs *regs)
+{
 	/*
 	 * Emulate 'blr'. 'regs' represents the state on entry of a predefined
-	 * function in the kernel/module, captured on a kprobe. We करोn't need
+	 * function in the kernel/module, captured on a kprobe. We don't need
 	 * to worry about 32-bit userspace on a 64-bit kernel.
 	 */
 	regs->nip = regs->link;
-पूर्ण
-NOKPROBE_SYMBOL(override_function_with_वापस);
+}
+NOKPROBE_SYMBOL(override_function_with_return);

@@ -1,74 +1,73 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (LGPL-2.1 OR BSD-2-Clause)
+// SPDX-License-Identifier: (LGPL-2.1 OR BSD-2-Clause)
 
 /*
  * BTF-to-C dumper test validating no name versioning happens between
- * independent C namespaces (काष्ठा/जोड़/क्रमागत vs प्रकार/क्रमागत values).
+ * independent C namespaces (struct/union/enum vs typedef/enum values).
  *
  * Copyright (c) 2019 Facebook
  */
 /* ----- START-EXPECTED-OUTPUT ----- */
-काष्ठा S अणु
-	पूर्णांक S;
-	पूर्णांक U;
-पूर्ण;
+struct S {
+	int S;
+	int U;
+};
 
-प्रकार काष्ठा S S;
+typedef struct S S;
 
-जोड़ U अणु
-	पूर्णांक S;
-	पूर्णांक U;
-पूर्ण;
+union U {
+	int S;
+	int U;
+};
 
-प्रकार जोड़ U U;
+typedef union U U;
 
-क्रमागत E अणु
+enum E {
 	V = 0,
-पूर्ण;
+};
 
-प्रकार क्रमागत E E;
+typedef enum E E;
 
-काष्ठा A अणुपूर्ण;
+struct A {};
 
-जोड़ B अणुपूर्ण;
+union B {};
 
-क्रमागत C अणु
+enum C {
 	A = 1,
 	B = 2,
 	C = 3,
-पूर्ण;
+};
 
-काष्ठा X अणुपूर्ण;
+struct X {};
 
-जोड़ Y अणुपूर्ण;
+union Y {};
 
-क्रमागत Z;
+enum Z;
 
-प्रकार पूर्णांक X;
+typedef int X;
 
-प्रकार पूर्णांक Y;
+typedef int Y;
 
-प्रकार पूर्णांक Z;
+typedef int Z;
 
 /*------ END-EXPECTED-OUTPUT ------ */
 
-पूर्णांक f(काष्ठा अणु
-	काष्ठा S _1;
+int f(struct {
+	struct S _1;
 	S _2;
-	जोड़ U _3;
+	union U _3;
 	U _4;
-	क्रमागत E _5;
+	enum E _5;
 	E _6;
-	काष्ठा A a;
-	जोड़ B b;
-	क्रमागत C c;
-	काष्ठा X x;
-	जोड़ Y y;
-	क्रमागत Z *z;
+	struct A a;
+	union B b;
+	enum C c;
+	struct X x;
+	union Y y;
+	enum Z *z;
 	X xx;
 	Y yy;
 	Z zz;
-पूर्ण *_)
-अणु
-	वापस 0;
-पूर्ण
+} *_)
+{
+	return 0;
+}

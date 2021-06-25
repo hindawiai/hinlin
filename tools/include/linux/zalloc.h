@@ -1,13 +1,12 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: LGPL-2.1
-#अगर_अघोषित __TOOLS_LINUX_ZALLOC_H
-#घोषणा __TOOLS_LINUX_ZALLOC_H
+// SPDX-License-Identifier: LGPL-2.1
+#ifndef __TOOLS_LINUX_ZALLOC_H
+#define __TOOLS_LINUX_ZALLOC_H
 
-#समावेश <मानकघोष.स>
+#include <stddef.h>
 
-व्योम *zalloc(माप_प्रकार size);
-व्योम __zमुक्त(व्योम **ptr);
+void *zalloc(size_t size);
+void __zfree(void **ptr);
 
-#घोषणा zमुक्त(ptr) __zमुक्त((व्योम **)(ptr))
+#define zfree(ptr) __zfree((void **)(ptr))
 
-#पूर्ण_अगर // __TOOLS_LINUX_ZALLOC_H
+#endif // __TOOLS_LINUX_ZALLOC_H

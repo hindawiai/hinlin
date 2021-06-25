@@ -1,37 +1,36 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * omap iommu: simple भव address space management
+ * omap iommu: simple virtual address space management
  *
  * Copyright (C) 2008-2009 Nokia Corporation
  *
  * Written by Hiroshi DOYU <Hiroshi.DOYU@nokia.com>
  */
 
-#अगर_अघोषित _OMAP_IOMMU_H_
-#घोषणा _OMAP_IOMMU_H_
+#ifndef _OMAP_IOMMU_H_
+#define _OMAP_IOMMU_H_
 
-काष्ठा iommu_करोमुख्य;
+struct iommu_domain;
 
-#अगर_घोषित CONFIG_OMAP_IOMMU
-बाह्य व्योम omap_iommu_save_ctx(काष्ठा device *dev);
-बाह्य व्योम omap_iommu_restore_ctx(काष्ठा device *dev);
+#ifdef CONFIG_OMAP_IOMMU
+extern void omap_iommu_save_ctx(struct device *dev);
+extern void omap_iommu_restore_ctx(struct device *dev);
 
-पूर्णांक omap_iommu_करोमुख्य_deactivate(काष्ठा iommu_करोमुख्य *करोमुख्य);
-पूर्णांक omap_iommu_करोमुख्य_activate(काष्ठा iommu_करोमुख्य *करोमुख्य);
-#अन्यथा
-अटल अंतरभूत व्योम omap_iommu_save_ctx(काष्ठा device *dev) अणुपूर्ण
-अटल अंतरभूत व्योम omap_iommu_restore_ctx(काष्ठा device *dev) अणुपूर्ण
+int omap_iommu_domain_deactivate(struct iommu_domain *domain);
+int omap_iommu_domain_activate(struct iommu_domain *domain);
+#else
+static inline void omap_iommu_save_ctx(struct device *dev) {}
+static inline void omap_iommu_restore_ctx(struct device *dev) {}
 
-अटल अंतरभूत पूर्णांक omap_iommu_करोमुख्य_deactivate(काष्ठा iommu_करोमुख्य *करोमुख्य)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int omap_iommu_domain_deactivate(struct iommu_domain *domain)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक omap_iommu_करोमुख्य_activate(काष्ठा iommu_करोमुख्य *करोमुख्य)
-अणु
-	वापस -ENODEV;
-पूर्ण
-#पूर्ण_अगर
+static inline int omap_iommu_domain_activate(struct iommu_domain *domain)
+{
+	return -ENODEV;
+}
+#endif
 
-#पूर्ण_अगर
+#endif

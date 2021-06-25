@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __MAC80211_DEBUGFS_STA_H
-#घोषणा __MAC80211_DEBUGFS_STA_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __MAC80211_DEBUGFS_STA_H
+#define __MAC80211_DEBUGFS_STA_H
 
-#समावेश "sta_info.h"
+#include "sta_info.h"
 
-#अगर_घोषित CONFIG_MAC80211_DEBUGFS
-व्योम ieee80211_sta_debugfs_add(काष्ठा sta_info *sta);
-व्योम ieee80211_sta_debugfs_हटाओ(काष्ठा sta_info *sta);
-#अन्यथा
-अटल अंतरभूत व्योम ieee80211_sta_debugfs_add(काष्ठा sta_info *sta) अणुपूर्ण
-अटल अंतरभूत व्योम ieee80211_sta_debugfs_हटाओ(काष्ठा sta_info *sta) अणुपूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_MAC80211_DEBUGFS
+void ieee80211_sta_debugfs_add(struct sta_info *sta);
+void ieee80211_sta_debugfs_remove(struct sta_info *sta);
+#else
+static inline void ieee80211_sta_debugfs_add(struct sta_info *sta) {}
+static inline void ieee80211_sta_debugfs_remove(struct sta_info *sta) {}
+#endif
 
-#पूर्ण_अगर /* __MAC80211_DEBUGFS_STA_H */
+#endif /* __MAC80211_DEBUGFS_STA_H */

@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * t5403.c - Support क्रम EPCOS T5403 pressure/temperature sensor
+ * t5403.c - Support for EPCOS T5403 pressure/temperature sensor
  *
  * Copyright (c) 2014 Peter Meerwald <pmeerw@pmeerw.net>
  *
@@ -10,76 +9,76 @@
  * TODO: end-of-conversion irq
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/sysfs.h>
-#समावेश <linux/delay.h>
+#include <linux/module.h>
+#include <linux/i2c.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/sysfs.h>
+#include <linux/delay.h>
 
-#घोषणा T5403_DATA 0xf5 /* data, LSB first, 16 bit */
-#घोषणा T5403_CALIB_DATA 0x8e /* 10 calibration coeff., LSB first, 16 bit */
-#घोषणा T5403_SLAVE_ADDR 0x88 /* I2C slave address, 0x77 */
-#घोषणा T5403_COMMAND 0xf1
+#define T5403_DATA 0xf5 /* data, LSB first, 16 bit */
+#define T5403_CALIB_DATA 0x8e /* 10 calibration coeff., LSB first, 16 bit */
+#define T5403_SLAVE_ADDR 0x88 /* I2C slave address, 0x77 */
+#define T5403_COMMAND 0xf1
 
 /* command bits */
-#घोषणा T5403_MODE_SHIFT 3 /* conversion समय: 2, 8, 16, 66 ms */
-#घोषणा T5403_PT BIT(1) /* 0 .. pressure, 1 .. temperature measurement */
-#घोषणा T5403_SCO BIT(0) /* start conversion */
+#define T5403_MODE_SHIFT 3 /* conversion time: 2, 8, 16, 66 ms */
+#define T5403_PT BIT(1) /* 0 .. pressure, 1 .. temperature measurement */
+#define T5403_SCO BIT(0) /* start conversion */
 
-#घोषणा T5403_MODE_LOW 0
-#घोषणा T5403_MODE_STANDARD 1
-#घोषणा T5403_MODE_HIGH 2
-#घोषणा T5403_MODE_ULTRA_HIGH 3
+#define T5403_MODE_LOW 0
+#define T5403_MODE_STANDARD 1
+#define T5403_MODE_HIGH 2
+#define T5403_MODE_ULTRA_HIGH 3
 
-#घोषणा T5403_I2C_MASK (~BIT(7))
-#घोषणा T5403_I2C_ADDR 0x77
+#define T5403_I2C_MASK (~BIT(7))
+#define T5403_I2C_ADDR 0x77
 
-अटल स्थिर पूर्णांक t5403_pressure_conv_ms[] = अणु2, 8, 16, 66पूर्ण;
+static const int t5403_pressure_conv_ms[] = {2, 8, 16, 66};
 
-काष्ठा t5403_data अणु
-	काष्ठा i2c_client *client;
-	काष्ठा mutex lock;
-	पूर्णांक mode;
+struct t5403_data {
+	struct i2c_client *client;
+	struct mutex lock;
+	int mode;
 	__le16 c[10];
-पूर्ण;
+};
 
-#घोषणा T5403_C_U16(i) le16_to_cpu(data->c[(i) - 1])
-#घोषणा T5403_C(i) sign_extend32(T5403_C_U16(i), 15)
+#define T5403_C_U16(i) le16_to_cpu(data->c[(i) - 1])
+#define T5403_C(i) sign_extend32(T5403_C_U16(i), 15)
 
-अटल पूर्णांक t5403_पढ़ो(काष्ठा t5403_data *data, bool pressure)
-अणु
-	पूर्णांक रुको_समय = 3;  /* wakeup समय in ms */
+static int t5403_read(struct t5403_data *data, bool pressure)
+{
+	int wait_time = 3;  /* wakeup time in ms */
 
-	पूर्णांक ret = i2c_smbus_ग_लिखो_byte_data(data->client, T5403_COMMAND,
+	int ret = i2c_smbus_write_byte_data(data->client, T5403_COMMAND,
 		(pressure ? (data->mode << T5403_MODE_SHIFT) : T5403_PT) |
 		T5403_SCO);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	रुको_समय += pressure ? t5403_pressure_conv_ms[data->mode] : 2;
+	wait_time += pressure ? t5403_pressure_conv_ms[data->mode] : 2;
 
-	msleep(रुको_समय);
+	msleep(wait_time);
 
-	वापस i2c_smbus_पढ़ो_word_data(data->client, T5403_DATA);
-पूर्ण
+	return i2c_smbus_read_word_data(data->client, T5403_DATA);
+}
 
-अटल पूर्णांक t5403_comp_pressure(काष्ठा t5403_data *data, पूर्णांक *val, पूर्णांक *val2)
-अणु
-	पूर्णांक ret;
+static int t5403_comp_pressure(struct t5403_data *data, int *val, int *val2)
+{
+	int ret;
 	s16 t_r;
 	u16 p_r;
 	s32 S, O, X;
 
 	mutex_lock(&data->lock);
 
-	ret = t5403_पढ़ो(data, false);
-	अगर (ret < 0)
-		जाओ करोne;
+	ret = t5403_read(data, false);
+	if (ret < 0)
+		goto done;
 	t_r = ret;
 
-	ret = t5403_पढ़ो(data, true);
-	अगर (ret < 0)
-		जाओ करोne;
+	ret = t5403_read(data, true);
+	if (ret < 0)
+		goto done;
 	p_r = ret;
 
 	/* see EPCOS application note */
@@ -99,136 +98,136 @@
 	*val = X / 1000;
 	*val2 = (X % 1000) * 1000;
 
-करोne:
+done:
 	mutex_unlock(&data->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक t5403_comp_temp(काष्ठा t5403_data *data, पूर्णांक *val)
-अणु
-	पूर्णांक ret;
+static int t5403_comp_temp(struct t5403_data *data, int *val)
+{
+	int ret;
 	s16 t_r;
 
 	mutex_lock(&data->lock);
-	ret = t5403_पढ़ो(data, false);
-	अगर (ret < 0)
-		जाओ करोne;
+	ret = t5403_read(data, false);
+	if (ret < 0)
+		goto done;
 	t_r = ret;
 
 	/* see EPCOS application note */
 	*val = ((s32) T5403_C_U16(1) * t_r / 0x100 +
 		(s32) T5403_C_U16(2) * 0x40) * 1000 / 0x10000;
 
-करोne:
+done:
 	mutex_unlock(&data->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक t5403_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
-			  काष्ठा iio_chan_spec स्थिर *chan,
-			  पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
-अणु
-	काष्ठा t5403_data *data = iio_priv(indio_dev);
-	पूर्णांक ret;
+static int t5403_read_raw(struct iio_dev *indio_dev,
+			  struct iio_chan_spec const *chan,
+			  int *val, int *val2, long mask)
+{
+	struct t5403_data *data = iio_priv(indio_dev);
+	int ret;
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_PROCESSED:
-		चयन (chan->type) अणु
-		हाल IIO_PRESSURE:
+	switch (mask) {
+	case IIO_CHAN_INFO_PROCESSED:
+		switch (chan->type) {
+		case IIO_PRESSURE:
 			ret = t5403_comp_pressure(data, val, val2);
-			अगर (ret < 0)
-				वापस ret;
-			वापस IIO_VAL_INT_PLUS_MICRO;
-		हाल IIO_TEMP:
+			if (ret < 0)
+				return ret;
+			return IIO_VAL_INT_PLUS_MICRO;
+		case IIO_TEMP:
 			ret = t5403_comp_temp(data, val);
-			अगर (ret < 0)
-				वापस ret;
-			वापस IIO_VAL_INT;
-		शेष:
-			वापस -EINVAL;
-	    पूर्ण
-	हाल IIO_CHAN_INFO_INT_TIME:
+			if (ret < 0)
+				return ret;
+			return IIO_VAL_INT;
+		default:
+			return -EINVAL;
+	    }
+	case IIO_CHAN_INFO_INT_TIME:
 		*val = 0;
 		*val2 = t5403_pressure_conv_ms[data->mode] * 1000;
-		वापस IIO_VAL_INT_PLUS_MICRO;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		return IIO_VAL_INT_PLUS_MICRO;
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल पूर्णांक t5403_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
-			   काष्ठा iio_chan_spec स्थिर *chan,
-			   पूर्णांक val, पूर्णांक val2, दीर्घ mask)
-अणु
-	काष्ठा t5403_data *data = iio_priv(indio_dev);
-	पूर्णांक i;
+static int t5403_write_raw(struct iio_dev *indio_dev,
+			   struct iio_chan_spec const *chan,
+			   int val, int val2, long mask)
+{
+	struct t5403_data *data = iio_priv(indio_dev);
+	int i;
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_INT_TIME:
-		अगर (val != 0)
-			वापस -EINVAL;
-		क्रम (i = 0; i < ARRAY_SIZE(t5403_pressure_conv_ms); i++)
-			अगर (val2 == t5403_pressure_conv_ms[i] * 1000) अणु
+	switch (mask) {
+	case IIO_CHAN_INFO_INT_TIME:
+		if (val != 0)
+			return -EINVAL;
+		for (i = 0; i < ARRAY_SIZE(t5403_pressure_conv_ms); i++)
+			if (val2 == t5403_pressure_conv_ms[i] * 1000) {
 				mutex_lock(&data->lock);
 				data->mode = i;
 				mutex_unlock(&data->lock);
-				वापस 0;
-			पूर्ण
-		वापस -EINVAL;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+				return 0;
+			}
+		return -EINVAL;
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल स्थिर काष्ठा iio_chan_spec t5403_channels[] = अणु
-	अणु
+static const struct iio_chan_spec t5403_channels[] = {
+	{
 		.type = IIO_PRESSURE,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_PROCESSED) |
 		    BIT(IIO_CHAN_INFO_INT_TIME),
-	पूर्ण,
-	अणु
+	},
+	{
 		.type = IIO_TEMP,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_PROCESSED),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल IIO_CONST_ATTR_INT_TIME_AVAIL("0.002 0.008 0.016 0.066");
+static IIO_CONST_ATTR_INT_TIME_AVAIL("0.002 0.008 0.016 0.066");
 
-अटल काष्ठा attribute *t5403_attributes[] = अणु
-	&iio_स्थिर_attr_पूर्णांकegration_समय_available.dev_attr.attr,
-	शून्य
-पूर्ण;
+static struct attribute *t5403_attributes[] = {
+	&iio_const_attr_integration_time_available.dev_attr.attr,
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group t5403_attribute_group = अणु
+static const struct attribute_group t5403_attribute_group = {
 	.attrs = t5403_attributes,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा iio_info t5403_info = अणु
-	.पढ़ो_raw = &t5403_पढ़ो_raw,
-	.ग_लिखो_raw = &t5403_ग_लिखो_raw,
+static const struct iio_info t5403_info = {
+	.read_raw = &t5403_read_raw,
+	.write_raw = &t5403_write_raw,
 	.attrs = &t5403_attribute_group,
-पूर्ण;
+};
 
-अटल पूर्णांक t5403_probe(काष्ठा i2c_client *client,
-			 स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा t5403_data *data;
-	काष्ठा iio_dev *indio_dev;
-	पूर्णांक ret;
+static int t5403_probe(struct i2c_client *client,
+			 const struct i2c_device_id *id)
+{
+	struct t5403_data *data;
+	struct iio_dev *indio_dev;
+	int ret;
 
-	अगर (!i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_WORD_DATA |
+	if (!i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_WORD_DATA |
 	    I2C_FUNC_SMBUS_I2C_BLOCK))
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
 
-	ret = i2c_smbus_पढ़ो_byte_data(client, T5403_SLAVE_ADDR);
-	अगर (ret < 0)
-		वापस ret;
-	अगर ((ret & T5403_I2C_MASK) != T5403_I2C_ADDR)
-		वापस -ENODEV;
+	ret = i2c_smbus_read_byte_data(client, T5403_SLAVE_ADDR);
+	if (ret < 0)
+		return ret;
+	if ((ret & T5403_I2C_MASK) != T5403_I2C_ADDR)
+		return -ENODEV;
 
-	indio_dev = devm_iio_device_alloc(&client->dev, माप(*data));
-	अगर (!indio_dev)
-		वापस -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&client->dev, sizeof(*data));
+	if (!indio_dev)
+		return -ENOMEM;
 
 	data = iio_priv(indio_dev);
 	data->client = client;
@@ -237,33 +236,33 @@
 	i2c_set_clientdata(client, indio_dev);
 	indio_dev->info = &t5403_info;
 	indio_dev->name = id->name;
-	indio_dev->modes = INDIO_सूचीECT_MODE;
+	indio_dev->modes = INDIO_DIRECT_MODE;
 	indio_dev->channels = t5403_channels;
 	indio_dev->num_channels = ARRAY_SIZE(t5403_channels);
 
 	data->mode = T5403_MODE_STANDARD;
 
-	ret = i2c_smbus_पढ़ो_i2c_block_data(data->client, T5403_CALIB_DATA,
-	    माप(data->c), (u8 *) data->c);
-	अगर (ret < 0)
-		वापस ret;
+	ret = i2c_smbus_read_i2c_block_data(data->client, T5403_CALIB_DATA,
+	    sizeof(data->c), (u8 *) data->c);
+	if (ret < 0)
+		return ret;
 
-	वापस devm_iio_device_रेजिस्टर(&client->dev, indio_dev);
-पूर्ण
+	return devm_iio_device_register(&client->dev, indio_dev);
+}
 
-अटल स्थिर काष्ठा i2c_device_id t5403_id[] = अणु
-	अणु "t5403", 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id t5403_id[] = {
+	{ "t5403", 0 },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, t5403_id);
 
-अटल काष्ठा i2c_driver t5403_driver = अणु
-	.driver = अणु
+static struct i2c_driver t5403_driver = {
+	.driver = {
 		.name	= "t5403",
-	पूर्ण,
+	},
 	.probe = t5403_probe,
 	.id_table = t5403_id,
-पूर्ण;
+};
 module_i2c_driver(t5403_driver);
 
 MODULE_AUTHOR("Peter Meerwald <pmeerw@pmeerw.net>");

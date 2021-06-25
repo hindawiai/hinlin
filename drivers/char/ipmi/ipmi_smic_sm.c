@@ -1,18 +1,17 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * ipmi_smic_sm.c
  *
- * The state-machine driver क्रम an IPMI SMIC driver
+ * The state-machine driver for an IPMI SMIC driver
  *
- * It started as a copy of Corey Minyard's driver क्रम the KSC पूर्णांकerface
+ * It started as a copy of Corey Minyard's driver for the KSC interface
  * and the kernel patch "mmcdev-patch-245" by HP
  *
- * modअगरied by:	Hannes Schulz <schulz@schwaar.com>
+ * modified by:	Hannes Schulz <schulz@schwaar.com>
  *		ipmi@schwaar.com
  *
  *
- * Corey Minyard's driver क्रम the KSC पूर्णांकerface has the following
+ * Corey Minyard's driver for the KSC interface has the following
  * copyright notice:
  *   Copyright 2002 MontaVista Software Inc.
  *
@@ -22,29 +21,29 @@
  * 2001 Hewlett-Packard Company
  */
 
-#घोषणा DEBUG /* So dev_dbg() is always available. */
+#define DEBUG /* So dev_dbg() is always available. */
 
-#समावेश <linux/kernel.h> /* For prपूर्णांकk. */
-#समावेश <linux/माला.स>
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/ipmi_msgdefs.h>		/* क्रम completion codes */
-#समावेश "ipmi_si_sm.h"
+#include <linux/kernel.h> /* For printk. */
+#include <linux/string.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/ipmi_msgdefs.h>		/* for completion codes */
+#include "ipmi_si_sm.h"
 
 /* smic_debug is a bit-field
- *	SMIC_DEBUG_ENABLE -	turned on क्रम now
+ *	SMIC_DEBUG_ENABLE -	turned on for now
  *	SMIC_DEBUG_MSG -	commands and their responses
  *	SMIC_DEBUG_STATES -	state machine
 */
-#घोषणा SMIC_DEBUG_STATES	4
-#घोषणा SMIC_DEBUG_MSG		2
-#घोषणा	SMIC_DEBUG_ENABLE	1
+#define SMIC_DEBUG_STATES	4
+#define SMIC_DEBUG_MSG		2
+#define	SMIC_DEBUG_ENABLE	1
 
-अटल पूर्णांक smic_debug = 1;
-module_param(smic_debug, पूर्णांक, 0644);
+static int smic_debug = 1;
+module_param(smic_debug, int, 0644);
 MODULE_PARM_DESC(smic_debug, "debug bitmask, 1=enable, 2=messages, 4=states");
 
-क्रमागत smic_states अणु
+enum smic_states {
 	SMIC_IDLE,
 	SMIC_START_OP,
 	SMIC_OP_OK,
@@ -56,249 +55,249 @@ MODULE_PARM_DESC(smic_debug, "debug bitmask, 1=enable, 2=messages, 4=states");
 	SMIC_READ_NEXT,
 	SMIC_READ_END,
 	SMIC_HOSED
-पूर्ण;
+};
 
-#घोषणा MAX_SMIC_READ_SIZE 80
-#घोषणा MAX_SMIC_WRITE_SIZE 80
-#घोषणा SMIC_MAX_ERROR_RETRIES 3
+#define MAX_SMIC_READ_SIZE 80
+#define MAX_SMIC_WRITE_SIZE 80
+#define SMIC_MAX_ERROR_RETRIES 3
 
 /* Timeouts in microseconds. */
-#घोषणा SMIC_RETRY_TIMEOUT (2*USEC_PER_SEC)
+#define SMIC_RETRY_TIMEOUT (2*USEC_PER_SEC)
 
 /* SMIC Flags Register Bits */
-#घोषणा SMIC_RX_DATA_READY	0x80
-#घोषणा SMIC_TX_DATA_READY	0x40
+#define SMIC_RX_DATA_READY	0x80
+#define SMIC_TX_DATA_READY	0x40
 
 /*
  * SMIC_SMI and SMIC_EVM_DATA_AVAIL are only used by
- * a few प्रणालीs, and then only by Systems Management
+ * a few systems, and then only by Systems Management
  * Interrupts, not by the OS.  Always ignore these bits.
  *
  */
-#घोषणा SMIC_SMI		0x10
-#घोषणा SMIC_EVM_DATA_AVAIL	0x08
-#घोषणा SMIC_SMS_DATA_AVAIL	0x04
-#घोषणा SMIC_FLAG_BSY		0x01
+#define SMIC_SMI		0x10
+#define SMIC_EVM_DATA_AVAIL	0x08
+#define SMIC_SMS_DATA_AVAIL	0x04
+#define SMIC_FLAG_BSY		0x01
 
 /* SMIC Error Codes */
-#घोषणा	EC_NO_ERROR		0x00
-#घोषणा	EC_ABORTED		0x01
-#घोषणा	EC_ILLEGAL_CONTROL	0x02
-#घोषणा	EC_NO_RESPONSE		0x03
-#घोषणा	EC_ILLEGAL_COMMAND	0x04
-#घोषणा	EC_BUFFER_FULL		0x05
+#define	EC_NO_ERROR		0x00
+#define	EC_ABORTED		0x01
+#define	EC_ILLEGAL_CONTROL	0x02
+#define	EC_NO_RESPONSE		0x03
+#define	EC_ILLEGAL_COMMAND	0x04
+#define	EC_BUFFER_FULL		0x05
 
-काष्ठा si_sm_data अणु
-	क्रमागत smic_states state;
-	काष्ठा si_sm_io *io;
-	अचिन्हित अक्षर	 ग_लिखो_data[MAX_SMIC_WRITE_SIZE];
-	पूर्णांक		 ग_लिखो_pos;
-	पूर्णांक		 ग_लिखो_count;
-	पूर्णांक		 orig_ग_लिखो_count;
-	अचिन्हित अक्षर	 पढ़ो_data[MAX_SMIC_READ_SIZE];
-	पूर्णांक		 पढ़ो_pos;
-	पूर्णांक		 truncated;
-	अचिन्हित पूर्णांक	 error_retries;
-	दीर्घ		 smic_समयout;
-पूर्ण;
+struct si_sm_data {
+	enum smic_states state;
+	struct si_sm_io *io;
+	unsigned char	 write_data[MAX_SMIC_WRITE_SIZE];
+	int		 write_pos;
+	int		 write_count;
+	int		 orig_write_count;
+	unsigned char	 read_data[MAX_SMIC_READ_SIZE];
+	int		 read_pos;
+	int		 truncated;
+	unsigned int	 error_retries;
+	long		 smic_timeout;
+};
 
-अटल अचिन्हित पूर्णांक init_smic_data(काष्ठा si_sm_data *smic,
-				   काष्ठा si_sm_io *io)
-अणु
+static unsigned int init_smic_data(struct si_sm_data *smic,
+				   struct si_sm_io *io)
+{
 	smic->state = SMIC_IDLE;
 	smic->io = io;
-	smic->ग_लिखो_pos = 0;
-	smic->ग_लिखो_count = 0;
-	smic->orig_ग_लिखो_count = 0;
-	smic->पढ़ो_pos = 0;
+	smic->write_pos = 0;
+	smic->write_count = 0;
+	smic->orig_write_count = 0;
+	smic->read_pos = 0;
 	smic->error_retries = 0;
 	smic->truncated = 0;
-	smic->smic_समयout = SMIC_RETRY_TIMEOUT;
+	smic->smic_timeout = SMIC_RETRY_TIMEOUT;
 
 	/* We use 3 bytes of I/O. */
-	वापस 3;
-पूर्ण
+	return 3;
+}
 
-अटल पूर्णांक start_smic_transaction(काष्ठा si_sm_data *smic,
-				  अचिन्हित अक्षर *data, अचिन्हित पूर्णांक size)
-अणु
-	अचिन्हित पूर्णांक i;
+static int start_smic_transaction(struct si_sm_data *smic,
+				  unsigned char *data, unsigned int size)
+{
+	unsigned int i;
 
-	अगर (size < 2)
-		वापस IPMI_REQ_LEN_INVALID_ERR;
-	अगर (size > MAX_SMIC_WRITE_SIZE)
-		वापस IPMI_REQ_LEN_EXCEEDED_ERR;
+	if (size < 2)
+		return IPMI_REQ_LEN_INVALID_ERR;
+	if (size > MAX_SMIC_WRITE_SIZE)
+		return IPMI_REQ_LEN_EXCEEDED_ERR;
 
-	अगर ((smic->state != SMIC_IDLE) && (smic->state != SMIC_HOSED)) अणु
+	if ((smic->state != SMIC_IDLE) && (smic->state != SMIC_HOSED)) {
 		dev_warn(smic->io->dev,
 			 "SMIC in invalid state %d\n", smic->state);
-		वापस IPMI_NOT_IN_MY_STATE_ERR;
-	पूर्ण
+		return IPMI_NOT_IN_MY_STATE_ERR;
+	}
 
-	अगर (smic_debug & SMIC_DEBUG_MSG) अणु
+	if (smic_debug & SMIC_DEBUG_MSG) {
 		dev_dbg(smic->io->dev, "%s -", __func__);
-		क्रम (i = 0; i < size; i++)
+		for (i = 0; i < size; i++)
 			pr_cont(" %02x", data[i]);
 		pr_cont("\n");
-	पूर्ण
+	}
 	smic->error_retries = 0;
-	स_नकल(smic->ग_लिखो_data, data, size);
-	smic->ग_लिखो_count = size;
-	smic->orig_ग_लिखो_count = size;
-	smic->ग_लिखो_pos = 0;
-	smic->पढ़ो_pos = 0;
+	memcpy(smic->write_data, data, size);
+	smic->write_count = size;
+	smic->orig_write_count = size;
+	smic->write_pos = 0;
+	smic->read_pos = 0;
 	smic->state = SMIC_START_OP;
-	smic->smic_समयout = SMIC_RETRY_TIMEOUT;
-	वापस 0;
-पूर्ण
+	smic->smic_timeout = SMIC_RETRY_TIMEOUT;
+	return 0;
+}
 
-अटल पूर्णांक smic_get_result(काष्ठा si_sm_data *smic,
-			   अचिन्हित अक्षर *data, अचिन्हित पूर्णांक length)
-अणु
-	पूर्णांक i;
+static int smic_get_result(struct si_sm_data *smic,
+			   unsigned char *data, unsigned int length)
+{
+	int i;
 
-	अगर (smic_debug & SMIC_DEBUG_MSG) अणु
+	if (smic_debug & SMIC_DEBUG_MSG) {
 		dev_dbg(smic->io->dev, "smic_get result -");
-		क्रम (i = 0; i < smic->पढ़ो_pos; i++)
-			pr_cont(" %02x", smic->पढ़ो_data[i]);
+		for (i = 0; i < smic->read_pos; i++)
+			pr_cont(" %02x", smic->read_data[i]);
 		pr_cont("\n");
-	पूर्ण
-	अगर (length < smic->पढ़ो_pos) अणु
-		smic->पढ़ो_pos = length;
+	}
+	if (length < smic->read_pos) {
+		smic->read_pos = length;
 		smic->truncated = 1;
-	पूर्ण
-	स_नकल(data, smic->पढ़ो_data, smic->पढ़ो_pos);
+	}
+	memcpy(data, smic->read_data, smic->read_pos);
 
-	अगर ((length >= 3) && (smic->पढ़ो_pos < 3)) अणु
+	if ((length >= 3) && (smic->read_pos < 3)) {
 		data[2] = IPMI_ERR_UNSPECIFIED;
-		smic->पढ़ो_pos = 3;
-	पूर्ण
-	अगर (smic->truncated) अणु
+		smic->read_pos = 3;
+	}
+	if (smic->truncated) {
 		data[2] = IPMI_ERR_MSG_TRUNCATED;
 		smic->truncated = 0;
-	पूर्ण
-	वापस smic->पढ़ो_pos;
-पूर्ण
+	}
+	return smic->read_pos;
+}
 
-अटल अंतरभूत अचिन्हित अक्षर पढ़ो_smic_flags(काष्ठा si_sm_data *smic)
-अणु
-	वापस smic->io->inputb(smic->io, 2);
-पूर्ण
+static inline unsigned char read_smic_flags(struct si_sm_data *smic)
+{
+	return smic->io->inputb(smic->io, 2);
+}
 
-अटल अंतरभूत अचिन्हित अक्षर पढ़ो_smic_status(काष्ठा si_sm_data *smic)
-अणु
-	वापस smic->io->inputb(smic->io, 1);
-पूर्ण
+static inline unsigned char read_smic_status(struct si_sm_data *smic)
+{
+	return smic->io->inputb(smic->io, 1);
+}
 
-अटल अंतरभूत अचिन्हित अक्षर पढ़ो_smic_data(काष्ठा si_sm_data *smic)
-अणु
-	वापस smic->io->inputb(smic->io, 0);
-पूर्ण
+static inline unsigned char read_smic_data(struct si_sm_data *smic)
+{
+	return smic->io->inputb(smic->io, 0);
+}
 
-अटल अंतरभूत व्योम ग_लिखो_smic_flags(काष्ठा si_sm_data *smic,
-				    अचिन्हित अक्षर   flags)
-अणु
+static inline void write_smic_flags(struct si_sm_data *smic,
+				    unsigned char   flags)
+{
 	smic->io->outputb(smic->io, 2, flags);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ग_लिखो_smic_control(काष्ठा si_sm_data *smic,
-				      अचिन्हित अक्षर   control)
-अणु
+static inline void write_smic_control(struct si_sm_data *smic,
+				      unsigned char   control)
+{
 	smic->io->outputb(smic->io, 1, control);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ग_लिखो_si_sm_data(काष्ठा si_sm_data *smic,
-				    अचिन्हित अक्षर   data)
-अणु
+static inline void write_si_sm_data(struct si_sm_data *smic,
+				    unsigned char   data)
+{
 	smic->io->outputb(smic->io, 0, data);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम start_error_recovery(काष्ठा si_sm_data *smic, अक्षर *reason)
-अणु
+static inline void start_error_recovery(struct si_sm_data *smic, char *reason)
+{
 	(smic->error_retries)++;
-	अगर (smic->error_retries > SMIC_MAX_ERROR_RETRIES) अणु
-		अगर (smic_debug & SMIC_DEBUG_ENABLE)
+	if (smic->error_retries > SMIC_MAX_ERROR_RETRIES) {
+		if (smic_debug & SMIC_DEBUG_ENABLE)
 			pr_warn("ipmi_smic_drv: smic hosed: %s\n", reason);
 		smic->state = SMIC_HOSED;
-	पूर्ण अन्यथा अणु
-		smic->ग_लिखो_count = smic->orig_ग_लिखो_count;
-		smic->ग_लिखो_pos = 0;
-		smic->पढ़ो_pos = 0;
+	} else {
+		smic->write_count = smic->orig_write_count;
+		smic->write_pos = 0;
+		smic->read_pos = 0;
 		smic->state = SMIC_START_OP;
-		smic->smic_समयout = SMIC_RETRY_TIMEOUT;
-	पूर्ण
-पूर्ण
+		smic->smic_timeout = SMIC_RETRY_TIMEOUT;
+	}
+}
 
-अटल अंतरभूत व्योम ग_लिखो_next_byte(काष्ठा si_sm_data *smic)
-अणु
-	ग_लिखो_si_sm_data(smic, smic->ग_लिखो_data[smic->ग_लिखो_pos]);
-	(smic->ग_लिखो_pos)++;
-	(smic->ग_लिखो_count)--;
-पूर्ण
+static inline void write_next_byte(struct si_sm_data *smic)
+{
+	write_si_sm_data(smic, smic->write_data[smic->write_pos]);
+	(smic->write_pos)++;
+	(smic->write_count)--;
+}
 
-अटल अंतरभूत व्योम पढ़ो_next_byte(काष्ठा si_sm_data *smic)
-अणु
-	अगर (smic->पढ़ो_pos >= MAX_SMIC_READ_SIZE) अणु
-		पढ़ो_smic_data(smic);
+static inline void read_next_byte(struct si_sm_data *smic)
+{
+	if (smic->read_pos >= MAX_SMIC_READ_SIZE) {
+		read_smic_data(smic);
 		smic->truncated = 1;
-	पूर्ण अन्यथा अणु
-		smic->पढ़ो_data[smic->पढ़ो_pos] = पढ़ो_smic_data(smic);
-		smic->पढ़ो_pos++;
-	पूर्ण
-पूर्ण
+	} else {
+		smic->read_data[smic->read_pos] = read_smic_data(smic);
+		smic->read_pos++;
+	}
+}
 
 /*  SMIC Control/Status Code Components */
-#घोषणा	SMIC_GET_STATUS		0x00	/* Control क्रमm's name */
-#घोषणा	SMIC_READY		0x00	/* Status  क्रमm's name */
-#घोषणा	SMIC_WR_START		0x01	/* Unअगरied Control/Status names... */
-#घोषणा	SMIC_WR_NEXT		0x02
-#घोषणा	SMIC_WR_END		0x03
-#घोषणा	SMIC_RD_START		0x04
-#घोषणा	SMIC_RD_NEXT		0x05
-#घोषणा	SMIC_RD_END		0x06
-#घोषणा	SMIC_CODE_MASK		0x0f
+#define	SMIC_GET_STATUS		0x00	/* Control form's name */
+#define	SMIC_READY		0x00	/* Status  form's name */
+#define	SMIC_WR_START		0x01	/* Unified Control/Status names... */
+#define	SMIC_WR_NEXT		0x02
+#define	SMIC_WR_END		0x03
+#define	SMIC_RD_START		0x04
+#define	SMIC_RD_NEXT		0x05
+#define	SMIC_RD_END		0x06
+#define	SMIC_CODE_MASK		0x0f
 
-#घोषणा	SMIC_CONTROL		0x00
-#घोषणा	SMIC_STATUS		0x80
-#घोषणा	SMIC_CS_MASK		0x80
+#define	SMIC_CONTROL		0x00
+#define	SMIC_STATUS		0x80
+#define	SMIC_CS_MASK		0x80
 
-#घोषणा	SMIC_SMS		0x40
-#घोषणा	SMIC_SMM		0x60
-#घोषणा	SMIC_STREAM_MASK	0x60
+#define	SMIC_SMS		0x40
+#define	SMIC_SMM		0x60
+#define	SMIC_STREAM_MASK	0x60
 
 /*  SMIC Control Codes */
-#घोषणा	SMIC_CC_SMS_GET_STATUS	(SMIC_CONTROL|SMIC_SMS|SMIC_GET_STATUS)
-#घोषणा	SMIC_CC_SMS_WR_START	(SMIC_CONTROL|SMIC_SMS|SMIC_WR_START)
-#घोषणा	SMIC_CC_SMS_WR_NEXT	(SMIC_CONTROL|SMIC_SMS|SMIC_WR_NEXT)
-#घोषणा	SMIC_CC_SMS_WR_END	(SMIC_CONTROL|SMIC_SMS|SMIC_WR_END)
-#घोषणा	SMIC_CC_SMS_RD_START	(SMIC_CONTROL|SMIC_SMS|SMIC_RD_START)
-#घोषणा	SMIC_CC_SMS_RD_NEXT	(SMIC_CONTROL|SMIC_SMS|SMIC_RD_NEXT)
-#घोषणा	SMIC_CC_SMS_RD_END	(SMIC_CONTROL|SMIC_SMS|SMIC_RD_END)
+#define	SMIC_CC_SMS_GET_STATUS	(SMIC_CONTROL|SMIC_SMS|SMIC_GET_STATUS)
+#define	SMIC_CC_SMS_WR_START	(SMIC_CONTROL|SMIC_SMS|SMIC_WR_START)
+#define	SMIC_CC_SMS_WR_NEXT	(SMIC_CONTROL|SMIC_SMS|SMIC_WR_NEXT)
+#define	SMIC_CC_SMS_WR_END	(SMIC_CONTROL|SMIC_SMS|SMIC_WR_END)
+#define	SMIC_CC_SMS_RD_START	(SMIC_CONTROL|SMIC_SMS|SMIC_RD_START)
+#define	SMIC_CC_SMS_RD_NEXT	(SMIC_CONTROL|SMIC_SMS|SMIC_RD_NEXT)
+#define	SMIC_CC_SMS_RD_END	(SMIC_CONTROL|SMIC_SMS|SMIC_RD_END)
 
-#घोषणा	SMIC_CC_SMM_GET_STATUS	(SMIC_CONTROL|SMIC_SMM|SMIC_GET_STATUS)
-#घोषणा	SMIC_CC_SMM_WR_START	(SMIC_CONTROL|SMIC_SMM|SMIC_WR_START)
-#घोषणा	SMIC_CC_SMM_WR_NEXT	(SMIC_CONTROL|SMIC_SMM|SMIC_WR_NEXT)
-#घोषणा	SMIC_CC_SMM_WR_END	(SMIC_CONTROL|SMIC_SMM|SMIC_WR_END)
-#घोषणा	SMIC_CC_SMM_RD_START	(SMIC_CONTROL|SMIC_SMM|SMIC_RD_START)
-#घोषणा	SMIC_CC_SMM_RD_NEXT	(SMIC_CONTROL|SMIC_SMM|SMIC_RD_NEXT)
-#घोषणा	SMIC_CC_SMM_RD_END	(SMIC_CONTROL|SMIC_SMM|SMIC_RD_END)
+#define	SMIC_CC_SMM_GET_STATUS	(SMIC_CONTROL|SMIC_SMM|SMIC_GET_STATUS)
+#define	SMIC_CC_SMM_WR_START	(SMIC_CONTROL|SMIC_SMM|SMIC_WR_START)
+#define	SMIC_CC_SMM_WR_NEXT	(SMIC_CONTROL|SMIC_SMM|SMIC_WR_NEXT)
+#define	SMIC_CC_SMM_WR_END	(SMIC_CONTROL|SMIC_SMM|SMIC_WR_END)
+#define	SMIC_CC_SMM_RD_START	(SMIC_CONTROL|SMIC_SMM|SMIC_RD_START)
+#define	SMIC_CC_SMM_RD_NEXT	(SMIC_CONTROL|SMIC_SMM|SMIC_RD_NEXT)
+#define	SMIC_CC_SMM_RD_END	(SMIC_CONTROL|SMIC_SMM|SMIC_RD_END)
 
 /*  SMIC Status Codes */
-#घोषणा	SMIC_SC_SMS_READY	(SMIC_STATUS|SMIC_SMS|SMIC_READY)
-#घोषणा	SMIC_SC_SMS_WR_START	(SMIC_STATUS|SMIC_SMS|SMIC_WR_START)
-#घोषणा	SMIC_SC_SMS_WR_NEXT	(SMIC_STATUS|SMIC_SMS|SMIC_WR_NEXT)
-#घोषणा	SMIC_SC_SMS_WR_END	(SMIC_STATUS|SMIC_SMS|SMIC_WR_END)
-#घोषणा	SMIC_SC_SMS_RD_START	(SMIC_STATUS|SMIC_SMS|SMIC_RD_START)
-#घोषणा	SMIC_SC_SMS_RD_NEXT	(SMIC_STATUS|SMIC_SMS|SMIC_RD_NEXT)
-#घोषणा	SMIC_SC_SMS_RD_END	(SMIC_STATUS|SMIC_SMS|SMIC_RD_END)
+#define	SMIC_SC_SMS_READY	(SMIC_STATUS|SMIC_SMS|SMIC_READY)
+#define	SMIC_SC_SMS_WR_START	(SMIC_STATUS|SMIC_SMS|SMIC_WR_START)
+#define	SMIC_SC_SMS_WR_NEXT	(SMIC_STATUS|SMIC_SMS|SMIC_WR_NEXT)
+#define	SMIC_SC_SMS_WR_END	(SMIC_STATUS|SMIC_SMS|SMIC_WR_END)
+#define	SMIC_SC_SMS_RD_START	(SMIC_STATUS|SMIC_SMS|SMIC_RD_START)
+#define	SMIC_SC_SMS_RD_NEXT	(SMIC_STATUS|SMIC_SMS|SMIC_RD_NEXT)
+#define	SMIC_SC_SMS_RD_END	(SMIC_STATUS|SMIC_SMS|SMIC_RD_END)
 
-#घोषणा	SMIC_SC_SMM_READY	(SMIC_STATUS|SMIC_SMM|SMIC_READY)
-#घोषणा	SMIC_SC_SMM_WR_START	(SMIC_STATUS|SMIC_SMM|SMIC_WR_START)
-#घोषणा	SMIC_SC_SMM_WR_NEXT	(SMIC_STATUS|SMIC_SMM|SMIC_WR_NEXT)
-#घोषणा	SMIC_SC_SMM_WR_END	(SMIC_STATUS|SMIC_SMM|SMIC_WR_END)
-#घोषणा	SMIC_SC_SMM_RD_START	(SMIC_STATUS|SMIC_SMM|SMIC_RD_START)
-#घोषणा	SMIC_SC_SMM_RD_NEXT	(SMIC_STATUS|SMIC_SMM|SMIC_RD_NEXT)
-#घोषणा	SMIC_SC_SMM_RD_END	(SMIC_STATUS|SMIC_SMM|SMIC_RD_END)
+#define	SMIC_SC_SMM_READY	(SMIC_STATUS|SMIC_SMM|SMIC_READY)
+#define	SMIC_SC_SMM_WR_START	(SMIC_STATUS|SMIC_SMM|SMIC_WR_START)
+#define	SMIC_SC_SMM_WR_NEXT	(SMIC_STATUS|SMIC_SMM|SMIC_WR_NEXT)
+#define	SMIC_SC_SMM_WR_END	(SMIC_STATUS|SMIC_SMM|SMIC_WR_END)
+#define	SMIC_SC_SMM_RD_START	(SMIC_STATUS|SMIC_SMM|SMIC_RD_START)
+#define	SMIC_SC_SMM_RD_NEXT	(SMIC_STATUS|SMIC_SMM|SMIC_RD_NEXT)
+#define	SMIC_SC_SMM_RD_END	(SMIC_STATUS|SMIC_SMM|SMIC_RD_END)
 
 /* these are the control/status codes we actually use
 	SMIC_CC_SMS_GET_STATUS	0x40
@@ -318,264 +317,264 @@ MODULE_PARM_DESC(smic_debug, "debug bitmask, 1=enable, 2=messages, 4=states");
 	SMIC_SC_SMS_RD_END	0xC6
 */
 
-अटल क्रमागत si_sm_result smic_event(काष्ठा si_sm_data *smic, दीर्घ समय)
-अणु
-	अचिन्हित अक्षर status;
-	अचिन्हित अक्षर flags;
-	अचिन्हित अक्षर data;
+static enum si_sm_result smic_event(struct si_sm_data *smic, long time)
+{
+	unsigned char status;
+	unsigned char flags;
+	unsigned char data;
 
-	अगर (smic->state == SMIC_HOSED) अणु
+	if (smic->state == SMIC_HOSED) {
 		init_smic_data(smic, smic->io);
-		वापस SI_SM_HOSED;
-	पूर्ण
-	अगर (smic->state != SMIC_IDLE) अणु
-		अगर (smic_debug & SMIC_DEBUG_STATES)
+		return SI_SM_HOSED;
+	}
+	if (smic->state != SMIC_IDLE) {
+		if (smic_debug & SMIC_DEBUG_STATES)
 			dev_dbg(smic->io->dev,
 				"%s - smic->smic_timeout = %ld, time = %ld\n",
-				__func__, smic->smic_समयout, समय);
+				__func__, smic->smic_timeout, time);
 		/*
-		 * FIXME: smic_event is someबार called with समय >
+		 * FIXME: smic_event is sometimes called with time >
 		 * SMIC_RETRY_TIMEOUT
 		 */
-		अगर (समय < SMIC_RETRY_TIMEOUT) अणु
-			smic->smic_समयout -= समय;
-			अगर (smic->smic_समयout < 0) अणु
+		if (time < SMIC_RETRY_TIMEOUT) {
+			smic->smic_timeout -= time;
+			if (smic->smic_timeout < 0) {
 				start_error_recovery(smic, "smic timed out.");
-				वापस SI_SM_CALL_WITH_DELAY;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	flags = पढ़ो_smic_flags(smic);
-	अगर (flags & SMIC_FLAG_BSY)
-		वापस SI_SM_CALL_WITH_DELAY;
+				return SI_SM_CALL_WITH_DELAY;
+			}
+		}
+	}
+	flags = read_smic_flags(smic);
+	if (flags & SMIC_FLAG_BSY)
+		return SI_SM_CALL_WITH_DELAY;
 
-	status = पढ़ो_smic_status(smic);
-	अगर (smic_debug & SMIC_DEBUG_STATES)
+	status = read_smic_status(smic);
+	if (smic_debug & SMIC_DEBUG_STATES)
 		dev_dbg(smic->io->dev,
 			"%s - state = %d, flags = 0x%02x, status = 0x%02x\n",
 			__func__, smic->state, flags, status);
 
-	चयन (smic->state) अणु
-	हाल SMIC_IDLE:
-		/* in IDLE we check क्रम available messages */
-		अगर (flags & SMIC_SMS_DATA_AVAIL)
-			वापस SI_SM_ATTN;
-		वापस SI_SM_IDLE;
+	switch (smic->state) {
+	case SMIC_IDLE:
+		/* in IDLE we check for available messages */
+		if (flags & SMIC_SMS_DATA_AVAIL)
+			return SI_SM_ATTN;
+		return SI_SM_IDLE;
 
-	हाल SMIC_START_OP:
+	case SMIC_START_OP:
 		/* sanity check whether smic is really idle */
-		ग_लिखो_smic_control(smic, SMIC_CC_SMS_GET_STATUS);
-		ग_लिखो_smic_flags(smic, flags | SMIC_FLAG_BSY);
+		write_smic_control(smic, SMIC_CC_SMS_GET_STATUS);
+		write_smic_flags(smic, flags | SMIC_FLAG_BSY);
 		smic->state = SMIC_OP_OK;
-		अवरोध;
+		break;
 
-	हाल SMIC_OP_OK:
-		अगर (status != SMIC_SC_SMS_READY) अणु
+	case SMIC_OP_OK:
+		if (status != SMIC_SC_SMS_READY) {
 			/* this should not happen */
 			start_error_recovery(smic,
 					     "state = SMIC_OP_OK,"
 					     " status != SMIC_SC_SMS_READY");
-			वापस SI_SM_CALL_WITH_DELAY;
-		पूर्ण
+			return SI_SM_CALL_WITH_DELAY;
+		}
 		/* OK so far; smic is idle let us start ... */
-		ग_लिखो_smic_control(smic, SMIC_CC_SMS_WR_START);
-		ग_लिखो_next_byte(smic);
-		ग_लिखो_smic_flags(smic, flags | SMIC_FLAG_BSY);
+		write_smic_control(smic, SMIC_CC_SMS_WR_START);
+		write_next_byte(smic);
+		write_smic_flags(smic, flags | SMIC_FLAG_BSY);
 		smic->state = SMIC_WRITE_START;
-		अवरोध;
+		break;
 
-	हाल SMIC_WRITE_START:
-		अगर (status != SMIC_SC_SMS_WR_START) अणु
+	case SMIC_WRITE_START:
+		if (status != SMIC_SC_SMS_WR_START) {
 			start_error_recovery(smic,
 					     "state = SMIC_WRITE_START, "
 					     "status != SMIC_SC_SMS_WR_START");
-			वापस SI_SM_CALL_WITH_DELAY;
-		पूर्ण
+			return SI_SM_CALL_WITH_DELAY;
+		}
 		/*
 		 * we must not issue WR_(NEXT|END) unless
 		 * TX_DATA_READY is set
 		 * */
-		अगर (flags & SMIC_TX_DATA_READY) अणु
-			अगर (smic->ग_लिखो_count == 1) अणु
+		if (flags & SMIC_TX_DATA_READY) {
+			if (smic->write_count == 1) {
 				/* last byte */
-				ग_लिखो_smic_control(smic, SMIC_CC_SMS_WR_END);
+				write_smic_control(smic, SMIC_CC_SMS_WR_END);
 				smic->state = SMIC_WRITE_END;
-			पूर्ण अन्यथा अणु
-				ग_लिखो_smic_control(smic, SMIC_CC_SMS_WR_NEXT);
+			} else {
+				write_smic_control(smic, SMIC_CC_SMS_WR_NEXT);
 				smic->state = SMIC_WRITE_NEXT;
-			पूर्ण
-			ग_लिखो_next_byte(smic);
-			ग_लिखो_smic_flags(smic, flags | SMIC_FLAG_BSY);
-		पूर्ण अन्यथा
-			वापस SI_SM_CALL_WITH_DELAY;
-		अवरोध;
+			}
+			write_next_byte(smic);
+			write_smic_flags(smic, flags | SMIC_FLAG_BSY);
+		} else
+			return SI_SM_CALL_WITH_DELAY;
+		break;
 
-	हाल SMIC_WRITE_NEXT:
-		अगर (status != SMIC_SC_SMS_WR_NEXT) अणु
+	case SMIC_WRITE_NEXT:
+		if (status != SMIC_SC_SMS_WR_NEXT) {
 			start_error_recovery(smic,
 					     "state = SMIC_WRITE_NEXT, "
 					     "status != SMIC_SC_SMS_WR_NEXT");
-			वापस SI_SM_CALL_WITH_DELAY;
-		पूर्ण
+			return SI_SM_CALL_WITH_DELAY;
+		}
 		/* this is the same code as in SMIC_WRITE_START */
-		अगर (flags & SMIC_TX_DATA_READY) अणु
-			अगर (smic->ग_लिखो_count == 1) अणु
-				ग_लिखो_smic_control(smic, SMIC_CC_SMS_WR_END);
+		if (flags & SMIC_TX_DATA_READY) {
+			if (smic->write_count == 1) {
+				write_smic_control(smic, SMIC_CC_SMS_WR_END);
 				smic->state = SMIC_WRITE_END;
-			पूर्ण अन्यथा अणु
-				ग_लिखो_smic_control(smic, SMIC_CC_SMS_WR_NEXT);
+			} else {
+				write_smic_control(smic, SMIC_CC_SMS_WR_NEXT);
 				smic->state = SMIC_WRITE_NEXT;
-			पूर्ण
-			ग_लिखो_next_byte(smic);
-			ग_लिखो_smic_flags(smic, flags | SMIC_FLAG_BSY);
-		पूर्ण अन्यथा
-			वापस SI_SM_CALL_WITH_DELAY;
-		अवरोध;
+			}
+			write_next_byte(smic);
+			write_smic_flags(smic, flags | SMIC_FLAG_BSY);
+		} else
+			return SI_SM_CALL_WITH_DELAY;
+		break;
 
-	हाल SMIC_WRITE_END:
-		अगर (status != SMIC_SC_SMS_WR_END) अणु
+	case SMIC_WRITE_END:
+		if (status != SMIC_SC_SMS_WR_END) {
 			start_error_recovery(smic,
 					     "state = SMIC_WRITE_END, "
 					     "status != SMIC_SC_SMS_WR_END");
-			वापस SI_SM_CALL_WITH_DELAY;
-		पूर्ण
-		/* data रेजिस्टर holds an error code */
-		data = पढ़ो_smic_data(smic);
-		अगर (data != 0) अणु
-			अगर (smic_debug & SMIC_DEBUG_ENABLE)
+			return SI_SM_CALL_WITH_DELAY;
+		}
+		/* data register holds an error code */
+		data = read_smic_data(smic);
+		if (data != 0) {
+			if (smic_debug & SMIC_DEBUG_ENABLE)
 				dev_dbg(smic->io->dev,
 					"SMIC_WRITE_END: data = %02x\n",
 					data);
 			start_error_recovery(smic,
 					     "state = SMIC_WRITE_END, "
 					     "data != SUCCESS");
-			वापस SI_SM_CALL_WITH_DELAY;
-		पूर्ण अन्यथा
+			return SI_SM_CALL_WITH_DELAY;
+		} else
 			smic->state = SMIC_WRITE2READ;
-		अवरोध;
+		break;
 
-	हाल SMIC_WRITE2READ:
+	case SMIC_WRITE2READ:
 		/*
-		 * we must रुको क्रम RX_DATA_READY to be set beक्रमe we
-		 * can जारी
+		 * we must wait for RX_DATA_READY to be set before we
+		 * can continue
 		 */
-		अगर (flags & SMIC_RX_DATA_READY) अणु
-			ग_लिखो_smic_control(smic, SMIC_CC_SMS_RD_START);
-			ग_लिखो_smic_flags(smic, flags | SMIC_FLAG_BSY);
+		if (flags & SMIC_RX_DATA_READY) {
+			write_smic_control(smic, SMIC_CC_SMS_RD_START);
+			write_smic_flags(smic, flags | SMIC_FLAG_BSY);
 			smic->state = SMIC_READ_START;
-		पूर्ण अन्यथा
-			वापस SI_SM_CALL_WITH_DELAY;
-		अवरोध;
+		} else
+			return SI_SM_CALL_WITH_DELAY;
+		break;
 
-	हाल SMIC_READ_START:
-		अगर (status != SMIC_SC_SMS_RD_START) अणु
+	case SMIC_READ_START:
+		if (status != SMIC_SC_SMS_RD_START) {
 			start_error_recovery(smic,
 					     "state = SMIC_READ_START, "
 					     "status != SMIC_SC_SMS_RD_START");
-			वापस SI_SM_CALL_WITH_DELAY;
-		पूर्ण
-		अगर (flags & SMIC_RX_DATA_READY) अणु
-			पढ़ो_next_byte(smic);
-			ग_लिखो_smic_control(smic, SMIC_CC_SMS_RD_NEXT);
-			ग_लिखो_smic_flags(smic, flags | SMIC_FLAG_BSY);
+			return SI_SM_CALL_WITH_DELAY;
+		}
+		if (flags & SMIC_RX_DATA_READY) {
+			read_next_byte(smic);
+			write_smic_control(smic, SMIC_CC_SMS_RD_NEXT);
+			write_smic_flags(smic, flags | SMIC_FLAG_BSY);
 			smic->state = SMIC_READ_NEXT;
-		पूर्ण अन्यथा
-			वापस SI_SM_CALL_WITH_DELAY;
-		अवरोध;
+		} else
+			return SI_SM_CALL_WITH_DELAY;
+		break;
 
-	हाल SMIC_READ_NEXT:
-		चयन (status) अणु
+	case SMIC_READ_NEXT:
+		switch (status) {
 		/*
-		 * smic tells us that this is the last byte to be पढ़ो
+		 * smic tells us that this is the last byte to be read
 		 * --> clean up
 		 */
-		हाल SMIC_SC_SMS_RD_END:
-			पढ़ो_next_byte(smic);
-			ग_लिखो_smic_control(smic, SMIC_CC_SMS_RD_END);
-			ग_लिखो_smic_flags(smic, flags | SMIC_FLAG_BSY);
+		case SMIC_SC_SMS_RD_END:
+			read_next_byte(smic);
+			write_smic_control(smic, SMIC_CC_SMS_RD_END);
+			write_smic_flags(smic, flags | SMIC_FLAG_BSY);
 			smic->state = SMIC_READ_END;
-			अवरोध;
-		हाल SMIC_SC_SMS_RD_NEXT:
-			अगर (flags & SMIC_RX_DATA_READY) अणु
-				पढ़ो_next_byte(smic);
-				ग_लिखो_smic_control(smic, SMIC_CC_SMS_RD_NEXT);
-				ग_लिखो_smic_flags(smic, flags | SMIC_FLAG_BSY);
+			break;
+		case SMIC_SC_SMS_RD_NEXT:
+			if (flags & SMIC_RX_DATA_READY) {
+				read_next_byte(smic);
+				write_smic_control(smic, SMIC_CC_SMS_RD_NEXT);
+				write_smic_flags(smic, flags | SMIC_FLAG_BSY);
 				smic->state = SMIC_READ_NEXT;
-			पूर्ण अन्यथा
-				वापस SI_SM_CALL_WITH_DELAY;
-			अवरोध;
-		शेष:
+			} else
+				return SI_SM_CALL_WITH_DELAY;
+			break;
+		default:
 			start_error_recovery(
 				smic,
 				"state = SMIC_READ_NEXT, "
 				"status != SMIC_SC_SMS_RD_(NEXT|END)");
-			वापस SI_SM_CALL_WITH_DELAY;
-		पूर्ण
-		अवरोध;
+			return SI_SM_CALL_WITH_DELAY;
+		}
+		break;
 
-	हाल SMIC_READ_END:
-		अगर (status != SMIC_SC_SMS_READY) अणु
+	case SMIC_READ_END:
+		if (status != SMIC_SC_SMS_READY) {
 			start_error_recovery(smic,
 					     "state = SMIC_READ_END, "
 					     "status != SMIC_SC_SMS_READY");
-			वापस SI_SM_CALL_WITH_DELAY;
-		पूर्ण
-		data = पढ़ो_smic_data(smic);
-		/* data रेजिस्टर holds an error code */
-		अगर (data != 0) अणु
-			अगर (smic_debug & SMIC_DEBUG_ENABLE)
+			return SI_SM_CALL_WITH_DELAY;
+		}
+		data = read_smic_data(smic);
+		/* data register holds an error code */
+		if (data != 0) {
+			if (smic_debug & SMIC_DEBUG_ENABLE)
 				dev_dbg(smic->io->dev,
 					"SMIC_READ_END: data = %02x\n",
 					data);
 			start_error_recovery(smic,
 					     "state = SMIC_READ_END, "
 					     "data != SUCCESS");
-			वापस SI_SM_CALL_WITH_DELAY;
-		पूर्ण अन्यथा अणु
+			return SI_SM_CALL_WITH_DELAY;
+		} else {
 			smic->state = SMIC_IDLE;
-			वापस SI_SM_TRANSACTION_COMPLETE;
-		पूर्ण
+			return SI_SM_TRANSACTION_COMPLETE;
+		}
 
-	हाल SMIC_HOSED:
+	case SMIC_HOSED:
 		init_smic_data(smic, smic->io);
-		वापस SI_SM_HOSED;
+		return SI_SM_HOSED;
 
-	शेष:
-		अगर (smic_debug & SMIC_DEBUG_ENABLE) अणु
+	default:
+		if (smic_debug & SMIC_DEBUG_ENABLE) {
 			dev_dbg(smic->io->dev,
 				"smic->state = %d\n", smic->state);
 			start_error_recovery(smic, "state = UNKNOWN");
-			वापस SI_SM_CALL_WITH_DELAY;
-		पूर्ण
-	पूर्ण
-	smic->smic_समयout = SMIC_RETRY_TIMEOUT;
-	वापस SI_SM_CALL_WITHOUT_DELAY;
-पूर्ण
+			return SI_SM_CALL_WITH_DELAY;
+		}
+	}
+	smic->smic_timeout = SMIC_RETRY_TIMEOUT;
+	return SI_SM_CALL_WITHOUT_DELAY;
+}
 
-अटल पूर्णांक smic_detect(काष्ठा si_sm_data *smic)
-अणु
+static int smic_detect(struct si_sm_data *smic)
+{
 	/*
 	 * It's impossible for the SMIC fnags register to be all 1's,
 	 * (assuming a properly functioning, self-initialized BMC)
-	 * but that's what you get from पढ़ोing a bogus address, so we
+	 * but that's what you get from reading a bogus address, so we
 	 * test that first.
 	 */
-	अगर (पढ़ो_smic_flags(smic) == 0xff)
-		वापस 1;
+	if (read_smic_flags(smic) == 0xff)
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम smic_cleanup(काष्ठा si_sm_data *kcs)
-अणु
-पूर्ण
+static void smic_cleanup(struct si_sm_data *kcs)
+{
+}
 
-अटल पूर्णांक smic_size(व्योम)
-अणु
-	वापस माप(काष्ठा si_sm_data);
-पूर्ण
+static int smic_size(void)
+{
+	return sizeof(struct si_sm_data);
+}
 
-स्थिर काष्ठा si_sm_handlers smic_smi_handlers = अणु
+const struct si_sm_handlers smic_smi_handlers = {
 	.init_data         = init_smic_data,
 	.start_transaction = start_smic_transaction,
 	.get_result        = smic_get_result,
@@ -583,4 +582,4 @@ MODULE_PARM_DESC(smic_debug, "debug bitmask, 1=enable, 2=messages, 4=states");
 	.detect            = smic_detect,
 	.cleanup           = smic_cleanup,
 	.size              = smic_size,
-पूर्ण;
+};

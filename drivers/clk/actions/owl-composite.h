@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 //
-// OWL composite घड़ी driver
+// OWL composite clock driver
 //
 // Copyright (c) 2014 Actions Semi Inc.
 // Author: David Liu <liuwei@actions-semi.com>
@@ -9,117 +8,117 @@
 // Copyright (c) 2018 Linaro Ltd.
 // Author: Manivannan Sadhasivam <manivannan.sadhasivam@linaro.org>
 
-#अगर_अघोषित _OWL_COMPOSITE_H_
-#घोषणा _OWL_COMPOSITE_H_
+#ifndef _OWL_COMPOSITE_H_
+#define _OWL_COMPOSITE_H_
 
-#समावेश "owl-common.h"
-#समावेश "owl-mux.h"
-#समावेश "owl-gate.h"
-#समावेश "owl-factor.h"
-#समावेश "owl-fixed-factor.h"
-#समावेश "owl-divider.h"
+#include "owl-common.h"
+#include "owl-mux.h"
+#include "owl-gate.h"
+#include "owl-factor.h"
+#include "owl-fixed-factor.h"
+#include "owl-divider.h"
 
-जोड़ owl_rate अणु
-	काष्ठा owl_भागider_hw	भाग_hw;
-	काष्ठा owl_factor_hw	factor_hw;
-	काष्ठा clk_fixed_factor	fix_fact_hw;
-पूर्ण;
+union owl_rate {
+	struct owl_divider_hw	div_hw;
+	struct owl_factor_hw	factor_hw;
+	struct clk_fixed_factor	fix_fact_hw;
+};
 
-काष्ठा owl_composite अणु
-	काष्ठा owl_mux_hw	mux_hw;
-	काष्ठा owl_gate_hw	gate_hw;
-	जोड़ owl_rate		rate;
+struct owl_composite {
+	struct owl_mux_hw	mux_hw;
+	struct owl_gate_hw	gate_hw;
+	union owl_rate		rate;
 
-	स्थिर काष्ठा clk_ops	*fix_fact_ops;
+	const struct clk_ops	*fix_fact_ops;
 
-	काष्ठा owl_clk_common	common;
-पूर्ण;
+	struct owl_clk_common	common;
+};
 
-#घोषणा OWL_COMP_DIV(_काष्ठा, _name, _parent,				\
-		     _mux, _gate, _भाग, _flags)				\
-	काष्ठा owl_composite _काष्ठा = अणु				\
+#define OWL_COMP_DIV(_struct, _name, _parent,				\
+		     _mux, _gate, _div, _flags)				\
+	struct owl_composite _struct = {				\
 		.mux_hw		= _mux,					\
 		.gate_hw	= _gate,				\
-		.rate.भाग_hw	= _भाग,					\
-		.common = अणु						\
-			.regmap		= शून्य,				\
+		.rate.div_hw	= _div,					\
+		.common = {						\
+			.regmap		= NULL,				\
 			.hw.init	= CLK_HW_INIT_PARENTS(_name,	\
 						     _parent,		\
-						      &owl_comp_भाग_ops,\
+						      &owl_comp_div_ops,\
 						     _flags),		\
-		पूर्ण,							\
-	पूर्ण
+		},							\
+	}
 
-#घोषणा OWL_COMP_DIV_FIXED(_काष्ठा, _name, _parent,			\
-		     _gate, _भाग, _flags)				\
-	काष्ठा owl_composite _काष्ठा = अणु				\
+#define OWL_COMP_DIV_FIXED(_struct, _name, _parent,			\
+		     _gate, _div, _flags)				\
+	struct owl_composite _struct = {				\
 		.gate_hw	= _gate,				\
-		.rate.भाग_hw	= _भाग,					\
-		.common = अणु						\
-			.regmap		= शून्य,				\
+		.rate.div_hw	= _div,					\
+		.common = {						\
+			.regmap		= NULL,				\
 			.hw.init	= CLK_HW_INIT(_name,		\
 						     _parent,		\
-						      &owl_comp_भाग_ops,\
+						      &owl_comp_div_ops,\
 						     _flags),		\
-		पूर्ण,							\
-	पूर्ण
+		},							\
+	}
 
-#घोषणा OWL_COMP_FACTOR(_काष्ठा, _name, _parent,			\
+#define OWL_COMP_FACTOR(_struct, _name, _parent,			\
 			_mux, _gate, _factor, _flags)			\
-	काष्ठा owl_composite _काष्ठा = अणु				\
+	struct owl_composite _struct = {				\
 		.mux_hw		= _mux,					\
 		.gate_hw	= _gate,				\
 		.rate.factor_hw	= _factor,				\
-		.common = अणु						\
-			.regmap		= शून्य,				\
+		.common = {						\
+			.regmap		= NULL,				\
 			.hw.init	= CLK_HW_INIT_PARENTS(_name,	\
 						     _parent,		\
 						     &owl_comp_fact_ops,\
 						     _flags),		\
-		पूर्ण,							\
-	पूर्ण
+		},							\
+	}
 
-#घोषणा OWL_COMP_FIXED_FACTOR(_काष्ठा, _name, _parent,			\
-			_gate, _mul, _भाग, _flags)			\
-	काष्ठा owl_composite _काष्ठा = अणु				\
+#define OWL_COMP_FIXED_FACTOR(_struct, _name, _parent,			\
+			_gate, _mul, _div, _flags)			\
+	struct owl_composite _struct = {				\
 		.gate_hw		= _gate,			\
 		.rate.fix_fact_hw.mult	= _mul,				\
-		.rate.fix_fact_hw.भाग	= _भाग,				\
+		.rate.fix_fact_hw.div	= _div,				\
 		.fix_fact_ops		= &clk_fixed_factor_ops,	\
-		.common = अणु						\
-			.regmap		= शून्य,				\
+		.common = {						\
+			.regmap		= NULL,				\
 			.hw.init	= CLK_HW_INIT(_name,		\
 						 _parent,		\
 						 &owl_comp_fix_fact_ops,\
 						 _flags),		\
-		पूर्ण,							\
-	पूर्ण
+		},							\
+	}
 
-#घोषणा OWL_COMP_PASS(_काष्ठा, _name, _parent,				\
+#define OWL_COMP_PASS(_struct, _name, _parent,				\
 		      _mux, _gate, _flags)				\
-	काष्ठा owl_composite _काष्ठा = अणु				\
+	struct owl_composite _struct = {				\
 		.mux_hw		= _mux,					\
 		.gate_hw	= _gate,				\
-		.common = अणु						\
-			.regmap		= शून्य,				\
+		.common = {						\
+			.regmap		= NULL,				\
 			.hw.init	= CLK_HW_INIT_PARENTS(_name,	\
 						     _parent,		\
 						     &owl_comp_pass_ops,\
 						     _flags),		\
-		पूर्ण,							\
-	पूर्ण
+		},							\
+	}
 
-अटल अंतरभूत काष्ठा owl_composite *hw_to_owl_comp(स्थिर काष्ठा clk_hw *hw)
-अणु
-	काष्ठा owl_clk_common *common = hw_to_owl_clk_common(hw);
+static inline struct owl_composite *hw_to_owl_comp(const struct clk_hw *hw)
+{
+	struct owl_clk_common *common = hw_to_owl_clk_common(hw);
 
-	वापस container_of(common, काष्ठा owl_composite, common);
-पूर्ण
+	return container_of(common, struct owl_composite, common);
+}
 
-बाह्य स्थिर काष्ठा clk_ops owl_comp_भाग_ops;
-बाह्य स्थिर काष्ठा clk_ops owl_comp_fact_ops;
-बाह्य स्थिर काष्ठा clk_ops owl_comp_fix_fact_ops;
-बाह्य स्थिर काष्ठा clk_ops owl_comp_pass_ops;
-बाह्य स्थिर काष्ठा clk_ops clk_fixed_factor_ops;
+extern const struct clk_ops owl_comp_div_ops;
+extern const struct clk_ops owl_comp_fact_ops;
+extern const struct clk_ops owl_comp_fix_fact_ops;
+extern const struct clk_ops owl_comp_pass_ops;
+extern const struct clk_ops clk_fixed_factor_ops;
 
-#पूर्ण_अगर /* _OWL_COMPOSITE_H_ */
+#endif /* _OWL_COMPOSITE_H_ */

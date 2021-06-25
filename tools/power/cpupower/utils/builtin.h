@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित BUILTIN_H
-#घोषणा BUILTIN_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef BUILTIN_H
+#define BUILTIN_H
 
-बाह्य पूर्णांक cmd_set(पूर्णांक argc, स्थिर अक्षर **argv);
-बाह्य पूर्णांक cmd_info(पूर्णांक argc, स्थिर अक्षर **argv);
-बाह्य पूर्णांक cmd_freq_set(पूर्णांक argc, स्थिर अक्षर **argv);
-बाह्य पूर्णांक cmd_freq_info(पूर्णांक argc, स्थिर अक्षर **argv);
-बाह्य पूर्णांक cmd_idle_set(पूर्णांक argc, स्थिर अक्षर **argv);
-बाह्य पूर्णांक cmd_idle_info(पूर्णांक argc, स्थिर अक्षर **argv);
-बाह्य पूर्णांक cmd_monitor(पूर्णांक argc, स्थिर अक्षर **argv);
+extern int cmd_set(int argc, const char **argv);
+extern int cmd_info(int argc, const char **argv);
+extern int cmd_freq_set(int argc, const char **argv);
+extern int cmd_freq_info(int argc, const char **argv);
+extern int cmd_idle_set(int argc, const char **argv);
+extern int cmd_idle_info(int argc, const char **argv);
+extern int cmd_monitor(int argc, const char **argv);
 
-#पूर्ण_अगर
+#endif

@@ -1,26 +1,25 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/err.h>
-#समावेश <linux/zभाग.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <sys/types.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <fcntl.h>
-#समावेश <sys/param.h>
-#समावेश "evlist.h"
-#समावेश "evsel.h"
-#समावेश "parse-events.h"
-#समावेश "parse-events-hybrid.h"
-#समावेश "debug.h"
-#समावेश "pmu.h"
-#समावेश "pmu-hybrid.h"
-#समावेश "perf.h"
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/err.h>
+#include <linux/zalloc.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/param.h>
+#include "evlist.h"
+#include "evsel.h"
+#include "parse-events.h"
+#include "parse-events-hybrid.h"
+#include "debug.h"
+#include "pmu.h"
+#include "pmu-hybrid.h"
+#include "perf.h"
 
-अटल व्योम config_hybrid_attr(काष्ठा perf_event_attr *attr,
-			       पूर्णांक type, पूर्णांक pmu_type)
-अणु
+static void config_hybrid_attr(struct perf_event_attr *attr,
+			       int type, int pmu_type)
+{
 	/*
-	 * attr.config layout क्रम type PERF_TYPE_HARDWARE and
+	 * attr.config layout for type PERF_TYPE_HARDWARE and
 	 * PERF_TYPE_HW_CACHE
 	 *
 	 * PERF_TYPE_HARDWARE:                 0xEEEEEEEE000000AA
@@ -35,145 +34,145 @@
 	 */
 	attr->type = type;
 	attr->config = attr->config | ((__u64)pmu_type << PERF_PMU_TYPE_SHIFT);
-पूर्ण
+}
 
-अटल पूर्णांक create_event_hybrid(__u32 config_type, पूर्णांक *idx,
-			       काष्ठा list_head *list,
-			       काष्ठा perf_event_attr *attr, अक्षर *name,
-			       काष्ठा list_head *config_terms,
-			       काष्ठा perf_pmu *pmu)
-अणु
-	काष्ठा evsel *evsel;
+static int create_event_hybrid(__u32 config_type, int *idx,
+			       struct list_head *list,
+			       struct perf_event_attr *attr, char *name,
+			       struct list_head *config_terms,
+			       struct perf_pmu *pmu)
+{
+	struct evsel *evsel;
 	__u32 type = attr->type;
 	__u64 config = attr->config;
 
 	config_hybrid_attr(attr, config_type, pmu->type);
 	evsel = parse_events__add_event_hybrid(list, idx, attr, name,
 					       pmu, config_terms);
-	अगर (evsel)
+	if (evsel)
 		evsel->pmu_name = strdup(pmu->name);
-	अन्यथा
-		वापस -ENOMEM;
+	else
+		return -ENOMEM;
 
 	attr->type = type;
 	attr->config = config;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pmu_cmp(काष्ठा parse_events_state *parse_state,
-		   काष्ठा perf_pmu *pmu)
-अणु
-	अगर (!parse_state->hybrid_pmu_name)
-		वापस 0;
+static int pmu_cmp(struct parse_events_state *parse_state,
+		   struct perf_pmu *pmu)
+{
+	if (!parse_state->hybrid_pmu_name)
+		return 0;
 
-	वापस म_भेद(parse_state->hybrid_pmu_name, pmu->name);
-पूर्ण
+	return strcmp(parse_state->hybrid_pmu_name, pmu->name);
+}
 
-अटल पूर्णांक add_hw_hybrid(काष्ठा parse_events_state *parse_state,
-			 काष्ठा list_head *list, काष्ठा perf_event_attr *attr,
-			 अक्षर *name, काष्ठा list_head *config_terms)
-अणु
-	काष्ठा perf_pmu *pmu;
-	पूर्णांक ret;
+static int add_hw_hybrid(struct parse_events_state *parse_state,
+			 struct list_head *list, struct perf_event_attr *attr,
+			 char *name, struct list_head *config_terms)
+{
+	struct perf_pmu *pmu;
+	int ret;
 
-	perf_pmu__क्रम_each_hybrid_pmu(pmu) अणु
-		अगर (pmu_cmp(parse_state, pmu))
-			जारी;
+	perf_pmu__for_each_hybrid_pmu(pmu) {
+		if (pmu_cmp(parse_state, pmu))
+			continue;
 
 		ret = create_event_hybrid(PERF_TYPE_HARDWARE,
 					  &parse_state->idx, list, attr, name,
 					  config_terms, pmu);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक create_raw_event_hybrid(पूर्णांक *idx, काष्ठा list_head *list,
-				   काष्ठा perf_event_attr *attr, अक्षर *name,
-				   काष्ठा list_head *config_terms,
-				   काष्ठा perf_pmu *pmu)
-अणु
-	काष्ठा evsel *evsel;
+static int create_raw_event_hybrid(int *idx, struct list_head *list,
+				   struct perf_event_attr *attr, char *name,
+				   struct list_head *config_terms,
+				   struct perf_pmu *pmu)
+{
+	struct evsel *evsel;
 
 	attr->type = pmu->type;
 	evsel = parse_events__add_event_hybrid(list, idx, attr, name,
 					       pmu, config_terms);
-	अगर (evsel)
+	if (evsel)
 		evsel->pmu_name = strdup(pmu->name);
-	अन्यथा
-		वापस -ENOMEM;
+	else
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक add_raw_hybrid(काष्ठा parse_events_state *parse_state,
-			  काष्ठा list_head *list, काष्ठा perf_event_attr *attr,
-			  अक्षर *name, काष्ठा list_head *config_terms)
-अणु
-	काष्ठा perf_pmu *pmu;
-	पूर्णांक ret;
+static int add_raw_hybrid(struct parse_events_state *parse_state,
+			  struct list_head *list, struct perf_event_attr *attr,
+			  char *name, struct list_head *config_terms)
+{
+	struct perf_pmu *pmu;
+	int ret;
 
-	perf_pmu__क्रम_each_hybrid_pmu(pmu) अणु
-		अगर (pmu_cmp(parse_state, pmu))
-			जारी;
+	perf_pmu__for_each_hybrid_pmu(pmu) {
+		if (pmu_cmp(parse_state, pmu))
+			continue;
 
 		ret = create_raw_event_hybrid(&parse_state->idx, list, attr,
 					      name, config_terms, pmu);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक parse_events__add_numeric_hybrid(काष्ठा parse_events_state *parse_state,
-				     काष्ठा list_head *list,
-				     काष्ठा perf_event_attr *attr,
-				     अक्षर *name, काष्ठा list_head *config_terms,
+int parse_events__add_numeric_hybrid(struct parse_events_state *parse_state,
+				     struct list_head *list,
+				     struct perf_event_attr *attr,
+				     char *name, struct list_head *config_terms,
 				     bool *hybrid)
-अणु
+{
 	*hybrid = false;
-	अगर (attr->type == PERF_TYPE_SOFTWARE)
-		वापस 0;
+	if (attr->type == PERF_TYPE_SOFTWARE)
+		return 0;
 
-	अगर (!perf_pmu__has_hybrid())
-		वापस 0;
+	if (!perf_pmu__has_hybrid())
+		return 0;
 
 	*hybrid = true;
-	अगर (attr->type != PERF_TYPE_RAW) अणु
-		वापस add_hw_hybrid(parse_state, list, attr, name,
+	if (attr->type != PERF_TYPE_RAW) {
+		return add_hw_hybrid(parse_state, list, attr, name,
 				     config_terms);
-	पूर्ण
+	}
 
-	वापस add_raw_hybrid(parse_state, list, attr, name,
+	return add_raw_hybrid(parse_state, list, attr, name,
 			      config_terms);
-पूर्ण
+}
 
-पूर्णांक parse_events__add_cache_hybrid(काष्ठा list_head *list, पूर्णांक *idx,
-				   काष्ठा perf_event_attr *attr, अक्षर *name,
-				   काष्ठा list_head *config_terms,
+int parse_events__add_cache_hybrid(struct list_head *list, int *idx,
+				   struct perf_event_attr *attr, char *name,
+				   struct list_head *config_terms,
 				   bool *hybrid,
-				   काष्ठा parse_events_state *parse_state)
-अणु
-	काष्ठा perf_pmu *pmu;
-	पूर्णांक ret;
+				   struct parse_events_state *parse_state)
+{
+	struct perf_pmu *pmu;
+	int ret;
 
 	*hybrid = false;
-	अगर (!perf_pmu__has_hybrid())
-		वापस 0;
+	if (!perf_pmu__has_hybrid())
+		return 0;
 
 	*hybrid = true;
-	perf_pmu__क्रम_each_hybrid_pmu(pmu) अणु
-		अगर (pmu_cmp(parse_state, pmu))
-			जारी;
+	perf_pmu__for_each_hybrid_pmu(pmu) {
+		if (pmu_cmp(parse_state, pmu))
+			continue;
 
 		ret = create_event_hybrid(PERF_TYPE_HW_CACHE, idx, list,
 					  attr, name, config_terms, pmu);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

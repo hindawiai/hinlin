@@ -1,326 +1,325 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 
 /*
- * Context चयन microbenchmark.
+ * Context switch microbenchmark.
  *
- * Copyright 2018, Anton Blanअक्षरd, IBM Corp.
+ * Copyright 2018, Anton Blanchard, IBM Corp.
  */
 
-#घोषणा _GNU_SOURCE
-#समावेश <निश्चित.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <getopt.h>
-#समावेश <सीमा.स>
-#समावेश <linux/futex.h>
-#समावेश <pthपढ़ो.h>
-#समावेश <sched.h>
-#समावेश <संकेत.स>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <sys/shm.h>
-#समावेश <sys/syscall.h>
-#समावेश <sys/समय.स>
-#समावेश <sys/types.h>
-#समावेश <sys/रुको.h>
-#समावेश <unistd.h>
+#define _GNU_SOURCE
+#include <assert.h>
+#include <errno.h>
+#include <getopt.h>
+#include <limits.h>
+#include <linux/futex.h>
+#include <pthread.h>
+#include <sched.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/shm.h>
+#include <sys/syscall.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
-अटल अचिन्हित पूर्णांक समयout = 30;
+static unsigned int timeout = 30;
 
-अटल व्योम set_cpu(पूर्णांक cpu)
-अणु
+static void set_cpu(int cpu)
+{
 	cpu_set_t cpuset;
 
-	अगर (cpu == -1)
-		वापस;
+	if (cpu == -1)
+		return;
 
 	CPU_ZERO(&cpuset);
 	CPU_SET(cpu, &cpuset);
 
-	अगर (sched_setaffinity(0, माप(cpuset), &cpuset)) अणु
-		लिखो_त्रुटि("sched_setaffinity");
-		निकास(1);
-	पूर्ण
-पूर्ण
+	if (sched_setaffinity(0, sizeof(cpuset), &cpuset)) {
+		perror("sched_setaffinity");
+		exit(1);
+	}
+}
 
-अटल व्योम start_process_on(व्योम *(*fn)(व्योम *), व्योम *arg, पूर्णांक cpu)
-अणु
-	पूर्णांक pid;
+static void start_process_on(void *(*fn)(void *), void *arg, int cpu)
+{
+	int pid;
 
-	pid = विभाजन();
-	अगर (pid == -1) अणु
-		लिखो_त्रुटि("fork");
-		निकास(1);
-	पूर्ण
+	pid = fork();
+	if (pid == -1) {
+		perror("fork");
+		exit(1);
+	}
 
-	अगर (pid)
-		वापस;
+	if (pid)
+		return;
 
 	set_cpu(cpu);
 
 	fn(arg);
 
-	निकास(0);
-पूर्ण
+	exit(0);
+}
 
-अटल पूर्णांक cpu;
-अटल पूर्णांक करो_विभाजन = 0;
-अटल पूर्णांक करो_vविभाजन = 0;
-अटल पूर्णांक करो_exec = 0;
-अटल अक्षर *exec_file;
-अटल पूर्णांक exec_target = 0;
-अटल अचिन्हित दीर्घ iterations;
-अटल अचिन्हित दीर्घ iterations_prev;
+static int cpu;
+static int do_fork = 0;
+static int do_vfork = 0;
+static int do_exec = 0;
+static char *exec_file;
+static int exec_target = 0;
+static unsigned long iterations;
+static unsigned long iterations_prev;
 
-अटल व्योम run_exec(व्योम)
-अणु
-	अक्षर *स्थिर argv[] = अणु "./exec_target", शून्य पूर्ण;
+static void run_exec(void)
+{
+	char *const argv[] = { "./exec_target", NULL };
 
-	अगर (execve("./exec_target", argv, शून्य) == -1) अणु
-		लिखो_त्रुटि("execve");
-		निकास(1);
-	पूर्ण
-पूर्ण
+	if (execve("./exec_target", argv, NULL) == -1) {
+		perror("execve");
+		exit(1);
+	}
+}
 
-अटल व्योम bench_विभाजन(व्योम)
-अणु
-	जबतक (1) अणु
-		pid_t pid = विभाजन();
-		अगर (pid == -1) अणु
-			लिखो_त्रुटि("fork");
-			निकास(1);
-		पूर्ण
-		अगर (pid == 0) अणु
-			अगर (करो_exec)
+static void bench_fork(void)
+{
+	while (1) {
+		pid_t pid = fork();
+		if (pid == -1) {
+			perror("fork");
+			exit(1);
+		}
+		if (pid == 0) {
+			if (do_exec)
 				run_exec();
-			_निकास(0);
-		पूर्ण
-		pid = रुकोpid(pid, शून्य, 0);
-		अगर (pid == -1) अणु
-			लिखो_त्रुटि("waitpid");
-			निकास(1);
-		पूर्ण
+			_exit(0);
+		}
+		pid = waitpid(pid, NULL, 0);
+		if (pid == -1) {
+			perror("waitpid");
+			exit(1);
+		}
 		iterations++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम bench_vविभाजन(व्योम)
-अणु
-	जबतक (1) अणु
-		pid_t pid = vविभाजन();
-		अगर (pid == -1) अणु
-			लिखो_त्रुटि("fork");
-			निकास(1);
-		पूर्ण
-		अगर (pid == 0) अणु
-			अगर (करो_exec)
+static void bench_vfork(void)
+{
+	while (1) {
+		pid_t pid = vfork();
+		if (pid == -1) {
+			perror("fork");
+			exit(1);
+		}
+		if (pid == 0) {
+			if (do_exec)
 				run_exec();
-			_निकास(0);
-		पूर्ण
-		pid = रुकोpid(pid, शून्य, 0);
-		अगर (pid == -1) अणु
-			लिखो_त्रुटि("waitpid");
-			निकास(1);
-		पूर्ण
+			_exit(0);
+		}
+		pid = waitpid(pid, NULL, 0);
+		if (pid == -1) {
+			perror("waitpid");
+			exit(1);
+		}
 		iterations++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम *null_fn(व्योम *arg)
-अणु
-	pthपढ़ो_निकास(शून्य);
-पूर्ण
+static void *null_fn(void *arg)
+{
+	pthread_exit(NULL);
+}
 
-अटल व्योम bench_thपढ़ो(व्योम)
-अणु
-	pthपढ़ो_t tid;
+static void bench_thread(void)
+{
+	pthread_t tid;
 	cpu_set_t cpuset;
-	pthपढ़ो_attr_t attr;
-	पूर्णांक rc;
+	pthread_attr_t attr;
+	int rc;
 
-	rc = pthपढ़ो_attr_init(&attr);
-	अगर (rc) अणु
-		त्रुटि_सं = rc;
-		लिखो_त्रुटि("pthread_attr_init");
-		निकास(1);
-	पूर्ण
+	rc = pthread_attr_init(&attr);
+	if (rc) {
+		errno = rc;
+		perror("pthread_attr_init");
+		exit(1);
+	}
 
-	अगर (cpu != -1) अणु
+	if (cpu != -1) {
 		CPU_ZERO(&cpuset);
 		CPU_SET(cpu, &cpuset);
 
-		rc = pthपढ़ो_attr_setaffinity_np(&attr, माप(cpu_set_t), &cpuset);
-		अगर (rc) अणु
-			त्रुटि_सं = rc;
-			लिखो_त्रुटि("pthread_attr_setaffinity_np");
-			निकास(1);
-		पूर्ण
-	पूर्ण
+		rc = pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpuset);
+		if (rc) {
+			errno = rc;
+			perror("pthread_attr_setaffinity_np");
+			exit(1);
+		}
+	}
 
-	जबतक (1) अणु
-		rc = pthपढ़ो_create(&tid, &attr, null_fn, शून्य);
-		अगर (rc) अणु
-			त्रुटि_सं = rc;
-			लिखो_त्रुटि("pthread_create");
-			निकास(1);
-		पूर्ण
-		rc = pthपढ़ो_join(tid, शून्य);
-		अगर (rc) अणु
-			त्रुटि_सं = rc;
-			लिखो_त्रुटि("pthread_join");
-			निकास(1);
-		पूर्ण
+	while (1) {
+		rc = pthread_create(&tid, &attr, null_fn, NULL);
+		if (rc) {
+			errno = rc;
+			perror("pthread_create");
+			exit(1);
+		}
+		rc = pthread_join(tid, NULL);
+		if (rc) {
+			errno = rc;
+			perror("pthread_join");
+			exit(1);
+		}
 		iterations++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम sigalrm_handler(पूर्णांक junk)
-अणु
-	अचिन्हित दीर्घ i = iterations;
+static void sigalrm_handler(int junk)
+{
+	unsigned long i = iterations;
 
-	म_लिखो("%ld\n", i - iterations_prev);
+	printf("%ld\n", i - iterations_prev);
 	iterations_prev = i;
 
-	अगर (--समयout == 0)
-		समाप्त(0, SIGUSR1);
+	if (--timeout == 0)
+		kill(0, SIGUSR1);
 
 	alarm(1);
-पूर्ण
+}
 
-अटल व्योम sigusr1_handler(पूर्णांक junk)
-अणु
-	निकास(0);
-पूर्ण
+static void sigusr1_handler(int junk)
+{
+	exit(0);
+}
 
-अटल व्योम *bench_proc(व्योम *arg)
-अणु
-	संकेत(SIGALRM, sigalrm_handler);
+static void *bench_proc(void *arg)
+{
+	signal(SIGALRM, sigalrm_handler);
 	alarm(1);
 
-	अगर (करो_विभाजन)
-		bench_विभाजन();
-	अन्यथा अगर (करो_vविभाजन)
-		bench_vविभाजन();
-	अन्यथा
-		bench_thपढ़ो();
+	if (do_fork)
+		bench_fork();
+	else if (do_vfork)
+		bench_vfork();
+	else
+		bench_thread();
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा option options[] = अणु
-	अणु "fork", no_argument, &करो_विभाजन, 1 पूर्ण,
-	अणु "vfork", no_argument, &करो_vविभाजन, 1 पूर्ण,
-	अणु "exec", no_argument, &करो_exec, 1 पूर्ण,
-	अणु "timeout", required_argument, 0, 's' पूर्ण,
-	अणु "exec-target", no_argument, &exec_target, 1 पूर्ण,
-	अणु शून्य पूर्ण,
-पूर्ण;
+static struct option options[] = {
+	{ "fork", no_argument, &do_fork, 1 },
+	{ "vfork", no_argument, &do_vfork, 1 },
+	{ "exec", no_argument, &do_exec, 1 },
+	{ "timeout", required_argument, 0, 's' },
+	{ "exec-target", no_argument, &exec_target, 1 },
+	{ NULL },
+};
 
-अटल व्योम usage(व्योम)
-अणु
-	ख_लिखो(मानक_त्रुटि, "Usage: fork <options> CPU\n\n");
-	ख_लिखो(मानक_त्रुटि, "\t\t--fork\tUse fork() (default threads)\n");
-	ख_लिखो(मानक_त्रुटि, "\t\t--vfork\tUse vfork() (default threads)\n");
-	ख_लिखो(मानक_त्रुटि, "\t\t--exec\tAlso exec() (default no exec)\n");
-	ख_लिखो(मानक_त्रुटि, "\t\t--timeout=X\tDuration in seconds to run (default 30)\n");
-	ख_लिखो(मानक_त्रुटि, "\t\t--exec-target\tInternal option for exec workload\n");
-पूर्ण
+static void usage(void)
+{
+	fprintf(stderr, "Usage: fork <options> CPU\n\n");
+	fprintf(stderr, "\t\t--fork\tUse fork() (default threads)\n");
+	fprintf(stderr, "\t\t--vfork\tUse vfork() (default threads)\n");
+	fprintf(stderr, "\t\t--exec\tAlso exec() (default no exec)\n");
+	fprintf(stderr, "\t\t--timeout=X\tDuration in seconds to run (default 30)\n");
+	fprintf(stderr, "\t\t--exec-target\tInternal option for exec workload\n");
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
-	चिन्हित अक्षर c;
+int main(int argc, char *argv[])
+{
+	signed char c;
 
-	जबतक (1) अणु
-		पूर्णांक option_index = 0;
+	while (1) {
+		int option_index = 0;
 
-		c = getopt_दीर्घ(argc, argv, "", options, &option_index);
+		c = getopt_long(argc, argv, "", options, &option_index);
 
-		अगर (c == -1)
-			अवरोध;
+		if (c == -1)
+			break;
 
-		चयन (c) अणु
-		हाल 0:
-			अगर (options[option_index].flag != 0)
-				अवरोध;
+		switch (c) {
+		case 0:
+			if (options[option_index].flag != 0)
+				break;
 
 			usage();
-			निकास(1);
-			अवरोध;
+			exit(1);
+			break;
 
-		हाल 's':
-			समयout = म_से_प(optarg);
-			अवरोध;
+		case 's':
+			timeout = atoi(optarg);
+			break;
 
-		शेष:
+		default:
 			usage();
-			निकास(1);
-		पूर्ण
-	पूर्ण
+			exit(1);
+		}
+	}
 
-	अगर (करो_विभाजन && करो_vविभाजन) अणु
+	if (do_fork && do_vfork) {
 		usage();
-		निकास(1);
-	पूर्ण
-	अगर (करो_exec && !करो_विभाजन && !करो_vविभाजन) अणु
+		exit(1);
+	}
+	if (do_exec && !do_fork && !do_vfork) {
 		usage();
-		निकास(1);
-	पूर्ण
+		exit(1);
+	}
 
-	अगर (करो_exec) अणु
-		अक्षर *स_नाम = strdup(argv[0]);
-		पूर्णांक i;
-		i = म_माप(स_नाम) - 1;
-		जबतक (i) अणु
-			अगर (स_नाम[i] == '/') अणु
-				स_नाम[i] = '\0';
-				अगर (स_बदलो(स_नाम) == -1) अणु
-					लिखो_त्रुटि("chdir");
-					निकास(1);
-				पूर्ण
-				अवरोध;
-			पूर्ण
+	if (do_exec) {
+		char *dirname = strdup(argv[0]);
+		int i;
+		i = strlen(dirname) - 1;
+		while (i) {
+			if (dirname[i] == '/') {
+				dirname[i] = '\0';
+				if (chdir(dirname) == -1) {
+					perror("chdir");
+					exit(1);
+				}
+				break;
+			}
 			i--;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (exec_target) अणु
-		निकास(0);
-	पूर्ण
+	if (exec_target) {
+		exit(0);
+	}
 
-	अगर (((argc - optind) != 1)) अणु
+	if (((argc - optind) != 1)) {
 		cpu = -1;
-	पूर्ण अन्यथा अणु
-		cpu = म_से_प(argv[optind++]);
-	पूर्ण
+	} else {
+		cpu = atoi(argv[optind++]);
+	}
 
-	अगर (करो_exec)
+	if (do_exec)
 		exec_file = argv[0];
 
 	set_cpu(cpu);
 
-	म_लिखो("Using ");
-	अगर (करो_विभाजन)
-		म_लिखो("fork");
-	अन्यथा अगर (करो_vविभाजन)
-		म_लिखो("vfork");
-	अन्यथा
-		म_लिखो("clone");
+	printf("Using ");
+	if (do_fork)
+		printf("fork");
+	else if (do_vfork)
+		printf("vfork");
+	else
+		printf("clone");
 
-	अगर (करो_exec)
-		म_लिखो(" + exec");
+	if (do_exec)
+		printf(" + exec");
 
-	म_लिखो(" on cpu %d\n", cpu);
+	printf(" on cpu %d\n", cpu);
 
-	/* Create a new process group so we can संकेत everyone क्रम निकास */
+	/* Create a new process group so we can signal everyone for exit */
 	setpgid(getpid(), getpid());
 
-	संकेत(SIGUSR1, sigusr1_handler);
+	signal(SIGUSR1, sigusr1_handler);
 
-	start_process_on(bench_proc, शून्य, cpu);
+	start_process_on(bench_proc, NULL, cpu);
 
-	जबतक (1)
+	while (1)
 		sleep(3600);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

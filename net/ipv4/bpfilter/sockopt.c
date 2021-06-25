@@ -1,81 +1,80 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/bpfilter.h>
-#समावेश <uapi/linux/bpf.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/kmod.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/file.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/uaccess.h>
+#include <linux/bpfilter.h>
+#include <uapi/linux/bpf.h>
+#include <linux/wait.h>
+#include <linux/kmod.h>
+#include <linux/fs.h>
+#include <linux/file.h>
 
-काष्ठा bpfilter_umh_ops bpfilter_ops;
+struct bpfilter_umh_ops bpfilter_ops;
 EXPORT_SYMBOL_GPL(bpfilter_ops);
 
-व्योम bpfilter_umh_cleanup(काष्ठा umd_info *info)
-अणु
+void bpfilter_umh_cleanup(struct umd_info *info)
+{
 	fput(info->pipe_to_umh);
 	fput(info->pipe_from_umh);
 	put_pid(info->tgid);
-	info->tgid = शून्य;
-पूर्ण
+	info->tgid = NULL;
+}
 EXPORT_SYMBOL_GPL(bpfilter_umh_cleanup);
 
-अटल पूर्णांक bpfilter_mbox_request(काष्ठा sock *sk, पूर्णांक optname, sockptr_t optval,
-				 अचिन्हित पूर्णांक optlen, bool is_set)
-अणु
-	पूर्णांक err;
+static int bpfilter_mbox_request(struct sock *sk, int optname, sockptr_t optval,
+				 unsigned int optlen, bool is_set)
+{
+	int err;
 	mutex_lock(&bpfilter_ops.lock);
-	अगर (!bpfilter_ops.sockopt) अणु
+	if (!bpfilter_ops.sockopt) {
 		mutex_unlock(&bpfilter_ops.lock);
 		request_module("bpfilter");
 		mutex_lock(&bpfilter_ops.lock);
 
-		अगर (!bpfilter_ops.sockopt) अणु
+		if (!bpfilter_ops.sockopt) {
 			err = -ENOPROTOOPT;
-			जाओ out;
-		पूर्ण
-	पूर्ण
-	अगर (bpfilter_ops.info.tgid &&
-	    thपढ़ो_group_निकासed(bpfilter_ops.info.tgid))
+			goto out;
+		}
+	}
+	if (bpfilter_ops.info.tgid &&
+	    thread_group_exited(bpfilter_ops.info.tgid))
 		bpfilter_umh_cleanup(&bpfilter_ops.info);
 
-	अगर (!bpfilter_ops.info.tgid) अणु
+	if (!bpfilter_ops.info.tgid) {
 		err = bpfilter_ops.start();
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		if (err)
+			goto out;
+	}
 	err = bpfilter_ops.sockopt(sk, optname, optval, optlen, is_set);
 out:
 	mutex_unlock(&bpfilter_ops.lock);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक bpfilter_ip_set_sockopt(काष्ठा sock *sk, पूर्णांक optname, sockptr_t optval,
-			    अचिन्हित पूर्णांक optlen)
-अणु
-	वापस bpfilter_mbox_request(sk, optname, optval, optlen, true);
-पूर्ण
+int bpfilter_ip_set_sockopt(struct sock *sk, int optname, sockptr_t optval,
+			    unsigned int optlen)
+{
+	return bpfilter_mbox_request(sk, optname, optval, optlen, true);
+}
 
-पूर्णांक bpfilter_ip_get_sockopt(काष्ठा sock *sk, पूर्णांक optname, अक्षर __user *optval,
-			    पूर्णांक __user *optlen)
-अणु
-	पूर्णांक len;
+int bpfilter_ip_get_sockopt(struct sock *sk, int optname, char __user *optval,
+			    int __user *optlen)
+{
+	int len;
 
-	अगर (get_user(len, optlen))
-		वापस -EFAULT;
+	if (get_user(len, optlen))
+		return -EFAULT;
 
-	वापस bpfilter_mbox_request(sk, optname, USER_SOCKPTR(optval), len,
+	return bpfilter_mbox_request(sk, optname, USER_SOCKPTR(optval), len,
 				     false);
-पूर्ण
+}
 
-अटल पूर्णांक __init bpfilter_sockopt_init(व्योम)
-अणु
+static int __init bpfilter_sockopt_init(void)
+{
 	mutex_init(&bpfilter_ops.lock);
-	bpfilter_ops.info.tgid = शून्य;
+	bpfilter_ops.info.tgid = NULL;
 	bpfilter_ops.info.driver_name = "bpfilter_umh";
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 device_initcall(bpfilter_sockopt_init);

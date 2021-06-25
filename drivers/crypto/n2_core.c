@@ -1,44 +1,43 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* n2_core.c: Niagara2 Stream Processing Unit (SPU) crypto support.
  *
  * Copyright (C) 2010, 2011 David S. Miller <davem@davemloft.net>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/cpumask.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/crypto.h>
-#समावेश <crypto/md5.h>
-#समावेश <crypto/sha1.h>
-#समावेश <crypto/sha2.h>
-#समावेश <crypto/aes.h>
-#समावेश <crypto/पूर्णांकernal/des.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/sched.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/cpumask.h>
+#include <linux/slab.h>
+#include <linux/interrupt.h>
+#include <linux/crypto.h>
+#include <crypto/md5.h>
+#include <crypto/sha1.h>
+#include <crypto/sha2.h>
+#include <crypto/aes.h>
+#include <crypto/internal/des.h>
+#include <linux/mutex.h>
+#include <linux/delay.h>
+#include <linux/sched.h>
 
-#समावेश <crypto/पूर्णांकernal/hash.h>
-#समावेश <crypto/पूर्णांकernal/skcipher.h>
-#समावेश <crypto/scatterwalk.h>
-#समावेश <crypto/algapi.h>
+#include <crypto/internal/hash.h>
+#include <crypto/internal/skcipher.h>
+#include <crypto/scatterwalk.h>
+#include <crypto/algapi.h>
 
-#समावेश <यंत्र/hypervisor.h>
-#समावेश <यंत्र/mdesc.h>
+#include <asm/hypervisor.h>
+#include <asm/mdesc.h>
 
-#समावेश "n2_core.h"
+#include "n2_core.h"
 
-#घोषणा DRV_MODULE_NAME		"n2_crypto"
-#घोषणा DRV_MODULE_VERSION	"0.2"
-#घोषणा DRV_MODULE_RELDATE	"July 28, 2011"
+#define DRV_MODULE_NAME		"n2_crypto"
+#define DRV_MODULE_VERSION	"0.2"
+#define DRV_MODULE_RELDATE	"July 28, 2011"
 
-अटल स्थिर अक्षर version[] =
+static const char version[] =
 	DRV_MODULE_NAME ".c:v" DRV_MODULE_VERSION " (" DRV_MODULE_RELDATE ")\n";
 
 MODULE_AUTHOR("David S. Miller (davem@davemloft.net)");
@@ -46,83 +45,83 @@ MODULE_DESCRIPTION("Niagara2 Crypto driver");
 MODULE_LICENSE("GPL");
 MODULE_VERSION(DRV_MODULE_VERSION);
 
-#घोषणा N2_CRA_PRIORITY		200
+#define N2_CRA_PRIORITY		200
 
-अटल DEFINE_MUTEX(spu_lock);
+static DEFINE_MUTEX(spu_lock);
 
-काष्ठा spu_queue अणु
+struct spu_queue {
 	cpumask_t		sharing;
-	अचिन्हित दीर्घ		qhandle;
+	unsigned long		qhandle;
 
 	spinlock_t		lock;
 	u8			q_type;
-	व्योम			*q;
-	अचिन्हित दीर्घ		head;
-	अचिन्हित दीर्घ		tail;
-	काष्ठा list_head	jobs;
+	void			*q;
+	unsigned long		head;
+	unsigned long		tail;
+	struct list_head	jobs;
 
-	अचिन्हित दीर्घ		devino;
+	unsigned long		devino;
 
-	अक्षर			irq_name[32];
-	अचिन्हित पूर्णांक		irq;
+	char			irq_name[32];
+	unsigned int		irq;
 
-	काष्ठा list_head	list;
-पूर्ण;
+	struct list_head	list;
+};
 
-काष्ठा spu_qreg अणु
-	काष्ठा spu_queue	*queue;
-	अचिन्हित दीर्घ		type;
-पूर्ण;
+struct spu_qreg {
+	struct spu_queue	*queue;
+	unsigned long		type;
+};
 
-अटल काष्ठा spu_queue **cpu_to_cwq;
-अटल काष्ठा spu_queue **cpu_to_mau;
+static struct spu_queue **cpu_to_cwq;
+static struct spu_queue **cpu_to_mau;
 
-अटल अचिन्हित दीर्घ spu_next_offset(काष्ठा spu_queue *q, अचिन्हित दीर्घ off)
-अणु
-	अगर (q->q_type == HV_NCS_QTYPE_MAU) अणु
+static unsigned long spu_next_offset(struct spu_queue *q, unsigned long off)
+{
+	if (q->q_type == HV_NCS_QTYPE_MAU) {
 		off += MAU_ENTRY_SIZE;
-		अगर (off == (MAU_ENTRY_SIZE * MAU_NUM_ENTRIES))
+		if (off == (MAU_ENTRY_SIZE * MAU_NUM_ENTRIES))
 			off = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		off += CWQ_ENTRY_SIZE;
-		अगर (off == (CWQ_ENTRY_SIZE * CWQ_NUM_ENTRIES))
+		if (off == (CWQ_ENTRY_SIZE * CWQ_NUM_ENTRIES))
 			off = 0;
-	पूर्ण
-	वापस off;
-पूर्ण
+	}
+	return off;
+}
 
-काष्ठा n2_request_common अणु
-	काष्ठा list_head	entry;
-	अचिन्हित पूर्णांक		offset;
-पूर्ण;
-#घोषणा OFFSET_NOT_RUNNING	(~(अचिन्हित पूर्णांक)0)
+struct n2_request_common {
+	struct list_head	entry;
+	unsigned int		offset;
+};
+#define OFFSET_NOT_RUNNING	(~(unsigned int)0)
 
 /* An async job request records the final tail value it used in
- * n2_request_common->offset, test to see अगर that offset is in
+ * n2_request_common->offset, test to see if that offset is in
  * the range old_head, new_head, inclusive.
  */
-अटल अंतरभूत bool job_finished(काष्ठा spu_queue *q, अचिन्हित पूर्णांक offset,
-				अचिन्हित दीर्घ old_head, अचिन्हित दीर्घ new_head)
-अणु
-	अगर (old_head <= new_head) अणु
-		अगर (offset > old_head && offset <= new_head)
-			वापस true;
-	पूर्ण अन्यथा अणु
-		अगर (offset > old_head || offset <= new_head)
-			वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+static inline bool job_finished(struct spu_queue *q, unsigned int offset,
+				unsigned long old_head, unsigned long new_head)
+{
+	if (old_head <= new_head) {
+		if (offset > old_head && offset <= new_head)
+			return true;
+	} else {
+		if (offset > old_head || offset <= new_head)
+			return true;
+	}
+	return false;
+}
 
 /* When the HEAD marker is unequal to the actual HEAD, we get
- * a भव device INO पूर्णांकerrupt.  We should process the
+ * a virtual device INO interrupt.  We should process the
  * completed CWQ entries and adjust the HEAD marker to clear
  * the IRQ.
  */
-अटल irqवापस_t cwq_पूर्णांकr(पूर्णांक irq, व्योम *dev_id)
-अणु
-	अचिन्हित दीर्घ off, new_head, hv_ret;
-	काष्ठा spu_queue *q = dev_id;
+static irqreturn_t cwq_intr(int irq, void *dev_id)
+{
+	unsigned long off, new_head, hv_ret;
+	struct spu_queue *q = dev_id;
 
 	pr_err("CPU[%d]: Got CWQ interrupt for qhdl[%lx]\n",
 	       smp_processor_id(), q->qhandle);
@@ -134,23 +133,23 @@ MODULE_VERSION(DRV_MODULE_VERSION);
 	pr_err("CPU[%d]: CWQ gethead[%lx] hv_ret[%lu]\n",
 	       smp_processor_id(), new_head, hv_ret);
 
-	क्रम (off = q->head; off != new_head; off = spu_next_offset(q, off)) अणु
+	for (off = q->head; off != new_head; off = spu_next_offset(q, off)) {
 		/* XXX ... XXX */
-	पूर्ण
+	}
 
 	hv_ret = sun4v_ncs_sethead_marker(q->qhandle, new_head);
-	अगर (hv_ret == HV_EOK)
+	if (hv_ret == HV_EOK)
 		q->head = new_head;
 
 	spin_unlock(&q->lock);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t mau_पूर्णांकr(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा spu_queue *q = dev_id;
-	अचिन्हित दीर्घ head, hv_ret;
+static irqreturn_t mau_intr(int irq, void *dev_id)
+{
+	struct spu_queue *q = dev_id;
+	unsigned long head, hv_ret;
 
 	spin_lock(&q->lock);
 
@@ -166,376 +165,376 @@ MODULE_VERSION(DRV_MODULE_VERSION);
 
 	spin_unlock(&q->lock);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम *spu_queue_next(काष्ठा spu_queue *q, व्योम *cur)
-अणु
-	वापस q->q + spu_next_offset(q, cur - q->q);
-पूर्ण
+static void *spu_queue_next(struct spu_queue *q, void *cur)
+{
+	return q->q + spu_next_offset(q, cur - q->q);
+}
 
-अटल पूर्णांक spu_queue_num_मुक्त(काष्ठा spu_queue *q)
-अणु
-	अचिन्हित दीर्घ head = q->head;
-	अचिन्हित दीर्घ tail = q->tail;
-	अचिन्हित दीर्घ end = (CWQ_ENTRY_SIZE * CWQ_NUM_ENTRIES);
-	अचिन्हित दीर्घ dअगरf;
+static int spu_queue_num_free(struct spu_queue *q)
+{
+	unsigned long head = q->head;
+	unsigned long tail = q->tail;
+	unsigned long end = (CWQ_ENTRY_SIZE * CWQ_NUM_ENTRIES);
+	unsigned long diff;
 
-	अगर (head > tail)
-		dअगरf = head - tail;
-	अन्यथा
-		dअगरf = (end - tail) + head;
+	if (head > tail)
+		diff = head - tail;
+	else
+		diff = (end - tail) + head;
 
-	वापस (dअगरf / CWQ_ENTRY_SIZE) - 1;
-पूर्ण
+	return (diff / CWQ_ENTRY_SIZE) - 1;
+}
 
-अटल व्योम *spu_queue_alloc(काष्ठा spu_queue *q, पूर्णांक num_entries)
-अणु
-	पूर्णांक avail = spu_queue_num_मुक्त(q);
+static void *spu_queue_alloc(struct spu_queue *q, int num_entries)
+{
+	int avail = spu_queue_num_free(q);
 
-	अगर (avail >= num_entries)
-		वापस q->q + q->tail;
+	if (avail >= num_entries)
+		return q->q + q->tail;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल अचिन्हित दीर्घ spu_queue_submit(काष्ठा spu_queue *q, व्योम *last)
-अणु
-	अचिन्हित दीर्घ hv_ret, new_tail;
+static unsigned long spu_queue_submit(struct spu_queue *q, void *last)
+{
+	unsigned long hv_ret, new_tail;
 
 	new_tail = spu_next_offset(q, last - q->q);
 
 	hv_ret = sun4v_ncs_settail(q->qhandle, new_tail);
-	अगर (hv_ret == HV_EOK)
+	if (hv_ret == HV_EOK)
 		q->tail = new_tail;
-	वापस hv_ret;
-पूर्ण
+	return hv_ret;
+}
 
-अटल u64 control_word_base(अचिन्हित पूर्णांक len, अचिन्हित पूर्णांक hmac_key_len,
-			     पूर्णांक enc_type, पूर्णांक auth_type,
-			     अचिन्हित पूर्णांक hash_len,
+static u64 control_word_base(unsigned int len, unsigned int hmac_key_len,
+			     int enc_type, int auth_type,
+			     unsigned int hash_len,
 			     bool sfas, bool sob, bool eob, bool encrypt,
-			     पूर्णांक opcode)
-अणु
+			     int opcode)
+{
 	u64 word = (len - 1) & CONTROL_LEN;
 
 	word |= ((u64) opcode << CONTROL_OPCODE_SHIFT);
 	word |= ((u64) enc_type << CONTROL_ENC_TYPE_SHIFT);
 	word |= ((u64) auth_type << CONTROL_AUTH_TYPE_SHIFT);
-	अगर (sfas)
+	if (sfas)
 		word |= CONTROL_STORE_FINAL_AUTH_STATE;
-	अगर (sob)
+	if (sob)
 		word |= CONTROL_START_OF_BLOCK;
-	अगर (eob)
+	if (eob)
 		word |= CONTROL_END_OF_BLOCK;
-	अगर (encrypt)
+	if (encrypt)
 		word |= CONTROL_ENCRYPT;
-	अगर (hmac_key_len)
+	if (hmac_key_len)
 		word |= ((u64) (hmac_key_len - 1)) << CONTROL_HMAC_KEY_LEN_SHIFT;
-	अगर (hash_len)
+	if (hash_len)
 		word |= ((u64) (hash_len - 1)) << CONTROL_HASH_LEN_SHIFT;
 
-	वापस word;
-पूर्ण
+	return word;
+}
 
-#अगर 0
-अटल अंतरभूत bool n2_should_run_async(काष्ठा spu_queue *qp, पूर्णांक this_len)
-अणु
-	अगर (this_len >= 64 ||
+#if 0
+static inline bool n2_should_run_async(struct spu_queue *qp, int this_len)
+{
+	if (this_len >= 64 ||
 	    qp->head != qp->tail)
-		वापस true;
-	वापस false;
-पूर्ण
-#पूर्ण_अगर
+		return true;
+	return false;
+}
+#endif
 
-काष्ठा n2_ahash_alg अणु
-	काष्ठा list_head	entry;
-	स्थिर u8		*hash_zero;
-	स्थिर u8		*hash_init;
+struct n2_ahash_alg {
+	struct list_head	entry;
+	const u8		*hash_zero;
+	const u8		*hash_init;
 	u8			hw_op_hashsz;
 	u8			digest_size;
 	u8			auth_type;
 	u8			hmac_type;
-	काष्ठा ahash_alg	alg;
-पूर्ण;
+	struct ahash_alg	alg;
+};
 
-अटल अंतरभूत काष्ठा n2_ahash_alg *n2_ahash_alg(काष्ठा crypto_tfm *tfm)
-अणु
-	काष्ठा crypto_alg *alg = tfm->__crt_alg;
-	काष्ठा ahash_alg *ahash_alg;
+static inline struct n2_ahash_alg *n2_ahash_alg(struct crypto_tfm *tfm)
+{
+	struct crypto_alg *alg = tfm->__crt_alg;
+	struct ahash_alg *ahash_alg;
 
-	ahash_alg = container_of(alg, काष्ठा ahash_alg, halg.base);
+	ahash_alg = container_of(alg, struct ahash_alg, halg.base);
 
-	वापस container_of(ahash_alg, काष्ठा n2_ahash_alg, alg);
-पूर्ण
+	return container_of(ahash_alg, struct n2_ahash_alg, alg);
+}
 
-काष्ठा n2_hmac_alg अणु
-	स्थिर अक्षर		*child_alg;
-	काष्ठा n2_ahash_alg	derived;
-पूर्ण;
+struct n2_hmac_alg {
+	const char		*child_alg;
+	struct n2_ahash_alg	derived;
+};
 
-अटल अंतरभूत काष्ठा n2_hmac_alg *n2_hmac_alg(काष्ठा crypto_tfm *tfm)
-अणु
-	काष्ठा crypto_alg *alg = tfm->__crt_alg;
-	काष्ठा ahash_alg *ahash_alg;
+static inline struct n2_hmac_alg *n2_hmac_alg(struct crypto_tfm *tfm)
+{
+	struct crypto_alg *alg = tfm->__crt_alg;
+	struct ahash_alg *ahash_alg;
 
-	ahash_alg = container_of(alg, काष्ठा ahash_alg, halg.base);
+	ahash_alg = container_of(alg, struct ahash_alg, halg.base);
 
-	वापस container_of(ahash_alg, काष्ठा n2_hmac_alg, derived.alg);
-पूर्ण
+	return container_of(ahash_alg, struct n2_hmac_alg, derived.alg);
+}
 
-काष्ठा n2_hash_ctx अणु
-	काष्ठा crypto_ahash		*fallback_tfm;
-पूर्ण;
+struct n2_hash_ctx {
+	struct crypto_ahash		*fallback_tfm;
+};
 
-#घोषणा N2_HASH_KEY_MAX			32 /* HW limit क्रम all HMAC requests */
+#define N2_HASH_KEY_MAX			32 /* HW limit for all HMAC requests */
 
-काष्ठा n2_hmac_ctx अणु
-	काष्ठा n2_hash_ctx		base;
+struct n2_hmac_ctx {
+	struct n2_hash_ctx		base;
 
-	काष्ठा crypto_shash		*child_shash;
+	struct crypto_shash		*child_shash;
 
-	पूर्णांक				hash_key_len;
-	अचिन्हित अक्षर			hash_key[N2_HASH_KEY_MAX];
-पूर्ण;
+	int				hash_key_len;
+	unsigned char			hash_key[N2_HASH_KEY_MAX];
+};
 
-काष्ठा n2_hash_req_ctx अणु
-	जोड़ अणु
-		काष्ठा md5_state	md5;
-		काष्ठा sha1_state	sha1;
-		काष्ठा sha256_state	sha256;
-	पूर्ण u;
+struct n2_hash_req_ctx {
+	union {
+		struct md5_state	md5;
+		struct sha1_state	sha1;
+		struct sha256_state	sha256;
+	} u;
 
-	काष्ठा ahash_request		fallback_req;
-पूर्ण;
+	struct ahash_request		fallback_req;
+};
 
-अटल पूर्णांक n2_hash_async_init(काष्ठा ahash_request *req)
-अणु
-	काष्ठा n2_hash_req_ctx *rctx = ahash_request_ctx(req);
-	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	काष्ठा n2_hash_ctx *ctx = crypto_ahash_ctx(tfm);
-
-	ahash_request_set_tfm(&rctx->fallback_req, ctx->fallback_tfm);
-	rctx->fallback_req.base.flags = req->base.flags & CRYPTO_TFM_REQ_MAY_SLEEP;
-
-	वापस crypto_ahash_init(&rctx->fallback_req);
-पूर्ण
-
-अटल पूर्णांक n2_hash_async_update(काष्ठा ahash_request *req)
-अणु
-	काष्ठा n2_hash_req_ctx *rctx = ahash_request_ctx(req);
-	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	काष्ठा n2_hash_ctx *ctx = crypto_ahash_ctx(tfm);
+static int n2_hash_async_init(struct ahash_request *req)
+{
+	struct n2_hash_req_ctx *rctx = ahash_request_ctx(req);
+	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	struct n2_hash_ctx *ctx = crypto_ahash_ctx(tfm);
 
 	ahash_request_set_tfm(&rctx->fallback_req, ctx->fallback_tfm);
 	rctx->fallback_req.base.flags = req->base.flags & CRYPTO_TFM_REQ_MAY_SLEEP;
-	rctx->fallback_req.nbytes = req->nbytes;
-	rctx->fallback_req.src = req->src;
 
-	वापस crypto_ahash_update(&rctx->fallback_req);
-पूर्ण
+	return crypto_ahash_init(&rctx->fallback_req);
+}
 
-अटल पूर्णांक n2_hash_async_final(काष्ठा ahash_request *req)
-अणु
-	काष्ठा n2_hash_req_ctx *rctx = ahash_request_ctx(req);
-	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	काष्ठा n2_hash_ctx *ctx = crypto_ahash_ctx(tfm);
-
-	ahash_request_set_tfm(&rctx->fallback_req, ctx->fallback_tfm);
-	rctx->fallback_req.base.flags = req->base.flags & CRYPTO_TFM_REQ_MAY_SLEEP;
-	rctx->fallback_req.result = req->result;
-
-	वापस crypto_ahash_final(&rctx->fallback_req);
-पूर्ण
-
-अटल पूर्णांक n2_hash_async_finup(काष्ठा ahash_request *req)
-अणु
-	काष्ठा n2_hash_req_ctx *rctx = ahash_request_ctx(req);
-	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	काष्ठा n2_hash_ctx *ctx = crypto_ahash_ctx(tfm);
+static int n2_hash_async_update(struct ahash_request *req)
+{
+	struct n2_hash_req_ctx *rctx = ahash_request_ctx(req);
+	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	struct n2_hash_ctx *ctx = crypto_ahash_ctx(tfm);
 
 	ahash_request_set_tfm(&rctx->fallback_req, ctx->fallback_tfm);
 	rctx->fallback_req.base.flags = req->base.flags & CRYPTO_TFM_REQ_MAY_SLEEP;
 	rctx->fallback_req.nbytes = req->nbytes;
 	rctx->fallback_req.src = req->src;
+
+	return crypto_ahash_update(&rctx->fallback_req);
+}
+
+static int n2_hash_async_final(struct ahash_request *req)
+{
+	struct n2_hash_req_ctx *rctx = ahash_request_ctx(req);
+	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	struct n2_hash_ctx *ctx = crypto_ahash_ctx(tfm);
+
+	ahash_request_set_tfm(&rctx->fallback_req, ctx->fallback_tfm);
+	rctx->fallback_req.base.flags = req->base.flags & CRYPTO_TFM_REQ_MAY_SLEEP;
 	rctx->fallback_req.result = req->result;
 
-	वापस crypto_ahash_finup(&rctx->fallback_req);
-पूर्ण
+	return crypto_ahash_final(&rctx->fallback_req);
+}
 
-अटल पूर्णांक n2_hash_async_noimport(काष्ठा ahash_request *req, स्थिर व्योम *in)
-अणु
-	वापस -ENOSYS;
-पूर्ण
+static int n2_hash_async_finup(struct ahash_request *req)
+{
+	struct n2_hash_req_ctx *rctx = ahash_request_ctx(req);
+	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	struct n2_hash_ctx *ctx = crypto_ahash_ctx(tfm);
 
-अटल पूर्णांक n2_hash_async_noexport(काष्ठा ahash_request *req, व्योम *out)
-अणु
-	वापस -ENOSYS;
-पूर्ण
+	ahash_request_set_tfm(&rctx->fallback_req, ctx->fallback_tfm);
+	rctx->fallback_req.base.flags = req->base.flags & CRYPTO_TFM_REQ_MAY_SLEEP;
+	rctx->fallback_req.nbytes = req->nbytes;
+	rctx->fallback_req.src = req->src;
+	rctx->fallback_req.result = req->result;
 
-अटल पूर्णांक n2_hash_cra_init(काष्ठा crypto_tfm *tfm)
-अणु
-	स्थिर अक्षर *fallback_driver_name = crypto_tfm_alg_name(tfm);
-	काष्ठा crypto_ahash *ahash = __crypto_ahash_cast(tfm);
-	काष्ठा n2_hash_ctx *ctx = crypto_ahash_ctx(ahash);
-	काष्ठा crypto_ahash *fallback_tfm;
-	पूर्णांक err;
+	return crypto_ahash_finup(&rctx->fallback_req);
+}
+
+static int n2_hash_async_noimport(struct ahash_request *req, const void *in)
+{
+	return -ENOSYS;
+}
+
+static int n2_hash_async_noexport(struct ahash_request *req, void *out)
+{
+	return -ENOSYS;
+}
+
+static int n2_hash_cra_init(struct crypto_tfm *tfm)
+{
+	const char *fallback_driver_name = crypto_tfm_alg_name(tfm);
+	struct crypto_ahash *ahash = __crypto_ahash_cast(tfm);
+	struct n2_hash_ctx *ctx = crypto_ahash_ctx(ahash);
+	struct crypto_ahash *fallback_tfm;
+	int err;
 
 	fallback_tfm = crypto_alloc_ahash(fallback_driver_name, 0,
 					  CRYPTO_ALG_NEED_FALLBACK);
-	अगर (IS_ERR(fallback_tfm)) अणु
+	if (IS_ERR(fallback_tfm)) {
 		pr_warn("Fallback driver '%s' could not be loaded!\n",
 			fallback_driver_name);
 		err = PTR_ERR(fallback_tfm);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	crypto_ahash_set_reqsize(ahash, (माप(काष्ठा n2_hash_req_ctx) +
+	crypto_ahash_set_reqsize(ahash, (sizeof(struct n2_hash_req_ctx) +
 					 crypto_ahash_reqsize(fallback_tfm)));
 
 	ctx->fallback_tfm = fallback_tfm;
-	वापस 0;
+	return 0;
 
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम n2_hash_cra_निकास(काष्ठा crypto_tfm *tfm)
-अणु
-	काष्ठा crypto_ahash *ahash = __crypto_ahash_cast(tfm);
-	काष्ठा n2_hash_ctx *ctx = crypto_ahash_ctx(ahash);
+static void n2_hash_cra_exit(struct crypto_tfm *tfm)
+{
+	struct crypto_ahash *ahash = __crypto_ahash_cast(tfm);
+	struct n2_hash_ctx *ctx = crypto_ahash_ctx(ahash);
 
-	crypto_मुक्त_ahash(ctx->fallback_tfm);
-पूर्ण
+	crypto_free_ahash(ctx->fallback_tfm);
+}
 
-अटल पूर्णांक n2_hmac_cra_init(काष्ठा crypto_tfm *tfm)
-अणु
-	स्थिर अक्षर *fallback_driver_name = crypto_tfm_alg_name(tfm);
-	काष्ठा crypto_ahash *ahash = __crypto_ahash_cast(tfm);
-	काष्ठा n2_hmac_ctx *ctx = crypto_ahash_ctx(ahash);
-	काष्ठा n2_hmac_alg *n2alg = n2_hmac_alg(tfm);
-	काष्ठा crypto_ahash *fallback_tfm;
-	काष्ठा crypto_shash *child_shash;
-	पूर्णांक err;
+static int n2_hmac_cra_init(struct crypto_tfm *tfm)
+{
+	const char *fallback_driver_name = crypto_tfm_alg_name(tfm);
+	struct crypto_ahash *ahash = __crypto_ahash_cast(tfm);
+	struct n2_hmac_ctx *ctx = crypto_ahash_ctx(ahash);
+	struct n2_hmac_alg *n2alg = n2_hmac_alg(tfm);
+	struct crypto_ahash *fallback_tfm;
+	struct crypto_shash *child_shash;
+	int err;
 
 	fallback_tfm = crypto_alloc_ahash(fallback_driver_name, 0,
 					  CRYPTO_ALG_NEED_FALLBACK);
-	अगर (IS_ERR(fallback_tfm)) अणु
+	if (IS_ERR(fallback_tfm)) {
 		pr_warn("Fallback driver '%s' could not be loaded!\n",
 			fallback_driver_name);
 		err = PTR_ERR(fallback_tfm);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	child_shash = crypto_alloc_shash(n2alg->child_alg, 0, 0);
-	अगर (IS_ERR(child_shash)) अणु
+	if (IS_ERR(child_shash)) {
 		pr_warn("Child shash '%s' could not be loaded!\n",
 			n2alg->child_alg);
 		err = PTR_ERR(child_shash);
-		जाओ out_मुक्त_fallback;
-	पूर्ण
+		goto out_free_fallback;
+	}
 
-	crypto_ahash_set_reqsize(ahash, (माप(काष्ठा n2_hash_req_ctx) +
+	crypto_ahash_set_reqsize(ahash, (sizeof(struct n2_hash_req_ctx) +
 					 crypto_ahash_reqsize(fallback_tfm)));
 
 	ctx->child_shash = child_shash;
 	ctx->base.fallback_tfm = fallback_tfm;
-	वापस 0;
+	return 0;
 
-out_मुक्त_fallback:
-	crypto_मुक्त_ahash(fallback_tfm);
+out_free_fallback:
+	crypto_free_ahash(fallback_tfm);
 
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम n2_hmac_cra_निकास(काष्ठा crypto_tfm *tfm)
-अणु
-	काष्ठा crypto_ahash *ahash = __crypto_ahash_cast(tfm);
-	काष्ठा n2_hmac_ctx *ctx = crypto_ahash_ctx(ahash);
+static void n2_hmac_cra_exit(struct crypto_tfm *tfm)
+{
+	struct crypto_ahash *ahash = __crypto_ahash_cast(tfm);
+	struct n2_hmac_ctx *ctx = crypto_ahash_ctx(ahash);
 
-	crypto_मुक्त_ahash(ctx->base.fallback_tfm);
-	crypto_मुक्त_shash(ctx->child_shash);
-पूर्ण
+	crypto_free_ahash(ctx->base.fallback_tfm);
+	crypto_free_shash(ctx->child_shash);
+}
 
-अटल पूर्णांक n2_hmac_async_setkey(काष्ठा crypto_ahash *tfm, स्थिर u8 *key,
-				अचिन्हित पूर्णांक keylen)
-अणु
-	काष्ठा n2_hmac_ctx *ctx = crypto_ahash_ctx(tfm);
-	काष्ठा crypto_shash *child_shash = ctx->child_shash;
-	काष्ठा crypto_ahash *fallback_tfm;
-	पूर्णांक err, bs, ds;
+static int n2_hmac_async_setkey(struct crypto_ahash *tfm, const u8 *key,
+				unsigned int keylen)
+{
+	struct n2_hmac_ctx *ctx = crypto_ahash_ctx(tfm);
+	struct crypto_shash *child_shash = ctx->child_shash;
+	struct crypto_ahash *fallback_tfm;
+	int err, bs, ds;
 
 	fallback_tfm = ctx->base.fallback_tfm;
 	err = crypto_ahash_setkey(fallback_tfm, key, keylen);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	bs = crypto_shash_blocksize(child_shash);
 	ds = crypto_shash_digestsize(child_shash);
 	BUG_ON(ds > N2_HASH_KEY_MAX);
-	अगर (keylen > bs) अणु
+	if (keylen > bs) {
 		err = crypto_shash_tfm_digest(child_shash, key, keylen,
 					      ctx->hash_key);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 		keylen = ds;
-	पूर्ण अन्यथा अगर (keylen <= N2_HASH_KEY_MAX)
-		स_नकल(ctx->hash_key, key, keylen);
+	} else if (keylen <= N2_HASH_KEY_MAX)
+		memcpy(ctx->hash_key, key, keylen);
 
 	ctx->hash_key_len = keylen;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल अचिन्हित दीर्घ रुको_क्रम_tail(काष्ठा spu_queue *qp)
-अणु
-	अचिन्हित दीर्घ head, hv_ret;
+static unsigned long wait_for_tail(struct spu_queue *qp)
+{
+	unsigned long head, hv_ret;
 
-	करो अणु
+	do {
 		hv_ret = sun4v_ncs_gethead(qp->qhandle, &head);
-		अगर (hv_ret != HV_EOK) अणु
+		if (hv_ret != HV_EOK) {
 			pr_err("Hypervisor error on gethead\n");
-			अवरोध;
-		पूर्ण
-		अगर (head == qp->tail) अणु
+			break;
+		}
+		if (head == qp->tail) {
 			qp->head = head;
-			अवरोध;
-		पूर्ण
-	पूर्ण जबतक (1);
-	वापस hv_ret;
-पूर्ण
+			break;
+		}
+	} while (1);
+	return hv_ret;
+}
 
-अटल अचिन्हित दीर्घ submit_and_रुको_क्रम_tail(काष्ठा spu_queue *qp,
-					      काष्ठा cwq_initial_entry *ent)
-अणु
-	अचिन्हित दीर्घ hv_ret = spu_queue_submit(qp, ent);
+static unsigned long submit_and_wait_for_tail(struct spu_queue *qp,
+					      struct cwq_initial_entry *ent)
+{
+	unsigned long hv_ret = spu_queue_submit(qp, ent);
 
-	अगर (hv_ret == HV_EOK)
-		hv_ret = रुको_क्रम_tail(qp);
+	if (hv_ret == HV_EOK)
+		hv_ret = wait_for_tail(qp);
 
-	वापस hv_ret;
-पूर्ण
+	return hv_ret;
+}
 
-अटल पूर्णांक n2_करो_async_digest(काष्ठा ahash_request *req,
-			      अचिन्हित पूर्णांक auth_type, अचिन्हित पूर्णांक digest_size,
-			      अचिन्हित पूर्णांक result_size, व्योम *hash_loc,
-			      अचिन्हित दीर्घ auth_key, अचिन्हित पूर्णांक auth_key_len)
-अणु
-	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	काष्ठा cwq_initial_entry *ent;
-	काष्ठा crypto_hash_walk walk;
-	काष्ठा spu_queue *qp;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक err = -ENODEV;
-	पूर्णांक nbytes, cpu;
+static int n2_do_async_digest(struct ahash_request *req,
+			      unsigned int auth_type, unsigned int digest_size,
+			      unsigned int result_size, void *hash_loc,
+			      unsigned long auth_key, unsigned int auth_key_len)
+{
+	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	struct cwq_initial_entry *ent;
+	struct crypto_hash_walk walk;
+	struct spu_queue *qp;
+	unsigned long flags;
+	int err = -ENODEV;
+	int nbytes, cpu;
 
 	/* The total effective length of the operation may not
 	 * exceed 2^16.
 	 */
-	अगर (unlikely(req->nbytes > (1 << 16))) अणु
-		काष्ठा n2_hash_req_ctx *rctx = ahash_request_ctx(req);
-		काष्ठा n2_hash_ctx *ctx = crypto_ahash_ctx(tfm);
+	if (unlikely(req->nbytes > (1 << 16))) {
+		struct n2_hash_req_ctx *rctx = ahash_request_ctx(req);
+		struct n2_hash_ctx *ctx = crypto_ahash_ctx(tfm);
 
 		ahash_request_set_tfm(&rctx->fallback_req, ctx->fallback_tfm);
 		rctx->fallback_req.base.flags =
@@ -544,19 +543,19 @@ out:
 		rctx->fallback_req.src = req->src;
 		rctx->fallback_req.result = req->result;
 
-		वापस crypto_ahash_digest(&rctx->fallback_req);
-	पूर्ण
+		return crypto_ahash_digest(&rctx->fallback_req);
+	}
 
 	nbytes = crypto_hash_walk_first(req, &walk);
 
 	cpu = get_cpu();
 	qp = cpu_to_cwq[cpu];
-	अगर (!qp)
-		जाओ out;
+	if (!qp)
+		goto out;
 
 	spin_lock_irqsave(&qp->lock, flags);
 
-	/* XXX can करो better, improve this later by करोing a by-hand scatterlist
+	/* XXX can do better, improve this later by doing a by-hand scatterlist
 	 * XXX walk, etc.
 	 */
 	ent = qp->q + qp->tail;
@@ -574,8 +573,8 @@ out:
 	ent->enc_iv_addr = 0UL;
 	ent->dest_addr = __pa(hash_loc);
 
-	nbytes = crypto_hash_walk_करोne(&walk, 0);
-	जबतक (nbytes > 0) अणु
+	nbytes = crypto_hash_walk_done(&walk, 0);
+	while (nbytes > 0) {
 		ent = spu_queue_next(qp, ent);
 
 		ent->control = (nbytes - 1);
@@ -587,56 +586,56 @@ out:
 		ent->enc_iv_addr = 0UL;
 		ent->dest_addr = 0UL;
 
-		nbytes = crypto_hash_walk_करोne(&walk, 0);
-	पूर्ण
+		nbytes = crypto_hash_walk_done(&walk, 0);
+	}
 	ent->control |= CONTROL_END_OF_BLOCK;
 
-	अगर (submit_and_रुको_क्रम_tail(qp, ent) != HV_EOK)
+	if (submit_and_wait_for_tail(qp, ent) != HV_EOK)
 		err = -EINVAL;
-	अन्यथा
+	else
 		err = 0;
 
 	spin_unlock_irqrestore(&qp->lock, flags);
 
-	अगर (!err)
-		स_नकल(req->result, hash_loc, result_size);
+	if (!err)
+		memcpy(req->result, hash_loc, result_size);
 out:
 	put_cpu();
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक n2_hash_async_digest(काष्ठा ahash_request *req)
-अणु
-	काष्ठा n2_ahash_alg *n2alg = n2_ahash_alg(req->base.tfm);
-	काष्ठा n2_hash_req_ctx *rctx = ahash_request_ctx(req);
-	पूर्णांक ds;
+static int n2_hash_async_digest(struct ahash_request *req)
+{
+	struct n2_ahash_alg *n2alg = n2_ahash_alg(req->base.tfm);
+	struct n2_hash_req_ctx *rctx = ahash_request_ctx(req);
+	int ds;
 
 	ds = n2alg->digest_size;
-	अगर (unlikely(req->nbytes == 0)) अणु
-		स_नकल(req->result, n2alg->hash_zero, ds);
-		वापस 0;
-	पूर्ण
-	स_नकल(&rctx->u, n2alg->hash_init, n2alg->hw_op_hashsz);
+	if (unlikely(req->nbytes == 0)) {
+		memcpy(req->result, n2alg->hash_zero, ds);
+		return 0;
+	}
+	memcpy(&rctx->u, n2alg->hash_init, n2alg->hw_op_hashsz);
 
-	वापस n2_करो_async_digest(req, n2alg->auth_type,
+	return n2_do_async_digest(req, n2alg->auth_type,
 				  n2alg->hw_op_hashsz, ds,
 				  &rctx->u, 0UL, 0);
-पूर्ण
+}
 
-अटल पूर्णांक n2_hmac_async_digest(काष्ठा ahash_request *req)
-अणु
-	काष्ठा n2_hmac_alg *n2alg = n2_hmac_alg(req->base.tfm);
-	काष्ठा n2_hash_req_ctx *rctx = ahash_request_ctx(req);
-	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	काष्ठा n2_hmac_ctx *ctx = crypto_ahash_ctx(tfm);
-	पूर्णांक ds;
+static int n2_hmac_async_digest(struct ahash_request *req)
+{
+	struct n2_hmac_alg *n2alg = n2_hmac_alg(req->base.tfm);
+	struct n2_hash_req_ctx *rctx = ahash_request_ctx(req);
+	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	struct n2_hmac_ctx *ctx = crypto_ahash_ctx(tfm);
+	int ds;
 
 	ds = n2alg->derived.digest_size;
-	अगर (unlikely(req->nbytes == 0) ||
-	    unlikely(ctx->hash_key_len > N2_HASH_KEY_MAX)) अणु
-		काष्ठा n2_hash_req_ctx *rctx = ahash_request_ctx(req);
-		काष्ठा n2_hash_ctx *ctx = crypto_ahash_ctx(tfm);
+	if (unlikely(req->nbytes == 0) ||
+	    unlikely(ctx->hash_key_len > N2_HASH_KEY_MAX)) {
+		struct n2_hash_req_ctx *rctx = ahash_request_ctx(req);
+		struct n2_hash_ctx *ctx = crypto_ahash_ctx(tfm);
 
 		ahash_request_set_tfm(&rctx->fallback_req, ctx->fallback_tfm);
 		rctx->fallback_req.base.flags =
@@ -645,58 +644,58 @@ out:
 		rctx->fallback_req.src = req->src;
 		rctx->fallback_req.result = req->result;
 
-		वापस crypto_ahash_digest(&rctx->fallback_req);
-	पूर्ण
-	स_नकल(&rctx->u, n2alg->derived.hash_init,
+		return crypto_ahash_digest(&rctx->fallback_req);
+	}
+	memcpy(&rctx->u, n2alg->derived.hash_init,
 	       n2alg->derived.hw_op_hashsz);
 
-	वापस n2_करो_async_digest(req, n2alg->derived.hmac_type,
+	return n2_do_async_digest(req, n2alg->derived.hmac_type,
 				  n2alg->derived.hw_op_hashsz, ds,
 				  &rctx->u,
 				  __pa(&ctx->hash_key),
 				  ctx->hash_key_len);
-पूर्ण
+}
 
-काष्ठा n2_skcipher_context अणु
-	पूर्णांक			key_len;
-	पूर्णांक			enc_type;
-	जोड़ अणु
+struct n2_skcipher_context {
+	int			key_len;
+	int			enc_type;
+	union {
 		u8		aes[AES_MAX_KEY_SIZE];
 		u8		des[DES_KEY_SIZE];
 		u8		des3[3 * DES_KEY_SIZE];
-	पूर्ण key;
-पूर्ण;
+	} key;
+};
 
-#घोषणा N2_CHUNK_ARR_LEN	16
+#define N2_CHUNK_ARR_LEN	16
 
-काष्ठा n2_crypto_chunk अणु
-	काष्ठा list_head	entry;
-	अचिन्हित दीर्घ		iv_paddr : 44;
-	अचिन्हित दीर्घ		arr_len : 20;
-	अचिन्हित दीर्घ		dest_paddr;
-	अचिन्हित दीर्घ		dest_final;
-	काष्ठा अणु
-		अचिन्हित दीर्घ	src_paddr : 44;
-		अचिन्हित दीर्घ	src_len : 20;
-	पूर्ण arr[N2_CHUNK_ARR_LEN];
-पूर्ण;
+struct n2_crypto_chunk {
+	struct list_head	entry;
+	unsigned long		iv_paddr : 44;
+	unsigned long		arr_len : 20;
+	unsigned long		dest_paddr;
+	unsigned long		dest_final;
+	struct {
+		unsigned long	src_paddr : 44;
+		unsigned long	src_len : 20;
+	} arr[N2_CHUNK_ARR_LEN];
+};
 
-काष्ठा n2_request_context अणु
-	काष्ठा skcipher_walk	walk;
-	काष्ठा list_head	chunk_list;
-	काष्ठा n2_crypto_chunk	chunk;
+struct n2_request_context {
+	struct skcipher_walk	walk;
+	struct list_head	chunk_list;
+	struct n2_crypto_chunk	chunk;
 	u8			temp_iv[16];
-पूर्ण;
+};
 
-/* The SPU allows some level of flexibility क्रम partial cipher blocks
- * being specअगरied in a descriptor.
+/* The SPU allows some level of flexibility for partial cipher blocks
+ * being specified in a descriptor.
  *
  * It merely requires that every descriptor's length field is at least
  * as large as the cipher block size.  This means that a cipher block
- * can span at most 2 descriptors.  However, this करोes not allow a
- * partial block to span पूर्णांकo the final descriptor as that would
+ * can span at most 2 descriptors.  However, this does not allow a
+ * partial block to span into the final descriptor as that would
  * violate the rule (since every descriptor's length must be at lest
- * the block size).  So, क्रम example, assuming an 8 byte block size:
+ * the block size).  So, for example, assuming an 8 byte block size:
  *
  *	0xe --> 0xa --> 0x8
  *
@@ -707,112 +706,112 @@ out:
  * is not a valid sequence.
  */
 
-काष्ठा n2_skcipher_alg अणु
-	काष्ठा list_head	entry;
+struct n2_skcipher_alg {
+	struct list_head	entry;
 	u8			enc_type;
-	काष्ठा skcipher_alg	skcipher;
-पूर्ण;
+	struct skcipher_alg	skcipher;
+};
 
-अटल अंतरभूत काष्ठा n2_skcipher_alg *n2_skcipher_alg(काष्ठा crypto_skcipher *tfm)
-अणु
-	काष्ठा skcipher_alg *alg = crypto_skcipher_alg(tfm);
+static inline struct n2_skcipher_alg *n2_skcipher_alg(struct crypto_skcipher *tfm)
+{
+	struct skcipher_alg *alg = crypto_skcipher_alg(tfm);
 
-	वापस container_of(alg, काष्ठा n2_skcipher_alg, skcipher);
-पूर्ण
+	return container_of(alg, struct n2_skcipher_alg, skcipher);
+}
 
-काष्ठा n2_skcipher_request_context अणु
-	काष्ठा skcipher_walk	walk;
-पूर्ण;
+struct n2_skcipher_request_context {
+	struct skcipher_walk	walk;
+};
 
-अटल पूर्णांक n2_aes_setkey(काष्ठा crypto_skcipher *skcipher, स्थिर u8 *key,
-			 अचिन्हित पूर्णांक keylen)
-अणु
-	काष्ठा crypto_tfm *tfm = crypto_skcipher_tfm(skcipher);
-	काष्ठा n2_skcipher_context *ctx = crypto_tfm_ctx(tfm);
-	काष्ठा n2_skcipher_alg *n2alg = n2_skcipher_alg(skcipher);
+static int n2_aes_setkey(struct crypto_skcipher *skcipher, const u8 *key,
+			 unsigned int keylen)
+{
+	struct crypto_tfm *tfm = crypto_skcipher_tfm(skcipher);
+	struct n2_skcipher_context *ctx = crypto_tfm_ctx(tfm);
+	struct n2_skcipher_alg *n2alg = n2_skcipher_alg(skcipher);
 
 	ctx->enc_type = (n2alg->enc_type & ENC_TYPE_CHAINING_MASK);
 
-	चयन (keylen) अणु
-	हाल AES_KEYSIZE_128:
+	switch (keylen) {
+	case AES_KEYSIZE_128:
 		ctx->enc_type |= ENC_TYPE_ALG_AES128;
-		अवरोध;
-	हाल AES_KEYSIZE_192:
+		break;
+	case AES_KEYSIZE_192:
 		ctx->enc_type |= ENC_TYPE_ALG_AES192;
-		अवरोध;
-	हाल AES_KEYSIZE_256:
+		break;
+	case AES_KEYSIZE_256:
 		ctx->enc_type |= ENC_TYPE_ALG_AES256;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	ctx->key_len = keylen;
-	स_नकल(ctx->key.aes, key, keylen);
-	वापस 0;
-पूर्ण
+	memcpy(ctx->key.aes, key, keylen);
+	return 0;
+}
 
-अटल पूर्णांक n2_des_setkey(काष्ठा crypto_skcipher *skcipher, स्थिर u8 *key,
-			 अचिन्हित पूर्णांक keylen)
-अणु
-	काष्ठा crypto_tfm *tfm = crypto_skcipher_tfm(skcipher);
-	काष्ठा n2_skcipher_context *ctx = crypto_tfm_ctx(tfm);
-	काष्ठा n2_skcipher_alg *n2alg = n2_skcipher_alg(skcipher);
-	पूर्णांक err;
+static int n2_des_setkey(struct crypto_skcipher *skcipher, const u8 *key,
+			 unsigned int keylen)
+{
+	struct crypto_tfm *tfm = crypto_skcipher_tfm(skcipher);
+	struct n2_skcipher_context *ctx = crypto_tfm_ctx(tfm);
+	struct n2_skcipher_alg *n2alg = n2_skcipher_alg(skcipher);
+	int err;
 
-	err = verअगरy_skcipher_des_key(skcipher, key);
-	अगर (err)
-		वापस err;
+	err = verify_skcipher_des_key(skcipher, key);
+	if (err)
+		return err;
 
 	ctx->enc_type = n2alg->enc_type;
 
 	ctx->key_len = keylen;
-	स_नकल(ctx->key.des, key, keylen);
-	वापस 0;
-पूर्ण
+	memcpy(ctx->key.des, key, keylen);
+	return 0;
+}
 
-अटल पूर्णांक n2_3des_setkey(काष्ठा crypto_skcipher *skcipher, स्थिर u8 *key,
-			  अचिन्हित पूर्णांक keylen)
-अणु
-	काष्ठा crypto_tfm *tfm = crypto_skcipher_tfm(skcipher);
-	काष्ठा n2_skcipher_context *ctx = crypto_tfm_ctx(tfm);
-	काष्ठा n2_skcipher_alg *n2alg = n2_skcipher_alg(skcipher);
-	पूर्णांक err;
+static int n2_3des_setkey(struct crypto_skcipher *skcipher, const u8 *key,
+			  unsigned int keylen)
+{
+	struct crypto_tfm *tfm = crypto_skcipher_tfm(skcipher);
+	struct n2_skcipher_context *ctx = crypto_tfm_ctx(tfm);
+	struct n2_skcipher_alg *n2alg = n2_skcipher_alg(skcipher);
+	int err;
 
-	err = verअगरy_skcipher_des3_key(skcipher, key);
-	अगर (err)
-		वापस err;
+	err = verify_skcipher_des3_key(skcipher, key);
+	if (err)
+		return err;
 
 	ctx->enc_type = n2alg->enc_type;
 
 	ctx->key_len = keylen;
-	स_नकल(ctx->key.des3, key, keylen);
-	वापस 0;
-पूर्ण
+	memcpy(ctx->key.des3, key, keylen);
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक skcipher_descriptor_len(पूर्णांक nbytes, अचिन्हित पूर्णांक block_size)
-अणु
-	पूर्णांक this_len = nbytes;
+static inline int skcipher_descriptor_len(int nbytes, unsigned int block_size)
+{
+	int this_len = nbytes;
 
 	this_len -= (nbytes & (block_size - 1));
-	वापस this_len > (1 << 16) ? (1 << 16) : this_len;
-पूर्ण
+	return this_len > (1 << 16) ? (1 << 16) : this_len;
+}
 
-अटल पूर्णांक __n2_crypt_chunk(काष्ठा crypto_skcipher *skcipher,
-			    काष्ठा n2_crypto_chunk *cp,
-			    काष्ठा spu_queue *qp, bool encrypt)
-अणु
-	काष्ठा n2_skcipher_context *ctx = crypto_skcipher_ctx(skcipher);
-	काष्ठा cwq_initial_entry *ent;
+static int __n2_crypt_chunk(struct crypto_skcipher *skcipher,
+			    struct n2_crypto_chunk *cp,
+			    struct spu_queue *qp, bool encrypt)
+{
+	struct n2_skcipher_context *ctx = crypto_skcipher_ctx(skcipher);
+	struct cwq_initial_entry *ent;
 	bool in_place;
-	पूर्णांक i;
+	int i;
 
 	ent = spu_queue_alloc(qp, cp->arr_len);
-	अगर (!ent) अणु
+	if (!ent) {
 		pr_info("queue_alloc() of %d fails\n",
 			cp->arr_len);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	in_place = (cp->dest_paddr == cp->arr[0].src_paddr);
 
@@ -829,7 +828,7 @@ out:
 	ent->enc_iv_addr = cp->iv_paddr;
 	ent->dest_addr = (in_place ? 0UL : cp->dest_paddr);
 
-	क्रम (i = 1; i < cp->arr_len; i++) अणु
+	for (i = 1; i < cp->arr_len; i++) {
 		ent = spu_queue_next(qp, ent);
 
 		ent->control = cp->arr[i].src_len - 1;
@@ -840,25 +839,25 @@ out:
 		ent->enc_key_addr = 0UL;
 		ent->enc_iv_addr = 0UL;
 		ent->dest_addr = 0UL;
-	पूर्ण
+	}
 	ent->control |= CONTROL_END_OF_BLOCK;
 
-	वापस (spu_queue_submit(qp, ent) != HV_EOK) ? -EINVAL : 0;
-पूर्ण
+	return (spu_queue_submit(qp, ent) != HV_EOK) ? -EINVAL : 0;
+}
 
-अटल पूर्णांक n2_compute_chunks(काष्ठा skcipher_request *req)
-अणु
-	काष्ठा n2_request_context *rctx = skcipher_request_ctx(req);
-	काष्ठा skcipher_walk *walk = &rctx->walk;
-	काष्ठा n2_crypto_chunk *chunk;
-	अचिन्हित दीर्घ dest_prev;
-	अचिन्हित पूर्णांक tot_len;
+static int n2_compute_chunks(struct skcipher_request *req)
+{
+	struct n2_request_context *rctx = skcipher_request_ctx(req);
+	struct skcipher_walk *walk = &rctx->walk;
+	struct n2_crypto_chunk *chunk;
+	unsigned long dest_prev;
+	unsigned int tot_len;
 	bool prev_in_place;
-	पूर्णांक err, nbytes;
+	int err, nbytes;
 
 	err = skcipher_walk_async(walk, req);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	INIT_LIST_HEAD(&rctx->chunk_list);
 
@@ -873,10 +872,10 @@ out:
 	dest_prev = ~0UL;
 	tot_len = 0;
 
-	जबतक ((nbytes = walk->nbytes) != 0) अणु
-		अचिन्हित दीर्घ dest_paddr, src_paddr;
+	while ((nbytes = walk->nbytes) != 0) {
+		unsigned long dest_paddr, src_paddr;
 		bool in_place;
-		पूर्णांक this_len;
+		int this_len;
 
 		src_paddr = (page_to_phys(walk->src.phys.page) +
 			     walk->src.phys.offset);
@@ -885,27 +884,27 @@ out:
 		in_place = (src_paddr == dest_paddr);
 		this_len = skcipher_descriptor_len(nbytes, walk->blocksize);
 
-		अगर (chunk->arr_len != 0) अणु
-			अगर (in_place != prev_in_place ||
+		if (chunk->arr_len != 0) {
+			if (in_place != prev_in_place ||
 			    (!prev_in_place &&
 			     dest_paddr != dest_prev) ||
 			    chunk->arr_len == N2_CHUNK_ARR_LEN ||
-			    tot_len + this_len > (1 << 16)) अणु
+			    tot_len + this_len > (1 << 16)) {
 				chunk->dest_final = dest_prev;
 				list_add_tail(&chunk->entry,
 					      &rctx->chunk_list);
-				chunk = kzalloc(माप(*chunk), GFP_ATOMIC);
-				अगर (!chunk) अणु
+				chunk = kzalloc(sizeof(*chunk), GFP_ATOMIC);
+				if (!chunk) {
 					err = -ENOMEM;
-					अवरोध;
-				पूर्ण
+					break;
+				}
 				INIT_LIST_HEAD(&chunk->entry);
-			पूर्ण
-		पूर्ण
-		अगर (chunk->arr_len == 0) अणु
+			}
+		}
+		if (chunk->arr_len == 0) {
 			chunk->dest_paddr = dest_paddr;
 			tot_len = 0;
-		पूर्ण
+		}
 		chunk->arr[chunk->arr_len].src_paddr = src_paddr;
 		chunk->arr[chunk->arr_len].src_len = this_len;
 		chunk->arr_len++;
@@ -914,462 +913,462 @@ out:
 		prev_in_place = in_place;
 		tot_len += this_len;
 
-		err = skcipher_walk_करोne(walk, nbytes - this_len);
-		अगर (err)
-			अवरोध;
-	पूर्ण
-	अगर (!err && chunk->arr_len != 0) अणु
+		err = skcipher_walk_done(walk, nbytes - this_len);
+		if (err)
+			break;
+	}
+	if (!err && chunk->arr_len != 0) {
 		chunk->dest_final = dest_prev;
 		list_add_tail(&chunk->entry, &rctx->chunk_list);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम n2_chunk_complete(काष्ठा skcipher_request *req, व्योम *final_iv)
-अणु
-	काष्ठा n2_request_context *rctx = skcipher_request_ctx(req);
-	काष्ठा n2_crypto_chunk *c, *पंचांगp;
+static void n2_chunk_complete(struct skcipher_request *req, void *final_iv)
+{
+	struct n2_request_context *rctx = skcipher_request_ctx(req);
+	struct n2_crypto_chunk *c, *tmp;
 
-	अगर (final_iv)
-		स_नकल(rctx->walk.iv, final_iv, rctx->walk.blocksize);
+	if (final_iv)
+		memcpy(rctx->walk.iv, final_iv, rctx->walk.blocksize);
 
-	list_क्रम_each_entry_safe(c, पंचांगp, &rctx->chunk_list, entry) अणु
+	list_for_each_entry_safe(c, tmp, &rctx->chunk_list, entry) {
 		list_del(&c->entry);
-		अगर (unlikely(c != &rctx->chunk))
-			kमुक्त(c);
-	पूर्ण
+		if (unlikely(c != &rctx->chunk))
+			kfree(c);
+	}
 
-पूर्ण
+}
 
-अटल पूर्णांक n2_करो_ecb(काष्ठा skcipher_request *req, bool encrypt)
-अणु
-	काष्ठा n2_request_context *rctx = skcipher_request_ctx(req);
-	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-	पूर्णांक err = n2_compute_chunks(req);
-	काष्ठा n2_crypto_chunk *c, *पंचांगp;
-	अचिन्हित दीर्घ flags, hv_ret;
-	काष्ठा spu_queue *qp;
+static int n2_do_ecb(struct skcipher_request *req, bool encrypt)
+{
+	struct n2_request_context *rctx = skcipher_request_ctx(req);
+	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+	int err = n2_compute_chunks(req);
+	struct n2_crypto_chunk *c, *tmp;
+	unsigned long flags, hv_ret;
+	struct spu_queue *qp;
 
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	qp = cpu_to_cwq[get_cpu()];
 	err = -ENODEV;
-	अगर (!qp)
-		जाओ out;
+	if (!qp)
+		goto out;
 
 	spin_lock_irqsave(&qp->lock, flags);
 
-	list_क्रम_each_entry_safe(c, पंचांगp, &rctx->chunk_list, entry) अणु
+	list_for_each_entry_safe(c, tmp, &rctx->chunk_list, entry) {
 		err = __n2_crypt_chunk(tfm, c, qp, encrypt);
-		अगर (err)
-			अवरोध;
+		if (err)
+			break;
 		list_del(&c->entry);
-		अगर (unlikely(c != &rctx->chunk))
-			kमुक्त(c);
-	पूर्ण
-	अगर (!err) अणु
-		hv_ret = रुको_क्रम_tail(qp);
-		अगर (hv_ret != HV_EOK)
+		if (unlikely(c != &rctx->chunk))
+			kfree(c);
+	}
+	if (!err) {
+		hv_ret = wait_for_tail(qp);
+		if (hv_ret != HV_EOK)
 			err = -EINVAL;
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&qp->lock, flags);
 
 out:
 	put_cpu();
 
-	n2_chunk_complete(req, शून्य);
-	वापस err;
-पूर्ण
+	n2_chunk_complete(req, NULL);
+	return err;
+}
 
-अटल पूर्णांक n2_encrypt_ecb(काष्ठा skcipher_request *req)
-अणु
-	वापस n2_करो_ecb(req, true);
-पूर्ण
+static int n2_encrypt_ecb(struct skcipher_request *req)
+{
+	return n2_do_ecb(req, true);
+}
 
-अटल पूर्णांक n2_decrypt_ecb(काष्ठा skcipher_request *req)
-अणु
-	वापस n2_करो_ecb(req, false);
-पूर्ण
+static int n2_decrypt_ecb(struct skcipher_request *req)
+{
+	return n2_do_ecb(req, false);
+}
 
-अटल पूर्णांक n2_करो_chaining(काष्ठा skcipher_request *req, bool encrypt)
-अणु
-	काष्ठा n2_request_context *rctx = skcipher_request_ctx(req);
-	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-	अचिन्हित दीर्घ flags, hv_ret, iv_paddr;
-	पूर्णांक err = n2_compute_chunks(req);
-	काष्ठा n2_crypto_chunk *c, *पंचांगp;
-	काष्ठा spu_queue *qp;
-	व्योम *final_iv_addr;
+static int n2_do_chaining(struct skcipher_request *req, bool encrypt)
+{
+	struct n2_request_context *rctx = skcipher_request_ctx(req);
+	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+	unsigned long flags, hv_ret, iv_paddr;
+	int err = n2_compute_chunks(req);
+	struct n2_crypto_chunk *c, *tmp;
+	struct spu_queue *qp;
+	void *final_iv_addr;
 
-	final_iv_addr = शून्य;
+	final_iv_addr = NULL;
 
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	qp = cpu_to_cwq[get_cpu()];
 	err = -ENODEV;
-	अगर (!qp)
-		जाओ out;
+	if (!qp)
+		goto out;
 
 	spin_lock_irqsave(&qp->lock, flags);
 
-	अगर (encrypt) अणु
+	if (encrypt) {
 		iv_paddr = __pa(rctx->walk.iv);
-		list_क्रम_each_entry_safe(c, पंचांगp, &rctx->chunk_list,
-					 entry) अणु
+		list_for_each_entry_safe(c, tmp, &rctx->chunk_list,
+					 entry) {
 			c->iv_paddr = iv_paddr;
 			err = __n2_crypt_chunk(tfm, c, qp, true);
-			अगर (err)
-				अवरोध;
+			if (err)
+				break;
 			iv_paddr = c->dest_final - rctx->walk.blocksize;
 			list_del(&c->entry);
-			अगर (unlikely(c != &rctx->chunk))
-				kमुक्त(c);
-		पूर्ण
+			if (unlikely(c != &rctx->chunk))
+				kfree(c);
+		}
 		final_iv_addr = __va(iv_paddr);
-	पूर्ण अन्यथा अणु
-		list_क्रम_each_entry_safe_reverse(c, पंचांगp, &rctx->chunk_list,
-						 entry) अणु
-			अगर (c == &rctx->chunk) अणु
+	} else {
+		list_for_each_entry_safe_reverse(c, tmp, &rctx->chunk_list,
+						 entry) {
+			if (c == &rctx->chunk) {
 				iv_paddr = __pa(rctx->walk.iv);
-			पूर्ण अन्यथा अणु
-				iv_paddr = (पंचांगp->arr[पंचांगp->arr_len-1].src_paddr +
-					    पंचांगp->arr[पंचांगp->arr_len-1].src_len -
+			} else {
+				iv_paddr = (tmp->arr[tmp->arr_len-1].src_paddr +
+					    tmp->arr[tmp->arr_len-1].src_len -
 					    rctx->walk.blocksize);
-			पूर्ण
-			अगर (!final_iv_addr) अणु
-				अचिन्हित दीर्घ pa;
+			}
+			if (!final_iv_addr) {
+				unsigned long pa;
 
 				pa = (c->arr[c->arr_len-1].src_paddr +
 				      c->arr[c->arr_len-1].src_len -
 				      rctx->walk.blocksize);
 				final_iv_addr = rctx->temp_iv;
-				स_नकल(rctx->temp_iv, __va(pa),
+				memcpy(rctx->temp_iv, __va(pa),
 				       rctx->walk.blocksize);
-			पूर्ण
+			}
 			c->iv_paddr = iv_paddr;
 			err = __n2_crypt_chunk(tfm, c, qp, false);
-			अगर (err)
-				अवरोध;
+			if (err)
+				break;
 			list_del(&c->entry);
-			अगर (unlikely(c != &rctx->chunk))
-				kमुक्त(c);
-		पूर्ण
-	पूर्ण
-	अगर (!err) अणु
-		hv_ret = रुको_क्रम_tail(qp);
-		अगर (hv_ret != HV_EOK)
+			if (unlikely(c != &rctx->chunk))
+				kfree(c);
+		}
+	}
+	if (!err) {
+		hv_ret = wait_for_tail(qp);
+		if (hv_ret != HV_EOK)
 			err = -EINVAL;
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&qp->lock, flags);
 
 out:
 	put_cpu();
 
-	n2_chunk_complete(req, err ? शून्य : final_iv_addr);
-	वापस err;
-पूर्ण
+	n2_chunk_complete(req, err ? NULL : final_iv_addr);
+	return err;
+}
 
-अटल पूर्णांक n2_encrypt_chaining(काष्ठा skcipher_request *req)
-अणु
-	वापस n2_करो_chaining(req, true);
-पूर्ण
+static int n2_encrypt_chaining(struct skcipher_request *req)
+{
+	return n2_do_chaining(req, true);
+}
 
-अटल पूर्णांक n2_decrypt_chaining(काष्ठा skcipher_request *req)
-अणु
-	वापस n2_करो_chaining(req, false);
-पूर्ण
+static int n2_decrypt_chaining(struct skcipher_request *req)
+{
+	return n2_do_chaining(req, false);
+}
 
-काष्ठा n2_skcipher_पंचांगpl अणु
-	स्थिर अक्षर		*name;
-	स्थिर अक्षर		*drv_name;
+struct n2_skcipher_tmpl {
+	const char		*name;
+	const char		*drv_name;
 	u8			block_size;
 	u8			enc_type;
-	काष्ठा skcipher_alg	skcipher;
-पूर्ण;
+	struct skcipher_alg	skcipher;
+};
 
-अटल स्थिर काष्ठा n2_skcipher_पंचांगpl skcipher_पंचांगpls[] = अणु
+static const struct n2_skcipher_tmpl skcipher_tmpls[] = {
 	/* DES: ECB CBC and CFB are supported */
-	अणु	.name		= "ecb(des)",
+	{	.name		= "ecb(des)",
 		.drv_name	= "ecb-des",
 		.block_size	= DES_BLOCK_SIZE,
 		.enc_type	= (ENC_TYPE_ALG_DES |
 				   ENC_TYPE_CHAINING_ECB),
-		.skcipher	= अणु
+		.skcipher	= {
 			.min_keysize	= DES_KEY_SIZE,
 			.max_keysize	= DES_KEY_SIZE,
 			.setkey		= n2_des_setkey,
 			.encrypt	= n2_encrypt_ecb,
 			.decrypt	= n2_decrypt_ecb,
-		पूर्ण,
-	पूर्ण,
-	अणु	.name		= "cbc(des)",
+		},
+	},
+	{	.name		= "cbc(des)",
 		.drv_name	= "cbc-des",
 		.block_size	= DES_BLOCK_SIZE,
 		.enc_type	= (ENC_TYPE_ALG_DES |
 				   ENC_TYPE_CHAINING_CBC),
-		.skcipher	= अणु
+		.skcipher	= {
 			.ivsize		= DES_BLOCK_SIZE,
 			.min_keysize	= DES_KEY_SIZE,
 			.max_keysize	= DES_KEY_SIZE,
 			.setkey		= n2_des_setkey,
 			.encrypt	= n2_encrypt_chaining,
 			.decrypt	= n2_decrypt_chaining,
-		पूर्ण,
-	पूर्ण,
-	अणु	.name		= "cfb(des)",
+		},
+	},
+	{	.name		= "cfb(des)",
 		.drv_name	= "cfb-des",
 		.block_size	= DES_BLOCK_SIZE,
 		.enc_type	= (ENC_TYPE_ALG_DES |
 				   ENC_TYPE_CHAINING_CFB),
-		.skcipher	= अणु
+		.skcipher	= {
 			.min_keysize	= DES_KEY_SIZE,
 			.max_keysize	= DES_KEY_SIZE,
 			.setkey		= n2_des_setkey,
 			.encrypt	= n2_encrypt_chaining,
 			.decrypt	= n2_decrypt_chaining,
-		पूर्ण,
-	पूर्ण,
+		},
+	},
 
 	/* 3DES: ECB CBC and CFB are supported */
-	अणु	.name		= "ecb(des3_ede)",
+	{	.name		= "ecb(des3_ede)",
 		.drv_name	= "ecb-3des",
 		.block_size	= DES_BLOCK_SIZE,
 		.enc_type	= (ENC_TYPE_ALG_3DES |
 				   ENC_TYPE_CHAINING_ECB),
-		.skcipher	= अणु
+		.skcipher	= {
 			.min_keysize	= 3 * DES_KEY_SIZE,
 			.max_keysize	= 3 * DES_KEY_SIZE,
 			.setkey		= n2_3des_setkey,
 			.encrypt	= n2_encrypt_ecb,
 			.decrypt	= n2_decrypt_ecb,
-		पूर्ण,
-	पूर्ण,
-	अणु	.name		= "cbc(des3_ede)",
+		},
+	},
+	{	.name		= "cbc(des3_ede)",
 		.drv_name	= "cbc-3des",
 		.block_size	= DES_BLOCK_SIZE,
 		.enc_type	= (ENC_TYPE_ALG_3DES |
 				   ENC_TYPE_CHAINING_CBC),
-		.skcipher	= अणु
+		.skcipher	= {
 			.ivsize		= DES_BLOCK_SIZE,
 			.min_keysize	= 3 * DES_KEY_SIZE,
 			.max_keysize	= 3 * DES_KEY_SIZE,
 			.setkey		= n2_3des_setkey,
 			.encrypt	= n2_encrypt_chaining,
 			.decrypt	= n2_decrypt_chaining,
-		पूर्ण,
-	पूर्ण,
-	अणु	.name		= "cfb(des3_ede)",
+		},
+	},
+	{	.name		= "cfb(des3_ede)",
 		.drv_name	= "cfb-3des",
 		.block_size	= DES_BLOCK_SIZE,
 		.enc_type	= (ENC_TYPE_ALG_3DES |
 				   ENC_TYPE_CHAINING_CFB),
-		.skcipher	= अणु
+		.skcipher	= {
 			.min_keysize	= 3 * DES_KEY_SIZE,
 			.max_keysize	= 3 * DES_KEY_SIZE,
 			.setkey		= n2_3des_setkey,
 			.encrypt	= n2_encrypt_chaining,
 			.decrypt	= n2_decrypt_chaining,
-		पूर्ण,
-	पूर्ण,
+		},
+	},
 	/* AES: ECB CBC and CTR are supported */
-	अणु	.name		= "ecb(aes)",
+	{	.name		= "ecb(aes)",
 		.drv_name	= "ecb-aes",
 		.block_size	= AES_BLOCK_SIZE,
 		.enc_type	= (ENC_TYPE_ALG_AES128 |
 				   ENC_TYPE_CHAINING_ECB),
-		.skcipher	= अणु
+		.skcipher	= {
 			.min_keysize	= AES_MIN_KEY_SIZE,
 			.max_keysize	= AES_MAX_KEY_SIZE,
 			.setkey		= n2_aes_setkey,
 			.encrypt	= n2_encrypt_ecb,
 			.decrypt	= n2_decrypt_ecb,
-		पूर्ण,
-	पूर्ण,
-	अणु	.name		= "cbc(aes)",
+		},
+	},
+	{	.name		= "cbc(aes)",
 		.drv_name	= "cbc-aes",
 		.block_size	= AES_BLOCK_SIZE,
 		.enc_type	= (ENC_TYPE_ALG_AES128 |
 				   ENC_TYPE_CHAINING_CBC),
-		.skcipher	= अणु
+		.skcipher	= {
 			.ivsize		= AES_BLOCK_SIZE,
 			.min_keysize	= AES_MIN_KEY_SIZE,
 			.max_keysize	= AES_MAX_KEY_SIZE,
 			.setkey		= n2_aes_setkey,
 			.encrypt	= n2_encrypt_chaining,
 			.decrypt	= n2_decrypt_chaining,
-		पूर्ण,
-	पूर्ण,
-	अणु	.name		= "ctr(aes)",
+		},
+	},
+	{	.name		= "ctr(aes)",
 		.drv_name	= "ctr-aes",
 		.block_size	= AES_BLOCK_SIZE,
 		.enc_type	= (ENC_TYPE_ALG_AES128 |
 				   ENC_TYPE_CHAINING_COUNTER),
-		.skcipher	= अणु
+		.skcipher	= {
 			.ivsize		= AES_BLOCK_SIZE,
 			.min_keysize	= AES_MIN_KEY_SIZE,
 			.max_keysize	= AES_MAX_KEY_SIZE,
 			.setkey		= n2_aes_setkey,
 			.encrypt	= n2_encrypt_chaining,
 			.decrypt	= n2_encrypt_chaining,
-		पूर्ण,
-	पूर्ण,
+		},
+	},
 
-पूर्ण;
-#घोषणा NUM_CIPHER_TMPLS ARRAY_SIZE(skcipher_पंचांगpls)
+};
+#define NUM_CIPHER_TMPLS ARRAY_SIZE(skcipher_tmpls)
 
-अटल LIST_HEAD(skcipher_algs);
+static LIST_HEAD(skcipher_algs);
 
-काष्ठा n2_hash_पंचांगpl अणु
-	स्थिर अक्षर	*name;
-	स्थिर u8	*hash_zero;
-	स्थिर u8	*hash_init;
+struct n2_hash_tmpl {
+	const char	*name;
+	const u8	*hash_zero;
+	const u8	*hash_init;
 	u8		hw_op_hashsz;
 	u8		digest_size;
 	u8		block_size;
 	u8		auth_type;
 	u8		hmac_type;
-पूर्ण;
+};
 
-अटल स्थिर __le32 n2_md5_init[MD5_HASH_WORDS] = अणु
+static const __le32 n2_md5_init[MD5_HASH_WORDS] = {
 	cpu_to_le32(MD5_H0),
 	cpu_to_le32(MD5_H1),
 	cpu_to_le32(MD5_H2),
 	cpu_to_le32(MD5_H3),
-पूर्ण;
-अटल स्थिर u32 n2_sha1_init[SHA1_DIGEST_SIZE / 4] = अणु
+};
+static const u32 n2_sha1_init[SHA1_DIGEST_SIZE / 4] = {
 	SHA1_H0, SHA1_H1, SHA1_H2, SHA1_H3, SHA1_H4,
-पूर्ण;
-अटल स्थिर u32 n2_sha256_init[SHA256_DIGEST_SIZE / 4] = अणु
+};
+static const u32 n2_sha256_init[SHA256_DIGEST_SIZE / 4] = {
 	SHA256_H0, SHA256_H1, SHA256_H2, SHA256_H3,
 	SHA256_H4, SHA256_H5, SHA256_H6, SHA256_H7,
-पूर्ण;
-अटल स्थिर u32 n2_sha224_init[SHA256_DIGEST_SIZE / 4] = अणु
+};
+static const u32 n2_sha224_init[SHA256_DIGEST_SIZE / 4] = {
 	SHA224_H0, SHA224_H1, SHA224_H2, SHA224_H3,
 	SHA224_H4, SHA224_H5, SHA224_H6, SHA224_H7,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा n2_hash_पंचांगpl hash_पंचांगpls[] = अणु
-	अणु .name		= "md5",
+static const struct n2_hash_tmpl hash_tmpls[] = {
+	{ .name		= "md5",
 	  .hash_zero	= md5_zero_message_hash,
 	  .hash_init	= (u8 *)n2_md5_init,
 	  .auth_type	= AUTH_TYPE_MD5,
 	  .hmac_type	= AUTH_TYPE_HMAC_MD5,
 	  .hw_op_hashsz	= MD5_DIGEST_SIZE,
 	  .digest_size	= MD5_DIGEST_SIZE,
-	  .block_size	= MD5_HMAC_BLOCK_SIZE पूर्ण,
-	अणु .name		= "sha1",
+	  .block_size	= MD5_HMAC_BLOCK_SIZE },
+	{ .name		= "sha1",
 	  .hash_zero	= sha1_zero_message_hash,
 	  .hash_init	= (u8 *)n2_sha1_init,
 	  .auth_type	= AUTH_TYPE_SHA1,
 	  .hmac_type	= AUTH_TYPE_HMAC_SHA1,
 	  .hw_op_hashsz	= SHA1_DIGEST_SIZE,
 	  .digest_size	= SHA1_DIGEST_SIZE,
-	  .block_size	= SHA1_BLOCK_SIZE पूर्ण,
-	अणु .name		= "sha256",
+	  .block_size	= SHA1_BLOCK_SIZE },
+	{ .name		= "sha256",
 	  .hash_zero	= sha256_zero_message_hash,
 	  .hash_init	= (u8 *)n2_sha256_init,
 	  .auth_type	= AUTH_TYPE_SHA256,
 	  .hmac_type	= AUTH_TYPE_HMAC_SHA256,
 	  .hw_op_hashsz	= SHA256_DIGEST_SIZE,
 	  .digest_size	= SHA256_DIGEST_SIZE,
-	  .block_size	= SHA256_BLOCK_SIZE पूर्ण,
-	अणु .name		= "sha224",
+	  .block_size	= SHA256_BLOCK_SIZE },
+	{ .name		= "sha224",
 	  .hash_zero	= sha224_zero_message_hash,
 	  .hash_init	= (u8 *)n2_sha224_init,
 	  .auth_type	= AUTH_TYPE_SHA256,
 	  .hmac_type	= AUTH_TYPE_RESERVED,
 	  .hw_op_hashsz	= SHA256_DIGEST_SIZE,
 	  .digest_size	= SHA224_DIGEST_SIZE,
-	  .block_size	= SHA224_BLOCK_SIZE पूर्ण,
-पूर्ण;
-#घोषणा NUM_HASH_TMPLS ARRAY_SIZE(hash_पंचांगpls)
+	  .block_size	= SHA224_BLOCK_SIZE },
+};
+#define NUM_HASH_TMPLS ARRAY_SIZE(hash_tmpls)
 
-अटल LIST_HEAD(ahash_algs);
-अटल LIST_HEAD(hmac_algs);
+static LIST_HEAD(ahash_algs);
+static LIST_HEAD(hmac_algs);
 
-अटल पूर्णांक algs_रेजिस्टरed;
+static int algs_registered;
 
-अटल व्योम __n2_unरेजिस्टर_algs(व्योम)
-अणु
-	काष्ठा n2_skcipher_alg *skcipher, *skcipher_पंचांगp;
-	काष्ठा n2_ahash_alg *alg, *alg_पंचांगp;
-	काष्ठा n2_hmac_alg *hmac, *hmac_पंचांगp;
+static void __n2_unregister_algs(void)
+{
+	struct n2_skcipher_alg *skcipher, *skcipher_tmp;
+	struct n2_ahash_alg *alg, *alg_tmp;
+	struct n2_hmac_alg *hmac, *hmac_tmp;
 
-	list_क्रम_each_entry_safe(skcipher, skcipher_पंचांगp, &skcipher_algs, entry) अणु
-		crypto_unरेजिस्टर_skcipher(&skcipher->skcipher);
+	list_for_each_entry_safe(skcipher, skcipher_tmp, &skcipher_algs, entry) {
+		crypto_unregister_skcipher(&skcipher->skcipher);
 		list_del(&skcipher->entry);
-		kमुक्त(skcipher);
-	पूर्ण
-	list_क्रम_each_entry_safe(hmac, hmac_पंचांगp, &hmac_algs, derived.entry) अणु
-		crypto_unरेजिस्टर_ahash(&hmac->derived.alg);
+		kfree(skcipher);
+	}
+	list_for_each_entry_safe(hmac, hmac_tmp, &hmac_algs, derived.entry) {
+		crypto_unregister_ahash(&hmac->derived.alg);
 		list_del(&hmac->derived.entry);
-		kमुक्त(hmac);
-	पूर्ण
-	list_क्रम_each_entry_safe(alg, alg_पंचांगp, &ahash_algs, entry) अणु
-		crypto_unरेजिस्टर_ahash(&alg->alg);
+		kfree(hmac);
+	}
+	list_for_each_entry_safe(alg, alg_tmp, &ahash_algs, entry) {
+		crypto_unregister_ahash(&alg->alg);
 		list_del(&alg->entry);
-		kमुक्त(alg);
-	पूर्ण
-पूर्ण
+		kfree(alg);
+	}
+}
 
-अटल पूर्णांक n2_skcipher_init_tfm(काष्ठा crypto_skcipher *tfm)
-अणु
-	crypto_skcipher_set_reqsize(tfm, माप(काष्ठा n2_request_context));
-	वापस 0;
-पूर्ण
+static int n2_skcipher_init_tfm(struct crypto_skcipher *tfm)
+{
+	crypto_skcipher_set_reqsize(tfm, sizeof(struct n2_request_context));
+	return 0;
+}
 
-अटल पूर्णांक __n2_रेजिस्टर_one_skcipher(स्थिर काष्ठा n2_skcipher_पंचांगpl *पंचांगpl)
-अणु
-	काष्ठा n2_skcipher_alg *p = kzalloc(माप(*p), GFP_KERNEL);
-	काष्ठा skcipher_alg *alg;
-	पूर्णांक err;
+static int __n2_register_one_skcipher(const struct n2_skcipher_tmpl *tmpl)
+{
+	struct n2_skcipher_alg *p = kzalloc(sizeof(*p), GFP_KERNEL);
+	struct skcipher_alg *alg;
+	int err;
 
-	अगर (!p)
-		वापस -ENOMEM;
+	if (!p)
+		return -ENOMEM;
 
 	alg = &p->skcipher;
-	*alg = पंचांगpl->skcipher;
+	*alg = tmpl->skcipher;
 
-	snम_लिखो(alg->base.cra_name, CRYPTO_MAX_ALG_NAME, "%s", पंचांगpl->name);
-	snम_लिखो(alg->base.cra_driver_name, CRYPTO_MAX_ALG_NAME, "%s-n2", पंचांगpl->drv_name);
+	snprintf(alg->base.cra_name, CRYPTO_MAX_ALG_NAME, "%s", tmpl->name);
+	snprintf(alg->base.cra_driver_name, CRYPTO_MAX_ALG_NAME, "%s-n2", tmpl->drv_name);
 	alg->base.cra_priority = N2_CRA_PRIORITY;
 	alg->base.cra_flags = CRYPTO_ALG_KERN_DRIVER_ONLY | CRYPTO_ALG_ASYNC |
 			      CRYPTO_ALG_ALLOCATES_MEMORY;
-	alg->base.cra_blocksize = पंचांगpl->block_size;
-	p->enc_type = पंचांगpl->enc_type;
-	alg->base.cra_ctxsize = माप(काष्ठा n2_skcipher_context);
+	alg->base.cra_blocksize = tmpl->block_size;
+	p->enc_type = tmpl->enc_type;
+	alg->base.cra_ctxsize = sizeof(struct n2_skcipher_context);
 	alg->base.cra_module = THIS_MODULE;
 	alg->init = n2_skcipher_init_tfm;
 
 	list_add(&p->entry, &skcipher_algs);
-	err = crypto_रेजिस्टर_skcipher(alg);
-	अगर (err) अणु
+	err = crypto_register_skcipher(alg);
+	if (err) {
 		pr_err("%s alg registration failed\n", alg->base.cra_name);
 		list_del(&p->entry);
-		kमुक्त(p);
-	पूर्ण अन्यथा अणु
+		kfree(p);
+	} else {
 		pr_info("%s alg registered\n", alg->base.cra_name);
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-अटल पूर्णांक __n2_रेजिस्टर_one_hmac(काष्ठा n2_ahash_alg *n2ahash)
-अणु
-	काष्ठा n2_hmac_alg *p = kzalloc(माप(*p), GFP_KERNEL);
-	काष्ठा ahash_alg *ahash;
-	काष्ठा crypto_alg *base;
-	पूर्णांक err;
+static int __n2_register_one_hmac(struct n2_ahash_alg *n2ahash)
+{
+	struct n2_hmac_alg *p = kzalloc(sizeof(*p), GFP_KERNEL);
+	struct ahash_alg *ahash;
+	struct crypto_alg *base;
+	int err;
 
-	अगर (!p)
-		वापस -ENOMEM;
+	if (!p)
+		return -ENOMEM;
 
 	p->child_alg = n2ahash->alg.halg.base.cra_name;
-	स_नकल(&p->derived, n2ahash, माप(काष्ठा n2_ahash_alg));
+	memcpy(&p->derived, n2ahash, sizeof(struct n2_ahash_alg));
 	INIT_LIST_HEAD(&p->derived.entry);
 
 	ahash = &p->derived.alg;
@@ -1377,42 +1376,42 @@ out:
 	ahash->setkey = n2_hmac_async_setkey;
 
 	base = &ahash->halg.base;
-	snम_लिखो(base->cra_name, CRYPTO_MAX_ALG_NAME, "hmac(%s)", p->child_alg);
-	snम_लिखो(base->cra_driver_name, CRYPTO_MAX_ALG_NAME, "hmac-%s-n2", p->child_alg);
+	snprintf(base->cra_name, CRYPTO_MAX_ALG_NAME, "hmac(%s)", p->child_alg);
+	snprintf(base->cra_driver_name, CRYPTO_MAX_ALG_NAME, "hmac-%s-n2", p->child_alg);
 
-	base->cra_ctxsize = माप(काष्ठा n2_hmac_ctx);
+	base->cra_ctxsize = sizeof(struct n2_hmac_ctx);
 	base->cra_init = n2_hmac_cra_init;
-	base->cra_निकास = n2_hmac_cra_निकास;
+	base->cra_exit = n2_hmac_cra_exit;
 
 	list_add(&p->derived.entry, &hmac_algs);
-	err = crypto_रेजिस्टर_ahash(ahash);
-	अगर (err) अणु
+	err = crypto_register_ahash(ahash);
+	if (err) {
 		pr_err("%s alg registration failed\n", base->cra_name);
 		list_del(&p->derived.entry);
-		kमुक्त(p);
-	पूर्ण अन्यथा अणु
+		kfree(p);
+	} else {
 		pr_info("%s alg registered\n", base->cra_name);
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-अटल पूर्णांक __n2_रेजिस्टर_one_ahash(स्थिर काष्ठा n2_hash_पंचांगpl *पंचांगpl)
-अणु
-	काष्ठा n2_ahash_alg *p = kzalloc(माप(*p), GFP_KERNEL);
-	काष्ठा hash_alg_common *halg;
-	काष्ठा crypto_alg *base;
-	काष्ठा ahash_alg *ahash;
-	पूर्णांक err;
+static int __n2_register_one_ahash(const struct n2_hash_tmpl *tmpl)
+{
+	struct n2_ahash_alg *p = kzalloc(sizeof(*p), GFP_KERNEL);
+	struct hash_alg_common *halg;
+	struct crypto_alg *base;
+	struct ahash_alg *ahash;
+	int err;
 
-	अगर (!p)
-		वापस -ENOMEM;
+	if (!p)
+		return -ENOMEM;
 
-	p->hash_zero = पंचांगpl->hash_zero;
-	p->hash_init = पंचांगpl->hash_init;
-	p->auth_type = पंचांगpl->auth_type;
-	p->hmac_type = पंचांगpl->hmac_type;
-	p->hw_op_hashsz = पंचांगpl->hw_op_hashsz;
-	p->digest_size = पंचांगpl->digest_size;
+	p->hash_zero = tmpl->hash_zero;
+	p->hash_init = tmpl->hash_init;
+	p->auth_type = tmpl->auth_type;
+	p->hmac_type = tmpl->hmac_type;
+	p->hw_op_hashsz = tmpl->hw_op_hashsz;
+	p->digest_size = tmpl->digest_size;
 
 	ahash = &p->alg;
 	ahash->init = n2_hash_async_init;
@@ -1424,294 +1423,294 @@ out:
 	ahash->import = n2_hash_async_noimport;
 
 	halg = &ahash->halg;
-	halg->digestsize = पंचांगpl->digest_size;
+	halg->digestsize = tmpl->digest_size;
 
 	base = &halg->base;
-	snम_लिखो(base->cra_name, CRYPTO_MAX_ALG_NAME, "%s", पंचांगpl->name);
-	snम_लिखो(base->cra_driver_name, CRYPTO_MAX_ALG_NAME, "%s-n2", पंचांगpl->name);
+	snprintf(base->cra_name, CRYPTO_MAX_ALG_NAME, "%s", tmpl->name);
+	snprintf(base->cra_driver_name, CRYPTO_MAX_ALG_NAME, "%s-n2", tmpl->name);
 	base->cra_priority = N2_CRA_PRIORITY;
 	base->cra_flags = CRYPTO_ALG_KERN_DRIVER_ONLY |
 			  CRYPTO_ALG_NEED_FALLBACK;
-	base->cra_blocksize = पंचांगpl->block_size;
-	base->cra_ctxsize = माप(काष्ठा n2_hash_ctx);
+	base->cra_blocksize = tmpl->block_size;
+	base->cra_ctxsize = sizeof(struct n2_hash_ctx);
 	base->cra_module = THIS_MODULE;
 	base->cra_init = n2_hash_cra_init;
-	base->cra_निकास = n2_hash_cra_निकास;
+	base->cra_exit = n2_hash_cra_exit;
 
 	list_add(&p->entry, &ahash_algs);
-	err = crypto_रेजिस्टर_ahash(ahash);
-	अगर (err) अणु
+	err = crypto_register_ahash(ahash);
+	if (err) {
 		pr_err("%s alg registration failed\n", base->cra_name);
 		list_del(&p->entry);
-		kमुक्त(p);
-	पूर्ण अन्यथा अणु
+		kfree(p);
+	} else {
 		pr_info("%s alg registered\n", base->cra_name);
-	पूर्ण
-	अगर (!err && p->hmac_type != AUTH_TYPE_RESERVED)
-		err = __n2_रेजिस्टर_one_hmac(p);
-	वापस err;
-पूर्ण
+	}
+	if (!err && p->hmac_type != AUTH_TYPE_RESERVED)
+		err = __n2_register_one_hmac(p);
+	return err;
+}
 
-अटल पूर्णांक n2_रेजिस्टर_algs(व्योम)
-अणु
-	पूर्णांक i, err = 0;
+static int n2_register_algs(void)
+{
+	int i, err = 0;
 
 	mutex_lock(&spu_lock);
-	अगर (algs_रेजिस्टरed++)
-		जाओ out;
+	if (algs_registered++)
+		goto out;
 
-	क्रम (i = 0; i < NUM_HASH_TMPLS; i++) अणु
-		err = __n2_रेजिस्टर_one_ahash(&hash_पंचांगpls[i]);
-		अगर (err) अणु
-			__n2_unरेजिस्टर_algs();
-			जाओ out;
-		पूर्ण
-	पूर्ण
-	क्रम (i = 0; i < NUM_CIPHER_TMPLS; i++) अणु
-		err = __n2_रेजिस्टर_one_skcipher(&skcipher_पंचांगpls[i]);
-		अगर (err) अणु
-			__n2_unरेजिस्टर_algs();
-			जाओ out;
-		पूर्ण
-	पूर्ण
+	for (i = 0; i < NUM_HASH_TMPLS; i++) {
+		err = __n2_register_one_ahash(&hash_tmpls[i]);
+		if (err) {
+			__n2_unregister_algs();
+			goto out;
+		}
+	}
+	for (i = 0; i < NUM_CIPHER_TMPLS; i++) {
+		err = __n2_register_one_skcipher(&skcipher_tmpls[i]);
+		if (err) {
+			__n2_unregister_algs();
+			goto out;
+		}
+	}
 
 out:
 	mutex_unlock(&spu_lock);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम n2_unरेजिस्टर_algs(व्योम)
-अणु
+static void n2_unregister_algs(void)
+{
 	mutex_lock(&spu_lock);
-	अगर (!--algs_रेजिस्टरed)
-		__n2_unरेजिस्टर_algs();
+	if (!--algs_registered)
+		__n2_unregister_algs();
 	mutex_unlock(&spu_lock);
-पूर्ण
+}
 
-/* To map CWQ queues to पूर्णांकerrupt sources, the hypervisor API provides
+/* To map CWQ queues to interrupt sources, the hypervisor API provides
  * a devino.  This isn't very useful to us because all of the
- * पूर्णांकerrupts listed in the device_node have been translated to
- * Linux भव IRQ cookie numbers.
+ * interrupts listed in the device_node have been translated to
+ * Linux virtual IRQ cookie numbers.
  *
  * So we have to back-translate, going through the 'intr' and 'ino'
  * property tables of the n2cp MDESC node, matching it with the OF
  * 'interrupts' property entries, in order to to figure out which
- * devino goes to which alपढ़ोy-translated IRQ.
+ * devino goes to which already-translated IRQ.
  */
-अटल पूर्णांक find_devino_index(काष्ठा platक्रमm_device *dev, काष्ठा spu_mdesc_info *ip,
-			     अचिन्हित दीर्घ dev_ino)
-अणु
-	स्थिर अचिन्हित पूर्णांक *dev_पूर्णांकrs;
-	अचिन्हित पूर्णांक पूर्णांकr;
-	पूर्णांक i;
+static int find_devino_index(struct platform_device *dev, struct spu_mdesc_info *ip,
+			     unsigned long dev_ino)
+{
+	const unsigned int *dev_intrs;
+	unsigned int intr;
+	int i;
 
-	क्रम (i = 0; i < ip->num_पूर्णांकrs; i++) अणु
-		अगर (ip->ino_table[i].ino == dev_ino)
-			अवरोध;
-	पूर्ण
-	अगर (i == ip->num_पूर्णांकrs)
-		वापस -ENODEV;
+	for (i = 0; i < ip->num_intrs; i++) {
+		if (ip->ino_table[i].ino == dev_ino)
+			break;
+	}
+	if (i == ip->num_intrs)
+		return -ENODEV;
 
-	पूर्णांकr = ip->ino_table[i].पूर्णांकr;
+	intr = ip->ino_table[i].intr;
 
-	dev_पूर्णांकrs = of_get_property(dev->dev.of_node, "interrupts", शून्य);
-	अगर (!dev_पूर्णांकrs)
-		वापस -ENODEV;
+	dev_intrs = of_get_property(dev->dev.of_node, "interrupts", NULL);
+	if (!dev_intrs)
+		return -ENODEV;
 
-	क्रम (i = 0; i < dev->archdata.num_irqs; i++) अणु
-		अगर (dev_पूर्णांकrs[i] == पूर्णांकr)
-			वापस i;
-	पूर्ण
+	for (i = 0; i < dev->archdata.num_irqs; i++) {
+		if (dev_intrs[i] == intr)
+			return i;
+	}
 
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}
 
-अटल पूर्णांक spu_map_ino(काष्ठा platक्रमm_device *dev, काष्ठा spu_mdesc_info *ip,
-		       स्थिर अक्षर *irq_name, काष्ठा spu_queue *p,
+static int spu_map_ino(struct platform_device *dev, struct spu_mdesc_info *ip,
+		       const char *irq_name, struct spu_queue *p,
 		       irq_handler_t handler)
-अणु
-	अचिन्हित दीर्घ herr;
-	पूर्णांक index;
+{
+	unsigned long herr;
+	int index;
 
 	herr = sun4v_ncs_qhandle_to_devino(p->qhandle, &p->devino);
-	अगर (herr)
-		वापस -EINVAL;
+	if (herr)
+		return -EINVAL;
 
 	index = find_devino_index(dev, ip, p->devino);
-	अगर (index < 0)
-		वापस index;
+	if (index < 0)
+		return index;
 
 	p->irq = dev->archdata.irqs[index];
 
-	प्र_लिखो(p->irq_name, "%s-%d", irq_name, index);
+	sprintf(p->irq_name, "%s-%d", irq_name, index);
 
-	वापस request_irq(p->irq, handler, 0, p->irq_name, p);
-पूर्ण
+	return request_irq(p->irq, handler, 0, p->irq_name, p);
+}
 
-अटल काष्ठा kmem_cache *queue_cache[2];
+static struct kmem_cache *queue_cache[2];
 
-अटल व्योम *new_queue(अचिन्हित दीर्घ q_type)
-अणु
-	वापस kmem_cache_zalloc(queue_cache[q_type - 1], GFP_KERNEL);
-पूर्ण
+static void *new_queue(unsigned long q_type)
+{
+	return kmem_cache_zalloc(queue_cache[q_type - 1], GFP_KERNEL);
+}
 
-अटल व्योम मुक्त_queue(व्योम *p, अचिन्हित दीर्घ q_type)
-अणु
-	kmem_cache_मुक्त(queue_cache[q_type - 1], p);
-पूर्ण
+static void free_queue(void *p, unsigned long q_type)
+{
+	kmem_cache_free(queue_cache[q_type - 1], p);
+}
 
-अटल पूर्णांक queue_cache_init(व्योम)
-अणु
-	अगर (!queue_cache[HV_NCS_QTYPE_MAU - 1])
+static int queue_cache_init(void)
+{
+	if (!queue_cache[HV_NCS_QTYPE_MAU - 1])
 		queue_cache[HV_NCS_QTYPE_MAU - 1] =
 			kmem_cache_create("mau_queue",
 					  (MAU_NUM_ENTRIES *
 					   MAU_ENTRY_SIZE),
-					  MAU_ENTRY_SIZE, 0, शून्य);
-	अगर (!queue_cache[HV_NCS_QTYPE_MAU - 1])
-		वापस -ENOMEM;
+					  MAU_ENTRY_SIZE, 0, NULL);
+	if (!queue_cache[HV_NCS_QTYPE_MAU - 1])
+		return -ENOMEM;
 
-	अगर (!queue_cache[HV_NCS_QTYPE_CWQ - 1])
+	if (!queue_cache[HV_NCS_QTYPE_CWQ - 1])
 		queue_cache[HV_NCS_QTYPE_CWQ - 1] =
 			kmem_cache_create("cwq_queue",
 					  (CWQ_NUM_ENTRIES *
 					   CWQ_ENTRY_SIZE),
-					  CWQ_ENTRY_SIZE, 0, शून्य);
-	अगर (!queue_cache[HV_NCS_QTYPE_CWQ - 1]) अणु
+					  CWQ_ENTRY_SIZE, 0, NULL);
+	if (!queue_cache[HV_NCS_QTYPE_CWQ - 1]) {
 		kmem_cache_destroy(queue_cache[HV_NCS_QTYPE_MAU - 1]);
-		queue_cache[HV_NCS_QTYPE_MAU - 1] = शून्य;
-		वापस -ENOMEM;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		queue_cache[HV_NCS_QTYPE_MAU - 1] = NULL;
+		return -ENOMEM;
+	}
+	return 0;
+}
 
-अटल व्योम queue_cache_destroy(व्योम)
-अणु
+static void queue_cache_destroy(void)
+{
 	kmem_cache_destroy(queue_cache[HV_NCS_QTYPE_MAU - 1]);
 	kmem_cache_destroy(queue_cache[HV_NCS_QTYPE_CWQ - 1]);
-	queue_cache[HV_NCS_QTYPE_MAU - 1] = शून्य;
-	queue_cache[HV_NCS_QTYPE_CWQ - 1] = शून्य;
-पूर्ण
+	queue_cache[HV_NCS_QTYPE_MAU - 1] = NULL;
+	queue_cache[HV_NCS_QTYPE_CWQ - 1] = NULL;
+}
 
-अटल दीर्घ spu_queue_रेजिस्टर_workfn(व्योम *arg)
-अणु
-	काष्ठा spu_qreg *qr = arg;
-	काष्ठा spu_queue *p = qr->queue;
-	अचिन्हित दीर्घ q_type = qr->type;
-	अचिन्हित दीर्घ hv_ret;
+static long spu_queue_register_workfn(void *arg)
+{
+	struct spu_qreg *qr = arg;
+	struct spu_queue *p = qr->queue;
+	unsigned long q_type = qr->type;
+	unsigned long hv_ret;
 
 	hv_ret = sun4v_ncs_qconf(q_type, __pa(p->q),
 				 CWQ_NUM_ENTRIES, &p->qhandle);
-	अगर (!hv_ret)
+	if (!hv_ret)
 		sun4v_ncs_sethead_marker(p->qhandle, 0);
 
-	वापस hv_ret ? -EINVAL : 0;
-पूर्ण
+	return hv_ret ? -EINVAL : 0;
+}
 
-अटल पूर्णांक spu_queue_रेजिस्टर(काष्ठा spu_queue *p, अचिन्हित दीर्घ q_type)
-अणु
-	पूर्णांक cpu = cpumask_any_and(&p->sharing, cpu_online_mask);
-	काष्ठा spu_qreg qr = अणु .queue = p, .type = q_type पूर्ण;
+static int spu_queue_register(struct spu_queue *p, unsigned long q_type)
+{
+	int cpu = cpumask_any_and(&p->sharing, cpu_online_mask);
+	struct spu_qreg qr = { .queue = p, .type = q_type };
 
-	वापस work_on_cpu_safe(cpu, spu_queue_रेजिस्टर_workfn, &qr);
-पूर्ण
+	return work_on_cpu_safe(cpu, spu_queue_register_workfn, &qr);
+}
 
-अटल पूर्णांक spu_queue_setup(काष्ठा spu_queue *p)
-अणु
-	पूर्णांक err;
+static int spu_queue_setup(struct spu_queue *p)
+{
+	int err;
 
 	p->q = new_queue(p->q_type);
-	अगर (!p->q)
-		वापस -ENOMEM;
+	if (!p->q)
+		return -ENOMEM;
 
-	err = spu_queue_रेजिस्टर(p, p->q_type);
-	अगर (err) अणु
-		मुक्त_queue(p->q, p->q_type);
-		p->q = शून्य;
-	पूर्ण
+	err = spu_queue_register(p, p->q_type);
+	if (err) {
+		free_queue(p->q, p->q_type);
+		p->q = NULL;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम spu_queue_destroy(काष्ठा spu_queue *p)
-अणु
-	अचिन्हित दीर्घ hv_ret;
+static void spu_queue_destroy(struct spu_queue *p)
+{
+	unsigned long hv_ret;
 
-	अगर (!p->q)
-		वापस;
+	if (!p->q)
+		return;
 
 	hv_ret = sun4v_ncs_qconf(p->q_type, p->qhandle, 0, &p->qhandle);
 
-	अगर (!hv_ret)
-		मुक्त_queue(p->q, p->q_type);
-पूर्ण
+	if (!hv_ret)
+		free_queue(p->q, p->q_type);
+}
 
-अटल व्योम spu_list_destroy(काष्ठा list_head *list)
-अणु
-	काष्ठा spu_queue *p, *n;
+static void spu_list_destroy(struct list_head *list)
+{
+	struct spu_queue *p, *n;
 
-	list_क्रम_each_entry_safe(p, n, list, list) अणु
-		पूर्णांक i;
+	list_for_each_entry_safe(p, n, list, list) {
+		int i;
 
-		क्रम (i = 0; i < NR_CPUS; i++) अणु
-			अगर (cpu_to_cwq[i] == p)
-				cpu_to_cwq[i] = शून्य;
-		पूर्ण
+		for (i = 0; i < NR_CPUS; i++) {
+			if (cpu_to_cwq[i] == p)
+				cpu_to_cwq[i] = NULL;
+		}
 
-		अगर (p->irq) अणु
-			मुक्त_irq(p->irq, p);
+		if (p->irq) {
+			free_irq(p->irq, p);
 			p->irq = 0;
-		पूर्ण
+		}
 		spu_queue_destroy(p);
 		list_del(&p->list);
-		kमुक्त(p);
-	पूर्ण
-पूर्ण
+		kfree(p);
+	}
+}
 
 /* Walk the backward arcs of a CWQ 'exec-unit' node,
- * gathering cpu membership inक्रमmation.
+ * gathering cpu membership information.
  */
-अटल पूर्णांक spu_mdesc_walk_arcs(काष्ठा mdesc_handle *mdesc,
-			       काष्ठा platक्रमm_device *dev,
-			       u64 node, काष्ठा spu_queue *p,
-			       काष्ठा spu_queue **table)
-अणु
+static int spu_mdesc_walk_arcs(struct mdesc_handle *mdesc,
+			       struct platform_device *dev,
+			       u64 node, struct spu_queue *p,
+			       struct spu_queue **table)
+{
 	u64 arc;
 
-	mdesc_क्रम_each_arc(arc, mdesc, node, MDESC_ARC_TYPE_BACK) अणु
+	mdesc_for_each_arc(arc, mdesc, node, MDESC_ARC_TYPE_BACK) {
 		u64 tgt = mdesc_arc_target(mdesc, arc);
-		स्थिर अक्षर *name = mdesc_node_name(mdesc, tgt);
-		स्थिर u64 *id;
+		const char *name = mdesc_node_name(mdesc, tgt);
+		const u64 *id;
 
-		अगर (म_भेद(name, "cpu"))
-			जारी;
-		id = mdesc_get_property(mdesc, tgt, "id", शून्य);
-		अगर (table[*id] != शून्य) अणु
+		if (strcmp(name, "cpu"))
+			continue;
+		id = mdesc_get_property(mdesc, tgt, "id", NULL);
+		if (table[*id] != NULL) {
 			dev_err(&dev->dev, "%pOF: SPU cpu slot already set.\n",
 				dev->dev.of_node);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		cpumask_set_cpu(*id, &p->sharing);
 		table[*id] = p;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /* Process an 'exec-unit' MDESC node of type 'cwq'.  */
-अटल पूर्णांक handle_exec_unit(काष्ठा spu_mdesc_info *ip, काष्ठा list_head *list,
-			    काष्ठा platक्रमm_device *dev, काष्ठा mdesc_handle *mdesc,
-			    u64 node, स्थिर अक्षर *iname, अचिन्हित दीर्घ q_type,
-			    irq_handler_t handler, काष्ठा spu_queue **table)
-अणु
-	काष्ठा spu_queue *p;
-	पूर्णांक err;
+static int handle_exec_unit(struct spu_mdesc_info *ip, struct list_head *list,
+			    struct platform_device *dev, struct mdesc_handle *mdesc,
+			    u64 node, const char *iname, unsigned long q_type,
+			    irq_handler_t handler, struct spu_queue **table)
+{
+	struct spu_queue *p;
+	int err;
 
-	p = kzalloc(माप(काष्ठा spu_queue), GFP_KERNEL);
-	अगर (!p) अणु
+	p = kzalloc(sizeof(struct spu_queue), GFP_KERNEL);
+	if (!p) {
 		dev_err(&dev->dev, "%pOF: Could not allocate SPU queue.\n",
 			dev->dev.of_node);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	cpumask_clear(&p->sharing);
 	spin_lock_init(&p->lock);
@@ -1720,472 +1719,472 @@ out:
 	list_add(&p->list, list);
 
 	err = spu_mdesc_walk_arcs(mdesc, dev, node, p, table);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = spu_queue_setup(p);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस spu_map_ino(dev, ip, iname, p, handler);
-पूर्ण
+	return spu_map_ino(dev, ip, iname, p, handler);
+}
 
-अटल पूर्णांक spu_mdesc_scan(काष्ठा mdesc_handle *mdesc, काष्ठा platक्रमm_device *dev,
-			  काष्ठा spu_mdesc_info *ip, काष्ठा list_head *list,
-			  स्थिर अक्षर *exec_name, अचिन्हित दीर्घ q_type,
-			  irq_handler_t handler, काष्ठा spu_queue **table)
-अणु
-	पूर्णांक err = 0;
+static int spu_mdesc_scan(struct mdesc_handle *mdesc, struct platform_device *dev,
+			  struct spu_mdesc_info *ip, struct list_head *list,
+			  const char *exec_name, unsigned long q_type,
+			  irq_handler_t handler, struct spu_queue **table)
+{
+	int err = 0;
 	u64 node;
 
-	mdesc_क्रम_each_node_by_name(mdesc, node, "exec-unit") अणु
-		स्थिर अक्षर *type;
+	mdesc_for_each_node_by_name(mdesc, node, "exec-unit") {
+		const char *type;
 
-		type = mdesc_get_property(mdesc, node, "type", शून्य);
-		अगर (!type || म_भेद(type, exec_name))
-			जारी;
+		type = mdesc_get_property(mdesc, node, "type", NULL);
+		if (!type || strcmp(type, exec_name))
+			continue;
 
 		err = handle_exec_unit(ip, list, dev, mdesc, node,
 				       exec_name, q_type, handler, table);
-		अगर (err) अणु
+		if (err) {
 			spu_list_destroy(list);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक get_irq_props(काष्ठा mdesc_handle *mdesc, u64 node,
-			 काष्ठा spu_mdesc_info *ip)
-अणु
-	स्थिर u64 *ino;
-	पूर्णांक ino_len;
-	पूर्णांक i;
+static int get_irq_props(struct mdesc_handle *mdesc, u64 node,
+			 struct spu_mdesc_info *ip)
+{
+	const u64 *ino;
+	int ino_len;
+	int i;
 
 	ino = mdesc_get_property(mdesc, node, "ino", &ino_len);
-	अगर (!ino) अणु
-		prपूर्णांकk("NO 'ino'\n");
-		वापस -ENODEV;
-	पूर्ण
+	if (!ino) {
+		printk("NO 'ino'\n");
+		return -ENODEV;
+	}
 
-	ip->num_पूर्णांकrs = ino_len / माप(u64);
-	ip->ino_table = kzalloc((माप(काष्ठा ino_blob) *
-				 ip->num_पूर्णांकrs),
+	ip->num_intrs = ino_len / sizeof(u64);
+	ip->ino_table = kzalloc((sizeof(struct ino_blob) *
+				 ip->num_intrs),
 				GFP_KERNEL);
-	अगर (!ip->ino_table)
-		वापस -ENOMEM;
+	if (!ip->ino_table)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < ip->num_पूर्णांकrs; i++) अणु
-		काष्ठा ino_blob *b = &ip->ino_table[i];
-		b->पूर्णांकr = i + 1;
+	for (i = 0; i < ip->num_intrs; i++) {
+		struct ino_blob *b = &ip->ino_table[i];
+		b->intr = i + 1;
 		b->ino = ino[i];
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक grab_mdesc_irq_props(काष्ठा mdesc_handle *mdesc,
-				काष्ठा platक्रमm_device *dev,
-				काष्ठा spu_mdesc_info *ip,
-				स्थिर अक्षर *node_name)
-अणु
-	स्थिर अचिन्हित पूर्णांक *reg;
+static int grab_mdesc_irq_props(struct mdesc_handle *mdesc,
+				struct platform_device *dev,
+				struct spu_mdesc_info *ip,
+				const char *node_name)
+{
+	const unsigned int *reg;
 	u64 node;
 
-	reg = of_get_property(dev->dev.of_node, "reg", शून्य);
-	अगर (!reg)
-		वापस -ENODEV;
+	reg = of_get_property(dev->dev.of_node, "reg", NULL);
+	if (!reg)
+		return -ENODEV;
 
-	mdesc_क्रम_each_node_by_name(mdesc, node, "virtual-device") अणु
-		स्थिर अक्षर *name;
-		स्थिर u64 *chdl;
+	mdesc_for_each_node_by_name(mdesc, node, "virtual-device") {
+		const char *name;
+		const u64 *chdl;
 
-		name = mdesc_get_property(mdesc, node, "name", शून्य);
-		अगर (!name || म_भेद(name, node_name))
-			जारी;
-		chdl = mdesc_get_property(mdesc, node, "cfg-handle", शून्य);
-		अगर (!chdl || (*chdl != *reg))
-			जारी;
+		name = mdesc_get_property(mdesc, node, "name", NULL);
+		if (!name || strcmp(name, node_name))
+			continue;
+		chdl = mdesc_get_property(mdesc, node, "cfg-handle", NULL);
+		if (!chdl || (*chdl != *reg))
+			continue;
 		ip->cfg_handle = *chdl;
-		वापस get_irq_props(mdesc, node, ip);
-	पूर्ण
+		return get_irq_props(mdesc, node, ip);
+	}
 
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}
 
-अटल अचिन्हित दीर्घ n2_spu_hvapi_major;
-अटल अचिन्हित दीर्घ n2_spu_hvapi_minor;
+static unsigned long n2_spu_hvapi_major;
+static unsigned long n2_spu_hvapi_minor;
 
-अटल पूर्णांक n2_spu_hvapi_रेजिस्टर(व्योम)
-अणु
-	पूर्णांक err;
+static int n2_spu_hvapi_register(void)
+{
+	int err;
 
 	n2_spu_hvapi_major = 2;
 	n2_spu_hvapi_minor = 0;
 
-	err = sun4v_hvapi_रेजिस्टर(HV_GRP_NCS,
+	err = sun4v_hvapi_register(HV_GRP_NCS,
 				   n2_spu_hvapi_major,
 				   &n2_spu_hvapi_minor);
 
-	अगर (!err)
+	if (!err)
 		pr_info("Registered NCS HVAPI version %lu.%lu\n",
 			n2_spu_hvapi_major,
 			n2_spu_hvapi_minor);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम n2_spu_hvapi_unरेजिस्टर(व्योम)
-अणु
-	sun4v_hvapi_unरेजिस्टर(HV_GRP_NCS);
-पूर्ण
+static void n2_spu_hvapi_unregister(void)
+{
+	sun4v_hvapi_unregister(HV_GRP_NCS);
+}
 
-अटल पूर्णांक global_ref;
+static int global_ref;
 
-अटल पूर्णांक grab_global_resources(व्योम)
-अणु
-	पूर्णांक err = 0;
+static int grab_global_resources(void)
+{
+	int err = 0;
 
 	mutex_lock(&spu_lock);
 
-	अगर (global_ref++)
-		जाओ out;
+	if (global_ref++)
+		goto out;
 
-	err = n2_spu_hvapi_रेजिस्टर();
-	अगर (err)
-		जाओ out;
+	err = n2_spu_hvapi_register();
+	if (err)
+		goto out;
 
 	err = queue_cache_init();
-	अगर (err)
-		जाओ out_hvapi_release;
+	if (err)
+		goto out_hvapi_release;
 
 	err = -ENOMEM;
-	cpu_to_cwq = kसुस्मृति(NR_CPUS, माप(काष्ठा spu_queue *),
+	cpu_to_cwq = kcalloc(NR_CPUS, sizeof(struct spu_queue *),
 			     GFP_KERNEL);
-	अगर (!cpu_to_cwq)
-		जाओ out_queue_cache_destroy;
+	if (!cpu_to_cwq)
+		goto out_queue_cache_destroy;
 
-	cpu_to_mau = kसुस्मृति(NR_CPUS, माप(काष्ठा spu_queue *),
+	cpu_to_mau = kcalloc(NR_CPUS, sizeof(struct spu_queue *),
 			     GFP_KERNEL);
-	अगर (!cpu_to_mau)
-		जाओ out_मुक्त_cwq_table;
+	if (!cpu_to_mau)
+		goto out_free_cwq_table;
 
 	err = 0;
 
 out:
-	अगर (err)
+	if (err)
 		global_ref--;
 	mutex_unlock(&spu_lock);
-	वापस err;
+	return err;
 
-out_मुक्त_cwq_table:
-	kमुक्त(cpu_to_cwq);
-	cpu_to_cwq = शून्य;
+out_free_cwq_table:
+	kfree(cpu_to_cwq);
+	cpu_to_cwq = NULL;
 
 out_queue_cache_destroy:
 	queue_cache_destroy();
 
 out_hvapi_release:
-	n2_spu_hvapi_unरेजिस्टर();
-	जाओ out;
-पूर्ण
+	n2_spu_hvapi_unregister();
+	goto out;
+}
 
-अटल व्योम release_global_resources(व्योम)
-अणु
+static void release_global_resources(void)
+{
 	mutex_lock(&spu_lock);
-	अगर (!--global_ref) अणु
-		kमुक्त(cpu_to_cwq);
-		cpu_to_cwq = शून्य;
+	if (!--global_ref) {
+		kfree(cpu_to_cwq);
+		cpu_to_cwq = NULL;
 
-		kमुक्त(cpu_to_mau);
-		cpu_to_mau = शून्य;
+		kfree(cpu_to_mau);
+		cpu_to_mau = NULL;
 
 		queue_cache_destroy();
-		n2_spu_hvapi_unरेजिस्टर();
-	पूर्ण
+		n2_spu_hvapi_unregister();
+	}
 	mutex_unlock(&spu_lock);
-पूर्ण
+}
 
-अटल काष्ठा n2_crypto *alloc_n2cp(व्योम)
-अणु
-	काष्ठा n2_crypto *np = kzalloc(माप(काष्ठा n2_crypto), GFP_KERNEL);
+static struct n2_crypto *alloc_n2cp(void)
+{
+	struct n2_crypto *np = kzalloc(sizeof(struct n2_crypto), GFP_KERNEL);
 
-	अगर (np)
+	if (np)
 		INIT_LIST_HEAD(&np->cwq_list);
 
-	वापस np;
-पूर्ण
+	return np;
+}
 
-अटल व्योम मुक्त_n2cp(काष्ठा n2_crypto *np)
-अणु
-	kमुक्त(np->cwq_info.ino_table);
-	np->cwq_info.ino_table = शून्य;
+static void free_n2cp(struct n2_crypto *np)
+{
+	kfree(np->cwq_info.ino_table);
+	np->cwq_info.ino_table = NULL;
 
-	kमुक्त(np);
-पूर्ण
+	kfree(np);
+}
 
-अटल व्योम n2_spu_driver_version(व्योम)
-अणु
-	अटल पूर्णांक n2_spu_version_prपूर्णांकed;
+static void n2_spu_driver_version(void)
+{
+	static int n2_spu_version_printed;
 
-	अगर (n2_spu_version_prपूर्णांकed++ == 0)
+	if (n2_spu_version_printed++ == 0)
 		pr_info("%s", version);
-पूर्ण
+}
 
-अटल पूर्णांक n2_crypto_probe(काष्ठा platक्रमm_device *dev)
-अणु
-	काष्ठा mdesc_handle *mdesc;
-	काष्ठा n2_crypto *np;
-	पूर्णांक err;
+static int n2_crypto_probe(struct platform_device *dev)
+{
+	struct mdesc_handle *mdesc;
+	struct n2_crypto *np;
+	int err;
 
 	n2_spu_driver_version();
 
 	pr_info("Found N2CP at %pOF\n", dev->dev.of_node);
 
 	np = alloc_n2cp();
-	अगर (!np) अणु
+	if (!np) {
 		dev_err(&dev->dev, "%pOF: Unable to allocate n2cp.\n",
 			dev->dev.of_node);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	err = grab_global_resources();
-	अगर (err) अणु
+	if (err) {
 		dev_err(&dev->dev, "%pOF: Unable to grab global resources.\n",
 			dev->dev.of_node);
-		जाओ out_मुक्त_n2cp;
-	पूर्ण
+		goto out_free_n2cp;
+	}
 
 	mdesc = mdesc_grab();
 
-	अगर (!mdesc) अणु
+	if (!mdesc) {
 		dev_err(&dev->dev, "%pOF: Unable to grab MDESC.\n",
 			dev->dev.of_node);
 		err = -ENODEV;
-		जाओ out_मुक्त_global;
-	पूर्ण
+		goto out_free_global;
+	}
 	err = grab_mdesc_irq_props(mdesc, dev, &np->cwq_info, "n2cp");
-	अगर (err) अणु
+	if (err) {
 		dev_err(&dev->dev, "%pOF: Unable to grab IRQ props.\n",
 			dev->dev.of_node);
 		mdesc_release(mdesc);
-		जाओ out_मुक्त_global;
-	पूर्ण
+		goto out_free_global;
+	}
 
 	err = spu_mdesc_scan(mdesc, dev, &np->cwq_info, &np->cwq_list,
-			     "cwq", HV_NCS_QTYPE_CWQ, cwq_पूर्णांकr,
+			     "cwq", HV_NCS_QTYPE_CWQ, cwq_intr,
 			     cpu_to_cwq);
 	mdesc_release(mdesc);
 
-	अगर (err) अणु
+	if (err) {
 		dev_err(&dev->dev, "%pOF: CWQ MDESC scan failed.\n",
 			dev->dev.of_node);
-		जाओ out_मुक्त_global;
-	पूर्ण
+		goto out_free_global;
+	}
 
-	err = n2_रेजिस्टर_algs();
-	अगर (err) अणु
+	err = n2_register_algs();
+	if (err) {
 		dev_err(&dev->dev, "%pOF: Unable to register algorithms.\n",
 			dev->dev.of_node);
-		जाओ out_मुक्त_spu_list;
-	पूर्ण
+		goto out_free_spu_list;
+	}
 
 	dev_set_drvdata(&dev->dev, np);
 
-	वापस 0;
+	return 0;
 
-out_मुक्त_spu_list:
+out_free_spu_list:
 	spu_list_destroy(&np->cwq_list);
 
-out_मुक्त_global:
+out_free_global:
 	release_global_resources();
 
-out_मुक्त_n2cp:
-	मुक्त_n2cp(np);
+out_free_n2cp:
+	free_n2cp(np);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक n2_crypto_हटाओ(काष्ठा platक्रमm_device *dev)
-अणु
-	काष्ठा n2_crypto *np = dev_get_drvdata(&dev->dev);
+static int n2_crypto_remove(struct platform_device *dev)
+{
+	struct n2_crypto *np = dev_get_drvdata(&dev->dev);
 
-	n2_unरेजिस्टर_algs();
+	n2_unregister_algs();
 
 	spu_list_destroy(&np->cwq_list);
 
 	release_global_resources();
 
-	मुक्त_n2cp(np);
+	free_n2cp(np);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा n2_mau *alloc_ncp(व्योम)
-अणु
-	काष्ठा n2_mau *mp = kzalloc(माप(काष्ठा n2_mau), GFP_KERNEL);
+static struct n2_mau *alloc_ncp(void)
+{
+	struct n2_mau *mp = kzalloc(sizeof(struct n2_mau), GFP_KERNEL);
 
-	अगर (mp)
+	if (mp)
 		INIT_LIST_HEAD(&mp->mau_list);
 
-	वापस mp;
-पूर्ण
+	return mp;
+}
 
-अटल व्योम मुक्त_ncp(काष्ठा n2_mau *mp)
-अणु
-	kमुक्त(mp->mau_info.ino_table);
-	mp->mau_info.ino_table = शून्य;
+static void free_ncp(struct n2_mau *mp)
+{
+	kfree(mp->mau_info.ino_table);
+	mp->mau_info.ino_table = NULL;
 
-	kमुक्त(mp);
-पूर्ण
+	kfree(mp);
+}
 
-अटल पूर्णांक n2_mau_probe(काष्ठा platक्रमm_device *dev)
-अणु
-	काष्ठा mdesc_handle *mdesc;
-	काष्ठा n2_mau *mp;
-	पूर्णांक err;
+static int n2_mau_probe(struct platform_device *dev)
+{
+	struct mdesc_handle *mdesc;
+	struct n2_mau *mp;
+	int err;
 
 	n2_spu_driver_version();
 
 	pr_info("Found NCP at %pOF\n", dev->dev.of_node);
 
 	mp = alloc_ncp();
-	अगर (!mp) अणु
+	if (!mp) {
 		dev_err(&dev->dev, "%pOF: Unable to allocate ncp.\n",
 			dev->dev.of_node);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	err = grab_global_resources();
-	अगर (err) अणु
+	if (err) {
 		dev_err(&dev->dev, "%pOF: Unable to grab global resources.\n",
 			dev->dev.of_node);
-		जाओ out_मुक्त_ncp;
-	पूर्ण
+		goto out_free_ncp;
+	}
 
 	mdesc = mdesc_grab();
 
-	अगर (!mdesc) अणु
+	if (!mdesc) {
 		dev_err(&dev->dev, "%pOF: Unable to grab MDESC.\n",
 			dev->dev.of_node);
 		err = -ENODEV;
-		जाओ out_मुक्त_global;
-	पूर्ण
+		goto out_free_global;
+	}
 
 	err = grab_mdesc_irq_props(mdesc, dev, &mp->mau_info, "ncp");
-	अगर (err) अणु
+	if (err) {
 		dev_err(&dev->dev, "%pOF: Unable to grab IRQ props.\n",
 			dev->dev.of_node);
 		mdesc_release(mdesc);
-		जाओ out_मुक्त_global;
-	पूर्ण
+		goto out_free_global;
+	}
 
 	err = spu_mdesc_scan(mdesc, dev, &mp->mau_info, &mp->mau_list,
-			     "mau", HV_NCS_QTYPE_MAU, mau_पूर्णांकr,
+			     "mau", HV_NCS_QTYPE_MAU, mau_intr,
 			     cpu_to_mau);
 	mdesc_release(mdesc);
 
-	अगर (err) अणु
+	if (err) {
 		dev_err(&dev->dev, "%pOF: MAU MDESC scan failed.\n",
 			dev->dev.of_node);
-		जाओ out_मुक्त_global;
-	पूर्ण
+		goto out_free_global;
+	}
 
 	dev_set_drvdata(&dev->dev, mp);
 
-	वापस 0;
+	return 0;
 
-out_मुक्त_global:
+out_free_global:
 	release_global_resources();
 
-out_मुक्त_ncp:
-	मुक्त_ncp(mp);
+out_free_ncp:
+	free_ncp(mp);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक n2_mau_हटाओ(काष्ठा platक्रमm_device *dev)
-अणु
-	काष्ठा n2_mau *mp = dev_get_drvdata(&dev->dev);
+static int n2_mau_remove(struct platform_device *dev)
+{
+	struct n2_mau *mp = dev_get_drvdata(&dev->dev);
 
 	spu_list_destroy(&mp->mau_list);
 
 	release_global_resources();
 
-	मुक्त_ncp(mp);
+	free_ncp(mp);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id n2_crypto_match[] = अणु
-	अणु
+static const struct of_device_id n2_crypto_match[] = {
+	{
 		.name = "n2cp",
 		.compatible = "SUNW,n2-cwq",
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "n2cp",
 		.compatible = "SUNW,vf-cwq",
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "n2cp",
 		.compatible = "SUNW,kt-cwq",
-	पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+	},
+	{},
+};
 
 MODULE_DEVICE_TABLE(of, n2_crypto_match);
 
-अटल काष्ठा platक्रमm_driver n2_crypto_driver = अणु
-	.driver = अणु
+static struct platform_driver n2_crypto_driver = {
+	.driver = {
 		.name		=	"n2cp",
 		.of_match_table	=	n2_crypto_match,
-	पूर्ण,
+	},
 	.probe		=	n2_crypto_probe,
-	.हटाओ		=	n2_crypto_हटाओ,
-पूर्ण;
+	.remove		=	n2_crypto_remove,
+};
 
-अटल स्थिर काष्ठा of_device_id n2_mau_match[] = अणु
-	अणु
+static const struct of_device_id n2_mau_match[] = {
+	{
 		.name = "ncp",
 		.compatible = "SUNW,n2-mau",
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "ncp",
 		.compatible = "SUNW,vf-mau",
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "ncp",
 		.compatible = "SUNW,kt-mau",
-	पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+	},
+	{},
+};
 
 MODULE_DEVICE_TABLE(of, n2_mau_match);
 
-अटल काष्ठा platक्रमm_driver n2_mau_driver = अणु
-	.driver = अणु
+static struct platform_driver n2_mau_driver = {
+	.driver = {
 		.name		=	"ncp",
 		.of_match_table	=	n2_mau_match,
-	पूर्ण,
+	},
 	.probe		=	n2_mau_probe,
-	.हटाओ		=	n2_mau_हटाओ,
-पूर्ण;
+	.remove		=	n2_mau_remove,
+};
 
-अटल काष्ठा platक्रमm_driver * स्थिर drivers[] = अणु
+static struct platform_driver * const drivers[] = {
 	&n2_crypto_driver,
 	&n2_mau_driver,
-पूर्ण;
+};
 
-अटल पूर्णांक __init n2_init(व्योम)
-अणु
-	वापस platक्रमm_रेजिस्टर_drivers(drivers, ARRAY_SIZE(drivers));
-पूर्ण
+static int __init n2_init(void)
+{
+	return platform_register_drivers(drivers, ARRAY_SIZE(drivers));
+}
 
-अटल व्योम __निकास n2_निकास(व्योम)
-अणु
-	platक्रमm_unरेजिस्टर_drivers(drivers, ARRAY_SIZE(drivers));
-पूर्ण
+static void __exit n2_exit(void)
+{
+	platform_unregister_drivers(drivers, ARRAY_SIZE(drivers));
+}
 
 module_init(n2_init);
-module_निकास(n2_निकास);
+module_exit(n2_exit);

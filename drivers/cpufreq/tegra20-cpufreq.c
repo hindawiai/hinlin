@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2010 Google, Inc.
  *
@@ -8,107 +7,107 @@
  *	Based on arch/arm/plat-omap/cpu-omap.c, (C) 2005 Nokia Corporation
  */
 
-#समावेश <linux/bits.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/err.h>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_opp.h>
-#समावेश <linux/types.h>
+#include <linux/bits.h>
+#include <linux/cpu.h>
+#include <linux/err.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
+#include <linux/pm_opp.h>
+#include <linux/types.h>
 
-#समावेश <soc/tegra/common.h>
-#समावेश <soc/tegra/fuse.h>
+#include <soc/tegra/common.h>
+#include <soc/tegra/fuse.h>
 
-अटल bool cpu0_node_has_opp_v2_prop(व्योम)
-अणु
-	काष्ठा device_node *np = of_cpu_device_node_get(0);
+static bool cpu0_node_has_opp_v2_prop(void)
+{
+	struct device_node *np = of_cpu_device_node_get(0);
 	bool ret = false;
 
-	अगर (of_get_property(np, "operating-points-v2", शून्य))
+	if (of_get_property(np, "operating-points-v2", NULL))
 		ret = true;
 
 	of_node_put(np);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम tegra20_cpufreq_put_supported_hw(व्योम *opp_table)
-अणु
+static void tegra20_cpufreq_put_supported_hw(void *opp_table)
+{
 	dev_pm_opp_put_supported_hw(opp_table);
-पूर्ण
+}
 
-अटल व्योम tegra20_cpufreq_dt_unरेजिस्टर(व्योम *cpufreq_dt)
-अणु
-	platक्रमm_device_unरेजिस्टर(cpufreq_dt);
-पूर्ण
+static void tegra20_cpufreq_dt_unregister(void *cpufreq_dt)
+{
+	platform_device_unregister(cpufreq_dt);
+}
 
-अटल पूर्णांक tegra20_cpufreq_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा platक्रमm_device *cpufreq_dt;
-	काष्ठा opp_table *opp_table;
-	काष्ठा device *cpu_dev;
+static int tegra20_cpufreq_probe(struct platform_device *pdev)
+{
+	struct platform_device *cpufreq_dt;
+	struct opp_table *opp_table;
+	struct device *cpu_dev;
 	u32 versions[2];
-	पूर्णांक err;
+	int err;
 
-	अगर (!cpu0_node_has_opp_v2_prop()) अणु
+	if (!cpu0_node_has_opp_v2_prop()) {
 		dev_err(&pdev->dev, "operating points not found\n");
 		dev_err(&pdev->dev, "please update your device tree\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (of_machine_is_compatible("nvidia,tegra20")) अणु
+	if (of_machine_is_compatible("nvidia,tegra20")) {
 		versions[0] = BIT(tegra_sku_info.cpu_process_id);
-		versions[1] = BIT(tegra_sku_info.soc_speeकरो_id);
-	पूर्ण अन्यथा अणु
+		versions[1] = BIT(tegra_sku_info.soc_speedo_id);
+	} else {
 		versions[0] = BIT(tegra_sku_info.cpu_process_id);
-		versions[1] = BIT(tegra_sku_info.cpu_speeकरो_id);
-	पूर्ण
+		versions[1] = BIT(tegra_sku_info.cpu_speedo_id);
+	}
 
 	dev_info(&pdev->dev, "hardware version 0x%x 0x%x\n",
 		 versions[0], versions[1]);
 
 	cpu_dev = get_cpu_device(0);
-	अगर (WARN_ON(!cpu_dev))
-		वापस -ENODEV;
+	if (WARN_ON(!cpu_dev))
+		return -ENODEV;
 
 	opp_table = dev_pm_opp_set_supported_hw(cpu_dev, versions, 2);
 	err = PTR_ERR_OR_ZERO(opp_table);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "failed to set supported hw: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	err = devm_add_action_or_reset(&pdev->dev,
 				       tegra20_cpufreq_put_supported_hw,
 				       opp_table);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	cpufreq_dt = platक्रमm_device_रेजिस्टर_simple("cpufreq-dt", -1, शून्य, 0);
+	cpufreq_dt = platform_device_register_simple("cpufreq-dt", -1, NULL, 0);
 	err = PTR_ERR_OR_ZERO(cpufreq_dt);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev,
 			"failed to create cpufreq-dt device: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	err = devm_add_action_or_reset(&pdev->dev,
-				       tegra20_cpufreq_dt_unरेजिस्टर,
+				       tegra20_cpufreq_dt_unregister,
 				       cpufreq_dt);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver tegra20_cpufreq_driver = अणु
+static struct platform_driver tegra20_cpufreq_driver = {
 	.probe		= tegra20_cpufreq_probe,
-	.driver		= अणु
+	.driver		= {
 		.name	= "tegra20-cpufreq",
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(tegra20_cpufreq_driver);
+	},
+};
+module_platform_driver(tegra20_cpufreq_driver);
 
 MODULE_ALIAS("platform:tegra20-cpufreq");
 MODULE_AUTHOR("Colin Cross <ccross@android.com>");

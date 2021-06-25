@@ -1,27 +1,26 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __PERF_UNWIND_LIBDW_H
-#घोषणा __PERF_UNWIND_LIBDW_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __PERF_UNWIND_LIBDW_H
+#define __PERF_UNWIND_LIBDW_H
 
-#समावेश <elfutils/libdwfl.h>
-#समावेश "unwind.h"
+#include <elfutils/libdwfl.h>
+#include "unwind.h"
 
-काष्ठा machine;
-काष्ठा perf_sample;
-काष्ठा thपढ़ो;
+struct machine;
+struct perf_sample;
+struct thread;
 
-bool libdw__arch_set_initial_रेजिस्टरs(Dwfl_Thपढ़ो *thपढ़ो, व्योम *arg);
+bool libdw__arch_set_initial_registers(Dwfl_Thread *thread, void *arg);
 
-काष्ठा unwind_info अणु
+struct unwind_info {
 	Dwfl			*dwfl;
-	काष्ठा perf_sample      *sample;
-	काष्ठा machine          *machine;
-	काष्ठा thपढ़ो           *thपढ़ो;
+	struct perf_sample      *sample;
+	struct machine          *machine;
+	struct thread           *thread;
 	unwind_entry_cb_t	cb;
-	व्योम			*arg;
-	पूर्णांक			max_stack;
-	पूर्णांक			idx;
-	काष्ठा unwind_entry	entries[];
-पूर्ण;
+	void			*arg;
+	int			max_stack;
+	int			idx;
+	struct unwind_entry	entries[];
+};
 
-#पूर्ण_अगर /* __PERF_UNWIND_LIBDW_H */
+#endif /* __PERF_UNWIND_LIBDW_H */

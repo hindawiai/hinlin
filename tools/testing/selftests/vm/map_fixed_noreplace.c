@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
 /*
  * Test that MAP_FIXED_NOREPLACE works.
@@ -8,200 +7,200 @@
  * Copyright 2018, Michael Ellerman, IBM Corporation.
  */
 
-#समावेश <sys/mman.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <unistd.h>
+#include <sys/mman.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
-#अगर_अघोषित MAP_FIXED_NOREPLACE
-#घोषणा MAP_FIXED_NOREPLACE 0x100000
-#पूर्ण_अगर
+#ifndef MAP_FIXED_NOREPLACE
+#define MAP_FIXED_NOREPLACE 0x100000
+#endif
 
-#घोषणा BASE_ADDRESS	(256ul * 1024 * 1024)
+#define BASE_ADDRESS	(256ul * 1024 * 1024)
 
 
-अटल व्योम dump_maps(व्योम)
-अणु
-	अक्षर cmd[32];
+static void dump_maps(void)
+{
+	char cmd[32];
 
-	snम_लिखो(cmd, माप(cmd), "cat /proc/%d/maps", getpid());
-	प्रणाली(cmd);
-पूर्ण
+	snprintf(cmd, sizeof(cmd), "cat /proc/%d/maps", getpid());
+	system(cmd);
+}
 
-पूर्णांक मुख्य(व्योम)
-अणु
-	अचिन्हित दीर्घ flags, addr, size, page_size;
-	अक्षर *p;
+int main(void)
+{
+	unsigned long flags, addr, size, page_size;
+	char *p;
 
 	page_size = sysconf(_SC_PAGE_SIZE);
 
 	flags = MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED_NOREPLACE;
 
 	// Check we can map all the areas we need below
-	त्रुटि_सं = 0;
+	errno = 0;
 	addr = BASE_ADDRESS;
 	size = 5 * page_size;
-	p = mmap((व्योम *)addr, size, PROT_NONE, flags, -1, 0);
+	p = mmap((void *)addr, size, PROT_NONE, flags, -1, 0);
 
-	म_लिखो("mmap() @ 0x%lx-0x%lx p=%p result=%m\n", addr, addr + size, p);
+	printf("mmap() @ 0x%lx-0x%lx p=%p result=%m\n", addr, addr + size, p);
 
-	अगर (p == MAP_FAILED) अणु
+	if (p == MAP_FAILED) {
 		dump_maps();
-		म_लिखो("Error: couldn't map the space we need for the test\n");
-		वापस 1;
-	पूर्ण
+		printf("Error: couldn't map the space we need for the test\n");
+		return 1;
+	}
 
-	त्रुटि_सं = 0;
-	अगर (munmap((व्योम *)addr, 5 * page_size) != 0) अणु
+	errno = 0;
+	if (munmap((void *)addr, 5 * page_size) != 0) {
 		dump_maps();
-		म_लिखो("Error: munmap failed!?\n");
-		वापस 1;
-	पूर्ण
-	म_लिखो("unmap() successful\n");
+		printf("Error: munmap failed!?\n");
+		return 1;
+	}
+	printf("unmap() successful\n");
 
-	त्रुटि_सं = 0;
+	errno = 0;
 	addr = BASE_ADDRESS + page_size;
 	size = 3 * page_size;
-	p = mmap((व्योम *)addr, size, PROT_NONE, flags, -1, 0);
-	म_लिखो("mmap() @ 0x%lx-0x%lx p=%p result=%m\n", addr, addr + size, p);
+	p = mmap((void *)addr, size, PROT_NONE, flags, -1, 0);
+	printf("mmap() @ 0x%lx-0x%lx p=%p result=%m\n", addr, addr + size, p);
 
-	अगर (p == MAP_FAILED) अणु
+	if (p == MAP_FAILED) {
 		dump_maps();
-		म_लिखो("Error: first mmap() failed unexpectedly\n");
-		वापस 1;
-	पूर्ण
+		printf("Error: first mmap() failed unexpectedly\n");
+		return 1;
+	}
 
 	/*
 	 * Exact same mapping again:
-	 *   base |  मुक्त  | new
+	 *   base |  free  | new
 	 *     +1 | mapped | new
 	 *     +2 | mapped | new
 	 *     +3 | mapped | new
-	 *     +4 |  मुक्त  | new
+	 *     +4 |  free  | new
 	 */
-	त्रुटि_सं = 0;
+	errno = 0;
 	addr = BASE_ADDRESS;
 	size = 5 * page_size;
-	p = mmap((व्योम *)addr, size, PROT_NONE, flags, -1, 0);
-	म_लिखो("mmap() @ 0x%lx-0x%lx p=%p result=%m\n", addr, addr + size, p);
+	p = mmap((void *)addr, size, PROT_NONE, flags, -1, 0);
+	printf("mmap() @ 0x%lx-0x%lx p=%p result=%m\n", addr, addr + size, p);
 
-	अगर (p != MAP_FAILED) अणु
+	if (p != MAP_FAILED) {
 		dump_maps();
-		म_लिखो("Error:1: mmap() succeeded when it shouldn't have\n");
-		वापस 1;
-	पूर्ण
+		printf("Error:1: mmap() succeeded when it shouldn't have\n");
+		return 1;
+	}
 
 	/*
 	 * Second mapping contained within first:
 	 *
-	 *   base |  मुक्त  |
+	 *   base |  free  |
 	 *     +1 | mapped |
 	 *     +2 | mapped | new
 	 *     +3 | mapped |
-	 *     +4 |  मुक्त  |
+	 *     +4 |  free  |
 	 */
-	त्रुटि_सं = 0;
+	errno = 0;
 	addr = BASE_ADDRESS + (2 * page_size);
 	size = page_size;
-	p = mmap((व्योम *)addr, size, PROT_NONE, flags, -1, 0);
-	म_लिखो("mmap() @ 0x%lx-0x%lx p=%p result=%m\n", addr, addr + size, p);
+	p = mmap((void *)addr, size, PROT_NONE, flags, -1, 0);
+	printf("mmap() @ 0x%lx-0x%lx p=%p result=%m\n", addr, addr + size, p);
 
-	अगर (p != MAP_FAILED) अणु
+	if (p != MAP_FAILED) {
 		dump_maps();
-		म_लिखो("Error:2: mmap() succeeded when it shouldn't have\n");
-		वापस 1;
-	पूर्ण
+		printf("Error:2: mmap() succeeded when it shouldn't have\n");
+		return 1;
+	}
 
 	/*
 	 * Overlap end of existing mapping:
-	 *   base |  मुक्त  |
+	 *   base |  free  |
 	 *     +1 | mapped |
 	 *     +2 | mapped |
 	 *     +3 | mapped | new
-	 *     +4 |  मुक्त  | new
+	 *     +4 |  free  | new
 	 */
-	त्रुटि_सं = 0;
+	errno = 0;
 	addr = BASE_ADDRESS + (3 * page_size);
 	size = 2 * page_size;
-	p = mmap((व्योम *)addr, size, PROT_NONE, flags, -1, 0);
-	म_लिखो("mmap() @ 0x%lx-0x%lx p=%p result=%m\n", addr, addr + size, p);
+	p = mmap((void *)addr, size, PROT_NONE, flags, -1, 0);
+	printf("mmap() @ 0x%lx-0x%lx p=%p result=%m\n", addr, addr + size, p);
 
-	अगर (p != MAP_FAILED) अणु
+	if (p != MAP_FAILED) {
 		dump_maps();
-		म_लिखो("Error:3: mmap() succeeded when it shouldn't have\n");
-		वापस 1;
-	पूर्ण
+		printf("Error:3: mmap() succeeded when it shouldn't have\n");
+		return 1;
+	}
 
 	/*
 	 * Overlap start of existing mapping:
-	 *   base |  मुक्त  | new
+	 *   base |  free  | new
 	 *     +1 | mapped | new
 	 *     +2 | mapped |
 	 *     +3 | mapped |
-	 *     +4 |  मुक्त  |
+	 *     +4 |  free  |
 	 */
-	त्रुटि_सं = 0;
+	errno = 0;
 	addr = BASE_ADDRESS;
 	size = 2 * page_size;
-	p = mmap((व्योम *)addr, size, PROT_NONE, flags, -1, 0);
-	म_लिखो("mmap() @ 0x%lx-0x%lx p=%p result=%m\n", addr, addr + size, p);
+	p = mmap((void *)addr, size, PROT_NONE, flags, -1, 0);
+	printf("mmap() @ 0x%lx-0x%lx p=%p result=%m\n", addr, addr + size, p);
 
-	अगर (p != MAP_FAILED) अणु
+	if (p != MAP_FAILED) {
 		dump_maps();
-		म_लिखो("Error:4: mmap() succeeded when it shouldn't have\n");
-		वापस 1;
-	पूर्ण
+		printf("Error:4: mmap() succeeded when it shouldn't have\n");
+		return 1;
+	}
 
 	/*
 	 * Adjacent to start of existing mapping:
-	 *   base |  मुक्त  | new
+	 *   base |  free  | new
 	 *     +1 | mapped |
 	 *     +2 | mapped |
 	 *     +3 | mapped |
-	 *     +4 |  मुक्त  |
+	 *     +4 |  free  |
 	 */
-	त्रुटि_सं = 0;
+	errno = 0;
 	addr = BASE_ADDRESS;
 	size = page_size;
-	p = mmap((व्योम *)addr, size, PROT_NONE, flags, -1, 0);
-	म_लिखो("mmap() @ 0x%lx-0x%lx p=%p result=%m\n", addr, addr + size, p);
+	p = mmap((void *)addr, size, PROT_NONE, flags, -1, 0);
+	printf("mmap() @ 0x%lx-0x%lx p=%p result=%m\n", addr, addr + size, p);
 
-	अगर (p == MAP_FAILED) अणु
+	if (p == MAP_FAILED) {
 		dump_maps();
-		म_लिखो("Error:5: mmap() failed when it shouldn't have\n");
-		वापस 1;
-	पूर्ण
+		printf("Error:5: mmap() failed when it shouldn't have\n");
+		return 1;
+	}
 
 	/*
 	 * Adjacent to end of existing mapping:
-	 *   base |  मुक्त  |
+	 *   base |  free  |
 	 *     +1 | mapped |
 	 *     +2 | mapped |
 	 *     +3 | mapped |
-	 *     +4 |  मुक्त  |  new
+	 *     +4 |  free  |  new
 	 */
-	त्रुटि_सं = 0;
+	errno = 0;
 	addr = BASE_ADDRESS + (4 * page_size);
 	size = page_size;
-	p = mmap((व्योम *)addr, size, PROT_NONE, flags, -1, 0);
-	म_लिखो("mmap() @ 0x%lx-0x%lx p=%p result=%m\n", addr, addr + size, p);
+	p = mmap((void *)addr, size, PROT_NONE, flags, -1, 0);
+	printf("mmap() @ 0x%lx-0x%lx p=%p result=%m\n", addr, addr + size, p);
 
-	अगर (p == MAP_FAILED) अणु
+	if (p == MAP_FAILED) {
 		dump_maps();
-		म_लिखो("Error:6: mmap() failed when it shouldn't have\n");
-		वापस 1;
-	पूर्ण
+		printf("Error:6: mmap() failed when it shouldn't have\n");
+		return 1;
+	}
 
 	addr = BASE_ADDRESS;
 	size = 5 * page_size;
-	अगर (munmap((व्योम *)addr, size) != 0) अणु
+	if (munmap((void *)addr, size) != 0) {
 		dump_maps();
-		म_लिखो("Error: munmap failed!?\n");
-		वापस 1;
-	पूर्ण
-	म_लिखो("unmap() successful\n");
+		printf("Error: munmap failed!?\n");
+		return 1;
+	}
+	printf("unmap() successful\n");
 
-	म_लिखो("OK\n");
-	वापस 0;
-पूर्ण
+	printf("OK\n");
+	return 0;
+}

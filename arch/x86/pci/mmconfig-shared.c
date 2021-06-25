@@ -1,10 +1,9 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * mmconfig-shared.c - Low-level direct PCI config space access via
  *                     MMCONFIG - common code between i386 and x86-64.
  *
- * This code करोes:
+ * This code does:
  * - known chipset handling
  * - ACPI decoding and validation
  *
@@ -12,73 +11,73 @@
  * themselves.
  */
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/init.h>
-#समावेश <linux/biपंचांगap.h>
-#समावेश <linux/dmi.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/rculist.h>
-#समावेश <यंत्र/e820/api.h>
-#समावेश <यंत्र/pci_x86.h>
-#समावेश <यंत्र/acpi.h>
+#include <linux/acpi.h>
+#include <linux/pci.h>
+#include <linux/init.h>
+#include <linux/bitmap.h>
+#include <linux/dmi.h>
+#include <linux/slab.h>
+#include <linux/mutex.h>
+#include <linux/rculist.h>
+#include <asm/e820/api.h>
+#include <asm/pci_x86.h>
+#include <asm/acpi.h>
 
-#घोषणा PREFIX "PCI: "
+#define PREFIX "PCI: "
 
-/* Indicate अगर the mmcfg resources have been placed पूर्णांकo the resource table. */
-अटल bool pci_mmcfg_running_state;
-अटल bool pci_mmcfg_arch_init_failed;
-अटल DEFINE_MUTEX(pci_mmcfg_lock);
-#घोषणा pci_mmcfg_lock_held() lock_is_held(&(pci_mmcfg_lock).dep_map)
+/* Indicate if the mmcfg resources have been placed into the resource table. */
+static bool pci_mmcfg_running_state;
+static bool pci_mmcfg_arch_init_failed;
+static DEFINE_MUTEX(pci_mmcfg_lock);
+#define pci_mmcfg_lock_held() lock_is_held(&(pci_mmcfg_lock).dep_map)
 
 LIST_HEAD(pci_mmcfg_list);
 
-अटल व्योम __init pci_mmconfig_हटाओ(काष्ठा pci_mmcfg_region *cfg)
-अणु
-	अगर (cfg->res.parent)
+static void __init pci_mmconfig_remove(struct pci_mmcfg_region *cfg)
+{
+	if (cfg->res.parent)
 		release_resource(&cfg->res);
 	list_del(&cfg->list);
-	kमुक्त(cfg);
-पूर्ण
+	kfree(cfg);
+}
 
-अटल व्योम __init मुक्त_all_mmcfg(व्योम)
-अणु
-	काष्ठा pci_mmcfg_region *cfg, *पंचांगp;
+static void __init free_all_mmcfg(void)
+{
+	struct pci_mmcfg_region *cfg, *tmp;
 
-	pci_mmcfg_arch_मुक्त();
-	list_क्रम_each_entry_safe(cfg, पंचांगp, &pci_mmcfg_list, list)
-		pci_mmconfig_हटाओ(cfg);
-पूर्ण
+	pci_mmcfg_arch_free();
+	list_for_each_entry_safe(cfg, tmp, &pci_mmcfg_list, list)
+		pci_mmconfig_remove(cfg);
+}
 
-अटल व्योम list_add_sorted(काष्ठा pci_mmcfg_region *new)
-अणु
-	काष्ठा pci_mmcfg_region *cfg;
+static void list_add_sorted(struct pci_mmcfg_region *new)
+{
+	struct pci_mmcfg_region *cfg;
 
 	/* keep list sorted by segment and starting bus number */
-	list_क्रम_each_entry_rcu(cfg, &pci_mmcfg_list, list, pci_mmcfg_lock_held()) अणु
-		अगर (cfg->segment > new->segment ||
+	list_for_each_entry_rcu(cfg, &pci_mmcfg_list, list, pci_mmcfg_lock_held()) {
+		if (cfg->segment > new->segment ||
 		    (cfg->segment == new->segment &&
-		     cfg->start_bus >= new->start_bus)) अणु
+		     cfg->start_bus >= new->start_bus)) {
 			list_add_tail_rcu(&new->list, &cfg->list);
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 	list_add_tail_rcu(&new->list, &pci_mmcfg_list);
-पूर्ण
+}
 
-अटल काष्ठा pci_mmcfg_region *pci_mmconfig_alloc(पूर्णांक segment, पूर्णांक start,
-						   पूर्णांक end, u64 addr)
-अणु
-	काष्ठा pci_mmcfg_region *new;
-	काष्ठा resource *res;
+static struct pci_mmcfg_region *pci_mmconfig_alloc(int segment, int start,
+						   int end, u64 addr)
+{
+	struct pci_mmcfg_region *new;
+	struct resource *res;
 
-	अगर (addr == 0)
-		वापस शून्य;
+	if (addr == 0)
+		return NULL;
 
-	new = kzalloc(माप(*new), GFP_KERNEL);
-	अगर (!new)
-		वापस शून्य;
+	new = kzalloc(sizeof(*new), GFP_KERNEL);
+	if (!new)
+		return NULL;
 
 	new->address = addr;
 	new->segment = segment;
@@ -89,20 +88,20 @@ LIST_HEAD(pci_mmcfg_list);
 	res->start = addr + PCI_MMCFG_BUS_OFFSET(start);
 	res->end = addr + PCI_MMCFG_BUS_OFFSET(end + 1) - 1;
 	res->flags = IORESOURCE_MEM | IORESOURCE_BUSY;
-	snम_लिखो(new->name, PCI_MMCFG_RESOURCE_NAME_LEN,
+	snprintf(new->name, PCI_MMCFG_RESOURCE_NAME_LEN,
 		 "PCI MMCONFIG %04x [bus %02x-%02x]", segment, start, end);
 	res->name = new->name;
 
-	वापस new;
-पूर्ण
+	return new;
+}
 
-काष्ठा pci_mmcfg_region *__init pci_mmconfig_add(पूर्णांक segment, पूर्णांक start,
-						 पूर्णांक end, u64 addr)
-अणु
-	काष्ठा pci_mmcfg_region *new;
+struct pci_mmcfg_region *__init pci_mmconfig_add(int segment, int start,
+						 int end, u64 addr)
+{
+	struct pci_mmcfg_region *new;
 
 	new = pci_mmconfig_alloc(segment, start, end, addr);
-	अगर (new) अणु
+	if (new) {
 		mutex_lock(&pci_mmcfg_lock);
 		list_add_sorted(new);
 		mutex_unlock(&pci_mmcfg_lock);
@@ -110,104 +109,104 @@ LIST_HEAD(pci_mmcfg_list);
 		pr_info(PREFIX
 		       "MMCONFIG for domain %04x [bus %02x-%02x] at %pR "
 		       "(base %#lx)\n",
-		       segment, start, end, &new->res, (अचिन्हित दीर्घ)addr);
-	पूर्ण
+		       segment, start, end, &new->res, (unsigned long)addr);
+	}
 
-	वापस new;
-पूर्ण
+	return new;
+}
 
-काष्ठा pci_mmcfg_region *pci_mmconfig_lookup(पूर्णांक segment, पूर्णांक bus)
-अणु
-	काष्ठा pci_mmcfg_region *cfg;
+struct pci_mmcfg_region *pci_mmconfig_lookup(int segment, int bus)
+{
+	struct pci_mmcfg_region *cfg;
 
-	list_क्रम_each_entry_rcu(cfg, &pci_mmcfg_list, list, pci_mmcfg_lock_held())
-		अगर (cfg->segment == segment &&
+	list_for_each_entry_rcu(cfg, &pci_mmcfg_list, list, pci_mmcfg_lock_held())
+		if (cfg->segment == segment &&
 		    cfg->start_bus <= bus && bus <= cfg->end_bus)
-			वापस cfg;
+			return cfg;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल स्थिर अक्षर *__init pci_mmcfg_e7520(व्योम)
-अणु
+static const char *__init pci_mmcfg_e7520(void)
+{
 	u32 win;
-	raw_pci_ops->पढ़ो(0, 0, PCI_DEVFN(0, 0), 0xce, 2, &win);
+	raw_pci_ops->read(0, 0, PCI_DEVFN(0, 0), 0xce, 2, &win);
 
 	win = win & 0xf000;
-	अगर (win == 0x0000 || win == 0xf000)
-		वापस शून्य;
+	if (win == 0x0000 || win == 0xf000)
+		return NULL;
 
-	अगर (pci_mmconfig_add(0, 0, 255, win << 16) == शून्य)
-		वापस शून्य;
+	if (pci_mmconfig_add(0, 0, 255, win << 16) == NULL)
+		return NULL;
 
-	वापस "Intel Corporation E7520 Memory Controller Hub";
-पूर्ण
+	return "Intel Corporation E7520 Memory Controller Hub";
+}
 
-अटल स्थिर अक्षर *__init pci_mmcfg_पूर्णांकel_945(व्योम)
-अणु
+static const char *__init pci_mmcfg_intel_945(void)
+{
 	u32 pciexbar, mask = 0, len = 0;
 
-	raw_pci_ops->पढ़ो(0, 0, PCI_DEVFN(0, 0), 0x48, 4, &pciexbar);
+	raw_pci_ops->read(0, 0, PCI_DEVFN(0, 0), 0x48, 4, &pciexbar);
 
 	/* Enable bit */
-	अगर (!(pciexbar & 1))
-		वापस शून्य;
+	if (!(pciexbar & 1))
+		return NULL;
 
 	/* Size bits */
-	चयन ((pciexbar >> 1) & 3) अणु
-	हाल 0:
+	switch ((pciexbar >> 1) & 3) {
+	case 0:
 		mask = 0xf0000000U;
 		len  = 0x10000000U;
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		mask = 0xf8000000U;
 		len  = 0x08000000U;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		mask = 0xfc000000U;
 		len  = 0x04000000U;
-		अवरोध;
-	शेष:
-		वापस शून्य;
-	पूर्ण
+		break;
+	default:
+		return NULL;
+	}
 
-	/* Errata #2, things अवरोध when not aligned on a 256Mb boundary */
+	/* Errata #2, things break when not aligned on a 256Mb boundary */
 	/* Can only happen in 64M/128M mode */
 
-	अगर ((pciexbar & mask) & 0x0fffffffU)
-		वापस शून्य;
+	if ((pciexbar & mask) & 0x0fffffffU)
+		return NULL;
 
-	/* Don't hit the APIC रेजिस्टरs and their मित्रs */
-	अगर ((pciexbar & mask) >= 0xf0000000U)
-		वापस शून्य;
+	/* Don't hit the APIC registers and their friends */
+	if ((pciexbar & mask) >= 0xf0000000U)
+		return NULL;
 
-	अगर (pci_mmconfig_add(0, 0, (len >> 20) - 1, pciexbar & mask) == शून्य)
-		वापस शून्य;
+	if (pci_mmconfig_add(0, 0, (len >> 20) - 1, pciexbar & mask) == NULL)
+		return NULL;
 
-	वापस "Intel Corporation 945G/GZ/P/PL Express Memory Controller Hub";
-पूर्ण
+	return "Intel Corporation 945G/GZ/P/PL Express Memory Controller Hub";
+}
 
-अटल स्थिर अक्षर *__init pci_mmcfg_amd_fam10h(व्योम)
-अणु
+static const char *__init pci_mmcfg_amd_fam10h(void)
+{
 	u32 low, high, address;
 	u64 base, msr;
-	पूर्णांक i;
-	अचिन्हित segnbits = 0, busnbits, end_bus;
+	int i;
+	unsigned segnbits = 0, busnbits, end_bus;
 
-	अगर (!(pci_probe & PCI_CHECK_ENABLE_AMD_MMCONF))
-		वापस शून्य;
+	if (!(pci_probe & PCI_CHECK_ENABLE_AMD_MMCONF))
+		return NULL;
 
 	address = MSR_FAM10H_MMIO_CONF_BASE;
-	अगर (rdmsr_safe(address, &low, &high))
-		वापस शून्य;
+	if (rdmsr_safe(address, &low, &high))
+		return NULL;
 
 	msr = high;
 	msr <<= 32;
 	msr |= low;
 
 	/* mmconfig is not enable */
-	अगर (!(msr & FAM10H_MMIO_CONF_ENABLE))
-		वापस शून्य;
+	if (!(msr & FAM10H_MMIO_CONF_ENABLE))
+		return NULL;
 
 	base = msr & (FAM10H_MMIO_CONF_BASE_MASK<<FAM10H_MMIO_CONF_BASE_SHIFT);
 
@@ -218,599 +217,599 @@ LIST_HEAD(pci_mmcfg_list);
 	 * only handle bus 0 ?
 	 * need to skip it
 	 */
-	अगर (!busnbits)
-		वापस शून्य;
+	if (!busnbits)
+		return NULL;
 
-	अगर (busnbits > 8) अणु
+	if (busnbits > 8) {
 		segnbits = busnbits - 8;
 		busnbits = 8;
-	पूर्ण
+	}
 
 	end_bus = (1 << busnbits) - 1;
-	क्रम (i = 0; i < (1 << segnbits); i++)
-		अगर (pci_mmconfig_add(i, 0, end_bus,
-				     base + (1<<28) * i) == शून्य) अणु
-			मुक्त_all_mmcfg();
-			वापस शून्य;
-		पूर्ण
+	for (i = 0; i < (1 << segnbits); i++)
+		if (pci_mmconfig_add(i, 0, end_bus,
+				     base + (1<<28) * i) == NULL) {
+			free_all_mmcfg();
+			return NULL;
+		}
 
-	वापस "AMD Family 10h NB";
-पूर्ण
+	return "AMD Family 10h NB";
+}
 
-अटल bool __initdata mcp55_checked;
-अटल स्थिर अक्षर *__init pci_mmcfg_nvidia_mcp55(व्योम)
-अणु
-	पूर्णांक bus;
-	पूर्णांक mcp55_mmconf_found = 0;
+static bool __initdata mcp55_checked;
+static const char *__init pci_mmcfg_nvidia_mcp55(void)
+{
+	int bus;
+	int mcp55_mmconf_found = 0;
 
-	अटल स्थिर u32 extcfg_regnum __initस्थिर	= 0x90;
-	अटल स्थिर u32 extcfg_regsize __initस्थिर	= 4;
-	अटल स्थिर u32 extcfg_enable_mask __initस्थिर	= 1 << 31;
-	अटल स्थिर u32 extcfg_start_mask __initस्थिर	= 0xff << 16;
-	अटल स्थिर पूर्णांक extcfg_start_shअगरt __initस्थिर	= 16;
-	अटल स्थिर u32 extcfg_size_mask __initस्थिर	= 0x3 << 28;
-	अटल स्थिर पूर्णांक extcfg_size_shअगरt __initस्थिर	= 28;
-	अटल स्थिर पूर्णांक extcfg_sizebus[] __initस्थिर	= अणु
+	static const u32 extcfg_regnum __initconst	= 0x90;
+	static const u32 extcfg_regsize __initconst	= 4;
+	static const u32 extcfg_enable_mask __initconst	= 1 << 31;
+	static const u32 extcfg_start_mask __initconst	= 0xff << 16;
+	static const int extcfg_start_shift __initconst	= 16;
+	static const u32 extcfg_size_mask __initconst	= 0x3 << 28;
+	static const int extcfg_size_shift __initconst	= 28;
+	static const int extcfg_sizebus[] __initconst	= {
 		0x100, 0x80, 0x40, 0x20
-	पूर्ण;
-	अटल स्थिर u32 extcfg_base_mask[] __initस्थिर	= अणु
+	};
+	static const u32 extcfg_base_mask[] __initconst	= {
 		0x7ff8, 0x7ffc, 0x7ffe, 0x7fff
-	पूर्ण;
-	अटल स्थिर पूर्णांक extcfg_base_lshअगरt __initस्थिर	= 25;
+	};
+	static const int extcfg_base_lshift __initconst	= 25;
 
 	/*
-	 * करो check अगर amd fam10h alपढ़ोy took over
+	 * do check if amd fam10h already took over
 	 */
-	अगर (!acpi_disabled || !list_empty(&pci_mmcfg_list) || mcp55_checked)
-		वापस शून्य;
+	if (!acpi_disabled || !list_empty(&pci_mmcfg_list) || mcp55_checked)
+		return NULL;
 
 	mcp55_checked = true;
-	क्रम (bus = 0; bus < 256; bus++) अणु
+	for (bus = 0; bus < 256; bus++) {
 		u64 base;
 		u32 l, extcfg;
-		u16 venकरोr, device;
-		पूर्णांक start, size_index, end;
+		u16 vendor, device;
+		int start, size_index, end;
 
-		raw_pci_ops->पढ़ो(0, bus, PCI_DEVFN(0, 0), 0, 4, &l);
-		venकरोr = l & 0xffff;
+		raw_pci_ops->read(0, bus, PCI_DEVFN(0, 0), 0, 4, &l);
+		vendor = l & 0xffff;
 		device = (l >> 16) & 0xffff;
 
-		अगर (PCI_VENDOR_ID_NVIDIA != venकरोr || 0x0369 != device)
-			जारी;
+		if (PCI_VENDOR_ID_NVIDIA != vendor || 0x0369 != device)
+			continue;
 
-		raw_pci_ops->पढ़ो(0, bus, PCI_DEVFN(0, 0), extcfg_regnum,
+		raw_pci_ops->read(0, bus, PCI_DEVFN(0, 0), extcfg_regnum,
 				  extcfg_regsize, &extcfg);
 
-		अगर (!(extcfg & extcfg_enable_mask))
-			जारी;
+		if (!(extcfg & extcfg_enable_mask))
+			continue;
 
-		size_index = (extcfg & extcfg_size_mask) >> extcfg_size_shअगरt;
+		size_index = (extcfg & extcfg_size_mask) >> extcfg_size_shift;
 		base = extcfg & extcfg_base_mask[size_index];
 		/* base could > 4G */
-		base <<= extcfg_base_lshअगरt;
-		start = (extcfg & extcfg_start_mask) >> extcfg_start_shअगरt;
+		base <<= extcfg_base_lshift;
+		start = (extcfg & extcfg_start_mask) >> extcfg_start_shift;
 		end = start + extcfg_sizebus[size_index] - 1;
-		अगर (pci_mmconfig_add(0, start, end, base) == शून्य)
-			जारी;
+		if (pci_mmconfig_add(0, start, end, base) == NULL)
+			continue;
 		mcp55_mmconf_found++;
-	पूर्ण
+	}
 
-	अगर (!mcp55_mmconf_found)
-		वापस शून्य;
+	if (!mcp55_mmconf_found)
+		return NULL;
 
-	वापस "nVidia MCP55";
-पूर्ण
+	return "nVidia MCP55";
+}
 
-काष्ठा pci_mmcfg_hostbridge_probe अणु
+struct pci_mmcfg_hostbridge_probe {
 	u32 bus;
 	u32 devfn;
-	u32 venकरोr;
+	u32 vendor;
 	u32 device;
-	स्थिर अक्षर *(*probe)(व्योम);
-पूर्ण;
+	const char *(*probe)(void);
+};
 
-अटल स्थिर काष्ठा pci_mmcfg_hostbridge_probe pci_mmcfg_probes[] __initस्थिर = अणु
-	अणु 0, PCI_DEVFN(0, 0), PCI_VENDOR_ID_INTEL,
-	  PCI_DEVICE_ID_INTEL_E7520_MCH, pci_mmcfg_e7520 पूर्ण,
-	अणु 0, PCI_DEVFN(0, 0), PCI_VENDOR_ID_INTEL,
-	  PCI_DEVICE_ID_INTEL_82945G_HB, pci_mmcfg_पूर्णांकel_945 पूर्ण,
-	अणु 0, PCI_DEVFN(0x18, 0), PCI_VENDOR_ID_AMD,
-	  0x1200, pci_mmcfg_amd_fam10h पूर्ण,
-	अणु 0xff, PCI_DEVFN(0, 0), PCI_VENDOR_ID_AMD,
-	  0x1200, pci_mmcfg_amd_fam10h पूर्ण,
-	अणु 0, PCI_DEVFN(0, 0), PCI_VENDOR_ID_NVIDIA,
-	  0x0369, pci_mmcfg_nvidia_mcp55 पूर्ण,
-पूर्ण;
+static const struct pci_mmcfg_hostbridge_probe pci_mmcfg_probes[] __initconst = {
+	{ 0, PCI_DEVFN(0, 0), PCI_VENDOR_ID_INTEL,
+	  PCI_DEVICE_ID_INTEL_E7520_MCH, pci_mmcfg_e7520 },
+	{ 0, PCI_DEVFN(0, 0), PCI_VENDOR_ID_INTEL,
+	  PCI_DEVICE_ID_INTEL_82945G_HB, pci_mmcfg_intel_945 },
+	{ 0, PCI_DEVFN(0x18, 0), PCI_VENDOR_ID_AMD,
+	  0x1200, pci_mmcfg_amd_fam10h },
+	{ 0xff, PCI_DEVFN(0, 0), PCI_VENDOR_ID_AMD,
+	  0x1200, pci_mmcfg_amd_fam10h },
+	{ 0, PCI_DEVFN(0, 0), PCI_VENDOR_ID_NVIDIA,
+	  0x0369, pci_mmcfg_nvidia_mcp55 },
+};
 
-अटल व्योम __init pci_mmcfg_check_end_bus_number(व्योम)
-अणु
-	काष्ठा pci_mmcfg_region *cfg, *cfgx;
+static void __init pci_mmcfg_check_end_bus_number(void)
+{
+	struct pci_mmcfg_region *cfg, *cfgx;
 
 	/* Fixup overlaps */
-	list_क्रम_each_entry(cfg, &pci_mmcfg_list, list) अणु
-		अगर (cfg->end_bus < cfg->start_bus)
+	list_for_each_entry(cfg, &pci_mmcfg_list, list) {
+		if (cfg->end_bus < cfg->start_bus)
 			cfg->end_bus = 255;
 
 		/* Don't access the list head ! */
-		अगर (cfg->list.next == &pci_mmcfg_list)
-			अवरोध;
+		if (cfg->list.next == &pci_mmcfg_list)
+			break;
 
 		cfgx = list_entry(cfg->list.next, typeof(*cfg), list);
-		अगर (cfg->end_bus >= cfgx->start_bus)
+		if (cfg->end_bus >= cfgx->start_bus)
 			cfg->end_bus = cfgx->start_bus - 1;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक __init pci_mmcfg_check_hostbridge(व्योम)
-अणु
+static int __init pci_mmcfg_check_hostbridge(void)
+{
 	u32 l;
 	u32 bus, devfn;
-	u16 venकरोr, device;
-	पूर्णांक i;
-	स्थिर अक्षर *name;
+	u16 vendor, device;
+	int i;
+	const char *name;
 
-	अगर (!raw_pci_ops)
-		वापस 0;
+	if (!raw_pci_ops)
+		return 0;
 
-	मुक्त_all_mmcfg();
+	free_all_mmcfg();
 
-	क्रम (i = 0; i < ARRAY_SIZE(pci_mmcfg_probes); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(pci_mmcfg_probes); i++) {
 		bus =  pci_mmcfg_probes[i].bus;
 		devfn = pci_mmcfg_probes[i].devfn;
-		raw_pci_ops->पढ़ो(0, bus, devfn, 0, 4, &l);
-		venकरोr = l & 0xffff;
+		raw_pci_ops->read(0, bus, devfn, 0, 4, &l);
+		vendor = l & 0xffff;
 		device = (l >> 16) & 0xffff;
 
-		name = शून्य;
-		अगर (pci_mmcfg_probes[i].venकरोr == venकरोr &&
+		name = NULL;
+		if (pci_mmcfg_probes[i].vendor == vendor &&
 		    pci_mmcfg_probes[i].device == device)
 			name = pci_mmcfg_probes[i].probe();
 
-		अगर (name)
+		if (name)
 			pr_info(PREFIX "%s with MMCONFIG support\n", name);
-	पूर्ण
+	}
 
 	/* some end_bus_number is crazy, fix it */
 	pci_mmcfg_check_end_bus_number();
 
-	वापस !list_empty(&pci_mmcfg_list);
-पूर्ण
+	return !list_empty(&pci_mmcfg_list);
+}
 
-अटल acpi_status check_mcfg_resource(काष्ठा acpi_resource *res, व्योम *data)
-अणु
-	काष्ठा resource *mcfg_res = data;
-	काष्ठा acpi_resource_address64 address;
+static acpi_status check_mcfg_resource(struct acpi_resource *res, void *data)
+{
+	struct resource *mcfg_res = data;
+	struct acpi_resource_address64 address;
 	acpi_status status;
 
-	अगर (res->type == ACPI_RESOURCE_TYPE_FIXED_MEMORY32) अणु
-		काष्ठा acpi_resource_fixed_memory32 *fixmem32 =
+	if (res->type == ACPI_RESOURCE_TYPE_FIXED_MEMORY32) {
+		struct acpi_resource_fixed_memory32 *fixmem32 =
 			&res->data.fixed_memory32;
-		अगर (!fixmem32)
-			वापस AE_OK;
-		अगर ((mcfg_res->start >= fixmem32->address) &&
+		if (!fixmem32)
+			return AE_OK;
+		if ((mcfg_res->start >= fixmem32->address) &&
 		    (mcfg_res->end < (fixmem32->address +
-				      fixmem32->address_length))) अणु
+				      fixmem32->address_length))) {
 			mcfg_res->flags = 1;
-			वापस AE_CTRL_TERMINATE;
-		पूर्ण
-	पूर्ण
-	अगर ((res->type != ACPI_RESOURCE_TYPE_ADDRESS32) &&
+			return AE_CTRL_TERMINATE;
+		}
+	}
+	if ((res->type != ACPI_RESOURCE_TYPE_ADDRESS32) &&
 	    (res->type != ACPI_RESOURCE_TYPE_ADDRESS64))
-		वापस AE_OK;
+		return AE_OK;
 
 	status = acpi_resource_to_address64(res, &address);
-	अगर (ACPI_FAILURE(status) ||
+	if (ACPI_FAILURE(status) ||
 	   (address.address.address_length <= 0) ||
 	   (address.resource_type != ACPI_MEMORY_RANGE))
-		वापस AE_OK;
+		return AE_OK;
 
-	अगर ((mcfg_res->start >= address.address.minimum) &&
-	    (mcfg_res->end < (address.address.minimum + address.address.address_length))) अणु
+	if ((mcfg_res->start >= address.address.minimum) &&
+	    (mcfg_res->end < (address.address.minimum + address.address.address_length))) {
 		mcfg_res->flags = 1;
-		वापस AE_CTRL_TERMINATE;
-	पूर्ण
-	वापस AE_OK;
-पूर्ण
+		return AE_CTRL_TERMINATE;
+	}
+	return AE_OK;
+}
 
-अटल acpi_status find_mboard_resource(acpi_handle handle, u32 lvl,
-					व्योम *context, व्योम **rv)
-अणु
-	काष्ठा resource *mcfg_res = context;
+static acpi_status find_mboard_resource(acpi_handle handle, u32 lvl,
+					void *context, void **rv)
+{
+	struct resource *mcfg_res = context;
 
 	acpi_walk_resources(handle, METHOD_NAME__CRS,
 			    check_mcfg_resource, context);
 
-	अगर (mcfg_res->flags)
-		वापस AE_CTRL_TERMINATE;
+	if (mcfg_res->flags)
+		return AE_CTRL_TERMINATE;
 
-	वापस AE_OK;
-पूर्ण
+	return AE_OK;
+}
 
-अटल bool is_acpi_reserved(u64 start, u64 end, क्रमागत e820_type not_used)
-अणु
-	काष्ठा resource mcfg_res;
+static bool is_acpi_reserved(u64 start, u64 end, enum e820_type not_used)
+{
+	struct resource mcfg_res;
 
 	mcfg_res.start = start;
 	mcfg_res.end = end - 1;
 	mcfg_res.flags = 0;
 
-	acpi_get_devices("PNP0C01", find_mboard_resource, &mcfg_res, शून्य);
+	acpi_get_devices("PNP0C01", find_mboard_resource, &mcfg_res, NULL);
 
-	अगर (!mcfg_res.flags)
+	if (!mcfg_res.flags)
 		acpi_get_devices("PNP0C02", find_mboard_resource, &mcfg_res,
-				 शून्य);
+				 NULL);
 
-	वापस mcfg_res.flags;
-पूर्ण
+	return mcfg_res.flags;
+}
 
-प्रकार bool (*check_reserved_t)(u64 start, u64 end, क्रमागत e820_type type);
+typedef bool (*check_reserved_t)(u64 start, u64 end, enum e820_type type);
 
-अटल bool __ref is_mmconf_reserved(check_reserved_t is_reserved,
-				     काष्ठा pci_mmcfg_region *cfg,
-				     काष्ठा device *dev, पूर्णांक with_e820)
-अणु
+static bool __ref is_mmconf_reserved(check_reserved_t is_reserved,
+				     struct pci_mmcfg_region *cfg,
+				     struct device *dev, int with_e820)
+{
 	u64 addr = cfg->res.start;
 	u64 size = resource_size(&cfg->res);
 	u64 old_size = size;
-	पूर्णांक num_buses;
-	अक्षर *method = with_e820 ? "E820" : "ACPI motherboard resources";
+	int num_buses;
+	char *method = with_e820 ? "E820" : "ACPI motherboard resources";
 
-	जबतक (!is_reserved(addr, addr + size, E820_TYPE_RESERVED)) अणु
+	while (!is_reserved(addr, addr + size, E820_TYPE_RESERVED)) {
 		size >>= 1;
-		अगर (size < (16UL<<20))
-			अवरोध;
-	पूर्ण
+		if (size < (16UL<<20))
+			break;
+	}
 
-	अगर (size < (16UL<<20) && size != old_size)
-		वापस 0;
+	if (size < (16UL<<20) && size != old_size)
+		return 0;
 
-	अगर (dev)
+	if (dev)
 		dev_info(dev, "MMCONFIG at %pR reserved in %s\n",
 			 &cfg->res, method);
-	अन्यथा
+	else
 		pr_info(PREFIX "MMCONFIG at %pR reserved in %s\n",
 		       &cfg->res, method);
 
-	अगर (old_size != size) अणु
+	if (old_size != size) {
 		/* update end_bus */
 		cfg->end_bus = cfg->start_bus + ((size>>20) - 1);
 		num_buses = cfg->end_bus - cfg->start_bus + 1;
 		cfg->res.end = cfg->res.start +
 		    PCI_MMCFG_BUS_OFFSET(num_buses) - 1;
-		snम_लिखो(cfg->name, PCI_MMCFG_RESOURCE_NAME_LEN,
+		snprintf(cfg->name, PCI_MMCFG_RESOURCE_NAME_LEN,
 			 "PCI MMCONFIG %04x [bus %02x-%02x]",
 			 cfg->segment, cfg->start_bus, cfg->end_bus);
 
-		अगर (dev)
+		if (dev)
 			dev_info(dev,
 				"MMCONFIG "
 				"at %pR (base %#lx) (size reduced!)\n",
-				&cfg->res, (अचिन्हित दीर्घ) cfg->address);
-		अन्यथा
+				&cfg->res, (unsigned long) cfg->address);
+		else
 			pr_info(PREFIX
 				"MMCONFIG for %04x [bus%02x-%02x] "
 				"at %pR (base %#lx) (size reduced!)\n",
 				cfg->segment, cfg->start_bus, cfg->end_bus,
-				&cfg->res, (अचिन्हित दीर्घ) cfg->address);
-	पूर्ण
+				&cfg->res, (unsigned long) cfg->address);
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल bool __ref
-pci_mmcfg_check_reserved(काष्ठा device *dev, काष्ठा pci_mmcfg_region *cfg, पूर्णांक early)
-अणु
-	अगर (!early && !acpi_disabled) अणु
-		अगर (is_mmconf_reserved(is_acpi_reserved, cfg, dev, 0))
-			वापस 1;
+static bool __ref
+pci_mmcfg_check_reserved(struct device *dev, struct pci_mmcfg_region *cfg, int early)
+{
+	if (!early && !acpi_disabled) {
+		if (is_mmconf_reserved(is_acpi_reserved, cfg, dev, 0))
+			return 1;
 
-		अगर (dev)
+		if (dev)
 			dev_info(dev, FW_INFO
 				 "MMCONFIG at %pR not reserved in "
 				 "ACPI motherboard resources\n",
 				 &cfg->res);
-		अन्यथा
+		else
 			pr_info(FW_INFO PREFIX
 			       "MMCONFIG at %pR not reserved in "
 			       "ACPI motherboard resources\n",
 			       &cfg->res);
-	पूर्ण
+	}
 
 	/*
 	 * e820__mapped_all() is marked as __init.
-	 * All entries from ACPI MCFG table have been checked at boot समय.
-	 * For MCFG inक्रमmation स्थिरructed from hotpluggable host bridge's
+	 * All entries from ACPI MCFG table have been checked at boot time.
+	 * For MCFG information constructed from hotpluggable host bridge's
 	 * _CBA method, just assume it's reserved.
 	 */
-	अगर (pci_mmcfg_running_state)
-		वापस 1;
+	if (pci_mmcfg_running_state)
+		return 1;
 
-	/* Don't try to करो this check unless configuration
+	/* Don't try to do this check unless configuration
 	   type 1 is available. how about type 2 ?*/
-	अगर (raw_pci_ops)
-		वापस is_mmconf_reserved(e820__mapped_all, cfg, dev, 1);
+	if (raw_pci_ops)
+		return is_mmconf_reserved(e820__mapped_all, cfg, dev, 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __init pci_mmcfg_reject_broken(पूर्णांक early)
-अणु
-	काष्ठा pci_mmcfg_region *cfg;
+static void __init pci_mmcfg_reject_broken(int early)
+{
+	struct pci_mmcfg_region *cfg;
 
-	list_क्रम_each_entry(cfg, &pci_mmcfg_list, list) अणु
-		अगर (pci_mmcfg_check_reserved(शून्य, cfg, early) == 0) अणु
+	list_for_each_entry(cfg, &pci_mmcfg_list, list) {
+		if (pci_mmcfg_check_reserved(NULL, cfg, early) == 0) {
 			pr_info(PREFIX "not using MMCONFIG\n");
-			मुक्त_all_mmcfg();
-			वापस;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			free_all_mmcfg();
+			return;
+		}
+	}
+}
 
-अटल पूर्णांक __init acpi_mcfg_check_entry(काष्ठा acpi_table_mcfg *mcfg,
-					काष्ठा acpi_mcfg_allocation *cfg)
-अणु
-	अगर (cfg->address < 0xFFFFFFFF)
-		वापस 0;
+static int __init acpi_mcfg_check_entry(struct acpi_table_mcfg *mcfg,
+					struct acpi_mcfg_allocation *cfg)
+{
+	if (cfg->address < 0xFFFFFFFF)
+		return 0;
 
-	अगर (!म_भेदन(mcfg->header.oem_id, "SGI", 3))
-		वापस 0;
+	if (!strncmp(mcfg->header.oem_id, "SGI", 3))
+		return 0;
 
-	अगर ((mcfg->header.revision >= 1) && (dmi_get_bios_year() >= 2010))
-		वापस 0;
+	if ((mcfg->header.revision >= 1) && (dmi_get_bios_year() >= 2010))
+		return 0;
 
 	pr_err(PREFIX "MCFG region for %04x [bus %02x-%02x] at %#llx "
 	       "is above 4GB, ignored\n", cfg->pci_segment,
 	       cfg->start_bus_number, cfg->end_bus_number, cfg->address);
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक __init pci_parse_mcfg(काष्ठा acpi_table_header *header)
-अणु
-	काष्ठा acpi_table_mcfg *mcfg;
-	काष्ठा acpi_mcfg_allocation *cfg_table, *cfg;
-	अचिन्हित दीर्घ i;
-	पूर्णांक entries;
+static int __init pci_parse_mcfg(struct acpi_table_header *header)
+{
+	struct acpi_table_mcfg *mcfg;
+	struct acpi_mcfg_allocation *cfg_table, *cfg;
+	unsigned long i;
+	int entries;
 
-	अगर (!header)
-		वापस -EINVAL;
+	if (!header)
+		return -EINVAL;
 
-	mcfg = (काष्ठा acpi_table_mcfg *)header;
+	mcfg = (struct acpi_table_mcfg *)header;
 
-	/* how many config काष्ठाures करो we have */
-	मुक्त_all_mmcfg();
+	/* how many config structures do we have */
+	free_all_mmcfg();
 	entries = 0;
-	i = header->length - माप(काष्ठा acpi_table_mcfg);
-	जबतक (i >= माप(काष्ठा acpi_mcfg_allocation)) अणु
+	i = header->length - sizeof(struct acpi_table_mcfg);
+	while (i >= sizeof(struct acpi_mcfg_allocation)) {
 		entries++;
-		i -= माप(काष्ठा acpi_mcfg_allocation);
-	पूर्ण
-	अगर (entries == 0) अणु
+		i -= sizeof(struct acpi_mcfg_allocation);
+	}
+	if (entries == 0) {
 		pr_err(PREFIX "MMCONFIG has no entries\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	cfg_table = (काष्ठा acpi_mcfg_allocation *) &mcfg[1];
-	क्रम (i = 0; i < entries; i++) अणु
+	cfg_table = (struct acpi_mcfg_allocation *) &mcfg[1];
+	for (i = 0; i < entries; i++) {
 		cfg = &cfg_table[i];
-		अगर (acpi_mcfg_check_entry(mcfg, cfg)) अणु
-			मुक्त_all_mmcfg();
-			वापस -ENODEV;
-		पूर्ण
+		if (acpi_mcfg_check_entry(mcfg, cfg)) {
+			free_all_mmcfg();
+			return -ENODEV;
+		}
 
-		अगर (pci_mmconfig_add(cfg->pci_segment, cfg->start_bus_number,
-				   cfg->end_bus_number, cfg->address) == शून्य) अणु
+		if (pci_mmconfig_add(cfg->pci_segment, cfg->start_bus_number,
+				   cfg->end_bus_number, cfg->address) == NULL) {
 			pr_warn(PREFIX "no memory for MCFG entries\n");
-			मुक्त_all_mmcfg();
-			वापस -ENOMEM;
-		पूर्ण
-	पूर्ण
+			free_all_mmcfg();
+			return -ENOMEM;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_ACPI_APEI
-बाह्य पूर्णांक (*arch_apei_filter_addr)(पूर्णांक (*func)(__u64 start, __u64 size,
-				     व्योम *data), व्योम *data);
+#ifdef CONFIG_ACPI_APEI
+extern int (*arch_apei_filter_addr)(int (*func)(__u64 start, __u64 size,
+				     void *data), void *data);
 
-अटल पूर्णांक pci_mmcfg_क्रम_each_region(पूर्णांक (*func)(__u64 start, __u64 size,
-				     व्योम *data), व्योम *data)
-अणु
-	काष्ठा pci_mmcfg_region *cfg;
-	पूर्णांक rc;
+static int pci_mmcfg_for_each_region(int (*func)(__u64 start, __u64 size,
+				     void *data), void *data)
+{
+	struct pci_mmcfg_region *cfg;
+	int rc;
 
-	अगर (list_empty(&pci_mmcfg_list))
-		वापस 0;
+	if (list_empty(&pci_mmcfg_list))
+		return 0;
 
-	list_क्रम_each_entry(cfg, &pci_mmcfg_list, list) अणु
+	list_for_each_entry(cfg, &pci_mmcfg_list, list) {
 		rc = func(cfg->res.start, resource_size(&cfg->res), data);
-		अगर (rc)
-			वापस rc;
-	पूर्ण
+		if (rc)
+			return rc;
+	}
 
-	वापस 0;
-पूर्ण
-#घोषणा set_apei_filter() (arch_apei_filter_addr = pci_mmcfg_क्रम_each_region)
-#अन्यथा
-#घोषणा set_apei_filter()
-#पूर्ण_अगर
+	return 0;
+}
+#define set_apei_filter() (arch_apei_filter_addr = pci_mmcfg_for_each_region)
+#else
+#define set_apei_filter()
+#endif
 
-अटल व्योम __init __pci_mmcfg_init(पूर्णांक early)
-अणु
+static void __init __pci_mmcfg_init(int early)
+{
 	pci_mmcfg_reject_broken(early);
-	अगर (list_empty(&pci_mmcfg_list))
-		वापस;
+	if (list_empty(&pci_mmcfg_list))
+		return;
 
-	अगर (pcibios_last_bus < 0) अणु
-		स्थिर काष्ठा pci_mmcfg_region *cfg;
+	if (pcibios_last_bus < 0) {
+		const struct pci_mmcfg_region *cfg;
 
-		list_क्रम_each_entry(cfg, &pci_mmcfg_list, list) अणु
-			अगर (cfg->segment)
-				अवरोध;
+		list_for_each_entry(cfg, &pci_mmcfg_list, list) {
+			if (cfg->segment)
+				break;
 			pcibios_last_bus = cfg->end_bus;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (pci_mmcfg_arch_init())
+	if (pci_mmcfg_arch_init())
 		pci_probe = (pci_probe & ~PCI_PROBE_MASK) | PCI_PROBE_MMCONF;
-	अन्यथा अणु
-		मुक्त_all_mmcfg();
+	else {
+		free_all_mmcfg();
 		pci_mmcfg_arch_init_failed = true;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक __initdata known_bridge;
+static int __initdata known_bridge;
 
-व्योम __init pci_mmcfg_early_init(व्योम)
-अणु
-	अगर (pci_probe & PCI_PROBE_MMCONF) अणु
-		अगर (pci_mmcfg_check_hostbridge())
+void __init pci_mmcfg_early_init(void)
+{
+	if (pci_probe & PCI_PROBE_MMCONF) {
+		if (pci_mmcfg_check_hostbridge())
 			known_bridge = 1;
-		अन्यथा
+		else
 			acpi_table_parse(ACPI_SIG_MCFG, pci_parse_mcfg);
 		__pci_mmcfg_init(1);
 
 		set_apei_filter();
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम __init pci_mmcfg_late_init(व्योम)
-अणु
+void __init pci_mmcfg_late_init(void)
+{
 	/* MMCONFIG disabled */
-	अगर ((pci_probe & PCI_PROBE_MMCONF) == 0)
-		वापस;
+	if ((pci_probe & PCI_PROBE_MMCONF) == 0)
+		return;
 
-	अगर (known_bridge)
-		वापस;
+	if (known_bridge)
+		return;
 
 	/* MMCONFIG hasn't been enabled yet, try again */
-	अगर (pci_probe & PCI_PROBE_MASK & ~PCI_PROBE_MMCONF) अणु
+	if (pci_probe & PCI_PROBE_MASK & ~PCI_PROBE_MMCONF) {
 		acpi_table_parse(ACPI_SIG_MCFG, pci_parse_mcfg);
 		__pci_mmcfg_init(0);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक __init pci_mmcfg_late_insert_resources(व्योम)
-अणु
-	काष्ठा pci_mmcfg_region *cfg;
+static int __init pci_mmcfg_late_insert_resources(void)
+{
+	struct pci_mmcfg_region *cfg;
 
 	pci_mmcfg_running_state = true;
 
-	/* If we are not using MMCONFIG, करोn't insert the resources. */
-	अगर ((pci_probe & PCI_PROBE_MMCONF) == 0)
-		वापस 1;
+	/* If we are not using MMCONFIG, don't insert the resources. */
+	if ((pci_probe & PCI_PROBE_MMCONF) == 0)
+		return 1;
 
 	/*
 	 * Attempt to insert the mmcfg resources but not with the busy flag
 	 * marked so it won't cause request errors when __request_region is
 	 * called.
 	 */
-	list_क्रम_each_entry(cfg, &pci_mmcfg_list, list)
-		अगर (!cfg->res.parent)
+	list_for_each_entry(cfg, &pci_mmcfg_list, list)
+		if (!cfg->res.parent)
 			insert_resource(&iomem_resource, &cfg->res);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Perक्रमm MMCONFIG resource insertion after PCI initialization to allow क्रम
+ * Perform MMCONFIG resource insertion after PCI initialization to allow for
  * misprogrammed MCFG tables that state larger sizes but actually conflict
- * with other प्रणाली resources.
+ * with other system resources.
  */
 late_initcall(pci_mmcfg_late_insert_resources);
 
-/* Add MMCFG inक्रमmation क्रम host bridges */
-पूर्णांक pci_mmconfig_insert(काष्ठा device *dev, u16 seg, u8 start, u8 end,
+/* Add MMCFG information for host bridges */
+int pci_mmconfig_insert(struct device *dev, u16 seg, u8 start, u8 end,
 			phys_addr_t addr)
-अणु
-	पूर्णांक rc;
-	काष्ठा resource *पंचांगp = शून्य;
-	काष्ठा pci_mmcfg_region *cfg;
+{
+	int rc;
+	struct resource *tmp = NULL;
+	struct pci_mmcfg_region *cfg;
 
-	अगर (!(pci_probe & PCI_PROBE_MMCONF) || pci_mmcfg_arch_init_failed)
-		वापस -ENODEV;
+	if (!(pci_probe & PCI_PROBE_MMCONF) || pci_mmcfg_arch_init_failed)
+		return -ENODEV;
 
-	अगर (start > end)
-		वापस -EINVAL;
+	if (start > end)
+		return -EINVAL;
 
 	mutex_lock(&pci_mmcfg_lock);
 	cfg = pci_mmconfig_lookup(seg, start);
-	अगर (cfg) अणु
-		अगर (cfg->end_bus < end)
+	if (cfg) {
+		if (cfg->end_bus < end)
 			dev_info(dev, FW_INFO
 				 "MMCONFIG for "
 				 "domain %04x [bus %02x-%02x] "
 				 "only partially covers this bridge\n",
 				  cfg->segment, cfg->start_bus, cfg->end_bus);
 		mutex_unlock(&pci_mmcfg_lock);
-		वापस -EEXIST;
-	पूर्ण
+		return -EEXIST;
+	}
 
-	अगर (!addr) अणु
+	if (!addr) {
 		mutex_unlock(&pci_mmcfg_lock);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	rc = -EBUSY;
 	cfg = pci_mmconfig_alloc(seg, start, end, addr);
-	अगर (cfg == शून्य) अणु
+	if (cfg == NULL) {
 		dev_warn(dev, "fail to add MMCONFIG (out of memory)\n");
 		rc = -ENOMEM;
-	पूर्ण अन्यथा अगर (!pci_mmcfg_check_reserved(dev, cfg, 0)) अणु
+	} else if (!pci_mmcfg_check_reserved(dev, cfg, 0)) {
 		dev_warn(dev, FW_BUG "MMCONFIG %pR isn't reserved\n",
 			 &cfg->res);
-	पूर्ण अन्यथा अणु
-		/* Insert resource अगर it's not in boot stage */
-		अगर (pci_mmcfg_running_state)
-			पंचांगp = insert_resource_conflict(&iomem_resource,
+	} else {
+		/* Insert resource if it's not in boot stage */
+		if (pci_mmcfg_running_state)
+			tmp = insert_resource_conflict(&iomem_resource,
 						       &cfg->res);
 
-		अगर (पंचांगp) अणु
+		if (tmp) {
 			dev_warn(dev,
 				 "MMCONFIG %pR conflicts with "
 				 "%s %pR\n",
-				 &cfg->res, पंचांगp->name, पंचांगp);
-		पूर्ण अन्यथा अगर (pci_mmcfg_arch_map(cfg)) अणु
+				 &cfg->res, tmp->name, tmp);
+		} else if (pci_mmcfg_arch_map(cfg)) {
 			dev_warn(dev, "fail to map MMCONFIG %pR.\n",
 				 &cfg->res);
-		पूर्ण अन्यथा अणु
+		} else {
 			list_add_sorted(cfg);
 			dev_info(dev, "MMCONFIG at %pR (base %#lx)\n",
-				 &cfg->res, (अचिन्हित दीर्घ)addr);
-			cfg = शून्य;
+				 &cfg->res, (unsigned long)addr);
+			cfg = NULL;
 			rc = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (cfg) अणु
-		अगर (cfg->res.parent)
+	if (cfg) {
+		if (cfg->res.parent)
 			release_resource(&cfg->res);
-		kमुक्त(cfg);
-	पूर्ण
+		kfree(cfg);
+	}
 
 	mutex_unlock(&pci_mmcfg_lock);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-/* Delete MMCFG inक्रमmation क्रम host bridges */
-पूर्णांक pci_mmconfig_delete(u16 seg, u8 start, u8 end)
-अणु
-	काष्ठा pci_mmcfg_region *cfg;
+/* Delete MMCFG information for host bridges */
+int pci_mmconfig_delete(u16 seg, u8 start, u8 end)
+{
+	struct pci_mmcfg_region *cfg;
 
 	mutex_lock(&pci_mmcfg_lock);
-	list_क्रम_each_entry_rcu(cfg, &pci_mmcfg_list, list)
-		अगर (cfg->segment == seg && cfg->start_bus == start &&
-		    cfg->end_bus == end) अणु
+	list_for_each_entry_rcu(cfg, &pci_mmcfg_list, list)
+		if (cfg->segment == seg && cfg->start_bus == start &&
+		    cfg->end_bus == end) {
 			list_del_rcu(&cfg->list);
 			synchronize_rcu();
 			pci_mmcfg_arch_unmap(cfg);
-			अगर (cfg->res.parent)
+			if (cfg->res.parent)
 				release_resource(&cfg->res);
 			mutex_unlock(&pci_mmcfg_lock);
-			kमुक्त(cfg);
-			वापस 0;
-		पूर्ण
+			kfree(cfg);
+			return 0;
+		}
 	mutex_unlock(&pci_mmcfg_lock);
 
-	वापस -ENOENT;
-पूर्ण
+	return -ENOENT;
+}

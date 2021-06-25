@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2018 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,12 +19,12 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#समावेश "curs.h"
+#include "curs.h"
 
-पूर्णांक
-curs907a_new(काष्ठा nouveau_drm *drm, पूर्णांक head, s32 oclass,
-	     काष्ठा nv50_wndw **pwndw)
-अणु
-	वापस curs507a_new_(&curs507a, drm, head, oclass,
+int
+curs907a_new(struct nouveau_drm *drm, int head, s32 oclass,
+	     struct nv50_wndw **pwndw)
+{
+	return curs507a_new_(&curs507a, drm, head, oclass,
 			     0x00000001 << (head * 4), pwndw);
-पूर्ण
+}

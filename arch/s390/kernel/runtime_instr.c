@@ -1,58 +1,57 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright IBM Corp. 2012
  * Author(s): Jan Glauber <jang@linux.vnet.ibm.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/संकेत.स>
-#समावेश <linux/mm.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/init.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel_स्थिति.स>
-#समावेश <linux/sched/task_stack.h>
+#include <linux/kernel.h>
+#include <linux/syscalls.h>
+#include <linux/signal.h>
+#include <linux/mm.h>
+#include <linux/slab.h>
+#include <linux/init.h>
+#include <linux/errno.h>
+#include <linux/kernel_stat.h>
+#include <linux/sched/task_stack.h>
 
-#समावेश <यंत्र/runसमय_instr.h>
-#समावेश <यंत्र/cpu_mf.h>
-#समावेश <यंत्र/irq.h>
+#include <asm/runtime_instr.h>
+#include <asm/cpu_mf.h>
+#include <asm/irq.h>
 
-#समावेश "entry.h"
+#include "entry.h"
 
 /* empty control block to disable RI by loading it */
-काष्ठा runसमय_instr_cb runसमय_instr_empty_cb;
+struct runtime_instr_cb runtime_instr_empty_cb;
 
-व्योम runसमय_instr_release(काष्ठा task_काष्ठा *tsk)
-अणु
-	kमुक्त(tsk->thपढ़ो.ri_cb);
-पूर्ण
+void runtime_instr_release(struct task_struct *tsk)
+{
+	kfree(tsk->thread.ri_cb);
+}
 
-अटल व्योम disable_runसमय_instr(व्योम)
-अणु
-	काष्ठा task_काष्ठा *task = current;
-	काष्ठा pt_regs *regs;
+static void disable_runtime_instr(void)
+{
+	struct task_struct *task = current;
+	struct pt_regs *regs;
 
-	अगर (!task->thपढ़ो.ri_cb)
-		वापस;
+	if (!task->thread.ri_cb)
+		return;
 	regs = task_pt_regs(task);
 	preempt_disable();
-	load_runसमय_instr_cb(&runसमय_instr_empty_cb);
-	kमुक्त(task->thपढ़ो.ri_cb);
-	task->thपढ़ो.ri_cb = शून्य;
+	load_runtime_instr_cb(&runtime_instr_empty_cb);
+	kfree(task->thread.ri_cb);
+	task->thread.ri_cb = NULL;
 	preempt_enable();
 
 	/*
 	 * Make sure the RI bit is deleted from the PSW. If the user did not
-	 * चयन off RI beक्रमe the प्रणाली call the process will get a
-	 * specअगरication exception otherwise.
+	 * switch off RI before the system call the process will get a
+	 * specification exception otherwise.
 	 */
 	regs->psw.mask &= ~PSW_MASK_RI;
-पूर्ण
+}
 
-अटल व्योम init_runसमय_instr_cb(काष्ठा runसमय_instr_cb *cb)
-अणु
+static void init_runtime_instr_cb(struct runtime_instr_cb *cb)
+{
 	cb->rla = 0xfff;
 	cb->s = 1;
 	cb->k = 1;
@@ -60,44 +59,44 @@
 	cb->pc = 1;
 	cb->key = PAGE_DEFAULT_KEY >> 4;
 	cb->v = 1;
-पूर्ण
+}
 
 /*
  * The signum argument is unused. In older kernels it was used to
- * specअगरy a real-समय संकेत. For backwards compatibility user space
- * should pass a valid real-समय संकेत number (the signum argument
+ * specify a real-time signal. For backwards compatibility user space
+ * should pass a valid real-time signal number (the signum argument
  * was checked in older kernels).
  */
-SYSCALL_DEFINE2(s390_runसमय_instr, पूर्णांक, command, पूर्णांक, signum)
-अणु
-	काष्ठा runसमय_instr_cb *cb;
+SYSCALL_DEFINE2(s390_runtime_instr, int, command, int, signum)
+{
+	struct runtime_instr_cb *cb;
 
-	अगर (!test_facility(64))
-		वापस -EOPNOTSUPP;
+	if (!test_facility(64))
+		return -EOPNOTSUPP;
 
-	अगर (command == S390_RUNTIME_INSTR_STOP) अणु
-		disable_runसमय_instr();
-		वापस 0;
-	पूर्ण
+	if (command == S390_RUNTIME_INSTR_STOP) {
+		disable_runtime_instr();
+		return 0;
+	}
 
-	अगर (command != S390_RUNTIME_INSTR_START)
-		वापस -EINVAL;
+	if (command != S390_RUNTIME_INSTR_START)
+		return -EINVAL;
 
-	अगर (!current->thपढ़ो.ri_cb) अणु
-		cb = kzalloc(माप(*cb), GFP_KERNEL);
-		अगर (!cb)
-			वापस -ENOMEM;
-	पूर्ण अन्यथा अणु
-		cb = current->thपढ़ो.ri_cb;
-		स_रखो(cb, 0, माप(*cb));
-	पूर्ण
+	if (!current->thread.ri_cb) {
+		cb = kzalloc(sizeof(*cb), GFP_KERNEL);
+		if (!cb)
+			return -ENOMEM;
+	} else {
+		cb = current->thread.ri_cb;
+		memset(cb, 0, sizeof(*cb));
+	}
 
-	init_runसमय_instr_cb(cb);
+	init_runtime_instr_cb(cb);
 
 	/* now load the control block to make it available */
 	preempt_disable();
-	current->thपढ़ो.ri_cb = cb;
-	load_runसमय_instr_cb(cb);
+	current->thread.ri_cb = cb;
+	load_runtime_instr_cb(cb);
 	preempt_enable();
-	वापस 0;
-पूर्ण
+	return 0;
+}

@@ -1,19 +1,18 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- *  The driver क्रम the Cirrus Logic's Sound Fusion CS46XX based soundcards
+ *  The driver for the Cirrus Logic's Sound Fusion CS46XX based soundcards
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  *
  * NOTE: comments are copy/paste from cwcemb80.lst 
  * provided by Tom Woller at Cirrus (my only
- * करोcumentation about the SP OS running inside
+ * documentation about the SP OS running inside
  * the DSP) 
  */
 
-#अगर_अघोषित __CS46XX_DSP_TASK_TYPES_H__
-#घोषणा __CS46XX_DSP_TASK_TYPES_H__
+#ifndef __CS46XX_DSP_TASK_TYPES_H__
+#define __CS46XX_DSP_TASK_TYPES_H__
 
-#समावेश "cs46xx_dsp_scb_types.h"
+#include "cs46xx_dsp_scb_types.h"
 
 /*********************************************************************************************
 Example hierarchy of stream control blocks in the SP
@@ -37,27 +36,27 @@ Ptr____Call (c)
 
 *********************************************************************************************/
 
-#घोषणा		HFG_FIRST_EXECUTE_MODE			0x0001
-#घोषणा		HFG_FIRST_EXECUTE_MODE_BIT		0
-#घोषणा		HFG_CONTEXT_SWITCH_MODE			0x0002
-#घोषणा		HFG_CONTEXT_SWITCH_MODE_BIT		1
+#define		HFG_FIRST_EXECUTE_MODE			0x0001
+#define		HFG_FIRST_EXECUTE_MODE_BIT		0
+#define		HFG_CONTEXT_SWITCH_MODE			0x0002
+#define		HFG_CONTEXT_SWITCH_MODE_BIT		1
 
-#घोषणा MAX_FG_STACK_SIZE 	32			/* THESE NEED TO BE COMPUTED PROPERLY */
-#घोषणा MAX_MG_STACK_SIZE 	16
-#घोषणा MAX_BG_STACK_SIZE 	9
-#घोषणा MAX_HFG_STACK_SIZE	4
+#define MAX_FG_STACK_SIZE 	32			/* THESE NEED TO BE COMPUTED PROPERLY */
+#define MAX_MG_STACK_SIZE 	16
+#define MAX_BG_STACK_SIZE 	9
+#define MAX_HFG_STACK_SIZE	4
 
-#घोषणा SLEEP_ACTIVE_INCREMENT		0		/* Enable task tree thपढ़ो to go to sleep
-											   This should only ever be used on the Background thपढ़ो */
-#घोषणा STANDARD_ACTIVE_INCREMENT	1		/* Task tree thपढ़ो normal operation */
-#घोषणा SUSPEND_ACTIVE_INCREMENT	2		/* Cause execution to suspend in the task tree thपढ़ो
-                                               This should only ever be used on the Background thपढ़ो */
+#define SLEEP_ACTIVE_INCREMENT		0		/* Enable task tree thread to go to sleep
+											   This should only ever be used on the Background thread */
+#define STANDARD_ACTIVE_INCREMENT	1		/* Task tree thread normal operation */
+#define SUSPEND_ACTIVE_INCREMENT	2		/* Cause execution to suspend in the task tree thread
+                                               This should only ever be used on the Background thread */
 
-#घोषणा HOSTFLAGS_DISABLE_BG_SLEEP  0       /* Host-controlled flag that determines whether we go to sleep
+#define HOSTFLAGS_DISABLE_BG_SLEEP  0       /* Host-controlled flag that determines whether we go to sleep
                                                at the end of BG */
 
-/* Minimal context save area क्रम Hyper Forground */
-काष्ठा dsp_hf_save_area अणु
+/* Minimal context save area for Hyper Forground */
+struct dsp_hf_save_area {
 	u32	r10_save;
 	u32	r54_save;
 	u32	r98_save;
@@ -77,37 +76,37 @@ Ptr____Call (c)
 	u32	rsd2_save;
 
        	___DSP_DUAL_16BIT_ALLOC(
-	      rsi2_save,	  /* See TaskTreeParameterBlock क्रम 
-				     reमुख्यder of रेजिस्टरs  */
+	      rsi2_save,	  /* See TaskTreeParameterBlock for 
+				     remainder of registers  */
 	      rsa2Save
 	)
 	/* saved as part of HFG context  */
-पूर्ण;
+};
 
 
-/* Task link data काष्ठाure */
-काष्ठा dsp_tree_link अणु
+/* Task link data structure */
+struct dsp_tree_link {
 	___DSP_DUAL_16BIT_ALLOC(
-	/* Poपूर्णांकer to sibling task control block */
+	/* Pointer to sibling task control block */
 	    next_scb,
-	/* Poपूर्णांकer to child task control block */
+	/* Pointer to child task control block */
 	    sub_ptr
 	)
   
 	___DSP_DUAL_16BIT_ALLOC(
-	/* Poपूर्णांकer to code entry poपूर्णांक */
-	    entry_poपूर्णांक, 
-	/* Poपूर्णांकer to local data */
+	/* Pointer to code entry point */
+	    entry_point, 
+	/* Pointer to local data */
 	    this_spb
 	)
-पूर्ण;
+};
 
 
-काष्ठा dsp_task_tree_data अणु
+struct dsp_task_tree_data {
 	___DSP_DUAL_16BIT_ALLOC(
 	/* Initial tock count; controls task tree execution rate */
 	    tock_count_limit,
-	/* Tock करोwn counter */
+	/* Tock down counter */
 	    tock_count
 	)
 
@@ -115,57 +114,57 @@ Ptr____Call (c)
 	   Subtract on task tree termination */
 	___DSP_DUAL_16BIT_ALLOC(
 	    active_tncrement,		
-	/* Number of pending activations क्रम task tree */
+	/* Number of pending activations for task tree */
 	    active_count
 	)
 
         ___DSP_DUAL_16BIT_ALLOC(
-	/* BitNumber to enable modअगरication of correct bit in ActiveTaskFlags */
+	/* BitNumber to enable modification of correct bit in ActiveTaskFlags */
 	    active_bit,	    
-	/* Poपूर्णांकer to OS location क्रम indicating current activity on task level */
+	/* Pointer to OS location for indicating current activity on task level */
 	    active_task_flags_ptr
 	)
 
-	/* Data काष्ठाure क्रम controlling movement of memory blocks:- 
+	/* Data structure for controlling movement of memory blocks:- 
 	   currently unused */
 	___DSP_DUAL_16BIT_ALLOC(
 	    mem_upd_ptr,
-	/* Data काष्ठाure क्रम controlling synchronous link update */
+	/* Data structure for controlling synchronous link update */
 	    link_upd_ptr
 	)
   
 	___DSP_DUAL_16BIT_ALLOC(
-	/* Save area क्रम reमुख्यder of full context. */
+	/* Save area for remainder of full context. */
 	    save_area,
-	/* Address of start of local stack क्रम data storage */
+	/* Address of start of local stack for data storage */
 	    data_stack_base_ptr
 	)
 
-पूर्ण;
+};
 
 
-काष्ठा dsp_पूर्णांकerval_समयr_data
-अणु
+struct dsp_interval_timer_data
+{
 	/* These data items have the same relative locations to those */
 	___DSP_DUAL_16BIT_ALLOC(
-	     पूर्णांकerval_समयr_period,
+	     interval_timer_period,
 	     itd_unused
 	)
 
-	/* used क्रम this data in the SPOS control block क्रम SPOS 1.0 */
+	/* used for this data in the SPOS control block for SPOS 1.0 */
 	___DSP_DUAL_16BIT_ALLOC(
-	     num_FG_ticks_this_पूर्णांकerval,        
-	     num_पूर्णांकervals
+	     num_FG_ticks_this_interval,        
+	     num_intervals
 	)
-पूर्ण;
+};
 
 
-/* This काष्ठाure contains extra storage क्रम the task tree
+/* This structure contains extra storage for the task tree
    Currently, this additional data is related only to a full context save */
-काष्ठा dsp_task_tree_context_block अणु
-	/* Up to 10 values are saved onto the stack.  8 क्रम the task tree, 1 क्रम
-	   The access to the context चयन (call or पूर्णांकerrupt), and 1 spare that
-	   users should never use.  This last may be required by the प्रणाली */
+struct dsp_task_tree_context_block {
+	/* Up to 10 values are saved onto the stack.  8 for the task tree, 1 for
+	   The access to the context switch (call or interrupt), and 1 spare that
+	   users should never use.  This last may be required by the system */
 	___DSP_DUAL_16BIT_ALLOC(
 	     stack1,
 	     stack0
@@ -190,7 +189,7 @@ Ptr____Call (c)
 	u32	  saverfe;					
 
 	/* Value may be overwritten by stack save algorithm.
-	   Retain the size of the stack data saved here अगर used */
+	   Retain the size of the stack data saved here if used */
 	___DSP_DUAL_16BIT_ALLOC(
              reserved1,	
   	     stack_size
@@ -223,16 +222,16 @@ Ptr____Call (c)
 	u32		saveaux2xaux3x;
 	u32		savershouthl;
 	u32		savershoutxmacmode;
-पूर्ण;
+};
                 
 
-काष्ठा dsp_task_tree_control_block अणु
-	काष्ठा dsp_hf_save_area			context;
-	काष्ठा dsp_tree_link			links;
-	काष्ठा dsp_task_tree_data		data;
-	काष्ठा dsp_task_tree_context_block	context_blk;
-	काष्ठा dsp_पूर्णांकerval_समयr_data		पूर्णांक_समयr;
-पूर्ण;
+struct dsp_task_tree_control_block {
+	struct dsp_hf_save_area			context;
+	struct dsp_tree_link			links;
+	struct dsp_task_tree_data		data;
+	struct dsp_task_tree_context_block	context_blk;
+	struct dsp_interval_timer_data		int_timer;
+};
 
 
-#पूर्ण_अगर /* __DSP_TASK_TYPES_H__ */
+#endif /* __DSP_TASK_TYPES_H__ */

@@ -1,30 +1,29 @@
-<शैली गुरु>
 /*
- * Copyright 2003-2011 NetLogic Microप्रणालीs, Inc. (NetLogic). All rights
+ * Copyright 2003-2011 NetLogic Microsystems, Inc. (NetLogic). All rights
  * reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the NetLogic
+ * COPYING in the main directory of this source tree, or the NetLogic
  * license below:
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary क्रमm must reproduce the above copyright
+ * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
- *    the करोcumentation and/or other materials provided with the
+ *    the documentation and/or other materials provided with the
  *    distribution.
  *
  * THIS SOFTWARE IS PROVIDED BY NETLOGIC ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED. IN NO EVENT SHALL NETLOGIC OR CONTRIBUTORS BE LIABLE
- * FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
  * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
@@ -33,88 +32,88 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#अगर_अघोषित _NLM_HAL_XLP_H
-#घोषणा _NLM_HAL_XLP_H
+#ifndef _NLM_HAL_XLP_H
+#define _NLM_HAL_XLP_H
 
-#घोषणा PIC_UART_0_IRQ			17
-#घोषणा PIC_UART_1_IRQ			18
+#define PIC_UART_0_IRQ			17
+#define PIC_UART_1_IRQ			18
 
-#घोषणा PIC_PCIE_LINK_LEGACY_IRQ_BASE	19
-#घोषणा PIC_PCIE_LINK_LEGACY_IRQ(i)	(19 + (i))
+#define PIC_PCIE_LINK_LEGACY_IRQ_BASE	19
+#define PIC_PCIE_LINK_LEGACY_IRQ(i)	(19 + (i))
 
-#घोषणा PIC_EHCI_0_IRQ			23
-#घोषणा PIC_EHCI_1_IRQ			24
-#घोषणा PIC_OHCI_0_IRQ			25
-#घोषणा PIC_OHCI_1_IRQ			26
-#घोषणा PIC_OHCI_2_IRQ			27
-#घोषणा PIC_OHCI_3_IRQ			28
-#घोषणा PIC_2XX_XHCI_0_IRQ		23
-#घोषणा PIC_2XX_XHCI_1_IRQ		24
-#घोषणा PIC_2XX_XHCI_2_IRQ		25
-#घोषणा PIC_9XX_XHCI_0_IRQ		23
-#घोषणा PIC_9XX_XHCI_1_IRQ		24
-#घोषणा PIC_9XX_XHCI_2_IRQ		25
+#define PIC_EHCI_0_IRQ			23
+#define PIC_EHCI_1_IRQ			24
+#define PIC_OHCI_0_IRQ			25
+#define PIC_OHCI_1_IRQ			26
+#define PIC_OHCI_2_IRQ			27
+#define PIC_OHCI_3_IRQ			28
+#define PIC_2XX_XHCI_0_IRQ		23
+#define PIC_2XX_XHCI_1_IRQ		24
+#define PIC_2XX_XHCI_2_IRQ		25
+#define PIC_9XX_XHCI_0_IRQ		23
+#define PIC_9XX_XHCI_1_IRQ		24
+#define PIC_9XX_XHCI_2_IRQ		25
 
-#घोषणा PIC_MMC_IRQ			29
-#घोषणा PIC_I2C_0_IRQ			30
-#घोषणा PIC_I2C_1_IRQ			31
-#घोषणा PIC_I2C_2_IRQ			32
-#घोषणा PIC_I2C_3_IRQ			33
-#घोषणा PIC_SPI_IRQ			34
-#घोषणा PIC_न_अंकD_IRQ			37
-#घोषणा PIC_SATA_IRQ			38
-#घोषणा PIC_GPIO_IRQ			39
+#define PIC_MMC_IRQ			29
+#define PIC_I2C_0_IRQ			30
+#define PIC_I2C_1_IRQ			31
+#define PIC_I2C_2_IRQ			32
+#define PIC_I2C_3_IRQ			33
+#define PIC_SPI_IRQ			34
+#define PIC_NAND_IRQ			37
+#define PIC_SATA_IRQ			38
+#define PIC_GPIO_IRQ			39
 
-#घोषणा PIC_PCIE_LINK_MSI_IRQ_BASE	44	/* 44 - 47 MSI IRQ */
-#घोषणा PIC_PCIE_LINK_MSI_IRQ(i)	(44 + (i))
+#define PIC_PCIE_LINK_MSI_IRQ_BASE	44	/* 44 - 47 MSI IRQ */
+#define PIC_PCIE_LINK_MSI_IRQ(i)	(44 + (i))
 
 /* MSI-X with second link-level dispatch */
-#घोषणा PIC_PCIE_MSIX_IRQ_BASE		48	/* 48 - 51 MSI-X IRQ */
-#घोषणा PIC_PCIE_MSIX_IRQ(i)		(48 + (i))
+#define PIC_PCIE_MSIX_IRQ_BASE		48	/* 48 - 51 MSI-X IRQ */
+#define PIC_PCIE_MSIX_IRQ(i)		(48 + (i))
 
 /* XLP9xx and XLP8xx has 128 and 32 MSIX vectors respectively */
-#घोषणा NLM_MSIX_VEC_BASE		96	/* 96 - 223 - MSIX mapped */
-#घोषणा NLM_MSI_VEC_BASE		224	/* 224 -351 - MSI mapped */
+#define NLM_MSIX_VEC_BASE		96	/* 96 - 223 - MSIX mapped */
+#define NLM_MSI_VEC_BASE		224	/* 224 -351 - MSI mapped */
 
-#घोषणा NLM_PIC_INसूचीECT_VEC_BASE	512
-#घोषणा NLM_GPIO_VEC_BASE		768
+#define NLM_PIC_INDIRECT_VEC_BASE	512
+#define NLM_GPIO_VEC_BASE		768
 
-#घोषणा PIC_IRQ_BASE			8
-#घोषणा PIC_IRT_FIRST_IRQ		PIC_IRQ_BASE
-#घोषणा PIC_IRT_LAST_IRQ		63
+#define PIC_IRQ_BASE			8
+#define PIC_IRT_FIRST_IRQ		PIC_IRQ_BASE
+#define PIC_IRT_LAST_IRQ		63
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
 /* SMP support functions */
-व्योम xlp_boot_core0_siblings(व्योम);
-व्योम xlp_wakeup_secondary_cpus(व्योम);
+void xlp_boot_core0_siblings(void);
+void xlp_wakeup_secondary_cpus(void);
 
-व्योम xlp_mmu_init(व्योम);
-व्योम nlm_hal_init(व्योम);
-पूर्णांक nlm_get_dram_map(पूर्णांक node, uपूर्णांक64_t *dram_map, पूर्णांक nentries);
+void xlp_mmu_init(void);
+void nlm_hal_init(void);
+int nlm_get_dram_map(int node, uint64_t *dram_map, int nentries);
 
-काष्ठा pci_dev;
-पूर्णांक xlp_socdev_to_node(स्थिर काष्ठा pci_dev *dev);
+struct pci_dev;
+int xlp_socdev_to_node(const struct pci_dev *dev);
 
 /* Device tree related */
-व्योम xlp_early_init_devtree(व्योम);
-व्योम *xlp_dt_init(व्योम *fdtp);
+void xlp_early_init_devtree(void);
+void *xlp_dt_init(void *fdtp);
 
-अटल अंतरभूत पूर्णांक cpu_is_xlpii(व्योम)
-अणु
-	पूर्णांक chip = पढ़ो_c0_prid() & PRID_IMP_MASK;
+static inline int cpu_is_xlpii(void)
+{
+	int chip = read_c0_prid() & PRID_IMP_MASK;
 
-	वापस chip == PRID_IMP_NETLOGIC_XLP2XX ||
+	return chip == PRID_IMP_NETLOGIC_XLP2XX ||
 		chip == PRID_IMP_NETLOGIC_XLP9XX ||
 		chip == PRID_IMP_NETLOGIC_XLP5XX;
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक cpu_is_xlp9xx(व्योम)
-अणु
-	पूर्णांक chip = पढ़ो_c0_prid() & PRID_IMP_MASK;
+static inline int cpu_is_xlp9xx(void)
+{
+	int chip = read_c0_prid() & PRID_IMP_MASK;
 
-	वापस chip == PRID_IMP_NETLOGIC_XLP9XX ||
+	return chip == PRID_IMP_NETLOGIC_XLP9XX ||
 		chip == PRID_IMP_NETLOGIC_XLP5XX;
-पूर्ण
-#पूर्ण_अगर /* !__ASSEMBLY__ */
-#पूर्ण_अगर /* _ASM_NLM_XLP_H */
+}
+#endif /* !__ASSEMBLY__ */
+#endif /* _ASM_NLM_XLP_H */

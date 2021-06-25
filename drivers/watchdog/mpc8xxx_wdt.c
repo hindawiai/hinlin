@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * mpc8xxx_wdt.c - MPC8xx/MPC83xx/MPC86xx watchकरोg userspace पूर्णांकerface
+ * mpc8xxx_wdt.c - MPC8xx/MPC83xx/MPC86xx watchdog userspace interface
  *
  * Authors: Dave Updegraff <dave@cray.org>
  *	    Kumar Gala <galak@kernel.crashing.org>
@@ -14,252 +13,252 @@
  * once after POR. Once enabled, you cannot disable, and vice versa.
  */
 
-#समावेश <linux/fs.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/module.h>
-#समावेश <linux/watchकरोg.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/uaccess.h>
-#समावेश <sysdev/fsl_soc.h>
+#include <linux/fs.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/of_address.h>
+#include <linux/of_platform.h>
+#include <linux/module.h>
+#include <linux/watchdog.h>
+#include <linux/io.h>
+#include <linux/uaccess.h>
+#include <sysdev/fsl_soc.h>
 
-#घोषणा WATCHDOG_TIMEOUT 10
+#define WATCHDOG_TIMEOUT 10
 
-काष्ठा mpc8xxx_wdt अणु
+struct mpc8xxx_wdt {
 	__be32 res0;
-	__be32 swcrr; /* System watchकरोg control रेजिस्टर */
-#घोषणा SWCRR_SWTC 0xFFFF0000 /* Software Watchकरोg Time Count. */
-#घोषणा SWCRR_SWF  0x00000008 /* Software Watchकरोg Freeze (mpc8xx). */
-#घोषणा SWCRR_SWEN 0x00000004 /* Watchकरोg Enable bit. */
-#घोषणा SWCRR_SWRI 0x00000002 /* Software Watchकरोg Reset/Interrupt Select bit.*/
-#घोषणा SWCRR_SWPR 0x00000001 /* Software Watchकरोg Counter Prescale bit. */
-	__be32 swcnr; /* System watchकरोg count रेजिस्टर */
+	__be32 swcrr; /* System watchdog control register */
+#define SWCRR_SWTC 0xFFFF0000 /* Software Watchdog Time Count. */
+#define SWCRR_SWF  0x00000008 /* Software Watchdog Freeze (mpc8xx). */
+#define SWCRR_SWEN 0x00000004 /* Watchdog Enable bit. */
+#define SWCRR_SWRI 0x00000002 /* Software Watchdog Reset/Interrupt Select bit.*/
+#define SWCRR_SWPR 0x00000001 /* Software Watchdog Counter Prescale bit. */
+	__be32 swcnr; /* System watchdog count register */
 	u8 res1[2];
-	__be16 swsrr; /* System watchकरोg service रेजिस्टर */
+	__be16 swsrr; /* System watchdog service register */
 	u8 res2[0xF0];
-पूर्ण;
+};
 
-काष्ठा mpc8xxx_wdt_type अणु
-	पूर्णांक prescaler;
+struct mpc8xxx_wdt_type {
+	int prescaler;
 	bool hw_enabled;
 	u32 rsr_mask;
-पूर्ण;
+};
 
-काष्ठा mpc8xxx_wdt_ddata अणु
-	काष्ठा mpc8xxx_wdt __iomem *base;
-	काष्ठा watchकरोg_device wdd;
+struct mpc8xxx_wdt_ddata {
+	struct mpc8xxx_wdt __iomem *base;
+	struct watchdog_device wdd;
 	spinlock_t lock;
 	u16 swtc;
-पूर्ण;
+};
 
-अटल u16 समयout;
-module_param(समयout, uलघु, 0);
-MODULE_PARM_DESC(समयout,
+static u16 timeout;
+module_param(timeout, ushort, 0);
+MODULE_PARM_DESC(timeout,
 	"Watchdog timeout in seconds. (1<timeout<65535, default="
 	__MODULE_STRING(WATCHDOG_TIMEOUT) ")");
 
-अटल bool reset = 1;
+static bool reset = 1;
 module_param(reset, bool, 0);
 MODULE_PARM_DESC(reset,
 	"Watchdog Interrupt/Reset Mode. 0 = interrupt, 1 = reset");
 
-अटल bool nowayout = WATCHDOG_NOWAYOUT;
+static bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout, "Watchdog cannot be stopped once started "
 		 "(default=" __MODULE_STRING(WATCHDOG_NOWAYOUT) ")");
 
-अटल व्योम mpc8xxx_wdt_keepalive(काष्ठा mpc8xxx_wdt_ddata *ddata)
-अणु
+static void mpc8xxx_wdt_keepalive(struct mpc8xxx_wdt_ddata *ddata)
+{
 	/* Ping the WDT */
 	spin_lock(&ddata->lock);
 	out_be16(&ddata->base->swsrr, 0x556c);
 	out_be16(&ddata->base->swsrr, 0xaa39);
 	spin_unlock(&ddata->lock);
-पूर्ण
+}
 
-अटल पूर्णांक mpc8xxx_wdt_start(काष्ठा watchकरोg_device *w)
-अणु
-	काष्ठा mpc8xxx_wdt_ddata *ddata =
-		container_of(w, काष्ठा mpc8xxx_wdt_ddata, wdd);
-	u32 पंचांगp = in_be32(&ddata->base->swcrr);
+static int mpc8xxx_wdt_start(struct watchdog_device *w)
+{
+	struct mpc8xxx_wdt_ddata *ddata =
+		container_of(w, struct mpc8xxx_wdt_ddata, wdd);
+	u32 tmp = in_be32(&ddata->base->swcrr);
 
 	/* Good, fire up the show */
-	पंचांगp &= ~(SWCRR_SWTC | SWCRR_SWF | SWCRR_SWEN | SWCRR_SWRI | SWCRR_SWPR);
-	पंचांगp |= SWCRR_SWEN | SWCRR_SWPR | (ddata->swtc << 16);
+	tmp &= ~(SWCRR_SWTC | SWCRR_SWF | SWCRR_SWEN | SWCRR_SWRI | SWCRR_SWPR);
+	tmp |= SWCRR_SWEN | SWCRR_SWPR | (ddata->swtc << 16);
 
-	अगर (reset)
-		पंचांगp |= SWCRR_SWRI;
+	if (reset)
+		tmp |= SWCRR_SWRI;
 
-	out_be32(&ddata->base->swcrr, पंचांगp);
+	out_be32(&ddata->base->swcrr, tmp);
 
-	पंचांगp = in_be32(&ddata->base->swcrr);
-	अगर (!(पंचांगp & SWCRR_SWEN))
-		वापस -EOPNOTSUPP;
+	tmp = in_be32(&ddata->base->swcrr);
+	if (!(tmp & SWCRR_SWEN))
+		return -EOPNOTSUPP;
 
-	ddata->swtc = पंचांगp >> 16;
+	ddata->swtc = tmp >> 16;
 	set_bit(WDOG_HW_RUNNING, &ddata->wdd.status);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mpc8xxx_wdt_ping(काष्ठा watchकरोg_device *w)
-अणु
-	काष्ठा mpc8xxx_wdt_ddata *ddata =
-		container_of(w, काष्ठा mpc8xxx_wdt_ddata, wdd);
+static int mpc8xxx_wdt_ping(struct watchdog_device *w)
+{
+	struct mpc8xxx_wdt_ddata *ddata =
+		container_of(w, struct mpc8xxx_wdt_ddata, wdd);
 
 	mpc8xxx_wdt_keepalive(ddata);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा watchकरोg_info mpc8xxx_wdt_info = अणु
+static struct watchdog_info mpc8xxx_wdt_info = {
 	.options = WDIOF_KEEPALIVEPING | WDIOF_MAGICCLOSE | WDIOF_SETTIMEOUT,
 	.firmware_version = 1,
 	.identity = "MPC8xxx",
-पूर्ण;
+};
 
-अटल काष्ठा watchकरोg_ops mpc8xxx_wdt_ops = अणु
+static struct watchdog_ops mpc8xxx_wdt_ops = {
 	.owner = THIS_MODULE,
 	.start = mpc8xxx_wdt_start,
 	.ping = mpc8xxx_wdt_ping,
-पूर्ण;
+};
 
-अटल पूर्णांक mpc8xxx_wdt_probe(काष्ठा platक्रमm_device *ofdev)
-अणु
-	पूर्णांक ret;
-	काष्ठा resource *res;
-	स्थिर काष्ठा mpc8xxx_wdt_type *wdt_type;
-	काष्ठा mpc8xxx_wdt_ddata *ddata;
+static int mpc8xxx_wdt_probe(struct platform_device *ofdev)
+{
+	int ret;
+	struct resource *res;
+	const struct mpc8xxx_wdt_type *wdt_type;
+	struct mpc8xxx_wdt_ddata *ddata;
 	u32 freq = fsl_get_sys_freq();
 	bool enabled;
-	काष्ठा device *dev = &ofdev->dev;
+	struct device *dev = &ofdev->dev;
 
 	wdt_type = of_device_get_match_data(dev);
-	अगर (!wdt_type)
-		वापस -EINVAL;
+	if (!wdt_type)
+		return -EINVAL;
 
-	अगर (!freq || freq == -1)
-		वापस -EINVAL;
+	if (!freq || freq == -1)
+		return -EINVAL;
 
-	ddata = devm_kzalloc(dev, माप(*ddata), GFP_KERNEL);
-	अगर (!ddata)
-		वापस -ENOMEM;
+	ddata = devm_kzalloc(dev, sizeof(*ddata), GFP_KERNEL);
+	if (!ddata)
+		return -ENOMEM;
 
-	ddata->base = devm_platक्रमm_ioremap_resource(ofdev, 0);
-	अगर (IS_ERR(ddata->base))
-		वापस PTR_ERR(ddata->base);
+	ddata->base = devm_platform_ioremap_resource(ofdev, 0);
+	if (IS_ERR(ddata->base))
+		return PTR_ERR(ddata->base);
 
 	enabled = in_be32(&ddata->base->swcrr) & SWCRR_SWEN;
-	अगर (!enabled && wdt_type->hw_enabled) अणु
+	if (!enabled && wdt_type->hw_enabled) {
 		dev_info(dev, "could not be enabled in software\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	res = platक्रमm_get_resource(ofdev, IORESOURCE_MEM, 1);
-	अगर (res) अणु
+	res = platform_get_resource(ofdev, IORESOURCE_MEM, 1);
+	if (res) {
 		bool status;
 		u32 __iomem *rsr = ioremap(res->start, resource_size(res));
 
-		अगर (!rsr)
-			वापस -ENOMEM;
+		if (!rsr)
+			return -ENOMEM;
 
 		status = in_be32(rsr) & wdt_type->rsr_mask;
 		ddata->wdd.bootstatus = status ? WDIOF_CARDRESET : 0;
-		 /* clear reset status bits related to watchकरोg समयr */
+		 /* clear reset status bits related to watchdog timer */
 		out_be32(rsr, wdt_type->rsr_mask);
 		iounmap(rsr);
 
 		dev_info(dev, "Last boot was %scaused by watchdog\n",
 			 status ? "" : "not ");
-	पूर्ण
+	}
 
 	spin_lock_init(&ddata->lock);
 
 	ddata->wdd.info = &mpc8xxx_wdt_info;
 	ddata->wdd.ops = &mpc8xxx_wdt_ops;
 
-	ddata->wdd.समयout = WATCHDOG_TIMEOUT;
-	watchकरोg_init_समयout(&ddata->wdd, समयout, dev);
+	ddata->wdd.timeout = WATCHDOG_TIMEOUT;
+	watchdog_init_timeout(&ddata->wdd, timeout, dev);
 
-	watchकरोg_set_nowayout(&ddata->wdd, nowayout);
+	watchdog_set_nowayout(&ddata->wdd, nowayout);
 
-	ddata->swtc = min(ddata->wdd.समयout * freq / wdt_type->prescaler,
+	ddata->swtc = min(ddata->wdd.timeout * freq / wdt_type->prescaler,
 			  0xffffU);
 
 	/*
-	 * If the watchकरोg was previously enabled or we're running on
+	 * If the watchdog was previously enabled or we're running on
 	 * MPC8xxx, we should ping the wdt from the kernel until the
 	 * userspace handles it.
 	 */
-	अगर (enabled)
+	if (enabled)
 		mpc8xxx_wdt_start(&ddata->wdd);
 
 	ddata->wdd.max_hw_heartbeat_ms = (ddata->swtc * wdt_type->prescaler) /
 					 (freq / 1000);
-	ddata->wdd.min_समयout = ddata->wdd.max_hw_heartbeat_ms / 1000;
-	अगर (ddata->wdd.समयout < ddata->wdd.min_समयout)
-		ddata->wdd.समयout = ddata->wdd.min_समयout;
+	ddata->wdd.min_timeout = ddata->wdd.max_hw_heartbeat_ms / 1000;
+	if (ddata->wdd.timeout < ddata->wdd.min_timeout)
+		ddata->wdd.timeout = ddata->wdd.min_timeout;
 
-	ret = devm_watchकरोg_रेजिस्टर_device(dev, &ddata->wdd);
-	अगर (ret)
-		वापस ret;
+	ret = devm_watchdog_register_device(dev, &ddata->wdd);
+	if (ret)
+		return ret;
 
 	dev_info(dev,
 		 "WDT driver for MPC8xxx initialized. mode:%s timeout=%d sec\n",
-		 reset ? "reset" : "interrupt", ddata->wdd.समयout);
+		 reset ? "reset" : "interrupt", ddata->wdd.timeout);
 
-	platक्रमm_set_drvdata(ofdev, ddata);
-	वापस 0;
-पूर्ण
+	platform_set_drvdata(ofdev, ddata);
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id mpc8xxx_wdt_match[] = अणु
-	अणु
+static const struct of_device_id mpc8xxx_wdt_match[] = {
+	{
 		.compatible = "mpc83xx_wdt",
-		.data = &(काष्ठा mpc8xxx_wdt_type) अणु
+		.data = &(struct mpc8xxx_wdt_type) {
 			.prescaler = 0x10000,
 			.rsr_mask = BIT(3), /* RSR Bit SWRS */
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.compatible = "fsl,mpc8610-wdt",
-		.data = &(काष्ठा mpc8xxx_wdt_type) अणु
+		.data = &(struct mpc8xxx_wdt_type) {
 			.prescaler = 0x10000,
 			.hw_enabled = true,
 			.rsr_mask = BIT(20), /* RSTRSCR Bit WDT_RR */
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.compatible = "fsl,mpc823-wdt",
-		.data = &(काष्ठा mpc8xxx_wdt_type) अणु
+		.data = &(struct mpc8xxx_wdt_type) {
 			.prescaler = 0x800,
 			.hw_enabled = true,
 			.rsr_mask = BIT(28), /* RSR Bit SWRS */
-		पूर्ण,
-	पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+		},
+	},
+	{},
+};
 MODULE_DEVICE_TABLE(of, mpc8xxx_wdt_match);
 
-अटल काष्ठा platक्रमm_driver mpc8xxx_wdt_driver = अणु
+static struct platform_driver mpc8xxx_wdt_driver = {
 	.probe		= mpc8xxx_wdt_probe,
-	.driver = अणु
+	.driver = {
 		.name = "mpc8xxx_wdt",
 		.of_match_table = mpc8xxx_wdt_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init mpc8xxx_wdt_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&mpc8xxx_wdt_driver);
-पूर्ण
+static int __init mpc8xxx_wdt_init(void)
+{
+	return platform_driver_register(&mpc8xxx_wdt_driver);
+}
 arch_initcall(mpc8xxx_wdt_init);
 
-अटल व्योम __निकास mpc8xxx_wdt_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&mpc8xxx_wdt_driver);
-पूर्ण
-module_निकास(mpc8xxx_wdt_निकास);
+static void __exit mpc8xxx_wdt_exit(void)
+{
+	platform_driver_unregister(&mpc8xxx_wdt_driver);
+}
+module_exit(mpc8xxx_wdt_exit);
 
 MODULE_AUTHOR("Dave Updegraff, Kumar Gala");
 MODULE_DESCRIPTION("Driver for watchdog timer in MPC8xx/MPC83xx/MPC86xx "

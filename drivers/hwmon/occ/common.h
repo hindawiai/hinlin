@@ -1,45 +1,44 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /* Copyright IBM Corp 2019 */
 
-#अगर_अघोषित OCC_COMMON_H
-#घोषणा OCC_COMMON_H
+#ifndef OCC_COMMON_H
+#define OCC_COMMON_H
 
-#समावेश <linux/hwmon-sysfs.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/sysfs.h>
+#include <linux/hwmon-sysfs.h>
+#include <linux/mutex.h>
+#include <linux/sysfs.h>
 
-काष्ठा device;
+struct device;
 
-#घोषणा OCC_RESP_DATA_BYTES		4089
+#define OCC_RESP_DATA_BYTES		4089
 
 /*
- * Same response क्रमmat क्रम all OCC versions.
+ * Same response format for all OCC versions.
  * Allocate the largest possible response.
  */
-काष्ठा occ_response अणु
+struct occ_response {
 	u8 seq_no;
 	u8 cmd_type;
-	u8 वापस_status;
+	u8 return_status;
 	__be16 data_length;
 	u8 data[OCC_RESP_DATA_BYTES];
 	__be16 checksum;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा occ_sensor_data_block_header अणु
+struct occ_sensor_data_block_header {
 	u8 eye_catcher[4];
 	u8 reserved;
-	u8 sensor_क्रमmat;
+	u8 sensor_format;
 	u8 sensor_length;
 	u8 num_sensors;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा occ_sensor_data_block अणु
-	काष्ठा occ_sensor_data_block_header header;
+struct occ_sensor_data_block {
+	struct occ_sensor_data_block_header header;
 	u32 data;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा occ_poll_response_header अणु
+struct occ_poll_response_header {
 	u8 status;
 	u8 ext_status;
 	u8 occs_present;
@@ -55,78 +54,78 @@
 	u8 eye_catcher[6];
 	u8 num_sensor_data_blocks;
 	u8 sensor_data_block_header_version;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा occ_poll_response अणु
-	काष्ठा occ_poll_response_header header;
-	काष्ठा occ_sensor_data_block block;
-पूर्ण __packed;
+struct occ_poll_response {
+	struct occ_poll_response_header header;
+	struct occ_sensor_data_block block;
+} __packed;
 
-काष्ठा occ_sensor अणु
+struct occ_sensor {
 	u8 num_sensors;
 	u8 version;
-	व्योम *data;	/* poपूर्णांकer to sensor data start within response */
-पूर्ण;
+	void *data;	/* pointer to sensor data start within response */
+};
 
 /*
  * OCC only provides one sensor data block of each type, but any number of
  * sensors within that block.
  */
-काष्ठा occ_sensors अणु
-	काष्ठा occ_sensor temp;
-	काष्ठा occ_sensor freq;
-	काष्ठा occ_sensor घातer;
-	काष्ठा occ_sensor caps;
-	काष्ठा occ_sensor extended;
-पूर्ण;
+struct occ_sensors {
+	struct occ_sensor temp;
+	struct occ_sensor freq;
+	struct occ_sensor power;
+	struct occ_sensor caps;
+	struct occ_sensor extended;
+};
 
 /*
- * Use our own attribute काष्ठा so we can dynamically allocate space क्रम the
+ * Use our own attribute struct so we can dynamically allocate space for the
  * name.
  */
-काष्ठा occ_attribute अणु
-	अक्षर name[32];
-	काष्ठा sensor_device_attribute_2 sensor;
-पूर्ण;
+struct occ_attribute {
+	char name[32];
+	struct sensor_device_attribute_2 sensor;
+};
 
-काष्ठा occ अणु
-	काष्ठा device *bus_dev;
+struct occ {
+	struct device *bus_dev;
 
-	काष्ठा occ_response resp;
-	काष्ठा occ_sensors sensors;
+	struct occ_response resp;
+	struct occ_sensors sensors;
 
-	पूर्णांक घातr_sample_समय_us;	/* average घातer sample समय */
+	int powr_sample_time_us;	/* average power sample time */
 	u8 seq_no;
-	u8 poll_cmd_data;		/* to perक्रमm OCC poll command */
-	पूर्णांक (*send_cmd)(काष्ठा occ *occ, u8 *cmd);
+	u8 poll_cmd_data;		/* to perform OCC poll command */
+	int (*send_cmd)(struct occ *occ, u8 *cmd);
 
-	अचिन्हित दीर्घ next_update;
-	काष्ठा mutex lock;		/* lock OCC access */
+	unsigned long next_update;
+	struct mutex lock;		/* lock OCC access */
 
-	काष्ठा device *hwmon;
-	काष्ठा occ_attribute *attrs;
-	काष्ठा attribute_group group;
-	स्थिर काष्ठा attribute_group *groups[2];
+	struct device *hwmon;
+	struct occ_attribute *attrs;
+	struct attribute_group group;
+	const struct attribute_group *groups[2];
 
-	पूर्णांक error;                      /* final transfer error after retry */
-	पूर्णांक last_error;			/* latest transfer error */
-	अचिन्हित पूर्णांक error_count;       /* number of xfr errors observed */
-	अचिन्हित दीर्घ last_safe;        /* समय OCC entered "safe" state */
+	int error;                      /* final transfer error after retry */
+	int last_error;			/* latest transfer error */
+	unsigned int error_count;       /* number of xfr errors observed */
+	unsigned long last_safe;        /* time OCC entered "safe" state */
 
 	/*
-	 * Store the previous state data क्रम comparison in order to notअगरy
-	 * sysfs पढ़ोers of state changes.
+	 * Store the previous state data for comparison in order to notify
+	 * sysfs readers of state changes.
 	 */
-	पूर्णांक prev_error;
+	int prev_error;
 	u8 prev_stat;
 	u8 prev_ext_stat;
 	u8 prev_occs_present;
-पूर्ण;
+};
 
-पूर्णांक occ_setup(काष्ठा occ *occ, स्थिर अक्षर *name);
-पूर्णांक occ_setup_sysfs(काष्ठा occ *occ);
-व्योम occ_shutकरोwn(काष्ठा occ *occ);
-व्योम occ_sysfs_poll_करोne(काष्ठा occ *occ);
-पूर्णांक occ_update_response(काष्ठा occ *occ);
+int occ_setup(struct occ *occ, const char *name);
+int occ_setup_sysfs(struct occ *occ);
+void occ_shutdown(struct occ *occ);
+void occ_sysfs_poll_done(struct occ *occ);
+int occ_update_response(struct occ *occ);
 
-#पूर्ण_अगर /* OCC_COMMON_H */
+#endif /* OCC_COMMON_H */

@@ -1,12 +1,11 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_POWERPC_CONTEXT_TRACKING_H
-#घोषणा _ASM_POWERPC_CONTEXT_TRACKING_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_POWERPC_CONTEXT_TRACKING_H
+#define _ASM_POWERPC_CONTEXT_TRACKING_H
 
-#अगर_घोषित CONFIG_CONTEXT_TRACKING
-#घोषणा SCHEDULE_USER bl	schedule_user
-#अन्यथा
-#घोषणा SCHEDULE_USER bl	schedule
-#पूर्ण_अगर
+#ifdef CONFIG_CONTEXT_TRACKING
+#define SCHEDULE_USER bl	schedule_user
+#else
+#define SCHEDULE_USER bl	schedule
+#endif
 
-#पूर्ण_अगर
+#endif

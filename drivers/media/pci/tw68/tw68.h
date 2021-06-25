@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  *  tw68 driver common header file
  *
@@ -17,48 +16,48 @@
  *  Copyright (C) 2014 Hans Verkuil <hverkuil@xs4all.nl>
  */
 
-#समावेश <linux/pci.h>
-#समावेश <linux/videodev2.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/पन.स>
+#include <linux/pci.h>
+#include <linux/videodev2.h>
+#include <linux/notifier.h>
+#include <linux/delay.h>
+#include <linux/mutex.h>
+#include <linux/io.h>
 
-#समावेश <media/v4l2-common.h>
-#समावेश <media/v4l2-ioctl.h>
-#समावेश <media/v4l2-ctrls.h>
-#समावेश <media/v4l2-device.h>
-#समावेश <media/videobuf2-v4l2.h>
-#समावेश <media/videobuf2-dma-sg.h>
+#include <media/v4l2-common.h>
+#include <media/v4l2-ioctl.h>
+#include <media/v4l2-ctrls.h>
+#include <media/v4l2-device.h>
+#include <media/videobuf2-v4l2.h>
+#include <media/videobuf2-dma-sg.h>
 
-#समावेश "tw68-reg.h"
+#include "tw68-reg.h"
 
-#घोषणा	UNSET	(-1U)
+#define	UNSET	(-1U)
 
-#घोषणा TW68_NORMS ( \
+#define TW68_NORMS ( \
 	V4L2_STD_NTSC    | V4L2_STD_PAL       | V4L2_STD_SECAM    | \
 	V4L2_STD_PAL_M   | V4L2_STD_PAL_Nc    | V4L2_STD_PAL_60)
 
-#घोषणा	TW68_VID_INTS	(TW68_FFERR | TW68_PABORT | TW68_DMAPERR | \
+#define	TW68_VID_INTS	(TW68_FFERR | TW68_PABORT | TW68_DMAPERR | \
 			 TW68_FFOF   | TW68_DMAPI)
-/* TW6800 chips have trouble with these, so we करोn't set them क्रम that chip */
-#घोषणा	TW68_VID_INTSX	(TW68_FDMIS | TW68_HLOCK | TW68_VLOCK)
+/* TW6800 chips have trouble with these, so we don't set them for that chip */
+#define	TW68_VID_INTSX	(TW68_FDMIS | TW68_HLOCK | TW68_VLOCK)
 
-#घोषणा	TW68_I2C_INTS	(TW68_SBERR | TW68_SBDONE | TW68_SBERR2  | \
+#define	TW68_I2C_INTS	(TW68_SBERR | TW68_SBDONE | TW68_SBERR2  | \
 			 TW68_SBDONE2)
 
-क्रमागत tw68_decoder_type अणु
+enum tw68_decoder_type {
 	TW6800,
 	TW6801,
 	TW6804,
 	TWXXXX,
-पूर्ण;
+};
 
 /* ----------------------------------------------------------- */
-/* अटल data                                                 */
+/* static data                                                 */
 
-काष्ठा tw68_tvnorm अणु
-	अक्षर		*name;
+struct tw68_tvnorm {
+	char		*name;
 	v4l2_std_id	id;
 
 	/* video decoder */
@@ -71,7 +70,7 @@
 
 	/* video scaler */
 	u32	h_delay;
-	u32	h_delay0;	/* क्रम TW6800 */
+	u32	h_delay0;	/* for TW6800 */
 	u32	h_start;
 	u32	h_stop;
 	u32	v_delay;
@@ -81,68 +80,68 @@
 	u32	vbi_v_stop_0;
 	u32	vbi_v_start_1;
 
-	/* Techwell specअगरic */
-	u32	क्रमmat;
-पूर्ण;
+	/* Techwell specific */
+	u32	format;
+};
 
-काष्ठा tw68_क्रमmat अणु
+struct tw68_format {
 	u32	fourcc;
 	u32	depth;
-	u32	twक्रमmat;
-पूर्ण;
+	u32	twformat;
+};
 
 /* ----------------------------------------------------------- */
 /* card configuration					  */
 
-#घोषणा TW68_BOARD_NOAUTO		UNSET
-#घोषणा TW68_BOARD_UNKNOWN		0
-#घोषणा	TW68_BOARD_GENERIC_6802		1
+#define TW68_BOARD_NOAUTO		UNSET
+#define TW68_BOARD_UNKNOWN		0
+#define	TW68_BOARD_GENERIC_6802		1
 
-#घोषणा	TW68_MAXBOARDS			16
-#घोषणा	TW68_INPUT_MAX			4
+#define	TW68_MAXBOARDS			16
+#define	TW68_INPUT_MAX			4
 
 /* ----------------------------------------------------------- */
 /* device / file handle status                                 */
 
-#घोषणा	BUFFER_TIMEOUT	msecs_to_jअगरfies(500)	/* 0.5 seconds */
+#define	BUFFER_TIMEOUT	msecs_to_jiffies(500)	/* 0.5 seconds */
 
-काष्ठा tw68_dev;	/* क्रमward delclaration */
+struct tw68_dev;	/* forward delclaration */
 
-/* buffer क्रम one video/vbi/ts frame */
-काष्ठा tw68_buf अणु
-	काष्ठा vb2_v4l2_buffer vb;
-	काष्ठा list_head list;
+/* buffer for one video/vbi/ts frame */
+struct tw68_buf {
+	struct vb2_v4l2_buffer vb;
+	struct list_head list;
 
-	अचिन्हित पूर्णांक   size;
+	unsigned int   size;
 	__le32         *cpu;
 	__le32         *jmp;
 	dma_addr_t     dma;
-पूर्ण;
+};
 
-काष्ठा tw68_fmt अणु
-	अक्षर			*name;
-	u32			fourcc;	/* v4l2 क्रमmat id */
-	पूर्णांक			depth;
-	पूर्णांक			flags;
-	u32			twक्रमmat;
-पूर्ण;
+struct tw68_fmt {
+	char			*name;
+	u32			fourcc;	/* v4l2 format id */
+	int			depth;
+	int			flags;
+	u32			twformat;
+};
 
 /* global device status */
-काष्ठा tw68_dev अणु
-	काष्ठा mutex		lock;
+struct tw68_dev {
+	struct mutex		lock;
 	spinlock_t		slock;
 	u16			instance;
-	काष्ठा v4l2_device	v4l2_dev;
+	struct v4l2_device	v4l2_dev;
 
 	/* various device info */
-	क्रमागत tw68_decoder_type	vdecoder;
-	काष्ठा video_device	vdev;
-	काष्ठा v4l2_ctrl_handler hdl;
+	enum tw68_decoder_type	vdecoder;
+	struct video_device	vdev;
+	struct v4l2_ctrl_handler hdl;
 
 	/* pci i/o */
-	अक्षर			*name;
-	काष्ठा pci_dev		*pci;
-	अचिन्हित अक्षर		pci_rev, pci_lat;
+	char			*name;
+	struct pci_dev		*pci;
+	unsigned char		pci_rev, pci_lat;
 	u32			__iomem *lmmio;
 	u8			__iomem *bmmio;
 	u32			pci_irqmask;
@@ -150,57 +149,57 @@
 	u32			board_virqmask;
 
 	/* video capture */
-	स्थिर काष्ठा tw68_क्रमmat *fmt;
-	अचिन्हित		width, height;
-	अचिन्हित		seqnr;
-	अचिन्हित		field;
-	काष्ठा vb2_queue	vidq;
-	काष्ठा list_head	active;
+	const struct tw68_format *fmt;
+	unsigned		width, height;
+	unsigned		seqnr;
+	unsigned		field;
+	struct vb2_queue	vidq;
+	struct list_head	active;
 
 	/* various v4l controls */
-	स्थिर काष्ठा tw68_tvnorm *tvnorm;	/* video */
+	const struct tw68_tvnorm *tvnorm;	/* video */
 
-	पूर्णांक			input;
-पूर्ण;
+	int			input;
+};
 
 /* ----------------------------------------------------------- */
 
-#घोषणा tw_पढ़ोl(reg)		पढ़ोl(dev->lmmio + ((reg) >> 2))
-#घोषणा	tw_पढ़ोb(reg)		पढ़ोb(dev->bmmio + (reg))
-#घोषणा tw_ग_लिखोl(reg, value)	ग_लिखोl((value), dev->lmmio + ((reg) >> 2))
-#घोषणा	tw_ग_लिखोb(reg, value)	ग_लिखोb((value), dev->bmmio + (reg))
+#define tw_readl(reg)		readl(dev->lmmio + ((reg) >> 2))
+#define	tw_readb(reg)		readb(dev->bmmio + (reg))
+#define tw_writel(reg, value)	writel((value), dev->lmmio + ((reg) >> 2))
+#define	tw_writeb(reg, value)	writeb((value), dev->bmmio + (reg))
 
-#घोषणा tw_anकरोrl(reg, mask, value) \
-		ग_लिखोl((पढ़ोl(dev->lmmio+((reg)>>2)) & ~(mask)) |\
+#define tw_andorl(reg, mask, value) \
+		writel((readl(dev->lmmio+((reg)>>2)) & ~(mask)) |\
 		((value) & (mask)), dev->lmmio+((reg)>>2))
-#घोषणा	tw_anकरोrb(reg, mask, value) \
-		ग_लिखोb((पढ़ोb(dev->bmmio + (reg)) & ~(mask)) |\
+#define	tw_andorb(reg, mask, value) \
+		writeb((readb(dev->bmmio + (reg)) & ~(mask)) |\
 		((value) & (mask)), dev->bmmio+(reg))
-#घोषणा tw_setl(reg, bit)	tw_anकरोrl((reg), (bit), (bit))
-#घोषणा	tw_setb(reg, bit)	tw_anकरोrb((reg), (bit), (bit))
-#घोषणा	tw_clearl(reg, bit)	\
-		ग_लिखोl((पढ़ोl(dev->lmmio + ((reg) >> 2)) & ~(bit)), \
+#define tw_setl(reg, bit)	tw_andorl((reg), (bit), (bit))
+#define	tw_setb(reg, bit)	tw_andorb((reg), (bit), (bit))
+#define	tw_clearl(reg, bit)	\
+		writel((readl(dev->lmmio + ((reg) >> 2)) & ~(bit)), \
 		dev->lmmio + ((reg) >> 2))
-#घोषणा	tw_clearb(reg, bit)	\
-		ग_लिखोb((पढ़ोb(dev->bmmio+(reg)) & ~(bit)), \
+#define	tw_clearb(reg, bit)	\
+		writeb((readb(dev->bmmio+(reg)) & ~(bit)), \
 		dev->bmmio + (reg))
 
-#घोषणा tw_रुको(us) अणु udelay(us); पूर्ण
+#define tw_wait(us) { udelay(us); }
 
 /* ----------------------------------------------------------- */
 /* tw68-video.c                                                */
 
-व्योम tw68_set_tvnorm_hw(काष्ठा tw68_dev *dev);
+void tw68_set_tvnorm_hw(struct tw68_dev *dev);
 
-पूर्णांक tw68_video_init1(काष्ठा tw68_dev *dev);
-पूर्णांक tw68_video_init2(काष्ठा tw68_dev *dev, पूर्णांक video_nr);
-व्योम tw68_irq_video_करोne(काष्ठा tw68_dev *dev, अचिन्हित दीर्घ status);
-पूर्णांक tw68_video_start_dma(काष्ठा tw68_dev *dev, काष्ठा tw68_buf *buf);
+int tw68_video_init1(struct tw68_dev *dev);
+int tw68_video_init2(struct tw68_dev *dev, int video_nr);
+void tw68_irq_video_done(struct tw68_dev *dev, unsigned long status);
+int tw68_video_start_dma(struct tw68_dev *dev, struct tw68_buf *buf);
 
 /* ----------------------------------------------------------- */
 /* tw68-risc.c                                                 */
 
-पूर्णांक tw68_risc_buffer(काष्ठा pci_dev *pci, काष्ठा tw68_buf *buf,
-	काष्ठा scatterlist *sglist, अचिन्हित पूर्णांक top_offset,
-	अचिन्हित पूर्णांक bottom_offset, अचिन्हित पूर्णांक bpl,
-	अचिन्हित पूर्णांक padding, अचिन्हित पूर्णांक lines);
+int tw68_risc_buffer(struct pci_dev *pci, struct tw68_buf *buf,
+	struct scatterlist *sglist, unsigned int top_offset,
+	unsigned int bottom_offset, unsigned int bpl,
+	unsigned int padding, unsigned int lines);

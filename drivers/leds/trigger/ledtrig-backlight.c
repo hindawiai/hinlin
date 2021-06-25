@@ -1,141 +1,140 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Backlight emulation LED trigger
  *
- * Copyright 2008 (C) Roकरोlfo Giometti <giometti@linux.it>
+ * Copyright 2008 (C) Rodolfo Giometti <giometti@linux.it>
  * Copyright 2008 (C) Eurotech S.p.A. <info@eurotech.it>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/init.h>
-#समावेश <linux/fb.h>
-#समावेश <linux/leds.h>
-#समावेश "../leds.h"
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/init.h>
+#include <linux/fb.h>
+#include <linux/leds.h>
+#include "../leds.h"
 
-#घोषणा BLANK		1
-#घोषणा UNBLANK		0
+#define BLANK		1
+#define UNBLANK		0
 
-काष्ठा bl_trig_notअगरier अणु
-	काष्ठा led_classdev *led;
-	पूर्णांक brightness;
-	पूर्णांक old_status;
-	काष्ठा notअगरier_block notअगरier;
-	अचिन्हित invert;
-पूर्ण;
+struct bl_trig_notifier {
+	struct led_classdev *led;
+	int brightness;
+	int old_status;
+	struct notifier_block notifier;
+	unsigned invert;
+};
 
-अटल पूर्णांक fb_notअगरier_callback(काष्ठा notअगरier_block *p,
-				अचिन्हित दीर्घ event, व्योम *data)
-अणु
-	काष्ठा bl_trig_notअगरier *n = container_of(p,
-					काष्ठा bl_trig_notअगरier, notअगरier);
-	काष्ठा led_classdev *led = n->led;
-	काष्ठा fb_event *fb_event = data;
-	पूर्णांक *blank;
-	पूर्णांक new_status;
+static int fb_notifier_callback(struct notifier_block *p,
+				unsigned long event, void *data)
+{
+	struct bl_trig_notifier *n = container_of(p,
+					struct bl_trig_notifier, notifier);
+	struct led_classdev *led = n->led;
+	struct fb_event *fb_event = data;
+	int *blank;
+	int new_status;
 
-	/* If we aren't पूर्णांकerested in this event, skip it immediately ... */
-	अगर (event != FB_EVENT_BLANK)
-		वापस 0;
+	/* If we aren't interested in this event, skip it immediately ... */
+	if (event != FB_EVENT_BLANK)
+		return 0;
 
 	blank = fb_event->data;
 	new_status = *blank ? BLANK : UNBLANK;
 
-	अगर (new_status == n->old_status)
-		वापस 0;
+	if (new_status == n->old_status)
+		return 0;
 
-	अगर ((n->old_status == UNBLANK) ^ n->invert) अणु
+	if ((n->old_status == UNBLANK) ^ n->invert) {
 		n->brightness = led->brightness;
 		led_set_brightness_nosleep(led, LED_OFF);
-	पूर्ण अन्यथा अणु
+	} else {
 		led_set_brightness_nosleep(led, n->brightness);
-	पूर्ण
+	}
 
 	n->old_status = new_status;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार bl_trig_invert_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा bl_trig_notअगरier *n = led_trigger_get_drvdata(dev);
+static ssize_t bl_trig_invert_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct bl_trig_notifier *n = led_trigger_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%u\n", n->invert);
-पूर्ण
+	return sprintf(buf, "%u\n", n->invert);
+}
 
-अटल sमाप_प्रकार bl_trig_invert_store(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार num)
-अणु
-	काष्ठा led_classdev *led = led_trigger_get_led(dev);
-	काष्ठा bl_trig_notअगरier *n = led_trigger_get_drvdata(dev);
-	अचिन्हित दीर्घ invert;
-	पूर्णांक ret;
+static ssize_t bl_trig_invert_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t num)
+{
+	struct led_classdev *led = led_trigger_get_led(dev);
+	struct bl_trig_notifier *n = led_trigger_get_drvdata(dev);
+	unsigned long invert;
+	int ret;
 
-	ret = kम_से_अदीर्घ(buf, 10, &invert);
-	अगर (ret < 0)
-		वापस ret;
+	ret = kstrtoul(buf, 10, &invert);
+	if (ret < 0)
+		return ret;
 
-	अगर (invert > 1)
-		वापस -EINVAL;
+	if (invert > 1)
+		return -EINVAL;
 
 	n->invert = invert;
 
 	/* After inverting, we need to update the LED. */
-	अगर ((n->old_status == BLANK) ^ n->invert)
+	if ((n->old_status == BLANK) ^ n->invert)
 		led_set_brightness_nosleep(led, LED_OFF);
-	अन्यथा
+	else
 		led_set_brightness_nosleep(led, n->brightness);
 
-	वापस num;
-पूर्ण
-अटल DEVICE_ATTR(inverted, 0644, bl_trig_invert_show, bl_trig_invert_store);
+	return num;
+}
+static DEVICE_ATTR(inverted, 0644, bl_trig_invert_show, bl_trig_invert_store);
 
-अटल काष्ठा attribute *bl_trig_attrs[] = अणु
+static struct attribute *bl_trig_attrs[] = {
 	&dev_attr_inverted.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 ATTRIBUTE_GROUPS(bl_trig);
 
-अटल पूर्णांक bl_trig_activate(काष्ठा led_classdev *led)
-अणु
-	पूर्णांक ret;
+static int bl_trig_activate(struct led_classdev *led)
+{
+	int ret;
 
-	काष्ठा bl_trig_notअगरier *n;
+	struct bl_trig_notifier *n;
 
-	n = kzalloc(माप(काष्ठा bl_trig_notअगरier), GFP_KERNEL);
-	अगर (!n)
-		वापस -ENOMEM;
+	n = kzalloc(sizeof(struct bl_trig_notifier), GFP_KERNEL);
+	if (!n)
+		return -ENOMEM;
 	led_set_trigger_data(led, n);
 
 	n->led = led;
 	n->brightness = led->brightness;
 	n->old_status = UNBLANK;
-	n->notअगरier.notअगरier_call = fb_notअगरier_callback;
+	n->notifier.notifier_call = fb_notifier_callback;
 
-	ret = fb_रेजिस्टर_client(&n->notअगरier);
-	अगर (ret)
+	ret = fb_register_client(&n->notifier);
+	if (ret)
 		dev_err(led->dev, "unable to register backlight trigger\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम bl_trig_deactivate(काष्ठा led_classdev *led)
-अणु
-	काष्ठा bl_trig_notअगरier *n = led_get_trigger_data(led);
+static void bl_trig_deactivate(struct led_classdev *led)
+{
+	struct bl_trig_notifier *n = led_get_trigger_data(led);
 
-	fb_unरेजिस्टर_client(&n->notअगरier);
-	kमुक्त(n);
-पूर्ण
+	fb_unregister_client(&n->notifier);
+	kfree(n);
+}
 
-अटल काष्ठा led_trigger bl_led_trigger = अणु
+static struct led_trigger bl_led_trigger = {
 	.name		= "backlight",
 	.activate	= bl_trig_activate,
 	.deactivate	= bl_trig_deactivate,
 	.groups		= bl_trig_groups,
-पूर्ण;
+};
 module_led_trigger(bl_led_trigger);
 
 MODULE_AUTHOR("Rodolfo Giometti <giometti@linux.it>");

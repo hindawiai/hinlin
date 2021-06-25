@@ -1,41 +1,40 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- *  tracefs.h - a pseuकरो file प्रणाली क्रम activating tracing
+ *  tracefs.h - a pseudo file system for activating tracing
  *
- * Based on debugfs by: 2004 Greg Kroah-Harपंचांगan <greg@kroah.com>
+ * Based on debugfs by: 2004 Greg Kroah-Hartman <greg@kroah.com>
  *
  *  Copyright (C) 2014 Red Hat Inc, author: Steven Rostedt <srostedt@redhat.com>
  *
- * tracefs is the file प्रणाली that is used by the tracing infraकाष्ठाure.
+ * tracefs is the file system that is used by the tracing infrastructure.
  */
 
-#अगर_अघोषित _TRACEFS_H_
-#घोषणा _TRACEFS_H_
+#ifndef _TRACEFS_H_
+#define _TRACEFS_H_
 
-#समावेश <linux/fs.h>
-#समावेश <linux/seq_file.h>
+#include <linux/fs.h>
+#include <linux/seq_file.h>
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-काष्ठा file_operations;
+struct file_operations;
 
-#अगर_घोषित CONFIG_TRACING
+#ifdef CONFIG_TRACING
 
-काष्ठा dentry *tracefs_create_file(स्थिर अक्षर *name, umode_t mode,
-				   काष्ठा dentry *parent, व्योम *data,
-				   स्थिर काष्ठा file_operations *fops);
+struct dentry *tracefs_create_file(const char *name, umode_t mode,
+				   struct dentry *parent, void *data,
+				   const struct file_operations *fops);
 
-काष्ठा dentry *tracefs_create_dir(स्थिर अक्षर *name, काष्ठा dentry *parent);
+struct dentry *tracefs_create_dir(const char *name, struct dentry *parent);
 
-व्योम tracefs_हटाओ(काष्ठा dentry *dentry);
+void tracefs_remove(struct dentry *dentry);
 
-काष्ठा dentry *tracefs_create_instance_dir(स्थिर अक्षर *name, काष्ठा dentry *parent,
-					   पूर्णांक (*सूची_गढ़ो)(स्थिर अक्षर *name),
-					   पूर्णांक (*सूची_हटाओ)(स्थिर अक्षर *name));
+struct dentry *tracefs_create_instance_dir(const char *name, struct dentry *parent,
+					   int (*mkdir)(const char *name),
+					   int (*rmdir)(const char *name));
 
-bool tracefs_initialized(व्योम);
+bool tracefs_initialized(void);
 
-#पूर्ण_अगर /* CONFIG_TRACING */
+#endif /* CONFIG_TRACING */
 
-#पूर्ण_अगर
+#endif

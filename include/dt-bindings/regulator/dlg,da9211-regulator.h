@@ -1,17 +1,16 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
-#अगर_अघोषित _DT_BINDINGS_REGULATOR_DLG_DA9211_H
-#घोषणा _DT_BINDINGS_REGULATOR_DLG_DA9211_H
+#ifndef _DT_BINDINGS_REGULATOR_DLG_DA9211_H
+#define _DT_BINDINGS_REGULATOR_DLG_DA9211_H
 
 /*
- * These buck mode स्थिरants may be used to specअगरy values in device tree
+ * These buck mode constants may be used to specify values in device tree
  * properties (e.g. regulator-initial-mode, regulator-allowed-modes).
  * A description of the following modes is in the manufacturers datasheet.
  */
 
-#घोषणा DA9211_BUCK_MODE_SLEEP		1
-#घोषणा DA9211_BUCK_MODE_SYNC		2
-#घोषणा DA9211_BUCK_MODE_AUTO		3
+#define DA9211_BUCK_MODE_SLEEP		1
+#define DA9211_BUCK_MODE_SYNC		2
+#define DA9211_BUCK_MODE_AUTO		3
 
-#पूर्ण_अगर
+#endif

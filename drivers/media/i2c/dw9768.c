@@ -1,60 +1,59 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2020 MediaTek Inc.
 
-#समावेश <linux/delay.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <media/v4l2-async.h>
-#समावेश <media/v4l2-ctrls.h>
-#समावेश <media/v4l2-device.h>
-#समावेश <media/v4l2-fwnode.h>
-#समावेश <media/v4l2-subdev.h>
+#include <linux/delay.h>
+#include <linux/i2c.h>
+#include <linux/module.h>
+#include <linux/pm_runtime.h>
+#include <linux/regulator/consumer.h>
+#include <media/v4l2-async.h>
+#include <media/v4l2-ctrls.h>
+#include <media/v4l2-device.h>
+#include <media/v4l2-fwnode.h>
+#include <media/v4l2-subdev.h>
 
-#घोषणा DW9768_NAME				"dw9768"
-#घोषणा DW9768_MAX_FOCUS_POS			(1024 - 1)
+#define DW9768_NAME				"dw9768"
+#define DW9768_MAX_FOCUS_POS			(1024 - 1)
 /*
- * This sets the minimum granularity क्रम the focus positions.
- * A value of 1 gives maximum accuracy क्रम a desired focus position
+ * This sets the minimum granularity for the focus positions.
+ * A value of 1 gives maximum accuracy for a desired focus position
  */
-#घोषणा DW9768_FOCUS_STEPS			1
+#define DW9768_FOCUS_STEPS			1
 
 /*
- * Ring control and Power control रेजिस्टर
+ * Ring control and Power control register
  * Bit[1] RING_EN
  * 0: Direct mode
  * 1: AAC mode (ringing control mode)
  * Bit[0] PD
  * 0: Normal operation mode
- * 1: Power करोwn mode
- * DW9768 requires रुकोing समय of Topr after PD reset takes place.
+ * 1: Power down mode
+ * DW9768 requires waiting time of Topr after PD reset takes place.
  */
-#घोषणा DW9768_RING_PD_CONTROL_REG		0x02
-#घोषणा DW9768_PD_MODE_OFF			0x00
-#घोषणा DW9768_PD_MODE_EN			BIT(0)
-#घोषणा DW9768_AAC_MODE_EN			BIT(1)
+#define DW9768_RING_PD_CONTROL_REG		0x02
+#define DW9768_PD_MODE_OFF			0x00
+#define DW9768_PD_MODE_EN			BIT(0)
+#define DW9768_AAC_MODE_EN			BIT(1)
 
 /*
- * DW9768 separates two रेजिस्टरs to control the VCM position.
- * One क्रम MSB value, another is LSB value.
+ * DW9768 separates two registers to control the VCM position.
+ * One for MSB value, another is LSB value.
  * DAC_MSB: D[9:8] (ADD: 0x03)
  * DAC_LSB: D[7:0] (ADD: 0x04)
  * D[9:0] DAC data input: positive output current = D[9:0] / 1023 * 100[mA]
  */
-#घोषणा DW9768_MSB_ADDR				0x03
-#घोषणा DW9768_LSB_ADDR				0x04
-#घोषणा DW9768_STATUS_ADDR			0x05
+#define DW9768_MSB_ADDR				0x03
+#define DW9768_LSB_ADDR				0x04
+#define DW9768_STATUS_ADDR			0x05
 
 /*
- * AAC mode control & prescale रेजिस्टर
- * Bit[7:5] Namely AC[2:0], decide the VCM mode and operation समय.
+ * AAC mode control & prescale register
+ * Bit[7:5] Namely AC[2:0], decide the VCM mode and operation time.
  * 001 AAC2 0.48 x Tvib
  * 010 AAC3 0.70 x Tvib
  * 011 AAC4 0.75 x Tvib
  * 101 AAC8 1.13 x Tvib
- * Bit[2:0] Namely PRESC[2:0], set the पूर्णांकernal घड़ी भागiding rate as follow.
+ * Bit[2:0] Namely PRESC[2:0], set the internal clock dividing rate as follow.
  * 000 2
  * 001 1
  * 010 1/2
@@ -62,348 +61,348 @@
  * 100 8
  * 101 4
  */
-#घोषणा DW9768_AAC_PRESC_REG			0x06
-#घोषणा DW9768_AAC_MODE_SEL_MASK		GENMASK(7, 5)
-#घोषणा DW9768_CLOCK_PRE_SCALE_SEL_MASK		GENMASK(2, 0)
+#define DW9768_AAC_PRESC_REG			0x06
+#define DW9768_AAC_MODE_SEL_MASK		GENMASK(7, 5)
+#define DW9768_CLOCK_PRE_SCALE_SEL_MASK		GENMASK(2, 0)
 
 /*
- * VCM period of vibration रेजिस्टर
- * Bit[5:0] Defined as VCM rising periodic समय (Tvib) together with PRESC[2:0]
+ * VCM period of vibration register
+ * Bit[5:0] Defined as VCM rising periodic time (Tvib) together with PRESC[2:0]
  * Tvib = (6.3ms + AACT[5:0] * 0.1ms) * Dividing Rate
- * Dividing Rate is the पूर्णांकernal घड़ी भागiding rate that is defined at
- * PRESCALE रेजिस्टर (ADD: 0x06)
+ * Dividing Rate is the internal clock dividing rate that is defined at
+ * PRESCALE register (ADD: 0x06)
  */
-#घोषणा DW9768_AAC_TIME_REG			0x07
+#define DW9768_AAC_TIME_REG			0x07
 
 /*
- * DW9768 requires रुकोing समय (delay समय) of t_OPR after घातer-up,
- * or in the हाल of PD reset taking place.
+ * DW9768 requires waiting time (delay time) of t_OPR after power-up,
+ * or in the case of PD reset taking place.
  */
-#घोषणा DW9768_T_OPR_US				1000
-#घोषणा DW9768_TVIB_MS_BASE10			(64 - 1)
-#घोषणा DW9768_AAC_MODE_DEFAULT			2
-#घोषणा DW9768_AAC_TIME_DEFAULT			0x20
-#घोषणा DW9768_CLOCK_PRE_SCALE_DEFAULT		1
+#define DW9768_T_OPR_US				1000
+#define DW9768_TVIB_MS_BASE10			(64 - 1)
+#define DW9768_AAC_MODE_DEFAULT			2
+#define DW9768_AAC_TIME_DEFAULT			0x20
+#define DW9768_CLOCK_PRE_SCALE_DEFAULT		1
 
 /*
  * This acts as the minimum granularity of lens movement.
- * Keep this value घातer of 2, so the control steps can be
- * unअगरormly adjusted क्रम gradual lens movement, with desired
+ * Keep this value power of 2, so the control steps can be
+ * uniformly adjusted for gradual lens movement, with desired
  * number of control steps.
  */
-#घोषणा DW9768_MOVE_STEPS			16
+#define DW9768_MOVE_STEPS			16
 
-अटल स्थिर अक्षर * स्थिर dw9768_supply_names[] = अणु
-	"vin",	/* Digital I/O घातer */
-	"vdd",	/* Digital core घातer */
-पूर्ण;
+static const char * const dw9768_supply_names[] = {
+	"vin",	/* Digital I/O power */
+	"vdd",	/* Digital core power */
+};
 
-/* dw9768 device काष्ठाure */
-काष्ठा dw9768 अणु
-	काष्ठा regulator_bulk_data supplies[ARRAY_SIZE(dw9768_supply_names)];
-	काष्ठा v4l2_ctrl_handler ctrls;
-	काष्ठा v4l2_ctrl *focus;
-	काष्ठा v4l2_subdev sd;
+/* dw9768 device structure */
+struct dw9768 {
+	struct regulator_bulk_data supplies[ARRAY_SIZE(dw9768_supply_names)];
+	struct v4l2_ctrl_handler ctrls;
+	struct v4l2_ctrl *focus;
+	struct v4l2_subdev sd;
 
 	u32 aac_mode;
 	u32 aac_timing;
-	u32 घड़ी_presc;
+	u32 clock_presc;
 	u32 move_delay_us;
-पूर्ण;
+};
 
-अटल अंतरभूत काष्ठा dw9768 *sd_to_dw9768(काष्ठा v4l2_subdev *subdev)
-अणु
-	वापस container_of(subdev, काष्ठा dw9768, sd);
-पूर्ण
+static inline struct dw9768 *sd_to_dw9768(struct v4l2_subdev *subdev)
+{
+	return container_of(subdev, struct dw9768, sd);
+}
 
-काष्ठा regval_list अणु
+struct regval_list {
 	u8 reg_num;
 	u8 value;
-पूर्ण;
+};
 
-काष्ठा dw9768_aac_mode_ot_multi अणु
-	u32 aac_mode_क्रमागत;
+struct dw9768_aac_mode_ot_multi {
+	u32 aac_mode_enum;
 	u32 ot_multi_base100;
-पूर्ण;
+};
 
-काष्ठा dw9768_clk_presc_भागiding_rate अणु
-	u32 clk_presc_क्रमागत;
-	u32 भागiding_rate_base100;
-पूर्ण;
+struct dw9768_clk_presc_dividing_rate {
+	u32 clk_presc_enum;
+	u32 dividing_rate_base100;
+};
 
-अटल स्थिर काष्ठा dw9768_aac_mode_ot_multi aac_mode_ot_multi[] = अणु
-	अणु1,  48पूर्ण,
-	अणु2,  70पूर्ण,
-	अणु3,  75पूर्ण,
-	अणु5, 113पूर्ण,
-पूर्ण;
+static const struct dw9768_aac_mode_ot_multi aac_mode_ot_multi[] = {
+	{1,  48},
+	{2,  70},
+	{3,  75},
+	{5, 113},
+};
 
-अटल स्थिर काष्ठा dw9768_clk_presc_भागiding_rate presc_भागiding_rate[] = अणु
-	अणु0, 200पूर्ण,
-	अणु1, 100पूर्ण,
-	अणु2,  50पूर्ण,
-	अणु3,  25पूर्ण,
-	अणु4, 800पूर्ण,
-	अणु5, 400पूर्ण,
-पूर्ण;
+static const struct dw9768_clk_presc_dividing_rate presc_dividing_rate[] = {
+	{0, 200},
+	{1, 100},
+	{2,  50},
+	{3,  25},
+	{4, 800},
+	{5, 400},
+};
 
-अटल u32 dw9768_find_ot_multi(u32 aac_mode_param)
-अणु
+static u32 dw9768_find_ot_multi(u32 aac_mode_param)
+{
 	u32 cur_ot_multi_base100 = 70;
-	अचिन्हित पूर्णांक i;
+	unsigned int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(aac_mode_ot_multi); i++) अणु
-		अगर (aac_mode_ot_multi[i].aac_mode_क्रमागत == aac_mode_param) अणु
+	for (i = 0; i < ARRAY_SIZE(aac_mode_ot_multi); i++) {
+		if (aac_mode_ot_multi[i].aac_mode_enum == aac_mode_param) {
 			cur_ot_multi_base100 =
 				aac_mode_ot_multi[i].ot_multi_base100;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस cur_ot_multi_base100;
-पूर्ण
+	return cur_ot_multi_base100;
+}
 
-अटल u32 dw9768_find_भागiding_rate(u32 presc_param)
-अणु
-	u32 cur_clk_भागiding_rate_base100 = 100;
-	अचिन्हित पूर्णांक i;
+static u32 dw9768_find_dividing_rate(u32 presc_param)
+{
+	u32 cur_clk_dividing_rate_base100 = 100;
+	unsigned int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(presc_भागiding_rate); i++) अणु
-		अगर (presc_भागiding_rate[i].clk_presc_क्रमागत == presc_param) अणु
-			cur_clk_भागiding_rate_base100 =
-				presc_भागiding_rate[i].भागiding_rate_base100;
-		पूर्ण
-	पूर्ण
+	for (i = 0; i < ARRAY_SIZE(presc_dividing_rate); i++) {
+		if (presc_dividing_rate[i].clk_presc_enum == presc_param) {
+			cur_clk_dividing_rate_base100 =
+				presc_dividing_rate[i].dividing_rate_base100;
+		}
+	}
 
-	वापस cur_clk_भागiding_rate_base100;
-पूर्ण
+	return cur_clk_dividing_rate_base100;
+}
 
 /*
- * DW9768_AAC_PRESC_REG & DW9768_AAC_TIME_REG determine VCM operation समय.
+ * DW9768_AAC_PRESC_REG & DW9768_AAC_TIME_REG determine VCM operation time.
  * For current VCM mode: AAC3, Operation Time would be 0.70 x Tvib.
  * Tvib = (6.3ms + AACT[5:0] * 0.1MS) * Dividing Rate.
- * Below is calculation of the operation delay क्रम each step.
+ * Below is calculation of the operation delay for each step.
  */
-अटल अंतरभूत u32 dw9768_cal_move_delay(u32 aac_mode_param, u32 presc_param,
+static inline u32 dw9768_cal_move_delay(u32 aac_mode_param, u32 presc_param,
 					u32 aac_timing_param)
-अणु
+{
 	u32 Tvib_us;
 	u32 ot_multi_base100;
-	u32 clk_भागiding_rate_base100;
+	u32 clk_dividing_rate_base100;
 
 	ot_multi_base100 = dw9768_find_ot_multi(aac_mode_param);
 
-	clk_भागiding_rate_base100 = dw9768_find_भागiding_rate(presc_param);
+	clk_dividing_rate_base100 = dw9768_find_dividing_rate(presc_param);
 
 	Tvib_us = (DW9768_TVIB_MS_BASE10 + aac_timing_param) *
-		  clk_भागiding_rate_base100;
+		  clk_dividing_rate_base100;
 
-	वापस Tvib_us * ot_multi_base100 / 100;
-पूर्ण
+	return Tvib_us * ot_multi_base100 / 100;
+}
 
-अटल पूर्णांक dw9768_mod_reg(काष्ठा dw9768 *dw9768, u8 reg, u8 mask, u8 val)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(&dw9768->sd);
-	पूर्णांक ret;
+static int dw9768_mod_reg(struct dw9768 *dw9768, u8 reg, u8 mask, u8 val)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(&dw9768->sd);
+	int ret;
 
-	ret = i2c_smbus_पढ़ो_byte_data(client, reg);
-	अगर (ret < 0)
-		वापस ret;
+	ret = i2c_smbus_read_byte_data(client, reg);
+	if (ret < 0)
+		return ret;
 
-	val = ((अचिन्हित अक्षर)ret & ~mask) | (val & mask);
+	val = ((unsigned char)ret & ~mask) | (val & mask);
 
-	वापस i2c_smbus_ग_लिखो_byte_data(client, reg, val);
-पूर्ण
+	return i2c_smbus_write_byte_data(client, reg, val);
+}
 
-अटल पूर्णांक dw9768_set_dac(काष्ठा dw9768 *dw9768, u16 val)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(&dw9768->sd);
+static int dw9768_set_dac(struct dw9768 *dw9768, u16 val)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(&dw9768->sd);
 
-	/* Write VCM position to रेजिस्टरs */
-	वापस i2c_smbus_ग_लिखो_word_swapped(client, DW9768_MSB_ADDR, val);
-पूर्ण
+	/* Write VCM position to registers */
+	return i2c_smbus_write_word_swapped(client, DW9768_MSB_ADDR, val);
+}
 
-अटल पूर्णांक dw9768_init(काष्ठा dw9768 *dw9768)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(&dw9768->sd);
-	पूर्णांक ret, val;
+static int dw9768_init(struct dw9768 *dw9768)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(&dw9768->sd);
+	int ret, val;
 
-	/* Reset DW9768_RING_PD_CONTROL_REG to शेष status 0x00 */
-	ret = i2c_smbus_ग_लिखो_byte_data(client, DW9768_RING_PD_CONTROL_REG,
+	/* Reset DW9768_RING_PD_CONTROL_REG to default status 0x00 */
+	ret = i2c_smbus_write_byte_data(client, DW9768_RING_PD_CONTROL_REG,
 					DW9768_PD_MODE_OFF);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	/*
-	 * DW9769 requires रुकोing delay समय of t_OPR
+	 * DW9769 requires waiting delay time of t_OPR
 	 * after PD reset takes place.
 	 */
 	usleep_range(DW9768_T_OPR_US, DW9768_T_OPR_US + 100);
 
 	/* Set DW9768_RING_PD_CONTROL_REG to DW9768_AAC_MODE_EN(0x01) */
-	ret = i2c_smbus_ग_लिखो_byte_data(client, DW9768_RING_PD_CONTROL_REG,
+	ret = i2c_smbus_write_byte_data(client, DW9768_RING_PD_CONTROL_REG,
 					DW9768_AAC_MODE_EN);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	/* Set AAC mode */
 	ret = dw9768_mod_reg(dw9768, DW9768_AAC_PRESC_REG,
 			     DW9768_AAC_MODE_SEL_MASK,
 			     dw9768->aac_mode << 5);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	/* Set घड़ी presc */
-	अगर (dw9768->घड़ी_presc != DW9768_CLOCK_PRE_SCALE_DEFAULT) अणु
+	/* Set clock presc */
+	if (dw9768->clock_presc != DW9768_CLOCK_PRE_SCALE_DEFAULT) {
 		ret = dw9768_mod_reg(dw9768, DW9768_AAC_PRESC_REG,
 				     DW9768_CLOCK_PRE_SCALE_SEL_MASK,
-				     dw9768->घड़ी_presc);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+				     dw9768->clock_presc);
+		if (ret < 0)
+			return ret;
+	}
 
 	/* Set AAC Timing */
-	अगर (dw9768->aac_timing != DW9768_AAC_TIME_DEFAULT) अणु
-		ret = i2c_smbus_ग_लिखो_byte_data(client, DW9768_AAC_TIME_REG,
+	if (dw9768->aac_timing != DW9768_AAC_TIME_DEFAULT) {
+		ret = i2c_smbus_write_byte_data(client, DW9768_AAC_TIME_REG,
 						dw9768->aac_timing);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+		if (ret < 0)
+			return ret;
+	}
 
-	क्रम (val = dw9768->focus->val % DW9768_MOVE_STEPS;
+	for (val = dw9768->focus->val % DW9768_MOVE_STEPS;
 	     val <= dw9768->focus->val;
-	     val += DW9768_MOVE_STEPS) अणु
+	     val += DW9768_MOVE_STEPS) {
 		ret = dw9768_set_dac(dw9768, val);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&client->dev, "I2C failure: %d", ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		usleep_range(dw9768->move_delay_us,
 			     dw9768->move_delay_us + 1000);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dw9768_release(काष्ठा dw9768 *dw9768)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(&dw9768->sd);
-	पूर्णांक ret, val;
+static int dw9768_release(struct dw9768 *dw9768)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(&dw9768->sd);
+	int ret, val;
 
-	val = round_करोwn(dw9768->focus->val, DW9768_MOVE_STEPS);
-	क्रम ( ; val >= 0; val -= DW9768_MOVE_STEPS) अणु
+	val = round_down(dw9768->focus->val, DW9768_MOVE_STEPS);
+	for ( ; val >= 0; val -= DW9768_MOVE_STEPS) {
 		ret = dw9768_set_dac(dw9768, val);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&client->dev, "I2C write fail: %d", ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		usleep_range(dw9768->move_delay_us,
 			     dw9768->move_delay_us + 1000);
-	पूर्ण
+	}
 
-	ret = i2c_smbus_ग_लिखो_byte_data(client, DW9768_RING_PD_CONTROL_REG,
+	ret = i2c_smbus_write_byte_data(client, DW9768_RING_PD_CONTROL_REG,
 					DW9768_PD_MODE_EN);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	/*
-	 * DW9769 requires रुकोing delay समय of t_OPR
+	 * DW9769 requires waiting delay time of t_OPR
 	 * after PD reset takes place.
 	 */
 	usleep_range(DW9768_T_OPR_US, DW9768_T_OPR_US + 100);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dw9768_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा v4l2_subdev *sd = dev_get_drvdata(dev);
-	काष्ठा dw9768 *dw9768 = sd_to_dw9768(sd);
+static int dw9768_runtime_suspend(struct device *dev)
+{
+	struct v4l2_subdev *sd = dev_get_drvdata(dev);
+	struct dw9768 *dw9768 = sd_to_dw9768(sd);
 
 	dw9768_release(dw9768);
 	regulator_bulk_disable(ARRAY_SIZE(dw9768_supply_names),
 			       dw9768->supplies);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dw9768_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा v4l2_subdev *sd = dev_get_drvdata(dev);
-	काष्ठा dw9768 *dw9768 = sd_to_dw9768(sd);
-	पूर्णांक ret;
+static int dw9768_runtime_resume(struct device *dev)
+{
+	struct v4l2_subdev *sd = dev_get_drvdata(dev);
+	struct dw9768 *dw9768 = sd_to_dw9768(sd);
+	int ret;
 
 	ret = regulator_bulk_enable(ARRAY_SIZE(dw9768_supply_names),
 				    dw9768->supplies);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "failed to enable regulators\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/*
-	 * The datasheet refers to t_OPR that needs to be रुकोed beक्रमe sending
-	 * I2C commands after घातer-up.
+	 * The datasheet refers to t_OPR that needs to be waited before sending
+	 * I2C commands after power-up.
 	 */
 	usleep_range(DW9768_T_OPR_US, DW9768_T_OPR_US + 100);
 
 	ret = dw9768_init(dw9768);
-	अगर (ret < 0)
-		जाओ disable_regulator;
+	if (ret < 0)
+		goto disable_regulator;
 
-	वापस 0;
+	return 0;
 
 disable_regulator:
 	regulator_bulk_disable(ARRAY_SIZE(dw9768_supply_names),
 			       dw9768->supplies);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक dw9768_set_ctrl(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	काष्ठा dw9768 *dw9768 = container_of(ctrl->handler,
-					     काष्ठा dw9768, ctrls);
+static int dw9768_set_ctrl(struct v4l2_ctrl *ctrl)
+{
+	struct dw9768 *dw9768 = container_of(ctrl->handler,
+					     struct dw9768, ctrls);
 
-	अगर (ctrl->id == V4L2_CID_FOCUS_ABSOLUTE)
-		वापस dw9768_set_dac(dw9768, ctrl->val);
+	if (ctrl->id == V4L2_CID_FOCUS_ABSOLUTE)
+		return dw9768_set_dac(dw9768, ctrl->val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा v4l2_ctrl_ops dw9768_ctrl_ops = अणु
+static const struct v4l2_ctrl_ops dw9768_ctrl_ops = {
 	.s_ctrl = dw9768_set_ctrl,
-पूर्ण;
+};
 
-अटल पूर्णांक dw9768_खोलो(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_subdev_fh *fh)
-अणु
-	पूर्णांक ret;
+static int dw9768_open(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
+{
+	int ret;
 
-	ret = pm_runसमय_get_sync(sd->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(sd->dev);
-		वापस ret;
-	पूर्ण
+	ret = pm_runtime_get_sync(sd->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(sd->dev);
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dw9768_बंद(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_subdev_fh *fh)
-अणु
-	pm_runसमय_put(sd->dev);
+static int dw9768_close(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
+{
+	pm_runtime_put(sd->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा v4l2_subdev_पूर्णांकernal_ops dw9768_पूर्णांक_ops = अणु
-	.खोलो = dw9768_खोलो,
-	.बंद = dw9768_बंद,
-पूर्ण;
+static const struct v4l2_subdev_internal_ops dw9768_int_ops = {
+	.open = dw9768_open,
+	.close = dw9768_close,
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_ops dw9768_ops = अणु पूर्ण;
+static const struct v4l2_subdev_ops dw9768_ops = { };
 
-अटल पूर्णांक dw9768_init_controls(काष्ठा dw9768 *dw9768)
-अणु
-	काष्ठा v4l2_ctrl_handler *hdl = &dw9768->ctrls;
-	स्थिर काष्ठा v4l2_ctrl_ops *ops = &dw9768_ctrl_ops;
+static int dw9768_init_controls(struct dw9768 *dw9768)
+{
+	struct v4l2_ctrl_handler *hdl = &dw9768->ctrls;
+	const struct v4l2_ctrl_ops *ops = &dw9768_ctrl_ops;
 
 	v4l2_ctrl_handler_init(hdl, 1);
 
@@ -411,141 +410,141 @@ disable_regulator:
 					  DW9768_MAX_FOCUS_POS,
 					  DW9768_FOCUS_STEPS, 0);
 
-	अगर (hdl->error)
-		वापस hdl->error;
+	if (hdl->error)
+		return hdl->error;
 
 	dw9768->sd.ctrl_handler = hdl;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dw9768_probe(काष्ठा i2c_client *client)
-अणु
-	काष्ठा device *dev = &client->dev;
-	काष्ठा dw9768 *dw9768;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक ret;
+static int dw9768_probe(struct i2c_client *client)
+{
+	struct device *dev = &client->dev;
+	struct dw9768 *dw9768;
+	unsigned int i;
+	int ret;
 
-	dw9768 = devm_kzalloc(dev, माप(*dw9768), GFP_KERNEL);
-	अगर (!dw9768)
-		वापस -ENOMEM;
+	dw9768 = devm_kzalloc(dev, sizeof(*dw9768), GFP_KERNEL);
+	if (!dw9768)
+		return -ENOMEM;
 
 	/* Initialize subdev */
 	v4l2_i2c_subdev_init(&dw9768->sd, client, &dw9768_ops);
 
 	dw9768->aac_mode = DW9768_AAC_MODE_DEFAULT;
 	dw9768->aac_timing = DW9768_AAC_TIME_DEFAULT;
-	dw9768->घड़ी_presc = DW9768_CLOCK_PRE_SCALE_DEFAULT;
+	dw9768->clock_presc = DW9768_CLOCK_PRE_SCALE_DEFAULT;
 
 	/* Optional indication of AAC mode select */
-	fwnode_property_पढ़ो_u32(dev_fwnode(dev), "dongwoon,aac-mode",
+	fwnode_property_read_u32(dev_fwnode(dev), "dongwoon,aac-mode",
 				 &dw9768->aac_mode);
 
-	/* Optional indication of घड़ी pre-scale select */
-	fwnode_property_पढ़ो_u32(dev_fwnode(dev), "dongwoon,clock-presc",
-				 &dw9768->घड़ी_presc);
+	/* Optional indication of clock pre-scale select */
+	fwnode_property_read_u32(dev_fwnode(dev), "dongwoon,clock-presc",
+				 &dw9768->clock_presc);
 
 	/* Optional indication of AAC Timing */
-	fwnode_property_पढ़ो_u32(dev_fwnode(dev), "dongwoon,aac-timing",
+	fwnode_property_read_u32(dev_fwnode(dev), "dongwoon,aac-timing",
 				 &dw9768->aac_timing);
 
 	dw9768->move_delay_us = dw9768_cal_move_delay(dw9768->aac_mode,
-						      dw9768->घड़ी_presc,
+						      dw9768->clock_presc,
 						      dw9768->aac_timing);
 
-	क्रम (i = 0; i < ARRAY_SIZE(dw9768_supply_names); i++)
+	for (i = 0; i < ARRAY_SIZE(dw9768_supply_names); i++)
 		dw9768->supplies[i].supply = dw9768_supply_names[i];
 
 	ret = devm_regulator_bulk_get(dev, ARRAY_SIZE(dw9768_supply_names),
 				      dw9768->supplies);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to get regulators\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* Initialize controls */
 	ret = dw9768_init_controls(dw9768);
-	अगर (ret)
-		जाओ err_मुक्त_handler;
+	if (ret)
+		goto err_free_handler;
 
 	/* Initialize subdev */
 	dw9768->sd.flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;
-	dw9768->sd.पूर्णांकernal_ops = &dw9768_पूर्णांक_ops;
+	dw9768->sd.internal_ops = &dw9768_int_ops;
 
-	ret = media_entity_pads_init(&dw9768->sd.entity, 0, शून्य);
-	अगर (ret < 0)
-		जाओ err_मुक्त_handler;
+	ret = media_entity_pads_init(&dw9768->sd.entity, 0, NULL);
+	if (ret < 0)
+		goto err_free_handler;
 
 	dw9768->sd.entity.function = MEDIA_ENT_F_LENS;
 
-	pm_runसमय_enable(dev);
-	अगर (!pm_runसमय_enabled(dev)) अणु
-		ret = dw9768_runसमय_resume(dev);
-		अगर (ret < 0) अणु
+	pm_runtime_enable(dev);
+	if (!pm_runtime_enabled(dev)) {
+		ret = dw9768_runtime_resume(dev);
+		if (ret < 0) {
 			dev_err(dev, "failed to power on: %d\n", ret);
-			जाओ err_clean_entity;
-		पूर्ण
-	पूर्ण
+			goto err_clean_entity;
+		}
+	}
 
-	ret = v4l2_async_रेजिस्टर_subdev(&dw9768->sd);
-	अगर (ret < 0) अणु
+	ret = v4l2_async_register_subdev(&dw9768->sd);
+	if (ret < 0) {
 		dev_err(dev, "failed to register V4L2 subdev: %d", ret);
-		जाओ err_घातer_off;
-	पूर्ण
+		goto err_power_off;
+	}
 
-	वापस 0;
+	return 0;
 
-err_घातer_off:
-	अगर (pm_runसमय_enabled(dev))
-		pm_runसमय_disable(dev);
-	अन्यथा
-		dw9768_runसमय_suspend(dev);
+err_power_off:
+	if (pm_runtime_enabled(dev))
+		pm_runtime_disable(dev);
+	else
+		dw9768_runtime_suspend(dev);
 err_clean_entity:
 	media_entity_cleanup(&dw9768->sd.entity);
-err_मुक्त_handler:
-	v4l2_ctrl_handler_मुक्त(&dw9768->ctrls);
+err_free_handler:
+	v4l2_ctrl_handler_free(&dw9768->ctrls);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक dw9768_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा v4l2_subdev *sd = i2c_get_clientdata(client);
-	काष्ठा dw9768 *dw9768 = sd_to_dw9768(sd);
+static int dw9768_remove(struct i2c_client *client)
+{
+	struct v4l2_subdev *sd = i2c_get_clientdata(client);
+	struct dw9768 *dw9768 = sd_to_dw9768(sd);
 
-	v4l2_async_unरेजिस्टर_subdev(&dw9768->sd);
-	v4l2_ctrl_handler_मुक्त(&dw9768->ctrls);
+	v4l2_async_unregister_subdev(&dw9768->sd);
+	v4l2_ctrl_handler_free(&dw9768->ctrls);
 	media_entity_cleanup(&dw9768->sd.entity);
-	pm_runसमय_disable(&client->dev);
-	अगर (!pm_runसमय_status_suspended(&client->dev))
-		dw9768_runसमय_suspend(&client->dev);
-	pm_runसमय_set_suspended(&client->dev);
+	pm_runtime_disable(&client->dev);
+	if (!pm_runtime_status_suspended(&client->dev))
+		dw9768_runtime_suspend(&client->dev);
+	pm_runtime_set_suspended(&client->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id dw9768_of_table[] = अणु
-	अणु .compatible = "dongwoon,dw9768" पूर्ण,
-	अणु .compatible = "giantec,gt9769" पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id dw9768_of_table[] = {
+	{ .compatible = "dongwoon,dw9768" },
+	{ .compatible = "giantec,gt9769" },
+	{}
+};
 MODULE_DEVICE_TABLE(of, dw9768_of_table);
 
-अटल स्थिर काष्ठा dev_pm_ops dw9768_pm_ops = अणु
-	SET_SYSTEM_SLEEP_PM_OPS(pm_runसमय_क्रमce_suspend,
-				pm_runसमय_क्रमce_resume)
-	SET_RUNTIME_PM_OPS(dw9768_runसमय_suspend, dw9768_runसमय_resume, शून्य)
-पूर्ण;
+static const struct dev_pm_ops dw9768_pm_ops = {
+	SET_SYSTEM_SLEEP_PM_OPS(pm_runtime_force_suspend,
+				pm_runtime_force_resume)
+	SET_RUNTIME_PM_OPS(dw9768_runtime_suspend, dw9768_runtime_resume, NULL)
+};
 
-अटल काष्ठा i2c_driver dw9768_i2c_driver = अणु
-	.driver = अणु
+static struct i2c_driver dw9768_i2c_driver = {
+	.driver = {
 		.name = DW9768_NAME,
 		.pm = &dw9768_pm_ops,
 		.of_match_table = dw9768_of_table,
-	पूर्ण,
+	},
 	.probe_new  = dw9768_probe,
-	.हटाओ = dw9768_हटाओ,
-पूर्ण;
+	.remove = dw9768_remove,
+};
 module_i2c_driver(dw9768_i2c_driver);
 
 MODULE_AUTHOR("Dongchun Zhu <dongchun.zhu@mediatek.com>");

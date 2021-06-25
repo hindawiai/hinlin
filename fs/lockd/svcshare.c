@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * linux/fs/lockd/svcshare.c
  *
@@ -8,47 +7,47 @@
  * Copyright (C) 1996 Olaf Kirch <okir@monad.swb.de>
  */
 
-#समावेश <linux/समय.स>
-#समावेश <linux/unistd.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/slab.h>
+#include <linux/time.h>
+#include <linux/unistd.h>
+#include <linux/string.h>
+#include <linux/slab.h>
 
-#समावेश <linux/sunrpc/clnt.h>
-#समावेश <linux/sunrpc/svc.h>
-#समावेश <linux/lockd/lockd.h>
-#समावेश <linux/lockd/share.h>
+#include <linux/sunrpc/clnt.h>
+#include <linux/sunrpc/svc.h>
+#include <linux/lockd/lockd.h>
+#include <linux/lockd/share.h>
 
-अटल अंतरभूत पूर्णांक
-nlm_cmp_owner(काष्ठा nlm_share *share, काष्ठा xdr_netobj *oh)
-अणु
-	वापस share->s_owner.len == oh->len
-	    && !स_भेद(share->s_owner.data, oh->data, oh->len);
-पूर्ण
+static inline int
+nlm_cmp_owner(struct nlm_share *share, struct xdr_netobj *oh)
+{
+	return share->s_owner.len == oh->len
+	    && !memcmp(share->s_owner.data, oh->data, oh->len);
+}
 
 __be32
-nlmsvc_share_file(काष्ठा nlm_host *host, काष्ठा nlm_file *file,
-			काष्ठा nlm_args *argp)
-अणु
-	काष्ठा nlm_share	*share;
-	काष्ठा xdr_netobj	*oh = &argp->lock.oh;
+nlmsvc_share_file(struct nlm_host *host, struct nlm_file *file,
+			struct nlm_args *argp)
+{
+	struct nlm_share	*share;
+	struct xdr_netobj	*oh = &argp->lock.oh;
 	u8			*ohdata;
 
-	क्रम (share = file->f_shares; share; share = share->s_next) अणु
-		अगर (share->s_host == host && nlm_cmp_owner(share, oh))
-			जाओ update;
-		अगर ((argp->fsm_access & share->s_mode)
+	for (share = file->f_shares; share; share = share->s_next) {
+		if (share->s_host == host && nlm_cmp_owner(share, oh))
+			goto update;
+		if ((argp->fsm_access & share->s_mode)
 		 || (argp->fsm_mode   & share->s_access ))
-			वापस nlm_lck_denied;
-	पूर्ण
+			return nlm_lck_denied;
+	}
 
-	share = kदो_स्मृति(माप(*share) + oh->len,
+	share = kmalloc(sizeof(*share) + oh->len,
 						GFP_KERNEL);
-	अगर (share == शून्य)
-		वापस nlm_lck_denied_nolocks;
+	if (share == NULL)
+		return nlm_lck_denied_nolocks;
 
 	/* Copy owner handle */
 	ohdata = (u8 *) (share + 1);
-	स_नकल(ohdata, oh->data, oh->len);
+	memcpy(ohdata, oh->data, oh->len);
 
 	share->s_file	    = file;
 	share->s_host       = host;
@@ -60,49 +59,49 @@ nlmsvc_share_file(काष्ठा nlm_host *host, काष्ठा nlm_file
 update:
 	share->s_access = argp->fsm_access;
 	share->s_mode   = argp->fsm_mode;
-	वापस nlm_granted;
-पूर्ण
+	return nlm_granted;
+}
 
 /*
  * Delete a share.
  */
 __be32
-nlmsvc_unshare_file(काष्ठा nlm_host *host, काष्ठा nlm_file *file,
-			काष्ठा nlm_args *argp)
-अणु
-	काष्ठा nlm_share	*share, **shpp;
-	काष्ठा xdr_netobj	*oh = &argp->lock.oh;
+nlmsvc_unshare_file(struct nlm_host *host, struct nlm_file *file,
+			struct nlm_args *argp)
+{
+	struct nlm_share	*share, **shpp;
+	struct xdr_netobj	*oh = &argp->lock.oh;
 
-	क्रम (shpp = &file->f_shares; (share = *shpp) != शून्य;
-					shpp = &share->s_next) अणु
-		अगर (share->s_host == host && nlm_cmp_owner(share, oh)) अणु
+	for (shpp = &file->f_shares; (share = *shpp) != NULL;
+					shpp = &share->s_next) {
+		if (share->s_host == host && nlm_cmp_owner(share, oh)) {
 			*shpp = share->s_next;
-			kमुक्त(share);
-			वापस nlm_granted;
-		पूर्ण
-	पूर्ण
+			kfree(share);
+			return nlm_granted;
+		}
+	}
 
-	/* X/Open spec says वापस success even अगर there was no
+	/* X/Open spec says return success even if there was no
 	 * corresponding share. */
-	वापस nlm_granted;
-पूर्ण
+	return nlm_granted;
+}
 
 /*
- * Traverse all shares क्रम a given file, and delete
+ * Traverse all shares for a given file, and delete
  * those owned by the given (type of) host
  */
-व्योम nlmsvc_traverse_shares(काष्ठा nlm_host *host, काष्ठा nlm_file *file,
+void nlmsvc_traverse_shares(struct nlm_host *host, struct nlm_file *file,
 		nlm_host_match_fn_t match)
-अणु
-	काष्ठा nlm_share	*share, **shpp;
+{
+	struct nlm_share	*share, **shpp;
 
 	shpp = &file->f_shares;
-	जबतक ((share = *shpp) !=  शून्य) अणु
-		अगर (match(share->s_host, host)) अणु
+	while ((share = *shpp) !=  NULL) {
+		if (match(share->s_host, host)) {
 			*shpp = share->s_next;
-			kमुक्त(share);
-			जारी;
-		पूर्ण
+			kfree(share);
+			continue;
+		}
 		shpp = &share->s_next;
-	पूर्ण
-पूर्ण
+	}
+}

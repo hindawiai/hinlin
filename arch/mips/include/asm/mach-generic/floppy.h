@@ -1,134 +1,133 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 1996, 1997, 1998, 2003 by Ralf Baechle
  */
-#अगर_अघोषित __ASM_MACH_GENERIC_FLOPPY_H
-#घोषणा __ASM_MACH_GENERIC_FLOPPY_H
+#ifndef __ASM_MACH_GENERIC_FLOPPY_H
+#define __ASM_MACH_GENERIC_FLOPPY_H
 
-#समावेश <linux/delay.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/linkage.h>
-#समावेश <linux/types.h>
-#समावेश <linux/mm.h>
+#include <linux/delay.h>
+#include <linux/ioport.h>
+#include <linux/sched.h>
+#include <linux/linkage.h>
+#include <linux/types.h>
+#include <linux/mm.h>
 
-#समावेश <यंत्र/bootinfo.h>
-#समावेश <यंत्र/cachectl.h>
-#समावेश <यंत्र/dma.h>
-#समावेश <यंत्र/floppy.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/irq.h>
+#include <asm/bootinfo.h>
+#include <asm/cachectl.h>
+#include <asm/dma.h>
+#include <asm/floppy.h>
+#include <asm/io.h>
+#include <asm/irq.h>
 
 /*
- * How to access the FDC's रेजिस्टरs.
+ * How to access the FDC's registers.
  */
-अटल अंतरभूत अचिन्हित अक्षर fd_inb(अचिन्हित पूर्णांक base, अचिन्हित पूर्णांक reg)
-अणु
-	वापस inb_p(base + reg);
-पूर्ण
+static inline unsigned char fd_inb(unsigned int base, unsigned int reg)
+{
+	return inb_p(base + reg);
+}
 
-अटल अंतरभूत व्योम fd_outb(अचिन्हित अक्षर value, अचिन्हित पूर्णांक base, अचिन्हित पूर्णांक reg)
-अणु
+static inline void fd_outb(unsigned char value, unsigned int base, unsigned int reg)
+{
 	outb_p(value, base + reg);
-पूर्ण
+}
 
 /*
  * How to access the floppy DMA functions.
  */
-अटल अंतरभूत व्योम fd_enable_dma(व्योम)
-अणु
+static inline void fd_enable_dma(void)
+{
 	enable_dma(FLOPPY_DMA);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम fd_disable_dma(व्योम)
-अणु
+static inline void fd_disable_dma(void)
+{
 	disable_dma(FLOPPY_DMA);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक fd_request_dma(व्योम)
-अणु
-	वापस request_dma(FLOPPY_DMA, "floppy");
-पूर्ण
+static inline int fd_request_dma(void)
+{
+	return request_dma(FLOPPY_DMA, "floppy");
+}
 
-अटल अंतरभूत व्योम fd_मुक्त_dma(व्योम)
-अणु
-	मुक्त_dma(FLOPPY_DMA);
-पूर्ण
+static inline void fd_free_dma(void)
+{
+	free_dma(FLOPPY_DMA);
+}
 
-अटल अंतरभूत व्योम fd_clear_dma_ff(व्योम)
-अणु
+static inline void fd_clear_dma_ff(void)
+{
 	clear_dma_ff(FLOPPY_DMA);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम fd_set_dma_mode(अक्षर mode)
-अणु
+static inline void fd_set_dma_mode(char mode)
+{
 	set_dma_mode(FLOPPY_DMA, mode);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम fd_set_dma_addr(अक्षर *addr)
-अणु
-	set_dma_addr(FLOPPY_DMA, (अचिन्हित दीर्घ) addr);
-पूर्ण
+static inline void fd_set_dma_addr(char *addr)
+{
+	set_dma_addr(FLOPPY_DMA, (unsigned long) addr);
+}
 
-अटल अंतरभूत व्योम fd_set_dma_count(अचिन्हित पूर्णांक count)
-अणु
+static inline void fd_set_dma_count(unsigned int count)
+{
 	set_dma_count(FLOPPY_DMA, count);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक fd_get_dma_residue(व्योम)
-अणु
-	वापस get_dma_residue(FLOPPY_DMA);
-पूर्ण
+static inline int fd_get_dma_residue(void)
+{
+	return get_dma_residue(FLOPPY_DMA);
+}
 
-अटल अंतरभूत व्योम fd_enable_irq(व्योम)
-अणु
+static inline void fd_enable_irq(void)
+{
 	enable_irq(FLOPPY_IRQ);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम fd_disable_irq(व्योम)
-अणु
+static inline void fd_disable_irq(void)
+{
 	disable_irq(FLOPPY_IRQ);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक fd_request_irq(व्योम)
-अणु
-	वापस request_irq(FLOPPY_IRQ, floppy_पूर्णांकerrupt,
-			   0, "floppy", शून्य);
-पूर्ण
+static inline int fd_request_irq(void)
+{
+	return request_irq(FLOPPY_IRQ, floppy_interrupt,
+			   0, "floppy", NULL);
+}
 
-अटल अंतरभूत व्योम fd_मुक्त_irq(व्योम)
-अणु
-	मुक्त_irq(FLOPPY_IRQ, शून्य);
-पूर्ण
+static inline void fd_free_irq(void)
+{
+	free_irq(FLOPPY_IRQ, NULL);
+}
 
-#घोषणा fd_मुक्त_irq()		मुक्त_irq(FLOPPY_IRQ, शून्य);
+#define fd_free_irq()		free_irq(FLOPPY_IRQ, NULL);
 
 
-अटल अंतरभूत अचिन्हित दीर्घ fd_getfdaddr1(व्योम)
-अणु
-	वापस 0x3f0;
-पूर्ण
+static inline unsigned long fd_getfdaddr1(void)
+{
+	return 0x3f0;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ fd_dma_mem_alloc(अचिन्हित दीर्घ size)
-अणु
-	वापस __get_dma_pages(GFP_KERNEL, get_order(size));
-पूर्ण
+static inline unsigned long fd_dma_mem_alloc(unsigned long size)
+{
+	return __get_dma_pages(GFP_KERNEL, get_order(size));
+}
 
-अटल अंतरभूत व्योम fd_dma_mem_मुक्त(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ size)
-अणु
-	मुक्त_pages(addr, get_order(size));
-पूर्ण
+static inline void fd_dma_mem_free(unsigned long addr, unsigned long size)
+{
+	free_pages(addr, get_order(size));
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ fd_drive_type(अचिन्हित दीर्घ n)
-अणु
-	अगर (n == 0)
-		वापस 4;	/* 3,5", 1.44mb */
+static inline unsigned long fd_drive_type(unsigned long n)
+{
+	if (n == 0)
+		return 4;	/* 3,5", 1.44mb */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#पूर्ण_अगर /* __ASM_MACH_GENERIC_FLOPPY_H */
+#endif /* __ASM_MACH_GENERIC_FLOPPY_H */

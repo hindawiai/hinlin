@@ -1,19 +1,18 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause-Clear
+// SPDX-License-Identifier: BSD-3-Clause-Clear
 /* Copyright (c) 2020 The Linux Foundation. All rights reserved. */
 
-#समावेश <linux/msi.h>
-#समावेश <linux/pci.h>
+#include <linux/msi.h>
+#include <linux/pci.h>
 
-#समावेश "core.h"
-#समावेश "debug.h"
-#समावेश "mhi.h"
-#समावेश "pci.h"
+#include "core.h"
+#include "debug.h"
+#include "mhi.h"
+#include "pci.h"
 
-#घोषणा MHI_TIMEOUT_DEFAULT_MS	90000
+#define MHI_TIMEOUT_DEFAULT_MS	90000
 
-अटल काष्ठा mhi_channel_config ath11k_mhi_channels_qca6390[] = अणु
-	अणु
+static struct mhi_channel_config ath11k_mhi_channels_qca6390[] = {
+	{
 		.num = 0,
 		.name = "LOOPBACK",
 		.num_elements = 32,
@@ -21,13 +20,13 @@
 		.dir = DMA_TO_DEVICE,
 		.ee_mask = 0x4,
 		.pollcfg = 0,
-		.करोorbell = MHI_DB_BRST_DISABLE,
-		.lpm_notअगरy = false,
+		.doorbell = MHI_DB_BRST_DISABLE,
+		.lpm_notify = false,
 		.offload_channel = false,
-		.करोorbell_mode_चयन = false,
-		.स्वतः_queue = false,
-	पूर्ण,
-	अणु
+		.doorbell_mode_switch = false,
+		.auto_queue = false,
+	},
+	{
 		.num = 1,
 		.name = "LOOPBACK",
 		.num_elements = 32,
@@ -35,13 +34,13 @@
 		.dir = DMA_FROM_DEVICE,
 		.ee_mask = 0x4,
 		.pollcfg = 0,
-		.करोorbell = MHI_DB_BRST_DISABLE,
-		.lpm_notअगरy = false,
+		.doorbell = MHI_DB_BRST_DISABLE,
+		.lpm_notify = false,
 		.offload_channel = false,
-		.करोorbell_mode_चयन = false,
-		.स्वतः_queue = false,
-	पूर्ण,
-	अणु
+		.doorbell_mode_switch = false,
+		.auto_queue = false,
+	},
+	{
 		.num = 20,
 		.name = "IPCR",
 		.num_elements = 64,
@@ -49,13 +48,13 @@
 		.dir = DMA_TO_DEVICE,
 		.ee_mask = 0x4,
 		.pollcfg = 0,
-		.करोorbell = MHI_DB_BRST_DISABLE,
-		.lpm_notअगरy = false,
+		.doorbell = MHI_DB_BRST_DISABLE,
+		.lpm_notify = false,
 		.offload_channel = false,
-		.करोorbell_mode_चयन = false,
-		.स्वतः_queue = false,
-	पूर्ण,
-	अणु
+		.doorbell_mode_switch = false,
+		.auto_queue = false,
+	},
+	{
 		.num = 21,
 		.name = "IPCR",
 		.num_elements = 64,
@@ -63,16 +62,16 @@
 		.dir = DMA_FROM_DEVICE,
 		.ee_mask = 0x4,
 		.pollcfg = 0,
-		.करोorbell = MHI_DB_BRST_DISABLE,
-		.lpm_notअगरy = false,
+		.doorbell = MHI_DB_BRST_DISABLE,
+		.lpm_notify = false,
 		.offload_channel = false,
-		.करोorbell_mode_चयन = false,
-		.स्वतः_queue = true,
-	पूर्ण,
-पूर्ण;
+		.doorbell_mode_switch = false,
+		.auto_queue = true,
+	},
+};
 
-अटल काष्ठा mhi_event_config ath11k_mhi_events_qca6390[] = अणु
-	अणु
+static struct mhi_event_config ath11k_mhi_events_qca6390[] = {
+	{
 		.num_elements = 32,
 		.irq_moderation_ms = 0,
 		.irq = 1,
@@ -81,8 +80,8 @@
 		.hardware_event = false,
 		.client_managed = false,
 		.offload_channel = false,
-	पूर्ण,
-	अणु
+	},
+	{
 		.num_elements = 256,
 		.irq_moderation_ms = 1,
 		.irq = 2,
@@ -91,22 +90,22 @@
 		.hardware_event = false,
 		.client_managed = false,
 		.offload_channel = false,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा mhi_controller_config ath11k_mhi_config_qca6390 = अणु
+static struct mhi_controller_config ath11k_mhi_config_qca6390 = {
 	.max_channels = 128,
-	.समयout_ms = 2000,
+	.timeout_ms = 2000,
 	.use_bounce_buf = false,
 	.buf_len = 0,
 	.num_channels = ARRAY_SIZE(ath11k_mhi_channels_qca6390),
 	.ch_cfg = ath11k_mhi_channels_qca6390,
 	.num_events = ARRAY_SIZE(ath11k_mhi_events_qca6390),
 	.event_cfg = ath11k_mhi_events_qca6390,
-पूर्ण;
+};
 
-अटल काष्ठा mhi_channel_config ath11k_mhi_channels_qcn9074[] = अणु
-	अणु
+static struct mhi_channel_config ath11k_mhi_channels_qcn9074[] = {
+	{
 		.num = 0,
 		.name = "LOOPBACK",
 		.num_elements = 32,
@@ -114,13 +113,13 @@
 		.dir = DMA_TO_DEVICE,
 		.ee_mask = 0x14,
 		.pollcfg = 0,
-		.करोorbell = MHI_DB_BRST_DISABLE,
-		.lpm_notअगरy = false,
+		.doorbell = MHI_DB_BRST_DISABLE,
+		.lpm_notify = false,
 		.offload_channel = false,
-		.करोorbell_mode_चयन = false,
-		.स्वतः_queue = false,
-	पूर्ण,
-	अणु
+		.doorbell_mode_switch = false,
+		.auto_queue = false,
+	},
+	{
 		.num = 1,
 		.name = "LOOPBACK",
 		.num_elements = 32,
@@ -128,13 +127,13 @@
 		.dir = DMA_FROM_DEVICE,
 		.ee_mask = 0x14,
 		.pollcfg = 0,
-		.करोorbell = MHI_DB_BRST_DISABLE,
-		.lpm_notअगरy = false,
+		.doorbell = MHI_DB_BRST_DISABLE,
+		.lpm_notify = false,
 		.offload_channel = false,
-		.करोorbell_mode_चयन = false,
-		.स्वतः_queue = false,
-	पूर्ण,
-	अणु
+		.doorbell_mode_switch = false,
+		.auto_queue = false,
+	},
+	{
 		.num = 20,
 		.name = "IPCR",
 		.num_elements = 32,
@@ -142,13 +141,13 @@
 		.dir = DMA_TO_DEVICE,
 		.ee_mask = 0x14,
 		.pollcfg = 0,
-		.करोorbell = MHI_DB_BRST_DISABLE,
-		.lpm_notअगरy = false,
+		.doorbell = MHI_DB_BRST_DISABLE,
+		.lpm_notify = false,
 		.offload_channel = false,
-		.करोorbell_mode_चयन = false,
-		.स्वतः_queue = false,
-	पूर्ण,
-	अणु
+		.doorbell_mode_switch = false,
+		.auto_queue = false,
+	},
+	{
 		.num = 21,
 		.name = "IPCR",
 		.num_elements = 32,
@@ -156,16 +155,16 @@
 		.dir = DMA_FROM_DEVICE,
 		.ee_mask = 0x14,
 		.pollcfg = 0,
-		.करोorbell = MHI_DB_BRST_DISABLE,
-		.lpm_notअगरy = false,
+		.doorbell = MHI_DB_BRST_DISABLE,
+		.lpm_notify = false,
 		.offload_channel = false,
-		.करोorbell_mode_चयन = false,
-		.स्वतः_queue = true,
-	पूर्ण,
-पूर्ण;
+		.doorbell_mode_switch = false,
+		.auto_queue = true,
+	},
+};
 
-अटल काष्ठा mhi_event_config ath11k_mhi_events_qcn9074[] = अणु
-	अणु
+static struct mhi_event_config ath11k_mhi_events_qcn9074[] = {
+	{
 		.num_elements = 32,
 		.irq_moderation_ms = 0,
 		.irq = 1,
@@ -174,8 +173,8 @@
 		.hardware_event = false,
 		.client_managed = false,
 		.offload_channel = false,
-	पूर्ण,
-	अणु
+	},
+	{
 		.num_elements = 256,
 		.irq_moderation_ms = 1,
 		.irq = 2,
@@ -184,25 +183,25 @@
 		.hardware_event = false,
 		.client_managed = false,
 		.offload_channel = false,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा mhi_controller_config ath11k_mhi_config_qcn9074 = अणु
+static struct mhi_controller_config ath11k_mhi_config_qcn9074 = {
 	.max_channels = 30,
-	.समयout_ms = 10000,
+	.timeout_ms = 10000,
 	.use_bounce_buf = false,
 	.buf_len = 0,
 	.num_channels = ARRAY_SIZE(ath11k_mhi_channels_qcn9074),
 	.ch_cfg = ath11k_mhi_channels_qcn9074,
 	.num_events = ARRAY_SIZE(ath11k_mhi_events_qcn9074),
 	.event_cfg = ath11k_mhi_events_qcn9074,
-पूर्ण;
+};
 
-व्योम ath11k_mhi_set_mhictrl_reset(काष्ठा ath11k_base *ab)
-अणु
+void ath11k_mhi_set_mhictrl_reset(struct ath11k_base *ab)
+{
 	u32 val;
 
-	val = ath11k_pci_पढ़ो32(ab, MHISTATUS);
+	val = ath11k_pci_read32(ab, MHISTATUS);
 
 	ath11k_dbg(ab, ATH11K_DBG_PCI, "MHISTATUS 0x%x\n", val);
 
@@ -210,122 +209,122 @@
 	 * has SYSERR bit set and thus need to set MHICTRL_RESET
 	 * to clear SYSERR.
 	 */
-	ath11k_pci_ग_लिखो32(ab, MHICTRL, MHICTRL_RESET_MASK);
+	ath11k_pci_write32(ab, MHICTRL, MHICTRL_RESET_MASK);
 
 	mdelay(10);
-पूर्ण
+}
 
-अटल व्योम ath11k_mhi_reset_txvecdb(काष्ठा ath11k_base *ab)
-अणु
-	ath11k_pci_ग_लिखो32(ab, PCIE_TXVECDB, 0);
-पूर्ण
+static void ath11k_mhi_reset_txvecdb(struct ath11k_base *ab)
+{
+	ath11k_pci_write32(ab, PCIE_TXVECDB, 0);
+}
 
-अटल व्योम ath11k_mhi_reset_txvecstatus(काष्ठा ath11k_base *ab)
-अणु
-	ath11k_pci_ग_लिखो32(ab, PCIE_TXVECSTATUS, 0);
-पूर्ण
+static void ath11k_mhi_reset_txvecstatus(struct ath11k_base *ab)
+{
+	ath11k_pci_write32(ab, PCIE_TXVECSTATUS, 0);
+}
 
-अटल व्योम ath11k_mhi_reset_rxvecdb(काष्ठा ath11k_base *ab)
-अणु
-	ath11k_pci_ग_लिखो32(ab, PCIE_RXVECDB, 0);
-पूर्ण
+static void ath11k_mhi_reset_rxvecdb(struct ath11k_base *ab)
+{
+	ath11k_pci_write32(ab, PCIE_RXVECDB, 0);
+}
 
-अटल व्योम ath11k_mhi_reset_rxvecstatus(काष्ठा ath11k_base *ab)
-अणु
-	ath11k_pci_ग_लिखो32(ab, PCIE_RXVECSTATUS, 0);
-पूर्ण
+static void ath11k_mhi_reset_rxvecstatus(struct ath11k_base *ab)
+{
+	ath11k_pci_write32(ab, PCIE_RXVECSTATUS, 0);
+}
 
-व्योम ath11k_mhi_clear_vector(काष्ठा ath11k_base *ab)
-अणु
+void ath11k_mhi_clear_vector(struct ath11k_base *ab)
+{
 	ath11k_mhi_reset_txvecdb(ab);
 	ath11k_mhi_reset_txvecstatus(ab);
 	ath11k_mhi_reset_rxvecdb(ab);
 	ath11k_mhi_reset_rxvecstatus(ab);
-पूर्ण
+}
 
-अटल पूर्णांक ath11k_mhi_get_msi(काष्ठा ath11k_pci *ab_pci)
-अणु
-	काष्ठा ath11k_base *ab = ab_pci->ab;
+static int ath11k_mhi_get_msi(struct ath11k_pci *ab_pci)
+{
+	struct ath11k_base *ab = ab_pci->ab;
 	u32 user_base_data, base_vector;
-	पूर्णांक ret, num_vectors, i;
-	पूर्णांक *irq;
+	int ret, num_vectors, i;
+	int *irq;
 
 	ret = ath11k_pci_get_user_msi_assignment(ab_pci,
 						 "MHI", &num_vectors,
 						 &user_base_data, &base_vector);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ath11k_dbg(ab, ATH11K_DBG_PCI, "Number of assigned MSI for MHI is %d, base vector is %d\n",
 		   num_vectors, base_vector);
 
-	irq = kसुस्मृति(num_vectors, माप(पूर्णांक), GFP_KERNEL);
-	अगर (!irq)
-		वापस -ENOMEM;
+	irq = kcalloc(num_vectors, sizeof(int), GFP_KERNEL);
+	if (!irq)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < num_vectors; i++)
+	for (i = 0; i < num_vectors; i++)
 		irq[i] = ath11k_pci_get_msi_irq(ab->dev,
 						base_vector + i);
 
 	ab_pci->mhi_ctrl->irq = irq;
 	ab_pci->mhi_ctrl->nr_irqs = num_vectors;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ath11k_mhi_op_runसमय_get(काष्ठा mhi_controller *mhi_cntrl)
-अणु
-	वापस 0;
-पूर्ण
+static int ath11k_mhi_op_runtime_get(struct mhi_controller *mhi_cntrl)
+{
+	return 0;
+}
 
-अटल व्योम ath11k_mhi_op_runसमय_put(काष्ठा mhi_controller *mhi_cntrl)
-अणु
-पूर्ण
+static void ath11k_mhi_op_runtime_put(struct mhi_controller *mhi_cntrl)
+{
+}
 
-अटल व्योम ath11k_mhi_op_status_cb(काष्ठा mhi_controller *mhi_cntrl,
-				    क्रमागत mhi_callback cb)
-अणु
-	काष्ठा ath11k_base *ab = dev_get_drvdata(mhi_cntrl->cntrl_dev);
+static void ath11k_mhi_op_status_cb(struct mhi_controller *mhi_cntrl,
+				    enum mhi_callback cb)
+{
+	struct ath11k_base *ab = dev_get_drvdata(mhi_cntrl->cntrl_dev);
 
-	चयन (cb) अणु
-	हाल MHI_CB_SYS_ERROR:
+	switch (cb) {
+	case MHI_CB_SYS_ERROR:
 		ath11k_warn(ab, "firmware crashed: MHI_CB_SYS_ERROR\n");
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-अटल पूर्णांक ath11k_mhi_op_पढ़ो_reg(काष्ठा mhi_controller *mhi_cntrl,
-				  व्योम __iomem *addr,
+static int ath11k_mhi_op_read_reg(struct mhi_controller *mhi_cntrl,
+				  void __iomem *addr,
 				  u32 *out)
-अणु
-	*out = पढ़ोl(addr);
+{
+	*out = readl(addr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ath11k_mhi_op_ग_लिखो_reg(काष्ठा mhi_controller *mhi_cntrl,
-				    व्योम __iomem *addr,
+static void ath11k_mhi_op_write_reg(struct mhi_controller *mhi_cntrl,
+				    void __iomem *addr,
 				    u32 val)
-अणु
-	ग_लिखोl(val, addr);
-पूर्ण
+{
+	writel(val, addr);
+}
 
-पूर्णांक ath11k_mhi_रेजिस्टर(काष्ठा ath11k_pci *ab_pci)
-अणु
-	काष्ठा ath11k_base *ab = ab_pci->ab;
-	काष्ठा mhi_controller *mhi_ctrl;
-	काष्ठा mhi_controller_config *ath11k_mhi_config;
-	पूर्णांक ret;
+int ath11k_mhi_register(struct ath11k_pci *ab_pci)
+{
+	struct ath11k_base *ab = ab_pci->ab;
+	struct mhi_controller *mhi_ctrl;
+	struct mhi_controller_config *ath11k_mhi_config;
+	int ret;
 
 	mhi_ctrl = mhi_alloc_controller();
-	अगर (!mhi_ctrl)
-		वापस -ENOMEM;
+	if (!mhi_ctrl)
+		return -ENOMEM;
 
-	ath11k_core_create_firmware_path(ab, ATH11K_AMSS_खाता,
+	ath11k_core_create_firmware_path(ab, ATH11K_AMSS_FILE,
 					 ab_pci->amss_path,
-					 माप(ab_pci->amss_path));
+					 sizeof(ab_pci->amss_path));
 
 	ab_pci->mhi_ctrl = mhi_ctrl;
 	mhi_ctrl->cntrl_dev = ab->dev;
@@ -333,262 +332,262 @@
 	mhi_ctrl->regs = ab->mem;
 
 	ret = ath11k_mhi_get_msi(ab_pci);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_err(ab, "failed to get msi for mhi\n");
-		mhi_मुक्त_controller(mhi_ctrl);
-		वापस ret;
-	पूर्ण
+		mhi_free_controller(mhi_ctrl);
+		return ret;
+	}
 
-	mhi_ctrl->ioबहु_शुरू = 0;
+	mhi_ctrl->iova_start = 0;
 	mhi_ctrl->iova_stop = 0xffffffff;
 	mhi_ctrl->sbl_size = SZ_512K;
 	mhi_ctrl->seg_len = SZ_512K;
-	mhi_ctrl->fbc_करोwnload = true;
-	mhi_ctrl->runसमय_get = ath11k_mhi_op_runसमय_get;
-	mhi_ctrl->runसमय_put = ath11k_mhi_op_runसमय_put;
+	mhi_ctrl->fbc_download = true;
+	mhi_ctrl->runtime_get = ath11k_mhi_op_runtime_get;
+	mhi_ctrl->runtime_put = ath11k_mhi_op_runtime_put;
 	mhi_ctrl->status_cb = ath11k_mhi_op_status_cb;
-	mhi_ctrl->पढ़ो_reg = ath11k_mhi_op_पढ़ो_reg;
-	mhi_ctrl->ग_लिखो_reg = ath11k_mhi_op_ग_लिखो_reg;
+	mhi_ctrl->read_reg = ath11k_mhi_op_read_reg;
+	mhi_ctrl->write_reg = ath11k_mhi_op_write_reg;
 
-	चयन (ab->hw_rev) अणु
-	हाल ATH11K_HW_QCN9074_HW10:
+	switch (ab->hw_rev) {
+	case ATH11K_HW_QCN9074_HW10:
 		ath11k_mhi_config = &ath11k_mhi_config_qcn9074;
-		अवरोध;
-	हाल ATH11K_HW_QCA6390_HW20:
+		break;
+	case ATH11K_HW_QCA6390_HW20:
 		ath11k_mhi_config = &ath11k_mhi_config_qca6390;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ath11k_err(ab, "failed assign mhi_config for unknown hw rev %d\n",
 			   ab->hw_rev);
-		mhi_मुक्त_controller(mhi_ctrl);
-		वापस -EINVAL;
-	पूर्ण
+		mhi_free_controller(mhi_ctrl);
+		return -EINVAL;
+	}
 
-	ret = mhi_रेजिस्टर_controller(mhi_ctrl, ath11k_mhi_config);
-	अगर (ret) अणु
+	ret = mhi_register_controller(mhi_ctrl, ath11k_mhi_config);
+	if (ret) {
 		ath11k_err(ab, "failed to register to mhi bus, err = %d\n", ret);
-		mhi_मुक्त_controller(mhi_ctrl);
-		वापस ret;
-	पूर्ण
+		mhi_free_controller(mhi_ctrl);
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम ath11k_mhi_unरेजिस्टर(काष्ठा ath11k_pci *ab_pci)
-अणु
-	काष्ठा mhi_controller *mhi_ctrl = ab_pci->mhi_ctrl;
+void ath11k_mhi_unregister(struct ath11k_pci *ab_pci)
+{
+	struct mhi_controller *mhi_ctrl = ab_pci->mhi_ctrl;
 
-	mhi_unरेजिस्टर_controller(mhi_ctrl);
-	kमुक्त(mhi_ctrl->irq);
-	mhi_मुक्त_controller(mhi_ctrl);
-पूर्ण
+	mhi_unregister_controller(mhi_ctrl);
+	kfree(mhi_ctrl->irq);
+	mhi_free_controller(mhi_ctrl);
+}
 
-अटल अक्षर *ath11k_mhi_state_to_str(क्रमागत ath11k_mhi_state mhi_state)
-अणु
-	चयन (mhi_state) अणु
-	हाल ATH11K_MHI_INIT:
-		वापस "INIT";
-	हाल ATH11K_MHI_DEINIT:
-		वापस "DEINIT";
-	हाल ATH11K_MHI_POWER_ON:
-		वापस "POWER_ON";
-	हाल ATH11K_MHI_POWER_OFF:
-		वापस "POWER_OFF";
-	हाल ATH11K_MHI_FORCE_POWER_OFF:
-		वापस "FORCE_POWER_OFF";
-	हाल ATH11K_MHI_SUSPEND:
-		वापस "SUSPEND";
-	हाल ATH11K_MHI_RESUME:
-		वापस "RESUME";
-	हाल ATH11K_MHI_TRIGGER_RDDM:
-		वापस "TRIGGER_RDDM";
-	हाल ATH11K_MHI_RDDM_DONE:
-		वापस "RDDM_DONE";
-	शेष:
-		वापस "UNKNOWN";
-	पूर्ण
-पूर्ण;
+static char *ath11k_mhi_state_to_str(enum ath11k_mhi_state mhi_state)
+{
+	switch (mhi_state) {
+	case ATH11K_MHI_INIT:
+		return "INIT";
+	case ATH11K_MHI_DEINIT:
+		return "DEINIT";
+	case ATH11K_MHI_POWER_ON:
+		return "POWER_ON";
+	case ATH11K_MHI_POWER_OFF:
+		return "POWER_OFF";
+	case ATH11K_MHI_FORCE_POWER_OFF:
+		return "FORCE_POWER_OFF";
+	case ATH11K_MHI_SUSPEND:
+		return "SUSPEND";
+	case ATH11K_MHI_RESUME:
+		return "RESUME";
+	case ATH11K_MHI_TRIGGER_RDDM:
+		return "TRIGGER_RDDM";
+	case ATH11K_MHI_RDDM_DONE:
+		return "RDDM_DONE";
+	default:
+		return "UNKNOWN";
+	}
+};
 
-अटल व्योम ath11k_mhi_set_state_bit(काष्ठा ath11k_pci *ab_pci,
-				     क्रमागत ath11k_mhi_state mhi_state)
-अणु
-	काष्ठा ath11k_base *ab = ab_pci->ab;
+static void ath11k_mhi_set_state_bit(struct ath11k_pci *ab_pci,
+				     enum ath11k_mhi_state mhi_state)
+{
+	struct ath11k_base *ab = ab_pci->ab;
 
-	चयन (mhi_state) अणु
-	हाल ATH11K_MHI_INIT:
+	switch (mhi_state) {
+	case ATH11K_MHI_INIT:
 		set_bit(ATH11K_MHI_INIT, &ab_pci->mhi_state);
-		अवरोध;
-	हाल ATH11K_MHI_DEINIT:
+		break;
+	case ATH11K_MHI_DEINIT:
 		clear_bit(ATH11K_MHI_INIT, &ab_pci->mhi_state);
-		अवरोध;
-	हाल ATH11K_MHI_POWER_ON:
+		break;
+	case ATH11K_MHI_POWER_ON:
 		set_bit(ATH11K_MHI_POWER_ON, &ab_pci->mhi_state);
-		अवरोध;
-	हाल ATH11K_MHI_POWER_OFF:
-	हाल ATH11K_MHI_FORCE_POWER_OFF:
+		break;
+	case ATH11K_MHI_POWER_OFF:
+	case ATH11K_MHI_FORCE_POWER_OFF:
 		clear_bit(ATH11K_MHI_POWER_ON, &ab_pci->mhi_state);
 		clear_bit(ATH11K_MHI_TRIGGER_RDDM, &ab_pci->mhi_state);
 		clear_bit(ATH11K_MHI_RDDM_DONE, &ab_pci->mhi_state);
-		अवरोध;
-	हाल ATH11K_MHI_SUSPEND:
+		break;
+	case ATH11K_MHI_SUSPEND:
 		set_bit(ATH11K_MHI_SUSPEND, &ab_pci->mhi_state);
-		अवरोध;
-	हाल ATH11K_MHI_RESUME:
+		break;
+	case ATH11K_MHI_RESUME:
 		clear_bit(ATH11K_MHI_SUSPEND, &ab_pci->mhi_state);
-		अवरोध;
-	हाल ATH11K_MHI_TRIGGER_RDDM:
+		break;
+	case ATH11K_MHI_TRIGGER_RDDM:
 		set_bit(ATH11K_MHI_TRIGGER_RDDM, &ab_pci->mhi_state);
-		अवरोध;
-	हाल ATH11K_MHI_RDDM_DONE:
+		break;
+	case ATH11K_MHI_RDDM_DONE:
 		set_bit(ATH11K_MHI_RDDM_DONE, &ab_pci->mhi_state);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ath11k_err(ab, "unhandled mhi state (%d)\n", mhi_state);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक ath11k_mhi_check_state_bit(काष्ठा ath11k_pci *ab_pci,
-				      क्रमागत ath11k_mhi_state mhi_state)
-अणु
-	काष्ठा ath11k_base *ab = ab_pci->ab;
+static int ath11k_mhi_check_state_bit(struct ath11k_pci *ab_pci,
+				      enum ath11k_mhi_state mhi_state)
+{
+	struct ath11k_base *ab = ab_pci->ab;
 
-	चयन (mhi_state) अणु
-	हाल ATH11K_MHI_INIT:
-		अगर (!test_bit(ATH11K_MHI_INIT, &ab_pci->mhi_state))
-			वापस 0;
-		अवरोध;
-	हाल ATH11K_MHI_DEINIT:
-	हाल ATH11K_MHI_POWER_ON:
-		अगर (test_bit(ATH11K_MHI_INIT, &ab_pci->mhi_state) &&
+	switch (mhi_state) {
+	case ATH11K_MHI_INIT:
+		if (!test_bit(ATH11K_MHI_INIT, &ab_pci->mhi_state))
+			return 0;
+		break;
+	case ATH11K_MHI_DEINIT:
+	case ATH11K_MHI_POWER_ON:
+		if (test_bit(ATH11K_MHI_INIT, &ab_pci->mhi_state) &&
 		    !test_bit(ATH11K_MHI_POWER_ON, &ab_pci->mhi_state))
-			वापस 0;
-		अवरोध;
-	हाल ATH11K_MHI_FORCE_POWER_OFF:
-		अगर (test_bit(ATH11K_MHI_POWER_ON, &ab_pci->mhi_state))
-			वापस 0;
-		अवरोध;
-	हाल ATH11K_MHI_POWER_OFF:
-	हाल ATH11K_MHI_SUSPEND:
-		अगर (test_bit(ATH11K_MHI_POWER_ON, &ab_pci->mhi_state) &&
+			return 0;
+		break;
+	case ATH11K_MHI_FORCE_POWER_OFF:
+		if (test_bit(ATH11K_MHI_POWER_ON, &ab_pci->mhi_state))
+			return 0;
+		break;
+	case ATH11K_MHI_POWER_OFF:
+	case ATH11K_MHI_SUSPEND:
+		if (test_bit(ATH11K_MHI_POWER_ON, &ab_pci->mhi_state) &&
 		    !test_bit(ATH11K_MHI_SUSPEND, &ab_pci->mhi_state))
-			वापस 0;
-		अवरोध;
-	हाल ATH11K_MHI_RESUME:
-		अगर (test_bit(ATH11K_MHI_SUSPEND, &ab_pci->mhi_state))
-			वापस 0;
-		अवरोध;
-	हाल ATH11K_MHI_TRIGGER_RDDM:
-		अगर (test_bit(ATH11K_MHI_POWER_ON, &ab_pci->mhi_state) &&
+			return 0;
+		break;
+	case ATH11K_MHI_RESUME:
+		if (test_bit(ATH11K_MHI_SUSPEND, &ab_pci->mhi_state))
+			return 0;
+		break;
+	case ATH11K_MHI_TRIGGER_RDDM:
+		if (test_bit(ATH11K_MHI_POWER_ON, &ab_pci->mhi_state) &&
 		    !test_bit(ATH11K_MHI_TRIGGER_RDDM, &ab_pci->mhi_state))
-			वापस 0;
-		अवरोध;
-	हाल ATH11K_MHI_RDDM_DONE:
-		वापस 0;
-	शेष:
+			return 0;
+		break;
+	case ATH11K_MHI_RDDM_DONE:
+		return 0;
+	default:
 		ath11k_err(ab, "unhandled mhi state: %s(%d)\n",
 			   ath11k_mhi_state_to_str(mhi_state), mhi_state);
-	पूर्ण
+	}
 
 	ath11k_err(ab, "failed to set mhi state %s(%d) in current mhi state (0x%lx)\n",
 		   ath11k_mhi_state_to_str(mhi_state), mhi_state,
 		   ab_pci->mhi_state);
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक ath11k_mhi_set_state(काष्ठा ath11k_pci *ab_pci,
-				क्रमागत ath11k_mhi_state mhi_state)
-अणु
-	काष्ठा ath11k_base *ab = ab_pci->ab;
-	पूर्णांक ret;
+static int ath11k_mhi_set_state(struct ath11k_pci *ab_pci,
+				enum ath11k_mhi_state mhi_state)
+{
+	struct ath11k_base *ab = ab_pci->ab;
+	int ret;
 
 	ret = ath11k_mhi_check_state_bit(ab_pci, mhi_state);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	ath11k_dbg(ab, ATH11K_DBG_PCI, "setting mhi state: %s(%d)\n",
 		   ath11k_mhi_state_to_str(mhi_state), mhi_state);
 
-	चयन (mhi_state) अणु
-	हाल ATH11K_MHI_INIT:
-		ret = mhi_prepare_क्रम_घातer_up(ab_pci->mhi_ctrl);
-		अवरोध;
-	हाल ATH11K_MHI_DEINIT:
-		mhi_unprepare_after_घातer_करोwn(ab_pci->mhi_ctrl);
+	switch (mhi_state) {
+	case ATH11K_MHI_INIT:
+		ret = mhi_prepare_for_power_up(ab_pci->mhi_ctrl);
+		break;
+	case ATH11K_MHI_DEINIT:
+		mhi_unprepare_after_power_down(ab_pci->mhi_ctrl);
 		ret = 0;
-		अवरोध;
-	हाल ATH11K_MHI_POWER_ON:
-		ret = mhi_async_घातer_up(ab_pci->mhi_ctrl);
-		अवरोध;
-	हाल ATH11K_MHI_POWER_OFF:
-		mhi_घातer_करोwn(ab_pci->mhi_ctrl, true);
+		break;
+	case ATH11K_MHI_POWER_ON:
+		ret = mhi_async_power_up(ab_pci->mhi_ctrl);
+		break;
+	case ATH11K_MHI_POWER_OFF:
+		mhi_power_down(ab_pci->mhi_ctrl, true);
 		ret = 0;
-		अवरोध;
-	हाल ATH11K_MHI_FORCE_POWER_OFF:
-		mhi_घातer_करोwn(ab_pci->mhi_ctrl, false);
+		break;
+	case ATH11K_MHI_FORCE_POWER_OFF:
+		mhi_power_down(ab_pci->mhi_ctrl, false);
 		ret = 0;
-		अवरोध;
-	हाल ATH11K_MHI_SUSPEND:
+		break;
+	case ATH11K_MHI_SUSPEND:
 		ret = mhi_pm_suspend(ab_pci->mhi_ctrl);
-		अवरोध;
-	हाल ATH11K_MHI_RESUME:
+		break;
+	case ATH11K_MHI_RESUME:
 		ret = mhi_pm_resume(ab_pci->mhi_ctrl);
-		अवरोध;
-	हाल ATH11K_MHI_TRIGGER_RDDM:
-		ret = mhi_क्रमce_rddm_mode(ab_pci->mhi_ctrl);
-		अवरोध;
-	हाल ATH11K_MHI_RDDM_DONE:
-		अवरोध;
-	शेष:
+		break;
+	case ATH11K_MHI_TRIGGER_RDDM:
+		ret = mhi_force_rddm_mode(ab_pci->mhi_ctrl);
+		break;
+	case ATH11K_MHI_RDDM_DONE:
+		break;
+	default:
 		ath11k_err(ab, "unhandled MHI state (%d)\n", mhi_state);
 		ret = -EINVAL;
-	पूर्ण
+	}
 
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	ath11k_mhi_set_state_bit(ab_pci, mhi_state);
 
-	वापस 0;
+	return 0;
 
 out:
 	ath11k_err(ab, "failed to set mhi state: %s(%d)\n",
 		   ath11k_mhi_state_to_str(mhi_state), mhi_state);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक ath11k_mhi_start(काष्ठा ath11k_pci *ab_pci)
-अणु
-	पूर्णांक ret;
+int ath11k_mhi_start(struct ath11k_pci *ab_pci)
+{
+	int ret;
 
-	ab_pci->mhi_ctrl->समयout_ms = MHI_TIMEOUT_DEFAULT_MS;
+	ab_pci->mhi_ctrl->timeout_ms = MHI_TIMEOUT_DEFAULT_MS;
 
 	ret = ath11k_mhi_set_state(ab_pci, ATH11K_MHI_INIT);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	ret = ath11k_mhi_set_state(ab_pci, ATH11K_MHI_POWER_ON);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	वापस 0;
+	return 0;
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम ath11k_mhi_stop(काष्ठा ath11k_pci *ab_pci)
-अणु
+void ath11k_mhi_stop(struct ath11k_pci *ab_pci)
+{
 	ath11k_mhi_set_state(ab_pci, ATH11K_MHI_POWER_OFF);
 	ath11k_mhi_set_state(ab_pci, ATH11K_MHI_DEINIT);
-पूर्ण
+}
 
-व्योम ath11k_mhi_suspend(काष्ठा ath11k_pci *ab_pci)
-अणु
+void ath11k_mhi_suspend(struct ath11k_pci *ab_pci)
+{
 	ath11k_mhi_set_state(ab_pci, ATH11K_MHI_SUSPEND);
-पूर्ण
+}
 
-व्योम ath11k_mhi_resume(काष्ठा ath11k_pci *ab_pci)
-अणु
+void ath11k_mhi_resume(struct ath11k_pci *ab_pci)
+{
 	ath11k_mhi_set_state(ab_pci, ATH11K_MHI_RESUME);
-पूर्ण
+}

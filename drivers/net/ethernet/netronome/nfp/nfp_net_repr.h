@@ -1,29 +1,28 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-2-Clause) */
+/* SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause) */
 /* Copyright (C) 2017-2018 Netronome Systems, Inc. */
 
-#अगर_अघोषित NFP_NET_REPR_H
-#घोषणा NFP_NET_REPR_H
+#ifndef NFP_NET_REPR_H
+#define NFP_NET_REPR_H
 
-काष्ठा metadata_dst;
-काष्ठा nfp_app;
-काष्ठा nfp_net;
-काष्ठा nfp_port;
+struct metadata_dst;
+struct nfp_app;
+struct nfp_net;
+struct nfp_port;
 
-#समावेश <net/dst_metadata.h>
+#include <net/dst_metadata.h>
 
 /**
- * काष्ठा nfp_reprs - container क्रम representor netdevs
+ * struct nfp_reprs - container for representor netdevs
  * @num_reprs:	Number of elements in reprs array
  * @reprs:	Array of representor netdevs
  */
-काष्ठा nfp_reprs अणु
-	अचिन्हित पूर्णांक num_reprs;
-	काष्ठा net_device __rcu *reprs[];
-पूर्ण;
+struct nfp_reprs {
+	unsigned int num_reprs;
+	struct net_device __rcu *reprs[];
+};
 
 /**
- * काष्ठा nfp_repr_pcpu_stats
+ * struct nfp_repr_pcpu_stats
  * @rx_packets:	Received packets
  * @rx_bytes:	Received bytes
  * @tx_packets:	Transmitted packets
@@ -31,85 +30,85 @@
  * @tx_drops:	Packets dropped on transmit
  * @syncp:	Reference count
  */
-काष्ठा nfp_repr_pcpu_stats अणु
+struct nfp_repr_pcpu_stats {
 	u64 rx_packets;
 	u64 rx_bytes;
 	u64 tx_packets;
 	u64 tx_bytes;
 	u64 tx_drops;
-	काष्ठा u64_stats_sync syncp;
-पूर्ण;
+	struct u64_stats_sync syncp;
+};
 
 /**
- * काष्ठा nfp_repr - priv data क्रम representor netdevs
- * @netdev:	Back poपूर्णांकer to netdev
- * @dst:	Destination क्रम packet TX
+ * struct nfp_repr - priv data for representor netdevs
+ * @netdev:	Back pointer to netdev
+ * @dst:	Destination for packet TX
  * @port:	Port of representor
  * @app:	APP handle
  * @stats:	Statistic of packets hitting CPU
- * @app_priv:	Poपूर्णांकer क्रम APP data
+ * @app_priv:	Pointer for APP data
  */
-काष्ठा nfp_repr अणु
-	काष्ठा net_device *netdev;
-	काष्ठा metadata_dst *dst;
-	काष्ठा nfp_port *port;
-	काष्ठा nfp_app *app;
-	काष्ठा nfp_repr_pcpu_stats __percpu *stats;
-	व्योम *app_priv;
-पूर्ण;
+struct nfp_repr {
+	struct net_device *netdev;
+	struct metadata_dst *dst;
+	struct nfp_port *port;
+	struct nfp_app *app;
+	struct nfp_repr_pcpu_stats __percpu *stats;
+	void *app_priv;
+};
 
 /**
- * क्रमागत nfp_repr_type - type of representor
- * @NFP_REPR_TYPE_PHYS_PORT:	बाह्यal NIC port
+ * enum nfp_repr_type - type of representor
+ * @NFP_REPR_TYPE_PHYS_PORT:	external NIC port
  * @NFP_REPR_TYPE_PF:		physical function
- * @NFP_REPR_TYPE_VF:		भव function
+ * @NFP_REPR_TYPE_VF:		virtual function
  * @__NFP_REPR_TYPE_MAX:	number of representor types
  */
-क्रमागत nfp_repr_type अणु
+enum nfp_repr_type {
 	NFP_REPR_TYPE_PHYS_PORT,
 	NFP_REPR_TYPE_PF,
 	NFP_REPR_TYPE_VF,
 
 	__NFP_REPR_TYPE_MAX,
-पूर्ण;
-#घोषणा NFP_REPR_TYPE_MAX (__NFP_REPR_TYPE_MAX - 1)
+};
+#define NFP_REPR_TYPE_MAX (__NFP_REPR_TYPE_MAX - 1)
 
-बाह्य स्थिर काष्ठा net_device_ops nfp_repr_netdev_ops;
+extern const struct net_device_ops nfp_repr_netdev_ops;
 
-अटल अंतरभूत bool nfp_netdev_is_nfp_repr(काष्ठा net_device *netdev)
-अणु
-	वापस netdev->netdev_ops == &nfp_repr_netdev_ops;
-पूर्ण
+static inline bool nfp_netdev_is_nfp_repr(struct net_device *netdev)
+{
+	return netdev->netdev_ops == &nfp_repr_netdev_ops;
+}
 
-अटल अंतरभूत पूर्णांक nfp_repr_get_port_id(काष्ठा net_device *netdev)
-अणु
-	काष्ठा nfp_repr *priv = netdev_priv(netdev);
+static inline int nfp_repr_get_port_id(struct net_device *netdev)
+{
+	struct nfp_repr *priv = netdev_priv(netdev);
 
-	वापस priv->dst->u.port_info.port_id;
-पूर्ण
+	return priv->dst->u.port_info.port_id;
+}
 
-काष्ठा net_device *
-nfp_repr_get_locked(काष्ठा nfp_app *app, काष्ठा nfp_reprs *set,
-		    अचिन्हित पूर्णांक id);
+struct net_device *
+nfp_repr_get_locked(struct nfp_app *app, struct nfp_reprs *set,
+		    unsigned int id);
 
-व्योम nfp_repr_inc_rx_stats(काष्ठा net_device *netdev, अचिन्हित पूर्णांक len);
-व्योम
-nfp_repr_transfer_features(काष्ठा net_device *netdev, काष्ठा net_device *lower);
-पूर्णांक nfp_repr_init(काष्ठा nfp_app *app, काष्ठा net_device *netdev,
-		  u32 cmsg_port_id, काष्ठा nfp_port *port,
-		  काष्ठा net_device *pf_netdev);
-व्योम nfp_repr_मुक्त(काष्ठा net_device *netdev);
-काष्ठा net_device *
-nfp_repr_alloc_mqs(काष्ठा nfp_app *app, अचिन्हित पूर्णांक txqs, अचिन्हित पूर्णांक rxqs);
-व्योम nfp_repr_clean_and_मुक्त(काष्ठा nfp_repr *repr);
-व्योम nfp_reprs_clean_and_मुक्त(काष्ठा nfp_app *app, काष्ठा nfp_reprs *reprs);
-व्योम nfp_reprs_clean_and_मुक्त_by_type(काष्ठा nfp_app *app,
-				      क्रमागत nfp_repr_type type);
-काष्ठा nfp_reprs *nfp_reprs_alloc(अचिन्हित पूर्णांक num_reprs);
-पूर्णांक nfp_reprs_resync_phys_ports(काष्ठा nfp_app *app);
+void nfp_repr_inc_rx_stats(struct net_device *netdev, unsigned int len);
+void
+nfp_repr_transfer_features(struct net_device *netdev, struct net_device *lower);
+int nfp_repr_init(struct nfp_app *app, struct net_device *netdev,
+		  u32 cmsg_port_id, struct nfp_port *port,
+		  struct net_device *pf_netdev);
+void nfp_repr_free(struct net_device *netdev);
+struct net_device *
+nfp_repr_alloc_mqs(struct nfp_app *app, unsigned int txqs, unsigned int rxqs);
+void nfp_repr_clean_and_free(struct nfp_repr *repr);
+void nfp_reprs_clean_and_free(struct nfp_app *app, struct nfp_reprs *reprs);
+void nfp_reprs_clean_and_free_by_type(struct nfp_app *app,
+				      enum nfp_repr_type type);
+struct nfp_reprs *nfp_reprs_alloc(unsigned int num_reprs);
+int nfp_reprs_resync_phys_ports(struct nfp_app *app);
 
-अटल अंतरभूत काष्ठा net_device *nfp_repr_alloc(काष्ठा nfp_app *app)
-अणु
-	वापस nfp_repr_alloc_mqs(app, 1, 1);
-पूर्ण
-#पूर्ण_अगर /* NFP_NET_REPR_H */
+static inline struct net_device *nfp_repr_alloc(struct nfp_app *app)
+{
+	return nfp_repr_alloc_mqs(app, 1, 1);
+}
+#endif /* NFP_NET_REPR_H */

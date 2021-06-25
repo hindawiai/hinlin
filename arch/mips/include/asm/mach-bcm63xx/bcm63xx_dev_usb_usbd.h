@@ -1,19 +1,18 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित BCM63XX_DEV_USB_USBD_H_
-#घोषणा BCM63XX_DEV_USB_USBD_H_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef BCM63XX_DEV_USB_USBD_H_
+#define BCM63XX_DEV_USB_USBD_H_
 
 /*
- * usb device platक्रमm data
+ * usb device platform data
  */
-काष्ठा bcm63xx_usbd_platक्रमm_data अणु
+struct bcm63xx_usbd_platform_data {
 	/* board can only support full speed (USB 1.1) */
-	पूर्णांक use_fullspeed;
+	int use_fullspeed;
 
-	/* 0-based port index, क्रम chips with >1 USB PHY */
-	पूर्णांक port_no;
-पूर्ण;
+	/* 0-based port index, for chips with >1 USB PHY */
+	int port_no;
+};
 
-पूर्णांक bcm63xx_usbd_रेजिस्टर(स्थिर काष्ठा bcm63xx_usbd_platक्रमm_data *pd);
+int bcm63xx_usbd_register(const struct bcm63xx_usbd_platform_data *pd);
 
-#पूर्ण_अगर /* BCM63XX_DEV_USB_USBD_H_ */
+#endif /* BCM63XX_DEV_USB_USBD_H_ */

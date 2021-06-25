@@ -1,86 +1,85 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * led_hw_brightness_mon.c
  *
  * This program monitors LED brightness level changes having its origin
  * in hardware/firmware, i.e. outside of kernel control.
- * A बारtamp and brightness value is prपूर्णांकed each समय the brightness changes.
+ * A timestamp and brightness value is printed each time the brightness changes.
  *
  * Usage: led_hw_brightness_mon <device-name>
  *
  * <device-name> is the name of the LED class device to be monitored. Pressing
- * CTRL+C will निकास.
+ * CTRL+C will exit.
  */
 
-#समावेश <त्रुटिसं.स>
-#समावेश <fcntl.h>
-#समावेश <poll.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <समय.स>
-#समावेश <unistd.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <poll.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
 
-#समावेश <linux/uleds.h>
+#include <linux/uleds.h>
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर स्थिर *argv[])
-अणु
-	पूर्णांक fd, ret;
-	अक्षर brightness_file_path[LED_MAX_NAME_SIZE + 11];
-	काष्ठा pollfd pollfd;
-	काष्ठा बारpec ts;
-	अक्षर buf[11];
+int main(int argc, char const *argv[])
+{
+	int fd, ret;
+	char brightness_file_path[LED_MAX_NAME_SIZE + 11];
+	struct pollfd pollfd;
+	struct timespec ts;
+	char buf[11];
 
-	अगर (argc != 2) अणु
-		ख_लिखो(मानक_त्रुटि, "Requires <device-name> argument\n");
-		वापस 1;
-	पूर्ण
+	if (argc != 2) {
+		fprintf(stderr, "Requires <device-name> argument\n");
+		return 1;
+	}
 
-	snम_लिखो(brightness_file_path, LED_MAX_NAME_SIZE,
+	snprintf(brightness_file_path, LED_MAX_NAME_SIZE,
 		 "/sys/class/leds/%s/brightness_hw_changed", argv[1]);
 
-	fd = खोलो(brightness_file_path, O_RDONLY);
-	अगर (fd == -1) अणु
-		म_लिखो("Failed to open %s file\n", brightness_file_path);
-		वापस 1;
-	पूर्ण
+	fd = open(brightness_file_path, O_RDONLY);
+	if (fd == -1) {
+		printf("Failed to open %s file\n", brightness_file_path);
+		return 1;
+	}
 
 	/*
-	 * पढ़ो may fail अगर no hw brightness change has occurred so far,
-	 * but it is required to aव्योम spurious poll notअगरications in
-	 * the opposite हाल.
+	 * read may fail if no hw brightness change has occurred so far,
+	 * but it is required to avoid spurious poll notifications in
+	 * the opposite case.
 	 */
-	पढ़ो(fd, buf, माप(buf));
+	read(fd, buf, sizeof(buf));
 
 	pollfd.fd = fd;
 	pollfd.events = POLLPRI;
 
-	जबतक (1) अणु
+	while (1) {
 		ret = poll(&pollfd, 1, -1);
-		अगर (ret == -1) अणु
-			म_लिखो("Failed to poll %s file (%d)\n",
+		if (ret == -1) {
+			printf("Failed to poll %s file (%d)\n",
 				brightness_file_path, ret);
 			ret = 1;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		घड़ी_समय_लो(CLOCK_MONOTONIC, &ts);
+		clock_gettime(CLOCK_MONOTONIC, &ts);
 
-		ret = पढ़ो(fd, buf, माप(buf));
-		अगर (ret < 0)
-			अवरोध;
+		ret = read(fd, buf, sizeof(buf));
+		if (ret < 0)
+			break;
 
-		ret = lseek(pollfd.fd, 0, शुरू_से);
-		अगर (ret < 0) अणु
-			म_लिखो("lseek failed (%d)\n", ret);
-			अवरोध;
-		पूर्ण
+		ret = lseek(pollfd.fd, 0, SEEK_SET);
+		if (ret < 0) {
+			printf("lseek failed (%d)\n", ret);
+			break;
+		}
 
-		म_लिखो("[%ld.%09ld] %d\n", ts.tv_sec, ts.tv_nsec, म_से_प(buf));
-	पूर्ण
+		printf("[%ld.%09ld] %d\n", ts.tv_sec, ts.tv_nsec, atoi(buf));
+	}
 
-	बंद(fd);
+	close(fd);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

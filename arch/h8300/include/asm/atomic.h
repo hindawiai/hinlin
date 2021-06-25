@@ -1,60 +1,59 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ARCH_H8300_ATOMIC__
-#घोषणा __ARCH_H8300_ATOMIC__
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ARCH_H8300_ATOMIC__
+#define __ARCH_H8300_ATOMIC__
 
-#समावेश <linux/compiler.h>
-#समावेश <linux/types.h>
-#समावेश <यंत्र/cmpxchg.h>
-#समावेश <यंत्र/irqflags.h>
+#include <linux/compiler.h>
+#include <linux/types.h>
+#include <asm/cmpxchg.h>
+#include <asm/irqflags.h>
 
 /*
- * Atomic operations that C can't guarantee us.  Useful क्रम
+ * Atomic operations that C can't guarantee us.  Useful for
  * resource counting etc..
  */
 
-#घोषणा atomic_पढ़ो(v)		READ_ONCE((v)->counter)
-#घोषणा atomic_set(v, i)	WRITE_ONCE(((v)->counter), (i))
+#define atomic_read(v)		READ_ONCE((v)->counter)
+#define atomic_set(v, i)	WRITE_ONCE(((v)->counter), (i))
 
-#घोषणा ATOMIC_OP_RETURN(op, c_op)				\
-अटल अंतरभूत पूर्णांक atomic_##op##_वापस(पूर्णांक i, atomic_t *v)	\
-अणु								\
+#define ATOMIC_OP_RETURN(op, c_op)				\
+static inline int atomic_##op##_return(int i, atomic_t *v)	\
+{								\
 	h8300flags flags;					\
-	पूर्णांक ret;						\
+	int ret;						\
 								\
 	flags = arch_local_irq_save();				\
 	ret = v->counter c_op i;				\
 	arch_local_irq_restore(flags);				\
-	वापस ret;						\
-पूर्ण
+	return ret;						\
+}
 
-#घोषणा ATOMIC_FETCH_OP(op, c_op)				\
-अटल अंतरभूत पूर्णांक atomic_fetch_##op(पूर्णांक i, atomic_t *v)		\
-अणु								\
+#define ATOMIC_FETCH_OP(op, c_op)				\
+static inline int atomic_fetch_##op(int i, atomic_t *v)		\
+{								\
 	h8300flags flags;					\
-	पूर्णांक ret;						\
+	int ret;						\
 								\
 	flags = arch_local_irq_save();				\
 	ret = v->counter;					\
 	v->counter c_op i;					\
 	arch_local_irq_restore(flags);				\
-	वापस ret;						\
-पूर्ण
+	return ret;						\
+}
 
-#घोषणा ATOMIC_OP(op, c_op)					\
-अटल अंतरभूत व्योम atomic_##op(पूर्णांक i, atomic_t *v)		\
-अणु								\
+#define ATOMIC_OP(op, c_op)					\
+static inline void atomic_##op(int i, atomic_t *v)		\
+{								\
 	h8300flags flags;					\
 								\
 	flags = arch_local_irq_save();				\
 	v->counter c_op i;					\
 	arch_local_irq_restore(flags);				\
-पूर्ण
+}
 
 ATOMIC_OP_RETURN(add, +=)
 ATOMIC_OP_RETURN(sub, -=)
 
-#घोषणा ATOMIC_OPS(op, c_op)					\
+#define ATOMIC_OPS(op, c_op)					\
 	ATOMIC_OP(op, c_op)					\
 	ATOMIC_FETCH_OP(op, c_op)
 
@@ -64,35 +63,35 @@ ATOMIC_OPS(xor, ^=)
 ATOMIC_OPS(add, +=)
 ATOMIC_OPS(sub, -=)
 
-#अघोषित ATOMIC_OPS
-#अघोषित ATOMIC_OP_RETURN
-#अघोषित ATOMIC_OP
+#undef ATOMIC_OPS
+#undef ATOMIC_OP_RETURN
+#undef ATOMIC_OP
 
-अटल अंतरभूत पूर्णांक atomic_cmpxchg(atomic_t *v, पूर्णांक old, पूर्णांक new)
-अणु
-	पूर्णांक ret;
+static inline int atomic_cmpxchg(atomic_t *v, int old, int new)
+{
+	int ret;
 	h8300flags flags;
 
 	flags = arch_local_irq_save();
 	ret = v->counter;
-	अगर (likely(ret == old))
+	if (likely(ret == old))
 		v->counter = new;
 	arch_local_irq_restore(flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत पूर्णांक atomic_fetch_add_unless(atomic_t *v, पूर्णांक a, पूर्णांक u)
-अणु
-	पूर्णांक ret;
+static inline int atomic_fetch_add_unless(atomic_t *v, int a, int u)
+{
+	int ret;
 	h8300flags flags;
 
 	flags = arch_local_irq_save();
 	ret = v->counter;
-	अगर (ret != u)
+	if (ret != u)
 		v->counter += a;
 	arch_local_irq_restore(flags);
-	वापस ret;
-पूर्ण
-#घोषणा atomic_fetch_add_unless		atomic_fetch_add_unless
+	return ret;
+}
+#define atomic_fetch_add_unless		atomic_fetch_add_unless
 
-#पूर्ण_अगर /* __ARCH_H8300_ATOMIC __ */
+#endif /* __ARCH_H8300_ATOMIC __ */

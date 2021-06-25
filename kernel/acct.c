@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  linux/kernel/acct.c
  *
- *  BSD Process Accounting क्रम Linux
+ *  BSD Process Accounting for Linux
  *
  *  Author: Marco van Wieringen <mvw@planets.elm.net>
  *
@@ -11,594 +10,594 @@
  *  Thomas K. Dyas <tdyas@eden.rutgers.edu>
  *
  *  This file implements BSD-style process accounting. Whenever any
- *  process निकासs, an accounting record of type "struct acct" is
- *  written to the file specअगरied with the acct() प्रणाली call. It is
- *  up to user-level programs to करो useful things with the accounting
- *  log. The kernel just provides the raw accounting inक्रमmation.
+ *  process exits, an accounting record of type "struct acct" is
+ *  written to the file specified with the acct() system call. It is
+ *  up to user-level programs to do useful things with the accounting
+ *  log. The kernel just provides the raw accounting information.
  *
  * (C) Copyright 1995 - 1997 Marco van Wieringen - ELM Consultancy B.V.
  *
- *  Plugged two leaks. 1) It didn't वापस acct_file पूर्णांकo the मुक्त_filps अगर
- *  the file happened to be पढ़ो-only. 2) If the accounting was suspended
- *  due to the lack of space it happily allowed to reखोलो it and completely
+ *  Plugged two leaks. 1) It didn't return acct_file into the free_filps if
+ *  the file happened to be read-only. 2) If the accounting was suspended
+ *  due to the lack of space it happily allowed to reopen it and completely
  *  lost the old acct_file. 3/10/98, Al Viro.
  *
- *  Now we silently बंद acct_file on attempt to reखोलो. Cleaned sys_acct().
- *  XTerms and EMACS are manअगरestations of pure evil. 21/10/98, AV.
+ *  Now we silently close acct_file on attempt to reopen. Cleaned sys_acct().
+ *  XTerms and EMACS are manifestations of pure evil. 21/10/98, AV.
  *
- *  Fixed a nasty पूर्णांकeraction with sys_umount(). If the accounting
+ *  Fixed a nasty interaction with sys_umount(). If the accounting
  *  was suspeneded we failed to stop it on umount(). Messy.
- *  Another one: remount to पढ़ोonly didn't stop accounting.
- *	Question: what should we करो अगर we have CAP_SYS_ADMIN but not
- *  CAP_SYS_PACCT? Current code करोes the following: umount वापसs -EBUSY
- *  unless we are messing with the root. In that हाल we are getting a
- *  real mess with करो_remount_sb(). 9/11/98, AV.
+ *  Another one: remount to readonly didn't stop accounting.
+ *	Question: what should we do if we have CAP_SYS_ADMIN but not
+ *  CAP_SYS_PACCT? Current code does the following: umount returns -EBUSY
+ *  unless we are messing with the root. In that case we are getting a
+ *  real mess with do_remount_sb(). 9/11/98, AV.
  *
  *  Fixed a bunch of races (and pair of leaks). Probably not the best way,
- *  but this one obviously करोesn't पूर्णांकroduce deadlocks. Later. BTW, found
+ *  but this one obviously doesn't introduce deadlocks. Later. BTW, found
  *  one race (and leak) in BSD implementation.
  *  OK, that's better. ANOTHER race and leak in BSD variant. There always
  *  is one more bug... 10/11/98, AV.
  *
- *	Oh, fsck... Oopsable SMP race in करो_process_acct() - we must hold
+ *	Oh, fsck... Oopsable SMP race in do_process_acct() - we must hold
  * ->mmap_lock to walk the vma list of current->mm. Nasty, since it leaks
- * a काष्ठा file खोलोed क्रम ग_लिखो. Fixed. 2/6/2000, AV.
+ * a struct file opened for write. Fixed. 2/6/2000, AV.
  */
 
-#समावेश <linux/mm.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/acct.h>
-#समावेश <linux/capability.h>
-#समावेश <linux/file.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/security.h>
-#समावेश <linux/vfs.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/बार.h>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/mount.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/sched/cpuसमय.स>
+#include <linux/mm.h>
+#include <linux/slab.h>
+#include <linux/acct.h>
+#include <linux/capability.h>
+#include <linux/file.h>
+#include <linux/tty.h>
+#include <linux/security.h>
+#include <linux/vfs.h>
+#include <linux/jiffies.h>
+#include <linux/times.h>
+#include <linux/syscalls.h>
+#include <linux/mount.h>
+#include <linux/uaccess.h>
+#include <linux/sched/cputime.h>
 
-#समावेश <यंत्र/भाग64.h>
-#समावेश <linux/blkdev.h> /* sector_भाग */
-#समावेश <linux/pid_namespace.h>
-#समावेश <linux/fs_pin.h>
+#include <asm/div64.h>
+#include <linux/blkdev.h> /* sector_div */
+#include <linux/pid_namespace.h>
+#include <linux/fs_pin.h>
 
 /*
- * These स्थिरants control the amount of मुक्तspace that suspend and
- * resume the process accounting प्रणाली, and the समय delay between
+ * These constants control the amount of freespace that suspend and
+ * resume the process accounting system, and the time delay between
  * each check.
- * Turned पूर्णांकo sysctl-controllable parameters. AV, 12/11/98
+ * Turned into sysctl-controllable parameters. AV, 12/11/98
  */
 
-पूर्णांक acct_parm[3] = अणु4, 2, 30पूर्ण;
-#घोषणा RESUME		(acct_parm[0])	/* >foo% मुक्त space - resume */
-#घोषणा SUSPEND		(acct_parm[1])	/* <foo% मुक्त space - suspend */
-#घोषणा ACCT_TIMEOUT	(acct_parm[2])	/* foo second समयout between checks */
+int acct_parm[3] = {4, 2, 30};
+#define RESUME		(acct_parm[0])	/* >foo% free space - resume */
+#define SUSPEND		(acct_parm[1])	/* <foo% free space - suspend */
+#define ACCT_TIMEOUT	(acct_parm[2])	/* foo second timeout between checks */
 
 /*
  * External references and all of the globals.
  */
 
-काष्ठा bsd_acct_काष्ठा अणु
-	काष्ठा fs_pin		pin;
-	atomic_दीर्घ_t		count;
-	काष्ठा rcu_head		rcu;
-	काष्ठा mutex		lock;
-	पूर्णांक			active;
-	अचिन्हित दीर्घ		needcheck;
-	काष्ठा file		*file;
-	काष्ठा pid_namespace	*ns;
-	काष्ठा work_काष्ठा	work;
-	काष्ठा completion	करोne;
-पूर्ण;
+struct bsd_acct_struct {
+	struct fs_pin		pin;
+	atomic_long_t		count;
+	struct rcu_head		rcu;
+	struct mutex		lock;
+	int			active;
+	unsigned long		needcheck;
+	struct file		*file;
+	struct pid_namespace	*ns;
+	struct work_struct	work;
+	struct completion	done;
+};
 
-अटल व्योम करो_acct_process(काष्ठा bsd_acct_काष्ठा *acct);
+static void do_acct_process(struct bsd_acct_struct *acct);
 
 /*
- * Check the amount of मुक्त space and suspend/resume accordingly.
+ * Check the amount of free space and suspend/resume accordingly.
  */
-अटल पूर्णांक check_मुक्त_space(काष्ठा bsd_acct_काष्ठा *acct)
-अणु
-	काष्ठा kstatfs sbuf;
+static int check_free_space(struct bsd_acct_struct *acct)
+{
+	struct kstatfs sbuf;
 
-	अगर (समय_is_after_jअगरfies(acct->needcheck))
-		जाओ out;
+	if (time_is_after_jiffies(acct->needcheck))
+		goto out;
 
 	/* May block */
-	अगर (vfs_statfs(&acct->file->f_path, &sbuf))
-		जाओ out;
+	if (vfs_statfs(&acct->file->f_path, &sbuf))
+		goto out;
 
-	अगर (acct->active) अणु
+	if (acct->active) {
 		u64 suspend = sbuf.f_blocks * SUSPEND;
-		करो_भाग(suspend, 100);
-		अगर (sbuf.f_bavail <= suspend) अणु
+		do_div(suspend, 100);
+		if (sbuf.f_bavail <= suspend) {
 			acct->active = 0;
 			pr_info("Process accounting paused\n");
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		u64 resume = sbuf.f_blocks * RESUME;
-		करो_भाग(resume, 100);
-		अगर (sbuf.f_bavail >= resume) अणु
+		do_div(resume, 100);
+		if (sbuf.f_bavail >= resume) {
 			acct->active = 1;
 			pr_info("Process accounting resumed\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	acct->needcheck = jअगरfies + ACCT_TIMEOUT*HZ;
+	acct->needcheck = jiffies + ACCT_TIMEOUT*HZ;
 out:
-	वापस acct->active;
-पूर्ण
+	return acct->active;
+}
 
-अटल व्योम acct_put(काष्ठा bsd_acct_काष्ठा *p)
-अणु
-	अगर (atomic_दीर्घ_dec_and_test(&p->count))
-		kमुक्त_rcu(p, rcu);
-पूर्ण
+static void acct_put(struct bsd_acct_struct *p)
+{
+	if (atomic_long_dec_and_test(&p->count))
+		kfree_rcu(p, rcu);
+}
 
-अटल अंतरभूत काष्ठा bsd_acct_काष्ठा *to_acct(काष्ठा fs_pin *p)
-अणु
-	वापस p ? container_of(p, काष्ठा bsd_acct_काष्ठा, pin) : शून्य;
-पूर्ण
+static inline struct bsd_acct_struct *to_acct(struct fs_pin *p)
+{
+	return p ? container_of(p, struct bsd_acct_struct, pin) : NULL;
+}
 
-अटल काष्ठा bsd_acct_काष्ठा *acct_get(काष्ठा pid_namespace *ns)
-अणु
-	काष्ठा bsd_acct_काष्ठा *res;
+static struct bsd_acct_struct *acct_get(struct pid_namespace *ns)
+{
+	struct bsd_acct_struct *res;
 again:
 	smp_rmb();
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	res = to_acct(READ_ONCE(ns->bacct));
-	अगर (!res) अणु
-		rcu_पढ़ो_unlock();
-		वापस शून्य;
-	पूर्ण
-	अगर (!atomic_दीर्घ_inc_not_zero(&res->count)) अणु
-		rcu_पढ़ो_unlock();
+	if (!res) {
+		rcu_read_unlock();
+		return NULL;
+	}
+	if (!atomic_long_inc_not_zero(&res->count)) {
+		rcu_read_unlock();
 		cpu_relax();
-		जाओ again;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+		goto again;
+	}
+	rcu_read_unlock();
 	mutex_lock(&res->lock);
-	अगर (res != to_acct(READ_ONCE(ns->bacct))) अणु
+	if (res != to_acct(READ_ONCE(ns->bacct))) {
 		mutex_unlock(&res->lock);
 		acct_put(res);
-		जाओ again;
-	पूर्ण
-	वापस res;
-पूर्ण
+		goto again;
+	}
+	return res;
+}
 
-अटल व्योम acct_pin_समाप्त(काष्ठा fs_pin *pin)
-अणु
-	काष्ठा bsd_acct_काष्ठा *acct = to_acct(pin);
+static void acct_pin_kill(struct fs_pin *pin)
+{
+	struct bsd_acct_struct *acct = to_acct(pin);
 	mutex_lock(&acct->lock);
-	करो_acct_process(acct);
+	do_acct_process(acct);
 	schedule_work(&acct->work);
-	रुको_क्रम_completion(&acct->करोne);
-	cmpxchg(&acct->ns->bacct, pin, शून्य);
+	wait_for_completion(&acct->done);
+	cmpxchg(&acct->ns->bacct, pin, NULL);
 	mutex_unlock(&acct->lock);
-	pin_हटाओ(pin);
+	pin_remove(pin);
 	acct_put(acct);
-पूर्ण
+}
 
-अटल व्योम बंद_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा bsd_acct_काष्ठा *acct = container_of(work, काष्ठा bsd_acct_काष्ठा, work);
-	काष्ठा file *file = acct->file;
-	अगर (file->f_op->flush)
-		file->f_op->flush(file, शून्य);
+static void close_work(struct work_struct *work)
+{
+	struct bsd_acct_struct *acct = container_of(work, struct bsd_acct_struct, work);
+	struct file *file = acct->file;
+	if (file->f_op->flush)
+		file->f_op->flush(file, NULL);
 	__fput_sync(file);
-	complete(&acct->करोne);
-पूर्ण
+	complete(&acct->done);
+}
 
-अटल पूर्णांक acct_on(काष्ठा filename *pathname)
-अणु
-	काष्ठा file *file;
-	काष्ठा vfsmount *mnt, *पूर्णांकernal;
-	काष्ठा pid_namespace *ns = task_active_pid_ns(current);
-	काष्ठा bsd_acct_काष्ठा *acct;
-	काष्ठा fs_pin *old;
-	पूर्णांक err;
+static int acct_on(struct filename *pathname)
+{
+	struct file *file;
+	struct vfsmount *mnt, *internal;
+	struct pid_namespace *ns = task_active_pid_ns(current);
+	struct bsd_acct_struct *acct;
+	struct fs_pin *old;
+	int err;
 
-	acct = kzalloc(माप(काष्ठा bsd_acct_काष्ठा), GFP_KERNEL);
-	अगर (!acct)
-		वापस -ENOMEM;
+	acct = kzalloc(sizeof(struct bsd_acct_struct), GFP_KERNEL);
+	if (!acct)
+		return -ENOMEM;
 
-	/* Dअगरference from BSD - they करोn't करो O_APPEND */
-	file = file_खोलो_name(pathname, O_WRONLY|O_APPEND|O_LARGEखाता, 0);
-	अगर (IS_ERR(file)) अणु
-		kमुक्त(acct);
-		वापस PTR_ERR(file);
-	पूर्ण
+	/* Difference from BSD - they don't do O_APPEND */
+	file = file_open_name(pathname, O_WRONLY|O_APPEND|O_LARGEFILE, 0);
+	if (IS_ERR(file)) {
+		kfree(acct);
+		return PTR_ERR(file);
+	}
 
-	अगर (!S_ISREG(file_inode(file)->i_mode)) अणु
-		kमुक्त(acct);
-		filp_बंद(file, शून्य);
-		वापस -EACCES;
-	पूर्ण
+	if (!S_ISREG(file_inode(file)->i_mode)) {
+		kfree(acct);
+		filp_close(file, NULL);
+		return -EACCES;
+	}
 
-	अगर (!(file->f_mode & FMODE_CAN_WRITE)) अणु
-		kमुक्त(acct);
-		filp_बंद(file, शून्य);
-		वापस -EIO;
-	पूर्ण
-	पूर्णांकernal = mnt_clone_पूर्णांकernal(&file->f_path);
-	अगर (IS_ERR(पूर्णांकernal)) अणु
-		kमुक्त(acct);
-		filp_बंद(file, शून्य);
-		वापस PTR_ERR(पूर्णांकernal);
-	पूर्ण
-	err = __mnt_want_ग_लिखो(पूर्णांकernal);
-	अगर (err) अणु
-		mntput(पूर्णांकernal);
-		kमुक्त(acct);
-		filp_बंद(file, शून्य);
-		वापस err;
-	पूर्ण
+	if (!(file->f_mode & FMODE_CAN_WRITE)) {
+		kfree(acct);
+		filp_close(file, NULL);
+		return -EIO;
+	}
+	internal = mnt_clone_internal(&file->f_path);
+	if (IS_ERR(internal)) {
+		kfree(acct);
+		filp_close(file, NULL);
+		return PTR_ERR(internal);
+	}
+	err = __mnt_want_write(internal);
+	if (err) {
+		mntput(internal);
+		kfree(acct);
+		filp_close(file, NULL);
+		return err;
+	}
 	mnt = file->f_path.mnt;
-	file->f_path.mnt = पूर्णांकernal;
+	file->f_path.mnt = internal;
 
-	atomic_दीर्घ_set(&acct->count, 1);
-	init_fs_pin(&acct->pin, acct_pin_समाप्त);
+	atomic_long_set(&acct->count, 1);
+	init_fs_pin(&acct->pin, acct_pin_kill);
 	acct->file = file;
-	acct->needcheck = jअगरfies;
+	acct->needcheck = jiffies;
 	acct->ns = ns;
 	mutex_init(&acct->lock);
-	INIT_WORK(&acct->work, बंद_work);
-	init_completion(&acct->करोne);
+	INIT_WORK(&acct->work, close_work);
+	init_completion(&acct->done);
 	mutex_lock_nested(&acct->lock, 1);	/* nobody has seen it yet */
 	pin_insert(&acct->pin, mnt);
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	old = xchg(&ns->bacct, &acct->pin);
 	mutex_unlock(&acct->lock);
-	pin_समाप्त(old);
-	__mnt_drop_ग_लिखो(mnt);
+	pin_kill(old);
+	__mnt_drop_write(mnt);
 	mntput(mnt);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल DEFINE_MUTEX(acct_on_mutex);
+static DEFINE_MUTEX(acct_on_mutex);
 
 /**
  * sys_acct - enable/disable process accounting
- * @name: file name क्रम accounting records or शून्य to shutकरोwn accounting
+ * @name: file name for accounting records or NULL to shutdown accounting
  *
- * sys_acct() is the only प्रणाली call needed to implement process
+ * sys_acct() is the only system call needed to implement process
  * accounting. It takes the name of the file where accounting records
- * should be written. If the filename is शून्य, accounting will be
- * shutकरोwn.
+ * should be written. If the filename is NULL, accounting will be
+ * shutdown.
  *
- * Returns: 0 क्रम success or negative त्रुटि_सं values क्रम failure.
+ * Returns: 0 for success or negative errno values for failure.
  */
-SYSCALL_DEFINE1(acct, स्थिर अक्षर __user *, name)
-अणु
-	पूर्णांक error = 0;
+SYSCALL_DEFINE1(acct, const char __user *, name)
+{
+	int error = 0;
 
-	अगर (!capable(CAP_SYS_PACCT))
-		वापस -EPERM;
+	if (!capable(CAP_SYS_PACCT))
+		return -EPERM;
 
-	अगर (name) अणु
-		काष्ठा filename *पंचांगp = getname(name);
+	if (name) {
+		struct filename *tmp = getname(name);
 
-		अगर (IS_ERR(पंचांगp))
-			वापस PTR_ERR(पंचांगp);
+		if (IS_ERR(tmp))
+			return PTR_ERR(tmp);
 		mutex_lock(&acct_on_mutex);
-		error = acct_on(पंचांगp);
+		error = acct_on(tmp);
 		mutex_unlock(&acct_on_mutex);
-		putname(पंचांगp);
-	पूर्ण अन्यथा अणु
-		rcu_पढ़ो_lock();
-		pin_समाप्त(task_active_pid_ns(current)->bacct);
-	पूर्ण
+		putname(tmp);
+	} else {
+		rcu_read_lock();
+		pin_kill(task_active_pid_ns(current)->bacct);
+	}
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-व्योम acct_निकास_ns(काष्ठा pid_namespace *ns)
-अणु
-	rcu_पढ़ो_lock();
-	pin_समाप्त(ns->bacct);
-पूर्ण
+void acct_exit_ns(struct pid_namespace *ns)
+{
+	rcu_read_lock();
+	pin_kill(ns->bacct);
+}
 
 /*
- *  encode an अचिन्हित दीर्घ पूर्णांकo a comp_t
+ *  encode an unsigned long into a comp_t
  *
- *  This routine has been aकरोpted from the encode_comp_t() function in
- *  the kern_acct.c file of the FreeBSD operating प्रणाली. The encoding
+ *  This routine has been adopted from the encode_comp_t() function in
+ *  the kern_acct.c file of the FreeBSD operating system. The encoding
  *  is a 13-bit fraction with a 3-bit (base 8) exponent.
  */
 
-#घोषणा	MANTSIZE	13			/* 13 bit mantissa. */
-#घोषणा	EXPSIZE		3			/* Base 8 (3 bit) exponent. */
-#घोषणा	MAXFRACT	((1 << MANTSIZE) - 1)	/* Maximum fractional value. */
+#define	MANTSIZE	13			/* 13 bit mantissa. */
+#define	EXPSIZE		3			/* Base 8 (3 bit) exponent. */
+#define	MAXFRACT	((1 << MANTSIZE) - 1)	/* Maximum fractional value. */
 
-अटल comp_t encode_comp_t(अचिन्हित दीर्घ value)
-अणु
-	पूर्णांक exp, rnd;
+static comp_t encode_comp_t(unsigned long value)
+{
+	int exp, rnd;
 
 	exp = rnd = 0;
-	जबतक (value > MAXFRACT) अणु
+	while (value > MAXFRACT) {
 		rnd = value & (1 << (EXPSIZE - 1));	/* Round up? */
-		value >>= EXPSIZE;	/* Base 8 exponent == 3 bit shअगरt. */
+		value >>= EXPSIZE;	/* Base 8 exponent == 3 bit shift. */
 		exp++;
-	पूर्ण
+	}
 
 	/*
-	 * If we need to round up, करो it (and handle overflow correctly).
+	 * If we need to round up, do it (and handle overflow correctly).
 	 */
-	अगर (rnd && (++value > MAXFRACT)) अणु
+	if (rnd && (++value > MAXFRACT)) {
 		value >>= EXPSIZE;
 		exp++;
-	पूर्ण
+	}
 
 	/*
 	 * Clean it up and polish it off.
 	 */
-	exp <<= MANTSIZE;		/* Shअगरt the exponent पूर्णांकo place */
+	exp <<= MANTSIZE;		/* Shift the exponent into place */
 	exp += value;			/* and add on the mantissa. */
-	वापस exp;
-पूर्ण
+	return exp;
+}
 
-#अगर ACCT_VERSION == 1 || ACCT_VERSION == 2
+#if ACCT_VERSION == 1 || ACCT_VERSION == 2
 /*
- * encode an u64 पूर्णांकo a comp2_t (24 bits)
+ * encode an u64 into a comp2_t (24 bits)
  *
  * Format: 5 bit base 2 exponent, 20 bits mantissa.
- * The leading bit of the mantissa is not stored, but implied क्रम
+ * The leading bit of the mantissa is not stored, but implied for
  * non-zero exponents.
  * Largest encodable value is 50 bits.
  */
 
-#घोषणा MANTSIZE2       20                      /* 20 bit mantissa. */
-#घोषणा EXPSIZE2        5                       /* 5 bit base 2 exponent. */
-#घोषणा MAXFRACT2       ((1ul << MANTSIZE2) - 1) /* Maximum fractional value. */
-#घोषणा MAXEXP2         ((1 << EXPSIZE2) - 1)    /* Maximum exponent. */
+#define MANTSIZE2       20                      /* 20 bit mantissa. */
+#define EXPSIZE2        5                       /* 5 bit base 2 exponent. */
+#define MAXFRACT2       ((1ul << MANTSIZE2) - 1) /* Maximum fractional value. */
+#define MAXEXP2         ((1 << EXPSIZE2) - 1)    /* Maximum exponent. */
 
-अटल comp2_t encode_comp2_t(u64 value)
-अणु
-	पूर्णांक exp, rnd;
+static comp2_t encode_comp2_t(u64 value)
+{
+	int exp, rnd;
 
 	exp = (value > (MAXFRACT2>>1));
 	rnd = 0;
-	जबतक (value > MAXFRACT2) अणु
+	while (value > MAXFRACT2) {
 		rnd = value & 1;
 		value >>= 1;
 		exp++;
-	पूर्ण
+	}
 
 	/*
-	 * If we need to round up, करो it (and handle overflow correctly).
+	 * If we need to round up, do it (and handle overflow correctly).
 	 */
-	अगर (rnd && (++value > MAXFRACT2)) अणु
+	if (rnd && (++value > MAXFRACT2)) {
 		value >>= 1;
 		exp++;
-	पूर्ण
+	}
 
-	अगर (exp > MAXEXP2) अणु
+	if (exp > MAXEXP2) {
 		/* Overflow. Return largest representable number instead. */
-		वापस (1ul << (MANTSIZE2+EXPSIZE2-1)) - 1;
-	पूर्ण अन्यथा अणु
-		वापस (value & (MAXFRACT2>>1)) | (exp << (MANTSIZE2-1));
-	पूर्ण
-पूर्ण
-#या_अगर ACCT_VERSION == 3
+		return (1ul << (MANTSIZE2+EXPSIZE2-1)) - 1;
+	} else {
+		return (value & (MAXFRACT2>>1)) | (exp << (MANTSIZE2-1));
+	}
+}
+#elif ACCT_VERSION == 3
 /*
- * encode an u64 पूर्णांकo a 32 bit IEEE भग्न
+ * encode an u64 into a 32 bit IEEE float
  */
-अटल u32 encode_भग्न(u64 value)
-अणु
-	अचिन्हित exp = 190;
-	अचिन्हित u;
+static u32 encode_float(u64 value)
+{
+	unsigned exp = 190;
+	unsigned u;
 
-	अगर (value == 0)
-		वापस 0;
-	जबतक ((s64)value > 0) अणु
+	if (value == 0)
+		return 0;
+	while ((s64)value > 0) {
 		value <<= 1;
 		exp--;
-	पूर्ण
+	}
 	u = (u32)(value >> 40) & 0x7fffffu;
-	वापस u | (exp << 23);
-पूर्ण
-#पूर्ण_अगर
+	return u | (exp << 23);
+}
+#endif
 
 /*
- *  Write an accounting entry क्रम an निकासing process
+ *  Write an accounting entry for an exiting process
  *
  *  The acct_process() call is the workhorse of the process
- *  accounting प्रणाली. The काष्ठा acct is built here and then written
- *  पूर्णांकo the accounting file. This function should only be called from
- *  करो_निकास() or when चयनing to a dअगरferent output file.
+ *  accounting system. The struct acct is built here and then written
+ *  into the accounting file. This function should only be called from
+ *  do_exit() or when switching to a different output file.
  */
 
-अटल व्योम fill_ac(acct_t *ac)
-अणु
-	काष्ठा pacct_काष्ठा *pacct = &current->संकेत->pacct;
-	u64 elapsed, run_समय;
-	समय64_t bसमय;
-	काष्ठा tty_काष्ठा *tty;
+static void fill_ac(acct_t *ac)
+{
+	struct pacct_struct *pacct = &current->signal->pacct;
+	u64 elapsed, run_time;
+	time64_t btime;
+	struct tty_struct *tty;
 
 	/*
-	 * Fill the accounting काष्ठा with the needed info as recorded
-	 * by the dअगरferent kernel functions.
+	 * Fill the accounting struct with the needed info as recorded
+	 * by the different kernel functions.
 	 */
-	स_रखो(ac, 0, माप(acct_t));
+	memset(ac, 0, sizeof(acct_t));
 
 	ac->ac_version = ACCT_VERSION | ACCT_BYTEORDER;
-	strlcpy(ac->ac_comm, current->comm, माप(ac->ac_comm));
+	strlcpy(ac->ac_comm, current->comm, sizeof(ac->ac_comm));
 
-	/* calculate run_समय in nsec*/
-	run_समय = kसमय_get_ns();
-	run_समय -= current->group_leader->start_समय;
+	/* calculate run_time in nsec*/
+	run_time = ktime_get_ns();
+	run_time -= current->group_leader->start_time;
 	/* convert nsec -> AHZ */
-	elapsed = nsec_to_AHZ(run_समय);
-#अगर ACCT_VERSION == 3
-	ac->ac_eसमय = encode_भग्न(elapsed);
-#अन्यथा
-	ac->ac_eसमय = encode_comp_t(elapsed < (अचिन्हित दीर्घ) -1l ?
-				(अचिन्हित दीर्घ) elapsed : (अचिन्हित दीर्घ) -1l);
-#पूर्ण_अगर
-#अगर ACCT_VERSION == 1 || ACCT_VERSION == 2
-	अणु
-		/* new enlarged eसमय field */
-		comp2_t eसमय = encode_comp2_t(elapsed);
+	elapsed = nsec_to_AHZ(run_time);
+#if ACCT_VERSION == 3
+	ac->ac_etime = encode_float(elapsed);
+#else
+	ac->ac_etime = encode_comp_t(elapsed < (unsigned long) -1l ?
+				(unsigned long) elapsed : (unsigned long) -1l);
+#endif
+#if ACCT_VERSION == 1 || ACCT_VERSION == 2
+	{
+		/* new enlarged etime field */
+		comp2_t etime = encode_comp2_t(elapsed);
 
-		ac->ac_eसमय_hi = eसमय >> 16;
-		ac->ac_eसमय_lo = (u16) eसमय;
-	पूर्ण
-#पूर्ण_अगर
-	करो_भाग(elapsed, AHZ);
-	bसमय = kसमय_get_real_seconds() - elapsed;
-	ac->ac_bसमय = clamp_t(समय64_t, bसमय, 0, U32_MAX);
-#अगर ACCT_VERSION==2
+		ac->ac_etime_hi = etime >> 16;
+		ac->ac_etime_lo = (u16) etime;
+	}
+#endif
+	do_div(elapsed, AHZ);
+	btime = ktime_get_real_seconds() - elapsed;
+	ac->ac_btime = clamp_t(time64_t, btime, 0, U32_MAX);
+#if ACCT_VERSION==2
 	ac->ac_ahz = AHZ;
-#पूर्ण_अगर
+#endif
 
 	spin_lock_irq(&current->sighand->siglock);
-	tty = current->संकेत->tty;	/* Safe as we hold the siglock */
+	tty = current->signal->tty;	/* Safe as we hold the siglock */
 	ac->ac_tty = tty ? old_encode_dev(tty_devnum(tty)) : 0;
-	ac->ac_uसमय = encode_comp_t(nsec_to_AHZ(pacct->ac_uसमय));
-	ac->ac_sसमय = encode_comp_t(nsec_to_AHZ(pacct->ac_sसमय));
+	ac->ac_utime = encode_comp_t(nsec_to_AHZ(pacct->ac_utime));
+	ac->ac_stime = encode_comp_t(nsec_to_AHZ(pacct->ac_stime));
 	ac->ac_flag = pacct->ac_flag;
 	ac->ac_mem = encode_comp_t(pacct->ac_mem);
 	ac->ac_minflt = encode_comp_t(pacct->ac_minflt);
 	ac->ac_majflt = encode_comp_t(pacct->ac_majflt);
-	ac->ac_निकासcode = pacct->ac_निकासcode;
+	ac->ac_exitcode = pacct->ac_exitcode;
 	spin_unlock_irq(&current->sighand->siglock);
-पूर्ण
+}
 /*
- *  करो_acct_process करोes all actual work. Caller holds the reference to file.
+ *  do_acct_process does all actual work. Caller holds the reference to file.
  */
-अटल व्योम करो_acct_process(काष्ठा bsd_acct_काष्ठा *acct)
-अणु
+static void do_acct_process(struct bsd_acct_struct *acct)
+{
 	acct_t ac;
-	अचिन्हित दीर्घ flim;
-	स्थिर काष्ठा cred *orig_cred;
-	काष्ठा file *file = acct->file;
+	unsigned long flim;
+	const struct cred *orig_cred;
+	struct file *file = acct->file;
 
 	/*
 	 * Accounting records are not subject to resource limits.
 	 */
-	flim = current->संकेत->rlim[RLIMIT_FSIZE].rlim_cur;
-	current->संकेत->rlim[RLIMIT_FSIZE].rlim_cur = RLIM_अनन्त;
-	/* Perक्रमm file operations on behalf of whoever enabled accounting */
+	flim = current->signal->rlim[RLIMIT_FSIZE].rlim_cur;
+	current->signal->rlim[RLIMIT_FSIZE].rlim_cur = RLIM_INFINITY;
+	/* Perform file operations on behalf of whoever enabled accounting */
 	orig_cred = override_creds(file->f_cred);
 
 	/*
-	 * First check to see अगर there is enough मुक्त_space to जारी
-	 * the process accounting प्रणाली.
+	 * First check to see if there is enough free_space to continue
+	 * the process accounting system.
 	 */
-	अगर (!check_मुक्त_space(acct))
-		जाओ out;
+	if (!check_free_space(acct))
+		goto out;
 
 	fill_ac(&ac);
 	/* we really need to bite the bullet and change layout */
 	ac.ac_uid = from_kuid_munged(file->f_cred->user_ns, orig_cred->uid);
 	ac.ac_gid = from_kgid_munged(file->f_cred->user_ns, orig_cred->gid);
-#अगर ACCT_VERSION == 1 || ACCT_VERSION == 2
+#if ACCT_VERSION == 1 || ACCT_VERSION == 2
 	/* backward-compatible 16 bit fields */
 	ac.ac_uid16 = ac.ac_uid;
 	ac.ac_gid16 = ac.ac_gid;
-#या_अगर ACCT_VERSION == 3
-	अणु
-		काष्ठा pid_namespace *ns = acct->ns;
+#elif ACCT_VERSION == 3
+	{
+		struct pid_namespace *ns = acct->ns;
 
 		ac.ac_pid = task_tgid_nr_ns(current, ns);
-		rcu_पढ़ो_lock();
+		rcu_read_lock();
 		ac.ac_ppid = task_tgid_nr_ns(rcu_dereference(current->real_parent),
 					     ns);
-		rcu_पढ़ो_unlock();
-	पूर्ण
-#पूर्ण_अगर
+		rcu_read_unlock();
+	}
+#endif
 	/*
-	 * Get मुक्तze protection. If the fs is frozen, just skip the ग_लिखो
-	 * as we could deadlock the प्रणाली otherwise.
+	 * Get freeze protection. If the fs is frozen, just skip the write
+	 * as we could deadlock the system otherwise.
 	 */
-	अगर (file_start_ग_लिखो_trylock(file)) अणु
-		/* it's been खोलोed O_APPEND, so position is irrelevant */
+	if (file_start_write_trylock(file)) {
+		/* it's been opened O_APPEND, so position is irrelevant */
 		loff_t pos = 0;
-		__kernel_ग_लिखो(file, &ac, माप(acct_t), &pos);
-		file_end_ग_लिखो(file);
-	पूर्ण
+		__kernel_write(file, &ac, sizeof(acct_t), &pos);
+		file_end_write(file);
+	}
 out:
-	current->संकेत->rlim[RLIMIT_FSIZE].rlim_cur = flim;
+	current->signal->rlim[RLIMIT_FSIZE].rlim_cur = flim;
 	revert_creds(orig_cred);
-पूर्ण
+}
 
 /**
- * acct_collect - collect accounting inक्रमmation पूर्णांकo pacct_काष्ठा
- * @निकासcode: task निकास code
- * @group_dead: not 0, अगर this thपढ़ो is the last one in the process.
+ * acct_collect - collect accounting information into pacct_struct
+ * @exitcode: task exit code
+ * @group_dead: not 0, if this thread is the last one in the process.
  */
-व्योम acct_collect(दीर्घ निकासcode, पूर्णांक group_dead)
-अणु
-	काष्ठा pacct_काष्ठा *pacct = &current->संकेत->pacct;
-	u64 uसमय, sसमय;
-	अचिन्हित दीर्घ vsize = 0;
+void acct_collect(long exitcode, int group_dead)
+{
+	struct pacct_struct *pacct = &current->signal->pacct;
+	u64 utime, stime;
+	unsigned long vsize = 0;
 
-	अगर (group_dead && current->mm) अणु
-		काष्ठा vm_area_काष्ठा *vma;
+	if (group_dead && current->mm) {
+		struct vm_area_struct *vma;
 
-		mmap_पढ़ो_lock(current->mm);
+		mmap_read_lock(current->mm);
 		vma = current->mm->mmap;
-		जबतक (vma) अणु
+		while (vma) {
 			vsize += vma->vm_end - vma->vm_start;
 			vma = vma->vm_next;
-		पूर्ण
-		mmap_पढ़ो_unlock(current->mm);
-	पूर्ण
+		}
+		mmap_read_unlock(current->mm);
+	}
 
 	spin_lock_irq(&current->sighand->siglock);
-	अगर (group_dead)
+	if (group_dead)
 		pacct->ac_mem = vsize / 1024;
-	अगर (thपढ़ो_group_leader(current)) अणु
-		pacct->ac_निकासcode = निकासcode;
-		अगर (current->flags & PF_FORKNOEXEC)
+	if (thread_group_leader(current)) {
+		pacct->ac_exitcode = exitcode;
+		if (current->flags & PF_FORKNOEXEC)
 			pacct->ac_flag |= AFORK;
-	पूर्ण
-	अगर (current->flags & PF_SUPERPRIV)
+	}
+	if (current->flags & PF_SUPERPRIV)
 		pacct->ac_flag |= ASU;
-	अगर (current->flags & PF_DUMPCORE)
+	if (current->flags & PF_DUMPCORE)
 		pacct->ac_flag |= ACORE;
-	अगर (current->flags & PF_SIGNALED)
+	if (current->flags & PF_SIGNALED)
 		pacct->ac_flag |= AXSIG;
 
-	task_cpuसमय(current, &uसमय, &sसमय);
-	pacct->ac_uसमय += uसमय;
-	pacct->ac_sसमय += sसमय;
+	task_cputime(current, &utime, &stime);
+	pacct->ac_utime += utime;
+	pacct->ac_stime += stime;
 	pacct->ac_minflt += current->min_flt;
 	pacct->ac_majflt += current->maj_flt;
 	spin_unlock_irq(&current->sighand->siglock);
-पूर्ण
+}
 
-अटल व्योम slow_acct_process(काष्ठा pid_namespace *ns)
-अणु
-	क्रम ( ; ns; ns = ns->parent) अणु
-		काष्ठा bsd_acct_काष्ठा *acct = acct_get(ns);
-		अगर (acct) अणु
-			करो_acct_process(acct);
+static void slow_acct_process(struct pid_namespace *ns)
+{
+	for ( ; ns; ns = ns->parent) {
+		struct bsd_acct_struct *acct = acct_get(ns);
+		if (acct) {
+			do_acct_process(acct);
 			mutex_unlock(&acct->lock);
 			acct_put(acct);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /**
- * acct_process - handles process accounting क्रम an निकासing task
+ * acct_process - handles process accounting for an exiting task
  */
-व्योम acct_process(व्योम)
-अणु
-	काष्ठा pid_namespace *ns;
+void acct_process(void)
+{
+	struct pid_namespace *ns;
 
 	/*
 	 * This loop is safe lockless, since current is still
 	 * alive and holds its namespace, which in turn holds
 	 * its parent.
 	 */
-	क्रम (ns = task_active_pid_ns(current); ns != शून्य; ns = ns->parent) अणु
-		अगर (ns->bacct)
-			अवरोध;
-	पूर्ण
-	अगर (unlikely(ns))
+	for (ns = task_active_pid_ns(current); ns != NULL; ns = ns->parent) {
+		if (ns->bacct)
+			break;
+	}
+	if (unlikely(ns))
 		slow_acct_process(ns);
-पूर्ण
+}

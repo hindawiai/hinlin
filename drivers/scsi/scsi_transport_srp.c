@@ -1,452 +1,451 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * SCSI RDMA (SRP) transport class
  *
  * Copyright (C) 2007 FUJITA Tomonori <tomof@acm.org>
  */
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/err.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/माला.स>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/jiffies.h>
+#include <linux/err.h>
+#include <linux/slab.h>
+#include <linux/string.h>
 
-#समावेश <scsi/scsi.h>
-#समावेश <scsi/scsi_cmnd.h>
-#समावेश <scsi/scsi_device.h>
-#समावेश <scsi/scsi_host.h>
-#समावेश <scsi/scsi_transport.h>
-#समावेश <scsi/scsi_transport_srp.h>
-#समावेश "scsi_priv.h"
+#include <scsi/scsi.h>
+#include <scsi/scsi_cmnd.h>
+#include <scsi/scsi_device.h>
+#include <scsi/scsi_host.h>
+#include <scsi/scsi_transport.h>
+#include <scsi/scsi_transport_srp.h>
+#include "scsi_priv.h"
 
-काष्ठा srp_host_attrs अणु
+struct srp_host_attrs {
 	atomic_t next_port_id;
-पूर्ण;
-#घोषणा to_srp_host_attrs(host)	((काष्ठा srp_host_attrs *)(host)->shost_data)
+};
+#define to_srp_host_attrs(host)	((struct srp_host_attrs *)(host)->shost_data)
 
-#घोषणा SRP_HOST_ATTRS 0
-#घोषणा SRP_RPORT_ATTRS 8
+#define SRP_HOST_ATTRS 0
+#define SRP_RPORT_ATTRS 8
 
-काष्ठा srp_पूर्णांकernal अणु
-	काष्ठा scsi_transport_ढाँचा t;
-	काष्ठा srp_function_ढाँचा *f;
+struct srp_internal {
+	struct scsi_transport_template t;
+	struct srp_function_template *f;
 
-	काष्ठा device_attribute *host_attrs[SRP_HOST_ATTRS + 1];
+	struct device_attribute *host_attrs[SRP_HOST_ATTRS + 1];
 
-	काष्ठा device_attribute *rport_attrs[SRP_RPORT_ATTRS + 1];
-	काष्ठा transport_container rport_attr_cont;
-पूर्ण;
+	struct device_attribute *rport_attrs[SRP_RPORT_ATTRS + 1];
+	struct transport_container rport_attr_cont;
+};
 
-अटल पूर्णांक scsi_is_srp_rport(स्थिर काष्ठा device *dev);
+static int scsi_is_srp_rport(const struct device *dev);
 
-#घोषणा to_srp_पूर्णांकernal(पंचांगpl) container_of(पंचांगpl, काष्ठा srp_पूर्णांकernal, t)
+#define to_srp_internal(tmpl) container_of(tmpl, struct srp_internal, t)
 
-#घोषणा	dev_to_rport(d)	container_of(d, काष्ठा srp_rport, dev)
-#घोषणा transport_class_to_srp_rport(dev) dev_to_rport((dev)->parent)
-अटल अंतरभूत काष्ठा Scsi_Host *rport_to_shost(काष्ठा srp_rport *r)
-अणु
-	वापस dev_to_shost(r->dev.parent);
-पूर्ण
+#define	dev_to_rport(d)	container_of(d, struct srp_rport, dev)
+#define transport_class_to_srp_rport(dev) dev_to_rport((dev)->parent)
+static inline struct Scsi_Host *rport_to_shost(struct srp_rport *r)
+{
+	return dev_to_shost(r->dev.parent);
+}
 
-अटल पूर्णांक find_child_rport(काष्ठा device *dev, व्योम *data)
-अणु
-	काष्ठा device **child = data;
+static int find_child_rport(struct device *dev, void *data)
+{
+	struct device **child = data;
 
-	अगर (scsi_is_srp_rport(dev)) अणु
+	if (scsi_is_srp_rport(dev)) {
 		WARN_ON_ONCE(*child);
 		*child = dev;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल अंतरभूत काष्ठा srp_rport *shost_to_rport(काष्ठा Scsi_Host *shost)
-अणु
-	काष्ठा device *child = शून्य;
+static inline struct srp_rport *shost_to_rport(struct Scsi_Host *shost)
+{
+	struct device *child = NULL;
 
-	WARN_ON_ONCE(device_क्रम_each_child(&shost->shost_gendev, &child,
+	WARN_ON_ONCE(device_for_each_child(&shost->shost_gendev, &child,
 					   find_child_rport) < 0);
-	वापस child ? dev_to_rport(child) : शून्य;
-पूर्ण
+	return child ? dev_to_rport(child) : NULL;
+}
 
 /**
- * srp_पंचांगo_valid() - check समयout combination validity
+ * srp_tmo_valid() - check timeout combination validity
  * @reconnect_delay: Reconnect delay in seconds.
- * @fast_io_fail_पंचांगo: Fast I/O fail समयout in seconds.
- * @dev_loss_पंचांगo: Device loss समयout in seconds.
+ * @fast_io_fail_tmo: Fast I/O fail timeout in seconds.
+ * @dev_loss_tmo: Device loss timeout in seconds.
  *
- * The combination of the समयout parameters must be such that SCSI commands
- * are finished in a reasonable समय. Hence करो not allow the fast I/O fail
- * समयout to exceed SCSI_DEVICE_BLOCK_MAX_TIMEOUT nor allow dev_loss_पंचांगo to
- * exceed that limit अगर failing I/O fast has been disabled. Furthermore, these
- * parameters must be such that multipath can detect failed paths समयly.
- * Hence करो not allow all three parameters to be disabled simultaneously.
+ * The combination of the timeout parameters must be such that SCSI commands
+ * are finished in a reasonable time. Hence do not allow the fast I/O fail
+ * timeout to exceed SCSI_DEVICE_BLOCK_MAX_TIMEOUT nor allow dev_loss_tmo to
+ * exceed that limit if failing I/O fast has been disabled. Furthermore, these
+ * parameters must be such that multipath can detect failed paths timely.
+ * Hence do not allow all three parameters to be disabled simultaneously.
  */
-पूर्णांक srp_पंचांगo_valid(पूर्णांक reconnect_delay, पूर्णांक fast_io_fail_पंचांगo, दीर्घ dev_loss_पंचांगo)
-अणु
-	अगर (reconnect_delay < 0 && fast_io_fail_पंचांगo < 0 && dev_loss_पंचांगo < 0)
-		वापस -EINVAL;
-	अगर (reconnect_delay == 0)
-		वापस -EINVAL;
-	अगर (fast_io_fail_पंचांगo > SCSI_DEVICE_BLOCK_MAX_TIMEOUT)
-		वापस -EINVAL;
-	अगर (fast_io_fail_पंचांगo < 0 &&
-	    dev_loss_पंचांगo > SCSI_DEVICE_BLOCK_MAX_TIMEOUT)
-		वापस -EINVAL;
-	अगर (dev_loss_पंचांगo >= दीर्घ_उच्च / HZ)
-		वापस -EINVAL;
-	अगर (fast_io_fail_पंचांगo >= 0 && dev_loss_पंचांगo >= 0 &&
-	    fast_io_fail_पंचांगo >= dev_loss_पंचांगo)
-		वापस -EINVAL;
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(srp_पंचांगo_valid);
+int srp_tmo_valid(int reconnect_delay, int fast_io_fail_tmo, long dev_loss_tmo)
+{
+	if (reconnect_delay < 0 && fast_io_fail_tmo < 0 && dev_loss_tmo < 0)
+		return -EINVAL;
+	if (reconnect_delay == 0)
+		return -EINVAL;
+	if (fast_io_fail_tmo > SCSI_DEVICE_BLOCK_MAX_TIMEOUT)
+		return -EINVAL;
+	if (fast_io_fail_tmo < 0 &&
+	    dev_loss_tmo > SCSI_DEVICE_BLOCK_MAX_TIMEOUT)
+		return -EINVAL;
+	if (dev_loss_tmo >= LONG_MAX / HZ)
+		return -EINVAL;
+	if (fast_io_fail_tmo >= 0 && dev_loss_tmo >= 0 &&
+	    fast_io_fail_tmo >= dev_loss_tmo)
+		return -EINVAL;
+	return 0;
+}
+EXPORT_SYMBOL_GPL(srp_tmo_valid);
 
-अटल पूर्णांक srp_host_setup(काष्ठा transport_container *tc, काष्ठा device *dev,
-			  काष्ठा device *cdev)
-अणु
-	काष्ठा Scsi_Host *shost = dev_to_shost(dev);
-	काष्ठा srp_host_attrs *srp_host = to_srp_host_attrs(shost);
+static int srp_host_setup(struct transport_container *tc, struct device *dev,
+			  struct device *cdev)
+{
+	struct Scsi_Host *shost = dev_to_shost(dev);
+	struct srp_host_attrs *srp_host = to_srp_host_attrs(shost);
 
 	atomic_set(&srp_host->next_port_id, 0);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल DECLARE_TRANSPORT_CLASS(srp_host_class, "srp_host", srp_host_setup,
-			       शून्य, शून्य);
+static DECLARE_TRANSPORT_CLASS(srp_host_class, "srp_host", srp_host_setup,
+			       NULL, NULL);
 
-अटल DECLARE_TRANSPORT_CLASS(srp_rport_class, "srp_remote_ports",
-			       शून्य, शून्य, शून्य);
+static DECLARE_TRANSPORT_CLASS(srp_rport_class, "srp_remote_ports",
+			       NULL, NULL, NULL);
 
-अटल sमाप_प्रकार
-show_srp_rport_id(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		  अक्षर *buf)
-अणु
-	काष्ठा srp_rport *rport = transport_class_to_srp_rport(dev);
-	वापस प्र_लिखो(buf, "%16phC\n", rport->port_id);
-पूर्ण
+static ssize_t
+show_srp_rport_id(struct device *dev, struct device_attribute *attr,
+		  char *buf)
+{
+	struct srp_rport *rport = transport_class_to_srp_rport(dev);
+	return sprintf(buf, "%16phC\n", rport->port_id);
+}
 
-अटल DEVICE_ATTR(port_id, S_IRUGO, show_srp_rport_id, शून्य);
+static DEVICE_ATTR(port_id, S_IRUGO, show_srp_rport_id, NULL);
 
-अटल स्थिर काष्ठा अणु
+static const struct {
 	u32 value;
-	अक्षर *name;
-पूर्ण srp_rport_role_names[] = अणु
-	अणुSRP_RPORT_ROLE_INITIATOR, "SRP Initiator"पूर्ण,
-	अणुSRP_RPORT_ROLE_TARGET, "SRP Target"पूर्ण,
-पूर्ण;
+	char *name;
+} srp_rport_role_names[] = {
+	{SRP_RPORT_ROLE_INITIATOR, "SRP Initiator"},
+	{SRP_RPORT_ROLE_TARGET, "SRP Target"},
+};
 
-अटल sमाप_प्रकार
-show_srp_rport_roles(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		     अक्षर *buf)
-अणु
-	काष्ठा srp_rport *rport = transport_class_to_srp_rport(dev);
-	पूर्णांक i;
-	अक्षर *name = शून्य;
+static ssize_t
+show_srp_rport_roles(struct device *dev, struct device_attribute *attr,
+		     char *buf)
+{
+	struct srp_rport *rport = transport_class_to_srp_rport(dev);
+	int i;
+	char *name = NULL;
 
-	क्रम (i = 0; i < ARRAY_SIZE(srp_rport_role_names); i++)
-		अगर (srp_rport_role_names[i].value == rport->roles) अणु
+	for (i = 0; i < ARRAY_SIZE(srp_rport_role_names); i++)
+		if (srp_rport_role_names[i].value == rport->roles) {
 			name = srp_rport_role_names[i].name;
-			अवरोध;
-		पूर्ण
-	वापस प्र_लिखो(buf, "%s\n", name ? : "unknown");
-पूर्ण
+			break;
+		}
+	return sprintf(buf, "%s\n", name ? : "unknown");
+}
 
-अटल DEVICE_ATTR(roles, S_IRUGO, show_srp_rport_roles, शून्य);
+static DEVICE_ATTR(roles, S_IRUGO, show_srp_rport_roles, NULL);
 
-अटल sमाप_प्रकार store_srp_rport_delete(काष्ठा device *dev,
-				      काष्ठा device_attribute *attr,
-				      स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा srp_rport *rport = transport_class_to_srp_rport(dev);
-	काष्ठा Scsi_Host *shost = dev_to_shost(dev);
-	काष्ठा srp_पूर्णांकernal *i = to_srp_पूर्णांकernal(shost->transportt);
+static ssize_t store_srp_rport_delete(struct device *dev,
+				      struct device_attribute *attr,
+				      const char *buf, size_t count)
+{
+	struct srp_rport *rport = transport_class_to_srp_rport(dev);
+	struct Scsi_Host *shost = dev_to_shost(dev);
+	struct srp_internal *i = to_srp_internal(shost->transportt);
 
-	अगर (i->f->rport_delete) अणु
+	if (i->f->rport_delete) {
 		i->f->rport_delete(rport);
-		वापस count;
-	पूर्ण अन्यथा अणु
-		वापस -ENOSYS;
-	पूर्ण
-पूर्ण
+		return count;
+	} else {
+		return -ENOSYS;
+	}
+}
 
-अटल DEVICE_ATTR(delete, S_IWUSR, शून्य, store_srp_rport_delete);
+static DEVICE_ATTR(delete, S_IWUSR, NULL, store_srp_rport_delete);
 
-अटल sमाप_प्रकार show_srp_rport_state(काष्ठा device *dev,
-				    काष्ठा device_attribute *attr,
-				    अक्षर *buf)
-अणु
-	अटल स्थिर अक्षर *स्थिर state_name[] = अणु
+static ssize_t show_srp_rport_state(struct device *dev,
+				    struct device_attribute *attr,
+				    char *buf)
+{
+	static const char *const state_name[] = {
 		[SRP_RPORT_RUNNING]	= "running",
 		[SRP_RPORT_BLOCKED]	= "blocked",
 		[SRP_RPORT_FAIL_FAST]	= "fail-fast",
 		[SRP_RPORT_LOST]	= "lost",
-	पूर्ण;
-	काष्ठा srp_rport *rport = transport_class_to_srp_rport(dev);
-	क्रमागत srp_rport_state state = rport->state;
+	};
+	struct srp_rport *rport = transport_class_to_srp_rport(dev);
+	enum srp_rport_state state = rport->state;
 
-	वापस प्र_लिखो(buf, "%s\n",
-		       (अचिन्हित)state < ARRAY_SIZE(state_name) ?
+	return sprintf(buf, "%s\n",
+		       (unsigned)state < ARRAY_SIZE(state_name) ?
 		       state_name[state] : "???");
-पूर्ण
+}
 
-अटल DEVICE_ATTR(state, S_IRUGO, show_srp_rport_state, शून्य);
+static DEVICE_ATTR(state, S_IRUGO, show_srp_rport_state, NULL);
 
-अटल sमाप_प्रकार srp_show_पंचांगo(अक्षर *buf, पूर्णांक पंचांगo)
-अणु
-	वापस पंचांगo >= 0 ? प्र_लिखो(buf, "%d\n", पंचांगo) : प्र_लिखो(buf, "off\n");
-पूर्ण
+static ssize_t srp_show_tmo(char *buf, int tmo)
+{
+	return tmo >= 0 ? sprintf(buf, "%d\n", tmo) : sprintf(buf, "off\n");
+}
 
-पूर्णांक srp_parse_पंचांगo(पूर्णांक *पंचांगo, स्थिर अक्षर *buf)
-अणु
-	पूर्णांक res = 0;
+int srp_parse_tmo(int *tmo, const char *buf)
+{
+	int res = 0;
 
-	अगर (म_भेदन(buf, "off", 3) != 0)
-		res = kstrtoपूर्णांक(buf, 0, पंचांगo);
-	अन्यथा
-		*पंचांगo = -1;
+	if (strncmp(buf, "off", 3) != 0)
+		res = kstrtoint(buf, 0, tmo);
+	else
+		*tmo = -1;
 
-	वापस res;
-पूर्ण
-EXPORT_SYMBOL(srp_parse_पंचांगo);
+	return res;
+}
+EXPORT_SYMBOL(srp_parse_tmo);
 
-अटल sमाप_प्रकार show_reconnect_delay(काष्ठा device *dev,
-				    काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा srp_rport *rport = transport_class_to_srp_rport(dev);
+static ssize_t show_reconnect_delay(struct device *dev,
+				    struct device_attribute *attr, char *buf)
+{
+	struct srp_rport *rport = transport_class_to_srp_rport(dev);
 
-	वापस srp_show_पंचांगo(buf, rport->reconnect_delay);
-पूर्ण
+	return srp_show_tmo(buf, rport->reconnect_delay);
+}
 
-अटल sमाप_प्रकार store_reconnect_delay(काष्ठा device *dev,
-				     काष्ठा device_attribute *attr,
-				     स्थिर अक्षर *buf, स्थिर माप_प्रकार count)
-अणु
-	काष्ठा srp_rport *rport = transport_class_to_srp_rport(dev);
-	पूर्णांक res, delay;
+static ssize_t store_reconnect_delay(struct device *dev,
+				     struct device_attribute *attr,
+				     const char *buf, const size_t count)
+{
+	struct srp_rport *rport = transport_class_to_srp_rport(dev);
+	int res, delay;
 
-	res = srp_parse_पंचांगo(&delay, buf);
-	अगर (res)
-		जाओ out;
-	res = srp_पंचांगo_valid(delay, rport->fast_io_fail_पंचांगo,
-			    rport->dev_loss_पंचांगo);
-	अगर (res)
-		जाओ out;
+	res = srp_parse_tmo(&delay, buf);
+	if (res)
+		goto out;
+	res = srp_tmo_valid(delay, rport->fast_io_fail_tmo,
+			    rport->dev_loss_tmo);
+	if (res)
+		goto out;
 
-	अगर (rport->reconnect_delay <= 0 && delay > 0 &&
-	    rport->state != SRP_RPORT_RUNNING) अणु
-		queue_delayed_work(प्रणाली_दीर्घ_wq, &rport->reconnect_work,
+	if (rport->reconnect_delay <= 0 && delay > 0 &&
+	    rport->state != SRP_RPORT_RUNNING) {
+		queue_delayed_work(system_long_wq, &rport->reconnect_work,
 				   delay * HZ);
-	पूर्ण अन्यथा अगर (delay <= 0) अणु
+	} else if (delay <= 0) {
 		cancel_delayed_work(&rport->reconnect_work);
-	पूर्ण
+	}
 	rport->reconnect_delay = delay;
 	res = count;
 
 out:
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल DEVICE_ATTR(reconnect_delay, S_IRUGO | S_IWUSR, show_reconnect_delay,
+static DEVICE_ATTR(reconnect_delay, S_IRUGO | S_IWUSR, show_reconnect_delay,
 		   store_reconnect_delay);
 
-अटल sमाप_प्रकार show_failed_reconnects(काष्ठा device *dev,
-				      काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा srp_rport *rport = transport_class_to_srp_rport(dev);
+static ssize_t show_failed_reconnects(struct device *dev,
+				      struct device_attribute *attr, char *buf)
+{
+	struct srp_rport *rport = transport_class_to_srp_rport(dev);
 
-	वापस प्र_लिखो(buf, "%d\n", rport->failed_reconnects);
-पूर्ण
+	return sprintf(buf, "%d\n", rport->failed_reconnects);
+}
 
-अटल DEVICE_ATTR(failed_reconnects, S_IRUGO, show_failed_reconnects, शून्य);
+static DEVICE_ATTR(failed_reconnects, S_IRUGO, show_failed_reconnects, NULL);
 
-अटल sमाप_प्रकार show_srp_rport_fast_io_fail_पंचांगo(काष्ठा device *dev,
-					       काष्ठा device_attribute *attr,
-					       अक्षर *buf)
-अणु
-	काष्ठा srp_rport *rport = transport_class_to_srp_rport(dev);
+static ssize_t show_srp_rport_fast_io_fail_tmo(struct device *dev,
+					       struct device_attribute *attr,
+					       char *buf)
+{
+	struct srp_rport *rport = transport_class_to_srp_rport(dev);
 
-	वापस srp_show_पंचांगo(buf, rport->fast_io_fail_पंचांगo);
-पूर्ण
+	return srp_show_tmo(buf, rport->fast_io_fail_tmo);
+}
 
-अटल sमाप_प्रकार store_srp_rport_fast_io_fail_पंचांगo(काष्ठा device *dev,
-						काष्ठा device_attribute *attr,
-						स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा srp_rport *rport = transport_class_to_srp_rport(dev);
-	पूर्णांक res;
-	पूर्णांक fast_io_fail_पंचांगo;
+static ssize_t store_srp_rport_fast_io_fail_tmo(struct device *dev,
+						struct device_attribute *attr,
+						const char *buf, size_t count)
+{
+	struct srp_rport *rport = transport_class_to_srp_rport(dev);
+	int res;
+	int fast_io_fail_tmo;
 
-	res = srp_parse_पंचांगo(&fast_io_fail_पंचांगo, buf);
-	अगर (res)
-		जाओ out;
-	res = srp_पंचांगo_valid(rport->reconnect_delay, fast_io_fail_पंचांगo,
-			    rport->dev_loss_पंचांगo);
-	अगर (res)
-		जाओ out;
-	rport->fast_io_fail_पंचांगo = fast_io_fail_पंचांगo;
+	res = srp_parse_tmo(&fast_io_fail_tmo, buf);
+	if (res)
+		goto out;
+	res = srp_tmo_valid(rport->reconnect_delay, fast_io_fail_tmo,
+			    rport->dev_loss_tmo);
+	if (res)
+		goto out;
+	rport->fast_io_fail_tmo = fast_io_fail_tmo;
 	res = count;
 
 out:
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल DEVICE_ATTR(fast_io_fail_पंचांगo, S_IRUGO | S_IWUSR,
-		   show_srp_rport_fast_io_fail_पंचांगo,
-		   store_srp_rport_fast_io_fail_पंचांगo);
+static DEVICE_ATTR(fast_io_fail_tmo, S_IRUGO | S_IWUSR,
+		   show_srp_rport_fast_io_fail_tmo,
+		   store_srp_rport_fast_io_fail_tmo);
 
-अटल sमाप_प्रकार show_srp_rport_dev_loss_पंचांगo(काष्ठा device *dev,
-					   काष्ठा device_attribute *attr,
-					   अक्षर *buf)
-अणु
-	काष्ठा srp_rport *rport = transport_class_to_srp_rport(dev);
+static ssize_t show_srp_rport_dev_loss_tmo(struct device *dev,
+					   struct device_attribute *attr,
+					   char *buf)
+{
+	struct srp_rport *rport = transport_class_to_srp_rport(dev);
 
-	वापस srp_show_पंचांगo(buf, rport->dev_loss_पंचांगo);
-पूर्ण
+	return srp_show_tmo(buf, rport->dev_loss_tmo);
+}
 
-अटल sमाप_प्रकार store_srp_rport_dev_loss_पंचांगo(काष्ठा device *dev,
-					    काष्ठा device_attribute *attr,
-					    स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा srp_rport *rport = transport_class_to_srp_rport(dev);
-	पूर्णांक res;
-	पूर्णांक dev_loss_पंचांगo;
+static ssize_t store_srp_rport_dev_loss_tmo(struct device *dev,
+					    struct device_attribute *attr,
+					    const char *buf, size_t count)
+{
+	struct srp_rport *rport = transport_class_to_srp_rport(dev);
+	int res;
+	int dev_loss_tmo;
 
-	res = srp_parse_पंचांगo(&dev_loss_पंचांगo, buf);
-	अगर (res)
-		जाओ out;
-	res = srp_पंचांगo_valid(rport->reconnect_delay, rport->fast_io_fail_पंचांगo,
-			    dev_loss_पंचांगo);
-	अगर (res)
-		जाओ out;
-	rport->dev_loss_पंचांगo = dev_loss_पंचांगo;
+	res = srp_parse_tmo(&dev_loss_tmo, buf);
+	if (res)
+		goto out;
+	res = srp_tmo_valid(rport->reconnect_delay, rport->fast_io_fail_tmo,
+			    dev_loss_tmo);
+	if (res)
+		goto out;
+	rport->dev_loss_tmo = dev_loss_tmo;
 	res = count;
 
 out:
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल DEVICE_ATTR(dev_loss_पंचांगo, S_IRUGO | S_IWUSR,
-		   show_srp_rport_dev_loss_पंचांगo,
-		   store_srp_rport_dev_loss_पंचांगo);
+static DEVICE_ATTR(dev_loss_tmo, S_IRUGO | S_IWUSR,
+		   show_srp_rport_dev_loss_tmo,
+		   store_srp_rport_dev_loss_tmo);
 
-अटल पूर्णांक srp_rport_set_state(काष्ठा srp_rport *rport,
-			       क्रमागत srp_rport_state new_state)
-अणु
-	क्रमागत srp_rport_state old_state = rport->state;
+static int srp_rport_set_state(struct srp_rport *rport,
+			       enum srp_rport_state new_state)
+{
+	enum srp_rport_state old_state = rport->state;
 
-	lockdep_निश्चित_held(&rport->mutex);
+	lockdep_assert_held(&rport->mutex);
 
-	चयन (new_state) अणु
-	हाल SRP_RPORT_RUNNING:
-		चयन (old_state) अणु
-		हाल SRP_RPORT_LOST:
-			जाओ invalid;
-		शेष:
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल SRP_RPORT_BLOCKED:
-		चयन (old_state) अणु
-		हाल SRP_RPORT_RUNNING:
-			अवरोध;
-		शेष:
-			जाओ invalid;
-		पूर्ण
-		अवरोध;
-	हाल SRP_RPORT_FAIL_FAST:
-		चयन (old_state) अणु
-		हाल SRP_RPORT_LOST:
-			जाओ invalid;
-		शेष:
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल SRP_RPORT_LOST:
-		अवरोध;
-	पूर्ण
+	switch (new_state) {
+	case SRP_RPORT_RUNNING:
+		switch (old_state) {
+		case SRP_RPORT_LOST:
+			goto invalid;
+		default:
+			break;
+		}
+		break;
+	case SRP_RPORT_BLOCKED:
+		switch (old_state) {
+		case SRP_RPORT_RUNNING:
+			break;
+		default:
+			goto invalid;
+		}
+		break;
+	case SRP_RPORT_FAIL_FAST:
+		switch (old_state) {
+		case SRP_RPORT_LOST:
+			goto invalid;
+		default:
+			break;
+		}
+		break;
+	case SRP_RPORT_LOST:
+		break;
+	}
 	rport->state = new_state;
-	वापस 0;
+	return 0;
 
 invalid:
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 /**
- * srp_reconnect_work() - reconnect and schedule a new attempt अगर necessary
- * @work: Work काष्ठाure used क्रम scheduling this operation.
+ * srp_reconnect_work() - reconnect and schedule a new attempt if necessary
+ * @work: Work structure used for scheduling this operation.
  */
-अटल व्योम srp_reconnect_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा srp_rport *rport = container_of(to_delayed_work(work),
-					काष्ठा srp_rport, reconnect_work);
-	काष्ठा Scsi_Host *shost = rport_to_shost(rport);
-	पूर्णांक delay, res;
+static void srp_reconnect_work(struct work_struct *work)
+{
+	struct srp_rport *rport = container_of(to_delayed_work(work),
+					struct srp_rport, reconnect_work);
+	struct Scsi_Host *shost = rport_to_shost(rport);
+	int delay, res;
 
 	res = srp_reconnect_rport(rport);
-	अगर (res != 0) अणु
-		shost_prपूर्णांकk(KERN_ERR, shost,
+	if (res != 0) {
+		shost_printk(KERN_ERR, shost,
 			     "reconnect attempt %d failed (%d)\n",
 			     ++rport->failed_reconnects, res);
 		delay = rport->reconnect_delay *
 			min(100, max(1, rport->failed_reconnects - 10));
-		अगर (delay > 0)
-			queue_delayed_work(प्रणाली_दीर्घ_wq,
+		if (delay > 0)
+			queue_delayed_work(system_long_wq,
 					   &rport->reconnect_work, delay * HZ);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * scsi_target_block() must have been called beक्रमe this function is
+ * scsi_target_block() must have been called before this function is
  * called to guarantee that no .queuecommand() calls are in progress.
  */
-अटल व्योम __rport_fail_io_fast(काष्ठा srp_rport *rport)
-अणु
-	काष्ठा Scsi_Host *shost = rport_to_shost(rport);
-	काष्ठा srp_पूर्णांकernal *i;
+static void __rport_fail_io_fast(struct srp_rport *rport)
+{
+	struct Scsi_Host *shost = rport_to_shost(rport);
+	struct srp_internal *i;
 
-	lockdep_निश्चित_held(&rport->mutex);
+	lockdep_assert_held(&rport->mutex);
 
-	अगर (srp_rport_set_state(rport, SRP_RPORT_FAIL_FAST))
-		वापस;
+	if (srp_rport_set_state(rport, SRP_RPORT_FAIL_FAST))
+		return;
 
 	scsi_target_unblock(rport->dev.parent, SDEV_TRANSPORT_OFFLINE);
 
-	/* Involve the LLD अगर possible to terminate all I/O on the rport. */
-	i = to_srp_पूर्णांकernal(shost->transportt);
-	अगर (i->f->terminate_rport_io)
+	/* Involve the LLD if possible to terminate all I/O on the rport. */
+	i = to_srp_internal(shost->transportt);
+	if (i->f->terminate_rport_io)
 		i->f->terminate_rport_io(rport);
-पूर्ण
+}
 
 /**
- * rport_fast_io_fail_समयकरोut() - fast I/O failure समयout handler
- * @work: Work काष्ठाure used क्रम scheduling this operation.
+ * rport_fast_io_fail_timedout() - fast I/O failure timeout handler
+ * @work: Work structure used for scheduling this operation.
  */
-अटल व्योम rport_fast_io_fail_समयकरोut(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा srp_rport *rport = container_of(to_delayed_work(work),
-					काष्ठा srp_rport, fast_io_fail_work);
-	काष्ठा Scsi_Host *shost = rport_to_shost(rport);
+static void rport_fast_io_fail_timedout(struct work_struct *work)
+{
+	struct srp_rport *rport = container_of(to_delayed_work(work),
+					struct srp_rport, fast_io_fail_work);
+	struct Scsi_Host *shost = rport_to_shost(rport);
 
 	pr_info("fast_io_fail_tmo expired for SRP %s / %s.\n",
 		dev_name(&rport->dev), dev_name(&shost->shost_gendev));
 
 	mutex_lock(&rport->mutex);
-	अगर (rport->state == SRP_RPORT_BLOCKED)
+	if (rport->state == SRP_RPORT_BLOCKED)
 		__rport_fail_io_fast(rport);
 	mutex_unlock(&rport->mutex);
-पूर्ण
+}
 
 /**
- * rport_dev_loss_समयकरोut() - device loss समयout handler
- * @work: Work काष्ठाure used क्रम scheduling this operation.
+ * rport_dev_loss_timedout() - device loss timeout handler
+ * @work: Work structure used for scheduling this operation.
  */
-अटल व्योम rport_dev_loss_समयकरोut(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा srp_rport *rport = container_of(to_delayed_work(work),
-					काष्ठा srp_rport, dev_loss_work);
-	काष्ठा Scsi_Host *shost = rport_to_shost(rport);
-	काष्ठा srp_पूर्णांकernal *i = to_srp_पूर्णांकernal(shost->transportt);
+static void rport_dev_loss_timedout(struct work_struct *work)
+{
+	struct srp_rport *rport = container_of(to_delayed_work(work),
+					struct srp_rport, dev_loss_work);
+	struct Scsi_Host *shost = rport_to_shost(rport);
+	struct srp_internal *i = to_srp_internal(shost->transportt);
 
 	pr_info("dev_loss_tmo expired for SRP %s / %s.\n",
 		dev_name(&rport->dev), dev_name(&shost->shost_gendev));
@@ -457,103 +456,103 @@ invalid:
 	mutex_unlock(&rport->mutex);
 
 	i->f->rport_delete(rport);
-पूर्ण
+}
 
-अटल व्योम __srp_start_tl_fail_समयrs(काष्ठा srp_rport *rport)
-अणु
-	काष्ठा Scsi_Host *shost = rport_to_shost(rport);
-	पूर्णांक delay, fast_io_fail_पंचांगo, dev_loss_पंचांगo;
+static void __srp_start_tl_fail_timers(struct srp_rport *rport)
+{
+	struct Scsi_Host *shost = rport_to_shost(rport);
+	int delay, fast_io_fail_tmo, dev_loss_tmo;
 
-	lockdep_निश्चित_held(&rport->mutex);
+	lockdep_assert_held(&rport->mutex);
 
 	delay = rport->reconnect_delay;
-	fast_io_fail_पंचांगo = rport->fast_io_fail_पंचांगo;
-	dev_loss_पंचांगo = rport->dev_loss_पंचांगo;
+	fast_io_fail_tmo = rport->fast_io_fail_tmo;
+	dev_loss_tmo = rport->dev_loss_tmo;
 	pr_debug("%s current state: %d\n", dev_name(&shost->shost_gendev),
 		 rport->state);
 
-	अगर (rport->state == SRP_RPORT_LOST)
-		वापस;
-	अगर (delay > 0)
-		queue_delayed_work(प्रणाली_दीर्घ_wq, &rport->reconnect_work,
+	if (rport->state == SRP_RPORT_LOST)
+		return;
+	if (delay > 0)
+		queue_delayed_work(system_long_wq, &rport->reconnect_work,
 				   1UL * delay * HZ);
-	अगर ((fast_io_fail_पंचांगo >= 0 || dev_loss_पंचांगo >= 0) &&
-	    srp_rport_set_state(rport, SRP_RPORT_BLOCKED) == 0) अणु
+	if ((fast_io_fail_tmo >= 0 || dev_loss_tmo >= 0) &&
+	    srp_rport_set_state(rport, SRP_RPORT_BLOCKED) == 0) {
 		pr_debug("%s new state: %d\n", dev_name(&shost->shost_gendev),
 			 rport->state);
 		scsi_target_block(&shost->shost_gendev);
-		अगर (fast_io_fail_पंचांगo >= 0)
-			queue_delayed_work(प्रणाली_दीर्घ_wq,
+		if (fast_io_fail_tmo >= 0)
+			queue_delayed_work(system_long_wq,
 					   &rport->fast_io_fail_work,
-					   1UL * fast_io_fail_पंचांगo * HZ);
-		अगर (dev_loss_पंचांगo >= 0)
-			queue_delayed_work(प्रणाली_दीर्घ_wq,
+					   1UL * fast_io_fail_tmo * HZ);
+		if (dev_loss_tmo >= 0)
+			queue_delayed_work(system_long_wq,
 					   &rport->dev_loss_work,
-					   1UL * dev_loss_पंचांगo * HZ);
-	पूर्ण
-पूर्ण
+					   1UL * dev_loss_tmo * HZ);
+	}
+}
 
 /**
- * srp_start_tl_fail_समयrs() - start the transport layer failure समयrs
+ * srp_start_tl_fail_timers() - start the transport layer failure timers
  * @rport: SRP target port.
  *
- * Start the transport layer fast I/O failure and device loss समयrs. Do not
- * modअगरy a समयr that was alपढ़ोy started.
+ * Start the transport layer fast I/O failure and device loss timers. Do not
+ * modify a timer that was already started.
  */
-व्योम srp_start_tl_fail_समयrs(काष्ठा srp_rport *rport)
-अणु
+void srp_start_tl_fail_timers(struct srp_rport *rport)
+{
 	mutex_lock(&rport->mutex);
-	__srp_start_tl_fail_समयrs(rport);
+	__srp_start_tl_fail_timers(rport);
 	mutex_unlock(&rport->mutex);
-पूर्ण
-EXPORT_SYMBOL(srp_start_tl_fail_समयrs);
+}
+EXPORT_SYMBOL(srp_start_tl_fail_timers);
 
 /**
  * srp_reconnect_rport() - reconnect to an SRP target port
  * @rport: SRP target port.
  *
- * Blocks SCSI command queueing beक्रमe invoking reconnect() such that
+ * Blocks SCSI command queueing before invoking reconnect() such that
  * queuecommand() won't be invoked concurrently with reconnect() from outside
  * the SCSI EH. This is important since a reconnect() implementation may
- * पुनः_स्मृतिate resources needed by queuecommand().
+ * reallocate resources needed by queuecommand().
  *
  * Notes:
- * - This function neither रुकोs until outstanding requests have finished nor
- *   tries to पात these. It is the responsibility of the reconnect()
- *   function to finish outstanding commands beक्रमe reconnecting to the target
+ * - This function neither waits until outstanding requests have finished nor
+ *   tries to abort these. It is the responsibility of the reconnect()
+ *   function to finish outstanding commands before reconnecting to the target
  *   port.
  * - It is the responsibility of the caller to ensure that the resources
- *   पुनः_स्मृतिated by the reconnect() function won't be used जबतक this function
+ *   reallocated by the reconnect() function won't be used while this function
  *   is in progress. One possible strategy is to invoke this function from
- *   the context of the SCSI EH thपढ़ो only. Another possible strategy is to
+ *   the context of the SCSI EH thread only. Another possible strategy is to
  *   lock the rport mutex inside each SCSI LLD callback that can be invoked by
- *   the SCSI EH (the scsi_host_ढाँचा.eh_*() functions and also the
- *   scsi_host_ढाँचा.queuecommand() function).
+ *   the SCSI EH (the scsi_host_template.eh_*() functions and also the
+ *   scsi_host_template.queuecommand() function).
  */
-पूर्णांक srp_reconnect_rport(काष्ठा srp_rport *rport)
-अणु
-	काष्ठा Scsi_Host *shost = rport_to_shost(rport);
-	काष्ठा srp_पूर्णांकernal *i = to_srp_पूर्णांकernal(shost->transportt);
-	काष्ठा scsi_device *sdev;
-	पूर्णांक res;
+int srp_reconnect_rport(struct srp_rport *rport)
+{
+	struct Scsi_Host *shost = rport_to_shost(rport);
+	struct srp_internal *i = to_srp_internal(shost->transportt);
+	struct scsi_device *sdev;
+	int res;
 
 	pr_debug("SCSI host %s\n", dev_name(&shost->shost_gendev));
 
-	res = mutex_lock_पूर्णांकerruptible(&rport->mutex);
-	अगर (res)
-		जाओ out;
-	अगर (rport->state != SRP_RPORT_FAIL_FAST && rport->state != SRP_RPORT_LOST)
+	res = mutex_lock_interruptible(&rport->mutex);
+	if (res)
+		goto out;
+	if (rport->state != SRP_RPORT_FAIL_FAST && rport->state != SRP_RPORT_LOST)
 		/*
 		 * sdev state must be SDEV_TRANSPORT_OFFLINE, transition
 		 * to SDEV_BLOCK is illegal. Calling scsi_target_unblock()
-		 * later is ok though, scsi_पूर्णांकernal_device_unblock_noरुको()
+		 * later is ok though, scsi_internal_device_unblock_nowait()
 		 * treats SDEV_TRANSPORT_OFFLINE like SDEV_BLOCK.
 		 */
 		scsi_target_block(&shost->shost_gendev);
 	res = rport->state != SRP_RPORT_LOST ? i->f->reconnect(rport) : -ENODEV;
 	pr_debug("%s (state %d): transport.reconnect() returned %d\n",
 		 dev_name(&shost->shost_gendev), rport->state, res);
-	अगर (res == 0) अणु
+	if (res == 0) {
 		cancel_delayed_work(&rport->fast_io_fail_work);
 		cancel_delayed_work(&rport->dev_loss_work);
 
@@ -563,147 +562,147 @@ EXPORT_SYMBOL(srp_start_tl_fail_समयrs);
 		/*
 		 * If the SCSI error handler has offlined one or more devices,
 		 * invoking scsi_target_unblock() won't change the state of
-		 * these devices पूर्णांकo running so करो that explicitly.
+		 * these devices into running so do that explicitly.
 		 */
-		shost_क्रम_each_device(sdev, shost) अणु
+		shost_for_each_device(sdev, shost) {
 			mutex_lock(&sdev->state_mutex);
-			अगर (sdev->sdev_state == SDEV_OFFLINE)
+			if (sdev->sdev_state == SDEV_OFFLINE)
 				sdev->sdev_state = SDEV_RUNNING;
 			mutex_unlock(&sdev->state_mutex);
-		पूर्ण
-	पूर्ण अन्यथा अगर (rport->state == SRP_RPORT_RUNNING) अणु
+		}
+	} else if (rport->state == SRP_RPORT_RUNNING) {
 		/*
 		 * srp_reconnect_rport() has been invoked with fast_io_fail
 		 * and dev_loss off. Mark the port as failed and start the TL
-		 * failure समयrs अगर these had not yet been started.
+		 * failure timers if these had not yet been started.
 		 */
 		__rport_fail_io_fast(rport);
-		__srp_start_tl_fail_समयrs(rport);
-	पूर्ण अन्यथा अगर (rport->state != SRP_RPORT_BLOCKED) अणु
+		__srp_start_tl_fail_timers(rport);
+	} else if (rport->state != SRP_RPORT_BLOCKED) {
 		scsi_target_unblock(&shost->shost_gendev,
 				    SDEV_TRANSPORT_OFFLINE);
-	पूर्ण
+	}
 	mutex_unlock(&rport->mutex);
 
 out:
-	वापस res;
-पूर्ण
+	return res;
+}
 EXPORT_SYMBOL(srp_reconnect_rport);
 
 /**
- * srp_समयd_out() - SRP transport पूर्णांकercept of the SCSI समयout EH
+ * srp_timed_out() - SRP transport intercept of the SCSI timeout EH
  * @scmd: SCSI command.
  *
- * If a समयout occurs जबतक an rport is in the blocked state, ask the SCSI
- * EH to जारी रुकोing (BLK_EH_RESET_TIMER). Otherwise let the SCSI core
- * handle the समयout (BLK_EH_DONE).
+ * If a timeout occurs while an rport is in the blocked state, ask the SCSI
+ * EH to continue waiting (BLK_EH_RESET_TIMER). Otherwise let the SCSI core
+ * handle the timeout (BLK_EH_DONE).
  *
  * Note: This function is called from soft-IRQ context and with the request
  * queue lock held.
  */
-क्रमागत blk_eh_समयr_वापस srp_समयd_out(काष्ठा scsi_cmnd *scmd)
-अणु
-	काष्ठा scsi_device *sdev = scmd->device;
-	काष्ठा Scsi_Host *shost = sdev->host;
-	काष्ठा srp_पूर्णांकernal *i = to_srp_पूर्णांकernal(shost->transportt);
-	काष्ठा srp_rport *rport = shost_to_rport(shost);
+enum blk_eh_timer_return srp_timed_out(struct scsi_cmnd *scmd)
+{
+	struct scsi_device *sdev = scmd->device;
+	struct Scsi_Host *shost = sdev->host;
+	struct srp_internal *i = to_srp_internal(shost->transportt);
+	struct srp_rport *rport = shost_to_rport(shost);
 
 	pr_debug("timeout for sdev %s\n", dev_name(&sdev->sdev_gendev));
-	वापस rport && rport->fast_io_fail_पंचांगo < 0 &&
-		rport->dev_loss_पंचांगo < 0 &&
-		i->f->reset_समयr_अगर_blocked && scsi_device_blocked(sdev) ?
+	return rport && rport->fast_io_fail_tmo < 0 &&
+		rport->dev_loss_tmo < 0 &&
+		i->f->reset_timer_if_blocked && scsi_device_blocked(sdev) ?
 		BLK_EH_RESET_TIMER : BLK_EH_DONE;
-पूर्ण
-EXPORT_SYMBOL(srp_समयd_out);
+}
+EXPORT_SYMBOL(srp_timed_out);
 
-अटल व्योम srp_rport_release(काष्ठा device *dev)
-अणु
-	काष्ठा srp_rport *rport = dev_to_rport(dev);
+static void srp_rport_release(struct device *dev)
+{
+	struct srp_rport *rport = dev_to_rport(dev);
 
 	put_device(dev->parent);
-	kमुक्त(rport);
-पूर्ण
+	kfree(rport);
+}
 
-अटल पूर्णांक scsi_is_srp_rport(स्थिर काष्ठा device *dev)
-अणु
-	वापस dev->release == srp_rport_release;
-पूर्ण
+static int scsi_is_srp_rport(const struct device *dev)
+{
+	return dev->release == srp_rport_release;
+}
 
-अटल पूर्णांक srp_rport_match(काष्ठा attribute_container *cont,
-			   काष्ठा device *dev)
-अणु
-	काष्ठा Scsi_Host *shost;
-	काष्ठा srp_पूर्णांकernal *i;
+static int srp_rport_match(struct attribute_container *cont,
+			   struct device *dev)
+{
+	struct Scsi_Host *shost;
+	struct srp_internal *i;
 
-	अगर (!scsi_is_srp_rport(dev))
-		वापस 0;
+	if (!scsi_is_srp_rport(dev))
+		return 0;
 
 	shost = dev_to_shost(dev->parent);
-	अगर (!shost->transportt)
-		वापस 0;
-	अगर (shost->transportt->host_attrs.ac.class != &srp_host_class.class)
-		वापस 0;
+	if (!shost->transportt)
+		return 0;
+	if (shost->transportt->host_attrs.ac.class != &srp_host_class.class)
+		return 0;
 
-	i = to_srp_पूर्णांकernal(shost->transportt);
-	वापस &i->rport_attr_cont.ac == cont;
-पूर्ण
+	i = to_srp_internal(shost->transportt);
+	return &i->rport_attr_cont.ac == cont;
+}
 
-अटल पूर्णांक srp_host_match(काष्ठा attribute_container *cont, काष्ठा device *dev)
-अणु
-	काष्ठा Scsi_Host *shost;
-	काष्ठा srp_पूर्णांकernal *i;
+static int srp_host_match(struct attribute_container *cont, struct device *dev)
+{
+	struct Scsi_Host *shost;
+	struct srp_internal *i;
 
-	अगर (!scsi_is_host_device(dev))
-		वापस 0;
+	if (!scsi_is_host_device(dev))
+		return 0;
 
 	shost = dev_to_shost(dev);
-	अगर (!shost->transportt)
-		वापस 0;
-	अगर (shost->transportt->host_attrs.ac.class != &srp_host_class.class)
-		वापस 0;
+	if (!shost->transportt)
+		return 0;
+	if (shost->transportt->host_attrs.ac.class != &srp_host_class.class)
+		return 0;
 
-	i = to_srp_पूर्णांकernal(shost->transportt);
-	वापस &i->t.host_attrs.ac == cont;
-पूर्ण
+	i = to_srp_internal(shost->transportt);
+	return &i->t.host_attrs.ac == cont;
+}
 
 /**
  * srp_rport_get() - increment rport reference count
  * @rport: SRP target port.
  */
-व्योम srp_rport_get(काष्ठा srp_rport *rport)
-अणु
+void srp_rport_get(struct srp_rport *rport)
+{
 	get_device(&rport->dev);
-पूर्ण
+}
 EXPORT_SYMBOL(srp_rport_get);
 
 /**
  * srp_rport_put() - decrement rport reference count
  * @rport: SRP target port.
  */
-व्योम srp_rport_put(काष्ठा srp_rport *rport)
-अणु
+void srp_rport_put(struct srp_rport *rport)
+{
 	put_device(&rport->dev);
-पूर्ण
+}
 EXPORT_SYMBOL(srp_rport_put);
 
 /**
  * srp_rport_add - add a SRP remote port to the device hierarchy
  * @shost:	scsi host the remote port is connected to.
- * @ids:	The port id क्रम the remote port.
+ * @ids:	The port id for the remote port.
  *
- * Publishes a port to the rest of the प्रणाली.
+ * Publishes a port to the rest of the system.
  */
-काष्ठा srp_rport *srp_rport_add(काष्ठा Scsi_Host *shost,
-				काष्ठा srp_rport_identअगरiers *ids)
-अणु
-	काष्ठा srp_rport *rport;
-	काष्ठा device *parent = &shost->shost_gendev;
-	काष्ठा srp_पूर्णांकernal *i = to_srp_पूर्णांकernal(shost->transportt);
-	पूर्णांक id, ret;
+struct srp_rport *srp_rport_add(struct Scsi_Host *shost,
+				struct srp_rport_identifiers *ids)
+{
+	struct srp_rport *rport;
+	struct device *parent = &shost->shost_gendev;
+	struct srp_internal *i = to_srp_internal(shost->transportt);
+	int id, ret;
 
-	rport = kzalloc(माप(*rport), GFP_KERNEL);
-	अगर (!rport)
-		वापस ERR_PTR(-ENOMEM);
+	rport = kzalloc(sizeof(*rport), GFP_KERNEL);
+	if (!rport)
+		return ERR_PTR(-ENOMEM);
 
 	mutex_init(&rport->mutex);
 
@@ -712,89 +711,89 @@ EXPORT_SYMBOL(srp_rport_put);
 	rport->dev.parent = get_device(parent);
 	rport->dev.release = srp_rport_release;
 
-	स_नकल(rport->port_id, ids->port_id, माप(rport->port_id));
+	memcpy(rport->port_id, ids->port_id, sizeof(rport->port_id));
 	rport->roles = ids->roles;
 
-	अगर (i->f->reconnect)
+	if (i->f->reconnect)
 		rport->reconnect_delay = i->f->reconnect_delay ?
 			*i->f->reconnect_delay : 10;
 	INIT_DELAYED_WORK(&rport->reconnect_work, srp_reconnect_work);
-	rport->fast_io_fail_पंचांगo = i->f->fast_io_fail_पंचांगo ?
-		*i->f->fast_io_fail_पंचांगo : 15;
-	rport->dev_loss_पंचांगo = i->f->dev_loss_पंचांगo ? *i->f->dev_loss_पंचांगo : 60;
+	rport->fast_io_fail_tmo = i->f->fast_io_fail_tmo ?
+		*i->f->fast_io_fail_tmo : 15;
+	rport->dev_loss_tmo = i->f->dev_loss_tmo ? *i->f->dev_loss_tmo : 60;
 	INIT_DELAYED_WORK(&rport->fast_io_fail_work,
-			  rport_fast_io_fail_समयकरोut);
-	INIT_DELAYED_WORK(&rport->dev_loss_work, rport_dev_loss_समयकरोut);
+			  rport_fast_io_fail_timedout);
+	INIT_DELAYED_WORK(&rport->dev_loss_work, rport_dev_loss_timedout);
 
-	id = atomic_inc_वापस(&to_srp_host_attrs(shost)->next_port_id);
+	id = atomic_inc_return(&to_srp_host_attrs(shost)->next_port_id);
 	dev_set_name(&rport->dev, "port-%d:%d", shost->host_no, id);
 
 	transport_setup_device(&rport->dev);
 
 	ret = device_add(&rport->dev);
-	अगर (ret) अणु
+	if (ret) {
 		transport_destroy_device(&rport->dev);
 		put_device(&rport->dev);
-		वापस ERR_PTR(ret);
-	पूर्ण
+		return ERR_PTR(ret);
+	}
 
 	transport_add_device(&rport->dev);
 	transport_configure_device(&rport->dev);
 
-	वापस rport;
-पूर्ण
+	return rport;
+}
 EXPORT_SYMBOL_GPL(srp_rport_add);
 
 /**
- * srp_rport_del  -  हटाओ a SRP remote port
- * @rport:	SRP remote port to हटाओ
+ * srp_rport_del  -  remove a SRP remote port
+ * @rport:	SRP remote port to remove
  *
- * Removes the specअगरied SRP remote port.
+ * Removes the specified SRP remote port.
  */
-व्योम srp_rport_del(काष्ठा srp_rport *rport)
-अणु
-	काष्ठा device *dev = &rport->dev;
+void srp_rport_del(struct srp_rport *rport)
+{
+	struct device *dev = &rport->dev;
 
-	transport_हटाओ_device(dev);
+	transport_remove_device(dev);
 	device_del(dev);
 	transport_destroy_device(dev);
 
 	put_device(dev);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(srp_rport_del);
 
-अटल पूर्णांक करो_srp_rport_del(काष्ठा device *dev, व्योम *data)
-अणु
-	अगर (scsi_is_srp_rport(dev))
+static int do_srp_rport_del(struct device *dev, void *data)
+{
+	if (scsi_is_srp_rport(dev))
 		srp_rport_del(dev_to_rport(dev));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * srp_हटाओ_host  -  tear करोwn a Scsi_Host's SRP data काष्ठाures
- * @shost:	Scsi Host that is torn करोwn
+ * srp_remove_host  -  tear down a Scsi_Host's SRP data structures
+ * @shost:	Scsi Host that is torn down
  *
- * Removes all SRP remote ports क्रम a given Scsi_Host.
- * Must be called just beक्रमe scsi_हटाओ_host क्रम SRP HBAs.
+ * Removes all SRP remote ports for a given Scsi_Host.
+ * Must be called just before scsi_remove_host for SRP HBAs.
  */
-व्योम srp_हटाओ_host(काष्ठा Scsi_Host *shost)
-अणु
-	device_क्रम_each_child(&shost->shost_gendev, शून्य, करो_srp_rport_del);
-पूर्ण
-EXPORT_SYMBOL_GPL(srp_हटाओ_host);
+void srp_remove_host(struct Scsi_Host *shost)
+{
+	device_for_each_child(&shost->shost_gendev, NULL, do_srp_rport_del);
+}
+EXPORT_SYMBOL_GPL(srp_remove_host);
 
 /**
- * srp_stop_rport_समयrs - stop the transport layer recovery समयrs
- * @rport: SRP remote port क्रम which to stop the समयrs.
+ * srp_stop_rport_timers - stop the transport layer recovery timers
+ * @rport: SRP remote port for which to stop the timers.
  *
- * Must be called after srp_हटाओ_host() and scsi_हटाओ_host(). The caller
+ * Must be called after srp_remove_host() and scsi_remove_host(). The caller
  * must hold a reference on the rport (rport->dev) and on the SCSI host
  * (rport->dev.parent).
  */
-व्योम srp_stop_rport_समयrs(काष्ठा srp_rport *rport)
-अणु
+void srp_stop_rport_timers(struct srp_rport *rport)
+{
 	mutex_lock(&rport->mutex);
-	अगर (rport->state == SRP_RPORT_BLOCKED)
+	if (rport->state == SRP_RPORT_BLOCKED)
 		__rport_fail_io_fast(rport);
 	srp_rport_set_state(rport, SRP_RPORT_LOST);
 	mutex_unlock(&rport->mutex);
@@ -802,29 +801,29 @@ EXPORT_SYMBOL_GPL(srp_हटाओ_host);
 	cancel_delayed_work_sync(&rport->reconnect_work);
 	cancel_delayed_work_sync(&rport->fast_io_fail_work);
 	cancel_delayed_work_sync(&rport->dev_loss_work);
-पूर्ण
-EXPORT_SYMBOL_GPL(srp_stop_rport_समयrs);
+}
+EXPORT_SYMBOL_GPL(srp_stop_rport_timers);
 
 /**
- * srp_attach_transport  -  instantiate SRP transport ढाँचा
- * @ft:		SRP transport class function ढाँचा
+ * srp_attach_transport  -  instantiate SRP transport template
+ * @ft:		SRP transport class function template
  */
-काष्ठा scsi_transport_ढाँचा *
-srp_attach_transport(काष्ठा srp_function_ढाँचा *ft)
-अणु
-	पूर्णांक count;
-	काष्ठा srp_पूर्णांकernal *i;
+struct scsi_transport_template *
+srp_attach_transport(struct srp_function_template *ft)
+{
+	int count;
+	struct srp_internal *i;
 
-	i = kzalloc(माप(*i), GFP_KERNEL);
-	अगर (!i)
-		वापस शून्य;
+	i = kzalloc(sizeof(*i), GFP_KERNEL);
+	if (!i)
+		return NULL;
 
-	i->t.host_size = माप(काष्ठा srp_host_attrs);
+	i->t.host_size = sizeof(struct srp_host_attrs);
 	i->t.host_attrs.ac.attrs = &i->host_attrs[0];
 	i->t.host_attrs.ac.class = &srp_host_class.class;
 	i->t.host_attrs.ac.match = srp_host_match;
-	i->host_attrs[0] = शून्य;
-	transport_container_रेजिस्टर(&i->t.host_attrs);
+	i->host_attrs[0] = NULL;
+	transport_container_register(&i->t.host_attrs);
 
 	i->rport_attr_cont.ac.attrs = &i->rport_attrs[0];
 	i->rport_attr_cont.ac.class = &srp_rport_class.class;
@@ -833,69 +832,69 @@ srp_attach_transport(काष्ठा srp_function_ढाँचा *ft)
 	count = 0;
 	i->rport_attrs[count++] = &dev_attr_port_id;
 	i->rport_attrs[count++] = &dev_attr_roles;
-	अगर (ft->has_rport_state) अणु
+	if (ft->has_rport_state) {
 		i->rport_attrs[count++] = &dev_attr_state;
-		i->rport_attrs[count++] = &dev_attr_fast_io_fail_पंचांगo;
-		i->rport_attrs[count++] = &dev_attr_dev_loss_पंचांगo;
-	पूर्ण
-	अगर (ft->reconnect) अणु
+		i->rport_attrs[count++] = &dev_attr_fast_io_fail_tmo;
+		i->rport_attrs[count++] = &dev_attr_dev_loss_tmo;
+	}
+	if (ft->reconnect) {
 		i->rport_attrs[count++] = &dev_attr_reconnect_delay;
 		i->rport_attrs[count++] = &dev_attr_failed_reconnects;
-	पूर्ण
-	अगर (ft->rport_delete)
+	}
+	if (ft->rport_delete)
 		i->rport_attrs[count++] = &dev_attr_delete;
-	i->rport_attrs[count++] = शून्य;
+	i->rport_attrs[count++] = NULL;
 	BUG_ON(count > ARRAY_SIZE(i->rport_attrs));
 
-	transport_container_रेजिस्टर(&i->rport_attr_cont);
+	transport_container_register(&i->rport_attr_cont);
 
 	i->f = ft;
 
-	वापस &i->t;
-पूर्ण
+	return &i->t;
+}
 EXPORT_SYMBOL_GPL(srp_attach_transport);
 
 /**
- * srp_release_transport  -  release SRP transport ढाँचा instance
- * @t:		transport ढाँचा instance
+ * srp_release_transport  -  release SRP transport template instance
+ * @t:		transport template instance
  */
-व्योम srp_release_transport(काष्ठा scsi_transport_ढाँचा *t)
-अणु
-	काष्ठा srp_पूर्णांकernal *i = to_srp_पूर्णांकernal(t);
+void srp_release_transport(struct scsi_transport_template *t)
+{
+	struct srp_internal *i = to_srp_internal(t);
 
-	transport_container_unरेजिस्टर(&i->t.host_attrs);
-	transport_container_unरेजिस्टर(&i->rport_attr_cont);
+	transport_container_unregister(&i->t.host_attrs);
+	transport_container_unregister(&i->rport_attr_cont);
 
-	kमुक्त(i);
-पूर्ण
+	kfree(i);
+}
 EXPORT_SYMBOL_GPL(srp_release_transport);
 
-अटल __init पूर्णांक srp_transport_init(व्योम)
-अणु
-	पूर्णांक ret;
+static __init int srp_transport_init(void)
+{
+	int ret;
 
-	ret = transport_class_रेजिस्टर(&srp_host_class);
-	अगर (ret)
-		वापस ret;
-	ret = transport_class_रेजिस्टर(&srp_rport_class);
-	अगर (ret)
-		जाओ unरेजिस्टर_host_class;
+	ret = transport_class_register(&srp_host_class);
+	if (ret)
+		return ret;
+	ret = transport_class_register(&srp_rport_class);
+	if (ret)
+		goto unregister_host_class;
 
-	वापस 0;
-unरेजिस्टर_host_class:
-	transport_class_unरेजिस्टर(&srp_host_class);
-	वापस ret;
-पूर्ण
+	return 0;
+unregister_host_class:
+	transport_class_unregister(&srp_host_class);
+	return ret;
+}
 
-अटल व्योम __निकास srp_transport_निकास(व्योम)
-अणु
-	transport_class_unरेजिस्टर(&srp_host_class);
-	transport_class_unरेजिस्टर(&srp_rport_class);
-पूर्ण
+static void __exit srp_transport_exit(void)
+{
+	transport_class_unregister(&srp_host_class);
+	transport_class_unregister(&srp_rport_class);
+}
 
 MODULE_AUTHOR("FUJITA Tomonori");
 MODULE_DESCRIPTION("SRP Transport Attributes");
 MODULE_LICENSE("GPL");
 
 module_init(srp_transport_init);
-module_निकास(srp_transport_निकास);
+module_exit(srp_transport_exit);

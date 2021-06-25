@@ -1,232 +1,231 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#समावेश <stdbool.h>
-#समावेश <linux/सीमा.स>
-#समावेश <sys/ptrace.h>
-#समावेश <sys/types.h>
-#समावेश <sys/mman.h>
-#समावेश <unistd.h>
-#समावेश <मानकपन.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <poll.h>
-#समावेश <मानककोष.स>
-#समावेश <sys/inotअगरy.h>
-#समावेश <माला.स>
-#समावेश <sys/रुको.h>
+/* SPDX-License-Identifier: GPL-2.0 */
+#include <stdbool.h>
+#include <linux/limits.h>
+#include <sys/ptrace.h>
+#include <sys/types.h>
+#include <sys/mman.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <errno.h>
+#include <poll.h>
+#include <stdlib.h>
+#include <sys/inotify.h>
+#include <string.h>
+#include <sys/wait.h>
 
-#समावेश "../kselftest.h"
-#समावेश "cgroup_util.h"
+#include "../kselftest.h"
+#include "cgroup_util.h"
 
-#घोषणा DEBUG
-#अगर_घोषित DEBUG
-#घोषणा debug(args...) ख_लिखो(मानक_त्रुटि, args)
-#अन्यथा
-#घोषणा debug(args...)
-#पूर्ण_अगर
+#define DEBUG
+#ifdef DEBUG
+#define debug(args...) fprintf(stderr, args)
+#else
+#define debug(args...)
+#endif
 
 /*
- * Check अगर the cgroup is frozen by looking at the cgroup.events::frozen value.
+ * Check if the cgroup is frozen by looking at the cgroup.events::frozen value.
  */
-अटल पूर्णांक cg_check_frozen(स्थिर अक्षर *cgroup, bool frozen)
-अणु
-	अगर (frozen) अणु
-		अगर (cg_पढ़ो_म_माला(cgroup, "cgroup.events", "frozen 1") != 0) अणु
+static int cg_check_frozen(const char *cgroup, bool frozen)
+{
+	if (frozen) {
+		if (cg_read_strstr(cgroup, "cgroup.events", "frozen 1") != 0) {
 			debug("Cgroup %s isn't frozen\n", cgroup);
-			वापस -1;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return -1;
+		}
+	} else {
 		/*
 		 * Check the cgroup.events::frozen value.
 		 */
-		अगर (cg_पढ़ो_म_माला(cgroup, "cgroup.events", "frozen 0") != 0) अणु
+		if (cg_read_strstr(cgroup, "cgroup.events", "frozen 0") != 0) {
 			debug("Cgroup %s is frozen\n", cgroup);
-			वापस -1;
-		पूर्ण
-	पूर्ण
+			return -1;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Freeze the given cgroup.
  */
-अटल पूर्णांक cg_मुक्तze_noरुको(स्थिर अक्षर *cgroup, bool मुक्तze)
-अणु
-	वापस cg_ग_लिखो(cgroup, "cgroup.freeze", मुक्तze ? "1" : "0");
-पूर्ण
+static int cg_freeze_nowait(const char *cgroup, bool freeze)
+{
+	return cg_write(cgroup, "cgroup.freeze", freeze ? "1" : "0");
+}
 
 /*
- * Prepare क्रम रुकोing on cgroup.events file.
+ * Prepare for waiting on cgroup.events file.
  */
-अटल पूर्णांक cg_prepare_क्रम_रुको(स्थिर अक्षर *cgroup)
-अणु
-	पूर्णांक fd, ret = -1;
+static int cg_prepare_for_wait(const char *cgroup)
+{
+	int fd, ret = -1;
 
-	fd = inotअगरy_init1(0);
-	अगर (fd == -1) अणु
+	fd = inotify_init1(0);
+	if (fd == -1) {
 		debug("Error: inotify_init1() failed\n");
-		वापस fd;
-	पूर्ण
+		return fd;
+	}
 
-	ret = inotअगरy_add_watch(fd, cg_control(cgroup, "cgroup.events"),
+	ret = inotify_add_watch(fd, cg_control(cgroup, "cgroup.events"),
 				IN_MODIFY);
-	अगर (ret == -1) अणु
+	if (ret == -1) {
 		debug("Error: inotify_add_watch() failed\n");
-		बंद(fd);
+		close(fd);
 		fd = -1;
-	पूर्ण
+	}
 
-	वापस fd;
-पूर्ण
+	return fd;
+}
 
 /*
- * Wait क्रम an event. If there are no events क्रम 10 seconds,
+ * Wait for an event. If there are no events for 10 seconds,
  * treat this an error.
  */
-अटल पूर्णांक cg_रुको_क्रम(पूर्णांक fd)
-अणु
-	पूर्णांक ret = -1;
-	काष्ठा pollfd fds = अणु
+static int cg_wait_for(int fd)
+{
+	int ret = -1;
+	struct pollfd fds = {
 		.fd = fd,
 		.events = POLLIN,
-	पूर्ण;
+	};
 
-	जबतक (true) अणु
+	while (true) {
 		ret = poll(&fds, 1, 10000);
 
-		अगर (ret == -1) अणु
-			अगर (त्रुटि_सं == EINTR)
-				जारी;
+		if (ret == -1) {
+			if (errno == EINTR)
+				continue;
 			debug("Error: poll() failed\n");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (ret > 0 && fds.revents & POLLIN) अणु
+		if (ret > 0 && fds.revents & POLLIN) {
 			ret = 0;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Attach a task to the given cgroup and रुको क्रम a cgroup frozen event.
+ * Attach a task to the given cgroup and wait for a cgroup frozen event.
  * All transient events (e.g. populated) are ignored.
  */
-अटल पूर्णांक cg_enter_and_रुको_क्रम_frozen(स्थिर अक्षर *cgroup, पूर्णांक pid,
+static int cg_enter_and_wait_for_frozen(const char *cgroup, int pid,
 					bool frozen)
-अणु
-	पूर्णांक fd, ret = -1;
-	पूर्णांक attempts;
+{
+	int fd, ret = -1;
+	int attempts;
 
-	fd = cg_prepare_क्रम_रुको(cgroup);
-	अगर (fd < 0)
-		वापस fd;
+	fd = cg_prepare_for_wait(cgroup);
+	if (fd < 0)
+		return fd;
 
 	ret = cg_enter(cgroup, pid);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	क्रम (attempts = 0; attempts < 10; attempts++) अणु
-		ret = cg_रुको_क्रम(fd);
-		अगर (ret)
-			अवरोध;
+	for (attempts = 0; attempts < 10; attempts++) {
+		ret = cg_wait_for(fd);
+		if (ret)
+			break;
 
 		ret = cg_check_frozen(cgroup, frozen);
-		अगर (ret)
-			जारी;
-	पूर्ण
+		if (ret)
+			continue;
+	}
 
 out:
-	बंद(fd);
-	वापस ret;
-पूर्ण
+	close(fd);
+	return ret;
+}
 
 /*
- * Freeze the given cgroup and रुको क्रम the inotअगरy संकेत.
+ * Freeze the given cgroup and wait for the inotify signal.
  * If there are no events in 10 seconds, treat this as an error.
  * Then check that the cgroup is in the desired state.
  */
-अटल पूर्णांक cg_मुक्तze_रुको(स्थिर अक्षर *cgroup, bool मुक्तze)
-अणु
-	पूर्णांक fd, ret = -1;
+static int cg_freeze_wait(const char *cgroup, bool freeze)
+{
+	int fd, ret = -1;
 
-	fd = cg_prepare_क्रम_रुको(cgroup);
-	अगर (fd < 0)
-		वापस fd;
+	fd = cg_prepare_for_wait(cgroup);
+	if (fd < 0)
+		return fd;
 
-	ret = cg_मुक्तze_noरुको(cgroup, मुक्तze);
-	अगर (ret) अणु
+	ret = cg_freeze_nowait(cgroup, freeze);
+	if (ret) {
 		debug("Error: cg_freeze_nowait() failed\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = cg_रुको_क्रम(fd);
-	अगर (ret)
-		जाओ out;
+	ret = cg_wait_for(fd);
+	if (ret)
+		goto out;
 
-	ret = cg_check_frozen(cgroup, मुक्तze);
+	ret = cg_check_frozen(cgroup, freeze);
 out:
-	बंद(fd);
-	वापस ret;
-पूर्ण
+	close(fd);
+	return ret;
+}
 
 /*
  * A simple process running in a sleep loop until being
  * re-parented.
  */
-अटल पूर्णांक child_fn(स्थिर अक्षर *cgroup, व्योम *arg)
-अणु
-	पूर्णांक ppid = getppid();
+static int child_fn(const char *cgroup, void *arg)
+{
+	int ppid = getppid();
 
-	जबतक (getppid() == ppid)
+	while (getppid() == ppid)
 		usleep(1000);
 
-	वापस getppid() == ppid;
-पूर्ण
+	return getppid() == ppid;
+}
 
 /*
- * A simple test क्रम the cgroup मुक्तzer: populated the cgroup with 100
- * running processes and मुक्तze it. Then unमुक्तze it. Then it समाप्तs all
+ * A simple test for the cgroup freezer: populated the cgroup with 100
+ * running processes and freeze it. Then unfreeze it. Then it kills all
  * processes and destroys the cgroup.
  */
-अटल पूर्णांक test_cgमुक्तzer_simple(स्थिर अक्षर *root)
-अणु
-	पूर्णांक ret = KSFT_FAIL;
-	अक्षर *cgroup = शून्य;
-	पूर्णांक i;
+static int test_cgfreezer_simple(const char *root)
+{
+	int ret = KSFT_FAIL;
+	char *cgroup = NULL;
+	int i;
 
 	cgroup = cg_name(root, "cg_test_simple");
-	अगर (!cgroup)
-		जाओ cleanup;
+	if (!cgroup)
+		goto cleanup;
 
-	अगर (cg_create(cgroup))
-		जाओ cleanup;
+	if (cg_create(cgroup))
+		goto cleanup;
 
-	क्रम (i = 0; i < 100; i++)
-		cg_run_noरुको(cgroup, child_fn, शून्य);
+	for (i = 0; i < 100; i++)
+		cg_run_nowait(cgroup, child_fn, NULL);
 
-	अगर (cg_रुको_क्रम_proc_count(cgroup, 100))
-		जाओ cleanup;
+	if (cg_wait_for_proc_count(cgroup, 100))
+		goto cleanup;
 
-	अगर (cg_check_frozen(cgroup, false))
-		जाओ cleanup;
+	if (cg_check_frozen(cgroup, false))
+		goto cleanup;
 
-	अगर (cg_मुक्तze_रुको(cgroup, true))
-		जाओ cleanup;
+	if (cg_freeze_wait(cgroup, true))
+		goto cleanup;
 
-	अगर (cg_मुक्तze_रुको(cgroup, false))
-		जाओ cleanup;
+	if (cg_freeze_wait(cgroup, false))
+		goto cleanup;
 
 	ret = KSFT_PASS;
 
 cleanup:
-	अगर (cgroup)
+	if (cgroup)
 		cg_destroy(cgroup);
-	मुक्त(cgroup);
-	वापस ret;
-पूर्ण
+	free(cgroup);
+	return ret;
+}
 
 /*
  * The test creates the following hierarchy:
@@ -241,666 +240,666 @@ cleanup:
  *      H
  *
  * with a process in C, H and 3 processes in K.
- * Then it tries to मुक्तze and unमुक्तze the whole tree.
+ * Then it tries to freeze and unfreeze the whole tree.
  */
-अटल पूर्णांक test_cgमुक्तzer_tree(स्थिर अक्षर *root)
-अणु
-	अक्षर *cgroup[10] = अणु0पूर्ण;
-	पूर्णांक ret = KSFT_FAIL;
-	पूर्णांक i;
+static int test_cgfreezer_tree(const char *root)
+{
+	char *cgroup[10] = {0};
+	int ret = KSFT_FAIL;
+	int i;
 
 	cgroup[0] = cg_name(root, "cg_test_tree_A");
-	अगर (!cgroup[0])
-		जाओ cleanup;
+	if (!cgroup[0])
+		goto cleanup;
 
 	cgroup[1] = cg_name(cgroup[0], "B");
-	अगर (!cgroup[1])
-		जाओ cleanup;
+	if (!cgroup[1])
+		goto cleanup;
 
 	cgroup[2] = cg_name(cgroup[1], "C");
-	अगर (!cgroup[2])
-		जाओ cleanup;
+	if (!cgroup[2])
+		goto cleanup;
 
 	cgroup[3] = cg_name(cgroup[1], "D");
-	अगर (!cgroup[3])
-		जाओ cleanup;
+	if (!cgroup[3])
+		goto cleanup;
 
 	cgroup[4] = cg_name(cgroup[0], "E");
-	अगर (!cgroup[4])
-		जाओ cleanup;
+	if (!cgroup[4])
+		goto cleanup;
 
 	cgroup[5] = cg_name(cgroup[4], "F");
-	अगर (!cgroup[5])
-		जाओ cleanup;
+	if (!cgroup[5])
+		goto cleanup;
 
 	cgroup[6] = cg_name(cgroup[5], "G");
-	अगर (!cgroup[6])
-		जाओ cleanup;
+	if (!cgroup[6])
+		goto cleanup;
 
 	cgroup[7] = cg_name(cgroup[6], "H");
-	अगर (!cgroup[7])
-		जाओ cleanup;
+	if (!cgroup[7])
+		goto cleanup;
 
 	cgroup[8] = cg_name(cgroup[0], "I");
-	अगर (!cgroup[8])
-		जाओ cleanup;
+	if (!cgroup[8])
+		goto cleanup;
 
 	cgroup[9] = cg_name(cgroup[0], "K");
-	अगर (!cgroup[9])
-		जाओ cleanup;
+	if (!cgroup[9])
+		goto cleanup;
 
-	क्रम (i = 0; i < 10; i++)
-		अगर (cg_create(cgroup[i]))
-			जाओ cleanup;
+	for (i = 0; i < 10; i++)
+		if (cg_create(cgroup[i]))
+			goto cleanup;
 
-	cg_run_noरुको(cgroup[2], child_fn, शून्य);
-	cg_run_noरुको(cgroup[7], child_fn, शून्य);
-	cg_run_noरुको(cgroup[9], child_fn, शून्य);
-	cg_run_noरुको(cgroup[9], child_fn, शून्य);
-	cg_run_noरुको(cgroup[9], child_fn, शून्य);
+	cg_run_nowait(cgroup[2], child_fn, NULL);
+	cg_run_nowait(cgroup[7], child_fn, NULL);
+	cg_run_nowait(cgroup[9], child_fn, NULL);
+	cg_run_nowait(cgroup[9], child_fn, NULL);
+	cg_run_nowait(cgroup[9], child_fn, NULL);
 
 	/*
 	 * Wait until all child processes will enter
 	 * corresponding cgroups.
 	 */
 
-	अगर (cg_रुको_क्रम_proc_count(cgroup[2], 1) ||
-	    cg_रुको_क्रम_proc_count(cgroup[7], 1) ||
-	    cg_रुको_क्रम_proc_count(cgroup[9], 3))
-		जाओ cleanup;
+	if (cg_wait_for_proc_count(cgroup[2], 1) ||
+	    cg_wait_for_proc_count(cgroup[7], 1) ||
+	    cg_wait_for_proc_count(cgroup[9], 3))
+		goto cleanup;
 
 	/*
 	 * Freeze B.
 	 */
-	अगर (cg_मुक्तze_रुको(cgroup[1], true))
-		जाओ cleanup;
+	if (cg_freeze_wait(cgroup[1], true))
+		goto cleanup;
 
 	/*
 	 * Freeze F.
 	 */
-	अगर (cg_मुक्तze_रुको(cgroup[5], true))
-		जाओ cleanup;
+	if (cg_freeze_wait(cgroup[5], true))
+		goto cleanup;
 
 	/*
 	 * Freeze G.
 	 */
-	अगर (cg_मुक्तze_रुको(cgroup[6], true))
-		जाओ cleanup;
+	if (cg_freeze_wait(cgroup[6], true))
+		goto cleanup;
 
 	/*
 	 * Check that A and E are not frozen.
 	 */
-	अगर (cg_check_frozen(cgroup[0], false))
-		जाओ cleanup;
+	if (cg_check_frozen(cgroup[0], false))
+		goto cleanup;
 
-	अगर (cg_check_frozen(cgroup[4], false))
-		जाओ cleanup;
+	if (cg_check_frozen(cgroup[4], false))
+		goto cleanup;
 
 	/*
 	 * Freeze A. Check that A, B and E are frozen.
 	 */
-	अगर (cg_मुक्तze_रुको(cgroup[0], true))
-		जाओ cleanup;
+	if (cg_freeze_wait(cgroup[0], true))
+		goto cleanup;
 
-	अगर (cg_check_frozen(cgroup[1], true))
-		जाओ cleanup;
+	if (cg_check_frozen(cgroup[1], true))
+		goto cleanup;
 
-	अगर (cg_check_frozen(cgroup[4], true))
-		जाओ cleanup;
+	if (cg_check_frozen(cgroup[4], true))
+		goto cleanup;
 
 	/*
-	 * Unमुक्तze B, F and G
+	 * Unfreeze B, F and G
 	 */
-	अगर (cg_मुक्तze_noरुको(cgroup[1], false))
-		जाओ cleanup;
+	if (cg_freeze_nowait(cgroup[1], false))
+		goto cleanup;
 
-	अगर (cg_मुक्तze_noरुको(cgroup[5], false))
-		जाओ cleanup;
+	if (cg_freeze_nowait(cgroup[5], false))
+		goto cleanup;
 
-	अगर (cg_मुक्तze_noरुको(cgroup[6], false))
-		जाओ cleanup;
+	if (cg_freeze_nowait(cgroup[6], false))
+		goto cleanup;
 
 	/*
 	 * Check that C and H are still frozen.
 	 */
-	अगर (cg_check_frozen(cgroup[2], true))
-		जाओ cleanup;
+	if (cg_check_frozen(cgroup[2], true))
+		goto cleanup;
 
-	अगर (cg_check_frozen(cgroup[7], true))
-		जाओ cleanup;
+	if (cg_check_frozen(cgroup[7], true))
+		goto cleanup;
 
 	/*
-	 * Unमुक्तze A. Check that A, C and K are not frozen.
+	 * Unfreeze A. Check that A, C and K are not frozen.
 	 */
-	अगर (cg_मुक्तze_रुको(cgroup[0], false))
-		जाओ cleanup;
+	if (cg_freeze_wait(cgroup[0], false))
+		goto cleanup;
 
-	अगर (cg_check_frozen(cgroup[2], false))
-		जाओ cleanup;
+	if (cg_check_frozen(cgroup[2], false))
+		goto cleanup;
 
-	अगर (cg_check_frozen(cgroup[9], false))
-		जाओ cleanup;
+	if (cg_check_frozen(cgroup[9], false))
+		goto cleanup;
 
 	ret = KSFT_PASS;
 
 cleanup:
-	क्रम (i = 9; i >= 0 && cgroup[i]; i--) अणु
+	for (i = 9; i >= 0 && cgroup[i]; i--) {
 		cg_destroy(cgroup[i]);
-		मुक्त(cgroup[i]);
-	पूर्ण
+		free(cgroup[i]);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * A विभाजन bomb emulator.
+ * A fork bomb emulator.
  */
-अटल पूर्णांक विभाजनbomb_fn(स्थिर अक्षर *cgroup, व्योम *arg)
-अणु
-	पूर्णांक ppid;
+static int forkbomb_fn(const char *cgroup, void *arg)
+{
+	int ppid;
 
-	विभाजन();
-	विभाजन();
+	fork();
+	fork();
 
 	ppid = getppid();
 
-	जबतक (getppid() == ppid)
+	while (getppid() == ppid)
 		usleep(1000);
 
-	वापस getppid() == ppid;
-पूर्ण
+	return getppid() == ppid;
+}
 
 /*
- * The test runs a विभाजन bomb in a cgroup and tries to मुक्तze it.
- * Then it समाप्तs all processes and checks that cgroup isn't populated
+ * The test runs a fork bomb in a cgroup and tries to freeze it.
+ * Then it kills all processes and checks that cgroup isn't populated
  * anymore.
  */
-अटल पूर्णांक test_cgमुक्तzer_विभाजनbomb(स्थिर अक्षर *root)
-अणु
-	पूर्णांक ret = KSFT_FAIL;
-	अक्षर *cgroup = शून्य;
+static int test_cgfreezer_forkbomb(const char *root)
+{
+	int ret = KSFT_FAIL;
+	char *cgroup = NULL;
 
 	cgroup = cg_name(root, "cg_forkbomb_test");
-	अगर (!cgroup)
-		जाओ cleanup;
+	if (!cgroup)
+		goto cleanup;
 
-	अगर (cg_create(cgroup))
-		जाओ cleanup;
+	if (cg_create(cgroup))
+		goto cleanup;
 
-	cg_run_noरुको(cgroup, विभाजनbomb_fn, शून्य);
+	cg_run_nowait(cgroup, forkbomb_fn, NULL);
 
 	usleep(100000);
 
-	अगर (cg_मुक्तze_रुको(cgroup, true))
-		जाओ cleanup;
+	if (cg_freeze_wait(cgroup, true))
+		goto cleanup;
 
-	अगर (cg_समाप्तall(cgroup))
-		जाओ cleanup;
+	if (cg_killall(cgroup))
+		goto cleanup;
 
-	अगर (cg_रुको_क्रम_proc_count(cgroup, 0))
-		जाओ cleanup;
+	if (cg_wait_for_proc_count(cgroup, 0))
+		goto cleanup;
 
 	ret = KSFT_PASS;
 
 cleanup:
-	अगर (cgroup)
+	if (cgroup)
 		cg_destroy(cgroup);
-	मुक्त(cgroup);
-	वापस ret;
-पूर्ण
+	free(cgroup);
+	return ret;
+}
 
 /*
- * The test creates a cgroups and मुक्तzes it. Then it creates a child cgroup
+ * The test creates a cgroups and freezes it. Then it creates a child cgroup
  * and populates it with a task. After that it checks that the child cgroup
- * is frozen and the parent cgroup reमुख्यs frozen too.
+ * is frozen and the parent cgroup remains frozen too.
  */
-अटल पूर्णांक test_cgमुक्तzer_सूची_गढ़ो(स्थिर अक्षर *root)
-अणु
-	पूर्णांक ret = KSFT_FAIL;
-	अक्षर *parent, *child = शून्य;
-	पूर्णांक pid;
+static int test_cgfreezer_mkdir(const char *root)
+{
+	int ret = KSFT_FAIL;
+	char *parent, *child = NULL;
+	int pid;
 
 	parent = cg_name(root, "cg_test_mkdir_A");
-	अगर (!parent)
-		जाओ cleanup;
+	if (!parent)
+		goto cleanup;
 
 	child = cg_name(parent, "cg_test_mkdir_B");
-	अगर (!child)
-		जाओ cleanup;
+	if (!child)
+		goto cleanup;
 
-	अगर (cg_create(parent))
-		जाओ cleanup;
+	if (cg_create(parent))
+		goto cleanup;
 
-	अगर (cg_मुक्तze_रुको(parent, true))
-		जाओ cleanup;
+	if (cg_freeze_wait(parent, true))
+		goto cleanup;
 
-	अगर (cg_create(child))
-		जाओ cleanup;
+	if (cg_create(child))
+		goto cleanup;
 
-	pid = cg_run_noरुको(child, child_fn, शून्य);
-	अगर (pid < 0)
-		जाओ cleanup;
+	pid = cg_run_nowait(child, child_fn, NULL);
+	if (pid < 0)
+		goto cleanup;
 
-	अगर (cg_रुको_क्रम_proc_count(child, 1))
-		जाओ cleanup;
+	if (cg_wait_for_proc_count(child, 1))
+		goto cleanup;
 
-	अगर (cg_check_frozen(child, true))
-		जाओ cleanup;
+	if (cg_check_frozen(child, true))
+		goto cleanup;
 
-	अगर (cg_check_frozen(parent, true))
-		जाओ cleanup;
+	if (cg_check_frozen(parent, true))
+		goto cleanup;
 
 	ret = KSFT_PASS;
 
 cleanup:
-	अगर (child)
+	if (child)
 		cg_destroy(child);
-	मुक्त(child);
-	अगर (parent)
+	free(child);
+	if (parent)
 		cg_destroy(parent);
-	मुक्त(parent);
-	वापस ret;
-पूर्ण
+	free(parent);
+	return ret;
+}
 
 /*
- * The test creates two nested cgroups, मुक्तzes the parent
- * and हटाओs the child. Then it checks that the parent cgroup
- * reमुख्यs frozen and it's possible to create a new child
- * without unमुक्तzing. The new child is frozen too.
+ * The test creates two nested cgroups, freezes the parent
+ * and removes the child. Then it checks that the parent cgroup
+ * remains frozen and it's possible to create a new child
+ * without unfreezing. The new child is frozen too.
  */
-अटल पूर्णांक test_cgमुक्तzer_सूची_हटाओ(स्थिर अक्षर *root)
-अणु
-	पूर्णांक ret = KSFT_FAIL;
-	अक्षर *parent, *child = शून्य;
+static int test_cgfreezer_rmdir(const char *root)
+{
+	int ret = KSFT_FAIL;
+	char *parent, *child = NULL;
 
 	parent = cg_name(root, "cg_test_rmdir_A");
-	अगर (!parent)
-		जाओ cleanup;
+	if (!parent)
+		goto cleanup;
 
 	child = cg_name(parent, "cg_test_rmdir_B");
-	अगर (!child)
-		जाओ cleanup;
+	if (!child)
+		goto cleanup;
 
-	अगर (cg_create(parent))
-		जाओ cleanup;
+	if (cg_create(parent))
+		goto cleanup;
 
-	अगर (cg_create(child))
-		जाओ cleanup;
+	if (cg_create(child))
+		goto cleanup;
 
-	अगर (cg_मुक्तze_रुको(parent, true))
-		जाओ cleanup;
+	if (cg_freeze_wait(parent, true))
+		goto cleanup;
 
-	अगर (cg_destroy(child))
-		जाओ cleanup;
+	if (cg_destroy(child))
+		goto cleanup;
 
-	अगर (cg_check_frozen(parent, true))
-		जाओ cleanup;
+	if (cg_check_frozen(parent, true))
+		goto cleanup;
 
-	अगर (cg_create(child))
-		जाओ cleanup;
+	if (cg_create(child))
+		goto cleanup;
 
-	अगर (cg_check_frozen(child, true))
-		जाओ cleanup;
+	if (cg_check_frozen(child, true))
+		goto cleanup;
 
 	ret = KSFT_PASS;
 
 cleanup:
-	अगर (child)
+	if (child)
 		cg_destroy(child);
-	मुक्त(child);
-	अगर (parent)
+	free(child);
+	if (parent)
 		cg_destroy(parent);
-	मुक्त(parent);
-	वापस ret;
-पूर्ण
+	free(parent);
+	return ret;
+}
 
 /*
  * The test creates two cgroups: A and B, runs a process in A
- * and perक्रमms several migrations:
+ * and performs several migrations:
  * 1) A (running) -> B (frozen)
  * 2) B (frozen) -> A (running)
  * 3) A (frozen) -> B (frozen)
  *
  * On each step it checks the actual state of both cgroups.
  */
-अटल पूर्णांक test_cgमुक्तzer_migrate(स्थिर अक्षर *root)
-अणु
-	पूर्णांक ret = KSFT_FAIL;
-	अक्षर *cgroup[2] = अणु0पूर्ण;
-	पूर्णांक pid;
+static int test_cgfreezer_migrate(const char *root)
+{
+	int ret = KSFT_FAIL;
+	char *cgroup[2] = {0};
+	int pid;
 
 	cgroup[0] = cg_name(root, "cg_test_migrate_A");
-	अगर (!cgroup[0])
-		जाओ cleanup;
+	if (!cgroup[0])
+		goto cleanup;
 
 	cgroup[1] = cg_name(root, "cg_test_migrate_B");
-	अगर (!cgroup[1])
-		जाओ cleanup;
+	if (!cgroup[1])
+		goto cleanup;
 
-	अगर (cg_create(cgroup[0]))
-		जाओ cleanup;
+	if (cg_create(cgroup[0]))
+		goto cleanup;
 
-	अगर (cg_create(cgroup[1]))
-		जाओ cleanup;
+	if (cg_create(cgroup[1]))
+		goto cleanup;
 
-	pid = cg_run_noरुको(cgroup[0], child_fn, शून्य);
-	अगर (pid < 0)
-		जाओ cleanup;
+	pid = cg_run_nowait(cgroup[0], child_fn, NULL);
+	if (pid < 0)
+		goto cleanup;
 
-	अगर (cg_रुको_क्रम_proc_count(cgroup[0], 1))
-		जाओ cleanup;
+	if (cg_wait_for_proc_count(cgroup[0], 1))
+		goto cleanup;
 
 	/*
 	 * Migrate from A (running) to B (frozen)
 	 */
-	अगर (cg_मुक्तze_रुको(cgroup[1], true))
-		जाओ cleanup;
+	if (cg_freeze_wait(cgroup[1], true))
+		goto cleanup;
 
-	अगर (cg_enter_and_रुको_क्रम_frozen(cgroup[1], pid, true))
-		जाओ cleanup;
+	if (cg_enter_and_wait_for_frozen(cgroup[1], pid, true))
+		goto cleanup;
 
-	अगर (cg_check_frozen(cgroup[0], false))
-		जाओ cleanup;
+	if (cg_check_frozen(cgroup[0], false))
+		goto cleanup;
 
 	/*
 	 * Migrate from B (frozen) to A (running)
 	 */
-	अगर (cg_enter_and_रुको_क्रम_frozen(cgroup[0], pid, false))
-		जाओ cleanup;
+	if (cg_enter_and_wait_for_frozen(cgroup[0], pid, false))
+		goto cleanup;
 
-	अगर (cg_check_frozen(cgroup[1], true))
-		जाओ cleanup;
+	if (cg_check_frozen(cgroup[1], true))
+		goto cleanup;
 
 	/*
 	 * Migrate from A (frozen) to B (frozen)
 	 */
-	अगर (cg_मुक्तze_रुको(cgroup[0], true))
-		जाओ cleanup;
+	if (cg_freeze_wait(cgroup[0], true))
+		goto cleanup;
 
-	अगर (cg_enter_and_रुको_क्रम_frozen(cgroup[1], pid, true))
-		जाओ cleanup;
+	if (cg_enter_and_wait_for_frozen(cgroup[1], pid, true))
+		goto cleanup;
 
-	अगर (cg_check_frozen(cgroup[0], true))
-		जाओ cleanup;
+	if (cg_check_frozen(cgroup[0], true))
+		goto cleanup;
 
 	ret = KSFT_PASS;
 
 cleanup:
-	अगर (cgroup[0])
+	if (cgroup[0])
 		cg_destroy(cgroup[0]);
-	मुक्त(cgroup[0]);
-	अगर (cgroup[1])
+	free(cgroup[0]);
+	if (cgroup[1])
 		cg_destroy(cgroup[1]);
-	मुक्त(cgroup[1]);
-	वापस ret;
-पूर्ण
+	free(cgroup[1]);
+	return ret;
+}
 
 /*
  * The test checks that ptrace works with a tracing process in a frozen cgroup.
  */
-अटल पूर्णांक test_cgमुक्तzer_ptrace(स्थिर अक्षर *root)
-अणु
-	पूर्णांक ret = KSFT_FAIL;
-	अक्षर *cgroup = शून्य;
+static int test_cgfreezer_ptrace(const char *root)
+{
+	int ret = KSFT_FAIL;
+	char *cgroup = NULL;
 	siginfo_t siginfo;
-	पूर्णांक pid;
+	int pid;
 
 	cgroup = cg_name(root, "cg_test_ptrace");
-	अगर (!cgroup)
-		जाओ cleanup;
+	if (!cgroup)
+		goto cleanup;
 
-	अगर (cg_create(cgroup))
-		जाओ cleanup;
+	if (cg_create(cgroup))
+		goto cleanup;
 
-	pid = cg_run_noरुको(cgroup, child_fn, शून्य);
-	अगर (pid < 0)
-		जाओ cleanup;
+	pid = cg_run_nowait(cgroup, child_fn, NULL);
+	if (pid < 0)
+		goto cleanup;
 
-	अगर (cg_रुको_क्रम_proc_count(cgroup, 1))
-		जाओ cleanup;
+	if (cg_wait_for_proc_count(cgroup, 1))
+		goto cleanup;
 
-	अगर (cg_मुक्तze_रुको(cgroup, true))
-		जाओ cleanup;
+	if (cg_freeze_wait(cgroup, true))
+		goto cleanup;
 
-	अगर (ptrace(PTRACE_SEIZE, pid, शून्य, शून्य))
-		जाओ cleanup;
+	if (ptrace(PTRACE_SEIZE, pid, NULL, NULL))
+		goto cleanup;
 
-	अगर (ptrace(PTRACE_INTERRUPT, pid, शून्य, शून्य))
-		जाओ cleanup;
+	if (ptrace(PTRACE_INTERRUPT, pid, NULL, NULL))
+		goto cleanup;
 
-	रुकोpid(pid, शून्य, 0);
+	waitpid(pid, NULL, 0);
 
 	/*
-	 * Cgroup has to reमुख्य frozen, however the test task
+	 * Cgroup has to remain frozen, however the test task
 	 * is in traced state.
 	 */
-	अगर (cg_check_frozen(cgroup, true))
-		जाओ cleanup;
+	if (cg_check_frozen(cgroup, true))
+		goto cleanup;
 
-	अगर (ptrace(PTRACE_GETSIGINFO, pid, शून्य, &siginfo))
-		जाओ cleanup;
+	if (ptrace(PTRACE_GETSIGINFO, pid, NULL, &siginfo))
+		goto cleanup;
 
-	अगर (ptrace(PTRACE_DETACH, pid, शून्य, शून्य))
-		जाओ cleanup;
+	if (ptrace(PTRACE_DETACH, pid, NULL, NULL))
+		goto cleanup;
 
-	अगर (cg_check_frozen(cgroup, true))
-		जाओ cleanup;
+	if (cg_check_frozen(cgroup, true))
+		goto cleanup;
 
 	ret = KSFT_PASS;
 
 cleanup:
-	अगर (cgroup)
+	if (cgroup)
 		cg_destroy(cgroup);
-	मुक्त(cgroup);
-	वापस ret;
-पूर्ण
+	free(cgroup);
+	return ret;
+}
 
 /*
- * Check अगर the process is stopped.
+ * Check if the process is stopped.
  */
-अटल पूर्णांक proc_check_stopped(पूर्णांक pid)
-अणु
-	अक्षर buf[PAGE_SIZE];
-	पूर्णांक len;
+static int proc_check_stopped(int pid)
+{
+	char buf[PAGE_SIZE];
+	int len;
 
-	len = proc_पढ़ो_text(pid, 0, "stat", buf, माप(buf));
-	अगर (len == -1) अणु
+	len = proc_read_text(pid, 0, "stat", buf, sizeof(buf));
+	if (len == -1) {
 		debug("Can't get %d stat\n", pid);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	अगर (म_माला(buf, "(test_freezer) T ") == शून्य) अणु
+	if (strstr(buf, "(test_freezer) T ") == NULL) {
 		debug("Process %d in the unexpected state: %s\n", pid, buf);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Test that it's possible to मुक्तze a cgroup with a stopped process.
+ * Test that it's possible to freeze a cgroup with a stopped process.
  */
-अटल पूर्णांक test_cgमुक्तzer_stopped(स्थिर अक्षर *root)
-अणु
-	पूर्णांक pid, ret = KSFT_FAIL;
-	अक्षर *cgroup = शून्य;
+static int test_cgfreezer_stopped(const char *root)
+{
+	int pid, ret = KSFT_FAIL;
+	char *cgroup = NULL;
 
 	cgroup = cg_name(root, "cg_test_stopped");
-	अगर (!cgroup)
-		जाओ cleanup;
+	if (!cgroup)
+		goto cleanup;
 
-	अगर (cg_create(cgroup))
-		जाओ cleanup;
+	if (cg_create(cgroup))
+		goto cleanup;
 
-	pid = cg_run_noरुको(cgroup, child_fn, शून्य);
+	pid = cg_run_nowait(cgroup, child_fn, NULL);
 
-	अगर (cg_रुको_क्रम_proc_count(cgroup, 1))
-		जाओ cleanup;
+	if (cg_wait_for_proc_count(cgroup, 1))
+		goto cleanup;
 
-	अगर (समाप्त(pid, SIGSTOP))
-		जाओ cleanup;
+	if (kill(pid, SIGSTOP))
+		goto cleanup;
 
-	अगर (cg_check_frozen(cgroup, false))
-		जाओ cleanup;
+	if (cg_check_frozen(cgroup, false))
+		goto cleanup;
 
-	अगर (cg_मुक्तze_रुको(cgroup, true))
-		जाओ cleanup;
+	if (cg_freeze_wait(cgroup, true))
+		goto cleanup;
 
-	अगर (cg_मुक्तze_रुको(cgroup, false))
-		जाओ cleanup;
+	if (cg_freeze_wait(cgroup, false))
+		goto cleanup;
 
-	अगर (proc_check_stopped(pid))
-		जाओ cleanup;
+	if (proc_check_stopped(pid))
+		goto cleanup;
 
 	ret = KSFT_PASS;
 
 cleanup:
-	अगर (cgroup)
+	if (cgroup)
 		cg_destroy(cgroup);
-	मुक्त(cgroup);
-	वापस ret;
-पूर्ण
+	free(cgroup);
+	return ret;
+}
 
 /*
- * Test that it's possible to मुक्तze a cgroup with a ptraced process.
+ * Test that it's possible to freeze a cgroup with a ptraced process.
  */
-अटल पूर्णांक test_cgमुक्तzer_ptraced(स्थिर अक्षर *root)
-अणु
-	पूर्णांक pid, ret = KSFT_FAIL;
-	अक्षर *cgroup = शून्य;
+static int test_cgfreezer_ptraced(const char *root)
+{
+	int pid, ret = KSFT_FAIL;
+	char *cgroup = NULL;
 	siginfo_t siginfo;
 
 	cgroup = cg_name(root, "cg_test_ptraced");
-	अगर (!cgroup)
-		जाओ cleanup;
+	if (!cgroup)
+		goto cleanup;
 
-	अगर (cg_create(cgroup))
-		जाओ cleanup;
+	if (cg_create(cgroup))
+		goto cleanup;
 
-	pid = cg_run_noरुको(cgroup, child_fn, शून्य);
+	pid = cg_run_nowait(cgroup, child_fn, NULL);
 
-	अगर (cg_रुको_क्रम_proc_count(cgroup, 1))
-		जाओ cleanup;
+	if (cg_wait_for_proc_count(cgroup, 1))
+		goto cleanup;
 
-	अगर (ptrace(PTRACE_SEIZE, pid, शून्य, शून्य))
-		जाओ cleanup;
+	if (ptrace(PTRACE_SEIZE, pid, NULL, NULL))
+		goto cleanup;
 
-	अगर (ptrace(PTRACE_INTERRUPT, pid, शून्य, शून्य))
-		जाओ cleanup;
+	if (ptrace(PTRACE_INTERRUPT, pid, NULL, NULL))
+		goto cleanup;
 
-	रुकोpid(pid, शून्य, 0);
+	waitpid(pid, NULL, 0);
 
-	अगर (cg_check_frozen(cgroup, false))
-		जाओ cleanup;
+	if (cg_check_frozen(cgroup, false))
+		goto cleanup;
 
-	अगर (cg_मुक्तze_रुको(cgroup, true))
-		जाओ cleanup;
+	if (cg_freeze_wait(cgroup, true))
+		goto cleanup;
 
 	/*
 	 * cg_check_frozen(cgroup, true) will fail here,
 	 * because the task in in the TRACEd state.
 	 */
-	अगर (cg_मुक्तze_रुको(cgroup, false))
-		जाओ cleanup;
+	if (cg_freeze_wait(cgroup, false))
+		goto cleanup;
 
-	अगर (ptrace(PTRACE_GETSIGINFO, pid, शून्य, &siginfo))
-		जाओ cleanup;
+	if (ptrace(PTRACE_GETSIGINFO, pid, NULL, &siginfo))
+		goto cleanup;
 
-	अगर (ptrace(PTRACE_DETACH, pid, शून्य, शून्य))
-		जाओ cleanup;
+	if (ptrace(PTRACE_DETACH, pid, NULL, NULL))
+		goto cleanup;
 
 	ret = KSFT_PASS;
 
 cleanup:
-	अगर (cgroup)
+	if (cgroup)
 		cg_destroy(cgroup);
-	मुक्त(cgroup);
-	वापस ret;
-पूर्ण
+	free(cgroup);
+	return ret;
+}
 
-अटल पूर्णांक vविभाजन_fn(स्थिर अक्षर *cgroup, व्योम *arg)
-अणु
-	पूर्णांक pid = vविभाजन();
+static int vfork_fn(const char *cgroup, void *arg)
+{
+	int pid = vfork();
 
-	अगर (pid == 0)
-		जबतक (true)
+	if (pid == 0)
+		while (true)
 			sleep(1);
 
-	वापस pid;
-पूर्ण
+	return pid;
+}
 
 /*
- * Test that it's possible to मुक्तze a cgroup with a process,
- * which called vविभाजन() and is रुकोing क्रम a child.
+ * Test that it's possible to freeze a cgroup with a process,
+ * which called vfork() and is waiting for a child.
  */
-अटल पूर्णांक test_cgमुक्तzer_vविभाजन(स्थिर अक्षर *root)
-अणु
-	पूर्णांक ret = KSFT_FAIL;
-	अक्षर *cgroup = शून्य;
+static int test_cgfreezer_vfork(const char *root)
+{
+	int ret = KSFT_FAIL;
+	char *cgroup = NULL;
 
 	cgroup = cg_name(root, "cg_test_vfork");
-	अगर (!cgroup)
-		जाओ cleanup;
+	if (!cgroup)
+		goto cleanup;
 
-	अगर (cg_create(cgroup))
-		जाओ cleanup;
+	if (cg_create(cgroup))
+		goto cleanup;
 
-	cg_run_noरुको(cgroup, vविभाजन_fn, शून्य);
+	cg_run_nowait(cgroup, vfork_fn, NULL);
 
-	अगर (cg_रुको_क्रम_proc_count(cgroup, 2))
-		जाओ cleanup;
+	if (cg_wait_for_proc_count(cgroup, 2))
+		goto cleanup;
 
-	अगर (cg_मुक्तze_रुको(cgroup, true))
-		जाओ cleanup;
+	if (cg_freeze_wait(cgroup, true))
+		goto cleanup;
 
 	ret = KSFT_PASS;
 
 cleanup:
-	अगर (cgroup)
+	if (cgroup)
 		cg_destroy(cgroup);
-	मुक्त(cgroup);
-	वापस ret;
-पूर्ण
+	free(cgroup);
+	return ret;
+}
 
-#घोषणा T(x) अणु x, #x पूर्ण
-काष्ठा cgमुक्तzer_test अणु
-	पूर्णांक (*fn)(स्थिर अक्षर *root);
-	स्थिर अक्षर *name;
-पूर्ण tests[] = अणु
-	T(test_cgमुक्तzer_simple),
-	T(test_cgमुक्तzer_tree),
-	T(test_cgमुक्तzer_विभाजनbomb),
-	T(test_cgमुक्तzer_सूची_गढ़ो),
-	T(test_cgमुक्तzer_सूची_हटाओ),
-	T(test_cgमुक्तzer_migrate),
-	T(test_cgमुक्तzer_ptrace),
-	T(test_cgमुक्तzer_stopped),
-	T(test_cgमुक्तzer_ptraced),
-	T(test_cgमुक्तzer_vविभाजन),
-पूर्ण;
-#अघोषित T
+#define T(x) { x, #x }
+struct cgfreezer_test {
+	int (*fn)(const char *root);
+	const char *name;
+} tests[] = {
+	T(test_cgfreezer_simple),
+	T(test_cgfreezer_tree),
+	T(test_cgfreezer_forkbomb),
+	T(test_cgfreezer_mkdir),
+	T(test_cgfreezer_rmdir),
+	T(test_cgfreezer_migrate),
+	T(test_cgfreezer_ptrace),
+	T(test_cgfreezer_stopped),
+	T(test_cgfreezer_ptraced),
+	T(test_cgfreezer_vfork),
+};
+#undef T
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
-	अक्षर root[PATH_MAX];
-	पूर्णांक i, ret = निकास_सफल;
+int main(int argc, char *argv[])
+{
+	char root[PATH_MAX];
+	int i, ret = EXIT_SUCCESS;
 
-	अगर (cg_find_unअगरied_root(root, माप(root)))
-		ksft_निकास_skip("cgroup v2 isn't mounted\n");
-	क्रम (i = 0; i < ARRAY_SIZE(tests); i++) अणु
-		चयन (tests[i].fn(root)) अणु
-		हाल KSFT_PASS:
+	if (cg_find_unified_root(root, sizeof(root)))
+		ksft_exit_skip("cgroup v2 isn't mounted\n");
+	for (i = 0; i < ARRAY_SIZE(tests); i++) {
+		switch (tests[i].fn(root)) {
+		case KSFT_PASS:
 			ksft_test_result_pass("%s\n", tests[i].name);
-			अवरोध;
-		हाल KSFT_SKIP:
+			break;
+		case KSFT_SKIP:
 			ksft_test_result_skip("%s\n", tests[i].name);
-			अवरोध;
-		शेष:
-			ret = निकास_त्रुटि;
+			break;
+		default:
+			ret = EXIT_FAILURE;
 			ksft_test_result_fail("%s\n", tests[i].name);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

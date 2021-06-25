@@ -1,77 +1,76 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright 2015, Michael Neuling, IBM Corp.
  *
  * Test the kernel's signal delievery code to ensure that we don't
- * trelaim twice in the kernel संकेत delivery code.  This can happen
- * अगर we trigger a संकेत when in a transaction and the stack poपूर्णांकer
+ * trelaim twice in the kernel signal delivery code.  This can happen
+ * if we trigger a signal when in a transaction and the stack pointer
  * is bogus.
  *
- * This test हाल रेजिस्टरs a SEGV handler, sets the stack poपूर्णांकer
- * (r1) to शून्य, starts a transaction and then generates a SEGV.  The
- * SEGV should be handled but we निकास here as the stack poपूर्णांकer is
- * invalid and hance we can't sigवापस.  We only need to check that
- * this flow करोesn't crash the kernel.
+ * This test case registers a SEGV handler, sets the stack pointer
+ * (r1) to NULL, starts a transaction and then generates a SEGV.  The
+ * SEGV should be handled but we exit here as the stack pointer is
+ * invalid and hance we can't sigreturn.  We only need to check that
+ * this flow doesn't crash the kernel.
  */
 
-#समावेश <unistd.h>
-#समावेश <sys/types.h>
-#समावेश <sys/रुको.h>
-#समावेश <मानककोष.स>
-#समावेश <मानकपन.स>
-#समावेश <संकेत.स>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <signal.h>
 
-#समावेश "utils.h"
-#समावेश "tm.h"
+#include "utils.h"
+#include "tm.h"
 
-व्योम संकेत_segv(पूर्णांक signum)
-अणु
+void signal_segv(int signum)
+{
 	/* This should never actually run since stack is foobar */
-	निकास(1);
-पूर्ण
+	exit(1);
+}
 
-पूर्णांक पंचांग_संकेत_stack()
-अणु
-	पूर्णांक pid;
+int tm_signal_stack()
+{
+	int pid;
 
-	SKIP_IF(!have_hपंचांग());
+	SKIP_IF(!have_htm());
 
-	pid = विभाजन();
-	अगर (pid < 0)
-		निकास(1);
+	pid = fork();
+	if (pid < 0)
+		exit(1);
 
-	अगर (pid) अणु /* Parent */
+	if (pid) { /* Parent */
 		/*
-		 * It's likely the whole machine will crash here so अगर
-		 * the child ever निकासs, we are good.
+		 * It's likely the whole machine will crash here so if
+		 * the child ever exits, we are good.
 		 */
-		रुको(शून्य);
-		वापस 0;
-	पूर्ण
+		wait(NULL);
+		return 0;
+	}
 
 	/*
 	 * The flow here is:
-	 * 1) रेजिस्टर a संकेत handler (so संकेत delievery occurs)
-	 * 2) make stack poपूर्णांकer (r1) = शून्य
+	 * 1) register a signal handler (so signal delievery occurs)
+	 * 2) make stack pointer (r1) = NULL
 	 * 3) start transaction
 	 * 4) cause segv
 	 */
-	अगर (संकेत(संक_अंश, संकेत_segv) == संक_त्रुटि)
-		निकास(1);
-	यंत्र अस्थिर("li 1, 0 ;"		/* stack ptr == शून्य */
+	if (signal(SIGSEGV, signal_segv) == SIG_ERR)
+		exit(1);
+	asm volatile("li 1, 0 ;"		/* stack ptr == NULL */
 		     "1:"
 		     "tbegin.;"
-		     "beq 1b ;"			/* retry क्रमever */
+		     "beq 1b ;"			/* retry forever */
 		     "tsuspend.;"
 		     "ld 2, 0(1) ;"		/* trigger segv" */
 		     : : : "memory");
 
 	/* This should never get here due to above segv */
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-पूर्णांक मुख्य(व्योम)
-अणु
-	वापस test_harness(पंचांग_संकेत_stack, "tm_signal_stack");
-पूर्ण
+int main(void)
+{
+	return test_harness(tm_signal_stack, "tm_signal_stack");
+}

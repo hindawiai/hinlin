@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only WITH Linux-syscall-note */
+/* SPDX-License-Identifier: GPL-2.0-only WITH Linux-syscall-note */
 /*
  * Copyright (C) 2012 ARM Ltd.
- * Copyright (C) 2015 Regents of the University of Calअगरornia
+ * Copyright (C) 2015 Regents of the University of California
  */
 
-#अगर_अघोषित _UAPI_ASM_RISCV_BITSPERLONG_H
-#घोषणा _UAPI_ASM_RISCV_BITSPERLONG_H
+#ifndef _UAPI_ASM_RISCV_BITSPERLONG_H
+#define _UAPI_ASM_RISCV_BITSPERLONG_H
 
-#घोषणा __BITS_PER_LONG (__SIZखातापूर्ण_POINTER__ * 8)
+#define __BITS_PER_LONG (__SIZEOF_POINTER__ * 8)
 
-#समावेश <यंत्र-generic/bitsperदीर्घ.h>
+#include <asm-generic/bitsperlong.h>
 
-#पूर्ण_अगर /* _UAPI_ASM_RISCV_BITSPERLONG_H */
+#endif /* _UAPI_ASM_RISCV_BITSPERLONG_H */

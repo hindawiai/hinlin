@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * linux/drivers/video/s3c2410fb.h
  *	Copyright (c) 2004 Arnaud Patard
@@ -6,44 +5,44 @@
  *  S3C2410 LCD Framebuffer Driver
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the मुख्य directory of this archive क्रम
+ * License.  See the file COPYING in the main directory of this archive for
  * more details.
  *
 */
 
-#अगर_अघोषित __S3C2410FB_H
-#घोषणा __S3C2410FB_H
+#ifndef __S3C2410FB_H
+#define __S3C2410FB_H
 
-क्रमागत s3c_drv_type अणु
+enum s3c_drv_type {
 	DRV_S3C2410,
 	DRV_S3C2412,
-पूर्ण;
+};
 
-काष्ठा s3c2410fb_info अणु
-	काष्ठा device		*dev;
-	काष्ठा clk		*clk;
+struct s3c2410fb_info {
+	struct device		*dev;
+	struct clk		*clk;
 
-	काष्ठा resource		*mem;
-	व्योम __iomem		*io;
-	व्योम __iomem		*irq_base;
+	struct resource		*mem;
+	void __iomem		*io;
+	void __iomem		*irq_base;
 
-	क्रमागत s3c_drv_type	drv_type;
-	काष्ठा s3c2410fb_hw	regs;
+	enum s3c_drv_type	drv_type;
+	struct s3c2410fb_hw	regs;
 
-	अचिन्हित दीर्घ		clk_rate;
-	अचिन्हित पूर्णांक		palette_पढ़ोy;
+	unsigned long		clk_rate;
+	unsigned int		palette_ready;
 
-#अगर_घोषित CONFIG_ARM_S3C24XX_CPUFREQ
-	काष्ठा notअगरier_block	freq_transition;
-#पूर्ण_अगर
+#ifdef CONFIG_ARM_S3C24XX_CPUFREQ
+	struct notifier_block	freq_transition;
+#endif
 
-	/* keep these रेजिस्टरs in हाल we need to re-ग_लिखो palette */
+	/* keep these registers in case we need to re-write palette */
 	u32			palette_buffer[256];
-	u32			pseuकरो_pal[16];
-पूर्ण;
+	u32			pseudo_pal[16];
+};
 
-#घोषणा PALETTE_BUFF_CLEAR (0x80000000)	/* entry is clear/invalid */
+#define PALETTE_BUFF_CLEAR (0x80000000)	/* entry is clear/invalid */
 
-पूर्णांक s3c2410fb_init(व्योम);
+int s3c2410fb_init(void);
 
-#पूर्ण_अगर
+#endif

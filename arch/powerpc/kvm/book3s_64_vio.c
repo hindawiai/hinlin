@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *
  * Copyright 2010 Paul Mackerras, IBM Corp. <paulus@au1.ibm.com>
@@ -7,260 +6,260 @@
  * Copyright 2016 Alexey Kardashevskiy, IBM Corporation <aik@au1.ibm.com>
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/kvm.h>
-#समावेश <linux/kvm_host.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/gfp.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/hugetlb.h>
-#समावेश <linux/list.h>
-#समावेश <linux/anon_inodes.h>
-#समावेश <linux/iommu.h>
-#समावेश <linux/file.h>
-#समावेश <linux/mm.h>
+#include <linux/types.h>
+#include <linux/string.h>
+#include <linux/kvm.h>
+#include <linux/kvm_host.h>
+#include <linux/highmem.h>
+#include <linux/gfp.h>
+#include <linux/slab.h>
+#include <linux/sched/signal.h>
+#include <linux/hugetlb.h>
+#include <linux/list.h>
+#include <linux/anon_inodes.h>
+#include <linux/iommu.h>
+#include <linux/file.h>
+#include <linux/mm.h>
 
-#समावेश <यंत्र/kvm_ppc.h>
-#समावेश <यंत्र/kvm_book3s.h>
-#समावेश <यंत्र/book3s/64/mmu-hash.h>
-#समावेश <यंत्र/hvcall.h>
-#समावेश <यंत्र/synch.h>
-#समावेश <यंत्र/ppc-opcode.h>
-#समावेश <यंत्र/udbg.h>
-#समावेश <यंत्र/iommu.h>
-#समावेश <यंत्र/tce.h>
-#समावेश <यंत्र/mmu_context.h>
+#include <asm/kvm_ppc.h>
+#include <asm/kvm_book3s.h>
+#include <asm/book3s/64/mmu-hash.h>
+#include <asm/hvcall.h>
+#include <asm/synch.h>
+#include <asm/ppc-opcode.h>
+#include <asm/udbg.h>
+#include <asm/iommu.h>
+#include <asm/tce.h>
+#include <asm/mmu_context.h>
 
-अटल अचिन्हित दीर्घ kvmppc_tce_pages(अचिन्हित दीर्घ iommu_pages)
-अणु
-	वापस ALIGN(iommu_pages * माप(u64), PAGE_SIZE) / PAGE_SIZE;
-पूर्ण
+static unsigned long kvmppc_tce_pages(unsigned long iommu_pages)
+{
+	return ALIGN(iommu_pages * sizeof(u64), PAGE_SIZE) / PAGE_SIZE;
+}
 
-अटल अचिन्हित दीर्घ kvmppc_stt_pages(अचिन्हित दीर्घ tce_pages)
-अणु
-	अचिन्हित दीर्घ stt_bytes = माप(काष्ठा kvmppc_spapr_tce_table) +
-			(tce_pages * माप(काष्ठा page *));
+static unsigned long kvmppc_stt_pages(unsigned long tce_pages)
+{
+	unsigned long stt_bytes = sizeof(struct kvmppc_spapr_tce_table) +
+			(tce_pages * sizeof(struct page *));
 
-	वापस tce_pages + ALIGN(stt_bytes, PAGE_SIZE) / PAGE_SIZE;
-पूर्ण
+	return tce_pages + ALIGN(stt_bytes, PAGE_SIZE) / PAGE_SIZE;
+}
 
-अटल व्योम kvm_spapr_tce_iommu_table_मुक्त(काष्ठा rcu_head *head)
-अणु
-	काष्ठा kvmppc_spapr_tce_iommu_table *stit = container_of(head,
-			काष्ठा kvmppc_spapr_tce_iommu_table, rcu);
+static void kvm_spapr_tce_iommu_table_free(struct rcu_head *head)
+{
+	struct kvmppc_spapr_tce_iommu_table *stit = container_of(head,
+			struct kvmppc_spapr_tce_iommu_table, rcu);
 
 	iommu_tce_table_put(stit->tbl);
 
-	kमुक्त(stit);
-पूर्ण
+	kfree(stit);
+}
 
-अटल व्योम kvm_spapr_tce_liobn_put(काष्ठा kref *kref)
-अणु
-	काष्ठा kvmppc_spapr_tce_iommu_table *stit = container_of(kref,
-			काष्ठा kvmppc_spapr_tce_iommu_table, kref);
+static void kvm_spapr_tce_liobn_put(struct kref *kref)
+{
+	struct kvmppc_spapr_tce_iommu_table *stit = container_of(kref,
+			struct kvmppc_spapr_tce_iommu_table, kref);
 
 	list_del_rcu(&stit->next);
 
-	call_rcu(&stit->rcu, kvm_spapr_tce_iommu_table_मुक्त);
-पूर्ण
+	call_rcu(&stit->rcu, kvm_spapr_tce_iommu_table_free);
+}
 
-बाह्य व्योम kvm_spapr_tce_release_iommu_group(काष्ठा kvm *kvm,
-		काष्ठा iommu_group *grp)
-अणु
-	पूर्णांक i;
-	काष्ठा kvmppc_spapr_tce_table *stt;
-	काष्ठा kvmppc_spapr_tce_iommu_table *stit, *पंचांगp;
-	काष्ठा iommu_table_group *table_group = शून्य;
+extern void kvm_spapr_tce_release_iommu_group(struct kvm *kvm,
+		struct iommu_group *grp)
+{
+	int i;
+	struct kvmppc_spapr_tce_table *stt;
+	struct kvmppc_spapr_tce_iommu_table *stit, *tmp;
+	struct iommu_table_group *table_group = NULL;
 
-	rcu_पढ़ो_lock();
-	list_क्रम_each_entry_rcu(stt, &kvm->arch.spapr_tce_tables, list) अणु
+	rcu_read_lock();
+	list_for_each_entry_rcu(stt, &kvm->arch.spapr_tce_tables, list) {
 
 		table_group = iommu_group_get_iommudata(grp);
-		अगर (WARN_ON(!table_group))
-			जारी;
+		if (WARN_ON(!table_group))
+			continue;
 
-		list_क्रम_each_entry_safe(stit, पंचांगp, &stt->iommu_tables, next) अणु
-			क्रम (i = 0; i < IOMMU_TABLE_GROUP_MAX_TABLES; ++i) अणु
-				अगर (table_group->tables[i] != stit->tbl)
-					जारी;
+		list_for_each_entry_safe(stit, tmp, &stt->iommu_tables, next) {
+			for (i = 0; i < IOMMU_TABLE_GROUP_MAX_TABLES; ++i) {
+				if (table_group->tables[i] != stit->tbl)
+					continue;
 
 				kref_put(&stit->kref, kvm_spapr_tce_liobn_put);
-			पूर्ण
-		पूर्ण
+			}
+		}
 		cond_resched_rcu();
-	पूर्ण
-	rcu_पढ़ो_unlock();
-पूर्ण
+	}
+	rcu_read_unlock();
+}
 
-बाह्य दीर्घ kvm_spapr_tce_attach_iommu_group(काष्ठा kvm *kvm, पूर्णांक tablefd,
-		काष्ठा iommu_group *grp)
-अणु
-	काष्ठा kvmppc_spapr_tce_table *stt = शून्य;
+extern long kvm_spapr_tce_attach_iommu_group(struct kvm *kvm, int tablefd,
+		struct iommu_group *grp)
+{
+	struct kvmppc_spapr_tce_table *stt = NULL;
 	bool found = false;
-	काष्ठा iommu_table *tbl = शून्य;
-	काष्ठा iommu_table_group *table_group;
-	दीर्घ i;
-	काष्ठा kvmppc_spapr_tce_iommu_table *stit;
-	काष्ठा fd f;
+	struct iommu_table *tbl = NULL;
+	struct iommu_table_group *table_group;
+	long i;
+	struct kvmppc_spapr_tce_iommu_table *stit;
+	struct fd f;
 
 	f = fdget(tablefd);
-	अगर (!f.file)
-		वापस -EBADF;
+	if (!f.file)
+		return -EBADF;
 
-	rcu_पढ़ो_lock();
-	list_क्रम_each_entry_rcu(stt, &kvm->arch.spapr_tce_tables, list) अणु
-		अगर (stt == f.file->निजी_data) अणु
+	rcu_read_lock();
+	list_for_each_entry_rcu(stt, &kvm->arch.spapr_tce_tables, list) {
+		if (stt == f.file->private_data) {
 			found = true;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	rcu_पढ़ो_unlock();
+			break;
+		}
+	}
+	rcu_read_unlock();
 
 	fdput(f);
 
-	अगर (!found)
-		वापस -EINVAL;
+	if (!found)
+		return -EINVAL;
 
 	table_group = iommu_group_get_iommudata(grp);
-	अगर (WARN_ON(!table_group))
-		वापस -EFAULT;
+	if (WARN_ON(!table_group))
+		return -EFAULT;
 
-	क्रम (i = 0; i < IOMMU_TABLE_GROUP_MAX_TABLES; ++i) अणु
-		काष्ठा iommu_table *tblपंचांगp = table_group->tables[i];
+	for (i = 0; i < IOMMU_TABLE_GROUP_MAX_TABLES; ++i) {
+		struct iommu_table *tbltmp = table_group->tables[i];
 
-		अगर (!tblपंचांगp)
-			जारी;
+		if (!tbltmp)
+			continue;
 		/* Make sure hardware table parameters are compatible */
-		अगर ((tblपंचांगp->it_page_shअगरt <= stt->page_shअगरt) &&
-				(tblपंचांगp->it_offset << tblपंचांगp->it_page_shअगरt ==
-				 stt->offset << stt->page_shअगरt) &&
-				(tblपंचांगp->it_size << tblपंचांगp->it_page_shअगरt >=
-				 stt->size << stt->page_shअगरt)) अणु
+		if ((tbltmp->it_page_shift <= stt->page_shift) &&
+				(tbltmp->it_offset << tbltmp->it_page_shift ==
+				 stt->offset << stt->page_shift) &&
+				(tbltmp->it_size << tbltmp->it_page_shift >=
+				 stt->size << stt->page_shift)) {
 			/*
-			 * Reference the table to aव्योम races with
-			 * add/हटाओ DMA winकरोws.
+			 * Reference the table to avoid races with
+			 * add/remove DMA windows.
 			 */
-			tbl = iommu_tce_table_get(tblपंचांगp);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (!tbl)
-		वापस -EINVAL;
+			tbl = iommu_tce_table_get(tbltmp);
+			break;
+		}
+	}
+	if (!tbl)
+		return -EINVAL;
 
-	rcu_पढ़ो_lock();
-	list_क्रम_each_entry_rcu(stit, &stt->iommu_tables, next) अणु
-		अगर (tbl != stit->tbl)
-			जारी;
+	rcu_read_lock();
+	list_for_each_entry_rcu(stit, &stt->iommu_tables, next) {
+		if (tbl != stit->tbl)
+			continue;
 
-		अगर (!kref_get_unless_zero(&stit->kref)) अणु
+		if (!kref_get_unless_zero(&stit->kref)) {
 			/* stit is being destroyed */
 			iommu_tce_table_put(tbl);
-			rcu_पढ़ो_unlock();
-			वापस -ENOTTY;
-		पूर्ण
+			rcu_read_unlock();
+			return -ENOTTY;
+		}
 		/*
-		 * The table is alपढ़ोy known to this KVM, we just increased
-		 * its KVM reference counter and can वापस.
+		 * The table is already known to this KVM, we just increased
+		 * its KVM reference counter and can return.
 		 */
-		rcu_पढ़ो_unlock();
-		वापस 0;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+		rcu_read_unlock();
+		return 0;
+	}
+	rcu_read_unlock();
 
-	stit = kzalloc(माप(*stit), GFP_KERNEL);
-	अगर (!stit) अणु
+	stit = kzalloc(sizeof(*stit), GFP_KERNEL);
+	if (!stit) {
 		iommu_tce_table_put(tbl);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	stit->tbl = tbl;
 	kref_init(&stit->kref);
 
 	list_add_rcu(&stit->next, &stt->iommu_tables);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम release_spapr_tce_table(काष्ठा rcu_head *head)
-अणु
-	काष्ठा kvmppc_spapr_tce_table *stt = container_of(head,
-			काष्ठा kvmppc_spapr_tce_table, rcu);
-	अचिन्हित दीर्घ i, npages = kvmppc_tce_pages(stt->size);
+static void release_spapr_tce_table(struct rcu_head *head)
+{
+	struct kvmppc_spapr_tce_table *stt = container_of(head,
+			struct kvmppc_spapr_tce_table, rcu);
+	unsigned long i, npages = kvmppc_tce_pages(stt->size);
 
-	क्रम (i = 0; i < npages; i++)
-		अगर (stt->pages[i])
-			__मुक्त_page(stt->pages[i]);
+	for (i = 0; i < npages; i++)
+		if (stt->pages[i])
+			__free_page(stt->pages[i]);
 
-	kमुक्त(stt);
-पूर्ण
+	kfree(stt);
+}
 
-अटल काष्ठा page *kvm_spapr_get_tce_page(काष्ठा kvmppc_spapr_tce_table *stt,
-		अचिन्हित दीर्घ sttpage)
-अणु
-	काष्ठा page *page = stt->pages[sttpage];
+static struct page *kvm_spapr_get_tce_page(struct kvmppc_spapr_tce_table *stt,
+		unsigned long sttpage)
+{
+	struct page *page = stt->pages[sttpage];
 
-	अगर (page)
-		वापस page;
+	if (page)
+		return page;
 
 	mutex_lock(&stt->alloc_lock);
 	page = stt->pages[sttpage];
-	अगर (!page) अणु
+	if (!page) {
 		page = alloc_page(GFP_KERNEL | __GFP_ZERO);
 		WARN_ON_ONCE(!page);
-		अगर (page)
+		if (page)
 			stt->pages[sttpage] = page;
-	पूर्ण
+	}
 	mutex_unlock(&stt->alloc_lock);
 
-	वापस page;
-पूर्ण
+	return page;
+}
 
-अटल vm_fault_t kvm_spapr_tce_fault(काष्ठा vm_fault *vmf)
-अणु
-	काष्ठा kvmppc_spapr_tce_table *stt = vmf->vma->vm_file->निजी_data;
-	काष्ठा page *page;
+static vm_fault_t kvm_spapr_tce_fault(struct vm_fault *vmf)
+{
+	struct kvmppc_spapr_tce_table *stt = vmf->vma->vm_file->private_data;
+	struct page *page;
 
-	अगर (vmf->pgoff >= kvmppc_tce_pages(stt->size))
-		वापस VM_FAULT_SIGBUS;
+	if (vmf->pgoff >= kvmppc_tce_pages(stt->size))
+		return VM_FAULT_SIGBUS;
 
 	page = kvm_spapr_get_tce_page(stt, vmf->pgoff);
-	अगर (!page)
-		वापस VM_FAULT_OOM;
+	if (!page)
+		return VM_FAULT_OOM;
 
 	get_page(page);
 	vmf->page = page;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा vm_operations_काष्ठा kvm_spapr_tce_vm_ops = अणु
+static const struct vm_operations_struct kvm_spapr_tce_vm_ops = {
 	.fault = kvm_spapr_tce_fault,
-पूर्ण;
+};
 
-अटल पूर्णांक kvm_spapr_tce_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
-अणु
+static int kvm_spapr_tce_mmap(struct file *file, struct vm_area_struct *vma)
+{
 	vma->vm_ops = &kvm_spapr_tce_vm_ops;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक kvm_spapr_tce_release(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	काष्ठा kvmppc_spapr_tce_table *stt = filp->निजी_data;
-	काष्ठा kvmppc_spapr_tce_iommu_table *stit, *पंचांगp;
-	काष्ठा kvm *kvm = stt->kvm;
+static int kvm_spapr_tce_release(struct inode *inode, struct file *filp)
+{
+	struct kvmppc_spapr_tce_table *stt = filp->private_data;
+	struct kvmppc_spapr_tce_iommu_table *stit, *tmp;
+	struct kvm *kvm = stt->kvm;
 
 	mutex_lock(&kvm->lock);
 	list_del_rcu(&stt->list);
 	mutex_unlock(&kvm->lock);
 
-	list_क्रम_each_entry_safe(stit, पंचांगp, &stt->iommu_tables, next) अणु
-		WARN_ON(!kref_पढ़ो(&stit->kref));
-		जबतक (1) अणु
-			अगर (kref_put(&stit->kref, kvm_spapr_tce_liobn_put))
-				अवरोध;
-		पूर्ण
-	पूर्ण
+	list_for_each_entry_safe(stit, tmp, &stt->iommu_tables, next) {
+		WARN_ON(!kref_read(&stit->kref));
+		while (1) {
+			if (kref_put(&stit->kref, kvm_spapr_tce_liobn_put))
+				break;
+		}
+	}
 
 	account_locked_vm(kvm->mm,
 		kvmppc_stt_pages(kvmppc_tce_pages(stt->size)), false);
@@ -269,40 +268,40 @@
 
 	call_rcu(&stt->rcu, release_spapr_tce_table);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations kvm_spapr_tce_fops = अणु
+static const struct file_operations kvm_spapr_tce_fops = {
 	.mmap           = kvm_spapr_tce_mmap,
 	.release	= kvm_spapr_tce_release,
-पूर्ण;
+};
 
-दीर्घ kvm_vm_ioctl_create_spapr_tce(काष्ठा kvm *kvm,
-				   काष्ठा kvm_create_spapr_tce_64 *args)
-अणु
-	काष्ठा kvmppc_spapr_tce_table *stt = शून्य;
-	काष्ठा kvmppc_spapr_tce_table *siter;
-	काष्ठा mm_काष्ठा *mm = kvm->mm;
-	अचिन्हित दीर्घ npages, size = args->size;
-	पूर्णांक ret;
+long kvm_vm_ioctl_create_spapr_tce(struct kvm *kvm,
+				   struct kvm_create_spapr_tce_64 *args)
+{
+	struct kvmppc_spapr_tce_table *stt = NULL;
+	struct kvmppc_spapr_tce_table *siter;
+	struct mm_struct *mm = kvm->mm;
+	unsigned long npages, size = args->size;
+	int ret;
 
-	अगर (!args->size || args->page_shअगरt < 12 || args->page_shअगरt > 34 ||
-		(args->offset + args->size > (ULदीर्घ_उच्च >> args->page_shअगरt)))
-		वापस -EINVAL;
+	if (!args->size || args->page_shift < 12 || args->page_shift > 34 ||
+		(args->offset + args->size > (ULLONG_MAX >> args->page_shift)))
+		return -EINVAL;
 
 	npages = kvmppc_tce_pages(size);
 	ret = account_locked_vm(mm, kvmppc_stt_pages(npages), true);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = -ENOMEM;
-	stt = kzalloc(माप(*stt) + npages * माप(काष्ठा page *),
+	stt = kzalloc(sizeof(*stt) + npages * sizeof(struct page *),
 		      GFP_KERNEL);
-	अगर (!stt)
-		जाओ fail_acct;
+	if (!stt)
+		goto fail_acct;
 
 	stt->liobn = args->liobn;
-	stt->page_shअगरt = args->page_shअगरt;
+	stt->page_shift = args->page_shift;
 	stt->offset = args->offset;
 	stt->size = size;
 	stt->kvm = kvm;
@@ -313,444 +312,444 @@
 
 	/* Check this LIOBN hasn't been previously allocated */
 	ret = 0;
-	list_क्रम_each_entry(siter, &kvm->arch.spapr_tce_tables, list) अणु
-		अगर (siter->liobn == args->liobn) अणु
+	list_for_each_entry(siter, &kvm->arch.spapr_tce_tables, list) {
+		if (siter->liobn == args->liobn) {
 			ret = -EBUSY;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	kvm_get_kvm(kvm);
-	अगर (!ret)
+	if (!ret)
 		ret = anon_inode_getfd("kvm-spapr-tce", &kvm_spapr_tce_fops,
 				       stt, O_RDWR | O_CLOEXEC);
 
-	अगर (ret >= 0)
+	if (ret >= 0)
 		list_add_rcu(&stt->list, &kvm->arch.spapr_tce_tables);
-	अन्यथा
+	else
 		kvm_put_kvm_no_destroy(kvm);
 
 	mutex_unlock(&kvm->lock);
 
-	अगर (ret >= 0)
-		वापस ret;
+	if (ret >= 0)
+		return ret;
 
-	kमुक्त(stt);
+	kfree(stt);
  fail_acct:
 	account_locked_vm(mm, kvmppc_stt_pages(npages), false);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल दीर्घ kvmppc_tce_to_ua(काष्ठा kvm *kvm, अचिन्हित दीर्घ tce,
-		अचिन्हित दीर्घ *ua)
-अणु
-	अचिन्हित दीर्घ gfn = tce >> PAGE_SHIFT;
-	काष्ठा kvm_memory_slot *memslot;
+static long kvmppc_tce_to_ua(struct kvm *kvm, unsigned long tce,
+		unsigned long *ua)
+{
+	unsigned long gfn = tce >> PAGE_SHIFT;
+	struct kvm_memory_slot *memslot;
 
 	memslot = search_memslots(kvm_memslots(kvm), gfn);
-	अगर (!memslot)
-		वापस -EINVAL;
+	if (!memslot)
+		return -EINVAL;
 
 	*ua = __gfn_to_hva_memslot(memslot, gfn) |
 		(tce & ~(PAGE_MASK | TCE_PCI_READ | TCE_PCI_WRITE));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल दीर्घ kvmppc_tce_validate(काष्ठा kvmppc_spapr_tce_table *stt,
-		अचिन्हित दीर्घ tce)
-अणु
-	अचिन्हित दीर्घ gpa = tce & ~(TCE_PCI_READ | TCE_PCI_WRITE);
-	क्रमागत dma_data_direction dir = iommu_tce_direction(tce);
-	काष्ठा kvmppc_spapr_tce_iommu_table *stit;
-	अचिन्हित दीर्घ ua = 0;
+static long kvmppc_tce_validate(struct kvmppc_spapr_tce_table *stt,
+		unsigned long tce)
+{
+	unsigned long gpa = tce & ~(TCE_PCI_READ | TCE_PCI_WRITE);
+	enum dma_data_direction dir = iommu_tce_direction(tce);
+	struct kvmppc_spapr_tce_iommu_table *stit;
+	unsigned long ua = 0;
 
 	/* Allow userspace to poison TCE table */
-	अगर (dir == DMA_NONE)
-		वापस H_SUCCESS;
+	if (dir == DMA_NONE)
+		return H_SUCCESS;
 
-	अगर (iommu_tce_check_gpa(stt->page_shअगरt, gpa))
-		वापस H_TOO_HARD;
+	if (iommu_tce_check_gpa(stt->page_shift, gpa))
+		return H_TOO_HARD;
 
-	अगर (kvmppc_tce_to_ua(stt->kvm, tce, &ua))
-		वापस H_TOO_HARD;
+	if (kvmppc_tce_to_ua(stt->kvm, tce, &ua))
+		return H_TOO_HARD;
 
-	rcu_पढ़ो_lock();
-	list_क्रम_each_entry_rcu(stit, &stt->iommu_tables, next) अणु
-		अचिन्हित दीर्घ hpa = 0;
-		काष्ठा mm_iommu_table_group_mem_t *mem;
-		दीर्घ shअगरt = stit->tbl->it_page_shअगरt;
+	rcu_read_lock();
+	list_for_each_entry_rcu(stit, &stt->iommu_tables, next) {
+		unsigned long hpa = 0;
+		struct mm_iommu_table_group_mem_t *mem;
+		long shift = stit->tbl->it_page_shift;
 
-		mem = mm_iommu_lookup(stt->kvm->mm, ua, 1ULL << shअगरt);
-		अगर (!mem || mm_iommu_ua_to_hpa(mem, ua, shअगरt, &hpa)) अणु
-			rcu_पढ़ो_unlock();
-			वापस H_TOO_HARD;
-		पूर्ण
-	पूर्ण
-	rcu_पढ़ो_unlock();
+		mem = mm_iommu_lookup(stt->kvm->mm, ua, 1ULL << shift);
+		if (!mem || mm_iommu_ua_to_hpa(mem, ua, shift, &hpa)) {
+			rcu_read_unlock();
+			return H_TOO_HARD;
+		}
+	}
+	rcu_read_unlock();
 
-	वापस H_SUCCESS;
-पूर्ण
+	return H_SUCCESS;
+}
 
 /*
- * Handles TCE requests क्रम emulated devices.
+ * Handles TCE requests for emulated devices.
  * Puts guest TCE values to the table and expects user space to convert them.
- * Cannot fail so kvmppc_tce_validate must be called beक्रमe it.
+ * Cannot fail so kvmppc_tce_validate must be called before it.
  */
-अटल व्योम kvmppc_tce_put(काष्ठा kvmppc_spapr_tce_table *stt,
-		अचिन्हित दीर्घ idx, अचिन्हित दीर्घ tce)
-अणु
-	काष्ठा page *page;
+static void kvmppc_tce_put(struct kvmppc_spapr_tce_table *stt,
+		unsigned long idx, unsigned long tce)
+{
+	struct page *page;
 	u64 *tbl;
-	अचिन्हित दीर्घ sttpage;
+	unsigned long sttpage;
 
 	idx -= stt->offset;
 	sttpage = idx / TCES_PER_PAGE;
 	page = stt->pages[sttpage];
 
-	अगर (!page) अणु
-		/* We allow any TCE, not just with पढ़ो|ग_लिखो permissions */
-		अगर (!tce)
-			वापस;
+	if (!page) {
+		/* We allow any TCE, not just with read|write permissions */
+		if (!tce)
+			return;
 
 		page = kvm_spapr_get_tce_page(stt, sttpage);
-		अगर (!page)
-			वापस;
-	पूर्ण
+		if (!page)
+			return;
+	}
 	tbl = page_to_virt(page);
 
 	tbl[idx % TCES_PER_PAGE] = tce;
-पूर्ण
+}
 
-अटल व्योम kvmppc_clear_tce(काष्ठा mm_काष्ठा *mm, काष्ठा iommu_table *tbl,
-		अचिन्हित दीर्घ entry)
-अणु
-	अचिन्हित दीर्घ hpa = 0;
-	क्रमागत dma_data_direction dir = DMA_NONE;
+static void kvmppc_clear_tce(struct mm_struct *mm, struct iommu_table *tbl,
+		unsigned long entry)
+{
+	unsigned long hpa = 0;
+	enum dma_data_direction dir = DMA_NONE;
 
-	iommu_tce_xchg_no_समाप्त(mm, tbl, entry, &hpa, &dir);
-पूर्ण
+	iommu_tce_xchg_no_kill(mm, tbl, entry, &hpa, &dir);
+}
 
-अटल दीर्घ kvmppc_tce_iommu_mapped_dec(काष्ठा kvm *kvm,
-		काष्ठा iommu_table *tbl, अचिन्हित दीर्घ entry)
-अणु
-	काष्ठा mm_iommu_table_group_mem_t *mem = शून्य;
-	स्थिर अचिन्हित दीर्घ pgsize = 1ULL << tbl->it_page_shअगरt;
+static long kvmppc_tce_iommu_mapped_dec(struct kvm *kvm,
+		struct iommu_table *tbl, unsigned long entry)
+{
+	struct mm_iommu_table_group_mem_t *mem = NULL;
+	const unsigned long pgsize = 1ULL << tbl->it_page_shift;
 	__be64 *pua = IOMMU_TABLE_USERSPACE_ENTRY_RO(tbl, entry);
 
-	अगर (!pua)
-		वापस H_SUCCESS;
+	if (!pua)
+		return H_SUCCESS;
 
 	mem = mm_iommu_lookup(kvm->mm, be64_to_cpu(*pua), pgsize);
-	अगर (!mem)
-		वापस H_TOO_HARD;
+	if (!mem)
+		return H_TOO_HARD;
 
 	mm_iommu_mapped_dec(mem);
 
 	*pua = cpu_to_be64(0);
 
-	वापस H_SUCCESS;
-पूर्ण
+	return H_SUCCESS;
+}
 
-अटल दीर्घ kvmppc_tce_iommu_करो_unmap(काष्ठा kvm *kvm,
-		काष्ठा iommu_table *tbl, अचिन्हित दीर्घ entry)
-अणु
-	क्रमागत dma_data_direction dir = DMA_NONE;
-	अचिन्हित दीर्घ hpa = 0;
-	दीर्घ ret;
+static long kvmppc_tce_iommu_do_unmap(struct kvm *kvm,
+		struct iommu_table *tbl, unsigned long entry)
+{
+	enum dma_data_direction dir = DMA_NONE;
+	unsigned long hpa = 0;
+	long ret;
 
-	अगर (WARN_ON_ONCE(iommu_tce_xchg_no_समाप्त(kvm->mm, tbl, entry, &hpa,
+	if (WARN_ON_ONCE(iommu_tce_xchg_no_kill(kvm->mm, tbl, entry, &hpa,
 					&dir)))
-		वापस H_TOO_HARD;
+		return H_TOO_HARD;
 
-	अगर (dir == DMA_NONE)
-		वापस H_SUCCESS;
+	if (dir == DMA_NONE)
+		return H_SUCCESS;
 
 	ret = kvmppc_tce_iommu_mapped_dec(kvm, tbl, entry);
-	अगर (ret != H_SUCCESS)
-		iommu_tce_xchg_no_समाप्त(kvm->mm, tbl, entry, &hpa, &dir);
+	if (ret != H_SUCCESS)
+		iommu_tce_xchg_no_kill(kvm->mm, tbl, entry, &hpa, &dir);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल दीर्घ kvmppc_tce_iommu_unmap(काष्ठा kvm *kvm,
-		काष्ठा kvmppc_spapr_tce_table *stt, काष्ठा iommu_table *tbl,
-		अचिन्हित दीर्घ entry)
-अणु
-	अचिन्हित दीर्घ i, ret = H_SUCCESS;
-	अचिन्हित दीर्घ subpages = 1ULL << (stt->page_shअगरt - tbl->it_page_shअगरt);
-	अचिन्हित दीर्घ io_entry = entry * subpages;
+static long kvmppc_tce_iommu_unmap(struct kvm *kvm,
+		struct kvmppc_spapr_tce_table *stt, struct iommu_table *tbl,
+		unsigned long entry)
+{
+	unsigned long i, ret = H_SUCCESS;
+	unsigned long subpages = 1ULL << (stt->page_shift - tbl->it_page_shift);
+	unsigned long io_entry = entry * subpages;
 
-	क्रम (i = 0; i < subpages; ++i) अणु
-		ret = kvmppc_tce_iommu_करो_unmap(kvm, tbl, io_entry + i);
-		अगर (ret != H_SUCCESS)
-			अवरोध;
-	पूर्ण
+	for (i = 0; i < subpages; ++i) {
+		ret = kvmppc_tce_iommu_do_unmap(kvm, tbl, io_entry + i);
+		if (ret != H_SUCCESS)
+			break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल दीर्घ kvmppc_tce_iommu_करो_map(काष्ठा kvm *kvm, काष्ठा iommu_table *tbl,
-		अचिन्हित दीर्घ entry, अचिन्हित दीर्घ ua,
-		क्रमागत dma_data_direction dir)
-अणु
-	दीर्घ ret;
-	अचिन्हित दीर्घ hpa;
+static long kvmppc_tce_iommu_do_map(struct kvm *kvm, struct iommu_table *tbl,
+		unsigned long entry, unsigned long ua,
+		enum dma_data_direction dir)
+{
+	long ret;
+	unsigned long hpa;
 	__be64 *pua = IOMMU_TABLE_USERSPACE_ENTRY(tbl, entry);
-	काष्ठा mm_iommu_table_group_mem_t *mem;
+	struct mm_iommu_table_group_mem_t *mem;
 
-	अगर (!pua)
+	if (!pua)
 		/* it_userspace allocation might be delayed */
-		वापस H_TOO_HARD;
+		return H_TOO_HARD;
 
-	mem = mm_iommu_lookup(kvm->mm, ua, 1ULL << tbl->it_page_shअगरt);
-	अगर (!mem)
+	mem = mm_iommu_lookup(kvm->mm, ua, 1ULL << tbl->it_page_shift);
+	if (!mem)
 		/* This only handles v2 IOMMU type, v1 is handled via ioctl() */
-		वापस H_TOO_HARD;
+		return H_TOO_HARD;
 
-	अगर (WARN_ON_ONCE(mm_iommu_ua_to_hpa(mem, ua, tbl->it_page_shअगरt, &hpa)))
-		वापस H_TOO_HARD;
+	if (WARN_ON_ONCE(mm_iommu_ua_to_hpa(mem, ua, tbl->it_page_shift, &hpa)))
+		return H_TOO_HARD;
 
-	अगर (mm_iommu_mapped_inc(mem))
-		वापस H_TOO_HARD;
+	if (mm_iommu_mapped_inc(mem))
+		return H_TOO_HARD;
 
-	ret = iommu_tce_xchg_no_समाप्त(kvm->mm, tbl, entry, &hpa, &dir);
-	अगर (WARN_ON_ONCE(ret)) अणु
+	ret = iommu_tce_xchg_no_kill(kvm->mm, tbl, entry, &hpa, &dir);
+	if (WARN_ON_ONCE(ret)) {
 		mm_iommu_mapped_dec(mem);
-		वापस H_TOO_HARD;
-	पूर्ण
+		return H_TOO_HARD;
+	}
 
-	अगर (dir != DMA_NONE)
+	if (dir != DMA_NONE)
 		kvmppc_tce_iommu_mapped_dec(kvm, tbl, entry);
 
 	*pua = cpu_to_be64(ua);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल दीर्घ kvmppc_tce_iommu_map(काष्ठा kvm *kvm,
-		काष्ठा kvmppc_spapr_tce_table *stt, काष्ठा iommu_table *tbl,
-		अचिन्हित दीर्घ entry, अचिन्हित दीर्घ ua,
-		क्रमागत dma_data_direction dir)
-अणु
-	अचिन्हित दीर्घ i, pgoff, ret = H_SUCCESS;
-	अचिन्हित दीर्घ subpages = 1ULL << (stt->page_shअगरt - tbl->it_page_shअगरt);
-	अचिन्हित दीर्घ io_entry = entry * subpages;
+static long kvmppc_tce_iommu_map(struct kvm *kvm,
+		struct kvmppc_spapr_tce_table *stt, struct iommu_table *tbl,
+		unsigned long entry, unsigned long ua,
+		enum dma_data_direction dir)
+{
+	unsigned long i, pgoff, ret = H_SUCCESS;
+	unsigned long subpages = 1ULL << (stt->page_shift - tbl->it_page_shift);
+	unsigned long io_entry = entry * subpages;
 
-	क्रम (i = 0, pgoff = 0; i < subpages;
-			++i, pgoff += IOMMU_PAGE_SIZE(tbl)) अणु
+	for (i = 0, pgoff = 0; i < subpages;
+			++i, pgoff += IOMMU_PAGE_SIZE(tbl)) {
 
-		ret = kvmppc_tce_iommu_करो_map(kvm, tbl,
+		ret = kvmppc_tce_iommu_do_map(kvm, tbl,
 				io_entry + i, ua + pgoff, dir);
-		अगर (ret != H_SUCCESS)
-			अवरोध;
-	पूर्ण
+		if (ret != H_SUCCESS)
+			break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-दीर्घ kvmppc_h_put_tce(काष्ठा kvm_vcpu *vcpu, अचिन्हित दीर्घ liobn,
-		      अचिन्हित दीर्घ ioba, अचिन्हित दीर्घ tce)
-अणु
-	काष्ठा kvmppc_spapr_tce_table *stt;
-	दीर्घ ret, idx;
-	काष्ठा kvmppc_spapr_tce_iommu_table *stit;
-	अचिन्हित दीर्घ entry, ua = 0;
-	क्रमागत dma_data_direction dir;
+long kvmppc_h_put_tce(struct kvm_vcpu *vcpu, unsigned long liobn,
+		      unsigned long ioba, unsigned long tce)
+{
+	struct kvmppc_spapr_tce_table *stt;
+	long ret, idx;
+	struct kvmppc_spapr_tce_iommu_table *stit;
+	unsigned long entry, ua = 0;
+	enum dma_data_direction dir;
 
-	/* udbg_म_लिखो("H_PUT_TCE(): liobn=0x%lx ioba=0x%lx, tce=0x%lx\n", */
+	/* udbg_printf("H_PUT_TCE(): liobn=0x%lx ioba=0x%lx, tce=0x%lx\n", */
 	/* 	    liobn, ioba, tce); */
 
 	stt = kvmppc_find_table(vcpu->kvm, liobn);
-	अगर (!stt)
-		वापस H_TOO_HARD;
+	if (!stt)
+		return H_TOO_HARD;
 
 	ret = kvmppc_ioba_validate(stt, ioba, 1);
-	अगर (ret != H_SUCCESS)
-		वापस ret;
+	if (ret != H_SUCCESS)
+		return ret;
 
-	idx = srcu_पढ़ो_lock(&vcpu->kvm->srcu);
+	idx = srcu_read_lock(&vcpu->kvm->srcu);
 
 	ret = kvmppc_tce_validate(stt, tce);
-	अगर (ret != H_SUCCESS)
-		जाओ unlock_निकास;
+	if (ret != H_SUCCESS)
+		goto unlock_exit;
 
 	dir = iommu_tce_direction(tce);
 
-	अगर ((dir != DMA_NONE) && kvmppc_tce_to_ua(vcpu->kvm, tce, &ua)) अणु
+	if ((dir != DMA_NONE) && kvmppc_tce_to_ua(vcpu->kvm, tce, &ua)) {
 		ret = H_PARAMETER;
-		जाओ unlock_निकास;
-	पूर्ण
+		goto unlock_exit;
+	}
 
-	entry = ioba >> stt->page_shअगरt;
+	entry = ioba >> stt->page_shift;
 
-	list_क्रम_each_entry_lockless(stit, &stt->iommu_tables, next) अणु
-		अगर (dir == DMA_NONE)
+	list_for_each_entry_lockless(stit, &stt->iommu_tables, next) {
+		if (dir == DMA_NONE)
 			ret = kvmppc_tce_iommu_unmap(vcpu->kvm, stt,
 					stit->tbl, entry);
-		अन्यथा
+		else
 			ret = kvmppc_tce_iommu_map(vcpu->kvm, stt, stit->tbl,
 					entry, ua, dir);
 
-		iommu_tce_समाप्त(stit->tbl, entry, 1);
+		iommu_tce_kill(stit->tbl, entry, 1);
 
-		अगर (ret != H_SUCCESS) अणु
+		if (ret != H_SUCCESS) {
 			kvmppc_clear_tce(vcpu->kvm->mm, stit->tbl, entry);
-			जाओ unlock_निकास;
-		पूर्ण
-	पूर्ण
+			goto unlock_exit;
+		}
+	}
 
 	kvmppc_tce_put(stt, entry, tce);
 
-unlock_निकास:
-	srcu_पढ़ो_unlock(&vcpu->kvm->srcu, idx);
+unlock_exit:
+	srcu_read_unlock(&vcpu->kvm->srcu, idx);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(kvmppc_h_put_tce);
 
-दीर्घ kvmppc_h_put_tce_indirect(काष्ठा kvm_vcpu *vcpu,
-		अचिन्हित दीर्घ liobn, अचिन्हित दीर्घ ioba,
-		अचिन्हित दीर्घ tce_list, अचिन्हित दीर्घ npages)
-अणु
-	काष्ठा kvmppc_spapr_tce_table *stt;
-	दीर्घ i, ret = H_SUCCESS, idx;
-	अचिन्हित दीर्घ entry, ua = 0;
+long kvmppc_h_put_tce_indirect(struct kvm_vcpu *vcpu,
+		unsigned long liobn, unsigned long ioba,
+		unsigned long tce_list, unsigned long npages)
+{
+	struct kvmppc_spapr_tce_table *stt;
+	long i, ret = H_SUCCESS, idx;
+	unsigned long entry, ua = 0;
 	u64 __user *tces;
 	u64 tce;
-	काष्ठा kvmppc_spapr_tce_iommu_table *stit;
+	struct kvmppc_spapr_tce_iommu_table *stit;
 
 	stt = kvmppc_find_table(vcpu->kvm, liobn);
-	अगर (!stt)
-		वापस H_TOO_HARD;
+	if (!stt)
+		return H_TOO_HARD;
 
-	entry = ioba >> stt->page_shअगरt;
+	entry = ioba >> stt->page_shift;
 	/*
 	 * SPAPR spec says that the maximum size of the list is 512 TCEs
 	 * so the whole table fits in 4K page
 	 */
-	अगर (npages > 512)
-		वापस H_PARAMETER;
+	if (npages > 512)
+		return H_PARAMETER;
 
-	अगर (tce_list & (SZ_4K - 1))
-		वापस H_PARAMETER;
+	if (tce_list & (SZ_4K - 1))
+		return H_PARAMETER;
 
 	ret = kvmppc_ioba_validate(stt, ioba, npages);
-	अगर (ret != H_SUCCESS)
-		वापस ret;
+	if (ret != H_SUCCESS)
+		return ret;
 
-	idx = srcu_पढ़ो_lock(&vcpu->kvm->srcu);
-	अगर (kvmppc_tce_to_ua(vcpu->kvm, tce_list, &ua)) अणु
+	idx = srcu_read_lock(&vcpu->kvm->srcu);
+	if (kvmppc_tce_to_ua(vcpu->kvm, tce_list, &ua)) {
 		ret = H_TOO_HARD;
-		जाओ unlock_निकास;
-	पूर्ण
+		goto unlock_exit;
+	}
 	tces = (u64 __user *) ua;
 
-	क्रम (i = 0; i < npages; ++i) अणु
-		अगर (get_user(tce, tces + i)) अणु
+	for (i = 0; i < npages; ++i) {
+		if (get_user(tce, tces + i)) {
 			ret = H_TOO_HARD;
-			जाओ unlock_निकास;
-		पूर्ण
+			goto unlock_exit;
+		}
 		tce = be64_to_cpu(tce);
 
 		ret = kvmppc_tce_validate(stt, tce);
-		अगर (ret != H_SUCCESS)
-			जाओ unlock_निकास;
-	पूर्ण
+		if (ret != H_SUCCESS)
+			goto unlock_exit;
+	}
 
-	क्रम (i = 0; i < npages; ++i) अणु
+	for (i = 0; i < npages; ++i) {
 		/*
 		 * This looks unsafe, because we validate, then regrab
 		 * the TCE from userspace which could have been changed by
-		 * another thपढ़ो.
+		 * another thread.
 		 *
 		 * But it actually is safe, because the relevant checks will be
 		 * re-executed in the following code.  If userspace tries to
-		 * change this करोdgily it will result in a messier failure mode
+		 * change this dodgily it will result in a messier failure mode
 		 * but won't threaten the host.
 		 */
-		अगर (get_user(tce, tces + i)) अणु
+		if (get_user(tce, tces + i)) {
 			ret = H_TOO_HARD;
-			जाओ invalidate_निकास;
-		पूर्ण
+			goto invalidate_exit;
+		}
 		tce = be64_to_cpu(tce);
 
-		अगर (kvmppc_tce_to_ua(vcpu->kvm, tce, &ua)) अणु
+		if (kvmppc_tce_to_ua(vcpu->kvm, tce, &ua)) {
 			ret = H_PARAMETER;
-			जाओ invalidate_निकास;
-		पूर्ण
+			goto invalidate_exit;
+		}
 
-		list_क्रम_each_entry_lockless(stit, &stt->iommu_tables, next) अणु
+		list_for_each_entry_lockless(stit, &stt->iommu_tables, next) {
 			ret = kvmppc_tce_iommu_map(vcpu->kvm, stt,
 					stit->tbl, entry + i, ua,
 					iommu_tce_direction(tce));
 
-			अगर (ret != H_SUCCESS) अणु
+			if (ret != H_SUCCESS) {
 				kvmppc_clear_tce(vcpu->kvm->mm, stit->tbl,
 						entry);
-				जाओ invalidate_निकास;
-			पूर्ण
-		पूर्ण
+				goto invalidate_exit;
+			}
+		}
 
 		kvmppc_tce_put(stt, entry + i, tce);
-	पूर्ण
+	}
 
-invalidate_निकास:
-	list_क्रम_each_entry_lockless(stit, &stt->iommu_tables, next)
-		iommu_tce_समाप्त(stit->tbl, entry, npages);
+invalidate_exit:
+	list_for_each_entry_lockless(stit, &stt->iommu_tables, next)
+		iommu_tce_kill(stit->tbl, entry, npages);
 
-unlock_निकास:
-	srcu_पढ़ो_unlock(&vcpu->kvm->srcu, idx);
+unlock_exit:
+	srcu_read_unlock(&vcpu->kvm->srcu, idx);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(kvmppc_h_put_tce_indirect);
 
-दीर्घ kvmppc_h_stuff_tce(काष्ठा kvm_vcpu *vcpu,
-		अचिन्हित दीर्घ liobn, अचिन्हित दीर्घ ioba,
-		अचिन्हित दीर्घ tce_value, अचिन्हित दीर्घ npages)
-अणु
-	काष्ठा kvmppc_spapr_tce_table *stt;
-	दीर्घ i, ret;
-	काष्ठा kvmppc_spapr_tce_iommu_table *stit;
+long kvmppc_h_stuff_tce(struct kvm_vcpu *vcpu,
+		unsigned long liobn, unsigned long ioba,
+		unsigned long tce_value, unsigned long npages)
+{
+	struct kvmppc_spapr_tce_table *stt;
+	long i, ret;
+	struct kvmppc_spapr_tce_iommu_table *stit;
 
 	stt = kvmppc_find_table(vcpu->kvm, liobn);
-	अगर (!stt)
-		वापस H_TOO_HARD;
+	if (!stt)
+		return H_TOO_HARD;
 
 	ret = kvmppc_ioba_validate(stt, ioba, npages);
-	अगर (ret != H_SUCCESS)
-		वापस ret;
+	if (ret != H_SUCCESS)
+		return ret;
 
-	/* Check permission bits only to allow userspace poison TCE क्रम debug */
-	अगर (tce_value & (TCE_PCI_WRITE | TCE_PCI_READ))
-		वापस H_PARAMETER;
+	/* Check permission bits only to allow userspace poison TCE for debug */
+	if (tce_value & (TCE_PCI_WRITE | TCE_PCI_READ))
+		return H_PARAMETER;
 
-	list_क्रम_each_entry_lockless(stit, &stt->iommu_tables, next) अणु
-		अचिन्हित दीर्घ entry = ioba >> stt->page_shअगरt;
+	list_for_each_entry_lockless(stit, &stt->iommu_tables, next) {
+		unsigned long entry = ioba >> stt->page_shift;
 
-		क्रम (i = 0; i < npages; ++i) अणु
+		for (i = 0; i < npages; ++i) {
 			ret = kvmppc_tce_iommu_unmap(vcpu->kvm, stt,
 					stit->tbl, entry + i);
 
-			अगर (ret == H_SUCCESS)
-				जारी;
+			if (ret == H_SUCCESS)
+				continue;
 
-			अगर (ret == H_TOO_HARD)
-				जाओ invalidate_निकास;
+			if (ret == H_TOO_HARD)
+				goto invalidate_exit;
 
 			WARN_ON_ONCE(1);
 			kvmppc_clear_tce(vcpu->kvm->mm, stit->tbl, entry);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्रम (i = 0; i < npages; ++i, ioba += (1ULL << stt->page_shअगरt))
-		kvmppc_tce_put(stt, ioba >> stt->page_shअगरt, tce_value);
+	for (i = 0; i < npages; ++i, ioba += (1ULL << stt->page_shift))
+		kvmppc_tce_put(stt, ioba >> stt->page_shift, tce_value);
 
-invalidate_निकास:
-	list_क्रम_each_entry_lockless(stit, &stt->iommu_tables, next)
-		iommu_tce_समाप्त(stit->tbl, ioba >> stt->page_shअगरt, npages);
+invalidate_exit:
+	list_for_each_entry_lockless(stit, &stt->iommu_tables, next)
+		iommu_tce_kill(stit->tbl, ioba >> stt->page_shift, npages);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(kvmppc_h_stuff_tce);

@@ -1,61 +1,60 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * HTC Shअगरt touchscreen driver
+ * HTC Shift touchscreen driver
  *
  * Copyright (C) 2008 Pau Oliva Fora <pof@eslack.org>
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/input.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/init.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/isa.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/dmi.h>
+#include <linux/errno.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/input.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/init.h>
+#include <linux/irq.h>
+#include <linux/isa.h>
+#include <linux/ioport.h>
+#include <linux/dmi.h>
 
 MODULE_AUTHOR("Pau Oliva Fora <pau@eslack.org>");
 MODULE_DESCRIPTION("HTC Shift touchscreen driver");
 MODULE_LICENSE("GPL");
 
-#घोषणा HTCPEN_PORT_IRQ_CLEAR	0x068
-#घोषणा HTCPEN_PORT_INIT	0x06c
-#घोषणा HTCPEN_PORT_INDEX	0x0250
-#घोषणा HTCPEN_PORT_DATA	0x0251
-#घोषणा HTCPEN_IRQ		3
+#define HTCPEN_PORT_IRQ_CLEAR	0x068
+#define HTCPEN_PORT_INIT	0x06c
+#define HTCPEN_PORT_INDEX	0x0250
+#define HTCPEN_PORT_DATA	0x0251
+#define HTCPEN_IRQ		3
 
-#घोषणा DEVICE_ENABLE		0xa2
-#घोषणा DEVICE_DISABLE		0xa3
+#define DEVICE_ENABLE		0xa2
+#define DEVICE_DISABLE		0xa3
 
-#घोषणा X_INDEX			3
-#घोषणा Y_INDEX			5
-#घोषणा TOUCH_INDEX		0xb
-#घोषणा LSB_XY_INDEX		0xc
-#घोषणा X_AXIS_MAX		2040
-#घोषणा Y_AXIS_MAX		2040
+#define X_INDEX			3
+#define Y_INDEX			5
+#define TOUCH_INDEX		0xb
+#define LSB_XY_INDEX		0xc
+#define X_AXIS_MAX		2040
+#define Y_AXIS_MAX		2040
 
-अटल bool invert_x;
+static bool invert_x;
 module_param(invert_x, bool, 0644);
 MODULE_PARM_DESC(invert_x, "If set, X axis is inverted");
-अटल bool invert_y;
+static bool invert_y;
 module_param(invert_y, bool, 0644);
 MODULE_PARM_DESC(invert_y, "If set, Y axis is inverted");
 
-अटल irqवापस_t htcpen_पूर्णांकerrupt(पूर्णांक irq, व्योम *handle)
-अणु
-	काष्ठा input_dev *htcpen_dev = handle;
-	अचिन्हित लघु x, y, xy;
+static irqreturn_t htcpen_interrupt(int irq, void *handle)
+{
+	struct input_dev *htcpen_dev = handle;
+	unsigned short x, y, xy;
 
 	/* 0 = press; 1 = release */
 	outb_p(TOUCH_INDEX, HTCPEN_PORT_INDEX);
 
-	अगर (inb_p(HTCPEN_PORT_DATA)) अणु
+	if (inb_p(HTCPEN_PORT_DATA)) {
 		input_report_key(htcpen_dev, BTN_TOUCH, 0);
-	पूर्ण अन्यथा अणु
+	} else {
 		outb_p(X_INDEX, HTCPEN_PORT_INDEX);
 		x = inb_p(HTCPEN_PORT_DATA);
 
@@ -68,100 +67,100 @@ MODULE_PARM_DESC(invert_y, "If set, Y axis is inverted");
 		/* get high resolution value of X and Y using LSB */
 		x = X_AXIS_MAX - ((x * 8) + ((xy >> 4) & 0xf));
 		y = (y * 8) + (xy & 0xf);
-		अगर (invert_x)
+		if (invert_x)
 			x = X_AXIS_MAX - x;
-		अगर (invert_y)
+		if (invert_y)
 			y = Y_AXIS_MAX - y;
 
-		अगर (x != X_AXIS_MAX && x != 0) अणु
+		if (x != X_AXIS_MAX && x != 0) {
 			input_report_key(htcpen_dev, BTN_TOUCH, 1);
-			input_report_असल(htcpen_dev, ABS_X, x);
-			input_report_असल(htcpen_dev, ABS_Y, y);
-		पूर्ण
-	पूर्ण
+			input_report_abs(htcpen_dev, ABS_X, x);
+			input_report_abs(htcpen_dev, ABS_Y, y);
+		}
+	}
 
 	input_sync(htcpen_dev);
 
 	inb_p(HTCPEN_PORT_IRQ_CLEAR);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक htcpen_खोलो(काष्ठा input_dev *dev)
-अणु
+static int htcpen_open(struct input_dev *dev)
+{
 	outb_p(DEVICE_ENABLE, HTCPEN_PORT_INIT);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम htcpen_बंद(काष्ठा input_dev *dev)
-अणु
+static void htcpen_close(struct input_dev *dev)
+{
 	outb_p(DEVICE_DISABLE, HTCPEN_PORT_INIT);
 	synchronize_irq(HTCPEN_IRQ);
-पूर्ण
+}
 
-अटल पूर्णांक htcpen_isa_probe(काष्ठा device *dev, अचिन्हित पूर्णांक id)
-अणु
-	काष्ठा input_dev *htcpen_dev;
-	पूर्णांक err = -EBUSY;
+static int htcpen_isa_probe(struct device *dev, unsigned int id)
+{
+	struct input_dev *htcpen_dev;
+	int err = -EBUSY;
 
-	अगर (!request_region(HTCPEN_PORT_IRQ_CLEAR, 1, "htcpen")) अणु
-		prपूर्णांकk(KERN_ERR "htcpen: unable to get IO region 0x%x\n",
+	if (!request_region(HTCPEN_PORT_IRQ_CLEAR, 1, "htcpen")) {
+		printk(KERN_ERR "htcpen: unable to get IO region 0x%x\n",
 			HTCPEN_PORT_IRQ_CLEAR);
-		जाओ request_region1_failed;
-	पूर्ण
+		goto request_region1_failed;
+	}
 
-	अगर (!request_region(HTCPEN_PORT_INIT, 1, "htcpen")) अणु
-		prपूर्णांकk(KERN_ERR "htcpen: unable to get IO region 0x%x\n",
+	if (!request_region(HTCPEN_PORT_INIT, 1, "htcpen")) {
+		printk(KERN_ERR "htcpen: unable to get IO region 0x%x\n",
 			HTCPEN_PORT_INIT);
-		जाओ request_region2_failed;
-	पूर्ण
+		goto request_region2_failed;
+	}
 
-	अगर (!request_region(HTCPEN_PORT_INDEX, 2, "htcpen")) अणु
-		prपूर्णांकk(KERN_ERR "htcpen: unable to get IO region 0x%x\n",
+	if (!request_region(HTCPEN_PORT_INDEX, 2, "htcpen")) {
+		printk(KERN_ERR "htcpen: unable to get IO region 0x%x\n",
 			HTCPEN_PORT_INDEX);
-		जाओ request_region3_failed;
-	पूर्ण
+		goto request_region3_failed;
+	}
 
 	htcpen_dev = input_allocate_device();
-	अगर (!htcpen_dev) अणु
-		prपूर्णांकk(KERN_ERR "htcpen: can't allocate device\n");
+	if (!htcpen_dev) {
+		printk(KERN_ERR "htcpen: can't allocate device\n");
 		err = -ENOMEM;
-		जाओ input_alloc_failed;
-	पूर्ण
+		goto input_alloc_failed;
+	}
 
 	htcpen_dev->name = "HTC Shift EC TouchScreen";
 	htcpen_dev->id.bustype = BUS_ISA;
 
 	htcpen_dev->evbit[0] = BIT_MASK(EV_ABS) | BIT_MASK(EV_KEY);
 	htcpen_dev->keybit[BIT_WORD(BTN_TOUCH)] = BIT_MASK(BTN_TOUCH);
-	input_set_असल_params(htcpen_dev, ABS_X, 0, X_AXIS_MAX, 0, 0);
-	input_set_असल_params(htcpen_dev, ABS_Y, 0, Y_AXIS_MAX, 0, 0);
+	input_set_abs_params(htcpen_dev, ABS_X, 0, X_AXIS_MAX, 0, 0);
+	input_set_abs_params(htcpen_dev, ABS_Y, 0, Y_AXIS_MAX, 0, 0);
 
-	htcpen_dev->खोलो = htcpen_खोलो;
-	htcpen_dev->बंद = htcpen_बंद;
+	htcpen_dev->open = htcpen_open;
+	htcpen_dev->close = htcpen_close;
 
-	err = request_irq(HTCPEN_IRQ, htcpen_पूर्णांकerrupt, 0, "htcpen",
+	err = request_irq(HTCPEN_IRQ, htcpen_interrupt, 0, "htcpen",
 			htcpen_dev);
-	अगर (err) अणु
-		prपूर्णांकk(KERN_ERR "htcpen: irq busy\n");
-		जाओ request_irq_failed;
-	पूर्ण
+	if (err) {
+		printk(KERN_ERR "htcpen: irq busy\n");
+		goto request_irq_failed;
+	}
 
 	inb_p(HTCPEN_PORT_IRQ_CLEAR);
 
-	err = input_रेजिस्टर_device(htcpen_dev);
-	अगर (err)
-		जाओ input_रेजिस्टर_failed;
+	err = input_register_device(htcpen_dev);
+	if (err)
+		goto input_register_failed;
 
 	dev_set_drvdata(dev, htcpen_dev);
 
-	वापस 0;
+	return 0;
 
- input_रेजिस्टर_failed:
-	मुक्त_irq(HTCPEN_IRQ, htcpen_dev);
+ input_register_failed:
+	free_irq(HTCPEN_IRQ, htcpen_dev);
  request_irq_failed:
-	input_मुक्त_device(htcpen_dev);
+	input_free_device(htcpen_dev);
  input_alloc_failed:
 	release_region(HTCPEN_PORT_INDEX, 2);
  request_region3_failed:
@@ -169,76 +168,76 @@ MODULE_PARM_DESC(invert_y, "If set, Y axis is inverted");
  request_region2_failed:
 	release_region(HTCPEN_PORT_IRQ_CLEAR, 1);
  request_region1_failed:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम htcpen_isa_हटाओ(काष्ठा device *dev, अचिन्हित पूर्णांक id)
-अणु
-	काष्ठा input_dev *htcpen_dev = dev_get_drvdata(dev);
+static void htcpen_isa_remove(struct device *dev, unsigned int id)
+{
+	struct input_dev *htcpen_dev = dev_get_drvdata(dev);
 
-	input_unरेजिस्टर_device(htcpen_dev);
+	input_unregister_device(htcpen_dev);
 
-	मुक्त_irq(HTCPEN_IRQ, htcpen_dev);
+	free_irq(HTCPEN_IRQ, htcpen_dev);
 
 	release_region(HTCPEN_PORT_INDEX, 2);
 	release_region(HTCPEN_PORT_INIT, 1);
 	release_region(HTCPEN_PORT_IRQ_CLEAR, 1);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक htcpen_isa_suspend(काष्ठा device *dev, अचिन्हित पूर्णांक n,
+#ifdef CONFIG_PM
+static int htcpen_isa_suspend(struct device *dev, unsigned int n,
 				pm_message_t state)
-अणु
+{
 	outb_p(DEVICE_DISABLE, HTCPEN_PORT_INIT);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक htcpen_isa_resume(काष्ठा device *dev, अचिन्हित पूर्णांक n)
-अणु
+static int htcpen_isa_resume(struct device *dev, unsigned int n)
+{
 	outb_p(DEVICE_ENABLE, HTCPEN_PORT_INIT);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल काष्ठा isa_driver htcpen_isa_driver = अणु
+static struct isa_driver htcpen_isa_driver = {
 	.probe		= htcpen_isa_probe,
-	.हटाओ		= htcpen_isa_हटाओ,
-#अगर_घोषित CONFIG_PM
+	.remove		= htcpen_isa_remove,
+#ifdef CONFIG_PM
 	.suspend	= htcpen_isa_suspend,
 	.resume		= htcpen_isa_resume,
-#पूर्ण_अगर
-	.driver = अणु
+#endif
+	.driver = {
 		.owner	= THIS_MODULE,
 		.name	= "htcpen",
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल स्थिर काष्ठा dmi_प्रणाली_id htcshअगरt_dmi_table[] __initस्थिर = अणु
-	अणु
+static const struct dmi_system_id htcshift_dmi_table[] __initconst = {
+	{
 		.ident = "Shift",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "High Tech Computer Corp"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "Shift"),
-		पूर्ण,
-	पूर्ण,
-	अणु पूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(dmi, htcshअगरt_dmi_table);
+		},
+	},
+	{ }
+};
+MODULE_DEVICE_TABLE(dmi, htcshift_dmi_table);
 
-अटल पूर्णांक __init htcpen_isa_init(व्योम)
-अणु
-	अगर (!dmi_check_प्रणाली(htcshअगरt_dmi_table))
-		वापस -ENODEV;
+static int __init htcpen_isa_init(void)
+{
+	if (!dmi_check_system(htcshift_dmi_table))
+		return -ENODEV;
 
-	वापस isa_रेजिस्टर_driver(&htcpen_isa_driver, 1);
-पूर्ण
+	return isa_register_driver(&htcpen_isa_driver, 1);
+}
 
-अटल व्योम __निकास htcpen_isa_निकास(व्योम)
-अणु
-	isa_unरेजिस्टर_driver(&htcpen_isa_driver);
-पूर्ण
+static void __exit htcpen_isa_exit(void)
+{
+	isa_unregister_driver(&htcpen_isa_driver);
+}
 
 module_init(htcpen_isa_init);
-module_निकास(htcpen_isa_निकास);
+module_exit(htcpen_isa_exit);

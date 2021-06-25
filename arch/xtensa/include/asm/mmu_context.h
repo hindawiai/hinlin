@@ -1,42 +1,41 @@
-<शैली गुरु>
 /*
  * Switch an MMU context.
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 2001 - 2013 Tensilica Inc.
  */
 
-#अगर_अघोषित _XTENSA_MMU_CONTEXT_H
-#घोषणा _XTENSA_MMU_CONTEXT_H
+#ifndef _XTENSA_MMU_CONTEXT_H
+#define _XTENSA_MMU_CONTEXT_H
 
-#अगर_अघोषित CONFIG_MMU
-#समावेश <यंत्र/nommu_context.h>
-#अन्यथा
+#ifndef CONFIG_MMU
+#include <asm/nommu_context.h>
+#else
 
-#समावेश <linux/stringअगरy.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/mm_types.h>
-#समावेश <linux/pgtable.h>
+#include <linux/stringify.h>
+#include <linux/sched.h>
+#include <linux/mm_types.h>
+#include <linux/pgtable.h>
 
-#समावेश <यंत्र/vectors.h>
+#include <asm/vectors.h>
 
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <यंत्र/tlbflush.h>
-#समावेश <यंत्र-generic/mm_hooks.h>
-#समावेश <यंत्र-generic/percpu.h>
+#include <asm/cacheflush.h>
+#include <asm/tlbflush.h>
+#include <asm-generic/mm_hooks.h>
+#include <asm-generic/percpu.h>
 
-#अगर (XCHAL_HAVE_TLBS != 1)
+#if (XCHAL_HAVE_TLBS != 1)
 # error "Linux must have an MMU!"
-#पूर्ण_अगर
+#endif
 
-DECLARE_PER_CPU(अचिन्हित दीर्घ, asid_cache);
-#घोषणा cpu_asid_cache(cpu) per_cpu(asid_cache, cpu)
+DECLARE_PER_CPU(unsigned long, asid_cache);
+#define cpu_asid_cache(cpu) per_cpu(asid_cache, cpu)
 
 /*
- * NO_CONTEXT is the invalid ASID value that we करोn't ever assign to
+ * NO_CONTEXT is the invalid ASID value that we don't ever assign to
  * any user or kernel context.  We use the reserved values in the
  * ASID_INSERT macro below.
  *
@@ -47,109 +46,109 @@ DECLARE_PER_CPU(अचिन्हित दीर्घ, asid_cache);
  * 4...255 available
  */
 
-#घोषणा NO_CONTEXT	0
-#घोषणा ASID_USER_FIRST	4
-#घोषणा ASID_MASK	((1 << XCHAL_MMU_ASID_BITS) - 1)
-#घोषणा ASID_INSERT(x)	(0x03020001 | (((x) & ASID_MASK) << 8))
+#define NO_CONTEXT	0
+#define ASID_USER_FIRST	4
+#define ASID_MASK	((1 << XCHAL_MMU_ASID_BITS) - 1)
+#define ASID_INSERT(x)	(0x03020001 | (((x) & ASID_MASK) << 8))
 
-व्योम init_mmu(व्योम);
-व्योम init_kio(व्योम);
+void init_mmu(void);
+void init_kio(void);
 
-अटल अंतरभूत व्योम set_rasid_रेजिस्टर (अचिन्हित दीर्घ val)
-अणु
-	__यंत्र__ __अस्थिर__ (" wsr %0, rasid\n\t"
+static inline void set_rasid_register (unsigned long val)
+{
+	__asm__ __volatile__ (" wsr %0, rasid\n\t"
 			      " isync\n" : : "a" (val));
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ get_rasid_रेजिस्टर (व्योम)
-अणु
-	अचिन्हित दीर्घ पंचांगp;
-	__यंत्र__ __अस्थिर__ (" rsr %0, rasid\n\t" : "=a" (पंचांगp));
-	वापस पंचांगp;
-पूर्ण
+static inline unsigned long get_rasid_register (void)
+{
+	unsigned long tmp;
+	__asm__ __volatile__ (" rsr %0, rasid\n\t" : "=a" (tmp));
+	return tmp;
+}
 
-अटल अंतरभूत व्योम get_new_mmu_context(काष्ठा mm_काष्ठा *mm, अचिन्हित पूर्णांक cpu)
-अणु
-	अचिन्हित दीर्घ asid = cpu_asid_cache(cpu);
-	अगर ((++asid & ASID_MASK) == 0) अणु
+static inline void get_new_mmu_context(struct mm_struct *mm, unsigned int cpu)
+{
+	unsigned long asid = cpu_asid_cache(cpu);
+	if ((++asid & ASID_MASK) == 0) {
 		/*
-		 * Start new asid cycle; जारी counting with next
+		 * Start new asid cycle; continue counting with next
 		 * incarnation bits; skipping over 0, 1, 2, 3.
 		 */
 		local_flush_tlb_all();
 		asid += ASID_USER_FIRST;
-	पूर्ण
+	}
 	cpu_asid_cache(cpu) = asid;
 	mm->context.asid[cpu] = asid;
 	mm->context.cpu = cpu;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम get_mmu_context(काष्ठा mm_काष्ठा *mm, अचिन्हित पूर्णांक cpu)
-अणु
+static inline void get_mmu_context(struct mm_struct *mm, unsigned int cpu)
+{
 	/*
-	 * Check अगर our ASID is of an older version and thus invalid.
+	 * Check if our ASID is of an older version and thus invalid.
 	 */
 
-	अगर (mm) अणु
-		अचिन्हित दीर्घ asid = mm->context.asid[cpu];
+	if (mm) {
+		unsigned long asid = mm->context.asid[cpu];
 
-		अगर (asid == NO_CONTEXT ||
+		if (asid == NO_CONTEXT ||
 				((asid ^ cpu_asid_cache(cpu)) & ~ASID_MASK))
 			get_new_mmu_context(mm, cpu);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम activate_context(काष्ठा mm_काष्ठा *mm, अचिन्हित पूर्णांक cpu)
-अणु
+static inline void activate_context(struct mm_struct *mm, unsigned int cpu)
+{
 	get_mmu_context(mm, cpu);
-	set_rasid_रेजिस्टर(ASID_INSERT(mm->context.asid[cpu]));
+	set_rasid_register(ASID_INSERT(mm->context.asid[cpu]));
 	invalidate_page_directory();
-पूर्ण
+}
 
 /*
- * Initialize the context related info क्रम a new mm_काष्ठा
+ * Initialize the context related info for a new mm_struct
  * instance.  Valid cpu values are 0..(NR_CPUS-1), so initializing
  * to -1 says the process has never run on any core.
  */
 
-#घोषणा init_new_context init_new_context
-अटल अंतरभूत पूर्णांक init_new_context(काष्ठा task_काष्ठा *tsk,
-		काष्ठा mm_काष्ठा *mm)
-अणु
-	पूर्णांक cpu;
-	क्रम_each_possible_cpu(cpu) अणु
+#define init_new_context init_new_context
+static inline int init_new_context(struct task_struct *tsk,
+		struct mm_struct *mm)
+{
+	int cpu;
+	for_each_possible_cpu(cpu) {
 		mm->context.asid[cpu] = NO_CONTEXT;
-	पूर्ण
+	}
 	mm->context.cpu = -1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत व्योम चयन_mm(काष्ठा mm_काष्ठा *prev, काष्ठा mm_काष्ठा *next,
-			     काष्ठा task_काष्ठा *tsk)
-अणु
-	अचिन्हित पूर्णांक cpu = smp_processor_id();
-	पूर्णांक migrated = next->context.cpu != cpu;
-	/* Flush the icache अगर we migrated to a new core. */
-	अगर (migrated) अणु
+static inline void switch_mm(struct mm_struct *prev, struct mm_struct *next,
+			     struct task_struct *tsk)
+{
+	unsigned int cpu = smp_processor_id();
+	int migrated = next->context.cpu != cpu;
+	/* Flush the icache if we migrated to a new core. */
+	if (migrated) {
 		__invalidate_icache_all();
 		next->context.cpu = cpu;
-	पूर्ण
-	अगर (migrated || prev != next)
+	}
+	if (migrated || prev != next)
 		activate_context(next, cpu);
-पूर्ण
+}
 
 /*
- * Destroy context related info क्रम an mm_काष्ठा that is about
+ * Destroy context related info for an mm_struct that is about
  * to be put to rest.
  */
-#घोषणा destroy_context destroy_context
-अटल अंतरभूत व्योम destroy_context(काष्ठा mm_काष्ठा *mm)
-अणु
+#define destroy_context destroy_context
+static inline void destroy_context(struct mm_struct *mm)
+{
 	invalidate_page_directory();
-पूर्ण
+}
 
 
-#समावेश <यंत्र-generic/mmu_context.h>
+#include <asm-generic/mmu_context.h>
 
-#पूर्ण_अगर /* CONFIG_MMU */
-#पूर्ण_अगर /* _XTENSA_MMU_CONTEXT_H */
+#endif /* CONFIG_MMU */
+#endif /* _XTENSA_MMU_CONTEXT_H */

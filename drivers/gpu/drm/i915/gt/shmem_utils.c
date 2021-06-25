@@ -1,115 +1,114 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: MIT
+// SPDX-License-Identifier: MIT
 /*
- * Copyright तऊ 2020 Intel Corporation
+ * Copyright © 2020 Intel Corporation
  */
 
-#समावेश <linux/mm.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/shmem_fs.h>
+#include <linux/mm.h>
+#include <linux/pagemap.h>
+#include <linux/shmem_fs.h>
 
-#समावेश "gem/i915_gem_object.h"
-#समावेश "shmem_utils.h"
+#include "gem/i915_gem_object.h"
+#include "shmem_utils.h"
 
-काष्ठा file *shmem_create_from_data(स्थिर अक्षर *name, व्योम *data, माप_प्रकार len)
-अणु
-	काष्ठा file *file;
-	पूर्णांक err;
+struct file *shmem_create_from_data(const char *name, void *data, size_t len)
+{
+	struct file *file;
+	int err;
 
 	file = shmem_file_setup(name, PAGE_ALIGN(len), VM_NORESERVE);
-	अगर (IS_ERR(file))
-		वापस file;
+	if (IS_ERR(file))
+		return file;
 
-	err = shmem_ग_लिखो(file, 0, data, len);
-	अगर (err) अणु
+	err = shmem_write(file, 0, data, len);
+	if (err) {
 		fput(file);
-		वापस ERR_PTR(err);
-	पूर्ण
+		return ERR_PTR(err);
+	}
 
-	वापस file;
-पूर्ण
+	return file;
+}
 
-काष्ठा file *shmem_create_from_object(काष्ठा drm_i915_gem_object *obj)
-अणु
-	काष्ठा file *file;
-	व्योम *ptr;
+struct file *shmem_create_from_object(struct drm_i915_gem_object *obj)
+{
+	struct file *file;
+	void *ptr;
 
-	अगर (i915_gem_object_is_shmem(obj)) अणु
+	if (i915_gem_object_is_shmem(obj)) {
 		file = obj->base.filp;
-		atomic_दीर्घ_inc(&file->f_count);
-		वापस file;
-	पूर्ण
+		atomic_long_inc(&file->f_count);
+		return file;
+	}
 
 	ptr = i915_gem_object_pin_map_unlocked(obj, I915_MAP_WB);
-	अगर (IS_ERR(ptr))
-		वापस ERR_CAST(ptr);
+	if (IS_ERR(ptr))
+		return ERR_CAST(ptr);
 
 	file = shmem_create_from_data("", ptr, obj->base.size);
 	i915_gem_object_unpin_map(obj);
 
-	वापस file;
-पूर्ण
+	return file;
+}
 
-व्योम *shmem_pin_map(काष्ठा file *file)
-अणु
-	काष्ठा page **pages;
-	माप_प्रकार n_pages, i;
-	व्योम *vaddr;
+void *shmem_pin_map(struct file *file)
+{
+	struct page **pages;
+	size_t n_pages, i;
+	void *vaddr;
 
 	n_pages = file->f_mapping->host->i_size >> PAGE_SHIFT;
-	pages = kvदो_स्मृति_array(n_pages, माप(*pages), GFP_KERNEL);
-	अगर (!pages)
-		वापस शून्य;
+	pages = kvmalloc_array(n_pages, sizeof(*pages), GFP_KERNEL);
+	if (!pages)
+		return NULL;
 
-	क्रम (i = 0; i < n_pages; i++) अणु
-		pages[i] = shmem_पढ़ो_mapping_page_gfp(file->f_mapping, i,
+	for (i = 0; i < n_pages; i++) {
+		pages[i] = shmem_read_mapping_page_gfp(file->f_mapping, i,
 						       GFP_KERNEL);
-		अगर (IS_ERR(pages[i]))
-			जाओ err_page;
-	पूर्ण
+		if (IS_ERR(pages[i]))
+			goto err_page;
+	}
 
 	vaddr = vmap(pages, n_pages, VM_MAP_PUT_PAGES, PAGE_KERNEL);
-	अगर (!vaddr)
-		जाओ err_page;
+	if (!vaddr)
+		goto err_page;
 	mapping_set_unevictable(file->f_mapping);
-	वापस vaddr;
+	return vaddr;
 err_page:
-	जबतक (i--)
+	while (i--)
 		put_page(pages[i]);
-	kvमुक्त(pages);
-	वापस शून्य;
-पूर्ण
+	kvfree(pages);
+	return NULL;
+}
 
-व्योम shmem_unpin_map(काष्ठा file *file, व्योम *ptr)
-अणु
+void shmem_unpin_map(struct file *file, void *ptr)
+{
 	mapping_clear_unevictable(file->f_mapping);
-	vमुक्त(ptr);
-पूर्ण
+	vfree(ptr);
+}
 
-अटल पूर्णांक __shmem_rw(काष्ठा file *file, loff_t off,
-		      व्योम *ptr, माप_प्रकार len,
-		      bool ग_लिखो)
-अणु
-	अचिन्हित दीर्घ pfn;
+static int __shmem_rw(struct file *file, loff_t off,
+		      void *ptr, size_t len,
+		      bool write)
+{
+	unsigned long pfn;
 
-	क्रम (pfn = off >> PAGE_SHIFT; len; pfn++) अणु
-		अचिन्हित पूर्णांक this =
-			min_t(माप_प्रकार, PAGE_SIZE - offset_in_page(off), len);
-		काष्ठा page *page;
-		व्योम *vaddr;
+	for (pfn = off >> PAGE_SHIFT; len; pfn++) {
+		unsigned int this =
+			min_t(size_t, PAGE_SIZE - offset_in_page(off), len);
+		struct page *page;
+		void *vaddr;
 
-		page = shmem_पढ़ो_mapping_page_gfp(file->f_mapping, pfn,
+		page = shmem_read_mapping_page_gfp(file->f_mapping, pfn,
 						   GFP_KERNEL);
-		अगर (IS_ERR(page))
-			वापस PTR_ERR(page);
+		if (IS_ERR(page))
+			return PTR_ERR(page);
 
 		vaddr = kmap(page);
-		अगर (ग_लिखो) अणु
-			स_नकल(vaddr + offset_in_page(off), ptr, this);
+		if (write) {
+			memcpy(vaddr + offset_in_page(off), ptr, this);
 			set_page_dirty(page);
-		पूर्ण अन्यथा अणु
-			स_नकल(ptr, vaddr + offset_in_page(off), this);
-		पूर्ण
+		} else {
+			memcpy(ptr, vaddr + offset_in_page(off), this);
+		}
 		mark_page_accessed(page);
 		kunmap(page);
 		put_page(page);
@@ -117,21 +116,21 @@ err_page:
 		len -= this;
 		ptr += this;
 		off = 0;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक shmem_पढ़ो(काष्ठा file *file, loff_t off, व्योम *dst, माप_प्रकार len)
-अणु
-	वापस __shmem_rw(file, off, dst, len, false);
-पूर्ण
+int shmem_read(struct file *file, loff_t off, void *dst, size_t len)
+{
+	return __shmem_rw(file, off, dst, len, false);
+}
 
-पूर्णांक shmem_ग_लिखो(काष्ठा file *file, loff_t off, व्योम *src, माप_प्रकार len)
-अणु
-	वापस __shmem_rw(file, off, src, len, true);
-पूर्ण
+int shmem_write(struct file *file, loff_t off, void *src, size_t len)
+{
+	return __shmem_rw(file, off, src, len, true);
+}
 
-#अगर IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
-#समावेश "st_shmem_utils.c"
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
+#include "st_shmem_utils.c"
+#endif

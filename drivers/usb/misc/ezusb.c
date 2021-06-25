@@ -1,152 +1,151 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * EZ-USB specअगरic functions used by some of the USB to Serial drivers.
+ * EZ-USB specific functions used by some of the USB to Serial drivers.
  *
- * Copyright (C) 1999 - 2002 Greg Kroah-Harपंचांगan (greg@kroah.com)
+ * Copyright (C) 1999 - 2002 Greg Kroah-Hartman (greg@kroah.com)
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/firmware.h>
-#समावेश <linux/ihex.h>
-#समावेश <linux/usb/ezusb.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <linux/usb.h>
+#include <linux/firmware.h>
+#include <linux/ihex.h>
+#include <linux/usb/ezusb.h>
 
-काष्ठा ezusb_fx_type अणु
+struct ezusb_fx_type {
 	/* EZ-USB Control and Status Register.  Bit 0 controls 8051 reset */
-	अचिन्हित लघु cpucs_reg;
-	अचिन्हित लघु max_पूर्णांकernal_adress;
-पूर्ण;
+	unsigned short cpucs_reg;
+	unsigned short max_internal_adress;
+};
 
-अटल स्थिर काष्ठा ezusb_fx_type ezusb_fx1 = अणु
+static const struct ezusb_fx_type ezusb_fx1 = {
 	.cpucs_reg = 0x7F92,
-	.max_पूर्णांकernal_adress = 0x1B3F,
-पूर्ण;
+	.max_internal_adress = 0x1B3F,
+};
 
-/* Commands क्रम writing to memory */
-#घोषणा WRITE_INT_RAM 0xA0
-#घोषणा WRITE_EXT_RAM 0xA3
+/* Commands for writing to memory */
+#define WRITE_INT_RAM 0xA0
+#define WRITE_EXT_RAM 0xA3
 
-अटल पूर्णांक ezusb_ग_लिखोmemory(काष्ठा usb_device *dev, पूर्णांक address,
-				अचिन्हित अक्षर *data, पूर्णांक length, __u8 request)
-अणु
-	अगर (!dev)
-		वापस -ENODEV;
+static int ezusb_writememory(struct usb_device *dev, int address,
+				unsigned char *data, int length, __u8 request)
+{
+	if (!dev)
+		return -ENODEV;
 
-	वापस usb_control_msg_send(dev, 0, request,
-				 USB_सूची_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
+	return usb_control_msg_send(dev, 0, request,
+				 USB_DIR_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
 				 address, 0, data, length, 3000, GFP_KERNEL);
-पूर्ण
+}
 
-अटल पूर्णांक ezusb_set_reset(काष्ठा usb_device *dev, अचिन्हित लघु cpucs_reg,
-			   अचिन्हित अक्षर reset_bit)
-अणु
-	पूर्णांक response = ezusb_ग_लिखोmemory(dev, cpucs_reg, &reset_bit, 1, WRITE_INT_RAM);
-	अगर (response < 0)
+static int ezusb_set_reset(struct usb_device *dev, unsigned short cpucs_reg,
+			   unsigned char reset_bit)
+{
+	int response = ezusb_writememory(dev, cpucs_reg, &reset_bit, 1, WRITE_INT_RAM);
+	if (response < 0)
 		dev_err(&dev->dev, "%s-%d failed: %d\n",
 						__func__, reset_bit, response);
-	वापस response;
-पूर्ण
+	return response;
+}
 
-पूर्णांक ezusb_fx1_set_reset(काष्ठा usb_device *dev, अचिन्हित अक्षर reset_bit)
-अणु
-	वापस ezusb_set_reset(dev, ezusb_fx1.cpucs_reg, reset_bit);
-पूर्ण
+int ezusb_fx1_set_reset(struct usb_device *dev, unsigned char reset_bit)
+{
+	return ezusb_set_reset(dev, ezusb_fx1.cpucs_reg, reset_bit);
+}
 EXPORT_SYMBOL_GPL(ezusb_fx1_set_reset);
 
-अटल पूर्णांक ezusb_ihex_firmware_करोwnload(काष्ठा usb_device *dev,
-					काष्ठा ezusb_fx_type fx,
-					स्थिर अक्षर *firmware_path)
-अणु
-	पूर्णांक ret = -ENOENT;
-	स्थिर काष्ठा firmware *firmware = शून्य;
-	स्थिर काष्ठा ihex_binrec *record;
+static int ezusb_ihex_firmware_download(struct usb_device *dev,
+					struct ezusb_fx_type fx,
+					const char *firmware_path)
+{
+	int ret = -ENOENT;
+	const struct firmware *firmware = NULL;
+	const struct ihex_binrec *record;
 
-	अगर (request_ihex_firmware(&firmware, firmware_path,
-				  &dev->dev)) अणु
+	if (request_ihex_firmware(&firmware, firmware_path,
+				  &dev->dev)) {
 		dev_err(&dev->dev,
 			"%s - request \"%s\" failed\n",
 			__func__, firmware_path);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = ezusb_set_reset(dev, fx.cpucs_reg, 0);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
-	record = (स्थिर काष्ठा ihex_binrec *)firmware->data;
-	क्रम (; record; record = ihex_next_binrec(record)) अणु
-		अगर (be32_to_cpu(record->addr) > fx.max_पूर्णांकernal_adress) अणु
-			ret = ezusb_ग_लिखोmemory(dev, be32_to_cpu(record->addr),
-						(अचिन्हित अक्षर *)record->data,
+	record = (const struct ihex_binrec *)firmware->data;
+	for (; record; record = ihex_next_binrec(record)) {
+		if (be32_to_cpu(record->addr) > fx.max_internal_adress) {
+			ret = ezusb_writememory(dev, be32_to_cpu(record->addr),
+						(unsigned char *)record->data,
 						be16_to_cpu(record->len), WRITE_EXT_RAM);
-			अगर (ret < 0) अणु
+			if (ret < 0) {
 				dev_err(&dev->dev, "%s - ezusb_writememory "
 					"failed writing internal memory "
 					"(%d %04X %p %d)\n", __func__, ret,
 					be32_to_cpu(record->addr), record->data,
 					be16_to_cpu(record->len));
-				जाओ out;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto out;
+			}
+		}
+	}
 
 	ret = ezusb_set_reset(dev, fx.cpucs_reg, 1);
-	अगर (ret < 0)
-		जाओ out;
-	record = (स्थिर काष्ठा ihex_binrec *)firmware->data;
-	क्रम (; record; record = ihex_next_binrec(record)) अणु
-		अगर (be32_to_cpu(record->addr) <= fx.max_पूर्णांकernal_adress) अणु
-			ret = ezusb_ग_लिखोmemory(dev, be32_to_cpu(record->addr),
-						(अचिन्हित अक्षर *)record->data,
+	if (ret < 0)
+		goto out;
+	record = (const struct ihex_binrec *)firmware->data;
+	for (; record; record = ihex_next_binrec(record)) {
+		if (be32_to_cpu(record->addr) <= fx.max_internal_adress) {
+			ret = ezusb_writememory(dev, be32_to_cpu(record->addr),
+						(unsigned char *)record->data,
 						be16_to_cpu(record->len), WRITE_INT_RAM);
-			अगर (ret < 0) अणु
+			if (ret < 0) {
 				dev_err(&dev->dev, "%s - ezusb_writememory "
 					"failed writing external memory "
 					"(%d %04X %p %d)\n", __func__, ret,
 					be32_to_cpu(record->addr), record->data,
 					be16_to_cpu(record->len));
-				जाओ out;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto out;
+			}
+		}
+	}
 	ret = ezusb_set_reset(dev, fx.cpucs_reg, 0);
 out:
 	release_firmware(firmware);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक ezusb_fx1_ihex_firmware_करोwnload(काष्ठा usb_device *dev,
-				     स्थिर अक्षर *firmware_path)
-अणु
-	वापस ezusb_ihex_firmware_करोwnload(dev, ezusb_fx1, firmware_path);
-पूर्ण
-EXPORT_SYMBOL_GPL(ezusb_fx1_ihex_firmware_करोwnload);
+int ezusb_fx1_ihex_firmware_download(struct usb_device *dev,
+				     const char *firmware_path)
+{
+	return ezusb_ihex_firmware_download(dev, ezusb_fx1, firmware_path);
+}
+EXPORT_SYMBOL_GPL(ezusb_fx1_ihex_firmware_download);
 
-#अगर 0
+#if 0
 /*
  * Once someone one needs these fx2 functions, uncomment them
  * and add them to ezusb.h and all should be good.
  */
-अटल काष्ठा ezusb_fx_type ezusb_fx2 = अणु
+static struct ezusb_fx_type ezusb_fx2 = {
 	.cpucs_reg = 0xE600,
-	.max_पूर्णांकernal_adress = 0x3FFF,
-पूर्ण;
+	.max_internal_adress = 0x3FFF,
+};
 
-पूर्णांक ezusb_fx2_set_reset(काष्ठा usb_device *dev, अचिन्हित अक्षर reset_bit)
-अणु
-	वापस ezusb_set_reset(dev, ezusb_fx2.cpucs_reg, reset_bit);
-पूर्ण
+int ezusb_fx2_set_reset(struct usb_device *dev, unsigned char reset_bit)
+{
+	return ezusb_set_reset(dev, ezusb_fx2.cpucs_reg, reset_bit);
+}
 EXPORT_SYMBOL_GPL(ezusb_fx2_set_reset);
 
-पूर्णांक ezusb_fx2_ihex_firmware_करोwnload(काष्ठा usb_device *dev,
-				     स्थिर अक्षर *firmware_path)
-अणु
-	वापस ezusb_ihex_firmware_करोwnload(dev, ezusb_fx2, firmware_path);
-पूर्ण
-EXPORT_SYMBOL_GPL(ezusb_fx2_ihex_firmware_करोwnload);
-#पूर्ण_अगर
+int ezusb_fx2_ihex_firmware_download(struct usb_device *dev,
+				     const char *firmware_path)
+{
+	return ezusb_ihex_firmware_download(dev, ezusb_fx2, firmware_path);
+}
+EXPORT_SYMBOL_GPL(ezusb_fx2_ihex_firmware_download);
+#endif
 
 MODULE_LICENSE("GPL");

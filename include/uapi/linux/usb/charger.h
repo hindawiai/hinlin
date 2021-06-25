@@ -1,32 +1,31 @@
-<शैली गुरु>
 /*
- * This file defines the USB अक्षरger type and state that are needed क्रम
+ * This file defines the USB charger type and state that are needed for
  * USB device APIs.
  */
 
-#अगर_अघोषित _UAPI__LINUX_USB_CHARGER_H
-#घोषणा _UAPI__LINUX_USB_CHARGER_H
+#ifndef _UAPI__LINUX_USB_CHARGER_H
+#define _UAPI__LINUX_USB_CHARGER_H
 
 /*
- * USB अक्षरger type:
+ * USB charger type:
  * SDP (Standard Downstream Port)
  * DCP (Dedicated Charging Port)
  * CDP (Charging Downstream Port)
  * ACA (Accessory Charger Adapters)
  */
-क्रमागत usb_अक्षरger_type अणु
+enum usb_charger_type {
 	UNKNOWN_TYPE = 0,
 	SDP_TYPE = 1,
 	DCP_TYPE = 2,
 	CDP_TYPE = 3,
 	ACA_TYPE = 4,
-पूर्ण;
+};
 
-/* USB अक्षरger state */
-क्रमागत usb_अक्षरger_state अणु
+/* USB charger state */
+enum usb_charger_state {
 	USB_CHARGER_DEFAULT = 0,
 	USB_CHARGER_PRESENT = 1,
 	USB_CHARGER_ABSENT = 2,
-पूर्ण;
+};
 
-#पूर्ण_अगर /* _UAPI__LINUX_USB_CHARGER_H */
+#endif /* _UAPI__LINUX_USB_CHARGER_H */

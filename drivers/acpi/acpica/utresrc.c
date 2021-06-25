@@ -1,80 +1,79 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /*******************************************************************************
  *
  * Module Name: utresrc - Resource management utilities
  *
  ******************************************************************************/
 
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
-#समावेश "acresrc.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
+#include "acresrc.h"
 
-#घोषणा _COMPONENT          ACPI_UTILITIES
+#define _COMPONENT          ACPI_UTILITIES
 ACPI_MODULE_NAME("utresrc")
 
 /*
  * Base sizes of the raw AML resource descriptors, indexed by resource type.
- * Zero indicates a reserved (and thereक्रमe invalid) resource type.
+ * Zero indicates a reserved (and therefore invalid) resource type.
  */
-स्थिर u8 acpi_gbl_resource_aml_sizes[] = अणु
+const u8 acpi_gbl_resource_aml_sizes[] = {
 	/* Small descriptors */
 
 	0,
 	0,
 	0,
 	0,
-	ACPI_AML_SIZE_SMALL(काष्ठा aml_resource_irq),
-	ACPI_AML_SIZE_SMALL(काष्ठा aml_resource_dma),
-	ACPI_AML_SIZE_SMALL(काष्ठा aml_resource_start_dependent),
-	ACPI_AML_SIZE_SMALL(काष्ठा aml_resource_end_dependent),
-	ACPI_AML_SIZE_SMALL(काष्ठा aml_resource_io),
-	ACPI_AML_SIZE_SMALL(काष्ठा aml_resource_fixed_io),
-	ACPI_AML_SIZE_SMALL(काष्ठा aml_resource_fixed_dma),
+	ACPI_AML_SIZE_SMALL(struct aml_resource_irq),
+	ACPI_AML_SIZE_SMALL(struct aml_resource_dma),
+	ACPI_AML_SIZE_SMALL(struct aml_resource_start_dependent),
+	ACPI_AML_SIZE_SMALL(struct aml_resource_end_dependent),
+	ACPI_AML_SIZE_SMALL(struct aml_resource_io),
+	ACPI_AML_SIZE_SMALL(struct aml_resource_fixed_io),
+	ACPI_AML_SIZE_SMALL(struct aml_resource_fixed_dma),
 	0,
 	0,
 	0,
-	ACPI_AML_SIZE_SMALL(काष्ठा aml_resource_venकरोr_small),
-	ACPI_AML_SIZE_SMALL(काष्ठा aml_resource_end_tag),
+	ACPI_AML_SIZE_SMALL(struct aml_resource_vendor_small),
+	ACPI_AML_SIZE_SMALL(struct aml_resource_end_tag),
 
 	/* Large descriptors */
 
 	0,
-	ACPI_AML_SIZE_LARGE(काष्ठा aml_resource_memory24),
-	ACPI_AML_SIZE_LARGE(काष्ठा aml_resource_generic_रेजिस्टर),
+	ACPI_AML_SIZE_LARGE(struct aml_resource_memory24),
+	ACPI_AML_SIZE_LARGE(struct aml_resource_generic_register),
 	0,
-	ACPI_AML_SIZE_LARGE(काष्ठा aml_resource_venकरोr_large),
-	ACPI_AML_SIZE_LARGE(काष्ठा aml_resource_memory32),
-	ACPI_AML_SIZE_LARGE(काष्ठा aml_resource_fixed_memory32),
-	ACPI_AML_SIZE_LARGE(काष्ठा aml_resource_address32),
-	ACPI_AML_SIZE_LARGE(काष्ठा aml_resource_address16),
-	ACPI_AML_SIZE_LARGE(काष्ठा aml_resource_extended_irq),
-	ACPI_AML_SIZE_LARGE(काष्ठा aml_resource_address64),
-	ACPI_AML_SIZE_LARGE(काष्ठा aml_resource_extended_address64),
-	ACPI_AML_SIZE_LARGE(काष्ठा aml_resource_gpio),
-	ACPI_AML_SIZE_LARGE(काष्ठा aml_resource_pin_function),
-	ACPI_AML_SIZE_LARGE(काष्ठा aml_resource_common_serialbus),
-	ACPI_AML_SIZE_LARGE(काष्ठा aml_resource_pin_config),
-	ACPI_AML_SIZE_LARGE(काष्ठा aml_resource_pin_group),
-	ACPI_AML_SIZE_LARGE(काष्ठा aml_resource_pin_group_function),
-	ACPI_AML_SIZE_LARGE(काष्ठा aml_resource_pin_group_config),
-पूर्ण;
+	ACPI_AML_SIZE_LARGE(struct aml_resource_vendor_large),
+	ACPI_AML_SIZE_LARGE(struct aml_resource_memory32),
+	ACPI_AML_SIZE_LARGE(struct aml_resource_fixed_memory32),
+	ACPI_AML_SIZE_LARGE(struct aml_resource_address32),
+	ACPI_AML_SIZE_LARGE(struct aml_resource_address16),
+	ACPI_AML_SIZE_LARGE(struct aml_resource_extended_irq),
+	ACPI_AML_SIZE_LARGE(struct aml_resource_address64),
+	ACPI_AML_SIZE_LARGE(struct aml_resource_extended_address64),
+	ACPI_AML_SIZE_LARGE(struct aml_resource_gpio),
+	ACPI_AML_SIZE_LARGE(struct aml_resource_pin_function),
+	ACPI_AML_SIZE_LARGE(struct aml_resource_common_serialbus),
+	ACPI_AML_SIZE_LARGE(struct aml_resource_pin_config),
+	ACPI_AML_SIZE_LARGE(struct aml_resource_pin_group),
+	ACPI_AML_SIZE_LARGE(struct aml_resource_pin_group_function),
+	ACPI_AML_SIZE_LARGE(struct aml_resource_pin_group_config),
+};
 
-स्थिर u8 acpi_gbl_resource_aml_serial_bus_sizes[] = अणु
+const u8 acpi_gbl_resource_aml_serial_bus_sizes[] = {
 	0,
-	ACPI_AML_SIZE_LARGE(काष्ठा aml_resource_i2c_serialbus),
-	ACPI_AML_SIZE_LARGE(काष्ठा aml_resource_spi_serialbus),
-	ACPI_AML_SIZE_LARGE(काष्ठा aml_resource_uart_serialbus),
-	ACPI_AML_SIZE_LARGE(काष्ठा aml_resource_csi2_serialbus),
-पूर्ण;
+	ACPI_AML_SIZE_LARGE(struct aml_resource_i2c_serialbus),
+	ACPI_AML_SIZE_LARGE(struct aml_resource_spi_serialbus),
+	ACPI_AML_SIZE_LARGE(struct aml_resource_uart_serialbus),
+	ACPI_AML_SIZE_LARGE(struct aml_resource_csi2_serialbus),
+};
 
 /*
  * Resource types, used to validate the resource length field.
  * The length of fixed-length types must match exactly, variable
  * lengths must meet the minimum required length, etc.
- * Zero indicates a reserved (and thereक्रमe invalid) resource type.
+ * Zero indicates a reserved (and therefore invalid) resource type.
  */
-अटल स्थिर u8 acpi_gbl_resource_types[] = अणु
+static const u8 acpi_gbl_resource_types[] = {
 	/* Small descriptors */
 
 	0,
@@ -91,16 +90,16 @@ ACPI_MODULE_NAME("utresrc")
 	0,
 	0,
 	0,
-	ACPI_VARIABLE_LENGTH,	/* 0E venकरोr_लघु */
+	ACPI_VARIABLE_LENGTH,	/* 0E vendor_short */
 	ACPI_FIXED_LENGTH,	/* 0F end_tag */
 
 	/* Large descriptors */
 
 	0,
 	ACPI_FIXED_LENGTH,	/* 01 Memory24 */
-	ACPI_FIXED_LENGTH,	/* 02 generic_रेजिस्टर */
+	ACPI_FIXED_LENGTH,	/* 02 generic_register */
 	0,
-	ACPI_VARIABLE_LENGTH,	/* 04 venकरोr_दीर्घ */
+	ACPI_VARIABLE_LENGTH,	/* 04 vendor_long */
 	ACPI_FIXED_LENGTH,	/* 05 Memory32 */
 	ACPI_FIXED_LENGTH,	/* 06 memory32_fixed */
 	ACPI_VARIABLE_LENGTH,	/* 07 Dword* address */
@@ -115,66 +114,66 @@ ACPI_MODULE_NAME("utresrc")
 	ACPI_VARIABLE_LENGTH,	/* 10 pin_group */
 	ACPI_VARIABLE_LENGTH,	/* 11 pin_group_function */
 	ACPI_VARIABLE_LENGTH,	/* 12 pin_group_config */
-पूर्ण;
+};
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ut_walk_aml_resources
  *
  * PARAMETERS:  walk_state          - Current walk info
- * PARAMETERS:  aml                 - Poपूर्णांकer to the raw AML resource ढाँचा
- *              aml_length          - Length of the entire ढाँचा
- *              user_function       - Called once क्रम each descriptor found. If
- *                                    शून्य, a poपूर्णांकer to the end_tag is वापसed
+ * PARAMETERS:  aml                 - Pointer to the raw AML resource template
+ *              aml_length          - Length of the entire template
+ *              user_function       - Called once for each descriptor found. If
+ *                                    NULL, a pointer to the end_tag is returned
  *              context             - Passed to user_function
  *
  * RETURN:      Status
  *
  * DESCRIPTION: Walk a raw AML resource list(buffer). User function called
- *              once क्रम each resource found.
+ *              once for each resource found.
  *
  ******************************************************************************/
 
 acpi_status
-acpi_ut_walk_aml_resources(काष्ठा acpi_walk_state *walk_state,
+acpi_ut_walk_aml_resources(struct acpi_walk_state *walk_state,
 			   u8 *aml,
 			   acpi_size aml_length,
-			   acpi_walk_aml_callback user_function, व्योम **context)
-अणु
+			   acpi_walk_aml_callback user_function, void **context)
+{
 	acpi_status status;
 	u8 *end_aml;
 	u8 resource_index;
 	u32 length;
 	u32 offset = 0;
-	u8 end_tag[2] = अणु 0x79, 0x00 पूर्ण;
+	u8 end_tag[2] = { 0x79, 0x00 };
 
 	ACPI_FUNCTION_TRACE(ut_walk_aml_resources);
 
-	/* The असलolute minimum resource ढाँचा is one end_tag descriptor */
+	/* The absolute minimum resource template is one end_tag descriptor */
 
-	अगर (aml_length < माप(काष्ठा aml_resource_end_tag)) अणु
-		वापस_ACPI_STATUS(AE_AML_NO_RESOURCE_END_TAG);
-	पूर्ण
+	if (aml_length < sizeof(struct aml_resource_end_tag)) {
+		return_ACPI_STATUS(AE_AML_NO_RESOURCE_END_TAG);
+	}
 
-	/* Poपूर्णांक to the end of the resource ढाँचा buffer */
+	/* Point to the end of the resource template buffer */
 
 	end_aml = aml + aml_length;
 
-	/* Walk the byte list, पात on any invalid descriptor type or length */
+	/* Walk the byte list, abort on any invalid descriptor type or length */
 
-	जबतक (aml < end_aml) अणु
+	while (aml < end_aml) {
 
 		/* Validate the Resource Type and Resource Length */
 
 		status =
 		    acpi_ut_validate_resource(walk_state, aml, &resource_index);
-		अगर (ACPI_FAILURE(status)) अणु
+		if (ACPI_FAILURE(status)) {
 			/*
-			 * Exit on failure. Cannot जारी because the descriptor
+			 * Exit on failure. Cannot continue because the descriptor
 			 * length may be bogus also.
 			 */
-			वापस_ACPI_STATUS(status);
-		पूर्ण
+			return_ACPI_STATUS(status);
+		}
 
 		/* Get the length of this descriptor */
 
@@ -182,89 +181,89 @@ acpi_ut_walk_aml_resources(काष्ठा acpi_walk_state *walk_state,
 
 		/* Invoke the user function */
 
-		अगर (user_function) अणु
+		if (user_function) {
 			status =
 			    user_function(aml, length, offset, resource_index,
 					  context);
-			अगर (ACPI_FAILURE(status)) अणु
-				वापस_ACPI_STATUS(status);
-			पूर्ण
-		पूर्ण
+			if (ACPI_FAILURE(status)) {
+				return_ACPI_STATUS(status);
+			}
+		}
 
-		/* An end_tag descriptor terminates this resource ढाँचा */
+		/* An end_tag descriptor terminates this resource template */
 
-		अगर (acpi_ut_get_resource_type(aml) ==
-		    ACPI_RESOURCE_NAME_END_TAG) अणु
+		if (acpi_ut_get_resource_type(aml) ==
+		    ACPI_RESOURCE_NAME_END_TAG) {
 			/*
-			 * There must be at least one more byte in the buffer क्रम
+			 * There must be at least one more byte in the buffer for
 			 * the 2nd byte of the end_tag
 			 */
-			अगर ((aml + 1) >= end_aml) अणु
-				वापस_ACPI_STATUS(AE_AML_NO_RESOURCE_END_TAG);
-			पूर्ण
+			if ((aml + 1) >= end_aml) {
+				return_ACPI_STATUS(AE_AML_NO_RESOURCE_END_TAG);
+			}
 
 			/*
-			 * Don't attempt to perक्रमm any validation on the 2nd byte.
-			 * Although all known ASL compilers insert a zero क्रम the 2nd
+			 * Don't attempt to perform any validation on the 2nd byte.
+			 * Although all known ASL compilers insert a zero for the 2nd
 			 * byte, it can also be a checksum (as per the ACPI spec),
 			 * and this is occasionally seen in the field. July 2017.
 			 */
 
-			/* Return the poपूर्णांकer to the end_tag अगर requested */
+			/* Return the pointer to the end_tag if requested */
 
-			अगर (!user_function) अणु
+			if (!user_function) {
 				*context = aml;
-			पूर्ण
+			}
 
-			/* Normal निकास */
+			/* Normal exit */
 
-			वापस_ACPI_STATUS(AE_OK);
-		पूर्ण
+			return_ACPI_STATUS(AE_OK);
+		}
 
 		aml += length;
 		offset += length;
-	पूर्ण
+	}
 
 	/* Did not find an end_tag descriptor */
 
-	अगर (user_function) अणु
+	if (user_function) {
 
 		/* Insert an end_tag anyway. acpi_rs_get_list_length always leaves room */
 
-		(व्योम)acpi_ut_validate_resource(walk_state, end_tag,
+		(void)acpi_ut_validate_resource(walk_state, end_tag,
 						&resource_index);
 		status =
 		    user_function(end_tag, 2, offset, resource_index, context);
-		अगर (ACPI_FAILURE(status)) अणु
-			वापस_ACPI_STATUS(status);
-		पूर्ण
-	पूर्ण
+		if (ACPI_FAILURE(status)) {
+			return_ACPI_STATUS(status);
+		}
+	}
 
-	वापस_ACPI_STATUS(AE_AML_NO_RESOURCE_END_TAG);
-पूर्ण
+	return_ACPI_STATUS(AE_AML_NO_RESOURCE_END_TAG);
+}
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ut_validate_resource
  *
  * PARAMETERS:  walk_state          - Current walk info
- *              aml                 - Poपूर्णांकer to the raw AML resource descriptor
- *              वापस_index        - Where the resource index is वापसed. शून्य
- *                                    अगर the index is not required.
+ *              aml                 - Pointer to the raw AML resource descriptor
+ *              return_index        - Where the resource index is returned. NULL
+ *                                    if the index is not required.
  *
- * RETURN:      Status, and optionally the Index पूर्णांकo the global resource tables
+ * RETURN:      Status, and optionally the Index into the global resource tables
  *
  * DESCRIPTION: Validate an AML resource descriptor by checking the Resource
- *              Type and Resource Length. Returns an index पूर्णांकo the global
- *              resource inक्रमmation/dispatch tables क्रम later use.
+ *              Type and Resource Length. Returns an index into the global
+ *              resource information/dispatch tables for later use.
  *
  ******************************************************************************/
 
 acpi_status
-acpi_ut_validate_resource(काष्ठा acpi_walk_state *walk_state,
-			  व्योम *aml, u8 *वापस_index)
-अणु
-	जोड़ aml_resource *aml_resource;
+acpi_ut_validate_resource(struct acpi_walk_state *walk_state,
+			  void *aml, u8 *return_index)
+{
+	union aml_resource *aml_resource;
 	u8 resource_type;
 	u8 resource_index;
 	acpi_rs_length resource_length;
@@ -281,35 +280,35 @@ acpi_ut_validate_resource(काष्ठा acpi_walk_state *walk_state,
 	 * Byte 0 contains the descriptor name (Resource Type)
 	 * Examine the large/small bit in the resource header
 	 */
-	अगर (resource_type & ACPI_RESOURCE_NAME_LARGE) अणु
+	if (resource_type & ACPI_RESOURCE_NAME_LARGE) {
 
-		/* Verअगरy the large resource type (name) against the max */
+		/* Verify the large resource type (name) against the max */
 
-		अगर (resource_type > ACPI_RESOURCE_NAME_LARGE_MAX) अणु
-			जाओ invalid_resource;
-		पूर्ण
+		if (resource_type > ACPI_RESOURCE_NAME_LARGE_MAX) {
+			goto invalid_resource;
+		}
 
 		/*
 		 * Large Resource Type -- bits 6:0 contain the name
 		 * Translate range 0x80-0x8B to index range 0x10-0x1B
 		 */
 		resource_index = (u8) (resource_type - 0x70);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
 		 * Small Resource Type -- bits 6:3 contain the name
-		 * Shअगरt range to index range 0x00-0x0F
+		 * Shift range to index range 0x00-0x0F
 		 */
 		resource_index = (u8)
 		    ((resource_type & ACPI_RESOURCE_NAME_SMALL_MASK) >> 3);
-	पूर्ण
+	}
 
 	/*
 	 * Check validity of the resource type, via acpi_gbl_resource_types.
 	 * Zero indicates an invalid resource.
 	 */
-	अगर (!acpi_gbl_resource_types[resource_index]) अणु
-		जाओ invalid_resource;
-	पूर्ण
+	if (!acpi_gbl_resource_types[resource_index]) {
+		goto invalid_resource;
+	}
 
 	/*
 	 * Validate the resource_length field. This ensures that the length
@@ -320,94 +319,94 @@ acpi_ut_validate_resource(काष्ठा acpi_walk_state *walk_state,
 
 	/* Validate based upon the type of resource - fixed length or variable */
 
-	चयन (acpi_gbl_resource_types[resource_index]) अणु
-	हाल ACPI_FIXED_LENGTH:
+	switch (acpi_gbl_resource_types[resource_index]) {
+	case ACPI_FIXED_LENGTH:
 
 		/* Fixed length resource, length must match exactly */
 
-		अगर (resource_length != minimum_resource_length) अणु
-			जाओ bad_resource_length;
-		पूर्ण
-		अवरोध;
+		if (resource_length != minimum_resource_length) {
+			goto bad_resource_length;
+		}
+		break;
 
-	हाल ACPI_VARIABLE_LENGTH:
+	case ACPI_VARIABLE_LENGTH:
 
 		/* Variable length resource, length must be at least the minimum */
 
-		अगर (resource_length < minimum_resource_length) अणु
-			जाओ bad_resource_length;
-		पूर्ण
-		अवरोध;
+		if (resource_length < minimum_resource_length) {
+			goto bad_resource_length;
+		}
+		break;
 
-	हाल ACPI_SMALL_VARIABLE_LENGTH:
+	case ACPI_SMALL_VARIABLE_LENGTH:
 
 		/* Small variable length resource, length can be (Min) or (Min-1) */
 
-		अगर ((resource_length > minimum_resource_length) ||
-		    (resource_length < (minimum_resource_length - 1))) अणु
-			जाओ bad_resource_length;
-		पूर्ण
-		अवरोध;
+		if ((resource_length > minimum_resource_length) ||
+		    (resource_length < (minimum_resource_length - 1))) {
+			goto bad_resource_length;
+		}
+		break;
 
-	शेष:
+	default:
 
 		/* Shouldn't happen (because of validation earlier), but be sure */
 
-		जाओ invalid_resource;
-	पूर्ण
+		goto invalid_resource;
+	}
 
-	aml_resource = ACPI_CAST_PTR(जोड़ aml_resource, aml);
-	अगर (resource_type == ACPI_RESOURCE_NAME_SERIAL_BUS) अणु
+	aml_resource = ACPI_CAST_PTR(union aml_resource, aml);
+	if (resource_type == ACPI_RESOURCE_NAME_SERIAL_BUS) {
 
 		/* Validate the bus_type field */
 
-		अगर ((aml_resource->common_serial_bus.type == 0) ||
+		if ((aml_resource->common_serial_bus.type == 0) ||
 		    (aml_resource->common_serial_bus.type >
-		     AML_RESOURCE_MAX_SERIALBUSTYPE)) अणु
-			अगर (walk_state) अणु
+		     AML_RESOURCE_MAX_SERIALBUSTYPE)) {
+			if (walk_state) {
 				ACPI_ERROR((AE_INFO,
 					    "Invalid/unsupported SerialBus resource descriptor: BusType 0x%2.2X",
 					    aml_resource->common_serial_bus.
 					    type));
-			पूर्ण
-			वापस (AE_AML_INVALID_RESOURCE_TYPE);
-		पूर्ण
-	पूर्ण
+			}
+			return (AE_AML_INVALID_RESOURCE_TYPE);
+		}
+	}
 
-	/* Optionally वापस the resource table index */
+	/* Optionally return the resource table index */
 
-	अगर (वापस_index) अणु
-		*वापस_index = resource_index;
-	पूर्ण
+	if (return_index) {
+		*return_index = resource_index;
+	}
 
-	वापस (AE_OK);
+	return (AE_OK);
 
 invalid_resource:
 
-	अगर (walk_state) अणु
+	if (walk_state) {
 		ACPI_ERROR((AE_INFO,
 			    "Invalid/unsupported resource descriptor: Type 0x%2.2X",
 			    resource_type));
-	पूर्ण
-	वापस (AE_AML_INVALID_RESOURCE_TYPE);
+	}
+	return (AE_AML_INVALID_RESOURCE_TYPE);
 
 bad_resource_length:
 
-	अगर (walk_state) अणु
+	if (walk_state) {
 		ACPI_ERROR((AE_INFO,
 			    "Invalid resource descriptor length: Type "
 			    "0x%2.2X, Length 0x%4.4X, MinLength 0x%4.4X",
 			    resource_type, resource_length,
 			    minimum_resource_length));
-	पूर्ण
-	वापस (AE_AML_BAD_RESOURCE_LENGTH);
-पूर्ण
+	}
+	return (AE_AML_BAD_RESOURCE_LENGTH);
+}
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ut_get_resource_type
  *
- * PARAMETERS:  aml             - Poपूर्णांकer to the raw AML resource descriptor
+ * PARAMETERS:  aml             - Pointer to the raw AML resource descriptor
  *
  * RETURN:      The Resource Type with no extraneous bits (except the
  *              Large/Small descriptor bit -- this is left alone)
@@ -417,42 +416,42 @@ bad_resource_length:
  *
  ******************************************************************************/
 
-u8 acpi_ut_get_resource_type(व्योम *aml)
-अणु
+u8 acpi_ut_get_resource_type(void *aml)
+{
 	ACPI_FUNCTION_ENTRY();
 
 	/*
 	 * Byte 0 contains the descriptor name (Resource Type)
 	 * Examine the large/small bit in the resource header
 	 */
-	अगर (ACPI_GET8(aml) & ACPI_RESOURCE_NAME_LARGE) अणु
+	if (ACPI_GET8(aml) & ACPI_RESOURCE_NAME_LARGE) {
 
 		/* Large Resource Type -- bits 6:0 contain the name */
 
-		वापस (ACPI_GET8(aml));
-	पूर्ण अन्यथा अणु
+		return (ACPI_GET8(aml));
+	} else {
 		/* Small Resource Type -- bits 6:3 contain the name */
 
-		वापस ((u8) (ACPI_GET8(aml) & ACPI_RESOURCE_NAME_SMALL_MASK));
-	पूर्ण
-पूर्ण
+		return ((u8) (ACPI_GET8(aml) & ACPI_RESOURCE_NAME_SMALL_MASK));
+	}
+}
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ut_get_resource_length
  *
- * PARAMETERS:  aml             - Poपूर्णांकer to the raw AML resource descriptor
+ * PARAMETERS:  aml             - Pointer to the raw AML resource descriptor
  *
  * RETURN:      Byte Length
  *
  * DESCRIPTION: Get the "Resource Length" of a raw AML descriptor. By
- *              definition, this करोes not include the size of the descriptor
+ *              definition, this does not include the size of the descriptor
  *              header or the length field itself.
  *
  ******************************************************************************/
 
-u16 acpi_ut_get_resource_length(व्योम *aml)
-अणु
+u16 acpi_ut_get_resource_length(void *aml)
+{
 	acpi_rs_length resource_length;
 
 	ACPI_FUNCTION_ENTRY();
@@ -461,52 +460,52 @@ u16 acpi_ut_get_resource_length(व्योम *aml)
 	 * Byte 0 contains the descriptor name (Resource Type)
 	 * Examine the large/small bit in the resource header
 	 */
-	अगर (ACPI_GET8(aml) & ACPI_RESOURCE_NAME_LARGE) अणु
+	if (ACPI_GET8(aml) & ACPI_RESOURCE_NAME_LARGE) {
 
 		/* Large Resource type -- bytes 1-2 contain the 16-bit length */
 
 		ACPI_MOVE_16_TO_16(&resource_length, ACPI_ADD_PTR(u8, aml, 1));
 
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Small Resource type -- bits 2:0 of byte 0 contain the length */
 
 		resource_length = (u16) (ACPI_GET8(aml) &
 					 ACPI_RESOURCE_NAME_SMALL_LENGTH_MASK);
-	पूर्ण
+	}
 
-	वापस (resource_length);
-पूर्ण
+	return (resource_length);
+}
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ut_get_resource_header_length
  *
- * PARAMETERS:  aml             - Poपूर्णांकer to the raw AML resource descriptor
+ * PARAMETERS:  aml             - Pointer to the raw AML resource descriptor
  *
  * RETURN:      Length of the AML header (depends on large/small descriptor)
  *
- * DESCRIPTION: Get the length of the header क्रम this resource.
+ * DESCRIPTION: Get the length of the header for this resource.
  *
  ******************************************************************************/
 
-u8 acpi_ut_get_resource_header_length(व्योम *aml)
-अणु
+u8 acpi_ut_get_resource_header_length(void *aml)
+{
 	ACPI_FUNCTION_ENTRY();
 
 	/* Examine the large/small bit in the resource header */
 
-	अगर (ACPI_GET8(aml) & ACPI_RESOURCE_NAME_LARGE) अणु
-		वापस (माप(काष्ठा aml_resource_large_header));
-	पूर्ण अन्यथा अणु
-		वापस (माप(काष्ठा aml_resource_small_header));
-	पूर्ण
-पूर्ण
+	if (ACPI_GET8(aml) & ACPI_RESOURCE_NAME_LARGE) {
+		return (sizeof(struct aml_resource_large_header));
+	} else {
+		return (sizeof(struct aml_resource_small_header));
+	}
+}
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ut_get_descriptor_length
  *
- * PARAMETERS:  aml             - Poपूर्णांकer to the raw AML resource descriptor
+ * PARAMETERS:  aml             - Pointer to the raw AML resource descriptor
  *
  * RETURN:      Byte length
  *
@@ -516,51 +515,51 @@ u8 acpi_ut_get_resource_header_length(व्योम *aml)
  *
  ******************************************************************************/
 
-u32 acpi_ut_get_descriptor_length(व्योम *aml)
-अणु
+u32 acpi_ut_get_descriptor_length(void *aml)
+{
 	ACPI_FUNCTION_ENTRY();
 
 	/*
-	 * Get the Resource Length (करोes not include header length) and add
-	 * the header length (depends on अगर this is a small or large resource)
+	 * Get the Resource Length (does not include header length) and add
+	 * the header length (depends on if this is a small or large resource)
 	 */
-	वापस (acpi_ut_get_resource_length(aml) +
+	return (acpi_ut_get_resource_length(aml) +
 		acpi_ut_get_resource_header_length(aml));
-पूर्ण
+}
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ut_get_resource_end_tag
  *
- * PARAMETERS:  obj_desc        - The resource ढाँचा buffer object
- *              end_tag         - Where the poपूर्णांकer to the end_tag is वापसed
+ * PARAMETERS:  obj_desc        - The resource template buffer object
+ *              end_tag         - Where the pointer to the end_tag is returned
  *
- * RETURN:      Status, poपूर्णांकer to the end tag
+ * RETURN:      Status, pointer to the end tag
  *
- * DESCRIPTION: Find the end_tag resource descriptor in an AML resource ढाँचा
+ * DESCRIPTION: Find the end_tag resource descriptor in an AML resource template
  *              Note: allows a buffer length of zero.
  *
  ******************************************************************************/
 
 acpi_status
-acpi_ut_get_resource_end_tag(जोड़ acpi_opeअक्रम_object *obj_desc, u8 **end_tag)
-अणु
+acpi_ut_get_resource_end_tag(union acpi_operand_object *obj_desc, u8 **end_tag)
+{
 	acpi_status status;
 
 	ACPI_FUNCTION_TRACE(ut_get_resource_end_tag);
 
 	/* Allow a buffer length of zero */
 
-	अगर (!obj_desc->buffer.length) अणु
-		*end_tag = obj_desc->buffer.poपूर्णांकer;
-		वापस_ACPI_STATUS(AE_OK);
-	पूर्ण
+	if (!obj_desc->buffer.length) {
+		*end_tag = obj_desc->buffer.pointer;
+		return_ACPI_STATUS(AE_OK);
+	}
 
-	/* Validate the ढाँचा and get a poपूर्णांकer to the end_tag */
+	/* Validate the template and get a pointer to the end_tag */
 
-	status = acpi_ut_walk_aml_resources(शून्य, obj_desc->buffer.poपूर्णांकer,
-					    obj_desc->buffer.length, शून्य,
-					    (व्योम **)end_tag);
+	status = acpi_ut_walk_aml_resources(NULL, obj_desc->buffer.pointer,
+					    obj_desc->buffer.length, NULL,
+					    (void **)end_tag);
 
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	return_ACPI_STATUS(status);
+}

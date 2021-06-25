@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * MDIO I2C bridge
  *
@@ -10,40 +9,40 @@
  * our PHY drivers access to these PHYs, and so allowing configuration
  * of their settings.
  */
-#समावेश <linux/i2c.h>
-#समावेश <linux/mdio/mdio-i2c.h>
-#समावेश <linux/phy.h>
+#include <linux/i2c.h>
+#include <linux/mdio/mdio-i2c.h>
+#include <linux/phy.h>
 
 /*
  * I2C bus addresses 0x50 and 0x51 are normally an EEPROM, which is
- * specअगरied to be present in SFP modules.  These correspond with PHY
+ * specified to be present in SFP modules.  These correspond with PHY
  * addresses 16 and 17.  Disallow access to these "phy" addresses.
  */
-अटल bool i2c_mii_valid_phy_id(पूर्णांक phy_id)
-अणु
-	वापस phy_id != 0x10 && phy_id != 0x11;
-पूर्ण
+static bool i2c_mii_valid_phy_id(int phy_id)
+{
+	return phy_id != 0x10 && phy_id != 0x11;
+}
 
-अटल अचिन्हित पूर्णांक i2c_mii_phy_addr(पूर्णांक phy_id)
-अणु
-	वापस phy_id + 0x40;
-पूर्ण
+static unsigned int i2c_mii_phy_addr(int phy_id)
+{
+	return phy_id + 0x40;
+}
 
-अटल पूर्णांक i2c_mii_पढ़ो(काष्ठा mii_bus *bus, पूर्णांक phy_id, पूर्णांक reg)
-अणु
-	काष्ठा i2c_adapter *i2c = bus->priv;
-	काष्ठा i2c_msg msgs[2];
+static int i2c_mii_read(struct mii_bus *bus, int phy_id, int reg)
+{
+	struct i2c_adapter *i2c = bus->priv;
+	struct i2c_msg msgs[2];
 	u8 addr[3], data[2], *p;
-	पूर्णांक bus_addr, ret;
+	int bus_addr, ret;
 
-	अगर (!i2c_mii_valid_phy_id(phy_id))
-		वापस 0xffff;
+	if (!i2c_mii_valid_phy_id(phy_id))
+		return 0xffff;
 
 	p = addr;
-	अगर (reg & MII_ADDR_C45) अणु
+	if (reg & MII_ADDR_C45) {
 		*p++ = 0x20 | ((reg >> 16) & 31);
 		*p++ = reg >> 8;
-	पूर्ण
+	}
 	*p++ = reg;
 
 	bus_addr = i2c_mii_phy_addr(phy_id);
@@ -53,31 +52,31 @@
 	msgs[0].buf = addr;
 	msgs[1].addr = bus_addr;
 	msgs[1].flags = I2C_M_RD;
-	msgs[1].len = माप(data);
+	msgs[1].len = sizeof(data);
 	msgs[1].buf = data;
 
 	ret = i2c_transfer(i2c, msgs, ARRAY_SIZE(msgs));
-	अगर (ret != ARRAY_SIZE(msgs))
-		वापस 0xffff;
+	if (ret != ARRAY_SIZE(msgs))
+		return 0xffff;
 
-	वापस data[0] << 8 | data[1];
-पूर्ण
+	return data[0] << 8 | data[1];
+}
 
-अटल पूर्णांक i2c_mii_ग_लिखो(काष्ठा mii_bus *bus, पूर्णांक phy_id, पूर्णांक reg, u16 val)
-अणु
-	काष्ठा i2c_adapter *i2c = bus->priv;
-	काष्ठा i2c_msg msg;
-	पूर्णांक ret;
+static int i2c_mii_write(struct mii_bus *bus, int phy_id, int reg, u16 val)
+{
+	struct i2c_adapter *i2c = bus->priv;
+	struct i2c_msg msg;
+	int ret;
 	u8 data[5], *p;
 
-	अगर (!i2c_mii_valid_phy_id(phy_id))
-		वापस 0;
+	if (!i2c_mii_valid_phy_id(phy_id))
+		return 0;
 
 	p = data;
-	अगर (reg & MII_ADDR_C45) अणु
+	if (reg & MII_ADDR_C45) {
 		*p++ = (reg >> 16) & 31;
 		*p++ = reg >> 8;
-	पूर्ण
+	}
 	*p++ = reg;
 	*p++ = val >> 8;
 	*p++ = val;
@@ -89,28 +88,28 @@
 
 	ret = i2c_transfer(i2c, &msg, 1);
 
-	वापस ret < 0 ? ret : 0;
-पूर्ण
+	return ret < 0 ? ret : 0;
+}
 
-काष्ठा mii_bus *mdio_i2c_alloc(काष्ठा device *parent, काष्ठा i2c_adapter *i2c)
-अणु
-	काष्ठा mii_bus *mii;
+struct mii_bus *mdio_i2c_alloc(struct device *parent, struct i2c_adapter *i2c)
+{
+	struct mii_bus *mii;
 
-	अगर (!i2c_check_functionality(i2c, I2C_FUNC_I2C))
-		वापस ERR_PTR(-EINVAL);
+	if (!i2c_check_functionality(i2c, I2C_FUNC_I2C))
+		return ERR_PTR(-EINVAL);
 
 	mii = mdiobus_alloc();
-	अगर (!mii)
-		वापस ERR_PTR(-ENOMEM);
+	if (!mii)
+		return ERR_PTR(-ENOMEM);
 
-	snम_लिखो(mii->id, MII_BUS_ID_SIZE, "i2c:%s", dev_name(parent));
+	snprintf(mii->id, MII_BUS_ID_SIZE, "i2c:%s", dev_name(parent));
 	mii->parent = parent;
-	mii->पढ़ो = i2c_mii_पढ़ो;
-	mii->ग_लिखो = i2c_mii_ग_लिखो;
+	mii->read = i2c_mii_read;
+	mii->write = i2c_mii_write;
 	mii->priv = i2c;
 
-	वापस mii;
-पूर्ण
+	return mii;
+}
 EXPORT_SYMBOL_GPL(mdio_i2c_alloc);
 
 MODULE_AUTHOR("Russell King");

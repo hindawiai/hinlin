@@ -1,217 +1,216 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * An I2C driver क्रम the Philips PCF8563 RTC
+ * An I2C driver for the Philips PCF8563 RTC
  * Copyright 2005-06 Tower Technologies
  *
  * Author: Alessandro Zummo <a.zummo@towertech.it>
- * Maपूर्णांकainers: http://www.nslu2-linux.org/
+ * Maintainers: http://www.nslu2-linux.org/
  *
  * based on the other drivers in this same directory.
  *
  * http://www.semiconductors.philips.com/acrobat/datasheets/PCF8563-04.pdf
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/bcd.h>
-#समावेश <linux/rtc.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/err.h>
+#include <linux/clk-provider.h>
+#include <linux/i2c.h>
+#include <linux/bcd.h>
+#include <linux/rtc.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/err.h>
 
-#घोषणा PCF8563_REG_ST1		0x00 /* status */
-#घोषणा PCF8563_REG_ST2		0x01
-#घोषणा PCF8563_BIT_AIE		BIT(1)
-#घोषणा PCF8563_BIT_AF		BIT(3)
-#घोषणा PCF8563_BITS_ST2_N	(7 << 5)
+#define PCF8563_REG_ST1		0x00 /* status */
+#define PCF8563_REG_ST2		0x01
+#define PCF8563_BIT_AIE		BIT(1)
+#define PCF8563_BIT_AF		BIT(3)
+#define PCF8563_BITS_ST2_N	(7 << 5)
 
-#घोषणा PCF8563_REG_SC		0x02 /* dateसमय */
-#घोषणा PCF8563_REG_MN		0x03
-#घोषणा PCF8563_REG_HR		0x04
-#घोषणा PCF8563_REG_DM		0x05
-#घोषणा PCF8563_REG_DW		0x06
-#घोषणा PCF8563_REG_MO		0x07
-#घोषणा PCF8563_REG_YR		0x08
+#define PCF8563_REG_SC		0x02 /* datetime */
+#define PCF8563_REG_MN		0x03
+#define PCF8563_REG_HR		0x04
+#define PCF8563_REG_DM		0x05
+#define PCF8563_REG_DW		0x06
+#define PCF8563_REG_MO		0x07
+#define PCF8563_REG_YR		0x08
 
-#घोषणा PCF8563_REG_AMN		0x09 /* alarm */
+#define PCF8563_REG_AMN		0x09 /* alarm */
 
-#घोषणा PCF8563_REG_CLKO		0x0D /* घड़ी out */
-#घोषणा PCF8563_REG_CLKO_FE		0x80 /* घड़ी out enabled */
-#घोषणा PCF8563_REG_CLKO_F_MASK		0x03 /* frequenc mask */
-#घोषणा PCF8563_REG_CLKO_F_32768HZ	0x00
-#घोषणा PCF8563_REG_CLKO_F_1024HZ	0x01
-#घोषणा PCF8563_REG_CLKO_F_32HZ		0x02
-#घोषणा PCF8563_REG_CLKO_F_1HZ		0x03
+#define PCF8563_REG_CLKO		0x0D /* clock out */
+#define PCF8563_REG_CLKO_FE		0x80 /* clock out enabled */
+#define PCF8563_REG_CLKO_F_MASK		0x03 /* frequenc mask */
+#define PCF8563_REG_CLKO_F_32768HZ	0x00
+#define PCF8563_REG_CLKO_F_1024HZ	0x01
+#define PCF8563_REG_CLKO_F_32HZ		0x02
+#define PCF8563_REG_CLKO_F_1HZ		0x03
 
-#घोषणा PCF8563_REG_TMRC	0x0E /* समयr control */
-#घोषणा PCF8563_TMRC_ENABLE	BIT(7)
-#घोषणा PCF8563_TMRC_4096	0
-#घोषणा PCF8563_TMRC_64		1
-#घोषणा PCF8563_TMRC_1		2
-#घोषणा PCF8563_TMRC_1_60	3
-#घोषणा PCF8563_TMRC_MASK	3
+#define PCF8563_REG_TMRC	0x0E /* timer control */
+#define PCF8563_TMRC_ENABLE	BIT(7)
+#define PCF8563_TMRC_4096	0
+#define PCF8563_TMRC_64		1
+#define PCF8563_TMRC_1		2
+#define PCF8563_TMRC_1_60	3
+#define PCF8563_TMRC_MASK	3
 
-#घोषणा PCF8563_REG_TMR		0x0F /* समयr */
+#define PCF8563_REG_TMR		0x0F /* timer */
 
-#घोषणा PCF8563_SC_LV		0x80 /* low voltage */
-#घोषणा PCF8563_MO_C		0x80 /* century */
+#define PCF8563_SC_LV		0x80 /* low voltage */
+#define PCF8563_MO_C		0x80 /* century */
 
-अटल काष्ठा i2c_driver pcf8563_driver;
+static struct i2c_driver pcf8563_driver;
 
-काष्ठा pcf8563 अणु
-	काष्ठा rtc_device *rtc;
+struct pcf8563 {
+	struct rtc_device *rtc;
 	/*
 	 * The meaning of MO_C bit varies by the chip type.
 	 * From PCF8563 datasheet: this bit is toggled when the years
-	 * रेजिस्टर overflows from 99 to 00
+	 * register overflows from 99 to 00
 	 *   0 indicates the century is 20xx
 	 *   1 indicates the century is 19xx
 	 * From RTC8564 datasheet: this bit indicates change of
 	 * century. When the year digit data overflows from 99 to 00,
-	 * this bit is set. By presetting it to 0 जबतक still in the
+	 * this bit is set. By presetting it to 0 while still in the
 	 * 20th century, it will be set in year 2000, ...
-	 * There seems no reliable way to know how the प्रणाली use this
-	 * bit.  So let's करो it heuristically, assuming we are live in
+	 * There seems no reliable way to know how the system use this
+	 * bit.  So let's do it heuristically, assuming we are live in
 	 * 1970...2069.
 	 */
-	पूर्णांक c_polarity;	/* 0: MO_C=1 means 19xx, otherwise MO_C=1 means 20xx */
+	int c_polarity;	/* 0: MO_C=1 means 19xx, otherwise MO_C=1 means 20xx */
 
-	काष्ठा i2c_client *client;
-#अगर_घोषित CONFIG_COMMON_CLK
-	काष्ठा clk_hw		clkout_hw;
-#पूर्ण_अगर
-पूर्ण;
+	struct i2c_client *client;
+#ifdef CONFIG_COMMON_CLK
+	struct clk_hw		clkout_hw;
+#endif
+};
 
-अटल पूर्णांक pcf8563_पढ़ो_block_data(काष्ठा i2c_client *client, अचिन्हित अक्षर reg,
-				   अचिन्हित अक्षर length, अचिन्हित अक्षर *buf)
-अणु
-	काष्ठा i2c_msg msgs[] = अणु
-		अणु/* setup पढ़ो ptr */
+static int pcf8563_read_block_data(struct i2c_client *client, unsigned char reg,
+				   unsigned char length, unsigned char *buf)
+{
+	struct i2c_msg msgs[] = {
+		{/* setup read ptr */
 			.addr = client->addr,
 			.len = 1,
 			.buf = &reg,
-		पूर्ण,
-		अणु
+		},
+		{
 			.addr = client->addr,
 			.flags = I2C_M_RD,
 			.len = length,
 			.buf = buf
-		पूर्ण,
-	पूर्ण;
+		},
+	};
 
-	अगर ((i2c_transfer(client->adapter, msgs, 2)) != 2) अणु
+	if ((i2c_transfer(client->adapter, msgs, 2)) != 2) {
 		dev_err(&client->dev, "%s: read error\n", __func__);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pcf8563_ग_लिखो_block_data(काष्ठा i2c_client *client,
-				   अचिन्हित अक्षर reg, अचिन्हित अक्षर length,
-				   अचिन्हित अक्षर *buf)
-अणु
-	पूर्णांक i, err;
+static int pcf8563_write_block_data(struct i2c_client *client,
+				   unsigned char reg, unsigned char length,
+				   unsigned char *buf)
+{
+	int i, err;
 
-	क्रम (i = 0; i < length; i++) अणु
-		अचिन्हित अक्षर data[2] = अणु reg + i, buf[i] पूर्ण;
+	for (i = 0; i < length; i++) {
+		unsigned char data[2] = { reg + i, buf[i] };
 
-		err = i2c_master_send(client, data, माप(data));
-		अगर (err != माप(data)) अणु
+		err = i2c_master_send(client, data, sizeof(data));
+		if (err != sizeof(data)) {
 			dev_err(&client->dev,
 				"%s: err=%d addr=%02x, data=%02x\n",
 				__func__, err, data[0], data[1]);
-			वापस -EIO;
-		पूर्ण
-	पूर्ण
+			return -EIO;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pcf8563_set_alarm_mode(काष्ठा i2c_client *client, bool on)
-अणु
-	अचिन्हित अक्षर buf;
-	पूर्णांक err;
+static int pcf8563_set_alarm_mode(struct i2c_client *client, bool on)
+{
+	unsigned char buf;
+	int err;
 
-	err = pcf8563_पढ़ो_block_data(client, PCF8563_REG_ST2, 1, &buf);
-	अगर (err < 0)
-		वापस err;
+	err = pcf8563_read_block_data(client, PCF8563_REG_ST2, 1, &buf);
+	if (err < 0)
+		return err;
 
-	अगर (on)
+	if (on)
 		buf |= PCF8563_BIT_AIE;
-	अन्यथा
+	else
 		buf &= ~PCF8563_BIT_AIE;
 
 	buf &= ~(PCF8563_BIT_AF | PCF8563_BITS_ST2_N);
 
-	err = pcf8563_ग_लिखो_block_data(client, PCF8563_REG_ST2, 1, &buf);
-	अगर (err < 0) अणु
+	err = pcf8563_write_block_data(client, PCF8563_REG_ST2, 1, &buf);
+	if (err < 0) {
 		dev_err(&client->dev, "%s: write error\n", __func__);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pcf8563_get_alarm_mode(काष्ठा i2c_client *client, अचिन्हित अक्षर *en,
-				  अचिन्हित अक्षर *pen)
-अणु
-	अचिन्हित अक्षर buf;
-	पूर्णांक err;
+static int pcf8563_get_alarm_mode(struct i2c_client *client, unsigned char *en,
+				  unsigned char *pen)
+{
+	unsigned char buf;
+	int err;
 
-	err = pcf8563_पढ़ो_block_data(client, PCF8563_REG_ST2, 1, &buf);
-	अगर (err)
-		वापस err;
+	err = pcf8563_read_block_data(client, PCF8563_REG_ST2, 1, &buf);
+	if (err)
+		return err;
 
-	अगर (en)
+	if (en)
 		*en = !!(buf & PCF8563_BIT_AIE);
-	अगर (pen)
+	if (pen)
 		*pen = !!(buf & PCF8563_BIT_AF);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल irqवापस_t pcf8563_irq(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा pcf8563 *pcf8563 = i2c_get_clientdata(dev_id);
-	पूर्णांक err;
-	अक्षर pending;
+static irqreturn_t pcf8563_irq(int irq, void *dev_id)
+{
+	struct pcf8563 *pcf8563 = i2c_get_clientdata(dev_id);
+	int err;
+	char pending;
 
-	err = pcf8563_get_alarm_mode(pcf8563->client, शून्य, &pending);
-	अगर (err)
-		वापस IRQ_NONE;
+	err = pcf8563_get_alarm_mode(pcf8563->client, NULL, &pending);
+	if (err)
+		return IRQ_NONE;
 
-	अगर (pending) अणु
+	if (pending) {
 		rtc_update_irq(pcf8563->rtc, 1, RTC_IRQF | RTC_AF);
 		pcf8563_set_alarm_mode(pcf8563->client, 1);
-		वापस IRQ_HANDLED;
-	पूर्ण
+		return IRQ_HANDLED;
+	}
 
-	वापस IRQ_NONE;
-पूर्ण
+	return IRQ_NONE;
+}
 
 /*
  * In the routines that deal directly with the pcf8563 hardware, we use
- * rtc_समय -- month 0-11, hour 0-23, yr = calendar year-epoch.
+ * rtc_time -- month 0-11, hour 0-23, yr = calendar year-epoch.
  */
-अटल पूर्णांक pcf8563_rtc_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
-	काष्ठा pcf8563 *pcf8563 = i2c_get_clientdata(client);
-	अचिन्हित अक्षर buf[9];
-	पूर्णांक err;
+static int pcf8563_rtc_read_time(struct device *dev, struct rtc_time *tm)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct pcf8563 *pcf8563 = i2c_get_clientdata(client);
+	unsigned char buf[9];
+	int err;
 
-	err = pcf8563_पढ़ो_block_data(client, PCF8563_REG_ST1, 9, buf);
-	अगर (err)
-		वापस err;
+	err = pcf8563_read_block_data(client, PCF8563_REG_ST1, 9, buf);
+	if (err)
+		return err;
 
-	अगर (buf[PCF8563_REG_SC] & PCF8563_SC_LV) अणु
+	if (buf[PCF8563_REG_SC] & PCF8563_SC_LV) {
 		dev_err(&client->dev,
 			"low voltage detected, date/time is not reliable.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	dev_dbg(&client->dev,
 		"%s: raw data is st1=%02x, st2=%02x, sec=%02x, min=%02x, hr=%02x, "
@@ -222,406 +221,406 @@
 		buf[8]);
 
 
-	पंचांग->पंचांग_sec = bcd2bin(buf[PCF8563_REG_SC] & 0x7F);
-	पंचांग->पंचांग_min = bcd2bin(buf[PCF8563_REG_MN] & 0x7F);
-	पंचांग->पंचांग_hour = bcd2bin(buf[PCF8563_REG_HR] & 0x3F); /* rtc hr 0-23 */
-	पंचांग->पंचांग_mday = bcd2bin(buf[PCF8563_REG_DM] & 0x3F);
-	पंचांग->पंचांग_wday = buf[PCF8563_REG_DW] & 0x07;
-	पंचांग->पंचांग_mon = bcd2bin(buf[PCF8563_REG_MO] & 0x1F) - 1; /* rtc mn 1-12 */
-	पंचांग->पंचांग_year = bcd2bin(buf[PCF8563_REG_YR]) + 100;
+	tm->tm_sec = bcd2bin(buf[PCF8563_REG_SC] & 0x7F);
+	tm->tm_min = bcd2bin(buf[PCF8563_REG_MN] & 0x7F);
+	tm->tm_hour = bcd2bin(buf[PCF8563_REG_HR] & 0x3F); /* rtc hr 0-23 */
+	tm->tm_mday = bcd2bin(buf[PCF8563_REG_DM] & 0x3F);
+	tm->tm_wday = buf[PCF8563_REG_DW] & 0x07;
+	tm->tm_mon = bcd2bin(buf[PCF8563_REG_MO] & 0x1F) - 1; /* rtc mn 1-12 */
+	tm->tm_year = bcd2bin(buf[PCF8563_REG_YR]) + 100;
 	/* detect the polarity heuristically. see note above. */
 	pcf8563->c_polarity = (buf[PCF8563_REG_MO] & PCF8563_MO_C) ?
-		(पंचांग->पंचांग_year >= 100) : (पंचांग->पंचांग_year < 100);
+		(tm->tm_year >= 100) : (tm->tm_year < 100);
 
 	dev_dbg(&client->dev, "%s: tm is secs=%d, mins=%d, hours=%d, "
 		"mday=%d, mon=%d, year=%d, wday=%d\n",
 		__func__,
-		पंचांग->पंचांग_sec, पंचांग->पंचांग_min, पंचांग->पंचांग_hour,
-		पंचांग->पंचांग_mday, पंचांग->पंचांग_mon, पंचांग->पंचांग_year, पंचांग->पंचांग_wday);
+		tm->tm_sec, tm->tm_min, tm->tm_hour,
+		tm->tm_mday, tm->tm_mon, tm->tm_year, tm->tm_wday);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pcf8563_rtc_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
-	काष्ठा pcf8563 *pcf8563 = i2c_get_clientdata(client);
-	अचिन्हित अक्षर buf[9];
+static int pcf8563_rtc_set_time(struct device *dev, struct rtc_time *tm)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct pcf8563 *pcf8563 = i2c_get_clientdata(client);
+	unsigned char buf[9];
 
 	dev_dbg(&client->dev, "%s: secs=%d, mins=%d, hours=%d, "
 		"mday=%d, mon=%d, year=%d, wday=%d\n",
 		__func__,
-		पंचांग->पंचांग_sec, पंचांग->पंचांग_min, पंचांग->पंचांग_hour,
-		पंचांग->पंचांग_mday, पंचांग->पंचांग_mon, पंचांग->पंचांग_year, पंचांग->पंचांग_wday);
+		tm->tm_sec, tm->tm_min, tm->tm_hour,
+		tm->tm_mday, tm->tm_mon, tm->tm_year, tm->tm_wday);
 
 	/* hours, minutes and seconds */
-	buf[PCF8563_REG_SC] = bin2bcd(पंचांग->पंचांग_sec);
-	buf[PCF8563_REG_MN] = bin2bcd(पंचांग->पंचांग_min);
-	buf[PCF8563_REG_HR] = bin2bcd(पंचांग->पंचांग_hour);
+	buf[PCF8563_REG_SC] = bin2bcd(tm->tm_sec);
+	buf[PCF8563_REG_MN] = bin2bcd(tm->tm_min);
+	buf[PCF8563_REG_HR] = bin2bcd(tm->tm_hour);
 
-	buf[PCF8563_REG_DM] = bin2bcd(पंचांग->पंचांग_mday);
+	buf[PCF8563_REG_DM] = bin2bcd(tm->tm_mday);
 
 	/* month, 1 - 12 */
-	buf[PCF8563_REG_MO] = bin2bcd(पंचांग->पंचांग_mon + 1);
+	buf[PCF8563_REG_MO] = bin2bcd(tm->tm_mon + 1);
 
 	/* year and century */
-	buf[PCF8563_REG_YR] = bin2bcd(पंचांग->पंचांग_year - 100);
-	अगर (pcf8563->c_polarity ? (पंचांग->पंचांग_year >= 100) : (पंचांग->पंचांग_year < 100))
+	buf[PCF8563_REG_YR] = bin2bcd(tm->tm_year - 100);
+	if (pcf8563->c_polarity ? (tm->tm_year >= 100) : (tm->tm_year < 100))
 		buf[PCF8563_REG_MO] |= PCF8563_MO_C;
 
-	buf[PCF8563_REG_DW] = पंचांग->पंचांग_wday & 0x07;
+	buf[PCF8563_REG_DW] = tm->tm_wday & 0x07;
 
-	वापस pcf8563_ग_लिखो_block_data(client, PCF8563_REG_SC,
+	return pcf8563_write_block_data(client, PCF8563_REG_SC,
 				9 - PCF8563_REG_SC, buf + PCF8563_REG_SC);
-पूर्ण
+}
 
-अटल पूर्णांक pcf8563_rtc_ioctl(काष्ठा device *dev, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
-	पूर्णांक ret;
+static int pcf8563_rtc_ioctl(struct device *dev, unsigned int cmd, unsigned long arg)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	int ret;
 
-	चयन (cmd) अणु
-	हाल RTC_VL_READ:
-		ret = i2c_smbus_पढ़ो_byte_data(client, PCF8563_REG_SC);
-		अगर (ret < 0)
-			वापस ret;
+	switch (cmd) {
+	case RTC_VL_READ:
+		ret = i2c_smbus_read_byte_data(client, PCF8563_REG_SC);
+		if (ret < 0)
+			return ret;
 
-		वापस put_user(ret & PCF8563_SC_LV ? RTC_VL_DATA_INVALID : 0,
-				(अचिन्हित पूर्णांक __user *)arg);
-	शेष:
-		वापस -ENOIOCTLCMD;
-	पूर्ण
-पूर्ण
+		return put_user(ret & PCF8563_SC_LV ? RTC_VL_DATA_INVALID : 0,
+				(unsigned int __user *)arg);
+	default:
+		return -ENOIOCTLCMD;
+	}
+}
 
-अटल पूर्णांक pcf8563_rtc_पढ़ो_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *पंचांग)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
-	अचिन्हित अक्षर buf[4];
-	पूर्णांक err;
+static int pcf8563_rtc_read_alarm(struct device *dev, struct rtc_wkalrm *tm)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	unsigned char buf[4];
+	int err;
 
-	err = pcf8563_पढ़ो_block_data(client, PCF8563_REG_AMN, 4, buf);
-	अगर (err)
-		वापस err;
+	err = pcf8563_read_block_data(client, PCF8563_REG_AMN, 4, buf);
+	if (err)
+		return err;
 
 	dev_dbg(&client->dev,
 		"%s: raw data is min=%02x, hr=%02x, mday=%02x, wday=%02x\n",
 		__func__, buf[0], buf[1], buf[2], buf[3]);
 
-	पंचांग->समय.पंचांग_sec = 0;
-	पंचांग->समय.पंचांग_min = bcd2bin(buf[0] & 0x7F);
-	पंचांग->समय.पंचांग_hour = bcd2bin(buf[1] & 0x3F);
-	पंचांग->समय.पंचांग_mday = bcd2bin(buf[2] & 0x3F);
-	पंचांग->समय.पंचांग_wday = bcd2bin(buf[3] & 0x7);
+	tm->time.tm_sec = 0;
+	tm->time.tm_min = bcd2bin(buf[0] & 0x7F);
+	tm->time.tm_hour = bcd2bin(buf[1] & 0x3F);
+	tm->time.tm_mday = bcd2bin(buf[2] & 0x3F);
+	tm->time.tm_wday = bcd2bin(buf[3] & 0x7);
 
-	err = pcf8563_get_alarm_mode(client, &पंचांग->enabled, &पंचांग->pending);
-	अगर (err < 0)
-		वापस err;
+	err = pcf8563_get_alarm_mode(client, &tm->enabled, &tm->pending);
+	if (err < 0)
+		return err;
 
 	dev_dbg(&client->dev, "%s: tm is mins=%d, hours=%d, mday=%d, wday=%d,"
-		" enabled=%d, pending=%d\n", __func__, पंचांग->समय.पंचांग_min,
-		पंचांग->समय.पंचांग_hour, पंचांग->समय.पंचांग_mday, पंचांग->समय.पंचांग_wday,
-		पंचांग->enabled, पंचांग->pending);
+		" enabled=%d, pending=%d\n", __func__, tm->time.tm_min,
+		tm->time.tm_hour, tm->time.tm_mday, tm->time.tm_wday,
+		tm->enabled, tm->pending);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pcf8563_rtc_set_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *पंचांग)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
-	अचिन्हित अक्षर buf[4];
-	पूर्णांक err;
+static int pcf8563_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *tm)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	unsigned char buf[4];
+	int err;
 
 	/* The alarm has no seconds, round up to nearest minute */
-	अगर (पंचांग->समय.पंचांग_sec) अणु
-		समय64_t alarm_समय = rtc_पंचांग_to_समय64(&पंचांग->समय);
+	if (tm->time.tm_sec) {
+		time64_t alarm_time = rtc_tm_to_time64(&tm->time);
 
-		alarm_समय += 60 - पंचांग->समय.पंचांग_sec;
-		rtc_समय64_to_पंचांग(alarm_समय, &पंचांग->समय);
-	पूर्ण
+		alarm_time += 60 - tm->time.tm_sec;
+		rtc_time64_to_tm(alarm_time, &tm->time);
+	}
 
 	dev_dbg(dev, "%s, min=%d hour=%d wday=%d mday=%d "
 		"enabled=%d pending=%d\n", __func__,
-		पंचांग->समय.पंचांग_min, पंचांग->समय.पंचांग_hour, पंचांग->समय.पंचांग_wday,
-		पंचांग->समय.पंचांग_mday, पंचांग->enabled, पंचांग->pending);
+		tm->time.tm_min, tm->time.tm_hour, tm->time.tm_wday,
+		tm->time.tm_mday, tm->enabled, tm->pending);
 
-	buf[0] = bin2bcd(पंचांग->समय.पंचांग_min);
-	buf[1] = bin2bcd(पंचांग->समय.पंचांग_hour);
-	buf[2] = bin2bcd(पंचांग->समय.पंचांग_mday);
-	buf[3] = पंचांग->समय.पंचांग_wday & 0x07;
+	buf[0] = bin2bcd(tm->time.tm_min);
+	buf[1] = bin2bcd(tm->time.tm_hour);
+	buf[2] = bin2bcd(tm->time.tm_mday);
+	buf[3] = tm->time.tm_wday & 0x07;
 
-	err = pcf8563_ग_लिखो_block_data(client, PCF8563_REG_AMN, 4, buf);
-	अगर (err)
-		वापस err;
+	err = pcf8563_write_block_data(client, PCF8563_REG_AMN, 4, buf);
+	if (err)
+		return err;
 
-	वापस pcf8563_set_alarm_mode(client, !!पंचांग->enabled);
-पूर्ण
+	return pcf8563_set_alarm_mode(client, !!tm->enabled);
+}
 
-अटल पूर्णांक pcf8563_irq_enable(काष्ठा device *dev, अचिन्हित पूर्णांक enabled)
-अणु
+static int pcf8563_irq_enable(struct device *dev, unsigned int enabled)
+{
 	dev_dbg(dev, "%s: en=%d\n", __func__, enabled);
-	वापस pcf8563_set_alarm_mode(to_i2c_client(dev), !!enabled);
-पूर्ण
+	return pcf8563_set_alarm_mode(to_i2c_client(dev), !!enabled);
+}
 
-#अगर_घोषित CONFIG_COMMON_CLK
+#ifdef CONFIG_COMMON_CLK
 /*
  * Handling of the clkout
  */
 
-#घोषणा clkout_hw_to_pcf8563(_hw) container_of(_hw, काष्ठा pcf8563, clkout_hw)
+#define clkout_hw_to_pcf8563(_hw) container_of(_hw, struct pcf8563, clkout_hw)
 
-अटल स्थिर पूर्णांक clkout_rates[] = अणु
+static const int clkout_rates[] = {
 	32768,
 	1024,
 	32,
 	1,
-पूर्ण;
+};
 
-अटल अचिन्हित दीर्घ pcf8563_clkout_recalc_rate(काष्ठा clk_hw *hw,
-						अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा pcf8563 *pcf8563 = clkout_hw_to_pcf8563(hw);
-	काष्ठा i2c_client *client = pcf8563->client;
-	अचिन्हित अक्षर buf;
-	पूर्णांक ret = pcf8563_पढ़ो_block_data(client, PCF8563_REG_CLKO, 1, &buf);
+static unsigned long pcf8563_clkout_recalc_rate(struct clk_hw *hw,
+						unsigned long parent_rate)
+{
+	struct pcf8563 *pcf8563 = clkout_hw_to_pcf8563(hw);
+	struct i2c_client *client = pcf8563->client;
+	unsigned char buf;
+	int ret = pcf8563_read_block_data(client, PCF8563_REG_CLKO, 1, &buf);
 
-	अगर (ret < 0)
-		वापस 0;
+	if (ret < 0)
+		return 0;
 
 	buf &= PCF8563_REG_CLKO_F_MASK;
-	वापस clkout_rates[buf];
-पूर्ण
+	return clkout_rates[buf];
+}
 
-अटल दीर्घ pcf8563_clkout_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				      अचिन्हित दीर्घ *prate)
-अणु
-	पूर्णांक i;
+static long pcf8563_clkout_round_rate(struct clk_hw *hw, unsigned long rate,
+				      unsigned long *prate)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(clkout_rates); i++)
-		अगर (clkout_rates[i] <= rate)
-			वापस clkout_rates[i];
+	for (i = 0; i < ARRAY_SIZE(clkout_rates); i++)
+		if (clkout_rates[i] <= rate)
+			return clkout_rates[i];
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pcf8563_clkout_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				   अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा pcf8563 *pcf8563 = clkout_hw_to_pcf8563(hw);
-	काष्ठा i2c_client *client = pcf8563->client;
-	अचिन्हित अक्षर buf;
-	पूर्णांक ret = pcf8563_पढ़ो_block_data(client, PCF8563_REG_CLKO, 1, &buf);
-	पूर्णांक i;
+static int pcf8563_clkout_set_rate(struct clk_hw *hw, unsigned long rate,
+				   unsigned long parent_rate)
+{
+	struct pcf8563 *pcf8563 = clkout_hw_to_pcf8563(hw);
+	struct i2c_client *client = pcf8563->client;
+	unsigned char buf;
+	int ret = pcf8563_read_block_data(client, PCF8563_REG_CLKO, 1, &buf);
+	int i;
 
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	क्रम (i = 0; i < ARRAY_SIZE(clkout_rates); i++)
-		अगर (clkout_rates[i] == rate) अणु
+	for (i = 0; i < ARRAY_SIZE(clkout_rates); i++)
+		if (clkout_rates[i] == rate) {
 			buf &= ~PCF8563_REG_CLKO_F_MASK;
 			buf |= i;
-			ret = pcf8563_ग_लिखो_block_data(client,
+			ret = pcf8563_write_block_data(client,
 						       PCF8563_REG_CLKO, 1,
 						       &buf);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक pcf8563_clkout_control(काष्ठा clk_hw *hw, bool enable)
-अणु
-	काष्ठा pcf8563 *pcf8563 = clkout_hw_to_pcf8563(hw);
-	काष्ठा i2c_client *client = pcf8563->client;
-	अचिन्हित अक्षर buf;
-	पूर्णांक ret = pcf8563_पढ़ो_block_data(client, PCF8563_REG_CLKO, 1, &buf);
+static int pcf8563_clkout_control(struct clk_hw *hw, bool enable)
+{
+	struct pcf8563 *pcf8563 = clkout_hw_to_pcf8563(hw);
+	struct i2c_client *client = pcf8563->client;
+	unsigned char buf;
+	int ret = pcf8563_read_block_data(client, PCF8563_REG_CLKO, 1, &buf);
 
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (enable)
+	if (enable)
 		buf |= PCF8563_REG_CLKO_FE;
-	अन्यथा
+	else
 		buf &= ~PCF8563_REG_CLKO_FE;
 
-	ret = pcf8563_ग_लिखो_block_data(client, PCF8563_REG_CLKO, 1, &buf);
-	वापस ret;
-पूर्ण
+	ret = pcf8563_write_block_data(client, PCF8563_REG_CLKO, 1, &buf);
+	return ret;
+}
 
-अटल पूर्णांक pcf8563_clkout_prepare(काष्ठा clk_hw *hw)
-अणु
-	वापस pcf8563_clkout_control(hw, 1);
-पूर्ण
+static int pcf8563_clkout_prepare(struct clk_hw *hw)
+{
+	return pcf8563_clkout_control(hw, 1);
+}
 
-अटल व्योम pcf8563_clkout_unprepare(काष्ठा clk_hw *hw)
-अणु
+static void pcf8563_clkout_unprepare(struct clk_hw *hw)
+{
 	pcf8563_clkout_control(hw, 0);
-पूर्ण
+}
 
-अटल पूर्णांक pcf8563_clkout_is_prepared(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा pcf8563 *pcf8563 = clkout_hw_to_pcf8563(hw);
-	काष्ठा i2c_client *client = pcf8563->client;
-	अचिन्हित अक्षर buf;
-	पूर्णांक ret = pcf8563_पढ़ो_block_data(client, PCF8563_REG_CLKO, 1, &buf);
+static int pcf8563_clkout_is_prepared(struct clk_hw *hw)
+{
+	struct pcf8563 *pcf8563 = clkout_hw_to_pcf8563(hw);
+	struct i2c_client *client = pcf8563->client;
+	unsigned char buf;
+	int ret = pcf8563_read_block_data(client, PCF8563_REG_CLKO, 1, &buf);
 
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस !!(buf & PCF8563_REG_CLKO_FE);
-पूर्ण
+	return !!(buf & PCF8563_REG_CLKO_FE);
+}
 
-अटल स्थिर काष्ठा clk_ops pcf8563_clkout_ops = अणु
+static const struct clk_ops pcf8563_clkout_ops = {
 	.prepare = pcf8563_clkout_prepare,
 	.unprepare = pcf8563_clkout_unprepare,
 	.is_prepared = pcf8563_clkout_is_prepared,
 	.recalc_rate = pcf8563_clkout_recalc_rate,
 	.round_rate = pcf8563_clkout_round_rate,
 	.set_rate = pcf8563_clkout_set_rate,
-पूर्ण;
+};
 
-अटल काष्ठा clk *pcf8563_clkout_रेजिस्टर_clk(काष्ठा pcf8563 *pcf8563)
-अणु
-	काष्ठा i2c_client *client = pcf8563->client;
-	काष्ठा device_node *node = client->dev.of_node;
-	काष्ठा clk *clk;
-	काष्ठा clk_init_data init;
-	पूर्णांक ret;
-	अचिन्हित अक्षर buf;
+static struct clk *pcf8563_clkout_register_clk(struct pcf8563 *pcf8563)
+{
+	struct i2c_client *client = pcf8563->client;
+	struct device_node *node = client->dev.of_node;
+	struct clk *clk;
+	struct clk_init_data init;
+	int ret;
+	unsigned char buf;
 
 	/* disable the clkout output */
 	buf = 0;
-	ret = pcf8563_ग_लिखो_block_data(client, PCF8563_REG_CLKO, 1, &buf);
-	अगर (ret < 0)
-		वापस ERR_PTR(ret);
+	ret = pcf8563_write_block_data(client, PCF8563_REG_CLKO, 1, &buf);
+	if (ret < 0)
+		return ERR_PTR(ret);
 
 	init.name = "pcf8563-clkout";
 	init.ops = &pcf8563_clkout_ops;
 	init.flags = 0;
-	init.parent_names = शून्य;
+	init.parent_names = NULL;
 	init.num_parents = 0;
 	pcf8563->clkout_hw.init = &init;
 
-	/* optional override of the घड़ीname */
-	of_property_पढ़ो_string(node, "clock-output-names", &init.name);
+	/* optional override of the clockname */
+	of_property_read_string(node, "clock-output-names", &init.name);
 
-	/* रेजिस्टर the घड़ी */
-	clk = devm_clk_रेजिस्टर(&client->dev, &pcf8563->clkout_hw);
+	/* register the clock */
+	clk = devm_clk_register(&client->dev, &pcf8563->clkout_hw);
 
-	अगर (!IS_ERR(clk))
+	if (!IS_ERR(clk))
 		of_clk_add_provider(node, of_clk_src_simple_get, clk);
 
-	वापस clk;
-पूर्ण
-#पूर्ण_अगर
+	return clk;
+}
+#endif
 
-अटल स्थिर काष्ठा rtc_class_ops pcf8563_rtc_ops = अणु
+static const struct rtc_class_ops pcf8563_rtc_ops = {
 	.ioctl		= pcf8563_rtc_ioctl,
-	.पढ़ो_समय	= pcf8563_rtc_पढ़ो_समय,
-	.set_समय	= pcf8563_rtc_set_समय,
-	.पढ़ो_alarm	= pcf8563_rtc_पढ़ो_alarm,
+	.read_time	= pcf8563_rtc_read_time,
+	.set_time	= pcf8563_rtc_set_time,
+	.read_alarm	= pcf8563_rtc_read_alarm,
 	.set_alarm	= pcf8563_rtc_set_alarm,
 	.alarm_irq_enable = pcf8563_irq_enable,
-पूर्ण;
+};
 
-अटल पूर्णांक pcf8563_probe(काष्ठा i2c_client *client,
-				स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा pcf8563 *pcf8563;
-	पूर्णांक err;
-	अचिन्हित अक्षर buf;
+static int pcf8563_probe(struct i2c_client *client,
+				const struct i2c_device_id *id)
+{
+	struct pcf8563 *pcf8563;
+	int err;
+	unsigned char buf;
 
 	dev_dbg(&client->dev, "%s\n", __func__);
 
-	अगर (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C))
-		वापस -ENODEV;
+	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C))
+		return -ENODEV;
 
-	pcf8563 = devm_kzalloc(&client->dev, माप(काष्ठा pcf8563),
+	pcf8563 = devm_kzalloc(&client->dev, sizeof(struct pcf8563),
 				GFP_KERNEL);
-	अगर (!pcf8563)
-		वापस -ENOMEM;
+	if (!pcf8563)
+		return -ENOMEM;
 
 	i2c_set_clientdata(client, pcf8563);
 	pcf8563->client = client;
 	device_set_wakeup_capable(&client->dev, 1);
 
-	/* Set समयr to lowest frequency to save घातer (ref Haoyu datasheet) */
+	/* Set timer to lowest frequency to save power (ref Haoyu datasheet) */
 	buf = PCF8563_TMRC_1_60;
-	err = pcf8563_ग_लिखो_block_data(client, PCF8563_REG_TMRC, 1, &buf);
-	अगर (err < 0) अणु
+	err = pcf8563_write_block_data(client, PCF8563_REG_TMRC, 1, &buf);
+	if (err < 0) {
 		dev_err(&client->dev, "%s: write error\n", __func__);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	/* Clear flags and disable पूर्णांकerrupts */
+	/* Clear flags and disable interrupts */
 	buf = 0;
-	err = pcf8563_ग_लिखो_block_data(client, PCF8563_REG_ST2, 1, &buf);
-	अगर (err < 0) अणु
+	err = pcf8563_write_block_data(client, PCF8563_REG_ST2, 1, &buf);
+	if (err < 0) {
 		dev_err(&client->dev, "%s: write error\n", __func__);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	pcf8563->rtc = devm_rtc_allocate_device(&client->dev);
-	अगर (IS_ERR(pcf8563->rtc))
-		वापस PTR_ERR(pcf8563->rtc);
+	if (IS_ERR(pcf8563->rtc))
+		return PTR_ERR(pcf8563->rtc);
 
 	pcf8563->rtc->ops = &pcf8563_rtc_ops;
 	/* the pcf8563 alarm only supports a minute accuracy */
 	pcf8563->rtc->uie_unsupported = 1;
 	pcf8563->rtc->range_min = RTC_TIMESTAMP_BEGIN_2000;
 	pcf8563->rtc->range_max = RTC_TIMESTAMP_END_2099;
-	pcf8563->rtc->set_start_समय = true;
+	pcf8563->rtc->set_start_time = true;
 
-	अगर (client->irq > 0) अणु
-		err = devm_request_thपढ़ोed_irq(&client->dev, client->irq,
-				शून्य, pcf8563_irq,
+	if (client->irq > 0) {
+		err = devm_request_threaded_irq(&client->dev, client->irq,
+				NULL, pcf8563_irq,
 				IRQF_SHARED | IRQF_ONESHOT | IRQF_TRIGGER_LOW,
 				pcf8563_driver.driver.name, client);
-		अगर (err) अणु
+		if (err) {
 			dev_err(&client->dev, "unable to request IRQ %d\n",
 								client->irq);
-			वापस err;
-		पूर्ण
-	पूर्ण
+			return err;
+		}
+	}
 
-	err = devm_rtc_रेजिस्टर_device(pcf8563->rtc);
-	अगर (err)
-		वापस err;
+	err = devm_rtc_register_device(pcf8563->rtc);
+	if (err)
+		return err;
 
-#अगर_घोषित CONFIG_COMMON_CLK
-	/* रेजिस्टर clk in common clk framework */
-	pcf8563_clkout_रेजिस्टर_clk(pcf8563);
-#पूर्ण_अगर
+#ifdef CONFIG_COMMON_CLK
+	/* register clk in common clk framework */
+	pcf8563_clkout_register_clk(pcf8563);
+#endif
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id pcf8563_id[] = अणु
-	अणु "pcf8563", 0 पूर्ण,
-	अणु "rtc8564", 0 पूर्ण,
-	अणु "pca8565", 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id pcf8563_id[] = {
+	{ "pcf8563", 0 },
+	{ "rtc8564", 0 },
+	{ "pca8565", 0 },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, pcf8563_id);
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id pcf8563_of_match[] = अणु
-	अणु .compatible = "nxp,pcf8563" पूर्ण,
-	अणु .compatible = "epson,rtc8564" पूर्ण,
-	अणु .compatible = "microcrystal,rv8564" पूर्ण,
-	अणु .compatible = "nxp,pca8565" पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id pcf8563_of_match[] = {
+	{ .compatible = "nxp,pcf8563" },
+	{ .compatible = "epson,rtc8564" },
+	{ .compatible = "microcrystal,rv8564" },
+	{ .compatible = "nxp,pca8565" },
+	{}
+};
 MODULE_DEVICE_TABLE(of, pcf8563_of_match);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा i2c_driver pcf8563_driver = अणु
-	.driver		= अणु
+static struct i2c_driver pcf8563_driver = {
+	.driver		= {
 		.name	= "rtc-pcf8563",
 		.of_match_table = of_match_ptr(pcf8563_of_match),
-	पूर्ण,
+	},
 	.probe		= pcf8563_probe,
 	.id_table	= pcf8563_id,
-पूर्ण;
+};
 
 module_i2c_driver(pcf8563_driver);
 

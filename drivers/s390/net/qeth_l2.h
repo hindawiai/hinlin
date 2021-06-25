@@ -1,40 +1,39 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  *    Copyright IBM Corp. 2013
  *    Author(s): Eugene Crosser <eugene.crosser@ru.ibm.com>
  */
 
-#अगर_अघोषित __QETH_L2_H__
-#घोषणा __QETH_L2_H__
+#ifndef __QETH_L2_H__
+#define __QETH_L2_H__
 
-#समावेश "qeth_core.h"
+#include "qeth_core.h"
 
-बाह्य स्थिर काष्ठा attribute_group *qeth_l2_attr_groups[];
+extern const struct attribute_group *qeth_l2_attr_groups[];
 
-पूर्णांक qeth_bridgeport_query_ports(काष्ठा qeth_card *card,
-				क्रमागत qeth_sbp_roles *role,
-				क्रमागत qeth_sbp_states *state);
-पूर्णांक qeth_bridgeport_setrole(काष्ठा qeth_card *card, क्रमागत qeth_sbp_roles role);
-पूर्णांक qeth_bridgeport_an_set(काष्ठा qeth_card *card, पूर्णांक enable);
+int qeth_bridgeport_query_ports(struct qeth_card *card,
+				enum qeth_sbp_roles *role,
+				enum qeth_sbp_states *state);
+int qeth_bridgeport_setrole(struct qeth_card *card, enum qeth_sbp_roles role);
+int qeth_bridgeport_an_set(struct qeth_card *card, int enable);
 
-पूर्णांक qeth_l2_vnicc_set_state(काष्ठा qeth_card *card, u32 vnicc, bool state);
-पूर्णांक qeth_l2_vnicc_get_state(काष्ठा qeth_card *card, u32 vnicc, bool *state);
-पूर्णांक qeth_l2_vnicc_set_समयout(काष्ठा qeth_card *card, u32 समयout);
-पूर्णांक qeth_l2_vnicc_get_समयout(काष्ठा qeth_card *card, u32 *समयout);
-bool qeth_bridgeport_allowed(काष्ठा qeth_card *card);
+int qeth_l2_vnicc_set_state(struct qeth_card *card, u32 vnicc, bool state);
+int qeth_l2_vnicc_get_state(struct qeth_card *card, u32 vnicc, bool *state);
+int qeth_l2_vnicc_set_timeout(struct qeth_card *card, u32 timeout);
+int qeth_l2_vnicc_get_timeout(struct qeth_card *card, u32 *timeout);
+bool qeth_bridgeport_allowed(struct qeth_card *card);
 
-काष्ठा qeth_mac अणु
+struct qeth_mac {
 	u8 mac_addr[ETH_ALEN];
 	u8 disp_flag:2;
-	काष्ठा hlist_node hnode;
-पूर्ण;
+	struct hlist_node hnode;
+};
 
-अटल अंतरभूत bool qeth_bridgeport_is_in_use(काष्ठा qeth_card *card)
-अणु
-	वापस card->options.sbp.role ||
+static inline bool qeth_bridgeport_is_in_use(struct qeth_card *card)
+{
+	return card->options.sbp.role ||
 	       card->options.sbp.reflect_promisc ||
-	       card->options.sbp.hostnotअगरication;
-पूर्ण
+	       card->options.sbp.hostnotification;
+}
 
-#पूर्ण_अगर /* __QETH_L2_H__ */
+#endif /* __QETH_L2_H__ */

@@ -1,18 +1,17 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _IP6T_MH_H
-#घोषणा _IP6T_MH_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _IP6T_MH_H
+#define _IP6T_MH_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
 /* MH matching stuff */
-काष्ठा ip6t_mh अणु
+struct ip6t_mh {
 	__u8 types[2];	/* MH type range */
 	__u8 invflags;	/* Inverse flags */
-पूर्ण;
+};
 
-/* Values क्रम "invflags" field in काष्ठा ip6t_mh. */
-#घोषणा IP6T_MH_INV_TYPE	0x01	/* Invert the sense of type. */
-#घोषणा IP6T_MH_INV_MASK	0x01	/* All possible flags. */
+/* Values for "invflags" field in struct ip6t_mh. */
+#define IP6T_MH_INV_TYPE	0x01	/* Invert the sense of type. */
+#define IP6T_MH_INV_MASK	0x01	/* All possible flags. */
 
-#पूर्ण_अगर /*_IP6T_MH_H*/
+#endif /*_IP6T_MH_H*/

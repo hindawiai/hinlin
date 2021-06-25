@@ -1,445 +1,444 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2009 Texas Instruments.
  *
- * common vpss प्रणाली module platक्रमm driver क्रम all video drivers.
+ * common vpss system module platform driver for all video drivers.
  */
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/err.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/io.h>
+#include <linux/pm_runtime.h>
+#include <linux/err.h>
 
-#समावेश <media/davinci/vpss.h>
+#include <media/davinci/vpss.h>
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("VPSS Driver");
 MODULE_AUTHOR("Texas Instruments");
 
 /* DM644x defines */
-#घोषणा DM644X_SBL_PCR_VPSS		(4)
+#define DM644X_SBL_PCR_VPSS		(4)
 
-#घोषणा DM355_VPSSBL_INTSEL		0x10
-#घोषणा DM355_VPSSBL_EVTSEL		0x14
-/* vpss BL रेजिस्टर offsets */
-#घोषणा DM355_VPSSBL_CCDCMUX		0x1c
-/* vpss CLK रेजिस्टर offsets */
-#घोषणा DM355_VPSSCLK_CLKCTRL		0x04
-/* masks and shअगरts */
-#घोषणा VPSS_HSSISEL_SHIFT		4
+#define DM355_VPSSBL_INTSEL		0x10
+#define DM355_VPSSBL_EVTSEL		0x14
+/* vpss BL register offsets */
+#define DM355_VPSSBL_CCDCMUX		0x1c
+/* vpss CLK register offsets */
+#define DM355_VPSSCLK_CLKCTRL		0x04
+/* masks and shifts */
+#define VPSS_HSSISEL_SHIFT		4
 /*
- * VDINT0 - vpss_पूर्णांक0, VDINT1 - vpss_पूर्णांक1, H3A - vpss_पूर्णांक4,
- * IPIPE_INT1_SDR - vpss_पूर्णांक5
+ * VDINT0 - vpss_int0, VDINT1 - vpss_int1, H3A - vpss_int4,
+ * IPIPE_INT1_SDR - vpss_int5
  */
-#घोषणा DM355_VPSSBL_INTSEL_DEFAULT	0xff83ff10
-/* VENCINT - vpss_पूर्णांक8 */
-#घोषणा DM355_VPSSBL_EVTSEL_DEFAULT	0x4
+#define DM355_VPSSBL_INTSEL_DEFAULT	0xff83ff10
+/* VENCINT - vpss_int8 */
+#define DM355_VPSSBL_EVTSEL_DEFAULT	0x4
 
-#घोषणा DM365_ISP5_PCCR				0x04
-#घोषणा DM365_ISP5_PCCR_BL_CLK_ENABLE		BIT(0)
-#घोषणा DM365_ISP5_PCCR_ISIF_CLK_ENABLE		BIT(1)
-#घोषणा DM365_ISP5_PCCR_H3A_CLK_ENABLE		BIT(2)
-#घोषणा DM365_ISP5_PCCR_RSZ_CLK_ENABLE		BIT(3)
-#घोषणा DM365_ISP5_PCCR_IPIPE_CLK_ENABLE	BIT(4)
-#घोषणा DM365_ISP5_PCCR_IPIPEIF_CLK_ENABLE	BIT(5)
-#घोषणा DM365_ISP5_PCCR_RSV			BIT(6)
+#define DM365_ISP5_PCCR				0x04
+#define DM365_ISP5_PCCR_BL_CLK_ENABLE		BIT(0)
+#define DM365_ISP5_PCCR_ISIF_CLK_ENABLE		BIT(1)
+#define DM365_ISP5_PCCR_H3A_CLK_ENABLE		BIT(2)
+#define DM365_ISP5_PCCR_RSZ_CLK_ENABLE		BIT(3)
+#define DM365_ISP5_PCCR_IPIPE_CLK_ENABLE	BIT(4)
+#define DM365_ISP5_PCCR_IPIPEIF_CLK_ENABLE	BIT(5)
+#define DM365_ISP5_PCCR_RSV			BIT(6)
 
-#घोषणा DM365_ISP5_BCR			0x08
-#घोषणा DM365_ISP5_BCR_ISIF_OUT_ENABLE	BIT(1)
+#define DM365_ISP5_BCR			0x08
+#define DM365_ISP5_BCR_ISIF_OUT_ENABLE	BIT(1)
 
-#घोषणा DM365_ISP5_INTSEL1		0x10
-#घोषणा DM365_ISP5_INTSEL2		0x14
-#घोषणा DM365_ISP5_INTSEL3		0x18
-#घोषणा DM365_ISP5_CCDCMUX		0x20
-#घोषणा DM365_ISP5_PG_FRAME_SIZE	0x28
-#घोषणा DM365_VPBE_CLK_CTRL		0x00
+#define DM365_ISP5_INTSEL1		0x10
+#define DM365_ISP5_INTSEL2		0x14
+#define DM365_ISP5_INTSEL3		0x18
+#define DM365_ISP5_CCDCMUX		0x20
+#define DM365_ISP5_PG_FRAME_SIZE	0x28
+#define DM365_VPBE_CLK_CTRL		0x00
 
-#घोषणा VPSS_CLK_CTRL			0x01c40044
-#घोषणा VPSS_CLK_CTRL_VENCCLKEN		BIT(3)
-#घोषणा VPSS_CLK_CTRL_DACCLKEN		BIT(4)
+#define VPSS_CLK_CTRL			0x01c40044
+#define VPSS_CLK_CTRL_VENCCLKEN		BIT(3)
+#define VPSS_CLK_CTRL_DACCLKEN		BIT(4)
 
 /*
- * vpss पूर्णांकerrupts. VDINT0 - vpss_पूर्णांक0, VDINT1 - vpss_पूर्णांक1,
- * AF - vpss_पूर्णांक3
+ * vpss interrupts. VDINT0 - vpss_int0, VDINT1 - vpss_int1,
+ * AF - vpss_int3
  */
-#घोषणा DM365_ISP5_INTSEL1_DEFAULT	0x0b1f0100
-/* AEW - vpss_पूर्णांक6, RSZ_INT_DMA - vpss_पूर्णांक5 */
-#घोषणा DM365_ISP5_INTSEL2_DEFAULT	0x1f0a0f1f
-/* VENC - vpss_पूर्णांक8 */
-#घोषणा DM365_ISP5_INTSEL3_DEFAULT	0x00000015
+#define DM365_ISP5_INTSEL1_DEFAULT	0x0b1f0100
+/* AEW - vpss_int6, RSZ_INT_DMA - vpss_int5 */
+#define DM365_ISP5_INTSEL2_DEFAULT	0x1f0a0f1f
+/* VENC - vpss_int8 */
+#define DM365_ISP5_INTSEL3_DEFAULT	0x00000015
 
-/* masks and shअगरts क्रम DM365*/
-#घोषणा DM365_CCDC_PG_VD_POL_SHIFT	0
-#घोषणा DM365_CCDC_PG_HD_POL_SHIFT	1
+/* masks and shifts for DM365*/
+#define DM365_CCDC_PG_VD_POL_SHIFT	0
+#define DM365_CCDC_PG_HD_POL_SHIFT	1
 
-#घोषणा CCD_SRC_SEL_MASK		(BIT_MASK(5) | BIT_MASK(4))
-#घोषणा CCD_SRC_SEL_SHIFT		4
+#define CCD_SRC_SEL_MASK		(BIT_MASK(5) | BIT_MASK(4))
+#define CCD_SRC_SEL_SHIFT		4
 
-/* Dअगरferent SoC platक्रमms supported by this driver */
-क्रमागत vpss_platक्रमm_type अणु
+/* Different SoC platforms supported by this driver */
+enum vpss_platform_type {
 	DM644X,
 	DM355,
 	DM365,
-पूर्ण;
+};
 
 /*
- * vpss operations. Depends on platक्रमm. Not all functions are available
- * on all platक्रमms. The api, first check अगर a function is available beक्रमe
+ * vpss operations. Depends on platform. Not all functions are available
+ * on all platforms. The api, first check if a function is available before
  * invoking it. In the probe, the function ptrs are initialized based on
  * vpss name. vpss name can be "dm355_vpss", "dm644x_vpss" etc.
  */
-काष्ठा vpss_hw_ops अणु
-	/* enable घड़ी */
-	पूर्णांक (*enable_घड़ी)(क्रमागत vpss_घड़ी_sel घड़ी_sel, पूर्णांक en);
+struct vpss_hw_ops {
+	/* enable clock */
+	int (*enable_clock)(enum vpss_clock_sel clock_sel, int en);
 	/* select input to ccdc */
-	व्योम (*select_ccdc_source)(क्रमागत vpss_ccdc_source_sel src_sel);
+	void (*select_ccdc_source)(enum vpss_ccdc_source_sel src_sel);
 	/* clear wbl overflow bit */
-	पूर्णांक (*clear_wbl_overflow)(क्रमागत vpss_wbl_sel wbl_sel);
+	int (*clear_wbl_overflow)(enum vpss_wbl_sel wbl_sel);
 	/* set sync polarity */
-	व्योम (*set_sync_pol)(काष्ठा vpss_sync_pol);
-	/* set the PG_FRAME_SIZE रेजिस्टर*/
-	व्योम (*set_pg_frame_size)(काष्ठा vpss_pg_frame_size);
-	/* check and clear पूर्णांकerrupt अगर occurred */
-	पूर्णांक (*dma_complete_पूर्णांकerrupt)(व्योम);
-पूर्ण;
+	void (*set_sync_pol)(struct vpss_sync_pol);
+	/* set the PG_FRAME_SIZE register*/
+	void (*set_pg_frame_size)(struct vpss_pg_frame_size);
+	/* check and clear interrupt if occurred */
+	int (*dma_complete_interrupt)(void);
+};
 
 /* vpss configuration */
-काष्ठा vpss_oper_config अणु
-	__iomem व्योम *vpss_regs_base0;
-	__iomem व्योम *vpss_regs_base1;
-	__iomem व्योम *vpss_regs_base2;
-	क्रमागत vpss_platक्रमm_type platक्रमm;
+struct vpss_oper_config {
+	__iomem void *vpss_regs_base0;
+	__iomem void *vpss_regs_base1;
+	__iomem void *vpss_regs_base2;
+	enum vpss_platform_type platform;
 	spinlock_t vpss_lock;
-	काष्ठा vpss_hw_ops hw_ops;
-पूर्ण;
+	struct vpss_hw_ops hw_ops;
+};
 
-अटल काष्ठा vpss_oper_config oper_cfg;
+static struct vpss_oper_config oper_cfg;
 
-/* रेजिस्टर access routines */
-अटल अंतरभूत u32 bl_regr(u32 offset)
-अणु
-	वापस __raw_पढ़ोl(oper_cfg.vpss_regs_base0 + offset);
-पूर्ण
+/* register access routines */
+static inline u32 bl_regr(u32 offset)
+{
+	return __raw_readl(oper_cfg.vpss_regs_base0 + offset);
+}
 
-अटल अंतरभूत व्योम bl_regw(u32 val, u32 offset)
-अणु
-	__raw_ग_लिखोl(val, oper_cfg.vpss_regs_base0 + offset);
-पूर्ण
+static inline void bl_regw(u32 val, u32 offset)
+{
+	__raw_writel(val, oper_cfg.vpss_regs_base0 + offset);
+}
 
-अटल अंतरभूत u32 vpss_regr(u32 offset)
-अणु
-	वापस __raw_पढ़ोl(oper_cfg.vpss_regs_base1 + offset);
-पूर्ण
+static inline u32 vpss_regr(u32 offset)
+{
+	return __raw_readl(oper_cfg.vpss_regs_base1 + offset);
+}
 
-अटल अंतरभूत व्योम vpss_regw(u32 val, u32 offset)
-अणु
-	__raw_ग_लिखोl(val, oper_cfg.vpss_regs_base1 + offset);
-पूर्ण
-
-/* For DM365 only */
-अटल अंतरभूत u32 isp5_पढ़ो(u32 offset)
-अणु
-	वापस __raw_पढ़ोl(oper_cfg.vpss_regs_base0 + offset);
-पूर्ण
+static inline void vpss_regw(u32 val, u32 offset)
+{
+	__raw_writel(val, oper_cfg.vpss_regs_base1 + offset);
+}
 
 /* For DM365 only */
-अटल अंतरभूत व्योम isp5_ग_लिखो(u32 val, u32 offset)
-अणु
-	__raw_ग_लिखोl(val, oper_cfg.vpss_regs_base0 + offset);
-पूर्ण
+static inline u32 isp5_read(u32 offset)
+{
+	return __raw_readl(oper_cfg.vpss_regs_base0 + offset);
+}
 
-अटल व्योम dm365_select_ccdc_source(क्रमागत vpss_ccdc_source_sel src_sel)
-अणु
-	u32 temp = isp5_पढ़ो(DM365_ISP5_CCDCMUX) & ~CCD_SRC_SEL_MASK;
+/* For DM365 only */
+static inline void isp5_write(u32 val, u32 offset)
+{
+	__raw_writel(val, oper_cfg.vpss_regs_base0 + offset);
+}
 
-	/* अगर we are using pattern generator, enable it */
-	अगर (src_sel == VPSS_PGLPBK || src_sel == VPSS_CCDCPG)
+static void dm365_select_ccdc_source(enum vpss_ccdc_source_sel src_sel)
+{
+	u32 temp = isp5_read(DM365_ISP5_CCDCMUX) & ~CCD_SRC_SEL_MASK;
+
+	/* if we are using pattern generator, enable it */
+	if (src_sel == VPSS_PGLPBK || src_sel == VPSS_CCDCPG)
 		temp |= 0x08;
 
 	temp |= (src_sel << CCD_SRC_SEL_SHIFT);
-	isp5_ग_लिखो(temp, DM365_ISP5_CCDCMUX);
-पूर्ण
+	isp5_write(temp, DM365_ISP5_CCDCMUX);
+}
 
-अटल व्योम dm355_select_ccdc_source(क्रमागत vpss_ccdc_source_sel src_sel)
-अणु
+static void dm355_select_ccdc_source(enum vpss_ccdc_source_sel src_sel)
+{
 	bl_regw(src_sel << VPSS_HSSISEL_SHIFT, DM355_VPSSBL_CCDCMUX);
-पूर्ण
+}
 
-पूर्णांक vpss_dma_complete_पूर्णांकerrupt(व्योम)
-अणु
-	अगर (!oper_cfg.hw_ops.dma_complete_पूर्णांकerrupt)
-		वापस 2;
-	वापस oper_cfg.hw_ops.dma_complete_पूर्णांकerrupt();
-पूर्ण
-EXPORT_SYMBOL(vpss_dma_complete_पूर्णांकerrupt);
+int vpss_dma_complete_interrupt(void)
+{
+	if (!oper_cfg.hw_ops.dma_complete_interrupt)
+		return 2;
+	return oper_cfg.hw_ops.dma_complete_interrupt();
+}
+EXPORT_SYMBOL(vpss_dma_complete_interrupt);
 
-पूर्णांक vpss_select_ccdc_source(क्रमागत vpss_ccdc_source_sel src_sel)
-अणु
-	अगर (!oper_cfg.hw_ops.select_ccdc_source)
-		वापस -EINVAL;
+int vpss_select_ccdc_source(enum vpss_ccdc_source_sel src_sel)
+{
+	if (!oper_cfg.hw_ops.select_ccdc_source)
+		return -EINVAL;
 
 	oper_cfg.hw_ops.select_ccdc_source(src_sel);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(vpss_select_ccdc_source);
 
-अटल पूर्णांक dm644x_clear_wbl_overflow(क्रमागत vpss_wbl_sel wbl_sel)
-अणु
+static int dm644x_clear_wbl_overflow(enum vpss_wbl_sel wbl_sel)
+{
 	u32 mask = 1, val;
 
-	अगर (wbl_sel < VPSS_PCR_AEW_WBL_0 ||
+	if (wbl_sel < VPSS_PCR_AEW_WBL_0 ||
 	    wbl_sel > VPSS_PCR_CCDC_WBL_O)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	/* writing a 0 clear the overflow */
 	mask = ~(mask << wbl_sel);
 	val = bl_regr(DM644X_SBL_PCR_VPSS) & mask;
 	bl_regw(val, DM644X_SBL_PCR_VPSS);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम vpss_set_sync_pol(काष्ठा vpss_sync_pol sync)
-अणु
-	अगर (!oper_cfg.hw_ops.set_sync_pol)
-		वापस;
+void vpss_set_sync_pol(struct vpss_sync_pol sync)
+{
+	if (!oper_cfg.hw_ops.set_sync_pol)
+		return;
 
 	oper_cfg.hw_ops.set_sync_pol(sync);
-पूर्ण
+}
 EXPORT_SYMBOL(vpss_set_sync_pol);
 
-पूर्णांक vpss_clear_wbl_overflow(क्रमागत vpss_wbl_sel wbl_sel)
-अणु
-	अगर (!oper_cfg.hw_ops.clear_wbl_overflow)
-		वापस -EINVAL;
+int vpss_clear_wbl_overflow(enum vpss_wbl_sel wbl_sel)
+{
+	if (!oper_cfg.hw_ops.clear_wbl_overflow)
+		return -EINVAL;
 
-	वापस oper_cfg.hw_ops.clear_wbl_overflow(wbl_sel);
-पूर्ण
+	return oper_cfg.hw_ops.clear_wbl_overflow(wbl_sel);
+}
 EXPORT_SYMBOL(vpss_clear_wbl_overflow);
 
 /*
- *  dm355_enable_घड़ी - Enable VPSS Clock
- *  @घड़ी_sel: Clock to be enabled/disabled
+ *  dm355_enable_clock - Enable VPSS Clock
+ *  @clock_sel: Clock to be enabled/disabled
  *  @en: enable/disable flag
  *
- *  This is called to enable or disable a vpss घड़ी
+ *  This is called to enable or disable a vpss clock
  */
-अटल पूर्णांक dm355_enable_घड़ी(क्रमागत vpss_घड़ी_sel घड़ी_sel, पूर्णांक en)
-अणु
-	अचिन्हित दीर्घ flags;
-	u32 utemp, mask = 0x1, shअगरt = 0;
+static int dm355_enable_clock(enum vpss_clock_sel clock_sel, int en)
+{
+	unsigned long flags;
+	u32 utemp, mask = 0x1, shift = 0;
 
-	चयन (घड़ी_sel) अणु
-	हाल VPSS_VPBE_CLOCK:
+	switch (clock_sel) {
+	case VPSS_VPBE_CLOCK:
 		/* nothing since lsb */
-		अवरोध;
-	हाल VPSS_VENC_CLOCK_SEL:
-		shअगरt = 2;
-		अवरोध;
-	हाल VPSS_CFALD_CLOCK:
-		shअगरt = 3;
-		अवरोध;
-	हाल VPSS_H3A_CLOCK:
-		shअगरt = 4;
-		अवरोध;
-	हाल VPSS_IPIPE_CLOCK:
-		shअगरt = 5;
-		अवरोध;
-	हाल VPSS_CCDC_CLOCK:
-		shअगरt = 6;
-		अवरोध;
-	शेष:
-		prपूर्णांकk(KERN_ERR "dm355_enable_clock: Invalid selector: %d\n",
-		       घड़ी_sel);
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	case VPSS_VENC_CLOCK_SEL:
+		shift = 2;
+		break;
+	case VPSS_CFALD_CLOCK:
+		shift = 3;
+		break;
+	case VPSS_H3A_CLOCK:
+		shift = 4;
+		break;
+	case VPSS_IPIPE_CLOCK:
+		shift = 5;
+		break;
+	case VPSS_CCDC_CLOCK:
+		shift = 6;
+		break;
+	default:
+		printk(KERN_ERR "dm355_enable_clock: Invalid selector: %d\n",
+		       clock_sel);
+		return -EINVAL;
+	}
 
 	spin_lock_irqsave(&oper_cfg.vpss_lock, flags);
 	utemp = vpss_regr(DM355_VPSSCLK_CLKCTRL);
-	अगर (!en)
-		utemp &= ~(mask << shअगरt);
-	अन्यथा
-		utemp |= (mask << shअगरt);
+	if (!en)
+		utemp &= ~(mask << shift);
+	else
+		utemp |= (mask << shift);
 
 	vpss_regw(utemp, DM355_VPSSCLK_CLKCTRL);
 	spin_unlock_irqrestore(&oper_cfg.vpss_lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dm365_enable_घड़ी(क्रमागत vpss_घड़ी_sel घड़ी_sel, पूर्णांक en)
-अणु
-	अचिन्हित दीर्घ flags;
-	u32 utemp, mask = 0x1, shअगरt = 0, offset = DM365_ISP5_PCCR;
-	u32 (*पढ़ो)(u32 offset) = isp5_पढ़ो;
-	व्योम(*ग_लिखो)(u32 val, u32 offset) = isp5_ग_लिखो;
+static int dm365_enable_clock(enum vpss_clock_sel clock_sel, int en)
+{
+	unsigned long flags;
+	u32 utemp, mask = 0x1, shift = 0, offset = DM365_ISP5_PCCR;
+	u32 (*read)(u32 offset) = isp5_read;
+	void(*write)(u32 val, u32 offset) = isp5_write;
 
-	चयन (घड़ी_sel) अणु
-	हाल VPSS_BL_CLOCK:
-		अवरोध;
-	हाल VPSS_CCDC_CLOCK:
-		shअगरt = 1;
-		अवरोध;
-	हाल VPSS_H3A_CLOCK:
-		shअगरt = 2;
-		अवरोध;
-	हाल VPSS_RSZ_CLOCK:
-		shअगरt = 3;
-		अवरोध;
-	हाल VPSS_IPIPE_CLOCK:
-		shअगरt = 4;
-		अवरोध;
-	हाल VPSS_IPIPEIF_CLOCK:
-		shअगरt = 5;
-		अवरोध;
-	हाल VPSS_PCLK_INTERNAL:
-		shअगरt = 6;
-		अवरोध;
-	हाल VPSS_PSYNC_CLOCK_SEL:
-		shअगरt = 7;
-		अवरोध;
-	हाल VPSS_VPBE_CLOCK:
-		पढ़ो = vpss_regr;
-		ग_लिखो = vpss_regw;
+	switch (clock_sel) {
+	case VPSS_BL_CLOCK:
+		break;
+	case VPSS_CCDC_CLOCK:
+		shift = 1;
+		break;
+	case VPSS_H3A_CLOCK:
+		shift = 2;
+		break;
+	case VPSS_RSZ_CLOCK:
+		shift = 3;
+		break;
+	case VPSS_IPIPE_CLOCK:
+		shift = 4;
+		break;
+	case VPSS_IPIPEIF_CLOCK:
+		shift = 5;
+		break;
+	case VPSS_PCLK_INTERNAL:
+		shift = 6;
+		break;
+	case VPSS_PSYNC_CLOCK_SEL:
+		shift = 7;
+		break;
+	case VPSS_VPBE_CLOCK:
+		read = vpss_regr;
+		write = vpss_regw;
 		offset = DM365_VPBE_CLK_CTRL;
-		अवरोध;
-	हाल VPSS_VENC_CLOCK_SEL:
-		shअगरt = 2;
-		पढ़ो = vpss_regr;
-		ग_लिखो = vpss_regw;
+		break;
+	case VPSS_VENC_CLOCK_SEL:
+		shift = 2;
+		read = vpss_regr;
+		write = vpss_regw;
 		offset = DM365_VPBE_CLK_CTRL;
-		अवरोध;
-	हाल VPSS_LDC_CLOCK:
-		shअगरt = 3;
-		पढ़ो = vpss_regr;
-		ग_लिखो = vpss_regw;
+		break;
+	case VPSS_LDC_CLOCK:
+		shift = 3;
+		read = vpss_regr;
+		write = vpss_regw;
 		offset = DM365_VPBE_CLK_CTRL;
-		अवरोध;
-	हाल VPSS_FDIF_CLOCK:
-		shअगरt = 4;
-		पढ़ो = vpss_regr;
-		ग_लिखो = vpss_regw;
+		break;
+	case VPSS_FDIF_CLOCK:
+		shift = 4;
+		read = vpss_regr;
+		write = vpss_regw;
 		offset = DM365_VPBE_CLK_CTRL;
-		अवरोध;
-	हाल VPSS_OSD_CLOCK_SEL:
-		shअगरt = 6;
-		पढ़ो = vpss_regr;
-		ग_लिखो = vpss_regw;
+		break;
+	case VPSS_OSD_CLOCK_SEL:
+		shift = 6;
+		read = vpss_regr;
+		write = vpss_regw;
 		offset = DM365_VPBE_CLK_CTRL;
-		अवरोध;
-	हाल VPSS_LDC_CLOCK_SEL:
-		shअगरt = 7;
-		पढ़ो = vpss_regr;
-		ग_लिखो = vpss_regw;
+		break;
+	case VPSS_LDC_CLOCK_SEL:
+		shift = 7;
+		read = vpss_regr;
+		write = vpss_regw;
 		offset = DM365_VPBE_CLK_CTRL;
-		अवरोध;
-	शेष:
-		prपूर्णांकk(KERN_ERR "dm365_enable_clock: Invalid selector: %d\n",
-		       घड़ी_sel);
-		वापस -1;
-	पूर्ण
+		break;
+	default:
+		printk(KERN_ERR "dm365_enable_clock: Invalid selector: %d\n",
+		       clock_sel);
+		return -1;
+	}
 
 	spin_lock_irqsave(&oper_cfg.vpss_lock, flags);
-	utemp = पढ़ो(offset);
-	अगर (!en) अणु
+	utemp = read(offset);
+	if (!en) {
 		mask = ~mask;
-		utemp &= (mask << shअगरt);
-	पूर्ण अन्यथा
-		utemp |= (mask << shअगरt);
+		utemp &= (mask << shift);
+	} else
+		utemp |= (mask << shift);
 
-	ग_लिखो(utemp, offset);
+	write(utemp, offset);
 	spin_unlock_irqrestore(&oper_cfg.vpss_lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक vpss_enable_घड़ी(क्रमागत vpss_घड़ी_sel घड़ी_sel, पूर्णांक en)
-अणु
-	अगर (!oper_cfg.hw_ops.enable_घड़ी)
-		वापस -EINVAL;
+int vpss_enable_clock(enum vpss_clock_sel clock_sel, int en)
+{
+	if (!oper_cfg.hw_ops.enable_clock)
+		return -EINVAL;
 
-	वापस oper_cfg.hw_ops.enable_घड़ी(घड़ी_sel, en);
-पूर्ण
-EXPORT_SYMBOL(vpss_enable_घड़ी);
+	return oper_cfg.hw_ops.enable_clock(clock_sel, en);
+}
+EXPORT_SYMBOL(vpss_enable_clock);
 
-व्योम dm365_vpss_set_sync_pol(काष्ठा vpss_sync_pol sync)
-अणु
-	पूर्णांक val = 0;
-	val = isp5_पढ़ो(DM365_ISP5_CCDCMUX);
+void dm365_vpss_set_sync_pol(struct vpss_sync_pol sync)
+{
+	int val = 0;
+	val = isp5_read(DM365_ISP5_CCDCMUX);
 
 	val |= (sync.ccdpg_hdpol << DM365_CCDC_PG_HD_POL_SHIFT);
 	val |= (sync.ccdpg_vdpol << DM365_CCDC_PG_VD_POL_SHIFT);
 
-	isp5_ग_लिखो(val, DM365_ISP5_CCDCMUX);
-पूर्ण
+	isp5_write(val, DM365_ISP5_CCDCMUX);
+}
 EXPORT_SYMBOL(dm365_vpss_set_sync_pol);
 
-व्योम vpss_set_pg_frame_size(काष्ठा vpss_pg_frame_size frame_size)
-अणु
-	अगर (!oper_cfg.hw_ops.set_pg_frame_size)
-		वापस;
+void vpss_set_pg_frame_size(struct vpss_pg_frame_size frame_size)
+{
+	if (!oper_cfg.hw_ops.set_pg_frame_size)
+		return;
 
 	oper_cfg.hw_ops.set_pg_frame_size(frame_size);
-पूर्ण
+}
 EXPORT_SYMBOL(vpss_set_pg_frame_size);
 
-व्योम dm365_vpss_set_pg_frame_size(काष्ठा vpss_pg_frame_size frame_size)
-अणु
-	पूर्णांक current_reg = ((frame_size.hlpfr >> 1) - 1) << 16;
+void dm365_vpss_set_pg_frame_size(struct vpss_pg_frame_size frame_size)
+{
+	int current_reg = ((frame_size.hlpfr >> 1) - 1) << 16;
 
 	current_reg |= (frame_size.pplen - 1);
-	isp5_ग_लिखो(current_reg, DM365_ISP5_PG_FRAME_SIZE);
-पूर्ण
+	isp5_write(current_reg, DM365_ISP5_PG_FRAME_SIZE);
+}
 EXPORT_SYMBOL(dm365_vpss_set_pg_frame_size);
 
-अटल पूर्णांक vpss_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा resource *res;
-	अक्षर *platक्रमm_name;
+static int vpss_probe(struct platform_device *pdev)
+{
+	struct resource *res;
+	char *platform_name;
 
-	अगर (!pdev->dev.platक्रमm_data) अणु
+	if (!pdev->dev.platform_data) {
 		dev_err(&pdev->dev, "no platform data\n");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
-	platक्रमm_name = pdev->dev.platक्रमm_data;
-	अगर (!म_भेद(platक्रमm_name, "dm355_vpss"))
-		oper_cfg.platक्रमm = DM355;
-	अन्यथा अगर (!म_भेद(platक्रमm_name, "dm365_vpss"))
-		oper_cfg.platक्रमm = DM365;
-	अन्यथा अगर (!म_भेद(platक्रमm_name, "dm644x_vpss"))
-		oper_cfg.platक्रमm = DM644X;
-	अन्यथा अणु
+	platform_name = pdev->dev.platform_data;
+	if (!strcmp(platform_name, "dm355_vpss"))
+		oper_cfg.platform = DM355;
+	else if (!strcmp(platform_name, "dm365_vpss"))
+		oper_cfg.platform = DM365;
+	else if (!strcmp(platform_name, "dm644x_vpss"))
+		oper_cfg.platform = DM644X;
+	else {
 		dev_err(&pdev->dev, "vpss driver not supported on this platform\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	dev_info(&pdev->dev, "%s vpss probed\n", platक्रमm_name);
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	dev_info(&pdev->dev, "%s vpss probed\n", platform_name);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 
 	oper_cfg.vpss_regs_base0 = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(oper_cfg.vpss_regs_base0))
-		वापस PTR_ERR(oper_cfg.vpss_regs_base0);
+	if (IS_ERR(oper_cfg.vpss_regs_base0))
+		return PTR_ERR(oper_cfg.vpss_regs_base0);
 
-	अगर (oper_cfg.platक्रमm == DM355 || oper_cfg.platक्रमm == DM365) अणु
-		res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 1);
+	if (oper_cfg.platform == DM355 || oper_cfg.platform == DM365) {
+		res = platform_get_resource(pdev, IORESOURCE_MEM, 1);
 
 		oper_cfg.vpss_regs_base1 = devm_ioremap_resource(&pdev->dev,
 								 res);
-		अगर (IS_ERR(oper_cfg.vpss_regs_base1))
-			वापस PTR_ERR(oper_cfg.vpss_regs_base1);
-	पूर्ण
+		if (IS_ERR(oper_cfg.vpss_regs_base1))
+			return PTR_ERR(oper_cfg.vpss_regs_base1);
+	}
 
-	अगर (oper_cfg.platक्रमm == DM355) अणु
-		oper_cfg.hw_ops.enable_घड़ी = dm355_enable_घड़ी;
+	if (oper_cfg.platform == DM355) {
+		oper_cfg.hw_ops.enable_clock = dm355_enable_clock;
 		oper_cfg.hw_ops.select_ccdc_source = dm355_select_ccdc_source;
-		/* Setup vpss पूर्णांकerrupts */
+		/* Setup vpss interrupts */
 		bl_regw(DM355_VPSSBL_INTSEL_DEFAULT, DM355_VPSSBL_INTSEL);
 		bl_regw(DM355_VPSSBL_EVTSEL_DEFAULT, DM355_VPSSBL_EVTSEL);
-	पूर्ण अन्यथा अगर (oper_cfg.platक्रमm == DM365) अणु
-		oper_cfg.hw_ops.enable_घड़ी = dm365_enable_घड़ी;
+	} else if (oper_cfg.platform == DM365) {
+		oper_cfg.hw_ops.enable_clock = dm365_enable_clock;
 		oper_cfg.hw_ops.select_ccdc_source = dm365_select_ccdc_source;
-		/* Setup vpss पूर्णांकerrupts */
-		isp5_ग_लिखो((isp5_पढ़ो(DM365_ISP5_PCCR) |
+		/* Setup vpss interrupts */
+		isp5_write((isp5_read(DM365_ISP5_PCCR) |
 				      DM365_ISP5_PCCR_BL_CLK_ENABLE |
 				      DM365_ISP5_PCCR_ISIF_CLK_ENABLE |
 				      DM365_ISP5_PCCR_H3A_CLK_ENABLE |
@@ -447,90 +446,90 @@ EXPORT_SYMBOL(dm365_vpss_set_pg_frame_size);
 				      DM365_ISP5_PCCR_IPIPE_CLK_ENABLE |
 				      DM365_ISP5_PCCR_IPIPEIF_CLK_ENABLE |
 				      DM365_ISP5_PCCR_RSV), DM365_ISP5_PCCR);
-		isp5_ग_लिखो((isp5_पढ़ो(DM365_ISP5_BCR) |
+		isp5_write((isp5_read(DM365_ISP5_BCR) |
 			    DM365_ISP5_BCR_ISIF_OUT_ENABLE), DM365_ISP5_BCR);
-		isp5_ग_लिखो(DM365_ISP5_INTSEL1_DEFAULT, DM365_ISP5_INTSEL1);
-		isp5_ग_लिखो(DM365_ISP5_INTSEL2_DEFAULT, DM365_ISP5_INTSEL2);
-		isp5_ग_लिखो(DM365_ISP5_INTSEL3_DEFAULT, DM365_ISP5_INTSEL3);
-	पूर्ण अन्यथा
+		isp5_write(DM365_ISP5_INTSEL1_DEFAULT, DM365_ISP5_INTSEL1);
+		isp5_write(DM365_ISP5_INTSEL2_DEFAULT, DM365_ISP5_INTSEL2);
+		isp5_write(DM365_ISP5_INTSEL3_DEFAULT, DM365_ISP5_INTSEL3);
+	} else
 		oper_cfg.hw_ops.clear_wbl_overflow = dm644x_clear_wbl_overflow;
 
-	pm_runसमय_enable(&pdev->dev);
+	pm_runtime_enable(&pdev->dev);
 
-	pm_runसमय_get(&pdev->dev);
+	pm_runtime_get(&pdev->dev);
 
 	spin_lock_init(&oper_cfg.vpss_lock);
-	dev_info(&pdev->dev, "%s vpss probe success\n", platक्रमm_name);
+	dev_info(&pdev->dev, "%s vpss probe success\n", platform_name);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vpss_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	pm_runसमय_disable(&pdev->dev);
-	वापस 0;
-पूर्ण
+static int vpss_remove(struct platform_device *pdev)
+{
+	pm_runtime_disable(&pdev->dev);
+	return 0;
+}
 
-अटल पूर्णांक vpss_suspend(काष्ठा device *dev)
-अणु
-	pm_runसमय_put(dev);
-	वापस 0;
-पूर्ण
+static int vpss_suspend(struct device *dev)
+{
+	pm_runtime_put(dev);
+	return 0;
+}
 
-अटल पूर्णांक vpss_resume(काष्ठा device *dev)
-अणु
-	pm_runसमय_get(dev);
-	वापस 0;
-पूर्ण
+static int vpss_resume(struct device *dev)
+{
+	pm_runtime_get(dev);
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops vpss_pm_ops = अणु
+static const struct dev_pm_ops vpss_pm_ops = {
 	.suspend = vpss_suspend,
 	.resume = vpss_resume,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_driver vpss_driver = अणु
-	.driver = अणु
+static struct platform_driver vpss_driver = {
+	.driver = {
 		.name	= "vpss",
 		.pm = &vpss_pm_ops,
-	पूर्ण,
-	.हटाओ = vpss_हटाओ,
+	},
+	.remove = vpss_remove,
 	.probe = vpss_probe,
-पूर्ण;
+};
 
-अटल व्योम vpss_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&vpss_driver);
+static void vpss_exit(void)
+{
+	platform_driver_unregister(&vpss_driver);
 	iounmap(oper_cfg.vpss_regs_base2);
 	release_mem_region(VPSS_CLK_CTRL, 4);
-पूर्ण
+}
 
-अटल पूर्णांक __init vpss_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init vpss_init(void)
+{
+	int ret;
 
-	अगर (!request_mem_region(VPSS_CLK_CTRL, 4, "vpss_clock_control"))
-		वापस -EBUSY;
+	if (!request_mem_region(VPSS_CLK_CTRL, 4, "vpss_clock_control"))
+		return -EBUSY;
 
 	oper_cfg.vpss_regs_base2 = ioremap(VPSS_CLK_CTRL, 4);
-	अगर (unlikely(!oper_cfg.vpss_regs_base2)) अणु
+	if (unlikely(!oper_cfg.vpss_regs_base2)) {
 		ret = -ENOMEM;
-		जाओ err_ioremap;
-	पूर्ण
+		goto err_ioremap;
+	}
 
-	ग_लिखोl(VPSS_CLK_CTRL_VENCCLKEN |
+	writel(VPSS_CLK_CTRL_VENCCLKEN |
 	       VPSS_CLK_CTRL_DACCLKEN, oper_cfg.vpss_regs_base2);
 
-	ret = platक्रमm_driver_रेजिस्टर(&vpss_driver);
-	अगर (ret)
-		जाओ err_pd_रेजिस्टर;
+	ret = platform_driver_register(&vpss_driver);
+	if (ret)
+		goto err_pd_register;
 
-	वापस 0;
+	return 0;
 
-err_pd_रेजिस्टर:
+err_pd_register:
 	iounmap(oper_cfg.vpss_regs_base2);
 err_ioremap:
 	release_mem_region(VPSS_CLK_CTRL, 4);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 subsys_initcall(vpss_init);
-module_निकास(vpss_निकास);
+module_exit(vpss_exit);

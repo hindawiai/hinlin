@@ -1,54 +1,53 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2012 Intel Corporation
  * Copyright (C) 2017 Linaro Ltd. <ard.biesheuvel@linaro.org>
  */
 
-#समावेश <arm_neon.h>
+#include <arm_neon.h>
 
-#अगर_घोषित CONFIG_ARM
+#ifdef CONFIG_ARM
 /*
- * AArch32 करोes not provide this पूर्णांकrinsic natively because it करोes not
- * implement the underlying inकाष्ठाion. AArch32 only provides a 64-bit
- * wide vtbl.8 inकाष्ठाion, so use that instead.
+ * AArch32 does not provide this intrinsic natively because it does not
+ * implement the underlying instruction. AArch32 only provides a 64-bit
+ * wide vtbl.8 instruction, so use that instead.
  */
-अटल uपूर्णांक8x16_t vqtbl1q_u8(uपूर्णांक8x16_t a, uपूर्णांक8x16_t b)
-अणु
-	जोड़ अणु
-		uपूर्णांक8x16_t	val;
-		uपूर्णांक8x8x2_t	pair;
-	पूर्ण __a = अणु a पूर्ण;
+static uint8x16_t vqtbl1q_u8(uint8x16_t a, uint8x16_t b)
+{
+	union {
+		uint8x16_t	val;
+		uint8x8x2_t	pair;
+	} __a = { a };
 
-	वापस vcombine_u8(vtbl2_u8(__a.pair, vget_low_u8(b)),
+	return vcombine_u8(vtbl2_u8(__a.pair, vget_low_u8(b)),
 			   vtbl2_u8(__a.pair, vget_high_u8(b)));
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-व्योम __raid6_2data_recov_neon(पूर्णांक bytes, uपूर्णांक8_t *p, uपूर्णांक8_t *q, uपूर्णांक8_t *dp,
-			      uपूर्णांक8_t *dq, स्थिर uपूर्णांक8_t *pbmul,
-			      स्थिर uपूर्णांक8_t *qmul)
-अणु
-	uपूर्णांक8x16_t pm0 = vld1q_u8(pbmul);
-	uपूर्णांक8x16_t pm1 = vld1q_u8(pbmul + 16);
-	uपूर्णांक8x16_t qm0 = vld1q_u8(qmul);
-	uपूर्णांक8x16_t qm1 = vld1q_u8(qmul + 16);
-	uपूर्णांक8x16_t x0f = vdupq_n_u8(0x0f);
+void __raid6_2data_recov_neon(int bytes, uint8_t *p, uint8_t *q, uint8_t *dp,
+			      uint8_t *dq, const uint8_t *pbmul,
+			      const uint8_t *qmul)
+{
+	uint8x16_t pm0 = vld1q_u8(pbmul);
+	uint8x16_t pm1 = vld1q_u8(pbmul + 16);
+	uint8x16_t qm0 = vld1q_u8(qmul);
+	uint8x16_t qm1 = vld1q_u8(qmul + 16);
+	uint8x16_t x0f = vdupq_n_u8(0x0f);
 
 	/*
-	 * जबतक ( bytes-- ) अणु
-	 *	uपूर्णांक8_t px, qx, db;
+	 * while ( bytes-- ) {
+	 *	uint8_t px, qx, db;
 	 *
 	 *	px    = *p ^ *dp;
 	 *	qx    = qmul[*q ^ *dq];
 	 *	*dq++ = db = pbmul[px] ^ qx;
 	 *	*dp++ = db ^ px;
 	 *	p++; q++;
-	 * पूर्ण
+	 * }
 	 */
 
-	जबतक (bytes) अणु
-		uपूर्णांक8x16_t vx, vy, px, qx, db;
+	while (bytes) {
+		uint8x16_t vx, vy, px, qx, db;
 
 		px = veorq_u8(vld1q_u8(p), vld1q_u8(dp));
 		vx = veorq_u8(vld1q_u8(q), vld1q_u8(dq));
@@ -72,25 +71,25 @@
 		q += 16;
 		dp += 16;
 		dq += 16;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम __raid6_datap_recov_neon(पूर्णांक bytes, uपूर्णांक8_t *p, uपूर्णांक8_t *q, uपूर्णांक8_t *dq,
-			      स्थिर uपूर्णांक8_t *qmul)
-अणु
-	uपूर्णांक8x16_t qm0 = vld1q_u8(qmul);
-	uपूर्णांक8x16_t qm1 = vld1q_u8(qmul + 16);
-	uपूर्णांक8x16_t x0f = vdupq_n_u8(0x0f);
+void __raid6_datap_recov_neon(int bytes, uint8_t *p, uint8_t *q, uint8_t *dq,
+			      const uint8_t *qmul)
+{
+	uint8x16_t qm0 = vld1q_u8(qmul);
+	uint8x16_t qm1 = vld1q_u8(qmul + 16);
+	uint8x16_t x0f = vdupq_n_u8(0x0f);
 
 	/*
-	 * जबतक (bytes--) अणु
+	 * while (bytes--) {
 	 *	*p++ ^= *dq = qmul[*q ^ *dq];
 	 *	q++; dq++;
-	 * पूर्ण
+	 * }
 	 */
 
-	जबतक (bytes) अणु
-		uपूर्णांक8x16_t vx, vy;
+	while (bytes) {
+		uint8x16_t vx, vy;
 
 		vx = veorq_u8(vld1q_u8(q), vld1q_u8(dq));
 
@@ -107,5 +106,5 @@
 		p += 16;
 		q += 16;
 		dq += 16;
-	पूर्ण
-पूर्ण
+	}
+}

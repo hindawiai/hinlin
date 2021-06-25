@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Squashfs - a compressed पढ़ो only fileप्रणाली क्रम Linux
+ * Squashfs - a compressed read only filesystem for Linux
  *
  * Copyright (c) 2010 LG Electronics
  * Chan Jeong <chan.jeong@lge.com>
@@ -9,113 +8,113 @@
  * lzo_wrapper.c
  */
 
-#समावेश <linux/mutex.h>
-#समावेश <linux/bपन.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/lzo.h>
+#include <linux/mutex.h>
+#include <linux/bio.h>
+#include <linux/slab.h>
+#include <linux/vmalloc.h>
+#include <linux/lzo.h>
 
-#समावेश "squashfs_fs.h"
-#समावेश "squashfs_fs_sb.h"
-#समावेश "squashfs.h"
-#समावेश "decompressor.h"
-#समावेश "page_actor.h"
+#include "squashfs_fs.h"
+#include "squashfs_fs_sb.h"
+#include "squashfs.h"
+#include "decompressor.h"
+#include "page_actor.h"
 
-काष्ठा squashfs_lzo अणु
-	व्योम	*input;
-	व्योम	*output;
-पूर्ण;
+struct squashfs_lzo {
+	void	*input;
+	void	*output;
+};
 
-अटल व्योम *lzo_init(काष्ठा squashfs_sb_info *msblk, व्योम *buff)
-अणु
-	पूर्णांक block_size = max_t(पूर्णांक, msblk->block_size, SQUASHFS_METADATA_SIZE);
+static void *lzo_init(struct squashfs_sb_info *msblk, void *buff)
+{
+	int block_size = max_t(int, msblk->block_size, SQUASHFS_METADATA_SIZE);
 
-	काष्ठा squashfs_lzo *stream = kzalloc(माप(*stream), GFP_KERNEL);
-	अगर (stream == शून्य)
-		जाओ failed;
-	stream->input = vदो_स्मृति(block_size);
-	अगर (stream->input == शून्य)
-		जाओ failed;
-	stream->output = vदो_स्मृति(block_size);
-	अगर (stream->output == शून्य)
-		जाओ failed2;
+	struct squashfs_lzo *stream = kzalloc(sizeof(*stream), GFP_KERNEL);
+	if (stream == NULL)
+		goto failed;
+	stream->input = vmalloc(block_size);
+	if (stream->input == NULL)
+		goto failed;
+	stream->output = vmalloc(block_size);
+	if (stream->output == NULL)
+		goto failed2;
 
-	वापस stream;
+	return stream;
 
 failed2:
-	vमुक्त(stream->input);
+	vfree(stream->input);
 failed:
 	ERROR("Failed to allocate lzo workspace\n");
-	kमुक्त(stream);
-	वापस ERR_PTR(-ENOMEM);
-पूर्ण
+	kfree(stream);
+	return ERR_PTR(-ENOMEM);
+}
 
 
-अटल व्योम lzo_मुक्त(व्योम *strm)
-अणु
-	काष्ठा squashfs_lzo *stream = strm;
+static void lzo_free(void *strm)
+{
+	struct squashfs_lzo *stream = strm;
 
-	अगर (stream) अणु
-		vमुक्त(stream->input);
-		vमुक्त(stream->output);
-	पूर्ण
-	kमुक्त(stream);
-पूर्ण
+	if (stream) {
+		vfree(stream->input);
+		vfree(stream->output);
+	}
+	kfree(stream);
+}
 
 
-अटल पूर्णांक lzo_uncompress(काष्ठा squashfs_sb_info *msblk, व्योम *strm,
-	काष्ठा bio *bio, पूर्णांक offset, पूर्णांक length,
-	काष्ठा squashfs_page_actor *output)
-अणु
-	काष्ठा bvec_iter_all iter_all = अणुपूर्ण;
-	काष्ठा bio_vec *bvec = bvec_init_iter_all(&iter_all);
-	काष्ठा squashfs_lzo *stream = strm;
-	व्योम *buff = stream->input, *data;
-	पूर्णांक bytes = length, res;
-	माप_प्रकार out_len = output->length;
+static int lzo_uncompress(struct squashfs_sb_info *msblk, void *strm,
+	struct bio *bio, int offset, int length,
+	struct squashfs_page_actor *output)
+{
+	struct bvec_iter_all iter_all = {};
+	struct bio_vec *bvec = bvec_init_iter_all(&iter_all);
+	struct squashfs_lzo *stream = strm;
+	void *buff = stream->input, *data;
+	int bytes = length, res;
+	size_t out_len = output->length;
 
-	जबतक (bio_next_segment(bio, &iter_all)) अणु
-		पूर्णांक avail = min(bytes, ((पूर्णांक)bvec->bv_len) - offset);
+	while (bio_next_segment(bio, &iter_all)) {
+		int avail = min(bytes, ((int)bvec->bv_len) - offset);
 
 		data = page_address(bvec->bv_page) + bvec->bv_offset;
-		स_नकल(buff, data + offset, avail);
+		memcpy(buff, data + offset, avail);
 		buff += avail;
 		bytes -= avail;
 		offset = 0;
-	पूर्ण
+	}
 
-	res = lzo1x_decompress_safe(stream->input, (माप_प्रकार)length,
+	res = lzo1x_decompress_safe(stream->input, (size_t)length,
 					stream->output, &out_len);
-	अगर (res != LZO_E_OK)
-		जाओ failed;
+	if (res != LZO_E_OK)
+		goto failed;
 
-	res = bytes = (पूर्णांक)out_len;
+	res = bytes = (int)out_len;
 	data = squashfs_first_page(output);
 	buff = stream->output;
-	जबतक (data) अणु
-		अगर (bytes <= PAGE_SIZE) अणु
-			स_नकल(data, buff, bytes);
-			अवरोध;
-		पूर्ण अन्यथा अणु
-			स_नकल(data, buff, PAGE_SIZE);
+	while (data) {
+		if (bytes <= PAGE_SIZE) {
+			memcpy(data, buff, bytes);
+			break;
+		} else {
+			memcpy(data, buff, PAGE_SIZE);
 			buff += PAGE_SIZE;
 			bytes -= PAGE_SIZE;
 			data = squashfs_next_page(output);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	squashfs_finish_page(output);
 
-	वापस res;
+	return res;
 
 failed:
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
-स्थिर काष्ठा squashfs_decompressor squashfs_lzo_comp_ops = अणु
+const struct squashfs_decompressor squashfs_lzo_comp_ops = {
 	.init = lzo_init,
-	.मुक्त = lzo_मुक्त,
+	.free = lzo_free,
 	.decompress = lzo_uncompress,
 	.id = LZO_COMPRESSION,
 	.name = "lzo",
 	.supported = 1
-पूर्ण;
+};

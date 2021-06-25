@@ -1,330 +1,329 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 // Copyright(c) 2015-17 Intel Corporation
 
 /*
- *  skl-ssp-clk.c - ASoC skylake ssp घड़ी driver
+ *  skl-ssp-clk.c - ASoC skylake ssp clock driver
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/err.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/clkdev.h>
-#समावेश <sound/पूर्णांकel-nhlt.h>
-#समावेश "skl.h"
-#समावेश "skl-ssp-clk.h"
-#समावेश "skl-topology.h"
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/err.h>
+#include <linux/platform_device.h>
+#include <linux/clk-provider.h>
+#include <linux/clkdev.h>
+#include <sound/intel-nhlt.h>
+#include "skl.h"
+#include "skl-ssp-clk.h"
+#include "skl-topology.h"
 
-#घोषणा to_skl_clk(_hw)	container_of(_hw, काष्ठा skl_clk, hw)
+#define to_skl_clk(_hw)	container_of(_hw, struct skl_clk, hw)
 
-काष्ठा skl_clk_parent अणु
-	काष्ठा clk_hw *hw;
-	काष्ठा clk_lookup *lookup;
-पूर्ण;
+struct skl_clk_parent {
+	struct clk_hw *hw;
+	struct clk_lookup *lookup;
+};
 
-काष्ठा skl_clk अणु
-	काष्ठा clk_hw hw;
-	काष्ठा clk_lookup *lookup;
-	अचिन्हित दीर्घ rate;
-	काष्ठा skl_clk_pdata *pdata;
+struct skl_clk {
+	struct clk_hw hw;
+	struct clk_lookup *lookup;
+	unsigned long rate;
+	struct skl_clk_pdata *pdata;
 	u32 id;
-पूर्ण;
+};
 
-काष्ठा skl_clk_data अणु
-	काष्ठा skl_clk_parent parent[SKL_MAX_CLK_SRC];
-	काष्ठा skl_clk *clk[SKL_MAX_CLK_CNT];
+struct skl_clk_data {
+	struct skl_clk_parent parent[SKL_MAX_CLK_SRC];
+	struct skl_clk *clk[SKL_MAX_CLK_CNT];
 	u8 avail_clk_cnt;
-पूर्ण;
+};
 
-अटल पूर्णांक skl_get_clk_type(u32 index)
-अणु
-	चयन (index) अणु
-	हाल 0 ... (SKL_SCLK_OFS - 1):
-		वापस SKL_MCLK;
+static int skl_get_clk_type(u32 index)
+{
+	switch (index) {
+	case 0 ... (SKL_SCLK_OFS - 1):
+		return SKL_MCLK;
 
-	हाल SKL_SCLK_OFS ... (SKL_SCLKFS_OFS - 1):
-		वापस SKL_SCLK;
+	case SKL_SCLK_OFS ... (SKL_SCLKFS_OFS - 1):
+		return SKL_SCLK;
 
-	हाल SKL_SCLKFS_OFS ... (SKL_MAX_CLK_CNT - 1):
-		वापस SKL_SCLK_FS;
+	case SKL_SCLKFS_OFS ... (SKL_MAX_CLK_CNT - 1):
+		return SKL_SCLK_FS;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल पूर्णांक skl_get_vbus_id(u32 index, u8 clk_type)
-अणु
-	चयन (clk_type) अणु
-	हाल SKL_MCLK:
-		वापस index;
+static int skl_get_vbus_id(u32 index, u8 clk_type)
+{
+	switch (clk_type) {
+	case SKL_MCLK:
+		return index;
 
-	हाल SKL_SCLK:
-		वापस index - SKL_SCLK_OFS;
+	case SKL_SCLK:
+		return index - SKL_SCLK_OFS;
 
-	हाल SKL_SCLK_FS:
-		वापस index - SKL_SCLKFS_OFS;
+	case SKL_SCLK_FS:
+		return index - SKL_SCLKFS_OFS;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल व्योम skl_fill_clk_ipc(काष्ठा skl_clk_rate_cfg_table *rcfg, u8 clk_type)
-अणु
-	काष्ठा nhlt_fmt_cfg *fmt_cfg;
-	जोड़ skl_clk_ctrl_ipc *ipc;
-	काष्ठा wav_fmt *wfmt;
+static void skl_fill_clk_ipc(struct skl_clk_rate_cfg_table *rcfg, u8 clk_type)
+{
+	struct nhlt_fmt_cfg *fmt_cfg;
+	union skl_clk_ctrl_ipc *ipc;
+	struct wav_fmt *wfmt;
 
-	अगर (!rcfg)
-		वापस;
+	if (!rcfg)
+		return;
 
 	ipc = &rcfg->dma_ctl_ipc;
-	अगर (clk_type == SKL_SCLK_FS) अणु
-		fmt_cfg = (काष्ठा nhlt_fmt_cfg *)rcfg->config;
+	if (clk_type == SKL_SCLK_FS) {
+		fmt_cfg = (struct nhlt_fmt_cfg *)rcfg->config;
 		wfmt = &fmt_cfg->fmt_ext.fmt;
 
 		/* Remove TLV Header size */
-		ipc->sclk_fs.hdr.size = माप(काष्ठा skl_dmactrl_sclkfs_cfg) -
-						माप(काष्ठा skl_tlv_hdr);
+		ipc->sclk_fs.hdr.size = sizeof(struct skl_dmactrl_sclkfs_cfg) -
+						sizeof(struct skl_tlv_hdr);
 		ipc->sclk_fs.sampling_frequency = wfmt->samples_per_sec;
 		ipc->sclk_fs.bit_depth = wfmt->bits_per_sample;
 		ipc->sclk_fs.valid_bit_depth =
 			fmt_cfg->fmt_ext.sample.valid_bits_per_sample;
 		ipc->sclk_fs.number_of_channels = wfmt->channels;
-	पूर्ण अन्यथा अणु
+	} else {
 		ipc->mclk.hdr.type = DMA_CLK_CONTROLS;
 		/* Remove TLV Header size */
-		ipc->mclk.hdr.size = माप(काष्ठा skl_dmactrl_mclk_cfg) -
-						माप(काष्ठा skl_tlv_hdr);
-	पूर्ण
-पूर्ण
+		ipc->mclk.hdr.size = sizeof(struct skl_dmactrl_mclk_cfg) -
+						sizeof(struct skl_tlv_hdr);
+	}
+}
 
-/* Sends dma control IPC to turn the घड़ी ON/OFF */
-अटल पूर्णांक skl_send_clk_dma_control(काष्ठा skl_dev *skl,
-				काष्ठा skl_clk_rate_cfg_table *rcfg,
+/* Sends dma control IPC to turn the clock ON/OFF */
+static int skl_send_clk_dma_control(struct skl_dev *skl,
+				struct skl_clk_rate_cfg_table *rcfg,
 				u32 vbus_id, u8 clk_type,
 				bool enable)
-अणु
-	काष्ठा nhlt_specअगरic_cfg *sp_cfg;
+{
+	struct nhlt_specific_cfg *sp_cfg;
 	u32 i2s_config_size, node_id = 0;
-	काष्ठा nhlt_fmt_cfg *fmt_cfg;
-	जोड़ skl_clk_ctrl_ipc *ipc;
-	व्योम *i2s_config = शून्य;
+	struct nhlt_fmt_cfg *fmt_cfg;
+	union skl_clk_ctrl_ipc *ipc;
+	void *i2s_config = NULL;
 	u8 *data, size;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!rcfg)
-		वापस -EIO;
+	if (!rcfg)
+		return -EIO;
 
 	ipc = &rcfg->dma_ctl_ipc;
-	fmt_cfg = (काष्ठा nhlt_fmt_cfg *)rcfg->config;
+	fmt_cfg = (struct nhlt_fmt_cfg *)rcfg->config;
 	sp_cfg = &fmt_cfg->config;
 
-	अगर (clk_type == SKL_SCLK_FS) अणु
+	if (clk_type == SKL_SCLK_FS) {
 		ipc->sclk_fs.hdr.type =
 			enable ? DMA_TRANSMITION_START : DMA_TRANSMITION_STOP;
 		data = (u8 *)&ipc->sclk_fs;
-		size = माप(काष्ठा skl_dmactrl_sclkfs_cfg);
-	पूर्ण अन्यथा अणु
+		size = sizeof(struct skl_dmactrl_sclkfs_cfg);
+	} else {
 		/* 1 to enable mclk, 0 to enable sclk */
-		अगर (clk_type == SKL_SCLK)
+		if (clk_type == SKL_SCLK)
 			ipc->mclk.mclk = 0;
-		अन्यथा
+		else
 			ipc->mclk.mclk = 1;
 
 		ipc->mclk.keep_running = enable;
 		ipc->mclk.warm_up_over = enable;
 		ipc->mclk.clk_stop_over = !enable;
 		data = (u8 *)&ipc->mclk;
-		size = माप(काष्ठा skl_dmactrl_mclk_cfg);
-	पूर्ण
+		size = sizeof(struct skl_dmactrl_mclk_cfg);
+	}
 
 	i2s_config_size = sp_cfg->size + size;
 	i2s_config = kzalloc(i2s_config_size, GFP_KERNEL);
-	अगर (!i2s_config)
-		वापस -ENOMEM;
+	if (!i2s_config)
+		return -ENOMEM;
 
 	/* copy blob */
-	स_नकल(i2s_config, sp_cfg->caps, sp_cfg->size);
+	memcpy(i2s_config, sp_cfg->caps, sp_cfg->size);
 
-	/* copy additional dma controls inक्रमmation */
-	स_नकल(i2s_config + sp_cfg->size, data, size);
+	/* copy additional dma controls information */
+	memcpy(i2s_config + sp_cfg->size, data, size);
 
 	node_id = ((SKL_DMA_I2S_LINK_INPUT_CLASS << 8) | (vbus_id << 4));
 	ret = skl_dsp_set_dma_control(skl, (u32 *)i2s_config,
 					i2s_config_size, node_id);
-	kमुक्त(i2s_config);
+	kfree(i2s_config);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा skl_clk_rate_cfg_table *skl_get_rate_cfg(
-		काष्ठा skl_clk_rate_cfg_table *rcfg,
-				अचिन्हित दीर्घ rate)
-अणु
-	पूर्णांक i;
+static struct skl_clk_rate_cfg_table *skl_get_rate_cfg(
+		struct skl_clk_rate_cfg_table *rcfg,
+				unsigned long rate)
+{
+	int i;
 
-	क्रम (i = 0; (i < SKL_MAX_CLK_RATES) && rcfg[i].rate; i++) अणु
-		अगर (rcfg[i].rate == rate)
-			वापस &rcfg[i];
-	पूर्ण
+	for (i = 0; (i < SKL_MAX_CLK_RATES) && rcfg[i].rate; i++) {
+		if (rcfg[i].rate == rate)
+			return &rcfg[i];
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक skl_clk_change_status(काष्ठा skl_clk *clkdev,
+static int skl_clk_change_status(struct skl_clk *clkdev,
 				bool enable)
-अणु
-	काष्ठा skl_clk_rate_cfg_table *rcfg;
-	पूर्णांक vbus_id, clk_type;
+{
+	struct skl_clk_rate_cfg_table *rcfg;
+	int vbus_id, clk_type;
 
 	clk_type = skl_get_clk_type(clkdev->id);
-	अगर (clk_type < 0)
-		वापस clk_type;
+	if (clk_type < 0)
+		return clk_type;
 
 	vbus_id = skl_get_vbus_id(clkdev->id, clk_type);
-	अगर (vbus_id < 0)
-		वापस vbus_id;
+	if (vbus_id < 0)
+		return vbus_id;
 
 	rcfg = skl_get_rate_cfg(clkdev->pdata->ssp_clks[clkdev->id].rate_cfg,
 						clkdev->rate);
-	अगर (!rcfg)
-		वापस -EINVAL;
+	if (!rcfg)
+		return -EINVAL;
 
-	वापस skl_send_clk_dma_control(clkdev->pdata->pvt_data, rcfg,
+	return skl_send_clk_dma_control(clkdev->pdata->pvt_data, rcfg,
 					vbus_id, clk_type, enable);
-पूर्ण
+}
 
-अटल पूर्णांक skl_clk_prepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा skl_clk *clkdev = to_skl_clk(hw);
+static int skl_clk_prepare(struct clk_hw *hw)
+{
+	struct skl_clk *clkdev = to_skl_clk(hw);
 
-	वापस skl_clk_change_status(clkdev, true);
-पूर्ण
+	return skl_clk_change_status(clkdev, true);
+}
 
-अटल व्योम skl_clk_unprepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा skl_clk *clkdev = to_skl_clk(hw);
+static void skl_clk_unprepare(struct clk_hw *hw)
+{
+	struct skl_clk *clkdev = to_skl_clk(hw);
 
 	skl_clk_change_status(clkdev, false);
-पूर्ण
+}
 
-अटल पूर्णांक skl_clk_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-					अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा skl_clk *clkdev = to_skl_clk(hw);
-	काष्ठा skl_clk_rate_cfg_table *rcfg;
-	पूर्णांक clk_type;
+static int skl_clk_set_rate(struct clk_hw *hw, unsigned long rate,
+					unsigned long parent_rate)
+{
+	struct skl_clk *clkdev = to_skl_clk(hw);
+	struct skl_clk_rate_cfg_table *rcfg;
+	int clk_type;
 
-	अगर (!rate)
-		वापस -EINVAL;
+	if (!rate)
+		return -EINVAL;
 
 	rcfg = skl_get_rate_cfg(clkdev->pdata->ssp_clks[clkdev->id].rate_cfg,
 							rate);
-	अगर (!rcfg)
-		वापस -EINVAL;
+	if (!rcfg)
+		return -EINVAL;
 
 	clk_type = skl_get_clk_type(clkdev->id);
-	अगर (clk_type < 0)
-		वापस clk_type;
+	if (clk_type < 0)
+		return clk_type;
 
 	skl_fill_clk_ipc(rcfg, clk_type);
 	clkdev->rate = rate;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित दीर्घ skl_clk_recalc_rate(काष्ठा clk_hw *hw,
-				अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा skl_clk *clkdev = to_skl_clk(hw);
+static unsigned long skl_clk_recalc_rate(struct clk_hw *hw,
+				unsigned long parent_rate)
+{
+	struct skl_clk *clkdev = to_skl_clk(hw);
 
-	अगर (clkdev->rate)
-		वापस clkdev->rate;
+	if (clkdev->rate)
+		return clkdev->rate;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Not supported by clk driver. Implemented to satisfy clk fw */
-अटल दीर्घ skl_clk_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-			       अचिन्हित दीर्घ *parent_rate)
-अणु
-	वापस rate;
-पूर्ण
+static long skl_clk_round_rate(struct clk_hw *hw, unsigned long rate,
+			       unsigned long *parent_rate)
+{
+	return rate;
+}
 
 /*
  * prepare/unprepare are used instead of enable/disable as IPC will be sent
  * in non-atomic context.
  */
-अटल स्थिर काष्ठा clk_ops skl_clk_ops = अणु
+static const struct clk_ops skl_clk_ops = {
 	.prepare = skl_clk_prepare,
 	.unprepare = skl_clk_unprepare,
 	.set_rate = skl_clk_set_rate,
 	.round_rate = skl_clk_round_rate,
 	.recalc_rate = skl_clk_recalc_rate,
-पूर्ण;
+};
 
-अटल व्योम unरेजिस्टर_parent_src_clk(काष्ठा skl_clk_parent *pclk,
-					अचिन्हित पूर्णांक id)
-अणु
-	जबतक (id--) अणु
+static void unregister_parent_src_clk(struct skl_clk_parent *pclk,
+					unsigned int id)
+{
+	while (id--) {
 		clkdev_drop(pclk[id].lookup);
-		clk_hw_unरेजिस्टर_fixed_rate(pclk[id].hw);
-	पूर्ण
-पूर्ण
+		clk_hw_unregister_fixed_rate(pclk[id].hw);
+	}
+}
 
-अटल व्योम unरेजिस्टर_src_clk(काष्ठा skl_clk_data *dclk)
-अणु
-	जबतक (dclk->avail_clk_cnt--)
+static void unregister_src_clk(struct skl_clk_data *dclk)
+{
+	while (dclk->avail_clk_cnt--)
 		clkdev_drop(dclk->clk[dclk->avail_clk_cnt]->lookup);
-पूर्ण
+}
 
-अटल पूर्णांक skl_रेजिस्टर_parent_clks(काष्ठा device *dev,
-			काष्ठा skl_clk_parent *parent,
-			काष्ठा skl_clk_parent_src *pclk)
-अणु
-	पूर्णांक i, ret;
+static int skl_register_parent_clks(struct device *dev,
+			struct skl_clk_parent *parent,
+			struct skl_clk_parent_src *pclk)
+{
+	int i, ret;
 
-	क्रम (i = 0; i < SKL_MAX_CLK_SRC; i++) अणु
+	for (i = 0; i < SKL_MAX_CLK_SRC; i++) {
 
-		/* Register Parent घड़ी */
-		parent[i].hw = clk_hw_रेजिस्टर_fixed_rate(dev, pclk[i].name,
+		/* Register Parent clock */
+		parent[i].hw = clk_hw_register_fixed_rate(dev, pclk[i].name,
 				pclk[i].parent_name, 0, pclk[i].rate);
-		अगर (IS_ERR(parent[i].hw)) अणु
+		if (IS_ERR(parent[i].hw)) {
 			ret = PTR_ERR(parent[i].hw);
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
 		parent[i].lookup = clkdev_hw_create(parent[i].hw, pclk[i].name,
-									शून्य);
-		अगर (!parent[i].lookup) अणु
-			clk_hw_unरेजिस्टर_fixed_rate(parent[i].hw);
+									NULL);
+		if (!parent[i].lookup) {
+			clk_hw_unregister_fixed_rate(parent[i].hw);
 			ret = -ENOMEM;
-			जाओ err;
-		पूर्ण
-	पूर्ण
+			goto err;
+		}
+	}
 
-	वापस 0;
+	return 0;
 err:
-	unरेजिस्टर_parent_src_clk(parent, i);
-	वापस ret;
-पूर्ण
+	unregister_parent_src_clk(parent, i);
+	return ret;
+}
 
 /* Assign fmt_config to clk_data */
-अटल काष्ठा skl_clk *रेजिस्टर_skl_clk(काष्ठा device *dev,
-			काष्ठा skl_ssp_clk *clk,
-			काष्ठा skl_clk_pdata *clk_pdata, पूर्णांक id)
-अणु
-	काष्ठा clk_init_data init;
-	काष्ठा skl_clk *clkdev;
-	पूर्णांक ret;
+static struct skl_clk *register_skl_clk(struct device *dev,
+			struct skl_ssp_clk *clk,
+			struct skl_clk_pdata *clk_pdata, int id)
+{
+	struct clk_init_data init;
+	struct skl_clk *clkdev;
+	int ret;
 
-	clkdev = devm_kzalloc(dev, माप(*clkdev), GFP_KERNEL);
-	अगर (!clkdev)
-		वापस ERR_PTR(-ENOMEM);
+	clkdev = devm_kzalloc(dev, sizeof(*clkdev), GFP_KERNEL);
+	if (!clkdev)
+		return ERR_PTR(-ENOMEM);
 
 	init.name = clk->name;
 	init.ops = &skl_clk_ops;
@@ -335,94 +334,94 @@ err:
 	clkdev->pdata = clk_pdata;
 
 	clkdev->id = id;
-	ret = devm_clk_hw_रेजिस्टर(dev, &clkdev->hw);
-	अगर (ret) अणु
+	ret = devm_clk_hw_register(dev, &clkdev->hw);
+	if (ret) {
 		clkdev = ERR_PTR(ret);
-		वापस clkdev;
-	पूर्ण
+		return clkdev;
+	}
 
-	clkdev->lookup = clkdev_hw_create(&clkdev->hw, init.name, शून्य);
-	अगर (!clkdev->lookup)
+	clkdev->lookup = clkdev_hw_create(&clkdev->hw, init.name, NULL);
+	if (!clkdev->lookup)
 		clkdev = ERR_PTR(-ENOMEM);
 
-	वापस clkdev;
-पूर्ण
+	return clkdev;
+}
 
-अटल पूर्णांक skl_clk_dev_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा device *parent_dev = dev->parent;
-	काष्ठा skl_clk_parent_src *parent_clks;
-	काष्ठा skl_clk_pdata *clk_pdata;
-	काष्ठा skl_clk_data *data;
-	काष्ठा skl_ssp_clk *clks;
-	पूर्णांक ret, i;
+static int skl_clk_dev_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct device *parent_dev = dev->parent;
+	struct skl_clk_parent_src *parent_clks;
+	struct skl_clk_pdata *clk_pdata;
+	struct skl_clk_data *data;
+	struct skl_ssp_clk *clks;
+	int ret, i;
 
 	clk_pdata = dev_get_platdata(&pdev->dev);
 	parent_clks = clk_pdata->parent_clks;
 	clks = clk_pdata->ssp_clks;
-	अगर (!parent_clks || !clks)
-		वापस -EIO;
+	if (!parent_clks || !clks)
+		return -EIO;
 
-	data = devm_kzalloc(dev, माप(*data), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = devm_kzalloc(dev, sizeof(*data), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
-	/* Register Parent घड़ी */
-	ret = skl_रेजिस्टर_parent_clks(parent_dev, data->parent, parent_clks);
-	अगर (ret < 0)
-		वापस ret;
+	/* Register Parent clock */
+	ret = skl_register_parent_clks(parent_dev, data->parent, parent_clks);
+	if (ret < 0)
+		return ret;
 
-	क्रम (i = 0; i < clk_pdata->num_clks; i++) अणु
+	for (i = 0; i < clk_pdata->num_clks; i++) {
 		/*
-		 * Only रेजिस्टर valid घड़ीs
-		 * i.e. क्रम which nhlt entry is present.
+		 * Only register valid clocks
+		 * i.e. for which nhlt entry is present.
 		 */
-		अगर (clks[i].rate_cfg[0].rate == 0)
-			जारी;
+		if (clks[i].rate_cfg[0].rate == 0)
+			continue;
 
-		data->clk[data->avail_clk_cnt] = रेजिस्टर_skl_clk(dev,
+		data->clk[data->avail_clk_cnt] = register_skl_clk(dev,
 				&clks[i], clk_pdata, i);
 
-		अगर (IS_ERR(data->clk[data->avail_clk_cnt])) अणु
+		if (IS_ERR(data->clk[data->avail_clk_cnt])) {
 			ret = PTR_ERR(data->clk[data->avail_clk_cnt]);
-			जाओ err_unreg_skl_clk;
-		पूर्ण
+			goto err_unreg_skl_clk;
+		}
 
 		data->avail_clk_cnt++;
-	पूर्ण
+	}
 
-	platक्रमm_set_drvdata(pdev, data);
+	platform_set_drvdata(pdev, data);
 
-	वापस 0;
+	return 0;
 
 err_unreg_skl_clk:
-	unरेजिस्टर_src_clk(data);
-	unरेजिस्टर_parent_src_clk(data->parent, SKL_MAX_CLK_SRC);
+	unregister_src_clk(data);
+	unregister_parent_src_clk(data->parent, SKL_MAX_CLK_SRC);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक skl_clk_dev_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा skl_clk_data *data;
+static int skl_clk_dev_remove(struct platform_device *pdev)
+{
+	struct skl_clk_data *data;
 
-	data = platक्रमm_get_drvdata(pdev);
-	unरेजिस्टर_src_clk(data);
-	unरेजिस्टर_parent_src_clk(data->parent, SKL_MAX_CLK_SRC);
+	data = platform_get_drvdata(pdev);
+	unregister_src_clk(data);
+	unregister_parent_src_clk(data->parent, SKL_MAX_CLK_SRC);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver skl_clk_driver = अणु
-	.driver = अणु
+static struct platform_driver skl_clk_driver = {
+	.driver = {
 		.name = "skl-ssp-clk",
-	पूर्ण,
+	},
 	.probe = skl_clk_dev_probe,
-	.हटाओ = skl_clk_dev_हटाओ,
-पूर्ण;
+	.remove = skl_clk_dev_remove,
+};
 
-module_platक्रमm_driver(skl_clk_driver);
+module_platform_driver(skl_clk_driver);
 
 MODULE_DESCRIPTION("Skylake clock driver");
 MODULE_AUTHOR("Jaikrishna Nemallapudi <jaikrishnax.nemallapudi@intel.com>");

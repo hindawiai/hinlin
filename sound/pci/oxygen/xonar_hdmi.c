@@ -1,118 +1,117 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * helper functions क्रम HDMI models (Xonar HDAV1.3/HDAV1.3 Slim)
+ * helper functions for HDMI models (Xonar HDAV1.3/HDAV1.3 Slim)
  *
  * Copyright (c) Clemens Ladisch <clemens@ladisch.de>
  */
 
-#समावेश <linux/pci.h>
-#समावेश <linux/delay.h>
-#समावेश <sound/asoundef.h>
-#समावेश <sound/control.h>
-#समावेश <sound/core.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/pcm_params.h>
-#समावेश <sound/tlv.h>
-#समावेश "xonar.h"
+#include <linux/pci.h>
+#include <linux/delay.h>
+#include <sound/asoundef.h>
+#include <sound/control.h>
+#include <sound/core.h>
+#include <sound/pcm.h>
+#include <sound/pcm_params.h>
+#include <sound/tlv.h>
+#include "xonar.h"
 
-अटल व्योम hdmi_ग_लिखो_command(काष्ठा oxygen *chip, u8 command,
-			       अचिन्हित पूर्णांक count, स्थिर u8 *params)
-अणु
-	अचिन्हित पूर्णांक i;
+static void hdmi_write_command(struct oxygen *chip, u8 command,
+			       unsigned int count, const u8 *params)
+{
+	unsigned int i;
 	u8 checksum;
 
-	oxygen_ग_लिखो_uart(chip, 0xfb);
-	oxygen_ग_लिखो_uart(chip, 0xef);
-	oxygen_ग_लिखो_uart(chip, command);
-	oxygen_ग_लिखो_uart(chip, count);
-	क्रम (i = 0; i < count; ++i)
-		oxygen_ग_लिखो_uart(chip, params[i]);
+	oxygen_write_uart(chip, 0xfb);
+	oxygen_write_uart(chip, 0xef);
+	oxygen_write_uart(chip, command);
+	oxygen_write_uart(chip, count);
+	for (i = 0; i < count; ++i)
+		oxygen_write_uart(chip, params[i]);
 	checksum = 0xfb + 0xef + command + count;
-	क्रम (i = 0; i < count; ++i)
+	for (i = 0; i < count; ++i)
 		checksum += params[i];
-	oxygen_ग_लिखो_uart(chip, checksum);
-पूर्ण
+	oxygen_write_uart(chip, checksum);
+}
 
-अटल व्योम xonar_hdmi_init_commands(काष्ठा oxygen *chip,
-				     काष्ठा xonar_hdmi *hdmi)
-अणु
+static void xonar_hdmi_init_commands(struct oxygen *chip,
+				     struct xonar_hdmi *hdmi)
+{
 	u8 param;
 
 	oxygen_reset_uart(chip);
 	param = 0;
-	hdmi_ग_लिखो_command(chip, 0x61, 1, &param);
+	hdmi_write_command(chip, 0x61, 1, &param);
 	param = 1;
-	hdmi_ग_लिखो_command(chip, 0x74, 1, &param);
-	hdmi_ग_लिखो_command(chip, 0x54, 5, hdmi->params);
-पूर्ण
+	hdmi_write_command(chip, 0x74, 1, &param);
+	hdmi_write_command(chip, 0x54, 5, hdmi->params);
+}
 
-व्योम xonar_hdmi_init(काष्ठा oxygen *chip, काष्ठा xonar_hdmi *hdmi)
-अणु
+void xonar_hdmi_init(struct oxygen *chip, struct xonar_hdmi *hdmi)
+{
 	hdmi->params[1] = IEC958_AES3_CON_FS_48000;
 	hdmi->params[4] = 1;
 	xonar_hdmi_init_commands(chip, hdmi);
-पूर्ण
+}
 
-व्योम xonar_hdmi_cleanup(काष्ठा oxygen *chip)
-अणु
+void xonar_hdmi_cleanup(struct oxygen *chip)
+{
 	u8 param = 0;
 
-	hdmi_ग_लिखो_command(chip, 0x74, 1, &param);
-पूर्ण
+	hdmi_write_command(chip, 0x74, 1, &param);
+}
 
-व्योम xonar_hdmi_resume(काष्ठा oxygen *chip, काष्ठा xonar_hdmi *hdmi)
-अणु
+void xonar_hdmi_resume(struct oxygen *chip, struct xonar_hdmi *hdmi)
+{
 	xonar_hdmi_init_commands(chip, hdmi);
-पूर्ण
+}
 
-व्योम xonar_hdmi_pcm_hardware_filter(अचिन्हित पूर्णांक channel,
-				    काष्ठा snd_pcm_hardware *hardware)
-अणु
-	अगर (channel == PCM_MULTICH) अणु
+void xonar_hdmi_pcm_hardware_filter(unsigned int channel,
+				    struct snd_pcm_hardware *hardware)
+{
+	if (channel == PCM_MULTICH) {
 		hardware->rates = SNDRV_PCM_RATE_44100 |
 				  SNDRV_PCM_RATE_48000 |
 				  SNDRV_PCM_RATE_96000 |
 				  SNDRV_PCM_RATE_192000;
 		hardware->rate_min = 44100;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम xonar_set_hdmi_params(काष्ठा oxygen *chip, काष्ठा xonar_hdmi *hdmi,
-			   काष्ठा snd_pcm_hw_params *params)
-अणु
+void xonar_set_hdmi_params(struct oxygen *chip, struct xonar_hdmi *hdmi,
+			   struct snd_pcm_hw_params *params)
+{
 	hdmi->params[0] = 0; /* 1 = non-audio */
-	चयन (params_rate(params)) अणु
-	हाल 44100:
+	switch (params_rate(params)) {
+	case 44100:
 		hdmi->params[1] = IEC958_AES3_CON_FS_44100;
-		अवरोध;
-	हाल 48000:
+		break;
+	case 48000:
 		hdmi->params[1] = IEC958_AES3_CON_FS_48000;
-		अवरोध;
-	शेष: /* 96000 */
+		break;
+	default: /* 96000 */
 		hdmi->params[1] = IEC958_AES3_CON_FS_96000;
-		अवरोध;
-	हाल 192000:
+		break;
+	case 192000:
 		hdmi->params[1] = IEC958_AES3_CON_FS_192000;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	hdmi->params[2] = params_channels(params) / 2 - 1;
-	अगर (params_क्रमmat(params) == SNDRV_PCM_FORMAT_S16_LE)
+	if (params_format(params) == SNDRV_PCM_FORMAT_S16_LE)
 		hdmi->params[3] = 0;
-	अन्यथा
+	else
 		hdmi->params[3] = 0xc0;
 	hdmi->params[4] = 1; /* ? */
-	hdmi_ग_लिखो_command(chip, 0x54, 5, hdmi->params);
-पूर्ण
+	hdmi_write_command(chip, 0x54, 5, hdmi->params);
+}
 
-व्योम xonar_hdmi_uart_input(काष्ठा oxygen *chip)
-अणु
-	अगर (chip->uart_input_count >= 2 &&
+void xonar_hdmi_uart_input(struct oxygen *chip)
+{
+	if (chip->uart_input_count >= 2 &&
 	    chip->uart_input[chip->uart_input_count - 2] == 'O' &&
-	    chip->uart_input[chip->uart_input_count - 1] == 'K') अणु
+	    chip->uart_input[chip->uart_input_count - 1] == 'K') {
 		dev_dbg(chip->card->dev, "message from HDMI chip received:\n");
-		prपूर्णांक_hex_dump_bytes("", DUMP_PREFIX_OFFSET,
+		print_hex_dump_bytes("", DUMP_PREFIX_OFFSET,
 				     chip->uart_input, chip->uart_input_count);
 		chip->uart_input_count = 0;
-	पूर्ण
-पूर्ण
+	}
+}

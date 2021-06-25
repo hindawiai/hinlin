@@ -1,15 +1,14 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0 OR MIT
+// SPDX-License-Identifier: GPL-2.0 OR MIT
 /**************************************************************************
  *
  * Copyright 2011-2015 VMware, Inc., Palo Alto, CA., USA
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modअगरy, merge, publish,
+ * without limitation the rights to use, copy, modify, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to करो so, subject to
+ * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -26,120 +25,120 @@
  *
  **************************************************************************/
 
-#समावेश <drm/drm_atomic.h>
-#समावेश <drm/drm_atomic_helper.h>
-#समावेश <drm/drm_damage_helper.h>
-#समावेश <drm/drm_fourcc.h>
-#समावेश <drm/drm_plane_helper.h>
-#समावेश <drm/drm_vblank.h>
+#include <drm/drm_atomic.h>
+#include <drm/drm_atomic_helper.h>
+#include <drm/drm_damage_helper.h>
+#include <drm/drm_fourcc.h>
+#include <drm/drm_plane_helper.h>
+#include <drm/drm_vblank.h>
 
-#समावेश "vmwgfx_kms.h"
+#include "vmwgfx_kms.h"
 
-#घोषणा vmw_crtc_to_sou(x) \
-	container_of(x, काष्ठा vmw_screen_object_unit, base.crtc)
-#घोषणा vmw_encoder_to_sou(x) \
-	container_of(x, काष्ठा vmw_screen_object_unit, base.encoder)
-#घोषणा vmw_connector_to_sou(x) \
-	container_of(x, काष्ठा vmw_screen_object_unit, base.connector)
+#define vmw_crtc_to_sou(x) \
+	container_of(x, struct vmw_screen_object_unit, base.crtc)
+#define vmw_encoder_to_sou(x) \
+	container_of(x, struct vmw_screen_object_unit, base.encoder)
+#define vmw_connector_to_sou(x) \
+	container_of(x, struct vmw_screen_object_unit, base.connector)
 
 /**
- * काष्ठा vmw_kms_sou_surface_dirty - Closure काष्ठाure क्रम
+ * struct vmw_kms_sou_surface_dirty - Closure structure for
  * blit surface to screen command.
  * @base: The base type we derive from. Used by vmw_kms_helper_dirty().
  * @left: Left side of bounding box.
  * @right: Right side of bounding box.
  * @top: Top side of bounding box.
  * @bottom: Bottom side of bounding box.
- * @dst_x: Dअगरference between source clip rects and framebuffer coordinates.
- * @dst_y: Dअगरference between source clip rects and framebuffer coordinates.
+ * @dst_x: Difference between source clip rects and framebuffer coordinates.
+ * @dst_y: Difference between source clip rects and framebuffer coordinates.
  * @sid: Surface id of surface to copy from.
  */
-काष्ठा vmw_kms_sou_surface_dirty अणु
-	काष्ठा vmw_kms_dirty base;
+struct vmw_kms_sou_surface_dirty {
+	struct vmw_kms_dirty base;
 	s32 left, right, top, bottom;
 	s32 dst_x, dst_y;
 	u32 sid;
-पूर्ण;
+};
 
 /*
  * SVGA commands that are used by this code. Please see the device headers
- * क्रम explanation.
+ * for explanation.
  */
-काष्ठा vmw_kms_sou_पढ़ोback_blit अणु
-	uपूर्णांक32 header;
-	SVGAFअगरoCmdBlitScreenToGMRFB body;
-पूर्ण;
+struct vmw_kms_sou_readback_blit {
+	uint32 header;
+	SVGAFifoCmdBlitScreenToGMRFB body;
+};
 
-काष्ठा vmw_kms_sou_bo_blit अणु
-	uपूर्णांक32 header;
-	SVGAFअगरoCmdBlitGMRFBToScreen body;
-पूर्ण;
+struct vmw_kms_sou_bo_blit {
+	uint32 header;
+	SVGAFifoCmdBlitGMRFBToScreen body;
+};
 
-काष्ठा vmw_kms_sou_dirty_cmd अणु
+struct vmw_kms_sou_dirty_cmd {
 	SVGA3dCmdHeader header;
 	SVGA3dCmdBlitSurfaceToScreen body;
-पूर्ण;
+};
 
-काष्ठा vmw_kms_sou_define_gmrfb अणु
-	uपूर्णांक32_t header;
-	SVGAFअगरoCmdDefineGMRFB body;
-पूर्ण;
+struct vmw_kms_sou_define_gmrfb {
+	uint32_t header;
+	SVGAFifoCmdDefineGMRFB body;
+};
 
 /*
  * Display unit using screen objects.
  */
-काष्ठा vmw_screen_object_unit अणु
-	काष्ठा vmw_display_unit base;
+struct vmw_screen_object_unit {
+	struct vmw_display_unit base;
 
-	अचिन्हित दीर्घ buffer_size; /**< Size of allocated buffer */
-	काष्ठा vmw_buffer_object *buffer; /**< Backing store buffer */
+	unsigned long buffer_size; /**< Size of allocated buffer */
+	struct vmw_buffer_object *buffer; /**< Backing store buffer */
 
 	bool defined;
-पूर्ण;
+};
 
-अटल व्योम vmw_sou_destroy(काष्ठा vmw_screen_object_unit *sou)
-अणु
+static void vmw_sou_destroy(struct vmw_screen_object_unit *sou)
+{
 	vmw_du_cleanup(&sou->base);
-	kमुक्त(sou);
-पूर्ण
+	kfree(sou);
+}
 
 
 /*
  * Screen Object Display Unit CRTC functions
  */
 
-अटल व्योम vmw_sou_crtc_destroy(काष्ठा drm_crtc *crtc)
-अणु
+static void vmw_sou_crtc_destroy(struct drm_crtc *crtc)
+{
 	vmw_sou_destroy(vmw_crtc_to_sou(crtc));
-पूर्ण
+}
 
 /*
- * Send the fअगरo command to create a screen.
+ * Send the fifo command to create a screen.
  */
-अटल पूर्णांक vmw_sou_fअगरo_create(काष्ठा vmw_निजी *dev_priv,
-			       काष्ठा vmw_screen_object_unit *sou,
-			       पूर्णांक x, पूर्णांक y,
-			       काष्ठा drm_display_mode *mode)
-अणु
-	माप_प्रकार fअगरo_size;
+static int vmw_sou_fifo_create(struct vmw_private *dev_priv,
+			       struct vmw_screen_object_unit *sou,
+			       int x, int y,
+			       struct drm_display_mode *mode)
+{
+	size_t fifo_size;
 
-	काष्ठा अणु
-		काष्ठा अणु
-			uपूर्णांक32_t cmdType;
-		पूर्ण header;
+	struct {
+		struct {
+			uint32_t cmdType;
+		} header;
 		SVGAScreenObject obj;
-	पूर्ण *cmd;
+	} *cmd;
 
 	BUG_ON(!sou->buffer);
 
-	fअगरo_size = माप(*cmd);
-	cmd = VMW_CMD_RESERVE(dev_priv, fअगरo_size);
-	अगर (unlikely(cmd == शून्य))
-		वापस -ENOMEM;
+	fifo_size = sizeof(*cmd);
+	cmd = VMW_CMD_RESERVE(dev_priv, fifo_size);
+	if (unlikely(cmd == NULL))
+		return -ENOMEM;
 
-	स_रखो(cmd, 0, fअगरo_size);
+	memset(cmd, 0, fifo_size);
 	cmd->header.cmdType = SVGA_CMD_DEFINE_SCREEN;
-	cmd->obj.काष्ठाSize = माप(SVGAScreenObject);
+	cmd->obj.structSize = sizeof(SVGAScreenObject);
 	cmd->obj.id = sou->base.unit;
 	cmd->obj.flags = SVGA_SCREEN_HAS_ROOT |
 		(sou->base.unit == 0 ? SVGA_SCREEN_IS_PRIMARY : 0);
@@ -154,71 +153,71 @@
 	vmw_bo_get_guest_ptr(&sou->buffer->base, &cmd->obj.backingStore.ptr);
 	cmd->obj.backingStore.pitch = mode->hdisplay * 4;
 
-	vmw_cmd_commit(dev_priv, fअगरo_size);
+	vmw_cmd_commit(dev_priv, fifo_size);
 
 	sou->defined = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Send the fअगरo command to destroy a screen.
+ * Send the fifo command to destroy a screen.
  */
-अटल पूर्णांक vmw_sou_fअगरo_destroy(काष्ठा vmw_निजी *dev_priv,
-				काष्ठा vmw_screen_object_unit *sou)
-अणु
-	माप_प्रकार fअगरo_size;
-	पूर्णांक ret;
+static int vmw_sou_fifo_destroy(struct vmw_private *dev_priv,
+				struct vmw_screen_object_unit *sou)
+{
+	size_t fifo_size;
+	int ret;
 
-	काष्ठा अणु
-		काष्ठा अणु
-			uपूर्णांक32_t cmdType;
-		पूर्ण header;
-		SVGAFअगरoCmdDestroyScreen body;
-	पूर्ण *cmd;
+	struct {
+		struct {
+			uint32_t cmdType;
+		} header;
+		SVGAFifoCmdDestroyScreen body;
+	} *cmd;
 
-	/* no need to करो anything */
-	अगर (unlikely(!sou->defined))
-		वापस 0;
+	/* no need to do anything */
+	if (unlikely(!sou->defined))
+		return 0;
 
-	fअगरo_size = माप(*cmd);
-	cmd = VMW_CMD_RESERVE(dev_priv, fअगरo_size);
-	अगर (unlikely(cmd == शून्य))
-		वापस -ENOMEM;
+	fifo_size = sizeof(*cmd);
+	cmd = VMW_CMD_RESERVE(dev_priv, fifo_size);
+	if (unlikely(cmd == NULL))
+		return -ENOMEM;
 
-	स_रखो(cmd, 0, fअगरo_size);
+	memset(cmd, 0, fifo_size);
 	cmd->header.cmdType = SVGA_CMD_DESTROY_SCREEN;
 	cmd->body.screenId = sou->base.unit;
 
-	vmw_cmd_commit(dev_priv, fअगरo_size);
+	vmw_cmd_commit(dev_priv, fifo_size);
 
 	/* Force sync */
-	ret = vmw_fallback_रुको(dev_priv, false, true, 0, false, 3*HZ);
-	अगर (unlikely(ret != 0))
+	ret = vmw_fallback_wait(dev_priv, false, true, 0, false, 3*HZ);
+	if (unlikely(ret != 0))
 		DRM_ERROR("Failed to sync with HW");
-	अन्यथा
+	else
 		sou->defined = false;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * vmw_sou_crtc_mode_set_nofb - Create new screen
  *
  * @crtc: CRTC associated with the new screen
  *
- * This function creates/destroys a screen.  This function cannot fail, so अगर
- * somehow we run पूर्णांकo a failure, just करो the best we can to get out.
+ * This function creates/destroys a screen.  This function cannot fail, so if
+ * somehow we run into a failure, just do the best we can to get out.
  */
-अटल व्योम vmw_sou_crtc_mode_set_nofb(काष्ठा drm_crtc *crtc)
-अणु
-	काष्ठा vmw_निजी *dev_priv;
-	काष्ठा vmw_screen_object_unit *sou;
-	काष्ठा vmw_framebuffer *vfb;
-	काष्ठा drm_framebuffer *fb;
-	काष्ठा drm_plane_state *ps;
-	काष्ठा vmw_plane_state *vps;
-	पूर्णांक ret;
+static void vmw_sou_crtc_mode_set_nofb(struct drm_crtc *crtc)
+{
+	struct vmw_private *dev_priv;
+	struct vmw_screen_object_unit *sou;
+	struct vmw_framebuffer *vfb;
+	struct drm_framebuffer *fb;
+	struct drm_plane_state *ps;
+	struct vmw_plane_state *vps;
+	int ret;
 
 	sou = vmw_crtc_to_sou(crtc);
 	dev_priv = vmw_priv(crtc->dev);
@@ -226,20 +225,20 @@
 	fb = ps->fb;
 	vps = vmw_plane_state_to_vps(ps);
 
-	vfb = (fb) ? vmw_framebuffer_to_vfb(fb) : शून्य;
+	vfb = (fb) ? vmw_framebuffer_to_vfb(fb) : NULL;
 
-	अगर (sou->defined) अणु
-		ret = vmw_sou_fअगरo_destroy(dev_priv, sou);
-		अगर (ret) अणु
+	if (sou->defined) {
+		ret = vmw_sou_fifo_destroy(dev_priv, sou);
+		if (ret) {
 			DRM_ERROR("Failed to destroy Screen Object\n");
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 
-	अगर (vfb) अणु
-		काष्ठा drm_connector_state *conn_state;
-		काष्ठा vmw_connector_state *vmw_conn_state;
-		पूर्णांक x, y;
+	if (vfb) {
+		struct drm_connector_state *conn_state;
+		struct vmw_connector_state *vmw_conn_state;
+		int x, y;
 
 		sou->buffer = vps->bo;
 		sou->buffer_size = vps->bo_size;
@@ -250,27 +249,27 @@
 		x = vmw_conn_state->gui_x;
 		y = vmw_conn_state->gui_y;
 
-		ret = vmw_sou_fअगरo_create(dev_priv, sou, x, y, &crtc->mode);
-		अगर (ret)
+		ret = vmw_sou_fifo_create(dev_priv, sou, x, y, &crtc->mode);
+		if (ret)
 			DRM_ERROR("Failed to define Screen Object %dx%d\n",
 				  crtc->x, crtc->y);
 
-	पूर्ण अन्यथा अणु
-		sou->buffer = शून्य;
+	} else {
+		sou->buffer = NULL;
 		sou->buffer_size = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * vmw_sou_crtc_helper_prepare - Noop
  *
  * @crtc:  CRTC associated with the new screen
  *
- * Prepares the CRTC क्रम a mode set, but we करोn't need to करो anything here.
+ * Prepares the CRTC for a mode set, but we don't need to do anything here.
  */
-अटल व्योम vmw_sou_crtc_helper_prepare(काष्ठा drm_crtc *crtc)
-अणु
-पूर्ण
+static void vmw_sou_crtc_helper_prepare(struct drm_crtc *crtc)
+{
+}
 
 /**
  * vmw_sou_crtc_atomic_enable - Noop
@@ -280,10 +279,10 @@
  *
  * This is called after a mode set has been completed.
  */
-अटल व्योम vmw_sou_crtc_atomic_enable(काष्ठा drm_crtc *crtc,
-				       काष्ठा drm_atomic_state *state)
-अणु
-पूर्ण
+static void vmw_sou_crtc_atomic_enable(struct drm_crtc *crtc,
+				       struct drm_atomic_state *state)
+{
+}
 
 /**
  * vmw_sou_crtc_atomic_disable - Turns off CRTC
@@ -291,30 +290,30 @@
  * @crtc: CRTC to be turned off
  * @state: Unused
  */
-अटल व्योम vmw_sou_crtc_atomic_disable(काष्ठा drm_crtc *crtc,
-					काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा vmw_निजी *dev_priv;
-	काष्ठा vmw_screen_object_unit *sou;
-	पूर्णांक ret;
+static void vmw_sou_crtc_atomic_disable(struct drm_crtc *crtc,
+					struct drm_atomic_state *state)
+{
+	struct vmw_private *dev_priv;
+	struct vmw_screen_object_unit *sou;
+	int ret;
 
 
-	अगर (!crtc) अणु
+	if (!crtc) {
 		DRM_ERROR("CRTC is NULL\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	sou = vmw_crtc_to_sou(crtc);
 	dev_priv = vmw_priv(crtc->dev);
 
-	अगर (sou->defined) अणु
-		ret = vmw_sou_fअगरo_destroy(dev_priv, sou);
-		अगर (ret)
+	if (sou->defined) {
+		ret = vmw_sou_fifo_destroy(dev_priv, sou);
+		if (ret)
 			DRM_ERROR("Failed to destroy Screen Object\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल स्थिर काष्ठा drm_crtc_funcs vmw_screen_object_crtc_funcs = अणु
+static const struct drm_crtc_funcs vmw_screen_object_crtc_funcs = {
 	.gamma_set = vmw_du_crtc_gamma_set,
 	.destroy = vmw_sou_crtc_destroy,
 	.reset = vmw_du_crtc_reset,
@@ -325,31 +324,31 @@
 	.get_vblank_counter = vmw_get_vblank_counter,
 	.enable_vblank = vmw_enable_vblank,
 	.disable_vblank = vmw_disable_vblank,
-पूर्ण;
+};
 
 /*
  * Screen Object Display Unit encoder functions
  */
 
-अटल व्योम vmw_sou_encoder_destroy(काष्ठा drm_encoder *encoder)
-अणु
+static void vmw_sou_encoder_destroy(struct drm_encoder *encoder)
+{
 	vmw_sou_destroy(vmw_encoder_to_sou(encoder));
-पूर्ण
+}
 
-अटल स्थिर काष्ठा drm_encoder_funcs vmw_screen_object_encoder_funcs = अणु
+static const struct drm_encoder_funcs vmw_screen_object_encoder_funcs = {
 	.destroy = vmw_sou_encoder_destroy,
-पूर्ण;
+};
 
 /*
  * Screen Object Display Unit connector functions
  */
 
-अटल व्योम vmw_sou_connector_destroy(काष्ठा drm_connector *connector)
-अणु
+static void vmw_sou_connector_destroy(struct drm_connector *connector)
+{
 	vmw_sou_destroy(vmw_connector_to_sou(connector));
-पूर्ण
+}
 
-अटल स्थिर काष्ठा drm_connector_funcs vmw_sou_connector_funcs = अणु
+static const struct drm_connector_funcs vmw_sou_connector_funcs = {
 	.dpms = vmw_du_connector_dpms,
 	.detect = vmw_du_connector_detect,
 	.fill_modes = vmw_du_connector_fill_modes,
@@ -357,12 +356,12 @@
 	.reset = vmw_du_connector_reset,
 	.atomic_duplicate_state = vmw_du_connector_duplicate_state,
 	.atomic_destroy_state = vmw_du_connector_destroy_state,
-पूर्ण;
+};
 
 
-अटल स्थिर काष्ठा
-drm_connector_helper_funcs vmw_sou_connector_helper_funcs = अणु
-पूर्ण;
+static const struct
+drm_connector_helper_funcs vmw_sou_connector_helper_funcs = {
+};
 
 
 
@@ -380,21 +379,21 @@ drm_connector_helper_funcs vmw_sou_connector_helper_funcs = अणु
  *
  * Returns 0 on success
  */
-अटल व्योम
-vmw_sou_primary_plane_cleanup_fb(काष्ठा drm_plane *plane,
-				 काष्ठा drm_plane_state *old_state)
-अणु
-	काष्ठा vmw_plane_state *vps = vmw_plane_state_to_vps(old_state);
-	काष्ठा drm_crtc *crtc = plane->state->crtc ?
+static void
+vmw_sou_primary_plane_cleanup_fb(struct drm_plane *plane,
+				 struct drm_plane_state *old_state)
+{
+	struct vmw_plane_state *vps = vmw_plane_state_to_vps(old_state);
+	struct drm_crtc *crtc = plane->state->crtc ?
 		plane->state->crtc : old_state->crtc;
 
-	अगर (vps->bo)
+	if (vps->bo)
 		vmw_bo_unpin(vmw_priv(crtc->dev), vps->bo, false);
 	vmw_bo_unreference(&vps->bo);
 	vps->bo_size = 0;
 
 	vmw_du_plane_cleanup_fb(plane, old_state);
-पूर्ण
+}
 
 
 /**
@@ -407,108 +406,108 @@ vmw_sou_primary_plane_cleanup_fb(काष्ठा drm_plane *plane,
  *
  * Returns 0 on success
  */
-अटल पूर्णांक
-vmw_sou_primary_plane_prepare_fb(काष्ठा drm_plane *plane,
-				 काष्ठा drm_plane_state *new_state)
-अणु
-	काष्ठा drm_framebuffer *new_fb = new_state->fb;
-	काष्ठा drm_crtc *crtc = plane->state->crtc ?: new_state->crtc;
-	काष्ठा vmw_plane_state *vps = vmw_plane_state_to_vps(new_state);
-	काष्ठा vmw_निजी *dev_priv;
-	माप_प्रकार size;
-	पूर्णांक ret;
+static int
+vmw_sou_primary_plane_prepare_fb(struct drm_plane *plane,
+				 struct drm_plane_state *new_state)
+{
+	struct drm_framebuffer *new_fb = new_state->fb;
+	struct drm_crtc *crtc = plane->state->crtc ?: new_state->crtc;
+	struct vmw_plane_state *vps = vmw_plane_state_to_vps(new_state);
+	struct vmw_private *dev_priv;
+	size_t size;
+	int ret;
 
 
-	अगर (!new_fb) अणु
+	if (!new_fb) {
 		vmw_bo_unreference(&vps->bo);
 		vps->bo_size = 0;
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	size = new_state->crtc_w * new_state->crtc_h * 4;
 	dev_priv = vmw_priv(crtc->dev);
 
-	अगर (vps->bo) अणु
-		अगर (vps->bo_size == size) अणु
+	if (vps->bo) {
+		if (vps->bo_size == size) {
 			/*
 			 * Note that this might temporarily up the pin-count
 			 * to 2, until cleanup_fb() is called.
 			 */
-			वापस vmw_bo_pin_in_vram(dev_priv, vps->bo,
+			return vmw_bo_pin_in_vram(dev_priv, vps->bo,
 						      true);
-		पूर्ण
+		}
 
 		vmw_bo_unreference(&vps->bo);
 		vps->bo_size = 0;
-	पूर्ण
+	}
 
-	vps->bo = kzalloc(माप(*vps->bo), GFP_KERNEL);
-	अगर (!vps->bo)
-		वापस -ENOMEM;
+	vps->bo = kzalloc(sizeof(*vps->bo), GFP_KERNEL);
+	if (!vps->bo)
+		return -ENOMEM;
 
 	vmw_svga_enable(dev_priv);
 
 	/* After we have alloced the backing store might not be able to
 	 * resume the overlays, this is preferred to failing to alloc.
 	 */
-	vmw_overlay_छोड़ो_all(dev_priv);
+	vmw_overlay_pause_all(dev_priv);
 	ret = vmw_bo_init(dev_priv, vps->bo, size,
 			      &vmw_vram_placement,
-			      false, true, &vmw_bo_bo_मुक्त);
+			      false, true, &vmw_bo_bo_free);
 	vmw_overlay_resume_all(dev_priv);
-	अगर (ret) अणु
-		vps->bo = शून्य; /* vmw_bo_init मुक्तs on error */
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		vps->bo = NULL; /* vmw_bo_init frees on error */
+		return ret;
+	}
 
 	vps->bo_size = size;
 
 	/*
-	 * TTM alपढ़ोy thinks the buffer is pinned, but make sure the
+	 * TTM already thinks the buffer is pinned, but make sure the
 	 * pin_count is upped.
 	 */
-	वापस vmw_bo_pin_in_vram(dev_priv, vps->bo, true);
-पूर्ण
+	return vmw_bo_pin_in_vram(dev_priv, vps->bo, true);
+}
 
-अटल uपूर्णांक32_t vmw_sou_bo_fअगरo_size(काष्ठा vmw_du_update_plane *update,
-				     uपूर्णांक32_t num_hits)
-अणु
-	वापस माप(काष्ठा vmw_kms_sou_define_gmrfb) +
-		माप(काष्ठा vmw_kms_sou_bo_blit) * num_hits;
-पूर्ण
+static uint32_t vmw_sou_bo_fifo_size(struct vmw_du_update_plane *update,
+				     uint32_t num_hits)
+{
+	return sizeof(struct vmw_kms_sou_define_gmrfb) +
+		sizeof(struct vmw_kms_sou_bo_blit) * num_hits;
+}
 
-अटल uपूर्णांक32_t vmw_sou_bo_define_gmrfb(काष्ठा vmw_du_update_plane *update,
-					व्योम *cmd)
-अणु
-	काष्ठा vmw_framebuffer_bo *vfbbo =
+static uint32_t vmw_sou_bo_define_gmrfb(struct vmw_du_update_plane *update,
+					void *cmd)
+{
+	struct vmw_framebuffer_bo *vfbbo =
 		container_of(update->vfb, typeof(*vfbbo), base);
-	काष्ठा vmw_kms_sou_define_gmrfb *gmr = cmd;
-	पूर्णांक depth = update->vfb->base.क्रमmat->depth;
+	struct vmw_kms_sou_define_gmrfb *gmr = cmd;
+	int depth = update->vfb->base.format->depth;
 
 	/* Emulate RGBA support, contrary to svga_reg.h this is not
-	 * supported by hosts. This is only a problem अगर we are पढ़ोing
+	 * supported by hosts. This is only a problem if we are reading
 	 * this value later and expecting what we uploaded back.
 	 */
-	अगर (depth == 32)
+	if (depth == 32)
 		depth = 24;
 
 	gmr->header = SVGA_CMD_DEFINE_GMRFB;
 
-	gmr->body.क्रमmat.bitsPerPixel = update->vfb->base.क्रमmat->cpp[0] * 8;
-	gmr->body.क्रमmat.colorDepth = depth;
-	gmr->body.क्रमmat.reserved = 0;
+	gmr->body.format.bitsPerPixel = update->vfb->base.format->cpp[0] * 8;
+	gmr->body.format.colorDepth = depth;
+	gmr->body.format.reserved = 0;
 	gmr->body.bytesPerLine = update->vfb->base.pitches[0];
 	vmw_bo_get_guest_ptr(&vfbbo->buffer->base, &gmr->body.ptr);
 
-	वापस माप(*gmr);
-पूर्ण
+	return sizeof(*gmr);
+}
 
-अटल uपूर्णांक32_t vmw_sou_bo_populate_clip(काष्ठा vmw_du_update_plane  *update,
-					 व्योम *cmd, काष्ठा drm_rect *clip,
-					 uपूर्णांक32_t fb_x, uपूर्णांक32_t fb_y)
-अणु
-	काष्ठा vmw_kms_sou_bo_blit *blit = cmd;
+static uint32_t vmw_sou_bo_populate_clip(struct vmw_du_update_plane  *update,
+					 void *cmd, struct drm_rect *clip,
+					 uint32_t fb_x, uint32_t fb_y)
+{
+	struct vmw_kms_sou_bo_blit *blit = cmd;
 
 	blit->header = SVGA_CMD_BLIT_GMRFB_TO_SCREEN;
 	blit->body.destScreenId = update->du->unit;
@@ -519,88 +518,88 @@ vmw_sou_primary_plane_prepare_fb(काष्ठा drm_plane *plane,
 	blit->body.destRect.right = clip->x2;
 	blit->body.destRect.bottom = clip->y2;
 
-	वापस माप(*blit);
-पूर्ण
+	return sizeof(*blit);
+}
 
-अटल uपूर्णांक32_t vmw_stud_bo_post_clip(काष्ठा vmw_du_update_plane  *update,
-				      व्योम *cmd, काष्ठा drm_rect *bb)
-अणु
-	वापस 0;
-पूर्ण
+static uint32_t vmw_stud_bo_post_clip(struct vmw_du_update_plane  *update,
+				      void *cmd, struct drm_rect *bb)
+{
+	return 0;
+}
 
 /**
- * vmw_sou_plane_update_bo - Update display unit क्रम bo backed fb.
- * @dev_priv: Device निजी.
+ * vmw_sou_plane_update_bo - Update display unit for bo backed fb.
+ * @dev_priv: Device private.
  * @plane: Plane state.
  * @old_state: Old plane state.
  * @vfb: Framebuffer which is blitted to display unit.
- * @out_fence: If non-शून्य, will वापस a ref-counted poपूर्णांकer to vmw_fence_obj.
- *             The वापसed fence poपूर्णांकer may be शून्य in which हाल the device
- *             has alपढ़ोy synchronized.
+ * @out_fence: If non-NULL, will return a ref-counted pointer to vmw_fence_obj.
+ *             The returned fence pointer may be NULL in which case the device
+ *             has already synchronized.
  *
  * Return: 0 on success or a negative error code on failure.
  */
-अटल पूर्णांक vmw_sou_plane_update_bo(काष्ठा vmw_निजी *dev_priv,
-				   काष्ठा drm_plane *plane,
-				   काष्ठा drm_plane_state *old_state,
-				   काष्ठा vmw_framebuffer *vfb,
-				   काष्ठा vmw_fence_obj **out_fence)
-अणु
-	काष्ठा vmw_du_update_plane_buffer bo_update;
+static int vmw_sou_plane_update_bo(struct vmw_private *dev_priv,
+				   struct drm_plane *plane,
+				   struct drm_plane_state *old_state,
+				   struct vmw_framebuffer *vfb,
+				   struct vmw_fence_obj **out_fence)
+{
+	struct vmw_du_update_plane_buffer bo_update;
 
-	स_रखो(&bo_update, 0, माप(काष्ठा vmw_du_update_plane_buffer));
+	memset(&bo_update, 0, sizeof(struct vmw_du_update_plane_buffer));
 	bo_update.base.plane = plane;
 	bo_update.base.old_state = old_state;
 	bo_update.base.dev_priv = dev_priv;
 	bo_update.base.du = vmw_crtc_to_du(plane->state->crtc);
 	bo_update.base.vfb = vfb;
 	bo_update.base.out_fence = out_fence;
-	bo_update.base.mutex = शून्य;
+	bo_update.base.mutex = NULL;
 	bo_update.base.cpu_blit = false;
-	bo_update.base.पूर्णांकr = true;
+	bo_update.base.intr = true;
 
-	bo_update.base.calc_fअगरo_size = vmw_sou_bo_fअगरo_size;
+	bo_update.base.calc_fifo_size = vmw_sou_bo_fifo_size;
 	bo_update.base.post_prepare = vmw_sou_bo_define_gmrfb;
 	bo_update.base.clip = vmw_sou_bo_populate_clip;
 	bo_update.base.post_clip = vmw_stud_bo_post_clip;
 
-	वापस vmw_du_helper_plane_update(&bo_update.base);
-पूर्ण
+	return vmw_du_helper_plane_update(&bo_update.base);
+}
 
-अटल uपूर्णांक32_t vmw_sou_surface_fअगरo_size(काष्ठा vmw_du_update_plane *update,
-					  uपूर्णांक32_t num_hits)
-अणु
-	वापस माप(काष्ठा vmw_kms_sou_dirty_cmd) + माप(SVGASignedRect) *
+static uint32_t vmw_sou_surface_fifo_size(struct vmw_du_update_plane *update,
+					  uint32_t num_hits)
+{
+	return sizeof(struct vmw_kms_sou_dirty_cmd) + sizeof(SVGASignedRect) *
 		num_hits;
-पूर्ण
+}
 
-अटल uपूर्णांक32_t vmw_sou_surface_post_prepare(काष्ठा vmw_du_update_plane *update,
-					     व्योम *cmd)
-अणु
-	काष्ठा vmw_du_update_plane_surface *srf_update;
+static uint32_t vmw_sou_surface_post_prepare(struct vmw_du_update_plane *update,
+					     void *cmd)
+{
+	struct vmw_du_update_plane_surface *srf_update;
 
 	srf_update = container_of(update, typeof(*srf_update), base);
 
 	/*
 	 * SOU SVGA_3D_CMD_BLIT_SURFACE_TO_SCREEN is special in the sense that
-	 * its bounding box is filled beक्रमe iterating over all the clips. So
+	 * its bounding box is filled before iterating over all the clips. So
 	 * store the FIFO start address and revisit to fill the details.
 	 */
 	srf_update->cmd_start = cmd;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल uपूर्णांक32_t vmw_sou_surface_pre_clip(काष्ठा vmw_du_update_plane *update,
-					 व्योम *cmd, uपूर्णांक32_t num_hits)
-अणु
-	काष्ठा vmw_kms_sou_dirty_cmd *blit = cmd;
-	काष्ठा vmw_framebuffer_surface *vfbs;
+static uint32_t vmw_sou_surface_pre_clip(struct vmw_du_update_plane *update,
+					 void *cmd, uint32_t num_hits)
+{
+	struct vmw_kms_sou_dirty_cmd *blit = cmd;
+	struct vmw_framebuffer_surface *vfbs;
 
 	vfbs = container_of(update->vfb, typeof(*vfbs), base);
 
 	blit->header.id = SVGA_3D_CMD_BLIT_SURFACE_TO_SCREEN;
-	blit->header.size = माप(blit->body) + माप(SVGASignedRect) *
+	blit->header.size = sizeof(blit->body) + sizeof(SVGASignedRect) *
 		num_hits;
 
 	blit->body.srcImage.sid = vfbs->surface->res.id;
@@ -617,13 +616,13 @@ vmw_sou_primary_plane_prepare_fb(काष्ठा drm_plane *plane,
 	blit->body.destRect.right = 0;
 	blit->body.destRect.bottom = 0;
 
-	वापस माप(*blit);
-पूर्ण
+	return sizeof(*blit);
+}
 
-अटल uपूर्णांक32_t vmw_sou_surface_clip_rect(काष्ठा vmw_du_update_plane *update,
-					  व्योम *cmd, काष्ठा drm_rect *clip,
-					  uपूर्णांक32_t src_x, uपूर्णांक32_t src_y)
-अणु
+static uint32_t vmw_sou_surface_clip_rect(struct vmw_du_update_plane *update,
+					  void *cmd, struct drm_rect *clip,
+					  uint32_t src_x, uint32_t src_y)
+{
 	SVGASignedRect *rect = cmd;
 
 	/*
@@ -635,29 +634,29 @@ vmw_sou_primary_plane_prepare_fb(काष्ठा drm_plane *plane,
 	rect->right = clip->x2;
 	rect->bottom = clip->y2;
 
-	वापस माप(*rect);
-पूर्ण
+	return sizeof(*rect);
+}
 
-अटल uपूर्णांक32_t vmw_sou_surface_post_clip(काष्ठा vmw_du_update_plane *update,
-					  व्योम *cmd, काष्ठा drm_rect *bb)
-अणु
-	काष्ठा vmw_du_update_plane_surface *srf_update;
-	काष्ठा drm_plane_state *state = update->plane->state;
-	काष्ठा drm_rect src_bb;
-	काष्ठा vmw_kms_sou_dirty_cmd *blit;
+static uint32_t vmw_sou_surface_post_clip(struct vmw_du_update_plane *update,
+					  void *cmd, struct drm_rect *bb)
+{
+	struct vmw_du_update_plane_surface *srf_update;
+	struct drm_plane_state *state = update->plane->state;
+	struct drm_rect src_bb;
+	struct vmw_kms_sou_dirty_cmd *blit;
 	SVGASignedRect *rect;
-	uपूर्णांक32_t num_hits;
-	पूर्णांक translate_src_x;
-	पूर्णांक translate_src_y;
-	पूर्णांक i;
+	uint32_t num_hits;
+	int translate_src_x;
+	int translate_src_y;
+	int i;
 
 	srf_update = container_of(update, typeof(*srf_update), base);
 
 	blit = srf_update->cmd_start;
 	rect = (SVGASignedRect *)&blit[1];
 
-	num_hits = (blit->header.size - माप(blit->body))/
-		माप(SVGASignedRect);
+	num_hits = (blit->header.size - sizeof(blit->body))/
+		sizeof(SVGASignedRect);
 
 	src_bb = *bb;
 
@@ -678,38 +677,38 @@ vmw_sou_primary_plane_prepare_fb(काष्ठा drm_plane *plane,
 	blit->body.destRect.bottom = bb->y2;
 
 	/* rects are relative to dest bb rect */
-	क्रम (i = 0; i < num_hits; i++) अणु
+	for (i = 0; i < num_hits; i++) {
 		rect->left -= bb->x1;
 		rect->top -= bb->y1;
 		rect->right -= bb->x1;
 		rect->bottom -= bb->y1;
 		rect++;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * vmw_sou_plane_update_surface - Update display unit क्रम surface backed fb.
- * @dev_priv: Device निजी.
+ * vmw_sou_plane_update_surface - Update display unit for surface backed fb.
+ * @dev_priv: Device private.
  * @plane: Plane state.
  * @old_state: Old plane state.
  * @vfb: Framebuffer which is blitted to display unit
- * @out_fence: If non-शून्य, will वापस a ref-counted poपूर्णांकer to vmw_fence_obj.
- *             The वापसed fence poपूर्णांकer may be शून्य in which हाल the device
- *             has alपढ़ोy synchronized.
+ * @out_fence: If non-NULL, will return a ref-counted pointer to vmw_fence_obj.
+ *             The returned fence pointer may be NULL in which case the device
+ *             has already synchronized.
  *
  * Return: 0 on success or a negative error code on failure.
  */
-अटल पूर्णांक vmw_sou_plane_update_surface(काष्ठा vmw_निजी *dev_priv,
-					काष्ठा drm_plane *plane,
-					काष्ठा drm_plane_state *old_state,
-					काष्ठा vmw_framebuffer *vfb,
-					काष्ठा vmw_fence_obj **out_fence)
-अणु
-	काष्ठा vmw_du_update_plane_surface srf_update;
+static int vmw_sou_plane_update_surface(struct vmw_private *dev_priv,
+					struct drm_plane *plane,
+					struct drm_plane_state *old_state,
+					struct vmw_framebuffer *vfb,
+					struct vmw_fence_obj **out_fence)
+{
+	struct vmw_du_update_plane_surface srf_update;
 
-	स_रखो(&srf_update, 0, माप(काष्ठा vmw_du_update_plane_surface));
+	memset(&srf_update, 0, sizeof(struct vmw_du_update_plane_surface));
 	srf_update.base.plane = plane;
 	srf_update.base.old_state = old_state;
 	srf_update.base.dev_priv = dev_priv;
@@ -718,52 +717,52 @@ vmw_sou_primary_plane_prepare_fb(काष्ठा drm_plane *plane,
 	srf_update.base.out_fence = out_fence;
 	srf_update.base.mutex = &dev_priv->cmdbuf_mutex;
 	srf_update.base.cpu_blit = false;
-	srf_update.base.पूर्णांकr = true;
+	srf_update.base.intr = true;
 
-	srf_update.base.calc_fअगरo_size = vmw_sou_surface_fअगरo_size;
+	srf_update.base.calc_fifo_size = vmw_sou_surface_fifo_size;
 	srf_update.base.post_prepare = vmw_sou_surface_post_prepare;
 	srf_update.base.pre_clip = vmw_sou_surface_pre_clip;
 	srf_update.base.clip = vmw_sou_surface_clip_rect;
 	srf_update.base.post_clip = vmw_sou_surface_post_clip;
 
-	वापस vmw_du_helper_plane_update(&srf_update.base);
-पूर्ण
+	return vmw_du_helper_plane_update(&srf_update.base);
+}
 
-अटल व्योम
-vmw_sou_primary_plane_atomic_update(काष्ठा drm_plane *plane,
-				    काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा drm_plane_state *old_state = drm_atomic_get_old_plane_state(state, plane);
-	काष्ठा drm_plane_state *new_state = drm_atomic_get_new_plane_state(state, plane);
-	काष्ठा drm_crtc *crtc = new_state->crtc;
-	काष्ठा drm_pending_vblank_event *event = शून्य;
-	काष्ठा vmw_fence_obj *fence = शून्य;
-	पूर्णांक ret;
+static void
+vmw_sou_primary_plane_atomic_update(struct drm_plane *plane,
+				    struct drm_atomic_state *state)
+{
+	struct drm_plane_state *old_state = drm_atomic_get_old_plane_state(state, plane);
+	struct drm_plane_state *new_state = drm_atomic_get_new_plane_state(state, plane);
+	struct drm_crtc *crtc = new_state->crtc;
+	struct drm_pending_vblank_event *event = NULL;
+	struct vmw_fence_obj *fence = NULL;
+	int ret;
 
-	/* In हाल of device error, मुख्यtain consistent atomic state */
-	अगर (crtc && new_state->fb) अणु
-		काष्ठा vmw_निजी *dev_priv = vmw_priv(crtc->dev);
-		काष्ठा vmw_framebuffer *vfb =
+	/* In case of device error, maintain consistent atomic state */
+	if (crtc && new_state->fb) {
+		struct vmw_private *dev_priv = vmw_priv(crtc->dev);
+		struct vmw_framebuffer *vfb =
 			vmw_framebuffer_to_vfb(new_state->fb);
 
-		अगर (vfb->bo)
+		if (vfb->bo)
 			ret = vmw_sou_plane_update_bo(dev_priv, plane,
 						      old_state, vfb, &fence);
-		अन्यथा
+		else
 			ret = vmw_sou_plane_update_surface(dev_priv, plane,
 							   old_state, vfb,
 							   &fence);
-		अगर (ret != 0)
+		if (ret != 0)
 			DRM_ERROR("Failed to update screen.\n");
-	पूर्ण अन्यथा अणु
-		/* Do nothing when fb and crtc is शून्य (blank crtc) */
-		वापस;
-	पूर्ण
+	} else {
+		/* Do nothing when fb and crtc is NULL (blank crtc) */
+		return;
+	}
 
-	/* For error हाल vblank event is send from vmw_du_crtc_atomic_flush */
+	/* For error case vblank event is send from vmw_du_crtc_atomic_flush */
 	event = crtc->state->event;
-	अगर (event && fence) अणु
-		काष्ठा drm_file *file_priv = event->base.file_priv;
+	if (event && fence) {
+		struct drm_file *file_priv = event->base.file_priv;
 
 		ret = vmw_event_fence_action_queue(file_priv,
 						   fence,
@@ -772,55 +771,55 @@ vmw_sou_primary_plane_atomic_update(काष्ठा drm_plane *plane,
 						   &event->event.vbl.tv_usec,
 						   true);
 
-		अगर (unlikely(ret != 0))
+		if (unlikely(ret != 0))
 			DRM_ERROR("Failed to queue event on fence.\n");
-		अन्यथा
-			crtc->state->event = शून्य;
-	पूर्ण
+		else
+			crtc->state->event = NULL;
+	}
 
-	अगर (fence)
+	if (fence)
 		vmw_fence_obj_unreference(&fence);
-पूर्ण
+}
 
 
-अटल स्थिर काष्ठा drm_plane_funcs vmw_sou_plane_funcs = अणु
+static const struct drm_plane_funcs vmw_sou_plane_funcs = {
 	.update_plane = drm_atomic_helper_update_plane,
 	.disable_plane = drm_atomic_helper_disable_plane,
 	.destroy = vmw_du_primary_plane_destroy,
 	.reset = vmw_du_plane_reset,
 	.atomic_duplicate_state = vmw_du_plane_duplicate_state,
 	.atomic_destroy_state = vmw_du_plane_destroy_state,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा drm_plane_funcs vmw_sou_cursor_funcs = अणु
+static const struct drm_plane_funcs vmw_sou_cursor_funcs = {
 	.update_plane = drm_atomic_helper_update_plane,
 	.disable_plane = drm_atomic_helper_disable_plane,
 	.destroy = vmw_du_cursor_plane_destroy,
 	.reset = vmw_du_plane_reset,
 	.atomic_duplicate_state = vmw_du_plane_duplicate_state,
 	.atomic_destroy_state = vmw_du_plane_destroy_state,
-पूर्ण;
+};
 
 /*
  * Atomic Helpers
  */
-अटल स्थिर काष्ठा
-drm_plane_helper_funcs vmw_sou_cursor_plane_helper_funcs = अणु
+static const struct
+drm_plane_helper_funcs vmw_sou_cursor_plane_helper_funcs = {
 	.atomic_check = vmw_du_cursor_plane_atomic_check,
 	.atomic_update = vmw_du_cursor_plane_atomic_update,
 	.prepare_fb = vmw_du_cursor_plane_prepare_fb,
 	.cleanup_fb = vmw_du_plane_cleanup_fb,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा
-drm_plane_helper_funcs vmw_sou_primary_plane_helper_funcs = अणु
+static const struct
+drm_plane_helper_funcs vmw_sou_primary_plane_helper_funcs = {
 	.atomic_check = vmw_du_primary_plane_atomic_check,
 	.atomic_update = vmw_sou_primary_plane_atomic_update,
 	.prepare_fb = vmw_sou_primary_plane_prepare_fb,
 	.cleanup_fb = vmw_sou_primary_plane_cleanup_fb,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा drm_crtc_helper_funcs vmw_sou_crtc_helper_funcs = अणु
+static const struct drm_crtc_helper_funcs vmw_sou_crtc_helper_funcs = {
 	.prepare = vmw_sou_crtc_helper_prepare,
 	.mode_set_nofb = vmw_sou_crtc_mode_set_nofb,
 	.atomic_check = vmw_du_crtc_atomic_check,
@@ -828,22 +827,22 @@ drm_plane_helper_funcs vmw_sou_primary_plane_helper_funcs = अणु
 	.atomic_flush = vmw_du_crtc_atomic_flush,
 	.atomic_enable = vmw_sou_crtc_atomic_enable,
 	.atomic_disable = vmw_sou_crtc_atomic_disable,
-पूर्ण;
+};
 
 
-अटल पूर्णांक vmw_sou_init(काष्ठा vmw_निजी *dev_priv, अचिन्हित unit)
-अणु
-	काष्ठा vmw_screen_object_unit *sou;
-	काष्ठा drm_device *dev = &dev_priv->drm;
-	काष्ठा drm_connector *connector;
-	काष्ठा drm_encoder *encoder;
-	काष्ठा drm_plane *primary, *cursor;
-	काष्ठा drm_crtc *crtc;
-	पूर्णांक ret;
+static int vmw_sou_init(struct vmw_private *dev_priv, unsigned unit)
+{
+	struct vmw_screen_object_unit *sou;
+	struct drm_device *dev = &dev_priv->drm;
+	struct drm_connector *connector;
+	struct drm_encoder *encoder;
+	struct drm_plane *primary, *cursor;
+	struct drm_crtc *crtc;
+	int ret;
 
-	sou = kzalloc(माप(*sou), GFP_KERNEL);
-	अगर (!sou)
-		वापस -ENOMEM;
+	sou = kzalloc(sizeof(*sou), GFP_KERNEL);
+	if (!sou)
+		return -ENOMEM;
 
 	sou->base.unit = unit;
 	crtc = &sou->base.crtc;
@@ -855,7 +854,7 @@ drm_plane_helper_funcs vmw_sou_primary_plane_helper_funcs = अणु
 	sou->base.pref_active = (unit == 0);
 	sou->base.pref_width = dev_priv->initial_width;
 	sou->base.pref_height = dev_priv->initial_height;
-	sou->base.pref_mode = शून्य;
+	sou->base.pref_mode = NULL;
 
 	/*
 	 * Remove this after enabling atomic because property values can
@@ -866,13 +865,13 @@ drm_plane_helper_funcs vmw_sou_primary_plane_helper_funcs = अणु
 	/* Initialize primary plane */
 	ret = drm_universal_plane_init(dev, &sou->base.primary,
 				       0, &vmw_sou_plane_funcs,
-				       vmw_primary_plane_क्रमmats,
-				       ARRAY_SIZE(vmw_primary_plane_क्रमmats),
-				       शून्य, DRM_PLANE_TYPE_PRIMARY, शून्य);
-	अगर (ret) अणु
+				       vmw_primary_plane_formats,
+				       ARRAY_SIZE(vmw_primary_plane_formats),
+				       NULL, DRM_PLANE_TYPE_PRIMARY, NULL);
+	if (ret) {
 		DRM_ERROR("Failed to initialize primary plane");
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
 	drm_plane_helper_add(primary, &vmw_sou_primary_plane_helper_funcs);
 	drm_plane_enable_fb_damage_clips(primary);
@@ -880,51 +879,51 @@ drm_plane_helper_funcs vmw_sou_primary_plane_helper_funcs = अणु
 	/* Initialize cursor plane */
 	ret = drm_universal_plane_init(dev, &sou->base.cursor,
 			0, &vmw_sou_cursor_funcs,
-			vmw_cursor_plane_क्रमmats,
-			ARRAY_SIZE(vmw_cursor_plane_क्रमmats),
-			शून्य, DRM_PLANE_TYPE_CURSOR, शून्य);
-	अगर (ret) अणु
+			vmw_cursor_plane_formats,
+			ARRAY_SIZE(vmw_cursor_plane_formats),
+			NULL, DRM_PLANE_TYPE_CURSOR, NULL);
+	if (ret) {
 		DRM_ERROR("Failed to initialize cursor plane");
 		drm_plane_cleanup(&sou->base.primary);
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
 	drm_plane_helper_add(cursor, &vmw_sou_cursor_plane_helper_funcs);
 
 	ret = drm_connector_init(dev, connector, &vmw_sou_connector_funcs,
 				 DRM_MODE_CONNECTOR_VIRTUAL);
-	अगर (ret) अणु
+	if (ret) {
 		DRM_ERROR("Failed to initialize connector\n");
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
 	drm_connector_helper_add(connector, &vmw_sou_connector_helper_funcs);
 	connector->status = vmw_du_connector_detect(connector, true);
 
 	ret = drm_encoder_init(dev, encoder, &vmw_screen_object_encoder_funcs,
-			       DRM_MODE_ENCODER_VIRTUAL, शून्य);
-	अगर (ret) अणु
+			       DRM_MODE_ENCODER_VIRTUAL, NULL);
+	if (ret) {
 		DRM_ERROR("Failed to initialize encoder\n");
-		जाओ err_मुक्त_connector;
-	पूर्ण
+		goto err_free_connector;
+	}
 
-	(व्योम) drm_connector_attach_encoder(connector, encoder);
+	(void) drm_connector_attach_encoder(connector, encoder);
 	encoder->possible_crtcs = (1 << unit);
 	encoder->possible_clones = 0;
 
-	ret = drm_connector_रेजिस्टर(connector);
-	अगर (ret) अणु
+	ret = drm_connector_register(connector);
+	if (ret) {
 		DRM_ERROR("Failed to register connector\n");
-		जाओ err_मुक्त_encoder;
-	पूर्ण
+		goto err_free_encoder;
+	}
 
 	ret = drm_crtc_init_with_planes(dev, crtc, &sou->base.primary,
 					&sou->base.cursor,
-					&vmw_screen_object_crtc_funcs, शून्य);
-	अगर (ret) अणु
+					&vmw_screen_object_crtc_funcs, NULL);
+	if (ret) {
 		DRM_ERROR("Failed to initialize CRTC\n");
-		जाओ err_मुक्त_unरेजिस्टर;
-	पूर्ण
+		goto err_free_unregister;
+	}
 
 	drm_crtc_helper_add(crtc, &vmw_sou_crtc_helper_funcs);
 
@@ -936,37 +935,37 @@ drm_plane_helper_funcs vmw_sou_primary_plane_helper_funcs = अणु
 				   dev->mode_config.suggested_x_property, 0);
 	drm_object_attach_property(&connector->base,
 				   dev->mode_config.suggested_y_property, 0);
-	वापस 0;
+	return 0;
 
-err_मुक्त_unरेजिस्टर:
-	drm_connector_unरेजिस्टर(connector);
-err_मुक्त_encoder:
+err_free_unregister:
+	drm_connector_unregister(connector);
+err_free_encoder:
 	drm_encoder_cleanup(encoder);
-err_मुक्त_connector:
+err_free_connector:
 	drm_connector_cleanup(connector);
-err_मुक्त:
-	kमुक्त(sou);
-	वापस ret;
-पूर्ण
+err_free:
+	kfree(sou);
+	return ret;
+}
 
-पूर्णांक vmw_kms_sou_init_display(काष्ठा vmw_निजी *dev_priv)
-अणु
-	काष्ठा drm_device *dev = &dev_priv->drm;
-	पूर्णांक i, ret;
+int vmw_kms_sou_init_display(struct vmw_private *dev_priv)
+{
+	struct drm_device *dev = &dev_priv->drm;
+	int i, ret;
 
-	अगर (!(dev_priv->capabilities & SVGA_CAP_SCREEN_OBJECT_2)) अणु
+	if (!(dev_priv->capabilities & SVGA_CAP_SCREEN_OBJECT_2)) {
 		DRM_INFO("Not using screen objects,"
 			 " missing cap SCREEN_OBJECT_2\n");
-		वापस -ENOSYS;
-	पूर्ण
+		return -ENOSYS;
+	}
 
 	ret = -ENOMEM;
 
 	ret = drm_vblank_init(dev, VMWGFX_NUM_DISPLAY_UNITS);
-	अगर (unlikely(ret != 0))
-		वापस ret;
+	if (unlikely(ret != 0))
+		return ret;
 
-	क्रम (i = 0; i < VMWGFX_NUM_DISPLAY_UNITS; ++i)
+	for (i = 0; i < VMWGFX_NUM_DISPLAY_UNITS; ++i)
 		vmw_sou_init(dev_priv, i);
 
 	dev_priv->active_display_unit = vmw_du_screen_object;
@@ -975,74 +974,74 @@ err_मुक्त:
 
 	DRM_INFO("Screen Objects Display Unit initialized\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक करो_bo_define_gmrfb(काष्ठा vmw_निजी *dev_priv,
-				  काष्ठा vmw_framebuffer *framebuffer)
-अणु
-	काष्ठा vmw_buffer_object *buf =
-		container_of(framebuffer, काष्ठा vmw_framebuffer_bo,
+static int do_bo_define_gmrfb(struct vmw_private *dev_priv,
+				  struct vmw_framebuffer *framebuffer)
+{
+	struct vmw_buffer_object *buf =
+		container_of(framebuffer, struct vmw_framebuffer_bo,
 			     base)->buffer;
-	पूर्णांक depth = framebuffer->base.क्रमmat->depth;
-	काष्ठा अणु
-		uपूर्णांक32_t header;
-		SVGAFअगरoCmdDefineGMRFB body;
-	पूर्ण *cmd;
+	int depth = framebuffer->base.format->depth;
+	struct {
+		uint32_t header;
+		SVGAFifoCmdDefineGMRFB body;
+	} *cmd;
 
 	/* Emulate RGBA support, contrary to svga_reg.h this is not
-	 * supported by hosts. This is only a problem अगर we are पढ़ोing
+	 * supported by hosts. This is only a problem if we are reading
 	 * this value later and expecting what we uploaded back.
 	 */
-	अगर (depth == 32)
+	if (depth == 32)
 		depth = 24;
 
-	cmd = VMW_CMD_RESERVE(dev_priv, माप(*cmd));
-	अगर (!cmd)
-		वापस -ENOMEM;
+	cmd = VMW_CMD_RESERVE(dev_priv, sizeof(*cmd));
+	if (!cmd)
+		return -ENOMEM;
 
 	cmd->header = SVGA_CMD_DEFINE_GMRFB;
-	cmd->body.क्रमmat.bitsPerPixel = framebuffer->base.क्रमmat->cpp[0] * 8;
-	cmd->body.क्रमmat.colorDepth = depth;
-	cmd->body.क्रमmat.reserved = 0;
+	cmd->body.format.bitsPerPixel = framebuffer->base.format->cpp[0] * 8;
+	cmd->body.format.colorDepth = depth;
+	cmd->body.format.reserved = 0;
 	cmd->body.bytesPerLine = framebuffer->base.pitches[0];
 	/* Buffer is reserved in vram or GMR */
 	vmw_bo_get_guest_ptr(&buf->base, &cmd->body.ptr);
-	vmw_cmd_commit(dev_priv, माप(*cmd));
+	vmw_cmd_commit(dev_priv, sizeof(*cmd));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * vmw_sou_surface_fअगरo_commit - Callback to fill in and submit a
+ * vmw_sou_surface_fifo_commit - Callback to fill in and submit a
  * blit surface to screen command.
  *
- * @dirty: The closure काष्ठाure.
+ * @dirty: The closure structure.
  *
  * Fills in the missing fields in the command, and translates the cliprects
  * to match the destination bounding box encoded.
  */
-अटल व्योम vmw_sou_surface_fअगरo_commit(काष्ठा vmw_kms_dirty *dirty)
-अणु
-	काष्ठा vmw_kms_sou_surface_dirty *sdirty =
+static void vmw_sou_surface_fifo_commit(struct vmw_kms_dirty *dirty)
+{
+	struct vmw_kms_sou_surface_dirty *sdirty =
 		container_of(dirty, typeof(*sdirty), base);
-	काष्ठा vmw_kms_sou_dirty_cmd *cmd = dirty->cmd;
+	struct vmw_kms_sou_dirty_cmd *cmd = dirty->cmd;
 	s32 trans_x = dirty->unit->crtc.x - sdirty->dst_x;
 	s32 trans_y = dirty->unit->crtc.y - sdirty->dst_y;
-	माप_प्रकार region_size = dirty->num_hits * माप(SVGASignedRect);
+	size_t region_size = dirty->num_hits * sizeof(SVGASignedRect);
 	SVGASignedRect *blit = (SVGASignedRect *) &cmd[1];
-	पूर्णांक i;
+	int i;
 
-	अगर (!dirty->num_hits) अणु
+	if (!dirty->num_hits) {
 		vmw_cmd_commit(dirty->dev_priv, 0);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	cmd->header.id = SVGA_3D_CMD_BLIT_SURFACE_TO_SCREEN;
-	cmd->header.size = माप(cmd->body) + region_size;
+	cmd->header.size = sizeof(cmd->body) + region_size;
 
 	/*
-	 * Use the destination bounding box to specअगरy destination - and
+	 * Use the destination bounding box to specify destination - and
 	 * source bounding regions.
 	 */
 	cmd->body.destRect.left = sdirty->left;
@@ -1059,32 +1058,32 @@ err_मुक्त:
 	cmd->body.destScreenId = dirty->unit->unit;
 
 	/* Blits are relative to the destination rect. Translate. */
-	क्रम (i = 0; i < dirty->num_hits; ++i, ++blit) अणु
+	for (i = 0; i < dirty->num_hits; ++i, ++blit) {
 		blit->left -= sdirty->left;
 		blit->right -= sdirty->left;
 		blit->top -= sdirty->top;
 		blit->bottom -= sdirty->top;
-	पूर्ण
+	}
 
-	vmw_cmd_commit(dirty->dev_priv, region_size + माप(*cmd));
+	vmw_cmd_commit(dirty->dev_priv, region_size + sizeof(*cmd));
 
 	sdirty->left = sdirty->top = S32_MAX;
 	sdirty->right = sdirty->bottom = S32_MIN;
-पूर्ण
+}
 
 /**
  * vmw_sou_surface_clip - Callback to encode a blit surface to screen cliprect.
  *
- * @dirty: The closure काष्ठाure
+ * @dirty: The closure structure
  *
  * Encodes a SVGASignedRect cliprect and updates the bounding box of the
  * BLIT_SURFACE_TO_SCREEN command.
  */
-अटल व्योम vmw_sou_surface_clip(काष्ठा vmw_kms_dirty *dirty)
-अणु
-	काष्ठा vmw_kms_sou_surface_dirty *sdirty =
+static void vmw_sou_surface_clip(struct vmw_kms_dirty *dirty)
+{
+	struct vmw_kms_sou_surface_dirty *sdirty =
 		container_of(dirty, typeof(*sdirty), base);
-	काष्ठा vmw_kms_sou_dirty_cmd *cmd = dirty->cmd;
+	struct vmw_kms_sou_dirty_cmd *cmd = dirty->cmd;
 	SVGASignedRect *blit = (SVGASignedRect *) &cmd[1];
 
 	/* Destination rect. */
@@ -1101,64 +1100,64 @@ err_मुक्त:
 	sdirty->bottom = max_t(s32, sdirty->bottom, dirty->unit_y2);
 
 	dirty->num_hits++;
-पूर्ण
+}
 
 /**
- * vmw_kms_sou_करो_surface_dirty - Dirty part of a surface backed framebuffer
+ * vmw_kms_sou_do_surface_dirty - Dirty part of a surface backed framebuffer
  *
- * @dev_priv: Poपूर्णांकer to the device निजी काष्ठाure.
- * @framebuffer: Poपूर्णांकer to the surface-buffer backed framebuffer.
- * @clips: Array of clip rects. Either @clips or @vclips must be शून्य.
+ * @dev_priv: Pointer to the device private structure.
+ * @framebuffer: Pointer to the surface-buffer backed framebuffer.
+ * @clips: Array of clip rects. Either @clips or @vclips must be NULL.
  * @vclips: Alternate array of clip rects. Either @clips or @vclips must
- * be शून्य.
- * @srf: Poपूर्णांकer to surface to blit from. If शून्य, the surface attached
+ * be NULL.
+ * @srf: Pointer to surface to blit from. If NULL, the surface attached
  * to @framebuffer will be used.
  * @dest_x: X coordinate offset to align @srf with framebuffer coordinates.
  * @dest_y: Y coordinate offset to align @srf with framebuffer coordinates.
  * @num_clips: Number of clip rects in @clips.
  * @inc: Increment to use when looping over @clips.
- * @out_fence: If non-शून्य, will वापस a ref-counted poपूर्णांकer to a
- * काष्ठा vmw_fence_obj. The वापसed fence poपूर्णांकer may be शून्य in which
- * हाल the device has alपढ़ोy synchronized.
- * @crtc: If crtc is passed, perक्रमm surface dirty on that crtc only.
+ * @out_fence: If non-NULL, will return a ref-counted pointer to a
+ * struct vmw_fence_obj. The returned fence pointer may be NULL in which
+ * case the device has already synchronized.
+ * @crtc: If crtc is passed, perform surface dirty on that crtc only.
  *
- * Returns 0 on success, negative error code on failure. -ERESTARTSYS अगर
- * पूर्णांकerrupted.
+ * Returns 0 on success, negative error code on failure. -ERESTARTSYS if
+ * interrupted.
  */
-पूर्णांक vmw_kms_sou_करो_surface_dirty(काष्ठा vmw_निजी *dev_priv,
-				 काष्ठा vmw_framebuffer *framebuffer,
-				 काष्ठा drm_clip_rect *clips,
-				 काष्ठा drm_vmw_rect *vclips,
-				 काष्ठा vmw_resource *srf,
+int vmw_kms_sou_do_surface_dirty(struct vmw_private *dev_priv,
+				 struct vmw_framebuffer *framebuffer,
+				 struct drm_clip_rect *clips,
+				 struct drm_vmw_rect *vclips,
+				 struct vmw_resource *srf,
 				 s32 dest_x,
 				 s32 dest_y,
-				 अचिन्हित num_clips, पूर्णांक inc,
-				 काष्ठा vmw_fence_obj **out_fence,
-				 काष्ठा drm_crtc *crtc)
-अणु
-	काष्ठा vmw_framebuffer_surface *vfbs =
+				 unsigned num_clips, int inc,
+				 struct vmw_fence_obj **out_fence,
+				 struct drm_crtc *crtc)
+{
+	struct vmw_framebuffer_surface *vfbs =
 		container_of(framebuffer, typeof(*vfbs), base);
-	काष्ठा vmw_kms_sou_surface_dirty sdirty;
-	DECLARE_VAL_CONTEXT(val_ctx, शून्य, 0);
-	पूर्णांक ret;
+	struct vmw_kms_sou_surface_dirty sdirty;
+	DECLARE_VAL_CONTEXT(val_ctx, NULL, 0);
+	int ret;
 
-	अगर (!srf)
+	if (!srf)
 		srf = &vfbs->surface->res;
 
-	ret = vmw_validation_add_resource(&val_ctx, srf, 0, VMW_RES_सूचीTY_NONE,
-					  शून्य, शून्य);
-	अगर (ret)
-		वापस ret;
+	ret = vmw_validation_add_resource(&val_ctx, srf, 0, VMW_RES_DIRTY_NONE,
+					  NULL, NULL);
+	if (ret)
+		return ret;
 
 	ret = vmw_validation_prepare(&val_ctx, &dev_priv->cmdbuf_mutex, true);
-	अगर (ret)
-		जाओ out_unref;
+	if (ret)
+		goto out_unref;
 
-	sdirty.base.fअगरo_commit = vmw_sou_surface_fअगरo_commit;
+	sdirty.base.fifo_commit = vmw_sou_surface_fifo_commit;
 	sdirty.base.clip = vmw_sou_surface_clip;
 	sdirty.base.dev_priv = dev_priv;
-	sdirty.base.fअगरo_reserve_size = माप(काष्ठा vmw_kms_sou_dirty_cmd) +
-	  माप(SVGASignedRect) * num_clips;
+	sdirty.base.fifo_reserve_size = sizeof(struct vmw_kms_sou_dirty_cmd) +
+	  sizeof(SVGASignedRect) * num_clips;
 	sdirty.base.crtc = crtc;
 
 	sdirty.sid = srf->id;
@@ -1170,45 +1169,45 @@ err_मुक्त:
 	ret = vmw_kms_helper_dirty(dev_priv, framebuffer, clips, vclips,
 				   dest_x, dest_y, num_clips, inc,
 				   &sdirty.base);
-	vmw_kms_helper_validation_finish(dev_priv, शून्य, &val_ctx, out_fence,
-					 शून्य);
+	vmw_kms_helper_validation_finish(dev_priv, NULL, &val_ctx, out_fence,
+					 NULL);
 
-	वापस ret;
+	return ret;
 
 out_unref:
 	vmw_validation_unref_lists(&val_ctx);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * vmw_sou_bo_fअगरo_commit - Callback to submit a set of पढ़ोback clips.
+ * vmw_sou_bo_fifo_commit - Callback to submit a set of readback clips.
  *
- * @dirty: The closure काष्ठाure.
+ * @dirty: The closure structure.
  *
- * Commits a previously built command buffer of पढ़ोback clips.
+ * Commits a previously built command buffer of readback clips.
  */
-अटल व्योम vmw_sou_bo_fअगरo_commit(काष्ठा vmw_kms_dirty *dirty)
-अणु
-	अगर (!dirty->num_hits) अणु
+static void vmw_sou_bo_fifo_commit(struct vmw_kms_dirty *dirty)
+{
+	if (!dirty->num_hits) {
 		vmw_cmd_commit(dirty->dev_priv, 0);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	vmw_cmd_commit(dirty->dev_priv,
-			माप(काष्ठा vmw_kms_sou_bo_blit) *
+			sizeof(struct vmw_kms_sou_bo_blit) *
 			dirty->num_hits);
-पूर्ण
+}
 
 /**
- * vmw_sou_bo_clip - Callback to encode a पढ़ोback cliprect.
+ * vmw_sou_bo_clip - Callback to encode a readback cliprect.
  *
- * @dirty: The closure काष्ठाure
+ * @dirty: The closure structure
  *
  * Encodes a BLIT_GMRFB_TO_SCREEN cliprect.
  */
-अटल व्योम vmw_sou_bo_clip(काष्ठा vmw_kms_dirty *dirty)
-अणु
-	काष्ठा vmw_kms_sou_bo_blit *blit = dirty->cmd;
+static void vmw_sou_bo_clip(struct vmw_kms_dirty *dirty)
+{
+	struct vmw_kms_sou_bo_blit *blit = dirty->cmd;
 
 	blit += dirty->num_hits;
 	blit->header = SVGA_CMD_BLIT_GMRFB_TO_SCREEN;
@@ -1220,105 +1219,105 @@ out_unref:
 	blit->body.destRect.right = dirty->unit_x2;
 	blit->body.destRect.bottom = dirty->unit_y2;
 	dirty->num_hits++;
-पूर्ण
+}
 
 /**
- * vmw_kms_करो_bo_dirty - Dirty part of a buffer-object backed framebuffer
+ * vmw_kms_do_bo_dirty - Dirty part of a buffer-object backed framebuffer
  *
- * @dev_priv: Poपूर्णांकer to the device निजी काष्ठाure.
- * @framebuffer: Poपूर्णांकer to the buffer-object backed framebuffer.
+ * @dev_priv: Pointer to the device private structure.
+ * @framebuffer: Pointer to the buffer-object backed framebuffer.
  * @clips: Array of clip rects.
  * @vclips: Alternate array of clip rects. Either @clips or @vclips must
- * be शून्य.
+ * be NULL.
  * @num_clips: Number of clip rects in @clips.
  * @increment: Increment to use when looping over @clips.
- * @पूर्णांकerruptible: Whether to perक्रमm रुकोs पूर्णांकerruptible अगर possible.
- * @out_fence: If non-शून्य, will वापस a ref-counted poपूर्णांकer to a
- * काष्ठा vmw_fence_obj. The वापसed fence poपूर्णांकer may be शून्य in which
- * हाल the device has alपढ़ोy synchronized.
- * @crtc: If crtc is passed, perक्रमm bo dirty on that crtc only.
+ * @interruptible: Whether to perform waits interruptible if possible.
+ * @out_fence: If non-NULL, will return a ref-counted pointer to a
+ * struct vmw_fence_obj. The returned fence pointer may be NULL in which
+ * case the device has already synchronized.
+ * @crtc: If crtc is passed, perform bo dirty on that crtc only.
  *
- * Returns 0 on success, negative error code on failure. -ERESTARTSYS अगर
- * पूर्णांकerrupted.
+ * Returns 0 on success, negative error code on failure. -ERESTARTSYS if
+ * interrupted.
  */
-पूर्णांक vmw_kms_sou_करो_bo_dirty(काष्ठा vmw_निजी *dev_priv,
-				काष्ठा vmw_framebuffer *framebuffer,
-				काष्ठा drm_clip_rect *clips,
-				काष्ठा drm_vmw_rect *vclips,
-				अचिन्हित num_clips, पूर्णांक increment,
-				bool पूर्णांकerruptible,
-				काष्ठा vmw_fence_obj **out_fence,
-				काष्ठा drm_crtc *crtc)
-अणु
-	काष्ठा vmw_buffer_object *buf =
-		container_of(framebuffer, काष्ठा vmw_framebuffer_bo,
+int vmw_kms_sou_do_bo_dirty(struct vmw_private *dev_priv,
+				struct vmw_framebuffer *framebuffer,
+				struct drm_clip_rect *clips,
+				struct drm_vmw_rect *vclips,
+				unsigned num_clips, int increment,
+				bool interruptible,
+				struct vmw_fence_obj **out_fence,
+				struct drm_crtc *crtc)
+{
+	struct vmw_buffer_object *buf =
+		container_of(framebuffer, struct vmw_framebuffer_bo,
 			     base)->buffer;
-	काष्ठा vmw_kms_dirty dirty;
-	DECLARE_VAL_CONTEXT(val_ctx, शून्य, 0);
-	पूर्णांक ret;
+	struct vmw_kms_dirty dirty;
+	DECLARE_VAL_CONTEXT(val_ctx, NULL, 0);
+	int ret;
 
 	ret = vmw_validation_add_bo(&val_ctx, buf, false, false);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = vmw_validation_prepare(&val_ctx, शून्य, पूर्णांकerruptible);
-	अगर (ret)
-		जाओ out_unref;
+	ret = vmw_validation_prepare(&val_ctx, NULL, interruptible);
+	if (ret)
+		goto out_unref;
 
-	ret = करो_bo_define_gmrfb(dev_priv, framebuffer);
-	अगर (unlikely(ret != 0))
-		जाओ out_revert;
+	ret = do_bo_define_gmrfb(dev_priv, framebuffer);
+	if (unlikely(ret != 0))
+		goto out_revert;
 
 	dirty.crtc = crtc;
-	dirty.fअगरo_commit = vmw_sou_bo_fअगरo_commit;
+	dirty.fifo_commit = vmw_sou_bo_fifo_commit;
 	dirty.clip = vmw_sou_bo_clip;
-	dirty.fअगरo_reserve_size = माप(काष्ठा vmw_kms_sou_bo_blit) *
+	dirty.fifo_reserve_size = sizeof(struct vmw_kms_sou_bo_blit) *
 		num_clips;
 	ret = vmw_kms_helper_dirty(dev_priv, framebuffer, clips, vclips,
 				   0, 0, num_clips, increment, &dirty);
-	vmw_kms_helper_validation_finish(dev_priv, शून्य, &val_ctx, out_fence,
-					 शून्य);
+	vmw_kms_helper_validation_finish(dev_priv, NULL, &val_ctx, out_fence,
+					 NULL);
 
-	वापस ret;
+	return ret;
 
 out_revert:
 	vmw_validation_revert(&val_ctx);
 out_unref:
 	vmw_validation_unref_lists(&val_ctx);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
 /**
- * vmw_sou_पढ़ोback_fअगरo_commit - Callback to submit a set of पढ़ोback clips.
+ * vmw_sou_readback_fifo_commit - Callback to submit a set of readback clips.
  *
- * @dirty: The closure काष्ठाure.
+ * @dirty: The closure structure.
  *
- * Commits a previously built command buffer of पढ़ोback clips.
+ * Commits a previously built command buffer of readback clips.
  */
-अटल व्योम vmw_sou_पढ़ोback_fअगरo_commit(काष्ठा vmw_kms_dirty *dirty)
-अणु
-	अगर (!dirty->num_hits) अणु
+static void vmw_sou_readback_fifo_commit(struct vmw_kms_dirty *dirty)
+{
+	if (!dirty->num_hits) {
 		vmw_cmd_commit(dirty->dev_priv, 0);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	vmw_cmd_commit(dirty->dev_priv,
-			माप(काष्ठा vmw_kms_sou_पढ़ोback_blit) *
+			sizeof(struct vmw_kms_sou_readback_blit) *
 			dirty->num_hits);
-पूर्ण
+}
 
 /**
- * vmw_sou_पढ़ोback_clip - Callback to encode a पढ़ोback cliprect.
+ * vmw_sou_readback_clip - Callback to encode a readback cliprect.
  *
- * @dirty: The closure काष्ठाure
+ * @dirty: The closure structure
  *
  * Encodes a BLIT_SCREEN_TO_GMRFB cliprect.
  */
-अटल व्योम vmw_sou_पढ़ोback_clip(काष्ठा vmw_kms_dirty *dirty)
-अणु
-	काष्ठा vmw_kms_sou_पढ़ोback_blit *blit = dirty->cmd;
+static void vmw_sou_readback_clip(struct vmw_kms_dirty *dirty)
+{
+	struct vmw_kms_sou_readback_blit *blit = dirty->cmd;
 
 	blit += dirty->num_hits;
 	blit->header = SVGA_CMD_BLIT_SCREEN_TO_GMRFB;
@@ -1330,67 +1329,67 @@ out_unref:
 	blit->body.srcRect.right = dirty->unit_x2;
 	blit->body.srcRect.bottom = dirty->unit_y2;
 	dirty->num_hits++;
-पूर्ण
+}
 
 /**
- * vmw_kms_sou_पढ़ोback - Perक्रमm a पढ़ोback from the screen object प्रणाली to
+ * vmw_kms_sou_readback - Perform a readback from the screen object system to
  * a buffer-object backed framebuffer.
  *
- * @dev_priv: Poपूर्णांकer to the device निजी काष्ठाure.
- * @file_priv: Poपूर्णांकer to a काष्ठा drm_file identअगरying the caller.
- * Must be set to शून्य अगर @user_fence_rep is शून्य.
- * @vfb: Poपूर्णांकer to the buffer-object backed framebuffer.
- * @user_fence_rep: User-space provided काष्ठाure क्रम fence inक्रमmation.
- * Must be set to non-शून्य अगर @file_priv is non-शून्य.
+ * @dev_priv: Pointer to the device private structure.
+ * @file_priv: Pointer to a struct drm_file identifying the caller.
+ * Must be set to NULL if @user_fence_rep is NULL.
+ * @vfb: Pointer to the buffer-object backed framebuffer.
+ * @user_fence_rep: User-space provided structure for fence information.
+ * Must be set to non-NULL if @file_priv is non-NULL.
  * @vclips: Array of clip rects.
  * @num_clips: Number of clip rects in @vclips.
- * @crtc: If crtc is passed, पढ़ोback on that crtc only.
+ * @crtc: If crtc is passed, readback on that crtc only.
  *
- * Returns 0 on success, negative error code on failure. -ERESTARTSYS अगर
- * पूर्णांकerrupted.
+ * Returns 0 on success, negative error code on failure. -ERESTARTSYS if
+ * interrupted.
  */
-पूर्णांक vmw_kms_sou_पढ़ोback(काष्ठा vmw_निजी *dev_priv,
-			 काष्ठा drm_file *file_priv,
-			 काष्ठा vmw_framebuffer *vfb,
-			 काष्ठा drm_vmw_fence_rep __user *user_fence_rep,
-			 काष्ठा drm_vmw_rect *vclips,
-			 uपूर्णांक32_t num_clips,
-			 काष्ठा drm_crtc *crtc)
-अणु
-	काष्ठा vmw_buffer_object *buf =
-		container_of(vfb, काष्ठा vmw_framebuffer_bo, base)->buffer;
-	काष्ठा vmw_kms_dirty dirty;
-	DECLARE_VAL_CONTEXT(val_ctx, शून्य, 0);
-	पूर्णांक ret;
+int vmw_kms_sou_readback(struct vmw_private *dev_priv,
+			 struct drm_file *file_priv,
+			 struct vmw_framebuffer *vfb,
+			 struct drm_vmw_fence_rep __user *user_fence_rep,
+			 struct drm_vmw_rect *vclips,
+			 uint32_t num_clips,
+			 struct drm_crtc *crtc)
+{
+	struct vmw_buffer_object *buf =
+		container_of(vfb, struct vmw_framebuffer_bo, base)->buffer;
+	struct vmw_kms_dirty dirty;
+	DECLARE_VAL_CONTEXT(val_ctx, NULL, 0);
+	int ret;
 
 	ret = vmw_validation_add_bo(&val_ctx, buf, false, false);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = vmw_validation_prepare(&val_ctx, शून्य, true);
-	अगर (ret)
-		जाओ out_unref;
+	ret = vmw_validation_prepare(&val_ctx, NULL, true);
+	if (ret)
+		goto out_unref;
 
-	ret = करो_bo_define_gmrfb(dev_priv, vfb);
-	अगर (unlikely(ret != 0))
-		जाओ out_revert;
+	ret = do_bo_define_gmrfb(dev_priv, vfb);
+	if (unlikely(ret != 0))
+		goto out_revert;
 
 	dirty.crtc = crtc;
-	dirty.fअगरo_commit = vmw_sou_पढ़ोback_fअगरo_commit;
-	dirty.clip = vmw_sou_पढ़ोback_clip;
-	dirty.fअगरo_reserve_size = माप(काष्ठा vmw_kms_sou_पढ़ोback_blit) *
+	dirty.fifo_commit = vmw_sou_readback_fifo_commit;
+	dirty.clip = vmw_sou_readback_clip;
+	dirty.fifo_reserve_size = sizeof(struct vmw_kms_sou_readback_blit) *
 		num_clips;
-	ret = vmw_kms_helper_dirty(dev_priv, vfb, शून्य, vclips,
+	ret = vmw_kms_helper_dirty(dev_priv, vfb, NULL, vclips,
 				   0, 0, num_clips, 1, &dirty);
-	vmw_kms_helper_validation_finish(dev_priv, file_priv, &val_ctx, शून्य,
+	vmw_kms_helper_validation_finish(dev_priv, file_priv, &val_ctx, NULL,
 					 user_fence_rep);
 
-	वापस ret;
+	return ret;
 
 out_revert:
 	vmw_validation_revert(&val_ctx);
 out_unref:
 	vmw_validation_unref_lists(&val_ctx);
 	
-	वापस ret;
-पूर्ण
+	return ret;
+}

@@ -1,23 +1,22 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2019 SiFive
  */
 
-#अगर_अघोषित _ASM_RISCV_PTDUMP_H
-#घोषणा _ASM_RISCV_PTDUMP_H
+#ifndef _ASM_RISCV_PTDUMP_H
+#define _ASM_RISCV_PTDUMP_H
 
-व्योम ptdump_check_wx(व्योम);
+void ptdump_check_wx(void);
 
-#अगर_घोषित CONFIG_DEBUG_WX
-अटल अंतरभूत व्योम debug_checkwx(व्योम)
-अणु
+#ifdef CONFIG_DEBUG_WX
+static inline void debug_checkwx(void)
+{
 	ptdump_check_wx();
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम debug_checkwx(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर
+}
+#else
+static inline void debug_checkwx(void)
+{
+}
+#endif
 
-#पूर्ण_अगर /* _ASM_RISCV_PTDUMP_H */
+#endif /* _ASM_RISCV_PTDUMP_H */

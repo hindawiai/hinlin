@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * NCR 5380 generic driver routines.  These should make it *trivial*
  * to implement 5380 SCSI drivers under Linux with a non-trantor
@@ -10,10 +9,10 @@
  * Copyright 1993, Drew Eckhardt
  * Visionary Computing
  * (Unix and Linux consulting and custom programming)
- * drew@coloraकरो.edu
+ * drew@colorado.edu
  * +1 (303) 666-5836
  *
- * For more inक्रमmation, please consult
+ * For more information, please consult
  *
  * NCR 5380 Family
  * SCSI Protocol Controller
@@ -21,7 +20,7 @@
  *
  * NCR Microelectronics
  * 1635 Aeroplaza Drive
- * Coloraकरो Springs, CO 80916
+ * Colorado Springs, CO 80916
  * 1+ (719) 578-3400
  * 1+ (800) 334-5454
  */
@@ -33,81 +32,81 @@
 
 /* Ported to Atari by Roman Hodek and others. */
 
-/* Adapted क्रम the Sun 3 by Sam Creasey. */
+/* Adapted for the Sun 3 by Sam Creasey. */
 
 /*
  * Design
  *
- * This is a generic 5380 driver.  To use it on a dअगरferent platक्रमm,
- * one simply ग_लिखोs appropriate प्रणाली specअगरic macros (ie, data
+ * This is a generic 5380 driver.  To use it on a different platform,
+ * one simply writes appropriate system specific macros (ie, data
  * transfer - some PC's will use the I/O bus, 68K's must use
  * memory mapped) and drops this file in their 'C' wrapper.
  *
- * As far as command queueing, two queues are मुख्यtained क्रम
- * each 5380 in the प्रणाली - commands that haven't been issued yet,
+ * As far as command queueing, two queues are maintained for
+ * each 5380 in the system - commands that haven't been issued yet,
  * and commands that are currently executing.  This means that an
  * unlimited number of commands may be queued, letting
  * more commands propagate from the higher driver levels giving higher
  * throughput.  Note that both I_T_L and I_T_L_Q nexuses are supported,
  * allowing multiple commands to propagate all the way to a SCSI-II device
- * जबतक a command is alपढ़ोy executing.
+ * while a command is already executing.
  *
  *
- * Issues specअगरic to the NCR5380 :
+ * Issues specific to the NCR5380 :
  *
- * When used in a PIO or pseuकरो-dma mode, the NCR5380 is a braindead
- * piece of hardware that requires you to sit in a loop polling क्रम
- * the REQ संकेत as दीर्घ as you are connected.  Some devices are
+ * When used in a PIO or pseudo-dma mode, the NCR5380 is a braindead
+ * piece of hardware that requires you to sit in a loop polling for
+ * the REQ signal as long as you are connected.  Some devices are
  * brain dead (ie, many TEXEL CD ROM drives) and won't disconnect
- * जबतक करोing दीर्घ seek operations. [...] These
+ * while doing long seek operations. [...] These
  * broken devices are the exception rather than the rule and I'd rather
- * spend my समय optimizing क्रम the normal हाल.
+ * spend my time optimizing for the normal case.
  *
  * Architecture :
  *
- * At the heart of the design is a coroutine, NCR5380_मुख्य,
- * which is started from a workqueue क्रम each NCR5380 host in the
- * प्रणाली.  It attempts to establish I_T_L or I_T_L_Q nexuses by
+ * At the heart of the design is a coroutine, NCR5380_main,
+ * which is started from a workqueue for each NCR5380 host in the
+ * system.  It attempts to establish I_T_L or I_T_L_Q nexuses by
  * removing the commands from the issue queue and calling
- * NCR5380_select() अगर a nexus is not established.
+ * NCR5380_select() if a nexus is not established.
  *
- * Once a nexus is established, the NCR5380_inक्रमmation_transfer()
- * phase goes through the various phases as inकाष्ठाed by the target.
- * अगर the target goes पूर्णांकo MSG IN and sends a DISCONNECT message,
- * the command काष्ठाure is placed पूर्णांकo the per instance disconnected
- * queue, and NCR5380_मुख्य tries to find more work.  If the target is
- * idle क्रम too दीर्घ, the प्रणाली will try to sleep.
+ * Once a nexus is established, the NCR5380_information_transfer()
+ * phase goes through the various phases as instructed by the target.
+ * if the target goes into MSG IN and sends a DISCONNECT message,
+ * the command structure is placed into the per instance disconnected
+ * queue, and NCR5380_main tries to find more work.  If the target is
+ * idle for too long, the system will try to sleep.
  *
- * If a command has disconnected, eventually an पूर्णांकerrupt will trigger,
- * calling NCR5380_पूर्णांकr()  which will in turn call NCR5380_reselect
- * to reestablish a nexus.  This will run मुख्य अगर necessary.
+ * If a command has disconnected, eventually an interrupt will trigger,
+ * calling NCR5380_intr()  which will in turn call NCR5380_reselect
+ * to reestablish a nexus.  This will run main if necessary.
  *
- * On command termination, the करोne function will be called as
+ * On command termination, the done function will be called as
  * appropriate.
  *
- * SCSI poपूर्णांकers are मुख्यtained in the SCp field of SCSI command
- * काष्ठाures, being initialized after the command is connected
- * in NCR5380_select, and set as appropriate in NCR5380_inक्रमmation_transfer.
+ * SCSI pointers are maintained in the SCp field of SCSI command
+ * structures, being initialized after the command is connected
+ * in NCR5380_select, and set as appropriate in NCR5380_information_transfer.
  * Note that in violation of the standard, an implicit SAVE POINTERS operation
- * is करोne, since some BROKEN disks fail to issue an explicit SAVE POINTERS.
+ * is done, since some BROKEN disks fail to issue an explicit SAVE POINTERS.
  */
 
 /*
  * Using this file :
- * This file a skeleton Linux SCSI driver क्रम the NCR 5380 series
- * of chips.  To use it, you ग_लिखो an architecture specअगरic functions
+ * This file a skeleton Linux SCSI driver for the NCR 5380 series
+ * of chips.  To use it, you write an architecture specific functions
  * and macros and include this file in your driver.
  *
  * These macros MUST be defined :
  *
- * NCR5380_पढ़ो(रेजिस्टर)  - पढ़ो from the specअगरied रेजिस्टर
+ * NCR5380_read(register)  - read from the specified register
  *
- * NCR5380_ग_लिखो(रेजिस्टर, value) - ग_लिखो to the specअगरic रेजिस्टर
+ * NCR5380_write(register, value) - write to the specific register
  *
- * NCR5380_implementation_fields  - additional fields needed क्रम this
- * specअगरic implementation of the NCR5380
+ * NCR5380_implementation_fields  - additional fields needed for this
+ * specific implementation of the NCR5380
  *
- * Either real DMA *or* pseuकरो DMA may be implemented
+ * Either real DMA *or* pseudo DMA may be implemented
  *
  * NCR5380_dma_xfer_len   - determine size of DMA/PDMA transfer
  * NCR5380_dma_send_setup - execute DMA/PDMA from memory to 5380
@@ -115,266 +114,266 @@
  * NCR5380_dma_residual   - residual byte count
  *
  * The generic driver is initialized by calling NCR5380_init(instance),
- * after setting the appropriate host specअगरic fields and ID.
+ * after setting the appropriate host specific fields and ID.
  */
 
-#अगर_अघोषित NCR5380_io_delay
-#घोषणा NCR5380_io_delay(x)
-#पूर्ण_अगर
+#ifndef NCR5380_io_delay
+#define NCR5380_io_delay(x)
+#endif
 
-#अगर_अघोषित NCR5380_acquire_dma_irq
-#घोषणा NCR5380_acquire_dma_irq(x)	(1)
-#पूर्ण_अगर
+#ifndef NCR5380_acquire_dma_irq
+#define NCR5380_acquire_dma_irq(x)	(1)
+#endif
 
-#अगर_अघोषित NCR5380_release_dma_irq
-#घोषणा NCR5380_release_dma_irq(x)
-#पूर्ण_अगर
+#ifndef NCR5380_release_dma_irq
+#define NCR5380_release_dma_irq(x)
+#endif
 
-अटल अचिन्हित पूर्णांक disconnect_mask = ~0;
-module_param(disconnect_mask, पूर्णांक, 0444);
+static unsigned int disconnect_mask = ~0;
+module_param(disconnect_mask, int, 0444);
 
-अटल पूर्णांक करो_पात(काष्ठा Scsi_Host *, अचिन्हित पूर्णांक);
-अटल व्योम करो_reset(काष्ठा Scsi_Host *);
-अटल व्योम bus_reset_cleanup(काष्ठा Scsi_Host *);
+static int do_abort(struct Scsi_Host *, unsigned int);
+static void do_reset(struct Scsi_Host *);
+static void bus_reset_cleanup(struct Scsi_Host *);
 
 /**
- * initialize_SCp - init the scsi poपूर्णांकer field
+ * initialize_SCp - init the scsi pointer field
  * @cmd: command block to set up
  *
- * Set up the पूर्णांकernal fields in the SCSI command.
+ * Set up the internal fields in the SCSI command.
  */
 
-अटल अंतरभूत व्योम initialize_SCp(काष्ठा scsi_cmnd *cmd)
-अणु
+static inline void initialize_SCp(struct scsi_cmnd *cmd)
+{
 	/*
-	 * Initialize the Scsi Poपूर्णांकer field so that all of the commands in the
+	 * Initialize the Scsi Pointer field so that all of the commands in the
 	 * various queues are valid.
 	 */
 
-	अगर (scsi_bufflen(cmd)) अणु
+	if (scsi_bufflen(cmd)) {
 		cmd->SCp.buffer = scsi_sglist(cmd);
 		cmd->SCp.ptr = sg_virt(cmd->SCp.buffer);
 		cmd->SCp.this_residual = cmd->SCp.buffer->length;
-	पूर्ण अन्यथा अणु
-		cmd->SCp.buffer = शून्य;
-		cmd->SCp.ptr = शून्य;
+	} else {
+		cmd->SCp.buffer = NULL;
+		cmd->SCp.ptr = NULL;
 		cmd->SCp.this_residual = 0;
-	पूर्ण
+	}
 
 	cmd->SCp.Status = 0;
 	cmd->SCp.Message = 0;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम advance_sg_buffer(काष्ठा scsi_cmnd *cmd)
-अणु
-	काष्ठा scatterlist *s = cmd->SCp.buffer;
+static inline void advance_sg_buffer(struct scsi_cmnd *cmd)
+{
+	struct scatterlist *s = cmd->SCp.buffer;
 
-	अगर (!cmd->SCp.this_residual && s && !sg_is_last(s)) अणु
+	if (!cmd->SCp.this_residual && s && !sg_is_last(s)) {
 		cmd->SCp.buffer = sg_next(s);
 		cmd->SCp.ptr = sg_virt(cmd->SCp.buffer);
 		cmd->SCp.this_residual = cmd->SCp.buffer->length;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम set_resid_from_SCp(काष्ठा scsi_cmnd *cmd)
-अणु
-	पूर्णांक resid = cmd->SCp.this_residual;
-	काष्ठा scatterlist *s = cmd->SCp.buffer;
+static inline void set_resid_from_SCp(struct scsi_cmnd *cmd)
+{
+	int resid = cmd->SCp.this_residual;
+	struct scatterlist *s = cmd->SCp.buffer;
 
-	अगर (s)
-		जबतक (!sg_is_last(s)) अणु
+	if (s)
+		while (!sg_is_last(s)) {
 			s = sg_next(s);
 			resid += s->length;
-		पूर्ण
+		}
 	scsi_set_resid(cmd, resid);
-पूर्ण
+}
 
 /**
- * NCR5380_poll_politely2 - रुको क्रम two chip रेजिस्टर values
- * @hostdata: host निजी data
- * @reg1: 5380 रेजिस्टर to poll
- * @bit1: Biपंचांगask to check
+ * NCR5380_poll_politely2 - wait for two chip register values
+ * @hostdata: host private data
+ * @reg1: 5380 register to poll
+ * @bit1: Bitmask to check
  * @val1: Expected value
- * @reg2: Second 5380 रेजिस्टर to poll
- * @bit2: Second biपंचांगask to check
+ * @reg2: Second 5380 register to poll
+ * @bit2: Second bitmask to check
  * @val2: Second expected value
- * @रुको: Time-out in jअगरfies, 0 अगर sleeping is not allowed
+ * @wait: Time-out in jiffies, 0 if sleeping is not allowed
  *
- * Polls the chip in a reasonably efficient manner रुकोing क्रम an
- * event to occur. After a लघु quick poll we begin to yield the CPU
- * (अगर possible). In irq contexts the समय-out is arbitrarily limited.
- * Callers may hold locks as दीर्घ as they are held in irq mode.
+ * Polls the chip in a reasonably efficient manner waiting for an
+ * event to occur. After a short quick poll we begin to yield the CPU
+ * (if possible). In irq contexts the time-out is arbitrarily limited.
+ * Callers may hold locks as long as they are held in irq mode.
  *
- * Returns 0 अगर either or both event(s) occurred otherwise -ETIMEDOUT.
+ * Returns 0 if either or both event(s) occurred otherwise -ETIMEDOUT.
  */
 
-अटल पूर्णांक NCR5380_poll_politely2(काष्ठा NCR5380_hostdata *hostdata,
-                                  अचिन्हित पूर्णांक reg1, u8 bit1, u8 val1,
-                                  अचिन्हित पूर्णांक reg2, u8 bit2, u8 val2,
-                                  अचिन्हित दीर्घ रुको)
-अणु
-	अचिन्हित दीर्घ n = hostdata->poll_loops;
-	अचिन्हित दीर्घ deadline = jअगरfies + रुको;
+static int NCR5380_poll_politely2(struct NCR5380_hostdata *hostdata,
+                                  unsigned int reg1, u8 bit1, u8 val1,
+                                  unsigned int reg2, u8 bit2, u8 val2,
+                                  unsigned long wait)
+{
+	unsigned long n = hostdata->poll_loops;
+	unsigned long deadline = jiffies + wait;
 
-	करो अणु
-		अगर ((NCR5380_पढ़ो(reg1) & bit1) == val1)
-			वापस 0;
-		अगर ((NCR5380_पढ़ो(reg2) & bit2) == val2)
-			वापस 0;
+	do {
+		if ((NCR5380_read(reg1) & bit1) == val1)
+			return 0;
+		if ((NCR5380_read(reg2) & bit2) == val2)
+			return 0;
 		cpu_relax();
-	पूर्ण जबतक (n--);
+	} while (n--);
 
-	अगर (!रुको)
-		वापस -ETIMEDOUT;
+	if (!wait)
+		return -ETIMEDOUT;
 
-	/* Repeatedly sleep क्रम 1 ms until deadline */
-	जबतक (समय_is_after_jअगरfies(deadline)) अणु
-		schedule_समयout_unपूर्णांकerruptible(1);
-		अगर ((NCR5380_पढ़ो(reg1) & bit1) == val1)
-			वापस 0;
-		अगर ((NCR5380_पढ़ो(reg2) & bit2) == val2)
-			वापस 0;
-	पूर्ण
+	/* Repeatedly sleep for 1 ms until deadline */
+	while (time_is_after_jiffies(deadline)) {
+		schedule_timeout_uninterruptible(1);
+		if ((NCR5380_read(reg1) & bit1) == val1)
+			return 0;
+		if ((NCR5380_read(reg2) & bit2) == val2)
+			return 0;
+	}
 
-	वापस -ETIMEDOUT;
-पूर्ण
+	return -ETIMEDOUT;
+}
 
-#अगर न_संशोधन
-अटल काष्ठा अणु
-	अचिन्हित अक्षर mask;
-	स्थिर अक्षर *name;
-पूर्ण संकेतs[] = अणु
-	अणुSR_DBP, "PARITY"पूर्ण,
-	अणुSR_RST, "RST"पूर्ण,
-	अणुSR_BSY, "BSY"पूर्ण,
-	अणुSR_REQ, "REQ"पूर्ण,
-	अणुSR_MSG, "MSG"पूर्ण,
-	अणुSR_CD, "CD"पूर्ण,
-	अणुSR_IO, "IO"पूर्ण,
-	अणुSR_SEL, "SEL"पूर्ण,
-	अणु0, शून्यपूर्ण
-पूर्ण,
-basrs[] = अणु
-	अणुBASR_END_DMA_TRANSFER, "END OF DMA"पूर्ण,
-	अणुBASR_DRQ, "DRQ"पूर्ण,
-	अणुBASR_PARITY_ERROR, "PARITY ERROR"पूर्ण,
-	अणुBASR_IRQ, "IRQ"पूर्ण,
-	अणुBASR_PHASE_MATCH, "PHASE MATCH"पूर्ण,
-	अणुBASR_BUSY_ERROR, "BUSY ERROR"पूर्ण,
-	अणुBASR_ATN, "ATN"पूर्ण,
-	अणुBASR_ACK, "ACK"पूर्ण,
-	अणु0, शून्यपूर्ण
-पूर्ण,
-icrs[] = अणु
-	अणुICR_ASSERT_RST, "ASSERT RST"पूर्ण,
-	अणुICR_ARBITRATION_PROGRESS, "ARB. IN PROGRESS"पूर्ण,
-	अणुICR_ARBITRATION_LOST, "LOST ARB."पूर्ण,
-	अणुICR_ASSERT_ACK, "ASSERT ACK"पूर्ण,
-	अणुICR_ASSERT_BSY, "ASSERT BSY"पूर्ण,
-	अणुICR_ASSERT_SEL, "ASSERT SEL"पूर्ण,
-	अणुICR_ASSERT_ATN, "ASSERT ATN"पूर्ण,
-	अणुICR_ASSERT_DATA, "ASSERT DATA"पूर्ण,
-	अणु0, शून्यपूर्ण
-पूर्ण,
-mrs[] = अणु
-	अणुMR_BLOCK_DMA_MODE, "BLOCK DMA MODE"पूर्ण,
-	अणुMR_TARGET, "TARGET"पूर्ण,
-	अणुMR_ENABLE_PAR_CHECK, "PARITY CHECK"पूर्ण,
-	अणुMR_ENABLE_PAR_INTR, "PARITY INTR"पूर्ण,
-	अणुMR_ENABLE_EOP_INTR, "EOP INTR"पूर्ण,
-	अणुMR_MONITOR_BSY, "MONITOR BSY"पूर्ण,
-	अणुMR_DMA_MODE, "DMA MODE"पूर्ण,
-	अणुMR_ARBITRATE, "ARBITRATE"पूर्ण,
-	अणु0, शून्यपूर्ण
-पूर्ण;
+#if NDEBUG
+static struct {
+	unsigned char mask;
+	const char *name;
+} signals[] = {
+	{SR_DBP, "PARITY"},
+	{SR_RST, "RST"},
+	{SR_BSY, "BSY"},
+	{SR_REQ, "REQ"},
+	{SR_MSG, "MSG"},
+	{SR_CD, "CD"},
+	{SR_IO, "IO"},
+	{SR_SEL, "SEL"},
+	{0, NULL}
+},
+basrs[] = {
+	{BASR_END_DMA_TRANSFER, "END OF DMA"},
+	{BASR_DRQ, "DRQ"},
+	{BASR_PARITY_ERROR, "PARITY ERROR"},
+	{BASR_IRQ, "IRQ"},
+	{BASR_PHASE_MATCH, "PHASE MATCH"},
+	{BASR_BUSY_ERROR, "BUSY ERROR"},
+	{BASR_ATN, "ATN"},
+	{BASR_ACK, "ACK"},
+	{0, NULL}
+},
+icrs[] = {
+	{ICR_ASSERT_RST, "ASSERT RST"},
+	{ICR_ARBITRATION_PROGRESS, "ARB. IN PROGRESS"},
+	{ICR_ARBITRATION_LOST, "LOST ARB."},
+	{ICR_ASSERT_ACK, "ASSERT ACK"},
+	{ICR_ASSERT_BSY, "ASSERT BSY"},
+	{ICR_ASSERT_SEL, "ASSERT SEL"},
+	{ICR_ASSERT_ATN, "ASSERT ATN"},
+	{ICR_ASSERT_DATA, "ASSERT DATA"},
+	{0, NULL}
+},
+mrs[] = {
+	{MR_BLOCK_DMA_MODE, "BLOCK DMA MODE"},
+	{MR_TARGET, "TARGET"},
+	{MR_ENABLE_PAR_CHECK, "PARITY CHECK"},
+	{MR_ENABLE_PAR_INTR, "PARITY INTR"},
+	{MR_ENABLE_EOP_INTR, "EOP INTR"},
+	{MR_MONITOR_BSY, "MONITOR BSY"},
+	{MR_DMA_MODE, "DMA MODE"},
+	{MR_ARBITRATE, "ARBITRATE"},
+	{0, NULL}
+};
 
 /**
- * NCR5380_prपूर्णांक - prपूर्णांक scsi bus संकेतs
+ * NCR5380_print - print scsi bus signals
  * @instance: adapter state to dump
  *
- * Prपूर्णांक the SCSI bus संकेतs क्रम debugging purposes
+ * Print the SCSI bus signals for debugging purposes
  */
 
-अटल व्योम NCR5380_prपूर्णांक(काष्ठा Scsi_Host *instance)
-अणु
-	काष्ठा NCR5380_hostdata *hostdata = shost_priv(instance);
-	अचिन्हित अक्षर status, basr, mr, icr, i;
+static void NCR5380_print(struct Scsi_Host *instance)
+{
+	struct NCR5380_hostdata *hostdata = shost_priv(instance);
+	unsigned char status, basr, mr, icr, i;
 
-	status = NCR5380_पढ़ो(STATUS_REG);
-	mr = NCR5380_पढ़ो(MODE_REG);
-	icr = NCR5380_पढ़ो(INITIATOR_COMMAND_REG);
-	basr = NCR5380_पढ़ो(BUS_AND_STATUS_REG);
+	status = NCR5380_read(STATUS_REG);
+	mr = NCR5380_read(MODE_REG);
+	icr = NCR5380_read(INITIATOR_COMMAND_REG);
+	basr = NCR5380_read(BUS_AND_STATUS_REG);
 
-	prपूर्णांकk(KERN_DEBUG "SR =   0x%02x : ", status);
-	क्रम (i = 0; संकेतs[i].mask; ++i)
-		अगर (status & संकेतs[i].mask)
-			prपूर्णांकk(KERN_CONT "%s, ", संकेतs[i].name);
-	prपूर्णांकk(KERN_CONT "\nBASR = 0x%02x : ", basr);
-	क्रम (i = 0; basrs[i].mask; ++i)
-		अगर (basr & basrs[i].mask)
-			prपूर्णांकk(KERN_CONT "%s, ", basrs[i].name);
-	prपूर्णांकk(KERN_CONT "\nICR =  0x%02x : ", icr);
-	क्रम (i = 0; icrs[i].mask; ++i)
-		अगर (icr & icrs[i].mask)
-			prपूर्णांकk(KERN_CONT "%s, ", icrs[i].name);
-	prपूर्णांकk(KERN_CONT "\nMR =   0x%02x : ", mr);
-	क्रम (i = 0; mrs[i].mask; ++i)
-		अगर (mr & mrs[i].mask)
-			prपूर्णांकk(KERN_CONT "%s, ", mrs[i].name);
-	prपूर्णांकk(KERN_CONT "\n");
-पूर्ण
+	printk(KERN_DEBUG "SR =   0x%02x : ", status);
+	for (i = 0; signals[i].mask; ++i)
+		if (status & signals[i].mask)
+			printk(KERN_CONT "%s, ", signals[i].name);
+	printk(KERN_CONT "\nBASR = 0x%02x : ", basr);
+	for (i = 0; basrs[i].mask; ++i)
+		if (basr & basrs[i].mask)
+			printk(KERN_CONT "%s, ", basrs[i].name);
+	printk(KERN_CONT "\nICR =  0x%02x : ", icr);
+	for (i = 0; icrs[i].mask; ++i)
+		if (icr & icrs[i].mask)
+			printk(KERN_CONT "%s, ", icrs[i].name);
+	printk(KERN_CONT "\nMR =   0x%02x : ", mr);
+	for (i = 0; mrs[i].mask; ++i)
+		if (mr & mrs[i].mask)
+			printk(KERN_CONT "%s, ", mrs[i].name);
+	printk(KERN_CONT "\n");
+}
 
-अटल काष्ठा अणु
-	अचिन्हित अक्षर value;
-	स्थिर अक्षर *name;
-पूर्ण phases[] = अणु
-	अणुPHASE_DATAOUT, "DATAOUT"पूर्ण,
-	अणुPHASE_DATAIN, "DATAIN"पूर्ण,
-	अणुPHASE_CMDOUT, "CMDOUT"पूर्ण,
-	अणुPHASE_STATIN, "STATIN"पूर्ण,
-	अणुPHASE_MSGOUT, "MSGOUT"पूर्ण,
-	अणुPHASE_MSGIN, "MSGIN"पूर्ण,
-	अणुPHASE_UNKNOWN, "UNKNOWN"पूर्ण
-पूर्ण;
+static struct {
+	unsigned char value;
+	const char *name;
+} phases[] = {
+	{PHASE_DATAOUT, "DATAOUT"},
+	{PHASE_DATAIN, "DATAIN"},
+	{PHASE_CMDOUT, "CMDOUT"},
+	{PHASE_STATIN, "STATIN"},
+	{PHASE_MSGOUT, "MSGOUT"},
+	{PHASE_MSGIN, "MSGIN"},
+	{PHASE_UNKNOWN, "UNKNOWN"}
+};
 
 /**
- * NCR5380_prपूर्णांक_phase - show SCSI phase
+ * NCR5380_print_phase - show SCSI phase
  * @instance: adapter to dump
  *
- * Prपूर्णांक the current SCSI phase क्रम debugging purposes
+ * Print the current SCSI phase for debugging purposes
  */
 
-अटल व्योम NCR5380_prपूर्णांक_phase(काष्ठा Scsi_Host *instance)
-अणु
-	काष्ठा NCR5380_hostdata *hostdata = shost_priv(instance);
-	अचिन्हित अक्षर status;
-	पूर्णांक i;
+static void NCR5380_print_phase(struct Scsi_Host *instance)
+{
+	struct NCR5380_hostdata *hostdata = shost_priv(instance);
+	unsigned char status;
+	int i;
 
-	status = NCR5380_पढ़ो(STATUS_REG);
-	अगर (!(status & SR_REQ))
-		shost_prपूर्णांकk(KERN_DEBUG, instance, "REQ not asserted, phase unknown.\n");
-	अन्यथा अणु
-		क्रम (i = 0; (phases[i].value != PHASE_UNKNOWN) &&
+	status = NCR5380_read(STATUS_REG);
+	if (!(status & SR_REQ))
+		shost_printk(KERN_DEBUG, instance, "REQ not asserted, phase unknown.\n");
+	else {
+		for (i = 0; (phases[i].value != PHASE_UNKNOWN) &&
 		     (phases[i].value != (status & PHASE_MASK)); ++i)
 			;
-		shost_prपूर्णांकk(KERN_DEBUG, instance, "phase %s\n", phases[i].name);
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर
+		shost_printk(KERN_DEBUG, instance, "phase %s\n", phases[i].name);
+	}
+}
+#endif
 
 /**
- * NCR5380_info - report driver and host inक्रमmation
+ * NCR5380_info - report driver and host information
  * @instance: relevant scsi host instance
  *
- * For use as the host ढाँचा info() handler.
+ * For use as the host template info() handler.
  */
 
-अटल स्थिर अक्षर *NCR5380_info(काष्ठा Scsi_Host *instance)
-अणु
-	काष्ठा NCR5380_hostdata *hostdata = shost_priv(instance);
+static const char *NCR5380_info(struct Scsi_Host *instance)
+{
+	struct NCR5380_hostdata *hostdata = shost_priv(instance);
 
-	वापस hostdata->info;
-पूर्ण
+	return hostdata->info;
+}
 
 /**
  * NCR5380_init - initialise an NCR5380
@@ -382,50 +381,50 @@ mrs[] = अणु
  * @flags: control flags
  *
  * Initializes *instance and corresponding 5380 chip,
- * with flags OR'd पूर्णांकo the initial flags value.
+ * with flags OR'd into the initial flags value.
  *
  * Notes : I assume that the host, hostno, and id bits have been
- * set correctly. I करोn't care about the irq and other fields.
+ * set correctly. I don't care about the irq and other fields.
  *
- * Returns 0 क्रम success
+ * Returns 0 for success
  */
 
-अटल पूर्णांक NCR5380_init(काष्ठा Scsi_Host *instance, पूर्णांक flags)
-अणु
-	काष्ठा NCR5380_hostdata *hostdata = shost_priv(instance);
-	पूर्णांक i;
-	अचिन्हित दीर्घ deadline;
-	अचिन्हित दीर्घ accesses_per_ms;
+static int NCR5380_init(struct Scsi_Host *instance, int flags)
+{
+	struct NCR5380_hostdata *hostdata = shost_priv(instance);
+	int i;
+	unsigned long deadline;
+	unsigned long accesses_per_ms;
 
 	instance->max_lun = 7;
 
 	hostdata->host = instance;
 	hostdata->id_mask = 1 << instance->this_id;
 	hostdata->id_higher_mask = 0;
-	क्रम (i = hostdata->id_mask; i <= 0x80; i <<= 1)
-		अगर (i > hostdata->id_mask)
+	for (i = hostdata->id_mask; i <= 0x80; i <<= 1)
+		if (i > hostdata->id_mask)
 			hostdata->id_higher_mask |= i;
-	क्रम (i = 0; i < 8; ++i)
+	for (i = 0; i < 8; ++i)
 		hostdata->busy[i] = 0;
 	hostdata->dma_len = 0;
 
 	spin_lock_init(&hostdata->lock);
-	hostdata->connected = शून्य;
-	hostdata->sensing = शून्य;
-	INIT_LIST_HEAD(&hostdata->स्वतःsense);
+	hostdata->connected = NULL;
+	hostdata->sensing = NULL;
+	INIT_LIST_HEAD(&hostdata->autosense);
 	INIT_LIST_HEAD(&hostdata->unissued);
 	INIT_LIST_HEAD(&hostdata->disconnected);
 
 	hostdata->flags = flags;
 
-	INIT_WORK(&hostdata->मुख्य_task, NCR5380_मुख्य);
+	INIT_WORK(&hostdata->main_task, NCR5380_main);
 	hostdata->work_q = alloc_workqueue("ncr5380_%d",
 	                        WQ_UNBOUND | WQ_MEM_RECLAIM,
 	                        1, instance->host_no);
-	अगर (!hostdata->work_q)
-		वापस -ENOMEM;
+	if (!hostdata->work_q)
+		return -ENOMEM;
 
-	snम_लिखो(hostdata->info, माप(hostdata->info),
+	snprintf(hostdata->info, sizeof(hostdata->info),
 		"%s, irq %d, io_port 0x%lx, base 0x%lx, can_queue %d, cmd_per_lun %d, sg_tablesize %d, this_id %d, flags { %s%s%s}",
 		instance->hostt->name, instance->irq, hostdata->io_port,
 		hostdata->base, instance->can_queue, instance->cmd_per_lun,
@@ -434,122 +433,122 @@ mrs[] = अणु
 		hostdata->flags & FLAG_NO_PSEUDO_DMA ? "NO_PSEUDO_DMA " : "",
 		hostdata->flags & FLAG_TOSHIBA_DELAY ? "TOSHIBA_DELAY " : "");
 
-	NCR5380_ग_लिखो(INITIATOR_COMMAND_REG, ICR_BASE);
-	NCR5380_ग_लिखो(MODE_REG, MR_BASE);
-	NCR5380_ग_लिखो(TARGET_COMMAND_REG, 0);
-	NCR5380_ग_लिखो(SELECT_ENABLE_REG, 0);
+	NCR5380_write(INITIATOR_COMMAND_REG, ICR_BASE);
+	NCR5380_write(MODE_REG, MR_BASE);
+	NCR5380_write(TARGET_COMMAND_REG, 0);
+	NCR5380_write(SELECT_ENABLE_REG, 0);
 
-	/* Calibrate रेजिस्टर polling loop */
+	/* Calibrate register polling loop */
 	i = 0;
-	deadline = jअगरfies + 1;
-	करो अणु
+	deadline = jiffies + 1;
+	do {
 		cpu_relax();
-	पूर्ण जबतक (समय_is_after_jअगरfies(deadline));
-	deadline += msecs_to_jअगरfies(256);
-	करो अणु
-		NCR5380_पढ़ो(STATUS_REG);
+	} while (time_is_after_jiffies(deadline));
+	deadline += msecs_to_jiffies(256);
+	do {
+		NCR5380_read(STATUS_REG);
 		++i;
 		cpu_relax();
-	पूर्ण जबतक (समय_is_after_jअगरfies(deadline));
+	} while (time_is_after_jiffies(deadline));
 	accesses_per_ms = i / 256;
 	hostdata->poll_loops = NCR5380_REG_POLL_TIME * accesses_per_ms / 2;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * NCR5380_maybe_reset_bus - Detect and correct bus wedge problems.
  * @instance: adapter to check
  *
- * If the प्रणाली crashed, it may have crashed with a connected target and
- * the SCSI bus busy. Check क्रम BUS FREE phase. If not, try to पात the
+ * If the system crashed, it may have crashed with a connected target and
+ * the SCSI bus busy. Check for BUS FREE phase. If not, try to abort the
  * currently established nexus, which we know nothing about. Failing that
- * करो a bus reset.
+ * do a bus reset.
  *
- * Note that a bus reset will cause the chip to निश्चित IRQ.
+ * Note that a bus reset will cause the chip to assert IRQ.
  *
- * Returns 0 अगर successful, otherwise -ENXIO.
+ * Returns 0 if successful, otherwise -ENXIO.
  */
 
-अटल पूर्णांक NCR5380_maybe_reset_bus(काष्ठा Scsi_Host *instance)
-अणु
-	काष्ठा NCR5380_hostdata *hostdata = shost_priv(instance);
-	पूर्णांक pass;
+static int NCR5380_maybe_reset_bus(struct Scsi_Host *instance)
+{
+	struct NCR5380_hostdata *hostdata = shost_priv(instance);
+	int pass;
 
-	क्रम (pass = 1; (NCR5380_पढ़ो(STATUS_REG) & SR_BSY) && pass <= 6; ++pass) अणु
-		चयन (pass) अणु
-		हाल 1:
-		हाल 3:
-		हाल 5:
-			shost_prपूर्णांकk(KERN_ERR, instance, "SCSI bus busy, waiting up to five seconds\n");
+	for (pass = 1; (NCR5380_read(STATUS_REG) & SR_BSY) && pass <= 6; ++pass) {
+		switch (pass) {
+		case 1:
+		case 3:
+		case 5:
+			shost_printk(KERN_ERR, instance, "SCSI bus busy, waiting up to five seconds\n");
 			NCR5380_poll_politely(hostdata,
 			                      STATUS_REG, SR_BSY, 0, 5 * HZ);
-			अवरोध;
-		हाल 2:
-			shost_prपूर्णांकk(KERN_ERR, instance, "bus busy, attempting abort\n");
-			करो_पात(instance, 1);
-			अवरोध;
-		हाल 4:
-			shost_prपूर्णांकk(KERN_ERR, instance, "bus busy, attempting reset\n");
-			करो_reset(instance);
-			/* Wait after a reset; the SCSI standard calls क्रम
-			 * 250ms, we रुको 500ms to be on the safe side.
-			 * But some Toshiba CD-ROMs need ten बार that.
+			break;
+		case 2:
+			shost_printk(KERN_ERR, instance, "bus busy, attempting abort\n");
+			do_abort(instance, 1);
+			break;
+		case 4:
+			shost_printk(KERN_ERR, instance, "bus busy, attempting reset\n");
+			do_reset(instance);
+			/* Wait after a reset; the SCSI standard calls for
+			 * 250ms, we wait 500ms to be on the safe side.
+			 * But some Toshiba CD-ROMs need ten times that.
 			 */
-			अगर (hostdata->flags & FLAG_TOSHIBA_DELAY)
+			if (hostdata->flags & FLAG_TOSHIBA_DELAY)
 				msleep(2500);
-			अन्यथा
+			else
 				msleep(500);
-			अवरोध;
-		हाल 6:
-			shost_prपूर्णांकk(KERN_ERR, instance, "bus locked solid\n");
-			वापस -ENXIO;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			break;
+		case 6:
+			shost_printk(KERN_ERR, instance, "bus locked solid\n");
+			return -ENXIO;
+		}
+	}
+	return 0;
+}
 
 /**
- * NCR5380_निकास - हटाओ an NCR5380
- * @instance: adapter to हटाओ
+ * NCR5380_exit - remove an NCR5380
+ * @instance: adapter to remove
  *
- * Assumes that no more work can be queued (e.g. by NCR5380_पूर्णांकr).
+ * Assumes that no more work can be queued (e.g. by NCR5380_intr).
  */
 
-अटल व्योम NCR5380_निकास(काष्ठा Scsi_Host *instance)
-अणु
-	काष्ठा NCR5380_hostdata *hostdata = shost_priv(instance);
+static void NCR5380_exit(struct Scsi_Host *instance)
+{
+	struct NCR5380_hostdata *hostdata = shost_priv(instance);
 
-	cancel_work_sync(&hostdata->मुख्य_task);
+	cancel_work_sync(&hostdata->main_task);
 	destroy_workqueue(hostdata->work_q);
-पूर्ण
+}
 
 /**
- * complete_cmd - finish processing a command and वापस it to the SCSI ML
+ * complete_cmd - finish processing a command and return it to the SCSI ML
  * @instance: the host instance
  * @cmd: command to complete
  */
 
-अटल व्योम complete_cmd(काष्ठा Scsi_Host *instance,
-                         काष्ठा scsi_cmnd *cmd)
-अणु
-	काष्ठा NCR5380_hostdata *hostdata = shost_priv(instance);
+static void complete_cmd(struct Scsi_Host *instance,
+                         struct scsi_cmnd *cmd)
+{
+	struct NCR5380_hostdata *hostdata = shost_priv(instance);
 
-	dsprपूर्णांकk(न_संशोधन_QUEUES, instance, "complete_cmd: cmd %p\n", cmd);
+	dsprintk(NDEBUG_QUEUES, instance, "complete_cmd: cmd %p\n", cmd);
 
-	अगर (hostdata->sensing == cmd) अणु
+	if (hostdata->sensing == cmd) {
 		/* Autosense processing ends here */
-		अगर (status_byte(cmd->result) != GOOD) अणु
+		if (status_byte(cmd->result) != GOOD) {
 			scsi_eh_restore_cmnd(cmd, &hostdata->ses);
-		पूर्ण अन्यथा अणु
+		} else {
 			scsi_eh_restore_cmnd(cmd, &hostdata->ses);
 			set_driver_byte(cmd, DRIVER_SENSE);
-		पूर्ण
-		hostdata->sensing = शून्य;
-	पूर्ण
+		}
+		hostdata->sensing = NULL;
+	}
 
-	cmd->scsi_करोne(cmd);
-पूर्ण
+	cmd->scsi_done(cmd);
+}
 
 /**
  * NCR5380_queue_command - queue a command
@@ -557,159 +556,159 @@ mrs[] = अणु
  * @cmd: SCSI command
  *
  * cmd is added to the per-instance issue queue, with minor
- * twiddling करोne to the host specअगरic fields of cmd.  If the
- * मुख्य coroutine is not running, it is restarted.
+ * twiddling done to the host specific fields of cmd.  If the
+ * main coroutine is not running, it is restarted.
  */
 
-अटल पूर्णांक NCR5380_queue_command(काष्ठा Scsi_Host *instance,
-                                 काष्ठा scsi_cmnd *cmd)
-अणु
-	काष्ठा NCR5380_hostdata *hostdata = shost_priv(instance);
-	काष्ठा NCR5380_cmd *ncmd = scsi_cmd_priv(cmd);
-	अचिन्हित दीर्घ flags;
+static int NCR5380_queue_command(struct Scsi_Host *instance,
+                                 struct scsi_cmnd *cmd)
+{
+	struct NCR5380_hostdata *hostdata = shost_priv(instance);
+	struct NCR5380_cmd *ncmd = scsi_cmd_priv(cmd);
+	unsigned long flags;
 
-#अगर (न_संशोधन & न_संशोधन_NO_WRITE)
-	चयन (cmd->cmnd[0]) अणु
-	हाल WRITE_6:
-	हाल WRITE_10:
-		shost_prपूर्णांकk(KERN_DEBUG, instance, "WRITE attempted with NDEBUG_NO_WRITE set\n");
+#if (NDEBUG & NDEBUG_NO_WRITE)
+	switch (cmd->cmnd[0]) {
+	case WRITE_6:
+	case WRITE_10:
+		shost_printk(KERN_DEBUG, instance, "WRITE attempted with NDEBUG_NO_WRITE set\n");
 		cmd->result = (DID_ERROR << 16);
-		cmd->scsi_करोne(cmd);
-		वापस 0;
-	पूर्ण
-#पूर्ण_अगर /* (न_संशोधन & न_संशोधन_NO_WRITE) */
+		cmd->scsi_done(cmd);
+		return 0;
+	}
+#endif /* (NDEBUG & NDEBUG_NO_WRITE) */
 
 	cmd->result = 0;
 
 	spin_lock_irqsave(&hostdata->lock, flags);
 
-	अगर (!NCR5380_acquire_dma_irq(instance)) अणु
+	if (!NCR5380_acquire_dma_irq(instance)) {
 		spin_unlock_irqrestore(&hostdata->lock, flags);
 
-		वापस SCSI_MLQUEUE_HOST_BUSY;
-	पूर्ण
+		return SCSI_MLQUEUE_HOST_BUSY;
+	}
 
 	/*
-	 * Insert the cmd पूर्णांकo the issue queue. Note that REQUEST SENSE
+	 * Insert the cmd into the issue queue. Note that REQUEST SENSE
 	 * commands are added to the head of the queue since any command will
 	 * clear the contingent allegiance condition that exists and the
-	 * sense data is only guaranteed to be valid जबतक the condition exists.
+	 * sense data is only guaranteed to be valid while the condition exists.
 	 */
 
-	अगर (cmd->cmnd[0] == REQUEST_SENSE)
+	if (cmd->cmnd[0] == REQUEST_SENSE)
 		list_add(&ncmd->list, &hostdata->unissued);
-	अन्यथा
+	else
 		list_add_tail(&ncmd->list, &hostdata->unissued);
 
 	spin_unlock_irqrestore(&hostdata->lock, flags);
 
-	dsprपूर्णांकk(न_संशोधन_QUEUES, instance, "command %p added to %s of queue\n",
+	dsprintk(NDEBUG_QUEUES, instance, "command %p added to %s of queue\n",
 	         cmd, (cmd->cmnd[0] == REQUEST_SENSE) ? "head" : "tail");
 
 	/* Kick off command processing */
-	queue_work(hostdata->work_q, &hostdata->मुख्य_task);
-	वापस 0;
-पूर्ण
+	queue_work(hostdata->work_q, &hostdata->main_task);
+	return 0;
+}
 
-अटल अंतरभूत व्योम maybe_release_dma_irq(काष्ठा Scsi_Host *instance)
-अणु
-	काष्ठा NCR5380_hostdata *hostdata = shost_priv(instance);
+static inline void maybe_release_dma_irq(struct Scsi_Host *instance)
+{
+	struct NCR5380_hostdata *hostdata = shost_priv(instance);
 
-	/* Caller करोes the locking needed to set & test these data atomically */
-	अगर (list_empty(&hostdata->disconnected) &&
+	/* Caller does the locking needed to set & test these data atomically */
+	if (list_empty(&hostdata->disconnected) &&
 	    list_empty(&hostdata->unissued) &&
-	    list_empty(&hostdata->स्वतःsense) &&
+	    list_empty(&hostdata->autosense) &&
 	    !hostdata->connected &&
-	    !hostdata->selecting) अणु
+	    !hostdata->selecting) {
 		NCR5380_release_dma_irq(instance);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * dequeue_next_cmd - dequeue a command क्रम processing
+ * dequeue_next_cmd - dequeue a command for processing
  * @instance: the scsi host instance
  *
- * Priority is given to commands on the स्वतःsense queue. These commands
- * need स्वतःsense because of a CHECK CONDITION result.
+ * Priority is given to commands on the autosense queue. These commands
+ * need autosense because of a CHECK CONDITION result.
  *
- * Returns a command poपूर्णांकer अगर a command is found क्रम a target that is
- * not alपढ़ोy busy. Otherwise वापसs शून्य.
+ * Returns a command pointer if a command is found for a target that is
+ * not already busy. Otherwise returns NULL.
  */
 
-अटल काष्ठा scsi_cmnd *dequeue_next_cmd(काष्ठा Scsi_Host *instance)
-अणु
-	काष्ठा NCR5380_hostdata *hostdata = shost_priv(instance);
-	काष्ठा NCR5380_cmd *ncmd;
-	काष्ठा scsi_cmnd *cmd;
+static struct scsi_cmnd *dequeue_next_cmd(struct Scsi_Host *instance)
+{
+	struct NCR5380_hostdata *hostdata = shost_priv(instance);
+	struct NCR5380_cmd *ncmd;
+	struct scsi_cmnd *cmd;
 
-	अगर (hostdata->sensing || list_empty(&hostdata->स्वतःsense)) अणु
-		list_क्रम_each_entry(ncmd, &hostdata->unissued, list) अणु
+	if (hostdata->sensing || list_empty(&hostdata->autosense)) {
+		list_for_each_entry(ncmd, &hostdata->unissued, list) {
 			cmd = NCR5380_to_scmd(ncmd);
-			dsprपूर्णांकk(न_संशोधन_QUEUES, instance, "dequeue: cmd=%p target=%d busy=0x%02x lun=%llu\n",
+			dsprintk(NDEBUG_QUEUES, instance, "dequeue: cmd=%p target=%d busy=0x%02x lun=%llu\n",
 			         cmd, scmd_id(cmd), hostdata->busy[scmd_id(cmd)], cmd->device->lun);
 
-			अगर (!(hostdata->busy[scmd_id(cmd)] & (1 << cmd->device->lun))) अणु
+			if (!(hostdata->busy[scmd_id(cmd)] & (1 << cmd->device->lun))) {
 				list_del(&ncmd->list);
-				dsprपूर्णांकk(न_संशोधन_QUEUES, instance,
+				dsprintk(NDEBUG_QUEUES, instance,
 				         "dequeue: removed %p from issue queue\n", cmd);
-				वापस cmd;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
+				return cmd;
+			}
+		}
+	} else {
 		/* Autosense processing begins here */
-		ncmd = list_first_entry(&hostdata->स्वतःsense,
-		                        काष्ठा NCR5380_cmd, list);
+		ncmd = list_first_entry(&hostdata->autosense,
+		                        struct NCR5380_cmd, list);
 		list_del(&ncmd->list);
 		cmd = NCR5380_to_scmd(ncmd);
-		dsprपूर्णांकk(न_संशोधन_QUEUES, instance,
+		dsprintk(NDEBUG_QUEUES, instance,
 		         "dequeue: removed %p from autosense queue\n", cmd);
-		scsi_eh_prep_cmnd(cmd, &hostdata->ses, शून्य, 0, ~0);
+		scsi_eh_prep_cmnd(cmd, &hostdata->ses, NULL, 0, ~0);
 		hostdata->sensing = cmd;
-		वापस cmd;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		return cmd;
+	}
+	return NULL;
+}
 
-अटल व्योम requeue_cmd(काष्ठा Scsi_Host *instance, काष्ठा scsi_cmnd *cmd)
-अणु
-	काष्ठा NCR5380_hostdata *hostdata = shost_priv(instance);
-	काष्ठा NCR5380_cmd *ncmd = scsi_cmd_priv(cmd);
+static void requeue_cmd(struct Scsi_Host *instance, struct scsi_cmnd *cmd)
+{
+	struct NCR5380_hostdata *hostdata = shost_priv(instance);
+	struct NCR5380_cmd *ncmd = scsi_cmd_priv(cmd);
 
-	अगर (hostdata->sensing == cmd) अणु
+	if (hostdata->sensing == cmd) {
 		scsi_eh_restore_cmnd(cmd, &hostdata->ses);
-		list_add(&ncmd->list, &hostdata->स्वतःsense);
-		hostdata->sensing = शून्य;
-	पूर्ण अन्यथा
+		list_add(&ncmd->list, &hostdata->autosense);
+		hostdata->sensing = NULL;
+	} else
 		list_add(&ncmd->list, &hostdata->unissued);
-पूर्ण
+}
 
 /**
- * NCR5380_मुख्य - NCR state machines
+ * NCR5380_main - NCR state machines
  *
- * NCR5380_मुख्य is a coroutine that runs as दीर्घ as more work can
- * be करोne on the NCR5380 host adapters in a प्रणाली.  Both
- * NCR5380_queue_command() and NCR5380_पूर्णांकr() will try to start it
- * in हाल it is not running.
+ * NCR5380_main is a coroutine that runs as long as more work can
+ * be done on the NCR5380 host adapters in a system.  Both
+ * NCR5380_queue_command() and NCR5380_intr() will try to start it
+ * in case it is not running.
  */
 
-अटल व्योम NCR5380_मुख्य(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा NCR5380_hostdata *hostdata =
-		container_of(work, काष्ठा NCR5380_hostdata, मुख्य_task);
-	काष्ठा Scsi_Host *instance = hostdata->host;
-	पूर्णांक करोne;
+static void NCR5380_main(struct work_struct *work)
+{
+	struct NCR5380_hostdata *hostdata =
+		container_of(work, struct NCR5380_hostdata, main_task);
+	struct Scsi_Host *instance = hostdata->host;
+	int done;
 
-	करो अणु
-		करोne = 1;
+	do {
+		done = 1;
 
 		spin_lock_irq(&hostdata->lock);
-		जबतक (!hostdata->connected && !hostdata->selecting) अणु
-			काष्ठा scsi_cmnd *cmd = dequeue_next_cmd(instance);
+		while (!hostdata->connected && !hostdata->selecting) {
+			struct scsi_cmnd *cmd = dequeue_next_cmd(instance);
 
-			अगर (!cmd)
-				अवरोध;
+			if (!cmd)
+				break;
 
-			dsprपूर्णांकk(न_संशोधन_MAIN, instance, "main: dequeued %p\n", cmd);
+			dsprintk(NDEBUG_MAIN, instance, "main: dequeued %p\n", cmd);
 
 			/*
 			 * Attempt to establish an I_T_L nexus here.
@@ -720,274 +719,274 @@ mrs[] = अणु
 			/*
 			 * REQUEST SENSE commands are issued without tagged
 			 * queueing, even on SCSI-II devices because the
-			 * contingent allegiance condition exists क्रम the
+			 * contingent allegiance condition exists for the
 			 * entire unit.
 			 */
 
-			अगर (!NCR5380_select(instance, cmd)) अणु
-				dsprपूर्णांकk(न_संशोधन_MAIN, instance, "main: select complete\n");
-			पूर्ण अन्यथा अणु
-				dsprपूर्णांकk(न_संशोधन_MAIN | न_संशोधन_QUEUES, instance,
+			if (!NCR5380_select(instance, cmd)) {
+				dsprintk(NDEBUG_MAIN, instance, "main: select complete\n");
+			} else {
+				dsprintk(NDEBUG_MAIN | NDEBUG_QUEUES, instance,
 				         "main: select failed, returning %p to queue\n", cmd);
 				requeue_cmd(instance, cmd);
-			पूर्ण
-		पूर्ण
-		अगर (hostdata->connected && !hostdata->dma_len) अणु
-			dsprपूर्णांकk(न_संशोधन_MAIN, instance, "main: performing information transfer\n");
-			NCR5380_inक्रमmation_transfer(instance);
-			करोne = 0;
-		पूर्ण
-		अगर (!hostdata->connected) अणु
-			NCR5380_ग_लिखो(SELECT_ENABLE_REG, hostdata->id_mask);
+			}
+		}
+		if (hostdata->connected && !hostdata->dma_len) {
+			dsprintk(NDEBUG_MAIN, instance, "main: performing information transfer\n");
+			NCR5380_information_transfer(instance);
+			done = 0;
+		}
+		if (!hostdata->connected) {
+			NCR5380_write(SELECT_ENABLE_REG, hostdata->id_mask);
 			maybe_release_dma_irq(instance);
-		पूर्ण
+		}
 		spin_unlock_irq(&hostdata->lock);
-		अगर (!करोne)
+		if (!done)
 			cond_resched();
-	पूर्ण जबतक (!करोne);
-पूर्ण
+	} while (!done);
+}
 
 /*
  * NCR5380_dma_complete - finish DMA transfer
  * @instance: the scsi host instance
  *
- * Called by the पूर्णांकerrupt handler when DMA finishes or a phase
+ * Called by the interrupt handler when DMA finishes or a phase
  * mismatch occurs (which would end the DMA transfer).
  */
 
-अटल व्योम NCR5380_dma_complete(काष्ठा Scsi_Host *instance)
-अणु
-	काष्ठा NCR5380_hostdata *hostdata = shost_priv(instance);
-	पूर्णांक transferred;
-	अचिन्हित अक्षर **data;
-	पूर्णांक *count;
-	पूर्णांक saved_data = 0, overrun = 0;
-	अचिन्हित अक्षर p;
+static void NCR5380_dma_complete(struct Scsi_Host *instance)
+{
+	struct NCR5380_hostdata *hostdata = shost_priv(instance);
+	int transferred;
+	unsigned char **data;
+	int *count;
+	int saved_data = 0, overrun = 0;
+	unsigned char p;
 
-	अगर (hostdata->पढ़ो_overruns) अणु
+	if (hostdata->read_overruns) {
 		p = hostdata->connected->SCp.phase;
-		अगर (p & SR_IO) अणु
+		if (p & SR_IO) {
 			udelay(10);
-			अगर ((NCR5380_पढ़ो(BUS_AND_STATUS_REG) &
+			if ((NCR5380_read(BUS_AND_STATUS_REG) &
 			     (BASR_PHASE_MATCH | BASR_ACK)) ==
-			    (BASR_PHASE_MATCH | BASR_ACK)) अणु
-				saved_data = NCR5380_पढ़ो(INPUT_DATA_REG);
+			    (BASR_PHASE_MATCH | BASR_ACK)) {
+				saved_data = NCR5380_read(INPUT_DATA_REG);
 				overrun = 1;
-				dsprपूर्णांकk(न_संशोधन_DMA, instance, "read overrun handled\n");
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				dsprintk(NDEBUG_DMA, instance, "read overrun handled\n");
+			}
+		}
+	}
 
-#अगर_घोषित CONFIG_SUN3
-	अगर ((sun3scsi_dma_finish(rq_data_dir(hostdata->connected->request)))) अणु
+#ifdef CONFIG_SUN3
+	if ((sun3scsi_dma_finish(rq_data_dir(hostdata->connected->request)))) {
 		pr_err("scsi%d: overrun in UDC counter -- not prepared to deal with this!\n",
 		       instance->host_no);
 		BUG();
-	पूर्ण
+	}
 
-	अगर ((NCR5380_पढ़ो(BUS_AND_STATUS_REG) & (BASR_PHASE_MATCH | BASR_ACK)) ==
-	    (BASR_PHASE_MATCH | BASR_ACK)) अणु
+	if ((NCR5380_read(BUS_AND_STATUS_REG) & (BASR_PHASE_MATCH | BASR_ACK)) ==
+	    (BASR_PHASE_MATCH | BASR_ACK)) {
 		pr_err("scsi%d: BASR %02x\n", instance->host_no,
-		       NCR5380_पढ़ो(BUS_AND_STATUS_REG));
+		       NCR5380_read(BUS_AND_STATUS_REG));
 		pr_err("scsi%d: bus stuck in data phase -- probably a single byte overrun!\n",
 		       instance->host_no);
 		BUG();
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
-	NCR5380_ग_लिखो(MODE_REG, MR_BASE);
-	NCR5380_ग_लिखो(INITIATOR_COMMAND_REG, ICR_BASE);
-	NCR5380_पढ़ो(RESET_PARITY_INTERRUPT_REG);
+	NCR5380_write(MODE_REG, MR_BASE);
+	NCR5380_write(INITIATOR_COMMAND_REG, ICR_BASE);
+	NCR5380_read(RESET_PARITY_INTERRUPT_REG);
 
 	transferred = hostdata->dma_len - NCR5380_dma_residual(hostdata);
 	hostdata->dma_len = 0;
 
-	data = (अचिन्हित अक्षर **)&hostdata->connected->SCp.ptr;
+	data = (unsigned char **)&hostdata->connected->SCp.ptr;
 	count = &hostdata->connected->SCp.this_residual;
 	*data += transferred;
 	*count -= transferred;
 
-	अगर (hostdata->पढ़ो_overruns) अणु
-		पूर्णांक cnt, toPIO;
+	if (hostdata->read_overruns) {
+		int cnt, toPIO;
 
-		अगर ((NCR5380_पढ़ो(STATUS_REG) & PHASE_MASK) == p && (p & SR_IO)) अणु
-			cnt = toPIO = hostdata->पढ़ो_overruns;
-			अगर (overrun) अणु
-				dsprपूर्णांकk(न_संशोधन_DMA, instance,
+		if ((NCR5380_read(STATUS_REG) & PHASE_MASK) == p && (p & SR_IO)) {
+			cnt = toPIO = hostdata->read_overruns;
+			if (overrun) {
+				dsprintk(NDEBUG_DMA, instance,
 				         "Got an input overrun, using saved byte\n");
 				*(*data)++ = saved_data;
 				(*count)--;
 				cnt--;
 				toPIO--;
-			पूर्ण
-			अगर (toPIO > 0) अणु
-				dsprपूर्णांकk(न_संशोधन_DMA, instance,
+			}
+			if (toPIO > 0) {
+				dsprintk(NDEBUG_DMA, instance,
 				         "Doing %d byte PIO to 0x%p\n", cnt, *data);
 				NCR5380_transfer_pio(instance, &p, &cnt, data, 0);
 				*count -= toPIO - cnt;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
 /**
- * NCR5380_पूर्णांकr - generic NCR5380 irq handler
- * @irq: पूर्णांकerrupt number
+ * NCR5380_intr - generic NCR5380 irq handler
+ * @irq: interrupt number
  * @dev_id: device info
  *
- * Handle पूर्णांकerrupts, reestablishing I_T_L or I_T_L_Q nexuses
- * from the disconnected queue, and restarting NCR5380_मुख्य()
+ * Handle interrupts, reestablishing I_T_L or I_T_L_Q nexuses
+ * from the disconnected queue, and restarting NCR5380_main()
  * as required.
  *
- * The chip can निश्चित IRQ in any of six dअगरferent conditions. The IRQ flag
- * is then cleared by पढ़ोing the Reset Parity/Interrupt Register (RPIR).
+ * The chip can assert IRQ in any of six different conditions. The IRQ flag
+ * is then cleared by reading the Reset Parity/Interrupt Register (RPIR).
  * Three of these six conditions are latched in the Bus and Status Register:
  * - End of DMA (cleared by ending DMA Mode)
- * - Parity error (cleared by पढ़ोing RPIR)
- * - Loss of BSY (cleared by पढ़ोing RPIR)
+ * - Parity error (cleared by reading RPIR)
+ * - Loss of BSY (cleared by reading RPIR)
  * Two conditions have flag bits that are not latched:
  * - Bus phase mismatch (non-maskable in DMA Mode, cleared by ending DMA Mode)
  * - Bus reset (non-maskable)
- * The reमुख्यing condition has no flag bit at all:
+ * The remaining condition has no flag bit at all:
  * - Selection/reselection
  *
- * Hence, establishing the cause(s) of any पूर्णांकerrupt is partly guesswork.
+ * Hence, establishing the cause(s) of any interrupt is partly guesswork.
  * In "The DP8490 and DP5380 Comparison Guide", National Semiconductor
- * claimed that "the design of the [DP8490] पूर्णांकerrupt logic ensures
- * पूर्णांकerrupts will not be lost (they can be on the DP5380)."
+ * claimed that "the design of the [DP8490] interrupt logic ensures
+ * interrupts will not be lost (they can be on the DP5380)."
  * The L5380/53C80 datasheet from LOGIC Devices has more details.
  *
- * Checking क्रम bus reset by पढ़ोing RST is futile because of पूर्णांकerrupt
- * latency, but a bus reset will reset chip logic. Checking क्रम parity error
- * is unnecessary because that पूर्णांकerrupt is never enabled. A Loss of BSY
+ * Checking for bus reset by reading RST is futile because of interrupt
+ * latency, but a bus reset will reset chip logic. Checking for parity error
+ * is unnecessary because that interrupt is never enabled. A Loss of BSY
  * condition will clear DMA Mode. We can tell when this occurs because the
- * the Busy Monitor पूर्णांकerrupt is enabled together with DMA Mode.
+ * the Busy Monitor interrupt is enabled together with DMA Mode.
  */
 
-अटल irqवापस_t __maybe_unused NCR5380_पूर्णांकr(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा Scsi_Host *instance = dev_id;
-	काष्ठा NCR5380_hostdata *hostdata = shost_priv(instance);
-	पूर्णांक handled = 0;
-	अचिन्हित अक्षर basr;
-	अचिन्हित दीर्घ flags;
+static irqreturn_t __maybe_unused NCR5380_intr(int irq, void *dev_id)
+{
+	struct Scsi_Host *instance = dev_id;
+	struct NCR5380_hostdata *hostdata = shost_priv(instance);
+	int handled = 0;
+	unsigned char basr;
+	unsigned long flags;
 
 	spin_lock_irqsave(&hostdata->lock, flags);
 
-	basr = NCR5380_पढ़ो(BUS_AND_STATUS_REG);
-	अगर (basr & BASR_IRQ) अणु
-		अचिन्हित अक्षर mr = NCR5380_पढ़ो(MODE_REG);
-		अचिन्हित अक्षर sr = NCR5380_पढ़ो(STATUS_REG);
+	basr = NCR5380_read(BUS_AND_STATUS_REG);
+	if (basr & BASR_IRQ) {
+		unsigned char mr = NCR5380_read(MODE_REG);
+		unsigned char sr = NCR5380_read(STATUS_REG);
 
-		dsprपूर्णांकk(न_संशोधन_INTR, instance, "IRQ %d, BASR 0x%02x, SR 0x%02x, MR 0x%02x\n",
+		dsprintk(NDEBUG_INTR, instance, "IRQ %d, BASR 0x%02x, SR 0x%02x, MR 0x%02x\n",
 		         irq, basr, sr, mr);
 
-		अगर ((mr & MR_DMA_MODE) || (mr & MR_MONITOR_BSY)) अणु
+		if ((mr & MR_DMA_MODE) || (mr & MR_MONITOR_BSY)) {
 			/* Probably End of DMA, Phase Mismatch or Loss of BSY.
 			 * We ack IRQ after clearing Mode Register. Workarounds
-			 * क्रम End of DMA errata need to happen in DMA Mode.
+			 * for End of DMA errata need to happen in DMA Mode.
 			 */
 
-			dsprपूर्णांकk(न_संशोधन_INTR, instance, "interrupt in DMA mode\n");
+			dsprintk(NDEBUG_INTR, instance, "interrupt in DMA mode\n");
 
-			अगर (hostdata->connected) अणु
+			if (hostdata->connected) {
 				NCR5380_dma_complete(instance);
-				queue_work(hostdata->work_q, &hostdata->मुख्य_task);
-			पूर्ण अन्यथा अणु
-				NCR5380_ग_लिखो(MODE_REG, MR_BASE);
-				NCR5380_पढ़ो(RESET_PARITY_INTERRUPT_REG);
-			पूर्ण
-		पूर्ण अन्यथा अगर ((NCR5380_पढ़ो(CURRENT_SCSI_DATA_REG) & hostdata->id_mask) &&
-		    (sr & (SR_SEL | SR_IO | SR_BSY | SR_RST)) == (SR_SEL | SR_IO)) अणु
+				queue_work(hostdata->work_q, &hostdata->main_task);
+			} else {
+				NCR5380_write(MODE_REG, MR_BASE);
+				NCR5380_read(RESET_PARITY_INTERRUPT_REG);
+			}
+		} else if ((NCR5380_read(CURRENT_SCSI_DATA_REG) & hostdata->id_mask) &&
+		    (sr & (SR_SEL | SR_IO | SR_BSY | SR_RST)) == (SR_SEL | SR_IO)) {
 			/* Probably reselected */
-			NCR5380_ग_लिखो(SELECT_ENABLE_REG, 0);
-			NCR5380_पढ़ो(RESET_PARITY_INTERRUPT_REG);
+			NCR5380_write(SELECT_ENABLE_REG, 0);
+			NCR5380_read(RESET_PARITY_INTERRUPT_REG);
 
-			dsprपूर्णांकk(न_संशोधन_INTR, instance, "interrupt with SEL and IO\n");
+			dsprintk(NDEBUG_INTR, instance, "interrupt with SEL and IO\n");
 
-			अगर (!hostdata->connected) अणु
+			if (!hostdata->connected) {
 				NCR5380_reselect(instance);
-				queue_work(hostdata->work_q, &hostdata->मुख्य_task);
-			पूर्ण
-			अगर (!hostdata->connected)
-				NCR5380_ग_लिखो(SELECT_ENABLE_REG, hostdata->id_mask);
-		पूर्ण अन्यथा अणु
+				queue_work(hostdata->work_q, &hostdata->main_task);
+			}
+			if (!hostdata->connected)
+				NCR5380_write(SELECT_ENABLE_REG, hostdata->id_mask);
+		} else {
 			/* Probably Bus Reset */
-			NCR5380_पढ़ो(RESET_PARITY_INTERRUPT_REG);
+			NCR5380_read(RESET_PARITY_INTERRUPT_REG);
 
-			अगर (sr & SR_RST) अणु
+			if (sr & SR_RST) {
 				/* Certainly Bus Reset */
-				shost_prपूर्णांकk(KERN_WARNING, instance,
+				shost_printk(KERN_WARNING, instance,
 					     "bus reset interrupt\n");
 				bus_reset_cleanup(instance);
-			पूर्ण अन्यथा अणु
-				dsprपूर्णांकk(न_संशोधन_INTR, instance, "unknown interrupt\n");
-			पूर्ण
-#अगर_घोषित SUN3_SCSI_VME
+			} else {
+				dsprintk(NDEBUG_INTR, instance, "unknown interrupt\n");
+			}
+#ifdef SUN3_SCSI_VME
 			dregs->csr |= CSR_DMA_ENABLE;
-#पूर्ण_अगर
-		पूर्ण
+#endif
+		}
 		handled = 1;
-	पूर्ण अन्यथा अणु
-		dsprपूर्णांकk(न_संशोधन_INTR, instance, "interrupt without IRQ bit\n");
-#अगर_घोषित SUN3_SCSI_VME
+	} else {
+		dsprintk(NDEBUG_INTR, instance, "interrupt without IRQ bit\n");
+#ifdef SUN3_SCSI_VME
 		dregs->csr |= CSR_DMA_ENABLE;
-#पूर्ण_अगर
-	पूर्ण
+#endif
+	}
 
 	spin_unlock_irqrestore(&hostdata->lock, flags);
 
-	वापस IRQ_RETVAL(handled);
-पूर्ण
+	return IRQ_RETVAL(handled);
+}
 
 /**
- * NCR5380_select - attempt arbitration and selection क्रम a given command
+ * NCR5380_select - attempt arbitration and selection for a given command
  * @instance: the Scsi_Host instance
  * @cmd: the scsi_cmnd to execute
  *
- * This routine establishes an I_T_L nexus क्रम a SCSI command. This involves
+ * This routine establishes an I_T_L nexus for a SCSI command. This involves
  * ARBITRATION, SELECTION and MESSAGE OUT phases and an IDENTIFY message.
  *
- * Returns true अगर the operation should be retried.
- * Returns false अगर it should not be retried.
+ * Returns true if the operation should be retried.
+ * Returns false if it should not be retried.
  *
  * Side effects :
- * If bus busy, arbitration failed, etc, NCR5380_select() will निकास
- * with रेजिस्टरs as they should have been on entry - ie
+ * If bus busy, arbitration failed, etc, NCR5380_select() will exit
+ * with registers as they should have been on entry - ie
  * SELECT_ENABLE will be set appropriately, the NCR5380
- * will cease to drive any SCSI bus संकेतs.
+ * will cease to drive any SCSI bus signals.
  *
  * If successful : the I_T_L nexus will be established, and
  * hostdata->connected will be set to cmd.
- * SELECT पूर्णांकerrupt will be disabled.
+ * SELECT interrupt will be disabled.
  *
- * If failed (no target) : cmd->scsi_करोne() will be called, and the
+ * If failed (no target) : cmd->scsi_done() will be called, and the
  * cmd->result host byte set to DID_BAD_TARGET.
  */
 
-अटल bool NCR5380_select(काष्ठा Scsi_Host *instance, काष्ठा scsi_cmnd *cmd)
+static bool NCR5380_select(struct Scsi_Host *instance, struct scsi_cmnd *cmd)
 	__releases(&hostdata->lock) __acquires(&hostdata->lock)
-अणु
-	काष्ठा NCR5380_hostdata *hostdata = shost_priv(instance);
-	अचिन्हित अक्षर पंचांगp[3], phase;
-	अचिन्हित अक्षर *data;
-	पूर्णांक len;
-	पूर्णांक err;
+{
+	struct NCR5380_hostdata *hostdata = shost_priv(instance);
+	unsigned char tmp[3], phase;
+	unsigned char *data;
+	int len;
+	int err;
 	bool ret = true;
 	bool can_disconnect = instance->irq != NO_IRQ &&
 			      cmd->cmnd[0] != REQUEST_SENSE &&
 			      (disconnect_mask & BIT(scmd_id(cmd)));
 
-	NCR5380_dprपूर्णांक(न_संशोधन_ARBITRATION, instance);
-	dsprपूर्णांकk(न_संशोधन_ARBITRATION, instance, "starting arbitration, id = %d\n",
+	NCR5380_dprint(NDEBUG_ARBITRATION, instance);
+	dsprintk(NDEBUG_ARBITRATION, instance, "starting arbitration, id = %d\n",
 	         instance->this_id);
 
 	/*
 	 * Arbitration and selection phases are slow and involve dropping the
-	 * lock, so we have to watch out क्रम EH. An exception handler may
-	 * change 'selecting' to शून्य. This function will then वापस false
-	 * so that the caller will क्रमget about 'cmd'. (During inक्रमmation
-	 * transfer phases, EH may change 'connected' to शून्य.)
+	 * lock, so we have to watch out for EH. An exception handler may
+	 * change 'selecting' to NULL. This function will then return false
+	 * so that the caller will forget about 'cmd'. (During information
+	 * transfer phases, EH may change 'connected' to NULL.)
 	 */
 	hostdata->selecting = cmd;
 
@@ -996,16 +995,16 @@ mrs[] = अणु
 	 * data bus during SELECTION.
 	 */
 
-	NCR5380_ग_लिखो(TARGET_COMMAND_REG, 0);
+	NCR5380_write(TARGET_COMMAND_REG, 0);
 
 	/*
 	 * Start arbitration.
 	 */
 
-	NCR5380_ग_लिखो(OUTPUT_DATA_REG, hostdata->id_mask);
-	NCR5380_ग_लिखो(MODE_REG, MR_ARBITRATE);
+	NCR5380_write(OUTPUT_DATA_REG, hostdata->id_mask);
+	NCR5380_write(MODE_REG, MR_ARBITRATE);
 
-	/* The chip now रुकोs क्रम BUS FREE phase. Then after the 800 ns
+	/* The chip now waits for BUS FREE phase. Then after the 800 ns
 	 * Bus Free Delay, arbitration will begin.
 	 */
 
@@ -1014,392 +1013,392 @@ mrs[] = अणु
 	                INITIATOR_COMMAND_REG, ICR_ARBITRATION_PROGRESS,
 	                                       ICR_ARBITRATION_PROGRESS, HZ);
 	spin_lock_irq(&hostdata->lock);
-	अगर (!(NCR5380_पढ़ो(MODE_REG) & MR_ARBITRATE)) अणु
-		/* Reselection पूर्णांकerrupt */
-		जाओ out;
-	पूर्ण
-	अगर (!hostdata->selecting) अणु
-		/* Command was पातed */
-		NCR5380_ग_लिखो(MODE_REG, MR_BASE);
-		वापस false;
-	पूर्ण
-	अगर (err < 0) अणु
-		NCR5380_ग_लिखो(MODE_REG, MR_BASE);
-		shost_prपूर्णांकk(KERN_ERR, instance,
+	if (!(NCR5380_read(MODE_REG) & MR_ARBITRATE)) {
+		/* Reselection interrupt */
+		goto out;
+	}
+	if (!hostdata->selecting) {
+		/* Command was aborted */
+		NCR5380_write(MODE_REG, MR_BASE);
+		return false;
+	}
+	if (err < 0) {
+		NCR5380_write(MODE_REG, MR_BASE);
+		shost_printk(KERN_ERR, instance,
 		             "select: arbitration timeout\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	spin_unlock_irq(&hostdata->lock);
 
 	/* The SCSI-2 arbitration delay is 2.4 us */
 	udelay(3);
 
-	/* Check क्रम lost arbitration */
-	अगर ((NCR5380_पढ़ो(INITIATOR_COMMAND_REG) & ICR_ARBITRATION_LOST) ||
-	    (NCR5380_पढ़ो(CURRENT_SCSI_DATA_REG) & hostdata->id_higher_mask) ||
-	    (NCR5380_पढ़ो(INITIATOR_COMMAND_REG) & ICR_ARBITRATION_LOST)) अणु
-		NCR5380_ग_लिखो(MODE_REG, MR_BASE);
-		dsprपूर्णांकk(न_संशोधन_ARBITRATION, instance, "lost arbitration, deasserting MR_ARBITRATE\n");
+	/* Check for lost arbitration */
+	if ((NCR5380_read(INITIATOR_COMMAND_REG) & ICR_ARBITRATION_LOST) ||
+	    (NCR5380_read(CURRENT_SCSI_DATA_REG) & hostdata->id_higher_mask) ||
+	    (NCR5380_read(INITIATOR_COMMAND_REG) & ICR_ARBITRATION_LOST)) {
+		NCR5380_write(MODE_REG, MR_BASE);
+		dsprintk(NDEBUG_ARBITRATION, instance, "lost arbitration, deasserting MR_ARBITRATE\n");
 		spin_lock_irq(&hostdata->lock);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* After/during arbitration, BSY should be निश्चितed.
+	/* After/during arbitration, BSY should be asserted.
 	 * IBM DPES-31080 Version S31Q works now
-	 * Tnx to Thomas_Roesch@m2.maus.de क्रम finding this! (Roman)
+	 * Tnx to Thomas_Roesch@m2.maus.de for finding this! (Roman)
 	 */
-	NCR5380_ग_लिखो(INITIATOR_COMMAND_REG,
+	NCR5380_write(INITIATOR_COMMAND_REG,
 		      ICR_BASE | ICR_ASSERT_SEL | ICR_ASSERT_BSY);
 
 	/*
-	 * Again, bus clear + bus settle समय is 1.2us, however, this is
-	 * a minimum so we'll udelay उच्चमान(1.2)
+	 * Again, bus clear + bus settle time is 1.2us, however, this is
+	 * a minimum so we'll udelay ceil(1.2)
 	 */
 
-	अगर (hostdata->flags & FLAG_TOSHIBA_DELAY)
+	if (hostdata->flags & FLAG_TOSHIBA_DELAY)
 		udelay(15);
-	अन्यथा
+	else
 		udelay(2);
 
 	spin_lock_irq(&hostdata->lock);
 
-	/* NCR5380_reselect() clears MODE_REG after a reselection पूर्णांकerrupt */
-	अगर (!(NCR5380_पढ़ो(MODE_REG) & MR_ARBITRATE))
-		जाओ out;
+	/* NCR5380_reselect() clears MODE_REG after a reselection interrupt */
+	if (!(NCR5380_read(MODE_REG) & MR_ARBITRATE))
+		goto out;
 
-	अगर (!hostdata->selecting) अणु
-		NCR5380_ग_लिखो(MODE_REG, MR_BASE);
-		NCR5380_ग_लिखो(INITIATOR_COMMAND_REG, ICR_BASE);
-		वापस false;
-	पूर्ण
+	if (!hostdata->selecting) {
+		NCR5380_write(MODE_REG, MR_BASE);
+		NCR5380_write(INITIATOR_COMMAND_REG, ICR_BASE);
+		return false;
+	}
 
-	dsprपूर्णांकk(न_संशोधन_ARBITRATION, instance, "won arbitration\n");
+	dsprintk(NDEBUG_ARBITRATION, instance, "won arbitration\n");
 
 	/*
-	 * Now that we have won arbitration, start Selection process, निश्चितing
+	 * Now that we have won arbitration, start Selection process, asserting
 	 * the host and target ID's on the SCSI bus.
 	 */
 
-	NCR5380_ग_लिखो(OUTPUT_DATA_REG, hostdata->id_mask | (1 << scmd_id(cmd)));
+	NCR5380_write(OUTPUT_DATA_REG, hostdata->id_mask | (1 << scmd_id(cmd)));
 
 	/*
-	 * Raise ATN जबतक SEL is true beक्रमe BSY goes false from arbitration,
+	 * Raise ATN while SEL is true before BSY goes false from arbitration,
 	 * since this is the only way to guarantee that we'll get a MESSAGE OUT
 	 * phase immediately after selection.
 	 */
 
-	NCR5380_ग_लिखो(INITIATOR_COMMAND_REG, ICR_BASE | ICR_ASSERT_BSY |
+	NCR5380_write(INITIATOR_COMMAND_REG, ICR_BASE | ICR_ASSERT_BSY |
 	              ICR_ASSERT_DATA | ICR_ASSERT_ATN | ICR_ASSERT_SEL);
-	NCR5380_ग_लिखो(MODE_REG, MR_BASE);
+	NCR5380_write(MODE_REG, MR_BASE);
 
 	/*
-	 * Reselect पूर्णांकerrupts must be turned off prior to the dropping of BSY,
-	 * otherwise we will trigger an पूर्णांकerrupt.
+	 * Reselect interrupts must be turned off prior to the dropping of BSY,
+	 * otherwise we will trigger an interrupt.
 	 */
-	NCR5380_ग_लिखो(SELECT_ENABLE_REG, 0);
+	NCR5380_write(SELECT_ENABLE_REG, 0);
 
 	spin_unlock_irq(&hostdata->lock);
 
 	/*
-	 * The initiator shall then रुको at least two deskew delays and release
-	 * the BSY संकेत.
+	 * The initiator shall then wait at least two deskew delays and release
+	 * the BSY signal.
 	 */
-	udelay(1);        /* wingel -- रुको two bus deskew delay >2*45ns */
+	udelay(1);        /* wingel -- wait two bus deskew delay >2*45ns */
 
 	/* Reset BSY */
-	NCR5380_ग_लिखो(INITIATOR_COMMAND_REG, ICR_BASE | ICR_ASSERT_DATA |
+	NCR5380_write(INITIATOR_COMMAND_REG, ICR_BASE | ICR_ASSERT_DATA |
 	              ICR_ASSERT_ATN | ICR_ASSERT_SEL);
 
 	/*
 	 * Something weird happens when we cease to drive BSY - looks
-	 * like the board/chip is letting us करो another पढ़ो beक्रमe the
+	 * like the board/chip is letting us do another read before the
 	 * appropriate propagation delay has expired, and we're confusing
-	 * a BSY संकेत from ourselves as the target's response to SELECTION.
+	 * a BSY signal from ourselves as the target's response to SELECTION.
 	 *
-	 * A small delay (the 'C++' frontend अवरोधs the pipeline with an
+	 * A small delay (the 'C++' frontend breaks the pipeline with an
 	 * unnecessary jump, making it work on my 386-33/Trantor T128, the
-	 * tighter 'C' code अवरोधs and requires this) solves the problem -
+	 * tighter 'C' code breaks and requires this) solves the problem -
 	 * the 1 us delay is arbitrary, and only used because this delay will
-	 * be the same on other platक्रमms and since it works here, it should
+	 * be the same on other platforms and since it works here, it should
 	 * work there.
 	 *
-	 * wingel suggests that this could be due to failing to रुको
+	 * wingel suggests that this could be due to failing to wait
 	 * one deskew delay.
 	 */
 
 	udelay(1);
 
-	dsprपूर्णांकk(न_संशोधन_SELECTION, instance, "selecting target %d\n", scmd_id(cmd));
+	dsprintk(NDEBUG_SELECTION, instance, "selecting target %d\n", scmd_id(cmd));
 
 	/*
-	 * The SCSI specअगरication calls क्रम a 250 ms समयout क्रम the actual
+	 * The SCSI specification calls for a 250 ms timeout for the actual
 	 * selection.
 	 */
 
 	err = NCR5380_poll_politely(hostdata, STATUS_REG, SR_BSY, SR_BSY,
-	                            msecs_to_jअगरfies(250));
+	                            msecs_to_jiffies(250));
 
-	अगर ((NCR5380_पढ़ो(STATUS_REG) & (SR_SEL | SR_IO)) == (SR_SEL | SR_IO)) अणु
+	if ((NCR5380_read(STATUS_REG) & (SR_SEL | SR_IO)) == (SR_SEL | SR_IO)) {
 		spin_lock_irq(&hostdata->lock);
-		NCR5380_ग_लिखो(INITIATOR_COMMAND_REG, ICR_BASE);
+		NCR5380_write(INITIATOR_COMMAND_REG, ICR_BASE);
 		NCR5380_reselect(instance);
-		shost_prपूर्णांकk(KERN_ERR, instance, "reselection after won arbitration?\n");
-		जाओ out;
-	पूर्ण
+		shost_printk(KERN_ERR, instance, "reselection after won arbitration?\n");
+		goto out;
+	}
 
-	अगर (err < 0) अणु
+	if (err < 0) {
 		spin_lock_irq(&hostdata->lock);
-		NCR5380_ग_लिखो(INITIATOR_COMMAND_REG, ICR_BASE);
+		NCR5380_write(INITIATOR_COMMAND_REG, ICR_BASE);
 
-		/* Can't touch cmd अगर it has been reclaimed by the scsi ML */
-		अगर (!hostdata->selecting)
-			वापस false;
+		/* Can't touch cmd if it has been reclaimed by the scsi ML */
+		if (!hostdata->selecting)
+			return false;
 
 		cmd->result = DID_BAD_TARGET << 16;
 		complete_cmd(instance, cmd);
-		dsprपूर्णांकk(न_संशोधन_SELECTION, instance,
+		dsprintk(NDEBUG_SELECTION, instance,
 			"target did not respond within 250ms\n");
 		ret = false;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
 	 * No less than two deskew delays after the initiator detects the
-	 * BSY संकेत is true, it shall release the SEL संकेत and may
+	 * BSY signal is true, it shall release the SEL signal and may
 	 * change the DATA BUS.                                     -wingel
 	 */
 
 	udelay(1);
 
-	NCR5380_ग_लिखो(INITIATOR_COMMAND_REG, ICR_BASE | ICR_ASSERT_ATN);
+	NCR5380_write(INITIATOR_COMMAND_REG, ICR_BASE | ICR_ASSERT_ATN);
 
 	/*
-	 * Since we followed the SCSI spec, and उठाओd ATN जबतक SEL
-	 * was true but beक्रमe BSY was false during selection, the inक्रमmation
+	 * Since we followed the SCSI spec, and raised ATN while SEL
+	 * was true but before BSY was false during selection, the information
 	 * transfer phase should be a MESSAGE OUT phase so that we can send the
 	 * IDENTIFY message.
 	 */
 
-	/* Wait क्रम start of REQ/ACK handshake */
+	/* Wait for start of REQ/ACK handshake */
 
 	err = NCR5380_poll_politely(hostdata, STATUS_REG, SR_REQ, SR_REQ, HZ);
 	spin_lock_irq(&hostdata->lock);
-	अगर (err < 0) अणु
-		shost_prपूर्णांकk(KERN_ERR, instance, "select: REQ timeout\n");
-		NCR5380_ग_लिखो(INITIATOR_COMMAND_REG, ICR_BASE);
-		जाओ out;
-	पूर्ण
-	अगर (!hostdata->selecting) अणु
-		करो_पात(instance, 0);
-		वापस false;
-	पूर्ण
+	if (err < 0) {
+		shost_printk(KERN_ERR, instance, "select: REQ timeout\n");
+		NCR5380_write(INITIATOR_COMMAND_REG, ICR_BASE);
+		goto out;
+	}
+	if (!hostdata->selecting) {
+		do_abort(instance, 0);
+		return false;
+	}
 
-	dsprपूर्णांकk(न_संशोधन_SELECTION, instance, "target %d selected, going into MESSAGE OUT phase.\n",
+	dsprintk(NDEBUG_SELECTION, instance, "target %d selected, going into MESSAGE OUT phase.\n",
 	         scmd_id(cmd));
-	पंचांगp[0] = IDENTIFY(can_disconnect, cmd->device->lun);
+	tmp[0] = IDENTIFY(can_disconnect, cmd->device->lun);
 
 	len = 1;
-	data = पंचांगp;
+	data = tmp;
 	phase = PHASE_MSGOUT;
 	NCR5380_transfer_pio(instance, &phase, &len, &data, 0);
-	अगर (len) अणु
-		NCR5380_ग_लिखो(INITIATOR_COMMAND_REG, ICR_BASE);
+	if (len) {
+		NCR5380_write(INITIATOR_COMMAND_REG, ICR_BASE);
 		cmd->result = DID_ERROR << 16;
 		complete_cmd(instance, cmd);
-		dsprपूर्णांकk(न_संशोधन_SELECTION, instance, "IDENTIFY message transfer failed\n");
+		dsprintk(NDEBUG_SELECTION, instance, "IDENTIFY message transfer failed\n");
 		ret = false;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	dsprपूर्णांकk(न_संशोधन_SELECTION, instance, "nexus established.\n");
+	dsprintk(NDEBUG_SELECTION, instance, "nexus established.\n");
 
 	hostdata->connected = cmd;
 	hostdata->busy[cmd->device->id] |= 1 << cmd->device->lun;
 
-#अगर_घोषित SUN3_SCSI_VME
+#ifdef SUN3_SCSI_VME
 	dregs->csr |= CSR_INTR;
-#पूर्ण_अगर
+#endif
 
 	initialize_SCp(cmd);
 
 	ret = false;
 
 out:
-	अगर (!hostdata->selecting)
-		वापस false;
-	hostdata->selecting = शून्य;
-	वापस ret;
-पूर्ण
+	if (!hostdata->selecting)
+		return false;
+	hostdata->selecting = NULL;
+	return ret;
+}
 
 /*
- * Function : पूर्णांक NCR5380_transfer_pio (काष्ठा Scsi_Host *instance,
- * अचिन्हित अक्षर *phase, पूर्णांक *count, अचिन्हित अक्षर **data)
+ * Function : int NCR5380_transfer_pio (struct Scsi_Host *instance,
+ * unsigned char *phase, int *count, unsigned char **data)
  *
  * Purpose : transfers data in given phase using polled I/O
  *
- * Inमाला_दो : instance - instance of driver, *phase - poपूर्णांकer to
- * what phase is expected, *count - poपूर्णांकer to number of
- * bytes to transfer, **data - poपूर्णांकer to data poपूर्णांकer,
+ * Inputs : instance - instance of driver, *phase - pointer to
+ * what phase is expected, *count - pointer to number of
+ * bytes to transfer, **data - pointer to data pointer,
  * can_sleep - 1 or 0 when sleeping is permitted or not, respectively.
  *
- * Returns : -1 when dअगरferent phase is entered without transferring
- * maximum number of bytes, 0 अगर all bytes are transferred or निकास
+ * Returns : -1 when different phase is entered without transferring
+ * maximum number of bytes, 0 if all bytes are transferred or exit
  * is in same phase.
  *
- * Also, *phase, *count, *data are modअगरied in place.
+ * Also, *phase, *count, *data are modified in place.
  *
- * XXX Note : handling क्रम bus मुक्त may be useful.
+ * XXX Note : handling for bus free may be useful.
  */
 
 /*
  * Note : this code is not as quick as it could be, however it
- * IS 100% reliable, and क्रम the actual data transfer where speed
- * counts, we will always करो a pseuकरो DMA or DMA transfer.
+ * IS 100% reliable, and for the actual data transfer where speed
+ * counts, we will always do a pseudo DMA or DMA transfer.
  */
 
-अटल पूर्णांक NCR5380_transfer_pio(काष्ठा Scsi_Host *instance,
-				अचिन्हित अक्षर *phase, पूर्णांक *count,
-				अचिन्हित अक्षर **data, अचिन्हित पूर्णांक can_sleep)
-अणु
-	काष्ठा NCR5380_hostdata *hostdata = shost_priv(instance);
-	अचिन्हित अक्षर p = *phase, पंचांगp;
-	पूर्णांक c = *count;
-	अचिन्हित अक्षर *d = *data;
+static int NCR5380_transfer_pio(struct Scsi_Host *instance,
+				unsigned char *phase, int *count,
+				unsigned char **data, unsigned int can_sleep)
+{
+	struct NCR5380_hostdata *hostdata = shost_priv(instance);
+	unsigned char p = *phase, tmp;
+	int c = *count;
+	unsigned char *d = *data;
 
 	/*
 	 * The NCR5380 chip will only drive the SCSI bus when the
-	 * phase specअगरied in the appropriate bits of the TARGET COMMAND
+	 * phase specified in the appropriate bits of the TARGET COMMAND
 	 * REGISTER match the STATUS REGISTER
 	 */
 
-	NCR5380_ग_लिखो(TARGET_COMMAND_REG, PHASE_SR_TO_TCR(p));
+	NCR5380_write(TARGET_COMMAND_REG, PHASE_SR_TO_TCR(p));
 
-	करो अणु
+	do {
 		/*
-		 * Wait क्रम निश्चितion of REQ, after which the phase bits will be
+		 * Wait for assertion of REQ, after which the phase bits will be
 		 * valid
 		 */
 
-		अगर (NCR5380_poll_politely(hostdata, STATUS_REG, SR_REQ, SR_REQ,
+		if (NCR5380_poll_politely(hostdata, STATUS_REG, SR_REQ, SR_REQ,
 					  HZ * can_sleep) < 0)
-			अवरोध;
+			break;
 
-		dsprपूर्णांकk(न_संशोधन_HANDSHAKE, instance, "REQ asserted\n");
+		dsprintk(NDEBUG_HANDSHAKE, instance, "REQ asserted\n");
 
-		/* Check क्रम phase mismatch */
-		अगर ((NCR5380_पढ़ो(STATUS_REG) & PHASE_MASK) != p) अणु
-			dsprपूर्णांकk(न_संशोधन_PIO, instance, "phase mismatch\n");
-			NCR5380_dprपूर्णांक_phase(न_संशोधन_PIO, instance);
-			अवरोध;
-		पूर्ण
+		/* Check for phase mismatch */
+		if ((NCR5380_read(STATUS_REG) & PHASE_MASK) != p) {
+			dsprintk(NDEBUG_PIO, instance, "phase mismatch\n");
+			NCR5380_dprint_phase(NDEBUG_PIO, instance);
+			break;
+		}
 
 		/* Do actual transfer from SCSI bus to / from memory */
-		अगर (!(p & SR_IO))
-			NCR5380_ग_लिखो(OUTPUT_DATA_REG, *d);
-		अन्यथा
-			*d = NCR5380_पढ़ो(CURRENT_SCSI_DATA_REG);
+		if (!(p & SR_IO))
+			NCR5380_write(OUTPUT_DATA_REG, *d);
+		else
+			*d = NCR5380_read(CURRENT_SCSI_DATA_REG);
 
 		++d;
 
 		/*
 		 * The SCSI standard suggests that in MSGOUT phase, the initiator
 		 * should drop ATN on the last byte of the message phase
-		 * after REQ has been निश्चितed क्रम the handshake but beक्रमe
-		 * the initiator उठाओs ACK.
+		 * after REQ has been asserted for the handshake but before
+		 * the initiator raises ACK.
 		 */
 
-		अगर (!(p & SR_IO)) अणु
-			अगर (!((p & SR_MSG) && c > 1)) अणु
-				NCR5380_ग_लिखो(INITIATOR_COMMAND_REG, ICR_BASE | ICR_ASSERT_DATA);
-				NCR5380_dprपूर्णांक(न_संशोधन_PIO, instance);
-				NCR5380_ग_लिखो(INITIATOR_COMMAND_REG, ICR_BASE |
+		if (!(p & SR_IO)) {
+			if (!((p & SR_MSG) && c > 1)) {
+				NCR5380_write(INITIATOR_COMMAND_REG, ICR_BASE | ICR_ASSERT_DATA);
+				NCR5380_dprint(NDEBUG_PIO, instance);
+				NCR5380_write(INITIATOR_COMMAND_REG, ICR_BASE |
 				              ICR_ASSERT_DATA | ICR_ASSERT_ACK);
-			पूर्ण अन्यथा अणु
-				NCR5380_ग_लिखो(INITIATOR_COMMAND_REG, ICR_BASE |
+			} else {
+				NCR5380_write(INITIATOR_COMMAND_REG, ICR_BASE |
 				              ICR_ASSERT_DATA | ICR_ASSERT_ATN);
-				NCR5380_dprपूर्णांक(न_संशोधन_PIO, instance);
-				NCR5380_ग_लिखो(INITIATOR_COMMAND_REG, ICR_BASE |
+				NCR5380_dprint(NDEBUG_PIO, instance);
+				NCR5380_write(INITIATOR_COMMAND_REG, ICR_BASE |
 				              ICR_ASSERT_DATA | ICR_ASSERT_ATN | ICR_ASSERT_ACK);
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			NCR5380_dprपूर्णांक(न_संशोधन_PIO, instance);
-			NCR5380_ग_लिखो(INITIATOR_COMMAND_REG, ICR_BASE | ICR_ASSERT_ACK);
-		पूर्ण
+			}
+		} else {
+			NCR5380_dprint(NDEBUG_PIO, instance);
+			NCR5380_write(INITIATOR_COMMAND_REG, ICR_BASE | ICR_ASSERT_ACK);
+		}
 
-		अगर (NCR5380_poll_politely(hostdata,
+		if (NCR5380_poll_politely(hostdata,
 		                          STATUS_REG, SR_REQ, 0, 5 * HZ * can_sleep) < 0)
-			अवरोध;
+			break;
 
-		dsprपूर्णांकk(न_संशोधन_HANDSHAKE, instance, "REQ negated, handshake complete\n");
+		dsprintk(NDEBUG_HANDSHAKE, instance, "REQ negated, handshake complete\n");
 
 /*
- * We have several special हालs to consider during REQ/ACK handshaking :
+ * We have several special cases to consider during REQ/ACK handshaking :
  * 1.  We were in MSGOUT phase, and we are on the last byte of the
  * message.  ATN must be dropped as ACK is dropped.
  *
  * 2.  We are in a MSGIN phase, and we are on the last byte of the
- * message.  We must निकास with ACK निश्चितed, so that the calling
- * code may उठाओ ATN beक्रमe dropping ACK to reject the message.
+ * message.  We must exit with ACK asserted, so that the calling
+ * code may raise ATN before dropping ACK to reject the message.
  *
  * 3.  ACK and ATN are clear and the target may proceed as normal.
  */
-		अगर (!(p == PHASE_MSGIN && c == 1)) अणु
-			अगर (p == PHASE_MSGOUT && c > 1)
-				NCR5380_ग_लिखो(INITIATOR_COMMAND_REG, ICR_BASE | ICR_ASSERT_ATN);
-			अन्यथा
-				NCR5380_ग_लिखो(INITIATOR_COMMAND_REG, ICR_BASE);
-		पूर्ण
-	पूर्ण जबतक (--c);
+		if (!(p == PHASE_MSGIN && c == 1)) {
+			if (p == PHASE_MSGOUT && c > 1)
+				NCR5380_write(INITIATOR_COMMAND_REG, ICR_BASE | ICR_ASSERT_ATN);
+			else
+				NCR5380_write(INITIATOR_COMMAND_REG, ICR_BASE);
+		}
+	} while (--c);
 
-	dsprपूर्णांकk(न_संशोधन_PIO, instance, "residual %d\n", c);
+	dsprintk(NDEBUG_PIO, instance, "residual %d\n", c);
 
 	*count = c;
 	*data = d;
-	पंचांगp = NCR5380_पढ़ो(STATUS_REG);
-	/* The phase पढ़ो from the bus is valid अगर either REQ is (alपढ़ोy)
-	 * निश्चितed or अगर ACK hasn't been released yet. The latter applies अगर
+	tmp = NCR5380_read(STATUS_REG);
+	/* The phase read from the bus is valid if either REQ is (already)
+	 * asserted or if ACK hasn't been released yet. The latter applies if
 	 * we're in MSG IN, DATA IN or STATUS and all bytes have been received.
 	 */
-	अगर ((पंचांगp & SR_REQ) || ((पंचांगp & SR_IO) && c == 0))
-		*phase = पंचांगp & PHASE_MASK;
-	अन्यथा
+	if ((tmp & SR_REQ) || ((tmp & SR_IO) && c == 0))
+		*phase = tmp & PHASE_MASK;
+	else
 		*phase = PHASE_UNKNOWN;
 
-	अगर (!c || (*phase == p))
-		वापस 0;
-	अन्यथा
-		वापस -1;
-पूर्ण
+	if (!c || (*phase == p))
+		return 0;
+	else
+		return -1;
+}
 
 /**
- * करो_reset - issue a reset command
+ * do_reset - issue a reset command
  * @instance: adapter to reset
  *
  * Issue a reset sequence to the NCR5380 and try and get the bus
- * back पूर्णांकo sane shape.
+ * back into sane shape.
  *
- * This clears the reset पूर्णांकerrupt flag because there may be no handler क्रम
- * it. When the driver is initialized, the NCR5380_पूर्णांकr() handler has not yet
- * been installed. And when in EH we may have released the ST DMA पूर्णांकerrupt.
+ * This clears the reset interrupt flag because there may be no handler for
+ * it. When the driver is initialized, the NCR5380_intr() handler has not yet
+ * been installed. And when in EH we may have released the ST DMA interrupt.
  */
 
-अटल व्योम करो_reset(काष्ठा Scsi_Host *instance)
-अणु
-	काष्ठा NCR5380_hostdata __maybe_unused *hostdata = shost_priv(instance);
-	अचिन्हित दीर्घ flags;
+static void do_reset(struct Scsi_Host *instance)
+{
+	struct NCR5380_hostdata __maybe_unused *hostdata = shost_priv(instance);
+	unsigned long flags;
 
 	local_irq_save(flags);
-	NCR5380_ग_लिखो(TARGET_COMMAND_REG,
-	              PHASE_SR_TO_TCR(NCR5380_पढ़ो(STATUS_REG) & PHASE_MASK));
-	NCR5380_ग_लिखो(INITIATOR_COMMAND_REG, ICR_BASE | ICR_ASSERT_RST);
+	NCR5380_write(TARGET_COMMAND_REG,
+	              PHASE_SR_TO_TCR(NCR5380_read(STATUS_REG) & PHASE_MASK));
+	NCR5380_write(INITIATOR_COMMAND_REG, ICR_BASE | ICR_ASSERT_RST);
 	udelay(50);
-	NCR5380_ग_लिखो(INITIATOR_COMMAND_REG, ICR_BASE);
-	(व्योम)NCR5380_पढ़ो(RESET_PARITY_INTERRUPT_REG);
+	NCR5380_write(INITIATOR_COMMAND_REG, ICR_BASE);
+	(void)NCR5380_read(RESET_PARITY_INTERRUPT_REG);
 	local_irq_restore(flags);
-पूर्ण
+}
 
 /**
- * करो_पात - पात the currently established nexus by going to
+ * do_abort - abort the currently established nexus by going to
  * MESSAGE OUT phase and sending an ABORT message.
  * @instance: relevant scsi host instance
  * @can_sleep: 1 or 0 when sleeping is permitted or not, respectively
@@ -1407,424 +1406,424 @@ out:
  * Returns 0 on success, negative error code on failure.
  */
 
-अटल पूर्णांक करो_पात(काष्ठा Scsi_Host *instance, अचिन्हित पूर्णांक can_sleep)
-अणु
-	काष्ठा NCR5380_hostdata *hostdata = shost_priv(instance);
-	अचिन्हित अक्षर *msgptr, phase, पंचांगp;
-	पूर्णांक len;
-	पूर्णांक rc;
+static int do_abort(struct Scsi_Host *instance, unsigned int can_sleep)
+{
+	struct NCR5380_hostdata *hostdata = shost_priv(instance);
+	unsigned char *msgptr, phase, tmp;
+	int len;
+	int rc;
 
 	/* Request message out phase */
-	NCR5380_ग_लिखो(INITIATOR_COMMAND_REG, ICR_BASE | ICR_ASSERT_ATN);
+	NCR5380_write(INITIATOR_COMMAND_REG, ICR_BASE | ICR_ASSERT_ATN);
 
 	/*
-	 * Wait क्रम the target to indicate a valid phase by निश्चितing
+	 * Wait for the target to indicate a valid phase by asserting
 	 * REQ.  Once this happens, we'll have either a MSGOUT phase
 	 * and can immediately send the ABORT message, or we'll have some
 	 * other phase and will have to source/sink data.
 	 *
-	 * We really करोn't care what value was on the bus or what value
+	 * We really don't care what value was on the bus or what value
 	 * the target sees, so we just handshake.
 	 */
 
 	rc = NCR5380_poll_politely(hostdata, STATUS_REG, SR_REQ, SR_REQ,
 				   10 * HZ * can_sleep);
-	अगर (rc < 0)
-		जाओ out;
+	if (rc < 0)
+		goto out;
 
-	पंचांगp = NCR5380_पढ़ो(STATUS_REG) & PHASE_MASK;
+	tmp = NCR5380_read(STATUS_REG) & PHASE_MASK;
 
-	NCR5380_ग_लिखो(TARGET_COMMAND_REG, PHASE_SR_TO_TCR(पंचांगp));
+	NCR5380_write(TARGET_COMMAND_REG, PHASE_SR_TO_TCR(tmp));
 
-	अगर (पंचांगp != PHASE_MSGOUT) अणु
-		NCR5380_ग_लिखो(INITIATOR_COMMAND_REG,
+	if (tmp != PHASE_MSGOUT) {
+		NCR5380_write(INITIATOR_COMMAND_REG,
 		              ICR_BASE | ICR_ASSERT_ATN | ICR_ASSERT_ACK);
 		rc = NCR5380_poll_politely(hostdata, STATUS_REG, SR_REQ, 0,
 					   3 * HZ * can_sleep);
-		अगर (rc < 0)
-			जाओ out;
-		NCR5380_ग_लिखो(INITIATOR_COMMAND_REG, ICR_BASE | ICR_ASSERT_ATN);
-	पूर्ण
+		if (rc < 0)
+			goto out;
+		NCR5380_write(INITIATOR_COMMAND_REG, ICR_BASE | ICR_ASSERT_ATN);
+	}
 
-	पंचांगp = ABORT;
-	msgptr = &पंचांगp;
+	tmp = ABORT;
+	msgptr = &tmp;
 	len = 1;
 	phase = PHASE_MSGOUT;
 	NCR5380_transfer_pio(instance, &phase, &len, &msgptr, can_sleep);
-	अगर (len)
+	if (len)
 		rc = -ENXIO;
 
 	/*
 	 * If we got here, and the command completed successfully,
-	 * we're about to go पूर्णांकo bus मुक्त state.
+	 * we're about to go into bus free state.
 	 */
 
 out:
-	NCR5380_ग_लिखो(INITIATOR_COMMAND_REG, ICR_BASE);
-	वापस rc;
-पूर्ण
+	NCR5380_write(INITIATOR_COMMAND_REG, ICR_BASE);
+	return rc;
+}
 
 /*
- * Function : पूर्णांक NCR5380_transfer_dma (काष्ठा Scsi_Host *instance,
- * अचिन्हित अक्षर *phase, पूर्णांक *count, अचिन्हित अक्षर **data)
+ * Function : int NCR5380_transfer_dma (struct Scsi_Host *instance,
+ * unsigned char *phase, int *count, unsigned char **data)
  *
  * Purpose : transfers data in given phase using either real
- * or pseuकरो DMA.
+ * or pseudo DMA.
  *
- * Inमाला_दो : instance - instance of driver, *phase - poपूर्णांकer to
- * what phase is expected, *count - poपूर्णांकer to number of
- * bytes to transfer, **data - poपूर्णांकer to data poपूर्णांकer.
+ * Inputs : instance - instance of driver, *phase - pointer to
+ * what phase is expected, *count - pointer to number of
+ * bytes to transfer, **data - pointer to data pointer.
  *
- * Returns : -1 when dअगरferent phase is entered without transferring
- * maximum number of bytes, 0 अगर all bytes or transferred or निकास
+ * Returns : -1 when different phase is entered without transferring
+ * maximum number of bytes, 0 if all bytes or transferred or exit
  * is in same phase.
  *
- * Also, *phase, *count, *data are modअगरied in place.
+ * Also, *phase, *count, *data are modified in place.
  */
 
 
-अटल पूर्णांक NCR5380_transfer_dma(काष्ठा Scsi_Host *instance,
-				अचिन्हित अक्षर *phase, पूर्णांक *count,
-				अचिन्हित अक्षर **data)
-अणु
-	काष्ठा NCR5380_hostdata *hostdata = shost_priv(instance);
-	पूर्णांक c = *count;
-	अचिन्हित अक्षर p = *phase;
-	अचिन्हित अक्षर *d = *data;
-	अचिन्हित अक्षर पंचांगp;
-	पूर्णांक result = 0;
+static int NCR5380_transfer_dma(struct Scsi_Host *instance,
+				unsigned char *phase, int *count,
+				unsigned char **data)
+{
+	struct NCR5380_hostdata *hostdata = shost_priv(instance);
+	int c = *count;
+	unsigned char p = *phase;
+	unsigned char *d = *data;
+	unsigned char tmp;
+	int result = 0;
 
-	अगर ((पंचांगp = (NCR5380_पढ़ो(STATUS_REG) & PHASE_MASK)) != p) अणु
-		*phase = पंचांगp;
-		वापस -1;
-	पूर्ण
+	if ((tmp = (NCR5380_read(STATUS_REG) & PHASE_MASK)) != p) {
+		*phase = tmp;
+		return -1;
+	}
 
 	hostdata->connected->SCp.phase = p;
 
-	अगर (p & SR_IO) अणु
-		अगर (hostdata->पढ़ो_overruns)
-			c -= hostdata->पढ़ो_overruns;
-		अन्यथा अगर (hostdata->flags & FLAG_DMA_FIXUP)
+	if (p & SR_IO) {
+		if (hostdata->read_overruns)
+			c -= hostdata->read_overruns;
+		else if (hostdata->flags & FLAG_DMA_FIXUP)
 			--c;
-	पूर्ण
+	}
 
-	dsprपूर्णांकk(न_संशोधन_DMA, instance, "initializing DMA %s: length %d, address %p\n",
+	dsprintk(NDEBUG_DMA, instance, "initializing DMA %s: length %d, address %p\n",
 	         (p & SR_IO) ? "receive" : "send", c, d);
 
-#अगर_घोषित CONFIG_SUN3
+#ifdef CONFIG_SUN3
 	/* send start chain */
 	sun3scsi_dma_start(c, *data);
-#पूर्ण_अगर
+#endif
 
-	NCR5380_ग_लिखो(TARGET_COMMAND_REG, PHASE_SR_TO_TCR(p));
-	NCR5380_ग_लिखो(MODE_REG, MR_BASE | MR_DMA_MODE | MR_MONITOR_BSY |
+	NCR5380_write(TARGET_COMMAND_REG, PHASE_SR_TO_TCR(p));
+	NCR5380_write(MODE_REG, MR_BASE | MR_DMA_MODE | MR_MONITOR_BSY |
 	                        MR_ENABLE_EOP_INTR);
 
-	अगर (!(hostdata->flags & FLAG_LATE_DMA_SETUP)) अणु
-		/* On the Medusa, it is a must to initialize the DMA beक्रमe
-		 * starting the NCR. This is also the cleaner way क्रम the TT.
+	if (!(hostdata->flags & FLAG_LATE_DMA_SETUP)) {
+		/* On the Medusa, it is a must to initialize the DMA before
+		 * starting the NCR. This is also the cleaner way for the TT.
 		 */
-		अगर (p & SR_IO)
+		if (p & SR_IO)
 			result = NCR5380_dma_recv_setup(hostdata, d, c);
-		अन्यथा
+		else
 			result = NCR5380_dma_send_setup(hostdata, d, c);
-	पूर्ण
+	}
 
 	/*
 	 * On the PAS16 at least I/O recovery delays are not needed here.
-	 * Everyone अन्यथा seems to want them.
+	 * Everyone else seems to want them.
 	 */
 
-	अगर (p & SR_IO) अणु
-		NCR5380_ग_लिखो(INITIATOR_COMMAND_REG, ICR_BASE);
+	if (p & SR_IO) {
+		NCR5380_write(INITIATOR_COMMAND_REG, ICR_BASE);
 		NCR5380_io_delay(1);
-		NCR5380_ग_लिखो(START_DMA_INITIATOR_RECEIVE_REG, 0);
-	पूर्ण अन्यथा अणु
+		NCR5380_write(START_DMA_INITIATOR_RECEIVE_REG, 0);
+	} else {
 		NCR5380_io_delay(1);
-		NCR5380_ग_लिखो(INITIATOR_COMMAND_REG, ICR_BASE | ICR_ASSERT_DATA);
+		NCR5380_write(INITIATOR_COMMAND_REG, ICR_BASE | ICR_ASSERT_DATA);
 		NCR5380_io_delay(1);
-		NCR5380_ग_लिखो(START_DMA_SEND_REG, 0);
+		NCR5380_write(START_DMA_SEND_REG, 0);
 		NCR5380_io_delay(1);
-	पूर्ण
+	}
 
-#अगर_घोषित CONFIG_SUN3
-#अगर_घोषित SUN3_SCSI_VME
+#ifdef CONFIG_SUN3
+#ifdef SUN3_SCSI_VME
 	dregs->csr |= CSR_DMA_ENABLE;
-#पूर्ण_अगर
+#endif
 	sun3_dma_active = 1;
-#पूर्ण_अगर
+#endif
 
-	अगर (hostdata->flags & FLAG_LATE_DMA_SETUP) अणु
-		/* On the Falcon, the DMA setup must be करोne after the last
-		 * NCR access, अन्यथा the DMA setup माला_लो trashed!
+	if (hostdata->flags & FLAG_LATE_DMA_SETUP) {
+		/* On the Falcon, the DMA setup must be done after the last
+		 * NCR access, else the DMA setup gets trashed!
 		 */
-		अगर (p & SR_IO)
+		if (p & SR_IO)
 			result = NCR5380_dma_recv_setup(hostdata, d, c);
-		अन्यथा
+		else
 			result = NCR5380_dma_send_setup(hostdata, d, c);
-	पूर्ण
+	}
 
-	/* On failure, NCR5380_dma_xxxx_setup() वापसs a negative पूर्णांक. */
-	अगर (result < 0)
-		वापस result;
+	/* On failure, NCR5380_dma_xxxx_setup() returns a negative int. */
+	if (result < 0)
+		return result;
 
-	/* For real DMA, result is the byte count. DMA पूर्णांकerrupt is expected. */
-	अगर (result > 0) अणु
+	/* For real DMA, result is the byte count. DMA interrupt is expected. */
+	if (result > 0) {
 		hostdata->dma_len = result;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* The result is zero अगरf pseuकरो DMA send/receive was completed. */
+	/* The result is zero iff pseudo DMA send/receive was completed. */
 	hostdata->dma_len = c;
 
 /*
- * A note regarding the DMA errata workarounds क्रम early NMOS silicon.
+ * A note regarding the DMA errata workarounds for early NMOS silicon.
  *
- * For DMA sends, we want to रुको until the last byte has been
- * transferred out over the bus beक्रमe we turn off DMA mode.  Alas, there
- * seems to be no terribly good way of करोing this on a 5380 under all
- * conditions.  For non-scatter-gather operations, we can रुको until REQ
+ * For DMA sends, we want to wait until the last byte has been
+ * transferred out over the bus before we turn off DMA mode.  Alas, there
+ * seems to be no terribly good way of doing this on a 5380 under all
+ * conditions.  For non-scatter-gather operations, we can wait until REQ
  * and ACK both go false, or until a phase mismatch occurs.  Gather-sends
  * are nastier, since the device will be expecting more data than we
- * are prepared to send it, and REQ will reमुख्य निश्चितed.  On a 53C8[01] we
+ * are prepared to send it, and REQ will remain asserted.  On a 53C8[01] we
  * could test Last Byte Sent to assure transfer (I imagine this is precisely
- * why this संकेत was added to the newer chips) but on the older 538[01]
- * this संकेत करोes not exist.  The workaround क्रम this lack is a watchकरोg;
- * we bail out of the रुको-loop after a modest amount of रुको-समय अगर
- * the usual निकास conditions are not met.  Not a terribly clean or
+ * why this signal was added to the newer chips) but on the older 538[01]
+ * this signal does not exist.  The workaround for this lack is a watchdog;
+ * we bail out of the wait-loop after a modest amount of wait-time if
+ * the usual exit conditions are not met.  Not a terribly clean or
  * correct solution :-%
  *
- * DMA receive is equally tricky due to a nasty अक्षरacteristic of the NCR5380.
+ * DMA receive is equally tricky due to a nasty characteristic of the NCR5380.
  * If the chip is in DMA receive mode, it will respond to a target's
- * REQ by latching the SCSI data पूर्णांकo the INPUT DATA रेजिस्टर and निश्चितing
- * ACK, even अगर it has _alपढ़ोy_ been notअगरied by the DMA controller that
+ * REQ by latching the SCSI data into the INPUT DATA register and asserting
+ * ACK, even if it has _already_ been notified by the DMA controller that
  * the current DMA transfer has completed!  If the NCR5380 is then taken
- * out of DMA mode, this alपढ़ोy-acknowledged byte is lost. This is
- * not a problem क्रम "one DMA transfer per READ command", because
+ * out of DMA mode, this already-acknowledged byte is lost. This is
+ * not a problem for "one DMA transfer per READ command", because
  * the situation will never arise... either all of the data is DMA'ed
- * properly, or the target चयनes to MESSAGE IN phase to संकेत a
+ * properly, or the target switches to MESSAGE IN phase to signal a
  * disconnection (either operation bringing the DMA to a clean halt).
  * However, in order to handle scatter-receive, we must work around the
- * problem.  The chosen fix is to DMA fewer bytes, then check क्रम the
- * condition beक्रमe taking the NCR5380 out of DMA mode.  One or two extra
+ * problem.  The chosen fix is to DMA fewer bytes, then check for the
+ * condition before taking the NCR5380 out of DMA mode.  One or two extra
  * bytes are transferred via PIO as necessary to fill out the original
  * request.
  */
 
-	अगर (hostdata->flags & FLAG_DMA_FIXUP) अणु
-		अगर (p & SR_IO) अणु
+	if (hostdata->flags & FLAG_DMA_FIXUP) {
+		if (p & SR_IO) {
 			/*
 			 * The workaround was to transfer fewer bytes than we
-			 * पूर्णांकended to with the pseuकरो-DMA पढ़ो function, रुको क्रम
-			 * the chip to latch the last byte, पढ़ो it, and then disable
-			 * pseuकरो-DMA mode.
+			 * intended to with the pseudo-DMA read function, wait for
+			 * the chip to latch the last byte, read it, and then disable
+			 * pseudo-DMA mode.
 			 *
-			 * After REQ is निश्चितed, the NCR5380 निश्चितs DRQ and ACK.
-			 * REQ is deनिश्चितed when ACK is निश्चितed, and not reनिश्चितed
+			 * After REQ is asserted, the NCR5380 asserts DRQ and ACK.
+			 * REQ is deasserted when ACK is asserted, and not reasserted
 			 * until ACK goes false.  Since the NCR5380 won't lower ACK
-			 * until DACK is निश्चितed, which won't happen unless we twiddle
+			 * until DACK is asserted, which won't happen unless we twiddle
 			 * the DMA port or we take the NCR5380 out of DMA mode, we
 			 * can guarantee that we won't handshake another extra
 			 * byte.
 			 */
 
-			अगर (NCR5380_poll_politely(hostdata, BUS_AND_STATUS_REG,
-			                          BASR_DRQ, BASR_DRQ, 0) < 0) अणु
+			if (NCR5380_poll_politely(hostdata, BUS_AND_STATUS_REG,
+			                          BASR_DRQ, BASR_DRQ, 0) < 0) {
 				result = -1;
-				shost_prपूर्णांकk(KERN_ERR, instance, "PDMA read: DRQ timeout\n");
-			पूर्ण
-			अगर (NCR5380_poll_politely(hostdata, STATUS_REG,
-			                          SR_REQ, 0, 0) < 0) अणु
+				shost_printk(KERN_ERR, instance, "PDMA read: DRQ timeout\n");
+			}
+			if (NCR5380_poll_politely(hostdata, STATUS_REG,
+			                          SR_REQ, 0, 0) < 0) {
 				result = -1;
-				shost_prपूर्णांकk(KERN_ERR, instance, "PDMA read: !REQ timeout\n");
-			पूर्ण
-			d[*count - 1] = NCR5380_पढ़ो(INPUT_DATA_REG);
-		पूर्ण अन्यथा अणु
+				shost_printk(KERN_ERR, instance, "PDMA read: !REQ timeout\n");
+			}
+			d[*count - 1] = NCR5380_read(INPUT_DATA_REG);
+		} else {
 			/*
-			 * Wait क्रम the last byte to be sent.  If REQ is being निश्चितed क्रम
+			 * Wait for the last byte to be sent.  If REQ is being asserted for
 			 * the byte we're interested, we'll ACK it and it will go false.
 			 */
-			अगर (NCR5380_poll_politely2(hostdata,
+			if (NCR5380_poll_politely2(hostdata,
 			     BUS_AND_STATUS_REG, BASR_DRQ, BASR_DRQ,
-			     BUS_AND_STATUS_REG, BASR_PHASE_MATCH, 0, 0) < 0) अणु
+			     BUS_AND_STATUS_REG, BASR_PHASE_MATCH, 0, 0) < 0) {
 				result = -1;
-				shost_prपूर्णांकk(KERN_ERR, instance, "PDMA write: DRQ and phase timeout\n");
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				shost_printk(KERN_ERR, instance, "PDMA write: DRQ and phase timeout\n");
+			}
+		}
+	}
 
 	NCR5380_dma_complete(instance);
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /*
- * Function : NCR5380_inक्रमmation_transfer (काष्ठा Scsi_Host *instance)
+ * Function : NCR5380_information_transfer (struct Scsi_Host *instance)
  *
- * Purpose : run through the various SCSI phases and करो as the target
+ * Purpose : run through the various SCSI phases and do as the target
  * directs us to.  Operates on the currently connected command,
  * instance->connected.
  *
- * Inमाला_दो : instance, instance क्रम which we are करोing commands
+ * Inputs : instance, instance for which we are doing commands
  *
  * Side effects : SCSI things happen, the disconnected queue will be
- * modअगरied अगर a command disconnects, *instance->connected will
+ * modified if a command disconnects, *instance->connected will
  * change.
  *
- * XXX Note : we need to watch क्रम bus मुक्त or a reset condition here
- * to recover from an unexpected bus मुक्त condition.
+ * XXX Note : we need to watch for bus free or a reset condition here
+ * to recover from an unexpected bus free condition.
  */
 
-अटल व्योम NCR5380_inक्रमmation_transfer(काष्ठा Scsi_Host *instance)
+static void NCR5380_information_transfer(struct Scsi_Host *instance)
 	__releases(&hostdata->lock) __acquires(&hostdata->lock)
-अणु
-	काष्ठा NCR5380_hostdata *hostdata = shost_priv(instance);
-	अचिन्हित अक्षर msgout = NOP;
-	पूर्णांक sink = 0;
-	पूर्णांक len;
-	पूर्णांक transfersize;
-	अचिन्हित अक्षर *data;
-	अचिन्हित अक्षर phase, पंचांगp, extended_msg[10], old_phase = 0xff;
-	काष्ठा scsi_cmnd *cmd;
+{
+	struct NCR5380_hostdata *hostdata = shost_priv(instance);
+	unsigned char msgout = NOP;
+	int sink = 0;
+	int len;
+	int transfersize;
+	unsigned char *data;
+	unsigned char phase, tmp, extended_msg[10], old_phase = 0xff;
+	struct scsi_cmnd *cmd;
 
-#अगर_घोषित SUN3_SCSI_VME
+#ifdef SUN3_SCSI_VME
 	dregs->csr |= CSR_INTR;
-#पूर्ण_अगर
+#endif
 
-	जबतक ((cmd = hostdata->connected)) अणु
-		काष्ठा NCR5380_cmd *ncmd = scsi_cmd_priv(cmd);
+	while ((cmd = hostdata->connected)) {
+		struct NCR5380_cmd *ncmd = scsi_cmd_priv(cmd);
 
-		पंचांगp = NCR5380_पढ़ो(STATUS_REG);
-		/* We only have a valid SCSI phase when REQ is निश्चितed */
-		अगर (पंचांगp & SR_REQ) अणु
-			phase = (पंचांगp & PHASE_MASK);
-			अगर (phase != old_phase) अणु
+		tmp = NCR5380_read(STATUS_REG);
+		/* We only have a valid SCSI phase when REQ is asserted */
+		if (tmp & SR_REQ) {
+			phase = (tmp & PHASE_MASK);
+			if (phase != old_phase) {
 				old_phase = phase;
-				NCR5380_dprपूर्णांक_phase(न_संशोधन_INFORMATION, instance);
-			पूर्ण
-#अगर_घोषित CONFIG_SUN3
-			अगर (phase == PHASE_CMDOUT &&
-			    sun3_dma_setup_करोne != cmd) अणु
-				पूर्णांक count;
+				NCR5380_dprint_phase(NDEBUG_INFORMATION, instance);
+			}
+#ifdef CONFIG_SUN3
+			if (phase == PHASE_CMDOUT &&
+			    sun3_dma_setup_done != cmd) {
+				int count;
 
 				advance_sg_buffer(cmd);
 
 				count = sun3scsi_dma_xfer_len(hostdata, cmd);
 
-				अगर (count > 0) अणु
-					अगर (rq_data_dir(cmd->request))
+				if (count > 0) {
+					if (rq_data_dir(cmd->request))
 						sun3scsi_dma_send_setup(hostdata,
 						                        cmd->SCp.ptr, count);
-					अन्यथा
+					else
 						sun3scsi_dma_recv_setup(hostdata,
 						                        cmd->SCp.ptr, count);
-					sun3_dma_setup_करोne = cmd;
-				पूर्ण
-#अगर_घोषित SUN3_SCSI_VME
+					sun3_dma_setup_done = cmd;
+				}
+#ifdef SUN3_SCSI_VME
 				dregs->csr |= CSR_INTR;
-#पूर्ण_अगर
-			पूर्ण
-#पूर्ण_अगर /* CONFIG_SUN3 */
+#endif
+			}
+#endif /* CONFIG_SUN3 */
 
-			अगर (sink && (phase != PHASE_MSGOUT)) अणु
-				NCR5380_ग_लिखो(TARGET_COMMAND_REG, PHASE_SR_TO_TCR(पंचांगp));
+			if (sink && (phase != PHASE_MSGOUT)) {
+				NCR5380_write(TARGET_COMMAND_REG, PHASE_SR_TO_TCR(tmp));
 
-				NCR5380_ग_लिखो(INITIATOR_COMMAND_REG, ICR_BASE | ICR_ASSERT_ATN |
+				NCR5380_write(INITIATOR_COMMAND_REG, ICR_BASE | ICR_ASSERT_ATN |
 				              ICR_ASSERT_ACK);
-				जबतक (NCR5380_पढ़ो(STATUS_REG) & SR_REQ)
+				while (NCR5380_read(STATUS_REG) & SR_REQ)
 					;
-				NCR5380_ग_लिखो(INITIATOR_COMMAND_REG, ICR_BASE |
+				NCR5380_write(INITIATOR_COMMAND_REG, ICR_BASE |
 				              ICR_ASSERT_ATN);
 				sink = 0;
-				जारी;
-			पूर्ण
+				continue;
+			}
 
-			चयन (phase) अणु
-			हाल PHASE_DATAOUT:
-#अगर (न_संशोधन & न_संशोधन_NO_DATAOUT)
-				shost_prपूर्णांकk(KERN_DEBUG, instance, "NDEBUG_NO_DATAOUT set, attempted DATAOUT aborted\n");
+			switch (phase) {
+			case PHASE_DATAOUT:
+#if (NDEBUG & NDEBUG_NO_DATAOUT)
+				shost_printk(KERN_DEBUG, instance, "NDEBUG_NO_DATAOUT set, attempted DATAOUT aborted\n");
 				sink = 1;
-				करो_पात(instance, 0);
+				do_abort(instance, 0);
 				cmd->result = DID_ERROR << 16;
 				complete_cmd(instance, cmd);
-				hostdata->connected = शून्य;
+				hostdata->connected = NULL;
 				hostdata->busy[scmd_id(cmd)] &= ~(1 << cmd->device->lun);
-				वापस;
-#पूर्ण_अगर
-			हाल PHASE_DATAIN:
+				return;
+#endif
+			case PHASE_DATAIN:
 				/*
 				 * If there is no room left in the current buffer in the
 				 * scatter-gather list, move onto the next one.
 				 */
 
 				advance_sg_buffer(cmd);
-				dsprपूर्णांकk(न_संशोधन_INFORMATION, instance,
+				dsprintk(NDEBUG_INFORMATION, instance,
 					"this residual %d, sg ents %d\n",
 					cmd->SCp.this_residual,
 					sg_nents(cmd->SCp.buffer));
 
 				/*
 				 * The preferred transfer method is going to be
-				 * PSEUDO-DMA क्रम प्रणालीs that are strictly PIO,
-				 * since we can let the hardware करो the handshaking.
+				 * PSEUDO-DMA for systems that are strictly PIO,
+				 * since we can let the hardware do the handshaking.
 				 *
 				 * For this to work, we need to know the transfersize
-				 * ahead of समय, since the pseuकरो-DMA code will sit
+				 * ahead of time, since the pseudo-DMA code will sit
 				 * in an unconditional loop.
 				 */
 
 				transfersize = 0;
-				अगर (!cmd->device->borken)
+				if (!cmd->device->borken)
 					transfersize = NCR5380_dma_xfer_len(hostdata, cmd);
 
-				अगर (transfersize > 0) अणु
+				if (transfersize > 0) {
 					len = transfersize;
-					अगर (NCR5380_transfer_dma(instance, &phase,
-					    &len, (अचिन्हित अक्षर **)&cmd->SCp.ptr)) अणु
+					if (NCR5380_transfer_dma(instance, &phase,
+					    &len, (unsigned char **)&cmd->SCp.ptr)) {
 						/*
-						 * If the watchकरोg समयr fires, all future
+						 * If the watchdog timer fires, all future
 						 * accesses to this device will use the
 						 * polled-IO.
 						 */
-						scmd_prपूर्णांकk(KERN_INFO, cmd,
+						scmd_printk(KERN_INFO, cmd,
 							"switching to slow handshake\n");
 						cmd->device->borken = 1;
-						करो_reset(instance);
+						do_reset(instance);
 						bus_reset_cleanup(instance);
-					पूर्ण
-				पूर्ण अन्यथा अणु
+					}
+				} else {
 					/* Transfer a small chunk so that the
-					 * irq mode lock is not held too दीर्घ.
+					 * irq mode lock is not held too long.
 					 */
 					transfersize = min(cmd->SCp.this_residual,
 							   NCR5380_PIO_CHUNK_SIZE);
 					len = transfersize;
 					NCR5380_transfer_pio(instance, &phase, &len,
-					                     (अचिन्हित अक्षर **)&cmd->SCp.ptr,
+					                     (unsigned char **)&cmd->SCp.ptr,
 							     0);
 					cmd->SCp.this_residual -= transfersize - len;
-				पूर्ण
-#अगर_घोषित CONFIG_SUN3
-				अगर (sun3_dma_setup_करोne == cmd)
-					sun3_dma_setup_करोne = शून्य;
-#पूर्ण_अगर
-				वापस;
-			हाल PHASE_MSGIN:
+				}
+#ifdef CONFIG_SUN3
+				if (sun3_dma_setup_done == cmd)
+					sun3_dma_setup_done = NULL;
+#endif
+				return;
+			case PHASE_MSGIN:
 				len = 1;
-				data = &पंचांगp;
+				data = &tmp;
 				NCR5380_transfer_pio(instance, &phase, &len, &data, 0);
-				cmd->SCp.Message = पंचांगp;
+				cmd->SCp.Message = tmp;
 
-				चयन (पंचांगp) अणु
-				हाल ABORT:
-				हाल COMMAND_COMPLETE:
+				switch (tmp) {
+				case ABORT:
+				case COMMAND_COMPLETE:
 					/* Accept message by clearing ACK */
 					sink = 1;
-					NCR5380_ग_लिखो(INITIATOR_COMMAND_REG, ICR_BASE);
-					dsprपूर्णांकk(न_संशोधन_QUEUES, instance,
+					NCR5380_write(INITIATOR_COMMAND_REG, ICR_BASE);
+					dsprintk(NDEBUG_QUEUES, instance,
 					         "COMMAND COMPLETE %p target %d lun %llu\n",
 					         cmd, scmd_id(cmd), cmd->device->lun);
 
-					hostdata->connected = शून्य;
+					hostdata->connected = NULL;
 					hostdata->busy[scmd_id(cmd)] &= ~(1 << cmd->device->lun);
 
 					cmd->result &= ~0xffff;
@@ -1833,451 +1832,451 @@ out:
 
 					set_resid_from_SCp(cmd);
 
-					अगर (cmd->cmnd[0] == REQUEST_SENSE)
+					if (cmd->cmnd[0] == REQUEST_SENSE)
 						complete_cmd(instance, cmd);
-					अन्यथा अणु
-						अगर (cmd->SCp.Status == SAM_STAT_CHECK_CONDITION ||
-						    cmd->SCp.Status == SAM_STAT_COMMAND_TERMINATED) अणु
-							dsprपूर्णांकk(न_संशोधन_QUEUES, instance, "autosense: adding cmd %p to tail of autosense queue\n",
+					else {
+						if (cmd->SCp.Status == SAM_STAT_CHECK_CONDITION ||
+						    cmd->SCp.Status == SAM_STAT_COMMAND_TERMINATED) {
+							dsprintk(NDEBUG_QUEUES, instance, "autosense: adding cmd %p to tail of autosense queue\n",
 							         cmd);
 							list_add_tail(&ncmd->list,
-							              &hostdata->स्वतःsense);
-						पूर्ण अन्यथा
+							              &hostdata->autosense);
+						} else
 							complete_cmd(instance, cmd);
-					पूर्ण
+					}
 
 					/*
-					 * Restore phase bits to 0 so an पूर्णांकerrupted selection,
+					 * Restore phase bits to 0 so an interrupted selection,
 					 * arbitration can resume.
 					 */
-					NCR5380_ग_लिखो(TARGET_COMMAND_REG, 0);
+					NCR5380_write(TARGET_COMMAND_REG, 0);
 
-					वापस;
-				हाल MESSAGE_REJECT:
+					return;
+				case MESSAGE_REJECT:
 					/* Accept message by clearing ACK */
-					NCR5380_ग_लिखो(INITIATOR_COMMAND_REG, ICR_BASE);
-					चयन (hostdata->last_message) अणु
-					हाल HEAD_OF_QUEUE_TAG:
-					हाल ORDERED_QUEUE_TAG:
-					हाल SIMPLE_QUEUE_TAG:
+					NCR5380_write(INITIATOR_COMMAND_REG, ICR_BASE);
+					switch (hostdata->last_message) {
+					case HEAD_OF_QUEUE_TAG:
+					case ORDERED_QUEUE_TAG:
+					case SIMPLE_QUEUE_TAG:
 						cmd->device->simple_tags = 0;
 						hostdata->busy[cmd->device->id] |= (1 << (cmd->device->lun & 0xFF));
-						अवरोध;
-					शेष:
-						अवरोध;
-					पूर्ण
-					अवरोध;
-				हाल DISCONNECT:
+						break;
+					default:
+						break;
+					}
+					break;
+				case DISCONNECT:
 					/* Accept message by clearing ACK */
-					NCR5380_ग_लिखो(INITIATOR_COMMAND_REG, ICR_BASE);
-					hostdata->connected = शून्य;
+					NCR5380_write(INITIATOR_COMMAND_REG, ICR_BASE);
+					hostdata->connected = NULL;
 					list_add(&ncmd->list, &hostdata->disconnected);
-					dsprपूर्णांकk(न_संशोधन_INFORMATION | न_संशोधन_QUEUES,
+					dsprintk(NDEBUG_INFORMATION | NDEBUG_QUEUES,
 					         instance, "connected command %p for target %d lun %llu moved to disconnected queue\n",
 					         cmd, scmd_id(cmd), cmd->device->lun);
 
 					/*
-					 * Restore phase bits to 0 so an पूर्णांकerrupted selection,
+					 * Restore phase bits to 0 so an interrupted selection,
 					 * arbitration can resume.
 					 */
-					NCR5380_ग_लिखो(TARGET_COMMAND_REG, 0);
+					NCR5380_write(TARGET_COMMAND_REG, 0);
 
-#अगर_घोषित SUN3_SCSI_VME
+#ifdef SUN3_SCSI_VME
 					dregs->csr |= CSR_DMA_ENABLE;
-#पूर्ण_अगर
-					वापस;
+#endif
+					return;
 					/*
-					 * The SCSI data poपूर्णांकer is *IMPLICITLY* saved on a disconnect
+					 * The SCSI data pointer is *IMPLICITLY* saved on a disconnect
 					 * operation, in violation of the SCSI spec so we can safely
-					 * ignore SAVE/RESTORE poपूर्णांकers calls.
+					 * ignore SAVE/RESTORE pointers calls.
 					 *
-					 * Unक्रमtunately, some disks violate the SCSI spec and
-					 * करोn't issue the required SAVE_POINTERS message beक्रमe
-					 * disconnecting, and we have to अवरोध spec to reमुख्य
+					 * Unfortunately, some disks violate the SCSI spec and
+					 * don't issue the required SAVE_POINTERS message before
+					 * disconnecting, and we have to break spec to remain
 					 * compatible.
 					 */
-				हाल SAVE_POINTERS:
-				हाल RESTORE_POINTERS:
+				case SAVE_POINTERS:
+				case RESTORE_POINTERS:
 					/* Accept message by clearing ACK */
-					NCR5380_ग_लिखो(INITIATOR_COMMAND_REG, ICR_BASE);
-					अवरोध;
-				हाल EXTENDED_MESSAGE:
+					NCR5380_write(INITIATOR_COMMAND_REG, ICR_BASE);
+					break;
+				case EXTENDED_MESSAGE:
 					/*
 					 * Start the message buffer with the EXTENDED_MESSAGE
-					 * byte, since spi_prपूर्णांक_msg() wants the whole thing.
+					 * byte, since spi_print_msg() wants the whole thing.
 					 */
 					extended_msg[0] = EXTENDED_MESSAGE;
 					/* Accept first byte by clearing ACK */
-					NCR5380_ग_लिखो(INITIATOR_COMMAND_REG, ICR_BASE);
+					NCR5380_write(INITIATOR_COMMAND_REG, ICR_BASE);
 
 					spin_unlock_irq(&hostdata->lock);
 
-					dsprपूर्णांकk(न_संशोधन_EXTENDED, instance, "receiving extended message\n");
+					dsprintk(NDEBUG_EXTENDED, instance, "receiving extended message\n");
 
 					len = 2;
 					data = extended_msg + 1;
 					phase = PHASE_MSGIN;
 					NCR5380_transfer_pio(instance, &phase, &len, &data, 1);
-					dsprपूर्णांकk(न_संशोधन_EXTENDED, instance, "length %d, code 0x%02x\n",
-					         (पूर्णांक)extended_msg[1],
-					         (पूर्णांक)extended_msg[2]);
+					dsprintk(NDEBUG_EXTENDED, instance, "length %d, code 0x%02x\n",
+					         (int)extended_msg[1],
+					         (int)extended_msg[2]);
 
-					अगर (!len && extended_msg[1] > 0 &&
-					    extended_msg[1] <= माप(extended_msg) - 2) अणु
+					if (!len && extended_msg[1] > 0 &&
+					    extended_msg[1] <= sizeof(extended_msg) - 2) {
 						/* Accept third byte by clearing ACK */
-						NCR5380_ग_लिखो(INITIATOR_COMMAND_REG, ICR_BASE);
+						NCR5380_write(INITIATOR_COMMAND_REG, ICR_BASE);
 						len = extended_msg[1] - 1;
 						data = extended_msg + 3;
 						phase = PHASE_MSGIN;
 
 						NCR5380_transfer_pio(instance, &phase, &len, &data, 1);
-						dsprपूर्णांकk(न_संशोधन_EXTENDED, instance, "message received, residual %d\n",
+						dsprintk(NDEBUG_EXTENDED, instance, "message received, residual %d\n",
 						         len);
 
-						चयन (extended_msg[2]) अणु
-						हाल EXTENDED_SDTR:
-						हाल EXTENDED_WDTR:
-							पंचांगp = 0;
-						पूर्ण
-					पूर्ण अन्यथा अगर (len) अणु
-						shost_prपूर्णांकk(KERN_ERR, instance, "error receiving extended message\n");
-						पंचांगp = 0;
-					पूर्ण अन्यथा अणु
-						shost_prपूर्णांकk(KERN_NOTICE, instance, "extended message code %02x length %d is too long\n",
+						switch (extended_msg[2]) {
+						case EXTENDED_SDTR:
+						case EXTENDED_WDTR:
+							tmp = 0;
+						}
+					} else if (len) {
+						shost_printk(KERN_ERR, instance, "error receiving extended message\n");
+						tmp = 0;
+					} else {
+						shost_printk(KERN_NOTICE, instance, "extended message code %02x length %d is too long\n",
 						             extended_msg[2], extended_msg[1]);
-						पंचांगp = 0;
-					पूर्ण
+						tmp = 0;
+					}
 
 					spin_lock_irq(&hostdata->lock);
-					अगर (!hostdata->connected)
-						वापस;
+					if (!hostdata->connected)
+						return;
 
 					/* Reject message */
 					fallthrough;
-				शेष:
+				default:
 					/*
 					 * If we get something weird that we aren't expecting,
 					 * log it.
 					 */
-					अगर (पंचांगp == EXTENDED_MESSAGE)
-						scmd_prपूर्णांकk(KERN_INFO, cmd,
+					if (tmp == EXTENDED_MESSAGE)
+						scmd_printk(KERN_INFO, cmd,
 						            "rejecting unknown extended message code %02x, length %d\n",
 						            extended_msg[2], extended_msg[1]);
-					अन्यथा अगर (पंचांगp)
-						scmd_prपूर्णांकk(KERN_INFO, cmd,
+					else if (tmp)
+						scmd_printk(KERN_INFO, cmd,
 						            "rejecting unknown message code %02x\n",
-						            पंचांगp);
+						            tmp);
 
 					msgout = MESSAGE_REJECT;
-					NCR5380_ग_लिखो(INITIATOR_COMMAND_REG, ICR_BASE | ICR_ASSERT_ATN);
-					अवरोध;
-				पूर्ण /* चयन (पंचांगp) */
-				अवरोध;
-			हाल PHASE_MSGOUT:
+					NCR5380_write(INITIATOR_COMMAND_REG, ICR_BASE | ICR_ASSERT_ATN);
+					break;
+				} /* switch (tmp) */
+				break;
+			case PHASE_MSGOUT:
 				len = 1;
 				data = &msgout;
 				hostdata->last_message = msgout;
 				NCR5380_transfer_pio(instance, &phase, &len, &data, 0);
-				अगर (msgout == ABORT) अणु
-					hostdata->connected = शून्य;
+				if (msgout == ABORT) {
+					hostdata->connected = NULL;
 					hostdata->busy[scmd_id(cmd)] &= ~(1 << cmd->device->lun);
 					cmd->result = DID_ERROR << 16;
 					complete_cmd(instance, cmd);
-					वापस;
-				पूर्ण
+					return;
+				}
 				msgout = NOP;
-				अवरोध;
-			हाल PHASE_CMDOUT:
+				break;
+			case PHASE_CMDOUT:
 				len = cmd->cmd_len;
 				data = cmd->cmnd;
 				/*
-				 * XXX क्रम perक्रमmance reasons, on machines with a
+				 * XXX for performance reasons, on machines with a
 				 * PSEUDO-DMA architecture we should probably
 				 * use the dma transfer function.
 				 */
 				NCR5380_transfer_pio(instance, &phase, &len, &data, 0);
-				अवरोध;
-			हाल PHASE_STATIN:
+				break;
+			case PHASE_STATIN:
 				len = 1;
-				data = &पंचांगp;
+				data = &tmp;
 				NCR5380_transfer_pio(instance, &phase, &len, &data, 0);
-				cmd->SCp.Status = पंचांगp;
-				अवरोध;
-			शेष:
-				shost_prपूर्णांकk(KERN_ERR, instance, "unknown phase\n");
-				NCR5380_dprपूर्णांक(न_संशोधन_ANY, instance);
-			पूर्ण /* चयन(phase) */
-		पूर्ण अन्यथा अणु
+				cmd->SCp.Status = tmp;
+				break;
+			default:
+				shost_printk(KERN_ERR, instance, "unknown phase\n");
+				NCR5380_dprint(NDEBUG_ANY, instance);
+			} /* switch(phase) */
+		} else {
 			spin_unlock_irq(&hostdata->lock);
 			NCR5380_poll_politely(hostdata, STATUS_REG, SR_REQ, SR_REQ, HZ);
 			spin_lock_irq(&hostdata->lock);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*
- * Function : व्योम NCR5380_reselect (काष्ठा Scsi_Host *instance)
+ * Function : void NCR5380_reselect (struct Scsi_Host *instance)
  *
- * Purpose : करोes reselection, initializing the instance->connected
- * field to poपूर्णांक to the scsi_cmnd क्रम which the I_T_L or I_T_L_Q
+ * Purpose : does reselection, initializing the instance->connected
+ * field to point to the scsi_cmnd for which the I_T_L or I_T_L_Q
  * nexus has been reestablished,
  *
- * Inमाला_दो : instance - this instance of the NCR5380.
+ * Inputs : instance - this instance of the NCR5380.
  */
 
-अटल व्योम NCR5380_reselect(काष्ठा Scsi_Host *instance)
-अणु
-	काष्ठा NCR5380_hostdata *hostdata = shost_priv(instance);
-	अचिन्हित अक्षर target_mask;
-	अचिन्हित अक्षर lun;
-	अचिन्हित अक्षर msg[3];
-	काष्ठा NCR5380_cmd *ncmd;
-	काष्ठा scsi_cmnd *पंचांगp;
+static void NCR5380_reselect(struct Scsi_Host *instance)
+{
+	struct NCR5380_hostdata *hostdata = shost_priv(instance);
+	unsigned char target_mask;
+	unsigned char lun;
+	unsigned char msg[3];
+	struct NCR5380_cmd *ncmd;
+	struct scsi_cmnd *tmp;
 
 	/*
 	 * Disable arbitration, etc. since the host adapter obviously
-	 * lost, and tell an पूर्णांकerrupted NCR5380_select() to restart.
+	 * lost, and tell an interrupted NCR5380_select() to restart.
 	 */
 
-	NCR5380_ग_लिखो(MODE_REG, MR_BASE);
+	NCR5380_write(MODE_REG, MR_BASE);
 
-	target_mask = NCR5380_पढ़ो(CURRENT_SCSI_DATA_REG) & ~(hostdata->id_mask);
-	अगर (!target_mask || target_mask & (target_mask - 1)) अणु
-		shost_prपूर्णांकk(KERN_WARNING, instance,
+	target_mask = NCR5380_read(CURRENT_SCSI_DATA_REG) & ~(hostdata->id_mask);
+	if (!target_mask || target_mask & (target_mask - 1)) {
+		shost_printk(KERN_WARNING, instance,
 			     "reselect: bad target_mask 0x%02x\n", target_mask);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
-	 * At this poपूर्णांक, we have detected that our SCSI ID is on the bus,
-	 * SEL is true and BSY was false क्रम at least one bus settle delay
+	 * At this point, we have detected that our SCSI ID is on the bus,
+	 * SEL is true and BSY was false for at least one bus settle delay
 	 * (400 ns).
 	 *
-	 * We must निश्चित BSY ourselves, until the target drops the SEL
-	 * संकेत.
+	 * We must assert BSY ourselves, until the target drops the SEL
+	 * signal.
 	 */
 
-	NCR5380_ग_लिखो(INITIATOR_COMMAND_REG, ICR_BASE | ICR_ASSERT_BSY);
-	अगर (NCR5380_poll_politely(hostdata,
-	                          STATUS_REG, SR_SEL, 0, 0) < 0) अणु
-		shost_prपूर्णांकk(KERN_ERR, instance, "reselect: !SEL timeout\n");
-		NCR5380_ग_लिखो(INITIATOR_COMMAND_REG, ICR_BASE);
-		वापस;
-	पूर्ण
-	NCR5380_ग_लिखो(INITIATOR_COMMAND_REG, ICR_BASE);
+	NCR5380_write(INITIATOR_COMMAND_REG, ICR_BASE | ICR_ASSERT_BSY);
+	if (NCR5380_poll_politely(hostdata,
+	                          STATUS_REG, SR_SEL, 0, 0) < 0) {
+		shost_printk(KERN_ERR, instance, "reselect: !SEL timeout\n");
+		NCR5380_write(INITIATOR_COMMAND_REG, ICR_BASE);
+		return;
+	}
+	NCR5380_write(INITIATOR_COMMAND_REG, ICR_BASE);
 
 	/*
-	 * Wait क्रम target to go पूर्णांकo MSGIN.
+	 * Wait for target to go into MSGIN.
 	 */
 
-	अगर (NCR5380_poll_politely(hostdata,
-	                          STATUS_REG, SR_REQ, SR_REQ, 0) < 0) अणु
-		अगर ((NCR5380_पढ़ो(STATUS_REG) & (SR_BSY | SR_SEL)) == 0)
+	if (NCR5380_poll_politely(hostdata,
+	                          STATUS_REG, SR_REQ, SR_REQ, 0) < 0) {
+		if ((NCR5380_read(STATUS_REG) & (SR_BSY | SR_SEL)) == 0)
 			/* BUS FREE phase */
-			वापस;
-		shost_prपूर्णांकk(KERN_ERR, instance, "reselect: REQ timeout\n");
-		करो_पात(instance, 0);
-		वापस;
-	पूर्ण
+			return;
+		shost_printk(KERN_ERR, instance, "reselect: REQ timeout\n");
+		do_abort(instance, 0);
+		return;
+	}
 
-#अगर_घोषित CONFIG_SUN3
+#ifdef CONFIG_SUN3
 	/* acknowledge toggle to MSGIN */
-	NCR5380_ग_लिखो(TARGET_COMMAND_REG, PHASE_SR_TO_TCR(PHASE_MSGIN));
+	NCR5380_write(TARGET_COMMAND_REG, PHASE_SR_TO_TCR(PHASE_MSGIN));
 
 	/* peek at the byte without really hitting the bus */
-	msg[0] = NCR5380_पढ़ो(CURRENT_SCSI_DATA_REG);
-#अन्यथा
-	अणु
-		पूर्णांक len = 1;
-		अचिन्हित अक्षर *data = msg;
-		अचिन्हित अक्षर phase = PHASE_MSGIN;
+	msg[0] = NCR5380_read(CURRENT_SCSI_DATA_REG);
+#else
+	{
+		int len = 1;
+		unsigned char *data = msg;
+		unsigned char phase = PHASE_MSGIN;
 
 		NCR5380_transfer_pio(instance, &phase, &len, &data, 0);
 
-		अगर (len) अणु
-			करो_पात(instance, 0);
-			वापस;
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर /* CONFIG_SUN3 */
+		if (len) {
+			do_abort(instance, 0);
+			return;
+		}
+	}
+#endif /* CONFIG_SUN3 */
 
-	अगर (!(msg[0] & 0x80)) अणु
-		shost_prपूर्णांकk(KERN_ERR, instance, "expecting IDENTIFY message, got ");
-		spi_prपूर्णांक_msg(msg);
-		prपूर्णांकk("\n");
-		करो_पात(instance, 0);
-		वापस;
-	पूर्ण
+	if (!(msg[0] & 0x80)) {
+		shost_printk(KERN_ERR, instance, "expecting IDENTIFY message, got ");
+		spi_print_msg(msg);
+		printk("\n");
+		do_abort(instance, 0);
+		return;
+	}
 	lun = msg[0] & 0x07;
 
 	/*
-	 * We need to add code क्रम SCSI-II to track which devices have
+	 * We need to add code for SCSI-II to track which devices have
 	 * I_T_L_Q nexuses established, and which have simple I_T_L
-	 * nexuses so we can chose to करो additional data transfer.
+	 * nexuses so we can chose to do additional data transfer.
 	 */
 
 	/*
 	 * Find the command corresponding to the I_T_L or I_T_L_Q  nexus we
-	 * just reestablished, and हटाओ it from the disconnected queue.
+	 * just reestablished, and remove it from the disconnected queue.
 	 */
 
-	पंचांगp = शून्य;
-	list_क्रम_each_entry(ncmd, &hostdata->disconnected, list) अणु
-		काष्ठा scsi_cmnd *cmd = NCR5380_to_scmd(ncmd);
+	tmp = NULL;
+	list_for_each_entry(ncmd, &hostdata->disconnected, list) {
+		struct scsi_cmnd *cmd = NCR5380_to_scmd(ncmd);
 
-		अगर (target_mask == (1 << scmd_id(cmd)) &&
-		    lun == (u8)cmd->device->lun) अणु
+		if (target_mask == (1 << scmd_id(cmd)) &&
+		    lun == (u8)cmd->device->lun) {
 			list_del(&ncmd->list);
-			पंचांगp = cmd;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			tmp = cmd;
+			break;
+		}
+	}
 
-	अगर (पंचांगp) अणु
-		dsprपूर्णांकk(न_संशोधन_RESELECTION | न_संशोधन_QUEUES, instance,
-		         "reselect: removed %p from disconnected queue\n", पंचांगp);
-	पूर्ण अन्यथा अणु
-		पूर्णांक target = ffs(target_mask) - 1;
+	if (tmp) {
+		dsprintk(NDEBUG_RESELECTION | NDEBUG_QUEUES, instance,
+		         "reselect: removed %p from disconnected queue\n", tmp);
+	} else {
+		int target = ffs(target_mask) - 1;
 
-		shost_prपूर्णांकk(KERN_ERR, instance, "target bitmask 0x%02x lun %d not in disconnected queue.\n",
+		shost_printk(KERN_ERR, instance, "target bitmask 0x%02x lun %d not in disconnected queue.\n",
 		             target_mask, lun);
 		/*
-		 * Since we have an established nexus that we can't करो anything
-		 * with, we must पात it.
+		 * Since we have an established nexus that we can't do anything
+		 * with, we must abort it.
 		 */
-		अगर (करो_पात(instance, 0) == 0)
+		if (do_abort(instance, 0) == 0)
 			hostdata->busy[target] &= ~(1 << lun);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-#अगर_घोषित CONFIG_SUN3
-	अगर (sun3_dma_setup_करोne != पंचांगp) अणु
-		पूर्णांक count;
+#ifdef CONFIG_SUN3
+	if (sun3_dma_setup_done != tmp) {
+		int count;
 
-		advance_sg_buffer(पंचांगp);
+		advance_sg_buffer(tmp);
 
-		count = sun3scsi_dma_xfer_len(hostdata, पंचांगp);
+		count = sun3scsi_dma_xfer_len(hostdata, tmp);
 
-		अगर (count > 0) अणु
-			अगर (rq_data_dir(पंचांगp->request))
+		if (count > 0) {
+			if (rq_data_dir(tmp->request))
 				sun3scsi_dma_send_setup(hostdata,
-				                        पंचांगp->SCp.ptr, count);
-			अन्यथा
+				                        tmp->SCp.ptr, count);
+			else
 				sun3scsi_dma_recv_setup(hostdata,
-				                        पंचांगp->SCp.ptr, count);
-			sun3_dma_setup_करोne = पंचांगp;
-		पूर्ण
-	पूर्ण
+				                        tmp->SCp.ptr, count);
+			sun3_dma_setup_done = tmp;
+		}
+	}
 
-	NCR5380_ग_लिखो(INITIATOR_COMMAND_REG, ICR_BASE | ICR_ASSERT_ACK);
-#पूर्ण_अगर /* CONFIG_SUN3 */
+	NCR5380_write(INITIATOR_COMMAND_REG, ICR_BASE | ICR_ASSERT_ACK);
+#endif /* CONFIG_SUN3 */
 
 	/* Accept message by clearing ACK */
-	NCR5380_ग_लिखो(INITIATOR_COMMAND_REG, ICR_BASE);
+	NCR5380_write(INITIATOR_COMMAND_REG, ICR_BASE);
 
-	hostdata->connected = पंचांगp;
-	dsprपूर्णांकk(न_संशोधन_RESELECTION, instance, "nexus established, target %d, lun %llu\n",
-	         scmd_id(पंचांगp), पंचांगp->device->lun);
-पूर्ण
-
-/**
- * list_find_cmd - test क्रम presence of a command in a linked list
- * @haystack: list of commands
- * @needle: command to search क्रम
- */
-
-अटल bool list_find_cmd(काष्ठा list_head *haystack,
-                          काष्ठा scsi_cmnd *needle)
-अणु
-	काष्ठा NCR5380_cmd *ncmd;
-
-	list_क्रम_each_entry(ncmd, haystack, list)
-		अगर (NCR5380_to_scmd(ncmd) == needle)
-			वापस true;
-	वापस false;
-पूर्ण
+	hostdata->connected = tmp;
+	dsprintk(NDEBUG_RESELECTION, instance, "nexus established, target %d, lun %llu\n",
+	         scmd_id(tmp), tmp->device->lun);
+}
 
 /**
- * list_हटाओ_cmd - हटाओ a command from linked list
+ * list_find_cmd - test for presence of a command in a linked list
  * @haystack: list of commands
- * @needle: command to हटाओ
+ * @needle: command to search for
  */
 
-अटल bool list_del_cmd(काष्ठा list_head *haystack,
-                         काष्ठा scsi_cmnd *needle)
-अणु
-	अगर (list_find_cmd(haystack, needle)) अणु
-		काष्ठा NCR5380_cmd *ncmd = scsi_cmd_priv(needle);
+static bool list_find_cmd(struct list_head *haystack,
+                          struct scsi_cmnd *needle)
+{
+	struct NCR5380_cmd *ncmd;
+
+	list_for_each_entry(ncmd, haystack, list)
+		if (NCR5380_to_scmd(ncmd) == needle)
+			return true;
+	return false;
+}
+
+/**
+ * list_remove_cmd - remove a command from linked list
+ * @haystack: list of commands
+ * @needle: command to remove
+ */
+
+static bool list_del_cmd(struct list_head *haystack,
+                         struct scsi_cmnd *needle)
+{
+	if (list_find_cmd(haystack, needle)) {
+		struct NCR5380_cmd *ncmd = scsi_cmd_priv(needle);
 
 		list_del(&ncmd->list);
-		वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+		return true;
+	}
+	return false;
+}
 
 /**
- * NCR5380_पात - scsi host eh_पात_handler() method
- * @cmd: the command to be पातed
+ * NCR5380_abort - scsi host eh_abort_handler() method
+ * @cmd: the command to be aborted
  *
- * Try to पात a given command by removing it from queues and/or sending
- * the target an पात message. This may not succeed in causing a target
- * to पात the command. Nonetheless, the low-level driver must क्रमget about
+ * Try to abort a given command by removing it from queues and/or sending
+ * the target an abort message. This may not succeed in causing a target
+ * to abort the command. Nonetheless, the low-level driver must forget about
  * the command because the mid-layer reclaims it and it may be re-issued.
  *
  * The normal path taken by a command is as follows. For EH we trace this
- * same path to locate and पात the command.
+ * same path to locate and abort the command.
  *
  * unissued -> selecting -> [unissued -> selecting ->]... connected ->
  * [disconnected -> connected ->]...
- * [स्वतःsense -> connected ->] करोne
+ * [autosense -> connected ->] done
  *
- * If cmd was not found at all then presumably it has alपढ़ोy been completed,
- * in which हाल वापस SUCCESS to try to aव्योम further EH measures.
+ * If cmd was not found at all then presumably it has already been completed,
+ * in which case return SUCCESS to try to avoid further EH measures.
  *
  * If the command has not completed yet, we must not fail to find it.
- * We have no option but to क्रमget the पातed command (even अगर it still
+ * We have no option but to forget the aborted command (even if it still
  * lacks sense data). The mid-layer may re-issue a command that is in error
- * recovery (see scsi_send_eh_cmnd), but the logic and data काष्ठाures in
+ * recovery (see scsi_send_eh_cmnd), but the logic and data structures in
  * this driver are such that a command can appear on one queue only.
  *
- * The lock protects driver data काष्ठाures, but EH handlers also use it
+ * The lock protects driver data structures, but EH handlers also use it
  * to serialize their own execution and prevent their own re-entry.
  */
 
-अटल पूर्णांक NCR5380_पात(काष्ठा scsi_cmnd *cmd)
-अणु
-	काष्ठा Scsi_Host *instance = cmd->device->host;
-	काष्ठा NCR5380_hostdata *hostdata = shost_priv(instance);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक result = SUCCESS;
+static int NCR5380_abort(struct scsi_cmnd *cmd)
+{
+	struct Scsi_Host *instance = cmd->device->host;
+	struct NCR5380_hostdata *hostdata = shost_priv(instance);
+	unsigned long flags;
+	int result = SUCCESS;
 
 	spin_lock_irqsave(&hostdata->lock, flags);
 
-#अगर (न_संशोधन & न_संशोधन_ANY)
-	scmd_prपूर्णांकk(KERN_INFO, cmd, __func__);
-#पूर्ण_अगर
-	NCR5380_dprपूर्णांक(न_संशोधन_ANY, instance);
-	NCR5380_dprपूर्णांक_phase(न_संशोधन_ANY, instance);
+#if (NDEBUG & NDEBUG_ANY)
+	scmd_printk(KERN_INFO, cmd, __func__);
+#endif
+	NCR5380_dprint(NDEBUG_ANY, instance);
+	NCR5380_dprint_phase(NDEBUG_ANY, instance);
 
-	अगर (list_del_cmd(&hostdata->unissued, cmd)) अणु
-		dsprपूर्णांकk(न_संशोधन_ABORT, instance,
+	if (list_del_cmd(&hostdata->unissued, cmd)) {
+		dsprintk(NDEBUG_ABORT, instance,
 		         "abort: removed %p from issue queue\n", cmd);
 		cmd->result = DID_ABORT << 16;
-		cmd->scsi_करोne(cmd); /* No tag or busy flag to worry about */
-		जाओ out;
-	पूर्ण
+		cmd->scsi_done(cmd); /* No tag or busy flag to worry about */
+		goto out;
+	}
 
-	अगर (hostdata->selecting == cmd) अणु
-		dsprपूर्णांकk(न_संशोधन_ABORT, instance,
+	if (hostdata->selecting == cmd) {
+		dsprintk(NDEBUG_ABORT, instance,
 		         "abort: cmd %p == selecting\n", cmd);
-		hostdata->selecting = शून्य;
+		hostdata->selecting = NULL;
 		cmd->result = DID_ABORT << 16;
 		complete_cmd(instance, cmd);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (list_del_cmd(&hostdata->disconnected, cmd)) अणु
-		dsprपूर्णांकk(न_संशोधन_ABORT, instance,
+	if (list_del_cmd(&hostdata->disconnected, cmd)) {
+		dsprintk(NDEBUG_ABORT, instance,
 		         "abort: removed %p from disconnected list\n", cmd);
 		/* Can't call NCR5380_select() and send ABORT because that
 		 * means releasing the lock. Need a bus reset.
@@ -2285,95 +2284,95 @@ out:
 		set_host_byte(cmd, DID_ERROR);
 		complete_cmd(instance, cmd);
 		result = FAILED;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (hostdata->connected == cmd) अणु
-		dsprपूर्णांकk(न_संशोधन_ABORT, instance, "abort: cmd %p is connected\n", cmd);
-		hostdata->connected = शून्य;
+	if (hostdata->connected == cmd) {
+		dsprintk(NDEBUG_ABORT, instance, "abort: cmd %p is connected\n", cmd);
+		hostdata->connected = NULL;
 		hostdata->dma_len = 0;
-		अगर (करो_पात(instance, 0) < 0) अणु
+		if (do_abort(instance, 0) < 0) {
 			set_host_byte(cmd, DID_ERROR);
 			complete_cmd(instance, cmd);
 			result = FAILED;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		set_host_byte(cmd, DID_ABORT);
 		complete_cmd(instance, cmd);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (list_del_cmd(&hostdata->स्वतःsense, cmd)) अणु
-		dsprपूर्णांकk(न_संशोधन_ABORT, instance,
+	if (list_del_cmd(&hostdata->autosense, cmd)) {
+		dsprintk(NDEBUG_ABORT, instance,
 		         "abort: removed %p from sense queue\n", cmd);
 		complete_cmd(instance, cmd);
-	पूर्ण
+	}
 
 out:
-	अगर (result == FAILED)
-		dsprपूर्णांकk(न_संशोधन_ABORT, instance, "abort: failed to abort %p\n", cmd);
-	अन्यथा अणु
+	if (result == FAILED)
+		dsprintk(NDEBUG_ABORT, instance, "abort: failed to abort %p\n", cmd);
+	else {
 		hostdata->busy[scmd_id(cmd)] &= ~(1 << cmd->device->lun);
-		dsprपूर्णांकk(न_संशोधन_ABORT, instance, "abort: successfully aborted %p\n", cmd);
-	पूर्ण
+		dsprintk(NDEBUG_ABORT, instance, "abort: successfully aborted %p\n", cmd);
+	}
 
-	queue_work(hostdata->work_q, &hostdata->मुख्य_task);
+	queue_work(hostdata->work_q, &hostdata->main_task);
 	spin_unlock_irqrestore(&hostdata->lock, flags);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 
-अटल व्योम bus_reset_cleanup(काष्ठा Scsi_Host *instance)
-अणु
-	काष्ठा NCR5380_hostdata *hostdata = shost_priv(instance);
-	पूर्णांक i;
-	काष्ठा NCR5380_cmd *ncmd;
+static void bus_reset_cleanup(struct Scsi_Host *instance)
+{
+	struct NCR5380_hostdata *hostdata = shost_priv(instance);
+	int i;
+	struct NCR5380_cmd *ncmd;
 
-	/* reset NCR रेजिस्टरs */
-	NCR5380_ग_लिखो(MODE_REG, MR_BASE);
-	NCR5380_ग_लिखो(TARGET_COMMAND_REG, 0);
-	NCR5380_ग_लिखो(SELECT_ENABLE_REG, 0);
+	/* reset NCR registers */
+	NCR5380_write(MODE_REG, MR_BASE);
+	NCR5380_write(TARGET_COMMAND_REG, 0);
+	NCR5380_write(SELECT_ENABLE_REG, 0);
 
 	/* After the reset, there are no more connected or disconnected commands
-	 * and no busy units; so clear the low-level status here to aव्योम
+	 * and no busy units; so clear the low-level status here to avoid
 	 * conflicts when the mid-level code tries to wake up the affected
 	 * commands!
 	 */
 
-	अगर (hostdata->selecting) अणु
+	if (hostdata->selecting) {
 		hostdata->selecting->result = DID_RESET << 16;
 		complete_cmd(instance, hostdata->selecting);
-		hostdata->selecting = शून्य;
-	पूर्ण
+		hostdata->selecting = NULL;
+	}
 
-	list_क्रम_each_entry(ncmd, &hostdata->disconnected, list) अणु
-		काष्ठा scsi_cmnd *cmd = NCR5380_to_scmd(ncmd);
+	list_for_each_entry(ncmd, &hostdata->disconnected, list) {
+		struct scsi_cmnd *cmd = NCR5380_to_scmd(ncmd);
 
 		set_host_byte(cmd, DID_RESET);
 		complete_cmd(instance, cmd);
-	पूर्ण
+	}
 	INIT_LIST_HEAD(&hostdata->disconnected);
 
-	list_क्रम_each_entry(ncmd, &hostdata->स्वतःsense, list) अणु
-		काष्ठा scsi_cmnd *cmd = NCR5380_to_scmd(ncmd);
+	list_for_each_entry(ncmd, &hostdata->autosense, list) {
+		struct scsi_cmnd *cmd = NCR5380_to_scmd(ncmd);
 
-		cmd->scsi_करोne(cmd);
-	पूर्ण
-	INIT_LIST_HEAD(&hostdata->स्वतःsense);
+		cmd->scsi_done(cmd);
+	}
+	INIT_LIST_HEAD(&hostdata->autosense);
 
-	अगर (hostdata->connected) अणु
+	if (hostdata->connected) {
 		set_host_byte(hostdata->connected, DID_RESET);
 		complete_cmd(instance, hostdata->connected);
-		hostdata->connected = शून्य;
-	पूर्ण
+		hostdata->connected = NULL;
+	}
 
-	क्रम (i = 0; i < 8; ++i)
+	for (i = 0; i < 8; ++i)
 		hostdata->busy[i] = 0;
 	hostdata->dma_len = 0;
 
-	queue_work(hostdata->work_q, &hostdata->मुख्य_task);
-पूर्ण
+	queue_work(hostdata->work_q, &hostdata->main_task);
+}
 
 /**
  * NCR5380_host_reset - reset the SCSI host
@@ -2382,33 +2381,33 @@ out:
  * Returns SUCCESS
  */
 
-अटल पूर्णांक NCR5380_host_reset(काष्ठा scsi_cmnd *cmd)
-अणु
-	काष्ठा Scsi_Host *instance = cmd->device->host;
-	काष्ठा NCR5380_hostdata *hostdata = shost_priv(instance);
-	अचिन्हित दीर्घ flags;
-	काष्ठा NCR5380_cmd *ncmd;
+static int NCR5380_host_reset(struct scsi_cmnd *cmd)
+{
+	struct Scsi_Host *instance = cmd->device->host;
+	struct NCR5380_hostdata *hostdata = shost_priv(instance);
+	unsigned long flags;
+	struct NCR5380_cmd *ncmd;
 
 	spin_lock_irqsave(&hostdata->lock, flags);
 
-#अगर (न_संशोधन & न_संशोधन_ANY)
-	shost_prपूर्णांकk(KERN_INFO, instance, __func__);
-#पूर्ण_अगर
-	NCR5380_dprपूर्णांक(न_संशोधन_ANY, instance);
-	NCR5380_dprपूर्णांक_phase(न_संशोधन_ANY, instance);
+#if (NDEBUG & NDEBUG_ANY)
+	shost_printk(KERN_INFO, instance, __func__);
+#endif
+	NCR5380_dprint(NDEBUG_ANY, instance);
+	NCR5380_dprint_phase(NDEBUG_ANY, instance);
 
-	list_क्रम_each_entry(ncmd, &hostdata->unissued, list) अणु
-		काष्ठा scsi_cmnd *scmd = NCR5380_to_scmd(ncmd);
+	list_for_each_entry(ncmd, &hostdata->unissued, list) {
+		struct scsi_cmnd *scmd = NCR5380_to_scmd(ncmd);
 
 		scmd->result = DID_RESET << 16;
-		scmd->scsi_करोne(scmd);
-	पूर्ण
+		scmd->scsi_done(scmd);
+	}
 	INIT_LIST_HEAD(&hostdata->unissued);
 
-	करो_reset(instance);
+	do_reset(instance);
 	bus_reset_cleanup(instance);
 
 	spin_unlock_irqrestore(&hostdata->lock, flags);
 
-	वापस SUCCESS;
-पूर्ण
+	return SUCCESS;
+}

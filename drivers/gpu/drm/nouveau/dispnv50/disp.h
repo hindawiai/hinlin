@@ -1,44 +1,43 @@
-<शैली गुरु>
-#अगर_अघोषित __NV50_KMS_H__
-#घोषणा __NV50_KMS_H__
-#समावेश <linux/workqueue.h>
-#समावेश <nvअगर/स्मृति.स>
-#समावेश <nvअगर/push.h>
+#ifndef __NV50_KMS_H__
+#define __NV50_KMS_H__
+#include <linux/workqueue.h>
+#include <nvif/mem.h>
+#include <nvif/push.h>
 
-#समावेश "nouveau_display.h"
+#include "nouveau_display.h"
 
-काष्ठा nv50_msto;
-काष्ठा nouveau_encoder;
+struct nv50_msto;
+struct nouveau_encoder;
 
-काष्ठा nv50_disp अणु
-	काष्ठा nvअगर_disp *disp;
-	काष्ठा nv50_core *core;
-	काष्ठा nvअगर_object caps;
+struct nv50_disp {
+	struct nvif_disp *disp;
+	struct nv50_core *core;
+	struct nvif_object caps;
 
-#घोषणा NV50_DISP_SYNC(c, o)                                ((c) * 0x040 + (o))
-#घोषणा NV50_DISP_CORE_NTFY                       NV50_DISP_SYNC(0      , 0x00)
-#घोषणा NV50_DISP_WNDW_SEM0(c)                    NV50_DISP_SYNC(1 + (c), 0x00)
-#घोषणा NV50_DISP_WNDW_SEM1(c)                    NV50_DISP_SYNC(1 + (c), 0x10)
-#घोषणा NV50_DISP_WNDW_NTFY(c)                    NV50_DISP_SYNC(1 + (c), 0x20)
-#घोषणा NV50_DISP_BASE_SEM0(c)                    NV50_DISP_WNDW_SEM0(0 + (c))
-#घोषणा NV50_DISP_BASE_SEM1(c)                    NV50_DISP_WNDW_SEM1(0 + (c))
-#घोषणा NV50_DISP_BASE_NTFY(c)                    NV50_DISP_WNDW_NTFY(0 + (c))
-#घोषणा NV50_DISP_OVLY_SEM0(c)                    NV50_DISP_WNDW_SEM0(4 + (c))
-#घोषणा NV50_DISP_OVLY_SEM1(c)                    NV50_DISP_WNDW_SEM1(4 + (c))
-#घोषणा NV50_DISP_OVLY_NTFY(c)                    NV50_DISP_WNDW_NTFY(4 + (c))
-	काष्ठा nouveau_bo *sync;
+#define NV50_DISP_SYNC(c, o)                                ((c) * 0x040 + (o))
+#define NV50_DISP_CORE_NTFY                       NV50_DISP_SYNC(0      , 0x00)
+#define NV50_DISP_WNDW_SEM0(c)                    NV50_DISP_SYNC(1 + (c), 0x00)
+#define NV50_DISP_WNDW_SEM1(c)                    NV50_DISP_SYNC(1 + (c), 0x10)
+#define NV50_DISP_WNDW_NTFY(c)                    NV50_DISP_SYNC(1 + (c), 0x20)
+#define NV50_DISP_BASE_SEM0(c)                    NV50_DISP_WNDW_SEM0(0 + (c))
+#define NV50_DISP_BASE_SEM1(c)                    NV50_DISP_WNDW_SEM1(0 + (c))
+#define NV50_DISP_BASE_NTFY(c)                    NV50_DISP_WNDW_NTFY(0 + (c))
+#define NV50_DISP_OVLY_SEM0(c)                    NV50_DISP_WNDW_SEM0(4 + (c))
+#define NV50_DISP_OVLY_SEM1(c)                    NV50_DISP_WNDW_SEM1(4 + (c))
+#define NV50_DISP_OVLY_NTFY(c)                    NV50_DISP_WNDW_NTFY(4 + (c))
+	struct nouveau_bo *sync;
 
-	काष्ठा mutex mutex;
-पूर्ण;
+	struct mutex mutex;
+};
 
-अटल अंतरभूत काष्ठा nv50_disp *
-nv50_disp(काष्ठा drm_device *dev)
-अणु
-	वापस nouveau_display(dev)->priv;
-पूर्ण
+static inline struct nv50_disp *
+nv50_disp(struct drm_device *dev)
+{
+	return nouveau_display(dev)->priv;
+}
 
-काष्ठा nv50_disp_पूर्णांकerlock अणु
-	क्रमागत nv50_disp_पूर्णांकerlock_type अणु
+struct nv50_disp_interlock {
+	enum nv50_disp_interlock_type {
 		NV50_DISP_INTERLOCK_CORE = 0,
 		NV50_DISP_INTERLOCK_CURS,
 		NV50_DISP_INTERLOCK_BASE,
@@ -46,71 +45,71 @@ nv50_disp(काष्ठा drm_device *dev)
 		NV50_DISP_INTERLOCK_WNDW,
 		NV50_DISP_INTERLOCK_WIMM,
 		NV50_DISP_INTERLOCK__SIZE
-	पूर्ण type;
+	} type;
 	u32 data;
 	u32 wimm;
-पूर्ण;
+};
 
-व्योम corec37d_ntfy_init(काष्ठा nouveau_bo *, u32);
+void corec37d_ntfy_init(struct nouveau_bo *, u32);
 
-व्योम head907d_olut_load(काष्ठा drm_color_lut *, पूर्णांक size, व्योम __iomem *);
+void head907d_olut_load(struct drm_color_lut *, int size, void __iomem *);
 
-काष्ठा nv50_chan अणु
-	काष्ठा nvअगर_object user;
-	काष्ठा nvअगर_device *device;
-पूर्ण;
+struct nv50_chan {
+	struct nvif_object user;
+	struct nvif_device *device;
+};
 
-काष्ठा nv50_dmac अणु
-	काष्ठा nv50_chan base;
+struct nv50_dmac {
+	struct nv50_chan base;
 
-	काष्ठा nvअगर_push _push;
-	काष्ठा nvअगर_push *push;
+	struct nvif_push _push;
+	struct nvif_push *push;
 	u32 *ptr;
 
-	काष्ठा nvअगर_object sync;
-	काष्ठा nvअगर_object vram;
+	struct nvif_object sync;
+	struct nvif_object vram;
 
 	/* Protects against concurrent pushbuf access to this channel, lock is
-	 * grabbed by evo_रुको (अगर the pushbuf reservation is successful) and
+	 * grabbed by evo_wait (if the pushbuf reservation is successful) and
 	 * dropped again by evo_kick. */
-	काष्ठा mutex lock;
+	struct mutex lock;
 
 	u32 cur;
 	u32 put;
 	u32 max;
-पूर्ण;
+};
 
-काष्ठा nv50_outp_atom अणु
-	काष्ठा list_head head;
+struct nv50_outp_atom {
+	struct list_head head;
 
-	काष्ठा drm_encoder *encoder;
+	struct drm_encoder *encoder;
 	bool flush_disable;
 
-	जोड़ nv50_outp_atom_mask अणु
-		काष्ठा अणु
+	union nv50_outp_atom_mask {
+		struct {
 			bool ctrl:1;
-		पूर्ण;
+		};
 		u8 mask;
-	पूर्ण set, clr;
-पूर्ण;
+	} set, clr;
+};
 
-पूर्णांक nv50_dmac_create(काष्ठा nvअगर_device *device, काष्ठा nvअगर_object *disp,
-		     स्थिर s32 *oclass, u8 head, व्योम *data, u32 size,
-		     s64 syncbuf, काष्ठा nv50_dmac *dmac);
-व्योम nv50_dmac_destroy(काष्ठा nv50_dmac *);
+int nv50_dmac_create(struct nvif_device *device, struct nvif_object *disp,
+		     const s32 *oclass, u8 head, void *data, u32 size,
+		     s64 syncbuf, struct nv50_dmac *dmac);
+void nv50_dmac_destroy(struct nv50_dmac *);
 
 /*
- * For normal encoders this just वापसs the encoder. For active MST encoders,
- * this वापसs the real outp that's driving displays on the topology.
- * Inactive MST encoders वापस शून्य, since they would have no real outp to
- * वापस anyway.
+ * For normal encoders this just returns the encoder. For active MST encoders,
+ * this returns the real outp that's driving displays on the topology.
+ * Inactive MST encoders return NULL, since they would have no real outp to
+ * return anyway.
  */
-काष्ठा nouveau_encoder *nv50_real_outp(काष्ठा drm_encoder *encoder);
+struct nouveau_encoder *nv50_real_outp(struct drm_encoder *encoder);
 
-u32 *evo_रुको(काष्ठा nv50_dmac *, पूर्णांक nr);
-व्योम evo_kick(u32 *, काष्ठा nv50_dmac *);
+u32 *evo_wait(struct nv50_dmac *, int nr);
+void evo_kick(u32 *, struct nv50_dmac *);
 
-बाह्य स्थिर u64 disp50xx_modअगरiers[];
-बाह्य स्थिर u64 disp90xx_modअगरiers[];
-बाह्य स्थिर u64 wndwc57e_modअगरiers[];
-#पूर्ण_अगर
+extern const u64 disp50xx_modifiers[];
+extern const u64 disp90xx_modifiers[];
+extern const u64 wndwc57e_modifiers[];
+#endif

@@ -1,56 +1,55 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * linux/arch/arm/mach-omap1/board-palmtt.c
  *
- * Modअगरied from board-palmtt2.c
+ * Modified from board-palmtt2.c
  *
- * Modअगरied and amended क्रम Palm Tungsten|T
+ * Modified and amended for Palm Tungsten|T
  * by Marek Vasut <marek.vasut@gmail.com>
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/input.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/mtd/mtd.h>
-#समावेश <linux/mtd/partitions.h>
-#समावेश <linux/mtd/physmap.h>
-#समावेश <linux/leds.h>
-#समावेश <linux/omapfb.h>
-#समावेश <linux/spi/spi.h>
-#समावेश <linux/spi/ads7846.h>
-#समावेश <linux/platक्रमm_data/omap1_bl.h>
-#समावेश <linux/platक्रमm_data/leds-omap.h>
+#include <linux/delay.h>
+#include <linux/gpio.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/platform_device.h>
+#include <linux/notifier.h>
+#include <linux/clk.h>
+#include <linux/input.h>
+#include <linux/interrupt.h>
+#include <linux/mtd/mtd.h>
+#include <linux/mtd/partitions.h>
+#include <linux/mtd/physmap.h>
+#include <linux/leds.h>
+#include <linux/omapfb.h>
+#include <linux/spi/spi.h>
+#include <linux/spi/ads7846.h>
+#include <linux/platform_data/omap1_bl.h>
+#include <linux/platform_data/leds-omap.h>
 
-#समावेश <यंत्र/mach-types.h>
-#समावेश <यंत्र/mach/arch.h>
-#समावेश <यंत्र/mach/map.h>
+#include <asm/mach-types.h>
+#include <asm/mach/arch.h>
+#include <asm/mach/map.h>
 
-#समावेश "flash.h"
-#समावेश <mach/mux.h>
-#समावेश <linux/omap-dma.h>
-#समावेश <mach/tc.h>
-#समावेश <linux/platक्रमm_data/keypad-omap.h>
+#include "flash.h"
+#include <mach/mux.h>
+#include <linux/omap-dma.h>
+#include <mach/tc.h>
+#include <linux/platform_data/keypad-omap.h>
 
-#समावेश <mach/hardware.h>
-#समावेश <mach/usb.h>
+#include <mach/hardware.h>
+#include <mach/usb.h>
 
-#समावेश "common.h"
+#include "common.h"
 
-#घोषणा PALMTT_USBDETECT_GPIO	0
-#घोषणा PALMTT_CABLE_GPIO	1
-#घोषणा PALMTT_LED_GPIO		3
-#घोषणा PALMTT_PENIRQ_GPIO	6
-#घोषणा PALMTT_MMC_WP_GPIO	8
-#घोषणा PALMTT_HDQ_GPIO		11
+#define PALMTT_USBDETECT_GPIO	0
+#define PALMTT_CABLE_GPIO	1
+#define PALMTT_LED_GPIO		3
+#define PALMTT_PENIRQ_GPIO	6
+#define PALMTT_MMC_WP_GPIO	8
+#define PALMTT_HDQ_GPIO		11
 
-अटल स्थिर अचिन्हित पूर्णांक palmtt_keymap[] = अणु
+static const unsigned int palmtt_keymap[] = {
 	KEY(0, 0, KEY_ESC),
 	KEY(1, 0, KEY_SPACE),
 	KEY(2, 0, KEY_LEFTCTRL),
@@ -62,199 +61,199 @@
 	KEY(3, 1, KEY_RIGHT),
 	KEY(0, 2, KEY_SLEEP),
 	KEY(4, 2, KEY_Y),
-पूर्ण;
+};
 
-अटल काष्ठा mtd_partition palmtt_partitions[] = अणु
-	अणु
+static struct mtd_partition palmtt_partitions[] = {
+	{
 		.name		= "write8k",
 		.offset		= 0,
 		.size		= SZ_8K,
 		.mask_flags	= 0,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name		= "PalmOS-BootLoader(ro)",
 		.offset		= SZ_8K,
 		.size		= 7 * SZ_8K,
 		.mask_flags	= MTD_WRITEABLE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name		= "u-boot",
 		.offset		= MTDPART_OFS_APPEND,
 		.size		= 8 * SZ_8K,
 		.mask_flags	= 0,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name		= "PalmOS-FS(ro)",
 		.offset		= MTDPART_OFS_APPEND,
 		.size		= 7 * SZ_1M + 4 * SZ_64K - 16 * SZ_8K,
 		.mask_flags	= MTD_WRITEABLE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name		= "u-boot(rez)",
 		.offset		= MTDPART_OFS_APPEND,
 		.size		= SZ_128K,
 		.mask_flags	= 0
-	पूर्ण,
-	अणु
+	},
+	{
 		.name		= "empty",
 		.offset		= MTDPART_OFS_APPEND,
 		.size		= MTDPART_SIZ_FULL,
 		.mask_flags	= 0
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल काष्ठा physmap_flash_data palmtt_flash_data = अणु
+static struct physmap_flash_data palmtt_flash_data = {
 	.width		= 2,
 	.set_vpp	= omap1_set_vpp,
 	.parts		= palmtt_partitions,
 	.nr_parts	= ARRAY_SIZE(palmtt_partitions),
-पूर्ण;
+};
 
-अटल काष्ठा resource palmtt_flash_resource = अणु
+static struct resource palmtt_flash_resource = {
 	.start		= OMAP_CS0_PHYS,
 	.end		= OMAP_CS0_PHYS + SZ_8M - 1,
 	.flags		= IORESOURCE_MEM,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device palmtt_flash_device = अणु
+static struct platform_device palmtt_flash_device = {
 	.name		= "physmap-flash",
 	.id		= 0,
-	.dev		= अणु
-		.platक्रमm_data	= &palmtt_flash_data,
-	पूर्ण,
+	.dev		= {
+		.platform_data	= &palmtt_flash_data,
+	},
 	.num_resources	= 1,
 	.resource	= &palmtt_flash_resource,
-पूर्ण;
+};
 
-अटल काष्ठा resource palmtt_kp_resources[] = अणु
-	[0] = अणु
+static struct resource palmtt_kp_resources[] = {
+	[0] = {
 		.start	= INT_KEYBOARD,
 		.end	= INT_KEYBOARD,
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा matrix_keymap_data palmtt_keymap_data = अणु
+static const struct matrix_keymap_data palmtt_keymap_data = {
 	.keymap		= palmtt_keymap,
 	.keymap_size	= ARRAY_SIZE(palmtt_keymap),
-पूर्ण;
+};
 
-अटल काष्ठा omap_kp_platक्रमm_data palmtt_kp_data = अणु
+static struct omap_kp_platform_data palmtt_kp_data = {
 	.rows	= 6,
 	.cols	= 3,
 	.keymap_data = &palmtt_keymap_data,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device palmtt_kp_device = अणु
+static struct platform_device palmtt_kp_device = {
 	.name		= "omap-keypad",
 	.id		= -1,
-	.dev		= अणु
-		.platक्रमm_data = &palmtt_kp_data,
-	पूर्ण,
+	.dev		= {
+		.platform_data = &palmtt_kp_data,
+	},
 	.num_resources	= ARRAY_SIZE(palmtt_kp_resources),
 	.resource	= palmtt_kp_resources,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device palmtt_lcd_device = अणु
+static struct platform_device palmtt_lcd_device = {
 	.name		= "lcd_palmtt",
 	.id		= -1,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device palmtt_spi_device = अणु
+static struct platform_device palmtt_spi_device = {
 	.name		= "spi_palmtt",
 	.id		= -1,
-पूर्ण;
+};
 
-अटल काष्ठा omap_backlight_config palmtt_backlight_config = अणु
-	.शेष_पूर्णांकensity	= 0xa0,
-पूर्ण;
+static struct omap_backlight_config palmtt_backlight_config = {
+	.default_intensity	= 0xa0,
+};
 
-अटल काष्ठा platक्रमm_device palmtt_backlight_device = अणु
+static struct platform_device palmtt_backlight_device = {
 	.name		= "omap-bl",
 	.id		= -1,
-	.dev		= अणु
-		.platक्रमm_data= &palmtt_backlight_config,
-	पूर्ण,
-पूर्ण;
+	.dev		= {
+		.platform_data= &palmtt_backlight_config,
+	},
+};
 
-अटल काष्ठा omap_led_config palmtt_led_config[] = अणु
-	अणु
-		.cdev	= अणु
+static struct omap_led_config palmtt_led_config[] = {
+	{
+		.cdev	= {
 			.name	= "palmtt:led0",
-		पूर्ण,
+		},
 		.gpio	= PALMTT_LED_GPIO,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा omap_led_platक्रमm_data palmtt_led_data = अणु
+static struct omap_led_platform_data palmtt_led_data = {
 	.nr_leds	= ARRAY_SIZE(palmtt_led_config),
 	.leds		= palmtt_led_config,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device palmtt_led_device = अणु
+static struct platform_device palmtt_led_device = {
 	.name	= "omap-led",
 	.id	= -1,
-	.dev	= अणु
-		.platक्रमm_data	= &palmtt_led_data,
-	पूर्ण,
-पूर्ण;
+	.dev	= {
+		.platform_data	= &palmtt_led_data,
+	},
+};
 
-अटल काष्ठा platक्रमm_device *palmtt_devices[] __initdata = अणु
+static struct platform_device *palmtt_devices[] __initdata = {
 	&palmtt_flash_device,
 	&palmtt_kp_device,
 	&palmtt_lcd_device,
 	&palmtt_spi_device,
 	&palmtt_backlight_device,
 	&palmtt_led_device,
-पूर्ण;
+};
 
-अटल पूर्णांक palmtt_get_penकरोwn_state(व्योम)
-अणु
-	वापस !gpio_get_value(6);
-पूर्ण
+static int palmtt_get_pendown_state(void)
+{
+	return !gpio_get_value(6);
+}
 
-अटल स्थिर काष्ठा ads7846_platक्रमm_data palmtt_ts_info = अणु
+static const struct ads7846_platform_data palmtt_ts_info = {
 	.model			= 7846,
-	.vref_delay_usecs	= 100,	/* पूर्णांकernal, no capacitor */
+	.vref_delay_usecs	= 100,	/* internal, no capacitor */
 	.x_plate_ohms		= 419,
 	.y_plate_ohms		= 486,
-	.get_penकरोwn_state	= palmtt_get_penकरोwn_state,
-पूर्ण;
+	.get_pendown_state	= palmtt_get_pendown_state,
+};
 
-अटल काष्ठा spi_board_info __initdata palmtt_boardinfo[] = अणु
-	अणु
+static struct spi_board_info __initdata palmtt_boardinfo[] = {
+	{
 		/* MicroWire (bus 2) CS0 has an ads7846e */
 		.modalias	= "ads7846",
-		.platक्रमm_data	= &palmtt_ts_info,
+		.platform_data	= &palmtt_ts_info,
 		.max_speed_hz	= 120000	/* max sample rate at 3V */
 					* 26	/* command + data + overhead */,
 		.bus_num	= 2,
 		.chip_select	= 0,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल काष्ठा omap_usb_config palmtt_usb_config __initdata = अणु
-	.रेजिस्टर_dev	= 1,
+static struct omap_usb_config palmtt_usb_config __initdata = {
+	.register_dev	= 1,
 	.hmc_mode	= 0,
 	.pins[0]	= 2,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा omap_lcd_config palmtt_lcd_config __initस्थिर = अणु
+static const struct omap_lcd_config palmtt_lcd_config __initconst = {
 	.ctrl_name	= "internal",
-पूर्ण;
+};
 
-अटल व्योम __init omap_mpu_wdt_mode(पूर्णांक mode) अणु
-	अगर (mode)
-		omap_ग_लिखोw(0x8000, OMAP_WDT_TIMER_MODE);
-	अन्यथा अणु
-		omap_ग_लिखोw(0x00f5, OMAP_WDT_TIMER_MODE);
-		omap_ग_लिखोw(0x00a0, OMAP_WDT_TIMER_MODE);
-	पूर्ण
-पूर्ण
+static void __init omap_mpu_wdt_mode(int mode) {
+	if (mode)
+		omap_writew(0x8000, OMAP_WDT_TIMER_MODE);
+	else {
+		omap_writew(0x00f5, OMAP_WDT_TIMER_MODE);
+		omap_writew(0x00a0, OMAP_WDT_TIMER_MODE);
+	}
+}
 
-अटल व्योम __init omap_palmtt_init(व्योम)
-अणु
-	/* mux pins क्रम uarts */
+static void __init omap_palmtt_init(void)
+{
+	/* mux pins for uarts */
 	omap_cfg_reg(UART1_TX);
 	omap_cfg_reg(UART1_RTS);
 	omap_cfg_reg(UART2_TX);
@@ -264,16 +263,16 @@
 
 	omap_mpu_wdt_mode(0);
 
-	platक्रमm_add_devices(palmtt_devices, ARRAY_SIZE(palmtt_devices));
+	platform_add_devices(palmtt_devices, ARRAY_SIZE(palmtt_devices));
 
 	palmtt_boardinfo[0].irq = gpio_to_irq(6);
-	spi_रेजिस्टर_board_info(palmtt_boardinfo,ARRAY_SIZE(palmtt_boardinfo));
+	spi_register_board_info(palmtt_boardinfo,ARRAY_SIZE(palmtt_boardinfo));
 	omap_serial_init();
 	omap1_usb_init(&palmtt_usb_config);
-	omap_रेजिस्टर_i2c_bus(1, 100, शून्य, 0);
+	omap_register_i2c_bus(1, 100, NULL, 0);
 
 	omapfb_set_lcd_config(&palmtt_lcd_config);
-पूर्ण
+}
 
 MACHINE_START(OMAP_PALMTT, "OMAP1510 based Palm Tungsten|T")
 	.atag_offset	= 0x100,
@@ -283,6 +282,6 @@ MACHINE_START(OMAP_PALMTT, "OMAP1510 based Palm Tungsten|T")
 	.handle_irq	= omap1_handle_irq,
 	.init_machine	= omap_palmtt_init,
 	.init_late	= omap1_init_late,
-	.init_समय	= omap1_समयr_init,
+	.init_time	= omap1_timer_init,
 	.restart	= omap1_restart,
 MACHINE_END

@@ -1,52 +1,51 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2008-2009 Michal Simek <monstr@monstr.eu>
  * Copyright (C) 2008-2009 PetaLogix
- * Copyright (C) 2006 Aपंचांगark Techno, Inc.
+ * Copyright (C) 2006 Atmark Techno, Inc.
  */
 
-#अगर_अघोषित _ASM_MICROBLAZE_TLBFLUSH_H
-#घोषणा _ASM_MICROBLAZE_TLBFLUSH_H
+#ifndef _ASM_MICROBLAZE_TLBFLUSH_H
+#define _ASM_MICROBLAZE_TLBFLUSH_H
 
-#समावेश <linux/sched.h>
-#समावेश <linux/thपढ़ोs.h>
-#समावेश <यंत्र/processor.h>	/* For TASK_SIZE */
-#समावेश <यंत्र/mmu.h>
-#समावेश <यंत्र/page.h>
+#include <linux/sched.h>
+#include <linux/threads.h>
+#include <asm/processor.h>	/* For TASK_SIZE */
+#include <asm/mmu.h>
+#include <asm/page.h>
 
-बाह्य व्योम _tlbie(अचिन्हित दीर्घ address);
-बाह्य व्योम _tlbia(व्योम);
+extern void _tlbie(unsigned long address);
+extern void _tlbia(void);
 
-#घोषणा __tlbia()	अणु preempt_disable(); _tlbia(); preempt_enable(); पूर्ण
-#घोषणा __tlbie(x)	अणु _tlbie(x); पूर्ण
+#define __tlbia()	{ preempt_disable(); _tlbia(); preempt_enable(); }
+#define __tlbie(x)	{ _tlbie(x); }
 
-अटल अंतरभूत व्योम local_flush_tlb_all(व्योम)
-	अणु __tlbia(); पूर्ण
-अटल अंतरभूत व्योम local_flush_tlb_mm(काष्ठा mm_काष्ठा *mm)
-	अणु __tlbia(); पूर्ण
-अटल अंतरभूत व्योम local_flush_tlb_page(काष्ठा vm_area_काष्ठा *vma,
-				अचिन्हित दीर्घ vmaddr)
-	अणु __tlbie(vmaddr); पूर्ण
-अटल अंतरभूत व्योम local_flush_tlb_range(काष्ठा vm_area_काष्ठा *vma,
-		अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
-	अणु __tlbia(); पूर्ण
+static inline void local_flush_tlb_all(void)
+	{ __tlbia(); }
+static inline void local_flush_tlb_mm(struct mm_struct *mm)
+	{ __tlbia(); }
+static inline void local_flush_tlb_page(struct vm_area_struct *vma,
+				unsigned long vmaddr)
+	{ __tlbie(vmaddr); }
+static inline void local_flush_tlb_range(struct vm_area_struct *vma,
+		unsigned long start, unsigned long end)
+	{ __tlbia(); }
 
-#घोषणा flush_tlb_kernel_range(start, end)	करो अणु पूर्ण जबतक (0)
+#define flush_tlb_kernel_range(start, end)	do { } while (0)
 
-#घोषणा update_mmu_cache(vma, addr, ptep)	करो अणु पूर्ण जबतक (0)
+#define update_mmu_cache(vma, addr, ptep)	do { } while (0)
 
-#घोषणा flush_tlb_all local_flush_tlb_all
-#घोषणा flush_tlb_mm local_flush_tlb_mm
-#घोषणा flush_tlb_page local_flush_tlb_page
-#घोषणा flush_tlb_range local_flush_tlb_range
+#define flush_tlb_all local_flush_tlb_all
+#define flush_tlb_mm local_flush_tlb_mm
+#define flush_tlb_page local_flush_tlb_page
+#define flush_tlb_range local_flush_tlb_range
 
 /*
- * This is called in munmap when we have मुक्तd up some page-table
- * pages.  We करोn't need to do anything here, there's nothing special
+ * This is called in munmap when we have freed up some page-table
+ * pages.  We don't need to do anything here, there's nothing special
  * about our page-table pages.  -- paulus
  */
-अटल अंतरभूत व्योम flush_tlb_pgtables(काष्ठा mm_काष्ठा *mm,
-	अचिन्हित दीर्घ start, अचिन्हित दीर्घ end) अणु पूर्ण
+static inline void flush_tlb_pgtables(struct mm_struct *mm,
+	unsigned long start, unsigned long end) { }
 
-#पूर्ण_अगर /* _ASM_MICROBLAZE_TLBFLUSH_H */
+#endif /* _ASM_MICROBLAZE_TLBFLUSH_H */

@@ -1,145 +1,144 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2020 NovaTech LLC
  * George McCollister <george.mccollister@gmail.com>
  */
 
-#समावेश <linux/bits.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/module.h>
-#समावेश "xrs700x.h"
-#समावेश "xrs700x_reg.h"
+#include <linux/bits.h>
+#include <linux/i2c.h>
+#include <linux/module.h>
+#include "xrs700x.h"
+#include "xrs700x_reg.h"
 
-काष्ठा xrs700x_i2c_cmd अणु
+struct xrs700x_i2c_cmd {
 	__be32 reg;
 	__be16 val;
-पूर्ण __packed;
+} __packed;
 
-अटल पूर्णांक xrs700x_i2c_reg_पढ़ो(व्योम *context, अचिन्हित पूर्णांक reg,
-				अचिन्हित पूर्णांक *val)
-अणु
-	काष्ठा device *dev = context;
-	काष्ठा i2c_client *i2c = to_i2c_client(dev);
-	काष्ठा xrs700x_i2c_cmd cmd;
-	पूर्णांक ret;
+static int xrs700x_i2c_reg_read(void *context, unsigned int reg,
+				unsigned int *val)
+{
+	struct device *dev = context;
+	struct i2c_client *i2c = to_i2c_client(dev);
+	struct xrs700x_i2c_cmd cmd;
+	int ret;
 
 	cmd.reg = cpu_to_be32(reg | 1);
 
-	ret = i2c_master_send(i2c, (अक्षर *)&cmd.reg, माप(cmd.reg));
-	अगर (ret < 0) अणु
+	ret = i2c_master_send(i2c, (char *)&cmd.reg, sizeof(cmd.reg));
+	if (ret < 0) {
 		dev_err(dev, "xrs i2c_master_send returned %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = i2c_master_recv(i2c, (अक्षर *)&cmd.val, माप(cmd.val));
-	अगर (ret < 0) अणु
+	ret = i2c_master_recv(i2c, (char *)&cmd.val, sizeof(cmd.val));
+	if (ret < 0) {
 		dev_err(dev, "xrs i2c_master_recv returned %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	*val = be16_to_cpu(cmd.val);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xrs700x_i2c_reg_ग_लिखो(व्योम *context, अचिन्हित पूर्णांक reg,
-				 अचिन्हित पूर्णांक val)
-अणु
-	काष्ठा device *dev = context;
-	काष्ठा i2c_client *i2c = to_i2c_client(dev);
-	काष्ठा xrs700x_i2c_cmd cmd;
-	पूर्णांक ret;
+static int xrs700x_i2c_reg_write(void *context, unsigned int reg,
+				 unsigned int val)
+{
+	struct device *dev = context;
+	struct i2c_client *i2c = to_i2c_client(dev);
+	struct xrs700x_i2c_cmd cmd;
+	int ret;
 
 	cmd.reg = cpu_to_be32(reg);
 	cmd.val = cpu_to_be16(val);
 
-	ret = i2c_master_send(i2c, (अक्षर *)&cmd, माप(cmd));
-	अगर (ret < 0) अणु
+	ret = i2c_master_send(i2c, (char *)&cmd, sizeof(cmd));
+	if (ret < 0) {
 		dev_err(dev, "xrs i2c_master_send returned %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा regmap_config xrs700x_i2c_regmap_config = अणु
+static const struct regmap_config xrs700x_i2c_regmap_config = {
 	.val_bits = 16,
 	.reg_stride = 2,
 	.reg_bits = 32,
 	.pad_bits = 0,
-	.ग_लिखो_flag_mask = 0,
-	.पढ़ो_flag_mask = 0,
-	.reg_पढ़ो = xrs700x_i2c_reg_पढ़ो,
-	.reg_ग_लिखो = xrs700x_i2c_reg_ग_लिखो,
-	.max_रेजिस्टर = 0,
+	.write_flag_mask = 0,
+	.read_flag_mask = 0,
+	.reg_read = xrs700x_i2c_reg_read,
+	.reg_write = xrs700x_i2c_reg_write,
+	.max_register = 0,
 	.cache_type = REGCACHE_NONE,
-	.reg_क्रमmat_endian = REGMAP_ENDIAN_BIG,
-	.val_क्रमmat_endian = REGMAP_ENDIAN_BIG
-पूर्ण;
+	.reg_format_endian = REGMAP_ENDIAN_BIG,
+	.val_format_endian = REGMAP_ENDIAN_BIG
+};
 
-अटल पूर्णांक xrs700x_i2c_probe(काष्ठा i2c_client *i2c,
-			     स्थिर काष्ठा i2c_device_id *i2c_id)
-अणु
-	काष्ठा xrs700x *priv;
-	पूर्णांक ret;
+static int xrs700x_i2c_probe(struct i2c_client *i2c,
+			     const struct i2c_device_id *i2c_id)
+{
+	struct xrs700x *priv;
+	int ret;
 
-	priv = xrs700x_चयन_alloc(&i2c->dev, i2c);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = xrs700x_switch_alloc(&i2c->dev, i2c);
+	if (!priv)
+		return -ENOMEM;
 
-	priv->regmap = devm_regmap_init(&i2c->dev, शून्य, &i2c->dev,
+	priv->regmap = devm_regmap_init(&i2c->dev, NULL, &i2c->dev,
 					&xrs700x_i2c_regmap_config);
-	अगर (IS_ERR(priv->regmap)) अणु
+	if (IS_ERR(priv->regmap)) {
 		ret = PTR_ERR(priv->regmap);
 		dev_err(&i2c->dev, "Failed to initialize regmap: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	i2c_set_clientdata(i2c, priv);
 
-	ret = xrs700x_चयन_रेजिस्टर(priv);
+	ret = xrs700x_switch_register(priv);
 
 	/* Main DSA driver may not be started yet. */
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xrs700x_i2c_हटाओ(काष्ठा i2c_client *i2c)
-अणु
-	काष्ठा xrs700x *priv = i2c_get_clientdata(i2c);
+static int xrs700x_i2c_remove(struct i2c_client *i2c)
+{
+	struct xrs700x *priv = i2c_get_clientdata(i2c);
 
-	xrs700x_चयन_हटाओ(priv);
+	xrs700x_switch_remove(priv);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id xrs700x_i2c_id[] = अणु
-	अणु "xrs700x-switch", 0 पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct i2c_device_id xrs700x_i2c_id[] = {
+	{ "xrs700x-switch", 0 },
+	{},
+};
 
 MODULE_DEVICE_TABLE(i2c, xrs700x_i2c_id);
 
-अटल स्थिर काष्ठा of_device_id __maybe_unused xrs700x_i2c_dt_ids[] = अणु
-	अणु .compatible = "arrow,xrs7003e", .data = &xrs7003e_info पूर्ण,
-	अणु .compatible = "arrow,xrs7003f", .data = &xrs7003f_info पूर्ण,
-	अणु .compatible = "arrow,xrs7004e", .data = &xrs7004e_info पूर्ण,
-	अणु .compatible = "arrow,xrs7004f", .data = &xrs7004f_info पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id __maybe_unused xrs700x_i2c_dt_ids[] = {
+	{ .compatible = "arrow,xrs7003e", .data = &xrs7003e_info },
+	{ .compatible = "arrow,xrs7003f", .data = &xrs7003f_info },
+	{ .compatible = "arrow,xrs7004e", .data = &xrs7004e_info },
+	{ .compatible = "arrow,xrs7004f", .data = &xrs7004f_info },
+	{},
+};
 MODULE_DEVICE_TABLE(of, xrs700x_i2c_dt_ids);
 
-अटल काष्ठा i2c_driver xrs700x_i2c_driver = अणु
-	.driver = अणु
+static struct i2c_driver xrs700x_i2c_driver = {
+	.driver = {
 		.name	= "xrs700x-i2c",
 		.of_match_table = of_match_ptr(xrs700x_i2c_dt_ids),
-	पूर्ण,
+	},
 	.probe	= xrs700x_i2c_probe,
-	.हटाओ	= xrs700x_i2c_हटाओ,
+	.remove	= xrs700x_i2c_remove,
 	.id_table = xrs700x_i2c_id,
-पूर्ण;
+};
 
 module_i2c_driver(xrs700x_i2c_driver);
 

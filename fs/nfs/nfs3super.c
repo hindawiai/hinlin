@@ -1,37 +1,36 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2012 Netapp, Inc. All rights reserved.
  */
-#समावेश <linux/module.h>
-#समावेश <linux/nfs_fs.h>
-#समावेश "internal.h"
-#समावेश "nfs3_fs.h"
-#समावेश "nfs.h"
+#include <linux/module.h>
+#include <linux/nfs_fs.h>
+#include "internal.h"
+#include "nfs3_fs.h"
+#include "nfs.h"
 
-काष्ठा nfs_subversion nfs_v3 = अणु
+struct nfs_subversion nfs_v3 = {
 	.owner = THIS_MODULE,
 	.nfs_fs   = &nfs_fs_type,
 	.rpc_vers = &nfs_version3,
 	.rpc_ops  = &nfs_v3_clientops,
 	.sops     = &nfs_sops,
-#अगर_घोषित CONFIG_NFS_V3_ACL
+#ifdef CONFIG_NFS_V3_ACL
 	.xattr    = nfs3_xattr_handlers,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-अटल पूर्णांक __init init_nfs_v3(व्योम)
-अणु
-	रेजिस्टर_nfs_version(&nfs_v3);
-	वापस 0;
-पूर्ण
+static int __init init_nfs_v3(void)
+{
+	register_nfs_version(&nfs_v3);
+	return 0;
+}
 
-अटल व्योम __निकास निकास_nfs_v3(व्योम)
-अणु
-	unरेजिस्टर_nfs_version(&nfs_v3);
-पूर्ण
+static void __exit exit_nfs_v3(void)
+{
+	unregister_nfs_version(&nfs_v3);
+}
 
 MODULE_LICENSE("GPL");
 
 module_init(init_nfs_v3);
-module_निकास(निकास_nfs_v3);
+module_exit(exit_nfs_v3);

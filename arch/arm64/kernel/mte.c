@@ -1,106 +1,105 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2020 ARM Ltd.
  */
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/prctl.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/mm.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/swap.h>
-#समावेश <linux/swapops.h>
-#समावेश <linux/thपढ़ो_info.h>
-#समावेश <linux/types.h>
-#समावेश <linux/uपन.स>
+#include <linux/bitops.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/prctl.h>
+#include <linux/sched.h>
+#include <linux/sched/mm.h>
+#include <linux/string.h>
+#include <linux/swap.h>
+#include <linux/swapops.h>
+#include <linux/thread_info.h>
+#include <linux/types.h>
+#include <linux/uio.h>
 
-#समावेश <यंत्र/barrier.h>
-#समावेश <यंत्र/cpufeature.h>
-#समावेश <यंत्र/mte.h>
-#समावेश <यंत्र/ptrace.h>
-#समावेश <यंत्र/sysreg.h>
+#include <asm/barrier.h>
+#include <asm/cpufeature.h>
+#include <asm/mte.h>
+#include <asm/ptrace.h>
+#include <asm/sysreg.h>
 
 u64 gcr_kernel_excl __ro_after_init;
 
-अटल bool report_fault_once = true;
+static bool report_fault_once = true;
 
-#अगर_घोषित CONFIG_KASAN_HW_TAGS
+#ifdef CONFIG_KASAN_HW_TAGS
 /* Whether the MTE asynchronous mode is enabled. */
 DEFINE_STATIC_KEY_FALSE(mte_async_mode);
 EXPORT_SYMBOL_GPL(mte_async_mode);
-#पूर्ण_अगर
+#endif
 
-अटल व्योम mte_sync_page_tags(काष्ठा page *page, pte_t *ptep, bool check_swap)
-अणु
+static void mte_sync_page_tags(struct page *page, pte_t *ptep, bool check_swap)
+{
 	pte_t old_pte = READ_ONCE(*ptep);
 
-	अगर (check_swap && is_swap_pte(old_pte)) अणु
+	if (check_swap && is_swap_pte(old_pte)) {
 		swp_entry_t entry = pte_to_swp_entry(old_pte);
 
-		अगर (!non_swap_entry(entry) && mte_restore_tags(entry, page))
-			वापस;
-	पूर्ण
+		if (!non_swap_entry(entry) && mte_restore_tags(entry, page))
+			return;
+	}
 
 	page_kasan_tag_reset(page);
 	/*
 	 * We need smp_wmb() in between setting the flags and clearing the
-	 * tags because अगर another thपढ़ो पढ़ोs page->flags and builds a
+	 * tags because if another thread reads page->flags and builds a
 	 * tagged address out of it, there is an actual dependency to the
-	 * memory access, but on the current thपढ़ो we करो not guarantee that
-	 * the new page->flags are visible beक्रमe the tags were updated.
+	 * memory access, but on the current thread we do not guarantee that
+	 * the new page->flags are visible before the tags were updated.
 	 */
 	smp_wmb();
 	mte_clear_page_tags(page_address(page));
-पूर्ण
+}
 
-व्योम mte_sync_tags(pte_t *ptep, pte_t pte)
-अणु
-	काष्ठा page *page = pte_page(pte);
-	दीर्घ i, nr_pages = compound_nr(page);
+void mte_sync_tags(pte_t *ptep, pte_t pte)
+{
+	struct page *page = pte_page(pte);
+	long i, nr_pages = compound_nr(page);
 	bool check_swap = nr_pages == 1;
 
-	/* अगर PG_mte_tagged is set, tags have alपढ़ोy been initialised */
-	क्रम (i = 0; i < nr_pages; i++, page++) अणु
-		अगर (!test_and_set_bit(PG_mte_tagged, &page->flags))
+	/* if PG_mte_tagged is set, tags have already been initialised */
+	for (i = 0; i < nr_pages; i++, page++) {
+		if (!test_and_set_bit(PG_mte_tagged, &page->flags))
 			mte_sync_page_tags(page, ptep, check_swap);
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक स_भेद_pages(काष्ठा page *page1, काष्ठा page *page2)
-अणु
-	अक्षर *addr1, *addr2;
-	पूर्णांक ret;
+int memcmp_pages(struct page *page1, struct page *page2)
+{
+	char *addr1, *addr2;
+	int ret;
 
 	addr1 = page_address(page1);
 	addr2 = page_address(page2);
-	ret = स_भेद(addr1, addr2, PAGE_SIZE);
+	ret = memcmp(addr1, addr2, PAGE_SIZE);
 
-	अगर (!प्रणाली_supports_mte() || ret)
-		वापस ret;
+	if (!system_supports_mte() || ret)
+		return ret;
 
 	/*
 	 * If the page content is identical but at least one of the pages is
-	 * tagged, वापस non-zero to aव्योम KSM merging. If only one of the
+	 * tagged, return non-zero to avoid KSM merging. If only one of the
 	 * pages is tagged, set_pte_at() may zero or change the tags of the
 	 * other page via mte_sync_tags().
 	 */
-	अगर (test_bit(PG_mte_tagged, &page1->flags) ||
+	if (test_bit(PG_mte_tagged, &page1->flags) ||
 	    test_bit(PG_mte_tagged, &page2->flags))
-		वापस addr1 != addr2;
+		return addr1 != addr2;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम mte_init_tags(u64 max_tag)
-अणु
-	अटल bool gcr_kernel_excl_initialized;
+void mte_init_tags(u64 max_tag)
+{
+	static bool gcr_kernel_excl_initialized;
 
-	अगर (!gcr_kernel_excl_initialized) अणु
+	if (!gcr_kernel_excl_initialized) {
 		/*
-		 * The क्रमmat of the tags in KASAN is 0xFF and in MTE is 0xF.
+		 * The format of the tags in KASAN is 0xFF and in MTE is 0xF.
 		 * This conversion extracts an MTE tag from a KASAN tag.
 		 */
 		u64 incl = GENMASK(FIELD_GET(MTE_TAG_MASK >> MTE_TAG_SHIFT,
@@ -108,260 +107,260 @@ EXPORT_SYMBOL_GPL(mte_async_mode);
 
 		gcr_kernel_excl = ~incl & SYS_GCR_EL1_EXCL_MASK;
 		gcr_kernel_excl_initialized = true;
-	पूर्ण
+	}
 
-	/* Enable the kernel exclude mask क्रम अक्रमom tags generation. */
-	ग_लिखो_sysreg_s(SYS_GCR_EL1_RRND | gcr_kernel_excl, SYS_GCR_EL1);
-पूर्ण
+	/* Enable the kernel exclude mask for random tags generation. */
+	write_sysreg_s(SYS_GCR_EL1_RRND | gcr_kernel_excl, SYS_GCR_EL1);
+}
 
-अटल अंतरभूत व्योम __mte_enable_kernel(स्थिर अक्षर *mode, अचिन्हित दीर्घ tcf)
-अणु
-	/* Enable MTE Sync Mode क्रम EL1. */
+static inline void __mte_enable_kernel(const char *mode, unsigned long tcf)
+{
+	/* Enable MTE Sync Mode for EL1. */
 	sysreg_clear_set(sctlr_el1, SCTLR_ELx_TCF_MASK, tcf);
 	isb();
 
 	pr_info_once("MTE: enabled in %s mode at EL1\n", mode);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_KASAN_HW_TAGS
-व्योम mte_enable_kernel_sync(व्योम)
-अणु
+#ifdef CONFIG_KASAN_HW_TAGS
+void mte_enable_kernel_sync(void)
+{
 	/*
 	 * Make sure we enter this function when no PE has set
 	 * async mode previously.
 	 */
-	WARN_ONCE(प्रणाली_uses_mte_async_mode(),
+	WARN_ONCE(system_uses_mte_async_mode(),
 			"MTE async mode enabled system wide!");
 
 	__mte_enable_kernel("synchronous", SCTLR_ELx_TCF_SYNC);
-पूर्ण
+}
 
-व्योम mte_enable_kernel_async(व्योम)
-अणु
+void mte_enable_kernel_async(void)
+{
 	__mte_enable_kernel("asynchronous", SCTLR_ELx_TCF_ASYNC);
 
 	/*
-	 * MTE async mode is set प्रणाली wide by the first PE that
+	 * MTE async mode is set system wide by the first PE that
 	 * executes this function.
 	 *
-	 * Note: If in future KASAN acquires a runसमय चयनing
+	 * Note: If in future KASAN acquires a runtime switching
 	 * mode in between sync and async, this strategy needs
 	 * to be reviewed.
 	 */
-	अगर (!प्रणाली_uses_mte_async_mode())
-		अटल_branch_enable(&mte_async_mode);
-पूर्ण
-#पूर्ण_अगर
+	if (!system_uses_mte_async_mode())
+		static_branch_enable(&mte_async_mode);
+}
+#endif
 
-व्योम mte_set_report_once(bool state)
-अणु
+void mte_set_report_once(bool state)
+{
 	WRITE_ONCE(report_fault_once, state);
-पूर्ण
+}
 
-bool mte_report_once(व्योम)
-अणु
-	वापस READ_ONCE(report_fault_once);
-पूर्ण
+bool mte_report_once(void)
+{
+	return READ_ONCE(report_fault_once);
+}
 
-#अगर_घोषित CONFIG_KASAN_HW_TAGS
-व्योम mte_check_tfsr_el1(व्योम)
-अणु
+#ifdef CONFIG_KASAN_HW_TAGS
+void mte_check_tfsr_el1(void)
+{
 	u64 tfsr_el1;
 
-	अगर (!प्रणाली_supports_mte())
-		वापस;
+	if (!system_supports_mte())
+		return;
 
-	tfsr_el1 = पढ़ो_sysreg_s(SYS_TFSR_EL1);
+	tfsr_el1 = read_sysreg_s(SYS_TFSR_EL1);
 
-	अगर (unlikely(tfsr_el1 & SYS_TFSR_EL1_TF1)) अणु
+	if (unlikely(tfsr_el1 & SYS_TFSR_EL1_TF1)) {
 		/*
-		 * Note: isb() is not required after this direct ग_लिखो
-		 * because there is no indirect पढ़ो subsequent to it
+		 * Note: isb() is not required after this direct write
+		 * because there is no indirect read subsequent to it
 		 * (per ARM DDI 0487F.c table D13-1).
 		 */
-		ग_लिखो_sysreg_s(0, SYS_TFSR_EL1);
+		write_sysreg_s(0, SYS_TFSR_EL1);
 
 		kasan_report_async();
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर
+	}
+}
+#endif
 
-अटल व्योम update_gcr_el1_excl(u64 excl)
-अणु
+static void update_gcr_el1_excl(u64 excl)
+{
 
 	/*
 	 * Note that the mask controlled by the user via prctl() is an
-	 * include जबतक GCR_EL1 accepts an exclude mask.
-	 * No need क्रम ISB since this only affects EL0 currently, implicit
+	 * include while GCR_EL1 accepts an exclude mask.
+	 * No need for ISB since this only affects EL0 currently, implicit
 	 * with ERET.
 	 */
 	sysreg_clear_set_s(SYS_GCR_EL1, SYS_GCR_EL1_EXCL_MASK, excl);
-पूर्ण
+}
 
-अटल व्योम set_gcr_el1_excl(u64 excl)
-अणु
-	current->thपढ़ो.gcr_user_excl = excl;
+static void set_gcr_el1_excl(u64 excl)
+{
+	current->thread.gcr_user_excl = excl;
 
 	/*
-	 * SYS_GCR_EL1 will be set to current->thपढ़ो.gcr_user_excl value
-	 * by mte_set_user_gcr() in kernel_निकास,
+	 * SYS_GCR_EL1 will be set to current->thread.gcr_user_excl value
+	 * by mte_set_user_gcr() in kernel_exit,
 	 */
-पूर्ण
+}
 
-व्योम mte_thपढ़ो_init_user(व्योम)
-अणु
-	अगर (!प्रणाली_supports_mte())
-		वापस;
+void mte_thread_init_user(void)
+{
+	if (!system_supports_mte())
+		return;
 
 	/* clear any pending asynchronous tag fault */
 	dsb(ish);
-	ग_लिखो_sysreg_s(0, SYS_TFSRE0_EL1);
-	clear_thपढ़ो_flag(TIF_MTE_ASYNC_FAULT);
+	write_sysreg_s(0, SYS_TFSRE0_EL1);
+	clear_thread_flag(TIF_MTE_ASYNC_FAULT);
 	/* disable tag checking */
-	set_task_sctlr_el1((current->thपढ़ो.sctlr_user & ~SCTLR_EL1_TCF0_MASK) |
+	set_task_sctlr_el1((current->thread.sctlr_user & ~SCTLR_EL1_TCF0_MASK) |
 			   SCTLR_EL1_TCF0_NONE);
 	/* reset tag generation mask */
 	set_gcr_el1_excl(SYS_GCR_EL1_EXCL_MASK);
-पूर्ण
+}
 
-व्योम mte_thपढ़ो_चयन(काष्ठा task_काष्ठा *next)
-अणु
+void mte_thread_switch(struct task_struct *next)
+{
 	/*
-	 * Check अगर an async tag exception occurred at EL1.
+	 * Check if an async tag exception occurred at EL1.
 	 *
-	 * Note: On the context चयन path we rely on the dsb() present
-	 * in __चयन_to() to guarantee that the indirect ग_लिखोs to TFSR_EL1
-	 * are synchronized beक्रमe this poपूर्णांक.
+	 * Note: On the context switch path we rely on the dsb() present
+	 * in __switch_to() to guarantee that the indirect writes to TFSR_EL1
+	 * are synchronized before this point.
 	 */
 	isb();
 	mte_check_tfsr_el1();
-पूर्ण
+}
 
-व्योम mte_suspend_enter(व्योम)
-अणु
-	अगर (!प्रणाली_supports_mte())
-		वापस;
+void mte_suspend_enter(void)
+{
+	if (!system_supports_mte())
+		return;
 
 	/*
-	 * The barriers are required to guarantee that the indirect ग_लिखोs
-	 * to TFSR_EL1 are synchronized beक्रमe we report the state.
+	 * The barriers are required to guarantee that the indirect writes
+	 * to TFSR_EL1 are synchronized before we report the state.
 	 */
 	dsb(nsh);
 	isb();
 
-	/* Report SYS_TFSR_EL1 beक्रमe suspend entry */
+	/* Report SYS_TFSR_EL1 before suspend entry */
 	mte_check_tfsr_el1();
-पूर्ण
+}
 
-व्योम mte_suspend_निकास(व्योम)
-अणु
-	अगर (!प्रणाली_supports_mte())
-		वापस;
+void mte_suspend_exit(void)
+{
+	if (!system_supports_mte())
+		return;
 
 	update_gcr_el1_excl(gcr_kernel_excl);
-पूर्ण
+}
 
-दीर्घ set_mte_ctrl(काष्ठा task_काष्ठा *task, अचिन्हित दीर्घ arg)
-अणु
-	u64 sctlr = task->thपढ़ो.sctlr_user & ~SCTLR_EL1_TCF0_MASK;
+long set_mte_ctrl(struct task_struct *task, unsigned long arg)
+{
+	u64 sctlr = task->thread.sctlr_user & ~SCTLR_EL1_TCF0_MASK;
 	u64 gcr_excl = ~((arg & PR_MTE_TAG_MASK) >> PR_MTE_TAG_SHIFT) &
 		       SYS_GCR_EL1_EXCL_MASK;
 
-	अगर (!प्रणाली_supports_mte())
-		वापस 0;
+	if (!system_supports_mte())
+		return 0;
 
-	चयन (arg & PR_MTE_TCF_MASK) अणु
-	हाल PR_MTE_TCF_NONE:
+	switch (arg & PR_MTE_TCF_MASK) {
+	case PR_MTE_TCF_NONE:
 		sctlr |= SCTLR_EL1_TCF0_NONE;
-		अवरोध;
-	हाल PR_MTE_TCF_SYNC:
+		break;
+	case PR_MTE_TCF_SYNC:
 		sctlr |= SCTLR_EL1_TCF0_SYNC;
-		अवरोध;
-	हाल PR_MTE_TCF_ASYNC:
+		break;
+	case PR_MTE_TCF_ASYNC:
 		sctlr |= SCTLR_EL1_TCF0_ASYNC;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	अगर (task != current) अणु
-		task->thपढ़ो.sctlr_user = sctlr;
-		task->thपढ़ो.gcr_user_excl = gcr_excl;
-	पूर्ण अन्यथा अणु
+	if (task != current) {
+		task->thread.sctlr_user = sctlr;
+		task->thread.gcr_user_excl = gcr_excl;
+	} else {
 		set_task_sctlr_el1(sctlr);
 		set_gcr_el1_excl(gcr_excl);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-दीर्घ get_mte_ctrl(काष्ठा task_काष्ठा *task)
-अणु
-	अचिन्हित दीर्घ ret;
-	u64 incl = ~task->thपढ़ो.gcr_user_excl & SYS_GCR_EL1_EXCL_MASK;
+long get_mte_ctrl(struct task_struct *task)
+{
+	unsigned long ret;
+	u64 incl = ~task->thread.gcr_user_excl & SYS_GCR_EL1_EXCL_MASK;
 
-	अगर (!प्रणाली_supports_mte())
-		वापस 0;
+	if (!system_supports_mte())
+		return 0;
 
 	ret = incl << PR_MTE_TAG_SHIFT;
 
-	चयन (task->thपढ़ो.sctlr_user & SCTLR_EL1_TCF0_MASK) अणु
-	हाल SCTLR_EL1_TCF0_NONE:
+	switch (task->thread.sctlr_user & SCTLR_EL1_TCF0_MASK) {
+	case SCTLR_EL1_TCF0_NONE:
 		ret |= PR_MTE_TCF_NONE;
-		अवरोध;
-	हाल SCTLR_EL1_TCF0_SYNC:
+		break;
+	case SCTLR_EL1_TCF0_SYNC:
 		ret |= PR_MTE_TCF_SYNC;
-		अवरोध;
-	हाल SCTLR_EL1_TCF0_ASYNC:
+		break;
+	case SCTLR_EL1_TCF0_ASYNC:
 		ret |= PR_MTE_TCF_ASYNC;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Access MTE tags in another process' address space as given in mm. Update
- * the number of tags copied. Return 0 अगर any tags copied, error otherwise.
+ * the number of tags copied. Return 0 if any tags copied, error otherwise.
  * Inspired by __access_remote_vm().
  */
-अटल पूर्णांक __access_remote_tags(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
-				काष्ठा iovec *kiov, अचिन्हित पूर्णांक gup_flags)
-अणु
-	काष्ठा vm_area_काष्ठा *vma;
-	व्योम __user *buf = kiov->iov_base;
-	माप_प्रकार len = kiov->iov_len;
-	पूर्णांक ret;
-	पूर्णांक ग_लिखो = gup_flags & FOLL_WRITE;
+static int __access_remote_tags(struct mm_struct *mm, unsigned long addr,
+				struct iovec *kiov, unsigned int gup_flags)
+{
+	struct vm_area_struct *vma;
+	void __user *buf = kiov->iov_base;
+	size_t len = kiov->iov_len;
+	int ret;
+	int write = gup_flags & FOLL_WRITE;
 
-	अगर (!access_ok(buf, len))
-		वापस -EFAULT;
+	if (!access_ok(buf, len))
+		return -EFAULT;
 
-	अगर (mmap_पढ़ो_lock_समाप्तable(mm))
-		वापस -EIO;
+	if (mmap_read_lock_killable(mm))
+		return -EIO;
 
-	जबतक (len) अणु
-		अचिन्हित दीर्घ tags, offset;
-		व्योम *maddr;
-		काष्ठा page *page = शून्य;
+	while (len) {
+		unsigned long tags, offset;
+		void *maddr;
+		struct page *page = NULL;
 
 		ret = get_user_pages_remote(mm, addr, 1, gup_flags, &page,
-					    &vma, शून्य);
-		अगर (ret <= 0)
-			अवरोध;
+					    &vma, NULL);
+		if (ret <= 0)
+			break;
 
 		/*
-		 * Only copy tags अगर the page has been mapped as PROT_MTE
+		 * Only copy tags if the page has been mapped as PROT_MTE
 		 * (PG_mte_tagged set). Otherwise the tags are not valid and
 		 * not accessible to user. Moreover, an mprotect(PROT_MTE)
-		 * would cause the existing tags to be cleared अगर the page
+		 * would cause the existing tags to be cleared if the page
 		 * was never mapped with PROT_MTE.
 		 */
-		अगर (!(vma->vm_flags & VM_MTE)) अणु
+		if (!(vma->vm_flags & VM_MTE)) {
 			ret = -EOPNOTSUPP;
 			put_page(page);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		WARN_ON_ONCE(!test_bit(PG_mte_tagged, &page->flags));
 
 		/* limit access to the end of the page */
@@ -369,88 +368,88 @@ bool mte_report_once(व्योम)
 		tags = min(len, (PAGE_SIZE - offset) / MTE_GRANULE_SIZE);
 
 		maddr = page_address(page);
-		अगर (ग_लिखो) अणु
+		if (write) {
 			tags = mte_copy_tags_from_user(maddr + offset, buf, tags);
 			set_page_dirty_lock(page);
-		पूर्ण अन्यथा अणु
+		} else {
 			tags = mte_copy_tags_to_user(buf, maddr + offset, tags);
-		पूर्ण
+		}
 		put_page(page);
 
 		/* error accessing the tracer's buffer */
-		अगर (!tags)
-			अवरोध;
+		if (!tags)
+			break;
 
 		len -= tags;
 		buf += tags;
 		addr += tags * MTE_GRANULE_SIZE;
-	पूर्ण
-	mmap_पढ़ो_unlock(mm);
+	}
+	mmap_read_unlock(mm);
 
-	/* वापस an error अगर no tags copied */
+	/* return an error if no tags copied */
 	kiov->iov_len = buf - kiov->iov_base;
-	अगर (!kiov->iov_len) अणु
-		/* check क्रम error accessing the tracee's address space */
-		अगर (ret <= 0)
-			वापस -EIO;
-		अन्यथा
-			वापस -EFAULT;
-	पूर्ण
+	if (!kiov->iov_len) {
+		/* check for error accessing the tracee's address space */
+		if (ret <= 0)
+			return -EIO;
+		else
+			return -EFAULT;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Copy MTE tags in another process' address space at 'addr' to/from tracer's
  * iovec buffer. Return 0 on success. Inspired by ptrace_access_vm().
  */
-अटल पूर्णांक access_remote_tags(काष्ठा task_काष्ठा *tsk, अचिन्हित दीर्घ addr,
-			      काष्ठा iovec *kiov, अचिन्हित पूर्णांक gup_flags)
-अणु
-	काष्ठा mm_काष्ठा *mm;
-	पूर्णांक ret;
+static int access_remote_tags(struct task_struct *tsk, unsigned long addr,
+			      struct iovec *kiov, unsigned int gup_flags)
+{
+	struct mm_struct *mm;
+	int ret;
 
 	mm = get_task_mm(tsk);
-	अगर (!mm)
-		वापस -EPERM;
+	if (!mm)
+		return -EPERM;
 
-	अगर (!tsk->ptrace || (current != tsk->parent) ||
+	if (!tsk->ptrace || (current != tsk->parent) ||
 	    ((get_dumpable(mm) != SUID_DUMP_USER) &&
-	     !ptracer_capable(tsk, mm->user_ns))) अणु
+	     !ptracer_capable(tsk, mm->user_ns))) {
 		mmput(mm);
-		वापस -EPERM;
-	पूर्ण
+		return -EPERM;
+	}
 
 	ret = __access_remote_tags(mm, addr, kiov, gup_flags);
 	mmput(mm);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक mte_ptrace_copy_tags(काष्ठा task_काष्ठा *child, दीर्घ request,
-			 अचिन्हित दीर्घ addr, अचिन्हित दीर्घ data)
-अणु
-	पूर्णांक ret;
-	काष्ठा iovec kiov;
-	काष्ठा iovec __user *uiov = (व्योम __user *)data;
-	अचिन्हित पूर्णांक gup_flags = FOLL_FORCE;
+int mte_ptrace_copy_tags(struct task_struct *child, long request,
+			 unsigned long addr, unsigned long data)
+{
+	int ret;
+	struct iovec kiov;
+	struct iovec __user *uiov = (void __user *)data;
+	unsigned int gup_flags = FOLL_FORCE;
 
-	अगर (!प्रणाली_supports_mte())
-		वापस -EIO;
+	if (!system_supports_mte())
+		return -EIO;
 
-	अगर (get_user(kiov.iov_base, &uiov->iov_base) ||
+	if (get_user(kiov.iov_base, &uiov->iov_base) ||
 	    get_user(kiov.iov_len, &uiov->iov_len))
-		वापस -EFAULT;
+		return -EFAULT;
 
-	अगर (request == PTRACE_POKEMTETAGS)
+	if (request == PTRACE_POKEMTETAGS)
 		gup_flags |= FOLL_WRITE;
 
 	/* align addr to the MTE tag granule */
 	addr &= MTE_GRANULE_MASK;
 
 	ret = access_remote_tags(child, addr, &kiov, gup_flags);
-	अगर (!ret)
+	if (!ret)
 		ret = put_user(kiov.iov_len, &uiov->iov_len);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

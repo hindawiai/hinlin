@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,18 +21,18 @@
  *
  * Authors: Alex Deucher
  */
-#अगर_अघोषित __CIK_REG_H__
-#घोषणा __CIK_REG_H__
+#ifndef __CIK_REG_H__
+#define __CIK_REG_H__
 
-#घोषणा CIK_DIDT_IND_INDEX                        0xca00
-#घोषणा CIK_DIDT_IND_DATA                         0xca04
+#define CIK_DIDT_IND_INDEX                        0xca00
+#define CIK_DIDT_IND_DATA                         0xca04
 
-#घोषणा CIK_DC_GPIO_HPD_MASK                      0x65b0
-#घोषणा CIK_DC_GPIO_HPD_A                         0x65b4
-#घोषणा CIK_DC_GPIO_HPD_EN                        0x65b8
-#घोषणा CIK_DC_GPIO_HPD_Y                         0x65bc
+#define CIK_DC_GPIO_HPD_MASK                      0x65b0
+#define CIK_DC_GPIO_HPD_A                         0x65b4
+#define CIK_DC_GPIO_HPD_EN                        0x65b8
+#define CIK_DC_GPIO_HPD_Y                         0x65bc
 
-#घोषणा CIK_GRPH_CONTROL                          0x6804
+#define CIK_GRPH_CONTROL                          0x6804
 #       define CIK_GRPH_DEPTH(x)                  (((x) & 0x3) << 0)
 #       define CIK_GRPH_DEPTH_8BPP                0
 #       define CIK_GRPH_DEPTH_16BPP               1
@@ -111,7 +110,7 @@
 #       define CIK_ROTATED_MICRO_TILING          4
 
 /* CUR blocks at 0x6998, 0x7598, 0x10198, 0x10d98, 0x11998, 0x12598 */
-#घोषणा CIK_CUR_CONTROL                           0x6998
+#define CIK_CUR_CONTROL                           0x6998
 #       define CIK_CURSOR_EN                      (1 << 0)
 #       define CIK_CURSOR_MODE(x)                 (((x) & 0x3) << 8)
 #       define CIK_CURSOR_MONO                    0
@@ -126,117 +125,117 @@
 #       define CIK_CURSOR_URGENT_1_4              2
 #       define CIK_CURSOR_URGENT_3_8              3
 #       define CIK_CURSOR_URGENT_1_2              4
-#घोषणा CIK_CUR_SURFACE_ADDRESS                   0x699c
+#define CIK_CUR_SURFACE_ADDRESS                   0x699c
 #       define CIK_CUR_SURFACE_ADDRESS_MASK       0xfffff000
-#घोषणा CIK_CUR_SIZE                              0x69a0
-#घोषणा CIK_CUR_SURFACE_ADDRESS_HIGH              0x69a4
-#घोषणा CIK_CUR_POSITION                          0x69a8
-#घोषणा CIK_CUR_HOT_SPOT                          0x69ac
-#घोषणा CIK_CUR_COLOR1                            0x69b0
-#घोषणा CIK_CUR_COLOR2                            0x69b4
-#घोषणा CIK_CUR_UPDATE                            0x69b8
+#define CIK_CUR_SIZE                              0x69a0
+#define CIK_CUR_SURFACE_ADDRESS_HIGH              0x69a4
+#define CIK_CUR_POSITION                          0x69a8
+#define CIK_CUR_HOT_SPOT                          0x69ac
+#define CIK_CUR_COLOR1                            0x69b0
+#define CIK_CUR_COLOR2                            0x69b4
+#define CIK_CUR_UPDATE                            0x69b8
 #       define CIK_CURSOR_UPDATE_PENDING          (1 << 0)
 #       define CIK_CURSOR_UPDATE_TAKEN            (1 << 1)
 #       define CIK_CURSOR_UPDATE_LOCK             (1 << 16)
 #       define CIK_CURSOR_DISABLE_MULTIPLE_UPDATE (1 << 24)
 
-#घोषणा CIK_ALPHA_CONTROL                         0x6af0
+#define CIK_ALPHA_CONTROL                         0x6af0
 #       define CIK_CURSOR_ALPHA_BLND_ENA          (1 << 1)
 
-#घोषणा CIK_LB_DATA_FORMAT                        0x6b00
+#define CIK_LB_DATA_FORMAT                        0x6b00
 #       define CIK_INTERLEAVE_EN                  (1 << 3)
 
-#घोषणा CIK_LB_DESKTOP_HEIGHT                     0x6b0c
+#define CIK_LB_DESKTOP_HEIGHT                     0x6b0c
 
-#घोषणा SQ_IND_INDEX					0x8DE0
-#घोषणा SQ_CMD						0x8DEC
-#घोषणा SQ_IND_DATA					0x8DE4
+#define SQ_IND_INDEX					0x8DE0
+#define SQ_CMD						0x8DEC
+#define SQ_IND_DATA					0x8DE4
 
 /*
  * The TCP_WATCHx_xxxx addresses that are shown here are in dwords,
  * and that's why they are multiplied by 4
  */
-#घोषणा TCP_WATCH0_ADDR_H				(0x32A0*4)
-#घोषणा TCP_WATCH1_ADDR_H				(0x32A3*4)
-#घोषणा TCP_WATCH2_ADDR_H				(0x32A6*4)
-#घोषणा TCP_WATCH3_ADDR_H				(0x32A9*4)
-#घोषणा TCP_WATCH0_ADDR_L				(0x32A1*4)
-#घोषणा TCP_WATCH1_ADDR_L				(0x32A4*4)
-#घोषणा TCP_WATCH2_ADDR_L				(0x32A7*4)
-#घोषणा TCP_WATCH3_ADDR_L				(0x32AA*4)
-#घोषणा TCP_WATCH0_CNTL					(0x32A2*4)
-#घोषणा TCP_WATCH1_CNTL					(0x32A5*4)
-#घोषणा TCP_WATCH2_CNTL					(0x32A8*4)
-#घोषणा TCP_WATCH3_CNTL					(0x32AB*4)
+#define TCP_WATCH0_ADDR_H				(0x32A0*4)
+#define TCP_WATCH1_ADDR_H				(0x32A3*4)
+#define TCP_WATCH2_ADDR_H				(0x32A6*4)
+#define TCP_WATCH3_ADDR_H				(0x32A9*4)
+#define TCP_WATCH0_ADDR_L				(0x32A1*4)
+#define TCP_WATCH1_ADDR_L				(0x32A4*4)
+#define TCP_WATCH2_ADDR_L				(0x32A7*4)
+#define TCP_WATCH3_ADDR_L				(0x32AA*4)
+#define TCP_WATCH0_CNTL					(0x32A2*4)
+#define TCP_WATCH1_CNTL					(0x32A5*4)
+#define TCP_WATCH2_CNTL					(0x32A8*4)
+#define TCP_WATCH3_CNTL					(0x32AB*4)
 
-#घोषणा CPC_INT_CNTL					0xC2D0
+#define CPC_INT_CNTL					0xC2D0
 
-#घोषणा CP_HQD_IQ_RPTR					0xC970u
-#घोषणा SDMA0_RLC0_RB_CNTL				0xD400u
-#घोषणा	SDMA_RB_VMID(x)					(x << 24)
-#घोषणा	SDMA0_RLC0_RB_BASE				0xD404u
-#घोषणा	SDMA0_RLC0_RB_BASE_HI				0xD408u
-#घोषणा	SDMA0_RLC0_RB_RPTR				0xD40Cu
-#घोषणा	SDMA0_RLC0_RB_WPTR				0xD410u
-#घोषणा	SDMA0_RLC0_RB_WPTR_POLL_CNTL			0xD414u
-#घोषणा	SDMA0_RLC0_RB_WPTR_POLL_ADDR_HI			0xD418u
-#घोषणा	SDMA0_RLC0_RB_WPTR_POLL_ADDR_LO			0xD41Cu
-#घोषणा	SDMA0_RLC0_RB_RPTR_ADDR_HI			0xD420u
-#घोषणा	SDMA0_RLC0_RB_RPTR_ADDR_LO			0xD424u
-#घोषणा	SDMA0_RLC0_IB_CNTL				0xD428u
-#घोषणा	SDMA0_RLC0_IB_RPTR				0xD42Cu
-#घोषणा	SDMA0_RLC0_IB_OFFSET				0xD430u
-#घोषणा	SDMA0_RLC0_IB_BASE_LO				0xD434u
-#घोषणा	SDMA0_RLC0_IB_BASE_HI				0xD438u
-#घोषणा	SDMA0_RLC0_IB_SIZE				0xD43Cu
-#घोषणा	SDMA0_RLC0_SKIP_CNTL				0xD440u
-#घोषणा	SDMA0_RLC0_CONTEXT_STATUS			0xD444u
-#घोषणा	SDMA_RLC_IDLE					(1 << 2)
-#घोषणा	SDMA0_RLC0_DOORBELL				0xD448u
-#घोषणा	SDMA_OFFSET(x)					(x << 0)
-#घोषणा	SDMA_DB_ENABLE					(1 << 28)
-#घोषणा	SDMA0_RLC0_VIRTUAL_ADDR				0xD49Cu
-#घोषणा	SDMA_ATC					(1 << 0)
-#घोषणा	SDMA_VA_PTR32					(1 << 4)
-#घोषणा	SDMA_VA_SHARED_BASE(x)				(x << 8)
-#घोषणा	SDMA0_RLC0_APE1_CNTL				0xD4A0u
-#घोषणा	SDMA0_RLC0_DOORBELL_LOG				0xD4A4u
-#घोषणा	SDMA0_RLC0_WATERMARK				0xD4A8u
-#घोषणा	SDMA0_CNTL					0xD010
-#घोषणा	SDMA1_CNTL					0xD810
+#define CP_HQD_IQ_RPTR					0xC970u
+#define SDMA0_RLC0_RB_CNTL				0xD400u
+#define	SDMA_RB_VMID(x)					(x << 24)
+#define	SDMA0_RLC0_RB_BASE				0xD404u
+#define	SDMA0_RLC0_RB_BASE_HI				0xD408u
+#define	SDMA0_RLC0_RB_RPTR				0xD40Cu
+#define	SDMA0_RLC0_RB_WPTR				0xD410u
+#define	SDMA0_RLC0_RB_WPTR_POLL_CNTL			0xD414u
+#define	SDMA0_RLC0_RB_WPTR_POLL_ADDR_HI			0xD418u
+#define	SDMA0_RLC0_RB_WPTR_POLL_ADDR_LO			0xD41Cu
+#define	SDMA0_RLC0_RB_RPTR_ADDR_HI			0xD420u
+#define	SDMA0_RLC0_RB_RPTR_ADDR_LO			0xD424u
+#define	SDMA0_RLC0_IB_CNTL				0xD428u
+#define	SDMA0_RLC0_IB_RPTR				0xD42Cu
+#define	SDMA0_RLC0_IB_OFFSET				0xD430u
+#define	SDMA0_RLC0_IB_BASE_LO				0xD434u
+#define	SDMA0_RLC0_IB_BASE_HI				0xD438u
+#define	SDMA0_RLC0_IB_SIZE				0xD43Cu
+#define	SDMA0_RLC0_SKIP_CNTL				0xD440u
+#define	SDMA0_RLC0_CONTEXT_STATUS			0xD444u
+#define	SDMA_RLC_IDLE					(1 << 2)
+#define	SDMA0_RLC0_DOORBELL				0xD448u
+#define	SDMA_OFFSET(x)					(x << 0)
+#define	SDMA_DB_ENABLE					(1 << 28)
+#define	SDMA0_RLC0_VIRTUAL_ADDR				0xD49Cu
+#define	SDMA_ATC					(1 << 0)
+#define	SDMA_VA_PTR32					(1 << 4)
+#define	SDMA_VA_SHARED_BASE(x)				(x << 8)
+#define	SDMA0_RLC0_APE1_CNTL				0xD4A0u
+#define	SDMA0_RLC0_DOORBELL_LOG				0xD4A4u
+#define	SDMA0_RLC0_WATERMARK				0xD4A8u
+#define	SDMA0_CNTL					0xD010
+#define	SDMA1_CNTL					0xD810
 
-क्रमागत अणु
+enum {
 	MAX_TRAPID = 8,		/* 3 bits in the bitfield.  */
 	MAX_WATCH_ADDRESSES = 4
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	ADDRESS_WATCH_REG_ADDR_HI = 0,
 	ADDRESS_WATCH_REG_ADDR_LO,
 	ADDRESS_WATCH_REG_CNTL,
 	ADDRESS_WATCH_REG_MAX
-पूर्ण;
+};
 
-क्रमागत अणु				/*  not defined in the CI/KV reg file  */
+enum {				/*  not defined in the CI/KV reg file  */
 	ADDRESS_WATCH_REG_CNTL_ATC_BIT = 0x10000000UL,
 	ADDRESS_WATCH_REG_CNTL_DEFAULT_MASK = 0x00FFFFFF,
 	ADDRESS_WATCH_REG_ADDLOW_MASK_EXTENSION = 0x03000000,
 	/* extend the mask to 26 bits in order to match the low address field */
 	ADDRESS_WATCH_REG_ADDLOW_SHIFT = 6,
 	ADDRESS_WATCH_REG_ADDHIGH_MASK = 0xFFFF
-पूर्ण;
+};
 
-जोड़ TCP_WATCH_CNTL_BITS अणु
-	काष्ठा अणु
-		uपूर्णांक32_t mask:24;
-		uपूर्णांक32_t vmid:4;
-		uपूर्णांक32_t atc:1;
-		uपूर्णांक32_t mode:2;
-		uपूर्णांक32_t valid:1;
-	पूर्ण bitfields, bits;
-	uपूर्णांक32_t u32All;
-	चिन्हित पूर्णांक i32All;
-	भग्न f32All;
-पूर्ण;
+union TCP_WATCH_CNTL_BITS {
+	struct {
+		uint32_t mask:24;
+		uint32_t vmid:4;
+		uint32_t atc:1;
+		uint32_t mode:2;
+		uint32_t valid:1;
+	} bitfields, bits;
+	uint32_t u32All;
+	signed int i32All;
+	float f32All;
+};
 
-#पूर्ण_अगर
+#endif

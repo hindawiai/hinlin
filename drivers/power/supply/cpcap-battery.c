@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- * Battery driver क्रम CPCAP PMIC
+ * Battery driver for CPCAP PMIC
  *
  * Copyright (C) 2017 Tony Lindgren <tony@atomide.com>
  *
@@ -9,327 +8,327 @@
  *
  * Copyright (C) 2009-2010 Motorola, Inc.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
 
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License क्रम more details.
+ * GNU General Public License for more details.
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/घातer_supply.h>
-#समावेश <linux/reboot.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/moduleparam.h>
+#include <linux/delay.h>
+#include <linux/err.h>
+#include <linux/interrupt.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
+#include <linux/power_supply.h>
+#include <linux/reboot.h>
+#include <linux/regmap.h>
+#include <linux/moduleparam.h>
 
-#समावेश <linux/iio/consumer.h>
-#समावेश <linux/iio/types.h>
-#समावेश <linux/mfd/motorola-cpcap.h>
+#include <linux/iio/consumer.h>
+#include <linux/iio/types.h>
+#include <linux/mfd/motorola-cpcap.h>
 
 /*
- * Register bit defines क्रम CPCAP_REG_BPEOL. Some of these seem to
+ * Register bit defines for CPCAP_REG_BPEOL. Some of these seem to
  * map to MC13783UG.pdf "Table 5-19. Register 13, Power Control 0"
  * to enable BATTDETEN, LOBAT and EOL features. We currently use
- * LOBAT पूर्णांकerrupts instead of EOL.
+ * LOBAT interrupts instead of EOL.
  */
-#घोषणा CPCAP_REG_BPEOL_BIT_EOL9	BIT(9)	/* Set क्रम EOL irq */
-#घोषणा CPCAP_REG_BPEOL_BIT_EOL8	BIT(8)	/* Set क्रम EOL irq */
-#घोषणा CPCAP_REG_BPEOL_BIT_UNKNOWN7	BIT(7)
-#घोषणा CPCAP_REG_BPEOL_BIT_UNKNOWN6	BIT(6)
-#घोषणा CPCAP_REG_BPEOL_BIT_UNKNOWN5	BIT(5)
-#घोषणा CPCAP_REG_BPEOL_BIT_EOL_MULTI	BIT(4)	/* Set क्रम multiple EOL irqs */
-#घोषणा CPCAP_REG_BPEOL_BIT_UNKNOWN3	BIT(3)
-#घोषणा CPCAP_REG_BPEOL_BIT_UNKNOWN2	BIT(2)
-#घोषणा CPCAP_REG_BPEOL_BIT_BATTDETEN	BIT(1)	/* Enable battery detect */
-#घोषणा CPCAP_REG_BPEOL_BIT_EOLSEL	BIT(0)	/* BPDET = 0, EOL = 1 */
+#define CPCAP_REG_BPEOL_BIT_EOL9	BIT(9)	/* Set for EOL irq */
+#define CPCAP_REG_BPEOL_BIT_EOL8	BIT(8)	/* Set for EOL irq */
+#define CPCAP_REG_BPEOL_BIT_UNKNOWN7	BIT(7)
+#define CPCAP_REG_BPEOL_BIT_UNKNOWN6	BIT(6)
+#define CPCAP_REG_BPEOL_BIT_UNKNOWN5	BIT(5)
+#define CPCAP_REG_BPEOL_BIT_EOL_MULTI	BIT(4)	/* Set for multiple EOL irqs */
+#define CPCAP_REG_BPEOL_BIT_UNKNOWN3	BIT(3)
+#define CPCAP_REG_BPEOL_BIT_UNKNOWN2	BIT(2)
+#define CPCAP_REG_BPEOL_BIT_BATTDETEN	BIT(1)	/* Enable battery detect */
+#define CPCAP_REG_BPEOL_BIT_EOLSEL	BIT(0)	/* BPDET = 0, EOL = 1 */
 
 /*
- * Register bit defines क्रम CPCAP_REG_CCC1. These seem similar to the twl6030
- * coulomb counter रेजिस्टरs rather than the mc13892 रेजिस्टरs. Both twl6030
- * and mc13892 set bits 2 and 1 to reset and clear रेजिस्टरs. But mc13892
- * sets bit 0 to start the coulomb counter जबतक twl6030 sets bit 0 to stop
- * the coulomb counter like cpcap करोes. So क्रम now, we use the twl6030 style
- * naming क्रम the रेजिस्टरs.
+ * Register bit defines for CPCAP_REG_CCC1. These seem similar to the twl6030
+ * coulomb counter registers rather than the mc13892 registers. Both twl6030
+ * and mc13892 set bits 2 and 1 to reset and clear registers. But mc13892
+ * sets bit 0 to start the coulomb counter while twl6030 sets bit 0 to stop
+ * the coulomb counter like cpcap does. So for now, we use the twl6030 style
+ * naming for the registers.
  */
-#घोषणा CPCAP_REG_CCC1_ACTIVE_MODE1	BIT(4)	/* Update rate */
-#घोषणा CPCAP_REG_CCC1_ACTIVE_MODE0	BIT(3)	/* Update rate */
-#घोषणा CPCAP_REG_CCC1_AUTOCLEAR	BIT(2)	/* Resets sample रेजिस्टरs */
-#घोषणा CPCAP_REG_CCC1_CAL_EN		BIT(1)	/* Clears after ग_लिखो in 1s */
-#घोषणा CPCAP_REG_CCC1_PAUSE		BIT(0)	/* Stop counters, allow ग_लिखो */
-#घोषणा CPCAP_REG_CCC1_RESET_MASK	(CPCAP_REG_CCC1_AUTOCLEAR | \
+#define CPCAP_REG_CCC1_ACTIVE_MODE1	BIT(4)	/* Update rate */
+#define CPCAP_REG_CCC1_ACTIVE_MODE0	BIT(3)	/* Update rate */
+#define CPCAP_REG_CCC1_AUTOCLEAR	BIT(2)	/* Resets sample registers */
+#define CPCAP_REG_CCC1_CAL_EN		BIT(1)	/* Clears after write in 1s */
+#define CPCAP_REG_CCC1_PAUSE		BIT(0)	/* Stop counters, allow write */
+#define CPCAP_REG_CCC1_RESET_MASK	(CPCAP_REG_CCC1_AUTOCLEAR | \
 					 CPCAP_REG_CCC1_CAL_EN)
 
-#घोषणा CPCAP_REG_CCCC2_RATE1		BIT(5)
-#घोषणा CPCAP_REG_CCCC2_RATE0		BIT(4)
-#घोषणा CPCAP_REG_CCCC2_ENABLE		BIT(3)
+#define CPCAP_REG_CCCC2_RATE1		BIT(5)
+#define CPCAP_REG_CCCC2_RATE0		BIT(4)
+#define CPCAP_REG_CCCC2_ENABLE		BIT(3)
 
-#घोषणा CPCAP_BATTERY_CC_SAMPLE_PERIOD_MS	250
+#define CPCAP_BATTERY_CC_SAMPLE_PERIOD_MS	250
 
-क्रमागत अणु
+enum {
 	CPCAP_BATTERY_IIO_BATTDET,
 	CPCAP_BATTERY_IIO_VOLTAGE,
 	CPCAP_BATTERY_IIO_CHRG_CURRENT,
 	CPCAP_BATTERY_IIO_BATT_CURRENT,
 	CPCAP_BATTERY_IIO_NR,
-पूर्ण;
+};
 
-क्रमागत cpcap_battery_irq_action अणु
+enum cpcap_battery_irq_action {
 	CPCAP_BATTERY_IRQ_ACTION_NONE,
 	CPCAP_BATTERY_IRQ_ACTION_CC_CAL_DONE,
 	CPCAP_BATTERY_IRQ_ACTION_BATTERY_LOW,
 	CPCAP_BATTERY_IRQ_ACTION_POWEROFF,
-पूर्ण;
+};
 
-काष्ठा cpcap_पूर्णांकerrupt_desc अणु
-	स्थिर अक्षर *name;
-	काष्ठा list_head node;
-	पूर्णांक irq;
-	क्रमागत cpcap_battery_irq_action action;
-पूर्ण;
+struct cpcap_interrupt_desc {
+	const char *name;
+	struct list_head node;
+	int irq;
+	enum cpcap_battery_irq_action action;
+};
 
-काष्ठा cpcap_battery_config अणु
-	पूर्णांक cd_factor;
-	काष्ठा घातer_supply_info info;
-	काष्ठा घातer_supply_battery_info bat;
-पूर्ण;
+struct cpcap_battery_config {
+	int cd_factor;
+	struct power_supply_info info;
+	struct power_supply_battery_info bat;
+};
 
-काष्ठा cpcap_coulomb_counter_data अणु
+struct cpcap_coulomb_counter_data {
 	s32 sample;		/* 24 or 32 bits */
 	s32 accumulator;
 	s16 offset;		/* 9 bits */
-	s16 पूर्णांकegrator;		/* 13 or 16 bits */
-पूर्ण;
+	s16 integrator;		/* 13 or 16 bits */
+};
 
-क्रमागत cpcap_battery_state अणु
+enum cpcap_battery_state {
 	CPCAP_BATTERY_STATE_PREVIOUS,
 	CPCAP_BATTERY_STATE_LATEST,
 	CPCAP_BATTERY_STATE_EMPTY,
 	CPCAP_BATTERY_STATE_FULL,
 	CPCAP_BATTERY_STATE_NR,
-पूर्ण;
+};
 
-काष्ठा cpcap_battery_state_data अणु
-	पूर्णांक voltage;
-	पूर्णांक current_ua;
-	पूर्णांक counter_uah;
-	पूर्णांक temperature;
-	kसमय_प्रकार समय;
-	काष्ठा cpcap_coulomb_counter_data cc;
-पूर्ण;
+struct cpcap_battery_state_data {
+	int voltage;
+	int current_ua;
+	int counter_uah;
+	int temperature;
+	ktime_t time;
+	struct cpcap_coulomb_counter_data cc;
+};
 
-काष्ठा cpcap_battery_ddata अणु
-	काष्ठा device *dev;
-	काष्ठा regmap *reg;
-	काष्ठा list_head irq_list;
-	काष्ठा iio_channel *channels[CPCAP_BATTERY_IIO_NR];
-	काष्ठा घातer_supply *psy;
-	काष्ठा cpcap_battery_config config;
-	काष्ठा cpcap_battery_state_data state[CPCAP_BATTERY_STATE_NR];
-	u32 cc_lsb;		/* NञAms per LSB */
+struct cpcap_battery_ddata {
+	struct device *dev;
+	struct regmap *reg;
+	struct list_head irq_list;
+	struct iio_channel *channels[CPCAP_BATTERY_IIO_NR];
+	struct power_supply *psy;
+	struct cpcap_battery_config config;
+	struct cpcap_battery_state_data state[CPCAP_BATTERY_STATE_NR];
+	u32 cc_lsb;		/* μAms per LSB */
 	atomic_t active;
-	पूर्णांक अक्षरge_full;
-	पूर्णांक status;
-	u16 venकरोr;
-	अचिन्हित पूर्णांक is_full:1;
-पूर्ण;
+	int charge_full;
+	int status;
+	u16 vendor;
+	unsigned int is_full:1;
+};
 
-#घोषणा CPCAP_NO_BATTERY	-400
+#define CPCAP_NO_BATTERY	-400
 
-अटल bool ignore_temperature_probe;
+static bool ignore_temperature_probe;
 module_param(ignore_temperature_probe, bool, 0660);
 
-अटल काष्ठा cpcap_battery_state_data *
-cpcap_battery_get_state(काष्ठा cpcap_battery_ddata *ddata,
-			क्रमागत cpcap_battery_state state)
-अणु
-	अगर (state >= CPCAP_BATTERY_STATE_NR)
-		वापस शून्य;
+static struct cpcap_battery_state_data *
+cpcap_battery_get_state(struct cpcap_battery_ddata *ddata,
+			enum cpcap_battery_state state)
+{
+	if (state >= CPCAP_BATTERY_STATE_NR)
+		return NULL;
 
-	वापस &ddata->state[state];
-पूर्ण
+	return &ddata->state[state];
+}
 
-अटल काष्ठा cpcap_battery_state_data *
-cpcap_battery_latest(काष्ठा cpcap_battery_ddata *ddata)
-अणु
-	वापस cpcap_battery_get_state(ddata, CPCAP_BATTERY_STATE_LATEST);
-पूर्ण
+static struct cpcap_battery_state_data *
+cpcap_battery_latest(struct cpcap_battery_ddata *ddata)
+{
+	return cpcap_battery_get_state(ddata, CPCAP_BATTERY_STATE_LATEST);
+}
 
-अटल काष्ठा cpcap_battery_state_data *
-cpcap_battery_previous(काष्ठा cpcap_battery_ddata *ddata)
-अणु
-	वापस cpcap_battery_get_state(ddata, CPCAP_BATTERY_STATE_PREVIOUS);
-पूर्ण
+static struct cpcap_battery_state_data *
+cpcap_battery_previous(struct cpcap_battery_ddata *ddata)
+{
+	return cpcap_battery_get_state(ddata, CPCAP_BATTERY_STATE_PREVIOUS);
+}
 
-अटल काष्ठा cpcap_battery_state_data *
-cpcap_battery_get_empty(काष्ठा cpcap_battery_ddata *ddata)
-अणु
-	वापस cpcap_battery_get_state(ddata, CPCAP_BATTERY_STATE_EMPTY);
-पूर्ण
+static struct cpcap_battery_state_data *
+cpcap_battery_get_empty(struct cpcap_battery_ddata *ddata)
+{
+	return cpcap_battery_get_state(ddata, CPCAP_BATTERY_STATE_EMPTY);
+}
 
-अटल काष्ठा cpcap_battery_state_data *
-cpcap_battery_get_full(काष्ठा cpcap_battery_ddata *ddata)
-अणु
-	वापस cpcap_battery_get_state(ddata, CPCAP_BATTERY_STATE_FULL);
-पूर्ण
+static struct cpcap_battery_state_data *
+cpcap_battery_get_full(struct cpcap_battery_ddata *ddata)
+{
+	return cpcap_battery_get_state(ddata, CPCAP_BATTERY_STATE_FULL);
+}
 
-अटल पूर्णांक cpcap_अक्षरger_battery_temperature(काष्ठा cpcap_battery_ddata *ddata,
-					     पूर्णांक *value)
-अणु
-	काष्ठा iio_channel *channel;
-	पूर्णांक error;
+static int cpcap_charger_battery_temperature(struct cpcap_battery_ddata *ddata,
+					     int *value)
+{
+	struct iio_channel *channel;
+	int error;
 
 	channel = ddata->channels[CPCAP_BATTERY_IIO_BATTDET];
-	error = iio_पढ़ो_channel_processed(channel, value);
-	अगर (error < 0) अणु
-		अगर (!ignore_temperature_probe)
+	error = iio_read_channel_processed(channel, value);
+	if (error < 0) {
+		if (!ignore_temperature_probe)
 			dev_warn(ddata->dev, "%s failed: %i\n", __func__, error);
 		*value = CPCAP_NO_BATTERY;
 
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	*value /= 100;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cpcap_battery_get_voltage(काष्ठा cpcap_battery_ddata *ddata)
-अणु
-	काष्ठा iio_channel *channel;
-	पूर्णांक error, value = 0;
+static int cpcap_battery_get_voltage(struct cpcap_battery_ddata *ddata)
+{
+	struct iio_channel *channel;
+	int error, value = 0;
 
 	channel = ddata->channels[CPCAP_BATTERY_IIO_VOLTAGE];
-	error = iio_पढ़ो_channel_processed(channel, &value);
-	अगर (error < 0) अणु
+	error = iio_read_channel_processed(channel, &value);
+	if (error < 0) {
 		dev_warn(ddata->dev, "%s failed: %i\n", __func__, error);
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस value * 1000;
-पूर्ण
+	return value * 1000;
+}
 
-अटल पूर्णांक cpcap_battery_get_current(काष्ठा cpcap_battery_ddata *ddata)
-अणु
-	काष्ठा iio_channel *channel;
-	पूर्णांक error, value = 0;
+static int cpcap_battery_get_current(struct cpcap_battery_ddata *ddata)
+{
+	struct iio_channel *channel;
+	int error, value = 0;
 
 	channel = ddata->channels[CPCAP_BATTERY_IIO_BATT_CURRENT];
-	error = iio_पढ़ो_channel_processed(channel, &value);
-	अगर (error < 0) अणु
+	error = iio_read_channel_processed(channel, &value);
+	if (error < 0) {
 		dev_warn(ddata->dev, "%s failed: %i\n", __func__, error);
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस value * 1000;
-पूर्ण
+	return value * 1000;
+}
 
 /**
- * cpcap_battery_cc_raw_भाग - calculate and भागide coulomb counter NञAms values
+ * cpcap_battery_cc_raw_div - calculate and divide coulomb counter μAms values
  * @ddata: device driver data
  * @sample: coulomb counter sample value
- * @accumulator: coulomb counter पूर्णांकegrator value
+ * @accumulator: coulomb counter integrator value
  * @offset: coulomb counter offset value
- * @भागider: conversion भागider
+ * @divider: conversion divider
  *
  * Note that cc_lsb and cc_dur values are from Motorola Linux kernel
  * function data_get_avg_curr_ua() and seem to be based on measured test
  * results. It also has the following comment:
  *
- * Adjusपंचांगent factors are applied here as a temp solution per the test
- * results. Need to work out a क्रमmal solution क्रम this adjusपंचांगent.
+ * Adjustment factors are applied here as a temp solution per the test
+ * results. Need to work out a formal solution for this adjustment.
  *
- * A coulomb counter क्रम similar hardware seems to be करोcumented in
+ * A coulomb counter for similar hardware seems to be documented in
  * "TWL6030 Gas Gauging Basics (Rev. A)" swca095a.pdf in chapter
  * "10 Calculating Accumulated Current". We however follow what the
- * Motorola mapphone Linux kernel is करोing as there may be either a
+ * Motorola mapphone Linux kernel is doing as there may be either a
  * TI or ST coulomb counter in the PMIC.
  */
-अटल पूर्णांक cpcap_battery_cc_raw_भाग(काष्ठा cpcap_battery_ddata *ddata,
+static int cpcap_battery_cc_raw_div(struct cpcap_battery_ddata *ddata,
 				    s32 sample, s32 accumulator,
-				    s16 offset, u32 भागider)
-अणु
+				    s16 offset, u32 divider)
+{
 	s64 acc;
 
-	अगर (!भागider)
-		वापस 0;
+	if (!divider)
+		return 0;
 
 	acc = accumulator;
 	acc -= (s64)sample * offset;
 	acc *= ddata->cc_lsb;
 	acc *= -1;
-	acc = भाग_s64(acc, भागider);
+	acc = div_s64(acc, divider);
 
-	वापस acc;
-पूर्ण
+	return acc;
+}
 
-/* 3600000NञAms = 1NञAh */
-अटल पूर्णांक cpcap_battery_cc_to_uah(काष्ठा cpcap_battery_ddata *ddata,
+/* 3600000μAms = 1μAh */
+static int cpcap_battery_cc_to_uah(struct cpcap_battery_ddata *ddata,
 				   s32 sample, s32 accumulator,
 				   s16 offset)
-अणु
-	वापस cpcap_battery_cc_raw_भाग(ddata, sample,
+{
+	return cpcap_battery_cc_raw_div(ddata, sample,
 					accumulator, offset,
 					3600000);
-पूर्ण
+}
 
-अटल पूर्णांक cpcap_battery_cc_to_ua(काष्ठा cpcap_battery_ddata *ddata,
+static int cpcap_battery_cc_to_ua(struct cpcap_battery_ddata *ddata,
 				  s32 sample, s32 accumulator,
 				  s16 offset)
-अणु
-	वापस cpcap_battery_cc_raw_भाग(ddata, sample,
+{
+	return cpcap_battery_cc_raw_div(ddata, sample,
 					accumulator, offset,
 					sample *
 					CPCAP_BATTERY_CC_SAMPLE_PERIOD_MS);
-पूर्ण
+}
 
 /**
- * cpcap_battery_पढ़ो_accumulated - पढ़ोs cpcap coulomb counter
+ * cpcap_battery_read_accumulated - reads cpcap coulomb counter
  * @ddata: device driver data
  * @ccd: coulomb counter values
  *
- * Based on Motorola mapphone kernel function data_पढ़ो_regs().
- * Looking at the रेजिस्टरs, the coulomb counter seems similar to
+ * Based on Motorola mapphone kernel function data_read_regs().
+ * Looking at the registers, the coulomb counter seems similar to
  * the coulomb counter in TWL6030. See "TWL6030 Gas Gauging Basics
- * (Rev. A) swca095a.pdf क्रम "10 Calculating Accumulated Current".
+ * (Rev. A) swca095a.pdf for "10 Calculating Accumulated Current".
  *
- * Note that swca095a.pdf inकाष्ठाs to stop the coulomb counter
- * beक्रमe पढ़ोing to aव्योम values changing. Motorola mapphone
- * Linux kernel करोes not करो it, so let's assume they've verअगरied
+ * Note that swca095a.pdf instructs to stop the coulomb counter
+ * before reading to avoid values changing. Motorola mapphone
+ * Linux kernel does not do it, so let's assume they've verified
  * the data produced is correct.
  */
-अटल पूर्णांक
-cpcap_battery_पढ़ो_accumulated(काष्ठा cpcap_battery_ddata *ddata,
-			       काष्ठा cpcap_coulomb_counter_data *ccd)
-अणु
+static int
+cpcap_battery_read_accumulated(struct cpcap_battery_ddata *ddata,
+			       struct cpcap_coulomb_counter_data *ccd)
+{
 	u16 buf[7];	/* CPCAP_REG_CCS1 to CCI */
-	पूर्णांक error;
+	int error;
 
 	ccd->sample = 0;
 	ccd->accumulator = 0;
 	ccd->offset = 0;
-	ccd->पूर्णांकegrator = 0;
+	ccd->integrator = 0;
 
-	/* Read coulomb counter रेजिस्टर range */
-	error = regmap_bulk_पढ़ो(ddata->reg, CPCAP_REG_CCS1,
+	/* Read coulomb counter register range */
+	error = regmap_bulk_read(ddata->reg, CPCAP_REG_CCS1,
 				 buf, ARRAY_SIZE(buf));
-	अगर (error)
-		वापस 0;
+	if (error)
+		return 0;
 
 	/* Sample value CPCAP_REG_CCS1 & 2 */
 	ccd->sample = (buf[1] & 0x0fff) << 16;
 	ccd->sample |= buf[0];
-	अगर (ddata->venकरोr == CPCAP_VENDOR_TI)
+	if (ddata->vendor == CPCAP_VENDOR_TI)
 		ccd->sample = sign_extend32(24, ccd->sample);
 
 	/* Accumulator value CPCAP_REG_CCA1 & 2 */
@@ -343,196 +342,196 @@ cpcap_battery_पढ़ो_accumulated(काष्ठा cpcap_battery_ddata *d
 	ccd->offset = buf[4];
 	ccd->offset = sign_extend32(ccd->offset, 9);
 
-	/* Integrator रेजिस्टर CPCAP_REG_CCI */
-	अगर (ddata->venकरोr == CPCAP_VENDOR_TI)
-		ccd->पूर्णांकegrator = sign_extend32(buf[6], 13);
-	अन्यथा
-		ccd->पूर्णांकegrator = (s16)buf[6];
+	/* Integrator register CPCAP_REG_CCI */
+	if (ddata->vendor == CPCAP_VENDOR_TI)
+		ccd->integrator = sign_extend32(buf[6], 13);
+	else
+		ccd->integrator = (s16)buf[6];
 
-	वापस cpcap_battery_cc_to_uah(ddata,
+	return cpcap_battery_cc_to_uah(ddata,
 				       ccd->sample,
 				       ccd->accumulator,
 				       ccd->offset);
-पूर्ण
+}
 
 /**
- * cpcap_battery_cc_get_avg_current - पढ़ो cpcap coulumb counter
+ * cpcap_battery_cc_get_avg_current - read cpcap coulumb counter
  * @ddata: cpcap battery driver device data
  */
-अटल पूर्णांक cpcap_battery_cc_get_avg_current(काष्ठा cpcap_battery_ddata *ddata)
-अणु
-	पूर्णांक value, acc, error;
+static int cpcap_battery_cc_get_avg_current(struct cpcap_battery_ddata *ddata)
+{
+	int value, acc, error;
 	s32 sample;
 	s16 offset;
 
-	/* Coulomb counter पूर्णांकegrator */
-	error = regmap_पढ़ो(ddata->reg, CPCAP_REG_CCI, &value);
-	अगर (error)
-		वापस error;
+	/* Coulomb counter integrator */
+	error = regmap_read(ddata->reg, CPCAP_REG_CCI, &value);
+	if (error)
+		return error;
 
-	अगर (ddata->venकरोr == CPCAP_VENDOR_TI) अणु
+	if (ddata->vendor == CPCAP_VENDOR_TI) {
 		acc = sign_extend32(value, 13);
 		sample = 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		acc = (s16)value;
 		sample = 4;
-	पूर्ण
+	}
 
 	/* Coulomb counter calibration offset  */
-	error = regmap_पढ़ो(ddata->reg, CPCAP_REG_CCM, &value);
-	अगर (error)
-		वापस error;
+	error = regmap_read(ddata->reg, CPCAP_REG_CCM, &value);
+	if (error)
+		return error;
 
 	offset = sign_extend32(value, 9);
 
-	वापस cpcap_battery_cc_to_ua(ddata, sample, acc, offset);
-पूर्ण
+	return cpcap_battery_cc_to_ua(ddata, sample, acc, offset);
+}
 
-अटल पूर्णांक cpcap_battery_get_अक्षरger_status(काष्ठा cpcap_battery_ddata *ddata,
-					    पूर्णांक *val)
-अणु
-	जोड़ घातer_supply_propval prop;
-	काष्ठा घातer_supply *अक्षरger;
-	पूर्णांक error;
+static int cpcap_battery_get_charger_status(struct cpcap_battery_ddata *ddata,
+					    int *val)
+{
+	union power_supply_propval prop;
+	struct power_supply *charger;
+	int error;
 
-	अक्षरger = घातer_supply_get_by_name("usb");
-	अगर (!अक्षरger)
-		वापस -ENODEV;
+	charger = power_supply_get_by_name("usb");
+	if (!charger)
+		return -ENODEV;
 
-	error = घातer_supply_get_property(अक्षरger, POWER_SUPPLY_PROP_STATUS,
+	error = power_supply_get_property(charger, POWER_SUPPLY_PROP_STATUS,
 					  &prop);
-	अगर (error)
+	if (error)
 		*val = POWER_SUPPLY_STATUS_UNKNOWN;
-	अन्यथा
-		*val = prop.पूर्णांकval;
+	else
+		*val = prop.intval;
 
-	घातer_supply_put(अक्षरger);
+	power_supply_put(charger);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल bool cpcap_battery_full(काष्ठा cpcap_battery_ddata *ddata)
-अणु
-	काष्ठा cpcap_battery_state_data *state = cpcap_battery_latest(ddata);
-	अचिन्हित पूर्णांक vfull;
-	पूर्णांक error, val;
+static bool cpcap_battery_full(struct cpcap_battery_ddata *ddata)
+{
+	struct cpcap_battery_state_data *state = cpcap_battery_latest(ddata);
+	unsigned int vfull;
+	int error, val;
 
-	error = cpcap_battery_get_अक्षरger_status(ddata, &val);
-	अगर (!error) अणु
-		चयन (val) अणु
-		हाल POWER_SUPPLY_STATUS_DISCHARGING:
+	error = cpcap_battery_get_charger_status(ddata, &val);
+	if (!error) {
+		switch (val) {
+		case POWER_SUPPLY_STATUS_DISCHARGING:
 			dev_dbg(ddata->dev, "charger disconnected\n");
 			ddata->is_full = 0;
-			अवरोध;
-		हाल POWER_SUPPLY_STATUS_FULL:
+			break;
+		case POWER_SUPPLY_STATUS_FULL:
 			dev_dbg(ddata->dev, "charger full status\n");
 			ddata->is_full = 1;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		default:
+			break;
+		}
+	}
 
 	/*
 	 * The full battery voltage here can be inaccurate, it's used just to
-	 * filter out any trickle अक्षरging events. We clear the is_full status
-	 * on अक्षरger disconnect above anyways.
+	 * filter out any trickle charging events. We clear the is_full status
+	 * on charger disconnect above anyways.
 	 */
-	vfull = ddata->config.bat.स्थिरant_अक्षरge_voltage_max_uv - 120000;
+	vfull = ddata->config.bat.constant_charge_voltage_max_uv - 120000;
 
-	अगर (ddata->is_full && state->voltage < vfull)
+	if (ddata->is_full && state->voltage < vfull)
 		ddata->is_full = 0;
 
-	वापस ddata->is_full;
-पूर्ण
+	return ddata->is_full;
+}
 
-अटल bool cpcap_battery_low(काष्ठा cpcap_battery_ddata *ddata)
-अणु
-	काष्ठा cpcap_battery_state_data *state = cpcap_battery_latest(ddata);
-	अटल bool is_low;
+static bool cpcap_battery_low(struct cpcap_battery_ddata *ddata)
+{
+	struct cpcap_battery_state_data *state = cpcap_battery_latest(ddata);
+	static bool is_low;
 
-	अगर (state->current_ua > 0 && (state->voltage <= 3350000 || is_low))
+	if (state->current_ua > 0 && (state->voltage <= 3350000 || is_low))
 		is_low = true;
-	अन्यथा
+	else
 		is_low = false;
 
-	वापस is_low;
-पूर्ण
+	return is_low;
+}
 
-अटल पूर्णांक cpcap_battery_update_status(काष्ठा cpcap_battery_ddata *ddata)
-अणु
-	काष्ठा cpcap_battery_state_data state, *latest, *previous,
+static int cpcap_battery_update_status(struct cpcap_battery_ddata *ddata)
+{
+	struct cpcap_battery_state_data state, *latest, *previous,
 					*empty, *full;
-	kसमय_प्रकार now;
-	पूर्णांक error;
+	ktime_t now;
+	int error;
 
-	स_रखो(&state, 0, माप(state));
-	now = kसमय_get();
+	memset(&state, 0, sizeof(state));
+	now = ktime_get();
 
 	latest = cpcap_battery_latest(ddata);
-	अगर (latest) अणु
-		s64 delta_ms = kसमय_प्रकारo_ms(kसमय_sub(now, latest->समय));
+	if (latest) {
+		s64 delta_ms = ktime_to_ms(ktime_sub(now, latest->time));
 
-		अगर (delta_ms < CPCAP_BATTERY_CC_SAMPLE_PERIOD_MS)
-			वापस delta_ms;
-	पूर्ण
+		if (delta_ms < CPCAP_BATTERY_CC_SAMPLE_PERIOD_MS)
+			return delta_ms;
+	}
 
-	state.समय = now;
+	state.time = now;
 	state.voltage = cpcap_battery_get_voltage(ddata);
 	state.current_ua = cpcap_battery_get_current(ddata);
-	state.counter_uah = cpcap_battery_पढ़ो_accumulated(ddata, &state.cc);
+	state.counter_uah = cpcap_battery_read_accumulated(ddata, &state.cc);
 
-	error = cpcap_अक्षरger_battery_temperature(ddata,
+	error = cpcap_charger_battery_temperature(ddata,
 						  &state.temperature);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	previous = cpcap_battery_previous(ddata);
-	स_नकल(previous, latest, माप(*previous));
-	स_नकल(latest, &state, माप(*latest));
+	memcpy(previous, latest, sizeof(*previous));
+	memcpy(latest, &state, sizeof(*latest));
 
-	अगर (cpcap_battery_full(ddata)) अणु
+	if (cpcap_battery_full(ddata)) {
 		full = cpcap_battery_get_full(ddata);
-		स_नकल(full, latest, माप(*full));
+		memcpy(full, latest, sizeof(*full));
 
 		empty = cpcap_battery_get_empty(ddata);
-		अगर (empty->voltage && empty->voltage != -1) अणु
+		if (empty->voltage && empty->voltage != -1) {
 			empty->voltage = -1;
-			ddata->अक्षरge_full =
+			ddata->charge_full =
 				empty->counter_uah - full->counter_uah;
-		पूर्ण अन्यथा अगर (ddata->अक्षरge_full) अणु
+		} else if (ddata->charge_full) {
 			empty->voltage = -1;
 			empty->counter_uah =
-				full->counter_uah + ddata->अक्षरge_full;
-		पूर्ण
-	पूर्ण अन्यथा अगर (cpcap_battery_low(ddata)) अणु
+				full->counter_uah + ddata->charge_full;
+		}
+	} else if (cpcap_battery_low(ddata)) {
 		empty = cpcap_battery_get_empty(ddata);
-		स_नकल(empty, latest, माप(*empty));
+		memcpy(empty, latest, sizeof(*empty));
 
 		full = cpcap_battery_get_full(ddata);
-		अगर (full->voltage) अणु
+		if (full->voltage) {
 			full->voltage = 0;
-			ddata->अक्षरge_full =
+			ddata->charge_full =
 				empty->counter_uah - full->counter_uah;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Update battery status when cpcap-अक्षरger calls घातer_supply_changed().
- * This allows us to detect battery full condition beक्रमe the अक्षरger
+ * Update battery status when cpcap-charger calls power_supply_changed().
+ * This allows us to detect battery full condition before the charger
  * disconnects.
  */
-अटल व्योम cpcap_battery_बाह्यal_घातer_changed(काष्ठा घातer_supply *psy)
-अणु
-	जोड़ घातer_supply_propval prop;
+static void cpcap_battery_external_power_changed(struct power_supply *psy)
+{
+	union power_supply_propval prop;
 
-	घातer_supply_get_property(psy, POWER_SUPPLY_PROP_STATUS, &prop);
-पूर्ण
+	power_supply_get_property(psy, POWER_SUPPLY_PROP_STATUS, &prop);
+}
 
-अटल क्रमागत घातer_supply_property cpcap_battery_props[] = अणु
+static enum power_supply_property cpcap_battery_props[] = {
 	POWER_SUPPLY_PROP_STATUS,
 	POWER_SUPPLY_PROP_PRESENT,
 	POWER_SUPPLY_PROP_TECHNOLOGY,
@@ -552,565 +551,565 @@ cpcap_battery_पढ़ो_accumulated(काष्ठा cpcap_battery_ddata *d
 	POWER_SUPPLY_PROP_CAPACITY_LEVEL,
 	POWER_SUPPLY_PROP_SCOPE,
 	POWER_SUPPLY_PROP_TEMP,
-पूर्ण;
+};
 
-अटल पूर्णांक cpcap_battery_get_property(काष्ठा घातer_supply *psy,
-				      क्रमागत घातer_supply_property psp,
-				      जोड़ घातer_supply_propval *val)
-अणु
-	काष्ठा cpcap_battery_ddata *ddata = घातer_supply_get_drvdata(psy);
-	काष्ठा cpcap_battery_state_data *latest, *previous, *empty;
+static int cpcap_battery_get_property(struct power_supply *psy,
+				      enum power_supply_property psp,
+				      union power_supply_propval *val)
+{
+	struct cpcap_battery_ddata *ddata = power_supply_get_drvdata(psy);
+	struct cpcap_battery_state_data *latest, *previous, *empty;
 	u32 sample;
 	s32 accumulator;
-	पूर्णांक cached;
-	s64 पंचांगp;
+	int cached;
+	s64 tmp;
 
 	cached = cpcap_battery_update_status(ddata);
-	अगर (cached < 0)
-		वापस cached;
+	if (cached < 0)
+		return cached;
 
 	latest = cpcap_battery_latest(ddata);
 	previous = cpcap_battery_previous(ddata);
 
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_PRESENT:
-		अगर (latest->temperature > CPCAP_NO_BATTERY || ignore_temperature_probe)
-			val->पूर्णांकval = 1;
-		अन्यथा
-			val->पूर्णांकval = 0;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_STATUS:
-		अगर (cpcap_battery_full(ddata)) अणु
-			val->पूर्णांकval = POWER_SUPPLY_STATUS_FULL;
-			अवरोध;
-		पूर्ण
-		अगर (cpcap_battery_cc_get_avg_current(ddata) < 0)
-			val->पूर्णांकval = POWER_SUPPLY_STATUS_CHARGING;
-		अन्यथा
-			val->पूर्णांकval = POWER_SUPPLY_STATUS_DISCHARGING;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_TECHNOLOGY:
-		val->पूर्णांकval = ddata->config.info.technology;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_VOLTAGE_NOW:
-		val->पूर्णांकval = cpcap_battery_get_voltage(ddata);
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_VOLTAGE_MAX_DESIGN:
-		val->पूर्णांकval = ddata->config.info.voltage_max_design;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_VOLTAGE_MIN_DESIGN:
-		val->पूर्णांकval = ddata->config.info.voltage_min_design;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE:
-		val->पूर्णांकval = ddata->config.bat.स्थिरant_अक्षरge_voltage_max_uv;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_CURRENT_AVG:
+	switch (psp) {
+	case POWER_SUPPLY_PROP_PRESENT:
+		if (latest->temperature > CPCAP_NO_BATTERY || ignore_temperature_probe)
+			val->intval = 1;
+		else
+			val->intval = 0;
+		break;
+	case POWER_SUPPLY_PROP_STATUS:
+		if (cpcap_battery_full(ddata)) {
+			val->intval = POWER_SUPPLY_STATUS_FULL;
+			break;
+		}
+		if (cpcap_battery_cc_get_avg_current(ddata) < 0)
+			val->intval = POWER_SUPPLY_STATUS_CHARGING;
+		else
+			val->intval = POWER_SUPPLY_STATUS_DISCHARGING;
+		break;
+	case POWER_SUPPLY_PROP_TECHNOLOGY:
+		val->intval = ddata->config.info.technology;
+		break;
+	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
+		val->intval = cpcap_battery_get_voltage(ddata);
+		break;
+	case POWER_SUPPLY_PROP_VOLTAGE_MAX_DESIGN:
+		val->intval = ddata->config.info.voltage_max_design;
+		break;
+	case POWER_SUPPLY_PROP_VOLTAGE_MIN_DESIGN:
+		val->intval = ddata->config.info.voltage_min_design;
+		break;
+	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE:
+		val->intval = ddata->config.bat.constant_charge_voltage_max_uv;
+		break;
+	case POWER_SUPPLY_PROP_CURRENT_AVG:
 		sample = latest->cc.sample - previous->cc.sample;
-		अगर (!sample) अणु
-			val->पूर्णांकval = cpcap_battery_cc_get_avg_current(ddata);
-			अवरोध;
-		पूर्ण
+		if (!sample) {
+			val->intval = cpcap_battery_cc_get_avg_current(ddata);
+			break;
+		}
 		accumulator = latest->cc.accumulator - previous->cc.accumulator;
-		val->पूर्णांकval = cpcap_battery_cc_to_ua(ddata, sample,
+		val->intval = cpcap_battery_cc_to_ua(ddata, sample,
 						     accumulator,
 						     latest->cc.offset);
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_CURRENT_NOW:
-		val->पूर्णांकval = latest->current_ua;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_CHARGE_COUNTER:
-		val->पूर्णांकval = latest->counter_uah;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_POWER_NOW:
-		पंचांगp = (latest->voltage / 10000) * latest->current_ua;
-		val->पूर्णांकval = भाग64_s64(पंचांगp, 100);
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_POWER_AVG:
+		break;
+	case POWER_SUPPLY_PROP_CURRENT_NOW:
+		val->intval = latest->current_ua;
+		break;
+	case POWER_SUPPLY_PROP_CHARGE_COUNTER:
+		val->intval = latest->counter_uah;
+		break;
+	case POWER_SUPPLY_PROP_POWER_NOW:
+		tmp = (latest->voltage / 10000) * latest->current_ua;
+		val->intval = div64_s64(tmp, 100);
+		break;
+	case POWER_SUPPLY_PROP_POWER_AVG:
 		sample = latest->cc.sample - previous->cc.sample;
-		अगर (!sample) अणु
-			पंचांगp = cpcap_battery_cc_get_avg_current(ddata);
-			पंचांगp *= (latest->voltage / 10000);
-			val->पूर्णांकval = भाग64_s64(पंचांगp, 100);
-			अवरोध;
-		पूर्ण
+		if (!sample) {
+			tmp = cpcap_battery_cc_get_avg_current(ddata);
+			tmp *= (latest->voltage / 10000);
+			val->intval = div64_s64(tmp, 100);
+			break;
+		}
 		accumulator = latest->cc.accumulator - previous->cc.accumulator;
-		पंचांगp = cpcap_battery_cc_to_ua(ddata, sample, accumulator,
+		tmp = cpcap_battery_cc_to_ua(ddata, sample, accumulator,
 					     latest->cc.offset);
-		पंचांगp *= ((latest->voltage + previous->voltage) / 20000);
-		val->पूर्णांकval = भाग64_s64(पंचांगp, 100);
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_CAPACITY:
+		tmp *= ((latest->voltage + previous->voltage) / 20000);
+		val->intval = div64_s64(tmp, 100);
+		break;
+	case POWER_SUPPLY_PROP_CAPACITY:
 		empty = cpcap_battery_get_empty(ddata);
-		अगर (!empty->voltage || !ddata->अक्षरge_full)
-			वापस -ENODATA;
-		/* (ddata->अक्षरge_full / 200) is needed क्रम rounding */
-		val->पूर्णांकval = empty->counter_uah - latest->counter_uah +
-			ddata->अक्षरge_full / 200;
-		val->पूर्णांकval = clamp(val->पूर्णांकval, 0, ddata->अक्षरge_full);
-		val->पूर्णांकval = val->पूर्णांकval * 100 / ddata->अक्षरge_full;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_CAPACITY_LEVEL:
-		अगर (cpcap_battery_full(ddata))
-			val->पूर्णांकval = POWER_SUPPLY_CAPACITY_LEVEL_FULL;
-		अन्यथा अगर (latest->voltage >= 3750000)
-			val->पूर्णांकval = POWER_SUPPLY_CAPACITY_LEVEL_HIGH;
-		अन्यथा अगर (latest->voltage >= 3300000)
-			val->पूर्णांकval = POWER_SUPPLY_CAPACITY_LEVEL_NORMAL;
-		अन्यथा अगर (latest->voltage > 3100000)
-			val->पूर्णांकval = POWER_SUPPLY_CAPACITY_LEVEL_LOW;
-		अन्यथा अगर (latest->voltage <= 3100000)
-			val->पूर्णांकval = POWER_SUPPLY_CAPACITY_LEVEL_CRITICAL;
-		अन्यथा
-			val->पूर्णांकval = POWER_SUPPLY_CAPACITY_LEVEL_UNKNOWN;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_CHARGE_NOW:
+		if (!empty->voltage || !ddata->charge_full)
+			return -ENODATA;
+		/* (ddata->charge_full / 200) is needed for rounding */
+		val->intval = empty->counter_uah - latest->counter_uah +
+			ddata->charge_full / 200;
+		val->intval = clamp(val->intval, 0, ddata->charge_full);
+		val->intval = val->intval * 100 / ddata->charge_full;
+		break;
+	case POWER_SUPPLY_PROP_CAPACITY_LEVEL:
+		if (cpcap_battery_full(ddata))
+			val->intval = POWER_SUPPLY_CAPACITY_LEVEL_FULL;
+		else if (latest->voltage >= 3750000)
+			val->intval = POWER_SUPPLY_CAPACITY_LEVEL_HIGH;
+		else if (latest->voltage >= 3300000)
+			val->intval = POWER_SUPPLY_CAPACITY_LEVEL_NORMAL;
+		else if (latest->voltage > 3100000)
+			val->intval = POWER_SUPPLY_CAPACITY_LEVEL_LOW;
+		else if (latest->voltage <= 3100000)
+			val->intval = POWER_SUPPLY_CAPACITY_LEVEL_CRITICAL;
+		else
+			val->intval = POWER_SUPPLY_CAPACITY_LEVEL_UNKNOWN;
+		break;
+	case POWER_SUPPLY_PROP_CHARGE_NOW:
 		empty = cpcap_battery_get_empty(ddata);
-		अगर (!empty->voltage)
-			वापस -ENODATA;
-		val->पूर्णांकval = empty->counter_uah - latest->counter_uah;
-		अगर (val->पूर्णांकval < 0)
-			val->पूर्णांकval = 0;
-		अन्यथा अगर (ddata->अक्षरge_full && ddata->अक्षरge_full < val->पूर्णांकval)
-			val->पूर्णांकval = ddata->अक्षरge_full;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_CHARGE_FULL:
-		अगर (!ddata->अक्षरge_full)
-			वापस -ENODATA;
-		val->पूर्णांकval = ddata->अक्षरge_full;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN:
-		val->पूर्णांकval = ddata->config.info.अक्षरge_full_design;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_SCOPE:
-		val->पूर्णांकval = POWER_SUPPLY_SCOPE_SYSTEM;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_TEMP:
-		अगर (ignore_temperature_probe)
-			वापस -ENODATA;
-		val->पूर्णांकval = latest->temperature;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		if (!empty->voltage)
+			return -ENODATA;
+		val->intval = empty->counter_uah - latest->counter_uah;
+		if (val->intval < 0)
+			val->intval = 0;
+		else if (ddata->charge_full && ddata->charge_full < val->intval)
+			val->intval = ddata->charge_full;
+		break;
+	case POWER_SUPPLY_PROP_CHARGE_FULL:
+		if (!ddata->charge_full)
+			return -ENODATA;
+		val->intval = ddata->charge_full;
+		break;
+	case POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN:
+		val->intval = ddata->config.info.charge_full_design;
+		break;
+	case POWER_SUPPLY_PROP_SCOPE:
+		val->intval = POWER_SUPPLY_SCOPE_SYSTEM;
+		break;
+	case POWER_SUPPLY_PROP_TEMP:
+		if (ignore_temperature_probe)
+			return -ENODATA;
+		val->intval = latest->temperature;
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cpcap_battery_update_अक्षरger(काष्ठा cpcap_battery_ddata *ddata,
-					पूर्णांक स्थिर_अक्षरge_voltage)
-अणु
-	जोड़ घातer_supply_propval prop;
-	जोड़ घातer_supply_propval val;
-	काष्ठा घातer_supply *अक्षरger;
-	पूर्णांक error;
+static int cpcap_battery_update_charger(struct cpcap_battery_ddata *ddata,
+					int const_charge_voltage)
+{
+	union power_supply_propval prop;
+	union power_supply_propval val;
+	struct power_supply *charger;
+	int error;
 
-	अक्षरger = घातer_supply_get_by_name("usb");
-	अगर (!अक्षरger)
-		वापस -ENODEV;
+	charger = power_supply_get_by_name("usb");
+	if (!charger)
+		return -ENODEV;
 
-	error = घातer_supply_get_property(अक्षरger,
+	error = power_supply_get_property(charger,
 				POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE,
 				&prop);
-	अगर (error)
-		जाओ out_put;
+	if (error)
+		goto out_put;
 
-	/* Allow अक्षरger स्थिर voltage lower than battery स्थिर voltage */
-	अगर (स्थिर_अक्षरge_voltage > prop.पूर्णांकval)
-		जाओ out_put;
+	/* Allow charger const voltage lower than battery const voltage */
+	if (const_charge_voltage > prop.intval)
+		goto out_put;
 
-	val.पूर्णांकval = स्थिर_अक्षरge_voltage;
+	val.intval = const_charge_voltage;
 
-	error = घातer_supply_set_property(अक्षरger,
+	error = power_supply_set_property(charger,
 			POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE,
 			&val);
 out_put:
-	घातer_supply_put(अक्षरger);
+	power_supply_put(charger);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक cpcap_battery_set_property(काष्ठा घातer_supply *psy,
-				      क्रमागत घातer_supply_property psp,
-				      स्थिर जोड़ घातer_supply_propval *val)
-अणु
-	काष्ठा cpcap_battery_ddata *ddata = घातer_supply_get_drvdata(psy);
+static int cpcap_battery_set_property(struct power_supply *psy,
+				      enum power_supply_property psp,
+				      const union power_supply_propval *val)
+{
+	struct cpcap_battery_ddata *ddata = power_supply_get_drvdata(psy);
 
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE:
-		अगर (val->पूर्णांकval < ddata->config.info.voltage_min_design)
-			वापस -EINVAL;
-		अगर (val->पूर्णांकval > ddata->config.info.voltage_max_design)
-			वापस -EINVAL;
+	switch (psp) {
+	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE:
+		if (val->intval < ddata->config.info.voltage_min_design)
+			return -EINVAL;
+		if (val->intval > ddata->config.info.voltage_max_design)
+			return -EINVAL;
 
-		ddata->config.bat.स्थिरant_अक्षरge_voltage_max_uv = val->पूर्णांकval;
+		ddata->config.bat.constant_charge_voltage_max_uv = val->intval;
 
-		वापस cpcap_battery_update_अक्षरger(ddata, val->पूर्णांकval);
-	हाल POWER_SUPPLY_PROP_CHARGE_FULL:
-		अगर (val->पूर्णांकval < 0)
-			वापस -EINVAL;
-		अगर (val->पूर्णांकval > ddata->config.info.अक्षरge_full_design)
-			वापस -EINVAL;
+		return cpcap_battery_update_charger(ddata, val->intval);
+	case POWER_SUPPLY_PROP_CHARGE_FULL:
+		if (val->intval < 0)
+			return -EINVAL;
+		if (val->intval > ddata->config.info.charge_full_design)
+			return -EINVAL;
 
-		ddata->अक्षरge_full = val->पूर्णांकval;
+		ddata->charge_full = val->intval;
 
-		वापस 0;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		return 0;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cpcap_battery_property_is_ग_लिखोable(काष्ठा घातer_supply *psy,
-					       क्रमागत घातer_supply_property psp)
-अणु
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE:
-	हाल POWER_SUPPLY_PROP_CHARGE_FULL:
-		वापस 1;
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+static int cpcap_battery_property_is_writeable(struct power_supply *psy,
+					       enum power_supply_property psp)
+{
+	switch (psp) {
+	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE:
+	case POWER_SUPPLY_PROP_CHARGE_FULL:
+		return 1;
+	default:
+		return 0;
+	}
+}
 
-अटल irqवापस_t cpcap_battery_irq_thपढ़ो(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा cpcap_battery_ddata *ddata = data;
-	काष्ठा cpcap_battery_state_data *latest;
-	काष्ठा cpcap_पूर्णांकerrupt_desc *d;
+static irqreturn_t cpcap_battery_irq_thread(int irq, void *data)
+{
+	struct cpcap_battery_ddata *ddata = data;
+	struct cpcap_battery_state_data *latest;
+	struct cpcap_interrupt_desc *d;
 
-	अगर (!atomic_पढ़ो(&ddata->active))
-		वापस IRQ_NONE;
+	if (!atomic_read(&ddata->active))
+		return IRQ_NONE;
 
-	list_क्रम_each_entry(d, &ddata->irq_list, node) अणु
-		अगर (irq == d->irq)
-			अवरोध;
-	पूर्ण
+	list_for_each_entry(d, &ddata->irq_list, node) {
+		if (irq == d->irq)
+			break;
+	}
 
-	अगर (list_entry_is_head(d, &ddata->irq_list, node))
-		वापस IRQ_NONE;
+	if (list_entry_is_head(d, &ddata->irq_list, node))
+		return IRQ_NONE;
 
 	latest = cpcap_battery_latest(ddata);
 
-	चयन (d->action) अणु
-	हाल CPCAP_BATTERY_IRQ_ACTION_CC_CAL_DONE:
+	switch (d->action) {
+	case CPCAP_BATTERY_IRQ_ACTION_CC_CAL_DONE:
 		dev_info(ddata->dev, "Coulomb counter calibration done\n");
-		अवरोध;
-	हाल CPCAP_BATTERY_IRQ_ACTION_BATTERY_LOW:
-		अगर (latest->current_ua >= 0)
+		break;
+	case CPCAP_BATTERY_IRQ_ACTION_BATTERY_LOW:
+		if (latest->current_ua >= 0)
 			dev_warn(ddata->dev, "Battery low at %imV!\n",
 				latest->voltage / 1000);
-		अवरोध;
-	हाल CPCAP_BATTERY_IRQ_ACTION_POWEROFF:
-		अगर (latest->current_ua >= 0 && latest->voltage <= 3200000) अणु
+		break;
+	case CPCAP_BATTERY_IRQ_ACTION_POWEROFF:
+		if (latest->current_ua >= 0 && latest->voltage <= 3200000) {
 			dev_emerg(ddata->dev,
 				  "Battery empty at %imV, powering off\n",
 				  latest->voltage / 1000);
-			orderly_घातeroff(true);
-		पूर्ण
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+			orderly_poweroff(true);
+		}
+		break;
+	default:
+		break;
+	}
 
-	घातer_supply_changed(ddata->psy);
+	power_supply_changed(ddata->psy);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक cpcap_battery_init_irq(काष्ठा platक्रमm_device *pdev,
-				  काष्ठा cpcap_battery_ddata *ddata,
-				  स्थिर अक्षर *name)
-अणु
-	काष्ठा cpcap_पूर्णांकerrupt_desc *d;
-	पूर्णांक irq, error;
+static int cpcap_battery_init_irq(struct platform_device *pdev,
+				  struct cpcap_battery_ddata *ddata,
+				  const char *name)
+{
+	struct cpcap_interrupt_desc *d;
+	int irq, error;
 
-	irq = platक्रमm_get_irq_byname(pdev, name);
-	अगर (irq < 0)
-		वापस irq;
+	irq = platform_get_irq_byname(pdev, name);
+	if (irq < 0)
+		return irq;
 
-	error = devm_request_thपढ़ोed_irq(ddata->dev, irq, शून्य,
-					  cpcap_battery_irq_thपढ़ो,
+	error = devm_request_threaded_irq(ddata->dev, irq, NULL,
+					  cpcap_battery_irq_thread,
 					  IRQF_SHARED | IRQF_ONESHOT,
 					  name, ddata);
-	अगर (error) अणु
+	if (error) {
 		dev_err(ddata->dev, "could not get irq %s: %i\n",
 			name, error);
 
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	d = devm_kzalloc(ddata->dev, माप(*d), GFP_KERNEL);
-	अगर (!d)
-		वापस -ENOMEM;
+	d = devm_kzalloc(ddata->dev, sizeof(*d), GFP_KERNEL);
+	if (!d)
+		return -ENOMEM;
 
 	d->name = name;
 	d->irq = irq;
 
-	अगर (!म_भेदन(name, "cccal", 5))
+	if (!strncmp(name, "cccal", 5))
 		d->action = CPCAP_BATTERY_IRQ_ACTION_CC_CAL_DONE;
-	अन्यथा अगर (!म_भेदन(name, "lowbph", 6))
+	else if (!strncmp(name, "lowbph", 6))
 		d->action = CPCAP_BATTERY_IRQ_ACTION_BATTERY_LOW;
-	अन्यथा अगर (!म_भेदन(name, "lowbpl", 6))
+	else if (!strncmp(name, "lowbpl", 6))
 		d->action = CPCAP_BATTERY_IRQ_ACTION_POWEROFF;
 
 	list_add(&d->node, &ddata->irq_list);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cpcap_battery_init_पूर्णांकerrupts(काष्ठा platक्रमm_device *pdev,
-					 काष्ठा cpcap_battery_ddata *ddata)
-अणु
-	अटल स्थिर अक्षर * स्थिर cpcap_battery_irqs[] = अणु
+static int cpcap_battery_init_interrupts(struct platform_device *pdev,
+					 struct cpcap_battery_ddata *ddata)
+{
+	static const char * const cpcap_battery_irqs[] = {
 		"eol", "lowbph", "lowbpl",
 		"chrgcurr1", "battdetb"
-	पूर्ण;
-	पूर्णांक i, error;
+	};
+	int i, error;
 
-	क्रम (i = 0; i < ARRAY_SIZE(cpcap_battery_irqs); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(cpcap_battery_irqs); i++) {
 		error = cpcap_battery_init_irq(pdev, ddata,
 					       cpcap_battery_irqs[i]);
-		अगर (error)
-			वापस error;
-	पूर्ण
+		if (error)
+			return error;
+	}
 
-	/* Enable calibration पूर्णांकerrupt अगर alपढ़ोy available in dts */
+	/* Enable calibration interrupt if already available in dts */
 	cpcap_battery_init_irq(pdev, ddata, "cccal");
 
-	/* Enable low battery पूर्णांकerrupts क्रम 3.3V high and 3.1V low */
+	/* Enable low battery interrupts for 3.3V high and 3.1V low */
 	error = regmap_update_bits(ddata->reg, CPCAP_REG_BPEOL,
 				   0xffff,
 				   CPCAP_REG_BPEOL_BIT_BATTDETEN);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cpcap_battery_init_iio(काष्ठा cpcap_battery_ddata *ddata)
-अणु
-	स्थिर अक्षर * स्थिर names[CPCAP_BATTERY_IIO_NR] = अणु
+static int cpcap_battery_init_iio(struct cpcap_battery_ddata *ddata)
+{
+	const char * const names[CPCAP_BATTERY_IIO_NR] = {
 		"battdetb", "battp", "chg_isense", "batti",
-	पूर्ण;
-	पूर्णांक error, i;
+	};
+	int error, i;
 
-	क्रम (i = 0; i < CPCAP_BATTERY_IIO_NR; i++) अणु
+	for (i = 0; i < CPCAP_BATTERY_IIO_NR; i++) {
 		ddata->channels[i] = devm_iio_channel_get(ddata->dev,
 							  names[i]);
-		अगर (IS_ERR(ddata->channels[i])) अणु
+		if (IS_ERR(ddata->channels[i])) {
 			error = PTR_ERR(ddata->channels[i]);
-			जाओ out_err;
-		पूर्ण
+			goto out_err;
+		}
 
-		अगर (!ddata->channels[i]->indio_dev) अणु
+		if (!ddata->channels[i]->indio_dev) {
 			error = -ENXIO;
-			जाओ out_err;
-		पूर्ण
-	पूर्ण
+			goto out_err;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
 out_err:
-	वापस dev_err_probe(ddata->dev, error,
+	return dev_err_probe(ddata->dev, error,
 			     "could not initialize VBUS or ID IIO\n");
-पूर्ण
+}
 
 /* Calibrate coulomb counter */
-अटल पूर्णांक cpcap_battery_calibrate(काष्ठा cpcap_battery_ddata *ddata)
-अणु
-	पूर्णांक error, ccc1, value;
-	अचिन्हित दीर्घ समयout;
+static int cpcap_battery_calibrate(struct cpcap_battery_ddata *ddata)
+{
+	int error, ccc1, value;
+	unsigned long timeout;
 
-	error = regmap_पढ़ो(ddata->reg, CPCAP_REG_CCC1, &ccc1);
-	अगर (error)
-		वापस error;
+	error = regmap_read(ddata->reg, CPCAP_REG_CCC1, &ccc1);
+	if (error)
+		return error;
 
-	समयout = jअगरfies + msecs_to_jअगरfies(6000);
+	timeout = jiffies + msecs_to_jiffies(6000);
 
 	/* Start calibration */
 	error = regmap_update_bits(ddata->reg, CPCAP_REG_CCC1,
 				   0xffff,
 				   CPCAP_REG_CCC1_CAL_EN);
-	अगर (error)
-		जाओ restore;
+	if (error)
+		goto restore;
 
-	जबतक (समय_beक्रमe(jअगरfies, समयout)) अणु
-		error = regmap_पढ़ो(ddata->reg, CPCAP_REG_CCC1, &value);
-		अगर (error)
-			जाओ restore;
+	while (time_before(jiffies, timeout)) {
+		error = regmap_read(ddata->reg, CPCAP_REG_CCC1, &value);
+		if (error)
+			goto restore;
 
-		अगर (!(value & CPCAP_REG_CCC1_CAL_EN))
-			अवरोध;
+		if (!(value & CPCAP_REG_CCC1_CAL_EN))
+			break;
 
-		error = regmap_पढ़ो(ddata->reg, CPCAP_REG_CCM, &value);
-		अगर (error)
-			जाओ restore;
+		error = regmap_read(ddata->reg, CPCAP_REG_CCM, &value);
+		if (error)
+			goto restore;
 
 		msleep(300);
-	पूर्ण
+	}
 
 	/* Read calibration offset from CCM */
-	error = regmap_पढ़ो(ddata->reg, CPCAP_REG_CCM, &value);
-	अगर (error)
-		जाओ restore;
+	error = regmap_read(ddata->reg, CPCAP_REG_CCM, &value);
+	if (error)
+		goto restore;
 
 	dev_info(ddata->dev, "calibration done: 0x%04x\n", value);
 
 restore:
-	अगर (error)
+	if (error)
 		dev_err(ddata->dev, "%s: error %i\n", __func__, error);
 
 	error = regmap_update_bits(ddata->reg, CPCAP_REG_CCC1,
 				   0xffff, ccc1);
-	अगर (error)
+	if (error)
 		dev_err(ddata->dev, "%s: restore error %i\n",
 			__func__, error);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
  * Based on the values from Motorola mapphone Linux kernel. In the
- * the Motorola mapphone Linux kernel tree the value क्रम pm_cd_factor
+ * the Motorola mapphone Linux kernel tree the value for pm_cd_factor
  * is passed to the kernel via device tree. If it turns out to be
- * something device specअगरic we can consider that too later.
+ * something device specific we can consider that too later.
  *
- * And looking at the battery full and shutकरोwn values क्रम the stock
- * kernel on droid 4, full is 4351000 and software initiates shutकरोwn
+ * And looking at the battery full and shutdown values for the stock
+ * kernel on droid 4, full is 4351000 and software initiates shutdown
  * at 3078000. The device will die around 2743000.
  */
-अटल स्थिर काष्ठा cpcap_battery_config cpcap_battery_शेष_data = अणु
+static const struct cpcap_battery_config cpcap_battery_default_data = {
 	.cd_factor = 0x3cc,
 	.info.technology = POWER_SUPPLY_TECHNOLOGY_LION,
 	.info.voltage_max_design = 4351000,
 	.info.voltage_min_design = 3100000,
-	.info.अक्षरge_full_design = 1740000,
-	.bat.स्थिरant_अक्षरge_voltage_max_uv = 4200000,
-पूर्ण;
+	.info.charge_full_design = 1740000,
+	.bat.constant_charge_voltage_max_uv = 4200000,
+};
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id cpcap_battery_id_table[] = अणु
-	अणु
+#ifdef CONFIG_OF
+static const struct of_device_id cpcap_battery_id_table[] = {
+	{
 		.compatible = "motorola,cpcap-battery",
-		.data = &cpcap_battery_शेष_data,
-	पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+		.data = &cpcap_battery_default_data,
+	},
+	{},
+};
 MODULE_DEVICE_TABLE(of, cpcap_battery_id_table);
-#पूर्ण_अगर
+#endif
 
-अटल स्थिर काष्ठा घातer_supply_desc cpcap_अक्षरger_battery_desc = अणु
+static const struct power_supply_desc cpcap_charger_battery_desc = {
 	.name		= "battery",
 	.type		= POWER_SUPPLY_TYPE_BATTERY,
 	.properties	= cpcap_battery_props,
 	.num_properties	= ARRAY_SIZE(cpcap_battery_props),
 	.get_property	= cpcap_battery_get_property,
 	.set_property	= cpcap_battery_set_property,
-	.property_is_ग_लिखोable = cpcap_battery_property_is_ग_लिखोable,
-	.बाह्यal_घातer_changed = cpcap_battery_बाह्यal_घातer_changed,
-पूर्ण;
+	.property_is_writeable = cpcap_battery_property_is_writeable,
+	.external_power_changed = cpcap_battery_external_power_changed,
+};
 
-अटल पूर्णांक cpcap_battery_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा cpcap_battery_ddata *ddata;
-	स्थिर काष्ठा of_device_id *match;
-	काष्ठा घातer_supply_config psy_cfg = अणुपूर्ण;
-	पूर्णांक error;
+static int cpcap_battery_probe(struct platform_device *pdev)
+{
+	struct cpcap_battery_ddata *ddata;
+	const struct of_device_id *match;
+	struct power_supply_config psy_cfg = {};
+	int error;
 
 	match = of_match_device(of_match_ptr(cpcap_battery_id_table),
 				&pdev->dev);
-	अगर (!match)
-		वापस -EINVAL;
+	if (!match)
+		return -EINVAL;
 
-	अगर (!match->data) अणु
+	if (!match->data) {
 		dev_err(&pdev->dev, "no configuration data found\n");
 
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	ddata = devm_kzalloc(&pdev->dev, माप(*ddata), GFP_KERNEL);
-	अगर (!ddata)
-		वापस -ENOMEM;
+	ddata = devm_kzalloc(&pdev->dev, sizeof(*ddata), GFP_KERNEL);
+	if (!ddata)
+		return -ENOMEM;
 
 	INIT_LIST_HEAD(&ddata->irq_list);
 	ddata->dev = &pdev->dev;
-	स_नकल(&ddata->config, match->data, माप(ddata->config));
+	memcpy(&ddata->config, match->data, sizeof(ddata->config));
 
-	ddata->reg = dev_get_regmap(ddata->dev->parent, शून्य);
-	अगर (!ddata->reg)
-		वापस -ENODEV;
+	ddata->reg = dev_get_regmap(ddata->dev->parent, NULL);
+	if (!ddata->reg)
+		return -ENODEV;
 
-	error = cpcap_get_venकरोr(ddata->dev, ddata->reg, &ddata->venकरोr);
-	अगर (error)
-		वापस error;
+	error = cpcap_get_vendor(ddata->dev, ddata->reg, &ddata->vendor);
+	if (error)
+		return error;
 
-	चयन (ddata->venकरोr) अणु
-	हाल CPCAP_VENDOR_ST:
-		ddata->cc_lsb = 95374;	/* NञAms per LSB */
-		अवरोध;
-	हाल CPCAP_VENDOR_TI:
-		ddata->cc_lsb = 91501;	/* NञAms per LSB */
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (ddata->vendor) {
+	case CPCAP_VENDOR_ST:
+		ddata->cc_lsb = 95374;	/* μAms per LSB */
+		break;
+	case CPCAP_VENDOR_TI:
+		ddata->cc_lsb = 91501;	/* μAms per LSB */
+		break;
+	default:
+		return -EINVAL;
+	}
 	ddata->cc_lsb = (ddata->cc_lsb * ddata->config.cd_factor) / 1000;
 
-	platक्रमm_set_drvdata(pdev, ddata);
+	platform_set_drvdata(pdev, ddata);
 
-	error = cpcap_battery_init_पूर्णांकerrupts(pdev, ddata);
-	अगर (error)
-		वापस error;
+	error = cpcap_battery_init_interrupts(pdev, ddata);
+	if (error)
+		return error;
 
 	error = cpcap_battery_init_iio(ddata);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	psy_cfg.of_node = pdev->dev.of_node;
 	psy_cfg.drv_data = ddata;
 
-	ddata->psy = devm_घातer_supply_रेजिस्टर(ddata->dev,
-						&cpcap_अक्षरger_battery_desc,
+	ddata->psy = devm_power_supply_register(ddata->dev,
+						&cpcap_charger_battery_desc,
 						&psy_cfg);
 	error = PTR_ERR_OR_ZERO(ddata->psy);
-	अगर (error) अणु
+	if (error) {
 		dev_err(ddata->dev, "failed to register power supply\n");
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	atomic_set(&ddata->active, 1);
 
 	error = cpcap_battery_calibrate(ddata);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cpcap_battery_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा cpcap_battery_ddata *ddata = platक्रमm_get_drvdata(pdev);
-	पूर्णांक error;
+static int cpcap_battery_remove(struct platform_device *pdev)
+{
+	struct cpcap_battery_ddata *ddata = platform_get_drvdata(pdev);
+	int error;
 
 	atomic_set(&ddata->active, 0);
 	error = regmap_update_bits(ddata->reg, CPCAP_REG_BPEOL,
 				   0xffff, 0);
-	अगर (error)
+	if (error)
 		dev_err(&pdev->dev, "could not disable: %i\n", error);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver cpcap_battery_driver = अणु
-	.driver	= अणु
+static struct platform_driver cpcap_battery_driver = {
+	.driver	= {
 		.name		= "cpcap_battery",
 		.of_match_table = of_match_ptr(cpcap_battery_id_table),
-	पूर्ण,
+	},
 	.probe	= cpcap_battery_probe,
-	.हटाओ = cpcap_battery_हटाओ,
-पूर्ण;
-module_platक्रमm_driver(cpcap_battery_driver);
+	.remove = cpcap_battery_remove,
+};
+module_platform_driver(cpcap_battery_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Tony Lindgren <tony@atomide.com>");

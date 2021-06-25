@@ -1,72 +1,71 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /****************************************************************************
- * Driver क्रम Solarflare network controllers and boards
+ * Driver for Solarflare network controllers and boards
  * Copyright 2005-2006 Fen Systems Ltd.
  * Copyright 2006-2012 Solarflare Communications Inc.
  */
 
-#समावेश <linux/netdevice.h>
-#समावेश <linux/module.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/kernel_स्थिति.स>
-#समावेश <linux/pci.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/ip.h>
-#समावेश <linux/in.h>
-#समावेश <linux/udp.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश <linux/slab.h>
-#समावेश "net_driver.h"
-#समावेश "efx.h"
-#समावेश "nic.h"
-#समावेश "selftest.h"
-#समावेश "workarounds.h"
+#include <linux/netdevice.h>
+#include <linux/module.h>
+#include <linux/delay.h>
+#include <linux/kernel_stat.h>
+#include <linux/pci.h>
+#include <linux/ethtool.h>
+#include <linux/ip.h>
+#include <linux/in.h>
+#include <linux/udp.h>
+#include <linux/rtnetlink.h>
+#include <linux/slab.h>
+#include "net_driver.h"
+#include "efx.h"
+#include "nic.h"
+#include "selftest.h"
+#include "workarounds.h"
 
 /* IRQ latency can be enormous because:
- * - All IRQs may be disabled on a CPU क्रम a *दीर्घ* समय by e.g. a
- *   slow serial console or an old IDE driver करोing error recovery
+ * - All IRQs may be disabled on a CPU for a *long* time by e.g. a
+ *   slow serial console or an old IDE driver doing error recovery
  * - The PREEMPT_RT patches mostly deal with this, but also allow a
  *   tasklet or normal task to be given higher priority than our IRQ
- *   thपढ़ोs
- * Try to aव्योम blaming the hardware क्रम this.
+ *   threads
+ * Try to avoid blaming the hardware for this.
  */
-#घोषणा IRQ_TIMEOUT HZ
+#define IRQ_TIMEOUT HZ
 
 /*
- * Loopback test packet काष्ठाure
+ * Loopback test packet structure
  *
- * The self-test should stress every RSS vector, and unक्रमtunately
- * Falcon only perक्रमms RSS on TCP/UDP packets.
+ * The self-test should stress every RSS vector, and unfortunately
+ * Falcon only performs RSS on TCP/UDP packets.
  */
-काष्ठा ef4_loopback_payload अणु
-	काष्ठा ethhdr header;
-	काष्ठा iphdr ip;
-	काष्ठा udphdr udp;
+struct ef4_loopback_payload {
+	struct ethhdr header;
+	struct iphdr ip;
+	struct udphdr udp;
 	__be16 iteration;
-	अक्षर msg[64];
-पूर्ण __packed;
+	char msg[64];
+} __packed;
 
 /* Loopback test source MAC address */
-अटल स्थिर u8 payload_source[ETH_ALEN] __aligned(2) = अणु
+static const u8 payload_source[ETH_ALEN] __aligned(2) = {
 	0x00, 0x0f, 0x53, 0x1b, 0x1b, 0x1b,
-पूर्ण;
+};
 
-अटल स्थिर अक्षर payload_msg[] =
+static const char payload_msg[] =
 	"Hello world! This is an Efx loopback test in progress!";
 
 /* Interrupt mode names */
-अटल स्थिर अचिन्हित पूर्णांक ef4_पूर्णांकerrupt_mode_max = EF4_INT_MODE_MAX;
-अटल स्थिर अक्षर *स्थिर ef4_पूर्णांकerrupt_mode_names[] = अणु
+static const unsigned int ef4_interrupt_mode_max = EF4_INT_MODE_MAX;
+static const char *const ef4_interrupt_mode_names[] = {
 	[EF4_INT_MODE_MSIX]   = "MSI-X",
 	[EF4_INT_MODE_MSI]    = "MSI",
 	[EF4_INT_MODE_LEGACY] = "legacy",
-पूर्ण;
-#घोषणा INT_MODE(efx) \
-	STRING_TABLE_LOOKUP(efx->पूर्णांकerrupt_mode, ef4_पूर्णांकerrupt_mode)
+};
+#define INT_MODE(efx) \
+	STRING_TABLE_LOOKUP(efx->interrupt_mode, ef4_interrupt_mode)
 
 /**
- * काष्ठा ef4_loopback_state - persistent state during a loopback selftest
+ * struct ef4_loopback_state - persistent state during a loopback selftest
  * @flush:		Drop all packets in ef4_loopback_rx_packet
  * @packet_count:	Number of packets being used in this test
  * @skbs:		An array of skbs transmitted
@@ -75,51 +74,51 @@
  * @rx_bad:		RX bad packet count
  * @payload:		Payload used in tests
  */
-काष्ठा ef4_loopback_state अणु
+struct ef4_loopback_state {
 	bool flush;
-	पूर्णांक packet_count;
-	काष्ठा sk_buff **skbs;
+	int packet_count;
+	struct sk_buff **skbs;
 	bool offload_csum;
 	atomic_t rx_good;
 	atomic_t rx_bad;
-	काष्ठा ef4_loopback_payload payload;
-पूर्ण;
+	struct ef4_loopback_payload payload;
+};
 
-/* How दीर्घ to रुको क्रम all the packets to arrive (in ms) */
-#घोषणा LOOPBACK_TIMEOUT_MS 1000
+/* How long to wait for all the packets to arrive (in ms) */
+#define LOOPBACK_TIMEOUT_MS 1000
 
 /**************************************************************************
  *
- * MII, NVRAM and रेजिस्टर tests
+ * MII, NVRAM and register tests
  *
  **************************************************************************/
 
-अटल पूर्णांक ef4_test_phy_alive(काष्ठा ef4_nic *efx, काष्ठा ef4_self_tests *tests)
-अणु
-	पूर्णांक rc = 0;
+static int ef4_test_phy_alive(struct ef4_nic *efx, struct ef4_self_tests *tests)
+{
+	int rc = 0;
 
-	अगर (efx->phy_op->test_alive) अणु
+	if (efx->phy_op->test_alive) {
 		rc = efx->phy_op->test_alive(efx);
 		tests->phy_alive = rc ? -1 : 1;
-	पूर्ण
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक ef4_test_nvram(काष्ठा ef4_nic *efx, काष्ठा ef4_self_tests *tests)
-अणु
-	पूर्णांक rc = 0;
+static int ef4_test_nvram(struct ef4_nic *efx, struct ef4_self_tests *tests)
+{
+	int rc = 0;
 
-	अगर (efx->type->test_nvram) अणु
+	if (efx->type->test_nvram) {
 		rc = efx->type->test_nvram(efx);
-		अगर (rc == -EPERM)
+		if (rc == -EPERM)
 			rc = 0;
-		अन्यथा
+		else
 			tests->nvram = rc ? -1 : 1;
-	पूर्ण
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**************************************************************************
  *
@@ -127,149 +126,149 @@
  *
  **************************************************************************/
 
-/* Test generation and receipt of पूर्णांकerrupts */
-अटल पूर्णांक ef4_test_पूर्णांकerrupts(काष्ठा ef4_nic *efx,
-			       काष्ठा ef4_self_tests *tests)
-अणु
-	अचिन्हित दीर्घ समयout, रुको;
-	पूर्णांक cpu;
-	पूर्णांक rc;
+/* Test generation and receipt of interrupts */
+static int ef4_test_interrupts(struct ef4_nic *efx,
+			       struct ef4_self_tests *tests)
+{
+	unsigned long timeout, wait;
+	int cpu;
+	int rc;
 
-	netअगर_dbg(efx, drv, efx->net_dev, "testing interrupts\n");
-	tests->पूर्णांकerrupt = -1;
+	netif_dbg(efx, drv, efx->net_dev, "testing interrupts\n");
+	tests->interrupt = -1;
 
 	rc = ef4_nic_irq_test_start(efx);
-	अगर (rc == -ENOTSUPP) अणु
-		netअगर_dbg(efx, drv, efx->net_dev,
+	if (rc == -ENOTSUPP) {
+		netif_dbg(efx, drv, efx->net_dev,
 			  "direct interrupt testing not supported\n");
-		tests->पूर्णांकerrupt = 0;
-		वापस 0;
-	पूर्ण
+		tests->interrupt = 0;
+		return 0;
+	}
 
-	समयout = jअगरfies + IRQ_TIMEOUT;
-	रुको = 1;
+	timeout = jiffies + IRQ_TIMEOUT;
+	wait = 1;
 
-	/* Wait क्रम arrival of test पूर्णांकerrupt. */
-	netअगर_dbg(efx, drv, efx->net_dev, "waiting for test interrupt\n");
-	करो अणु
-		schedule_समयout_unपूर्णांकerruptible(रुको);
+	/* Wait for arrival of test interrupt. */
+	netif_dbg(efx, drv, efx->net_dev, "waiting for test interrupt\n");
+	do {
+		schedule_timeout_uninterruptible(wait);
 		cpu = ef4_nic_irq_test_irq_cpu(efx);
-		अगर (cpu >= 0)
-			जाओ success;
-		रुको *= 2;
-	पूर्ण जबतक (समय_beक्रमe(jअगरfies, समयout));
+		if (cpu >= 0)
+			goto success;
+		wait *= 2;
+	} while (time_before(jiffies, timeout));
 
-	netअगर_err(efx, drv, efx->net_dev, "timed out waiting for interrupt\n");
-	वापस -ETIMEDOUT;
+	netif_err(efx, drv, efx->net_dev, "timed out waiting for interrupt\n");
+	return -ETIMEDOUT;
 
  success:
-	netअगर_dbg(efx, drv, efx->net_dev, "%s test interrupt seen on CPU%d\n",
+	netif_dbg(efx, drv, efx->net_dev, "%s test interrupt seen on CPU%d\n",
 		  INT_MODE(efx), cpu);
-	tests->पूर्णांकerrupt = 1;
-	वापस 0;
-पूर्ण
+	tests->interrupt = 1;
+	return 0;
+}
 
-/* Test generation and receipt of पूर्णांकerrupting events */
-अटल पूर्णांक ef4_test_eventq_irq(काष्ठा ef4_nic *efx,
-			       काष्ठा ef4_self_tests *tests)
-अणु
-	काष्ठा ef4_channel *channel;
-	अचिन्हित पूर्णांक पढ़ो_ptr[EF4_MAX_CHANNELS];
-	अचिन्हित दीर्घ napi_ran = 0, dma_pend = 0, पूर्णांक_pend = 0;
-	अचिन्हित दीर्घ समयout, रुको;
+/* Test generation and receipt of interrupting events */
+static int ef4_test_eventq_irq(struct ef4_nic *efx,
+			       struct ef4_self_tests *tests)
+{
+	struct ef4_channel *channel;
+	unsigned int read_ptr[EF4_MAX_CHANNELS];
+	unsigned long napi_ran = 0, dma_pend = 0, int_pend = 0;
+	unsigned long timeout, wait;
 
 	BUILD_BUG_ON(EF4_MAX_CHANNELS > BITS_PER_LONG);
 
-	ef4_क्रम_each_channel(channel, efx) अणु
-		पढ़ो_ptr[channel->channel] = channel->eventq_पढ़ो_ptr;
+	ef4_for_each_channel(channel, efx) {
+		read_ptr[channel->channel] = channel->eventq_read_ptr;
 		set_bit(channel->channel, &dma_pend);
-		set_bit(channel->channel, &पूर्णांक_pend);
+		set_bit(channel->channel, &int_pend);
 		ef4_nic_event_test_start(channel);
-	पूर्ण
+	}
 
-	समयout = jअगरfies + IRQ_TIMEOUT;
-	रुको = 1;
+	timeout = jiffies + IRQ_TIMEOUT;
+	wait = 1;
 
-	/* Wait क्रम arrival of पूर्णांकerrupts.  NAPI processing may or may
-	 * not complete in समय, but we can cope in any हाल.
+	/* Wait for arrival of interrupts.  NAPI processing may or may
+	 * not complete in time, but we can cope in any case.
 	 */
-	करो अणु
-		schedule_समयout_unपूर्णांकerruptible(रुको);
+	do {
+		schedule_timeout_uninterruptible(wait);
 
-		ef4_क्रम_each_channel(channel, efx) अणु
+		ef4_for_each_channel(channel, efx) {
 			ef4_stop_eventq(channel);
-			अगर (channel->eventq_पढ़ो_ptr !=
-			    पढ़ो_ptr[channel->channel]) अणु
+			if (channel->eventq_read_ptr !=
+			    read_ptr[channel->channel]) {
 				set_bit(channel->channel, &napi_ran);
 				clear_bit(channel->channel, &dma_pend);
-				clear_bit(channel->channel, &पूर्णांक_pend);
-			पूर्ण अन्यथा अणु
-				अगर (ef4_nic_event_present(channel))
+				clear_bit(channel->channel, &int_pend);
+			} else {
+				if (ef4_nic_event_present(channel))
 					clear_bit(channel->channel, &dma_pend);
-				अगर (ef4_nic_event_test_irq_cpu(channel) >= 0)
-					clear_bit(channel->channel, &पूर्णांक_pend);
-			पूर्ण
+				if (ef4_nic_event_test_irq_cpu(channel) >= 0)
+					clear_bit(channel->channel, &int_pend);
+			}
 			ef4_start_eventq(channel);
-		पूर्ण
+		}
 
-		रुको *= 2;
-	पूर्ण जबतक ((dma_pend || पूर्णांक_pend) && समय_beक्रमe(jअगरfies, समयout));
+		wait *= 2;
+	} while ((dma_pend || int_pend) && time_before(jiffies, timeout));
 
-	ef4_क्रम_each_channel(channel, efx) अणु
+	ef4_for_each_channel(channel, efx) {
 		bool dma_seen = !test_bit(channel->channel, &dma_pend);
-		bool पूर्णांक_seen = !test_bit(channel->channel, &पूर्णांक_pend);
+		bool int_seen = !test_bit(channel->channel, &int_pend);
 
 		tests->eventq_dma[channel->channel] = dma_seen ? 1 : -1;
-		tests->eventq_पूर्णांक[channel->channel] = पूर्णांक_seen ? 1 : -1;
+		tests->eventq_int[channel->channel] = int_seen ? 1 : -1;
 
-		अगर (dma_seen && पूर्णांक_seen) अणु
-			netअगर_dbg(efx, drv, efx->net_dev,
+		if (dma_seen && int_seen) {
+			netif_dbg(efx, drv, efx->net_dev,
 				  "channel %d event queue passed (with%s NAPI)\n",
 				  channel->channel,
 				  test_bit(channel->channel, &napi_ran) ?
 				  "" : "out");
-		पूर्ण अन्यथा अणु
-			/* Report failure and whether either पूर्णांकerrupt or DMA
+		} else {
+			/* Report failure and whether either interrupt or DMA
 			 * worked
 			 */
-			netअगर_err(efx, drv, efx->net_dev,
+			netif_err(efx, drv, efx->net_dev,
 				  "channel %d timed out waiting for event queue\n",
 				  channel->channel);
-			अगर (पूर्णांक_seen)
-				netअगर_err(efx, drv, efx->net_dev,
+			if (int_seen)
+				netif_err(efx, drv, efx->net_dev,
 					  "channel %d saw interrupt "
 					  "during event queue test\n",
 					  channel->channel);
-			अगर (dma_seen)
-				netअगर_err(efx, drv, efx->net_dev,
+			if (dma_seen)
+				netif_err(efx, drv, efx->net_dev,
 					  "channel %d event was generated, but "
 					  "failed to trigger an interrupt\n",
 					  channel->channel);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस (dma_pend || पूर्णांक_pend) ? -ETIMEDOUT : 0;
-पूर्ण
+	return (dma_pend || int_pend) ? -ETIMEDOUT : 0;
+}
 
-अटल पूर्णांक ef4_test_phy(काष्ठा ef4_nic *efx, काष्ठा ef4_self_tests *tests,
-			अचिन्हित flags)
-अणु
-	पूर्णांक rc;
+static int ef4_test_phy(struct ef4_nic *efx, struct ef4_self_tests *tests,
+			unsigned flags)
+{
+	int rc;
 
-	अगर (!efx->phy_op->run_tests)
-		वापस 0;
+	if (!efx->phy_op->run_tests)
+		return 0;
 
 	mutex_lock(&efx->mac_lock);
 	rc = efx->phy_op->run_tests(efx, tests->phy_ext, flags);
 	mutex_unlock(&efx->mac_lock);
-	अगर (rc == -EPERM)
+	if (rc == -EPERM)
 		rc = 0;
-	अन्यथा
-		netअगर_info(efx, drv, efx->net_dev,
+	else
+		netif_info(efx, drv, efx->net_dev,
 			   "%s phy selftest\n", rc ? "Failed" : "Passed");
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**************************************************************************
  *
@@ -279,105 +278,105 @@
  **************************************************************************/
 
 /* Loopback test RX callback
- * This is called क्रम each received packet during loopback testing.
+ * This is called for each received packet during loopback testing.
  */
-व्योम ef4_loopback_rx_packet(काष्ठा ef4_nic *efx,
-			    स्थिर अक्षर *buf_ptr, पूर्णांक pkt_len)
-अणु
-	काष्ठा ef4_loopback_state *state = efx->loopback_selftest;
-	काष्ठा ef4_loopback_payload *received;
-	काष्ठा ef4_loopback_payload *payload;
+void ef4_loopback_rx_packet(struct ef4_nic *efx,
+			    const char *buf_ptr, int pkt_len)
+{
+	struct ef4_loopback_state *state = efx->loopback_selftest;
+	struct ef4_loopback_payload *received;
+	struct ef4_loopback_payload *payload;
 
 	BUG_ON(!buf_ptr);
 
 	/* If we are just flushing, then drop the packet */
-	अगर ((state == शून्य) || state->flush)
-		वापस;
+	if ((state == NULL) || state->flush)
+		return;
 
 	payload = &state->payload;
 
-	received = (काष्ठा ef4_loopback_payload *) buf_ptr;
+	received = (struct ef4_loopback_payload *) buf_ptr;
 	received->ip.saddr = payload->ip.saddr;
-	अगर (state->offload_csum)
+	if (state->offload_csum)
 		received->ip.check = payload->ip.check;
 
 	/* Check that header exists */
-	अगर (pkt_len < माप(received->header)) अणु
-		netअगर_err(efx, drv, efx->net_dev,
+	if (pkt_len < sizeof(received->header)) {
+		netif_err(efx, drv, efx->net_dev,
 			  "saw runt RX packet (length %d) in %s loopback "
 			  "test\n", pkt_len, LOOPBACK_MODE(efx));
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	/* Check that the ethernet header exists */
-	अगर (स_भेद(&received->header, &payload->header, ETH_HLEN) != 0) अणु
-		netअगर_err(efx, drv, efx->net_dev,
+	if (memcmp(&received->header, &payload->header, ETH_HLEN) != 0) {
+		netif_err(efx, drv, efx->net_dev,
 			  "saw non-loopback RX packet in %s loopback test\n",
 			  LOOPBACK_MODE(efx));
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	/* Check packet length */
-	अगर (pkt_len != माप(*payload)) अणु
-		netअगर_err(efx, drv, efx->net_dev,
+	if (pkt_len != sizeof(*payload)) {
+		netif_err(efx, drv, efx->net_dev,
 			  "saw incorrect RX packet length %d (wanted %d) in "
-			  "%s loopback test\n", pkt_len, (पूर्णांक)माप(*payload),
+			  "%s loopback test\n", pkt_len, (int)sizeof(*payload),
 			  LOOPBACK_MODE(efx));
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	/* Check that IP header matches */
-	अगर (स_भेद(&received->ip, &payload->ip, माप(payload->ip)) != 0) अणु
-		netअगर_err(efx, drv, efx->net_dev,
+	if (memcmp(&received->ip, &payload->ip, sizeof(payload->ip)) != 0) {
+		netif_err(efx, drv, efx->net_dev,
 			  "saw corrupted IP header in %s loopback test\n",
 			  LOOPBACK_MODE(efx));
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	/* Check that msg and padding matches */
-	अगर (स_भेद(&received->msg, &payload->msg, माप(received->msg)) != 0) अणु
-		netअगर_err(efx, drv, efx->net_dev,
+	if (memcmp(&received->msg, &payload->msg, sizeof(received->msg)) != 0) {
+		netif_err(efx, drv, efx->net_dev,
 			  "saw corrupted RX packet in %s loopback test\n",
 			  LOOPBACK_MODE(efx));
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	/* Check that iteration matches */
-	अगर (received->iteration != payload->iteration) अणु
-		netअगर_err(efx, drv, efx->net_dev,
+	if (received->iteration != payload->iteration) {
+		netif_err(efx, drv, efx->net_dev,
 			  "saw RX packet from iteration %d (wanted %d) in "
 			  "%s loopback test\n", ntohs(received->iteration),
 			  ntohs(payload->iteration), LOOPBACK_MODE(efx));
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	/* Increase correct RX count */
-	netअगर_vdbg(efx, drv, efx->net_dev,
+	netif_vdbg(efx, drv, efx->net_dev,
 		   "got loopback RX in %s loopback test\n", LOOPBACK_MODE(efx));
 
 	atomic_inc(&state->rx_good);
-	वापस;
+	return;
 
  err:
-#अगर_घोषित DEBUG
-	अगर (atomic_पढ़ो(&state->rx_bad) == 0) अणु
-		netअगर_err(efx, drv, efx->net_dev, "received packet:\n");
-		prपूर्णांक_hex_dump(KERN_ERR, "", DUMP_PREFIX_OFFSET, 0x10, 1,
+#ifdef DEBUG
+	if (atomic_read(&state->rx_bad) == 0) {
+		netif_err(efx, drv, efx->net_dev, "received packet:\n");
+		print_hex_dump(KERN_ERR, "", DUMP_PREFIX_OFFSET, 0x10, 1,
 			       buf_ptr, pkt_len, 0);
-		netअगर_err(efx, drv, efx->net_dev, "expected packet:\n");
-		prपूर्णांक_hex_dump(KERN_ERR, "", DUMP_PREFIX_OFFSET, 0x10, 1,
-			       &state->payload, माप(state->payload), 0);
-	पूर्ण
-#पूर्ण_अगर
+		netif_err(efx, drv, efx->net_dev, "expected packet:\n");
+		print_hex_dump(KERN_ERR, "", DUMP_PREFIX_OFFSET, 0x10, 1,
+			       &state->payload, sizeof(state->payload), 0);
+	}
+#endif
 	atomic_inc(&state->rx_bad);
-पूर्ण
+}
 
-/* Initialise an ef4_selftest_state क्रम a new iteration */
-अटल व्योम ef4_iterate_state(काष्ठा ef4_nic *efx)
-अणु
-	काष्ठा ef4_loopback_state *state = efx->loopback_selftest;
-	काष्ठा net_device *net_dev = efx->net_dev;
-	काष्ठा ef4_loopback_payload *payload = &state->payload;
+/* Initialise an ef4_selftest_state for a new iteration */
+static void ef4_iterate_state(struct ef4_nic *efx)
+{
+	struct ef4_loopback_state *state = efx->loopback_selftest;
+	struct net_device *net_dev = efx->net_dev;
+	struct ef4_loopback_payload *payload = &state->payload;
 
 	/* Initialise the layerII header */
 	ether_addr_copy((u8 *)&payload->header.h_dest, net_dev->dev_addr);
@@ -387,160 +386,160 @@
 	/* saddr set later and used as incrementing count */
 	payload->ip.daddr = htonl(INADDR_LOOPBACK);
 	payload->ip.ihl = 5;
-	payload->ip.check = (__क्रमce __sum16) htons(0xdead);
-	payload->ip.tot_len = htons(माप(*payload) - माप(काष्ठा ethhdr));
+	payload->ip.check = (__force __sum16) htons(0xdead);
+	payload->ip.tot_len = htons(sizeof(*payload) - sizeof(struct ethhdr));
 	payload->ip.version = IPVERSION;
 	payload->ip.protocol = IPPROTO_UDP;
 
 	/* Initialise udp header */
 	payload->udp.source = 0;
-	payload->udp.len = htons(माप(*payload) - माप(काष्ठा ethhdr) -
-				 माप(काष्ठा iphdr));
+	payload->udp.len = htons(sizeof(*payload) - sizeof(struct ethhdr) -
+				 sizeof(struct iphdr));
 	payload->udp.check = 0;	/* checksum ignored */
 
 	/* Fill out payload */
 	payload->iteration = htons(ntohs(payload->iteration) + 1);
-	स_नकल(&payload->msg, payload_msg, माप(payload_msg));
+	memcpy(&payload->msg, payload_msg, sizeof(payload_msg));
 
-	/* Fill out reमुख्यing state members */
+	/* Fill out remaining state members */
 	atomic_set(&state->rx_good, 0);
 	atomic_set(&state->rx_bad, 0);
 	smp_wmb();
-पूर्ण
+}
 
-अटल पूर्णांक ef4_begin_loopback(काष्ठा ef4_tx_queue *tx_queue)
-अणु
-	काष्ठा ef4_nic *efx = tx_queue->efx;
-	काष्ठा ef4_loopback_state *state = efx->loopback_selftest;
-	काष्ठा ef4_loopback_payload *payload;
-	काष्ठा sk_buff *skb;
-	पूर्णांक i;
+static int ef4_begin_loopback(struct ef4_tx_queue *tx_queue)
+{
+	struct ef4_nic *efx = tx_queue->efx;
+	struct ef4_loopback_state *state = efx->loopback_selftest;
+	struct ef4_loopback_payload *payload;
+	struct sk_buff *skb;
+	int i;
 	netdev_tx_t rc;
 
 	/* Transmit N copies of buffer */
-	क्रम (i = 0; i < state->packet_count; i++) अणु
-		/* Allocate an skb, holding an extra reference क्रम
+	for (i = 0; i < state->packet_count; i++) {
+		/* Allocate an skb, holding an extra reference for
 		 * transmit completion counting */
-		skb = alloc_skb(माप(state->payload), GFP_KERNEL);
-		अगर (!skb)
-			वापस -ENOMEM;
+		skb = alloc_skb(sizeof(state->payload), GFP_KERNEL);
+		if (!skb)
+			return -ENOMEM;
 		state->skbs[i] = skb;
 		skb_get(skb);
 
 		/* Copy the payload in, incrementing the source address to
 		 * exercise the rss vectors */
-		payload = skb_put(skb, माप(state->payload));
-		स_नकल(payload, &state->payload, माप(state->payload));
+		payload = skb_put(skb, sizeof(state->payload));
+		memcpy(payload, &state->payload, sizeof(state->payload));
 		payload->ip.saddr = htonl(INADDR_LOOPBACK | (i << 2));
 
 		/* Ensure everything we've written is visible to the
-		 * पूर्णांकerrupt handler. */
+		 * interrupt handler. */
 		smp_wmb();
 
-		netअगर_tx_lock_bh(efx->net_dev);
+		netif_tx_lock_bh(efx->net_dev);
 		rc = ef4_enqueue_skb(tx_queue, skb);
-		netअगर_tx_unlock_bh(efx->net_dev);
+		netif_tx_unlock_bh(efx->net_dev);
 
-		अगर (rc != NETDEV_TX_OK) अणु
-			netअगर_err(efx, drv, efx->net_dev,
+		if (rc != NETDEV_TX_OK) {
+			netif_err(efx, drv, efx->net_dev,
 				  "TX queue %d could not transmit packet %d of "
 				  "%d in %s loopback test\n", tx_queue->queue,
 				  i + 1, state->packet_count,
 				  LOOPBACK_MODE(efx));
 
-			/* Defer cleaning up the other skbs क्रम the caller */
-			kमुक्त_skb(skb);
-			वापस -EPIPE;
-		पूर्ण
-	पूर्ण
+			/* Defer cleaning up the other skbs for the caller */
+			kfree_skb(skb);
+			return -EPIPE;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ef4_poll_loopback(काष्ठा ef4_nic *efx)
-अणु
-	काष्ठा ef4_loopback_state *state = efx->loopback_selftest;
+static int ef4_poll_loopback(struct ef4_nic *efx)
+{
+	struct ef4_loopback_state *state = efx->loopback_selftest;
 
-	वापस atomic_पढ़ो(&state->rx_good) == state->packet_count;
-पूर्ण
+	return atomic_read(&state->rx_good) == state->packet_count;
+}
 
-अटल पूर्णांक ef4_end_loopback(काष्ठा ef4_tx_queue *tx_queue,
-			    काष्ठा ef4_loopback_self_tests *lb_tests)
-अणु
-	काष्ठा ef4_nic *efx = tx_queue->efx;
-	काष्ठा ef4_loopback_state *state = efx->loopback_selftest;
-	काष्ठा sk_buff *skb;
-	पूर्णांक tx_करोne = 0, rx_good, rx_bad;
-	पूर्णांक i, rc = 0;
+static int ef4_end_loopback(struct ef4_tx_queue *tx_queue,
+			    struct ef4_loopback_self_tests *lb_tests)
+{
+	struct ef4_nic *efx = tx_queue->efx;
+	struct ef4_loopback_state *state = efx->loopback_selftest;
+	struct sk_buff *skb;
+	int tx_done = 0, rx_good, rx_bad;
+	int i, rc = 0;
 
-	netअगर_tx_lock_bh(efx->net_dev);
+	netif_tx_lock_bh(efx->net_dev);
 
 	/* Count the number of tx completions, and decrement the refcnt. Any
-	 * skbs not alपढ़ोy completed will be मुक्त'd when the queue is flushed */
-	क्रम (i = 0; i < state->packet_count; i++) अणु
+	 * skbs not already completed will be free'd when the queue is flushed */
+	for (i = 0; i < state->packet_count; i++) {
 		skb = state->skbs[i];
-		अगर (skb && !skb_shared(skb))
-			++tx_करोne;
-		dev_kमुक्त_skb(skb);
-	पूर्ण
+		if (skb && !skb_shared(skb))
+			++tx_done;
+		dev_kfree_skb(skb);
+	}
 
-	netअगर_tx_unlock_bh(efx->net_dev);
+	netif_tx_unlock_bh(efx->net_dev);
 
 	/* Check TX completion and received packet counts */
-	rx_good = atomic_पढ़ो(&state->rx_good);
-	rx_bad = atomic_पढ़ो(&state->rx_bad);
-	अगर (tx_करोne != state->packet_count) अणु
-		/* Don't मुक्त the skbs; they will be picked up on TX
-		 * overflow or channel tearकरोwn.
+	rx_good = atomic_read(&state->rx_good);
+	rx_bad = atomic_read(&state->rx_bad);
+	if (tx_done != state->packet_count) {
+		/* Don't free the skbs; they will be picked up on TX
+		 * overflow or channel teardown.
 		 */
-		netअगर_err(efx, drv, efx->net_dev,
+		netif_err(efx, drv, efx->net_dev,
 			  "TX queue %d saw only %d out of an expected %d "
 			  "TX completion events in %s loopback test\n",
-			  tx_queue->queue, tx_करोne, state->packet_count,
+			  tx_queue->queue, tx_done, state->packet_count,
 			  LOOPBACK_MODE(efx));
 		rc = -ETIMEDOUT;
 		/* Allow to fall through so we see the RX errors as well */
-	पूर्ण
+	}
 
 	/* We may always be up to a flush away from our desired packet total */
-	अगर (rx_good != state->packet_count) अणु
-		netअगर_dbg(efx, drv, efx->net_dev,
+	if (rx_good != state->packet_count) {
+		netif_dbg(efx, drv, efx->net_dev,
 			  "TX queue %d saw only %d out of an expected %d "
 			  "received packets in %s loopback test\n",
 			  tx_queue->queue, rx_good, state->packet_count,
 			  LOOPBACK_MODE(efx));
 		rc = -ETIMEDOUT;
 		/* Fall through */
-	पूर्ण
+	}
 
-	/* Update loopback test काष्ठाure */
+	/* Update loopback test structure */
 	lb_tests->tx_sent[tx_queue->queue] += state->packet_count;
-	lb_tests->tx_करोne[tx_queue->queue] += tx_करोne;
+	lb_tests->tx_done[tx_queue->queue] += tx_done;
 	lb_tests->rx_good += rx_good;
 	lb_tests->rx_bad += rx_bad;
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक
-ef4_test_loopback(काष्ठा ef4_tx_queue *tx_queue,
-		  काष्ठा ef4_loopback_self_tests *lb_tests)
-अणु
-	काष्ठा ef4_nic *efx = tx_queue->efx;
-	काष्ठा ef4_loopback_state *state = efx->loopback_selftest;
-	पूर्णांक i, begin_rc, end_rc;
+static int
+ef4_test_loopback(struct ef4_tx_queue *tx_queue,
+		  struct ef4_loopback_self_tests *lb_tests)
+{
+	struct ef4_nic *efx = tx_queue->efx;
+	struct ef4_loopback_state *state = efx->loopback_selftest;
+	int i, begin_rc, end_rc;
 
-	क्रम (i = 0; i < 3; i++) अणु
+	for (i = 0; i < 3; i++) {
 		/* Determine how many packets to send */
 		state->packet_count = efx->txq_entries / 3;
 		state->packet_count = min(1 << (i << 2), state->packet_count);
-		state->skbs = kसुस्मृति(state->packet_count,
-				      माप(state->skbs[0]), GFP_KERNEL);
-		अगर (!state->skbs)
-			वापस -ENOMEM;
+		state->skbs = kcalloc(state->packet_count,
+				      sizeof(state->skbs[0]), GFP_KERNEL);
+		if (!state->skbs)
+			return -ENOMEM;
 		state->flush = false;
 
-		netअगर_dbg(efx, drv, efx->net_dev,
+		netif_dbg(efx, drv, efx->net_dev,
 			  "TX queue %d testing %s loopback with %d packets\n",
 			  tx_queue->queue, LOOPBACK_MODE(efx),
 			  state->packet_count);
@@ -549,201 +548,201 @@ ef4_test_loopback(काष्ठा ef4_tx_queue *tx_queue,
 		begin_rc = ef4_begin_loopback(tx_queue);
 
 		/* This will normally complete very quickly, but be
-		 * prepared to रुको much दीर्घer. */
+		 * prepared to wait much longer. */
 		msleep(1);
-		अगर (!ef4_poll_loopback(efx)) अणु
+		if (!ef4_poll_loopback(efx)) {
 			msleep(LOOPBACK_TIMEOUT_MS);
 			ef4_poll_loopback(efx);
-		पूर्ण
+		}
 
 		end_rc = ef4_end_loopback(tx_queue, lb_tests);
-		kमुक्त(state->skbs);
+		kfree(state->skbs);
 
-		अगर (begin_rc || end_rc) अणु
-			/* Wait a जबतक to ensure there are no packets
-			 * भग्नing around after a failure. */
-			schedule_समयout_unपूर्णांकerruptible(HZ / 10);
-			वापस begin_rc ? begin_rc : end_rc;
-		पूर्ण
-	पूर्ण
+		if (begin_rc || end_rc) {
+			/* Wait a while to ensure there are no packets
+			 * floating around after a failure. */
+			schedule_timeout_uninterruptible(HZ / 10);
+			return begin_rc ? begin_rc : end_rc;
+		}
+	}
 
-	netअगर_dbg(efx, drv, efx->net_dev,
+	netif_dbg(efx, drv, efx->net_dev,
 		  "TX queue %d passed %s loopback test with a burst length "
 		  "of %d packets\n", tx_queue->queue, LOOPBACK_MODE(efx),
 		  state->packet_count);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Wait क्रम link up. On Falcon, we would prefer to rely on ef4_monitor, but
+/* Wait for link up. On Falcon, we would prefer to rely on ef4_monitor, but
  * any contention on the mac lock (via e.g. ef4_mac_mcast_work) causes it
- * to delay and retry. Thereक्रमe, it's safer to just poll directly. Wait
- * क्रम link up and any faults to dissipate. */
-अटल पूर्णांक ef4_रुको_क्रम_link(काष्ठा ef4_nic *efx)
-अणु
-	काष्ठा ef4_link_state *link_state = &efx->link_state;
-	पूर्णांक count, link_up_count = 0;
+ * to delay and retry. Therefore, it's safer to just poll directly. Wait
+ * for link up and any faults to dissipate. */
+static int ef4_wait_for_link(struct ef4_nic *efx)
+{
+	struct ef4_link_state *link_state = &efx->link_state;
+	int count, link_up_count = 0;
 	bool link_up;
 
-	क्रम (count = 0; count < 40; count++) अणु
-		schedule_समयout_unपूर्णांकerruptible(HZ / 10);
+	for (count = 0; count < 40; count++) {
+		schedule_timeout_uninterruptible(HZ / 10);
 
-		अगर (efx->type->monitor != शून्य) अणु
+		if (efx->type->monitor != NULL) {
 			mutex_lock(&efx->mac_lock);
 			efx->type->monitor(efx);
 			mutex_unlock(&efx->mac_lock);
-		पूर्ण
+		}
 
 		mutex_lock(&efx->mac_lock);
 		link_up = link_state->up;
-		अगर (link_up)
+		if (link_up)
 			link_up = !efx->type->check_mac_fault(efx);
 		mutex_unlock(&efx->mac_lock);
 
-		अगर (link_up) अणु
-			अगर (++link_up_count == 2)
-				वापस 0;
-		पूर्ण अन्यथा अणु
+		if (link_up) {
+			if (++link_up_count == 2)
+				return 0;
+		} else {
 			link_up_count = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस -ETIMEDOUT;
-पूर्ण
+	return -ETIMEDOUT;
+}
 
-अटल पूर्णांक ef4_test_loopbacks(काष्ठा ef4_nic *efx, काष्ठा ef4_self_tests *tests,
-			      अचिन्हित पूर्णांक loopback_modes)
-अणु
-	क्रमागत ef4_loopback_mode mode;
-	काष्ठा ef4_loopback_state *state;
-	काष्ठा ef4_channel *channel =
+static int ef4_test_loopbacks(struct ef4_nic *efx, struct ef4_self_tests *tests,
+			      unsigned int loopback_modes)
+{
+	enum ef4_loopback_mode mode;
+	struct ef4_loopback_state *state;
+	struct ef4_channel *channel =
 		ef4_get_channel(efx, efx->tx_channel_offset);
-	काष्ठा ef4_tx_queue *tx_queue;
-	पूर्णांक rc = 0;
+	struct ef4_tx_queue *tx_queue;
+	int rc = 0;
 
-	/* Set the port loopback_selftest member. From this poपूर्णांक on
+	/* Set the port loopback_selftest member. From this point on
 	 * all received packets will be dropped. Mark the state as
 	 * "flushing" so all inflight packets are dropped */
-	state = kzalloc(माप(*state), GFP_KERNEL);
-	अगर (state == शून्य)
-		वापस -ENOMEM;
+	state = kzalloc(sizeof(*state), GFP_KERNEL);
+	if (state == NULL)
+		return -ENOMEM;
 	BUG_ON(efx->loopback_selftest);
 	state->flush = true;
 	efx->loopback_selftest = state;
 
 	/* Test all supported loopback modes */
-	क्रम (mode = LOOPBACK_NONE; mode <= LOOPBACK_TEST_MAX; mode++) अणु
-		अगर (!(loopback_modes & (1 << mode)))
-			जारी;
+	for (mode = LOOPBACK_NONE; mode <= LOOPBACK_TEST_MAX; mode++) {
+		if (!(loopback_modes & (1 << mode)))
+			continue;
 
-		/* Move the port पूर्णांकo the specअगरied loopback mode. */
+		/* Move the port into the specified loopback mode. */
 		state->flush = true;
 		mutex_lock(&efx->mac_lock);
 		efx->loopback_mode = mode;
 		rc = __ef4_reconfigure_port(efx);
 		mutex_unlock(&efx->mac_lock);
-		अगर (rc) अणु
-			netअगर_err(efx, drv, efx->net_dev,
+		if (rc) {
+			netif_err(efx, drv, efx->net_dev,
 				  "unable to move into %s loopback\n",
 				  LOOPBACK_MODE(efx));
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		rc = ef4_रुको_क्रम_link(efx);
-		अगर (rc) अणु
-			netअगर_err(efx, drv, efx->net_dev,
+		rc = ef4_wait_for_link(efx);
+		if (rc) {
+			netif_err(efx, drv, efx->net_dev,
 				  "loopback %s never came up\n",
 				  LOOPBACK_MODE(efx));
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		/* Test all enabled types of TX queue */
-		ef4_क्रम_each_channel_tx_queue(tx_queue, channel) अणु
+		ef4_for_each_channel_tx_queue(tx_queue, channel) {
 			state->offload_csum = (tx_queue->queue &
 					       EF4_TXQ_TYPE_OFFLOAD);
 			rc = ef4_test_loopback(tx_queue,
 					       &tests->loopback[mode]);
-			अगर (rc)
-				जाओ out;
-		पूर्ण
-	पूर्ण
+			if (rc)
+				goto out;
+		}
+	}
 
  out:
-	/* Remove the flush. The caller will हटाओ the loopback setting */
+	/* Remove the flush. The caller will remove the loopback setting */
 	state->flush = true;
-	efx->loopback_selftest = शून्य;
+	efx->loopback_selftest = NULL;
 	wmb();
-	kमुक्त(state);
+	kfree(state);
 
-	अगर (rc == -EPERM)
+	if (rc == -EPERM)
 		rc = 0;
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**************************************************************************
  *
- * Entry poपूर्णांक
+ * Entry point
  *
  *************************************************************************/
 
-पूर्णांक ef4_selftest(काष्ठा ef4_nic *efx, काष्ठा ef4_self_tests *tests,
-		 अचिन्हित flags)
-अणु
-	क्रमागत ef4_loopback_mode loopback_mode = efx->loopback_mode;
-	पूर्णांक phy_mode = efx->phy_mode;
-	पूर्णांक rc_test = 0, rc_reset, rc;
+int ef4_selftest(struct ef4_nic *efx, struct ef4_self_tests *tests,
+		 unsigned flags)
+{
+	enum ef4_loopback_mode loopback_mode = efx->loopback_mode;
+	int phy_mode = efx->phy_mode;
+	int rc_test = 0, rc_reset, rc;
 
 	ef4_selftest_async_cancel(efx);
 
 	/* Online (i.e. non-disruptive) testing
-	 * This checks पूर्णांकerrupt generation, event delivery and PHY presence. */
+	 * This checks interrupt generation, event delivery and PHY presence. */
 
 	rc = ef4_test_phy_alive(efx, tests);
-	अगर (rc && !rc_test)
+	if (rc && !rc_test)
 		rc_test = rc;
 
 	rc = ef4_test_nvram(efx, tests);
-	अगर (rc && !rc_test)
+	if (rc && !rc_test)
 		rc_test = rc;
 
-	rc = ef4_test_पूर्णांकerrupts(efx, tests);
-	अगर (rc && !rc_test)
+	rc = ef4_test_interrupts(efx, tests);
+	if (rc && !rc_test)
 		rc_test = rc;
 
 	rc = ef4_test_eventq_irq(efx, tests);
-	अगर (rc && !rc_test)
+	if (rc && !rc_test)
 		rc_test = rc;
 
-	अगर (rc_test)
-		वापस rc_test;
+	if (rc_test)
+		return rc_test;
 
-	अगर (!(flags & ETH_TEST_FL_OFFLINE))
-		वापस ef4_test_phy(efx, tests, flags);
+	if (!(flags & ETH_TEST_FL_OFFLINE))
+		return ef4_test_phy(efx, tests, flags);
 
 	/* Offline (i.e. disruptive) testing
-	 * This checks MAC and PHY loopback on the specअगरied port. */
+	 * This checks MAC and PHY loopback on the specified port. */
 
-	/* Detach the device so the kernel करोesn't transmit during the
-	 * loopback test and the watchकरोg समयout करोesn't fire.
+	/* Detach the device so the kernel doesn't transmit during the
+	 * loopback test and the watchdog timeout doesn't fire.
 	 */
 	ef4_device_detach_sync(efx);
 
-	अगर (efx->type->test_chip) अणु
+	if (efx->type->test_chip) {
 		rc_reset = efx->type->test_chip(efx, tests);
-		अगर (rc_reset) अणु
-			netअगर_err(efx, hw, efx->net_dev,
+		if (rc_reset) {
+			netif_err(efx, hw, efx->net_dev,
 				  "Unable to recover from chip test\n");
 			ef4_schedule_reset(efx, RESET_TYPE_DISABLE);
-			वापस rc_reset;
-		पूर्ण
+			return rc_reset;
+		}
 
-		अगर ((tests->memory < 0 || tests->रेजिस्टरs < 0) && !rc_test)
+		if ((tests->memory < 0 || tests->registers < 0) && !rc_test)
 			rc_test = -EIO;
-	पूर्ण
+	}
 
-	/* Ensure that the phy is घातered and out of loopback
-	 * क्रम the bist and loopback tests */
+	/* Ensure that the phy is powered and out of loopback
+	 * for the bist and loopback tests */
 	mutex_lock(&efx->mac_lock);
 	efx->phy_mode &= ~PHY_MODE_LOW_POWER;
 	efx->loopback_mode = LOOPBACK_NONE;
@@ -751,11 +750,11 @@ ef4_test_loopback(काष्ठा ef4_tx_queue *tx_queue,
 	mutex_unlock(&efx->mac_lock);
 
 	rc = ef4_test_phy(efx, tests, flags);
-	अगर (rc && !rc_test)
+	if (rc && !rc_test)
 		rc_test = rc;
 
 	rc = ef4_test_loopbacks(efx, tests, efx->loopback_modes);
-	अगर (rc && !rc_test)
+	if (rc && !rc_test)
 		rc_test = rc;
 
 	/* restore the PHY to the previous state */
@@ -765,41 +764,41 @@ ef4_test_loopback(काष्ठा ef4_tx_queue *tx_queue,
 	__ef4_reconfigure_port(efx);
 	mutex_unlock(&efx->mac_lock);
 
-	netअगर_device_attach(efx->net_dev);
+	netif_device_attach(efx->net_dev);
 
-	वापस rc_test;
-पूर्ण
+	return rc_test;
+}
 
-व्योम ef4_selftest_async_start(काष्ठा ef4_nic *efx)
-अणु
-	काष्ठा ef4_channel *channel;
+void ef4_selftest_async_start(struct ef4_nic *efx)
+{
+	struct ef4_channel *channel;
 
-	ef4_क्रम_each_channel(channel, efx)
+	ef4_for_each_channel(channel, efx)
 		ef4_nic_event_test_start(channel);
 	schedule_delayed_work(&efx->selftest_work, IRQ_TIMEOUT);
-पूर्ण
+}
 
-व्योम ef4_selftest_async_cancel(काष्ठा ef4_nic *efx)
-अणु
+void ef4_selftest_async_cancel(struct ef4_nic *efx)
+{
 	cancel_delayed_work_sync(&efx->selftest_work);
-पूर्ण
+}
 
-व्योम ef4_selftest_async_work(काष्ठा work_काष्ठा *data)
-अणु
-	काष्ठा ef4_nic *efx = container_of(data, काष्ठा ef4_nic,
+void ef4_selftest_async_work(struct work_struct *data)
+{
+	struct ef4_nic *efx = container_of(data, struct ef4_nic,
 					   selftest_work.work);
-	काष्ठा ef4_channel *channel;
-	पूर्णांक cpu;
+	struct ef4_channel *channel;
+	int cpu;
 
-	ef4_क्रम_each_channel(channel, efx) अणु
+	ef4_for_each_channel(channel, efx) {
 		cpu = ef4_nic_event_test_irq_cpu(channel);
-		अगर (cpu < 0)
-			netअगर_err(efx, अगरup, efx->net_dev,
+		if (cpu < 0)
+			netif_err(efx, ifup, efx->net_dev,
 				  "channel %d failed to trigger an interrupt\n",
 				  channel->channel);
-		अन्यथा
-			netअगर_dbg(efx, अगरup, efx->net_dev,
+		else
+			netif_dbg(efx, ifup, efx->net_dev,
 				  "channel %d triggered interrupt on CPU %d\n",
 				  channel->channel, cpu);
-	पूर्ण
-पूर्ण
+	}
+}

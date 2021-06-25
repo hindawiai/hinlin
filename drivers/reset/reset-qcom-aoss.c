@@ -1,135 +1,134 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2018 The Linux Foundation. All rights reserved.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/reset-controller.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of_device.h>
-#समावेश <dt-bindings/reset/qcom,sdm845-aoss.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/reset-controller.h>
+#include <linux/delay.h>
+#include <linux/io.h>
+#include <linux/of_device.h>
+#include <dt-bindings/reset/qcom,sdm845-aoss.h>
 
-काष्ठा qcom_aoss_reset_map अणु
-	अचिन्हित पूर्णांक reg;
-पूर्ण;
+struct qcom_aoss_reset_map {
+	unsigned int reg;
+};
 
-काष्ठा qcom_aoss_desc अणु
-	स्थिर काष्ठा qcom_aoss_reset_map *resets;
-	माप_प्रकार num_resets;
-पूर्ण;
+struct qcom_aoss_desc {
+	const struct qcom_aoss_reset_map *resets;
+	size_t num_resets;
+};
 
-काष्ठा qcom_aoss_reset_data अणु
-	काष्ठा reset_controller_dev rcdev;
-	व्योम __iomem *base;
-	स्थिर काष्ठा qcom_aoss_desc *desc;
-पूर्ण;
+struct qcom_aoss_reset_data {
+	struct reset_controller_dev rcdev;
+	void __iomem *base;
+	const struct qcom_aoss_desc *desc;
+};
 
-अटल स्थिर काष्ठा qcom_aoss_reset_map sdm845_aoss_resets[] = अणु
-	[AOSS_CC_MSS_RESTART] = अणु0x10000पूर्ण,
-	[AOSS_CC_CAMSS_RESTART] = अणु0x11000पूर्ण,
-	[AOSS_CC_VENUS_RESTART] = अणु0x12000पूर्ण,
-	[AOSS_CC_GPU_RESTART] = अणु0x13000पूर्ण,
-	[AOSS_CC_DISPSS_RESTART] = अणु0x14000पूर्ण,
-	[AOSS_CC_WCSS_RESTART] = अणु0x20000पूर्ण,
-	[AOSS_CC_LPASS_RESTART] = अणु0x30000पूर्ण,
-पूर्ण;
+static const struct qcom_aoss_reset_map sdm845_aoss_resets[] = {
+	[AOSS_CC_MSS_RESTART] = {0x10000},
+	[AOSS_CC_CAMSS_RESTART] = {0x11000},
+	[AOSS_CC_VENUS_RESTART] = {0x12000},
+	[AOSS_CC_GPU_RESTART] = {0x13000},
+	[AOSS_CC_DISPSS_RESTART] = {0x14000},
+	[AOSS_CC_WCSS_RESTART] = {0x20000},
+	[AOSS_CC_LPASS_RESTART] = {0x30000},
+};
 
-अटल स्थिर काष्ठा qcom_aoss_desc sdm845_aoss_desc = अणु
+static const struct qcom_aoss_desc sdm845_aoss_desc = {
 	.resets = sdm845_aoss_resets,
 	.num_resets = ARRAY_SIZE(sdm845_aoss_resets),
-पूर्ण;
+};
 
-अटल अंतरभूत काष्ठा qcom_aoss_reset_data *to_qcom_aoss_reset_data(
-				काष्ठा reset_controller_dev *rcdev)
-अणु
-	वापस container_of(rcdev, काष्ठा qcom_aoss_reset_data, rcdev);
-पूर्ण
+static inline struct qcom_aoss_reset_data *to_qcom_aoss_reset_data(
+				struct reset_controller_dev *rcdev)
+{
+	return container_of(rcdev, struct qcom_aoss_reset_data, rcdev);
+}
 
-अटल पूर्णांक qcom_aoss_control_निश्चित(काष्ठा reset_controller_dev *rcdev,
-				    अचिन्हित दीर्घ idx)
-अणु
-	काष्ठा qcom_aoss_reset_data *data = to_qcom_aoss_reset_data(rcdev);
-	स्थिर काष्ठा qcom_aoss_reset_map *map = &data->desc->resets[idx];
+static int qcom_aoss_control_assert(struct reset_controller_dev *rcdev,
+				    unsigned long idx)
+{
+	struct qcom_aoss_reset_data *data = to_qcom_aoss_reset_data(rcdev);
+	const struct qcom_aoss_reset_map *map = &data->desc->resets[idx];
 
-	ग_लिखोl(1, data->base + map->reg);
-	/* Wait 6 32kHz sleep cycles क्रम reset */
+	writel(1, data->base + map->reg);
+	/* Wait 6 32kHz sleep cycles for reset */
 	usleep_range(200, 300);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qcom_aoss_control_deनिश्चित(काष्ठा reset_controller_dev *rcdev,
-				      अचिन्हित दीर्घ idx)
-अणु
-	काष्ठा qcom_aoss_reset_data *data = to_qcom_aoss_reset_data(rcdev);
-	स्थिर काष्ठा qcom_aoss_reset_map *map = &data->desc->resets[idx];
+static int qcom_aoss_control_deassert(struct reset_controller_dev *rcdev,
+				      unsigned long idx)
+{
+	struct qcom_aoss_reset_data *data = to_qcom_aoss_reset_data(rcdev);
+	const struct qcom_aoss_reset_map *map = &data->desc->resets[idx];
 
-	ग_लिखोl(0, data->base + map->reg);
-	/* Wait 6 32kHz sleep cycles क्रम reset */
+	writel(0, data->base + map->reg);
+	/* Wait 6 32kHz sleep cycles for reset */
 	usleep_range(200, 300);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qcom_aoss_control_reset(काष्ठा reset_controller_dev *rcdev,
-					अचिन्हित दीर्घ idx)
-अणु
-	qcom_aoss_control_निश्चित(rcdev, idx);
+static int qcom_aoss_control_reset(struct reset_controller_dev *rcdev,
+					unsigned long idx)
+{
+	qcom_aoss_control_assert(rcdev, idx);
 
-	वापस qcom_aoss_control_deनिश्चित(rcdev, idx);
-पूर्ण
+	return qcom_aoss_control_deassert(rcdev, idx);
+}
 
-अटल स्थिर काष्ठा reset_control_ops qcom_aoss_reset_ops = अणु
+static const struct reset_control_ops qcom_aoss_reset_ops = {
 	.reset = qcom_aoss_control_reset,
-	.निश्चित = qcom_aoss_control_निश्चित,
-	.deनिश्चित = qcom_aoss_control_deनिश्चित,
-पूर्ण;
+	.assert = qcom_aoss_control_assert,
+	.deassert = qcom_aoss_control_deassert,
+};
 
-अटल पूर्णांक qcom_aoss_reset_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा qcom_aoss_reset_data *data;
-	काष्ठा device *dev = &pdev->dev;
-	स्थिर काष्ठा qcom_aoss_desc *desc;
-	काष्ठा resource *res;
+static int qcom_aoss_reset_probe(struct platform_device *pdev)
+{
+	struct qcom_aoss_reset_data *data;
+	struct device *dev = &pdev->dev;
+	const struct qcom_aoss_desc *desc;
+	struct resource *res;
 
 	desc = of_device_get_match_data(dev);
-	अगर (!desc)
-		वापस -EINVAL;
+	if (!desc)
+		return -EINVAL;
 
-	data = devm_kzalloc(dev, माप(*data), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = devm_kzalloc(dev, sizeof(*data), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
 	data->desc = desc;
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	data->base = devm_ioremap_resource(dev, res);
-	अगर (IS_ERR(data->base))
-		वापस PTR_ERR(data->base);
+	if (IS_ERR(data->base))
+		return PTR_ERR(data->base);
 
 	data->rcdev.owner = THIS_MODULE;
 	data->rcdev.ops = &qcom_aoss_reset_ops;
 	data->rcdev.nr_resets = desc->num_resets;
 	data->rcdev.of_node = dev->of_node;
 
-	वापस devm_reset_controller_रेजिस्टर(dev, &data->rcdev);
-पूर्ण
+	return devm_reset_controller_register(dev, &data->rcdev);
+}
 
-अटल स्थिर काष्ठा of_device_id qcom_aoss_reset_of_match[] = अणु
-	अणु .compatible = "qcom,sdm845-aoss-cc", .data = &sdm845_aoss_desc पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id qcom_aoss_reset_of_match[] = {
+	{ .compatible = "qcom,sdm845-aoss-cc", .data = &sdm845_aoss_desc },
+	{}
+};
 MODULE_DEVICE_TABLE(of, qcom_aoss_reset_of_match);
 
-अटल काष्ठा platक्रमm_driver qcom_aoss_reset_driver = अणु
+static struct platform_driver qcom_aoss_reset_driver = {
 	.probe = qcom_aoss_reset_probe,
-	.driver  = अणु
+	.driver  = {
 		.name = "qcom_aoss_reset",
 		.of_match_table = qcom_aoss_reset_of_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(qcom_aoss_reset_driver);
+module_platform_driver(qcom_aoss_reset_driver);
 
 MODULE_DESCRIPTION("Qualcomm AOSS Reset Driver");
 MODULE_LICENSE("GPL v2");

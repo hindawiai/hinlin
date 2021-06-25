@@ -1,34 +1,33 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2019 ARM Limited
  *
  * Place a fake sigframe on the stack including a BAD Unknown magic
- * record: on sigवापस Kernel must spot this attempt and the test
- * हाल is expected to be terminated via SEGV.
+ * record: on sigreturn Kernel must spot this attempt and the test
+ * case is expected to be terminated via SEGV.
  */
 
-#समावेश <संकेत.स>
-#समावेश <ucontext.h>
+#include <signal.h>
+#include <ucontext.h>
 
-#समावेश "test_signals_utils.h"
-#समावेश "testcases.h"
+#include "test_signals_utils.h"
+#include "testcases.h"
 
-काष्ठा fake_sigframe sf;
+struct fake_sigframe sf;
 
-अटल पूर्णांक fake_sigवापस_bad_magic_run(काष्ठा tdescr *td,
+static int fake_sigreturn_bad_magic_run(struct tdescr *td,
 					siginfo_t *si, ucontext_t *uc)
-अणु
-	काष्ठा _aarch64_ctx *shead = GET_SF_RESV_HEAD(sf), *head;
+{
+	struct _aarch64_ctx *shead = GET_SF_RESV_HEAD(sf), *head;
 
 	/* just to fill the ucontext_t with something real */
-	अगर (!get_current_context(td, &sf.uc))
-		वापस 1;
+	if (!get_current_context(td, &sf.uc))
+		return 1;
 
 	/* need at least 2*HDR_SZ space: KSFT_BAD_MAGIC + terminator. */
-	head = get_starting_head(shead, HDR_SZ * 2, GET_SF_RESV_SIZE(sf), शून्य);
-	अगर (!head)
-		वापस 0;
+	head = get_starting_head(shead, HDR_SZ * 2, GET_SF_RESV_SIZE(sf), NULL);
+	if (!head)
+		return 0;
 
 	/*
 	 * use a well known NON existent bad magic...something
@@ -36,18 +35,18 @@
 	 */
 	head->magic = KSFT_BAD_MAGIC;
 	head->size = HDR_SZ;
-	ग_लिखो_terminator_record(GET_RESV_NEXT_HEAD(head));
+	write_terminator_record(GET_RESV_NEXT_HEAD(head));
 
 	ASSERT_BAD_CONTEXT(&sf.uc);
-	fake_sigवापस(&sf, माप(sf), 0);
+	fake_sigreturn(&sf, sizeof(sf), 0);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-काष्ठा tdescr tde = अणु
+struct tdescr tde = {
 		.name = "FAKE_SIGRETURN_BAD_MAGIC",
 		.descr = "Trigger a sigreturn with a sigframe with a bad magic",
-		.sig_ok = संक_अंश,
-		.समयout = 3,
-		.run = fake_sigवापस_bad_magic_run,
-पूर्ण;
+		.sig_ok = SIGSEGV,
+		.timeout = 3,
+		.run = fake_sigreturn_bad_magic_run,
+};

@@ -1,83 +1,82 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /******************************************************************************
  * version.h
  *
- * Xen version, type, and compile inक्रमmation.
+ * Xen version, type, and compile information.
  *
  * Copyright (c) 2005, Nguyen Anh Quynh <aquynh@gmail.com>
  * Copyright (c) 2005, Keir Fraser <keir@xensource.com>
  */
 
-#अगर_अघोषित __XEN_PUBLIC_VERSION_H__
-#घोषणा __XEN_PUBLIC_VERSION_H__
+#ifndef __XEN_PUBLIC_VERSION_H__
+#define __XEN_PUBLIC_VERSION_H__
 
-/* NB. All ops वापस zero on success, except XENVER_version. */
+/* NB. All ops return zero on success, except XENVER_version. */
 
-/* arg == शून्य; वापसs major:minor (16:16). */
-#घोषणा XENVER_version      0
+/* arg == NULL; returns major:minor (16:16). */
+#define XENVER_version      0
 
 /* arg == xen_extraversion_t. */
-#घोषणा XENVER_extraversion 1
-काष्ठा xen_extraversion अणु
-    अक्षर extraversion[16];
-पूर्ण;
-#घोषणा XEN_EXTRAVERSION_LEN (माप(काष्ठा xen_extraversion))
+#define XENVER_extraversion 1
+struct xen_extraversion {
+    char extraversion[16];
+};
+#define XEN_EXTRAVERSION_LEN (sizeof(struct xen_extraversion))
 
 /* arg == xen_compile_info_t. */
-#घोषणा XENVER_compile_info 2
-काष्ठा xen_compile_info अणु
-    अक्षर compiler[64];
-    अक्षर compile_by[16];
-    अक्षर compile_करोमुख्य[32];
-    अक्षर compile_date[32];
-पूर्ण;
+#define XENVER_compile_info 2
+struct xen_compile_info {
+    char compiler[64];
+    char compile_by[16];
+    char compile_domain[32];
+    char compile_date[32];
+};
 
-#घोषणा XENVER_capabilities 3
-काष्ठा xen_capabilities_info अणु
-    अक्षर info[1024];
-पूर्ण;
-#घोषणा XEN_CAPABILITIES_INFO_LEN (माप(काष्ठा xen_capabilities_info))
+#define XENVER_capabilities 3
+struct xen_capabilities_info {
+    char info[1024];
+};
+#define XEN_CAPABILITIES_INFO_LEN (sizeof(struct xen_capabilities_info))
 
-#घोषणा XENVER_changeset 4
-काष्ठा xen_changeset_info अणु
-    अक्षर info[64];
-पूर्ण;
-#घोषणा XEN_CHANGESET_INFO_LEN (माप(काष्ठा xen_changeset_info))
+#define XENVER_changeset 4
+struct xen_changeset_info {
+    char info[64];
+};
+#define XEN_CHANGESET_INFO_LEN (sizeof(struct xen_changeset_info))
 
-#घोषणा XENVER_platक्रमm_parameters 5
-काष्ठा xen_platक्रमm_parameters अणु
-    xen_uदीर्घ_t virt_start;
-पूर्ण;
+#define XENVER_platform_parameters 5
+struct xen_platform_parameters {
+    xen_ulong_t virt_start;
+};
 
-#घोषणा XENVER_get_features 6
-काष्ठा xen_feature_info अणु
-    अचिन्हित पूर्णांक submap_idx;    /* IN: which 32-bit submap to वापस */
-    uपूर्णांक32_t     submap;        /* OUT: 32-bit submap */
-पूर्ण;
+#define XENVER_get_features 6
+struct xen_feature_info {
+    unsigned int submap_idx;    /* IN: which 32-bit submap to return */
+    uint32_t     submap;        /* OUT: 32-bit submap */
+};
 
 /* Declares the features reported by XENVER_get_features. */
-#समावेश <xen/पूर्णांकerface/features.h>
+#include <xen/interface/features.h>
 
-/* arg == शून्य; वापसs host memory page size. */
-#घोषणा XENVER_pagesize 7
+/* arg == NULL; returns host memory page size. */
+#define XENVER_pagesize 7
 
-/* arg == xen_करोमुख्य_handle_t. */
-#घोषणा XENVER_guest_handle 8
+/* arg == xen_domain_handle_t. */
+#define XENVER_guest_handle 8
 
-#घोषणा XENVER_commandline 9
-काष्ठा xen_commandline अणु
-	अक्षर buf[1024];
-पूर्ण;
+#define XENVER_commandline 9
+struct xen_commandline {
+	char buf[1024];
+};
 
 /*
  * Return value is the number of bytes written, or XEN_Exx on error.
- * Calling with empty parameter वापसs the size of build_id.
+ * Calling with empty parameter returns the size of build_id.
  */
-#घोषणा XENVER_build_id 10
-काष्ठा xen_build_id अणु
-	uपूर्णांक32_t	len; /* IN: size of buf[]. */
-	अचिन्हित अक्षर	buf[];
-पूर्ण;
+#define XENVER_build_id 10
+struct xen_build_id {
+	uint32_t	len; /* IN: size of buf[]. */
+	unsigned char	buf[];
+};
 
-#पूर्ण_अगर /* __XEN_PUBLIC_VERSION_H__ */
+#endif /* __XEN_PUBLIC_VERSION_H__ */

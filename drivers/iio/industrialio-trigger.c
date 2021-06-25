@@ -1,26 +1,25 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* The industrial I/O core, trigger handling functions
  *
  * Copyright (c) 2008 Jonathan Cameron
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/idr.h>
-#समावेश <linux/err.h>
-#समावेश <linux/device.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/list.h>
-#समावेश <linux/slab.h>
+#include <linux/kernel.h>
+#include <linux/idr.h>
+#include <linux/err.h>
+#include <linux/device.h>
+#include <linux/interrupt.h>
+#include <linux/list.h>
+#include <linux/slab.h>
 
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/trigger.h>
-#समावेश "iio_core.h"
-#समावेश "iio_core_trigger.h"
-#समावेश <linux/iio/trigger_consumer.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/trigger.h>
+#include "iio_core.h"
+#include "iio_core_trigger.h"
+#include <linux/iio/trigger_consumer.h>
 
 /* RFC - Question of approach
- * Make the common हाल (single sensor single trigger)
+ * Make the common case (single sensor single trigger)
  * simple by starting trigger capture from when first sensors
  * is added.
  *
@@ -30,500 +29,500 @@
  * Any other suggestions?
  */
 
-अटल DEFINE_IDA(iio_trigger_ida);
+static DEFINE_IDA(iio_trigger_ida);
 
 /* Single list of all available triggers */
-अटल LIST_HEAD(iio_trigger_list);
-अटल DEFINE_MUTEX(iio_trigger_list_lock);
+static LIST_HEAD(iio_trigger_list);
+static DEFINE_MUTEX(iio_trigger_list_lock);
 
 /**
- * iio_trigger_पढ़ो_name() - retrieve useful identअगरying name
+ * iio_trigger_read_name() - retrieve useful identifying name
  * @dev:	device associated with the iio_trigger
- * @attr:	poपूर्णांकer to the device_attribute काष्ठाure that is
+ * @attr:	pointer to the device_attribute structure that is
  *		being processed
- * @buf:	buffer to prपूर्णांक the name पूर्णांकo
+ * @buf:	buffer to print the name into
  *
  * Return: a negative number on failure or the number of written
- *	   अक्षरacters on success.
+ *	   characters on success.
  */
-अटल sमाप_प्रकार iio_trigger_पढ़ो_name(काष्ठा device *dev,
-				     काष्ठा device_attribute *attr,
-				     अक्षर *buf)
-अणु
-	काष्ठा iio_trigger *trig = to_iio_trigger(dev);
-	वापस sysfs_emit(buf, "%s\n", trig->name);
-पूर्ण
+static ssize_t iio_trigger_read_name(struct device *dev,
+				     struct device_attribute *attr,
+				     char *buf)
+{
+	struct iio_trigger *trig = to_iio_trigger(dev);
+	return sysfs_emit(buf, "%s\n", trig->name);
+}
 
-अटल DEVICE_ATTR(name, S_IRUGO, iio_trigger_पढ़ो_name, शून्य);
+static DEVICE_ATTR(name, S_IRUGO, iio_trigger_read_name, NULL);
 
-अटल काष्ठा attribute *iio_trig_dev_attrs[] = अणु
+static struct attribute *iio_trig_dev_attrs[] = {
 	&dev_attr_name.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 ATTRIBUTE_GROUPS(iio_trig_dev);
 
-अटल काष्ठा iio_trigger *__iio_trigger_find_by_name(स्थिर अक्षर *name);
+static struct iio_trigger *__iio_trigger_find_by_name(const char *name);
 
-पूर्णांक __iio_trigger_रेजिस्टर(काष्ठा iio_trigger *trig_info,
-			   काष्ठा module *this_mod)
-अणु
-	पूर्णांक ret;
+int __iio_trigger_register(struct iio_trigger *trig_info,
+			   struct module *this_mod)
+{
+	int ret;
 
 	trig_info->owner = this_mod;
 
 	trig_info->id = ida_simple_get(&iio_trigger_ida, 0, 0, GFP_KERNEL);
-	अगर (trig_info->id < 0)
-		वापस trig_info->id;
+	if (trig_info->id < 0)
+		return trig_info->id;
 
-	/* Set the name used क्रम the sysfs directory etc */
+	/* Set the name used for the sysfs directory etc */
 	dev_set_name(&trig_info->dev, "trigger%d", trig_info->id);
 
 	ret = device_add(&trig_info->dev);
-	अगर (ret)
-		जाओ error_unरेजिस्टर_id;
+	if (ret)
+		goto error_unregister_id;
 
 	/* Add to list of available triggers held by the IIO core */
 	mutex_lock(&iio_trigger_list_lock);
-	अगर (__iio_trigger_find_by_name(trig_info->name)) अणु
+	if (__iio_trigger_find_by_name(trig_info->name)) {
 		pr_err("Duplicate trigger name '%s'\n", trig_info->name);
 		ret = -EEXIST;
-		जाओ error_device_del;
-	पूर्ण
+		goto error_device_del;
+	}
 	list_add_tail(&trig_info->list, &iio_trigger_list);
 	mutex_unlock(&iio_trigger_list_lock);
 
-	वापस 0;
+	return 0;
 
 error_device_del:
 	mutex_unlock(&iio_trigger_list_lock);
 	device_del(&trig_info->dev);
-error_unरेजिस्टर_id:
-	ida_simple_हटाओ(&iio_trigger_ida, trig_info->id);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(__iio_trigger_रेजिस्टर);
+error_unregister_id:
+	ida_simple_remove(&iio_trigger_ida, trig_info->id);
+	return ret;
+}
+EXPORT_SYMBOL(__iio_trigger_register);
 
-व्योम iio_trigger_unरेजिस्टर(काष्ठा iio_trigger *trig_info)
-अणु
+void iio_trigger_unregister(struct iio_trigger *trig_info)
+{
 	mutex_lock(&iio_trigger_list_lock);
 	list_del(&trig_info->list);
 	mutex_unlock(&iio_trigger_list_lock);
 
-	ida_simple_हटाओ(&iio_trigger_ida, trig_info->id);
+	ida_simple_remove(&iio_trigger_ida, trig_info->id);
 	/* Possible issue in here */
 	device_del(&trig_info->dev);
-पूर्ण
-EXPORT_SYMBOL(iio_trigger_unरेजिस्टर);
+}
+EXPORT_SYMBOL(iio_trigger_unregister);
 
-पूर्णांक iio_trigger_set_immutable(काष्ठा iio_dev *indio_dev, काष्ठा iio_trigger *trig)
-अणु
-	अगर (!indio_dev || !trig)
-		वापस -EINVAL;
+int iio_trigger_set_immutable(struct iio_dev *indio_dev, struct iio_trigger *trig)
+{
+	if (!indio_dev || !trig)
+		return -EINVAL;
 
 	mutex_lock(&indio_dev->mlock);
-	WARN_ON(indio_dev->trig_पढ़ोonly);
+	WARN_ON(indio_dev->trig_readonly);
 
 	indio_dev->trig = iio_trigger_get(trig);
-	indio_dev->trig_पढ़ोonly = true;
+	indio_dev->trig_readonly = true;
 	mutex_unlock(&indio_dev->mlock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(iio_trigger_set_immutable);
 
-/* Search क्रम trigger by name, assuming iio_trigger_list_lock held */
-अटल काष्ठा iio_trigger *__iio_trigger_find_by_name(स्थिर अक्षर *name)
-अणु
-	काष्ठा iio_trigger *iter;
+/* Search for trigger by name, assuming iio_trigger_list_lock held */
+static struct iio_trigger *__iio_trigger_find_by_name(const char *name)
+{
+	struct iio_trigger *iter;
 
-	list_क्रम_each_entry(iter, &iio_trigger_list, list)
-		अगर (!म_भेद(iter->name, name))
-			वापस iter;
+	list_for_each_entry(iter, &iio_trigger_list, list)
+		if (!strcmp(iter->name, name))
+			return iter;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा iio_trigger *iio_trigger_acquire_by_name(स्थिर अक्षर *name)
-अणु
-	काष्ठा iio_trigger *trig = शून्य, *iter;
+static struct iio_trigger *iio_trigger_acquire_by_name(const char *name)
+{
+	struct iio_trigger *trig = NULL, *iter;
 
 	mutex_lock(&iio_trigger_list_lock);
-	list_क्रम_each_entry(iter, &iio_trigger_list, list)
-		अगर (sysfs_streq(iter->name, name)) अणु
+	list_for_each_entry(iter, &iio_trigger_list, list)
+		if (sysfs_streq(iter->name, name)) {
 			trig = iter;
 			iio_trigger_get(trig);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 	mutex_unlock(&iio_trigger_list_lock);
 
-	वापस trig;
-पूर्ण
+	return trig;
+}
 
-व्योम iio_trigger_poll(काष्ठा iio_trigger *trig)
-अणु
-	पूर्णांक i;
+void iio_trigger_poll(struct iio_trigger *trig)
+{
+	int i;
 
-	अगर (!atomic_पढ़ो(&trig->use_count)) अणु
+	if (!atomic_read(&trig->use_count)) {
 		atomic_set(&trig->use_count, CONFIG_IIO_CONSUMERS_PER_TRIGGER);
 
-		क्रम (i = 0; i < CONFIG_IIO_CONSUMERS_PER_TRIGGER; i++) अणु
-			अगर (trig->subirqs[i].enabled)
+		for (i = 0; i < CONFIG_IIO_CONSUMERS_PER_TRIGGER; i++) {
+			if (trig->subirqs[i].enabled)
 				generic_handle_irq(trig->subirq_base + i);
-			अन्यथा
-				iio_trigger_notअगरy_करोne(trig);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			else
+				iio_trigger_notify_done(trig);
+		}
+	}
+}
 EXPORT_SYMBOL(iio_trigger_poll);
 
-irqवापस_t iio_trigger_generic_data_rdy_poll(पूर्णांक irq, व्योम *निजी)
-अणु
-	iio_trigger_poll(निजी);
-	वापस IRQ_HANDLED;
-पूर्ण
+irqreturn_t iio_trigger_generic_data_rdy_poll(int irq, void *private)
+{
+	iio_trigger_poll(private);
+	return IRQ_HANDLED;
+}
 EXPORT_SYMBOL(iio_trigger_generic_data_rdy_poll);
 
-व्योम iio_trigger_poll_chained(काष्ठा iio_trigger *trig)
-अणु
-	पूर्णांक i;
+void iio_trigger_poll_chained(struct iio_trigger *trig)
+{
+	int i;
 
-	अगर (!atomic_पढ़ो(&trig->use_count)) अणु
+	if (!atomic_read(&trig->use_count)) {
 		atomic_set(&trig->use_count, CONFIG_IIO_CONSUMERS_PER_TRIGGER);
 
-		क्रम (i = 0; i < CONFIG_IIO_CONSUMERS_PER_TRIGGER; i++) अणु
-			अगर (trig->subirqs[i].enabled)
+		for (i = 0; i < CONFIG_IIO_CONSUMERS_PER_TRIGGER; i++) {
+			if (trig->subirqs[i].enabled)
 				handle_nested_irq(trig->subirq_base + i);
-			अन्यथा
-				iio_trigger_notअगरy_करोne(trig);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			else
+				iio_trigger_notify_done(trig);
+		}
+	}
+}
 EXPORT_SYMBOL(iio_trigger_poll_chained);
 
-व्योम iio_trigger_notअगरy_करोne(काष्ठा iio_trigger *trig)
-अणु
-	अगर (atomic_dec_and_test(&trig->use_count) && trig->ops &&
+void iio_trigger_notify_done(struct iio_trigger *trig)
+{
+	if (atomic_dec_and_test(&trig->use_count) && trig->ops &&
 	    trig->ops->reenable)
 		trig->ops->reenable(trig);
-पूर्ण
-EXPORT_SYMBOL(iio_trigger_notअगरy_करोne);
+}
+EXPORT_SYMBOL(iio_trigger_notify_done);
 
 /* Trigger Consumer related functions */
-अटल पूर्णांक iio_trigger_get_irq(काष्ठा iio_trigger *trig)
-अणु
-	पूर्णांक ret;
+static int iio_trigger_get_irq(struct iio_trigger *trig)
+{
+	int ret;
 
 	mutex_lock(&trig->pool_lock);
-	ret = biपंचांगap_find_मुक्त_region(trig->pool,
+	ret = bitmap_find_free_region(trig->pool,
 				      CONFIG_IIO_CONSUMERS_PER_TRIGGER,
 				      ilog2(1));
 	mutex_unlock(&trig->pool_lock);
-	अगर (ret >= 0)
+	if (ret >= 0)
 		ret += trig->subirq_base;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम iio_trigger_put_irq(काष्ठा iio_trigger *trig, पूर्णांक irq)
-अणु
+static void iio_trigger_put_irq(struct iio_trigger *trig, int irq)
+{
 	mutex_lock(&trig->pool_lock);
 	clear_bit(irq - trig->subirq_base, trig->pool);
 	mutex_unlock(&trig->pool_lock);
-पूर्ण
+}
 
-/* Complनिकासy in here.  With certain triggers (datardy) an acknowledgement
- * may be needed अगर the pollfuncs करो not include the data पढ़ो क्रम the
+/* Complexity in here.  With certain triggers (datardy) an acknowledgement
+ * may be needed if the pollfuncs do not include the data read for the
  * triggering device.
  * This is not currently handled.  Alternative of not enabling trigger unless
  * the relevant function is in there may be the best option.
  */
-/* Worth protecting against द्विगुन additions? */
-पूर्णांक iio_trigger_attach_poll_func(काष्ठा iio_trigger *trig,
-				 काष्ठा iio_poll_func *pf)
-अणु
+/* Worth protecting against double additions? */
+int iio_trigger_attach_poll_func(struct iio_trigger *trig,
+				 struct iio_poll_func *pf)
+{
 	bool notinuse =
-		biपंचांगap_empty(trig->pool, CONFIG_IIO_CONSUMERS_PER_TRIGGER);
-	पूर्णांक ret = 0;
+		bitmap_empty(trig->pool, CONFIG_IIO_CONSUMERS_PER_TRIGGER);
+	int ret = 0;
 
-	/* Prevent the module from being हटाओd whilst attached to a trigger */
+	/* Prevent the module from being removed whilst attached to a trigger */
 	__module_get(pf->indio_dev->driver_module);
 
 	/* Get irq number */
 	pf->irq = iio_trigger_get_irq(trig);
-	अगर (pf->irq < 0) अणु
+	if (pf->irq < 0) {
 		pr_err("Could not find an available irq for trigger %s, CONFIG_IIO_CONSUMERS_PER_TRIGGER=%d limit might be exceeded\n",
 			trig->name, CONFIG_IIO_CONSUMERS_PER_TRIGGER);
-		जाओ out_put_module;
-	पूर्ण
+		goto out_put_module;
+	}
 
 	/* Request irq */
-	ret = request_thपढ़ोed_irq(pf->irq, pf->h, pf->thपढ़ो,
+	ret = request_threaded_irq(pf->irq, pf->h, pf->thread,
 				   pf->type, pf->name,
 				   pf);
-	अगर (ret < 0)
-		जाओ out_put_irq;
+	if (ret < 0)
+		goto out_put_irq;
 
 	/* Enable trigger in driver */
-	अगर (trig->ops && trig->ops->set_trigger_state && notinuse) अणु
+	if (trig->ops && trig->ops->set_trigger_state && notinuse) {
 		ret = trig->ops->set_trigger_state(trig, true);
-		अगर (ret < 0)
-			जाओ out_मुक्त_irq;
-	पूर्ण
+		if (ret < 0)
+			goto out_free_irq;
+	}
 
 	/*
-	 * Check अगर we just रेजिस्टरed to our own trigger: we determine that
-	 * this is the हाल अगर the IIO device and the trigger device share the
+	 * Check if we just registered to our own trigger: we determine that
+	 * this is the case if the IIO device and the trigger device share the
 	 * same parent device.
 	 */
-	अगर (pf->indio_dev->dev.parent == trig->dev.parent)
+	if (pf->indio_dev->dev.parent == trig->dev.parent)
 		trig->attached_own_device = true;
 
-	वापस ret;
+	return ret;
 
-out_मुक्त_irq:
-	मुक्त_irq(pf->irq, pf);
+out_free_irq:
+	free_irq(pf->irq, pf);
 out_put_irq:
 	iio_trigger_put_irq(trig, pf->irq);
 out_put_module:
 	module_put(pf->indio_dev->driver_module);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक iio_trigger_detach_poll_func(काष्ठा iio_trigger *trig,
-				 काष्ठा iio_poll_func *pf)
-अणु
+int iio_trigger_detach_poll_func(struct iio_trigger *trig,
+				 struct iio_poll_func *pf)
+{
 	bool no_other_users =
-		biपंचांगap_weight(trig->pool, CONFIG_IIO_CONSUMERS_PER_TRIGGER) == 1;
-	पूर्णांक ret = 0;
+		bitmap_weight(trig->pool, CONFIG_IIO_CONSUMERS_PER_TRIGGER) == 1;
+	int ret = 0;
 
-	अगर (trig->ops && trig->ops->set_trigger_state && no_other_users) अणु
+	if (trig->ops && trig->ops->set_trigger_state && no_other_users) {
 		ret = trig->ops->set_trigger_state(trig, false);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
-	अगर (pf->indio_dev->dev.parent == trig->dev.parent)
+		if (ret)
+			return ret;
+	}
+	if (pf->indio_dev->dev.parent == trig->dev.parent)
 		trig->attached_own_device = false;
 	iio_trigger_put_irq(trig, pf->irq);
-	मुक्त_irq(pf->irq, pf);
+	free_irq(pf->irq, pf);
 	module_put(pf->indio_dev->driver_module);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-irqवापस_t iio_pollfunc_store_समय(पूर्णांक irq, व्योम *p)
-अणु
-	काष्ठा iio_poll_func *pf = p;
+irqreturn_t iio_pollfunc_store_time(int irq, void *p)
+{
+	struct iio_poll_func *pf = p;
 
-	pf->बारtamp = iio_get_समय_ns(pf->indio_dev);
-	वापस IRQ_WAKE_THREAD;
-पूर्ण
-EXPORT_SYMBOL(iio_pollfunc_store_समय);
+	pf->timestamp = iio_get_time_ns(pf->indio_dev);
+	return IRQ_WAKE_THREAD;
+}
+EXPORT_SYMBOL(iio_pollfunc_store_time);
 
-काष्ठा iio_poll_func
-*iio_alloc_pollfunc(irqवापस_t (*h)(पूर्णांक irq, व्योम *p),
-		    irqवापस_t (*thपढ़ो)(पूर्णांक irq, व्योम *p),
-		    पूर्णांक type,
-		    काष्ठा iio_dev *indio_dev,
-		    स्थिर अक्षर *fmt,
+struct iio_poll_func
+*iio_alloc_pollfunc(irqreturn_t (*h)(int irq, void *p),
+		    irqreturn_t (*thread)(int irq, void *p),
+		    int type,
+		    struct iio_dev *indio_dev,
+		    const char *fmt,
 		    ...)
-अणु
-	बहु_सूची vargs;
-	काष्ठा iio_poll_func *pf;
+{
+	va_list vargs;
+	struct iio_poll_func *pf;
 
-	pf = kदो_स्मृति(माप *pf, GFP_KERNEL);
-	अगर (pf == शून्य)
-		वापस शून्य;
-	बहु_शुरू(vargs, fmt);
-	pf->name = kvaप्र_लिखो(GFP_KERNEL, fmt, vargs);
-	बहु_पूर्ण(vargs);
-	अगर (pf->name == शून्य) अणु
-		kमुक्त(pf);
-		वापस शून्य;
-	पूर्ण
+	pf = kmalloc(sizeof *pf, GFP_KERNEL);
+	if (pf == NULL)
+		return NULL;
+	va_start(vargs, fmt);
+	pf->name = kvasprintf(GFP_KERNEL, fmt, vargs);
+	va_end(vargs);
+	if (pf->name == NULL) {
+		kfree(pf);
+		return NULL;
+	}
 	pf->h = h;
-	pf->thपढ़ो = thपढ़ो;
+	pf->thread = thread;
 	pf->type = type;
 	pf->indio_dev = indio_dev;
 
-	वापस pf;
-पूर्ण
+	return pf;
+}
 EXPORT_SYMBOL_GPL(iio_alloc_pollfunc);
 
-व्योम iio_dealloc_pollfunc(काष्ठा iio_poll_func *pf)
-अणु
-	kमुक्त(pf->name);
-	kमुक्त(pf);
-पूर्ण
+void iio_dealloc_pollfunc(struct iio_poll_func *pf)
+{
+	kfree(pf->name);
+	kfree(pf);
+}
 EXPORT_SYMBOL_GPL(iio_dealloc_pollfunc);
 
 /**
- * iio_trigger_पढ़ो_current() - trigger consumer sysfs query current trigger
+ * iio_trigger_read_current() - trigger consumer sysfs query current trigger
  * @dev:	device associated with an industrial I/O device
- * @attr:	poपूर्णांकer to the device_attribute काष्ठाure that
+ * @attr:	pointer to the device_attribute structure that
  *		is being processed
- * @buf:	buffer where the current trigger name will be prपूर्णांकed पूर्णांकo
+ * @buf:	buffer where the current trigger name will be printed into
  *
- * For trigger consumers the current_trigger पूर्णांकerface allows the trigger
+ * For trigger consumers the current_trigger interface allows the trigger
  * used by the device to be queried.
  *
- * Return: a negative number on failure, the number of अक्षरacters written
- *	   on success or 0 अगर no trigger is available
+ * Return: a negative number on failure, the number of characters written
+ *	   on success or 0 if no trigger is available
  */
-अटल sमाप_प्रकार iio_trigger_पढ़ो_current(काष्ठा device *dev,
-					काष्ठा device_attribute *attr,
-					अक्षर *buf)
-अणु
-	काष्ठा iio_dev *indio_dev = dev_to_iio_dev(dev);
+static ssize_t iio_trigger_read_current(struct device *dev,
+					struct device_attribute *attr,
+					char *buf)
+{
+	struct iio_dev *indio_dev = dev_to_iio_dev(dev);
 
-	अगर (indio_dev->trig)
-		वापस sysfs_emit(buf, "%s\n", indio_dev->trig->name);
-	वापस 0;
-पूर्ण
+	if (indio_dev->trig)
+		return sysfs_emit(buf, "%s\n", indio_dev->trig->name);
+	return 0;
+}
 
 /**
- * iio_trigger_ग_लिखो_current() - trigger consumer sysfs set current trigger
+ * iio_trigger_write_current() - trigger consumer sysfs set current trigger
  * @dev:	device associated with an industrial I/O device
  * @attr:	device attribute that is being processed
  * @buf:	string buffer that holds the name of the trigger
  * @len:	length of the trigger name held by buf
  *
- * For trigger consumers the current_trigger पूर्णांकerface allows the trigger
- * used क्रम this device to be specअगरied at run समय based on the trigger's
+ * For trigger consumers the current_trigger interface allows the trigger
+ * used for this device to be specified at run time based on the trigger's
  * name.
  *
  * Return: negative error code on failure or length of the buffer
  *	   on success
  */
-अटल sमाप_प्रकार iio_trigger_ग_लिखो_current(काष्ठा device *dev,
-					 काष्ठा device_attribute *attr,
-					 स्थिर अक्षर *buf,
-					 माप_प्रकार len)
-अणु
-	काष्ठा iio_dev *indio_dev = dev_to_iio_dev(dev);
-	काष्ठा iio_trigger *oldtrig = indio_dev->trig;
-	काष्ठा iio_trigger *trig;
-	पूर्णांक ret;
+static ssize_t iio_trigger_write_current(struct device *dev,
+					 struct device_attribute *attr,
+					 const char *buf,
+					 size_t len)
+{
+	struct iio_dev *indio_dev = dev_to_iio_dev(dev);
+	struct iio_trigger *oldtrig = indio_dev->trig;
+	struct iio_trigger *trig;
+	int ret;
 
 	mutex_lock(&indio_dev->mlock);
-	अगर (indio_dev->currenपंचांगode == INDIO_BUFFER_TRIGGERED) अणु
+	if (indio_dev->currentmode == INDIO_BUFFER_TRIGGERED) {
 		mutex_unlock(&indio_dev->mlock);
-		वापस -EBUSY;
-	पूर्ण
-	अगर (indio_dev->trig_पढ़ोonly) अणु
+		return -EBUSY;
+	}
+	if (indio_dev->trig_readonly) {
 		mutex_unlock(&indio_dev->mlock);
-		वापस -EPERM;
-	पूर्ण
+		return -EPERM;
+	}
 	mutex_unlock(&indio_dev->mlock);
 
 	trig = iio_trigger_acquire_by_name(buf);
-	अगर (oldtrig == trig) अणु
+	if (oldtrig == trig) {
 		ret = len;
-		जाओ out_trigger_put;
-	पूर्ण
+		goto out_trigger_put;
+	}
 
-	अगर (trig && indio_dev->info->validate_trigger) अणु
+	if (trig && indio_dev->info->validate_trigger) {
 		ret = indio_dev->info->validate_trigger(indio_dev, trig);
-		अगर (ret)
-			जाओ out_trigger_put;
-	पूर्ण
+		if (ret)
+			goto out_trigger_put;
+	}
 
-	अगर (trig && trig->ops && trig->ops->validate_device) अणु
+	if (trig && trig->ops && trig->ops->validate_device) {
 		ret = trig->ops->validate_device(trig, indio_dev);
-		अगर (ret)
-			जाओ out_trigger_put;
-	पूर्ण
+		if (ret)
+			goto out_trigger_put;
+	}
 
 	indio_dev->trig = trig;
 
-	अगर (oldtrig) अणु
-		अगर (indio_dev->modes & INDIO_EVENT_TRIGGERED)
+	if (oldtrig) {
+		if (indio_dev->modes & INDIO_EVENT_TRIGGERED)
 			iio_trigger_detach_poll_func(oldtrig,
 						     indio_dev->pollfunc_event);
 		iio_trigger_put(oldtrig);
-	पूर्ण
-	अगर (indio_dev->trig) अणु
-		अगर (indio_dev->modes & INDIO_EVENT_TRIGGERED)
+	}
+	if (indio_dev->trig) {
+		if (indio_dev->modes & INDIO_EVENT_TRIGGERED)
 			iio_trigger_attach_poll_func(indio_dev->trig,
 						     indio_dev->pollfunc_event);
-	पूर्ण
+	}
 
-	वापस len;
+	return len;
 
 out_trigger_put:
-	अगर (trig)
+	if (trig)
 		iio_trigger_put(trig);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल DEVICE_ATTR(current_trigger, S_IRUGO | S_IWUSR,
-		   iio_trigger_पढ़ो_current,
-		   iio_trigger_ग_लिखो_current);
+static DEVICE_ATTR(current_trigger, S_IRUGO | S_IWUSR,
+		   iio_trigger_read_current,
+		   iio_trigger_write_current);
 
-अटल काष्ठा attribute *iio_trigger_consumer_attrs[] = अणु
+static struct attribute *iio_trigger_consumer_attrs[] = {
 	&dev_attr_current_trigger.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group iio_trigger_consumer_attr_group = अणु
+static const struct attribute_group iio_trigger_consumer_attr_group = {
 	.name = "trigger",
 	.attrs = iio_trigger_consumer_attrs,
-पूर्ण;
+};
 
-अटल व्योम iio_trig_release(काष्ठा device *device)
-अणु
-	काष्ठा iio_trigger *trig = to_iio_trigger(device);
-	पूर्णांक i;
+static void iio_trig_release(struct device *device)
+{
+	struct iio_trigger *trig = to_iio_trigger(device);
+	int i;
 
-	अगर (trig->subirq_base) अणु
-		क्रम (i = 0; i < CONFIG_IIO_CONSUMERS_PER_TRIGGER; i++) अणु
-			irq_modअगरy_status(trig->subirq_base + i,
+	if (trig->subirq_base) {
+		for (i = 0; i < CONFIG_IIO_CONSUMERS_PER_TRIGGER; i++) {
+			irq_modify_status(trig->subirq_base + i,
 					  IRQ_NOAUTOEN,
 					  IRQ_NOREQUEST | IRQ_NOPROBE);
 			irq_set_chip(trig->subirq_base + i,
-				     शून्य);
+				     NULL);
 			irq_set_handler(trig->subirq_base + i,
-					शून्य);
-		पूर्ण
+					NULL);
+		}
 
-		irq_मुक्त_descs(trig->subirq_base,
+		irq_free_descs(trig->subirq_base,
 			       CONFIG_IIO_CONSUMERS_PER_TRIGGER);
-	पूर्ण
-	kमुक्त(trig->name);
-	kमुक्त(trig);
-पूर्ण
+	}
+	kfree(trig->name);
+	kfree(trig);
+}
 
-अटल स्थिर काष्ठा device_type iio_trig_type = अणु
+static const struct device_type iio_trig_type = {
 	.release = iio_trig_release,
 	.groups = iio_trig_dev_groups,
-पूर्ण;
+};
 
-अटल व्योम iio_trig_subirqmask(काष्ठा irq_data *d)
-अणु
-	काष्ठा irq_chip *chip = irq_data_get_irq_chip(d);
-	काष्ठा iio_trigger *trig = container_of(chip, काष्ठा iio_trigger, subirq_chip);
+static void iio_trig_subirqmask(struct irq_data *d)
+{
+	struct irq_chip *chip = irq_data_get_irq_chip(d);
+	struct iio_trigger *trig = container_of(chip, struct iio_trigger, subirq_chip);
 
 	trig->subirqs[d->irq - trig->subirq_base].enabled = false;
-पूर्ण
+}
 
-अटल व्योम iio_trig_subirqunmask(काष्ठा irq_data *d)
-अणु
-	काष्ठा irq_chip *chip = irq_data_get_irq_chip(d);
-	काष्ठा iio_trigger *trig = container_of(chip, काष्ठा iio_trigger, subirq_chip);
+static void iio_trig_subirqunmask(struct irq_data *d)
+{
+	struct irq_chip *chip = irq_data_get_irq_chip(d);
+	struct iio_trigger *trig = container_of(chip, struct iio_trigger, subirq_chip);
 
 	trig->subirqs[d->irq - trig->subirq_base].enabled = true;
-पूर्ण
+}
 
-अटल __म_लिखो(2, 0)
-काष्ठा iio_trigger *viio_trigger_alloc(काष्ठा device *parent,
-				       स्थिर अक्षर *fmt,
-				       बहु_सूची vargs)
-अणु
-	काष्ठा iio_trigger *trig;
-	पूर्णांक i;
+static __printf(2, 0)
+struct iio_trigger *viio_trigger_alloc(struct device *parent,
+				       const char *fmt,
+				       va_list vargs)
+{
+	struct iio_trigger *trig;
+	int i;
 
-	trig = kzalloc(माप *trig, GFP_KERNEL);
-	अगर (!trig)
-		वापस शून्य;
+	trig = kzalloc(sizeof *trig, GFP_KERNEL);
+	if (!trig)
+		return NULL;
 
 	trig->dev.parent = parent;
 	trig->dev.type = &iio_trig_type;
@@ -534,184 +533,184 @@ out_trigger_put:
 	trig->subirq_base = irq_alloc_descs(-1, 0,
 					    CONFIG_IIO_CONSUMERS_PER_TRIGGER,
 					    0);
-	अगर (trig->subirq_base < 0)
-		जाओ मुक्त_trig;
+	if (trig->subirq_base < 0)
+		goto free_trig;
 
-	trig->name = kvaप्र_लिखो(GFP_KERNEL, fmt, vargs);
-	अगर (trig->name == शून्य)
-		जाओ मुक्त_descs;
+	trig->name = kvasprintf(GFP_KERNEL, fmt, vargs);
+	if (trig->name == NULL)
+		goto free_descs;
 
 	trig->subirq_chip.name = trig->name;
 	trig->subirq_chip.irq_mask = &iio_trig_subirqmask;
 	trig->subirq_chip.irq_unmask = &iio_trig_subirqunmask;
-	क्रम (i = 0; i < CONFIG_IIO_CONSUMERS_PER_TRIGGER; i++) अणु
+	for (i = 0; i < CONFIG_IIO_CONSUMERS_PER_TRIGGER; i++) {
 		irq_set_chip(trig->subirq_base + i, &trig->subirq_chip);
 		irq_set_handler(trig->subirq_base + i, &handle_simple_irq);
-		irq_modअगरy_status(trig->subirq_base + i,
+		irq_modify_status(trig->subirq_base + i,
 				  IRQ_NOREQUEST | IRQ_NOAUTOEN, IRQ_NOPROBE);
-	पूर्ण
+	}
 	get_device(&trig->dev);
 
-	वापस trig;
+	return trig;
 
-मुक्त_descs:
-	irq_मुक्त_descs(trig->subirq_base, CONFIG_IIO_CONSUMERS_PER_TRIGGER);
-मुक्त_trig:
-	kमुक्त(trig);
-	वापस शून्य;
-पूर्ण
+free_descs:
+	irq_free_descs(trig->subirq_base, CONFIG_IIO_CONSUMERS_PER_TRIGGER);
+free_trig:
+	kfree(trig);
+	return NULL;
+}
 
 /**
  * iio_trigger_alloc - Allocate a trigger
- * @parent:		Device to allocate iio_trigger क्रम
- * @fmt:		trigger name क्रमmat. If it includes क्रमmat
- *			specअगरiers, the additional arguments following
- *			क्रमmat are क्रमmatted and inserted in the resulting
- *			string replacing their respective specअगरiers.
+ * @parent:		Device to allocate iio_trigger for
+ * @fmt:		trigger name format. If it includes format
+ *			specifiers, the additional arguments following
+ *			format are formatted and inserted in the resulting
+ *			string replacing their respective specifiers.
  * RETURNS:
- * Poपूर्णांकer to allocated iio_trigger on success, शून्य on failure.
+ * Pointer to allocated iio_trigger on success, NULL on failure.
  */
-काष्ठा iio_trigger *iio_trigger_alloc(काष्ठा device *parent, स्थिर अक्षर *fmt, ...)
-अणु
-	काष्ठा iio_trigger *trig;
-	बहु_सूची vargs;
+struct iio_trigger *iio_trigger_alloc(struct device *parent, const char *fmt, ...)
+{
+	struct iio_trigger *trig;
+	va_list vargs;
 
-	बहु_शुरू(vargs, fmt);
+	va_start(vargs, fmt);
 	trig = viio_trigger_alloc(parent, fmt, vargs);
-	बहु_पूर्ण(vargs);
+	va_end(vargs);
 
-	वापस trig;
-पूर्ण
+	return trig;
+}
 EXPORT_SYMBOL(iio_trigger_alloc);
 
-व्योम iio_trigger_मुक्त(काष्ठा iio_trigger *trig)
-अणु
-	अगर (trig)
+void iio_trigger_free(struct iio_trigger *trig)
+{
+	if (trig)
 		put_device(&trig->dev);
-पूर्ण
-EXPORT_SYMBOL(iio_trigger_मुक्त);
+}
+EXPORT_SYMBOL(iio_trigger_free);
 
-अटल व्योम devm_iio_trigger_release(काष्ठा device *dev, व्योम *res)
-अणु
-	iio_trigger_मुक्त(*(काष्ठा iio_trigger **)res);
-पूर्ण
+static void devm_iio_trigger_release(struct device *dev, void *res)
+{
+	iio_trigger_free(*(struct iio_trigger **)res);
+}
 
 /**
  * devm_iio_trigger_alloc - Resource-managed iio_trigger_alloc()
  * Managed iio_trigger_alloc.  iio_trigger allocated with this function is
- * स्वतःmatically मुक्तd on driver detach.
- * @parent:		Device to allocate iio_trigger क्रम
- * @fmt:		trigger name क्रमmat. If it includes क्रमmat
- *			specअगरiers, the additional arguments following
- *			क्रमmat are क्रमmatted and inserted in the resulting
- *			string replacing their respective specअगरiers.
+ * automatically freed on driver detach.
+ * @parent:		Device to allocate iio_trigger for
+ * @fmt:		trigger name format. If it includes format
+ *			specifiers, the additional arguments following
+ *			format are formatted and inserted in the resulting
+ *			string replacing their respective specifiers.
  *
  *
  * RETURNS:
- * Poपूर्णांकer to allocated iio_trigger on success, शून्य on failure.
+ * Pointer to allocated iio_trigger on success, NULL on failure.
  */
-काष्ठा iio_trigger *devm_iio_trigger_alloc(काष्ठा device *parent, स्थिर अक्षर *fmt, ...)
-अणु
-	काष्ठा iio_trigger **ptr, *trig;
-	बहु_सूची vargs;
+struct iio_trigger *devm_iio_trigger_alloc(struct device *parent, const char *fmt, ...)
+{
+	struct iio_trigger **ptr, *trig;
+	va_list vargs;
 
-	ptr = devres_alloc(devm_iio_trigger_release, माप(*ptr),
+	ptr = devres_alloc(devm_iio_trigger_release, sizeof(*ptr),
 			   GFP_KERNEL);
-	अगर (!ptr)
-		वापस शून्य;
+	if (!ptr)
+		return NULL;
 
-	/* use raw alloc_dr क्रम kदो_स्मृति caller tracing */
-	बहु_शुरू(vargs, fmt);
+	/* use raw alloc_dr for kmalloc caller tracing */
+	va_start(vargs, fmt);
 	trig = viio_trigger_alloc(parent, fmt, vargs);
-	बहु_पूर्ण(vargs);
-	अगर (trig) अणु
+	va_end(vargs);
+	if (trig) {
 		*ptr = trig;
 		devres_add(parent, ptr);
-	पूर्ण अन्यथा अणु
-		devres_मुक्त(ptr);
-	पूर्ण
+	} else {
+		devres_free(ptr);
+	}
 
-	वापस trig;
-पूर्ण
+	return trig;
+}
 EXPORT_SYMBOL_GPL(devm_iio_trigger_alloc);
 
-अटल व्योम devm_iio_trigger_unreg(काष्ठा device *dev, व्योम *res)
-अणु
-	iio_trigger_unरेजिस्टर(*(काष्ठा iio_trigger **)res);
-पूर्ण
+static void devm_iio_trigger_unreg(struct device *dev, void *res)
+{
+	iio_trigger_unregister(*(struct iio_trigger **)res);
+}
 
 /**
- * __devm_iio_trigger_रेजिस्टर - Resource-managed iio_trigger_रेजिस्टर()
- * @dev:	device this trigger was allocated क्रम
- * @trig_info:	trigger to रेजिस्टर
- * @this_mod:   module रेजिस्टरing the trigger
+ * __devm_iio_trigger_register - Resource-managed iio_trigger_register()
+ * @dev:	device this trigger was allocated for
+ * @trig_info:	trigger to register
+ * @this_mod:   module registering the trigger
  *
- * Managed iio_trigger_रेजिस्टर().  The IIO trigger रेजिस्टरed with this
- * function is स्वतःmatically unरेजिस्टरed on driver detach. This function
- * calls iio_trigger_रेजिस्टर() पूर्णांकernally. Refer to that function क्रम more
- * inक्रमmation.
+ * Managed iio_trigger_register().  The IIO trigger registered with this
+ * function is automatically unregistered on driver detach. This function
+ * calls iio_trigger_register() internally. Refer to that function for more
+ * information.
  *
  * RETURNS:
  * 0 on success, negative error number on failure.
  */
-पूर्णांक __devm_iio_trigger_रेजिस्टर(काष्ठा device *dev,
-				काष्ठा iio_trigger *trig_info,
-				काष्ठा module *this_mod)
-अणु
-	काष्ठा iio_trigger **ptr;
-	पूर्णांक ret;
+int __devm_iio_trigger_register(struct device *dev,
+				struct iio_trigger *trig_info,
+				struct module *this_mod)
+{
+	struct iio_trigger **ptr;
+	int ret;
 
-	ptr = devres_alloc(devm_iio_trigger_unreg, माप(*ptr), GFP_KERNEL);
-	अगर (!ptr)
-		वापस -ENOMEM;
+	ptr = devres_alloc(devm_iio_trigger_unreg, sizeof(*ptr), GFP_KERNEL);
+	if (!ptr)
+		return -ENOMEM;
 
 	*ptr = trig_info;
-	ret = __iio_trigger_रेजिस्टर(trig_info, this_mod);
-	अगर (!ret)
+	ret = __iio_trigger_register(trig_info, this_mod);
+	if (!ret)
 		devres_add(dev, ptr);
-	अन्यथा
-		devres_मुक्त(ptr);
+	else
+		devres_free(ptr);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(__devm_iio_trigger_रेजिस्टर);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(__devm_iio_trigger_register);
 
-bool iio_trigger_using_own(काष्ठा iio_dev *indio_dev)
-अणु
-	वापस indio_dev->trig->attached_own_device;
-पूर्ण
+bool iio_trigger_using_own(struct iio_dev *indio_dev)
+{
+	return indio_dev->trig->attached_own_device;
+}
 EXPORT_SYMBOL(iio_trigger_using_own);
 
 /**
- * iio_trigger_validate_own_device - Check अगर a trigger and IIO device beदीर्घ to
+ * iio_trigger_validate_own_device - Check if a trigger and IIO device belong to
  *  the same device
  * @trig: The IIO trigger to check
  * @indio_dev: the IIO device to check
  *
- * This function can be used as the validate_device callback क्रम triggers that
+ * This function can be used as the validate_device callback for triggers that
  * can only be attached to their own device.
  *
- * Return: 0 अगर both the trigger and the IIO device beदीर्घ to the same
+ * Return: 0 if both the trigger and the IIO device belong to the same
  * device, -EINVAL otherwise.
  */
-पूर्णांक iio_trigger_validate_own_device(काष्ठा iio_trigger *trig,
-				    काष्ठा iio_dev *indio_dev)
-अणु
-	अगर (indio_dev->dev.parent != trig->dev.parent)
-		वापस -EINVAL;
-	वापस 0;
-पूर्ण
+int iio_trigger_validate_own_device(struct iio_trigger *trig,
+				    struct iio_dev *indio_dev)
+{
+	if (indio_dev->dev.parent != trig->dev.parent)
+		return -EINVAL;
+	return 0;
+}
 EXPORT_SYMBOL(iio_trigger_validate_own_device);
 
-पूर्णांक iio_device_रेजिस्टर_trigger_consumer(काष्ठा iio_dev *indio_dev)
-अणु
-	वापस iio_device_रेजिस्टर_sysfs_group(indio_dev,
+int iio_device_register_trigger_consumer(struct iio_dev *indio_dev)
+{
+	return iio_device_register_sysfs_group(indio_dev,
 					       &iio_trigger_consumer_attr_group);
-पूर्ण
+}
 
-व्योम iio_device_unरेजिस्टर_trigger_consumer(काष्ठा iio_dev *indio_dev)
-अणु
+void iio_device_unregister_trigger_consumer(struct iio_dev *indio_dev)
+{
 	/* Clean up an associated but not attached trigger reference */
-	अगर (indio_dev->trig)
+	if (indio_dev->trig)
 		iio_trigger_put(indio_dev->trig);
-पूर्ण
+}

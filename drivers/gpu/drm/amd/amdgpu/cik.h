@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,15 +21,15 @@
  *
  */
 
-#अगर_अघोषित __CIK_H__
-#घोषणा __CIK_H__
+#ifndef __CIK_H__
+#define __CIK_H__
 
-#घोषणा CIK_FLUSH_GPU_TLB_NUM_WREG	3
+#define CIK_FLUSH_GPU_TLB_NUM_WREG	3
 
-व्योम cik_srbm_select(काष्ठा amdgpu_device *adev,
+void cik_srbm_select(struct amdgpu_device *adev,
 		     u32 me, u32 pipe, u32 queue, u32 vmid);
-पूर्णांक cik_set_ip_blocks(काष्ठा amdgpu_device *adev);
+int cik_set_ip_blocks(struct amdgpu_device *adev);
 
-व्योम legacy_करोorbell_index_init(काष्ठा amdgpu_device *adev);
+void legacy_doorbell_index_init(struct amdgpu_device *adev);
 
-#पूर्ण_अगर
+#endif

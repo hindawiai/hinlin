@@ -1,16 +1,15 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <त्रुटिसं.स>
-#समावेश <regex.h>
-#समावेश <माला.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/zभाग.स>
+// SPDX-License-Identifier: GPL-2.0
+#include <errno.h>
+#include <regex.h>
+#include <string.h>
+#include <linux/kernel.h>
+#include <linux/zalloc.h>
 
-#समावेश "../../../util/debug.h"
-#समावेश "../../../util/event.h"
-#समावेश "../../../util/perf_regs.h"
+#include "../../../util/debug.h"
+#include "../../../util/event.h"
+#include "../../../util/perf_regs.h"
 
-स्थिर काष्ठा sample_reg sample_reg_masks[] = अणु
+const struct sample_reg sample_reg_masks[] = {
 	SMPL_REG(x0, PERF_REG_ARM64_X0),
 	SMPL_REG(x1, PERF_REG_ARM64_X1),
 	SMPL_REG(x2, PERF_REG_ARM64_X2),
@@ -45,90 +44,90 @@
 	SMPL_REG(sp, PERF_REG_ARM64_SP),
 	SMPL_REG(pc, PERF_REG_ARM64_PC),
 	SMPL_REG_END
-पूर्ण;
+};
 
 /* %xNUM */
-#घोषणा SDT_OP_REGEX1  "^(x[1-2]?[0-9]|3[0-1])$"
+#define SDT_OP_REGEX1  "^(x[1-2]?[0-9]|3[0-1])$"
 
 /* [sp], [sp, NUM] */
-#घोषणा SDT_OP_REGEX2  "^\\[sp(, )?([0-9]+)?\\]$"
+#define SDT_OP_REGEX2  "^\\[sp(, )?([0-9]+)?\\]$"
 
-अटल regex_t sdt_op_regex1, sdt_op_regex2;
+static regex_t sdt_op_regex1, sdt_op_regex2;
 
-अटल पूर्णांक sdt_init_op_regex(व्योम)
-अणु
-	अटल पूर्णांक initialized;
-	पूर्णांक ret = 0;
+static int sdt_init_op_regex(void)
+{
+	static int initialized;
+	int ret = 0;
 
-	अगर (initialized)
-		वापस 0;
+	if (initialized)
+		return 0;
 
 	ret = regcomp(&sdt_op_regex1, SDT_OP_REGEX1, REG_EXTENDED);
-	अगर (ret)
-		जाओ error;
+	if (ret)
+		goto error;
 
 	ret = regcomp(&sdt_op_regex2, SDT_OP_REGEX2, REG_EXTENDED);
-	अगर (ret)
-		जाओ मुक्त_regex1;
+	if (ret)
+		goto free_regex1;
 
 	initialized = 1;
-	वापस 0;
+	return 0;
 
-मुक्त_regex1:
-	regमुक्त(&sdt_op_regex1);
+free_regex1:
+	regfree(&sdt_op_regex1);
 error:
 	pr_debug4("Regex compilation error.\n");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * SDT marker arguments on Arm64 uses %xREG or [sp, NUM], currently
- * support these two क्रमmats.
+ * support these two formats.
  */
-पूर्णांक arch_sdt_arg_parse_op(अक्षर *old_op, अक्षर **new_op)
-अणु
-	पूर्णांक ret, new_len;
+int arch_sdt_arg_parse_op(char *old_op, char **new_op)
+{
+	int ret, new_len;
 	regmatch_t rm[5];
 
 	ret = sdt_init_op_regex();
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (!regexec(&sdt_op_regex1, old_op, 3, rm, 0)) अणु
+	if (!regexec(&sdt_op_regex1, old_op, 3, rm, 0)) {
 		/* Extract xNUM */
-		new_len = 2;	/* % शून्य */
-		new_len += (पूर्णांक)(rm[1].rm_eo - rm[1].rm_so);
+		new_len = 2;	/* % NULL */
+		new_len += (int)(rm[1].rm_eo - rm[1].rm_so);
 
 		*new_op = zalloc(new_len);
-		अगर (!*new_op)
-			वापस -ENOMEM;
+		if (!*new_op)
+			return -ENOMEM;
 
-		scnम_लिखो(*new_op, new_len, "%%%.*s",
-			(पूर्णांक)(rm[1].rm_eo - rm[1].rm_so), old_op + rm[1].rm_so);
-	पूर्ण अन्यथा अगर (!regexec(&sdt_op_regex2, old_op, 5, rm, 0)) अणु
+		scnprintf(*new_op, new_len, "%%%.*s",
+			(int)(rm[1].rm_eo - rm[1].rm_so), old_op + rm[1].rm_so);
+	} else if (!regexec(&sdt_op_regex2, old_op, 5, rm, 0)) {
 		/* [sp], [sp, NUM] or [sp,NUM] */
-		new_len = 7;	/* + ( % s p ) शून्य */
+		new_len = 7;	/* + ( % s p ) NULL */
 
 		/* If the argument is [sp], need to fill offset '0' */
-		अगर (rm[2].rm_so == -1)
+		if (rm[2].rm_so == -1)
 			new_len += 1;
-		अन्यथा
-			new_len += (पूर्णांक)(rm[2].rm_eo - rm[2].rm_so);
+		else
+			new_len += (int)(rm[2].rm_eo - rm[2].rm_so);
 
 		*new_op = zalloc(new_len);
-		अगर (!*new_op)
-			वापस -ENOMEM;
+		if (!*new_op)
+			return -ENOMEM;
 
-		अगर (rm[2].rm_so == -1)
-			scnम_लिखो(*new_op, new_len, "+0(%%sp)");
-		अन्यथा
-			scnम_लिखो(*new_op, new_len, "+%.*s(%%sp)",
-				  (पूर्णांक)(rm[2].rm_eo - rm[2].rm_so),
+		if (rm[2].rm_so == -1)
+			scnprintf(*new_op, new_len, "+0(%%sp)");
+		else
+			scnprintf(*new_op, new_len, "+%.*s(%%sp)",
+				  (int)(rm[2].rm_eo - rm[2].rm_so),
 				  old_op + rm[2].rm_so);
-	पूर्ण अन्यथा अणु
+	} else {
 		pr_debug4("Skipping unsupported SDT argument: %s\n", old_op);
-		वापस SDT_ARG_SKIP;
-	पूर्ण
+		return SDT_ARG_SKIP;
+	}
 
-	वापस SDT_ARG_VALID;
-पूर्ण
+	return SDT_ARG_VALID;
+}

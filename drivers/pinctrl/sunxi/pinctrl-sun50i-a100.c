@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2020 Yangtao Li <frank@allwinnertech.com>
  *
@@ -7,15 +6,15 @@
  * huangshuosheng <huangshuosheng@allwinnertech.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/pinctrl/pinctrl.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/pinctrl/pinctrl.h>
+#include <linux/platform_device.h>
 
-#समावेश "pinctrl-sunxi.h"
+#include "pinctrl-sunxi.h"
 
-अटल स्थिर काष्ठा sunxi_desc_pin a100_pins[] = अणु
+static const struct sunxi_desc_pin a100_pins[] = {
 	SUNXI_PIN(SUNXI_PINCTRL_PIN(B, 0),
 		  SUNXI_FUNCTION(0x0, "gpio_in"),
 		  SUNXI_FUNCTION(0x1, "gpio_out"),
@@ -676,34 +675,34 @@
 		  SUNXI_FUNCTION(0x4, "i2s3_din3"),	/* DIN3 */
 		  SUNXI_FUNCTION(0x5, "ledc"),
 		  SUNXI_FUNCTION_IRQ_BANK(0x6, 6, 19)),
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक a100_irq_bank_map[] = अणु 1, 2, 3, 4, 5, 6, 7पूर्ण;
+static const unsigned int a100_irq_bank_map[] = { 1, 2, 3, 4, 5, 6, 7};
 
-अटल स्थिर काष्ठा sunxi_pinctrl_desc a100_pinctrl_data = अणु
+static const struct sunxi_pinctrl_desc a100_pinctrl_data = {
 	.pins = a100_pins,
 	.npins = ARRAY_SIZE(a100_pins),
 	.irq_banks = 7,
 	.irq_bank_map = a100_irq_bank_map,
 	.io_bias_cfg_variant = BIAS_VOLTAGE_PIO_POW_MODE_SEL,
-पूर्ण;
+};
 
-अटल पूर्णांक a100_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस sunxi_pinctrl_init(pdev, &a100_pinctrl_data);
-पूर्ण
+static int a100_pinctrl_probe(struct platform_device *pdev)
+{
+	return sunxi_pinctrl_init(pdev, &a100_pinctrl_data);
+}
 
-अटल स्थिर काष्ठा of_device_id a100_pinctrl_match[] = अणु
-	अणु .compatible = "allwinner,sun50i-a100-pinctrl", पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id a100_pinctrl_match[] = {
+	{ .compatible = "allwinner,sun50i-a100-pinctrl", },
+	{}
+};
 MODULE_DEVICE_TABLE(of, a100_pinctrl_match);
 
-अटल काष्ठा platक्रमm_driver a100_pinctrl_driver = अणु
+static struct platform_driver a100_pinctrl_driver = {
 	.probe	= a100_pinctrl_probe,
-	.driver	= अणु
+	.driver	= {
 		.name		= "sun50i-a100-pinctrl",
 		.of_match_table	= a100_pinctrl_match,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(a100_pinctrl_driver);
+	},
+};
+module_platform_driver(a100_pinctrl_driver);

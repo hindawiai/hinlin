@@ -1,42 +1,41 @@
-<शैली गुरु>
 /*
  * Copyright(c) 2015 - 2020 Intel Corporation.
  *
  * This file is provided under a dual BSD/GPLv2 license.  When using or
- * redistributing this file, you may करो so under either license.
+ * redistributing this file, you may do so under either license.
  *
  * GPL LICENSE SUMMARY
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of version 2 of the GNU General Public License as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License क्रम more details.
+ * General Public License for more details.
  *
  * BSD LICENSE
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
  * are met:
  *
  *  - Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- *  - Redistributions in binary क्रमm must reproduce the above copyright
+ *  - Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
- *    the करोcumentation and/or other materials provided with the
+ *    the documentation and/or other materials provided with the
  *    distribution.
  *  - Neither the name of Intel Corporation nor the names of its
- *    contributors may be used to enकरोrse or promote products derived
- *    from this software without specअगरic prior written permission.
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -46,102 +45,102 @@
  *
  */
 
-#समावेश <linux/pci.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/xarray.h>
-#समावेश <linux/module.h>
-#समावेश <linux/prपूर्णांकk.h>
-#समावेश <linux/hrसमयr.h>
-#समावेश <linux/biपंचांगap.h>
-#समावेश <linux/numa.h>
-#समावेश <rdma/rdma_vt.h>
+#include <linux/pci.h>
+#include <linux/netdevice.h>
+#include <linux/vmalloc.h>
+#include <linux/delay.h>
+#include <linux/xarray.h>
+#include <linux/module.h>
+#include <linux/printk.h>
+#include <linux/hrtimer.h>
+#include <linux/bitmap.h>
+#include <linux/numa.h>
+#include <rdma/rdma_vt.h>
 
-#समावेश "hfi.h"
-#समावेश "device.h"
-#समावेश "common.h"
-#समावेश "trace.h"
-#समावेश "mad.h"
-#समावेश "sdma.h"
-#समावेश "debugfs.h"
-#समावेश "verbs.h"
-#समावेश "aspm.h"
-#समावेश "affinity.h"
-#समावेश "vnic.h"
-#समावेश "exp_rcv.h"
-#समावेश "netdev.h"
+#include "hfi.h"
+#include "device.h"
+#include "common.h"
+#include "trace.h"
+#include "mad.h"
+#include "sdma.h"
+#include "debugfs.h"
+#include "verbs.h"
+#include "aspm.h"
+#include "affinity.h"
+#include "vnic.h"
+#include "exp_rcv.h"
+#include "netdev.h"
 
-#अघोषित pr_fmt
-#घोषणा pr_fmt(fmt) DRIVER_NAME ": " fmt
+#undef pr_fmt
+#define pr_fmt(fmt) DRIVER_NAME ": " fmt
 
 /*
  * min buffers we want to have per context, after driver
  */
-#घोषणा HFI1_MIN_USER_CTXT_BUFCNT 7
+#define HFI1_MIN_USER_CTXT_BUFCNT 7
 
-#घोषणा HFI1_MIN_EAGER_BUFFER_SIZE (4 * 1024) /* 4KB */
-#घोषणा HFI1_MAX_EAGER_BUFFER_SIZE (256 * 1024) /* 256KB */
+#define HFI1_MIN_EAGER_BUFFER_SIZE (4 * 1024) /* 4KB */
+#define HFI1_MAX_EAGER_BUFFER_SIZE (256 * 1024) /* 256KB */
 
-#घोषणा NUM_IB_PORTS 1
+#define NUM_IB_PORTS 1
 
 /*
- * Number of user receive contexts we are configured to use (to allow क्रम more
+ * Number of user receive contexts we are configured to use (to allow for more
  * pio buffers per ctxt, etc.)  Zero means use one user context per CPU.
  */
-पूर्णांक num_user_contexts = -1;
-module_param_named(num_user_contexts, num_user_contexts, पूर्णांक, 0444);
+int num_user_contexts = -1;
+module_param_named(num_user_contexts, num_user_contexts, int, 0444);
 MODULE_PARM_DESC(
 	num_user_contexts, "Set max number of user contexts to use (default: -1 will use the real (non-HT) CPU count)");
 
-uपूर्णांक krcvqs[RXE_NUM_DATA_VL];
-पूर्णांक krcvqsset;
-module_param_array(krcvqs, uपूर्णांक, &krcvqsset, S_IRUGO);
+uint krcvqs[RXE_NUM_DATA_VL];
+int krcvqsset;
+module_param_array(krcvqs, uint, &krcvqsset, S_IRUGO);
 MODULE_PARM_DESC(krcvqs, "Array of the number of non-control kernel receive queues by VL");
 
 /* computed based on above array */
-अचिन्हित दीर्घ n_krcvqs;
+unsigned long n_krcvqs;
 
-अटल अचिन्हित hfi1_rcvarr_split = 25;
-module_param_named(rcvarr_split, hfi1_rcvarr_split, uपूर्णांक, S_IRUGO);
+static unsigned hfi1_rcvarr_split = 25;
+module_param_named(rcvarr_split, hfi1_rcvarr_split, uint, S_IRUGO);
 MODULE_PARM_DESC(rcvarr_split, "Percent of context's RcvArray entries used for Eager buffers");
 
-अटल uपूर्णांक eager_buffer_size = (8 << 20); /* 8MB */
-module_param(eager_buffer_size, uपूर्णांक, S_IRUGO);
+static uint eager_buffer_size = (8 << 20); /* 8MB */
+module_param(eager_buffer_size, uint, S_IRUGO);
 MODULE_PARM_DESC(eager_buffer_size, "Size of the eager buffers, default: 8MB");
 
-अटल uपूर्णांक rcvhdrcnt = 2048; /* 2x the max eager buffer count */
-module_param_named(rcvhdrcnt, rcvhdrcnt, uपूर्णांक, S_IRUGO);
+static uint rcvhdrcnt = 2048; /* 2x the max eager buffer count */
+module_param_named(rcvhdrcnt, rcvhdrcnt, uint, S_IRUGO);
 MODULE_PARM_DESC(rcvhdrcnt, "Receive header queue count (default 2048)");
 
-अटल uपूर्णांक hfi1_hdrq_entsize = 32;
-module_param_named(hdrq_entsize, hfi1_hdrq_entsize, uपूर्णांक, 0444);
+static uint hfi1_hdrq_entsize = 32;
+module_param_named(hdrq_entsize, hfi1_hdrq_entsize, uint, 0444);
 MODULE_PARM_DESC(hdrq_entsize, "Size of header queue entries: 2 - 8B, 16 - 64B, 32 - 128B (default)");
 
-अचिन्हित पूर्णांक user_credit_वापस_threshold = 33;	/* शेष is 33% */
-module_param(user_credit_वापस_threshold, uपूर्णांक, S_IRUGO);
-MODULE_PARM_DESC(user_credit_वापस_threshold, "Credit return threshold for user send contexts, return when unreturned credits passes this many blocks (in percent of allocated blocks, 0 is off)");
+unsigned int user_credit_return_threshold = 33;	/* default is 33% */
+module_param(user_credit_return_threshold, uint, S_IRUGO);
+MODULE_PARM_DESC(user_credit_return_threshold, "Credit return threshold for user send contexts, return when unreturned credits passes this many blocks (in percent of allocated blocks, 0 is off)");
 
 DEFINE_XARRAY_FLAGS(hfi1_dev_table, XA_FLAGS_ALLOC | XA_FLAGS_LOCK_IRQ);
 
-अटल पूर्णांक hfi1_create_kctxt(काष्ठा hfi1_devdata *dd,
-			     काष्ठा hfi1_pportdata *ppd)
-अणु
-	काष्ठा hfi1_ctxtdata *rcd;
-	पूर्णांक ret;
+static int hfi1_create_kctxt(struct hfi1_devdata *dd,
+			     struct hfi1_pportdata *ppd)
+{
+	struct hfi1_ctxtdata *rcd;
+	int ret;
 
 	/* Control context has to be always 0 */
 	BUILD_BUG_ON(HFI1_CTRL_CTXT != 0);
 
 	ret = hfi1_create_ctxtdata(ppd, dd->node, &rcd);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dd_dev_err(dd, "Kernel receive context allocation failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/*
 	 * Set up the kernel context flags here and now because they use
-	 * शेष values क्रम all receive side memories.  User contexts will
+	 * default values for all receive side memories.  User contexts will
 	 * be handled as they are created.
 	 */
 	rcd->flags = HFI1_CAP_KGET(MULTI_PKT_EGR) |
@@ -150,233 +149,233 @@ DEFINE_XARRAY_FLAGS(hfi1_dev_table, XA_FLAGS_ALLOC | XA_FLAGS_LOCK_IRQ);
 		HFI1_CAP_KGET(DMA_RTAIL);
 
 	/* Control context must use DMA_RTAIL */
-	अगर (rcd->ctxt == HFI1_CTRL_CTXT)
+	if (rcd->ctxt == HFI1_CTRL_CTXT)
 		rcd->flags |= HFI1_CAP_DMA_RTAIL;
 	rcd->fast_handler = get_dma_rtail_setting(rcd) ?
-				handle_receive_पूर्णांकerrupt_dma_rtail :
-				handle_receive_पूर्णांकerrupt_nodma_rtail;
-	rcd->slow_handler = handle_receive_पूर्णांकerrupt;
+				handle_receive_interrupt_dma_rtail :
+				handle_receive_interrupt_nodma_rtail;
+	rcd->slow_handler = handle_receive_interrupt;
 
 	hfi1_set_seq_cnt(rcd, 1);
 
 	rcd->sc = sc_alloc(dd, SC_ACK, rcd->rcvhdrqentsize, dd->node);
-	अगर (!rcd->sc) अणु
+	if (!rcd->sc) {
 		dd_dev_err(dd, "Kernel send context allocation failed\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	hfi1_init_ctxt(rcd->sc);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Create the receive context array and one or more kernel contexts
  */
-पूर्णांक hfi1_create_kctxts(काष्ठा hfi1_devdata *dd)
-अणु
+int hfi1_create_kctxts(struct hfi1_devdata *dd)
+{
 	u16 i;
-	पूर्णांक ret;
+	int ret;
 
-	dd->rcd = kसुस्मृति_node(dd->num_rcv_contexts, माप(*dd->rcd),
+	dd->rcd = kcalloc_node(dd->num_rcv_contexts, sizeof(*dd->rcd),
 			       GFP_KERNEL, dd->node);
-	अगर (!dd->rcd)
-		वापस -ENOMEM;
+	if (!dd->rcd)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < dd->first_dyn_alloc_ctxt; ++i) अणु
+	for (i = 0; i < dd->first_dyn_alloc_ctxt; ++i) {
 		ret = hfi1_create_kctxt(dd, dd->pport);
-		अगर (ret)
-			जाओ bail;
-	पूर्ण
+		if (ret)
+			goto bail;
+	}
 
-	वापस 0;
+	return 0;
 bail:
-	क्रम (i = 0; dd->rcd && i < dd->first_dyn_alloc_ctxt; ++i)
-		hfi1_मुक्त_ctxt(dd->rcd[i]);
+	for (i = 0; dd->rcd && i < dd->first_dyn_alloc_ctxt; ++i)
+		hfi1_free_ctxt(dd->rcd[i]);
 
-	/* All the contexts should be मुक्तd, मुक्त the array */
-	kमुक्त(dd->rcd);
-	dd->rcd = शून्य;
-	वापस ret;
-पूर्ण
+	/* All the contexts should be freed, free the array */
+	kfree(dd->rcd);
+	dd->rcd = NULL;
+	return ret;
+}
 
 /*
- * Helper routines क्रम the receive context reference count (rcd and uctxt).
+ * Helper routines for the receive context reference count (rcd and uctxt).
  */
-अटल व्योम hfi1_rcd_init(काष्ठा hfi1_ctxtdata *rcd)
-अणु
+static void hfi1_rcd_init(struct hfi1_ctxtdata *rcd)
+{
 	kref_init(&rcd->kref);
-पूर्ण
+}
 
 /**
- * hfi1_rcd_मुक्त - When reference is zero clean up.
- * @kref: poपूर्णांकer to an initialized rcd data काष्ठाure
+ * hfi1_rcd_free - When reference is zero clean up.
+ * @kref: pointer to an initialized rcd data structure
  *
  */
-अटल व्योम hfi1_rcd_मुक्त(काष्ठा kref *kref)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा hfi1_ctxtdata *rcd =
-		container_of(kref, काष्ठा hfi1_ctxtdata, kref);
+static void hfi1_rcd_free(struct kref *kref)
+{
+	unsigned long flags;
+	struct hfi1_ctxtdata *rcd =
+		container_of(kref, struct hfi1_ctxtdata, kref);
 
 	spin_lock_irqsave(&rcd->dd->uctxt_lock, flags);
-	rcd->dd->rcd[rcd->ctxt] = शून्य;
+	rcd->dd->rcd[rcd->ctxt] = NULL;
 	spin_unlock_irqrestore(&rcd->dd->uctxt_lock, flags);
 
-	hfi1_मुक्त_ctxtdata(rcd->dd, rcd);
+	hfi1_free_ctxtdata(rcd->dd, rcd);
 
-	kमुक्त(rcd);
-पूर्ण
+	kfree(rcd);
+}
 
 /**
- * hfi1_rcd_put - decrement reference क्रम rcd
- * @rcd: poपूर्णांकer to an initialized rcd data काष्ठाure
+ * hfi1_rcd_put - decrement reference for rcd
+ * @rcd: pointer to an initialized rcd data structure
  *
  * Use this to put a reference after the init.
  */
-पूर्णांक hfi1_rcd_put(काष्ठा hfi1_ctxtdata *rcd)
-अणु
-	अगर (rcd)
-		वापस kref_put(&rcd->kref, hfi1_rcd_मुक्त);
+int hfi1_rcd_put(struct hfi1_ctxtdata *rcd)
+{
+	if (rcd)
+		return kref_put(&rcd->kref, hfi1_rcd_free);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * hfi1_rcd_get - increment reference क्रम rcd
- * @rcd: poपूर्णांकer to an initialized rcd data काष्ठाure
+ * hfi1_rcd_get - increment reference for rcd
+ * @rcd: pointer to an initialized rcd data structure
  *
  * Use this to get a reference after the init.
  *
- * Return : reflect kref_get_unless_zero(), which वापसs non-zero on
+ * Return : reflect kref_get_unless_zero(), which returns non-zero on
  * increment, otherwise 0.
  */
-पूर्णांक hfi1_rcd_get(काष्ठा hfi1_ctxtdata *rcd)
-अणु
-	वापस kref_get_unless_zero(&rcd->kref);
-पूर्ण
+int hfi1_rcd_get(struct hfi1_ctxtdata *rcd)
+{
+	return kref_get_unless_zero(&rcd->kref);
+}
 
 /**
  * allocate_rcd_index - allocate an rcd index from the rcd array
- * @dd: poपूर्णांकer to a valid devdata काष्ठाure
- * @rcd: rcd data काष्ठाure to assign
- * @index: poपूर्णांकer to index that is allocated
+ * @dd: pointer to a valid devdata structure
+ * @rcd: rcd data structure to assign
+ * @index: pointer to index that is allocated
  *
  * Find an empty index in the rcd array, and assign the given rcd to it.
  * If the array is full, we are EBUSY.
  *
  */
-अटल पूर्णांक allocate_rcd_index(काष्ठा hfi1_devdata *dd,
-			      काष्ठा hfi1_ctxtdata *rcd, u16 *index)
-अणु
-	अचिन्हित दीर्घ flags;
+static int allocate_rcd_index(struct hfi1_devdata *dd,
+			      struct hfi1_ctxtdata *rcd, u16 *index)
+{
+	unsigned long flags;
 	u16 ctxt;
 
 	spin_lock_irqsave(&dd->uctxt_lock, flags);
-	क्रम (ctxt = 0; ctxt < dd->num_rcv_contexts; ctxt++)
-		अगर (!dd->rcd[ctxt])
-			अवरोध;
+	for (ctxt = 0; ctxt < dd->num_rcv_contexts; ctxt++)
+		if (!dd->rcd[ctxt])
+			break;
 
-	अगर (ctxt < dd->num_rcv_contexts) अणु
+	if (ctxt < dd->num_rcv_contexts) {
 		rcd->ctxt = ctxt;
 		dd->rcd[ctxt] = rcd;
 		hfi1_rcd_init(rcd);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&dd->uctxt_lock, flags);
 
-	अगर (ctxt >= dd->num_rcv_contexts)
-		वापस -EBUSY;
+	if (ctxt >= dd->num_rcv_contexts)
+		return -EBUSY;
 
 	*index = ctxt;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * hfi1_rcd_get_by_index_safe - validate the ctxt index beक्रमe accessing the
+ * hfi1_rcd_get_by_index_safe - validate the ctxt index before accessing the
  * array
- * @dd: poपूर्णांकer to a valid devdata काष्ठाure
+ * @dd: pointer to a valid devdata structure
  * @ctxt: the index of an possilbe rcd
  *
- * This is a wrapper क्रम hfi1_rcd_get_by_index() to validate that the given
+ * This is a wrapper for hfi1_rcd_get_by_index() to validate that the given
  * ctxt index is valid.
  *
- * The caller is responsible क्रम making the _put().
+ * The caller is responsible for making the _put().
  *
  */
-काष्ठा hfi1_ctxtdata *hfi1_rcd_get_by_index_safe(काष्ठा hfi1_devdata *dd,
+struct hfi1_ctxtdata *hfi1_rcd_get_by_index_safe(struct hfi1_devdata *dd,
 						 u16 ctxt)
-अणु
-	अगर (ctxt < dd->num_rcv_contexts)
-		वापस hfi1_rcd_get_by_index(dd, ctxt);
+{
+	if (ctxt < dd->num_rcv_contexts)
+		return hfi1_rcd_get_by_index(dd, ctxt);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /**
  * hfi1_rcd_get_by_index
- * @dd: poपूर्णांकer to a valid devdata काष्ठाure
+ * @dd: pointer to a valid devdata structure
  * @ctxt: the index of an possilbe rcd
  *
  * We need to protect access to the rcd array.  If access is needed to
  * one or more index, get the protecting spinlock and then increment the
  * kref.
  *
- * The caller is responsible क्रम making the _put().
+ * The caller is responsible for making the _put().
  *
  */
-काष्ठा hfi1_ctxtdata *hfi1_rcd_get_by_index(काष्ठा hfi1_devdata *dd, u16 ctxt)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा hfi1_ctxtdata *rcd = शून्य;
+struct hfi1_ctxtdata *hfi1_rcd_get_by_index(struct hfi1_devdata *dd, u16 ctxt)
+{
+	unsigned long flags;
+	struct hfi1_ctxtdata *rcd = NULL;
 
 	spin_lock_irqsave(&dd->uctxt_lock, flags);
-	अगर (dd->rcd[ctxt]) अणु
+	if (dd->rcd[ctxt]) {
 		rcd = dd->rcd[ctxt];
-		अगर (!hfi1_rcd_get(rcd))
-			rcd = शून्य;
-	पूर्ण
+		if (!hfi1_rcd_get(rcd))
+			rcd = NULL;
+	}
 	spin_unlock_irqrestore(&dd->uctxt_lock, flags);
 
-	वापस rcd;
-पूर्ण
+	return rcd;
+}
 
 /*
- * Common code क्रम user and kernel context create and setup.
- * NOTE: the initial kref is करोne here (hf1_rcd_init()).
+ * Common code for user and kernel context create and setup.
+ * NOTE: the initial kref is done here (hf1_rcd_init()).
  */
-पूर्णांक hfi1_create_ctxtdata(काष्ठा hfi1_pportdata *ppd, पूर्णांक numa,
-			 काष्ठा hfi1_ctxtdata **context)
-अणु
-	काष्ठा hfi1_devdata *dd = ppd->dd;
-	काष्ठा hfi1_ctxtdata *rcd;
-	अचिन्हित kctxt_ngroups = 0;
+int hfi1_create_ctxtdata(struct hfi1_pportdata *ppd, int numa,
+			 struct hfi1_ctxtdata **context)
+{
+	struct hfi1_devdata *dd = ppd->dd;
+	struct hfi1_ctxtdata *rcd;
+	unsigned kctxt_ngroups = 0;
 	u32 base;
 
-	अगर (dd->rcv_entries.nctxt_extra >
+	if (dd->rcv_entries.nctxt_extra >
 	    dd->num_rcv_contexts - dd->first_dyn_alloc_ctxt)
 		kctxt_ngroups = (dd->rcv_entries.nctxt_extra -
 			 (dd->num_rcv_contexts - dd->first_dyn_alloc_ctxt));
-	rcd = kzalloc_node(माप(*rcd), GFP_KERNEL, numa);
-	अगर (rcd) अणु
+	rcd = kzalloc_node(sizeof(*rcd), GFP_KERNEL, numa);
+	if (rcd) {
 		u32 rcvtids, max_entries;
 		u16 ctxt;
-		पूर्णांक ret;
+		int ret;
 
 		ret = allocate_rcd_index(dd, rcd, &ctxt);
-		अगर (ret) अणु
-			*context = शून्य;
-			kमुक्त(rcd);
-			वापस ret;
-		पूर्ण
+		if (ret) {
+			*context = NULL;
+			kfree(rcd);
+			return ret;
+		}
 
-		INIT_LIST_HEAD(&rcd->qp_रुको_list);
+		INIT_LIST_HEAD(&rcd->qp_wait_list);
 		hfi1_exp_tid_group_init(rcd);
 		rcd->ppd = ppd;
 		rcd->dd = dd;
 		rcd->numa_id = numa;
 		rcd->rcv_array_groups = dd->rcv_entries.ngroups;
 		rcd->rhf_rcv_function_map = normal_rhf_rcv_functions;
-		rcd->msix_पूर्णांकr = CCE_NUM_MSIX_VECTORS;
+		rcd->msix_intr = CCE_NUM_MSIX_VECTORS;
 
 		mutex_init(&rcd->exp_mutex);
 		spin_lock_init(&rcd->exp_lock);
@@ -386,45 +385,45 @@ bail:
 		hfi1_cdbg(PROC, "setting up context %u\n", rcd->ctxt);
 
 		/*
-		 * Calculate the context's RcvArray entry starting poपूर्णांक.
-		 * We करो this here because we have to take पूर्णांकo account all
+		 * Calculate the context's RcvArray entry starting point.
+		 * We do this here because we have to take into account all
 		 * the RcvArray entries that previous context would have
-		 * taken and we have to account क्रम any extra groups asचिन्हित
-		 * to the अटल (kernel) or dynamic (vnic/user) contexts.
+		 * taken and we have to account for any extra groups assigned
+		 * to the static (kernel) or dynamic (vnic/user) contexts.
 		 */
-		अगर (ctxt < dd->first_dyn_alloc_ctxt) अणु
-			अगर (ctxt < kctxt_ngroups) अणु
+		if (ctxt < dd->first_dyn_alloc_ctxt) {
+			if (ctxt < kctxt_ngroups) {
 				base = ctxt * (dd->rcv_entries.ngroups + 1);
 				rcd->rcv_array_groups++;
-			पूर्ण अन्यथा अणु
+			} else {
 				base = kctxt_ngroups +
 					(ctxt * dd->rcv_entries.ngroups);
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			u16 ct = ctxt - dd->first_dyn_alloc_ctxt;
 
 			base = ((dd->n_krcv_queues * dd->rcv_entries.ngroups) +
 				kctxt_ngroups);
-			अगर (ct < dd->rcv_entries.nctxt_extra) अणु
+			if (ct < dd->rcv_entries.nctxt_extra) {
 				base += ct * (dd->rcv_entries.ngroups + 1);
 				rcd->rcv_array_groups++;
-			पूर्ण अन्यथा अणु
+			} else {
 				base += dd->rcv_entries.nctxt_extra +
 					(ct * dd->rcv_entries.ngroups);
-			पूर्ण
-		पूर्ण
+			}
+		}
 		rcd->eager_base = base * dd->rcv_entries.group_size;
 
 		rcd->rcvhdrq_cnt = rcvhdrcnt;
 		rcd->rcvhdrqentsize = hfi1_hdrq_entsize;
 		rcd->rhf_offset =
-			rcd->rcvhdrqentsize - माप(u64) / माप(u32);
+			rcd->rcvhdrqentsize - sizeof(u64) / sizeof(u32);
 		/*
-		 * Simple Eager buffer allocation: we have alपढ़ोy pre-allocated
-		 * the number of RcvArray entry groups. Each ctxtdata काष्ठाure
-		 * holds the number of groups क्रम that context.
+		 * Simple Eager buffer allocation: we have already pre-allocated
+		 * the number of RcvArray entry groups. Each ctxtdata structure
+		 * holds the number of groups for that context.
 		 *
-		 * To follow CSR requirements and मुख्यtain cacheline alignment,
+		 * To follow CSR requirements and maintain cacheline alignment,
 		 * make sure all sizes and bases are multiples of group_size.
 		 *
 		 * The expected entry count is what is left after assigning
@@ -433,13 +432,13 @@ bail:
 		max_entries = rcd->rcv_array_groups *
 			dd->rcv_entries.group_size;
 		rcvtids = ((max_entries * hfi1_rcvarr_split) / 100);
-		rcd->egrbufs.count = round_करोwn(rcvtids,
+		rcd->egrbufs.count = round_down(rcvtids,
 						dd->rcv_entries.group_size);
-		अगर (rcd->egrbufs.count > MAX_EAGER_ENTRIES) अणु
+		if (rcd->egrbufs.count > MAX_EAGER_ENTRIES) {
 			dd_dev_err(dd, "ctxt%u: requested too many RcvArray entries.\n",
 				   rcd->ctxt);
 			rcd->egrbufs.count = MAX_EAGER_ENTRIES;
-		पूर्ण
+		}
 		hfi1_cdbg(PROC,
 			  "ctxt%u: max Eager buffer RcvArray entries: %u\n",
 			  rcd->ctxt, rcd->egrbufs.count);
@@ -449,190 +448,190 @@ bail:
 		 * data.
 		 * This will allocate the maximum possible buffer count based
 		 * on the value of the RcvArray split parameter.
-		 * The resulting value will be rounded करोwn to the बंदst
+		 * The resulting value will be rounded down to the closest
 		 * multiple of dd->rcv_entries.group_size.
 		 */
 		rcd->egrbufs.buffers =
-			kसुस्मृति_node(rcd->egrbufs.count,
-				     माप(*rcd->egrbufs.buffers),
+			kcalloc_node(rcd->egrbufs.count,
+				     sizeof(*rcd->egrbufs.buffers),
 				     GFP_KERNEL, numa);
-		अगर (!rcd->egrbufs.buffers)
-			जाओ bail;
+		if (!rcd->egrbufs.buffers)
+			goto bail;
 		rcd->egrbufs.rcvtids =
-			kसुस्मृति_node(rcd->egrbufs.count,
-				     माप(*rcd->egrbufs.rcvtids),
+			kcalloc_node(rcd->egrbufs.count,
+				     sizeof(*rcd->egrbufs.rcvtids),
 				     GFP_KERNEL, numa);
-		अगर (!rcd->egrbufs.rcvtids)
-			जाओ bail;
+		if (!rcd->egrbufs.rcvtids)
+			goto bail;
 		rcd->egrbufs.size = eager_buffer_size;
 		/*
-		 * The size of the buffers programmed पूर्णांकo the RcvArray
+		 * The size of the buffers programmed into the RcvArray
 		 * entries needs to be big enough to handle the highest
 		 * MTU supported.
 		 */
-		अगर (rcd->egrbufs.size < hfi1_max_mtu) अणु
-			rcd->egrbufs.size = __roundup_घात_of_two(hfi1_max_mtu);
+		if (rcd->egrbufs.size < hfi1_max_mtu) {
+			rcd->egrbufs.size = __roundup_pow_of_two(hfi1_max_mtu);
 			hfi1_cdbg(PROC,
 				  "ctxt%u: eager bufs size too small. Adjusting to %u\n",
 				    rcd->ctxt, rcd->egrbufs.size);
-		पूर्ण
+		}
 		rcd->egrbufs.rcvtid_size = HFI1_MAX_EAGER_BUFFER_SIZE;
 
-		/* Applicable only क्रम अटलally created kernel contexts */
-		अगर (ctxt < dd->first_dyn_alloc_ctxt) अणु
-			rcd->opstats = kzalloc_node(माप(*rcd->opstats),
+		/* Applicable only for statically created kernel contexts */
+		if (ctxt < dd->first_dyn_alloc_ctxt) {
+			rcd->opstats = kzalloc_node(sizeof(*rcd->opstats),
 						    GFP_KERNEL, numa);
-			अगर (!rcd->opstats)
-				जाओ bail;
+			if (!rcd->opstats)
+				goto bail;
 
-			/* Initialize TID flow generations क्रम the context */
+			/* Initialize TID flow generations for the context */
 			hfi1_kern_init_ctxt_generations(rcd);
-		पूर्ण
+		}
 
 		*context = rcd;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 bail:
-	*context = शून्य;
-	hfi1_मुक्त_ctxt(rcd);
-	वापस -ENOMEM;
-पूर्ण
+	*context = NULL;
+	hfi1_free_ctxt(rcd);
+	return -ENOMEM;
+}
 
 /**
- * hfi1_मुक्त_ctxt
- * @rcd: poपूर्णांकer to an initialized rcd data काष्ठाure
+ * hfi1_free_ctxt
+ * @rcd: pointer to an initialized rcd data structure
  *
- * This wrapper is the मुक्त function that matches hfi1_create_ctxtdata().
- * When a context is करोne being used (kernel or user), this function is called
- * क्रम the "final" put to match the kref init from hf1i_create_ctxtdata().
- * Other users of the context करो a get/put sequence to make sure that the
- * काष्ठाure isn't हटाओd जबतक in use.
+ * This wrapper is the free function that matches hfi1_create_ctxtdata().
+ * When a context is done being used (kernel or user), this function is called
+ * for the "final" put to match the kref init from hf1i_create_ctxtdata().
+ * Other users of the context do a get/put sequence to make sure that the
+ * structure isn't removed while in use.
  */
-व्योम hfi1_मुक्त_ctxt(काष्ठा hfi1_ctxtdata *rcd)
-अणु
+void hfi1_free_ctxt(struct hfi1_ctxtdata *rcd)
+{
 	hfi1_rcd_put(rcd);
-पूर्ण
+}
 
 /*
- * Select the largest ccti value over all SLs to determine the पूर्णांकra-
- * packet gap क्रम the link.
+ * Select the largest ccti value over all SLs to determine the intra-
+ * packet gap for the link.
  *
- * called with cca_समयr_lock held (to protect access to cca_समयr
- * array), and rcu_पढ़ो_lock() (to protect access to cc_state).
+ * called with cca_timer_lock held (to protect access to cca_timer
+ * array), and rcu_read_lock() (to protect access to cc_state).
  */
-व्योम set_link_ipg(काष्ठा hfi1_pportdata *ppd)
-अणु
-	काष्ठा hfi1_devdata *dd = ppd->dd;
-	काष्ठा cc_state *cc_state;
-	पूर्णांक i;
+void set_link_ipg(struct hfi1_pportdata *ppd)
+{
+	struct hfi1_devdata *dd = ppd->dd;
+	struct cc_state *cc_state;
+	int i;
 	u16 cce, ccti_limit, max_ccti = 0;
-	u16 shअगरt, mult;
+	u16 shift, mult;
 	u64 src;
 	u32 current_egress_rate; /* Mbits /sec */
-	u32 max_pkt_समय;
+	u32 max_pkt_time;
 	/*
-	 * max_pkt_समय is the maximum packet egress समय in units
-	 * of the fabric घड़ी period 1/(805 MHz).
+	 * max_pkt_time is the maximum packet egress time in units
+	 * of the fabric clock period 1/(805 MHz).
 	 */
 
 	cc_state = get_cc_state(ppd);
 
-	अगर (!cc_state)
+	if (!cc_state)
 		/*
-		 * This should _never_ happen - rcu_पढ़ो_lock() is held,
-		 * and set_link_ipg() should not be called अगर cc_state
-		 * is शून्य.
+		 * This should _never_ happen - rcu_read_lock() is held,
+		 * and set_link_ipg() should not be called if cc_state
+		 * is NULL.
 		 */
-		वापस;
+		return;
 
-	क्रम (i = 0; i < OPA_MAX_SLS; i++) अणु
-		u16 ccti = ppd->cca_समयr[i].ccti;
+	for (i = 0; i < OPA_MAX_SLS; i++) {
+		u16 ccti = ppd->cca_timer[i].ccti;
 
-		अगर (ccti > max_ccti)
+		if (ccti > max_ccti)
 			max_ccti = ccti;
-	पूर्ण
+	}
 
 	ccti_limit = cc_state->cct.ccti_limit;
-	अगर (max_ccti > ccti_limit)
+	if (max_ccti > ccti_limit)
 		max_ccti = ccti_limit;
 
 	cce = cc_state->cct.entries[max_ccti].entry;
-	shअगरt = (cce & 0xc000) >> 14;
+	shift = (cce & 0xc000) >> 14;
 	mult = (cce & 0x3fff);
 
 	current_egress_rate = active_egress_rate(ppd);
 
-	max_pkt_समय = egress_cycles(ppd->ibmaxlen, current_egress_rate);
+	max_pkt_time = egress_cycles(ppd->ibmaxlen, current_egress_rate);
 
-	src = (max_pkt_समय >> shअगरt) * mult;
+	src = (max_pkt_time >> shift) * mult;
 
 	src &= SEND_STATIC_RATE_CONTROL_CSR_SRC_RELOAD_SMASK;
 	src <<= SEND_STATIC_RATE_CONTROL_CSR_SRC_RELOAD_SHIFT;
 
-	ग_लिखो_csr(dd, SEND_STATIC_RATE_CONTROL, src);
-पूर्ण
+	write_csr(dd, SEND_STATIC_RATE_CONTROL, src);
+}
 
-अटल क्रमागत hrसमयr_restart cca_समयr_fn(काष्ठा hrसमयr *t)
-अणु
-	काष्ठा cca_समयr *cca_समयr;
-	काष्ठा hfi1_pportdata *ppd;
-	पूर्णांक sl;
-	u16 ccti_समयr, ccti_min;
-	काष्ठा cc_state *cc_state;
-	अचिन्हित दीर्घ flags;
-	क्रमागत hrसमयr_restart ret = HRTIMER_NORESTART;
+static enum hrtimer_restart cca_timer_fn(struct hrtimer *t)
+{
+	struct cca_timer *cca_timer;
+	struct hfi1_pportdata *ppd;
+	int sl;
+	u16 ccti_timer, ccti_min;
+	struct cc_state *cc_state;
+	unsigned long flags;
+	enum hrtimer_restart ret = HRTIMER_NORESTART;
 
-	cca_समयr = container_of(t, काष्ठा cca_समयr, hrसमयr);
-	ppd = cca_समयr->ppd;
-	sl = cca_समयr->sl;
+	cca_timer = container_of(t, struct cca_timer, hrtimer);
+	ppd = cca_timer->ppd;
+	sl = cca_timer->sl;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
 	cc_state = get_cc_state(ppd);
 
-	अगर (!cc_state) अणु
-		rcu_पढ़ो_unlock();
-		वापस HRTIMER_NORESTART;
-	पूर्ण
+	if (!cc_state) {
+		rcu_read_unlock();
+		return HRTIMER_NORESTART;
+	}
 
 	/*
-	 * 1) decrement ccti क्रम SL
-	 * 2) calculate IPG क्रम link (set_link_ipg())
-	 * 3) restart समयr, unless ccti is at min value
+	 * 1) decrement ccti for SL
+	 * 2) calculate IPG for link (set_link_ipg())
+	 * 3) restart timer, unless ccti is at min value
 	 */
 
 	ccti_min = cc_state->cong_setting.entries[sl].ccti_min;
-	ccti_समयr = cc_state->cong_setting.entries[sl].ccti_समयr;
+	ccti_timer = cc_state->cong_setting.entries[sl].ccti_timer;
 
-	spin_lock_irqsave(&ppd->cca_समयr_lock, flags);
+	spin_lock_irqsave(&ppd->cca_timer_lock, flags);
 
-	अगर (cca_समयr->ccti > ccti_min) अणु
-		cca_समयr->ccti--;
+	if (cca_timer->ccti > ccti_min) {
+		cca_timer->ccti--;
 		set_link_ipg(ppd);
-	पूर्ण
+	}
 
-	अगर (cca_समयr->ccti > ccti_min) अणु
-		अचिन्हित दीर्घ nsec = 1024 * ccti_समयr;
-		/* ccti_समयr is in units of 1.024 usec */
-		hrसमयr_क्रमward_now(t, ns_to_kसमय(nsec));
+	if (cca_timer->ccti > ccti_min) {
+		unsigned long nsec = 1024 * ccti_timer;
+		/* ccti_timer is in units of 1.024 usec */
+		hrtimer_forward_now(t, ns_to_ktime(nsec));
 		ret = HRTIMER_RESTART;
-	पूर्ण
+	}
 
-	spin_unlock_irqrestore(&ppd->cca_समयr_lock, flags);
-	rcu_पढ़ो_unlock();
-	वापस ret;
-पूर्ण
+	spin_unlock_irqrestore(&ppd->cca_timer_lock, flags);
+	rcu_read_unlock();
+	return ret;
+}
 
 /*
- * Common code क्रम initializing the physical port काष्ठाure.
+ * Common code for initializing the physical port structure.
  */
-व्योम hfi1_init_pportdata(काष्ठा pci_dev *pdev, काष्ठा hfi1_pportdata *ppd,
-			 काष्ठा hfi1_devdata *dd, u8 hw_pidx, u32 port)
-अणु
-	पूर्णांक i;
-	uपूर्णांक शेष_pkey_idx;
-	काष्ठा cc_state *cc_state;
+void hfi1_init_pportdata(struct pci_dev *pdev, struct hfi1_pportdata *ppd,
+			 struct hfi1_devdata *dd, u8 hw_pidx, u32 port)
+{
+	int i;
+	uint default_pkey_idx;
+	struct cc_state *cc_state;
 
 	ppd->dd = dd;
 	ppd->hw_pidx = hw_pidx;
@@ -642,31 +641,31 @@ bail:
 	 * There are C_VL_COUNT number of PortVLXmitWait counters.
 	 * Adding 1 to C_VL_COUNT to include the PortXmitWait counter.
 	 */
-	क्रम (i = 0; i < C_VL_COUNT + 1; i++) अणु
-		ppd->port_vl_xmit_रुको_last[i] = 0;
+	for (i = 0; i < C_VL_COUNT + 1; i++) {
+		ppd->port_vl_xmit_wait_last[i] = 0;
 		ppd->vl_xmit_flit_cnt[i] = 0;
-	पूर्ण
+	}
 
-	शेष_pkey_idx = 1;
+	default_pkey_idx = 1;
 
-	ppd->pkeys[शेष_pkey_idx] = DEFAULT_P_KEY;
-	ppd->part_enक्रमce |= HFI1_PART_ENFORCE_IN;
+	ppd->pkeys[default_pkey_idx] = DEFAULT_P_KEY;
+	ppd->part_enforce |= HFI1_PART_ENFORCE_IN;
 
-	अगर (loopback) अणु
+	if (loopback) {
 		dd_dev_err(dd, "Faking data partition 0x8001 in idx %u\n",
-			   !शेष_pkey_idx);
-		ppd->pkeys[!शेष_pkey_idx] = 0x8001;
-	पूर्ण
+			   !default_pkey_idx);
+		ppd->pkeys[!default_pkey_idx] = 0x8001;
+	}
 
-	INIT_WORK(&ppd->link_vc_work, handle_verअगरy_cap);
+	INIT_WORK(&ppd->link_vc_work, handle_verify_cap);
 	INIT_WORK(&ppd->link_up_work, handle_link_up);
-	INIT_WORK(&ppd->link_करोwn_work, handle_link_करोwn);
-	INIT_WORK(&ppd->मुक्तze_work, handle_मुक्तze);
-	INIT_WORK(&ppd->link_करोwngrade_work, handle_link_करोwngrade);
+	INIT_WORK(&ppd->link_down_work, handle_link_down);
+	INIT_WORK(&ppd->freeze_work, handle_freeze);
+	INIT_WORK(&ppd->link_downgrade_work, handle_link_downgrade);
 	INIT_WORK(&ppd->sma_message_work, handle_sma_message);
 	INIT_WORK(&ppd->link_bounce_work, handle_link_bounce);
 	INIT_DELAYED_WORK(&ppd->start_link_work, handle_start_link);
-	INIT_WORK(&ppd->linkstate_active_work, receive_पूर्णांकerrupt_work);
+	INIT_WORK(&ppd->linkstate_active_work, receive_interrupt_work);
 	INIT_WORK(&ppd->qsfp_info.qsfp_work, qsfp_event);
 
 	mutex_init(&ppd->hls_lock);
@@ -676,76 +675,76 @@ bail:
 	ppd->sm_trap_qp = 0x0;
 	ppd->sa_qp = 0x1;
 
-	ppd->hfi1_wq = शून्य;
+	ppd->hfi1_wq = NULL;
 
-	spin_lock_init(&ppd->cca_समयr_lock);
+	spin_lock_init(&ppd->cca_timer_lock);
 
-	क्रम (i = 0; i < OPA_MAX_SLS; i++) अणु
-		hrसमयr_init(&ppd->cca_समयr[i].hrसमयr, CLOCK_MONOTONIC,
+	for (i = 0; i < OPA_MAX_SLS; i++) {
+		hrtimer_init(&ppd->cca_timer[i].hrtimer, CLOCK_MONOTONIC,
 			     HRTIMER_MODE_REL);
-		ppd->cca_समयr[i].ppd = ppd;
-		ppd->cca_समयr[i].sl = i;
-		ppd->cca_समयr[i].ccti = 0;
-		ppd->cca_समयr[i].hrसमयr.function = cca_समयr_fn;
-	पूर्ण
+		ppd->cca_timer[i].ppd = ppd;
+		ppd->cca_timer[i].sl = i;
+		ppd->cca_timer[i].ccti = 0;
+		ppd->cca_timer[i].hrtimer.function = cca_timer_fn;
+	}
 
 	ppd->cc_max_table_entries = IB_CC_TABLE_CAP_DEFAULT;
 
 	spin_lock_init(&ppd->cc_state_lock);
 	spin_lock_init(&ppd->cc_log_lock);
-	cc_state = kzalloc(माप(*cc_state), GFP_KERNEL);
+	cc_state = kzalloc(sizeof(*cc_state), GFP_KERNEL);
 	RCU_INIT_POINTER(ppd->cc_state, cc_state);
-	अगर (!cc_state)
-		जाओ bail;
-	वापस;
+	if (!cc_state)
+		goto bail;
+	return;
 
 bail:
 	dd_dev_err(dd, "Congestion Control Agent disabled for port %d\n", port);
-पूर्ण
+}
 
 /*
- * Do initialization क्रम device that is only needed on
+ * Do initialization for device that is only needed on
  * first detect, not on resets.
  */
-अटल पूर्णांक loadसमय_init(काष्ठा hfi1_devdata *dd)
-अणु
-	वापस 0;
-पूर्ण
+static int loadtime_init(struct hfi1_devdata *dd)
+{
+	return 0;
+}
 
 /**
  * init_after_reset - re-initialize after a reset
  * @dd: the hfi1_ib device
  *
  * sanity check at least some of the values after reset, and
- * ensure no receive or transmit (explicitly, in हाल reset
+ * ensure no receive or transmit (explicitly, in case reset
  * failed
  */
-अटल पूर्णांक init_after_reset(काष्ठा hfi1_devdata *dd)
-अणु
-	पूर्णांक i;
-	काष्ठा hfi1_ctxtdata *rcd;
+static int init_after_reset(struct hfi1_devdata *dd)
+{
+	int i;
+	struct hfi1_ctxtdata *rcd;
 	/*
-	 * Ensure chip करोes no sends or receives, tail updates, or
-	 * pioavail updates जबतक we re-initialize.  This is mostly
-	 * क्रम the driver data काष्ठाures, not chip रेजिस्टरs.
+	 * Ensure chip does no sends or receives, tail updates, or
+	 * pioavail updates while we re-initialize.  This is mostly
+	 * for the driver data structures, not chip registers.
 	 */
-	क्रम (i = 0; i < dd->num_rcv_contexts; i++) अणु
+	for (i = 0; i < dd->num_rcv_contexts; i++) {
 		rcd = hfi1_rcd_get_by_index(dd, i);
 		hfi1_rcvctrl(dd, HFI1_RCVCTRL_CTXT_DIS |
 			     HFI1_RCVCTRL_INTRAVAIL_DIS |
 			     HFI1_RCVCTRL_TAILUPD_DIS, rcd);
 		hfi1_rcd_put(rcd);
-	पूर्ण
+	}
 	pio_send_control(dd, PSC_GLOBAL_DISABLE);
-	क्रम (i = 0; i < dd->num_send_contexts; i++)
+	for (i = 0; i < dd->num_send_contexts; i++)
 		sc_disable(dd->send_contexts[i].sc);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम enable_chip(काष्ठा hfi1_devdata *dd)
-अणु
-	काष्ठा hfi1_ctxtdata *rcd;
+static void enable_chip(struct hfi1_devdata *dd)
+{
+	struct hfi1_ctxtdata *rcd;
 	u32 rcvmask;
 	u16 i;
 
@@ -753,42 +752,42 @@ bail:
 	pio_send_control(dd, PSC_GLOBAL_ENABLE);
 
 	/*
-	 * Enable kernel ctxts' receive and receive पूर्णांकerrupt.
-	 * Other ctxts करोne as user खोलोs and initializes them.
+	 * Enable kernel ctxts' receive and receive interrupt.
+	 * Other ctxts done as user opens and initializes them.
 	 */
-	क्रम (i = 0; i < dd->first_dyn_alloc_ctxt; ++i) अणु
+	for (i = 0; i < dd->first_dyn_alloc_ctxt; ++i) {
 		rcd = hfi1_rcd_get_by_index(dd, i);
-		अगर (!rcd)
-			जारी;
+		if (!rcd)
+			continue;
 		rcvmask = HFI1_RCVCTRL_CTXT_ENB | HFI1_RCVCTRL_INTRAVAIL_ENB;
 		rcvmask |= HFI1_CAP_KGET_MASK(rcd->flags, DMA_RTAIL) ?
 			HFI1_RCVCTRL_TAILUPD_ENB : HFI1_RCVCTRL_TAILUPD_DIS;
-		अगर (!HFI1_CAP_KGET_MASK(rcd->flags, MULTI_PKT_EGR))
+		if (!HFI1_CAP_KGET_MASK(rcd->flags, MULTI_PKT_EGR))
 			rcvmask |= HFI1_RCVCTRL_ONE_PKT_EGR_ENB;
-		अगर (HFI1_CAP_KGET_MASK(rcd->flags, NODROP_RHQ_FULL))
+		if (HFI1_CAP_KGET_MASK(rcd->flags, NODROP_RHQ_FULL))
 			rcvmask |= HFI1_RCVCTRL_NO_RHQ_DROP_ENB;
-		अगर (HFI1_CAP_KGET_MASK(rcd->flags, NODROP_EGR_FULL))
+		if (HFI1_CAP_KGET_MASK(rcd->flags, NODROP_EGR_FULL))
 			rcvmask |= HFI1_RCVCTRL_NO_EGR_DROP_ENB;
-		अगर (HFI1_CAP_IS_KSET(TID_RDMA))
+		if (HFI1_CAP_IS_KSET(TID_RDMA))
 			rcvmask |= HFI1_RCVCTRL_TIDFLOW_ENB;
 		hfi1_rcvctrl(dd, rcvmask, rcd);
 		sc_enable(rcd->sc);
 		hfi1_rcd_put(rcd);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * create_workqueues - create per port workqueues
  * @dd: the hfi1_ib device
  */
-अटल पूर्णांक create_workqueues(काष्ठा hfi1_devdata *dd)
-अणु
-	पूर्णांक pidx;
-	काष्ठा hfi1_pportdata *ppd;
+static int create_workqueues(struct hfi1_devdata *dd)
+{
+	int pidx;
+	struct hfi1_pportdata *ppd;
 
-	क्रम (pidx = 0; pidx < dd->num_pports; ++pidx) अणु
+	for (pidx = 0; pidx < dd->num_pports; ++pidx) {
 		ppd = dd->pport + pidx;
-		अगर (!ppd->hfi1_wq) अणु
+		if (!ppd->hfi1_wq) {
 			ppd->hfi1_wq =
 				alloc_workqueue(
 				    "hfi%d_%d",
@@ -796,12 +795,12 @@ bail:
 				    WQ_MEM_RECLAIM,
 				    HFI1_MAX_ACTIVE_WORKQUEUE_ENTRIES,
 				    dd->unit, pidx);
-			अगर (!ppd->hfi1_wq)
-				जाओ wq_error;
-		पूर्ण
-		अगर (!ppd->link_wq) अणु
+			if (!ppd->hfi1_wq)
+				goto wq_error;
+		}
+		if (!ppd->link_wq) {
 			/*
-			 * Make the link workqueue single-thपढ़ोed to enक्रमce
+			 * Make the link workqueue single-threaded to enforce
 			 * serialization.
 			 */
 			ppd->link_wq =
@@ -810,285 +809,285 @@ bail:
 				    WQ_SYSFS | WQ_MEM_RECLAIM | WQ_UNBOUND,
 				    1, /* max_active */
 				    dd->unit, pidx);
-			अगर (!ppd->link_wq)
-				जाओ wq_error;
-		पूर्ण
-	पूर्ण
-	वापस 0;
+			if (!ppd->link_wq)
+				goto wq_error;
+		}
+	}
+	return 0;
 wq_error:
 	pr_err("alloc_workqueue failed for port %d\n", pidx + 1);
-	क्रम (pidx = 0; pidx < dd->num_pports; ++pidx) अणु
+	for (pidx = 0; pidx < dd->num_pports; ++pidx) {
 		ppd = dd->pport + pidx;
-		अगर (ppd->hfi1_wq) अणु
+		if (ppd->hfi1_wq) {
 			destroy_workqueue(ppd->hfi1_wq);
-			ppd->hfi1_wq = शून्य;
-		पूर्ण
-		अगर (ppd->link_wq) अणु
+			ppd->hfi1_wq = NULL;
+		}
+		if (ppd->link_wq) {
 			destroy_workqueue(ppd->link_wq);
-			ppd->link_wq = शून्य;
-		पूर्ण
-	पूर्ण
-	वापस -ENOMEM;
-पूर्ण
+			ppd->link_wq = NULL;
+		}
+	}
+	return -ENOMEM;
+}
 
 /**
  * destroy_workqueues - destroy per port workqueues
  * @dd: the hfi1_ib device
  */
-अटल व्योम destroy_workqueues(काष्ठा hfi1_devdata *dd)
-अणु
-	पूर्णांक pidx;
-	काष्ठा hfi1_pportdata *ppd;
+static void destroy_workqueues(struct hfi1_devdata *dd)
+{
+	int pidx;
+	struct hfi1_pportdata *ppd;
 
-	क्रम (pidx = 0; pidx < dd->num_pports; ++pidx) अणु
+	for (pidx = 0; pidx < dd->num_pports; ++pidx) {
 		ppd = dd->pport + pidx;
 
-		अगर (ppd->hfi1_wq) अणु
+		if (ppd->hfi1_wq) {
 			destroy_workqueue(ppd->hfi1_wq);
-			ppd->hfi1_wq = शून्य;
-		पूर्ण
-		अगर (ppd->link_wq) अणु
+			ppd->hfi1_wq = NULL;
+		}
+		if (ppd->link_wq) {
 			destroy_workqueue(ppd->link_wq);
-			ppd->link_wq = शून्य;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			ppd->link_wq = NULL;
+		}
+	}
+}
 
 /**
- * enable_general_पूर्णांकr() - Enable the IRQs that will be handled by the
- * general पूर्णांकerrupt handler.
+ * enable_general_intr() - Enable the IRQs that will be handled by the
+ * general interrupt handler.
  * @dd: valid devdata
  *
  */
-अटल व्योम enable_general_पूर्णांकr(काष्ठा hfi1_devdata *dd)
-अणु
-	set_पूर्णांकr_bits(dd, CCE_ERR_INT, MISC_ERR_INT, true);
-	set_पूर्णांकr_bits(dd, PIO_ERR_INT, TXE_ERR_INT, true);
-	set_पूर्णांकr_bits(dd, IS_SENDCTXT_ERR_START, IS_SENDCTXT_ERR_END, true);
-	set_पूर्णांकr_bits(dd, PBC_INT, GPIO_ASSERT_INT, true);
-	set_पूर्णांकr_bits(dd, TCRIT_INT, TCRIT_INT, true);
-	set_पूर्णांकr_bits(dd, IS_DC_START, IS_DC_END, true);
-	set_पूर्णांकr_bits(dd, IS_SENDCREDIT_START, IS_SENDCREDIT_END, true);
-पूर्ण
+static void enable_general_intr(struct hfi1_devdata *dd)
+{
+	set_intr_bits(dd, CCE_ERR_INT, MISC_ERR_INT, true);
+	set_intr_bits(dd, PIO_ERR_INT, TXE_ERR_INT, true);
+	set_intr_bits(dd, IS_SENDCTXT_ERR_START, IS_SENDCTXT_ERR_END, true);
+	set_intr_bits(dd, PBC_INT, GPIO_ASSERT_INT, true);
+	set_intr_bits(dd, TCRIT_INT, TCRIT_INT, true);
+	set_intr_bits(dd, IS_DC_START, IS_DC_END, true);
+	set_intr_bits(dd, IS_SENDCREDIT_START, IS_SENDCREDIT_END, true);
+}
 
 /**
- * hfi1_init - करो the actual initialization sequence on the chip
+ * hfi1_init - do the actual initialization sequence on the chip
  * @dd: the hfi1_ib device
- * @reinit: re-initializing, so करोn't allocate new memory
+ * @reinit: re-initializing, so don't allocate new memory
  *
- * Do the actual initialization sequence on the chip.  This is करोne
- * both from the init routine called from the PCI infraकाष्ठाure, and
- * when we reset the chip, or detect that it was reset पूर्णांकernally,
+ * Do the actual initialization sequence on the chip.  This is done
+ * both from the init routine called from the PCI infrastructure, and
+ * when we reset the chip, or detect that it was reset internally,
  * or it's administratively re-enabled.
  *
- * Memory allocation here and in called routines is only करोne in
- * the first हाल (reinit == 0).  We have to be careful, because even
- * without memory allocation, we need to re-ग_लिखो all the chip रेजिस्टरs
+ * Memory allocation here and in called routines is only done in
+ * the first case (reinit == 0).  We have to be careful, because even
+ * without memory allocation, we need to re-write all the chip registers
  * TIDs, etc. after the reset or enable has completed.
  */
-पूर्णांक hfi1_init(काष्ठा hfi1_devdata *dd, पूर्णांक reinit)
-अणु
-	पूर्णांक ret = 0, pidx, lastfail = 0;
-	अचिन्हित दीर्घ len;
+int hfi1_init(struct hfi1_devdata *dd, int reinit)
+{
+	int ret = 0, pidx, lastfail = 0;
+	unsigned long len;
 	u16 i;
-	काष्ठा hfi1_ctxtdata *rcd;
-	काष्ठा hfi1_pportdata *ppd;
+	struct hfi1_ctxtdata *rcd;
+	struct hfi1_pportdata *ppd;
 
 	/* Set up send low level handlers */
 	dd->process_pio_send = hfi1_verbs_send_pio;
 	dd->process_dma_send = hfi1_verbs_send_dma;
-	dd->pio_अंतरभूत_send = pio_copy;
+	dd->pio_inline_send = pio_copy;
 	dd->process_vnic_dma_send = hfi1_vnic_send_dma;
 
-	अगर (is_ax(dd)) अणु
+	if (is_ax(dd)) {
 		atomic_set(&dd->drop_packet, DROP_PACKET_ON);
-		dd->करो_drop = true;
-	पूर्ण अन्यथा अणु
+		dd->do_drop = true;
+	} else {
 		atomic_set(&dd->drop_packet, DROP_PACKET_OFF);
-		dd->करो_drop = false;
-	पूर्ण
+		dd->do_drop = false;
+	}
 
 	/* make sure the link is not "up" */
-	क्रम (pidx = 0; pidx < dd->num_pports; ++pidx) अणु
+	for (pidx = 0; pidx < dd->num_pports; ++pidx) {
 		ppd = dd->pport + pidx;
 		ppd->linkup = 0;
-	पूर्ण
+	}
 
-	अगर (reinit)
+	if (reinit)
 		ret = init_after_reset(dd);
-	अन्यथा
-		ret = loadसमय_init(dd);
-	अगर (ret)
-		जाओ करोne;
+	else
+		ret = loadtime_init(dd);
+	if (ret)
+		goto done;
 
-	/* allocate dummy tail memory क्रम all receive contexts */
+	/* allocate dummy tail memory for all receive contexts */
 	dd->rcvhdrtail_dummy_kvaddr = dma_alloc_coherent(&dd->pcidev->dev,
-							 माप(u64),
+							 sizeof(u64),
 							 &dd->rcvhdrtail_dummy_dma,
 							 GFP_KERNEL);
 
-	अगर (!dd->rcvhdrtail_dummy_kvaddr) अणु
+	if (!dd->rcvhdrtail_dummy_kvaddr) {
 		dd_dev_err(dd, "cannot allocate dummy tail memory\n");
 		ret = -ENOMEM;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	/* dd->rcd can be शून्य अगर early initialization failed */
-	क्रम (i = 0; dd->rcd && i < dd->first_dyn_alloc_ctxt; ++i) अणु
+	/* dd->rcd can be NULL if early initialization failed */
+	for (i = 0; dd->rcd && i < dd->first_dyn_alloc_ctxt; ++i) {
 		/*
-		 * Set up the (kernel) rcvhdr queue and egr TIDs.  If करोing
-		 * re-init, the simplest way to handle this is to मुक्त
+		 * Set up the (kernel) rcvhdr queue and egr TIDs.  If doing
+		 * re-init, the simplest way to handle this is to free
 		 * existing, and re-allocate.
 		 * Need to re-create rest of ctxt 0 ctxtdata as well.
 		 */
 		rcd = hfi1_rcd_get_by_index(dd, i);
-		अगर (!rcd)
-			जारी;
+		if (!rcd)
+			continue;
 
-		rcd->करो_पूर्णांकerrupt = &handle_receive_पूर्णांकerrupt;
+		rcd->do_interrupt = &handle_receive_interrupt;
 
 		lastfail = hfi1_create_rcvhdrq(dd, rcd);
-		अगर (!lastfail)
+		if (!lastfail)
 			lastfail = hfi1_setup_eagerbufs(rcd);
-		अगर (!lastfail)
+		if (!lastfail)
 			lastfail = hfi1_kern_exp_rcv_init(rcd, reinit);
-		अगर (lastfail) अणु
+		if (lastfail) {
 			dd_dev_err(dd,
 				   "failed to allocate kernel ctxt's rcvhdrq and/or egr bufs\n");
 			ret = lastfail;
-		पूर्ण
+		}
 		/* enable IRQ */
 		hfi1_rcd_put(rcd);
-	पूर्ण
+	}
 
-	/* Allocate enough memory क्रम user event notअगरication. */
+	/* Allocate enough memory for user event notification. */
 	len = PAGE_ALIGN(chip_rcv_contexts(dd) * HFI1_MAX_SHARED_CTXTS *
-			 माप(*dd->events));
-	dd->events = vदो_स्मृति_user(len);
-	अगर (!dd->events)
+			 sizeof(*dd->events));
+	dd->events = vmalloc_user(len);
+	if (!dd->events)
 		dd_dev_err(dd, "Failed to allocate user events page\n");
 	/*
-	 * Allocate a page क्रम device and port status.
+	 * Allocate a page for device and port status.
 	 * Page will be shared amongst all user processes.
 	 */
-	dd->status = vदो_स्मृति_user(PAGE_SIZE);
-	अगर (!dd->status)
+	dd->status = vmalloc_user(PAGE_SIZE);
+	if (!dd->status)
 		dd_dev_err(dd, "Failed to allocate dev status page\n");
-	क्रम (pidx = 0; pidx < dd->num_pports; ++pidx) अणु
+	for (pidx = 0; pidx < dd->num_pports; ++pidx) {
 		ppd = dd->pport + pidx;
-		अगर (dd->status)
+		if (dd->status)
 			/* Currently, we only have one port */
 			ppd->statusp = &dd->status->port;
 
 		set_mtu(ppd);
-	पूर्ण
+	}
 
-	/* enable chip even अगर we have an error, so we can debug cause */
+	/* enable chip even if we have an error, so we can debug cause */
 	enable_chip(dd);
 
-करोne:
+done:
 	/*
-	 * Set status even अगर port serdes is not initialized
+	 * Set status even if port serdes is not initialized
 	 * so that diags will work.
 	 */
-	अगर (dd->status)
+	if (dd->status)
 		dd->status->dev |= HFI1_STATUS_CHIP_PRESENT |
 			HFI1_STATUS_INITTED;
-	अगर (!ret) अणु
-		/* enable all पूर्णांकerrupts from the chip */
-		enable_general_पूर्णांकr(dd);
-		init_qsfp_पूर्णांक(dd);
+	if (!ret) {
+		/* enable all interrupts from the chip */
+		enable_general_intr(dd);
+		init_qsfp_int(dd);
 
-		/* chip is OK क्रम user apps; mark it as initialized */
-		क्रम (pidx = 0; pidx < dd->num_pports; ++pidx) अणु
+		/* chip is OK for user apps; mark it as initialized */
+		for (pidx = 0; pidx < dd->num_pports; ++pidx) {
 			ppd = dd->pport + pidx;
 
 			/*
-			 * start the serdes - must be after पूर्णांकerrupts are
-			 * enabled so we are notअगरied when the link goes up
+			 * start the serdes - must be after interrupts are
+			 * enabled so we are notified when the link goes up
 			 */
 			lastfail = bringup_serdes(ppd);
-			अगर (lastfail)
+			if (lastfail)
 				dd_dev_info(dd,
 					    "Failed to bring up port %u\n",
 					    ppd->port);
 
 			/*
-			 * Set status even अगर port serdes is not initialized
+			 * Set status even if port serdes is not initialized
 			 * so that diags will work.
 			 */
-			अगर (ppd->statusp)
+			if (ppd->statusp)
 				*ppd->statusp |= HFI1_STATUS_CHIP_PRESENT |
 							HFI1_STATUS_INITTED;
-			अगर (!ppd->link_speed_enabled)
-				जारी;
-		पूर्ण
-	पूर्ण
+			if (!ppd->link_speed_enabled)
+				continue;
+		}
+	}
 
-	/* अगर ret is non-zero, we probably should करो some cleanup here... */
-	वापस ret;
-पूर्ण
+	/* if ret is non-zero, we probably should do some cleanup here... */
+	return ret;
+}
 
-काष्ठा hfi1_devdata *hfi1_lookup(पूर्णांक unit)
-अणु
-	वापस xa_load(&hfi1_dev_table, unit);
-पूर्ण
+struct hfi1_devdata *hfi1_lookup(int unit)
+{
+	return xa_load(&hfi1_dev_table, unit);
+}
 
 /*
- * Stop the समयrs during unit shutकरोwn, or after an error late
+ * Stop the timers during unit shutdown, or after an error late
  * in initialization.
  */
-अटल व्योम stop_समयrs(काष्ठा hfi1_devdata *dd)
-अणु
-	काष्ठा hfi1_pportdata *ppd;
-	पूर्णांक pidx;
+static void stop_timers(struct hfi1_devdata *dd)
+{
+	struct hfi1_pportdata *ppd;
+	int pidx;
 
-	क्रम (pidx = 0; pidx < dd->num_pports; ++pidx) अणु
+	for (pidx = 0; pidx < dd->num_pports; ++pidx) {
 		ppd = dd->pport + pidx;
-		अगर (ppd->led_override_समयr.function) अणु
-			del_समयr_sync(&ppd->led_override_समयr);
-			atomic_set(&ppd->led_override_समयr_active, 0);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		if (ppd->led_override_timer.function) {
+			del_timer_sync(&ppd->led_override_timer);
+			atomic_set(&ppd->led_override_timer_active, 0);
+		}
+	}
+}
 
 /**
- * shutकरोwn_device - shut करोwn a device
+ * shutdown_device - shut down a device
  * @dd: the hfi1_ib device
  *
  * This is called to make the device quiet when we are about to
  * unload the driver, and also when the device is administratively
- * disabled.   It करोes not मुक्त any data काष्ठाures.
- * Everything it करोes has to be setup again by hfi1_init(dd, 1)
+ * disabled.   It does not free any data structures.
+ * Everything it does has to be setup again by hfi1_init(dd, 1)
  */
-अटल व्योम shutकरोwn_device(काष्ठा hfi1_devdata *dd)
-अणु
-	काष्ठा hfi1_pportdata *ppd;
-	काष्ठा hfi1_ctxtdata *rcd;
-	अचिन्हित pidx;
-	पूर्णांक i;
+static void shutdown_device(struct hfi1_devdata *dd)
+{
+	struct hfi1_pportdata *ppd;
+	struct hfi1_ctxtdata *rcd;
+	unsigned pidx;
+	int i;
 
-	अगर (dd->flags & HFI1_SHUTDOWN)
-		वापस;
+	if (dd->flags & HFI1_SHUTDOWN)
+		return;
 	dd->flags |= HFI1_SHUTDOWN;
 
-	क्रम (pidx = 0; pidx < dd->num_pports; ++pidx) अणु
+	for (pidx = 0; pidx < dd->num_pports; ++pidx) {
 		ppd = dd->pport + pidx;
 
 		ppd->linkup = 0;
-		अगर (ppd->statusp)
+		if (ppd->statusp)
 			*ppd->statusp &= ~(HFI1_STATUS_IB_CONF |
 					   HFI1_STATUS_IB_READY);
-	पूर्ण
+	}
 	dd->flags &= ~HFI1_INITTED;
 
-	/* mask and clean up पूर्णांकerrupts */
-	set_पूर्णांकr_bits(dd, IS_FIRST_SOURCE, IS_LAST_SOURCE, false);
-	msix_clean_up_पूर्णांकerrupts(dd);
+	/* mask and clean up interrupts */
+	set_intr_bits(dd, IS_FIRST_SOURCE, IS_LAST_SOURCE, false);
+	msix_clean_up_interrupts(dd);
 
-	क्रम (pidx = 0; pidx < dd->num_pports; ++pidx) अणु
+	for (pidx = 0; pidx < dd->num_pports; ++pidx) {
 		ppd = dd->pport + pidx;
-		क्रम (i = 0; i < dd->num_rcv_contexts; i++) अणु
+		for (i = 0; i < dd->num_rcv_contexts; i++) {
 			rcd = hfi1_rcd_get_by_index(dd, i);
 			hfi1_rcvctrl(dd, HFI1_RCVCTRL_TAILUPD_DIS |
 				     HFI1_RCVCTRL_CTXT_DIS |
@@ -1096,139 +1095,139 @@ wq_error:
 				     HFI1_RCVCTRL_PKEY_DIS |
 				     HFI1_RCVCTRL_ONE_PKT_EGR_DIS, rcd);
 			hfi1_rcd_put(rcd);
-		पूर्ण
+		}
 		/*
 		 * Gracefully stop all sends allowing any in progress to
 		 * trickle out first.
 		 */
-		क्रम (i = 0; i < dd->num_send_contexts; i++)
+		for (i = 0; i < dd->num_send_contexts; i++)
 			sc_flush(dd->send_contexts[i].sc);
-	पूर्ण
+	}
 
 	/*
-	 * Enough क्रम anything that's going to trickle out to have actually
-	 * करोne so.
+	 * Enough for anything that's going to trickle out to have actually
+	 * done so.
 	 */
 	udelay(20);
 
-	क्रम (pidx = 0; pidx < dd->num_pports; ++pidx) अणु
+	for (pidx = 0; pidx < dd->num_pports; ++pidx) {
 		ppd = dd->pport + pidx;
 
 		/* disable all contexts */
-		क्रम (i = 0; i < dd->num_send_contexts; i++)
+		for (i = 0; i < dd->num_send_contexts; i++)
 			sc_disable(dd->send_contexts[i].sc);
 		/* disable the send device */
 		pio_send_control(dd, PSC_GLOBAL_DISABLE);
 
-		shutकरोwn_led_override(ppd);
+		shutdown_led_override(ppd);
 
 		/*
 		 * Clear SerdesEnable.
-		 * We can't count on पूर्णांकerrupts since we are stopping.
+		 * We can't count on interrupts since we are stopping.
 		 */
 		hfi1_quiet_serdes(ppd);
-		अगर (ppd->hfi1_wq)
+		if (ppd->hfi1_wq)
 			flush_workqueue(ppd->hfi1_wq);
-		अगर (ppd->link_wq)
+		if (ppd->link_wq)
 			flush_workqueue(ppd->link_wq);
-	पूर्ण
-	sdma_निकास(dd);
-पूर्ण
+	}
+	sdma_exit(dd);
+}
 
 /**
- * hfi1_मुक्त_ctxtdata - मुक्त a context's allocated data
+ * hfi1_free_ctxtdata - free a context's allocated data
  * @dd: the hfi1_ib device
- * @rcd: the ctxtdata काष्ठाure
+ * @rcd: the ctxtdata structure
  *
- * मुक्त up any allocated data क्रम a context
+ * free up any allocated data for a context
  * It should never change any chip state, or global driver state.
  */
-व्योम hfi1_मुक्त_ctxtdata(काष्ठा hfi1_devdata *dd, काष्ठा hfi1_ctxtdata *rcd)
-अणु
+void hfi1_free_ctxtdata(struct hfi1_devdata *dd, struct hfi1_ctxtdata *rcd)
+{
 	u32 e;
 
-	अगर (!rcd)
-		वापस;
+	if (!rcd)
+		return;
 
-	अगर (rcd->rcvhdrq) अणु
-		dma_मुक्त_coherent(&dd->pcidev->dev, rcvhdrq_size(rcd),
+	if (rcd->rcvhdrq) {
+		dma_free_coherent(&dd->pcidev->dev, rcvhdrq_size(rcd),
 				  rcd->rcvhdrq, rcd->rcvhdrq_dma);
-		rcd->rcvhdrq = शून्य;
-		अगर (hfi1_rcvhdrtail_kvaddr(rcd)) अणु
-			dma_मुक्त_coherent(&dd->pcidev->dev, PAGE_SIZE,
-					  (व्योम *)hfi1_rcvhdrtail_kvaddr(rcd),
+		rcd->rcvhdrq = NULL;
+		if (hfi1_rcvhdrtail_kvaddr(rcd)) {
+			dma_free_coherent(&dd->pcidev->dev, PAGE_SIZE,
+					  (void *)hfi1_rcvhdrtail_kvaddr(rcd),
 					  rcd->rcvhdrqtailaddr_dma);
-			rcd->rcvhdrtail_kvaddr = शून्य;
-		पूर्ण
-	पूर्ण
+			rcd->rcvhdrtail_kvaddr = NULL;
+		}
+	}
 
 	/* all the RcvArray entries should have been cleared by now */
-	kमुक्त(rcd->egrbufs.rcvtids);
-	rcd->egrbufs.rcvtids = शून्य;
+	kfree(rcd->egrbufs.rcvtids);
+	rcd->egrbufs.rcvtids = NULL;
 
-	क्रम (e = 0; e < rcd->egrbufs.alloced; e++) अणु
-		अगर (rcd->egrbufs.buffers[e].dma)
-			dma_मुक्त_coherent(&dd->pcidev->dev,
+	for (e = 0; e < rcd->egrbufs.alloced; e++) {
+		if (rcd->egrbufs.buffers[e].dma)
+			dma_free_coherent(&dd->pcidev->dev,
 					  rcd->egrbufs.buffers[e].len,
 					  rcd->egrbufs.buffers[e].addr,
 					  rcd->egrbufs.buffers[e].dma);
-	पूर्ण
-	kमुक्त(rcd->egrbufs.buffers);
+	}
+	kfree(rcd->egrbufs.buffers);
 	rcd->egrbufs.alloced = 0;
-	rcd->egrbufs.buffers = शून्य;
+	rcd->egrbufs.buffers = NULL;
 
-	sc_मुक्त(rcd->sc);
-	rcd->sc = शून्य;
+	sc_free(rcd->sc);
+	rcd->sc = NULL;
 
-	vमुक्त(rcd->subctxt_uregbase);
-	vमुक्त(rcd->subctxt_rcvegrbuf);
-	vमुक्त(rcd->subctxt_rcvhdr_base);
-	kमुक्त(rcd->opstats);
+	vfree(rcd->subctxt_uregbase);
+	vfree(rcd->subctxt_rcvegrbuf);
+	vfree(rcd->subctxt_rcvhdr_base);
+	kfree(rcd->opstats);
 
-	rcd->subctxt_uregbase = शून्य;
-	rcd->subctxt_rcvegrbuf = शून्य;
-	rcd->subctxt_rcvhdr_base = शून्य;
-	rcd->opstats = शून्य;
-पूर्ण
+	rcd->subctxt_uregbase = NULL;
+	rcd->subctxt_rcvegrbuf = NULL;
+	rcd->subctxt_rcvhdr_base = NULL;
+	rcd->opstats = NULL;
+}
 
 /*
  * Release our hold on the shared asic data.  If we are the last one,
- * वापस the काष्ठाure to be finalized outside the lock.  Must be
+ * return the structure to be finalized outside the lock.  Must be
  * holding hfi1_dev_table lock.
  */
-अटल काष्ठा hfi1_asic_data *release_asic_data(काष्ठा hfi1_devdata *dd)
-अणु
-	काष्ठा hfi1_asic_data *ad;
-	पूर्णांक other;
+static struct hfi1_asic_data *release_asic_data(struct hfi1_devdata *dd)
+{
+	struct hfi1_asic_data *ad;
+	int other;
 
-	अगर (!dd->asic_data)
-		वापस शून्य;
-	dd->asic_data->dds[dd->hfi1_id] = शून्य;
+	if (!dd->asic_data)
+		return NULL;
+	dd->asic_data->dds[dd->hfi1_id] = NULL;
 	other = dd->hfi1_id ? 0 : 1;
 	ad = dd->asic_data;
-	dd->asic_data = शून्य;
-	/* वापस शून्य अगर the other dd still has a link */
-	वापस ad->dds[other] ? शून्य : ad;
-पूर्ण
+	dd->asic_data = NULL;
+	/* return NULL if the other dd still has a link */
+	return ad->dds[other] ? NULL : ad;
+}
 
-अटल व्योम finalize_asic_data(काष्ठा hfi1_devdata *dd,
-			       काष्ठा hfi1_asic_data *ad)
-अणु
+static void finalize_asic_data(struct hfi1_devdata *dd,
+			       struct hfi1_asic_data *ad)
+{
 	clean_up_i2c(dd, ad);
-	kमुक्त(ad);
-पूर्ण
+	kfree(ad);
+}
 
 /**
- * hfi1_मुक्त_devdata - cleans up and मुक्तs per-unit data काष्ठाure
- * @dd: poपूर्णांकer to a valid devdata काष्ठाure
+ * hfi1_free_devdata - cleans up and frees per-unit data structure
+ * @dd: pointer to a valid devdata structure
  *
- * It cleans up and मुक्तs all data काष्ठाures set up by
+ * It cleans up and frees all data structures set up by
  * by hfi1_alloc_devdata().
  */
-व्योम hfi1_मुक्त_devdata(काष्ठा hfi1_devdata *dd)
-अणु
-	काष्ठा hfi1_asic_data *ad;
-	अचिन्हित दीर्घ flags;
+void hfi1_free_devdata(struct hfi1_devdata *dd)
+{
+	struct hfi1_asic_data *ad;
+	unsigned long flags;
 
 	xa_lock_irqsave(&hfi1_dev_table, flags);
 	__xa_erase(&hfi1_dev_table, dd->unit);
@@ -1236,69 +1235,69 @@ wq_error:
 	xa_unlock_irqrestore(&hfi1_dev_table, flags);
 
 	finalize_asic_data(dd, ad);
-	मुक्त_platक्रमm_config(dd);
-	rcu_barrier(); /* रुको क्रम rcu callbacks to complete */
-	मुक्त_percpu(dd->पूर्णांक_counter);
-	मुक्त_percpu(dd->rcv_limit);
-	मुक्त_percpu(dd->send_schedule);
-	मुक्त_percpu(dd->tx_opstats);
-	dd->पूर्णांक_counter   = शून्य;
-	dd->rcv_limit     = शून्य;
-	dd->send_schedule = शून्य;
-	dd->tx_opstats    = शून्य;
-	kमुक्त(dd->comp_vect);
-	dd->comp_vect = शून्य;
+	free_platform_config(dd);
+	rcu_barrier(); /* wait for rcu callbacks to complete */
+	free_percpu(dd->int_counter);
+	free_percpu(dd->rcv_limit);
+	free_percpu(dd->send_schedule);
+	free_percpu(dd->tx_opstats);
+	dd->int_counter   = NULL;
+	dd->rcv_limit     = NULL;
+	dd->send_schedule = NULL;
+	dd->tx_opstats    = NULL;
+	kfree(dd->comp_vect);
+	dd->comp_vect = NULL;
 	sdma_clean(dd, dd->num_sdma);
 	rvt_dealloc_device(&dd->verbs_dev.rdi);
-पूर्ण
+}
 
 /**
- * hfi1_alloc_devdata - Allocate our primary per-unit data काष्ठाure.
+ * hfi1_alloc_devdata - Allocate our primary per-unit data structure.
  * @pdev: Valid PCI device
- * @extra: How many bytes to alloc past the शेष
+ * @extra: How many bytes to alloc past the default
  *
- * Must be करोne via verbs allocator, because the verbs cleanup process
- * both करोes cleanup and मुक्त of the data काष्ठाure.
- * "extra" is क्रम chip-specअगरic data.
+ * Must be done via verbs allocator, because the verbs cleanup process
+ * both does cleanup and free of the data structure.
+ * "extra" is for chip-specific data.
  */
-अटल काष्ठा hfi1_devdata *hfi1_alloc_devdata(काष्ठा pci_dev *pdev,
-					       माप_प्रकार extra)
-अणु
-	काष्ठा hfi1_devdata *dd;
-	पूर्णांक ret, nports;
+static struct hfi1_devdata *hfi1_alloc_devdata(struct pci_dev *pdev,
+					       size_t extra)
+{
+	struct hfi1_devdata *dd;
+	int ret, nports;
 
 	/* extra is * number of ports */
-	nports = extra / माप(काष्ठा hfi1_pportdata);
+	nports = extra / sizeof(struct hfi1_pportdata);
 
-	dd = (काष्ठा hfi1_devdata *)rvt_alloc_device(माप(*dd) + extra,
+	dd = (struct hfi1_devdata *)rvt_alloc_device(sizeof(*dd) + extra,
 						     nports);
-	अगर (!dd)
-		वापस ERR_PTR(-ENOMEM);
+	if (!dd)
+		return ERR_PTR(-ENOMEM);
 	dd->num_pports = nports;
-	dd->pport = (काष्ठा hfi1_pportdata *)(dd + 1);
+	dd->pport = (struct hfi1_pportdata *)(dd + 1);
 	dd->pcidev = pdev;
 	pci_set_drvdata(pdev, dd);
 
 	ret = xa_alloc_irq(&hfi1_dev_table, &dd->unit, dd, xa_limit_32b,
 			GFP_KERNEL);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&pdev->dev,
 			"Could not allocate unit ID: error %d\n", -ret);
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 	rvt_set_ibdev_name(&dd->verbs_dev.rdi, "%s_%d", class_name(), dd->unit);
 	/*
-	 * If the BIOS करोes not have the NUMA node inक्रमmation set, select
-	 * NUMA 0 so we get consistent perक्रमmance.
+	 * If the BIOS does not have the NUMA node information set, select
+	 * NUMA 0 so we get consistent performance.
 	 */
 	dd->node = pcibus_to_node(pdev->bus);
-	अगर (dd->node == NUMA_NO_NODE) अणु
+	if (dd->node == NUMA_NO_NODE) {
 		dd_dev_err(dd, "Invalid PCI NUMA node. Performance may be affected\n");
 		dd->node = 0;
-	पूर्ण
+	}
 
 	/*
-	 * Initialize all locks क्रम the device. This needs to be as early as
+	 * Initialize all locks for the device. This needs to be as early as
 	 * possible so locks are usable.
 	 */
 	spin_lock_init(&dd->sc_lock);
@@ -1312,289 +1311,289 @@ wq_error:
 	spin_lock_init(&dd->sde_map_lock);
 	spin_lock_init(&dd->pio_map_lock);
 	mutex_init(&dd->dc8051_lock);
-	init_रुकोqueue_head(&dd->event_queue);
+	init_waitqueue_head(&dd->event_queue);
 	spin_lock_init(&dd->irq_src_lock);
 
-	dd->पूर्णांक_counter = alloc_percpu(u64);
-	अगर (!dd->पूर्णांक_counter) अणु
+	dd->int_counter = alloc_percpu(u64);
+	if (!dd->int_counter) {
 		ret = -ENOMEM;
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
 	dd->rcv_limit = alloc_percpu(u64);
-	अगर (!dd->rcv_limit) अणु
+	if (!dd->rcv_limit) {
 		ret = -ENOMEM;
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
 	dd->send_schedule = alloc_percpu(u64);
-	अगर (!dd->send_schedule) अणु
+	if (!dd->send_schedule) {
 		ret = -ENOMEM;
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
-	dd->tx_opstats = alloc_percpu(काष्ठा hfi1_opcode_stats_perctx);
-	अगर (!dd->tx_opstats) अणु
+	dd->tx_opstats = alloc_percpu(struct hfi1_opcode_stats_perctx);
+	if (!dd->tx_opstats) {
 		ret = -ENOMEM;
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
-	dd->comp_vect = kzalloc(माप(*dd->comp_vect), GFP_KERNEL);
-	अगर (!dd->comp_vect) अणु
+	dd->comp_vect = kzalloc(sizeof(*dd->comp_vect), GFP_KERNEL);
+	if (!dd->comp_vect) {
 		ret = -ENOMEM;
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
 	atomic_set(&dd->ipoib_rsm_usr_num, 0);
-	वापस dd;
+	return dd;
 
 bail:
-	hfi1_मुक्त_devdata(dd);
-	वापस ERR_PTR(ret);
-पूर्ण
+	hfi1_free_devdata(dd);
+	return ERR_PTR(ret);
+}
 
 /*
- * Called from मुक्तze mode handlers, and from PCI error
+ * Called from freeze mode handlers, and from PCI error
  * reporting code.  Should be paranoid about state of
- * प्रणाली and data काष्ठाures.
+ * system and data structures.
  */
-व्योम hfi1_disable_after_error(काष्ठा hfi1_devdata *dd)
-अणु
-	अगर (dd->flags & HFI1_INITTED) अणु
+void hfi1_disable_after_error(struct hfi1_devdata *dd)
+{
+	if (dd->flags & HFI1_INITTED) {
 		u32 pidx;
 
 		dd->flags &= ~HFI1_INITTED;
-		अगर (dd->pport)
-			क्रम (pidx = 0; pidx < dd->num_pports; ++pidx) अणु
-				काष्ठा hfi1_pportdata *ppd;
+		if (dd->pport)
+			for (pidx = 0; pidx < dd->num_pports; ++pidx) {
+				struct hfi1_pportdata *ppd;
 
 				ppd = dd->pport + pidx;
-				अगर (dd->flags & HFI1_PRESENT)
+				if (dd->flags & HFI1_PRESENT)
 					set_link_state(ppd, HLS_DN_DISABLE);
 
-				अगर (ppd->statusp)
+				if (ppd->statusp)
 					*ppd->statusp &= ~HFI1_STATUS_IB_READY;
-			पूर्ण
-	पूर्ण
+			}
+	}
 
 	/*
-	 * Mark as having had an error क्रम driver, and also
-	 * क्रम /sys and status word mapped to user programs.
+	 * Mark as having had an error for driver, and also
+	 * for /sys and status word mapped to user programs.
 	 * This marks unit as not usable, until reset.
 	 */
-	अगर (dd->status)
+	if (dd->status)
 		dd->status->dev |= HFI1_STATUS_HWERROR;
-पूर्ण
+}
 
-अटल व्योम हटाओ_one(काष्ठा pci_dev *);
-अटल पूर्णांक init_one(काष्ठा pci_dev *, स्थिर काष्ठा pci_device_id *);
-अटल व्योम shutकरोwn_one(काष्ठा pci_dev *);
+static void remove_one(struct pci_dev *);
+static int init_one(struct pci_dev *, const struct pci_device_id *);
+static void shutdown_one(struct pci_dev *);
 
-#घोषणा DRIVER_LOAD_MSG "Intel " DRIVER_NAME " loaded: "
-#घोषणा PFX DRIVER_NAME ": "
+#define DRIVER_LOAD_MSG "Intel " DRIVER_NAME " loaded: "
+#define PFX DRIVER_NAME ": "
 
-स्थिर काष्ठा pci_device_id hfi1_pci_tbl[] = अणु
-	अणु PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL0) पूर्ण,
-	अणु PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL1) पूर्ण,
-	अणु 0, पूर्ण
-पूर्ण;
+const struct pci_device_id hfi1_pci_tbl[] = {
+	{ PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL0) },
+	{ PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL1) },
+	{ 0, }
+};
 
 MODULE_DEVICE_TABLE(pci, hfi1_pci_tbl);
 
-अटल काष्ठा pci_driver hfi1_pci_driver = अणु
+static struct pci_driver hfi1_pci_driver = {
 	.name = DRIVER_NAME,
 	.probe = init_one,
-	.हटाओ = हटाओ_one,
-	.shutकरोwn = shutकरोwn_one,
+	.remove = remove_one,
+	.shutdown = shutdown_one,
 	.id_table = hfi1_pci_tbl,
 	.err_handler = &hfi1_pci_err_handler,
-पूर्ण;
+};
 
-अटल व्योम __init compute_krcvqs(व्योम)
-अणु
-	पूर्णांक i;
+static void __init compute_krcvqs(void)
+{
+	int i;
 
-	क्रम (i = 0; i < krcvqsset; i++)
+	for (i = 0; i < krcvqsset; i++)
 		n_krcvqs += krcvqs[i];
-पूर्ण
+}
 
 /*
  * Do all the generic driver unit- and chip-independent memory
  * allocation and initialization.
  */
-अटल पूर्णांक __init hfi1_mod_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init hfi1_mod_init(void)
+{
+	int ret;
 
 	ret = dev_init();
-	अगर (ret)
-		जाओ bail;
+	if (ret)
+		goto bail;
 
 	ret = node_affinity_init();
-	अगर (ret)
-		जाओ bail;
+	if (ret)
+		goto bail;
 
-	/* validate max MTU beक्रमe any devices start */
-	अगर (!valid_opa_max_mtu(hfi1_max_mtu)) अणु
+	/* validate max MTU before any devices start */
+	if (!valid_opa_max_mtu(hfi1_max_mtu)) {
 		pr_err("Invalid max_mtu 0x%x, using 0x%x instead\n",
 		       hfi1_max_mtu, HFI1_DEFAULT_MAX_MTU);
 		hfi1_max_mtu = HFI1_DEFAULT_MAX_MTU;
-	पूर्ण
-	/* valid CUs run from 1-128 in घातers of 2 */
-	अगर (hfi1_cu > 128 || !is_घातer_of_2(hfi1_cu))
+	}
+	/* valid CUs run from 1-128 in powers of 2 */
+	if (hfi1_cu > 128 || !is_power_of_2(hfi1_cu))
 		hfi1_cu = 1;
-	/* valid credit वापस threshold is 0-100, variable is अचिन्हित */
-	अगर (user_credit_वापस_threshold > 100)
-		user_credit_वापस_threshold = 100;
+	/* valid credit return threshold is 0-100, variable is unsigned */
+	if (user_credit_return_threshold > 100)
+		user_credit_return_threshold = 100;
 
 	compute_krcvqs();
 	/*
-	 * sanitize receive पूर्णांकerrupt count, समय must रुको until after
+	 * sanitize receive interrupt count, time must wait until after
 	 * the hardware type is known
 	 */
-	अगर (rcv_पूर्णांकr_count > RCV_HDR_HEAD_COUNTER_MASK)
-		rcv_पूर्णांकr_count = RCV_HDR_HEAD_COUNTER_MASK;
+	if (rcv_intr_count > RCV_HDR_HEAD_COUNTER_MASK)
+		rcv_intr_count = RCV_HDR_HEAD_COUNTER_MASK;
 	/* reject invalid combinations */
-	अगर (rcv_पूर्णांकr_count == 0 && rcv_पूर्णांकr_समयout == 0) अणु
+	if (rcv_intr_count == 0 && rcv_intr_timeout == 0) {
 		pr_err("Invalid mode: both receive interrupt count and available timeout are zero - setting interrupt count to 1\n");
-		rcv_पूर्णांकr_count = 1;
-	पूर्ण
-	अगर (rcv_पूर्णांकr_count > 1 && rcv_पूर्णांकr_समयout == 0) अणु
+		rcv_intr_count = 1;
+	}
+	if (rcv_intr_count > 1 && rcv_intr_timeout == 0) {
 		/*
-		 * Aव्योम indefinite packet delivery by requiring a समयout
-		 * अगर count is > 1.
+		 * Avoid indefinite packet delivery by requiring a timeout
+		 * if count is > 1.
 		 */
 		pr_err("Invalid mode: receive interrupt count greater than 1 and available timeout is zero - setting available timeout to 1\n");
-		rcv_पूर्णांकr_समयout = 1;
-	पूर्ण
-	अगर (rcv_पूर्णांकr_dynamic && !(rcv_पूर्णांकr_count > 1 && rcv_पूर्णांकr_समयout > 0)) अणु
+		rcv_intr_timeout = 1;
+	}
+	if (rcv_intr_dynamic && !(rcv_intr_count > 1 && rcv_intr_timeout > 0)) {
 		/*
-		 * The dynamic algorithm expects a non-zero समयout
+		 * The dynamic algorithm expects a non-zero timeout
 		 * and a count > 1.
 		 */
 		pr_err("Invalid mode: dynamic receive interrupt mitigation with invalid count and timeout - turning dynamic off\n");
-		rcv_पूर्णांकr_dynamic = 0;
-	पूर्ण
+		rcv_intr_dynamic = 0;
+	}
 
 	/* sanitize link CRC options */
 	link_crc_mask &= SUPPORTED_CRCS;
 
 	ret = opfn_init();
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		pr_err("Failed to allocate opfn_wq");
-		जाओ bail_dev;
-	पूर्ण
+		goto bail_dev;
+	}
 
 	/*
-	 * These must be called beक्रमe the driver is रेजिस्टरed with
-	 * the PCI subप्रणाली.
+	 * These must be called before the driver is registered with
+	 * the PCI subsystem.
 	 */
 	hfi1_dbg_init();
-	ret = pci_रेजिस्टर_driver(&hfi1_pci_driver);
-	अगर (ret < 0) अणु
+	ret = pci_register_driver(&hfi1_pci_driver);
+	if (ret < 0) {
 		pr_err("Unable to register driver: error %d\n", -ret);
-		जाओ bail_dev;
-	पूर्ण
-	जाओ bail; /* all OK */
+		goto bail_dev;
+	}
+	goto bail; /* all OK */
 
 bail_dev:
-	hfi1_dbg_निकास();
+	hfi1_dbg_exit();
 	dev_cleanup();
 bail:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 module_init(hfi1_mod_init);
 
 /*
- * Do the non-unit driver cleanup, memory मुक्त, etc. at unload.
+ * Do the non-unit driver cleanup, memory free, etc. at unload.
  */
-अटल व्योम __निकास hfi1_mod_cleanup(व्योम)
-अणु
-	pci_unरेजिस्टर_driver(&hfi1_pci_driver);
-	opfn_निकास();
+static void __exit hfi1_mod_cleanup(void)
+{
+	pci_unregister_driver(&hfi1_pci_driver);
+	opfn_exit();
 	node_affinity_destroy_all();
-	hfi1_dbg_निकास();
+	hfi1_dbg_exit();
 
 	WARN_ON(!xa_empty(&hfi1_dev_table));
 	dispose_firmware();	/* asymmetric with obtain_firmware() */
 	dev_cleanup();
-पूर्ण
+}
 
-module_निकास(hfi1_mod_cleanup);
+module_exit(hfi1_mod_cleanup);
 
 /* this can only be called after a successful initialization */
-अटल व्योम cleanup_device_data(काष्ठा hfi1_devdata *dd)
-अणु
-	पूर्णांक ctxt;
-	पूर्णांक pidx;
+static void cleanup_device_data(struct hfi1_devdata *dd)
+{
+	int ctxt;
+	int pidx;
 
-	/* users can't करो anything more with chip */
-	क्रम (pidx = 0; pidx < dd->num_pports; ++pidx) अणु
-		काष्ठा hfi1_pportdata *ppd = &dd->pport[pidx];
-		काष्ठा cc_state *cc_state;
-		पूर्णांक i;
+	/* users can't do anything more with chip */
+	for (pidx = 0; pidx < dd->num_pports; ++pidx) {
+		struct hfi1_pportdata *ppd = &dd->pport[pidx];
+		struct cc_state *cc_state;
+		int i;
 
-		अगर (ppd->statusp)
+		if (ppd->statusp)
 			*ppd->statusp &= ~HFI1_STATUS_CHIP_PRESENT;
 
-		क्रम (i = 0; i < OPA_MAX_SLS; i++)
-			hrसमयr_cancel(&ppd->cca_समयr[i].hrसमयr);
+		for (i = 0; i < OPA_MAX_SLS; i++)
+			hrtimer_cancel(&ppd->cca_timer[i].hrtimer);
 
 		spin_lock(&ppd->cc_state_lock);
-		cc_state = get_cc_state_रक्षित(ppd);
-		RCU_INIT_POINTER(ppd->cc_state, शून्य);
+		cc_state = get_cc_state_protected(ppd);
+		RCU_INIT_POINTER(ppd->cc_state, NULL);
 		spin_unlock(&ppd->cc_state_lock);
 
-		अगर (cc_state)
-			kमुक्त_rcu(cc_state, rcu);
-	पूर्ण
+		if (cc_state)
+			kfree_rcu(cc_state, rcu);
+	}
 
-	मुक्त_credit_वापस(dd);
+	free_credit_return(dd);
 
-	अगर (dd->rcvhdrtail_dummy_kvaddr) अणु
-		dma_मुक्त_coherent(&dd->pcidev->dev, माप(u64),
-				  (व्योम *)dd->rcvhdrtail_dummy_kvaddr,
+	if (dd->rcvhdrtail_dummy_kvaddr) {
+		dma_free_coherent(&dd->pcidev->dev, sizeof(u64),
+				  (void *)dd->rcvhdrtail_dummy_kvaddr,
 				  dd->rcvhdrtail_dummy_dma);
-		dd->rcvhdrtail_dummy_kvaddr = शून्य;
-	पूर्ण
+		dd->rcvhdrtail_dummy_kvaddr = NULL;
+	}
 
 	/*
 	 * Free any resources still in use (usually just kernel contexts)
-	 * at unload; we करो क्रम ctxtcnt, because that's what we allocate.
+	 * at unload; we do for ctxtcnt, because that's what we allocate.
 	 */
-	क्रम (ctxt = 0; dd->rcd && ctxt < dd->num_rcv_contexts; ctxt++) अणु
-		काष्ठा hfi1_ctxtdata *rcd = dd->rcd[ctxt];
+	for (ctxt = 0; dd->rcd && ctxt < dd->num_rcv_contexts; ctxt++) {
+		struct hfi1_ctxtdata *rcd = dd->rcd[ctxt];
 
-		अगर (rcd) अणु
-			hfi1_मुक्त_ctxt_rcv_groups(rcd);
-			hfi1_मुक्त_ctxt(rcd);
-		पूर्ण
-	पूर्ण
+		if (rcd) {
+			hfi1_free_ctxt_rcv_groups(rcd);
+			hfi1_free_ctxt(rcd);
+		}
+	}
 
-	kमुक्त(dd->rcd);
-	dd->rcd = शून्य;
+	kfree(dd->rcd);
+	dd->rcd = NULL;
 
-	मुक्त_pio_map(dd);
-	/* must follow rcv context मुक्त - need to हटाओ rcv's hooks */
-	क्रम (ctxt = 0; ctxt < dd->num_send_contexts; ctxt++)
-		sc_मुक्त(dd->send_contexts[ctxt].sc);
+	free_pio_map(dd);
+	/* must follow rcv context free - need to remove rcv's hooks */
+	for (ctxt = 0; ctxt < dd->num_send_contexts; ctxt++)
+		sc_free(dd->send_contexts[ctxt].sc);
 	dd->num_send_contexts = 0;
-	kमुक्त(dd->send_contexts);
-	dd->send_contexts = शून्य;
-	kमुक्त(dd->hw_to_sw);
-	dd->hw_to_sw = शून्य;
-	kमुक्त(dd->boardname);
-	vमुक्त(dd->events);
-	vमुक्त(dd->status);
-पूर्ण
+	kfree(dd->send_contexts);
+	dd->send_contexts = NULL;
+	kfree(dd->hw_to_sw);
+	dd->hw_to_sw = NULL;
+	kfree(dd->boardname);
+	vfree(dd->events);
+	vfree(dd->status);
+}
 
 /*
- * Clean up on unit shutकरोwn, or error during unit load after
+ * Clean up on unit shutdown, or error during unit load after
  * successful initialization.
  */
-अटल व्योम postinit_cleanup(काष्ठा hfi1_devdata *dd)
-अणु
+static void postinit_cleanup(struct hfi1_devdata *dd)
+{
 	hfi1_start_cleanup(dd);
 	hfi1_comp_vectors_clean_up(dd);
 	hfi1_dev_affinity_clean_up(dd);
@@ -1604,201 +1603,201 @@ module_निकास(hfi1_mod_cleanup);
 
 	cleanup_device_data(dd);
 
-	hfi1_मुक्त_devdata(dd);
-पूर्ण
+	hfi1_free_devdata(dd);
+}
 
-अटल पूर्णांक init_one(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
-अणु
-	पूर्णांक ret = 0, j, pidx, initfail;
-	काष्ठा hfi1_devdata *dd;
-	काष्ठा hfi1_pportdata *ppd;
+static int init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
+{
+	int ret = 0, j, pidx, initfail;
+	struct hfi1_devdata *dd;
+	struct hfi1_pportdata *ppd;
 
 	/* First, lock the non-writable module parameters */
 	HFI1_CAP_LOCK();
 
 	/* Validate dev ids */
-	अगर (!(ent->device == PCI_DEVICE_ID_INTEL0 ||
-	      ent->device == PCI_DEVICE_ID_INTEL1)) अणु
+	if (!(ent->device == PCI_DEVICE_ID_INTEL0 ||
+	      ent->device == PCI_DEVICE_ID_INTEL1)) {
 		dev_err(&pdev->dev, "Failing on unknown Intel deviceid 0x%x\n",
 			ent->device);
 		ret = -ENODEV;
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
 	/* Allocate the dd so we can get to work */
 	dd = hfi1_alloc_devdata(pdev, NUM_IB_PORTS *
-				माप(काष्ठा hfi1_pportdata));
-	अगर (IS_ERR(dd)) अणु
+				sizeof(struct hfi1_pportdata));
+	if (IS_ERR(dd)) {
 		ret = PTR_ERR(dd);
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
 	/* Validate some global module parameters */
 	ret = hfi1_validate_rcvhdrcnt(dd, rcvhdrcnt);
-	अगर (ret)
-		जाओ bail;
+	if (ret)
+		goto bail;
 
 	/* use the encoding function as a sanitization check */
-	अगर (!encode_rcv_header_entry_size(hfi1_hdrq_entsize)) अणु
+	if (!encode_rcv_header_entry_size(hfi1_hdrq_entsize)) {
 		dd_dev_err(dd, "Invalid HdrQ Entry size %u\n",
 			   hfi1_hdrq_entsize);
 		ret = -EINVAL;
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
-	/* The receive eager buffer size must be set beक्रमe the receive
+	/* The receive eager buffer size must be set before the receive
 	 * contexts are created.
 	 *
 	 * Set the eager buffer size.  Validate that it falls in a range
-	 * allowed by the hardware - all घातers of 2 between the min and
+	 * allowed by the hardware - all powers of 2 between the min and
 	 * max.  The maximum valid MTU is within the eager buffer range
-	 * so we करो not need to cap the max_mtu by an eager buffer size
+	 * so we do not need to cap the max_mtu by an eager buffer size
 	 * setting.
 	 */
-	अगर (eager_buffer_size) अणु
-		अगर (!is_घातer_of_2(eager_buffer_size))
+	if (eager_buffer_size) {
+		if (!is_power_of_2(eager_buffer_size))
 			eager_buffer_size =
-				roundup_घात_of_two(eager_buffer_size);
+				roundup_pow_of_two(eager_buffer_size);
 		eager_buffer_size =
 			clamp_val(eager_buffer_size,
 				  MIN_EAGER_BUFFER * 8,
 				  MAX_EAGER_BUFFER_TOTAL);
 		dd_dev_info(dd, "Eager buffer size %u\n",
 			    eager_buffer_size);
-	पूर्ण अन्यथा अणु
+	} else {
 		dd_dev_err(dd, "Invalid Eager buffer size of 0\n");
 		ret = -EINVAL;
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
 	/* restrict value of hfi1_rcvarr_split */
 	hfi1_rcvarr_split = clamp_val(hfi1_rcvarr_split, 0, 100);
 
 	ret = hfi1_pcie_init(dd);
-	अगर (ret)
-		जाओ bail;
+	if (ret)
+		goto bail;
 
 	/*
-	 * Do device-specअगरic initialization, function table setup, dd
+	 * Do device-specific initialization, function table setup, dd
 	 * allocation, etc.
 	 */
 	ret = hfi1_init_dd(dd);
-	अगर (ret)
-		जाओ clean_bail; /* error alपढ़ोy prपूर्णांकed */
+	if (ret)
+		goto clean_bail; /* error already printed */
 
 	ret = create_workqueues(dd);
-	अगर (ret)
-		जाओ clean_bail;
+	if (ret)
+		goto clean_bail;
 
-	/* करो the generic initialization */
+	/* do the generic initialization */
 	initfail = hfi1_init(dd, 0);
 
-	ret = hfi1_रेजिस्टर_ib_device(dd);
+	ret = hfi1_register_ib_device(dd);
 
 	/*
-	 * Now पढ़ोy क्रम use.  this should be cleared whenever we
+	 * Now ready for use.  this should be cleared whenever we
 	 * detect a reset, or initiate one.  If earlier failure,
 	 * we still create devices, so diags, etc. can be used
 	 * to determine cause of problem.
 	 */
-	अगर (!initfail && !ret) अणु
+	if (!initfail && !ret) {
 		dd->flags |= HFI1_INITTED;
-		/* create debufs files after init and ib रेजिस्टर */
+		/* create debufs files after init and ib register */
 		hfi1_dbg_ibdev_init(&dd->verbs_dev);
-	पूर्ण
+	}
 
 	j = hfi1_device_create(dd);
-	अगर (j)
+	if (j)
 		dd_dev_err(dd, "Failed to create /dev devices: %d\n", -j);
 
-	अगर (initfail || ret) अणु
-		msix_clean_up_पूर्णांकerrupts(dd);
-		stop_समयrs(dd);
+	if (initfail || ret) {
+		msix_clean_up_interrupts(dd);
+		stop_timers(dd);
 		flush_workqueue(ib_wq);
-		क्रम (pidx = 0; pidx < dd->num_pports; ++pidx) अणु
+		for (pidx = 0; pidx < dd->num_pports; ++pidx) {
 			hfi1_quiet_serdes(dd->pport + pidx);
 			ppd = dd->pport + pidx;
-			अगर (ppd->hfi1_wq) अणु
+			if (ppd->hfi1_wq) {
 				destroy_workqueue(ppd->hfi1_wq);
-				ppd->hfi1_wq = शून्य;
-			पूर्ण
-			अगर (ppd->link_wq) अणु
+				ppd->hfi1_wq = NULL;
+			}
+			if (ppd->link_wq) {
 				destroy_workqueue(ppd->link_wq);
-				ppd->link_wq = शून्य;
-			पूर्ण
-		पूर्ण
-		अगर (!j)
-			hfi1_device_हटाओ(dd);
-		अगर (!ret)
-			hfi1_unरेजिस्टर_ib_device(dd);
+				ppd->link_wq = NULL;
+			}
+		}
+		if (!j)
+			hfi1_device_remove(dd);
+		if (!ret)
+			hfi1_unregister_ib_device(dd);
 		postinit_cleanup(dd);
-		अगर (initfail)
+		if (initfail)
 			ret = initfail;
-		जाओ bail;	/* everything alपढ़ोy cleaned */
-	पूर्ण
+		goto bail;	/* everything already cleaned */
+	}
 
 	sdma_start(dd);
 
-	वापस 0;
+	return 0;
 
 clean_bail:
 	hfi1_pcie_cleanup(pdev);
 bail:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम रुको_क्रम_clients(काष्ठा hfi1_devdata *dd)
-अणु
+static void wait_for_clients(struct hfi1_devdata *dd)
+{
 	/*
-	 * Remove the device init value and complete the device अगर there is
-	 * no clients or रुको क्रम active clients to finish.
+	 * Remove the device init value and complete the device if there is
+	 * no clients or wait for active clients to finish.
 	 */
-	अगर (atomic_dec_and_test(&dd->user_refcount))
+	if (atomic_dec_and_test(&dd->user_refcount))
 		complete(&dd->user_comp);
 
-	रुको_क्रम_completion(&dd->user_comp);
-पूर्ण
+	wait_for_completion(&dd->user_comp);
+}
 
-अटल व्योम हटाओ_one(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा hfi1_devdata *dd = pci_get_drvdata(pdev);
+static void remove_one(struct pci_dev *pdev)
+{
+	struct hfi1_devdata *dd = pci_get_drvdata(pdev);
 
-	/* बंद debugfs files beक्रमe ib unरेजिस्टर */
-	hfi1_dbg_ibdev_निकास(&dd->verbs_dev);
+	/* close debugfs files before ib unregister */
+	hfi1_dbg_ibdev_exit(&dd->verbs_dev);
 
-	/* हटाओ the /dev hfi1 पूर्णांकerface */
-	hfi1_device_हटाओ(dd);
+	/* remove the /dev hfi1 interface */
+	hfi1_device_remove(dd);
 
-	/* रुको क्रम existing user space clients to finish */
-	रुको_क्रम_clients(dd);
+	/* wait for existing user space clients to finish */
+	wait_for_clients(dd);
 
-	/* unरेजिस्टर from IB core */
-	hfi1_unरेजिस्टर_ib_device(dd);
+	/* unregister from IB core */
+	hfi1_unregister_ib_device(dd);
 
-	/* मुक्त netdev data */
-	hfi1_मुक्त_rx(dd);
+	/* free netdev data */
+	hfi1_free_rx(dd);
 
 	/*
-	 * Disable the IB link, disable पूर्णांकerrupts on the device,
+	 * Disable the IB link, disable interrupts on the device,
 	 * clear dma engines, etc.
 	 */
-	shutकरोwn_device(dd);
+	shutdown_device(dd);
 	destroy_workqueues(dd);
 
-	stop_समयrs(dd);
+	stop_timers(dd);
 
-	/* रुको until all of our (qsfp) queue_work() calls complete */
+	/* wait until all of our (qsfp) queue_work() calls complete */
 	flush_workqueue(ib_wq);
 
 	postinit_cleanup(dd);
-पूर्ण
+}
 
-अटल व्योम shutकरोwn_one(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा hfi1_devdata *dd = pci_get_drvdata(pdev);
+static void shutdown_one(struct pci_dev *pdev)
+{
+	struct hfi1_devdata *dd = pci_get_drvdata(pdev);
 
-	shutकरोwn_device(dd);
-पूर्ण
+	shutdown_device(dd);
+}
 
 /**
  * hfi1_create_rcvhdrq - create a receive header queue
@@ -1806,83 +1805,83 @@ bail:
  * @rcd: the context data
  *
  * This must be contiguous memory (from an i/o perspective), and must be
- * DMA'able (which means क्रम some प्रणालीs, it will go through an IOMMU,
- * or be क्रमced पूर्णांकo a low address range).
+ * DMA'able (which means for some systems, it will go through an IOMMU,
+ * or be forced into a low address range).
  */
-पूर्णांक hfi1_create_rcvhdrq(काष्ठा hfi1_devdata *dd, काष्ठा hfi1_ctxtdata *rcd)
-अणु
-	अचिन्हित amt;
+int hfi1_create_rcvhdrq(struct hfi1_devdata *dd, struct hfi1_ctxtdata *rcd)
+{
+	unsigned amt;
 
-	अगर (!rcd->rcvhdrq) अणु
+	if (!rcd->rcvhdrq) {
 		gfp_t gfp_flags;
 
 		amt = rcvhdrq_size(rcd);
 
-		अगर (rcd->ctxt < dd->first_dyn_alloc_ctxt || rcd->is_vnic)
+		if (rcd->ctxt < dd->first_dyn_alloc_ctxt || rcd->is_vnic)
 			gfp_flags = GFP_KERNEL;
-		अन्यथा
+		else
 			gfp_flags = GFP_USER;
 		rcd->rcvhdrq = dma_alloc_coherent(&dd->pcidev->dev, amt,
 						  &rcd->rcvhdrq_dma,
 						  gfp_flags | __GFP_COMP);
 
-		अगर (!rcd->rcvhdrq) अणु
+		if (!rcd->rcvhdrq) {
 			dd_dev_err(dd,
 				   "attempt to allocate %d bytes for ctxt %u rcvhdrq failed\n",
 				   amt, rcd->ctxt);
-			जाओ bail;
-		पूर्ण
+			goto bail;
+		}
 
-		अगर (HFI1_CAP_KGET_MASK(rcd->flags, DMA_RTAIL) ||
-		    HFI1_CAP_UGET_MASK(rcd->flags, DMA_RTAIL)) अणु
+		if (HFI1_CAP_KGET_MASK(rcd->flags, DMA_RTAIL) ||
+		    HFI1_CAP_UGET_MASK(rcd->flags, DMA_RTAIL)) {
 			rcd->rcvhdrtail_kvaddr = dma_alloc_coherent(&dd->pcidev->dev,
 								    PAGE_SIZE,
 								    &rcd->rcvhdrqtailaddr_dma,
 								    gfp_flags);
-			अगर (!rcd->rcvhdrtail_kvaddr)
-				जाओ bail_मुक्त;
-		पूर्ण
-	पूर्ण
+			if (!rcd->rcvhdrtail_kvaddr)
+				goto bail_free;
+		}
+	}
 
 	set_hdrq_regs(rcd->dd, rcd->ctxt, rcd->rcvhdrqentsize,
 		      rcd->rcvhdrq_cnt);
 
-	वापस 0;
+	return 0;
 
-bail_मुक्त:
+bail_free:
 	dd_dev_err(dd,
 		   "attempt to allocate 1 page for ctxt %u rcvhdrqtailaddr failed\n",
 		   rcd->ctxt);
-	dma_मुक्त_coherent(&dd->pcidev->dev, amt, rcd->rcvhdrq,
+	dma_free_coherent(&dd->pcidev->dev, amt, rcd->rcvhdrq,
 			  rcd->rcvhdrq_dma);
-	rcd->rcvhdrq = शून्य;
+	rcd->rcvhdrq = NULL;
 bail:
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
 /**
  * hfi1_setup_eagerbufs - llocate eager buffers, both kernel and user
  * contexts.
  * @rcd: the context we are setting up.
  *
- * Allocate the eager TID buffers and program them पूर्णांकo hip.
- * They are no दीर्घer completely contiguous, we करो multiple allocation
- * calls.  Otherwise we get the OOM code involved, by asking क्रम too
+ * Allocate the eager TID buffers and program them into hip.
+ * They are no longer completely contiguous, we do multiple allocation
+ * calls.  Otherwise we get the OOM code involved, by asking for too
  * much per call, with disastrous results on some kernels.
  */
-पूर्णांक hfi1_setup_eagerbufs(काष्ठा hfi1_ctxtdata *rcd)
-अणु
-	काष्ठा hfi1_devdata *dd = rcd->dd;
+int hfi1_setup_eagerbufs(struct hfi1_ctxtdata *rcd)
+{
+	struct hfi1_devdata *dd = rcd->dd;
 	u32 max_entries, egrtop, alloced_bytes = 0;
 	gfp_t gfp_flags;
 	u16 order, idx = 0;
-	पूर्णांक ret = 0;
-	u16 round_mtu = roundup_घात_of_two(hfi1_max_mtu);
+	int ret = 0;
+	u16 round_mtu = roundup_pow_of_two(hfi1_max_mtu);
 
 	/*
 	 * GFP_USER, but without GFP_FS, so buffer cache can be
 	 * coalesced (we hope); otherwise, even at order 4,
-	 * heavy fileप्रणाली activity makes these fail, and we can
+	 * heavy filesystem activity makes these fail, and we can
 	 * use compound pages.
 	 */
 	gfp_flags = __GFP_RECLAIM | __GFP_IO | __GFP_COMP;
@@ -1894,31 +1893,31 @@ bail:
 	 * theoretical lower limit of the value. Here, we check against the
 	 * MTU.
 	 */
-	अगर (rcd->egrbufs.size < (round_mtu * dd->rcv_entries.group_size))
+	if (rcd->egrbufs.size < (round_mtu * dd->rcv_entries.group_size))
 		rcd->egrbufs.size = round_mtu * dd->rcv_entries.group_size;
 	/*
 	 * If using one-pkt-per-egr-buffer, lower the eager buffer
 	 * size to the max MTU (page-aligned).
 	 */
-	अगर (!HFI1_CAP_KGET_MASK(rcd->flags, MULTI_PKT_EGR))
+	if (!HFI1_CAP_KGET_MASK(rcd->flags, MULTI_PKT_EGR))
 		rcd->egrbufs.rcvtid_size = round_mtu;
 
 	/*
 	 * Eager buffers sizes of 1MB or less require smaller TID sizes
 	 * to satisfy the "multiple of 8 RcvArray entries" requirement.
 	 */
-	अगर (rcd->egrbufs.size <= (1 << 20))
-		rcd->egrbufs.rcvtid_size = max((अचिन्हित दीर्घ)round_mtu,
-			roundकरोwn_घात_of_two(rcd->egrbufs.size / 8));
+	if (rcd->egrbufs.size <= (1 << 20))
+		rcd->egrbufs.rcvtid_size = max((unsigned long)round_mtu,
+			rounddown_pow_of_two(rcd->egrbufs.size / 8));
 
-	जबतक (alloced_bytes < rcd->egrbufs.size &&
-	       rcd->egrbufs.alloced < rcd->egrbufs.count) अणु
+	while (alloced_bytes < rcd->egrbufs.size &&
+	       rcd->egrbufs.alloced < rcd->egrbufs.count) {
 		rcd->egrbufs.buffers[idx].addr =
 			dma_alloc_coherent(&dd->pcidev->dev,
 					   rcd->egrbufs.rcvtid_size,
 					   &rcd->egrbufs.buffers[idx].dma,
 					   gfp_flags);
-		अगर (rcd->egrbufs.buffers[idx].addr) अणु
+		if (rcd->egrbufs.buffers[idx].addr) {
 			rcd->egrbufs.buffers[idx].len =
 				rcd->egrbufs.rcvtid_size;
 			rcd->egrbufs.rcvtids[rcd->egrbufs.alloced].addr =
@@ -1928,62 +1927,62 @@ bail:
 			rcd->egrbufs.alloced++;
 			alloced_bytes += rcd->egrbufs.rcvtid_size;
 			idx++;
-		पूर्ण अन्यथा अणु
+		} else {
 			u32 new_size, i, j;
 			u64 offset = 0;
 
 			/*
-			 * Fail the eager buffer allocation अगर:
-			 *   - we are alपढ़ोy using the lowest acceptable size
+			 * Fail the eager buffer allocation if:
+			 *   - we are already using the lowest acceptable size
 			 *   - we are using one-pkt-per-egr-buffer (this implies
 			 *     that we are accepting only one size)
 			 */
-			अगर (rcd->egrbufs.rcvtid_size == round_mtu ||
-			    !HFI1_CAP_KGET_MASK(rcd->flags, MULTI_PKT_EGR)) अणु
+			if (rcd->egrbufs.rcvtid_size == round_mtu ||
+			    !HFI1_CAP_KGET_MASK(rcd->flags, MULTI_PKT_EGR)) {
 				dd_dev_err(dd, "ctxt%u: Failed to allocate eager buffers\n",
 					   rcd->ctxt);
 				ret = -ENOMEM;
-				जाओ bail_rcvegrbuf_phys;
-			पूर्ण
+				goto bail_rcvegrbuf_phys;
+			}
 
 			new_size = rcd->egrbufs.rcvtid_size / 2;
 
 			/*
-			 * If the first attempt to allocate memory failed, करोn't
-			 * fail everything but जारी with the next lower
+			 * If the first attempt to allocate memory failed, don't
+			 * fail everything but continue with the next lower
 			 * size.
 			 */
-			अगर (idx == 0) अणु
+			if (idx == 0) {
 				rcd->egrbufs.rcvtid_size = new_size;
-				जारी;
-			पूर्ण
+				continue;
+			}
 
 			/*
-			 * Re-partition alपढ़ोy allocated buffers to a smaller
+			 * Re-partition already allocated buffers to a smaller
 			 * size.
 			 */
 			rcd->egrbufs.alloced = 0;
-			क्रम (i = 0, j = 0, offset = 0; j < idx; i++) अणु
-				अगर (i >= rcd->egrbufs.count)
-					अवरोध;
+			for (i = 0, j = 0, offset = 0; j < idx; i++) {
+				if (i >= rcd->egrbufs.count)
+					break;
 				rcd->egrbufs.rcvtids[i].dma =
 					rcd->egrbufs.buffers[j].dma + offset;
 				rcd->egrbufs.rcvtids[i].addr =
 					rcd->egrbufs.buffers[j].addr + offset;
 				rcd->egrbufs.alloced++;
-				अगर ((rcd->egrbufs.buffers[j].dma + offset +
+				if ((rcd->egrbufs.buffers[j].dma + offset +
 				     new_size) ==
 				    (rcd->egrbufs.buffers[j].dma +
-				     rcd->egrbufs.buffers[j].len)) अणु
+				     rcd->egrbufs.buffers[j].len)) {
 					j++;
 					offset = 0;
-				पूर्ण अन्यथा अणु
+				} else {
 					offset += new_size;
-				पूर्ण
-			पूर्ण
+				}
+			}
 			rcd->egrbufs.rcvtid_size = new_size;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	rcd->egrbufs.numbufs = idx;
 	rcd->egrbufs.size = alloced_bytes;
 
@@ -1993,21 +1992,21 @@ bail:
 		  rcd->egrbufs.rcvtid_size / 1024, rcd->egrbufs.size / 1024);
 
 	/*
-	 * Set the contexts rcv array head update threshold to the बंदst
-	 * घातer of 2 (so we can use a mask instead of modulo) below half
+	 * Set the contexts rcv array head update threshold to the closest
+	 * power of 2 (so we can use a mask instead of modulo) below half
 	 * the allocated entries.
 	 */
 	rcd->egrbufs.threshold =
-		roundकरोwn_घात_of_two(rcd->egrbufs.alloced / 2);
+		rounddown_pow_of_two(rcd->egrbufs.alloced / 2);
 	/*
-	 * Compute the expected RcvArray entry base. This is करोne after
+	 * Compute the expected RcvArray entry base. This is done after
 	 * allocating the eager buffers in order to maximize the
-	 * expected RcvArray entries क्रम the context.
+	 * expected RcvArray entries for the context.
 	 */
 	max_entries = rcd->rcv_array_groups * dd->rcv_entries.group_size;
 	egrtop = roundup(rcd->egrbufs.alloced, dd->rcv_entries.group_size);
 	rcd->expected_count = max_entries - egrtop;
-	अगर (rcd->expected_count > MAX_TID_PAIR_ENTRIES * 2)
+	if (rcd->expected_count > MAX_TID_PAIR_ENTRIES * 2)
 		rcd->expected_count = MAX_TID_PAIR_ENTRIES * 2;
 
 	rcd->expected_base = rcd->eager_base + egrtop;
@@ -2015,34 +2014,34 @@ bail:
 		  rcd->ctxt, rcd->egrbufs.alloced, rcd->expected_count,
 		  rcd->eager_base, rcd->expected_base);
 
-	अगर (!hfi1_rcvbuf_validate(rcd->egrbufs.rcvtid_size, PT_EAGER, &order)) अणु
+	if (!hfi1_rcvbuf_validate(rcd->egrbufs.rcvtid_size, PT_EAGER, &order)) {
 		hfi1_cdbg(PROC,
 			  "ctxt%u: current Eager buffer size is invalid %u\n",
 			  rcd->ctxt, rcd->egrbufs.rcvtid_size);
 		ret = -EINVAL;
-		जाओ bail_rcvegrbuf_phys;
-	पूर्ण
+		goto bail_rcvegrbuf_phys;
+	}
 
-	क्रम (idx = 0; idx < rcd->egrbufs.alloced; idx++) अणु
+	for (idx = 0; idx < rcd->egrbufs.alloced; idx++) {
 		hfi1_put_tid(dd, rcd->eager_base + idx, PT_EAGER,
 			     rcd->egrbufs.rcvtids[idx].dma, order);
 		cond_resched();
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 bail_rcvegrbuf_phys:
-	क्रम (idx = 0; idx < rcd->egrbufs.alloced &&
+	for (idx = 0; idx < rcd->egrbufs.alloced &&
 	     rcd->egrbufs.buffers[idx].addr;
-	     idx++) अणु
-		dma_मुक्त_coherent(&dd->pcidev->dev,
+	     idx++) {
+		dma_free_coherent(&dd->pcidev->dev,
 				  rcd->egrbufs.buffers[idx].len,
 				  rcd->egrbufs.buffers[idx].addr,
 				  rcd->egrbufs.buffers[idx].dma);
-		rcd->egrbufs.buffers[idx].addr = शून्य;
+		rcd->egrbufs.buffers[idx].addr = NULL;
 		rcd->egrbufs.buffers[idx].dma = 0;
 		rcd->egrbufs.buffers[idx].len = 0;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

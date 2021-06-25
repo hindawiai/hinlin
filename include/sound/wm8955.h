@@ -1,22 +1,21 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * Platक्रमm data क्रम WM8955
+ * Platform data for WM8955
  *
  * Copyright 2009 Wolfson Microelectronics PLC.
  *
- * Author: Mark Brown <broonie@खोलोsource.wolfsonmicro.com>
+ * Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
  */
 
-#अगर_अघोषित __WM8955_PDATA_H__
-#घोषणा __WM8955_PDATA_H__
+#ifndef __WM8955_PDATA_H__
+#define __WM8955_PDATA_H__
 
-काष्ठा wm8955_pdata अणु
+struct wm8955_pdata {
 	/* Configure LOUT2/ROUT2 to drive a speaker */
-	अचिन्हित पूर्णांक out2_speaker:1;
+	unsigned int out2_speaker:1;
 
-	/* Configure MONOIN+/- in dअगरferential mode */
-	अचिन्हित पूर्णांक monoin_dअगरf:1;
-पूर्ण;
+	/* Configure MONOIN+/- in differential mode */
+	unsigned int monoin_diff:1;
+};
 
-#पूर्ण_अगर
+#endif

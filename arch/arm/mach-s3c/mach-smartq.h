@@ -1,17 +1,16 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * linux/arch/arm/mach-s3c64xx/mach-smartq.h
  *
  * Copyright (C) 2010 Maurus Cuelenaere
  */
 
-#अगर_अघोषित __MACH_SMARTQ_H
-#घोषणा __MACH_SMARTQ_H __खाता__
+#ifndef __MACH_SMARTQ_H
+#define __MACH_SMARTQ_H __FILE__
 
-#समावेश <linux/init.h>
+#include <linux/init.h>
 
-बाह्य व्योम __init smartq_map_io(व्योम);
-बाह्य व्योम __init smartq_machine_init(व्योम);
+extern void __init smartq_map_io(void);
+extern void __init smartq_machine_init(void);
 
-#पूर्ण_अगर /* __MACH_SMARTQ_H */
+#endif /* __MACH_SMARTQ_H */

@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * dwc3-haps.c - Synopsys HAPS PCI Specअगरic glue layer
+ * dwc3-haps.c - Synopsys HAPS PCI Specific glue layer
  *
  * Copyright (C) 2018 Synopsys, Inc.
  *
@@ -9,60 +8,60 @@
  *          John Youn <johnyoun@synopsys.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/property.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/pci.h>
+#include <linux/platform_device.h>
+#include <linux/property.h>
 
 /**
- * काष्ठा dwc3_haps - Driver निजी काष्ठाure
- * @dwc3: child dwc3 platक्रमm_device
+ * struct dwc3_haps - Driver private structure
+ * @dwc3: child dwc3 platform_device
  * @pci: our link to PCI bus
  */
-काष्ठा dwc3_haps अणु
-	काष्ठा platक्रमm_device *dwc3;
-	काष्ठा pci_dev *pci;
-पूर्ण;
+struct dwc3_haps {
+	struct platform_device *dwc3;
+	struct pci_dev *pci;
+};
 
-अटल स्थिर काष्ठा property_entry initial_properties[] = अणु
+static const struct property_entry initial_properties[] = {
 	PROPERTY_ENTRY_BOOL("snps,usb3_lpm_capable"),
 	PROPERTY_ENTRY_BOOL("snps,has-lpm-erratum"),
 	PROPERTY_ENTRY_BOOL("snps,dis_enblslpm_quirk"),
 	PROPERTY_ENTRY_BOOL("linux,sysdev_is_parent"),
-	अणु पूर्ण,
-पूर्ण;
+	{ },
+};
 
-अटल स्थिर काष्ठा software_node dwc3_haps_swnode = अणु
+static const struct software_node dwc3_haps_swnode = {
 	.properties = initial_properties,
-पूर्ण;
+};
 
-अटल पूर्णांक dwc3_haps_probe(काष्ठा pci_dev *pci,
-			   स्थिर काष्ठा pci_device_id *id)
-अणु
-	काष्ठा dwc3_haps	*dwc;
-	काष्ठा device		*dev = &pci->dev;
-	काष्ठा resource		res[2];
-	पूर्णांक			ret;
+static int dwc3_haps_probe(struct pci_dev *pci,
+			   const struct pci_device_id *id)
+{
+	struct dwc3_haps	*dwc;
+	struct device		*dev = &pci->dev;
+	struct resource		res[2];
+	int			ret;
 
 	ret = pcim_enable_device(pci);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to enable pci device\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	pci_set_master(pci);
 
-	dwc = devm_kzalloc(dev, माप(*dwc), GFP_KERNEL);
-	अगर (!dwc)
-		वापस -ENOMEM;
+	dwc = devm_kzalloc(dev, sizeof(*dwc), GFP_KERNEL);
+	if (!dwc)
+		return -ENOMEM;
 
-	dwc->dwc3 = platक्रमm_device_alloc("dwc3", PLATFORM_DEVID_AUTO);
-	अगर (!dwc->dwc3)
-		वापस -ENOMEM;
+	dwc->dwc3 = platform_device_alloc("dwc3", PLATFORM_DEVID_AUTO);
+	if (!dwc->dwc3)
+		return -ENOMEM;
 
-	स_रखो(res, 0x00, माप(काष्ठा resource) * ARRAY_SIZE(res));
+	memset(res, 0x00, sizeof(struct resource) * ARRAY_SIZE(res));
 
 	res[0].start	= pci_resource_start(pci, 0);
 	res[0].end	= pci_resource_end(pci, 0);
@@ -73,74 +72,74 @@
 	res[1].name	= "dwc_usb3";
 	res[1].flags	= IORESOURCE_IRQ;
 
-	ret = platक्रमm_device_add_resources(dwc->dwc3, res, ARRAY_SIZE(res));
-	अगर (ret) अणु
+	ret = platform_device_add_resources(dwc->dwc3, res, ARRAY_SIZE(res));
+	if (ret) {
 		dev_err(dev, "couldn't add resources to dwc3 device\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	dwc->pci = pci;
 	dwc->dwc3->dev.parent = dev;
 
 	ret = device_add_software_node(&dwc->dwc3->dev, &dwc3_haps_swnode);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
-	ret = platक्रमm_device_add(dwc->dwc3);
-	अगर (ret) अणु
+	ret = platform_device_add(dwc->dwc3);
+	if (ret) {
 		dev_err(dev, "failed to register dwc3 device\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	pci_set_drvdata(pci, dwc);
 
-	वापस 0;
+	return 0;
 err:
-	device_हटाओ_software_node(&dwc->dwc3->dev);
-	platक्रमm_device_put(dwc->dwc3);
-	वापस ret;
-पूर्ण
+	device_remove_software_node(&dwc->dwc3->dev);
+	platform_device_put(dwc->dwc3);
+	return ret;
+}
 
-अटल व्योम dwc3_haps_हटाओ(काष्ठा pci_dev *pci)
-अणु
-	काष्ठा dwc3_haps *dwc = pci_get_drvdata(pci);
+static void dwc3_haps_remove(struct pci_dev *pci)
+{
+	struct dwc3_haps *dwc = pci_get_drvdata(pci);
 
-	device_हटाओ_software_node(&dwc->dwc3->dev);
-	platक्रमm_device_unरेजिस्टर(dwc->dwc3);
-पूर्ण
+	device_remove_software_node(&dwc->dwc3->dev);
+	platform_device_unregister(dwc->dwc3);
+}
 
-अटल स्थिर काष्ठा pci_device_id dwc3_haps_id_table[] = अणु
-	अणु
+static const struct pci_device_id dwc3_haps_id_table[] = {
+	{
 		PCI_DEVICE(PCI_VENDOR_ID_SYNOPSYS,
 			   PCI_DEVICE_ID_SYNOPSYS_HAPSUSB3),
 		/*
-		 * i.MX6QP and i.MX7D platक्रमm use a PCIe controller with the
-		 * same VID and PID as this USB controller. The प्रणाली may
+		 * i.MX6QP and i.MX7D platform use a PCIe controller with the
+		 * same VID and PID as this USB controller. The system may
 		 * incorrectly match this driver to that PCIe controller. To
-		 * workaround this, specअगरically use class type USB to prevent
+		 * workaround this, specifically use class type USB to prevent
 		 * incorrect driver matching.
 		 */
 		.class = (PCI_CLASS_SERIAL_USB << 8),
 		.class_mask = 0xffff00,
-	पूर्ण,
-	अणु
+	},
+	{
 		PCI_DEVICE(PCI_VENDOR_ID_SYNOPSYS,
 			   PCI_DEVICE_ID_SYNOPSYS_HAPSUSB3_AXI),
-	पूर्ण,
-	अणु
+	},
+	{
 		PCI_DEVICE(PCI_VENDOR_ID_SYNOPSYS,
 			   PCI_DEVICE_ID_SYNOPSYS_HAPSUSB31),
-	पूर्ण,
-	अणु  पूर्ण	/* Terminating Entry */
-पूर्ण;
+	},
+	{  }	/* Terminating Entry */
+};
 MODULE_DEVICE_TABLE(pci, dwc3_haps_id_table);
 
-अटल काष्ठा pci_driver dwc3_haps_driver = अणु
+static struct pci_driver dwc3_haps_driver = {
 	.name		= "dwc3-haps",
 	.id_table	= dwc3_haps_id_table,
 	.probe		= dwc3_haps_probe,
-	.हटाओ		= dwc3_haps_हटाओ,
-पूर्ण;
+	.remove		= dwc3_haps_remove,
+};
 
 MODULE_AUTHOR("Thinh Nguyen <thinhn@synopsys.com>");
 MODULE_LICENSE("GPL v2");

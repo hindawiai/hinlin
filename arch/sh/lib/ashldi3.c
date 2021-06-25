@@ -1,31 +1,30 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/module.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/module.h>
 
-#समावेश "libgcc.h"
+#include "libgcc.h"
 
-दीर्घ दीर्घ __ashldi3(दीर्घ दीर्घ u, word_type b)
-अणु
-	DWजोड़ uu, w;
+long long __ashldi3(long long u, word_type b)
+{
+	DWunion uu, w;
 	word_type bm;
 
-	अगर (b == 0)
-		वापस u;
+	if (b == 0)
+		return u;
 
 	uu.ll = u;
 	bm = 32 - b;
 
-	अगर (bm <= 0) अणु
+	if (bm <= 0) {
 		w.s.low = 0;
-		w.s.high = (अचिन्हित पूर्णांक) uu.s.low << -bm;
-	पूर्ण अन्यथा अणु
-		स्थिर अचिन्हित पूर्णांक carries = (अचिन्हित पूर्णांक) uu.s.low >> bm;
+		w.s.high = (unsigned int) uu.s.low << -bm;
+	} else {
+		const unsigned int carries = (unsigned int) uu.s.low >> bm;
 
-		w.s.low = (अचिन्हित पूर्णांक) uu.s.low << b;
-		w.s.high = ((अचिन्हित पूर्णांक) uu.s.high << b) | carries;
-	पूर्ण
+		w.s.low = (unsigned int) uu.s.low << b;
+		w.s.high = ((unsigned int) uu.s.high << b) | carries;
+	}
 
-	वापस w.ll;
-पूर्ण
+	return w.ll;
+}
 
 EXPORT_SYMBOL(__ashldi3);

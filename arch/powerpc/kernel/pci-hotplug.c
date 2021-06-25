@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Derived from "arch/powerpc/platforms/pseries/pci_dlpar.c"
  *
@@ -11,87 +10,87 @@
  * Updates, 2013, Gavin Shan <shangw@linux.vnet.ibm.com>
  */
 
-#समावेश <linux/pci.h>
-#समावेश <linux/export.h>
-#समावेश <यंत्र/pci-bridge.h>
-#समावेश <यंत्र/ppc-pci.h>
-#समावेश <यंत्र/firmware.h>
-#समावेश <यंत्र/eeh.h>
+#include <linux/pci.h>
+#include <linux/export.h>
+#include <asm/pci-bridge.h>
+#include <asm/ppc-pci.h>
+#include <asm/firmware.h>
+#include <asm/eeh.h>
 
-अटल काष्ठा pci_bus *find_bus_among_children(काष्ठा pci_bus *bus,
-					       काष्ठा device_node *dn)
-अणु
-	काष्ठा pci_bus *child = शून्य;
-	काष्ठा pci_bus *पंचांगp;
+static struct pci_bus *find_bus_among_children(struct pci_bus *bus,
+					       struct device_node *dn)
+{
+	struct pci_bus *child = NULL;
+	struct pci_bus *tmp;
 
-	अगर (pci_bus_to_OF_node(bus) == dn)
-		वापस bus;
+	if (pci_bus_to_OF_node(bus) == dn)
+		return bus;
 
-	list_क्रम_each_entry(पंचांगp, &bus->children, node) अणु
-		child = find_bus_among_children(पंचांगp, dn);
-		अगर (child)
-			अवरोध;
-	पूर्ण
+	list_for_each_entry(tmp, &bus->children, node) {
+		child = find_bus_among_children(tmp, dn);
+		if (child)
+			break;
+	}
 
-	वापस child;
-पूर्ण
+	return child;
+}
 
-काष्ठा pci_bus *pci_find_bus_by_node(काष्ठा device_node *dn)
-अणु
-	काष्ठा pci_dn *pdn = PCI_DN(dn);
+struct pci_bus *pci_find_bus_by_node(struct device_node *dn)
+{
+	struct pci_dn *pdn = PCI_DN(dn);
 
-	अगर (!pdn  || !pdn->phb || !pdn->phb->bus)
-		वापस शून्य;
+	if (!pdn  || !pdn->phb || !pdn->phb->bus)
+		return NULL;
 
-	वापस find_bus_among_children(pdn->phb->bus, dn);
-पूर्ण
+	return find_bus_among_children(pdn->phb->bus, dn);
+}
 EXPORT_SYMBOL_GPL(pci_find_bus_by_node);
 
 /**
  * pcibios_release_device - release PCI device
  * @dev: PCI device
  *
- * The function is called beक्रमe releasing the indicated PCI device.
+ * The function is called before releasing the indicated PCI device.
  */
-व्योम pcibios_release_device(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा pci_controller *phb = pci_bus_to_host(dev->bus);
-	काष्ठा pci_dn *pdn = pci_get_pdn(dev);
+void pcibios_release_device(struct pci_dev *dev)
+{
+	struct pci_controller *phb = pci_bus_to_host(dev->bus);
+	struct pci_dn *pdn = pci_get_pdn(dev);
 
-	अगर (phb->controller_ops.release_device)
+	if (phb->controller_ops.release_device)
 		phb->controller_ops.release_device(dev);
 
-	/* मुक्त()ing the pci_dn has been deferred to us, करो it now */
-	अगर (pdn && (pdn->flags & PCI_DN_FLAG_DEAD)) अणु
+	/* free()ing the pci_dn has been deferred to us, do it now */
+	if (pdn && (pdn->flags & PCI_DN_FLAG_DEAD)) {
 		pci_dbg(dev, "freeing dead pdn\n");
-		kमुक्त(pdn);
-	पूर्ण
-पूर्ण
+		kfree(pdn);
+	}
+}
 
 /**
- * pci_hp_हटाओ_devices - हटाओ all devices under this bus
+ * pci_hp_remove_devices - remove all devices under this bus
  * @bus: the indicated PCI bus
  *
  * Remove all of the PCI devices under this bus both from the
- * linux pci device tree, and from the घातerpc EEH address cache.
+ * linux pci device tree, and from the powerpc EEH address cache.
  */
-व्योम pci_hp_हटाओ_devices(काष्ठा pci_bus *bus)
-अणु
-	काष्ठा pci_dev *dev, *पंचांगp;
-	काष्ठा pci_bus *child_bus;
+void pci_hp_remove_devices(struct pci_bus *bus)
+{
+	struct pci_dev *dev, *tmp;
+	struct pci_bus *child_bus;
 
-	/* First go करोwn child busses */
-	list_क्रम_each_entry(child_bus, &bus->children, node)
-		pci_hp_हटाओ_devices(child_bus);
+	/* First go down child busses */
+	list_for_each_entry(child_bus, &bus->children, node)
+		pci_hp_remove_devices(child_bus);
 
 	pr_debug("PCI: Removing devices on bus %04x:%02x\n",
-		 pci_करोमुख्य_nr(bus),  bus->number);
-	list_क्रम_each_entry_safe_reverse(dev, पंचांगp, &bus->devices, bus_list) अणु
+		 pci_domain_nr(bus),  bus->number);
+	list_for_each_entry_safe_reverse(dev, tmp, &bus->devices, bus_list) {
 		pr_debug("   Removing %s...\n", pci_name(dev));
-		pci_stop_and_हटाओ_bus_device(dev);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(pci_hp_हटाओ_devices);
+		pci_stop_and_remove_bus_device(dev);
+	}
+}
+EXPORT_SYMBOL_GPL(pci_hp_remove_devices);
 
 /**
  * pci_hp_add_devices - adds new pci devices to bus
@@ -99,51 +98,51 @@ EXPORT_SYMBOL_GPL(pci_hp_हटाओ_devices);
  *
  * This routine will find and fixup new pci devices under
  * the indicated bus. This routine presumes that there
- * might alपढ़ोy be some devices under this bridge, so
+ * might already be some devices under this bridge, so
  * it carefully tries to add only new devices.  (And that
- * is how this routine dअगरfers from other, similar pcibios
+ * is how this routine differs from other, similar pcibios
  * routines.)
  */
-व्योम pci_hp_add_devices(काष्ठा pci_bus *bus)
-अणु
-	पूर्णांक slotno, mode, max;
-	काष्ठा pci_dev *dev;
-	काष्ठा pci_controller *phb;
-	काष्ठा device_node *dn = pci_bus_to_OF_node(bus);
+void pci_hp_add_devices(struct pci_bus *bus)
+{
+	int slotno, mode, max;
+	struct pci_dev *dev;
+	struct pci_controller *phb;
+	struct device_node *dn = pci_bus_to_OF_node(bus);
 
 	phb = pci_bus_to_host(bus);
 
 	mode = PCI_PROBE_NORMAL;
-	अगर (phb->controller_ops.probe_mode)
+	if (phb->controller_ops.probe_mode)
 		mode = phb->controller_ops.probe_mode(bus);
 
-	अगर (mode == PCI_PROBE_DEVTREE) अणु
+	if (mode == PCI_PROBE_DEVTREE) {
 		/* use ofdt-based probe */
 		of_rescan_bus(dn, bus);
-	पूर्ण अन्यथा अगर (mode == PCI_PROBE_NORMAL &&
-		   dn->child && PCI_DN(dn->child)) अणु
+	} else if (mode == PCI_PROBE_NORMAL &&
+		   dn->child && PCI_DN(dn->child)) {
 		/*
-		 * Use legacy probe. In the partial hotplug हाल, we
-		 * probably have gअक्रमchildren devices unplugged. So
-		 * we करोn't check the वापस value from pci_scan_slot() in
-		 * order क्रम fully rescan all the way करोwn to pick them up.
-		 * They can have been हटाओd during partial hotplug.
+		 * Use legacy probe. In the partial hotplug case, we
+		 * probably have grandchildren devices unplugged. So
+		 * we don't check the return value from pci_scan_slot() in
+		 * order for fully rescan all the way down to pick them up.
+		 * They can have been removed during partial hotplug.
 		 */
 		slotno = PCI_SLOT(PCI_DN(dn->child)->devfn);
 		pci_scan_slot(bus, PCI_DEVFN(slotno, 0));
 		max = bus->busn_res.start;
 		/*
-		 * Scan bridges that are alपढ़ोy configured. We करोn't touch
-		 * them unless they are misconfigured (which will be करोne in
+		 * Scan bridges that are already configured. We don't touch
+		 * them unless they are misconfigured (which will be done in
 		 * the second scan below).
 		 */
-		क्रम_each_pci_bridge(dev, bus)
+		for_each_pci_bridge(dev, bus)
 			max = pci_scan_bridge(bus, dev, max, 0);
 
 		/* Scan bridges that need to be reconfigured */
-		क्रम_each_pci_bridge(dev, bus)
+		for_each_pci_bridge(dev, bus)
 			max = pci_scan_bridge(bus, dev, max, 1);
-	पूर्ण
+	}
 	pcibios_finish_adding_to_bus(bus);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(pci_hp_add_devices);

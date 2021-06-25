@@ -1,196 +1,195 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- *  Driver core क्रम serial ports
+ *  Driver core for serial ports
  *
- *  Based on drivers/अक्षर/serial.c, by Linus Torvalds, Theoकरोre Ts'o.
+ *  Based on drivers/char/serial.c, by Linus Torvalds, Theodore Ts'o.
  *
  *  Copyright 1999 ARM Limited
  *  Copyright (C) 2000-2001 Deep Blue Solutions Ltd.
  */
-#समावेश <linux/module.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/tty_flip.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/init.h>
-#समावेश <linux/console.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/of.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/device.h>
-#समावेश <linux/serial.h> /* क्रम serial_state and serial_icounter_काष्ठा */
-#समावेश <linux/serial_core.h>
-#समावेश <linux/sysrq.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/security.h>
+#include <linux/module.h>
+#include <linux/tty.h>
+#include <linux/tty_flip.h>
+#include <linux/slab.h>
+#include <linux/sched/signal.h>
+#include <linux/init.h>
+#include <linux/console.h>
+#include <linux/gpio/consumer.h>
+#include <linux/of.h>
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
+#include <linux/device.h>
+#include <linux/serial.h> /* for serial_state and serial_icounter_struct */
+#include <linux/serial_core.h>
+#include <linux/sysrq.h>
+#include <linux/delay.h>
+#include <linux/mutex.h>
+#include <linux/security.h>
 
-#समावेश <linux/irq.h>
-#समावेश <linux/uaccess.h>
+#include <linux/irq.h>
+#include <linux/uaccess.h>
 
 /*
  * This is used to lock changes in serial line configuration.
  */
-अटल DEFINE_MUTEX(port_mutex);
+static DEFINE_MUTEX(port_mutex);
 
 /*
  * lockdep: port->lock is initialized in two places, but we
  *          want only one lock-class:
  */
-अटल काष्ठा lock_class_key port_lock_key;
+static struct lock_class_key port_lock_key;
 
-#घोषणा HIGH_BITS_OFFSET	((माप(दीर्घ)-माप(पूर्णांक))*8)
+#define HIGH_BITS_OFFSET	((sizeof(long)-sizeof(int))*8)
 
-अटल व्योम uart_change_speed(काष्ठा tty_काष्ठा *tty, काष्ठा uart_state *state,
-					काष्ठा ktermios *old_termios);
-अटल व्योम uart_रुको_until_sent(काष्ठा tty_काष्ठा *tty, पूर्णांक समयout);
-अटल व्योम uart_change_pm(काष्ठा uart_state *state,
-			   क्रमागत uart_pm_state pm_state);
+static void uart_change_speed(struct tty_struct *tty, struct uart_state *state,
+					struct ktermios *old_termios);
+static void uart_wait_until_sent(struct tty_struct *tty, int timeout);
+static void uart_change_pm(struct uart_state *state,
+			   enum uart_pm_state pm_state);
 
-अटल व्योम uart_port_shutकरोwn(काष्ठा tty_port *port);
+static void uart_port_shutdown(struct tty_port *port);
 
-अटल पूर्णांक uart_dcd_enabled(काष्ठा uart_port *uport)
-अणु
-	वापस !!(uport->status & UPSTAT_DCD_ENABLE);
-पूर्ण
+static int uart_dcd_enabled(struct uart_port *uport)
+{
+	return !!(uport->status & UPSTAT_DCD_ENABLE);
+}
 
-अटल अंतरभूत काष्ठा uart_port *uart_port_ref(काष्ठा uart_state *state)
-अणु
-	अगर (atomic_add_unless(&state->refcount, 1, 0))
-		वापस state->uart_port;
-	वापस शून्य;
-पूर्ण
+static inline struct uart_port *uart_port_ref(struct uart_state *state)
+{
+	if (atomic_add_unless(&state->refcount, 1, 0))
+		return state->uart_port;
+	return NULL;
+}
 
-अटल अंतरभूत व्योम uart_port_deref(काष्ठा uart_port *uport)
-अणु
-	अगर (atomic_dec_and_test(&uport->state->refcount))
-		wake_up(&uport->state->हटाओ_रुको);
-पूर्ण
+static inline void uart_port_deref(struct uart_port *uport)
+{
+	if (atomic_dec_and_test(&uport->state->refcount))
+		wake_up(&uport->state->remove_wait);
+}
 
-#घोषणा uart_port_lock(state, flags)					\
-	(अणु								\
-		काष्ठा uart_port *__uport = uart_port_ref(state);	\
-		अगर (__uport)						\
+#define uart_port_lock(state, flags)					\
+	({								\
+		struct uart_port *__uport = uart_port_ref(state);	\
+		if (__uport)						\
 			spin_lock_irqsave(&__uport->lock, flags);	\
 		__uport;						\
-	पूर्ण)
+	})
 
-#घोषणा uart_port_unlock(uport, flags)					\
-	(अणु								\
-		काष्ठा uart_port *__uport = uport;			\
-		अगर (__uport) अणु						\
+#define uart_port_unlock(uport, flags)					\
+	({								\
+		struct uart_port *__uport = uport;			\
+		if (__uport) {						\
 			spin_unlock_irqrestore(&__uport->lock, flags);	\
 			uart_port_deref(__uport);			\
-		पूर्ण							\
-	पूर्ण)
+		}							\
+	})
 
-अटल अंतरभूत काष्ठा uart_port *uart_port_check(काष्ठा uart_state *state)
-अणु
-	lockdep_निश्चित_held(&state->port.mutex);
-	वापस state->uart_port;
-पूर्ण
+static inline struct uart_port *uart_port_check(struct uart_state *state)
+{
+	lockdep_assert_held(&state->port.mutex);
+	return state->uart_port;
+}
 
 /*
- * This routine is used by the पूर्णांकerrupt handler to schedule processing in
- * the software पूर्णांकerrupt portion of the driver.
+ * This routine is used by the interrupt handler to schedule processing in
+ * the software interrupt portion of the driver.
  */
-व्योम uart_ग_लिखो_wakeup(काष्ठा uart_port *port)
-अणु
-	काष्ठा uart_state *state = port->state;
+void uart_write_wakeup(struct uart_port *port)
+{
+	struct uart_state *state = port->state;
 	/*
 	 * This means you called this function _after_ the port was
-	 * बंदd.  No cookie क्रम you.
+	 * closed.  No cookie for you.
 	 */
 	BUG_ON(!state);
 	tty_port_tty_wakeup(&state->port);
-पूर्ण
+}
 
-अटल व्योम uart_stop(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा uart_state *state = tty->driver_data;
-	काष्ठा uart_port *port;
-	अचिन्हित दीर्घ flags;
+static void uart_stop(struct tty_struct *tty)
+{
+	struct uart_state *state = tty->driver_data;
+	struct uart_port *port;
+	unsigned long flags;
 
 	port = uart_port_lock(state, flags);
-	अगर (port)
+	if (port)
 		port->ops->stop_tx(port);
 	uart_port_unlock(port, flags);
-पूर्ण
+}
 
-अटल व्योम __uart_start(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा uart_state *state = tty->driver_data;
-	काष्ठा uart_port *port = state->uart_port;
+static void __uart_start(struct tty_struct *tty)
+{
+	struct uart_state *state = tty->driver_data;
+	struct uart_port *port = state->uart_port;
 
-	अगर (port && !uart_tx_stopped(port))
+	if (port && !uart_tx_stopped(port))
 		port->ops->start_tx(port);
-पूर्ण
+}
 
-अटल व्योम uart_start(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा uart_state *state = tty->driver_data;
-	काष्ठा uart_port *port;
-	अचिन्हित दीर्घ flags;
+static void uart_start(struct tty_struct *tty)
+{
+	struct uart_state *state = tty->driver_data;
+	struct uart_port *port;
+	unsigned long flags;
 
 	port = uart_port_lock(state, flags);
 	__uart_start(tty);
 	uart_port_unlock(port, flags);
-पूर्ण
+}
 
-अटल व्योम
-uart_update_mctrl(काष्ठा uart_port *port, अचिन्हित पूर्णांक set, अचिन्हित पूर्णांक clear)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक old;
+static void
+uart_update_mctrl(struct uart_port *port, unsigned int set, unsigned int clear)
+{
+	unsigned long flags;
+	unsigned int old;
 
 	spin_lock_irqsave(&port->lock, flags);
 	old = port->mctrl;
 	port->mctrl = (old & ~clear) | set;
-	अगर (old != port->mctrl)
+	if (old != port->mctrl)
 		port->ops->set_mctrl(port, port->mctrl);
 	spin_unlock_irqrestore(&port->lock, flags);
-पूर्ण
+}
 
-#घोषणा uart_set_mctrl(port, set)	uart_update_mctrl(port, set, 0)
-#घोषणा uart_clear_mctrl(port, clear)	uart_update_mctrl(port, 0, clear)
+#define uart_set_mctrl(port, set)	uart_update_mctrl(port, set, 0)
+#define uart_clear_mctrl(port, clear)	uart_update_mctrl(port, 0, clear)
 
-अटल व्योम uart_port_dtr_rts(काष्ठा uart_port *uport, पूर्णांक उठाओ)
-अणु
-	पूर्णांक rs485_on = uport->rs485_config &&
+static void uart_port_dtr_rts(struct uart_port *uport, int raise)
+{
+	int rs485_on = uport->rs485_config &&
 		(uport->rs485.flags & SER_RS485_ENABLED);
-	पूर्णांक RTS_after_send = !!(uport->rs485.flags & SER_RS485_RTS_AFTER_SEND);
+	int RTS_after_send = !!(uport->rs485.flags & SER_RS485_RTS_AFTER_SEND);
 
-	अगर (उठाओ) अणु
-		अगर (rs485_on && !RTS_after_send) अणु
+	if (raise) {
+		if (rs485_on && !RTS_after_send) {
 			uart_set_mctrl(uport, TIOCM_DTR);
 			uart_clear_mctrl(uport, TIOCM_RTS);
-		पूर्ण अन्यथा अणु
+		} else {
 			uart_set_mctrl(uport, TIOCM_DTR | TIOCM_RTS);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अचिन्हित पूर्णांक clear = TIOCM_DTR;
+		}
+	} else {
+		unsigned int clear = TIOCM_DTR;
 
 		clear |= (!rs485_on || !RTS_after_send) ? TIOCM_RTS : 0;
 		uart_clear_mctrl(uport, clear);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Startup the port.  This will be called once per खोलो.  All calls
+ * Startup the port.  This will be called once per open.  All calls
  * will be serialised by the per-port mutex.
  */
-अटल पूर्णांक uart_port_startup(काष्ठा tty_काष्ठा *tty, काष्ठा uart_state *state,
-		पूर्णांक init_hw)
-अणु
-	काष्ठा uart_port *uport = uart_port_check(state);
-	अचिन्हित दीर्घ page;
-	अचिन्हित दीर्घ flags = 0;
-	पूर्णांक retval = 0;
+static int uart_port_startup(struct tty_struct *tty, struct uart_state *state,
+		int init_hw)
+{
+	struct uart_port *uport = uart_port_check(state);
+	unsigned long page;
+	unsigned long flags = 0;
+	int retval = 0;
 
-	अगर (uport->type == PORT_UNKNOWN)
-		वापस 1;
+	if (uport->type == PORT_UNKNOWN)
+		return 1;
 
 	/*
 	 * Make sure the device is in D0 state.
@@ -202,317 +201,317 @@ uart_update_mctrl(काष्ठा uart_port *port, अचिन्हित �
 	 * buffer.
 	 */
 	page = get_zeroed_page(GFP_KERNEL);
-	अगर (!page)
-		वापस -ENOMEM;
+	if (!page)
+		return -ENOMEM;
 
 	uart_port_lock(state, flags);
-	अगर (!state->xmit.buf) अणु
-		state->xmit.buf = (अचिन्हित अक्षर *) page;
+	if (!state->xmit.buf) {
+		state->xmit.buf = (unsigned char *) page;
 		uart_circ_clear(&state->xmit);
 		uart_port_unlock(uport, flags);
-	पूर्ण अन्यथा अणु
+	} else {
 		uart_port_unlock(uport, flags);
 		/*
-		 * Do not मुक्त() the page under the port lock, see
-		 * uart_shutकरोwn().
+		 * Do not free() the page under the port lock, see
+		 * uart_shutdown().
 		 */
-		मुक्त_page(page);
-	पूर्ण
+		free_page(page);
+	}
 
 	retval = uport->ops->startup(uport);
-	अगर (retval == 0) अणु
-		अगर (uart_console(uport) && uport->cons->cflag) अणु
+	if (retval == 0) {
+		if (uart_console(uport) && uport->cons->cflag) {
 			tty->termios.c_cflag = uport->cons->cflag;
 			uport->cons->cflag = 0;
-		पूर्ण
+		}
 		/*
 		 * Initialise the hardware port settings.
 		 */
-		uart_change_speed(tty, state, शून्य);
+		uart_change_speed(tty, state, NULL);
 
 		/*
-		 * Setup the RTS and DTR संकेतs once the
-		 * port is खोलो and पढ़ोy to respond.
+		 * Setup the RTS and DTR signals once the
+		 * port is open and ready to respond.
 		 */
-		अगर (init_hw && C_BAUD(tty))
+		if (init_hw && C_BAUD(tty))
 			uart_port_dtr_rts(uport, 1);
-	पूर्ण
+	}
 
 	/*
 	 * This is to allow setserial on this port. People may want to set
-	 * port/irq/type and then reconfigure the port properly अगर it failed
+	 * port/irq/type and then reconfigure the port properly if it failed
 	 * now.
 	 */
-	अगर (retval && capable(CAP_SYS_ADMIN))
-		वापस 1;
+	if (retval && capable(CAP_SYS_ADMIN))
+		return 1;
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक uart_startup(काष्ठा tty_काष्ठा *tty, काष्ठा uart_state *state,
-		पूर्णांक init_hw)
-अणु
-	काष्ठा tty_port *port = &state->port;
-	पूर्णांक retval;
+static int uart_startup(struct tty_struct *tty, struct uart_state *state,
+		int init_hw)
+{
+	struct tty_port *port = &state->port;
+	int retval;
 
-	अगर (tty_port_initialized(port))
-		वापस 0;
+	if (tty_port_initialized(port))
+		return 0;
 
 	retval = uart_port_startup(tty, state, init_hw);
-	अगर (retval)
+	if (retval)
 		set_bit(TTY_IO_ERROR, &tty->flags);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 /*
- * This routine will shutकरोwn a serial port; पूर्णांकerrupts are disabled, and
- * DTR is dropped अगर the hangup on बंद termio flag is on.  Calls to
- * uart_shutकरोwn are serialised by the per-port semaphore.
+ * This routine will shutdown a serial port; interrupts are disabled, and
+ * DTR is dropped if the hangup on close termio flag is on.  Calls to
+ * uart_shutdown are serialised by the per-port semaphore.
  *
- * uport == शून्य अगर uart_port has alपढ़ोy been हटाओd
+ * uport == NULL if uart_port has already been removed
  */
-अटल व्योम uart_shutकरोwn(काष्ठा tty_काष्ठा *tty, काष्ठा uart_state *state)
-अणु
-	काष्ठा uart_port *uport = uart_port_check(state);
-	काष्ठा tty_port *port = &state->port;
-	अचिन्हित दीर्घ flags = 0;
-	अक्षर *xmit_buf = शून्य;
+static void uart_shutdown(struct tty_struct *tty, struct uart_state *state)
+{
+	struct uart_port *uport = uart_port_check(state);
+	struct tty_port *port = &state->port;
+	unsigned long flags = 0;
+	char *xmit_buf = NULL;
 
 	/*
 	 * Set the TTY IO error marker
 	 */
-	अगर (tty)
+	if (tty)
 		set_bit(TTY_IO_ERROR, &tty->flags);
 
-	अगर (tty_port_initialized(port)) अणु
+	if (tty_port_initialized(port)) {
 		tty_port_set_initialized(port, 0);
 
 		/*
 		 * Turn off DTR and RTS early.
 		 */
-		अगर (uport && uart_console(uport) && tty)
+		if (uport && uart_console(uport) && tty)
 			uport->cons->cflag = tty->termios.c_cflag;
 
-		अगर (!tty || C_HUPCL(tty))
+		if (!tty || C_HUPCL(tty))
 			uart_port_dtr_rts(uport, 0);
 
-		uart_port_shutकरोwn(port);
-	पूर्ण
+		uart_port_shutdown(port);
+	}
 
 	/*
-	 * It's possible क्रम shutकरोwn to be called after suspend अगर we get
-	 * a DCD drop (hangup) at just the right समय.  Clear suspended bit so
-	 * we करोn't try to resume a port that has been shutकरोwn.
+	 * It's possible for shutdown to be called after suspend if we get
+	 * a DCD drop (hangup) at just the right time.  Clear suspended bit so
+	 * we don't try to resume a port that has been shutdown.
 	 */
 	tty_port_set_suspended(port, 0);
 
 	/*
-	 * Do not मुक्त() the transmit buffer page under the port lock since
+	 * Do not free() the transmit buffer page under the port lock since
 	 * this can create various circular locking scenarios. For instance,
-	 * console driver may need to allocate/मुक्त a debug object, which
-	 * can endup in prपूर्णांकk() recursion.
+	 * console driver may need to allocate/free a debug object, which
+	 * can endup in printk() recursion.
 	 */
 	uart_port_lock(state, flags);
 	xmit_buf = state->xmit.buf;
-	state->xmit.buf = शून्य;
+	state->xmit.buf = NULL;
 	uart_port_unlock(uport, flags);
 
-	अगर (xmit_buf)
-		मुक्त_page((अचिन्हित दीर्घ)xmit_buf);
-पूर्ण
+	if (xmit_buf)
+		free_page((unsigned long)xmit_buf);
+}
 
 /**
- *	uart_update_समयout - update per-port FIFO समयout.
- *	@port:  uart_port काष्ठाure describing the port
+ *	uart_update_timeout - update per-port FIFO timeout.
+ *	@port:  uart_port structure describing the port
  *	@cflag: termios cflag value
  *	@baud:  speed of the port
  *
- *	Set the port FIFO समयout value.  The @cflag value should
+ *	Set the port FIFO timeout value.  The @cflag value should
  *	reflect the actual hardware settings.
  */
-व्योम
-uart_update_समयout(काष्ठा uart_port *port, अचिन्हित पूर्णांक cflag,
-		    अचिन्हित पूर्णांक baud)
-अणु
-	अचिन्हित पूर्णांक bits;
+void
+uart_update_timeout(struct uart_port *port, unsigned int cflag,
+		    unsigned int baud)
+{
+	unsigned int bits;
 
 	/* byte size and parity */
-	चयन (cflag & CSIZE) अणु
-	हाल CS5:
+	switch (cflag & CSIZE) {
+	case CS5:
 		bits = 7;
-		अवरोध;
-	हाल CS6:
+		break;
+	case CS6:
 		bits = 8;
-		अवरोध;
-	हाल CS7:
+		break;
+	case CS7:
 		bits = 9;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		bits = 10;
-		अवरोध; /* CS8 */
-	पूर्ण
+		break; /* CS8 */
+	}
 
-	अगर (cflag & CSTOPB)
+	if (cflag & CSTOPB)
 		bits++;
-	अगर (cflag & PARENB)
+	if (cflag & PARENB)
 		bits++;
 
 	/*
-	 * The total number of bits to be transmitted in the fअगरo.
+	 * The total number of bits to be transmitted in the fifo.
 	 */
-	bits = bits * port->fअगरosize;
+	bits = bits * port->fifosize;
 
 	/*
-	 * Figure the समयout to send the above number of bits.
+	 * Figure the timeout to send the above number of bits.
 	 * Add .02 seconds of slop
 	 */
-	port->समयout = (HZ * bits) / baud + HZ/50;
-पूर्ण
+	port->timeout = (HZ * bits) / baud + HZ/50;
+}
 
-EXPORT_SYMBOL(uart_update_समयout);
+EXPORT_SYMBOL(uart_update_timeout);
 
 /**
- *	uart_get_baud_rate - वापस baud rate क्रम a particular port
- *	@port: uart_port काष्ठाure describing the port in question.
+ *	uart_get_baud_rate - return baud rate for a particular port
+ *	@port: uart_port structure describing the port in question.
  *	@termios: desired termios settings.
- *	@old: old termios (or शून्य)
+ *	@old: old termios (or NULL)
  *	@min: minimum acceptable baud rate
  *	@max: maximum acceptable baud rate
  *
- *	Decode the termios काष्ठाure पूर्णांकo a numeric baud rate,
+ *	Decode the termios structure into a numeric baud rate,
  *	taking account of the magic 38400 baud rate (with spd_*
  *	flags), and mapping the %B0 rate to 9600 baud.
  *
  *	If the new baud rate is invalid, try the old termios setting.
  *	If it's still invalid, we try 9600 baud.
  *
- *	Update the @termios काष्ठाure to reflect the baud rate
- *	we're actually going to be using. Don't करो this क्रम the हाल
+ *	Update the @termios structure to reflect the baud rate
+ *	we're actually going to be using. Don't do this for the case
  *	where B0 is requested ("hang up").
  */
-अचिन्हित पूर्णांक
-uart_get_baud_rate(काष्ठा uart_port *port, काष्ठा ktermios *termios,
-		   काष्ठा ktermios *old, अचिन्हित पूर्णांक min, अचिन्हित पूर्णांक max)
-अणु
-	अचिन्हित पूर्णांक try;
-	अचिन्हित पूर्णांक baud;
-	अचिन्हित पूर्णांक altbaud;
-	पूर्णांक hung_up = 0;
+unsigned int
+uart_get_baud_rate(struct uart_port *port, struct ktermios *termios,
+		   struct ktermios *old, unsigned int min, unsigned int max)
+{
+	unsigned int try;
+	unsigned int baud;
+	unsigned int altbaud;
+	int hung_up = 0;
 	upf_t flags = port->flags & UPF_SPD_MASK;
 
-	चयन (flags) अणु
-	हाल UPF_SPD_HI:
+	switch (flags) {
+	case UPF_SPD_HI:
 		altbaud = 57600;
-		अवरोध;
-	हाल UPF_SPD_VHI:
+		break;
+	case UPF_SPD_VHI:
 		altbaud = 115200;
-		अवरोध;
-	हाल UPF_SPD_SHI:
+		break;
+	case UPF_SPD_SHI:
 		altbaud = 230400;
-		अवरोध;
-	हाल UPF_SPD_WARP:
+		break;
+	case UPF_SPD_WARP:
 		altbaud = 460800;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		altbaud = 38400;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	क्रम (try = 0; try < 2; try++) अणु
+	for (try = 0; try < 2; try++) {
 		baud = tty_termios_baud_rate(termios);
 
 		/*
 		 * The spd_hi, spd_vhi, spd_shi, spd_warp kludge...
 		 * Die! Die! Die!
 		 */
-		अगर (try == 0 && baud == 38400)
+		if (try == 0 && baud == 38400)
 			baud = altbaud;
 
 		/*
-		 * Special हाल: B0 rate.
+		 * Special case: B0 rate.
 		 */
-		अगर (baud == 0) अणु
+		if (baud == 0) {
 			hung_up = 1;
 			baud = 9600;
-		पूर्ण
+		}
 
-		अगर (baud >= min && baud <= max)
-			वापस baud;
+		if (baud >= min && baud <= max)
+			return baud;
 
 		/*
 		 * Oops, the quotient was zero.  Try again with
-		 * the old baud rate अगर possible.
+		 * the old baud rate if possible.
 		 */
 		termios->c_cflag &= ~CBAUD;
-		अगर (old) अणु
+		if (old) {
 			baud = tty_termios_baud_rate(old);
-			अगर (!hung_up)
+			if (!hung_up)
 				tty_termios_encode_baud_rate(termios,
 								baud, baud);
-			old = शून्य;
-			जारी;
-		पूर्ण
+			old = NULL;
+			continue;
+		}
 
 		/*
-		 * As a last resort, अगर the range cannot be met then clip to
+		 * As a last resort, if the range cannot be met then clip to
 		 * the nearest chip supported rate.
 		 */
-		अगर (!hung_up) अणु
-			अगर (baud <= min)
+		if (!hung_up) {
+			if (baud <= min)
 				tty_termios_encode_baud_rate(termios,
 							min + 1, min + 1);
-			अन्यथा
+			else
 				tty_termios_encode_baud_rate(termios,
 							max - 1, max - 1);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	/* Should never happen */
 	WARN_ON(1);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 EXPORT_SYMBOL(uart_get_baud_rate);
 
 /**
- *	uart_get_भागisor - वापस uart घड़ी भागisor
- *	@port: uart_port काष्ठाure describing the port.
+ *	uart_get_divisor - return uart clock divisor
+ *	@port: uart_port structure describing the port.
  *	@baud: desired baud rate
  *
- *	Calculate the uart घड़ी भागisor क्रम the port.
+ *	Calculate the uart clock divisor for the port.
  */
-अचिन्हित पूर्णांक
-uart_get_भागisor(काष्ठा uart_port *port, अचिन्हित पूर्णांक baud)
-अणु
-	अचिन्हित पूर्णांक quot;
+unsigned int
+uart_get_divisor(struct uart_port *port, unsigned int baud)
+{
+	unsigned int quot;
 
 	/*
 	 * Old custom speed handling.
 	 */
-	अगर (baud == 38400 && (port->flags & UPF_SPD_MASK) == UPF_SPD_CUST)
-		quot = port->custom_भागisor;
-	अन्यथा
+	if (baud == 38400 && (port->flags & UPF_SPD_MASK) == UPF_SPD_CUST)
+		quot = port->custom_divisor;
+	else
 		quot = DIV_ROUND_CLOSEST(port->uartclk, 16 * baud);
 
-	वापस quot;
-पूर्ण
+	return quot;
+}
 
-EXPORT_SYMBOL(uart_get_भागisor);
+EXPORT_SYMBOL(uart_get_divisor);
 
 /* Caller holds port mutex */
-अटल व्योम uart_change_speed(काष्ठा tty_काष्ठा *tty, काष्ठा uart_state *state,
-					काष्ठा ktermios *old_termios)
-अणु
-	काष्ठा uart_port *uport = uart_port_check(state);
-	काष्ठा ktermios *termios;
-	पूर्णांक hw_stopped;
+static void uart_change_speed(struct tty_struct *tty, struct uart_state *state,
+					struct ktermios *old_termios)
+{
+	struct uart_port *uport = uart_port_check(state);
+	struct ktermios *termios;
+	int hw_stopped;
 
 	/*
-	 * If we have no tty, termios, or the port करोes not exist,
-	 * then we can't set the parameters क्रम this port.
+	 * If we have no tty, termios, or the port does not exist,
+	 * then we can't set the parameters for this port.
 	 */
-	अगर (!tty || uport->type == PORT_UNKNOWN)
-		वापस;
+	if (!tty || uport->type == PORT_UNKNOWN)
+		return;
 
 	termios = &tty->termios;
 	uport->ops->set_termios(uport, termios, old_termios);
@@ -521,244 +520,244 @@ EXPORT_SYMBOL(uart_get_भागisor);
 	 * Set modem status enables based on termios cflag
 	 */
 	spin_lock_irq(&uport->lock);
-	अगर (termios->c_cflag & CRTSCTS)
+	if (termios->c_cflag & CRTSCTS)
 		uport->status |= UPSTAT_CTS_ENABLE;
-	अन्यथा
+	else
 		uport->status &= ~UPSTAT_CTS_ENABLE;
 
-	अगर (termios->c_cflag & CLOCAL)
+	if (termios->c_cflag & CLOCAL)
 		uport->status &= ~UPSTAT_DCD_ENABLE;
-	अन्यथा
+	else
 		uport->status |= UPSTAT_DCD_ENABLE;
 
 	/* reset sw-assisted CTS flow control based on (possibly) new mode */
 	hw_stopped = uport->hw_stopped;
 	uport->hw_stopped = uart_softcts_mode(uport) &&
 				!(uport->ops->get_mctrl(uport) & TIOCM_CTS);
-	अगर (uport->hw_stopped) अणु
-		अगर (!hw_stopped)
+	if (uport->hw_stopped) {
+		if (!hw_stopped)
 			uport->ops->stop_tx(uport);
-	पूर्ण अन्यथा अणु
-		अगर (hw_stopped)
+	} else {
+		if (hw_stopped)
 			__uart_start(tty);
-	पूर्ण
+	}
 	spin_unlock_irq(&uport->lock);
-पूर्ण
+}
 
-अटल पूर्णांक uart_put_अक्षर(काष्ठा tty_काष्ठा *tty, अचिन्हित अक्षर c)
-अणु
-	काष्ठा uart_state *state = tty->driver_data;
-	काष्ठा uart_port *port;
-	काष्ठा circ_buf *circ;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = 0;
+static int uart_put_char(struct tty_struct *tty, unsigned char c)
+{
+	struct uart_state *state = tty->driver_data;
+	struct uart_port *port;
+	struct circ_buf *circ;
+	unsigned long flags;
+	int ret = 0;
 
 	circ = &state->xmit;
 	port = uart_port_lock(state, flags);
-	अगर (!circ->buf) अणु
+	if (!circ->buf) {
 		uart_port_unlock(port, flags);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (port && uart_circ_अक्षरs_मुक्त(circ) != 0) अणु
+	if (port && uart_circ_chars_free(circ) != 0) {
 		circ->buf[circ->head] = c;
 		circ->head = (circ->head + 1) & (UART_XMIT_SIZE - 1);
 		ret = 1;
-	पूर्ण
+	}
 	uart_port_unlock(port, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम uart_flush_अक्षरs(काष्ठा tty_काष्ठा *tty)
-अणु
+static void uart_flush_chars(struct tty_struct *tty)
+{
 	uart_start(tty);
-पूर्ण
+}
 
-अटल पूर्णांक uart_ग_लिखो(काष्ठा tty_काष्ठा *tty,
-					स्थिर अचिन्हित अक्षर *buf, पूर्णांक count)
-अणु
-	काष्ठा uart_state *state = tty->driver_data;
-	काष्ठा uart_port *port;
-	काष्ठा circ_buf *circ;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक c, ret = 0;
+static int uart_write(struct tty_struct *tty,
+					const unsigned char *buf, int count)
+{
+	struct uart_state *state = tty->driver_data;
+	struct uart_port *port;
+	struct circ_buf *circ;
+	unsigned long flags;
+	int c, ret = 0;
 
 	/*
 	 * This means you called this function _after_ the port was
-	 * बंदd.  No cookie क्रम you.
+	 * closed.  No cookie for you.
 	 */
-	अगर (!state) अणु
+	if (!state) {
 		WARN_ON(1);
-		वापस -EL3HLT;
-	पूर्ण
+		return -EL3HLT;
+	}
 
 	port = uart_port_lock(state, flags);
 	circ = &state->xmit;
-	अगर (!circ->buf) अणु
+	if (!circ->buf) {
 		uart_port_unlock(port, flags);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	जबतक (port) अणु
+	while (port) {
 		c = CIRC_SPACE_TO_END(circ->head, circ->tail, UART_XMIT_SIZE);
-		अगर (count < c)
+		if (count < c)
 			c = count;
-		अगर (c <= 0)
-			अवरोध;
-		स_नकल(circ->buf + circ->head, buf, c);
+		if (c <= 0)
+			break;
+		memcpy(circ->buf + circ->head, buf, c);
 		circ->head = (circ->head + c) & (UART_XMIT_SIZE - 1);
 		buf += c;
 		count -= c;
 		ret += c;
-	पूर्ण
+	}
 
 	__uart_start(tty);
 	uart_port_unlock(port, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक uart_ग_लिखो_room(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा uart_state *state = tty->driver_data;
-	काष्ठा uart_port *port;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
-
-	port = uart_port_lock(state, flags);
-	ret = uart_circ_अक्षरs_मुक्त(&state->xmit);
-	uart_port_unlock(port, flags);
-	वापस ret;
-पूर्ण
-
-अटल पूर्णांक uart_अक्षरs_in_buffer(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा uart_state *state = tty->driver_data;
-	काष्ठा uart_port *port;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+static int uart_write_room(struct tty_struct *tty)
+{
+	struct uart_state *state = tty->driver_data;
+	struct uart_port *port;
+	unsigned long flags;
+	int ret;
 
 	port = uart_port_lock(state, flags);
-	ret = uart_circ_अक्षरs_pending(&state->xmit);
+	ret = uart_circ_chars_free(&state->xmit);
 	uart_port_unlock(port, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम uart_flush_buffer(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा uart_state *state = tty->driver_data;
-	काष्ठा uart_port *port;
-	अचिन्हित दीर्घ flags;
+static int uart_chars_in_buffer(struct tty_struct *tty)
+{
+	struct uart_state *state = tty->driver_data;
+	struct uart_port *port;
+	unsigned long flags;
+	int ret;
+
+	port = uart_port_lock(state, flags);
+	ret = uart_circ_chars_pending(&state->xmit);
+	uart_port_unlock(port, flags);
+	return ret;
+}
+
+static void uart_flush_buffer(struct tty_struct *tty)
+{
+	struct uart_state *state = tty->driver_data;
+	struct uart_port *port;
+	unsigned long flags;
 
 	/*
 	 * This means you called this function _after_ the port was
-	 * बंदd.  No cookie क्रम you.
+	 * closed.  No cookie for you.
 	 */
-	अगर (!state) अणु
+	if (!state) {
 		WARN_ON(1);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	pr_debug("uart_flush_buffer(%d) called\n", tty->index);
 
 	port = uart_port_lock(state, flags);
-	अगर (!port)
-		वापस;
+	if (!port)
+		return;
 	uart_circ_clear(&state->xmit);
-	अगर (port->ops->flush_buffer)
+	if (port->ops->flush_buffer)
 		port->ops->flush_buffer(port);
 	uart_port_unlock(port, flags);
 	tty_port_tty_wakeup(&state->port);
-पूर्ण
+}
 
 /*
- * This function is used to send a high-priority XON/XOFF अक्षरacter to
+ * This function is used to send a high-priority XON/XOFF character to
  * the device
  */
-अटल व्योम uart_send_xअक्षर(काष्ठा tty_काष्ठा *tty, अक्षर ch)
-अणु
-	काष्ठा uart_state *state = tty->driver_data;
-	काष्ठा uart_port *port;
-	अचिन्हित दीर्घ flags;
+static void uart_send_xchar(struct tty_struct *tty, char ch)
+{
+	struct uart_state *state = tty->driver_data;
+	struct uart_port *port;
+	unsigned long flags;
 
 	port = uart_port_ref(state);
-	अगर (!port)
-		वापस;
+	if (!port)
+		return;
 
-	अगर (port->ops->send_xअक्षर)
-		port->ops->send_xअक्षर(port, ch);
-	अन्यथा अणु
+	if (port->ops->send_xchar)
+		port->ops->send_xchar(port, ch);
+	else {
 		spin_lock_irqsave(&port->lock, flags);
-		port->x_अक्षर = ch;
-		अगर (ch)
+		port->x_char = ch;
+		if (ch)
 			port->ops->start_tx(port);
 		spin_unlock_irqrestore(&port->lock, flags);
-	पूर्ण
+	}
 	uart_port_deref(port);
-पूर्ण
+}
 
-अटल व्योम uart_throttle(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा uart_state *state = tty->driver_data;
+static void uart_throttle(struct tty_struct *tty)
+{
+	struct uart_state *state = tty->driver_data;
 	upstat_t mask = UPSTAT_SYNC_FIFO;
-	काष्ठा uart_port *port;
+	struct uart_port *port;
 
 	port = uart_port_ref(state);
-	अगर (!port)
-		वापस;
+	if (!port)
+		return;
 
-	अगर (I_IXOFF(tty))
+	if (I_IXOFF(tty))
 		mask |= UPSTAT_AUTOXOFF;
-	अगर (C_CRTSCTS(tty))
+	if (C_CRTSCTS(tty))
 		mask |= UPSTAT_AUTORTS;
 
-	अगर (port->status & mask) अणु
+	if (port->status & mask) {
 		port->ops->throttle(port);
 		mask &= ~port->status;
-	पूर्ण
+	}
 
-	अगर (mask & UPSTAT_AUTORTS)
+	if (mask & UPSTAT_AUTORTS)
 		uart_clear_mctrl(port, TIOCM_RTS);
 
-	अगर (mask & UPSTAT_AUTOXOFF)
-		uart_send_xअक्षर(tty, STOP_CHAR(tty));
+	if (mask & UPSTAT_AUTOXOFF)
+		uart_send_xchar(tty, STOP_CHAR(tty));
 
 	uart_port_deref(port);
-पूर्ण
+}
 
-अटल व्योम uart_unthrottle(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा uart_state *state = tty->driver_data;
+static void uart_unthrottle(struct tty_struct *tty)
+{
+	struct uart_state *state = tty->driver_data;
 	upstat_t mask = UPSTAT_SYNC_FIFO;
-	काष्ठा uart_port *port;
+	struct uart_port *port;
 
 	port = uart_port_ref(state);
-	अगर (!port)
-		वापस;
+	if (!port)
+		return;
 
-	अगर (I_IXOFF(tty))
+	if (I_IXOFF(tty))
 		mask |= UPSTAT_AUTOXOFF;
-	अगर (C_CRTSCTS(tty))
+	if (C_CRTSCTS(tty))
 		mask |= UPSTAT_AUTORTS;
 
-	अगर (port->status & mask) अणु
+	if (port->status & mask) {
 		port->ops->unthrottle(port);
 		mask &= ~port->status;
-	पूर्ण
+	}
 
-	अगर (mask & UPSTAT_AUTORTS)
+	if (mask & UPSTAT_AUTORTS)
 		uart_set_mctrl(port, TIOCM_RTS);
 
-	अगर (mask & UPSTAT_AUTOXOFF)
-		uart_send_xअक्षर(tty, START_CHAR(tty));
+	if (mask & UPSTAT_AUTOXOFF)
+		uart_send_xchar(tty, START_CHAR(tty));
 
 	uart_port_deref(port);
-पूर्ण
+}
 
-अटल पूर्णांक uart_get_info(काष्ठा tty_port *port, काष्ठा serial_काष्ठा *retinfo)
-अणु
-	काष्ठा uart_state *state = container_of(port, काष्ठा uart_state, port);
-	काष्ठा uart_port *uport;
-	पूर्णांक ret = -ENODEV;
+static int uart_get_info(struct tty_port *port, struct serial_struct *retinfo)
+{
+	struct uart_state *state = container_of(port, struct uart_state, port);
+	struct uart_port *uport;
+	int ret = -ENODEV;
 
 	/*
 	 * Ensure the state we copy is consistent and no hardware changes
@@ -766,66 +765,66 @@ EXPORT_SYMBOL(uart_get_भागisor);
 	 */
 	mutex_lock(&port->mutex);
 	uport = uart_port_check(state);
-	अगर (!uport)
-		जाओ out;
+	if (!uport)
+		goto out;
 
 	retinfo->type	    = uport->type;
 	retinfo->line	    = uport->line;
 	retinfo->port	    = uport->iobase;
-	अगर (HIGH_BITS_OFFSET)
-		retinfo->port_high = (दीर्घ) uport->iobase >> HIGH_BITS_OFFSET;
+	if (HIGH_BITS_OFFSET)
+		retinfo->port_high = (long) uport->iobase >> HIGH_BITS_OFFSET;
 	retinfo->irq		    = uport->irq;
-	retinfo->flags	    = (__क्रमce पूर्णांक)uport->flags;
-	retinfo->xmit_fअगरo_size  = uport->fअगरosize;
+	retinfo->flags	    = (__force int)uport->flags;
+	retinfo->xmit_fifo_size  = uport->fifosize;
 	retinfo->baud_base	    = uport->uartclk / 16;
-	retinfo->बंद_delay	    = jअगरfies_to_msecs(port->बंद_delay) / 10;
-	retinfo->closing_रुको    = port->closing_रुको == ASYNC_CLOSING_WAIT_NONE ?
+	retinfo->close_delay	    = jiffies_to_msecs(port->close_delay) / 10;
+	retinfo->closing_wait    = port->closing_wait == ASYNC_CLOSING_WAIT_NONE ?
 				ASYNC_CLOSING_WAIT_NONE :
-				jअगरfies_to_msecs(port->closing_रुको) / 10;
-	retinfo->custom_भागisor  = uport->custom_भागisor;
+				jiffies_to_msecs(port->closing_wait) / 10;
+	retinfo->custom_divisor  = uport->custom_divisor;
 	retinfo->hub6	    = uport->hub6;
 	retinfo->io_type         = uport->iotype;
-	retinfo->iomem_reg_shअगरt = uport->regshअगरt;
-	retinfo->iomem_base      = (व्योम *)(अचिन्हित दीर्घ)uport->mapbase;
+	retinfo->iomem_reg_shift = uport->regshift;
+	retinfo->iomem_base      = (void *)(unsigned long)uport->mapbase;
 
 	ret = 0;
 out:
 	mutex_unlock(&port->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक uart_get_info_user(काष्ठा tty_काष्ठा *tty,
-			 काष्ठा serial_काष्ठा *ss)
-अणु
-	काष्ठा uart_state *state = tty->driver_data;
-	काष्ठा tty_port *port = &state->port;
+static int uart_get_info_user(struct tty_struct *tty,
+			 struct serial_struct *ss)
+{
+	struct uart_state *state = tty->driver_data;
+	struct tty_port *port = &state->port;
 
-	वापस uart_get_info(port, ss) < 0 ? -EIO : 0;
-पूर्ण
+	return uart_get_info(port, ss) < 0 ? -EIO : 0;
+}
 
-अटल पूर्णांक uart_set_info(काष्ठा tty_काष्ठा *tty, काष्ठा tty_port *port,
-			 काष्ठा uart_state *state,
-			 काष्ठा serial_काष्ठा *new_info)
-अणु
-	काष्ठा uart_port *uport = uart_port_check(state);
-	अचिन्हित दीर्घ new_port;
-	अचिन्हित पूर्णांक change_irq, change_port, closing_रुको;
-	अचिन्हित पूर्णांक old_custom_भागisor, बंद_delay;
+static int uart_set_info(struct tty_struct *tty, struct tty_port *port,
+			 struct uart_state *state,
+			 struct serial_struct *new_info)
+{
+	struct uart_port *uport = uart_port_check(state);
+	unsigned long new_port;
+	unsigned int change_irq, change_port, closing_wait;
+	unsigned int old_custom_divisor, close_delay;
 	upf_t old_flags, new_flags;
-	पूर्णांक retval = 0;
+	int retval = 0;
 
-	अगर (!uport)
-		वापस -EIO;
+	if (!uport)
+		return -EIO;
 
 	new_port = new_info->port;
-	अगर (HIGH_BITS_OFFSET)
-		new_port += (अचिन्हित दीर्घ) new_info->port_high << HIGH_BITS_OFFSET;
+	if (HIGH_BITS_OFFSET)
+		new_port += (unsigned long) new_info->port_high << HIGH_BITS_OFFSET;
 
 	new_info->irq = irq_canonicalize(new_info->irq);
-	बंद_delay = msecs_to_jअगरfies(new_info->बंद_delay * 10);
-	closing_रुको = new_info->closing_रुको == ASYNC_CLOSING_WAIT_NONE ?
+	close_delay = msecs_to_jiffies(new_info->close_delay * 10);
+	closing_wait = new_info->closing_wait == ASYNC_CLOSING_WAIT_NONE ?
 			ASYNC_CLOSING_WAIT_NONE :
-			msecs_to_jअगरfies(new_info->closing_रुको * 10);
+			msecs_to_jiffies(new_info->closing_wait * 10);
 
 
 	change_irq  = !(uport->flags & UPF_FIXED_PORT)
@@ -838,432 +837,432 @@ out:
 	 */
 	change_port = !(uport->flags & UPF_FIXED_PORT)
 		&& (new_port != uport->iobase ||
-		    (अचिन्हित दीर्घ)new_info->iomem_base != uport->mapbase ||
+		    (unsigned long)new_info->iomem_base != uport->mapbase ||
 		    new_info->hub6 != uport->hub6 ||
 		    new_info->io_type != uport->iotype ||
-		    new_info->iomem_reg_shअगरt != uport->regshअगरt ||
+		    new_info->iomem_reg_shift != uport->regshift ||
 		    new_info->type != uport->type);
 
 	old_flags = uport->flags;
-	new_flags = (__क्रमce upf_t)new_info->flags;
-	old_custom_भागisor = uport->custom_भागisor;
+	new_flags = (__force upf_t)new_info->flags;
+	old_custom_divisor = uport->custom_divisor;
 
-	अगर (!capable(CAP_SYS_ADMIN)) अणु
+	if (!capable(CAP_SYS_ADMIN)) {
 		retval = -EPERM;
-		अगर (change_irq || change_port ||
+		if (change_irq || change_port ||
 		    (new_info->baud_base != uport->uartclk / 16) ||
-		    (बंद_delay != port->बंद_delay) ||
-		    (closing_रुको != port->closing_रुको) ||
-		    (new_info->xmit_fअगरo_size &&
-		     new_info->xmit_fअगरo_size != uport->fअगरosize) ||
+		    (close_delay != port->close_delay) ||
+		    (closing_wait != port->closing_wait) ||
+		    (new_info->xmit_fifo_size &&
+		     new_info->xmit_fifo_size != uport->fifosize) ||
 		    (((new_flags ^ old_flags) & ~UPF_USR_MASK) != 0))
-			जाओ निकास;
+			goto exit;
 		uport->flags = ((uport->flags & ~UPF_USR_MASK) |
 			       (new_flags & UPF_USR_MASK));
-		uport->custom_भागisor = new_info->custom_भागisor;
-		जाओ check_and_निकास;
-	पूर्ण
+		uport->custom_divisor = new_info->custom_divisor;
+		goto check_and_exit;
+	}
 
-	अगर (change_irq || change_port) अणु
-		retval = security_locked_करोwn(LOCKDOWN_TIOCSSERIAL);
-		अगर (retval)
-			जाओ निकास;
-	पूर्ण
+	if (change_irq || change_port) {
+		retval = security_locked_down(LOCKDOWN_TIOCSSERIAL);
+		if (retval)
+			goto exit;
+	}
 
 	/*
-	 * Ask the low level driver to verअगरy the settings.
+	 * Ask the low level driver to verify the settings.
 	 */
-	अगर (uport->ops->verअगरy_port)
-		retval = uport->ops->verअगरy_port(uport, new_info);
+	if (uport->ops->verify_port)
+		retval = uport->ops->verify_port(uport, new_info);
 
-	अगर ((new_info->irq >= nr_irqs) || (new_info->irq < 0) ||
+	if ((new_info->irq >= nr_irqs) || (new_info->irq < 0) ||
 	    (new_info->baud_base < 9600))
 		retval = -EINVAL;
 
-	अगर (retval)
-		जाओ निकास;
+	if (retval)
+		goto exit;
 
-	अगर (change_port || change_irq) अणु
+	if (change_port || change_irq) {
 		retval = -EBUSY;
 
 		/*
 		 * Make sure that we are the sole user of this port.
 		 */
-		अगर (tty_port_users(port) > 1)
-			जाओ निकास;
+		if (tty_port_users(port) > 1)
+			goto exit;
 
 		/*
-		 * We need to shutकरोwn the serial port at the old
+		 * We need to shutdown the serial port at the old
 		 * port/type/irq combination.
 		 */
-		uart_shutकरोwn(tty, state);
-	पूर्ण
+		uart_shutdown(tty, state);
+	}
 
-	अगर (change_port) अणु
-		अचिन्हित दीर्घ old_iobase, old_mapbase;
-		अचिन्हित पूर्णांक old_type, old_iotype, old_hub6, old_shअगरt;
+	if (change_port) {
+		unsigned long old_iobase, old_mapbase;
+		unsigned int old_type, old_iotype, old_hub6, old_shift;
 
 		old_iobase = uport->iobase;
 		old_mapbase = uport->mapbase;
 		old_type = uport->type;
 		old_hub6 = uport->hub6;
 		old_iotype = uport->iotype;
-		old_shअगरt = uport->regshअगरt;
+		old_shift = uport->regshift;
 
 		/*
 		 * Free and release old regions
 		 */
-		अगर (old_type != PORT_UNKNOWN && uport->ops->release_port)
+		if (old_type != PORT_UNKNOWN && uport->ops->release_port)
 			uport->ops->release_port(uport);
 
 		uport->iobase = new_port;
 		uport->type = new_info->type;
 		uport->hub6 = new_info->hub6;
 		uport->iotype = new_info->io_type;
-		uport->regshअगरt = new_info->iomem_reg_shअगरt;
-		uport->mapbase = (अचिन्हित दीर्घ)new_info->iomem_base;
+		uport->regshift = new_info->iomem_reg_shift;
+		uport->mapbase = (unsigned long)new_info->iomem_base;
 
 		/*
 		 * Claim and map the new regions
 		 */
-		अगर (uport->type != PORT_UNKNOWN && uport->ops->request_port) अणु
+		if (uport->type != PORT_UNKNOWN && uport->ops->request_port) {
 			retval = uport->ops->request_port(uport);
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Always success - Jean II */
 			retval = 0;
-		पूर्ण
+		}
 
 		/*
-		 * If we fail to request resources क्रम the
+		 * If we fail to request resources for the
 		 * new port, try to restore the old settings.
 		 */
-		अगर (retval) अणु
+		if (retval) {
 			uport->iobase = old_iobase;
 			uport->type = old_type;
 			uport->hub6 = old_hub6;
 			uport->iotype = old_iotype;
-			uport->regshअगरt = old_shअगरt;
+			uport->regshift = old_shift;
 			uport->mapbase = old_mapbase;
 
-			अगर (old_type != PORT_UNKNOWN) अणु
+			if (old_type != PORT_UNKNOWN) {
 				retval = uport->ops->request_port(uport);
 				/*
 				 * If we failed to restore the old settings,
 				 * we fail like this.
 				 */
-				अगर (retval)
+				if (retval)
 					uport->type = PORT_UNKNOWN;
 
 				/*
 				 * We failed anyway.
 				 */
 				retval = -EBUSY;
-			पूर्ण
+			}
 
-			/* Added to वापस the correct error -Ram Gupta */
-			जाओ निकास;
-		पूर्ण
-	पूर्ण
+			/* Added to return the correct error -Ram Gupta */
+			goto exit;
+		}
+	}
 
-	अगर (change_irq)
+	if (change_irq)
 		uport->irq      = new_info->irq;
-	अगर (!(uport->flags & UPF_FIXED_PORT))
+	if (!(uport->flags & UPF_FIXED_PORT))
 		uport->uartclk  = new_info->baud_base * 16;
 	uport->flags            = (uport->flags & ~UPF_CHANGE_MASK) |
 				 (new_flags & UPF_CHANGE_MASK);
-	uport->custom_भागisor   = new_info->custom_भागisor;
-	port->बंद_delay     = बंद_delay;
-	port->closing_रुको    = closing_रुको;
-	अगर (new_info->xmit_fअगरo_size)
-		uport->fअगरosize = new_info->xmit_fअगरo_size;
+	uport->custom_divisor   = new_info->custom_divisor;
+	port->close_delay     = close_delay;
+	port->closing_wait    = closing_wait;
+	if (new_info->xmit_fifo_size)
+		uport->fifosize = new_info->xmit_fifo_size;
 
- check_and_निकास:
+ check_and_exit:
 	retval = 0;
-	अगर (uport->type == PORT_UNKNOWN)
-		जाओ निकास;
-	अगर (tty_port_initialized(port)) अणु
-		अगर (((old_flags ^ uport->flags) & UPF_SPD_MASK) ||
-		    old_custom_भागisor != uport->custom_भागisor) अणु
+	if (uport->type == PORT_UNKNOWN)
+		goto exit;
+	if (tty_port_initialized(port)) {
+		if (((old_flags ^ uport->flags) & UPF_SPD_MASK) ||
+		    old_custom_divisor != uport->custom_divisor) {
 			/*
-			 * If they're setting up a custom भागisor or speed,
+			 * If they're setting up a custom divisor or speed,
 			 * instead of clearing it, then bitch about it.
 			 */
-			अगर (uport->flags & UPF_SPD_MASK) अणु
+			if (uport->flags & UPF_SPD_MASK) {
 				dev_notice_ratelimited(uport->dev,
 				       "%s sets custom speed on %s. This is deprecated.\n",
 				      current->comm,
 				      tty_name(port->tty));
-			पूर्ण
-			uart_change_speed(tty, state, शून्य);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			}
+			uart_change_speed(tty, state, NULL);
+		}
+	} else {
 		retval = uart_startup(tty, state, 1);
-		अगर (retval == 0)
+		if (retval == 0)
 			tty_port_set_initialized(port, true);
-		अगर (retval > 0)
+		if (retval > 0)
 			retval = 0;
-	पूर्ण
- निकास:
-	वापस retval;
-पूर्ण
+	}
+ exit:
+	return retval;
+}
 
-अटल पूर्णांक uart_set_info_user(काष्ठा tty_काष्ठा *tty, काष्ठा serial_काष्ठा *ss)
-अणु
-	काष्ठा uart_state *state = tty->driver_data;
-	काष्ठा tty_port *port = &state->port;
-	पूर्णांक retval;
+static int uart_set_info_user(struct tty_struct *tty, struct serial_struct *ss)
+{
+	struct uart_state *state = tty->driver_data;
+	struct tty_port *port = &state->port;
+	int retval;
 
-	करोwn_ग_लिखो(&tty->termios_rwsem);
+	down_write(&tty->termios_rwsem);
 	/*
 	 * This semaphore protects port->count.  It is also
-	 * very useful to prevent खोलोs.  Also, take the
+	 * very useful to prevent opens.  Also, take the
 	 * port configuration semaphore to make sure that a
-	 * module insertion/removal करोesn't change anything
+	 * module insertion/removal doesn't change anything
 	 * under us.
 	 */
 	mutex_lock(&port->mutex);
 	retval = uart_set_info(tty, port, state, ss);
 	mutex_unlock(&port->mutex);
-	up_ग_लिखो(&tty->termios_rwsem);
-	वापस retval;
-पूर्ण
+	up_write(&tty->termios_rwsem);
+	return retval;
+}
 
 /**
- *	uart_get_lsr_info	-	get line status रेजिस्टर info
+ *	uart_get_lsr_info	-	get line status register info
  *	@tty: tty associated with the UART
  *	@state: UART being queried
- *	@value: वापसed modem value
+ *	@value: returned modem value
  */
-अटल पूर्णांक uart_get_lsr_info(काष्ठा tty_काष्ठा *tty,
-			काष्ठा uart_state *state, अचिन्हित पूर्णांक __user *value)
-अणु
-	काष्ठा uart_port *uport = uart_port_check(state);
-	अचिन्हित पूर्णांक result;
+static int uart_get_lsr_info(struct tty_struct *tty,
+			struct uart_state *state, unsigned int __user *value)
+{
+	struct uart_port *uport = uart_port_check(state);
+	unsigned int result;
 
 	result = uport->ops->tx_empty(uport);
 
 	/*
-	 * If we're about to load something पूर्णांकo the transmit
-	 * रेजिस्टर, we'll pretend the transmitter isn't empty to
-	 * aव्योम a race condition (depending on when the transmit
-	 * पूर्णांकerrupt happens).
+	 * If we're about to load something into the transmit
+	 * register, we'll pretend the transmitter isn't empty to
+	 * avoid a race condition (depending on when the transmit
+	 * interrupt happens).
 	 */
-	अगर (uport->x_अक्षर ||
-	    ((uart_circ_अक्षरs_pending(&state->xmit) > 0) &&
+	if (uport->x_char ||
+	    ((uart_circ_chars_pending(&state->xmit) > 0) &&
 	     !uart_tx_stopped(uport)))
 		result &= ~TIOCSER_TEMT;
 
-	वापस put_user(result, value);
-पूर्ण
+	return put_user(result, value);
+}
 
-अटल पूर्णांक uart_tiocmget(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा uart_state *state = tty->driver_data;
-	काष्ठा tty_port *port = &state->port;
-	काष्ठा uart_port *uport;
-	पूर्णांक result = -EIO;
+static int uart_tiocmget(struct tty_struct *tty)
+{
+	struct uart_state *state = tty->driver_data;
+	struct tty_port *port = &state->port;
+	struct uart_port *uport;
+	int result = -EIO;
 
 	mutex_lock(&port->mutex);
 	uport = uart_port_check(state);
-	अगर (!uport)
-		जाओ out;
+	if (!uport)
+		goto out;
 
-	अगर (!tty_io_error(tty)) अणु
+	if (!tty_io_error(tty)) {
 		result = uport->mctrl;
 		spin_lock_irq(&uport->lock);
 		result |= uport->ops->get_mctrl(uport);
 		spin_unlock_irq(&uport->lock);
-	पूर्ण
+	}
 out:
 	mutex_unlock(&port->mutex);
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक
-uart_tiocmset(काष्ठा tty_काष्ठा *tty, अचिन्हित पूर्णांक set, अचिन्हित पूर्णांक clear)
-अणु
-	काष्ठा uart_state *state = tty->driver_data;
-	काष्ठा tty_port *port = &state->port;
-	काष्ठा uart_port *uport;
-	पूर्णांक ret = -EIO;
+static int
+uart_tiocmset(struct tty_struct *tty, unsigned int set, unsigned int clear)
+{
+	struct uart_state *state = tty->driver_data;
+	struct tty_port *port = &state->port;
+	struct uart_port *uport;
+	int ret = -EIO;
 
 	mutex_lock(&port->mutex);
 	uport = uart_port_check(state);
-	अगर (!uport)
-		जाओ out;
+	if (!uport)
+		goto out;
 
-	अगर (!tty_io_error(tty)) अणु
+	if (!tty_io_error(tty)) {
 		uart_update_mctrl(uport, set, clear);
 		ret = 0;
-	पूर्ण
+	}
 out:
 	mutex_unlock(&port->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक uart_अवरोध_ctl(काष्ठा tty_काष्ठा *tty, पूर्णांक अवरोध_state)
-अणु
-	काष्ठा uart_state *state = tty->driver_data;
-	काष्ठा tty_port *port = &state->port;
-	काष्ठा uart_port *uport;
-	पूर्णांक ret = -EIO;
+static int uart_break_ctl(struct tty_struct *tty, int break_state)
+{
+	struct uart_state *state = tty->driver_data;
+	struct tty_port *port = &state->port;
+	struct uart_port *uport;
+	int ret = -EIO;
 
 	mutex_lock(&port->mutex);
 	uport = uart_port_check(state);
-	अगर (!uport)
-		जाओ out;
+	if (!uport)
+		goto out;
 
-	अगर (uport->type != PORT_UNKNOWN && uport->ops->अवरोध_ctl)
-		uport->ops->अवरोध_ctl(uport, अवरोध_state);
+	if (uport->type != PORT_UNKNOWN && uport->ops->break_ctl)
+		uport->ops->break_ctl(uport, break_state);
 	ret = 0;
 out:
 	mutex_unlock(&port->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक uart_करो_स्वतःconfig(काष्ठा tty_काष्ठा *tty, काष्ठा uart_state *state)
-अणु
-	काष्ठा tty_port *port = &state->port;
-	काष्ठा uart_port *uport;
-	पूर्णांक flags, ret;
+static int uart_do_autoconfig(struct tty_struct *tty, struct uart_state *state)
+{
+	struct tty_port *port = &state->port;
+	struct uart_port *uport;
+	int flags, ret;
 
-	अगर (!capable(CAP_SYS_ADMIN))
-		वापस -EPERM;
+	if (!capable(CAP_SYS_ADMIN))
+		return -EPERM;
 
 	/*
 	 * Take the per-port semaphore.  This prevents count from
-	 * changing, and hence any extra खोलोs of the port जबतक
-	 * we're स्वतः-configuring.
+	 * changing, and hence any extra opens of the port while
+	 * we're auto-configuring.
 	 */
-	अगर (mutex_lock_पूर्णांकerruptible(&port->mutex))
-		वापस -ERESTARTSYS;
+	if (mutex_lock_interruptible(&port->mutex))
+		return -ERESTARTSYS;
 
 	uport = uart_port_check(state);
-	अगर (!uport) अणु
+	if (!uport) {
 		ret = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = -EBUSY;
-	अगर (tty_port_users(port) == 1) अणु
-		uart_shutकरोwn(tty, state);
+	if (tty_port_users(port) == 1) {
+		uart_shutdown(tty, state);
 
 		/*
-		 * If we alपढ़ोy have a port type configured,
+		 * If we already have a port type configured,
 		 * we must release its resources.
 		 */
-		अगर (uport->type != PORT_UNKNOWN && uport->ops->release_port)
+		if (uport->type != PORT_UNKNOWN && uport->ops->release_port)
 			uport->ops->release_port(uport);
 
 		flags = UART_CONFIG_TYPE;
-		अगर (uport->flags & UPF_AUTO_IRQ)
+		if (uport->flags & UPF_AUTO_IRQ)
 			flags |= UART_CONFIG_IRQ;
 
 		/*
-		 * This will claim the ports resources अगर
+		 * This will claim the ports resources if
 		 * a port is found.
 		 */
 		uport->ops->config_port(uport, flags);
 
 		ret = uart_startup(tty, state, 1);
-		अगर (ret == 0)
+		if (ret == 0)
 			tty_port_set_initialized(port, true);
-		अगर (ret > 0)
+		if (ret > 0)
 			ret = 0;
-	पूर्ण
+	}
 out:
 	mutex_unlock(&port->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम uart_enable_ms(काष्ठा uart_port *uport)
-अणु
+static void uart_enable_ms(struct uart_port *uport)
+{
 	/*
-	 * Force modem status पूर्णांकerrupts on
+	 * Force modem status interrupts on
 	 */
-	अगर (uport->ops->enable_ms)
+	if (uport->ops->enable_ms)
 		uport->ops->enable_ms(uport);
-पूर्ण
+}
 
 /*
- * Wait क्रम any of the 4 modem inमाला_दो (DCD,RI,DSR,CTS) to change
- * - mask passed in arg क्रम lines of पूर्णांकerest
- *   (use |'ed TIOCM_RNG/DSR/CD/CTS क्रम masking)
+ * Wait for any of the 4 modem inputs (DCD,RI,DSR,CTS) to change
+ * - mask passed in arg for lines of interest
+ *   (use |'ed TIOCM_RNG/DSR/CD/CTS for masking)
  * Caller should use TIOCGICOUNT to see which one it was
  *
- * FIXME: This wants extracting पूर्णांकo a common all driver implementation
+ * FIXME: This wants extracting into a common all driver implementation
  * of TIOCMWAIT using tty_port.
  */
-अटल पूर्णांक uart_रुको_modem_status(काष्ठा uart_state *state, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा uart_port *uport;
-	काष्ठा tty_port *port = &state->port;
-	DECLARE_WAITQUEUE(रुको, current);
-	काष्ठा uart_icount cprev, cnow;
-	पूर्णांक ret;
+static int uart_wait_modem_status(struct uart_state *state, unsigned long arg)
+{
+	struct uart_port *uport;
+	struct tty_port *port = &state->port;
+	DECLARE_WAITQUEUE(wait, current);
+	struct uart_icount cprev, cnow;
+	int ret;
 
 	/*
 	 * note the counters on entry
 	 */
 	uport = uart_port_ref(state);
-	अगर (!uport)
-		वापस -EIO;
+	if (!uport)
+		return -EIO;
 	spin_lock_irq(&uport->lock);
-	स_नकल(&cprev, &uport->icount, माप(काष्ठा uart_icount));
+	memcpy(&cprev, &uport->icount, sizeof(struct uart_icount));
 	uart_enable_ms(uport);
 	spin_unlock_irq(&uport->lock);
 
-	add_रुको_queue(&port->delta_msr_रुको, &रुको);
-	क्रम (;;) अणु
+	add_wait_queue(&port->delta_msr_wait, &wait);
+	for (;;) {
 		spin_lock_irq(&uport->lock);
-		स_नकल(&cnow, &uport->icount, माप(काष्ठा uart_icount));
+		memcpy(&cnow, &uport->icount, sizeof(struct uart_icount));
 		spin_unlock_irq(&uport->lock);
 
 		set_current_state(TASK_INTERRUPTIBLE);
 
-		अगर (((arg & TIOCM_RNG) && (cnow.rng != cprev.rng)) ||
+		if (((arg & TIOCM_RNG) && (cnow.rng != cprev.rng)) ||
 		    ((arg & TIOCM_DSR) && (cnow.dsr != cprev.dsr)) ||
 		    ((arg & TIOCM_CD)  && (cnow.dcd != cprev.dcd)) ||
-		    ((arg & TIOCM_CTS) && (cnow.cts != cprev.cts))) अणु
+		    ((arg & TIOCM_CTS) && (cnow.cts != cprev.cts))) {
 			ret = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		schedule();
 
-		/* see अगर a संकेत did it */
-		अगर (संकेत_pending(current)) अणु
+		/* see if a signal did it */
+		if (signal_pending(current)) {
 			ret = -ERESTARTSYS;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		cprev = cnow;
-	पूर्ण
+	}
 	__set_current_state(TASK_RUNNING);
-	हटाओ_रुको_queue(&port->delta_msr_रुको, &रुको);
+	remove_wait_queue(&port->delta_msr_wait, &wait);
 	uart_port_deref(uport);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Get counter of input serial line पूर्णांकerrupts (DCD,RI,DSR,CTS)
- * Return: ग_लिखो counters to the user passed counter काष्ठा
- * NB: both 1->0 and 0->1 transitions are counted except क्रम
+ * Get counter of input serial line interrupts (DCD,RI,DSR,CTS)
+ * Return: write counters to the user passed counter struct
+ * NB: both 1->0 and 0->1 transitions are counted except for
  *     RI where only 0->1 is counted.
  */
-अटल पूर्णांक uart_get_icount(काष्ठा tty_काष्ठा *tty,
-			  काष्ठा serial_icounter_काष्ठा *icount)
-अणु
-	काष्ठा uart_state *state = tty->driver_data;
-	काष्ठा uart_icount cnow;
-	काष्ठा uart_port *uport;
+static int uart_get_icount(struct tty_struct *tty,
+			  struct serial_icounter_struct *icount)
+{
+	struct uart_state *state = tty->driver_data;
+	struct uart_icount cnow;
+	struct uart_port *uport;
 
 	uport = uart_port_ref(state);
-	अगर (!uport)
-		वापस -EIO;
+	if (!uport)
+		return -EIO;
 	spin_lock_irq(&uport->lock);
-	स_नकल(&cnow, &uport->icount, माप(काष्ठा uart_icount));
+	memcpy(&cnow, &uport->icount, sizeof(struct uart_icount));
 	spin_unlock_irq(&uport->lock);
 	uart_port_deref(uport);
 
@@ -1279,230 +1278,230 @@ out:
 	icount->brk         = cnow.brk;
 	icount->buf_overrun = cnow.buf_overrun;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक uart_get_rs485_config(काष्ठा uart_port *port,
-			 काष्ठा serial_rs485 __user *rs485)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा serial_rs485 aux;
+static int uart_get_rs485_config(struct uart_port *port,
+			 struct serial_rs485 __user *rs485)
+{
+	unsigned long flags;
+	struct serial_rs485 aux;
 
 	spin_lock_irqsave(&port->lock, flags);
 	aux = port->rs485;
 	spin_unlock_irqrestore(&port->lock, flags);
 
-	अगर (copy_to_user(rs485, &aux, माप(aux)))
-		वापस -EFAULT;
+	if (copy_to_user(rs485, &aux, sizeof(aux)))
+		return -EFAULT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक uart_set_rs485_config(काष्ठा uart_port *port,
-			 काष्ठा serial_rs485 __user *rs485_user)
-अणु
-	काष्ठा serial_rs485 rs485;
-	पूर्णांक ret;
-	अचिन्हित दीर्घ flags;
+static int uart_set_rs485_config(struct uart_port *port,
+			 struct serial_rs485 __user *rs485_user)
+{
+	struct serial_rs485 rs485;
+	int ret;
+	unsigned long flags;
 
-	अगर (!port->rs485_config)
-		वापस -ENOTTY;
+	if (!port->rs485_config)
+		return -ENOTTY;
 
-	अगर (copy_from_user(&rs485, rs485_user, माप(*rs485_user)))
-		वापस -EFAULT;
+	if (copy_from_user(&rs485, rs485_user, sizeof(*rs485_user)))
+		return -EFAULT;
 
 	spin_lock_irqsave(&port->lock, flags);
 	ret = port->rs485_config(port, &rs485);
 	spin_unlock_irqrestore(&port->lock, flags);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (copy_to_user(rs485_user, &port->rs485, माप(port->rs485)))
-		वापस -EFAULT;
+	if (copy_to_user(rs485_user, &port->rs485, sizeof(port->rs485)))
+		return -EFAULT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक uart_get_iso7816_config(काष्ठा uart_port *port,
-				   काष्ठा serial_iso7816 __user *iso7816)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा serial_iso7816 aux;
+static int uart_get_iso7816_config(struct uart_port *port,
+				   struct serial_iso7816 __user *iso7816)
+{
+	unsigned long flags;
+	struct serial_iso7816 aux;
 
-	अगर (!port->iso7816_config)
-		वापस -ENOTTY;
+	if (!port->iso7816_config)
+		return -ENOTTY;
 
 	spin_lock_irqsave(&port->lock, flags);
 	aux = port->iso7816;
 	spin_unlock_irqrestore(&port->lock, flags);
 
-	अगर (copy_to_user(iso7816, &aux, माप(aux)))
-		वापस -EFAULT;
+	if (copy_to_user(iso7816, &aux, sizeof(aux)))
+		return -EFAULT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक uart_set_iso7816_config(काष्ठा uart_port *port,
-				   काष्ठा serial_iso7816 __user *iso7816_user)
-अणु
-	काष्ठा serial_iso7816 iso7816;
-	पूर्णांक i, ret;
-	अचिन्हित दीर्घ flags;
+static int uart_set_iso7816_config(struct uart_port *port,
+				   struct serial_iso7816 __user *iso7816_user)
+{
+	struct serial_iso7816 iso7816;
+	int i, ret;
+	unsigned long flags;
 
-	अगर (!port->iso7816_config)
-		वापस -ENOTTY;
+	if (!port->iso7816_config)
+		return -ENOTTY;
 
-	अगर (copy_from_user(&iso7816, iso7816_user, माप(*iso7816_user)))
-		वापस -EFAULT;
+	if (copy_from_user(&iso7816, iso7816_user, sizeof(*iso7816_user)))
+		return -EFAULT;
 
 	/*
-	 * There are 5 words reserved क्रम future use. Check that userspace
-	 * करोesn't put stuff in there to prevent अवरोधages in the future.
+	 * There are 5 words reserved for future use. Check that userspace
+	 * doesn't put stuff in there to prevent breakages in the future.
 	 */
-	क्रम (i = 0; i < 5; i++)
-		अगर (iso7816.reserved[i])
-			वापस -EINVAL;
+	for (i = 0; i < 5; i++)
+		if (iso7816.reserved[i])
+			return -EINVAL;
 
 	spin_lock_irqsave(&port->lock, flags);
 	ret = port->iso7816_config(port, &iso7816);
 	spin_unlock_irqrestore(&port->lock, flags);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (copy_to_user(iso7816_user, &port->iso7816, माप(port->iso7816)))
-		वापस -EFAULT;
+	if (copy_to_user(iso7816_user, &port->iso7816, sizeof(port->iso7816)))
+		return -EFAULT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Called via sys_ioctl.  We can use spin_lock_irq() here.
  */
-अटल पूर्णांक
-uart_ioctl(काष्ठा tty_काष्ठा *tty, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा uart_state *state = tty->driver_data;
-	काष्ठा tty_port *port = &state->port;
-	काष्ठा uart_port *uport;
-	व्योम __user *uarg = (व्योम __user *)arg;
-	पूर्णांक ret = -ENOIOCTLCMD;
+static int
+uart_ioctl(struct tty_struct *tty, unsigned int cmd, unsigned long arg)
+{
+	struct uart_state *state = tty->driver_data;
+	struct tty_port *port = &state->port;
+	struct uart_port *uport;
+	void __user *uarg = (void __user *)arg;
+	int ret = -ENOIOCTLCMD;
 
 
 	/*
-	 * These ioctls करोn't rely on the hardware to be present.
+	 * These ioctls don't rely on the hardware to be present.
 	 */
-	चयन (cmd) अणु
-	हाल TIOCSERCONFIG:
-		करोwn_ग_लिखो(&tty->termios_rwsem);
-		ret = uart_करो_स्वतःconfig(tty, state);
-		up_ग_लिखो(&tty->termios_rwsem);
-		अवरोध;
-	पूर्ण
+	switch (cmd) {
+	case TIOCSERCONFIG:
+		down_write(&tty->termios_rwsem);
+		ret = uart_do_autoconfig(tty, state);
+		up_write(&tty->termios_rwsem);
+		break;
+	}
 
-	अगर (ret != -ENOIOCTLCMD)
-		जाओ out;
+	if (ret != -ENOIOCTLCMD)
+		goto out;
 
-	अगर (tty_io_error(tty)) अणु
+	if (tty_io_error(tty)) {
 		ret = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
 	 * The following should only be used when hardware is present.
 	 */
-	चयन (cmd) अणु
-	हाल TIOCMIWAIT:
-		ret = uart_रुको_modem_status(state, arg);
-		अवरोध;
-	पूर्ण
+	switch (cmd) {
+	case TIOCMIWAIT:
+		ret = uart_wait_modem_status(state, arg);
+		break;
+	}
 
-	अगर (ret != -ENOIOCTLCMD)
-		जाओ out;
+	if (ret != -ENOIOCTLCMD)
+		goto out;
 
 	mutex_lock(&port->mutex);
 	uport = uart_port_check(state);
 
-	अगर (!uport || tty_io_error(tty)) अणु
+	if (!uport || tty_io_error(tty)) {
 		ret = -EIO;
-		जाओ out_up;
-	पूर्ण
+		goto out_up;
+	}
 
 	/*
 	 * All these rely on hardware being present and need to be
-	 * रक्षित against the tty being hung up.
+	 * protected against the tty being hung up.
 	 */
 
-	चयन (cmd) अणु
-	हाल TIOCSERGETLSR: /* Get line status रेजिस्टर */
+	switch (cmd) {
+	case TIOCSERGETLSR: /* Get line status register */
 		ret = uart_get_lsr_info(tty, state, uarg);
-		अवरोध;
+		break;
 
-	हाल TIOCGRS485:
+	case TIOCGRS485:
 		ret = uart_get_rs485_config(uport, uarg);
-		अवरोध;
+		break;
 
-	हाल TIOCSRS485:
+	case TIOCSRS485:
 		ret = uart_set_rs485_config(uport, uarg);
-		अवरोध;
+		break;
 
-	हाल TIOCSISO7816:
+	case TIOCSISO7816:
 		ret = uart_set_iso7816_config(state->uart_port, uarg);
-		अवरोध;
+		break;
 
-	हाल TIOCGISO7816:
+	case TIOCGISO7816:
 		ret = uart_get_iso7816_config(state->uart_port, uarg);
-		अवरोध;
-	शेष:
-		अगर (uport->ops->ioctl)
+		break;
+	default:
+		if (uport->ops->ioctl)
 			ret = uport->ops->ioctl(uport, cmd, arg);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 out_up:
 	mutex_unlock(&port->mutex);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम uart_set_ldisc(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा uart_state *state = tty->driver_data;
-	काष्ठा uart_port *uport;
-	काष्ठा tty_port *port = &state->port;
+static void uart_set_ldisc(struct tty_struct *tty)
+{
+	struct uart_state *state = tty->driver_data;
+	struct uart_port *uport;
+	struct tty_port *port = &state->port;
 
-	अगर (!tty_port_initialized(port))
-		वापस;
+	if (!tty_port_initialized(port))
+		return;
 
 	mutex_lock(&state->port.mutex);
 	uport = uart_port_check(state);
-	अगर (uport && uport->ops->set_ldisc)
+	if (uport && uport->ops->set_ldisc)
 		uport->ops->set_ldisc(uport, &tty->termios);
 	mutex_unlock(&state->port.mutex);
-पूर्ण
+}
 
-अटल व्योम uart_set_termios(काष्ठा tty_काष्ठा *tty,
-						काष्ठा ktermios *old_termios)
-अणु
-	काष्ठा uart_state *state = tty->driver_data;
-	काष्ठा uart_port *uport;
-	अचिन्हित पूर्णांक cflag = tty->termios.c_cflag;
-	अचिन्हित पूर्णांक अगरlag_mask = IGNBRK|BRKINT|IGNPAR|PARMRK|INPCK;
+static void uart_set_termios(struct tty_struct *tty,
+						struct ktermios *old_termios)
+{
+	struct uart_state *state = tty->driver_data;
+	struct uart_port *uport;
+	unsigned int cflag = tty->termios.c_cflag;
+	unsigned int iflag_mask = IGNBRK|BRKINT|IGNPAR|PARMRK|INPCK;
 	bool sw_changed = false;
 
 	mutex_lock(&state->port.mutex);
 	uport = uart_port_check(state);
-	अगर (!uport)
-		जाओ out;
+	if (!uport)
+		goto out;
 
 	/*
-	 * Drivers करोing software flow control also need to know
+	 * Drivers doing software flow control also need to know
 	 * about changes to these input settings.
 	 */
-	अगर (uport->flags & UPF_SOFT_FLOW) अणु
-		अगरlag_mask |= IXANY|IXON|IXOFF;
+	if (uport->flags & UPF_SOFT_FLOW) {
+		iflag_mask |= IXANY|IXON|IXOFF;
 		sw_changed =
 		   tty->termios.c_cc[VSTART] != old_termios->c_cc[VSTART] ||
 		   tty->termios.c_cc[VSTOP] != old_termios->c_cc[VSTOP];
-	पूर्ण
+	}
 
 	/*
 	 * These are the bits that are used to setup various
@@ -1510,161 +1509,161 @@ out:
 	 * bits in c_cflag; c_[io]speed will always be set
 	 * appropriately by set_termios() in tty_ioctl.c
 	 */
-	अगर ((cflag ^ old_termios->c_cflag) == 0 &&
+	if ((cflag ^ old_termios->c_cflag) == 0 &&
 	    tty->termios.c_ospeed == old_termios->c_ospeed &&
 	    tty->termios.c_ispeed == old_termios->c_ispeed &&
-	    ((tty->termios.c_अगरlag ^ old_termios->c_अगरlag) & अगरlag_mask) == 0 &&
-	    !sw_changed) अणु
-		जाओ out;
-	पूर्ण
+	    ((tty->termios.c_iflag ^ old_termios->c_iflag) & iflag_mask) == 0 &&
+	    !sw_changed) {
+		goto out;
+	}
 
 	uart_change_speed(tty, state, old_termios);
 	/* reload cflag from termios; port driver may have overridden flags */
 	cflag = tty->termios.c_cflag;
 
 	/* Handle transition to B0 status */
-	अगर ((old_termios->c_cflag & CBAUD) && !(cflag & CBAUD))
+	if ((old_termios->c_cflag & CBAUD) && !(cflag & CBAUD))
 		uart_clear_mctrl(uport, TIOCM_RTS | TIOCM_DTR);
 	/* Handle transition away from B0 status */
-	अन्यथा अगर (!(old_termios->c_cflag & CBAUD) && (cflag & CBAUD)) अणु
-		अचिन्हित पूर्णांक mask = TIOCM_DTR;
+	else if (!(old_termios->c_cflag & CBAUD) && (cflag & CBAUD)) {
+		unsigned int mask = TIOCM_DTR;
 
-		अगर (!(cflag & CRTSCTS) || !tty_throttled(tty))
+		if (!(cflag & CRTSCTS) || !tty_throttled(tty))
 			mask |= TIOCM_RTS;
 		uart_set_mctrl(uport, mask);
-	पूर्ण
+	}
 out:
 	mutex_unlock(&state->port.mutex);
-पूर्ण
+}
 
 /*
- * Calls to uart_बंद() are serialised via the tty_lock in
+ * Calls to uart_close() are serialised via the tty_lock in
  *   drivers/tty/tty_io.c:tty_release()
- *   drivers/tty/tty_io.c:करो_tty_hangup()
+ *   drivers/tty/tty_io.c:do_tty_hangup()
  */
-अटल व्योम uart_बंद(काष्ठा tty_काष्ठा *tty, काष्ठा file *filp)
-अणु
-	काष्ठा uart_state *state = tty->driver_data;
+static void uart_close(struct tty_struct *tty, struct file *filp)
+{
+	struct uart_state *state = tty->driver_data;
 
-	अगर (!state) अणु
-		काष्ठा uart_driver *drv = tty->driver->driver_state;
-		काष्ठा tty_port *port;
+	if (!state) {
+		struct uart_driver *drv = tty->driver->driver_state;
+		struct tty_port *port;
 
 		state = drv->state + tty->index;
 		port = &state->port;
 		spin_lock_irq(&port->lock);
 		--port->count;
 		spin_unlock_irq(&port->lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	pr_debug("uart_close(%d) called\n", tty->index);
 
-	tty_port_बंद(tty->port, tty, filp);
-पूर्ण
+	tty_port_close(tty->port, tty, filp);
+}
 
-अटल व्योम uart_tty_port_shutकरोwn(काष्ठा tty_port *port)
-अणु
-	काष्ठा uart_state *state = container_of(port, काष्ठा uart_state, port);
-	काष्ठा uart_port *uport = uart_port_check(state);
+static void uart_tty_port_shutdown(struct tty_port *port)
+{
+	struct uart_state *state = container_of(port, struct uart_state, port);
+	struct uart_port *uport = uart_port_check(state);
 
 	/*
-	 * At this poपूर्णांक, we stop accepting input.  To करो this, we
-	 * disable the receive line status पूर्णांकerrupts.
+	 * At this point, we stop accepting input.  To do this, we
+	 * disable the receive line status interrupts.
 	 */
-	अगर (WARN(!uport, "detached port still initialized!\n"))
-		वापस;
+	if (WARN(!uport, "detached port still initialized!\n"))
+		return;
 
 	spin_lock_irq(&uport->lock);
 	uport->ops->stop_rx(uport);
 	spin_unlock_irq(&uport->lock);
 
-	uart_port_shutकरोwn(port);
+	uart_port_shutdown(port);
 
 	/*
-	 * It's possible क्रम shutकरोwn to be called after suspend अगर we get
-	 * a DCD drop (hangup) at just the right समय.  Clear suspended bit so
-	 * we करोn't try to resume a port that has been shutकरोwn.
+	 * It's possible for shutdown to be called after suspend if we get
+	 * a DCD drop (hangup) at just the right time.  Clear suspended bit so
+	 * we don't try to resume a port that has been shutdown.
 	 */
 	tty_port_set_suspended(port, 0);
 
 	uart_change_pm(state, UART_PM_STATE_OFF);
 
-पूर्ण
+}
 
-अटल व्योम uart_रुको_until_sent(काष्ठा tty_काष्ठा *tty, पूर्णांक समयout)
-अणु
-	काष्ठा uart_state *state = tty->driver_data;
-	काष्ठा uart_port *port;
-	अचिन्हित दीर्घ अक्षर_समय, expire;
+static void uart_wait_until_sent(struct tty_struct *tty, int timeout)
+{
+	struct uart_state *state = tty->driver_data;
+	struct uart_port *port;
+	unsigned long char_time, expire;
 
 	port = uart_port_ref(state);
-	अगर (!port)
-		वापस;
+	if (!port)
+		return;
 
-	अगर (port->type == PORT_UNKNOWN || port->fअगरosize == 0) अणु
+	if (port->type == PORT_UNKNOWN || port->fifosize == 0) {
 		uart_port_deref(port);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
-	 * Set the check पूर्णांकerval to be 1/5 of the estimated समय to
-	 * send a single अक्षरacter, and make it at least 1.  The check
-	 * पूर्णांकerval should also be less than the समयout.
+	 * Set the check interval to be 1/5 of the estimated time to
+	 * send a single character, and make it at least 1.  The check
+	 * interval should also be less than the timeout.
 	 *
 	 * Note: we have to use pretty tight timings here to satisfy
 	 * the NIST-PCTS.
 	 */
-	अक्षर_समय = (port->समयout - HZ/50) / port->fअगरosize;
-	अक्षर_समय = अक्षर_समय / 5;
-	अगर (अक्षर_समय == 0)
-		अक्षर_समय = 1;
-	अगर (समयout && समयout < अक्षर_समय)
-		अक्षर_समय = समयout;
+	char_time = (port->timeout - HZ/50) / port->fifosize;
+	char_time = char_time / 5;
+	if (char_time == 0)
+		char_time = 1;
+	if (timeout && timeout < char_time)
+		char_time = timeout;
 
 	/*
 	 * If the transmitter hasn't cleared in twice the approximate
-	 * amount of समय to send the entire FIFO, it probably won't
-	 * ever clear.  This assumes the UART isn't करोing flow
-	 * control, which is currently the हाल.  Hence, अगर it ever
-	 * takes दीर्घer than port->समयout, this is probably due to a
-	 * UART bug of some kind.  So, we clamp the समयout parameter at
-	 * 2*port->समयout.
+	 * amount of time to send the entire FIFO, it probably won't
+	 * ever clear.  This assumes the UART isn't doing flow
+	 * control, which is currently the case.  Hence, if it ever
+	 * takes longer than port->timeout, this is probably due to a
+	 * UART bug of some kind.  So, we clamp the timeout parameter at
+	 * 2*port->timeout.
 	 */
-	अगर (समयout == 0 || समयout > 2 * port->समयout)
-		समयout = 2 * port->समयout;
+	if (timeout == 0 || timeout > 2 * port->timeout)
+		timeout = 2 * port->timeout;
 
-	expire = jअगरfies + समयout;
+	expire = jiffies + timeout;
 
 	pr_debug("uart_wait_until_sent(%d), jiffies=%lu, expire=%lu...\n",
-		port->line, jअगरfies, expire);
+		port->line, jiffies, expire);
 
 	/*
 	 * Check whether the transmitter is empty every 'char_time'.
-	 * 'timeout' / 'expire' give us the maximum amount of समय
-	 * we रुको.
+	 * 'timeout' / 'expire' give us the maximum amount of time
+	 * we wait.
 	 */
-	जबतक (!port->ops->tx_empty(port)) अणु
-		msleep_पूर्णांकerruptible(jअगरfies_to_msecs(अक्षर_समय));
-		अगर (संकेत_pending(current))
-			अवरोध;
-		अगर (समय_after(jअगरfies, expire))
-			अवरोध;
-	पूर्ण
+	while (!port->ops->tx_empty(port)) {
+		msleep_interruptible(jiffies_to_msecs(char_time));
+		if (signal_pending(current))
+			break;
+		if (time_after(jiffies, expire))
+			break;
+	}
 	uart_port_deref(port);
-पूर्ण
+}
 
 /*
  * Calls to uart_hangup() are serialised by the tty_lock in
- *   drivers/tty/tty_io.c:करो_tty_hangup()
- * This runs from a workqueue and can sleep क्रम a _लघु_ समय only.
+ *   drivers/tty/tty_io.c:do_tty_hangup()
+ * This runs from a workqueue and can sleep for a _short_ time only.
  */
-अटल व्योम uart_hangup(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा uart_state *state = tty->driver_data;
-	काष्ठा tty_port *port = &state->port;
-	काष्ठा uart_port *uport;
-	अचिन्हित दीर्घ flags;
+static void uart_hangup(struct tty_struct *tty)
+{
+	struct uart_state *state = tty->driver_data;
+	struct tty_port *port = &state->port;
+	struct uart_port *uport;
+	unsigned long flags;
 
 	pr_debug("uart_hangup(%d)\n", tty->index);
 
@@ -1672,213 +1671,213 @@ out:
 	uport = uart_port_check(state);
 	WARN(!uport, "hangup of detached port!\n");
 
-	अगर (tty_port_active(port)) अणु
+	if (tty_port_active(port)) {
 		uart_flush_buffer(tty);
-		uart_shutकरोwn(tty, state);
+		uart_shutdown(tty, state);
 		spin_lock_irqsave(&port->lock, flags);
 		port->count = 0;
 		spin_unlock_irqrestore(&port->lock, flags);
 		tty_port_set_active(port, 0);
-		tty_port_tty_set(port, शून्य);
-		अगर (uport && !uart_console(uport))
+		tty_port_tty_set(port, NULL);
+		if (uport && !uart_console(uport))
 			uart_change_pm(state, UART_PM_STATE_OFF);
-		wake_up_पूर्णांकerruptible(&port->खोलो_रुको);
-		wake_up_पूर्णांकerruptible(&port->delta_msr_रुको);
-	पूर्ण
+		wake_up_interruptible(&port->open_wait);
+		wake_up_interruptible(&port->delta_msr_wait);
+	}
 	mutex_unlock(&port->mutex);
-पूर्ण
+}
 
-/* uport == शून्य अगर uart_port has alपढ़ोy been हटाओd */
-अटल व्योम uart_port_shutकरोwn(काष्ठा tty_port *port)
-अणु
-	काष्ठा uart_state *state = container_of(port, काष्ठा uart_state, port);
-	काष्ठा uart_port *uport = uart_port_check(state);
+/* uport == NULL if uart_port has already been removed */
+static void uart_port_shutdown(struct tty_port *port)
+{
+	struct uart_state *state = container_of(port, struct uart_state, port);
+	struct uart_port *uport = uart_port_check(state);
 
 	/*
-	 * clear delta_msr_रुको queue to aव्योम mem leaks: we may मुक्त
+	 * clear delta_msr_wait queue to avoid mem leaks: we may free
 	 * the irq here so the queue might never be woken up.  Note
-	 * that we won't end up रुकोing on delta_msr_रुको again since
-	 * any outstanding file descriptors should be poपूर्णांकing at
+	 * that we won't end up waiting on delta_msr_wait again since
+	 * any outstanding file descriptors should be pointing at
 	 * hung_up_tty_fops now.
 	 */
-	wake_up_पूर्णांकerruptible(&port->delta_msr_रुको);
+	wake_up_interruptible(&port->delta_msr_wait);
 
 	/*
 	 * Free the IRQ and disable the port.
 	 */
-	अगर (uport)
-		uport->ops->shutकरोwn(uport);
+	if (uport)
+		uport->ops->shutdown(uport);
 
 	/*
 	 * Ensure that the IRQ handler isn't running on another CPU.
 	 */
-	अगर (uport)
+	if (uport)
 		synchronize_irq(uport->irq);
-पूर्ण
+}
 
-अटल पूर्णांक uart_carrier_उठाओd(काष्ठा tty_port *port)
-अणु
-	काष्ठा uart_state *state = container_of(port, काष्ठा uart_state, port);
-	काष्ठा uart_port *uport;
-	पूर्णांक mctrl;
+static int uart_carrier_raised(struct tty_port *port)
+{
+	struct uart_state *state = container_of(port, struct uart_state, port);
+	struct uart_port *uport;
+	int mctrl;
 
 	uport = uart_port_ref(state);
 	/*
-	 * Should never observe uport == शून्य since checks क्रम hangup should
-	 * पात the tty_port_block_til_पढ़ोy() loop beक्रमe checking क्रम carrier
-	 * उठाओd -- but report carrier उठाओd अगर it करोes anyway so खोलो will
-	 * जारी and not sleep
+	 * Should never observe uport == NULL since checks for hangup should
+	 * abort the tty_port_block_til_ready() loop before checking for carrier
+	 * raised -- but report carrier raised if it does anyway so open will
+	 * continue and not sleep
 	 */
-	अगर (WARN_ON(!uport))
-		वापस 1;
+	if (WARN_ON(!uport))
+		return 1;
 	spin_lock_irq(&uport->lock);
 	uart_enable_ms(uport);
 	mctrl = uport->ops->get_mctrl(uport);
 	spin_unlock_irq(&uport->lock);
 	uart_port_deref(uport);
-	अगर (mctrl & TIOCM_CAR)
-		वापस 1;
-	वापस 0;
-पूर्ण
+	if (mctrl & TIOCM_CAR)
+		return 1;
+	return 0;
+}
 
-अटल व्योम uart_dtr_rts(काष्ठा tty_port *port, पूर्णांक उठाओ)
-अणु
-	काष्ठा uart_state *state = container_of(port, काष्ठा uart_state, port);
-	काष्ठा uart_port *uport;
+static void uart_dtr_rts(struct tty_port *port, int raise)
+{
+	struct uart_state *state = container_of(port, struct uart_state, port);
+	struct uart_port *uport;
 
 	uport = uart_port_ref(state);
-	अगर (!uport)
-		वापस;
-	uart_port_dtr_rts(uport, उठाओ);
+	if (!uport)
+		return;
+	uart_port_dtr_rts(uport, raise);
 	uart_port_deref(uport);
-पूर्ण
+}
 
-अटल पूर्णांक uart_install(काष्ठा tty_driver *driver, काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा uart_driver *drv = driver->driver_state;
-	काष्ठा uart_state *state = drv->state + tty->index;
+static int uart_install(struct tty_driver *driver, struct tty_struct *tty)
+{
+	struct uart_driver *drv = driver->driver_state;
+	struct uart_state *state = drv->state + tty->index;
 
 	tty->driver_data = state;
 
-	वापस tty_standard_install(driver, tty);
-पूर्ण
+	return tty_standard_install(driver, tty);
+}
 
 /*
- * Calls to uart_खोलो are serialised by the tty_lock in
- *   drivers/tty/tty_io.c:tty_खोलो()
- * Note that अगर this fails, then uart_बंद() _will_ be called.
+ * Calls to uart_open are serialised by the tty_lock in
+ *   drivers/tty/tty_io.c:tty_open()
+ * Note that if this fails, then uart_close() _will_ be called.
  *
- * In समय, we want to scrap the "opening nonpresent ports"
- * behaviour and implement an alternative way क्रम setserial
+ * In time, we want to scrap the "opening nonpresent ports"
+ * behaviour and implement an alternative way for setserial
  * to set base addresses/ports/types.  This will allow us to
  * get rid of a certain amount of extra tests.
  */
-अटल पूर्णांक uart_खोलो(काष्ठा tty_काष्ठा *tty, काष्ठा file *filp)
-अणु
-	काष्ठा uart_state *state = tty->driver_data;
-	पूर्णांक retval;
+static int uart_open(struct tty_struct *tty, struct file *filp)
+{
+	struct uart_state *state = tty->driver_data;
+	int retval;
 
-	retval = tty_port_खोलो(&state->port, tty, filp);
-	अगर (retval > 0)
+	retval = tty_port_open(&state->port, tty, filp);
+	if (retval > 0)
 		retval = 0;
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक uart_port_activate(काष्ठा tty_port *port, काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा uart_state *state = container_of(port, काष्ठा uart_state, port);
-	काष्ठा uart_port *uport;
-	पूर्णांक ret;
+static int uart_port_activate(struct tty_port *port, struct tty_struct *tty)
+{
+	struct uart_state *state = container_of(port, struct uart_state, port);
+	struct uart_port *uport;
+	int ret;
 
 	uport = uart_port_check(state);
-	अगर (!uport || uport->flags & UPF_DEAD)
-		वापस -ENXIO;
+	if (!uport || uport->flags & UPF_DEAD)
+		return -ENXIO;
 
 	/*
 	 * Start up the serial port.
 	 */
 	ret = uart_startup(tty, state, 0);
-	अगर (ret > 0)
+	if (ret > 0)
 		tty_port_set_active(port, 1);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर अक्षर *uart_type(काष्ठा uart_port *port)
-अणु
-	स्थिर अक्षर *str = शून्य;
+static const char *uart_type(struct uart_port *port)
+{
+	const char *str = NULL;
 
-	अगर (port->ops->type)
+	if (port->ops->type)
 		str = port->ops->type(port);
 
-	अगर (!str)
+	if (!str)
 		str = "unknown";
 
-	वापस str;
-पूर्ण
+	return str;
+}
 
-#अगर_घोषित CONFIG_PROC_FS
+#ifdef CONFIG_PROC_FS
 
-अटल व्योम uart_line_info(काष्ठा seq_file *m, काष्ठा uart_driver *drv, पूर्णांक i)
-अणु
-	काष्ठा uart_state *state = drv->state + i;
-	काष्ठा tty_port *port = &state->port;
-	क्रमागत uart_pm_state pm_state;
-	काष्ठा uart_port *uport;
-	अक्षर stat_buf[32];
-	अचिन्हित पूर्णांक status;
-	पूर्णांक mmio;
+static void uart_line_info(struct seq_file *m, struct uart_driver *drv, int i)
+{
+	struct uart_state *state = drv->state + i;
+	struct tty_port *port = &state->port;
+	enum uart_pm_state pm_state;
+	struct uart_port *uport;
+	char stat_buf[32];
+	unsigned int status;
+	int mmio;
 
 	mutex_lock(&port->mutex);
 	uport = uart_port_check(state);
-	अगर (!uport)
-		जाओ out;
+	if (!uport)
+		goto out;
 
 	mmio = uport->iotype >= UPIO_MEM;
-	seq_म_लिखो(m, "%d: uart:%s %s%08llX irq:%d",
+	seq_printf(m, "%d: uart:%s %s%08llX irq:%d",
 			uport->line, uart_type(uport),
 			mmio ? "mmio:0x" : "port:",
-			mmio ? (अचिन्हित दीर्घ दीर्घ)uport->mapbase
-			     : (अचिन्हित दीर्घ दीर्घ)uport->iobase,
+			mmio ? (unsigned long long)uport->mapbase
+			     : (unsigned long long)uport->iobase,
 			uport->irq);
 
-	अगर (uport->type == PORT_UNKNOWN) अणु
-		seq_अ_दो(m, '\n');
-		जाओ out;
-	पूर्ण
+	if (uport->type == PORT_UNKNOWN) {
+		seq_putc(m, '\n');
+		goto out;
+	}
 
-	अगर (capable(CAP_SYS_ADMIN)) अणु
+	if (capable(CAP_SYS_ADMIN)) {
 		pm_state = state->pm_state;
-		अगर (pm_state != UART_PM_STATE_ON)
+		if (pm_state != UART_PM_STATE_ON)
 			uart_change_pm(state, UART_PM_STATE_ON);
 		spin_lock_irq(&uport->lock);
 		status = uport->ops->get_mctrl(uport);
 		spin_unlock_irq(&uport->lock);
-		अगर (pm_state != UART_PM_STATE_ON)
+		if (pm_state != UART_PM_STATE_ON)
 			uart_change_pm(state, pm_state);
 
-		seq_म_लिखो(m, " tx:%d rx:%d",
+		seq_printf(m, " tx:%d rx:%d",
 				uport->icount.tx, uport->icount.rx);
-		अगर (uport->icount.frame)
-			seq_म_लिखो(m, " fe:%d",	uport->icount.frame);
-		अगर (uport->icount.parity)
-			seq_म_लिखो(m, " pe:%d",	uport->icount.parity);
-		अगर (uport->icount.brk)
-			seq_म_लिखो(m, " brk:%d", uport->icount.brk);
-		अगर (uport->icount.overrun)
-			seq_म_लिखो(m, " oe:%d", uport->icount.overrun);
-		अगर (uport->icount.buf_overrun)
-			seq_म_लिखो(m, " bo:%d", uport->icount.buf_overrun);
+		if (uport->icount.frame)
+			seq_printf(m, " fe:%d",	uport->icount.frame);
+		if (uport->icount.parity)
+			seq_printf(m, " pe:%d",	uport->icount.parity);
+		if (uport->icount.brk)
+			seq_printf(m, " brk:%d", uport->icount.brk);
+		if (uport->icount.overrun)
+			seq_printf(m, " oe:%d", uport->icount.overrun);
+		if (uport->icount.buf_overrun)
+			seq_printf(m, " bo:%d", uport->icount.buf_overrun);
 
-#घोषणा INFOBIT(bit, str) \
-	अगर (uport->mctrl & (bit)) \
-		म_जोड़न(stat_buf, (str), माप(stat_buf) - \
-			म_माप(stat_buf) - 2)
-#घोषणा STATBIT(bit, str) \
-	अगर (status & (bit)) \
-		म_जोड़न(stat_buf, (str), माप(stat_buf) - \
-		       म_माप(stat_buf) - 2)
+#define INFOBIT(bit, str) \
+	if (uport->mctrl & (bit)) \
+		strncat(stat_buf, (str), sizeof(stat_buf) - \
+			strlen(stat_buf) - 2)
+#define STATBIT(bit, str) \
+	if (status & (bit)) \
+		strncat(stat_buf, (str), sizeof(stat_buf) - \
+		       strlen(stat_buf) - 2)
 
 		stat_buf[0] = '\0';
 		stat_buf[1] = '\0';
@@ -1888,307 +1887,307 @@ out:
 		STATBIT(TIOCM_DSR, "|DSR");
 		STATBIT(TIOCM_CAR, "|CD");
 		STATBIT(TIOCM_RNG, "|RI");
-		अगर (stat_buf[0])
+		if (stat_buf[0])
 			stat_buf[0] = ' ';
 
-		seq_माला_दो(m, stat_buf);
-	पूर्ण
-	seq_अ_दो(m, '\n');
-#अघोषित STATBIT
-#अघोषित INFOBIT
+		seq_puts(m, stat_buf);
+	}
+	seq_putc(m, '\n');
+#undef STATBIT
+#undef INFOBIT
 out:
 	mutex_unlock(&port->mutex);
-पूर्ण
+}
 
-अटल पूर्णांक uart_proc_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	काष्ठा tty_driver *ttydrv = m->निजी;
-	काष्ठा uart_driver *drv = ttydrv->driver_state;
-	पूर्णांक i;
+static int uart_proc_show(struct seq_file *m, void *v)
+{
+	struct tty_driver *ttydrv = m->private;
+	struct uart_driver *drv = ttydrv->driver_state;
+	int i;
 
-	seq_म_लिखो(m, "serinfo:1.0 driver%s%s revision:%s\n", "", "", "");
-	क्रम (i = 0; i < drv->nr; i++)
+	seq_printf(m, "serinfo:1.0 driver%s%s revision:%s\n", "", "", "");
+	for (i = 0; i < drv->nr; i++)
 		uart_line_info(m, drv, i);
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल अंतरभूत bool uart_console_enabled(काष्ठा uart_port *port)
-अणु
-	वापस uart_console(port) && (port->cons->flags & CON_ENABLED);
-पूर्ण
+static inline bool uart_console_enabled(struct uart_port *port)
+{
+	return uart_console(port) && (port->cons->flags & CON_ENABLED);
+}
 
-अटल व्योम uart_port_spin_lock_init(काष्ठा uart_port *port)
-अणु
+static void uart_port_spin_lock_init(struct uart_port *port)
+{
 	spin_lock_init(&port->lock);
 	lockdep_set_class(&port->lock, &port_lock_key);
-पूर्ण
+}
 
-#अगर defined(CONFIG_SERIAL_CORE_CONSOLE) || defined(CONFIG_CONSOLE_POLL)
+#if defined(CONFIG_SERIAL_CORE_CONSOLE) || defined(CONFIG_CONSOLE_POLL)
 /**
- *	uart_console_ग_लिखो - ग_लिखो a console message to a serial port
- *	@port: the port to ग_लिखो the message
- *	@s: array of अक्षरacters
- *	@count: number of अक्षरacters in string to ग_लिखो
- *	@अक्षर_दो: function to ग_लिखो अक्षरacter to port
+ *	uart_console_write - write a console message to a serial port
+ *	@port: the port to write the message
+ *	@s: array of characters
+ *	@count: number of characters in string to write
+ *	@putchar: function to write character to port
  */
-व्योम uart_console_ग_लिखो(काष्ठा uart_port *port, स्थिर अक्षर *s,
-			अचिन्हित पूर्णांक count,
-			व्योम (*अक्षर_दो)(काष्ठा uart_port *, पूर्णांक))
-अणु
-	अचिन्हित पूर्णांक i;
+void uart_console_write(struct uart_port *port, const char *s,
+			unsigned int count,
+			void (*putchar)(struct uart_port *, int))
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < count; i++, s++) अणु
-		अगर (*s == '\n')
-			अक्षर_दो(port, '\r');
-		अक्षर_दो(port, *s);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(uart_console_ग_लिखो);
+	for (i = 0; i < count; i++, s++) {
+		if (*s == '\n')
+			putchar(port, '\r');
+		putchar(port, *s);
+	}
+}
+EXPORT_SYMBOL_GPL(uart_console_write);
 
 /*
- *	Check whether an invalid uart number has been specअगरied, and
- *	अगर so, search क्रम the first available port that करोes have
+ *	Check whether an invalid uart number has been specified, and
+ *	if so, search for the first available port that does have
  *	console support.
  */
-काष्ठा uart_port * __init
-uart_get_console(काष्ठा uart_port *ports, पूर्णांक nr, काष्ठा console *co)
-अणु
-	पूर्णांक idx = co->index;
+struct uart_port * __init
+uart_get_console(struct uart_port *ports, int nr, struct console *co)
+{
+	int idx = co->index;
 
-	अगर (idx < 0 || idx >= nr || (ports[idx].iobase == 0 &&
-				     ports[idx].membase == शून्य))
-		क्रम (idx = 0; idx < nr; idx++)
-			अगर (ports[idx].iobase != 0 ||
-			    ports[idx].membase != शून्य)
-				अवरोध;
+	if (idx < 0 || idx >= nr || (ports[idx].iobase == 0 &&
+				     ports[idx].membase == NULL))
+		for (idx = 0; idx < nr; idx++)
+			if (ports[idx].iobase != 0 ||
+			    ports[idx].membase != NULL)
+				break;
 
 	co->index = idx;
 
-	वापस ports + idx;
-पूर्ण
+	return ports + idx;
+}
 
 /**
  *	uart_parse_earlycon - Parse earlycon options
  *	@p:	  ptr to 2nd field (ie., just beyond '<name>,')
- *	@iotype:  ptr क्रम decoded iotype (out)
- *	@addr:    ptr क्रम decoded mapbase/iobase (out)
- *	@options: ptr क्रम <options> field; शून्य अगर not present (out)
+ *	@iotype:  ptr for decoded iotype (out)
+ *	@addr:    ptr for decoded mapbase/iobase (out)
+ *	@options: ptr for <options> field; NULL if not present (out)
  *
- *	Decodes earlycon kernel command line parameters of the क्रमm
+ *	Decodes earlycon kernel command line parameters of the form
  *	   earlycon=<name>,io|mmio|mmio16|mmio32|mmio32be|mmio32native,<addr>,<options>
  *	   console=<name>,io|mmio|mmio16|mmio32|mmio32be|mmio32native,<addr>,<options>
  *
- *	The optional क्रमm
+ *	The optional form
  *
  *	   earlycon=<name>,0x<addr>,<options>
  *	   console=<name>,0x<addr>,<options>
  *
- *	is also accepted; the वापसed @iotype will be UPIO_MEM.
+ *	is also accepted; the returned @iotype will be UPIO_MEM.
  *
  *	Returns 0 on success or -EINVAL on failure
  */
-पूर्णांक uart_parse_earlycon(अक्षर *p, अचिन्हित अक्षर *iotype, resource_माप_प्रकार *addr,
-			अक्षर **options)
-अणु
-	अगर (म_भेदन(p, "mmio,", 5) == 0) अणु
+int uart_parse_earlycon(char *p, unsigned char *iotype, resource_size_t *addr,
+			char **options)
+{
+	if (strncmp(p, "mmio,", 5) == 0) {
 		*iotype = UPIO_MEM;
 		p += 5;
-	पूर्ण अन्यथा अगर (म_भेदन(p, "mmio16,", 7) == 0) अणु
+	} else if (strncmp(p, "mmio16,", 7) == 0) {
 		*iotype = UPIO_MEM16;
 		p += 7;
-	पूर्ण अन्यथा अगर (म_भेदन(p, "mmio32,", 7) == 0) अणु
+	} else if (strncmp(p, "mmio32,", 7) == 0) {
 		*iotype = UPIO_MEM32;
 		p += 7;
-	पूर्ण अन्यथा अगर (म_भेदन(p, "mmio32be,", 9) == 0) अणु
+	} else if (strncmp(p, "mmio32be,", 9) == 0) {
 		*iotype = UPIO_MEM32BE;
 		p += 9;
-	पूर्ण अन्यथा अगर (म_भेदन(p, "mmio32native,", 13) == 0) अणु
+	} else if (strncmp(p, "mmio32native,", 13) == 0) {
 		*iotype = IS_ENABLED(CONFIG_CPU_BIG_ENDIAN) ?
 			UPIO_MEM32BE : UPIO_MEM32;
 		p += 13;
-	पूर्ण अन्यथा अगर (म_भेदन(p, "io,", 3) == 0) अणु
+	} else if (strncmp(p, "io,", 3) == 0) {
 		*iotype = UPIO_PORT;
 		p += 3;
-	पूर्ण अन्यथा अगर (म_भेदन(p, "0x", 2) == 0) अणु
+	} else if (strncmp(p, "0x", 2) == 0) {
 		*iotype = UPIO_MEM;
-	पूर्ण अन्यथा अणु
-		वापस -EINVAL;
-	पूर्ण
+	} else {
+		return -EINVAL;
+	}
 
 	/*
-	 * Beक्रमe you replace it with kम_से_अदीर्घl(), think about options separator
+	 * Before you replace it with kstrtoull(), think about options separator
 	 * (',') it will not tolerate
 	 */
-	*addr = simple_म_से_अदीर्घl(p, शून्य, 0);
-	p = म_अक्षर(p, ',');
-	अगर (p)
+	*addr = simple_strtoull(p, NULL, 0);
+	p = strchr(p, ',');
+	if (p)
 		p++;
 
 	*options = p;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(uart_parse_earlycon);
 
 /**
  *	uart_parse_options - Parse serial port baud/parity/bits/flow control.
- *	@options: poपूर्णांकer to option string
- *	@baud: poपूर्णांकer to an 'int' variable क्रम the baud rate.
- *	@parity: poपूर्णांकer to an 'int' variable क्रम the parity.
- *	@bits: poपूर्णांकer to an 'int' variable क्रम the number of data bits.
- *	@flow: poपूर्णांकer to an 'int' variable क्रम the flow control अक्षरacter.
+ *	@options: pointer to option string
+ *	@baud: pointer to an 'int' variable for the baud rate.
+ *	@parity: pointer to an 'int' variable for the parity.
+ *	@bits: pointer to an 'int' variable for the number of data bits.
+ *	@flow: pointer to an 'int' variable for the flow control character.
  *
  *	uart_parse_options decodes a string containing the serial console
- *	options.  The क्रमmat of the string is <baud><parity><bits><flow>,
+ *	options.  The format of the string is <baud><parity><bits><flow>,
  *	eg: 115200n8r
  */
-व्योम
-uart_parse_options(स्थिर अक्षर *options, पूर्णांक *baud, पूर्णांक *parity,
-		   पूर्णांक *bits, पूर्णांक *flow)
-अणु
-	स्थिर अक्षर *s = options;
+void
+uart_parse_options(const char *options, int *baud, int *parity,
+		   int *bits, int *flow)
+{
+	const char *s = options;
 
-	*baud = simple_म_से_अदीर्घ(s, शून्य, 10);
-	जबतक (*s >= '0' && *s <= '9')
+	*baud = simple_strtoul(s, NULL, 10);
+	while (*s >= '0' && *s <= '9')
 		s++;
-	अगर (*s)
+	if (*s)
 		*parity = *s++;
-	अगर (*s)
+	if (*s)
 		*bits = *s++ - '0';
-	अगर (*s)
+	if (*s)
 		*flow = *s;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(uart_parse_options);
 
 /**
  *	uart_set_options - setup the serial console parameters
- *	@port: poपूर्णांकer to the serial ports uart_port काष्ठाure
- *	@co: console poपूर्णांकer
+ *	@port: pointer to the serial ports uart_port structure
+ *	@co: console pointer
  *	@baud: baud rate
- *	@parity: parity अक्षरacter - 'n' (none), 'o' (odd), 'e' (even)
+ *	@parity: parity character - 'n' (none), 'o' (odd), 'e' (even)
  *	@bits: number of data bits
- *	@flow: flow control अक्षरacter - 'r' (rts)
+ *	@flow: flow control character - 'r' (rts)
  */
-पूर्णांक
-uart_set_options(काष्ठा uart_port *port, काष्ठा console *co,
-		 पूर्णांक baud, पूर्णांक parity, पूर्णांक bits, पूर्णांक flow)
-अणु
-	काष्ठा ktermios termios;
-	अटल काष्ठा ktermios dummy;
+int
+uart_set_options(struct uart_port *port, struct console *co,
+		 int baud, int parity, int bits, int flow)
+{
+	struct ktermios termios;
+	static struct ktermios dummy;
 
 	/*
 	 * Ensure that the serial-console lock is initialised early.
 	 *
 	 * Note that the console-enabled check is needed because of kgdboc,
-	 * which can end up calling uart_set_options() क्रम an alपढ़ोy enabled
+	 * which can end up calling uart_set_options() for an already enabled
 	 * console via tty_find_polling_driver() and uart_poll_init().
 	 */
-	अगर (!uart_console_enabled(port) && !port->console_reinit)
+	if (!uart_console_enabled(port) && !port->console_reinit)
 		uart_port_spin_lock_init(port);
 
-	स_रखो(&termios, 0, माप(काष्ठा ktermios));
+	memset(&termios, 0, sizeof(struct ktermios));
 
 	termios.c_cflag |= CREAD | HUPCL | CLOCAL;
 	tty_termios_encode_baud_rate(&termios, baud, baud);
 
-	अगर (bits == 7)
+	if (bits == 7)
 		termios.c_cflag |= CS7;
-	अन्यथा
+	else
 		termios.c_cflag |= CS8;
 
-	चयन (parity) अणु
-	हाल 'o': case 'O':
+	switch (parity) {
+	case 'o': case 'O':
 		termios.c_cflag |= PARODD;
 		fallthrough;
-	हाल 'e': case 'E':
+	case 'e': case 'E':
 		termios.c_cflag |= PARENB;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (flow == 'r')
+	if (flow == 'r')
 		termios.c_cflag |= CRTSCTS;
 
 	/*
-	 * some uarts on other side करोn't support no flow control.
+	 * some uarts on other side don't support no flow control.
 	 * So we set * DTR in host uart to make them happy
 	 */
 	port->mctrl |= TIOCM_DTR;
 
 	port->ops->set_termios(port, &termios, &dummy);
 	/*
-	 * Allow the setting of the UART parameters with a शून्य console
+	 * Allow the setting of the UART parameters with a NULL console
 	 * too:
 	 */
-	अगर (co)
+	if (co)
 		co->cflag = termios.c_cflag;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(uart_set_options);
-#पूर्ण_अगर /* CONFIG_SERIAL_CORE_CONSOLE */
+#endif /* CONFIG_SERIAL_CORE_CONSOLE */
 
 /**
- * uart_change_pm - set घातer state of the port
+ * uart_change_pm - set power state of the port
  *
  * @state: port descriptor
  * @pm_state: new state
  *
  * Locking: port->mutex has to be held
  */
-अटल व्योम uart_change_pm(काष्ठा uart_state *state,
-			   क्रमागत uart_pm_state pm_state)
-अणु
-	काष्ठा uart_port *port = uart_port_check(state);
+static void uart_change_pm(struct uart_state *state,
+			   enum uart_pm_state pm_state)
+{
+	struct uart_port *port = uart_port_check(state);
 
-	अगर (state->pm_state != pm_state) अणु
-		अगर (port && port->ops->pm)
+	if (state->pm_state != pm_state) {
+		if (port && port->ops->pm)
 			port->ops->pm(port, pm_state, state->pm_state);
 		state->pm_state = pm_state;
-	पूर्ण
-पूर्ण
+	}
+}
 
-काष्ठा uart_match अणु
-	काष्ठा uart_port *port;
-	काष्ठा uart_driver *driver;
-पूर्ण;
+struct uart_match {
+	struct uart_port *port;
+	struct uart_driver *driver;
+};
 
-अटल पूर्णांक serial_match_port(काष्ठा device *dev, व्योम *data)
-अणु
-	काष्ठा uart_match *match = data;
-	काष्ठा tty_driver *tty_drv = match->driver->tty_driver;
+static int serial_match_port(struct device *dev, void *data)
+{
+	struct uart_match *match = data;
+	struct tty_driver *tty_drv = match->driver->tty_driver;
 	dev_t devt = MKDEV(tty_drv->major, tty_drv->minor_start) +
 		match->port->line;
 
-	वापस dev->devt == devt; /* Actually, only one tty per port */
-पूर्ण
+	return dev->devt == devt; /* Actually, only one tty per port */
+}
 
-पूर्णांक uart_suspend_port(काष्ठा uart_driver *drv, काष्ठा uart_port *uport)
-अणु
-	काष्ठा uart_state *state = drv->state + uport->line;
-	काष्ठा tty_port *port = &state->port;
-	काष्ठा device *tty_dev;
-	काष्ठा uart_match match = अणुuport, drvपूर्ण;
+int uart_suspend_port(struct uart_driver *drv, struct uart_port *uport)
+{
+	struct uart_state *state = drv->state + uport->line;
+	struct tty_port *port = &state->port;
+	struct device *tty_dev;
+	struct uart_match match = {uport, drv};
 
 	mutex_lock(&port->mutex);
 
 	tty_dev = device_find_child(uport->dev, &match, serial_match_port);
-	अगर (tty_dev && device_may_wakeup(tty_dev)) अणु
+	if (tty_dev && device_may_wakeup(tty_dev)) {
 		enable_irq_wake(uport->irq);
 		put_device(tty_dev);
 		mutex_unlock(&port->mutex);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	put_device(tty_dev);
 
-	/* Nothing to करो अगर the console is not suspending */
-	अगर (!console_suspend_enabled && uart_console(uport))
-		जाओ unlock;
+	/* Nothing to do if the console is not suspending */
+	if (!console_suspend_enabled && uart_console(uport))
+		goto unlock;
 
 	uport->suspended = 1;
 
-	अगर (tty_port_initialized(port)) अणु
-		स्थिर काष्ठा uart_ops *ops = uport->ops;
-		पूर्णांक tries;
+	if (tty_port_initialized(port)) {
+		const struct uart_ops *ops = uport->ops;
+		int tries;
 
 		tty_port_set_suspended(port, 1);
 		tty_port_set_initialized(port, 0);
@@ -2200,186 +2199,186 @@ EXPORT_SYMBOL_GPL(uart_set_options);
 		spin_unlock_irq(&uport->lock);
 
 		/*
-		 * Wait क्रम the transmitter to empty.
+		 * Wait for the transmitter to empty.
 		 */
-		क्रम (tries = 3; !ops->tx_empty(uport) && tries; tries--)
+		for (tries = 3; !ops->tx_empty(uport) && tries; tries--)
 			msleep(10);
-		अगर (!tries)
+		if (!tries)
 			dev_err(uport->dev, "%s: Unable to drain transmitter\n",
 				uport->name);
 
-		ops->shutकरोwn(uport);
-	पूर्ण
+		ops->shutdown(uport);
+	}
 
 	/*
-	 * Disable the console device beक्रमe suspending.
+	 * Disable the console device before suspending.
 	 */
-	अगर (uart_console(uport))
+	if (uart_console(uport))
 		console_stop(uport->cons);
 
 	uart_change_pm(state, UART_PM_STATE_OFF);
 unlock:
 	mutex_unlock(&port->mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक uart_resume_port(काष्ठा uart_driver *drv, काष्ठा uart_port *uport)
-अणु
-	काष्ठा uart_state *state = drv->state + uport->line;
-	काष्ठा tty_port *port = &state->port;
-	काष्ठा device *tty_dev;
-	काष्ठा uart_match match = अणुuport, drvपूर्ण;
-	काष्ठा ktermios termios;
+int uart_resume_port(struct uart_driver *drv, struct uart_port *uport)
+{
+	struct uart_state *state = drv->state + uport->line;
+	struct tty_port *port = &state->port;
+	struct device *tty_dev;
+	struct uart_match match = {uport, drv};
+	struct ktermios termios;
 
 	mutex_lock(&port->mutex);
 
 	tty_dev = device_find_child(uport->dev, &match, serial_match_port);
-	अगर (!uport->suspended && device_may_wakeup(tty_dev)) अणु
-		अगर (irqd_is_wakeup_set(irq_get_irq_data((uport->irq))))
+	if (!uport->suspended && device_may_wakeup(tty_dev)) {
+		if (irqd_is_wakeup_set(irq_get_irq_data((uport->irq))))
 			disable_irq_wake(uport->irq);
 		put_device(tty_dev);
 		mutex_unlock(&port->mutex);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	put_device(tty_dev);
 	uport->suspended = 0;
 
 	/*
 	 * Re-enable the console device after suspending.
 	 */
-	अगर (uart_console(uport)) अणु
+	if (uart_console(uport)) {
 		/*
 		 * First try to use the console cflag setting.
 		 */
-		स_रखो(&termios, 0, माप(काष्ठा ktermios));
+		memset(&termios, 0, sizeof(struct ktermios));
 		termios.c_cflag = uport->cons->cflag;
 
 		/*
 		 * If that's unset, use the tty termios setting.
 		 */
-		अगर (port->tty && termios.c_cflag == 0)
+		if (port->tty && termios.c_cflag == 0)
 			termios = port->tty->termios;
 
-		अगर (console_suspend_enabled)
+		if (console_suspend_enabled)
 			uart_change_pm(state, UART_PM_STATE_ON);
-		uport->ops->set_termios(uport, &termios, शून्य);
-		अगर (console_suspend_enabled)
+		uport->ops->set_termios(uport, &termios, NULL);
+		if (console_suspend_enabled)
 			console_start(uport->cons);
-	पूर्ण
+	}
 
-	अगर (tty_port_suspended(port)) अणु
-		स्थिर काष्ठा uart_ops *ops = uport->ops;
-		पूर्णांक ret;
+	if (tty_port_suspended(port)) {
+		const struct uart_ops *ops = uport->ops;
+		int ret;
 
 		uart_change_pm(state, UART_PM_STATE_ON);
 		spin_lock_irq(&uport->lock);
 		ops->set_mctrl(uport, 0);
 		spin_unlock_irq(&uport->lock);
-		अगर (console_suspend_enabled || !uart_console(uport)) अणु
-			/* Protected by port mutex क्रम now */
-			काष्ठा tty_काष्ठा *tty = port->tty;
+		if (console_suspend_enabled || !uart_console(uport)) {
+			/* Protected by port mutex for now */
+			struct tty_struct *tty = port->tty;
 
 			ret = ops->startup(uport);
-			अगर (ret == 0) अणु
-				अगर (tty)
-					uart_change_speed(tty, state, शून्य);
+			if (ret == 0) {
+				if (tty)
+					uart_change_speed(tty, state, NULL);
 				spin_lock_irq(&uport->lock);
 				ops->set_mctrl(uport, uport->mctrl);
 				ops->start_tx(uport);
 				spin_unlock_irq(&uport->lock);
 				tty_port_set_initialized(port, 1);
-			पूर्ण अन्यथा अणु
+			} else {
 				/*
 				 * Failed to resume - maybe hardware went away?
 				 * Clear the "initialized" flag so we won't try
-				 * to call the low level drivers shutकरोwn method.
+				 * to call the low level drivers shutdown method.
 				 */
-				uart_shutकरोwn(tty, state);
-			पूर्ण
-		पूर्ण
+				uart_shutdown(tty, state);
+			}
+		}
 
 		tty_port_set_suspended(port, 0);
-	पूर्ण
+	}
 
 	mutex_unlock(&port->mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत व्योम
-uart_report_port(काष्ठा uart_driver *drv, काष्ठा uart_port *port)
-अणु
-	अक्षर address[64];
+static inline void
+uart_report_port(struct uart_driver *drv, struct uart_port *port)
+{
+	char address[64];
 
-	चयन (port->iotype) अणु
-	हाल UPIO_PORT:
-		snम_लिखो(address, माप(address), "I/O 0x%lx", port->iobase);
-		अवरोध;
-	हाल UPIO_HUB6:
-		snम_लिखो(address, माप(address),
+	switch (port->iotype) {
+	case UPIO_PORT:
+		snprintf(address, sizeof(address), "I/O 0x%lx", port->iobase);
+		break;
+	case UPIO_HUB6:
+		snprintf(address, sizeof(address),
 			 "I/O 0x%lx offset 0x%x", port->iobase, port->hub6);
-		अवरोध;
-	हाल UPIO_MEM:
-	हाल UPIO_MEM16:
-	हाल UPIO_MEM32:
-	हाल UPIO_MEM32BE:
-	हाल UPIO_AU:
-	हाल UPIO_TSI:
-		snम_लिखो(address, माप(address),
-			 "MMIO 0x%llx", (अचिन्हित दीर्घ दीर्घ)port->mapbase);
-		अवरोध;
-	शेष:
-		strlcpy(address, "*unknown*", माप(address));
-		अवरोध;
-	पूर्ण
+		break;
+	case UPIO_MEM:
+	case UPIO_MEM16:
+	case UPIO_MEM32:
+	case UPIO_MEM32BE:
+	case UPIO_AU:
+	case UPIO_TSI:
+		snprintf(address, sizeof(address),
+			 "MMIO 0x%llx", (unsigned long long)port->mapbase);
+		break;
+	default:
+		strlcpy(address, "*unknown*", sizeof(address));
+		break;
+	}
 
 	pr_info("%s%s%s at %s (irq = %d, base_baud = %d) is a %s\n",
 	       port->dev ? dev_name(port->dev) : "",
 	       port->dev ? ": " : "",
 	       port->name,
 	       address, port->irq, port->uartclk / 16, uart_type(port));
-पूर्ण
+}
 
-अटल व्योम
-uart_configure_port(काष्ठा uart_driver *drv, काष्ठा uart_state *state,
-		    काष्ठा uart_port *port)
-अणु
-	अचिन्हित पूर्णांक flags;
+static void
+uart_configure_port(struct uart_driver *drv, struct uart_state *state,
+		    struct uart_port *port)
+{
+	unsigned int flags;
 
 	/*
-	 * If there isn't a port here, don't करो anything further.
+	 * If there isn't a port here, don't do anything further.
 	 */
-	अगर (!port->iobase && !port->mapbase && !port->membase)
-		वापस;
+	if (!port->iobase && !port->mapbase && !port->membase)
+		return;
 
 	/*
-	 * Now करो the स्वतः configuration stuff.  Note that config_port
-	 * is expected to claim the resources and map the port क्रम us.
+	 * Now do the auto configuration stuff.  Note that config_port
+	 * is expected to claim the resources and map the port for us.
 	 */
 	flags = 0;
-	अगर (port->flags & UPF_AUTO_IRQ)
+	if (port->flags & UPF_AUTO_IRQ)
 		flags |= UART_CONFIG_IRQ;
-	अगर (port->flags & UPF_BOOT_AUTOCONF) अणु
-		अगर (!(port->flags & UPF_FIXED_TYPE)) अणु
+	if (port->flags & UPF_BOOT_AUTOCONF) {
+		if (!(port->flags & UPF_FIXED_TYPE)) {
 			port->type = PORT_UNKNOWN;
 			flags |= UART_CONFIG_TYPE;
-		पूर्ण
+		}
 		port->ops->config_port(port, flags);
-	पूर्ण
+	}
 
-	अगर (port->type != PORT_UNKNOWN) अणु
-		अचिन्हित दीर्घ flags;
+	if (port->type != PORT_UNKNOWN) {
+		unsigned long flags;
 
 		uart_report_port(drv, port);
 
-		/* Power up port क्रम set_mctrl() */
+		/* Power up port for set_mctrl() */
 		uart_change_pm(state, UART_PM_STATE_ON);
 
 		/*
 		 * Ensure that the modem control lines are de-activated.
 		 * keep the DTR setting that is set in uart_set_options()
-		 * We probably करोn't need a spinlock around this, but
+		 * We probably don't need a spinlock around this, but
 		 */
 		spin_lock_irqsave(&port->lock, flags);
 		port->ops->set_mctrl(port, port->mctrl & TIOCM_DTR);
@@ -2387,169 +2386,169 @@ uart_configure_port(काष्ठा uart_driver *drv, काष्ठा uart
 
 		/*
 		 * If this driver supports console, and it hasn't been
-		 * successfully रेजिस्टरed yet, try to re-रेजिस्टर it.
+		 * successfully registered yet, try to re-register it.
 		 * It may be that the port was not available.
 		 */
-		अगर (port->cons && !(port->cons->flags & CON_ENABLED))
-			रेजिस्टर_console(port->cons);
+		if (port->cons && !(port->cons->flags & CON_ENABLED))
+			register_console(port->cons);
 
 		/*
-		 * Power करोwn all ports by शेष, except the
-		 * console अगर we have one.
+		 * Power down all ports by default, except the
+		 * console if we have one.
 		 */
-		अगर (!uart_console(port))
+		if (!uart_console(port))
 			uart_change_pm(state, UART_PM_STATE_OFF);
-	पूर्ण
-पूर्ण
+	}
+}
 
-#अगर_घोषित CONFIG_CONSOLE_POLL
+#ifdef CONFIG_CONSOLE_POLL
 
-अटल पूर्णांक uart_poll_init(काष्ठा tty_driver *driver, पूर्णांक line, अक्षर *options)
-अणु
-	काष्ठा uart_driver *drv = driver->driver_state;
-	काष्ठा uart_state *state = drv->state + line;
-	काष्ठा tty_port *tport;
-	काष्ठा uart_port *port;
-	पूर्णांक baud = 9600;
-	पूर्णांक bits = 8;
-	पूर्णांक parity = 'n';
-	पूर्णांक flow = 'n';
-	पूर्णांक ret = 0;
+static int uart_poll_init(struct tty_driver *driver, int line, char *options)
+{
+	struct uart_driver *drv = driver->driver_state;
+	struct uart_state *state = drv->state + line;
+	struct tty_port *tport;
+	struct uart_port *port;
+	int baud = 9600;
+	int bits = 8;
+	int parity = 'n';
+	int flow = 'n';
+	int ret = 0;
 
 	tport = &state->port;
 	mutex_lock(&tport->mutex);
 
 	port = uart_port_check(state);
-	अगर (!port || !(port->ops->poll_get_अक्षर && port->ops->poll_put_अक्षर)) अणु
+	if (!port || !(port->ops->poll_get_char && port->ops->poll_put_char)) {
 		ret = -1;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (port->ops->poll_init) अणु
+	if (port->ops->poll_init) {
 		/*
-		 * We करोn't set initialized as we only initialized the hw,
+		 * We don't set initialized as we only initialized the hw,
 		 * e.g. state->xmit is still uninitialized.
 		 */
-		अगर (!tty_port_initialized(tport))
+		if (!tty_port_initialized(tport))
 			ret = port->ops->poll_init(port);
-	पूर्ण
+	}
 
-	अगर (!ret && options) अणु
+	if (!ret && options) {
 		uart_parse_options(options, &baud, &parity, &bits, &flow);
-		ret = uart_set_options(port, शून्य, baud, parity, bits, flow);
-	पूर्ण
+		ret = uart_set_options(port, NULL, baud, parity, bits, flow);
+	}
 out:
 	mutex_unlock(&tport->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक uart_poll_get_अक्षर(काष्ठा tty_driver *driver, पूर्णांक line)
-अणु
-	काष्ठा uart_driver *drv = driver->driver_state;
-	काष्ठा uart_state *state = drv->state + line;
-	काष्ठा uart_port *port;
-	पूर्णांक ret = -1;
+static int uart_poll_get_char(struct tty_driver *driver, int line)
+{
+	struct uart_driver *drv = driver->driver_state;
+	struct uart_state *state = drv->state + line;
+	struct uart_port *port;
+	int ret = -1;
 
 	port = uart_port_ref(state);
-	अगर (port) अणु
-		ret = port->ops->poll_get_अक्षर(port);
+	if (port) {
+		ret = port->ops->poll_get_char(port);
 		uart_port_deref(port);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम uart_poll_put_अक्षर(काष्ठा tty_driver *driver, पूर्णांक line, अक्षर ch)
-अणु
-	काष्ठा uart_driver *drv = driver->driver_state;
-	काष्ठा uart_state *state = drv->state + line;
-	काष्ठा uart_port *port;
+static void uart_poll_put_char(struct tty_driver *driver, int line, char ch)
+{
+	struct uart_driver *drv = driver->driver_state;
+	struct uart_state *state = drv->state + line;
+	struct uart_port *port;
 
 	port = uart_port_ref(state);
-	अगर (!port)
-		वापस;
+	if (!port)
+		return;
 
-	अगर (ch == '\n')
-		port->ops->poll_put_अक्षर(port, '\r');
-	port->ops->poll_put_अक्षर(port, ch);
+	if (ch == '\n')
+		port->ops->poll_put_char(port, '\r');
+	port->ops->poll_put_char(port, ch);
 	uart_port_deref(port);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-अटल स्थिर काष्ठा tty_operations uart_ops = अणु
+static const struct tty_operations uart_ops = {
 	.install	= uart_install,
-	.खोलो		= uart_खोलो,
-	.बंद		= uart_बंद,
-	.ग_लिखो		= uart_ग_लिखो,
-	.put_अक्षर	= uart_put_अक्षर,
-	.flush_अक्षरs	= uart_flush_अक्षरs,
-	.ग_लिखो_room	= uart_ग_लिखो_room,
-	.अक्षरs_in_buffer= uart_अक्षरs_in_buffer,
+	.open		= uart_open,
+	.close		= uart_close,
+	.write		= uart_write,
+	.put_char	= uart_put_char,
+	.flush_chars	= uart_flush_chars,
+	.write_room	= uart_write_room,
+	.chars_in_buffer= uart_chars_in_buffer,
 	.flush_buffer	= uart_flush_buffer,
 	.ioctl		= uart_ioctl,
 	.throttle	= uart_throttle,
 	.unthrottle	= uart_unthrottle,
-	.send_xअक्षर	= uart_send_xअक्षर,
+	.send_xchar	= uart_send_xchar,
 	.set_termios	= uart_set_termios,
 	.set_ldisc	= uart_set_ldisc,
 	.stop		= uart_stop,
 	.start		= uart_start,
 	.hangup		= uart_hangup,
-	.अवरोध_ctl	= uart_अवरोध_ctl,
-	.रुको_until_sent= uart_रुको_until_sent,
-#अगर_घोषित CONFIG_PROC_FS
+	.break_ctl	= uart_break_ctl,
+	.wait_until_sent= uart_wait_until_sent,
+#ifdef CONFIG_PROC_FS
 	.proc_show	= uart_proc_show,
-#पूर्ण_अगर
+#endif
 	.tiocmget	= uart_tiocmget,
 	.tiocmset	= uart_tiocmset,
 	.set_serial	= uart_set_info_user,
 	.get_serial	= uart_get_info_user,
 	.get_icount	= uart_get_icount,
-#अगर_घोषित CONFIG_CONSOLE_POLL
+#ifdef CONFIG_CONSOLE_POLL
 	.poll_init	= uart_poll_init,
-	.poll_get_अक्षर	= uart_poll_get_अक्षर,
-	.poll_put_अक्षर	= uart_poll_put_अक्षर,
-#पूर्ण_अगर
-पूर्ण;
+	.poll_get_char	= uart_poll_get_char,
+	.poll_put_char	= uart_poll_put_char,
+#endif
+};
 
-अटल स्थिर काष्ठा tty_port_operations uart_port_ops = अणु
-	.carrier_उठाओd = uart_carrier_उठाओd,
+static const struct tty_port_operations uart_port_ops = {
+	.carrier_raised = uart_carrier_raised,
 	.dtr_rts	= uart_dtr_rts,
 	.activate	= uart_port_activate,
-	.shutकरोwn	= uart_tty_port_shutकरोwn,
-पूर्ण;
+	.shutdown	= uart_tty_port_shutdown,
+};
 
 /**
- *	uart_रेजिस्टर_driver - रेजिस्टर a driver with the uart core layer
- *	@drv: low level driver काष्ठाure
+ *	uart_register_driver - register a driver with the uart core layer
+ *	@drv: low level driver structure
  *
- *	Register a uart driver with the core driver.  We in turn रेजिस्टर
+ *	Register a uart driver with the core driver.  We in turn register
  *	with the tty layer, and initialise the core driver per-port state.
  *
  *	We have a proc file in /proc/tty/driver which is named after the
  *	normal driver.
  *
- *	drv->port should be शून्य, and the per-port काष्ठाures should be
- *	रेजिस्टरed using uart_add_one_port after this call has succeeded.
+ *	drv->port should be NULL, and the per-port structures should be
+ *	registered using uart_add_one_port after this call has succeeded.
  */
-पूर्णांक uart_रेजिस्टर_driver(काष्ठा uart_driver *drv)
-अणु
-	काष्ठा tty_driver *normal;
-	पूर्णांक i, retval = -ENOMEM;
+int uart_register_driver(struct uart_driver *drv)
+{
+	struct tty_driver *normal;
+	int i, retval = -ENOMEM;
 
 	BUG_ON(drv->state);
 
 	/*
-	 * Maybe we should be using a slab cache क्रम this, especially अगर
+	 * Maybe we should be using a slab cache for this, especially if
 	 * we have a large number of ports to handle.
 	 */
-	drv->state = kसुस्मृति(drv->nr, माप(काष्ठा uart_state), GFP_KERNEL);
-	अगर (!drv->state)
-		जाओ out;
+	drv->state = kcalloc(drv->nr, sizeof(struct uart_state), GFP_KERNEL);
+	if (!drv->state)
+		goto out;
 
 	normal = alloc_tty_driver(drv->nr);
-	अगर (!normal)
-		जाओ out_kमुक्त;
+	if (!normal)
+		goto out_kfree;
 
 	drv->tty_driver = normal;
 
@@ -2569,338 +2568,338 @@ out:
 	/*
 	 * Initialise the UART state(s).
 	 */
-	क्रम (i = 0; i < drv->nr; i++) अणु
-		काष्ठा uart_state *state = drv->state + i;
-		काष्ठा tty_port *port = &state->port;
+	for (i = 0; i < drv->nr; i++) {
+		struct uart_state *state = drv->state + i;
+		struct tty_port *port = &state->port;
 
 		tty_port_init(port);
 		port->ops = &uart_port_ops;
-	पूर्ण
+	}
 
-	retval = tty_रेजिस्टर_driver(normal);
-	अगर (retval >= 0)
-		वापस retval;
+	retval = tty_register_driver(normal);
+	if (retval >= 0)
+		return retval;
 
-	क्रम (i = 0; i < drv->nr; i++)
+	for (i = 0; i < drv->nr; i++)
 		tty_port_destroy(&drv->state[i].port);
 	put_tty_driver(normal);
-out_kमुक्त:
-	kमुक्त(drv->state);
+out_kfree:
+	kfree(drv->state);
 out:
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 /**
- *	uart_unरेजिस्टर_driver - हटाओ a driver from the uart core layer
- *	@drv: low level driver काष्ठाure
+ *	uart_unregister_driver - remove a driver from the uart core layer
+ *	@drv: low level driver structure
  *
  *	Remove all references to a driver from the core driver.  The low
- *	level driver must have हटाओd all its ports via the
- *	uart_हटाओ_one_port() अगर it रेजिस्टरed them with uart_add_one_port().
- *	(ie, drv->port == शून्य)
+ *	level driver must have removed all its ports via the
+ *	uart_remove_one_port() if it registered them with uart_add_one_port().
+ *	(ie, drv->port == NULL)
  */
-व्योम uart_unरेजिस्टर_driver(काष्ठा uart_driver *drv)
-अणु
-	काष्ठा tty_driver *p = drv->tty_driver;
-	अचिन्हित पूर्णांक i;
+void uart_unregister_driver(struct uart_driver *drv)
+{
+	struct tty_driver *p = drv->tty_driver;
+	unsigned int i;
 
-	tty_unरेजिस्टर_driver(p);
+	tty_unregister_driver(p);
 	put_tty_driver(p);
-	क्रम (i = 0; i < drv->nr; i++)
+	for (i = 0; i < drv->nr; i++)
 		tty_port_destroy(&drv->state[i].port);
-	kमुक्त(drv->state);
-	drv->state = शून्य;
-	drv->tty_driver = शून्य;
-पूर्ण
+	kfree(drv->state);
+	drv->state = NULL;
+	drv->tty_driver = NULL;
+}
 
-काष्ठा tty_driver *uart_console_device(काष्ठा console *co, पूर्णांक *index)
-अणु
-	काष्ठा uart_driver *p = co->data;
+struct tty_driver *uart_console_device(struct console *co, int *index)
+{
+	struct uart_driver *p = co->data;
 	*index = co->index;
-	वापस p->tty_driver;
-पूर्ण
+	return p->tty_driver;
+}
 EXPORT_SYMBOL_GPL(uart_console_device);
 
-अटल sमाप_प्रकार uartclk_show(काष्ठा device *dev,
-	काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा serial_काष्ठा पंचांगp;
-	काष्ठा tty_port *port = dev_get_drvdata(dev);
+static ssize_t uartclk_show(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+	struct serial_struct tmp;
+	struct tty_port *port = dev_get_drvdata(dev);
 
-	uart_get_info(port, &पंचांगp);
-	वापस प्र_लिखो(buf, "%d\n", पंचांगp.baud_base * 16);
-पूर्ण
+	uart_get_info(port, &tmp);
+	return sprintf(buf, "%d\n", tmp.baud_base * 16);
+}
 
-अटल sमाप_प्रकार type_show(काष्ठा device *dev,
-	काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा serial_काष्ठा पंचांगp;
-	काष्ठा tty_port *port = dev_get_drvdata(dev);
+static ssize_t type_show(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+	struct serial_struct tmp;
+	struct tty_port *port = dev_get_drvdata(dev);
 
-	uart_get_info(port, &पंचांगp);
-	वापस प्र_लिखो(buf, "%d\n", पंचांगp.type);
-पूर्ण
+	uart_get_info(port, &tmp);
+	return sprintf(buf, "%d\n", tmp.type);
+}
 
-अटल sमाप_प्रकार line_show(काष्ठा device *dev,
-	काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा serial_काष्ठा पंचांगp;
-	काष्ठा tty_port *port = dev_get_drvdata(dev);
+static ssize_t line_show(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+	struct serial_struct tmp;
+	struct tty_port *port = dev_get_drvdata(dev);
 
-	uart_get_info(port, &पंचांगp);
-	वापस प्र_लिखो(buf, "%d\n", पंचांगp.line);
-पूर्ण
+	uart_get_info(port, &tmp);
+	return sprintf(buf, "%d\n", tmp.line);
+}
 
-अटल sमाप_प्रकार port_show(काष्ठा device *dev,
-	काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा serial_काष्ठा पंचांगp;
-	काष्ठा tty_port *port = dev_get_drvdata(dev);
-	अचिन्हित दीर्घ ioaddr;
+static ssize_t port_show(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+	struct serial_struct tmp;
+	struct tty_port *port = dev_get_drvdata(dev);
+	unsigned long ioaddr;
 
-	uart_get_info(port, &पंचांगp);
-	ioaddr = पंचांगp.port;
-	अगर (HIGH_BITS_OFFSET)
-		ioaddr |= (अचिन्हित दीर्घ)पंचांगp.port_high << HIGH_BITS_OFFSET;
-	वापस प्र_लिखो(buf, "0x%lX\n", ioaddr);
-पूर्ण
+	uart_get_info(port, &tmp);
+	ioaddr = tmp.port;
+	if (HIGH_BITS_OFFSET)
+		ioaddr |= (unsigned long)tmp.port_high << HIGH_BITS_OFFSET;
+	return sprintf(buf, "0x%lX\n", ioaddr);
+}
 
-अटल sमाप_प्रकार irq_show(काष्ठा device *dev,
-	काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा serial_काष्ठा पंचांगp;
-	काष्ठा tty_port *port = dev_get_drvdata(dev);
+static ssize_t irq_show(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+	struct serial_struct tmp;
+	struct tty_port *port = dev_get_drvdata(dev);
 
-	uart_get_info(port, &पंचांगp);
-	वापस प्र_लिखो(buf, "%d\n", पंचांगp.irq);
-पूर्ण
+	uart_get_info(port, &tmp);
+	return sprintf(buf, "%d\n", tmp.irq);
+}
 
-अटल sमाप_प्रकार flags_show(काष्ठा device *dev,
-	काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा serial_काष्ठा पंचांगp;
-	काष्ठा tty_port *port = dev_get_drvdata(dev);
+static ssize_t flags_show(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+	struct serial_struct tmp;
+	struct tty_port *port = dev_get_drvdata(dev);
 
-	uart_get_info(port, &पंचांगp);
-	वापस प्र_लिखो(buf, "0x%X\n", पंचांगp.flags);
-पूर्ण
+	uart_get_info(port, &tmp);
+	return sprintf(buf, "0x%X\n", tmp.flags);
+}
 
-अटल sमाप_प्रकार xmit_fअगरo_size_show(काष्ठा device *dev,
-	काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा serial_काष्ठा पंचांगp;
-	काष्ठा tty_port *port = dev_get_drvdata(dev);
+static ssize_t xmit_fifo_size_show(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+	struct serial_struct tmp;
+	struct tty_port *port = dev_get_drvdata(dev);
 
-	uart_get_info(port, &पंचांगp);
-	वापस प्र_लिखो(buf, "%d\n", पंचांगp.xmit_fअगरo_size);
-पूर्ण
+	uart_get_info(port, &tmp);
+	return sprintf(buf, "%d\n", tmp.xmit_fifo_size);
+}
 
-अटल sमाप_प्रकार बंद_delay_show(काष्ठा device *dev,
-	काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा serial_काष्ठा पंचांगp;
-	काष्ठा tty_port *port = dev_get_drvdata(dev);
+static ssize_t close_delay_show(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+	struct serial_struct tmp;
+	struct tty_port *port = dev_get_drvdata(dev);
 
-	uart_get_info(port, &पंचांगp);
-	वापस प्र_लिखो(buf, "%d\n", पंचांगp.बंद_delay);
-पूर्ण
+	uart_get_info(port, &tmp);
+	return sprintf(buf, "%d\n", tmp.close_delay);
+}
 
-अटल sमाप_प्रकार closing_रुको_show(काष्ठा device *dev,
-	काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा serial_काष्ठा पंचांगp;
-	काष्ठा tty_port *port = dev_get_drvdata(dev);
+static ssize_t closing_wait_show(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+	struct serial_struct tmp;
+	struct tty_port *port = dev_get_drvdata(dev);
 
-	uart_get_info(port, &पंचांगp);
-	वापस प्र_लिखो(buf, "%d\n", पंचांगp.closing_रुको);
-पूर्ण
+	uart_get_info(port, &tmp);
+	return sprintf(buf, "%d\n", tmp.closing_wait);
+}
 
-अटल sमाप_प्रकार custom_भागisor_show(काष्ठा device *dev,
-	काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा serial_काष्ठा पंचांगp;
-	काष्ठा tty_port *port = dev_get_drvdata(dev);
+static ssize_t custom_divisor_show(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+	struct serial_struct tmp;
+	struct tty_port *port = dev_get_drvdata(dev);
 
-	uart_get_info(port, &पंचांगp);
-	वापस प्र_लिखो(buf, "%d\n", पंचांगp.custom_भागisor);
-पूर्ण
+	uart_get_info(port, &tmp);
+	return sprintf(buf, "%d\n", tmp.custom_divisor);
+}
 
-अटल sमाप_प्रकार io_type_show(काष्ठा device *dev,
-	काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा serial_काष्ठा पंचांगp;
-	काष्ठा tty_port *port = dev_get_drvdata(dev);
+static ssize_t io_type_show(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+	struct serial_struct tmp;
+	struct tty_port *port = dev_get_drvdata(dev);
 
-	uart_get_info(port, &पंचांगp);
-	वापस प्र_लिखो(buf, "%d\n", पंचांगp.io_type);
-पूर्ण
+	uart_get_info(port, &tmp);
+	return sprintf(buf, "%d\n", tmp.io_type);
+}
 
-अटल sमाप_प्रकार iomem_base_show(काष्ठा device *dev,
-	काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा serial_काष्ठा पंचांगp;
-	काष्ठा tty_port *port = dev_get_drvdata(dev);
+static ssize_t iomem_base_show(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+	struct serial_struct tmp;
+	struct tty_port *port = dev_get_drvdata(dev);
 
-	uart_get_info(port, &पंचांगp);
-	वापस प्र_लिखो(buf, "0x%lX\n", (अचिन्हित दीर्घ)पंचांगp.iomem_base);
-पूर्ण
+	uart_get_info(port, &tmp);
+	return sprintf(buf, "0x%lX\n", (unsigned long)tmp.iomem_base);
+}
 
-अटल sमाप_प्रकार iomem_reg_shअगरt_show(काष्ठा device *dev,
-	काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा serial_काष्ठा पंचांगp;
-	काष्ठा tty_port *port = dev_get_drvdata(dev);
+static ssize_t iomem_reg_shift_show(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+	struct serial_struct tmp;
+	struct tty_port *port = dev_get_drvdata(dev);
 
-	uart_get_info(port, &पंचांगp);
-	वापस प्र_लिखो(buf, "%d\n", पंचांगp.iomem_reg_shअगरt);
-पूर्ण
+	uart_get_info(port, &tmp);
+	return sprintf(buf, "%d\n", tmp.iomem_reg_shift);
+}
 
-अटल sमाप_प्रकार console_show(काष्ठा device *dev,
-	काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा tty_port *port = dev_get_drvdata(dev);
-	काष्ठा uart_state *state = container_of(port, काष्ठा uart_state, port);
-	काष्ठा uart_port *uport;
+static ssize_t console_show(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+	struct tty_port *port = dev_get_drvdata(dev);
+	struct uart_state *state = container_of(port, struct uart_state, port);
+	struct uart_port *uport;
 	bool console = false;
 
 	mutex_lock(&port->mutex);
 	uport = uart_port_check(state);
-	अगर (uport)
+	if (uport)
 		console = uart_console_enabled(uport);
 	mutex_unlock(&port->mutex);
 
-	वापस प्र_लिखो(buf, "%c\n", console ? 'Y' : 'N');
-पूर्ण
+	return sprintf(buf, "%c\n", console ? 'Y' : 'N');
+}
 
-अटल sमाप_प्रकार console_store(काष्ठा device *dev,
-	काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा tty_port *port = dev_get_drvdata(dev);
-	काष्ठा uart_state *state = container_of(port, काष्ठा uart_state, port);
-	काष्ठा uart_port *uport;
+static ssize_t console_store(struct device *dev,
+	struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct tty_port *port = dev_get_drvdata(dev);
+	struct uart_state *state = container_of(port, struct uart_state, port);
+	struct uart_port *uport;
 	bool oldconsole, newconsole;
-	पूर्णांक ret;
+	int ret;
 
 	ret = kstrtobool(buf, &newconsole);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	mutex_lock(&port->mutex);
 	uport = uart_port_check(state);
-	अगर (uport) अणु
+	if (uport) {
 		oldconsole = uart_console_enabled(uport);
-		अगर (oldconsole && !newconsole) अणु
-			ret = unरेजिस्टर_console(uport->cons);
-		पूर्ण अन्यथा अगर (!oldconsole && newconsole) अणु
-			अगर (uart_console(uport)) अणु
+		if (oldconsole && !newconsole) {
+			ret = unregister_console(uport->cons);
+		} else if (!oldconsole && newconsole) {
+			if (uart_console(uport)) {
 				uport->console_reinit = 1;
-				रेजिस्टर_console(uport->cons);
-			पूर्ण अन्यथा अणु
+				register_console(uport->cons);
+			} else {
 				ret = -ENOENT;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			}
+		}
+	} else {
 		ret = -ENXIO;
-	पूर्ण
+	}
 	mutex_unlock(&port->mutex);
 
-	वापस ret < 0 ? ret : count;
-पूर्ण
+	return ret < 0 ? ret : count;
+}
 
-अटल DEVICE_ATTR_RO(uartclk);
-अटल DEVICE_ATTR_RO(type);
-अटल DEVICE_ATTR_RO(line);
-अटल DEVICE_ATTR_RO(port);
-अटल DEVICE_ATTR_RO(irq);
-अटल DEVICE_ATTR_RO(flags);
-अटल DEVICE_ATTR_RO(xmit_fअगरo_size);
-अटल DEVICE_ATTR_RO(बंद_delay);
-अटल DEVICE_ATTR_RO(closing_रुको);
-अटल DEVICE_ATTR_RO(custom_भागisor);
-अटल DEVICE_ATTR_RO(io_type);
-अटल DEVICE_ATTR_RO(iomem_base);
-अटल DEVICE_ATTR_RO(iomem_reg_shअगरt);
-अटल DEVICE_ATTR_RW(console);
+static DEVICE_ATTR_RO(uartclk);
+static DEVICE_ATTR_RO(type);
+static DEVICE_ATTR_RO(line);
+static DEVICE_ATTR_RO(port);
+static DEVICE_ATTR_RO(irq);
+static DEVICE_ATTR_RO(flags);
+static DEVICE_ATTR_RO(xmit_fifo_size);
+static DEVICE_ATTR_RO(close_delay);
+static DEVICE_ATTR_RO(closing_wait);
+static DEVICE_ATTR_RO(custom_divisor);
+static DEVICE_ATTR_RO(io_type);
+static DEVICE_ATTR_RO(iomem_base);
+static DEVICE_ATTR_RO(iomem_reg_shift);
+static DEVICE_ATTR_RW(console);
 
-अटल काष्ठा attribute *tty_dev_attrs[] = अणु
+static struct attribute *tty_dev_attrs[] = {
 	&dev_attr_uartclk.attr,
 	&dev_attr_type.attr,
 	&dev_attr_line.attr,
 	&dev_attr_port.attr,
 	&dev_attr_irq.attr,
 	&dev_attr_flags.attr,
-	&dev_attr_xmit_fअगरo_size.attr,
-	&dev_attr_बंद_delay.attr,
-	&dev_attr_closing_रुको.attr,
-	&dev_attr_custom_भागisor.attr,
+	&dev_attr_xmit_fifo_size.attr,
+	&dev_attr_close_delay.attr,
+	&dev_attr_closing_wait.attr,
+	&dev_attr_custom_divisor.attr,
 	&dev_attr_io_type.attr,
 	&dev_attr_iomem_base.attr,
-	&dev_attr_iomem_reg_shअगरt.attr,
+	&dev_attr_iomem_reg_shift.attr,
 	&dev_attr_console.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group tty_dev_attr_group = अणु
+static const struct attribute_group tty_dev_attr_group = {
 	.attrs = tty_dev_attrs,
-पूर्ण;
+};
 
 /**
- *	uart_add_one_port - attach a driver-defined port काष्ठाure
- *	@drv: poपूर्णांकer to the uart low level driver काष्ठाure क्रम this port
- *	@uport: uart port काष्ठाure to use क्रम this port.
+ *	uart_add_one_port - attach a driver-defined port structure
+ *	@drv: pointer to the uart low level driver structure for this port
+ *	@uport: uart port structure to use for this port.
  *
  *	Context: task context, might sleep
  *
- *	This allows the driver to रेजिस्टर its own uart_port काष्ठाure
- *	with the core driver.  The मुख्य purpose is to allow the low
+ *	This allows the driver to register its own uart_port structure
+ *	with the core driver.  The main purpose is to allow the low
  *	level uart drivers to expand uart_port, rather than having yet
- *	more levels of काष्ठाures.
+ *	more levels of structures.
  */
-पूर्णांक uart_add_one_port(काष्ठा uart_driver *drv, काष्ठा uart_port *uport)
-अणु
-	काष्ठा uart_state *state;
-	काष्ठा tty_port *port;
-	पूर्णांक ret = 0;
-	काष्ठा device *tty_dev;
-	पूर्णांक num_groups;
+int uart_add_one_port(struct uart_driver *drv, struct uart_port *uport)
+{
+	struct uart_state *state;
+	struct tty_port *port;
+	int ret = 0;
+	struct device *tty_dev;
+	int num_groups;
 
-	अगर (uport->line >= drv->nr)
-		वापस -EINVAL;
+	if (uport->line >= drv->nr)
+		return -EINVAL;
 
 	state = drv->state + uport->line;
 	port = &state->port;
 
 	mutex_lock(&port_mutex);
 	mutex_lock(&port->mutex);
-	अगर (state->uart_port) अणु
+	if (state->uart_port) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* Link the port to the driver state table and vice versa */
 	atomic_set(&state->refcount, 1);
-	init_रुकोqueue_head(&state->हटाओ_रुको);
+	init_waitqueue_head(&state->remove_wait);
 	state->uart_port = uport;
 	uport->state = state;
 
 	state->pm_state = UART_PM_STATE_UNDEFINED;
 	uport->cons = drv->cons;
 	uport->minor = drv->tty_driver->minor_start + uport->line;
-	uport->name = kaप्र_लिखो(GFP_KERNEL, "%s%d", drv->dev_name,
+	uport->name = kasprintf(GFP_KERNEL, "%s%d", drv->dev_name,
 				drv->tty_driver->name_base + uport->line);
-	अगर (!uport->name) अणु
+	if (!uport->name) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
-	 * If this port is in use as a console then the spinlock is alपढ़ोy
+	 * If this port is in use as a console then the spinlock is already
 	 * initialised.
 	 */
-	अगर (!uart_console_enabled(uport))
+	if (!uart_console_enabled(uport))
 		uart_port_spin_lock_init(uport);
 
-	अगर (uport->cons && uport->dev)
+	if (uport->cons && uport->dev)
 		of_console_check(uport->dev->of_node, uport->cons->name, uport->line);
 
 	tty_port_link_device(port, drv->tty_driver, uport->line);
@@ -2909,31 +2908,31 @@ EXPORT_SYMBOL_GPL(uart_console_device);
 	port->console = uart_console(uport);
 
 	num_groups = 2;
-	अगर (uport->attr_group)
+	if (uport->attr_group)
 		num_groups++;
 
-	uport->tty_groups = kसुस्मृति(num_groups, माप(*uport->tty_groups),
+	uport->tty_groups = kcalloc(num_groups, sizeof(*uport->tty_groups),
 				    GFP_KERNEL);
-	अगर (!uport->tty_groups) अणु
+	if (!uport->tty_groups) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	uport->tty_groups[0] = &tty_dev_attr_group;
-	अगर (uport->attr_group)
+	if (uport->attr_group)
 		uport->tty_groups[1] = uport->attr_group;
 
 	/*
 	 * Register the port whether it's detected or not.  This allows
 	 * setserial to be used to alter this port's parameters.
 	 */
-	tty_dev = tty_port_रेजिस्टर_device_attr_serdev(port, drv->tty_driver,
+	tty_dev = tty_port_register_device_attr_serdev(port, drv->tty_driver,
 			uport->line, uport->dev, port, uport->tty_groups);
-	अगर (!IS_ERR(tty_dev)) अणु
+	if (!IS_ERR(tty_dev)) {
 		device_set_wakeup_capable(tty_dev, 1);
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_err(uport->dev, "Cannot register tty device on line %d\n",
 		       uport->line);
-	पूर्ण
+	}
 
 	/*
 	 * Ensure UPF_DEAD is not set.
@@ -2944,72 +2943,72 @@ EXPORT_SYMBOL_GPL(uart_console_device);
 	mutex_unlock(&port->mutex);
 	mutex_unlock(&port_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- *	uart_हटाओ_one_port - detach a driver defined port काष्ठाure
- *	@drv: poपूर्णांकer to the uart low level driver काष्ठाure क्रम this port
- *	@uport: uart port काष्ठाure क्रम this port
+ *	uart_remove_one_port - detach a driver defined port structure
+ *	@drv: pointer to the uart low level driver structure for this port
+ *	@uport: uart port structure for this port
  *
  *	Context: task context, might sleep
  *
- *	This unhooks (and hangs up) the specअगरied port काष्ठाure from the
+ *	This unhooks (and hangs up) the specified port structure from the
  *	core driver.  No further calls will be made to the low-level code
- *	क्रम this port.
+ *	for this port.
  */
-पूर्णांक uart_हटाओ_one_port(काष्ठा uart_driver *drv, काष्ठा uart_port *uport)
-अणु
-	काष्ठा uart_state *state = drv->state + uport->line;
-	काष्ठा tty_port *port = &state->port;
-	काष्ठा uart_port *uart_port;
-	काष्ठा tty_काष्ठा *tty;
-	पूर्णांक ret = 0;
+int uart_remove_one_port(struct uart_driver *drv, struct uart_port *uport)
+{
+	struct uart_state *state = drv->state + uport->line;
+	struct tty_port *port = &state->port;
+	struct uart_port *uart_port;
+	struct tty_struct *tty;
+	int ret = 0;
 
 	mutex_lock(&port_mutex);
 
 	/*
-	 * Mark the port "dead" - this prevents any खोलोs from
-	 * succeeding जबतक we shut करोwn the port.
+	 * Mark the port "dead" - this prevents any opens from
+	 * succeeding while we shut down the port.
 	 */
 	mutex_lock(&port->mutex);
 	uart_port = uart_port_check(state);
-	अगर (uart_port != uport)
+	if (uart_port != uport)
 		dev_alert(uport->dev, "Removing wrong port: %p != %p\n",
 			  uart_port, uport);
 
-	अगर (!uart_port) अणु
+	if (!uart_port) {
 		mutex_unlock(&port->mutex);
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	uport->flags |= UPF_DEAD;
 	mutex_unlock(&port->mutex);
 
 	/*
 	 * Remove the devices from the tty layer
 	 */
-	tty_port_unरेजिस्टर_device(port, drv->tty_driver, uport->line);
+	tty_port_unregister_device(port, drv->tty_driver, uport->line);
 
 	tty = tty_port_tty_get(port);
-	अगर (tty) अणु
+	if (tty) {
 		tty_vhangup(port->tty);
 		tty_kref_put(tty);
-	पूर्ण
+	}
 
 	/*
-	 * If the port is used as a console, unरेजिस्टर it
+	 * If the port is used as a console, unregister it
 	 */
-	अगर (uart_console(uport))
-		unरेजिस्टर_console(uport->cons);
+	if (uart_console(uport))
+		unregister_console(uport->cons);
 
 	/*
-	 * Free the port IO and memory resources, अगर any.
+	 * Free the port IO and memory resources, if any.
 	 */
-	अगर (uport->type != PORT_UNKNOWN && uport->ops->release_port)
+	if (uport->type != PORT_UNKNOWN && uport->ops->release_port)
 		uport->ops->release_port(uport);
-	kमुक्त(uport->tty_groups);
-	kमुक्त(uport->name);
+	kfree(uport->tty_groups);
+	kfree(uport->name);
 
 	/*
 	 * Indicate that there isn't a port here anymore.
@@ -3017,220 +3016,220 @@ EXPORT_SYMBOL_GPL(uart_console_device);
 	uport->type = PORT_UNKNOWN;
 
 	mutex_lock(&port->mutex);
-	WARN_ON(atomic_dec_वापस(&state->refcount) < 0);
-	रुको_event(state->हटाओ_रुको, !atomic_पढ़ो(&state->refcount));
-	state->uart_port = शून्य;
+	WARN_ON(atomic_dec_return(&state->refcount) < 0);
+	wait_event(state->remove_wait, !atomic_read(&state->refcount));
+	state->uart_port = NULL;
 	mutex_unlock(&port->mutex);
 out:
 	mutex_unlock(&port_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  *	Are the two ports equivalent?
  */
-पूर्णांक uart_match_port(काष्ठा uart_port *port1, काष्ठा uart_port *port2)
-अणु
-	अगर (port1->iotype != port2->iotype)
-		वापस 0;
+int uart_match_port(struct uart_port *port1, struct uart_port *port2)
+{
+	if (port1->iotype != port2->iotype)
+		return 0;
 
-	चयन (port1->iotype) अणु
-	हाल UPIO_PORT:
-		वापस (port1->iobase == port2->iobase);
-	हाल UPIO_HUB6:
-		वापस (port1->iobase == port2->iobase) &&
+	switch (port1->iotype) {
+	case UPIO_PORT:
+		return (port1->iobase == port2->iobase);
+	case UPIO_HUB6:
+		return (port1->iobase == port2->iobase) &&
 		       (port1->hub6   == port2->hub6);
-	हाल UPIO_MEM:
-	हाल UPIO_MEM16:
-	हाल UPIO_MEM32:
-	हाल UPIO_MEM32BE:
-	हाल UPIO_AU:
-	हाल UPIO_TSI:
-		वापस (port1->mapbase == port2->mapbase);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	case UPIO_MEM:
+	case UPIO_MEM16:
+	case UPIO_MEM32:
+	case UPIO_MEM32BE:
+	case UPIO_AU:
+	case UPIO_TSI:
+		return (port1->mapbase == port2->mapbase);
+	}
+	return 0;
+}
 EXPORT_SYMBOL(uart_match_port);
 
 /**
  *	uart_handle_dcd_change - handle a change of carrier detect state
- *	@uport: uart_port काष्ठाure क्रम the खोलो port
- *	@status: new carrier detect status, nonzero अगर active
+ *	@uport: uart_port structure for the open port
+ *	@status: new carrier detect status, nonzero if active
  *
  *	Caller must hold uport->lock
  */
-व्योम uart_handle_dcd_change(काष्ठा uart_port *uport, अचिन्हित पूर्णांक status)
-अणु
-	काष्ठा tty_port *port = &uport->state->port;
-	काष्ठा tty_काष्ठा *tty = port->tty;
-	काष्ठा tty_ldisc *ld;
+void uart_handle_dcd_change(struct uart_port *uport, unsigned int status)
+{
+	struct tty_port *port = &uport->state->port;
+	struct tty_struct *tty = port->tty;
+	struct tty_ldisc *ld;
 
-	lockdep_निश्चित_held_once(&uport->lock);
+	lockdep_assert_held_once(&uport->lock);
 
-	अगर (tty) अणु
+	if (tty) {
 		ld = tty_ldisc_ref(tty);
-		अगर (ld) अणु
-			अगर (ld->ops->dcd_change)
+		if (ld) {
+			if (ld->ops->dcd_change)
 				ld->ops->dcd_change(tty, status);
 			tty_ldisc_deref(ld);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	uport->icount.dcd++;
 
-	अगर (uart_dcd_enabled(uport)) अणु
-		अगर (status)
-			wake_up_पूर्णांकerruptible(&port->खोलो_रुको);
-		अन्यथा अगर (tty)
+	if (uart_dcd_enabled(uport)) {
+		if (status)
+			wake_up_interruptible(&port->open_wait);
+		else if (tty)
 			tty_hangup(tty);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(uart_handle_dcd_change);
 
 /**
  *	uart_handle_cts_change - handle a change of clear-to-send state
- *	@uport: uart_port काष्ठाure क्रम the खोलो port
- *	@status: new clear to send status, nonzero अगर active
+ *	@uport: uart_port structure for the open port
+ *	@status: new clear to send status, nonzero if active
  *
  *	Caller must hold uport->lock
  */
-व्योम uart_handle_cts_change(काष्ठा uart_port *uport, अचिन्हित पूर्णांक status)
-अणु
-	lockdep_निश्चित_held_once(&uport->lock);
+void uart_handle_cts_change(struct uart_port *uport, unsigned int status)
+{
+	lockdep_assert_held_once(&uport->lock);
 
 	uport->icount.cts++;
 
-	अगर (uart_softcts_mode(uport)) अणु
-		अगर (uport->hw_stopped) अणु
-			अगर (status) अणु
+	if (uart_softcts_mode(uport)) {
+		if (uport->hw_stopped) {
+			if (status) {
 				uport->hw_stopped = 0;
 				uport->ops->start_tx(uport);
-				uart_ग_लिखो_wakeup(uport);
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (!status) अणु
+				uart_write_wakeup(uport);
+			}
+		} else {
+			if (!status) {
 				uport->hw_stopped = 1;
 				uport->ops->stop_tx(uport);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(uart_handle_cts_change);
 
 /**
- * uart_insert_अक्षर - push a अक्षर to the uart layer
+ * uart_insert_char - push a char to the uart layer
  *
- * User is responsible to call tty_flip_buffer_push when they are करोne with
+ * User is responsible to call tty_flip_buffer_push when they are done with
  * insertion.
  *
  * @port: corresponding port
- * @status: state of the serial port RX buffer (LSR क्रम 8250)
+ * @status: state of the serial port RX buffer (LSR for 8250)
  * @overrun: mask of overrun bits in @status
- * @ch: अक्षरacter to push
- * @flag: flag क्रम the अक्षरacter (see TTY_NORMAL and मित्रs)
+ * @ch: character to push
+ * @flag: flag for the character (see TTY_NORMAL and friends)
  */
-व्योम uart_insert_अक्षर(काष्ठा uart_port *port, अचिन्हित पूर्णांक status,
-		 अचिन्हित पूर्णांक overrun, अचिन्हित पूर्णांक ch, अचिन्हित पूर्णांक flag)
-अणु
-	काष्ठा tty_port *tport = &port->state->port;
+void uart_insert_char(struct uart_port *port, unsigned int status,
+		 unsigned int overrun, unsigned int ch, unsigned int flag)
+{
+	struct tty_port *tport = &port->state->port;
 
-	अगर ((status & port->ignore_status_mask & ~overrun) == 0)
-		अगर (tty_insert_flip_अक्षर(tport, ch, flag) == 0)
+	if ((status & port->ignore_status_mask & ~overrun) == 0)
+		if (tty_insert_flip_char(tport, ch, flag) == 0)
 			++port->icount.buf_overrun;
 
 	/*
 	 * Overrun is special.  Since it's reported immediately,
-	 * it करोesn't affect the current अक्षरacter.
+	 * it doesn't affect the current character.
 	 */
-	अगर (status & ~port->ignore_status_mask & overrun)
-		अगर (tty_insert_flip_अक्षर(tport, 0, TTY_OVERRUN) == 0)
+	if (status & ~port->ignore_status_mask & overrun)
+		if (tty_insert_flip_char(tport, 0, TTY_OVERRUN) == 0)
 			++port->icount.buf_overrun;
-पूर्ण
-EXPORT_SYMBOL_GPL(uart_insert_अक्षर);
+}
+EXPORT_SYMBOL_GPL(uart_insert_char);
 
-#अगर_घोषित CONFIG_MAGIC_SYSRQ_SERIAL
-अटल स्थिर अक्षर sysrq_toggle_seq[] = CONFIG_MAGIC_SYSRQ_SERIAL_SEQUENCE;
+#ifdef CONFIG_MAGIC_SYSRQ_SERIAL
+static const char sysrq_toggle_seq[] = CONFIG_MAGIC_SYSRQ_SERIAL_SEQUENCE;
 
-अटल व्योम uart_sysrq_on(काष्ठा work_काष्ठा *w)
-अणु
-	पूर्णांक sysrq_toggle_seq_len = म_माप(sysrq_toggle_seq);
+static void uart_sysrq_on(struct work_struct *w)
+{
+	int sysrq_toggle_seq_len = strlen(sysrq_toggle_seq);
 
 	sysrq_toggle_support(1);
 	pr_info("SysRq is enabled by magic sequence '%*pE' on serial\n",
 		sysrq_toggle_seq_len, sysrq_toggle_seq);
-पूर्ण
-अटल DECLARE_WORK(sysrq_enable_work, uart_sysrq_on);
+}
+static DECLARE_WORK(sysrq_enable_work, uart_sysrq_on);
 
 /**
  *	uart_try_toggle_sysrq - Enables SysRq from serial line
- *	@port: uart_port काष्ठाure where अक्षर(s) after BREAK met
- *	@ch: new अक्षरacter in the sequence after received BREAK
+ *	@port: uart_port structure where char(s) after BREAK met
+ *	@ch: new character in the sequence after received BREAK
  *
  *	Enables magic SysRq when the required sequence is met on port
  *	(see CONFIG_MAGIC_SYSRQ_SERIAL_SEQUENCE).
  *
- *	Returns false अगर @ch is out of enabling sequence and should be
- *	handled some other way, true अगर @ch was consumed.
+ *	Returns false if @ch is out of enabling sequence and should be
+ *	handled some other way, true if @ch was consumed.
  */
-bool uart_try_toggle_sysrq(काष्ठा uart_port *port, अचिन्हित पूर्णांक ch)
-अणु
-	पूर्णांक sysrq_toggle_seq_len = म_माप(sysrq_toggle_seq);
+bool uart_try_toggle_sysrq(struct uart_port *port, unsigned int ch)
+{
+	int sysrq_toggle_seq_len = strlen(sysrq_toggle_seq);
 
-	अगर (!sysrq_toggle_seq_len)
-		वापस false;
+	if (!sysrq_toggle_seq_len)
+		return false;
 
 	BUILD_BUG_ON(ARRAY_SIZE(sysrq_toggle_seq) >= U8_MAX);
-	अगर (sysrq_toggle_seq[port->sysrq_seq] != ch) अणु
+	if (sysrq_toggle_seq[port->sysrq_seq] != ch) {
 		port->sysrq_seq = 0;
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	अगर (++port->sysrq_seq < sysrq_toggle_seq_len) अणु
-		port->sysrq = jअगरfies + SYSRQ_TIMEOUT;
-		वापस true;
-	पूर्ण
+	if (++port->sysrq_seq < sysrq_toggle_seq_len) {
+		port->sysrq = jiffies + SYSRQ_TIMEOUT;
+		return true;
+	}
 
 	schedule_work(&sysrq_enable_work);
 
 	port->sysrq = 0;
-	वापस true;
-पूर्ण
+	return true;
+}
 EXPORT_SYMBOL_GPL(uart_try_toggle_sysrq);
-#पूर्ण_अगर
+#endif
 
-EXPORT_SYMBOL(uart_ग_लिखो_wakeup);
-EXPORT_SYMBOL(uart_रेजिस्टर_driver);
-EXPORT_SYMBOL(uart_unरेजिस्टर_driver);
+EXPORT_SYMBOL(uart_write_wakeup);
+EXPORT_SYMBOL(uart_register_driver);
+EXPORT_SYMBOL(uart_unregister_driver);
 EXPORT_SYMBOL(uart_suspend_port);
 EXPORT_SYMBOL(uart_resume_port);
 EXPORT_SYMBOL(uart_add_one_port);
-EXPORT_SYMBOL(uart_हटाओ_one_port);
+EXPORT_SYMBOL(uart_remove_one_port);
 
 /**
- * uart_get_rs485_mode() - retrieve rs485 properties क्रम given uart
+ * uart_get_rs485_mode() - retrieve rs485 properties for given uart
  * @port: uart device's target port
  *
  * This function implements the device tree binding described in
  * Documentation/devicetree/bindings/serial/rs485.txt.
  */
-पूर्णांक uart_get_rs485_mode(काष्ठा uart_port *port)
-अणु
-	काष्ठा serial_rs485 *rs485conf = &port->rs485;
-	काष्ठा device *dev = port->dev;
+int uart_get_rs485_mode(struct uart_port *port)
+{
+	struct serial_rs485 *rs485conf = &port->rs485;
+	struct device *dev = port->dev;
 	u32 rs485_delay[2];
-	पूर्णांक ret;
+	int ret;
 
-	ret = device_property_पढ़ो_u32_array(dev, "rs485-rts-delay",
+	ret = device_property_read_u32_array(dev, "rs485-rts-delay",
 					     rs485_delay, 2);
-	अगर (!ret) अणु
-		rs485conf->delay_rts_beक्रमe_send = rs485_delay[0];
+	if (!ret) {
+		rs485conf->delay_rts_before_send = rs485_delay[0];
 		rs485conf->delay_rts_after_send = rs485_delay[1];
-	पूर्ण अन्यथा अणु
-		rs485conf->delay_rts_beक्रमe_send = 0;
+	} else {
+		rs485conf->delay_rts_before_send = 0;
 		rs485conf->delay_rts_after_send = 0;
-	पूर्ण
+	}
 
 	/*
 	 * Clear full-duplex and enabled flags, set RTS polarity to active high
@@ -3241,32 +3240,32 @@ EXPORT_SYMBOL(uart_हटाओ_one_port);
 			      SER_RS485_RTS_AFTER_SEND);
 	rs485conf->flags |= SER_RS485_RTS_ON_SEND;
 
-	अगर (device_property_पढ़ो_bool(dev, "rs485-rx-during-tx"))
+	if (device_property_read_bool(dev, "rs485-rx-during-tx"))
 		rs485conf->flags |= SER_RS485_RX_DURING_TX;
 
-	अगर (device_property_पढ़ो_bool(dev, "linux,rs485-enabled-at-boot-time"))
+	if (device_property_read_bool(dev, "linux,rs485-enabled-at-boot-time"))
 		rs485conf->flags |= SER_RS485_ENABLED;
 
-	अगर (device_property_पढ़ो_bool(dev, "rs485-rts-active-low")) अणु
+	if (device_property_read_bool(dev, "rs485-rts-active-low")) {
 		rs485conf->flags &= ~SER_RS485_RTS_ON_SEND;
 		rs485conf->flags |= SER_RS485_RTS_AFTER_SEND;
-	पूर्ण
+	}
 
 	/*
-	 * Disabling termination by शेष is the safe choice:  Else अगर many
+	 * Disabling termination by default is the safe choice:  Else if many
 	 * bus participants enable it, no communication is possible at all.
-	 * Works fine क्रम लघु cables and users may enable क्रम दीर्घer cables.
+	 * Works fine for short cables and users may enable for longer cables.
 	 */
 	port->rs485_term_gpio = devm_gpiod_get_optional(dev, "rs485-term",
 							GPIOD_OUT_LOW);
-	अगर (IS_ERR(port->rs485_term_gpio)) अणु
+	if (IS_ERR(port->rs485_term_gpio)) {
 		ret = PTR_ERR(port->rs485_term_gpio);
-		port->rs485_term_gpio = शून्य;
-		वापस dev_err_probe(dev, ret, "Cannot get rs485-term-gpios\n");
-	पूर्ण
+		port->rs485_term_gpio = NULL;
+		return dev_err_probe(dev, ret, "Cannot get rs485-term-gpios\n");
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(uart_get_rs485_mode);
 
 MODULE_DESCRIPTION("Serial driver core");

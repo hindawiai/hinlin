@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * luma_enhance_table.h
  *
@@ -8,7 +7,7 @@
  * Copyright (C) 2010 Nokia Corporation
  * Copyright (C) 2009 Texas Instruments, Inc.
  *
- * Contacts: Laurent Pinअक्षरt <laurent.pinअक्षरt@ideasonboard.com>
+ * Contacts: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
  *	     Sakari Ailus <sakari.ailus@iki.fi>
  */
 

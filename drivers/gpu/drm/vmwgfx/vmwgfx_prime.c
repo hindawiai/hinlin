@@ -1,15 +1,14 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0 OR MIT
+// SPDX-License-Identifier: GPL-2.0 OR MIT
 /**************************************************************************
  *
  * Copyright 2013 VMware, Inc., Palo Alto, CA., USA
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modअगरy, merge, publish,
+ * without limitation the rights to use, copy, modify, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to करो so, subject to
+ * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -31,61 +30,61 @@
  *
  */
 
-#समावेश "vmwgfx_drv.h"
-#समावेश "ttm_object.h"
-#समावेश <linux/dma-buf.h>
+#include "vmwgfx_drv.h"
+#include "ttm_object.h"
+#include <linux/dma-buf.h>
 
 /*
  * DMA-BUF attach- and mapping methods. No need to implement
- * these until we have other भव devices use them.
+ * these until we have other virtual devices use them.
  */
 
-अटल पूर्णांक vmw_prime_map_attach(काष्ठा dma_buf *dma_buf,
-				काष्ठा dma_buf_attachment *attach)
-अणु
-	वापस -ENOSYS;
-पूर्ण
+static int vmw_prime_map_attach(struct dma_buf *dma_buf,
+				struct dma_buf_attachment *attach)
+{
+	return -ENOSYS;
+}
 
-अटल व्योम vmw_prime_map_detach(काष्ठा dma_buf *dma_buf,
-				 काष्ठा dma_buf_attachment *attach)
-अणु
-पूर्ण
+static void vmw_prime_map_detach(struct dma_buf *dma_buf,
+				 struct dma_buf_attachment *attach)
+{
+}
 
-अटल काष्ठा sg_table *vmw_prime_map_dma_buf(काष्ठा dma_buf_attachment *attach,
-					      क्रमागत dma_data_direction dir)
-अणु
-	वापस ERR_PTR(-ENOSYS);
-पूर्ण
+static struct sg_table *vmw_prime_map_dma_buf(struct dma_buf_attachment *attach,
+					      enum dma_data_direction dir)
+{
+	return ERR_PTR(-ENOSYS);
+}
 
-अटल व्योम vmw_prime_unmap_dma_buf(काष्ठा dma_buf_attachment *attach,
-				    काष्ठा sg_table *sgb,
-				    क्रमागत dma_data_direction dir)
-अणु
-पूर्ण
+static void vmw_prime_unmap_dma_buf(struct dma_buf_attachment *attach,
+				    struct sg_table *sgb,
+				    enum dma_data_direction dir)
+{
+}
 
-स्थिर काष्ठा dma_buf_ops vmw_prime_dmabuf_ops =  अणु
+const struct dma_buf_ops vmw_prime_dmabuf_ops =  {
 	.attach = vmw_prime_map_attach,
 	.detach = vmw_prime_map_detach,
 	.map_dma_buf = vmw_prime_map_dma_buf,
 	.unmap_dma_buf = vmw_prime_unmap_dma_buf,
-	.release = शून्य,
-पूर्ण;
+	.release = NULL,
+};
 
-पूर्णांक vmw_prime_fd_to_handle(काष्ठा drm_device *dev,
-			   काष्ठा drm_file *file_priv,
-			   पूर्णांक fd, u32 *handle)
-अणु
-	काष्ठा tपंचांग_object_file *tfile = vmw_fpriv(file_priv)->tfile;
+int vmw_prime_fd_to_handle(struct drm_device *dev,
+			   struct drm_file *file_priv,
+			   int fd, u32 *handle)
+{
+	struct ttm_object_file *tfile = vmw_fpriv(file_priv)->tfile;
 
-	वापस tपंचांग_prime_fd_to_handle(tfile, fd, handle);
-पूर्ण
+	return ttm_prime_fd_to_handle(tfile, fd, handle);
+}
 
-पूर्णांक vmw_prime_handle_to_fd(काष्ठा drm_device *dev,
-			   काष्ठा drm_file *file_priv,
-			   uपूर्णांक32_t handle, uपूर्णांक32_t flags,
-			   पूर्णांक *prime_fd)
-अणु
-	काष्ठा tपंचांग_object_file *tfile = vmw_fpriv(file_priv)->tfile;
+int vmw_prime_handle_to_fd(struct drm_device *dev,
+			   struct drm_file *file_priv,
+			   uint32_t handle, uint32_t flags,
+			   int *prime_fd)
+{
+	struct ttm_object_file *tfile = vmw_fpriv(file_priv)->tfile;
 
-	वापस tपंचांग_prime_handle_to_fd(tfile, handle, flags, prime_fd);
-पूर्ण
+	return ttm_prime_handle_to_fd(tfile, handle, flags, prime_fd);
+}

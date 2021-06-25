@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __KVM_COALESCED_MMIO_H__
-#घोषणा __KVM_COALESCED_MMIO_H__
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __KVM_COALESCED_MMIO_H__
+#define __KVM_COALESCED_MMIO_H__
 
 /*
  * KVM coalesced MMIO
@@ -12,29 +11,29 @@
  *
  */
 
-#अगर_घोषित CONFIG_KVM_MMIO
+#ifdef CONFIG_KVM_MMIO
 
-#समावेश <linux/list.h>
+#include <linux/list.h>
 
-काष्ठा kvm_coalesced_mmio_dev अणु
-	काष्ठा list_head list;
-	काष्ठा kvm_io_device dev;
-	काष्ठा kvm *kvm;
-	काष्ठा kvm_coalesced_mmio_zone zone;
-पूर्ण;
+struct kvm_coalesced_mmio_dev {
+	struct list_head list;
+	struct kvm_io_device dev;
+	struct kvm *kvm;
+	struct kvm_coalesced_mmio_zone zone;
+};
 
-पूर्णांक kvm_coalesced_mmio_init(काष्ठा kvm *kvm);
-व्योम kvm_coalesced_mmio_मुक्त(काष्ठा kvm *kvm);
-पूर्णांक kvm_vm_ioctl_रेजिस्टर_coalesced_mmio(काष्ठा kvm *kvm,
-					काष्ठा kvm_coalesced_mmio_zone *zone);
-पूर्णांक kvm_vm_ioctl_unरेजिस्टर_coalesced_mmio(काष्ठा kvm *kvm,
-					काष्ठा kvm_coalesced_mmio_zone *zone);
+int kvm_coalesced_mmio_init(struct kvm *kvm);
+void kvm_coalesced_mmio_free(struct kvm *kvm);
+int kvm_vm_ioctl_register_coalesced_mmio(struct kvm *kvm,
+					struct kvm_coalesced_mmio_zone *zone);
+int kvm_vm_ioctl_unregister_coalesced_mmio(struct kvm *kvm,
+					struct kvm_coalesced_mmio_zone *zone);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत पूर्णांक kvm_coalesced_mmio_init(काष्ठा kvm *kvm) अणु वापस 0; पूर्ण
-अटल अंतरभूत व्योम kvm_coalesced_mmio_मुक्त(काष्ठा kvm *kvm) अणु पूर्ण
+static inline int kvm_coalesced_mmio_init(struct kvm *kvm) { return 0; }
+static inline void kvm_coalesced_mmio_free(struct kvm *kvm) { }
 
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर
+#endif

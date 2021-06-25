@@ -1,353 +1,352 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright 2017 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sched/types.h>
+#include <linux/delay.h>
+#include <linux/slab.h>
+#include <linux/sched/types.h>
 
-#समावेश <media/cec-pin.h>
-#समावेश "cec-pin-priv.h"
+#include <media/cec-pin.h>
+#include "cec-pin-priv.h"
 
 /* All timings are in microseconds */
 
 /* start bit timings */
-#घोषणा CEC_TIM_START_BIT_LOW		3700
-#घोषणा CEC_TIM_START_BIT_LOW_MIN	3500
-#घोषणा CEC_TIM_START_BIT_LOW_MAX	3900
-#घोषणा CEC_TIM_START_BIT_TOTAL		4500
-#घोषणा CEC_TIM_START_BIT_TOTAL_MIN	4300
-#घोषणा CEC_TIM_START_BIT_TOTAL_MAX	4700
+#define CEC_TIM_START_BIT_LOW		3700
+#define CEC_TIM_START_BIT_LOW_MIN	3500
+#define CEC_TIM_START_BIT_LOW_MAX	3900
+#define CEC_TIM_START_BIT_TOTAL		4500
+#define CEC_TIM_START_BIT_TOTAL_MIN	4300
+#define CEC_TIM_START_BIT_TOTAL_MAX	4700
 
 /* data bit timings */
-#घोषणा CEC_TIM_DATA_BIT_0_LOW		1500
-#घोषणा CEC_TIM_DATA_BIT_0_LOW_MIN	1300
-#घोषणा CEC_TIM_DATA_BIT_0_LOW_MAX	1700
-#घोषणा CEC_TIM_DATA_BIT_1_LOW		600
-#घोषणा CEC_TIM_DATA_BIT_1_LOW_MIN	400
-#घोषणा CEC_TIM_DATA_BIT_1_LOW_MAX	800
-#घोषणा CEC_TIM_DATA_BIT_TOTAL		2400
-#घोषणा CEC_TIM_DATA_BIT_TOTAL_MIN	2050
-#घोषणा CEC_TIM_DATA_BIT_TOTAL_MAX	2750
-/* earliest safe समय to sample the bit state */
-#घोषणा CEC_TIM_DATA_BIT_SAMPLE		850
-/* earliest समय the bit is back to 1 (T7 + 50) */
-#घोषणा CEC_TIM_DATA_BIT_HIGH		1750
+#define CEC_TIM_DATA_BIT_0_LOW		1500
+#define CEC_TIM_DATA_BIT_0_LOW_MIN	1300
+#define CEC_TIM_DATA_BIT_0_LOW_MAX	1700
+#define CEC_TIM_DATA_BIT_1_LOW		600
+#define CEC_TIM_DATA_BIT_1_LOW_MIN	400
+#define CEC_TIM_DATA_BIT_1_LOW_MAX	800
+#define CEC_TIM_DATA_BIT_TOTAL		2400
+#define CEC_TIM_DATA_BIT_TOTAL_MIN	2050
+#define CEC_TIM_DATA_BIT_TOTAL_MAX	2750
+/* earliest safe time to sample the bit state */
+#define CEC_TIM_DATA_BIT_SAMPLE		850
+/* earliest time the bit is back to 1 (T7 + 50) */
+#define CEC_TIM_DATA_BIT_HIGH		1750
 
 /* when idle, sample once per millisecond */
-#घोषणा CEC_TIM_IDLE_SAMPLE		1000
+#define CEC_TIM_IDLE_SAMPLE		1000
 /* when processing the start bit, sample twice per millisecond */
-#घोषणा CEC_TIM_START_BIT_SAMPLE	500
-/* when polling क्रम a state change, sample once every 50 microseconds */
-#घोषणा CEC_TIM_SAMPLE			50
+#define CEC_TIM_START_BIT_SAMPLE	500
+/* when polling for a state change, sample once every 50 microseconds */
+#define CEC_TIM_SAMPLE			50
 
-#घोषणा CEC_TIM_LOW_DRIVE_ERROR		(1.5 * CEC_TIM_DATA_BIT_TOTAL)
-
-/*
- * Total data bit समय that is too लघु/दीर्घ क्रम a valid bit,
- * used क्रम error injection.
- */
-#घोषणा CEC_TIM_DATA_BIT_TOTAL_SHORT	1800
-#घोषणा CEC_TIM_DATA_BIT_TOTAL_LONG	2900
+#define CEC_TIM_LOW_DRIVE_ERROR		(1.5 * CEC_TIM_DATA_BIT_TOTAL)
 
 /*
- * Total start bit समय that is too लघु/दीर्घ क्रम a valid bit,
- * used क्रम error injection.
+ * Total data bit time that is too short/long for a valid bit,
+ * used for error injection.
  */
-#घोषणा CEC_TIM_START_BIT_TOTAL_SHORT	4100
-#घोषणा CEC_TIM_START_BIT_TOTAL_LONG	5000
+#define CEC_TIM_DATA_BIT_TOTAL_SHORT	1800
+#define CEC_TIM_DATA_BIT_TOTAL_LONG	2900
+
+/*
+ * Total start bit time that is too short/long for a valid bit,
+ * used for error injection.
+ */
+#define CEC_TIM_START_BIT_TOTAL_SHORT	4100
+#define CEC_TIM_START_BIT_TOTAL_LONG	5000
 
 /* Data bits are 0-7, EOM is bit 8 and ACK is bit 9 */
-#घोषणा EOM_BIT				8
-#घोषणा ACK_BIT				9
+#define EOM_BIT				8
+#define ACK_BIT				9
 
-काष्ठा cec_state अणु
-	स्थिर अक्षर * स्थिर name;
-	अचिन्हित पूर्णांक usecs;
-पूर्ण;
+struct cec_state {
+	const char * const name;
+	unsigned int usecs;
+};
 
-अटल स्थिर काष्ठा cec_state states[CEC_PIN_STATES] = अणु
-	अणु "Off",		   0 पूर्ण,
-	अणु "Idle",		   CEC_TIM_IDLE_SAMPLE पूर्ण,
-	अणु "Tx Wait",		   CEC_TIM_SAMPLE पूर्ण,
-	अणु "Tx Wait for High",	   CEC_TIM_IDLE_SAMPLE पूर्ण,
-	अणु "Tx Start Bit Low",	   CEC_TIM_START_BIT_LOW पूर्ण,
-	अणु "Tx Start Bit High",	   CEC_TIM_START_BIT_TOTAL - CEC_TIM_START_BIT_LOW पूर्ण,
-	अणु "Tx Start Bit High Short", CEC_TIM_START_BIT_TOTAL_SHORT - CEC_TIM_START_BIT_LOW पूर्ण,
-	अणु "Tx Start Bit High Long", CEC_TIM_START_BIT_TOTAL_LONG - CEC_TIM_START_BIT_LOW पूर्ण,
-	अणु "Tx Start Bit Low Custom", 0 पूर्ण,
-	अणु "Tx Start Bit High Custom", 0 पूर्ण,
-	अणु "Tx Data 0 Low",	   CEC_TIM_DATA_BIT_0_LOW पूर्ण,
-	अणु "Tx Data 0 High",	   CEC_TIM_DATA_BIT_TOTAL - CEC_TIM_DATA_BIT_0_LOW पूर्ण,
-	अणु "Tx Data 0 High Short",  CEC_TIM_DATA_BIT_TOTAL_SHORT - CEC_TIM_DATA_BIT_0_LOW पूर्ण,
-	अणु "Tx Data 0 High Long",   CEC_TIM_DATA_BIT_TOTAL_LONG - CEC_TIM_DATA_BIT_0_LOW पूर्ण,
-	अणु "Tx Data 1 Low",	   CEC_TIM_DATA_BIT_1_LOW पूर्ण,
-	अणु "Tx Data 1 High",	   CEC_TIM_DATA_BIT_TOTAL - CEC_TIM_DATA_BIT_1_LOW पूर्ण,
-	अणु "Tx Data 1 High Short",  CEC_TIM_DATA_BIT_TOTAL_SHORT - CEC_TIM_DATA_BIT_1_LOW पूर्ण,
-	अणु "Tx Data 1 High Long",   CEC_TIM_DATA_BIT_TOTAL_LONG - CEC_TIM_DATA_BIT_1_LOW पूर्ण,
-	अणु "Tx Data 1 High Pre Sample", CEC_TIM_DATA_BIT_SAMPLE - CEC_TIM_DATA_BIT_1_LOW पूर्ण,
-	अणु "Tx Data 1 High Post Sample", CEC_TIM_DATA_BIT_TOTAL - CEC_TIM_DATA_BIT_SAMPLE पूर्ण,
-	अणु "Tx Data 1 High Post Sample Short", CEC_TIM_DATA_BIT_TOTAL_SHORT - CEC_TIM_DATA_BIT_SAMPLE पूर्ण,
-	अणु "Tx Data 1 High Post Sample Long", CEC_TIM_DATA_BIT_TOTAL_LONG - CEC_TIM_DATA_BIT_SAMPLE पूर्ण,
-	अणु "Tx Data Bit Low Custom", 0 पूर्ण,
-	अणु "Tx Data Bit High Custom", 0 पूर्ण,
-	अणु "Tx Pulse Low Custom",   0 पूर्ण,
-	अणु "Tx Pulse High Custom",  0 पूर्ण,
-	अणु "Tx Low Drive",	   CEC_TIM_LOW_DRIVE_ERROR पूर्ण,
-	अणु "Rx Start Bit Low",	   CEC_TIM_SAMPLE पूर्ण,
-	अणु "Rx Start Bit High",	   CEC_TIM_SAMPLE पूर्ण,
-	अणु "Rx Data Sample",	   CEC_TIM_DATA_BIT_SAMPLE पूर्ण,
-	अणु "Rx Data Post Sample",   CEC_TIM_DATA_BIT_HIGH - CEC_TIM_DATA_BIT_SAMPLE पूर्ण,
-	अणु "Rx Data Wait for Low",  CEC_TIM_SAMPLE पूर्ण,
-	अणु "Rx Ack Low",		   CEC_TIM_DATA_BIT_0_LOW पूर्ण,
-	अणु "Rx Ack Low Post",	   CEC_TIM_DATA_BIT_HIGH - CEC_TIM_DATA_BIT_0_LOW पूर्ण,
-	अणु "Rx Ack High Post",	   CEC_TIM_DATA_BIT_HIGH पूर्ण,
-	अणु "Rx Ack Finish",	   CEC_TIM_DATA_BIT_TOTAL_MIN - CEC_TIM_DATA_BIT_HIGH पूर्ण,
-	अणु "Rx Low Drive",	   CEC_TIM_LOW_DRIVE_ERROR पूर्ण,
-	अणु "Rx Irq",		   0 पूर्ण,
-पूर्ण;
+static const struct cec_state states[CEC_PIN_STATES] = {
+	{ "Off",		   0 },
+	{ "Idle",		   CEC_TIM_IDLE_SAMPLE },
+	{ "Tx Wait",		   CEC_TIM_SAMPLE },
+	{ "Tx Wait for High",	   CEC_TIM_IDLE_SAMPLE },
+	{ "Tx Start Bit Low",	   CEC_TIM_START_BIT_LOW },
+	{ "Tx Start Bit High",	   CEC_TIM_START_BIT_TOTAL - CEC_TIM_START_BIT_LOW },
+	{ "Tx Start Bit High Short", CEC_TIM_START_BIT_TOTAL_SHORT - CEC_TIM_START_BIT_LOW },
+	{ "Tx Start Bit High Long", CEC_TIM_START_BIT_TOTAL_LONG - CEC_TIM_START_BIT_LOW },
+	{ "Tx Start Bit Low Custom", 0 },
+	{ "Tx Start Bit High Custom", 0 },
+	{ "Tx Data 0 Low",	   CEC_TIM_DATA_BIT_0_LOW },
+	{ "Tx Data 0 High",	   CEC_TIM_DATA_BIT_TOTAL - CEC_TIM_DATA_BIT_0_LOW },
+	{ "Tx Data 0 High Short",  CEC_TIM_DATA_BIT_TOTAL_SHORT - CEC_TIM_DATA_BIT_0_LOW },
+	{ "Tx Data 0 High Long",   CEC_TIM_DATA_BIT_TOTAL_LONG - CEC_TIM_DATA_BIT_0_LOW },
+	{ "Tx Data 1 Low",	   CEC_TIM_DATA_BIT_1_LOW },
+	{ "Tx Data 1 High",	   CEC_TIM_DATA_BIT_TOTAL - CEC_TIM_DATA_BIT_1_LOW },
+	{ "Tx Data 1 High Short",  CEC_TIM_DATA_BIT_TOTAL_SHORT - CEC_TIM_DATA_BIT_1_LOW },
+	{ "Tx Data 1 High Long",   CEC_TIM_DATA_BIT_TOTAL_LONG - CEC_TIM_DATA_BIT_1_LOW },
+	{ "Tx Data 1 High Pre Sample", CEC_TIM_DATA_BIT_SAMPLE - CEC_TIM_DATA_BIT_1_LOW },
+	{ "Tx Data 1 High Post Sample", CEC_TIM_DATA_BIT_TOTAL - CEC_TIM_DATA_BIT_SAMPLE },
+	{ "Tx Data 1 High Post Sample Short", CEC_TIM_DATA_BIT_TOTAL_SHORT - CEC_TIM_DATA_BIT_SAMPLE },
+	{ "Tx Data 1 High Post Sample Long", CEC_TIM_DATA_BIT_TOTAL_LONG - CEC_TIM_DATA_BIT_SAMPLE },
+	{ "Tx Data Bit Low Custom", 0 },
+	{ "Tx Data Bit High Custom", 0 },
+	{ "Tx Pulse Low Custom",   0 },
+	{ "Tx Pulse High Custom",  0 },
+	{ "Tx Low Drive",	   CEC_TIM_LOW_DRIVE_ERROR },
+	{ "Rx Start Bit Low",	   CEC_TIM_SAMPLE },
+	{ "Rx Start Bit High",	   CEC_TIM_SAMPLE },
+	{ "Rx Data Sample",	   CEC_TIM_DATA_BIT_SAMPLE },
+	{ "Rx Data Post Sample",   CEC_TIM_DATA_BIT_HIGH - CEC_TIM_DATA_BIT_SAMPLE },
+	{ "Rx Data Wait for Low",  CEC_TIM_SAMPLE },
+	{ "Rx Ack Low",		   CEC_TIM_DATA_BIT_0_LOW },
+	{ "Rx Ack Low Post",	   CEC_TIM_DATA_BIT_HIGH - CEC_TIM_DATA_BIT_0_LOW },
+	{ "Rx Ack High Post",	   CEC_TIM_DATA_BIT_HIGH },
+	{ "Rx Ack Finish",	   CEC_TIM_DATA_BIT_TOTAL_MIN - CEC_TIM_DATA_BIT_HIGH },
+	{ "Rx Low Drive",	   CEC_TIM_LOW_DRIVE_ERROR },
+	{ "Rx Irq",		   0 },
+};
 
-अटल व्योम cec_pin_update(काष्ठा cec_pin *pin, bool v, bool क्रमce)
-अणु
-	अगर (!क्रमce && v == pin->adap->cec_pin_is_high)
-		वापस;
+static void cec_pin_update(struct cec_pin *pin, bool v, bool force)
+{
+	if (!force && v == pin->adap->cec_pin_is_high)
+		return;
 
 	pin->adap->cec_pin_is_high = v;
-	अगर (atomic_पढ़ो(&pin->work_pin_num_events) < CEC_NUM_PIN_EVENTS) अणु
+	if (atomic_read(&pin->work_pin_num_events) < CEC_NUM_PIN_EVENTS) {
 		u8 ev = v;
 
-		अगर (pin->work_pin_events_dropped) अणु
+		if (pin->work_pin_events_dropped) {
 			pin->work_pin_events_dropped = false;
 			ev |= CEC_PIN_EVENT_FL_DROPPED;
-		पूर्ण
+		}
 		pin->work_pin_events[pin->work_pin_events_wr] = ev;
-		pin->work_pin_ts[pin->work_pin_events_wr] = kसमय_get();
+		pin->work_pin_ts[pin->work_pin_events_wr] = ktime_get();
 		pin->work_pin_events_wr =
 			(pin->work_pin_events_wr + 1) % CEC_NUM_PIN_EVENTS;
 		atomic_inc(&pin->work_pin_num_events);
-	पूर्ण अन्यथा अणु
+	} else {
 		pin->work_pin_events_dropped = true;
 		pin->work_pin_events_dropped_cnt++;
-	पूर्ण
-	wake_up_पूर्णांकerruptible(&pin->kthपढ़ो_रुकोq);
-पूर्ण
+	}
+	wake_up_interruptible(&pin->kthread_waitq);
+}
 
-अटल bool cec_pin_पढ़ो(काष्ठा cec_pin *pin)
-अणु
-	bool v = pin->ops->पढ़ो(pin->adap);
+static bool cec_pin_read(struct cec_pin *pin)
+{
+	bool v = pin->ops->read(pin->adap);
 
 	cec_pin_update(pin, v, false);
-	वापस v;
-पूर्ण
+	return v;
+}
 
-अटल व्योम cec_pin_low(काष्ठा cec_pin *pin)
-अणु
+static void cec_pin_low(struct cec_pin *pin)
+{
 	pin->ops->low(pin->adap);
 	cec_pin_update(pin, false, false);
-पूर्ण
+}
 
-अटल bool cec_pin_high(काष्ठा cec_pin *pin)
-अणु
+static bool cec_pin_high(struct cec_pin *pin)
+{
 	pin->ops->high(pin->adap);
-	वापस cec_pin_पढ़ो(pin);
-पूर्ण
+	return cec_pin_read(pin);
+}
 
-अटल bool rx_error_inj(काष्ठा cec_pin *pin, अचिन्हित पूर्णांक mode_offset,
-			 पूर्णांक arg_idx, u8 *arg)
-अणु
-#अगर_घोषित CONFIG_CEC_PIN_ERROR_INJ
+static bool rx_error_inj(struct cec_pin *pin, unsigned int mode_offset,
+			 int arg_idx, u8 *arg)
+{
+#ifdef CONFIG_CEC_PIN_ERROR_INJ
 	u16 cmd = cec_pin_rx_error_inj(pin);
 	u64 e = pin->error_inj[cmd];
-	अचिन्हित पूर्णांक mode = (e >> mode_offset) & CEC_ERROR_INJ_MODE_MASK;
+	unsigned int mode = (e >> mode_offset) & CEC_ERROR_INJ_MODE_MASK;
 
-	अगर (arg_idx >= 0) अणु
+	if (arg_idx >= 0) {
 		u8 pos = pin->error_inj_args[cmd][arg_idx];
 
-		अगर (arg)
+		if (arg)
 			*arg = pos;
-		अन्यथा अगर (pos != pin->rx_bit)
-			वापस false;
-	पूर्ण
+		else if (pos != pin->rx_bit)
+			return false;
+	}
 
-	चयन (mode) अणु
-	हाल CEC_ERROR_INJ_MODE_ONCE:
+	switch (mode) {
+	case CEC_ERROR_INJ_MODE_ONCE:
 		pin->error_inj[cmd] &=
 			~(CEC_ERROR_INJ_MODE_MASK << mode_offset);
-		वापस true;
-	हाल CEC_ERROR_INJ_MODE_ALWAYS:
-		वापस true;
-	हाल CEC_ERROR_INJ_MODE_TOGGLE:
-		वापस pin->rx_toggle;
-	शेष:
-		वापस false;
-	पूर्ण
-#अन्यथा
-	वापस false;
-#पूर्ण_अगर
-पूर्ण
+		return true;
+	case CEC_ERROR_INJ_MODE_ALWAYS:
+		return true;
+	case CEC_ERROR_INJ_MODE_TOGGLE:
+		return pin->rx_toggle;
+	default:
+		return false;
+	}
+#else
+	return false;
+#endif
+}
 
-अटल bool rx_nack(काष्ठा cec_pin *pin)
-अणु
-	वापस rx_error_inj(pin, CEC_ERROR_INJ_RX_NACK_OFFSET, -1, शून्य);
-पूर्ण
+static bool rx_nack(struct cec_pin *pin)
+{
+	return rx_error_inj(pin, CEC_ERROR_INJ_RX_NACK_OFFSET, -1, NULL);
+}
 
-अटल bool rx_low_drive(काष्ठा cec_pin *pin)
-अणु
-	वापस rx_error_inj(pin, CEC_ERROR_INJ_RX_LOW_DRIVE_OFFSET,
-			    CEC_ERROR_INJ_RX_LOW_DRIVE_ARG_IDX, शून्य);
-पूर्ण
+static bool rx_low_drive(struct cec_pin *pin)
+{
+	return rx_error_inj(pin, CEC_ERROR_INJ_RX_LOW_DRIVE_OFFSET,
+			    CEC_ERROR_INJ_RX_LOW_DRIVE_ARG_IDX, NULL);
+}
 
-अटल bool rx_add_byte(काष्ठा cec_pin *pin)
-अणु
-	वापस rx_error_inj(pin, CEC_ERROR_INJ_RX_ADD_BYTE_OFFSET, -1, शून्य);
-पूर्ण
+static bool rx_add_byte(struct cec_pin *pin)
+{
+	return rx_error_inj(pin, CEC_ERROR_INJ_RX_ADD_BYTE_OFFSET, -1, NULL);
+}
 
-अटल bool rx_हटाओ_byte(काष्ठा cec_pin *pin)
-अणु
-	वापस rx_error_inj(pin, CEC_ERROR_INJ_RX_REMOVE_BYTE_OFFSET, -1, शून्य);
-पूर्ण
+static bool rx_remove_byte(struct cec_pin *pin)
+{
+	return rx_error_inj(pin, CEC_ERROR_INJ_RX_REMOVE_BYTE_OFFSET, -1, NULL);
+}
 
-अटल bool rx_arb_lost(काष्ठा cec_pin *pin, u8 *poll)
-अणु
-	वापस pin->tx_msg.len == 0 &&
+static bool rx_arb_lost(struct cec_pin *pin, u8 *poll)
+{
+	return pin->tx_msg.len == 0 &&
 		rx_error_inj(pin, CEC_ERROR_INJ_RX_ARB_LOST_OFFSET,
 			     CEC_ERROR_INJ_RX_ARB_LOST_ARG_IDX, poll);
-पूर्ण
+}
 
-अटल bool tx_error_inj(काष्ठा cec_pin *pin, अचिन्हित पूर्णांक mode_offset,
-			 पूर्णांक arg_idx, u8 *arg)
-अणु
-#अगर_घोषित CONFIG_CEC_PIN_ERROR_INJ
+static bool tx_error_inj(struct cec_pin *pin, unsigned int mode_offset,
+			 int arg_idx, u8 *arg)
+{
+#ifdef CONFIG_CEC_PIN_ERROR_INJ
 	u16 cmd = cec_pin_tx_error_inj(pin);
 	u64 e = pin->error_inj[cmd];
-	अचिन्हित पूर्णांक mode = (e >> mode_offset) & CEC_ERROR_INJ_MODE_MASK;
+	unsigned int mode = (e >> mode_offset) & CEC_ERROR_INJ_MODE_MASK;
 
-	अगर (arg_idx >= 0) अणु
+	if (arg_idx >= 0) {
 		u8 pos = pin->error_inj_args[cmd][arg_idx];
 
-		अगर (arg)
+		if (arg)
 			*arg = pos;
-		अन्यथा अगर (pos != pin->tx_bit)
-			वापस false;
-	पूर्ण
+		else if (pos != pin->tx_bit)
+			return false;
+	}
 
-	चयन (mode) अणु
-	हाल CEC_ERROR_INJ_MODE_ONCE:
+	switch (mode) {
+	case CEC_ERROR_INJ_MODE_ONCE:
 		pin->error_inj[cmd] &=
 			~(CEC_ERROR_INJ_MODE_MASK << mode_offset);
-		वापस true;
-	हाल CEC_ERROR_INJ_MODE_ALWAYS:
-		वापस true;
-	हाल CEC_ERROR_INJ_MODE_TOGGLE:
-		वापस pin->tx_toggle;
-	शेष:
-		वापस false;
-	पूर्ण
-#अन्यथा
-	वापस false;
-#पूर्ण_अगर
-पूर्ण
+		return true;
+	case CEC_ERROR_INJ_MODE_ALWAYS:
+		return true;
+	case CEC_ERROR_INJ_MODE_TOGGLE:
+		return pin->tx_toggle;
+	default:
+		return false;
+	}
+#else
+	return false;
+#endif
+}
 
-अटल bool tx_no_eom(काष्ठा cec_pin *pin)
-अणु
-	वापस tx_error_inj(pin, CEC_ERROR_INJ_TX_NO_EOM_OFFSET, -1, शून्य);
-पूर्ण
+static bool tx_no_eom(struct cec_pin *pin)
+{
+	return tx_error_inj(pin, CEC_ERROR_INJ_TX_NO_EOM_OFFSET, -1, NULL);
+}
 
-अटल bool tx_early_eom(काष्ठा cec_pin *pin)
-अणु
-	वापस tx_error_inj(pin, CEC_ERROR_INJ_TX_EARLY_EOM_OFFSET, -1, शून्य);
-पूर्ण
+static bool tx_early_eom(struct cec_pin *pin)
+{
+	return tx_error_inj(pin, CEC_ERROR_INJ_TX_EARLY_EOM_OFFSET, -1, NULL);
+}
 
-अटल bool tx_लघु_bit(काष्ठा cec_pin *pin)
-अणु
-	वापस tx_error_inj(pin, CEC_ERROR_INJ_TX_SHORT_BIT_OFFSET,
-			    CEC_ERROR_INJ_TX_SHORT_BIT_ARG_IDX, शून्य);
-पूर्ण
+static bool tx_short_bit(struct cec_pin *pin)
+{
+	return tx_error_inj(pin, CEC_ERROR_INJ_TX_SHORT_BIT_OFFSET,
+			    CEC_ERROR_INJ_TX_SHORT_BIT_ARG_IDX, NULL);
+}
 
-अटल bool tx_दीर्घ_bit(काष्ठा cec_pin *pin)
-अणु
-	वापस tx_error_inj(pin, CEC_ERROR_INJ_TX_LONG_BIT_OFFSET,
-			    CEC_ERROR_INJ_TX_LONG_BIT_ARG_IDX, शून्य);
-पूर्ण
+static bool tx_long_bit(struct cec_pin *pin)
+{
+	return tx_error_inj(pin, CEC_ERROR_INJ_TX_LONG_BIT_OFFSET,
+			    CEC_ERROR_INJ_TX_LONG_BIT_ARG_IDX, NULL);
+}
 
-अटल bool tx_custom_bit(काष्ठा cec_pin *pin)
-अणु
-	वापस tx_error_inj(pin, CEC_ERROR_INJ_TX_CUSTOM_BIT_OFFSET,
-			    CEC_ERROR_INJ_TX_CUSTOM_BIT_ARG_IDX, शून्य);
-पूर्ण
+static bool tx_custom_bit(struct cec_pin *pin)
+{
+	return tx_error_inj(pin, CEC_ERROR_INJ_TX_CUSTOM_BIT_OFFSET,
+			    CEC_ERROR_INJ_TX_CUSTOM_BIT_ARG_IDX, NULL);
+}
 
-अटल bool tx_लघु_start(काष्ठा cec_pin *pin)
-अणु
-	वापस tx_error_inj(pin, CEC_ERROR_INJ_TX_SHORT_START_OFFSET, -1, शून्य);
-पूर्ण
+static bool tx_short_start(struct cec_pin *pin)
+{
+	return tx_error_inj(pin, CEC_ERROR_INJ_TX_SHORT_START_OFFSET, -1, NULL);
+}
 
-अटल bool tx_दीर्घ_start(काष्ठा cec_pin *pin)
-अणु
-	वापस tx_error_inj(pin, CEC_ERROR_INJ_TX_LONG_START_OFFSET, -1, शून्य);
-पूर्ण
+static bool tx_long_start(struct cec_pin *pin)
+{
+	return tx_error_inj(pin, CEC_ERROR_INJ_TX_LONG_START_OFFSET, -1, NULL);
+}
 
-अटल bool tx_custom_start(काष्ठा cec_pin *pin)
-अणु
-	वापस tx_error_inj(pin, CEC_ERROR_INJ_TX_CUSTOM_START_OFFSET,
-			    -1, शून्य);
-पूर्ण
+static bool tx_custom_start(struct cec_pin *pin)
+{
+	return tx_error_inj(pin, CEC_ERROR_INJ_TX_CUSTOM_START_OFFSET,
+			    -1, NULL);
+}
 
-अटल bool tx_last_bit(काष्ठा cec_pin *pin)
-अणु
-	वापस tx_error_inj(pin, CEC_ERROR_INJ_TX_LAST_BIT_OFFSET,
-			    CEC_ERROR_INJ_TX_LAST_BIT_ARG_IDX, शून्य);
-पूर्ण
+static bool tx_last_bit(struct cec_pin *pin)
+{
+	return tx_error_inj(pin, CEC_ERROR_INJ_TX_LAST_BIT_OFFSET,
+			    CEC_ERROR_INJ_TX_LAST_BIT_ARG_IDX, NULL);
+}
 
-अटल u8 tx_add_bytes(काष्ठा cec_pin *pin)
-अणु
+static u8 tx_add_bytes(struct cec_pin *pin)
+{
 	u8 bytes;
 
-	अगर (tx_error_inj(pin, CEC_ERROR_INJ_TX_ADD_BYTES_OFFSET,
+	if (tx_error_inj(pin, CEC_ERROR_INJ_TX_ADD_BYTES_OFFSET,
 			 CEC_ERROR_INJ_TX_ADD_BYTES_ARG_IDX, &bytes))
-		वापस bytes;
-	वापस 0;
-पूर्ण
+		return bytes;
+	return 0;
+}
 
-अटल bool tx_हटाओ_byte(काष्ठा cec_pin *pin)
-अणु
-	वापस tx_error_inj(pin, CEC_ERROR_INJ_TX_REMOVE_BYTE_OFFSET, -1, शून्य);
-पूर्ण
+static bool tx_remove_byte(struct cec_pin *pin)
+{
+	return tx_error_inj(pin, CEC_ERROR_INJ_TX_REMOVE_BYTE_OFFSET, -1, NULL);
+}
 
-अटल bool tx_low_drive(काष्ठा cec_pin *pin)
-अणु
-	वापस tx_error_inj(pin, CEC_ERROR_INJ_TX_LOW_DRIVE_OFFSET,
-			    CEC_ERROR_INJ_TX_LOW_DRIVE_ARG_IDX, शून्य);
-पूर्ण
+static bool tx_low_drive(struct cec_pin *pin)
+{
+	return tx_error_inj(pin, CEC_ERROR_INJ_TX_LOW_DRIVE_OFFSET,
+			    CEC_ERROR_INJ_TX_LOW_DRIVE_ARG_IDX, NULL);
+}
 
-अटल व्योम cec_pin_to_idle(काष्ठा cec_pin *pin)
-अणु
+static void cec_pin_to_idle(struct cec_pin *pin)
+{
 	/*
 	 * Reset all status fields, release the bus and
 	 * go to idle state.
 	 */
 	pin->rx_bit = pin->tx_bit = 0;
 	pin->rx_msg.len = 0;
-	स_रखो(pin->rx_msg.msg, 0, माप(pin->rx_msg.msg));
-	pin->ts = ns_to_kसमय(0);
+	memset(pin->rx_msg.msg, 0, sizeof(pin->rx_msg.msg));
+	pin->ts = ns_to_ktime(0);
 	pin->tx_generated_poll = false;
 	pin->tx_post_eom = false;
-	अगर (pin->state >= CEC_ST_TX_WAIT &&
+	if (pin->state >= CEC_ST_TX_WAIT &&
 	    pin->state <= CEC_ST_TX_LOW_DRIVE)
 		pin->tx_toggle ^= 1;
-	अगर (pin->state >= CEC_ST_RX_START_BIT_LOW &&
+	if (pin->state >= CEC_ST_RX_START_BIT_LOW &&
 	    pin->state <= CEC_ST_RX_LOW_DRIVE)
 		pin->rx_toggle ^= 1;
 	pin->state = CEC_ST_IDLE;
-पूर्ण
+}
 
 /*
  * Handle Transmit-related states
  *
  * Basic state changes when transmitting:
  *
- * Idle -> Tx Wait (रुकोing क्रम the end of संकेत मुक्त समय) ->
+ * Idle -> Tx Wait (waiting for the end of signal free time) ->
  *	Tx Start Bit Low -> Tx Start Bit High ->
  *
  *   Regular data bits + EOM:
@@ -366,274 +365,274 @@
  * If it detects a Low Drive condition then:
  *	Tx Wait For High -> Idle
  *
- * If it loses arbitration, then it चयनes to state Rx Data Post Sample.
+ * If it loses arbitration, then it switches to state Rx Data Post Sample.
  */
-अटल व्योम cec_pin_tx_states(काष्ठा cec_pin *pin, kसमय_प्रकार ts)
-अणु
+static void cec_pin_tx_states(struct cec_pin *pin, ktime_t ts)
+{
 	bool v;
 	bool is_ack_bit, ack;
 
-	चयन (pin->state) अणु
-	हाल CEC_ST_TX_WAIT_FOR_HIGH:
-		अगर (cec_pin_पढ़ो(pin))
+	switch (pin->state) {
+	case CEC_ST_TX_WAIT_FOR_HIGH:
+		if (cec_pin_read(pin))
 			cec_pin_to_idle(pin);
-		अवरोध;
+		break;
 
-	हाल CEC_ST_TX_START_BIT_LOW:
-		अगर (tx_लघु_start(pin)) अणु
+	case CEC_ST_TX_START_BIT_LOW:
+		if (tx_short_start(pin)) {
 			/*
-			 * Error Injection: send an invalid (too लघु)
+			 * Error Injection: send an invalid (too short)
 			 * start pulse.
 			 */
 			pin->state = CEC_ST_TX_START_BIT_HIGH_SHORT;
-		पूर्ण अन्यथा अगर (tx_दीर्घ_start(pin)) अणु
+		} else if (tx_long_start(pin)) {
 			/*
-			 * Error Injection: send an invalid (too दीर्घ)
+			 * Error Injection: send an invalid (too long)
 			 * start pulse.
 			 */
 			pin->state = CEC_ST_TX_START_BIT_HIGH_LONG;
-		पूर्ण अन्यथा अणु
+		} else {
 			pin->state = CEC_ST_TX_START_BIT_HIGH;
-		पूर्ण
+		}
 		/* Generate start bit */
 		cec_pin_high(pin);
-		अवरोध;
+		break;
 
-	हाल CEC_ST_TX_START_BIT_LOW_CUSTOM:
+	case CEC_ST_TX_START_BIT_LOW_CUSTOM:
 		pin->state = CEC_ST_TX_START_BIT_HIGH_CUSTOM;
 		/* Generate start bit */
 		cec_pin_high(pin);
-		अवरोध;
+		break;
 
-	हाल CEC_ST_TX_DATA_BIT_1_HIGH_POST_SAMPLE:
-	हाल CEC_ST_TX_DATA_BIT_1_HIGH_POST_SAMPLE_SHORT:
-	हाल CEC_ST_TX_DATA_BIT_1_HIGH_POST_SAMPLE_LONG:
-		अगर (pin->tx_nacked) अणु
+	case CEC_ST_TX_DATA_BIT_1_HIGH_POST_SAMPLE:
+	case CEC_ST_TX_DATA_BIT_1_HIGH_POST_SAMPLE_SHORT:
+	case CEC_ST_TX_DATA_BIT_1_HIGH_POST_SAMPLE_LONG:
+		if (pin->tx_nacked) {
 			cec_pin_to_idle(pin);
 			pin->tx_msg.len = 0;
-			अगर (pin->tx_generated_poll)
-				अवरोध;
+			if (pin->tx_generated_poll)
+				break;
 			pin->work_tx_ts = ts;
 			pin->work_tx_status = CEC_TX_STATUS_NACK;
-			wake_up_पूर्णांकerruptible(&pin->kthपढ़ो_रुकोq);
-			अवरोध;
-		पूर्ण
+			wake_up_interruptible(&pin->kthread_waitq);
+			break;
+		}
 		fallthrough;
-	हाल CEC_ST_TX_DATA_BIT_0_HIGH:
-	हाल CEC_ST_TX_DATA_BIT_0_HIGH_SHORT:
-	हाल CEC_ST_TX_DATA_BIT_0_HIGH_LONG:
-	हाल CEC_ST_TX_DATA_BIT_1_HIGH:
-	हाल CEC_ST_TX_DATA_BIT_1_HIGH_SHORT:
-	हाल CEC_ST_TX_DATA_BIT_1_HIGH_LONG:
+	case CEC_ST_TX_DATA_BIT_0_HIGH:
+	case CEC_ST_TX_DATA_BIT_0_HIGH_SHORT:
+	case CEC_ST_TX_DATA_BIT_0_HIGH_LONG:
+	case CEC_ST_TX_DATA_BIT_1_HIGH:
+	case CEC_ST_TX_DATA_BIT_1_HIGH_SHORT:
+	case CEC_ST_TX_DATA_BIT_1_HIGH_LONG:
 		/*
-		 * If the पढ़ो value is 1, then all is OK, otherwise we have a
+		 * If the read value is 1, then all is OK, otherwise we have a
 		 * low drive condition.
 		 *
-		 * Special हाल: when we generate a poll message due to an
+		 * Special case: when we generate a poll message due to an
 		 * Arbitration Lost error injection, then ignore this since
-		 * the pin can actually be low in that हाल.
+		 * the pin can actually be low in that case.
 		 */
-		अगर (!cec_pin_पढ़ो(pin) && !pin->tx_generated_poll) अणु
+		if (!cec_pin_read(pin) && !pin->tx_generated_poll) {
 			/*
 			 * It's 0, so someone detected an error and pulled the
-			 * line low क्रम 1.5 बार the nominal bit period.
+			 * line low for 1.5 times the nominal bit period.
 			 */
 			pin->tx_msg.len = 0;
 			pin->state = CEC_ST_TX_WAIT_FOR_HIGH;
 			pin->work_tx_ts = ts;
 			pin->work_tx_status = CEC_TX_STATUS_LOW_DRIVE;
 			pin->tx_low_drive_cnt++;
-			wake_up_पूर्णांकerruptible(&pin->kthपढ़ो_रुकोq);
-			अवरोध;
-		पूर्ण
+			wake_up_interruptible(&pin->kthread_waitq);
+			break;
+		}
 		fallthrough;
-	हाल CEC_ST_TX_DATA_BIT_HIGH_CUSTOM:
-		अगर (tx_last_bit(pin)) अणु
+	case CEC_ST_TX_DATA_BIT_HIGH_CUSTOM:
+		if (tx_last_bit(pin)) {
 			/* Error Injection: just stop sending after this bit */
 			cec_pin_to_idle(pin);
 			pin->tx_msg.len = 0;
-			अगर (pin->tx_generated_poll)
-				अवरोध;
+			if (pin->tx_generated_poll)
+				break;
 			pin->work_tx_ts = ts;
 			pin->work_tx_status = CEC_TX_STATUS_OK;
-			wake_up_पूर्णांकerruptible(&pin->kthपढ़ो_रुकोq);
-			अवरोध;
-		पूर्ण
+			wake_up_interruptible(&pin->kthread_waitq);
+			break;
+		}
 		pin->tx_bit++;
 		fallthrough;
-	हाल CEC_ST_TX_START_BIT_HIGH:
-	हाल CEC_ST_TX_START_BIT_HIGH_SHORT:
-	हाल CEC_ST_TX_START_BIT_HIGH_LONG:
-	हाल CEC_ST_TX_START_BIT_HIGH_CUSTOM:
-		अगर (tx_low_drive(pin)) अणु
+	case CEC_ST_TX_START_BIT_HIGH:
+	case CEC_ST_TX_START_BIT_HIGH_SHORT:
+	case CEC_ST_TX_START_BIT_HIGH_LONG:
+	case CEC_ST_TX_START_BIT_HIGH_CUSTOM:
+		if (tx_low_drive(pin)) {
 			/* Error injection: go to low drive */
 			cec_pin_low(pin);
 			pin->state = CEC_ST_TX_LOW_DRIVE;
 			pin->tx_msg.len = 0;
-			अगर (pin->tx_generated_poll)
-				अवरोध;
+			if (pin->tx_generated_poll)
+				break;
 			pin->work_tx_ts = ts;
 			pin->work_tx_status = CEC_TX_STATUS_LOW_DRIVE;
 			pin->tx_low_drive_cnt++;
-			wake_up_पूर्णांकerruptible(&pin->kthपढ़ो_रुकोq);
-			अवरोध;
-		पूर्ण
-		अगर (pin->tx_bit / 10 >= pin->tx_msg.len + pin->tx_extra_bytes) अणु
+			wake_up_interruptible(&pin->kthread_waitq);
+			break;
+		}
+		if (pin->tx_bit / 10 >= pin->tx_msg.len + pin->tx_extra_bytes) {
 			cec_pin_to_idle(pin);
 			pin->tx_msg.len = 0;
-			अगर (pin->tx_generated_poll)
-				अवरोध;
+			if (pin->tx_generated_poll)
+				break;
 			pin->work_tx_ts = ts;
 			pin->work_tx_status = CEC_TX_STATUS_OK;
-			wake_up_पूर्णांकerruptible(&pin->kthपढ़ो_रुकोq);
-			अवरोध;
-		पूर्ण
+			wake_up_interruptible(&pin->kthread_waitq);
+			break;
+		}
 
-		चयन (pin->tx_bit % 10) अणु
-		शेष: अणु
+		switch (pin->tx_bit % 10) {
+		default: {
 			/*
-			 * In the CEC_ERROR_INJ_TX_ADD_BYTES हाल we transmit
+			 * In the CEC_ERROR_INJ_TX_ADD_BYTES case we transmit
 			 * extra bytes, so pin->tx_bit / 10 can become >= 16.
-			 * Generate bit values क्रम those extra bytes instead
-			 * of पढ़ोing them from the transmit buffer.
+			 * Generate bit values for those extra bytes instead
+			 * of reading them from the transmit buffer.
 			 */
-			अचिन्हित पूर्णांक idx = (pin->tx_bit / 10);
+			unsigned int idx = (pin->tx_bit / 10);
 			u8 val = idx;
 
-			अगर (idx < pin->tx_msg.len)
+			if (idx < pin->tx_msg.len)
 				val = pin->tx_msg.msg[idx];
 			v = val & (1 << (7 - (pin->tx_bit % 10)));
 
 			pin->state = v ? CEC_ST_TX_DATA_BIT_1_LOW :
 					 CEC_ST_TX_DATA_BIT_0_LOW;
-			अवरोध;
-		पूर्ण
-		हाल EOM_BIT: अणु
-			अचिन्हित पूर्णांक tot_len = pin->tx_msg.len +
+			break;
+		}
+		case EOM_BIT: {
+			unsigned int tot_len = pin->tx_msg.len +
 					       pin->tx_extra_bytes;
-			अचिन्हित पूर्णांक tx_byte_idx = pin->tx_bit / 10;
+			unsigned int tx_byte_idx = pin->tx_bit / 10;
 
 			v = !pin->tx_post_eom && tx_byte_idx == tot_len - 1;
-			अगर (tot_len > 1 && tx_byte_idx == tot_len - 2 &&
-			    tx_early_eom(pin)) अणु
+			if (tot_len > 1 && tx_byte_idx == tot_len - 2 &&
+			    tx_early_eom(pin)) {
 				/* Error injection: set EOM one byte early */
 				v = true;
 				pin->tx_post_eom = true;
-			पूर्ण अन्यथा अगर (v && tx_no_eom(pin)) अणु
+			} else if (v && tx_no_eom(pin)) {
 				/* Error injection: no EOM */
 				v = false;
-			पूर्ण
+			}
 			pin->state = v ? CEC_ST_TX_DATA_BIT_1_LOW :
 					 CEC_ST_TX_DATA_BIT_0_LOW;
-			अवरोध;
-		पूर्ण
-		हाल ACK_BIT:
+			break;
+		}
+		case ACK_BIT:
 			pin->state = CEC_ST_TX_DATA_BIT_1_LOW;
-			अवरोध;
-		पूर्ण
-		अगर (tx_custom_bit(pin))
+			break;
+		}
+		if (tx_custom_bit(pin))
 			pin->state = CEC_ST_TX_DATA_BIT_LOW_CUSTOM;
 		cec_pin_low(pin);
-		अवरोध;
+		break;
 
-	हाल CEC_ST_TX_DATA_BIT_0_LOW:
-	हाल CEC_ST_TX_DATA_BIT_1_LOW:
+	case CEC_ST_TX_DATA_BIT_0_LOW:
+	case CEC_ST_TX_DATA_BIT_1_LOW:
 		v = pin->state == CEC_ST_TX_DATA_BIT_1_LOW;
 		is_ack_bit = pin->tx_bit % 10 == ACK_BIT;
-		अगर (v && (pin->tx_bit < 4 || is_ack_bit)) अणु
+		if (v && (pin->tx_bit < 4 || is_ack_bit)) {
 			pin->state = CEC_ST_TX_DATA_BIT_1_HIGH_PRE_SAMPLE;
-		पूर्ण अन्यथा अगर (!is_ack_bit && tx_लघु_bit(pin)) अणु
-			/* Error Injection: send an invalid (too लघु) bit */
+		} else if (!is_ack_bit && tx_short_bit(pin)) {
+			/* Error Injection: send an invalid (too short) bit */
 			pin->state = v ? CEC_ST_TX_DATA_BIT_1_HIGH_SHORT :
 					 CEC_ST_TX_DATA_BIT_0_HIGH_SHORT;
-		पूर्ण अन्यथा अगर (!is_ack_bit && tx_दीर्घ_bit(pin)) अणु
-			/* Error Injection: send an invalid (too दीर्घ) bit */
+		} else if (!is_ack_bit && tx_long_bit(pin)) {
+			/* Error Injection: send an invalid (too long) bit */
 			pin->state = v ? CEC_ST_TX_DATA_BIT_1_HIGH_LONG :
 					 CEC_ST_TX_DATA_BIT_0_HIGH_LONG;
-		पूर्ण अन्यथा अणु
+		} else {
 			pin->state = v ? CEC_ST_TX_DATA_BIT_1_HIGH :
 					 CEC_ST_TX_DATA_BIT_0_HIGH;
-		पूर्ण
+		}
 		cec_pin_high(pin);
-		अवरोध;
+		break;
 
-	हाल CEC_ST_TX_DATA_BIT_LOW_CUSTOM:
+	case CEC_ST_TX_DATA_BIT_LOW_CUSTOM:
 		pin->state = CEC_ST_TX_DATA_BIT_HIGH_CUSTOM;
 		cec_pin_high(pin);
-		अवरोध;
+		break;
 
-	हाल CEC_ST_TX_DATA_BIT_1_HIGH_PRE_SAMPLE:
-		/* Read the CEC value at the sample समय */
-		v = cec_pin_पढ़ो(pin);
+	case CEC_ST_TX_DATA_BIT_1_HIGH_PRE_SAMPLE:
+		/* Read the CEC value at the sample time */
+		v = cec_pin_read(pin);
 		is_ack_bit = pin->tx_bit % 10 == ACK_BIT;
 		/*
 		 * If v == 0 and we're within the first 4 bits
-		 * of the initiator, then someone अन्यथा started
+		 * of the initiator, then someone else started
 		 * transmitting and we lost the arbitration
 		 * (i.e. the logical address of the other
 		 * transmitter has more leading 0 bits in the
 		 * initiator).
 		 */
-		अगर (!v && !is_ack_bit && !pin->tx_generated_poll) अणु
+		if (!v && !is_ack_bit && !pin->tx_generated_poll) {
 			pin->tx_msg.len = 0;
 			pin->work_tx_ts = ts;
 			pin->work_tx_status = CEC_TX_STATUS_ARB_LOST;
-			wake_up_पूर्णांकerruptible(&pin->kthपढ़ो_रुकोq);
+			wake_up_interruptible(&pin->kthread_waitq);
 			pin->rx_bit = pin->tx_bit;
 			pin->tx_bit = 0;
-			स_रखो(pin->rx_msg.msg, 0, माप(pin->rx_msg.msg));
+			memset(pin->rx_msg.msg, 0, sizeof(pin->rx_msg.msg));
 			pin->rx_msg.msg[0] = pin->tx_msg.msg[0];
 			pin->rx_msg.msg[0] &= (0xff << (8 - pin->rx_bit));
 			pin->rx_msg.len = 0;
-			pin->ts = kसमय_sub_us(ts, CEC_TIM_DATA_BIT_SAMPLE);
+			pin->ts = ktime_sub_us(ts, CEC_TIM_DATA_BIT_SAMPLE);
 			pin->state = CEC_ST_RX_DATA_POST_SAMPLE;
 			pin->rx_bit++;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		pin->state = CEC_ST_TX_DATA_BIT_1_HIGH_POST_SAMPLE;
-		अगर (!is_ack_bit && tx_लघु_bit(pin)) अणु
-			/* Error Injection: send an invalid (too लघु) bit */
+		if (!is_ack_bit && tx_short_bit(pin)) {
+			/* Error Injection: send an invalid (too short) bit */
 			pin->state = CEC_ST_TX_DATA_BIT_1_HIGH_POST_SAMPLE_SHORT;
-		पूर्ण अन्यथा अगर (!is_ack_bit && tx_दीर्घ_bit(pin)) अणु
-			/* Error Injection: send an invalid (too दीर्घ) bit */
+		} else if (!is_ack_bit && tx_long_bit(pin)) {
+			/* Error Injection: send an invalid (too long) bit */
 			pin->state = CEC_ST_TX_DATA_BIT_1_HIGH_POST_SAMPLE_LONG;
-		पूर्ण
-		अगर (!is_ack_bit)
-			अवरोध;
+		}
+		if (!is_ack_bit)
+			break;
 		/* Was the message ACKed? */
 		ack = cec_msg_is_broadcast(&pin->tx_msg) ? v : !v;
-		अगर (!ack && (!pin->tx_ignore_nack_until_eom ||
+		if (!ack && (!pin->tx_ignore_nack_until_eom ||
 		    pin->tx_bit / 10 == pin->tx_msg.len - 1) &&
-		    !pin->tx_post_eom) अणु
+		    !pin->tx_post_eom) {
 			/*
 			 * Note: the CEC spec is ambiguous regarding
 			 * what action to take when a NACK appears
-			 * beक्रमe the last byte of the payload was
+			 * before the last byte of the payload was
 			 * transmitted: either stop transmitting
-			 * immediately, or रुको until the last byte
+			 * immediately, or wait until the last byte
 			 * was transmitted.
 			 *
 			 * Most CEC implementations appear to stop
-			 * immediately, and that's what we करो here
+			 * immediately, and that's what we do here
 			 * as well.
 			 */
 			pin->tx_nacked = true;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल CEC_ST_TX_PULSE_LOW_CUSTOM:
+	case CEC_ST_TX_PULSE_LOW_CUSTOM:
 		cec_pin_high(pin);
 		pin->state = CEC_ST_TX_PULSE_HIGH_CUSTOM;
-		अवरोध;
+		break;
 
-	हाल CEC_ST_TX_PULSE_HIGH_CUSTOM:
+	case CEC_ST_TX_PULSE_HIGH_CUSTOM:
 		cec_pin_to_idle(pin);
-		अवरोध;
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+	default:
+		break;
+	}
+}
 
 /*
  * Handle Receive-related states
@@ -650,427 +649,427 @@
  *   Ack bit 0 && EOM:
  *	Rx Ack Low -> Rx Ack Low Post -> Rx Ack Finish -> Idle
  */
-अटल व्योम cec_pin_rx_states(काष्ठा cec_pin *pin, kसमय_प्रकार ts)
-अणु
+static void cec_pin_rx_states(struct cec_pin *pin, ktime_t ts)
+{
 	s32 delta;
 	bool v;
 	bool ack;
-	bool bcast, क्रम_us;
+	bool bcast, for_us;
 	u8 dest;
 	u8 poll;
 
-	चयन (pin->state) अणु
+	switch (pin->state) {
 	/* Receive states */
-	हाल CEC_ST_RX_START_BIT_LOW:
-		v = cec_pin_पढ़ो(pin);
-		अगर (!v)
-			अवरोध;
+	case CEC_ST_RX_START_BIT_LOW:
+		v = cec_pin_read(pin);
+		if (!v)
+			break;
 		pin->state = CEC_ST_RX_START_BIT_HIGH;
-		delta = kसमय_us_delta(ts, pin->ts);
-		/* Start bit low is too लघु, go back to idle */
-		अगर (delta < CEC_TIM_START_BIT_LOW_MIN - CEC_TIM_IDLE_SAMPLE) अणु
-			अगर (!pin->rx_start_bit_low_too_लघु_cnt++) अणु
-				pin->rx_start_bit_low_too_लघु_ts = kसमय_प्रकारo_ns(pin->ts);
-				pin->rx_start_bit_low_too_लघु_delta = delta;
-			पूर्ण
+		delta = ktime_us_delta(ts, pin->ts);
+		/* Start bit low is too short, go back to idle */
+		if (delta < CEC_TIM_START_BIT_LOW_MIN - CEC_TIM_IDLE_SAMPLE) {
+			if (!pin->rx_start_bit_low_too_short_cnt++) {
+				pin->rx_start_bit_low_too_short_ts = ktime_to_ns(pin->ts);
+				pin->rx_start_bit_low_too_short_delta = delta;
+			}
 			cec_pin_to_idle(pin);
-			अवरोध;
-		पूर्ण
-		अगर (rx_arb_lost(pin, &poll)) अणु
+			break;
+		}
+		if (rx_arb_lost(pin, &poll)) {
 			cec_msg_init(&pin->tx_msg, poll >> 4, poll & 0xf);
 			pin->tx_generated_poll = true;
 			pin->tx_extra_bytes = 0;
 			pin->state = CEC_ST_TX_START_BIT_HIGH;
 			pin->ts = ts;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल CEC_ST_RX_START_BIT_HIGH:
-		v = cec_pin_पढ़ो(pin);
-		delta = kसमय_us_delta(ts, pin->ts);
+	case CEC_ST_RX_START_BIT_HIGH:
+		v = cec_pin_read(pin);
+		delta = ktime_us_delta(ts, pin->ts);
 		/*
-		 * Unक्रमtunately the spec करोes not specअगरy when to give up
+		 * Unfortunately the spec does not specify when to give up
 		 * and go to idle. We just pick TOTAL_LONG.
 		 */
-		अगर (v && delta > CEC_TIM_START_BIT_TOTAL_LONG) अणु
-			pin->rx_start_bit_too_दीर्घ_cnt++;
+		if (v && delta > CEC_TIM_START_BIT_TOTAL_LONG) {
+			pin->rx_start_bit_too_long_cnt++;
 			cec_pin_to_idle(pin);
-			अवरोध;
-		पूर्ण
-		अगर (v)
-			अवरोध;
-		/* Start bit is too लघु, go back to idle */
-		अगर (delta < CEC_TIM_START_BIT_TOTAL_MIN - CEC_TIM_IDLE_SAMPLE) अणु
-			अगर (!pin->rx_start_bit_too_लघु_cnt++) अणु
-				pin->rx_start_bit_too_लघु_ts = kसमय_प्रकारo_ns(pin->ts);
-				pin->rx_start_bit_too_लघु_delta = delta;
-			पूर्ण
+			break;
+		}
+		if (v)
+			break;
+		/* Start bit is too short, go back to idle */
+		if (delta < CEC_TIM_START_BIT_TOTAL_MIN - CEC_TIM_IDLE_SAMPLE) {
+			if (!pin->rx_start_bit_too_short_cnt++) {
+				pin->rx_start_bit_too_short_ts = ktime_to_ns(pin->ts);
+				pin->rx_start_bit_too_short_delta = delta;
+			}
 			cec_pin_to_idle(pin);
-			अवरोध;
-		पूर्ण
-		अगर (rx_low_drive(pin)) अणु
+			break;
+		}
+		if (rx_low_drive(pin)) {
 			/* Error injection: go to low drive */
 			cec_pin_low(pin);
 			pin->state = CEC_ST_RX_LOW_DRIVE;
 			pin->rx_low_drive_cnt++;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		pin->state = CEC_ST_RX_DATA_SAMPLE;
 		pin->ts = ts;
 		pin->rx_eom = false;
-		अवरोध;
+		break;
 
-	हाल CEC_ST_RX_DATA_SAMPLE:
-		v = cec_pin_पढ़ो(pin);
+	case CEC_ST_RX_DATA_SAMPLE:
+		v = cec_pin_read(pin);
 		pin->state = CEC_ST_RX_DATA_POST_SAMPLE;
-		चयन (pin->rx_bit % 10) अणु
-		शेष:
-			अगर (pin->rx_bit / 10 < CEC_MAX_MSG_SIZE)
+		switch (pin->rx_bit % 10) {
+		default:
+			if (pin->rx_bit / 10 < CEC_MAX_MSG_SIZE)
 				pin->rx_msg.msg[pin->rx_bit / 10] |=
 					v << (7 - (pin->rx_bit % 10));
-			अवरोध;
-		हाल EOM_BIT:
+			break;
+		case EOM_BIT:
 			pin->rx_eom = v;
 			pin->rx_msg.len = pin->rx_bit / 10 + 1;
-			अवरोध;
-		हाल ACK_BIT:
-			अवरोध;
-		पूर्ण
+			break;
+		case ACK_BIT:
+			break;
+		}
 		pin->rx_bit++;
-		अवरोध;
+		break;
 
-	हाल CEC_ST_RX_DATA_POST_SAMPLE:
+	case CEC_ST_RX_DATA_POST_SAMPLE:
 		pin->state = CEC_ST_RX_DATA_WAIT_FOR_LOW;
-		अवरोध;
+		break;
 
-	हाल CEC_ST_RX_DATA_WAIT_FOR_LOW:
-		v = cec_pin_पढ़ो(pin);
-		delta = kसमय_us_delta(ts, pin->ts);
+	case CEC_ST_RX_DATA_WAIT_FOR_LOW:
+		v = cec_pin_read(pin);
+		delta = ktime_us_delta(ts, pin->ts);
 		/*
-		 * Unक्रमtunately the spec करोes not specअगरy when to give up
+		 * Unfortunately the spec does not specify when to give up
 		 * and go to idle. We just pick TOTAL_LONG.
 		 */
-		अगर (v && delta > CEC_TIM_DATA_BIT_TOTAL_LONG) अणु
-			pin->rx_data_bit_too_दीर्घ_cnt++;
+		if (v && delta > CEC_TIM_DATA_BIT_TOTAL_LONG) {
+			pin->rx_data_bit_too_long_cnt++;
 			cec_pin_to_idle(pin);
-			अवरोध;
-		पूर्ण
-		अगर (v)
-			अवरोध;
+			break;
+		}
+		if (v)
+			break;
 
-		अगर (rx_low_drive(pin)) अणु
+		if (rx_low_drive(pin)) {
 			/* Error injection: go to low drive */
 			cec_pin_low(pin);
 			pin->state = CEC_ST_RX_LOW_DRIVE;
 			pin->rx_low_drive_cnt++;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/*
-		 * Go to low drive state when the total bit समय is
-		 * too लघु.
+		 * Go to low drive state when the total bit time is
+		 * too short.
 		 */
-		अगर (delta < CEC_TIM_DATA_BIT_TOTAL_MIN) अणु
-			अगर (!pin->rx_data_bit_too_लघु_cnt++) अणु
-				pin->rx_data_bit_too_लघु_ts = kसमय_प्रकारo_ns(pin->ts);
-				pin->rx_data_bit_too_लघु_delta = delta;
-			पूर्ण
+		if (delta < CEC_TIM_DATA_BIT_TOTAL_MIN) {
+			if (!pin->rx_data_bit_too_short_cnt++) {
+				pin->rx_data_bit_too_short_ts = ktime_to_ns(pin->ts);
+				pin->rx_data_bit_too_short_delta = delta;
+			}
 			cec_pin_low(pin);
 			pin->state = CEC_ST_RX_LOW_DRIVE;
 			pin->rx_low_drive_cnt++;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		pin->ts = ts;
-		अगर (pin->rx_bit % 10 != 9) अणु
+		if (pin->rx_bit % 10 != 9) {
 			pin->state = CEC_ST_RX_DATA_SAMPLE;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		dest = cec_msg_destination(&pin->rx_msg);
 		bcast = dest == CEC_LOG_ADDR_BROADCAST;
-		/* क्रम_us == broadcast or directed to us */
-		क्रम_us = bcast || (pin->la_mask & (1 << dest));
+		/* for_us == broadcast or directed to us */
+		for_us = bcast || (pin->la_mask & (1 << dest));
 		/* ACK bit value */
-		ack = bcast ? 1 : !क्रम_us;
+		ack = bcast ? 1 : !for_us;
 
-		अगर (क्रम_us && rx_nack(pin)) अणु
+		if (for_us && rx_nack(pin)) {
 			/* Error injection: toggle the ACK bit */
 			ack = !ack;
-		पूर्ण
+		}
 
-		अगर (ack) अणु
-			/* No need to ग_लिखो to the bus, just रुको */
+		if (ack) {
+			/* No need to write to the bus, just wait */
 			pin->state = CEC_ST_RX_ACK_HIGH_POST;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		cec_pin_low(pin);
 		pin->state = CEC_ST_RX_ACK_LOW;
-		अवरोध;
+		break;
 
-	हाल CEC_ST_RX_ACK_LOW:
+	case CEC_ST_RX_ACK_LOW:
 		cec_pin_high(pin);
 		pin->state = CEC_ST_RX_ACK_LOW_POST;
-		अवरोध;
+		break;
 
-	हाल CEC_ST_RX_ACK_LOW_POST:
-	हाल CEC_ST_RX_ACK_HIGH_POST:
-		v = cec_pin_पढ़ो(pin);
-		अगर (v && pin->rx_eom) अणु
+	case CEC_ST_RX_ACK_LOW_POST:
+	case CEC_ST_RX_ACK_HIGH_POST:
+		v = cec_pin_read(pin);
+		if (v && pin->rx_eom) {
 			pin->work_rx_msg = pin->rx_msg;
-			pin->work_rx_msg.rx_ts = kसमय_प्रकारo_ns(ts);
-			wake_up_पूर्णांकerruptible(&pin->kthपढ़ो_रुकोq);
+			pin->work_rx_msg.rx_ts = ktime_to_ns(ts);
+			wake_up_interruptible(&pin->kthread_waitq);
 			pin->ts = ts;
 			pin->state = CEC_ST_RX_ACK_FINISH;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		pin->rx_bit++;
 		pin->state = CEC_ST_RX_DATA_WAIT_FOR_LOW;
-		अवरोध;
+		break;
 
-	हाल CEC_ST_RX_ACK_FINISH:
+	case CEC_ST_RX_ACK_FINISH:
 		cec_pin_to_idle(pin);
-		अवरोध;
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+	default:
+		break;
+	}
+}
 
 /*
- * Main समयr function
+ * Main timer function
  *
  */
-अटल क्रमागत hrसमयr_restart cec_pin_समयr(काष्ठा hrसमयr *समयr)
-अणु
-	काष्ठा cec_pin *pin = container_of(समयr, काष्ठा cec_pin, समयr);
-	काष्ठा cec_adapter *adap = pin->adap;
-	kसमय_प्रकार ts;
+static enum hrtimer_restart cec_pin_timer(struct hrtimer *timer)
+{
+	struct cec_pin *pin = container_of(timer, struct cec_pin, timer);
+	struct cec_adapter *adap = pin->adap;
+	ktime_t ts;
 	s32 delta;
 	u32 usecs;
 
-	ts = kसमय_get();
-	अगर (kसमय_प्रकारo_ns(pin->समयr_ts)) अणु
-		delta = kसमय_us_delta(ts, pin->समयr_ts);
-		pin->समयr_cnt++;
-		अगर (delta > 100 && pin->state != CEC_ST_IDLE) अणु
-			/* Keep track of समयr overruns */
-			pin->समयr_sum_overrun += delta;
-			pin->समयr_100ms_overruns++;
-			अगर (delta > 300)
-				pin->समयr_300ms_overruns++;
-			अगर (delta > pin->समयr_max_overrun)
-				pin->समयr_max_overrun = delta;
-		पूर्ण
-	पूर्ण
-	अगर (adap->monitor_pin_cnt)
-		cec_pin_पढ़ो(pin);
+	ts = ktime_get();
+	if (ktime_to_ns(pin->timer_ts)) {
+		delta = ktime_us_delta(ts, pin->timer_ts);
+		pin->timer_cnt++;
+		if (delta > 100 && pin->state != CEC_ST_IDLE) {
+			/* Keep track of timer overruns */
+			pin->timer_sum_overrun += delta;
+			pin->timer_100ms_overruns++;
+			if (delta > 300)
+				pin->timer_300ms_overruns++;
+			if (delta > pin->timer_max_overrun)
+				pin->timer_max_overrun = delta;
+		}
+	}
+	if (adap->monitor_pin_cnt)
+		cec_pin_read(pin);
 
-	अगर (pin->रुको_usecs) अणु
+	if (pin->wait_usecs) {
 		/*
 		 * If we are monitoring the pin, then we have to
-		 * sample at regular पूर्णांकervals.
+		 * sample at regular intervals.
 		 */
-		अगर (pin->रुको_usecs > 150) अणु
-			pin->रुको_usecs -= 100;
-			pin->समयr_ts = kसमय_add_us(ts, 100);
-			hrसमयr_क्रमward_now(समयr, ns_to_kसमय(100000));
-			वापस HRTIMER_RESTART;
-		पूर्ण
-		अगर (pin->रुको_usecs > 100) अणु
-			pin->रुको_usecs /= 2;
-			pin->समयr_ts = kसमय_add_us(ts, pin->रुको_usecs);
-			hrसमयr_क्रमward_now(समयr,
-					ns_to_kसमय(pin->रुको_usecs * 1000));
-			वापस HRTIMER_RESTART;
-		पूर्ण
-		pin->समयr_ts = kसमय_add_us(ts, pin->रुको_usecs);
-		hrसमयr_क्रमward_now(समयr,
-				    ns_to_kसमय(pin->रुको_usecs * 1000));
-		pin->रुको_usecs = 0;
-		वापस HRTIMER_RESTART;
-	पूर्ण
+		if (pin->wait_usecs > 150) {
+			pin->wait_usecs -= 100;
+			pin->timer_ts = ktime_add_us(ts, 100);
+			hrtimer_forward_now(timer, ns_to_ktime(100000));
+			return HRTIMER_RESTART;
+		}
+		if (pin->wait_usecs > 100) {
+			pin->wait_usecs /= 2;
+			pin->timer_ts = ktime_add_us(ts, pin->wait_usecs);
+			hrtimer_forward_now(timer,
+					ns_to_ktime(pin->wait_usecs * 1000));
+			return HRTIMER_RESTART;
+		}
+		pin->timer_ts = ktime_add_us(ts, pin->wait_usecs);
+		hrtimer_forward_now(timer,
+				    ns_to_ktime(pin->wait_usecs * 1000));
+		pin->wait_usecs = 0;
+		return HRTIMER_RESTART;
+	}
 
-	चयन (pin->state) अणु
+	switch (pin->state) {
 	/* Transmit states */
-	हाल CEC_ST_TX_WAIT_FOR_HIGH:
-	हाल CEC_ST_TX_START_BIT_LOW:
-	हाल CEC_ST_TX_START_BIT_HIGH:
-	हाल CEC_ST_TX_START_BIT_HIGH_SHORT:
-	हाल CEC_ST_TX_START_BIT_HIGH_LONG:
-	हाल CEC_ST_TX_START_BIT_LOW_CUSTOM:
-	हाल CEC_ST_TX_START_BIT_HIGH_CUSTOM:
-	हाल CEC_ST_TX_DATA_BIT_0_LOW:
-	हाल CEC_ST_TX_DATA_BIT_0_HIGH:
-	हाल CEC_ST_TX_DATA_BIT_0_HIGH_SHORT:
-	हाल CEC_ST_TX_DATA_BIT_0_HIGH_LONG:
-	हाल CEC_ST_TX_DATA_BIT_1_LOW:
-	हाल CEC_ST_TX_DATA_BIT_1_HIGH:
-	हाल CEC_ST_TX_DATA_BIT_1_HIGH_SHORT:
-	हाल CEC_ST_TX_DATA_BIT_1_HIGH_LONG:
-	हाल CEC_ST_TX_DATA_BIT_1_HIGH_PRE_SAMPLE:
-	हाल CEC_ST_TX_DATA_BIT_1_HIGH_POST_SAMPLE:
-	हाल CEC_ST_TX_DATA_BIT_1_HIGH_POST_SAMPLE_SHORT:
-	हाल CEC_ST_TX_DATA_BIT_1_HIGH_POST_SAMPLE_LONG:
-	हाल CEC_ST_TX_DATA_BIT_LOW_CUSTOM:
-	हाल CEC_ST_TX_DATA_BIT_HIGH_CUSTOM:
-	हाल CEC_ST_TX_PULSE_LOW_CUSTOM:
-	हाल CEC_ST_TX_PULSE_HIGH_CUSTOM:
+	case CEC_ST_TX_WAIT_FOR_HIGH:
+	case CEC_ST_TX_START_BIT_LOW:
+	case CEC_ST_TX_START_BIT_HIGH:
+	case CEC_ST_TX_START_BIT_HIGH_SHORT:
+	case CEC_ST_TX_START_BIT_HIGH_LONG:
+	case CEC_ST_TX_START_BIT_LOW_CUSTOM:
+	case CEC_ST_TX_START_BIT_HIGH_CUSTOM:
+	case CEC_ST_TX_DATA_BIT_0_LOW:
+	case CEC_ST_TX_DATA_BIT_0_HIGH:
+	case CEC_ST_TX_DATA_BIT_0_HIGH_SHORT:
+	case CEC_ST_TX_DATA_BIT_0_HIGH_LONG:
+	case CEC_ST_TX_DATA_BIT_1_LOW:
+	case CEC_ST_TX_DATA_BIT_1_HIGH:
+	case CEC_ST_TX_DATA_BIT_1_HIGH_SHORT:
+	case CEC_ST_TX_DATA_BIT_1_HIGH_LONG:
+	case CEC_ST_TX_DATA_BIT_1_HIGH_PRE_SAMPLE:
+	case CEC_ST_TX_DATA_BIT_1_HIGH_POST_SAMPLE:
+	case CEC_ST_TX_DATA_BIT_1_HIGH_POST_SAMPLE_SHORT:
+	case CEC_ST_TX_DATA_BIT_1_HIGH_POST_SAMPLE_LONG:
+	case CEC_ST_TX_DATA_BIT_LOW_CUSTOM:
+	case CEC_ST_TX_DATA_BIT_HIGH_CUSTOM:
+	case CEC_ST_TX_PULSE_LOW_CUSTOM:
+	case CEC_ST_TX_PULSE_HIGH_CUSTOM:
 		cec_pin_tx_states(pin, ts);
-		अवरोध;
+		break;
 
 	/* Receive states */
-	हाल CEC_ST_RX_START_BIT_LOW:
-	हाल CEC_ST_RX_START_BIT_HIGH:
-	हाल CEC_ST_RX_DATA_SAMPLE:
-	हाल CEC_ST_RX_DATA_POST_SAMPLE:
-	हाल CEC_ST_RX_DATA_WAIT_FOR_LOW:
-	हाल CEC_ST_RX_ACK_LOW:
-	हाल CEC_ST_RX_ACK_LOW_POST:
-	हाल CEC_ST_RX_ACK_HIGH_POST:
-	हाल CEC_ST_RX_ACK_FINISH:
+	case CEC_ST_RX_START_BIT_LOW:
+	case CEC_ST_RX_START_BIT_HIGH:
+	case CEC_ST_RX_DATA_SAMPLE:
+	case CEC_ST_RX_DATA_POST_SAMPLE:
+	case CEC_ST_RX_DATA_WAIT_FOR_LOW:
+	case CEC_ST_RX_ACK_LOW:
+	case CEC_ST_RX_ACK_LOW_POST:
+	case CEC_ST_RX_ACK_HIGH_POST:
+	case CEC_ST_RX_ACK_FINISH:
 		cec_pin_rx_states(pin, ts);
-		अवरोध;
+		break;
 
-	हाल CEC_ST_IDLE:
-	हाल CEC_ST_TX_WAIT:
-		अगर (!cec_pin_high(pin)) अणु
-			/* Start bit, चयन to receive state */
+	case CEC_ST_IDLE:
+	case CEC_ST_TX_WAIT:
+		if (!cec_pin_high(pin)) {
+			/* Start bit, switch to receive state */
 			pin->ts = ts;
 			pin->state = CEC_ST_RX_START_BIT_LOW;
 			/*
 			 * If a transmit is pending, then that transmit should
-			 * use a संकेत मुक्त समय of no more than
+			 * use a signal free time of no more than
 			 * CEC_SIGNAL_FREE_TIME_NEW_INITIATOR since it will
 			 * have a new initiator due to the receive that is now
 			 * starting.
 			 */
-			अगर (pin->tx_msg.len && pin->tx_संकेत_मुक्त_समय >
+			if (pin->tx_msg.len && pin->tx_signal_free_time >
 			    CEC_SIGNAL_FREE_TIME_NEW_INITIATOR)
-				pin->tx_संकेत_मुक्त_समय =
+				pin->tx_signal_free_time =
 					CEC_SIGNAL_FREE_TIME_NEW_INITIATOR;
-			अवरोध;
-		पूर्ण
-		अगर (kसमय_प्रकारo_ns(pin->ts) == 0)
+			break;
+		}
+		if (ktime_to_ns(pin->ts) == 0)
 			pin->ts = ts;
-		अगर (pin->tx_msg.len) अणु
+		if (pin->tx_msg.len) {
 			/*
-			 * Check अगर the bus has been मुक्त क्रम दीर्घ enough
+			 * Check if the bus has been free for long enough
 			 * so we can kick off the pending transmit.
 			 */
-			delta = kसमय_us_delta(ts, pin->ts);
-			अगर (delta / CEC_TIM_DATA_BIT_TOTAL >
-			    pin->tx_संकेत_मुक्त_समय) अणु
+			delta = ktime_us_delta(ts, pin->ts);
+			if (delta / CEC_TIM_DATA_BIT_TOTAL >
+			    pin->tx_signal_free_time) {
 				pin->tx_nacked = false;
-				अगर (tx_custom_start(pin))
+				if (tx_custom_start(pin))
 					pin->state = CEC_ST_TX_START_BIT_LOW_CUSTOM;
-				अन्यथा
+				else
 					pin->state = CEC_ST_TX_START_BIT_LOW;
 				/* Generate start bit */
 				cec_pin_low(pin);
-				अवरोध;
-			पूर्ण
-			अगर (delta / CEC_TIM_DATA_BIT_TOTAL >
-			    pin->tx_संकेत_मुक्त_समय - 1)
+				break;
+			}
+			if (delta / CEC_TIM_DATA_BIT_TOTAL >
+			    pin->tx_signal_free_time - 1)
 				pin->state = CEC_ST_TX_WAIT;
-			अवरोध;
-		पूर्ण
-		अगर (pin->tx_custom_pulse && pin->state == CEC_ST_IDLE) अणु
+			break;
+		}
+		if (pin->tx_custom_pulse && pin->state == CEC_ST_IDLE) {
 			pin->tx_custom_pulse = false;
 			/* Generate custom pulse */
 			cec_pin_low(pin);
 			pin->state = CEC_ST_TX_PULSE_LOW_CUSTOM;
-			अवरोध;
-		पूर्ण
-		अगर (pin->state != CEC_ST_IDLE || pin->ops->enable_irq == शून्य ||
+			break;
+		}
+		if (pin->state != CEC_ST_IDLE || pin->ops->enable_irq == NULL ||
 		    pin->enable_irq_failed || adap->is_configuring ||
 		    adap->is_configured || adap->monitor_all_cnt)
-			अवरोध;
-		/* Switch to पूर्णांकerrupt mode */
+			break;
+		/* Switch to interrupt mode */
 		atomic_set(&pin->work_irq_change, CEC_PIN_IRQ_ENABLE);
 		pin->state = CEC_ST_RX_IRQ;
-		wake_up_पूर्णांकerruptible(&pin->kthपढ़ो_रुकोq);
-		वापस HRTIMER_NORESTART;
+		wake_up_interruptible(&pin->kthread_waitq);
+		return HRTIMER_NORESTART;
 
-	हाल CEC_ST_TX_LOW_DRIVE:
-	हाल CEC_ST_RX_LOW_DRIVE:
+	case CEC_ST_TX_LOW_DRIVE:
+	case CEC_ST_RX_LOW_DRIVE:
 		cec_pin_high(pin);
 		cec_pin_to_idle(pin);
-		अवरोध;
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
-	चयन (pin->state) अणु
-	हाल CEC_ST_TX_START_BIT_LOW_CUSTOM:
-	हाल CEC_ST_TX_DATA_BIT_LOW_CUSTOM:
-	हाल CEC_ST_TX_PULSE_LOW_CUSTOM:
+	switch (pin->state) {
+	case CEC_ST_TX_START_BIT_LOW_CUSTOM:
+	case CEC_ST_TX_DATA_BIT_LOW_CUSTOM:
+	case CEC_ST_TX_PULSE_LOW_CUSTOM:
 		usecs = pin->tx_custom_low_usecs;
-		अवरोध;
-	हाल CEC_ST_TX_START_BIT_HIGH_CUSTOM:
-	हाल CEC_ST_TX_DATA_BIT_HIGH_CUSTOM:
-	हाल CEC_ST_TX_PULSE_HIGH_CUSTOM:
+		break;
+	case CEC_ST_TX_START_BIT_HIGH_CUSTOM:
+	case CEC_ST_TX_DATA_BIT_HIGH_CUSTOM:
+	case CEC_ST_TX_PULSE_HIGH_CUSTOM:
 		usecs = pin->tx_custom_high_usecs;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		usecs = states[pin->state].usecs;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (!adap->monitor_pin_cnt || usecs <= 150) अणु
-		pin->रुको_usecs = 0;
-		pin->समयr_ts = kसमय_add_us(ts, usecs);
-		hrसमयr_क्रमward_now(समयr,
-				ns_to_kसमय(usecs * 1000));
-		वापस HRTIMER_RESTART;
-	पूर्ण
-	pin->रुको_usecs = usecs - 100;
-	pin->समयr_ts = kसमय_add_us(ts, 100);
-	hrसमयr_क्रमward_now(समयr, ns_to_kसमय(100000));
-	वापस HRTIMER_RESTART;
-पूर्ण
+	if (!adap->monitor_pin_cnt || usecs <= 150) {
+		pin->wait_usecs = 0;
+		pin->timer_ts = ktime_add_us(ts, usecs);
+		hrtimer_forward_now(timer,
+				ns_to_ktime(usecs * 1000));
+		return HRTIMER_RESTART;
+	}
+	pin->wait_usecs = usecs - 100;
+	pin->timer_ts = ktime_add_us(ts, 100);
+	hrtimer_forward_now(timer, ns_to_ktime(100000));
+	return HRTIMER_RESTART;
+}
 
-अटल पूर्णांक cec_pin_thपढ़ो_func(व्योम *_adap)
-अणु
-	काष्ठा cec_adapter *adap = _adap;
-	काष्ठा cec_pin *pin = adap->pin;
+static int cec_pin_thread_func(void *_adap)
+{
+	struct cec_adapter *adap = _adap;
+	struct cec_pin *pin = adap->pin;
 
-	क्रम (;;) अणु
-		रुको_event_पूर्णांकerruptible(pin->kthपढ़ो_रुकोq,
-			kthपढ़ो_should_stop() ||
+	for (;;) {
+		wait_event_interruptible(pin->kthread_waitq,
+			kthread_should_stop() ||
 			pin->work_rx_msg.len ||
 			pin->work_tx_status ||
-			atomic_पढ़ो(&pin->work_irq_change) ||
-			atomic_पढ़ो(&pin->work_pin_num_events));
+			atomic_read(&pin->work_irq_change) ||
+			atomic_read(&pin->work_pin_num_events));
 
-		अगर (pin->work_rx_msg.len) अणु
-			काष्ठा cec_msg *msg = &pin->work_rx_msg;
+		if (pin->work_rx_msg.len) {
+			struct cec_msg *msg = &pin->work_rx_msg;
 
-			अगर (msg->len > 1 && msg->len < CEC_MAX_MSG_SIZE &&
-			    rx_add_byte(pin)) अणु
+			if (msg->len > 1 && msg->len < CEC_MAX_MSG_SIZE &&
+			    rx_add_byte(pin)) {
 				/* Error injection: add byte to the message */
 				msg->msg[msg->len++] = 0x55;
-			पूर्ण
-			अगर (msg->len > 2 && rx_हटाओ_byte(pin)) अणु
-				/* Error injection: हटाओ byte from message */
+			}
+			if (msg->len > 2 && rx_remove_byte(pin)) {
+				/* Error injection: remove byte from message */
 				msg->len--;
-			पूर्ण
-			अगर (msg->len > CEC_MAX_MSG_SIZE)
+			}
+			if (msg->len > CEC_MAX_MSG_SIZE)
 				msg->len = CEC_MAX_MSG_SIZE;
 			cec_received_msg_ts(adap, msg,
-				ns_to_kसमय(pin->work_rx_msg.rx_ts));
+				ns_to_ktime(pin->work_rx_msg.rx_ts));
 			msg->len = 0;
-		पूर्ण
-		अगर (pin->work_tx_status) अणु
-			अचिन्हित पूर्णांक tx_status = pin->work_tx_status;
+		}
+		if (pin->work_tx_status) {
+			unsigned int tx_status = pin->work_tx_status;
 
 			pin->work_tx_status = 0;
-			cec_transmit_attempt_करोne_ts(adap, tx_status,
+			cec_transmit_attempt_done_ts(adap, tx_status,
 						     pin->work_tx_ts);
-		पूर्ण
+		}
 
-		जबतक (atomic_पढ़ो(&pin->work_pin_num_events)) अणु
-			अचिन्हित पूर्णांक idx = pin->work_pin_events_rd;
+		while (atomic_read(&pin->work_pin_num_events)) {
+			unsigned int idx = pin->work_pin_events_rd;
 			u8 v = pin->work_pin_events[idx];
 
 			cec_queue_pin_cec_event(adap,
@@ -1079,253 +1078,253 @@
 						pin->work_pin_ts[idx]);
 			pin->work_pin_events_rd = (idx + 1) % CEC_NUM_PIN_EVENTS;
 			atomic_dec(&pin->work_pin_num_events);
-		पूर्ण
+		}
 
-		चयन (atomic_xchg(&pin->work_irq_change,
-				    CEC_PIN_IRQ_UNCHANGED)) अणु
-		हाल CEC_PIN_IRQ_DISABLE:
+		switch (atomic_xchg(&pin->work_irq_change,
+				    CEC_PIN_IRQ_UNCHANGED)) {
+		case CEC_PIN_IRQ_DISABLE:
 			pin->ops->disable_irq(adap);
 			cec_pin_high(pin);
 			cec_pin_to_idle(pin);
-			hrसमयr_start(&pin->समयr, ns_to_kसमय(0),
+			hrtimer_start(&pin->timer, ns_to_ktime(0),
 				      HRTIMER_MODE_REL);
-			अवरोध;
-		हाल CEC_PIN_IRQ_ENABLE:
+			break;
+		case CEC_PIN_IRQ_ENABLE:
 			pin->enable_irq_failed = !pin->ops->enable_irq(adap);
-			अगर (pin->enable_irq_failed) अणु
+			if (pin->enable_irq_failed) {
 				cec_pin_to_idle(pin);
-				hrसमयr_start(&pin->समयr, ns_to_kसमय(0),
+				hrtimer_start(&pin->timer, ns_to_ktime(0),
 					      HRTIMER_MODE_REL);
-			पूर्ण
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
+			}
+			break;
+		default:
+			break;
+		}
 
-		अगर (kthपढ़ो_should_stop())
-			अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (kthread_should_stop())
+			break;
+	}
+	return 0;
+}
 
-अटल पूर्णांक cec_pin_adap_enable(काष्ठा cec_adapter *adap, bool enable)
-अणु
-	काष्ठा cec_pin *pin = adap->pin;
+static int cec_pin_adap_enable(struct cec_adapter *adap, bool enable)
+{
+	struct cec_pin *pin = adap->pin;
 
 	pin->enabled = enable;
-	अगर (enable) अणु
+	if (enable) {
 		atomic_set(&pin->work_pin_num_events, 0);
 		pin->work_pin_events_rd = pin->work_pin_events_wr = 0;
 		pin->work_pin_events_dropped = false;
-		cec_pin_पढ़ो(pin);
+		cec_pin_read(pin);
 		cec_pin_to_idle(pin);
 		pin->tx_msg.len = 0;
-		pin->समयr_ts = ns_to_kसमय(0);
+		pin->timer_ts = ns_to_ktime(0);
 		atomic_set(&pin->work_irq_change, CEC_PIN_IRQ_UNCHANGED);
-		pin->kthपढ़ो = kthपढ़ो_run(cec_pin_thपढ़ो_func, adap,
+		pin->kthread = kthread_run(cec_pin_thread_func, adap,
 					   "cec-pin");
-		अगर (IS_ERR(pin->kthपढ़ो)) अणु
+		if (IS_ERR(pin->kthread)) {
 			pr_err("cec-pin: kernel_thread() failed\n");
-			वापस PTR_ERR(pin->kthपढ़ो);
-		पूर्ण
-		hrसमयr_start(&pin->समयr, ns_to_kसमय(0),
+			return PTR_ERR(pin->kthread);
+		}
+		hrtimer_start(&pin->timer, ns_to_ktime(0),
 			      HRTIMER_MODE_REL);
-	पूर्ण अन्यथा अणु
-		अगर (pin->ops->disable_irq)
+	} else {
+		if (pin->ops->disable_irq)
 			pin->ops->disable_irq(adap);
-		hrसमयr_cancel(&pin->समयr);
-		kthपढ़ो_stop(pin->kthपढ़ो);
-		cec_pin_पढ़ो(pin);
+		hrtimer_cancel(&pin->timer);
+		kthread_stop(pin->kthread);
+		cec_pin_read(pin);
 		cec_pin_to_idle(pin);
 		pin->state = CEC_ST_OFF;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक cec_pin_adap_log_addr(काष्ठा cec_adapter *adap, u8 log_addr)
-अणु
-	काष्ठा cec_pin *pin = adap->pin;
+static int cec_pin_adap_log_addr(struct cec_adapter *adap, u8 log_addr)
+{
+	struct cec_pin *pin = adap->pin;
 
-	अगर (log_addr == CEC_LOG_ADDR_INVALID)
+	if (log_addr == CEC_LOG_ADDR_INVALID)
 		pin->la_mask = 0;
-	अन्यथा
+	else
 		pin->la_mask |= (1 << log_addr);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम cec_pin_start_समयr(काष्ठा cec_pin *pin)
-अणु
-	अगर (pin->state != CEC_ST_RX_IRQ)
-		वापस;
+void cec_pin_start_timer(struct cec_pin *pin)
+{
+	if (pin->state != CEC_ST_RX_IRQ)
+		return;
 
 	atomic_set(&pin->work_irq_change, CEC_PIN_IRQ_UNCHANGED);
 	pin->ops->disable_irq(pin->adap);
 	cec_pin_high(pin);
 	cec_pin_to_idle(pin);
-	hrसमयr_start(&pin->समयr, ns_to_kसमय(0), HRTIMER_MODE_REL);
-पूर्ण
+	hrtimer_start(&pin->timer, ns_to_ktime(0), HRTIMER_MODE_REL);
+}
 
-अटल पूर्णांक cec_pin_adap_transmit(काष्ठा cec_adapter *adap, u8 attempts,
-				      u32 संकेत_मुक्त_समय, काष्ठा cec_msg *msg)
-अणु
-	काष्ठा cec_pin *pin = adap->pin;
+static int cec_pin_adap_transmit(struct cec_adapter *adap, u8 attempts,
+				      u32 signal_free_time, struct cec_msg *msg)
+{
+	struct cec_pin *pin = adap->pin;
 
 	/*
 	 * If a receive is in progress, then this transmit should use
-	 * a संकेत मुक्त समय of max CEC_SIGNAL_FREE_TIME_NEW_INITIATOR
+	 * a signal free time of max CEC_SIGNAL_FREE_TIME_NEW_INITIATOR
 	 * since when it starts transmitting it will have a new initiator.
 	 */
-	अगर (pin->state != CEC_ST_IDLE &&
-	    संकेत_मुक्त_समय > CEC_SIGNAL_FREE_TIME_NEW_INITIATOR)
-		संकेत_मुक्त_समय = CEC_SIGNAL_FREE_TIME_NEW_INITIATOR;
+	if (pin->state != CEC_ST_IDLE &&
+	    signal_free_time > CEC_SIGNAL_FREE_TIME_NEW_INITIATOR)
+		signal_free_time = CEC_SIGNAL_FREE_TIME_NEW_INITIATOR;
 
-	pin->tx_संकेत_मुक्त_समय = संकेत_मुक्त_समय;
+	pin->tx_signal_free_time = signal_free_time;
 	pin->tx_extra_bytes = 0;
 	pin->tx_msg = *msg;
-	अगर (msg->len > 1) अणु
+	if (msg->len > 1) {
 		/* Error injection: add byte to the message */
 		pin->tx_extra_bytes = tx_add_bytes(pin);
-	पूर्ण
-	अगर (msg->len > 2 && tx_हटाओ_byte(pin)) अणु
-		/* Error injection: हटाओ byte from the message */
+	}
+	if (msg->len > 2 && tx_remove_byte(pin)) {
+		/* Error injection: remove byte from the message */
 		pin->tx_msg.len--;
-	पूर्ण
+	}
 	pin->work_tx_status = 0;
 	pin->tx_bit = 0;
-	cec_pin_start_समयr(pin);
-	वापस 0;
-पूर्ण
+	cec_pin_start_timer(pin);
+	return 0;
+}
 
-अटल व्योम cec_pin_adap_status(काष्ठा cec_adapter *adap,
-				       काष्ठा seq_file *file)
-अणु
-	काष्ठा cec_pin *pin = adap->pin;
+static void cec_pin_adap_status(struct cec_adapter *adap,
+				       struct seq_file *file)
+{
+	struct cec_pin *pin = adap->pin;
 
-	seq_म_लिखो(file, "state: %s\n", states[pin->state].name);
-	seq_म_लिखो(file, "tx_bit: %d\n", pin->tx_bit);
-	seq_म_लिखो(file, "rx_bit: %d\n", pin->rx_bit);
-	seq_म_लिखो(file, "cec pin: %d\n", pin->ops->पढ़ो(adap));
-	seq_म_लिखो(file, "cec pin events dropped: %u\n",
+	seq_printf(file, "state: %s\n", states[pin->state].name);
+	seq_printf(file, "tx_bit: %d\n", pin->tx_bit);
+	seq_printf(file, "rx_bit: %d\n", pin->rx_bit);
+	seq_printf(file, "cec pin: %d\n", pin->ops->read(adap));
+	seq_printf(file, "cec pin events dropped: %u\n",
 		   pin->work_pin_events_dropped_cnt);
-	seq_म_लिखो(file, "irq failed: %d\n", pin->enable_irq_failed);
-	अगर (pin->समयr_100ms_overruns) अणु
-		seq_म_लिखो(file, "timer overruns > 100ms: %u of %u\n",
-			   pin->समयr_100ms_overruns, pin->समयr_cnt);
-		seq_म_लिखो(file, "timer overruns > 300ms: %u of %u\n",
-			   pin->समयr_300ms_overruns, pin->समयr_cnt);
-		seq_म_लिखो(file, "max timer overrun: %u usecs\n",
-			   pin->समयr_max_overrun);
-		seq_म_लिखो(file, "avg timer overrun: %u usecs\n",
-			   pin->समयr_sum_overrun / pin->समयr_100ms_overruns);
-	पूर्ण
-	अगर (pin->rx_start_bit_low_too_लघु_cnt)
-		seq_म_लिखो(file,
+	seq_printf(file, "irq failed: %d\n", pin->enable_irq_failed);
+	if (pin->timer_100ms_overruns) {
+		seq_printf(file, "timer overruns > 100ms: %u of %u\n",
+			   pin->timer_100ms_overruns, pin->timer_cnt);
+		seq_printf(file, "timer overruns > 300ms: %u of %u\n",
+			   pin->timer_300ms_overruns, pin->timer_cnt);
+		seq_printf(file, "max timer overrun: %u usecs\n",
+			   pin->timer_max_overrun);
+		seq_printf(file, "avg timer overrun: %u usecs\n",
+			   pin->timer_sum_overrun / pin->timer_100ms_overruns);
+	}
+	if (pin->rx_start_bit_low_too_short_cnt)
+		seq_printf(file,
 			   "rx start bit low too short: %u (delta %u, ts %llu)\n",
-			   pin->rx_start_bit_low_too_लघु_cnt,
-			   pin->rx_start_bit_low_too_लघु_delta,
-			   pin->rx_start_bit_low_too_लघु_ts);
-	अगर (pin->rx_start_bit_too_लघु_cnt)
-		seq_म_लिखो(file,
+			   pin->rx_start_bit_low_too_short_cnt,
+			   pin->rx_start_bit_low_too_short_delta,
+			   pin->rx_start_bit_low_too_short_ts);
+	if (pin->rx_start_bit_too_short_cnt)
+		seq_printf(file,
 			   "rx start bit too short: %u (delta %u, ts %llu)\n",
-			   pin->rx_start_bit_too_लघु_cnt,
-			   pin->rx_start_bit_too_लघु_delta,
-			   pin->rx_start_bit_too_लघु_ts);
-	अगर (pin->rx_start_bit_too_दीर्घ_cnt)
-		seq_म_लिखो(file, "rx start bit too long: %u\n",
-			   pin->rx_start_bit_too_दीर्घ_cnt);
-	अगर (pin->rx_data_bit_too_लघु_cnt)
-		seq_म_लिखो(file,
+			   pin->rx_start_bit_too_short_cnt,
+			   pin->rx_start_bit_too_short_delta,
+			   pin->rx_start_bit_too_short_ts);
+	if (pin->rx_start_bit_too_long_cnt)
+		seq_printf(file, "rx start bit too long: %u\n",
+			   pin->rx_start_bit_too_long_cnt);
+	if (pin->rx_data_bit_too_short_cnt)
+		seq_printf(file,
 			   "rx data bit too short: %u (delta %u, ts %llu)\n",
-			   pin->rx_data_bit_too_लघु_cnt,
-			   pin->rx_data_bit_too_लघु_delta,
-			   pin->rx_data_bit_too_लघु_ts);
-	अगर (pin->rx_data_bit_too_दीर्घ_cnt)
-		seq_म_लिखो(file, "rx data bit too long: %u\n",
-			   pin->rx_data_bit_too_दीर्घ_cnt);
-	seq_म_लिखो(file, "rx initiated low drive: %u\n", pin->rx_low_drive_cnt);
-	seq_म_लिखो(file, "tx detected low drive: %u\n", pin->tx_low_drive_cnt);
+			   pin->rx_data_bit_too_short_cnt,
+			   pin->rx_data_bit_too_short_delta,
+			   pin->rx_data_bit_too_short_ts);
+	if (pin->rx_data_bit_too_long_cnt)
+		seq_printf(file, "rx data bit too long: %u\n",
+			   pin->rx_data_bit_too_long_cnt);
+	seq_printf(file, "rx initiated low drive: %u\n", pin->rx_low_drive_cnt);
+	seq_printf(file, "tx detected low drive: %u\n", pin->tx_low_drive_cnt);
 	pin->work_pin_events_dropped_cnt = 0;
-	pin->समयr_cnt = 0;
-	pin->समयr_100ms_overruns = 0;
-	pin->समयr_300ms_overruns = 0;
-	pin->समयr_max_overrun = 0;
-	pin->समयr_sum_overrun = 0;
-	pin->rx_start_bit_low_too_लघु_cnt = 0;
-	pin->rx_start_bit_too_लघु_cnt = 0;
-	pin->rx_start_bit_too_दीर्घ_cnt = 0;
-	pin->rx_data_bit_too_लघु_cnt = 0;
-	pin->rx_data_bit_too_दीर्घ_cnt = 0;
+	pin->timer_cnt = 0;
+	pin->timer_100ms_overruns = 0;
+	pin->timer_300ms_overruns = 0;
+	pin->timer_max_overrun = 0;
+	pin->timer_sum_overrun = 0;
+	pin->rx_start_bit_low_too_short_cnt = 0;
+	pin->rx_start_bit_too_short_cnt = 0;
+	pin->rx_start_bit_too_long_cnt = 0;
+	pin->rx_data_bit_too_short_cnt = 0;
+	pin->rx_data_bit_too_long_cnt = 0;
 	pin->rx_low_drive_cnt = 0;
 	pin->tx_low_drive_cnt = 0;
-	अगर (pin->ops->status)
+	if (pin->ops->status)
 		pin->ops->status(adap, file);
-पूर्ण
+}
 
-अटल पूर्णांक cec_pin_adap_monitor_all_enable(काष्ठा cec_adapter *adap,
+static int cec_pin_adap_monitor_all_enable(struct cec_adapter *adap,
 						  bool enable)
-अणु
-	काष्ठा cec_pin *pin = adap->pin;
+{
+	struct cec_pin *pin = adap->pin;
 
 	pin->monitor_all = enable;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम cec_pin_adap_मुक्त(काष्ठा cec_adapter *adap)
-अणु
-	काष्ठा cec_pin *pin = adap->pin;
+static void cec_pin_adap_free(struct cec_adapter *adap)
+{
+	struct cec_pin *pin = adap->pin;
 
-	अगर (pin->ops->मुक्त)
-		pin->ops->मुक्त(adap);
-	adap->pin = शून्य;
-	kमुक्त(pin);
-पूर्ण
+	if (pin->ops->free)
+		pin->ops->free(adap);
+	adap->pin = NULL;
+	kfree(pin);
+}
 
-अटल पूर्णांक cec_pin_received(काष्ठा cec_adapter *adap, काष्ठा cec_msg *msg)
-अणु
-	काष्ठा cec_pin *pin = adap->pin;
+static int cec_pin_received(struct cec_adapter *adap, struct cec_msg *msg)
+{
+	struct cec_pin *pin = adap->pin;
 
-	अगर (pin->ops->received)
-		वापस pin->ops->received(adap, msg);
-	वापस -ENOMSG;
-पूर्ण
+	if (pin->ops->received)
+		return pin->ops->received(adap, msg);
+	return -ENOMSG;
+}
 
-व्योम cec_pin_changed(काष्ठा cec_adapter *adap, bool value)
-अणु
-	काष्ठा cec_pin *pin = adap->pin;
+void cec_pin_changed(struct cec_adapter *adap, bool value)
+{
+	struct cec_pin *pin = adap->pin;
 
 	cec_pin_update(pin, value, false);
-	अगर (!value && (adap->is_configuring || adap->is_configured ||
+	if (!value && (adap->is_configuring || adap->is_configured ||
 		       adap->monitor_all_cnt))
 		atomic_set(&pin->work_irq_change, CEC_PIN_IRQ_DISABLE);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(cec_pin_changed);
 
-अटल स्थिर काष्ठा cec_adap_ops cec_pin_adap_ops = अणु
+static const struct cec_adap_ops cec_pin_adap_ops = {
 	.adap_enable = cec_pin_adap_enable,
 	.adap_monitor_all_enable = cec_pin_adap_monitor_all_enable,
 	.adap_log_addr = cec_pin_adap_log_addr,
 	.adap_transmit = cec_pin_adap_transmit,
 	.adap_status = cec_pin_adap_status,
-	.adap_मुक्त = cec_pin_adap_मुक्त,
-#अगर_घोषित CONFIG_CEC_PIN_ERROR_INJ
+	.adap_free = cec_pin_adap_free,
+#ifdef CONFIG_CEC_PIN_ERROR_INJ
 	.error_inj_parse_line = cec_pin_error_inj_parse_line,
 	.error_inj_show = cec_pin_error_inj_show,
-#पूर्ण_अगर
+#endif
 	.received = cec_pin_received,
-पूर्ण;
+};
 
-काष्ठा cec_adapter *cec_pin_allocate_adapter(स्थिर काष्ठा cec_pin_ops *pin_ops,
-					व्योम *priv, स्थिर अक्षर *name, u32 caps)
-अणु
-	काष्ठा cec_adapter *adap;
-	काष्ठा cec_pin *pin = kzalloc(माप(*pin), GFP_KERNEL);
+struct cec_adapter *cec_pin_allocate_adapter(const struct cec_pin_ops *pin_ops,
+					void *priv, const char *name, u32 caps)
+{
+	struct cec_adapter *adap;
+	struct cec_pin *pin = kzalloc(sizeof(*pin), GFP_KERNEL);
 
-	अगर (pin == शून्य)
-		वापस ERR_PTR(-ENOMEM);
+	if (pin == NULL)
+		return ERR_PTR(-ENOMEM);
 	pin->ops = pin_ops;
-	hrसमयr_init(&pin->समयr, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-	pin->समयr.function = cec_pin_समयr;
-	init_रुकोqueue_head(&pin->kthपढ़ो_रुकोq);
+	hrtimer_init(&pin->timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+	pin->timer.function = cec_pin_timer;
+	init_waitqueue_head(&pin->kthread_waitq);
 	pin->tx_custom_low_usecs = CEC_TIM_CUSTOM_DEFAULT;
 	pin->tx_custom_high_usecs = CEC_TIM_CUSTOM_DEFAULT;
 
@@ -1333,14 +1332,14 @@ EXPORT_SYMBOL_GPL(cec_pin_changed);
 			    caps | CEC_CAP_MONITOR_ALL | CEC_CAP_MONITOR_PIN,
 			    CEC_MAX_LOG_ADDRS);
 
-	अगर (IS_ERR(adap)) अणु
-		kमुक्त(pin);
-		वापस adap;
-	पूर्ण
+	if (IS_ERR(adap)) {
+		kfree(pin);
+		return adap;
+	}
 
 	adap->pin = pin;
 	pin->adap = adap;
 	cec_pin_update(pin, cec_pin_high(pin), true);
-	वापस adap;
-पूर्ण
+	return adap;
+}
 EXPORT_SYMBOL_GPL(cec_pin_allocate_adapter);

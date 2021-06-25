@@ -1,112 +1,111 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * page.c - buffer/page management specअगरic to NILFS
+ * page.c - buffer/page management specific to NILFS
  *
  * Copyright (C) 2005-2008 Nippon Telegraph and Telephone Corporation.
  *
  * Written by Ryusuke Konishi and Seiji Kihara.
  */
 
-#समावेश <linux/pagemap.h>
-#समावेश <linux/ग_लिखोback.h>
-#समावेश <linux/swap.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/page-flags.h>
-#समावेश <linux/list.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/pagevec.h>
-#समावेश <linux/gfp.h>
-#समावेश "nilfs.h"
-#समावेश "page.h"
-#समावेश "mdt.h"
+#include <linux/pagemap.h>
+#include <linux/writeback.h>
+#include <linux/swap.h>
+#include <linux/bitops.h>
+#include <linux/page-flags.h>
+#include <linux/list.h>
+#include <linux/highmem.h>
+#include <linux/pagevec.h>
+#include <linux/gfp.h>
+#include "nilfs.h"
+#include "page.h"
+#include "mdt.h"
 
 
-#घोषणा NILFS_BUFFER_INHERENT_BITS					\
+#define NILFS_BUFFER_INHERENT_BITS					\
 	(BIT(BH_Uptodate) | BIT(BH_Mapped) | BIT(BH_NILFS_Node) |	\
 	 BIT(BH_NILFS_Volatile) | BIT(BH_NILFS_Checked))
 
-अटल काष्ठा buffer_head *
-__nilfs_get_page_block(काष्ठा page *page, अचिन्हित दीर्घ block, pgoff_t index,
-		       पूर्णांक blkbits, अचिन्हित दीर्घ b_state)
+static struct buffer_head *
+__nilfs_get_page_block(struct page *page, unsigned long block, pgoff_t index,
+		       int blkbits, unsigned long b_state)
 
-अणु
-	अचिन्हित दीर्घ first_block;
-	काष्ठा buffer_head *bh;
+{
+	unsigned long first_block;
+	struct buffer_head *bh;
 
-	अगर (!page_has_buffers(page))
+	if (!page_has_buffers(page))
 		create_empty_buffers(page, 1 << blkbits, b_state);
 
-	first_block = (अचिन्हित दीर्घ)index << (PAGE_SHIFT - blkbits);
+	first_block = (unsigned long)index << (PAGE_SHIFT - blkbits);
 	bh = nilfs_page_get_nth_block(page, block - first_block);
 
 	touch_buffer(bh);
-	रुको_on_buffer(bh);
-	वापस bh;
-पूर्ण
+	wait_on_buffer(bh);
+	return bh;
+}
 
-काष्ठा buffer_head *nilfs_grab_buffer(काष्ठा inode *inode,
-				      काष्ठा address_space *mapping,
-				      अचिन्हित दीर्घ blkoff,
-				      अचिन्हित दीर्घ b_state)
-अणु
-	पूर्णांक blkbits = inode->i_blkbits;
+struct buffer_head *nilfs_grab_buffer(struct inode *inode,
+				      struct address_space *mapping,
+				      unsigned long blkoff,
+				      unsigned long b_state)
+{
+	int blkbits = inode->i_blkbits;
 	pgoff_t index = blkoff >> (PAGE_SHIFT - blkbits);
-	काष्ठा page *page;
-	काष्ठा buffer_head *bh;
+	struct page *page;
+	struct buffer_head *bh;
 
 	page = grab_cache_page(mapping, index);
-	अगर (unlikely(!page))
-		वापस शून्य;
+	if (unlikely(!page))
+		return NULL;
 
 	bh = __nilfs_get_page_block(page, blkoff, index, blkbits, b_state);
-	अगर (unlikely(!bh)) अणु
+	if (unlikely(!bh)) {
 		unlock_page(page);
 		put_page(page);
-		वापस शून्य;
-	पूर्ण
-	वापस bh;
-पूर्ण
+		return NULL;
+	}
+	return bh;
+}
 
 /**
- * nilfs_क्रमget_buffer - discard dirty state
+ * nilfs_forget_buffer - discard dirty state
  * @bh: buffer head of the buffer to be discarded
  */
-व्योम nilfs_क्रमget_buffer(काष्ठा buffer_head *bh)
-अणु
-	काष्ठा page *page = bh->b_page;
-	स्थिर अचिन्हित दीर्घ clear_bits =
+void nilfs_forget_buffer(struct buffer_head *bh)
+{
+	struct page *page = bh->b_page;
+	const unsigned long clear_bits =
 		(BIT(BH_Uptodate) | BIT(BH_Dirty) | BIT(BH_Mapped) |
 		 BIT(BH_Async_Write) | BIT(BH_NILFS_Volatile) |
 		 BIT(BH_NILFS_Checked) | BIT(BH_NILFS_Redirected));
 
 	lock_buffer(bh);
 	set_mask_bits(&bh->b_state, clear_bits, 0);
-	अगर (nilfs_page_buffers_clean(page))
+	if (nilfs_page_buffers_clean(page))
 		__nilfs_clear_page_dirty(page);
 
 	bh->b_blocknr = -1;
 	ClearPageUptodate(page);
 	ClearPageMappedToDisk(page);
 	unlock_buffer(bh);
-	brअन्यथा(bh);
-पूर्ण
+	brelse(bh);
+}
 
 /**
  * nilfs_copy_buffer -- copy buffer data and flags
  * @dbh: destination buffer
  * @sbh: source buffer
  */
-व्योम nilfs_copy_buffer(काष्ठा buffer_head *dbh, काष्ठा buffer_head *sbh)
-अणु
-	व्योम *kaddr0, *kaddr1;
-	अचिन्हित दीर्घ bits;
-	काष्ठा page *spage = sbh->b_page, *dpage = dbh->b_page;
-	काष्ठा buffer_head *bh;
+void nilfs_copy_buffer(struct buffer_head *dbh, struct buffer_head *sbh)
+{
+	void *kaddr0, *kaddr1;
+	unsigned long bits;
+	struct page *spage = sbh->b_page, *dpage = dbh->b_page;
+	struct buffer_head *bh;
 
 	kaddr0 = kmap_atomic(spage);
 	kaddr1 = kmap_atomic(dpage);
-	स_नकल(kaddr1 + bh_offset(dbh), kaddr0 + bh_offset(sbh), sbh->b_size);
+	memcpy(kaddr1 + bh_offset(dbh), kaddr0 + bh_offset(sbh), sbh->b_size);
 	kunmap_atomic(kaddr1);
 	kunmap_atomic(kaddr0);
 
@@ -116,73 +115,73 @@ __nilfs_get_page_block(काष्ठा page *page, अचिन्हित �
 
 	bh = dbh;
 	bits = sbh->b_state & (BIT(BH_Uptodate) | BIT(BH_Mapped));
-	जबतक ((bh = bh->b_this_page) != dbh) अणु
+	while ((bh = bh->b_this_page) != dbh) {
 		lock_buffer(bh);
 		bits &= bh->b_state;
 		unlock_buffer(bh);
-	पूर्ण
-	अगर (bits & BIT(BH_Uptodate))
+	}
+	if (bits & BIT(BH_Uptodate))
 		SetPageUptodate(dpage);
-	अन्यथा
+	else
 		ClearPageUptodate(dpage);
-	अगर (bits & BIT(BH_Mapped))
+	if (bits & BIT(BH_Mapped))
 		SetPageMappedToDisk(dpage);
-	अन्यथा
+	else
 		ClearPageMappedToDisk(dpage);
-पूर्ण
+}
 
 /**
- * nilfs_page_buffers_clean - check अगर a page has dirty buffers or not.
+ * nilfs_page_buffers_clean - check if a page has dirty buffers or not.
  * @page: page to be checked
  *
- * nilfs_page_buffers_clean() वापसs zero अगर the page has dirty buffers.
- * Otherwise, it वापसs non-zero value.
+ * nilfs_page_buffers_clean() returns zero if the page has dirty buffers.
+ * Otherwise, it returns non-zero value.
  */
-पूर्णांक nilfs_page_buffers_clean(काष्ठा page *page)
-अणु
-	काष्ठा buffer_head *bh, *head;
+int nilfs_page_buffers_clean(struct page *page)
+{
+	struct buffer_head *bh, *head;
 
 	bh = head = page_buffers(page);
-	करो अणु
-		अगर (buffer_dirty(bh))
-			वापस 0;
+	do {
+		if (buffer_dirty(bh))
+			return 0;
 		bh = bh->b_this_page;
-	पूर्ण जबतक (bh != head);
-	वापस 1;
-पूर्ण
+	} while (bh != head);
+	return 1;
+}
 
-व्योम nilfs_page_bug(काष्ठा page *page)
-अणु
-	काष्ठा address_space *m;
-	अचिन्हित दीर्घ ino;
+void nilfs_page_bug(struct page *page)
+{
+	struct address_space *m;
+	unsigned long ino;
 
-	अगर (unlikely(!page)) अणु
-		prपूर्णांकk(KERN_CRIT "NILFS_PAGE_BUG(NULL)\n");
-		वापस;
-	पूर्ण
+	if (unlikely(!page)) {
+		printk(KERN_CRIT "NILFS_PAGE_BUG(NULL)\n");
+		return;
+	}
 
 	m = page->mapping;
 	ino = m ? m->host->i_ino : 0;
 
-	prपूर्णांकk(KERN_CRIT "NILFS_PAGE_BUG(%p): cnt=%d index#=%llu flags=0x%lx "
+	printk(KERN_CRIT "NILFS_PAGE_BUG(%p): cnt=%d index#=%llu flags=0x%lx "
 	       "mapping=%p ino=%lu\n",
 	       page, page_ref_count(page),
-	       (अचिन्हित दीर्घ दीर्घ)page->index, page->flags, m, ino);
+	       (unsigned long long)page->index, page->flags, m, ino);
 
-	अगर (page_has_buffers(page)) अणु
-		काष्ठा buffer_head *bh, *head;
-		पूर्णांक i = 0;
+	if (page_has_buffers(page)) {
+		struct buffer_head *bh, *head;
+		int i = 0;
 
 		bh = head = page_buffers(page);
-		करो अणु
-			prपूर्णांकk(KERN_CRIT
+		do {
+			printk(KERN_CRIT
 			       " BH[%d] %p: cnt=%d block#=%llu state=0x%lx\n",
-			       i++, bh, atomic_पढ़ो(&bh->b_count),
-			       (अचिन्हित दीर्घ दीर्घ)bh->b_blocknr, bh->b_state);
+			       i++, bh, atomic_read(&bh->b_count),
+			       (unsigned long long)bh->b_blocknr, bh->b_state);
 			bh = bh->b_this_page;
-		पूर्ण जबतक (bh != head);
-	पूर्ण
-पूर्ण
+		} while (bh != head);
+	}
+}
 
 /**
  * nilfs_copy_page -- copy the page with buffers
@@ -190,26 +189,26 @@ __nilfs_get_page_block(काष्ठा page *page, अचिन्हित �
  * @src: source page
  * @copy_dirty: flag whether to copy dirty states on the page's buffer heads.
  *
- * This function is क्रम both data pages and btnode pages.  The dirty flag
+ * This function is for both data pages and btnode pages.  The dirty flag
  * should be treated by caller.  The page must not be under i/o.
  * Both src and dst page must be locked
  */
-अटल व्योम nilfs_copy_page(काष्ठा page *dst, काष्ठा page *src, पूर्णांक copy_dirty)
-अणु
-	काष्ठा buffer_head *dbh, *dbufs, *sbh, *sbufs;
-	अचिन्हित दीर्घ mask = NILFS_BUFFER_INHERENT_BITS;
+static void nilfs_copy_page(struct page *dst, struct page *src, int copy_dirty)
+{
+	struct buffer_head *dbh, *dbufs, *sbh, *sbufs;
+	unsigned long mask = NILFS_BUFFER_INHERENT_BITS;
 
 	BUG_ON(PageWriteback(dst));
 
 	sbh = sbufs = page_buffers(src);
-	अगर (!page_has_buffers(dst))
+	if (!page_has_buffers(dst))
 		create_empty_buffers(dst, sbh->b_size, 0);
 
-	अगर (copy_dirty)
+	if (copy_dirty)
 		mask |= BIT(BH_Dirty);
 
 	dbh = dbufs = page_buffers(dst);
-	करो अणु
+	do {
 		lock_buffer(sbh);
 		lock_buffer(dbh);
 		dbh->b_state = sbh->b_state & mask;
@@ -217,55 +216,55 @@ __nilfs_get_page_block(काष्ठा page *page, अचिन्हित �
 		dbh->b_bdev = sbh->b_bdev;
 		sbh = sbh->b_this_page;
 		dbh = dbh->b_this_page;
-	पूर्ण जबतक (dbh != dbufs);
+	} while (dbh != dbufs);
 
 	copy_highpage(dst, src);
 
-	अगर (PageUptodate(src) && !PageUptodate(dst))
+	if (PageUptodate(src) && !PageUptodate(dst))
 		SetPageUptodate(dst);
-	अन्यथा अगर (!PageUptodate(src) && PageUptodate(dst))
+	else if (!PageUptodate(src) && PageUptodate(dst))
 		ClearPageUptodate(dst);
-	अगर (PageMappedToDisk(src) && !PageMappedToDisk(dst))
+	if (PageMappedToDisk(src) && !PageMappedToDisk(dst))
 		SetPageMappedToDisk(dst);
-	अन्यथा अगर (!PageMappedToDisk(src) && PageMappedToDisk(dst))
+	else if (!PageMappedToDisk(src) && PageMappedToDisk(dst))
 		ClearPageMappedToDisk(dst);
 
-	करो अणु
+	do {
 		unlock_buffer(sbh);
 		unlock_buffer(dbh);
 		sbh = sbh->b_this_page;
 		dbh = dbh->b_this_page;
-	पूर्ण जबतक (dbh != dbufs);
-पूर्ण
+	} while (dbh != dbufs);
+}
 
-पूर्णांक nilfs_copy_dirty_pages(काष्ठा address_space *dmap,
-			   काष्ठा address_space *smap)
-अणु
-	काष्ठा pagevec pvec;
-	अचिन्हित पूर्णांक i;
+int nilfs_copy_dirty_pages(struct address_space *dmap,
+			   struct address_space *smap)
+{
+	struct pagevec pvec;
+	unsigned int i;
 	pgoff_t index = 0;
-	पूर्णांक err = 0;
+	int err = 0;
 
 	pagevec_init(&pvec);
 repeat:
-	अगर (!pagevec_lookup_tag(&pvec, smap, &index, PAGECACHE_TAG_सूचीTY))
-		वापस 0;
+	if (!pagevec_lookup_tag(&pvec, smap, &index, PAGECACHE_TAG_DIRTY))
+		return 0;
 
-	क्रम (i = 0; i < pagevec_count(&pvec); i++) अणु
-		काष्ठा page *page = pvec.pages[i], *dpage;
+	for (i = 0; i < pagevec_count(&pvec); i++) {
+		struct page *page = pvec.pages[i], *dpage;
 
 		lock_page(page);
-		अगर (unlikely(!PageDirty(page)))
+		if (unlikely(!PageDirty(page)))
 			NILFS_PAGE_BUG(page, "inconsistent dirty state");
 
 		dpage = grab_cache_page(dmap, page->index);
-		अगर (unlikely(!dpage)) अणु
+		if (unlikely(!dpage)) {
 			/* No empty page is added to the page cache */
 			err = -ENOMEM;
 			unlock_page(page);
-			अवरोध;
-		पूर्ण
-		अगर (unlikely(!page_has_buffers(page)))
+			break;
+		}
+		if (unlikely(!page_has_buffers(page)))
 			NILFS_PAGE_BUG(page,
 				       "found empty page in dat page cache");
 
@@ -275,51 +274,51 @@ repeat:
 		unlock_page(dpage);
 		put_page(dpage);
 		unlock_page(page);
-	पूर्ण
+	}
 	pagevec_release(&pvec);
 	cond_resched();
 
-	अगर (likely(!err))
-		जाओ repeat;
-	वापस err;
-पूर्ण
+	if (likely(!err))
+		goto repeat;
+	return err;
+}
 
 /**
- * nilfs_copy_back_pages -- copy back pages to original cache from shaकरोw cache
+ * nilfs_copy_back_pages -- copy back pages to original cache from shadow cache
  * @dmap: destination page cache
  * @smap: source page cache
  *
  * No pages must be added to the cache during this process.
  * This must be ensured by the caller.
  */
-व्योम nilfs_copy_back_pages(काष्ठा address_space *dmap,
-			   काष्ठा address_space *smap)
-अणु
-	काष्ठा pagevec pvec;
-	अचिन्हित पूर्णांक i, n;
+void nilfs_copy_back_pages(struct address_space *dmap,
+			   struct address_space *smap)
+{
+	struct pagevec pvec;
+	unsigned int i, n;
 	pgoff_t index = 0;
 
 	pagevec_init(&pvec);
 repeat:
 	n = pagevec_lookup(&pvec, smap, &index);
-	अगर (!n)
-		वापस;
+	if (!n)
+		return;
 
-	क्रम (i = 0; i < pagevec_count(&pvec); i++) अणु
-		काष्ठा page *page = pvec.pages[i], *dpage;
+	for (i = 0; i < pagevec_count(&pvec); i++) {
+		struct page *page = pvec.pages[i], *dpage;
 		pgoff_t offset = page->index;
 
 		lock_page(page);
 		dpage = find_lock_page(dmap, offset);
-		अगर (dpage) अणु
-			/* overग_लिखो existing page in the destination cache */
+		if (dpage) {
+			/* overwrite existing page in the destination cache */
 			WARN_ON(PageDirty(dpage));
 			nilfs_copy_page(dpage, page, 0);
 			unlock_page(dpage);
 			put_page(dpage);
-			/* Do we not need to हटाओ page from smap here? */
-		पूर्ण अन्यथा अणु
-			काष्ठा page *p;
+			/* Do we not need to remove page from smap here? */
+		} else {
+			struct page *p;
 
 			/* move the page to the destination cache */
 			xa_lock_irq(&smap->i_pages);
@@ -330,150 +329,150 @@ repeat:
 
 			xa_lock_irq(&dmap->i_pages);
 			p = __xa_store(&dmap->i_pages, offset, page, GFP_NOFS);
-			अगर (unlikely(p)) अणु
+			if (unlikely(p)) {
 				/* Probably -ENOMEM */
-				page->mapping = शून्य;
+				page->mapping = NULL;
 				put_page(page);
-			पूर्ण अन्यथा अणु
+			} else {
 				page->mapping = dmap;
 				dmap->nrpages++;
-				अगर (PageDirty(page))
+				if (PageDirty(page))
 					__xa_set_mark(&dmap->i_pages, offset,
-							PAGECACHE_TAG_सूचीTY);
-			पूर्ण
+							PAGECACHE_TAG_DIRTY);
+			}
 			xa_unlock_irq(&dmap->i_pages);
-		पूर्ण
+		}
 		unlock_page(page);
-	पूर्ण
+	}
 	pagevec_release(&pvec);
 	cond_resched();
 
-	जाओ repeat;
-पूर्ण
+	goto repeat;
+}
 
 /**
  * nilfs_clear_dirty_pages - discard dirty pages in address space
- * @mapping: address space with dirty pages क्रम discarding
- * @silent: suppress [true] or prपूर्णांक [false] warning messages
+ * @mapping: address space with dirty pages for discarding
+ * @silent: suppress [true] or print [false] warning messages
  */
-व्योम nilfs_clear_dirty_pages(काष्ठा address_space *mapping, bool silent)
-अणु
-	काष्ठा pagevec pvec;
-	अचिन्हित पूर्णांक i;
+void nilfs_clear_dirty_pages(struct address_space *mapping, bool silent)
+{
+	struct pagevec pvec;
+	unsigned int i;
 	pgoff_t index = 0;
 
 	pagevec_init(&pvec);
 
-	जबतक (pagevec_lookup_tag(&pvec, mapping, &index,
-					PAGECACHE_TAG_सूचीTY)) अणु
-		क्रम (i = 0; i < pagevec_count(&pvec); i++) अणु
-			काष्ठा page *page = pvec.pages[i];
+	while (pagevec_lookup_tag(&pvec, mapping, &index,
+					PAGECACHE_TAG_DIRTY)) {
+		for (i = 0; i < pagevec_count(&pvec); i++) {
+			struct page *page = pvec.pages[i];
 
 			lock_page(page);
 			nilfs_clear_dirty_page(page, silent);
 			unlock_page(page);
-		पूर्ण
+		}
 		pagevec_release(&pvec);
 		cond_resched();
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * nilfs_clear_dirty_page - discard dirty page
  * @page: dirty page that will be discarded
- * @silent: suppress [true] or prपूर्णांक [false] warning messages
+ * @silent: suppress [true] or print [false] warning messages
  */
-व्योम nilfs_clear_dirty_page(काष्ठा page *page, bool silent)
-अणु
-	काष्ठा inode *inode = page->mapping->host;
-	काष्ठा super_block *sb = inode->i_sb;
+void nilfs_clear_dirty_page(struct page *page, bool silent)
+{
+	struct inode *inode = page->mapping->host;
+	struct super_block *sb = inode->i_sb;
 
 	BUG_ON(!PageLocked(page));
 
-	अगर (!silent)
+	if (!silent)
 		nilfs_warn(sb, "discard dirty page: offset=%lld, ino=%lu",
 			   page_offset(page), inode->i_ino);
 
 	ClearPageUptodate(page);
 	ClearPageMappedToDisk(page);
 
-	अगर (page_has_buffers(page)) अणु
-		काष्ठा buffer_head *bh, *head;
-		स्थिर अचिन्हित दीर्घ clear_bits =
+	if (page_has_buffers(page)) {
+		struct buffer_head *bh, *head;
+		const unsigned long clear_bits =
 			(BIT(BH_Uptodate) | BIT(BH_Dirty) | BIT(BH_Mapped) |
 			 BIT(BH_Async_Write) | BIT(BH_NILFS_Volatile) |
 			 BIT(BH_NILFS_Checked) | BIT(BH_NILFS_Redirected));
 
 		bh = head = page_buffers(page);
-		करो अणु
+		do {
 			lock_buffer(bh);
-			अगर (!silent)
+			if (!silent)
 				nilfs_warn(sb,
 					   "discard dirty block: blocknr=%llu, size=%zu",
 					   (u64)bh->b_blocknr, bh->b_size);
 
 			set_mask_bits(&bh->b_state, clear_bits, 0);
 			unlock_buffer(bh);
-		पूर्ण जबतक (bh = bh->b_this_page, bh != head);
-	पूर्ण
+		} while (bh = bh->b_this_page, bh != head);
+	}
 
 	__nilfs_clear_page_dirty(page);
-पूर्ण
+}
 
-अचिन्हित पूर्णांक nilfs_page_count_clean_buffers(काष्ठा page *page,
-					    अचिन्हित पूर्णांक from, अचिन्हित पूर्णांक to)
-अणु
-	अचिन्हित पूर्णांक block_start, block_end;
-	काष्ठा buffer_head *bh, *head;
-	अचिन्हित पूर्णांक nc = 0;
+unsigned int nilfs_page_count_clean_buffers(struct page *page,
+					    unsigned int from, unsigned int to)
+{
+	unsigned int block_start, block_end;
+	struct buffer_head *bh, *head;
+	unsigned int nc = 0;
 
-	क्रम (bh = head = page_buffers(page), block_start = 0;
+	for (bh = head = page_buffers(page), block_start = 0;
 	     bh != head || !block_start;
-	     block_start = block_end, bh = bh->b_this_page) अणु
+	     block_start = block_end, bh = bh->b_this_page) {
 		block_end = block_start + bh->b_size;
-		अगर (block_end > from && block_start < to && !buffer_dirty(bh))
+		if (block_end > from && block_start < to && !buffer_dirty(bh))
 			nc++;
-	पूर्ण
-	वापस nc;
-पूर्ण
+	}
+	return nc;
+}
 
-व्योम nilfs_mapping_init(काष्ठा address_space *mapping, काष्ठा inode *inode)
-अणु
+void nilfs_mapping_init(struct address_space *mapping, struct inode *inode)
+{
 	mapping->host = inode;
 	mapping->flags = 0;
 	mapping_set_gfp_mask(mapping, GFP_NOFS);
-	mapping->निजी_data = शून्य;
+	mapping->private_data = NULL;
 	mapping->a_ops = &empty_aops;
-पूर्ण
+}
 
 /*
- * NILFS2 needs clear_page_dirty() in the following two हालs:
+ * NILFS2 needs clear_page_dirty() in the following two cases:
  *
  * 1) For B-tree node pages and data pages of the dat/gcdat, NILFS2 clears
- *    page dirty flags when it copies back pages from the shaकरोw cache
- *    (gcdat->अणुi_mapping,i_btnode_cacheपूर्ण) to its original cache
- *    (dat->अणुi_mapping,i_btnode_cacheपूर्ण).
+ *    page dirty flags when it copies back pages from the shadow cache
+ *    (gcdat->{i_mapping,i_btnode_cache}) to its original cache
+ *    (dat->{i_mapping,i_btnode_cache}).
  *
  * 2) Some B-tree operations like insertion or deletion may dispose buffers
  *    in dirty state, and this needs to cancel the dirty state of their pages.
  */
-पूर्णांक __nilfs_clear_page_dirty(काष्ठा page *page)
-अणु
-	काष्ठा address_space *mapping = page->mapping;
+int __nilfs_clear_page_dirty(struct page *page)
+{
+	struct address_space *mapping = page->mapping;
 
-	अगर (mapping) अणु
+	if (mapping) {
 		xa_lock_irq(&mapping->i_pages);
-		अगर (test_bit(PG_dirty, &page->flags)) अणु
+		if (test_bit(PG_dirty, &page->flags)) {
 			__xa_clear_mark(&mapping->i_pages, page_index(page),
-					     PAGECACHE_TAG_सूचीTY);
+					     PAGECACHE_TAG_DIRTY);
 			xa_unlock_irq(&mapping->i_pages);
-			वापस clear_page_dirty_क्रम_io(page);
-		पूर्ण
+			return clear_page_dirty_for_io(page);
+		}
 		xa_unlock_irq(&mapping->i_pages);
-		वापस 0;
-	पूर्ण
-	वापस TestClearPageDirty(page);
-पूर्ण
+		return 0;
+	}
+	return TestClearPageDirty(page);
+}
 
 /**
  * nilfs_find_uncommitted_extent - find extent of uncommitted data
@@ -484,23 +483,23 @@ repeat:
  * This function searches an extent of buffers marked "delayed" which
  * starts from a block offset equal to or larger than @start_blk.  If
  * such an extent was found, this will store the start offset in
- * @blkoff and वापस its length in blocks.  Otherwise, zero is
- * वापसed.
+ * @blkoff and return its length in blocks.  Otherwise, zero is
+ * returned.
  */
-अचिन्हित दीर्घ nilfs_find_uncommitted_extent(काष्ठा inode *inode,
+unsigned long nilfs_find_uncommitted_extent(struct inode *inode,
 					    sector_t start_blk,
 					    sector_t *blkoff)
-अणु
-	अचिन्हित पूर्णांक i;
+{
+	unsigned int i;
 	pgoff_t index;
-	अचिन्हित पूर्णांक nblocks_in_page;
-	अचिन्हित दीर्घ length = 0;
+	unsigned int nblocks_in_page;
+	unsigned long length = 0;
 	sector_t b;
-	काष्ठा pagevec pvec;
-	काष्ठा page *page;
+	struct pagevec pvec;
+	struct page *page;
 
-	अगर (inode->i_mapping->nrpages == 0)
-		वापस 0;
+	if (inode->i_mapping->nrpages == 0)
+		return 0;
 
 	index = start_blk >> (PAGE_SHIFT - inode->i_blkbits);
 	nblocks_in_page = 1U << (PAGE_SHIFT - inode->i_blkbits);
@@ -510,51 +509,51 @@ repeat:
 repeat:
 	pvec.nr = find_get_pages_contig(inode->i_mapping, index, PAGEVEC_SIZE,
 					pvec.pages);
-	अगर (pvec.nr == 0)
-		वापस length;
+	if (pvec.nr == 0)
+		return length;
 
-	अगर (length > 0 && pvec.pages[0]->index > index)
-		जाओ out;
+	if (length > 0 && pvec.pages[0]->index > index)
+		goto out;
 
 	b = pvec.pages[0]->index << (PAGE_SHIFT - inode->i_blkbits);
 	i = 0;
-	करो अणु
+	do {
 		page = pvec.pages[i];
 
 		lock_page(page);
-		अगर (page_has_buffers(page)) अणु
-			काष्ठा buffer_head *bh, *head;
+		if (page_has_buffers(page)) {
+			struct buffer_head *bh, *head;
 
 			bh = head = page_buffers(page);
-			करो अणु
-				अगर (b < start_blk)
-					जारी;
-				अगर (buffer_delay(bh)) अणु
-					अगर (length == 0)
+			do {
+				if (b < start_blk)
+					continue;
+				if (buffer_delay(bh)) {
+					if (length == 0)
 						*blkoff = b;
 					length++;
-				पूर्ण अन्यथा अगर (length > 0) अणु
-					जाओ out_locked;
-				पूर्ण
-			पूर्ण जबतक (++b, bh = bh->b_this_page, bh != head);
-		पूर्ण अन्यथा अणु
-			अगर (length > 0)
-				जाओ out_locked;
+				} else if (length > 0) {
+					goto out_locked;
+				}
+			} while (++b, bh = bh->b_this_page, bh != head);
+		} else {
+			if (length > 0)
+				goto out_locked;
 
 			b += nblocks_in_page;
-		पूर्ण
+		}
 		unlock_page(page);
 
-	पूर्ण जबतक (++i < pagevec_count(&pvec));
+	} while (++i < pagevec_count(&pvec));
 
 	index = page->index + 1;
 	pagevec_release(&pvec);
 	cond_resched();
-	जाओ repeat;
+	goto repeat;
 
 out_locked:
 	unlock_page(page);
 out:
 	pagevec_release(&pvec);
-	वापस length;
-पूर्ण
+	return length;
+}

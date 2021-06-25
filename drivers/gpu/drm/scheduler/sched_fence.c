@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,98 +21,98 @@
  *
  */
 
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/module.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/रुको.h>
+#include <linux/kthread.h>
+#include <linux/module.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/wait.h>
 
-#समावेश <drm/gpu_scheduler.h>
+#include <drm/gpu_scheduler.h>
 
-अटल काष्ठा kmem_cache *sched_fence_slab;
+static struct kmem_cache *sched_fence_slab;
 
-अटल पूर्णांक __init drm_sched_fence_slab_init(व्योम)
-अणु
+static int __init drm_sched_fence_slab_init(void)
+{
 	sched_fence_slab = kmem_cache_create(
-		"drm_sched_fence", माप(काष्ठा drm_sched_fence), 0,
-		SLAB_HWCACHE_ALIGN, शून्य);
-	अगर (!sched_fence_slab)
-		वापस -ENOMEM;
+		"drm_sched_fence", sizeof(struct drm_sched_fence), 0,
+		SLAB_HWCACHE_ALIGN, NULL);
+	if (!sched_fence_slab)
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास drm_sched_fence_slab_fini(व्योम)
-अणु
+static void __exit drm_sched_fence_slab_fini(void)
+{
 	rcu_barrier();
 	kmem_cache_destroy(sched_fence_slab);
-पूर्ण
+}
 
-व्योम drm_sched_fence_scheduled(काष्ठा drm_sched_fence *fence)
-अणु
-	पूर्णांक ret = dma_fence_संकेत(&fence->scheduled);
+void drm_sched_fence_scheduled(struct drm_sched_fence *fence)
+{
+	int ret = dma_fence_signal(&fence->scheduled);
 
-	अगर (!ret)
+	if (!ret)
 		DMA_FENCE_TRACE(&fence->scheduled,
 				"signaled from irq context\n");
-	अन्यथा
+	else
 		DMA_FENCE_TRACE(&fence->scheduled,
 				"was already signaled\n");
-पूर्ण
+}
 
-व्योम drm_sched_fence_finished(काष्ठा drm_sched_fence *fence)
-अणु
-	पूर्णांक ret = dma_fence_संकेत(&fence->finished);
+void drm_sched_fence_finished(struct drm_sched_fence *fence)
+{
+	int ret = dma_fence_signal(&fence->finished);
 
-	अगर (!ret)
+	if (!ret)
 		DMA_FENCE_TRACE(&fence->finished,
 				"signaled from irq context\n");
-	अन्यथा
+	else
 		DMA_FENCE_TRACE(&fence->finished,
 				"was already signaled\n");
-पूर्ण
+}
 
-अटल स्थिर अक्षर *drm_sched_fence_get_driver_name(काष्ठा dma_fence *fence)
-अणु
-	वापस "drm_sched";
-पूर्ण
+static const char *drm_sched_fence_get_driver_name(struct dma_fence *fence)
+{
+	return "drm_sched";
+}
 
-अटल स्थिर अक्षर *drm_sched_fence_get_समयline_name(काष्ठा dma_fence *f)
-अणु
-	काष्ठा drm_sched_fence *fence = to_drm_sched_fence(f);
-	वापस (स्थिर अक्षर *)fence->sched->name;
-पूर्ण
+static const char *drm_sched_fence_get_timeline_name(struct dma_fence *f)
+{
+	struct drm_sched_fence *fence = to_drm_sched_fence(f);
+	return (const char *)fence->sched->name;
+}
 
 /**
- * drm_sched_fence_मुक्त - मुक्त up the fence memory
+ * drm_sched_fence_free - free up the fence memory
  *
  * @rcu: RCU callback head
  *
  * Free up the fence memory after the RCU grace period.
  */
-अटल व्योम drm_sched_fence_मुक्त(काष्ठा rcu_head *rcu)
-अणु
-	काष्ठा dma_fence *f = container_of(rcu, काष्ठा dma_fence, rcu);
-	काष्ठा drm_sched_fence *fence = to_drm_sched_fence(f);
+static void drm_sched_fence_free(struct rcu_head *rcu)
+{
+	struct dma_fence *f = container_of(rcu, struct dma_fence, rcu);
+	struct drm_sched_fence *fence = to_drm_sched_fence(f);
 
-	kmem_cache_मुक्त(sched_fence_slab, fence);
-पूर्ण
+	kmem_cache_free(sched_fence_slab, fence);
+}
 
 /**
- * drm_sched_fence_release_scheduled - callback that fence can be मुक्तd
+ * drm_sched_fence_release_scheduled - callback that fence can be freed
  *
  * @f: fence
  *
  * This function is called when the reference count becomes zero.
- * It just RCU schedules मुक्तing up the fence.
+ * It just RCU schedules freeing up the fence.
  */
-अटल व्योम drm_sched_fence_release_scheduled(काष्ठा dma_fence *f)
-अणु
-	काष्ठा drm_sched_fence *fence = to_drm_sched_fence(f);
+static void drm_sched_fence_release_scheduled(struct dma_fence *f)
+{
+	struct drm_sched_fence *fence = to_drm_sched_fence(f);
 
 	dma_fence_put(fence->parent);
-	call_rcu(&fence->finished.rcu, drm_sched_fence_मुक्त);
-पूर्ण
+	call_rcu(&fence->finished.rcu, drm_sched_fence_free);
+}
 
 /**
  * drm_sched_fence_release_finished - drop extra reference
@@ -122,62 +121,62 @@
  *
  * Drop the extra reference from the scheduled fence to the base fence.
  */
-अटल व्योम drm_sched_fence_release_finished(काष्ठा dma_fence *f)
-अणु
-	काष्ठा drm_sched_fence *fence = to_drm_sched_fence(f);
+static void drm_sched_fence_release_finished(struct dma_fence *f)
+{
+	struct drm_sched_fence *fence = to_drm_sched_fence(f);
 
 	dma_fence_put(&fence->scheduled);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा dma_fence_ops drm_sched_fence_ops_scheduled = अणु
+static const struct dma_fence_ops drm_sched_fence_ops_scheduled = {
 	.get_driver_name = drm_sched_fence_get_driver_name,
-	.get_समयline_name = drm_sched_fence_get_समयline_name,
+	.get_timeline_name = drm_sched_fence_get_timeline_name,
 	.release = drm_sched_fence_release_scheduled,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा dma_fence_ops drm_sched_fence_ops_finished = अणु
+static const struct dma_fence_ops drm_sched_fence_ops_finished = {
 	.get_driver_name = drm_sched_fence_get_driver_name,
-	.get_समयline_name = drm_sched_fence_get_समयline_name,
+	.get_timeline_name = drm_sched_fence_get_timeline_name,
 	.release = drm_sched_fence_release_finished,
-पूर्ण;
+};
 
-काष्ठा drm_sched_fence *to_drm_sched_fence(काष्ठा dma_fence *f)
-अणु
-	अगर (f->ops == &drm_sched_fence_ops_scheduled)
-		वापस container_of(f, काष्ठा drm_sched_fence, scheduled);
+struct drm_sched_fence *to_drm_sched_fence(struct dma_fence *f)
+{
+	if (f->ops == &drm_sched_fence_ops_scheduled)
+		return container_of(f, struct drm_sched_fence, scheduled);
 
-	अगर (f->ops == &drm_sched_fence_ops_finished)
-		वापस container_of(f, काष्ठा drm_sched_fence, finished);
+	if (f->ops == &drm_sched_fence_ops_finished)
+		return container_of(f, struct drm_sched_fence, finished);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL(to_drm_sched_fence);
 
-काष्ठा drm_sched_fence *drm_sched_fence_create(काष्ठा drm_sched_entity *entity,
-					       व्योम *owner)
-अणु
-	काष्ठा drm_sched_fence *fence = शून्य;
-	अचिन्हित seq;
+struct drm_sched_fence *drm_sched_fence_create(struct drm_sched_entity *entity,
+					       void *owner)
+{
+	struct drm_sched_fence *fence = NULL;
+	unsigned seq;
 
 	fence = kmem_cache_zalloc(sched_fence_slab, GFP_KERNEL);
-	अगर (fence == शून्य)
-		वापस शून्य;
+	if (fence == NULL)
+		return NULL;
 
 	fence->owner = owner;
 	fence->sched = entity->rq->sched;
 	spin_lock_init(&fence->lock);
 
-	seq = atomic_inc_वापस(&entity->fence_seq);
+	seq = atomic_inc_return(&entity->fence_seq);
 	dma_fence_init(&fence->scheduled, &drm_sched_fence_ops_scheduled,
 		       &fence->lock, entity->fence_context, seq);
 	dma_fence_init(&fence->finished, &drm_sched_fence_ops_finished,
 		       &fence->lock, entity->fence_context + 1, seq);
 
-	वापस fence;
-पूर्ण
+	return fence;
+}
 
 module_init(drm_sched_fence_slab_init);
-module_निकास(drm_sched_fence_slab_fini);
+module_exit(drm_sched_fence_slab_fini);
 
 MODULE_DESCRIPTION("DRM GPU scheduler");
 MODULE_LICENSE("GPL and additional rights");

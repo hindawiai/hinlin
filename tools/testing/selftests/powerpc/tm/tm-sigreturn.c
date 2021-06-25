@@ -1,35 +1,34 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
 /*
  * Copyright 2015, Laurent Dufour, IBM Corp.
  *
- * Test the kernel's संकेत वापसing code to check reclaim is करोne अगर the
- * sigवापस() is called जबतक in a transaction (suspended since active is
- * alपढ़ोy dropped trough the प्रणाली call path).
+ * Test the kernel's signal returning code to check reclaim is done if the
+ * sigreturn() is called while in a transaction (suspended since active is
+ * already dropped trough the system call path).
  *
- * The kernel must discard the transaction when entering sigवापस, since
- * restoring the potential TM SPRS from the संकेत frame is requiring to not be
+ * The kernel must discard the transaction when entering sigreturn, since
+ * restoring the potential TM SPRS from the signal frame is requiring to not be
  * in a transaction.
  */
 
-#समावेश <संकेत.स>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <sys/types.h>
-#समावेश <sys/रुको.h>
-#समावेश <unistd.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
-#समावेश "tm.h"
-#समावेश "utils.h"
+#include "tm.h"
+#include "utils.h"
 
 
-व्योम handler(पूर्णांक sig)
-अणु
-	uपूर्णांक64_t ret;
+void handler(int sig)
+{
+	uint64_t ret;
 
-	यंत्र __अस्थिर__(
+	asm __volatile__(
 		"li             3,1             ;"
 		"tbegin.                        ;"
 		"beq            1f              ;"
@@ -41,31 +40,31 @@
 		:
 		: "memory", "3", "cr0");
 
-	अगर (ret)
-		निकास(1);
+	if (ret)
+		exit(1);
 
 	/*
-	 * We वापस from the संकेत handle जबतक in a suspended transaction
+	 * We return from the signal handle while in a suspended transaction
 	 */
-पूर्ण
+}
 
 
-पूर्णांक पंचांग_sigवापस(व्योम)
-अणु
-	काष्ठा sigaction sa;
-	uपूर्णांक64_t ret = 0;
+int tm_sigreturn(void)
+{
+	struct sigaction sa;
+	uint64_t ret = 0;
 
-	SKIP_IF(!have_hपंचांग());
+	SKIP_IF(!have_htm());
 	SKIP_IF(!is_ppc64le());
 
-	स_रखो(&sa, 0, माप(sa));
+	memset(&sa, 0, sizeof(sa));
 	sa.sa_handler = handler;
 	sigemptyset(&sa.sa_mask);
 
-	अगर (sigaction(संक_अंश, &sa, शून्य))
-		निकास(1);
+	if (sigaction(SIGSEGV, &sa, NULL))
+		exit(1);
 
-	यंत्र __अस्थिर__(
+	asm __volatile__(
 		"tbegin.                        ;"
 		"beq            1f              ;"
 		"li             3,0             ;"
@@ -82,13 +81,13 @@
 		:
 		: "memory", "3", "cr0");
 
-	अगर (ret != 2)
-		निकास(1);
+	if (ret != 2)
+		exit(1);
 
-	निकास(0);
-पूर्ण
+	exit(0);
+}
 
-पूर्णांक मुख्य(व्योम)
-अणु
-	वापस test_harness(पंचांग_sigवापस, "tm_sigreturn");
-पूर्ण
+int main(void)
+{
+	return test_harness(tm_sigreturn, "tm_sigreturn");
+}

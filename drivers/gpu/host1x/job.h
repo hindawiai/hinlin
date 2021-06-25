@@ -1,35 +1,34 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Tegra host1x Job
  *
  * Copyright (c) 2011-2013, NVIDIA Corporation.
  */
 
-#अगर_अघोषित __HOST1X_JOB_H
-#घोषणा __HOST1X_JOB_H
+#ifndef __HOST1X_JOB_H
+#define __HOST1X_JOB_H
 
-#समावेश <linux/dma-direction.h>
+#include <linux/dma-direction.h>
 
-काष्ठा host1x_job_gather अणु
-	अचिन्हित पूर्णांक words;
+struct host1x_job_gather {
+	unsigned int words;
 	dma_addr_t base;
-	काष्ठा host1x_bo *bo;
-	अचिन्हित पूर्णांक offset;
+	struct host1x_bo *bo;
+	unsigned int offset;
 	bool handled;
-पूर्ण;
+};
 
-काष्ठा host1x_job_unpin_data अणु
-	काष्ठा host1x_bo *bo;
-	काष्ठा sg_table *sgt;
-	काष्ठा device *dev;
-	माप_प्रकार size;
-	क्रमागत dma_data_direction dir;
-पूर्ण;
+struct host1x_job_unpin_data {
+	struct host1x_bo *bo;
+	struct sg_table *sgt;
+	struct device *dev;
+	size_t size;
+	enum dma_data_direction dir;
+};
 
 /*
  * Dump contents of job to debug output.
  */
-व्योम host1x_job_dump(काष्ठा device *dev, काष्ठा host1x_job *job);
+void host1x_job_dump(struct device *dev, struct host1x_job *job);
 
-#पूर्ण_अगर
+#endif

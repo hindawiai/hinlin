@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2009 Jerome Glisse.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,147 +22,147 @@
  * Authors: Jerome Glisse
  */
 
-#समावेश <drm/amdgpu_drm.h>
-#समावेश "amdgpu.h"
+#include <drm/amdgpu_drm.h>
+#include "amdgpu.h"
 
-#घोषणा AMDGPU_BENCHMARK_ITERATIONS 1024
-#घोषणा AMDGPU_BENCHMARK_COMMON_MODES_N 17
+#define AMDGPU_BENCHMARK_ITERATIONS 1024
+#define AMDGPU_BENCHMARK_COMMON_MODES_N 17
 
-अटल पूर्णांक amdgpu_benchmark_करो_move(काष्ठा amdgpu_device *adev, अचिन्हित size,
-				    uपूर्णांक64_t saddr, uपूर्णांक64_t daddr, पूर्णांक n)
-अणु
-	अचिन्हित दीर्घ start_jअगरfies;
-	अचिन्हित दीर्घ end_jअगरfies;
-	काष्ठा dma_fence *fence;
-	पूर्णांक i, r;
+static int amdgpu_benchmark_do_move(struct amdgpu_device *adev, unsigned size,
+				    uint64_t saddr, uint64_t daddr, int n)
+{
+	unsigned long start_jiffies;
+	unsigned long end_jiffies;
+	struct dma_fence *fence;
+	int i, r;
 
-	start_jअगरfies = jअगरfies;
-	क्रम (i = 0; i < n; i++) अणु
-		काष्ठा amdgpu_ring *ring = adev->mman.buffer_funcs_ring;
-		r = amdgpu_copy_buffer(ring, saddr, daddr, size, शून्य, &fence,
+	start_jiffies = jiffies;
+	for (i = 0; i < n; i++) {
+		struct amdgpu_ring *ring = adev->mman.buffer_funcs_ring;
+		r = amdgpu_copy_buffer(ring, saddr, daddr, size, NULL, &fence,
 				       false, false, false);
-		अगर (r)
-			जाओ निकास_करो_move;
-		r = dma_fence_रुको(fence, false);
+		if (r)
+			goto exit_do_move;
+		r = dma_fence_wait(fence, false);
 		dma_fence_put(fence);
-		अगर (r)
-			जाओ निकास_करो_move;
-	पूर्ण
-	end_jअगरfies = jअगरfies;
-	r = jअगरfies_to_msecs(end_jअगरfies - start_jअगरfies);
+		if (r)
+			goto exit_do_move;
+	}
+	end_jiffies = jiffies;
+	r = jiffies_to_msecs(end_jiffies - start_jiffies);
 
-निकास_करो_move:
-	वापस r;
-पूर्ण
+exit_do_move:
+	return r;
+}
 
 
-अटल व्योम amdgpu_benchmark_log_results(पूर्णांक n, अचिन्हित size,
-					 अचिन्हित पूर्णांक समय,
-					 अचिन्हित sकरोमुख्य, अचिन्हित dकरोमुख्य,
-					 अक्षर *kind)
-अणु
-	अचिन्हित पूर्णांक throughput = (n * (size >> 10)) / समय;
+static void amdgpu_benchmark_log_results(int n, unsigned size,
+					 unsigned int time,
+					 unsigned sdomain, unsigned ddomain,
+					 char *kind)
+{
+	unsigned int throughput = (n * (size >> 10)) / time;
 	DRM_INFO("amdgpu: %s %u bo moves of %u kB from"
 		 " %d to %d in %u ms, throughput: %u Mb/s or %u MB/s\n",
-		 kind, n, size >> 10, sकरोमुख्य, dकरोमुख्य, समय,
+		 kind, n, size >> 10, sdomain, ddomain, time,
 		 throughput * 8, throughput);
-पूर्ण
+}
 
-अटल व्योम amdgpu_benchmark_move(काष्ठा amdgpu_device *adev, अचिन्हित size,
-				  अचिन्हित sकरोमुख्य, अचिन्हित dकरोमुख्य)
-अणु
-	काष्ठा amdgpu_bo *करोbj = शून्य;
-	काष्ठा amdgpu_bo *sobj = शून्य;
-	काष्ठा amdgpu_bo_param bp;
-	uपूर्णांक64_t saddr, daddr;
-	पूर्णांक r, n;
-	पूर्णांक समय;
+static void amdgpu_benchmark_move(struct amdgpu_device *adev, unsigned size,
+				  unsigned sdomain, unsigned ddomain)
+{
+	struct amdgpu_bo *dobj = NULL;
+	struct amdgpu_bo *sobj = NULL;
+	struct amdgpu_bo_param bp;
+	uint64_t saddr, daddr;
+	int r, n;
+	int time;
 
-	स_रखो(&bp, 0, माप(bp));
+	memset(&bp, 0, sizeof(bp));
 	bp.size = size;
 	bp.byte_align = PAGE_SIZE;
-	bp.करोमुख्य = sकरोमुख्य;
+	bp.domain = sdomain;
 	bp.flags = 0;
-	bp.type = tपंचांग_bo_type_kernel;
-	bp.resv = शून्य;
-	bp.bo_ptr_size = माप(काष्ठा amdgpu_bo);
+	bp.type = ttm_bo_type_kernel;
+	bp.resv = NULL;
+	bp.bo_ptr_size = sizeof(struct amdgpu_bo);
 
 	n = AMDGPU_BENCHMARK_ITERATIONS;
 	r = amdgpu_bo_create(adev, &bp, &sobj);
-	अगर (r) अणु
-		जाओ out_cleanup;
-	पूर्ण
+	if (r) {
+		goto out_cleanup;
+	}
 	r = amdgpu_bo_reserve(sobj, false);
-	अगर (unlikely(r != 0))
-		जाओ out_cleanup;
-	r = amdgpu_bo_pin(sobj, sकरोमुख्य);
-	अगर (r) अणु
+	if (unlikely(r != 0))
+		goto out_cleanup;
+	r = amdgpu_bo_pin(sobj, sdomain);
+	if (r) {
 		amdgpu_bo_unreserve(sobj);
-		जाओ out_cleanup;
-	पूर्ण
-	r = amdgpu_tपंचांग_alloc_gart(&sobj->tbo);
+		goto out_cleanup;
+	}
+	r = amdgpu_ttm_alloc_gart(&sobj->tbo);
 	amdgpu_bo_unreserve(sobj);
-	अगर (r) अणु
-		जाओ out_cleanup;
-	पूर्ण
+	if (r) {
+		goto out_cleanup;
+	}
 	saddr = amdgpu_bo_gpu_offset(sobj);
-	bp.करोमुख्य = dकरोमुख्य;
-	r = amdgpu_bo_create(adev, &bp, &करोbj);
-	अगर (r) अणु
-		जाओ out_cleanup;
-	पूर्ण
-	r = amdgpu_bo_reserve(करोbj, false);
-	अगर (unlikely(r != 0))
-		जाओ out_cleanup;
-	r = amdgpu_bo_pin(करोbj, dकरोमुख्य);
-	अगर (r) अणु
+	bp.domain = ddomain;
+	r = amdgpu_bo_create(adev, &bp, &dobj);
+	if (r) {
+		goto out_cleanup;
+	}
+	r = amdgpu_bo_reserve(dobj, false);
+	if (unlikely(r != 0))
+		goto out_cleanup;
+	r = amdgpu_bo_pin(dobj, ddomain);
+	if (r) {
 		amdgpu_bo_unreserve(sobj);
-		जाओ out_cleanup;
-	पूर्ण
-	r = amdgpu_tपंचांग_alloc_gart(&करोbj->tbo);
-	amdgpu_bo_unreserve(करोbj);
-	अगर (r) अणु
-		जाओ out_cleanup;
-	पूर्ण
-	daddr = amdgpu_bo_gpu_offset(करोbj);
+		goto out_cleanup;
+	}
+	r = amdgpu_ttm_alloc_gart(&dobj->tbo);
+	amdgpu_bo_unreserve(dobj);
+	if (r) {
+		goto out_cleanup;
+	}
+	daddr = amdgpu_bo_gpu_offset(dobj);
 
-	अगर (adev->mman.buffer_funcs) अणु
-		समय = amdgpu_benchmark_करो_move(adev, size, saddr, daddr, n);
-		अगर (समय < 0)
-			जाओ out_cleanup;
-		अगर (समय > 0)
-			amdgpu_benchmark_log_results(n, size, समय,
-						     sकरोमुख्य, dकरोमुख्य, "dma");
-	पूर्ण
+	if (adev->mman.buffer_funcs) {
+		time = amdgpu_benchmark_do_move(adev, size, saddr, daddr, n);
+		if (time < 0)
+			goto out_cleanup;
+		if (time > 0)
+			amdgpu_benchmark_log_results(n, size, time,
+						     sdomain, ddomain, "dma");
+	}
 
 out_cleanup:
 	/* Check error value now. The value can be overwritten when clean up.*/
-	अगर (r) अणु
+	if (r) {
 		DRM_ERROR("Error while benchmarking BO move.\n");
-	पूर्ण
+	}
 
-	अगर (sobj) अणु
+	if (sobj) {
 		r = amdgpu_bo_reserve(sobj, true);
-		अगर (likely(r == 0)) अणु
+		if (likely(r == 0)) {
 			amdgpu_bo_unpin(sobj);
 			amdgpu_bo_unreserve(sobj);
-		पूर्ण
+		}
 		amdgpu_bo_unref(&sobj);
-	पूर्ण
-	अगर (करोbj) अणु
-		r = amdgpu_bo_reserve(करोbj, true);
-		अगर (likely(r == 0)) अणु
-			amdgpu_bo_unpin(करोbj);
-			amdgpu_bo_unreserve(करोbj);
-		पूर्ण
-		amdgpu_bo_unref(&करोbj);
-	पूर्ण
-पूर्ण
+	}
+	if (dobj) {
+		r = amdgpu_bo_reserve(dobj, true);
+		if (likely(r == 0)) {
+			amdgpu_bo_unpin(dobj);
+			amdgpu_bo_unreserve(dobj);
+		}
+		amdgpu_bo_unref(&dobj);
+	}
+}
 
-व्योम amdgpu_benchmark(काष्ठा amdgpu_device *adev, पूर्णांक test_number)
-अणु
-	पूर्णांक i;
-	अटल स्थिर पूर्णांक common_modes[AMDGPU_BENCHMARK_COMMON_MODES_N] = अणु
+void amdgpu_benchmark(struct amdgpu_device *adev, int test_number)
+{
+	int i;
+	static const int common_modes[AMDGPU_BENCHMARK_COMMON_MODES_N] = {
 		640 * 480 * 4,
 		720 * 480 * 4,
 		800 * 600 * 4,
@@ -181,65 +180,65 @@ out_cleanup:
 		1600 * 1200 * 4,
 		1920 * 1080 * 4,
 		1920 * 1200 * 4
-	पूर्ण;
+	};
 
-	चयन (test_number) अणु
-	हाल 1:
+	switch (test_number) {
+	case 1:
 		/* simple test, VRAM to GTT and GTT to VRAM */
 		amdgpu_benchmark_move(adev, 1024*1024, AMDGPU_GEM_DOMAIN_GTT,
 				      AMDGPU_GEM_DOMAIN_VRAM);
 		amdgpu_benchmark_move(adev, 1024*1024, AMDGPU_GEM_DOMAIN_VRAM,
 				      AMDGPU_GEM_DOMAIN_GTT);
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		/* simple test, VRAM to VRAM */
 		amdgpu_benchmark_move(adev, 1024*1024, AMDGPU_GEM_DOMAIN_VRAM,
 				      AMDGPU_GEM_DOMAIN_VRAM);
-		अवरोध;
-	हाल 3:
-		/* GTT to VRAM, buffer size sweep, घातers of 2 */
-		क्रम (i = 1; i <= 16384; i <<= 1)
+		break;
+	case 3:
+		/* GTT to VRAM, buffer size sweep, powers of 2 */
+		for (i = 1; i <= 16384; i <<= 1)
 			amdgpu_benchmark_move(adev, i * AMDGPU_GPU_PAGE_SIZE,
 					      AMDGPU_GEM_DOMAIN_GTT,
 					      AMDGPU_GEM_DOMAIN_VRAM);
-		अवरोध;
-	हाल 4:
-		/* VRAM to GTT, buffer size sweep, घातers of 2 */
-		क्रम (i = 1; i <= 16384; i <<= 1)
+		break;
+	case 4:
+		/* VRAM to GTT, buffer size sweep, powers of 2 */
+		for (i = 1; i <= 16384; i <<= 1)
 			amdgpu_benchmark_move(adev, i * AMDGPU_GPU_PAGE_SIZE,
 					      AMDGPU_GEM_DOMAIN_VRAM,
 					      AMDGPU_GEM_DOMAIN_GTT);
-		अवरोध;
-	हाल 5:
-		/* VRAM to VRAM, buffer size sweep, घातers of 2 */
-		क्रम (i = 1; i <= 16384; i <<= 1)
+		break;
+	case 5:
+		/* VRAM to VRAM, buffer size sweep, powers of 2 */
+		for (i = 1; i <= 16384; i <<= 1)
 			amdgpu_benchmark_move(adev, i * AMDGPU_GPU_PAGE_SIZE,
 					      AMDGPU_GEM_DOMAIN_VRAM,
 					      AMDGPU_GEM_DOMAIN_VRAM);
-		अवरोध;
-	हाल 6:
+		break;
+	case 6:
 		/* GTT to VRAM, buffer size sweep, common modes */
-		क्रम (i = 0; i < AMDGPU_BENCHMARK_COMMON_MODES_N; i++)
+		for (i = 0; i < AMDGPU_BENCHMARK_COMMON_MODES_N; i++)
 			amdgpu_benchmark_move(adev, common_modes[i],
 					      AMDGPU_GEM_DOMAIN_GTT,
 					      AMDGPU_GEM_DOMAIN_VRAM);
-		अवरोध;
-	हाल 7:
+		break;
+	case 7:
 		/* VRAM to GTT, buffer size sweep, common modes */
-		क्रम (i = 0; i < AMDGPU_BENCHMARK_COMMON_MODES_N; i++)
+		for (i = 0; i < AMDGPU_BENCHMARK_COMMON_MODES_N; i++)
 			amdgpu_benchmark_move(adev, common_modes[i],
 					      AMDGPU_GEM_DOMAIN_VRAM,
 					      AMDGPU_GEM_DOMAIN_GTT);
-		अवरोध;
-	हाल 8:
+		break;
+	case 8:
 		/* VRAM to VRAM, buffer size sweep, common modes */
-		क्रम (i = 0; i < AMDGPU_BENCHMARK_COMMON_MODES_N; i++)
+		for (i = 0; i < AMDGPU_BENCHMARK_COMMON_MODES_N; i++)
 			amdgpu_benchmark_move(adev, common_modes[i],
 					      AMDGPU_GEM_DOMAIN_VRAM,
 					      AMDGPU_GEM_DOMAIN_VRAM);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		DRM_ERROR("Unknown benchmark\n");
-	पूर्ण
-पूर्ण
+	}
+}

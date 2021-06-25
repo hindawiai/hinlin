@@ -1,232 +1,231 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * R-Car Generation 2 da9063(L)/da9210 regulator quirk
  *
  * Certain Gen2 development boards have an da9063 and one or more da9210
- * regulators. All of these regulators have their पूर्णांकerrupt request lines
- * tied to the same पूर्णांकerrupt pin (IRQ2) on the SoC.
+ * regulators. All of these regulators have their interrupt request lines
+ * tied to the same interrupt pin (IRQ2) on the SoC.
  *
  * After cold boot or da9063-induced restart, both the da9063 and da9210 seem
- * to निश्चित their पूर्णांकerrupt request lines.  Hence as soon as one driver
- * requests this irq, it माला_लो stuck in an पूर्णांकerrupt storm, as it only manages
- * to deनिश्चित its own पूर्णांकerrupt request line, and the other driver hasn't
- * installed an पूर्णांकerrupt handler yet.
+ * to assert their interrupt request lines.  Hence as soon as one driver
+ * requests this irq, it gets stuck in an interrupt storm, as it only manages
+ * to deassert its own interrupt request line, and the other driver hasn't
+ * installed an interrupt handler yet.
  *
- * To handle this, install a quirk that masks the पूर्णांकerrupts in both the
+ * To handle this, install a quirk that masks the interrupts in both the
  * da9063 and da9210.  This quirk has to run after the i2c master driver has
- * been initialized, but beक्रमe the i2c slave drivers are initialized.
+ * been initialized, but before the i2c slave drivers are initialized.
  *
  * Copyright (C) 2015 Glider bvba
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/list.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/mfd/da9063/रेजिस्टरs.h>
+#include <linux/device.h>
+#include <linux/i2c.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/list.h>
+#include <linux/notifier.h>
+#include <linux/of.h>
+#include <linux/of_irq.h>
+#include <linux/mfd/da9063/registers.h>
 
-#घोषणा IRQC_BASE		0xe61c0000
-#घोषणा IRQC_MONITOR		0x104	/* IRQn Signal Level Monitor Register */
+#define IRQC_BASE		0xe61c0000
+#define IRQC_MONITOR		0x104	/* IRQn Signal Level Monitor Register */
 
-#घोषणा REGULATOR_IRQ_MASK	BIT(2)	/* IRQ2, active low */
+#define REGULATOR_IRQ_MASK	BIT(2)	/* IRQ2, active low */
 
 /* start of DA9210 System Control and Event Registers */
-#घोषणा DA9210_REG_MASK_A		0x54
+#define DA9210_REG_MASK_A		0x54
 
-काष्ठा regulator_quirk अणु
-	काष्ठा list_head		list;
-	स्थिर काष्ठा of_device_id	*id;
-	काष्ठा device_node		*np;
-	काष्ठा of_phandle_args		irq_args;
-	काष्ठा i2c_msg			i2c_msg;
+struct regulator_quirk {
+	struct list_head		list;
+	const struct of_device_id	*id;
+	struct device_node		*np;
+	struct of_phandle_args		irq_args;
+	struct i2c_msg			i2c_msg;
 	bool				shared;	/* IRQ line is shared */
-पूर्ण;
+};
 
-अटल LIST_HEAD(quirk_list);
-अटल व्योम __iomem *irqc;
+static LIST_HEAD(quirk_list);
+static void __iomem *irqc;
 
-/* first byte sets the memory poपूर्णांकer, following are consecutive reg values */
-अटल u8 da9063_irq_clr[] = अणु DA9063_REG_IRQ_MASK_A, 0xff, 0xff, 0xff, 0xff पूर्ण;
-अटल u8 da9210_irq_clr[] = अणु DA9210_REG_MASK_A, 0xff, 0xff पूर्ण;
+/* first byte sets the memory pointer, following are consecutive reg values */
+static u8 da9063_irq_clr[] = { DA9063_REG_IRQ_MASK_A, 0xff, 0xff, 0xff, 0xff };
+static u8 da9210_irq_clr[] = { DA9210_REG_MASK_A, 0xff, 0xff };
 
-अटल काष्ठा i2c_msg da9063_msg = अणु
+static struct i2c_msg da9063_msg = {
 	.len = ARRAY_SIZE(da9063_irq_clr),
 	.buf = da9063_irq_clr,
-पूर्ण;
+};
 
-अटल काष्ठा i2c_msg da9210_msg = अणु
+static struct i2c_msg da9210_msg = {
 	.len = ARRAY_SIZE(da9210_irq_clr),
 	.buf = da9210_irq_clr,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id rcar_gen2_quirk_match[] = अणु
-	अणु .compatible = "dlg,da9063", .data = &da9063_msg पूर्ण,
-	अणु .compatible = "dlg,da9063l", .data = &da9063_msg पूर्ण,
-	अणु .compatible = "dlg,da9210", .data = &da9210_msg पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id rcar_gen2_quirk_match[] = {
+	{ .compatible = "dlg,da9063", .data = &da9063_msg },
+	{ .compatible = "dlg,da9063l", .data = &da9063_msg },
+	{ .compatible = "dlg,da9210", .data = &da9210_msg },
+	{},
+};
 
-अटल पूर्णांक regulator_quirk_notअगरy(काष्ठा notअगरier_block *nb,
-				  अचिन्हित दीर्घ action, व्योम *data)
-अणु
-	काष्ठा regulator_quirk *pos, *पंचांगp;
-	काष्ठा device *dev = data;
-	काष्ठा i2c_client *client;
-	अटल bool करोne;
-	पूर्णांक ret;
+static int regulator_quirk_notify(struct notifier_block *nb,
+				  unsigned long action, void *data)
+{
+	struct regulator_quirk *pos, *tmp;
+	struct device *dev = data;
+	struct i2c_client *client;
+	static bool done;
+	int ret;
 	u32 mon;
 
-	अगर (करोne)
-		वापस 0;
+	if (done)
+		return 0;
 
-	mon = ioपढ़ो32(irqc + IRQC_MONITOR);
+	mon = ioread32(irqc + IRQC_MONITOR);
 	dev_dbg(dev, "%s: %ld, IRQC_MONITOR = 0x%x\n", __func__, action, mon);
-	अगर (mon & REGULATOR_IRQ_MASK)
-		जाओ हटाओ;
+	if (mon & REGULATOR_IRQ_MASK)
+		goto remove;
 
-	अगर (action != BUS_NOTIFY_ADD_DEVICE || dev->type == &i2c_adapter_type)
-		वापस 0;
+	if (action != BUS_NOTIFY_ADD_DEVICE || dev->type == &i2c_adapter_type)
+		return 0;
 
 	client = to_i2c_client(dev);
 	dev_dbg(dev, "Detected %s\n", client->name);
 
 	/*
-	 * Send message to all PMICs that share an IRQ line to deनिश्चित it.
+	 * Send message to all PMICs that share an IRQ line to deassert it.
 	 *
-	 * WARNING: This works only अगर all the PMICs are on the same I2C bus.
+	 * WARNING: This works only if all the PMICs are on the same I2C bus.
 	 */
-	list_क्रम_each_entry(pos, &quirk_list, list) अणु
-		अगर (!pos->shared)
-			जारी;
+	list_for_each_entry(pos, &quirk_list, list) {
+		if (!pos->shared)
+			continue;
 
-		अगर (pos->np->parent != client->dev.parent->of_node)
-			जारी;
+		if (pos->np->parent != client->dev.parent->of_node)
+			continue;
 
 		dev_info(&client->dev, "clearing %s@0x%02x interrupts\n",
 			 pos->id->compatible, pos->i2c_msg.addr);
 
 		ret = i2c_transfer(client->adapter, &pos->i2c_msg, 1);
-		अगर (ret != 1)
+		if (ret != 1)
 			dev_err(&client->dev, "i2c error %d\n", ret);
-	पूर्ण
+	}
 
-	mon = ioपढ़ो32(irqc + IRQC_MONITOR);
-	अगर (mon & REGULATOR_IRQ_MASK)
-		जाओ हटाओ;
+	mon = ioread32(irqc + IRQC_MONITOR);
+	if (mon & REGULATOR_IRQ_MASK)
+		goto remove;
 
-	वापस 0;
+	return 0;
 
-हटाओ:
+remove:
 	dev_info(dev, "IRQ2 is not asserted, removing quirk\n");
 
-	list_क्रम_each_entry_safe(pos, पंचांगp, &quirk_list, list) अणु
+	list_for_each_entry_safe(pos, tmp, &quirk_list, list) {
 		list_del(&pos->list);
-		kमुक्त(pos);
-	पूर्ण
+		kfree(pos);
+	}
 
-	करोne = true;
+	done = true;
 	iounmap(irqc);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा notअगरier_block regulator_quirk_nb = अणु
-	.notअगरier_call = regulator_quirk_notअगरy
-पूर्ण;
+static struct notifier_block regulator_quirk_nb = {
+	.notifier_call = regulator_quirk_notify
+};
 
-अटल पूर्णांक __init rcar_gen2_regulator_quirk(व्योम)
-अणु
-	काष्ठा regulator_quirk *quirk, *pos, *पंचांगp;
-	काष्ठा of_phandle_args *argsa, *argsb;
-	स्थिर काष्ठा of_device_id *id;
-	काष्ठा device_node *np;
+static int __init rcar_gen2_regulator_quirk(void)
+{
+	struct regulator_quirk *quirk, *pos, *tmp;
+	struct of_phandle_args *argsa, *argsb;
+	const struct of_device_id *id;
+	struct device_node *np;
 	u32 mon, addr;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!of_machine_is_compatible("renesas,koelsch") &&
+	if (!of_machine_is_compatible("renesas,koelsch") &&
 	    !of_machine_is_compatible("renesas,lager") &&
 	    !of_machine_is_compatible("renesas,porter") &&
 	    !of_machine_is_compatible("renesas,stout") &&
 	    !of_machine_is_compatible("renesas,gose"))
-		वापस -ENODEV;
+		return -ENODEV;
 
-	क्रम_each_matching_node_and_match(np, rcar_gen2_quirk_match, &id) अणु
-		अगर (!of_device_is_available(np))
-			अवरोध;
+	for_each_matching_node_and_match(np, rcar_gen2_quirk_match, &id) {
+		if (!of_device_is_available(np))
+			break;
 
-		ret = of_property_पढ़ो_u32(np, "reg", &addr);
-		अगर (ret)	/* Skip invalid entry and जारी */
-			जारी;
+		ret = of_property_read_u32(np, "reg", &addr);
+		if (ret)	/* Skip invalid entry and continue */
+			continue;
 
-		quirk = kzalloc(माप(*quirk), GFP_KERNEL);
-		अगर (!quirk) अणु
+		quirk = kzalloc(sizeof(*quirk), GFP_KERNEL);
+		if (!quirk) {
 			ret = -ENOMEM;
-			जाओ err_mem;
-		पूर्ण
+			goto err_mem;
+		}
 
 		argsa = &quirk->irq_args;
-		स_नकल(&quirk->i2c_msg, id->data, माप(quirk->i2c_msg));
+		memcpy(&quirk->i2c_msg, id->data, sizeof(quirk->i2c_msg));
 
 		quirk->id = id;
 		quirk->np = np;
 		quirk->i2c_msg.addr = addr;
 
 		ret = of_irq_parse_one(np, 0, argsa);
-		अगर (ret) अणु	/* Skip invalid entry and जारी */
-			kमुक्त(quirk);
-			जारी;
-		पूर्ण
+		if (ret) {	/* Skip invalid entry and continue */
+			kfree(quirk);
+			continue;
+		}
 
-		list_क्रम_each_entry(pos, &quirk_list, list) अणु
+		list_for_each_entry(pos, &quirk_list, list) {
 			argsb = &pos->irq_args;
 
-			अगर (argsa->args_count != argsb->args_count)
-				जारी;
+			if (argsa->args_count != argsb->args_count)
+				continue;
 
-			ret = स_भेद(argsa->args, argsb->args,
+			ret = memcmp(argsa->args, argsb->args,
 				     argsa->args_count *
-				     माप(argsa->args[0]));
-			अगर (!ret) अणु
+				     sizeof(argsa->args[0]));
+			if (!ret) {
 				pos->shared = true;
 				quirk->shared = true;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		list_add_tail(&quirk->list, &quirk_list);
-	पूर्ण
+	}
 
 	irqc = ioremap(IRQC_BASE, PAGE_SIZE);
-	अगर (!irqc) अणु
+	if (!irqc) {
 		ret = -ENOMEM;
-		जाओ err_mem;
-	पूर्ण
+		goto err_mem;
+	}
 
-	mon = ioपढ़ो32(irqc + IRQC_MONITOR);
-	अगर (mon & REGULATOR_IRQ_MASK) अणु
+	mon = ioread32(irqc + IRQC_MONITOR);
+	if (mon & REGULATOR_IRQ_MASK) {
 		pr_debug("%s: IRQ2 is not asserted, not installing quirk\n",
 			 __func__);
 		ret = 0;
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
 	pr_info("IRQ2 is asserted, installing regulator quirk\n");
 
-	bus_रेजिस्टर_notअगरier(&i2c_bus_type, &regulator_quirk_nb);
-	वापस 0;
+	bus_register_notifier(&i2c_bus_type, &regulator_quirk_nb);
+	return 0;
 
-err_मुक्त:
+err_free:
 	iounmap(irqc);
 err_mem:
-	list_क्रम_each_entry_safe(pos, पंचांगp, &quirk_list, list) अणु
+	list_for_each_entry_safe(pos, tmp, &quirk_list, list) {
 		list_del(&pos->list);
-		kमुक्त(pos);
-	पूर्ण
+		kfree(pos);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 arch_initcall(rcar_gen2_regulator_quirk);

@@ -1,34 +1,33 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2017 Oracle and/or its affiliates. All rights reserved. */
 
-#समावेश "ixgbe.h"
-#समावेश <net/xfrm.h>
-#समावेश <crypto/aead.h>
-#समावेश <linux/अगर_bridge.h>
+#include "ixgbe.h"
+#include <net/xfrm.h>
+#include <crypto/aead.h>
+#include <linux/if_bridge.h>
 
-#घोषणा IXGBE_IPSEC_KEY_BITS  160
-अटल स्थिर अक्षर aes_gcm_name[] = "rfc4106(gcm(aes))";
+#define IXGBE_IPSEC_KEY_BITS  160
+static const char aes_gcm_name[] = "rfc4106(gcm(aes))";
 
-अटल व्योम ixgbe_ipsec_del_sa(काष्ठा xfrm_state *xs);
+static void ixgbe_ipsec_del_sa(struct xfrm_state *xs);
 
 /**
- * ixgbe_ipsec_set_tx_sa - set the Tx SA रेजिस्टरs
- * @hw: hw specअगरic details
- * @idx: रेजिस्टर index to ग_लिखो
+ * ixgbe_ipsec_set_tx_sa - set the Tx SA registers
+ * @hw: hw specific details
+ * @idx: register index to write
  * @key: key byte array
  * @salt: salt bytes
  **/
-अटल व्योम ixgbe_ipsec_set_tx_sa(काष्ठा ixgbe_hw *hw, u16 idx,
+static void ixgbe_ipsec_set_tx_sa(struct ixgbe_hw *hw, u16 idx,
 				  u32 key[], u32 salt)
-अणु
+{
 	u32 reg;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < 4; i++)
+	for (i = 0; i < 4; i++)
 		IXGBE_WRITE_REG(hw, IXGBE_IPSTXKEY(i),
-				(__क्रमce u32)cpu_to_be32(key[3 - i]));
-	IXGBE_WRITE_REG(hw, IXGBE_IPSTXSALT, (__क्रमce u32)cpu_to_be32(salt));
+				(__force u32)cpu_to_be32(key[3 - i]));
+	IXGBE_WRITE_REG(hw, IXGBE_IPSTXSALT, (__force u32)cpu_to_be32(salt));
 	IXGBE_WRITE_FLUSH(hw);
 
 	reg = IXGBE_READ_REG(hw, IXGBE_IPSTXIDX);
@@ -36,20 +35,20 @@
 	reg |= idx << IXGBE_RXTXIDX_IDX_SHIFT | IXGBE_RXTXIDX_WRITE;
 	IXGBE_WRITE_REG(hw, IXGBE_IPSTXIDX, reg);
 	IXGBE_WRITE_FLUSH(hw);
-पूर्ण
+}
 
 /**
  * ixgbe_ipsec_set_rx_item - set an Rx table item
- * @hw: hw specअगरic details
- * @idx: रेजिस्टर index to ग_लिखो
+ * @hw: hw specific details
+ * @idx: register index to write
  * @tbl: table selector
  *
- * Trigger the device to store पूर्णांकo a particular Rx table the
- * data that has alपढ़ोy been loaded पूर्णांकo the input रेजिस्टर
+ * Trigger the device to store into a particular Rx table the
+ * data that has already been loaded into the input register
  **/
-अटल व्योम ixgbe_ipsec_set_rx_item(काष्ठा ixgbe_hw *hw, u16 idx,
-				    क्रमागत ixgbe_ipsec_tbl_sel tbl)
-अणु
+static void ixgbe_ipsec_set_rx_item(struct ixgbe_hw *hw, u16 idx,
+				    enum ixgbe_ipsec_tbl_sel tbl)
+{
 	u32 reg;
 
 	reg = IXGBE_READ_REG(hw, IXGBE_IPSRXIDX);
@@ -59,94 +58,94 @@
 	       IXGBE_RXTXIDX_WRITE;
 	IXGBE_WRITE_REG(hw, IXGBE_IPSRXIDX, reg);
 	IXGBE_WRITE_FLUSH(hw);
-पूर्ण
+}
 
 /**
- * ixgbe_ipsec_set_rx_sa - set up the रेजिस्टर bits to save SA info
- * @hw: hw specअगरic details
- * @idx: रेजिस्टर index to ग_लिखो
+ * ixgbe_ipsec_set_rx_sa - set up the register bits to save SA info
+ * @hw: hw specific details
+ * @idx: register index to write
  * @spi: security parameter index
  * @key: key byte array
  * @salt: salt bytes
  * @mode: rx decrypt control bits
- * @ip_idx: index पूर्णांकo IP table क्रम related IP address
+ * @ip_idx: index into IP table for related IP address
  **/
-अटल व्योम ixgbe_ipsec_set_rx_sa(काष्ठा ixgbe_hw *hw, u16 idx, __be32 spi,
+static void ixgbe_ipsec_set_rx_sa(struct ixgbe_hw *hw, u16 idx, __be32 spi,
 				  u32 key[], u32 salt, u32 mode, u32 ip_idx)
-अणु
-	पूर्णांक i;
+{
+	int i;
 
 	/* store the SPI (in bigendian) and IPidx */
 	IXGBE_WRITE_REG(hw, IXGBE_IPSRXSPI,
-			(__क्रमce u32)cpu_to_le32((__क्रमce u32)spi));
+			(__force u32)cpu_to_le32((__force u32)spi));
 	IXGBE_WRITE_REG(hw, IXGBE_IPSRXIPIDX, ip_idx);
 	IXGBE_WRITE_FLUSH(hw);
 
 	ixgbe_ipsec_set_rx_item(hw, idx, ips_rx_spi_tbl);
 
 	/* store the key, salt, and mode */
-	क्रम (i = 0; i < 4; i++)
+	for (i = 0; i < 4; i++)
 		IXGBE_WRITE_REG(hw, IXGBE_IPSRXKEY(i),
-				(__क्रमce u32)cpu_to_be32(key[3 - i]));
-	IXGBE_WRITE_REG(hw, IXGBE_IPSRXSALT, (__क्रमce u32)cpu_to_be32(salt));
+				(__force u32)cpu_to_be32(key[3 - i]));
+	IXGBE_WRITE_REG(hw, IXGBE_IPSRXSALT, (__force u32)cpu_to_be32(salt));
 	IXGBE_WRITE_REG(hw, IXGBE_IPSRXMOD, mode);
 	IXGBE_WRITE_FLUSH(hw);
 
 	ixgbe_ipsec_set_rx_item(hw, idx, ips_rx_key_tbl);
-पूर्ण
+}
 
 /**
- * ixgbe_ipsec_set_rx_ip - set up the रेजिस्टर bits to save SA IP addr info
- * @hw: hw specअगरic details
- * @idx: रेजिस्टर index to ग_लिखो
+ * ixgbe_ipsec_set_rx_ip - set up the register bits to save SA IP addr info
+ * @hw: hw specific details
+ * @idx: register index to write
  * @addr: IP address byte array
  **/
-अटल व्योम ixgbe_ipsec_set_rx_ip(काष्ठा ixgbe_hw *hw, u16 idx, __be32 addr[])
-अणु
-	पूर्णांक i;
+static void ixgbe_ipsec_set_rx_ip(struct ixgbe_hw *hw, u16 idx, __be32 addr[])
+{
+	int i;
 
 	/* store the ip address */
-	क्रम (i = 0; i < 4; i++)
+	for (i = 0; i < 4; i++)
 		IXGBE_WRITE_REG(hw, IXGBE_IPSRXIPADDR(i),
-				(__क्रमce u32)cpu_to_le32((__क्रमce u32)addr[i]));
+				(__force u32)cpu_to_le32((__force u32)addr[i]));
 	IXGBE_WRITE_FLUSH(hw);
 
 	ixgbe_ipsec_set_rx_item(hw, idx, ips_rx_ip_tbl);
-पूर्ण
+}
 
 /**
- * ixgbe_ipsec_clear_hw_tables - because some tables करोn't get cleared on reset
- * @adapter: board निजी काष्ठाure
+ * ixgbe_ipsec_clear_hw_tables - because some tables don't get cleared on reset
+ * @adapter: board private structure
  **/
-अटल व्योम ixgbe_ipsec_clear_hw_tables(काष्ठा ixgbe_adapter *adapter)
-अणु
-	काष्ठा ixgbe_hw *hw = &adapter->hw;
-	u32 buf[4] = अणु0, 0, 0, 0पूर्ण;
+static void ixgbe_ipsec_clear_hw_tables(struct ixgbe_adapter *adapter)
+{
+	struct ixgbe_hw *hw = &adapter->hw;
+	u32 buf[4] = {0, 0, 0, 0};
 	u16 idx;
 
 	/* disable Rx and Tx SA lookup */
 	IXGBE_WRITE_REG(hw, IXGBE_IPSRXIDX, 0);
 	IXGBE_WRITE_REG(hw, IXGBE_IPSTXIDX, 0);
 
-	/* scrub the tables - split the loops क्रम the max of the IP table */
-	क्रम (idx = 0; idx < IXGBE_IPSEC_MAX_RX_IP_COUNT; idx++) अणु
+	/* scrub the tables - split the loops for the max of the IP table */
+	for (idx = 0; idx < IXGBE_IPSEC_MAX_RX_IP_COUNT; idx++) {
 		ixgbe_ipsec_set_tx_sa(hw, idx, buf, 0);
 		ixgbe_ipsec_set_rx_sa(hw, idx, 0, buf, 0, 0, 0);
 		ixgbe_ipsec_set_rx_ip(hw, idx, (__be32 *)buf);
-	पूर्ण
-	क्रम (; idx < IXGBE_IPSEC_MAX_SA_COUNT; idx++) अणु
+	}
+	for (; idx < IXGBE_IPSEC_MAX_SA_COUNT; idx++) {
 		ixgbe_ipsec_set_tx_sa(hw, idx, buf, 0);
 		ixgbe_ipsec_set_rx_sa(hw, idx, 0, buf, 0, 0, 0);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * ixgbe_ipsec_stop_data
- * @adapter: board निजी काष्ठाure
+ * @adapter: board private structure
  **/
-अटल व्योम ixgbe_ipsec_stop_data(काष्ठा ixgbe_adapter *adapter)
-अणु
-	काष्ठा ixgbe_hw *hw = &adapter->hw;
+static void ixgbe_ipsec_stop_data(struct ixgbe_adapter *adapter)
+{
+	struct ixgbe_hw *hw = &adapter->hw;
 	bool link = adapter->link_up;
 	u32 t_rdy, r_rdy;
 	u32 limit;
@@ -161,7 +160,7 @@
 	reg |= IXGBE_SECRXCTRL_RX_DIS;
 	IXGBE_WRITE_REG(hw, IXGBE_SECRXCTRL, reg);
 
-	/* If both Tx and Rx are पढ़ोy there are no packets
+	/* If both Tx and Rx are ready there are no packets
 	 * that we need to flush so the loopback configuration
 	 * below is not necessary.
 	 */
@@ -169,14 +168,14 @@
 		IXGBE_SECTXSTAT_SECTX_RDY;
 	r_rdy = IXGBE_READ_REG(hw, IXGBE_SECRXSTAT) &
 		IXGBE_SECRXSTAT_SECRX_RDY;
-	अगर (t_rdy && r_rdy)
-		वापस;
+	if (t_rdy && r_rdy)
+		return;
 
-	/* If the tx fअगरo करोesn't have link, but still has data,
+	/* If the tx fifo doesn't have link, but still has data,
 	 * we can't clear the tx sec block.  Set the MAC loopback
-	 * beक्रमe block clear
+	 * before block clear
 	 */
-	अगर (!link) अणु
+	if (!link) {
 		reg = IXGBE_READ_REG(hw, IXGBE_MACC);
 		reg |= IXGBE_MACC_FLU;
 		IXGBE_WRITE_REG(hw, IXGBE_MACC, reg);
@@ -187,20 +186,20 @@
 
 		IXGBE_WRITE_FLUSH(hw);
 		mdelay(3);
-	पूर्ण
+	}
 
-	/* रुको क्रम the paths to empty */
+	/* wait for the paths to empty */
 	limit = 20;
-	करो अणु
+	do {
 		mdelay(10);
 		t_rdy = IXGBE_READ_REG(hw, IXGBE_SECTXSTAT) &
 			IXGBE_SECTXSTAT_SECTX_RDY;
 		r_rdy = IXGBE_READ_REG(hw, IXGBE_SECRXSTAT) &
 			IXGBE_SECRXSTAT_SECRX_RDY;
-	पूर्ण जबतक (!(t_rdy && r_rdy) && limit--);
+	} while (!(t_rdy && r_rdy) && limit--);
 
-	/* unकरो loopback अगर we played with it earlier */
-	अगर (!link) अणु
+	/* undo loopback if we played with it earlier */
+	if (!link) {
 		reg = IXGBE_READ_REG(hw, IXGBE_MACC);
 		reg &= ~IXGBE_MACC_FLU;
 		IXGBE_WRITE_REG(hw, IXGBE_MACC, reg);
@@ -210,16 +209,16 @@
 		IXGBE_WRITE_REG(hw, IXGBE_HLREG0, reg);
 
 		IXGBE_WRITE_FLUSH(hw);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * ixgbe_ipsec_stop_engine
- * @adapter: board निजी काष्ठाure
+ * @adapter: board private structure
  **/
-अटल व्योम ixgbe_ipsec_stop_engine(काष्ठा ixgbe_adapter *adapter)
-अणु
-	काष्ठा ixgbe_hw *hw = &adapter->hw;
+static void ixgbe_ipsec_stop_engine(struct ixgbe_adapter *adapter)
+{
+	struct ixgbe_hw *hw = &adapter->hw;
 	u32 reg;
 
 	ixgbe_ipsec_stop_data(adapter);
@@ -228,7 +227,7 @@
 	IXGBE_WRITE_REG(hw, IXGBE_IPSTXIDX, 0);
 	IXGBE_WRITE_REG(hw, IXGBE_IPSRXIDX, 0);
 
-	/* disable the Rx and Tx engines and full packet store-n-क्रमward */
+	/* disable the Rx and Tx engines and full packet store-n-forward */
 	reg = IXGBE_READ_REG(hw, IXGBE_SECTXCTRL);
 	reg |= IXGBE_SECTXCTRL_SECTX_DIS;
 	reg &= ~IXGBE_SECTXCTRL_STORE_FORWARD;
@@ -241,27 +240,27 @@
 	/* restore the "tx security buffer almost full threshold" to 0x250 */
 	IXGBE_WRITE_REG(hw, IXGBE_SECTXBUFFAF, 0x250);
 
-	/* Set minimum IFG between packets back to the शेष 0x1 */
+	/* Set minimum IFG between packets back to the default 0x1 */
 	reg = IXGBE_READ_REG(hw, IXGBE_SECTXMINIFG);
 	reg = (reg & 0xfffffff0) | 0x1;
 	IXGBE_WRITE_REG(hw, IXGBE_SECTXMINIFG, reg);
 
-	/* final set क्रम normal (no ipsec offload) processing */
+	/* final set for normal (no ipsec offload) processing */
 	IXGBE_WRITE_REG(hw, IXGBE_SECTXCTRL, IXGBE_SECTXCTRL_SECTX_DIS);
 	IXGBE_WRITE_REG(hw, IXGBE_SECRXCTRL, IXGBE_SECRXCTRL_SECRX_DIS);
 
 	IXGBE_WRITE_FLUSH(hw);
-पूर्ण
+}
 
 /**
  * ixgbe_ipsec_start_engine
- * @adapter: board निजी काष्ठाure
+ * @adapter: board private structure
  *
- * NOTE: this increases घातer consumption whether being used or not
+ * NOTE: this increases power consumption whether being used or not
  **/
-अटल व्योम ixgbe_ipsec_start_engine(काष्ठा ixgbe_adapter *adapter)
-अणु
-	काष्ठा ixgbe_hw *hw = &adapter->hw;
+static void ixgbe_ipsec_start_engine(struct ixgbe_adapter *adapter)
+{
+	struct ixgbe_hw *hw = &adapter->hw;
 	u32 reg;
 
 	ixgbe_ipsec_stop_data(adapter);
@@ -288,27 +287,27 @@
 	IXGBE_WRITE_REG(hw, IXGBE_IPSRXIDX, IXGBE_RXTXIDX_IPS_EN);
 
 	IXGBE_WRITE_FLUSH(hw);
-पूर्ण
+}
 
 /**
  * ixgbe_ipsec_restore - restore the ipsec HW settings after a reset
- * @adapter: board निजी काष्ठाure
+ * @adapter: board private structure
  *
  * Reload the HW tables from the SW tables after they've been bashed
  * by a chip reset.
  *
- * Any VF entries are हटाओd from the SW and HW tables since either
- * (a) the VF also माला_लो reset on PF reset and will ask again क्रम the
- * offloads, or (b) the VF has been हटाओd by a change in the num_vfs.
+ * Any VF entries are removed from the SW and HW tables since either
+ * (a) the VF also gets reset on PF reset and will ask again for the
+ * offloads, or (b) the VF has been removed by a change in the num_vfs.
  **/
-व्योम ixgbe_ipsec_restore(काष्ठा ixgbe_adapter *adapter)
-अणु
-	काष्ठा ixgbe_ipsec *ipsec = adapter->ipsec;
-	काष्ठा ixgbe_hw *hw = &adapter->hw;
-	पूर्णांक i;
+void ixgbe_ipsec_restore(struct ixgbe_adapter *adapter)
+{
+	struct ixgbe_ipsec *ipsec = adapter->ipsec;
+	struct ixgbe_hw *hw = &adapter->hw;
+	int i;
 
-	अगर (!(adapter->flags2 & IXGBE_FLAG2_IPSEC_ENABLED))
-		वापस;
+	if (!(adapter->flags2 & IXGBE_FLAG2_IPSEC_ENABLED))
+		return;
 
 	/* clean up and restart the engine */
 	ixgbe_ipsec_stop_engine(adapter);
@@ -316,316 +315,316 @@
 	ixgbe_ipsec_start_engine(adapter);
 
 	/* reload the Rx and Tx keys */
-	क्रम (i = 0; i < IXGBE_IPSEC_MAX_SA_COUNT; i++) अणु
-		काष्ठा rx_sa *r = &ipsec->rx_tbl[i];
-		काष्ठा tx_sa *t = &ipsec->tx_tbl[i];
+	for (i = 0; i < IXGBE_IPSEC_MAX_SA_COUNT; i++) {
+		struct rx_sa *r = &ipsec->rx_tbl[i];
+		struct tx_sa *t = &ipsec->tx_tbl[i];
 
-		अगर (r->used) अणु
-			अगर (r->mode & IXGBE_RXTXMOD_VF)
+		if (r->used) {
+			if (r->mode & IXGBE_RXTXMOD_VF)
 				ixgbe_ipsec_del_sa(r->xs);
-			अन्यथा
+			else
 				ixgbe_ipsec_set_rx_sa(hw, i, r->xs->id.spi,
 						      r->key, r->salt,
 						      r->mode, r->iptbl_ind);
-		पूर्ण
+		}
 
-		अगर (t->used) अणु
-			अगर (t->mode & IXGBE_RXTXMOD_VF)
+		if (t->used) {
+			if (t->mode & IXGBE_RXTXMOD_VF)
 				ixgbe_ipsec_del_sa(t->xs);
-			अन्यथा
+			else
 				ixgbe_ipsec_set_tx_sa(hw, i, t->key, t->salt);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* reload the IP addrs */
-	क्रम (i = 0; i < IXGBE_IPSEC_MAX_RX_IP_COUNT; i++) अणु
-		काष्ठा rx_ip_sa *ipsa = &ipsec->ip_tbl[i];
+	for (i = 0; i < IXGBE_IPSEC_MAX_RX_IP_COUNT; i++) {
+		struct rx_ip_sa *ipsa = &ipsec->ip_tbl[i];
 
-		अगर (ipsa->used)
+		if (ipsa->used)
 			ixgbe_ipsec_set_rx_ip(hw, i, ipsa->ipaddr);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * ixgbe_ipsec_find_empty_idx - find the first unused security parameter index
- * @ipsec: poपूर्णांकer to ipsec काष्ठा
- * @rxtable: true अगर we need to look in the Rx table
+ * @ipsec: pointer to ipsec struct
+ * @rxtable: true if we need to look in the Rx table
  *
  * Returns the first unused index in either the Rx or Tx SA table
  **/
-अटल पूर्णांक ixgbe_ipsec_find_empty_idx(काष्ठा ixgbe_ipsec *ipsec, bool rxtable)
-अणु
+static int ixgbe_ipsec_find_empty_idx(struct ixgbe_ipsec *ipsec, bool rxtable)
+{
 	u32 i;
 
-	अगर (rxtable) अणु
-		अगर (ipsec->num_rx_sa == IXGBE_IPSEC_MAX_SA_COUNT)
-			वापस -ENOSPC;
+	if (rxtable) {
+		if (ipsec->num_rx_sa == IXGBE_IPSEC_MAX_SA_COUNT)
+			return -ENOSPC;
 
 		/* search rx sa table */
-		क्रम (i = 0; i < IXGBE_IPSEC_MAX_SA_COUNT; i++) अणु
-			अगर (!ipsec->rx_tbl[i].used)
-				वापस i;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (ipsec->num_tx_sa == IXGBE_IPSEC_MAX_SA_COUNT)
-			वापस -ENOSPC;
+		for (i = 0; i < IXGBE_IPSEC_MAX_SA_COUNT; i++) {
+			if (!ipsec->rx_tbl[i].used)
+				return i;
+		}
+	} else {
+		if (ipsec->num_tx_sa == IXGBE_IPSEC_MAX_SA_COUNT)
+			return -ENOSPC;
 
 		/* search tx sa table */
-		क्रम (i = 0; i < IXGBE_IPSEC_MAX_SA_COUNT; i++) अणु
-			अगर (!ipsec->tx_tbl[i].used)
-				वापस i;
-		पूर्ण
-	पूर्ण
+		for (i = 0; i < IXGBE_IPSEC_MAX_SA_COUNT; i++) {
+			if (!ipsec->tx_tbl[i].used)
+				return i;
+		}
+	}
 
-	वापस -ENOSPC;
-पूर्ण
+	return -ENOSPC;
+}
 
 /**
  * ixgbe_ipsec_find_rx_state - find the state that matches
- * @ipsec: poपूर्णांकer to ipsec काष्ठा
+ * @ipsec: pointer to ipsec struct
  * @daddr: inbound address to match
  * @proto: protocol to match
  * @spi: SPI to match
- * @ip4: true अगर using an ipv4 address
+ * @ip4: true if using an ipv4 address
  *
- * Returns a poपूर्णांकer to the matching SA state inक्रमmation
+ * Returns a pointer to the matching SA state information
  **/
-अटल काष्ठा xfrm_state *ixgbe_ipsec_find_rx_state(काष्ठा ixgbe_ipsec *ipsec,
+static struct xfrm_state *ixgbe_ipsec_find_rx_state(struct ixgbe_ipsec *ipsec,
 						    __be32 *daddr, u8 proto,
 						    __be32 spi, bool ip4)
-अणु
-	काष्ठा rx_sa *rsa;
-	काष्ठा xfrm_state *ret = शून्य;
+{
+	struct rx_sa *rsa;
+	struct xfrm_state *ret = NULL;
 
-	rcu_पढ़ो_lock();
-	hash_क्रम_each_possible_rcu(ipsec->rx_sa_list, rsa, hlist,
-				   (__क्रमce u32)spi) अणु
-		अगर (rsa->mode & IXGBE_RXTXMOD_VF)
-			जारी;
-		अगर (spi == rsa->xs->id.spi &&
+	rcu_read_lock();
+	hash_for_each_possible_rcu(ipsec->rx_sa_list, rsa, hlist,
+				   (__force u32)spi) {
+		if (rsa->mode & IXGBE_RXTXMOD_VF)
+			continue;
+		if (spi == rsa->xs->id.spi &&
 		    ((ip4 && *daddr == rsa->xs->id.daddr.a4) ||
-		      (!ip4 && !स_भेद(daddr, &rsa->xs->id.daddr.a6,
-				       माप(rsa->xs->id.daddr.a6)))) &&
-		    proto == rsa->xs->id.proto) अणु
+		      (!ip4 && !memcmp(daddr, &rsa->xs->id.daddr.a6,
+				       sizeof(rsa->xs->id.daddr.a6)))) &&
+		    proto == rsa->xs->id.proto) {
 			ret = rsa->xs;
 			xfrm_state_hold(ret);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	rcu_पढ़ो_unlock();
-	वापस ret;
-पूर्ण
+			break;
+		}
+	}
+	rcu_read_unlock();
+	return ret;
+}
 
 /**
  * ixgbe_ipsec_parse_proto_keys - find the key and salt based on the protocol
- * @xs: poपूर्णांकer to xfrm_state काष्ठा
- * @mykey: poपूर्णांकer to key array to populate
- * @mysalt: poपूर्णांकer to salt value to populate
+ * @xs: pointer to xfrm_state struct
+ * @mykey: pointer to key array to populate
+ * @mysalt: pointer to salt value to populate
  *
  * This copies the protocol keys and salt to our own data tables.  The
  * 82599 family only supports the one algorithm.
  **/
-अटल पूर्णांक ixgbe_ipsec_parse_proto_keys(काष्ठा xfrm_state *xs,
+static int ixgbe_ipsec_parse_proto_keys(struct xfrm_state *xs,
 					u32 *mykey, u32 *mysalt)
-अणु
-	काष्ठा net_device *dev = xs->xso.real_dev;
-	अचिन्हित अक्षर *key_data;
-	अक्षर *alg_name = शून्य;
-	पूर्णांक key_len;
+{
+	struct net_device *dev = xs->xso.real_dev;
+	unsigned char *key_data;
+	char *alg_name = NULL;
+	int key_len;
 
-	अगर (!xs->aead) अणु
+	if (!xs->aead) {
 		netdev_err(dev, "Unsupported IPsec algorithm\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (xs->aead->alg_icv_len != IXGBE_IPSEC_AUTH_BITS) अणु
+	if (xs->aead->alg_icv_len != IXGBE_IPSEC_AUTH_BITS) {
 		netdev_err(dev, "IPsec offload requires %d bit authentication\n",
 			   IXGBE_IPSEC_AUTH_BITS);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	key_data = &xs->aead->alg_key[0];
 	key_len = xs->aead->alg_key_len;
 	alg_name = xs->aead->alg_name;
 
-	अगर (म_भेद(alg_name, aes_gcm_name)) अणु
+	if (strcmp(alg_name, aes_gcm_name)) {
 		netdev_err(dev, "Unsupported IPsec algorithm - please use %s\n",
 			   aes_gcm_name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* The key bytes come करोwn in a bigendian array of bytes, so
-	 * we करोn't need to करो any byteswapping.
-	 * 160 accounts क्रम 16 byte key and 4 byte salt
+	/* The key bytes come down in a bigendian array of bytes, so
+	 * we don't need to do any byteswapping.
+	 * 160 accounts for 16 byte key and 4 byte salt
 	 */
-	अगर (key_len == IXGBE_IPSEC_KEY_BITS) अणु
+	if (key_len == IXGBE_IPSEC_KEY_BITS) {
 		*mysalt = ((u32 *)key_data)[4];
-	पूर्ण अन्यथा अगर (key_len != (IXGBE_IPSEC_KEY_BITS - (माप(*mysalt) * 8))) अणु
+	} else if (key_len != (IXGBE_IPSEC_KEY_BITS - (sizeof(*mysalt) * 8))) {
 		netdev_err(dev, "IPsec hw offload only supports keys up to 128 bits with a 32 bit salt\n");
-		वापस -EINVAL;
-	पूर्ण अन्यथा अणु
+		return -EINVAL;
+	} else {
 		netdev_info(dev, "IPsec hw offload parameters missing 32 bit salt value\n");
 		*mysalt = 0;
-	पूर्ण
-	स_नकल(mykey, key_data, 16);
+	}
+	memcpy(mykey, key_data, 16);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * ixgbe_ipsec_check_mgmt_ip - make sure there is no clash with mgmt IP filters
- * @xs: poपूर्णांकer to transक्रमmer state काष्ठा
+ * @xs: pointer to transformer state struct
  **/
-अटल पूर्णांक ixgbe_ipsec_check_mgmt_ip(काष्ठा xfrm_state *xs)
-अणु
-	काष्ठा net_device *dev = xs->xso.real_dev;
-	काष्ठा ixgbe_adapter *adapter = netdev_priv(dev);
-	काष्ठा ixgbe_hw *hw = &adapter->hw;
+static int ixgbe_ipsec_check_mgmt_ip(struct xfrm_state *xs)
+{
+	struct net_device *dev = xs->xso.real_dev;
+	struct ixgbe_adapter *adapter = netdev_priv(dev);
+	struct ixgbe_hw *hw = &adapter->hw;
 	u32 mfval, manc, reg;
-	पूर्णांक num_filters = 4;
+	int num_filters = 4;
 	bool manc_ipv4;
 	u32 bmcipval;
-	पूर्णांक i, j;
+	int i, j;
 
-#घोषणा MANC_EN_IPV4_FILTER      BIT(24)
-#घोषणा MFVAL_IPV4_FILTER_SHIFT  16
-#घोषणा MFVAL_IPV6_FILTER_SHIFT  24
-#घोषणा MIPAF_ARR(_m, _n)        (IXGBE_MIPAF + ((_m) * 0x10) + ((_n) * 4))
+#define MANC_EN_IPV4_FILTER      BIT(24)
+#define MFVAL_IPV4_FILTER_SHIFT  16
+#define MFVAL_IPV6_FILTER_SHIFT  24
+#define MIPAF_ARR(_m, _n)        (IXGBE_MIPAF + ((_m) * 0x10) + ((_n) * 4))
 
-#घोषणा IXGBE_BMCIP(_n)          (0x5050 + ((_n) * 4))
-#घोषणा IXGBE_BMCIPVAL           0x5060
-#घोषणा BMCIP_V4                 0x2
-#घोषणा BMCIP_V6                 0x3
-#घोषणा BMCIP_MASK               0x3
+#define IXGBE_BMCIP(_n)          (0x5050 + ((_n) * 4))
+#define IXGBE_BMCIPVAL           0x5060
+#define BMCIP_V4                 0x2
+#define BMCIP_V6                 0x3
+#define BMCIP_MASK               0x3
 
 	manc = IXGBE_READ_REG(hw, IXGBE_MANC);
 	manc_ipv4 = !!(manc & MANC_EN_IPV4_FILTER);
 	mfval = IXGBE_READ_REG(hw, IXGBE_MFVAL);
 	bmcipval = IXGBE_READ_REG(hw, IXGBE_BMCIPVAL);
 
-	अगर (xs->props.family == AF_INET) अणु
+	if (xs->props.family == AF_INET) {
 		/* are there any IPv4 filters to check? */
-		अगर (manc_ipv4) अणु
+		if (manc_ipv4) {
 			/* the 4 ipv4 filters are all in MIPAF(3, i) */
-			क्रम (i = 0; i < num_filters; i++) अणु
-				अगर (!(mfval & BIT(MFVAL_IPV4_FILTER_SHIFT + i)))
-					जारी;
+			for (i = 0; i < num_filters; i++) {
+				if (!(mfval & BIT(MFVAL_IPV4_FILTER_SHIFT + i)))
+					continue;
 
 				reg = IXGBE_READ_REG(hw, MIPAF_ARR(3, i));
-				अगर (reg == xs->id.daddr.a4)
-					वापस 1;
-			पूर्ण
-		पूर्ण
+				if (reg == xs->id.daddr.a4)
+					return 1;
+			}
+		}
 
-		अगर ((bmcipval & BMCIP_MASK) == BMCIP_V4) अणु
+		if ((bmcipval & BMCIP_MASK) == BMCIP_V4) {
 			reg = IXGBE_READ_REG(hw, IXGBE_BMCIP(3));
-			अगर (reg == xs->id.daddr.a4)
-				वापस 1;
-		पूर्ण
+			if (reg == xs->id.daddr.a4)
+				return 1;
+		}
 
-	पूर्ण अन्यथा अणु
-		/* अगर there are ipv4 filters, they are in the last ipv6 slot */
-		अगर (manc_ipv4)
+	} else {
+		/* if there are ipv4 filters, they are in the last ipv6 slot */
+		if (manc_ipv4)
 			num_filters = 3;
 
-		क्रम (i = 0; i < num_filters; i++) अणु
-			अगर (!(mfval & BIT(MFVAL_IPV6_FILTER_SHIFT + i)))
-				जारी;
+		for (i = 0; i < num_filters; i++) {
+			if (!(mfval & BIT(MFVAL_IPV6_FILTER_SHIFT + i)))
+				continue;
 
-			क्रम (j = 0; j < 4; j++) अणु
+			for (j = 0; j < 4; j++) {
 				reg = IXGBE_READ_REG(hw, MIPAF_ARR(i, j));
-				अगर (reg != xs->id.daddr.a6[j])
-					अवरोध;
-			पूर्ण
-			अगर (j == 4)   /* did we match all 4 words? */
-				वापस 1;
-		पूर्ण
+				if (reg != xs->id.daddr.a6[j])
+					break;
+			}
+			if (j == 4)   /* did we match all 4 words? */
+				return 1;
+		}
 
-		अगर ((bmcipval & BMCIP_MASK) == BMCIP_V6) अणु
-			क्रम (j = 0; j < 4; j++) अणु
+		if ((bmcipval & BMCIP_MASK) == BMCIP_V6) {
+			for (j = 0; j < 4; j++) {
 				reg = IXGBE_READ_REG(hw, IXGBE_BMCIP(j));
-				अगर (reg != xs->id.daddr.a6[j])
-					अवरोध;
-			पूर्ण
-			अगर (j == 4)   /* did we match all 4 words? */
-				वापस 1;
-		पूर्ण
-	पूर्ण
+				if (reg != xs->id.daddr.a6[j])
+					break;
+			}
+			if (j == 4)   /* did we match all 4 words? */
+				return 1;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * ixgbe_ipsec_add_sa - program device with a security association
- * @xs: poपूर्णांकer to transक्रमmer state काष्ठा
+ * @xs: pointer to transformer state struct
  **/
-अटल पूर्णांक ixgbe_ipsec_add_sa(काष्ठा xfrm_state *xs)
-अणु
-	काष्ठा net_device *dev = xs->xso.real_dev;
-	काष्ठा ixgbe_adapter *adapter = netdev_priv(dev);
-	काष्ठा ixgbe_ipsec *ipsec = adapter->ipsec;
-	काष्ठा ixgbe_hw *hw = &adapter->hw;
-	पूर्णांक checked, match, first;
+static int ixgbe_ipsec_add_sa(struct xfrm_state *xs)
+{
+	struct net_device *dev = xs->xso.real_dev;
+	struct ixgbe_adapter *adapter = netdev_priv(dev);
+	struct ixgbe_ipsec *ipsec = adapter->ipsec;
+	struct ixgbe_hw *hw = &adapter->hw;
+	int checked, match, first;
 	u16 sa_idx;
-	पूर्णांक ret;
-	पूर्णांक i;
+	int ret;
+	int i;
 
-	अगर (xs->id.proto != IPPROTO_ESP && xs->id.proto != IPPROTO_AH) अणु
+	if (xs->id.proto != IPPROTO_ESP && xs->id.proto != IPPROTO_AH) {
 		netdev_err(dev, "Unsupported protocol 0x%04x for ipsec offload\n",
 			   xs->id.proto);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (xs->props.mode != XFRM_MODE_TRANSPORT) अणु
+	if (xs->props.mode != XFRM_MODE_TRANSPORT) {
 		netdev_err(dev, "Unsupported mode for ipsec offload\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (ixgbe_ipsec_check_mgmt_ip(xs)) अणु
+	if (ixgbe_ipsec_check_mgmt_ip(xs)) {
 		netdev_err(dev, "IPsec IP addr clash with mgmt filters\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (xs->xso.flags & XFRM_OFFLOAD_INBOUND) अणु
-		काष्ठा rx_sa rsa;
+	if (xs->xso.flags & XFRM_OFFLOAD_INBOUND) {
+		struct rx_sa rsa;
 
-		अगर (xs->calg) अणु
+		if (xs->calg) {
 			netdev_err(dev, "Compression offload not supported\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		/* find the first unused index */
 		ret = ixgbe_ipsec_find_empty_idx(ipsec, true);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			netdev_err(dev, "No space for SA in Rx table!\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		sa_idx = (u16)ret;
 
-		स_रखो(&rsa, 0, माप(rsa));
+		memset(&rsa, 0, sizeof(rsa));
 		rsa.used = true;
 		rsa.xs = xs;
 
-		अगर (rsa.xs->id.proto & IPPROTO_ESP)
+		if (rsa.xs->id.proto & IPPROTO_ESP)
 			rsa.decrypt = xs->ealg || xs->aead;
 
 		/* get the key and salt */
 		ret = ixgbe_ipsec_parse_proto_keys(xs, rsa.key, &rsa.salt);
-		अगर (ret) अणु
+		if (ret) {
 			netdev_err(dev, "Failed to get key data for Rx SA table\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		/* get ip क्रम rx sa table */
-		अगर (xs->props.family == AF_INET6)
-			स_नकल(rsa.ipaddr, &xs->id.daddr.a6, 16);
-		अन्यथा
-			स_नकल(&rsa.ipaddr[3], &xs->id.daddr.a4, 4);
+		/* get ip for rx sa table */
+		if (xs->props.family == AF_INET6)
+			memcpy(rsa.ipaddr, &xs->id.daddr.a6, 16);
+		else
+			memcpy(&rsa.ipaddr[3], &xs->id.daddr.a4, 4);
 
-		/* The HW करोes not have a 1:1 mapping from keys to IP addrs, so
-		 * check क्रम a matching IP addr entry in the table.  If the addr
-		 * alपढ़ोy exists, use it; अन्यथा find an unused slot and add the
-		 * addr.  If one करोes not exist and there are no unused table
+		/* The HW does not have a 1:1 mapping from keys to IP addrs, so
+		 * check for a matching IP addr entry in the table.  If the addr
+		 * already exists, use it; else find an unused slot and add the
+		 * addr.  If one does not exist and there are no unused table
 		 * entries, fail the request.
 		 */
 
@@ -635,58 +634,58 @@
 		checked = 0;
 		match = -1;
 		first = -1;
-		क्रम (i = 0;
+		for (i = 0;
 		     i < IXGBE_IPSEC_MAX_RX_IP_COUNT &&
 		     (checked < ipsec->num_rx_sa || first < 0);
-		     i++) अणु
-			अगर (ipsec->ip_tbl[i].used) अणु
-				अगर (!स_भेद(ipsec->ip_tbl[i].ipaddr,
-					    rsa.ipaddr, माप(rsa.ipaddr))) अणु
+		     i++) {
+			if (ipsec->ip_tbl[i].used) {
+				if (!memcmp(ipsec->ip_tbl[i].ipaddr,
+					    rsa.ipaddr, sizeof(rsa.ipaddr))) {
 					match = i;
-					अवरोध;
-				पूर्ण
+					break;
+				}
 				checked++;
-			पूर्ण अन्यथा अगर (first < 0) अणु
+			} else if (first < 0) {
 				first = i;  /* track the first empty seen */
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (ipsec->num_rx_sa == 0)
+		if (ipsec->num_rx_sa == 0)
 			first = 0;
 
-		अगर (match >= 0) अणु
+		if (match >= 0) {
 			/* addrs are the same, we should use this one */
 			rsa.iptbl_ind = match;
 			ipsec->ip_tbl[match].ref_cnt++;
 
-		पूर्ण अन्यथा अगर (first >= 0) अणु
+		} else if (first >= 0) {
 			/* no matches, but here's an empty slot */
 			rsa.iptbl_ind = first;
 
-			स_नकल(ipsec->ip_tbl[first].ipaddr,
-			       rsa.ipaddr, माप(rsa.ipaddr));
+			memcpy(ipsec->ip_tbl[first].ipaddr,
+			       rsa.ipaddr, sizeof(rsa.ipaddr));
 			ipsec->ip_tbl[first].ref_cnt = 1;
 			ipsec->ip_tbl[first].used = true;
 
 			ixgbe_ipsec_set_rx_ip(hw, rsa.iptbl_ind, rsa.ipaddr);
 
-		पूर्ण अन्यथा अणु
+		} else {
 			/* no match and no empty slot */
 			netdev_err(dev, "No space for SA in Rx IP SA table\n");
-			स_रखो(&rsa, 0, माप(rsa));
-			वापस -ENOSPC;
-		पूर्ण
+			memset(&rsa, 0, sizeof(rsa));
+			return -ENOSPC;
+		}
 
 		rsa.mode = IXGBE_RXMOD_VALID;
-		अगर (rsa.xs->id.proto & IPPROTO_ESP)
+		if (rsa.xs->id.proto & IPPROTO_ESP)
 			rsa.mode |= IXGBE_RXMOD_PROTO_ESP;
-		अगर (rsa.decrypt)
+		if (rsa.decrypt)
 			rsa.mode |= IXGBE_RXMOD_DECRYPT;
-		अगर (rsa.xs->props.family == AF_INET6)
+		if (rsa.xs->props.family == AF_INET6)
 			rsa.mode |= IXGBE_RXMOD_IPV6;
 
 		/* the preparations worked, so save the info */
-		स_नकल(&ipsec->rx_tbl[sa_idx], &rsa, माप(rsa));
+		memcpy(&ipsec->rx_tbl[sa_idx], &rsa, sizeof(rsa));
 
 		ixgbe_ipsec_set_rx_sa(hw, sa_idx, rsa.xs->id.spi, rsa.key,
 				      rsa.salt, rsa.mode, rsa.iptbl_ind);
@@ -694,456 +693,456 @@
 
 		ipsec->num_rx_sa++;
 
-		/* hash the new entry क्रम faster search in Rx path */
+		/* hash the new entry for faster search in Rx path */
 		hash_add_rcu(ipsec->rx_sa_list, &ipsec->rx_tbl[sa_idx].hlist,
-			     (__क्रमce u32)rsa.xs->id.spi);
-	पूर्ण अन्यथा अणु
-		काष्ठा tx_sa tsa;
+			     (__force u32)rsa.xs->id.spi);
+	} else {
+		struct tx_sa tsa;
 
-		अगर (adapter->num_vfs &&
+		if (adapter->num_vfs &&
 		    adapter->bridge_mode != BRIDGE_MODE_VEPA)
-			वापस -EOPNOTSUPP;
+			return -EOPNOTSUPP;
 
 		/* find the first unused index */
 		ret = ixgbe_ipsec_find_empty_idx(ipsec, false);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			netdev_err(dev, "No space for SA in Tx table\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		sa_idx = (u16)ret;
 
-		स_रखो(&tsa, 0, माप(tsa));
+		memset(&tsa, 0, sizeof(tsa));
 		tsa.used = true;
 		tsa.xs = xs;
 
-		अगर (xs->id.proto & IPPROTO_ESP)
+		if (xs->id.proto & IPPROTO_ESP)
 			tsa.encrypt = xs->ealg || xs->aead;
 
 		ret = ixgbe_ipsec_parse_proto_keys(xs, tsa.key, &tsa.salt);
-		अगर (ret) अणु
+		if (ret) {
 			netdev_err(dev, "Failed to get key data for Tx SA table\n");
-			स_रखो(&tsa, 0, माप(tsa));
-			वापस ret;
-		पूर्ण
+			memset(&tsa, 0, sizeof(tsa));
+			return ret;
+		}
 
 		/* the preparations worked, so save the info */
-		स_नकल(&ipsec->tx_tbl[sa_idx], &tsa, माप(tsa));
+		memcpy(&ipsec->tx_tbl[sa_idx], &tsa, sizeof(tsa));
 
 		ixgbe_ipsec_set_tx_sa(hw, sa_idx, tsa.key, tsa.salt);
 
 		xs->xso.offload_handle = sa_idx + IXGBE_IPSEC_BASE_TX_INDEX;
 
 		ipsec->num_tx_sa++;
-	पूर्ण
+	}
 
-	/* enable the engine अगर not alपढ़ोy warmed up */
-	अगर (!(adapter->flags2 & IXGBE_FLAG2_IPSEC_ENABLED)) अणु
+	/* enable the engine if not already warmed up */
+	if (!(adapter->flags2 & IXGBE_FLAG2_IPSEC_ENABLED)) {
 		ixgbe_ipsec_start_engine(adapter);
 		adapter->flags2 |= IXGBE_FLAG2_IPSEC_ENABLED;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * ixgbe_ipsec_del_sa - clear out this specअगरic SA
- * @xs: poपूर्णांकer to transक्रमmer state काष्ठा
+ * ixgbe_ipsec_del_sa - clear out this specific SA
+ * @xs: pointer to transformer state struct
  **/
-अटल व्योम ixgbe_ipsec_del_sa(काष्ठा xfrm_state *xs)
-अणु
-	काष्ठा net_device *dev = xs->xso.real_dev;
-	काष्ठा ixgbe_adapter *adapter = netdev_priv(dev);
-	काष्ठा ixgbe_ipsec *ipsec = adapter->ipsec;
-	काष्ठा ixgbe_hw *hw = &adapter->hw;
-	u32 zerobuf[4] = अणु0, 0, 0, 0पूर्ण;
+static void ixgbe_ipsec_del_sa(struct xfrm_state *xs)
+{
+	struct net_device *dev = xs->xso.real_dev;
+	struct ixgbe_adapter *adapter = netdev_priv(dev);
+	struct ixgbe_ipsec *ipsec = adapter->ipsec;
+	struct ixgbe_hw *hw = &adapter->hw;
+	u32 zerobuf[4] = {0, 0, 0, 0};
 	u16 sa_idx;
 
-	अगर (xs->xso.flags & XFRM_OFFLOAD_INBOUND) अणु
-		काष्ठा rx_sa *rsa;
+	if (xs->xso.flags & XFRM_OFFLOAD_INBOUND) {
+		struct rx_sa *rsa;
 		u8 ipi;
 
 		sa_idx = xs->xso.offload_handle - IXGBE_IPSEC_BASE_RX_INDEX;
 		rsa = &ipsec->rx_tbl[sa_idx];
 
-		अगर (!rsa->used) अणु
+		if (!rsa->used) {
 			netdev_err(dev, "Invalid Rx SA selected sa_idx=%d offload_handle=%lu\n",
 				   sa_idx, xs->xso.offload_handle);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		ixgbe_ipsec_set_rx_sa(hw, sa_idx, 0, zerobuf, 0, 0, 0);
 		hash_del_rcu(&rsa->hlist);
 
-		/* अगर the IP table entry is referenced by only this SA,
+		/* if the IP table entry is referenced by only this SA,
 		 * i.e. ref_cnt is only 1, clear the IP table entry as well
 		 */
 		ipi = rsa->iptbl_ind;
-		अगर (ipsec->ip_tbl[ipi].ref_cnt > 0) अणु
+		if (ipsec->ip_tbl[ipi].ref_cnt > 0) {
 			ipsec->ip_tbl[ipi].ref_cnt--;
 
-			अगर (!ipsec->ip_tbl[ipi].ref_cnt) अणु
-				स_रखो(&ipsec->ip_tbl[ipi], 0,
-				       माप(काष्ठा rx_ip_sa));
+			if (!ipsec->ip_tbl[ipi].ref_cnt) {
+				memset(&ipsec->ip_tbl[ipi], 0,
+				       sizeof(struct rx_ip_sa));
 				ixgbe_ipsec_set_rx_ip(hw, ipi,
-						      (__क्रमce __be32 *)zerobuf);
-			पूर्ण
-		पूर्ण
+						      (__force __be32 *)zerobuf);
+			}
+		}
 
-		स_रखो(rsa, 0, माप(काष्ठा rx_sa));
+		memset(rsa, 0, sizeof(struct rx_sa));
 		ipsec->num_rx_sa--;
-	पूर्ण अन्यथा अणु
+	} else {
 		sa_idx = xs->xso.offload_handle - IXGBE_IPSEC_BASE_TX_INDEX;
 
-		अगर (!ipsec->tx_tbl[sa_idx].used) अणु
+		if (!ipsec->tx_tbl[sa_idx].used) {
 			netdev_err(dev, "Invalid Tx SA selected sa_idx=%d offload_handle=%lu\n",
 				   sa_idx, xs->xso.offload_handle);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		ixgbe_ipsec_set_tx_sa(hw, sa_idx, zerobuf, 0);
-		स_रखो(&ipsec->tx_tbl[sa_idx], 0, माप(काष्ठा tx_sa));
+		memset(&ipsec->tx_tbl[sa_idx], 0, sizeof(struct tx_sa));
 		ipsec->num_tx_sa--;
-	पूर्ण
+	}
 
-	/* अगर there are no SAs left, stop the engine to save energy */
-	अगर (ipsec->num_rx_sa == 0 && ipsec->num_tx_sa == 0) अणु
+	/* if there are no SAs left, stop the engine to save energy */
+	if (ipsec->num_rx_sa == 0 && ipsec->num_tx_sa == 0) {
 		adapter->flags2 &= ~IXGBE_FLAG2_IPSEC_ENABLED;
 		ixgbe_ipsec_stop_engine(adapter);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * ixgbe_ipsec_offload_ok - can this packet use the xfrm hw offload
  * @skb: current data packet
- * @xs: poपूर्णांकer to transक्रमmer state काष्ठा
+ * @xs: pointer to transformer state struct
  **/
-अटल bool ixgbe_ipsec_offload_ok(काष्ठा sk_buff *skb, काष्ठा xfrm_state *xs)
-अणु
-	अगर (xs->props.family == AF_INET) अणु
+static bool ixgbe_ipsec_offload_ok(struct sk_buff *skb, struct xfrm_state *xs)
+{
+	if (xs->props.family == AF_INET) {
 		/* Offload with IPv4 options is not supported yet */
-		अगर (ip_hdr(skb)->ihl != 5)
-			वापस false;
-	पूर्ण अन्यथा अणु
+		if (ip_hdr(skb)->ihl != 5)
+			return false;
+	} else {
 		/* Offload with IPv6 extension headers is not support yet */
-		अगर (ipv6_ext_hdr(ipv6_hdr(skb)->nexthdr))
-			वापस false;
-	पूर्ण
+		if (ipv6_ext_hdr(ipv6_hdr(skb)->nexthdr))
+			return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल स्थिर काष्ठा xfrmdev_ops ixgbe_xfrmdev_ops = अणु
-	.xकरो_dev_state_add = ixgbe_ipsec_add_sa,
-	.xकरो_dev_state_delete = ixgbe_ipsec_del_sa,
-	.xकरो_dev_offload_ok = ixgbe_ipsec_offload_ok,
-पूर्ण;
+static const struct xfrmdev_ops ixgbe_xfrmdev_ops = {
+	.xdo_dev_state_add = ixgbe_ipsec_add_sa,
+	.xdo_dev_state_delete = ixgbe_ipsec_del_sa,
+	.xdo_dev_offload_ok = ixgbe_ipsec_offload_ok,
+};
 
 /**
- * ixgbe_ipsec_vf_clear - clear the tables of data क्रम a VF
- * @adapter: board निजी काष्ठाure
- * @vf: VF id to be हटाओd
+ * ixgbe_ipsec_vf_clear - clear the tables of data for a VF
+ * @adapter: board private structure
+ * @vf: VF id to be removed
  **/
-व्योम ixgbe_ipsec_vf_clear(काष्ठा ixgbe_adapter *adapter, u32 vf)
-अणु
-	काष्ठा ixgbe_ipsec *ipsec = adapter->ipsec;
-	पूर्णांक i;
+void ixgbe_ipsec_vf_clear(struct ixgbe_adapter *adapter, u32 vf)
+{
+	struct ixgbe_ipsec *ipsec = adapter->ipsec;
+	int i;
 
-	अगर (!ipsec)
-		वापस;
+	if (!ipsec)
+		return;
 
 	/* search rx sa table */
-	क्रम (i = 0; i < IXGBE_IPSEC_MAX_SA_COUNT && ipsec->num_rx_sa; i++) अणु
-		अगर (!ipsec->rx_tbl[i].used)
-			जारी;
-		अगर (ipsec->rx_tbl[i].mode & IXGBE_RXTXMOD_VF &&
+	for (i = 0; i < IXGBE_IPSEC_MAX_SA_COUNT && ipsec->num_rx_sa; i++) {
+		if (!ipsec->rx_tbl[i].used)
+			continue;
+		if (ipsec->rx_tbl[i].mode & IXGBE_RXTXMOD_VF &&
 		    ipsec->rx_tbl[i].vf == vf)
 			ixgbe_ipsec_del_sa(ipsec->rx_tbl[i].xs);
-	पूर्ण
+	}
 
 	/* search tx sa table */
-	क्रम (i = 0; i < IXGBE_IPSEC_MAX_SA_COUNT && ipsec->num_tx_sa; i++) अणु
-		अगर (!ipsec->tx_tbl[i].used)
-			जारी;
-		अगर (ipsec->tx_tbl[i].mode & IXGBE_RXTXMOD_VF &&
+	for (i = 0; i < IXGBE_IPSEC_MAX_SA_COUNT && ipsec->num_tx_sa; i++) {
+		if (!ipsec->tx_tbl[i].used)
+			continue;
+		if (ipsec->tx_tbl[i].mode & IXGBE_RXTXMOD_VF &&
 		    ipsec->tx_tbl[i].vf == vf)
 			ixgbe_ipsec_del_sa(ipsec->tx_tbl[i].xs);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * ixgbe_ipsec_vf_add_sa - translate VF request to SA add
- * @adapter: board निजी काष्ठाure
+ * @adapter: board private structure
  * @msgbuf: The message buffer
  * @vf: the VF index
  *
  * Make up a new xs and algorithm info from the data sent by the VF.
  * We only need to sketch in just enough to set up the HW offload.
- * Put the resulting offload_handle पूर्णांकo the वापस message to the VF.
+ * Put the resulting offload_handle into the return message to the VF.
  *
  * Returns 0 or error value
  **/
-पूर्णांक ixgbe_ipsec_vf_add_sa(काष्ठा ixgbe_adapter *adapter, u32 *msgbuf, u32 vf)
-अणु
-	काष्ठा ixgbe_ipsec *ipsec = adapter->ipsec;
-	काष्ठा xfrm_algo_desc *algo;
-	काष्ठा sa_mbx_msg *sam;
-	काष्ठा xfrm_state *xs;
-	माप_प्रकार aead_len;
+int ixgbe_ipsec_vf_add_sa(struct ixgbe_adapter *adapter, u32 *msgbuf, u32 vf)
+{
+	struct ixgbe_ipsec *ipsec = adapter->ipsec;
+	struct xfrm_algo_desc *algo;
+	struct sa_mbx_msg *sam;
+	struct xfrm_state *xs;
+	size_t aead_len;
 	u16 sa_idx;
 	u32 pfsa;
-	पूर्णांक err;
+	int err;
 
-	sam = (काष्ठा sa_mbx_msg *)(&msgbuf[1]);
-	अगर (!adapter->vfinfo[vf].trusted ||
-	    !(adapter->flags2 & IXGBE_FLAG2_VF_IPSEC_ENABLED)) अणु
+	sam = (struct sa_mbx_msg *)(&msgbuf[1]);
+	if (!adapter->vfinfo[vf].trusted ||
+	    !(adapter->flags2 & IXGBE_FLAG2_VF_IPSEC_ENABLED)) {
 		e_warn(drv, "VF %d attempted to add an IPsec SA\n", vf);
 		err = -EACCES;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
-	/* Tx IPsec offload करोesn't seem to work on this
-	 * device, so block these requests क्रम now.
+	/* Tx IPsec offload doesn't seem to work on this
+	 * device, so block these requests for now.
 	 */
-	अगर (!(sam->flags & XFRM_OFFLOAD_INBOUND)) अणु
+	if (!(sam->flags & XFRM_OFFLOAD_INBOUND)) {
 		err = -EOPNOTSUPP;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
-	xs = kzalloc(माप(*xs), GFP_KERNEL);
-	अगर (unlikely(!xs)) अणु
+	xs = kzalloc(sizeof(*xs), GFP_KERNEL);
+	if (unlikely(!xs)) {
 		err = -ENOMEM;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
 	xs->xso.flags = sam->flags;
 	xs->id.spi = sam->spi;
 	xs->id.proto = sam->proto;
 	xs->props.family = sam->family;
-	अगर (xs->props.family == AF_INET6)
-		स_नकल(&xs->id.daddr.a6, sam->addr, माप(xs->id.daddr.a6));
-	अन्यथा
-		स_नकल(&xs->id.daddr.a4, sam->addr, माप(xs->id.daddr.a4));
+	if (xs->props.family == AF_INET6)
+		memcpy(&xs->id.daddr.a6, sam->addr, sizeof(xs->id.daddr.a6));
+	else
+		memcpy(&xs->id.daddr.a4, sam->addr, sizeof(xs->id.daddr.a4));
 	xs->xso.dev = adapter->netdev;
 
 	algo = xfrm_aead_get_byname(aes_gcm_name, IXGBE_IPSEC_AUTH_BITS, 1);
-	अगर (unlikely(!algo)) अणु
+	if (unlikely(!algo)) {
 		err = -ENOENT;
-		जाओ err_xs;
-	पूर्ण
+		goto err_xs;
+	}
 
-	aead_len = माप(*xs->aead) + IXGBE_IPSEC_KEY_BITS / 8;
+	aead_len = sizeof(*xs->aead) + IXGBE_IPSEC_KEY_BITS / 8;
 	xs->aead = kzalloc(aead_len, GFP_KERNEL);
-	अगर (unlikely(!xs->aead)) अणु
+	if (unlikely(!xs->aead)) {
 		err = -ENOMEM;
-		जाओ err_xs;
-	पूर्ण
+		goto err_xs;
+	}
 
 	xs->props.ealgo = algo->desc.sadb_alg_id;
 	xs->geniv = algo->uinfo.aead.geniv;
 	xs->aead->alg_icv_len = IXGBE_IPSEC_AUTH_BITS;
 	xs->aead->alg_key_len = IXGBE_IPSEC_KEY_BITS;
-	स_नकल(xs->aead->alg_key, sam->key, माप(sam->key));
-	स_नकल(xs->aead->alg_name, aes_gcm_name, माप(aes_gcm_name));
+	memcpy(xs->aead->alg_key, sam->key, sizeof(sam->key));
+	memcpy(xs->aead->alg_name, aes_gcm_name, sizeof(aes_gcm_name));
 
 	/* set up the HW offload */
 	err = ixgbe_ipsec_add_sa(xs);
-	अगर (err)
-		जाओ err_aead;
+	if (err)
+		goto err_aead;
 
 	pfsa = xs->xso.offload_handle;
-	अगर (pfsa < IXGBE_IPSEC_BASE_TX_INDEX) अणु
+	if (pfsa < IXGBE_IPSEC_BASE_TX_INDEX) {
 		sa_idx = pfsa - IXGBE_IPSEC_BASE_RX_INDEX;
 		ipsec->rx_tbl[sa_idx].vf = vf;
 		ipsec->rx_tbl[sa_idx].mode |= IXGBE_RXTXMOD_VF;
-	पूर्ण अन्यथा अणु
+	} else {
 		sa_idx = pfsa - IXGBE_IPSEC_BASE_TX_INDEX;
 		ipsec->tx_tbl[sa_idx].vf = vf;
 		ipsec->tx_tbl[sa_idx].mode |= IXGBE_RXTXMOD_VF;
-	पूर्ण
+	}
 
 	msgbuf[1] = xs->xso.offload_handle;
 
-	वापस 0;
+	return 0;
 
 err_aead:
-	kमुक्त_sensitive(xs->aead);
+	kfree_sensitive(xs->aead);
 err_xs:
-	kमुक्त_sensitive(xs);
+	kfree_sensitive(xs);
 err_out:
 	msgbuf[1] = err;
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /**
  * ixgbe_ipsec_vf_del_sa - translate VF request to SA delete
- * @adapter: board निजी काष्ठाure
+ * @adapter: board private structure
  * @msgbuf: The message buffer
  * @vf: the VF index
  *
- * Given the offload_handle sent by the VF, look क्रम the related SA table
- * entry and use its xs field to call क्रम a delete of the SA.
+ * Given the offload_handle sent by the VF, look for the related SA table
+ * entry and use its xs field to call for a delete of the SA.
  *
- * Note: We silently ignore requests to delete entries that are alपढ़ोy
+ * Note: We silently ignore requests to delete entries that are already
  *       set to unused because when a VF is set to "DOWN", the PF first
- *       माला_लो a reset and clears all the VF's entries; then the VF's
- *       XFRM stack sends inभागidual deletes क्रम each entry, which the
- *       reset alपढ़ोy हटाओd.  In the future it might be good to try to
+ *       gets a reset and clears all the VF's entries; then the VF's
+ *       XFRM stack sends individual deletes for each entry, which the
+ *       reset already removed.  In the future it might be good to try to
  *       optimize this so not so many unnecessary delete messages are sent.
  *
  * Returns 0 or error value
  **/
-पूर्णांक ixgbe_ipsec_vf_del_sa(काष्ठा ixgbe_adapter *adapter, u32 *msgbuf, u32 vf)
-अणु
-	काष्ठा ixgbe_ipsec *ipsec = adapter->ipsec;
-	काष्ठा xfrm_state *xs;
+int ixgbe_ipsec_vf_del_sa(struct ixgbe_adapter *adapter, u32 *msgbuf, u32 vf)
+{
+	struct ixgbe_ipsec *ipsec = adapter->ipsec;
+	struct xfrm_state *xs;
 	u32 pfsa = msgbuf[1];
 	u16 sa_idx;
 
-	अगर (!adapter->vfinfo[vf].trusted) अणु
+	if (!adapter->vfinfo[vf].trusted) {
 		e_err(drv, "vf %d attempted to delete an SA\n", vf);
-		वापस -EPERM;
-	पूर्ण
+		return -EPERM;
+	}
 
-	अगर (pfsa < IXGBE_IPSEC_BASE_TX_INDEX) अणु
-		काष्ठा rx_sa *rsa;
+	if (pfsa < IXGBE_IPSEC_BASE_TX_INDEX) {
+		struct rx_sa *rsa;
 
 		sa_idx = pfsa - IXGBE_IPSEC_BASE_RX_INDEX;
-		अगर (sa_idx >= IXGBE_IPSEC_MAX_SA_COUNT) अणु
+		if (sa_idx >= IXGBE_IPSEC_MAX_SA_COUNT) {
 			e_err(drv, "vf %d SA index %d out of range\n",
 			      vf, sa_idx);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		rsa = &ipsec->rx_tbl[sa_idx];
 
-		अगर (!rsa->used)
-			वापस 0;
+		if (!rsa->used)
+			return 0;
 
-		अगर (!(rsa->mode & IXGBE_RXTXMOD_VF) ||
-		    rsa->vf != vf) अणु
+		if (!(rsa->mode & IXGBE_RXTXMOD_VF) ||
+		    rsa->vf != vf) {
 			e_err(drv, "vf %d bad Rx SA index %d\n", vf, sa_idx);
-			वापस -ENOENT;
-		पूर्ण
+			return -ENOENT;
+		}
 
 		xs = ipsec->rx_tbl[sa_idx].xs;
-	पूर्ण अन्यथा अणु
-		काष्ठा tx_sa *tsa;
+	} else {
+		struct tx_sa *tsa;
 
 		sa_idx = pfsa - IXGBE_IPSEC_BASE_TX_INDEX;
-		अगर (sa_idx >= IXGBE_IPSEC_MAX_SA_COUNT) अणु
+		if (sa_idx >= IXGBE_IPSEC_MAX_SA_COUNT) {
 			e_err(drv, "vf %d SA index %d out of range\n",
 			      vf, sa_idx);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		tsa = &ipsec->tx_tbl[sa_idx];
 
-		अगर (!tsa->used)
-			वापस 0;
+		if (!tsa->used)
+			return 0;
 
-		अगर (!(tsa->mode & IXGBE_RXTXMOD_VF) ||
-		    tsa->vf != vf) अणु
+		if (!(tsa->mode & IXGBE_RXTXMOD_VF) ||
+		    tsa->vf != vf) {
 			e_err(drv, "vf %d bad Tx SA index %d\n", vf, sa_idx);
-			वापस -ENOENT;
-		पूर्ण
+			return -ENOENT;
+		}
 
 		xs = ipsec->tx_tbl[sa_idx].xs;
-	पूर्ण
+	}
 
 	ixgbe_ipsec_del_sa(xs);
 
-	/* हटाओ the xs that was made-up in the add request */
-	kमुक्त_sensitive(xs);
+	/* remove the xs that was made-up in the add request */
+	kfree_sensitive(xs);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * ixgbe_ipsec_tx - setup Tx flags क्रम ipsec offload
+ * ixgbe_ipsec_tx - setup Tx flags for ipsec offload
  * @tx_ring: outgoing context
  * @first: current data packet
- * @itd: ipsec Tx data क्रम later use in building context descriptor
+ * @itd: ipsec Tx data for later use in building context descriptor
  **/
-पूर्णांक ixgbe_ipsec_tx(काष्ठा ixgbe_ring *tx_ring,
-		   काष्ठा ixgbe_tx_buffer *first,
-		   काष्ठा ixgbe_ipsec_tx_data *itd)
-अणु
-	काष्ठा ixgbe_adapter *adapter = netdev_priv(tx_ring->netdev);
-	काष्ठा ixgbe_ipsec *ipsec = adapter->ipsec;
-	काष्ठा xfrm_state *xs;
-	काष्ठा sec_path *sp;
-	काष्ठा tx_sa *tsa;
+int ixgbe_ipsec_tx(struct ixgbe_ring *tx_ring,
+		   struct ixgbe_tx_buffer *first,
+		   struct ixgbe_ipsec_tx_data *itd)
+{
+	struct ixgbe_adapter *adapter = netdev_priv(tx_ring->netdev);
+	struct ixgbe_ipsec *ipsec = adapter->ipsec;
+	struct xfrm_state *xs;
+	struct sec_path *sp;
+	struct tx_sa *tsa;
 
 	sp = skb_sec_path(first->skb);
-	अगर (unlikely(!sp->len)) अणु
+	if (unlikely(!sp->len)) {
 		netdev_err(tx_ring->netdev, "%s: no xfrm state len = %d\n",
 			   __func__, sp->len);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	xs = xfrm_input_state(first->skb);
-	अगर (unlikely(!xs)) अणु
+	if (unlikely(!xs)) {
 		netdev_err(tx_ring->netdev, "%s: no xfrm_input_state() xs = %p\n",
 			   __func__, xs);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	itd->sa_idx = xs->xso.offload_handle - IXGBE_IPSEC_BASE_TX_INDEX;
-	अगर (unlikely(itd->sa_idx >= IXGBE_IPSEC_MAX_SA_COUNT)) अणु
+	if (unlikely(itd->sa_idx >= IXGBE_IPSEC_MAX_SA_COUNT)) {
 		netdev_err(tx_ring->netdev, "%s: bad sa_idx=%d handle=%lu\n",
 			   __func__, itd->sa_idx, xs->xso.offload_handle);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	tsa = &ipsec->tx_tbl[itd->sa_idx];
-	अगर (unlikely(!tsa->used)) अणु
+	if (unlikely(!tsa->used)) {
 		netdev_err(tx_ring->netdev, "%s: unused sa_idx=%d\n",
 			   __func__, itd->sa_idx);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	first->tx_flags |= IXGBE_TX_FLAGS_IPSEC | IXGBE_TX_FLAGS_CC;
 
-	अगर (xs->id.proto == IPPROTO_ESP) अणु
+	if (xs->id.proto == IPPROTO_ESP) {
 
 		itd->flags |= IXGBE_ADVTXD_TUCMD_IPSEC_TYPE_ESP |
 			      IXGBE_ADVTXD_TUCMD_L4T_TCP;
-		अगर (first->protocol == htons(ETH_P_IP))
+		if (first->protocol == htons(ETH_P_IP))
 			itd->flags |= IXGBE_ADVTXD_TUCMD_IPV4;
 
 		/* The actual trailer length is authlen (16 bytes) plus
-		 * 2 bytes क्रम the proto and the padlen values, plus
+		 * 2 bytes for the proto and the padlen values, plus
 		 * padlen bytes of padding.  This ends up not the same
-		 * as the अटल value found in xs->props.trailer_len (21).
+		 * as the static value found in xs->props.trailer_len (21).
 		 *
-		 * ... but अगर we're doing GSO, don't bother as the stack
-		 * करोesn't add a trailer क्रम those.
+		 * ... but if we're doing GSO, don't bother as the stack
+		 * doesn't add a trailer for those.
 		 */
-		अगर (!skb_is_gso(first->skb)) अणु
+		if (!skb_is_gso(first->skb)) {
 			/* The "correct" way to get the auth length would be
 			 * to use
 			 *    authlen = crypto_aead_authsize(xs->data);
 			 * but since we know we only have one size to worry
-			 * about * we can let the compiler use the स्थिरant
+			 * about * we can let the compiler use the constant
 			 * and save us a few CPU cycles.
 			 */
-			स्थिर पूर्णांक authlen = IXGBE_IPSEC_AUTH_BITS / 8;
-			काष्ठा sk_buff *skb = first->skb;
+			const int authlen = IXGBE_IPSEC_AUTH_BITS / 8;
+			struct sk_buff *skb = first->skb;
 			u8 padlen;
-			पूर्णांक ret;
+			int ret;
 
 			ret = skb_copy_bits(skb, skb->len - (authlen + 2),
 					    &padlen, 1);
-			अगर (unlikely(ret))
-				वापस 0;
+			if (unlikely(ret))
+				return 0;
 			itd->trailer_len = authlen + 2 + padlen;
-		पूर्ण
-	पूर्ण
-	अगर (tsa->encrypt)
+		}
+	}
+	if (tsa->encrypt)
 		itd->flags |= IXGBE_ADVTXD_TUCMD_IPSEC_ENCRYPT_EN;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /**
  * ixgbe_ipsec_rx - decode ipsec bits from Rx descriptor
@@ -1151,24 +1150,24 @@ err_out:
  * @rx_desc: receive data descriptor
  * @skb: current data packet
  *
- * Determine अगर there was an ipsec encapsulation noticed, and अगर so set up
- * the resulting status क्रम later in the receive stack.
+ * Determine if there was an ipsec encapsulation noticed, and if so set up
+ * the resulting status for later in the receive stack.
  **/
-व्योम ixgbe_ipsec_rx(काष्ठा ixgbe_ring *rx_ring,
-		    जोड़ ixgbe_adv_rx_desc *rx_desc,
-		    काष्ठा sk_buff *skb)
-अणु
-	काष्ठा ixgbe_adapter *adapter = netdev_priv(rx_ring->netdev);
+void ixgbe_ipsec_rx(struct ixgbe_ring *rx_ring,
+		    union ixgbe_adv_rx_desc *rx_desc,
+		    struct sk_buff *skb)
+{
+	struct ixgbe_adapter *adapter = netdev_priv(rx_ring->netdev);
 	__le16 pkt_info = rx_desc->wb.lower.lo_dword.hs_rss.pkt_info;
 	__le16 ipsec_pkt_types = cpu_to_le16(IXGBE_RXDADV_PKTTYPE_IPSEC_AH |
 					     IXGBE_RXDADV_PKTTYPE_IPSEC_ESP);
-	काष्ठा ixgbe_ipsec *ipsec = adapter->ipsec;
-	काष्ठा xfrm_offload *xo = शून्य;
-	काष्ठा xfrm_state *xs = शून्य;
-	काष्ठा ipv6hdr *ip6 = शून्य;
-	काष्ठा iphdr *ip4 = शून्य;
-	काष्ठा sec_path *sp;
-	व्योम *daddr;
+	struct ixgbe_ipsec *ipsec = adapter->ipsec;
+	struct xfrm_offload *xo = NULL;
+	struct xfrm_state *xs = NULL;
+	struct ipv6hdr *ip6 = NULL;
+	struct iphdr *ip4 = NULL;
+	struct sec_path *sp;
+	void *daddr;
 	__be32 spi;
 	u8 *c_hdr;
 	u8 proto;
@@ -1176,40 +1175,40 @@ err_out:
 	/* Find the ip and crypto headers in the data.
 	 * We can assume no vlan header in the way, b/c the
 	 * hw won't recognize the IPsec packet and anyway the
-	 * currently vlan device करोesn't support xfrm offload.
+	 * currently vlan device doesn't support xfrm offload.
 	 */
-	अगर (pkt_info & cpu_to_le16(IXGBE_RXDADV_PKTTYPE_IPV4)) अणु
-		ip4 = (काष्ठा iphdr *)(skb->data + ETH_HLEN);
+	if (pkt_info & cpu_to_le16(IXGBE_RXDADV_PKTTYPE_IPV4)) {
+		ip4 = (struct iphdr *)(skb->data + ETH_HLEN);
 		daddr = &ip4->daddr;
 		c_hdr = (u8 *)ip4 + ip4->ihl * 4;
-	पूर्ण अन्यथा अगर (pkt_info & cpu_to_le16(IXGBE_RXDADV_PKTTYPE_IPV6)) अणु
-		ip6 = (काष्ठा ipv6hdr *)(skb->data + ETH_HLEN);
+	} else if (pkt_info & cpu_to_le16(IXGBE_RXDADV_PKTTYPE_IPV6)) {
+		ip6 = (struct ipv6hdr *)(skb->data + ETH_HLEN);
 		daddr = &ip6->daddr;
-		c_hdr = (u8 *)ip6 + माप(काष्ठा ipv6hdr);
-	पूर्ण अन्यथा अणु
-		वापस;
-	पूर्ण
+		c_hdr = (u8 *)ip6 + sizeof(struct ipv6hdr);
+	} else {
+		return;
+	}
 
-	चयन (pkt_info & ipsec_pkt_types) अणु
-	हाल cpu_to_le16(IXGBE_RXDADV_PKTTYPE_IPSEC_AH):
-		spi = ((काष्ठा ip_auth_hdr *)c_hdr)->spi;
+	switch (pkt_info & ipsec_pkt_types) {
+	case cpu_to_le16(IXGBE_RXDADV_PKTTYPE_IPSEC_AH):
+		spi = ((struct ip_auth_hdr *)c_hdr)->spi;
 		proto = IPPROTO_AH;
-		अवरोध;
-	हाल cpu_to_le16(IXGBE_RXDADV_PKTTYPE_IPSEC_ESP):
-		spi = ((काष्ठा ip_esp_hdr *)c_hdr)->spi;
+		break;
+	case cpu_to_le16(IXGBE_RXDADV_PKTTYPE_IPSEC_ESP):
+		spi = ((struct ip_esp_hdr *)c_hdr)->spi;
 		proto = IPPROTO_ESP;
-		अवरोध;
-	शेष:
-		वापस;
-	पूर्ण
+		break;
+	default:
+		return;
+	}
 
 	xs = ixgbe_ipsec_find_rx_state(ipsec, daddr, proto, spi, !!ip4);
-	अगर (unlikely(!xs))
-		वापस;
+	if (unlikely(!xs))
+		return;
 
 	sp = secpath_set(skb);
-	अगर (unlikely(!sp))
-		वापस;
+	if (unlikely(!sp))
+		return;
 
 	sp->xvec[sp->len++] = xs;
 	sp->olen++;
@@ -1218,51 +1217,51 @@ err_out:
 	xo->status = CRYPTO_SUCCESS;
 
 	adapter->rx_ipsec++;
-पूर्ण
+}
 
 /**
- * ixgbe_init_ipsec_offload - initialize security रेजिस्टरs क्रम IPSec operation
- * @adapter: board निजी काष्ठाure
+ * ixgbe_init_ipsec_offload - initialize security registers for IPSec operation
+ * @adapter: board private structure
  **/
-व्योम ixgbe_init_ipsec_offload(काष्ठा ixgbe_adapter *adapter)
-अणु
-	काष्ठा ixgbe_hw *hw = &adapter->hw;
-	काष्ठा ixgbe_ipsec *ipsec;
+void ixgbe_init_ipsec_offload(struct ixgbe_adapter *adapter)
+{
+	struct ixgbe_hw *hw = &adapter->hw;
+	struct ixgbe_ipsec *ipsec;
 	u32 t_dis, r_dis;
-	माप_प्रकार size;
+	size_t size;
 
-	अगर (hw->mac.type == ixgbe_mac_82598EB)
-		वापस;
+	if (hw->mac.type == ixgbe_mac_82598EB)
+		return;
 
-	/* If there is no support क्रम either Tx or Rx offload
-	 * we should not be advertising support क्रम IPsec.
+	/* If there is no support for either Tx or Rx offload
+	 * we should not be advertising support for IPsec.
 	 */
 	t_dis = IXGBE_READ_REG(hw, IXGBE_SECTXSTAT) &
 		IXGBE_SECTXSTAT_SECTX_OFF_DIS;
 	r_dis = IXGBE_READ_REG(hw, IXGBE_SECRXSTAT) &
 		IXGBE_SECRXSTAT_SECRX_OFF_DIS;
-	अगर (t_dis || r_dis)
-		वापस;
+	if (t_dis || r_dis)
+		return;
 
-	ipsec = kzalloc(माप(*ipsec), GFP_KERNEL);
-	अगर (!ipsec)
-		जाओ err1;
+	ipsec = kzalloc(sizeof(*ipsec), GFP_KERNEL);
+	if (!ipsec)
+		goto err1;
 	hash_init(ipsec->rx_sa_list);
 
-	size = माप(काष्ठा rx_sa) * IXGBE_IPSEC_MAX_SA_COUNT;
+	size = sizeof(struct rx_sa) * IXGBE_IPSEC_MAX_SA_COUNT;
 	ipsec->rx_tbl = kzalloc(size, GFP_KERNEL);
-	अगर (!ipsec->rx_tbl)
-		जाओ err2;
+	if (!ipsec->rx_tbl)
+		goto err2;
 
-	size = माप(काष्ठा tx_sa) * IXGBE_IPSEC_MAX_SA_COUNT;
+	size = sizeof(struct tx_sa) * IXGBE_IPSEC_MAX_SA_COUNT;
 	ipsec->tx_tbl = kzalloc(size, GFP_KERNEL);
-	अगर (!ipsec->tx_tbl)
-		जाओ err2;
+	if (!ipsec->tx_tbl)
+		goto err2;
 
-	size = माप(काष्ठा rx_ip_sa) * IXGBE_IPSEC_MAX_RX_IP_COUNT;
+	size = sizeof(struct rx_ip_sa) * IXGBE_IPSEC_MAX_RX_IP_COUNT;
 	ipsec->ip_tbl = kzalloc(size, GFP_KERNEL);
-	अगर (!ipsec->ip_tbl)
-		जाओ err2;
+	if (!ipsec->ip_tbl)
+		goto err2;
 
 	ipsec->num_rx_sa = 0;
 	ipsec->num_tx_sa = 0;
@@ -1273,30 +1272,30 @@ err_out:
 
 	adapter->netdev->xfrmdev_ops = &ixgbe_xfrmdev_ops;
 
-	वापस;
+	return;
 
 err2:
-	kमुक्त(ipsec->ip_tbl);
-	kमुक्त(ipsec->rx_tbl);
-	kमुक्त(ipsec->tx_tbl);
-	kमुक्त(ipsec);
+	kfree(ipsec->ip_tbl);
+	kfree(ipsec->rx_tbl);
+	kfree(ipsec->tx_tbl);
+	kfree(ipsec);
 err1:
 	netdev_err(adapter->netdev, "Unable to allocate memory for SA tables");
-पूर्ण
+}
 
 /**
- * ixgbe_stop_ipsec_offload - tear करोwn the ipsec offload
- * @adapter: board निजी काष्ठाure
+ * ixgbe_stop_ipsec_offload - tear down the ipsec offload
+ * @adapter: board private structure
  **/
-व्योम ixgbe_stop_ipsec_offload(काष्ठा ixgbe_adapter *adapter)
-अणु
-	काष्ठा ixgbe_ipsec *ipsec = adapter->ipsec;
+void ixgbe_stop_ipsec_offload(struct ixgbe_adapter *adapter)
+{
+	struct ixgbe_ipsec *ipsec = adapter->ipsec;
 
-	adapter->ipsec = शून्य;
-	अगर (ipsec) अणु
-		kमुक्त(ipsec->ip_tbl);
-		kमुक्त(ipsec->rx_tbl);
-		kमुक्त(ipsec->tx_tbl);
-		kमुक्त(ipsec);
-	पूर्ण
-पूर्ण
+	adapter->ipsec = NULL;
+	if (ipsec) {
+		kfree(ipsec->ip_tbl);
+		kfree(ipsec->rx_tbl);
+		kfree(ipsec->tx_tbl);
+		kfree(ipsec);
+	}
+}

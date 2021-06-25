@@ -1,132 +1,131 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * DS1286 Real Time Clock पूर्णांकerface क्रम Linux
+ * DS1286 Real Time Clock interface for Linux
  *
  * Copyright (C) 1998, 1999, 2000 Ralf Baechle
- * Copyright (C) 2008 Thomas Bogenकरोerfer
+ * Copyright (C) 2008 Thomas Bogendoerfer
  *
- * Based on code written by Paul Gorपंचांगaker.
+ * Based on code written by Paul Gortmaker.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/rtc.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/bcd.h>
-#समावेश <linux/rtc/ds1286.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/slab.h>
+#include <linux/module.h>
+#include <linux/rtc.h>
+#include <linux/platform_device.h>
+#include <linux/bcd.h>
+#include <linux/rtc/ds1286.h>
+#include <linux/io.h>
+#include <linux/slab.h>
 
-काष्ठा ds1286_priv अणु
-	काष्ठा rtc_device *rtc;
+struct ds1286_priv {
+	struct rtc_device *rtc;
 	u32 __iomem *rtcregs;
 	spinlock_t lock;
-पूर्ण;
+};
 
-अटल अंतरभूत u8 ds1286_rtc_पढ़ो(काष्ठा ds1286_priv *priv, पूर्णांक reg)
-अणु
-	वापस __raw_पढ़ोl(&priv->rtcregs[reg]) & 0xff;
-पूर्ण
+static inline u8 ds1286_rtc_read(struct ds1286_priv *priv, int reg)
+{
+	return __raw_readl(&priv->rtcregs[reg]) & 0xff;
+}
 
-अटल अंतरभूत व्योम ds1286_rtc_ग_लिखो(काष्ठा ds1286_priv *priv, u8 data, पूर्णांक reg)
-अणु
-	__raw_ग_लिखोl(data, &priv->rtcregs[reg]);
-पूर्ण
+static inline void ds1286_rtc_write(struct ds1286_priv *priv, u8 data, int reg)
+{
+	__raw_writel(data, &priv->rtcregs[reg]);
+}
 
 
-अटल पूर्णांक ds1286_alarm_irq_enable(काष्ठा device *dev, अचिन्हित पूर्णांक enabled)
-अणु
-	काष्ठा ds1286_priv *priv = dev_get_drvdata(dev);
-	अचिन्हित दीर्घ flags;
-	अचिन्हित अक्षर val;
+static int ds1286_alarm_irq_enable(struct device *dev, unsigned int enabled)
+{
+	struct ds1286_priv *priv = dev_get_drvdata(dev);
+	unsigned long flags;
+	unsigned char val;
 
-	/* Allow or mask alarm पूर्णांकerrupts */
+	/* Allow or mask alarm interrupts */
 	spin_lock_irqsave(&priv->lock, flags);
-	val = ds1286_rtc_पढ़ो(priv, RTC_CMD);
-	अगर (enabled)
+	val = ds1286_rtc_read(priv, RTC_CMD);
+	if (enabled)
 		val &=  ~RTC_TDM;
-	अन्यथा
+	else
 		val |=  RTC_TDM;
-	ds1286_rtc_ग_लिखो(priv, val, RTC_CMD);
+	ds1286_rtc_write(priv, val, RTC_CMD);
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_RTC_INTF_DEV
+#ifdef CONFIG_RTC_INTF_DEV
 
-अटल पूर्णांक ds1286_ioctl(काष्ठा device *dev, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा ds1286_priv *priv = dev_get_drvdata(dev);
-	अचिन्हित दीर्घ flags;
-	अचिन्हित अक्षर val;
+static int ds1286_ioctl(struct device *dev, unsigned int cmd, unsigned long arg)
+{
+	struct ds1286_priv *priv = dev_get_drvdata(dev);
+	unsigned long flags;
+	unsigned char val;
 
-	चयन (cmd) अणु
-	हाल RTC_WIE_OFF:
-		/* Mask watchकरोg पूर्णांक. enab. bit	*/
+	switch (cmd) {
+	case RTC_WIE_OFF:
+		/* Mask watchdog int. enab. bit	*/
 		spin_lock_irqsave(&priv->lock, flags);
-		val = ds1286_rtc_पढ़ो(priv, RTC_CMD);
+		val = ds1286_rtc_read(priv, RTC_CMD);
 		val |= RTC_WAM;
-		ds1286_rtc_ग_लिखो(priv, val, RTC_CMD);
+		ds1286_rtc_write(priv, val, RTC_CMD);
 		spin_unlock_irqrestore(&priv->lock, flags);
-		अवरोध;
-	हाल RTC_WIE_ON:
-		/* Allow watchकरोg पूर्णांकerrupts.	*/
+		break;
+	case RTC_WIE_ON:
+		/* Allow watchdog interrupts.	*/
 		spin_lock_irqsave(&priv->lock, flags);
-		val = ds1286_rtc_पढ़ो(priv, RTC_CMD);
+		val = ds1286_rtc_read(priv, RTC_CMD);
 		val &= ~RTC_WAM;
-		ds1286_rtc_ग_लिखो(priv, val, RTC_CMD);
+		ds1286_rtc_write(priv, val, RTC_CMD);
 		spin_unlock_irqrestore(&priv->lock, flags);
-		अवरोध;
-	शेष:
-		वापस -ENOIOCTLCMD;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	default:
+		return -ENOIOCTLCMD;
+	}
+	return 0;
+}
 
-#अन्यथा
-#घोषणा ds1286_ioctl    शून्य
-#पूर्ण_अगर
+#else
+#define ds1286_ioctl    NULL
+#endif
 
-#अगर_घोषित CONFIG_PROC_FS
+#ifdef CONFIG_PROC_FS
 
-अटल पूर्णांक ds1286_proc(काष्ठा device *dev, काष्ठा seq_file *seq)
-अणु
-	काष्ठा ds1286_priv *priv = dev_get_drvdata(dev);
-	अचिन्हित अक्षर month, cmd, amode;
-	स्थिर अक्षर *s;
+static int ds1286_proc(struct device *dev, struct seq_file *seq)
+{
+	struct ds1286_priv *priv = dev_get_drvdata(dev);
+	unsigned char month, cmd, amode;
+	const char *s;
 
-	month = ds1286_rtc_पढ़ो(priv, RTC_MONTH);
-	seq_म_लिखो(seq,
+	month = ds1286_rtc_read(priv, RTC_MONTH);
+	seq_printf(seq,
 		   "oscillator\t: %s\n"
 		   "square_wave\t: %s\n",
 		   (month & RTC_EOSC) ? "disabled" : "enabled",
 		   (month & RTC_ESQW) ? "disabled" : "enabled");
 
-	amode = ((ds1286_rtc_पढ़ो(priv, RTC_MINUTES_ALARM) & 0x80) >> 5) |
-		((ds1286_rtc_पढ़ो(priv, RTC_HOURS_ALARM) & 0x80) >> 6) |
-		((ds1286_rtc_पढ़ो(priv, RTC_DAY_ALARM) & 0x80) >> 7);
-	चयन (amode) अणु
-	हाल 7:
+	amode = ((ds1286_rtc_read(priv, RTC_MINUTES_ALARM) & 0x80) >> 5) |
+		((ds1286_rtc_read(priv, RTC_HOURS_ALARM) & 0x80) >> 6) |
+		((ds1286_rtc_read(priv, RTC_DAY_ALARM) & 0x80) >> 7);
+	switch (amode) {
+	case 7:
 		s = "each minute";
-		अवरोध;
-	हाल 3:
+		break;
+	case 3:
 		s = "minutes match";
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		s = "hours and minutes match";
-		अवरोध;
-	हाल 0:
+		break;
+	case 0:
 		s = "days, hours and minutes match";
-		अवरोध;
-	शेष:
+		break;
+	default:
 		s = "invalid";
-		अवरोध;
-	पूर्ण
-	seq_म_लिखो(seq, "alarm_mode\t: %s\n", s);
+		break;
+	}
+	seq_printf(seq, "alarm_mode\t: %s\n", s);
 
-	cmd = ds1286_rtc_पढ़ो(priv, RTC_CMD);
-	seq_म_लिखो(seq,
+	cmd = ds1286_rtc_read(priv, RTC_CMD);
+	seq_printf(seq,
 		   "alarm_enable\t: %s\n"
 		   "wdog_alarm\t: %s\n"
 		   "alarm_mask\t: %s\n"
@@ -141,99 +140,99 @@
 		   (cmd & RTC_PU_LVL) ? "pulse" : "level",
 		   (cmd & RTC_IBH_LO) ? "low" : "high",
 		   (cmd & RTC_IPSW) ? "unswapped" : "swapped");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अन्यथा
-#घोषणा ds1286_proc     शून्य
-#पूर्ण_अगर
+#else
+#define ds1286_proc     NULL
+#endif
 
-अटल पूर्णांक ds1286_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	काष्ठा ds1286_priv *priv = dev_get_drvdata(dev);
-	अचिन्हित अक्षर save_control;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित दीर्घ uip_watchकरोg = jअगरfies;
+static int ds1286_read_time(struct device *dev, struct rtc_time *tm)
+{
+	struct ds1286_priv *priv = dev_get_drvdata(dev);
+	unsigned char save_control;
+	unsigned long flags;
+	unsigned long uip_watchdog = jiffies;
 
 	/*
-	 * पढ़ो RTC once any update in progress is करोne. The update
-	 * can take just over 2ms. We रुको 10 to 20ms. There is no need to
-	 * to poll-रुको (up to 1s - eeccch) क्रम the falling edge of RTC_UIP.
+	 * read RTC once any update in progress is done. The update
+	 * can take just over 2ms. We wait 10 to 20ms. There is no need to
+	 * to poll-wait (up to 1s - eeccch) for the falling edge of RTC_UIP.
 	 * If you need to know *exactly* when a second has started, enable
-	 * periodic update complete पूर्णांकerrupts, (via ioctl) and then
-	 * immediately पढ़ो /dev/rtc which will block until you get the IRQ.
-	 * Once the पढ़ो clears, पढ़ो the RTC समय (again via ioctl). Easy.
+	 * periodic update complete interrupts, (via ioctl) and then
+	 * immediately read /dev/rtc which will block until you get the IRQ.
+	 * Once the read clears, read the RTC time (again via ioctl). Easy.
 	 */
 
-	अगर (ds1286_rtc_पढ़ो(priv, RTC_CMD) & RTC_TE)
-		जबतक (समय_beक्रमe(jअगरfies, uip_watchकरोg + 2*HZ/100))
+	if (ds1286_rtc_read(priv, RTC_CMD) & RTC_TE)
+		while (time_before(jiffies, uip_watchdog + 2*HZ/100))
 			barrier();
 
 	/*
-	 * Only the values that we पढ़ो from the RTC are set. We leave
-	 * पंचांग_wday, पंचांग_yday and पंचांग_isdst untouched. Even though the
+	 * Only the values that we read from the RTC are set. We leave
+	 * tm_wday, tm_yday and tm_isdst untouched. Even though the
 	 * RTC has RTC_DAY_OF_WEEK, we ignore it, as it is only updated
 	 * by the RTC when initially set to a non-zero value.
 	 */
 	spin_lock_irqsave(&priv->lock, flags);
-	save_control = ds1286_rtc_पढ़ो(priv, RTC_CMD);
-	ds1286_rtc_ग_लिखो(priv, (save_control|RTC_TE), RTC_CMD);
+	save_control = ds1286_rtc_read(priv, RTC_CMD);
+	ds1286_rtc_write(priv, (save_control|RTC_TE), RTC_CMD);
 
-	पंचांग->पंचांग_sec = ds1286_rtc_पढ़ो(priv, RTC_SECONDS);
-	पंचांग->पंचांग_min = ds1286_rtc_पढ़ो(priv, RTC_MINUTES);
-	पंचांग->पंचांग_hour = ds1286_rtc_पढ़ो(priv, RTC_HOURS) & 0x3f;
-	पंचांग->पंचांग_mday = ds1286_rtc_पढ़ो(priv, RTC_DATE);
-	पंचांग->पंचांग_mon = ds1286_rtc_पढ़ो(priv, RTC_MONTH) & 0x1f;
-	पंचांग->पंचांग_year = ds1286_rtc_पढ़ो(priv, RTC_YEAR);
+	tm->tm_sec = ds1286_rtc_read(priv, RTC_SECONDS);
+	tm->tm_min = ds1286_rtc_read(priv, RTC_MINUTES);
+	tm->tm_hour = ds1286_rtc_read(priv, RTC_HOURS) & 0x3f;
+	tm->tm_mday = ds1286_rtc_read(priv, RTC_DATE);
+	tm->tm_mon = ds1286_rtc_read(priv, RTC_MONTH) & 0x1f;
+	tm->tm_year = ds1286_rtc_read(priv, RTC_YEAR);
 
-	ds1286_rtc_ग_लिखो(priv, save_control, RTC_CMD);
+	ds1286_rtc_write(priv, save_control, RTC_CMD);
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	पंचांग->पंचांग_sec = bcd2bin(पंचांग->पंचांग_sec);
-	पंचांग->पंचांग_min = bcd2bin(पंचांग->पंचांग_min);
-	पंचांग->पंचांग_hour = bcd2bin(पंचांग->पंचांग_hour);
-	पंचांग->पंचांग_mday = bcd2bin(पंचांग->पंचांग_mday);
-	पंचांग->पंचांग_mon = bcd2bin(पंचांग->पंचांग_mon);
-	पंचांग->पंचांग_year = bcd2bin(पंचांग->पंचांग_year);
+	tm->tm_sec = bcd2bin(tm->tm_sec);
+	tm->tm_min = bcd2bin(tm->tm_min);
+	tm->tm_hour = bcd2bin(tm->tm_hour);
+	tm->tm_mday = bcd2bin(tm->tm_mday);
+	tm->tm_mon = bcd2bin(tm->tm_mon);
+	tm->tm_year = bcd2bin(tm->tm_year);
 
 	/*
-	 * Account क्रम dअगरferences between how the RTC uses the values
-	 * and how they are defined in a काष्ठा rtc_समय;
+	 * Account for differences between how the RTC uses the values
+	 * and how they are defined in a struct rtc_time;
 	 */
-	अगर (पंचांग->पंचांग_year < 45)
-		पंचांग->पंचांग_year += 30;
-	पंचांग->पंचांग_year += 40;
-	अगर (पंचांग->पंचांग_year < 70)
-		पंचांग->पंचांग_year += 100;
+	if (tm->tm_year < 45)
+		tm->tm_year += 30;
+	tm->tm_year += 40;
+	if (tm->tm_year < 70)
+		tm->tm_year += 100;
 
-	पंचांग->पंचांग_mon--;
+	tm->tm_mon--;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ds1286_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	काष्ठा ds1286_priv *priv = dev_get_drvdata(dev);
-	अचिन्हित अक्षर mon, day, hrs, min, sec;
-	अचिन्हित अक्षर save_control;
-	अचिन्हित पूर्णांक yrs;
-	अचिन्हित दीर्घ flags;
+static int ds1286_set_time(struct device *dev, struct rtc_time *tm)
+{
+	struct ds1286_priv *priv = dev_get_drvdata(dev);
+	unsigned char mon, day, hrs, min, sec;
+	unsigned char save_control;
+	unsigned int yrs;
+	unsigned long flags;
 
-	yrs = पंचांग->पंचांग_year + 1900;
-	mon = पंचांग->पंचांग_mon + 1;   /* पंचांग_mon starts at zero */
-	day = पंचांग->पंचांग_mday;
-	hrs = पंचांग->पंचांग_hour;
-	min = पंचांग->पंचांग_min;
-	sec = पंचांग->पंचांग_sec;
+	yrs = tm->tm_year + 1900;
+	mon = tm->tm_mon + 1;   /* tm_mon starts at zero */
+	day = tm->tm_mday;
+	hrs = tm->tm_hour;
+	min = tm->tm_min;
+	sec = tm->tm_sec;
 
-	अगर (yrs < 1970)
-		वापस -EINVAL;
+	if (yrs < 1970)
+		return -EINVAL;
 
 	yrs -= 1940;
-	अगर (yrs > 255)    /* They are अचिन्हित */
-		वापस -EINVAL;
+	if (yrs > 255)    /* They are unsigned */
+		return -EINVAL;
 
-	अगर (yrs >= 100)
+	if (yrs >= 100)
 		yrs -= 100;
 
 	sec = bin2bcd(sec);
@@ -244,114 +243,114 @@
 	yrs = bin2bcd(yrs);
 
 	spin_lock_irqsave(&priv->lock, flags);
-	save_control = ds1286_rtc_पढ़ो(priv, RTC_CMD);
-	ds1286_rtc_ग_लिखो(priv, (save_control|RTC_TE), RTC_CMD);
+	save_control = ds1286_rtc_read(priv, RTC_CMD);
+	ds1286_rtc_write(priv, (save_control|RTC_TE), RTC_CMD);
 
-	ds1286_rtc_ग_लिखो(priv, yrs, RTC_YEAR);
-	ds1286_rtc_ग_लिखो(priv, mon, RTC_MONTH);
-	ds1286_rtc_ग_लिखो(priv, day, RTC_DATE);
-	ds1286_rtc_ग_लिखो(priv, hrs, RTC_HOURS);
-	ds1286_rtc_ग_लिखो(priv, min, RTC_MINUTES);
-	ds1286_rtc_ग_लिखो(priv, sec, RTC_SECONDS);
-	ds1286_rtc_ग_लिखो(priv, 0, RTC_HUNDREDTH_SECOND);
+	ds1286_rtc_write(priv, yrs, RTC_YEAR);
+	ds1286_rtc_write(priv, mon, RTC_MONTH);
+	ds1286_rtc_write(priv, day, RTC_DATE);
+	ds1286_rtc_write(priv, hrs, RTC_HOURS);
+	ds1286_rtc_write(priv, min, RTC_MINUTES);
+	ds1286_rtc_write(priv, sec, RTC_SECONDS);
+	ds1286_rtc_write(priv, 0, RTC_HUNDREDTH_SECOND);
 
-	ds1286_rtc_ग_लिखो(priv, save_control, RTC_CMD);
+	ds1286_rtc_write(priv, save_control, RTC_CMD);
 	spin_unlock_irqrestore(&priv->lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ds1286_पढ़ो_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alm)
-अणु
-	काष्ठा ds1286_priv *priv = dev_get_drvdata(dev);
-	अचिन्हित दीर्घ flags;
+static int ds1286_read_alarm(struct device *dev, struct rtc_wkalrm *alm)
+{
+	struct ds1286_priv *priv = dev_get_drvdata(dev);
+	unsigned long flags;
 
 	/*
-	 * Only the values that we पढ़ो from the RTC are set. That
-	 * means only पंचांग_wday, पंचांग_hour, पंचांग_min.
+	 * Only the values that we read from the RTC are set. That
+	 * means only tm_wday, tm_hour, tm_min.
 	 */
 	spin_lock_irqsave(&priv->lock, flags);
-	alm->समय.पंचांग_min = ds1286_rtc_पढ़ो(priv, RTC_MINUTES_ALARM) & 0x7f;
-	alm->समय.पंचांग_hour = ds1286_rtc_पढ़ो(priv, RTC_HOURS_ALARM)  & 0x1f;
-	alm->समय.पंचांग_wday = ds1286_rtc_पढ़ो(priv, RTC_DAY_ALARM)    & 0x07;
-	ds1286_rtc_पढ़ो(priv, RTC_CMD);
+	alm->time.tm_min = ds1286_rtc_read(priv, RTC_MINUTES_ALARM) & 0x7f;
+	alm->time.tm_hour = ds1286_rtc_read(priv, RTC_HOURS_ALARM)  & 0x1f;
+	alm->time.tm_wday = ds1286_rtc_read(priv, RTC_DAY_ALARM)    & 0x07;
+	ds1286_rtc_read(priv, RTC_CMD);
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	alm->समय.पंचांग_min = bcd2bin(alm->समय.पंचांग_min);
-	alm->समय.पंचांग_hour = bcd2bin(alm->समय.पंचांग_hour);
-	alm->समय.पंचांग_sec = 0;
-	वापस 0;
-पूर्ण
+	alm->time.tm_min = bcd2bin(alm->time.tm_min);
+	alm->time.tm_hour = bcd2bin(alm->time.tm_hour);
+	alm->time.tm_sec = 0;
+	return 0;
+}
 
-अटल पूर्णांक ds1286_set_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alm)
-अणु
-	काष्ठा ds1286_priv *priv = dev_get_drvdata(dev);
-	अचिन्हित अक्षर hrs, min, sec;
+static int ds1286_set_alarm(struct device *dev, struct rtc_wkalrm *alm)
+{
+	struct ds1286_priv *priv = dev_get_drvdata(dev);
+	unsigned char hrs, min, sec;
 
-	hrs = alm->समय.पंचांग_hour;
-	min = alm->समय.पंचांग_min;
-	sec = alm->समय.पंचांग_sec;
+	hrs = alm->time.tm_hour;
+	min = alm->time.tm_min;
+	sec = alm->time.tm_sec;
 
-	अगर (hrs >= 24)
+	if (hrs >= 24)
 		hrs = 0xff;
 
-	अगर (min >= 60)
+	if (min >= 60)
 		min = 0xff;
 
-	अगर (sec != 0)
-		वापस -EINVAL;
+	if (sec != 0)
+		return -EINVAL;
 
 	min = bin2bcd(min);
 	hrs = bin2bcd(hrs);
 
 	spin_lock(&priv->lock);
-	ds1286_rtc_ग_लिखो(priv, hrs, RTC_HOURS_ALARM);
-	ds1286_rtc_ग_लिखो(priv, min, RTC_MINUTES_ALARM);
+	ds1286_rtc_write(priv, hrs, RTC_HOURS_ALARM);
+	ds1286_rtc_write(priv, min, RTC_MINUTES_ALARM);
 	spin_unlock(&priv->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा rtc_class_ops ds1286_ops = अणु
+static const struct rtc_class_ops ds1286_ops = {
 	.ioctl		= ds1286_ioctl,
 	.proc		= ds1286_proc,
-	.पढ़ो_समय	= ds1286_पढ़ो_समय,
-	.set_समय	= ds1286_set_समय,
-	.पढ़ो_alarm	= ds1286_पढ़ो_alarm,
+	.read_time	= ds1286_read_time,
+	.set_time	= ds1286_set_time,
+	.read_alarm	= ds1286_read_alarm,
 	.set_alarm	= ds1286_set_alarm,
 	.alarm_irq_enable = ds1286_alarm_irq_enable,
-पूर्ण;
+};
 
-अटल पूर्णांक ds1286_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा rtc_device *rtc;
-	काष्ठा ds1286_priv *priv;
+static int ds1286_probe(struct platform_device *pdev)
+{
+	struct rtc_device *rtc;
+	struct ds1286_priv *priv;
 
-	priv = devm_kzalloc(&pdev->dev, माप(काष्ठा ds1286_priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(&pdev->dev, sizeof(struct ds1286_priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
-	priv->rtcregs = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(priv->rtcregs))
-		वापस PTR_ERR(priv->rtcregs);
+	priv->rtcregs = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(priv->rtcregs))
+		return PTR_ERR(priv->rtcregs);
 
 	spin_lock_init(&priv->lock);
-	platक्रमm_set_drvdata(pdev, priv);
-	rtc = devm_rtc_device_रेजिस्टर(&pdev->dev, "ds1286", &ds1286_ops,
+	platform_set_drvdata(pdev, priv);
+	rtc = devm_rtc_device_register(&pdev->dev, "ds1286", &ds1286_ops,
 					THIS_MODULE);
-	अगर (IS_ERR(rtc))
-		वापस PTR_ERR(rtc);
+	if (IS_ERR(rtc))
+		return PTR_ERR(rtc);
 	priv->rtc = rtc;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver ds1286_platक्रमm_driver = अणु
-	.driver		= अणु
+static struct platform_driver ds1286_platform_driver = {
+	.driver		= {
 		.name	= "rtc-ds1286",
-	पूर्ण,
+	},
 	.probe		= ds1286_probe,
-पूर्ण;
+};
 
-module_platक्रमm_driver(ds1286_platक्रमm_driver);
+module_platform_driver(ds1286_platform_driver);
 
 MODULE_AUTHOR("Thomas Bogendoerfer <tsbogend@alpha.franken.de>");
 MODULE_DESCRIPTION("DS1286 RTC driver");

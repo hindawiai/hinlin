@@ -1,44 +1,43 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * FCI FC2580 silicon tuner driver
  *
  * Copyright (C) 2012 Antti Palosaari <crope@iki.fi>
  */
 
-#समावेश "fc2580_priv.h"
+#include "fc2580_priv.h"
 
 /*
  * TODO:
- * I2C ग_लिखो and पढ़ो works only क्रम one single रेजिस्टर. Multiple रेजिस्टरs
- * could not be accessed using normal रेजिस्टर address स्वतः-increment.
- * There could be (very likely) रेजिस्टर to change that behavior....
+ * I2C write and read works only for one single register. Multiple registers
+ * could not be accessed using normal register address auto-increment.
+ * There could be (very likely) register to change that behavior....
  */
 
-/* ग_लिखो single रेजिस्टर conditionally only when value dअगरfers from 0xff
- * XXX: This is special routine meant only क्रम writing fc2580_freq_regs_lut[]
- * values. Do not use क्रम the other purposes. */
-अटल पूर्णांक fc2580_wr_reg_ff(काष्ठा fc2580_dev *dev, u8 reg, u8 val)
-अणु
-	अगर (val == 0xff)
-		वापस 0;
-	अन्यथा
-		वापस regmap_ग_लिखो(dev->regmap, reg, val);
-पूर्ण
+/* write single register conditionally only when value differs from 0xff
+ * XXX: This is special routine meant only for writing fc2580_freq_regs_lut[]
+ * values. Do not use for the other purposes. */
+static int fc2580_wr_reg_ff(struct fc2580_dev *dev, u8 reg, u8 val)
+{
+	if (val == 0xff)
+		return 0;
+	else
+		return regmap_write(dev->regmap, reg, val);
+}
 
-अटल पूर्णांक fc2580_set_params(काष्ठा fc2580_dev *dev)
-अणु
-	काष्ठा i2c_client *client = dev->client;
-	पूर्णांक ret, i;
-	अचिन्हित पूर्णांक uiपंचांगp, भाग_ref, भाग_ref_val, भाग_n, k, k_cw, भाग_out;
+static int fc2580_set_params(struct fc2580_dev *dev)
+{
+	struct i2c_client *client = dev->client;
+	int ret, i;
+	unsigned int uitmp, div_ref, div_ref_val, div_n, k, k_cw, div_out;
 	u64 f_vco;
 	u8 synth_config;
-	अचिन्हित दीर्घ समयout;
+	unsigned long timeout;
 
-	अगर (!dev->active) अणु
+	if (!dev->active) {
 		dev_dbg(&client->dev, "tuner is sleeping\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/*
 	 * Fractional-N synthesizer
@@ -55,568 +54,568 @@
 	 *                               | /Rout | ------>
 	 *                               +-------+
 	 */
-	क्रम (i = 0; i < ARRAY_SIZE(fc2580_pll_lut); i++) अणु
-		अगर (dev->f_frequency <= fc2580_pll_lut[i].freq)
-			अवरोध;
-	पूर्ण
-	अगर (i == ARRAY_SIZE(fc2580_pll_lut)) अणु
+	for (i = 0; i < ARRAY_SIZE(fc2580_pll_lut); i++) {
+		if (dev->f_frequency <= fc2580_pll_lut[i].freq)
+			break;
+	}
+	if (i == ARRAY_SIZE(fc2580_pll_lut)) {
 		ret = -EINVAL;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	#घोषणा DIV_PRE_N 2
-	#घोषणा F_REF dev->clk
-	भाग_out = fc2580_pll_lut[i].भाग_out;
-	f_vco = (u64) dev->f_frequency * भाग_out;
+	#define DIV_PRE_N 2
+	#define F_REF dev->clk
+	div_out = fc2580_pll_lut[i].div_out;
+	f_vco = (u64) dev->f_frequency * div_out;
 	synth_config = fc2580_pll_lut[i].band;
-	अगर (f_vco < 2600000000ULL)
+	if (f_vco < 2600000000ULL)
 		synth_config |= 0x06;
-	अन्यथा
+	else
 		synth_config |= 0x0e;
 
-	/* select reference भागider R (keep PLL भाग N in valid range) */
-	#घोषणा DIV_N_MIN 76
-	अगर (f_vco >= भाग_u64((u64) DIV_PRE_N * DIV_N_MIN * F_REF, 1)) अणु
-		भाग_ref = 1;
-		भाग_ref_val = 0x00;
-	पूर्ण अन्यथा अगर (f_vco >= भाग_u64((u64) DIV_PRE_N * DIV_N_MIN * F_REF, 2)) अणु
-		भाग_ref = 2;
-		भाग_ref_val = 0x10;
-	पूर्ण अन्यथा अणु
-		भाग_ref = 4;
-		भाग_ref_val = 0x20;
-	पूर्ण
+	/* select reference divider R (keep PLL div N in valid range) */
+	#define DIV_N_MIN 76
+	if (f_vco >= div_u64((u64) DIV_PRE_N * DIV_N_MIN * F_REF, 1)) {
+		div_ref = 1;
+		div_ref_val = 0x00;
+	} else if (f_vco >= div_u64((u64) DIV_PRE_N * DIV_N_MIN * F_REF, 2)) {
+		div_ref = 2;
+		div_ref_val = 0x10;
+	} else {
+		div_ref = 4;
+		div_ref_val = 0x20;
+	}
 
-	/* calculate PLL पूर्णांकeger and fractional control word */
-	uiपंचांगp = DIV_PRE_N * F_REF / भाग_ref;
-	भाग_n = भाग_u64_rem(f_vco, uiपंचांगp, &k);
-	k_cw = भाग_u64((u64) k * 0x100000, uiपंचांगp);
+	/* calculate PLL integer and fractional control word */
+	uitmp = DIV_PRE_N * F_REF / div_ref;
+	div_n = div_u64_rem(f_vco, uitmp, &k);
+	k_cw = div_u64((u64) k * 0x100000, uitmp);
 
 	dev_dbg(&client->dev,
 		"frequency=%u bandwidth=%u f_vco=%llu F_REF=%u div_ref=%u div_n=%u k=%u div_out=%u k_cw=%0x\n",
-		dev->f_frequency, dev->f_bandwidth, f_vco, F_REF, भाग_ref,
-		भाग_n, k, भाग_out, k_cw);
+		dev->f_frequency, dev->f_bandwidth, f_vco, F_REF, div_ref,
+		div_n, k, div_out, k_cw);
 
-	ret = regmap_ग_लिखो(dev->regmap, 0x02, synth_config);
-	अगर (ret)
-		जाओ err;
+	ret = regmap_write(dev->regmap, 0x02, synth_config);
+	if (ret)
+		goto err;
 
-	ret = regmap_ग_लिखो(dev->regmap, 0x18, भाग_ref_val << 0 | k_cw >> 16);
-	अगर (ret)
-		जाओ err;
+	ret = regmap_write(dev->regmap, 0x18, div_ref_val << 0 | k_cw >> 16);
+	if (ret)
+		goto err;
 
-	ret = regmap_ग_लिखो(dev->regmap, 0x1a, (k_cw >> 8) & 0xff);
-	अगर (ret)
-		जाओ err;
+	ret = regmap_write(dev->regmap, 0x1a, (k_cw >> 8) & 0xff);
+	if (ret)
+		goto err;
 
-	ret = regmap_ग_लिखो(dev->regmap, 0x1b, (k_cw >> 0) & 0xff);
-	अगर (ret)
-		जाओ err;
+	ret = regmap_write(dev->regmap, 0x1b, (k_cw >> 0) & 0xff);
+	if (ret)
+		goto err;
 
-	ret = regmap_ग_लिखो(dev->regmap, 0x1c, भाग_n);
-	अगर (ret)
-		जाओ err;
+	ret = regmap_write(dev->regmap, 0x1c, div_n);
+	if (ret)
+		goto err;
 
-	/* रेजिस्टरs */
-	क्रम (i = 0; i < ARRAY_SIZE(fc2580_freq_regs_lut); i++) अणु
-		अगर (dev->f_frequency <= fc2580_freq_regs_lut[i].freq)
-			अवरोध;
-	पूर्ण
-	अगर (i == ARRAY_SIZE(fc2580_freq_regs_lut)) अणु
+	/* registers */
+	for (i = 0; i < ARRAY_SIZE(fc2580_freq_regs_lut); i++) {
+		if (dev->f_frequency <= fc2580_freq_regs_lut[i].freq)
+			break;
+	}
+	if (i == ARRAY_SIZE(fc2580_freq_regs_lut)) {
 		ret = -EINVAL;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	ret = fc2580_wr_reg_ff(dev, 0x25, fc2580_freq_regs_lut[i].r25_val);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	ret = fc2580_wr_reg_ff(dev, 0x27, fc2580_freq_regs_lut[i].r27_val);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	ret = fc2580_wr_reg_ff(dev, 0x28, fc2580_freq_regs_lut[i].r28_val);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	ret = fc2580_wr_reg_ff(dev, 0x29, fc2580_freq_regs_lut[i].r29_val);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	ret = fc2580_wr_reg_ff(dev, 0x2b, fc2580_freq_regs_lut[i].r2b_val);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	ret = fc2580_wr_reg_ff(dev, 0x2c, fc2580_freq_regs_lut[i].r2c_val);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	ret = fc2580_wr_reg_ff(dev, 0x2d, fc2580_freq_regs_lut[i].r2d_val);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	ret = fc2580_wr_reg_ff(dev, 0x30, fc2580_freq_regs_lut[i].r30_val);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	ret = fc2580_wr_reg_ff(dev, 0x44, fc2580_freq_regs_lut[i].r44_val);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	ret = fc2580_wr_reg_ff(dev, 0x50, fc2580_freq_regs_lut[i].r50_val);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	ret = fc2580_wr_reg_ff(dev, 0x53, fc2580_freq_regs_lut[i].r53_val);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	ret = fc2580_wr_reg_ff(dev, 0x5f, fc2580_freq_regs_lut[i].r5f_val);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	ret = fc2580_wr_reg_ff(dev, 0x61, fc2580_freq_regs_lut[i].r61_val);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	ret = fc2580_wr_reg_ff(dev, 0x62, fc2580_freq_regs_lut[i].r62_val);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	ret = fc2580_wr_reg_ff(dev, 0x63, fc2580_freq_regs_lut[i].r63_val);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	ret = fc2580_wr_reg_ff(dev, 0x67, fc2580_freq_regs_lut[i].r67_val);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	ret = fc2580_wr_reg_ff(dev, 0x68, fc2580_freq_regs_lut[i].r68_val);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	ret = fc2580_wr_reg_ff(dev, 0x69, fc2580_freq_regs_lut[i].r69_val);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	ret = fc2580_wr_reg_ff(dev, 0x6a, fc2580_freq_regs_lut[i].r6a_val);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	ret = fc2580_wr_reg_ff(dev, 0x6b, fc2580_freq_regs_lut[i].r6b_val);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	ret = fc2580_wr_reg_ff(dev, 0x6c, fc2580_freq_regs_lut[i].r6c_val);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	ret = fc2580_wr_reg_ff(dev, 0x6d, fc2580_freq_regs_lut[i].r6d_val);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	ret = fc2580_wr_reg_ff(dev, 0x6e, fc2580_freq_regs_lut[i].r6e_val);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	ret = fc2580_wr_reg_ff(dev, 0x6f, fc2580_freq_regs_lut[i].r6f_val);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	/* IF filters */
-	क्रम (i = 0; i < ARRAY_SIZE(fc2580_अगर_filter_lut); i++) अणु
-		अगर (dev->f_bandwidth <= fc2580_अगर_filter_lut[i].freq)
-			अवरोध;
-	पूर्ण
-	अगर (i == ARRAY_SIZE(fc2580_अगर_filter_lut)) अणु
+	for (i = 0; i < ARRAY_SIZE(fc2580_if_filter_lut); i++) {
+		if (dev->f_bandwidth <= fc2580_if_filter_lut[i].freq)
+			break;
+	}
+	if (i == ARRAY_SIZE(fc2580_if_filter_lut)) {
 		ret = -EINVAL;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	ret = regmap_ग_लिखो(dev->regmap, 0x36, fc2580_अगर_filter_lut[i].r36_val);
-	अगर (ret)
-		जाओ err;
+	ret = regmap_write(dev->regmap, 0x36, fc2580_if_filter_lut[i].r36_val);
+	if (ret)
+		goto err;
 
-	uiपंचांगp = (अचिन्हित पूर्णांक) 8058000 - (dev->f_bandwidth * 122 / 100 / 2);
-	uiपंचांगp = भाग64_u64((u64) dev->clk * uiपंचांगp, 1000000000000ULL);
-	ret = regmap_ग_लिखो(dev->regmap, 0x37, uiपंचांगp);
-	अगर (ret)
-		जाओ err;
+	uitmp = (unsigned int) 8058000 - (dev->f_bandwidth * 122 / 100 / 2);
+	uitmp = div64_u64((u64) dev->clk * uitmp, 1000000000000ULL);
+	ret = regmap_write(dev->regmap, 0x37, uitmp);
+	if (ret)
+		goto err;
 
-	ret = regmap_ग_लिखो(dev->regmap, 0x39, fc2580_अगर_filter_lut[i].r39_val);
-	अगर (ret)
-		जाओ err;
+	ret = regmap_write(dev->regmap, 0x39, fc2580_if_filter_lut[i].r39_val);
+	if (ret)
+		goto err;
 
-	समयout = jअगरfies + msecs_to_jअगरfies(30);
-	क्रम (uiपंचांगp = ~0xc0; !समय_after(jअगरfies, समयout) && uiपंचांगp != 0xc0;) अणु
+	timeout = jiffies + msecs_to_jiffies(30);
+	for (uitmp = ~0xc0; !time_after(jiffies, timeout) && uitmp != 0xc0;) {
 		/* trigger filter */
-		ret = regmap_ग_लिखो(dev->regmap, 0x2e, 0x09);
-		अगर (ret)
-			जाओ err;
+		ret = regmap_write(dev->regmap, 0x2e, 0x09);
+		if (ret)
+			goto err;
 
 		/* locked when [7:6] are set (val: d7 6MHz, d5 7MHz, cd 8MHz) */
-		ret = regmap_पढ़ो(dev->regmap, 0x2f, &uiपंचांगp);
-		अगर (ret)
-			जाओ err;
-		uiपंचांगp &= 0xc0;
+		ret = regmap_read(dev->regmap, 0x2f, &uitmp);
+		if (ret)
+			goto err;
+		uitmp &= 0xc0;
 
-		ret = regmap_ग_लिखो(dev->regmap, 0x2e, 0x01);
-		अगर (ret)
-			जाओ err;
-	पूर्ण
-	अगर (uiपंचांगp != 0xc0)
-		dev_dbg(&client->dev, "filter did not lock %02x\n", uiपंचांगp);
+		ret = regmap_write(dev->regmap, 0x2e, 0x01);
+		if (ret)
+			goto err;
+	}
+	if (uitmp != 0xc0)
+		dev_dbg(&client->dev, "filter did not lock %02x\n", uitmp);
 
-	वापस 0;
+	return 0;
 err:
 	dev_dbg(&client->dev, "failed=%d\n", ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक fc2580_init(काष्ठा fc2580_dev *dev)
-अणु
-	काष्ठा i2c_client *client = dev->client;
-	पूर्णांक ret, i;
+static int fc2580_init(struct fc2580_dev *dev)
+{
+	struct i2c_client *client = dev->client;
+	int ret, i;
 
 	dev_dbg(&client->dev, "\n");
 
-	क्रम (i = 0; i < ARRAY_SIZE(fc2580_init_reg_vals); i++) अणु
-		ret = regmap_ग_लिखो(dev->regmap, fc2580_init_reg_vals[i].reg,
+	for (i = 0; i < ARRAY_SIZE(fc2580_init_reg_vals); i++) {
+		ret = regmap_write(dev->regmap, fc2580_init_reg_vals[i].reg,
 				fc2580_init_reg_vals[i].val);
-		अगर (ret)
-			जाओ err;
-	पूर्ण
+		if (ret)
+			goto err;
+	}
 
 	dev->active = true;
-	वापस 0;
+	return 0;
 err:
 	dev_dbg(&client->dev, "failed=%d\n", ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक fc2580_sleep(काष्ठा fc2580_dev *dev)
-अणु
-	काष्ठा i2c_client *client = dev->client;
-	पूर्णांक ret;
+static int fc2580_sleep(struct fc2580_dev *dev)
+{
+	struct i2c_client *client = dev->client;
+	int ret;
 
 	dev_dbg(&client->dev, "\n");
 
 	dev->active = false;
 
-	ret = regmap_ग_लिखो(dev->regmap, 0x02, 0x0a);
-	अगर (ret)
-		जाओ err;
-	वापस 0;
+	ret = regmap_write(dev->regmap, 0x02, 0x0a);
+	if (ret)
+		goto err;
+	return 0;
 err:
 	dev_dbg(&client->dev, "failed=%d\n", ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * DVB API
  */
-अटल पूर्णांक fc2580_dvb_set_params(काष्ठा dvb_frontend *fe)
-अणु
-	काष्ठा fc2580_dev *dev = fe->tuner_priv;
-	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
+static int fc2580_dvb_set_params(struct dvb_frontend *fe)
+{
+	struct fc2580_dev *dev = fe->tuner_priv;
+	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
 
 	dev->f_frequency = c->frequency;
 	dev->f_bandwidth = c->bandwidth_hz;
-	वापस fc2580_set_params(dev);
-पूर्ण
+	return fc2580_set_params(dev);
+}
 
-अटल पूर्णांक fc2580_dvb_init(काष्ठा dvb_frontend *fe)
-अणु
-	वापस fc2580_init(fe->tuner_priv);
-पूर्ण
+static int fc2580_dvb_init(struct dvb_frontend *fe)
+{
+	return fc2580_init(fe->tuner_priv);
+}
 
-अटल पूर्णांक fc2580_dvb_sleep(काष्ठा dvb_frontend *fe)
-अणु
-	वापस fc2580_sleep(fe->tuner_priv);
-पूर्ण
+static int fc2580_dvb_sleep(struct dvb_frontend *fe)
+{
+	return fc2580_sleep(fe->tuner_priv);
+}
 
-अटल पूर्णांक fc2580_dvb_get_अगर_frequency(काष्ठा dvb_frontend *fe, u32 *frequency)
-अणु
+static int fc2580_dvb_get_if_frequency(struct dvb_frontend *fe, u32 *frequency)
+{
 	*frequency = 0; /* Zero-IF */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dvb_tuner_ops fc2580_dvb_tuner_ops = अणु
-	.info = अणु
+static const struct dvb_tuner_ops fc2580_dvb_tuner_ops = {
+	.info = {
 		.name             = "FCI FC2580",
 		.frequency_min_hz = 174 * MHz,
 		.frequency_max_hz = 862 * MHz,
-	पूर्ण,
+	},
 
 	.init = fc2580_dvb_init,
 	.sleep = fc2580_dvb_sleep,
 	.set_params = fc2580_dvb_set_params,
 
-	.get_अगर_frequency = fc2580_dvb_get_अगर_frequency,
-पूर्ण;
+	.get_if_frequency = fc2580_dvb_get_if_frequency,
+};
 
 /*
  * V4L2 API
  */
-#अगर IS_ENABLED(CONFIG_VIDEO_V4L2)
-अटल स्थिर काष्ठा v4l2_frequency_band bands[] = अणु
-	अणु
+#if IS_ENABLED(CONFIG_VIDEO_V4L2)
+static const struct v4l2_frequency_band bands[] = {
+	{
 		.type = V4L2_TUNER_RF,
 		.index = 0,
 		.capability = V4L2_TUNER_CAP_1HZ | V4L2_TUNER_CAP_FREQ_BANDS,
 		.rangelow   =   130000000,
 		.rangehigh  =  2000000000,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल अंतरभूत काष्ठा fc2580_dev *fc2580_subdev_to_dev(काष्ठा v4l2_subdev *sd)
-अणु
-	वापस container_of(sd, काष्ठा fc2580_dev, subdev);
-पूर्ण
+static inline struct fc2580_dev *fc2580_subdev_to_dev(struct v4l2_subdev *sd)
+{
+	return container_of(sd, struct fc2580_dev, subdev);
+}
 
-अटल पूर्णांक fc2580_standby(काष्ठा v4l2_subdev *sd)
-अणु
-	काष्ठा fc2580_dev *dev = fc2580_subdev_to_dev(sd);
-	पूर्णांक ret;
+static int fc2580_standby(struct v4l2_subdev *sd)
+{
+	struct fc2580_dev *dev = fc2580_subdev_to_dev(sd);
+	int ret;
 
 	ret = fc2580_sleep(dev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस fc2580_set_params(dev);
-पूर्ण
+	return fc2580_set_params(dev);
+}
 
-अटल पूर्णांक fc2580_g_tuner(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_tuner *v)
-अणु
-	काष्ठा fc2580_dev *dev = fc2580_subdev_to_dev(sd);
-	काष्ठा i2c_client *client = dev->client;
+static int fc2580_g_tuner(struct v4l2_subdev *sd, struct v4l2_tuner *v)
+{
+	struct fc2580_dev *dev = fc2580_subdev_to_dev(sd);
+	struct i2c_client *client = dev->client;
 
 	dev_dbg(&client->dev, "index=%d\n", v->index);
 
-	strscpy(v->name, "FCI FC2580", माप(v->name));
+	strscpy(v->name, "FCI FC2580", sizeof(v->name));
 	v->type = V4L2_TUNER_RF;
 	v->capability = V4L2_TUNER_CAP_1HZ | V4L2_TUNER_CAP_FREQ_BANDS;
 	v->rangelow  = bands[0].rangelow;
 	v->rangehigh = bands[0].rangehigh;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fc2580_s_tuner(काष्ठा v4l2_subdev *sd, स्थिर काष्ठा v4l2_tuner *v)
-अणु
-	काष्ठा fc2580_dev *dev = fc2580_subdev_to_dev(sd);
-	काष्ठा i2c_client *client = dev->client;
+static int fc2580_s_tuner(struct v4l2_subdev *sd, const struct v4l2_tuner *v)
+{
+	struct fc2580_dev *dev = fc2580_subdev_to_dev(sd);
+	struct i2c_client *client = dev->client;
 
 	dev_dbg(&client->dev, "index=%d\n", v->index);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fc2580_g_frequency(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_frequency *f)
-अणु
-	काष्ठा fc2580_dev *dev = fc2580_subdev_to_dev(sd);
-	काष्ठा i2c_client *client = dev->client;
+static int fc2580_g_frequency(struct v4l2_subdev *sd, struct v4l2_frequency *f)
+{
+	struct fc2580_dev *dev = fc2580_subdev_to_dev(sd);
+	struct i2c_client *client = dev->client;
 
 	dev_dbg(&client->dev, "tuner=%d\n", f->tuner);
 	f->frequency = dev->f_frequency;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fc2580_s_frequency(काष्ठा v4l2_subdev *sd,
-			      स्थिर काष्ठा v4l2_frequency *f)
-अणु
-	काष्ठा fc2580_dev *dev = fc2580_subdev_to_dev(sd);
-	काष्ठा i2c_client *client = dev->client;
+static int fc2580_s_frequency(struct v4l2_subdev *sd,
+			      const struct v4l2_frequency *f)
+{
+	struct fc2580_dev *dev = fc2580_subdev_to_dev(sd);
+	struct i2c_client *client = dev->client;
 
 	dev_dbg(&client->dev, "tuner=%d type=%d frequency=%u\n",
 		f->tuner, f->type, f->frequency);
 
-	dev->f_frequency = clamp_t(अचिन्हित पूर्णांक, f->frequency,
+	dev->f_frequency = clamp_t(unsigned int, f->frequency,
 				   bands[0].rangelow, bands[0].rangehigh);
-	वापस fc2580_set_params(dev);
-पूर्ण
+	return fc2580_set_params(dev);
+}
 
-अटल पूर्णांक fc2580_क्रमागत_freq_bands(काष्ठा v4l2_subdev *sd,
-				  काष्ठा v4l2_frequency_band *band)
-अणु
-	काष्ठा fc2580_dev *dev = fc2580_subdev_to_dev(sd);
-	काष्ठा i2c_client *client = dev->client;
+static int fc2580_enum_freq_bands(struct v4l2_subdev *sd,
+				  struct v4l2_frequency_band *band)
+{
+	struct fc2580_dev *dev = fc2580_subdev_to_dev(sd);
+	struct i2c_client *client = dev->client;
 
 	dev_dbg(&client->dev, "tuner=%d type=%d index=%d\n",
 		band->tuner, band->type, band->index);
 
-	अगर (band->index >= ARRAY_SIZE(bands))
-		वापस -EINVAL;
+	if (band->index >= ARRAY_SIZE(bands))
+		return -EINVAL;
 
 	band->capability = bands[band->index].capability;
 	band->rangelow = bands[band->index].rangelow;
 	band->rangehigh = bands[band->index].rangehigh;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा v4l2_subdev_tuner_ops fc2580_subdev_tuner_ops = अणु
+static const struct v4l2_subdev_tuner_ops fc2580_subdev_tuner_ops = {
 	.standby                  = fc2580_standby,
 	.g_tuner                  = fc2580_g_tuner,
 	.s_tuner                  = fc2580_s_tuner,
 	.g_frequency              = fc2580_g_frequency,
 	.s_frequency              = fc2580_s_frequency,
-	.क्रमागत_freq_bands          = fc2580_क्रमागत_freq_bands,
-पूर्ण;
+	.enum_freq_bands          = fc2580_enum_freq_bands,
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_ops fc2580_subdev_ops = अणु
+static const struct v4l2_subdev_ops fc2580_subdev_ops = {
 	.tuner                    = &fc2580_subdev_tuner_ops,
-पूर्ण;
+};
 
-अटल पूर्णांक fc2580_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	काष्ठा fc2580_dev *dev = container_of(ctrl->handler, काष्ठा fc2580_dev, hdl);
-	काष्ठा i2c_client *client = dev->client;
-	पूर्णांक ret;
+static int fc2580_s_ctrl(struct v4l2_ctrl *ctrl)
+{
+	struct fc2580_dev *dev = container_of(ctrl->handler, struct fc2580_dev, hdl);
+	struct i2c_client *client = dev->client;
+	int ret;
 
 	dev_dbg(&client->dev, "ctrl: id=%d name=%s cur.val=%d val=%d\n",
 		ctrl->id, ctrl->name, ctrl->cur.val, ctrl->val);
 
-	चयन (ctrl->id) अणु
-	हाल V4L2_CID_RF_TUNER_BANDWIDTH_AUTO:
-	हाल V4L2_CID_RF_TUNER_BANDWIDTH:
+	switch (ctrl->id) {
+	case V4L2_CID_RF_TUNER_BANDWIDTH_AUTO:
+	case V4L2_CID_RF_TUNER_BANDWIDTH:
 		/*
-		 * TODO: Auto logic करोes not work 100% correctly as tuner driver
-		 * करो not have inक्रमmation to calculate maximum suitable
+		 * TODO: Auto logic does not work 100% correctly as tuner driver
+		 * do not have information to calculate maximum suitable
 		 * bandwidth. Calculating it is responsible of master driver.
 		 */
 		dev->f_bandwidth = dev->bandwidth->val;
 		ret = fc2580_set_params(dev);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_dbg(&client->dev, "unknown ctrl");
 		ret = -EINVAL;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल स्थिर काष्ठा v4l2_ctrl_ops fc2580_ctrl_ops = अणु
+static const struct v4l2_ctrl_ops fc2580_ctrl_ops = {
 	.s_ctrl = fc2580_s_ctrl,
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-अटल काष्ठा v4l2_subdev *fc2580_get_v4l2_subdev(काष्ठा i2c_client *client)
-अणु
-	काष्ठा fc2580_dev *dev = i2c_get_clientdata(client);
+static struct v4l2_subdev *fc2580_get_v4l2_subdev(struct i2c_client *client)
+{
+	struct fc2580_dev *dev = i2c_get_clientdata(client);
 
-	अगर (dev->subdev.ops)
-		वापस &dev->subdev;
-	अन्यथा
-		वापस शून्य;
-पूर्ण
+	if (dev->subdev.ops)
+		return &dev->subdev;
+	else
+		return NULL;
+}
 
-अटल पूर्णांक fc2580_probe(काष्ठा i2c_client *client,
-			स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा fc2580_dev *dev;
-	काष्ठा fc2580_platक्रमm_data *pdata = client->dev.platक्रमm_data;
-	काष्ठा dvb_frontend *fe = pdata->dvb_frontend;
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक uiपंचांगp;
-	अटल स्थिर काष्ठा regmap_config regmap_config = अणु
+static int fc2580_probe(struct i2c_client *client,
+			const struct i2c_device_id *id)
+{
+	struct fc2580_dev *dev;
+	struct fc2580_platform_data *pdata = client->dev.platform_data;
+	struct dvb_frontend *fe = pdata->dvb_frontend;
+	int ret;
+	unsigned int uitmp;
+	static const struct regmap_config regmap_config = {
 		.reg_bits = 8,
 		.val_bits = 8,
-	पूर्ण;
+	};
 
-	dev = kzalloc(माप(*dev), GFP_KERNEL);
-	अगर (!dev) अणु
+	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
+	if (!dev) {
 		ret = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	अगर (pdata->clk)
+	if (pdata->clk)
 		dev->clk = pdata->clk;
-	अन्यथा
-		dev->clk = 16384000; /* पूर्णांकernal घड़ी */
+	else
+		dev->clk = 16384000; /* internal clock */
 	dev->client = client;
 	dev->regmap = devm_regmap_init_i2c(client, &regmap_config);
-	अगर (IS_ERR(dev->regmap)) अणु
+	if (IS_ERR(dev->regmap)) {
 		ret = PTR_ERR(dev->regmap);
-		जाओ err_kमुक्त;
-	पूर्ण
+		goto err_kfree;
+	}
 
-	/* check अगर the tuner is there */
-	ret = regmap_पढ़ो(dev->regmap, 0x01, &uiपंचांगp);
-	अगर (ret)
-		जाओ err_kमुक्त;
+	/* check if the tuner is there */
+	ret = regmap_read(dev->regmap, 0x01, &uitmp);
+	if (ret)
+		goto err_kfree;
 
-	dev_dbg(&client->dev, "chip_id=%02x\n", uiपंचांगp);
+	dev_dbg(&client->dev, "chip_id=%02x\n", uitmp);
 
-	चयन (uiपंचांगp) अणु
-	हाल 0x56:
-	हाल 0x5a:
-		अवरोध;
-	शेष:
+	switch (uitmp) {
+	case 0x56:
+	case 0x5a:
+		break;
+	default:
 		ret = -ENODEV;
-		जाओ err_kमुक्त;
-	पूर्ण
+		goto err_kfree;
+	}
 
-#अगर IS_ENABLED(CONFIG_VIDEO_V4L2)
+#if IS_ENABLED(CONFIG_VIDEO_V4L2)
 	/* Register controls */
 	v4l2_ctrl_handler_init(&dev->hdl, 2);
-	dev->bandwidth_स्वतः = v4l2_ctrl_new_std(&dev->hdl, &fc2580_ctrl_ops,
+	dev->bandwidth_auto = v4l2_ctrl_new_std(&dev->hdl, &fc2580_ctrl_ops,
 						V4L2_CID_RF_TUNER_BANDWIDTH_AUTO,
 						0, 1, 1, 1);
 	dev->bandwidth = v4l2_ctrl_new_std(&dev->hdl, &fc2580_ctrl_ops,
 					   V4L2_CID_RF_TUNER_BANDWIDTH,
 					   3000, 10000000, 1, 3000);
-	v4l2_ctrl_स्वतः_cluster(2, &dev->bandwidth_स्वतः, 0, false);
-	अगर (dev->hdl.error) अणु
+	v4l2_ctrl_auto_cluster(2, &dev->bandwidth_auto, 0, false);
+	if (dev->hdl.error) {
 		ret = dev->hdl.error;
 		dev_err(&client->dev, "Could not initialize controls\n");
-		v4l2_ctrl_handler_मुक्त(&dev->hdl);
-		जाओ err_kमुक्त;
-	पूर्ण
+		v4l2_ctrl_handler_free(&dev->hdl);
+		goto err_kfree;
+	}
 	dev->subdev.ctrl_handler = &dev->hdl;
 	dev->f_frequency = bands[0].rangelow;
 	dev->f_bandwidth = dev->bandwidth->val;
 	v4l2_i2c_subdev_init(&dev->subdev, client, &fc2580_subdev_ops);
-#पूर्ण_अगर
+#endif
 	fe->tuner_priv = dev;
-	स_नकल(&fe->ops.tuner_ops, &fc2580_dvb_tuner_ops,
-	       माप(fe->ops.tuner_ops));
+	memcpy(&fe->ops.tuner_ops, &fc2580_dvb_tuner_ops,
+	       sizeof(fe->ops.tuner_ops));
 	pdata->get_v4l2_subdev = fc2580_get_v4l2_subdev;
 	i2c_set_clientdata(client, dev);
 
 	dev_info(&client->dev, "FCI FC2580 successfully identified\n");
-	वापस 0;
-err_kमुक्त:
-	kमुक्त(dev);
+	return 0;
+err_kfree:
+	kfree(dev);
 err:
 	dev_dbg(&client->dev, "failed=%d\n", ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक fc2580_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा fc2580_dev *dev = i2c_get_clientdata(client);
+static int fc2580_remove(struct i2c_client *client)
+{
+	struct fc2580_dev *dev = i2c_get_clientdata(client);
 
 	dev_dbg(&client->dev, "\n");
 
-#अगर IS_ENABLED(CONFIG_VIDEO_V4L2)
-	v4l2_ctrl_handler_मुक्त(&dev->hdl);
-#पूर्ण_अगर
-	kमुक्त(dev);
-	वापस 0;
-पूर्ण
+#if IS_ENABLED(CONFIG_VIDEO_V4L2)
+	v4l2_ctrl_handler_free(&dev->hdl);
+#endif
+	kfree(dev);
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id fc2580_id_table[] = अणु
-	अणु"fc2580", 0पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct i2c_device_id fc2580_id_table[] = {
+	{"fc2580", 0},
+	{}
+};
 MODULE_DEVICE_TABLE(i2c, fc2580_id_table);
 
-अटल काष्ठा i2c_driver fc2580_driver = अणु
-	.driver = अणु
+static struct i2c_driver fc2580_driver = {
+	.driver = {
 		.name	= "fc2580",
 		.suppress_bind_attrs = true,
-	पूर्ण,
+	},
 	.probe		= fc2580_probe,
-	.हटाओ		= fc2580_हटाओ,
+	.remove		= fc2580_remove,
 	.id_table	= fc2580_id_table,
-पूर्ण;
+};
 
 module_i2c_driver(fc2580_driver);
 

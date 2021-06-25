@@ -1,328 +1,327 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * devपंचांगpfs - kernel-मुख्यtained पंचांगpfs-based /dev
+ * devtmpfs - kernel-maintained tmpfs-based /dev
  *
  * Copyright (C) 2009, Kay Sievers <kay.sievers@vrfy.org>
  *
- * During bootup, beक्रमe any driver core device is रेजिस्टरed,
- * devपंचांगpfs, a पंचांगpfs-based fileप्रणाली is created. Every driver-core
+ * During bootup, before any driver core device is registered,
+ * devtmpfs, a tmpfs-based filesystem is created. Every driver-core
  * device which requests a device node, will add a node in this
- * fileप्रणाली.
- * By शेष, all devices are named after the name of the device,
- * owned by root and have a शेष mode of 0600. Subप्रणालीs can
- * overग_लिखो the शेष setting अगर needed.
+ * filesystem.
+ * By default, all devices are named after the name of the device,
+ * owned by root and have a default mode of 0600. Subsystems can
+ * overwrite the default setting if needed.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/mount.h>
-#समावेश <linux/device.h>
-#समावेश <linux/genhd.h>
-#समावेश <linux/namei.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/shmem_fs.h>
-#समावेश <linux/ramfs.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/init_syscalls.h>
-#समावेश <uapi/linux/mount.h>
-#समावेश "base.h"
+#include <linux/kernel.h>
+#include <linux/syscalls.h>
+#include <linux/mount.h>
+#include <linux/device.h>
+#include <linux/genhd.h>
+#include <linux/namei.h>
+#include <linux/fs.h>
+#include <linux/shmem_fs.h>
+#include <linux/ramfs.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/kthread.h>
+#include <linux/init_syscalls.h>
+#include <uapi/linux/mount.h>
+#include "base.h"
 
-अटल काष्ठा task_काष्ठा *thपढ़ो;
+static struct task_struct *thread;
 
-अटल पूर्णांक __initdata mount_dev = IS_ENABLED(CONFIG_DEVTMPFS_MOUNT);
+static int __initdata mount_dev = IS_ENABLED(CONFIG_DEVTMPFS_MOUNT);
 
-अटल DEFINE_SPINLOCK(req_lock);
+static DEFINE_SPINLOCK(req_lock);
 
-अटल काष्ठा req अणु
-	काष्ठा req *next;
-	काष्ठा completion करोne;
-	पूर्णांक err;
-	स्थिर अक्षर *name;
+static struct req {
+	struct req *next;
+	struct completion done;
+	int err;
+	const char *name;
 	umode_t mode;	/* 0 => delete */
 	kuid_t uid;
 	kgid_t gid;
-	काष्ठा device *dev;
-पूर्ण *requests;
+	struct device *dev;
+} *requests;
 
-अटल पूर्णांक __init mount_param(अक्षर *str)
-अणु
-	mount_dev = simple_म_से_अदीर्घ(str, शून्य, 0);
-	वापस 1;
-पूर्ण
+static int __init mount_param(char *str)
+{
+	mount_dev = simple_strtoul(str, NULL, 0);
+	return 1;
+}
 __setup("devtmpfs.mount=", mount_param);
 
-अटल काष्ठा vfsmount *mnt;
+static struct vfsmount *mnt;
 
-अटल काष्ठा dentry *खुला_dev_mount(काष्ठा file_प्रणाली_type *fs_type, पूर्णांक flags,
-		      स्थिर अक्षर *dev_name, व्योम *data)
-अणु
-	काष्ठा super_block *s = mnt->mnt_sb;
+static struct dentry *public_dev_mount(struct file_system_type *fs_type, int flags,
+		      const char *dev_name, void *data)
+{
+	struct super_block *s = mnt->mnt_sb;
 	atomic_inc(&s->s_active);
-	करोwn_ग_लिखो(&s->s_umount);
-	वापस dget(s->s_root);
-पूर्ण
+	down_write(&s->s_umount);
+	return dget(s->s_root);
+}
 
-अटल काष्ठा file_प्रणाली_type पूर्णांकernal_fs_type = अणु
+static struct file_system_type internal_fs_type = {
 	.name = "devtmpfs",
-#अगर_घोषित CONFIG_TMPFS
+#ifdef CONFIG_TMPFS
 	.init_fs_context = shmem_init_fs_context,
 	.parameters	= shmem_fs_parameters,
-#अन्यथा
+#else
 	.init_fs_context = ramfs_init_fs_context,
 	.parameters	= ramfs_fs_parameters,
-#पूर्ण_अगर
-	.समाप्त_sb = समाप्त_litter_super,
-पूर्ण;
+#endif
+	.kill_sb = kill_litter_super,
+};
 
-अटल काष्ठा file_प्रणाली_type dev_fs_type = अणु
+static struct file_system_type dev_fs_type = {
 	.name = "devtmpfs",
-	.mount = खुला_dev_mount,
-पूर्ण;
+	.mount = public_dev_mount,
+};
 
-#अगर_घोषित CONFIG_BLOCK
-अटल अंतरभूत पूर्णांक is_blockdev(काष्ठा device *dev)
-अणु
-	वापस dev->class == &block_class;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत पूर्णांक is_blockdev(काष्ठा device *dev) अणु वापस 0; पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_BLOCK
+static inline int is_blockdev(struct device *dev)
+{
+	return dev->class == &block_class;
+}
+#else
+static inline int is_blockdev(struct device *dev) { return 0; }
+#endif
 
-अटल पूर्णांक devपंचांगpfs_submit_req(काष्ठा req *req, स्थिर अक्षर *पंचांगp)
-अणु
-	init_completion(&req->करोne);
+static int devtmpfs_submit_req(struct req *req, const char *tmp)
+{
+	init_completion(&req->done);
 
 	spin_lock(&req_lock);
 	req->next = requests;
 	requests = req;
 	spin_unlock(&req_lock);
 
-	wake_up_process(thपढ़ो);
-	रुको_क्रम_completion(&req->करोne);
+	wake_up_process(thread);
+	wait_for_completion(&req->done);
 
-	kमुक्त(पंचांगp);
+	kfree(tmp);
 
-	वापस req->err;
-पूर्ण
+	return req->err;
+}
 
-पूर्णांक devपंचांगpfs_create_node(काष्ठा device *dev)
-अणु
-	स्थिर अक्षर *पंचांगp = शून्य;
-	काष्ठा req req;
+int devtmpfs_create_node(struct device *dev)
+{
+	const char *tmp = NULL;
+	struct req req;
 
-	अगर (!thपढ़ो)
-		वापस 0;
+	if (!thread)
+		return 0;
 
 	req.mode = 0;
 	req.uid = GLOBAL_ROOT_UID;
 	req.gid = GLOBAL_ROOT_GID;
-	req.name = device_get_devnode(dev, &req.mode, &req.uid, &req.gid, &पंचांगp);
-	अगर (!req.name)
-		वापस -ENOMEM;
+	req.name = device_get_devnode(dev, &req.mode, &req.uid, &req.gid, &tmp);
+	if (!req.name)
+		return -ENOMEM;
 
-	अगर (req.mode == 0)
+	if (req.mode == 0)
 		req.mode = 0600;
-	अगर (is_blockdev(dev))
+	if (is_blockdev(dev))
 		req.mode |= S_IFBLK;
-	अन्यथा
+	else
 		req.mode |= S_IFCHR;
 
 	req.dev = dev;
 
-	वापस devपंचांगpfs_submit_req(&req, पंचांगp);
-पूर्ण
+	return devtmpfs_submit_req(&req, tmp);
+}
 
-पूर्णांक devपंचांगpfs_delete_node(काष्ठा device *dev)
-अणु
-	स्थिर अक्षर *पंचांगp = शून्य;
-	काष्ठा req req;
+int devtmpfs_delete_node(struct device *dev)
+{
+	const char *tmp = NULL;
+	struct req req;
 
-	अगर (!thपढ़ो)
-		वापस 0;
+	if (!thread)
+		return 0;
 
-	req.name = device_get_devnode(dev, शून्य, शून्य, शून्य, &पंचांगp);
-	अगर (!req.name)
-		वापस -ENOMEM;
+	req.name = device_get_devnode(dev, NULL, NULL, NULL, &tmp);
+	if (!req.name)
+		return -ENOMEM;
 
 	req.mode = 0;
 	req.dev = dev;
 
-	वापस devपंचांगpfs_submit_req(&req, पंचांगp);
-पूर्ण
+	return devtmpfs_submit_req(&req, tmp);
+}
 
-अटल पूर्णांक dev_सूची_गढ़ो(स्थिर अक्षर *name, umode_t mode)
-अणु
-	काष्ठा dentry *dentry;
-	काष्ठा path path;
-	पूर्णांक err;
+static int dev_mkdir(const char *name, umode_t mode)
+{
+	struct dentry *dentry;
+	struct path path;
+	int err;
 
-	dentry = kern_path_create(AT_FDCWD, name, &path, LOOKUP_सूचीECTORY);
-	अगर (IS_ERR(dentry))
-		वापस PTR_ERR(dentry);
+	dentry = kern_path_create(AT_FDCWD, name, &path, LOOKUP_DIRECTORY);
+	if (IS_ERR(dentry))
+		return PTR_ERR(dentry);
 
-	err = vfs_सूची_गढ़ो(&init_user_ns, d_inode(path.dentry), dentry, mode);
-	अगर (!err)
+	err = vfs_mkdir(&init_user_ns, d_inode(path.dentry), dentry, mode);
+	if (!err)
 		/* mark as kernel-created inode */
-		d_inode(dentry)->i_निजी = &thपढ़ो;
-	करोne_path_create(&path, dentry);
-	वापस err;
-पूर्ण
+		d_inode(dentry)->i_private = &thread;
+	done_path_create(&path, dentry);
+	return err;
+}
 
-अटल पूर्णांक create_path(स्थिर अक्षर *nodepath)
-अणु
-	अक्षर *path;
-	अक्षर *s;
-	पूर्णांक err = 0;
+static int create_path(const char *nodepath)
+{
+	char *path;
+	char *s;
+	int err = 0;
 
-	/* parent directories करो not exist, create them */
+	/* parent directories do not exist, create them */
 	path = kstrdup(nodepath, GFP_KERNEL);
-	अगर (!path)
-		वापस -ENOMEM;
+	if (!path)
+		return -ENOMEM;
 
 	s = path;
-	क्रम (;;) अणु
-		s = म_अक्षर(s, '/');
-		अगर (!s)
-			अवरोध;
+	for (;;) {
+		s = strchr(s, '/');
+		if (!s)
+			break;
 		s[0] = '\0';
-		err = dev_सूची_गढ़ो(path, 0755);
-		अगर (err && err != -EEXIST)
-			अवरोध;
+		err = dev_mkdir(path, 0755);
+		if (err && err != -EEXIST)
+			break;
 		s[0] = '/';
 		s++;
-	पूर्ण
-	kमुक्त(path);
-	वापस err;
-पूर्ण
+	}
+	kfree(path);
+	return err;
+}
 
-अटल पूर्णांक handle_create(स्थिर अक्षर *nodename, umode_t mode, kuid_t uid,
-			 kgid_t gid, काष्ठा device *dev)
-अणु
-	काष्ठा dentry *dentry;
-	काष्ठा path path;
-	पूर्णांक err;
+static int handle_create(const char *nodename, umode_t mode, kuid_t uid,
+			 kgid_t gid, struct device *dev)
+{
+	struct dentry *dentry;
+	struct path path;
+	int err;
 
 	dentry = kern_path_create(AT_FDCWD, nodename, &path, 0);
-	अगर (dentry == ERR_PTR(-ENOENT)) अणु
+	if (dentry == ERR_PTR(-ENOENT)) {
 		create_path(nodename);
 		dentry = kern_path_create(AT_FDCWD, nodename, &path, 0);
-	पूर्ण
-	अगर (IS_ERR(dentry))
-		वापस PTR_ERR(dentry);
+	}
+	if (IS_ERR(dentry))
+		return PTR_ERR(dentry);
 
 	err = vfs_mknod(&init_user_ns, d_inode(path.dentry), dentry, mode,
 			dev->devt);
-	अगर (!err) अणु
-		काष्ठा iattr newattrs;
+	if (!err) {
+		struct iattr newattrs;
 
 		newattrs.ia_mode = mode;
 		newattrs.ia_uid = uid;
 		newattrs.ia_gid = gid;
 		newattrs.ia_valid = ATTR_MODE|ATTR_UID|ATTR_GID;
 		inode_lock(d_inode(dentry));
-		notअगरy_change(&init_user_ns, dentry, &newattrs, शून्य);
+		notify_change(&init_user_ns, dentry, &newattrs, NULL);
 		inode_unlock(d_inode(dentry));
 
 		/* mark as kernel-created inode */
-		d_inode(dentry)->i_निजी = &thपढ़ो;
-	पूर्ण
-	करोne_path_create(&path, dentry);
-	वापस err;
-पूर्ण
+		d_inode(dentry)->i_private = &thread;
+	}
+	done_path_create(&path, dentry);
+	return err;
+}
 
-अटल पूर्णांक dev_सूची_हटाओ(स्थिर अक्षर *name)
-अणु
-	काष्ठा path parent;
-	काष्ठा dentry *dentry;
-	पूर्णांक err;
+static int dev_rmdir(const char *name)
+{
+	struct path parent;
+	struct dentry *dentry;
+	int err;
 
 	dentry = kern_path_locked(name, &parent);
-	अगर (IS_ERR(dentry))
-		वापस PTR_ERR(dentry);
-	अगर (d_really_is_positive(dentry)) अणु
-		अगर (d_inode(dentry)->i_निजी == &thपढ़ो)
-			err = vfs_सूची_हटाओ(&init_user_ns, d_inode(parent.dentry),
+	if (IS_ERR(dentry))
+		return PTR_ERR(dentry);
+	if (d_really_is_positive(dentry)) {
+		if (d_inode(dentry)->i_private == &thread)
+			err = vfs_rmdir(&init_user_ns, d_inode(parent.dentry),
 					dentry);
-		अन्यथा
+		else
 			err = -EPERM;
-	पूर्ण अन्यथा अणु
+	} else {
 		err = -ENOENT;
-	पूर्ण
+	}
 	dput(dentry);
 	inode_unlock(d_inode(parent.dentry));
 	path_put(&parent);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक delete_path(स्थिर अक्षर *nodepath)
-अणु
-	अक्षर *path;
-	पूर्णांक err = 0;
+static int delete_path(const char *nodepath)
+{
+	char *path;
+	int err = 0;
 
 	path = kstrdup(nodepath, GFP_KERNEL);
-	अगर (!path)
-		वापस -ENOMEM;
+	if (!path)
+		return -ENOMEM;
 
-	क्रम (;;) अणु
-		अक्षर *base;
+	for (;;) {
+		char *base;
 
-		base = म_खोजप(path, '/');
-		अगर (!base)
-			अवरोध;
+		base = strrchr(path, '/');
+		if (!base)
+			break;
 		base[0] = '\0';
-		err = dev_सूची_हटाओ(path);
-		अगर (err)
-			अवरोध;
-	पूर्ण
+		err = dev_rmdir(path);
+		if (err)
+			break;
+	}
 
-	kमुक्त(path);
-	वापस err;
-पूर्ण
+	kfree(path);
+	return err;
+}
 
-अटल पूर्णांक dev_mynode(काष्ठा device *dev, काष्ठा inode *inode, काष्ठा kstat *stat)
-अणु
+static int dev_mynode(struct device *dev, struct inode *inode, struct kstat *stat)
+{
 	/* did we create it */
-	अगर (inode->i_निजी != &thपढ़ो)
-		वापस 0;
+	if (inode->i_private != &thread)
+		return 0;
 
-	/* करोes the dev_t match */
-	अगर (is_blockdev(dev)) अणु
-		अगर (!S_ISBLK(stat->mode))
-			वापस 0;
-	पूर्ण अन्यथा अणु
-		अगर (!S_ISCHR(stat->mode))
-			वापस 0;
-	पूर्ण
-	अगर (stat->rdev != dev->devt)
-		वापस 0;
+	/* does the dev_t match */
+	if (is_blockdev(dev)) {
+		if (!S_ISBLK(stat->mode))
+			return 0;
+	} else {
+		if (!S_ISCHR(stat->mode))
+			return 0;
+	}
+	if (stat->rdev != dev->devt)
+		return 0;
 
 	/* ours */
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक handle_हटाओ(स्थिर अक्षर *nodename, काष्ठा device *dev)
-अणु
-	काष्ठा path parent;
-	काष्ठा dentry *dentry;
-	पूर्णांक deleted = 0;
-	पूर्णांक err;
+static int handle_remove(const char *nodename, struct device *dev)
+{
+	struct path parent;
+	struct dentry *dentry;
+	int deleted = 0;
+	int err;
 
 	dentry = kern_path_locked(nodename, &parent);
-	अगर (IS_ERR(dentry))
-		वापस PTR_ERR(dentry);
+	if (IS_ERR(dentry))
+		return PTR_ERR(dentry);
 
-	अगर (d_really_is_positive(dentry)) अणु
-		काष्ठा kstat stat;
-		काष्ठा path p = अणु.mnt = parent.mnt, .dentry = dentryपूर्ण;
+	if (d_really_is_positive(dentry)) {
+		struct kstat stat;
+		struct path p = {.mnt = parent.mnt, .dentry = dentry};
 		err = vfs_getattr(&p, &stat, STATX_TYPE | STATX_MODE,
 				  AT_STATX_SYNC_AS_STAT);
-		अगर (!err && dev_mynode(dev, d_inode(dentry), &stat)) अणु
-			काष्ठा iattr newattrs;
+		if (!err && dev_mynode(dev, d_inode(dentry), &stat)) {
+			struct iattr newattrs;
 			/*
-			 * beक्रमe unlinking this node, reset permissions
+			 * before unlinking this node, reset permissions
 			 * of possible references like hardlinks
 			 */
 			newattrs.ia_uid = GLOBAL_ROOT_UID;
@@ -331,150 +330,150 @@ __setup("devtmpfs.mount=", mount_param);
 			newattrs.ia_valid =
 				ATTR_UID|ATTR_GID|ATTR_MODE;
 			inode_lock(d_inode(dentry));
-			notअगरy_change(&init_user_ns, dentry, &newattrs, शून्य);
+			notify_change(&init_user_ns, dentry, &newattrs, NULL);
 			inode_unlock(d_inode(dentry));
 			err = vfs_unlink(&init_user_ns, d_inode(parent.dentry),
-					 dentry, शून्य);
-			अगर (!err || err == -ENOENT)
+					 dentry, NULL);
+			if (!err || err == -ENOENT)
 				deleted = 1;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		err = -ENOENT;
-	पूर्ण
+	}
 	dput(dentry);
 	inode_unlock(d_inode(parent.dentry));
 
 	path_put(&parent);
-	अगर (deleted && म_अक्षर(nodename, '/'))
+	if (deleted && strchr(nodename, '/'))
 		delete_path(nodename);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- * If configured, or requested by the commandline, devपंचांगpfs will be
- * स्वतः-mounted after the kernel mounted the root fileप्रणाली.
+ * If configured, or requested by the commandline, devtmpfs will be
+ * auto-mounted after the kernel mounted the root filesystem.
  */
-पूर्णांक __init devपंचांगpfs_mount(व्योम)
-अणु
-	पूर्णांक err;
+int __init devtmpfs_mount(void)
+{
+	int err;
 
-	अगर (!mount_dev)
-		वापस 0;
+	if (!mount_dev)
+		return 0;
 
-	अगर (!thपढ़ो)
-		वापस 0;
+	if (!thread)
+		return 0;
 
-	err = init_mount("devtmpfs", "dev", "devtmpfs", MS_SILENT, शून्य);
-	अगर (err)
-		prपूर्णांकk(KERN_INFO "devtmpfs: error mounting %i\n", err);
-	अन्यथा
-		prपूर्णांकk(KERN_INFO "devtmpfs: mounted\n");
-	वापस err;
-पूर्ण
+	err = init_mount("devtmpfs", "dev", "devtmpfs", MS_SILENT, NULL);
+	if (err)
+		printk(KERN_INFO "devtmpfs: error mounting %i\n", err);
+	else
+		printk(KERN_INFO "devtmpfs: mounted\n");
+	return err;
+}
 
-अटल __initdata DECLARE_COMPLETION(setup_करोne);
+static __initdata DECLARE_COMPLETION(setup_done);
 
-अटल पूर्णांक handle(स्थिर अक्षर *name, umode_t mode, kuid_t uid, kgid_t gid,
-		  काष्ठा device *dev)
-अणु
-	अगर (mode)
-		वापस handle_create(name, mode, uid, gid, dev);
-	अन्यथा
-		वापस handle_हटाओ(name, dev);
-पूर्ण
+static int handle(const char *name, umode_t mode, kuid_t uid, kgid_t gid,
+		  struct device *dev)
+{
+	if (mode)
+		return handle_create(name, mode, uid, gid, dev);
+	else
+		return handle_remove(name, dev);
+}
 
-अटल व्योम __noवापस devपंचांगpfs_work_loop(व्योम)
-अणु
-	जबतक (1) अणु
+static void __noreturn devtmpfs_work_loop(void)
+{
+	while (1) {
 		spin_lock(&req_lock);
-		जबतक (requests) अणु
-			काष्ठा req *req = requests;
-			requests = शून्य;
+		while (requests) {
+			struct req *req = requests;
+			requests = NULL;
 			spin_unlock(&req_lock);
-			जबतक (req) अणु
-				काष्ठा req *next = req->next;
+			while (req) {
+				struct req *next = req->next;
 				req->err = handle(req->name, req->mode,
 						  req->uid, req->gid, req->dev);
-				complete(&req->करोne);
+				complete(&req->done);
 				req = next;
-			पूर्ण
+			}
 			spin_lock(&req_lock);
-		पूर्ण
+		}
 		__set_current_state(TASK_INTERRUPTIBLE);
 		spin_unlock(&req_lock);
 		schedule();
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल noअंतरभूत पूर्णांक __init devपंचांगpfs_setup(व्योम *p)
-अणु
-	पूर्णांक err;
+static noinline int __init devtmpfs_setup(void *p)
+{
+	int err;
 
 	err = ksys_unshare(CLONE_NEWNS);
-	अगर (err)
-		जाओ out;
-	err = init_mount("devtmpfs", "/", "devtmpfs", MS_SILENT, शून्य);
-	अगर (err)
-		जाओ out;
-	init_स_बदलो("/.."); /* will traverse पूर्णांकo overmounted root */
+	if (err)
+		goto out;
+	err = init_mount("devtmpfs", "/", "devtmpfs", MS_SILENT, NULL);
+	if (err)
+		goto out;
+	init_chdir("/.."); /* will traverse into overmounted root */
 	init_chroot(".");
 out:
-	*(पूर्णांक *)p = err;
-	वापस err;
-पूर्ण
+	*(int *)p = err;
+	return err;
+}
 
 /*
- * The __ref is because devपंचांगpfs_setup needs to be __init क्रम the routines it
- * calls.  That call is करोne जबतक devपंचांगpfs_init, which is marked __init,
- * synchronously रुकोs क्रम it to complete.
+ * The __ref is because devtmpfs_setup needs to be __init for the routines it
+ * calls.  That call is done while devtmpfs_init, which is marked __init,
+ * synchronously waits for it to complete.
  */
-अटल पूर्णांक __ref devपंचांगpfsd(व्योम *p)
-अणु
-	पूर्णांक err = devपंचांगpfs_setup(p);
+static int __ref devtmpfsd(void *p)
+{
+	int err = devtmpfs_setup(p);
 
-	complete(&setup_करोne);
-	अगर (err)
-		वापस err;
-	devपंचांगpfs_work_loop();
-	वापस 0;
-पूर्ण
+	complete(&setup_done);
+	if (err)
+		return err;
+	devtmpfs_work_loop();
+	return 0;
+}
 
 /*
- * Create devपंचांगpfs instance, driver-core devices will add their device
+ * Create devtmpfs instance, driver-core devices will add their device
  * nodes here.
  */
-पूर्णांक __init devपंचांगpfs_init(व्योम)
-अणु
-	अक्षर opts[] = "mode=0755";
-	पूर्णांक err;
+int __init devtmpfs_init(void)
+{
+	char opts[] = "mode=0755";
+	int err;
 
-	mnt = vfs_kern_mount(&पूर्णांकernal_fs_type, 0, "devtmpfs", opts);
-	अगर (IS_ERR(mnt)) अणु
-		prपूर्णांकk(KERN_ERR "devtmpfs: unable to create devtmpfs %ld\n",
+	mnt = vfs_kern_mount(&internal_fs_type, 0, "devtmpfs", opts);
+	if (IS_ERR(mnt)) {
+		printk(KERN_ERR "devtmpfs: unable to create devtmpfs %ld\n",
 				PTR_ERR(mnt));
-		वापस PTR_ERR(mnt);
-	पूर्ण
-	err = रेजिस्टर_fileप्रणाली(&dev_fs_type);
-	अगर (err) अणु
-		prपूर्णांकk(KERN_ERR "devtmpfs: unable to register devtmpfs "
+		return PTR_ERR(mnt);
+	}
+	err = register_filesystem(&dev_fs_type);
+	if (err) {
+		printk(KERN_ERR "devtmpfs: unable to register devtmpfs "
 		       "type %i\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	thपढ़ो = kthपढ़ो_run(devपंचांगpfsd, &err, "kdevtmpfs");
-	अगर (!IS_ERR(thपढ़ो)) अणु
-		रुको_क्रम_completion(&setup_करोne);
-	पूर्ण अन्यथा अणु
-		err = PTR_ERR(thपढ़ो);
-		thपढ़ो = शून्य;
-	पूर्ण
+	thread = kthread_run(devtmpfsd, &err, "kdevtmpfs");
+	if (!IS_ERR(thread)) {
+		wait_for_completion(&setup_done);
+	} else {
+		err = PTR_ERR(thread);
+		thread = NULL;
+	}
 
-	अगर (err) अणु
-		prपूर्णांकk(KERN_ERR "devtmpfs: unable to create devtmpfs %i\n", err);
-		unरेजिस्टर_fileप्रणाली(&dev_fs_type);
-		वापस err;
-	पूर्ण
+	if (err) {
+		printk(KERN_ERR "devtmpfs: unable to create devtmpfs %i\n", err);
+		unregister_filesystem(&dev_fs_type);
+		return err;
+	}
 
-	prपूर्णांकk(KERN_INFO "devtmpfs: initialized\n");
-	वापस 0;
-पूर्ण
+	printk(KERN_INFO "devtmpfs: initialized\n");
+	return 0;
+}

@@ -1,59 +1,58 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2011-2018, The Linux Foundation. All rights reserved.
 // Copyright (c) 2018, Linaro Limited
 
-#समावेश <linux/completion.h>
-#समावेश <linux/device.h>
-#समावेश <linux/dma-buf.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/idr.h>
-#समावेश <linux/list.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of.h>
-#समावेश <linux/sort.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/rpmsg.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/slab.h>
-#समावेश <uapi/misc/fastrpc.h>
+#include <linux/completion.h>
+#include <linux/device.h>
+#include <linux/dma-buf.h>
+#include <linux/dma-mapping.h>
+#include <linux/idr.h>
+#include <linux/list.h>
+#include <linux/miscdevice.h>
+#include <linux/module.h>
+#include <linux/of_address.h>
+#include <linux/of.h>
+#include <linux/sort.h>
+#include <linux/of_platform.h>
+#include <linux/rpmsg.h>
+#include <linux/scatterlist.h>
+#include <linux/slab.h>
+#include <uapi/misc/fastrpc.h>
 
-#घोषणा ADSP_DOMAIN_ID (0)
-#घोषणा MDSP_DOMAIN_ID (1)
-#घोषणा SDSP_DOMAIN_ID (2)
-#घोषणा CDSP_DOMAIN_ID (3)
-#घोषणा FASTRPC_DEV_MAX		4 /* adsp, mdsp, slpi, cdsp*/
-#घोषणा FASTRPC_MAX_SESSIONS	9 /*8 compute, 1 cpz*/
-#घोषणा FASTRPC_ALIGN		128
-#घोषणा FASTRPC_MAX_FDLIST	16
-#घोषणा FASTRPC_MAX_CRCLIST	64
-#घोषणा FASTRPC_PHYS(p)	((p) & 0xffffffff)
-#घोषणा FASTRPC_CTX_MAX (256)
-#घोषणा FASTRPC_INIT_HANDLE	1
-#घोषणा FASTRPC_CTXID_MASK (0xFF0)
-#घोषणा INIT_खाताLEN_MAX (2 * 1024 * 1024)
-#घोषणा FASTRPC_DEVICE_NAME	"fastrpc"
-#घोषणा ADSP_MMAP_ADD_PAGES 0x1000
+#define ADSP_DOMAIN_ID (0)
+#define MDSP_DOMAIN_ID (1)
+#define SDSP_DOMAIN_ID (2)
+#define CDSP_DOMAIN_ID (3)
+#define FASTRPC_DEV_MAX		4 /* adsp, mdsp, slpi, cdsp*/
+#define FASTRPC_MAX_SESSIONS	9 /*8 compute, 1 cpz*/
+#define FASTRPC_ALIGN		128
+#define FASTRPC_MAX_FDLIST	16
+#define FASTRPC_MAX_CRCLIST	64
+#define FASTRPC_PHYS(p)	((p) & 0xffffffff)
+#define FASTRPC_CTX_MAX (256)
+#define FASTRPC_INIT_HANDLE	1
+#define FASTRPC_CTXID_MASK (0xFF0)
+#define INIT_FILELEN_MAX (2 * 1024 * 1024)
+#define FASTRPC_DEVICE_NAME	"fastrpc"
+#define ADSP_MMAP_ADD_PAGES 0x1000
 
 /* Retrives number of input buffers from the scalars parameter */
-#घोषणा REMOTE_SCALARS_INBUFS(sc)	(((sc) >> 16) & 0x0ff)
+#define REMOTE_SCALARS_INBUFS(sc)	(((sc) >> 16) & 0x0ff)
 
 /* Retrives number of output buffers from the scalars parameter */
-#घोषणा REMOTE_SCALARS_OUTBUFS(sc)	(((sc) >> 8) & 0x0ff)
+#define REMOTE_SCALARS_OUTBUFS(sc)	(((sc) >> 8) & 0x0ff)
 
 /* Retrives number of input handles from the scalars parameter */
-#घोषणा REMOTE_SCALARS_INHANDLES(sc)	(((sc) >> 4) & 0x0f)
+#define REMOTE_SCALARS_INHANDLES(sc)	(((sc) >> 4) & 0x0f)
 
 /* Retrives number of output handles from the scalars parameter */
-#घोषणा REMOTE_SCALARS_OUTHANDLES(sc)	((sc) & 0x0f)
+#define REMOTE_SCALARS_OUTHANDLES(sc)	((sc) & 0x0f)
 
-#घोषणा REMOTE_SCALARS_LENGTH(sc)	(REMOTE_SCALARS_INBUFS(sc) +   \
+#define REMOTE_SCALARS_LENGTH(sc)	(REMOTE_SCALARS_INBUFS(sc) +   \
 					 REMOTE_SCALARS_OUTBUFS(sc) +  \
 					 REMOTE_SCALARS_INHANDLES(sc)+ \
 					 REMOTE_SCALARS_OUTHANDLES(sc))
-#घोषणा FASTRPC_BUILD_SCALARS(attr, method, in, out, oin, oout)  \
+#define FASTRPC_BUILD_SCALARS(attr, method, in, out, oin, oout)  \
 				(((attr & 0x07) << 29) |		\
 				((method & 0x1f) << 24) |	\
 				((in & 0xff) << 16) |		\
@@ -61,249 +60,249 @@
 				((oin & 0x0f) <<  4) |		\
 				(oout & 0x0f))
 
-#घोषणा FASTRPC_SCALARS(method, in, out) \
+#define FASTRPC_SCALARS(method, in, out) \
 		FASTRPC_BUILD_SCALARS(0, method, in, out, 0, 0)
 
-#घोषणा FASTRPC_CREATE_PROCESS_NARGS	6
+#define FASTRPC_CREATE_PROCESS_NARGS	6
 /* Remote Method id table */
-#घोषणा FASTRPC_RMID_INIT_ATTACH	0
-#घोषणा FASTRPC_RMID_INIT_RELEASE	1
-#घोषणा FASTRPC_RMID_INIT_MMAP		4
-#घोषणा FASTRPC_RMID_INIT_MUNMAP	5
-#घोषणा FASTRPC_RMID_INIT_CREATE	6
-#घोषणा FASTRPC_RMID_INIT_CREATE_ATTR	7
-#घोषणा FASTRPC_RMID_INIT_CREATE_STATIC	8
+#define FASTRPC_RMID_INIT_ATTACH	0
+#define FASTRPC_RMID_INIT_RELEASE	1
+#define FASTRPC_RMID_INIT_MMAP		4
+#define FASTRPC_RMID_INIT_MUNMAP	5
+#define FASTRPC_RMID_INIT_CREATE	6
+#define FASTRPC_RMID_INIT_CREATE_ATTR	7
+#define FASTRPC_RMID_INIT_CREATE_STATIC	8
 
-/* Protection Doमुख्य(PD) ids */
-#घोषणा AUDIO_PD	(0) /* also GUEST_OS PD? */
-#घोषणा USER_PD		(1)
-#घोषणा SENSORS_PD	(2)
+/* Protection Domain(PD) ids */
+#define AUDIO_PD	(0) /* also GUEST_OS PD? */
+#define USER_PD		(1)
+#define SENSORS_PD	(2)
 
-#घोषणा miscdev_to_cctx(d) container_of(d, काष्ठा fastrpc_channel_ctx, miscdev)
+#define miscdev_to_cctx(d) container_of(d, struct fastrpc_channel_ctx, miscdev)
 
-अटल स्थिर अक्षर *करोमुख्यs[FASTRPC_DEV_MAX] = अणु "adsp", "mdsp",
-						"sdsp", "cdsp"पूर्ण;
-काष्ठा fastrpc_phy_page अणु
+static const char *domains[FASTRPC_DEV_MAX] = { "adsp", "mdsp",
+						"sdsp", "cdsp"};
+struct fastrpc_phy_page {
 	u64 addr;		/* physical address */
 	u64 size;		/* size of contiguous region */
-पूर्ण;
+};
 
-काष्ठा fastrpc_invoke_buf अणु
+struct fastrpc_invoke_buf {
 	u32 num;		/* number of contiguous regions */
 	u32 pgidx;		/* index to start of contiguous region */
-पूर्ण;
+};
 
-काष्ठा fastrpc_remote_arg अणु
+struct fastrpc_remote_arg {
 	u64 pv;
 	u64 len;
-पूर्ण;
+};
 
-काष्ठा fastrpc_mmap_rsp_msg अणु
+struct fastrpc_mmap_rsp_msg {
 	u64 vaddr;
-पूर्ण;
+};
 
-काष्ठा fastrpc_mmap_req_msg अणु
+struct fastrpc_mmap_req_msg {
 	s32 pgid;
 	u32 flags;
 	u64 vaddr;
 	s32 num;
-पूर्ण;
+};
 
-काष्ठा fastrpc_munmap_req_msg अणु
+struct fastrpc_munmap_req_msg {
 	s32 pgid;
 	u64 vaddr;
 	u64 size;
-पूर्ण;
+};
 
-काष्ठा fastrpc_msg अणु
-	पूर्णांक pid;		/* process group id */
-	पूर्णांक tid;		/* thपढ़ो id */
+struct fastrpc_msg {
+	int pid;		/* process group id */
+	int tid;		/* thread id */
 	u64 ctx;		/* invoke caller context */
 	u32 handle;	/* handle to invoke */
-	u32 sc;		/* scalars काष्ठाure describing the data */
+	u32 sc;		/* scalars structure describing the data */
 	u64 addr;		/* physical address */
 	u64 size;		/* size of contiguous region */
-पूर्ण;
+};
 
-काष्ठा fastrpc_invoke_rsp अणु
+struct fastrpc_invoke_rsp {
 	u64 ctx;		/* invoke caller context */
-	पूर्णांक retval;		/* invoke वापस value */
-पूर्ण;
+	int retval;		/* invoke return value */
+};
 
-काष्ठा fastrpc_buf_overlap अणु
+struct fastrpc_buf_overlap {
 	u64 start;
 	u64 end;
-	पूर्णांक raix;
+	int raix;
 	u64 mstart;
 	u64 mend;
 	u64 offset;
-पूर्ण;
+};
 
-काष्ठा fastrpc_buf अणु
-	काष्ठा fastrpc_user *fl;
-	काष्ठा dma_buf *dmabuf;
-	काष्ठा device *dev;
-	व्योम *virt;
+struct fastrpc_buf {
+	struct fastrpc_user *fl;
+	struct dma_buf *dmabuf;
+	struct device *dev;
+	void *virt;
 	u64 phys;
 	u64 size;
-	/* Lock क्रम dma buf attachments */
-	काष्ठा mutex lock;
-	काष्ठा list_head attachments;
+	/* Lock for dma buf attachments */
+	struct mutex lock;
+	struct list_head attachments;
 	/* mmap support */
-	काष्ठा list_head node; /* list of user requested mmaps */
-	uपूर्णांकptr_t raddr;
-पूर्ण;
+	struct list_head node; /* list of user requested mmaps */
+	uintptr_t raddr;
+};
 
-काष्ठा fastrpc_dma_buf_attachment अणु
-	काष्ठा device *dev;
-	काष्ठा sg_table sgt;
-	काष्ठा list_head node;
-पूर्ण;
+struct fastrpc_dma_buf_attachment {
+	struct device *dev;
+	struct sg_table sgt;
+	struct list_head node;
+};
 
-काष्ठा fastrpc_map अणु
-	काष्ठा list_head node;
-	काष्ठा fastrpc_user *fl;
-	पूर्णांक fd;
-	काष्ठा dma_buf *buf;
-	काष्ठा sg_table *table;
-	काष्ठा dma_buf_attachment *attach;
+struct fastrpc_map {
+	struct list_head node;
+	struct fastrpc_user *fl;
+	int fd;
+	struct dma_buf *buf;
+	struct sg_table *table;
+	struct dma_buf_attachment *attach;
 	u64 phys;
 	u64 size;
-	व्योम *va;
+	void *va;
 	u64 len;
-	काष्ठा kref refcount;
-पूर्ण;
+	struct kref refcount;
+};
 
-काष्ठा fastrpc_invoke_ctx अणु
-	पूर्णांक nscalars;
-	पूर्णांक nbufs;
-	पूर्णांक retval;
-	पूर्णांक pid;
-	पूर्णांक tgid;
+struct fastrpc_invoke_ctx {
+	int nscalars;
+	int nbufs;
+	int retval;
+	int pid;
+	int tgid;
 	u32 sc;
 	u32 *crc;
 	u64 ctxid;
 	u64 msg_sz;
-	काष्ठा kref refcount;
-	काष्ठा list_head node; /* list of ctxs */
-	काष्ठा completion work;
-	काष्ठा work_काष्ठा put_work;
-	काष्ठा fastrpc_msg msg;
-	काष्ठा fastrpc_user *fl;
-	काष्ठा fastrpc_remote_arg *rpra;
-	काष्ठा fastrpc_map **maps;
-	काष्ठा fastrpc_buf *buf;
-	काष्ठा fastrpc_invoke_args *args;
-	काष्ठा fastrpc_buf_overlap *olaps;
-	काष्ठा fastrpc_channel_ctx *cctx;
-पूर्ण;
+	struct kref refcount;
+	struct list_head node; /* list of ctxs */
+	struct completion work;
+	struct work_struct put_work;
+	struct fastrpc_msg msg;
+	struct fastrpc_user *fl;
+	struct fastrpc_remote_arg *rpra;
+	struct fastrpc_map **maps;
+	struct fastrpc_buf *buf;
+	struct fastrpc_invoke_args *args;
+	struct fastrpc_buf_overlap *olaps;
+	struct fastrpc_channel_ctx *cctx;
+};
 
-काष्ठा fastrpc_session_ctx अणु
-	काष्ठा device *dev;
-	पूर्णांक sid;
+struct fastrpc_session_ctx {
+	struct device *dev;
+	int sid;
 	bool used;
 	bool valid;
-पूर्ण;
+};
 
-काष्ठा fastrpc_channel_ctx अणु
-	पूर्णांक करोमुख्य_id;
-	पूर्णांक sesscount;
-	काष्ठा rpmsg_device *rpdev;
-	काष्ठा fastrpc_session_ctx session[FASTRPC_MAX_SESSIONS];
+struct fastrpc_channel_ctx {
+	int domain_id;
+	int sesscount;
+	struct rpmsg_device *rpdev;
+	struct fastrpc_session_ctx session[FASTRPC_MAX_SESSIONS];
 	spinlock_t lock;
-	काष्ठा idr ctx_idr;
-	काष्ठा list_head users;
-	काष्ठा miscdevice miscdev;
-	काष्ठा kref refcount;
-पूर्ण;
+	struct idr ctx_idr;
+	struct list_head users;
+	struct miscdevice miscdev;
+	struct kref refcount;
+};
 
-काष्ठा fastrpc_user अणु
-	काष्ठा list_head user;
-	काष्ठा list_head maps;
-	काष्ठा list_head pending;
-	काष्ठा list_head mmaps;
+struct fastrpc_user {
+	struct list_head user;
+	struct list_head maps;
+	struct list_head pending;
+	struct list_head mmaps;
 
-	काष्ठा fastrpc_channel_ctx *cctx;
-	काष्ठा fastrpc_session_ctx *sctx;
-	काष्ठा fastrpc_buf *init_mem;
+	struct fastrpc_channel_ctx *cctx;
+	struct fastrpc_session_ctx *sctx;
+	struct fastrpc_buf *init_mem;
 
-	पूर्णांक tgid;
-	पूर्णांक pd;
-	/* Lock क्रम lists */
+	int tgid;
+	int pd;
+	/* Lock for lists */
 	spinlock_t lock;
-	/* lock क्रम allocations */
-	काष्ठा mutex mutex;
-पूर्ण;
+	/* lock for allocations */
+	struct mutex mutex;
+};
 
-अटल व्योम fastrpc_मुक्त_map(काष्ठा kref *ref)
-अणु
-	काष्ठा fastrpc_map *map;
+static void fastrpc_free_map(struct kref *ref)
+{
+	struct fastrpc_map *map;
 
-	map = container_of(ref, काष्ठा fastrpc_map, refcount);
+	map = container_of(ref, struct fastrpc_map, refcount);
 
-	अगर (map->table) अणु
+	if (map->table) {
 		dma_buf_unmap_attachment(map->attach, map->table,
-					 DMA_BIसूचीECTIONAL);
+					 DMA_BIDIRECTIONAL);
 		dma_buf_detach(map->buf, map->attach);
 		dma_buf_put(map->buf);
-	पूर्ण
+	}
 
-	kमुक्त(map);
-पूर्ण
+	kfree(map);
+}
 
-अटल व्योम fastrpc_map_put(काष्ठा fastrpc_map *map)
-अणु
-	अगर (map)
-		kref_put(&map->refcount, fastrpc_मुक्त_map);
-पूर्ण
+static void fastrpc_map_put(struct fastrpc_map *map)
+{
+	if (map)
+		kref_put(&map->refcount, fastrpc_free_map);
+}
 
-अटल व्योम fastrpc_map_get(काष्ठा fastrpc_map *map)
-अणु
-	अगर (map)
+static void fastrpc_map_get(struct fastrpc_map *map)
+{
+	if (map)
 		kref_get(&map->refcount);
-पूर्ण
+}
 
-अटल पूर्णांक fastrpc_map_find(काष्ठा fastrpc_user *fl, पूर्णांक fd,
-			    काष्ठा fastrpc_map **ppmap)
-अणु
-	काष्ठा fastrpc_map *map = शून्य;
+static int fastrpc_map_find(struct fastrpc_user *fl, int fd,
+			    struct fastrpc_map **ppmap)
+{
+	struct fastrpc_map *map = NULL;
 
 	mutex_lock(&fl->mutex);
-	list_क्रम_each_entry(map, &fl->maps, node) अणु
-		अगर (map->fd == fd) अणु
+	list_for_each_entry(map, &fl->maps, node) {
+		if (map->fd == fd) {
 			fastrpc_map_get(map);
 			*ppmap = map;
 			mutex_unlock(&fl->mutex);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 	mutex_unlock(&fl->mutex);
 
-	वापस -ENOENT;
-पूर्ण
+	return -ENOENT;
+}
 
-अटल व्योम fastrpc_buf_मुक्त(काष्ठा fastrpc_buf *buf)
-अणु
-	dma_मुक्त_coherent(buf->dev, buf->size, buf->virt,
+static void fastrpc_buf_free(struct fastrpc_buf *buf)
+{
+	dma_free_coherent(buf->dev, buf->size, buf->virt,
 			  FASTRPC_PHYS(buf->phys));
-	kमुक्त(buf);
-पूर्ण
+	kfree(buf);
+}
 
-अटल पूर्णांक fastrpc_buf_alloc(काष्ठा fastrpc_user *fl, काष्ठा device *dev,
-			     u64 size, काष्ठा fastrpc_buf **obuf)
-अणु
-	काष्ठा fastrpc_buf *buf;
+static int fastrpc_buf_alloc(struct fastrpc_user *fl, struct device *dev,
+			     u64 size, struct fastrpc_buf **obuf)
+{
+	struct fastrpc_buf *buf;
 
-	buf = kzalloc(माप(*buf), GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	buf = kzalloc(sizeof(*buf), GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
 
 	INIT_LIST_HEAD(&buf->attachments);
 	INIT_LIST_HEAD(&buf->node);
 	mutex_init(&buf->lock);
 
 	buf->fl = fl;
-	buf->virt = शून्य;
+	buf->virt = NULL;
 	buf->phys = 0;
 	buf->size = size;
 	buf->dev = dev;
@@ -311,145 +310,145 @@
 
 	buf->virt = dma_alloc_coherent(dev, buf->size, (dma_addr_t *)&buf->phys,
 				       GFP_KERNEL);
-	अगर (!buf->virt) अणु
+	if (!buf->virt) {
 		mutex_destroy(&buf->lock);
-		kमुक्त(buf);
-		वापस -ENOMEM;
-	पूर्ण
+		kfree(buf);
+		return -ENOMEM;
+	}
 
-	अगर (fl->sctx && fl->sctx->sid)
+	if (fl->sctx && fl->sctx->sid)
 		buf->phys += ((u64)fl->sctx->sid << 32);
 
 	*obuf = buf;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम fastrpc_channel_ctx_मुक्त(काष्ठा kref *ref)
-अणु
-	काष्ठा fastrpc_channel_ctx *cctx;
+static void fastrpc_channel_ctx_free(struct kref *ref)
+{
+	struct fastrpc_channel_ctx *cctx;
 
-	cctx = container_of(ref, काष्ठा fastrpc_channel_ctx, refcount);
+	cctx = container_of(ref, struct fastrpc_channel_ctx, refcount);
 
-	kमुक्त(cctx);
-पूर्ण
+	kfree(cctx);
+}
 
-अटल व्योम fastrpc_channel_ctx_get(काष्ठा fastrpc_channel_ctx *cctx)
-अणु
+static void fastrpc_channel_ctx_get(struct fastrpc_channel_ctx *cctx)
+{
 	kref_get(&cctx->refcount);
-पूर्ण
+}
 
-अटल व्योम fastrpc_channel_ctx_put(काष्ठा fastrpc_channel_ctx *cctx)
-अणु
-	kref_put(&cctx->refcount, fastrpc_channel_ctx_मुक्त);
-पूर्ण
+static void fastrpc_channel_ctx_put(struct fastrpc_channel_ctx *cctx)
+{
+	kref_put(&cctx->refcount, fastrpc_channel_ctx_free);
+}
 
-अटल व्योम fastrpc_context_मुक्त(काष्ठा kref *ref)
-अणु
-	काष्ठा fastrpc_invoke_ctx *ctx;
-	काष्ठा fastrpc_channel_ctx *cctx;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक i;
+static void fastrpc_context_free(struct kref *ref)
+{
+	struct fastrpc_invoke_ctx *ctx;
+	struct fastrpc_channel_ctx *cctx;
+	unsigned long flags;
+	int i;
 
-	ctx = container_of(ref, काष्ठा fastrpc_invoke_ctx, refcount);
+	ctx = container_of(ref, struct fastrpc_invoke_ctx, refcount);
 	cctx = ctx->cctx;
 
-	क्रम (i = 0; i < ctx->nscalars; i++)
+	for (i = 0; i < ctx->nscalars; i++)
 		fastrpc_map_put(ctx->maps[i]);
 
-	अगर (ctx->buf)
-		fastrpc_buf_मुक्त(ctx->buf);
+	if (ctx->buf)
+		fastrpc_buf_free(ctx->buf);
 
 	spin_lock_irqsave(&cctx->lock, flags);
-	idr_हटाओ(&cctx->ctx_idr, ctx->ctxid >> 4);
+	idr_remove(&cctx->ctx_idr, ctx->ctxid >> 4);
 	spin_unlock_irqrestore(&cctx->lock, flags);
 
-	kमुक्त(ctx->maps);
-	kमुक्त(ctx->olaps);
-	kमुक्त(ctx);
+	kfree(ctx->maps);
+	kfree(ctx->olaps);
+	kfree(ctx);
 
 	fastrpc_channel_ctx_put(cctx);
-पूर्ण
+}
 
-अटल व्योम fastrpc_context_get(काष्ठा fastrpc_invoke_ctx *ctx)
-अणु
+static void fastrpc_context_get(struct fastrpc_invoke_ctx *ctx)
+{
 	kref_get(&ctx->refcount);
-पूर्ण
+}
 
-अटल व्योम fastrpc_context_put(काष्ठा fastrpc_invoke_ctx *ctx)
-अणु
-	kref_put(&ctx->refcount, fastrpc_context_मुक्त);
-पूर्ण
+static void fastrpc_context_put(struct fastrpc_invoke_ctx *ctx)
+{
+	kref_put(&ctx->refcount, fastrpc_context_free);
+}
 
-अटल व्योम fastrpc_context_put_wq(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा fastrpc_invoke_ctx *ctx =
-			container_of(work, काष्ठा fastrpc_invoke_ctx, put_work);
+static void fastrpc_context_put_wq(struct work_struct *work)
+{
+	struct fastrpc_invoke_ctx *ctx =
+			container_of(work, struct fastrpc_invoke_ctx, put_work);
 
 	fastrpc_context_put(ctx);
-पूर्ण
+}
 
-#घोषणा CMP(aa, bb) ((aa) == (bb) ? 0 : (aa) < (bb) ? -1 : 1)
-अटल पूर्णांक olaps_cmp(स्थिर व्योम *a, स्थिर व्योम *b)
-अणु
-	काष्ठा fastrpc_buf_overlap *pa = (काष्ठा fastrpc_buf_overlap *)a;
-	काष्ठा fastrpc_buf_overlap *pb = (काष्ठा fastrpc_buf_overlap *)b;
+#define CMP(aa, bb) ((aa) == (bb) ? 0 : (aa) < (bb) ? -1 : 1)
+static int olaps_cmp(const void *a, const void *b)
+{
+	struct fastrpc_buf_overlap *pa = (struct fastrpc_buf_overlap *)a;
+	struct fastrpc_buf_overlap *pb = (struct fastrpc_buf_overlap *)b;
 	/* sort with lowest starting buffer first */
-	पूर्णांक st = CMP(pa->start, pb->start);
+	int st = CMP(pa->start, pb->start);
 	/* sort with highest ending buffer first */
-	पूर्णांक ed = CMP(pb->end, pa->end);
+	int ed = CMP(pb->end, pa->end);
 
-	वापस st == 0 ? ed : st;
-पूर्ण
+	return st == 0 ? ed : st;
+}
 
-अटल व्योम fastrpc_get_buff_overlaps(काष्ठा fastrpc_invoke_ctx *ctx)
-अणु
+static void fastrpc_get_buff_overlaps(struct fastrpc_invoke_ctx *ctx)
+{
 	u64 max_end = 0;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < ctx->nbufs; ++i) अणु
+	for (i = 0; i < ctx->nbufs; ++i) {
 		ctx->olaps[i].start = ctx->args[i].ptr;
 		ctx->olaps[i].end = ctx->olaps[i].start + ctx->args[i].length;
 		ctx->olaps[i].raix = i;
-	पूर्ण
+	}
 
-	sort(ctx->olaps, ctx->nbufs, माप(*ctx->olaps), olaps_cmp, शून्य);
+	sort(ctx->olaps, ctx->nbufs, sizeof(*ctx->olaps), olaps_cmp, NULL);
 
-	क्रम (i = 0; i < ctx->nbufs; ++i) अणु
+	for (i = 0; i < ctx->nbufs; ++i) {
 		/* Falling inside previous range */
-		अगर (ctx->olaps[i].start < max_end) अणु
+		if (ctx->olaps[i].start < max_end) {
 			ctx->olaps[i].mstart = max_end;
 			ctx->olaps[i].mend = ctx->olaps[i].end;
 			ctx->olaps[i].offset = max_end - ctx->olaps[i].start;
 
-			अगर (ctx->olaps[i].end > max_end) अणु
+			if (ctx->olaps[i].end > max_end) {
 				max_end = ctx->olaps[i].end;
-			पूर्ण अन्यथा अणु
+			} else {
 				ctx->olaps[i].mend = 0;
 				ctx->olaps[i].mstart = 0;
-			पूर्ण
+			}
 
-		पूर्ण अन्यथा  अणु
+		} else  {
 			ctx->olaps[i].mend = ctx->olaps[i].end;
 			ctx->olaps[i].mstart = ctx->olaps[i].start;
 			ctx->olaps[i].offset = 0;
 			max_end = ctx->olaps[i].end;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल काष्ठा fastrpc_invoke_ctx *fastrpc_context_alloc(
-			काष्ठा fastrpc_user *user, u32 kernel, u32 sc,
-			काष्ठा fastrpc_invoke_args *args)
-अणु
-	काष्ठा fastrpc_channel_ctx *cctx = user->cctx;
-	काष्ठा fastrpc_invoke_ctx *ctx = शून्य;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+static struct fastrpc_invoke_ctx *fastrpc_context_alloc(
+			struct fastrpc_user *user, u32 kernel, u32 sc,
+			struct fastrpc_invoke_args *args)
+{
+	struct fastrpc_channel_ctx *cctx = user->cctx;
+	struct fastrpc_invoke_ctx *ctx = NULL;
+	unsigned long flags;
+	int ret;
 
-	ctx = kzalloc(माप(*ctx), GFP_KERNEL);
-	अगर (!ctx)
-		वापस ERR_PTR(-ENOMEM);
+	ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
+	if (!ctx)
+		return ERR_PTR(-ENOMEM);
 
 	INIT_LIST_HEAD(&ctx->node);
 	ctx->fl = user;
@@ -457,23 +456,23 @@
 	ctx->nbufs = REMOTE_SCALARS_INBUFS(sc) +
 		     REMOTE_SCALARS_OUTBUFS(sc);
 
-	अगर (ctx->nscalars) अणु
-		ctx->maps = kसुस्मृति(ctx->nscalars,
-				    माप(*ctx->maps), GFP_KERNEL);
-		अगर (!ctx->maps) अणु
-			kमुक्त(ctx);
-			वापस ERR_PTR(-ENOMEM);
-		पूर्ण
-		ctx->olaps = kसुस्मृति(ctx->nscalars,
-				    माप(*ctx->olaps), GFP_KERNEL);
-		अगर (!ctx->olaps) अणु
-			kमुक्त(ctx->maps);
-			kमुक्त(ctx);
-			वापस ERR_PTR(-ENOMEM);
-		पूर्ण
+	if (ctx->nscalars) {
+		ctx->maps = kcalloc(ctx->nscalars,
+				    sizeof(*ctx->maps), GFP_KERNEL);
+		if (!ctx->maps) {
+			kfree(ctx);
+			return ERR_PTR(-ENOMEM);
+		}
+		ctx->olaps = kcalloc(ctx->nscalars,
+				    sizeof(*ctx->olaps), GFP_KERNEL);
+		if (!ctx->olaps) {
+			kfree(ctx->maps);
+			kfree(ctx);
+			return ERR_PTR(-ENOMEM);
+		}
 		ctx->args = args;
 		fastrpc_get_buff_overlaps(ctx);
-	पूर्ण
+	}
 
 	/* Released in fastrpc_context_put() */
 	fastrpc_channel_ctx_get(cctx);
@@ -493,76 +492,76 @@
 	spin_lock_irqsave(&cctx->lock, flags);
 	ret = idr_alloc_cyclic(&cctx->ctx_idr, ctx, 1,
 			       FASTRPC_CTX_MAX, GFP_ATOMIC);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		spin_unlock_irqrestore(&cctx->lock, flags);
-		जाओ err_idr;
-	पूर्ण
+		goto err_idr;
+	}
 	ctx->ctxid = ret << 4;
 	spin_unlock_irqrestore(&cctx->lock, flags);
 
 	kref_init(&ctx->refcount);
 
-	वापस ctx;
+	return ctx;
 err_idr:
 	spin_lock(&user->lock);
 	list_del(&ctx->node);
 	spin_unlock(&user->lock);
 	fastrpc_channel_ctx_put(cctx);
-	kमुक्त(ctx->maps);
-	kमुक्त(ctx->olaps);
-	kमुक्त(ctx);
+	kfree(ctx->maps);
+	kfree(ctx->olaps);
+	kfree(ctx);
 
-	वापस ERR_PTR(ret);
-पूर्ण
+	return ERR_PTR(ret);
+}
 
-अटल काष्ठा sg_table *
-fastrpc_map_dma_buf(काष्ठा dma_buf_attachment *attachment,
-		    क्रमागत dma_data_direction dir)
-अणु
-	काष्ठा fastrpc_dma_buf_attachment *a = attachment->priv;
-	काष्ठा sg_table *table;
-	पूर्णांक ret;
+static struct sg_table *
+fastrpc_map_dma_buf(struct dma_buf_attachment *attachment,
+		    enum dma_data_direction dir)
+{
+	struct fastrpc_dma_buf_attachment *a = attachment->priv;
+	struct sg_table *table;
+	int ret;
 
 	table = &a->sgt;
 
 	ret = dma_map_sgtable(attachment->dev, table, dir, 0);
-	अगर (ret)
+	if (ret)
 		table = ERR_PTR(ret);
-	वापस table;
-पूर्ण
+	return table;
+}
 
-अटल व्योम fastrpc_unmap_dma_buf(काष्ठा dma_buf_attachment *attach,
-				  काष्ठा sg_table *table,
-				  क्रमागत dma_data_direction dir)
-अणु
+static void fastrpc_unmap_dma_buf(struct dma_buf_attachment *attach,
+				  struct sg_table *table,
+				  enum dma_data_direction dir)
+{
 	dma_unmap_sgtable(attach->dev, table, dir, 0);
-पूर्ण
+}
 
-अटल व्योम fastrpc_release(काष्ठा dma_buf *dmabuf)
-अणु
-	काष्ठा fastrpc_buf *buffer = dmabuf->priv;
+static void fastrpc_release(struct dma_buf *dmabuf)
+{
+	struct fastrpc_buf *buffer = dmabuf->priv;
 
-	fastrpc_buf_मुक्त(buffer);
-पूर्ण
+	fastrpc_buf_free(buffer);
+}
 
-अटल पूर्णांक fastrpc_dma_buf_attach(काष्ठा dma_buf *dmabuf,
-				  काष्ठा dma_buf_attachment *attachment)
-अणु
-	काष्ठा fastrpc_dma_buf_attachment *a;
-	काष्ठा fastrpc_buf *buffer = dmabuf->priv;
-	पूर्णांक ret;
+static int fastrpc_dma_buf_attach(struct dma_buf *dmabuf,
+				  struct dma_buf_attachment *attachment)
+{
+	struct fastrpc_dma_buf_attachment *a;
+	struct fastrpc_buf *buffer = dmabuf->priv;
+	int ret;
 
-	a = kzalloc(माप(*a), GFP_KERNEL);
-	अगर (!a)
-		वापस -ENOMEM;
+	a = kzalloc(sizeof(*a), GFP_KERNEL);
+	if (!a)
+		return -ENOMEM;
 
 	ret = dma_get_sgtable(buffer->dev, &a->sgt, buffer->virt,
 			      FASTRPC_PHYS(buffer->phys), buffer->size);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(buffer->dev, "failed to get scatterlist from DMA API\n");
-		kमुक्त(a);
-		वापस -EINVAL;
-	पूर्ण
+		kfree(a);
+		return -EINVAL;
+	}
 
 	a->dev = attachment->dev;
 	INIT_LIST_HEAD(&a->node);
@@ -572,42 +571,42 @@ fastrpc_map_dma_buf(काष्ठा dma_buf_attachment *attachment,
 	list_add(&a->node, &buffer->attachments);
 	mutex_unlock(&buffer->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम fastrpc_dma_buf_detatch(काष्ठा dma_buf *dmabuf,
-				    काष्ठा dma_buf_attachment *attachment)
-अणु
-	काष्ठा fastrpc_dma_buf_attachment *a = attachment->priv;
-	काष्ठा fastrpc_buf *buffer = dmabuf->priv;
+static void fastrpc_dma_buf_detatch(struct dma_buf *dmabuf,
+				    struct dma_buf_attachment *attachment)
+{
+	struct fastrpc_dma_buf_attachment *a = attachment->priv;
+	struct fastrpc_buf *buffer = dmabuf->priv;
 
 	mutex_lock(&buffer->lock);
 	list_del(&a->node);
 	mutex_unlock(&buffer->lock);
-	sg_मुक्त_table(&a->sgt);
-	kमुक्त(a);
-पूर्ण
+	sg_free_table(&a->sgt);
+	kfree(a);
+}
 
-अटल पूर्णांक fastrpc_vmap(काष्ठा dma_buf *dmabuf, काष्ठा dma_buf_map *map)
-अणु
-	काष्ठा fastrpc_buf *buf = dmabuf->priv;
+static int fastrpc_vmap(struct dma_buf *dmabuf, struct dma_buf_map *map)
+{
+	struct fastrpc_buf *buf = dmabuf->priv;
 
 	dma_buf_map_set_vaddr(map, buf->virt);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fastrpc_mmap(काष्ठा dma_buf *dmabuf,
-			काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा fastrpc_buf *buf = dmabuf->priv;
-	माप_प्रकार size = vma->vm_end - vma->vm_start;
+static int fastrpc_mmap(struct dma_buf *dmabuf,
+			struct vm_area_struct *vma)
+{
+	struct fastrpc_buf *buf = dmabuf->priv;
+	size_t size = vma->vm_end - vma->vm_start;
 
-	वापस dma_mmap_coherent(buf->dev, vma, buf->virt,
+	return dma_mmap_coherent(buf->dev, vma, buf->virt,
 				 FASTRPC_PHYS(buf->phys), size);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा dma_buf_ops fastrpc_dma_buf_ops = अणु
+static const struct dma_buf_ops fastrpc_dma_buf_ops = {
 	.attach = fastrpc_dma_buf_attach,
 	.detach = fastrpc_dma_buf_detatch,
 	.map_dma_buf = fastrpc_map_dma_buf,
@@ -615,43 +614,43 @@ fastrpc_map_dma_buf(काष्ठा dma_buf_attachment *attachment,
 	.mmap = fastrpc_mmap,
 	.vmap = fastrpc_vmap,
 	.release = fastrpc_release,
-पूर्ण;
+};
 
-अटल पूर्णांक fastrpc_map_create(काष्ठा fastrpc_user *fl, पूर्णांक fd,
-			      u64 len, काष्ठा fastrpc_map **ppmap)
-अणु
-	काष्ठा fastrpc_session_ctx *sess = fl->sctx;
-	काष्ठा fastrpc_map *map = शून्य;
-	पूर्णांक err = 0;
+static int fastrpc_map_create(struct fastrpc_user *fl, int fd,
+			      u64 len, struct fastrpc_map **ppmap)
+{
+	struct fastrpc_session_ctx *sess = fl->sctx;
+	struct fastrpc_map *map = NULL;
+	int err = 0;
 
-	अगर (!fastrpc_map_find(fl, fd, ppmap))
-		वापस 0;
+	if (!fastrpc_map_find(fl, fd, ppmap))
+		return 0;
 
-	map = kzalloc(माप(*map), GFP_KERNEL);
-	अगर (!map)
-		वापस -ENOMEM;
+	map = kzalloc(sizeof(*map), GFP_KERNEL);
+	if (!map)
+		return -ENOMEM;
 
 	INIT_LIST_HEAD(&map->node);
 	map->fl = fl;
 	map->fd = fd;
 	map->buf = dma_buf_get(fd);
-	अगर (IS_ERR(map->buf)) अणु
+	if (IS_ERR(map->buf)) {
 		err = PTR_ERR(map->buf);
-		जाओ get_err;
-	पूर्ण
+		goto get_err;
+	}
 
 	map->attach = dma_buf_attach(map->buf, sess->dev);
-	अगर (IS_ERR(map->attach)) अणु
+	if (IS_ERR(map->attach)) {
 		dev_err(sess->dev, "Failed to attach dmabuf\n");
 		err = PTR_ERR(map->attach);
-		जाओ attach_err;
-	पूर्ण
+		goto attach_err;
+	}
 
-	map->table = dma_buf_map_attachment(map->attach, DMA_BIसूचीECTIONAL);
-	अगर (IS_ERR(map->table)) अणु
+	map->table = dma_buf_map_attachment(map->attach, DMA_BIDIRECTIONAL);
+	if (IS_ERR(map->table)) {
 		err = PTR_ERR(map->table);
-		जाओ map_err;
-	पूर्ण
+		goto map_err;
+	}
 
 	map->phys = sg_dma_address(map->table->sgl);
 	map->phys += ((u64)fl->sctx->sid << 32);
@@ -665,17 +664,17 @@ fastrpc_map_dma_buf(काष्ठा dma_buf_attachment *attachment,
 	spin_unlock(&fl->lock);
 	*ppmap = map;
 
-	वापस 0;
+	return 0;
 
 map_err:
 	dma_buf_detach(map->buf, map->attach);
 attach_err:
 	dma_buf_put(map->buf);
 get_err:
-	kमुक्त(map);
+	kfree(map);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
  * Fastrpc payload buffer with metadata looks like:
@@ -683,19 +682,19 @@ get_err:
  * >>>>>>  START of METADATA <<<<<<<<<
  * +---------------------------------+
  * |           Arguments             |
- * | type:(काष्ठा fastrpc_remote_arg)|
+ * | type:(struct fastrpc_remote_arg)|
  * |             (0 - N)             |
  * +---------------------------------+
  * |         Invoke Buffer list      |
- * | type:(काष्ठा fastrpc_invoke_buf)|
+ * | type:(struct fastrpc_invoke_buf)|
  * |           (0 - N)               |
  * +---------------------------------+
  * |         Page info list          |
- * | type:(काष्ठा fastrpc_phy_page)  |
+ * | type:(struct fastrpc_phy_page)  |
  * |             (0 - N)             |
  * +---------------------------------+
  * |         Optional info           |
- * |(can be specअगरic to SoC/Firmware)|
+ * |(can be specific to SoC/Firmware)|
  * +---------------------------------+
  * >>>>>>>>  END of METADATA <<<<<<<<<
  * +---------------------------------+
@@ -704,99 +703,99 @@ get_err:
  * +---------------------------------+
  */
 
-अटल पूर्णांक fastrpc_get_meta_size(काष्ठा fastrpc_invoke_ctx *ctx)
-अणु
-	पूर्णांक size = 0;
+static int fastrpc_get_meta_size(struct fastrpc_invoke_ctx *ctx)
+{
+	int size = 0;
 
-	size = (माप(काष्ठा fastrpc_remote_arg) +
-		माप(काष्ठा fastrpc_invoke_buf) +
-		माप(काष्ठा fastrpc_phy_page)) * ctx->nscalars +
-		माप(u64) * FASTRPC_MAX_FDLIST +
-		माप(u32) * FASTRPC_MAX_CRCLIST;
+	size = (sizeof(struct fastrpc_remote_arg) +
+		sizeof(struct fastrpc_invoke_buf) +
+		sizeof(struct fastrpc_phy_page)) * ctx->nscalars +
+		sizeof(u64) * FASTRPC_MAX_FDLIST +
+		sizeof(u32) * FASTRPC_MAX_CRCLIST;
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल u64 fastrpc_get_payload_size(काष्ठा fastrpc_invoke_ctx *ctx, पूर्णांक metalen)
-अणु
+static u64 fastrpc_get_payload_size(struct fastrpc_invoke_ctx *ctx, int metalen)
+{
 	u64 size = 0;
-	पूर्णांक i;
+	int i;
 
 	size = ALIGN(metalen, FASTRPC_ALIGN);
-	क्रम (i = 0; i < ctx->nscalars; i++) अणु
-		अगर (ctx->args[i].fd == 0 || ctx->args[i].fd == -1) अणु
+	for (i = 0; i < ctx->nscalars; i++) {
+		if (ctx->args[i].fd == 0 || ctx->args[i].fd == -1) {
 
-			अगर (ctx->olaps[i].offset == 0)
+			if (ctx->olaps[i].offset == 0)
 				size = ALIGN(size, FASTRPC_ALIGN);
 
 			size += (ctx->olaps[i].mend - ctx->olaps[i].mstart);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल पूर्णांक fastrpc_create_maps(काष्ठा fastrpc_invoke_ctx *ctx)
-अणु
-	काष्ठा device *dev = ctx->fl->sctx->dev;
-	पूर्णांक i, err;
+static int fastrpc_create_maps(struct fastrpc_invoke_ctx *ctx)
+{
+	struct device *dev = ctx->fl->sctx->dev;
+	int i, err;
 
-	क्रम (i = 0; i < ctx->nscalars; ++i) अणु
+	for (i = 0; i < ctx->nscalars; ++i) {
 		/* Make sure reserved field is set to 0 */
-		अगर (ctx->args[i].reserved)
-			वापस -EINVAL;
+		if (ctx->args[i].reserved)
+			return -EINVAL;
 
-		अगर (ctx->args[i].fd == 0 || ctx->args[i].fd == -1 ||
+		if (ctx->args[i].fd == 0 || ctx->args[i].fd == -1 ||
 		    ctx->args[i].length == 0)
-			जारी;
+			continue;
 
 		err = fastrpc_map_create(ctx->fl, ctx->args[i].fd,
 					 ctx->args[i].length, &ctx->maps[i]);
-		अगर (err) अणु
+		if (err) {
 			dev_err(dev, "Error Creating map %d\n", err);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक fastrpc_get_args(u32 kernel, काष्ठा fastrpc_invoke_ctx *ctx)
-अणु
-	काष्ठा device *dev = ctx->fl->sctx->dev;
-	काष्ठा fastrpc_remote_arg *rpra;
-	काष्ठा fastrpc_invoke_buf *list;
-	काष्ठा fastrpc_phy_page *pages;
-	पूर्णांक inbufs, i, oix, err = 0;
+static int fastrpc_get_args(u32 kernel, struct fastrpc_invoke_ctx *ctx)
+{
+	struct device *dev = ctx->fl->sctx->dev;
+	struct fastrpc_remote_arg *rpra;
+	struct fastrpc_invoke_buf *list;
+	struct fastrpc_phy_page *pages;
+	int inbufs, i, oix, err = 0;
 	u64 len, rlen, pkt_size;
 	u64 pg_start, pg_end;
-	uपूर्णांकptr_t args;
-	पूर्णांक metalen;
+	uintptr_t args;
+	int metalen;
 
 	inbufs = REMOTE_SCALARS_INBUFS(ctx->sc);
 	metalen = fastrpc_get_meta_size(ctx);
 	pkt_size = fastrpc_get_payload_size(ctx, metalen);
 
 	err = fastrpc_create_maps(ctx);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	ctx->msg_sz = pkt_size;
 
 	err = fastrpc_buf_alloc(ctx->fl, dev, pkt_size, &ctx->buf);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	rpra = ctx->buf->virt;
-	list = ctx->buf->virt + ctx->nscalars * माप(*rpra);
-	pages = ctx->buf->virt + ctx->nscalars * (माप(*list) +
-		माप(*rpra));
-	args = (uपूर्णांकptr_t)ctx->buf->virt + metalen;
+	list = ctx->buf->virt + ctx->nscalars * sizeof(*rpra);
+	pages = ctx->buf->virt + ctx->nscalars * (sizeof(*list) +
+		sizeof(*rpra));
+	args = (uintptr_t)ctx->buf->virt + metalen;
 	rlen = pkt_size - metalen;
 	ctx->rpra = rpra;
 
-	क्रम (oix = 0; oix < ctx->nbufs; ++oix) अणु
-		पूर्णांक mlen;
+	for (oix = 0; oix < ctx->nbufs; ++oix) {
+		int mlen;
 
 		i = ctx->olaps[oix].raix;
 		len = ctx->args[i].length;
@@ -806,17 +805,17 @@ get_err:
 		list[i].num = len ? 1 : 0;
 		list[i].pgidx = i;
 
-		अगर (!len)
-			जारी;
+		if (!len)
+			continue;
 
-		अगर (ctx->maps[i]) अणु
-			काष्ठा vm_area_काष्ठा *vma = शून्य;
+		if (ctx->maps[i]) {
+			struct vm_area_struct *vma = NULL;
 
 			rpra[i].pv = (u64) ctx->args[i].ptr;
 			pages[i].addr = ctx->maps[i]->phys;
 
 			vma = find_vma(current->mm, ctx->args[i].ptr);
-			अगर (vma)
+			if (vma)
 				pages[i].addr += ctx->args[i].ptr -
 						 vma->vm_start;
 
@@ -825,17 +824,17 @@ get_err:
 				  PAGE_SHIFT;
 			pages[i].size = (pg_end - pg_start + 1) * PAGE_SIZE;
 
-		पूर्ण अन्यथा अणु
+		} else {
 
-			अगर (ctx->olaps[oix].offset == 0) अणु
+			if (ctx->olaps[oix].offset == 0) {
 				rlen -= ALIGN(args, FASTRPC_ALIGN) - args;
 				args = ALIGN(args, FASTRPC_ALIGN);
-			पूर्ण
+			}
 
 			mlen = ctx->olaps[oix].mend - ctx->olaps[oix].mstart;
 
-			अगर (rlen < mlen)
-				जाओ bail;
+			if (rlen < mlen)
+				goto bail;
 
 			rpra[i].pv = args - ctx->olaps[oix].offset;
 			pages[i].addr = ctx->buf->phys -
@@ -848,78 +847,78 @@ get_err:
 			pages[i].size = (pg_end - pg_start + 1) * PAGE_SIZE;
 			args = args + mlen;
 			rlen -= mlen;
-		पूर्ण
+		}
 
-		अगर (i < inbufs && !ctx->maps[i]) अणु
-			व्योम *dst = (व्योम *)(uपूर्णांकptr_t)rpra[i].pv;
-			व्योम *src = (व्योम *)(uपूर्णांकptr_t)ctx->args[i].ptr;
+		if (i < inbufs && !ctx->maps[i]) {
+			void *dst = (void *)(uintptr_t)rpra[i].pv;
+			void *src = (void *)(uintptr_t)ctx->args[i].ptr;
 
-			अगर (!kernel) अणु
-				अगर (copy_from_user(dst, (व्योम __user *)src,
-						   len)) अणु
+			if (!kernel) {
+				if (copy_from_user(dst, (void __user *)src,
+						   len)) {
 					err = -EFAULT;
-					जाओ bail;
-				पूर्ण
-			पूर्ण अन्यथा अणु
-				स_नकल(dst, src, len);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+					goto bail;
+				}
+			} else {
+				memcpy(dst, src, len);
+			}
+		}
+	}
 
-	क्रम (i = ctx->nbufs; i < ctx->nscalars; ++i) अणु
+	for (i = ctx->nbufs; i < ctx->nscalars; ++i) {
 		rpra[i].pv = (u64) ctx->args[i].ptr;
 		rpra[i].len = ctx->args[i].length;
 		list[i].num = ctx->args[i].length ? 1 : 0;
 		list[i].pgidx = i;
 		pages[i].addr = ctx->maps[i]->phys;
 		pages[i].size = ctx->maps[i]->size;
-	पूर्ण
+	}
 
 bail:
-	अगर (err)
+	if (err)
 		dev_err(dev, "Error: get invoke args failed:%d\n", err);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक fastrpc_put_args(काष्ठा fastrpc_invoke_ctx *ctx,
+static int fastrpc_put_args(struct fastrpc_invoke_ctx *ctx,
 			    u32 kernel)
-अणु
-	काष्ठा fastrpc_remote_arg *rpra = ctx->rpra;
-	पूर्णांक i, inbufs;
+{
+	struct fastrpc_remote_arg *rpra = ctx->rpra;
+	int i, inbufs;
 
 	inbufs = REMOTE_SCALARS_INBUFS(ctx->sc);
 
-	क्रम (i = inbufs; i < ctx->nbufs; ++i) अणु
-		व्योम *src = (व्योम *)(uपूर्णांकptr_t)rpra[i].pv;
-		व्योम *dst = (व्योम *)(uपूर्णांकptr_t)ctx->args[i].ptr;
+	for (i = inbufs; i < ctx->nbufs; ++i) {
+		void *src = (void *)(uintptr_t)rpra[i].pv;
+		void *dst = (void *)(uintptr_t)ctx->args[i].ptr;
 		u64 len = rpra[i].len;
 
-		अगर (!kernel) अणु
-			अगर (copy_to_user((व्योम __user *)dst, src, len))
-				वापस -EFAULT;
-		पूर्ण अन्यथा अणु
-			स_नकल(dst, src, len);
-		पूर्ण
-	पूर्ण
+		if (!kernel) {
+			if (copy_to_user((void __user *)dst, src, len))
+				return -EFAULT;
+		} else {
+			memcpy(dst, src, len);
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fastrpc_invoke_send(काष्ठा fastrpc_session_ctx *sctx,
-			       काष्ठा fastrpc_invoke_ctx *ctx,
-			       u32 kernel, uपूर्णांक32_t handle)
-अणु
-	काष्ठा fastrpc_channel_ctx *cctx;
-	काष्ठा fastrpc_user *fl = ctx->fl;
-	काष्ठा fastrpc_msg *msg = &ctx->msg;
-	पूर्णांक ret;
+static int fastrpc_invoke_send(struct fastrpc_session_ctx *sctx,
+			       struct fastrpc_invoke_ctx *ctx,
+			       u32 kernel, uint32_t handle)
+{
+	struct fastrpc_channel_ctx *cctx;
+	struct fastrpc_user *fl = ctx->fl;
+	struct fastrpc_msg *msg = &ctx->msg;
+	int ret;
 
 	cctx = fl->cctx;
 	msg->pid = fl->tgid;
 	msg->tid = current->pid;
 
-	अगर (kernel)
+	if (kernel)
 		msg->pid = 0;
 
 	msg->ctx = ctx->ctxid | fl->pd;
@@ -929,149 +928,149 @@ bail:
 	msg->size = roundup(ctx->msg_sz, PAGE_SIZE);
 	fastrpc_context_get(ctx);
 
-	ret = rpmsg_send(cctx->rpdev->ept, (व्योम *)msg, माप(*msg));
+	ret = rpmsg_send(cctx->rpdev->ept, (void *)msg, sizeof(*msg));
 
-	अगर (ret)
+	if (ret)
 		fastrpc_context_put(ctx);
 
-	वापस ret;
+	return ret;
 
-पूर्ण
+}
 
-अटल पूर्णांक fastrpc_पूर्णांकernal_invoke(काष्ठा fastrpc_user *fl,  u32 kernel,
+static int fastrpc_internal_invoke(struct fastrpc_user *fl,  u32 kernel,
 				   u32 handle, u32 sc,
-				   काष्ठा fastrpc_invoke_args *args)
-अणु
-	काष्ठा fastrpc_invoke_ctx *ctx = शून्य;
-	पूर्णांक err = 0;
+				   struct fastrpc_invoke_args *args)
+{
+	struct fastrpc_invoke_ctx *ctx = NULL;
+	int err = 0;
 
-	अगर (!fl->sctx)
-		वापस -EINVAL;
+	if (!fl->sctx)
+		return -EINVAL;
 
-	अगर (!fl->cctx->rpdev)
-		वापस -EPIPE;
+	if (!fl->cctx->rpdev)
+		return -EPIPE;
 
-	अगर (handle == FASTRPC_INIT_HANDLE && !kernel) अणु
+	if (handle == FASTRPC_INIT_HANDLE && !kernel) {
 		dev_warn_ratelimited(fl->sctx->dev, "user app trying to send a kernel RPC message (%d)\n",  handle);
-		वापस -EPERM;
-	पूर्ण
+		return -EPERM;
+	}
 
 	ctx = fastrpc_context_alloc(fl, kernel, sc, args);
-	अगर (IS_ERR(ctx))
-		वापस PTR_ERR(ctx);
+	if (IS_ERR(ctx))
+		return PTR_ERR(ctx);
 
-	अगर (ctx->nscalars) अणु
+	if (ctx->nscalars) {
 		err = fastrpc_get_args(kernel, ctx);
-		अगर (err)
-			जाओ bail;
-	पूर्ण
+		if (err)
+			goto bail;
+	}
 
-	/* make sure that all CPU memory ग_लिखोs are seen by DSP */
+	/* make sure that all CPU memory writes are seen by DSP */
 	dma_wmb();
 	/* Send invoke buffer to remote dsp */
 	err = fastrpc_invoke_send(fl->sctx, ctx, kernel, handle);
-	अगर (err)
-		जाओ bail;
+	if (err)
+		goto bail;
 
-	अगर (kernel) अणु
-		अगर (!रुको_क्रम_completion_समयout(&ctx->work, 10 * HZ))
+	if (kernel) {
+		if (!wait_for_completion_timeout(&ctx->work, 10 * HZ))
 			err = -ETIMEDOUT;
-	पूर्ण अन्यथा अणु
-		err = रुको_क्रम_completion_पूर्णांकerruptible(&ctx->work);
-	पूर्ण
+	} else {
+		err = wait_for_completion_interruptible(&ctx->work);
+	}
 
-	अगर (err)
-		जाओ bail;
+	if (err)
+		goto bail;
 
 	/* Check the response from remote dsp */
 	err = ctx->retval;
-	अगर (err)
-		जाओ bail;
+	if (err)
+		goto bail;
 
-	अगर (ctx->nscalars) अणु
-		/* make sure that all memory ग_लिखोs by DSP are seen by CPU */
+	if (ctx->nscalars) {
+		/* make sure that all memory writes by DSP are seen by CPU */
 		dma_rmb();
 		/* populate all the output buffers with results */
 		err = fastrpc_put_args(ctx, kernel);
-		अगर (err)
-			जाओ bail;
-	पूर्ण
+		if (err)
+			goto bail;
+	}
 
 bail:
-	अगर (err != -ERESTARTSYS && err != -ETIMEDOUT) अणु
-		/* We are करोne with this compute context */
+	if (err != -ERESTARTSYS && err != -ETIMEDOUT) {
+		/* We are done with this compute context */
 		spin_lock(&fl->lock);
 		list_del(&ctx->node);
 		spin_unlock(&fl->lock);
 		fastrpc_context_put(ctx);
-	पूर्ण
-	अगर (err)
+	}
+	if (err)
 		dev_dbg(fl->sctx->dev, "Error: Invoke Failed %d\n", err);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक fastrpc_init_create_process(काष्ठा fastrpc_user *fl,
-					अक्षर __user *argp)
-अणु
-	काष्ठा fastrpc_init_create init;
-	काष्ठा fastrpc_invoke_args *args;
-	काष्ठा fastrpc_phy_page pages[1];
-	काष्ठा fastrpc_map *map = शून्य;
-	काष्ठा fastrpc_buf *imem = शून्य;
-	पूर्णांक memlen;
-	पूर्णांक err;
-	काष्ठा अणु
-		पूर्णांक pgid;
+static int fastrpc_init_create_process(struct fastrpc_user *fl,
+					char __user *argp)
+{
+	struct fastrpc_init_create init;
+	struct fastrpc_invoke_args *args;
+	struct fastrpc_phy_page pages[1];
+	struct fastrpc_map *map = NULL;
+	struct fastrpc_buf *imem = NULL;
+	int memlen;
+	int err;
+	struct {
+		int pgid;
 		u32 namelen;
 		u32 filelen;
 		u32 pageslen;
 		u32 attrs;
 		u32 siglen;
-	पूर्ण inbuf;
+	} inbuf;
 	u32 sc;
 
-	args = kसुस्मृति(FASTRPC_CREATE_PROCESS_NARGS, माप(*args), GFP_KERNEL);
-	अगर (!args)
-		वापस -ENOMEM;
+	args = kcalloc(FASTRPC_CREATE_PROCESS_NARGS, sizeof(*args), GFP_KERNEL);
+	if (!args)
+		return -ENOMEM;
 
-	अगर (copy_from_user(&init, argp, माप(init))) अणु
+	if (copy_from_user(&init, argp, sizeof(init))) {
 		err = -EFAULT;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	अगर (init.filelen > INIT_खाताLEN_MAX) अणु
+	if (init.filelen > INIT_FILELEN_MAX) {
 		err = -EINVAL;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	inbuf.pgid = fl->tgid;
-	inbuf.namelen = म_माप(current->comm) + 1;
+	inbuf.namelen = strlen(current->comm) + 1;
 	inbuf.filelen = init.filelen;
 	inbuf.pageslen = 1;
 	inbuf.attrs = init.attrs;
 	inbuf.siglen = init.siglen;
 	fl->pd = USER_PD;
 
-	अगर (init.filelen && init.filefd) अणु
+	if (init.filelen && init.filefd) {
 		err = fastrpc_map_create(fl, init.filefd, init.filelen, &map);
-		अगर (err)
-			जाओ err;
-	पूर्ण
+		if (err)
+			goto err;
+	}
 
-	memlen = ALIGN(max(INIT_खाताLEN_MAX, (पूर्णांक)init.filelen * 4),
+	memlen = ALIGN(max(INIT_FILELEN_MAX, (int)init.filelen * 4),
 		       1024 * 1024);
 	err = fastrpc_buf_alloc(fl, fl->sctx->dev, memlen,
 				&imem);
-	अगर (err)
-		जाओ err_alloc;
+	if (err)
+		goto err_alloc;
 
 	fl->init_mem = imem;
-	args[0].ptr = (u64)(uपूर्णांकptr_t)&inbuf;
-	args[0].length = माप(inbuf);
+	args[0].ptr = (u64)(uintptr_t)&inbuf;
+	args[0].length = sizeof(inbuf);
 	args[0].fd = -1;
 
-	args[1].ptr = (u64)(uपूर्णांकptr_t)current->comm;
+	args[1].ptr = (u64)(uintptr_t)current->comm;
 	args[1].length = inbuf.namelen;
 	args[1].fd = -1;
 
@@ -1082,102 +1081,102 @@ bail:
 	pages[0].addr = imem->phys;
 	pages[0].size = imem->size;
 
-	args[3].ptr = (u64)(uपूर्णांकptr_t) pages;
-	args[3].length = 1 * माप(*pages);
+	args[3].ptr = (u64)(uintptr_t) pages;
+	args[3].length = 1 * sizeof(*pages);
 	args[3].fd = -1;
 
-	args[4].ptr = (u64)(uपूर्णांकptr_t)&inbuf.attrs;
-	args[4].length = माप(inbuf.attrs);
+	args[4].ptr = (u64)(uintptr_t)&inbuf.attrs;
+	args[4].length = sizeof(inbuf.attrs);
 	args[4].fd = -1;
 
-	args[5].ptr = (u64)(uपूर्णांकptr_t) &inbuf.siglen;
-	args[5].length = माप(inbuf.siglen);
+	args[5].ptr = (u64)(uintptr_t) &inbuf.siglen;
+	args[5].length = sizeof(inbuf.siglen);
 	args[5].fd = -1;
 
 	sc = FASTRPC_SCALARS(FASTRPC_RMID_INIT_CREATE, 4, 0);
-	अगर (init.attrs)
+	if (init.attrs)
 		sc = FASTRPC_SCALARS(FASTRPC_RMID_INIT_CREATE_ATTR, 6, 0);
 
-	err = fastrpc_पूर्णांकernal_invoke(fl, true, FASTRPC_INIT_HANDLE,
+	err = fastrpc_internal_invoke(fl, true, FASTRPC_INIT_HANDLE,
 				      sc, args);
-	अगर (err)
-		जाओ err_invoke;
+	if (err)
+		goto err_invoke;
 
-	kमुक्त(args);
+	kfree(args);
 
-	वापस 0;
+	return 0;
 
 err_invoke:
-	fl->init_mem = शून्य;
-	fastrpc_buf_मुक्त(imem);
+	fl->init_mem = NULL;
+	fastrpc_buf_free(imem);
 err_alloc:
-	अगर (map) अणु
+	if (map) {
 		spin_lock(&fl->lock);
 		list_del(&map->node);
 		spin_unlock(&fl->lock);
 		fastrpc_map_put(map);
-	पूर्ण
+	}
 err:
-	kमुक्त(args);
+	kfree(args);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल काष्ठा fastrpc_session_ctx *fastrpc_session_alloc(
-					काष्ठा fastrpc_channel_ctx *cctx)
-अणु
-	काष्ठा fastrpc_session_ctx *session = शून्य;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक i;
+static struct fastrpc_session_ctx *fastrpc_session_alloc(
+					struct fastrpc_channel_ctx *cctx)
+{
+	struct fastrpc_session_ctx *session = NULL;
+	unsigned long flags;
+	int i;
 
 	spin_lock_irqsave(&cctx->lock, flags);
-	क्रम (i = 0; i < cctx->sesscount; i++) अणु
-		अगर (!cctx->session[i].used && cctx->session[i].valid) अणु
+	for (i = 0; i < cctx->sesscount; i++) {
+		if (!cctx->session[i].used && cctx->session[i].valid) {
 			cctx->session[i].used = true;
 			session = &cctx->session[i];
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	spin_unlock_irqrestore(&cctx->lock, flags);
 
-	वापस session;
-पूर्ण
+	return session;
+}
 
-अटल व्योम fastrpc_session_मुक्त(काष्ठा fastrpc_channel_ctx *cctx,
-				 काष्ठा fastrpc_session_ctx *session)
-अणु
-	अचिन्हित दीर्घ flags;
+static void fastrpc_session_free(struct fastrpc_channel_ctx *cctx,
+				 struct fastrpc_session_ctx *session)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&cctx->lock, flags);
 	session->used = false;
 	spin_unlock_irqrestore(&cctx->lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक fastrpc_release_current_dsp_process(काष्ठा fastrpc_user *fl)
-अणु
-	काष्ठा fastrpc_invoke_args args[1];
-	पूर्णांक tgid = 0;
+static int fastrpc_release_current_dsp_process(struct fastrpc_user *fl)
+{
+	struct fastrpc_invoke_args args[1];
+	int tgid = 0;
 	u32 sc;
 
 	tgid = fl->tgid;
-	args[0].ptr = (u64)(uपूर्णांकptr_t) &tgid;
-	args[0].length = माप(tgid);
+	args[0].ptr = (u64)(uintptr_t) &tgid;
+	args[0].length = sizeof(tgid);
 	args[0].fd = -1;
 	args[0].reserved = 0;
 	sc = FASTRPC_SCALARS(FASTRPC_RMID_INIT_RELEASE, 1, 0);
 
-	वापस fastrpc_पूर्णांकernal_invoke(fl, true, FASTRPC_INIT_HANDLE,
+	return fastrpc_internal_invoke(fl, true, FASTRPC_INIT_HANDLE,
 				       sc, &args[0]);
-पूर्ण
+}
 
-अटल पूर्णांक fastrpc_device_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा fastrpc_user *fl = (काष्ठा fastrpc_user *)file->निजी_data;
-	काष्ठा fastrpc_channel_ctx *cctx = fl->cctx;
-	काष्ठा fastrpc_invoke_ctx *ctx, *n;
-	काष्ठा fastrpc_map *map, *m;
-	काष्ठा fastrpc_buf *buf, *b;
-	अचिन्हित दीर्घ flags;
+static int fastrpc_device_release(struct inode *inode, struct file *file)
+{
+	struct fastrpc_user *fl = (struct fastrpc_user *)file->private_data;
+	struct fastrpc_channel_ctx *cctx = fl->cctx;
+	struct fastrpc_invoke_ctx *ctx, *n;
+	struct fastrpc_map *map, *m;
+	struct fastrpc_buf *buf, *b;
+	unsigned long flags;
 
 	fastrpc_release_current_dsp_process(fl);
 
@@ -1185,48 +1184,48 @@ err:
 	list_del(&fl->user);
 	spin_unlock_irqrestore(&cctx->lock, flags);
 
-	अगर (fl->init_mem)
-		fastrpc_buf_मुक्त(fl->init_mem);
+	if (fl->init_mem)
+		fastrpc_buf_free(fl->init_mem);
 
-	list_क्रम_each_entry_safe(ctx, n, &fl->pending, node) अणु
+	list_for_each_entry_safe(ctx, n, &fl->pending, node) {
 		list_del(&ctx->node);
 		fastrpc_context_put(ctx);
-	पूर्ण
+	}
 
-	list_क्रम_each_entry_safe(map, m, &fl->maps, node) अणु
+	list_for_each_entry_safe(map, m, &fl->maps, node) {
 		list_del(&map->node);
 		fastrpc_map_put(map);
-	पूर्ण
+	}
 
-	list_क्रम_each_entry_safe(buf, b, &fl->mmaps, node) अणु
+	list_for_each_entry_safe(buf, b, &fl->mmaps, node) {
 		list_del(&buf->node);
-		fastrpc_buf_मुक्त(buf);
-	पूर्ण
+		fastrpc_buf_free(buf);
+	}
 
-	fastrpc_session_मुक्त(cctx, fl->sctx);
+	fastrpc_session_free(cctx, fl->sctx);
 	fastrpc_channel_ctx_put(cctx);
 
 	mutex_destroy(&fl->mutex);
-	kमुक्त(fl);
-	file->निजी_data = शून्य;
+	kfree(fl);
+	file->private_data = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fastrpc_device_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	काष्ठा fastrpc_channel_ctx *cctx = miscdev_to_cctx(filp->निजी_data);
-	काष्ठा fastrpc_user *fl = शून्य;
-	अचिन्हित दीर्घ flags;
+static int fastrpc_device_open(struct inode *inode, struct file *filp)
+{
+	struct fastrpc_channel_ctx *cctx = miscdev_to_cctx(filp->private_data);
+	struct fastrpc_user *fl = NULL;
+	unsigned long flags;
 
-	fl = kzalloc(माप(*fl), GFP_KERNEL);
-	अगर (!fl)
-		वापस -ENOMEM;
+	fl = kzalloc(sizeof(*fl), GFP_KERNEL);
+	if (!fl)
+		return -ENOMEM;
 
 	/* Released in fastrpc_device_release() */
 	fastrpc_channel_ctx_get(cctx);
 
-	filp->निजी_data = fl;
+	filp->private_data = fl;
 	spin_lock_init(&fl->lock);
 	mutex_init(&fl->mutex);
 	INIT_LIST_HEAD(&fl->pending);
@@ -1237,221 +1236,221 @@ err:
 	fl->cctx = cctx;
 
 	fl->sctx = fastrpc_session_alloc(cctx);
-	अगर (!fl->sctx) अणु
+	if (!fl->sctx) {
 		dev_err(&cctx->rpdev->dev, "No session available\n");
 		mutex_destroy(&fl->mutex);
-		kमुक्त(fl);
+		kfree(fl);
 
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	spin_lock_irqsave(&cctx->lock, flags);
 	list_add_tail(&fl->user, &cctx->users);
 	spin_unlock_irqrestore(&cctx->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fastrpc_dmabuf_alloc(काष्ठा fastrpc_user *fl, अक्षर __user *argp)
-अणु
-	काष्ठा fastrpc_alloc_dma_buf bp;
+static int fastrpc_dmabuf_alloc(struct fastrpc_user *fl, char __user *argp)
+{
+	struct fastrpc_alloc_dma_buf bp;
 	DEFINE_DMA_BUF_EXPORT_INFO(exp_info);
-	काष्ठा fastrpc_buf *buf = शून्य;
-	पूर्णांक err;
+	struct fastrpc_buf *buf = NULL;
+	int err;
 
-	अगर (copy_from_user(&bp, argp, माप(bp)))
-		वापस -EFAULT;
+	if (copy_from_user(&bp, argp, sizeof(bp)))
+		return -EFAULT;
 
 	err = fastrpc_buf_alloc(fl, fl->sctx->dev, bp.size, &buf);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 	exp_info.ops = &fastrpc_dma_buf_ops;
 	exp_info.size = bp.size;
 	exp_info.flags = O_RDWR;
 	exp_info.priv = buf;
 	buf->dmabuf = dma_buf_export(&exp_info);
-	अगर (IS_ERR(buf->dmabuf)) अणु
+	if (IS_ERR(buf->dmabuf)) {
 		err = PTR_ERR(buf->dmabuf);
-		fastrpc_buf_मुक्त(buf);
-		वापस err;
-	पूर्ण
+		fastrpc_buf_free(buf);
+		return err;
+	}
 
 	bp.fd = dma_buf_fd(buf->dmabuf, O_ACCMODE);
-	अगर (bp.fd < 0) अणु
+	if (bp.fd < 0) {
 		dma_buf_put(buf->dmabuf);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (copy_to_user(argp, &bp, माप(bp))) अणु
+	if (copy_to_user(argp, &bp, sizeof(bp))) {
 		dma_buf_put(buf->dmabuf);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fastrpc_init_attach(काष्ठा fastrpc_user *fl, पूर्णांक pd)
-अणु
-	काष्ठा fastrpc_invoke_args args[1];
-	पूर्णांक tgid = fl->tgid;
+static int fastrpc_init_attach(struct fastrpc_user *fl, int pd)
+{
+	struct fastrpc_invoke_args args[1];
+	int tgid = fl->tgid;
 	u32 sc;
 
-	args[0].ptr = (u64)(uपूर्णांकptr_t) &tgid;
-	args[0].length = माप(tgid);
+	args[0].ptr = (u64)(uintptr_t) &tgid;
+	args[0].length = sizeof(tgid);
 	args[0].fd = -1;
 	args[0].reserved = 0;
 	sc = FASTRPC_SCALARS(FASTRPC_RMID_INIT_ATTACH, 1, 0);
 	fl->pd = pd;
 
-	वापस fastrpc_पूर्णांकernal_invoke(fl, true, FASTRPC_INIT_HANDLE,
+	return fastrpc_internal_invoke(fl, true, FASTRPC_INIT_HANDLE,
 				       sc, &args[0]);
-पूर्ण
+}
 
-अटल पूर्णांक fastrpc_invoke(काष्ठा fastrpc_user *fl, अक्षर __user *argp)
-अणु
-	काष्ठा fastrpc_invoke_args *args = शून्य;
-	काष्ठा fastrpc_invoke inv;
+static int fastrpc_invoke(struct fastrpc_user *fl, char __user *argp)
+{
+	struct fastrpc_invoke_args *args = NULL;
+	struct fastrpc_invoke inv;
 	u32 nscalars;
-	पूर्णांक err;
+	int err;
 
-	अगर (copy_from_user(&inv, argp, माप(inv)))
-		वापस -EFAULT;
+	if (copy_from_user(&inv, argp, sizeof(inv)))
+		return -EFAULT;
 
 	/* nscalars is truncated here to max supported value */
 	nscalars = REMOTE_SCALARS_LENGTH(inv.sc);
-	अगर (nscalars) अणु
-		args = kसुस्मृति(nscalars, माप(*args), GFP_KERNEL);
-		अगर (!args)
-			वापस -ENOMEM;
+	if (nscalars) {
+		args = kcalloc(nscalars, sizeof(*args), GFP_KERNEL);
+		if (!args)
+			return -ENOMEM;
 
-		अगर (copy_from_user(args, (व्योम __user *)(uपूर्णांकptr_t)inv.args,
-				   nscalars * माप(*args))) अणु
-			kमुक्त(args);
-			वापस -EFAULT;
-		पूर्ण
-	पूर्ण
+		if (copy_from_user(args, (void __user *)(uintptr_t)inv.args,
+				   nscalars * sizeof(*args))) {
+			kfree(args);
+			return -EFAULT;
+		}
+	}
 
-	err = fastrpc_पूर्णांकernal_invoke(fl, false, inv.handle, inv.sc, args);
-	kमुक्त(args);
+	err = fastrpc_internal_invoke(fl, false, inv.handle, inv.sc, args);
+	kfree(args);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक fastrpc_req_munmap_impl(काष्ठा fastrpc_user *fl,
-				   काष्ठा fastrpc_req_munmap *req)
-अणु
-	काष्ठा fastrpc_invoke_args args[1] = अणु [0] = अणु 0 पूर्ण पूर्ण;
-	काष्ठा fastrpc_buf *buf, *b;
-	काष्ठा fastrpc_munmap_req_msg req_msg;
-	काष्ठा device *dev = fl->sctx->dev;
-	पूर्णांक err;
+static int fastrpc_req_munmap_impl(struct fastrpc_user *fl,
+				   struct fastrpc_req_munmap *req)
+{
+	struct fastrpc_invoke_args args[1] = { [0] = { 0 } };
+	struct fastrpc_buf *buf, *b;
+	struct fastrpc_munmap_req_msg req_msg;
+	struct device *dev = fl->sctx->dev;
+	int err;
 	u32 sc;
 
 	spin_lock(&fl->lock);
-	list_क्रम_each_entry_safe(buf, b, &fl->mmaps, node) अणु
-		अगर ((buf->raddr == req->vaddrout) && (buf->size == req->size))
-			अवरोध;
-		buf = शून्य;
-	पूर्ण
+	list_for_each_entry_safe(buf, b, &fl->mmaps, node) {
+		if ((buf->raddr == req->vaddrout) && (buf->size == req->size))
+			break;
+		buf = NULL;
+	}
 	spin_unlock(&fl->lock);
 
-	अगर (!buf) अणु
+	if (!buf) {
 		dev_err(dev, "mmap not in list\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	req_msg.pgid = fl->tgid;
 	req_msg.size = buf->size;
 	req_msg.vaddr = buf->raddr;
 
-	args[0].ptr = (u64) (uपूर्णांकptr_t) &req_msg;
-	args[0].length = माप(req_msg);
+	args[0].ptr = (u64) (uintptr_t) &req_msg;
+	args[0].length = sizeof(req_msg);
 
 	sc = FASTRPC_SCALARS(FASTRPC_RMID_INIT_MUNMAP, 1, 0);
-	err = fastrpc_पूर्णांकernal_invoke(fl, true, FASTRPC_INIT_HANDLE, sc,
+	err = fastrpc_internal_invoke(fl, true, FASTRPC_INIT_HANDLE, sc,
 				      &args[0]);
-	अगर (!err) अणु
+	if (!err) {
 		dev_dbg(dev, "unmmap\tpt 0x%09lx OK\n", buf->raddr);
 		spin_lock(&fl->lock);
 		list_del(&buf->node);
 		spin_unlock(&fl->lock);
-		fastrpc_buf_मुक्त(buf);
-	पूर्ण अन्यथा अणु
+		fastrpc_buf_free(buf);
+	} else {
 		dev_err(dev, "unmmap\tpt 0x%09lx ERROR\n", buf->raddr);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक fastrpc_req_munmap(काष्ठा fastrpc_user *fl, अक्षर __user *argp)
-अणु
-	काष्ठा fastrpc_req_munmap req;
+static int fastrpc_req_munmap(struct fastrpc_user *fl, char __user *argp)
+{
+	struct fastrpc_req_munmap req;
 
-	अगर (copy_from_user(&req, argp, माप(req)))
-		वापस -EFAULT;
+	if (copy_from_user(&req, argp, sizeof(req)))
+		return -EFAULT;
 
-	वापस fastrpc_req_munmap_impl(fl, &req);
-पूर्ण
+	return fastrpc_req_munmap_impl(fl, &req);
+}
 
-अटल पूर्णांक fastrpc_req_mmap(काष्ठा fastrpc_user *fl, अक्षर __user *argp)
-अणु
-	काष्ठा fastrpc_invoke_args args[3] = अणु [0 ... 2] = अणु 0 पूर्ण पूर्ण;
-	काष्ठा fastrpc_buf *buf = शून्य;
-	काष्ठा fastrpc_mmap_req_msg req_msg;
-	काष्ठा fastrpc_mmap_rsp_msg rsp_msg;
-	काष्ठा fastrpc_req_munmap req_unmap;
-	काष्ठा fastrpc_phy_page pages;
-	काष्ठा fastrpc_req_mmap req;
-	काष्ठा device *dev = fl->sctx->dev;
-	पूर्णांक err;
+static int fastrpc_req_mmap(struct fastrpc_user *fl, char __user *argp)
+{
+	struct fastrpc_invoke_args args[3] = { [0 ... 2] = { 0 } };
+	struct fastrpc_buf *buf = NULL;
+	struct fastrpc_mmap_req_msg req_msg;
+	struct fastrpc_mmap_rsp_msg rsp_msg;
+	struct fastrpc_req_munmap req_unmap;
+	struct fastrpc_phy_page pages;
+	struct fastrpc_req_mmap req;
+	struct device *dev = fl->sctx->dev;
+	int err;
 	u32 sc;
 
-	अगर (copy_from_user(&req, argp, माप(req)))
-		वापस -EFAULT;
+	if (copy_from_user(&req, argp, sizeof(req)))
+		return -EFAULT;
 
-	अगर (req.flags != ADSP_MMAP_ADD_PAGES) अणु
+	if (req.flags != ADSP_MMAP_ADD_PAGES) {
 		dev_err(dev, "flag not supported 0x%x\n", req.flags);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (req.vaddrin) अणु
+	if (req.vaddrin) {
 		dev_err(dev, "adding user allocated pages is not supported\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	err = fastrpc_buf_alloc(fl, fl->sctx->dev, req.size, &buf);
-	अगर (err) अणु
+	if (err) {
 		dev_err(dev, "failed to allocate buffer\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	req_msg.pgid = fl->tgid;
 	req_msg.flags = req.flags;
 	req_msg.vaddr = req.vaddrin;
-	req_msg.num = माप(pages);
+	req_msg.num = sizeof(pages);
 
-	args[0].ptr = (u64) (uपूर्णांकptr_t) &req_msg;
-	args[0].length = माप(req_msg);
+	args[0].ptr = (u64) (uintptr_t) &req_msg;
+	args[0].length = sizeof(req_msg);
 
 	pages.addr = buf->phys;
 	pages.size = buf->size;
 
-	args[1].ptr = (u64) (uपूर्णांकptr_t) &pages;
-	args[1].length = माप(pages);
+	args[1].ptr = (u64) (uintptr_t) &pages;
+	args[1].length = sizeof(pages);
 
-	args[2].ptr = (u64) (uपूर्णांकptr_t) &rsp_msg;
-	args[2].length = माप(rsp_msg);
+	args[2].ptr = (u64) (uintptr_t) &rsp_msg;
+	args[2].length = sizeof(rsp_msg);
 
 	sc = FASTRPC_SCALARS(FASTRPC_RMID_INIT_MMAP, 2, 1);
-	err = fastrpc_पूर्णांकernal_invoke(fl, true, FASTRPC_INIT_HANDLE, sc,
+	err = fastrpc_internal_invoke(fl, true, FASTRPC_INIT_HANDLE, sc,
 				      &args[0]);
-	अगर (err) अणु
+	if (err) {
 		dev_err(dev, "mmap error (len 0x%08llx)\n", buf->size);
-		जाओ err_invoke;
-	पूर्ण
+		goto err_invoke;
+	}
 
 	/* update the buffer to be able to deallocate the memory on the DSP */
-	buf->raddr = (uपूर्णांकptr_t) rsp_msg.vaddr;
+	buf->raddr = (uintptr_t) rsp_msg.vaddr;
 
 	/* let the client know the address to use */
 	req.vaddrout = rsp_msg.vaddr;
@@ -1460,83 +1459,83 @@ err:
 	list_add_tail(&buf->node, &fl->mmaps);
 	spin_unlock(&fl->lock);
 
-	अगर (copy_to_user((व्योम __user *)argp, &req, माप(req))) अणु
+	if (copy_to_user((void __user *)argp, &req, sizeof(req))) {
 		/* unmap the memory and release the buffer */
 		req_unmap.vaddrout = buf->raddr;
 		req_unmap.size = buf->size;
 		fastrpc_req_munmap_impl(fl, &req_unmap);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
 	dev_dbg(dev, "mmap\t\tpt 0x%09lx OK [len 0x%08llx]\n",
 		buf->raddr, buf->size);
 
-	वापस 0;
+	return 0;
 
 err_invoke:
-	fastrpc_buf_मुक्त(buf);
+	fastrpc_buf_free(buf);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल दीर्घ fastrpc_device_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
-				 अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा fastrpc_user *fl = (काष्ठा fastrpc_user *)file->निजी_data;
-	अक्षर __user *argp = (अक्षर __user *)arg;
-	पूर्णांक err;
+static long fastrpc_device_ioctl(struct file *file, unsigned int cmd,
+				 unsigned long arg)
+{
+	struct fastrpc_user *fl = (struct fastrpc_user *)file->private_data;
+	char __user *argp = (char __user *)arg;
+	int err;
 
-	चयन (cmd) अणु
-	हाल FASTRPC_IOCTL_INVOKE:
+	switch (cmd) {
+	case FASTRPC_IOCTL_INVOKE:
 		err = fastrpc_invoke(fl, argp);
-		अवरोध;
-	हाल FASTRPC_IOCTL_INIT_ATTACH:
+		break;
+	case FASTRPC_IOCTL_INIT_ATTACH:
 		err = fastrpc_init_attach(fl, AUDIO_PD);
-		अवरोध;
-	हाल FASTRPC_IOCTL_INIT_ATTACH_SNS:
+		break;
+	case FASTRPC_IOCTL_INIT_ATTACH_SNS:
 		err = fastrpc_init_attach(fl, SENSORS_PD);
-		अवरोध;
-	हाल FASTRPC_IOCTL_INIT_CREATE:
+		break;
+	case FASTRPC_IOCTL_INIT_CREATE:
 		err = fastrpc_init_create_process(fl, argp);
-		अवरोध;
-	हाल FASTRPC_IOCTL_ALLOC_DMA_BUFF:
+		break;
+	case FASTRPC_IOCTL_ALLOC_DMA_BUFF:
 		err = fastrpc_dmabuf_alloc(fl, argp);
-		अवरोध;
-	हाल FASTRPC_IOCTL_MMAP:
+		break;
+	case FASTRPC_IOCTL_MMAP:
 		err = fastrpc_req_mmap(fl, argp);
-		अवरोध;
-	हाल FASTRPC_IOCTL_MUNMAP:
+		break;
+	case FASTRPC_IOCTL_MUNMAP:
 		err = fastrpc_req_munmap(fl, argp);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		err = -ENOTTY;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल स्थिर काष्ठा file_operations fastrpc_fops = अणु
-	.खोलो = fastrpc_device_खोलो,
+static const struct file_operations fastrpc_fops = {
+	.open = fastrpc_device_open,
 	.release = fastrpc_device_release,
 	.unlocked_ioctl = fastrpc_device_ioctl,
 	.compat_ioctl = fastrpc_device_ioctl,
-पूर्ण;
+};
 
-अटल पूर्णांक fastrpc_cb_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा fastrpc_channel_ctx *cctx;
-	काष्ठा fastrpc_session_ctx *sess;
-	काष्ठा device *dev = &pdev->dev;
-	पूर्णांक i, sessions = 0;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक rc;
+static int fastrpc_cb_probe(struct platform_device *pdev)
+{
+	struct fastrpc_channel_ctx *cctx;
+	struct fastrpc_session_ctx *sess;
+	struct device *dev = &pdev->dev;
+	int i, sessions = 0;
+	unsigned long flags;
+	int rc;
 
 	cctx = dev_get_drvdata(dev->parent);
-	अगर (!cctx)
-		वापस -EINVAL;
+	if (!cctx)
+		return -EINVAL;
 
-	of_property_पढ़ो_u32(dev->of_node, "qcom,nsessions", &sessions);
+	of_property_read_u32(dev->of_node, "qcom,nsessions", &sessions);
 
 	spin_lock_irqsave(&cctx->lock, flags);
 	sess = &cctx->session[cctx->sesscount];
@@ -1545,102 +1544,102 @@ err_invoke:
 	sess->dev = dev;
 	dev_set_drvdata(dev, sess);
 
-	अगर (of_property_पढ़ो_u32(dev->of_node, "reg", &sess->sid))
+	if (of_property_read_u32(dev->of_node, "reg", &sess->sid))
 		dev_info(dev, "FastRPC Session ID not specified in DT\n");
 
-	अगर (sessions > 0) अणु
-		काष्ठा fastrpc_session_ctx *dup_sess;
+	if (sessions > 0) {
+		struct fastrpc_session_ctx *dup_sess;
 
-		क्रम (i = 1; i < sessions; i++) अणु
-			अगर (cctx->sesscount++ >= FASTRPC_MAX_SESSIONS)
-				अवरोध;
+		for (i = 1; i < sessions; i++) {
+			if (cctx->sesscount++ >= FASTRPC_MAX_SESSIONS)
+				break;
 			dup_sess = &cctx->session[cctx->sesscount];
-			स_नकल(dup_sess, sess, माप(*dup_sess));
-		पूर्ण
-	पूर्ण
+			memcpy(dup_sess, sess, sizeof(*dup_sess));
+		}
+	}
 	cctx->sesscount++;
 	spin_unlock_irqrestore(&cctx->lock, flags);
 	rc = dma_set_mask(dev, DMA_BIT_MASK(32));
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(dev, "32-bit DMA enable failed\n");
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fastrpc_cb_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा fastrpc_channel_ctx *cctx = dev_get_drvdata(pdev->dev.parent);
-	काष्ठा fastrpc_session_ctx *sess = dev_get_drvdata(&pdev->dev);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक i;
+static int fastrpc_cb_remove(struct platform_device *pdev)
+{
+	struct fastrpc_channel_ctx *cctx = dev_get_drvdata(pdev->dev.parent);
+	struct fastrpc_session_ctx *sess = dev_get_drvdata(&pdev->dev);
+	unsigned long flags;
+	int i;
 
 	spin_lock_irqsave(&cctx->lock, flags);
-	क्रम (i = 1; i < FASTRPC_MAX_SESSIONS; i++) अणु
-		अगर (cctx->session[i].sid == sess->sid) अणु
+	for (i = 1; i < FASTRPC_MAX_SESSIONS; i++) {
+		if (cctx->session[i].sid == sess->sid) {
 			cctx->session[i].valid = false;
 			cctx->sesscount--;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock_irqrestore(&cctx->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id fastrpc_match_table[] = अणु
-	अणु .compatible = "qcom,fastrpc-compute-cb", पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id fastrpc_match_table[] = {
+	{ .compatible = "qcom,fastrpc-compute-cb", },
+	{}
+};
 
-अटल काष्ठा platक्रमm_driver fastrpc_cb_driver = अणु
+static struct platform_driver fastrpc_cb_driver = {
 	.probe = fastrpc_cb_probe,
-	.हटाओ = fastrpc_cb_हटाओ,
-	.driver = अणु
+	.remove = fastrpc_cb_remove,
+	.driver = {
 		.name = "qcom,fastrpc-cb",
 		.of_match_table = fastrpc_match_table,
 		.suppress_bind_attrs = true,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक fastrpc_rpmsg_probe(काष्ठा rpmsg_device *rpdev)
-अणु
-	काष्ठा device *rdev = &rpdev->dev;
-	काष्ठा fastrpc_channel_ctx *data;
-	पूर्णांक i, err, करोमुख्य_id = -1;
-	स्थिर अक्षर *करोमुख्य;
+static int fastrpc_rpmsg_probe(struct rpmsg_device *rpdev)
+{
+	struct device *rdev = &rpdev->dev;
+	struct fastrpc_channel_ctx *data;
+	int i, err, domain_id = -1;
+	const char *domain;
 
-	err = of_property_पढ़ो_string(rdev->of_node, "label", &करोमुख्य);
-	अगर (err) अणु
+	err = of_property_read_string(rdev->of_node, "label", &domain);
+	if (err) {
 		dev_info(rdev, "FastRPC Domain not specified in DT\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	क्रम (i = 0; i <= CDSP_DOMAIN_ID; i++) अणु
-		अगर (!म_भेद(करोमुख्यs[i], करोमुख्य)) अणु
-			करोमुख्य_id = i;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+	for (i = 0; i <= CDSP_DOMAIN_ID; i++) {
+		if (!strcmp(domains[i], domain)) {
+			domain_id = i;
+			break;
+		}
+	}
 
-	अगर (करोमुख्य_id < 0) अणु
-		dev_info(rdev, "FastRPC Invalid Domain ID %d\n", करोमुख्य_id);
-		वापस -EINVAL;
-	पूर्ण
+	if (domain_id < 0) {
+		dev_info(rdev, "FastRPC Invalid Domain ID %d\n", domain_id);
+		return -EINVAL;
+	}
 
-	data = kzalloc(माप(*data), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = kzalloc(sizeof(*data), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
 	data->miscdev.minor = MISC_DYNAMIC_MINOR;
-	data->miscdev.name = devm_kaप्र_लिखो(rdev, GFP_KERNEL, "fastrpc-%s",
-					    करोमुख्यs[करोमुख्य_id]);
+	data->miscdev.name = devm_kasprintf(rdev, GFP_KERNEL, "fastrpc-%s",
+					    domains[domain_id]);
 	data->miscdev.fops = &fastrpc_fops;
-	err = misc_रेजिस्टर(&data->miscdev);
-	अगर (err) अणु
-		kमुक्त(data);
-		वापस err;
-	पूर्ण
+	err = misc_register(&data->miscdev);
+	if (err) {
+		kfree(data);
+		return err;
+	}
 
 	kref_init(&data->refcount);
 
@@ -1649,51 +1648,51 @@ err_invoke:
 	INIT_LIST_HEAD(&data->users);
 	spin_lock_init(&data->lock);
 	idr_init(&data->ctx_idr);
-	data->करोमुख्य_id = करोमुख्य_id;
+	data->domain_id = domain_id;
 	data->rpdev = rpdev;
 
-	वापस of_platक्रमm_populate(rdev->of_node, शून्य, शून्य, rdev);
-पूर्ण
+	return of_platform_populate(rdev->of_node, NULL, NULL, rdev);
+}
 
-अटल व्योम fastrpc_notअगरy_users(काष्ठा fastrpc_user *user)
-अणु
-	काष्ठा fastrpc_invoke_ctx *ctx;
+static void fastrpc_notify_users(struct fastrpc_user *user)
+{
+	struct fastrpc_invoke_ctx *ctx;
 
 	spin_lock(&user->lock);
-	list_क्रम_each_entry(ctx, &user->pending, node)
+	list_for_each_entry(ctx, &user->pending, node)
 		complete(&ctx->work);
 	spin_unlock(&user->lock);
-पूर्ण
+}
 
-अटल व्योम fastrpc_rpmsg_हटाओ(काष्ठा rpmsg_device *rpdev)
-अणु
-	काष्ठा fastrpc_channel_ctx *cctx = dev_get_drvdata(&rpdev->dev);
-	काष्ठा fastrpc_user *user;
-	अचिन्हित दीर्घ flags;
+static void fastrpc_rpmsg_remove(struct rpmsg_device *rpdev)
+{
+	struct fastrpc_channel_ctx *cctx = dev_get_drvdata(&rpdev->dev);
+	struct fastrpc_user *user;
+	unsigned long flags;
 
 	spin_lock_irqsave(&cctx->lock, flags);
-	list_क्रम_each_entry(user, &cctx->users, user)
-		fastrpc_notअगरy_users(user);
+	list_for_each_entry(user, &cctx->users, user)
+		fastrpc_notify_users(user);
 	spin_unlock_irqrestore(&cctx->lock, flags);
 
-	misc_deरेजिस्टर(&cctx->miscdev);
-	of_platक्रमm_depopulate(&rpdev->dev);
+	misc_deregister(&cctx->miscdev);
+	of_platform_depopulate(&rpdev->dev);
 
-	cctx->rpdev = शून्य;
+	cctx->rpdev = NULL;
 	fastrpc_channel_ctx_put(cctx);
-पूर्ण
+}
 
-अटल पूर्णांक fastrpc_rpmsg_callback(काष्ठा rpmsg_device *rpdev, व्योम *data,
-				  पूर्णांक len, व्योम *priv, u32 addr)
-अणु
-	काष्ठा fastrpc_channel_ctx *cctx = dev_get_drvdata(&rpdev->dev);
-	काष्ठा fastrpc_invoke_rsp *rsp = data;
-	काष्ठा fastrpc_invoke_ctx *ctx;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित दीर्घ ctxid;
+static int fastrpc_rpmsg_callback(struct rpmsg_device *rpdev, void *data,
+				  int len, void *priv, u32 addr)
+{
+	struct fastrpc_channel_ctx *cctx = dev_get_drvdata(&rpdev->dev);
+	struct fastrpc_invoke_rsp *rsp = data;
+	struct fastrpc_invoke_ctx *ctx;
+	unsigned long flags;
+	unsigned long ctxid;
 
-	अगर (len < माप(*rsp))
-		वापस -EINVAL;
+	if (len < sizeof(*rsp))
+		return -EINVAL;
 
 	ctxid = ((rsp->ctx & FASTRPC_CTXID_MASK) >> 4);
 
@@ -1701,66 +1700,66 @@ err_invoke:
 	ctx = idr_find(&cctx->ctx_idr, ctxid);
 	spin_unlock_irqrestore(&cctx->lock, flags);
 
-	अगर (!ctx) अणु
+	if (!ctx) {
 		dev_err(&rpdev->dev, "No context ID matches response\n");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	ctx->retval = rsp->retval;
 	complete(&ctx->work);
 
 	/*
-	 * The DMA buffer associated with the context cannot be मुक्तd in
-	 * पूर्णांकerrupt context so schedule it through a worker thपढ़ो to
-	 * aव्योम a kernel BUG.
+	 * The DMA buffer associated with the context cannot be freed in
+	 * interrupt context so schedule it through a worker thread to
+	 * avoid a kernel BUG.
 	 */
 	schedule_work(&ctx->put_work);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id fastrpc_rpmsg_of_match[] = अणु
-	अणु .compatible = "qcom,fastrpc" पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id fastrpc_rpmsg_of_match[] = {
+	{ .compatible = "qcom,fastrpc" },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, fastrpc_rpmsg_of_match);
 
-अटल काष्ठा rpmsg_driver fastrpc_driver = अणु
+static struct rpmsg_driver fastrpc_driver = {
 	.probe = fastrpc_rpmsg_probe,
-	.हटाओ = fastrpc_rpmsg_हटाओ,
+	.remove = fastrpc_rpmsg_remove,
 	.callback = fastrpc_rpmsg_callback,
-	.drv = अणु
+	.drv = {
 		.name = "qcom,fastrpc",
 		.of_match_table = fastrpc_rpmsg_of_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक fastrpc_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int fastrpc_init(void)
+{
+	int ret;
 
-	ret = platक्रमm_driver_रेजिस्टर(&fastrpc_cb_driver);
-	अगर (ret < 0) अणु
+	ret = platform_driver_register(&fastrpc_cb_driver);
+	if (ret < 0) {
 		pr_err("fastrpc: failed to register cb driver\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = रेजिस्टर_rpmsg_driver(&fastrpc_driver);
-	अगर (ret < 0) अणु
+	ret = register_rpmsg_driver(&fastrpc_driver);
+	if (ret < 0) {
 		pr_err("fastrpc: failed to register rpmsg driver\n");
-		platक्रमm_driver_unरेजिस्टर(&fastrpc_cb_driver);
-		वापस ret;
-	पूर्ण
+		platform_driver_unregister(&fastrpc_cb_driver);
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 module_init(fastrpc_init);
 
-अटल व्योम fastrpc_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&fastrpc_cb_driver);
-	unरेजिस्टर_rpmsg_driver(&fastrpc_driver);
-पूर्ण
-module_निकास(fastrpc_निकास);
+static void fastrpc_exit(void)
+{
+	platform_driver_unregister(&fastrpc_cb_driver);
+	unregister_rpmsg_driver(&fastrpc_driver);
+}
+module_exit(fastrpc_exit);
 
 MODULE_LICENSE("GPL v2");

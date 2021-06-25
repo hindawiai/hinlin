@@ -1,37 +1,36 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  linux/arch/arm/mach-mmp/pxa910.c
  *
- *  Code specअगरic to PXA910
+ *  Code specific to PXA910
  */
-#समावेश <linux/clk/mmp.h>
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/list.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/irq.h>
-#समावेश <linux/irqchip/mmp.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/clk/mmp.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/list.h>
+#include <linux/io.h>
+#include <linux/irq.h>
+#include <linux/irqchip/mmp.h>
+#include <linux/platform_device.h>
 
-#समावेश <यंत्र/hardware/cache-tauros2.h>
-#समावेश <यंत्र/mach/समय.स>
-#समावेश "addr-map.h"
-#समावेश "regs-apbc.h"
-#समावेश <linux/soc/mmp/cputype.h>
-#समावेश "irqs.h"
-#समावेश "mfp.h"
-#समावेश "devices.h"
-#समावेश "pm-pxa910.h"
-#समावेश "pxa910.h"
+#include <asm/hardware/cache-tauros2.h>
+#include <asm/mach/time.h>
+#include "addr-map.h"
+#include "regs-apbc.h"
+#include <linux/soc/mmp/cputype.h>
+#include "irqs.h"
+#include "mfp.h"
+#include "devices.h"
+#include "pm-pxa910.h"
+#include "pxa910.h"
 
-#समावेश "common.h"
+#include "common.h"
 
-#घोषणा MFPR_VIRT_BASE	(APB_VIRT_BASE + 0x1e000)
+#define MFPR_VIRT_BASE	(APB_VIRT_BASE + 0x1e000)
 
-अटल काष्ठा mfp_addr_map pxa910_mfp_addr_map[] __initdata =
-अणु
+static struct mfp_addr_map pxa910_mfp_addr_map[] __initdata =
+{
 	MFP_ADDR_X(GPIO0, GPIO54, 0xdc),
 	MFP_ADDR_X(GPIO67, GPIO98, 0x1b8),
 	MFP_ADDR_X(GPIO100, GPIO109, 0x238),
@@ -76,46 +75,46 @@
 	MFP_ADDR_X(MMC1_DAT7, MMC1_WP, 0x84),
 
 	MFP_ADDR_END,
-पूर्ण;
+};
 
-व्योम __init pxa910_init_irq(व्योम)
-अणु
+void __init pxa910_init_irq(void)
+{
 	icu_init_irq();
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 	icu_irq_chip.irq_set_wake = pxa910_set_wake;
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल पूर्णांक __init pxa910_init(व्योम)
-अणु
-	अगर (cpu_is_pxa910()) अणु
-#अगर_घोषित CONFIG_CACHE_TAUROS2
+static int __init pxa910_init(void)
+{
+	if (cpu_is_pxa910()) {
+#ifdef CONFIG_CACHE_TAUROS2
 		tauros2_init(0);
-#पूर्ण_अगर
+#endif
 		mfp_init_base(MFPR_VIRT_BASE);
 		mfp_init_addr(pxa910_mfp_addr_map);
 		pxa910_clk_init(APB_PHYS_BASE + 0x50000,
 				AXI_PHYS_BASE + 0x82800,
 				APB_PHYS_BASE + 0x15000,
 				APB_PHYS_BASE + 0x3b000);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 postcore_initcall(pxa910_init);
 
-/* प्रणाली समयr - घड़ी enabled, 3.25MHz */
-#घोषणा TIMER_CLK_RST	(APBC_APBCLK | APBC_FNCLK | APBC_FNCLKSEL(3))
-#घोषणा APBC_TIMERS	APBC_REG(0x34)
+/* system timer - clock enabled, 3.25MHz */
+#define TIMER_CLK_RST	(APBC_APBCLK | APBC_FNCLK | APBC_FNCLKSEL(3))
+#define APBC_TIMERS	APBC_REG(0x34)
 
-व्योम __init pxa910_समयr_init(व्योम)
-अणु
+void __init pxa910_timer_init(void)
+{
 	/* reset and configure */
-	__raw_ग_लिखोl(APBC_APBCLK | APBC_RST, APBC_TIMERS);
-	__raw_ग_लिखोl(TIMER_CLK_RST, APBC_TIMERS);
+	__raw_writel(APBC_APBCLK | APBC_RST, APBC_TIMERS);
+	__raw_writel(TIMER_CLK_RST, APBC_TIMERS);
 
-	mmp_समयr_init(IRQ_PXA910_AP1_TIMER1, 3250000);
-पूर्ण
+	mmp_timer_init(IRQ_PXA910_AP1_TIMER1, 3250000);
+}
 
 /* on-chip devices */
 
@@ -130,7 +129,7 @@ postcore_initcall(pxa910_init);
  *   pxa910_device_uart1 - UART2 as FFUART
  *   pxa910_device_uart2 - UART3 as BTUART
  *
- * UART1 is not used by AP क्रम the moment.
+ * UART1 is not used by AP for the moment.
  */
 PXA910_DEVICE(uart1, "pxa2xx-uart", 0, UART2, 0xd4017000, 0x30, 21, 22);
 PXA910_DEVICE(uart2, "pxa2xx-uart", 1, UART3, 0xd4018000, 0x30, 23, 24);
@@ -140,52 +139,52 @@ PXA910_DEVICE(pwm1, "pxa910-pwm", 0, NONE, 0xd401a000, 0x10);
 PXA910_DEVICE(pwm2, "pxa910-pwm", 1, NONE, 0xd401a400, 0x10);
 PXA910_DEVICE(pwm3, "pxa910-pwm", 2, NONE, 0xd401a800, 0x10);
 PXA910_DEVICE(pwm4, "pxa910-pwm", 3, NONE, 0xd401ac00, 0x10);
-PXA910_DEVICE(nand, "pxa3xx-nand", -1, न_अंकD, 0xd4283000, 0x80, 97, 99);
+PXA910_DEVICE(nand, "pxa3xx-nand", -1, NAND, 0xd4283000, 0x80, 97, 99);
 PXA910_DEVICE(disp, "mmp-disp", 0, LCD, 0xd420b000, 0x1ec);
 PXA910_DEVICE(fb, "mmp-fb", -1, NONE, 0, 0);
 PXA910_DEVICE(panel, "tpo-hvga", -1, NONE, 0, 0);
 
-काष्ठा resource pxa910_resource_gpio[] = अणु
-	अणु
+struct resource pxa910_resource_gpio[] = {
+	{
 		.start	= 0xd4019000,
 		.end	= 0xd4019fff,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण, अणु
+	}, {
 		.start	= IRQ_PXA910_AP_GPIO,
 		.end	= IRQ_PXA910_AP_GPIO,
 		.name	= "gpio_mux",
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा platक्रमm_device pxa910_device_gpio = अणु
+struct platform_device pxa910_device_gpio = {
 	.name		= "mmp-gpio",
 	.id		= -1,
 	.num_resources	= ARRAY_SIZE(pxa910_resource_gpio),
 	.resource	= pxa910_resource_gpio,
-पूर्ण;
+};
 
-अटल काष्ठा resource pxa910_resource_rtc[] = अणु
-	अणु
+static struct resource pxa910_resource_rtc[] = {
+	{
 		.start	= 0xd4010000,
 		.end	= 0xd401003f,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण, अणु
+	}, {
 		.start	= IRQ_PXA910_RTC_INT,
 		.end	= IRQ_PXA910_RTC_INT,
 		.name	= "rtc 1Hz",
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण, अणु
+	}, {
 		.start	= IRQ_PXA910_RTC_ALARM,
 		.end	= IRQ_PXA910_RTC_ALARM,
 		.name	= "rtc alarm",
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा platक्रमm_device pxa910_device_rtc = अणु
+struct platform_device pxa910_device_rtc = {
 	.name		= "sa1100-rtc",
 	.id		= -1,
 	.num_resources	= ARRAY_SIZE(pxa910_resource_rtc),
 	.resource	= pxa910_resource_rtc,
-पूर्ण;
+};

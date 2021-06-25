@@ -1,78 +1,77 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2008 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
-#अगर_अघोषित __XFS_IOCTL_H__
-#घोषणा __XFS_IOCTL_H__
+#ifndef __XFS_IOCTL_H__
+#define __XFS_IOCTL_H__
 
-काष्ठा xfs_bstat;
-काष्ठा xfs_ibulk;
-काष्ठा xfs_inogrp;
+struct xfs_bstat;
+struct xfs_ibulk;
+struct xfs_inogrp;
 
 
-बाह्य पूर्णांक
+extern int
 xfs_ioc_space(
-	काष्ठा file		*filp,
+	struct file		*filp,
 	xfs_flock64_t		*bf);
 
-पूर्णांक
+int
 xfs_ioc_swapext(
 	xfs_swapext_t	*sxp);
 
-बाह्य पूर्णांक
+extern int
 xfs_find_handle(
-	अचिन्हित पूर्णांक		cmd,
+	unsigned int		cmd,
 	xfs_fsop_handlereq_t	*hreq);
 
-बाह्य पूर्णांक
-xfs_खोलो_by_handle(
-	काष्ठा file		*parfilp,
+extern int
+xfs_open_by_handle(
+	struct file		*parfilp,
 	xfs_fsop_handlereq_t	*hreq);
 
-बाह्य पूर्णांक
-xfs_पढ़ोlink_by_handle(
-	काष्ठा file		*parfilp,
+extern int
+xfs_readlink_by_handle(
+	struct file		*parfilp,
 	xfs_fsop_handlereq_t	*hreq);
 
-पूर्णांक xfs_ioc_attrmulti_one(काष्ठा file *parfilp, काष्ठा inode *inode,
-		uपूर्णांक32_t opcode, व्योम __user *uname, व्योम __user *value,
-		uपूर्णांक32_t *len, uपूर्णांक32_t flags);
-पूर्णांक xfs_ioc_attr_list(काष्ठा xfs_inode *dp, व्योम __user *ubuf, पूर्णांक bufsize,
-	पूर्णांक flags, काष्ठा xfs_attrlist_cursor __user *ucursor);
+int xfs_ioc_attrmulti_one(struct file *parfilp, struct inode *inode,
+		uint32_t opcode, void __user *uname, void __user *value,
+		uint32_t *len, uint32_t flags);
+int xfs_ioc_attr_list(struct xfs_inode *dp, void __user *ubuf, int bufsize,
+	int flags, struct xfs_attrlist_cursor __user *ucursor);
 
-बाह्य काष्ठा dentry *
+extern struct dentry *
 xfs_handle_to_dentry(
-	काष्ठा file		*parfilp,
-	व्योम __user		*uhandle,
+	struct file		*parfilp,
+	void __user		*uhandle,
 	u32			hlen);
 
-बाह्य पूर्णांक
+extern int
 xfs_fileattr_get(
-	काष्ठा dentry		*dentry,
-	काष्ठा fileattr		*fa);
+	struct dentry		*dentry,
+	struct fileattr		*fa);
 
-बाह्य पूर्णांक
+extern int
 xfs_fileattr_set(
-	काष्ठा user_namespace	*mnt_userns,
-	काष्ठा dentry		*dentry,
-	काष्ठा fileattr		*fa);
+	struct user_namespace	*mnt_userns,
+	struct dentry		*dentry,
+	struct fileattr		*fa);
 
-बाह्य दीर्घ
+extern long
 xfs_file_ioctl(
-	काष्ठा file		*filp,
-	अचिन्हित पूर्णांक		cmd,
-	अचिन्हित दीर्घ		p);
+	struct file		*filp,
+	unsigned int		cmd,
+	unsigned long		p);
 
-बाह्य दीर्घ
+extern long
 xfs_file_compat_ioctl(
-	काष्ठा file		*file,
-	अचिन्हित पूर्णांक		cmd,
-	अचिन्हित दीर्घ		arg);
+	struct file		*file,
+	unsigned int		cmd,
+	unsigned long		arg);
 
-पूर्णांक xfs_fsbulkstat_one_fmt(काष्ठा xfs_ibulk *breq,
-			   स्थिर काष्ठा xfs_bulkstat *bstat);
-पूर्णांक xfs_fsinumbers_fmt(काष्ठा xfs_ibulk *breq, स्थिर काष्ठा xfs_inumbers *igrp);
+int xfs_fsbulkstat_one_fmt(struct xfs_ibulk *breq,
+			   const struct xfs_bulkstat *bstat);
+int xfs_fsinumbers_fmt(struct xfs_ibulk *breq, const struct xfs_inumbers *igrp);
 
-#पूर्ण_अगर
+#endif

@@ -1,85 +1,84 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2009-2012  Realtek Corporation.*/
 
-#समावेश "../wifi.h"
-#समावेश "../base.h"
-#समावेश "../pci.h"
-#समावेश "../core.h"
-#समावेश "reg.h"
-#समावेश "def.h"
-#समावेश "phy.h"
-#समावेश "dm.h"
-#समावेश "../rtl8192c/fw_common.h"
+#include "../wifi.h"
+#include "../base.h"
+#include "../pci.h"
+#include "../core.h"
+#include "reg.h"
+#include "def.h"
+#include "phy.h"
+#include "dm.h"
+#include "../rtl8192c/fw_common.h"
 
-व्योम rtl92ce_dm_dynamic_txघातer(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_phy *rtlphy = &(rtlpriv->phy);
-	काष्ठा rtl_mac *mac = rtl_mac(rtl_priv(hw));
-	दीर्घ undec_sm_pwdb;
+void rtl92ce_dm_dynamic_txpower(struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_phy *rtlphy = &(rtlpriv->phy);
+	struct rtl_mac *mac = rtl_mac(rtl_priv(hw));
+	long undec_sm_pwdb;
 
-	अगर (!rtlpriv->dm.dynamic_txघातer_enable)
-		वापस;
+	if (!rtlpriv->dm.dynamic_txpower_enable)
+		return;
 
-	अगर (rtlpriv->dm.dm_flag & HAL_DM_HIPWR_DISABLE) अणु
-		rtlpriv->dm.dynamic_txhighघातer_lvl = TXHIGHPWRLEVEL_NORMAL;
-		वापस;
-	पूर्ण
+	if (rtlpriv->dm.dm_flag & HAL_DM_HIPWR_DISABLE) {
+		rtlpriv->dm.dynamic_txhighpower_lvl = TXHIGHPWRLEVEL_NORMAL;
+		return;
+	}
 
-	अगर ((mac->link_state < MAC80211_LINKED) &&
-	    (rtlpriv->dm.entry_min_undec_sm_pwdb == 0)) अणु
+	if ((mac->link_state < MAC80211_LINKED) &&
+	    (rtlpriv->dm.entry_min_undec_sm_pwdb == 0)) {
 		rtl_dbg(rtlpriv, COMP_POWER, DBG_TRACE,
 			"Not connected to any\n");
 
-		rtlpriv->dm.dynamic_txhighघातer_lvl = TXHIGHPWRLEVEL_NORMAL;
+		rtlpriv->dm.dynamic_txhighpower_lvl = TXHIGHPWRLEVEL_NORMAL;
 
 		rtlpriv->dm.last_dtp_lvl = TXHIGHPWRLEVEL_NORMAL;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (mac->link_state >= MAC80211_LINKED) अणु
-		अगर (mac->opmode == NL80211_IFTYPE_ADHOC) अणु
+	if (mac->link_state >= MAC80211_LINKED) {
+		if (mac->opmode == NL80211_IFTYPE_ADHOC) {
 			undec_sm_pwdb = rtlpriv->dm.entry_min_undec_sm_pwdb;
 			rtl_dbg(rtlpriv, COMP_POWER, DBG_LOUD,
 				"AP Client PWDB = 0x%lx\n",
 				undec_sm_pwdb);
-		पूर्ण अन्यथा अणु
+		} else {
 			undec_sm_pwdb = rtlpriv->dm.undec_sm_pwdb;
 			rtl_dbg(rtlpriv, COMP_POWER, DBG_LOUD,
 				"STA Default Port PWDB = 0x%lx\n",
 				undec_sm_pwdb);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		undec_sm_pwdb = rtlpriv->dm.entry_min_undec_sm_pwdb;
 
 		rtl_dbg(rtlpriv, COMP_POWER, DBG_LOUD,
 			"AP Ext Port PWDB = 0x%lx\n",
 			undec_sm_pwdb);
-	पूर्ण
+	}
 
-	अगर (undec_sm_pwdb >= TX_POWER_NEAR_FIELD_THRESH_LVL2) अणु
-		rtlpriv->dm.dynamic_txhighघातer_lvl = TXHIGHPWRLEVEL_LEVEL1;
+	if (undec_sm_pwdb >= TX_POWER_NEAR_FIELD_THRESH_LVL2) {
+		rtlpriv->dm.dynamic_txhighpower_lvl = TXHIGHPWRLEVEL_LEVEL1;
 		rtl_dbg(rtlpriv, COMP_POWER, DBG_LOUD,
 			"TXHIGHPWRLEVEL_LEVEL1 (TxPwr=0x0)\n");
-	पूर्ण अन्यथा अगर ((undec_sm_pwdb < (TX_POWER_NEAR_FIELD_THRESH_LVL2 - 3)) &&
-		   (undec_sm_pwdb >= TX_POWER_NEAR_FIELD_THRESH_LVL1)) अणु
+	} else if ((undec_sm_pwdb < (TX_POWER_NEAR_FIELD_THRESH_LVL2 - 3)) &&
+		   (undec_sm_pwdb >= TX_POWER_NEAR_FIELD_THRESH_LVL1)) {
 
-		rtlpriv->dm.dynamic_txhighघातer_lvl = TXHIGHPWRLEVEL_LEVEL1;
+		rtlpriv->dm.dynamic_txhighpower_lvl = TXHIGHPWRLEVEL_LEVEL1;
 		rtl_dbg(rtlpriv, COMP_POWER, DBG_LOUD,
 			"TXHIGHPWRLEVEL_LEVEL1 (TxPwr=0x10)\n");
-	पूर्ण अन्यथा अगर (undec_sm_pwdb < (TX_POWER_NEAR_FIELD_THRESH_LVL1 - 5)) अणु
-		rtlpriv->dm.dynamic_txhighघातer_lvl = TXHIGHPWRLEVEL_NORMAL;
+	} else if (undec_sm_pwdb < (TX_POWER_NEAR_FIELD_THRESH_LVL1 - 5)) {
+		rtlpriv->dm.dynamic_txhighpower_lvl = TXHIGHPWRLEVEL_NORMAL;
 		rtl_dbg(rtlpriv, COMP_POWER, DBG_LOUD,
 			"TXHIGHPWRLEVEL_NORMAL\n");
-	पूर्ण
+	}
 
-	अगर ((rtlpriv->dm.dynamic_txhighघातer_lvl != rtlpriv->dm.last_dtp_lvl)) अणु
+	if ((rtlpriv->dm.dynamic_txhighpower_lvl != rtlpriv->dm.last_dtp_lvl)) {
 		rtl_dbg(rtlpriv, COMP_POWER, DBG_LOUD,
 			"PHY_SetTxPowerLevel8192S() Channel = %d\n",
 			rtlphy->current_channel);
-		rtl92c_phy_set_txघातer_level(hw, rtlphy->current_channel);
-	पूर्ण
+		rtl92c_phy_set_txpower_level(hw, rtlphy->current_channel);
+	}
 
-	rtlpriv->dm.last_dtp_lvl = rtlpriv->dm.dynamic_txhighघातer_lvl;
-पूर्ण
+	rtlpriv->dm.last_dtp_lvl = rtlpriv->dm.dynamic_txhighpower_lvl;
+}

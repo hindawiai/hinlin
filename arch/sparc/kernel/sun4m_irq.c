@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * sun4m irq support
  *
- *  djhr: Hacked out of irq.c पूर्णांकo a CPU dependent version.
+ *  djhr: Hacked out of irq.c into a CPU dependent version.
  *
  *  Copyright (C) 1995 David S. Miller (davem@caip.rutgers.edu)
  *  Copyright (C) 1995 Miguel de Icaza (miguel@nuclecu.unam.mx)
@@ -11,18 +10,18 @@
  *  Copyright (C) 1996 Dave Redman (djhr@tadpole.co.uk)
  */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/sched/debug.h>
-#समावेश <linux/pgtable.h>
+#include <linux/slab.h>
+#include <linux/sched/debug.h>
+#include <linux/pgtable.h>
 
-#समावेश <यंत्र/समयr.h>
-#समावेश <यंत्र/traps.h>
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/cacheflush.h>
+#include <asm/timer.h>
+#include <asm/traps.h>
+#include <asm/irq.h>
+#include <asm/io.h>
+#include <asm/cacheflush.h>
 
-#समावेश "irq.h"
-#समावेश "kernel.h"
+#include "irq.h"
+#include "kernel.h"
 
 /* Sample sun4m IRQ layout:
  *
@@ -39,41 +38,41 @@
  * 0x3b - SBUS level 5
  * 0x3d - SBUS level 6
  *
- * Each पूर्णांकerrupt source has a mask bit in the पूर्णांकerrupt रेजिस्टरs.
- * When the mask bit is set, this blocks पूर्णांकerrupt deliver.  So you
- * clear the bit to enable the पूर्णांकerrupt.
+ * Each interrupt source has a mask bit in the interrupt registers.
+ * When the mask bit is set, this blocks interrupt deliver.  So you
+ * clear the bit to enable the interrupt.
  *
- * Interrupts numbered less than 0x10 are software triggered पूर्णांकerrupts
+ * Interrupts numbered less than 0x10 are software triggered interrupts
  * and unused by Linux.
  *
  * Interrupt level assignment on sun4m:
  *
  *	level		source
  * ------------------------------------------------------------
- *	  1		softपूर्णांक-1
- *	  2		softपूर्णांक-2, VME/SBUS level 1
- *	  3		softपूर्णांक-3, VME/SBUS level 2
- *	  4		softपूर्णांक-4, onboard SCSI
- *	  5		softपूर्णांक-5, VME/SBUS level 3
- *	  6		softपूर्णांक-6, onboard ETHERNET
- *	  7		softपूर्णांक-7, VME/SBUS level 4
- *	  8		softपूर्णांक-8, onboard VIDEO
- *	  9		softपूर्णांक-9, VME/SBUS level 5, Module Interrupt
- *	 10		softपूर्णांक-10, प्रणाली counter/समयr
- *	 11		softपूर्णांक-11, VME/SBUS level 6, Floppy
- *	 12		softपूर्णांक-12, Keyboard/Mouse, Serial
- *	 13		softपूर्णांक-13, VME/SBUS level 7, ISDN Audio
- *	 14		softपूर्णांक-14, per-processor counter/समयr
- *	 15		softपूर्णांक-15, Asynchronous Errors (broadcast)
+ *	  1		softint-1
+ *	  2		softint-2, VME/SBUS level 1
+ *	  3		softint-3, VME/SBUS level 2
+ *	  4		softint-4, onboard SCSI
+ *	  5		softint-5, VME/SBUS level 3
+ *	  6		softint-6, onboard ETHERNET
+ *	  7		softint-7, VME/SBUS level 4
+ *	  8		softint-8, onboard VIDEO
+ *	  9		softint-9, VME/SBUS level 5, Module Interrupt
+ *	 10		softint-10, system counter/timer
+ *	 11		softint-11, VME/SBUS level 6, Floppy
+ *	 12		softint-12, Keyboard/Mouse, Serial
+ *	 13		softint-13, VME/SBUS level 7, ISDN Audio
+ *	 14		softint-14, per-processor counter/timer
+ *	 15		softint-15, Asynchronous Errors (broadcast)
  *
- * Each पूर्णांकerrupt source is masked distinctly in the sun4m पूर्णांकerrupt
- * रेजिस्टरs.  The PIL level alone is thereक्रमe ambiguous, since multiple
- * पूर्णांकerrupt sources map to a single PIL.
+ * Each interrupt source is masked distinctly in the sun4m interrupt
+ * registers.  The PIL level alone is therefore ambiguous, since multiple
+ * interrupt sources map to a single PIL.
  *
- * This ambiguity is resolved in the 'intr' property क्रम device nodes
+ * This ambiguity is resolved in the 'intr' property for device nodes
  * in the OF device tree.  Each 'intr' property entry is composed of
  * two 32-bit words.  The first word is the IRQ priority value, which
- * is what we're पूर्णांकersted in.  The second word is the IRQ vector, which
+ * is what we're intersted in.  The second word is the IRQ vector, which
  * is unused.
  *
  * The low 4 bits of the IRQ priority indicate the PIL, and the upper
@@ -83,7 +82,7 @@
  * For example, an 'intr' IRQ priority value of 0x24 is onboard SCSI
  * whereas a value of 0x33 is SBUS level 2.  Here are some sample
  * 'intr' property IRQ priority values from ss4, ss5, ss10, ss20, and
- * Tadpole S3 GX प्रणालीs.
+ * Tadpole S3 GX systems.
  *
  * esp:		0x24	onboard ESP SCSI
  * le:		0x26	onboard Lance ETHERNET
@@ -96,61 +95,61 @@
  * modem:	0x3d	SBUS level 7 MODEM
  * zs:		0x2c	onboard keyboard/mouse/serial
  * floppy:	0x2b	onboard Floppy
- * घातer:	0x22	onboard घातer device (XXX unknown mask bit XXX)
+ * power:	0x22	onboard power device (XXX unknown mask bit XXX)
  */
 
 
-/* Code in entry.S needs to get at these रेजिस्टर mappings.  */
-काष्ठा sun4m_irq_percpu __iomem *sun4m_irq_percpu[SUN4M_NCPUS];
-काष्ठा sun4m_irq_global __iomem *sun4m_irq_global;
+/* Code in entry.S needs to get at these register mappings.  */
+struct sun4m_irq_percpu __iomem *sun4m_irq_percpu[SUN4M_NCPUS];
+struct sun4m_irq_global __iomem *sun4m_irq_global;
 
-काष्ठा sun4m_handler_data अणु
+struct sun4m_handler_data {
 	bool    percpu;
-	दीर्घ    mask;
-पूर्ण;
+	long    mask;
+};
 
 /* Dave Redman (djhr@tadpole.co.uk)
- * The sun4m पूर्णांकerrupt रेजिस्टरs.
+ * The sun4m interrupt registers.
  */
-#घोषणा SUN4M_INT_ENABLE	0x80000000
-#घोषणा SUN4M_INT_E14		0x00000080
-#घोषणा SUN4M_INT_E10		0x00080000
+#define SUN4M_INT_ENABLE	0x80000000
+#define SUN4M_INT_E14		0x00000080
+#define SUN4M_INT_E10		0x00080000
 
-#घोषणा	SUN4M_INT_MASKALL	0x80000000	  /* mask all पूर्णांकerrupts */
-#घोषणा	SUN4M_INT_MODULE_ERR	0x40000000	  /* module error */
-#घोषणा	SUN4M_INT_M2S_WRITE_ERR	0x20000000	  /* ग_लिखो buffer error */
-#घोषणा	SUN4M_INT_ECC_ERR	0x10000000	  /* ecc memory error */
-#घोषणा	SUN4M_INT_VME_ERR	0x08000000	  /* vme async error */
-#घोषणा	SUN4M_INT_FLOPPY	0x00400000	  /* floppy disk */
-#घोषणा	SUN4M_INT_MODULE	0x00200000	  /* module पूर्णांकerrupt */
-#घोषणा	SUN4M_INT_VIDEO		0x00100000	  /* onboard video */
-#घोषणा	SUN4M_INT_REALTIME	0x00080000	  /* प्रणाली समयr */
-#घोषणा	SUN4M_INT_SCSI		0x00040000	  /* onboard scsi */
-#घोषणा	SUN4M_INT_AUDIO		0x00020000	  /* audio/isdn */
-#घोषणा	SUN4M_INT_ETHERNET	0x00010000	  /* onboard ethernet */
-#घोषणा	SUN4M_INT_SERIAL	0x00008000	  /* serial ports */
-#घोषणा	SUN4M_INT_KBDMS		0x00004000	  /* keyboard/mouse */
-#घोषणा	SUN4M_INT_SBUSBITS	0x00003F80	  /* sbus पूर्णांक bits */
-#घोषणा	SUN4M_INT_VMEBITS	0x0000007F	  /* vme पूर्णांक bits */
+#define	SUN4M_INT_MASKALL	0x80000000	  /* mask all interrupts */
+#define	SUN4M_INT_MODULE_ERR	0x40000000	  /* module error */
+#define	SUN4M_INT_M2S_WRITE_ERR	0x20000000	  /* write buffer error */
+#define	SUN4M_INT_ECC_ERR	0x10000000	  /* ecc memory error */
+#define	SUN4M_INT_VME_ERR	0x08000000	  /* vme async error */
+#define	SUN4M_INT_FLOPPY	0x00400000	  /* floppy disk */
+#define	SUN4M_INT_MODULE	0x00200000	  /* module interrupt */
+#define	SUN4M_INT_VIDEO		0x00100000	  /* onboard video */
+#define	SUN4M_INT_REALTIME	0x00080000	  /* system timer */
+#define	SUN4M_INT_SCSI		0x00040000	  /* onboard scsi */
+#define	SUN4M_INT_AUDIO		0x00020000	  /* audio/isdn */
+#define	SUN4M_INT_ETHERNET	0x00010000	  /* onboard ethernet */
+#define	SUN4M_INT_SERIAL	0x00008000	  /* serial ports */
+#define	SUN4M_INT_KBDMS		0x00004000	  /* keyboard/mouse */
+#define	SUN4M_INT_SBUSBITS	0x00003F80	  /* sbus int bits */
+#define	SUN4M_INT_VMEBITS	0x0000007F	  /* vme int bits */
 
-#घोषणा	SUN4M_INT_ERROR		(SUN4M_INT_MODULE_ERR |    \
+#define	SUN4M_INT_ERROR		(SUN4M_INT_MODULE_ERR |    \
 				 SUN4M_INT_M2S_WRITE_ERR | \
 				 SUN4M_INT_ECC_ERR |       \
 				 SUN4M_INT_VME_ERR)
 
-#घोषणा SUN4M_INT_SBUS(x)	(1 << (x+7))
-#घोषणा SUN4M_INT_VME(x)	(1 << (x))
+#define SUN4M_INT_SBUS(x)	(1 << (x+7))
+#define SUN4M_INT_VME(x)	(1 << (x))
 
 /* Interrupt levels used by OBP */
-#घोषणा	OBP_INT_LEVEL_SOFT	0x10
-#घोषणा	OBP_INT_LEVEL_ONBOARD	0x20
-#घोषणा	OBP_INT_LEVEL_SBUS	0x30
-#घोषणा	OBP_INT_LEVEL_VME	0x40
+#define	OBP_INT_LEVEL_SOFT	0x10
+#define	OBP_INT_LEVEL_ONBOARD	0x20
+#define	OBP_INT_LEVEL_SBUS	0x30
+#define	OBP_INT_LEVEL_VME	0x40
 
-#घोषणा SUN4M_TIMER_IRQ         (OBP_INT_LEVEL_ONBOARD | 10)
-#घोषणा SUN4M_PROखाता_IRQ       (OBP_INT_LEVEL_ONBOARD | 14)
+#define SUN4M_TIMER_IRQ         (OBP_INT_LEVEL_ONBOARD | 10)
+#define SUN4M_PROFILE_IRQ       (OBP_INT_LEVEL_ONBOARD | 14)
 
-अटल अचिन्हित दीर्घ sun4m_imask[0x50] = अणु
+static unsigned long sun4m_imask[0x50] = {
 	/* 0x00 - SMP */
 	0,  SUN4M_SOFT_INT(1),
 	SUN4M_SOFT_INT(2),  SUN4M_SOFT_INT(3),
@@ -186,94 +185,94 @@
 	0, SUN4M_INT_VME(2), 0, SUN4M_INT_VME(3),
 	0, SUN4M_INT_VME(4), 0, SUN4M_INT_VME(5),
 	0, SUN4M_INT_VME(6), 0, 0
-पूर्ण;
+};
 
-अटल व्योम sun4m_mask_irq(काष्ठा irq_data *data)
-अणु
-	काष्ठा sun4m_handler_data *handler_data;
-	पूर्णांक cpu = smp_processor_id();
-
-	handler_data = irq_data_get_irq_handler_data(data);
-	अगर (handler_data->mask) अणु
-		अचिन्हित दीर्घ flags;
-
-		local_irq_save(flags);
-		अगर (handler_data->percpu) अणु
-			sbus_ग_लिखोl(handler_data->mask, &sun4m_irq_percpu[cpu]->set);
-		पूर्ण अन्यथा अणु
-			sbus_ग_लिखोl(handler_data->mask, &sun4m_irq_global->mask_set);
-		पूर्ण
-		local_irq_restore(flags);
-	पूर्ण
-पूर्ण
-
-अटल व्योम sun4m_unmask_irq(काष्ठा irq_data *data)
-अणु
-	काष्ठा sun4m_handler_data *handler_data;
-	पूर्णांक cpu = smp_processor_id();
+static void sun4m_mask_irq(struct irq_data *data)
+{
+	struct sun4m_handler_data *handler_data;
+	int cpu = smp_processor_id();
 
 	handler_data = irq_data_get_irq_handler_data(data);
-	अगर (handler_data->mask) अणु
-		अचिन्हित दीर्घ flags;
+	if (handler_data->mask) {
+		unsigned long flags;
 
 		local_irq_save(flags);
-		अगर (handler_data->percpu) अणु
-			sbus_ग_लिखोl(handler_data->mask, &sun4m_irq_percpu[cpu]->clear);
-		पूर्ण अन्यथा अणु
-			sbus_ग_लिखोl(handler_data->mask, &sun4m_irq_global->mask_clear);
-		पूर्ण
+		if (handler_data->percpu) {
+			sbus_writel(handler_data->mask, &sun4m_irq_percpu[cpu]->set);
+		} else {
+			sbus_writel(handler_data->mask, &sun4m_irq_global->mask_set);
+		}
 		local_irq_restore(flags);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अचिन्हित पूर्णांक sun4m_startup_irq(काष्ठा irq_data *data)
-अणु
+static void sun4m_unmask_irq(struct irq_data *data)
+{
+	struct sun4m_handler_data *handler_data;
+	int cpu = smp_processor_id();
+
+	handler_data = irq_data_get_irq_handler_data(data);
+	if (handler_data->mask) {
+		unsigned long flags;
+
+		local_irq_save(flags);
+		if (handler_data->percpu) {
+			sbus_writel(handler_data->mask, &sun4m_irq_percpu[cpu]->clear);
+		} else {
+			sbus_writel(handler_data->mask, &sun4m_irq_global->mask_clear);
+		}
+		local_irq_restore(flags);
+	}
+}
+
+static unsigned int sun4m_startup_irq(struct irq_data *data)
+{
 	irq_link(data->irq);
 	sun4m_unmask_irq(data);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sun4m_shutकरोwn_irq(काष्ठा irq_data *data)
-अणु
+static void sun4m_shutdown_irq(struct irq_data *data)
+{
 	sun4m_mask_irq(data);
 	irq_unlink(data->irq);
-पूर्ण
+}
 
-अटल काष्ठा irq_chip sun4m_irq = अणु
+static struct irq_chip sun4m_irq = {
 	.name		= "sun4m",
 	.irq_startup	= sun4m_startup_irq,
-	.irq_shutकरोwn	= sun4m_shutकरोwn_irq,
+	.irq_shutdown	= sun4m_shutdown_irq,
 	.irq_mask	= sun4m_mask_irq,
 	.irq_unmask	= sun4m_unmask_irq,
-पूर्ण;
+};
 
 
-अटल अचिन्हित पूर्णांक sun4m_build_device_irq(काष्ठा platक्रमm_device *op,
-					   अचिन्हित पूर्णांक real_irq)
-अणु
-	काष्ठा sun4m_handler_data *handler_data;
-	अचिन्हित पूर्णांक irq;
-	अचिन्हित पूर्णांक pil;
+static unsigned int sun4m_build_device_irq(struct platform_device *op,
+					   unsigned int real_irq)
+{
+	struct sun4m_handler_data *handler_data;
+	unsigned int irq;
+	unsigned int pil;
 
-	अगर (real_irq >= OBP_INT_LEVEL_VME) अणु
-		prom_म_लिखो("Bogus sun4m IRQ %u\n", real_irq);
+	if (real_irq >= OBP_INT_LEVEL_VME) {
+		prom_printf("Bogus sun4m IRQ %u\n", real_irq);
 		prom_halt();
-	पूर्ण
+	}
 	pil = (real_irq & 0xf);
 	irq = irq_alloc(real_irq, pil);
 
-	अगर (irq == 0)
-		जाओ out;
+	if (irq == 0)
+		goto out;
 
 	handler_data = irq_get_handler_data(irq);
-	अगर (unlikely(handler_data))
-		जाओ out;
+	if (unlikely(handler_data))
+		goto out;
 
-	handler_data = kzalloc(माप(काष्ठा sun4m_handler_data), GFP_ATOMIC);
-	अगर (unlikely(!handler_data)) अणु
-		prom_म_लिखो("IRQ: kzalloc(sun4m_handler_data) failed.\n");
+	handler_data = kzalloc(sizeof(struct sun4m_handler_data), GFP_ATOMIC);
+	if (unlikely(!handler_data)) {
+		prom_printf("IRQ: kzalloc(sun4m_handler_data) failed.\n");
 		prom_halt();
-	पूर्ण
+	}
 
 	handler_data->mask = sun4m_imask[real_irq];
 	handler_data->percpu = real_irq < OBP_INT_LEVEL_ONBOARD;
@@ -282,141 +281,141 @@
 	irq_set_handler_data(irq, handler_data);
 
 out:
-	वापस irq;
-पूर्ण
+	return irq;
+}
 
-काष्ठा sun4m_समयr_percpu अणु
+struct sun4m_timer_percpu {
 	u32		l14_limit;
 	u32		l14_count;
 	u32		l14_limit_noclear;
-	u32		user_समयr_start_stop;
-पूर्ण;
+	u32		user_timer_start_stop;
+};
 
-अटल काष्ठा sun4m_समयr_percpu __iomem *समयrs_percpu[SUN4M_NCPUS];
+static struct sun4m_timer_percpu __iomem *timers_percpu[SUN4M_NCPUS];
 
-काष्ठा sun4m_समयr_global अणु
+struct sun4m_timer_global {
 	u32		l10_limit;
 	u32		l10_count;
 	u32		l10_limit_noclear;
 	u32		reserved;
-	u32		समयr_config;
-पूर्ण;
+	u32		timer_config;
+};
 
-अटल काष्ठा sun4m_समयr_global __iomem *समयrs_global;
+static struct sun4m_timer_global __iomem *timers_global;
 
-अटल व्योम sun4m_clear_घड़ी_irq(व्योम)
-अणु
-	sbus_पढ़ोl(&समयrs_global->l10_limit);
-पूर्ण
+static void sun4m_clear_clock_irq(void)
+{
+	sbus_readl(&timers_global->l10_limit);
+}
 
-व्योम sun4m_nmi(काष्ठा pt_regs *regs)
-अणु
-	अचिन्हित दीर्घ afsr, afar, si;
+void sun4m_nmi(struct pt_regs *regs)
+{
+	unsigned long afsr, afar, si;
 
-	prपूर्णांकk(KERN_ERR "Aieee: sun4m NMI received!\n");
+	printk(KERN_ERR "Aieee: sun4m NMI received!\n");
 	/* XXX HyperSparc hack XXX */
-	__यंत्र__ __अस्थिर__("mov 0x500, %%g1\n\t"
+	__asm__ __volatile__("mov 0x500, %%g1\n\t"
 			     "lda [%%g1] 0x4, %0\n\t"
 			     "mov 0x600, %%g1\n\t"
 			     "lda [%%g1] 0x4, %1\n\t" :
 			     "=r" (afsr), "=r" (afar));
-	prपूर्णांकk(KERN_ERR "afsr=%08lx afar=%08lx\n", afsr, afar);
-	si = sbus_पढ़ोl(&sun4m_irq_global->pending);
-	prपूर्णांकk(KERN_ERR "si=%08lx\n", si);
-	अगर (si & SUN4M_INT_MODULE_ERR)
-		prपूर्णांकk(KERN_ERR "Module async error\n");
-	अगर (si & SUN4M_INT_M2S_WRITE_ERR)
-		prपूर्णांकk(KERN_ERR "MBus/SBus async error\n");
-	अगर (si & SUN4M_INT_ECC_ERR)
-		prपूर्णांकk(KERN_ERR "ECC memory error\n");
-	अगर (si & SUN4M_INT_VME_ERR)
-		prपूर्णांकk(KERN_ERR "VME async error\n");
-	prपूर्णांकk(KERN_ERR "you lose buddy boy...\n");
+	printk(KERN_ERR "afsr=%08lx afar=%08lx\n", afsr, afar);
+	si = sbus_readl(&sun4m_irq_global->pending);
+	printk(KERN_ERR "si=%08lx\n", si);
+	if (si & SUN4M_INT_MODULE_ERR)
+		printk(KERN_ERR "Module async error\n");
+	if (si & SUN4M_INT_M2S_WRITE_ERR)
+		printk(KERN_ERR "MBus/SBus async error\n");
+	if (si & SUN4M_INT_ECC_ERR)
+		printk(KERN_ERR "ECC memory error\n");
+	if (si & SUN4M_INT_VME_ERR)
+		printk(KERN_ERR "VME async error\n");
+	printk(KERN_ERR "you lose buddy boy...\n");
 	show_regs(regs);
 	prom_halt();
-पूर्ण
+}
 
-व्योम sun4m_unmask_profile_irq(व्योम)
-अणु
-	अचिन्हित दीर्घ flags;
+void sun4m_unmask_profile_irq(void)
+{
+	unsigned long flags;
 
 	local_irq_save(flags);
-	sbus_ग_लिखोl(sun4m_imask[SUN4M_PROखाता_IRQ], &sun4m_irq_global->mask_clear);
+	sbus_writel(sun4m_imask[SUN4M_PROFILE_IRQ], &sun4m_irq_global->mask_clear);
 	local_irq_restore(flags);
-पूर्ण
+}
 
-व्योम sun4m_clear_profile_irq(पूर्णांक cpu)
-अणु
-	sbus_पढ़ोl(&समयrs_percpu[cpu]->l14_limit);
-पूर्ण
+void sun4m_clear_profile_irq(int cpu)
+{
+	sbus_readl(&timers_percpu[cpu]->l14_limit);
+}
 
-अटल व्योम sun4m_load_profile_irq(पूर्णांक cpu, अचिन्हित पूर्णांक limit)
-अणु
-	अचिन्हित पूर्णांक value = limit ? समयr_value(limit) : 0;
-	sbus_ग_लिखोl(value, &समयrs_percpu[cpu]->l14_limit);
-पूर्ण
+static void sun4m_load_profile_irq(int cpu, unsigned int limit)
+{
+	unsigned int value = limit ? timer_value(limit) : 0;
+	sbus_writel(value, &timers_percpu[cpu]->l14_limit);
+}
 
-अटल व्योम __init sun4m_init_समयrs(व्योम)
-अणु
-	काष्ठा device_node *dp = of_find_node_by_name(शून्य, "counter");
-	पूर्णांक i, err, len, num_cpu_समयrs;
-	अचिन्हित पूर्णांक irq;
-	स्थिर u32 *addr;
+static void __init sun4m_init_timers(void)
+{
+	struct device_node *dp = of_find_node_by_name(NULL, "counter");
+	int i, err, len, num_cpu_timers;
+	unsigned int irq;
+	const u32 *addr;
 
-	अगर (!dp) अणु
-		prपूर्णांकk(KERN_ERR "sun4m_init_timers: No 'counter' node.\n");
-		वापस;
-	पूर्ण
+	if (!dp) {
+		printk(KERN_ERR "sun4m_init_timers: No 'counter' node.\n");
+		return;
+	}
 
 	addr = of_get_property(dp, "address", &len);
 	of_node_put(dp);
-	अगर (!addr) अणु
-		prपूर्णांकk(KERN_ERR "sun4m_init_timers: No 'address' prop.\n");
-		वापस;
-	पूर्ण
+	if (!addr) {
+		printk(KERN_ERR "sun4m_init_timers: No 'address' prop.\n");
+		return;
+	}
 
-	num_cpu_समयrs = (len / माप(u32)) - 1;
-	क्रम (i = 0; i < num_cpu_समयrs; i++) अणु
-		समयrs_percpu[i] = (व्योम __iomem *)
-			(अचिन्हित दीर्घ) addr[i];
-	पूर्ण
-	समयrs_global = (व्योम __iomem *)
-		(अचिन्हित दीर्घ) addr[num_cpu_समयrs];
+	num_cpu_timers = (len / sizeof(u32)) - 1;
+	for (i = 0; i < num_cpu_timers; i++) {
+		timers_percpu[i] = (void __iomem *)
+			(unsigned long) addr[i];
+	}
+	timers_global = (void __iomem *)
+		(unsigned long) addr[num_cpu_timers];
 
-	/* Every per-cpu समयr works in समयr mode */
-	sbus_ग_लिखोl(0x00000000, &समयrs_global->समयr_config);
+	/* Every per-cpu timer works in timer mode */
+	sbus_writel(0x00000000, &timers_global->timer_config);
 
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 	sparc_config.cs_period = SBUS_CLOCK_RATE * 2;  /* 2 seconds */
 	sparc_config.features |= FEAT_L14_ONESHOT;
-#अन्यथा
+#else
 	sparc_config.cs_period = SBUS_CLOCK_RATE / HZ; /* 1/HZ sec  */
 	sparc_config.features |= FEAT_L10_CLOCKEVENT;
-#पूर्ण_अगर
+#endif
 	sparc_config.features |= FEAT_L10_CLOCKSOURCE;
-	sbus_ग_लिखोl(समयr_value(sparc_config.cs_period),
-	            &समयrs_global->l10_limit);
+	sbus_writel(timer_value(sparc_config.cs_period),
+	            &timers_global->l10_limit);
 
-	master_l10_counter = &समयrs_global->l10_count;
+	master_l10_counter = &timers_global->l10_count;
 
-	irq = sun4m_build_device_irq(शून्य, SUN4M_TIMER_IRQ);
+	irq = sun4m_build_device_irq(NULL, SUN4M_TIMER_IRQ);
 
-	err = request_irq(irq, समयr_पूर्णांकerrupt, IRQF_TIMER, "timer", शून्य);
-	अगर (err) अणु
-		prपूर्णांकk(KERN_ERR "sun4m_init_timers: Register IRQ error %d.\n",
+	err = request_irq(irq, timer_interrupt, IRQF_TIMER, "timer", NULL);
+	if (err) {
+		printk(KERN_ERR "sun4m_init_timers: Register IRQ error %d.\n",
 			err);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	क्रम (i = 0; i < num_cpu_समयrs; i++)
-		sbus_ग_लिखोl(0, &समयrs_percpu[i]->l14_limit);
-	अगर (num_cpu_समयrs == 4)
-		sbus_ग_लिखोl(SUN4M_INT_E14, &sun4m_irq_global->mask_set);
+	for (i = 0; i < num_cpu_timers; i++)
+		sbus_writel(0, &timers_percpu[i]->l14_limit);
+	if (num_cpu_timers == 4)
+		sbus_writel(SUN4M_INT_E14, &sun4m_irq_global->mask_set);
 
-#अगर_घोषित CONFIG_SMP
-	अणु
-		अचिन्हित दीर्घ flags;
-		काष्ठा tt_entry *trap_table = &sparc_ttable[SP_TRAP_IRQ1 + (14 - 1)];
+#ifdef CONFIG_SMP
+	{
+		unsigned long flags;
+		struct tt_entry *trap_table = &sparc_ttable[SP_TRAP_IRQ1 + (14 - 1)];
 
 		/* For SMP we use the level 14 ticker, however the bootup code
 		 * has copied the firmware's level 14 vector into the boot cpu's
@@ -429,51 +428,51 @@ out:
 		trap_table->inst_four = lvl14_save[3];
 		local_ops->cache_all();
 		local_irq_restore(flags);
-	पूर्ण
-#पूर्ण_अगर
-पूर्ण
+	}
+#endif
+}
 
-व्योम __init sun4m_init_IRQ(व्योम)
-अणु
-	काष्ठा device_node *dp = of_find_node_by_name(शून्य, "interrupt");
-	पूर्णांक len, i, mid, num_cpu_iregs;
-	स्थिर u32 *addr;
+void __init sun4m_init_IRQ(void)
+{
+	struct device_node *dp = of_find_node_by_name(NULL, "interrupt");
+	int len, i, mid, num_cpu_iregs;
+	const u32 *addr;
 
-	अगर (!dp) अणु
-		prपूर्णांकk(KERN_ERR "sun4m_init_IRQ: No 'interrupt' node.\n");
-		वापस;
-	पूर्ण
+	if (!dp) {
+		printk(KERN_ERR "sun4m_init_IRQ: No 'interrupt' node.\n");
+		return;
+	}
 
 	addr = of_get_property(dp, "address", &len);
 	of_node_put(dp);
-	अगर (!addr) अणु
-		prपूर्णांकk(KERN_ERR "sun4m_init_IRQ: No 'address' prop.\n");
-		वापस;
-	पूर्ण
+	if (!addr) {
+		printk(KERN_ERR "sun4m_init_IRQ: No 'address' prop.\n");
+		return;
+	}
 
-	num_cpu_iregs = (len / माप(u32)) - 1;
-	क्रम (i = 0; i < num_cpu_iregs; i++) अणु
-		sun4m_irq_percpu[i] = (व्योम __iomem *)
-			(अचिन्हित दीर्घ) addr[i];
-	पूर्ण
-	sun4m_irq_global = (व्योम __iomem *)
-		(अचिन्हित दीर्घ) addr[num_cpu_iregs];
+	num_cpu_iregs = (len / sizeof(u32)) - 1;
+	for (i = 0; i < num_cpu_iregs; i++) {
+		sun4m_irq_percpu[i] = (void __iomem *)
+			(unsigned long) addr[i];
+	}
+	sun4m_irq_global = (void __iomem *)
+		(unsigned long) addr[num_cpu_iregs];
 
 	local_irq_disable();
 
-	sbus_ग_लिखोl(~SUN4M_INT_MASKALL, &sun4m_irq_global->mask_set);
-	क्रम (i = 0; !cpu_find_by_instance(i, शून्य, &mid); i++)
-		sbus_ग_लिखोl(~0x17fff, &sun4m_irq_percpu[mid]->clear);
+	sbus_writel(~SUN4M_INT_MASKALL, &sun4m_irq_global->mask_set);
+	for (i = 0; !cpu_find_by_instance(i, NULL, &mid); i++)
+		sbus_writel(~0x17fff, &sun4m_irq_percpu[mid]->clear);
 
-	अगर (num_cpu_iregs == 4)
-		sbus_ग_लिखोl(0, &sun4m_irq_global->पूर्णांकerrupt_target);
+	if (num_cpu_iregs == 4)
+		sbus_writel(0, &sun4m_irq_global->interrupt_target);
 
-	sparc_config.init_समयrs      = sun4m_init_समयrs;
+	sparc_config.init_timers      = sun4m_init_timers;
 	sparc_config.build_device_irq = sun4m_build_device_irq;
-	sparc_config.घड़ी_rate       = SBUS_CLOCK_RATE;
-	sparc_config.clear_घड़ी_irq  = sun4m_clear_घड़ी_irq;
+	sparc_config.clock_rate       = SBUS_CLOCK_RATE;
+	sparc_config.clear_clock_irq  = sun4m_clear_clock_irq;
 	sparc_config.load_profile_irq = sun4m_load_profile_irq;
 
 
-	/* Cannot enable पूर्णांकerrupts until OBP ticker is disabled. */
-पूर्ण
+	/* Cannot enable interrupts until OBP ticker is disabled. */
+}

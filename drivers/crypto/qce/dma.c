@@ -1,130 +1,129 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2012-2014, The Linux Foundation. All rights reserved.
  */
 
-#समावेश <linux/dmaengine.h>
-#समावेश <crypto/scatterwalk.h>
+#include <linux/dmaengine.h>
+#include <crypto/scatterwalk.h>
 
-#समावेश "dma.h"
+#include "dma.h"
 
-पूर्णांक qce_dma_request(काष्ठा device *dev, काष्ठा qce_dma_data *dma)
-अणु
-	पूर्णांक ret;
+int qce_dma_request(struct device *dev, struct qce_dma_data *dma)
+{
+	int ret;
 
 	dma->txchan = dma_request_chan(dev, "tx");
-	अगर (IS_ERR(dma->txchan))
-		वापस PTR_ERR(dma->txchan);
+	if (IS_ERR(dma->txchan))
+		return PTR_ERR(dma->txchan);
 
 	dma->rxchan = dma_request_chan(dev, "rx");
-	अगर (IS_ERR(dma->rxchan)) अणु
+	if (IS_ERR(dma->rxchan)) {
 		ret = PTR_ERR(dma->rxchan);
-		जाओ error_rx;
-	पूर्ण
+		goto error_rx;
+	}
 
-	dma->result_buf = kदो_स्मृति(QCE_RESULT_BUF_SZ + QCE_IGNORE_BUF_SZ,
+	dma->result_buf = kmalloc(QCE_RESULT_BUF_SZ + QCE_IGNORE_BUF_SZ,
 				  GFP_KERNEL);
-	अगर (!dma->result_buf) अणु
+	if (!dma->result_buf) {
 		ret = -ENOMEM;
-		जाओ error_nomem;
-	पूर्ण
+		goto error_nomem;
+	}
 
 	dma->ignore_buf = dma->result_buf + QCE_RESULT_BUF_SZ;
 
-	वापस 0;
+	return 0;
 error_nomem:
 	dma_release_channel(dma->rxchan);
 error_rx:
 	dma_release_channel(dma->txchan);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम qce_dma_release(काष्ठा qce_dma_data *dma)
-अणु
+void qce_dma_release(struct qce_dma_data *dma)
+{
 	dma_release_channel(dma->txchan);
 	dma_release_channel(dma->rxchan);
-	kमुक्त(dma->result_buf);
-पूर्ण
+	kfree(dma->result_buf);
+}
 
-काष्ठा scatterlist *
-qce_sgtable_add(काष्ठा sg_table *sgt, काष्ठा scatterlist *new_sgl,
-		अचिन्हित पूर्णांक max_len)
-अणु
-	काष्ठा scatterlist *sg = sgt->sgl, *sg_last = शून्य;
-	अचिन्हित पूर्णांक new_len;
+struct scatterlist *
+qce_sgtable_add(struct sg_table *sgt, struct scatterlist *new_sgl,
+		unsigned int max_len)
+{
+	struct scatterlist *sg = sgt->sgl, *sg_last = NULL;
+	unsigned int new_len;
 
-	जबतक (sg) अणु
-		अगर (!sg_page(sg))
-			अवरोध;
+	while (sg) {
+		if (!sg_page(sg))
+			break;
 		sg = sg_next(sg);
-	पूर्ण
+	}
 
-	अगर (!sg)
-		वापस ERR_PTR(-EINVAL);
+	if (!sg)
+		return ERR_PTR(-EINVAL);
 
-	जबतक (new_sgl && sg && max_len) अणु
+	while (new_sgl && sg && max_len) {
 		new_len = new_sgl->length > max_len ? max_len : new_sgl->length;
 		sg_set_page(sg, sg_page(new_sgl), new_len, new_sgl->offset);
 		sg_last = sg;
 		sg = sg_next(sg);
 		new_sgl = sg_next(new_sgl);
 		max_len -= new_len;
-	पूर्ण
+	}
 
-	वापस sg_last;
-पूर्ण
+	return sg_last;
+}
 
-अटल पूर्णांक qce_dma_prep_sg(काष्ठा dma_chan *chan, काष्ठा scatterlist *sg,
-			   पूर्णांक nents, अचिन्हित दीर्घ flags,
-			   क्रमागत dma_transfer_direction dir,
-			   dma_async_tx_callback cb, व्योम *cb_param)
-अणु
-	काष्ठा dma_async_tx_descriptor *desc;
+static int qce_dma_prep_sg(struct dma_chan *chan, struct scatterlist *sg,
+			   int nents, unsigned long flags,
+			   enum dma_transfer_direction dir,
+			   dma_async_tx_callback cb, void *cb_param)
+{
+	struct dma_async_tx_descriptor *desc;
 	dma_cookie_t cookie;
 
-	अगर (!sg || !nents)
-		वापस -EINVAL;
+	if (!sg || !nents)
+		return -EINVAL;
 
 	desc = dmaengine_prep_slave_sg(chan, sg, nents, dir, flags);
-	अगर (!desc)
-		वापस -EINVAL;
+	if (!desc)
+		return -EINVAL;
 
 	desc->callback = cb;
 	desc->callback_param = cb_param;
 	cookie = dmaengine_submit(desc);
 
-	वापस dma_submit_error(cookie);
-पूर्ण
+	return dma_submit_error(cookie);
+}
 
-पूर्णांक qce_dma_prep_sgs(काष्ठा qce_dma_data *dma, काष्ठा scatterlist *rx_sg,
-		     पूर्णांक rx_nents, काष्ठा scatterlist *tx_sg, पूर्णांक tx_nents,
-		     dma_async_tx_callback cb, व्योम *cb_param)
-अणु
-	काष्ठा dma_chan *rxchan = dma->rxchan;
-	काष्ठा dma_chan *txchan = dma->txchan;
-	अचिन्हित दीर्घ flags = DMA_PREP_INTERRUPT | DMA_CTRL_ACK;
-	पूर्णांक ret;
+int qce_dma_prep_sgs(struct qce_dma_data *dma, struct scatterlist *rx_sg,
+		     int rx_nents, struct scatterlist *tx_sg, int tx_nents,
+		     dma_async_tx_callback cb, void *cb_param)
+{
+	struct dma_chan *rxchan = dma->rxchan;
+	struct dma_chan *txchan = dma->txchan;
+	unsigned long flags = DMA_PREP_INTERRUPT | DMA_CTRL_ACK;
+	int ret;
 
 	ret = qce_dma_prep_sg(rxchan, rx_sg, rx_nents, flags, DMA_MEM_TO_DEV,
-			     शून्य, शून्य);
-	अगर (ret)
-		वापस ret;
+			     NULL, NULL);
+	if (ret)
+		return ret;
 
-	वापस qce_dma_prep_sg(txchan, tx_sg, tx_nents, flags, DMA_DEV_TO_MEM,
+	return qce_dma_prep_sg(txchan, tx_sg, tx_nents, flags, DMA_DEV_TO_MEM,
 			       cb, cb_param);
-पूर्ण
+}
 
-व्योम qce_dma_issue_pending(काष्ठा qce_dma_data *dma)
-अणु
+void qce_dma_issue_pending(struct qce_dma_data *dma)
+{
 	dma_async_issue_pending(dma->rxchan);
 	dma_async_issue_pending(dma->txchan);
-पूर्ण
+}
 
-पूर्णांक qce_dma_terminate_all(काष्ठा qce_dma_data *dma)
-अणु
-	पूर्णांक ret;
+int qce_dma_terminate_all(struct qce_dma_data *dma)
+{
+	int ret;
 
 	ret = dmaengine_terminate_all(dma->rxchan);
-	वापस ret ?: dmaengine_terminate_all(dma->txchan);
-पूर्ण
+	return ret ?: dmaengine_terminate_all(dma->txchan);
+}

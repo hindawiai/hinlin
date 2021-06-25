@@ -1,38 +1,37 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 // Copyright 2017 IBM Corp.
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <यंत्र/mmu.h>
-#समावेश "ocxl_internal.h"
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <asm/mmu.h>
+#include "ocxl_internal.h"
 
-अटल पूर्णांक __init init_ocxl(व्योम)
-अणु
-	पूर्णांक rc = 0;
+static int __init init_ocxl(void)
+{
+	int rc = 0;
 
-	अगर (!tlbie_capable)
-		वापस -EINVAL;
+	if (!tlbie_capable)
+		return -EINVAL;
 
 	rc = ocxl_file_init();
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	rc = pci_रेजिस्टर_driver(&ocxl_pci_driver);
-	अगर (rc) अणु
-		ocxl_file_निकास();
-		वापस rc;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	rc = pci_register_driver(&ocxl_pci_driver);
+	if (rc) {
+		ocxl_file_exit();
+		return rc;
+	}
+	return 0;
+}
 
-अटल व्योम निकास_ocxl(व्योम)
-अणु
-	pci_unरेजिस्टर_driver(&ocxl_pci_driver);
-	ocxl_file_निकास();
-पूर्ण
+static void exit_ocxl(void)
+{
+	pci_unregister_driver(&ocxl_pci_driver);
+	ocxl_file_exit();
+}
 
 module_init(init_ocxl);
-module_निकास(निकास_ocxl);
+module_exit(exit_ocxl);
 
 MODULE_DESCRIPTION("Open Coherent Accelerator");
 MODULE_LICENSE("GPL");

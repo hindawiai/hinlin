@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2018 Cambridge Greys Ltd
  * Copyright (C) 2015-2016 Anton Ivanov (aivanov@brocade.com)
@@ -7,239 +6,239 @@
  */
 
 /* 2001-09-28...2002-04-17
- * Partition stuff by James_McMechan@hoपंचांगail.com
+ * Partition stuff by James_McMechan@hotmail.com
  * old style ubd by setting UBD_SHIFT to 0
- * 2002-09-27...2002-10-18 massive tinkering क्रम 2.5
+ * 2002-09-27...2002-10-18 massive tinkering for 2.5
  * partitions have changed in 2.5
- * 2003-01-29 more tinkering क्रम 2.5.59-1
+ * 2003-01-29 more tinkering for 2.5.59-1
  * This should now address the sysfs problems and has
- * the symlink क्रम devfs to allow क्रम booting with
+ * the symlink for devfs to allow for booting with
  * the common /dev/ubd/discX/... names rather than
  * only /dev/ubdN/discN this version also has lots of
- * clean ups preparing क्रम ubd-many.
+ * clean ups preparing for ubd-many.
  * James McMechan
  */
 
-#घोषणा UBD_SHIFT 4
+#define UBD_SHIFT 4
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/blk-mq.h>
-#समावेश <linux/ata.h>
-#समावेश <linux/hdreg.h>
-#समावेश <linux/cdrom.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <यंत्र/tlbflush.h>
-#समावेश <kern_util.h>
-#समावेश "mconsole_kern.h"
-#समावेश <init.h>
-#समावेश <irq_kern.h>
-#समावेश "ubd.h"
-#समावेश <os.h>
-#समावेश "cow.h"
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/blkdev.h>
+#include <linux/blk-mq.h>
+#include <linux/ata.h>
+#include <linux/hdreg.h>
+#include <linux/cdrom.h>
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
+#include <linux/ctype.h>
+#include <linux/slab.h>
+#include <linux/vmalloc.h>
+#include <linux/platform_device.h>
+#include <linux/scatterlist.h>
+#include <asm/tlbflush.h>
+#include <kern_util.h>
+#include "mconsole_kern.h"
+#include <init.h>
+#include <irq_kern.h>
+#include "ubd.h"
+#include <os.h>
+#include "cow.h"
 
 /* Max request size is determined by sector mask - 32K */
-#घोषणा UBD_MAX_REQUEST (8 * माप(दीर्घ))
+#define UBD_MAX_REQUEST (8 * sizeof(long))
 
-काष्ठा io_desc अणु
-	अक्षर *buffer;
-	अचिन्हित दीर्घ length;
-	अचिन्हित दीर्घ sector_mask;
-	अचिन्हित दीर्घ दीर्घ cow_offset;
-	अचिन्हित दीर्घ biपंचांगap_words[2];
-पूर्ण;
+struct io_desc {
+	char *buffer;
+	unsigned long length;
+	unsigned long sector_mask;
+	unsigned long long cow_offset;
+	unsigned long bitmap_words[2];
+};
 
-काष्ठा io_thपढ़ो_req अणु
-	काष्ठा request *req;
-	पूर्णांक fds[2];
-	अचिन्हित दीर्घ offsets[2];
-	अचिन्हित दीर्घ दीर्घ offset;
-	पूर्णांक sectorsize;
-	पूर्णांक error;
+struct io_thread_req {
+	struct request *req;
+	int fds[2];
+	unsigned long offsets[2];
+	unsigned long long offset;
+	int sectorsize;
+	int error;
 
-	पूर्णांक desc_cnt;
-	/* io_desc has to be the last element of the काष्ठा */
-	काष्ठा io_desc io_desc[];
-पूर्ण;
-
-
-अटल काष्ठा io_thपढ़ो_req * (*irq_req_buffer)[];
-अटल काष्ठा io_thपढ़ो_req *irq_reमुख्यder;
-अटल पूर्णांक irq_reमुख्यder_size;
-
-अटल काष्ठा io_thपढ़ो_req * (*io_req_buffer)[];
-अटल काष्ठा io_thपढ़ो_req *io_reमुख्यder;
-अटल पूर्णांक io_reमुख्यder_size;
+	int desc_cnt;
+	/* io_desc has to be the last element of the struct */
+	struct io_desc io_desc[];
+};
 
 
+static struct io_thread_req * (*irq_req_buffer)[];
+static struct io_thread_req *irq_remainder;
+static int irq_remainder_size;
 
-अटल अंतरभूत पूर्णांक ubd_test_bit(__u64 bit, अचिन्हित अक्षर *data)
-अणु
+static struct io_thread_req * (*io_req_buffer)[];
+static struct io_thread_req *io_remainder;
+static int io_remainder_size;
+
+
+
+static inline int ubd_test_bit(__u64 bit, unsigned char *data)
+{
 	__u64 n;
-	पूर्णांक bits, off;
+	int bits, off;
 
-	bits = माप(data[0]) * 8;
+	bits = sizeof(data[0]) * 8;
 	n = bit / bits;
 	off = bit % bits;
-	वापस (data[n] & (1 << off)) != 0;
-पूर्ण
+	return (data[n] & (1 << off)) != 0;
+}
 
-अटल अंतरभूत व्योम ubd_set_bit(__u64 bit, अचिन्हित अक्षर *data)
-अणु
+static inline void ubd_set_bit(__u64 bit, unsigned char *data)
+{
 	__u64 n;
-	पूर्णांक bits, off;
+	int bits, off;
 
-	bits = माप(data[0]) * 8;
+	bits = sizeof(data[0]) * 8;
 	n = bit / bits;
 	off = bit % bits;
 	data[n] |= (1 << off);
-पूर्ण
+}
 /*End stuff from ubd_user.h*/
 
-#घोषणा DRIVER_NAME "uml-blkdev"
+#define DRIVER_NAME "uml-blkdev"
 
-अटल DEFINE_MUTEX(ubd_lock);
-अटल DEFINE_MUTEX(ubd_mutex); /* replaces BKL, might not be needed */
+static DEFINE_MUTEX(ubd_lock);
+static DEFINE_MUTEX(ubd_mutex); /* replaces BKL, might not be needed */
 
-अटल पूर्णांक ubd_खोलो(काष्ठा block_device *bdev, भ_शेषe_t mode);
-अटल व्योम ubd_release(काष्ठा gendisk *disk, भ_शेषe_t mode);
-अटल पूर्णांक ubd_ioctl(काष्ठा block_device *bdev, भ_शेषe_t mode,
-		     अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg);
-अटल पूर्णांक ubd_getgeo(काष्ठा block_device *bdev, काष्ठा hd_geometry *geo);
+static int ubd_open(struct block_device *bdev, fmode_t mode);
+static void ubd_release(struct gendisk *disk, fmode_t mode);
+static int ubd_ioctl(struct block_device *bdev, fmode_t mode,
+		     unsigned int cmd, unsigned long arg);
+static int ubd_getgeo(struct block_device *bdev, struct hd_geometry *geo);
 
-#घोषणा MAX_DEV (16)
+#define MAX_DEV (16)
 
-अटल स्थिर काष्ठा block_device_operations ubd_blops = अणु
+static const struct block_device_operations ubd_blops = {
         .owner		= THIS_MODULE,
-        .खोलो		= ubd_खोलो,
+        .open		= ubd_open,
         .release	= ubd_release,
         .ioctl		= ubd_ioctl,
         .compat_ioctl	= blkdev_compat_ptr_ioctl,
 	.getgeo		= ubd_getgeo,
-पूर्ण;
+};
 
 /* Protected by ubd_lock */
-अटल पूर्णांक fake_major = UBD_MAJOR;
-अटल काष्ठा gendisk *ubd_gendisk[MAX_DEV];
-अटल काष्ठा gendisk *fake_gendisk[MAX_DEV];
+static int fake_major = UBD_MAJOR;
+static struct gendisk *ubd_gendisk[MAX_DEV];
+static struct gendisk *fake_gendisk[MAX_DEV];
 
-#अगर_घोषित CONFIG_BLK_DEV_UBD_SYNC
-#घोषणा OPEN_FLAGS ((काष्ठा खोलोflags) अणु .r = 1, .w = 1, .s = 1, .c = 0, \
-					 .cl = 1 पूर्ण)
-#अन्यथा
-#घोषणा OPEN_FLAGS ((काष्ठा खोलोflags) अणु .r = 1, .w = 1, .s = 0, .c = 0, \
-					 .cl = 1 पूर्ण)
-#पूर्ण_अगर
-अटल काष्ठा खोलोflags global_खोलोflags = OPEN_FLAGS;
+#ifdef CONFIG_BLK_DEV_UBD_SYNC
+#define OPEN_FLAGS ((struct openflags) { .r = 1, .w = 1, .s = 1, .c = 0, \
+					 .cl = 1 })
+#else
+#define OPEN_FLAGS ((struct openflags) { .r = 1, .w = 1, .s = 0, .c = 0, \
+					 .cl = 1 })
+#endif
+static struct openflags global_openflags = OPEN_FLAGS;
 
-काष्ठा cow अणु
+struct cow {
 	/* backing file name */
-	अक्षर *file;
+	char *file;
 	/* backing file fd */
-	पूर्णांक fd;
-	अचिन्हित दीर्घ *biपंचांगap;
-	अचिन्हित दीर्घ biपंचांगap_len;
-	पूर्णांक biपंचांगap_offset;
-	पूर्णांक data_offset;
-पूर्ण;
+	int fd;
+	unsigned long *bitmap;
+	unsigned long bitmap_len;
+	int bitmap_offset;
+	int data_offset;
+};
 
-#घोषणा MAX_SG 64
+#define MAX_SG 64
 
-काष्ठा ubd अणु
-	/* name (and fd, below) of the file खोलोed क्रम writing, either the
+struct ubd {
+	/* name (and fd, below) of the file opened for writing, either the
 	 * backing or the cow file. */
-	अक्षर *file;
-	अक्षर *serial;
-	पूर्णांक count;
-	पूर्णांक fd;
+	char *file;
+	char *serial;
+	int count;
+	int fd;
 	__u64 size;
-	काष्ठा खोलोflags boot_खोलोflags;
-	काष्ठा खोलोflags खोलोflags;
-	अचिन्हित shared:1;
-	अचिन्हित no_cow:1;
-	अचिन्हित no_trim:1;
-	काष्ठा cow cow;
-	काष्ठा platक्रमm_device pdev;
-	काष्ठा request_queue *queue;
-	काष्ठा blk_mq_tag_set tag_set;
+	struct openflags boot_openflags;
+	struct openflags openflags;
+	unsigned shared:1;
+	unsigned no_cow:1;
+	unsigned no_trim:1;
+	struct cow cow;
+	struct platform_device pdev;
+	struct request_queue *queue;
+	struct blk_mq_tag_set tag_set;
 	spinlock_t lock;
-पूर्ण;
+};
 
-#घोषणा DEFAULT_COW अणु \
-	.file =			शून्य, \
+#define DEFAULT_COW { \
+	.file =			NULL, \
 	.fd =			-1,	\
-	.biपंचांगap =		शून्य, \
-	.biपंचांगap_offset =	0, \
+	.bitmap =		NULL, \
+	.bitmap_offset =	0, \
 	.data_offset =		0, \
-पूर्ण
+}
 
-#घोषणा DEFAULT_UBD अणु \
-	.file = 		शून्य, \
-	.serial =		शून्य, \
+#define DEFAULT_UBD { \
+	.file = 		NULL, \
+	.serial =		NULL, \
 	.count =		0, \
 	.fd =			-1, \
 	.size =			-1, \
-	.boot_खोलोflags =	OPEN_FLAGS, \
-	.खोलोflags =		OPEN_FLAGS, \
+	.boot_openflags =	OPEN_FLAGS, \
+	.openflags =		OPEN_FLAGS, \
 	.no_cow =               0, \
 	.no_trim =		0, \
 	.shared =		0, \
 	.cow =			DEFAULT_COW, \
 	.lock =			__SPIN_LOCK_UNLOCKED(ubd_devs.lock), \
-पूर्ण
+}
 
 /* Protected by ubd_lock */
-अटल काष्ठा ubd ubd_devs[MAX_DEV] = अणु [0 ... MAX_DEV - 1] = DEFAULT_UBD पूर्ण;
+static struct ubd ubd_devs[MAX_DEV] = { [0 ... MAX_DEV - 1] = DEFAULT_UBD };
 
 /* Only changed by fake_ide_setup which is a setup */
-अटल पूर्णांक fake_ide = 0;
-अटल काष्ठा proc_dir_entry *proc_ide_root = शून्य;
-अटल काष्ठा proc_dir_entry *proc_ide = शून्य;
+static int fake_ide = 0;
+static struct proc_dir_entry *proc_ide_root = NULL;
+static struct proc_dir_entry *proc_ide = NULL;
 
-अटल blk_status_t ubd_queue_rq(काष्ठा blk_mq_hw_ctx *hctx,
-				 स्थिर काष्ठा blk_mq_queue_data *bd);
+static blk_status_t ubd_queue_rq(struct blk_mq_hw_ctx *hctx,
+				 const struct blk_mq_queue_data *bd);
 
-अटल व्योम make_proc_ide(व्योम)
-अणु
-	proc_ide_root = proc_सूची_गढ़ो("ide", शून्य);
-	proc_ide = proc_सूची_गढ़ो("ide0", proc_ide_root);
-पूर्ण
+static void make_proc_ide(void)
+{
+	proc_ide_root = proc_mkdir("ide", NULL);
+	proc_ide = proc_mkdir("ide0", proc_ide_root);
+}
 
-अटल पूर्णांक fake_ide_media_proc_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	seq_माला_दो(m, "disk\n");
-	वापस 0;
-पूर्ण
+static int fake_ide_media_proc_show(struct seq_file *m, void *v)
+{
+	seq_puts(m, "disk\n");
+	return 0;
+}
 
-अटल व्योम make_ide_entries(स्थिर अक्षर *dev_name)
-अणु
-	काष्ठा proc_dir_entry *dir, *ent;
-	अक्षर name[64];
+static void make_ide_entries(const char *dev_name)
+{
+	struct proc_dir_entry *dir, *ent;
+	char name[64];
 
-	अगर(proc_ide_root == शून्य) make_proc_ide();
+	if(proc_ide_root == NULL) make_proc_ide();
 
-	dir = proc_सूची_गढ़ो(dev_name, proc_ide);
-	अगर(!dir) वापस;
+	dir = proc_mkdir(dev_name, proc_ide);
+	if(!dir) return;
 
 	ent = proc_create_single("media", S_IRUGO, dir,
 			fake_ide_media_proc_show);
-	अगर(!ent) वापस;
-	snम_लिखो(name, माप(name), "ide0/%s", dev_name);
+	if(!ent) return;
+	snprintf(name, sizeof(name), "ide0/%s", dev_name);
 	proc_symlink(dev_name, proc_ide_root, name);
-पूर्ण
+}
 
-अटल पूर्णांक fake_ide_setup(अक्षर *str)
-अणु
+static int fake_ide_setup(char *str)
+{
 	fake_ide = 1;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 __setup("fake_ide", fake_ide_setup);
 
@@ -248,167 +247,167 @@ __uml_help(fake_ide_setup,
 "    Create ide0 entries that map onto ubd devices.\n\n"
 );
 
-अटल पूर्णांक parse_unit(अक्षर **ptr)
-अणु
-	अक्षर *str = *ptr, *end;
-	पूर्णांक n = -1;
+static int parse_unit(char **ptr)
+{
+	char *str = *ptr, *end;
+	int n = -1;
 
-	अगर(है_अंक(*str)) अणु
-		n = simple_म_से_अदीर्घ(str, &end, 0);
-		अगर(end == str)
-			वापस -1;
+	if(isdigit(*str)) {
+		n = simple_strtoul(str, &end, 0);
+		if(end == str)
+			return -1;
 		*ptr = end;
-	पूर्ण
-	अन्यथा अगर (('a' <= *str) && (*str <= 'z')) अणु
+	}
+	else if (('a' <= *str) && (*str <= 'z')) {
 		n = *str - 'a';
 		str++;
 		*ptr = str;
-	पूर्ण
-	वापस n;
-पूर्ण
+	}
+	return n;
+}
 
-/* If *index_out == -1 at निकास, the passed option was a general one;
- * otherwise, the str poपूर्णांकer is used (and owned) inside ubd_devs array, so it
- * should not be मुक्तd on निकास.
+/* If *index_out == -1 at exit, the passed option was a general one;
+ * otherwise, the str pointer is used (and owned) inside ubd_devs array, so it
+ * should not be freed on exit.
  */
-अटल पूर्णांक ubd_setup_common(अक्षर *str, पूर्णांक *index_out, अक्षर **error_out)
-अणु
-	काष्ठा ubd *ubd_dev;
-	काष्ठा खोलोflags flags = global_खोलोflags;
-	अक्षर *file, *backing_file, *serial;
-	पूर्णांक n, err = 0, i;
+static int ubd_setup_common(char *str, int *index_out, char **error_out)
+{
+	struct ubd *ubd_dev;
+	struct openflags flags = global_openflags;
+	char *file, *backing_file, *serial;
+	int n, err = 0, i;
 
-	अगर(index_out) *index_out = -1;
+	if(index_out) *index_out = -1;
 	n = *str;
-	अगर(n == '=')अणु
-		अक्षर *end;
-		पूर्णांक major;
+	if(n == '='){
+		char *end;
+		int major;
 
 		str++;
-		अगर(!म_भेद(str, "sync"))अणु
-			global_खोलोflags = of_sync(global_खोलोflags);
-			वापस err;
-		पूर्ण
+		if(!strcmp(str, "sync")){
+			global_openflags = of_sync(global_openflags);
+			return err;
+		}
 
 		err = -EINVAL;
-		major = simple_म_से_अदीर्घ(str, &end, 0);
-		अगर((*end != '\0') || (end == str))अणु
+		major = simple_strtoul(str, &end, 0);
+		if((*end != '\0') || (end == str)){
 			*error_out = "Didn't parse major number";
-			वापस err;
-		पूर्ण
+			return err;
+		}
 
 		mutex_lock(&ubd_lock);
-		अगर (fake_major != UBD_MAJOR) अणु
+		if (fake_major != UBD_MAJOR) {
 			*error_out = "Can't assign a fake major twice";
-			जाओ out1;
-		पूर्ण
+			goto out1;
+		}
 
 		fake_major = major;
 
-		prपूर्णांकk(KERN_INFO "Setting extra ubd major number to %d\n",
+		printk(KERN_INFO "Setting extra ubd major number to %d\n",
 		       major);
 		err = 0;
 	out1:
 		mutex_unlock(&ubd_lock);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	n = parse_unit(&str);
-	अगर(n < 0)अणु
+	if(n < 0){
 		*error_out = "Couldn't parse device number";
-		वापस -EINVAL;
-	पूर्ण
-	अगर(n >= MAX_DEV)अणु
+		return -EINVAL;
+	}
+	if(n >= MAX_DEV){
 		*error_out = "Device number out of range";
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
 	err = -EBUSY;
 	mutex_lock(&ubd_lock);
 
 	ubd_dev = &ubd_devs[n];
-	अगर(ubd_dev->file != शून्य)अणु
+	if(ubd_dev->file != NULL){
 		*error_out = "Device is already configured";
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (index_out)
+	if (index_out)
 		*index_out = n;
 
 	err = -EINVAL;
-	क्रम (i = 0; i < माप("rscdt="); i++) अणु
-		चयन (*str) अणु
-		हाल 'r':
+	for (i = 0; i < sizeof("rscdt="); i++) {
+		switch (*str) {
+		case 'r':
 			flags.w = 0;
-			अवरोध;
-		हाल 's':
+			break;
+		case 's':
 			flags.s = 1;
-			अवरोध;
-		हाल 'd':
+			break;
+		case 'd':
 			ubd_dev->no_cow = 1;
-			अवरोध;
-		हाल 'c':
+			break;
+		case 'c':
 			ubd_dev->shared = 1;
-			अवरोध;
-		हाल 't':
+			break;
+		case 't':
 			ubd_dev->no_trim = 1;
-			अवरोध;
-		हाल '=':
+			break;
+		case '=':
 			str++;
-			जाओ अवरोध_loop;
-		शेष:
+			goto break_loop;
+		default:
 			*error_out = "Expected '=' or flag letter "
 				"(r, s, c, t or d)";
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		str++;
-	पूर्ण
+	}
 
-	अगर (*str == '=')
+	if (*str == '=')
 		*error_out = "Too many flags specified";
-	अन्यथा
+	else
 		*error_out = "Missing '='";
-	जाओ out;
+	goto out;
 
-अवरोध_loop:
+break_loop:
 	file = strsep(&str, ",:");
-	अगर (*file == '\0')
-		file = शून्य;
+	if (*file == '\0')
+		file = NULL;
 
 	backing_file = strsep(&str, ",:");
-	अगर (backing_file && *backing_file == '\0')
-		backing_file = शून्य;
+	if (backing_file && *backing_file == '\0')
+		backing_file = NULL;
 
 	serial = strsep(&str, ",:");
-	अगर (serial && *serial == '\0')
-		serial = शून्य;
+	if (serial && *serial == '\0')
+		serial = NULL;
 
-	अगर (backing_file && ubd_dev->no_cow) अणु
+	if (backing_file && ubd_dev->no_cow) {
 		*error_out = "Can't specify both 'd' and a cow file";
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	err = 0;
 	ubd_dev->file = file;
 	ubd_dev->cow.file = backing_file;
 	ubd_dev->serial = serial;
-	ubd_dev->boot_खोलोflags = flags;
+	ubd_dev->boot_openflags = flags;
 out:
 	mutex_unlock(&ubd_lock);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक ubd_setup(अक्षर *str)
-अणु
-	अक्षर *error;
-	पूर्णांक err;
+static int ubd_setup(char *str)
+{
+	char *error;
+	int err;
 
-	err = ubd_setup_common(str, शून्य, &error);
-	अगर(err)
-		prपूर्णांकk(KERN_ERR "Failed to initialize device with \"%s\" : "
+	err = ubd_setup_common(str, NULL, &error);
+	if(err)
+		printk(KERN_ERR "Failed to initialize device with \"%s\" : "
 		       "%s\n", str, error);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 __setup("ubd", ubd_setup);
 __uml_help(ubd_setup,
@@ -443,12 +442,12 @@ __uml_help(ubd_setup,
 "       ubd0=File,,Serial\n"
 );
 
-अटल पूर्णांक udb_setup(अक्षर *str)
-अणु
-	prपूर्णांकk("udb%s specified on command line is almost certainly a ubd -> "
+static int udb_setup(char *str)
+{
+	printk("udb%s specified on command line is almost certainly a ubd -> "
 	       "udb TYPO\n", str);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 __setup("udb", udb_setup);
 __uml_help(udb_setup,
@@ -460,517 +459,517 @@ __uml_help(udb_setup,
 );
 
 /* Only changed by ubd_init, which is an initcall. */
-अटल पूर्णांक thपढ़ो_fd = -1;
+static int thread_fd = -1;
 
-/* Function to पढ़ो several request poपूर्णांकers at a समय
-* handling fractional पढ़ोs अगर (and as) needed
+/* Function to read several request pointers at a time
+* handling fractional reads if (and as) needed
 */
 
-अटल पूर्णांक bulk_req_safe_पढ़ो(
-	पूर्णांक fd,
-	काष्ठा io_thपढ़ो_req * (*request_buffer)[],
-	काष्ठा io_thपढ़ो_req **reमुख्यder,
-	पूर्णांक *reमुख्यder_size,
-	पूर्णांक max_recs
+static int bulk_req_safe_read(
+	int fd,
+	struct io_thread_req * (*request_buffer)[],
+	struct io_thread_req **remainder,
+	int *remainder_size,
+	int max_recs
 	)
-अणु
-	पूर्णांक n = 0;
-	पूर्णांक res = 0;
+{
+	int n = 0;
+	int res = 0;
 
-	अगर (*reमुख्यder_size > 0) अणु
-		स_हटाओ(
-			(अक्षर *) request_buffer,
-			(अक्षर *) reमुख्यder, *reमुख्यder_size
+	if (*remainder_size > 0) {
+		memmove(
+			(char *) request_buffer,
+			(char *) remainder, *remainder_size
 		);
-		n = *reमुख्यder_size;
-	पूर्ण
+		n = *remainder_size;
+	}
 
-	res = os_पढ़ो_file(
+	res = os_read_file(
 			fd,
-			((अक्षर *) request_buffer) + *reमुख्यder_size,
-			माप(काष्ठा io_thपढ़ो_req *)*max_recs
-				- *reमुख्यder_size
+			((char *) request_buffer) + *remainder_size,
+			sizeof(struct io_thread_req *)*max_recs
+				- *remainder_size
 		);
-	अगर (res > 0) अणु
+	if (res > 0) {
 		n += res;
-		अगर ((n % माप(काष्ठा io_thपढ़ो_req *)) > 0) अणु
+		if ((n % sizeof(struct io_thread_req *)) > 0) {
 			/*
-			* Read somehow वापसed not a multiple of dword
+			* Read somehow returned not a multiple of dword
 			* theoretically possible, but never observed in the
-			* wild, so पढ़ो routine must be able to handle it
+			* wild, so read routine must be able to handle it
 			*/
-			*reमुख्यder_size = n % माप(काष्ठा io_thपढ़ो_req *);
-			WARN(*reमुख्यder_size > 0, "UBD IPC read returned a partial result");
-			स_हटाओ(
-				reमुख्यder,
-				((अक्षर *) request_buffer) +
-					(n/माप(काष्ठा io_thपढ़ो_req *))*माप(काष्ठा io_thपढ़ो_req *),
-				*reमुख्यder_size
+			*remainder_size = n % sizeof(struct io_thread_req *);
+			WARN(*remainder_size > 0, "UBD IPC read returned a partial result");
+			memmove(
+				remainder,
+				((char *) request_buffer) +
+					(n/sizeof(struct io_thread_req *))*sizeof(struct io_thread_req *),
+				*remainder_size
 			);
-			n = n - *reमुख्यder_size;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			n = n - *remainder_size;
+		}
+	} else {
 		n = res;
-	पूर्ण
-	वापस n;
-पूर्ण
+	}
+	return n;
+}
 
-/* Called without dev->lock held, and only in पूर्णांकerrupt context. */
-अटल व्योम ubd_handler(व्योम)
-अणु
-	पूर्णांक n;
-	पूर्णांक count;
+/* Called without dev->lock held, and only in interrupt context. */
+static void ubd_handler(void)
+{
+	int n;
+	int count;
 
-	जबतक(1)अणु
-		n = bulk_req_safe_पढ़ो(
-			thपढ़ो_fd,
+	while(1){
+		n = bulk_req_safe_read(
+			thread_fd,
 			irq_req_buffer,
-			&irq_reमुख्यder,
-			&irq_reमुख्यder_size,
+			&irq_remainder,
+			&irq_remainder_size,
 			UBD_REQ_BUFFER_SIZE
 		);
-		अगर (n < 0) अणु
-			अगर(n == -EAGAIN)
-				अवरोध;
-			prपूर्णांकk(KERN_ERR "spurious interrupt in ubd_handler, "
+		if (n < 0) {
+			if(n == -EAGAIN)
+				break;
+			printk(KERN_ERR "spurious interrupt in ubd_handler, "
 			       "err = %d\n", -n);
-			वापस;
-		पूर्ण
-		क्रम (count = 0; count < n/माप(काष्ठा io_thपढ़ो_req *); count++) अणु
-			काष्ठा io_thपढ़ो_req *io_req = (*irq_req_buffer)[count];
+			return;
+		}
+		for (count = 0; count < n/sizeof(struct io_thread_req *); count++) {
+			struct io_thread_req *io_req = (*irq_req_buffer)[count];
 
-			अगर ((io_req->error == BLK_STS_NOTSUPP) && (req_op(io_req->req) == REQ_OP_DISCARD)) अणु
+			if ((io_req->error == BLK_STS_NOTSUPP) && (req_op(io_req->req) == REQ_OP_DISCARD)) {
 				blk_queue_max_discard_sectors(io_req->req->q, 0);
-				blk_queue_max_ग_लिखो_zeroes_sectors(io_req->req->q, 0);
+				blk_queue_max_write_zeroes_sectors(io_req->req->q, 0);
 				blk_queue_flag_clear(QUEUE_FLAG_DISCARD, io_req->req->q);
-			पूर्ण
+			}
 			blk_mq_end_request(io_req->req, io_req->error);
-			kमुक्त(io_req);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			kfree(io_req);
+		}
+	}
+}
 
-अटल irqवापस_t ubd_पूर्णांकr(पूर्णांक irq, व्योम *dev)
-अणु
+static irqreturn_t ubd_intr(int irq, void *dev)
+{
 	ubd_handler();
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /* Only changed by ubd_init, which is an initcall. */
-अटल पूर्णांक io_pid = -1;
+static int io_pid = -1;
 
-अटल व्योम समाप्त_io_thपढ़ो(व्योम)
-अणु
-	अगर(io_pid != -1)
-		os_समाप्त_process(io_pid, 1);
-पूर्ण
+static void kill_io_thread(void)
+{
+	if(io_pid != -1)
+		os_kill_process(io_pid, 1);
+}
 
-__uml_निकासcall(समाप्त_io_thपढ़ो);
+__uml_exitcall(kill_io_thread);
 
-अटल अंतरभूत पूर्णांक ubd_file_size(काष्ठा ubd *ubd_dev, __u64 *size_out)
-अणु
-	अक्षर *file;
-	पूर्णांक fd;
-	पूर्णांक err;
+static inline int ubd_file_size(struct ubd *ubd_dev, __u64 *size_out)
+{
+	char *file;
+	int fd;
+	int err;
 
 	__u32 version;
 	__u32 align;
-	अक्षर *backing_file;
-	समय64_t mसमय;
-	अचिन्हित दीर्घ दीर्घ size;
-	पूर्णांक sector_size;
-	पूर्णांक biपंचांगap_offset;
+	char *backing_file;
+	time64_t mtime;
+	unsigned long long size;
+	int sector_size;
+	int bitmap_offset;
 
-	अगर (ubd_dev->file && ubd_dev->cow.file) अणु
+	if (ubd_dev->file && ubd_dev->cow.file) {
 		file = ubd_dev->cow.file;
 
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	fd = os_खोलो_file(ubd_dev->file, of_पढ़ो(OPENFLAGS()), 0);
-	अगर (fd < 0)
-		वापस fd;
+	fd = os_open_file(ubd_dev->file, of_read(OPENFLAGS()), 0);
+	if (fd < 0)
+		return fd;
 
-	err = पढ़ो_cow_header(file_पढ़ोer, &fd, &version, &backing_file, \
-		&mसमय, &size, &sector_size, &align, &biपंचांगap_offset);
-	os_बंद_file(fd);
+	err = read_cow_header(file_reader, &fd, &version, &backing_file, \
+		&mtime, &size, &sector_size, &align, &bitmap_offset);
+	os_close_file(fd);
 
-	अगर(err == -EINVAL)
+	if(err == -EINVAL)
 		file = ubd_dev->file;
-	अन्यथा
+	else
 		file = backing_file;
 
 out:
-	वापस os_file_size(file, size_out);
-पूर्ण
+	return os_file_size(file, size_out);
+}
 
-अटल पूर्णांक पढ़ो_cow_biपंचांगap(पूर्णांक fd, व्योम *buf, पूर्णांक offset, पूर्णांक len)
-अणु
-	पूर्णांक err;
+static int read_cow_bitmap(int fd, void *buf, int offset, int len)
+{
+	int err;
 
-	err = os_pपढ़ो_file(fd, buf, len, offset);
-	अगर (err < 0)
-		वापस err;
+	err = os_pread_file(fd, buf, len, offset);
+	if (err < 0)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक backing_file_mismatch(अक्षर *file, __u64 size, समय64_t mसमय)
-अणु
-	समय64_t modसमय;
-	अचिन्हित दीर्घ दीर्घ actual;
-	पूर्णांक err;
+static int backing_file_mismatch(char *file, __u64 size, time64_t mtime)
+{
+	time64_t modtime;
+	unsigned long long actual;
+	int err;
 
-	err = os_file_modसमय(file, &modसमय);
-	अगर (err < 0) अणु
-		prपूर्णांकk(KERN_ERR "Failed to get modification time of backing "
+	err = os_file_modtime(file, &modtime);
+	if (err < 0) {
+		printk(KERN_ERR "Failed to get modification time of backing "
 		       "file \"%s\", err = %d\n", file, -err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	err = os_file_size(file, &actual);
-	अगर (err < 0) अणु
-		prपूर्णांकk(KERN_ERR "Failed to get size of backing file \"%s\", "
+	if (err < 0) {
+		printk(KERN_ERR "Failed to get size of backing file \"%s\", "
 		       "err = %d\n", file, -err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (actual != size) अणु
-		/*__u64 can be a दीर्घ on AMD64 and with %lu GCC complains; so
+	if (actual != size) {
+		/*__u64 can be a long on AMD64 and with %lu GCC complains; so
 		 * the typecast.*/
-		prपूर्णांकk(KERN_ERR "Size mismatch (%llu vs %llu) of COW header "
-		       "vs backing file\n", (अचिन्हित दीर्घ दीर्घ) size, actual);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (modसमय != mसमय) अणु
-		prपूर्णांकk(KERN_ERR "mtime mismatch (%lld vs %lld) of COW header vs "
-		       "backing file\n", mसमय, modसमय);
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		printk(KERN_ERR "Size mismatch (%llu vs %llu) of COW header "
+		       "vs backing file\n", (unsigned long long) size, actual);
+		return -EINVAL;
+	}
+	if (modtime != mtime) {
+		printk(KERN_ERR "mtime mismatch (%lld vs %lld) of COW header vs "
+		       "backing file\n", mtime, modtime);
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल पूर्णांक path_requires_चयन(अक्षर *from_cmdline, अक्षर *from_cow, अक्षर *cow)
-अणु
-	काष्ठा uml_stat buf1, buf2;
-	पूर्णांक err;
+static int path_requires_switch(char *from_cmdline, char *from_cow, char *cow)
+{
+	struct uml_stat buf1, buf2;
+	int err;
 
-	अगर (from_cmdline == शून्य)
-		वापस 0;
-	अगर (!म_भेद(from_cmdline, from_cow))
-		वापस 0;
+	if (from_cmdline == NULL)
+		return 0;
+	if (!strcmp(from_cmdline, from_cow))
+		return 0;
 
 	err = os_stat_file(from_cmdline, &buf1);
-	अगर (err < 0) अणु
-		prपूर्णांकk(KERN_ERR "Couldn't stat '%s', err = %d\n", from_cmdline,
+	if (err < 0) {
+		printk(KERN_ERR "Couldn't stat '%s', err = %d\n", from_cmdline,
 		       -err);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	err = os_stat_file(from_cow, &buf2);
-	अगर (err < 0) अणु
-		prपूर्णांकk(KERN_ERR "Couldn't stat '%s', err = %d\n", from_cow,
+	if (err < 0) {
+		printk(KERN_ERR "Couldn't stat '%s', err = %d\n", from_cow,
 		       -err);
-		वापस 1;
-	पूर्ण
-	अगर ((buf1.ust_dev == buf2.ust_dev) && (buf1.ust_ino == buf2.ust_ino))
-		वापस 0;
+		return 1;
+	}
+	if ((buf1.ust_dev == buf2.ust_dev) && (buf1.ust_ino == buf2.ust_ino))
+		return 0;
 
-	prपूर्णांकk(KERN_ERR "Backing file mismatch - \"%s\" requested, "
+	printk(KERN_ERR "Backing file mismatch - \"%s\" requested, "
 	       "\"%s\" specified in COW header of \"%s\"\n",
 	       from_cmdline, from_cow, cow);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक खोलो_ubd_file(अक्षर *file, काष्ठा खोलोflags *खोलोflags, पूर्णांक shared,
-		  अक्षर **backing_file_out, पूर्णांक *biपंचांगap_offset_out,
-		  अचिन्हित दीर्घ *biपंचांगap_len_out, पूर्णांक *data_offset_out,
-		  पूर्णांक *create_cow_out)
-अणु
-	समय64_t mसमय;
-	अचिन्हित दीर्घ दीर्घ size;
+static int open_ubd_file(char *file, struct openflags *openflags, int shared,
+		  char **backing_file_out, int *bitmap_offset_out,
+		  unsigned long *bitmap_len_out, int *data_offset_out,
+		  int *create_cow_out)
+{
+	time64_t mtime;
+	unsigned long long size;
 	__u32 version, align;
-	अक्षर *backing_file;
-	पूर्णांक fd, err, sectorsize, asked_चयन, mode = 0644;
+	char *backing_file;
+	int fd, err, sectorsize, asked_switch, mode = 0644;
 
-	fd = os_खोलो_file(file, *खोलोflags, mode);
-	अगर (fd < 0) अणु
-		अगर ((fd == -ENOENT) && (create_cow_out != शून्य))
+	fd = os_open_file(file, *openflags, mode);
+	if (fd < 0) {
+		if ((fd == -ENOENT) && (create_cow_out != NULL))
 			*create_cow_out = 1;
-		अगर (!खोलोflags->w ||
+		if (!openflags->w ||
 		    ((fd != -EROFS) && (fd != -EACCES)))
-			वापस fd;
-		खोलोflags->w = 0;
-		fd = os_खोलो_file(file, *खोलोflags, mode);
-		अगर (fd < 0)
-			वापस fd;
-	पूर्ण
+			return fd;
+		openflags->w = 0;
+		fd = os_open_file(file, *openflags, mode);
+		if (fd < 0)
+			return fd;
+	}
 
-	अगर (shared)
-		prपूर्णांकk(KERN_INFO "Not locking \"%s\" on the host\n", file);
-	अन्यथा अणु
-		err = os_lock_file(fd, खोलोflags->w);
-		अगर (err < 0) अणु
-			prपूर्णांकk(KERN_ERR "Failed to lock '%s', err = %d\n",
+	if (shared)
+		printk(KERN_INFO "Not locking \"%s\" on the host\n", file);
+	else {
+		err = os_lock_file(fd, openflags->w);
+		if (err < 0) {
+			printk(KERN_ERR "Failed to lock '%s', err = %d\n",
 			       file, -err);
-			जाओ out_बंद;
-		पूर्ण
-	पूर्ण
+			goto out_close;
+		}
+	}
 
-	/* Successful वापस हाल! */
-	अगर (backing_file_out == शून्य)
-		वापस fd;
+	/* Successful return case! */
+	if (backing_file_out == NULL)
+		return fd;
 
-	err = पढ़ो_cow_header(file_पढ़ोer, &fd, &version, &backing_file, &mसमय,
-			      &size, &sectorsize, &align, biपंचांगap_offset_out);
-	अगर (err && (*backing_file_out != शून्य)) अणु
-		prपूर्णांकk(KERN_ERR "Failed to read COW header from COW file "
+	err = read_cow_header(file_reader, &fd, &version, &backing_file, &mtime,
+			      &size, &sectorsize, &align, bitmap_offset_out);
+	if (err && (*backing_file_out != NULL)) {
+		printk(KERN_ERR "Failed to read COW header from COW file "
 		       "\"%s\", errno = %d\n", file, -err);
-		जाओ out_बंद;
-	पूर्ण
-	अगर (err)
-		वापस fd;
+		goto out_close;
+	}
+	if (err)
+		return fd;
 
-	asked_चयन = path_requires_चयन(*backing_file_out, backing_file,
+	asked_switch = path_requires_switch(*backing_file_out, backing_file,
 					    file);
 
-	/* Allow चयनing only अगर no mismatch. */
-	अगर (asked_चयन && !backing_file_mismatch(*backing_file_out, size,
-						   mसमय)) अणु
-		prपूर्णांकk(KERN_ERR "Switching backing file to '%s'\n",
+	/* Allow switching only if no mismatch. */
+	if (asked_switch && !backing_file_mismatch(*backing_file_out, size,
+						   mtime)) {
+		printk(KERN_ERR "Switching backing file to '%s'\n",
 		       *backing_file_out);
-		err = ग_लिखो_cow_header(file, fd, *backing_file_out,
+		err = write_cow_header(file, fd, *backing_file_out,
 				       sectorsize, align, &size);
-		अगर (err) अणु
-			prपूर्णांकk(KERN_ERR "Switch failed, errno = %d\n", -err);
-			जाओ out_बंद;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		if (err) {
+			printk(KERN_ERR "Switch failed, errno = %d\n", -err);
+			goto out_close;
+		}
+	} else {
 		*backing_file_out = backing_file;
-		err = backing_file_mismatch(*backing_file_out, size, mसमय);
-		अगर (err)
-			जाओ out_बंद;
-	पूर्ण
+		err = backing_file_mismatch(*backing_file_out, size, mtime);
+		if (err)
+			goto out_close;
+	}
 
-	cow_sizes(version, size, sectorsize, align, *biपंचांगap_offset_out,
-		  biपंचांगap_len_out, data_offset_out);
+	cow_sizes(version, size, sectorsize, align, *bitmap_offset_out,
+		  bitmap_len_out, data_offset_out);
 
-	वापस fd;
- out_बंद:
-	os_बंद_file(fd);
-	वापस err;
-पूर्ण
+	return fd;
+ out_close:
+	os_close_file(fd);
+	return err;
+}
 
-अटल पूर्णांक create_cow_file(अक्षर *cow_file, अक्षर *backing_file,
-		    काष्ठा खोलोflags flags,
-		    पूर्णांक sectorsize, पूर्णांक alignment, पूर्णांक *biपंचांगap_offset_out,
-		    अचिन्हित दीर्घ *biपंचांगap_len_out, पूर्णांक *data_offset_out)
-अणु
-	पूर्णांक err, fd;
+static int create_cow_file(char *cow_file, char *backing_file,
+		    struct openflags flags,
+		    int sectorsize, int alignment, int *bitmap_offset_out,
+		    unsigned long *bitmap_len_out, int *data_offset_out)
+{
+	int err, fd;
 
 	flags.c = 1;
-	fd = खोलो_ubd_file(cow_file, &flags, 0, शून्य, शून्य, शून्य, शून्य, शून्य);
-	अगर (fd < 0) अणु
+	fd = open_ubd_file(cow_file, &flags, 0, NULL, NULL, NULL, NULL, NULL);
+	if (fd < 0) {
 		err = fd;
-		prपूर्णांकk(KERN_ERR "Open of COW file '%s' failed, errno = %d\n",
+		printk(KERN_ERR "Open of COW file '%s' failed, errno = %d\n",
 		       cow_file, -err);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	err = init_cow_file(fd, cow_file, backing_file, sectorsize, alignment,
-			    biपंचांगap_offset_out, biपंचांगap_len_out,
+			    bitmap_offset_out, bitmap_len_out,
 			    data_offset_out);
-	अगर (!err)
-		वापस fd;
-	os_बंद_file(fd);
+	if (!err)
+		return fd;
+	os_close_file(fd);
  out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम ubd_बंद_dev(काष्ठा ubd *ubd_dev)
-अणु
-	os_बंद_file(ubd_dev->fd);
-	अगर(ubd_dev->cow.file == शून्य)
-		वापस;
+static void ubd_close_dev(struct ubd *ubd_dev)
+{
+	os_close_file(ubd_dev->fd);
+	if(ubd_dev->cow.file == NULL)
+		return;
 
-	os_बंद_file(ubd_dev->cow.fd);
-	vमुक्त(ubd_dev->cow.biपंचांगap);
-	ubd_dev->cow.biपंचांगap = शून्य;
-पूर्ण
+	os_close_file(ubd_dev->cow.fd);
+	vfree(ubd_dev->cow.bitmap);
+	ubd_dev->cow.bitmap = NULL;
+}
 
-अटल पूर्णांक ubd_खोलो_dev(काष्ठा ubd *ubd_dev)
-अणु
-	काष्ठा खोलोflags flags;
-	अक्षर **back_ptr;
-	पूर्णांक err, create_cow, *create_ptr;
-	पूर्णांक fd;
+static int ubd_open_dev(struct ubd *ubd_dev)
+{
+	struct openflags flags;
+	char **back_ptr;
+	int err, create_cow, *create_ptr;
+	int fd;
 
-	ubd_dev->खोलोflags = ubd_dev->boot_खोलोflags;
+	ubd_dev->openflags = ubd_dev->boot_openflags;
 	create_cow = 0;
-	create_ptr = (ubd_dev->cow.file != शून्य) ? &create_cow : शून्य;
-	back_ptr = ubd_dev->no_cow ? शून्य : &ubd_dev->cow.file;
+	create_ptr = (ubd_dev->cow.file != NULL) ? &create_cow : NULL;
+	back_ptr = ubd_dev->no_cow ? NULL : &ubd_dev->cow.file;
 
-	fd = खोलो_ubd_file(ubd_dev->file, &ubd_dev->खोलोflags, ubd_dev->shared,
-				back_ptr, &ubd_dev->cow.biपंचांगap_offset,
-				&ubd_dev->cow.biपंचांगap_len, &ubd_dev->cow.data_offset,
+	fd = open_ubd_file(ubd_dev->file, &ubd_dev->openflags, ubd_dev->shared,
+				back_ptr, &ubd_dev->cow.bitmap_offset,
+				&ubd_dev->cow.bitmap_len, &ubd_dev->cow.data_offset,
 				create_ptr);
 
-	अगर((fd == -ENOENT) && create_cow)अणु
+	if((fd == -ENOENT) && create_cow){
 		fd = create_cow_file(ubd_dev->file, ubd_dev->cow.file,
-					  ubd_dev->खोलोflags, SECTOR_SIZE, PAGE_SIZE,
-					  &ubd_dev->cow.biपंचांगap_offset,
-					  &ubd_dev->cow.biपंचांगap_len,
+					  ubd_dev->openflags, SECTOR_SIZE, PAGE_SIZE,
+					  &ubd_dev->cow.bitmap_offset,
+					  &ubd_dev->cow.bitmap_len,
 					  &ubd_dev->cow.data_offset);
-		अगर(fd >= 0)अणु
-			prपूर्णांकk(KERN_INFO "Creating \"%s\" as COW file for "
+		if(fd >= 0){
+			printk(KERN_INFO "Creating \"%s\" as COW file for "
 			       "\"%s\"\n", ubd_dev->file, ubd_dev->cow.file);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर(fd < 0)अणु
-		prपूर्णांकk("Failed to open '%s', errno = %d\n", ubd_dev->file,
+	if(fd < 0){
+		printk("Failed to open '%s', errno = %d\n", ubd_dev->file,
 		       -fd);
-		वापस fd;
-	पूर्ण
+		return fd;
+	}
 	ubd_dev->fd = fd;
 
-	अगर(ubd_dev->cow.file != शून्य)अणु
-		blk_queue_max_hw_sectors(ubd_dev->queue, 8 * माप(दीर्घ));
+	if(ubd_dev->cow.file != NULL){
+		blk_queue_max_hw_sectors(ubd_dev->queue, 8 * sizeof(long));
 
 		err = -ENOMEM;
-		ubd_dev->cow.biपंचांगap = vदो_स्मृति(ubd_dev->cow.biपंचांगap_len);
-		अगर(ubd_dev->cow.biपंचांगap == शून्य)अणु
-			prपूर्णांकk(KERN_ERR "Failed to vmalloc COW bitmap\n");
-			जाओ error;
-		पूर्ण
+		ubd_dev->cow.bitmap = vmalloc(ubd_dev->cow.bitmap_len);
+		if(ubd_dev->cow.bitmap == NULL){
+			printk(KERN_ERR "Failed to vmalloc COW bitmap\n");
+			goto error;
+		}
 		flush_tlb_kernel_vm();
 
-		err = पढ़ो_cow_biपंचांगap(ubd_dev->fd, ubd_dev->cow.biपंचांगap,
-				      ubd_dev->cow.biपंचांगap_offset,
-				      ubd_dev->cow.biपंचांगap_len);
-		अगर(err < 0)
-			जाओ error;
+		err = read_cow_bitmap(ubd_dev->fd, ubd_dev->cow.bitmap,
+				      ubd_dev->cow.bitmap_offset,
+				      ubd_dev->cow.bitmap_len);
+		if(err < 0)
+			goto error;
 
-		flags = ubd_dev->खोलोflags;
+		flags = ubd_dev->openflags;
 		flags.w = 0;
-		err = खोलो_ubd_file(ubd_dev->cow.file, &flags, ubd_dev->shared, शून्य,
-				    शून्य, शून्य, शून्य, शून्य);
-		अगर(err < 0) जाओ error;
+		err = open_ubd_file(ubd_dev->cow.file, &flags, ubd_dev->shared, NULL,
+				    NULL, NULL, NULL, NULL);
+		if(err < 0) goto error;
 		ubd_dev->cow.fd = err;
-	पूर्ण
-	अगर (ubd_dev->no_trim == 0) अणु
+	}
+	if (ubd_dev->no_trim == 0) {
 		ubd_dev->queue->limits.discard_granularity = SECTOR_SIZE;
 		ubd_dev->queue->limits.discard_alignment = SECTOR_SIZE;
 		blk_queue_max_discard_sectors(ubd_dev->queue, UBD_MAX_REQUEST);
-		blk_queue_max_ग_लिखो_zeroes_sectors(ubd_dev->queue, UBD_MAX_REQUEST);
+		blk_queue_max_write_zeroes_sectors(ubd_dev->queue, UBD_MAX_REQUEST);
 		blk_queue_flag_set(QUEUE_FLAG_DISCARD, ubd_dev->queue);
-	पूर्ण
+	}
 	blk_queue_flag_set(QUEUE_FLAG_NONROT, ubd_dev->queue);
-	वापस 0;
+	return 0;
  error:
-	os_बंद_file(ubd_dev->fd);
-	वापस err;
-पूर्ण
+	os_close_file(ubd_dev->fd);
+	return err;
+}
 
-अटल व्योम ubd_device_release(काष्ठा device *dev)
-अणु
-	काष्ठा ubd *ubd_dev = dev_get_drvdata(dev);
+static void ubd_device_release(struct device *dev)
+{
+	struct ubd *ubd_dev = dev_get_drvdata(dev);
 
 	blk_cleanup_queue(ubd_dev->queue);
-	blk_mq_मुक्त_tag_set(&ubd_dev->tag_set);
-	*ubd_dev = ((काष्ठा ubd) DEFAULT_UBD);
-पूर्ण
+	blk_mq_free_tag_set(&ubd_dev->tag_set);
+	*ubd_dev = ((struct ubd) DEFAULT_UBD);
+}
 
-अटल sमाप_प्रकार serial_show(काष्ठा device *dev,
-			   काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा gendisk *disk = dev_to_disk(dev);
-	काष्ठा ubd *ubd_dev = disk->निजी_data;
+static ssize_t serial_show(struct device *dev,
+			   struct device_attribute *attr, char *buf)
+{
+	struct gendisk *disk = dev_to_disk(dev);
+	struct ubd *ubd_dev = disk->private_data;
 
-	अगर (!ubd_dev)
-		वापस 0;
+	if (!ubd_dev)
+		return 0;
 
-	वापस प्र_लिखो(buf, "%s", ubd_dev->serial);
-पूर्ण
+	return sprintf(buf, "%s", ubd_dev->serial);
+}
 
-अटल DEVICE_ATTR_RO(serial);
+static DEVICE_ATTR_RO(serial);
 
-अटल काष्ठा attribute *ubd_attrs[] = अणु
+static struct attribute *ubd_attrs[] = {
 	&dev_attr_serial.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल umode_t ubd_attrs_are_visible(काष्ठा kobject *kobj,
-				     काष्ठा attribute *a, पूर्णांक n)
-अणु
-	वापस a->mode;
-पूर्ण
+static umode_t ubd_attrs_are_visible(struct kobject *kobj,
+				     struct attribute *a, int n)
+{
+	return a->mode;
+}
 
-अटल स्थिर काष्ठा attribute_group ubd_attr_group = अणु
+static const struct attribute_group ubd_attr_group = {
 	.attrs = ubd_attrs,
 	.is_visible = ubd_attrs_are_visible,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *ubd_attr_groups[] = अणु
+static const struct attribute_group *ubd_attr_groups[] = {
 	&ubd_attr_group,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल पूर्णांक ubd_disk_रेजिस्टर(पूर्णांक major, u64 size, पूर्णांक unit,
-			     काष्ठा gendisk **disk_out)
-अणु
-	काष्ठा device *parent = शून्य;
-	काष्ठा gendisk *disk;
+static int ubd_disk_register(int major, u64 size, int unit,
+			     struct gendisk **disk_out)
+{
+	struct device *parent = NULL;
+	struct gendisk *disk;
 
 	disk = alloc_disk(1 << UBD_SHIFT);
-	अगर(disk == शून्य)
-		वापस -ENOMEM;
+	if(disk == NULL)
+		return -ENOMEM;
 
 	disk->major = major;
 	disk->first_minor = unit << UBD_SHIFT;
 	disk->fops = &ubd_blops;
 	set_capacity(disk, size / 512);
-	अगर (major == UBD_MAJOR)
-		प्र_लिखो(disk->disk_name, "ubd%c", 'a' + unit);
-	अन्यथा
-		प्र_लिखो(disk->disk_name, "ubd_fake%d", unit);
+	if (major == UBD_MAJOR)
+		sprintf(disk->disk_name, "ubd%c", 'a' + unit);
+	else
+		sprintf(disk->disk_name, "ubd_fake%d", unit);
 
-	/* sysfs रेजिस्टर (not क्रम ide fake devices) */
-	अगर (major == UBD_MAJOR) अणु
+	/* sysfs register (not for ide fake devices) */
+	if (major == UBD_MAJOR) {
 		ubd_devs[unit].pdev.id   = unit;
 		ubd_devs[unit].pdev.name = DRIVER_NAME;
 		ubd_devs[unit].pdev.dev.release = ubd_device_release;
 		dev_set_drvdata(&ubd_devs[unit].pdev.dev, &ubd_devs[unit]);
-		platक्रमm_device_रेजिस्टर(&ubd_devs[unit].pdev);
+		platform_device_register(&ubd_devs[unit].pdev);
 		parent = &ubd_devs[unit].pdev.dev;
-	पूर्ण
+	}
 
-	disk->निजी_data = &ubd_devs[unit];
+	disk->private_data = &ubd_devs[unit];
 	disk->queue = ubd_devs[unit].queue;
 	device_add_disk(parent, disk, ubd_attr_groups);
 
 	*disk_out = disk;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा ROUND_BLOCK(n) ((n + (SECTOR_SIZE - 1)) & (-SECTOR_SIZE))
+#define ROUND_BLOCK(n) ((n + (SECTOR_SIZE - 1)) & (-SECTOR_SIZE))
 
-अटल स्थिर काष्ठा blk_mq_ops ubd_mq_ops = अणु
+static const struct blk_mq_ops ubd_mq_ops = {
 	.queue_rq = ubd_queue_rq,
-पूर्ण;
+};
 
-अटल पूर्णांक ubd_add(पूर्णांक n, अक्षर **error_out)
-अणु
-	काष्ठा ubd *ubd_dev = &ubd_devs[n];
-	पूर्णांक err = 0;
+static int ubd_add(int n, char **error_out)
+{
+	struct ubd *ubd_dev = &ubd_devs[n];
+	int err = 0;
 
-	अगर(ubd_dev->file == शून्य)
-		जाओ out;
+	if(ubd_dev->file == NULL)
+		goto out;
 
 	err = ubd_file_size(ubd_dev, &ubd_dev->size);
-	अगर(err < 0)अणु
+	if(err < 0){
 		*error_out = "Couldn't determine size of device's file";
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ubd_dev->size = ROUND_BLOCK(ubd_dev->size);
 
@@ -982,436 +981,436 @@ out:
 	ubd_dev->tag_set.nr_hw_queues = 1;
 
 	err = blk_mq_alloc_tag_set(&ubd_dev->tag_set);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	ubd_dev->queue = blk_mq_init_queue(&ubd_dev->tag_set);
-	अगर (IS_ERR(ubd_dev->queue)) अणु
+	if (IS_ERR(ubd_dev->queue)) {
 		err = PTR_ERR(ubd_dev->queue);
-		जाओ out_cleanup_tags;
-	पूर्ण
+		goto out_cleanup_tags;
+	}
 
 	ubd_dev->queue->queuedata = ubd_dev;
-	blk_queue_ग_लिखो_cache(ubd_dev->queue, true, false);
+	blk_queue_write_cache(ubd_dev->queue, true, false);
 
 	blk_queue_max_segments(ubd_dev->queue, MAX_SG);
 	blk_queue_segment_boundary(ubd_dev->queue, PAGE_SIZE - 1);
-	err = ubd_disk_रेजिस्टर(UBD_MAJOR, ubd_dev->size, n, &ubd_gendisk[n]);
-	अगर(err)अणु
+	err = ubd_disk_register(UBD_MAJOR, ubd_dev->size, n, &ubd_gendisk[n]);
+	if(err){
 		*error_out = "Failed to register device";
-		जाओ out_cleanup_tags;
-	पूर्ण
+		goto out_cleanup_tags;
+	}
 
-	अगर (fake_major != UBD_MAJOR)
-		ubd_disk_रेजिस्टर(fake_major, ubd_dev->size, n,
+	if (fake_major != UBD_MAJOR)
+		ubd_disk_register(fake_major, ubd_dev->size, n,
 				  &fake_gendisk[n]);
 
 	/*
 	 * Perhaps this should also be under the "if (fake_major)" above
 	 * using the fake_disk->disk_name
 	 */
-	अगर (fake_ide)
+	if (fake_ide)
 		make_ide_entries(ubd_gendisk[n]->disk_name);
 
 	err = 0;
 out:
-	वापस err;
+	return err;
 
 out_cleanup_tags:
-	blk_mq_मुक्त_tag_set(&ubd_dev->tag_set);
-	अगर (!(IS_ERR(ubd_dev->queue)))
+	blk_mq_free_tag_set(&ubd_dev->tag_set);
+	if (!(IS_ERR(ubd_dev->queue)))
 		blk_cleanup_queue(ubd_dev->queue);
-	जाओ out;
-पूर्ण
+	goto out;
+}
 
-अटल पूर्णांक ubd_config(अक्षर *str, अक्षर **error_out)
-अणु
-	पूर्णांक n, ret;
+static int ubd_config(char *str, char **error_out)
+{
+	int n, ret;
 
 	/* This string is possibly broken up and stored, so it's only
-	 * मुक्तd अगर ubd_setup_common fails, or अगर only general options
+	 * freed if ubd_setup_common fails, or if only general options
 	 * were set.
 	 */
 	str = kstrdup(str, GFP_KERNEL);
-	अगर (str == शून्य) अणु
+	if (str == NULL) {
 		*error_out = "Failed to allocate memory";
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	ret = ubd_setup_common(str, &n, error_out);
-	अगर (ret)
-		जाओ err_मुक्त;
+	if (ret)
+		goto err_free;
 
-	अगर (n == -1) अणु
+	if (n == -1) {
 		ret = 0;
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
 	mutex_lock(&ubd_lock);
 	ret = ubd_add(n, error_out);
-	अगर (ret)
-		ubd_devs[n].file = शून्य;
+	if (ret)
+		ubd_devs[n].file = NULL;
 	mutex_unlock(&ubd_lock);
 
 out:
-	वापस ret;
+	return ret;
 
-err_मुक्त:
-	kमुक्त(str);
-	जाओ out;
-पूर्ण
+err_free:
+	kfree(str);
+	goto out;
+}
 
-अटल पूर्णांक ubd_get_config(अक्षर *name, अक्षर *str, पूर्णांक size, अक्षर **error_out)
-अणु
-	काष्ठा ubd *ubd_dev;
-	पूर्णांक n, len = 0;
+static int ubd_get_config(char *name, char *str, int size, char **error_out)
+{
+	struct ubd *ubd_dev;
+	int n, len = 0;
 
 	n = parse_unit(&name);
-	अगर((n >= MAX_DEV) || (n < 0))अणु
+	if((n >= MAX_DEV) || (n < 0)){
 		*error_out = "ubd_get_config : device number out of range";
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	ubd_dev = &ubd_devs[n];
 	mutex_lock(&ubd_lock);
 
-	अगर(ubd_dev->file == शून्य)अणु
+	if(ubd_dev->file == NULL){
 		CONFIG_CHUNK(str, size, len, "", 1);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	CONFIG_CHUNK(str, size, len, ubd_dev->file, 0);
 
-	अगर(ubd_dev->cow.file != शून्य)अणु
+	if(ubd_dev->cow.file != NULL){
 		CONFIG_CHUNK(str, size, len, ",", 0);
 		CONFIG_CHUNK(str, size, len, ubd_dev->cow.file, 1);
-	पूर्ण
-	अन्यथा CONFIG_CHUNK(str, size, len, "", 1);
+	}
+	else CONFIG_CHUNK(str, size, len, "", 1);
 
  out:
 	mutex_unlock(&ubd_lock);
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल पूर्णांक ubd_id(अक्षर **str, पूर्णांक *start_out, पूर्णांक *end_out)
-अणु
-	पूर्णांक n;
+static int ubd_id(char **str, int *start_out, int *end_out)
+{
+	int n;
 
 	n = parse_unit(str);
 	*start_out = 0;
 	*end_out = MAX_DEV - 1;
-	वापस n;
-पूर्ण
+	return n;
+}
 
-अटल पूर्णांक ubd_हटाओ(पूर्णांक n, अक्षर **error_out)
-अणु
-	काष्ठा gendisk *disk = ubd_gendisk[n];
-	काष्ठा ubd *ubd_dev;
-	पूर्णांक err = -ENODEV;
+static int ubd_remove(int n, char **error_out)
+{
+	struct gendisk *disk = ubd_gendisk[n];
+	struct ubd *ubd_dev;
+	int err = -ENODEV;
 
 	mutex_lock(&ubd_lock);
 
 	ubd_dev = &ubd_devs[n];
 
-	अगर(ubd_dev->file == शून्य)
-		जाओ out;
+	if(ubd_dev->file == NULL)
+		goto out;
 
-	/* you cannot हटाओ a खोलो disk */
+	/* you cannot remove a open disk */
 	err = -EBUSY;
-	अगर(ubd_dev->count > 0)
-		जाओ out;
+	if(ubd_dev->count > 0)
+		goto out;
 
-	ubd_gendisk[n] = शून्य;
-	अगर(disk != शून्य)अणु
+	ubd_gendisk[n] = NULL;
+	if(disk != NULL){
 		del_gendisk(disk);
 		put_disk(disk);
-	पूर्ण
+	}
 
-	अगर(fake_gendisk[n] != शून्य)अणु
+	if(fake_gendisk[n] != NULL){
 		del_gendisk(fake_gendisk[n]);
 		put_disk(fake_gendisk[n]);
-		fake_gendisk[n] = शून्य;
-	पूर्ण
+		fake_gendisk[n] = NULL;
+	}
 
 	err = 0;
-	platक्रमm_device_unरेजिस्टर(&ubd_dev->pdev);
+	platform_device_unregister(&ubd_dev->pdev);
 out:
 	mutex_unlock(&ubd_lock);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /* All these are called by mconsole in process context and without
- * ubd-specअगरic locks.  The काष्ठाure itself is स्थिर except क्रम .list.
+ * ubd-specific locks.  The structure itself is const except for .list.
  */
-अटल काष्ठा mc_device ubd_mc = अणु
+static struct mc_device ubd_mc = {
 	.list		= LIST_HEAD_INIT(ubd_mc.list),
 	.name		= "ubd",
 	.config		= ubd_config,
 	.get_config	= ubd_get_config,
 	.id		= ubd_id,
-	.हटाओ		= ubd_हटाओ,
-पूर्ण;
+	.remove		= ubd_remove,
+};
 
-अटल पूर्णांक __init ubd_mc_init(व्योम)
-अणु
-	mconsole_रेजिस्टर_dev(&ubd_mc);
-	वापस 0;
-पूर्ण
+static int __init ubd_mc_init(void)
+{
+	mconsole_register_dev(&ubd_mc);
+	return 0;
+}
 
 __initcall(ubd_mc_init);
 
-अटल पूर्णांक __init ubd0_init(व्योम)
-अणु
-	काष्ठा ubd *ubd_dev = &ubd_devs[0];
+static int __init ubd0_init(void)
+{
+	struct ubd *ubd_dev = &ubd_devs[0];
 
 	mutex_lock(&ubd_lock);
-	अगर(ubd_dev->file == शून्य)
+	if(ubd_dev->file == NULL)
 		ubd_dev->file = "root_fs";
 	mutex_unlock(&ubd_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 __initcall(ubd0_init);
 
 /* Used in ubd_init, which is an initcall */
-अटल काष्ठा platक्रमm_driver ubd_driver = अणु
-	.driver = अणु
+static struct platform_driver ubd_driver = {
+	.driver = {
 		.name  = DRIVER_NAME,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init ubd_init(व्योम)
-अणु
-	अक्षर *error;
-	पूर्णांक i, err;
+static int __init ubd_init(void)
+{
+	char *error;
+	int i, err;
 
-	अगर (रेजिस्टर_blkdev(UBD_MAJOR, "ubd"))
-		वापस -1;
+	if (register_blkdev(UBD_MAJOR, "ubd"))
+		return -1;
 
-	अगर (fake_major != UBD_MAJOR) अणु
-		अक्षर name[माप("ubd_nnn\0")];
+	if (fake_major != UBD_MAJOR) {
+		char name[sizeof("ubd_nnn\0")];
 
-		snम_लिखो(name, माप(name), "ubd_%d", fake_major);
-		अगर (रेजिस्टर_blkdev(fake_major, "ubd"))
-			वापस -1;
-	पूर्ण
+		snprintf(name, sizeof(name), "ubd_%d", fake_major);
+		if (register_blkdev(fake_major, "ubd"))
+			return -1;
+	}
 
-	irq_req_buffer = kदो_स्मृति_array(UBD_REQ_BUFFER_SIZE,
-				       माप(काष्ठा io_thपढ़ो_req *),
+	irq_req_buffer = kmalloc_array(UBD_REQ_BUFFER_SIZE,
+				       sizeof(struct io_thread_req *),
 				       GFP_KERNEL
 		);
-	irq_reमुख्यder = 0;
+	irq_remainder = 0;
 
-	अगर (irq_req_buffer == शून्य) अणु
-		prपूर्णांकk(KERN_ERR "Failed to initialize ubd buffering\n");
-		वापस -1;
-	पूर्ण
-	io_req_buffer = kदो_स्मृति_array(UBD_REQ_BUFFER_SIZE,
-				      माप(काष्ठा io_thपढ़ो_req *),
+	if (irq_req_buffer == NULL) {
+		printk(KERN_ERR "Failed to initialize ubd buffering\n");
+		return -1;
+	}
+	io_req_buffer = kmalloc_array(UBD_REQ_BUFFER_SIZE,
+				      sizeof(struct io_thread_req *),
 				      GFP_KERNEL
 		);
 
-	io_reमुख्यder = 0;
+	io_remainder = 0;
 
-	अगर (io_req_buffer == शून्य) अणु
-		prपूर्णांकk(KERN_ERR "Failed to initialize ubd buffering\n");
-		वापस -1;
-	पूर्ण
-	platक्रमm_driver_रेजिस्टर(&ubd_driver);
+	if (io_req_buffer == NULL) {
+		printk(KERN_ERR "Failed to initialize ubd buffering\n");
+		return -1;
+	}
+	platform_driver_register(&ubd_driver);
 	mutex_lock(&ubd_lock);
-	क्रम (i = 0; i < MAX_DEV; i++)अणु
+	for (i = 0; i < MAX_DEV; i++){
 		err = ubd_add(i, &error);
-		अगर(err)
-			prपूर्णांकk(KERN_ERR "Failed to initialize ubd device %d :"
+		if(err)
+			printk(KERN_ERR "Failed to initialize ubd device %d :"
 			       "%s\n", i, error);
-	पूर्ण
+	}
 	mutex_unlock(&ubd_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 late_initcall(ubd_init);
 
-अटल पूर्णांक __init ubd_driver_init(व्योम)अणु
-	अचिन्हित दीर्घ stack;
-	पूर्णांक err;
+static int __init ubd_driver_init(void){
+	unsigned long stack;
+	int err;
 
 	/* Set by CONFIG_BLK_DEV_UBD_SYNC or ubd=sync.*/
-	अगर(global_खोलोflags.s)अणु
-		prपूर्णांकk(KERN_INFO "ubd: Synchronous mode\n");
+	if(global_openflags.s){
+		printk(KERN_INFO "ubd: Synchronous mode\n");
 		/* Letting ubd=sync be like using ubd#s= instead of ubd#= is
-		 * enough. So use anyway the io thपढ़ो. */
-	पूर्ण
+		 * enough. So use anyway the io thread. */
+	}
 	stack = alloc_stack(0, 0);
-	io_pid = start_io_thपढ़ो(stack + PAGE_SIZE - माप(व्योम *),
-				 &thपढ़ो_fd);
-	अगर(io_pid < 0)अणु
-		prपूर्णांकk(KERN_ERR
+	io_pid = start_io_thread(stack + PAGE_SIZE - sizeof(void *),
+				 &thread_fd);
+	if(io_pid < 0){
+		printk(KERN_ERR
 		       "ubd : Failed to start I/O thread (errno = %d) - "
 		       "falling back to synchronous I/O\n", -io_pid);
 		io_pid = -1;
-		वापस 0;
-	पूर्ण
-	err = um_request_irq(UBD_IRQ, thपढ़ो_fd, IRQ_READ, ubd_पूर्णांकr,
+		return 0;
+	}
+	err = um_request_irq(UBD_IRQ, thread_fd, IRQ_READ, ubd_intr,
 			     0, "ubd", ubd_devs);
-	अगर(err < 0)
-		prपूर्णांकk(KERN_ERR "um_request_irq failed - errno = %d\n", -err);
-	वापस 0;
-पूर्ण
+	if(err < 0)
+		printk(KERN_ERR "um_request_irq failed - errno = %d\n", -err);
+	return 0;
+}
 
 device_initcall(ubd_driver_init);
 
-अटल पूर्णांक ubd_खोलो(काष्ठा block_device *bdev, भ_शेषe_t mode)
-अणु
-	काष्ठा gendisk *disk = bdev->bd_disk;
-	काष्ठा ubd *ubd_dev = disk->निजी_data;
-	पूर्णांक err = 0;
+static int ubd_open(struct block_device *bdev, fmode_t mode)
+{
+	struct gendisk *disk = bdev->bd_disk;
+	struct ubd *ubd_dev = disk->private_data;
+	int err = 0;
 
 	mutex_lock(&ubd_mutex);
-	अगर(ubd_dev->count == 0)अणु
-		err = ubd_खोलो_dev(ubd_dev);
-		अगर(err)अणु
-			prपूर्णांकk(KERN_ERR "%s: Can't open \"%s\": errno = %d\n",
+	if(ubd_dev->count == 0){
+		err = ubd_open_dev(ubd_dev);
+		if(err){
+			printk(KERN_ERR "%s: Can't open \"%s\": errno = %d\n",
 			       disk->disk_name, ubd_dev->file, -err);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 	ubd_dev->count++;
-	set_disk_ro(disk, !ubd_dev->खोलोflags.w);
+	set_disk_ro(disk, !ubd_dev->openflags.w);
 
 	/* This should no more be needed. And it didn't work anyway to exclude
-	 * पढ़ो-ग_लिखो remounting of fileप्रणालीs.*/
-	/*अगर((mode & FMODE_WRITE) && !ubd_dev->खोलोflags.w)अणु
-	        अगर(--ubd_dev->count == 0) ubd_बंद_dev(ubd_dev);
+	 * read-write remounting of filesystems.*/
+	/*if((mode & FMODE_WRITE) && !ubd_dev->openflags.w){
+	        if(--ubd_dev->count == 0) ubd_close_dev(ubd_dev);
 	        err = -EROFS;
-	पूर्ण*/
+	}*/
 out:
 	mutex_unlock(&ubd_mutex);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम ubd_release(काष्ठा gendisk *disk, भ_शेषe_t mode)
-अणु
-	काष्ठा ubd *ubd_dev = disk->निजी_data;
+static void ubd_release(struct gendisk *disk, fmode_t mode)
+{
+	struct ubd *ubd_dev = disk->private_data;
 
 	mutex_lock(&ubd_mutex);
-	अगर(--ubd_dev->count == 0)
-		ubd_बंद_dev(ubd_dev);
+	if(--ubd_dev->count == 0)
+		ubd_close_dev(ubd_dev);
 	mutex_unlock(&ubd_mutex);
-पूर्ण
+}
 
-अटल व्योम cowअगरy_biपंचांगap(__u64 io_offset, पूर्णांक length, अचिन्हित दीर्घ *cow_mask,
-			  __u64 *cow_offset, अचिन्हित दीर्घ *biपंचांगap,
-			  __u64 biपंचांगap_offset, अचिन्हित दीर्घ *biपंचांगap_words,
-			  __u64 biपंचांगap_len)
-अणु
+static void cowify_bitmap(__u64 io_offset, int length, unsigned long *cow_mask,
+			  __u64 *cow_offset, unsigned long *bitmap,
+			  __u64 bitmap_offset, unsigned long *bitmap_words,
+			  __u64 bitmap_len)
+{
 	__u64 sector = io_offset >> SECTOR_SHIFT;
-	पूर्णांक i, update_biपंचांगap = 0;
+	int i, update_bitmap = 0;
 
-	क्रम (i = 0; i < length >> SECTOR_SHIFT; i++) अणु
-		अगर(cow_mask != शून्य)
-			ubd_set_bit(i, (अचिन्हित अक्षर *) cow_mask);
-		अगर(ubd_test_bit(sector + i, (अचिन्हित अक्षर *) biपंचांगap))
-			जारी;
+	for (i = 0; i < length >> SECTOR_SHIFT; i++) {
+		if(cow_mask != NULL)
+			ubd_set_bit(i, (unsigned char *) cow_mask);
+		if(ubd_test_bit(sector + i, (unsigned char *) bitmap))
+			continue;
 
-		update_biपंचांगap = 1;
-		ubd_set_bit(sector + i, (अचिन्हित अक्षर *) biपंचांगap);
-	पूर्ण
+		update_bitmap = 1;
+		ubd_set_bit(sector + i, (unsigned char *) bitmap);
+	}
 
-	अगर(!update_biपंचांगap)
-		वापस;
+	if(!update_bitmap)
+		return;
 
-	*cow_offset = sector / (माप(अचिन्हित दीर्घ) * 8);
+	*cow_offset = sector / (sizeof(unsigned long) * 8);
 
-	/* This takes care of the हाल where we're exactly at the end of the
+	/* This takes care of the case where we're exactly at the end of the
 	 * device, and *cow_offset + 1 is off the end.  So, just back it up
-	 * by one word.  Thanks to Lynn Kerby क्रम the fix and James McMechan
-	 * क्रम the original diagnosis.
+	 * by one word.  Thanks to Lynn Kerby for the fix and James McMechan
+	 * for the original diagnosis.
 	 */
-	अगर (*cow_offset == (DIV_ROUND_UP(biपंचांगap_len,
-					 माप(अचिन्हित दीर्घ)) - 1))
+	if (*cow_offset == (DIV_ROUND_UP(bitmap_len,
+					 sizeof(unsigned long)) - 1))
 		(*cow_offset)--;
 
-	biपंचांगap_words[0] = biपंचांगap[*cow_offset];
-	biपंचांगap_words[1] = biपंचांगap[*cow_offset + 1];
+	bitmap_words[0] = bitmap[*cow_offset];
+	bitmap_words[1] = bitmap[*cow_offset + 1];
 
-	*cow_offset *= माप(अचिन्हित दीर्घ);
-	*cow_offset += biपंचांगap_offset;
-पूर्ण
+	*cow_offset *= sizeof(unsigned long);
+	*cow_offset += bitmap_offset;
+}
 
-अटल व्योम cowअगरy_req(काष्ठा io_thपढ़ो_req *req, काष्ठा io_desc *segment,
-		       अचिन्हित दीर्घ offset, अचिन्हित दीर्घ *biपंचांगap,
-		       __u64 biपंचांगap_offset, __u64 biपंचांगap_len)
-अणु
+static void cowify_req(struct io_thread_req *req, struct io_desc *segment,
+		       unsigned long offset, unsigned long *bitmap,
+		       __u64 bitmap_offset, __u64 bitmap_len)
+{
 	__u64 sector = offset >> SECTOR_SHIFT;
-	पूर्णांक i;
+	int i;
 
-	अगर (segment->length > (माप(segment->sector_mask) * 8) << SECTOR_SHIFT)
+	if (segment->length > (sizeof(segment->sector_mask) * 8) << SECTOR_SHIFT)
 		panic("Operation too long");
 
-	अगर (req_op(req->req) == REQ_OP_READ) अणु
-		क्रम (i = 0; i < segment->length >> SECTOR_SHIFT; i++) अणु
-			अगर(ubd_test_bit(sector + i, (अचिन्हित अक्षर *) biपंचांगap))
-				ubd_set_bit(i, (अचिन्हित अक्षर *)
+	if (req_op(req->req) == REQ_OP_READ) {
+		for (i = 0; i < segment->length >> SECTOR_SHIFT; i++) {
+			if(ubd_test_bit(sector + i, (unsigned char *) bitmap))
+				ubd_set_bit(i, (unsigned char *)
 					    &segment->sector_mask);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		cowअगरy_biपंचांगap(offset, segment->length, &segment->sector_mask,
-			      &segment->cow_offset, biपंचांगap, biपंचांगap_offset,
-			      segment->biपंचांगap_words, biपंचांगap_len);
-	पूर्ण
-पूर्ण
+		}
+	} else {
+		cowify_bitmap(offset, segment->length, &segment->sector_mask,
+			      &segment->cow_offset, bitmap, bitmap_offset,
+			      segment->bitmap_words, bitmap_len);
+	}
+}
 
-अटल व्योम ubd_map_req(काष्ठा ubd *dev, काष्ठा io_thपढ़ो_req *io_req,
-			काष्ठा request *req)
-अणु
-	काष्ठा bio_vec bvec;
-	काष्ठा req_iterator iter;
-	पूर्णांक i = 0;
-	अचिन्हित दीर्घ byte_offset = io_req->offset;
-	पूर्णांक op = req_op(req);
+static void ubd_map_req(struct ubd *dev, struct io_thread_req *io_req,
+			struct request *req)
+{
+	struct bio_vec bvec;
+	struct req_iterator iter;
+	int i = 0;
+	unsigned long byte_offset = io_req->offset;
+	int op = req_op(req);
 
-	अगर (op == REQ_OP_WRITE_ZEROES || op == REQ_OP_DISCARD) अणु
-		io_req->io_desc[0].buffer = शून्य;
+	if (op == REQ_OP_WRITE_ZEROES || op == REQ_OP_DISCARD) {
+		io_req->io_desc[0].buffer = NULL;
 		io_req->io_desc[0].length = blk_rq_bytes(req);
-	पूर्ण अन्यथा अणु
-		rq_क्रम_each_segment(bvec, req, iter) अणु
+	} else {
+		rq_for_each_segment(bvec, req, iter) {
 			BUG_ON(i >= io_req->desc_cnt);
 
 			io_req->io_desc[i].buffer =
 				page_address(bvec.bv_page) + bvec.bv_offset;
 			io_req->io_desc[i].length = bvec.bv_len;
 			i++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (dev->cow.file) अणु
-		क्रम (i = 0; i < io_req->desc_cnt; i++) अणु
-			cowअगरy_req(io_req, &io_req->io_desc[i], byte_offset,
-				   dev->cow.biपंचांगap, dev->cow.biपंचांगap_offset,
-				   dev->cow.biपंचांगap_len);
+	if (dev->cow.file) {
+		for (i = 0; i < io_req->desc_cnt; i++) {
+			cowify_req(io_req, &io_req->io_desc[i], byte_offset,
+				   dev->cow.bitmap, dev->cow.bitmap_offset,
+				   dev->cow.bitmap_len);
 			byte_offset += io_req->io_desc[i].length;
-		पूर्ण
+		}
 
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल काष्ठा io_thपढ़ो_req *ubd_alloc_req(काष्ठा ubd *dev, काष्ठा request *req,
-					   पूर्णांक desc_cnt)
-अणु
-	काष्ठा io_thपढ़ो_req *io_req;
-	पूर्णांक i;
+static struct io_thread_req *ubd_alloc_req(struct ubd *dev, struct request *req,
+					   int desc_cnt)
+{
+	struct io_thread_req *io_req;
+	int i;
 
-	io_req = kदो_स्मृति(माप(*io_req) +
-			 (desc_cnt * माप(काष्ठा io_desc)),
+	io_req = kmalloc(sizeof(*io_req) +
+			 (desc_cnt * sizeof(struct io_desc)),
 			 GFP_ATOMIC);
-	अगर (!io_req)
-		वापस शून्य;
+	if (!io_req)
+		return NULL;
 
 	io_req->req = req;
-	अगर (dev->cow.file)
+	if (dev->cow.file)
 		io_req->fds[0] = dev->cow.fd;
-	अन्यथा
+	else
 		io_req->fds[0] = dev->fd;
 	io_req->error = 0;
 	io_req->sectorsize = SECTOR_SIZE;
@@ -1420,290 +1419,290 @@ out:
 	io_req->offsets[0] = 0;
 	io_req->offsets[1] = dev->cow.data_offset;
 
-	क्रम (i = 0 ; i < desc_cnt; i++) अणु
+	for (i = 0 ; i < desc_cnt; i++) {
 		io_req->io_desc[i].sector_mask = 0;
 		io_req->io_desc[i].cow_offset = -1;
-	पूर्ण
+	}
 
-	वापस io_req;
-पूर्ण
+	return io_req;
+}
 
-अटल पूर्णांक ubd_submit_request(काष्ठा ubd *dev, काष्ठा request *req)
-अणु
-	पूर्णांक segs = 0;
-	काष्ठा io_thपढ़ो_req *io_req;
-	पूर्णांक ret;
-	पूर्णांक op = req_op(req);
+static int ubd_submit_request(struct ubd *dev, struct request *req)
+{
+	int segs = 0;
+	struct io_thread_req *io_req;
+	int ret;
+	int op = req_op(req);
 
-	अगर (op == REQ_OP_FLUSH)
+	if (op == REQ_OP_FLUSH)
 		segs = 0;
-	अन्यथा अगर (op == REQ_OP_WRITE_ZEROES || op == REQ_OP_DISCARD)
+	else if (op == REQ_OP_WRITE_ZEROES || op == REQ_OP_DISCARD)
 		segs = 1;
-	अन्यथा
+	else
 		segs = blk_rq_nr_phys_segments(req);
 
 	io_req = ubd_alloc_req(dev, req, segs);
-	अगर (!io_req)
-		वापस -ENOMEM;
+	if (!io_req)
+		return -ENOMEM;
 
 	io_req->desc_cnt = segs;
-	अगर (segs)
+	if (segs)
 		ubd_map_req(dev, io_req, req);
 
-	ret = os_ग_लिखो_file(thपढ़ो_fd, &io_req, माप(io_req));
-	अगर (ret != माप(io_req)) अणु
-		अगर (ret != -EAGAIN)
+	ret = os_write_file(thread_fd, &io_req, sizeof(io_req));
+	if (ret != sizeof(io_req)) {
+		if (ret != -EAGAIN)
 			pr_err("write to io thread failed: %d\n", -ret);
-		kमुक्त(io_req);
-	पूर्ण
-	वापस ret;
-पूर्ण
+		kfree(io_req);
+	}
+	return ret;
+}
 
-अटल blk_status_t ubd_queue_rq(काष्ठा blk_mq_hw_ctx *hctx,
-				 स्थिर काष्ठा blk_mq_queue_data *bd)
-अणु
-	काष्ठा ubd *ubd_dev = hctx->queue->queuedata;
-	काष्ठा request *req = bd->rq;
-	पूर्णांक ret = 0, res = BLK_STS_OK;
+static blk_status_t ubd_queue_rq(struct blk_mq_hw_ctx *hctx,
+				 const struct blk_mq_queue_data *bd)
+{
+	struct ubd *ubd_dev = hctx->queue->queuedata;
+	struct request *req = bd->rq;
+	int ret = 0, res = BLK_STS_OK;
 
 	blk_mq_start_request(req);
 
 	spin_lock_irq(&ubd_dev->lock);
 
-	चयन (req_op(req)) अणु
-	हाल REQ_OP_FLUSH:
-	हाल REQ_OP_READ:
-	हाल REQ_OP_WRITE:
-	हाल REQ_OP_DISCARD:
-	हाल REQ_OP_WRITE_ZEROES:
+	switch (req_op(req)) {
+	case REQ_OP_FLUSH:
+	case REQ_OP_READ:
+	case REQ_OP_WRITE:
+	case REQ_OP_DISCARD:
+	case REQ_OP_WRITE_ZEROES:
 		ret = ubd_submit_request(ubd_dev, req);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		WARN_ON_ONCE(1);
 		res = BLK_STS_NOTSUPP;
-	पूर्ण
+	}
 
 	spin_unlock_irq(&ubd_dev->lock);
 
-	अगर (ret < 0) अणु
-		अगर (ret == -ENOMEM)
+	if (ret < 0) {
+		if (ret == -ENOMEM)
 			res = BLK_STS_RESOURCE;
-		अन्यथा
+		else
 			res = BLK_STS_DEV_RESOURCE;
-	पूर्ण
+	}
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल पूर्णांक ubd_getgeo(काष्ठा block_device *bdev, काष्ठा hd_geometry *geo)
-अणु
-	काष्ठा ubd *ubd_dev = bdev->bd_disk->निजी_data;
+static int ubd_getgeo(struct block_device *bdev, struct hd_geometry *geo)
+{
+	struct ubd *ubd_dev = bdev->bd_disk->private_data;
 
 	geo->heads = 128;
 	geo->sectors = 32;
 	geo->cylinders = ubd_dev->size / (128 * 32 * 512);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ubd_ioctl(काष्ठा block_device *bdev, भ_शेषe_t mode,
-		     अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा ubd *ubd_dev = bdev->bd_disk->निजी_data;
+static int ubd_ioctl(struct block_device *bdev, fmode_t mode,
+		     unsigned int cmd, unsigned long arg)
+{
+	struct ubd *ubd_dev = bdev->bd_disk->private_data;
 	u16 ubd_id[ATA_ID_WORDS];
 
-	चयन (cmd) अणु
-		काष्ठा cdrom_volctrl volume;
-	हाल HDIO_GET_IDENTITY:
-		स_रखो(&ubd_id, 0, ATA_ID_WORDS * 2);
+	switch (cmd) {
+		struct cdrom_volctrl volume;
+	case HDIO_GET_IDENTITY:
+		memset(&ubd_id, 0, ATA_ID_WORDS * 2);
 		ubd_id[ATA_ID_CYLS]	= ubd_dev->size / (128 * 32 * 512);
 		ubd_id[ATA_ID_HEADS]	= 128;
 		ubd_id[ATA_ID_SECTORS]	= 32;
-		अगर(copy_to_user((अक्षर __user *) arg, (अक्षर *) &ubd_id,
-				 माप(ubd_id)))
-			वापस -EFAULT;
-		वापस 0;
+		if(copy_to_user((char __user *) arg, (char *) &ubd_id,
+				 sizeof(ubd_id)))
+			return -EFAULT;
+		return 0;
 
-	हाल CDROMVOLREAD:
-		अगर(copy_from_user(&volume, (अक्षर __user *) arg, माप(volume)))
-			वापस -EFAULT;
+	case CDROMVOLREAD:
+		if(copy_from_user(&volume, (char __user *) arg, sizeof(volume)))
+			return -EFAULT;
 		volume.channel0 = 255;
 		volume.channel1 = 255;
 		volume.channel2 = 255;
 		volume.channel3 = 255;
-		अगर(copy_to_user((अक्षर __user *) arg, &volume, माप(volume)))
-			वापस -EFAULT;
-		वापस 0;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+		if(copy_to_user((char __user *) arg, &volume, sizeof(volume)))
+			return -EFAULT;
+		return 0;
+	}
+	return -EINVAL;
+}
 
-अटल पूर्णांक map_error(पूर्णांक error_code)
-अणु
-	चयन (error_code) अणु
-	हाल 0:
-		वापस BLK_STS_OK;
-	हाल ENOSYS:
-	हाल EOPNOTSUPP:
-		वापस BLK_STS_NOTSUPP;
-	हाल ENOSPC:
-		वापस BLK_STS_NOSPC;
-	पूर्ण
-	वापस BLK_STS_IOERR;
-पूर्ण
+static int map_error(int error_code)
+{
+	switch (error_code) {
+	case 0:
+		return BLK_STS_OK;
+	case ENOSYS:
+	case EOPNOTSUPP:
+		return BLK_STS_NOTSUPP;
+	case ENOSPC:
+		return BLK_STS_NOSPC;
+	}
+	return BLK_STS_IOERR;
+}
 
 /*
  * Everything from here onwards *IS NOT PART OF THE KERNEL*
  *
  * The following functions are part of UML hypervisor code.
  * All functions from here onwards are executed as a helper
- * thपढ़ो and are not allowed to execute any kernel functions.
+ * thread and are not allowed to execute any kernel functions.
  *
  * Any communication must occur strictly via shared memory and IPC.
  *
- * Do not add prपूर्णांकks, locks, kernel memory operations, etc - it
+ * Do not add printks, locks, kernel memory operations, etc - it
  * will result in unpredictable behaviour and/or crashes.
  */
 
-अटल पूर्णांक update_biपंचांगap(काष्ठा io_thपढ़ो_req *req, काष्ठा io_desc *segment)
-अणु
-	पूर्णांक n;
+static int update_bitmap(struct io_thread_req *req, struct io_desc *segment)
+{
+	int n;
 
-	अगर (segment->cow_offset == -1)
-		वापस map_error(0);
+	if (segment->cow_offset == -1)
+		return map_error(0);
 
-	n = os_pग_लिखो_file(req->fds[1], &segment->biपंचांगap_words,
-			  माप(segment->biपंचांगap_words), segment->cow_offset);
-	अगर (n != माप(segment->biपंचांगap_words))
-		वापस map_error(-n);
+	n = os_pwrite_file(req->fds[1], &segment->bitmap_words,
+			  sizeof(segment->bitmap_words), segment->cow_offset);
+	if (n != sizeof(segment->bitmap_words))
+		return map_error(-n);
 
-	वापस map_error(0);
-पूर्ण
+	return map_error(0);
+}
 
-अटल व्योम करो_io(काष्ठा io_thपढ़ो_req *req, काष्ठा io_desc *desc)
-अणु
-	अक्षर *buf = शून्य;
-	अचिन्हित दीर्घ len;
-	पूर्णांक n, nsectors, start, end, bit;
+static void do_io(struct io_thread_req *req, struct io_desc *desc)
+{
+	char *buf = NULL;
+	unsigned long len;
+	int n, nsectors, start, end, bit;
 	__u64 off;
 
-	/* FLUSH is really a special हाल, we cannot "case" it with others */
+	/* FLUSH is really a special case, we cannot "case" it with others */
 
-	अगर (req_op(req->req) == REQ_OP_FLUSH) अणु
+	if (req_op(req->req) == REQ_OP_FLUSH) {
 		/* fds[0] is always either the rw image or our cow file */
 		req->error = map_error(-os_sync_file(req->fds[0]));
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	nsectors = desc->length / req->sectorsize;
 	start = 0;
-	करो अणु
-		bit = ubd_test_bit(start, (अचिन्हित अक्षर *) &desc->sector_mask);
+	do {
+		bit = ubd_test_bit(start, (unsigned char *) &desc->sector_mask);
 		end = start;
-		जबतक((end < nsectors) &&
-		      (ubd_test_bit(end, (अचिन्हित अक्षर *) &desc->sector_mask) == bit))
+		while((end < nsectors) &&
+		      (ubd_test_bit(end, (unsigned char *) &desc->sector_mask) == bit))
 			end++;
 
 		off = req->offset + req->offsets[bit] +
 			start * req->sectorsize;
 		len = (end - start) * req->sectorsize;
-		अगर (desc->buffer != शून्य)
+		if (desc->buffer != NULL)
 			buf = &desc->buffer[start * req->sectorsize];
 
-		चयन (req_op(req->req)) अणु
-		हाल REQ_OP_READ:
+		switch (req_op(req->req)) {
+		case REQ_OP_READ:
 			n = 0;
-			करो अणु
+			do {
 				buf = &buf[n];
 				len -= n;
-				n = os_pपढ़ो_file(req->fds[bit], buf, len, off);
-				अगर (n < 0) अणु
+				n = os_pread_file(req->fds[bit], buf, len, off);
+				if (n < 0) {
 					req->error = map_error(-n);
-					वापस;
-				पूर्ण
-			पूर्ण जबतक((n < len) && (n != 0));
-			अगर (n < len) स_रखो(&buf[n], 0, len - n);
-			अवरोध;
-		हाल REQ_OP_WRITE:
-			n = os_pग_लिखो_file(req->fds[bit], buf, len, off);
-			अगर(n != len)अणु
+					return;
+				}
+			} while((n < len) && (n != 0));
+			if (n < len) memset(&buf[n], 0, len - n);
+			break;
+		case REQ_OP_WRITE:
+			n = os_pwrite_file(req->fds[bit], buf, len, off);
+			if(n != len){
 				req->error = map_error(-n);
-				वापस;
-			पूर्ण
-			अवरोध;
-		हाल REQ_OP_DISCARD:
-		हाल REQ_OP_WRITE_ZEROES:
+				return;
+			}
+			break;
+		case REQ_OP_DISCARD:
+		case REQ_OP_WRITE_ZEROES:
 			n = os_falloc_punch(req->fds[bit], off, len);
-			अगर (n) अणु
+			if (n) {
 				req->error = map_error(-n);
-				वापस;
-			पूर्ण
-			अवरोध;
-		शेष:
+				return;
+			}
+			break;
+		default:
 			WARN_ON_ONCE(1);
 			req->error = BLK_STS_NOTSUPP;
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		start = end;
-	पूर्ण जबतक(start < nsectors);
+	} while(start < nsectors);
 
 	req->offset += len;
-	req->error = update_biपंचांगap(req, desc);
-पूर्ण
+	req->error = update_bitmap(req, desc);
+}
 
-/* Changed in start_io_thपढ़ो, which is serialized by being called only
+/* Changed in start_io_thread, which is serialized by being called only
  * from ubd_init, which is an initcall.
  */
-पूर्णांक kernel_fd = -1;
+int kernel_fd = -1;
 
-/* Only changed by the io thपढ़ो. XXX: currently unused. */
-अटल पूर्णांक io_count = 0;
+/* Only changed by the io thread. XXX: currently unused. */
+static int io_count = 0;
 
-पूर्णांक io_thपढ़ो(व्योम *arg)
-अणु
-	पूर्णांक n, count, written, res;
+int io_thread(void *arg)
+{
+	int n, count, written, res;
 
-	os_fix_helper_संकेतs();
+	os_fix_helper_signals();
 
-	जबतक(1)अणु
-		n = bulk_req_safe_पढ़ो(
+	while(1){
+		n = bulk_req_safe_read(
 			kernel_fd,
 			io_req_buffer,
-			&io_reमुख्यder,
-			&io_reमुख्यder_size,
+			&io_remainder,
+			&io_remainder_size,
 			UBD_REQ_BUFFER_SIZE
 		);
-		अगर (n <= 0) अणु
-			अगर (n == -EAGAIN)
-				ubd_पढ़ो_poll(-1);
+		if (n <= 0) {
+			if (n == -EAGAIN)
+				ubd_read_poll(-1);
 
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		क्रम (count = 0; count < n/माप(काष्ठा io_thपढ़ो_req *); count++) अणु
-			काष्ठा io_thपढ़ो_req *req = (*io_req_buffer)[count];
-			पूर्णांक i;
+		for (count = 0; count < n/sizeof(struct io_thread_req *); count++) {
+			struct io_thread_req *req = (*io_req_buffer)[count];
+			int i;
 
 			io_count++;
-			क्रम (i = 0; !req->error && i < req->desc_cnt; i++)
-				करो_io(req, &(req->io_desc[i]));
+			for (i = 0; !req->error && i < req->desc_cnt; i++)
+				do_io(req, &(req->io_desc[i]));
 
-		पूर्ण
+		}
 
 		written = 0;
 
-		करो अणु
-			res = os_ग_लिखो_file(kernel_fd,
-					    ((अक्षर *) io_req_buffer) + written,
+		do {
+			res = os_write_file(kernel_fd,
+					    ((char *) io_req_buffer) + written,
 					    n - written);
-			अगर (res >= 0) अणु
+			if (res >= 0) {
 				written += res;
-			पूर्ण
-			अगर (written < n) अणु
-				ubd_ग_लिखो_poll(-1);
-			पूर्ण
-		पूर्ण जबतक (written < n);
-	पूर्ण
+			}
+			if (written < n) {
+				ubd_write_poll(-1);
+			}
+		} while (written < n);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

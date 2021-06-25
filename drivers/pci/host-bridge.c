@@ -1,101 +1,100 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Host bridge related code
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/pci.h>
+#include <linux/module.h>
 
-#समावेश "pci.h"
+#include "pci.h"
 
-अटल काष्ठा pci_bus *find_pci_root_bus(काष्ठा pci_bus *bus)
-अणु
-	जबतक (bus->parent)
+static struct pci_bus *find_pci_root_bus(struct pci_bus *bus)
+{
+	while (bus->parent)
 		bus = bus->parent;
 
-	वापस bus;
-पूर्ण
+	return bus;
+}
 
-काष्ठा pci_host_bridge *pci_find_host_bridge(काष्ठा pci_bus *bus)
-अणु
-	काष्ठा pci_bus *root_bus = find_pci_root_bus(bus);
+struct pci_host_bridge *pci_find_host_bridge(struct pci_bus *bus)
+{
+	struct pci_bus *root_bus = find_pci_root_bus(bus);
 
-	वापस to_pci_host_bridge(root_bus->bridge);
-पूर्ण
+	return to_pci_host_bridge(root_bus->bridge);
+}
 
-काष्ठा device *pci_get_host_bridge_device(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा pci_bus *root_bus = find_pci_root_bus(dev->bus);
-	काष्ठा device *bridge = root_bus->bridge;
+struct device *pci_get_host_bridge_device(struct pci_dev *dev)
+{
+	struct pci_bus *root_bus = find_pci_root_bus(dev->bus);
+	struct device *bridge = root_bus->bridge;
 
 	kobject_get(&bridge->kobj);
-	वापस bridge;
-पूर्ण
+	return bridge;
+}
 
-व्योम  pci_put_host_bridge_device(काष्ठा device *dev)
-अणु
+void  pci_put_host_bridge_device(struct device *dev)
+{
 	kobject_put(&dev->kobj);
-पूर्ण
+}
 
-व्योम pci_set_host_bridge_release(काष्ठा pci_host_bridge *bridge,
-				 व्योम (*release_fn)(काष्ठा pci_host_bridge *),
-				 व्योम *release_data)
-अणु
+void pci_set_host_bridge_release(struct pci_host_bridge *bridge,
+				 void (*release_fn)(struct pci_host_bridge *),
+				 void *release_data)
+{
 	bridge->release_fn = release_fn;
 	bridge->release_data = release_data;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(pci_set_host_bridge_release);
 
-व्योम pcibios_resource_to_bus(काष्ठा pci_bus *bus, काष्ठा pci_bus_region *region,
-			     काष्ठा resource *res)
-अणु
-	काष्ठा pci_host_bridge *bridge = pci_find_host_bridge(bus);
-	काष्ठा resource_entry *winकरोw;
-	resource_माप_प्रकार offset = 0;
+void pcibios_resource_to_bus(struct pci_bus *bus, struct pci_bus_region *region,
+			     struct resource *res)
+{
+	struct pci_host_bridge *bridge = pci_find_host_bridge(bus);
+	struct resource_entry *window;
+	resource_size_t offset = 0;
 
-	resource_list_क्रम_each_entry(winकरोw, &bridge->winकरोws) अणु
-		अगर (resource_contains(winकरोw->res, res)) अणु
-			offset = winकरोw->offset;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+	resource_list_for_each_entry(window, &bridge->windows) {
+		if (resource_contains(window->res, res)) {
+			offset = window->offset;
+			break;
+		}
+	}
 
 	region->start = res->start - offset;
 	region->end = res->end - offset;
-पूर्ण
+}
 EXPORT_SYMBOL(pcibios_resource_to_bus);
 
-अटल bool region_contains(काष्ठा pci_bus_region *region1,
-			    काष्ठा pci_bus_region *region2)
-अणु
-	वापस region1->start <= region2->start && region1->end >= region2->end;
-पूर्ण
+static bool region_contains(struct pci_bus_region *region1,
+			    struct pci_bus_region *region2)
+{
+	return region1->start <= region2->start && region1->end >= region2->end;
+}
 
-व्योम pcibios_bus_to_resource(काष्ठा pci_bus *bus, काष्ठा resource *res,
-			     काष्ठा pci_bus_region *region)
-अणु
-	काष्ठा pci_host_bridge *bridge = pci_find_host_bridge(bus);
-	काष्ठा resource_entry *winकरोw;
-	resource_माप_प्रकार offset = 0;
+void pcibios_bus_to_resource(struct pci_bus *bus, struct resource *res,
+			     struct pci_bus_region *region)
+{
+	struct pci_host_bridge *bridge = pci_find_host_bridge(bus);
+	struct resource_entry *window;
+	resource_size_t offset = 0;
 
-	resource_list_क्रम_each_entry(winकरोw, &bridge->winकरोws) अणु
-		काष्ठा pci_bus_region bus_region;
+	resource_list_for_each_entry(window, &bridge->windows) {
+		struct pci_bus_region bus_region;
 
-		अगर (resource_type(res) != resource_type(winकरोw->res))
-			जारी;
+		if (resource_type(res) != resource_type(window->res))
+			continue;
 
-		bus_region.start = winकरोw->res->start - winकरोw->offset;
-		bus_region.end = winकरोw->res->end - winकरोw->offset;
+		bus_region.start = window->res->start - window->offset;
+		bus_region.end = window->res->end - window->offset;
 
-		अगर (region_contains(&bus_region, region)) अणु
-			offset = winकरोw->offset;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+		if (region_contains(&bus_region, region)) {
+			offset = window->offset;
+			break;
+		}
+	}
 
 	res->start = region->start + offset;
 	res->end = region->end + offset;
-पूर्ण
+}
 EXPORT_SYMBOL(pcibios_bus_to_resource);

@@ -1,529 +1,528 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  acpi_utils.c - ACPI Utility Functions ($Revision: 10 $)
  *
- *  Copyright (C) 2001, 2002 Andy Grover <andrew.grover@पूर्णांकel.com>
- *  Copyright (C) 2001, 2002 Paul Diefenbaugh <paul.s.diefenbaugh@पूर्णांकel.com>
+ *  Copyright (C) 2001, 2002 Andy Grover <andrew.grover@intel.com>
+ *  Copyright (C) 2001, 2002 Paul Diefenbaugh <paul.s.diefenbaugh@intel.com>
  */
 
-#घोषणा pr_fmt(fmt) "ACPI: utils: " fmt
+#define pr_fmt(fmt) "ACPI: utils: " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/init.h>
-#समावेश <linux/types.h>
-#समावेश <linux/hardirq.h>
-#समावेश <linux/acpi.h>
-#समावेश <linux/dynamic_debug.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/init.h>
+#include <linux/types.h>
+#include <linux/hardirq.h>
+#include <linux/acpi.h>
+#include <linux/dynamic_debug.h>
 
-#समावेश "internal.h"
-#समावेश "sleep.h"
+#include "internal.h"
+#include "sleep.h"
 
 /* --------------------------------------------------------------------------
                             Object Evaluation Helpers
    -------------------------------------------------------------------------- */
-अटल व्योम acpi_util_eval_error(acpi_handle h, acpi_string p, acpi_status s)
-अणु
-	acpi_handle_debug(h, "Evaluate [%s]: %s\n", p, acpi_क्रमmat_exception(s));
-पूर्ण
+static void acpi_util_eval_error(acpi_handle h, acpi_string p, acpi_status s)
+{
+	acpi_handle_debug(h, "Evaluate [%s]: %s\n", p, acpi_format_exception(s));
+}
 
 acpi_status
-acpi_extract_package(जोड़ acpi_object *package,
-		     काष्ठा acpi_buffer *क्रमmat, काष्ठा acpi_buffer *buffer)
-अणु
+acpi_extract_package(union acpi_object *package,
+		     struct acpi_buffer *format, struct acpi_buffer *buffer)
+{
 	u32 size_required = 0;
 	u32 tail_offset = 0;
-	अक्षर *क्रमmat_string = शून्य;
-	u32 क्रमmat_count = 0;
+	char *format_string = NULL;
+	u32 format_count = 0;
 	u32 i = 0;
-	u8 *head = शून्य;
-	u8 *tail = शून्य;
+	u8 *head = NULL;
+	u8 *tail = NULL;
 
 
-	अगर (!package || (package->type != ACPI_TYPE_PACKAGE)
-	    || (package->package.count < 1)) अणु
+	if (!package || (package->type != ACPI_TYPE_PACKAGE)
+	    || (package->package.count < 1)) {
 		pr_debug("Invalid package argument\n");
-		वापस AE_BAD_PARAMETER;
-	पूर्ण
+		return AE_BAD_PARAMETER;
+	}
 
-	अगर (!क्रमmat || !क्रमmat->poपूर्णांकer || (क्रमmat->length < 1)) अणु
+	if (!format || !format->pointer || (format->length < 1)) {
 		pr_debug("Invalid format argument\n");
-		वापस AE_BAD_PARAMETER;
-	पूर्ण
+		return AE_BAD_PARAMETER;
+	}
 
-	अगर (!buffer) अणु
+	if (!buffer) {
 		pr_debug("Invalid buffer argument\n");
-		वापस AE_BAD_PARAMETER;
-	पूर्ण
+		return AE_BAD_PARAMETER;
+	}
 
-	क्रमmat_count = (क्रमmat->length / माप(अक्षर)) - 1;
-	अगर (क्रमmat_count > package->package.count) अणु
+	format_count = (format->length / sizeof(char)) - 1;
+	if (format_count > package->package.count) {
 		pr_debug("Format specifies more objects [%d] than present [%d]\n",
-			 क्रमmat_count, package->package.count);
-		वापस AE_BAD_DATA;
-	पूर्ण
+			 format_count, package->package.count);
+		return AE_BAD_DATA;
+	}
 
-	क्रमmat_string = क्रमmat->poपूर्णांकer;
+	format_string = format->pointer;
 
 	/*
 	 * Calculate size_required.
 	 */
-	क्रम (i = 0; i < क्रमmat_count; i++) अणु
+	for (i = 0; i < format_count; i++) {
 
-		जोड़ acpi_object *element = &(package->package.elements[i]);
+		union acpi_object *element = &(package->package.elements[i]);
 
-		चयन (element->type) अणु
+		switch (element->type) {
 
-		हाल ACPI_TYPE_INTEGER:
-			चयन (क्रमmat_string[i]) अणु
-			हाल 'N':
-				size_required += माप(u64);
-				tail_offset += माप(u64);
-				अवरोध;
-			हाल 'S':
+		case ACPI_TYPE_INTEGER:
+			switch (format_string[i]) {
+			case 'N':
+				size_required += sizeof(u64);
+				tail_offset += sizeof(u64);
+				break;
+			case 'S':
 				size_required +=
-				    माप(अक्षर *) + माप(u64) +
-				    माप(अक्षर);
-				tail_offset += माप(अक्षर *);
-				अवरोध;
-			शेष:
+				    sizeof(char *) + sizeof(u64) +
+				    sizeof(char);
+				tail_offset += sizeof(char *);
+				break;
+			default:
 				pr_debug("Invalid package element [%d]: got number, expected [%c]\n",
-					 i, क्रमmat_string[i]);
-				वापस AE_BAD_DATA;
-			पूर्ण
-			अवरोध;
+					 i, format_string[i]);
+				return AE_BAD_DATA;
+			}
+			break;
 
-		हाल ACPI_TYPE_STRING:
-		हाल ACPI_TYPE_BUFFER:
-			चयन (क्रमmat_string[i]) अणु
-			हाल 'S':
+		case ACPI_TYPE_STRING:
+		case ACPI_TYPE_BUFFER:
+			switch (format_string[i]) {
+			case 'S':
 				size_required +=
-				    माप(अक्षर *) +
-				    (element->string.length * माप(अक्षर)) +
-				    माप(अक्षर);
-				tail_offset += माप(अक्षर *);
-				अवरोध;
-			हाल 'B':
+				    sizeof(char *) +
+				    (element->string.length * sizeof(char)) +
+				    sizeof(char);
+				tail_offset += sizeof(char *);
+				break;
+			case 'B':
 				size_required +=
-				    माप(u8 *) + element->buffer.length;
-				tail_offset += माप(u8 *);
-				अवरोध;
-			शेष:
+				    sizeof(u8 *) + element->buffer.length;
+				tail_offset += sizeof(u8 *);
+				break;
+			default:
 				pr_debug("Invalid package element [%d] got string/buffer, expected [%c]\n",
-					 i, क्रमmat_string[i]);
-				वापस AE_BAD_DATA;
-			पूर्ण
-			अवरोध;
-		हाल ACPI_TYPE_LOCAL_REFERENCE:
-			चयन (क्रमmat_string[i]) अणु
-			हाल 'R':
-				size_required += माप(व्योम *);
-				tail_offset += माप(व्योम *);
-				अवरोध;
-			शेष:
+					 i, format_string[i]);
+				return AE_BAD_DATA;
+			}
+			break;
+		case ACPI_TYPE_LOCAL_REFERENCE:
+			switch (format_string[i]) {
+			case 'R':
+				size_required += sizeof(void *);
+				tail_offset += sizeof(void *);
+				break;
+			default:
 				pr_debug("Invalid package element [%d] got reference, expected [%c]\n",
-					 i, क्रमmat_string[i]);
-				वापस AE_BAD_DATA;
-			पूर्ण
-			अवरोध;
+					 i, format_string[i]);
+				return AE_BAD_DATA;
+			}
+			break;
 
-		हाल ACPI_TYPE_PACKAGE:
-		शेष:
+		case ACPI_TYPE_PACKAGE:
+		default:
 			pr_debug("Unsupported element at index=%d\n", i);
 			/* TBD: handle nested packages... */
-			वापस AE_SUPPORT;
-		पूर्ण
-	पूर्ण
+			return AE_SUPPORT;
+		}
+	}
 
 	/*
 	 * Validate output buffer.
 	 */
-	अगर (buffer->length == ACPI_ALLOCATE_BUFFER) अणु
-		buffer->poपूर्णांकer = ACPI_ALLOCATE_ZEROED(size_required);
-		अगर (!buffer->poपूर्णांकer)
-			वापस AE_NO_MEMORY;
+	if (buffer->length == ACPI_ALLOCATE_BUFFER) {
+		buffer->pointer = ACPI_ALLOCATE_ZEROED(size_required);
+		if (!buffer->pointer)
+			return AE_NO_MEMORY;
 		buffer->length = size_required;
-	पूर्ण अन्यथा अणु
-		अगर (buffer->length < size_required) अणु
+	} else {
+		if (buffer->length < size_required) {
 			buffer->length = size_required;
-			वापस AE_BUFFER_OVERFLOW;
-		पूर्ण अन्यथा अगर (buffer->length != size_required ||
-			   !buffer->poपूर्णांकer) अणु
-			वापस AE_BAD_PARAMETER;
-		पूर्ण
-	पूर्ण
+			return AE_BUFFER_OVERFLOW;
+		} else if (buffer->length != size_required ||
+			   !buffer->pointer) {
+			return AE_BAD_PARAMETER;
+		}
+	}
 
-	head = buffer->poपूर्णांकer;
-	tail = buffer->poपूर्णांकer + tail_offset;
+	head = buffer->pointer;
+	tail = buffer->pointer + tail_offset;
 
 	/*
 	 * Extract package data.
 	 */
-	क्रम (i = 0; i < क्रमmat_count; i++) अणु
+	for (i = 0; i < format_count; i++) {
 
-		u8 **poपूर्णांकer = शून्य;
-		जोड़ acpi_object *element = &(package->package.elements[i]);
+		u8 **pointer = NULL;
+		union acpi_object *element = &(package->package.elements[i]);
 
-		चयन (element->type) अणु
+		switch (element->type) {
 
-		हाल ACPI_TYPE_INTEGER:
-			चयन (क्रमmat_string[i]) अणु
-			हाल 'N':
+		case ACPI_TYPE_INTEGER:
+			switch (format_string[i]) {
+			case 'N':
 				*((u64 *) head) =
-				    element->पूर्णांकeger.value;
-				head += माप(u64);
-				अवरोध;
-			हाल 'S':
-				poपूर्णांकer = (u8 **) head;
-				*poपूर्णांकer = tail;
+				    element->integer.value;
+				head += sizeof(u64);
+				break;
+			case 'S':
+				pointer = (u8 **) head;
+				*pointer = tail;
 				*((u64 *) tail) =
-				    element->पूर्णांकeger.value;
-				head += माप(u64 *);
-				tail += माप(u64);
-				/* शून्य terminate string */
-				*tail = (अक्षर)0;
-				tail += माप(अक्षर);
-				अवरोध;
-			शेष:
+				    element->integer.value;
+				head += sizeof(u64 *);
+				tail += sizeof(u64);
+				/* NULL terminate string */
+				*tail = (char)0;
+				tail += sizeof(char);
+				break;
+			default:
 				/* Should never get here */
-				अवरोध;
-			पूर्ण
-			अवरोध;
+				break;
+			}
+			break;
 
-		हाल ACPI_TYPE_STRING:
-		हाल ACPI_TYPE_BUFFER:
-			चयन (क्रमmat_string[i]) अणु
-			हाल 'S':
-				poपूर्णांकer = (u8 **) head;
-				*poपूर्णांकer = tail;
-				स_नकल(tail, element->string.poपूर्णांकer,
+		case ACPI_TYPE_STRING:
+		case ACPI_TYPE_BUFFER:
+			switch (format_string[i]) {
+			case 'S':
+				pointer = (u8 **) head;
+				*pointer = tail;
+				memcpy(tail, element->string.pointer,
 				       element->string.length);
-				head += माप(अक्षर *);
-				tail += element->string.length * माप(अक्षर);
-				/* शून्य terminate string */
-				*tail = (अक्षर)0;
-				tail += माप(अक्षर);
-				अवरोध;
-			हाल 'B':
-				poपूर्णांकer = (u8 **) head;
-				*poपूर्णांकer = tail;
-				स_नकल(tail, element->buffer.poपूर्णांकer,
+				head += sizeof(char *);
+				tail += element->string.length * sizeof(char);
+				/* NULL terminate string */
+				*tail = (char)0;
+				tail += sizeof(char);
+				break;
+			case 'B':
+				pointer = (u8 **) head;
+				*pointer = tail;
+				memcpy(tail, element->buffer.pointer,
 				       element->buffer.length);
-				head += माप(u8 *);
+				head += sizeof(u8 *);
 				tail += element->buffer.length;
-				अवरोध;
-			शेष:
+				break;
+			default:
 				/* Should never get here */
-				अवरोध;
-			पूर्ण
-			अवरोध;
-		हाल ACPI_TYPE_LOCAL_REFERENCE:
-			चयन (क्रमmat_string[i]) अणु
-			हाल 'R':
-				*(व्योम **)head =
-				    (व्योम *)element->reference.handle;
-				head += माप(व्योम *);
-				अवरोध;
-			शेष:
+				break;
+			}
+			break;
+		case ACPI_TYPE_LOCAL_REFERENCE:
+			switch (format_string[i]) {
+			case 'R':
+				*(void **)head =
+				    (void *)element->reference.handle;
+				head += sizeof(void *);
+				break;
+			default:
 				/* Should never get here */
-				अवरोध;
-			पूर्ण
-			अवरोध;
-		हाल ACPI_TYPE_PACKAGE:
+				break;
+			}
+			break;
+		case ACPI_TYPE_PACKAGE:
 			/* TBD: handle nested packages... */
-		शेष:
+		default:
 			/* Should never get here */
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस AE_OK;
-पूर्ण
+	return AE_OK;
+}
 
 EXPORT_SYMBOL(acpi_extract_package);
 
 acpi_status
-acpi_evaluate_पूर्णांकeger(acpi_handle handle,
+acpi_evaluate_integer(acpi_handle handle,
 		      acpi_string pathname,
-		      काष्ठा acpi_object_list *arguments, अचिन्हित दीर्घ दीर्घ *data)
-अणु
+		      struct acpi_object_list *arguments, unsigned long long *data)
+{
 	acpi_status status = AE_OK;
-	जोड़ acpi_object element;
-	काष्ठा acpi_buffer buffer = अणु 0, शून्य पूर्ण;
+	union acpi_object element;
+	struct acpi_buffer buffer = { 0, NULL };
 
-	अगर (!data)
-		वापस AE_BAD_PARAMETER;
+	if (!data)
+		return AE_BAD_PARAMETER;
 
-	buffer.length = माप(जोड़ acpi_object);
-	buffer.poपूर्णांकer = &element;
+	buffer.length = sizeof(union acpi_object);
+	buffer.pointer = &element;
 	status = acpi_evaluate_object(handle, pathname, arguments, &buffer);
-	अगर (ACPI_FAILURE(status)) अणु
+	if (ACPI_FAILURE(status)) {
 		acpi_util_eval_error(handle, pathname, status);
-		वापस status;
-	पूर्ण
+		return status;
+	}
 
-	अगर (element.type != ACPI_TYPE_INTEGER) अणु
+	if (element.type != ACPI_TYPE_INTEGER) {
 		acpi_util_eval_error(handle, pathname, AE_BAD_DATA);
-		वापस AE_BAD_DATA;
-	पूर्ण
+		return AE_BAD_DATA;
+	}
 
-	*data = element.पूर्णांकeger.value;
+	*data = element.integer.value;
 
 	acpi_handle_debug(handle, "Return value [%llu]\n", *data);
 
-	वापस AE_OK;
-पूर्ण
+	return AE_OK;
+}
 
-EXPORT_SYMBOL(acpi_evaluate_पूर्णांकeger);
+EXPORT_SYMBOL(acpi_evaluate_integer);
 
 acpi_status
 acpi_evaluate_reference(acpi_handle handle,
 			acpi_string pathname,
-			काष्ठा acpi_object_list *arguments,
-			काष्ठा acpi_handle_list *list)
-अणु
+			struct acpi_object_list *arguments,
+			struct acpi_handle_list *list)
+{
 	acpi_status status = AE_OK;
-	जोड़ acpi_object *package = शून्य;
-	जोड़ acpi_object *element = शून्य;
-	काष्ठा acpi_buffer buffer = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
+	union acpi_object *package = NULL;
+	union acpi_object *element = NULL;
+	struct acpi_buffer buffer = { ACPI_ALLOCATE_BUFFER, NULL };
 	u32 i = 0;
 
 
-	अगर (!list) अणु
-		वापस AE_BAD_PARAMETER;
-	पूर्ण
+	if (!list) {
+		return AE_BAD_PARAMETER;
+	}
 
 	/* Evaluate object. */
 
 	status = acpi_evaluate_object(handle, pathname, arguments, &buffer);
-	अगर (ACPI_FAILURE(status))
-		जाओ end;
+	if (ACPI_FAILURE(status))
+		goto end;
 
-	package = buffer.poपूर्णांकer;
+	package = buffer.pointer;
 
-	अगर ((buffer.length == 0) || !package) अणु
+	if ((buffer.length == 0) || !package) {
 		status = AE_BAD_DATA;
 		acpi_util_eval_error(handle, pathname, status);
-		जाओ end;
-	पूर्ण
-	अगर (package->type != ACPI_TYPE_PACKAGE) अणु
+		goto end;
+	}
+	if (package->type != ACPI_TYPE_PACKAGE) {
 		status = AE_BAD_DATA;
 		acpi_util_eval_error(handle, pathname, status);
-		जाओ end;
-	पूर्ण
-	अगर (!package->package.count) अणु
+		goto end;
+	}
+	if (!package->package.count) {
 		status = AE_BAD_DATA;
 		acpi_util_eval_error(handle, pathname, status);
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
-	अगर (package->package.count > ACPI_MAX_HANDLES) अणु
-		kमुक्त(package);
-		वापस AE_NO_MEMORY;
-	पूर्ण
+	if (package->package.count > ACPI_MAX_HANDLES) {
+		kfree(package);
+		return AE_NO_MEMORY;
+	}
 	list->count = package->package.count;
 
 	/* Extract package data. */
 
-	क्रम (i = 0; i < list->count; i++) अणु
+	for (i = 0; i < list->count; i++) {
 
 		element = &(package->package.elements[i]);
 
-		अगर (element->type != ACPI_TYPE_LOCAL_REFERENCE) अणु
+		if (element->type != ACPI_TYPE_LOCAL_REFERENCE) {
 			status = AE_BAD_DATA;
 			acpi_util_eval_error(handle, pathname, status);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (!element->reference.handle) अणु
-			status = AE_शून्य_ENTRY;
+		if (!element->reference.handle) {
+			status = AE_NULL_ENTRY;
 			acpi_util_eval_error(handle, pathname, status);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		/* Get the  acpi_handle. */
 
 		list->handles[i] = element->reference.handle;
 		acpi_handle_debug(list->handles[i], "Found in reference list\n");
-	पूर्ण
+	}
 
       end:
-	अगर (ACPI_FAILURE(status)) अणु
+	if (ACPI_FAILURE(status)) {
 		list->count = 0;
-		//kमुक्त(list->handles);
-	पूर्ण
+		//kfree(list->handles);
+	}
 
-	kमुक्त(buffer.poपूर्णांकer);
+	kfree(buffer.pointer);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 EXPORT_SYMBOL(acpi_evaluate_reference);
 
 acpi_status
-acpi_get_physical_device_location(acpi_handle handle, काष्ठा acpi_pld_info **pld)
-अणु
+acpi_get_physical_device_location(acpi_handle handle, struct acpi_pld_info **pld)
+{
 	acpi_status status;
-	काष्ठा acpi_buffer buffer = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
-	जोड़ acpi_object *output;
+	struct acpi_buffer buffer = { ACPI_ALLOCATE_BUFFER, NULL };
+	union acpi_object *output;
 
-	status = acpi_evaluate_object(handle, "_PLD", शून्य, &buffer);
+	status = acpi_evaluate_object(handle, "_PLD", NULL, &buffer);
 
-	अगर (ACPI_FAILURE(status))
-		वापस status;
+	if (ACPI_FAILURE(status))
+		return status;
 
-	output = buffer.poपूर्णांकer;
+	output = buffer.pointer;
 
-	अगर (!output || output->type != ACPI_TYPE_PACKAGE
+	if (!output || output->type != ACPI_TYPE_PACKAGE
 	    || !output->package.count
 	    || output->package.elements[0].type != ACPI_TYPE_BUFFER
-	    || output->package.elements[0].buffer.length < ACPI_PLD_REV1_BUFFER_SIZE) अणु
+	    || output->package.elements[0].buffer.length < ACPI_PLD_REV1_BUFFER_SIZE) {
 		status = AE_TYPE;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	status = acpi_decode_pld_buffer(
-			output->package.elements[0].buffer.poपूर्णांकer,
+			output->package.elements[0].buffer.pointer,
 			output->package.elements[0].buffer.length,
 			pld);
 
 out:
-	kमुक्त(buffer.poपूर्णांकer);
-	वापस status;
-पूर्ण
+	kfree(buffer.pointer);
+	return status;
+}
 EXPORT_SYMBOL(acpi_get_physical_device_location);
 
 /**
- * acpi_evaluate_ost: Evaluate _OST क्रम hotplug operations
+ * acpi_evaluate_ost: Evaluate _OST for hotplug operations
  * @handle: ACPI device handle
  * @source_event: source event code
  * @status_code: status code
- * @status_buf: optional detailed inक्रमmation (शून्य अगर none)
+ * @status_buf: optional detailed information (NULL if none)
  *
- * Evaluate _OST क्रम hotplug operations. All ACPI hotplug handlers
- * must call this function when evaluating _OST क्रम hotplug operations.
- * When the platक्रमm करोes not support _OST, this function has no effect.
+ * Evaluate _OST for hotplug operations. All ACPI hotplug handlers
+ * must call this function when evaluating _OST for hotplug operations.
+ * When the platform does not support _OST, this function has no effect.
  */
 acpi_status
 acpi_evaluate_ost(acpi_handle handle, u32 source_event, u32 status_code,
-		  काष्ठा acpi_buffer *status_buf)
-अणु
-	जोड़ acpi_object params[3] = अणु
-		अणु.type = ACPI_TYPE_INTEGER,पूर्ण,
-		अणु.type = ACPI_TYPE_INTEGER,पूर्ण,
-		अणु.type = ACPI_TYPE_BUFFER,पूर्ण
-	पूर्ण;
-	काष्ठा acpi_object_list arg_list = अणु3, paramsपूर्ण;
+		  struct acpi_buffer *status_buf)
+{
+	union acpi_object params[3] = {
+		{.type = ACPI_TYPE_INTEGER,},
+		{.type = ACPI_TYPE_INTEGER,},
+		{.type = ACPI_TYPE_BUFFER,}
+	};
+	struct acpi_object_list arg_list = {3, params};
 
-	params[0].पूर्णांकeger.value = source_event;
-	params[1].पूर्णांकeger.value = status_code;
-	अगर (status_buf != शून्य) अणु
-		params[2].buffer.poपूर्णांकer = status_buf->poपूर्णांकer;
+	params[0].integer.value = source_event;
+	params[1].integer.value = status_code;
+	if (status_buf != NULL) {
+		params[2].buffer.pointer = status_buf->pointer;
 		params[2].buffer.length = status_buf->length;
-	पूर्ण अन्यथा अणु
-		params[2].buffer.poपूर्णांकer = शून्य;
+	} else {
+		params[2].buffer.pointer = NULL;
 		params[2].buffer.length = 0;
-	पूर्ण
+	}
 
-	वापस acpi_evaluate_object(handle, "_OST", &arg_list, शून्य);
-पूर्ण
+	return acpi_evaluate_object(handle, "_OST", &arg_list, NULL);
+}
 EXPORT_SYMBOL(acpi_evaluate_ost);
 
 /**
  * acpi_handle_path: Return the object path of handle
  * @handle: ACPI device handle
  *
- * Caller must मुक्त the वापसed buffer
+ * Caller must free the returned buffer
  */
-अटल अक्षर *acpi_handle_path(acpi_handle handle)
-अणु
-	काष्ठा acpi_buffer buffer = अणु
+static char *acpi_handle_path(acpi_handle handle)
+{
+	struct acpi_buffer buffer = {
 		.length = ACPI_ALLOCATE_BUFFER,
-		.poपूर्णांकer = शून्य
-	पूर्ण;
+		.pointer = NULL
+	};
 
-	अगर (in_पूर्णांकerrupt() ||
+	if (in_interrupt() ||
 	    acpi_get_name(handle, ACPI_FULL_PATHNAME, &buffer) != AE_OK)
-		वापस शून्य;
-	वापस buffer.poपूर्णांकer;
-पूर्ण
+		return NULL;
+	return buffer.pointer;
+}
 
 /**
- * acpi_handle_prपूर्णांकk: Prपूर्णांक message with ACPI prefix and object path
+ * acpi_handle_printk: Print message with ACPI prefix and object path
  * @level: log level
  * @handle: ACPI device handle
- * @fmt: क्रमmat string
+ * @fmt: format string
  *
- * This function is called through acpi_handle_<level> macros and prपूर्णांकs
+ * This function is called through acpi_handle_<level> macros and prints
  * a message with ACPI prefix and object path.  This function acquires
- * the global namespace mutex to obtain an object path.  In पूर्णांकerrupt
+ * the global namespace mutex to obtain an object path.  In interrupt
  * context, it shows the object path as <n/a>.
  */
-व्योम
-acpi_handle_prपूर्णांकk(स्थिर अक्षर *level, acpi_handle handle, स्थिर अक्षर *fmt, ...)
-अणु
-	काष्ठा va_क्रमmat vaf;
-	बहु_सूची args;
-	स्थिर अक्षर *path;
+void
+acpi_handle_printk(const char *level, acpi_handle handle, const char *fmt, ...)
+{
+	struct va_format vaf;
+	va_list args;
+	const char *path;
 
-	बहु_शुरू(args, fmt);
+	va_start(args, fmt);
 	vaf.fmt = fmt;
 	vaf.va = &args;
 
 	path = acpi_handle_path(handle);
-	prपूर्णांकk("%sACPI: %s: %pV", level, path ? path : "<n/a>" , &vaf);
+	printk("%sACPI: %s: %pV", level, path ? path : "<n/a>" , &vaf);
 
-	बहु_पूर्ण(args);
-	kमुक्त(path);
-पूर्ण
-EXPORT_SYMBOL(acpi_handle_prपूर्णांकk);
+	va_end(args);
+	kfree(path);
+}
+EXPORT_SYMBOL(acpi_handle_printk);
 
-#अगर defined(CONFIG_DYNAMIC_DEBUG)
+#if defined(CONFIG_DYNAMIC_DEBUG)
 /**
  * __acpi_handle_debug: pr_debug with ACPI prefix and object path
  * @descriptor: Dynamic Debug descriptor
  * @handle: ACPI device handle
- * @fmt: क्रमmat string
+ * @fmt: format string
  *
  * This function is called through acpi_handle_debug macro and debug
- * prपूर्णांकs a message with ACPI prefix and object path. This function
+ * prints a message with ACPI prefix and object path. This function
  * acquires the global namespace mutex to obtain an object path.  In
- * पूर्णांकerrupt context, it shows the object path as <n/a>.
+ * interrupt context, it shows the object path as <n/a>.
  */
-व्योम
-__acpi_handle_debug(काष्ठा _ddebug *descriptor, acpi_handle handle,
-		    स्थिर अक्षर *fmt, ...)
-अणु
-	काष्ठा va_क्रमmat vaf;
-	बहु_सूची args;
-	स्थिर अक्षर *path;
+void
+__acpi_handle_debug(struct _ddebug *descriptor, acpi_handle handle,
+		    const char *fmt, ...)
+{
+	struct va_format vaf;
+	va_list args;
+	const char *path;
 
-	बहु_शुरू(args, fmt);
+	va_start(args, fmt);
 	vaf.fmt = fmt;
 	vaf.va = &args;
 
 	path = acpi_handle_path(handle);
 	__dynamic_pr_debug(descriptor, "ACPI: %s: %pV", path ? path : "<n/a>", &vaf);
 
-	बहु_पूर्ण(args);
-	kमुक्त(path);
-पूर्ण
+	va_end(args);
+	kfree(path);
+}
 EXPORT_SYMBOL(__acpi_handle_debug);
-#पूर्ण_अगर
+#endif
 
 /**
  * acpi_evaluation_failure_warn - Log evaluation failure warning.
  * @handle: Parent object handle.
  * @name: Name of the object whose evaluation has failed.
- * @status: Status value वापसed by the failing object evaluation.
+ * @status: Status value returned by the failing object evaluation.
  */
-व्योम acpi_evaluation_failure_warn(acpi_handle handle, स्थिर अक्षर *name,
+void acpi_evaluation_failure_warn(acpi_handle handle, const char *name,
 				  acpi_status status)
-अणु
+{
 	acpi_handle_warn(handle, "%s evaluation failed: %s\n", name,
-			 acpi_क्रमmat_exception(status));
-पूर्ण
+			 acpi_format_exception(status));
+}
 EXPORT_SYMBOL_GPL(acpi_evaluation_failure_warn);
 
 /**
@@ -533,92 +532,92 @@ EXPORT_SYMBOL_GPL(acpi_evaluation_failure_warn);
  *
  * Check whether @handle has a method named @name.
  */
-bool acpi_has_method(acpi_handle handle, अक्षर *name)
-अणु
-	acpi_handle पंचांगp;
+bool acpi_has_method(acpi_handle handle, char *name)
+{
+	acpi_handle tmp;
 
-	वापस ACPI_SUCCESS(acpi_get_handle(handle, name, &पंचांगp));
-पूर्ण
+	return ACPI_SUCCESS(acpi_get_handle(handle, name, &tmp));
+}
 EXPORT_SYMBOL(acpi_has_method);
 
-acpi_status acpi_execute_simple_method(acpi_handle handle, अक्षर *method,
+acpi_status acpi_execute_simple_method(acpi_handle handle, char *method,
 				       u64 arg)
-अणु
-	जोड़ acpi_object obj = अणु .type = ACPI_TYPE_INTEGER पूर्ण;
-	काष्ठा acpi_object_list arg_list = अणु .count = 1, .poपूर्णांकer = &obj, पूर्ण;
+{
+	union acpi_object obj = { .type = ACPI_TYPE_INTEGER };
+	struct acpi_object_list arg_list = { .count = 1, .pointer = &obj, };
 
-	obj.पूर्णांकeger.value = arg;
+	obj.integer.value = arg;
 
-	वापस acpi_evaluate_object(handle, method, &arg_list, शून्य);
-पूर्ण
+	return acpi_evaluate_object(handle, method, &arg_list, NULL);
+}
 EXPORT_SYMBOL(acpi_execute_simple_method);
 
 /**
- * acpi_evaluate_ej0: Evaluate _EJ0 method क्रम hotplug operations
+ * acpi_evaluate_ej0: Evaluate _EJ0 method for hotplug operations
  * @handle: ACPI device handle
  *
- * Evaluate device's _EJ0 method क्रम hotplug operations.
+ * Evaluate device's _EJ0 method for hotplug operations.
  */
 acpi_status acpi_evaluate_ej0(acpi_handle handle)
-अणु
+{
 	acpi_status status;
 
 	status = acpi_execute_simple_method(handle, "_EJ0", 1);
-	अगर (status == AE_NOT_FOUND)
+	if (status == AE_NOT_FOUND)
 		acpi_handle_warn(handle, "No _EJ0 support for device\n");
-	अन्यथा अगर (ACPI_FAILURE(status))
+	else if (ACPI_FAILURE(status))
 		acpi_handle_warn(handle, "Eject failed (0x%x)\n", status);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /**
  * acpi_evaluate_lck: Evaluate _LCK method to lock/unlock device
  * @handle: ACPI device handle
- * @lock: lock device अगर non-zero, otherwise unlock device
+ * @lock: lock device if non-zero, otherwise unlock device
  *
- * Evaluate device's _LCK method अगर present to lock/unlock device
+ * Evaluate device's _LCK method if present to lock/unlock device
  */
-acpi_status acpi_evaluate_lck(acpi_handle handle, पूर्णांक lock)
-अणु
+acpi_status acpi_evaluate_lck(acpi_handle handle, int lock)
+{
 	acpi_status status;
 
 	status = acpi_execute_simple_method(handle, "_LCK", !!lock);
-	अगर (ACPI_FAILURE(status) && status != AE_NOT_FOUND) अणु
-		अगर (lock)
+	if (ACPI_FAILURE(status) && status != AE_NOT_FOUND) {
+		if (lock)
 			acpi_handle_warn(handle,
 				"Locking device failed (0x%x)\n", status);
-		अन्यथा
+		else
 			acpi_handle_warn(handle,
 				"Unlocking device failed (0x%x)\n", status);
-	पूर्ण
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /**
- * acpi_evaluate_reg: Evaluate _REG method to रेजिस्टर OpRegion presence
+ * acpi_evaluate_reg: Evaluate _REG method to register OpRegion presence
  * @handle: ACPI device handle
- * @space_id: ACPI address space id to रेजिस्टर OpRegion presence क्रम
+ * @space_id: ACPI address space id to register OpRegion presence for
  * @function: Parameter to pass to _REG one of ACPI_REG_CONNECT or
  *            ACPI_REG_DISCONNECT
  *
- * Evaluate device's _REG method to रेजिस्टर OpRegion presence.
+ * Evaluate device's _REG method to register OpRegion presence.
  */
 acpi_status acpi_evaluate_reg(acpi_handle handle, u8 space_id, u32 function)
-अणु
-	काष्ठा acpi_object_list arg_list;
-	जोड़ acpi_object params[2];
+{
+	struct acpi_object_list arg_list;
+	union acpi_object params[2];
 
 	params[0].type = ACPI_TYPE_INTEGER;
-	params[0].पूर्णांकeger.value = space_id;
+	params[0].integer.value = space_id;
 	params[1].type = ACPI_TYPE_INTEGER;
-	params[1].पूर्णांकeger.value = function;
+	params[1].integer.value = function;
 	arg_list.count = 2;
-	arg_list.poपूर्णांकer = params;
+	arg_list.pointer = params;
 
-	वापस acpi_evaluate_object(handle, "_REG", &arg_list, शून्य);
-पूर्ण
+	return acpi_evaluate_object(handle, "_REG", &arg_list, NULL);
+}
 EXPORT_SYMBOL(acpi_evaluate_reg);
 
 /**
@@ -627,328 +626,328 @@ EXPORT_SYMBOL(acpi_evaluate_reg);
  * @guid: GUID of requested functions, should be 16 bytes
  * @rev: revision number of requested function
  * @func: requested function number
- * @argv4: the function specअगरic parameter
+ * @argv4: the function specific parameter
  *
- * Evaluate device's _DSM method with specअगरied GUID, revision id and
- * function number. Caller needs to मुक्त the वापसed object.
+ * Evaluate device's _DSM method with specified GUID, revision id and
+ * function number. Caller needs to free the returned object.
  *
- * Though ACPI defines the fourth parameter क्रम _DSM should be a package,
- * some old BIOSes करो expect a buffer or an पूर्णांकeger etc.
+ * Though ACPI defines the fourth parameter for _DSM should be a package,
+ * some old BIOSes do expect a buffer or an integer etc.
  */
-जोड़ acpi_object *
-acpi_evaluate_dsm(acpi_handle handle, स्थिर guid_t *guid, u64 rev, u64 func,
-		  जोड़ acpi_object *argv4)
-अणु
+union acpi_object *
+acpi_evaluate_dsm(acpi_handle handle, const guid_t *guid, u64 rev, u64 func,
+		  union acpi_object *argv4)
+{
 	acpi_status ret;
-	काष्ठा acpi_buffer buf = अणुACPI_ALLOCATE_BUFFER, शून्यपूर्ण;
-	जोड़ acpi_object params[4];
-	काष्ठा acpi_object_list input = अणु
+	struct acpi_buffer buf = {ACPI_ALLOCATE_BUFFER, NULL};
+	union acpi_object params[4];
+	struct acpi_object_list input = {
 		.count = 4,
-		.poपूर्णांकer = params,
-	पूर्ण;
+		.pointer = params,
+	};
 
 	params[0].type = ACPI_TYPE_BUFFER;
 	params[0].buffer.length = 16;
-	params[0].buffer.poपूर्णांकer = (u8 *)guid;
+	params[0].buffer.pointer = (u8 *)guid;
 	params[1].type = ACPI_TYPE_INTEGER;
-	params[1].पूर्णांकeger.value = rev;
+	params[1].integer.value = rev;
 	params[2].type = ACPI_TYPE_INTEGER;
-	params[2].पूर्णांकeger.value = func;
-	अगर (argv4) अणु
+	params[2].integer.value = func;
+	if (argv4) {
 		params[3] = *argv4;
-	पूर्ण अन्यथा अणु
+	} else {
 		params[3].type = ACPI_TYPE_PACKAGE;
 		params[3].package.count = 0;
-		params[3].package.elements = शून्य;
-	पूर्ण
+		params[3].package.elements = NULL;
+	}
 
 	ret = acpi_evaluate_object(handle, "_DSM", &input, &buf);
-	अगर (ACPI_SUCCESS(ret))
-		वापस (जोड़ acpi_object *)buf.poपूर्णांकer;
+	if (ACPI_SUCCESS(ret))
+		return (union acpi_object *)buf.pointer;
 
-	अगर (ret != AE_NOT_FOUND)
+	if (ret != AE_NOT_FOUND)
 		acpi_handle_warn(handle,
 				"failed to evaluate _DSM (0x%x)\n", ret);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL(acpi_evaluate_dsm);
 
 /**
- * acpi_check_dsm - check अगर _DSM method supports requested functions.
+ * acpi_check_dsm - check if _DSM method supports requested functions.
  * @handle: ACPI device handle
  * @guid: GUID of requested functions, should be 16 bytes at least
  * @rev: revision number of requested functions
- * @funcs: biपंचांगap of requested functions
+ * @funcs: bitmap of requested functions
  *
  * Evaluate device's _DSM method to check whether it supports requested
  * functions. Currently only support 64 functions at maximum, should be
- * enough क्रम now.
+ * enough for now.
  */
-bool acpi_check_dsm(acpi_handle handle, स्थिर guid_t *guid, u64 rev, u64 funcs)
-अणु
-	पूर्णांक i;
+bool acpi_check_dsm(acpi_handle handle, const guid_t *guid, u64 rev, u64 funcs)
+{
+	int i;
 	u64 mask = 0;
-	जोड़ acpi_object *obj;
+	union acpi_object *obj;
 
-	अगर (funcs == 0)
-		वापस false;
+	if (funcs == 0)
+		return false;
 
-	obj = acpi_evaluate_dsm(handle, guid, rev, 0, शून्य);
-	अगर (!obj)
-		वापस false;
+	obj = acpi_evaluate_dsm(handle, guid, rev, 0, NULL);
+	if (!obj)
+		return false;
 
-	/* For compatibility, old BIOSes may वापस an पूर्णांकeger */
-	अगर (obj->type == ACPI_TYPE_INTEGER)
-		mask = obj->पूर्णांकeger.value;
-	अन्यथा अगर (obj->type == ACPI_TYPE_BUFFER)
-		क्रम (i = 0; i < obj->buffer.length && i < 8; i++)
-			mask |= (((u64)obj->buffer.poपूर्णांकer[i]) << (i * 8));
+	/* For compatibility, old BIOSes may return an integer */
+	if (obj->type == ACPI_TYPE_INTEGER)
+		mask = obj->integer.value;
+	else if (obj->type == ACPI_TYPE_BUFFER)
+		for (i = 0; i < obj->buffer.length && i < 8; i++)
+			mask |= (((u64)obj->buffer.pointer[i]) << (i * 8));
 	ACPI_FREE(obj);
 
 	/*
-	 * Bit 0 indicates whether there's support क्रम any functions other than
-	 * function 0 क्रम the specअगरied GUID and revision.
+	 * Bit 0 indicates whether there's support for any functions other than
+	 * function 0 for the specified GUID and revision.
 	 */
-	अगर ((mask & 0x1) && (mask & funcs) == funcs)
-		वापस true;
+	if ((mask & 0x1) && (mask & funcs) == funcs)
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 EXPORT_SYMBOL(acpi_check_dsm);
 
 /**
  * acpi_dev_hid_uid_match - Match device by supplied HID and UID
  * @adev: ACPI device to match.
  * @hid2: Hardware ID of the device.
- * @uid2: Unique ID of the device, pass शून्य to not check _UID.
+ * @uid2: Unique ID of the device, pass NULL to not check _UID.
  *
  * Matches HID and UID in @adev with given @hid2 and @uid2.
- * Returns true अगर matches.
+ * Returns true if matches.
  */
-bool acpi_dev_hid_uid_match(काष्ठा acpi_device *adev,
-			    स्थिर अक्षर *hid2, स्थिर अक्षर *uid2)
-अणु
-	स्थिर अक्षर *hid1 = acpi_device_hid(adev);
-	स्थिर अक्षर *uid1 = acpi_device_uid(adev);
+bool acpi_dev_hid_uid_match(struct acpi_device *adev,
+			    const char *hid2, const char *uid2)
+{
+	const char *hid1 = acpi_device_hid(adev);
+	const char *uid1 = acpi_device_uid(adev);
 
-	अगर (म_भेद(hid1, hid2))
-		वापस false;
+	if (strcmp(hid1, hid2))
+		return false;
 
-	अगर (!uid2)
-		वापस true;
+	if (!uid2)
+		return true;
 
-	वापस uid1 && !म_भेद(uid1, uid2);
-पूर्ण
+	return uid1 && !strcmp(uid1, uid2);
+}
 EXPORT_SYMBOL(acpi_dev_hid_uid_match);
 
 /**
  * acpi_dev_found - Detect presence of a given ACPI device in the namespace.
  * @hid: Hardware ID of the device.
  *
- * Return %true अगर the device was present at the moment of invocation.
- * Note that अगर the device is pluggable, it may since have disappeared.
+ * Return %true if the device was present at the moment of invocation.
+ * Note that if the device is pluggable, it may since have disappeared.
  *
  * For this function to work, acpi_bus_scan() must have been executed
- * which happens in the subsys_initcall() subsection. Hence, करो not
+ * which happens in the subsys_initcall() subsection. Hence, do not
  * call from a subsys_initcall() or earlier (use acpi_get_devices()
  * instead). Calling from module_init() is fine (which is synonymous
  * with device_initcall()).
  */
-bool acpi_dev_found(स्थिर अक्षर *hid)
-अणु
-	काष्ठा acpi_device_bus_id *acpi_device_bus_id;
+bool acpi_dev_found(const char *hid)
+{
+	struct acpi_device_bus_id *acpi_device_bus_id;
 	bool found = false;
 
 	mutex_lock(&acpi_device_lock);
-	list_क्रम_each_entry(acpi_device_bus_id, &acpi_bus_id_list, node)
-		अगर (!म_भेद(acpi_device_bus_id->bus_id, hid)) अणु
+	list_for_each_entry(acpi_device_bus_id, &acpi_bus_id_list, node)
+		if (!strcmp(acpi_device_bus_id->bus_id, hid)) {
 			found = true;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 	mutex_unlock(&acpi_device_lock);
 
-	वापस found;
-पूर्ण
+	return found;
+}
 EXPORT_SYMBOL(acpi_dev_found);
 
-काष्ठा acpi_dev_match_info अणु
-	काष्ठा acpi_device_id hid[2];
-	स्थिर अक्षर *uid;
+struct acpi_dev_match_info {
+	struct acpi_device_id hid[2];
+	const char *uid;
 	s64 hrv;
-पूर्ण;
+};
 
-अटल पूर्णांक acpi_dev_match_cb(काष्ठा device *dev, स्थिर व्योम *data)
-अणु
-	काष्ठा acpi_device *adev = to_acpi_device(dev);
-	स्थिर काष्ठा acpi_dev_match_info *match = data;
-	अचिन्हित दीर्घ दीर्घ hrv;
+static int acpi_dev_match_cb(struct device *dev, const void *data)
+{
+	struct acpi_device *adev = to_acpi_device(dev);
+	const struct acpi_dev_match_info *match = data;
+	unsigned long long hrv;
 	acpi_status status;
 
-	अगर (acpi_match_device_ids(adev, match->hid))
-		वापस 0;
+	if (acpi_match_device_ids(adev, match->hid))
+		return 0;
 
-	अगर (match->uid && (!adev->pnp.unique_id ||
-	    म_भेद(adev->pnp.unique_id, match->uid)))
-		वापस 0;
+	if (match->uid && (!adev->pnp.unique_id ||
+	    strcmp(adev->pnp.unique_id, match->uid)))
+		return 0;
 
-	अगर (match->hrv == -1)
-		वापस 1;
+	if (match->hrv == -1)
+		return 1;
 
-	status = acpi_evaluate_पूर्णांकeger(adev->handle, "_HRV", शून्य, &hrv);
-	अगर (ACPI_FAILURE(status))
-		वापस 0;
+	status = acpi_evaluate_integer(adev->handle, "_HRV", NULL, &hrv);
+	if (ACPI_FAILURE(status))
+		return 0;
 
-	वापस hrv == match->hrv;
-पूर्ण
+	return hrv == match->hrv;
+}
 
 /**
  * acpi_dev_present - Detect that a given ACPI device is present
  * @hid: Hardware ID of the device.
- * @uid: Unique ID of the device, pass शून्य to not check _UID
+ * @uid: Unique ID of the device, pass NULL to not check _UID
  * @hrv: Hardware Revision of the device, pass -1 to not check _HRV
  *
- * Return %true अगर a matching device was present at the moment of invocation.
- * Note that अगर the device is pluggable, it may since have disappeared.
+ * Return %true if a matching device was present at the moment of invocation.
+ * Note that if the device is pluggable, it may since have disappeared.
  *
  * Note that unlike acpi_dev_found() this function checks the status
- * of the device. So क्रम devices which are present in the DSDT, but
- * which are disabled (their _STA callback वापसs 0) this function
- * will वापस false.
+ * of the device. So for devices which are present in the DSDT, but
+ * which are disabled (their _STA callback returns 0) this function
+ * will return false.
  *
  * For this function to work, acpi_bus_scan() must have been executed
- * which happens in the subsys_initcall() subsection. Hence, करो not
+ * which happens in the subsys_initcall() subsection. Hence, do not
  * call from a subsys_initcall() or earlier (use acpi_get_devices()
  * instead). Calling from module_init() is fine (which is synonymous
  * with device_initcall()).
  */
-bool acpi_dev_present(स्थिर अक्षर *hid, स्थिर अक्षर *uid, s64 hrv)
-अणु
-	काष्ठा acpi_dev_match_info match = अणुपूर्ण;
-	काष्ठा device *dev;
+bool acpi_dev_present(const char *hid, const char *uid, s64 hrv)
+{
+	struct acpi_dev_match_info match = {};
+	struct device *dev;
 
-	strlcpy(match.hid[0].id, hid, माप(match.hid[0].id));
+	strlcpy(match.hid[0].id, hid, sizeof(match.hid[0].id));
 	match.uid = uid;
 	match.hrv = hrv;
 
-	dev = bus_find_device(&acpi_bus_type, शून्य, &match, acpi_dev_match_cb);
+	dev = bus_find_device(&acpi_bus_type, NULL, &match, acpi_dev_match_cb);
 	put_device(dev);
-	वापस !!dev;
-पूर्ण
+	return !!dev;
+}
 EXPORT_SYMBOL(acpi_dev_present);
 
 /**
  * acpi_dev_get_next_match_dev - Return the next match of ACPI device
- * @adev: Poपूर्णांकer to the previous ACPI device matching this @hid, @uid and @hrv
+ * @adev: Pointer to the previous ACPI device matching this @hid, @uid and @hrv
  * @hid: Hardware ID of the device.
- * @uid: Unique ID of the device, pass शून्य to not check _UID
+ * @uid: Unique ID of the device, pass NULL to not check _UID
  * @hrv: Hardware Revision of the device, pass -1 to not check _HRV
  *
- * Return the next match of ACPI device अगर another matching device was present
- * at the moment of invocation, or शून्य otherwise.
+ * Return the next match of ACPI device if another matching device was present
+ * at the moment of invocation, or NULL otherwise.
  *
- * FIXME: The function करोes not tolerate the sudden disappearance of @adev, e.g.
- * in the हाल of a hotplug event. That said, the caller should ensure that
+ * FIXME: The function does not tolerate the sudden disappearance of @adev, e.g.
+ * in the case of a hotplug event. That said, the caller should ensure that
  * this will never happen.
  *
- * The caller is responsible क्रम invoking acpi_dev_put() on the वापसed device.
+ * The caller is responsible for invoking acpi_dev_put() on the returned device.
  *
- * See additional inक्रमmation in acpi_dev_present() as well.
+ * See additional information in acpi_dev_present() as well.
  */
-काष्ठा acpi_device *
-acpi_dev_get_next_match_dev(काष्ठा acpi_device *adev, स्थिर अक्षर *hid, स्थिर अक्षर *uid, s64 hrv)
-अणु
-	काष्ठा device *start = adev ? &adev->dev : शून्य;
-	काष्ठा acpi_dev_match_info match = अणुपूर्ण;
-	काष्ठा device *dev;
+struct acpi_device *
+acpi_dev_get_next_match_dev(struct acpi_device *adev, const char *hid, const char *uid, s64 hrv)
+{
+	struct device *start = adev ? &adev->dev : NULL;
+	struct acpi_dev_match_info match = {};
+	struct device *dev;
 
-	strlcpy(match.hid[0].id, hid, माप(match.hid[0].id));
+	strlcpy(match.hid[0].id, hid, sizeof(match.hid[0].id));
 	match.uid = uid;
 	match.hrv = hrv;
 
 	dev = bus_find_device(&acpi_bus_type, start, &match, acpi_dev_match_cb);
-	वापस dev ? to_acpi_device(dev) : शून्य;
-पूर्ण
+	return dev ? to_acpi_device(dev) : NULL;
+}
 EXPORT_SYMBOL(acpi_dev_get_next_match_dev);
 
 /**
  * acpi_dev_get_first_match_dev - Return the first match of ACPI device
  * @hid: Hardware ID of the device.
- * @uid: Unique ID of the device, pass शून्य to not check _UID
+ * @uid: Unique ID of the device, pass NULL to not check _UID
  * @hrv: Hardware Revision of the device, pass -1 to not check _HRV
  *
- * Return the first match of ACPI device अगर a matching device was present
- * at the moment of invocation, or शून्य otherwise.
+ * Return the first match of ACPI device if a matching device was present
+ * at the moment of invocation, or NULL otherwise.
  *
- * The caller is responsible क्रम invoking acpi_dev_put() on the वापसed device.
+ * The caller is responsible for invoking acpi_dev_put() on the returned device.
  *
- * See additional inक्रमmation in acpi_dev_present() as well.
+ * See additional information in acpi_dev_present() as well.
  */
-काष्ठा acpi_device *
-acpi_dev_get_first_match_dev(स्थिर अक्षर *hid, स्थिर अक्षर *uid, s64 hrv)
-अणु
-	वापस acpi_dev_get_next_match_dev(शून्य, hid, uid, hrv);
-पूर्ण
+struct acpi_device *
+acpi_dev_get_first_match_dev(const char *hid, const char *uid, s64 hrv)
+{
+	return acpi_dev_get_next_match_dev(NULL, hid, uid, hrv);
+}
 EXPORT_SYMBOL(acpi_dev_get_first_match_dev);
 
 /**
- * acpi_reduced_hardware - Return अगर this is an ACPI-reduced-hw machine
+ * acpi_reduced_hardware - Return if this is an ACPI-reduced-hw machine
  *
  * Return true when running on an ACPI-reduced-hw machine, false otherwise.
  */
-bool acpi_reduced_hardware(व्योम)
-अणु
-	वापस acpi_gbl_reduced_hardware;
-पूर्ण
+bool acpi_reduced_hardware(void)
+{
+	return acpi_gbl_reduced_hardware;
+}
 EXPORT_SYMBOL_GPL(acpi_reduced_hardware);
 
 /*
- * acpi_backlight= handling, this is करोne here rather then in video_detect.c
+ * acpi_backlight= handling, this is done here rather then in video_detect.c
  * because __setup cannot be used in modules.
  */
-अक्षर acpi_video_backlight_string[16];
+char acpi_video_backlight_string[16];
 EXPORT_SYMBOL(acpi_video_backlight_string);
 
-अटल पूर्णांक __init acpi_backlight(अक्षर *str)
-अणु
+static int __init acpi_backlight(char *str)
+{
 	strlcpy(acpi_video_backlight_string, str,
-		माप(acpi_video_backlight_string));
-	वापस 1;
-पूर्ण
+		sizeof(acpi_video_backlight_string));
+	return 1;
+}
 __setup("acpi_backlight=", acpi_backlight);
 
 /**
- * acpi_match_platक्रमm_list - Check अगर the प्रणाली matches with a given list
- * @plat: poपूर्णांकer to acpi_platक्रमm_list table terminated by a शून्य entry
+ * acpi_match_platform_list - Check if the system matches with a given list
+ * @plat: pointer to acpi_platform_list table terminated by a NULL entry
  *
- * Return the matched index अगर the प्रणाली is found in the platक्रमm list.
- * Otherwise, वापस a negative error code.
+ * Return the matched index if the system is found in the platform list.
+ * Otherwise, return a negative error code.
  */
-पूर्णांक acpi_match_platक्रमm_list(स्थिर काष्ठा acpi_platक्रमm_list *plat)
-अणु
-	काष्ठा acpi_table_header hdr;
-	पूर्णांक idx = 0;
+int acpi_match_platform_list(const struct acpi_platform_list *plat)
+{
+	struct acpi_table_header hdr;
+	int idx = 0;
 
-	अगर (acpi_disabled)
-		वापस -ENODEV;
+	if (acpi_disabled)
+		return -ENODEV;
 
-	क्रम (; plat->oem_id[0]; plat++, idx++) अणु
-		अगर (ACPI_FAILURE(acpi_get_table_header(plat->table, 0, &hdr)))
-			जारी;
+	for (; plat->oem_id[0]; plat++, idx++) {
+		if (ACPI_FAILURE(acpi_get_table_header(plat->table, 0, &hdr)))
+			continue;
 
-		अगर (म_भेदन(plat->oem_id, hdr.oem_id, ACPI_OEM_ID_SIZE))
-			जारी;
+		if (strncmp(plat->oem_id, hdr.oem_id, ACPI_OEM_ID_SIZE))
+			continue;
 
-		अगर (म_भेदन(plat->oem_table_id, hdr.oem_table_id, ACPI_OEM_TABLE_ID_SIZE))
-			जारी;
+		if (strncmp(plat->oem_table_id, hdr.oem_table_id, ACPI_OEM_TABLE_ID_SIZE))
+			continue;
 
-		अगर ((plat->pred == all_versions) ||
+		if ((plat->pred == all_versions) ||
 		    (plat->pred == less_than_or_equal && hdr.oem_revision <= plat->oem_revision) ||
 		    (plat->pred == greater_than_or_equal && hdr.oem_revision >= plat->oem_revision) ||
 		    (plat->pred == equal && hdr.oem_revision == plat->oem_revision))
-			वापस idx;
-	पूर्ण
+			return idx;
+	}
 
-	वापस -ENODEV;
-पूर्ण
-EXPORT_SYMBOL(acpi_match_platक्रमm_list);
+	return -ENODEV;
+}
+EXPORT_SYMBOL(acpi_match_platform_list);

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * PA-RISC KGDB support
  *
@@ -7,67 +6,67 @@
  *
  */
 
-#समावेश <linux/kgdb.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/sched.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/kdebug.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/ptrace.h>
-#समावेश <यंत्र/traps.h>
-#समावेश <यंत्र/processor.h>
-#समावेश <यंत्र/patch.h>
-#समावेश <यंत्र/cacheflush.h>
+#include <linux/kgdb.h>
+#include <linux/string.h>
+#include <linux/sched.h>
+#include <linux/notifier.h>
+#include <linux/kdebug.h>
+#include <linux/uaccess.h>
+#include <asm/ptrace.h>
+#include <asm/traps.h>
+#include <asm/processor.h>
+#include <asm/patch.h>
+#include <asm/cacheflush.h>
 
-स्थिर काष्ठा kgdb_arch arch_kgdb_ops = अणु
-	.gdb_bpt_instr = अणु 0x03, 0xff, 0xa0, 0x1f पूर्ण
-पूर्ण;
+const struct kgdb_arch arch_kgdb_ops = {
+	.gdb_bpt_instr = { 0x03, 0xff, 0xa0, 0x1f }
+};
 
-अटल पूर्णांक __kgdb_notअगरy(काष्ठा die_args *args, अचिन्हित दीर्घ cmd)
-अणु
-	काष्ठा pt_regs *regs = args->regs;
+static int __kgdb_notify(struct die_args *args, unsigned long cmd)
+{
+	struct pt_regs *regs = args->regs;
 
-	अगर (kgdb_handle_exception(1, args->signr, cmd, regs))
-		वापस NOTIFY_DONE;
-	वापस NOTIFY_STOP;
-पूर्ण
+	if (kgdb_handle_exception(1, args->signr, cmd, regs))
+		return NOTIFY_DONE;
+	return NOTIFY_STOP;
+}
 
-अटल पूर्णांक kgdb_notअगरy(काष्ठा notअगरier_block *self,
-		       अचिन्हित दीर्घ cmd, व्योम *ptr)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+static int kgdb_notify(struct notifier_block *self,
+		       unsigned long cmd, void *ptr)
+{
+	unsigned long flags;
+	int ret;
 
 	local_irq_save(flags);
-	ret = __kgdb_notअगरy(ptr, cmd);
+	ret = __kgdb_notify(ptr, cmd);
 	local_irq_restore(flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा notअगरier_block kgdb_notअगरier = अणु
-	.notअगरier_call	= kgdb_notअगरy,
-	.priority	= -पूर्णांक_उच्च,
-पूर्ण;
+static struct notifier_block kgdb_notifier = {
+	.notifier_call	= kgdb_notify,
+	.priority	= -INT_MAX,
+};
 
-पूर्णांक kgdb_arch_init(व्योम)
-अणु
-	वापस रेजिस्टर_die_notअगरier(&kgdb_notअगरier);
-पूर्ण
+int kgdb_arch_init(void)
+{
+	return register_die_notifier(&kgdb_notifier);
+}
 
-व्योम kgdb_arch_निकास(व्योम)
-अणु
-	unरेजिस्टर_die_notअगरier(&kgdb_notअगरier);
-पूर्ण
+void kgdb_arch_exit(void)
+{
+	unregister_die_notifier(&kgdb_notifier);
+}
 
-व्योम pt_regs_to_gdb_regs(अचिन्हित दीर्घ *gdb_regs, काष्ठा pt_regs *regs)
-अणु
-	काष्ठा parisc_gdb_regs *gr = (काष्ठा parisc_gdb_regs *)gdb_regs;
+void pt_regs_to_gdb_regs(unsigned long *gdb_regs, struct pt_regs *regs)
+{
+	struct parisc_gdb_regs *gr = (struct parisc_gdb_regs *)gdb_regs;
 
-	स_रखो(gr, 0, माप(काष्ठा parisc_gdb_regs));
+	memset(gr, 0, sizeof(struct parisc_gdb_regs));
 
-	स_नकल(gr->gpr, regs->gr, माप(gr->gpr));
-	स_नकल(gr->fr, regs->fr, माप(gr->fr));
+	memcpy(gr->gpr, regs->gr, sizeof(gr->gpr));
+	memcpy(gr->fr, regs->fr, sizeof(gr->fr));
 
 	gr->sr0 = regs->sr[0];
 	gr->sr1 = regs->sr[1];
@@ -90,15 +89,15 @@
 
 	gr->iaoq_b = regs->iaoq[1];
 	gr->iasq_b = regs->iasq[1];
-पूर्ण
+}
 
-व्योम gdb_regs_to_pt_regs(अचिन्हित दीर्घ *gdb_regs, काष्ठा pt_regs *regs)
-अणु
-	काष्ठा parisc_gdb_regs *gr = (काष्ठा parisc_gdb_regs *)gdb_regs;
+void gdb_regs_to_pt_regs(unsigned long *gdb_regs, struct pt_regs *regs)
+{
+	struct parisc_gdb_regs *gr = (struct parisc_gdb_regs *)gdb_regs;
 
 
-	स_नकल(regs->gr, gr->gpr, माप(regs->gr));
-	स_नकल(regs->fr, gr->fr, माप(regs->fr));
+	memcpy(regs->gr, gr->gpr, sizeof(regs->gr));
+	memcpy(regs->fr, gr->fr, sizeof(regs->fr));
 
 	regs->sr[0] = gr->sr0;
 	regs->sr[1] = gr->sr1;
@@ -121,13 +120,13 @@
 
 	regs->iaoq[1] = gr->iaoq_b;
 	regs->iasq[1] = gr->iasq_b;
-पूर्ण
+}
 
-व्योम sleeping_thपढ़ो_to_gdb_regs(अचिन्हित दीर्घ *gdb_regs,
-				काष्ठा task_काष्ठा *task)
-अणु
-	काष्ठा pt_regs *regs = task_pt_regs(task);
-	अचिन्हित दीर्घ gr30, iaoq;
+void sleeping_thread_to_gdb_regs(unsigned long *gdb_regs,
+				struct task_struct *task)
+{
+	struct pt_regs *regs = task_pt_regs(task);
+	unsigned long gr30, iaoq;
 
 	gr30 = regs->gr[30];
 	iaoq = regs->iaoq[0];
@@ -139,72 +138,72 @@
 	regs->gr[30] = gr30;
 	regs->iaoq[0] = iaoq;
 
-पूर्ण
+}
 
-अटल व्योम step_inकाष्ठाion_queue(काष्ठा pt_regs *regs)
-अणु
+static void step_instruction_queue(struct pt_regs *regs)
+{
 	regs->iaoq[0] = regs->iaoq[1];
 	regs->iaoq[1] += 4;
-पूर्ण
+}
 
-व्योम kgdb_arch_set_pc(काष्ठा pt_regs *regs, अचिन्हित दीर्घ ip)
-अणु
+void kgdb_arch_set_pc(struct pt_regs *regs, unsigned long ip)
+{
 	regs->iaoq[0] = ip;
 	regs->iaoq[1] = ip + 4;
-पूर्ण
+}
 
-पूर्णांक kgdb_arch_set_अवरोधpoपूर्णांक(काष्ठा kgdb_bkpt *bpt)
-अणु
-	पूर्णांक ret = copy_from_kernel_nofault(bpt->saved_instr,
-			(अक्षर *)bpt->bpt_addr, BREAK_INSTR_SIZE);
-	अगर (ret)
-		वापस ret;
+int kgdb_arch_set_breakpoint(struct kgdb_bkpt *bpt)
+{
+	int ret = copy_from_kernel_nofault(bpt->saved_instr,
+			(char *)bpt->bpt_addr, BREAK_INSTR_SIZE);
+	if (ret)
+		return ret;
 
-	__patch_text((व्योम *)bpt->bpt_addr,
-			*(अचिन्हित पूर्णांक *)&arch_kgdb_ops.gdb_bpt_instr);
-	वापस ret;
-पूर्ण
+	__patch_text((void *)bpt->bpt_addr,
+			*(unsigned int *)&arch_kgdb_ops.gdb_bpt_instr);
+	return ret;
+}
 
-पूर्णांक kgdb_arch_हटाओ_अवरोधpoपूर्णांक(काष्ठा kgdb_bkpt *bpt)
-अणु
-	__patch_text((व्योम *)bpt->bpt_addr, *(अचिन्हित पूर्णांक *)&bpt->saved_instr);
-	वापस 0;
-पूर्ण
+int kgdb_arch_remove_breakpoint(struct kgdb_bkpt *bpt)
+{
+	__patch_text((void *)bpt->bpt_addr, *(unsigned int *)&bpt->saved_instr);
+	return 0;
+}
 
-पूर्णांक kgdb_arch_handle_exception(पूर्णांक trap, पूर्णांक signo,
-		पूर्णांक err_code, अक्षर *inbuf, अक्षर *outbuf,
-		काष्ठा pt_regs *regs)
-अणु
-	अचिन्हित दीर्घ addr;
-	अक्षर *p = inbuf + 1;
+int kgdb_arch_handle_exception(int trap, int signo,
+		int err_code, char *inbuf, char *outbuf,
+		struct pt_regs *regs)
+{
+	unsigned long addr;
+	char *p = inbuf + 1;
 
-	चयन (inbuf[0]) अणु
-	हाल 'D':
-	हाल 'c':
-	हाल 'k':
-		kgdb_contthपढ़ो = शून्य;
+	switch (inbuf[0]) {
+	case 'D':
+	case 'c':
+	case 'k':
+		kgdb_contthread = NULL;
 		kgdb_single_step = 0;
 
-		अगर (kgdb_hex2दीर्घ(&p, &addr))
+		if (kgdb_hex2long(&p, &addr))
 			kgdb_arch_set_pc(regs, addr);
-		अन्यथा अगर (trap == 9 && regs->iir ==
+		else if (trap == 9 && regs->iir ==
 				PARISC_KGDB_COMPILED_BREAK_INSN)
-			step_inकाष्ठाion_queue(regs);
-		वापस 0;
-	हाल 's':
+			step_instruction_queue(regs);
+		return 0;
+	case 's':
 		kgdb_single_step = 1;
-		अगर (kgdb_hex2दीर्घ(&p, &addr)) अणु
+		if (kgdb_hex2long(&p, &addr)) {
 			kgdb_arch_set_pc(regs, addr);
-		पूर्ण अन्यथा अगर (trap == 9 && regs->iir ==
-				PARISC_KGDB_COMPILED_BREAK_INSN) अणु
-			step_inकाष्ठाion_queue(regs);
+		} else if (trap == 9 && regs->iir ==
+				PARISC_KGDB_COMPILED_BREAK_INSN) {
+			step_instruction_queue(regs);
 			mtctl(-1, 0);
-		पूर्ण अन्यथा अणु
+		} else {
 			mtctl(0, 0);
-		पूर्ण
+		}
 		regs->gr[0] |= PSW_R;
-		वापस 0;
+		return 0;
 
-	पूर्ण
-	वापस -1;
-पूर्ण
+	}
+	return -1;
+}

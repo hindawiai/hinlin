@@ -1,219 +1,218 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- *	Generic watchकरोg defines. Derived from..
+ *	Generic watchdog defines. Derived from..
  *
- * Berkshire PC Watchकरोg Defines
+ * Berkshire PC Watchdog Defines
  * by Ken Hollis <khollis@bitgate.com>
  *
  */
-#अगर_अघोषित _LINUX_WATCHDOG_H
-#घोषणा _LINUX_WATCHDOG_H
+#ifndef _LINUX_WATCHDOG_H
+#define _LINUX_WATCHDOG_H
 
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/cdev.h>
-#समावेश <linux/device.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <uapi/linux/watchकरोg.h>
+#include <linux/bitops.h>
+#include <linux/cdev.h>
+#include <linux/device.h>
+#include <linux/kernel.h>
+#include <linux/notifier.h>
+#include <uapi/linux/watchdog.h>
 
-काष्ठा watchकरोg_ops;
-काष्ठा watchकरोg_device;
-काष्ठा watchकरोg_core_data;
-काष्ठा watchकरोg_governor;
+struct watchdog_ops;
+struct watchdog_device;
+struct watchdog_core_data;
+struct watchdog_governor;
 
-/** काष्ठा watchकरोg_ops - The watchकरोg-devices operations
+/** struct watchdog_ops - The watchdog-devices operations
  *
  * @owner:	The module owner.
- * @start:	The routine क्रम starting the watchकरोg device.
- * @stop:	The routine क्रम stopping the watchकरोg device.
- * @ping:	The routine that sends a keepalive ping to the watchकरोg device.
- * @status:	The routine that shows the status of the watchकरोg device.
- * @set_समयout:The routine क्रम setting the watchकरोg devices समयout value (in seconds).
- * @set_preसमयout:The routine क्रम setting the watchकरोg devices preसमयout.
- * @get_समयleft:The routine that माला_लो the समय left beक्रमe a reset (in seconds).
- * @restart:	The routine क्रम restarting the machine.
+ * @start:	The routine for starting the watchdog device.
+ * @stop:	The routine for stopping the watchdog device.
+ * @ping:	The routine that sends a keepalive ping to the watchdog device.
+ * @status:	The routine that shows the status of the watchdog device.
+ * @set_timeout:The routine for setting the watchdog devices timeout value (in seconds).
+ * @set_pretimeout:The routine for setting the watchdog devices pretimeout.
+ * @get_timeleft:The routine that gets the time left before a reset (in seconds).
+ * @restart:	The routine for restarting the machine.
  * @ioctl:	The routines that handles extra ioctl calls.
  *
- * The watchकरोg_ops काष्ठाure contains a list of low-level operations
- * that control a watchकरोg device. It also contains the module that owns
+ * The watchdog_ops structure contains a list of low-level operations
+ * that control a watchdog device. It also contains the module that owns
  * these operations. The start function is mandatory, all other
  * functions are optional.
  */
-काष्ठा watchकरोg_ops अणु
-	काष्ठा module *owner;
+struct watchdog_ops {
+	struct module *owner;
 	/* mandatory operations */
-	पूर्णांक (*start)(काष्ठा watchकरोg_device *);
+	int (*start)(struct watchdog_device *);
 	/* optional operations */
-	पूर्णांक (*stop)(काष्ठा watchकरोg_device *);
-	पूर्णांक (*ping)(काष्ठा watchकरोg_device *);
-	अचिन्हित पूर्णांक (*status)(काष्ठा watchकरोg_device *);
-	पूर्णांक (*set_समयout)(काष्ठा watchकरोg_device *, अचिन्हित पूर्णांक);
-	पूर्णांक (*set_preसमयout)(काष्ठा watchकरोg_device *, अचिन्हित पूर्णांक);
-	अचिन्हित पूर्णांक (*get_समयleft)(काष्ठा watchकरोg_device *);
-	पूर्णांक (*restart)(काष्ठा watchकरोg_device *, अचिन्हित दीर्घ, व्योम *);
-	दीर्घ (*ioctl)(काष्ठा watchकरोg_device *, अचिन्हित पूर्णांक, अचिन्हित दीर्घ);
-पूर्ण;
+	int (*stop)(struct watchdog_device *);
+	int (*ping)(struct watchdog_device *);
+	unsigned int (*status)(struct watchdog_device *);
+	int (*set_timeout)(struct watchdog_device *, unsigned int);
+	int (*set_pretimeout)(struct watchdog_device *, unsigned int);
+	unsigned int (*get_timeleft)(struct watchdog_device *);
+	int (*restart)(struct watchdog_device *, unsigned long, void *);
+	long (*ioctl)(struct watchdog_device *, unsigned int, unsigned long);
+};
 
-/** काष्ठा watchकरोg_device - The काष्ठाure that defines a watchकरोg device
+/** struct watchdog_device - The structure that defines a watchdog device
  *
- * @id:		The watchकरोg's ID. (Allocated by watchकरोg_रेजिस्टर_device)
+ * @id:		The watchdog's ID. (Allocated by watchdog_register_device)
  * @parent:	The parent bus device
  * @groups:	List of sysfs attribute groups to create when creating the
- *		watchकरोg device.
- * @info:	Poपूर्णांकer to a watchकरोg_info काष्ठाure.
- * @ops:	Poपूर्णांकer to the list of watchकरोg operations.
- * @gov:	Poपूर्णांकer to watchकरोg preसमयout governor.
- * @bootstatus:	Status of the watchकरोg device at boot.
- * @समयout:	The watchकरोg devices समयout value (in seconds).
- * @preसमयout: The watchकरोg devices pre_समयout value.
- * @min_समयout:The watchकरोg devices minimum समयout value (in seconds).
- * @max_समयout:The watchकरोg devices maximum समयout value (in seconds)
- *		as configurable from user space. Only relevant अगर
+ *		watchdog device.
+ * @info:	Pointer to a watchdog_info structure.
+ * @ops:	Pointer to the list of watchdog operations.
+ * @gov:	Pointer to watchdog pretimeout governor.
+ * @bootstatus:	Status of the watchdog device at boot.
+ * @timeout:	The watchdog devices timeout value (in seconds).
+ * @pretimeout: The watchdog devices pre_timeout value.
+ * @min_timeout:The watchdog devices minimum timeout value (in seconds).
+ * @max_timeout:The watchdog devices maximum timeout value (in seconds)
+ *		as configurable from user space. Only relevant if
  *		max_hw_heartbeat_ms is not provided.
  * @min_hw_heartbeat_ms:
- *		Hardware limit क्रम minimum समय between heartbeats,
+ *		Hardware limit for minimum time between heartbeats,
  *		in milli-seconds.
  * @max_hw_heartbeat_ms:
- *		Hardware limit क्रम maximum समयout, in milli-seconds.
- *		Replaces max_समयout अगर specअगरied.
- * @reboot_nb:	The notअगरier block to stop watchकरोg on reboot.
- * @restart_nb:	The notअगरier block to रेजिस्टर a restart function.
- * @driver_data:Poपूर्णांकer to the drivers निजी data.
- * @wd_data:	Poपूर्णांकer to watchकरोg core पूर्णांकernal data.
- * @status:	Field that contains the devices पूर्णांकernal status bits.
+ *		Hardware limit for maximum timeout, in milli-seconds.
+ *		Replaces max_timeout if specified.
+ * @reboot_nb:	The notifier block to stop watchdog on reboot.
+ * @restart_nb:	The notifier block to register a restart function.
+ * @driver_data:Pointer to the drivers private data.
+ * @wd_data:	Pointer to watchdog core internal data.
+ * @status:	Field that contains the devices internal status bits.
  * @deferred:	Entry in wtd_deferred_reg_list which is used to
- *		रेजिस्टर early initialized watchकरोgs.
+ *		register early initialized watchdogs.
  *
- * The watchकरोg_device काष्ठाure contains all inक्रमmation about a
- * watchकरोg समयr device.
+ * The watchdog_device structure contains all information about a
+ * watchdog timer device.
  *
  * The driver-data field may not be accessed directly. It must be accessed
- * via the watchकरोg_set_drvdata and watchकरोg_get_drvdata helpers.
+ * via the watchdog_set_drvdata and watchdog_get_drvdata helpers.
  */
-काष्ठा watchकरोg_device अणु
-	पूर्णांक id;
-	काष्ठा device *parent;
-	स्थिर काष्ठा attribute_group **groups;
-	स्थिर काष्ठा watchकरोg_info *info;
-	स्थिर काष्ठा watchकरोg_ops *ops;
-	स्थिर काष्ठा watchकरोg_governor *gov;
-	अचिन्हित पूर्णांक bootstatus;
-	अचिन्हित पूर्णांक समयout;
-	अचिन्हित पूर्णांक preसमयout;
-	अचिन्हित पूर्णांक min_समयout;
-	अचिन्हित पूर्णांक max_समयout;
-	अचिन्हित पूर्णांक min_hw_heartbeat_ms;
-	अचिन्हित पूर्णांक max_hw_heartbeat_ms;
-	काष्ठा notअगरier_block reboot_nb;
-	काष्ठा notअगरier_block restart_nb;
-	व्योम *driver_data;
-	काष्ठा watchकरोg_core_data *wd_data;
-	अचिन्हित दीर्घ status;
-/* Bit numbers क्रम status flags */
-#घोषणा WDOG_ACTIVE		0	/* Is the watchकरोg running/active */
-#घोषणा WDOG_NO_WAY_OUT		1	/* Is 'nowayout' feature set ? */
-#घोषणा WDOG_STOP_ON_REBOOT	2	/* Should be stopped on reboot */
-#घोषणा WDOG_HW_RUNNING		3	/* True अगर HW watchकरोg running */
-#घोषणा WDOG_STOP_ON_UNREGISTER	4	/* Should be stopped on unरेजिस्टर */
-	काष्ठा list_head deferred;
-पूर्ण;
+struct watchdog_device {
+	int id;
+	struct device *parent;
+	const struct attribute_group **groups;
+	const struct watchdog_info *info;
+	const struct watchdog_ops *ops;
+	const struct watchdog_governor *gov;
+	unsigned int bootstatus;
+	unsigned int timeout;
+	unsigned int pretimeout;
+	unsigned int min_timeout;
+	unsigned int max_timeout;
+	unsigned int min_hw_heartbeat_ms;
+	unsigned int max_hw_heartbeat_ms;
+	struct notifier_block reboot_nb;
+	struct notifier_block restart_nb;
+	void *driver_data;
+	struct watchdog_core_data *wd_data;
+	unsigned long status;
+/* Bit numbers for status flags */
+#define WDOG_ACTIVE		0	/* Is the watchdog running/active */
+#define WDOG_NO_WAY_OUT		1	/* Is 'nowayout' feature set ? */
+#define WDOG_STOP_ON_REBOOT	2	/* Should be stopped on reboot */
+#define WDOG_HW_RUNNING		3	/* True if HW watchdog running */
+#define WDOG_STOP_ON_UNREGISTER	4	/* Should be stopped on unregister */
+	struct list_head deferred;
+};
 
-#घोषणा WATCHDOG_NOWAYOUT		IS_BUILTIN(CONFIG_WATCHDOG_NOWAYOUT)
-#घोषणा WATCHDOG_NOWAYOUT_INIT_STATUS	(WATCHDOG_NOWAYOUT << WDOG_NO_WAY_OUT)
+#define WATCHDOG_NOWAYOUT		IS_BUILTIN(CONFIG_WATCHDOG_NOWAYOUT)
+#define WATCHDOG_NOWAYOUT_INIT_STATUS	(WATCHDOG_NOWAYOUT << WDOG_NO_WAY_OUT)
 
-/* Use the following function to check whether or not the watchकरोg is active */
-अटल अंतरभूत bool watchकरोg_active(काष्ठा watchकरोg_device *wdd)
-अणु
-	वापस test_bit(WDOG_ACTIVE, &wdd->status);
-पूर्ण
+/* Use the following function to check whether or not the watchdog is active */
+static inline bool watchdog_active(struct watchdog_device *wdd)
+{
+	return test_bit(WDOG_ACTIVE, &wdd->status);
+}
 
 /*
- * Use the following function to check whether or not the hardware watchकरोg
+ * Use the following function to check whether or not the hardware watchdog
  * is running
  */
-अटल अंतरभूत bool watchकरोg_hw_running(काष्ठा watchकरोg_device *wdd)
-अणु
-	वापस test_bit(WDOG_HW_RUNNING, &wdd->status);
-पूर्ण
+static inline bool watchdog_hw_running(struct watchdog_device *wdd)
+{
+	return test_bit(WDOG_HW_RUNNING, &wdd->status);
+}
 
 /* Use the following function to set the nowayout feature */
-अटल अंतरभूत व्योम watchकरोg_set_nowayout(काष्ठा watchकरोg_device *wdd, bool nowayout)
-अणु
-	अगर (nowayout)
+static inline void watchdog_set_nowayout(struct watchdog_device *wdd, bool nowayout)
+{
+	if (nowayout)
 		set_bit(WDOG_NO_WAY_OUT, &wdd->status);
-पूर्ण
+}
 
-/* Use the following function to stop the watchकरोg on reboot */
-अटल अंतरभूत व्योम watchकरोg_stop_on_reboot(काष्ठा watchकरोg_device *wdd)
-अणु
+/* Use the following function to stop the watchdog on reboot */
+static inline void watchdog_stop_on_reboot(struct watchdog_device *wdd)
+{
 	set_bit(WDOG_STOP_ON_REBOOT, &wdd->status);
-पूर्ण
+}
 
-/* Use the following function to stop the watchकरोg when unरेजिस्टरing it */
-अटल अंतरभूत व्योम watchकरोg_stop_on_unरेजिस्टर(काष्ठा watchकरोg_device *wdd)
-अणु
+/* Use the following function to stop the watchdog when unregistering it */
+static inline void watchdog_stop_on_unregister(struct watchdog_device *wdd)
+{
 	set_bit(WDOG_STOP_ON_UNREGISTER, &wdd->status);
-पूर्ण
+}
 
-/* Use the following function to check अगर a समयout value is invalid */
-अटल अंतरभूत bool watchकरोg_समयout_invalid(काष्ठा watchकरोg_device *wdd, अचिन्हित पूर्णांक t)
-अणु
+/* Use the following function to check if a timeout value is invalid */
+static inline bool watchdog_timeout_invalid(struct watchdog_device *wdd, unsigned int t)
+{
 	/*
-	 * The समयout is invalid अगर
-	 * - the requested value is larger than अच_पूर्णांक_उच्च / 1000
-	 *   (since पूर्णांकernal calculations are करोne in milli-seconds),
+	 * The timeout is invalid if
+	 * - the requested value is larger than UINT_MAX / 1000
+	 *   (since internal calculations are done in milli-seconds),
 	 * or
-	 * - the requested value is smaller than the configured minimum समयout,
+	 * - the requested value is smaller than the configured minimum timeout,
 	 * or
-	 * - a maximum hardware समयout is not configured, a maximum समयout
+	 * - a maximum hardware timeout is not configured, a maximum timeout
 	 *   is configured, and the requested value is larger than the
-	 *   configured maximum समयout.
+	 *   configured maximum timeout.
 	 */
-	वापस t > अच_पूर्णांक_उच्च / 1000 || t < wdd->min_समयout ||
-		(!wdd->max_hw_heartbeat_ms && wdd->max_समयout &&
-		 t > wdd->max_समयout);
-पूर्ण
+	return t > UINT_MAX / 1000 || t < wdd->min_timeout ||
+		(!wdd->max_hw_heartbeat_ms && wdd->max_timeout &&
+		 t > wdd->max_timeout);
+}
 
-/* Use the following function to check अगर a preसमयout value is invalid */
-अटल अंतरभूत bool watchकरोg_preसमयout_invalid(काष्ठा watchकरोg_device *wdd,
-					       अचिन्हित पूर्णांक t)
-अणु
-	वापस t && wdd->समयout && t >= wdd->समयout;
-पूर्ण
+/* Use the following function to check if a pretimeout value is invalid */
+static inline bool watchdog_pretimeout_invalid(struct watchdog_device *wdd,
+					       unsigned int t)
+{
+	return t && wdd->timeout && t >= wdd->timeout;
+}
 
-/* Use the following functions to manipulate watchकरोg driver specअगरic data */
-अटल अंतरभूत व्योम watchकरोg_set_drvdata(काष्ठा watchकरोg_device *wdd, व्योम *data)
-अणु
+/* Use the following functions to manipulate watchdog driver specific data */
+static inline void watchdog_set_drvdata(struct watchdog_device *wdd, void *data)
+{
 	wdd->driver_data = data;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम *watchकरोg_get_drvdata(काष्ठा watchकरोg_device *wdd)
-अणु
-	वापस wdd->driver_data;
-पूर्ण
+static inline void *watchdog_get_drvdata(struct watchdog_device *wdd)
+{
+	return wdd->driver_data;
+}
 
-/* Use the following functions to report watchकरोg preसमयout event */
-#अगर IS_ENABLED(CONFIG_WATCHDOG_PRETIMEOUT_GOV)
-व्योम watchकरोg_notअगरy_preसमयout(काष्ठा watchकरोg_device *wdd);
-#अन्यथा
-अटल अंतरभूत व्योम watchकरोg_notअगरy_preसमयout(काष्ठा watchकरोg_device *wdd)
-अणु
+/* Use the following functions to report watchdog pretimeout event */
+#if IS_ENABLED(CONFIG_WATCHDOG_PRETIMEOUT_GOV)
+void watchdog_notify_pretimeout(struct watchdog_device *wdd);
+#else
+static inline void watchdog_notify_pretimeout(struct watchdog_device *wdd)
+{
 	pr_alert("watchdog%d: pretimeout event\n", wdd->id);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-/* drivers/watchकरोg/watchकरोg_core.c */
-व्योम watchकरोg_set_restart_priority(काष्ठा watchकरोg_device *wdd, पूर्णांक priority);
-बाह्य पूर्णांक watchकरोg_init_समयout(काष्ठा watchकरोg_device *wdd,
-				  अचिन्हित पूर्णांक समयout_parm, काष्ठा device *dev);
-बाह्य पूर्णांक watchकरोg_रेजिस्टर_device(काष्ठा watchकरोg_device *);
-बाह्य व्योम watchकरोg_unरेजिस्टर_device(काष्ठा watchकरोg_device *);
+/* drivers/watchdog/watchdog_core.c */
+void watchdog_set_restart_priority(struct watchdog_device *wdd, int priority);
+extern int watchdog_init_timeout(struct watchdog_device *wdd,
+				  unsigned int timeout_parm, struct device *dev);
+extern int watchdog_register_device(struct watchdog_device *);
+extern void watchdog_unregister_device(struct watchdog_device *);
 
-पूर्णांक watchकरोg_set_last_hw_keepalive(काष्ठा watchकरोg_device *, अचिन्हित पूर्णांक);
+int watchdog_set_last_hw_keepalive(struct watchdog_device *, unsigned int);
 
-/* devres रेजिस्टर variant */
-पूर्णांक devm_watchकरोg_रेजिस्टर_device(काष्ठा device *dev, काष्ठा watchकरोg_device *);
+/* devres register variant */
+int devm_watchdog_register_device(struct device *dev, struct watchdog_device *);
 
-#पूर्ण_अगर  /* अगरndef _LINUX_WATCHDOG_H */
+#endif  /* ifndef _LINUX_WATCHDOG_H */

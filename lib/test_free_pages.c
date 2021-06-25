@@ -1,48 +1,47 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * test_मुक्त_pages.c: Check that मुक्त_pages() करोesn't leak memory
+ * test_free_pages.c: Check that free_pages() doesn't leak memory
  * Copyright (c) 2020 Oracle
  * Author: Matthew Wilcox <willy@infradead.org>
  */
 
-#घोषणा pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/gfp.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/module.h>
+#include <linux/gfp.h>
+#include <linux/mm.h>
+#include <linux/module.h>
 
-अटल व्योम test_मुक्त_pages(gfp_t gfp)
-अणु
-	अचिन्हित पूर्णांक i;
+static void test_free_pages(gfp_t gfp)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < 1000 * 1000; i++) अणु
-		अचिन्हित दीर्घ addr = __get_मुक्त_pages(gfp, 3);
-		काष्ठा page *page = virt_to_page(addr);
+	for (i = 0; i < 1000 * 1000; i++) {
+		unsigned long addr = __get_free_pages(gfp, 3);
+		struct page *page = virt_to_page(addr);
 
 		/* Simulate page cache getting a speculative reference */
 		get_page(page);
-		मुक्त_pages(addr, 3);
+		free_pages(addr, 3);
 		put_page(page);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक m_in(व्योम)
-अणु
+static int m_in(void)
+{
 	pr_info("Testing with GFP_KERNEL\n");
-	test_मुक्त_pages(GFP_KERNEL);
+	test_free_pages(GFP_KERNEL);
 	pr_info("Testing with GFP_KERNEL | __GFP_COMP\n");
-	test_मुक्त_pages(GFP_KERNEL | __GFP_COMP);
+	test_free_pages(GFP_KERNEL | __GFP_COMP);
 	pr_info("Test completed\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम m_ex(व्योम)
-अणु
-पूर्ण
+static void m_ex(void)
+{
+}
 
 module_init(m_in);
-module_निकास(m_ex);
+module_exit(m_ex);
 MODULE_AUTHOR("Matthew Wilcox <willy@infradead.org>");
 MODULE_LICENSE("GPL");

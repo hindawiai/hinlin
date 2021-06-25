@@ -1,104 +1,103 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  tsl2550.c - Linux kernel modules क्रम ambient light sensor
+ *  tsl2550.c - Linux kernel modules for ambient light sensor
  *
- *  Copyright (C) 2007 Roकरोlfo Giometti <giometti@linux.it>
+ *  Copyright (C) 2007 Rodolfo Giometti <giometti@linux.it>
  *  Copyright (C) 2007 Eurotech S.p.A. <info@eurotech.it>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/mutex.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/i2c.h>
+#include <linux/mutex.h>
 
-#घोषणा TSL2550_DRV_NAME	"tsl2550"
-#घोषणा DRIVER_VERSION		"1.2"
+#define TSL2550_DRV_NAME	"tsl2550"
+#define DRIVER_VERSION		"1.2"
 
 /*
  * Defines
  */
 
-#घोषणा TSL2550_POWER_DOWN		0x00
-#घोषणा TSL2550_POWER_UP		0x03
-#घोषणा TSL2550_STANDARD_RANGE		0x18
-#घोषणा TSL2550_EXTENDED_RANGE		0x1d
-#घोषणा TSL2550_READ_ADC0		0x43
-#घोषणा TSL2550_READ_ADC1		0x83
+#define TSL2550_POWER_DOWN		0x00
+#define TSL2550_POWER_UP		0x03
+#define TSL2550_STANDARD_RANGE		0x18
+#define TSL2550_EXTENDED_RANGE		0x1d
+#define TSL2550_READ_ADC0		0x43
+#define TSL2550_READ_ADC1		0x83
 
 /*
  * Structs
  */
 
-काष्ठा tsl2550_data अणु
-	काष्ठा i2c_client *client;
-	काष्ठा mutex update_lock;
+struct tsl2550_data {
+	struct i2c_client *client;
+	struct mutex update_lock;
 
-	अचिन्हित पूर्णांक घातer_state:1;
-	अचिन्हित पूर्णांक operating_mode:1;
-पूर्ण;
+	unsigned int power_state:1;
+	unsigned int operating_mode:1;
+};
 
 /*
  * Global data
  */
 
-अटल स्थिर u8 TSL2550_MODE_RANGE[2] = अणु
+static const u8 TSL2550_MODE_RANGE[2] = {
 	TSL2550_STANDARD_RANGE, TSL2550_EXTENDED_RANGE,
-पूर्ण;
+};
 
 /*
  * Management functions
  */
 
-अटल पूर्णांक tsl2550_set_operating_mode(काष्ठा i2c_client *client, पूर्णांक mode)
-अणु
-	काष्ठा tsl2550_data *data = i2c_get_clientdata(client);
+static int tsl2550_set_operating_mode(struct i2c_client *client, int mode)
+{
+	struct tsl2550_data *data = i2c_get_clientdata(client);
 
-	पूर्णांक ret = i2c_smbus_ग_लिखो_byte(client, TSL2550_MODE_RANGE[mode]);
+	int ret = i2c_smbus_write_byte(client, TSL2550_MODE_RANGE[mode]);
 
 	data->operating_mode = mode;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक tsl2550_set_घातer_state(काष्ठा i2c_client *client, पूर्णांक state)
-अणु
-	काष्ठा tsl2550_data *data = i2c_get_clientdata(client);
-	पूर्णांक ret;
+static int tsl2550_set_power_state(struct i2c_client *client, int state)
+{
+	struct tsl2550_data *data = i2c_get_clientdata(client);
+	int ret;
 
-	अगर (state == 0)
-		ret = i2c_smbus_ग_लिखो_byte(client, TSL2550_POWER_DOWN);
-	अन्यथा अणु
-		ret = i2c_smbus_ग_लिखो_byte(client, TSL2550_POWER_UP);
+	if (state == 0)
+		ret = i2c_smbus_write_byte(client, TSL2550_POWER_DOWN);
+	else {
+		ret = i2c_smbus_write_byte(client, TSL2550_POWER_UP);
 
-		/* On घातer up we should reset operating mode also... */
+		/* On power up we should reset operating mode also... */
 		tsl2550_set_operating_mode(client, data->operating_mode);
-	पूर्ण
+	}
 
-	data->घातer_state = state;
+	data->power_state = state;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक tsl2550_get_adc_value(काष्ठा i2c_client *client, u8 cmd)
-अणु
-	पूर्णांक ret;
+static int tsl2550_get_adc_value(struct i2c_client *client, u8 cmd)
+{
+	int ret;
 
-	ret = i2c_smbus_पढ़ो_byte_data(client, cmd);
-	अगर (ret < 0)
-		वापस ret;
-	अगर (!(ret & 0x80))
-		वापस -EAGAIN;
-	वापस ret & 0x7f;	/* हटाओ the "valid" bit */
-पूर्ण
+	ret = i2c_smbus_read_byte_data(client, cmd);
+	if (ret < 0)
+		return ret;
+	if (!(ret & 0x80))
+		return -EAGAIN;
+	return ret & 0x7f;	/* remove the "valid" bit */
+}
 
 /*
  * LUX calculation
  */
 
-#घोषणा	TSL2550_MAX_LUX		1846
+#define	TSL2550_MAX_LUX		1846
 
-अटल स्थिर u8 ratio_lut[] = अणु
+static const u8 ratio_lut[] = {
 	100, 100, 100, 100, 100, 100, 100, 100,
 	100, 100, 100, 100, 100, 100, 99, 99,
 	99, 99, 99, 99, 99, 99, 99, 99,
@@ -116,9 +115,9 @@
 	33, 33, 32, 32, 32, 32, 32, 31,
 	31, 31, 31, 31, 30, 30, 30, 30,
 	30,
-पूर्ण;
+};
 
-अटल स्थिर u16 count_lut[] = अणु
+static const u16 count_lut[] = {
 	0, 1, 2, 3, 4, 5, 6, 7,
 	8, 9, 10, 11, 12, 13, 14, 15,
 	16, 18, 20, 22, 24, 26, 28, 30,
@@ -135,23 +134,23 @@
 	1551, 1615, 1679, 1743, 1807, 1871, 1935, 1999,
 	2095, 2223, 2351, 2479, 2607, 2735, 2863, 2991,
 	3119, 3247, 3375, 3503, 3631, 3759, 3887, 4015,
-पूर्ण;
+};
 
 /*
- * This function is described पूर्णांकo Taos TSL2550 Designer's Notebook
+ * This function is described into Taos TSL2550 Designer's Notebook
  * pages 2, 3.
  */
-अटल पूर्णांक tsl2550_calculate_lux(u8 ch0, u8 ch1)
-अणु
-	अचिन्हित पूर्णांक lux;
+static int tsl2550_calculate_lux(u8 ch0, u8 ch1)
+{
+	unsigned int lux;
 
 	/* Look up count from channel values */
 	u16 c0 = count_lut[ch0];
 	u16 c1 = count_lut[ch1];
 
-	/* Aव्योम भागision by 0 and count 1 cannot be greater than count 0 */
-	अगर (c1 <= c0)
-		अगर (c0) अणु
+	/* Avoid division by 0 and count 1 cannot be greater than count 0 */
+	if (c1 <= c0)
+		if (c0) {
 			/*
 			 * Calculate ratio.
 			 * Note: the "128" is a scaling factor
@@ -160,211 +159,211 @@
 
 			/* Calculate LUX */
 			lux = ((c0 - c1) * ratio_lut[r]) / 256;
-		पूर्ण अन्यथा
+		} else
 			lux = 0;
-	अन्यथा
-		वापस 0;
+	else
+		return 0;
 
 	/* LUX range check */
-	वापस lux > TSL2550_MAX_LUX ? TSL2550_MAX_LUX : lux;
-पूर्ण
+	return lux > TSL2550_MAX_LUX ? TSL2550_MAX_LUX : lux;
+}
 
 /*
  * SysFS support
  */
 
-अटल sमाप_प्रकार tsl2550_show_घातer_state(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा tsl2550_data *data = i2c_get_clientdata(to_i2c_client(dev));
+static ssize_t tsl2550_show_power_state(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct tsl2550_data *data = i2c_get_clientdata(to_i2c_client(dev));
 
-	वापस प्र_लिखो(buf, "%u\n", data->घातer_state);
-पूर्ण
+	return sprintf(buf, "%u\n", data->power_state);
+}
 
-अटल sमाप_प्रकार tsl2550_store_घातer_state(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
-	काष्ठा tsl2550_data *data = i2c_get_clientdata(client);
-	अचिन्हित दीर्घ val = simple_म_से_अदीर्घ(buf, शून्य, 10);
-	पूर्णांक ret;
+static ssize_t tsl2550_store_power_state(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct tsl2550_data *data = i2c_get_clientdata(client);
+	unsigned long val = simple_strtoul(buf, NULL, 10);
+	int ret;
 
-	अगर (val > 1)
-		वापस -EINVAL;
+	if (val > 1)
+		return -EINVAL;
 
 	mutex_lock(&data->update_lock);
-	ret = tsl2550_set_घातer_state(client, val);
+	ret = tsl2550_set_power_state(client, val);
 	mutex_unlock(&data->update_lock);
 
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल DEVICE_ATTR(घातer_state, S_IWUSR | S_IRUGO,
-		   tsl2550_show_घातer_state, tsl2550_store_घातer_state);
+static DEVICE_ATTR(power_state, S_IWUSR | S_IRUGO,
+		   tsl2550_show_power_state, tsl2550_store_power_state);
 
-अटल sमाप_प्रकार tsl2550_show_operating_mode(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा tsl2550_data *data = i2c_get_clientdata(to_i2c_client(dev));
+static ssize_t tsl2550_show_operating_mode(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct tsl2550_data *data = i2c_get_clientdata(to_i2c_client(dev));
 
-	वापस प्र_लिखो(buf, "%u\n", data->operating_mode);
-पूर्ण
+	return sprintf(buf, "%u\n", data->operating_mode);
+}
 
-अटल sमाप_प्रकार tsl2550_store_operating_mode(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
-	काष्ठा tsl2550_data *data = i2c_get_clientdata(client);
-	अचिन्हित दीर्घ val = simple_म_से_अदीर्घ(buf, शून्य, 10);
-	पूर्णांक ret;
+static ssize_t tsl2550_store_operating_mode(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct tsl2550_data *data = i2c_get_clientdata(client);
+	unsigned long val = simple_strtoul(buf, NULL, 10);
+	int ret;
 
-	अगर (val > 1)
-		वापस -EINVAL;
+	if (val > 1)
+		return -EINVAL;
 
-	अगर (data->घातer_state == 0)
-		वापस -EBUSY;
+	if (data->power_state == 0)
+		return -EBUSY;
 
 	mutex_lock(&data->update_lock);
 	ret = tsl2550_set_operating_mode(client, val);
 	mutex_unlock(&data->update_lock);
 
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल DEVICE_ATTR(operating_mode, S_IWUSR | S_IRUGO,
+static DEVICE_ATTR(operating_mode, S_IWUSR | S_IRUGO,
 		   tsl2550_show_operating_mode, tsl2550_store_operating_mode);
 
-अटल sमाप_प्रकार __tsl2550_show_lux(काष्ठा i2c_client *client, अक्षर *buf)
-अणु
-	काष्ठा tsl2550_data *data = i2c_get_clientdata(client);
+static ssize_t __tsl2550_show_lux(struct i2c_client *client, char *buf)
+{
+	struct tsl2550_data *data = i2c_get_clientdata(client);
 	u8 ch0, ch1;
-	पूर्णांक ret;
+	int ret;
 
 	ret = tsl2550_get_adc_value(client, TSL2550_READ_ADC0);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 	ch0 = ret;
 
 	ret = tsl2550_get_adc_value(client, TSL2550_READ_ADC1);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 	ch1 = ret;
 
 	/* Do the job */
 	ret = tsl2550_calculate_lux(ch0, ch1);
-	अगर (ret < 0)
-		वापस ret;
-	अगर (data->operating_mode == 1)
+	if (ret < 0)
+		return ret;
+	if (data->operating_mode == 1)
 		ret *= 5;
 
-	वापस प्र_लिखो(buf, "%d\n", ret);
-पूर्ण
+	return sprintf(buf, "%d\n", ret);
+}
 
-अटल sमाप_प्रकार tsl2550_show_lux1_input(काष्ठा device *dev,
-			काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
-	काष्ठा tsl2550_data *data = i2c_get_clientdata(client);
-	पूर्णांक ret;
+static ssize_t tsl2550_show_lux1_input(struct device *dev,
+			struct device_attribute *attr, char *buf)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct tsl2550_data *data = i2c_get_clientdata(client);
+	int ret;
 
-	/* No LUX data अगर not operational */
-	अगर (!data->घातer_state)
-		वापस -EBUSY;
+	/* No LUX data if not operational */
+	if (!data->power_state)
+		return -EBUSY;
 
 	mutex_lock(&data->update_lock);
 	ret = __tsl2550_show_lux(client, buf);
 	mutex_unlock(&data->update_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल DEVICE_ATTR(lux1_input, S_IRUGO,
-		   tsl2550_show_lux1_input, शून्य);
+static DEVICE_ATTR(lux1_input, S_IRUGO,
+		   tsl2550_show_lux1_input, NULL);
 
-अटल काष्ठा attribute *tsl2550_attributes[] = अणु
-	&dev_attr_घातer_state.attr,
+static struct attribute *tsl2550_attributes[] = {
+	&dev_attr_power_state.attr,
 	&dev_attr_operating_mode.attr,
 	&dev_attr_lux1_input.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group tsl2550_attr_group = अणु
+static const struct attribute_group tsl2550_attr_group = {
 	.attrs = tsl2550_attributes,
-पूर्ण;
+};
 
 /*
  * Initialization function
  */
 
-अटल पूर्णांक tsl2550_init_client(काष्ठा i2c_client *client)
-अणु
-	काष्ठा tsl2550_data *data = i2c_get_clientdata(client);
-	पूर्णांक err;
+static int tsl2550_init_client(struct i2c_client *client)
+{
+	struct tsl2550_data *data = i2c_get_clientdata(client);
+	int err;
 
 	/*
-	 * Probe the chip. To करो so we try to घातer up the device and then to
-	 * पढ़ो back the 0x03 code
+	 * Probe the chip. To do so we try to power up the device and then to
+	 * read back the 0x03 code
 	 */
-	err = i2c_smbus_पढ़ो_byte_data(client, TSL2550_POWER_UP);
-	अगर (err < 0)
-		वापस err;
-	अगर (err != TSL2550_POWER_UP)
-		वापस -ENODEV;
-	data->घातer_state = 1;
+	err = i2c_smbus_read_byte_data(client, TSL2550_POWER_UP);
+	if (err < 0)
+		return err;
+	if (err != TSL2550_POWER_UP)
+		return -ENODEV;
+	data->power_state = 1;
 
-	/* Set the शेष operating mode */
-	err = i2c_smbus_ग_लिखो_byte(client,
+	/* Set the default operating mode */
+	err = i2c_smbus_write_byte(client,
 				   TSL2550_MODE_RANGE[data->operating_mode]);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * I2C init/probing/निकास functions
+ * I2C init/probing/exit functions
  */
 
-अटल काष्ठा i2c_driver tsl2550_driver;
-अटल पूर्णांक tsl2550_probe(काष्ठा i2c_client *client,
-				   स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा i2c_adapter *adapter = client->adapter;
-	काष्ठा tsl2550_data *data;
-	पूर्णांक *opmode, err = 0;
+static struct i2c_driver tsl2550_driver;
+static int tsl2550_probe(struct i2c_client *client,
+				   const struct i2c_device_id *id)
+{
+	struct i2c_adapter *adapter = client->adapter;
+	struct tsl2550_data *data;
+	int *opmode, err = 0;
 
-	अगर (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_WRITE_BYTE
-					    | I2C_FUNC_SMBUS_READ_BYTE_DATA)) अणु
+	if (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_WRITE_BYTE
+					    | I2C_FUNC_SMBUS_READ_BYTE_DATA)) {
 		err = -EIO;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	data = kzalloc(माप(काष्ठा tsl2550_data), GFP_KERNEL);
-	अगर (!data) अणु
+	data = kzalloc(sizeof(struct tsl2550_data), GFP_KERNEL);
+	if (!data) {
 		err = -ENOMEM;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 	data->client = client;
 	i2c_set_clientdata(client, data);
 
-	/* Check platक्रमm data */
-	opmode = client->dev.platक्रमm_data;
-	अगर (opmode) अणु
-		अगर (*opmode < 0 || *opmode > 1) अणु
+	/* Check platform data */
+	opmode = client->dev.platform_data;
+	if (opmode) {
+		if (*opmode < 0 || *opmode > 1) {
 			dev_err(&client->dev, "invalid operating_mode (%d)\n",
 					*opmode);
 			err = -EINVAL;
-			जाओ निकास_kमुक्त;
-		पूर्ण
+			goto exit_kfree;
+		}
 		data->operating_mode = *opmode;
-	पूर्ण अन्यथा
-		data->operating_mode = 0;	/* शेष mode is standard */
+	} else
+		data->operating_mode = 0;	/* default mode is standard */
 	dev_info(&client->dev, "%s operating mode\n",
 			data->operating_mode ? "extended" : "standard");
 
@@ -372,79 +371,79 @@
 
 	/* Initialize the TSL2550 chip */
 	err = tsl2550_init_client(client);
-	अगर (err)
-		जाओ निकास_kमुक्त;
+	if (err)
+		goto exit_kfree;
 
 	/* Register sysfs hooks */
 	err = sysfs_create_group(&client->dev.kobj, &tsl2550_attr_group);
-	अगर (err)
-		जाओ निकास_kमुक्त;
+	if (err)
+		goto exit_kfree;
 
 	dev_info(&client->dev, "support ver. %s enabled\n", DRIVER_VERSION);
 
-	वापस 0;
+	return 0;
 
-निकास_kमुक्त:
-	kमुक्त(data);
-निकास:
-	वापस err;
-पूर्ण
+exit_kfree:
+	kfree(data);
+exit:
+	return err;
+}
 
-अटल पूर्णांक tsl2550_हटाओ(काष्ठा i2c_client *client)
-अणु
-	sysfs_हटाओ_group(&client->dev.kobj, &tsl2550_attr_group);
+static int tsl2550_remove(struct i2c_client *client)
+{
+	sysfs_remove_group(&client->dev.kobj, &tsl2550_attr_group);
 
-	/* Power करोwn the device */
-	tsl2550_set_घातer_state(client, 0);
+	/* Power down the device */
+	tsl2550_set_power_state(client, 0);
 
-	kमुक्त(i2c_get_clientdata(client));
+	kfree(i2c_get_clientdata(client));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
+#ifdef CONFIG_PM_SLEEP
 
-अटल पूर्णांक tsl2550_suspend(काष्ठा device *dev)
-अणु
-	वापस tsl2550_set_घातer_state(to_i2c_client(dev), 0);
-पूर्ण
+static int tsl2550_suspend(struct device *dev)
+{
+	return tsl2550_set_power_state(to_i2c_client(dev), 0);
+}
 
-अटल पूर्णांक tsl2550_resume(काष्ठा device *dev)
-अणु
-	वापस tsl2550_set_घातer_state(to_i2c_client(dev), 1);
-पूर्ण
+static int tsl2550_resume(struct device *dev)
+{
+	return tsl2550_set_power_state(to_i2c_client(dev), 1);
+}
 
-अटल SIMPLE_DEV_PM_OPS(tsl2550_pm_ops, tsl2550_suspend, tsl2550_resume);
-#घोषणा TSL2550_PM_OPS (&tsl2550_pm_ops)
+static SIMPLE_DEV_PM_OPS(tsl2550_pm_ops, tsl2550_suspend, tsl2550_resume);
+#define TSL2550_PM_OPS (&tsl2550_pm_ops)
 
-#अन्यथा
+#else
 
-#घोषणा TSL2550_PM_OPS शून्य
+#define TSL2550_PM_OPS NULL
 
-#पूर्ण_अगर /* CONFIG_PM_SLEEP */
+#endif /* CONFIG_PM_SLEEP */
 
-अटल स्थिर काष्ठा i2c_device_id tsl2550_id[] = अणु
-	अणु "tsl2550", 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id tsl2550_id[] = {
+	{ "tsl2550", 0 },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, tsl2550_id);
 
-अटल स्थिर काष्ठा of_device_id tsl2550_of_match[] = अणु
-	अणु .compatible = "taos,tsl2550" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id tsl2550_of_match[] = {
+	{ .compatible = "taos,tsl2550" },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, tsl2550_of_match);
 
-अटल काष्ठा i2c_driver tsl2550_driver = अणु
-	.driver = अणु
+static struct i2c_driver tsl2550_driver = {
+	.driver = {
 		.name	= TSL2550_DRV_NAME,
 		.of_match_table = tsl2550_of_match,
 		.pm	= TSL2550_PM_OPS,
-	पूर्ण,
+	},
 	.probe	= tsl2550_probe,
-	.हटाओ	= tsl2550_हटाओ,
+	.remove	= tsl2550_remove,
 	.id_table = tsl2550_id,
-पूर्ण;
+};
 
 module_i2c_driver(tsl2550_driver);
 

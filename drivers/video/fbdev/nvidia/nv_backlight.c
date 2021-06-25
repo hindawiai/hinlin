@@ -1,138 +1,137 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Backlight code क्रम nVidia based graphic cards
+ * Backlight code for nVidia based graphic cards
  *
  * Copyright 2004 Antonino Daplas <adaplas@pol.net>
  * Copyright (c) 2006 Michael Hanselmann <linux-kernel@hansmi.ch>
  */
 
-#समावेश <linux/backlight.h>
-#समावेश <linux/fb.h>
-#समावेश <linux/pci.h>
+#include <linux/backlight.h>
+#include <linux/fb.h>
+#include <linux/pci.h>
 
-#अगर_घोषित CONFIG_PMAC_BACKLIGHT
-#समावेश <यंत्र/backlight.h>
-#पूर्ण_अगर
+#ifdef CONFIG_PMAC_BACKLIGHT
+#include <asm/backlight.h>
+#endif
 
-#समावेश "nv_local.h"
-#समावेश "nv_type.h"
-#समावेश "nv_proto.h"
+#include "nv_local.h"
+#include "nv_type.h"
+#include "nv_proto.h"
 
-/* We करो not have any inक्रमmation about which values are allowed, thus
+/* We do not have any information about which values are allowed, thus
  * we used safe values.
  */
-#घोषणा MIN_LEVEL 0x158
-#घोषणा MAX_LEVEL 0x534
-#घोषणा LEVEL_STEP ((MAX_LEVEL - MIN_LEVEL) / FB_BACKLIGHT_MAX)
+#define MIN_LEVEL 0x158
+#define MAX_LEVEL 0x534
+#define LEVEL_STEP ((MAX_LEVEL - MIN_LEVEL) / FB_BACKLIGHT_MAX)
 
-अटल पूर्णांक nvidia_bl_get_level_brightness(काष्ठा nvidia_par *par,
-		पूर्णांक level)
-अणु
-	काष्ठा fb_info *info = pci_get_drvdata(par->pci_dev);
-	पूर्णांक nlevel;
+static int nvidia_bl_get_level_brightness(struct nvidia_par *par,
+		int level)
+{
+	struct fb_info *info = pci_get_drvdata(par->pci_dev);
+	int nlevel;
 
 	/* Get and convert the value */
-	/* No locking of bl_curve since we पढ़ो a single value */
+	/* No locking of bl_curve since we read a single value */
 	nlevel = MIN_LEVEL + info->bl_curve[level] * LEVEL_STEP;
 
-	अगर (nlevel < 0)
+	if (nlevel < 0)
 		nlevel = 0;
-	अन्यथा अगर (nlevel < MIN_LEVEL)
+	else if (nlevel < MIN_LEVEL)
 		nlevel = MIN_LEVEL;
-	अन्यथा अगर (nlevel > MAX_LEVEL)
+	else if (nlevel > MAX_LEVEL)
 		nlevel = MAX_LEVEL;
 
-	वापस nlevel;
-पूर्ण
+	return nlevel;
+}
 
-अटल पूर्णांक nvidia_bl_update_status(काष्ठा backlight_device *bd)
-अणु
-	काष्ठा nvidia_par *par = bl_get_data(bd);
-	u32 पंचांगp_pcrt, पंचांगp_pmc, fpcontrol;
-	पूर्णांक level;
+static int nvidia_bl_update_status(struct backlight_device *bd)
+{
+	struct nvidia_par *par = bl_get_data(bd);
+	u32 tmp_pcrt, tmp_pmc, fpcontrol;
+	int level;
 
-	अगर (!par->FlatPanel)
-		वापस 0;
+	if (!par->FlatPanel)
+		return 0;
 
-	अगर (bd->props.घातer != FB_BLANK_UNBLANK ||
+	if (bd->props.power != FB_BLANK_UNBLANK ||
 	    bd->props.fb_blank != FB_BLANK_UNBLANK)
 		level = 0;
-	अन्यथा
+	else
 		level = bd->props.brightness;
 
-	पंचांगp_pmc = NV_RD32(par->PMC, 0x10F0) & 0x0000FFFF;
-	पंचांगp_pcrt = NV_RD32(par->PCRTC0, 0x081C) & 0xFFFFFFFC;
+	tmp_pmc = NV_RD32(par->PMC, 0x10F0) & 0x0000FFFF;
+	tmp_pcrt = NV_RD32(par->PCRTC0, 0x081C) & 0xFFFFFFFC;
 	fpcontrol = NV_RD32(par->PRAMDAC, 0x0848) & 0xCFFFFFCC;
 
-	अगर (level > 0) अणु
-		पंचांगp_pcrt |= 0x1;
-		पंचांगp_pmc |= (1 << 31); /* backlight bit */
-		पंचांगp_pmc |= nvidia_bl_get_level_brightness(par, level) << 16;
+	if (level > 0) {
+		tmp_pcrt |= 0x1;
+		tmp_pmc |= (1 << 31); /* backlight bit */
+		tmp_pmc |= nvidia_bl_get_level_brightness(par, level) << 16;
 		fpcontrol |= par->fpSyncs;
-	पूर्ण अन्यथा
+	} else
 		fpcontrol |= 0x20000022;
 
-	NV_WR32(par->PCRTC0, 0x081C, पंचांगp_pcrt);
-	NV_WR32(par->PMC, 0x10F0, पंचांगp_pmc);
+	NV_WR32(par->PCRTC0, 0x081C, tmp_pcrt);
+	NV_WR32(par->PMC, 0x10F0, tmp_pmc);
 	NV_WR32(par->PRAMDAC, 0x848, fpcontrol);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा backlight_ops nvidia_bl_ops = अणु
+static const struct backlight_ops nvidia_bl_ops = {
 	.update_status	= nvidia_bl_update_status,
-पूर्ण;
+};
 
-व्योम nvidia_bl_init(काष्ठा nvidia_par *par)
-अणु
-	काष्ठा backlight_properties props;
-	काष्ठा fb_info *info = pci_get_drvdata(par->pci_dev);
-	काष्ठा backlight_device *bd;
-	अक्षर name[12];
+void nvidia_bl_init(struct nvidia_par *par)
+{
+	struct backlight_properties props;
+	struct fb_info *info = pci_get_drvdata(par->pci_dev);
+	struct backlight_device *bd;
+	char name[12];
 
-	अगर (!par->FlatPanel)
-		वापस;
+	if (!par->FlatPanel)
+		return;
 
-#अगर_घोषित CONFIG_PMAC_BACKLIGHT
-	अगर (!machine_is(घातermac) ||
+#ifdef CONFIG_PMAC_BACKLIGHT
+	if (!machine_is(powermac) ||
 	    !pmac_has_backlight_type("mnca"))
-		वापस;
-#पूर्ण_अगर
+		return;
+#endif
 
-	snम_लिखो(name, माप(name), "nvidiabl%d", info->node);
+	snprintf(name, sizeof(name), "nvidiabl%d", info->node);
 
-	स_रखो(&props, 0, माप(काष्ठा backlight_properties));
+	memset(&props, 0, sizeof(struct backlight_properties));
 	props.type = BACKLIGHT_RAW;
 	props.max_brightness = FB_BACKLIGHT_LEVELS - 1;
-	bd = backlight_device_रेजिस्टर(name, info->dev, par, &nvidia_bl_ops,
+	bd = backlight_device_register(name, info->dev, par, &nvidia_bl_ops,
 				       &props);
-	अगर (IS_ERR(bd)) अणु
-		info->bl_dev = शून्य;
-		prपूर्णांकk(KERN_WARNING "nvidia: Backlight registration failed\n");
-		जाओ error;
-	पूर्ण
+	if (IS_ERR(bd)) {
+		info->bl_dev = NULL;
+		printk(KERN_WARNING "nvidia: Backlight registration failed\n");
+		goto error;
+	}
 
 	info->bl_dev = bd;
-	fb_bl_शेष_curve(info, 0,
+	fb_bl_default_curve(info, 0,
 		0x158 * FB_BACKLIGHT_MAX / MAX_LEVEL,
 		0x534 * FB_BACKLIGHT_MAX / MAX_LEVEL);
 
 	bd->props.brightness = bd->props.max_brightness;
-	bd->props.घातer = FB_BLANK_UNBLANK;
+	bd->props.power = FB_BLANK_UNBLANK;
 	backlight_update_status(bd);
 
-	prपूर्णांकk("nvidia: Backlight initialized (%s)\n", name);
+	printk("nvidia: Backlight initialized (%s)\n", name);
 
 error:
-	वापस;
-पूर्ण
+	return;
+}
 
-व्योम nvidia_bl_निकास(काष्ठा nvidia_par *par)
-अणु
-	काष्ठा fb_info *info = pci_get_drvdata(par->pci_dev);
-	काष्ठा backlight_device *bd = info->bl_dev;
+void nvidia_bl_exit(struct nvidia_par *par)
+{
+	struct fb_info *info = pci_get_drvdata(par->pci_dev);
+	struct backlight_device *bd = info->bl_dev;
 
-	backlight_device_unरेजिस्टर(bd);
-	prपूर्णांकk("nvidia: Backlight unloaded\n");
-पूर्ण
+	backlight_device_unregister(bd);
+	printk("nvidia: Backlight unloaded\n");
+}

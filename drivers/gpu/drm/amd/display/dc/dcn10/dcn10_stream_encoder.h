@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  *  and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,15 +23,15 @@
  *
  */
 
-#अगर_अघोषित __DC_STREAM_ENCODER_DCN10_H__
-#घोषणा __DC_STREAM_ENCODER_DCN10_H__
+#ifndef __DC_STREAM_ENCODER_DCN10_H__
+#define __DC_STREAM_ENCODER_DCN10_H__
 
-#समावेश "stream_encoder.h"
+#include "stream_encoder.h"
 
-#घोषणा DCN10STRENC_FROM_STRENC(stream_encoder)\
-	container_of(stream_encoder, काष्ठा dcn10_stream_encoder, base)
+#define DCN10STRENC_FROM_STRENC(stream_encoder)\
+	container_of(stream_encoder, struct dcn10_stream_encoder, base)
 
-#घोषणा SE_COMMON_DCN_REG_LIST(id) \
+#define SE_COMMON_DCN_REG_LIST(id) \
 	SRI(AFMT_CNTL, DIG, id), \
 	SRI(AFMT_GENERIC_0, DIG, id), \
 	SRI(AFMT_GENERIC_1, DIG, id), \
@@ -95,99 +94,99 @@
 	SRI(DP_SEC_TIMESTAMP, DP, id), \
 	SRI(DIG_CLOCK_PATTERN, DIG, id)
 
-#घोषणा SE_DCN_REG_LIST(id)\
+#define SE_DCN_REG_LIST(id)\
 	SE_COMMON_DCN_REG_LIST(id)
 
 
-काष्ठा dcn10_stream_enc_रेजिस्टरs अणु
-	uपूर्णांक32_t AFMT_CNTL;
-	uपूर्णांक32_t AFMT_AVI_INFO0;
-	uपूर्णांक32_t AFMT_AVI_INFO1;
-	uपूर्णांक32_t AFMT_AVI_INFO2;
-	uपूर्णांक32_t AFMT_AVI_INFO3;
-	uपूर्णांक32_t AFMT_GENERIC_0;
-	uपूर्णांक32_t AFMT_GENERIC_1;
-	uपूर्णांक32_t AFMT_GENERIC_2;
-	uपूर्णांक32_t AFMT_GENERIC_3;
-	uपूर्णांक32_t AFMT_GENERIC_4;
-	uपूर्णांक32_t AFMT_GENERIC_5;
-	uपूर्णांक32_t AFMT_GENERIC_6;
-	uपूर्णांक32_t AFMT_GENERIC_7;
-	uपूर्णांक32_t AFMT_GENERIC_HDR;
-	uपूर्णांक32_t AFMT_INFOFRAME_CONTROL0;
-	uपूर्णांक32_t AFMT_VBI_PACKET_CONTROL;
-	uपूर्णांक32_t AFMT_VBI_PACKET_CONTROL1;
-	uपूर्णांक32_t AFMT_AUDIO_PACKET_CONTROL;
-	uपूर्णांक32_t AFMT_AUDIO_PACKET_CONTROL2;
-	uपूर्णांक32_t AFMT_AUDIO_SRC_CONTROL;
-	uपूर्णांक32_t AFMT_60958_0;
-	uपूर्णांक32_t AFMT_60958_1;
-	uपूर्णांक32_t AFMT_60958_2;
-	uपूर्णांक32_t DIG_FE_CNTL;
-	uपूर्णांक32_t DIG_FE_CNTL2;
-	uपूर्णांक32_t DP_MSE_RATE_CNTL;
-	uपूर्णांक32_t DP_MSE_RATE_UPDATE;
-	uपूर्णांक32_t DP_PIXEL_FORMAT;
-	uपूर्णांक32_t DP_SEC_CNTL;
-	uपूर्णांक32_t DP_SEC_CNTL1;
-	uपूर्णांक32_t DP_SEC_CNTL2;
-	uपूर्णांक32_t DP_SEC_CNTL5;
-	uपूर्णांक32_t DP_SEC_CNTL6;
-	uपूर्णांक32_t DP_STEER_FIFO;
-	uपूर्णांक32_t DP_VID_M;
-	uपूर्णांक32_t DP_VID_N;
-	uपूर्णांक32_t DP_VID_STREAM_CNTL;
-	uपूर्णांक32_t DP_VID_TIMING;
-	uपूर्णांक32_t DP_SEC_AUD_N;
-	uपूर्णांक32_t DP_SEC_TIMESTAMP;
-	uपूर्णांक32_t HDMI_CONTROL;
-	uपूर्णांक32_t HDMI_GC;
-	uपूर्णांक32_t HDMI_GENERIC_PACKET_CONTROL0;
-	uपूर्णांक32_t HDMI_GENERIC_PACKET_CONTROL1;
-	uपूर्णांक32_t HDMI_GENERIC_PACKET_CONTROL2;
-	uपूर्णांक32_t HDMI_GENERIC_PACKET_CONTROL3;
-	uपूर्णांक32_t HDMI_GENERIC_PACKET_CONTROL4;
-	uपूर्णांक32_t HDMI_GENERIC_PACKET_CONTROL5;
-	uपूर्णांक32_t HDMI_INFOFRAME_CONTROL0;
-	uपूर्णांक32_t HDMI_INFOFRAME_CONTROL1;
-	uपूर्णांक32_t HDMI_VBI_PACKET_CONTROL;
-	uपूर्णांक32_t HDMI_AUDIO_PACKET_CONTROL;
-	uपूर्णांक32_t HDMI_ACR_PACKET_CONTROL;
-	uपूर्णांक32_t HDMI_ACR_32_0;
-	uपूर्णांक32_t HDMI_ACR_32_1;
-	uपूर्णांक32_t HDMI_ACR_44_0;
-	uपूर्णांक32_t HDMI_ACR_44_1;
-	uपूर्णांक32_t HDMI_ACR_48_0;
-	uपूर्णांक32_t HDMI_ACR_48_1;
-	uपूर्णांक32_t DP_DB_CNTL;
-	uपूर्णांक32_t DP_MSA_MISC;
-	uपूर्णांक32_t DP_MSA_VBID_MISC;
-	uपूर्णांक32_t DP_MSA_COLORIMETRY;
-	uपूर्णांक32_t DP_MSA_TIMING_PARAM1;
-	uपूर्णांक32_t DP_MSA_TIMING_PARAM2;
-	uपूर्णांक32_t DP_MSA_TIMING_PARAM3;
-	uपूर्णांक32_t DP_MSA_TIMING_PARAM4;
-	uपूर्णांक32_t HDMI_DB_CONTROL;
-	uपूर्णांक32_t DP_DSC_CNTL;
-	uपूर्णांक32_t DP_DSC_BYTES_PER_PIXEL;
-	uपूर्णांक32_t DME_CONTROL;
-	uपूर्णांक32_t DP_SEC_METADATA_TRANSMISSION;
-	uपूर्णांक32_t HDMI_METADATA_PACKET_CONTROL;
-	uपूर्णांक32_t DP_SEC_FRAMING4;
-	uपूर्णांक32_t DP_GSP11_CNTL;
-	uपूर्णांक32_t HDMI_GENERIC_PACKET_CONTROL6;
-	uपूर्णांक32_t HDMI_GENERIC_PACKET_CONTROL7;
-	uपूर्णांक32_t HDMI_GENERIC_PACKET_CONTROL8;
-	uपूर्णांक32_t HDMI_GENERIC_PACKET_CONTROL9;
-	uपूर्णांक32_t HDMI_GENERIC_PACKET_CONTROL10;
-	uपूर्णांक32_t DIG_CLOCK_PATTERN;
-पूर्ण;
+struct dcn10_stream_enc_registers {
+	uint32_t AFMT_CNTL;
+	uint32_t AFMT_AVI_INFO0;
+	uint32_t AFMT_AVI_INFO1;
+	uint32_t AFMT_AVI_INFO2;
+	uint32_t AFMT_AVI_INFO3;
+	uint32_t AFMT_GENERIC_0;
+	uint32_t AFMT_GENERIC_1;
+	uint32_t AFMT_GENERIC_2;
+	uint32_t AFMT_GENERIC_3;
+	uint32_t AFMT_GENERIC_4;
+	uint32_t AFMT_GENERIC_5;
+	uint32_t AFMT_GENERIC_6;
+	uint32_t AFMT_GENERIC_7;
+	uint32_t AFMT_GENERIC_HDR;
+	uint32_t AFMT_INFOFRAME_CONTROL0;
+	uint32_t AFMT_VBI_PACKET_CONTROL;
+	uint32_t AFMT_VBI_PACKET_CONTROL1;
+	uint32_t AFMT_AUDIO_PACKET_CONTROL;
+	uint32_t AFMT_AUDIO_PACKET_CONTROL2;
+	uint32_t AFMT_AUDIO_SRC_CONTROL;
+	uint32_t AFMT_60958_0;
+	uint32_t AFMT_60958_1;
+	uint32_t AFMT_60958_2;
+	uint32_t DIG_FE_CNTL;
+	uint32_t DIG_FE_CNTL2;
+	uint32_t DP_MSE_RATE_CNTL;
+	uint32_t DP_MSE_RATE_UPDATE;
+	uint32_t DP_PIXEL_FORMAT;
+	uint32_t DP_SEC_CNTL;
+	uint32_t DP_SEC_CNTL1;
+	uint32_t DP_SEC_CNTL2;
+	uint32_t DP_SEC_CNTL5;
+	uint32_t DP_SEC_CNTL6;
+	uint32_t DP_STEER_FIFO;
+	uint32_t DP_VID_M;
+	uint32_t DP_VID_N;
+	uint32_t DP_VID_STREAM_CNTL;
+	uint32_t DP_VID_TIMING;
+	uint32_t DP_SEC_AUD_N;
+	uint32_t DP_SEC_TIMESTAMP;
+	uint32_t HDMI_CONTROL;
+	uint32_t HDMI_GC;
+	uint32_t HDMI_GENERIC_PACKET_CONTROL0;
+	uint32_t HDMI_GENERIC_PACKET_CONTROL1;
+	uint32_t HDMI_GENERIC_PACKET_CONTROL2;
+	uint32_t HDMI_GENERIC_PACKET_CONTROL3;
+	uint32_t HDMI_GENERIC_PACKET_CONTROL4;
+	uint32_t HDMI_GENERIC_PACKET_CONTROL5;
+	uint32_t HDMI_INFOFRAME_CONTROL0;
+	uint32_t HDMI_INFOFRAME_CONTROL1;
+	uint32_t HDMI_VBI_PACKET_CONTROL;
+	uint32_t HDMI_AUDIO_PACKET_CONTROL;
+	uint32_t HDMI_ACR_PACKET_CONTROL;
+	uint32_t HDMI_ACR_32_0;
+	uint32_t HDMI_ACR_32_1;
+	uint32_t HDMI_ACR_44_0;
+	uint32_t HDMI_ACR_44_1;
+	uint32_t HDMI_ACR_48_0;
+	uint32_t HDMI_ACR_48_1;
+	uint32_t DP_DB_CNTL;
+	uint32_t DP_MSA_MISC;
+	uint32_t DP_MSA_VBID_MISC;
+	uint32_t DP_MSA_COLORIMETRY;
+	uint32_t DP_MSA_TIMING_PARAM1;
+	uint32_t DP_MSA_TIMING_PARAM2;
+	uint32_t DP_MSA_TIMING_PARAM3;
+	uint32_t DP_MSA_TIMING_PARAM4;
+	uint32_t HDMI_DB_CONTROL;
+	uint32_t DP_DSC_CNTL;
+	uint32_t DP_DSC_BYTES_PER_PIXEL;
+	uint32_t DME_CONTROL;
+	uint32_t DP_SEC_METADATA_TRANSMISSION;
+	uint32_t HDMI_METADATA_PACKET_CONTROL;
+	uint32_t DP_SEC_FRAMING4;
+	uint32_t DP_GSP11_CNTL;
+	uint32_t HDMI_GENERIC_PACKET_CONTROL6;
+	uint32_t HDMI_GENERIC_PACKET_CONTROL7;
+	uint32_t HDMI_GENERIC_PACKET_CONTROL8;
+	uint32_t HDMI_GENERIC_PACKET_CONTROL9;
+	uint32_t HDMI_GENERIC_PACKET_CONTROL10;
+	uint32_t DIG_CLOCK_PATTERN;
+};
 
 
-#घोषणा SE_SF(reg_name, field_name, post_fix)\
+#define SE_SF(reg_name, field_name, post_fix)\
 	.field_name = reg_name ## __ ## field_name ## post_fix
 
-#घोषणा SE_COMMON_MASK_SH_LIST_SOC_BASE(mask_sh)\
+#define SE_COMMON_MASK_SH_LIST_SOC_BASE(mask_sh)\
 	SE_SF(DIG0_AFMT_VBI_PACKET_CONTROL, AFMT_GENERIC_INDEX, mask_sh),\
 	SE_SF(DIG0_AFMT_GENERIC_HDR, AFMT_GENERIC_HB0, mask_sh),\
 	SE_SF(DIG0_AFMT_GENERIC_HDR, AFMT_GENERIC_HB1, mask_sh),\
@@ -200,10 +199,10 @@
 	SE_SF(DIG0_HDMI_CONTROL, HDMI_DEEP_COLOR_ENABLE, mask_sh),\
 	SE_SF(DIG0_HDMI_CONTROL, HDMI_DEEP_COLOR_DEPTH, mask_sh),\
 	SE_SF(DIG0_HDMI_CONTROL, HDMI_DATA_SCRAMBLE_EN, mask_sh),\
-	SE_SF(DIG0_HDMI_CONTROL, HDMI_NO_EXTRA_शून्य_PACKET_FILLED, mask_sh),\
+	SE_SF(DIG0_HDMI_CONTROL, HDMI_NO_EXTRA_NULL_PACKET_FILLED, mask_sh),\
 	SE_SF(DIG0_HDMI_VBI_PACKET_CONTROL, HDMI_GC_CONT, mask_sh),\
 	SE_SF(DIG0_HDMI_VBI_PACKET_CONTROL, HDMI_GC_SEND, mask_sh),\
-	SE_SF(DIG0_HDMI_VBI_PACKET_CONTROL, HDMI_शून्य_SEND, mask_sh),\
+	SE_SF(DIG0_HDMI_VBI_PACKET_CONTROL, HDMI_NULL_SEND, mask_sh),\
 	SE_SF(DIG0_HDMI_INFOFRAME_CONTROL0, HDMI_AUDIO_INFO_SEND, mask_sh),\
 	SE_SF(DIG0_AFMT_INFOFRAME_CONTROL0, AFMT_AUDIO_INFO_UPDATE, mask_sh),\
 	SE_SF(DIG0_HDMI_INFOFRAME_CONTROL1, HDMI_AUDIO_INFO_LINE, mask_sh),\
@@ -319,10 +318,10 @@
 	SE_SF(DIG0_DIG_FE_CNTL, DIG_SOURCE_SELECT, mask_sh),\
 	SE_SF(DIG0_DIG_CLOCK_PATTERN, DIG_CLOCK_PATTERN, mask_sh)
 
-#घोषणा SE_COMMON_MASK_SH_LIST_SOC(mask_sh)\
+#define SE_COMMON_MASK_SH_LIST_SOC(mask_sh)\
 	SE_COMMON_MASK_SH_LIST_SOC_BASE(mask_sh)
 
-#घोषणा SE_COMMON_MASK_SH_LIST_DCN10(mask_sh)\
+#define SE_COMMON_MASK_SH_LIST_DCN10(mask_sh)\
 	SE_COMMON_MASK_SH_LIST_SOC(mask_sh),\
 	SE_SF(DIG0_HDMI_GENERIC_PACKET_CONTROL0, HDMI_GENERIC0_CONT, mask_sh),\
 	SE_SF(DIG0_HDMI_GENERIC_PACKET_CONTROL0, HDMI_GENERIC0_SEND, mask_sh),\
@@ -332,7 +331,7 @@
 	SE_SF(DIG0_HDMI_GENERIC_PACKET_CONTROL0, HDMI_GENERIC1_LINE, mask_sh)
 
 
-#घोषणा SE_REG_FIELD_LIST_DCN1_0(type) \
+#define SE_REG_FIELD_LIST_DCN1_0(type) \
 	type AFMT_GENERIC_INDEX;\
 	type AFMT_GENERIC_HB0;\
 	type AFMT_GENERIC_HB1;\
@@ -399,9 +398,9 @@
 	type HDMI_DEEP_COLOR_DEPTH;\
 	type HDMI_GC_CONT;\
 	type HDMI_GC_SEND;\
-	type HDMI_शून्य_SEND;\
+	type HDMI_NULL_SEND;\
 	type HDMI_DATA_SCRAMBLE_EN;\
-	type HDMI_NO_EXTRA_शून्य_PACKET_FILLED;\
+	type HDMI_NO_EXTRA_NULL_PACKET_FILLED;\
 	type HDMI_AUDIO_INFO_SEND;\
 	type AFMT_AUDIO_INFO_UPDATE;\
 	type HDMI_AUDIO_INFO_LINE;\
@@ -491,7 +490,7 @@
 	type DIG_SOURCE_SELECT;\
 	type DIG_CLOCK_PATTERN
 
-#घोषणा SE_REG_FIELD_LIST_DCN2_0(type) \
+#define SE_REG_FIELD_LIST_DCN2_0(type) \
 	type DP_DSC_MODE;\
 	type DP_DSC_SLICE_WIDTH;\
 	type DP_DSC_BYTES_PER_PIXEL;\
@@ -510,7 +509,7 @@
 	type DP_PIXEL_COMBINE;\
 	type DP_SST_SDP_SPLITTING
 
-#घोषणा SE_REG_FIELD_LIST_DCN3_0(type) \
+#define SE_REG_FIELD_LIST_DCN3_0(type) \
 	type HDMI_GENERIC8_CONT;\
 	type HDMI_GENERIC8_SEND;\
 	type HDMI_GENERIC8_LINE;\
@@ -536,142 +535,142 @@
 	type DP_SEC_GSP11_ENABLE;\
 	type DP_SEC_GSP11_LINE_NUM
 
-काष्ठा dcn10_stream_encoder_shअगरt अणु
-	SE_REG_FIELD_LIST_DCN1_0(uपूर्णांक8_t);
-	SE_REG_FIELD_LIST_DCN2_0(uपूर्णांक8_t);
-	SE_REG_FIELD_LIST_DCN3_0(uपूर्णांक8_t);
-पूर्ण;
+struct dcn10_stream_encoder_shift {
+	SE_REG_FIELD_LIST_DCN1_0(uint8_t);
+	SE_REG_FIELD_LIST_DCN2_0(uint8_t);
+	SE_REG_FIELD_LIST_DCN3_0(uint8_t);
+};
 
-काष्ठा dcn10_stream_encoder_mask अणु
-	SE_REG_FIELD_LIST_DCN1_0(uपूर्णांक32_t);
-	SE_REG_FIELD_LIST_DCN2_0(uपूर्णांक32_t);
-	SE_REG_FIELD_LIST_DCN3_0(uपूर्णांक32_t);
-पूर्ण;
+struct dcn10_stream_encoder_mask {
+	SE_REG_FIELD_LIST_DCN1_0(uint32_t);
+	SE_REG_FIELD_LIST_DCN2_0(uint32_t);
+	SE_REG_FIELD_LIST_DCN3_0(uint32_t);
+};
 
-काष्ठा dcn10_stream_encoder अणु
-	काष्ठा stream_encoder base;
-	स्थिर काष्ठा dcn10_stream_enc_रेजिस्टरs *regs;
-	स्थिर काष्ठा dcn10_stream_encoder_shअगरt *se_shअगरt;
-	स्थिर काष्ठा dcn10_stream_encoder_mask *se_mask;
-पूर्ण;
+struct dcn10_stream_encoder {
+	struct stream_encoder base;
+	const struct dcn10_stream_enc_registers *regs;
+	const struct dcn10_stream_encoder_shift *se_shift;
+	const struct dcn10_stream_encoder_mask *se_mask;
+};
 
-व्योम dcn10_stream_encoder_स्थिरruct(
-	काष्ठा dcn10_stream_encoder *enc1,
-	काष्ठा dc_context *ctx,
-	काष्ठा dc_bios *bp,
-	क्रमागत engine_id eng_id,
-	स्थिर काष्ठा dcn10_stream_enc_रेजिस्टरs *regs,
-	स्थिर काष्ठा dcn10_stream_encoder_shअगरt *se_shअगरt,
-	स्थिर काष्ठा dcn10_stream_encoder_mask *se_mask);
+void dcn10_stream_encoder_construct(
+	struct dcn10_stream_encoder *enc1,
+	struct dc_context *ctx,
+	struct dc_bios *bp,
+	enum engine_id eng_id,
+	const struct dcn10_stream_enc_registers *regs,
+	const struct dcn10_stream_encoder_shift *se_shift,
+	const struct dcn10_stream_encoder_mask *se_mask);
 
-व्योम enc1_update_generic_info_packet(
-	काष्ठा dcn10_stream_encoder *enc1,
-	uपूर्णांक32_t packet_index,
-	स्थिर काष्ठा dc_info_packet *info_packet);
+void enc1_update_generic_info_packet(
+	struct dcn10_stream_encoder *enc1,
+	uint32_t packet_index,
+	const struct dc_info_packet *info_packet);
 
-व्योम enc1_stream_encoder_dp_set_stream_attribute(
-	काष्ठा stream_encoder *enc,
-	काष्ठा dc_crtc_timing *crtc_timing,
-	क्रमागत dc_color_space output_color_space,
-	bool use_vsc_sdp_क्रम_colorimetry,
-	uपूर्णांक32_t enable_sdp_splitting);
+void enc1_stream_encoder_dp_set_stream_attribute(
+	struct stream_encoder *enc,
+	struct dc_crtc_timing *crtc_timing,
+	enum dc_color_space output_color_space,
+	bool use_vsc_sdp_for_colorimetry,
+	uint32_t enable_sdp_splitting);
 
-व्योम enc1_stream_encoder_hdmi_set_stream_attribute(
-	काष्ठा stream_encoder *enc,
-	काष्ठा dc_crtc_timing *crtc_timing,
-	पूर्णांक actual_pix_clk_khz,
+void enc1_stream_encoder_hdmi_set_stream_attribute(
+	struct stream_encoder *enc,
+	struct dc_crtc_timing *crtc_timing,
+	int actual_pix_clk_khz,
 	bool enable_audio);
 
-व्योम enc1_stream_encoder_dvi_set_stream_attribute(
-	काष्ठा stream_encoder *enc,
-	काष्ठा dc_crtc_timing *crtc_timing,
+void enc1_stream_encoder_dvi_set_stream_attribute(
+	struct stream_encoder *enc,
+	struct dc_crtc_timing *crtc_timing,
 	bool is_dual_link);
 
-व्योम enc1_stream_encoder_set_throttled_vcp_size(
-	काष्ठा stream_encoder *enc,
-	काष्ठा fixed31_32 avg_समय_slots_per_mtp);
+void enc1_stream_encoder_set_throttled_vcp_size(
+	struct stream_encoder *enc,
+	struct fixed31_32 avg_time_slots_per_mtp);
 
-व्योम enc1_stream_encoder_update_dp_info_packets(
-	काष्ठा stream_encoder *enc,
-	स्थिर काष्ठा encoder_info_frame *info_frame);
+void enc1_stream_encoder_update_dp_info_packets(
+	struct stream_encoder *enc,
+	const struct encoder_info_frame *info_frame);
 
-व्योम enc1_stream_encoder_send_immediate_sdp_message(
-	काष्ठा stream_encoder *enc,
-	स्थिर uपूर्णांक8_t *custom_sdp_message,
-				अचिन्हित पूर्णांक sdp_message_size);
+void enc1_stream_encoder_send_immediate_sdp_message(
+	struct stream_encoder *enc,
+	const uint8_t *custom_sdp_message,
+				unsigned int sdp_message_size);
 
-व्योम enc1_stream_encoder_stop_dp_info_packets(
-	काष्ठा stream_encoder *enc);
+void enc1_stream_encoder_stop_dp_info_packets(
+	struct stream_encoder *enc);
 
-व्योम enc1_stream_encoder_dp_blank(
-	काष्ठा stream_encoder *enc);
+void enc1_stream_encoder_dp_blank(
+	struct stream_encoder *enc);
 
-व्योम enc1_stream_encoder_dp_unblank(
-	काष्ठा stream_encoder *enc,
-	स्थिर काष्ठा encoder_unblank_param *param);
+void enc1_stream_encoder_dp_unblank(
+	struct stream_encoder *enc,
+	const struct encoder_unblank_param *param);
 
-व्योम enc1_setup_stereo_sync(
-	काष्ठा stream_encoder *enc,
-	पूर्णांक tg_inst, bool enable);
+void enc1_setup_stereo_sync(
+	struct stream_encoder *enc,
+	int tg_inst, bool enable);
 
-व्योम enc1_stream_encoder_set_avmute(
-	काष्ठा stream_encoder *enc,
+void enc1_stream_encoder_set_avmute(
+	struct stream_encoder *enc,
 	bool enable);
 
-व्योम enc1_se_audio_mute_control(
-	काष्ठा stream_encoder *enc,
+void enc1_se_audio_mute_control(
+	struct stream_encoder *enc,
 	bool mute);
 
-व्योम enc1_se_dp_audio_setup(
-	काष्ठा stream_encoder *enc,
-	अचिन्हित पूर्णांक az_inst,
-	काष्ठा audio_info *info);
+void enc1_se_dp_audio_setup(
+	struct stream_encoder *enc,
+	unsigned int az_inst,
+	struct audio_info *info);
 
-व्योम enc1_se_dp_audio_enable(
-	काष्ठा stream_encoder *enc);
+void enc1_se_dp_audio_enable(
+	struct stream_encoder *enc);
 
-व्योम enc1_se_dp_audio_disable(
-	काष्ठा stream_encoder *enc);
+void enc1_se_dp_audio_disable(
+	struct stream_encoder *enc);
 
-व्योम enc1_se_hdmi_audio_setup(
-	काष्ठा stream_encoder *enc,
-	अचिन्हित पूर्णांक az_inst,
-	काष्ठा audio_info *info,
-	काष्ठा audio_crtc_info *audio_crtc_info);
+void enc1_se_hdmi_audio_setup(
+	struct stream_encoder *enc,
+	unsigned int az_inst,
+	struct audio_info *info,
+	struct audio_crtc_info *audio_crtc_info);
 
-व्योम enc1_se_hdmi_audio_disable(
-	काष्ठा stream_encoder *enc);
+void enc1_se_hdmi_audio_disable(
+	struct stream_encoder *enc);
 
-व्योम enc1_dig_connect_to_otg(
-	काष्ठा stream_encoder *enc,
-	पूर्णांक tg_inst);
+void enc1_dig_connect_to_otg(
+	struct stream_encoder *enc,
+	int tg_inst);
 
-अचिन्हित पूर्णांक enc1_dig_source_otg(
-	काष्ठा stream_encoder *enc);
+unsigned int enc1_dig_source_otg(
+	struct stream_encoder *enc);
 
-व्योम enc1_stream_encoder_set_stream_attribute_helper(
-	काष्ठा dcn10_stream_encoder *enc1,
-	काष्ठा dc_crtc_timing *crtc_timing);
+void enc1_stream_encoder_set_stream_attribute_helper(
+	struct dcn10_stream_encoder *enc1,
+	struct dc_crtc_timing *crtc_timing);
 
-व्योम enc1_se_enable_audio_घड़ी(
-	काष्ठा stream_encoder *enc,
+void enc1_se_enable_audio_clock(
+	struct stream_encoder *enc,
 	bool enable);
 
-व्योम enc1_se_enable_dp_audio(
-	काष्ठा stream_encoder *enc);
+void enc1_se_enable_dp_audio(
+	struct stream_encoder *enc);
 
-व्योम get_audio_घड़ी_info(
-	क्रमागत dc_color_depth color_depth,
-	uपूर्णांक32_t crtc_pixel_घड़ी_100Hz,
-	uपूर्णांक32_t actual_pixel_घड़ी_100Hz,
-	काष्ठा audio_घड़ी_info *audio_घड़ी_info);
+void get_audio_clock_info(
+	enum dc_color_depth color_depth,
+	uint32_t crtc_pixel_clock_100Hz,
+	uint32_t actual_pixel_clock_100Hz,
+	struct audio_clock_info *audio_clock_info);
 
-व्योम enc1_reset_hdmi_stream_attribute(
-	काष्ठा stream_encoder *enc);
+void enc1_reset_hdmi_stream_attribute(
+	struct stream_encoder *enc);
 
-bool enc1_stream_encoder_dp_get_pixel_क्रमmat(
-	काष्ठा stream_encoder *enc,
-	क्रमागत dc_pixel_encoding *encoding,
-	क्रमागत dc_color_depth *depth);
+bool enc1_stream_encoder_dp_get_pixel_format(
+	struct stream_encoder *enc,
+	enum dc_pixel_encoding *encoding,
+	enum dc_color_depth *depth);
 
-#पूर्ण_अगर /* __DC_STREAM_ENCODER_DCN10_H__ */
+#endif /* __DC_STREAM_ENCODER_DCN10_H__ */

@@ -1,105 +1,104 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2003 Broadcom Corporation
  */
-#समावेश <linux/cache.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/संकेत.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/रुको.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/unistd.h>
-#समावेश <linux/compat.h>
-#समावेश <linux/bitops.h>
+#include <linux/cache.h>
+#include <linux/sched.h>
+#include <linux/mm.h>
+#include <linux/smp.h>
+#include <linux/kernel.h>
+#include <linux/signal.h>
+#include <linux/errno.h>
+#include <linux/wait.h>
+#include <linux/ptrace.h>
+#include <linux/unistd.h>
+#include <linux/compat.h>
+#include <linux/bitops.h>
 
-#समावेश <यंत्र/abi.h>
-#समावेश <यंत्र/यंत्र.h>
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <यंत्र/compat-संकेत.स>
-#समावेश <यंत्र/sim.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/ucontext.h>
-#समावेश <यंत्र/fpu.h>
-#समावेश <यंत्र/cpu-features.h>
-#समावेश <यंत्र/war.h>
+#include <asm/abi.h>
+#include <asm/asm.h>
+#include <asm/cacheflush.h>
+#include <asm/compat-signal.h>
+#include <asm/sim.h>
+#include <linux/uaccess.h>
+#include <asm/ucontext.h>
+#include <asm/fpu.h>
+#include <asm/cpu-features.h>
+#include <asm/war.h>
 
-#समावेश "signal-common.h"
+#include "signal-common.h"
 
 /*
- * Including <यंत्र/unistd.h> would give use the 64-bit syscall numbers ...
+ * Including <asm/unistd.h> would give use the 64-bit syscall numbers ...
  */
-#घोषणा __NR_N32_restart_syscall	6214
+#define __NR_N32_restart_syscall	6214
 
-बाह्य पूर्णांक setup_sigcontext(काष्ठा pt_regs *, काष्ठा sigcontext __user *);
-बाह्य पूर्णांक restore_sigcontext(काष्ठा pt_regs *, काष्ठा sigcontext __user *);
+extern int setup_sigcontext(struct pt_regs *, struct sigcontext __user *);
+extern int restore_sigcontext(struct pt_regs *, struct sigcontext __user *);
 
-काष्ठा ucontextn32 अणु
+struct ucontextn32 {
 	u32		    uc_flags;
 	s32		    uc_link;
 	compat_stack_t      uc_stack;
-	काष्ठा sigcontext   uc_mcontext;
-	compat_sigset_t	    uc_sigmask;	  /* mask last क्रम extensibility */
-पूर्ण;
+	struct sigcontext   uc_mcontext;
+	compat_sigset_t	    uc_sigmask;	  /* mask last for extensibility */
+};
 
-काष्ठा rt_sigframe_n32 अणु
-	u32 rs_ass[4];			/* argument save space क्रम o32 */
-	u32 rs_pad[2];			/* Was: संकेत trampoline */
-	काष्ठा compat_siginfo rs_info;
-	काष्ठा ucontextn32 rs_uc;
-पूर्ण;
+struct rt_sigframe_n32 {
+	u32 rs_ass[4];			/* argument save space for o32 */
+	u32 rs_pad[2];			/* Was: signal trampoline */
+	struct compat_siginfo rs_info;
+	struct ucontextn32 rs_uc;
+};
 
-यंत्रlinkage व्योम sysn32_rt_sigवापस(व्योम)
-अणु
-	काष्ठा rt_sigframe_n32 __user *frame;
-	काष्ठा pt_regs *regs;
+asmlinkage void sysn32_rt_sigreturn(void)
+{
+	struct rt_sigframe_n32 __user *frame;
+	struct pt_regs *regs;
 	sigset_t set;
-	पूर्णांक sig;
+	int sig;
 
 	regs = current_pt_regs();
-	frame = (काष्ठा rt_sigframe_n32 __user *)regs->regs[29];
-	अगर (!access_ok(frame, माप(*frame)))
-		जाओ badframe;
-	अगर (__copy_conv_sigset_from_user(&set, &frame->rs_uc.uc_sigmask))
-		जाओ badframe;
+	frame = (struct rt_sigframe_n32 __user *)regs->regs[29];
+	if (!access_ok(frame, sizeof(*frame)))
+		goto badframe;
+	if (__copy_conv_sigset_from_user(&set, &frame->rs_uc.uc_sigmask))
+		goto badframe;
 
 	set_current_blocked(&set);
 
 	sig = restore_sigcontext(regs, &frame->rs_uc.uc_mcontext);
-	अगर (sig < 0)
-		जाओ badframe;
-	अन्यथा अगर (sig)
-		क्रमce_sig(sig);
+	if (sig < 0)
+		goto badframe;
+	else if (sig)
+		force_sig(sig);
 
-	अगर (compat_restore_altstack(&frame->rs_uc.uc_stack))
-		जाओ badframe;
+	if (compat_restore_altstack(&frame->rs_uc.uc_stack))
+		goto badframe;
 
 	/*
-	 * Don't let your children करो this ...
+	 * Don't let your children do this ...
 	 */
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 		"move\t$29, %0\n\t"
 		"j\tsyscall_exit"
-		: /* no outमाला_दो */
+		: /* no outputs */
 		: "r" (regs));
 	/* Unreached */
 
 badframe:
-	क्रमce_sig(संक_अंश);
-पूर्ण
+	force_sig(SIGSEGV);
+}
 
-अटल पूर्णांक setup_rt_frame_n32(व्योम *sig_वापस, काष्ठा kसंकेत *ksig,
-			      काष्ठा pt_regs *regs, sigset_t *set)
-अणु
-	काष्ठा rt_sigframe_n32 __user *frame;
-	पूर्णांक err = 0;
+static int setup_rt_frame_n32(void *sig_return, struct ksignal *ksig,
+			      struct pt_regs *regs, sigset_t *set)
+{
+	struct rt_sigframe_n32 __user *frame;
+	int err = 0;
 
-	frame = get_sigframe(ksig, regs, माप(*frame));
-	अगर (!access_ok(frame, माप (*frame)))
-		वापस -EFAULT;
+	frame = get_sigframe(ksig, regs, sizeof(*frame));
+	if (!access_ok(frame, sizeof (*frame)))
+		return -EFAULT;
 
 	/* Create siginfo.  */
 	err |= copy_siginfo_to_user32(&frame->rs_info, &ksig->info);
@@ -111,40 +110,40 @@ badframe:
 	err |= setup_sigcontext(regs, &frame->rs_uc.uc_mcontext);
 	err |= __copy_conv_sigset_to_user(&frame->rs_uc.uc_sigmask, set);
 
-	अगर (err)
-		वापस -EFAULT;
+	if (err)
+		return -EFAULT;
 
 	/*
-	 * Arguments to संकेत handler:
+	 * Arguments to signal handler:
 	 *
-	 *   a0 = संकेत number
+	 *   a0 = signal number
 	 *   a1 = 0 (should be cause)
-	 *   a2 = poपूर्णांकer to ucontext
+	 *   a2 = pointer to ucontext
 	 *
-	 * $25 and c0_epc poपूर्णांक to the संकेत handler, $29 poपूर्णांकs to
-	 * the काष्ठा rt_sigframe.
+	 * $25 and c0_epc point to the signal handler, $29 points to
+	 * the struct rt_sigframe.
 	 */
 	regs->regs[ 4] = ksig->sig;
-	regs->regs[ 5] = (अचिन्हित दीर्घ) &frame->rs_info;
-	regs->regs[ 6] = (अचिन्हित दीर्घ) &frame->rs_uc;
-	regs->regs[29] = (अचिन्हित दीर्घ) frame;
-	regs->regs[31] = (अचिन्हित दीर्घ) sig_वापस;
-	regs->cp0_epc = regs->regs[25] = (अचिन्हित दीर्घ) ksig->ka.sa.sa_handler;
+	regs->regs[ 5] = (unsigned long) &frame->rs_info;
+	regs->regs[ 6] = (unsigned long) &frame->rs_uc;
+	regs->regs[29] = (unsigned long) frame;
+	regs->regs[31] = (unsigned long) sig_return;
+	regs->cp0_epc = regs->regs[25] = (unsigned long) ksig->ka.sa.sa_handler;
 
 	DEBUGP("SIG deliver (%s:%d): sp=0x%p pc=0x%lx ra=0x%lx\n",
 	       current->comm, current->pid,
 	       frame, regs->cp0_epc, regs->regs[31]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा mips_abi mips_abi_n32 = अणु
+struct mips_abi mips_abi_n32 = {
 	.setup_rt_frame = setup_rt_frame_n32,
 	.restart	= __NR_N32_restart_syscall,
 
-	.off_sc_fpregs = दुरत्व(काष्ठा sigcontext, sc_fpregs),
-	.off_sc_fpc_csr = दुरत्व(काष्ठा sigcontext, sc_fpc_csr),
-	.off_sc_used_math = दुरत्व(काष्ठा sigcontext, sc_used_math),
+	.off_sc_fpregs = offsetof(struct sigcontext, sc_fpregs),
+	.off_sc_fpc_csr = offsetof(struct sigcontext, sc_fpc_csr),
+	.off_sc_used_math = offsetof(struct sigcontext, sc_used_math),
 
 	.vdso		= &vdso_image_n32,
-पूर्ण;
+};

@@ -1,22 +1,21 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * This code is derived from the VIA reference driver (copyright message
- * below) provided to Red Hat by VIA Networking Technologies, Inc. क्रम
+ * below) provided to Red Hat by VIA Networking Technologies, Inc. for
  * addition to the Linux kernel.
  *
- * The code has been merged पूर्णांकo one source file, cleaned up to follow
+ * The code has been merged into one source file, cleaned up to follow
  * Linux coding style,  ported to the Linux 2.6 kernel tree and cleaned
- * क्रम 64bit hardware platक्रमms.
+ * for 64bit hardware platforms.
  *
  * TODO
- *	rx_copyअवरोध/alignment
+ *	rx_copybreak/alignment
  *	More testing
  *
  * The changes are (c) Copyright 2004, Red Hat Inc. <alan@lxorguk.ukuu.org.uk>
  * Additional fixes and clean up: Francois Romieu
  *
- * This source has not been verअगरied क्रम use in safety critical प्रणालीs.
+ * This source has not been verified for use in safety critical systems.
  *
  * Please direct queries about the revamped driver to the linux-kernel
  * list not VIA.
@@ -33,220 +32,220 @@
  * MODULE_LICENSE("GPL");
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/init.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/ioport.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/रुको.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/अगर.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/inetdevice.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/reboot.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/mii.h>
-#समावेश <linux/in.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/अगर_vlan.h>
-#समावेश <linux/ip.h>
-#समावेश <linux/tcp.h>
-#समावेश <linux/udp.h>
-#समावेश <linux/crc-ccitt.h>
-#समावेश <linux/crc32.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/bitops.h>
+#include <linux/init.h>
+#include <linux/dma-mapping.h>
+#include <linux/mm.h>
+#include <linux/errno.h>
+#include <linux/ioport.h>
+#include <linux/pci.h>
+#include <linux/kernel.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/skbuff.h>
+#include <linux/delay.h>
+#include <linux/timer.h>
+#include <linux/slab.h>
+#include <linux/interrupt.h>
+#include <linux/string.h>
+#include <linux/wait.h>
+#include <linux/io.h>
+#include <linux/if.h>
+#include <linux/uaccess.h>
+#include <linux/proc_fs.h>
+#include <linux/of_address.h>
+#include <linux/of_device.h>
+#include <linux/of_irq.h>
+#include <linux/inetdevice.h>
+#include <linux/platform_device.h>
+#include <linux/reboot.h>
+#include <linux/ethtool.h>
+#include <linux/mii.h>
+#include <linux/in.h>
+#include <linux/if_arp.h>
+#include <linux/if_vlan.h>
+#include <linux/ip.h>
+#include <linux/tcp.h>
+#include <linux/udp.h>
+#include <linux/crc-ccitt.h>
+#include <linux/crc32.h>
 
-#समावेश "via-velocity.h"
+#include "via-velocity.h"
 
-क्रमागत velocity_bus_type अणु
+enum velocity_bus_type {
 	BUS_PCI,
 	BUS_PLATFORM,
-पूर्ण;
+};
 
-अटल पूर्णांक velocity_nics;
+static int velocity_nics;
 
-अटल व्योम velocity_set_घातer_state(काष्ठा velocity_info *vptr, अक्षर state)
-अणु
-	व्योम *addr = vptr->mac_regs;
+static void velocity_set_power_state(struct velocity_info *vptr, char state)
+{
+	void *addr = vptr->mac_regs;
 
-	अगर (vptr->pdev)
-		pci_set_घातer_state(vptr->pdev, state);
-	अन्यथा
-		ग_लिखोb(state, addr + 0x154);
-पूर्ण
+	if (vptr->pdev)
+		pci_set_power_state(vptr->pdev, state);
+	else
+		writeb(state, addr + 0x154);
+}
 
 /**
  *	mac_get_cam_mask	-	Read a CAM mask
- *	@regs: रेजिस्टर block क्रम this velocity
+ *	@regs: register block for this velocity
  *	@mask: buffer to store mask
  *
- *	Fetch the mask bits of the selected CAM and store them पूर्णांकo the
+ *	Fetch the mask bits of the selected CAM and store them into the
  *	provided mask buffer.
  */
-अटल व्योम mac_get_cam_mask(काष्ठा mac_regs __iomem *regs, u8 *mask)
-अणु
-	पूर्णांक i;
+static void mac_get_cam_mask(struct mac_regs __iomem *regs, u8 *mask)
+{
+	int i;
 
 	/* Select CAM mask */
 	BYTE_REG_BITS_SET(CAMCR_PS_CAM_MASK, CAMCR_PS1 | CAMCR_PS0, &regs->CAMCR);
 
-	ग_लिखोb(0, &regs->CAMADDR);
+	writeb(0, &regs->CAMADDR);
 
-	/* पढ़ो mask */
-	क्रम (i = 0; i < 8; i++)
-		*mask++ = पढ़ोb(&(regs->MARCAM[i]));
+	/* read mask */
+	for (i = 0; i < 8; i++)
+		*mask++ = readb(&(regs->MARCAM[i]));
 
 	/* disable CAMEN */
-	ग_लिखोb(0, &regs->CAMADDR);
+	writeb(0, &regs->CAMADDR);
 
 	/* Select mar */
 	BYTE_REG_BITS_SET(CAMCR_PS_MAR, CAMCR_PS1 | CAMCR_PS0, &regs->CAMCR);
-पूर्ण
+}
 
 /**
  *	mac_set_cam_mask	-	Set a CAM mask
- *	@regs: रेजिस्टर block क्रम this velocity
+ *	@regs: register block for this velocity
  *	@mask: CAM mask to load
  *
- *	Store a new mask पूर्णांकo a CAM
+ *	Store a new mask into a CAM
  */
-अटल व्योम mac_set_cam_mask(काष्ठा mac_regs __iomem *regs, u8 *mask)
-अणु
-	पूर्णांक i;
+static void mac_set_cam_mask(struct mac_regs __iomem *regs, u8 *mask)
+{
+	int i;
 	/* Select CAM mask */
 	BYTE_REG_BITS_SET(CAMCR_PS_CAM_MASK, CAMCR_PS1 | CAMCR_PS0, &regs->CAMCR);
 
-	ग_लिखोb(CAMADDR_CAMEN, &regs->CAMADDR);
+	writeb(CAMADDR_CAMEN, &regs->CAMADDR);
 
-	क्रम (i = 0; i < 8; i++)
-		ग_लिखोb(*mask++, &(regs->MARCAM[i]));
+	for (i = 0; i < 8; i++)
+		writeb(*mask++, &(regs->MARCAM[i]));
 
 	/* disable CAMEN */
-	ग_लिखोb(0, &regs->CAMADDR);
+	writeb(0, &regs->CAMADDR);
 
 	/* Select mar */
 	BYTE_REG_BITS_SET(CAMCR_PS_MAR, CAMCR_PS1 | CAMCR_PS0, &regs->CAMCR);
-पूर्ण
+}
 
-अटल व्योम mac_set_vlan_cam_mask(काष्ठा mac_regs __iomem *regs, u8 *mask)
-अणु
-	पूर्णांक i;
+static void mac_set_vlan_cam_mask(struct mac_regs __iomem *regs, u8 *mask)
+{
+	int i;
 	/* Select CAM mask */
 	BYTE_REG_BITS_SET(CAMCR_PS_CAM_MASK, CAMCR_PS1 | CAMCR_PS0, &regs->CAMCR);
 
-	ग_लिखोb(CAMADDR_CAMEN | CAMADDR_VCAMSL, &regs->CAMADDR);
+	writeb(CAMADDR_CAMEN | CAMADDR_VCAMSL, &regs->CAMADDR);
 
-	क्रम (i = 0; i < 8; i++)
-		ग_लिखोb(*mask++, &(regs->MARCAM[i]));
+	for (i = 0; i < 8; i++)
+		writeb(*mask++, &(regs->MARCAM[i]));
 
 	/* disable CAMEN */
-	ग_लिखोb(0, &regs->CAMADDR);
+	writeb(0, &regs->CAMADDR);
 
 	/* Select mar */
 	BYTE_REG_BITS_SET(CAMCR_PS_MAR, CAMCR_PS1 | CAMCR_PS0, &regs->CAMCR);
-पूर्ण
+}
 
 /**
  *	mac_set_cam	-	set CAM data
- *	@regs: रेजिस्टर block of this velocity
+ *	@regs: register block of this velocity
  *	@idx: Cam index
  *	@addr: 2 or 6 bytes of CAM data
  *
- *	Load an address or vlan tag पूर्णांकo a CAM
+ *	Load an address or vlan tag into a CAM
  */
-अटल व्योम mac_set_cam(काष्ठा mac_regs __iomem *regs, पूर्णांक idx, स्थिर u8 *addr)
-अणु
-	पूर्णांक i;
+static void mac_set_cam(struct mac_regs __iomem *regs, int idx, const u8 *addr)
+{
+	int i;
 
 	/* Select CAM mask */
 	BYTE_REG_BITS_SET(CAMCR_PS_CAM_DATA, CAMCR_PS1 | CAMCR_PS0, &regs->CAMCR);
 
 	idx &= (64 - 1);
 
-	ग_लिखोb(CAMADDR_CAMEN | idx, &regs->CAMADDR);
+	writeb(CAMADDR_CAMEN | idx, &regs->CAMADDR);
 
-	क्रम (i = 0; i < 6; i++)
-		ग_लिखोb(*addr++, &(regs->MARCAM[i]));
+	for (i = 0; i < 6; i++)
+		writeb(*addr++, &(regs->MARCAM[i]));
 
 	BYTE_REG_BITS_ON(CAMCR_CAMWR, &regs->CAMCR);
 
 	udelay(10);
 
-	ग_लिखोb(0, &regs->CAMADDR);
+	writeb(0, &regs->CAMADDR);
 
 	/* Select mar */
 	BYTE_REG_BITS_SET(CAMCR_PS_MAR, CAMCR_PS1 | CAMCR_PS0, &regs->CAMCR);
-पूर्ण
+}
 
-अटल व्योम mac_set_vlan_cam(काष्ठा mac_regs __iomem *regs, पूर्णांक idx,
-			     स्थिर u8 *addr)
-अणु
+static void mac_set_vlan_cam(struct mac_regs __iomem *regs, int idx,
+			     const u8 *addr)
+{
 
 	/* Select CAM mask */
 	BYTE_REG_BITS_SET(CAMCR_PS_CAM_DATA, CAMCR_PS1 | CAMCR_PS0, &regs->CAMCR);
 
 	idx &= (64 - 1);
 
-	ग_लिखोb(CAMADDR_CAMEN | CAMADDR_VCAMSL | idx, &regs->CAMADDR);
-	ग_लिखोw(*((u16 *) addr), &regs->MARCAM[0]);
+	writeb(CAMADDR_CAMEN | CAMADDR_VCAMSL | idx, &regs->CAMADDR);
+	writew(*((u16 *) addr), &regs->MARCAM[0]);
 
 	BYTE_REG_BITS_ON(CAMCR_CAMWR, &regs->CAMCR);
 
 	udelay(10);
 
-	ग_लिखोb(0, &regs->CAMADDR);
+	writeb(0, &regs->CAMADDR);
 
 	/* Select mar */
 	BYTE_REG_BITS_SET(CAMCR_PS_MAR, CAMCR_PS1 | CAMCR_PS0, &regs->CAMCR);
-पूर्ण
+}
 
 
 /**
- *	mac_wol_reset	-	reset WOL after निकासing low घातer
- *	@regs: रेजिस्टर block of this velocity
+ *	mac_wol_reset	-	reset WOL after exiting low power
+ *	@regs: register block of this velocity
  *
  *	Called after we drop out of wake on lan mode in order to
- *	reset the Wake on lan features. This function करोesn't restore
+ *	reset the Wake on lan features. This function doesn't restore
  *	the rest of the logic from the result of sleep/wakeup
  */
-अटल व्योम mac_wol_reset(काष्ठा mac_regs __iomem *regs)
-अणु
+static void mac_wol_reset(struct mac_regs __iomem *regs)
+{
 
-	/* Turn off SWPTAG right after leaving घातer mode */
+	/* Turn off SWPTAG right after leaving power mode */
 	BYTE_REG_BITS_OFF(STICKHW_SWPTAG, &regs->STICKHW);
 	/* clear sticky bits */
 	BYTE_REG_BITS_OFF((STICKHW_DS1 | STICKHW_DS0), &regs->STICKHW);
 
 	BYTE_REG_BITS_OFF(CHIPGCR_FCGMII, &regs->CHIPGCR);
 	BYTE_REG_BITS_OFF(CHIPGCR_FCMODE, &regs->CHIPGCR);
-	/* disable क्रमce PME-enable */
-	ग_लिखोb(WOLCFG_PMEOVR, &regs->WOLCFGClr);
-	/* disable घातer-event config bit */
-	ग_लिखोw(0xFFFF, &regs->WOLCRClr);
-	/* clear घातer status */
-	ग_लिखोw(0xFFFF, &regs->WOLSRClr);
-पूर्ण
+	/* disable force PME-enable */
+	writeb(WOLCFG_PMEOVR, &regs->WOLCFGClr);
+	/* disable power-event config bit */
+	writew(0xFFFF, &regs->WOLCRClr);
+	/* clear power status */
+	writew(0xFFFF, &regs->WOLSRClr);
+}
 
-अटल स्थिर काष्ठा ethtool_ops velocity_ethtool_ops;
+static const struct ethtool_ops velocity_ethtool_ops;
 
 /*
     Define module options
@@ -256,37 +255,37 @@ MODULE_AUTHOR("VIA Networking Technologies, Inc.");
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("VIA Networking Velocity Family Gigabit Ethernet Adapter Driver");
 
-#घोषणा VELOCITY_PARAM(N, D) \
-	अटल पूर्णांक N[MAX_UNITS] = OPTION_DEFAULT;\
-	module_param_array(N, पूर्णांक, शून्य, 0); \
+#define VELOCITY_PARAM(N, D) \
+	static int N[MAX_UNITS] = OPTION_DEFAULT;\
+	module_param_array(N, int, NULL, 0); \
 	MODULE_PARM_DESC(N, D);
 
-#घोषणा RX_DESC_MIN     64
-#घोषणा RX_DESC_MAX     255
-#घोषणा RX_DESC_DEF     64
+#define RX_DESC_MIN     64
+#define RX_DESC_MAX     255
+#define RX_DESC_DEF     64
 VELOCITY_PARAM(RxDescriptors, "Number of receive descriptors");
 
-#घोषणा TX_DESC_MIN     16
-#घोषणा TX_DESC_MAX     256
-#घोषणा TX_DESC_DEF     64
+#define TX_DESC_MIN     16
+#define TX_DESC_MAX     256
+#define TX_DESC_DEF     64
 VELOCITY_PARAM(TxDescriptors, "Number of transmit descriptors");
 
-#घोषणा RX_THRESH_MIN   0
-#घोषणा RX_THRESH_MAX   3
-#घोषणा RX_THRESH_DEF   0
-/* rx_thresh[] is used क्रम controlling the receive fअगरo threshold.
-   0: indicate the rxfअगरo threshold is 128 bytes.
-   1: indicate the rxfअगरo threshold is 512 bytes.
-   2: indicate the rxfअगरo threshold is 1024 bytes.
-   3: indicate the rxfअगरo threshold is store & क्रमward.
+#define RX_THRESH_MIN   0
+#define RX_THRESH_MAX   3
+#define RX_THRESH_DEF   0
+/* rx_thresh[] is used for controlling the receive fifo threshold.
+   0: indicate the rxfifo threshold is 128 bytes.
+   1: indicate the rxfifo threshold is 512 bytes.
+   2: indicate the rxfifo threshold is 1024 bytes.
+   3: indicate the rxfifo threshold is store & forward.
 */
 VELOCITY_PARAM(rx_thresh, "Receive fifo threshold");
 
-#घोषणा DMA_LENGTH_MIN  0
-#घोषणा DMA_LENGTH_MAX  7
-#घोषणा DMA_LENGTH_DEF  6
+#define DMA_LENGTH_MIN  0
+#define DMA_LENGTH_MAX  7
+#define DMA_LENGTH_DEF  6
 
-/* DMA_length[] is used क्रम controlling the DMA length
+/* DMA_length[] is used for controlling the DMA length
    0: 8 DWORDs
    1: 16 DWORDs
    2: 32 DWORDs
@@ -298,8 +297,8 @@ VELOCITY_PARAM(rx_thresh, "Receive fifo threshold");
 */
 VELOCITY_PARAM(DMA_length, "DMA length");
 
-#घोषणा IP_ALIG_DEF     0
-/* IP_byte_align[] is used क्रम IP header DWORD byte aligned
+#define IP_ALIG_DEF     0
+/* IP_byte_align[] is used for IP header DWORD byte aligned
    0: indicate the IP header won't be DWORD byte aligned.(Default) .
    1: indicate the IP header will be DWORD byte aligned.
       In some environment, the IP header should be DWORD byte aligned,
@@ -307,12 +306,12 @@ VELOCITY_PARAM(DMA_length, "DMA length");
 */
 VELOCITY_PARAM(IP_byte_align, "Enable IP header dword aligned");
 
-#घोषणा FLOW_CNTL_DEF   1
-#घोषणा FLOW_CNTL_MIN   1
-#घोषणा FLOW_CNTL_MAX   5
+#define FLOW_CNTL_DEF   1
+#define FLOW_CNTL_MIN   1
+#define FLOW_CNTL_MAX   5
 
-/* flow_control[] is used क्रम setting the flow control ability of NIC.
-   1: hardware deafult - AUTO (शेष). Use Hardware शेष value in ANAR.
+/* flow_control[] is used for setting the flow control ability of NIC.
+   1: hardware deafult - AUTO (default). Use Hardware default value in ANAR.
    2: enable TX flow control.
    3: enable RX flow control.
    4: enable RX/TX flow control.
@@ -320,11 +319,11 @@ VELOCITY_PARAM(IP_byte_align, "Enable IP header dword aligned");
 */
 VELOCITY_PARAM(flow_control, "Enable flow control ability");
 
-#घोषणा MED_LNK_DEF 0
-#घोषणा MED_LNK_MIN 0
-#घोषणा MED_LNK_MAX 5
-/* speed_duplex[] is used क्रम setting the speed and duplex mode of NIC.
-   0: indicate स्वतःnegotiation क्रम both speed and duplex mode
+#define MED_LNK_DEF 0
+#define MED_LNK_MIN 0
+#define MED_LNK_MAX 5
+/* speed_duplex[] is used for setting the speed and duplex mode of NIC.
+   0: indicate autonegotiation for both speed and duplex mode
    1: indicate 100Mbps half duplex mode
    2: indicate 100Mbps full duplex mode
    3: indicate 10Mbps half duplex mode
@@ -332,541 +331,541 @@ VELOCITY_PARAM(flow_control, "Enable flow control ability");
    5: indicate 1000Mbps full duplex mode
 
    Note:
-   अगर EEPROM have been set to the क्रमce mode, this option is ignored
+   if EEPROM have been set to the force mode, this option is ignored
    by driver.
 */
 VELOCITY_PARAM(speed_duplex, "Setting the speed and duplex mode");
 
-#घोषणा WOL_OPT_DEF     0
-#घोषणा WOL_OPT_MIN     0
-#घोषणा WOL_OPT_MAX     7
-/* wol_opts[] is used क्रम controlling wake on lan behavior.
-   0: Wake up अगर recevied a magic packet. (Default)
-   1: Wake up अगर link status is on/off.
-   2: Wake up अगर recevied an arp packet.
-   4: Wake up अगर recevied any unicast packet.
+#define WOL_OPT_DEF     0
+#define WOL_OPT_MIN     0
+#define WOL_OPT_MAX     7
+/* wol_opts[] is used for controlling wake on lan behavior.
+   0: Wake up if recevied a magic packet. (Default)
+   1: Wake up if link status is on/off.
+   2: Wake up if recevied an arp packet.
+   4: Wake up if recevied any unicast packet.
    Those value can be sumed up to support more than one option.
 */
 VELOCITY_PARAM(wol_opts, "Wake On Lan options");
 
-अटल पूर्णांक rx_copyअवरोध = 200;
-module_param(rx_copyअवरोध, पूर्णांक, 0644);
-MODULE_PARM_DESC(rx_copyअवरोध, "Copy breakpoint for copy-only-tiny-frames");
+static int rx_copybreak = 200;
+module_param(rx_copybreak, int, 0644);
+MODULE_PARM_DESC(rx_copybreak, "Copy breakpoint for copy-only-tiny-frames");
 
 /*
  *	Internal board variants. At the moment we have only one
  */
-अटल काष्ठा velocity_info_tbl chip_info_table[] = अणु
-	अणुCHIP_TYPE_VT6110, "VIA Networking Velocity Family Gigabit Ethernet Adapter", 1, 0x00FFFFFFULपूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static struct velocity_info_tbl chip_info_table[] = {
+	{CHIP_TYPE_VT6110, "VIA Networking Velocity Family Gigabit Ethernet Adapter", 1, 0x00FFFFFFUL},
+	{ }
+};
 
 /*
- *	Describe the PCI device identअगरiers that we support in this
- *	device driver. Used क्रम hotplug स्वतःloading.
+ *	Describe the PCI device identifiers that we support in this
+ *	device driver. Used for hotplug autoloading.
  */
 
-अटल स्थिर काष्ठा pci_device_id velocity_pci_id_table[] = अणु
-	अणु PCI_DEVICE(PCI_VENDOR_ID_VIA, PCI_DEVICE_ID_VIA_612X) पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct pci_device_id velocity_pci_id_table[] = {
+	{ PCI_DEVICE(PCI_VENDOR_ID_VIA, PCI_DEVICE_ID_VIA_612X) },
+	{ }
+};
 
 MODULE_DEVICE_TABLE(pci, velocity_pci_id_table);
 
 /*
- *	Describe the OF device identअगरiers that we support in this
- *	device driver. Used क्रम devicetree nodes.
+ *	Describe the OF device identifiers that we support in this
+ *	device driver. Used for devicetree nodes.
  */
-अटल स्थिर काष्ठा of_device_id velocity_of_ids[] = अणु
-	अणु .compatible = "via,velocity-vt6110", .data = &chip_info_table[0] पूर्ण,
-	अणु /* Sentinel */ पूर्ण,
-पूर्ण;
+static const struct of_device_id velocity_of_ids[] = {
+	{ .compatible = "via,velocity-vt6110", .data = &chip_info_table[0] },
+	{ /* Sentinel */ },
+};
 MODULE_DEVICE_TABLE(of, velocity_of_ids);
 
 /**
- *	get_chip_name	- 	identअगरier to name
- *	@chip_id: chip identअगरier
+ *	get_chip_name	- 	identifier to name
+ *	@chip_id: chip identifier
  *
- *	Given a chip identअगरier वापस a suitable description. Returns
- *	a poपूर्णांकer a अटल string valid जबतक the driver is loaded.
+ *	Given a chip identifier return a suitable description. Returns
+ *	a pointer a static string valid while the driver is loaded.
  */
-अटल स्थिर अक्षर *get_chip_name(क्रमागत chip_type chip_id)
-अणु
-	पूर्णांक i;
-	क्रम (i = 0; chip_info_table[i].name != शून्य; i++)
-		अगर (chip_info_table[i].chip_id == chip_id)
-			अवरोध;
-	वापस chip_info_table[i].name;
-पूर्ण
+static const char *get_chip_name(enum chip_type chip_id)
+{
+	int i;
+	for (i = 0; chip_info_table[i].name != NULL; i++)
+		if (chip_info_table[i].chip_id == chip_id)
+			break;
+	return chip_info_table[i].name;
+}
 
 /**
- *	velocity_set_पूर्णांक_opt	-	parser क्रम पूर्णांकeger options
- *	@opt: poपूर्णांकer to option value
- *	@val: value the user requested (or -1 क्रम शेष)
+ *	velocity_set_int_opt	-	parser for integer options
+ *	@opt: pointer to option value
+ *	@val: value the user requested (or -1 for default)
  *	@min: lowest value allowed
  *	@max: highest value allowed
- *	@def: शेष value
+ *	@def: default value
  *	@name: property name
  *
- *	Set an पूर्णांकeger property in the module options. This function करोes
- *	all the verअगरication and checking as well as reporting so that
- *	we करोn't duplicate code क्रम each option.
+ *	Set an integer property in the module options. This function does
+ *	all the verification and checking as well as reporting so that
+ *	we don't duplicate code for each option.
  */
-अटल व्योम velocity_set_पूर्णांक_opt(पूर्णांक *opt, पूर्णांक val, पूर्णांक min, पूर्णांक max, पूर्णांक def,
-				 अक्षर *name)
-अणु
-	अगर (val == -1)
+static void velocity_set_int_opt(int *opt, int val, int min, int max, int def,
+				 char *name)
+{
+	if (val == -1)
 		*opt = def;
-	अन्यथा अगर (val < min || val > max) अणु
+	else if (val < min || val > max) {
 		pr_notice("the value of parameter %s is invalid, the valid range is (%d-%d)\n",
 			  name, min, max);
 		*opt = def;
-	पूर्ण अन्यथा अणु
+	} else {
 		pr_info("set value of parameter %s to %d\n", name, val);
 		*opt = val;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- *	velocity_set_bool_opt	-	parser क्रम boolean options
- *	@opt: poपूर्णांकer to option value
- *	@val: value the user requested (or -1 क्रम शेष)
- *	@def: शेष value (yes/no)
- *	@flag: numeric value to set क्रम true.
+ *	velocity_set_bool_opt	-	parser for boolean options
+ *	@opt: pointer to option value
+ *	@val: value the user requested (or -1 for default)
+ *	@def: default value (yes/no)
+ *	@flag: numeric value to set for true.
  *	@name: property name
  *
- *	Set a boolean property in the module options. This function करोes
- *	all the verअगरication and checking as well as reporting so that
- *	we करोn't duplicate code क्रम each option.
+ *	Set a boolean property in the module options. This function does
+ *	all the verification and checking as well as reporting so that
+ *	we don't duplicate code for each option.
  */
-अटल व्योम velocity_set_bool_opt(u32 *opt, पूर्णांक val, पूर्णांक def, u32 flag,
-				  अक्षर *name)
-अणु
+static void velocity_set_bool_opt(u32 *opt, int val, int def, u32 flag,
+				  char *name)
+{
 	(*opt) &= (~flag);
-	अगर (val == -1)
+	if (val == -1)
 		*opt |= (def ? flag : 0);
-	अन्यथा अगर (val < 0 || val > 1) अणु
+	else if (val < 0 || val > 1) {
 		pr_notice("the value of parameter %s is invalid, the valid range is (%d-%d)\n",
 			  name, 0, 1);
 		*opt |= (def ? flag : 0);
-	पूर्ण अन्यथा अणु
+	} else {
 		pr_info("set parameter %s to %s\n",
 			name, val ? "TRUE" : "FALSE");
 		*opt |= (val ? flag : 0);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  *	velocity_get_options	-	set options on device
- *	@opts: option काष्ठाure क्रम the device
+ *	@opts: option structure for the device
  *	@index: index of option to use in module options array
  *
- *	Turn the module and command options पूर्णांकo a single काष्ठाure
- *	क्रम the current device
+ *	Turn the module and command options into a single structure
+ *	for the current device
  */
-अटल व्योम velocity_get_options(काष्ठा velocity_opt *opts, पूर्णांक index)
-अणु
+static void velocity_get_options(struct velocity_opt *opts, int index)
+{
 
-	velocity_set_पूर्णांक_opt(&opts->rx_thresh, rx_thresh[index],
+	velocity_set_int_opt(&opts->rx_thresh, rx_thresh[index],
 			     RX_THRESH_MIN, RX_THRESH_MAX, RX_THRESH_DEF,
 			     "rx_thresh");
-	velocity_set_पूर्णांक_opt(&opts->DMA_length, DMA_length[index],
+	velocity_set_int_opt(&opts->DMA_length, DMA_length[index],
 			     DMA_LENGTH_MIN, DMA_LENGTH_MAX, DMA_LENGTH_DEF,
 			     "DMA_length");
-	velocity_set_पूर्णांक_opt(&opts->numrx, RxDescriptors[index],
+	velocity_set_int_opt(&opts->numrx, RxDescriptors[index],
 			     RX_DESC_MIN, RX_DESC_MAX, RX_DESC_DEF,
 			     "RxDescriptors");
-	velocity_set_पूर्णांक_opt(&opts->numtx, TxDescriptors[index],
+	velocity_set_int_opt(&opts->numtx, TxDescriptors[index],
 			     TX_DESC_MIN, TX_DESC_MAX, TX_DESC_DEF,
 			     "TxDescriptors");
 
-	velocity_set_पूर्णांक_opt(&opts->flow_cntl, flow_control[index],
+	velocity_set_int_opt(&opts->flow_cntl, flow_control[index],
 			     FLOW_CNTL_MIN, FLOW_CNTL_MAX, FLOW_CNTL_DEF,
 			     "flow_control");
 	velocity_set_bool_opt(&opts->flags, IP_byte_align[index],
 			      IP_ALIG_DEF, VELOCITY_FLAGS_IP_ALIGN,
 			      "IP_byte_align");
-	velocity_set_पूर्णांक_opt((पूर्णांक *) &opts->spd_dpx, speed_duplex[index],
+	velocity_set_int_opt((int *) &opts->spd_dpx, speed_duplex[index],
 			     MED_LNK_MIN, MED_LNK_MAX, MED_LNK_DEF,
 			     "Media link mode");
-	velocity_set_पूर्णांक_opt(&opts->wol_opts, wol_opts[index],
+	velocity_set_int_opt(&opts->wol_opts, wol_opts[index],
 			     WOL_OPT_MIN, WOL_OPT_MAX, WOL_OPT_DEF,
 			     "Wake On Lan options");
 	opts->numrx = (opts->numrx & ~3);
-पूर्ण
+}
 
 /**
  *	velocity_init_cam_filter	-	initialise CAM
  *	@vptr: velocity to program
  *
- *	Initialize the content addressable memory used क्रम filters. Load
+ *	Initialize the content addressable memory used for filters. Load
  *	appropriately according to the presence of VLAN
  */
-अटल व्योम velocity_init_cam_filter(काष्ठा velocity_info *vptr)
-अणु
-	काष्ठा mac_regs __iomem *regs = vptr->mac_regs;
-	अचिन्हित पूर्णांक vid, i = 0;
+static void velocity_init_cam_filter(struct velocity_info *vptr)
+{
+	struct mac_regs __iomem *regs = vptr->mac_regs;
+	unsigned int vid, i = 0;
 
 	/* Turn on MCFG_PQEN, turn off MCFG_RTGOPT */
 	WORD_REG_BITS_SET(MCFG_PQEN, MCFG_RTGOPT, &regs->MCFG);
 	WORD_REG_BITS_ON(MCFG_VIDFR, &regs->MCFG);
 
 	/* Disable all CAMs */
-	स_रखो(vptr->vCAMmask, 0, माप(u8) * 8);
-	स_रखो(vptr->mCAMmask, 0, माप(u8) * 8);
+	memset(vptr->vCAMmask, 0, sizeof(u8) * 8);
+	memset(vptr->mCAMmask, 0, sizeof(u8) * 8);
 	mac_set_vlan_cam_mask(regs, vptr->vCAMmask);
 	mac_set_cam_mask(regs, vptr->mCAMmask);
 
 	/* Enable VCAMs */
-	क्रम_each_set_bit(vid, vptr->active_vlans, VLAN_N_VID) अणु
+	for_each_set_bit(vid, vptr->active_vlans, VLAN_N_VID) {
 		mac_set_vlan_cam(regs, i, (u8 *) &vid);
 		vptr->vCAMmask[i / 8] |= 0x1 << (i % 8);
-		अगर (++i >= VCAM_SIZE)
-			अवरोध;
-	पूर्ण
+		if (++i >= VCAM_SIZE)
+			break;
+	}
 	mac_set_vlan_cam_mask(regs, vptr->vCAMmask);
-पूर्ण
+}
 
-अटल पूर्णांक velocity_vlan_rx_add_vid(काष्ठा net_device *dev,
+static int velocity_vlan_rx_add_vid(struct net_device *dev,
 				    __be16 proto, u16 vid)
-अणु
-	काष्ठा velocity_info *vptr = netdev_priv(dev);
+{
+	struct velocity_info *vptr = netdev_priv(dev);
 
 	spin_lock_irq(&vptr->lock);
 	set_bit(vid, vptr->active_vlans);
 	velocity_init_cam_filter(vptr);
 	spin_unlock_irq(&vptr->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक velocity_vlan_rx_समाप्त_vid(काष्ठा net_device *dev,
+static int velocity_vlan_rx_kill_vid(struct net_device *dev,
 				     __be16 proto, u16 vid)
-अणु
-	काष्ठा velocity_info *vptr = netdev_priv(dev);
+{
+	struct velocity_info *vptr = netdev_priv(dev);
 
 	spin_lock_irq(&vptr->lock);
 	clear_bit(vid, vptr->active_vlans);
 	velocity_init_cam_filter(vptr);
 	spin_unlock_irq(&vptr->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम velocity_init_rx_ring_indexes(काष्ठा velocity_info *vptr)
-अणु
+static void velocity_init_rx_ring_indexes(struct velocity_info *vptr)
+{
 	vptr->rx.dirty = vptr->rx.filled = vptr->rx.curr = 0;
-पूर्ण
+}
 
 /**
  *	velocity_rx_reset	-	handle a receive reset
  *	@vptr: velocity we are resetting
  *
- *	Reset the ownership and status क्रम the receive ring side.
+ *	Reset the ownership and status for the receive ring side.
  *	Hand all the receive queue to the NIC.
  */
-अटल व्योम velocity_rx_reset(काष्ठा velocity_info *vptr)
-अणु
+static void velocity_rx_reset(struct velocity_info *vptr)
+{
 
-	काष्ठा mac_regs __iomem *regs = vptr->mac_regs;
-	पूर्णांक i;
+	struct mac_regs __iomem *regs = vptr->mac_regs;
+	int i;
 
 	velocity_init_rx_ring_indexes(vptr);
 
 	/*
-	 *	Init state, all RD entries beदीर्घ to the NIC
+	 *	Init state, all RD entries belong to the NIC
 	 */
-	क्रम (i = 0; i < vptr->options.numrx; ++i)
+	for (i = 0; i < vptr->options.numrx; ++i)
 		vptr->rx.ring[i].rdesc0.len |= OWNED_BY_NIC;
 
-	ग_लिखोw(vptr->options.numrx, &regs->RBRDU);
-	ग_लिखोl(vptr->rx.pool_dma, &regs->RDBaseLo);
-	ग_लिखोw(0, &regs->RDIdx);
-	ग_लिखोw(vptr->options.numrx - 1, &regs->RDCSize);
-पूर्ण
+	writew(vptr->options.numrx, &regs->RBRDU);
+	writel(vptr->rx.pool_dma, &regs->RDBaseLo);
+	writew(0, &regs->RDIdx);
+	writew(vptr->options.numrx - 1, &regs->RDCSize);
+}
 
 /**
  *	velocity_get_opt_media_mode	-	get media selection
  *	@vptr: velocity adapter
  *
  *	Get the media mode stored in EEPROM or module options and load
- *	mii_status accordingly. The requested link state inक्रमmation
- *	is also वापसed.
+ *	mii_status accordingly. The requested link state information
+ *	is also returned.
  */
-अटल u32 velocity_get_opt_media_mode(काष्ठा velocity_info *vptr)
-अणु
+static u32 velocity_get_opt_media_mode(struct velocity_info *vptr)
+{
 	u32 status = 0;
 
-	चयन (vptr->options.spd_dpx) अणु
-	हाल SPD_DPX_AUTO:
+	switch (vptr->options.spd_dpx) {
+	case SPD_DPX_AUTO:
 		status = VELOCITY_AUTONEG_ENABLE;
-		अवरोध;
-	हाल SPD_DPX_100_FULL:
+		break;
+	case SPD_DPX_100_FULL:
 		status = VELOCITY_SPEED_100 | VELOCITY_DUPLEX_FULL;
-		अवरोध;
-	हाल SPD_DPX_10_FULL:
+		break;
+	case SPD_DPX_10_FULL:
 		status = VELOCITY_SPEED_10 | VELOCITY_DUPLEX_FULL;
-		अवरोध;
-	हाल SPD_DPX_100_HALF:
+		break;
+	case SPD_DPX_100_HALF:
 		status = VELOCITY_SPEED_100;
-		अवरोध;
-	हाल SPD_DPX_10_HALF:
+		break;
+	case SPD_DPX_10_HALF:
 		status = VELOCITY_SPEED_10;
-		अवरोध;
-	हाल SPD_DPX_1000_FULL:
+		break;
+	case SPD_DPX_1000_FULL:
 		status = VELOCITY_SPEED_1000 | VELOCITY_DUPLEX_FULL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	vptr->mii_status = status;
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /**
- *	safe_disable_mii_स्वतःpoll	-	स्वतःpoll off
- *	@regs: velocity रेजिस्टरs
+ *	safe_disable_mii_autopoll	-	autopoll off
+ *	@regs: velocity registers
  *
- *	Turn off the स्वतःpoll and रुको क्रम it to disable on the chip
+ *	Turn off the autopoll and wait for it to disable on the chip
  */
-अटल व्योम safe_disable_mii_स्वतःpoll(काष्ठा mac_regs __iomem *regs)
-अणु
+static void safe_disable_mii_autopoll(struct mac_regs __iomem *regs)
+{
 	u16 ww;
 
 	/*  turn off MAUTO */
-	ग_लिखोb(0, &regs->MIICR);
-	क्रम (ww = 0; ww < W_MAX_TIMEOUT; ww++) अणु
+	writeb(0, &regs->MIICR);
+	for (ww = 0; ww < W_MAX_TIMEOUT; ww++) {
 		udelay(1);
-		अगर (BYTE_REG_BITS_IS_ON(MIISR_MIDLE, &regs->MIISR))
-			अवरोध;
-	पूर्ण
-पूर्ण
+		if (BYTE_REG_BITS_IS_ON(MIISR_MIDLE, &regs->MIISR))
+			break;
+	}
+}
 
 /**
- *	enable_mii_स्वतःpoll	-	turn on स्वतःpolling
- *	@regs: velocity रेजिस्टरs
+ *	enable_mii_autopoll	-	turn on autopolling
+ *	@regs: velocity registers
  *
- *	Enable the MII link status स्वतःpoll feature on the Velocity
- *	hardware. Wait क्रम it to enable.
+ *	Enable the MII link status autopoll feature on the Velocity
+ *	hardware. Wait for it to enable.
  */
-अटल व्योम enable_mii_स्वतःpoll(काष्ठा mac_regs __iomem *regs)
-अणु
-	पूर्णांक ii;
+static void enable_mii_autopoll(struct mac_regs __iomem *regs)
+{
+	int ii;
 
-	ग_लिखोb(0, &(regs->MIICR));
-	ग_लिखोb(MIIADR_SWMPL, &regs->MIIADR);
+	writeb(0, &(regs->MIICR));
+	writeb(MIIADR_SWMPL, &regs->MIIADR);
 
-	क्रम (ii = 0; ii < W_MAX_TIMEOUT; ii++) अणु
+	for (ii = 0; ii < W_MAX_TIMEOUT; ii++) {
 		udelay(1);
-		अगर (BYTE_REG_BITS_IS_ON(MIISR_MIDLE, &regs->MIISR))
-			अवरोध;
-	पूर्ण
+		if (BYTE_REG_BITS_IS_ON(MIISR_MIDLE, &regs->MIISR))
+			break;
+	}
 
-	ग_लिखोb(MIICR_MAUTO, &regs->MIICR);
+	writeb(MIICR_MAUTO, &regs->MIICR);
 
-	क्रम (ii = 0; ii < W_MAX_TIMEOUT; ii++) अणु
+	for (ii = 0; ii < W_MAX_TIMEOUT; ii++) {
 		udelay(1);
-		अगर (!BYTE_REG_BITS_IS_ON(MIISR_MIDLE, &regs->MIISR))
-			अवरोध;
-	पूर्ण
+		if (!BYTE_REG_BITS_IS_ON(MIISR_MIDLE, &regs->MIISR))
+			break;
+	}
 
-पूर्ण
+}
 
 /**
- *	velocity_mii_पढ़ो	-	पढ़ो MII data
- *	@regs: velocity रेजिस्टरs
- *	@index: MII रेजिस्टर index
- *	@data: buffer क्रम received data
+ *	velocity_mii_read	-	read MII data
+ *	@regs: velocity registers
+ *	@index: MII register index
+ *	@data: buffer for received data
  *
- *	Perक्रमm a single पढ़ो of an MII 16bit रेजिस्टर. Returns zero
- *	on success or -ETIMEDOUT अगर the PHY did not respond.
+ *	Perform a single read of an MII 16bit register. Returns zero
+ *	on success or -ETIMEDOUT if the PHY did not respond.
  */
-अटल पूर्णांक velocity_mii_पढ़ो(काष्ठा mac_regs __iomem *regs, u8 index, u16 *data)
-अणु
+static int velocity_mii_read(struct mac_regs __iomem *regs, u8 index, u16 *data)
+{
 	u16 ww;
 
 	/*
 	 *	Disable MIICR_MAUTO, so that mii addr can be set normally
 	 */
-	safe_disable_mii_स्वतःpoll(regs);
+	safe_disable_mii_autopoll(regs);
 
-	ग_लिखोb(index, &regs->MIIADR);
+	writeb(index, &regs->MIIADR);
 
 	BYTE_REG_BITS_ON(MIICR_RCMD, &regs->MIICR);
 
-	क्रम (ww = 0; ww < W_MAX_TIMEOUT; ww++) अणु
-		अगर (!(पढ़ोb(&regs->MIICR) & MIICR_RCMD))
-			अवरोध;
-	पूर्ण
+	for (ww = 0; ww < W_MAX_TIMEOUT; ww++) {
+		if (!(readb(&regs->MIICR) & MIICR_RCMD))
+			break;
+	}
 
-	*data = पढ़ोw(&regs->MIIDATA);
+	*data = readw(&regs->MIIDATA);
 
-	enable_mii_स्वतःpoll(regs);
-	अगर (ww == W_MAX_TIMEOUT)
-		वापस -ETIMEDOUT;
-	वापस 0;
-पूर्ण
+	enable_mii_autopoll(regs);
+	if (ww == W_MAX_TIMEOUT)
+		return -ETIMEDOUT;
+	return 0;
+}
 
 /**
  *	mii_check_media_mode	-	check media state
- *	@regs: velocity रेजिस्टरs
+ *	@regs: velocity registers
  *
  *	Check the current MII status and determine the link status
  *	accordingly
  */
-अटल u32 mii_check_media_mode(काष्ठा mac_regs __iomem *regs)
-अणु
+static u32 mii_check_media_mode(struct mac_regs __iomem *regs)
+{
 	u32 status = 0;
 	u16 ANAR;
 
-	अगर (!MII_REG_BITS_IS_ON(BMSR_LSTATUS, MII_BMSR, regs))
+	if (!MII_REG_BITS_IS_ON(BMSR_LSTATUS, MII_BMSR, regs))
 		status |= VELOCITY_LINK_FAIL;
 
-	अगर (MII_REG_BITS_IS_ON(ADVERTISE_1000FULL, MII_CTRL1000, regs))
+	if (MII_REG_BITS_IS_ON(ADVERTISE_1000FULL, MII_CTRL1000, regs))
 		status |= VELOCITY_SPEED_1000 | VELOCITY_DUPLEX_FULL;
-	अन्यथा अगर (MII_REG_BITS_IS_ON(ADVERTISE_1000HALF, MII_CTRL1000, regs))
+	else if (MII_REG_BITS_IS_ON(ADVERTISE_1000HALF, MII_CTRL1000, regs))
 		status |= (VELOCITY_SPEED_1000);
-	अन्यथा अणु
-		velocity_mii_पढ़ो(regs, MII_ADVERTISE, &ANAR);
-		अगर (ANAR & ADVERTISE_100FULL)
+	else {
+		velocity_mii_read(regs, MII_ADVERTISE, &ANAR);
+		if (ANAR & ADVERTISE_100FULL)
 			status |= (VELOCITY_SPEED_100 | VELOCITY_DUPLEX_FULL);
-		अन्यथा अगर (ANAR & ADVERTISE_100HALF)
+		else if (ANAR & ADVERTISE_100HALF)
 			status |= VELOCITY_SPEED_100;
-		अन्यथा अगर (ANAR & ADVERTISE_10FULL)
+		else if (ANAR & ADVERTISE_10FULL)
 			status |= (VELOCITY_SPEED_10 | VELOCITY_DUPLEX_FULL);
-		अन्यथा
+		else
 			status |= (VELOCITY_SPEED_10);
-	पूर्ण
+	}
 
-	अगर (MII_REG_BITS_IS_ON(BMCR_ANENABLE, MII_BMCR, regs)) अणु
-		velocity_mii_पढ़ो(regs, MII_ADVERTISE, &ANAR);
-		अगर ((ANAR & (ADVERTISE_100FULL | ADVERTISE_100HALF | ADVERTISE_10FULL | ADVERTISE_10HALF))
-		    == (ADVERTISE_100FULL | ADVERTISE_100HALF | ADVERTISE_10FULL | ADVERTISE_10HALF)) अणु
-			अगर (MII_REG_BITS_IS_ON(ADVERTISE_1000HALF | ADVERTISE_1000FULL, MII_CTRL1000, regs))
+	if (MII_REG_BITS_IS_ON(BMCR_ANENABLE, MII_BMCR, regs)) {
+		velocity_mii_read(regs, MII_ADVERTISE, &ANAR);
+		if ((ANAR & (ADVERTISE_100FULL | ADVERTISE_100HALF | ADVERTISE_10FULL | ADVERTISE_10HALF))
+		    == (ADVERTISE_100FULL | ADVERTISE_100HALF | ADVERTISE_10FULL | ADVERTISE_10HALF)) {
+			if (MII_REG_BITS_IS_ON(ADVERTISE_1000HALF | ADVERTISE_1000FULL, MII_CTRL1000, regs))
 				status |= VELOCITY_AUTONEG_ENABLE;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /**
- *	velocity_mii_ग_लिखो	-	ग_लिखो MII data
- *	@regs: velocity रेजिस्टरs
- *	@mii_addr: MII रेजिस्टर index
- *	@data: 16bit data क्रम the MII रेजिस्टर
+ *	velocity_mii_write	-	write MII data
+ *	@regs: velocity registers
+ *	@mii_addr: MII register index
+ *	@data: 16bit data for the MII register
  *
- *	Perक्रमm a single ग_लिखो to an MII 16bit रेजिस्टर. Returns zero
- *	on success or -ETIMEDOUT अगर the PHY did not respond.
+ *	Perform a single write to an MII 16bit register. Returns zero
+ *	on success or -ETIMEDOUT if the PHY did not respond.
  */
-अटल पूर्णांक velocity_mii_ग_लिखो(काष्ठा mac_regs __iomem *regs, u8 mii_addr, u16 data)
-अणु
+static int velocity_mii_write(struct mac_regs __iomem *regs, u8 mii_addr, u16 data)
+{
 	u16 ww;
 
 	/*
 	 *	Disable MIICR_MAUTO, so that mii addr can be set normally
 	 */
-	safe_disable_mii_स्वतःpoll(regs);
+	safe_disable_mii_autopoll(regs);
 
 	/* MII reg offset */
-	ग_लिखोb(mii_addr, &regs->MIIADR);
+	writeb(mii_addr, &regs->MIIADR);
 	/* set MII data */
-	ग_लिखोw(data, &regs->MIIDATA);
+	writew(data, &regs->MIIDATA);
 
 	/* turn on MIICR_WCMD */
 	BYTE_REG_BITS_ON(MIICR_WCMD, &regs->MIICR);
 
-	/* W_MAX_TIMEOUT is the समयout period */
-	क्रम (ww = 0; ww < W_MAX_TIMEOUT; ww++) अणु
+	/* W_MAX_TIMEOUT is the timeout period */
+	for (ww = 0; ww < W_MAX_TIMEOUT; ww++) {
 		udelay(5);
-		अगर (!(पढ़ोb(&regs->MIICR) & MIICR_WCMD))
-			अवरोध;
-	पूर्ण
-	enable_mii_स्वतःpoll(regs);
+		if (!(readb(&regs->MIICR) & MIICR_WCMD))
+			break;
+	}
+	enable_mii_autopoll(regs);
 
-	अगर (ww == W_MAX_TIMEOUT)
-		वापस -ETIMEDOUT;
-	वापस 0;
-पूर्ण
+	if (ww == W_MAX_TIMEOUT)
+		return -ETIMEDOUT;
+	return 0;
+}
 
 /**
  *	set_mii_flow_control	-	flow control setup
- *	@vptr: velocity पूर्णांकerface
+ *	@vptr: velocity interface
  *
- *	Set up the flow control on this पूर्णांकerface according to
+ *	Set up the flow control on this interface according to
  *	the supplied user/eeprom options.
  */
-अटल व्योम set_mii_flow_control(काष्ठा velocity_info *vptr)
-अणु
+static void set_mii_flow_control(struct velocity_info *vptr)
+{
 	/*Enable or Disable PAUSE in ANAR */
-	चयन (vptr->options.flow_cntl) अणु
-	हाल FLOW_CNTL_TX:
+	switch (vptr->options.flow_cntl) {
+	case FLOW_CNTL_TX:
 		MII_REG_BITS_OFF(ADVERTISE_PAUSE_CAP, MII_ADVERTISE, vptr->mac_regs);
 		MII_REG_BITS_ON(ADVERTISE_PAUSE_ASYM, MII_ADVERTISE, vptr->mac_regs);
-		अवरोध;
+		break;
 
-	हाल FLOW_CNTL_RX:
+	case FLOW_CNTL_RX:
 		MII_REG_BITS_ON(ADVERTISE_PAUSE_CAP, MII_ADVERTISE, vptr->mac_regs);
 		MII_REG_BITS_ON(ADVERTISE_PAUSE_ASYM, MII_ADVERTISE, vptr->mac_regs);
-		अवरोध;
+		break;
 
-	हाल FLOW_CNTL_TX_RX:
+	case FLOW_CNTL_TX_RX:
 		MII_REG_BITS_ON(ADVERTISE_PAUSE_CAP, MII_ADVERTISE, vptr->mac_regs);
 		MII_REG_BITS_OFF(ADVERTISE_PAUSE_ASYM, MII_ADVERTISE, vptr->mac_regs);
-		अवरोध;
+		break;
 
-	हाल FLOW_CNTL_DISABLE:
+	case FLOW_CNTL_DISABLE:
 		MII_REG_BITS_OFF(ADVERTISE_PAUSE_CAP, MII_ADVERTISE, vptr->mac_regs);
 		MII_REG_BITS_OFF(ADVERTISE_PAUSE_ASYM, MII_ADVERTISE, vptr->mac_regs);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
 /**
- *	mii_set_स्वतः_on		-	स्वतःnegotiate on
+ *	mii_set_auto_on		-	autonegotiate on
  *	@vptr: velocity
  *
- *	Enable स्वतःnegotation on this पूर्णांकerface
+ *	Enable autonegotation on this interface
  */
-अटल व्योम mii_set_स्वतः_on(काष्ठा velocity_info *vptr)
-अणु
-	अगर (MII_REG_BITS_IS_ON(BMCR_ANENABLE, MII_BMCR, vptr->mac_regs))
+static void mii_set_auto_on(struct velocity_info *vptr)
+{
+	if (MII_REG_BITS_IS_ON(BMCR_ANENABLE, MII_BMCR, vptr->mac_regs))
 		MII_REG_BITS_ON(BMCR_ANRESTART, MII_BMCR, vptr->mac_regs);
-	अन्यथा
+	else
 		MII_REG_BITS_ON(BMCR_ANENABLE, MII_BMCR, vptr->mac_regs);
-पूर्ण
+}
 
-अटल u32 check_connection_type(काष्ठा mac_regs __iomem *regs)
-अणु
+static u32 check_connection_type(struct mac_regs __iomem *regs)
+{
 	u32 status = 0;
 	u8 PHYSR0;
 	u16 ANAR;
-	PHYSR0 = पढ़ोb(&regs->PHYSR0);
+	PHYSR0 = readb(&regs->PHYSR0);
 
 	/*
-	   अगर (!(PHYSR0 & PHYSR0_LINKGD))
+	   if (!(PHYSR0 & PHYSR0_LINKGD))
 	   status|=VELOCITY_LINK_FAIL;
 	 */
 
-	अगर (PHYSR0 & PHYSR0_FDPX)
+	if (PHYSR0 & PHYSR0_FDPX)
 		status |= VELOCITY_DUPLEX_FULL;
 
-	अगर (PHYSR0 & PHYSR0_SPDG)
+	if (PHYSR0 & PHYSR0_SPDG)
 		status |= VELOCITY_SPEED_1000;
-	अन्यथा अगर (PHYSR0 & PHYSR0_SPD10)
+	else if (PHYSR0 & PHYSR0_SPD10)
 		status |= VELOCITY_SPEED_10;
-	अन्यथा
+	else
 		status |= VELOCITY_SPEED_100;
 
-	अगर (MII_REG_BITS_IS_ON(BMCR_ANENABLE, MII_BMCR, regs)) अणु
-		velocity_mii_पढ़ो(regs, MII_ADVERTISE, &ANAR);
-		अगर ((ANAR & (ADVERTISE_100FULL | ADVERTISE_100HALF | ADVERTISE_10FULL | ADVERTISE_10HALF))
-		    == (ADVERTISE_100FULL | ADVERTISE_100HALF | ADVERTISE_10FULL | ADVERTISE_10HALF)) अणु
-			अगर (MII_REG_BITS_IS_ON(ADVERTISE_1000HALF | ADVERTISE_1000FULL, MII_CTRL1000, regs))
+	if (MII_REG_BITS_IS_ON(BMCR_ANENABLE, MII_BMCR, regs)) {
+		velocity_mii_read(regs, MII_ADVERTISE, &ANAR);
+		if ((ANAR & (ADVERTISE_100FULL | ADVERTISE_100HALF | ADVERTISE_10FULL | ADVERTISE_10HALF))
+		    == (ADVERTISE_100FULL | ADVERTISE_100HALF | ADVERTISE_10FULL | ADVERTISE_10HALF)) {
+			if (MII_REG_BITS_IS_ON(ADVERTISE_1000HALF | ADVERTISE_1000FULL, MII_CTRL1000, regs))
 				status |= VELOCITY_AUTONEG_ENABLE;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /**
  *	velocity_set_media_mode		-	set media mode
@@ -877,24 +876,24 @@ MODULE_DEVICE_TABLE(of, velocity_of_ids);
  *	PHY and also velocity hardware setup accordingly. In particular
  *	we need to set up CD polling and frame bursting.
  */
-अटल पूर्णांक velocity_set_media_mode(काष्ठा velocity_info *vptr, u32 mii_status)
-अणु
-	काष्ठा mac_regs __iomem *regs = vptr->mac_regs;
+static int velocity_set_media_mode(struct velocity_info *vptr, u32 mii_status)
+{
+	struct mac_regs __iomem *regs = vptr->mac_regs;
 
 	vptr->mii_status = mii_check_media_mode(vptr->mac_regs);
 
 	/* Set mii link status */
 	set_mii_flow_control(vptr);
 
-	अगर (PHYID_GET_PHY_ID(vptr->phy_id) == PHYID_CICADA_CS8201)
+	if (PHYID_GET_PHY_ID(vptr->phy_id) == PHYID_CICADA_CS8201)
 		MII_REG_BITS_ON(AUXCR_MDPPS, MII_NCONFIG, vptr->mac_regs);
 
 	/*
 	 *	If connection type is AUTO
 	 */
-	अगर (mii_status & VELOCITY_AUTONEG_ENABLE) अणु
+	if (mii_status & VELOCITY_AUTONEG_ENABLE) {
 		netdev_info(vptr->netdev, "Velocity is in AUTO mode\n");
-		/* clear क्रमce MAC mode bit */
+		/* clear force MAC mode bit */
 		BYTE_REG_BITS_OFF(CHIPGCR_FCMODE, &regs->CHIPGCR);
 		/* set duplex mode of MAC according to duplex mode of MII */
 		MII_REG_BITS_ON(ADVERTISE_100FULL | ADVERTISE_100HALF | ADVERTISE_10FULL | ADVERTISE_10HALF, MII_ADVERTISE, vptr->mac_regs);
@@ -902,148 +901,148 @@ MODULE_DEVICE_TABLE(of, velocity_of_ids);
 		MII_REG_BITS_ON(BMCR_SPEED1000, MII_BMCR, vptr->mac_regs);
 
 		/* enable AUTO-NEGO mode */
-		mii_set_स्वतः_on(vptr);
-	पूर्ण अन्यथा अणु
+		mii_set_auto_on(vptr);
+	} else {
 		u16 CTRL1000;
 		u16 ANAR;
 		u8 CHIPGCR;
 
 		/*
-		 * 1. अगर it's 3119, disable frame bursting in halfduplex mode
+		 * 1. if it's 3119, disable frame bursting in halfduplex mode
 		 *    and enable it in fullduplex mode
 		 * 2. set correct MII/GMII and half/full duplex mode in CHIPGCR
 		 * 3. only enable CD heart beat counter in 10HD mode
 		 */
 
-		/* set क्रमce MAC mode bit */
+		/* set force MAC mode bit */
 		BYTE_REG_BITS_ON(CHIPGCR_FCMODE, &regs->CHIPGCR);
 
-		CHIPGCR = पढ़ोb(&regs->CHIPGCR);
+		CHIPGCR = readb(&regs->CHIPGCR);
 
-		अगर (mii_status & VELOCITY_SPEED_1000)
+		if (mii_status & VELOCITY_SPEED_1000)
 			CHIPGCR |= CHIPGCR_FCGMII;
-		अन्यथा
+		else
 			CHIPGCR &= ~CHIPGCR_FCGMII;
 
-		अगर (mii_status & VELOCITY_DUPLEX_FULL) अणु
+		if (mii_status & VELOCITY_DUPLEX_FULL) {
 			CHIPGCR |= CHIPGCR_FCFDX;
-			ग_लिखोb(CHIPGCR, &regs->CHIPGCR);
+			writeb(CHIPGCR, &regs->CHIPGCR);
 			netdev_info(vptr->netdev,
 				    "set Velocity to forced full mode\n");
-			अगर (vptr->rev_id < REV_ID_VT3216_A0)
+			if (vptr->rev_id < REV_ID_VT3216_A0)
 				BYTE_REG_BITS_OFF(TCR_TB2BDIS, &regs->TCR);
-		पूर्ण अन्यथा अणु
+		} else {
 			CHIPGCR &= ~CHIPGCR_FCFDX;
 			netdev_info(vptr->netdev,
 				    "set Velocity to forced half mode\n");
-			ग_लिखोb(CHIPGCR, &regs->CHIPGCR);
-			अगर (vptr->rev_id < REV_ID_VT3216_A0)
+			writeb(CHIPGCR, &regs->CHIPGCR);
+			if (vptr->rev_id < REV_ID_VT3216_A0)
 				BYTE_REG_BITS_ON(TCR_TB2BDIS, &regs->TCR);
-		पूर्ण
+		}
 
-		velocity_mii_पढ़ो(vptr->mac_regs, MII_CTRL1000, &CTRL1000);
+		velocity_mii_read(vptr->mac_regs, MII_CTRL1000, &CTRL1000);
 		CTRL1000 &= ~(ADVERTISE_1000FULL | ADVERTISE_1000HALF);
-		अगर ((mii_status & VELOCITY_SPEED_1000) &&
-		    (mii_status & VELOCITY_DUPLEX_FULL)) अणु
+		if ((mii_status & VELOCITY_SPEED_1000) &&
+		    (mii_status & VELOCITY_DUPLEX_FULL)) {
 			CTRL1000 |= ADVERTISE_1000FULL;
-		पूर्ण
-		velocity_mii_ग_लिखो(vptr->mac_regs, MII_CTRL1000, CTRL1000);
+		}
+		velocity_mii_write(vptr->mac_regs, MII_CTRL1000, CTRL1000);
 
-		अगर (!(mii_status & VELOCITY_DUPLEX_FULL) && (mii_status & VELOCITY_SPEED_10))
+		if (!(mii_status & VELOCITY_DUPLEX_FULL) && (mii_status & VELOCITY_SPEED_10))
 			BYTE_REG_BITS_OFF(TESTCFG_HBDIS, &regs->TESTCFG);
-		अन्यथा
+		else
 			BYTE_REG_BITS_ON(TESTCFG_HBDIS, &regs->TESTCFG);
 
 		/* MII_REG_BITS_OFF(BMCR_SPEED1000, MII_BMCR, vptr->mac_regs); */
-		velocity_mii_पढ़ो(vptr->mac_regs, MII_ADVERTISE, &ANAR);
+		velocity_mii_read(vptr->mac_regs, MII_ADVERTISE, &ANAR);
 		ANAR &= (~(ADVERTISE_100FULL | ADVERTISE_100HALF | ADVERTISE_10FULL | ADVERTISE_10HALF));
-		अगर (mii_status & VELOCITY_SPEED_100) अणु
-			अगर (mii_status & VELOCITY_DUPLEX_FULL)
+		if (mii_status & VELOCITY_SPEED_100) {
+			if (mii_status & VELOCITY_DUPLEX_FULL)
 				ANAR |= ADVERTISE_100FULL;
-			अन्यथा
+			else
 				ANAR |= ADVERTISE_100HALF;
-		पूर्ण अन्यथा अगर (mii_status & VELOCITY_SPEED_10) अणु
-			अगर (mii_status & VELOCITY_DUPLEX_FULL)
+		} else if (mii_status & VELOCITY_SPEED_10) {
+			if (mii_status & VELOCITY_DUPLEX_FULL)
 				ANAR |= ADVERTISE_10FULL;
-			अन्यथा
+			else
 				ANAR |= ADVERTISE_10HALF;
-		पूर्ण
-		velocity_mii_ग_लिखो(vptr->mac_regs, MII_ADVERTISE, ANAR);
+		}
+		velocity_mii_write(vptr->mac_regs, MII_ADVERTISE, ANAR);
 		/* enable AUTO-NEGO mode */
-		mii_set_स्वतः_on(vptr);
+		mii_set_auto_on(vptr);
 		/* MII_REG_BITS_ON(BMCR_ANENABLE, MII_BMCR, vptr->mac_regs); */
-	पूर्ण
+	}
 	/* vptr->mii_status=mii_check_media_mode(vptr->mac_regs); */
 	/* vptr->mii_status=check_connection_type(vptr->mac_regs); */
-	वापस VELOCITY_LINK_CHANGE;
-पूर्ण
+	return VELOCITY_LINK_CHANGE;
+}
 
 /**
- *	velocity_prपूर्णांक_link_status	-	link status reporting
+ *	velocity_print_link_status	-	link status reporting
  *	@vptr: velocity to report on
  *
- *	Turn the link status of the velocity card पूर्णांकo a kernel log
+ *	Turn the link status of the velocity card into a kernel log
  *	description of the new link state, detailing speed and duplex
  *	status
  */
-अटल व्योम velocity_prपूर्णांक_link_status(काष्ठा velocity_info *vptr)
-अणु
-	स्थिर अक्षर *link;
-	स्थिर अक्षर *speed;
-	स्थिर अक्षर *duplex;
+static void velocity_print_link_status(struct velocity_info *vptr)
+{
+	const char *link;
+	const char *speed;
+	const char *duplex;
 
-	अगर (vptr->mii_status & VELOCITY_LINK_FAIL) अणु
+	if (vptr->mii_status & VELOCITY_LINK_FAIL) {
 		netdev_notice(vptr->netdev, "failed to detect cable link\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (vptr->options.spd_dpx == SPD_DPX_AUTO) अणु
+	if (vptr->options.spd_dpx == SPD_DPX_AUTO) {
 		link = "auto-negotiation";
 
-		अगर (vptr->mii_status & VELOCITY_SPEED_1000)
+		if (vptr->mii_status & VELOCITY_SPEED_1000)
 			speed = "1000";
-		अन्यथा अगर (vptr->mii_status & VELOCITY_SPEED_100)
+		else if (vptr->mii_status & VELOCITY_SPEED_100)
 			speed = "100";
-		अन्यथा
+		else
 			speed = "10";
 
-		अगर (vptr->mii_status & VELOCITY_DUPLEX_FULL)
+		if (vptr->mii_status & VELOCITY_DUPLEX_FULL)
 			duplex = "full";
-		अन्यथा
+		else
 			duplex = "half";
-	पूर्ण अन्यथा अणु
+	} else {
 		link = "forced";
 
-		चयन (vptr->options.spd_dpx) अणु
-		हाल SPD_DPX_1000_FULL:
+		switch (vptr->options.spd_dpx) {
+		case SPD_DPX_1000_FULL:
 			speed = "1000";
 			duplex = "full";
-			अवरोध;
-		हाल SPD_DPX_100_HALF:
+			break;
+		case SPD_DPX_100_HALF:
 			speed = "100";
 			duplex = "half";
-			अवरोध;
-		हाल SPD_DPX_100_FULL:
+			break;
+		case SPD_DPX_100_FULL:
 			speed = "100";
 			duplex = "full";
-			अवरोध;
-		हाल SPD_DPX_10_HALF:
+			break;
+		case SPD_DPX_10_HALF:
 			speed = "10";
 			duplex = "half";
-			अवरोध;
-		हाल SPD_DPX_10_FULL:
+			break;
+		case SPD_DPX_10_FULL:
 			speed = "10";
 			duplex = "full";
-			अवरोध;
-		शेष:
+			break;
+		default:
 			speed = "unknown";
 			duplex = "unknown";
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	netdev_notice(vptr->netdev, "Link %s speed %sM bps %s duplex\n",
 		      link, speed, duplex);
-पूर्ण
+}
 
 /**
  *	enable_flow_control_ability	-	flow control
@@ -1052,125 +1051,125 @@ MODULE_DEVICE_TABLE(of, velocity_of_ids);
  *	Set up flow control according to the flow control options
  *	determined by the eeprom/configuration.
  */
-अटल व्योम enable_flow_control_ability(काष्ठा velocity_info *vptr)
-अणु
+static void enable_flow_control_ability(struct velocity_info *vptr)
+{
 
-	काष्ठा mac_regs __iomem *regs = vptr->mac_regs;
+	struct mac_regs __iomem *regs = vptr->mac_regs;
 
-	चयन (vptr->options.flow_cntl) अणु
+	switch (vptr->options.flow_cntl) {
 
-	हाल FLOW_CNTL_DEFAULT:
-		अगर (BYTE_REG_BITS_IS_ON(PHYSR0_RXFLC, &regs->PHYSR0))
-			ग_लिखोl(CR0_FDXRFCEN, &regs->CR0Set);
-		अन्यथा
-			ग_लिखोl(CR0_FDXRFCEN, &regs->CR0Clr);
+	case FLOW_CNTL_DEFAULT:
+		if (BYTE_REG_BITS_IS_ON(PHYSR0_RXFLC, &regs->PHYSR0))
+			writel(CR0_FDXRFCEN, &regs->CR0Set);
+		else
+			writel(CR0_FDXRFCEN, &regs->CR0Clr);
 
-		अगर (BYTE_REG_BITS_IS_ON(PHYSR0_TXFLC, &regs->PHYSR0))
-			ग_लिखोl(CR0_FDXTFCEN, &regs->CR0Set);
-		अन्यथा
-			ग_लिखोl(CR0_FDXTFCEN, &regs->CR0Clr);
-		अवरोध;
+		if (BYTE_REG_BITS_IS_ON(PHYSR0_TXFLC, &regs->PHYSR0))
+			writel(CR0_FDXTFCEN, &regs->CR0Set);
+		else
+			writel(CR0_FDXTFCEN, &regs->CR0Clr);
+		break;
 
-	हाल FLOW_CNTL_TX:
-		ग_लिखोl(CR0_FDXTFCEN, &regs->CR0Set);
-		ग_लिखोl(CR0_FDXRFCEN, &regs->CR0Clr);
-		अवरोध;
+	case FLOW_CNTL_TX:
+		writel(CR0_FDXTFCEN, &regs->CR0Set);
+		writel(CR0_FDXRFCEN, &regs->CR0Clr);
+		break;
 
-	हाल FLOW_CNTL_RX:
-		ग_लिखोl(CR0_FDXRFCEN, &regs->CR0Set);
-		ग_लिखोl(CR0_FDXTFCEN, &regs->CR0Clr);
-		अवरोध;
+	case FLOW_CNTL_RX:
+		writel(CR0_FDXRFCEN, &regs->CR0Set);
+		writel(CR0_FDXTFCEN, &regs->CR0Clr);
+		break;
 
-	हाल FLOW_CNTL_TX_RX:
-		ग_लिखोl(CR0_FDXTFCEN, &regs->CR0Set);
-		ग_लिखोl(CR0_FDXRFCEN, &regs->CR0Set);
-		अवरोध;
+	case FLOW_CNTL_TX_RX:
+		writel(CR0_FDXTFCEN, &regs->CR0Set);
+		writel(CR0_FDXRFCEN, &regs->CR0Set);
+		break;
 
-	हाल FLOW_CNTL_DISABLE:
-		ग_लिखोl(CR0_FDXRFCEN, &regs->CR0Clr);
-		ग_लिखोl(CR0_FDXTFCEN, &regs->CR0Clr);
-		अवरोध;
+	case FLOW_CNTL_DISABLE:
+		writel(CR0_FDXRFCEN, &regs->CR0Clr);
+		writel(CR0_FDXTFCEN, &regs->CR0Clr);
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
-पूर्ण
+}
 
 /**
  *	velocity_soft_reset	-	soft reset
  *	@vptr: velocity to reset
  *
  *	Kick off a soft reset of the velocity adapter and then poll
- *	until the reset sequence has completed beक्रमe वापसing.
+ *	until the reset sequence has completed before returning.
  */
-अटल पूर्णांक velocity_soft_reset(काष्ठा velocity_info *vptr)
-अणु
-	काष्ठा mac_regs __iomem *regs = vptr->mac_regs;
-	पूर्णांक i = 0;
+static int velocity_soft_reset(struct velocity_info *vptr)
+{
+	struct mac_regs __iomem *regs = vptr->mac_regs;
+	int i = 0;
 
-	ग_लिखोl(CR0_SFRST, &regs->CR0Set);
+	writel(CR0_SFRST, &regs->CR0Set);
 
-	क्रम (i = 0; i < W_MAX_TIMEOUT; i++) अणु
+	for (i = 0; i < W_MAX_TIMEOUT; i++) {
 		udelay(5);
-		अगर (!DWORD_REG_BITS_IS_ON(CR0_SFRST, &regs->CR0Set))
-			अवरोध;
-	पूर्ण
+		if (!DWORD_REG_BITS_IS_ON(CR0_SFRST, &regs->CR0Set))
+			break;
+	}
 
-	अगर (i == W_MAX_TIMEOUT) अणु
-		ग_लिखोl(CR0_FORSRST, &regs->CR0Set);
+	if (i == W_MAX_TIMEOUT) {
+		writel(CR0_FORSRST, &regs->CR0Set);
 		/* FIXME: PCI POSTING */
 		/* delay 2ms */
 		mdelay(2);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /**
  *	velocity_set_multi	-	filter list change callback
  *	@dev: network device
  *
  *	Called by the network layer when the filter lists need to change
- *	क्रम a velocity adapter. Reload the CAMs with the new address
+ *	for a velocity adapter. Reload the CAMs with the new address
  *	filter ruleset.
  */
-अटल व्योम velocity_set_multi(काष्ठा net_device *dev)
-अणु
-	काष्ठा velocity_info *vptr = netdev_priv(dev);
-	काष्ठा mac_regs __iomem *regs = vptr->mac_regs;
+static void velocity_set_multi(struct net_device *dev)
+{
+	struct velocity_info *vptr = netdev_priv(dev);
+	struct mac_regs __iomem *regs = vptr->mac_regs;
 	u8 rx_mode;
-	पूर्णांक i;
-	काष्ठा netdev_hw_addr *ha;
+	int i;
+	struct netdev_hw_addr *ha;
 
-	अगर (dev->flags & IFF_PROMISC) अणु	/* Set promiscuous. */
-		ग_लिखोl(0xffffffff, &regs->MARCAM[0]);
-		ग_लिखोl(0xffffffff, &regs->MARCAM[4]);
+	if (dev->flags & IFF_PROMISC) {	/* Set promiscuous. */
+		writel(0xffffffff, &regs->MARCAM[0]);
+		writel(0xffffffff, &regs->MARCAM[4]);
 		rx_mode = (RCR_AM | RCR_AB | RCR_PROM);
-	पूर्ण अन्यथा अगर ((netdev_mc_count(dev) > vptr->multicast_limit) ||
-		   (dev->flags & IFF_ALLMULTI)) अणु
-		ग_लिखोl(0xffffffff, &regs->MARCAM[0]);
-		ग_लिखोl(0xffffffff, &regs->MARCAM[4]);
+	} else if ((netdev_mc_count(dev) > vptr->multicast_limit) ||
+		   (dev->flags & IFF_ALLMULTI)) {
+		writel(0xffffffff, &regs->MARCAM[0]);
+		writel(0xffffffff, &regs->MARCAM[4]);
 		rx_mode = (RCR_AM | RCR_AB);
-	पूर्ण अन्यथा अणु
-		पूर्णांक offset = MCAM_SIZE - vptr->multicast_limit;
+	} else {
+		int offset = MCAM_SIZE - vptr->multicast_limit;
 		mac_get_cam_mask(regs, vptr->mCAMmask);
 
 		i = 0;
-		netdev_क्रम_each_mc_addr(ha, dev) अणु
+		netdev_for_each_mc_addr(ha, dev) {
 			mac_set_cam(regs, i + offset, ha->addr);
 			vptr->mCAMmask[(offset + i) / 8] |= 1 << ((offset + i) & 7);
 			i++;
-		पूर्ण
+		}
 
 		mac_set_cam_mask(regs, vptr->mCAMmask);
 		rx_mode = RCR_AM | RCR_AB | RCR_AP;
-	पूर्ण
-	अगर (dev->mtu > 1500)
+	}
+	if (dev->mtu > 1500)
 		rx_mode |= RCR_AL;
 
 	BYTE_REG_BITS_ON(rx_mode, &regs->RCR);
 
-पूर्ण
+}
 
 /*
  * MII access , media link mode setting functions
@@ -1181,202 +1180,202 @@ MODULE_DEVICE_TABLE(of, velocity_of_ids);
  *	@vptr: velocity adapter
  *	@mii_status:  links tatus
  *
- *	Set up the PHY क्रम the current link state.
+ *	Set up the PHY for the current link state.
  */
-अटल व्योम mii_init(काष्ठा velocity_info *vptr, u32 mii_status)
-अणु
+static void mii_init(struct velocity_info *vptr, u32 mii_status)
+{
 	u16 BMCR;
 
-	चयन (PHYID_GET_PHY_ID(vptr->phy_id)) अणु
-	हाल PHYID_ICPLUS_IP101A:
+	switch (PHYID_GET_PHY_ID(vptr->phy_id)) {
+	case PHYID_ICPLUS_IP101A:
 		MII_REG_BITS_ON((ADVERTISE_PAUSE_ASYM | ADVERTISE_PAUSE_CAP),
 						MII_ADVERTISE, vptr->mac_regs);
-		अगर (vptr->mii_status & VELOCITY_DUPLEX_FULL)
+		if (vptr->mii_status & VELOCITY_DUPLEX_FULL)
 			MII_REG_BITS_ON(TCSR_ECHODIS, MII_SREVISION,
 								vptr->mac_regs);
-		अन्यथा
+		else
 			MII_REG_BITS_OFF(TCSR_ECHODIS, MII_SREVISION,
 								vptr->mac_regs);
 		MII_REG_BITS_ON(PLED_LALBE, MII_TPISTATUS, vptr->mac_regs);
-		अवरोध;
-	हाल PHYID_CICADA_CS8201:
+		break;
+	case PHYID_CICADA_CS8201:
 		/*
-		 *	Reset to hardware शेष
+		 *	Reset to hardware default
 		 */
 		MII_REG_BITS_OFF((ADVERTISE_PAUSE_ASYM | ADVERTISE_PAUSE_CAP), MII_ADVERTISE, vptr->mac_regs);
 		/*
-		 *	Turn on ECHODIS bit in NWay-क्रमced full mode and turn it
-		 *	off it in NWay-क्रमced half mode क्रम NWay-क्रमced v.s.
-		 *	legacy-क्रमced issue.
+		 *	Turn on ECHODIS bit in NWay-forced full mode and turn it
+		 *	off it in NWay-forced half mode for NWay-forced v.s.
+		 *	legacy-forced issue.
 		 */
-		अगर (vptr->mii_status & VELOCITY_DUPLEX_FULL)
+		if (vptr->mii_status & VELOCITY_DUPLEX_FULL)
 			MII_REG_BITS_ON(TCSR_ECHODIS, MII_SREVISION, vptr->mac_regs);
-		अन्यथा
+		else
 			MII_REG_BITS_OFF(TCSR_ECHODIS, MII_SREVISION, vptr->mac_regs);
 		/*
-		 *	Turn on Link/Activity LED enable bit क्रम CIS8201
+		 *	Turn on Link/Activity LED enable bit for CIS8201
 		 */
 		MII_REG_BITS_ON(PLED_LALBE, MII_TPISTATUS, vptr->mac_regs);
-		अवरोध;
-	हाल PHYID_VT3216_32BIT:
-	हाल PHYID_VT3216_64BIT:
+		break;
+	case PHYID_VT3216_32BIT:
+	case PHYID_VT3216_64BIT:
 		/*
-		 *	Reset to hardware शेष
+		 *	Reset to hardware default
 		 */
 		MII_REG_BITS_ON((ADVERTISE_PAUSE_ASYM | ADVERTISE_PAUSE_CAP), MII_ADVERTISE, vptr->mac_regs);
 		/*
-		 *	Turn on ECHODIS bit in NWay-क्रमced full mode and turn it
-		 *	off it in NWay-क्रमced half mode क्रम NWay-क्रमced v.s.
-		 *	legacy-क्रमced issue
+		 *	Turn on ECHODIS bit in NWay-forced full mode and turn it
+		 *	off it in NWay-forced half mode for NWay-forced v.s.
+		 *	legacy-forced issue
 		 */
-		अगर (vptr->mii_status & VELOCITY_DUPLEX_FULL)
+		if (vptr->mii_status & VELOCITY_DUPLEX_FULL)
 			MII_REG_BITS_ON(TCSR_ECHODIS, MII_SREVISION, vptr->mac_regs);
-		अन्यथा
+		else
 			MII_REG_BITS_OFF(TCSR_ECHODIS, MII_SREVISION, vptr->mac_regs);
-		अवरोध;
+		break;
 
-	हाल PHYID_MARVELL_1000:
-	हाल PHYID_MARVELL_1000S:
+	case PHYID_MARVELL_1000:
+	case PHYID_MARVELL_1000S:
 		/*
 		 *	Assert CRS on Transmit
 		 */
 		MII_REG_BITS_ON(PSCR_ACRSTX, MII_REG_PSCR, vptr->mac_regs);
 		/*
-		 *	Reset to hardware शेष
+		 *	Reset to hardware default
 		 */
 		MII_REG_BITS_ON((ADVERTISE_PAUSE_ASYM | ADVERTISE_PAUSE_CAP), MII_ADVERTISE, vptr->mac_regs);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		;
-	पूर्ण
-	velocity_mii_पढ़ो(vptr->mac_regs, MII_BMCR, &BMCR);
-	अगर (BMCR & BMCR_ISOLATE) अणु
+	}
+	velocity_mii_read(vptr->mac_regs, MII_BMCR, &BMCR);
+	if (BMCR & BMCR_ISOLATE) {
 		BMCR &= ~BMCR_ISOLATE;
-		velocity_mii_ग_लिखो(vptr->mac_regs, MII_BMCR, BMCR);
-	पूर्ण
-पूर्ण
+		velocity_mii_write(vptr->mac_regs, MII_BMCR, BMCR);
+	}
+}
 
 /**
- * setup_queue_समयrs	-	Setup पूर्णांकerrupt समयrs
+ * setup_queue_timers	-	Setup interrupt timers
  * @vptr: velocity adapter
  *
- * Setup पूर्णांकerrupt frequency during suppression (समयout अगर the frame
+ * Setup interrupt frequency during suppression (timeout if the frame
  * count isn't filled).
  */
-अटल व्योम setup_queue_समयrs(काष्ठा velocity_info *vptr)
-अणु
-	/* Only क्रम newer revisions */
-	अगर (vptr->rev_id >= REV_ID_VT3216_A0) अणु
-		u8 txqueue_समयr = 0;
-		u8 rxqueue_समयr = 0;
+static void setup_queue_timers(struct velocity_info *vptr)
+{
+	/* Only for newer revisions */
+	if (vptr->rev_id >= REV_ID_VT3216_A0) {
+		u8 txqueue_timer = 0;
+		u8 rxqueue_timer = 0;
 
-		अगर (vptr->mii_status & (VELOCITY_SPEED_1000 |
-				VELOCITY_SPEED_100)) अणु
-			txqueue_समयr = vptr->options.txqueue_समयr;
-			rxqueue_समयr = vptr->options.rxqueue_समयr;
-		पूर्ण
+		if (vptr->mii_status & (VELOCITY_SPEED_1000 |
+				VELOCITY_SPEED_100)) {
+			txqueue_timer = vptr->options.txqueue_timer;
+			rxqueue_timer = vptr->options.rxqueue_timer;
+		}
 
-		ग_लिखोb(txqueue_समयr, &vptr->mac_regs->TQETMR);
-		ग_लिखोb(rxqueue_समयr, &vptr->mac_regs->RQETMR);
-	पूर्ण
-पूर्ण
+		writeb(txqueue_timer, &vptr->mac_regs->TQETMR);
+		writeb(rxqueue_timer, &vptr->mac_regs->RQETMR);
+	}
+}
 
 /**
- * setup_adaptive_पूर्णांकerrupts  -  Setup पूर्णांकerrupt suppression
+ * setup_adaptive_interrupts  -  Setup interrupt suppression
  * @vptr: velocity adapter
  *
- * The velocity is able to suppress पूर्णांकerrupt during high पूर्णांकerrupt load.
+ * The velocity is able to suppress interrupt during high interrupt load.
  * This function turns on that feature.
  */
-अटल व्योम setup_adaptive_पूर्णांकerrupts(काष्ठा velocity_info *vptr)
-अणु
-	काष्ठा mac_regs __iomem *regs = vptr->mac_regs;
-	u16 tx_पूर्णांकsup = vptr->options.tx_पूर्णांकsup;
-	u16 rx_पूर्णांकsup = vptr->options.rx_पूर्णांकsup;
+static void setup_adaptive_interrupts(struct velocity_info *vptr)
+{
+	struct mac_regs __iomem *regs = vptr->mac_regs;
+	u16 tx_intsup = vptr->options.tx_intsup;
+	u16 rx_intsup = vptr->options.rx_intsup;
 
-	/* Setup शेष पूर्णांकerrupt mask (will be changed below) */
-	vptr->पूर्णांक_mask = INT_MASK_DEF;
+	/* Setup default interrupt mask (will be changed below) */
+	vptr->int_mask = INT_MASK_DEF;
 
 	/* Set Tx Interrupt Suppression Threshold */
-	ग_लिखोb(CAMCR_PS0, &regs->CAMCR);
-	अगर (tx_पूर्णांकsup != 0) अणु
-		vptr->पूर्णांक_mask &= ~(ISR_PTXI | ISR_PTX0I | ISR_PTX1I |
+	writeb(CAMCR_PS0, &regs->CAMCR);
+	if (tx_intsup != 0) {
+		vptr->int_mask &= ~(ISR_PTXI | ISR_PTX0I | ISR_PTX1I |
 				ISR_PTX2I | ISR_PTX3I);
-		ग_लिखोw(tx_पूर्णांकsup, &regs->ISRCTL);
-	पूर्ण अन्यथा
-		ग_लिखोw(ISRCTL_TSUPDIS, &regs->ISRCTL);
+		writew(tx_intsup, &regs->ISRCTL);
+	} else
+		writew(ISRCTL_TSUPDIS, &regs->ISRCTL);
 
 	/* Set Rx Interrupt Suppression Threshold */
-	ग_लिखोb(CAMCR_PS1, &regs->CAMCR);
-	अगर (rx_पूर्णांकsup != 0) अणु
-		vptr->पूर्णांक_mask &= ~ISR_PRXI;
-		ग_लिखोw(rx_पूर्णांकsup, &regs->ISRCTL);
-	पूर्ण अन्यथा
-		ग_लिखोw(ISRCTL_RSUPDIS, &regs->ISRCTL);
+	writeb(CAMCR_PS1, &regs->CAMCR);
+	if (rx_intsup != 0) {
+		vptr->int_mask &= ~ISR_PRXI;
+		writew(rx_intsup, &regs->ISRCTL);
+	} else
+		writew(ISRCTL_RSUPDIS, &regs->ISRCTL);
 
-	/* Select page to पूर्णांकerrupt hold समयr */
-	ग_लिखोb(0, &regs->CAMCR);
-पूर्ण
+	/* Select page to interrupt hold timer */
+	writeb(0, &regs->CAMCR);
+}
 
 /**
- *	velocity_init_रेजिस्टरs	-	initialise MAC रेजिस्टरs
+ *	velocity_init_registers	-	initialise MAC registers
  *	@vptr: velocity to init
  *	@type: type of initialisation (hot or cold)
  *
  *	Initialise the MAC on a reset or on first set up on the
  *	hardware.
  */
-अटल व्योम velocity_init_रेजिस्टरs(काष्ठा velocity_info *vptr,
-				    क्रमागत velocity_init_type type)
-अणु
-	काष्ठा mac_regs __iomem *regs = vptr->mac_regs;
-	काष्ठा net_device *netdev = vptr->netdev;
-	पूर्णांक i, mii_status;
+static void velocity_init_registers(struct velocity_info *vptr,
+				    enum velocity_init_type type)
+{
+	struct mac_regs __iomem *regs = vptr->mac_regs;
+	struct net_device *netdev = vptr->netdev;
+	int i, mii_status;
 
 	mac_wol_reset(regs);
 
-	चयन (type) अणु
-	हाल VELOCITY_INIT_RESET:
-	हाल VELOCITY_INIT_WOL:
+	switch (type) {
+	case VELOCITY_INIT_RESET:
+	case VELOCITY_INIT_WOL:
 
-		netअगर_stop_queue(netdev);
+		netif_stop_queue(netdev);
 
 		/*
-		 *	Reset RX to prevent RX poपूर्णांकer not on the 4X location
+		 *	Reset RX to prevent RX pointer not on the 4X location
 		 */
 		velocity_rx_reset(vptr);
 		mac_rx_queue_run(regs);
 		mac_rx_queue_wake(regs);
 
 		mii_status = velocity_get_opt_media_mode(vptr);
-		अगर (velocity_set_media_mode(vptr, mii_status) != VELOCITY_LINK_CHANGE) अणु
-			velocity_prपूर्णांक_link_status(vptr);
-			अगर (!(vptr->mii_status & VELOCITY_LINK_FAIL))
-				netअगर_wake_queue(netdev);
-		पूर्ण
+		if (velocity_set_media_mode(vptr, mii_status) != VELOCITY_LINK_CHANGE) {
+			velocity_print_link_status(vptr);
+			if (!(vptr->mii_status & VELOCITY_LINK_FAIL))
+				netif_wake_queue(netdev);
+		}
 
 		enable_flow_control_ability(vptr);
 
 		mac_clear_isr(regs);
-		ग_लिखोl(CR0_STOP, &regs->CR0Clr);
-		ग_लिखोl((CR0_DPOLL | CR0_TXON | CR0_RXON | CR0_STRT),
+		writel(CR0_STOP, &regs->CR0Clr);
+		writel((CR0_DPOLL | CR0_TXON | CR0_RXON | CR0_STRT),
 							&regs->CR0Set);
 
-		अवरोध;
+		break;
 
-	हाल VELOCITY_INIT_COLD:
-	शेष:
+	case VELOCITY_INIT_COLD:
+	default:
 		/*
 		 *	Do reset
 		 */
 		velocity_soft_reset(vptr);
 		mdelay(5);
 
-		अगर (!vptr->no_eeprom) अणु
+		if (!vptr->no_eeprom) {
 			mac_eeprom_reload(regs);
-			क्रम (i = 0; i < 6; i++)
-				ग_लिखोb(netdev->dev_addr[i], regs->PAR + i);
-		पूर्ण
+			for (i = 0; i < 6; i++)
+				writeb(netdev->dev_addr[i], regs->PAR + i);
+		}
 
 		/*
 		 *	clear Pre_ACPI bit.
@@ -1385,7 +1384,7 @@ MODULE_DEVICE_TABLE(of, velocity_of_ids);
 		mac_set_rx_thresh(regs, vptr->options.rx_thresh);
 		mac_set_dma_length(regs, vptr->options.DMA_length);
 
-		ग_लिखोb(WOLCFG_SAM | WOLCFG_SAB, &regs->WOLCFGSet);
+		writeb(WOLCFG_SAM | WOLCFG_SAB, &regs->WOLCFGSet);
 		/*
 		 *	Back off algorithm use original IEEE standard
 		 */
@@ -1402,102 +1401,102 @@ MODULE_DEVICE_TABLE(of, velocity_of_ids);
 		velocity_set_multi(netdev);
 
 		/*
-		 *	Enable MII स्वतः-polling
+		 *	Enable MII auto-polling
 		 */
-		enable_mii_स्वतःpoll(regs);
+		enable_mii_autopoll(regs);
 
-		setup_adaptive_पूर्णांकerrupts(vptr);
+		setup_adaptive_interrupts(vptr);
 
-		ग_लिखोl(vptr->rx.pool_dma, &regs->RDBaseLo);
-		ग_लिखोw(vptr->options.numrx - 1, &regs->RDCSize);
+		writel(vptr->rx.pool_dma, &regs->RDBaseLo);
+		writew(vptr->options.numrx - 1, &regs->RDCSize);
 		mac_rx_queue_run(regs);
 		mac_rx_queue_wake(regs);
 
-		ग_लिखोw(vptr->options.numtx - 1, &regs->TDCSize);
+		writew(vptr->options.numtx - 1, &regs->TDCSize);
 
-		क्रम (i = 0; i < vptr->tx.numq; i++) अणु
-			ग_लिखोl(vptr->tx.pool_dma[i], &regs->TDBaseLo[i]);
+		for (i = 0; i < vptr->tx.numq; i++) {
+			writel(vptr->tx.pool_dma[i], &regs->TDBaseLo[i]);
 			mac_tx_queue_run(regs, i);
-		पूर्ण
+		}
 
-		init_flow_control_रेजिस्टर(vptr);
+		init_flow_control_register(vptr);
 
-		ग_लिखोl(CR0_STOP, &regs->CR0Clr);
-		ग_लिखोl((CR0_DPOLL | CR0_TXON | CR0_RXON | CR0_STRT), &regs->CR0Set);
+		writel(CR0_STOP, &regs->CR0Clr);
+		writel((CR0_DPOLL | CR0_TXON | CR0_RXON | CR0_STRT), &regs->CR0Set);
 
 		mii_status = velocity_get_opt_media_mode(vptr);
-		netअगर_stop_queue(netdev);
+		netif_stop_queue(netdev);
 
 		mii_init(vptr, mii_status);
 
-		अगर (velocity_set_media_mode(vptr, mii_status) != VELOCITY_LINK_CHANGE) अणु
-			velocity_prपूर्णांक_link_status(vptr);
-			अगर (!(vptr->mii_status & VELOCITY_LINK_FAIL))
-				netअगर_wake_queue(netdev);
-		पूर्ण
+		if (velocity_set_media_mode(vptr, mii_status) != VELOCITY_LINK_CHANGE) {
+			velocity_print_link_status(vptr);
+			if (!(vptr->mii_status & VELOCITY_LINK_FAIL))
+				netif_wake_queue(netdev);
+		}
 
 		enable_flow_control_ability(vptr);
 		mac_hw_mibs_init(regs);
-		mac_ग_लिखो_पूर्णांक_mask(vptr->पूर्णांक_mask, regs);
+		mac_write_int_mask(vptr->int_mask, regs);
 		mac_clear_isr(regs);
 
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम velocity_give_many_rx_descs(काष्ठा velocity_info *vptr)
-अणु
-	काष्ठा mac_regs __iomem *regs = vptr->mac_regs;
-	पूर्णांक avail, dirty, unusable;
+static void velocity_give_many_rx_descs(struct velocity_info *vptr)
+{
+	struct mac_regs __iomem *regs = vptr->mac_regs;
+	int avail, dirty, unusable;
 
 	/*
 	 * RD number must be equal to 4X per hardware spec
 	 * (programming guide rev 1.20, p.13)
 	 */
-	अगर (vptr->rx.filled < 4)
-		वापस;
+	if (vptr->rx.filled < 4)
+		return;
 
 	wmb();
 
 	unusable = vptr->rx.filled & 0x0003;
 	dirty = vptr->rx.dirty - unusable;
-	क्रम (avail = vptr->rx.filled & 0xfffc; avail; avail--) अणु
+	for (avail = vptr->rx.filled & 0xfffc; avail; avail--) {
 		dirty = (dirty > 0) ? dirty - 1 : vptr->options.numrx - 1;
 		vptr->rx.ring[dirty].rdesc0.len |= OWNED_BY_NIC;
-	पूर्ण
+	}
 
-	ग_लिखोw(vptr->rx.filled & 0xfffc, &regs->RBRDU);
+	writew(vptr->rx.filled & 0xfffc, &regs->RBRDU);
 	vptr->rx.filled = unusable;
-पूर्ण
+}
 
 /**
  *	velocity_init_dma_rings	-	set up DMA rings
  *	@vptr: Velocity to set up
  *
- *	Allocate PCI mapped DMA rings क्रम the receive and transmit layer
+ *	Allocate PCI mapped DMA rings for the receive and transmit layer
  *	to use.
  */
-अटल पूर्णांक velocity_init_dma_rings(काष्ठा velocity_info *vptr)
-अणु
-	काष्ठा velocity_opt *opt = &vptr->options;
-	स्थिर अचिन्हित पूर्णांक rx_ring_size = opt->numrx * माप(काष्ठा rx_desc);
-	स्थिर अचिन्हित पूर्णांक tx_ring_size = opt->numtx * माप(काष्ठा tx_desc);
+static int velocity_init_dma_rings(struct velocity_info *vptr)
+{
+	struct velocity_opt *opt = &vptr->options;
+	const unsigned int rx_ring_size = opt->numrx * sizeof(struct rx_desc);
+	const unsigned int tx_ring_size = opt->numtx * sizeof(struct tx_desc);
 	dma_addr_t pool_dma;
-	व्योम *pool;
-	अचिन्हित पूर्णांक i;
+	void *pool;
+	unsigned int i;
 
 	/*
 	 * Allocate all RD/TD rings a single pool.
 	 *
-	 * dma_alloc_coherent() fulfills the requirement क्रम 64 bytes
+	 * dma_alloc_coherent() fulfills the requirement for 64 bytes
 	 * alignment
 	 */
 	pool = dma_alloc_coherent(vptr->dev, tx_ring_size * vptr->tx.numq +
 				    rx_ring_size, &pool_dma, GFP_ATOMIC);
-	अगर (!pool) अणु
+	if (!pool) {
 		dev_err(vptr->dev, "%s : DMA memory allocation failed.\n",
 			vptr->netdev->name);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	vptr->rx.ring = pool;
 	vptr->rx.pool_dma = pool_dma;
@@ -1505,46 +1504,46 @@ MODULE_DEVICE_TABLE(of, velocity_of_ids);
 	pool += rx_ring_size;
 	pool_dma += rx_ring_size;
 
-	क्रम (i = 0; i < vptr->tx.numq; i++) अणु
+	for (i = 0; i < vptr->tx.numq; i++) {
 		vptr->tx.rings[i] = pool;
 		vptr->tx.pool_dma[i] = pool_dma;
 		pool += tx_ring_size;
 		pool_dma += tx_ring_size;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम velocity_set_rxbufsize(काष्ठा velocity_info *vptr, पूर्णांक mtu)
-अणु
+static void velocity_set_rxbufsize(struct velocity_info *vptr, int mtu)
+{
 	vptr->rx.buf_sz = (mtu <= ETH_DATA_LEN) ? PKT_BUF_SZ : mtu + 32;
-पूर्ण
+}
 
 /**
  *	velocity_alloc_rx_buf	-	allocate aligned receive buffer
  *	@vptr: velocity
  *	@idx: ring index
  *
- *	Allocate a new full sized buffer क्रम the reception of a frame and
- *	map it पूर्णांकo PCI space क्रम the hardware to use. The hardware
- *	requires *64* byte alignment of the buffer which makes lअगरe
+ *	Allocate a new full sized buffer for the reception of a frame and
+ *	map it into PCI space for the hardware to use. The hardware
+ *	requires *64* byte alignment of the buffer which makes life
  *	less fun than would be ideal.
  */
-अटल पूर्णांक velocity_alloc_rx_buf(काष्ठा velocity_info *vptr, पूर्णांक idx)
-अणु
-	काष्ठा rx_desc *rd = &(vptr->rx.ring[idx]);
-	काष्ठा velocity_rd_info *rd_info = &(vptr->rx.info[idx]);
+static int velocity_alloc_rx_buf(struct velocity_info *vptr, int idx)
+{
+	struct rx_desc *rd = &(vptr->rx.ring[idx]);
+	struct velocity_rd_info *rd_info = &(vptr->rx.info[idx]);
 
 	rd_info->skb = netdev_alloc_skb(vptr->netdev, vptr->rx.buf_sz + 64);
-	अगर (rd_info->skb == शून्य)
-		वापस -ENOMEM;
+	if (rd_info->skb == NULL)
+		return -ENOMEM;
 
 	/*
-	 *	Do the gymnastics to get the buffer head क्रम data at
+	 *	Do the gymnastics to get the buffer head for data at
 	 *	64byte alignment.
 	 */
 	skb_reserve(rd_info->skb,
-			64 - ((अचिन्हित दीर्घ) rd_info->skb->data & 63));
+			64 - ((unsigned long) rd_info->skb->data & 63));
 	rd_info->skb_dma = dma_map_single(vptr->dev, rd_info->skb->data,
 					vptr->rx.buf_sz, DMA_FROM_DEVICE);
 
@@ -1556,256 +1555,256 @@ MODULE_DEVICE_TABLE(of, velocity_of_ids);
 	rd->size = cpu_to_le16(vptr->rx.buf_sz) | RX_INTEN;
 	rd->pa_low = cpu_to_le32(rd_info->skb_dma);
 	rd->pa_high = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक velocity_rx_refill(काष्ठा velocity_info *vptr)
-अणु
-	पूर्णांक dirty = vptr->rx.dirty, करोne = 0;
+static int velocity_rx_refill(struct velocity_info *vptr)
+{
+	int dirty = vptr->rx.dirty, done = 0;
 
-	करो अणु
-		काष्ठा rx_desc *rd = vptr->rx.ring + dirty;
+	do {
+		struct rx_desc *rd = vptr->rx.ring + dirty;
 
-		/* Fine क्रम an all zero Rx desc at init समय as well */
-		अगर (rd->rdesc0.len & OWNED_BY_NIC)
-			अवरोध;
+		/* Fine for an all zero Rx desc at init time as well */
+		if (rd->rdesc0.len & OWNED_BY_NIC)
+			break;
 
-		अगर (!vptr->rx.info[dirty].skb) अणु
-			अगर (velocity_alloc_rx_buf(vptr, dirty) < 0)
-				अवरोध;
-		पूर्ण
-		करोne++;
+		if (!vptr->rx.info[dirty].skb) {
+			if (velocity_alloc_rx_buf(vptr, dirty) < 0)
+				break;
+		}
+		done++;
 		dirty = (dirty < vptr->options.numrx - 1) ? dirty + 1 : 0;
-	पूर्ण जबतक (dirty != vptr->rx.curr);
+	} while (dirty != vptr->rx.curr);
 
-	अगर (करोne) अणु
+	if (done) {
 		vptr->rx.dirty = dirty;
-		vptr->rx.filled += करोne;
-	पूर्ण
+		vptr->rx.filled += done;
+	}
 
-	वापस करोne;
-पूर्ण
+	return done;
+}
 
 /**
- *	velocity_मुक्त_rd_ring	-	मुक्त receive ring
+ *	velocity_free_rd_ring	-	free receive ring
  *	@vptr: velocity to clean up
  *
- *	Free the receive buffers क्रम each ring slot and any
+ *	Free the receive buffers for each ring slot and any
  *	attached socket buffers that need to go away.
  */
-अटल व्योम velocity_मुक्त_rd_ring(काष्ठा velocity_info *vptr)
-अणु
-	पूर्णांक i;
+static void velocity_free_rd_ring(struct velocity_info *vptr)
+{
+	int i;
 
-	अगर (vptr->rx.info == शून्य)
-		वापस;
+	if (vptr->rx.info == NULL)
+		return;
 
-	क्रम (i = 0; i < vptr->options.numrx; i++) अणु
-		काष्ठा velocity_rd_info *rd_info = &(vptr->rx.info[i]);
-		काष्ठा rx_desc *rd = vptr->rx.ring + i;
+	for (i = 0; i < vptr->options.numrx; i++) {
+		struct velocity_rd_info *rd_info = &(vptr->rx.info[i]);
+		struct rx_desc *rd = vptr->rx.ring + i;
 
-		स_रखो(rd, 0, माप(*rd));
+		memset(rd, 0, sizeof(*rd));
 
-		अगर (!rd_info->skb)
-			जारी;
+		if (!rd_info->skb)
+			continue;
 		dma_unmap_single(vptr->dev, rd_info->skb_dma, vptr->rx.buf_sz,
 				 DMA_FROM_DEVICE);
 		rd_info->skb_dma = 0;
 
-		dev_kमुक्त_skb(rd_info->skb);
-		rd_info->skb = शून्य;
-	पूर्ण
+		dev_kfree_skb(rd_info->skb);
+		rd_info->skb = NULL;
+	}
 
-	kमुक्त(vptr->rx.info);
-	vptr->rx.info = शून्य;
-पूर्ण
+	kfree(vptr->rx.info);
+	vptr->rx.info = NULL;
+}
 
 /**
  *	velocity_init_rd_ring	-	set up receive ring
  *	@vptr: velocity to configure
  *
- *	Allocate and set up the receive buffers क्रम each ring slot and
+ *	Allocate and set up the receive buffers for each ring slot and
  *	assign them to the network adapter.
  */
-अटल पूर्णांक velocity_init_rd_ring(काष्ठा velocity_info *vptr)
-अणु
-	पूर्णांक ret = -ENOMEM;
+static int velocity_init_rd_ring(struct velocity_info *vptr)
+{
+	int ret = -ENOMEM;
 
-	vptr->rx.info = kसुस्मृति(vptr->options.numrx,
-				माप(काष्ठा velocity_rd_info), GFP_KERNEL);
-	अगर (!vptr->rx.info)
-		जाओ out;
+	vptr->rx.info = kcalloc(vptr->options.numrx,
+				sizeof(struct velocity_rd_info), GFP_KERNEL);
+	if (!vptr->rx.info)
+		goto out;
 
 	velocity_init_rx_ring_indexes(vptr);
 
-	अगर (velocity_rx_refill(vptr) != vptr->options.numrx) अणु
+	if (velocity_rx_refill(vptr) != vptr->options.numrx) {
 		netdev_err(vptr->netdev, "failed to allocate RX buffer\n");
-		velocity_मुक्त_rd_ring(vptr);
-		जाओ out;
-	पूर्ण
+		velocity_free_rd_ring(vptr);
+		goto out;
+	}
 
 	ret = 0;
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  *	velocity_init_td_ring	-	set up transmit ring
  *	@vptr:	velocity
  *
- *	Set up the transmit ring and chain the ring poपूर्णांकers together.
- *	Returns zero on success or a negative posix त्रुटि_सं code क्रम
+ *	Set up the transmit ring and chain the ring pointers together.
+ *	Returns zero on success or a negative posix errno code for
  *	failure.
  */
-अटल पूर्णांक velocity_init_td_ring(काष्ठा velocity_info *vptr)
-अणु
-	पूर्णांक j;
+static int velocity_init_td_ring(struct velocity_info *vptr)
+{
+	int j;
 
 	/* Init the TD ring entries */
-	क्रम (j = 0; j < vptr->tx.numq; j++) अणु
+	for (j = 0; j < vptr->tx.numq; j++) {
 
-		vptr->tx.infos[j] = kसुस्मृति(vptr->options.numtx,
-					    माप(काष्ठा velocity_td_info),
+		vptr->tx.infos[j] = kcalloc(vptr->options.numtx,
+					    sizeof(struct velocity_td_info),
 					    GFP_KERNEL);
-		अगर (!vptr->tx.infos[j])	अणु
-			जबतक (--j >= 0)
-				kमुक्त(vptr->tx.infos[j]);
-			वापस -ENOMEM;
-		पूर्ण
+		if (!vptr->tx.infos[j])	{
+			while (--j >= 0)
+				kfree(vptr->tx.infos[j]);
+			return -ENOMEM;
+		}
 
 		vptr->tx.tail[j] = vptr->tx.curr[j] = vptr->tx.used[j] = 0;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /**
- *	velocity_मुक्त_dma_rings	-	मुक्त PCI ring poपूर्णांकers
- *	@vptr: Velocity to मुक्त from
+ *	velocity_free_dma_rings	-	free PCI ring pointers
+ *	@vptr: Velocity to free from
  *
  *	Clean up the PCI ring buffers allocated to this velocity.
  */
-अटल व्योम velocity_मुक्त_dma_rings(काष्ठा velocity_info *vptr)
-अणु
-	स्थिर पूर्णांक size = vptr->options.numrx * माप(काष्ठा rx_desc) +
-		vptr->options.numtx * माप(काष्ठा tx_desc) * vptr->tx.numq;
+static void velocity_free_dma_rings(struct velocity_info *vptr)
+{
+	const int size = vptr->options.numrx * sizeof(struct rx_desc) +
+		vptr->options.numtx * sizeof(struct tx_desc) * vptr->tx.numq;
 
-	dma_मुक्त_coherent(vptr->dev, size, vptr->rx.ring, vptr->rx.pool_dma);
-पूर्ण
+	dma_free_coherent(vptr->dev, size, vptr->rx.ring, vptr->rx.pool_dma);
+}
 
-अटल पूर्णांक velocity_init_rings(काष्ठा velocity_info *vptr, पूर्णांक mtu)
-अणु
-	पूर्णांक ret;
+static int velocity_init_rings(struct velocity_info *vptr, int mtu)
+{
+	int ret;
 
 	velocity_set_rxbufsize(vptr, mtu);
 
 	ret = velocity_init_dma_rings(vptr);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
 	ret = velocity_init_rd_ring(vptr);
-	अगर (ret < 0)
-		जाओ err_मुक्त_dma_rings_0;
+	if (ret < 0)
+		goto err_free_dma_rings_0;
 
 	ret = velocity_init_td_ring(vptr);
-	अगर (ret < 0)
-		जाओ err_मुक्त_rd_ring_1;
+	if (ret < 0)
+		goto err_free_rd_ring_1;
 out:
-	वापस ret;
+	return ret;
 
-err_मुक्त_rd_ring_1:
-	velocity_मुक्त_rd_ring(vptr);
-err_मुक्त_dma_rings_0:
-	velocity_मुक्त_dma_rings(vptr);
-	जाओ out;
-पूर्ण
+err_free_rd_ring_1:
+	velocity_free_rd_ring(vptr);
+err_free_dma_rings_0:
+	velocity_free_dma_rings(vptr);
+	goto out;
+}
 
 /**
- *	velocity_मुक्त_tx_buf	-	मुक्त transmit buffer
+ *	velocity_free_tx_buf	-	free transmit buffer
  *	@vptr: velocity
  *	@tdinfo: buffer
- *	@td: transmit descriptor to मुक्त
+ *	@td: transmit descriptor to free
  *
- *	Release an transmit buffer. If the buffer was pपुनः_स्मृतिated then
- *	recycle it, अगर not then unmap the buffer.
+ *	Release an transmit buffer. If the buffer was preallocated then
+ *	recycle it, if not then unmap the buffer.
  */
-अटल व्योम velocity_मुक्त_tx_buf(काष्ठा velocity_info *vptr,
-		काष्ठा velocity_td_info *tdinfo, काष्ठा tx_desc *td)
-अणु
-	काष्ठा sk_buff *skb = tdinfo->skb;
-	पूर्णांक i;
+static void velocity_free_tx_buf(struct velocity_info *vptr,
+		struct velocity_td_info *tdinfo, struct tx_desc *td)
+{
+	struct sk_buff *skb = tdinfo->skb;
+	int i;
 
 	/*
 	 *	Don't unmap the pre-allocated tx_bufs
 	 */
-	क्रम (i = 0; i < tdinfo->nskb_dma; i++) अणु
-		माप_प्रकार pktlen = max_t(माप_प्रकार, skb->len, ETH_ZLEN);
+	for (i = 0; i < tdinfo->nskb_dma; i++) {
+		size_t pktlen = max_t(size_t, skb->len, ETH_ZLEN);
 
 		/* For scatter-gather */
-		अगर (skb_shinfo(skb)->nr_frags > 0)
-			pktlen = max_t(माप_प्रकार, pktlen,
+		if (skb_shinfo(skb)->nr_frags > 0)
+			pktlen = max_t(size_t, pktlen,
 				       td->td_buf[i].size & ~TD_QUEUE);
 
 		dma_unmap_single(vptr->dev, tdinfo->skb_dma[i],
 				 le16_to_cpu(pktlen), DMA_TO_DEVICE);
-	पूर्ण
+	}
 	dev_consume_skb_irq(skb);
-	tdinfo->skb = शून्य;
-पूर्ण
+	tdinfo->skb = NULL;
+}
 
 /*
- *	FIXME: could we merge this with velocity_मुक्त_tx_buf ?
+ *	FIXME: could we merge this with velocity_free_tx_buf ?
  */
-अटल व्योम velocity_मुक्त_td_ring_entry(काष्ठा velocity_info *vptr,
-							 पूर्णांक q, पूर्णांक n)
-अणु
-	काष्ठा velocity_td_info *td_info = &(vptr->tx.infos[q][n]);
-	पूर्णांक i;
+static void velocity_free_td_ring_entry(struct velocity_info *vptr,
+							 int q, int n)
+{
+	struct velocity_td_info *td_info = &(vptr->tx.infos[q][n]);
+	int i;
 
-	अगर (td_info == शून्य)
-		वापस;
+	if (td_info == NULL)
+		return;
 
-	अगर (td_info->skb) अणु
-		क्रम (i = 0; i < td_info->nskb_dma; i++) अणु
-			अगर (td_info->skb_dma[i]) अणु
+	if (td_info->skb) {
+		for (i = 0; i < td_info->nskb_dma; i++) {
+			if (td_info->skb_dma[i]) {
 				dma_unmap_single(vptr->dev, td_info->skb_dma[i],
 					td_info->skb->len, DMA_TO_DEVICE);
 				td_info->skb_dma[i] = 0;
-			पूर्ण
-		पूर्ण
-		dev_kमुक्त_skb(td_info->skb);
-		td_info->skb = शून्य;
-	पूर्ण
-पूर्ण
+			}
+		}
+		dev_kfree_skb(td_info->skb);
+		td_info->skb = NULL;
+	}
+}
 
 /**
- *	velocity_मुक्त_td_ring	-	मुक्त td ring
+ *	velocity_free_td_ring	-	free td ring
  *	@vptr: velocity
  *
- *	Free up the transmit ring क्रम this particular velocity adapter.
- *	We मुक्त the ring contents but not the ring itself.
+ *	Free up the transmit ring for this particular velocity adapter.
+ *	We free the ring contents but not the ring itself.
  */
-अटल व्योम velocity_मुक्त_td_ring(काष्ठा velocity_info *vptr)
-अणु
-	पूर्णांक i, j;
+static void velocity_free_td_ring(struct velocity_info *vptr)
+{
+	int i, j;
 
-	क्रम (j = 0; j < vptr->tx.numq; j++) अणु
-		अगर (vptr->tx.infos[j] == शून्य)
-			जारी;
-		क्रम (i = 0; i < vptr->options.numtx; i++)
-			velocity_मुक्त_td_ring_entry(vptr, j, i);
+	for (j = 0; j < vptr->tx.numq; j++) {
+		if (vptr->tx.infos[j] == NULL)
+			continue;
+		for (i = 0; i < vptr->options.numtx; i++)
+			velocity_free_td_ring_entry(vptr, j, i);
 
-		kमुक्त(vptr->tx.infos[j]);
-		vptr->tx.infos[j] = शून्य;
-	पूर्ण
-पूर्ण
+		kfree(vptr->tx.infos[j]);
+		vptr->tx.infos[j] = NULL;
+	}
+}
 
-अटल व्योम velocity_मुक्त_rings(काष्ठा velocity_info *vptr)
-अणु
-	velocity_मुक्त_td_ring(vptr);
-	velocity_मुक्त_rd_ring(vptr);
-	velocity_मुक्त_dma_rings(vptr);
-पूर्ण
+static void velocity_free_rings(struct velocity_info *vptr)
+{
+	velocity_free_td_ring(vptr);
+	velocity_free_rd_ring(vptr);
+	velocity_free_dma_rings(vptr);
+}
 
 /**
  *	velocity_error	-	handle error from controller
@@ -1818,27 +1817,27 @@ err_मुक्त_dma_rings_0:
  *	the pci_device_failed logic to bounce the hardware
  *
  */
-अटल व्योम velocity_error(काष्ठा velocity_info *vptr, पूर्णांक status)
-अणु
+static void velocity_error(struct velocity_info *vptr, int status)
+{
 
-	अगर (status & ISR_TXSTLI) अणु
-		काष्ठा mac_regs __iomem *regs = vptr->mac_regs;
+	if (status & ISR_TXSTLI) {
+		struct mac_regs __iomem *regs = vptr->mac_regs;
 
 		netdev_err(vptr->netdev, "TD structure error TDindex=%hx\n",
-			   पढ़ोw(&regs->TDIdx[0]));
+			   readw(&regs->TDIdx[0]));
 		BYTE_REG_BITS_ON(TXESR_TDSTR, &regs->TXESR);
-		ग_लिखोw(TRDCSR_RUN, &regs->TDCSRClr);
-		netअगर_stop_queue(vptr->netdev);
+		writew(TRDCSR_RUN, &regs->TDCSRClr);
+		netif_stop_queue(vptr->netdev);
 
 		/* FIXME: port over the pci_device_failed code and use it
 		   here */
-	पूर्ण
+	}
 
-	अगर (status & ISR_SRCI) अणु
-		काष्ठा mac_regs __iomem *regs = vptr->mac_regs;
-		पूर्णांक linked;
+	if (status & ISR_SRCI) {
+		struct mac_regs __iomem *regs = vptr->mac_regs;
+		int linked;
 
-		अगर (vptr->options.spd_dpx == SPD_DPX_AUTO) अणु
+		if (vptr->options.spd_dpx == SPD_DPX_AUTO) {
 			vptr->mii_status = check_connection_type(regs);
 
 			/*
@@ -1846,78 +1845,78 @@ err_मुक्त_dma_rings_0:
 			 *	halfduplex mode and enable it in fullduplex
 			 *	 mode
 			 */
-			अगर (vptr->rev_id < REV_ID_VT3216_A0) अणु
-				अगर (vptr->mii_status & VELOCITY_DUPLEX_FULL)
+			if (vptr->rev_id < REV_ID_VT3216_A0) {
+				if (vptr->mii_status & VELOCITY_DUPLEX_FULL)
 					BYTE_REG_BITS_ON(TCR_TB2BDIS, &regs->TCR);
-				अन्यथा
+				else
 					BYTE_REG_BITS_OFF(TCR_TB2BDIS, &regs->TCR);
-			पूर्ण
+			}
 			/*
 			 *	Only enable CD heart beat counter in 10HD mode
 			 */
-			अगर (!(vptr->mii_status & VELOCITY_DUPLEX_FULL) && (vptr->mii_status & VELOCITY_SPEED_10))
+			if (!(vptr->mii_status & VELOCITY_DUPLEX_FULL) && (vptr->mii_status & VELOCITY_SPEED_10))
 				BYTE_REG_BITS_OFF(TESTCFG_HBDIS, &regs->TESTCFG);
-			अन्यथा
+			else
 				BYTE_REG_BITS_ON(TESTCFG_HBDIS, &regs->TESTCFG);
 
-			setup_queue_समयrs(vptr);
-		पूर्ण
+			setup_queue_timers(vptr);
+		}
 		/*
 		 *	Get link status from PHYSR0
 		 */
-		linked = पढ़ोb(&regs->PHYSR0) & PHYSR0_LINKGD;
+		linked = readb(&regs->PHYSR0) & PHYSR0_LINKGD;
 
-		अगर (linked) अणु
+		if (linked) {
 			vptr->mii_status &= ~VELOCITY_LINK_FAIL;
-			netअगर_carrier_on(vptr->netdev);
-		पूर्ण अन्यथा अणु
+			netif_carrier_on(vptr->netdev);
+		} else {
 			vptr->mii_status |= VELOCITY_LINK_FAIL;
-			netअगर_carrier_off(vptr->netdev);
-		पूर्ण
+			netif_carrier_off(vptr->netdev);
+		}
 
-		velocity_prपूर्णांक_link_status(vptr);
+		velocity_print_link_status(vptr);
 		enable_flow_control_ability(vptr);
 
 		/*
-		 *	Re-enable स्वतः-polling because SRCI will disable
-		 *	स्वतः-polling
+		 *	Re-enable auto-polling because SRCI will disable
+		 *	auto-polling
 		 */
 
-		enable_mii_स्वतःpoll(regs);
+		enable_mii_autopoll(regs);
 
-		अगर (vptr->mii_status & VELOCITY_LINK_FAIL)
-			netअगर_stop_queue(vptr->netdev);
-		अन्यथा
-			netअगर_wake_queue(vptr->netdev);
+		if (vptr->mii_status & VELOCITY_LINK_FAIL)
+			netif_stop_queue(vptr->netdev);
+		else
+			netif_wake_queue(vptr->netdev);
 
-	पूर्ण
-	अगर (status & ISR_MIBFI)
+	}
+	if (status & ISR_MIBFI)
 		velocity_update_hw_mibs(vptr);
-	अगर (status & ISR_LSTEI)
+	if (status & ISR_LSTEI)
 		mac_rx_queue_wake(vptr->mac_regs);
-पूर्ण
+}
 
 /**
- *	tx_srv		-	transmit पूर्णांकerrupt service
+ *	tx_srv		-	transmit interrupt service
  *	@vptr: Velocity
  *
- *	Scan the queues looking क्रम transmitted packets that
+ *	Scan the queues looking for transmitted packets that
  *	we can complete and clean up. Update any statistics as
  *	necessary/
  */
-अटल पूर्णांक velocity_tx_srv(काष्ठा velocity_info *vptr)
-अणु
-	काष्ठा tx_desc *td;
-	पूर्णांक qnum;
-	पूर्णांक full = 0;
-	पूर्णांक idx;
-	पूर्णांक works = 0;
-	काष्ठा velocity_td_info *tdinfo;
-	काष्ठा net_device_stats *stats = &vptr->netdev->stats;
+static int velocity_tx_srv(struct velocity_info *vptr)
+{
+	struct tx_desc *td;
+	int qnum;
+	int full = 0;
+	int idx;
+	int works = 0;
+	struct velocity_td_info *tdinfo;
+	struct net_device_stats *stats = &vptr->netdev->stats;
 
-	क्रम (qnum = 0; qnum < vptr->tx.numq; qnum++) अणु
-		क्रम (idx = vptr->tx.tail[qnum]; vptr->tx.used[qnum] > 0;
-			idx = (idx + 1) % vptr->options.numtx) अणु
+	for (qnum = 0; qnum < vptr->tx.numq; qnum++) {
+		for (idx = vptr->tx.tail[qnum]; vptr->tx.used[qnum] > 0;
+			idx = (idx + 1) % vptr->options.numtx) {
 
 			/*
 			 *	Get Tx Descriptor
@@ -1925,99 +1924,99 @@ err_मुक्त_dma_rings_0:
 			td = &(vptr->tx.rings[qnum][idx]);
 			tdinfo = &(vptr->tx.infos[qnum][idx]);
 
-			अगर (td->tdesc0.len & OWNED_BY_NIC)
-				अवरोध;
+			if (td->tdesc0.len & OWNED_BY_NIC)
+				break;
 
-			अगर ((works++ > 15))
-				अवरोध;
+			if ((works++ > 15))
+				break;
 
-			अगर (td->tdesc0.TSR & TSR0_TERR) अणु
+			if (td->tdesc0.TSR & TSR0_TERR) {
 				stats->tx_errors++;
 				stats->tx_dropped++;
-				अगर (td->tdesc0.TSR & TSR0_CDH)
+				if (td->tdesc0.TSR & TSR0_CDH)
 					stats->tx_heartbeat_errors++;
-				अगर (td->tdesc0.TSR & TSR0_CRS)
+				if (td->tdesc0.TSR & TSR0_CRS)
 					stats->tx_carrier_errors++;
-				अगर (td->tdesc0.TSR & TSR0_ABT)
-					stats->tx_पातed_errors++;
-				अगर (td->tdesc0.TSR & TSR0_OWC)
-					stats->tx_winकरोw_errors++;
-			पूर्ण अन्यथा अणु
+				if (td->tdesc0.TSR & TSR0_ABT)
+					stats->tx_aborted_errors++;
+				if (td->tdesc0.TSR & TSR0_OWC)
+					stats->tx_window_errors++;
+			} else {
 				stats->tx_packets++;
 				stats->tx_bytes += tdinfo->skb->len;
-			पूर्ण
-			velocity_मुक्त_tx_buf(vptr, tdinfo, td);
+			}
+			velocity_free_tx_buf(vptr, tdinfo, td);
 			vptr->tx.used[qnum]--;
-		पूर्ण
+		}
 		vptr->tx.tail[qnum] = idx;
 
-		अगर (AVAIL_TD(vptr, qnum) < 1)
+		if (AVAIL_TD(vptr, qnum) < 1)
 			full = 1;
-	पूर्ण
+	}
 	/*
-	 *	Look to see अगर we should kick the transmit network
-	 *	layer क्रम more work.
+	 *	Look to see if we should kick the transmit network
+	 *	layer for more work.
 	 */
-	अगर (netअगर_queue_stopped(vptr->netdev) && (full == 0) &&
-	    (!(vptr->mii_status & VELOCITY_LINK_FAIL))) अणु
-		netअगर_wake_queue(vptr->netdev);
-	पूर्ण
-	वापस works;
-पूर्ण
+	if (netif_queue_stopped(vptr->netdev) && (full == 0) &&
+	    (!(vptr->mii_status & VELOCITY_LINK_FAIL))) {
+		netif_wake_queue(vptr->netdev);
+	}
+	return works;
+}
 
 /**
  *	velocity_rx_csum	-	checksum process
  *	@rd: receive packet descriptor
  *	@skb: network layer packet buffer
  *
- *	Process the status bits क्रम the received packet and determine
- *	अगर the checksum was computed and verअगरied by the hardware
+ *	Process the status bits for the received packet and determine
+ *	if the checksum was computed and verified by the hardware
  */
-अटल अंतरभूत व्योम velocity_rx_csum(काष्ठा rx_desc *rd, काष्ठा sk_buff *skb)
-अणु
-	skb_checksum_none_निश्चित(skb);
+static inline void velocity_rx_csum(struct rx_desc *rd, struct sk_buff *skb)
+{
+	skb_checksum_none_assert(skb);
 
-	अगर (rd->rdesc1.CSM & CSM_IPKT) अणु
-		अगर (rd->rdesc1.CSM & CSM_IPOK) अणु
-			अगर ((rd->rdesc1.CSM & CSM_TCPKT) ||
-					(rd->rdesc1.CSM & CSM_UDPKT)) अणु
-				अगर (!(rd->rdesc1.CSM & CSM_TUPOK))
-					वापस;
-			पूर्ण
+	if (rd->rdesc1.CSM & CSM_IPKT) {
+		if (rd->rdesc1.CSM & CSM_IPOK) {
+			if ((rd->rdesc1.CSM & CSM_TCPKT) ||
+					(rd->rdesc1.CSM & CSM_UDPKT)) {
+				if (!(rd->rdesc1.CSM & CSM_TUPOK))
+					return;
+			}
 			skb->ip_summed = CHECKSUM_UNNECESSARY;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /**
- *	velocity_rx_copy	-	in place Rx copy क्रम small packets
+ *	velocity_rx_copy	-	in place Rx copy for small packets
  *	@rx_skb: network layer packet buffer candidate
  *	@pkt_size: received data size
  *	@vptr: velocity adapter
  *
- *	Replace the current skb that is scheduled क्रम Rx processing by a
- *	लघुer, immediately allocated skb, अगर the received packet is small
- *	enough. This function वापसs a negative value अगर the received
- *	packet is too big or अगर memory is exhausted.
+ *	Replace the current skb that is scheduled for Rx processing by a
+ *	shorter, immediately allocated skb, if the received packet is small
+ *	enough. This function returns a negative value if the received
+ *	packet is too big or if memory is exhausted.
  */
-अटल पूर्णांक velocity_rx_copy(काष्ठा sk_buff **rx_skb, पूर्णांक pkt_size,
-			    काष्ठा velocity_info *vptr)
-अणु
-	पूर्णांक ret = -1;
-	अगर (pkt_size < rx_copyअवरोध) अणु
-		काष्ठा sk_buff *new_skb;
+static int velocity_rx_copy(struct sk_buff **rx_skb, int pkt_size,
+			    struct velocity_info *vptr)
+{
+	int ret = -1;
+	if (pkt_size < rx_copybreak) {
+		struct sk_buff *new_skb;
 
 		new_skb = netdev_alloc_skb_ip_align(vptr->netdev, pkt_size);
-		अगर (new_skb) अणु
+		if (new_skb) {
 			new_skb->ip_summed = rx_skb[0]->ip_summed;
 			skb_copy_from_linear_data(*rx_skb, new_skb->data, pkt_size);
 			*rx_skb = new_skb;
 			ret = 0;
-		पूर्ण
+		}
 
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
 /**
  *	velocity_iph_realign	-	IP header alignment
@@ -2028,430 +2027,430 @@ err_मुक्त_dma_rings_0:
  *	Align IP header on a 2 bytes boundary. This behavior can be
  *	configured by the user.
  */
-अटल अंतरभूत व्योम velocity_iph_realign(काष्ठा velocity_info *vptr,
-					काष्ठा sk_buff *skb, पूर्णांक pkt_size)
-अणु
-	अगर (vptr->flags & VELOCITY_FLAGS_IP_ALIGN) अणु
-		स_हटाओ(skb->data + 2, skb->data, pkt_size);
+static inline void velocity_iph_realign(struct velocity_info *vptr,
+					struct sk_buff *skb, int pkt_size)
+{
+	if (vptr->flags & VELOCITY_FLAGS_IP_ALIGN) {
+		memmove(skb->data + 2, skb->data, pkt_size);
 		skb_reserve(skb, 2);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  *	velocity_receive_frame	-	received packet processor
  *	@vptr: velocity we are handling
  *	@idx: ring index
  *
- *	A packet has arrived. We process the packet and अगर appropriate
+ *	A packet has arrived. We process the packet and if appropriate
  *	pass the frame up the network stack
  */
-अटल पूर्णांक velocity_receive_frame(काष्ठा velocity_info *vptr, पूर्णांक idx)
-अणु
-	काष्ठा net_device_stats *stats = &vptr->netdev->stats;
-	काष्ठा velocity_rd_info *rd_info = &(vptr->rx.info[idx]);
-	काष्ठा rx_desc *rd = &(vptr->rx.ring[idx]);
-	पूर्णांक pkt_len = le16_to_cpu(rd->rdesc0.len) & 0x3fff;
-	काष्ठा sk_buff *skb;
+static int velocity_receive_frame(struct velocity_info *vptr, int idx)
+{
+	struct net_device_stats *stats = &vptr->netdev->stats;
+	struct velocity_rd_info *rd_info = &(vptr->rx.info[idx]);
+	struct rx_desc *rd = &(vptr->rx.ring[idx]);
+	int pkt_len = le16_to_cpu(rd->rdesc0.len) & 0x3fff;
+	struct sk_buff *skb;
 
-	अगर (unlikely(rd->rdesc0.RSR & (RSR_STP | RSR_EDP | RSR_RL))) अणु
-		अगर (rd->rdesc0.RSR & (RSR_STP | RSR_EDP))
+	if (unlikely(rd->rdesc0.RSR & (RSR_STP | RSR_EDP | RSR_RL))) {
+		if (rd->rdesc0.RSR & (RSR_STP | RSR_EDP))
 			netdev_err(vptr->netdev, "received frame spans multiple RDs\n");
 		stats->rx_length_errors++;
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (rd->rdesc0.RSR & RSR_MAR)
+	if (rd->rdesc0.RSR & RSR_MAR)
 		stats->multicast++;
 
 	skb = rd_info->skb;
 
-	dma_sync_single_क्रम_cpu(vptr->dev, rd_info->skb_dma,
+	dma_sync_single_for_cpu(vptr->dev, rd_info->skb_dma,
 				    vptr->rx.buf_sz, DMA_FROM_DEVICE);
 
 	velocity_rx_csum(rd, skb);
 
-	अगर (velocity_rx_copy(&skb, pkt_len, vptr) < 0) अणु
+	if (velocity_rx_copy(&skb, pkt_len, vptr) < 0) {
 		velocity_iph_realign(vptr, skb, pkt_len);
-		rd_info->skb = शून्य;
+		rd_info->skb = NULL;
 		dma_unmap_single(vptr->dev, rd_info->skb_dma, vptr->rx.buf_sz,
 				 DMA_FROM_DEVICE);
-	पूर्ण अन्यथा अणु
-		dma_sync_single_क्रम_device(vptr->dev, rd_info->skb_dma,
+	} else {
+		dma_sync_single_for_device(vptr->dev, rd_info->skb_dma,
 					   vptr->rx.buf_sz, DMA_FROM_DEVICE);
-	पूर्ण
+	}
 
 	skb_put(skb, pkt_len - 4);
 	skb->protocol = eth_type_trans(skb, vptr->netdev);
 
-	अगर (rd->rdesc0.RSR & RSR_DETAG) अणु
+	if (rd->rdesc0.RSR & RSR_DETAG) {
 		u16 vid = swab16(le16_to_cpu(rd->rdesc1.PQTAG));
 
 		__vlan_hwaccel_put_tag(skb, htons(ETH_P_8021Q), vid);
-	पूर्ण
-	netअगर_receive_skb(skb);
+	}
+	netif_receive_skb(skb);
 
 	stats->rx_bytes += pkt_len;
 	stats->rx_packets++;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- *	velocity_rx_srv		-	service RX पूर्णांकerrupt
+ *	velocity_rx_srv		-	service RX interrupt
  *	@vptr: velocity
- *	@budget_left: reमुख्यing budget
+ *	@budget_left: remaining budget
  *
- *	Walk the receive ring of the velocity adapter and हटाओ
+ *	Walk the receive ring of the velocity adapter and remove
  *	any received packets from the receive queue. Hand the ring
- *	slots back to the adapter क्रम reuse.
+ *	slots back to the adapter for reuse.
  */
-अटल पूर्णांक velocity_rx_srv(काष्ठा velocity_info *vptr, पूर्णांक budget_left)
-अणु
-	काष्ठा net_device_stats *stats = &vptr->netdev->stats;
-	पूर्णांक rd_curr = vptr->rx.curr;
-	पूर्णांक works = 0;
+static int velocity_rx_srv(struct velocity_info *vptr, int budget_left)
+{
+	struct net_device_stats *stats = &vptr->netdev->stats;
+	int rd_curr = vptr->rx.curr;
+	int works = 0;
 
-	जबतक (works < budget_left) अणु
-		काष्ठा rx_desc *rd = vptr->rx.ring + rd_curr;
+	while (works < budget_left) {
+		struct rx_desc *rd = vptr->rx.ring + rd_curr;
 
-		अगर (!vptr->rx.info[rd_curr].skb)
-			अवरोध;
+		if (!vptr->rx.info[rd_curr].skb)
+			break;
 
-		अगर (rd->rdesc0.len & OWNED_BY_NIC)
-			अवरोध;
+		if (rd->rdesc0.len & OWNED_BY_NIC)
+			break;
 
 		rmb();
 
 		/*
 		 *	Don't drop CE or RL error frame although RXOK is off
 		 */
-		अगर (rd->rdesc0.RSR & (RSR_RXOK | RSR_CE | RSR_RL)) अणु
-			अगर (velocity_receive_frame(vptr, rd_curr) < 0)
+		if (rd->rdesc0.RSR & (RSR_RXOK | RSR_CE | RSR_RL)) {
+			if (velocity_receive_frame(vptr, rd_curr) < 0)
 				stats->rx_dropped++;
-		पूर्ण अन्यथा अणु
-			अगर (rd->rdesc0.RSR & RSR_CRC)
+		} else {
+			if (rd->rdesc0.RSR & RSR_CRC)
 				stats->rx_crc_errors++;
-			अगर (rd->rdesc0.RSR & RSR_FAE)
+			if (rd->rdesc0.RSR & RSR_FAE)
 				stats->rx_frame_errors++;
 
 			stats->rx_dropped++;
-		पूर्ण
+		}
 
 		rd->size |= RX_INTEN;
 
 		rd_curr++;
-		अगर (rd_curr >= vptr->options.numrx)
+		if (rd_curr >= vptr->options.numrx)
 			rd_curr = 0;
 		works++;
-	पूर्ण
+	}
 
 	vptr->rx.curr = rd_curr;
 
-	अगर ((works > 0) && (velocity_rx_refill(vptr) > 0))
+	if ((works > 0) && (velocity_rx_refill(vptr) > 0))
 		velocity_give_many_rx_descs(vptr);
 
 	VAR_USED(stats);
-	वापस works;
-पूर्ण
+	return works;
+}
 
-अटल पूर्णांक velocity_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
-अणु
-	काष्ठा velocity_info *vptr = container_of(napi,
-			काष्ठा velocity_info, napi);
-	अचिन्हित पूर्णांक rx_करोne;
-	अचिन्हित दीर्घ flags;
+static int velocity_poll(struct napi_struct *napi, int budget)
+{
+	struct velocity_info *vptr = container_of(napi,
+			struct velocity_info, napi);
+	unsigned int rx_done;
+	unsigned long flags;
 
 	/*
-	 * Do rx and tx twice क्रम perक्रमmance (taken from the VIA
+	 * Do rx and tx twice for performance (taken from the VIA
 	 * out-of-tree driver).
 	 */
-	rx_करोne = velocity_rx_srv(vptr, budget);
+	rx_done = velocity_rx_srv(vptr, budget);
 	spin_lock_irqsave(&vptr->lock, flags);
 	velocity_tx_srv(vptr);
-	/* If budget not fully consumed, निकास the polling mode */
-	अगर (rx_करोne < budget) अणु
-		napi_complete_करोne(napi, rx_करोne);
-		mac_enable_पूर्णांक(vptr->mac_regs);
-	पूर्ण
+	/* If budget not fully consumed, exit the polling mode */
+	if (rx_done < budget) {
+		napi_complete_done(napi, rx_done);
+		mac_enable_int(vptr->mac_regs);
+	}
 	spin_unlock_irqrestore(&vptr->lock, flags);
 
-	वापस rx_करोne;
-पूर्ण
+	return rx_done;
+}
 
 /**
- *	velocity_पूर्णांकr		-	पूर्णांकerrupt callback
- *	@irq: पूर्णांकerrupt number
- *	@dev_instance: पूर्णांकerrupting device
+ *	velocity_intr		-	interrupt callback
+ *	@irq: interrupt number
+ *	@dev_instance: interrupting device
  *
- *	Called whenever an पूर्णांकerrupt is generated by the velocity
- *	adapter IRQ line. We may not be the source of the पूर्णांकerrupt
- *	and need to identअगरy initially अगर we are, and अगर not निकास as
+ *	Called whenever an interrupt is generated by the velocity
+ *	adapter IRQ line. We may not be the source of the interrupt
+ *	and need to identify initially if we are, and if not exit as
  *	efficiently as possible.
  */
-अटल irqवापस_t velocity_पूर्णांकr(पूर्णांक irq, व्योम *dev_instance)
-अणु
-	काष्ठा net_device *dev = dev_instance;
-	काष्ठा velocity_info *vptr = netdev_priv(dev);
+static irqreturn_t velocity_intr(int irq, void *dev_instance)
+{
+	struct net_device *dev = dev_instance;
+	struct velocity_info *vptr = netdev_priv(dev);
 	u32 isr_status;
 
 	spin_lock(&vptr->lock);
-	isr_status = mac_पढ़ो_isr(vptr->mac_regs);
+	isr_status = mac_read_isr(vptr->mac_regs);
 
 	/* Not us ? */
-	अगर (isr_status == 0) अणु
+	if (isr_status == 0) {
 		spin_unlock(&vptr->lock);
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 
-	/* Ack the पूर्णांकerrupt */
-	mac_ग_लिखो_isr(vptr->mac_regs, isr_status);
+	/* Ack the interrupt */
+	mac_write_isr(vptr->mac_regs, isr_status);
 
-	अगर (likely(napi_schedule_prep(&vptr->napi))) अणु
-		mac_disable_पूर्णांक(vptr->mac_regs);
+	if (likely(napi_schedule_prep(&vptr->napi))) {
+		mac_disable_int(vptr->mac_regs);
 		__napi_schedule(&vptr->napi);
-	पूर्ण
+	}
 
-	अगर (isr_status & (~(ISR_PRXI | ISR_PPRXI | ISR_PTXI | ISR_PPTXI)))
+	if (isr_status & (~(ISR_PRXI | ISR_PPRXI | ISR_PTXI | ISR_PPTXI)))
 		velocity_error(vptr, isr_status);
 
 	spin_unlock(&vptr->lock);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /**
- *	velocity_खोलो		-	पूर्णांकerface activation callback
- *	@dev: network layer device to खोलो
+ *	velocity_open		-	interface activation callback
+ *	@dev: network layer device to open
  *
- *	Called when the network layer brings the पूर्णांकerface up. Returns
+ *	Called when the network layer brings the interface up. Returns
  *	a negative posix error code on failure, or zero on success.
  *
- *	All the ring allocation and set up is करोne on खोलो क्रम this
+ *	All the ring allocation and set up is done on open for this
  *	adapter to minimise memory usage when inactive
  */
-अटल पूर्णांक velocity_खोलो(काष्ठा net_device *dev)
-अणु
-	काष्ठा velocity_info *vptr = netdev_priv(dev);
-	पूर्णांक ret;
+static int velocity_open(struct net_device *dev)
+{
+	struct velocity_info *vptr = netdev_priv(dev);
+	int ret;
 
 	ret = velocity_init_rings(vptr, dev->mtu);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
 	/* Ensure chip is running */
-	velocity_set_घातer_state(vptr, PCI_D0);
+	velocity_set_power_state(vptr, PCI_D0);
 
-	velocity_init_रेजिस्टरs(vptr, VELOCITY_INIT_COLD);
+	velocity_init_registers(vptr, VELOCITY_INIT_COLD);
 
-	ret = request_irq(dev->irq, velocity_पूर्णांकr, IRQF_SHARED,
+	ret = request_irq(dev->irq, velocity_intr, IRQF_SHARED,
 			  dev->name, dev);
-	अगर (ret < 0) अणु
-		/* Power करोwn the chip */
-		velocity_set_घातer_state(vptr, PCI_D3hot);
-		velocity_मुक्त_rings(vptr);
-		जाओ out;
-	पूर्ण
+	if (ret < 0) {
+		/* Power down the chip */
+		velocity_set_power_state(vptr, PCI_D3hot);
+		velocity_free_rings(vptr);
+		goto out;
+	}
 
 	velocity_give_many_rx_descs(vptr);
 
-	mac_enable_पूर्णांक(vptr->mac_regs);
-	netअगर_start_queue(dev);
+	mac_enable_int(vptr->mac_regs);
+	netif_start_queue(dev);
 	napi_enable(&vptr->napi);
 	vptr->flags |= VELOCITY_FLAGS_OPENED;
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- *	velocity_shutकरोwn	-	shut करोwn the chip
+ *	velocity_shutdown	-	shut down the chip
  *	@vptr: velocity to deactivate
  *
- *	Shuts करोwn the पूर्णांकernal operations of the velocity and
- *	disables पूर्णांकerrupts, स्वतःpolling, transmit and receive
+ *	Shuts down the internal operations of the velocity and
+ *	disables interrupts, autopolling, transmit and receive
  */
-अटल व्योम velocity_shutकरोwn(काष्ठा velocity_info *vptr)
-अणु
-	काष्ठा mac_regs __iomem *regs = vptr->mac_regs;
-	mac_disable_पूर्णांक(regs);
-	ग_लिखोl(CR0_STOP, &regs->CR0Set);
-	ग_लिखोw(0xFFFF, &regs->TDCSRClr);
-	ग_लिखोb(0xFF, &regs->RDCSRClr);
-	safe_disable_mii_स्वतःpoll(regs);
+static void velocity_shutdown(struct velocity_info *vptr)
+{
+	struct mac_regs __iomem *regs = vptr->mac_regs;
+	mac_disable_int(regs);
+	writel(CR0_STOP, &regs->CR0Set);
+	writew(0xFFFF, &regs->TDCSRClr);
+	writeb(0xFF, &regs->RDCSRClr);
+	safe_disable_mii_autopoll(regs);
 	mac_clear_isr(regs);
-पूर्ण
+}
 
 /**
  *	velocity_change_mtu	-	MTU change callback
  *	@dev: network device
  *	@new_mtu: desired MTU
  *
- *	Handle requests from the networking layer क्रम MTU change on
- *	this पूर्णांकerface. It माला_लो called on a change by the network layer.
- *	Return zero क्रम success or negative posix error code.
+ *	Handle requests from the networking layer for MTU change on
+ *	this interface. It gets called on a change by the network layer.
+ *	Return zero for success or negative posix error code.
  */
-अटल पूर्णांक velocity_change_mtu(काष्ठा net_device *dev, पूर्णांक new_mtu)
-अणु
-	काष्ठा velocity_info *vptr = netdev_priv(dev);
-	पूर्णांक ret = 0;
+static int velocity_change_mtu(struct net_device *dev, int new_mtu)
+{
+	struct velocity_info *vptr = netdev_priv(dev);
+	int ret = 0;
 
-	अगर (!netअगर_running(dev)) अणु
+	if (!netif_running(dev)) {
 		dev->mtu = new_mtu;
-		जाओ out_0;
-	पूर्ण
+		goto out_0;
+	}
 
-	अगर (dev->mtu != new_mtu) अणु
-		काष्ठा velocity_info *पंचांगp_vptr;
-		अचिन्हित दीर्घ flags;
-		काष्ठा rx_info rx;
-		काष्ठा tx_info tx;
+	if (dev->mtu != new_mtu) {
+		struct velocity_info *tmp_vptr;
+		unsigned long flags;
+		struct rx_info rx;
+		struct tx_info tx;
 
-		पंचांगp_vptr = kzalloc(माप(*पंचांगp_vptr), GFP_KERNEL);
-		अगर (!पंचांगp_vptr) अणु
+		tmp_vptr = kzalloc(sizeof(*tmp_vptr), GFP_KERNEL);
+		if (!tmp_vptr) {
 			ret = -ENOMEM;
-			जाओ out_0;
-		पूर्ण
+			goto out_0;
+		}
 
-		पंचांगp_vptr->netdev = dev;
-		पंचांगp_vptr->pdev = vptr->pdev;
-		पंचांगp_vptr->dev = vptr->dev;
-		पंचांगp_vptr->options = vptr->options;
-		पंचांगp_vptr->tx.numq = vptr->tx.numq;
+		tmp_vptr->netdev = dev;
+		tmp_vptr->pdev = vptr->pdev;
+		tmp_vptr->dev = vptr->dev;
+		tmp_vptr->options = vptr->options;
+		tmp_vptr->tx.numq = vptr->tx.numq;
 
-		ret = velocity_init_rings(पंचांगp_vptr, new_mtu);
-		अगर (ret < 0)
-			जाओ out_मुक्त_पंचांगp_vptr_1;
+		ret = velocity_init_rings(tmp_vptr, new_mtu);
+		if (ret < 0)
+			goto out_free_tmp_vptr_1;
 
 		napi_disable(&vptr->napi);
 
 		spin_lock_irqsave(&vptr->lock, flags);
 
-		netअगर_stop_queue(dev);
-		velocity_shutकरोwn(vptr);
+		netif_stop_queue(dev);
+		velocity_shutdown(vptr);
 
 		rx = vptr->rx;
 		tx = vptr->tx;
 
-		vptr->rx = पंचांगp_vptr->rx;
-		vptr->tx = पंचांगp_vptr->tx;
+		vptr->rx = tmp_vptr->rx;
+		vptr->tx = tmp_vptr->tx;
 
-		पंचांगp_vptr->rx = rx;
-		पंचांगp_vptr->tx = tx;
+		tmp_vptr->rx = rx;
+		tmp_vptr->tx = tx;
 
 		dev->mtu = new_mtu;
 
-		velocity_init_रेजिस्टरs(vptr, VELOCITY_INIT_COLD);
+		velocity_init_registers(vptr, VELOCITY_INIT_COLD);
 
 		velocity_give_many_rx_descs(vptr);
 
 		napi_enable(&vptr->napi);
 
-		mac_enable_पूर्णांक(vptr->mac_regs);
-		netअगर_start_queue(dev);
+		mac_enable_int(vptr->mac_regs);
+		netif_start_queue(dev);
 
 		spin_unlock_irqrestore(&vptr->lock, flags);
 
-		velocity_मुक्त_rings(पंचांगp_vptr);
+		velocity_free_rings(tmp_vptr);
 
-out_मुक्त_पंचांगp_vptr_1:
-		kमुक्त(पंचांगp_vptr);
-	पूर्ण
+out_free_tmp_vptr_1:
+		kfree(tmp_vptr);
+	}
 out_0:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
+#ifdef CONFIG_NET_POLL_CONTROLLER
 /**
  *  velocity_poll_controller		-	Velocity Poll controller function
  *  @dev: network device
  *
  *
  *  Used by NETCONSOLE and other diagnostic tools to allow network I/P
- *  with पूर्णांकerrupts disabled.
+ *  with interrupts disabled.
  */
-अटल व्योम velocity_poll_controller(काष्ठा net_device *dev)
-अणु
+static void velocity_poll_controller(struct net_device *dev)
+{
 	disable_irq(dev->irq);
-	velocity_पूर्णांकr(dev->irq, dev);
+	velocity_intr(dev->irq, dev);
 	enable_irq(dev->irq);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
 /**
  *	velocity_mii_ioctl		-	MII ioctl handler
  *	@dev: network device
- *	@अगरr: the अगरreq block क्रम the ioctl
+ *	@ifr: the ifreq block for the ioctl
  *	@cmd: the command
  *
  *	Process MII requests made via ioctl from the network layer. These
- *	are used by tools like kudzu to पूर्णांकerrogate the link state of the
+ *	are used by tools like kudzu to interrogate the link state of the
  *	hardware
  */
-अटल पूर्णांक velocity_mii_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *अगरr, पूर्णांक cmd)
-अणु
-	काष्ठा velocity_info *vptr = netdev_priv(dev);
-	काष्ठा mac_regs __iomem *regs = vptr->mac_regs;
-	अचिन्हित दीर्घ flags;
-	काष्ठा mii_ioctl_data *miidata = अगर_mii(अगरr);
-	पूर्णांक err;
+static int velocity_mii_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
+{
+	struct velocity_info *vptr = netdev_priv(dev);
+	struct mac_regs __iomem *regs = vptr->mac_regs;
+	unsigned long flags;
+	struct mii_ioctl_data *miidata = if_mii(ifr);
+	int err;
 
-	चयन (cmd) अणु
-	हाल SIOCGMIIPHY:
-		miidata->phy_id = पढ़ोb(&regs->MIIADR) & 0x1f;
-		अवरोध;
-	हाल SIOCGMIIREG:
-		अगर (velocity_mii_पढ़ो(vptr->mac_regs, miidata->reg_num & 0x1f, &(miidata->val_out)) < 0)
-			वापस -ETIMEDOUT;
-		अवरोध;
-	हाल SIOCSMIIREG:
+	switch (cmd) {
+	case SIOCGMIIPHY:
+		miidata->phy_id = readb(&regs->MIIADR) & 0x1f;
+		break;
+	case SIOCGMIIREG:
+		if (velocity_mii_read(vptr->mac_regs, miidata->reg_num & 0x1f, &(miidata->val_out)) < 0)
+			return -ETIMEDOUT;
+		break;
+	case SIOCSMIIREG:
 		spin_lock_irqsave(&vptr->lock, flags);
-		err = velocity_mii_ग_लिखो(vptr->mac_regs, miidata->reg_num & 0x1f, miidata->val_in);
+		err = velocity_mii_write(vptr->mac_regs, miidata->reg_num & 0x1f, miidata->val_in);
 		spin_unlock_irqrestore(&vptr->lock, flags);
 		check_connection_type(vptr->mac_regs);
-		अगर (err)
-			वापस err;
-		अवरोध;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (err)
+			return err;
+		break;
+	default:
+		return -EOPNOTSUPP;
+	}
+	return 0;
+}
 
 /**
- *	velocity_ioctl		-	ioctl entry poपूर्णांक
+ *	velocity_ioctl		-	ioctl entry point
  *	@dev: network device
- *	@rq: पूर्णांकerface request ioctl
+ *	@rq: interface request ioctl
  *	@cmd: command code
  *
  *	Called when the user issues an ioctl request to the network
- *	device in question. The velocity पूर्णांकerface supports MII.
+ *	device in question. The velocity interface supports MII.
  */
-अटल पूर्णांक velocity_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *rq, पूर्णांक cmd)
-अणु
-	काष्ठा velocity_info *vptr = netdev_priv(dev);
-	पूर्णांक ret;
+static int velocity_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
+{
+	struct velocity_info *vptr = netdev_priv(dev);
+	int ret;
 
-	/* If we are asked क्रम inक्रमmation and the device is घातer
+	/* If we are asked for information and the device is power
 	   saving then we need to bring the device back up to talk to it */
 
-	अगर (!netअगर_running(dev))
-		velocity_set_घातer_state(vptr, PCI_D0);
+	if (!netif_running(dev))
+		velocity_set_power_state(vptr, PCI_D0);
 
-	चयन (cmd) अणु
-	हाल SIOCGMIIPHY:	/* Get address of MII PHY in use. */
-	हाल SIOCGMIIREG:	/* Read MII PHY रेजिस्टर. */
-	हाल SIOCSMIIREG:	/* Write to MII PHY रेजिस्टर. */
+	switch (cmd) {
+	case SIOCGMIIPHY:	/* Get address of MII PHY in use. */
+	case SIOCGMIIREG:	/* Read MII PHY register. */
+	case SIOCSMIIREG:	/* Write to MII PHY register. */
 		ret = velocity_mii_ioctl(dev, rq, cmd);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		ret = -EOPNOTSUPP;
-	पूर्ण
-	अगर (!netअगर_running(dev))
-		velocity_set_घातer_state(vptr, PCI_D3hot);
+	}
+	if (!netif_running(dev))
+		velocity_set_power_state(vptr, PCI_D3hot);
 
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  *	velocity_get_status	-	statistics callback
@@ -2459,67 +2458,67 @@ out_0:
  *
  *	Callback from the network layer to allow driver statistics
  *	to be resynchronized with hardware collected state. In the
- *	हाल of the velocity we need to pull the MIB counters from
- *	the hardware पूर्णांकo the counters beक्रमe letting the network
+ *	case of the velocity we need to pull the MIB counters from
+ *	the hardware into the counters before letting the network
  *	layer display them.
  */
-अटल काष्ठा net_device_stats *velocity_get_stats(काष्ठा net_device *dev)
-अणु
-	काष्ठा velocity_info *vptr = netdev_priv(dev);
+static struct net_device_stats *velocity_get_stats(struct net_device *dev)
+{
+	struct velocity_info *vptr = netdev_priv(dev);
 
-	/* If the hardware is करोwn, करोn't touch MII */
-	अगर (!netअगर_running(dev))
-		वापस &dev->stats;
+	/* If the hardware is down, don't touch MII */
+	if (!netif_running(dev))
+		return &dev->stats;
 
 	spin_lock_irq(&vptr->lock);
 	velocity_update_hw_mibs(vptr);
 	spin_unlock_irq(&vptr->lock);
 
-	dev->stats.rx_packets = vptr->mib_counter[HW_MIB_अगरRxAllPkts];
-	dev->stats.rx_errors = vptr->mib_counter[HW_MIB_अगरRxErrorPkts];
-	dev->stats.rx_length_errors = vptr->mib_counter[HW_MIB_अगरInRangeLengthErrors];
+	dev->stats.rx_packets = vptr->mib_counter[HW_MIB_ifRxAllPkts];
+	dev->stats.rx_errors = vptr->mib_counter[HW_MIB_ifRxErrorPkts];
+	dev->stats.rx_length_errors = vptr->mib_counter[HW_MIB_ifInRangeLengthErrors];
 
-//  अचिन्हित दीर्घ   rx_dropped;     /* no space in linux buffers    */
-	dev->stats.collisions = vptr->mib_counter[HW_MIB_अगरTxEtherCollisions];
+//  unsigned long   rx_dropped;     /* no space in linux buffers    */
+	dev->stats.collisions = vptr->mib_counter[HW_MIB_ifTxEtherCollisions];
 	/* detailed rx_errors: */
-//  अचिन्हित दीर्घ   rx_length_errors;
-//  अचिन्हित दीर्घ   rx_over_errors;     /* receiver ring buff overflow  */
-	dev->stats.rx_crc_errors = vptr->mib_counter[HW_MIB_अगरRxPktCRCE];
-//  अचिन्हित दीर्घ   rx_frame_errors;    /* recv'd frame alignment error */
-//  अचिन्हित दीर्घ   rx_fअगरo_errors;     /* recv'r fअगरo overrun      */
-//  अचिन्हित दीर्घ   rx_missed_errors;   /* receiver missed packet   */
+//  unsigned long   rx_length_errors;
+//  unsigned long   rx_over_errors;     /* receiver ring buff overflow  */
+	dev->stats.rx_crc_errors = vptr->mib_counter[HW_MIB_ifRxPktCRCE];
+//  unsigned long   rx_frame_errors;    /* recv'd frame alignment error */
+//  unsigned long   rx_fifo_errors;     /* recv'r fifo overrun      */
+//  unsigned long   rx_missed_errors;   /* receiver missed packet   */
 
 	/* detailed tx_errors */
-//  अचिन्हित दीर्घ   tx_fअगरo_errors;
+//  unsigned long   tx_fifo_errors;
 
-	वापस &dev->stats;
-पूर्ण
+	return &dev->stats;
+}
 
 /**
- *	velocity_बंद		-	बंद adapter callback
+ *	velocity_close		-	close adapter callback
  *	@dev: network device
  *
  *	Callback from the network layer when the velocity is being
  *	deactivated by the network layer
  */
-अटल पूर्णांक velocity_बंद(काष्ठा net_device *dev)
-अणु
-	काष्ठा velocity_info *vptr = netdev_priv(dev);
+static int velocity_close(struct net_device *dev)
+{
+	struct velocity_info *vptr = netdev_priv(dev);
 
 	napi_disable(&vptr->napi);
-	netअगर_stop_queue(dev);
-	velocity_shutकरोwn(vptr);
+	netif_stop_queue(dev);
+	velocity_shutdown(vptr);
 
-	अगर (vptr->flags & VELOCITY_FLAGS_WOL_ENABLED)
+	if (vptr->flags & VELOCITY_FLAGS_WOL_ENABLED)
 		velocity_get_ip(vptr);
 
-	मुक्त_irq(dev->irq, dev);
+	free_irq(dev->irq, dev);
 
-	velocity_मुक्त_rings(vptr);
+	velocity_free_rings(vptr);
 
 	vptr->flags &= (~VELOCITY_FLAGS_OPENED);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  *	velocity_xmit		-	transmit packet callback
@@ -2529,30 +2528,30 @@ out_0:
  *	Called by the network layer to request a packet is queued to
  *	the velocity. Returns zero on success.
  */
-अटल netdev_tx_t velocity_xmit(काष्ठा sk_buff *skb,
-				 काष्ठा net_device *dev)
-अणु
-	काष्ठा velocity_info *vptr = netdev_priv(dev);
-	पूर्णांक qnum = 0;
-	काष्ठा tx_desc *td_ptr;
-	काष्ठा velocity_td_info *tdinfo;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक pktlen;
-	पूर्णांक index, prev;
-	पूर्णांक i = 0;
+static netdev_tx_t velocity_xmit(struct sk_buff *skb,
+				 struct net_device *dev)
+{
+	struct velocity_info *vptr = netdev_priv(dev);
+	int qnum = 0;
+	struct tx_desc *td_ptr;
+	struct velocity_td_info *tdinfo;
+	unsigned long flags;
+	int pktlen;
+	int index, prev;
+	int i = 0;
 
-	अगर (skb_padto(skb, ETH_ZLEN))
-		जाओ out;
+	if (skb_padto(skb, ETH_ZLEN))
+		goto out;
 
 	/* The hardware can handle at most 7 memory segments, so merge
-	 * the skb अगर there are more */
-	अगर (skb_shinfo(skb)->nr_frags > 6 && __skb_linearize(skb)) अणु
-		dev_kमुक्त_skb_any(skb);
-		वापस NETDEV_TX_OK;
-	पूर्ण
+	 * the skb if there are more */
+	if (skb_shinfo(skb)->nr_frags > 6 && __skb_linearize(skb)) {
+		dev_kfree_skb_any(skb);
+		return NETDEV_TX_OK;
+	}
 
 	pktlen = skb_shinfo(skb)->nr_frags == 0 ?
-			max_t(अचिन्हित पूर्णांक, skb->len, ETH_ZLEN) :
+			max_t(unsigned int, skb->len, ETH_ZLEN) :
 				skb_headlen(skb);
 
 	spin_lock_irqsave(&vptr->lock, flags);
@@ -2565,7 +2564,7 @@ out_0:
 	td_ptr->td_buf[0].size &= ~TD_QUEUE;
 
 	/*
-	 *	Map the linear network buffer पूर्णांकo PCI space and
+	 *	Map the linear network buffer into PCI space and
 	 *	add it to the transmit ring.
 	 */
 	tdinfo->skb = skb;
@@ -2577,8 +2576,8 @@ out_0:
 	td_ptr->td_buf[0].size = cpu_to_le16(pktlen);
 
 	/* Handle fragments */
-	क्रम (i = 0; i < skb_shinfo(skb)->nr_frags; i++) अणु
-		स्थिर skb_frag_t *frag = &skb_shinfo(skb)->frags[i];
+	for (i = 0; i < skb_shinfo(skb)->nr_frags; i++) {
+		const skb_frag_t *frag = &skb_shinfo(skb)->frags[i];
 
 		tdinfo->skb_dma[i + 1] = skb_frag_dma_map(vptr->dev,
 							  frag, 0,
@@ -2588,37 +2587,37 @@ out_0:
 		td_ptr->td_buf[i + 1].pa_low = cpu_to_le32(tdinfo->skb_dma[i + 1]);
 		td_ptr->td_buf[i + 1].pa_high = 0;
 		td_ptr->td_buf[i + 1].size = cpu_to_le16(skb_frag_size(frag));
-	पूर्ण
+	}
 	tdinfo->nskb_dma = i + 1;
 
 	td_ptr->tdesc1.cmd = TCPLS_NORMAL + (tdinfo->nskb_dma + 1) * 16;
 
-	अगर (skb_vlan_tag_present(skb)) अणु
+	if (skb_vlan_tag_present(skb)) {
 		td_ptr->tdesc1.vlan = cpu_to_le16(skb_vlan_tag_get(skb));
 		td_ptr->tdesc1.TCR |= TCR0_VETAG;
-	पूर्ण
+	}
 
 	/*
 	 *	Handle hardware checksum
 	 */
-	अगर (skb->ip_summed == CHECKSUM_PARTIAL) अणु
-		स्थिर काष्ठा iphdr *ip = ip_hdr(skb);
-		अगर (ip->protocol == IPPROTO_TCP)
+	if (skb->ip_summed == CHECKSUM_PARTIAL) {
+		const struct iphdr *ip = ip_hdr(skb);
+		if (ip->protocol == IPPROTO_TCP)
 			td_ptr->tdesc1.TCR |= TCR0_TCPCK;
-		अन्यथा अगर (ip->protocol == IPPROTO_UDP)
+		else if (ip->protocol == IPPROTO_UDP)
 			td_ptr->tdesc1.TCR |= (TCR0_UDPCK);
 		td_ptr->tdesc1.TCR |= TCR0_IPCK;
-	पूर्ण
+	}
 
 	prev = index - 1;
-	अगर (prev < 0)
+	if (prev < 0)
 		prev = vptr->options.numtx - 1;
 	td_ptr->tdesc0.len |= OWNED_BY_NIC;
 	vptr->tx.used[qnum]++;
 	vptr->tx.curr[qnum] = (index + 1) % vptr->options.numtx;
 
-	अगर (AVAIL_TD(vptr, qnum) < 1)
-		netअगर_stop_queue(dev);
+	if (AVAIL_TD(vptr, qnum) < 1)
+		netif_stop_queue(dev);
 
 	td_ptr = &(vptr->tx.rings[qnum][prev]);
 	td_ptr->td_buf[0].size |= TD_QUEUE;
@@ -2626,160 +2625,160 @@ out_0:
 
 	spin_unlock_irqrestore(&vptr->lock, flags);
 out:
-	वापस NETDEV_TX_OK;
-पूर्ण
+	return NETDEV_TX_OK;
+}
 
-अटल स्थिर काष्ठा net_device_ops velocity_netdev_ops = अणु
-	.nकरो_खोलो		= velocity_खोलो,
-	.nकरो_stop		= velocity_बंद,
-	.nकरो_start_xmit		= velocity_xmit,
-	.nकरो_get_stats		= velocity_get_stats,
-	.nकरो_validate_addr	= eth_validate_addr,
-	.nकरो_set_mac_address	= eth_mac_addr,
-	.nकरो_set_rx_mode	= velocity_set_multi,
-	.nकरो_change_mtu		= velocity_change_mtu,
-	.nकरो_करो_ioctl		= velocity_ioctl,
-	.nकरो_vlan_rx_add_vid	= velocity_vlan_rx_add_vid,
-	.nकरो_vlan_rx_समाप्त_vid	= velocity_vlan_rx_समाप्त_vid,
-#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
-	.nकरो_poll_controller = velocity_poll_controller,
-#पूर्ण_अगर
-पूर्ण;
+static const struct net_device_ops velocity_netdev_ops = {
+	.ndo_open		= velocity_open,
+	.ndo_stop		= velocity_close,
+	.ndo_start_xmit		= velocity_xmit,
+	.ndo_get_stats		= velocity_get_stats,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_set_mac_address	= eth_mac_addr,
+	.ndo_set_rx_mode	= velocity_set_multi,
+	.ndo_change_mtu		= velocity_change_mtu,
+	.ndo_do_ioctl		= velocity_ioctl,
+	.ndo_vlan_rx_add_vid	= velocity_vlan_rx_add_vid,
+	.ndo_vlan_rx_kill_vid	= velocity_vlan_rx_kill_vid,
+#ifdef CONFIG_NET_POLL_CONTROLLER
+	.ndo_poll_controller = velocity_poll_controller,
+#endif
+};
 
 /**
- *	velocity_init_info	-	init निजी data
+ *	velocity_init_info	-	init private data
  *	@vptr: Velocity info
  *	@info: Board type
  *
- *	Set up the initial velocity_info काष्ठा क्रम the device that has been
+ *	Set up the initial velocity_info struct for the device that has been
  *	discovered.
  */
-अटल व्योम velocity_init_info(काष्ठा velocity_info *vptr,
-				स्थिर काष्ठा velocity_info_tbl *info)
-अणु
+static void velocity_init_info(struct velocity_info *vptr,
+				const struct velocity_info_tbl *info)
+{
 	vptr->chip_id = info->chip_id;
 	vptr->tx.numq = info->txqueue;
 	vptr->multicast_limit = MCAM_SIZE;
 	spin_lock_init(&vptr->lock);
-पूर्ण
+}
 
 /**
- *	velocity_get_pci_info	-	retrieve PCI info क्रम device
+ *	velocity_get_pci_info	-	retrieve PCI info for device
  *	@vptr: velocity device
  *
- *	Retrieve the PCI configuration space data that पूर्णांकerests us from
+ *	Retrieve the PCI configuration space data that interests us from
  *	the kernel PCI layer
  */
-अटल पूर्णांक velocity_get_pci_info(काष्ठा velocity_info *vptr)
-अणु
-	काष्ठा pci_dev *pdev = vptr->pdev;
+static int velocity_get_pci_info(struct velocity_info *vptr)
+{
+	struct pci_dev *pdev = vptr->pdev;
 
 	pci_set_master(pdev);
 
 	vptr->ioaddr = pci_resource_start(pdev, 0);
 	vptr->memaddr = pci_resource_start(pdev, 1);
 
-	अगर (!(pci_resource_flags(pdev, 0) & IORESOURCE_IO)) अणु
+	if (!(pci_resource_flags(pdev, 0) & IORESOURCE_IO)) {
 		dev_err(&pdev->dev,
 			   "region #0 is not an I/O resource, aborting.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर ((pci_resource_flags(pdev, 1) & IORESOURCE_IO)) अणु
+	if ((pci_resource_flags(pdev, 1) & IORESOURCE_IO)) {
 		dev_err(&pdev->dev,
 			   "region #1 is an I/O resource, aborting.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (pci_resource_len(pdev, 1) < VELOCITY_IO_SIZE) अणु
+	if (pci_resource_len(pdev, 1) < VELOCITY_IO_SIZE) {
 		dev_err(&pdev->dev, "region #1 is too small.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- *	velocity_get_platक्रमm_info - retrieve platक्रमm info क्रम device
+ *	velocity_get_platform_info - retrieve platform info for device
  *	@vptr: velocity device
  *
- *	Retrieve the Platक्रमm configuration data that पूर्णांकerests us
+ *	Retrieve the Platform configuration data that interests us
  */
-अटल पूर्णांक velocity_get_platक्रमm_info(काष्ठा velocity_info *vptr)
-अणु
-	काष्ठा resource res;
-	पूर्णांक ret;
+static int velocity_get_platform_info(struct velocity_info *vptr)
+{
+	struct resource res;
+	int ret;
 
-	अगर (of_get_property(vptr->dev->of_node, "no-eeprom", शून्य))
+	if (of_get_property(vptr->dev->of_node, "no-eeprom", NULL))
 		vptr->no_eeprom = 1;
 
 	ret = of_address_to_resource(vptr->dev->of_node, 0, &res);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(vptr->dev, "unable to find memory address\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	vptr->memaddr = res.start;
 
-	अगर (resource_size(&res) < VELOCITY_IO_SIZE) अणु
+	if (resource_size(&res) < VELOCITY_IO_SIZE) {
 		dev_err(vptr->dev, "memory region is too small.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- *	velocity_prपूर्णांक_info	-	per driver data
+ *	velocity_print_info	-	per driver data
  *	@vptr: velocity
  *
- *	Prपूर्णांक per driver data as the kernel driver finds Velocity
+ *	Print per driver data as the kernel driver finds Velocity
  *	hardware
  */
-अटल व्योम velocity_prपूर्णांक_info(काष्ठा velocity_info *vptr)
-अणु
+static void velocity_print_info(struct velocity_info *vptr)
+{
 	netdev_info(vptr->netdev, "%s - Ethernet Address: %pM\n",
 		    get_chip_name(vptr->chip_id), vptr->netdev->dev_addr);
-पूर्ण
+}
 
-अटल u32 velocity_get_link(काष्ठा net_device *dev)
-अणु
-	काष्ठा velocity_info *vptr = netdev_priv(dev);
-	काष्ठा mac_regs __iomem *regs = vptr->mac_regs;
-	वापस BYTE_REG_BITS_IS_ON(PHYSR0_LINKGD, &regs->PHYSR0) ? 1 : 0;
-पूर्ण
+static u32 velocity_get_link(struct net_device *dev)
+{
+	struct velocity_info *vptr = netdev_priv(dev);
+	struct mac_regs __iomem *regs = vptr->mac_regs;
+	return BYTE_REG_BITS_IS_ON(PHYSR0_LINKGD, &regs->PHYSR0) ? 1 : 0;
+}
 
 /**
  *	velocity_probe - set up discovered velocity device
  *	@dev: PCI device
  *	@info: table of match
- *	@irq: पूर्णांकerrupt info
+ *	@irq: interrupt info
  *	@bustype: bus that device is connected to
  *
  *	Configure a discovered adapter from scratch. Return a negative
- *	त्रुटि_सं error code on failure paths.
+ *	errno error code on failure paths.
  */
-अटल पूर्णांक velocity_probe(काष्ठा device *dev, पूर्णांक irq,
-			   स्थिर काष्ठा velocity_info_tbl *info,
-			   क्रमागत velocity_bus_type bustype)
-अणु
-	काष्ठा net_device *netdev;
-	पूर्णांक i;
-	काष्ठा velocity_info *vptr;
-	काष्ठा mac_regs __iomem *regs;
-	पूर्णांक ret = -ENOMEM;
+static int velocity_probe(struct device *dev, int irq,
+			   const struct velocity_info_tbl *info,
+			   enum velocity_bus_type bustype)
+{
+	struct net_device *netdev;
+	int i;
+	struct velocity_info *vptr;
+	struct mac_regs __iomem *regs;
+	int ret = -ENOMEM;
 
 	/* FIXME: this driver, like almost all other ethernet drivers,
 	 * can support more than MAX_UNITS.
 	 */
-	अगर (velocity_nics >= MAX_UNITS) अणु
+	if (velocity_nics >= MAX_UNITS) {
 		dev_notice(dev, "already found %d NICs.\n", velocity_nics);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	netdev = alloc_etherdev(माप(काष्ठा velocity_info));
-	अगर (!netdev)
-		जाओ out;
+	netdev = alloc_etherdev(sizeof(struct velocity_info));
+	if (!netdev)
+		goto out;
 
 	/* Chain it all together */
 
@@ -2796,32 +2795,32 @@ out:
 
 	velocity_init_info(vptr, info);
 
-	अगर (bustype == BUS_PCI) अणु
+	if (bustype == BUS_PCI) {
 		vptr->pdev = to_pci_dev(dev);
 
 		ret = velocity_get_pci_info(vptr);
-		अगर (ret < 0)
-			जाओ err_मुक्त_dev;
-	पूर्ण अन्यथा अणु
-		vptr->pdev = शून्य;
-		ret = velocity_get_platक्रमm_info(vptr);
-		अगर (ret < 0)
-			जाओ err_मुक्त_dev;
-	पूर्ण
+		if (ret < 0)
+			goto err_free_dev;
+	} else {
+		vptr->pdev = NULL;
+		ret = velocity_get_platform_info(vptr);
+		if (ret < 0)
+			goto err_free_dev;
+	}
 
 	regs = ioremap(vptr->memaddr, VELOCITY_IO_SIZE);
-	अगर (regs == शून्य) अणु
+	if (regs == NULL) {
 		ret = -EIO;
-		जाओ err_मुक्त_dev;
-	पूर्ण
+		goto err_free_dev;
+	}
 
 	vptr->mac_regs = regs;
-	vptr->rev_id = पढ़ोb(&regs->rev_id);
+	vptr->rev_id = readb(&regs->rev_id);
 
 	mac_wol_reset(regs);
 
-	क्रम (i = 0; i < 6; i++)
-		netdev->dev_addr[i] = पढ़ोb(&regs->PAR[i]);
+	for (i = 0; i < 6; i++)
+		netdev->dev_addr[i] = readb(&regs->PAR[i]);
 
 
 	velocity_get_options(&vptr->options, velocity_nics);
@@ -2833,7 +2832,7 @@ out:
 	vptr->options.flags &= info->flags;
 
 	/*
-	 *	Enable the chip specअगरied capbilities
+	 *	Enable the chip specified capbilities
 	 */
 
 	vptr->flags = vptr->options.flags | (info->flags & 0xFF000000UL);
@@ -2845,7 +2844,7 @@ out:
 
 	netdev->netdev_ops = &velocity_netdev_ops;
 	netdev->ethtool_ops = &velocity_ethtool_ops;
-	netअगर_napi_add(netdev, &vptr->napi, velocity_poll,
+	netif_napi_add(netdev, &vptr->napi, velocity_poll,
 							VELOCITY_NAPI_WEIGHT);
 
 	netdev->hw_features = NETIF_F_IP_CSUM | NETIF_F_SG |
@@ -2858,448 +2857,448 @@ out:
 	netdev->min_mtu = VELOCITY_MIN_MTU;
 	netdev->max_mtu = VELOCITY_MAX_MTU;
 
-	ret = रेजिस्टर_netdev(netdev);
-	अगर (ret < 0)
-		जाओ err_iounmap;
+	ret = register_netdev(netdev);
+	if (ret < 0)
+		goto err_iounmap;
 
-	अगर (!velocity_get_link(netdev)) अणु
-		netअगर_carrier_off(netdev);
+	if (!velocity_get_link(netdev)) {
+		netif_carrier_off(netdev);
 		vptr->mii_status |= VELOCITY_LINK_FAIL;
-	पूर्ण
+	}
 
-	velocity_prपूर्णांक_info(vptr);
+	velocity_print_info(vptr);
 	dev_set_drvdata(vptr->dev, netdev);
 
-	/* and leave the chip घातered करोwn */
+	/* and leave the chip powered down */
 
-	velocity_set_घातer_state(vptr, PCI_D3hot);
+	velocity_set_power_state(vptr, PCI_D3hot);
 	velocity_nics++;
 out:
-	वापस ret;
+	return ret;
 
 err_iounmap:
-	netअगर_napi_del(&vptr->napi);
+	netif_napi_del(&vptr->napi);
 	iounmap(regs);
-err_मुक्त_dev:
-	मुक्त_netdev(netdev);
-	जाओ out;
-पूर्ण
+err_free_dev:
+	free_netdev(netdev);
+	goto out;
+}
 
 /**
- *	velocity_हटाओ	- device unplug
- *	@dev: device being हटाओd
+ *	velocity_remove	- device unplug
+ *	@dev: device being removed
  *
  *	Device unload callback. Called on an unplug or on module
- *	unload क्रम each active device that is present. Disconnects
- *	the device from the network layer and मुक्तs all the resources
+ *	unload for each active device that is present. Disconnects
+ *	the device from the network layer and frees all the resources
  */
-अटल पूर्णांक velocity_हटाओ(काष्ठा device *dev)
-अणु
-	काष्ठा net_device *netdev = dev_get_drvdata(dev);
-	काष्ठा velocity_info *vptr = netdev_priv(netdev);
+static int velocity_remove(struct device *dev)
+{
+	struct net_device *netdev = dev_get_drvdata(dev);
+	struct velocity_info *vptr = netdev_priv(netdev);
 
-	unरेजिस्टर_netdev(netdev);
-	netअगर_napi_del(&vptr->napi);
+	unregister_netdev(netdev);
+	netif_napi_del(&vptr->napi);
 	iounmap(vptr->mac_regs);
-	मुक्त_netdev(netdev);
+	free_netdev(netdev);
 	velocity_nics--;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक velocity_pci_probe(काष्ठा pci_dev *pdev,
-			       स्थिर काष्ठा pci_device_id *ent)
-अणु
-	स्थिर काष्ठा velocity_info_tbl *info =
+static int velocity_pci_probe(struct pci_dev *pdev,
+			       const struct pci_device_id *ent)
+{
+	const struct velocity_info_tbl *info =
 					&chip_info_table[ent->driver_data];
-	पूर्णांक ret;
+	int ret;
 
 	ret = pci_enable_device(pdev);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	ret = pci_request_regions(pdev, VELOCITY_NAME);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&pdev->dev, "No PCI resources.\n");
-		जाओ fail1;
-	पूर्ण
+		goto fail1;
+	}
 
 	ret = velocity_probe(&pdev->dev, pdev->irq, info, BUS_PCI);
-	अगर (ret == 0)
-		वापस 0;
+	if (ret == 0)
+		return 0;
 
 	pci_release_regions(pdev);
 fail1:
 	pci_disable_device(pdev);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम velocity_pci_हटाओ(काष्ठा pci_dev *pdev)
-अणु
-	velocity_हटाओ(&pdev->dev);
+static void velocity_pci_remove(struct pci_dev *pdev)
+{
+	velocity_remove(&pdev->dev);
 
 	pci_release_regions(pdev);
 	pci_disable_device(pdev);
-पूर्ण
+}
 
-अटल पूर्णांक velocity_platक्रमm_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	स्थिर काष्ठा of_device_id *of_id;
-	स्थिर काष्ठा velocity_info_tbl *info;
-	पूर्णांक irq;
+static int velocity_platform_probe(struct platform_device *pdev)
+{
+	const struct of_device_id *of_id;
+	const struct velocity_info_tbl *info;
+	int irq;
 
 	of_id = of_match_device(velocity_of_ids, &pdev->dev);
-	अगर (!of_id)
-		वापस -EINVAL;
+	if (!of_id)
+		return -EINVAL;
 	info = of_id->data;
 
 	irq = irq_of_parse_and_map(pdev->dev.of_node, 0);
-	अगर (!irq)
-		वापस -EINVAL;
+	if (!irq)
+		return -EINVAL;
 
-	वापस velocity_probe(&pdev->dev, irq, info, BUS_PLATFORM);
-पूर्ण
+	return velocity_probe(&pdev->dev, irq, info, BUS_PLATFORM);
+}
 
-अटल पूर्णांक velocity_platक्रमm_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	velocity_हटाओ(&pdev->dev);
+static int velocity_platform_remove(struct platform_device *pdev)
+{
+	velocity_remove(&pdev->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
+#ifdef CONFIG_PM_SLEEP
 /**
  *	wol_calc_crc		-	WOL CRC
  *	@size: size of the wake mask
  *	@pattern: data pattern
  *	@mask_pattern: mask
  *
- *	Compute the wake on lan crc hashes क्रम the packet header
- *	we are पूर्णांकerested in.
+ *	Compute the wake on lan crc hashes for the packet header
+ *	we are interested in.
  */
-अटल u16 wol_calc_crc(पूर्णांक size, u8 *pattern, u8 *mask_pattern)
-अणु
+static u16 wol_calc_crc(int size, u8 *pattern, u8 *mask_pattern)
+{
 	u16 crc = 0xFFFF;
 	u8 mask;
-	पूर्णांक i, j;
+	int i, j;
 
-	क्रम (i = 0; i < size; i++) अणु
+	for (i = 0; i < size; i++) {
 		mask = mask_pattern[i];
 
-		/* Skip this loop अगर the mask equals to zero */
-		अगर (mask == 0x00)
-			जारी;
+		/* Skip this loop if the mask equals to zero */
+		if (mask == 0x00)
+			continue;
 
-		क्रम (j = 0; j < 8; j++) अणु
-			अगर ((mask & 0x01) == 0) अणु
+		for (j = 0; j < 8; j++) {
+			if ((mask & 0x01) == 0) {
 				mask >>= 1;
-				जारी;
-			पूर्ण
+				continue;
+			}
 			mask >>= 1;
 			crc = crc_ccitt(crc, &(pattern[i * 8 + j]), 1);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	/*	Finally, invert the result once to get the correct data */
 	crc = ~crc;
-	वापस bitrev32(crc) >> 16;
-पूर्ण
+	return bitrev32(crc) >> 16;
+}
 
 /**
- *	velocity_set_wol	-	set up क्रम wake on lan
+ *	velocity_set_wol	-	set up for wake on lan
  *	@vptr: velocity to set WOL status on
  *
- *	Set a card up क्रम wake on lan either by unicast or by
+ *	Set a card up for wake on lan either by unicast or by
  *	ARP packet.
  *
- *	FIXME: check अटल buffer is safe here
+ *	FIXME: check static buffer is safe here
  */
-अटल पूर्णांक velocity_set_wol(काष्ठा velocity_info *vptr)
-अणु
-	काष्ठा mac_regs __iomem *regs = vptr->mac_regs;
-	क्रमागत speed_opt spd_dpx = vptr->options.spd_dpx;
-	अटल u8 buf[256];
-	पूर्णांक i;
+static int velocity_set_wol(struct velocity_info *vptr)
+{
+	struct mac_regs __iomem *regs = vptr->mac_regs;
+	enum speed_opt spd_dpx = vptr->options.spd_dpx;
+	static u8 buf[256];
+	int i;
 
-	अटल u32 mask_pattern[2][4] = अणु
-		अणु0x00203000, 0x000003C0, 0x00000000, 0x0000000पूर्ण, /* ARP */
-		अणु0xfffff000, 0xffffffff, 0xffffffff, 0x000ffffपूर्ण	 /* Magic Packet */
-	पूर्ण;
+	static u32 mask_pattern[2][4] = {
+		{0x00203000, 0x000003C0, 0x00000000, 0x0000000}, /* ARP */
+		{0xfffff000, 0xffffffff, 0xffffffff, 0x000ffff}	 /* Magic Packet */
+	};
 
-	ग_लिखोw(0xFFFF, &regs->WOLCRClr);
-	ग_लिखोb(WOLCFG_SAB | WOLCFG_SAM, &regs->WOLCFGSet);
-	ग_लिखोw(WOLCR_MAGIC_EN, &regs->WOLCRSet);
+	writew(0xFFFF, &regs->WOLCRClr);
+	writeb(WOLCFG_SAB | WOLCFG_SAM, &regs->WOLCFGSet);
+	writew(WOLCR_MAGIC_EN, &regs->WOLCRSet);
 
 	/*
-	   अगर (vptr->wol_opts & VELOCITY_WOL_PHY)
-	   ग_लिखोw((WOLCR_LINKON_EN|WOLCR_LINKOFF_EN), &regs->WOLCRSet);
+	   if (vptr->wol_opts & VELOCITY_WOL_PHY)
+	   writew((WOLCR_LINKON_EN|WOLCR_LINKOFF_EN), &regs->WOLCRSet);
 	 */
 
-	अगर (vptr->wol_opts & VELOCITY_WOL_UCAST)
-		ग_लिखोw(WOLCR_UNICAST_EN, &regs->WOLCRSet);
+	if (vptr->wol_opts & VELOCITY_WOL_UCAST)
+		writew(WOLCR_UNICAST_EN, &regs->WOLCRSet);
 
-	अगर (vptr->wol_opts & VELOCITY_WOL_ARP) अणु
-		काष्ठा arp_packet *arp = (काष्ठा arp_packet *) buf;
+	if (vptr->wol_opts & VELOCITY_WOL_ARP) {
+		struct arp_packet *arp = (struct arp_packet *) buf;
 		u16 crc;
-		स_रखो(buf, 0, माप(काष्ठा arp_packet) + 7);
+		memset(buf, 0, sizeof(struct arp_packet) + 7);
 
-		क्रम (i = 0; i < 4; i++)
-			ग_लिखोl(mask_pattern[0][i], &regs->ByteMask[0][i]);
+		for (i = 0; i < 4; i++)
+			writel(mask_pattern[0][i], &regs->ByteMask[0][i]);
 
 		arp->type = htons(ETH_P_ARP);
 		arp->ar_op = htons(1);
 
-		स_नकल(arp->ar_tip, vptr->ip_addr, 4);
+		memcpy(arp->ar_tip, vptr->ip_addr, 4);
 
-		crc = wol_calc_crc((माप(काष्ठा arp_packet) + 7) / 8, buf,
+		crc = wol_calc_crc((sizeof(struct arp_packet) + 7) / 8, buf,
 				(u8 *) & mask_pattern[0][0]);
 
-		ग_लिखोw(crc, &regs->PatternCRC[0]);
-		ग_लिखोw(WOLCR_ARP_EN, &regs->WOLCRSet);
-	पूर्ण
+		writew(crc, &regs->PatternCRC[0]);
+		writew(WOLCR_ARP_EN, &regs->WOLCRSet);
+	}
 
 	BYTE_REG_BITS_ON(PWCFG_WOLTYPE, &regs->PWCFGSet);
 	BYTE_REG_BITS_ON(PWCFG_LEGACY_WOLEN, &regs->PWCFGSet);
 
-	ग_लिखोw(0x0FFF, &regs->WOLSRClr);
+	writew(0x0FFF, &regs->WOLSRClr);
 
-	अगर (spd_dpx == SPD_DPX_1000_FULL)
-		जाओ mac_करोne;
+	if (spd_dpx == SPD_DPX_1000_FULL)
+		goto mac_done;
 
-	अगर (spd_dpx != SPD_DPX_AUTO)
-		जाओ advertise_करोne;
+	if (spd_dpx != SPD_DPX_AUTO)
+		goto advertise_done;
 
-	अगर (vptr->mii_status & VELOCITY_AUTONEG_ENABLE) अणु
-		अगर (PHYID_GET_PHY_ID(vptr->phy_id) == PHYID_CICADA_CS8201)
+	if (vptr->mii_status & VELOCITY_AUTONEG_ENABLE) {
+		if (PHYID_GET_PHY_ID(vptr->phy_id) == PHYID_CICADA_CS8201)
 			MII_REG_BITS_ON(AUXCR_MDPPS, MII_NCONFIG, vptr->mac_regs);
 
 		MII_REG_BITS_OFF(ADVERTISE_1000FULL | ADVERTISE_1000HALF, MII_CTRL1000, vptr->mac_regs);
-	पूर्ण
+	}
 
-	अगर (vptr->mii_status & VELOCITY_SPEED_1000)
+	if (vptr->mii_status & VELOCITY_SPEED_1000)
 		MII_REG_BITS_ON(BMCR_ANRESTART, MII_BMCR, vptr->mac_regs);
 
-advertise_करोne:
+advertise_done:
 	BYTE_REG_BITS_ON(CHIPGCR_FCMODE, &regs->CHIPGCR);
 
-	अणु
+	{
 		u8 GCR;
-		GCR = पढ़ोb(&regs->CHIPGCR);
+		GCR = readb(&regs->CHIPGCR);
 		GCR = (GCR & ~CHIPGCR_FCGMII) | CHIPGCR_FCFDX;
-		ग_लिखोb(GCR, &regs->CHIPGCR);
-	पूर्ण
+		writeb(GCR, &regs->CHIPGCR);
+	}
 
-mac_करोne:
+mac_done:
 	BYTE_REG_BITS_OFF(ISR_PWEI, &regs->ISR);
-	/* Turn on SWPTAG just beक्रमe entering घातer mode */
+	/* Turn on SWPTAG just before entering power mode */
 	BYTE_REG_BITS_ON(STICKHW_SWPTAG, &regs->STICKHW);
 	/* Go to bed ..... */
 	BYTE_REG_BITS_ON((STICKHW_DS1 | STICKHW_DS0), &regs->STICKHW);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- *	velocity_save_context	-	save रेजिस्टरs
+ *	velocity_save_context	-	save registers
  *	@vptr: velocity
- *	@context: buffer क्रम stored context
+ *	@context: buffer for stored context
  *
  *	Retrieve the current configuration from the velocity hardware
- *	and stash it in the context काष्ठाure, क्रम use by the context
+ *	and stash it in the context structure, for use by the context
  *	restore functions. This allows us to save things we need across
- *	घातer करोwn states
+ *	power down states
  */
-अटल व्योम velocity_save_context(काष्ठा velocity_info *vptr, काष्ठा velocity_context *context)
-अणु
-	काष्ठा mac_regs __iomem *regs = vptr->mac_regs;
+static void velocity_save_context(struct velocity_info *vptr, struct velocity_context *context)
+{
+	struct mac_regs __iomem *regs = vptr->mac_regs;
 	u16 i;
 	u8 __iomem *ptr = (u8 __iomem *)regs;
 
-	क्रम (i = MAC_REG_PAR; i < MAC_REG_CR0_CLR; i += 4)
-		*((u32 *) (context->mac_reg + i)) = पढ़ोl(ptr + i);
+	for (i = MAC_REG_PAR; i < MAC_REG_CR0_CLR; i += 4)
+		*((u32 *) (context->mac_reg + i)) = readl(ptr + i);
 
-	क्रम (i = MAC_REG_MAR; i < MAC_REG_TDCSR_CLR; i += 4)
-		*((u32 *) (context->mac_reg + i)) = पढ़ोl(ptr + i);
+	for (i = MAC_REG_MAR; i < MAC_REG_TDCSR_CLR; i += 4)
+		*((u32 *) (context->mac_reg + i)) = readl(ptr + i);
 
-	क्रम (i = MAC_REG_RDBASE_LO; i < MAC_REG_FIFO_TEST0; i += 4)
-		*((u32 *) (context->mac_reg + i)) = पढ़ोl(ptr + i);
+	for (i = MAC_REG_RDBASE_LO; i < MAC_REG_FIFO_TEST0; i += 4)
+		*((u32 *) (context->mac_reg + i)) = readl(ptr + i);
 
-पूर्ण
+}
 
-अटल पूर्णांक velocity_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा net_device *netdev = dev_get_drvdata(dev);
-	काष्ठा velocity_info *vptr = netdev_priv(netdev);
-	अचिन्हित दीर्घ flags;
+static int velocity_suspend(struct device *dev)
+{
+	struct net_device *netdev = dev_get_drvdata(dev);
+	struct velocity_info *vptr = netdev_priv(netdev);
+	unsigned long flags;
 
-	अगर (!netअगर_running(vptr->netdev))
-		वापस 0;
+	if (!netif_running(vptr->netdev))
+		return 0;
 
-	netअगर_device_detach(vptr->netdev);
+	netif_device_detach(vptr->netdev);
 
 	spin_lock_irqsave(&vptr->lock, flags);
-	अगर (vptr->pdev)
+	if (vptr->pdev)
 		pci_save_state(vptr->pdev);
 
-	अगर (vptr->flags & VELOCITY_FLAGS_WOL_ENABLED) अणु
+	if (vptr->flags & VELOCITY_FLAGS_WOL_ENABLED) {
 		velocity_get_ip(vptr);
 		velocity_save_context(vptr, &vptr->context);
-		velocity_shutकरोwn(vptr);
+		velocity_shutdown(vptr);
 		velocity_set_wol(vptr);
-		अगर (vptr->pdev)
+		if (vptr->pdev)
 			pci_enable_wake(vptr->pdev, PCI_D3hot, 1);
-		velocity_set_घातer_state(vptr, PCI_D3hot);
-	पूर्ण अन्यथा अणु
+		velocity_set_power_state(vptr, PCI_D3hot);
+	} else {
 		velocity_save_context(vptr, &vptr->context);
-		velocity_shutकरोwn(vptr);
-		अगर (vptr->pdev)
+		velocity_shutdown(vptr);
+		if (vptr->pdev)
 			pci_disable_device(vptr->pdev);
-		velocity_set_घातer_state(vptr, PCI_D3hot);
-	पूर्ण
+		velocity_set_power_state(vptr, PCI_D3hot);
+	}
 
 	spin_unlock_irqrestore(&vptr->lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- *	velocity_restore_context	-	restore रेजिस्टरs
+ *	velocity_restore_context	-	restore registers
  *	@vptr: velocity
- *	@context: buffer क्रम stored context
+ *	@context: buffer for stored context
  *
- *	Reload the रेजिस्टर configuration from the velocity context
+ *	Reload the register configuration from the velocity context
  *	created by velocity_save_context.
  */
-अटल व्योम velocity_restore_context(काष्ठा velocity_info *vptr, काष्ठा velocity_context *context)
-अणु
-	काष्ठा mac_regs __iomem *regs = vptr->mac_regs;
-	पूर्णांक i;
+static void velocity_restore_context(struct velocity_info *vptr, struct velocity_context *context)
+{
+	struct mac_regs __iomem *regs = vptr->mac_regs;
+	int i;
 	u8 __iomem *ptr = (u8 __iomem *)regs;
 
-	क्रम (i = MAC_REG_PAR; i < MAC_REG_CR0_SET; i += 4)
-		ग_लिखोl(*((u32 *) (context->mac_reg + i)), ptr + i);
+	for (i = MAC_REG_PAR; i < MAC_REG_CR0_SET; i += 4)
+		writel(*((u32 *) (context->mac_reg + i)), ptr + i);
 
 	/* Just skip cr0 */
-	क्रम (i = MAC_REG_CR1_SET; i < MAC_REG_CR0_CLR; i++) अणु
+	for (i = MAC_REG_CR1_SET; i < MAC_REG_CR0_CLR; i++) {
 		/* Clear */
-		ग_लिखोb(~(*((u8 *) (context->mac_reg + i))), ptr + i + 4);
+		writeb(~(*((u8 *) (context->mac_reg + i))), ptr + i + 4);
 		/* Set */
-		ग_लिखोb(*((u8 *) (context->mac_reg + i)), ptr + i);
-	पूर्ण
+		writeb(*((u8 *) (context->mac_reg + i)), ptr + i);
+	}
 
-	क्रम (i = MAC_REG_MAR; i < MAC_REG_IMR; i += 4)
-		ग_लिखोl(*((u32 *) (context->mac_reg + i)), ptr + i);
+	for (i = MAC_REG_MAR; i < MAC_REG_IMR; i += 4)
+		writel(*((u32 *) (context->mac_reg + i)), ptr + i);
 
-	क्रम (i = MAC_REG_RDBASE_LO; i < MAC_REG_FIFO_TEST0; i += 4)
-		ग_लिखोl(*((u32 *) (context->mac_reg + i)), ptr + i);
+	for (i = MAC_REG_RDBASE_LO; i < MAC_REG_FIFO_TEST0; i += 4)
+		writel(*((u32 *) (context->mac_reg + i)), ptr + i);
 
-	क्रम (i = MAC_REG_TDCSR_SET; i <= MAC_REG_RDCSR_SET; i++)
-		ग_लिखोb(*((u8 *) (context->mac_reg + i)), ptr + i);
-पूर्ण
+	for (i = MAC_REG_TDCSR_SET; i <= MAC_REG_RDCSR_SET; i++)
+		writeb(*((u8 *) (context->mac_reg + i)), ptr + i);
+}
 
-अटल पूर्णांक velocity_resume(काष्ठा device *dev)
-अणु
-	काष्ठा net_device *netdev = dev_get_drvdata(dev);
-	काष्ठा velocity_info *vptr = netdev_priv(netdev);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक i;
+static int velocity_resume(struct device *dev)
+{
+	struct net_device *netdev = dev_get_drvdata(dev);
+	struct velocity_info *vptr = netdev_priv(netdev);
+	unsigned long flags;
+	int i;
 
-	अगर (!netअगर_running(vptr->netdev))
-		वापस 0;
+	if (!netif_running(vptr->netdev))
+		return 0;
 
-	velocity_set_घातer_state(vptr, PCI_D0);
+	velocity_set_power_state(vptr, PCI_D0);
 
-	अगर (vptr->pdev) अणु
+	if (vptr->pdev) {
 		pci_enable_wake(vptr->pdev, PCI_D0, 0);
 		pci_restore_state(vptr->pdev);
-	पूर्ण
+	}
 
 	mac_wol_reset(vptr->mac_regs);
 
 	spin_lock_irqsave(&vptr->lock, flags);
 	velocity_restore_context(vptr, &vptr->context);
-	velocity_init_रेजिस्टरs(vptr, VELOCITY_INIT_WOL);
-	mac_disable_पूर्णांक(vptr->mac_regs);
+	velocity_init_registers(vptr, VELOCITY_INIT_WOL);
+	mac_disable_int(vptr->mac_regs);
 
 	velocity_tx_srv(vptr);
 
-	क्रम (i = 0; i < vptr->tx.numq; i++) अणु
-		अगर (vptr->tx.used[i])
+	for (i = 0; i < vptr->tx.numq; i++) {
+		if (vptr->tx.used[i])
 			mac_tx_queue_wake(vptr->mac_regs, i);
-	पूर्ण
+	}
 
-	mac_enable_पूर्णांक(vptr->mac_regs);
+	mac_enable_int(vptr->mac_regs);
 	spin_unlock_irqrestore(&vptr->lock, flags);
-	netअगर_device_attach(vptr->netdev);
+	netif_device_attach(vptr->netdev);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर	/* CONFIG_PM_SLEEP */
+	return 0;
+}
+#endif	/* CONFIG_PM_SLEEP */
 
-अटल SIMPLE_DEV_PM_OPS(velocity_pm_ops, velocity_suspend, velocity_resume);
+static SIMPLE_DEV_PM_OPS(velocity_pm_ops, velocity_suspend, velocity_resume);
 
 /*
- *	Definition क्रम our device driver. The PCI layer पूर्णांकerface
+ *	Definition for our device driver. The PCI layer interface
  *	uses this to handle all our card discover and plugging
  */
-अटल काष्ठा pci_driver velocity_pci_driver = अणु
+static struct pci_driver velocity_pci_driver = {
 	.name		= VELOCITY_NAME,
 	.id_table	= velocity_pci_id_table,
 	.probe		= velocity_pci_probe,
-	.हटाओ		= velocity_pci_हटाओ,
-	.driver = अणु
+	.remove		= velocity_pci_remove,
+	.driver = {
 		.pm = &velocity_pm_ops,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा platक्रमm_driver velocity_platक्रमm_driver = अणु
-	.probe		= velocity_platक्रमm_probe,
-	.हटाओ		= velocity_platक्रमm_हटाओ,
-	.driver = अणु
+static struct platform_driver velocity_platform_driver = {
+	.probe		= velocity_platform_probe,
+	.remove		= velocity_platform_remove,
+	.driver = {
 		.name = "via-velocity",
 		.of_match_table = velocity_of_ids,
 		.pm = &velocity_pm_ops,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /**
- *	velocity_ethtool_up	-	pre hook क्रम ethtool
+ *	velocity_ethtool_up	-	pre hook for ethtool
  *	@dev: network device
  *
- *	Called beक्रमe an ethtool operation. We need to make sure the
- *	chip is out of D3 state beक्रमe we poke at it. In हाल of ethtool
+ *	Called before an ethtool operation. We need to make sure the
+ *	chip is out of D3 state before we poke at it. In case of ethtool
  *	ops nesting, only wake the device up in the outermost block.
  */
-अटल पूर्णांक velocity_ethtool_up(काष्ठा net_device *dev)
-अणु
-	काष्ठा velocity_info *vptr = netdev_priv(dev);
+static int velocity_ethtool_up(struct net_device *dev)
+{
+	struct velocity_info *vptr = netdev_priv(dev);
 
-	अगर (vptr->ethtool_ops_nesting == U32_MAX)
-		वापस -EBUSY;
-	अगर (!vptr->ethtool_ops_nesting++ && !netअगर_running(dev))
-		velocity_set_घातer_state(vptr, PCI_D0);
-	वापस 0;
-पूर्ण
+	if (vptr->ethtool_ops_nesting == U32_MAX)
+		return -EBUSY;
+	if (!vptr->ethtool_ops_nesting++ && !netif_running(dev))
+		velocity_set_power_state(vptr, PCI_D0);
+	return 0;
+}
 
 /**
- *	velocity_ethtool_करोwn	-	post hook क्रम ethtool
+ *	velocity_ethtool_down	-	post hook for ethtool
  *	@dev: network device
  *
  *	Called after an ethtool operation. Restore the chip back to D3
- *	state अगर it isn't running. In हाल of ethtool ops nesting, only
+ *	state if it isn't running. In case of ethtool ops nesting, only
  *	put the device to sleep in the outermost block.
  */
-अटल व्योम velocity_ethtool_करोwn(काष्ठा net_device *dev)
-अणु
-	काष्ठा velocity_info *vptr = netdev_priv(dev);
+static void velocity_ethtool_down(struct net_device *dev)
+{
+	struct velocity_info *vptr = netdev_priv(dev);
 
-	अगर (!--vptr->ethtool_ops_nesting && !netअगर_running(dev))
-		velocity_set_घातer_state(vptr, PCI_D3hot);
-पूर्ण
+	if (!--vptr->ethtool_ops_nesting && !netif_running(dev))
+		velocity_set_power_state(vptr, PCI_D3hot);
+}
 
-अटल पूर्णांक velocity_get_link_ksettings(काष्ठा net_device *dev,
-				       काष्ठा ethtool_link_ksettings *cmd)
-अणु
-	काष्ठा velocity_info *vptr = netdev_priv(dev);
-	काष्ठा mac_regs __iomem *regs = vptr->mac_regs;
+static int velocity_get_link_ksettings(struct net_device *dev,
+				       struct ethtool_link_ksettings *cmd)
+{
+	struct velocity_info *vptr = netdev_priv(dev);
+	struct mac_regs __iomem *regs = vptr->mac_regs;
 	u32 status;
 	u32 supported, advertising;
 
@@ -3315,7 +3314,7 @@ mac_करोne:
 			SUPPORTED_1000baseT_Full;
 
 	advertising = ADVERTISED_TP | ADVERTISED_Autoneg;
-	अगर (vptr->options.spd_dpx == SPD_DPX_AUTO) अणु
+	if (vptr->options.spd_dpx == SPD_DPX_AUTO) {
 		advertising |=
 			ADVERTISED_10baseT_Half |
 			ADVERTISED_10baseT_Full |
@@ -3323,43 +3322,43 @@ mac_करोne:
 			ADVERTISED_100baseT_Full |
 			ADVERTISED_1000baseT_Half |
 			ADVERTISED_1000baseT_Full;
-	पूर्ण अन्यथा अणु
-		चयन (vptr->options.spd_dpx) अणु
-		हाल SPD_DPX_1000_FULL:
+	} else {
+		switch (vptr->options.spd_dpx) {
+		case SPD_DPX_1000_FULL:
 			advertising |= ADVERTISED_1000baseT_Full;
-			अवरोध;
-		हाल SPD_DPX_100_HALF:
+			break;
+		case SPD_DPX_100_HALF:
 			advertising |= ADVERTISED_100baseT_Half;
-			अवरोध;
-		हाल SPD_DPX_100_FULL:
+			break;
+		case SPD_DPX_100_FULL:
 			advertising |= ADVERTISED_100baseT_Full;
-			अवरोध;
-		हाल SPD_DPX_10_HALF:
+			break;
+		case SPD_DPX_10_HALF:
 			advertising |= ADVERTISED_10baseT_Half;
-			अवरोध;
-		हाल SPD_DPX_10_FULL:
+			break;
+		case SPD_DPX_10_FULL:
 			advertising |= ADVERTISED_10baseT_Full;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		default:
+			break;
+		}
+	}
 
-	अगर (status & VELOCITY_SPEED_1000)
+	if (status & VELOCITY_SPEED_1000)
 		cmd->base.speed = SPEED_1000;
-	अन्यथा अगर (status & VELOCITY_SPEED_100)
+	else if (status & VELOCITY_SPEED_100)
 		cmd->base.speed = SPEED_100;
-	अन्यथा
+	else
 		cmd->base.speed = SPEED_10;
 
-	cmd->base.स्वतःneg = (status & VELOCITY_AUTONEG_ENABLE) ?
+	cmd->base.autoneg = (status & VELOCITY_AUTONEG_ENABLE) ?
 		AUTONEG_ENABLE : AUTONEG_DISABLE;
 	cmd->base.port = PORT_TP;
-	cmd->base.phy_address = पढ़ोb(&regs->MIIADR) & 0x1F;
+	cmd->base.phy_address = readb(&regs->MIIADR) & 0x1F;
 
-	अगर (status & VELOCITY_DUPLEX_FULL)
+	if (status & VELOCITY_DUPLEX_FULL)
 		cmd->base.duplex = DUPLEX_FULL;
-	अन्यथा
+	else
 		cmd->base.duplex = DUPLEX_HALF;
 
 	ethtool_convert_legacy_u32_to_link_mode(cmd->link_modes.supported,
@@ -3367,214 +3366,214 @@ mac_करोne:
 	ethtool_convert_legacy_u32_to_link_mode(cmd->link_modes.advertising,
 						advertising);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक velocity_set_link_ksettings(काष्ठा net_device *dev,
-				       स्थिर काष्ठा ethtool_link_ksettings *cmd)
-अणु
-	काष्ठा velocity_info *vptr = netdev_priv(dev);
+static int velocity_set_link_ksettings(struct net_device *dev,
+				       const struct ethtool_link_ksettings *cmd)
+{
+	struct velocity_info *vptr = netdev_priv(dev);
 	u32 speed = cmd->base.speed;
 	u32 curr_status;
 	u32 new_status = 0;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	curr_status = check_connection_type(vptr->mac_regs);
 	curr_status &= (~VELOCITY_LINK_FAIL);
 
-	new_status |= ((cmd->base.स्वतःneg) ? VELOCITY_AUTONEG_ENABLE : 0);
+	new_status |= ((cmd->base.autoneg) ? VELOCITY_AUTONEG_ENABLE : 0);
 	new_status |= ((speed == SPEED_1000) ? VELOCITY_SPEED_1000 : 0);
 	new_status |= ((speed == SPEED_100) ? VELOCITY_SPEED_100 : 0);
 	new_status |= ((speed == SPEED_10) ? VELOCITY_SPEED_10 : 0);
 	new_status |= ((cmd->base.duplex == DUPLEX_FULL) ?
 		       VELOCITY_DUPLEX_FULL : 0);
 
-	अगर ((new_status & VELOCITY_AUTONEG_ENABLE) &&
-	    (new_status != (curr_status | VELOCITY_AUTONEG_ENABLE))) अणु
+	if ((new_status & VELOCITY_AUTONEG_ENABLE) &&
+	    (new_status != (curr_status | VELOCITY_AUTONEG_ENABLE))) {
 		ret = -EINVAL;
-	पूर्ण अन्यथा अणु
-		क्रमागत speed_opt spd_dpx;
+	} else {
+		enum speed_opt spd_dpx;
 
-		अगर (new_status & VELOCITY_AUTONEG_ENABLE)
+		if (new_status & VELOCITY_AUTONEG_ENABLE)
 			spd_dpx = SPD_DPX_AUTO;
-		अन्यथा अगर ((new_status & VELOCITY_SPEED_1000) &&
-			 (new_status & VELOCITY_DUPLEX_FULL)) अणु
+		else if ((new_status & VELOCITY_SPEED_1000) &&
+			 (new_status & VELOCITY_DUPLEX_FULL)) {
 			spd_dpx = SPD_DPX_1000_FULL;
-		पूर्ण अन्यथा अगर (new_status & VELOCITY_SPEED_100)
+		} else if (new_status & VELOCITY_SPEED_100)
 			spd_dpx = (new_status & VELOCITY_DUPLEX_FULL) ?
 				SPD_DPX_100_FULL : SPD_DPX_100_HALF;
-		अन्यथा अगर (new_status & VELOCITY_SPEED_10)
+		else if (new_status & VELOCITY_SPEED_10)
 			spd_dpx = (new_status & VELOCITY_DUPLEX_FULL) ?
 				SPD_DPX_10_FULL : SPD_DPX_10_HALF;
-		अन्यथा
-			वापस -EOPNOTSUPP;
+		else
+			return -EOPNOTSUPP;
 
 		vptr->options.spd_dpx = spd_dpx;
 
 		velocity_set_media_mode(vptr, new_status);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम velocity_get_drvinfo(काष्ठा net_device *dev, काष्ठा ethtool_drvinfo *info)
-अणु
-	काष्ठा velocity_info *vptr = netdev_priv(dev);
+static void velocity_get_drvinfo(struct net_device *dev, struct ethtool_drvinfo *info)
+{
+	struct velocity_info *vptr = netdev_priv(dev);
 
-	strlcpy(info->driver, VELOCITY_NAME, माप(info->driver));
-	strlcpy(info->version, VELOCITY_VERSION, माप(info->version));
-	अगर (vptr->pdev)
+	strlcpy(info->driver, VELOCITY_NAME, sizeof(info->driver));
+	strlcpy(info->version, VELOCITY_VERSION, sizeof(info->version));
+	if (vptr->pdev)
 		strlcpy(info->bus_info, pci_name(vptr->pdev),
-						माप(info->bus_info));
-	अन्यथा
-		strlcpy(info->bus_info, "platform", माप(info->bus_info));
-पूर्ण
+						sizeof(info->bus_info));
+	else
+		strlcpy(info->bus_info, "platform", sizeof(info->bus_info));
+}
 
-अटल व्योम velocity_ethtool_get_wol(काष्ठा net_device *dev, काष्ठा ethtool_wolinfo *wol)
-अणु
-	काष्ठा velocity_info *vptr = netdev_priv(dev);
+static void velocity_ethtool_get_wol(struct net_device *dev, struct ethtool_wolinfo *wol)
+{
+	struct velocity_info *vptr = netdev_priv(dev);
 	wol->supported = WAKE_PHY | WAKE_MAGIC | WAKE_UCAST | WAKE_ARP;
 	wol->wolopts |= WAKE_MAGIC;
 	/*
-	   अगर (vptr->wol_opts & VELOCITY_WOL_PHY)
+	   if (vptr->wol_opts & VELOCITY_WOL_PHY)
 		   wol.wolopts|=WAKE_PHY;
 			 */
-	अगर (vptr->wol_opts & VELOCITY_WOL_UCAST)
+	if (vptr->wol_opts & VELOCITY_WOL_UCAST)
 		wol->wolopts |= WAKE_UCAST;
-	अगर (vptr->wol_opts & VELOCITY_WOL_ARP)
+	if (vptr->wol_opts & VELOCITY_WOL_ARP)
 		wol->wolopts |= WAKE_ARP;
-	स_नकल(&wol->sopass, vptr->wol_passwd, 6);
-पूर्ण
+	memcpy(&wol->sopass, vptr->wol_passwd, 6);
+}
 
-अटल पूर्णांक velocity_ethtool_set_wol(काष्ठा net_device *dev, काष्ठा ethtool_wolinfo *wol)
-अणु
-	काष्ठा velocity_info *vptr = netdev_priv(dev);
+static int velocity_ethtool_set_wol(struct net_device *dev, struct ethtool_wolinfo *wol)
+{
+	struct velocity_info *vptr = netdev_priv(dev);
 
-	अगर (!(wol->wolopts & (WAKE_PHY | WAKE_MAGIC | WAKE_UCAST | WAKE_ARP)))
-		वापस -EFAULT;
+	if (!(wol->wolopts & (WAKE_PHY | WAKE_MAGIC | WAKE_UCAST | WAKE_ARP)))
+		return -EFAULT;
 	vptr->wol_opts = VELOCITY_WOL_MAGIC;
 
 	/*
-	   अगर (wol.wolopts & WAKE_PHY) अणु
+	   if (wol.wolopts & WAKE_PHY) {
 	   vptr->wol_opts|=VELOCITY_WOL_PHY;
 	   vptr->flags |=VELOCITY_FLAGS_WOL_ENABLED;
-	   पूर्ण
+	   }
 	 */
 
-	अगर (wol->wolopts & WAKE_MAGIC) अणु
+	if (wol->wolopts & WAKE_MAGIC) {
 		vptr->wol_opts |= VELOCITY_WOL_MAGIC;
 		vptr->flags |= VELOCITY_FLAGS_WOL_ENABLED;
-	पूर्ण
-	अगर (wol->wolopts & WAKE_UCAST) अणु
+	}
+	if (wol->wolopts & WAKE_UCAST) {
 		vptr->wol_opts |= VELOCITY_WOL_UCAST;
 		vptr->flags |= VELOCITY_FLAGS_WOL_ENABLED;
-	पूर्ण
-	अगर (wol->wolopts & WAKE_ARP) अणु
+	}
+	if (wol->wolopts & WAKE_ARP) {
 		vptr->wol_opts |= VELOCITY_WOL_ARP;
 		vptr->flags |= VELOCITY_FLAGS_WOL_ENABLED;
-	पूर्ण
-	स_नकल(vptr->wol_passwd, wol->sopass, 6);
-	वापस 0;
-पूर्ण
+	}
+	memcpy(vptr->wol_passwd, wol->sopass, 6);
+	return 0;
+}
 
-अटल पूर्णांक get_pending_समयr_val(पूर्णांक val)
-अणु
-	पूर्णांक mult_bits = val >> 6;
-	पूर्णांक mult = 1;
+static int get_pending_timer_val(int val)
+{
+	int mult_bits = val >> 6;
+	int mult = 1;
 
-	चयन (mult_bits)
-	अणु
-	हाल 1:
-		mult = 4; अवरोध;
-	हाल 2:
-		mult = 16; अवरोध;
-	हाल 3:
-		mult = 64; अवरोध;
-	हाल 0:
-	शेष:
-		अवरोध;
-	पूर्ण
+	switch (mult_bits)
+	{
+	case 1:
+		mult = 4; break;
+	case 2:
+		mult = 16; break;
+	case 3:
+		mult = 64; break;
+	case 0:
+	default:
+		break;
+	}
 
-	वापस (val & 0x3f) * mult;
-पूर्ण
+	return (val & 0x3f) * mult;
+}
 
-अटल व्योम set_pending_समयr_val(पूर्णांक *val, u32 us)
-अणु
+static void set_pending_timer_val(int *val, u32 us)
+{
 	u8 mult = 0;
-	u8 shअगरt = 0;
+	u8 shift = 0;
 
-	अगर (us >= 0x3f) अणु
+	if (us >= 0x3f) {
 		mult = 1; /* mult with 4 */
-		shअगरt = 2;
-	पूर्ण
-	अगर (us >= 0x3f * 4) अणु
+		shift = 2;
+	}
+	if (us >= 0x3f * 4) {
 		mult = 2; /* mult with 16 */
-		shअगरt = 4;
-	पूर्ण
-	अगर (us >= 0x3f * 16) अणु
+		shift = 4;
+	}
+	if (us >= 0x3f * 16) {
 		mult = 3; /* mult with 64 */
-		shअगरt = 6;
-	पूर्ण
+		shift = 6;
+	}
 
-	*val = (mult << 6) | ((us >> shअगरt) & 0x3f);
-पूर्ण
+	*val = (mult << 6) | ((us >> shift) & 0x3f);
+}
 
 
-अटल पूर्णांक velocity_get_coalesce(काष्ठा net_device *dev,
-		काष्ठा ethtool_coalesce *ecmd)
-अणु
-	काष्ठा velocity_info *vptr = netdev_priv(dev);
+static int velocity_get_coalesce(struct net_device *dev,
+		struct ethtool_coalesce *ecmd)
+{
+	struct velocity_info *vptr = netdev_priv(dev);
 
-	ecmd->tx_max_coalesced_frames = vptr->options.tx_पूर्णांकsup;
-	ecmd->rx_max_coalesced_frames = vptr->options.rx_पूर्णांकsup;
+	ecmd->tx_max_coalesced_frames = vptr->options.tx_intsup;
+	ecmd->rx_max_coalesced_frames = vptr->options.rx_intsup;
 
-	ecmd->rx_coalesce_usecs = get_pending_समयr_val(vptr->options.rxqueue_समयr);
-	ecmd->tx_coalesce_usecs = get_pending_समयr_val(vptr->options.txqueue_समयr);
+	ecmd->rx_coalesce_usecs = get_pending_timer_val(vptr->options.rxqueue_timer);
+	ecmd->tx_coalesce_usecs = get_pending_timer_val(vptr->options.txqueue_timer);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक velocity_set_coalesce(काष्ठा net_device *dev,
-		काष्ठा ethtool_coalesce *ecmd)
-अणु
-	काष्ठा velocity_info *vptr = netdev_priv(dev);
-	पूर्णांक max_us = 0x3f * 64;
-	अचिन्हित दीर्घ flags;
+static int velocity_set_coalesce(struct net_device *dev,
+		struct ethtool_coalesce *ecmd)
+{
+	struct velocity_info *vptr = netdev_priv(dev);
+	int max_us = 0x3f * 64;
+	unsigned long flags;
 
 	/* 6 bits of  */
-	अगर (ecmd->tx_coalesce_usecs > max_us)
-		वापस -EINVAL;
-	अगर (ecmd->rx_coalesce_usecs > max_us)
-		वापस -EINVAL;
+	if (ecmd->tx_coalesce_usecs > max_us)
+		return -EINVAL;
+	if (ecmd->rx_coalesce_usecs > max_us)
+		return -EINVAL;
 
-	अगर (ecmd->tx_max_coalesced_frames > 0xff)
-		वापस -EINVAL;
-	अगर (ecmd->rx_max_coalesced_frames > 0xff)
-		वापस -EINVAL;
+	if (ecmd->tx_max_coalesced_frames > 0xff)
+		return -EINVAL;
+	if (ecmd->rx_max_coalesced_frames > 0xff)
+		return -EINVAL;
 
-	vptr->options.rx_पूर्णांकsup = ecmd->rx_max_coalesced_frames;
-	vptr->options.tx_पूर्णांकsup = ecmd->tx_max_coalesced_frames;
+	vptr->options.rx_intsup = ecmd->rx_max_coalesced_frames;
+	vptr->options.tx_intsup = ecmd->tx_max_coalesced_frames;
 
-	set_pending_समयr_val(&vptr->options.rxqueue_समयr,
+	set_pending_timer_val(&vptr->options.rxqueue_timer,
 			ecmd->rx_coalesce_usecs);
-	set_pending_समयr_val(&vptr->options.txqueue_समयr,
+	set_pending_timer_val(&vptr->options.txqueue_timer,
 			ecmd->tx_coalesce_usecs);
 
-	/* Setup the पूर्णांकerrupt suppression and queue समयrs */
+	/* Setup the interrupt suppression and queue timers */
 	spin_lock_irqsave(&vptr->lock, flags);
-	mac_disable_पूर्णांक(vptr->mac_regs);
-	setup_adaptive_पूर्णांकerrupts(vptr);
-	setup_queue_समयrs(vptr);
+	mac_disable_int(vptr->mac_regs);
+	setup_adaptive_interrupts(vptr);
+	setup_queue_timers(vptr);
 
-	mac_ग_लिखो_पूर्णांक_mask(vptr->पूर्णांक_mask, vptr->mac_regs);
+	mac_write_int_mask(vptr->int_mask, vptr->mac_regs);
 	mac_clear_isr(vptr->mac_regs);
-	mac_enable_पूर्णांक(vptr->mac_regs);
+	mac_enable_int(vptr->mac_regs);
 	spin_unlock_irqrestore(&vptr->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर अक्षर velocity_gstrings[][ETH_GSTRING_LEN] = अणु
+static const char velocity_gstrings[][ETH_GSTRING_LEN] = {
 	"rx_all",
 	"rx_ok",
 	"tx_ok",
@@ -3607,45 +3606,45 @@ mac_करोne:
 	"rx_symbol_errors",
 	"in_range_length_errors",
 	"late_collisions"
-पूर्ण;
+};
 
-अटल व्योम velocity_get_strings(काष्ठा net_device *dev, u32 sset, u8 *data)
-अणु
-	चयन (sset) अणु
-	हाल ETH_SS_STATS:
-		स_नकल(data, *velocity_gstrings, माप(velocity_gstrings));
-		अवरोध;
-	पूर्ण
-पूर्ण
+static void velocity_get_strings(struct net_device *dev, u32 sset, u8 *data)
+{
+	switch (sset) {
+	case ETH_SS_STATS:
+		memcpy(data, *velocity_gstrings, sizeof(velocity_gstrings));
+		break;
+	}
+}
 
-अटल पूर्णांक velocity_get_sset_count(काष्ठा net_device *dev, पूर्णांक sset)
-अणु
-	चयन (sset) अणु
-	हाल ETH_SS_STATS:
-		वापस ARRAY_SIZE(velocity_gstrings);
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+static int velocity_get_sset_count(struct net_device *dev, int sset)
+{
+	switch (sset) {
+	case ETH_SS_STATS:
+		return ARRAY_SIZE(velocity_gstrings);
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल व्योम velocity_get_ethtool_stats(काष्ठा net_device *dev,
-				       काष्ठा ethtool_stats *stats, u64 *data)
-अणु
-	अगर (netअगर_running(dev)) अणु
-		काष्ठा velocity_info *vptr = netdev_priv(dev);
+static void velocity_get_ethtool_stats(struct net_device *dev,
+				       struct ethtool_stats *stats, u64 *data)
+{
+	if (netif_running(dev)) {
+		struct velocity_info *vptr = netdev_priv(dev);
 		u32 *p = vptr->mib_counter;
-		पूर्णांक i;
+		int i;
 
 		spin_lock_irq(&vptr->lock);
 		velocity_update_hw_mibs(vptr);
 		spin_unlock_irq(&vptr->lock);
 
-		क्रम (i = 0; i < ARRAY_SIZE(velocity_gstrings); i++)
+		for (i = 0; i < ARRAY_SIZE(velocity_gstrings); i++)
 			*data++ = *p++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल स्थिर काष्ठा ethtool_ops velocity_ethtool_ops = अणु
+static const struct ethtool_ops velocity_ethtool_ops = {
 	.supported_coalesce_params = ETHTOOL_COALESCE_USECS |
 				     ETHTOOL_COALESCE_MAX_FRAMES,
 	.get_drvinfo		= velocity_get_drvinfo,
@@ -3658,86 +3657,86 @@ mac_करोne:
 	.get_coalesce		= velocity_get_coalesce,
 	.set_coalesce		= velocity_set_coalesce,
 	.begin			= velocity_ethtool_up,
-	.complete		= velocity_ethtool_करोwn,
+	.complete		= velocity_ethtool_down,
 	.get_link_ksettings	= velocity_get_link_ksettings,
 	.set_link_ksettings	= velocity_set_link_ksettings,
-पूर्ण;
+};
 
-#अगर defined(CONFIG_PM) && defined(CONFIG_INET)
-अटल पूर्णांक velocity_netdev_event(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ notअगरication, व्योम *ptr)
-अणु
-	काष्ठा in_अगरaddr *अगरa = ptr;
-	काष्ठा net_device *dev = अगरa->अगरa_dev->dev;
+#if defined(CONFIG_PM) && defined(CONFIG_INET)
+static int velocity_netdev_event(struct notifier_block *nb, unsigned long notification, void *ptr)
+{
+	struct in_ifaddr *ifa = ptr;
+	struct net_device *dev = ifa->ifa_dev->dev;
 
-	अगर (dev_net(dev) == &init_net &&
+	if (dev_net(dev) == &init_net &&
 	    dev->netdev_ops == &velocity_netdev_ops)
 		velocity_get_ip(netdev_priv(dev));
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल काष्ठा notअगरier_block velocity_inetaddr_notअगरier = अणु
-	.notअगरier_call	= velocity_netdev_event,
-पूर्ण;
+static struct notifier_block velocity_inetaddr_notifier = {
+	.notifier_call	= velocity_netdev_event,
+};
 
-अटल व्योम velocity_रेजिस्टर_notअगरier(व्योम)
-अणु
-	रेजिस्टर_inetaddr_notअगरier(&velocity_inetaddr_notअगरier);
-पूर्ण
+static void velocity_register_notifier(void)
+{
+	register_inetaddr_notifier(&velocity_inetaddr_notifier);
+}
 
-अटल व्योम velocity_unरेजिस्टर_notअगरier(व्योम)
-अणु
-	unरेजिस्टर_inetaddr_notअगरier(&velocity_inetaddr_notअगरier);
-पूर्ण
+static void velocity_unregister_notifier(void)
+{
+	unregister_inetaddr_notifier(&velocity_inetaddr_notifier);
+}
 
-#अन्यथा
+#else
 
-#घोषणा velocity_रेजिस्टर_notअगरier()	करो अणुपूर्ण जबतक (0)
-#घोषणा velocity_unरेजिस्टर_notअगरier()	करो अणुपूर्ण जबतक (0)
+#define velocity_register_notifier()	do {} while (0)
+#define velocity_unregister_notifier()	do {} while (0)
 
-#पूर्ण_अगर	/* defined(CONFIG_PM) && defined(CONFIG_INET) */
+#endif	/* defined(CONFIG_PM) && defined(CONFIG_INET) */
 
 /**
- *	velocity_init_module	-	load समय function
+ *	velocity_init_module	-	load time function
  *
  *	Called when the velocity module is loaded. The PCI driver
- *	is रेजिस्टरed with the PCI layer, and in turn will call
- *	the probe functions क्रम each velocity adapter installed
- *	in the प्रणाली.
+ *	is registered with the PCI layer, and in turn will call
+ *	the probe functions for each velocity adapter installed
+ *	in the system.
  */
-अटल पूर्णांक __init velocity_init_module(व्योम)
-अणु
-	पूर्णांक ret_pci, ret_platक्रमm;
+static int __init velocity_init_module(void)
+{
+	int ret_pci, ret_platform;
 
-	velocity_रेजिस्टर_notअगरier();
+	velocity_register_notifier();
 
-	ret_pci = pci_रेजिस्टर_driver(&velocity_pci_driver);
-	ret_platक्रमm = platक्रमm_driver_रेजिस्टर(&velocity_platक्रमm_driver);
+	ret_pci = pci_register_driver(&velocity_pci_driver);
+	ret_platform = platform_driver_register(&velocity_platform_driver);
 
-	/* अगर both_रेजिस्टरs failed, हटाओ the notअगरier */
-	अगर ((ret_pci < 0) && (ret_platक्रमm < 0)) अणु
-		velocity_unरेजिस्टर_notअगरier();
-		वापस ret_pci;
-	पूर्ण
+	/* if both_registers failed, remove the notifier */
+	if ((ret_pci < 0) && (ret_platform < 0)) {
+		velocity_unregister_notifier();
+		return ret_pci;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  *	velocity_cleanup	-	module unload
  *
  *	When the velocity hardware is unloaded this function is called.
- *	It will clean up the notअगरiers and the unरेजिस्टर the PCI
- *	driver पूर्णांकerface क्रम this hardware. This in turn cleans up
- *	all discovered पूर्णांकerfaces beक्रमe वापसing from the function
+ *	It will clean up the notifiers and the unregister the PCI
+ *	driver interface for this hardware. This in turn cleans up
+ *	all discovered interfaces before returning from the function
  */
-अटल व्योम __निकास velocity_cleanup_module(व्योम)
-अणु
-	velocity_unरेजिस्टर_notअगरier();
+static void __exit velocity_cleanup_module(void)
+{
+	velocity_unregister_notifier();
 
-	pci_unरेजिस्टर_driver(&velocity_pci_driver);
-	platक्रमm_driver_unरेजिस्टर(&velocity_platक्रमm_driver);
-पूर्ण
+	pci_unregister_driver(&velocity_pci_driver);
+	platform_driver_unregister(&velocity_platform_driver);
+}
 
 module_init(velocity_init_module);
-module_निकास(velocity_cleanup_module);
+module_exit(velocity_cleanup_module);

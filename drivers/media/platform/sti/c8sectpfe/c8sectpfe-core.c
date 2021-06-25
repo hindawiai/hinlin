@@ -1,110 +1,109 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * c8sectpfe-core.c - C8SECTPFE STi DVB driver
  *
  * Copyright (c) STMicroelectronics 2015
  *
  *   Author:Peter Bennett <peter.bennett@st.com>
- *	    Peter Grअगरfin <peter.grअगरfin@linaro.org>
+ *	    Peter Griffin <peter.griffin@linaro.org>
  *
  */
-#समावेश <linux/atomic.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/dvb/dmx.h>
-#समावेश <linux/dvb/frontend.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/firmware.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/of_gpपन.स>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/version.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/pinctrl/pinctrl.h>
+#include <linux/atomic.h>
+#include <linux/clk.h>
+#include <linux/completion.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/dma-mapping.h>
+#include <linux/dvb/dmx.h>
+#include <linux/dvb/frontend.h>
+#include <linux/errno.h>
+#include <linux/firmware.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/of_gpio.h>
+#include <linux/of_platform.h>
+#include <linux/platform_device.h>
+#include <linux/usb.h>
+#include <linux/slab.h>
+#include <linux/time.h>
+#include <linux/version.h>
+#include <linux/wait.h>
+#include <linux/pinctrl/pinctrl.h>
 
-#समावेश "c8sectpfe-core.h"
-#समावेश "c8sectpfe-common.h"
-#समावेश "c8sectpfe-debugfs.h"
-#समावेश <media/dmxdev.h>
-#समावेश <media/dvb_demux.h>
-#समावेश <media/dvb_frontend.h>
-#समावेश <media/dvb_net.h>
+#include "c8sectpfe-core.h"
+#include "c8sectpfe-common.h"
+#include "c8sectpfe-debugfs.h"
+#include <media/dmxdev.h>
+#include <media/dvb_demux.h>
+#include <media/dvb_frontend.h>
+#include <media/dvb_net.h>
 
-#घोषणा FIRMWARE_MEMDMA "pti_memdma_h407.elf"
+#define FIRMWARE_MEMDMA "pti_memdma_h407.elf"
 MODULE_FIRMWARE(FIRMWARE_MEMDMA);
 
-#घोषणा PID_TABLE_SIZE 1024
-#घोषणा POLL_MSECS 50
+#define PID_TABLE_SIZE 1024
+#define POLL_MSECS 50
 
-अटल पूर्णांक load_c8sectpfe_fw(काष्ठा c8sectpfei *fei);
+static int load_c8sectpfe_fw(struct c8sectpfei *fei);
 
-#घोषणा TS_PKT_SIZE 188
-#घोषणा HEADER_SIZE (4)
-#घोषणा PACKET_SIZE (TS_PKT_SIZE+HEADER_SIZE)
+#define TS_PKT_SIZE 188
+#define HEADER_SIZE (4)
+#define PACKET_SIZE (TS_PKT_SIZE+HEADER_SIZE)
 
-#घोषणा FEI_ALIGNMENT (32)
+#define FEI_ALIGNMENT (32)
 /* hw requires minimum of 8*PACKET_SIZE and padded to 8byte boundary */
-#घोषणा FEI_BUFFER_SIZE (8*PACKET_SIZE*340)
+#define FEI_BUFFER_SIZE (8*PACKET_SIZE*340)
 
-#घोषणा FIFO_LEN 1024
+#define FIFO_LEN 1024
 
-अटल व्योम c8sectpfe_समयr_पूर्णांकerrupt(काष्ठा समयr_list *t)
-अणु
-	काष्ठा c8sectpfei *fei = from_समयr(fei, t, समयr);
-	काष्ठा channel_info *channel;
-	पूर्णांक chan_num;
+static void c8sectpfe_timer_interrupt(struct timer_list *t)
+{
+	struct c8sectpfei *fei = from_timer(fei, t, timer);
+	struct channel_info *channel;
+	int chan_num;
 
 	/* iterate through input block channels */
-	क्रम (chan_num = 0; chan_num < fei->tsin_count; chan_num++) अणु
+	for (chan_num = 0; chan_num < fei->tsin_count; chan_num++) {
 		channel = fei->channel_data[chan_num];
 
 		/* is this descriptor initialised and TP enabled */
-		अगर (channel->irec && पढ़ोl(channel->irec + DMA_PRDS_TPENABLE))
+		if (channel->irec && readl(channel->irec + DMA_PRDS_TPENABLE))
 			tasklet_schedule(&channel->tsklet);
-	पूर्ण
+	}
 
-	fei->समयr.expires = jअगरfies +	msecs_to_jअगरfies(POLL_MSECS);
-	add_समयr(&fei->समयr);
-पूर्ण
+	fei->timer.expires = jiffies +	msecs_to_jiffies(POLL_MSECS);
+	add_timer(&fei->timer);
+}
 
-अटल व्योम channel_swdemux_tsklet(काष्ठा tasklet_काष्ठा *t)
-अणु
-	काष्ठा channel_info *channel = from_tasklet(channel, t, tsklet);
-	काष्ठा c8sectpfei *fei;
-	अचिन्हित दीर्घ wp, rp;
-	पूर्णांक pos, num_packets, n, size;
+static void channel_swdemux_tsklet(struct tasklet_struct *t)
+{
+	struct channel_info *channel = from_tasklet(channel, t, tsklet);
+	struct c8sectpfei *fei;
+	unsigned long wp, rp;
+	int pos, num_packets, n, size;
 	u8 *buf;
 
-	अगर (unlikely(!channel || !channel->irec))
-		वापस;
+	if (unlikely(!channel || !channel->irec))
+		return;
 
 	fei = channel->fei;
 
-	wp = पढ़ोl(channel->irec + DMA_PRDS_BUSWP_TP(0));
-	rp = पढ़ोl(channel->irec + DMA_PRDS_BUSRP_TP(0));
+	wp = readl(channel->irec + DMA_PRDS_BUSWP_TP(0));
+	rp = readl(channel->irec + DMA_PRDS_BUSRP_TP(0));
 
 	pos = rp - channel->back_buffer_busaddr;
 
 	/* has it wrapped */
-	अगर (wp < rp)
+	if (wp < rp)
 		wp = channel->back_buffer_busaddr + FEI_BUFFER_SIZE;
 
 	size = wp - rp;
 	num_packets = size / PACKET_SIZE;
 
 	/* manage cache so data is visible to CPU */
-	dma_sync_single_क्रम_cpu(fei->dev,
+	dma_sync_single_for_cpu(fei->dev,
 				rp,
 				size,
 				DMA_FROM_DEVICE);
@@ -115,276 +114,276 @@ MODULE_FIRMWARE(FIRMWARE_MEMDMA);
 		"chan=%d channel=%p num_packets = %d, buf = %p, pos = 0x%x\n\trp=0x%lx, wp=0x%lx\n",
 		channel->tsin_id, channel, num_packets, buf, pos, rp, wp);
 
-	क्रम (n = 0; n < num_packets; n++) अणु
+	for (n = 0; n < num_packets; n++) {
 		dvb_dmx_swfilter_packets(
 			&fei->c8sectpfe[0]->
 				demux[channel->demux_mapping].dvb_demux,
 			&buf[pos], 1);
 
 		pos += PACKET_SIZE;
-	पूर्ण
+	}
 
-	/* advance the पढ़ो poपूर्णांकer */
-	अगर (wp == (channel->back_buffer_busaddr + FEI_BUFFER_SIZE))
-		ग_लिखोl(channel->back_buffer_busaddr, channel->irec +
+	/* advance the read pointer */
+	if (wp == (channel->back_buffer_busaddr + FEI_BUFFER_SIZE))
+		writel(channel->back_buffer_busaddr, channel->irec +
 			DMA_PRDS_BUSRP_TP(0));
-	अन्यथा
-		ग_लिखोl(wp, channel->irec + DMA_PRDS_BUSRP_TP(0));
-पूर्ण
+	else
+		writel(wp, channel->irec + DMA_PRDS_BUSRP_TP(0));
+}
 
-अटल पूर्णांक c8sectpfe_start_feed(काष्ठा dvb_demux_feed *dvbdmxfeed)
-अणु
-	काष्ठा dvb_demux *demux = dvbdmxfeed->demux;
-	काष्ठा stdemux *stdemux = (काष्ठा stdemux *)demux->priv;
-	काष्ठा c8sectpfei *fei = stdemux->c8sectpfei;
-	काष्ठा channel_info *channel;
-	u32 पंचांगp;
-	अचिन्हित दीर्घ *biपंचांगap;
-	पूर्णांक ret;
+static int c8sectpfe_start_feed(struct dvb_demux_feed *dvbdmxfeed)
+{
+	struct dvb_demux *demux = dvbdmxfeed->demux;
+	struct stdemux *stdemux = (struct stdemux *)demux->priv;
+	struct c8sectpfei *fei = stdemux->c8sectpfei;
+	struct channel_info *channel;
+	u32 tmp;
+	unsigned long *bitmap;
+	int ret;
 
-	चयन (dvbdmxfeed->type) अणु
-	हाल DMX_TYPE_TS:
-		अवरोध;
-	हाल DMX_TYPE_SEC:
-		अवरोध;
-	शेष:
+	switch (dvbdmxfeed->type) {
+	case DMX_TYPE_TS:
+		break;
+	case DMX_TYPE_SEC:
+		break;
+	default:
 		dev_err(fei->dev, "%s:%d Error bailing\n"
 			, __func__, __LINE__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (dvbdmxfeed->type == DMX_TYPE_TS) अणु
-		चयन (dvbdmxfeed->pes_type) अणु
-		हाल DMX_PES_VIDEO:
-		हाल DMX_PES_AUDIO:
-		हाल DMX_PES_TELETEXT:
-		हाल DMX_PES_PCR:
-		हाल DMX_PES_OTHER:
-			अवरोध;
-		शेष:
+	if (dvbdmxfeed->type == DMX_TYPE_TS) {
+		switch (dvbdmxfeed->pes_type) {
+		case DMX_PES_VIDEO:
+		case DMX_PES_AUDIO:
+		case DMX_PES_TELETEXT:
+		case DMX_PES_PCR:
+		case DMX_PES_OTHER:
+			break;
+		default:
 			dev_err(fei->dev, "%s:%d Error bailing\n"
 				, __func__, __LINE__);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	अगर (!atomic_पढ़ो(&fei->fw_loaded)) अणु
+	if (!atomic_read(&fei->fw_loaded)) {
 		ret = load_c8sectpfe_fw(fei);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	mutex_lock(&fei->lock);
 
 	channel = fei->channel_data[stdemux->tsin_index];
 
-	biपंचांगap = (अचिन्हित दीर्घ *) channel->pid_buffer_aligned;
+	bitmap = (unsigned long *) channel->pid_buffer_aligned;
 
 	/* 8192 is a special PID */
-	अगर (dvbdmxfeed->pid == 8192) अणु
-		पंचांगp = पढ़ोl(fei->io + C8SECTPFE_IB_PID_SET(channel->tsin_id));
-		पंचांगp &= ~C8SECTPFE_PID_ENABLE;
-		ग_लिखोl(पंचांगp, fei->io + C8SECTPFE_IB_PID_SET(channel->tsin_id));
+	if (dvbdmxfeed->pid == 8192) {
+		tmp = readl(fei->io + C8SECTPFE_IB_PID_SET(channel->tsin_id));
+		tmp &= ~C8SECTPFE_PID_ENABLE;
+		writel(tmp, fei->io + C8SECTPFE_IB_PID_SET(channel->tsin_id));
 
-	पूर्ण अन्यथा अणु
-		biपंचांगap_set(biपंचांगap, dvbdmxfeed->pid, 1);
-	पूर्ण
+	} else {
+		bitmap_set(bitmap, dvbdmxfeed->pid, 1);
+	}
 
-	/* manage cache so PID biपंचांगap is visible to HW */
-	dma_sync_single_क्रम_device(fei->dev,
+	/* manage cache so PID bitmap is visible to HW */
+	dma_sync_single_for_device(fei->dev,
 					channel->pid_buffer_busaddr,
 					PID_TABLE_SIZE,
 					DMA_TO_DEVICE);
 
 	channel->active = 1;
 
-	अगर (fei->global_feed_count == 0) अणु
-		fei->समयr.expires = jअगरfies +
-			msecs_to_jअगरfies(msecs_to_jअगरfies(POLL_MSECS));
+	if (fei->global_feed_count == 0) {
+		fei->timer.expires = jiffies +
+			msecs_to_jiffies(msecs_to_jiffies(POLL_MSECS));
 
-		add_समयr(&fei->समयr);
-	पूर्ण
+		add_timer(&fei->timer);
+	}
 
-	अगर (stdemux->running_feed_count == 0) अणु
+	if (stdemux->running_feed_count == 0) {
 
 		dev_dbg(fei->dev, "Starting channel=%p\n", channel);
 
 		tasklet_setup(&channel->tsklet, channel_swdemux_tsklet);
 
-		/* Reset the पूर्णांकernal inputblock sram poपूर्णांकers */
-		ग_लिखोl(channel->fअगरo,
+		/* Reset the internal inputblock sram pointers */
+		writel(channel->fifo,
 			fei->io + C8SECTPFE_IB_BUFF_STRT(channel->tsin_id));
-		ग_लिखोl(channel->fअगरo + FIFO_LEN - 1,
+		writel(channel->fifo + FIFO_LEN - 1,
 			fei->io + C8SECTPFE_IB_BUFF_END(channel->tsin_id));
 
-		ग_लिखोl(channel->fअगरo,
+		writel(channel->fifo,
 			fei->io + C8SECTPFE_IB_READ_PNT(channel->tsin_id));
-		ग_लिखोl(channel->fअगरo,
+		writel(channel->fifo,
 			fei->io + C8SECTPFE_IB_WRT_PNT(channel->tsin_id));
 
 
-		/* reset पढ़ो / ग_लिखो memdma ptrs क्रम this channel */
-		ग_लिखोl(channel->back_buffer_busaddr, channel->irec +
+		/* reset read / write memdma ptrs for this channel */
+		writel(channel->back_buffer_busaddr, channel->irec +
 			DMA_PRDS_BUSBASE_TP(0));
 
-		पंचांगp = channel->back_buffer_busaddr + FEI_BUFFER_SIZE - 1;
-		ग_लिखोl(पंचांगp, channel->irec + DMA_PRDS_BUSTOP_TP(0));
+		tmp = channel->back_buffer_busaddr + FEI_BUFFER_SIZE - 1;
+		writel(tmp, channel->irec + DMA_PRDS_BUSTOP_TP(0));
 
-		ग_लिखोl(channel->back_buffer_busaddr, channel->irec +
+		writel(channel->back_buffer_busaddr, channel->irec +
 			DMA_PRDS_BUSWP_TP(0));
 
 		/* Issue a reset and enable InputBlock */
-		ग_लिखोl(C8SECTPFE_SYS_ENABLE | C8SECTPFE_SYS_RESET
+		writel(C8SECTPFE_SYS_ENABLE | C8SECTPFE_SYS_RESET
 			, fei->io + C8SECTPFE_IB_SYS(channel->tsin_id));
 
 		/* and enable the tp */
-		ग_लिखोl(0x1, channel->irec + DMA_PRDS_TPENABLE);
+		writel(0x1, channel->irec + DMA_PRDS_TPENABLE);
 
 		dev_dbg(fei->dev, "%s:%d Starting DMA feed on stdemux=%p\n"
 			, __func__, __LINE__, stdemux);
-	पूर्ण
+	}
 
 	stdemux->running_feed_count++;
 	fei->global_feed_count++;
 
 	mutex_unlock(&fei->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक c8sectpfe_stop_feed(काष्ठा dvb_demux_feed *dvbdmxfeed)
-अणु
+static int c8sectpfe_stop_feed(struct dvb_demux_feed *dvbdmxfeed)
+{
 
-	काष्ठा dvb_demux *demux = dvbdmxfeed->demux;
-	काष्ठा stdemux *stdemux = (काष्ठा stdemux *)demux->priv;
-	काष्ठा c8sectpfei *fei = stdemux->c8sectpfei;
-	काष्ठा channel_info *channel;
-	पूर्णांक idlereq;
-	u32 पंचांगp;
-	पूर्णांक ret;
-	अचिन्हित दीर्घ *biपंचांगap;
+	struct dvb_demux *demux = dvbdmxfeed->demux;
+	struct stdemux *stdemux = (struct stdemux *)demux->priv;
+	struct c8sectpfei *fei = stdemux->c8sectpfei;
+	struct channel_info *channel;
+	int idlereq;
+	u32 tmp;
+	int ret;
+	unsigned long *bitmap;
 
-	अगर (!atomic_पढ़ो(&fei->fw_loaded)) अणु
+	if (!atomic_read(&fei->fw_loaded)) {
 		ret = load_c8sectpfe_fw(fei);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	mutex_lock(&fei->lock);
 
 	channel = fei->channel_data[stdemux->tsin_index];
 
-	biपंचांगap = (अचिन्हित दीर्घ *) channel->pid_buffer_aligned;
+	bitmap = (unsigned long *) channel->pid_buffer_aligned;
 
-	अगर (dvbdmxfeed->pid == 8192) अणु
-		पंचांगp = पढ़ोl(fei->io + C8SECTPFE_IB_PID_SET(channel->tsin_id));
-		पंचांगp |= C8SECTPFE_PID_ENABLE;
-		ग_लिखोl(पंचांगp, fei->io + C8SECTPFE_IB_PID_SET(channel->tsin_id));
-	पूर्ण अन्यथा अणु
-		biपंचांगap_clear(biपंचांगap, dvbdmxfeed->pid, 1);
-	पूर्ण
+	if (dvbdmxfeed->pid == 8192) {
+		tmp = readl(fei->io + C8SECTPFE_IB_PID_SET(channel->tsin_id));
+		tmp |= C8SECTPFE_PID_ENABLE;
+		writel(tmp, fei->io + C8SECTPFE_IB_PID_SET(channel->tsin_id));
+	} else {
+		bitmap_clear(bitmap, dvbdmxfeed->pid, 1);
+	}
 
 	/* manage cache so data is visible to HW */
-	dma_sync_single_क्रम_device(fei->dev,
+	dma_sync_single_for_device(fei->dev,
 					channel->pid_buffer_busaddr,
 					PID_TABLE_SIZE,
 					DMA_TO_DEVICE);
 
-	अगर (--stdemux->running_feed_count == 0) अणु
+	if (--stdemux->running_feed_count == 0) {
 
 		channel = fei->channel_data[stdemux->tsin_index];
 
 		/* TP re-configuration on page 168 of functional spec */
 
 		/* disable IB (prevents more TS data going to memdma) */
-		ग_लिखोl(0, fei->io + C8SECTPFE_IB_SYS(channel->tsin_id));
+		writel(0, fei->io + C8SECTPFE_IB_SYS(channel->tsin_id));
 
 		/* disable this channels descriptor */
-		ग_लिखोl(0,  channel->irec + DMA_PRDS_TPENABLE);
+		writel(0,  channel->irec + DMA_PRDS_TPENABLE);
 
 		tasklet_disable(&channel->tsklet);
 
 		/* now request memdma channel goes idle */
 		idlereq = (1 << channel->tsin_id) | IDLEREQ;
-		ग_लिखोl(idlereq, fei->io + DMA_IDLE_REQ);
+		writel(idlereq, fei->io + DMA_IDLE_REQ);
 
-		/* रुको क्रम idle irq handler to संकेत completion */
-		ret = रुको_क्रम_completion_समयout(&channel->idle_completion,
-						msecs_to_jअगरfies(100));
+		/* wait for idle irq handler to signal completion */
+		ret = wait_for_completion_timeout(&channel->idle_completion,
+						msecs_to_jiffies(100));
 
-		अगर (ret == 0)
+		if (ret == 0)
 			dev_warn(fei->dev,
 				"Timeout waiting for idle irq on tsin%d\n",
 				channel->tsin_id);
 
 		reinit_completion(&channel->idle_completion);
 
-		/* reset पढ़ो / ग_लिखो ptrs क्रम this channel */
+		/* reset read / write ptrs for this channel */
 
-		ग_लिखोl(channel->back_buffer_busaddr,
+		writel(channel->back_buffer_busaddr,
 			channel->irec + DMA_PRDS_BUSBASE_TP(0));
 
-		पंचांगp = channel->back_buffer_busaddr + FEI_BUFFER_SIZE - 1;
-		ग_लिखोl(पंचांगp, channel->irec + DMA_PRDS_BUSTOP_TP(0));
+		tmp = channel->back_buffer_busaddr + FEI_BUFFER_SIZE - 1;
+		writel(tmp, channel->irec + DMA_PRDS_BUSTOP_TP(0));
 
-		ग_लिखोl(channel->back_buffer_busaddr,
+		writel(channel->back_buffer_busaddr,
 			channel->irec + DMA_PRDS_BUSWP_TP(0));
 
 		dev_dbg(fei->dev,
 			"%s:%d stopping DMA feed on stdemux=%p channel=%d\n",
 			__func__, __LINE__, stdemux, channel->tsin_id);
 
-		/* turn off all PIDS in the biपंचांगap */
-		स_रखो((व्योम *)channel->pid_buffer_aligned
+		/* turn off all PIDS in the bitmap */
+		memset((void *)channel->pid_buffer_aligned
 			, 0x00, PID_TABLE_SIZE);
 
 		/* manage cache so data is visible to HW */
-		dma_sync_single_क्रम_device(fei->dev,
+		dma_sync_single_for_device(fei->dev,
 					channel->pid_buffer_busaddr,
 					PID_TABLE_SIZE,
 					DMA_TO_DEVICE);
 
 		channel->active = 0;
-	पूर्ण
+	}
 
-	अगर (--fei->global_feed_count == 0) अणु
+	if (--fei->global_feed_count == 0) {
 		dev_dbg(fei->dev, "%s:%d global_feed_count=%d\n"
 			, __func__, __LINE__, fei->global_feed_count);
 
-		del_समयr(&fei->समयr);
-	पूर्ण
+		del_timer(&fei->timer);
+	}
 
 	mutex_unlock(&fei->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा channel_info *find_channel(काष्ठा c8sectpfei *fei, पूर्णांक tsin_num)
-अणु
-	पूर्णांक i;
+static struct channel_info *find_channel(struct c8sectpfei *fei, int tsin_num)
+{
+	int i;
 
-	क्रम (i = 0; i < C8SECTPFE_MAX_TSIN_CHAN; i++) अणु
-		अगर (!fei->channel_data[i])
-			जारी;
+	for (i = 0; i < C8SECTPFE_MAX_TSIN_CHAN; i++) {
+		if (!fei->channel_data[i])
+			continue;
 
-		अगर (fei->channel_data[i]->tsin_id == tsin_num)
-			वापस fei->channel_data[i];
-	पूर्ण
+		if (fei->channel_data[i]->tsin_id == tsin_num)
+			return fei->channel_data[i];
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम c8sectpfe_अ_लोonfig(काष्ठा c8sectpfei *fei)
-अणु
-	काष्ठा c8sectpfe_hw *hw = &fei->hw_stats;
+static void c8sectpfe_getconfig(struct c8sectpfei *fei)
+{
+	struct c8sectpfe_hw *hw = &fei->hw_stats;
 
-	hw->num_ib = पढ़ोl(fei->io + SYS_CFG_NUM_IB);
-	hw->num_mib = पढ़ोl(fei->io + SYS_CFG_NUM_MIB);
-	hw->num_swts = पढ़ोl(fei->io + SYS_CFG_NUM_SWTS);
-	hw->num_tsout = पढ़ोl(fei->io + SYS_CFG_NUM_TSOUT);
-	hw->num_ccsc = पढ़ोl(fei->io + SYS_CFG_NUM_CCSC);
-	hw->num_ram = पढ़ोl(fei->io + SYS_CFG_NUM_RAM);
-	hw->num_tp = पढ़ोl(fei->io + SYS_CFG_NUM_TP);
+	hw->num_ib = readl(fei->io + SYS_CFG_NUM_IB);
+	hw->num_mib = readl(fei->io + SYS_CFG_NUM_MIB);
+	hw->num_swts = readl(fei->io + SYS_CFG_NUM_SWTS);
+	hw->num_tsout = readl(fei->io + SYS_CFG_NUM_TSOUT);
+	hw->num_ccsc = readl(fei->io + SYS_CFG_NUM_CCSC);
+	hw->num_ram = readl(fei->io + SYS_CFG_NUM_RAM);
+	hw->num_tp = readl(fei->io + SYS_CFG_NUM_TP);
 
 	dev_info(fei->dev, "C8SECTPFE hw supports the following:\n");
 	dev_info(fei->dev, "Input Blocks: %d\n", hw->num_ib);
@@ -396,64 +395,64 @@ MODULE_FIRMWARE(FIRMWARE_MEMDMA);
 	dev_info(fei->dev, "RAMs supported by C8SECTPFE: %d\n", hw->num_ram);
 	dev_info(fei->dev, "Tango TPs supported by C8SECTPFE: %d\n"
 			, hw->num_tp);
-पूर्ण
+}
 
-अटल irqवापस_t c8sectpfe_idle_irq_handler(पूर्णांक irq, व्योम *priv)
-अणु
-	काष्ठा c8sectpfei *fei = priv;
-	काष्ठा channel_info *chan;
-	पूर्णांक bit;
-	अचिन्हित दीर्घ पंचांगp = पढ़ोl(fei->io + DMA_IDLE_REQ);
+static irqreturn_t c8sectpfe_idle_irq_handler(int irq, void *priv)
+{
+	struct c8sectpfei *fei = priv;
+	struct channel_info *chan;
+	int bit;
+	unsigned long tmp = readl(fei->io + DMA_IDLE_REQ);
 
 	/* page 168 of functional spec: Clear the idle request
-	   by writing 0 to the C8SECTPFE_DMA_IDLE_REQ रेजिस्टर. */
+	   by writing 0 to the C8SECTPFE_DMA_IDLE_REQ register. */
 
-	/* संकेत idle completion */
-	क्रम_each_set_bit(bit, &पंचांगp, fei->hw_stats.num_ib) अणु
+	/* signal idle completion */
+	for_each_set_bit(bit, &tmp, fei->hw_stats.num_ib) {
 
 		chan = find_channel(fei, bit);
 
-		अगर (chan)
+		if (chan)
 			complete(&chan->idle_completion);
-	पूर्ण
+	}
 
-	ग_लिखोl(0, fei->io + DMA_IDLE_REQ);
+	writel(0, fei->io + DMA_IDLE_REQ);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 
-अटल व्योम मुक्त_input_block(काष्ठा c8sectpfei *fei, काष्ठा channel_info *tsin)
-अणु
-	अगर (!fei || !tsin)
-		वापस;
+static void free_input_block(struct c8sectpfei *fei, struct channel_info *tsin)
+{
+	if (!fei || !tsin)
+		return;
 
-	अगर (tsin->back_buffer_busaddr)
-		अगर (!dma_mapping_error(fei->dev, tsin->back_buffer_busaddr))
+	if (tsin->back_buffer_busaddr)
+		if (!dma_mapping_error(fei->dev, tsin->back_buffer_busaddr))
 			dma_unmap_single(fei->dev, tsin->back_buffer_busaddr,
-				FEI_BUFFER_SIZE, DMA_BIसूचीECTIONAL);
+				FEI_BUFFER_SIZE, DMA_BIDIRECTIONAL);
 
-	kमुक्त(tsin->back_buffer_start);
+	kfree(tsin->back_buffer_start);
 
-	अगर (tsin->pid_buffer_busaddr)
-		अगर (!dma_mapping_error(fei->dev, tsin->pid_buffer_busaddr))
+	if (tsin->pid_buffer_busaddr)
+		if (!dma_mapping_error(fei->dev, tsin->pid_buffer_busaddr))
 			dma_unmap_single(fei->dev, tsin->pid_buffer_busaddr,
-				PID_TABLE_SIZE, DMA_BIसूचीECTIONAL);
+				PID_TABLE_SIZE, DMA_BIDIRECTIONAL);
 
-	kमुक्त(tsin->pid_buffer_start);
-पूर्ण
+	kfree(tsin->pid_buffer_start);
+}
 
-#घोषणा MAX_NAME 20
+#define MAX_NAME 20
 
-अटल पूर्णांक configure_memdma_and_inputblock(काष्ठा c8sectpfei *fei,
-				काष्ठा channel_info *tsin)
-अणु
-	पूर्णांक ret;
-	u32 पंचांगp;
-	अक्षर tsin_pin_name[MAX_NAME];
+static int configure_memdma_and_inputblock(struct c8sectpfei *fei,
+				struct channel_info *tsin)
+{
+	int ret;
+	u32 tmp;
+	char tsin_pin_name[MAX_NAME];
 
-	अगर (!fei || !tsin)
-		वापस -EINVAL;
+	if (!fei || !tsin)
+		return -EINVAL;
 
 	dev_dbg(fei->dev, "%s:%d Configuring channel=%p tsin=%d\n"
 		, __func__, __LINE__, tsin, tsin->tsin_id);
@@ -463,389 +462,389 @@ MODULE_FIRMWARE(FIRMWARE_MEMDMA);
 	tsin->back_buffer_start = kzalloc(FEI_BUFFER_SIZE +
 					FEI_ALIGNMENT, GFP_KERNEL);
 
-	अगर (!tsin->back_buffer_start) अणु
+	if (!tsin->back_buffer_start) {
 		ret = -ENOMEM;
-		जाओ err_unmap;
-	पूर्ण
+		goto err_unmap;
+	}
 
 	/* Ensure backbuffer is 32byte aligned */
 	tsin->back_buffer_aligned = tsin->back_buffer_start
 		+ FEI_ALIGNMENT;
 
-	tsin->back_buffer_aligned = (व्योम *)
-		(((uपूर्णांकptr_t) tsin->back_buffer_aligned) & ~0x1F);
+	tsin->back_buffer_aligned = (void *)
+		(((uintptr_t) tsin->back_buffer_aligned) & ~0x1F);
 
 	tsin->back_buffer_busaddr = dma_map_single(fei->dev,
-					(व्योम *)tsin->back_buffer_aligned,
+					(void *)tsin->back_buffer_aligned,
 					FEI_BUFFER_SIZE,
-					DMA_BIसूचीECTIONAL);
+					DMA_BIDIRECTIONAL);
 
-	अगर (dma_mapping_error(fei->dev, tsin->back_buffer_busaddr)) अणु
+	if (dma_mapping_error(fei->dev, tsin->back_buffer_busaddr)) {
 		dev_err(fei->dev, "failed to map back_buffer\n");
 		ret = -EFAULT;
-		जाओ err_unmap;
-	पूर्ण
+		goto err_unmap;
+	}
 
 	/*
-	 * The pid buffer can be configured (in hw) क्रम byte or bit
-	 * per pid. By घातers of deduction we conclude stih407 family
-	 * is configured (at SoC design stage) क्रम bit per pid.
+	 * The pid buffer can be configured (in hw) for byte or bit
+	 * per pid. By powers of deduction we conclude stih407 family
+	 * is configured (at SoC design stage) for bit per pid.
 	 */
 	tsin->pid_buffer_start = kzalloc(2048, GFP_KERNEL);
 
-	अगर (!tsin->pid_buffer_start) अणु
+	if (!tsin->pid_buffer_start) {
 		ret = -ENOMEM;
-		जाओ err_unmap;
-	पूर्ण
+		goto err_unmap;
+	}
 
 	/*
 	 * PID buffer needs to be aligned to size of the pid table
 	 * which at bit per pid is 1024 bytes (8192 pids / 8).
-	 * PIDF_BASE रेजिस्टर enक्रमces this alignment when writing
-	 * the रेजिस्टर.
+	 * PIDF_BASE register enforces this alignment when writing
+	 * the register.
 	 */
 
 	tsin->pid_buffer_aligned = tsin->pid_buffer_start +
 		PID_TABLE_SIZE;
 
-	tsin->pid_buffer_aligned = (व्योम *)
-		(((uपूर्णांकptr_t) tsin->pid_buffer_aligned) & ~0x3ff);
+	tsin->pid_buffer_aligned = (void *)
+		(((uintptr_t) tsin->pid_buffer_aligned) & ~0x3ff);
 
 	tsin->pid_buffer_busaddr = dma_map_single(fei->dev,
 						tsin->pid_buffer_aligned,
 						PID_TABLE_SIZE,
-						DMA_BIसूचीECTIONAL);
+						DMA_BIDIRECTIONAL);
 
-	अगर (dma_mapping_error(fei->dev, tsin->pid_buffer_busaddr)) अणु
+	if (dma_mapping_error(fei->dev, tsin->pid_buffer_busaddr)) {
 		dev_err(fei->dev, "failed to map pid_bitmap\n");
 		ret = -EFAULT;
-		जाओ err_unmap;
-	पूर्ण
+		goto err_unmap;
+	}
 
-	/* manage cache so pid biपंचांगap is visible to HW */
-	dma_sync_single_क्रम_device(fei->dev,
+	/* manage cache so pid bitmap is visible to HW */
+	dma_sync_single_for_device(fei->dev,
 				tsin->pid_buffer_busaddr,
 				PID_TABLE_SIZE,
 				DMA_TO_DEVICE);
 
-	snम_लिखो(tsin_pin_name, MAX_NAME, "tsin%d-%s", tsin->tsin_id,
+	snprintf(tsin_pin_name, MAX_NAME, "tsin%d-%s", tsin->tsin_id,
 		(tsin->serial_not_parallel ? "serial" : "parallel"));
 
 	tsin->pstate = pinctrl_lookup_state(fei->pinctrl, tsin_pin_name);
-	अगर (IS_ERR(tsin->pstate)) अणु
+	if (IS_ERR(tsin->pstate)) {
 		dev_err(fei->dev, "%s: pinctrl_lookup_state couldn't find %s state\n"
 			, __func__, tsin_pin_name);
 		ret = PTR_ERR(tsin->pstate);
-		जाओ err_unmap;
-	पूर्ण
+		goto err_unmap;
+	}
 
 	ret = pinctrl_select_state(fei->pinctrl, tsin->pstate);
 
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(fei->dev, "%s: pinctrl_select_state failed\n"
 			, __func__);
-		जाओ err_unmap;
-	पूर्ण
+		goto err_unmap;
+	}
 
 	/* Enable this input block */
-	पंचांगp = पढ़ोl(fei->io + SYS_INPUT_CLKEN);
-	पंचांगp |= BIT(tsin->tsin_id);
-	ग_लिखोl(पंचांगp, fei->io + SYS_INPUT_CLKEN);
+	tmp = readl(fei->io + SYS_INPUT_CLKEN);
+	tmp |= BIT(tsin->tsin_id);
+	writel(tmp, fei->io + SYS_INPUT_CLKEN);
 
-	अगर (tsin->serial_not_parallel)
-		पंचांगp |= C8SECTPFE_SERIAL_NOT_PARALLEL;
+	if (tsin->serial_not_parallel)
+		tmp |= C8SECTPFE_SERIAL_NOT_PARALLEL;
 
-	अगर (tsin->invert_ts_clk)
-		पंचांगp |= C8SECTPFE_INVERT_TSCLK;
+	if (tsin->invert_ts_clk)
+		tmp |= C8SECTPFE_INVERT_TSCLK;
 
-	अगर (tsin->async_not_sync)
-		पंचांगp |= C8SECTPFE_ASYNC_NOT_SYNC;
+	if (tsin->async_not_sync)
+		tmp |= C8SECTPFE_ASYNC_NOT_SYNC;
 
-	पंचांगp |= C8SECTPFE_ALIGN_BYTE_SOP | C8SECTPFE_BYTE_ENDIANNESS_MSB;
+	tmp |= C8SECTPFE_ALIGN_BYTE_SOP | C8SECTPFE_BYTE_ENDIANNESS_MSB;
 
-	ग_लिखोl(पंचांगp, fei->io + C8SECTPFE_IB_IP_FMT_CFG(tsin->tsin_id));
+	writel(tmp, fei->io + C8SECTPFE_IB_IP_FMT_CFG(tsin->tsin_id));
 
-	ग_लिखोl(C8SECTPFE_SYNC(0x9) |
+	writel(C8SECTPFE_SYNC(0x9) |
 		C8SECTPFE_DROP(0x9) |
 		C8SECTPFE_TOKEN(0x47),
 		fei->io + C8SECTPFE_IB_SYNCLCKDRP_CFG(tsin->tsin_id));
 
-	ग_लिखोl(TS_PKT_SIZE, fei->io + C8SECTPFE_IB_PKT_LEN(tsin->tsin_id));
+	writel(TS_PKT_SIZE, fei->io + C8SECTPFE_IB_PKT_LEN(tsin->tsin_id));
 
 	/* Place the FIFO's at the end of the irec descriptors */
 
-	tsin->fअगरo = (tsin->tsin_id * FIFO_LEN);
+	tsin->fifo = (tsin->tsin_id * FIFO_LEN);
 
-	ग_लिखोl(tsin->fअगरo, fei->io + C8SECTPFE_IB_BUFF_STRT(tsin->tsin_id));
-	ग_लिखोl(tsin->fअगरo + FIFO_LEN - 1,
+	writel(tsin->fifo, fei->io + C8SECTPFE_IB_BUFF_STRT(tsin->tsin_id));
+	writel(tsin->fifo + FIFO_LEN - 1,
 		fei->io + C8SECTPFE_IB_BUFF_END(tsin->tsin_id));
 
-	ग_लिखोl(tsin->fअगरo, fei->io + C8SECTPFE_IB_READ_PNT(tsin->tsin_id));
-	ग_लिखोl(tsin->fअगरo, fei->io + C8SECTPFE_IB_WRT_PNT(tsin->tsin_id));
+	writel(tsin->fifo, fei->io + C8SECTPFE_IB_READ_PNT(tsin->tsin_id));
+	writel(tsin->fifo, fei->io + C8SECTPFE_IB_WRT_PNT(tsin->tsin_id));
 
-	ग_लिखोl(tsin->pid_buffer_busaddr,
+	writel(tsin->pid_buffer_busaddr,
 		fei->io + PIDF_BASE(tsin->tsin_id));
 
 	dev_dbg(fei->dev, "chan=%d PIDF_BASE=0x%x pid_bus_addr=%pad\n",
-		tsin->tsin_id, पढ़ोl(fei->io + PIDF_BASE(tsin->tsin_id)),
+		tsin->tsin_id, readl(fei->io + PIDF_BASE(tsin->tsin_id)),
 		&tsin->pid_buffer_busaddr);
 
 	/* Configure and enable HW PID filtering */
 
 	/*
 	 * The PID value is created by assembling the first 8 bytes of
-	 * the TS packet पूर्णांकo a 64-bit word in big-endian क्रमmat. A
+	 * the TS packet into a 64-bit word in big-endian format. A
 	 * slice of that 64-bit word is taken from
 	 * (PID_OFFSET+PID_NUM_BITS-1) to PID_OFFSET.
 	 */
-	पंचांगp = (C8SECTPFE_PID_ENABLE | C8SECTPFE_PID_NUMBITS(13)
+	tmp = (C8SECTPFE_PID_ENABLE | C8SECTPFE_PID_NUMBITS(13)
 		| C8SECTPFE_PID_OFFSET(40));
 
-	ग_लिखोl(पंचांगp, fei->io + C8SECTPFE_IB_PID_SET(tsin->tsin_id));
+	writel(tmp, fei->io + C8SECTPFE_IB_PID_SET(tsin->tsin_id));
 
 	dev_dbg(fei->dev, "chan=%d setting wp: %d, rp: %d, buf: %d-%d\n",
 		tsin->tsin_id,
-		पढ़ोl(fei->io + C8SECTPFE_IB_WRT_PNT(tsin->tsin_id)),
-		पढ़ोl(fei->io + C8SECTPFE_IB_READ_PNT(tsin->tsin_id)),
-		पढ़ोl(fei->io + C8SECTPFE_IB_BUFF_STRT(tsin->tsin_id)),
-		पढ़ोl(fei->io + C8SECTPFE_IB_BUFF_END(tsin->tsin_id)));
+		readl(fei->io + C8SECTPFE_IB_WRT_PNT(tsin->tsin_id)),
+		readl(fei->io + C8SECTPFE_IB_READ_PNT(tsin->tsin_id)),
+		readl(fei->io + C8SECTPFE_IB_BUFF_STRT(tsin->tsin_id)),
+		readl(fei->io + C8SECTPFE_IB_BUFF_END(tsin->tsin_id)));
 
-	/* Get base addpress of poपूर्णांकer record block from DMEM */
+	/* Get base addpress of pointer record block from DMEM */
 	tsin->irec = fei->io + DMA_MEMDMA_OFFSET + DMA_DMEM_OFFSET +
-			पढ़ोl(fei->io + DMA_PTRREC_BASE);
+			readl(fei->io + DMA_PTRREC_BASE);
 
-	/* fill out poपूर्णांकer record data काष्ठाure */
+	/* fill out pointer record data structure */
 
-	/* advance poपूर्णांकer record block to our channel */
+	/* advance pointer record block to our channel */
 	tsin->irec += (tsin->tsin_id * DMA_PRDS_SIZE);
 
-	ग_लिखोl(tsin->fअगरo, tsin->irec + DMA_PRDS_MEMBASE);
+	writel(tsin->fifo, tsin->irec + DMA_PRDS_MEMBASE);
 
-	ग_लिखोl(tsin->fअगरo + FIFO_LEN - 1, tsin->irec + DMA_PRDS_MEMTOP);
+	writel(tsin->fifo + FIFO_LEN - 1, tsin->irec + DMA_PRDS_MEMTOP);
 
-	ग_लिखोl((188 + 7)&~7, tsin->irec + DMA_PRDS_PKTSIZE);
+	writel((188 + 7)&~7, tsin->irec + DMA_PRDS_PKTSIZE);
 
-	ग_लिखोl(0x1, tsin->irec + DMA_PRDS_TPENABLE);
+	writel(0x1, tsin->irec + DMA_PRDS_TPENABLE);
 
-	/* पढ़ो/ग_लिखो poपूर्णांकers with physical bus address */
+	/* read/write pointers with physical bus address */
 
-	ग_लिखोl(tsin->back_buffer_busaddr, tsin->irec + DMA_PRDS_BUSBASE_TP(0));
+	writel(tsin->back_buffer_busaddr, tsin->irec + DMA_PRDS_BUSBASE_TP(0));
 
-	पंचांगp = tsin->back_buffer_busaddr + FEI_BUFFER_SIZE - 1;
-	ग_लिखोl(पंचांगp, tsin->irec + DMA_PRDS_BUSTOP_TP(0));
+	tmp = tsin->back_buffer_busaddr + FEI_BUFFER_SIZE - 1;
+	writel(tmp, tsin->irec + DMA_PRDS_BUSTOP_TP(0));
 
-	ग_लिखोl(tsin->back_buffer_busaddr, tsin->irec + DMA_PRDS_BUSWP_TP(0));
-	ग_लिखोl(tsin->back_buffer_busaddr, tsin->irec + DMA_PRDS_BUSRP_TP(0));
+	writel(tsin->back_buffer_busaddr, tsin->irec + DMA_PRDS_BUSWP_TP(0));
+	writel(tsin->back_buffer_busaddr, tsin->irec + DMA_PRDS_BUSRP_TP(0));
 
 	/* initialize tasklet */
 	tasklet_setup(&tsin->tsklet, channel_swdemux_tsklet);
 
-	वापस 0;
+	return 0;
 
 err_unmap:
-	मुक्त_input_block(fei, tsin);
-	वापस ret;
-पूर्ण
+	free_input_block(fei, tsin);
+	return ret;
+}
 
-अटल irqवापस_t c8sectpfe_error_irq_handler(पूर्णांक irq, व्योम *priv)
-अणु
-	काष्ठा c8sectpfei *fei = priv;
+static irqreturn_t c8sectpfe_error_irq_handler(int irq, void *priv)
+{
+	struct c8sectpfei *fei = priv;
 
 	dev_err(fei->dev, "%s: error handling not yet implemented\n"
 		, __func__);
 
 	/*
 	 * TODO FIXME we should detect some error conditions here
-	 * and ideally करो something about them!
+	 * and ideally do something about them!
 	 */
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक c8sectpfe_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा device_node *child, *np = dev->of_node;
-	काष्ठा c8sectpfei *fei;
-	काष्ठा resource *res;
-	पूर्णांक ret, index = 0;
-	काष्ठा channel_info *tsin;
+static int c8sectpfe_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct device_node *child, *np = dev->of_node;
+	struct c8sectpfei *fei;
+	struct resource *res;
+	int ret, index = 0;
+	struct channel_info *tsin;
 
-	/* Allocate the c8sectpfei काष्ठाure */
-	fei = devm_kzalloc(dev, माप(काष्ठा c8sectpfei), GFP_KERNEL);
-	अगर (!fei)
-		वापस -ENOMEM;
+	/* Allocate the c8sectpfei structure */
+	fei = devm_kzalloc(dev, sizeof(struct c8sectpfei), GFP_KERNEL);
+	if (!fei)
+		return -ENOMEM;
 
 	fei->dev = dev;
 
-	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "c8sectpfe");
+	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "c8sectpfe");
 	fei->io = devm_ioremap_resource(dev, res);
-	अगर (IS_ERR(fei->io))
-		वापस PTR_ERR(fei->io);
+	if (IS_ERR(fei->io))
+		return PTR_ERR(fei->io);
 
-	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM,
+	res = platform_get_resource_byname(pdev, IORESOURCE_MEM,
 					"c8sectpfe-ram");
 	fei->sram = devm_ioremap_resource(dev, res);
-	अगर (IS_ERR(fei->sram))
-		वापस PTR_ERR(fei->sram);
+	if (IS_ERR(fei->sram))
+		return PTR_ERR(fei->sram);
 
 	fei->sram_size = resource_size(res);
 
-	fei->idle_irq = platक्रमm_get_irq_byname(pdev, "c8sectpfe-idle-irq");
-	अगर (fei->idle_irq < 0)
-		वापस fei->idle_irq;
+	fei->idle_irq = platform_get_irq_byname(pdev, "c8sectpfe-idle-irq");
+	if (fei->idle_irq < 0)
+		return fei->idle_irq;
 
-	fei->error_irq = platक्रमm_get_irq_byname(pdev, "c8sectpfe-error-irq");
-	अगर (fei->error_irq < 0)
-		वापस fei->error_irq;
+	fei->error_irq = platform_get_irq_byname(pdev, "c8sectpfe-error-irq");
+	if (fei->error_irq < 0)
+		return fei->error_irq;
 
-	platक्रमm_set_drvdata(pdev, fei);
+	platform_set_drvdata(pdev, fei);
 
 	fei->c8sectpfeclk = devm_clk_get(dev, "c8sectpfe");
-	अगर (IS_ERR(fei->c8sectpfeclk)) अणु
+	if (IS_ERR(fei->c8sectpfeclk)) {
 		dev_err(dev, "c8sectpfe clk not found\n");
-		वापस PTR_ERR(fei->c8sectpfeclk);
-	पूर्ण
+		return PTR_ERR(fei->c8sectpfeclk);
+	}
 
 	ret = clk_prepare_enable(fei->c8sectpfeclk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to enable c8sectpfe clock\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* to save घातer disable all IP's (on by शेष) */
-	ग_लिखोl(0, fei->io + SYS_INPUT_CLKEN);
+	/* to save power disable all IP's (on by default) */
+	writel(0, fei->io + SYS_INPUT_CLKEN);
 
-	/* Enable memdma घड़ी */
-	ग_लिखोl(MEMDMAENABLE, fei->io + SYS_OTHER_CLKEN);
+	/* Enable memdma clock */
+	writel(MEMDMAENABLE, fei->io + SYS_OTHER_CLKEN);
 
-	/* clear पूर्णांकernal sram */
-	स_रखो_io(fei->sram, 0x0, fei->sram_size);
+	/* clear internal sram */
+	memset_io(fei->sram, 0x0, fei->sram_size);
 
-	c8sectpfe_अ_लोonfig(fei);
+	c8sectpfe_getconfig(fei);
 
 	ret = devm_request_irq(dev, fei->idle_irq, c8sectpfe_idle_irq_handler,
 			0, "c8sectpfe-idle-irq", fei);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Can't register c8sectpfe-idle-irq IRQ.\n");
-		जाओ err_clk_disable;
-	पूर्ण
+		goto err_clk_disable;
+	}
 
 	ret = devm_request_irq(dev, fei->error_irq,
 				c8sectpfe_error_irq_handler, 0,
 				"c8sectpfe-error-irq", fei);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Can't register c8sectpfe-error-irq IRQ.\n");
-		जाओ err_clk_disable;
-	पूर्ण
+		goto err_clk_disable;
+	}
 
 	fei->tsin_count = of_get_child_count(np);
 
-	अगर (fei->tsin_count > C8SECTPFE_MAX_TSIN_CHAN ||
-		fei->tsin_count > fei->hw_stats.num_ib) अणु
+	if (fei->tsin_count > C8SECTPFE_MAX_TSIN_CHAN ||
+		fei->tsin_count > fei->hw_stats.num_ib) {
 
 		dev_err(dev, "More tsin declared than exist on SoC!\n");
 		ret = -EINVAL;
-		जाओ err_clk_disable;
-	पूर्ण
+		goto err_clk_disable;
+	}
 
 	fei->pinctrl = devm_pinctrl_get(dev);
 
-	अगर (IS_ERR(fei->pinctrl)) अणु
+	if (IS_ERR(fei->pinctrl)) {
 		dev_err(dev, "Error getting tsin pins\n");
 		ret = PTR_ERR(fei->pinctrl);
-		जाओ err_clk_disable;
-	पूर्ण
+		goto err_clk_disable;
+	}
 
-	क्रम_each_child_of_node(np, child) अणु
-		काष्ठा device_node *i2c_bus;
+	for_each_child_of_node(np, child) {
+		struct device_node *i2c_bus;
 
 		fei->channel_data[index] = devm_kzalloc(dev,
-						माप(काष्ठा channel_info),
+						sizeof(struct channel_info),
 						GFP_KERNEL);
 
-		अगर (!fei->channel_data[index]) अणु
+		if (!fei->channel_data[index]) {
 			ret = -ENOMEM;
-			जाओ err_node_put;
-		पूर्ण
+			goto err_node_put;
+		}
 
 		tsin = fei->channel_data[index];
 
 		tsin->fei = fei;
 
-		ret = of_property_पढ़ो_u32(child, "tsin-num", &tsin->tsin_id);
-		अगर (ret) अणु
+		ret = of_property_read_u32(child, "tsin-num", &tsin->tsin_id);
+		if (ret) {
 			dev_err(&pdev->dev, "No tsin_num found\n");
-			जाओ err_node_put;
-		पूर्ण
+			goto err_node_put;
+		}
 
 		/* sanity check value */
-		अगर (tsin->tsin_id > fei->hw_stats.num_ib) अणु
+		if (tsin->tsin_id > fei->hw_stats.num_ib) {
 			dev_err(&pdev->dev,
 				"tsin-num %d specified greater than number\n\tof input block hw in SoC! (%d)",
 				tsin->tsin_id, fei->hw_stats.num_ib);
 			ret = -EINVAL;
-			जाओ err_node_put;
-		पूर्ण
+			goto err_node_put;
+		}
 
-		tsin->invert_ts_clk = of_property_पढ़ो_bool(child,
+		tsin->invert_ts_clk = of_property_read_bool(child,
 							"invert-ts-clk");
 
-		tsin->serial_not_parallel = of_property_पढ़ो_bool(child,
+		tsin->serial_not_parallel = of_property_read_bool(child,
 							"serial-not-parallel");
 
-		tsin->async_not_sync = of_property_पढ़ो_bool(child,
+		tsin->async_not_sync = of_property_read_bool(child,
 							"async-not-sync");
 
-		ret = of_property_पढ़ो_u32(child, "dvb-card",
+		ret = of_property_read_u32(child, "dvb-card",
 					&tsin->dvb_card);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&pdev->dev, "No dvb-card found\n");
-			जाओ err_node_put;
-		पूर्ण
+			goto err_node_put;
+		}
 
 		i2c_bus = of_parse_phandle(child, "i2c-bus", 0);
-		अगर (!i2c_bus) अणु
+		if (!i2c_bus) {
 			dev_err(&pdev->dev, "No i2c-bus found\n");
 			ret = -ENODEV;
-			जाओ err_node_put;
-		पूर्ण
+			goto err_node_put;
+		}
 		tsin->i2c_adapter =
 			of_find_i2c_adapter_by_node(i2c_bus);
-		अगर (!tsin->i2c_adapter) अणु
+		if (!tsin->i2c_adapter) {
 			dev_err(&pdev->dev, "No i2c adapter found\n");
 			of_node_put(i2c_bus);
 			ret = -ENODEV;
-			जाओ err_node_put;
-		पूर्ण
+			goto err_node_put;
+		}
 		of_node_put(i2c_bus);
 
 		tsin->rst_gpio = of_get_named_gpio(child, "reset-gpios", 0);
 
 		ret = gpio_is_valid(tsin->rst_gpio);
-		अगर (!ret) अणु
+		if (!ret) {
 			dev_err(dev,
 				"reset gpio for tsin%d not valid (gpio=%d)\n",
 				tsin->tsin_id, tsin->rst_gpio);
 			ret = -EINVAL;
-			जाओ err_node_put;
-		पूर्ण
+			goto err_node_put;
+		}
 
 		ret = devm_gpio_request_one(dev, tsin->rst_gpio,
 					GPIOF_OUT_INIT_LOW, "NIM reset");
-		अगर (ret && ret != -EBUSY) अणु
+		if (ret && ret != -EBUSY) {
 			dev_err(dev, "Can't request tsin%d reset gpio\n"
 				, fei->channel_data[index]->tsin_id);
-			जाओ err_node_put;
-		पूर्ण
+			goto err_node_put;
+		}
 
-		अगर (!ret) अणु
+		if (!ret) {
 			/* toggle reset lines */
 			gpio_direction_output(tsin->rst_gpio, 0);
 			usleep_range(3500, 5000);
 			gpio_direction_output(tsin->rst_gpio, 1);
 			usleep_range(3000, 5000);
-		पूर्ण
+		}
 
 		tsin->demux_mapping = index;
 
@@ -857,181 +856,181 @@ err_unmap:
 			tsin->dvb_card);
 
 		index++;
-	पूर्ण
+	}
 
-	/* Setup समयr पूर्णांकerrupt */
-	समयr_setup(&fei->समयr, c8sectpfe_समयr_पूर्णांकerrupt, 0);
+	/* Setup timer interrupt */
+	timer_setup(&fei->timer, c8sectpfe_timer_interrupt, 0);
 
 	mutex_init(&fei->lock);
 
-	/* Get the configuration inक्रमmation about the tuners */
-	ret = c8sectpfe_tuner_रेजिस्टर_frontend(&fei->c8sectpfe[0],
-					(व्योम *)fei,
+	/* Get the configuration information about the tuners */
+	ret = c8sectpfe_tuner_register_frontend(&fei->c8sectpfe[0],
+					(void *)fei,
 					c8sectpfe_start_feed,
 					c8sectpfe_stop_feed);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "c8sectpfe_tuner_register_frontend failed (%d)\n",
 			ret);
-		जाओ err_clk_disable;
-	पूर्ण
+		goto err_clk_disable;
+	}
 
 	c8sectpfe_debugfs_init(fei);
 
-	वापस 0;
+	return 0;
 
 err_node_put:
 	of_node_put(child);
 err_clk_disable:
 	clk_disable_unprepare(fei->c8sectpfeclk);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक c8sectpfe_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा c8sectpfei *fei = platक्रमm_get_drvdata(pdev);
-	काष्ठा channel_info *channel;
-	पूर्णांक i;
+static int c8sectpfe_remove(struct platform_device *pdev)
+{
+	struct c8sectpfei *fei = platform_get_drvdata(pdev);
+	struct channel_info *channel;
+	int i;
 
-	रुको_क्रम_completion(&fei->fw_ack);
+	wait_for_completion(&fei->fw_ack);
 
-	c8sectpfe_tuner_unरेजिस्टर_frontend(fei->c8sectpfe[0], fei);
+	c8sectpfe_tuner_unregister_frontend(fei->c8sectpfe[0], fei);
 
 	/*
 	 * Now loop through and un-configure each of the InputBlock resources
 	 */
-	क्रम (i = 0; i < fei->tsin_count; i++) अणु
+	for (i = 0; i < fei->tsin_count; i++) {
 		channel = fei->channel_data[i];
-		मुक्त_input_block(fei, channel);
-	पूर्ण
+		free_input_block(fei, channel);
+	}
 
-	c8sectpfe_debugfs_निकास(fei);
+	c8sectpfe_debugfs_exit(fei);
 
 	dev_info(fei->dev, "Stopping memdma SLIM core\n");
-	अगर (पढ़ोl(fei->io + DMA_CPU_RUN))
-		ग_लिखोl(0x0,  fei->io + DMA_CPU_RUN);
+	if (readl(fei->io + DMA_CPU_RUN))
+		writel(0x0,  fei->io + DMA_CPU_RUN);
 
-	/* unघड़ी all पूर्णांकernal IP's */
-	अगर (पढ़ोl(fei->io + SYS_INPUT_CLKEN))
-		ग_लिखोl(0, fei->io + SYS_INPUT_CLKEN);
+	/* unclock all internal IP's */
+	if (readl(fei->io + SYS_INPUT_CLKEN))
+		writel(0, fei->io + SYS_INPUT_CLKEN);
 
-	अगर (पढ़ोl(fei->io + SYS_OTHER_CLKEN))
-		ग_लिखोl(0, fei->io + SYS_OTHER_CLKEN);
+	if (readl(fei->io + SYS_OTHER_CLKEN))
+		writel(0, fei->io + SYS_OTHER_CLKEN);
 
-	अगर (fei->c8sectpfeclk)
+	if (fei->c8sectpfeclk)
 		clk_disable_unprepare(fei->c8sectpfeclk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक configure_channels(काष्ठा c8sectpfei *fei)
-अणु
-	पूर्णांक index = 0, ret;
-	काष्ठा channel_info *tsin;
-	काष्ठा device_node *child, *np = fei->dev->of_node;
+static int configure_channels(struct c8sectpfei *fei)
+{
+	int index = 0, ret;
+	struct channel_info *tsin;
+	struct device_node *child, *np = fei->dev->of_node;
 
 	/* iterate round each tsin and configure memdma descriptor and IB hw */
-	क्रम_each_child_of_node(np, child) अणु
+	for_each_child_of_node(np, child) {
 
 		tsin = fei->channel_data[index];
 
 		ret = configure_memdma_and_inputblock(fei,
 						fei->channel_data[index]);
 
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(fei->dev,
 				"configure_memdma_and_inputblock failed\n");
-			जाओ err_unmap;
-		पूर्ण
+			goto err_unmap;
+		}
 		index++;
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 err_unmap:
-	क्रम (index = 0; index < fei->tsin_count; index++) अणु
+	for (index = 0; index < fei->tsin_count; index++) {
 		tsin = fei->channel_data[index];
-		मुक्त_input_block(fei, tsin);
-	पूर्ण
-	वापस ret;
-पूर्ण
+		free_input_block(fei, tsin);
+	}
+	return ret;
+}
 
-अटल पूर्णांक
-c8sectpfe_elf_sanity_check(काष्ठा c8sectpfei *fei, स्थिर काष्ठा firmware *fw)
-अणु
-	काष्ठा elf32_hdr *ehdr;
-	अक्षर class;
+static int
+c8sectpfe_elf_sanity_check(struct c8sectpfei *fei, const struct firmware *fw)
+{
+	struct elf32_hdr *ehdr;
+	char class;
 
-	अगर (!fw) अणु
+	if (!fw) {
 		dev_err(fei->dev, "failed to load %s\n", FIRMWARE_MEMDMA);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (fw->size < माप(काष्ठा elf32_hdr)) अणु
+	if (fw->size < sizeof(struct elf32_hdr)) {
 		dev_err(fei->dev, "Image is too small\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ehdr = (काष्ठा elf32_hdr *)fw->data;
+	ehdr = (struct elf32_hdr *)fw->data;
 
-	/* We only support ELF32 at this poपूर्णांक */
+	/* We only support ELF32 at this point */
 	class = ehdr->e_ident[EI_CLASS];
-	अगर (class != ELFCLASS32) अणु
+	if (class != ELFCLASS32) {
 		dev_err(fei->dev, "Unsupported class: %d\n", class);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (ehdr->e_ident[EI_DATA] != ELFDATA2LSB) अणु
+	if (ehdr->e_ident[EI_DATA] != ELFDATA2LSB) {
 		dev_err(fei->dev, "Unsupported firmware endianness\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (fw->size < ehdr->e_shoff + माप(काष्ठा elf32_shdr)) अणु
+	if (fw->size < ehdr->e_shoff + sizeof(struct elf32_shdr)) {
 		dev_err(fei->dev, "Image is too small\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (स_भेद(ehdr->e_ident, ELFMAG, SELFMAG)) अणु
+	if (memcmp(ehdr->e_ident, ELFMAG, SELFMAG)) {
 		dev_err(fei->dev, "Image is corrupted (bad magic)\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Check ELF magic */
 	ehdr = (Elf32_Ehdr *)fw->data;
-	अगर (ehdr->e_ident[EI_MAG0] != ELFMAG0 ||
+	if (ehdr->e_ident[EI_MAG0] != ELFMAG0 ||
 	    ehdr->e_ident[EI_MAG1] != ELFMAG1 ||
 	    ehdr->e_ident[EI_MAG2] != ELFMAG2 ||
-	    ehdr->e_ident[EI_MAG3] != ELFMAG3) अणु
+	    ehdr->e_ident[EI_MAG3] != ELFMAG3) {
 		dev_err(fei->dev, "Invalid ELF magic\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (ehdr->e_type != ET_EXEC) अणु
+	if (ehdr->e_type != ET_EXEC) {
 		dev_err(fei->dev, "Unsupported ELF header type\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (ehdr->e_phoff > fw->size) अणु
+	if (ehdr->e_phoff > fw->size) {
 		dev_err(fei->dev, "Firmware size is too small\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल व्योम load_imem_segment(काष्ठा c8sectpfei *fei, Elf32_Phdr *phdr,
-			स्थिर काष्ठा firmware *fw, u8 __iomem *dest,
-			पूर्णांक seg_num)
-अणु
-	स्थिर u8 *imem_src = fw->data + phdr->p_offset;
-	पूर्णांक i;
+static void load_imem_segment(struct c8sectpfei *fei, Elf32_Phdr *phdr,
+			const struct firmware *fw, u8 __iomem *dest,
+			int seg_num)
+{
+	const u8 *imem_src = fw->data + phdr->p_offset;
+	int i;
 
 	/*
 	 * For IMEM segments, the segment contains 24-bit
-	 * inकाष्ठाions which must be padded to 32-bit
-	 * inकाष्ठाions beक्रमe being written. The written
-	 * segment is padded with NOP inकाष्ठाions.
+	 * instructions which must be padded to 32-bit
+	 * instructions before being written. The written
+	 * segment is padded with NOP instructions.
 	 */
 
 	dev_dbg(fei->dev,
@@ -1039,25 +1038,25 @@ c8sectpfe_elf_sanity_check(काष्ठा c8sectpfei *fei, स्थिर �
 		seg_num, phdr->p_paddr, phdr->p_filesz, dest,
 		phdr->p_memsz + phdr->p_memsz / 3);
 
-	क्रम (i = 0; i < phdr->p_filesz; i++) अणु
+	for (i = 0; i < phdr->p_filesz; i++) {
 
-		ग_लिखोb(पढ़ोb((व्योम __iomem *)imem_src), (व्योम __iomem *)dest);
+		writeb(readb((void __iomem *)imem_src), (void __iomem *)dest);
 
 		/* Every 3 bytes, add an additional
 		 * padding zero in destination */
-		अगर (i % 3 == 2) अणु
+		if (i % 3 == 2) {
 			dest++;
-			ग_लिखोb(0x00, (व्योम __iomem *)dest);
-		पूर्ण
+			writeb(0x00, (void __iomem *)dest);
+		}
 
 		dest++;
 		imem_src++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम load_dmem_segment(काष्ठा c8sectpfei *fei, Elf32_Phdr *phdr,
-			स्थिर काष्ठा firmware *fw, u8 __iomem *dst, पूर्णांक seg_num)
-अणु
+static void load_dmem_segment(struct c8sectpfei *fei, Elf32_Phdr *phdr,
+			const struct firmware *fw, u8 __iomem *dst, int seg_num)
+{
 	/*
 	 * For DMEM segments copy the segment data from the ELF
 	 * file and pad segment with zeroes
@@ -1068,134 +1067,134 @@ c8sectpfe_elf_sanity_check(काष्ठा c8sectpfei *fei, स्थिर �
 		seg_num, phdr->p_paddr, phdr->p_filesz,
 		dst, phdr->p_memsz);
 
-	स_नकल((व्योम __क्रमce *)dst, (व्योम *)fw->data + phdr->p_offset,
+	memcpy((void __force *)dst, (void *)fw->data + phdr->p_offset,
 		phdr->p_filesz);
 
-	स_रखो((व्योम __क्रमce *)dst + phdr->p_filesz, 0,
+	memset((void __force *)dst + phdr->p_filesz, 0,
 		phdr->p_memsz - phdr->p_filesz);
-पूर्ण
+}
 
-अटल पूर्णांक load_slim_core_fw(स्थिर काष्ठा firmware *fw, काष्ठा c8sectpfei *fei)
-अणु
+static int load_slim_core_fw(const struct firmware *fw, struct c8sectpfei *fei)
+{
 	Elf32_Ehdr *ehdr;
 	Elf32_Phdr *phdr;
 	u8 __iomem *dst;
-	पूर्णांक err = 0, i;
+	int err = 0, i;
 
-	अगर (!fw || !fei)
-		वापस -EINVAL;
+	if (!fw || !fei)
+		return -EINVAL;
 
 	ehdr = (Elf32_Ehdr *)fw->data;
 	phdr = (Elf32_Phdr *)(fw->data + ehdr->e_phoff);
 
 	/* go through the available ELF segments */
-	क्रम (i = 0; i < ehdr->e_phnum; i++, phdr++) अणु
+	for (i = 0; i < ehdr->e_phnum; i++, phdr++) {
 
 		/* Only consider LOAD segments */
-		अगर (phdr->p_type != PT_LOAD)
-			जारी;
+		if (phdr->p_type != PT_LOAD)
+			continue;
 
 		/*
 		 * Check segment is contained within the fw->data buffer
 		 */
-		अगर (phdr->p_offset + phdr->p_filesz > fw->size) अणु
+		if (phdr->p_offset + phdr->p_filesz > fw->size) {
 			dev_err(fei->dev,
 				"Segment %d is outside of firmware file\n", i);
 			err = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/*
 		 * MEMDMA IMEM has executable flag set, otherwise load
-		 * this segment पूर्णांकo DMEM.
+		 * this segment into DMEM.
 		 *
 		 */
 
-		अगर (phdr->p_flags & PF_X) अणु
+		if (phdr->p_flags & PF_X) {
 			dst = (u8 __iomem *) fei->io + DMA_MEMDMA_IMEM;
 			/*
-			 * The Slim ELF file uses 32-bit word addressing क्रम
+			 * The Slim ELF file uses 32-bit word addressing for
 			 * load offsets.
 			 */
-			dst += (phdr->p_paddr & 0xFFFFF) * माप(अचिन्हित पूर्णांक);
+			dst += (phdr->p_paddr & 0xFFFFF) * sizeof(unsigned int);
 			load_imem_segment(fei, phdr, fw, dst, i);
-		पूर्ण अन्यथा अणु
+		} else {
 			dst = (u8 __iomem *) fei->io + DMA_MEMDMA_DMEM;
 			/*
-			 * The Slim ELF file uses 32-bit word addressing क्रम
+			 * The Slim ELF file uses 32-bit word addressing for
 			 * load offsets.
 			 */
-			dst += (phdr->p_paddr & 0xFFFFF) * माप(अचिन्हित पूर्णांक);
+			dst += (phdr->p_paddr & 0xFFFFF) * sizeof(unsigned int);
 			load_dmem_segment(fei, phdr, fw, dst, i);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	release_firmware(fw);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक load_c8sectpfe_fw(काष्ठा c8sectpfei *fei)
-अणु
-	स्थिर काष्ठा firmware *fw;
-	पूर्णांक err;
+static int load_c8sectpfe_fw(struct c8sectpfei *fei)
+{
+	const struct firmware *fw;
+	int err;
 
 	dev_info(fei->dev, "Loading firmware: %s\n", FIRMWARE_MEMDMA);
 
 	err = request_firmware(&fw, FIRMWARE_MEMDMA, fei->dev);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = c8sectpfe_elf_sanity_check(fei, fw);
-	अगर (err) अणु
+	if (err) {
 		dev_err(fei->dev, "c8sectpfe_elf_sanity_check failed err=(%d)\n"
 			, err);
 		release_firmware(fw);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	err = load_slim_core_fw(fw, fei);
-	अगर (err) अणु
+	if (err) {
 		dev_err(fei->dev, "load_slim_core_fw failed err=(%d)\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	/* now the firmware is loaded configure the input blocks */
 	err = configure_channels(fei);
-	अगर (err) अणु
+	if (err) {
 		dev_err(fei->dev, "configure_channels failed err=(%d)\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	/*
 	 * STBus target port can access IMEM and DMEM ports
-	 * without रुकोing क्रम CPU
+	 * without waiting for CPU
 	 */
-	ग_लिखोl(0x1, fei->io + DMA_PER_STBUS_SYNC);
+	writel(0x1, fei->io + DMA_PER_STBUS_SYNC);
 
 	dev_info(fei->dev, "Boot the memdma SLIM core\n");
-	ग_लिखोl(0x1,  fei->io + DMA_CPU_RUN);
+	writel(0x1,  fei->io + DMA_CPU_RUN);
 
 	atomic_set(&fei->fw_loaded, 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id c8sectpfe_match[] = अणु
-	अणु .compatible = "st,stih407-c8sectpfe" पूर्ण,
-	अणु /* sentinel */ पूर्ण,
-पूर्ण;
+static const struct of_device_id c8sectpfe_match[] = {
+	{ .compatible = "st,stih407-c8sectpfe" },
+	{ /* sentinel */ },
+};
 MODULE_DEVICE_TABLE(of, c8sectpfe_match);
 
-अटल काष्ठा platक्रमm_driver c8sectpfe_driver = अणु
-	.driver = अणु
+static struct platform_driver c8sectpfe_driver = {
+	.driver = {
 		.name = "c8sectpfe",
 		.of_match_table = of_match_ptr(c8sectpfe_match),
-	पूर्ण,
+	},
 	.probe	= c8sectpfe_probe,
-	.हटाओ	= c8sectpfe_हटाओ,
-पूर्ण;
+	.remove	= c8sectpfe_remove,
+};
 
-module_platक्रमm_driver(c8sectpfe_driver);
+module_platform_driver(c8sectpfe_driver);
 
 MODULE_AUTHOR("Peter Bennett <peter.bennett@st.com>");
 MODULE_AUTHOR("Peter Griffin <peter.griffin@linaro.org>");

@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Copyright (c) 2011 Samsung Electronics Co., Ltd.
  *
@@ -9,31 +8,31 @@
  *	Seung-Woo Kim <sw0312.kim@samsung.com>
  */
 
-#अगर_अघोषित _EXYNOS_DRM_FBDEV_H_
-#घोषणा _EXYNOS_DRM_FBDEV_H_
+#ifndef _EXYNOS_DRM_FBDEV_H_
+#define _EXYNOS_DRM_FBDEV_H_
 
-#अगर_घोषित CONFIG_DRM_FBDEV_EMULATION
+#ifdef CONFIG_DRM_FBDEV_EMULATION
 
-पूर्णांक exynos_drm_fbdev_init(काष्ठा drm_device *dev);
-व्योम exynos_drm_fbdev_fini(काष्ठा drm_device *dev);
+int exynos_drm_fbdev_init(struct drm_device *dev);
+void exynos_drm_fbdev_fini(struct drm_device *dev);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत पूर्णांक exynos_drm_fbdev_init(काष्ठा drm_device *dev)
-अणु
-	वापस 0;
-पूर्ण
+static inline int exynos_drm_fbdev_init(struct drm_device *dev)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम exynos_drm_fbdev_fini(काष्ठा drm_device *dev)
-अणु
-पूर्ण
+static inline void exynos_drm_fbdev_fini(struct drm_device *dev)
+{
+}
 
-अटल अंतरभूत व्योम exynos_drm_fbdev_restore_mode(काष्ठा drm_device *dev)
-अणु
-पूर्ण
+static inline void exynos_drm_fbdev_restore_mode(struct drm_device *dev)
+{
+}
 
-#घोषणा exynos_drm_output_poll_changed (शून्य)
+#define exynos_drm_output_poll_changed (NULL)
 
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर
+#endif

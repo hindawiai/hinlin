@@ -1,34 +1,33 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#समावेश <linux/netlink.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश <linux/types.h>
-#समावेश <net/net_namespace.h>
-#समावेश <net/netlink.h>
-#समावेश <linux/in6.h>
-#समावेश <net/ip.h>
+// SPDX-License-Identifier: GPL-2.0-only
+#include <linux/netlink.h>
+#include <linux/rtnetlink.h>
+#include <linux/types.h>
+#include <net/net_namespace.h>
+#include <net/netlink.h>
+#include <linux/in6.h>
+#include <net/ip.h>
 
-पूर्णांक rपंचांग_getroute_parse_ip_proto(काष्ठा nlattr *attr, u8 *ip_proto, u8 family,
-				काष्ठा netlink_ext_ack *extack)
-अणु
+int rtm_getroute_parse_ip_proto(struct nlattr *attr, u8 *ip_proto, u8 family,
+				struct netlink_ext_ack *extack)
+{
 	*ip_proto = nla_get_u8(attr);
 
-	चयन (*ip_proto) अणु
-	हाल IPPROTO_TCP:
-	हाल IPPROTO_UDP:
-		वापस 0;
-	हाल IPPROTO_ICMP:
-		अगर (family != AF_INET)
-			अवरोध;
-		वापस 0;
-#अगर IS_ENABLED(CONFIG_IPV6)
-	हाल IPPROTO_ICMPV6:
-		अगर (family != AF_INET6)
-			अवरोध;
-		वापस 0;
-#पूर्ण_अगर
-	पूर्ण
+	switch (*ip_proto) {
+	case IPPROTO_TCP:
+	case IPPROTO_UDP:
+		return 0;
+	case IPPROTO_ICMP:
+		if (family != AF_INET)
+			break;
+		return 0;
+#if IS_ENABLED(CONFIG_IPV6)
+	case IPPROTO_ICMPV6:
+		if (family != AF_INET6)
+			break;
+		return 0;
+#endif
+	}
 	NL_SET_ERR_MSG(extack, "Unsupported ip proto");
-	वापस -EOPNOTSUPP;
-पूर्ण
-EXPORT_SYMBOL_GPL(rपंचांग_getroute_parse_ip_proto);
+	return -EOPNOTSUPP;
+}
+EXPORT_SYMBOL_GPL(rtm_getroute_parse_ip_proto);

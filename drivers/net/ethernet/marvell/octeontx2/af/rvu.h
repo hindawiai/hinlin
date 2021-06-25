@@ -1,142 +1,141 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*  Marvell OcteonTx2 RVU Admin Function driver
  *
  * Copyright (C) 2018 Marvell International Ltd.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
 
-#अगर_अघोषित RVU_H
-#घोषणा RVU_H
+#ifndef RVU_H
+#define RVU_H
 
-#समावेश <linux/pci.h>
-#समावेश <net/devlink.h>
+#include <linux/pci.h>
+#include <net/devlink.h>
 
-#समावेश "rvu_struct.h"
-#समावेश "rvu_devlink.h"
-#समावेश "common.h"
-#समावेश "mbox.h"
-#समावेश "npc.h"
-#समावेश "rvu_reg.h"
+#include "rvu_struct.h"
+#include "rvu_devlink.h"
+#include "common.h"
+#include "mbox.h"
+#include "npc.h"
+#include "rvu_reg.h"
 
 /* PCI device IDs */
-#घोषणा	PCI_DEVID_OCTEONTX2_RVU_AF		0xA065
-#घोषणा	PCI_DEVID_OCTEONTX2_LBK			0xA061
+#define	PCI_DEVID_OCTEONTX2_RVU_AF		0xA065
+#define	PCI_DEVID_OCTEONTX2_LBK			0xA061
 
-/* Subप्रणाली Device ID */
-#घोषणा PCI_SUBSYS_DEVID_96XX                  0xB200
-#घोषणा PCI_SUBSYS_DEVID_CN10K_A	       0xB900
+/* Subsystem Device ID */
+#define PCI_SUBSYS_DEVID_96XX                  0xB200
+#define PCI_SUBSYS_DEVID_CN10K_A	       0xB900
 
 /* PCI BAR nos */
-#घोषणा	PCI_AF_REG_BAR_NUM			0
-#घोषणा	PCI_PF_REG_BAR_NUM			2
-#घोषणा	PCI_MBOX_BAR_NUM			4
+#define	PCI_AF_REG_BAR_NUM			0
+#define	PCI_PF_REG_BAR_NUM			2
+#define	PCI_MBOX_BAR_NUM			4
 
-#घोषणा NAME_SIZE				32
-#घोषणा MAX_NIX_BLKS				2
-#घोषणा MAX_CPT_BLKS				2
+#define NAME_SIZE				32
+#define MAX_NIX_BLKS				2
+#define MAX_CPT_BLKS				2
 
 /* PF_FUNC */
-#घोषणा RVU_PFVF_PF_SHIFT	10
-#घोषणा RVU_PFVF_PF_MASK	0x3F
-#घोषणा RVU_PFVF_FUNC_SHIFT	0
-#घोषणा RVU_PFVF_FUNC_MASK	0x3FF
+#define RVU_PFVF_PF_SHIFT	10
+#define RVU_PFVF_PF_MASK	0x3F
+#define RVU_PFVF_FUNC_SHIFT	0
+#define RVU_PFVF_FUNC_MASK	0x3FF
 
-#अगर_घोषित CONFIG_DEBUG_FS
-काष्ठा dump_ctx अणु
-	पूर्णांक	lf;
-	पूर्णांक	id;
+#ifdef CONFIG_DEBUG_FS
+struct dump_ctx {
+	int	lf;
+	int	id;
 	bool	all;
-पूर्ण;
+};
 
-काष्ठा cpt_ctx अणु
-	पूर्णांक blkaddr;
-	काष्ठा rvu *rvu;
-पूर्ण;
+struct cpt_ctx {
+	int blkaddr;
+	struct rvu *rvu;
+};
 
-काष्ठा rvu_debugfs अणु
-	काष्ठा dentry *root;
-	काष्ठा dentry *cgx_root;
-	काष्ठा dentry *cgx;
-	काष्ठा dentry *lmac;
-	काष्ठा dentry *npa;
-	काष्ठा dentry *nix;
-	काष्ठा dentry *npc;
-	काष्ठा dentry *cpt;
-	काष्ठा dump_ctx npa_aura_ctx;
-	काष्ठा dump_ctx npa_pool_ctx;
-	काष्ठा dump_ctx nix_cq_ctx;
-	काष्ठा dump_ctx nix_rq_ctx;
-	काष्ठा dump_ctx nix_sq_ctx;
-	काष्ठा cpt_ctx cpt_ctx[MAX_CPT_BLKS];
-	पूर्णांक npa_qsize_id;
-	पूर्णांक nix_qsize_id;
-पूर्ण;
-#पूर्ण_अगर
+struct rvu_debugfs {
+	struct dentry *root;
+	struct dentry *cgx_root;
+	struct dentry *cgx;
+	struct dentry *lmac;
+	struct dentry *npa;
+	struct dentry *nix;
+	struct dentry *npc;
+	struct dentry *cpt;
+	struct dump_ctx npa_aura_ctx;
+	struct dump_ctx npa_pool_ctx;
+	struct dump_ctx nix_cq_ctx;
+	struct dump_ctx nix_rq_ctx;
+	struct dump_ctx nix_sq_ctx;
+	struct cpt_ctx cpt_ctx[MAX_CPT_BLKS];
+	int npa_qsize_id;
+	int nix_qsize_id;
+};
+#endif
 
-काष्ठा rvu_work अणु
-	काष्ठा	work_काष्ठा work;
-	काष्ठा	rvu *rvu;
-	पूर्णांक num_msgs;
-	पूर्णांक up_num_msgs;
-पूर्ण;
+struct rvu_work {
+	struct	work_struct work;
+	struct	rvu *rvu;
+	int num_msgs;
+	int up_num_msgs;
+};
 
-काष्ठा rsrc_bmap अणु
-	अचिन्हित दीर्घ *bmap;	/* Poपूर्णांकer to resource biपंचांगap */
+struct rsrc_bmap {
+	unsigned long *bmap;	/* Pointer to resource bitmap */
 	u16  max;		/* Max resource id or count */
-पूर्ण;
+};
 
-काष्ठा rvu_block अणु
-	काष्ठा rsrc_bmap	lf;
-	काष्ठा admin_queue	*aq; /* NIX/NPA AQ */
-	u16  *fn_map; /* LF to pcअगरunc mapping */
+struct rvu_block {
+	struct rsrc_bmap	lf;
+	struct admin_queue	*aq; /* NIX/NPA AQ */
+	u16  *fn_map; /* LF to pcifunc mapping */
 	bool multislot;
 	bool implemented;
 	u8   addr;  /* RVU_BLOCK_ADDR_E */
 	u8   type;  /* RVU_BLOCK_TYPE_E */
-	u8   lfshअगरt;
+	u8   lfshift;
 	u64  lookup_reg;
 	u64  pf_lfcnt_reg;
 	u64  vf_lfcnt_reg;
 	u64  lfcfg_reg;
 	u64  msixcfg_reg;
 	u64  lfreset_reg;
-	अचिन्हित अक्षर name[NAME_SIZE];
-पूर्ण;
+	unsigned char name[NAME_SIZE];
+};
 
-काष्ठा nix_mcast अणु
-	काष्ठा qmem	*mce_ctx;
-	काष्ठा qmem	*mcast_buf;
-	पूर्णांक		replay_pkind;
-	पूर्णांक		next_मुक्त_mce;
-	काष्ठा mutex	mce_lock; /* Serialize MCE updates */
-पूर्ण;
+struct nix_mcast {
+	struct qmem	*mce_ctx;
+	struct qmem	*mcast_buf;
+	int		replay_pkind;
+	int		next_free_mce;
+	struct mutex	mce_lock; /* Serialize MCE updates */
+};
 
-काष्ठा nix_mce_list अणु
-	काष्ठा hlist_head	head;
-	पूर्णांक			count;
-	पूर्णांक			max;
-पूर्ण;
+struct nix_mce_list {
+	struct hlist_head	head;
+	int			count;
+	int			max;
+};
 
-/* layer metadata to uniquely identअगरy a packet header field */
-काष्ठा npc_layer_mdata अणु
+/* layer metadata to uniquely identify a packet header field */
+struct npc_layer_mdata {
 	u8 lid;
 	u8 ltype;
 	u8 hdr;
 	u8 key;
 	u8 len;
-पूर्ण;
+};
 
 /* Structure to represent a field present in the
  * generated key. A key field may present anywhere and can
- * be of any size in the generated key. Once this काष्ठाure
- * is populated क्रम fields of पूर्णांकerest then field's presence
- * and location (अगर present) can be known.
+ * be of any size in the generated key. Once this structure
+ * is populated for fields of interest then field's presence
+ * and location (if present) can be known.
  */
-काष्ठा npc_key_field अणु
+struct npc_key_field {
 	/* Masks where all set bits indicate position
 	 * of a field in the key
 	 */
@@ -146,18 +145,18 @@
 	 * 4 bytes in KW0, 8 bytes in KW1 and 4 bytes in KW2 and
 	 * nr_kws will be 3(KW0, KW1 and KW2).
 	 */
-	पूर्णांक nr_kws;
+	int nr_kws;
 	/* used by packet header fields */
-	काष्ठा npc_layer_mdata layer_mdata;
-पूर्ण;
+	struct npc_layer_mdata layer_mdata;
+};
 
-काष्ठा npc_mcam अणु
-	काष्ठा rsrc_bmap counters;
-	काष्ठा mutex	lock;	/* MCAM entries and counters update lock */
-	अचिन्हित दीर्घ	*bmap;		/* biपंचांगap, 0 => bmap_entries */
-	अचिन्हित दीर्घ	*bmap_reverse;	/* Reverse biपंचांगap, bmap_entries => 0 */
+struct npc_mcam {
+	struct rsrc_bmap counters;
+	struct mutex	lock;	/* MCAM entries and counters update lock */
+	unsigned long	*bmap;		/* bitmap, 0 => bmap_entries */
+	unsigned long	*bmap_reverse;	/* Reverse bitmap, bmap_entries => 0 */
 	u16	bmap_entries;	/* Number of unreserved MCAM entries */
-	u16	bmap_fcnt;	/* MCAM entries मुक्त count */
+	u16	bmap_fcnt;	/* MCAM entries free count */
 	u16	*entry2pfvf_map;
 	u16	*entry2cntr_map;
 	u16	*cntr2pfvf_map;
@@ -174,17 +173,17 @@
 	u16	lprio_start;
 	u16	hprio_count;
 	u16	hprio_end;
-	u16     rx_miss_act_cntr; /* Counter क्रम RX MISS action */
+	u16     rx_miss_act_cntr; /* Counter for RX MISS action */
 	/* fields present in the generated key */
-	काष्ठा npc_key_field	tx_key_fields[NPC_KEY_FIELDS_MAX];
-	काष्ठा npc_key_field	rx_key_fields[NPC_KEY_FIELDS_MAX];
+	struct npc_key_field	tx_key_fields[NPC_KEY_FIELDS_MAX];
+	struct npc_key_field	rx_key_fields[NPC_KEY_FIELDS_MAX];
 	u64	tx_features;
 	u64	rx_features;
-	काष्ठा list_head mcam_rules;
-पूर्ण;
+	struct list_head mcam_rules;
+};
 
-/* Structure क्रम per RVU func info ie PF/VF */
-काष्ठा rvu_pfvf अणु
+/* Structure for per RVU func info ie PF/VF */
+struct rvu_pfvf {
 	bool		npalf; /* Only one NPALF per RVU_FUNC */
 	bool		nixlf; /* Only one NIXLF per RVU_FUNC */
 	u16		sso;
@@ -195,27 +194,27 @@
 	u8		cgx_lmac;
 
 	/* Block LF's MSIX vector info */
-	काष्ठा rsrc_bmap msix;      /* Biपंचांगap क्रम MSIX vector alloc */
-#घोषणा MSIX_BLKLF(blkaddr, lf) (((blkaddr) << 8) | ((lf) & 0xFF))
+	struct rsrc_bmap msix;      /* Bitmap for MSIX vector alloc */
+#define MSIX_BLKLF(blkaddr, lf) (((blkaddr) << 8) | ((lf) & 0xFF))
 	u16		 *msix_lfmap; /* Vector to block LF mapping */
 
 	/* NPA contexts */
-	काष्ठा qmem	*aura_ctx;
-	काष्ठा qmem	*pool_ctx;
-	काष्ठा qmem	*npa_qपूर्णांकs_ctx;
-	अचिन्हित दीर्घ	*aura_bmap;
-	अचिन्हित दीर्घ	*pool_bmap;
+	struct qmem	*aura_ctx;
+	struct qmem	*pool_ctx;
+	struct qmem	*npa_qints_ctx;
+	unsigned long	*aura_bmap;
+	unsigned long	*pool_bmap;
 
 	/* NIX contexts */
-	काष्ठा qmem	*rq_ctx;
-	काष्ठा qmem	*sq_ctx;
-	काष्ठा qmem	*cq_ctx;
-	काष्ठा qmem	*rss_ctx;
-	काष्ठा qmem	*cq_पूर्णांकs_ctx;
-	काष्ठा qmem	*nix_qपूर्णांकs_ctx;
-	अचिन्हित दीर्घ	*sq_bmap;
-	अचिन्हित दीर्घ	*rq_bmap;
-	अचिन्हित दीर्घ	*cq_bmap;
+	struct qmem	*rq_ctx;
+	struct qmem	*sq_ctx;
+	struct qmem	*cq_ctx;
+	struct qmem	*rss_ctx;
+	struct qmem	*cq_ints_ctx;
+	struct qmem	*nix_qints_ctx;
+	unsigned long	*sq_bmap;
+	unsigned long	*rq_bmap;
+	unsigned long	*cq_bmap;
 
 	u16		rx_chan_base;
 	u16		tx_chan_base;
@@ -226,78 +225,78 @@
 
 	u8		pf_set_vf_cfg;
 	u8		mac_addr[ETH_ALEN]; /* MAC address of this PF/VF */
-	u8		शेष_mac[ETH_ALEN]; /* MAC address from FWdata */
+	u8		default_mac[ETH_ALEN]; /* MAC address from FWdata */
 
 	/* Broadcast pkt replication info */
 	u16			bcast_mce_idx;
-	काष्ठा nix_mce_list	bcast_mce_list;
+	struct nix_mce_list	bcast_mce_list;
 
-	काष्ठा rvu_npc_mcam_rule *def_ucast_rule;
+	struct rvu_npc_mcam_rule *def_ucast_rule;
 
 	bool	cgx_in_use; /* this PF/VF using CGX? */
-	पूर्णांक	cgx_users;  /* number of cgx users - used only by PFs */
+	int	cgx_users;  /* number of cgx users - used only by PFs */
 
-	u8	nix_blkaddr; /* BLKADDR_NIX0/1 asचिन्हित to this PF */
-	u8	nix_rx_पूर्णांकf; /* NIX0_RX/NIX1_RX पूर्णांकerface to NPC */
-	u8	nix_tx_पूर्णांकf; /* NIX0_TX/NIX1_TX पूर्णांकerface to NPC */
-पूर्ण;
+	u8	nix_blkaddr; /* BLKADDR_NIX0/1 assigned to this PF */
+	u8	nix_rx_intf; /* NIX0_RX/NIX1_RX interface to NPC */
+	u8	nix_tx_intf; /* NIX0_TX/NIX1_TX interface to NPC */
+};
 
-काष्ठा nix_txsch अणु
-	काष्ठा rsrc_bmap schq;
+struct nix_txsch {
+	struct rsrc_bmap schq;
 	u8   lvl;
-#घोषणा NIX_TXSCHQ_FREE		      BIT_ULL(1)
-#घोषणा NIX_TXSCHQ_CFG_DONE	      BIT_ULL(0)
-#घोषणा TXSCH_MAP_FUNC(__pfvf_map)    ((__pfvf_map) & 0xFFFF)
-#घोषणा TXSCH_MAP_FLAGS(__pfvf_map)   ((__pfvf_map) >> 16)
-#घोषणा TXSCH_MAP(__func, __flags)    (((__func) & 0xFFFF) | ((__flags) << 16))
-#घोषणा TXSCH_SET_FLAG(__pfvf_map, flag)    ((__pfvf_map) | ((flag) << 16))
+#define NIX_TXSCHQ_FREE		      BIT_ULL(1)
+#define NIX_TXSCHQ_CFG_DONE	      BIT_ULL(0)
+#define TXSCH_MAP_FUNC(__pfvf_map)    ((__pfvf_map) & 0xFFFF)
+#define TXSCH_MAP_FLAGS(__pfvf_map)   ((__pfvf_map) >> 16)
+#define TXSCH_MAP(__func, __flags)    (((__func) & 0xFFFF) | ((__flags) << 16))
+#define TXSCH_SET_FLAG(__pfvf_map, flag)    ((__pfvf_map) | ((flag) << 16))
 	u32  *pfvf_map;
-पूर्ण;
+};
 
-काष्ठा nix_mark_क्रमmat अणु
+struct nix_mark_format {
 	u8 total;
 	u8 in_use;
 	u32 *cfg;
-पूर्ण;
+};
 
-काष्ठा npc_pkind अणु
-	काष्ठा rsrc_bmap rsrc;
+struct npc_pkind {
+	struct rsrc_bmap rsrc;
 	u32	*pfchan_map;
-पूर्ण;
+};
 
-काष्ठा nix_flowkey अणु
-#घोषणा NIX_FLOW_KEY_ALG_MAX 32
+struct nix_flowkey {
+#define NIX_FLOW_KEY_ALG_MAX 32
 	u32 flowkey[NIX_FLOW_KEY_ALG_MAX];
-	पूर्णांक in_use;
-पूर्ण;
+	int in_use;
+};
 
-काष्ठा nix_lso अणु
+struct nix_lso {
 	u8 total;
 	u8 in_use;
-पूर्ण;
+};
 
-काष्ठा nix_txvlan अणु
-#घोषणा NIX_TX_VTAG_DEF_MAX 0x400
-	काष्ठा rsrc_bmap rsrc;
+struct nix_txvlan {
+#define NIX_TX_VTAG_DEF_MAX 0x400
+	struct rsrc_bmap rsrc;
 	u16 *entry2pfvf_map;
-	काष्ठा mutex rsrc_lock; /* Serialize resource alloc/मुक्त */
-पूर्ण;
+	struct mutex rsrc_lock; /* Serialize resource alloc/free */
+};
 
-काष्ठा nix_hw अणु
-	पूर्णांक blkaddr;
-	काष्ठा rvu *rvu;
-	काष्ठा nix_txsch txsch[NIX_TXSCH_LVL_CNT]; /* Tx schedulers */
-	काष्ठा nix_mcast mcast;
-	काष्ठा nix_flowkey flowkey;
-	काष्ठा nix_mark_क्रमmat mark_क्रमmat;
-	काष्ठा nix_lso lso;
-	काष्ठा nix_txvlan txvlan;
-पूर्ण;
+struct nix_hw {
+	int blkaddr;
+	struct rvu *rvu;
+	struct nix_txsch txsch[NIX_TXSCH_LVL_CNT]; /* Tx schedulers */
+	struct nix_mcast mcast;
+	struct nix_flowkey flowkey;
+	struct nix_mark_format mark_format;
+	struct nix_lso lso;
+	struct nix_txvlan txvlan;
+};
 
 /* RVU block's capabilities or functionality,
  * which vary by silicon version/skew.
  */
-काष्ठा hw_cap अणु
+struct hw_cap {
 	/* Transmit side supported functionality */
 	u8	nix_tx_aggr_lvl; /* Tx link's traffic aggregation level */
 	u16	nix_txsch_per_cgx_lmac; /* Max Q's transmitting to CGX LMAC */
@@ -307,11 +306,11 @@
 	bool	nix_shaping;		 /* Is shaping and coloring supported */
 	bool	nix_tx_link_bp;		 /* Can link backpressure TL queues ? */
 	bool	nix_rx_multicast;	 /* Rx packet replication support */
-	bool	per_pf_mbox_regs; /* PF mbox specअगरied in per PF रेजिस्टरs ? */
+	bool	per_pf_mbox_regs; /* PF mbox specified in per PF registers ? */
 	bool	programmable_chans; /* Channels programmable ? */
-पूर्ण;
+};
 
-काष्ठा rvu_hwinfo अणु
+struct rvu_hwinfo {
 	u8	total_pfs;   /* MAX RVU PFs HW supports */
 	u16	total_vfs;   /* Max RVU VFs HW supports */
 	u16	max_vfs_per_pf; /* Max VFs that can be attached to a PF */
@@ -327,39 +326,39 @@
 	u8	cpt_links;	/* Number of CPT links */
 	u8	npc_kpus;          /* No of parser units */
 	u8	npc_pkinds;        /* No of port kinds */
-	u8	npc_पूर्णांकfs;         /* No of पूर्णांकerfaces */
+	u8	npc_intfs;         /* No of interfaces */
 	u8	npc_kpu_entries;   /* No of KPU entries */
 	u16	npc_counters;	   /* No of match stats counters */
 	u32	lbk_bufsize;	   /* FIFO size supported by LBK */
-	bool	npc_ext_set;	   /* Extended रेजिस्टर set */
+	bool	npc_ext_set;	   /* Extended register set */
 
-	काष्ठा hw_cap    cap;
-	काष्ठा rvu_block block[BLK_COUNT]; /* Block info */
-	काष्ठा nix_hw    *nix;
-	काष्ठा rvu	 *rvu;
-	काष्ठा npc_pkind pkind;
-	काष्ठा npc_mcam  mcam;
-पूर्ण;
+	struct hw_cap    cap;
+	struct rvu_block block[BLK_COUNT]; /* Block info */
+	struct nix_hw    *nix;
+	struct rvu	 *rvu;
+	struct npc_pkind pkind;
+	struct npc_mcam  mcam;
+};
 
-काष्ठा mbox_wq_info अणु
-	काष्ठा otx2_mbox mbox;
-	काष्ठा rvu_work *mbox_wrk;
+struct mbox_wq_info {
+	struct otx2_mbox mbox;
+	struct rvu_work *mbox_wrk;
 
-	काष्ठा otx2_mbox mbox_up;
-	काष्ठा rvu_work *mbox_wrk_up;
+	struct otx2_mbox mbox_up;
+	struct rvu_work *mbox_wrk_up;
 
-	काष्ठा workqueue_काष्ठा *mbox_wq;
-पूर्ण;
+	struct workqueue_struct *mbox_wq;
+};
 
-काष्ठा rvu_fwdata अणु
-#घोषणा RVU_FWDATA_HEADER_MAGIC	0xCFDA	/* Custom Firmware Data*/
-#घोषणा RVU_FWDATA_VERSION	0x0001
+struct rvu_fwdata {
+#define RVU_FWDATA_HEADER_MAGIC	0xCFDA	/* Custom Firmware Data*/
+#define RVU_FWDATA_VERSION	0x0001
 	u32 header_magic;
 	u32 version;		/* version id */
 
 	/* MAC address */
-#घोषणा PF_MACNUM_MAX	32
-#घोषणा VF_MACNUM_MAX	256
+#define PF_MACNUM_MAX	32
+#define VF_MACNUM_MAX	256
 	u64 pf_macs[PF_MACNUM_MAX];
 	u64 vf_macs[VF_MACNUM_MAX];
 	u64 sclk;
@@ -367,341 +366,341 @@
 	u64 mcam_addr;
 	u64 mcam_sz;
 	u64 msixtr_base;
-#घोषणा FWDATA_RESERVED_MEM 1023
+#define FWDATA_RESERVED_MEM 1023
 	u64 reserved[FWDATA_RESERVED_MEM];
-#घोषणा CGX_MAX         5
-#घोषणा CGX_LMACS_MAX   4
-	काष्ठा cgx_lmac_fwdata_s cgx_fw_data[CGX_MAX][CGX_LMACS_MAX];
+#define CGX_MAX         5
+#define CGX_LMACS_MAX   4
+	struct cgx_lmac_fwdata_s cgx_fw_data[CGX_MAX][CGX_LMACS_MAX];
 	/* Do not add new fields below this line */
-पूर्ण;
+};
 
-काष्ठा ptp;
+struct ptp;
 
-/* KPU profile adapter काष्ठाure gathering all KPU configuration data and असलtracting out the
+/* KPU profile adapter structure gathering all KPU configuration data and abstracting out the
  * source where it came from.
  */
-काष्ठा npc_kpu_profile_adapter अणु
-	स्थिर अक्षर			*name;
+struct npc_kpu_profile_adapter {
+	const char			*name;
 	u64				version;
-	स्थिर काष्ठा npc_lt_def_cfg	*lt_def;
-	स्थिर काष्ठा npc_kpu_profile_action	*ikpu; /* array[pkinds] */
-	स्थिर काष्ठा npc_kpu_profile	*kpu; /* array[kpus] */
-	काष्ठा npc_mcam_kex		*mkex;
-	माप_प्रकार				pkinds;
-	माप_प्रकार				kpus;
-पूर्ण;
+	const struct npc_lt_def_cfg	*lt_def;
+	const struct npc_kpu_profile_action	*ikpu; /* array[pkinds] */
+	const struct npc_kpu_profile	*kpu; /* array[kpus] */
+	struct npc_mcam_kex		*mkex;
+	size_t				pkinds;
+	size_t				kpus;
+};
 
-काष्ठा rvu अणु
-	व्योम __iomem		*afreg_base;
-	व्योम __iomem		*pfreg_base;
-	काष्ठा pci_dev		*pdev;
-	काष्ठा device		*dev;
-	काष्ठा rvu_hwinfo       *hw;
-	काष्ठा rvu_pfvf		*pf;
-	काष्ठा rvu_pfvf		*hwvf;
-	काष्ठा mutex		rsrc_lock; /* Serialize resource alloc/मुक्त */
-	पूर्णांक			vfs; /* Number of VFs attached to RVU */
-	पूर्णांक			nix_blkaddr[MAX_NIX_BLKS];
+struct rvu {
+	void __iomem		*afreg_base;
+	void __iomem		*pfreg_base;
+	struct pci_dev		*pdev;
+	struct device		*dev;
+	struct rvu_hwinfo       *hw;
+	struct rvu_pfvf		*pf;
+	struct rvu_pfvf		*hwvf;
+	struct mutex		rsrc_lock; /* Serialize resource alloc/free */
+	int			vfs; /* Number of VFs attached to RVU */
+	int			nix_blkaddr[MAX_NIX_BLKS];
 
 	/* Mbox */
-	काष्ठा mbox_wq_info	afpf_wq_info;
-	काष्ठा mbox_wq_info	afvf_wq_info;
+	struct mbox_wq_info	afpf_wq_info;
+	struct mbox_wq_info	afvf_wq_info;
 
 	/* PF FLR */
-	काष्ठा rvu_work		*flr_wrk;
-	काष्ठा workqueue_काष्ठा *flr_wq;
-	काष्ठा mutex		flr_lock; /* Serialize FLRs */
+	struct rvu_work		*flr_wrk;
+	struct workqueue_struct *flr_wq;
+	struct mutex		flr_lock; /* Serialize FLRs */
 
 	/* MSI-X */
 	u16			num_vec;
-	अक्षर			*irq_name;
+	char			*irq_name;
 	bool			*irq_allocated;
 	dma_addr_t		msix_base_iova;
 	u64			msixtr_base_phy; /* Register reset value */
 
 	/* CGX */
-#घोषणा PF_CGXMAP_BASE		1 /* PF 0 is reserved क्रम RVU PF */
+#define PF_CGXMAP_BASE		1 /* PF 0 is reserved for RVU PF */
 	u8			cgx_mapped_pfs;
 	u8			cgx_cnt_max;	 /* CGX port count max */
 	u8			*pf2cgxlmac_map; /* pf to cgx_lmac map */
-	u16			*cgxlmac2pf_map; /* biपंचांगap of mapped pfs क्रम
+	u16			*cgxlmac2pf_map; /* bitmap of mapped pfs for
 						  * every cgx lmac port
 						  */
-	अचिन्हित दीर्घ		pf_notअगरy_bmap; /* Flags क्रम PF notअगरication */
-	व्योम			**cgx_idmap; /* cgx id to cgx data map table */
-	काष्ठा			work_काष्ठा cgx_evh_work;
-	काष्ठा			workqueue_काष्ठा *cgx_evh_wq;
+	unsigned long		pf_notify_bmap; /* Flags for PF notification */
+	void			**cgx_idmap; /* cgx id to cgx data map table */
+	struct			work_struct cgx_evh_work;
+	struct			workqueue_struct *cgx_evh_wq;
 	spinlock_t		cgx_evq_lock; /* cgx event queue lock */
-	काष्ठा list_head	cgx_evq_head; /* cgx event queue head */
-	काष्ठा mutex		cgx_cfg_lock; /* serialize cgx configuration */
+	struct list_head	cgx_evq_head; /* cgx event queue head */
+	struct mutex		cgx_cfg_lock; /* serialize cgx configuration */
 
-	अक्षर mkex_pfl_name[MKEX_NAME_LEN]; /* Configured MKEX profile name */
+	char mkex_pfl_name[MKEX_NAME_LEN]; /* Configured MKEX profile name */
 
 	/* Firmware data */
-	काष्ठा rvu_fwdata	*fwdata;
+	struct rvu_fwdata	*fwdata;
 
 	/* NPC KPU data */
-	काष्ठा npc_kpu_profile_adapter kpu;
+	struct npc_kpu_profile_adapter kpu;
 
-	काष्ठा ptp		*ptp;
+	struct ptp		*ptp;
 
-#अगर_घोषित CONFIG_DEBUG_FS
-	काष्ठा rvu_debugfs	rvu_dbg;
-#पूर्ण_अगर
-	काष्ठा rvu_devlink	*rvu_dl;
-पूर्ण;
+#ifdef CONFIG_DEBUG_FS
+	struct rvu_debugfs	rvu_dbg;
+#endif
+	struct rvu_devlink	*rvu_dl;
+};
 
-अटल अंतरभूत व्योम rvu_ग_लिखो64(काष्ठा rvu *rvu, u64 block, u64 offset, u64 val)
-अणु
-	ग_लिखोq(val, rvu->afreg_base + ((block << 28) | offset));
-पूर्ण
+static inline void rvu_write64(struct rvu *rvu, u64 block, u64 offset, u64 val)
+{
+	writeq(val, rvu->afreg_base + ((block << 28) | offset));
+}
 
-अटल अंतरभूत u64 rvu_पढ़ो64(काष्ठा rvu *rvu, u64 block, u64 offset)
-अणु
-	वापस पढ़ोq(rvu->afreg_base + ((block << 28) | offset));
-पूर्ण
+static inline u64 rvu_read64(struct rvu *rvu, u64 block, u64 offset)
+{
+	return readq(rvu->afreg_base + ((block << 28) | offset));
+}
 
-अटल अंतरभूत व्योम rvupf_ग_लिखो64(काष्ठा rvu *rvu, u64 offset, u64 val)
-अणु
-	ग_लिखोq(val, rvu->pfreg_base + offset);
-पूर्ण
+static inline void rvupf_write64(struct rvu *rvu, u64 offset, u64 val)
+{
+	writeq(val, rvu->pfreg_base + offset);
+}
 
-अटल अंतरभूत u64 rvupf_पढ़ो64(काष्ठा rvu *rvu, u64 offset)
-अणु
-	वापस पढ़ोq(rvu->pfreg_base + offset);
-पूर्ण
+static inline u64 rvupf_read64(struct rvu *rvu, u64 offset)
+{
+	return readq(rvu->pfreg_base + offset);
+}
 
 /* Silicon revisions */
-अटल अंतरभूत bool is_rvu_96xx_A0(काष्ठा rvu *rvu)
-अणु
-	काष्ठा pci_dev *pdev = rvu->pdev;
+static inline bool is_rvu_96xx_A0(struct rvu *rvu)
+{
+	struct pci_dev *pdev = rvu->pdev;
 
-	वापस (pdev->revision == 0x00) &&
-		(pdev->subप्रणाली_device == PCI_SUBSYS_DEVID_96XX);
-पूर्ण
+	return (pdev->revision == 0x00) &&
+		(pdev->subsystem_device == PCI_SUBSYS_DEVID_96XX);
+}
 
-अटल अंतरभूत bool is_rvu_96xx_B0(काष्ठा rvu *rvu)
-अणु
-	काष्ठा pci_dev *pdev = rvu->pdev;
+static inline bool is_rvu_96xx_B0(struct rvu *rvu)
+{
+	struct pci_dev *pdev = rvu->pdev;
 
-	वापस ((pdev->revision == 0x00) || (pdev->revision == 0x01)) &&
-		(pdev->subप्रणाली_device == PCI_SUBSYS_DEVID_96XX);
-पूर्ण
+	return ((pdev->revision == 0x00) || (pdev->revision == 0x01)) &&
+		(pdev->subsystem_device == PCI_SUBSYS_DEVID_96XX);
+}
 
-/* REVID क्रम PCIe devices.
+/* REVID for PCIe devices.
  * Bits 0..1: minor pass, bit 3..2: major pass
  * bits 7..4: midr id
  */
-#घोषणा PCI_REVISION_ID_96XX		0x00
-#घोषणा PCI_REVISION_ID_95XX		0x10
-#घोषणा PCI_REVISION_ID_LOKI		0x20
-#घोषणा PCI_REVISION_ID_98XX		0x30
-#घोषणा PCI_REVISION_ID_95XXMM		0x40
+#define PCI_REVISION_ID_96XX		0x00
+#define PCI_REVISION_ID_95XX		0x10
+#define PCI_REVISION_ID_LOKI		0x20
+#define PCI_REVISION_ID_98XX		0x30
+#define PCI_REVISION_ID_95XXMM		0x40
 
-अटल अंतरभूत bool is_rvu_otx2(काष्ठा rvu *rvu)
-अणु
-	काष्ठा pci_dev *pdev = rvu->pdev;
+static inline bool is_rvu_otx2(struct rvu *rvu)
+{
+	struct pci_dev *pdev = rvu->pdev;
 
 	u8 midr = pdev->revision & 0xF0;
 
-	वापस (midr == PCI_REVISION_ID_96XX || midr == PCI_REVISION_ID_95XX ||
+	return (midr == PCI_REVISION_ID_96XX || midr == PCI_REVISION_ID_95XX ||
 		midr == PCI_REVISION_ID_LOKI || midr == PCI_REVISION_ID_98XX ||
 		midr == PCI_REVISION_ID_95XXMM);
-पूर्ण
+}
 
-अटल अंतरभूत u16 rvu_nix_chan_cgx(काष्ठा rvu *rvu, u8 cgxid,
+static inline u16 rvu_nix_chan_cgx(struct rvu *rvu, u8 cgxid,
 				   u8 lmacid, u8 chan)
-अणु
-	u64 nix_स्थिर = rvu_पढ़ो64(rvu, BLKADDR_NIX0, NIX_AF_CONST);
-	u16 cgx_chans = nix_स्थिर & 0xFFULL;
-	काष्ठा rvu_hwinfo *hw = rvu->hw;
+{
+	u64 nix_const = rvu_read64(rvu, BLKADDR_NIX0, NIX_AF_CONST);
+	u16 cgx_chans = nix_const & 0xFFULL;
+	struct rvu_hwinfo *hw = rvu->hw;
 
-	अगर (!hw->cap.programmable_chans)
-		वापस NIX_CHAN_CGX_LMAC_CHX(cgxid, lmacid, chan);
+	if (!hw->cap.programmable_chans)
+		return NIX_CHAN_CGX_LMAC_CHX(cgxid, lmacid, chan);
 
-	वापस rvu->hw->cgx_chan_base +
+	return rvu->hw->cgx_chan_base +
 		(cgxid * hw->lmac_per_cgx + lmacid) * cgx_chans + chan;
-पूर्ण
+}
 
-अटल अंतरभूत u16 rvu_nix_chan_lbk(काष्ठा rvu *rvu, u8 lbkid,
+static inline u16 rvu_nix_chan_lbk(struct rvu *rvu, u8 lbkid,
 				   u8 chan)
-अणु
-	u64 nix_स्थिर = rvu_पढ़ो64(rvu, BLKADDR_NIX0, NIX_AF_CONST);
-	u16 lbk_chans = (nix_स्थिर >> 16) & 0xFFULL;
-	काष्ठा rvu_hwinfo *hw = rvu->hw;
+{
+	u64 nix_const = rvu_read64(rvu, BLKADDR_NIX0, NIX_AF_CONST);
+	u16 lbk_chans = (nix_const >> 16) & 0xFFULL;
+	struct rvu_hwinfo *hw = rvu->hw;
 
-	अगर (!hw->cap.programmable_chans)
-		वापस NIX_CHAN_LBK_CHX(lbkid, chan);
+	if (!hw->cap.programmable_chans)
+		return NIX_CHAN_LBK_CHX(lbkid, chan);
 
-	वापस rvu->hw->lbk_chan_base + lbkid * lbk_chans + chan;
-पूर्ण
+	return rvu->hw->lbk_chan_base + lbkid * lbk_chans + chan;
+}
 
-अटल अंतरभूत u16 rvu_nix_chan_cpt(काष्ठा rvu *rvu, u8 chan)
-अणु
-	वापस rvu->hw->cpt_chan_base + chan;
-पूर्ण
+static inline u16 rvu_nix_chan_cpt(struct rvu *rvu, u8 chan)
+{
+	return rvu->hw->cpt_chan_base + chan;
+}
 
 /* Function Prototypes
  * RVU
  */
-अटल अंतरभूत पूर्णांक is_afvf(u16 pcअगरunc)
-अणु
-	वापस !(pcअगरunc & ~RVU_PFVF_FUNC_MASK);
-पूर्ण
+static inline int is_afvf(u16 pcifunc)
+{
+	return !(pcifunc & ~RVU_PFVF_FUNC_MASK);
+}
 
-/* check अगर PF_FUNC is AF */
-अटल अंतरभूत bool is_pffunc_af(u16 pcअगरunc)
-अणु
-	वापस !pcअगरunc;
-पूर्ण
+/* check if PF_FUNC is AF */
+static inline bool is_pffunc_af(u16 pcifunc)
+{
+	return !pcifunc;
+}
 
-अटल अंतरभूत bool is_rvu_fwdata_valid(काष्ठा rvu *rvu)
-अणु
-	वापस (rvu->fwdata->header_magic == RVU_FWDATA_HEADER_MAGIC) &&
+static inline bool is_rvu_fwdata_valid(struct rvu *rvu)
+{
+	return (rvu->fwdata->header_magic == RVU_FWDATA_HEADER_MAGIC) &&
 		(rvu->fwdata->version == RVU_FWDATA_VERSION);
-पूर्ण
+}
 
-पूर्णांक rvu_alloc_biपंचांगap(काष्ठा rsrc_bmap *rsrc);
-पूर्णांक rvu_alloc_rsrc(काष्ठा rsrc_bmap *rsrc);
-व्योम rvu_मुक्त_rsrc(काष्ठा rsrc_bmap *rsrc, पूर्णांक id);
-पूर्णांक rvu_rsrc_मुक्त_count(काष्ठा rsrc_bmap *rsrc);
-पूर्णांक rvu_alloc_rsrc_contig(काष्ठा rsrc_bmap *rsrc, पूर्णांक nrsrc);
-bool rvu_rsrc_check_contig(काष्ठा rsrc_bmap *rsrc, पूर्णांक nrsrc);
-u16 rvu_get_rsrc_mapcount(काष्ठा rvu_pfvf *pfvf, पूर्णांक blkaddr);
-पूर्णांक rvu_get_pf(u16 pcअगरunc);
-काष्ठा rvu_pfvf *rvu_get_pfvf(काष्ठा rvu *rvu, पूर्णांक pcअगरunc);
-व्योम rvu_get_pf_numvfs(काष्ठा rvu *rvu, पूर्णांक pf, पूर्णांक *numvfs, पूर्णांक *hwvf);
-bool is_block_implemented(काष्ठा rvu_hwinfo *hw, पूर्णांक blkaddr);
-bool is_pffunc_map_valid(काष्ठा rvu *rvu, u16 pcअगरunc, पूर्णांक blktype);
-पूर्णांक rvu_get_lf(काष्ठा rvu *rvu, काष्ठा rvu_block *block, u16 pcअगरunc, u16 slot);
-पूर्णांक rvu_lf_reset(काष्ठा rvu *rvu, काष्ठा rvu_block *block, पूर्णांक lf);
-पूर्णांक rvu_get_blkaddr(काष्ठा rvu *rvu, पूर्णांक blktype, u16 pcअगरunc);
-पूर्णांक rvu_poll_reg(काष्ठा rvu *rvu, u64 block, u64 offset, u64 mask, bool zero);
-पूर्णांक rvu_get_num_lbk_chans(व्योम);
+int rvu_alloc_bitmap(struct rsrc_bmap *rsrc);
+int rvu_alloc_rsrc(struct rsrc_bmap *rsrc);
+void rvu_free_rsrc(struct rsrc_bmap *rsrc, int id);
+int rvu_rsrc_free_count(struct rsrc_bmap *rsrc);
+int rvu_alloc_rsrc_contig(struct rsrc_bmap *rsrc, int nrsrc);
+bool rvu_rsrc_check_contig(struct rsrc_bmap *rsrc, int nrsrc);
+u16 rvu_get_rsrc_mapcount(struct rvu_pfvf *pfvf, int blkaddr);
+int rvu_get_pf(u16 pcifunc);
+struct rvu_pfvf *rvu_get_pfvf(struct rvu *rvu, int pcifunc);
+void rvu_get_pf_numvfs(struct rvu *rvu, int pf, int *numvfs, int *hwvf);
+bool is_block_implemented(struct rvu_hwinfo *hw, int blkaddr);
+bool is_pffunc_map_valid(struct rvu *rvu, u16 pcifunc, int blktype);
+int rvu_get_lf(struct rvu *rvu, struct rvu_block *block, u16 pcifunc, u16 slot);
+int rvu_lf_reset(struct rvu *rvu, struct rvu_block *block, int lf);
+int rvu_get_blkaddr(struct rvu *rvu, int blktype, u16 pcifunc);
+int rvu_poll_reg(struct rvu *rvu, u64 block, u64 offset, u64 mask, bool zero);
+int rvu_get_num_lbk_chans(void);
 
 /* RVU HW reg validation */
-क्रमागत regmap_block अणु
+enum regmap_block {
 	TXSCHQ_HWREGMAP = 0,
 	MAX_HWREGMAP,
-पूर्ण;
+};
 
-bool rvu_check_valid_reg(पूर्णांक regmap, पूर्णांक regblk, u64 reg);
+bool rvu_check_valid_reg(int regmap, int regblk, u64 reg);
 
 /* NPA/NIX AQ APIs */
-पूर्णांक rvu_aq_alloc(काष्ठा rvu *rvu, काष्ठा admin_queue **ad_queue,
-		 पूर्णांक qsize, पूर्णांक inst_size, पूर्णांक res_size);
-व्योम rvu_aq_मुक्त(काष्ठा rvu *rvu, काष्ठा admin_queue *aq);
+int rvu_aq_alloc(struct rvu *rvu, struct admin_queue **ad_queue,
+		 int qsize, int inst_size, int res_size);
+void rvu_aq_free(struct rvu *rvu, struct admin_queue *aq);
 
 /* CGX APIs */
-अटल अंतरभूत bool is_pf_cgxmapped(काष्ठा rvu *rvu, u8 pf)
-अणु
-	वापस (pf >= PF_CGXMAP_BASE && pf <= rvu->cgx_mapped_pfs);
-पूर्ण
+static inline bool is_pf_cgxmapped(struct rvu *rvu, u8 pf)
+{
+	return (pf >= PF_CGXMAP_BASE && pf <= rvu->cgx_mapped_pfs);
+}
 
-अटल अंतरभूत व्योम rvu_get_cgx_lmac_id(u8 map, u8 *cgx_id, u8 *lmac_id)
-अणु
+static inline void rvu_get_cgx_lmac_id(u8 map, u8 *cgx_id, u8 *lmac_id)
+{
 	*cgx_id = (map >> 4) & 0xF;
 	*lmac_id = (map & 0xF);
-पूर्ण
+}
 
-#घोषणा M(_name, _id, fn_name, req, rsp)				\
-पूर्णांक rvu_mbox_handler_ ## fn_name(काष्ठा rvu *, काष्ठा req *, काष्ठा rsp *);
+#define M(_name, _id, fn_name, req, rsp)				\
+int rvu_mbox_handler_ ## fn_name(struct rvu *, struct req *, struct rsp *);
 MBOX_MESSAGES
-#अघोषित M
+#undef M
 
-पूर्णांक rvu_cgx_init(काष्ठा rvu *rvu);
-पूर्णांक rvu_cgx_निकास(काष्ठा rvu *rvu);
-व्योम *rvu_cgx_pdata(u8 cgx_id, काष्ठा rvu *rvu);
-पूर्णांक rvu_cgx_config_rxtx(काष्ठा rvu *rvu, u16 pcअगरunc, bool start);
-व्योम rvu_cgx_enadis_rx_bp(काष्ठा rvu *rvu, पूर्णांक pf, bool enable);
-पूर्णांक rvu_cgx_start_stop_io(काष्ठा rvu *rvu, u16 pcअगरunc, bool start);
-पूर्णांक rvu_cgx_nix_cuml_stats(काष्ठा rvu *rvu, व्योम *cgxd, पूर्णांक lmac_id, पूर्णांक index,
-			   पूर्णांक rxtxflag, u64 *stat);
+int rvu_cgx_init(struct rvu *rvu);
+int rvu_cgx_exit(struct rvu *rvu);
+void *rvu_cgx_pdata(u8 cgx_id, struct rvu *rvu);
+int rvu_cgx_config_rxtx(struct rvu *rvu, u16 pcifunc, bool start);
+void rvu_cgx_enadis_rx_bp(struct rvu *rvu, int pf, bool enable);
+int rvu_cgx_start_stop_io(struct rvu *rvu, u16 pcifunc, bool start);
+int rvu_cgx_nix_cuml_stats(struct rvu *rvu, void *cgxd, int lmac_id, int index,
+			   int rxtxflag, u64 *stat);
 /* NPA APIs */
-पूर्णांक rvu_npa_init(काष्ठा rvu *rvu);
-व्योम rvu_npa_मुक्तmem(काष्ठा rvu *rvu);
-व्योम rvu_npa_lf_tearकरोwn(काष्ठा rvu *rvu, u16 pcअगरunc, पूर्णांक npalf);
-पूर्णांक rvu_npa_aq_enq_inst(काष्ठा rvu *rvu, काष्ठा npa_aq_enq_req *req,
-			काष्ठा npa_aq_enq_rsp *rsp);
+int rvu_npa_init(struct rvu *rvu);
+void rvu_npa_freemem(struct rvu *rvu);
+void rvu_npa_lf_teardown(struct rvu *rvu, u16 pcifunc, int npalf);
+int rvu_npa_aq_enq_inst(struct rvu *rvu, struct npa_aq_enq_req *req,
+			struct npa_aq_enq_rsp *rsp);
 
 /* NIX APIs */
-bool is_nixlf_attached(काष्ठा rvu *rvu, u16 pcअगरunc);
-पूर्णांक rvu_nix_init(काष्ठा rvu *rvu);
-पूर्णांक rvu_nix_reserve_mark_क्रमmat(काष्ठा rvu *rvu, काष्ठा nix_hw *nix_hw,
-				पूर्णांक blkaddr, u32 cfg);
-व्योम rvu_nix_मुक्तmem(काष्ठा rvu *rvu);
-पूर्णांक rvu_get_nixlf_count(काष्ठा rvu *rvu);
-व्योम rvu_nix_lf_tearकरोwn(काष्ठा rvu *rvu, u16 pcअगरunc, पूर्णांक blkaddr, पूर्णांक npalf);
-पूर्णांक nix_get_nixlf(काष्ठा rvu *rvu, u16 pcअगरunc, पूर्णांक *nixlf, पूर्णांक *nix_blkaddr);
-पूर्णांक nix_update_bcast_mce_list(काष्ठा rvu *rvu, u16 pcअगरunc, bool add);
-काष्ठा nix_hw *get_nix_hw(काष्ठा rvu_hwinfo *hw, पूर्णांक blkaddr);
-पूर्णांक rvu_get_next_nix_blkaddr(काष्ठा rvu *rvu, पूर्णांक blkaddr);
-व्योम rvu_nix_reset_mac(काष्ठा rvu_pfvf *pfvf, पूर्णांक pcअगरunc);
+bool is_nixlf_attached(struct rvu *rvu, u16 pcifunc);
+int rvu_nix_init(struct rvu *rvu);
+int rvu_nix_reserve_mark_format(struct rvu *rvu, struct nix_hw *nix_hw,
+				int blkaddr, u32 cfg);
+void rvu_nix_freemem(struct rvu *rvu);
+int rvu_get_nixlf_count(struct rvu *rvu);
+void rvu_nix_lf_teardown(struct rvu *rvu, u16 pcifunc, int blkaddr, int npalf);
+int nix_get_nixlf(struct rvu *rvu, u16 pcifunc, int *nixlf, int *nix_blkaddr);
+int nix_update_bcast_mce_list(struct rvu *rvu, u16 pcifunc, bool add);
+struct nix_hw *get_nix_hw(struct rvu_hwinfo *hw, int blkaddr);
+int rvu_get_next_nix_blkaddr(struct rvu *rvu, int blkaddr);
+void rvu_nix_reset_mac(struct rvu_pfvf *pfvf, int pcifunc);
 
 /* NPC APIs */
-पूर्णांक rvu_npc_init(काष्ठा rvu *rvu);
-व्योम rvu_npc_मुक्तmem(काष्ठा rvu *rvu);
-पूर्णांक rvu_npc_get_pkind(काष्ठा rvu *rvu, u16 pf);
-व्योम rvu_npc_set_pkind(काष्ठा rvu *rvu, पूर्णांक pkind, काष्ठा rvu_pfvf *pfvf);
-पूर्णांक npc_config_ts_kpuaction(काष्ठा rvu *rvu, पूर्णांक pf, u16 pcअगरunc, bool en);
-व्योम rvu_npc_install_ucast_entry(काष्ठा rvu *rvu, u16 pcअगरunc,
-				 पूर्णांक nixlf, u64 chan, u8 *mac_addr);
-व्योम rvu_npc_install_promisc_entry(काष्ठा rvu *rvu, u16 pcअगरunc,
-				   पूर्णांक nixlf, u64 chan, u8 chan_cnt,
+int rvu_npc_init(struct rvu *rvu);
+void rvu_npc_freemem(struct rvu *rvu);
+int rvu_npc_get_pkind(struct rvu *rvu, u16 pf);
+void rvu_npc_set_pkind(struct rvu *rvu, int pkind, struct rvu_pfvf *pfvf);
+int npc_config_ts_kpuaction(struct rvu *rvu, int pf, u16 pcifunc, bool en);
+void rvu_npc_install_ucast_entry(struct rvu *rvu, u16 pcifunc,
+				 int nixlf, u64 chan, u8 *mac_addr);
+void rvu_npc_install_promisc_entry(struct rvu *rvu, u16 pcifunc,
+				   int nixlf, u64 chan, u8 chan_cnt,
 				   bool allmulti);
-व्योम rvu_npc_disable_promisc_entry(काष्ठा rvu *rvu, u16 pcअगरunc, पूर्णांक nixlf);
-व्योम rvu_npc_enable_promisc_entry(काष्ठा rvu *rvu, u16 pcअगरunc, पूर्णांक nixlf);
-व्योम rvu_npc_install_bcast_match_entry(काष्ठा rvu *rvu, u16 pcअगरunc,
-				       पूर्णांक nixlf, u64 chan);
-व्योम rvu_npc_enable_bcast_entry(काष्ठा rvu *rvu, u16 pcअगरunc, bool enable);
-व्योम rvu_npc_disable_mcam_entries(काष्ठा rvu *rvu, u16 pcअगरunc, पूर्णांक nixlf);
-व्योम rvu_npc_मुक्त_mcam_entries(काष्ठा rvu *rvu, u16 pcअगरunc, पूर्णांक nixlf);
-व्योम rvu_npc_disable_शेष_entries(काष्ठा rvu *rvu, u16 pcअगरunc, पूर्णांक nixlf);
-व्योम rvu_npc_enable_शेष_entries(काष्ठा rvu *rvu, u16 pcअगरunc, पूर्णांक nixlf);
-व्योम rvu_npc_update_flowkey_alg_idx(काष्ठा rvu *rvu, u16 pcअगरunc, पूर्णांक nixlf,
-				    पूर्णांक group, पूर्णांक alg_idx, पूर्णांक mcam_index);
-व्योम rvu_npc_get_mcam_entry_alloc_info(काष्ठा rvu *rvu, u16 pcअगरunc,
-				       पूर्णांक blkaddr, पूर्णांक *alloc_cnt,
-				       पूर्णांक *enable_cnt);
-व्योम rvu_npc_get_mcam_counter_alloc_info(काष्ठा rvu *rvu, u16 pcअगरunc,
-					 पूर्णांक blkaddr, पूर्णांक *alloc_cnt,
-					 पूर्णांक *enable_cnt);
-bool is_npc_पूर्णांकf_tx(u8 पूर्णांकf);
-bool is_npc_पूर्णांकf_rx(u8 पूर्णांकf);
-bool is_npc_पूर्णांकerface_valid(काष्ठा rvu *rvu, u8 पूर्णांकf);
-पूर्णांक rvu_npc_get_tx_nibble_cfg(काष्ठा rvu *rvu, u64 nibble_ena);
-पूर्णांक npc_mcam_verअगरy_channel(काष्ठा rvu *rvu, u16 pcअगरunc, u8 पूर्णांकf, u16 channel);
-पूर्णांक npc_flow_steering_init(काष्ठा rvu *rvu, पूर्णांक blkaddr);
-स्थिर अक्षर *npc_get_field_name(u8 hdr);
-पूर्णांक npc_get_bank(काष्ठा npc_mcam *mcam, पूर्णांक index);
-व्योम npc_mcam_enable_flows(काष्ठा rvu *rvu, u16 target);
-व्योम npc_mcam_disable_flows(काष्ठा rvu *rvu, u16 target);
-व्योम npc_enable_mcam_entry(काष्ठा rvu *rvu, काष्ठा npc_mcam *mcam,
-			   पूर्णांक blkaddr, पूर्णांक index, bool enable);
-व्योम npc_पढ़ो_mcam_entry(काष्ठा rvu *rvu, काष्ठा npc_mcam *mcam,
-			 पूर्णांक blkaddr, u16 src, काष्ठा mcam_entry *entry,
-			 u8 *पूर्णांकf, u8 *ena);
-bool is_mac_feature_supported(काष्ठा rvu *rvu, पूर्णांक pf, पूर्णांक feature);
-u32  rvu_cgx_get_fअगरolen(काष्ठा rvu *rvu);
-व्योम *rvu_first_cgx_pdata(काष्ठा rvu *rvu);
+void rvu_npc_disable_promisc_entry(struct rvu *rvu, u16 pcifunc, int nixlf);
+void rvu_npc_enable_promisc_entry(struct rvu *rvu, u16 pcifunc, int nixlf);
+void rvu_npc_install_bcast_match_entry(struct rvu *rvu, u16 pcifunc,
+				       int nixlf, u64 chan);
+void rvu_npc_enable_bcast_entry(struct rvu *rvu, u16 pcifunc, bool enable);
+void rvu_npc_disable_mcam_entries(struct rvu *rvu, u16 pcifunc, int nixlf);
+void rvu_npc_free_mcam_entries(struct rvu *rvu, u16 pcifunc, int nixlf);
+void rvu_npc_disable_default_entries(struct rvu *rvu, u16 pcifunc, int nixlf);
+void rvu_npc_enable_default_entries(struct rvu *rvu, u16 pcifunc, int nixlf);
+void rvu_npc_update_flowkey_alg_idx(struct rvu *rvu, u16 pcifunc, int nixlf,
+				    int group, int alg_idx, int mcam_index);
+void rvu_npc_get_mcam_entry_alloc_info(struct rvu *rvu, u16 pcifunc,
+				       int blkaddr, int *alloc_cnt,
+				       int *enable_cnt);
+void rvu_npc_get_mcam_counter_alloc_info(struct rvu *rvu, u16 pcifunc,
+					 int blkaddr, int *alloc_cnt,
+					 int *enable_cnt);
+bool is_npc_intf_tx(u8 intf);
+bool is_npc_intf_rx(u8 intf);
+bool is_npc_interface_valid(struct rvu *rvu, u8 intf);
+int rvu_npc_get_tx_nibble_cfg(struct rvu *rvu, u64 nibble_ena);
+int npc_mcam_verify_channel(struct rvu *rvu, u16 pcifunc, u8 intf, u16 channel);
+int npc_flow_steering_init(struct rvu *rvu, int blkaddr);
+const char *npc_get_field_name(u8 hdr);
+int npc_get_bank(struct npc_mcam *mcam, int index);
+void npc_mcam_enable_flows(struct rvu *rvu, u16 target);
+void npc_mcam_disable_flows(struct rvu *rvu, u16 target);
+void npc_enable_mcam_entry(struct rvu *rvu, struct npc_mcam *mcam,
+			   int blkaddr, int index, bool enable);
+void npc_read_mcam_entry(struct rvu *rvu, struct npc_mcam *mcam,
+			 int blkaddr, u16 src, struct mcam_entry *entry,
+			 u8 *intf, u8 *ena);
+bool is_mac_feature_supported(struct rvu *rvu, int pf, int feature);
+u32  rvu_cgx_get_fifolen(struct rvu *rvu);
+void *rvu_first_cgx_pdata(struct rvu *rvu);
 
-पूर्णांक npc_get_nixlf_mcam_index(काष्ठा npc_mcam *mcam, u16 pcअगरunc, पूर्णांक nixlf,
-			     पूर्णांक type);
-bool is_mcam_entry_enabled(काष्ठा rvu *rvu, काष्ठा npc_mcam *mcam, पूर्णांक blkaddr,
-			   पूर्णांक index);
+int npc_get_nixlf_mcam_index(struct npc_mcam *mcam, u16 pcifunc, int nixlf,
+			     int type);
+bool is_mcam_entry_enabled(struct rvu *rvu, struct npc_mcam *mcam, int blkaddr,
+			   int index);
 
 /* CPT APIs */
-पूर्णांक rvu_cpt_lf_tearकरोwn(काष्ठा rvu *rvu, u16 pcअगरunc, पूर्णांक lf, पूर्णांक slot);
+int rvu_cpt_lf_teardown(struct rvu *rvu, u16 pcifunc, int lf, int slot);
 
 /* CN10K RVU */
-पूर्णांक rvu_set_channels_base(काष्ठा rvu *rvu);
-व्योम rvu_program_channels(काष्ठा rvu *rvu);
+int rvu_set_channels_base(struct rvu *rvu);
+void rvu_program_channels(struct rvu *rvu);
 
-#अगर_घोषित CONFIG_DEBUG_FS
-व्योम rvu_dbg_init(काष्ठा rvu *rvu);
-व्योम rvu_dbg_निकास(काष्ठा rvu *rvu);
-#अन्यथा
-अटल अंतरभूत व्योम rvu_dbg_init(काष्ठा rvu *rvu) अणुपूर्ण
-अटल अंतरभूत व्योम rvu_dbg_निकास(काष्ठा rvu *rvu) अणुपूर्ण
-#पूर्ण_अगर
-#पूर्ण_अगर /* RVU_H */
+#ifdef CONFIG_DEBUG_FS
+void rvu_dbg_init(struct rvu *rvu);
+void rvu_dbg_exit(struct rvu *rvu);
+#else
+static inline void rvu_dbg_init(struct rvu *rvu) {}
+static inline void rvu_dbg_exit(struct rvu *rvu) {}
+#endif
+#endif /* RVU_H */

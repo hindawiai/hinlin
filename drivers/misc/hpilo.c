@@ -1,63 +1,62 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Driver क्रम the HP iLO management processor.
+ * Driver for the HP iLO management processor.
  *
  * Copyright (C) 2008 Hewlett-Packard Development Company, L.P.
  *	David Altobelli <david.altobelli@hpe.com>
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/module.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/device.h>
-#समावेश <linux/file.h>
-#समावेश <linux/cdev.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/रुको.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/slab.h>
-#समावेश "hpilo.h"
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/module.h>
+#include <linux/fs.h>
+#include <linux/pci.h>
+#include <linux/interrupt.h>
+#include <linux/ioport.h>
+#include <linux/device.h>
+#include <linux/file.h>
+#include <linux/cdev.h>
+#include <linux/sched.h>
+#include <linux/spinlock.h>
+#include <linux/delay.h>
+#include <linux/uaccess.h>
+#include <linux/io.h>
+#include <linux/wait.h>
+#include <linux/poll.h>
+#include <linux/slab.h>
+#include "hpilo.h"
 
-अटल काष्ठा class *ilo_class;
-अटल अचिन्हित पूर्णांक ilo_major;
-अटल अचिन्हित पूर्णांक max_ccb = 16;
-अटल अक्षर ilo_hwdev[MAX_ILO_DEV];
-अटल स्थिर काष्ठा pci_device_id ilo_blacklist[] = अणु
+static struct class *ilo_class;
+static unsigned int ilo_major;
+static unsigned int max_ccb = 16;
+static char ilo_hwdev[MAX_ILO_DEV];
+static const struct pci_device_id ilo_blacklist[] = {
 	/* auxiliary iLO */
-	अणुPCI_DEVICE_SUB(PCI_VENDOR_ID_HP, 0x3307, PCI_VENDOR_ID_HP, 0x1979)पूर्ण,
+	{PCI_DEVICE_SUB(PCI_VENDOR_ID_HP, 0x3307, PCI_VENDOR_ID_HP, 0x1979)},
 	/* CL */
-	अणुPCI_DEVICE_SUB(PCI_VENDOR_ID_HP, 0x3307, PCI_VENDOR_ID_HP_3PAR, 0x0289)पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+	{PCI_DEVICE_SUB(PCI_VENDOR_ID_HP, 0x3307, PCI_VENDOR_ID_HP_3PAR, 0x0289)},
+	{}
+};
 
-अटल अंतरभूत पूर्णांक get_entry_id(पूर्णांक entry)
-अणु
-	वापस (entry & ENTRY_MASK_DESCRIPTOR) >> ENTRY_BITPOS_DESCRIPTOR;
-पूर्ण
+static inline int get_entry_id(int entry)
+{
+	return (entry & ENTRY_MASK_DESCRIPTOR) >> ENTRY_BITPOS_DESCRIPTOR;
+}
 
-अटल अंतरभूत पूर्णांक get_entry_len(पूर्णांक entry)
-अणु
-	वापस ((entry & ENTRY_MASK_QWORDS) >> ENTRY_BITPOS_QWORDS) << 3;
-पूर्ण
+static inline int get_entry_len(int entry)
+{
+	return ((entry & ENTRY_MASK_QWORDS) >> ENTRY_BITPOS_QWORDS) << 3;
+}
 
-अटल अंतरभूत पूर्णांक mk_entry(पूर्णांक id, पूर्णांक len)
-अणु
-	पूर्णांक qlen = len & 7 ? (len >> 3) + 1 : len >> 3;
-	वापस id << ENTRY_BITPOS_DESCRIPTOR | qlen << ENTRY_BITPOS_QWORDS;
-पूर्ण
+static inline int mk_entry(int id, int len)
+{
+	int qlen = len & 7 ? (len >> 3) + 1 : len >> 3;
+	return id << ENTRY_BITPOS_DESCRIPTOR | qlen << ENTRY_BITPOS_QWORDS;
+}
 
-अटल अंतरभूत पूर्णांक desc_mem_sz(पूर्णांक nr_entry)
-अणु
-	वापस nr_entry << L2_QENTRY_SZ;
-पूर्ण
+static inline int desc_mem_sz(int nr_entry)
+{
+	return nr_entry << L2_QENTRY_SZ;
+}
 
 /*
  * FIFO queues, shared with hardware.
@@ -69,220 +68,220 @@
  *
  * Returns true on successful queue/dequeue, false on failure.
  */
-अटल पूर्णांक fअगरo_enqueue(काष्ठा ilo_hwinfo *hw, अक्षर *fअगरobar, पूर्णांक entry)
-अणु
-	काष्ठा fअगरo *fअगरo_q = FIFOBARTOHANDLE(fअगरobar);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = 0;
+static int fifo_enqueue(struct ilo_hwinfo *hw, char *fifobar, int entry)
+{
+	struct fifo *fifo_q = FIFOBARTOHANDLE(fifobar);
+	unsigned long flags;
+	int ret = 0;
 
-	spin_lock_irqsave(&hw->fअगरo_lock, flags);
-	अगर (!(fअगरo_q->fअगरobar[(fअगरo_q->tail + 1) & fअगरo_q->imask]
-	      & ENTRY_MASK_O)) अणु
-		fअगरo_q->fअगरobar[fअगरo_q->tail & fअगरo_q->imask] |=
-				(entry & ENTRY_MASK_NOSTATE) | fअगरo_q->merge;
-		fअगरo_q->tail += 1;
+	spin_lock_irqsave(&hw->fifo_lock, flags);
+	if (!(fifo_q->fifobar[(fifo_q->tail + 1) & fifo_q->imask]
+	      & ENTRY_MASK_O)) {
+		fifo_q->fifobar[fifo_q->tail & fifo_q->imask] |=
+				(entry & ENTRY_MASK_NOSTATE) | fifo_q->merge;
+		fifo_q->tail += 1;
 		ret = 1;
-	पूर्ण
-	spin_unlock_irqrestore(&hw->fअगरo_lock, flags);
+	}
+	spin_unlock_irqrestore(&hw->fifo_lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक fअगरo_dequeue(काष्ठा ilo_hwinfo *hw, अक्षर *fअगरobar, पूर्णांक *entry)
-अणु
-	काष्ठा fअगरo *fअगरo_q = FIFOBARTOHANDLE(fअगरobar);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = 0;
+static int fifo_dequeue(struct ilo_hwinfo *hw, char *fifobar, int *entry)
+{
+	struct fifo *fifo_q = FIFOBARTOHANDLE(fifobar);
+	unsigned long flags;
+	int ret = 0;
 	u64 c;
 
-	spin_lock_irqsave(&hw->fअगरo_lock, flags);
-	c = fअगरo_q->fअगरobar[fअगरo_q->head & fअगरo_q->imask];
-	अगर (c & ENTRY_MASK_C) अणु
-		अगर (entry)
+	spin_lock_irqsave(&hw->fifo_lock, flags);
+	c = fifo_q->fifobar[fifo_q->head & fifo_q->imask];
+	if (c & ENTRY_MASK_C) {
+		if (entry)
 			*entry = c & ENTRY_MASK_NOSTATE;
 
-		fअगरo_q->fअगरobar[fअगरo_q->head & fअगरo_q->imask] =
+		fifo_q->fifobar[fifo_q->head & fifo_q->imask] =
 							(c | ENTRY_MASK) + 1;
-		fअगरo_q->head += 1;
+		fifo_q->head += 1;
 		ret = 1;
-	पूर्ण
-	spin_unlock_irqrestore(&hw->fअगरo_lock, flags);
+	}
+	spin_unlock_irqrestore(&hw->fifo_lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक fअगरo_check_recv(काष्ठा ilo_hwinfo *hw, अक्षर *fअगरobar)
-अणु
-	काष्ठा fअगरo *fअगरo_q = FIFOBARTOHANDLE(fअगरobar);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = 0;
+static int fifo_check_recv(struct ilo_hwinfo *hw, char *fifobar)
+{
+	struct fifo *fifo_q = FIFOBARTOHANDLE(fifobar);
+	unsigned long flags;
+	int ret = 0;
 	u64 c;
 
-	spin_lock_irqsave(&hw->fअगरo_lock, flags);
-	c = fअगरo_q->fअगरobar[fअगरo_q->head & fअगरo_q->imask];
-	अगर (c & ENTRY_MASK_C)
+	spin_lock_irqsave(&hw->fifo_lock, flags);
+	c = fifo_q->fifobar[fifo_q->head & fifo_q->imask];
+	if (c & ENTRY_MASK_C)
 		ret = 1;
-	spin_unlock_irqrestore(&hw->fअगरo_lock, flags);
+	spin_unlock_irqrestore(&hw->fifo_lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ilo_pkt_enqueue(काष्ठा ilo_hwinfo *hw, काष्ठा ccb *ccb,
-			   पूर्णांक dir, पूर्णांक id, पूर्णांक len)
-अणु
-	अक्षर *fअगरobar;
-	पूर्णांक entry;
+static int ilo_pkt_enqueue(struct ilo_hwinfo *hw, struct ccb *ccb,
+			   int dir, int id, int len)
+{
+	char *fifobar;
+	int entry;
 
-	अगर (dir == SENDQ)
-		fअगरobar = ccb->ccb_u1.send_fअगरobar;
-	अन्यथा
-		fअगरobar = ccb->ccb_u3.recv_fअगरobar;
+	if (dir == SENDQ)
+		fifobar = ccb->ccb_u1.send_fifobar;
+	else
+		fifobar = ccb->ccb_u3.recv_fifobar;
 
 	entry = mk_entry(id, len);
-	वापस fअगरo_enqueue(hw, fअगरobar, entry);
-पूर्ण
+	return fifo_enqueue(hw, fifobar, entry);
+}
 
-अटल पूर्णांक ilo_pkt_dequeue(काष्ठा ilo_hwinfo *hw, काष्ठा ccb *ccb,
-			   पूर्णांक dir, पूर्णांक *id, पूर्णांक *len, व्योम **pkt)
-अणु
-	अक्षर *fअगरobar, *desc;
-	पूर्णांक entry = 0, pkt_id = 0;
-	पूर्णांक ret;
+static int ilo_pkt_dequeue(struct ilo_hwinfo *hw, struct ccb *ccb,
+			   int dir, int *id, int *len, void **pkt)
+{
+	char *fifobar, *desc;
+	int entry = 0, pkt_id = 0;
+	int ret;
 
-	अगर (dir == SENDQ) अणु
-		fअगरobar = ccb->ccb_u1.send_fअगरobar;
+	if (dir == SENDQ) {
+		fifobar = ccb->ccb_u1.send_fifobar;
 		desc = ccb->ccb_u2.send_desc;
-	पूर्ण अन्यथा अणु
-		fअगरobar = ccb->ccb_u3.recv_fअगरobar;
+	} else {
+		fifobar = ccb->ccb_u3.recv_fifobar;
 		desc = ccb->ccb_u4.recv_desc;
-	पूर्ण
+	}
 
-	ret = fअगरo_dequeue(hw, fअगरobar, &entry);
-	अगर (ret) अणु
+	ret = fifo_dequeue(hw, fifobar, &entry);
+	if (ret) {
 		pkt_id = get_entry_id(entry);
-		अगर (id)
+		if (id)
 			*id = pkt_id;
-		अगर (len)
+		if (len)
 			*len = get_entry_len(entry);
-		अगर (pkt)
-			*pkt = (व्योम *)(desc + desc_mem_sz(pkt_id));
-	पूर्ण
+		if (pkt)
+			*pkt = (void *)(desc + desc_mem_sz(pkt_id));
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ilo_pkt_recv(काष्ठा ilo_hwinfo *hw, काष्ठा ccb *ccb)
-अणु
-	अक्षर *fअगरobar = ccb->ccb_u3.recv_fअगरobar;
+static int ilo_pkt_recv(struct ilo_hwinfo *hw, struct ccb *ccb)
+{
+	char *fifobar = ccb->ccb_u3.recv_fifobar;
 
-	वापस fअगरo_check_recv(hw, fअगरobar);
-पूर्ण
+	return fifo_check_recv(hw, fifobar);
+}
 
-अटल अंतरभूत व्योम करोorbell_set(काष्ठा ccb *ccb)
-अणु
-	ioग_लिखो8(1, ccb->ccb_u5.db_base);
-पूर्ण
+static inline void doorbell_set(struct ccb *ccb)
+{
+	iowrite8(1, ccb->ccb_u5.db_base);
+}
 
-अटल अंतरभूत व्योम करोorbell_clr(काष्ठा ccb *ccb)
-अणु
-	ioग_लिखो8(2, ccb->ccb_u5.db_base);
-पूर्ण
+static inline void doorbell_clr(struct ccb *ccb)
+{
+	iowrite8(2, ccb->ccb_u5.db_base);
+}
 
-अटल अंतरभूत पूर्णांक ctrl_set(पूर्णांक l2sz, पूर्णांक idxmask, पूर्णांक desclim)
-अणु
-	पूर्णांक active = 0, go = 1;
-	वापस l2sz << CTRL_BITPOS_L2SZ |
+static inline int ctrl_set(int l2sz, int idxmask, int desclim)
+{
+	int active = 0, go = 1;
+	return l2sz << CTRL_BITPOS_L2SZ |
 	       idxmask << CTRL_BITPOS_FIFOINDEXMASK |
 	       desclim << CTRL_BITPOS_DESCLIMIT |
 	       active << CTRL_BITPOS_A |
 	       go << CTRL_BITPOS_G;
-पूर्ण
+}
 
-अटल व्योम ctrl_setup(काष्ठा ccb *ccb, पूर्णांक nr_desc, पूर्णांक l2desc_sz)
-अणु
-	/* क्रम simplicity, use the same parameters क्रम send and recv ctrls */
+static void ctrl_setup(struct ccb *ccb, int nr_desc, int l2desc_sz)
+{
+	/* for simplicity, use the same parameters for send and recv ctrls */
 	ccb->send_ctrl = ctrl_set(l2desc_sz, nr_desc-1, nr_desc-1);
 	ccb->recv_ctrl = ctrl_set(l2desc_sz, nr_desc-1, nr_desc-1);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक fअगरo_sz(पूर्णांक nr_entry)
-अणु
-	/* size of a fअगरo is determined by the number of entries it contains */
-	वापस nr_entry * माप(u64) + FIFOHANDLESIZE;
-पूर्ण
+static inline int fifo_sz(int nr_entry)
+{
+	/* size of a fifo is determined by the number of entries it contains */
+	return nr_entry * sizeof(u64) + FIFOHANDLESIZE;
+}
 
-अटल व्योम fअगरo_setup(व्योम *base_addr, पूर्णांक nr_entry)
-अणु
-	काष्ठा fअगरo *fअगरo_q = base_addr;
-	पूर्णांक i;
+static void fifo_setup(void *base_addr, int nr_entry)
+{
+	struct fifo *fifo_q = base_addr;
+	int i;
 
-	/* set up an empty fअगरo */
-	fअगरo_q->head = 0;
-	fअगरo_q->tail = 0;
-	fअगरo_q->reset = 0;
-	fअगरo_q->nrents = nr_entry;
-	fअगरo_q->imask = nr_entry - 1;
-	fअगरo_q->merge = ENTRY_MASK_O;
+	/* set up an empty fifo */
+	fifo_q->head = 0;
+	fifo_q->tail = 0;
+	fifo_q->reset = 0;
+	fifo_q->nrents = nr_entry;
+	fifo_q->imask = nr_entry - 1;
+	fifo_q->merge = ENTRY_MASK_O;
 
-	क्रम (i = 0; i < nr_entry; i++)
-		fअगरo_q->fअगरobar[i] = 0;
-पूर्ण
+	for (i = 0; i < nr_entry; i++)
+		fifo_q->fifobar[i] = 0;
+}
 
-अटल व्योम ilo_ccb_बंद(काष्ठा pci_dev *pdev, काष्ठा ccb_data *data)
-अणु
-	काष्ठा ccb *driver_ccb = &data->driver_ccb;
-	काष्ठा ccb __iomem *device_ccb = data->mapped_ccb;
-	पूर्णांक retries;
+static void ilo_ccb_close(struct pci_dev *pdev, struct ccb_data *data)
+{
+	struct ccb *driver_ccb = &data->driver_ccb;
+	struct ccb __iomem *device_ccb = data->mapped_ccb;
+	int retries;
 
 	/* complicated dance to tell the hw we are stopping */
-	करोorbell_clr(driver_ccb);
-	ioग_लिखो32(ioपढ़ो32(&device_ccb->send_ctrl) & ~(1 << CTRL_BITPOS_G),
+	doorbell_clr(driver_ccb);
+	iowrite32(ioread32(&device_ccb->send_ctrl) & ~(1 << CTRL_BITPOS_G),
 		  &device_ccb->send_ctrl);
-	ioग_लिखो32(ioपढ़ो32(&device_ccb->recv_ctrl) & ~(1 << CTRL_BITPOS_G),
+	iowrite32(ioread32(&device_ccb->recv_ctrl) & ~(1 << CTRL_BITPOS_G),
 		  &device_ccb->recv_ctrl);
 
-	/* give iLO some समय to process stop request */
-	क्रम (retries = MAX_WAIT; retries > 0; retries--) अणु
-		करोorbell_set(driver_ccb);
+	/* give iLO some time to process stop request */
+	for (retries = MAX_WAIT; retries > 0; retries--) {
+		doorbell_set(driver_ccb);
 		udelay(WAIT_TIME);
-		अगर (!(ioपढ़ो32(&device_ccb->send_ctrl) & (1 << CTRL_BITPOS_A))
+		if (!(ioread32(&device_ccb->send_ctrl) & (1 << CTRL_BITPOS_A))
 		    &&
-		    !(ioपढ़ो32(&device_ccb->recv_ctrl) & (1 << CTRL_BITPOS_A)))
-			अवरोध;
-	पूर्ण
-	अगर (retries == 0)
+		    !(ioread32(&device_ccb->recv_ctrl) & (1 << CTRL_BITPOS_A)))
+			break;
+	}
+	if (retries == 0)
 		dev_err(&pdev->dev, "Closing, but controller still active\n");
 
 	/* clear the hw ccb */
-	स_रखो_io(device_ccb, 0, माप(काष्ठा ccb));
+	memset_io(device_ccb, 0, sizeof(struct ccb));
 
-	/* मुक्त resources used to back send/recv queues */
-	dma_मुक्त_coherent(&pdev->dev, data->dma_size, data->dma_va,
+	/* free resources used to back send/recv queues */
+	dma_free_coherent(&pdev->dev, data->dma_size, data->dma_va,
 			  data->dma_pa);
-पूर्ण
+}
 
-अटल पूर्णांक ilo_ccb_setup(काष्ठा ilo_hwinfo *hw, काष्ठा ccb_data *data, पूर्णांक slot)
-अणु
-	अक्षर *dma_va;
+static int ilo_ccb_setup(struct ilo_hwinfo *hw, struct ccb_data *data, int slot)
+{
+	char *dma_va;
 	dma_addr_t dma_pa;
-	काष्ठा ccb *driver_ccb, *ilo_ccb;
+	struct ccb *driver_ccb, *ilo_ccb;
 
 	driver_ccb = &data->driver_ccb;
 	ilo_ccb = &data->ilo_ccb;
 
-	data->dma_size = 2 * fअगरo_sz(NR_QENTRY) +
+	data->dma_size = 2 * fifo_sz(NR_QENTRY) +
 			 2 * desc_mem_sz(NR_QENTRY) +
 			 ILO_START_ALIGN + ILO_CACHE_SZ;
 
 	data->dma_va = dma_alloc_coherent(&hw->ilo_dev->dev, data->dma_size,
 					  &data->dma_pa, GFP_ATOMIC);
-	अगर (!data->dma_va)
-		वापस -ENOMEM;
+	if (!data->dma_va)
+		return -ENOMEM;
 
-	dma_va = (अक्षर *)data->dma_va;
+	dma_va = (char *)data->dma_va;
 	dma_pa = data->dma_pa;
 
-	dma_va = (अक्षर *)roundup((अचिन्हित दीर्घ)dma_va, ILO_START_ALIGN);
+	dma_va = (char *)roundup((unsigned long)dma_va, ILO_START_ALIGN);
 	dma_pa = roundup(dma_pa, ILO_START_ALIGN);
 
 	/*
@@ -292,20 +291,20 @@
 	ctrl_setup(driver_ccb, NR_QENTRY, L2_QENTRY_SZ);
 	ctrl_setup(ilo_ccb, NR_QENTRY, L2_QENTRY_SZ);
 
-	fअगरo_setup(dma_va, NR_QENTRY);
-	driver_ccb->ccb_u1.send_fअगरobar = dma_va + FIFOHANDLESIZE;
-	ilo_ccb->ccb_u1.send_fअगरobar_pa = dma_pa + FIFOHANDLESIZE;
-	dma_va += fअगरo_sz(NR_QENTRY);
-	dma_pa += fअगरo_sz(NR_QENTRY);
+	fifo_setup(dma_va, NR_QENTRY);
+	driver_ccb->ccb_u1.send_fifobar = dma_va + FIFOHANDLESIZE;
+	ilo_ccb->ccb_u1.send_fifobar_pa = dma_pa + FIFOHANDLESIZE;
+	dma_va += fifo_sz(NR_QENTRY);
+	dma_pa += fifo_sz(NR_QENTRY);
 
-	dma_va = (अक्षर *)roundup((अचिन्हित दीर्घ)dma_va, ILO_CACHE_SZ);
+	dma_va = (char *)roundup((unsigned long)dma_va, ILO_CACHE_SZ);
 	dma_pa = roundup(dma_pa, ILO_CACHE_SZ);
 
-	fअगरo_setup(dma_va, NR_QENTRY);
-	driver_ccb->ccb_u3.recv_fअगरobar = dma_va + FIFOHANDLESIZE;
-	ilo_ccb->ccb_u3.recv_fअगरobar_pa = dma_pa + FIFOHANDLESIZE;
-	dma_va += fअगरo_sz(NR_QENTRY);
-	dma_pa += fअगरo_sz(NR_QENTRY);
+	fifo_setup(dma_va, NR_QENTRY);
+	driver_ccb->ccb_u3.recv_fifobar = dma_va + FIFOHANDLESIZE;
+	ilo_ccb->ccb_u3.recv_fifobar_pa = dma_pa + FIFOHANDLESIZE;
+	dma_va += fifo_sz(NR_QENTRY);
+	dma_pa += fifo_sz(NR_QENTRY);
 
 	driver_ccb->ccb_u2.send_desc = dma_va;
 	ilo_ccb->ccb_u2.send_desc_pa = dma_pa;
@@ -319,599 +318,599 @@
 	ilo_ccb->channel = slot;
 
 	driver_ccb->ccb_u5.db_base = hw->db_vaddr + (slot << L2_DB_SIZE);
-	ilo_ccb->ccb_u5.db_base = शून्य; /* hw ccb's करोorbell is not used */
+	ilo_ccb->ccb_u5.db_base = NULL; /* hw ccb's doorbell is not used */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ilo_ccb_खोलो(काष्ठा ilo_hwinfo *hw, काष्ठा ccb_data *data, पूर्णांक slot)
-अणु
-	पूर्णांक pkt_id, pkt_sz;
-	काष्ठा ccb *driver_ccb = &data->driver_ccb;
+static void ilo_ccb_open(struct ilo_hwinfo *hw, struct ccb_data *data, int slot)
+{
+	int pkt_id, pkt_sz;
+	struct ccb *driver_ccb = &data->driver_ccb;
 
 	/* copy the ccb with physical addrs to device memory */
-	data->mapped_ccb = (काष्ठा ccb __iomem *)
+	data->mapped_ccb = (struct ccb __iomem *)
 				(hw->ram_vaddr + (slot * ILOHW_CCB_SZ));
-	स_नकल_toio(data->mapped_ccb, &data->ilo_ccb, माप(काष्ठा ccb));
+	memcpy_toio(data->mapped_ccb, &data->ilo_ccb, sizeof(struct ccb));
 
 	/* put packets on the send and receive queues */
 	pkt_sz = 0;
-	क्रम (pkt_id = 0; pkt_id < NR_QENTRY; pkt_id++) अणु
+	for (pkt_id = 0; pkt_id < NR_QENTRY; pkt_id++) {
 		ilo_pkt_enqueue(hw, driver_ccb, SENDQ, pkt_id, pkt_sz);
-		करोorbell_set(driver_ccb);
-	पूर्ण
+		doorbell_set(driver_ccb);
+	}
 
 	pkt_sz = desc_mem_sz(1);
-	क्रम (pkt_id = 0; pkt_id < NR_QENTRY; pkt_id++)
+	for (pkt_id = 0; pkt_id < NR_QENTRY; pkt_id++)
 		ilo_pkt_enqueue(hw, driver_ccb, RECVQ, pkt_id, pkt_sz);
 
-	/* the ccb is पढ़ोy to use */
-	करोorbell_clr(driver_ccb);
-पूर्ण
+	/* the ccb is ready to use */
+	doorbell_clr(driver_ccb);
+}
 
-अटल पूर्णांक ilo_ccb_verअगरy(काष्ठा ilo_hwinfo *hw, काष्ठा ccb_data *data)
-अणु
-	पूर्णांक pkt_id, i;
-	काष्ठा ccb *driver_ccb = &data->driver_ccb;
+static int ilo_ccb_verify(struct ilo_hwinfo *hw, struct ccb_data *data)
+{
+	int pkt_id, i;
+	struct ccb *driver_ccb = &data->driver_ccb;
 
 	/* make sure iLO is really handling requests */
-	क्रम (i = MAX_WAIT; i > 0; i--) अणु
-		अगर (ilo_pkt_dequeue(hw, driver_ccb, SENDQ, &pkt_id, शून्य, शून्य))
-			अवरोध;
+	for (i = MAX_WAIT; i > 0; i--) {
+		if (ilo_pkt_dequeue(hw, driver_ccb, SENDQ, &pkt_id, NULL, NULL))
+			break;
 		udelay(WAIT_TIME);
-	पूर्ण
+	}
 
-	अगर (i == 0) अणु
+	if (i == 0) {
 		dev_err(&hw->ilo_dev->dev, "Open could not dequeue a packet\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	ilo_pkt_enqueue(hw, driver_ccb, SENDQ, pkt_id, 0);
-	करोorbell_set(driver_ccb);
-	वापस 0;
-पूर्ण
+	doorbell_set(driver_ccb);
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक is_channel_reset(काष्ठा ccb *ccb)
-अणु
-	/* check क्रम this particular channel needing a reset */
-	वापस FIFOBARTOHANDLE(ccb->ccb_u1.send_fअगरobar)->reset;
-पूर्ण
+static inline int is_channel_reset(struct ccb *ccb)
+{
+	/* check for this particular channel needing a reset */
+	return FIFOBARTOHANDLE(ccb->ccb_u1.send_fifobar)->reset;
+}
 
-अटल अंतरभूत व्योम set_channel_reset(काष्ठा ccb *ccb)
-अणु
+static inline void set_channel_reset(struct ccb *ccb)
+{
 	/* set a flag indicating this channel needs a reset */
-	FIFOBARTOHANDLE(ccb->ccb_u1.send_fअगरobar)->reset = 1;
-पूर्ण
+	FIFOBARTOHANDLE(ccb->ccb_u1.send_fifobar)->reset = 1;
+}
 
-अटल अंतरभूत पूर्णांक get_device_outbound(काष्ठा ilo_hwinfo *hw)
-अणु
-	वापस ioपढ़ो32(&hw->mmio_vaddr[DB_OUT]);
-पूर्ण
+static inline int get_device_outbound(struct ilo_hwinfo *hw)
+{
+	return ioread32(&hw->mmio_vaddr[DB_OUT]);
+}
 
-अटल अंतरभूत पूर्णांक is_db_reset(पूर्णांक db_out)
-अणु
-	वापस db_out & (1 << DB_RESET);
-पूर्ण
+static inline int is_db_reset(int db_out)
+{
+	return db_out & (1 << DB_RESET);
+}
 
-अटल अंतरभूत पूर्णांक is_device_reset(काष्ठा ilo_hwinfo *hw)
-अणु
-	/* check क्रम global reset condition */
-	वापस is_db_reset(get_device_outbound(hw));
-पूर्ण
+static inline int is_device_reset(struct ilo_hwinfo *hw)
+{
+	/* check for global reset condition */
+	return is_db_reset(get_device_outbound(hw));
+}
 
-अटल अंतरभूत व्योम clear_pending_db(काष्ठा ilo_hwinfo *hw, पूर्णांक clr)
-अणु
-	ioग_लिखो32(clr, &hw->mmio_vaddr[DB_OUT]);
-पूर्ण
+static inline void clear_pending_db(struct ilo_hwinfo *hw, int clr)
+{
+	iowrite32(clr, &hw->mmio_vaddr[DB_OUT]);
+}
 
-अटल अंतरभूत व्योम clear_device(काष्ठा ilo_hwinfo *hw)
-अणु
+static inline void clear_device(struct ilo_hwinfo *hw)
+{
 	/* clear the device (reset bits, pending channel entries) */
 	clear_pending_db(hw, -1);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ilo_enable_पूर्णांकerrupts(काष्ठा ilo_hwinfo *hw)
-अणु
-	ioग_लिखो8(ioपढ़ो8(&hw->mmio_vaddr[DB_IRQ]) | 1, &hw->mmio_vaddr[DB_IRQ]);
-पूर्ण
+static inline void ilo_enable_interrupts(struct ilo_hwinfo *hw)
+{
+	iowrite8(ioread8(&hw->mmio_vaddr[DB_IRQ]) | 1, &hw->mmio_vaddr[DB_IRQ]);
+}
 
-अटल अंतरभूत व्योम ilo_disable_पूर्णांकerrupts(काष्ठा ilo_hwinfo *hw)
-अणु
-	ioग_लिखो8(ioपढ़ो8(&hw->mmio_vaddr[DB_IRQ]) & ~1,
+static inline void ilo_disable_interrupts(struct ilo_hwinfo *hw)
+{
+	iowrite8(ioread8(&hw->mmio_vaddr[DB_IRQ]) & ~1,
 		 &hw->mmio_vaddr[DB_IRQ]);
-पूर्ण
+}
 
-अटल व्योम ilo_set_reset(काष्ठा ilo_hwinfo *hw)
-अणु
-	पूर्णांक slot;
+static void ilo_set_reset(struct ilo_hwinfo *hw)
+{
+	int slot;
 
 	/*
 	 * Mapped memory is zeroed on ilo reset, so set a per ccb flag
-	 * to indicate that this ccb needs to be बंदd and reखोलोed.
+	 * to indicate that this ccb needs to be closed and reopened.
 	 */
-	क्रम (slot = 0; slot < max_ccb; slot++) अणु
-		अगर (!hw->ccb_alloc[slot])
-			जारी;
+	for (slot = 0; slot < max_ccb; slot++) {
+		if (!hw->ccb_alloc[slot])
+			continue;
 		set_channel_reset(&hw->ccb_alloc[slot]->driver_ccb);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल sमाप_प्रकार ilo_पढ़ो(काष्ठा file *fp, अक्षर __user *buf,
-			माप_प्रकार len, loff_t *off)
-अणु
-	पूर्णांक err, found, cnt, pkt_id, pkt_len;
-	काष्ठा ccb_data *data = fp->निजी_data;
-	काष्ठा ccb *driver_ccb = &data->driver_ccb;
-	काष्ठा ilo_hwinfo *hw = data->ilo_hw;
-	व्योम *pkt;
+static ssize_t ilo_read(struct file *fp, char __user *buf,
+			size_t len, loff_t *off)
+{
+	int err, found, cnt, pkt_id, pkt_len;
+	struct ccb_data *data = fp->private_data;
+	struct ccb *driver_ccb = &data->driver_ccb;
+	struct ilo_hwinfo *hw = data->ilo_hw;
+	void *pkt;
 
-	अगर (is_channel_reset(driver_ccb)) अणु
+	if (is_channel_reset(driver_ccb)) {
 		/*
 		 * If the device has been reset, applications
-		 * need to बंद and reखोलो all ccbs.
+		 * need to close and reopen all ccbs.
 		 */
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	/*
 	 * This function is to be called when data is expected
-	 * in the channel, and will वापस an error अगर no packet is found
+	 * in the channel, and will return an error if no packet is found
 	 * during the loop below.  The sleep/retry logic is to allow
-	 * applications to call पढ़ो() immediately post ग_लिखो(),
-	 * and give iLO some समय to process the sent packet.
+	 * applications to call read() immediately post write(),
+	 * and give iLO some time to process the sent packet.
 	 */
 	cnt = 20;
-	करो अणु
-		/* look क्रम a received packet */
+	do {
+		/* look for a received packet */
 		found = ilo_pkt_dequeue(hw, driver_ccb, RECVQ, &pkt_id,
 					&pkt_len, &pkt);
-		अगर (found)
-			अवरोध;
+		if (found)
+			break;
 		cnt--;
 		msleep(100);
-	पूर्ण जबतक (!found && cnt);
+	} while (!found && cnt);
 
-	अगर (!found)
-		वापस -EAGAIN;
+	if (!found)
+		return -EAGAIN;
 
 	/* only copy the length of the received packet */
-	अगर (pkt_len < len)
+	if (pkt_len < len)
 		len = pkt_len;
 
 	err = copy_to_user(buf, pkt, len);
 
-	/* वापस the received packet to the queue */
+	/* return the received packet to the queue */
 	ilo_pkt_enqueue(hw, driver_ccb, RECVQ, pkt_id, desc_mem_sz(1));
 
-	वापस err ? -EFAULT : len;
-पूर्ण
+	return err ? -EFAULT : len;
+}
 
-अटल sमाप_प्रकार ilo_ग_लिखो(काष्ठा file *fp, स्थिर अक्षर __user *buf,
-			 माप_प्रकार len, loff_t *off)
-अणु
-	पूर्णांक err, pkt_id, pkt_len;
-	काष्ठा ccb_data *data = fp->निजी_data;
-	काष्ठा ccb *driver_ccb = &data->driver_ccb;
-	काष्ठा ilo_hwinfo *hw = data->ilo_hw;
-	व्योम *pkt;
+static ssize_t ilo_write(struct file *fp, const char __user *buf,
+			 size_t len, loff_t *off)
+{
+	int err, pkt_id, pkt_len;
+	struct ccb_data *data = fp->private_data;
+	struct ccb *driver_ccb = &data->driver_ccb;
+	struct ilo_hwinfo *hw = data->ilo_hw;
+	void *pkt;
 
-	अगर (is_channel_reset(driver_ccb))
-		वापस -ENODEV;
+	if (is_channel_reset(driver_ccb))
+		return -ENODEV;
 
 	/* get a packet to send the user command */
-	अगर (!ilo_pkt_dequeue(hw, driver_ccb, SENDQ, &pkt_id, &pkt_len, &pkt))
-		वापस -EBUSY;
+	if (!ilo_pkt_dequeue(hw, driver_ccb, SENDQ, &pkt_id, &pkt_len, &pkt))
+		return -EBUSY;
 
 	/* limit the length to the length of the packet */
-	अगर (pkt_len < len)
+	if (pkt_len < len)
 		len = pkt_len;
 
-	/* on failure, set the len to 0 to वापस empty packet to the device */
+	/* on failure, set the len to 0 to return empty packet to the device */
 	err = copy_from_user(pkt, buf, len);
-	अगर (err)
+	if (err)
 		len = 0;
 
 	/* send the packet */
 	ilo_pkt_enqueue(hw, driver_ccb, SENDQ, pkt_id, len);
-	करोorbell_set(driver_ccb);
+	doorbell_set(driver_ccb);
 
-	वापस err ? -EFAULT : len;
-पूर्ण
+	return err ? -EFAULT : len;
+}
 
-अटल __poll_t ilo_poll(काष्ठा file *fp, poll_table *रुको)
-अणु
-	काष्ठा ccb_data *data = fp->निजी_data;
-	काष्ठा ccb *driver_ccb = &data->driver_ccb;
+static __poll_t ilo_poll(struct file *fp, poll_table *wait)
+{
+	struct ccb_data *data = fp->private_data;
+	struct ccb *driver_ccb = &data->driver_ccb;
 
-	poll_रुको(fp, &data->ccb_रुकोq, रुको);
+	poll_wait(fp, &data->ccb_waitq, wait);
 
-	अगर (is_channel_reset(driver_ccb))
-		वापस EPOLLERR;
-	अन्यथा अगर (ilo_pkt_recv(data->ilo_hw, driver_ccb))
-		वापस EPOLLIN | EPOLLRDNORM;
+	if (is_channel_reset(driver_ccb))
+		return EPOLLERR;
+	else if (ilo_pkt_recv(data->ilo_hw, driver_ccb))
+		return EPOLLIN | EPOLLRDNORM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ilo_बंद(काष्ठा inode *ip, काष्ठा file *fp)
-अणु
-	पूर्णांक slot;
-	काष्ठा ccb_data *data;
-	काष्ठा ilo_hwinfo *hw;
-	अचिन्हित दीर्घ flags;
+static int ilo_close(struct inode *ip, struct file *fp)
+{
+	int slot;
+	struct ccb_data *data;
+	struct ilo_hwinfo *hw;
+	unsigned long flags;
 
 	slot = iminor(ip) % max_ccb;
-	hw = container_of(ip->i_cdev, काष्ठा ilo_hwinfo, cdev);
+	hw = container_of(ip->i_cdev, struct ilo_hwinfo, cdev);
 
-	spin_lock(&hw->खोलो_lock);
+	spin_lock(&hw->open_lock);
 
-	अगर (hw->ccb_alloc[slot]->ccb_cnt == 1) अणु
+	if (hw->ccb_alloc[slot]->ccb_cnt == 1) {
 
-		data = fp->निजी_data;
+		data = fp->private_data;
 
 		spin_lock_irqsave(&hw->alloc_lock, flags);
-		hw->ccb_alloc[slot] = शून्य;
+		hw->ccb_alloc[slot] = NULL;
 		spin_unlock_irqrestore(&hw->alloc_lock, flags);
 
-		ilo_ccb_बंद(hw->ilo_dev, data);
+		ilo_ccb_close(hw->ilo_dev, data);
 
-		kमुक्त(data);
-	पूर्ण अन्यथा
+		kfree(data);
+	} else
 		hw->ccb_alloc[slot]->ccb_cnt--;
 
-	spin_unlock(&hw->खोलो_lock);
+	spin_unlock(&hw->open_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ilo_खोलो(काष्ठा inode *ip, काष्ठा file *fp)
-अणु
-	पूर्णांक slot, error;
-	काष्ठा ccb_data *data;
-	काष्ठा ilo_hwinfo *hw;
-	अचिन्हित दीर्घ flags;
+static int ilo_open(struct inode *ip, struct file *fp)
+{
+	int slot, error;
+	struct ccb_data *data;
+	struct ilo_hwinfo *hw;
+	unsigned long flags;
 
 	slot = iminor(ip) % max_ccb;
-	hw = container_of(ip->i_cdev, काष्ठा ilo_hwinfo, cdev);
+	hw = container_of(ip->i_cdev, struct ilo_hwinfo, cdev);
 
 	/* new ccb allocation */
-	data = kzalloc(माप(*data), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = kzalloc(sizeof(*data), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
-	spin_lock(&hw->खोलो_lock);
+	spin_lock(&hw->open_lock);
 
-	/* each fd निजी_data holds sw/hw view of ccb */
-	अगर (hw->ccb_alloc[slot] == शून्य) अणु
-		/* create a channel control block क्रम this minor */
+	/* each fd private_data holds sw/hw view of ccb */
+	if (hw->ccb_alloc[slot] == NULL) {
+		/* create a channel control block for this minor */
 		error = ilo_ccb_setup(hw, data, slot);
-		अगर (error) अणु
-			kमुक्त(data);
-			जाओ out;
-		पूर्ण
+		if (error) {
+			kfree(data);
+			goto out;
+		}
 
 		data->ccb_cnt = 1;
 		data->ccb_excl = fp->f_flags & O_EXCL;
 		data->ilo_hw = hw;
-		init_रुकोqueue_head(&data->ccb_रुकोq);
+		init_waitqueue_head(&data->ccb_waitq);
 
-		/* ग_लिखो the ccb to hw */
+		/* write the ccb to hw */
 		spin_lock_irqsave(&hw->alloc_lock, flags);
-		ilo_ccb_खोलो(hw, data, slot);
+		ilo_ccb_open(hw, data, slot);
 		hw->ccb_alloc[slot] = data;
 		spin_unlock_irqrestore(&hw->alloc_lock, flags);
 
 		/* make sure the channel is functional */
-		error = ilo_ccb_verअगरy(hw, data);
-		अगर (error) अणु
+		error = ilo_ccb_verify(hw, data);
+		if (error) {
 
 			spin_lock_irqsave(&hw->alloc_lock, flags);
-			hw->ccb_alloc[slot] = शून्य;
+			hw->ccb_alloc[slot] = NULL;
 			spin_unlock_irqrestore(&hw->alloc_lock, flags);
 
-			ilo_ccb_बंद(hw->ilo_dev, data);
+			ilo_ccb_close(hw->ilo_dev, data);
 
-			kमुक्त(data);
-			जाओ out;
-		पूर्ण
+			kfree(data);
+			goto out;
+		}
 
-	पूर्ण अन्यथा अणु
-		kमुक्त(data);
-		अगर (fp->f_flags & O_EXCL || hw->ccb_alloc[slot]->ccb_excl) अणु
+	} else {
+		kfree(data);
+		if (fp->f_flags & O_EXCL || hw->ccb_alloc[slot]->ccb_excl) {
 			/*
-			 * The channel exists, and either this खोलो
-			 * or a previous खोलो of this channel wants
+			 * The channel exists, and either this open
+			 * or a previous open of this channel wants
 			 * exclusive access.
 			 */
 			error = -EBUSY;
-		पूर्ण अन्यथा अणु
+		} else {
 			hw->ccb_alloc[slot]->ccb_cnt++;
 			error = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 out:
-	spin_unlock(&hw->खोलो_lock);
+	spin_unlock(&hw->open_lock);
 
-	अगर (!error)
-		fp->निजी_data = hw->ccb_alloc[slot];
+	if (!error)
+		fp->private_data = hw->ccb_alloc[slot];
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल स्थिर काष्ठा file_operations ilo_fops = अणु
+static const struct file_operations ilo_fops = {
 	.owner		= THIS_MODULE,
-	.पढ़ो		= ilo_पढ़ो,
-	.ग_लिखो		= ilo_ग_लिखो,
+	.read		= ilo_read,
+	.write		= ilo_write,
 	.poll		= ilo_poll,
-	.खोलो 		= ilo_खोलो,
-	.release 	= ilo_बंद,
+	.open 		= ilo_open,
+	.release 	= ilo_close,
 	.llseek		= noop_llseek,
-पूर्ण;
+};
 
-अटल irqवापस_t ilo_isr(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा ilo_hwinfo *hw = data;
-	पूर्णांक pending, i;
+static irqreturn_t ilo_isr(int irq, void *data)
+{
+	struct ilo_hwinfo *hw = data;
+	int pending, i;
 
 	spin_lock(&hw->alloc_lock);
 
-	/* check क्रम ccbs which have data */
+	/* check for ccbs which have data */
 	pending = get_device_outbound(hw);
-	अगर (!pending) अणु
+	if (!pending) {
 		spin_unlock(&hw->alloc_lock);
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 
-	अगर (is_db_reset(pending)) अणु
-		/* wake up all ccbs अगर the device was reset */
+	if (is_db_reset(pending)) {
+		/* wake up all ccbs if the device was reset */
 		pending = -1;
 		ilo_set_reset(hw);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < max_ccb; i++) अणु
-		अगर (!hw->ccb_alloc[i])
-			जारी;
-		अगर (pending & (1 << i))
-			wake_up_पूर्णांकerruptible(&hw->ccb_alloc[i]->ccb_रुकोq);
-	पूर्ण
+	for (i = 0; i < max_ccb; i++) {
+		if (!hw->ccb_alloc[i])
+			continue;
+		if (pending & (1 << i))
+			wake_up_interruptible(&hw->ccb_alloc[i]->ccb_waitq);
+	}
 
 	/* clear the device of the channels that have been handled */
 	clear_pending_db(hw, pending);
 
 	spin_unlock(&hw->alloc_lock);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम ilo_unmap_device(काष्ठा pci_dev *pdev, काष्ठा ilo_hwinfo *hw)
-अणु
+static void ilo_unmap_device(struct pci_dev *pdev, struct ilo_hwinfo *hw)
+{
 	pci_iounmap(pdev, hw->db_vaddr);
 	pci_iounmap(pdev, hw->ram_vaddr);
 	pci_iounmap(pdev, hw->mmio_vaddr);
-पूर्ण
+}
 
-अटल पूर्णांक ilo_map_device(काष्ठा pci_dev *pdev, काष्ठा ilo_hwinfo *hw)
-अणु
-	पूर्णांक bar;
-	अचिन्हित दीर्घ off;
+static int ilo_map_device(struct pci_dev *pdev, struct ilo_hwinfo *hw)
+{
+	int bar;
+	unsigned long off;
 
-	/* map the memory mapped i/o रेजिस्टरs */
+	/* map the memory mapped i/o registers */
 	hw->mmio_vaddr = pci_iomap(pdev, 1, 0);
-	अगर (hw->mmio_vaddr == शून्य) अणु
+	if (hw->mmio_vaddr == NULL) {
 		dev_err(&pdev->dev, "Error mapping mmio\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* map the adapter shared memory region */
-	अगर (pdev->subप्रणाली_device == 0x00E4) अणु
+	if (pdev->subsystem_device == 0x00E4) {
 		bar = 5;
-		/* Last 8k is reserved क्रम CCBs */
+		/* Last 8k is reserved for CCBs */
 		off = pci_resource_len(pdev, bar) - 0x2000;
-	पूर्ण अन्यथा अणु
+	} else {
 		bar = 2;
 		off = 0;
-	पूर्ण
+	}
 	hw->ram_vaddr = pci_iomap_range(pdev, bar, off, max_ccb * ILOHW_CCB_SZ);
-	अगर (hw->ram_vaddr == शून्य) अणु
+	if (hw->ram_vaddr == NULL) {
 		dev_err(&pdev->dev, "Error mapping shared mem\n");
-		जाओ mmio_मुक्त;
-	पूर्ण
+		goto mmio_free;
+	}
 
-	/* map the करोorbell aperture */
+	/* map the doorbell aperture */
 	hw->db_vaddr = pci_iomap(pdev, 3, max_ccb * ONE_DB_SIZE);
-	अगर (hw->db_vaddr == शून्य) अणु
+	if (hw->db_vaddr == NULL) {
 		dev_err(&pdev->dev, "Error mapping doorbell\n");
-		जाओ ram_मुक्त;
-	पूर्ण
+		goto ram_free;
+	}
 
-	वापस 0;
-ram_मुक्त:
+	return 0;
+ram_free:
 	pci_iounmap(pdev, hw->ram_vaddr);
-mmio_मुक्त:
+mmio_free:
 	pci_iounmap(pdev, hw->mmio_vaddr);
 out:
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल व्योम ilo_हटाओ(काष्ठा pci_dev *pdev)
-अणु
-	पूर्णांक i, minor;
-	काष्ठा ilo_hwinfo *ilo_hw = pci_get_drvdata(pdev);
+static void ilo_remove(struct pci_dev *pdev)
+{
+	int i, minor;
+	struct ilo_hwinfo *ilo_hw = pci_get_drvdata(pdev);
 
-	अगर (!ilo_hw)
-		वापस;
+	if (!ilo_hw)
+		return;
 
 	clear_device(ilo_hw);
 
 	minor = MINOR(ilo_hw->cdev.dev);
-	क्रम (i = minor; i < minor + max_ccb; i++)
+	for (i = minor; i < minor + max_ccb; i++)
 		device_destroy(ilo_class, MKDEV(ilo_major, i));
 
 	cdev_del(&ilo_hw->cdev);
-	ilo_disable_पूर्णांकerrupts(ilo_hw);
-	मुक्त_irq(pdev->irq, ilo_hw);
+	ilo_disable_interrupts(ilo_hw);
+	free_irq(pdev->irq, ilo_hw);
 	ilo_unmap_device(pdev, ilo_hw);
 	pci_release_regions(pdev);
 	/*
 	 * pci_disable_device(pdev) used to be here. But this PCI device has
-	 * two functions with पूर्णांकerrupt lines connected to a single pin. The
+	 * two functions with interrupt lines connected to a single pin. The
 	 * other one is a USB host controller. So when we disable the PIN here
 	 * e.g. by rmmod hpilo, the controller stops working. It is because
-	 * the पूर्णांकerrupt link is disabled in ACPI since it is not refcounted
-	 * yet. See acpi_pci_link_मुक्त_irq called from acpi_pci_irq_disable.
+	 * the interrupt link is disabled in ACPI since it is not refcounted
+	 * yet. See acpi_pci_link_free_irq called from acpi_pci_irq_disable.
 	 */
-	kमुक्त(ilo_hw);
+	kfree(ilo_hw);
 	ilo_hwdev[(minor / max_ccb)] = 0;
-पूर्ण
+}
 
-अटल पूर्णांक ilo_probe(काष्ठा pci_dev *pdev,
-			       स्थिर काष्ठा pci_device_id *ent)
-अणु
-	पूर्णांक devnum, minor, start, error = 0;
-	काष्ठा ilo_hwinfo *ilo_hw;
+static int ilo_probe(struct pci_dev *pdev,
+			       const struct pci_device_id *ent)
+{
+	int devnum, minor, start, error = 0;
+	struct ilo_hwinfo *ilo_hw;
 
-	अगर (pci_match_id(ilo_blacklist, pdev)) अणु
+	if (pci_match_id(ilo_blacklist, pdev)) {
 		dev_dbg(&pdev->dev, "Not supported on this device\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (max_ccb > MAX_CCB)
+	if (max_ccb > MAX_CCB)
 		max_ccb = MAX_CCB;
-	अन्यथा अगर (max_ccb < MIN_CCB)
+	else if (max_ccb < MIN_CCB)
 		max_ccb = MIN_CCB;
 
-	/* find a मुक्त range क्रम device files */
-	क्रम (devnum = 0; devnum < MAX_ILO_DEV; devnum++) अणु
-		अगर (ilo_hwdev[devnum] == 0) अणु
+	/* find a free range for device files */
+	for (devnum = 0; devnum < MAX_ILO_DEV; devnum++) {
+		if (ilo_hwdev[devnum] == 0) {
 			ilo_hwdev[devnum] = 1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (devnum == MAX_ILO_DEV) अणु
+	if (devnum == MAX_ILO_DEV) {
 		dev_err(&pdev->dev, "Error finding free device\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	/* track global allocations क्रम this device */
+	/* track global allocations for this device */
 	error = -ENOMEM;
-	ilo_hw = kzalloc(माप(*ilo_hw), GFP_KERNEL);
-	अगर (!ilo_hw)
-		जाओ out;
+	ilo_hw = kzalloc(sizeof(*ilo_hw), GFP_KERNEL);
+	if (!ilo_hw)
+		goto out;
 
 	ilo_hw->ilo_dev = pdev;
 	spin_lock_init(&ilo_hw->alloc_lock);
-	spin_lock_init(&ilo_hw->fअगरo_lock);
-	spin_lock_init(&ilo_hw->खोलो_lock);
+	spin_lock_init(&ilo_hw->fifo_lock);
+	spin_lock_init(&ilo_hw->open_lock);
 
 	error = pci_enable_device(pdev);
-	अगर (error)
-		जाओ मुक्त;
+	if (error)
+		goto free;
 
 	pci_set_master(pdev);
 
 	error = pci_request_regions(pdev, ILO_NAME);
-	अगर (error)
-		जाओ disable;
+	if (error)
+		goto disable;
 
 	error = ilo_map_device(pdev, ilo_hw);
-	अगर (error)
-		जाओ मुक्त_regions;
+	if (error)
+		goto free_regions;
 
 	pci_set_drvdata(pdev, ilo_hw);
 	clear_device(ilo_hw);
 
 	error = request_irq(pdev->irq, ilo_isr, IRQF_SHARED, "hpilo", ilo_hw);
-	अगर (error)
-		जाओ unmap;
+	if (error)
+		goto unmap;
 
-	ilo_enable_पूर्णांकerrupts(ilo_hw);
+	ilo_enable_interrupts(ilo_hw);
 
 	cdev_init(&ilo_hw->cdev, &ilo_fops);
 	ilo_hw->cdev.owner = THIS_MODULE;
 	start = devnum * max_ccb;
 	error = cdev_add(&ilo_hw->cdev, MKDEV(ilo_major, start), max_ccb);
-	अगर (error) अणु
+	if (error) {
 		dev_err(&pdev->dev, "Could not add cdev\n");
-		जाओ हटाओ_isr;
-	पूर्ण
+		goto remove_isr;
+	}
 
-	क्रम (minor = 0 ; minor < max_ccb; minor++) अणु
-		काष्ठा device *dev;
+	for (minor = 0 ; minor < max_ccb; minor++) {
+		struct device *dev;
 		dev = device_create(ilo_class, &pdev->dev,
-				    MKDEV(ilo_major, minor), शून्य,
+				    MKDEV(ilo_major, minor), NULL,
 				    "hpilo!d%dccb%d", devnum, minor);
-		अगर (IS_ERR(dev))
+		if (IS_ERR(dev))
 			dev_err(&pdev->dev, "Could not create files\n");
-	पूर्ण
+	}
 
-	वापस 0;
-हटाओ_isr:
-	ilo_disable_पूर्णांकerrupts(ilo_hw);
-	मुक्त_irq(pdev->irq, ilo_hw);
+	return 0;
+remove_isr:
+	ilo_disable_interrupts(ilo_hw);
+	free_irq(pdev->irq, ilo_hw);
 unmap:
 	ilo_unmap_device(pdev, ilo_hw);
-मुक्त_regions:
+free_regions:
 	pci_release_regions(pdev);
 disable:
-/*	pci_disable_device(pdev);  see comment in ilo_हटाओ */
-मुक्त:
-	kमुक्त(ilo_hw);
+/*	pci_disable_device(pdev);  see comment in ilo_remove */
+free:
+	kfree(ilo_hw);
 out:
 	ilo_hwdev[devnum] = 0;
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल स्थिर काष्ठा pci_device_id ilo_devices[] = अणु
-	अणु PCI_DEVICE(PCI_VENDOR_ID_COMPAQ, 0xB204) पूर्ण,
-	अणु PCI_DEVICE(PCI_VENDOR_ID_HP, 0x3307) पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct pci_device_id ilo_devices[] = {
+	{ PCI_DEVICE(PCI_VENDOR_ID_COMPAQ, 0xB204) },
+	{ PCI_DEVICE(PCI_VENDOR_ID_HP, 0x3307) },
+	{ }
+};
 MODULE_DEVICE_TABLE(pci, ilo_devices);
 
-अटल काष्ठा pci_driver ilo_driver = अणु
+static struct pci_driver ilo_driver = {
 	.name 	  = ILO_NAME,
 	.id_table = ilo_devices,
 	.probe 	  = ilo_probe,
-	.हटाओ   = ilo_हटाओ,
-पूर्ण;
+	.remove   = ilo_remove,
+};
 
-अटल पूर्णांक __init ilo_init(व्योम)
-अणु
-	पूर्णांक error;
+static int __init ilo_init(void)
+{
+	int error;
 	dev_t dev;
 
 	ilo_class = class_create(THIS_MODULE, "iLO");
-	अगर (IS_ERR(ilo_class)) अणु
+	if (IS_ERR(ilo_class)) {
 		error = PTR_ERR(ilo_class);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	error = alloc_chrdev_region(&dev, 0, MAX_OPEN, ILO_NAME);
-	अगर (error)
-		जाओ class_destroy;
+	if (error)
+		goto class_destroy;
 
 	ilo_major = MAJOR(dev);
 
-	error =	pci_रेजिस्टर_driver(&ilo_driver);
-	अगर (error)
-		जाओ chr_हटाओ;
+	error =	pci_register_driver(&ilo_driver);
+	if (error)
+		goto chr_remove;
 
-	वापस 0;
-chr_हटाओ:
-	unरेजिस्टर_chrdev_region(dev, MAX_OPEN);
+	return 0;
+chr_remove:
+	unregister_chrdev_region(dev, MAX_OPEN);
 class_destroy:
 	class_destroy(ilo_class);
 out:
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल व्योम __निकास ilo_निकास(व्योम)
-अणु
-	pci_unरेजिस्टर_driver(&ilo_driver);
-	unरेजिस्टर_chrdev_region(MKDEV(ilo_major, 0), MAX_OPEN);
+static void __exit ilo_exit(void)
+{
+	pci_unregister_driver(&ilo_driver);
+	unregister_chrdev_region(MKDEV(ilo_major, 0), MAX_OPEN);
 	class_destroy(ilo_class);
-पूर्ण
+}
 
 MODULE_VERSION("1.5.0");
 MODULE_ALIAS(ILO_NAME);
@@ -919,8 +918,8 @@ MODULE_DESCRIPTION(ILO_NAME);
 MODULE_AUTHOR("David Altobelli <david.altobelli@hpe.com>");
 MODULE_LICENSE("GPL v2");
 
-module_param(max_ccb, uपूर्णांक, 0444);
+module_param(max_ccb, uint, 0444);
 MODULE_PARM_DESC(max_ccb, "Maximum number of HP iLO channels to attach (8-24)(default=16)");
 
 module_init(ilo_init);
-module_निकास(ilo_निकास);
+module_exit(ilo_exit);

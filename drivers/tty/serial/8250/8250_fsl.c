@@ -1,120 +1,119 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Freescale 16550 UART "driver", Copyright (C) 2011 Paul Gorपंचांगaker.
+ * Freescale 16550 UART "driver", Copyright (C) 2011 Paul Gortmaker.
  * Copyright 2020 NXP
  * Copyright 2020 Puresoftware Ltd.
  *
  * This isn't a full driver; it just provides an alternate IRQ
  * handler to deal with an errata and provide ACPI wrapper.
- * Everything अन्यथा is just using the bog standard 8250 support.
+ * Everything else is just using the bog standard 8250 support.
  *
- * We follow code flow of serial8250_शेष_handle_irq() but add
- * a check क्रम a अवरोध and insert a dummy पढ़ो on the Rx क्रम the
+ * We follow code flow of serial8250_default_handle_irq() but add
+ * a check for a break and insert a dummy read on the Rx for the
  * immediately following IRQ event.
  *
- * We re-use the alपढ़ोy existing "bug handling" lsr_saved_flags
- * field to carry the "what we just did" inक्रमmation from the one
+ * We re-use the already existing "bug handling" lsr_saved_flags
+ * field to carry the "what we just did" information from the one
  * IRQ event to the next one.
  */
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/serial_reg.h>
-#समावेश <linux/serial_8250.h>
+#include <linux/acpi.h>
+#include <linux/serial_reg.h>
+#include <linux/serial_8250.h>
 
-#समावेश "8250.h"
+#include "8250.h"
 
-काष्ठा fsl8250_data अणु
-	पूर्णांक	line;
-पूर्ण;
+struct fsl8250_data {
+	int	line;
+};
 
-पूर्णांक fsl8250_handle_irq(काष्ठा uart_port *port)
-अणु
-	अचिन्हित अक्षर lsr, orig_lsr;
-	अचिन्हित पूर्णांक iir;
-	काष्ठा uart_8250_port *up = up_to_u8250p(port);
+int fsl8250_handle_irq(struct uart_port *port)
+{
+	unsigned char lsr, orig_lsr;
+	unsigned int iir;
+	struct uart_8250_port *up = up_to_u8250p(port);
 
 	spin_lock(&up->port.lock);
 
 	iir = port->serial_in(port, UART_IIR);
-	अगर (iir & UART_IIR_NO_INT) अणु
+	if (iir & UART_IIR_NO_INT) {
 		spin_unlock(&up->port.lock);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* This is the WAR; अगर last event was BRK, then पढ़ो and वापस */
-	अगर (unlikely(up->lsr_saved_flags & UART_LSR_BI)) अणु
+	/* This is the WAR; if last event was BRK, then read and return */
+	if (unlikely(up->lsr_saved_flags & UART_LSR_BI)) {
 		up->lsr_saved_flags &= ~UART_LSR_BI;
 		port->serial_in(port, UART_RX);
 		spin_unlock(&up->port.lock);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
 	lsr = orig_lsr = up->port.serial_in(&up->port, UART_LSR);
 
-	/* Process incoming अक्षरacters first */
-	अगर ((lsr & (UART_LSR_DR | UART_LSR_BI)) &&
-	    (up->ier & (UART_IER_RLSI | UART_IER_RDI))) अणु
-		lsr = serial8250_rx_अक्षरs(up, lsr);
-	पूर्ण
+	/* Process incoming characters first */
+	if ((lsr & (UART_LSR_DR | UART_LSR_BI)) &&
+	    (up->ier & (UART_IER_RLSI | UART_IER_RDI))) {
+		lsr = serial8250_rx_chars(up, lsr);
+	}
 
-	/* Stop processing पूर्णांकerrupts on input overrun */
-	अगर ((orig_lsr & UART_LSR_OE) && (up->overrun_backoff_समय_ms > 0)) अणु
-		अचिन्हित दीर्घ delay;
+	/* Stop processing interrupts on input overrun */
+	if ((orig_lsr & UART_LSR_OE) && (up->overrun_backoff_time_ms > 0)) {
+		unsigned long delay;
 
 		up->ier = port->serial_in(port, UART_IER);
-		अगर (up->ier & (UART_IER_RLSI | UART_IER_RDI)) अणु
+		if (up->ier & (UART_IER_RLSI | UART_IER_RDI)) {
 			port->ops->stop_rx(port);
-		पूर्ण अन्यथा अणु
-			/* Keep restarting the समयr until
+		} else {
+			/* Keep restarting the timer until
 			 * the input overrun subsides.
 			 */
 			cancel_delayed_work(&up->overrun_backoff);
-		पूर्ण
+		}
 
-		delay = msecs_to_jअगरfies(up->overrun_backoff_समय_ms);
+		delay = msecs_to_jiffies(up->overrun_backoff_time_ms);
 		schedule_delayed_work(&up->overrun_backoff, delay);
-	पूर्ण
+	}
 
 	serial8250_modem_status(up);
 
-	अगर ((lsr & UART_LSR_THRE) && (up->ier & UART_IER_THRI))
-		serial8250_tx_अक्षरs(up);
+	if ((lsr & UART_LSR_THRE) && (up->ier & UART_IER_THRI))
+		serial8250_tx_chars(up);
 
 	up->lsr_saved_flags = orig_lsr;
 
 	uart_unlock_and_check_sysrq(&up->port);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 EXPORT_SYMBOL_GPL(fsl8250_handle_irq);
 
-#अगर_घोषित CONFIG_ACPI
-अटल पूर्णांक fsl8250_acpi_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा fsl8250_data *data;
-	काष्ठा uart_8250_port port8250;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा resource *regs;
+#ifdef CONFIG_ACPI
+static int fsl8250_acpi_probe(struct platform_device *pdev)
+{
+	struct fsl8250_data *data;
+	struct uart_8250_port port8250;
+	struct device *dev = &pdev->dev;
+	struct resource *regs;
 
-	पूर्णांक ret, irq;
+	int ret, irq;
 
-	regs = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!regs) अणु
+	regs = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!regs) {
 		dev_err(dev, "no registers defined\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0)
-		वापस irq;
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0)
+		return irq;
 
-	स_रखो(&port8250, 0, माप(port8250));
+	memset(&port8250, 0, sizeof(port8250));
 
-	ret = device_property_पढ़ो_u32(dev, "clock-frequency",
+	ret = device_property_read_u32(dev, "clock-frequency",
 					&port8250.port.uartclk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	spin_lock_init(&port8250.port.lock);
 
@@ -132,43 +131,43 @@ EXPORT_SYMBOL_GPL(fsl8250_handle_irq);
 
 	port8250.port.membase = devm_ioremap(dev,  port8250.port.mapbase,
 							port8250.port.mapsize);
-	अगर (!port8250.port.membase)
-		वापस -ENOMEM;
+	if (!port8250.port.membase)
+		return -ENOMEM;
 
-	data = devm_kzalloc(dev, माप(*data), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = devm_kzalloc(dev, sizeof(*data), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
-	data->line = serial8250_रेजिस्टर_8250_port(&port8250);
-	अगर (data->line < 0)
-		वापस data->line;
+	data->line = serial8250_register_8250_port(&port8250);
+	if (data->line < 0)
+		return data->line;
 
-	platक्रमm_set_drvdata(pdev, data);
-	वापस 0;
-पूर्ण
+	platform_set_drvdata(pdev, data);
+	return 0;
+}
 
-अटल पूर्णांक fsl8250_acpi_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा fsl8250_data *data = platक्रमm_get_drvdata(pdev);
+static int fsl8250_acpi_remove(struct platform_device *pdev)
+{
+	struct fsl8250_data *data = platform_get_drvdata(pdev);
 
-	serial8250_unरेजिस्टर_port(data->line);
-	वापस 0;
-पूर्ण
+	serial8250_unregister_port(data->line);
+	return 0;
+}
 
-अटल स्थिर काष्ठा acpi_device_id fsl_8250_acpi_id[] = अणु
-	अणु "NXP0018", 0 पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct acpi_device_id fsl_8250_acpi_id[] = {
+	{ "NXP0018", 0 },
+	{ },
+};
 MODULE_DEVICE_TABLE(acpi, fsl_8250_acpi_id);
 
-अटल काष्ठा platक्रमm_driver fsl8250_platक्रमm_driver = अणु
-	.driver = अणु
+static struct platform_driver fsl8250_platform_driver = {
+	.driver = {
 		.name			= "fsl-16550-uart",
 		.acpi_match_table	= ACPI_PTR(fsl_8250_acpi_id),
-	पूर्ण,
+	},
 	.probe			= fsl8250_acpi_probe,
-	.हटाओ			= fsl8250_acpi_हटाओ,
-पूर्ण;
+	.remove			= fsl8250_acpi_remove,
+};
 
-module_platक्रमm_driver(fsl8250_platक्रमm_driver);
-#पूर्ण_अगर
+module_platform_driver(fsl8250_platform_driver);
+#endif

@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * UHCI HCD (Host Controller Driver) क्रम GRLIB GRUSBHC
+ * UHCI HCD (Host Controller Driver) for GRLIB GRUSBHC
  *
  * Copyright (c) 2011 Jan Andersson <jan@gaisler.com>
  *
@@ -11,185 +10,185 @@
  * (C) Copyright 1999 Randy Dunlap
  * (C) Copyright 1999 Georg Acher, acher@in.tum.de
  * (C) Copyright 1999 Deti Fliegl, deti@fliegl.de
- * (C) Copyright 1999 Thomas Sailer, sailer@अगरe.ee.ethz.ch
+ * (C) Copyright 1999 Thomas Sailer, sailer@ife.ee.ethz.ch
  * (C) Copyright 1999 Roman Weissgaerber, weissg@vienna.at
- * (C) Copyright 2000 Yggdrasil Computing, Inc. (port of new PCI पूर्णांकerface
+ * (C) Copyright 2000 Yggdrasil Computing, Inc. (port of new PCI interface
  *               support from usb-ohci.c by Adam Richter, adam@yggdrasil.com).
  * (C) Copyright 1999 Gregory P. Smith (from usb-ohci.c)
  * (C) Copyright 2004-2007 Alan Stern, stern@rowland.harvard.edu
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_platक्रमm.h>
+#include <linux/device.h>
+#include <linux/of_irq.h>
+#include <linux/of_address.h>
+#include <linux/of_platform.h>
 
-अटल पूर्णांक uhci_grlib_init(काष्ठा usb_hcd *hcd)
-अणु
-	काष्ठा uhci_hcd *uhci = hcd_to_uhci(hcd);
+static int uhci_grlib_init(struct usb_hcd *hcd)
+{
+	struct uhci_hcd *uhci = hcd_to_uhci(hcd);
 
 	/*
 	 * Probe to determine the endianness of the controller.
-	 * We know that bit 7 of the PORTSC1 रेजिस्टर is always set
-	 * and bit 15 is always clear.  If uhci_पढ़ोw() yields a value
+	 * We know that bit 7 of the PORTSC1 register is always set
+	 * and bit 15 is always clear.  If uhci_readw() yields a value
 	 * with bit 7 (0x80) turned on then the current little-endian
 	 * setting is correct.  Otherwise we assume the value was
-	 * byte-swapped; hence the रेजिस्टर पूर्णांकerface and presumably
+	 * byte-swapped; hence the register interface and presumably
 	 * also the descriptors are big-endian.
 	 */
-	अगर (!(uhci_पढ़ोw(uhci, USBPORTSC1) & 0x80)) अणु
+	if (!(uhci_readw(uhci, USBPORTSC1) & 0x80)) {
 		uhci->big_endian_mmio = 1;
 		uhci->big_endian_desc = 1;
-	पूर्ण
+	}
 
 	uhci->rh_numports = uhci_count_ports(hcd);
 
-	/* Set up poपूर्णांकers to to generic functions */
+	/* Set up pointers to to generic functions */
 	uhci->reset_hc = uhci_generic_reset_hc;
 	uhci->check_and_reset_hc = uhci_generic_check_and_reset_hc;
-	/* No special actions need to be taken क्रम the functions below */
-	uhci->configure_hc = शून्य;
-	uhci->resume_detect_पूर्णांकerrupts_are_broken = शून्य;
-	uhci->global_suspend_mode_is_broken = शून्य;
+	/* No special actions need to be taken for the functions below */
+	uhci->configure_hc = NULL;
+	uhci->resume_detect_interrupts_are_broken = NULL;
+	uhci->global_suspend_mode_is_broken = NULL;
 
-	/* Reset अगर the controller isn't alपढ़ोy safely quiescent. */
+	/* Reset if the controller isn't already safely quiescent. */
 	check_and_reset_hc(uhci);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा hc_driver uhci_grlib_hc_driver = अणु
+static const struct hc_driver uhci_grlib_hc_driver = {
 	.description =		hcd_name,
 	.product_desc =		"GRLIB GRUSBHC UHCI Host Controller",
-	.hcd_priv_size =	माप(काष्ठा uhci_hcd),
+	.hcd_priv_size =	sizeof(struct uhci_hcd),
 
 	/* Generic hardware linkage */
 	.irq =			uhci_irq,
 	.flags =		HCD_MEMORY | HCD_DMA | HCD_USB11,
 
-	/* Basic lअगरecycle operations */
+	/* Basic lifecycle operations */
 	.reset =		uhci_grlib_init,
 	.start =		uhci_start,
-#अगर_घोषित CONFIG_PM
-	.pci_suspend =		शून्य,
-	.pci_resume =		शून्य,
+#ifdef CONFIG_PM
+	.pci_suspend =		NULL,
+	.pci_resume =		NULL,
 	.bus_suspend =		uhci_rh_suspend,
 	.bus_resume =		uhci_rh_resume,
-#पूर्ण_अगर
+#endif
 	.stop =			uhci_stop,
 
 	.urb_enqueue =		uhci_urb_enqueue,
 	.urb_dequeue =		uhci_urb_dequeue,
 
-	.endpoपूर्णांक_disable =	uhci_hcd_endpoपूर्णांक_disable,
+	.endpoint_disable =	uhci_hcd_endpoint_disable,
 	.get_frame_number =	uhci_hcd_get_frame_number,
 
 	.hub_status_data =	uhci_hub_status_data,
 	.hub_control =		uhci_hub_control,
-पूर्ण;
+};
 
 
-अटल पूर्णांक uhci_hcd_grlib_probe(काष्ठा platक्रमm_device *op)
-अणु
-	काष्ठा device_node *dn = op->dev.of_node;
-	काष्ठा usb_hcd *hcd;
-	काष्ठा uhci_hcd	*uhci = शून्य;
-	काष्ठा resource res;
-	पूर्णांक irq;
-	पूर्णांक rv;
+static int uhci_hcd_grlib_probe(struct platform_device *op)
+{
+	struct device_node *dn = op->dev.of_node;
+	struct usb_hcd *hcd;
+	struct uhci_hcd	*uhci = NULL;
+	struct resource res;
+	int irq;
+	int rv;
 
-	अगर (usb_disabled())
-		वापस -ENODEV;
+	if (usb_disabled())
+		return -ENODEV;
 
 	dev_dbg(&op->dev, "initializing GRUSBHC UHCI USB Controller\n");
 
 	rv = of_address_to_resource(dn, 0, &res);
-	अगर (rv)
-		वापस rv;
+	if (rv)
+		return rv;
 
-	/* usb_create_hcd requires dma_mask != शून्य */
+	/* usb_create_hcd requires dma_mask != NULL */
 	op->dev.dma_mask = &op->dev.coherent_dma_mask;
 	hcd = usb_create_hcd(&uhci_grlib_hc_driver, &op->dev,
 			"GRUSBHC UHCI USB");
-	अगर (!hcd)
-		वापस -ENOMEM;
+	if (!hcd)
+		return -ENOMEM;
 
 	hcd->rsrc_start = res.start;
 	hcd->rsrc_len = resource_size(&res);
 
 	irq = irq_of_parse_and_map(dn, 0);
-	अगर (irq == NO_IRQ) अणु
-		prपूर्णांकk(KERN_ERR "%s: irq_of_parse_and_map failed\n", __खाता__);
+	if (irq == NO_IRQ) {
+		printk(KERN_ERR "%s: irq_of_parse_and_map failed\n", __FILE__);
 		rv = -EBUSY;
-		जाओ err_usb;
-	पूर्ण
+		goto err_usb;
+	}
 
 	hcd->regs = devm_ioremap_resource(&op->dev, &res);
-	अगर (IS_ERR(hcd->regs)) अणु
+	if (IS_ERR(hcd->regs)) {
 		rv = PTR_ERR(hcd->regs);
-		जाओ err_irq;
-	पूर्ण
+		goto err_irq;
+	}
 
 	uhci = hcd_to_uhci(hcd);
 
 	uhci->regs = hcd->regs;
 
 	rv = usb_add_hcd(hcd, irq, 0);
-	अगर (rv)
-		जाओ err_irq;
+	if (rv)
+		goto err_irq;
 
 	device_wakeup_enable(hcd->self.controller);
-	वापस 0;
+	return 0;
 
 err_irq:
 	irq_dispose_mapping(irq);
 err_usb:
 	usb_put_hcd(hcd);
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-अटल पूर्णांक uhci_hcd_grlib_हटाओ(काष्ठा platक्रमm_device *op)
-अणु
-	काष्ठा usb_hcd *hcd = platक्रमm_get_drvdata(op);
+static int uhci_hcd_grlib_remove(struct platform_device *op)
+{
+	struct usb_hcd *hcd = platform_get_drvdata(op);
 
 	dev_dbg(&op->dev, "stopping GRLIB GRUSBHC UHCI USB Controller\n");
 
-	usb_हटाओ_hcd(hcd);
+	usb_remove_hcd(hcd);
 
 	irq_dispose_mapping(hcd->irq);
 	usb_put_hcd(hcd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Make sure the controller is quiescent and that we're not using it
- * any more.  This is मुख्यly क्रम the benefit of programs which, like kexec,
- * expect the hardware to be idle: not करोing DMA or generating IRQs.
+ * any more.  This is mainly for the benefit of programs which, like kexec,
+ * expect the hardware to be idle: not doing DMA or generating IRQs.
  *
  * This routine may be called in a damaged or failing kernel.  Hence we
- * करो not acquire the spinlock beक्रमe shutting करोwn the controller.
+ * do not acquire the spinlock before shutting down the controller.
  */
-अटल व्योम uhci_hcd_grlib_shutकरोwn(काष्ठा platक्रमm_device *op)
-अणु
-	काष्ठा usb_hcd *hcd = platक्रमm_get_drvdata(op);
+static void uhci_hcd_grlib_shutdown(struct platform_device *op)
+{
+	struct usb_hcd *hcd = platform_get_drvdata(op);
 
 	uhci_hc_died(hcd_to_uhci(hcd));
-पूर्ण
+}
 
-अटल स्थिर काष्ठा of_device_id uhci_hcd_grlib_of_match[] = अणु
-	अणु .name = "GAISLER_UHCI", पूर्ण,
-	अणु .name = "01_027", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id uhci_hcd_grlib_of_match[] = {
+	{ .name = "GAISLER_UHCI", },
+	{ .name = "01_027", },
+	{},
+};
 MODULE_DEVICE_TABLE(of, uhci_hcd_grlib_of_match);
 
 
-अटल काष्ठा platक्रमm_driver uhci_grlib_driver = अणु
+static struct platform_driver uhci_grlib_driver = {
 	.probe		= uhci_hcd_grlib_probe,
-	.हटाओ		= uhci_hcd_grlib_हटाओ,
-	.shutकरोwn	= uhci_hcd_grlib_shutकरोwn,
-	.driver = अणु
+	.remove		= uhci_hcd_grlib_remove,
+	.shutdown	= uhci_hcd_grlib_shutdown,
+	.driver = {
 		.name = "grlib-uhci",
 		.of_match_table = uhci_hcd_grlib_of_match,
-	पूर्ण,
-पूर्ण;
+	},
+};

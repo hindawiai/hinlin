@@ -1,73 +1,72 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Copyright 1998-2008 VIA Technologies, Inc. All Rights Reserved.
  * Copyright 2001-2008 S3 Graphics, Inc. All Rights Reserved.
 
  */
 
-#अगर_अघोषित __GLOBAL_H__
-#घोषणा __GLOBAL_H__
+#ifndef __GLOBAL_H__
+#define __GLOBAL_H__
 
-#समावेश <linux/fb.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/init.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/console.h>
-#समावेश <linux/समयr.h>
+#include <linux/fb.h>
+#include <linux/delay.h>
+#include <linux/ioport.h>
+#include <linux/pci.h>
+#include <linux/io.h>
+#include <linux/uaccess.h>
+#include <linux/init.h>
+#include <linux/proc_fs.h>
+#include <linux/console.h>
+#include <linux/timer.h>
 
-#अगर_घोषित CONFIG_X86
-#समावेश <यंत्र/olpc.h>
-#अन्यथा
-#घोषणा machine_is_olpc(x) 0
-#पूर्ण_अगर
+#ifdef CONFIG_X86
+#include <asm/olpc.h>
+#else
+#define machine_is_olpc(x) 0
+#endif
 
-#समावेश "debug.h"
+#include "debug.h"
 
-#समावेश "viafbdev.h"
-#समावेश "chip.h"
-#समावेश "accel.h"
-#समावेश "share.h"
-#समावेश "dvi.h"
-#समावेश "viamode.h"
-#समावेश "hw.h"
+#include "viafbdev.h"
+#include "chip.h"
+#include "accel.h"
+#include "share.h"
+#include "dvi.h"
+#include "viamode.h"
+#include "hw.h"
 
-#समावेश "lcd.h"
-#समावेश "ioctl.h"
-#समावेश "via_utility.h"
-#समावेश "vt1636.h"
-#समावेश "tblDPASetting.h"
+#include "lcd.h"
+#include "ioctl.h"
+#include "via_utility.h"
+#include "vt1636.h"
+#include "tblDPASetting.h"
 
-/* External काष्ठा*/
+/* External struct*/
 
-बाह्य पूर्णांक viafb_platक्रमm_epia_dvi;
-बाह्य पूर्णांक viafb_device_lcd_dualedge;
-बाह्य पूर्णांक viafb_bus_width;
-बाह्य पूर्णांक viafb_display_hardware_layout;
-बाह्य काष्ठा offset offset_reg;
-बाह्य काष्ठा viafb_par *viaparinfo;
-बाह्य काष्ठा viafb_par *viaparinfo1;
-बाह्य काष्ठा fb_info *viafbinfo;
-बाह्य काष्ठा fb_info *viafbinfo1;
-बाह्य पूर्णांक viafb_DeviceStatus;
-बाह्य पूर्णांक viafb_refresh;
-बाह्य पूर्णांक viafb_refresh1;
-बाह्य पूर्णांक viafb_lcd_dsp_method;
-बाह्य पूर्णांक viafb_lcd_mode;
+extern int viafb_platform_epia_dvi;
+extern int viafb_device_lcd_dualedge;
+extern int viafb_bus_width;
+extern int viafb_display_hardware_layout;
+extern struct offset offset_reg;
+extern struct viafb_par *viaparinfo;
+extern struct viafb_par *viaparinfo1;
+extern struct fb_info *viafbinfo;
+extern struct fb_info *viafbinfo1;
+extern int viafb_DeviceStatus;
+extern int viafb_refresh;
+extern int viafb_refresh1;
+extern int viafb_lcd_dsp_method;
+extern int viafb_lcd_mode;
 
-बाह्य पूर्णांक viafb_CRT_ON;
-बाह्य अचिन्हित पूर्णांक viafb_second_xres;
-बाह्य अचिन्हित पूर्णांक viafb_second_yres;
-बाह्य पूर्णांक viafb_hotplug_Xres;
-बाह्य पूर्णांक viafb_hotplug_Yres;
-बाह्य पूर्णांक viafb_hotplug_bpp;
-बाह्य पूर्णांक viafb_hotplug_refresh;
-बाह्य पूर्णांक viafb_primary_dev;
+extern int viafb_CRT_ON;
+extern unsigned int viafb_second_xres;
+extern unsigned int viafb_second_yres;
+extern int viafb_hotplug_Xres;
+extern int viafb_hotplug_Yres;
+extern int viafb_hotplug_bpp;
+extern int viafb_hotplug_refresh;
+extern int viafb_primary_dev;
 
-बाह्य पूर्णांक viafb_lcd_panel_id;
+extern int viafb_lcd_panel_id;
 
-#पूर्ण_अगर /* __GLOBAL_H__ */
+#endif /* __GLOBAL_H__ */

@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,19 +20,19 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#अगर_अघोषित _CI_SMUMANAGER_H_
-#घोषणा _CI_SMUMANAGER_H_
+#ifndef _CI_SMUMANAGER_H_
+#define _CI_SMUMANAGER_H_
 
-#घोषणा SMU__NUM_SCLK_DPM_STATE  8
-#घोषणा SMU__NUM_MCLK_DPM_LEVELS 6
-#घोषणा SMU__NUM_LCLK_DPM_LEVELS 8
-#घोषणा SMU__NUM_PCIE_DPM_LEVELS 8
+#define SMU__NUM_SCLK_DPM_STATE  8
+#define SMU__NUM_MCLK_DPM_LEVELS 6
+#define SMU__NUM_LCLK_DPM_LEVELS 8
+#define SMU__NUM_PCIE_DPM_LEVELS 8
 
-#समावेश "smu7_discrete.h"
-#समावेश <pp_endian.h>
-#समावेश "ppatomctrl.h"
+#include "smu7_discrete.h"
+#include <pp_endian.h>
+#include "ppatomctrl.h"
 
-काष्ठा ci_pt_शेषs अणु
+struct ci_pt_defaults {
 	u8 svi_load_line_en;
 	u8 svi_load_line_vddc;
 	u8 tdc_vddc_throttle_release_limit_perc;
@@ -44,34 +43,34 @@
 	u32 bapm_temp_gradient;
 	u16 bapmti_r[SMU7_DTE_ITERATIONS * SMU7_DTE_SOURCES * SMU7_DTE_SINKS];
 	u16 bapmti_rc[SMU7_DTE_ITERATIONS * SMU7_DTE_SOURCES * SMU7_DTE_SINKS];
-पूर्ण;
+};
 
-काष्ठा ci_mc_reg_entry अणु
-	uपूर्णांक32_t mclk_max;
-	uपूर्णांक32_t mc_data[SMU7_DISCRETE_MC_REGISTER_ARRAY_SIZE];
-पूर्ण;
+struct ci_mc_reg_entry {
+	uint32_t mclk_max;
+	uint32_t mc_data[SMU7_DISCRETE_MC_REGISTER_ARRAY_SIZE];
+};
 
-काष्ठा ci_mc_reg_table अणु
-	uपूर्णांक8_t   last;
-	uपूर्णांक8_t   num_entries;
-	uपूर्णांक16_t  validflag;
-	काष्ठा ci_mc_reg_entry    mc_reg_table_entry[MAX_AC_TIMING_ENTRIES];
+struct ci_mc_reg_table {
+	uint8_t   last;
+	uint8_t   num_entries;
+	uint16_t  validflag;
+	struct ci_mc_reg_entry    mc_reg_table_entry[MAX_AC_TIMING_ENTRIES];
 	SMU7_Discrete_MCRegisterAddress mc_reg_address[SMU7_DISCRETE_MC_REGISTER_ARRAY_SIZE];
-पूर्ण;
+};
 
-काष्ठा ci_smumgr अणु
-	uपूर्णांक32_t                             soft_regs_start;
-	uपूर्णांक32_t                             dpm_table_start;
-	uपूर्णांक32_t                             mc_reg_table_start;
-	uपूर्णांक32_t                             fan_table_start;
-	uपूर्णांक32_t                             arb_table_start;
-	uपूर्णांक32_t                             ulv_setting_starts;
-	काष्ठा SMU7_Discrete_DpmTable       smc_state_table;
-	काष्ठा SMU7_Discrete_PmFuses  घातer_tune_table;
-	स्थिर काष्ठा ci_pt_शेषs  *घातer_tune_शेषs;
+struct ci_smumgr {
+	uint32_t                             soft_regs_start;
+	uint32_t                             dpm_table_start;
+	uint32_t                             mc_reg_table_start;
+	uint32_t                             fan_table_start;
+	uint32_t                             arb_table_start;
+	uint32_t                             ulv_setting_starts;
+	struct SMU7_Discrete_DpmTable       smc_state_table;
+	struct SMU7_Discrete_PmFuses  power_tune_table;
+	const struct ci_pt_defaults  *power_tune_defaults;
 	SMU7_Discrete_MCRegisters      mc_regs;
-	काष्ठा ci_mc_reg_table mc_reg_table;
-पूर्ण;
+	struct ci_mc_reg_table mc_reg_table;
+};
 
-#पूर्ण_अगर
+#endif
 

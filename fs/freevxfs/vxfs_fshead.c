@@ -1,17 +1,16 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2000-2001 Christoph Hellwig.
  * Copyright (c) 2016 Krzysztof Blaszkowski
  * All rights reserved.
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions, and the following disclaimer,
- *    without modअगरication.
- * 2. The name of the author may not be used to enकरोrse or promote products
- *    derived from this software without specअगरic prior written permission.
+ *    without modification.
+ * 2. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
  *
  * Alternatively, this software may be distributed under the terms of the
  * GNU General Public License ("GPL").
@@ -20,7 +19,7 @@
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR
- * ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
@@ -30,162 +29,162 @@
  */
 
 /*
- * Veritas fileप्रणाली driver - fileset header routines.
+ * Veritas filesystem driver - fileset header routines.
  */
-#समावेश <linux/fs.h>
-#समावेश <linux/buffer_head.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/माला.स>
+#include <linux/fs.h>
+#include <linux/buffer_head.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/string.h>
 
-#समावेश "vxfs.h"
-#समावेश "vxfs_inode.h"
-#समावेश "vxfs_extern.h"
-#समावेश "vxfs_fshead.h"
+#include "vxfs.h"
+#include "vxfs_inode.h"
+#include "vxfs_extern.h"
+#include "vxfs_fshead.h"
 
 
-#अगर_घोषित DIAGNOSTIC
-अटल व्योम
-vxfs_dumpfsh(काष्ठा vxfs_fsh *fhp)
-अणु
-	prपूर्णांकk("\n\ndumping fileset header:\n");
-	prपूर्णांकk("----------------------------\n");
-	prपूर्णांकk("version: %u\n", fhp->fsh_version);
-	prपूर्णांकk("fsindex: %u\n", fhp->fsh_fsindex);
-	prपूर्णांकk("iauino: %u\tninodes:%u\n",
+#ifdef DIAGNOSTIC
+static void
+vxfs_dumpfsh(struct vxfs_fsh *fhp)
+{
+	printk("\n\ndumping fileset header:\n");
+	printk("----------------------------\n");
+	printk("version: %u\n", fhp->fsh_version);
+	printk("fsindex: %u\n", fhp->fsh_fsindex);
+	printk("iauino: %u\tninodes:%u\n",
 			fhp->fsh_iauino, fhp->fsh_ninodes);
-	prपूर्णांकk("maxinode: %u\tlctino: %u\n",
+	printk("maxinode: %u\tlctino: %u\n",
 			fhp->fsh_maxinode, fhp->fsh_lctino);
-	prपूर्णांकk("nau: %u\n", fhp->fsh_nau);
-	prपूर्णांकk("ilistino[0]: %u\tilistino[1]: %u\n",
+	printk("nau: %u\n", fhp->fsh_nau);
+	printk("ilistino[0]: %u\tilistino[1]: %u\n",
 			fhp->fsh_ilistino[0], fhp->fsh_ilistino[1]);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
 /**
- * vxfs_getfsh - पढ़ो fileset header पूर्णांकo memory
+ * vxfs_getfsh - read fileset header into memory
  * @ip:		the (fake) fileset header inode
- * @which:	0 क्रम the काष्ठाural, 1 क्रम the primary fsh.
+ * @which:	0 for the structural, 1 for the primary fsh.
  *
  * Description:
- *   vxfs_getfsh पढ़ोs either the काष्ठाural or primary fileset header
- *   described by @ip पूर्णांकo memory.
+ *   vxfs_getfsh reads either the structural or primary fileset header
+ *   described by @ip into memory.
  *
  * Returns:
- *   The fileset header काष्ठाure on success, अन्यथा Zero.
+ *   The fileset header structure on success, else Zero.
  */
-अटल काष्ठा vxfs_fsh *
-vxfs_getfsh(काष्ठा inode *ip, पूर्णांक which)
-अणु
-	काष्ठा buffer_head		*bp;
+static struct vxfs_fsh *
+vxfs_getfsh(struct inode *ip, int which)
+{
+	struct buffer_head		*bp;
 
-	bp = vxfs_bपढ़ो(ip, which);
-	अगर (bp) अणु
-		काष्ठा vxfs_fsh		*fhp;
+	bp = vxfs_bread(ip, which);
+	if (bp) {
+		struct vxfs_fsh		*fhp;
 
-		अगर (!(fhp = kदो_स्मृति(माप(*fhp), GFP_KERNEL)))
-			जाओ out;
-		स_नकल(fhp, bp->b_data, माप(*fhp));
+		if (!(fhp = kmalloc(sizeof(*fhp), GFP_KERNEL)))
+			goto out;
+		memcpy(fhp, bp->b_data, sizeof(*fhp));
 
 		put_bh(bp);
-		वापस (fhp);
-	पूर्ण
+		return (fhp);
+	}
 out:
-	brअन्यथा(bp);
-	वापस शून्य;
-पूर्ण
+	brelse(bp);
+	return NULL;
+}
 
 /**
- * vxfs_पढ़ो_fshead - पढ़ो the fileset headers
- * @sbp:	superblock to which the fileset beदीर्घs
+ * vxfs_read_fshead - read the fileset headers
+ * @sbp:	superblock to which the fileset belongs
  *
  * Description:
- *   vxfs_पढ़ो_fshead will fill the inode and काष्ठाural inode list in @sb.
+ *   vxfs_read_fshead will fill the inode and structural inode list in @sb.
  *
  * Returns:
- *   Zero on success, अन्यथा a negative error code (-EINVAL).
+ *   Zero on success, else a negative error code (-EINVAL).
  */
-पूर्णांक
-vxfs_पढ़ो_fshead(काष्ठा super_block *sbp)
-अणु
-	काष्ठा vxfs_sb_info		*infp = VXFS_SBI(sbp);
-	काष्ठा vxfs_fsh			*pfp, *sfp;
-	काष्ठा vxfs_inode_info		*vip;
+int
+vxfs_read_fshead(struct super_block *sbp)
+{
+	struct vxfs_sb_info		*infp = VXFS_SBI(sbp);
+	struct vxfs_fsh			*pfp, *sfp;
+	struct vxfs_inode_info		*vip;
 
 	infp->vsi_fship = vxfs_blkiget(sbp, infp->vsi_iext, infp->vsi_fshino);
-	अगर (!infp->vsi_fship) अणु
-		prपूर्णांकk(KERN_ERR "vxfs: unable to read fsh inode\n");
-		वापस -EINVAL;
-	पूर्ण
+	if (!infp->vsi_fship) {
+		printk(KERN_ERR "vxfs: unable to read fsh inode\n");
+		return -EINVAL;
+	}
 
 	vip = VXFS_INO(infp->vsi_fship);
-	अगर (!VXFS_ISFSH(vip)) अणु
-		prपूर्णांकk(KERN_ERR "vxfs: fsh list inode is of wrong type (%x)\n",
+	if (!VXFS_ISFSH(vip)) {
+		printk(KERN_ERR "vxfs: fsh list inode is of wrong type (%x)\n",
 				vip->vii_mode & VXFS_TYPE_MASK); 
-		जाओ out_iput_fship;
-	पूर्ण
+		goto out_iput_fship;
+	}
 
-#अगर_घोषित DIAGNOSTIC
-	prपूर्णांकk("vxfs: fsh inode dump:\n");
+#ifdef DIAGNOSTIC
+	printk("vxfs: fsh inode dump:\n");
 	vxfs_dumpi(vip, infp->vsi_fshino);
-#पूर्ण_अगर
+#endif
 
 	sfp = vxfs_getfsh(infp->vsi_fship, 0);
-	अगर (!sfp) अणु
-		prपूर्णांकk(KERN_ERR "vxfs: unable to get structural fsh\n");
-		जाओ out_iput_fship;
-	पूर्ण 
+	if (!sfp) {
+		printk(KERN_ERR "vxfs: unable to get structural fsh\n");
+		goto out_iput_fship;
+	} 
 
-#अगर_घोषित DIAGNOSTIC
+#ifdef DIAGNOSTIC
 	vxfs_dumpfsh(sfp);
-#पूर्ण_अगर
+#endif
 
 	pfp = vxfs_getfsh(infp->vsi_fship, 1);
-	अगर (!pfp) अणु
-		prपूर्णांकk(KERN_ERR "vxfs: unable to get primary fsh\n");
-		जाओ out_मुक्त_sfp;
-	पूर्ण
+	if (!pfp) {
+		printk(KERN_ERR "vxfs: unable to get primary fsh\n");
+		goto out_free_sfp;
+	}
 
-#अगर_घोषित DIAGNOSTIC
+#ifdef DIAGNOSTIC
 	vxfs_dumpfsh(pfp);
-#पूर्ण_अगर
+#endif
 
 	infp->vsi_stilist = vxfs_blkiget(sbp, infp->vsi_iext,
 			fs32_to_cpu(infp, sfp->fsh_ilistino[0]));
-	अगर (!infp->vsi_stilist) अणु
-		prपूर्णांकk(KERN_ERR "vxfs: unable to get structural list inode\n");
-		जाओ out_मुक्त_pfp;
-	पूर्ण
-	अगर (!VXFS_ISILT(VXFS_INO(infp->vsi_stilist))) अणु
-		prपूर्णांकk(KERN_ERR "vxfs: structural list inode is of wrong type (%x)\n",
+	if (!infp->vsi_stilist) {
+		printk(KERN_ERR "vxfs: unable to get structural list inode\n");
+		goto out_free_pfp;
+	}
+	if (!VXFS_ISILT(VXFS_INO(infp->vsi_stilist))) {
+		printk(KERN_ERR "vxfs: structural list inode is of wrong type (%x)\n",
 				VXFS_INO(infp->vsi_stilist)->vii_mode & VXFS_TYPE_MASK); 
-		जाओ out_iput_stilist;
-	पूर्ण
+		goto out_iput_stilist;
+	}
 
 	infp->vsi_ilist = vxfs_stiget(sbp, fs32_to_cpu(infp, pfp->fsh_ilistino[0]));
-	अगर (!infp->vsi_ilist) अणु
-		prपूर्णांकk(KERN_ERR "vxfs: unable to get inode list inode\n");
-		जाओ out_iput_stilist;
-	पूर्ण
-	अगर (!VXFS_ISILT(VXFS_INO(infp->vsi_ilist))) अणु
-		prपूर्णांकk(KERN_ERR "vxfs: inode list inode is of wrong type (%x)\n",
+	if (!infp->vsi_ilist) {
+		printk(KERN_ERR "vxfs: unable to get inode list inode\n");
+		goto out_iput_stilist;
+	}
+	if (!VXFS_ISILT(VXFS_INO(infp->vsi_ilist))) {
+		printk(KERN_ERR "vxfs: inode list inode is of wrong type (%x)\n",
 				VXFS_INO(infp->vsi_ilist)->vii_mode & VXFS_TYPE_MASK);
-		जाओ out_iput_ilist;
-	पूर्ण
+		goto out_iput_ilist;
+	}
 
-	kमुक्त(pfp);
-	kमुक्त(sfp);
-	वापस 0;
+	kfree(pfp);
+	kfree(sfp);
+	return 0;
 
  out_iput_ilist:
  	iput(infp->vsi_ilist);
  out_iput_stilist:
  	iput(infp->vsi_stilist);
- out_मुक्त_pfp:
-	kमुक्त(pfp);
- out_मुक्त_sfp:
- 	kमुक्त(sfp);
+ out_free_pfp:
+	kfree(pfp);
+ out_free_sfp:
+ 	kfree(sfp);
  out_iput_fship:
 	iput(infp->vsi_fship);
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}

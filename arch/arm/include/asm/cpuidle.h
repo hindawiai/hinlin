@@ -1,54 +1,53 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_ARM_CPUIDLE_H
-#घोषणा __ASM_ARM_CPUIDLE_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_ARM_CPUIDLE_H
+#define __ASM_ARM_CPUIDLE_H
 
-#समावेश <यंत्र/proc-fns.h>
+#include <asm/proc-fns.h>
 
-#अगर_घोषित CONFIG_CPU_IDLE
-बाह्य पूर्णांक arm_cpuidle_simple_enter(काष्ठा cpuidle_device *dev,
-		काष्ठा cpuidle_driver *drv, पूर्णांक index);
-#घोषणा __cpuidle_method_section __used __section("__cpuidle_method_of_table")
-#अन्यथा
-अटल अंतरभूत पूर्णांक arm_cpuidle_simple_enter(काष्ठा cpuidle_device *dev,
-		काष्ठा cpuidle_driver *drv, पूर्णांक index) अणु वापस -ENODEV; पूर्ण
-#घोषणा __cpuidle_method_section __maybe_unused /* drop silently */
-#पूर्ण_अगर
+#ifdef CONFIG_CPU_IDLE
+extern int arm_cpuidle_simple_enter(struct cpuidle_device *dev,
+		struct cpuidle_driver *drv, int index);
+#define __cpuidle_method_section __used __section("__cpuidle_method_of_table")
+#else
+static inline int arm_cpuidle_simple_enter(struct cpuidle_device *dev,
+		struct cpuidle_driver *drv, int index) { return -ENODEV; }
+#define __cpuidle_method_section __maybe_unused /* drop silently */
+#endif
 
 /* Common ARM WFI state */
-#घोषणा ARM_CPUIDLE_WFI_STATE_PWR(p) अणु\
+#define ARM_CPUIDLE_WFI_STATE_PWR(p) {\
 	.enter                  = arm_cpuidle_simple_enter,\
-	.निकास_latency           = 1,\
+	.exit_latency           = 1,\
 	.target_residency       = 1,\
-	.घातer_usage		= p,\
+	.power_usage		= p,\
 	.name                   = "WFI",\
 	.desc                   = "ARM WFI",\
-पूर्ण
+}
 
 /*
- * in हाल घातer_specअगरied == 1, give a शेष WFI घातer value needed
+ * in case power_specified == 1, give a default WFI power value needed
  * by some governors
  */
-#घोषणा ARM_CPUIDLE_WFI_STATE ARM_CPUIDLE_WFI_STATE_PWR(अच_पूर्णांक_उच्च)
+#define ARM_CPUIDLE_WFI_STATE ARM_CPUIDLE_WFI_STATE_PWR(UINT_MAX)
 
-काष्ठा device_node;
+struct device_node;
 
-काष्ठा cpuidle_ops अणु
-	पूर्णांक (*suspend)(अचिन्हित दीर्घ arg);
-	पूर्णांक (*init)(काष्ठा device_node *, पूर्णांक cpu);
-पूर्ण;
+struct cpuidle_ops {
+	int (*suspend)(unsigned long arg);
+	int (*init)(struct device_node *, int cpu);
+};
 
-काष्ठा of_cpuidle_method अणु
-	स्थिर अक्षर *method;
-	स्थिर काष्ठा cpuidle_ops *ops;
-पूर्ण;
+struct of_cpuidle_method {
+	const char *method;
+	const struct cpuidle_ops *ops;
+};
 
-#घोषणा CPUIDLE_METHOD_OF_DECLARE(name, _method, _ops)			\
-	अटल स्थिर काष्ठा of_cpuidle_method __cpuidle_method_of_table_##name \
-	__cpuidle_method_section = अणु .method = _method, .ops = _ops पूर्ण
+#define CPUIDLE_METHOD_OF_DECLARE(name, _method, _ops)			\
+	static const struct of_cpuidle_method __cpuidle_method_of_table_##name \
+	__cpuidle_method_section = { .method = _method, .ops = _ops }
 
-बाह्य पूर्णांक arm_cpuidle_suspend(पूर्णांक index);
+extern int arm_cpuidle_suspend(int index);
 
-बाह्य पूर्णांक arm_cpuidle_init(पूर्णांक cpu);
+extern int arm_cpuidle_init(int cpu);
 
-#पूर्ण_अगर
+#endif

@@ -1,210 +1,209 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * drivers/net/ethernet/rocker/rocker_tlv.h - Rocker चयन device driver
+ * drivers/net/ethernet/rocker/rocker_tlv.h - Rocker switch device driver
  * Copyright (c) 2014-2016 Jiri Pirko <jiri@mellanox.com>
  * Copyright (c) 2014 Scott Feldman <sfeldma@gmail.com>
  */
 
-#अगर_अघोषित _ROCKER_TLV_H
-#घोषणा _ROCKER_TLV_H
+#ifndef _ROCKER_TLV_H
+#define _ROCKER_TLV_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-#समावेश "rocker_hw.h"
-#समावेश "rocker.h"
+#include "rocker_hw.h"
+#include "rocker.h"
 
-#घोषणा ROCKER_TLV_ALIGNTO 8U
-#घोषणा ROCKER_TLV_ALIGN(len) \
+#define ROCKER_TLV_ALIGNTO 8U
+#define ROCKER_TLV_ALIGN(len) \
 	(((len) + ROCKER_TLV_ALIGNTO - 1) & ~(ROCKER_TLV_ALIGNTO - 1))
-#घोषणा ROCKER_TLV_HDRLEN ROCKER_TLV_ALIGN(माप(काष्ठा rocker_tlv))
+#define ROCKER_TLV_HDRLEN ROCKER_TLV_ALIGN(sizeof(struct rocker_tlv))
 
 /*  <------- ROCKER_TLV_HDRLEN -------> <--- ROCKER_TLV_ALIGN(payload) --->
  * +-----------------------------+- - -+- - - - - - - - - - - - - - -+- - -+
  * |             Header          | Pad |           Payload           | Pad |
- * |      (काष्ठा rocker_tlv)    | ing |                             | ing |
+ * |      (struct rocker_tlv)    | ing |                             | ing |
  * +-----------------------------+- - -+- - - - - - - - - - - - - - -+- - -+
  *  <--------------------------- tlv->len -------------------------->
  */
 
-अटल अंतरभूत काष्ठा rocker_tlv *rocker_tlv_next(स्थिर काष्ठा rocker_tlv *tlv,
-						 पूर्णांक *reमुख्यing)
-अणु
-	पूर्णांक totlen = ROCKER_TLV_ALIGN(tlv->len);
+static inline struct rocker_tlv *rocker_tlv_next(const struct rocker_tlv *tlv,
+						 int *remaining)
+{
+	int totlen = ROCKER_TLV_ALIGN(tlv->len);
 
-	*reमुख्यing -= totlen;
-	वापस (काष्ठा rocker_tlv *) ((अक्षर *) tlv + totlen);
-पूर्ण
+	*remaining -= totlen;
+	return (struct rocker_tlv *) ((char *) tlv + totlen);
+}
 
-अटल अंतरभूत पूर्णांक rocker_tlv_ok(स्थिर काष्ठा rocker_tlv *tlv, पूर्णांक reमुख्यing)
-अणु
-	वापस reमुख्यing >= (पूर्णांक) ROCKER_TLV_HDRLEN &&
+static inline int rocker_tlv_ok(const struct rocker_tlv *tlv, int remaining)
+{
+	return remaining >= (int) ROCKER_TLV_HDRLEN &&
 	       tlv->len >= ROCKER_TLV_HDRLEN &&
-	       tlv->len <= reमुख्यing;
-पूर्ण
+	       tlv->len <= remaining;
+}
 
-#घोषणा rocker_tlv_क्रम_each(pos, head, len, rem)	\
-	क्रम (pos = head, rem = len;			\
+#define rocker_tlv_for_each(pos, head, len, rem)	\
+	for (pos = head, rem = len;			\
 	     rocker_tlv_ok(pos, rem);			\
 	     pos = rocker_tlv_next(pos, &(rem)))
 
-#घोषणा rocker_tlv_क्रम_each_nested(pos, tlv, rem)	\
-	rocker_tlv_क्रम_each(pos, rocker_tlv_data(tlv),	\
+#define rocker_tlv_for_each_nested(pos, tlv, rem)	\
+	rocker_tlv_for_each(pos, rocker_tlv_data(tlv),	\
 			    rocker_tlv_len(tlv), rem)
 
-अटल अंतरभूत पूर्णांक rocker_tlv_attr_size(पूर्णांक payload)
-अणु
-	वापस ROCKER_TLV_HDRLEN + payload;
-पूर्ण
+static inline int rocker_tlv_attr_size(int payload)
+{
+	return ROCKER_TLV_HDRLEN + payload;
+}
 
-अटल अंतरभूत पूर्णांक rocker_tlv_total_size(पूर्णांक payload)
-अणु
-	वापस ROCKER_TLV_ALIGN(rocker_tlv_attr_size(payload));
-पूर्ण
+static inline int rocker_tlv_total_size(int payload)
+{
+	return ROCKER_TLV_ALIGN(rocker_tlv_attr_size(payload));
+}
 
-अटल अंतरभूत पूर्णांक rocker_tlv_padlen(पूर्णांक payload)
-अणु
-	वापस rocker_tlv_total_size(payload) - rocker_tlv_attr_size(payload);
-पूर्ण
+static inline int rocker_tlv_padlen(int payload)
+{
+	return rocker_tlv_total_size(payload) - rocker_tlv_attr_size(payload);
+}
 
-अटल अंतरभूत पूर्णांक rocker_tlv_type(स्थिर काष्ठा rocker_tlv *tlv)
-अणु
-	वापस tlv->type;
-पूर्ण
+static inline int rocker_tlv_type(const struct rocker_tlv *tlv)
+{
+	return tlv->type;
+}
 
-अटल अंतरभूत व्योम *rocker_tlv_data(स्थिर काष्ठा rocker_tlv *tlv)
-अणु
-	वापस (अक्षर *) tlv + ROCKER_TLV_HDRLEN;
-पूर्ण
+static inline void *rocker_tlv_data(const struct rocker_tlv *tlv)
+{
+	return (char *) tlv + ROCKER_TLV_HDRLEN;
+}
 
-अटल अंतरभूत पूर्णांक rocker_tlv_len(स्थिर काष्ठा rocker_tlv *tlv)
-अणु
-	वापस tlv->len - ROCKER_TLV_HDRLEN;
-पूर्ण
+static inline int rocker_tlv_len(const struct rocker_tlv *tlv)
+{
+	return tlv->len - ROCKER_TLV_HDRLEN;
+}
 
-अटल अंतरभूत u8 rocker_tlv_get_u8(स्थिर काष्ठा rocker_tlv *tlv)
-अणु
-	वापस *(u8 *) rocker_tlv_data(tlv);
-पूर्ण
+static inline u8 rocker_tlv_get_u8(const struct rocker_tlv *tlv)
+{
+	return *(u8 *) rocker_tlv_data(tlv);
+}
 
-अटल अंतरभूत u16 rocker_tlv_get_u16(स्थिर काष्ठा rocker_tlv *tlv)
-अणु
-	वापस *(u16 *) rocker_tlv_data(tlv);
-पूर्ण
+static inline u16 rocker_tlv_get_u16(const struct rocker_tlv *tlv)
+{
+	return *(u16 *) rocker_tlv_data(tlv);
+}
 
-अटल अंतरभूत __be16 rocker_tlv_get_be16(स्थिर काष्ठा rocker_tlv *tlv)
-अणु
-	वापस *(__be16 *) rocker_tlv_data(tlv);
-पूर्ण
+static inline __be16 rocker_tlv_get_be16(const struct rocker_tlv *tlv)
+{
+	return *(__be16 *) rocker_tlv_data(tlv);
+}
 
-अटल अंतरभूत u32 rocker_tlv_get_u32(स्थिर काष्ठा rocker_tlv *tlv)
-अणु
-	वापस *(u32 *) rocker_tlv_data(tlv);
-पूर्ण
+static inline u32 rocker_tlv_get_u32(const struct rocker_tlv *tlv)
+{
+	return *(u32 *) rocker_tlv_data(tlv);
+}
 
-अटल अंतरभूत u64 rocker_tlv_get_u64(स्थिर काष्ठा rocker_tlv *tlv)
-अणु
-	वापस *(u64 *) rocker_tlv_data(tlv);
-पूर्ण
+static inline u64 rocker_tlv_get_u64(const struct rocker_tlv *tlv)
+{
+	return *(u64 *) rocker_tlv_data(tlv);
+}
 
-व्योम rocker_tlv_parse(स्थिर काष्ठा rocker_tlv **tb, पूर्णांक maxtype,
-		      स्थिर अक्षर *buf, पूर्णांक buf_len);
+void rocker_tlv_parse(const struct rocker_tlv **tb, int maxtype,
+		      const char *buf, int buf_len);
 
-अटल अंतरभूत व्योम rocker_tlv_parse_nested(स्थिर काष्ठा rocker_tlv **tb,
-					   पूर्णांक maxtype,
-					   स्थिर काष्ठा rocker_tlv *tlv)
-अणु
+static inline void rocker_tlv_parse_nested(const struct rocker_tlv **tb,
+					   int maxtype,
+					   const struct rocker_tlv *tlv)
+{
 	rocker_tlv_parse(tb, maxtype, rocker_tlv_data(tlv),
 			 rocker_tlv_len(tlv));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-rocker_tlv_parse_desc(स्थिर काष्ठा rocker_tlv **tb, पूर्णांक maxtype,
-		      स्थिर काष्ठा rocker_desc_info *desc_info)
-अणु
+static inline void
+rocker_tlv_parse_desc(const struct rocker_tlv **tb, int maxtype,
+		      const struct rocker_desc_info *desc_info)
+{
 	rocker_tlv_parse(tb, maxtype, desc_info->data,
 			 desc_info->desc->tlv_size);
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा rocker_tlv *
-rocker_tlv_start(काष्ठा rocker_desc_info *desc_info)
-अणु
-	वापस (काष्ठा rocker_tlv *) ((अक्षर *) desc_info->data +
+static inline struct rocker_tlv *
+rocker_tlv_start(struct rocker_desc_info *desc_info)
+{
+	return (struct rocker_tlv *) ((char *) desc_info->data +
 					       desc_info->tlv_size);
-पूर्ण
+}
 
-पूर्णांक rocker_tlv_put(काष्ठा rocker_desc_info *desc_info,
-		   पूर्णांक attrtype, पूर्णांक attrlen, स्थिर व्योम *data);
+int rocker_tlv_put(struct rocker_desc_info *desc_info,
+		   int attrtype, int attrlen, const void *data);
 
-अटल अंतरभूत पूर्णांक
-rocker_tlv_put_u8(काष्ठा rocker_desc_info *desc_info, पूर्णांक attrtype, u8 value)
-अणु
-	u8 पंचांगp = value; /* work around GCC PR81715 */
+static inline int
+rocker_tlv_put_u8(struct rocker_desc_info *desc_info, int attrtype, u8 value)
+{
+	u8 tmp = value; /* work around GCC PR81715 */
 
-	वापस rocker_tlv_put(desc_info, attrtype, माप(u8), &पंचांगp);
-पूर्ण
+	return rocker_tlv_put(desc_info, attrtype, sizeof(u8), &tmp);
+}
 
-अटल अंतरभूत पूर्णांक
-rocker_tlv_put_u16(काष्ठा rocker_desc_info *desc_info, पूर्णांक attrtype, u16 value)
-अणु
-	u16 पंचांगp = value;
+static inline int
+rocker_tlv_put_u16(struct rocker_desc_info *desc_info, int attrtype, u16 value)
+{
+	u16 tmp = value;
 
-	वापस rocker_tlv_put(desc_info, attrtype, माप(u16), &पंचांगp);
-पूर्ण
+	return rocker_tlv_put(desc_info, attrtype, sizeof(u16), &tmp);
+}
 
-अटल अंतरभूत पूर्णांक
-rocker_tlv_put_be16(काष्ठा rocker_desc_info *desc_info, पूर्णांक attrtype, __be16 value)
-अणु
-	__be16 पंचांगp = value;
+static inline int
+rocker_tlv_put_be16(struct rocker_desc_info *desc_info, int attrtype, __be16 value)
+{
+	__be16 tmp = value;
 
-	वापस rocker_tlv_put(desc_info, attrtype, माप(__be16), &पंचांगp);
-पूर्ण
+	return rocker_tlv_put(desc_info, attrtype, sizeof(__be16), &tmp);
+}
 
-अटल अंतरभूत पूर्णांक
-rocker_tlv_put_u32(काष्ठा rocker_desc_info *desc_info, पूर्णांक attrtype, u32 value)
-अणु
-	u32 पंचांगp = value;
+static inline int
+rocker_tlv_put_u32(struct rocker_desc_info *desc_info, int attrtype, u32 value)
+{
+	u32 tmp = value;
 
-	वापस rocker_tlv_put(desc_info, attrtype, माप(u32), &पंचांगp);
-पूर्ण
+	return rocker_tlv_put(desc_info, attrtype, sizeof(u32), &tmp);
+}
 
-अटल अंतरभूत पूर्णांक
-rocker_tlv_put_be32(काष्ठा rocker_desc_info *desc_info, पूर्णांक attrtype, __be32 value)
-अणु
-	__be32 पंचांगp = value;
+static inline int
+rocker_tlv_put_be32(struct rocker_desc_info *desc_info, int attrtype, __be32 value)
+{
+	__be32 tmp = value;
 
-	वापस rocker_tlv_put(desc_info, attrtype, माप(__be32), &पंचांगp);
-पूर्ण
+	return rocker_tlv_put(desc_info, attrtype, sizeof(__be32), &tmp);
+}
 
-अटल अंतरभूत पूर्णांक
-rocker_tlv_put_u64(काष्ठा rocker_desc_info *desc_info, पूर्णांक attrtype, u64 value)
-अणु
-	u64 पंचांगp = value;
+static inline int
+rocker_tlv_put_u64(struct rocker_desc_info *desc_info, int attrtype, u64 value)
+{
+	u64 tmp = value;
 
-	वापस rocker_tlv_put(desc_info, attrtype, माप(u64), &पंचांगp);
-पूर्ण
+	return rocker_tlv_put(desc_info, attrtype, sizeof(u64), &tmp);
+}
 
-अटल अंतरभूत काष्ठा rocker_tlv *
-rocker_tlv_nest_start(काष्ठा rocker_desc_info *desc_info, पूर्णांक attrtype)
-अणु
-	काष्ठा rocker_tlv *start = rocker_tlv_start(desc_info);
+static inline struct rocker_tlv *
+rocker_tlv_nest_start(struct rocker_desc_info *desc_info, int attrtype)
+{
+	struct rocker_tlv *start = rocker_tlv_start(desc_info);
 
-	अगर (rocker_tlv_put(desc_info, attrtype, 0, शून्य) < 0)
-		वापस शून्य;
+	if (rocker_tlv_put(desc_info, attrtype, 0, NULL) < 0)
+		return NULL;
 
-	वापस start;
-पूर्ण
+	return start;
+}
 
-अटल अंतरभूत व्योम rocker_tlv_nest_end(काष्ठा rocker_desc_info *desc_info,
-				       काष्ठा rocker_tlv *start)
-अणु
-	start->len = (अक्षर *) rocker_tlv_start(desc_info) - (अक्षर *) start;
-पूर्ण
+static inline void rocker_tlv_nest_end(struct rocker_desc_info *desc_info,
+				       struct rocker_tlv *start)
+{
+	start->len = (char *) rocker_tlv_start(desc_info) - (char *) start;
+}
 
-अटल अंतरभूत व्योम rocker_tlv_nest_cancel(काष्ठा rocker_desc_info *desc_info,
-					  स्थिर काष्ठा rocker_tlv *start)
-अणु
-	desc_info->tlv_size = (स्थिर अक्षर *) start - desc_info->data;
-पूर्ण
+static inline void rocker_tlv_nest_cancel(struct rocker_desc_info *desc_info,
+					  const struct rocker_tlv *start)
+{
+	desc_info->tlv_size = (const char *) start - desc_info->data;
+}
 
-#पूर्ण_अगर
+#endif

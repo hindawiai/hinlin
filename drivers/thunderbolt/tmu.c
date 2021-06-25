@@ -1,384 +1,383 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Thunderbolt Time Management Unit (TMU) support
  *
  * Copyright (C) 2019, Intel Corporation
- * Authors: Mika Westerberg <mika.westerberg@linux.पूर्णांकel.com>
- *	    Rajmohan Mani <rajmohan.mani@पूर्णांकel.com>
+ * Authors: Mika Westerberg <mika.westerberg@linux.intel.com>
+ *	    Rajmohan Mani <rajmohan.mani@intel.com>
  */
 
-#समावेश <linux/delay.h>
+#include <linux/delay.h>
 
-#समावेश "tb.h"
+#include "tb.h"
 
-अटल स्थिर अक्षर *tb_चयन_पंचांगu_mode_name(स्थिर काष्ठा tb_चयन *sw)
-अणु
-	bool root_चयन = !tb_route(sw);
+static const char *tb_switch_tmu_mode_name(const struct tb_switch *sw)
+{
+	bool root_switch = !tb_route(sw);
 
-	चयन (sw->पंचांगu.rate) अणु
-	हाल TB_SWITCH_TMU_RATE_OFF:
-		वापस "off";
+	switch (sw->tmu.rate) {
+	case TB_SWITCH_TMU_RATE_OFF:
+		return "off";
 
-	हाल TB_SWITCH_TMU_RATE_HIFI:
-		/* Root चयन करोes not have upstream directionality */
-		अगर (root_चयन)
-			वापस "HiFi";
-		अगर (sw->पंचांगu.unidirectional)
-			वापस "uni-directional, HiFi";
-		वापस "bi-directional, HiFi";
+	case TB_SWITCH_TMU_RATE_HIFI:
+		/* Root switch does not have upstream directionality */
+		if (root_switch)
+			return "HiFi";
+		if (sw->tmu.unidirectional)
+			return "uni-directional, HiFi";
+		return "bi-directional, HiFi";
 
-	हाल TB_SWITCH_TMU_RATE_NORMAL:
-		अगर (root_चयन)
-			वापस "normal";
-		वापस "uni-directional, normal";
+	case TB_SWITCH_TMU_RATE_NORMAL:
+		if (root_switch)
+			return "normal";
+		return "uni-directional, normal";
 
-	शेष:
-		वापस "unknown";
-	पूर्ण
-पूर्ण
+	default:
+		return "unknown";
+	}
+}
 
-अटल bool tb_चयन_पंचांगu_ucap_supported(काष्ठा tb_चयन *sw)
-अणु
-	पूर्णांक ret;
+static bool tb_switch_tmu_ucap_supported(struct tb_switch *sw)
+{
+	int ret;
 	u32 val;
 
-	ret = tb_sw_पढ़ो(sw, &val, TB_CFG_SWITCH,
-			 sw->पंचांगu.cap + TMU_RTR_CS_0, 1);
-	अगर (ret)
-		वापस false;
+	ret = tb_sw_read(sw, &val, TB_CFG_SWITCH,
+			 sw->tmu.cap + TMU_RTR_CS_0, 1);
+	if (ret)
+		return false;
 
-	वापस !!(val & TMU_RTR_CS_0_UCAP);
-पूर्ण
+	return !!(val & TMU_RTR_CS_0_UCAP);
+}
 
-अटल पूर्णांक tb_चयन_पंचांगu_rate_पढ़ो(काष्ठा tb_चयन *sw)
-अणु
-	पूर्णांक ret;
+static int tb_switch_tmu_rate_read(struct tb_switch *sw)
+{
+	int ret;
 	u32 val;
 
-	ret = tb_sw_पढ़ो(sw, &val, TB_CFG_SWITCH,
-			 sw->पंचांगu.cap + TMU_RTR_CS_3, 1);
-	अगर (ret)
-		वापस ret;
+	ret = tb_sw_read(sw, &val, TB_CFG_SWITCH,
+			 sw->tmu.cap + TMU_RTR_CS_3, 1);
+	if (ret)
+		return ret;
 
 	val >>= TMU_RTR_CS_3_TS_PACKET_INTERVAL_SHIFT;
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल पूर्णांक tb_चयन_पंचांगu_rate_ग_लिखो(काष्ठा tb_चयन *sw, पूर्णांक rate)
-अणु
-	पूर्णांक ret;
+static int tb_switch_tmu_rate_write(struct tb_switch *sw, int rate)
+{
+	int ret;
 	u32 val;
 
-	ret = tb_sw_पढ़ो(sw, &val, TB_CFG_SWITCH,
-			 sw->पंचांगu.cap + TMU_RTR_CS_3, 1);
-	अगर (ret)
-		वापस ret;
+	ret = tb_sw_read(sw, &val, TB_CFG_SWITCH,
+			 sw->tmu.cap + TMU_RTR_CS_3, 1);
+	if (ret)
+		return ret;
 
 	val &= ~TMU_RTR_CS_3_TS_PACKET_INTERVAL_MASK;
 	val |= rate << TMU_RTR_CS_3_TS_PACKET_INTERVAL_SHIFT;
 
-	वापस tb_sw_ग_लिखो(sw, &val, TB_CFG_SWITCH,
-			   sw->पंचांगu.cap + TMU_RTR_CS_3, 1);
-पूर्ण
+	return tb_sw_write(sw, &val, TB_CFG_SWITCH,
+			   sw->tmu.cap + TMU_RTR_CS_3, 1);
+}
 
-अटल पूर्णांक tb_port_पंचांगu_ग_लिखो(काष्ठा tb_port *port, u8 offset, u32 mask,
+static int tb_port_tmu_write(struct tb_port *port, u8 offset, u32 mask,
 			     u32 value)
-अणु
+{
 	u32 data;
-	पूर्णांक ret;
+	int ret;
 
-	ret = tb_port_पढ़ो(port, &data, TB_CFG_PORT, port->cap_पंचांगu + offset, 1);
-	अगर (ret)
-		वापस ret;
+	ret = tb_port_read(port, &data, TB_CFG_PORT, port->cap_tmu + offset, 1);
+	if (ret)
+		return ret;
 
 	data &= ~mask;
 	data |= value;
 
-	वापस tb_port_ग_लिखो(port, &data, TB_CFG_PORT,
-			     port->cap_पंचांगu + offset, 1);
-पूर्ण
+	return tb_port_write(port, &data, TB_CFG_PORT,
+			     port->cap_tmu + offset, 1);
+}
 
-अटल पूर्णांक tb_port_पंचांगu_set_unidirectional(काष्ठा tb_port *port,
+static int tb_port_tmu_set_unidirectional(struct tb_port *port,
 					  bool unidirectional)
-अणु
+{
 	u32 val;
 
-	अगर (!port->sw->पंचांगu.has_ucap)
-		वापस 0;
+	if (!port->sw->tmu.has_ucap)
+		return 0;
 
 	val = unidirectional ? TMU_ADP_CS_3_UDM : 0;
-	वापस tb_port_पंचांगu_ग_लिखो(port, TMU_ADP_CS_3, TMU_ADP_CS_3_UDM, val);
-पूर्ण
+	return tb_port_tmu_write(port, TMU_ADP_CS_3, TMU_ADP_CS_3_UDM, val);
+}
 
-अटल अंतरभूत पूर्णांक tb_port_पंचांगu_unidirectional_disable(काष्ठा tb_port *port)
-अणु
-	वापस tb_port_पंचांगu_set_unidirectional(port, false);
-पूर्ण
+static inline int tb_port_tmu_unidirectional_disable(struct tb_port *port)
+{
+	return tb_port_tmu_set_unidirectional(port, false);
+}
 
-अटल bool tb_port_पंचांगu_is_unidirectional(काष्ठा tb_port *port)
-अणु
-	पूर्णांक ret;
+static bool tb_port_tmu_is_unidirectional(struct tb_port *port)
+{
+	int ret;
 	u32 val;
 
-	ret = tb_port_पढ़ो(port, &val, TB_CFG_PORT,
-			   port->cap_पंचांगu + TMU_ADP_CS_3, 1);
-	अगर (ret)
-		वापस false;
+	ret = tb_port_read(port, &val, TB_CFG_PORT,
+			   port->cap_tmu + TMU_ADP_CS_3, 1);
+	if (ret)
+		return false;
 
-	वापस val & TMU_ADP_CS_3_UDM;
-पूर्ण
+	return val & TMU_ADP_CS_3_UDM;
+}
 
-अटल पूर्णांक tb_चयन_पंचांगu_set_समय_disruption(काष्ठा tb_चयन *sw, bool set)
-अणु
-	पूर्णांक ret;
+static int tb_switch_tmu_set_time_disruption(struct tb_switch *sw, bool set)
+{
+	int ret;
 	u32 val;
 
-	ret = tb_sw_पढ़ो(sw, &val, TB_CFG_SWITCH,
-			 sw->पंचांगu.cap + TMU_RTR_CS_0, 1);
-	अगर (ret)
-		वापस ret;
+	ret = tb_sw_read(sw, &val, TB_CFG_SWITCH,
+			 sw->tmu.cap + TMU_RTR_CS_0, 1);
+	if (ret)
+		return ret;
 
-	अगर (set)
+	if (set)
 		val |= TMU_RTR_CS_0_TD;
-	अन्यथा
+	else
 		val &= ~TMU_RTR_CS_0_TD;
 
-	वापस tb_sw_ग_लिखो(sw, &val, TB_CFG_SWITCH,
-			   sw->पंचांगu.cap + TMU_RTR_CS_0, 1);
-पूर्ण
+	return tb_sw_write(sw, &val, TB_CFG_SWITCH,
+			   sw->tmu.cap + TMU_RTR_CS_0, 1);
+}
 
 /**
- * tb_चयन_पंचांगu_init() - Initialize चयन TMU काष्ठाures
+ * tb_switch_tmu_init() - Initialize switch TMU structures
  * @sw: Switch to initialized
  *
- * This function must be called beक्रमe other TMU related functions to
- * makes the पूर्णांकernal काष्ठाures are filled in correctly. Does not
+ * This function must be called before other TMU related functions to
+ * makes the internal structures are filled in correctly. Does not
  * change any hardware configuration.
  */
-पूर्णांक tb_चयन_पंचांगu_init(काष्ठा tb_चयन *sw)
-अणु
-	काष्ठा tb_port *port;
-	पूर्णांक ret;
+int tb_switch_tmu_init(struct tb_switch *sw)
+{
+	struct tb_port *port;
+	int ret;
 
-	अगर (tb_चयन_is_icm(sw))
-		वापस 0;
+	if (tb_switch_is_icm(sw))
+		return 0;
 
-	ret = tb_चयन_find_cap(sw, TB_SWITCH_CAP_TMU);
-	अगर (ret > 0)
-		sw->पंचांगu.cap = ret;
+	ret = tb_switch_find_cap(sw, TB_SWITCH_CAP_TMU);
+	if (ret > 0)
+		sw->tmu.cap = ret;
 
-	tb_चयन_क्रम_each_port(sw, port) अणु
-		पूर्णांक cap;
+	tb_switch_for_each_port(sw, port) {
+		int cap;
 
 		cap = tb_port_find_cap(port, TB_PORT_CAP_TIME1);
-		अगर (cap > 0)
-			port->cap_पंचांगu = cap;
-	पूर्ण
+		if (cap > 0)
+			port->cap_tmu = cap;
+	}
 
-	ret = tb_चयन_पंचांगu_rate_पढ़ो(sw);
-	अगर (ret < 0)
-		वापस ret;
+	ret = tb_switch_tmu_rate_read(sw);
+	if (ret < 0)
+		return ret;
 
-	sw->पंचांगu.rate = ret;
+	sw->tmu.rate = ret;
 
-	sw->पंचांगu.has_ucap = tb_चयन_पंचांगu_ucap_supported(sw);
-	अगर (sw->पंचांगu.has_ucap) अणु
+	sw->tmu.has_ucap = tb_switch_tmu_ucap_supported(sw);
+	if (sw->tmu.has_ucap) {
 		tb_sw_dbg(sw, "TMU: supports uni-directional mode\n");
 
-		अगर (tb_route(sw)) अणु
-			काष्ठा tb_port *up = tb_upstream_port(sw);
+		if (tb_route(sw)) {
+			struct tb_port *up = tb_upstream_port(sw);
 
-			sw->पंचांगu.unidirectional =
-				tb_port_पंचांगu_is_unidirectional(up);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		sw->पंचांगu.unidirectional = false;
-	पूर्ण
+			sw->tmu.unidirectional =
+				tb_port_tmu_is_unidirectional(up);
+		}
+	} else {
+		sw->tmu.unidirectional = false;
+	}
 
-	tb_sw_dbg(sw, "TMU: current mode: %s\n", tb_चयन_पंचांगu_mode_name(sw));
-	वापस 0;
-पूर्ण
+	tb_sw_dbg(sw, "TMU: current mode: %s\n", tb_switch_tmu_mode_name(sw));
+	return 0;
+}
 
 /**
- * tb_चयन_पंचांगu_post_समय() - Update चयन local समय
- * @sw: Switch whose समय to update
+ * tb_switch_tmu_post_time() - Update switch local time
+ * @sw: Switch whose time to update
  *
- * Updates चयन local समय using समय posting procedure.
+ * Updates switch local time using time posting procedure.
  */
-पूर्णांक tb_चयन_पंचांगu_post_समय(काष्ठा tb_चयन *sw)
-अणु
-	अचिन्हित पूर्णांक  post_local_समय_offset, post_समय_offset;
-	काष्ठा tb_चयन *root_चयन = sw->tb->root_चयन;
-	u64 hi, mid, lo, local_समय, post_समय;
-	पूर्णांक i, ret, retries = 100;
-	u32 gm_local_समय[3];
+int tb_switch_tmu_post_time(struct tb_switch *sw)
+{
+	unsigned int  post_local_time_offset, post_time_offset;
+	struct tb_switch *root_switch = sw->tb->root_switch;
+	u64 hi, mid, lo, local_time, post_time;
+	int i, ret, retries = 100;
+	u32 gm_local_time[3];
 
-	अगर (!tb_route(sw))
-		वापस 0;
+	if (!tb_route(sw))
+		return 0;
 
-	अगर (!tb_चयन_is_usb4(sw))
-		वापस 0;
+	if (!tb_switch_is_usb4(sw))
+		return 0;
 
-	/* Need to be able to पढ़ो the gअक्रम master समय */
-	अगर (!root_चयन->पंचांगu.cap)
-		वापस 0;
+	/* Need to be able to read the grand master time */
+	if (!root_switch->tmu.cap)
+		return 0;
 
-	ret = tb_sw_पढ़ो(root_चयन, gm_local_समय, TB_CFG_SWITCH,
-			 root_चयन->पंचांगu.cap + TMU_RTR_CS_1,
-			 ARRAY_SIZE(gm_local_समय));
-	अगर (ret)
-		वापस ret;
+	ret = tb_sw_read(root_switch, gm_local_time, TB_CFG_SWITCH,
+			 root_switch->tmu.cap + TMU_RTR_CS_1,
+			 ARRAY_SIZE(gm_local_time));
+	if (ret)
+		return ret;
 
-	क्रम (i = 0; i < ARRAY_SIZE(gm_local_समय); i++)
-		tb_sw_dbg(root_चयन, "local_time[%d]=0x%08x\n", i,
-			  gm_local_समय[i]);
+	for (i = 0; i < ARRAY_SIZE(gm_local_time); i++)
+		tb_sw_dbg(root_switch, "local_time[%d]=0x%08x\n", i,
+			  gm_local_time[i]);
 
 	/* Convert to nanoseconds (drop fractional part) */
-	hi = gm_local_समय[2] & TMU_RTR_CS_3_LOCAL_TIME_NS_MASK;
-	mid = gm_local_समय[1];
-	lo = (gm_local_समय[0] & TMU_RTR_CS_1_LOCAL_TIME_NS_MASK) >>
+	hi = gm_local_time[2] & TMU_RTR_CS_3_LOCAL_TIME_NS_MASK;
+	mid = gm_local_time[1];
+	lo = (gm_local_time[0] & TMU_RTR_CS_1_LOCAL_TIME_NS_MASK) >>
 		TMU_RTR_CS_1_LOCAL_TIME_NS_SHIFT;
-	local_समय = hi << 48 | mid << 16 | lo;
+	local_time = hi << 48 | mid << 16 | lo;
 
-	/* Tell the चयन that समय sync is disrupted क्रम a जबतक */
-	ret = tb_चयन_पंचांगu_set_समय_disruption(sw, true);
-	अगर (ret)
-		वापस ret;
+	/* Tell the switch that time sync is disrupted for a while */
+	ret = tb_switch_tmu_set_time_disruption(sw, true);
+	if (ret)
+		return ret;
 
-	post_local_समय_offset = sw->पंचांगu.cap + TMU_RTR_CS_22;
-	post_समय_offset = sw->पंचांगu.cap + TMU_RTR_CS_24;
+	post_local_time_offset = sw->tmu.cap + TMU_RTR_CS_22;
+	post_time_offset = sw->tmu.cap + TMU_RTR_CS_24;
 
 	/*
-	 * Write the Gअक्रमmaster समय to the Post Local Time रेजिस्टरs
-	 * of the new चयन.
+	 * Write the Grandmaster time to the Post Local Time registers
+	 * of the new switch.
 	 */
-	ret = tb_sw_ग_लिखो(sw, &local_समय, TB_CFG_SWITCH,
-			  post_local_समय_offset, 2);
-	अगर (ret)
-		जाओ out;
+	ret = tb_sw_write(sw, &local_time, TB_CFG_SWITCH,
+			  post_local_time_offset, 2);
+	if (ret)
+		goto out;
 
 	/*
-	 * Have the new चयन update its local समय (by writing 1 to
-	 * the post_समय रेजिस्टरs) and रुको क्रम the completion of the
-	 * same (post_समय रेजिस्टर becomes 0). This means the समय has
+	 * Have the new switch update its local time (by writing 1 to
+	 * the post_time registers) and wait for the completion of the
+	 * same (post_time register becomes 0). This means the time has
 	 * been converged properly.
 	 */
-	post_समय = 1;
+	post_time = 1;
 
-	ret = tb_sw_ग_लिखो(sw, &post_समय, TB_CFG_SWITCH, post_समय_offset, 2);
-	अगर (ret)
-		जाओ out;
+	ret = tb_sw_write(sw, &post_time, TB_CFG_SWITCH, post_time_offset, 2);
+	if (ret)
+		goto out;
 
-	करो अणु
+	do {
 		usleep_range(5, 10);
-		ret = tb_sw_पढ़ो(sw, &post_समय, TB_CFG_SWITCH,
-				 post_समय_offset, 2);
-		अगर (ret)
-			जाओ out;
-	पूर्ण जबतक (--retries && post_समय);
+		ret = tb_sw_read(sw, &post_time, TB_CFG_SWITCH,
+				 post_time_offset, 2);
+		if (ret)
+			goto out;
+	} while (--retries && post_time);
 
-	अगर (!retries) अणु
+	if (!retries) {
 		ret = -ETIMEDOUT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	tb_sw_dbg(sw, "TMU: updated local time to %#llx\n", local_समय);
+	tb_sw_dbg(sw, "TMU: updated local time to %#llx\n", local_time);
 
 out:
-	tb_चयन_पंचांगu_set_समय_disruption(sw, false);
-	वापस ret;
-पूर्ण
+	tb_switch_tmu_set_time_disruption(sw, false);
+	return ret;
+}
 
 /**
- * tb_चयन_पंचांगu_disable() - Disable TMU of a चयन
+ * tb_switch_tmu_disable() - Disable TMU of a switch
  * @sw: Switch whose TMU to disable
  *
- * Turns off TMU of @sw अगर it is enabled. If not enabled करोes nothing.
+ * Turns off TMU of @sw if it is enabled. If not enabled does nothing.
  */
-पूर्णांक tb_चयन_पंचांगu_disable(काष्ठा tb_चयन *sw)
-अणु
-	पूर्णांक ret;
+int tb_switch_tmu_disable(struct tb_switch *sw)
+{
+	int ret;
 
-	अगर (!tb_चयन_is_usb4(sw))
-		वापस 0;
+	if (!tb_switch_is_usb4(sw))
+		return 0;
 
-	/* Alपढ़ोy disabled? */
-	अगर (sw->पंचांगu.rate == TB_SWITCH_TMU_RATE_OFF)
-		वापस 0;
+	/* Already disabled? */
+	if (sw->tmu.rate == TB_SWITCH_TMU_RATE_OFF)
+		return 0;
 
-	अगर (sw->पंचांगu.unidirectional) अणु
-		काष्ठा tb_चयन *parent = tb_चयन_parent(sw);
-		काष्ठा tb_port *up, *करोwn;
+	if (sw->tmu.unidirectional) {
+		struct tb_switch *parent = tb_switch_parent(sw);
+		struct tb_port *up, *down;
 
 		up = tb_upstream_port(sw);
-		करोwn = tb_port_at(tb_route(sw), parent);
+		down = tb_port_at(tb_route(sw), parent);
 
-		/* The चयन may be unplugged so ignore any errors */
-		tb_port_पंचांगu_unidirectional_disable(up);
-		ret = tb_port_पंचांगu_unidirectional_disable(करोwn);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		/* The switch may be unplugged so ignore any errors */
+		tb_port_tmu_unidirectional_disable(up);
+		ret = tb_port_tmu_unidirectional_disable(down);
+		if (ret)
+			return ret;
+	}
 
-	tb_चयन_पंचांगu_rate_ग_लिखो(sw, TB_SWITCH_TMU_RATE_OFF);
+	tb_switch_tmu_rate_write(sw, TB_SWITCH_TMU_RATE_OFF);
 
-	sw->पंचांगu.unidirectional = false;
-	sw->पंचांगu.rate = TB_SWITCH_TMU_RATE_OFF;
+	sw->tmu.unidirectional = false;
+	sw->tmu.rate = TB_SWITCH_TMU_RATE_OFF;
 
 	tb_sw_dbg(sw, "TMU: disabled\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * tb_चयन_पंचांगu_enable() - Enable TMU on a चयन
+ * tb_switch_tmu_enable() - Enable TMU on a switch
  * @sw: Switch whose TMU to enable
  *
- * Enables TMU of a चयन to be in bi-directional, HiFi mode. In this mode
+ * Enables TMU of a switch to be in bi-directional, HiFi mode. In this mode
  * all tunneling should work.
  */
-पूर्णांक tb_चयन_पंचांगu_enable(काष्ठा tb_चयन *sw)
-अणु
-	पूर्णांक ret;
+int tb_switch_tmu_enable(struct tb_switch *sw)
+{
+	int ret;
 
-	अगर (!tb_चयन_is_usb4(sw))
-		वापस 0;
+	if (!tb_switch_is_usb4(sw))
+		return 0;
 
-	अगर (tb_चयन_पंचांगu_is_enabled(sw))
-		वापस 0;
+	if (tb_switch_tmu_is_enabled(sw))
+		return 0;
 
-	ret = tb_चयन_पंचांगu_set_समय_disruption(sw, true);
-	अगर (ret)
-		वापस ret;
+	ret = tb_switch_tmu_set_time_disruption(sw, true);
+	if (ret)
+		return ret;
 
 	/* Change mode to bi-directional */
-	अगर (tb_route(sw) && sw->पंचांगu.unidirectional) अणु
-		काष्ठा tb_चयन *parent = tb_चयन_parent(sw);
-		काष्ठा tb_port *up, *करोwn;
+	if (tb_route(sw) && sw->tmu.unidirectional) {
+		struct tb_switch *parent = tb_switch_parent(sw);
+		struct tb_port *up, *down;
 
 		up = tb_upstream_port(sw);
-		करोwn = tb_port_at(tb_route(sw), parent);
+		down = tb_port_at(tb_route(sw), parent);
 
-		ret = tb_port_पंचांगu_unidirectional_disable(करोwn);
-		अगर (ret)
-			वापस ret;
+		ret = tb_port_tmu_unidirectional_disable(down);
+		if (ret)
+			return ret;
 
-		ret = tb_चयन_पंचांगu_rate_ग_लिखो(sw, TB_SWITCH_TMU_RATE_HIFI);
-		अगर (ret)
-			वापस ret;
+		ret = tb_switch_tmu_rate_write(sw, TB_SWITCH_TMU_RATE_HIFI);
+		if (ret)
+			return ret;
 
-		ret = tb_port_पंचांगu_unidirectional_disable(up);
-		अगर (ret)
-			वापस ret;
-	पूर्ण अन्यथा अणु
-		ret = tb_चयन_पंचांगu_rate_ग_लिखो(sw, TB_SWITCH_TMU_RATE_HIFI);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		ret = tb_port_tmu_unidirectional_disable(up);
+		if (ret)
+			return ret;
+	} else {
+		ret = tb_switch_tmu_rate_write(sw, TB_SWITCH_TMU_RATE_HIFI);
+		if (ret)
+			return ret;
+	}
 
-	sw->पंचांगu.unidirectional = false;
-	sw->पंचांगu.rate = TB_SWITCH_TMU_RATE_HIFI;
-	tb_sw_dbg(sw, "TMU: mode set to: %s\n", tb_चयन_पंचांगu_mode_name(sw));
+	sw->tmu.unidirectional = false;
+	sw->tmu.rate = TB_SWITCH_TMU_RATE_HIFI;
+	tb_sw_dbg(sw, "TMU: mode set to: %s\n", tb_switch_tmu_mode_name(sw));
 
-	वापस tb_चयन_पंचांगu_set_समय_disruption(sw, false);
-पूर्ण
+	return tb_switch_tmu_set_time_disruption(sw, false);
+}

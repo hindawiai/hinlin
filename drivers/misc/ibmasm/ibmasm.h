@@ -1,210 +1,209 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 
 /*
  * IBM ASM Service Processor Device Driver
  *
  * Copyright (C) IBM Corporation, 2004
  *
- * Author: Max Asbथघck <amax@us.ibm.com>
+ * Author: Max Asböck <amax@us.ibm.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/list.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kref.h>
-#समावेश <linux/device.h>
-#समावेश <linux/input.h>
-#समावेश <linux/समय64.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/errno.h>
+#include <linux/list.h>
+#include <linux/wait.h>
+#include <linux/spinlock.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <linux/interrupt.h>
+#include <linux/kref.h>
+#include <linux/device.h>
+#include <linux/input.h>
+#include <linux/time64.h>
 
-/* Driver identअगरication */
-#घोषणा DRIVER_NAME	"ibmasm"
-#घोषणा DRIVER_VERSION  "1.0"
-#घोषणा DRIVER_AUTHOR   "Max Asbock <masbock@us.ibm.com>, Vernon Mauery <vernux@us.ibm.com>"
-#घोषणा DRIVER_DESC     "IBM ASM Service Processor Driver"
+/* Driver identification */
+#define DRIVER_NAME	"ibmasm"
+#define DRIVER_VERSION  "1.0"
+#define DRIVER_AUTHOR   "Max Asbock <masbock@us.ibm.com>, Vernon Mauery <vernux@us.ibm.com>"
+#define DRIVER_DESC     "IBM ASM Service Processor Driver"
 
-#घोषणा err(msg) prपूर्णांकk(KERN_ERR "%s: " msg "\n", DRIVER_NAME)
-#घोषणा info(msg) prपूर्णांकk(KERN_INFO "%s: " msg "\n", DRIVER_NAME)
+#define err(msg) printk(KERN_ERR "%s: " msg "\n", DRIVER_NAME)
+#define info(msg) printk(KERN_INFO "%s: " msg "\n", DRIVER_NAME)
 
-बाह्य पूर्णांक ibmयंत्र_debug;
-#घोषणा dbg(STR, ARGS...)					\
-	करो अणु							\
-		अगर (ibmयंत्र_debug)				\
-			prपूर्णांकk(KERN_DEBUG STR , ##ARGS);	\
-	पूर्ण जबतक (0)
+extern int ibmasm_debug;
+#define dbg(STR, ARGS...)					\
+	do {							\
+		if (ibmasm_debug)				\
+			printk(KERN_DEBUG STR , ##ARGS);	\
+	} while (0)
 
-अटल अंतरभूत अक्षर *get_बारtamp(अक्षर *buf)
-अणु
-	काष्ठा बारpec64 now;
+static inline char *get_timestamp(char *buf)
+{
+	struct timespec64 now;
 
-	kसमय_get_real_ts64(&now);
-	प्र_लिखो(buf, "%llu.%.08lu", (दीर्घ दीर्घ)now.tv_sec,
+	ktime_get_real_ts64(&now);
+	sprintf(buf, "%llu.%.08lu", (long long)now.tv_sec,
 				now.tv_nsec / NSEC_PER_USEC);
-	वापस buf;
-पूर्ण
+	return buf;
+}
 
-#घोषणा IBMASM_CMD_PENDING	0
-#घोषणा IBMASM_CMD_COMPLETE	1
-#घोषणा IBMASM_CMD_FAILED	2
+#define IBMASM_CMD_PENDING	0
+#define IBMASM_CMD_COMPLETE	1
+#define IBMASM_CMD_FAILED	2
 
-#घोषणा IBMASM_CMD_TIMEOUT_NORMAL	45
-#घोषणा IBMASM_CMD_TIMEOUT_EXTRA	240
+#define IBMASM_CMD_TIMEOUT_NORMAL	45
+#define IBMASM_CMD_TIMEOUT_EXTRA	240
 
-#घोषणा IBMASM_CMD_MAX_BUFFER_SIZE	0x8000
+#define IBMASM_CMD_MAX_BUFFER_SIZE	0x8000
 
-#घोषणा REVERSE_HEARTBEAT_TIMEOUT	120
+#define REVERSE_HEARTBEAT_TIMEOUT	120
 
-#घोषणा HEARTBEAT_BUFFER_SIZE		0x400
+#define HEARTBEAT_BUFFER_SIZE		0x400
 
-#अगर_घोषित IA64
-#घोषणा IBMASM_DRIVER_VPD "Lin64 6.08      "
-#अन्यथा
-#घोषणा IBMASM_DRIVER_VPD "Lin32 6.08      "
-#पूर्ण_अगर
+#ifdef IA64
+#define IBMASM_DRIVER_VPD "Lin64 6.08      "
+#else
+#define IBMASM_DRIVER_VPD "Lin32 6.08      "
+#endif
 
-#घोषणा SYSTEM_STATE_OS_UP      5
-#घोषणा SYSTEM_STATE_OS_DOWN    4
+#define SYSTEM_STATE_OS_UP      5
+#define SYSTEM_STATE_OS_DOWN    4
 
-#घोषणा IBMASM_NAME_SIZE	16
+#define IBMASM_NAME_SIZE	16
 
-#घोषणा IBMASM_NUM_EVENTS	10
-#घोषणा IBMASM_EVENT_MAX_SIZE	2048u
+#define IBMASM_NUM_EVENTS	10
+#define IBMASM_EVENT_MAX_SIZE	2048u
 
 
-काष्ठा command अणु
-	काष्ठा list_head	queue_node;
-	रुको_queue_head_t	रुको;
-	अचिन्हित अक्षर		*buffer;
-	माप_प्रकार			buffer_size;
-	पूर्णांक			status;
-	काष्ठा kref		kref;
+struct command {
+	struct list_head	queue_node;
+	wait_queue_head_t	wait;
+	unsigned char		*buffer;
+	size_t			buffer_size;
+	int			status;
+	struct kref		kref;
 	spinlock_t		*lock;
-पूर्ण;
-#घोषणा to_command(c) container_of(c, काष्ठा command, kref)
+};
+#define to_command(c) container_of(c, struct command, kref)
 
-व्योम ibmयंत्र_मुक्त_command(काष्ठा kref *kref);
-अटल अंतरभूत व्योम command_put(काष्ठा command *cmd)
-अणु
-	अचिन्हित दीर्घ flags;
+void ibmasm_free_command(struct kref *kref);
+static inline void command_put(struct command *cmd)
+{
+	unsigned long flags;
 	spinlock_t *lock = cmd->lock;
 
 	spin_lock_irqsave(lock, flags);
-	kref_put(&cmd->kref, ibmयंत्र_मुक्त_command);
+	kref_put(&cmd->kref, ibmasm_free_command);
 	spin_unlock_irqrestore(lock, flags);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम command_get(काष्ठा command *cmd)
-अणु
+static inline void command_get(struct command *cmd)
+{
 	kref_get(&cmd->kref);
-पूर्ण
+}
 
 
-काष्ठा ibmयंत्र_event अणु
-	अचिन्हित पूर्णांक	serial_number;
-	अचिन्हित पूर्णांक	data_size;
-	अचिन्हित अक्षर	data[IBMASM_EVENT_MAX_SIZE];
-पूर्ण;
+struct ibmasm_event {
+	unsigned int	serial_number;
+	unsigned int	data_size;
+	unsigned char	data[IBMASM_EVENT_MAX_SIZE];
+};
 
-काष्ठा event_buffer अणु
-	काष्ठा ibmयंत्र_event	events[IBMASM_NUM_EVENTS];
-	अचिन्हित पूर्णांक		next_serial_number;
-	अचिन्हित पूर्णांक		next_index;
-	काष्ठा list_head	पढ़ोers;
-पूर्ण;
+struct event_buffer {
+	struct ibmasm_event	events[IBMASM_NUM_EVENTS];
+	unsigned int		next_serial_number;
+	unsigned int		next_index;
+	struct list_head	readers;
+};
 
-काष्ठा event_पढ़ोer अणु
-	पूर्णांक			cancelled;
-	अचिन्हित पूर्णांक		next_serial_number;
-	रुको_queue_head_t	रुको;
-	काष्ठा list_head	node;
-	अचिन्हित पूर्णांक		data_size;
-	अचिन्हित अक्षर		data[IBMASM_EVENT_MAX_SIZE];
-पूर्ण;
+struct event_reader {
+	int			cancelled;
+	unsigned int		next_serial_number;
+	wait_queue_head_t	wait;
+	struct list_head	node;
+	unsigned int		data_size;
+	unsigned char		data[IBMASM_EVENT_MAX_SIZE];
+};
 
-काष्ठा reverse_heartbeat अणु
-	रुको_queue_head_t	रुको;
-	अचिन्हित पूर्णांक		stopped;
-पूर्ण;
+struct reverse_heartbeat {
+	wait_queue_head_t	wait;
+	unsigned int		stopped;
+};
 
-काष्ठा ibmयंत्र_remote अणु
-	काष्ठा input_dev *keybd_dev;
-	काष्ठा input_dev *mouse_dev;
-पूर्ण;
+struct ibmasm_remote {
+	struct input_dev *keybd_dev;
+	struct input_dev *mouse_dev;
+};
 
-काष्ठा service_processor अणु
-	काष्ठा list_head	node;
+struct service_processor {
+	struct list_head	node;
 	spinlock_t		lock;
-	व्योम __iomem		*base_address;
-	अचिन्हित पूर्णांक		irq;
-	काष्ठा command		*current_command;
-	काष्ठा command		*heartbeat;
-	काष्ठा list_head	command_queue;
-	काष्ठा event_buffer	*event_buffer;
-	अक्षर			स_नाम[IBMASM_NAME_SIZE];
-	अक्षर			devname[IBMASM_NAME_SIZE];
-	अचिन्हित पूर्णांक		number;
-	काष्ठा ibmयंत्र_remote	remote;
-	पूर्णांक			serial_line;
-	काष्ठा device		*dev;
-पूर्ण;
+	void __iomem		*base_address;
+	unsigned int		irq;
+	struct command		*current_command;
+	struct command		*heartbeat;
+	struct list_head	command_queue;
+	struct event_buffer	*event_buffer;
+	char			dirname[IBMASM_NAME_SIZE];
+	char			devname[IBMASM_NAME_SIZE];
+	unsigned int		number;
+	struct ibmasm_remote	remote;
+	int			serial_line;
+	struct device		*dev;
+};
 
 /* command processing */
-काष्ठा command *ibmयंत्र_new_command(काष्ठा service_processor *sp, माप_प्रकार buffer_size);
-व्योम ibmयंत्र_exec_command(काष्ठा service_processor *sp, काष्ठा command *cmd);
-व्योम ibmयंत्र_रुको_क्रम_response(काष्ठा command *cmd, पूर्णांक समयout);
-व्योम ibmयंत्र_receive_command_response(काष्ठा service_processor *sp, व्योम *response,  माप_प्रकार size);
+struct command *ibmasm_new_command(struct service_processor *sp, size_t buffer_size);
+void ibmasm_exec_command(struct service_processor *sp, struct command *cmd);
+void ibmasm_wait_for_response(struct command *cmd, int timeout);
+void ibmasm_receive_command_response(struct service_processor *sp, void *response,  size_t size);
 
 /* event processing */
-पूर्णांक ibmयंत्र_event_buffer_init(काष्ठा service_processor *sp);
-व्योम ibmयंत्र_event_buffer_निकास(काष्ठा service_processor *sp);
-व्योम ibmयंत्र_receive_event(काष्ठा service_processor *sp, व्योम *data,  अचिन्हित पूर्णांक data_size);
-व्योम ibmयंत्र_event_पढ़ोer_रेजिस्टर(काष्ठा service_processor *sp, काष्ठा event_पढ़ोer *पढ़ोer);
-व्योम ibmयंत्र_event_पढ़ोer_unरेजिस्टर(काष्ठा service_processor *sp, काष्ठा event_पढ़ोer *पढ़ोer);
-पूर्णांक ibmयंत्र_get_next_event(काष्ठा service_processor *sp, काष्ठा event_पढ़ोer *पढ़ोer);
-व्योम ibmयंत्र_cancel_next_event(काष्ठा event_पढ़ोer *पढ़ोer);
+int ibmasm_event_buffer_init(struct service_processor *sp);
+void ibmasm_event_buffer_exit(struct service_processor *sp);
+void ibmasm_receive_event(struct service_processor *sp, void *data,  unsigned int data_size);
+void ibmasm_event_reader_register(struct service_processor *sp, struct event_reader *reader);
+void ibmasm_event_reader_unregister(struct service_processor *sp, struct event_reader *reader);
+int ibmasm_get_next_event(struct service_processor *sp, struct event_reader *reader);
+void ibmasm_cancel_next_event(struct event_reader *reader);
 
 /* heartbeat - from SP to OS */
-व्योम ibmयंत्र_रेजिस्टर_panic_notअगरier(व्योम);
-व्योम ibmयंत्र_unरेजिस्टर_panic_notअगरier(व्योम);
-पूर्णांक ibmयंत्र_heartbeat_init(काष्ठा service_processor *sp);
-व्योम ibmयंत्र_heartbeat_निकास(काष्ठा service_processor *sp);
-व्योम ibmयंत्र_receive_heartbeat(काष्ठा service_processor *sp,  व्योम *message, माप_प्रकार size);
+void ibmasm_register_panic_notifier(void);
+void ibmasm_unregister_panic_notifier(void);
+int ibmasm_heartbeat_init(struct service_processor *sp);
+void ibmasm_heartbeat_exit(struct service_processor *sp);
+void ibmasm_receive_heartbeat(struct service_processor *sp,  void *message, size_t size);
 
 /* reverse heartbeat - from OS to SP */
-व्योम ibmयंत्र_init_reverse_heartbeat(काष्ठा service_processor *sp, काष्ठा reverse_heartbeat *rhb);
-पूर्णांक ibmयंत्र_start_reverse_heartbeat(काष्ठा service_processor *sp, काष्ठा reverse_heartbeat *rhb);
-व्योम ibmयंत्र_stop_reverse_heartbeat(काष्ठा reverse_heartbeat *rhb);
+void ibmasm_init_reverse_heartbeat(struct service_processor *sp, struct reverse_heartbeat *rhb);
+int ibmasm_start_reverse_heartbeat(struct service_processor *sp, struct reverse_heartbeat *rhb);
+void ibmasm_stop_reverse_heartbeat(struct reverse_heartbeat *rhb);
 
-/* करोt commands */
-व्योम ibmयंत्र_receive_message(काष्ठा service_processor *sp, व्योम *data, पूर्णांक data_size);
-पूर्णांक ibmयंत्र_send_driver_vpd(काष्ठा service_processor *sp);
-पूर्णांक ibmयंत्र_send_os_state(काष्ठा service_processor *sp, पूर्णांक os_state);
+/* dot commands */
+void ibmasm_receive_message(struct service_processor *sp, void *data, int data_size);
+int ibmasm_send_driver_vpd(struct service_processor *sp);
+int ibmasm_send_os_state(struct service_processor *sp, int os_state);
 
 /* low level message processing */
-पूर्णांक ibmयंत्र_send_i2o_message(काष्ठा service_processor *sp);
-irqवापस_t ibmयंत्र_पूर्णांकerrupt_handler(पूर्णांक irq, व्योम * dev_id);
+int ibmasm_send_i2o_message(struct service_processor *sp);
+irqreturn_t ibmasm_interrupt_handler(int irq, void * dev_id);
 
 /* remote console */
-व्योम ibmयंत्र_handle_mouse_पूर्णांकerrupt(काष्ठा service_processor *sp);
-पूर्णांक ibmयंत्र_init_remote_input_dev(काष्ठा service_processor *sp);
-व्योम ibmयंत्र_मुक्त_remote_input_dev(काष्ठा service_processor *sp);
+void ibmasm_handle_mouse_interrupt(struct service_processor *sp);
+int ibmasm_init_remote_input_dev(struct service_processor *sp);
+void ibmasm_free_remote_input_dev(struct service_processor *sp);
 
-/* file प्रणाली */
-पूर्णांक ibmयंत्रfs_रेजिस्टर(व्योम);
-व्योम ibmयंत्रfs_unरेजिस्टर(व्योम);
-व्योम ibmयंत्रfs_add_sp(काष्ठा service_processor *sp);
+/* file system */
+int ibmasmfs_register(void);
+void ibmasmfs_unregister(void);
+void ibmasmfs_add_sp(struct service_processor *sp);
 
 /* uart */
-#अगर IS_ENABLED(CONFIG_SERIAL_8250)
-व्योम ibmयंत्र_रेजिस्टर_uart(काष्ठा service_processor *sp);
-व्योम ibmयंत्र_unरेजिस्टर_uart(काष्ठा service_processor *sp);
-#अन्यथा
-#घोषणा ibmयंत्र_रेजिस्टर_uart(sp)	करो अणु पूर्ण जबतक(0)
-#घोषणा ibmयंत्र_unरेजिस्टर_uart(sp)	करो अणु पूर्ण जबतक(0)
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_SERIAL_8250)
+void ibmasm_register_uart(struct service_processor *sp);
+void ibmasm_unregister_uart(struct service_processor *sp);
+#else
+#define ibmasm_register_uart(sp)	do { } while(0)
+#define ibmasm_unregister_uart(sp)	do { } while(0)
+#endif

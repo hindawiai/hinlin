@@ -1,50 +1,49 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/suspend.h>
+// SPDX-License-Identifier: GPL-2.0-only
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/suspend.h>
 
-#समावेश "notifier-error-inject.h"
+#include "notifier-error-inject.h"
 
-अटल पूर्णांक priority;
-module_param(priority, पूर्णांक, 0);
+static int priority;
+module_param(priority, int, 0);
 MODULE_PARM_DESC(priority, "specify PM notifier priority");
 
-अटल काष्ठा notअगरier_err_inject pm_notअगरier_err_inject = अणु
-	.actions = अणु
-		अणु NOTIFIER_ERR_INJECT_ACTION(PM_HIBERNATION_PREPARE) पूर्ण,
-		अणु NOTIFIER_ERR_INJECT_ACTION(PM_SUSPEND_PREPARE) पूर्ण,
-		अणु NOTIFIER_ERR_INJECT_ACTION(PM_RESTORE_PREPARE) पूर्ण,
-		अणुपूर्ण
-	पूर्ण
-पूर्ण;
+static struct notifier_err_inject pm_notifier_err_inject = {
+	.actions = {
+		{ NOTIFIER_ERR_INJECT_ACTION(PM_HIBERNATION_PREPARE) },
+		{ NOTIFIER_ERR_INJECT_ACTION(PM_SUSPEND_PREPARE) },
+		{ NOTIFIER_ERR_INJECT_ACTION(PM_RESTORE_PREPARE) },
+		{}
+	}
+};
 
-अटल काष्ठा dentry *dir;
+static struct dentry *dir;
 
-अटल पूर्णांक err_inject_init(व्योम)
-अणु
-	पूर्णांक err;
+static int err_inject_init(void)
+{
+	int err;
 
-	dir = notअगरier_err_inject_init("pm", notअगरier_err_inject_dir,
-					&pm_notअगरier_err_inject, priority);
-	अगर (IS_ERR(dir))
-		वापस PTR_ERR(dir);
+	dir = notifier_err_inject_init("pm", notifier_err_inject_dir,
+					&pm_notifier_err_inject, priority);
+	if (IS_ERR(dir))
+		return PTR_ERR(dir);
 
-	err = रेजिस्टर_pm_notअगरier(&pm_notअगरier_err_inject.nb);
-	अगर (err)
-		debugfs_हटाओ_recursive(dir);
+	err = register_pm_notifier(&pm_notifier_err_inject.nb);
+	if (err)
+		debugfs_remove_recursive(dir);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम err_inject_निकास(व्योम)
-अणु
-	unरेजिस्टर_pm_notअगरier(&pm_notअगरier_err_inject.nb);
-	debugfs_हटाओ_recursive(dir);
-पूर्ण
+static void err_inject_exit(void)
+{
+	unregister_pm_notifier(&pm_notifier_err_inject.nb);
+	debugfs_remove_recursive(dir);
+}
 
 module_init(err_inject_init);
-module_निकास(err_inject_निकास);
+module_exit(err_inject_exit);
 
 MODULE_DESCRIPTION("PM notifier error injection module");
 MODULE_LICENSE("GPL");

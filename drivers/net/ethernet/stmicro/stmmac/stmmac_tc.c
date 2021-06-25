@@ -1,20 +1,19 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0 OR MIT)
+// SPDX-License-Identifier: (GPL-2.0 OR MIT)
 /*
  * Copyright (c) 2018 Synopsys, Inc. and/or its affiliates.
- * sपंचांगmac TC Handling (HW only)
+ * stmmac TC Handling (HW only)
  */
 
-#समावेश <net/pkt_cls.h>
-#समावेश <net/tc_act/tc_gact.h>
-#समावेश "common.h"
-#समावेश "dwmac4.h"
-#समावेश "dwmac5.h"
-#समावेश "stmmac.h"
+#include <net/pkt_cls.h>
+#include <net/tc_act/tc_gact.h>
+#include "common.h"
+#include "dwmac4.h"
+#include "dwmac5.h"
+#include "stmmac.h"
 
-अटल व्योम tc_fill_all_pass_entry(काष्ठा sपंचांगmac_tc_entry *entry)
-अणु
-	स_रखो(entry, 0, माप(*entry));
+static void tc_fill_all_pass_entry(struct stmmac_tc_entry *entry)
+{
+	memset(entry, 0, sizeof(*entry));
 	entry->in_use = true;
 	entry->is_last = true;
 	entry->is_frag = false;
@@ -24,114 +23,114 @@
 	entry->val.match_en = 0x0;
 	entry->val.af = 1;
 	entry->val.dma_ch_no = 0x0;
-पूर्ण
+}
 
-अटल काष्ठा sपंचांगmac_tc_entry *tc_find_entry(काष्ठा sपंचांगmac_priv *priv,
-					     काष्ठा tc_cls_u32_offload *cls,
-					     bool मुक्त)
-अणु
-	काष्ठा sपंचांगmac_tc_entry *entry, *first = शून्य, *dup = शून्य;
+static struct stmmac_tc_entry *tc_find_entry(struct stmmac_priv *priv,
+					     struct tc_cls_u32_offload *cls,
+					     bool free)
+{
+	struct stmmac_tc_entry *entry, *first = NULL, *dup = NULL;
 	u32 loc = cls->knode.handle;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < priv->tc_entries_max; i++) अणु
+	for (i = 0; i < priv->tc_entries_max; i++) {
 		entry = &priv->tc_entries[i];
-		अगर (!entry->in_use && !first && मुक्त)
+		if (!entry->in_use && !first && free)
 			first = entry;
-		अगर ((entry->handle == loc) && !मुक्त && !entry->is_frag)
+		if ((entry->handle == loc) && !free && !entry->is_frag)
 			dup = entry;
-	पूर्ण
+	}
 
-	अगर (dup)
-		वापस dup;
-	अगर (first) अणु
+	if (dup)
+		return dup;
+	if (first) {
 		first->handle = loc;
 		first->in_use = true;
 
 		/* Reset HW values */
-		स_रखो(&first->val, 0, माप(first->val));
-	पूर्ण
+		memset(&first->val, 0, sizeof(first->val));
+	}
 
-	वापस first;
-पूर्ण
+	return first;
+}
 
-अटल पूर्णांक tc_fill_actions(काष्ठा sपंचांगmac_tc_entry *entry,
-			   काष्ठा sपंचांगmac_tc_entry *frag,
-			   काष्ठा tc_cls_u32_offload *cls)
-अणु
-	काष्ठा sपंचांगmac_tc_entry *action_entry = entry;
-	स्थिर काष्ठा tc_action *act;
-	काष्ठा tcf_exts *exts;
-	पूर्णांक i;
+static int tc_fill_actions(struct stmmac_tc_entry *entry,
+			   struct stmmac_tc_entry *frag,
+			   struct tc_cls_u32_offload *cls)
+{
+	struct stmmac_tc_entry *action_entry = entry;
+	const struct tc_action *act;
+	struct tcf_exts *exts;
+	int i;
 
 	exts = cls->knode.exts;
-	अगर (!tcf_exts_has_actions(exts))
-		वापस -EINVAL;
-	अगर (frag)
+	if (!tcf_exts_has_actions(exts))
+		return -EINVAL;
+	if (frag)
 		action_entry = frag;
 
-	tcf_exts_क्रम_each_action(i, act, exts) अणु
+	tcf_exts_for_each_action(i, act, exts) {
 		/* Accept */
-		अगर (is_tcf_gact_ok(act)) अणु
+		if (is_tcf_gact_ok(act)) {
 			action_entry->val.af = 1;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		/* Drop */
-		अगर (is_tcf_gact_shot(act)) अणु
+		if (is_tcf_gact_shot(act)) {
 			action_entry->val.rf = 1;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/* Unsupported */
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tc_fill_entry(काष्ठा sपंचांगmac_priv *priv,
-			 काष्ठा tc_cls_u32_offload *cls)
-अणु
-	काष्ठा sपंचांगmac_tc_entry *entry, *frag = शून्य;
-	काष्ठा tc_u32_sel *sel = cls->knode.sel;
+static int tc_fill_entry(struct stmmac_priv *priv,
+			 struct tc_cls_u32_offload *cls)
+{
+	struct stmmac_tc_entry *entry, *frag = NULL;
+	struct tc_u32_sel *sel = cls->knode.sel;
 	u32 off, data, mask, real_off, rem;
 	u32 prio = cls->common.prio << 16;
-	पूर्णांक ret;
+	int ret;
 
 	/* Only 1 match per entry */
-	अगर (sel->nkeys <= 0 || sel->nkeys > 1)
-		वापस -EINVAL;
+	if (sel->nkeys <= 0 || sel->nkeys > 1)
+		return -EINVAL;
 
-	off = sel->keys[0].off << sel->offshअगरt;
+	off = sel->keys[0].off << sel->offshift;
 	data = sel->keys[0].val;
 	mask = sel->keys[0].mask;
 
-	चयन (ntohs(cls->common.protocol)) अणु
-	हाल ETH_P_ALL:
-		अवरोध;
-	हाल ETH_P_IP:
+	switch (ntohs(cls->common.protocol)) {
+	case ETH_P_ALL:
+		break;
+	case ETH_P_IP:
 		off += ETH_HLEN;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	अगर (off > priv->tc_off_max)
-		वापस -EINVAL;
+	if (off > priv->tc_off_max)
+		return -EINVAL;
 
 	real_off = off / 4;
 	rem = off % 4;
 
 	entry = tc_find_entry(priv, cls, true);
-	अगर (!entry)
-		वापस -EINVAL;
+	if (!entry)
+		return -EINVAL;
 
-	अगर (rem) अणु
+	if (rem) {
 		frag = tc_find_entry(priv, cls, true);
-		अगर (!frag) अणु
+		if (!frag) {
 			ret = -EINVAL;
-			जाओ err_unuse;
-		पूर्ण
+			goto err_unuse;
+		}
 
 		entry->frag_ptr = frag;
 		entry->val.match_en = (mask << (rem * 8)) &
@@ -148,233 +147,233 @@
 		frag->val.frame_offset = real_off + 1;
 		frag->prio = prio;
 		frag->is_frag = true;
-	पूर्ण अन्यथा अणु
-		entry->frag_ptr = शून्य;
+	} else {
+		entry->frag_ptr = NULL;
 		entry->val.match_en = mask;
 		entry->val.match_data = data;
 		entry->val.frame_offset = real_off;
 		entry->prio = prio;
-	पूर्ण
+	}
 
 	ret = tc_fill_actions(entry, frag, cls);
-	अगर (ret)
-		जाओ err_unuse;
+	if (ret)
+		goto err_unuse;
 
-	वापस 0;
+	return 0;
 
 err_unuse:
-	अगर (frag)
+	if (frag)
 		frag->in_use = false;
 	entry->in_use = false;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम tc_unfill_entry(काष्ठा sपंचांगmac_priv *priv,
-			    काष्ठा tc_cls_u32_offload *cls)
-अणु
-	काष्ठा sपंचांगmac_tc_entry *entry;
+static void tc_unfill_entry(struct stmmac_priv *priv,
+			    struct tc_cls_u32_offload *cls)
+{
+	struct stmmac_tc_entry *entry;
 
 	entry = tc_find_entry(priv, cls, false);
-	अगर (!entry)
-		वापस;
+	if (!entry)
+		return;
 
 	entry->in_use = false;
-	अगर (entry->frag_ptr) अणु
+	if (entry->frag_ptr) {
 		entry = entry->frag_ptr;
 		entry->is_frag = false;
 		entry->in_use = false;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक tc_config_knode(काष्ठा sपंचांगmac_priv *priv,
-			   काष्ठा tc_cls_u32_offload *cls)
-अणु
-	पूर्णांक ret;
+static int tc_config_knode(struct stmmac_priv *priv,
+			   struct tc_cls_u32_offload *cls)
+{
+	int ret;
 
 	ret = tc_fill_entry(priv, cls);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = sपंचांगmac_rxp_config(priv, priv->hw->pcsr, priv->tc_entries,
+	ret = stmmac_rxp_config(priv, priv->hw->pcsr, priv->tc_entries,
 			priv->tc_entries_max);
-	अगर (ret)
-		जाओ err_unfill;
+	if (ret)
+		goto err_unfill;
 
-	वापस 0;
+	return 0;
 
 err_unfill:
 	tc_unfill_entry(priv, cls);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक tc_delete_knode(काष्ठा sपंचांगmac_priv *priv,
-			   काष्ठा tc_cls_u32_offload *cls)
-अणु
+static int tc_delete_knode(struct stmmac_priv *priv,
+			   struct tc_cls_u32_offload *cls)
+{
 	/* Set entry and fragments as not used */
 	tc_unfill_entry(priv, cls);
 
-	वापस sपंचांगmac_rxp_config(priv, priv->hw->pcsr, priv->tc_entries,
+	return stmmac_rxp_config(priv, priv->hw->pcsr, priv->tc_entries,
 				 priv->tc_entries_max);
-पूर्ण
+}
 
-अटल पूर्णांक tc_setup_cls_u32(काष्ठा sपंचांगmac_priv *priv,
-			    काष्ठा tc_cls_u32_offload *cls)
-अणु
-	चयन (cls->command) अणु
-	हाल TC_CLSU32_REPLACE_KNODE:
+static int tc_setup_cls_u32(struct stmmac_priv *priv,
+			    struct tc_cls_u32_offload *cls)
+{
+	switch (cls->command) {
+	case TC_CLSU32_REPLACE_KNODE:
 		tc_unfill_entry(priv, cls);
 		fallthrough;
-	हाल TC_CLSU32_NEW_KNODE:
-		वापस tc_config_knode(priv, cls);
-	हाल TC_CLSU32_DELETE_KNODE:
-		वापस tc_delete_knode(priv, cls);
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+	case TC_CLSU32_NEW_KNODE:
+		return tc_config_knode(priv, cls);
+	case TC_CLSU32_DELETE_KNODE:
+		return tc_delete_knode(priv, cls);
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल पूर्णांक tc_init(काष्ठा sपंचांगmac_priv *priv)
-अणु
-	काष्ठा dma_features *dma_cap = &priv->dma_cap;
-	अचिन्हित पूर्णांक count;
-	पूर्णांक i;
+static int tc_init(struct stmmac_priv *priv)
+{
+	struct dma_features *dma_cap = &priv->dma_cap;
+	unsigned int count;
+	int i;
 
-	अगर (dma_cap->l3l4fnum) अणु
+	if (dma_cap->l3l4fnum) {
 		priv->flow_entries_max = dma_cap->l3l4fnum;
-		priv->flow_entries = devm_kसुस्मृति(priv->device,
+		priv->flow_entries = devm_kcalloc(priv->device,
 						  dma_cap->l3l4fnum,
-						  माप(*priv->flow_entries),
+						  sizeof(*priv->flow_entries),
 						  GFP_KERNEL);
-		अगर (!priv->flow_entries)
-			वापस -ENOMEM;
+		if (!priv->flow_entries)
+			return -ENOMEM;
 
-		क्रम (i = 0; i < priv->flow_entries_max; i++)
+		for (i = 0; i < priv->flow_entries_max; i++)
 			priv->flow_entries[i].idx = i;
 
 		dev_info(priv->device, "Enabled Flow TC (entries=%d)\n",
 			 priv->flow_entries_max);
-	पूर्ण
+	}
 
-	अगर (!priv->plat->fpe_cfg) अणु
+	if (!priv->plat->fpe_cfg) {
 		priv->plat->fpe_cfg = devm_kzalloc(priv->device,
-						   माप(*priv->plat->fpe_cfg),
+						   sizeof(*priv->plat->fpe_cfg),
 						   GFP_KERNEL);
-		अगर (!priv->plat->fpe_cfg)
-			वापस -ENOMEM;
-	पूर्ण अन्यथा अणु
-		स_रखो(priv->plat->fpe_cfg, 0, माप(*priv->plat->fpe_cfg));
-	पूर्ण
+		if (!priv->plat->fpe_cfg)
+			return -ENOMEM;
+	} else {
+		memset(priv->plat->fpe_cfg, 0, sizeof(*priv->plat->fpe_cfg));
+	}
 
-	/* Fail silently as we can still use reमुख्यing features, e.g. CBS */
-	अगर (!dma_cap->frpsel)
-		वापस 0;
+	/* Fail silently as we can still use remaining features, e.g. CBS */
+	if (!dma_cap->frpsel)
+		return 0;
 
-	चयन (dma_cap->frpbs) अणु
-	हाल 0x0:
+	switch (dma_cap->frpbs) {
+	case 0x0:
 		priv->tc_off_max = 64;
-		अवरोध;
-	हाल 0x1:
+		break;
+	case 0x1:
 		priv->tc_off_max = 128;
-		अवरोध;
-	हाल 0x2:
+		break;
+	case 0x2:
 		priv->tc_off_max = 256;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	चयन (dma_cap->frpes) अणु
-	हाल 0x0:
+	switch (dma_cap->frpes) {
+	case 0x0:
 		count = 64;
-		अवरोध;
-	हाल 0x1:
+		break;
+	case 0x1:
 		count = 128;
-		अवरोध;
-	हाल 0x2:
+		break;
+	case 0x2:
 		count = 256;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	/* Reserve one last filter which lets all pass */
 	priv->tc_entries_max = count;
-	priv->tc_entries = devm_kसुस्मृति(priv->device,
-			count, माप(*priv->tc_entries), GFP_KERNEL);
-	अगर (!priv->tc_entries)
-		वापस -ENOMEM;
+	priv->tc_entries = devm_kcalloc(priv->device,
+			count, sizeof(*priv->tc_entries), GFP_KERNEL);
+	if (!priv->tc_entries)
+		return -ENOMEM;
 
 	tc_fill_all_pass_entry(&priv->tc_entries[count - 1]);
 
 	dev_info(priv->device, "Enabling HW TC (entries=%d, max_off=%d)\n",
 			priv->tc_entries_max, priv->tc_off_max);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tc_setup_cbs(काष्ठा sपंचांगmac_priv *priv,
-			काष्ठा tc_cbs_qopt_offload *qopt)
-अणु
+static int tc_setup_cbs(struct stmmac_priv *priv,
+			struct tc_cbs_qopt_offload *qopt)
+{
 	u32 tx_queues_count = priv->plat->tx_queues_to_use;
 	u32 queue = qopt->queue;
-	u32 ptr, speed_भाग;
+	u32 ptr, speed_div;
 	u32 mode_to_use;
 	u64 value;
-	पूर्णांक ret;
+	int ret;
 
 	/* Queue 0 is not AVB capable */
-	अगर (queue <= 0 || queue >= tx_queues_count)
-		वापस -EINVAL;
-	अगर (!priv->dma_cap.av)
-		वापस -EOPNOTSUPP;
+	if (queue <= 0 || queue >= tx_queues_count)
+		return -EINVAL;
+	if (!priv->dma_cap.av)
+		return -EOPNOTSUPP;
 
 	/* Port Transmit Rate and Speed Divider */
-	चयन (priv->speed) अणु
-	हाल SPEED_10000:
+	switch (priv->speed) {
+	case SPEED_10000:
 		ptr = 32;
-		speed_भाग = 10000000;
-		अवरोध;
-	हाल SPEED_5000:
+		speed_div = 10000000;
+		break;
+	case SPEED_5000:
 		ptr = 32;
-		speed_भाग = 5000000;
-		अवरोध;
-	हाल SPEED_2500:
+		speed_div = 5000000;
+		break;
+	case SPEED_2500:
 		ptr = 8;
-		speed_भाग = 2500000;
-		अवरोध;
-	हाल SPEED_1000:
+		speed_div = 2500000;
+		break;
+	case SPEED_1000:
 		ptr = 8;
-		speed_भाग = 1000000;
-		अवरोध;
-	हाल SPEED_100:
+		speed_div = 1000000;
+		break;
+	case SPEED_100:
 		ptr = 4;
-		speed_भाग = 100000;
-		अवरोध;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		speed_div = 100000;
+		break;
+	default:
+		return -EOPNOTSUPP;
+	}
 
 	mode_to_use = priv->plat->tx_queues_cfg[queue].mode_to_use;
-	अगर (mode_to_use == MTL_QUEUE_DCB && qopt->enable) अणु
-		ret = sपंचांगmac_dma_qmode(priv, priv->ioaddr, queue, MTL_QUEUE_AVB);
-		अगर (ret)
-			वापस ret;
+	if (mode_to_use == MTL_QUEUE_DCB && qopt->enable) {
+		ret = stmmac_dma_qmode(priv, priv->ioaddr, queue, MTL_QUEUE_AVB);
+		if (ret)
+			return ret;
 
 		priv->plat->tx_queues_cfg[queue].mode_to_use = MTL_QUEUE_AVB;
-	पूर्ण अन्यथा अगर (!qopt->enable) अणु
-		ret = sपंचांगmac_dma_qmode(priv, priv->ioaddr, queue,
+	} else if (!qopt->enable) {
+		ret = stmmac_dma_qmode(priv, priv->ioaddr, queue,
 				       MTL_QUEUE_DCB);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		priv->plat->tx_queues_cfg[queue].mode_to_use = MTL_QUEUE_DCB;
-	पूर्ण
+	}
 
-	/* Final adjusपंचांगents क्रम HW */
-	value = भाग_s64(qopt->idleslope * 1024ll * ptr, speed_भाग);
+	/* Final adjustments for HW */
+	value = div_s64(qopt->idleslope * 1024ll * ptr, speed_div);
 	priv->plat->tx_queues_cfg[queue].idle_slope = value & GENMASK(31, 0);
 
-	value = भाग_s64(-qopt->sendslope * 1024ll * ptr, speed_भाग);
+	value = div_s64(-qopt->sendslope * 1024ll * ptr, speed_div);
 	priv->plat->tx_queues_cfg[queue].send_slope = value & GENMASK(31, 0);
 
 	value = qopt->hicredit * 1024ll * 8;
@@ -383,528 +382,528 @@ err_unfill:
 	value = qopt->locredit * 1024ll * 8;
 	priv->plat->tx_queues_cfg[queue].low_credit = value & GENMASK(31, 0);
 
-	ret = sपंचांगmac_config_cbs(priv, priv->hw,
+	ret = stmmac_config_cbs(priv, priv->hw,
 				priv->plat->tx_queues_cfg[queue].send_slope,
 				priv->plat->tx_queues_cfg[queue].idle_slope,
 				priv->plat->tx_queues_cfg[queue].high_credit,
 				priv->plat->tx_queues_cfg[queue].low_credit,
 				queue);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	dev_info(priv->device, "CBS queue %d: send %d, idle %d, hi %d, lo %d\n",
 			queue, qopt->sendslope, qopt->idleslope,
 			qopt->hicredit, qopt->locredit);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tc_parse_flow_actions(काष्ठा sपंचांगmac_priv *priv,
-				 काष्ठा flow_action *action,
-				 काष्ठा sपंचांगmac_flow_entry *entry,
-				 काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा flow_action_entry *act;
-	पूर्णांक i;
+static int tc_parse_flow_actions(struct stmmac_priv *priv,
+				 struct flow_action *action,
+				 struct stmmac_flow_entry *entry,
+				 struct netlink_ext_ack *extack)
+{
+	struct flow_action_entry *act;
+	int i;
 
-	अगर (!flow_action_has_entries(action))
-		वापस -EINVAL;
+	if (!flow_action_has_entries(action))
+		return -EINVAL;
 
-	अगर (!flow_action_basic_hw_stats_check(action, extack))
-		वापस -EOPNOTSUPP;
+	if (!flow_action_basic_hw_stats_check(action, extack))
+		return -EOPNOTSUPP;
 
-	flow_action_क्रम_each(i, act, action) अणु
-		चयन (act->id) अणु
-		हाल FLOW_ACTION_DROP:
+	flow_action_for_each(i, act, action) {
+		switch (act->id) {
+		case FLOW_ACTION_DROP:
 			entry->action |= STMMAC_FLOW_ACTION_DROP;
-			वापस 0;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			return 0;
+		default:
+			break;
+		}
+	}
 
-	/* Nothing to करो, maybe inverse filter ? */
-	वापस 0;
-पूर्ण
+	/* Nothing to do, maybe inverse filter ? */
+	return 0;
+}
 
-अटल पूर्णांक tc_add_basic_flow(काष्ठा sपंचांगmac_priv *priv,
-			     काष्ठा flow_cls_offload *cls,
-			     काष्ठा sपंचांगmac_flow_entry *entry)
-अणु
-	काष्ठा flow_rule *rule = flow_cls_offload_flow_rule(cls);
-	काष्ठा flow_dissector *dissector = rule->match.dissector;
-	काष्ठा flow_match_basic match;
+static int tc_add_basic_flow(struct stmmac_priv *priv,
+			     struct flow_cls_offload *cls,
+			     struct stmmac_flow_entry *entry)
+{
+	struct flow_rule *rule = flow_cls_offload_flow_rule(cls);
+	struct flow_dissector *dissector = rule->match.dissector;
+	struct flow_match_basic match;
 
-	/* Nothing to करो here */
-	अगर (!dissector_uses_key(dissector, FLOW_DISSECTOR_KEY_BASIC))
-		वापस -EINVAL;
+	/* Nothing to do here */
+	if (!dissector_uses_key(dissector, FLOW_DISSECTOR_KEY_BASIC))
+		return -EINVAL;
 
 	flow_rule_match_basic(rule, &match);
 	entry->ip_proto = match.key->ip_proto;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tc_add_ip4_flow(काष्ठा sपंचांगmac_priv *priv,
-			   काष्ठा flow_cls_offload *cls,
-			   काष्ठा sपंचांगmac_flow_entry *entry)
-अणु
-	काष्ठा flow_rule *rule = flow_cls_offload_flow_rule(cls);
-	काष्ठा flow_dissector *dissector = rule->match.dissector;
+static int tc_add_ip4_flow(struct stmmac_priv *priv,
+			   struct flow_cls_offload *cls,
+			   struct stmmac_flow_entry *entry)
+{
+	struct flow_rule *rule = flow_cls_offload_flow_rule(cls);
+	struct flow_dissector *dissector = rule->match.dissector;
 	bool inv = entry->action & STMMAC_FLOW_ACTION_DROP;
-	काष्ठा flow_match_ipv4_addrs match;
+	struct flow_match_ipv4_addrs match;
 	u32 hw_match;
-	पूर्णांक ret;
+	int ret;
 
-	/* Nothing to करो here */
-	अगर (!dissector_uses_key(dissector, FLOW_DISSECTOR_KEY_IPV4_ADDRS))
-		वापस -EINVAL;
+	/* Nothing to do here */
+	if (!dissector_uses_key(dissector, FLOW_DISSECTOR_KEY_IPV4_ADDRS))
+		return -EINVAL;
 
 	flow_rule_match_ipv4_addrs(rule, &match);
 	hw_match = ntohl(match.key->src) & ntohl(match.mask->src);
-	अगर (hw_match) अणु
-		ret = sपंचांगmac_config_l3_filter(priv, priv->hw, entry->idx, true,
+	if (hw_match) {
+		ret = stmmac_config_l3_filter(priv, priv->hw, entry->idx, true,
 					      false, true, inv, hw_match);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	hw_match = ntohl(match.key->dst) & ntohl(match.mask->dst);
-	अगर (hw_match) अणु
-		ret = sपंचांगmac_config_l3_filter(priv, priv->hw, entry->idx, true,
+	if (hw_match) {
+		ret = stmmac_config_l3_filter(priv, priv->hw, entry->idx, true,
 					      false, false, inv, hw_match);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tc_add_ports_flow(काष्ठा sपंचांगmac_priv *priv,
-			     काष्ठा flow_cls_offload *cls,
-			     काष्ठा sपंचांगmac_flow_entry *entry)
-अणु
-	काष्ठा flow_rule *rule = flow_cls_offload_flow_rule(cls);
-	काष्ठा flow_dissector *dissector = rule->match.dissector;
+static int tc_add_ports_flow(struct stmmac_priv *priv,
+			     struct flow_cls_offload *cls,
+			     struct stmmac_flow_entry *entry)
+{
+	struct flow_rule *rule = flow_cls_offload_flow_rule(cls);
+	struct flow_dissector *dissector = rule->match.dissector;
 	bool inv = entry->action & STMMAC_FLOW_ACTION_DROP;
-	काष्ठा flow_match_ports match;
+	struct flow_match_ports match;
 	u32 hw_match;
 	bool is_udp;
-	पूर्णांक ret;
+	int ret;
 
-	/* Nothing to करो here */
-	अगर (!dissector_uses_key(dissector, FLOW_DISSECTOR_KEY_PORTS))
-		वापस -EINVAL;
+	/* Nothing to do here */
+	if (!dissector_uses_key(dissector, FLOW_DISSECTOR_KEY_PORTS))
+		return -EINVAL;
 
-	चयन (entry->ip_proto) अणु
-	हाल IPPROTO_TCP:
+	switch (entry->ip_proto) {
+	case IPPROTO_TCP:
 		is_udp = false;
-		अवरोध;
-	हाल IPPROTO_UDP:
+		break;
+	case IPPROTO_UDP:
 		is_udp = true;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	flow_rule_match_ports(rule, &match);
 
 	hw_match = ntohs(match.key->src) & ntohs(match.mask->src);
-	अगर (hw_match) अणु
-		ret = sपंचांगmac_config_l4_filter(priv, priv->hw, entry->idx, true,
+	if (hw_match) {
+		ret = stmmac_config_l4_filter(priv, priv->hw, entry->idx, true,
 					      is_udp, true, inv, hw_match);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	hw_match = ntohs(match.key->dst) & ntohs(match.mask->dst);
-	अगर (hw_match) अणु
-		ret = sपंचांगmac_config_l4_filter(priv, priv->hw, entry->idx, true,
+	if (hw_match) {
+		ret = stmmac_config_l4_filter(priv, priv->hw, entry->idx, true,
 					      is_udp, false, inv, hw_match);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	entry->is_l4 = true;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा sपंचांगmac_flow_entry *tc_find_flow(काष्ठा sपंचांगmac_priv *priv,
-					      काष्ठा flow_cls_offload *cls,
-					      bool get_मुक्त)
-अणु
-	पूर्णांक i;
+static struct stmmac_flow_entry *tc_find_flow(struct stmmac_priv *priv,
+					      struct flow_cls_offload *cls,
+					      bool get_free)
+{
+	int i;
 
-	क्रम (i = 0; i < priv->flow_entries_max; i++) अणु
-		काष्ठा sपंचांगmac_flow_entry *entry = &priv->flow_entries[i];
+	for (i = 0; i < priv->flow_entries_max; i++) {
+		struct stmmac_flow_entry *entry = &priv->flow_entries[i];
 
-		अगर (entry->cookie == cls->cookie)
-			वापस entry;
-		अगर (get_मुक्त && (entry->in_use == false))
-			वापस entry;
-	पूर्ण
+		if (entry->cookie == cls->cookie)
+			return entry;
+		if (get_free && (entry->in_use == false))
+			return entry;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा अणु
-	पूर्णांक (*fn)(काष्ठा sपंचांगmac_priv *priv, काष्ठा flow_cls_offload *cls,
-		  काष्ठा sपंचांगmac_flow_entry *entry);
-पूर्ण tc_flow_parsers[] = अणु
-	अणु .fn = tc_add_basic_flow पूर्ण,
-	अणु .fn = tc_add_ip4_flow पूर्ण,
-	अणु .fn = tc_add_ports_flow पूर्ण,
-पूर्ण;
+static struct {
+	int (*fn)(struct stmmac_priv *priv, struct flow_cls_offload *cls,
+		  struct stmmac_flow_entry *entry);
+} tc_flow_parsers[] = {
+	{ .fn = tc_add_basic_flow },
+	{ .fn = tc_add_ip4_flow },
+	{ .fn = tc_add_ports_flow },
+};
 
-अटल पूर्णांक tc_add_flow(काष्ठा sपंचांगmac_priv *priv,
-		       काष्ठा flow_cls_offload *cls)
-अणु
-	काष्ठा sपंचांगmac_flow_entry *entry = tc_find_flow(priv, cls, false);
-	काष्ठा flow_rule *rule = flow_cls_offload_flow_rule(cls);
-	पूर्णांक i, ret;
+static int tc_add_flow(struct stmmac_priv *priv,
+		       struct flow_cls_offload *cls)
+{
+	struct stmmac_flow_entry *entry = tc_find_flow(priv, cls, false);
+	struct flow_rule *rule = flow_cls_offload_flow_rule(cls);
+	int i, ret;
 
-	अगर (!entry) अणु
+	if (!entry) {
 		entry = tc_find_flow(priv, cls, true);
-		अगर (!entry)
-			वापस -ENOENT;
-	पूर्ण
+		if (!entry)
+			return -ENOENT;
+	}
 
 	ret = tc_parse_flow_actions(priv, &rule->action, entry,
 				    cls->common.extack);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	क्रम (i = 0; i < ARRAY_SIZE(tc_flow_parsers); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(tc_flow_parsers); i++) {
 		ret = tc_flow_parsers[i].fn(priv, cls, entry);
-		अगर (!ret) अणु
+		if (!ret) {
 			entry->in_use = true;
-			जारी;
-		पूर्ण
-	पूर्ण
+			continue;
+		}
+	}
 
-	अगर (!entry->in_use)
-		वापस -EINVAL;
+	if (!entry->in_use)
+		return -EINVAL;
 
 	entry->cookie = cls->cookie;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tc_del_flow(काष्ठा sपंचांगmac_priv *priv,
-		       काष्ठा flow_cls_offload *cls)
-अणु
-	काष्ठा sपंचांगmac_flow_entry *entry = tc_find_flow(priv, cls, false);
-	पूर्णांक ret;
+static int tc_del_flow(struct stmmac_priv *priv,
+		       struct flow_cls_offload *cls)
+{
+	struct stmmac_flow_entry *entry = tc_find_flow(priv, cls, false);
+	int ret;
 
-	अगर (!entry || !entry->in_use)
-		वापस -ENOENT;
+	if (!entry || !entry->in_use)
+		return -ENOENT;
 
-	अगर (entry->is_l4) अणु
-		ret = sपंचांगmac_config_l4_filter(priv, priv->hw, entry->idx, false,
+	if (entry->is_l4) {
+		ret = stmmac_config_l4_filter(priv, priv->hw, entry->idx, false,
 					      false, false, false, 0);
-	पूर्ण अन्यथा अणु
-		ret = sपंचांगmac_config_l3_filter(priv, priv->hw, entry->idx, false,
+	} else {
+		ret = stmmac_config_l3_filter(priv, priv->hw, entry->idx, false,
 					      false, false, false, 0);
-	पूर्ण
+	}
 
 	entry->in_use = false;
 	entry->cookie = 0;
 	entry->is_l4 = false;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#घोषणा VLAN_PRIO_FULL_MASK (0x07)
+#define VLAN_PRIO_FULL_MASK (0x07)
 
-अटल पूर्णांक tc_add_vlan_flow(काष्ठा sपंचांगmac_priv *priv,
-			    काष्ठा flow_cls_offload *cls)
-अणु
-	काष्ठा flow_rule *rule = flow_cls_offload_flow_rule(cls);
-	काष्ठा flow_dissector *dissector = rule->match.dissector;
-	पूर्णांक tc = tc_classid_to_hwtc(priv->dev, cls->classid);
-	काष्ठा flow_match_vlan match;
+static int tc_add_vlan_flow(struct stmmac_priv *priv,
+			    struct flow_cls_offload *cls)
+{
+	struct flow_rule *rule = flow_cls_offload_flow_rule(cls);
+	struct flow_dissector *dissector = rule->match.dissector;
+	int tc = tc_classid_to_hwtc(priv->dev, cls->classid);
+	struct flow_match_vlan match;
 
-	/* Nothing to करो here */
-	अगर (!dissector_uses_key(dissector, FLOW_DISSECTOR_KEY_VLAN))
-		वापस -EINVAL;
+	/* Nothing to do here */
+	if (!dissector_uses_key(dissector, FLOW_DISSECTOR_KEY_VLAN))
+		return -EINVAL;
 
-	अगर (tc < 0) अणु
+	if (tc < 0) {
 		netdev_err(priv->dev, "Invalid traffic class\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	flow_rule_match_vlan(rule, &match);
 
-	अगर (match.mask->vlan_priority) अणु
+	if (match.mask->vlan_priority) {
 		u32 prio;
 
-		अगर (match.mask->vlan_priority != VLAN_PRIO_FULL_MASK) अणु
+		if (match.mask->vlan_priority != VLAN_PRIO_FULL_MASK) {
 			netdev_err(priv->dev, "Only full mask is supported for VLAN priority");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		prio = BIT(match.key->vlan_priority);
-		sपंचांगmac_rx_queue_prio(priv, priv->hw, prio, tc);
-	पूर्ण
+		stmmac_rx_queue_prio(priv, priv->hw, prio, tc);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tc_del_vlan_flow(काष्ठा sपंचांगmac_priv *priv,
-			    काष्ठा flow_cls_offload *cls)
-अणु
-	काष्ठा flow_rule *rule = flow_cls_offload_flow_rule(cls);
-	काष्ठा flow_dissector *dissector = rule->match.dissector;
-	पूर्णांक tc = tc_classid_to_hwtc(priv->dev, cls->classid);
+static int tc_del_vlan_flow(struct stmmac_priv *priv,
+			    struct flow_cls_offload *cls)
+{
+	struct flow_rule *rule = flow_cls_offload_flow_rule(cls);
+	struct flow_dissector *dissector = rule->match.dissector;
+	int tc = tc_classid_to_hwtc(priv->dev, cls->classid);
 
-	/* Nothing to करो here */
-	अगर (!dissector_uses_key(dissector, FLOW_DISSECTOR_KEY_VLAN))
-		वापस -EINVAL;
+	/* Nothing to do here */
+	if (!dissector_uses_key(dissector, FLOW_DISSECTOR_KEY_VLAN))
+		return -EINVAL;
 
-	अगर (tc < 0) अणु
+	if (tc < 0) {
 		netdev_err(priv->dev, "Invalid traffic class\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	sपंचांगmac_rx_queue_prio(priv, priv->hw, 0, tc);
+	stmmac_rx_queue_prio(priv, priv->hw, 0, tc);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tc_add_flow_cls(काष्ठा sपंचांगmac_priv *priv,
-			   काष्ठा flow_cls_offload *cls)
-अणु
-	पूर्णांक ret;
+static int tc_add_flow_cls(struct stmmac_priv *priv,
+			   struct flow_cls_offload *cls)
+{
+	int ret;
 
 	ret = tc_add_flow(priv, cls);
-	अगर (!ret)
-		वापस ret;
+	if (!ret)
+		return ret;
 
-	वापस tc_add_vlan_flow(priv, cls);
-पूर्ण
+	return tc_add_vlan_flow(priv, cls);
+}
 
-अटल पूर्णांक tc_del_flow_cls(काष्ठा sपंचांगmac_priv *priv,
-			   काष्ठा flow_cls_offload *cls)
-अणु
-	पूर्णांक ret;
+static int tc_del_flow_cls(struct stmmac_priv *priv,
+			   struct flow_cls_offload *cls)
+{
+	int ret;
 
 	ret = tc_del_flow(priv, cls);
-	अगर (!ret)
-		वापस ret;
+	if (!ret)
+		return ret;
 
-	वापस tc_del_vlan_flow(priv, cls);
-पूर्ण
+	return tc_del_vlan_flow(priv, cls);
+}
 
-अटल पूर्णांक tc_setup_cls(काष्ठा sपंचांगmac_priv *priv,
-			काष्ठा flow_cls_offload *cls)
-अणु
-	पूर्णांक ret = 0;
+static int tc_setup_cls(struct stmmac_priv *priv,
+			struct flow_cls_offload *cls)
+{
+	int ret = 0;
 
 	/* When RSS is enabled, the filtering will be bypassed */
-	अगर (priv->rss.enable)
-		वापस -EBUSY;
+	if (priv->rss.enable)
+		return -EBUSY;
 
-	चयन (cls->command) अणु
-	हाल FLOW_CLS_REPLACE:
+	switch (cls->command) {
+	case FLOW_CLS_REPLACE:
 		ret = tc_add_flow_cls(priv, cls);
-		अवरोध;
-	हाल FLOW_CLS_DESTROY:
+		break;
+	case FLOW_CLS_DESTROY:
 		ret = tc_del_flow_cls(priv, cls);
-		अवरोध;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		break;
+	default:
+		return -EOPNOTSUPP;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक tc_setup_taprio(काष्ठा sपंचांगmac_priv *priv,
-			   काष्ठा tc_taprio_qopt_offload *qopt)
-अणु
+static int tc_setup_taprio(struct stmmac_priv *priv,
+			   struct tc_taprio_qopt_offload *qopt)
+{
 	u32 size, wid = priv->dma_cap.estwid, dep = priv->dma_cap.estdep;
-	काष्ठा plat_sपंचांगmacenet_data *plat = priv->plat;
-	काष्ठा बारpec64 समय, current_समय;
-	kसमय_प्रकार current_समय_ns;
+	struct plat_stmmacenet_data *plat = priv->plat;
+	struct timespec64 time, current_time;
+	ktime_t current_time_ns;
 	bool fpe = false;
-	पूर्णांक i, ret = 0;
+	int i, ret = 0;
 	u64 ctr;
 
-	अगर (!priv->dma_cap.estsel)
-		वापस -EOPNOTSUPP;
+	if (!priv->dma_cap.estsel)
+		return -EOPNOTSUPP;
 
-	चयन (wid) अणु
-	हाल 0x1:
+	switch (wid) {
+	case 0x1:
 		wid = 16;
-		अवरोध;
-	हाल 0x2:
+		break;
+	case 0x2:
 		wid = 20;
-		अवरोध;
-	हाल 0x3:
+		break;
+	case 0x3:
 		wid = 24;
-		अवरोध;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		break;
+	default:
+		return -EOPNOTSUPP;
+	}
 
-	चयन (dep) अणु
-	हाल 0x1:
+	switch (dep) {
+	case 0x1:
 		dep = 64;
-		अवरोध;
-	हाल 0x2:
+		break;
+	case 0x2:
 		dep = 128;
-		अवरोध;
-	हाल 0x3:
+		break;
+	case 0x3:
 		dep = 256;
-		अवरोध;
-	हाल 0x4:
+		break;
+	case 0x4:
 		dep = 512;
-		अवरोध;
-	हाल 0x5:
+		break;
+	case 0x5:
 		dep = 1024;
-		अवरोध;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		break;
+	default:
+		return -EOPNOTSUPP;
+	}
 
-	अगर (!qopt->enable)
-		जाओ disable;
-	अगर (qopt->num_entries >= dep)
-		वापस -EINVAL;
-	अगर (!qopt->base_समय)
-		वापस -दुस्फल;
-	अगर (!qopt->cycle_समय)
-		वापस -दुस्फल;
+	if (!qopt->enable)
+		goto disable;
+	if (qopt->num_entries >= dep)
+		return -EINVAL;
+	if (!qopt->base_time)
+		return -ERANGE;
+	if (!qopt->cycle_time)
+		return -ERANGE;
 
-	अगर (!plat->est) अणु
-		plat->est = devm_kzalloc(priv->device, माप(*plat->est),
+	if (!plat->est) {
+		plat->est = devm_kzalloc(priv->device, sizeof(*plat->est),
 					 GFP_KERNEL);
-		अगर (!plat->est)
-			वापस -ENOMEM;
-	पूर्ण अन्यथा अणु
-		स_रखो(plat->est, 0, माप(*plat->est));
-	पूर्ण
+		if (!plat->est)
+			return -ENOMEM;
+	} else {
+		memset(plat->est, 0, sizeof(*plat->est));
+	}
 
 	size = qopt->num_entries;
 
 	priv->plat->est->gcl_size = size;
 	priv->plat->est->enable = qopt->enable;
 
-	क्रम (i = 0; i < size; i++) अणु
-		s64 delta_ns = qopt->entries[i].पूर्णांकerval;
+	for (i = 0; i < size; i++) {
+		s64 delta_ns = qopt->entries[i].interval;
 		u32 gates = qopt->entries[i].gate_mask;
 
-		अगर (delta_ns > GENMASK(wid, 0))
-			वापस -दुस्फल;
-		अगर (gates > GENMASK(31 - wid, 0))
-			वापस -दुस्फल;
+		if (delta_ns > GENMASK(wid, 0))
+			return -ERANGE;
+		if (gates > GENMASK(31 - wid, 0))
+			return -ERANGE;
 
-		चयन (qopt->entries[i].command) अणु
-		हाल TC_TAPRIO_CMD_SET_GATES:
-			अगर (fpe)
-				वापस -EINVAL;
-			अवरोध;
-		हाल TC_TAPRIO_CMD_SET_AND_HOLD:
+		switch (qopt->entries[i].command) {
+		case TC_TAPRIO_CMD_SET_GATES:
+			if (fpe)
+				return -EINVAL;
+			break;
+		case TC_TAPRIO_CMD_SET_AND_HOLD:
 			gates |= BIT(0);
 			fpe = true;
-			अवरोध;
-		हाल TC_TAPRIO_CMD_SET_AND_RELEASE:
+			break;
+		case TC_TAPRIO_CMD_SET_AND_RELEASE:
 			gates &= ~BIT(0);
 			fpe = true;
-			अवरोध;
-		शेष:
-			वापस -EOPNOTSUPP;
-		पूर्ण
+			break;
+		default:
+			return -EOPNOTSUPP;
+		}
 
 		priv->plat->est->gcl[i] = delta_ns | (gates << wid);
-	पूर्ण
+	}
 
-	/* Adjust क्रम real प्रणाली समय */
-	priv->ptp_घड़ी_ops.समय_लो64(&priv->ptp_घड़ी_ops, &current_समय);
-	current_समय_ns = बारpec64_to_kसमय(current_समय);
-	अगर (kसमय_after(qopt->base_समय, current_समय_ns)) अणु
-		समय = kसमय_प्रकारo_बारpec64(qopt->base_समय);
-	पूर्ण अन्यथा अणु
-		kसमय_प्रकार base_समय;
+	/* Adjust for real system time */
+	priv->ptp_clock_ops.gettime64(&priv->ptp_clock_ops, &current_time);
+	current_time_ns = timespec64_to_ktime(current_time);
+	if (ktime_after(qopt->base_time, current_time_ns)) {
+		time = ktime_to_timespec64(qopt->base_time);
+	} else {
+		ktime_t base_time;
 		s64 n;
 
-		n = भाग64_s64(kसमय_sub_ns(current_समय_ns, qopt->base_समय),
-			      qopt->cycle_समय);
-		base_समय = kसमय_add_ns(qopt->base_समय,
-					 (n + 1) * qopt->cycle_समय);
+		n = div64_s64(ktime_sub_ns(current_time_ns, qopt->base_time),
+			      qopt->cycle_time);
+		base_time = ktime_add_ns(qopt->base_time,
+					 (n + 1) * qopt->cycle_time);
 
-		समय = kसमय_प्रकारo_बारpec64(base_समय);
-	पूर्ण
+		time = ktime_to_timespec64(base_time);
+	}
 
-	priv->plat->est->btr[0] = (u32)समय.tv_nsec;
-	priv->plat->est->btr[1] = (u32)समय.tv_sec;
+	priv->plat->est->btr[0] = (u32)time.tv_nsec;
+	priv->plat->est->btr[1] = (u32)time.tv_sec;
 
-	ctr = qopt->cycle_समय;
-	priv->plat->est->ctr[0] = करो_भाग(ctr, NSEC_PER_SEC);
+	ctr = qopt->cycle_time;
+	priv->plat->est->ctr[0] = do_div(ctr, NSEC_PER_SEC);
 	priv->plat->est->ctr[1] = (u32)ctr;
 
-	अगर (fpe && !priv->dma_cap.fpesel)
-		वापस -EOPNOTSUPP;
+	if (fpe && !priv->dma_cap.fpesel)
+		return -EOPNOTSUPP;
 
-	/* Actual FPE रेजिस्टर configuration will be करोne after FPE handshake
+	/* Actual FPE register configuration will be done after FPE handshake
 	 * is success.
 	 */
 	priv->plat->fpe_cfg->enable = fpe;
 
-	ret = sपंचांगmac_est_configure(priv, priv->ioaddr, priv->plat->est,
+	ret = stmmac_est_configure(priv, priv->ioaddr, priv->plat->est,
 				   priv->plat->clk_ptp_rate);
-	अगर (ret) अणु
+	if (ret) {
 		netdev_err(priv->dev, "failed to configure EST\n");
-		जाओ disable;
-	पूर्ण
+		goto disable;
+	}
 
 	netdev_info(priv->dev, "configured EST\n");
 
-	अगर (fpe) अणु
-		sपंचांगmac_fpe_handshake(priv, true);
+	if (fpe) {
+		stmmac_fpe_handshake(priv, true);
 		netdev_info(priv->dev, "start FPE handshake\n");
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 disable:
 	priv->plat->est->enable = false;
-	sपंचांगmac_est_configure(priv, priv->ioaddr, priv->plat->est,
+	stmmac_est_configure(priv, priv->ioaddr, priv->plat->est,
 			     priv->plat->clk_ptp_rate);
 
 	priv->plat->fpe_cfg->enable = false;
-	sपंचांगmac_fpe_configure(priv, priv->ioaddr,
+	stmmac_fpe_configure(priv, priv->ioaddr,
 			     priv->plat->tx_queues_to_use,
 			     priv->plat->rx_queues_to_use,
 			     false);
 	netdev_info(priv->dev, "disabled FPE\n");
 
-	sपंचांगmac_fpe_handshake(priv, false);
+	stmmac_fpe_handshake(priv, false);
 	netdev_info(priv->dev, "stop FPE handshake\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक tc_setup_etf(काष्ठा sपंचांगmac_priv *priv,
-			काष्ठा tc_etf_qopt_offload *qopt)
-अणु
-	अगर (!priv->dma_cap.tbssel)
-		वापस -EOPNOTSUPP;
-	अगर (qopt->queue >= priv->plat->tx_queues_to_use)
-		वापस -EINVAL;
-	अगर (!(priv->tx_queue[qopt->queue].tbs & STMMAC_TBS_AVAIL))
-		वापस -EINVAL;
+static int tc_setup_etf(struct stmmac_priv *priv,
+			struct tc_etf_qopt_offload *qopt)
+{
+	if (!priv->dma_cap.tbssel)
+		return -EOPNOTSUPP;
+	if (qopt->queue >= priv->plat->tx_queues_to_use)
+		return -EINVAL;
+	if (!(priv->tx_queue[qopt->queue].tbs & STMMAC_TBS_AVAIL))
+		return -EINVAL;
 
-	अगर (qopt->enable)
+	if (qopt->enable)
 		priv->tx_queue[qopt->queue].tbs |= STMMAC_TBS_EN;
-	अन्यथा
+	else
 		priv->tx_queue[qopt->queue].tbs &= ~STMMAC_TBS_EN;
 
 	netdev_info(priv->dev, "%s ETF for Queue %d\n",
 		    qopt->enable ? "enabled" : "disabled", qopt->queue);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा sपंचांगmac_tc_ops dwmac510_tc_ops = अणु
+const struct stmmac_tc_ops dwmac510_tc_ops = {
 	.init = tc_init,
 	.setup_cls_u32 = tc_setup_cls_u32,
 	.setup_cbs = tc_setup_cbs,
 	.setup_cls = tc_setup_cls,
 	.setup_taprio = tc_setup_taprio,
 	.setup_etf = tc_setup_etf,
-पूर्ण;
+};

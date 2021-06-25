@@ -1,126 +1,125 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _M68K_DELAY_H
-#घोषणा _M68K_DELAY_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _M68K_DELAY_H
+#define _M68K_DELAY_H
 
-#समावेश <यंत्र/param.h>
+#include <asm/param.h>
 
 /*
- * Copyright (C) 1994 Hamish Macकरोnald
+ * Copyright (C) 1994 Hamish Macdonald
  * Copyright (C) 2004 Greg Ungerer <gerg@uclinux.com>
  *
  * Delay routines, using a pre-computed "loops_per_jiffy" value.
  */
 
-#अगर defined(CONFIG_COLDFIRE)
+#if defined(CONFIG_COLDFIRE)
 /*
- * The ColdFire runs the delay loop at signअगरicantly dअगरferent speeds
- * depending upon दीर्घ word alignment or not.  We'll pad it to
- * दीर्घ word alignment which is the faster version.
- * The 0x4a8e is of course a 'tstl %fp' inकाष्ठाion.  This is better
- * than using a NOP (0x4e71) inकाष्ठाion because it executes in one
- * cycle not three and करोesn't allow क्रम an arbitrary delay रुकोing
- * क्रम bus cycles to finish.  Also fp/a6 isn't likely to cause a
- * stall रुकोing क्रम the रेजिस्टर to become valid अगर such is added
+ * The ColdFire runs the delay loop at significantly different speeds
+ * depending upon long word alignment or not.  We'll pad it to
+ * long word alignment which is the faster version.
+ * The 0x4a8e is of course a 'tstl %fp' instruction.  This is better
+ * than using a NOP (0x4e71) instruction because it executes in one
+ * cycle not three and doesn't allow for an arbitrary delay waiting
+ * for bus cycles to finish.  Also fp/a6 isn't likely to cause a
+ * stall waiting for the register to become valid if such is added
  * to the coldfire at some stage.
  */
-#घोषणा	DELAY_ALIGN	".balignw 4, 0x4a8e\n\t"
-#अन्यथा
+#define	DELAY_ALIGN	".balignw 4, 0x4a8e\n\t"
+#else
 /*
- * No inकाष्ठाion alignment required क्रम other m68k types.
+ * No instruction alignment required for other m68k types.
  */
-#घोषणा	DELAY_ALIGN
-#पूर्ण_अगर
+#define	DELAY_ALIGN
+#endif
 
-अटल अंतरभूत व्योम __delay(अचिन्हित दीर्घ loops)
-अणु
-	__यंत्र__ __अस्थिर__ (
+static inline void __delay(unsigned long loops)
+{
+	__asm__ __volatile__ (
 		DELAY_ALIGN
 		"1: subql #1,%0\n\t"
 		"jcc 1b"
 		: "=d" (loops)
 		: "0" (loops));
-पूर्ण
+}
 
-बाह्य व्योम __bad_udelay(व्योम);
+extern void __bad_udelay(void);
 
 
-#अगर_घोषित CONFIG_CPU_HAS_NO_MULDIV64
+#ifdef CONFIG_CPU_HAS_NO_MULDIV64
 /*
- * The simpler m68k and ColdFire processors करो not have a 32*32->64
- * multiply inकाष्ठाion. So we need to handle them a little dअगरferently.
- * We use a bit of shअगरting and a single 32*32->32 multiply to get बंद.
+ * The simpler m68k and ColdFire processors do not have a 32*32->64
+ * multiply instruction. So we need to handle them a little differently.
+ * We use a bit of shifting and a single 32*32->32 multiply to get close.
  */
-#घोषणा	HZSCALE		(268435456 / (1000000 / HZ))
+#define	HZSCALE		(268435456 / (1000000 / HZ))
 
-#घोषणा	__स्थिर_udelay(u) \
-	__delay(((((u) * HZSCALE) >> 11) * (loops_per_jअगरfy >> 11)) >> 6)
+#define	__const_udelay(u) \
+	__delay(((((u) * HZSCALE) >> 11) * (loops_per_jiffy >> 11)) >> 6)
 
-#अन्यथा
+#else
 
-अटल अंतरभूत व्योम __xdelay(अचिन्हित दीर्घ xloops)
-अणु
-	अचिन्हित दीर्घ पंचांगp;
+static inline void __xdelay(unsigned long xloops)
+{
+	unsigned long tmp;
 
-	__यंत्र__ ("mulul %2,%0:%1"
-		: "=d" (xloops), "=d" (पंचांगp)
-		: "d" (xloops), "1" (loops_per_jअगरfy));
+	__asm__ ("mulul %2,%0:%1"
+		: "=d" (xloops), "=d" (tmp)
+		: "d" (xloops), "1" (loops_per_jiffy));
 	__delay(xloops * HZ);
-पूर्ण
+}
 
 /*
- * The definition of __स्थिर_udelay is specअगरically made a macro so that
- * the स्थिर factor (4295 = 2**32 / 1000000) can be optimized out when
- * the delay is a स्थिर.
+ * The definition of __const_udelay is specifically made a macro so that
+ * the const factor (4295 = 2**32 / 1000000) can be optimized out when
+ * the delay is a const.
  */
-#घोषणा	__स्थिर_udelay(n)	(__xdelay((n) * 4295))
+#define	__const_udelay(n)	(__xdelay((n) * 4295))
 
-#पूर्ण_अगर
+#endif
 
-अटल अंतरभूत व्योम __udelay(अचिन्हित दीर्घ usecs)
-अणु
-	__स्थिर_udelay(usecs);
-पूर्ण
+static inline void __udelay(unsigned long usecs)
+{
+	__const_udelay(usecs);
+}
 
 /*
- * Use only क्रम very small delays ( < 1 msec).  Should probably use a
- * lookup table, really, as the multiplications take much too दीर्घ with
- * लघु delays.  This is a "reasonable" implementation, though (and the
- * first स्थिरant multiplications माला_लो optimized away अगर the delay is
- * a स्थिरant)
+ * Use only for very small delays ( < 1 msec).  Should probably use a
+ * lookup table, really, as the multiplications take much too long with
+ * short delays.  This is a "reasonable" implementation, though (and the
+ * first constant multiplications gets optimized away if the delay is
+ * a constant)
  */
-#घोषणा udelay(n) (__builtin_स्थिरant_p(n) ? \
-	((n) > 20000 ? __bad_udelay() : __स्थिर_udelay(n)) : __udelay(n))
+#define udelay(n) (__builtin_constant_p(n) ? \
+	((n) > 20000 ? __bad_udelay() : __const_udelay(n)) : __udelay(n))
 
 /*
  * nanosecond delay:
  *
- * ((((HZSCALE) >> 11) * (loops_per_jअगरfy >> 11)) >> 6) is the number of loops
+ * ((((HZSCALE) >> 11) * (loops_per_jiffy >> 11)) >> 6) is the number of loops
  * per microsecond
  *
- * 1000 / ((((HZSCALE) >> 11) * (loops_per_jअगरfy >> 11)) >> 6) is the number of
+ * 1000 / ((((HZSCALE) >> 11) * (loops_per_jiffy >> 11)) >> 6) is the number of
  * nanoseconds per loop
  *
- * So n / ( 1000 / ((((HZSCALE) >> 11) * (loops_per_jअगरfy >> 11)) >> 6) ) would
- * be the number of loops क्रम n nanoseconds
+ * So n / ( 1000 / ((((HZSCALE) >> 11) * (loops_per_jiffy >> 11)) >> 6) ) would
+ * be the number of loops for n nanoseconds
  */
 
 /*
- * The simpler m68k and ColdFire processors करो not have a 32*32->64
- * multiply inकाष्ठाion. So we need to handle them a little dअगरferently.
- * We use a bit of shअगरting and a single 32*32->32 multiply to get बंद.
- * This is a macro so that the स्थिर version can factor out the first
- * multiply and shअगरt.
+ * The simpler m68k and ColdFire processors do not have a 32*32->64
+ * multiply instruction. So we need to handle them a little differently.
+ * We use a bit of shifting and a single 32*32->32 multiply to get close.
+ * This is a macro so that the const version can factor out the first
+ * multiply and shift.
  */
-#घोषणा	HZSCALE		(268435456 / (1000000 / HZ))
+#define	HZSCALE		(268435456 / (1000000 / HZ))
 
-अटल अंतरभूत व्योम ndelay(अचिन्हित दीर्घ nsec)
-अणु
+static inline void ndelay(unsigned long nsec)
+{
 	__delay(DIV_ROUND_UP(nsec *
 			     ((((HZSCALE) >> 11) *
-			       (loops_per_jअगरfy >> 11)) >> 6),
+			       (loops_per_jiffy >> 11)) >> 6),
 			     1000));
-पूर्ण
-#घोषणा ndelay(n) ndelay(n)
+}
+#define ndelay(n) ndelay(n)
 
-#पूर्ण_अगर /* defined(_M68K_DELAY_H) */
+#endif /* defined(_M68K_DELAY_H) */

@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Cache operations
  *
@@ -8,15 +7,15 @@
  * Copyright (C) 2003 John Williams <jwilliams@itee.uq.edu.au>
  */
 
-#अगर_अघोषित _ASM_MICROBLAZE_CACHE_H
-#घोषणा _ASM_MICROBLAZE_CACHE_H
+#ifndef _ASM_MICROBLAZE_CACHE_H
+#define _ASM_MICROBLAZE_CACHE_H
 
-#समावेश <यंत्र/रेजिस्टरs.h>
+#include <asm/registers.h>
 
-#घोषणा L1_CACHE_SHIFT 5
+#define L1_CACHE_SHIFT 5
 /* word-granular cache in microblaze */
-#घोषणा L1_CACHE_BYTES	(1 << L1_CACHE_SHIFT)
+#define L1_CACHE_BYTES	(1 << L1_CACHE_SHIFT)
 
-#घोषणा SMP_CACHE_BYTES	L1_CACHE_BYTES
+#define SMP_CACHE_BYTES	L1_CACHE_BYTES
 
-#पूर्ण_अगर /* _ASM_MICROBLAZE_CACHE_H */
+#endif /* _ASM_MICROBLAZE_CACHE_H */

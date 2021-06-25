@@ -1,28 +1,27 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2004, 2007-2010, 2011-2012 Synopsys, Inc. (www.synopsys.com)
  */
 
-#अगर_अघोषित _ASM_ARC_UNALIGNED_H
-#घोषणा _ASM_ARC_UNALIGNED_H
+#ifndef _ASM_ARC_UNALIGNED_H
+#define _ASM_ARC_UNALIGNED_H
 
 /* ARC700 can't handle unaligned Data accesses. */
 
-#समावेश <यंत्र-generic/unaligned.h>
-#समावेश <यंत्र/ptrace.h>
+#include <asm-generic/unaligned.h>
+#include <asm/ptrace.h>
 
-#अगर_घोषित CONFIG_ARC_EMUL_UNALIGNED
-पूर्णांक misaligned_fixup(अचिन्हित दीर्घ address, काष्ठा pt_regs *regs,
-		     काष्ठा callee_regs *cregs);
-#अन्यथा
-अटल अंतरभूत पूर्णांक
-misaligned_fixup(अचिन्हित दीर्घ address, काष्ठा pt_regs *regs,
-		 काष्ठा callee_regs *cregs)
-अणु
+#ifdef CONFIG_ARC_EMUL_UNALIGNED
+int misaligned_fixup(unsigned long address, struct pt_regs *regs,
+		     struct callee_regs *cregs);
+#else
+static inline int
+misaligned_fixup(unsigned long address, struct pt_regs *regs,
+		 struct callee_regs *cregs)
+{
 	/* Not fixed */
-	वापस 1;
-पूर्ण
-#पूर्ण_अगर
+	return 1;
+}
+#endif
 
-#पूर्ण_अगर /* _ASM_ARC_UNALIGNED_H */
+#endif /* _ASM_ARC_UNALIGNED_H */

@@ -1,32 +1,31 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) ST-Ericsson SA 2010
- * Author: Shujuan Chen <shujuan.chen@stericsson.com> क्रम ST-Ericsson.
- * Author: Jonas Linde <jonas.linde@stericsson.com> क्रम ST-Ericsson.
- * Author: Joakim Bech <joakim.xx.bech@stericsson.com> क्रम ST-Ericsson.
- * Author: Berne Hebark <berne.herbark@stericsson.com> क्रम ST-Ericsson.
- * Author: Niklas Hernaeus <niklas.hernaeus@stericsson.com> क्रम ST-Ericsson.
+ * Author: Shujuan Chen <shujuan.chen@stericsson.com> for ST-Ericsson.
+ * Author: Jonas Linde <jonas.linde@stericsson.com> for ST-Ericsson.
+ * Author: Joakim Bech <joakim.xx.bech@stericsson.com> for ST-Ericsson.
+ * Author: Berne Hebark <berne.herbark@stericsson.com> for ST-Ericsson.
+ * Author: Niklas Hernaeus <niklas.hernaeus@stericsson.com> for ST-Ericsson.
  */
 
-#अगर_अघोषित _CRYP_IRQ_H_
-#घोषणा _CRYP_IRQ_H_
+#ifndef _CRYP_IRQ_H_
+#define _CRYP_IRQ_H_
 
-#समावेश "cryp.h"
+#include "cryp.h"
 
-क्रमागत cryp_irq_src_id अणु
+enum cryp_irq_src_id {
 	CRYP_IRQ_SRC_INPUT_FIFO = 0x1,
 	CRYP_IRQ_SRC_OUTPUT_FIFO = 0x2,
 	CRYP_IRQ_SRC_ALL = 0x3
-पूर्ण;
+};
 
 /*
  * M0 Funtions
  */
-व्योम cryp_enable_irq_src(काष्ठा cryp_device_data *device_data, u32 irq_src);
+void cryp_enable_irq_src(struct cryp_device_data *device_data, u32 irq_src);
 
-व्योम cryp_disable_irq_src(काष्ठा cryp_device_data *device_data, u32 irq_src);
+void cryp_disable_irq_src(struct cryp_device_data *device_data, u32 irq_src);
 
-bool cryp_pending_irq_src(काष्ठा cryp_device_data *device_data, u32 irq_src);
+bool cryp_pending_irq_src(struct cryp_device_data *device_data, u32 irq_src);
 
-#पूर्ण_अगर				/* _CRYP_IRQ_H_ */
+#endif				/* _CRYP_IRQ_H_ */

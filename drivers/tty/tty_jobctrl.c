@@ -1,108 +1,107 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/संकेत.स>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/sched/task.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/fcntl.h>
-#समावेश <linux/uaccess.h>
-#समावेश "tty.h"
+#include <linux/types.h>
+#include <linux/errno.h>
+#include <linux/signal.h>
+#include <linux/sched/signal.h>
+#include <linux/sched/task.h>
+#include <linux/tty.h>
+#include <linux/fcntl.h>
+#include <linux/uaccess.h>
+#include "tty.h"
 
-अटल पूर्णांक is_ignored(पूर्णांक sig)
-अणु
-	वापस (sigismember(&current->blocked, sig) ||
-		current->sighand->action[sig-1].sa.sa_handler == संक_छोड़ो);
-पूर्ण
+static int is_ignored(int sig)
+{
+	return (sigismember(&current->blocked, sig) ||
+		current->sighand->action[sig-1].sa.sa_handler == SIG_IGN);
+}
 
 /**
- *	tty_check_change	-	check क्रम POSIX terminal changes
+ *	tty_check_change	-	check for POSIX terminal changes
  *	@tty: tty to check
- *	@sig: संकेत to send
+ *	@sig: signal to send
  *
- *	If we try to ग_लिखो to, or set the state of, a terminal and we're
- *	not in the क्रमeground, send a SIGTTOU.  If the संकेत is blocked or
- *	ignored, go ahead and perक्रमm the operation.  (POSIX 7.2)
+ *	If we try to write to, or set the state of, a terminal and we're
+ *	not in the foreground, send a SIGTTOU.  If the signal is blocked or
+ *	ignored, go ahead and perform the operation.  (POSIX 7.2)
  *
  *	Locking: ctrl_lock
  */
-पूर्णांक __tty_check_change(काष्ठा tty_काष्ठा *tty, पूर्णांक sig)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा pid *pgrp, *tty_pgrp;
-	पूर्णांक ret = 0;
+int __tty_check_change(struct tty_struct *tty, int sig)
+{
+	unsigned long flags;
+	struct pid *pgrp, *tty_pgrp;
+	int ret = 0;
 
-	अगर (current->संकेत->tty != tty)
-		वापस 0;
+	if (current->signal->tty != tty)
+		return 0;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	pgrp = task_pgrp(current);
 
 	spin_lock_irqsave(&tty->ctrl_lock, flags);
 	tty_pgrp = tty->pgrp;
 	spin_unlock_irqrestore(&tty->ctrl_lock, flags);
 
-	अगर (tty_pgrp && pgrp != tty_pgrp) अणु
-		अगर (is_ignored(sig)) अणु
-			अगर (sig == SIGTTIN)
+	if (tty_pgrp && pgrp != tty_pgrp) {
+		if (is_ignored(sig)) {
+			if (sig == SIGTTIN)
 				ret = -EIO;
-		पूर्ण अन्यथा अगर (is_current_pgrp_orphaned())
+		} else if (is_current_pgrp_orphaned())
 			ret = -EIO;
-		अन्यथा अणु
-			समाप्त_pgrp(pgrp, sig, 1);
-			set_thपढ़ो_flag(TIF_SIGPENDING);
+		else {
+			kill_pgrp(pgrp, sig, 1);
+			set_thread_flag(TIF_SIGPENDING);
 			ret = -ERESTARTSYS;
-		पूर्ण
-	पूर्ण
-	rcu_पढ़ो_unlock();
+		}
+	}
+	rcu_read_unlock();
 
-	अगर (!tty_pgrp)
+	if (!tty_pgrp)
 		tty_warn(tty, "sig=%d, tty->pgrp == NULL!\n", sig);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक tty_check_change(काष्ठा tty_काष्ठा *tty)
-अणु
-	वापस __tty_check_change(tty, SIGTTOU);
-पूर्ण
+int tty_check_change(struct tty_struct *tty)
+{
+	return __tty_check_change(tty, SIGTTOU);
+}
 EXPORT_SYMBOL(tty_check_change);
 
-व्योम proc_clear_tty(काष्ठा task_काष्ठा *p)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा tty_काष्ठा *tty;
+void proc_clear_tty(struct task_struct *p)
+{
+	unsigned long flags;
+	struct tty_struct *tty;
 
 	spin_lock_irqsave(&p->sighand->siglock, flags);
-	tty = p->संकेत->tty;
-	p->संकेत->tty = शून्य;
+	tty = p->signal->tty;
+	p->signal->tty = NULL;
 	spin_unlock_irqrestore(&p->sighand->siglock, flags);
 	tty_kref_put(tty);
-पूर्ण
+}
 
 /**
  * proc_set_tty -  set the controlling terminal
- *	@tty: tty काष्ठाure
+ *	@tty: tty structure
  *
- * Only callable by the session leader and only अगर it करोes not alपढ़ोy have
+ * Only callable by the session leader and only if it does not already have
  * a controlling terminal.
  *
  * Caller must hold:  tty_lock()
- *		      a पढ़ोlock on tasklist_lock
+ *		      a readlock on tasklist_lock
  *		      sighand lock
  */
-अटल व्योम __proc_set_tty(काष्ठा tty_काष्ठा *tty)
-अणु
-	अचिन्हित दीर्घ flags;
+static void __proc_set_tty(struct tty_struct *tty)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&tty->ctrl_lock, flags);
 	/*
-	 * The session and fg pgrp references will be non-शून्य अगर
+	 * The session and fg pgrp references will be non-NULL if
 	 * tiocsctty() is stealing the controlling tty
 	 */
 	put_pid(tty->session);
@@ -110,478 +109,478 @@ EXPORT_SYMBOL(tty_check_change);
 	tty->pgrp = get_pid(task_pgrp(current));
 	tty->session = get_pid(task_session(current));
 	spin_unlock_irqrestore(&tty->ctrl_lock, flags);
-	अगर (current->संकेत->tty) अणु
+	if (current->signal->tty) {
 		tty_debug(tty, "current tty %s not NULL!!\n",
-			  current->संकेत->tty->name);
-		tty_kref_put(current->संकेत->tty);
-	पूर्ण
-	put_pid(current->संकेत->tty_old_pgrp);
-	current->संकेत->tty = tty_kref_get(tty);
-	current->संकेत->tty_old_pgrp = शून्य;
-पूर्ण
+			  current->signal->tty->name);
+		tty_kref_put(current->signal->tty);
+	}
+	put_pid(current->signal->tty_old_pgrp);
+	current->signal->tty = tty_kref_get(tty);
+	current->signal->tty_old_pgrp = NULL;
+}
 
-अटल व्योम proc_set_tty(काष्ठा tty_काष्ठा *tty)
-अणु
+static void proc_set_tty(struct tty_struct *tty)
+{
 	spin_lock_irq(&current->sighand->siglock);
 	__proc_set_tty(tty);
 	spin_unlock_irq(&current->sighand->siglock);
-पूर्ण
+}
 
 /*
- * Called by tty_खोलो() to set the controlling tty अगर applicable.
+ * Called by tty_open() to set the controlling tty if applicable.
  */
-व्योम tty_खोलो_proc_set_tty(काष्ठा file *filp, काष्ठा tty_काष्ठा *tty)
-अणु
-	पढ़ो_lock(&tasklist_lock);
+void tty_open_proc_set_tty(struct file *filp, struct tty_struct *tty)
+{
+	read_lock(&tasklist_lock);
 	spin_lock_irq(&current->sighand->siglock);
-	अगर (current->संकेत->leader &&
-	    !current->संकेत->tty &&
-	    tty->session == शून्य) अणु
+	if (current->signal->leader &&
+	    !current->signal->tty &&
+	    tty->session == NULL) {
 		/*
-		 * Don't let a process that only has ग_लिखो access to the tty
+		 * Don't let a process that only has write access to the tty
 		 * obtain the privileges associated with having a tty as
-		 * controlling terminal (being able to reखोलो it with full
-		 * access through /dev/tty, being able to perक्रमm pushback).
+		 * controlling terminal (being able to reopen it with full
+		 * access through /dev/tty, being able to perform pushback).
 		 * Many distributions set the group of all ttys to "tty" and
-		 * grant ग_लिखो-only access to all terminals क्रम setgid tty
+		 * grant write-only access to all terminals for setgid tty
 		 * binaries, which should not imply full privileges on all ttys.
 		 *
-		 * This could theoretically अवरोध old code that perक्रमms खोलो()
-		 * on a ग_लिखो-only file descriptor. In that हाल, it might be
-		 * necessary to also permit this अगर
+		 * This could theoretically break old code that performs open()
+		 * on a write-only file descriptor. In that case, it might be
+		 * necessary to also permit this if
 		 * inode_permission(inode, MAY_READ) == 0.
 		 */
-		अगर (filp->f_mode & FMODE_READ)
+		if (filp->f_mode & FMODE_READ)
 			__proc_set_tty(tty);
-	पूर्ण
+	}
 	spin_unlock_irq(&current->sighand->siglock);
-	पढ़ो_unlock(&tasklist_lock);
-पूर्ण
+	read_unlock(&tasklist_lock);
+}
 
-काष्ठा tty_काष्ठा *get_current_tty(व्योम)
-अणु
-	काष्ठा tty_काष्ठा *tty;
-	अचिन्हित दीर्घ flags;
+struct tty_struct *get_current_tty(void)
+{
+	struct tty_struct *tty;
+	unsigned long flags;
 
 	spin_lock_irqsave(&current->sighand->siglock, flags);
-	tty = tty_kref_get(current->संकेत->tty);
+	tty = tty_kref_get(current->signal->tty);
 	spin_unlock_irqrestore(&current->sighand->siglock, flags);
-	वापस tty;
-पूर्ण
+	return tty;
+}
 EXPORT_SYMBOL_GPL(get_current_tty);
 
 /*
  * Called from tty_release().
  */
-व्योम session_clear_tty(काष्ठा pid *session)
-अणु
-	काष्ठा task_काष्ठा *p;
+void session_clear_tty(struct pid *session)
+{
+	struct task_struct *p;
 
-	करो_each_pid_task(session, PIDTYPE_SID, p) अणु
+	do_each_pid_task(session, PIDTYPE_SID, p) {
 		proc_clear_tty(p);
-	पूर्ण जबतक_each_pid_task(session, PIDTYPE_SID, p);
-पूर्ण
+	} while_each_pid_task(session, PIDTYPE_SID, p);
+}
 
 /**
- *	tty_संकेत_session_leader	- sends SIGHUP to session leader
+ *	tty_signal_session_leader	- sends SIGHUP to session leader
  *	@tty: controlling tty
- *	@निकास_session: अगर non-zero, संकेत all क्रमeground group processes
+ *	@exit_session: if non-zero, signal all foreground group processes
  *
  *	Send SIGHUP and SIGCONT to the session leader and its process group.
- *	Optionally, संकेत all processes in the क्रमeground process group.
+ *	Optionally, signal all processes in the foreground process group.
  *
  *	Returns the number of processes in the session with this tty
  *	as their controlling terminal. This value is used to drop
- *	tty references क्रम those processes.
+ *	tty references for those processes.
  */
-पूर्णांक tty_संकेत_session_leader(काष्ठा tty_काष्ठा *tty, पूर्णांक निकास_session)
-अणु
-	काष्ठा task_काष्ठा *p;
-	पूर्णांक refs = 0;
-	काष्ठा pid *tty_pgrp = शून्य;
+int tty_signal_session_leader(struct tty_struct *tty, int exit_session)
+{
+	struct task_struct *p;
+	int refs = 0;
+	struct pid *tty_pgrp = NULL;
 
-	पढ़ो_lock(&tasklist_lock);
-	अगर (tty->session) अणु
-		करो_each_pid_task(tty->session, PIDTYPE_SID, p) अणु
+	read_lock(&tasklist_lock);
+	if (tty->session) {
+		do_each_pid_task(tty->session, PIDTYPE_SID, p) {
 			spin_lock_irq(&p->sighand->siglock);
-			अगर (p->संकेत->tty == tty) अणु
-				p->संकेत->tty = शून्य;
+			if (p->signal->tty == tty) {
+				p->signal->tty = NULL;
 				/*
 				 * We defer the dereferences outside of
 				 * the tasklist lock.
 				 */
 				refs++;
-			पूर्ण
-			अगर (!p->संकेत->leader) अणु
+			}
+			if (!p->signal->leader) {
 				spin_unlock_irq(&p->sighand->siglock);
-				जारी;
-			पूर्ण
+				continue;
+			}
 			__group_send_sig_info(SIGHUP, SEND_SIG_PRIV, p);
 			__group_send_sig_info(SIGCONT, SEND_SIG_PRIV, p);
-			put_pid(p->संकेत->tty_old_pgrp);  /* A noop */
+			put_pid(p->signal->tty_old_pgrp);  /* A noop */
 			spin_lock(&tty->ctrl_lock);
 			tty_pgrp = get_pid(tty->pgrp);
-			अगर (tty->pgrp)
-				p->संकेत->tty_old_pgrp = get_pid(tty->pgrp);
+			if (tty->pgrp)
+				p->signal->tty_old_pgrp = get_pid(tty->pgrp);
 			spin_unlock(&tty->ctrl_lock);
 			spin_unlock_irq(&p->sighand->siglock);
-		पूर्ण जबतक_each_pid_task(tty->session, PIDTYPE_SID, p);
-	पूर्ण
-	पढ़ो_unlock(&tasklist_lock);
+		} while_each_pid_task(tty->session, PIDTYPE_SID, p);
+	}
+	read_unlock(&tasklist_lock);
 
-	अगर (tty_pgrp) अणु
-		अगर (निकास_session)
-			समाप्त_pgrp(tty_pgrp, SIGHUP, निकास_session);
+	if (tty_pgrp) {
+		if (exit_session)
+			kill_pgrp(tty_pgrp, SIGHUP, exit_session);
 		put_pid(tty_pgrp);
-	पूर्ण
+	}
 
-	वापस refs;
-पूर्ण
+	return refs;
+}
 
 /**
  *	disassociate_ctty	-	disconnect controlling tty
- *	@on_निकास: true अगर निकासing so need to "hang up" the session
+ *	@on_exit: true if exiting so need to "hang up" the session
  *
  *	This function is typically called only by the session leader, when
  *	it wants to disassociate itself from its controlling tty.
  *
- *	It perक्रमms the following functions:
- *	(1)  Sends a SIGHUP and SIGCONT to the क्रमeground process group
+ *	It performs the following functions:
+ *	(1)  Sends a SIGHUP and SIGCONT to the foreground process group
  *	(2)  Clears the tty from being controlling the session
- *	(3)  Clears the controlling tty क्रम all processes in the
+ *	(3)  Clears the controlling tty for all processes in the
  *		session group.
  *
- *	The argument on_निकास is set to 1 अगर called when a process is
- *	निकासing; it is 0 अगर called by the ioctl TIOCNOTTY.
+ *	The argument on_exit is set to 1 if called when a process is
+ *	exiting; it is 0 if called by the ioctl TIOCNOTTY.
  *
  *	Locking:
- *		BTM is taken क्रम hysterical raisons, and held when
+ *		BTM is taken for hysterical raisons, and held when
  *		  called from no_tty().
  *		  tty_mutex is taken to protect tty
- *		  ->siglock is taken to protect ->संकेत/->sighand
- *		  tasklist_lock is taken to walk process list क्रम sessions
- *		    ->siglock is taken to protect ->संकेत/->sighand
+ *		  ->siglock is taken to protect ->signal/->sighand
+ *		  tasklist_lock is taken to walk process list for sessions
+ *		    ->siglock is taken to protect ->signal/->sighand
  */
-व्योम disassociate_ctty(पूर्णांक on_निकास)
-अणु
-	काष्ठा tty_काष्ठा *tty;
+void disassociate_ctty(int on_exit)
+{
+	struct tty_struct *tty;
 
-	अगर (!current->संकेत->leader)
-		वापस;
+	if (!current->signal->leader)
+		return;
 
 	tty = get_current_tty();
-	अगर (tty) अणु
-		अगर (on_निकास && tty->driver->type != TTY_DRIVER_TYPE_PTY) अणु
+	if (tty) {
+		if (on_exit && tty->driver->type != TTY_DRIVER_TYPE_PTY) {
 			tty_vhangup_session(tty);
-		पूर्ण अन्यथा अणु
-			काष्ठा pid *tty_pgrp = tty_get_pgrp(tty);
+		} else {
+			struct pid *tty_pgrp = tty_get_pgrp(tty);
 
-			अगर (tty_pgrp) अणु
-				समाप्त_pgrp(tty_pgrp, SIGHUP, on_निकास);
-				अगर (!on_निकास)
-					समाप्त_pgrp(tty_pgrp, SIGCONT, on_निकास);
+			if (tty_pgrp) {
+				kill_pgrp(tty_pgrp, SIGHUP, on_exit);
+				if (!on_exit)
+					kill_pgrp(tty_pgrp, SIGCONT, on_exit);
 				put_pid(tty_pgrp);
-			पूर्ण
-		पूर्ण
+			}
+		}
 		tty_kref_put(tty);
 
-	पूर्ण अन्यथा अगर (on_निकास) अणु
-		काष्ठा pid *old_pgrp;
+	} else if (on_exit) {
+		struct pid *old_pgrp;
 
 		spin_lock_irq(&current->sighand->siglock);
-		old_pgrp = current->संकेत->tty_old_pgrp;
-		current->संकेत->tty_old_pgrp = शून्य;
+		old_pgrp = current->signal->tty_old_pgrp;
+		current->signal->tty_old_pgrp = NULL;
 		spin_unlock_irq(&current->sighand->siglock);
-		अगर (old_pgrp) अणु
-			समाप्त_pgrp(old_pgrp, SIGHUP, on_निकास);
-			समाप्त_pgrp(old_pgrp, SIGCONT, on_निकास);
+		if (old_pgrp) {
+			kill_pgrp(old_pgrp, SIGHUP, on_exit);
+			kill_pgrp(old_pgrp, SIGCONT, on_exit);
 			put_pid(old_pgrp);
-		पूर्ण
-		वापस;
-	पूर्ण
+		}
+		return;
+	}
 
 	spin_lock_irq(&current->sighand->siglock);
-	put_pid(current->संकेत->tty_old_pgrp);
-	current->संकेत->tty_old_pgrp = शून्य;
-	tty = tty_kref_get(current->संकेत->tty);
+	put_pid(current->signal->tty_old_pgrp);
+	current->signal->tty_old_pgrp = NULL;
+	tty = tty_kref_get(current->signal->tty);
 	spin_unlock_irq(&current->sighand->siglock);
 
-	अगर (tty) अणु
-		अचिन्हित दीर्घ flags;
+	if (tty) {
+		unsigned long flags;
 
 		tty_lock(tty);
 		spin_lock_irqsave(&tty->ctrl_lock, flags);
 		put_pid(tty->session);
 		put_pid(tty->pgrp);
-		tty->session = शून्य;
-		tty->pgrp = शून्य;
+		tty->session = NULL;
+		tty->pgrp = NULL;
 		spin_unlock_irqrestore(&tty->ctrl_lock, flags);
 		tty_unlock(tty);
 		tty_kref_put(tty);
-	पूर्ण
+	}
 
-	/* Now clear संकेत->tty under the lock */
-	पढ़ो_lock(&tasklist_lock);
+	/* Now clear signal->tty under the lock */
+	read_lock(&tasklist_lock);
 	session_clear_tty(task_session(current));
-	पढ़ो_unlock(&tasklist_lock);
-पूर्ण
+	read_unlock(&tasklist_lock);
+}
 
 /*
  *
- *	no_tty	- Ensure the current process करोes not have a controlling tty
+ *	no_tty	- Ensure the current process does not have a controlling tty
  */
-व्योम no_tty(व्योम)
-अणु
+void no_tty(void)
+{
 	/*
 	 * FIXME: Review locking here. The tty_lock never covered any race
 	 * between a new association and proc_clear_tty but possibly we need
 	 * to protect against this anyway.
 	 */
-	काष्ठा task_काष्ठा *tsk = current;
+	struct task_struct *tsk = current;
 
 	disassociate_ctty(0);
 	proc_clear_tty(tsk);
-पूर्ण
+}
 
 /**
  *	tiocsctty	-	set controlling tty
- *	@tty: tty काष्ठाure
- *	@file: file काष्ठाure used to check permissions
+ *	@tty: tty structure
+ *	@file: file structure used to check permissions
  *	@arg: user argument
  *
  *	This ioctl is used to manage job control. It permits a session
- *	leader to set this tty as the controlling tty क्रम the session.
+ *	leader to set this tty as the controlling tty for the session.
  *
  *	Locking:
- *		Takes tty_lock() to serialize proc_set_tty() क्रम this tty
- *		Takes tasklist_lock पूर्णांकernally to walk sessions
- *		Takes ->siglock() when updating संकेत->tty
+ *		Takes tty_lock() to serialize proc_set_tty() for this tty
+ *		Takes tasklist_lock internally to walk sessions
+ *		Takes ->siglock() when updating signal->tty
  */
-अटल पूर्णांक tiocsctty(काष्ठा tty_काष्ठा *tty, काष्ठा file *file, पूर्णांक arg)
-अणु
-	पूर्णांक ret = 0;
+static int tiocsctty(struct tty_struct *tty, struct file *file, int arg)
+{
+	int ret = 0;
 
 	tty_lock(tty);
-	पढ़ो_lock(&tasklist_lock);
+	read_lock(&tasklist_lock);
 
-	अगर (current->संकेत->leader && (task_session(current) == tty->session))
-		जाओ unlock;
+	if (current->signal->leader && (task_session(current) == tty->session))
+		goto unlock;
 
 	/*
 	 * The process must be a session leader and
-	 * not have a controlling tty alपढ़ोy.
+	 * not have a controlling tty already.
 	 */
-	अगर (!current->संकेत->leader || current->संकेत->tty) अणु
+	if (!current->signal->leader || current->signal->tty) {
 		ret = -EPERM;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर (tty->session) अणु
+	if (tty->session) {
 		/*
-		 * This tty is alपढ़ोy the controlling
-		 * tty क्रम another session group!
+		 * This tty is already the controlling
+		 * tty for another session group!
 		 */
-		अगर (arg == 1 && capable(CAP_SYS_ADMIN)) अणु
+		if (arg == 1 && capable(CAP_SYS_ADMIN)) {
 			/*
 			 * Steal it away
 			 */
 			session_clear_tty(tty->session);
-		पूर्ण अन्यथा अणु
+		} else {
 			ret = -EPERM;
-			जाओ unlock;
-		पूर्ण
-	पूर्ण
+			goto unlock;
+		}
+	}
 
-	/* See the comment in tty_खोलो_proc_set_tty(). */
-	अगर ((file->f_mode & FMODE_READ) == 0 && !capable(CAP_SYS_ADMIN)) अणु
+	/* See the comment in tty_open_proc_set_tty(). */
+	if ((file->f_mode & FMODE_READ) == 0 && !capable(CAP_SYS_ADMIN)) {
 		ret = -EPERM;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	proc_set_tty(tty);
 unlock:
-	पढ़ो_unlock(&tasklist_lock);
+	read_unlock(&tasklist_lock);
 	tty_unlock(tty);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- *	tty_get_pgrp	-	वापस a ref counted pgrp pid
- *	@tty: tty to पढ़ो
+ *	tty_get_pgrp	-	return a ref counted pgrp pid
+ *	@tty: tty to read
  *
- *	Returns a refcounted instance of the pid काष्ठा क्रम the process
+ *	Returns a refcounted instance of the pid struct for the process
  *	group controlling the tty.
  */
-काष्ठा pid *tty_get_pgrp(काष्ठा tty_काष्ठा *tty)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा pid *pgrp;
+struct pid *tty_get_pgrp(struct tty_struct *tty)
+{
+	unsigned long flags;
+	struct pid *pgrp;
 
 	spin_lock_irqsave(&tty->ctrl_lock, flags);
 	pgrp = get_pid(tty->pgrp);
 	spin_unlock_irqrestore(&tty->ctrl_lock, flags);
 
-	वापस pgrp;
-पूर्ण
+	return pgrp;
+}
 EXPORT_SYMBOL_GPL(tty_get_pgrp);
 
 /*
- * This checks not only the pgrp, but falls back on the pid अगर no
- * satisfactory pgrp is found. I dunno - gdb करोesn't work correctly
+ * This checks not only the pgrp, but falls back on the pid if no
+ * satisfactory pgrp is found. I dunno - gdb doesn't work correctly
  * without this...
  *
  * The caller must hold rcu lock or the tasklist lock.
  */
-अटल काष्ठा pid *session_of_pgrp(काष्ठा pid *pgrp)
-अणु
-	काष्ठा task_काष्ठा *p;
-	काष्ठा pid *sid = शून्य;
+static struct pid *session_of_pgrp(struct pid *pgrp)
+{
+	struct task_struct *p;
+	struct pid *sid = NULL;
 
 	p = pid_task(pgrp, PIDTYPE_PGID);
-	अगर (p == शून्य)
+	if (p == NULL)
 		p = pid_task(pgrp, PIDTYPE_PID);
-	अगर (p != शून्य)
+	if (p != NULL)
 		sid = task_session(p);
 
-	वापस sid;
-पूर्ण
+	return sid;
+}
 
 /**
  *	tiocgpgrp		-	get process group
  *	@tty: tty passed by user
- *	@real_tty: tty side of the tty passed by the user अगर a pty अन्यथा the tty
- *	@p: वापसed pid
+ *	@real_tty: tty side of the tty passed by the user if a pty else the tty
+ *	@p: returned pid
  *
  *	Obtain the process group of the tty. If there is no process group
- *	वापस an error.
+ *	return an error.
  *
- *	Locking: none. Reference to current->संकेत->tty is safe.
+ *	Locking: none. Reference to current->signal->tty is safe.
  */
-अटल पूर्णांक tiocgpgrp(काष्ठा tty_काष्ठा *tty, काष्ठा tty_काष्ठा *real_tty, pid_t __user *p)
-अणु
-	काष्ठा pid *pid;
-	पूर्णांक ret;
+static int tiocgpgrp(struct tty_struct *tty, struct tty_struct *real_tty, pid_t __user *p)
+{
+	struct pid *pid;
+	int ret;
 	/*
 	 * (tty == real_tty) is a cheap way of
-	 * testing अगर the tty is NOT a master pty.
+	 * testing if the tty is NOT a master pty.
 	 */
-	अगर (tty == real_tty && current->संकेत->tty != real_tty)
-		वापस -ENOTTY;
+	if (tty == real_tty && current->signal->tty != real_tty)
+		return -ENOTTY;
 	pid = tty_get_pgrp(real_tty);
 	ret =  put_user(pid_vnr(pid), p);
 	put_pid(pid);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  *	tiocspgrp		-	attempt to set process group
  *	@tty: tty passed by user
  *	@real_tty: tty side device matching tty passed by user
- *	@p: pid poपूर्णांकer
+ *	@p: pid pointer
  *
  *	Set the process group of the tty to the session passed. Only
  *	permitted where the tty session is our session.
  *
  *	Locking: RCU, ctrl lock
  */
-अटल पूर्णांक tiocspgrp(काष्ठा tty_काष्ठा *tty, काष्ठा tty_काष्ठा *real_tty, pid_t __user *p)
-अणु
-	काष्ठा pid *pgrp;
+static int tiocspgrp(struct tty_struct *tty, struct tty_struct *real_tty, pid_t __user *p)
+{
+	struct pid *pgrp;
 	pid_t pgrp_nr;
-	पूर्णांक retval = tty_check_change(real_tty);
+	int retval = tty_check_change(real_tty);
 
-	अगर (retval == -EIO)
-		वापस -ENOTTY;
-	अगर (retval)
-		वापस retval;
+	if (retval == -EIO)
+		return -ENOTTY;
+	if (retval)
+		return retval;
 
-	अगर (get_user(pgrp_nr, p))
-		वापस -EFAULT;
-	अगर (pgrp_nr < 0)
-		वापस -EINVAL;
+	if (get_user(pgrp_nr, p))
+		return -EFAULT;
+	if (pgrp_nr < 0)
+		return -EINVAL;
 
 	spin_lock_irq(&real_tty->ctrl_lock);
-	अगर (!current->संकेत->tty ||
-	    (current->संकेत->tty != real_tty) ||
-	    (real_tty->session != task_session(current))) अणु
+	if (!current->signal->tty ||
+	    (current->signal->tty != real_tty) ||
+	    (real_tty->session != task_session(current))) {
 		retval = -ENOTTY;
-		जाओ out_unlock_ctrl;
-	पूर्ण
-	rcu_पढ़ो_lock();
+		goto out_unlock_ctrl;
+	}
+	rcu_read_lock();
 	pgrp = find_vpid(pgrp_nr);
 	retval = -ESRCH;
-	अगर (!pgrp)
-		जाओ out_unlock;
+	if (!pgrp)
+		goto out_unlock;
 	retval = -EPERM;
-	अगर (session_of_pgrp(pgrp) != task_session(current))
-		जाओ out_unlock;
+	if (session_of_pgrp(pgrp) != task_session(current))
+		goto out_unlock;
 	retval = 0;
 	put_pid(real_tty->pgrp);
 	real_tty->pgrp = get_pid(pgrp);
 out_unlock:
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 out_unlock_ctrl:
 	spin_unlock_irq(&real_tty->ctrl_lock);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 /**
  *	tiocgsid		-	get session id
  *	@tty: tty passed by user
- *	@real_tty: tty side of the tty passed by the user अगर a pty अन्यथा the tty
- *	@p: poपूर्णांकer to वापसed session id
+ *	@real_tty: tty side of the tty passed by the user if a pty else the tty
+ *	@p: pointer to returned session id
  *
  *	Obtain the session id of the tty. If there is no session
- *	वापस an error.
+ *	return an error.
  */
-अटल पूर्णांक tiocgsid(काष्ठा tty_काष्ठा *tty, काष्ठा tty_काष्ठा *real_tty, pid_t __user *p)
-अणु
-	अचिन्हित दीर्घ flags;
+static int tiocgsid(struct tty_struct *tty, struct tty_struct *real_tty, pid_t __user *p)
+{
+	unsigned long flags;
 	pid_t sid;
 
 	/*
 	 * (tty == real_tty) is a cheap way of
-	 * testing अगर the tty is NOT a master pty.
+	 * testing if the tty is NOT a master pty.
 	 */
-	अगर (tty == real_tty && current->संकेत->tty != real_tty)
-		वापस -ENOTTY;
+	if (tty == real_tty && current->signal->tty != real_tty)
+		return -ENOTTY;
 
 	spin_lock_irqsave(&real_tty->ctrl_lock, flags);
-	अगर (!real_tty->session)
-		जाओ err;
+	if (!real_tty->session)
+		goto err;
 	sid = pid_vnr(real_tty->session);
 	spin_unlock_irqrestore(&real_tty->ctrl_lock, flags);
 
-	वापस put_user(sid, p);
+	return put_user(sid, p);
 
 err:
 	spin_unlock_irqrestore(&real_tty->ctrl_lock, flags);
-	वापस -ENOTTY;
-पूर्ण
+	return -ENOTTY;
+}
 
 /*
  * Called from tty_ioctl(). If tty is a pty then real_tty is the slave side,
- * अगर not then tty == real_tty.
+ * if not then tty == real_tty.
  */
-दीर्घ tty_jobctrl_ioctl(काष्ठा tty_काष्ठा *tty, काष्ठा tty_काष्ठा *real_tty,
-		       काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	व्योम __user *p = (व्योम __user *)arg;
+long tty_jobctrl_ioctl(struct tty_struct *tty, struct tty_struct *real_tty,
+		       struct file *file, unsigned int cmd, unsigned long arg)
+{
+	void __user *p = (void __user *)arg;
 
-	चयन (cmd) अणु
-	हाल TIOCNOTTY:
-		अगर (current->संकेत->tty != tty)
-			वापस -ENOTTY;
+	switch (cmd) {
+	case TIOCNOTTY:
+		if (current->signal->tty != tty)
+			return -ENOTTY;
 		no_tty();
-		वापस 0;
-	हाल TIOCSCTTY:
-		वापस tiocsctty(real_tty, file, arg);
-	हाल TIOCGPGRP:
-		वापस tiocgpgrp(tty, real_tty, p);
-	हाल TIOCSPGRP:
-		वापस tiocspgrp(tty, real_tty, p);
-	हाल TIOCGSID:
-		वापस tiocgsid(tty, real_tty, p);
-	पूर्ण
-	वापस -ENOIOCTLCMD;
-पूर्ण
+		return 0;
+	case TIOCSCTTY:
+		return tiocsctty(real_tty, file, arg);
+	case TIOCGPGRP:
+		return tiocgpgrp(tty, real_tty, p);
+	case TIOCSPGRP:
+		return tiocspgrp(tty, real_tty, p);
+	case TIOCGSID:
+		return tiocgsid(tty, real_tty, p);
+	}
+	return -ENOIOCTLCMD;
+}

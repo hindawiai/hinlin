@@ -1,22 +1,21 @@
-<शैली गुरु>
-/* Firmware file पढ़ोing and करोwnload helpers
+/* Firmware file reading and download helpers
  *
- * See copyright notice in मुख्य.c
+ * See copyright notice in main.c
  */
-#अगर_अघोषित _ORINOCO_FW_H_
-#घोषणा _ORINOCO_FW_H_
+#ifndef _ORINOCO_FW_H_
+#define _ORINOCO_FW_H_
 
 /* Forward declations */
-काष्ठा orinoco_निजी;
+struct orinoco_private;
 
-पूर्णांक orinoco_करोwnload(काष्ठा orinoco_निजी *priv);
+int orinoco_download(struct orinoco_private *priv);
 
-#अगर defined(CONFIG_HERMES_CACHE_FW_ON_INIT) || defined(CONFIG_PM_SLEEP)
-व्योम orinoco_cache_fw(काष्ठा orinoco_निजी *priv, पूर्णांक ap);
-व्योम orinoco_uncache_fw(काष्ठा orinoco_निजी *priv);
-#अन्यथा
-#घोषणा orinoco_cache_fw(priv, ap) करो अणु पूर्ण जबतक (0)
-#घोषणा orinoco_uncache_fw(priv) करो अणु पूर्ण जबतक (0)
-#पूर्ण_अगर
+#if defined(CONFIG_HERMES_CACHE_FW_ON_INIT) || defined(CONFIG_PM_SLEEP)
+void orinoco_cache_fw(struct orinoco_private *priv, int ap);
+void orinoco_uncache_fw(struct orinoco_private *priv);
+#else
+#define orinoco_cache_fw(priv, ap) do { } while (0)
+#define orinoco_uncache_fw(priv) do { } while (0)
+#endif
 
-#पूर्ण_अगर /* _ORINOCO_FW_H_ */
+#endif /* _ORINOCO_FW_H_ */

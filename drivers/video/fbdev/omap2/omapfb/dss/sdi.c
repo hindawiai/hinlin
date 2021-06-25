@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * linux/drivers/video/omap2/dss/sdi.c
  *
@@ -7,310 +6,310 @@
  * Author: Tomi Valkeinen <tomi.valkeinen@nokia.com>
  */
 
-#घोषणा DSS_SUBSYS_NAME "SDI"
+#define DSS_SUBSYS_NAME "SDI"
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/err.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/export.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/of.h>
-#समावेश <linux/component.h>
+#include <linux/kernel.h>
+#include <linux/delay.h>
+#include <linux/err.h>
+#include <linux/regulator/consumer.h>
+#include <linux/export.h>
+#include <linux/platform_device.h>
+#include <linux/string.h>
+#include <linux/of.h>
+#include <linux/component.h>
 
-#समावेश <video/omapfb_dss.h>
-#समावेश "dss.h"
+#include <video/omapfb_dss.h>
+#include "dss.h"
 
-अटल काष्ठा अणु
-	काष्ठा platक्रमm_device *pdev;
+static struct {
+	struct platform_device *pdev;
 
 	bool update_enabled;
-	काष्ठा regulator *vdds_sdi_reg;
+	struct regulator *vdds_sdi_reg;
 
-	काष्ठा dss_lcd_mgr_config mgr_config;
-	काष्ठा omap_video_timings timings;
-	पूर्णांक datapairs;
+	struct dss_lcd_mgr_config mgr_config;
+	struct omap_video_timings timings;
+	int datapairs;
 
-	काष्ठा omap_dss_device output;
+	struct omap_dss_device output;
 
 	bool port_initialized;
-पूर्ण sdi;
+} sdi;
 
-काष्ठा sdi_clk_calc_ctx अणु
-	अचिन्हित दीर्घ pck_min, pck_max;
+struct sdi_clk_calc_ctx {
+	unsigned long pck_min, pck_max;
 
-	अचिन्हित दीर्घ fck;
-	काष्ठा dispc_घड़ी_info dispc_cinfo;
-पूर्ण;
+	unsigned long fck;
+	struct dispc_clock_info dispc_cinfo;
+};
 
-अटल bool dpi_calc_dispc_cb(पूर्णांक lckd, पूर्णांक pckd, अचिन्हित दीर्घ lck,
-		अचिन्हित दीर्घ pck, व्योम *data)
-अणु
-	काष्ठा sdi_clk_calc_ctx *ctx = data;
+static bool dpi_calc_dispc_cb(int lckd, int pckd, unsigned long lck,
+		unsigned long pck, void *data)
+{
+	struct sdi_clk_calc_ctx *ctx = data;
 
-	ctx->dispc_cinfo.lck_भाग = lckd;
-	ctx->dispc_cinfo.pck_भाग = pckd;
+	ctx->dispc_cinfo.lck_div = lckd;
+	ctx->dispc_cinfo.pck_div = pckd;
 	ctx->dispc_cinfo.lck = lck;
 	ctx->dispc_cinfo.pck = pck;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool dpi_calc_dss_cb(अचिन्हित दीर्घ fck, व्योम *data)
-अणु
-	काष्ठा sdi_clk_calc_ctx *ctx = data;
+static bool dpi_calc_dss_cb(unsigned long fck, void *data)
+{
+	struct sdi_clk_calc_ctx *ctx = data;
 
 	ctx->fck = fck;
 
-	वापस dispc_भाग_calc(fck, ctx->pck_min, ctx->pck_max,
+	return dispc_div_calc(fck, ctx->pck_min, ctx->pck_max,
 			dpi_calc_dispc_cb, ctx);
-पूर्ण
+}
 
-अटल पूर्णांक sdi_calc_घड़ी_भाग(अचिन्हित दीर्घ pclk,
-		अचिन्हित दीर्घ *fck,
-		काष्ठा dispc_घड़ी_info *dispc_cinfo)
-अणु
-	पूर्णांक i;
-	काष्ठा sdi_clk_calc_ctx ctx;
+static int sdi_calc_clock_div(unsigned long pclk,
+		unsigned long *fck,
+		struct dispc_clock_info *dispc_cinfo)
+{
+	int i;
+	struct sdi_clk_calc_ctx ctx;
 
 	/*
 	 * DSS fclk gives us very few possibilities, so finding a good pixel
-	 * घड़ी may not be possible. We try multiple बार to find the घड़ी,
-	 * each समय widening the pixel घड़ी range we look क्रम, up to
+	 * clock may not be possible. We try multiple times to find the clock,
+	 * each time widening the pixel clock range we look for, up to
 	 * +/- 1MHz.
 	 */
 
-	क्रम (i = 0; i < 10; ++i) अणु
+	for (i = 0; i < 10; ++i) {
 		bool ok;
 
-		स_रखो(&ctx, 0, माप(ctx));
-		अगर (pclk > 1000 * i * i * i)
+		memset(&ctx, 0, sizeof(ctx));
+		if (pclk > 1000 * i * i * i)
 			ctx.pck_min = max(pclk - 1000 * i * i * i, 0lu);
-		अन्यथा
+		else
 			ctx.pck_min = 0;
 		ctx.pck_max = pclk + 1000 * i * i * i;
 
-		ok = dss_भाग_calc(pclk, ctx.pck_min, dpi_calc_dss_cb, &ctx);
-		अगर (ok) अणु
+		ok = dss_div_calc(pclk, ctx.pck_min, dpi_calc_dss_cb, &ctx);
+		if (ok) {
 			*fck = ctx.fck;
 			*dispc_cinfo = ctx.dispc_cinfo;
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल व्योम sdi_config_lcd_manager(काष्ठा omap_dss_device *dssdev)
-अणु
-	काष्ठा omap_overlay_manager *mgr = sdi.output.manager;
+static void sdi_config_lcd_manager(struct omap_dss_device *dssdev)
+{
+	struct omap_overlay_manager *mgr = sdi.output.manager;
 
 	sdi.mgr_config.io_pad_mode = DSS_IO_PAD_MODE_BYPASS;
 
 	sdi.mgr_config.stallmode = false;
-	sdi.mgr_config.fअगरohandcheck = false;
+	sdi.mgr_config.fifohandcheck = false;
 
 	sdi.mgr_config.video_port_width = 24;
 	sdi.mgr_config.lcden_sig_polarity = 1;
 
 	dss_mgr_set_lcd_config(mgr, &sdi.mgr_config);
-पूर्ण
+}
 
-अटल पूर्णांक sdi_display_enable(काष्ठा omap_dss_device *dssdev)
-अणु
-	काष्ठा omap_dss_device *out = &sdi.output;
-	काष्ठा omap_video_timings *t = &sdi.timings;
-	अचिन्हित दीर्घ fck;
-	काष्ठा dispc_घड़ी_info dispc_cinfo;
-	अचिन्हित दीर्घ pck;
-	पूर्णांक r;
+static int sdi_display_enable(struct omap_dss_device *dssdev)
+{
+	struct omap_dss_device *out = &sdi.output;
+	struct omap_video_timings *t = &sdi.timings;
+	unsigned long fck;
+	struct dispc_clock_info dispc_cinfo;
+	unsigned long pck;
+	int r;
 
-	अगर (out->manager == शून्य) अणु
+	if (out->manager == NULL) {
 		DSSERR("failed to enable display: no output/manager\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	r = regulator_enable(sdi.vdds_sdi_reg);
-	अगर (r)
-		जाओ err_reg_enable;
+	if (r)
+		goto err_reg_enable;
 
-	r = dispc_runसमय_get();
-	अगर (r)
-		जाओ err_get_dispc;
+	r = dispc_runtime_get();
+	if (r)
+		goto err_get_dispc;
 
 	/* 15.5.9.1.2 */
 	t->data_pclk_edge = OMAPDSS_DRIVE_SIG_RISING_EDGE;
 	t->sync_pclk_edge = OMAPDSS_DRIVE_SIG_RISING_EDGE;
 
-	r = sdi_calc_घड़ी_भाग(t->pixelघड़ी, &fck, &dispc_cinfo);
-	अगर (r)
-		जाओ err_calc_घड़ी_भाग;
+	r = sdi_calc_clock_div(t->pixelclock, &fck, &dispc_cinfo);
+	if (r)
+		goto err_calc_clock_div;
 
-	sdi.mgr_config.घड़ी_info = dispc_cinfo;
+	sdi.mgr_config.clock_info = dispc_cinfo;
 
-	pck = fck / dispc_cinfo.lck_भाग / dispc_cinfo.pck_भाग;
+	pck = fck / dispc_cinfo.lck_div / dispc_cinfo.pck_div;
 
-	अगर (pck != t->pixelघड़ी) अणु
+	if (pck != t->pixelclock) {
 		DSSWARN("Could not find exact pixel clock. Requested %d Hz, got %lu Hz\n",
-			t->pixelघड़ी, pck);
+			t->pixelclock, pck);
 
-		t->pixelघड़ी = pck;
-	पूर्ण
+		t->pixelclock = pck;
+	}
 
 
 	dss_mgr_set_timings(out->manager, t);
 
 	r = dss_set_fck_rate(fck);
-	अगर (r)
-		जाओ err_set_dss_घड़ी_भाग;
+	if (r)
+		goto err_set_dss_clock_div;
 
 	sdi_config_lcd_manager(dssdev);
 
 	/*
-	 * LCLK and PCLK भागisors are located in shaकरोw रेजिस्टरs, and we
-	 * normally ग_लिखो them to DISPC रेजिस्टरs when enabling the output.
-	 * However, SDI uses pck-मुक्त as source घड़ी क्रम its PLL, and pck-मुक्त
-	 * is affected by the भागisors. And as we need the PLL beक्रमe enabling
-	 * the output, we need to ग_लिखो the भागisors early.
+	 * LCLK and PCLK divisors are located in shadow registers, and we
+	 * normally write them to DISPC registers when enabling the output.
+	 * However, SDI uses pck-free as source clock for its PLL, and pck-free
+	 * is affected by the divisors. And as we need the PLL before enabling
+	 * the output, we need to write the divisors early.
 	 *
-	 * It seems just writing to the DISPC रेजिस्टर is enough, and we करोn't
-	 * need to care about the shaकरोw रेजिस्टर mechanism क्रम pck-मुक्त. The
-	 * exact reason क्रम this is unknown.
+	 * It seems just writing to the DISPC register is enough, and we don't
+	 * need to care about the shadow register mechanism for pck-free. The
+	 * exact reason for this is unknown.
 	 */
-	dispc_mgr_set_घड़ी_भाग(out->manager->id, &sdi.mgr_config.घड़ी_info);
+	dispc_mgr_set_clock_div(out->manager->id, &sdi.mgr_config.clock_info);
 
 	dss_sdi_init(sdi.datapairs);
 	r = dss_sdi_enable();
-	अगर (r)
-		जाओ err_sdi_enable;
+	if (r)
+		goto err_sdi_enable;
 	mdelay(2);
 
 	r = dss_mgr_enable(out->manager);
-	अगर (r)
-		जाओ err_mgr_enable;
+	if (r)
+		goto err_mgr_enable;
 
-	वापस 0;
+	return 0;
 
 err_mgr_enable:
 	dss_sdi_disable();
 err_sdi_enable:
-err_set_dss_घड़ी_भाग:
-err_calc_घड़ी_भाग:
-	dispc_runसमय_put();
+err_set_dss_clock_div:
+err_calc_clock_div:
+	dispc_runtime_put();
 err_get_dispc:
 	regulator_disable(sdi.vdds_sdi_reg);
 err_reg_enable:
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल व्योम sdi_display_disable(काष्ठा omap_dss_device *dssdev)
-अणु
-	काष्ठा omap_overlay_manager *mgr = sdi.output.manager;
+static void sdi_display_disable(struct omap_dss_device *dssdev)
+{
+	struct omap_overlay_manager *mgr = sdi.output.manager;
 
 	dss_mgr_disable(mgr);
 
 	dss_sdi_disable();
 
-	dispc_runसमय_put();
+	dispc_runtime_put();
 
 	regulator_disable(sdi.vdds_sdi_reg);
-पूर्ण
+}
 
-अटल व्योम sdi_set_timings(काष्ठा omap_dss_device *dssdev,
-		काष्ठा omap_video_timings *timings)
-अणु
+static void sdi_set_timings(struct omap_dss_device *dssdev,
+		struct omap_video_timings *timings)
+{
 	sdi.timings = *timings;
-पूर्ण
+}
 
-अटल व्योम sdi_get_timings(काष्ठा omap_dss_device *dssdev,
-		काष्ठा omap_video_timings *timings)
-अणु
+static void sdi_get_timings(struct omap_dss_device *dssdev,
+		struct omap_video_timings *timings)
+{
 	*timings = sdi.timings;
-पूर्ण
+}
 
-अटल पूर्णांक sdi_check_timings(काष्ठा omap_dss_device *dssdev,
-			काष्ठा omap_video_timings *timings)
-अणु
-	काष्ठा omap_overlay_manager *mgr = sdi.output.manager;
+static int sdi_check_timings(struct omap_dss_device *dssdev,
+			struct omap_video_timings *timings)
+{
+	struct omap_overlay_manager *mgr = sdi.output.manager;
 
-	अगर (mgr && !dispc_mgr_timings_ok(mgr->id, timings))
-		वापस -EINVAL;
+	if (mgr && !dispc_mgr_timings_ok(mgr->id, timings))
+		return -EINVAL;
 
-	अगर (timings->pixelघड़ी == 0)
-		वापस -EINVAL;
+	if (timings->pixelclock == 0)
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sdi_set_datapairs(काष्ठा omap_dss_device *dssdev, पूर्णांक datapairs)
-अणु
+static void sdi_set_datapairs(struct omap_dss_device *dssdev, int datapairs)
+{
 	sdi.datapairs = datapairs;
-पूर्ण
+}
 
-अटल पूर्णांक sdi_init_regulator(व्योम)
-अणु
-	काष्ठा regulator *vdds_sdi;
+static int sdi_init_regulator(void)
+{
+	struct regulator *vdds_sdi;
 
-	अगर (sdi.vdds_sdi_reg)
-		वापस 0;
+	if (sdi.vdds_sdi_reg)
+		return 0;
 
 	vdds_sdi = devm_regulator_get(&sdi.pdev->dev, "vdds_sdi");
-	अगर (IS_ERR(vdds_sdi)) अणु
-		अगर (PTR_ERR(vdds_sdi) != -EPROBE_DEFER)
+	if (IS_ERR(vdds_sdi)) {
+		if (PTR_ERR(vdds_sdi) != -EPROBE_DEFER)
 			DSSERR("can't get VDDS_SDI regulator\n");
-		वापस PTR_ERR(vdds_sdi);
-	पूर्ण
+		return PTR_ERR(vdds_sdi);
+	}
 
 	sdi.vdds_sdi_reg = vdds_sdi;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sdi_connect(काष्ठा omap_dss_device *dssdev,
-		काष्ठा omap_dss_device *dst)
-अणु
-	काष्ठा omap_overlay_manager *mgr;
-	पूर्णांक r;
+static int sdi_connect(struct omap_dss_device *dssdev,
+		struct omap_dss_device *dst)
+{
+	struct omap_overlay_manager *mgr;
+	int r;
 
 	r = sdi_init_regulator();
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	mgr = omap_dss_get_overlay_manager(dssdev->dispc_channel);
-	अगर (!mgr)
-		वापस -ENODEV;
+	if (!mgr)
+		return -ENODEV;
 
 	r = dss_mgr_connect(mgr, dssdev);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	r = omapdss_output_set_device(dssdev, dst);
-	अगर (r) अणु
+	if (r) {
 		DSSERR("failed to connect output to new device: %s\n",
 				dst->name);
 		dss_mgr_disconnect(mgr, dssdev);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sdi_disconnect(काष्ठा omap_dss_device *dssdev,
-		काष्ठा omap_dss_device *dst)
-अणु
+static void sdi_disconnect(struct omap_dss_device *dssdev,
+		struct omap_dss_device *dst)
+{
 	WARN_ON(dst != dssdev->dst);
 
-	अगर (dst != dssdev->dst)
-		वापस;
+	if (dst != dssdev->dst)
+		return;
 
 	omapdss_output_unset_device(dssdev);
 
-	अगर (dssdev->manager)
+	if (dssdev->manager)
 		dss_mgr_disconnect(dssdev->manager, dssdev);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा omapdss_sdi_ops sdi_ops = अणु
+static const struct omapdss_sdi_ops sdi_ops = {
 	.connect = sdi_connect,
 	.disconnect = sdi_disconnect,
 
@@ -322,11 +321,11 @@ err_reg_enable:
 	.get_timings = sdi_get_timings,
 
 	.set_datapairs = sdi_set_datapairs,
-पूर्ण;
+};
 
-अटल व्योम sdi_init_output(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा omap_dss_device *out = &sdi.output;
+static void sdi_init_output(struct platform_device *pdev)
+{
+	struct omap_dss_device *out = &sdi.output;
 
 	out->dev = &pdev->dev;
 	out->id = OMAP_DSS_OUTPUT_SDI;
@@ -338,84 +337,84 @@ err_reg_enable:
 	out->ops.sdi = &sdi_ops;
 	out->owner = THIS_MODULE;
 
-	omapdss_रेजिस्टर_output(out);
-पूर्ण
+	omapdss_register_output(out);
+}
 
-अटल व्योम sdi_uninit_output(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा omap_dss_device *out = &sdi.output;
+static void sdi_uninit_output(struct platform_device *pdev)
+{
+	struct omap_dss_device *out = &sdi.output;
 
-	omapdss_unरेजिस्टर_output(out);
-पूर्ण
+	omapdss_unregister_output(out);
+}
 
-अटल पूर्णांक sdi_bind(काष्ठा device *dev, काष्ठा device *master, व्योम *data)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
+static int sdi_bind(struct device *dev, struct device *master, void *data)
+{
+	struct platform_device *pdev = to_platform_device(dev);
 
 	sdi.pdev = pdev;
 
 	sdi_init_output(pdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sdi_unbind(काष्ठा device *dev, काष्ठा device *master, व्योम *data)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
+static void sdi_unbind(struct device *dev, struct device *master, void *data)
+{
+	struct platform_device *pdev = to_platform_device(dev);
 
 	sdi_uninit_output(pdev);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा component_ops sdi_component_ops = अणु
+static const struct component_ops sdi_component_ops = {
 	.bind	= sdi_bind,
 	.unbind	= sdi_unbind,
-पूर्ण;
+};
 
-अटल पूर्णांक sdi_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस component_add(&pdev->dev, &sdi_component_ops);
-पूर्ण
+static int sdi_probe(struct platform_device *pdev)
+{
+	return component_add(&pdev->dev, &sdi_component_ops);
+}
 
-अटल पूर्णांक sdi_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
+static int sdi_remove(struct platform_device *pdev)
+{
 	component_del(&pdev->dev, &sdi_component_ops);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver omap_sdi_driver = अणु
+static struct platform_driver omap_sdi_driver = {
 	.probe		= sdi_probe,
-	.हटाओ         = sdi_हटाओ,
-	.driver         = अणु
+	.remove         = sdi_remove,
+	.driver         = {
 		.name   = "omapdss_sdi",
 		.suppress_bind_attrs = true,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-पूर्णांक __init sdi_init_platक्रमm_driver(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&omap_sdi_driver);
-पूर्ण
+int __init sdi_init_platform_driver(void)
+{
+	return platform_driver_register(&omap_sdi_driver);
+}
 
-व्योम sdi_uninit_platक्रमm_driver(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&omap_sdi_driver);
-पूर्ण
+void sdi_uninit_platform_driver(void)
+{
+	platform_driver_unregister(&omap_sdi_driver);
+}
 
-पूर्णांक sdi_init_port(काष्ठा platक्रमm_device *pdev, काष्ठा device_node *port)
-अणु
-	काष्ठा device_node *ep;
+int sdi_init_port(struct platform_device *pdev, struct device_node *port)
+{
+	struct device_node *ep;
 	u32 datapairs;
-	पूर्णांक r;
+	int r;
 
-	ep = omapdss_of_get_next_endpoपूर्णांक(port, शून्य);
-	अगर (!ep)
-		वापस 0;
+	ep = omapdss_of_get_next_endpoint(port, NULL);
+	if (!ep)
+		return 0;
 
-	r = of_property_पढ़ो_u32(ep, "datapairs", &datapairs);
-	अगर (r) अणु
+	r = of_property_read_u32(ep, "datapairs", &datapairs);
+	if (r) {
 		DSSERR("failed to parse datapairs\n");
-		जाओ err_datapairs;
-	पूर्ण
+		goto err_datapairs;
+	}
 
 	sdi.datapairs = datapairs;
 
@@ -427,18 +426,18 @@ err_reg_enable:
 
 	sdi.port_initialized = true;
 
-	वापस 0;
+	return 0;
 
 err_datapairs:
 	of_node_put(ep);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-व्योम sdi_uninit_port(काष्ठा device_node *port)
-अणु
-	अगर (!sdi.port_initialized)
-		वापस;
+void sdi_uninit_port(struct device_node *port)
+{
+	if (!sdi.port_initialized)
+		return;
 
 	sdi_uninit_output(sdi.pdev);
-पूर्ण
+}

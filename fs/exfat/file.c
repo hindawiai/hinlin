@@ -1,65 +1,64 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2012-2013 Samsung Electronics Co., Ltd.
  */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/compat.h>
-#समावेश <linux/cred.h>
-#समावेश <linux/buffer_head.h>
-#समावेश <linux/blkdev.h>
+#include <linux/slab.h>
+#include <linux/compat.h>
+#include <linux/cred.h>
+#include <linux/buffer_head.h>
+#include <linux/blkdev.h>
 
-#समावेश "exfat_raw.h"
-#समावेश "exfat_fs.h"
+#include "exfat_raw.h"
+#include "exfat_fs.h"
 
-अटल पूर्णांक exfat_cont_expand(काष्ठा inode *inode, loff_t size)
-अणु
-	काष्ठा address_space *mapping = inode->i_mapping;
-	loff_t start = i_size_पढ़ो(inode), count = size - i_size_पढ़ो(inode);
-	पूर्णांक err, err2;
+static int exfat_cont_expand(struct inode *inode, loff_t size)
+{
+	struct address_space *mapping = inode->i_mapping;
+	loff_t start = i_size_read(inode), count = size - i_size_read(inode);
+	int err, err2;
 
 	err = generic_cont_expand_simple(inode, size);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	inode->i_स_समय = inode->i_mसमय = current_समय(inode);
+	inode->i_ctime = inode->i_mtime = current_time(inode);
 	mark_inode_dirty(inode);
 
-	अगर (!IS_SYNC(inode))
-		वापस 0;
+	if (!IS_SYNC(inode))
+		return 0;
 
-	err = filemap_fdataग_लिखो_range(mapping, start, start + count - 1);
+	err = filemap_fdatawrite_range(mapping, start, start + count - 1);
 	err2 = sync_mapping_buffers(mapping);
-	अगर (!err)
+	if (!err)
 		err = err2;
-	err2 = ग_लिखो_inode_now(inode, 1);
-	अगर (!err)
+	err2 = write_inode_now(inode, 1);
+	if (!err)
 		err = err2;
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस filemap_fdataरुको_range(mapping, start, start + count - 1);
-पूर्ण
+	return filemap_fdatawait_range(mapping, start, start + count - 1);
+}
 
-अटल bool exfat_allow_set_समय(काष्ठा exfat_sb_info *sbi, काष्ठा inode *inode)
-अणु
-	mode_t allow_uसमय = sbi->options.allow_uसमय;
+static bool exfat_allow_set_time(struct exfat_sb_info *sbi, struct inode *inode)
+{
+	mode_t allow_utime = sbi->options.allow_utime;
 
-	अगर (!uid_eq(current_fsuid(), inode->i_uid)) अणु
-		अगर (in_group_p(inode->i_gid))
-			allow_uसमय >>= 3;
-		अगर (allow_uसमय & MAY_WRITE)
-			वापस true;
-	पूर्ण
+	if (!uid_eq(current_fsuid(), inode->i_uid)) {
+		if (in_group_p(inode->i_gid))
+			allow_utime >>= 3;
+		if (allow_utime & MAY_WRITE)
+			return true;
+	}
 
-	/* use a शेष check */
-	वापस false;
-पूर्ण
+	/* use a default check */
+	return false;
+}
 
-अटल पूर्णांक exfat_sanitize_mode(स्थिर काष्ठा exfat_sb_info *sbi,
-		काष्ठा inode *inode, umode_t *mode_ptr)
-अणु
+static int exfat_sanitize_mode(const struct exfat_sb_info *sbi,
+		struct inode *inode, umode_t *mode_ptr)
+{
 	mode_t i_mode, mask, perm;
 
 	i_mode = inode->i_mode;
@@ -69,368 +68,368 @@
 	perm = *mode_ptr & ~(S_IFMT | mask);
 
 	/* Of the r and x bits, all (subject to umask) must be present.*/
-	अगर ((perm & 0555) != (i_mode & 0555))
-		वापस -EPERM;
+	if ((perm & 0555) != (i_mode & 0555))
+		return -EPERM;
 
-	अगर (exfat_mode_can_hold_ro(inode)) अणु
+	if (exfat_mode_can_hold_ro(inode)) {
 		/*
 		 * Of the w bits, either all (subject to umask) or none must
 		 * be present.
 		 */
-		अगर ((perm & 0222) && ((perm & 0222) != (0222 & ~mask)))
-			वापस -EPERM;
-	पूर्ण अन्यथा अणु
+		if ((perm & 0222) && ((perm & 0222) != (0222 & ~mask)))
+			return -EPERM;
+	} else {
 		/*
 		 * If exfat_mode_can_hold_ro(inode) is false, can't change
 		 * w bits.
 		 */
-		अगर ((perm & 0222) != (0222 & ~mask))
-			वापस -EPERM;
-	पूर्ण
+		if ((perm & 0222) != (0222 & ~mask))
+			return -EPERM;
+	}
 
 	*mode_ptr &= S_IFMT | perm;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* resize the file length */
-पूर्णांक __exfat_truncate(काष्ठा inode *inode, loff_t new_size)
-अणु
-	अचिन्हित पूर्णांक num_clusters_new, num_clusters_phys;
-	अचिन्हित पूर्णांक last_clu = EXFAT_FREE_CLUSTER;
-	काष्ठा exfat_chain clu;
-	काष्ठा super_block *sb = inode->i_sb;
-	काष्ठा exfat_sb_info *sbi = EXFAT_SB(sb);
-	काष्ठा exfat_inode_info *ei = EXFAT_I(inode);
-	पूर्णांक evict = (ei->dir.dir == सूची_DELETED) ? 1 : 0;
+int __exfat_truncate(struct inode *inode, loff_t new_size)
+{
+	unsigned int num_clusters_new, num_clusters_phys;
+	unsigned int last_clu = EXFAT_FREE_CLUSTER;
+	struct exfat_chain clu;
+	struct super_block *sb = inode->i_sb;
+	struct exfat_sb_info *sbi = EXFAT_SB(sb);
+	struct exfat_inode_info *ei = EXFAT_I(inode);
+	int evict = (ei->dir.dir == DIR_DELETED) ? 1 : 0;
 
-	/* check अगर the given file ID is खोलोed */
-	अगर (ei->type != TYPE_खाता && ei->type != TYPE_सूची)
-		वापस -EPERM;
+	/* check if the given file ID is opened */
+	if (ei->type != TYPE_FILE && ei->type != TYPE_DIR)
+		return -EPERM;
 
 	exfat_set_volume_dirty(sb);
 
-	num_clusters_new = EXFAT_B_TO_CLU_ROUND_UP(i_size_पढ़ो(inode), sbi);
+	num_clusters_new = EXFAT_B_TO_CLU_ROUND_UP(i_size_read(inode), sbi);
 	num_clusters_phys =
 		EXFAT_B_TO_CLU_ROUND_UP(EXFAT_I(inode)->i_size_ondisk, sbi);
 
 	exfat_chain_set(&clu, ei->start_clu, num_clusters_phys, ei->flags);
 
-	अगर (new_size > 0) अणु
+	if (new_size > 0) {
 		/*
 		 * Truncate FAT chain num_clusters after the first cluster
 		 * num_clusters = min(new, phys);
 		 */
-		अचिन्हित पूर्णांक num_clusters =
+		unsigned int num_clusters =
 			min(num_clusters_new, num_clusters_phys);
 
 		/*
 		 * Follow FAT chain
 		 * (defensive coding - works fine even with corrupted FAT table
 		 */
-		अगर (clu.flags == ALLOC_NO_FAT_CHAIN) अणु
+		if (clu.flags == ALLOC_NO_FAT_CHAIN) {
 			clu.dir += num_clusters;
 			clu.size -= num_clusters;
-		पूर्ण अन्यथा अणु
-			जबतक (num_clusters > 0) अणु
+		} else {
+			while (num_clusters > 0) {
 				last_clu = clu.dir;
-				अगर (exfat_get_next_cluster(sb, &(clu.dir)))
-					वापस -EIO;
+				if (exfat_get_next_cluster(sb, &(clu.dir)))
+					return -EIO;
 
 				num_clusters--;
 				clu.size--;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			}
+		}
+	} else {
 		ei->flags = ALLOC_NO_FAT_CHAIN;
-		ei->start_clu = EXFAT_खातापूर्ण_CLUSTER;
-	पूर्ण
+		ei->start_clu = EXFAT_EOF_CLUSTER;
+	}
 
-	i_size_ग_लिखो(inode, new_size);
+	i_size_write(inode, new_size);
 
-	अगर (ei->type == TYPE_खाता)
+	if (ei->type == TYPE_FILE)
 		ei->attr |= ATTR_ARCHIVE;
 
 	/* update the directory entry */
-	अगर (!evict) अणु
-		काष्ठा बारpec64 ts;
-		काष्ठा exfat_dentry *ep, *ep2;
-		काष्ठा exfat_entry_set_cache *es;
-		पूर्णांक err;
+	if (!evict) {
+		struct timespec64 ts;
+		struct exfat_dentry *ep, *ep2;
+		struct exfat_entry_set_cache *es;
+		int err;
 
 		es = exfat_get_dentry_set(sb, &(ei->dir), ei->entry,
 				ES_ALL_ENTRIES);
-		अगर (!es)
-			वापस -EIO;
+		if (!es)
+			return -EIO;
 		ep = exfat_get_dentry_cached(es, 0);
 		ep2 = exfat_get_dentry_cached(es, 1);
 
-		ts = current_समय(inode);
-		exfat_set_entry_समय(sbi, &ts,
-				&ep->dentry.file.modअगरy_tz,
-				&ep->dentry.file.modअगरy_समय,
-				&ep->dentry.file.modअगरy_date,
-				&ep->dentry.file.modअगरy_समय_cs);
+		ts = current_time(inode);
+		exfat_set_entry_time(sbi, &ts,
+				&ep->dentry.file.modify_tz,
+				&ep->dentry.file.modify_time,
+				&ep->dentry.file.modify_date,
+				&ep->dentry.file.modify_time_cs);
 		ep->dentry.file.attr = cpu_to_le16(ei->attr);
 
-		/* File size should be zero अगर there is no cluster allocated */
-		अगर (ei->start_clu == EXFAT_खातापूर्ण_CLUSTER) अणु
+		/* File size should be zero if there is no cluster allocated */
+		if (ei->start_clu == EXFAT_EOF_CLUSTER) {
 			ep2->dentry.stream.valid_size = 0;
 			ep2->dentry.stream.size = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			ep2->dentry.stream.valid_size = cpu_to_le64(new_size);
 			ep2->dentry.stream.size = ep2->dentry.stream.valid_size;
-		पूर्ण
+		}
 
-		अगर (new_size == 0) अणु
+		if (new_size == 0) {
 			/* Any directory can not be truncated to zero */
-			WARN_ON(ei->type != TYPE_खाता);
+			WARN_ON(ei->type != TYPE_FILE);
 
 			ep2->dentry.stream.flags = ALLOC_FAT_CHAIN;
 			ep2->dentry.stream.start_clu = EXFAT_FREE_CLUSTER;
-		पूर्ण
+		}
 
 		exfat_update_dir_chksum_with_entry_set(es);
-		err = exfat_मुक्त_dentry_set(es, inode_needs_sync(inode));
-		अगर (err)
-			वापस err;
-	पूर्ण
+		err = exfat_free_dentry_set(es, inode_needs_sync(inode));
+		if (err)
+			return err;
+	}
 
 	/* cut off from the FAT chain */
-	अगर (ei->flags == ALLOC_FAT_CHAIN && last_clu != EXFAT_FREE_CLUSTER &&
-			last_clu != EXFAT_खातापूर्ण_CLUSTER) अणु
-		अगर (exfat_ent_set(sb, last_clu, EXFAT_खातापूर्ण_CLUSTER))
-			वापस -EIO;
-	पूर्ण
+	if (ei->flags == ALLOC_FAT_CHAIN && last_clu != EXFAT_FREE_CLUSTER &&
+			last_clu != EXFAT_EOF_CLUSTER) {
+		if (exfat_ent_set(sb, last_clu, EXFAT_EOF_CLUSTER))
+			return -EIO;
+	}
 
-	/* invalidate cache and मुक्त the clusters */
+	/* invalidate cache and free the clusters */
 	/* clear exfat cache */
 	exfat_cache_inval_inode(inode);
 
-	/* hपूर्णांक inक्रमmation */
-	ei->hपूर्णांक_bmap.off = EXFAT_खातापूर्ण_CLUSTER;
-	ei->hपूर्णांक_bmap.clu = EXFAT_खातापूर्ण_CLUSTER;
+	/* hint information */
+	ei->hint_bmap.off = EXFAT_EOF_CLUSTER;
+	ei->hint_bmap.clu = EXFAT_EOF_CLUSTER;
 
-	/* hपूर्णांक_stat will be used अगर this is directory. */
-	ei->hपूर्णांक_stat.eidx = 0;
-	ei->hपूर्णांक_stat.clu = ei->start_clu;
-	ei->hपूर्णांक_femp.eidx = EXFAT_HINT_NONE;
+	/* hint_stat will be used if this is directory. */
+	ei->hint_stat.eidx = 0;
+	ei->hint_stat.clu = ei->start_clu;
+	ei->hint_femp.eidx = EXFAT_HINT_NONE;
 
-	/* मुक्त the clusters */
-	अगर (exfat_मुक्त_cluster(inode, &clu))
-		वापस -EIO;
+	/* free the clusters */
+	if (exfat_free_cluster(inode, &clu))
+		return -EIO;
 
 	exfat_clear_volume_dirty(sb);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम exfat_truncate(काष्ठा inode *inode, loff_t size)
-अणु
-	काष्ठा super_block *sb = inode->i_sb;
-	काष्ठा exfat_sb_info *sbi = EXFAT_SB(sb);
-	अचिन्हित पूर्णांक blocksize = i_blocksize(inode);
+void exfat_truncate(struct inode *inode, loff_t size)
+{
+	struct super_block *sb = inode->i_sb;
+	struct exfat_sb_info *sbi = EXFAT_SB(sb);
+	unsigned int blocksize = i_blocksize(inode);
 	loff_t aligned_size;
-	पूर्णांक err;
+	int err;
 
 	mutex_lock(&sbi->s_lock);
-	अगर (EXFAT_I(inode)->start_clu == 0) अणु
+	if (EXFAT_I(inode)->start_clu == 0) {
 		/*
 		 * Empty start_clu != ~0 (not allocated)
 		 */
 		exfat_fs_error(sb, "tried to truncate zeroed cluster.");
-		जाओ ग_लिखो_size;
-	पूर्ण
+		goto write_size;
+	}
 
-	err = __exfat_truncate(inode, i_size_पढ़ो(inode));
-	अगर (err)
-		जाओ ग_लिखो_size;
+	err = __exfat_truncate(inode, i_size_read(inode));
+	if (err)
+		goto write_size;
 
-	inode->i_स_समय = inode->i_mसमय = current_समय(inode);
-	अगर (IS_सूचीSYNC(inode))
+	inode->i_ctime = inode->i_mtime = current_time(inode);
+	if (IS_DIRSYNC(inode))
 		exfat_sync_inode(inode);
-	अन्यथा
+	else
 		mark_inode_dirty(inode);
 
-	inode->i_blocks = ((i_size_पढ़ो(inode) + (sbi->cluster_size - 1)) &
+	inode->i_blocks = ((i_size_read(inode) + (sbi->cluster_size - 1)) &
 			~(sbi->cluster_size - 1)) >> inode->i_blkbits;
-ग_लिखो_size:
-	aligned_size = i_size_पढ़ो(inode);
-	अगर (aligned_size & (blocksize - 1)) अणु
+write_size:
+	aligned_size = i_size_read(inode);
+	if (aligned_size & (blocksize - 1)) {
 		aligned_size |= (blocksize - 1);
 		aligned_size++;
-	पूर्ण
+	}
 
-	अगर (EXFAT_I(inode)->i_size_ondisk > i_size_पढ़ो(inode))
+	if (EXFAT_I(inode)->i_size_ondisk > i_size_read(inode))
 		EXFAT_I(inode)->i_size_ondisk = aligned_size;
 
-	अगर (EXFAT_I(inode)->i_size_aligned > i_size_पढ़ो(inode))
+	if (EXFAT_I(inode)->i_size_aligned > i_size_read(inode))
 		EXFAT_I(inode)->i_size_aligned = aligned_size;
 	mutex_unlock(&sbi->s_lock);
-पूर्ण
+}
 
-पूर्णांक exfat_getattr(काष्ठा user_namespace *mnt_uerns, स्थिर काष्ठा path *path,
-		  काष्ठा kstat *stat, अचिन्हित पूर्णांक request_mask,
-		  अचिन्हित पूर्णांक query_flags)
-अणु
-	काष्ठा inode *inode = d_backing_inode(path->dentry);
-	काष्ठा exfat_inode_info *ei = EXFAT_I(inode);
+int exfat_getattr(struct user_namespace *mnt_uerns, const struct path *path,
+		  struct kstat *stat, unsigned int request_mask,
+		  unsigned int query_flags)
+{
+	struct inode *inode = d_backing_inode(path->dentry);
+	struct exfat_inode_info *ei = EXFAT_I(inode);
 
 	generic_fillattr(&init_user_ns, inode, stat);
-	exfat_truncate_aसमय(&stat->aसमय);
+	exfat_truncate_atime(&stat->atime);
 	stat->result_mask |= STATX_BTIME;
-	stat->bसमय.tv_sec = ei->i_crसमय.tv_sec;
-	stat->bसमय.tv_nsec = ei->i_crसमय.tv_nsec;
+	stat->btime.tv_sec = ei->i_crtime.tv_sec;
+	stat->btime.tv_nsec = ei->i_crtime.tv_nsec;
 	stat->blksize = EXFAT_SB(inode->i_sb)->cluster_size;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक exfat_setattr(काष्ठा user_namespace *mnt_userns, काष्ठा dentry *dentry,
-		  काष्ठा iattr *attr)
-अणु
-	काष्ठा exfat_sb_info *sbi = EXFAT_SB(dentry->d_sb);
-	काष्ठा inode *inode = dentry->d_inode;
-	अचिन्हित पूर्णांक ia_valid;
-	पूर्णांक error;
+int exfat_setattr(struct user_namespace *mnt_userns, struct dentry *dentry,
+		  struct iattr *attr)
+{
+	struct exfat_sb_info *sbi = EXFAT_SB(dentry->d_sb);
+	struct inode *inode = dentry->d_inode;
+	unsigned int ia_valid;
+	int error;
 
-	अगर ((attr->ia_valid & ATTR_SIZE) &&
-	    attr->ia_size > i_size_पढ़ो(inode)) अणु
+	if ((attr->ia_valid & ATTR_SIZE) &&
+	    attr->ia_size > i_size_read(inode)) {
 		error = exfat_cont_expand(inode, attr->ia_size);
-		अगर (error || attr->ia_valid == ATTR_SIZE)
-			वापस error;
+		if (error || attr->ia_valid == ATTR_SIZE)
+			return error;
 		attr->ia_valid &= ~ATTR_SIZE;
-	पूर्ण
+	}
 
-	/* Check क्रम setting the inode समय. */
+	/* Check for setting the inode time. */
 	ia_valid = attr->ia_valid;
-	अगर ((ia_valid & (ATTR_MTIME_SET | ATTR_ATIME_SET | ATTR_TIMES_SET)) &&
-	    exfat_allow_set_समय(sbi, inode)) अणु
+	if ((ia_valid & (ATTR_MTIME_SET | ATTR_ATIME_SET | ATTR_TIMES_SET)) &&
+	    exfat_allow_set_time(sbi, inode)) {
 		attr->ia_valid &= ~(ATTR_MTIME_SET | ATTR_ATIME_SET |
 				ATTR_TIMES_SET);
-	पूर्ण
+	}
 
 	error = setattr_prepare(&init_user_ns, dentry, attr);
 	attr->ia_valid = ia_valid;
-	अगर (error)
-		जाओ out;
+	if (error)
+		goto out;
 
-	अगर (((attr->ia_valid & ATTR_UID) &&
+	if (((attr->ia_valid & ATTR_UID) &&
 	     !uid_eq(attr->ia_uid, sbi->options.fs_uid)) ||
 	    ((attr->ia_valid & ATTR_GID) &&
 	     !gid_eq(attr->ia_gid, sbi->options.fs_gid)) ||
 	    ((attr->ia_valid & ATTR_MODE) &&
-	     (attr->ia_mode & ~(S_IFREG | S_IFLNK | S_IFसूची | 0777)))) अणु
+	     (attr->ia_mode & ~(S_IFREG | S_IFLNK | S_IFDIR | 0777)))) {
 		error = -EPERM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
-	 * We करोn't वापस -EPERM here. Yes, strange, but this is too
+	 * We don't return -EPERM here. Yes, strange, but this is too
 	 * old behavior.
 	 */
-	अगर (attr->ia_valid & ATTR_MODE) अणु
-		अगर (exfat_sanitize_mode(sbi, inode, &attr->ia_mode) < 0)
+	if (attr->ia_valid & ATTR_MODE) {
+		if (exfat_sanitize_mode(sbi, inode, &attr->ia_mode) < 0)
 			attr->ia_valid &= ~ATTR_MODE;
-	पूर्ण
+	}
 
-	अगर (attr->ia_valid & ATTR_SIZE) अणु
+	if (attr->ia_valid & ATTR_SIZE) {
 		error = exfat_block_truncate_page(inode, attr->ia_size);
-		अगर (error)
-			जाओ out;
+		if (error)
+			goto out;
 
-		करोwn_ग_लिखो(&EXFAT_I(inode)->truncate_lock);
+		down_write(&EXFAT_I(inode)->truncate_lock);
 		truncate_setsize(inode, attr->ia_size);
 		exfat_truncate(inode, attr->ia_size);
-		up_ग_लिखो(&EXFAT_I(inode)->truncate_lock);
-	पूर्ण
+		up_write(&EXFAT_I(inode)->truncate_lock);
+	}
 
 	setattr_copy(&init_user_ns, inode, attr);
-	exfat_truncate_aसमय(&inode->i_aसमय);
+	exfat_truncate_atime(&inode->i_atime);
 	mark_inode_dirty(inode);
 
 out:
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक exfat_ioctl_fitrim(काष्ठा inode *inode, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा request_queue *q = bdev_get_queue(inode->i_sb->s_bdev);
-	काष्ठा fstrim_range range;
-	पूर्णांक ret = 0;
+static int exfat_ioctl_fitrim(struct inode *inode, unsigned long arg)
+{
+	struct request_queue *q = bdev_get_queue(inode->i_sb->s_bdev);
+	struct fstrim_range range;
+	int ret = 0;
 
-	अगर (!capable(CAP_SYS_ADMIN))
-		वापस -EPERM;
+	if (!capable(CAP_SYS_ADMIN))
+		return -EPERM;
 
-	अगर (!blk_queue_discard(q))
-		वापस -EOPNOTSUPP;
+	if (!blk_queue_discard(q))
+		return -EOPNOTSUPP;
 
-	अगर (copy_from_user(&range, (काष्ठा fstrim_range __user *)arg, माप(range)))
-		वापस -EFAULT;
+	if (copy_from_user(&range, (struct fstrim_range __user *)arg, sizeof(range)))
+		return -EFAULT;
 
-	range.minlen = max_t(अचिन्हित पूर्णांक, range.minlen,
+	range.minlen = max_t(unsigned int, range.minlen,
 				q->limits.discard_granularity);
 
 	ret = exfat_trim_fs(inode, &range);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (copy_to_user((काष्ठा fstrim_range __user *)arg, &range, माप(range)))
-		वापस -EFAULT;
+	if (copy_to_user((struct fstrim_range __user *)arg, &range, sizeof(range)))
+		return -EFAULT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-दीर्घ exfat_ioctl(काष्ठा file *filp, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा inode *inode = file_inode(filp);
+long exfat_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+{
+	struct inode *inode = file_inode(filp);
 
-	चयन (cmd) अणु
-	हाल FITRIM:
-		वापस exfat_ioctl_fitrim(inode, arg);
-	शेष:
-		वापस -ENOTTY;
-	पूर्ण
-पूर्ण
+	switch (cmd) {
+	case FITRIM:
+		return exfat_ioctl_fitrim(inode, arg);
+	default:
+		return -ENOTTY;
+	}
+}
 
-#अगर_घोषित CONFIG_COMPAT
-दीर्घ exfat_compat_ioctl(काष्ठा file *filp, अचिन्हित पूर्णांक cmd,
-				अचिन्हित दीर्घ arg)
-अणु
-	वापस exfat_ioctl(filp, cmd, (अचिन्हित दीर्घ)compat_ptr(arg));
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_COMPAT
+long exfat_compat_ioctl(struct file *filp, unsigned int cmd,
+				unsigned long arg)
+{
+	return exfat_ioctl(filp, cmd, (unsigned long)compat_ptr(arg));
+}
+#endif
 
-पूर्णांक exfat_file_fsync(काष्ठा file *filp, loff_t start, loff_t end, पूर्णांक datasync)
-अणु
-	काष्ठा inode *inode = filp->f_mapping->host;
-	पूर्णांक err;
+int exfat_file_fsync(struct file *filp, loff_t start, loff_t end, int datasync)
+{
+	struct inode *inode = filp->f_mapping->host;
+	int err;
 
 	err = __generic_file_fsync(filp, start, end, datasync);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = sync_blockdev(inode->i_sb->s_bdev);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस blkdev_issue_flush(inode->i_sb->s_bdev);
-पूर्ण
+	return blkdev_issue_flush(inode->i_sb->s_bdev);
+}
 
-स्थिर काष्ठा file_operations exfat_file_operations = अणु
+const struct file_operations exfat_file_operations = {
 	.llseek		= generic_file_llseek,
-	.पढ़ो_iter	= generic_file_पढ़ो_iter,
-	.ग_लिखो_iter	= generic_file_ग_लिखो_iter,
+	.read_iter	= generic_file_read_iter,
+	.write_iter	= generic_file_write_iter,
 	.unlocked_ioctl = exfat_ioctl,
-#अगर_घोषित CONFIG_COMPAT
+#ifdef CONFIG_COMPAT
 	.compat_ioctl = exfat_compat_ioctl,
-#पूर्ण_अगर
+#endif
 	.mmap		= generic_file_mmap,
 	.fsync		= exfat_file_fsync,
-	.splice_पढ़ो	= generic_file_splice_पढ़ो,
-	.splice_ग_लिखो	= iter_file_splice_ग_लिखो,
-पूर्ण;
+	.splice_read	= generic_file_splice_read,
+	.splice_write	= iter_file_splice_write,
+};
 
-स्थिर काष्ठा inode_operations exfat_file_inode_operations = अणु
+const struct inode_operations exfat_file_inode_operations = {
 	.setattr     = exfat_setattr,
 	.getattr     = exfat_getattr,
-पूर्ण;
+};

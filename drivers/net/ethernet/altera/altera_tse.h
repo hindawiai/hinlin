@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /* Altera Triple-Speed Ethernet MAC driver
  * Copyright (C) 2008-2014 Altera Corporation. All rights reserved
  *
@@ -18,119 +17,119 @@
  * Major updates contributed by GlobalLogic
  */
 
-#अगर_अघोषित __ALTERA_TSE_H__
-#घोषणा __ALTERA_TSE_H__
+#ifndef __ALTERA_TSE_H__
+#define __ALTERA_TSE_H__
 
-#घोषणा ALTERA_TSE_RESOURCE_NAME	"altera_tse"
+#define ALTERA_TSE_RESOURCE_NAME	"altera_tse"
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/अगर_vlan.h>
-#समावेश <linux/list.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/phy.h>
+#include <linux/bitops.h>
+#include <linux/if_vlan.h>
+#include <linux/list.h>
+#include <linux/netdevice.h>
+#include <linux/phy.h>
 
-#घोषणा ALTERA_TSE_SW_RESET_WATCHDOG_CNTR	10000
-#घोषणा ALTERA_TSE_MAC_FIFO_WIDTH		4	/* TX/RX FIFO width in
+#define ALTERA_TSE_SW_RESET_WATCHDOG_CNTR	10000
+#define ALTERA_TSE_MAC_FIFO_WIDTH		4	/* TX/RX FIFO width in
 							 * bytes
 							 */
-/* Rx FIFO शेष settings */
-#घोषणा ALTERA_TSE_RX_SECTION_EMPTY	16
-#घोषणा ALTERA_TSE_RX_SECTION_FULL	0
-#घोषणा ALTERA_TSE_RX_ALMOST_EMPTY	8
-#घोषणा ALTERA_TSE_RX_ALMOST_FULL	8
+/* Rx FIFO default settings */
+#define ALTERA_TSE_RX_SECTION_EMPTY	16
+#define ALTERA_TSE_RX_SECTION_FULL	0
+#define ALTERA_TSE_RX_ALMOST_EMPTY	8
+#define ALTERA_TSE_RX_ALMOST_FULL	8
 
-/* Tx FIFO शेष settings */
-#घोषणा ALTERA_TSE_TX_SECTION_EMPTY	16
-#घोषणा ALTERA_TSE_TX_SECTION_FULL	0
-#घोषणा ALTERA_TSE_TX_ALMOST_EMPTY	8
-#घोषणा ALTERA_TSE_TX_ALMOST_FULL	3
+/* Tx FIFO default settings */
+#define ALTERA_TSE_TX_SECTION_EMPTY	16
+#define ALTERA_TSE_TX_SECTION_FULL	0
+#define ALTERA_TSE_TX_ALMOST_EMPTY	8
+#define ALTERA_TSE_TX_ALMOST_FULL	3
 
-/* MAC function configuration शेष settings */
-#घोषणा ALTERA_TSE_TX_IPG_LENGTH	12
+/* MAC function configuration default settings */
+#define ALTERA_TSE_TX_IPG_LENGTH	12
 
-#घोषणा ALTERA_TSE_PAUSE_QUANTA		0xffff
+#define ALTERA_TSE_PAUSE_QUANTA		0xffff
 
-#घोषणा GET_BIT_VALUE(v, bit)		(((v) >> (bit)) & 0x1)
+#define GET_BIT_VALUE(v, bit)		(((v) >> (bit)) & 0x1)
 
 /* MAC Command_Config Register Bit Definitions
  */
-#घोषणा MAC_CMDCFG_TX_ENA			BIT(0)
-#घोषणा MAC_CMDCFG_RX_ENA			BIT(1)
-#घोषणा MAC_CMDCFG_XON_GEN			BIT(2)
-#घोषणा MAC_CMDCFG_ETH_SPEED			BIT(3)
-#घोषणा MAC_CMDCFG_PROMIS_EN			BIT(4)
-#घोषणा MAC_CMDCFG_PAD_EN			BIT(5)
-#घोषणा MAC_CMDCFG_CRC_FWD			BIT(6)
-#घोषणा MAC_CMDCFG_PAUSE_FWD			BIT(7)
-#घोषणा MAC_CMDCFG_PAUSE_IGNORE			BIT(8)
-#घोषणा MAC_CMDCFG_TX_ADDR_INS			BIT(9)
-#घोषणा MAC_CMDCFG_HD_ENA			BIT(10)
-#घोषणा MAC_CMDCFG_EXCESS_COL			BIT(11)
-#घोषणा MAC_CMDCFG_LATE_COL			BIT(12)
-#घोषणा MAC_CMDCFG_SW_RESET			BIT(13)
-#घोषणा MAC_CMDCFG_MHASH_SEL			BIT(14)
-#घोषणा MAC_CMDCFG_LOOP_ENA			BIT(15)
-#घोषणा MAC_CMDCFG_TX_ADDR_SEL(v)		(((v) & 0x7) << 16)
-#घोषणा MAC_CMDCFG_MAGIC_ENA			BIT(19)
-#घोषणा MAC_CMDCFG_SLEEP			BIT(20)
-#घोषणा MAC_CMDCFG_WAKEUP			BIT(21)
-#घोषणा MAC_CMDCFG_XOFF_GEN			BIT(22)
-#घोषणा MAC_CMDCFG_CNTL_FRM_ENA			BIT(23)
-#घोषणा MAC_CMDCFG_NO_LGTH_CHECK		BIT(24)
-#घोषणा MAC_CMDCFG_ENA_10			BIT(25)
-#घोषणा MAC_CMDCFG_RX_ERR_DISC			BIT(26)
-#घोषणा MAC_CMDCFG_DISABLE_READ_TIMEOUT		BIT(27)
-#घोषणा MAC_CMDCFG_CNT_RESET			BIT(31)
+#define MAC_CMDCFG_TX_ENA			BIT(0)
+#define MAC_CMDCFG_RX_ENA			BIT(1)
+#define MAC_CMDCFG_XON_GEN			BIT(2)
+#define MAC_CMDCFG_ETH_SPEED			BIT(3)
+#define MAC_CMDCFG_PROMIS_EN			BIT(4)
+#define MAC_CMDCFG_PAD_EN			BIT(5)
+#define MAC_CMDCFG_CRC_FWD			BIT(6)
+#define MAC_CMDCFG_PAUSE_FWD			BIT(7)
+#define MAC_CMDCFG_PAUSE_IGNORE			BIT(8)
+#define MAC_CMDCFG_TX_ADDR_INS			BIT(9)
+#define MAC_CMDCFG_HD_ENA			BIT(10)
+#define MAC_CMDCFG_EXCESS_COL			BIT(11)
+#define MAC_CMDCFG_LATE_COL			BIT(12)
+#define MAC_CMDCFG_SW_RESET			BIT(13)
+#define MAC_CMDCFG_MHASH_SEL			BIT(14)
+#define MAC_CMDCFG_LOOP_ENA			BIT(15)
+#define MAC_CMDCFG_TX_ADDR_SEL(v)		(((v) & 0x7) << 16)
+#define MAC_CMDCFG_MAGIC_ENA			BIT(19)
+#define MAC_CMDCFG_SLEEP			BIT(20)
+#define MAC_CMDCFG_WAKEUP			BIT(21)
+#define MAC_CMDCFG_XOFF_GEN			BIT(22)
+#define MAC_CMDCFG_CNTL_FRM_ENA			BIT(23)
+#define MAC_CMDCFG_NO_LGTH_CHECK		BIT(24)
+#define MAC_CMDCFG_ENA_10			BIT(25)
+#define MAC_CMDCFG_RX_ERR_DISC			BIT(26)
+#define MAC_CMDCFG_DISABLE_READ_TIMEOUT		BIT(27)
+#define MAC_CMDCFG_CNT_RESET			BIT(31)
 
-#घोषणा MAC_CMDCFG_TX_ENA_GET(v)		GET_BIT_VALUE(v, 0)
-#घोषणा MAC_CMDCFG_RX_ENA_GET(v)		GET_BIT_VALUE(v, 1)
-#घोषणा MAC_CMDCFG_XON_GEN_GET(v)		GET_BIT_VALUE(v, 2)
-#घोषणा MAC_CMDCFG_ETH_SPEED_GET(v)		GET_BIT_VALUE(v, 3)
-#घोषणा MAC_CMDCFG_PROMIS_EN_GET(v)		GET_BIT_VALUE(v, 4)
-#घोषणा MAC_CMDCFG_PAD_EN_GET(v)		GET_BIT_VALUE(v, 5)
-#घोषणा MAC_CMDCFG_CRC_FWD_GET(v)		GET_BIT_VALUE(v, 6)
-#घोषणा MAC_CMDCFG_PAUSE_FWD_GET(v)		GET_BIT_VALUE(v, 7)
-#घोषणा MAC_CMDCFG_PAUSE_IGNORE_GET(v)		GET_BIT_VALUE(v, 8)
-#घोषणा MAC_CMDCFG_TX_ADDR_INS_GET(v)		GET_BIT_VALUE(v, 9)
-#घोषणा MAC_CMDCFG_HD_ENA_GET(v)		GET_BIT_VALUE(v, 10)
-#घोषणा MAC_CMDCFG_EXCESS_COL_GET(v)		GET_BIT_VALUE(v, 11)
-#घोषणा MAC_CMDCFG_LATE_COL_GET(v)		GET_BIT_VALUE(v, 12)
-#घोषणा MAC_CMDCFG_SW_RESET_GET(v)		GET_BIT_VALUE(v, 13)
-#घोषणा MAC_CMDCFG_MHASH_SEL_GET(v)		GET_BIT_VALUE(v, 14)
-#घोषणा MAC_CMDCFG_LOOP_ENA_GET(v)		GET_BIT_VALUE(v, 15)
-#घोषणा MAC_CMDCFG_TX_ADDR_SEL_GET(v)		(((v) >> 16) & 0x7)
-#घोषणा MAC_CMDCFG_MAGIC_ENA_GET(v)		GET_BIT_VALUE(v, 19)
-#घोषणा MAC_CMDCFG_SLEEP_GET(v)			GET_BIT_VALUE(v, 20)
-#घोषणा MAC_CMDCFG_WAKEUP_GET(v)		GET_BIT_VALUE(v, 21)
-#घोषणा MAC_CMDCFG_XOFF_GEN_GET(v)		GET_BIT_VALUE(v, 22)
-#घोषणा MAC_CMDCFG_CNTL_FRM_ENA_GET(v)		GET_BIT_VALUE(v, 23)
-#घोषणा MAC_CMDCFG_NO_LGTH_CHECK_GET(v)		GET_BIT_VALUE(v, 24)
-#घोषणा MAC_CMDCFG_ENA_10_GET(v)		GET_BIT_VALUE(v, 25)
-#घोषणा MAC_CMDCFG_RX_ERR_DISC_GET(v)		GET_BIT_VALUE(v, 26)
-#घोषणा MAC_CMDCFG_DISABLE_READ_TIMEOUT_GET(v)	GET_BIT_VALUE(v, 27)
-#घोषणा MAC_CMDCFG_CNT_RESET_GET(v)		GET_BIT_VALUE(v, 31)
+#define MAC_CMDCFG_TX_ENA_GET(v)		GET_BIT_VALUE(v, 0)
+#define MAC_CMDCFG_RX_ENA_GET(v)		GET_BIT_VALUE(v, 1)
+#define MAC_CMDCFG_XON_GEN_GET(v)		GET_BIT_VALUE(v, 2)
+#define MAC_CMDCFG_ETH_SPEED_GET(v)		GET_BIT_VALUE(v, 3)
+#define MAC_CMDCFG_PROMIS_EN_GET(v)		GET_BIT_VALUE(v, 4)
+#define MAC_CMDCFG_PAD_EN_GET(v)		GET_BIT_VALUE(v, 5)
+#define MAC_CMDCFG_CRC_FWD_GET(v)		GET_BIT_VALUE(v, 6)
+#define MAC_CMDCFG_PAUSE_FWD_GET(v)		GET_BIT_VALUE(v, 7)
+#define MAC_CMDCFG_PAUSE_IGNORE_GET(v)		GET_BIT_VALUE(v, 8)
+#define MAC_CMDCFG_TX_ADDR_INS_GET(v)		GET_BIT_VALUE(v, 9)
+#define MAC_CMDCFG_HD_ENA_GET(v)		GET_BIT_VALUE(v, 10)
+#define MAC_CMDCFG_EXCESS_COL_GET(v)		GET_BIT_VALUE(v, 11)
+#define MAC_CMDCFG_LATE_COL_GET(v)		GET_BIT_VALUE(v, 12)
+#define MAC_CMDCFG_SW_RESET_GET(v)		GET_BIT_VALUE(v, 13)
+#define MAC_CMDCFG_MHASH_SEL_GET(v)		GET_BIT_VALUE(v, 14)
+#define MAC_CMDCFG_LOOP_ENA_GET(v)		GET_BIT_VALUE(v, 15)
+#define MAC_CMDCFG_TX_ADDR_SEL_GET(v)		(((v) >> 16) & 0x7)
+#define MAC_CMDCFG_MAGIC_ENA_GET(v)		GET_BIT_VALUE(v, 19)
+#define MAC_CMDCFG_SLEEP_GET(v)			GET_BIT_VALUE(v, 20)
+#define MAC_CMDCFG_WAKEUP_GET(v)		GET_BIT_VALUE(v, 21)
+#define MAC_CMDCFG_XOFF_GEN_GET(v)		GET_BIT_VALUE(v, 22)
+#define MAC_CMDCFG_CNTL_FRM_ENA_GET(v)		GET_BIT_VALUE(v, 23)
+#define MAC_CMDCFG_NO_LGTH_CHECK_GET(v)		GET_BIT_VALUE(v, 24)
+#define MAC_CMDCFG_ENA_10_GET(v)		GET_BIT_VALUE(v, 25)
+#define MAC_CMDCFG_RX_ERR_DISC_GET(v)		GET_BIT_VALUE(v, 26)
+#define MAC_CMDCFG_DISABLE_READ_TIMEOUT_GET(v)	GET_BIT_VALUE(v, 27)
+#define MAC_CMDCFG_CNT_RESET_GET(v)		GET_BIT_VALUE(v, 31)
 
-/* SGMII PCS रेजिस्टर addresses
+/* SGMII PCS register addresses
  */
-#घोषणा SGMII_PCS_SCRATCH	0x10
-#घोषणा SGMII_PCS_REV		0x11
-#घोषणा SGMII_PCS_LINK_TIMER_0	0x12
-#घोषणा SGMII_PCS_LINK_TIMER_1	0x13
-#घोषणा SGMII_PCS_IF_MODE	0x14
-#घोषणा SGMII_PCS_DIS_READ_TO	0x15
-#घोषणा SGMII_PCS_READ_TO	0x16
-#घोषणा SGMII_PCS_SW_RESET_TIMEOUT 100 /* usecs */
+#define SGMII_PCS_SCRATCH	0x10
+#define SGMII_PCS_REV		0x11
+#define SGMII_PCS_LINK_TIMER_0	0x12
+#define SGMII_PCS_LINK_TIMER_1	0x13
+#define SGMII_PCS_IF_MODE	0x14
+#define SGMII_PCS_DIS_READ_TO	0x15
+#define SGMII_PCS_READ_TO	0x16
+#define SGMII_PCS_SW_RESET_TIMEOUT 100 /* usecs */
 
-/* MDIO रेजिस्टरs within MAC रेजिस्टर Space
+/* MDIO registers within MAC register Space
  */
-काष्ठा altera_tse_mdio अणु
-	u32 control;	/* PHY device operation control रेजिस्टर */
-	u32 status;	/* PHY device operation status रेजिस्टर */
-	u32 phy_id1;	/* Bits 31:16 of PHY identअगरier */
-	u32 phy_id2;	/* Bits 15:0 of PHY identअगरier */
-	u32 स्वतः_negotiation_advertisement;	/* Auto-negotiation
+struct altera_tse_mdio {
+	u32 control;	/* PHY device operation control register */
+	u32 status;	/* PHY device operation status register */
+	u32 phy_id1;	/* Bits 31:16 of PHY identifier */
+	u32 phy_id2;	/* Bits 15:0 of PHY identifier */
+	u32 auto_negotiation_advertisement;	/* Auto-negotiation
 							 * advertisement
-							 * रेजिस्टर
+							 * register
 							 */
 	u32 remote_partner_base_page_ability;
 
@@ -160,23 +159,23 @@
 	u32 reg1d;
 	u32 reg1e;
 	u32 reg1f;
-पूर्ण;
+};
 
-/* MAC रेजिस्टर Space. Note that some of these रेजिस्टरs may or may not be
+/* MAC register Space. Note that some of these registers may or may not be
  * present depending upon options chosen by the user when the core was
  * configured and built. Please consult the Altera Triple Speed Ethernet User
- * Guide क्रम details.
+ * Guide for details.
  */
-काष्ठा altera_tse_mac अणु
+struct altera_tse_mac {
 	/* Bits 15:0: MegaCore function revision (0x0800). Bit 31:16: Customer
-	 * specअगरic revision
+	 * specific revision
 	 */
 	u32 megacore_revision;
-	/* Provides a memory location क्रम user applications to test the device
+	/* Provides a memory location for user applications to test the device
 	 * memory operation.
 	 */
 	u32 scratch_pad;
-	/* The host processor uses this रेजिस्टर to control and configure the
+	/* The host processor uses this register to control and configure the
 	 * MAC block
 	 */
 	u32 command_config;
@@ -190,10 +189,10 @@
 	u32 mac_addr_1;
 	/* 14-bit maximum frame length. The MAC receive logic */
 	u32 frm_length;
-	/* The छोड़ो quanta is used in each छोड़ो frame sent to a remote
-	 * Ethernet device, in increments of 512 Ethernet bit बार
+	/* The pause quanta is used in each pause frame sent to a remote
+	 * Ethernet device, in increments of 512 Ethernet bit times
 	 */
-	u32 छोड़ो_quanta;
+	u32 pause_quanta;
 	/* 12-bit receive FIFO section-empty threshold */
 	u32 rx_section_empty;
 	/* 12-bit receive FIFO section-full threshold */
@@ -215,10 +214,10 @@
 	/* MDIO address of PHY Device 1. Bits 0 to 4 hold a 5-bit PHY address */
 	u32 mdio_phy1_addr;
 
-	/* Bit[15:0]ै 16-bit holकरोff quanta */
-	u32 holकरोff_quant;
+	/* Bit[15:0]—16-bit holdoff quanta */
+	u32 holdoff_quant;
 
-	/* only अगर 100/1000 BaseX PCS, reserved otherwise */
+	/* only if 100/1000 BaseX PCS, reserved otherwise */
 	u32 reserved1[5];
 
 	/* Minimum IPG between consecutive transmit frame in terms of bytes */
@@ -230,9 +229,9 @@
 	u32 mac_id_1;
 	u32 mac_id_2;
 
-	/* Number of frames transmitted without error including छोड़ो frames */
+	/* Number of frames transmitted without error including pause frames */
 	u32 frames_transmitted_ok;
-	/* Number of frames received without error including छोड़ो frames */
+	/* Number of frames received without error including pause frames */
 	u32 frames_received_ok;
 	/* Number of frames received with a CRC error */
 	u32 frames_check_sequence_errors;
@@ -247,35 +246,35 @@
 
 	/* IEEE 802.3 oPausedEntity Managed Object Support */
 
-	/* Number of transmitted छोड़ो frames */
-	u32 tx_छोड़ो_mac_ctrl_frames;
-	/* Number of Received छोड़ो frames */
-	u32 rx_छोड़ो_mac_ctrl_frames;
+	/* Number of transmitted pause frames */
+	u32 tx_pause_mac_ctrl_frames;
+	/* Number of Received pause frames */
+	u32 rx_pause_mac_ctrl_frames;
 
 	/* IETF MIB (MIB-II) Object Support */
 
 	/* Number of frames received with error */
-	u32 अगर_in_errors;
+	u32 if_in_errors;
 	/* Number of frames transmitted with error */
-	u32 अगर_out_errors;
+	u32 if_out_errors;
 	/* Number of valid received unicast frames */
-	u32 अगर_in_ucast_pkts;
-	/* Number of valid received multicasts frames (without छोड़ो) */
-	u32 अगर_in_multicast_pkts;
+	u32 if_in_ucast_pkts;
+	/* Number of valid received multicasts frames (without pause) */
+	u32 if_in_multicast_pkts;
 	/* Number of valid received broadcast frames */
-	u32 अगर_in_broadcast_pkts;
-	u32 अगर_out_discards;
+	u32 if_in_broadcast_pkts;
+	u32 if_out_discards;
 	/* The number of valid unicast frames transmitted */
-	u32 अगर_out_ucast_pkts;
+	u32 if_out_ucast_pkts;
 	/* The number of valid multicast frames transmitted,
-	 * excluding छोड़ो frames
+	 * excluding pause frames
 	 */
-	u32 अगर_out_multicast_pkts;
-	u32 अगर_out_broadcast_pkts;
+	u32 if_out_multicast_pkts;
+	u32 if_out_broadcast_pkts;
 
 	/* IETF RMON MIB Object Support */
 
-	/* Counts the number of dropped packets due to पूर्णांकernal errors
+	/* Counts the number of dropped packets due to internal errors
 	 * of the MAC client.
 	 */
 	u32 ether_stats_drop_events;
@@ -285,8 +284,8 @@
 	u32 ether_stats_pkts;
 	/* Number of packets received with less than 64 bytes. */
 	u32 ether_stats_undersize_pkts;
-	/* The number of frames received that are दीर्घer than the
-	 * value configured in the frm_length रेजिस्टर
+	/* The number of frames received that are longer than the
+	 * value configured in the frm_length register
 	 */
 	u32 ether_stats_oversize_pkts;
 	/* Number of received packet with 64 bytes */
@@ -303,17 +302,17 @@
 	u32 ether_stats_pkts_1024to1518_octets;
 
 	/* Any frame length from 1519 to the maximum length configured in the
-	 * frm_length रेजिस्टर, अगर it is greater than 1518
+	 * frm_length register, if it is greater than 1518
 	 */
 	u32 ether_stats_pkts_1519tox_octets;
-	/* Too दीर्घ frames with CRC error */
+	/* Too long frames with CRC error */
 	u32 ether_stats_jabbers;
-	/* Too लघु frames with CRC error */
+	/* Too short frames with CRC error */
 	u32 ether_stats_fragments;
 
 	u32 reserved2;
 
-	/* FIFO control रेजिस्टर */
+	/* FIFO control register */
 	u32 tx_cmd_stat;
 	u32 rx_cmd_stat;
 
@@ -330,10 +329,10 @@
 	u32 hash_table[64];
 
 	/* Registers 0 to 31 within PHY device 0/1 connected to the MDIO PHY
-	 * management पूर्णांकerface
+	 * management interface
 	 */
-	काष्ठा altera_tse_mdio mdio_phy0;
-	काष्ठा altera_tse_mdio mdio_phy1;
+	struct altera_tse_mdio mdio_phy0;
+	struct altera_tse_mdio mdio_phy1;
 
 	/* 4 Supplemental MAC Addresses */
 	u32 supp_mac_addr_0_0;
@@ -356,83 +355,83 @@
 	u32 rx_adjust_ns;
 
 	u32 reserved5[42];
-पूर्ण;
+};
 
-#घोषणा tse_csroffs(a) (दुरत्व(काष्ठा altera_tse_mac, a))
+#define tse_csroffs(a) (offsetof(struct altera_tse_mac, a))
 
 /* Transmit and Receive Command Registers Bit Definitions
  */
-#घोषणा ALTERA_TSE_TX_CMD_STAT_OMIT_CRC		BIT(17)
-#घोषणा ALTERA_TSE_TX_CMD_STAT_TX_SHIFT16	BIT(18)
-#घोषणा ALTERA_TSE_RX_CMD_STAT_RX_SHIFT16	BIT(25)
+#define ALTERA_TSE_TX_CMD_STAT_OMIT_CRC		BIT(17)
+#define ALTERA_TSE_TX_CMD_STAT_TX_SHIFT16	BIT(18)
+#define ALTERA_TSE_RX_CMD_STAT_RX_SHIFT16	BIT(25)
 
-/* Wrapper around a poपूर्णांकer to a socket buffer,
- * so a DMA handle can be stored aदीर्घ with the buffer
+/* Wrapper around a pointer to a socket buffer,
+ * so a DMA handle can be stored along with the buffer
  */
-काष्ठा tse_buffer अणु
-	काष्ठा list_head lh;
-	काष्ठा sk_buff *skb;
+struct tse_buffer {
+	struct list_head lh;
+	struct sk_buff *skb;
 	dma_addr_t dma_addr;
 	u32 len;
-	पूर्णांक mapped_as_page;
-पूर्ण;
+	int mapped_as_page;
+};
 
-काष्ठा altera_tse_निजी;
+struct altera_tse_private;
 
-#घोषणा ALTERA_DTYPE_SGDMA 1
-#घोषणा ALTERA_DTYPE_MSGDMA 2
+#define ALTERA_DTYPE_SGDMA 1
+#define ALTERA_DTYPE_MSGDMA 2
 
-/* standard DMA पूर्णांकerface क्रम SGDMA and MSGDMA */
-काष्ठा altera_dmaops अणु
-	पूर्णांक altera_dtype;
-	पूर्णांक dmamask;
-	व्योम (*reset_dma)(काष्ठा altera_tse_निजी *);
-	व्योम (*enable_txirq)(काष्ठा altera_tse_निजी *);
-	व्योम (*enable_rxirq)(काष्ठा altera_tse_निजी *);
-	व्योम (*disable_txirq)(काष्ठा altera_tse_निजी *);
-	व्योम (*disable_rxirq)(काष्ठा altera_tse_निजी *);
-	व्योम (*clear_txirq)(काष्ठा altera_tse_निजी *);
-	व्योम (*clear_rxirq)(काष्ठा altera_tse_निजी *);
-	पूर्णांक (*tx_buffer)(काष्ठा altera_tse_निजी *, काष्ठा tse_buffer *);
-	u32 (*tx_completions)(काष्ठा altera_tse_निजी *);
-	व्योम (*add_rx_desc)(काष्ठा altera_tse_निजी *, काष्ठा tse_buffer *);
-	u32 (*get_rx_status)(काष्ठा altera_tse_निजी *);
-	पूर्णांक (*init_dma)(काष्ठा altera_tse_निजी *);
-	व्योम (*uninit_dma)(काष्ठा altera_tse_निजी *);
-	व्योम (*start_rxdma)(काष्ठा altera_tse_निजी *);
-पूर्ण;
+/* standard DMA interface for SGDMA and MSGDMA */
+struct altera_dmaops {
+	int altera_dtype;
+	int dmamask;
+	void (*reset_dma)(struct altera_tse_private *);
+	void (*enable_txirq)(struct altera_tse_private *);
+	void (*enable_rxirq)(struct altera_tse_private *);
+	void (*disable_txirq)(struct altera_tse_private *);
+	void (*disable_rxirq)(struct altera_tse_private *);
+	void (*clear_txirq)(struct altera_tse_private *);
+	void (*clear_rxirq)(struct altera_tse_private *);
+	int (*tx_buffer)(struct altera_tse_private *, struct tse_buffer *);
+	u32 (*tx_completions)(struct altera_tse_private *);
+	void (*add_rx_desc)(struct altera_tse_private *, struct tse_buffer *);
+	u32 (*get_rx_status)(struct altera_tse_private *);
+	int (*init_dma)(struct altera_tse_private *);
+	void (*uninit_dma)(struct altera_tse_private *);
+	void (*start_rxdma)(struct altera_tse_private *);
+};
 
-/* This काष्ठाure is निजी to each device.
+/* This structure is private to each device.
  */
-काष्ठा altera_tse_निजी अणु
-	काष्ठा net_device *dev;
-	काष्ठा device *device;
-	काष्ठा napi_काष्ठा napi;
+struct altera_tse_private {
+	struct net_device *dev;
+	struct device *device;
+	struct napi_struct napi;
 
 	/* MAC address space */
-	काष्ठा altera_tse_mac __iomem *mac_dev;
+	struct altera_tse_mac __iomem *mac_dev;
 
 	/* TSE Revision */
 	u32	revision;
 
 	/* mSGDMA Rx Dispatcher address space */
-	व्योम __iomem *rx_dma_csr;
-	व्योम __iomem *rx_dma_desc;
-	व्योम __iomem *rx_dma_resp;
+	void __iomem *rx_dma_csr;
+	void __iomem *rx_dma_desc;
+	void __iomem *rx_dma_resp;
 
 	/* mSGDMA Tx Dispatcher address space */
-	व्योम __iomem *tx_dma_csr;
-	व्योम __iomem *tx_dma_desc;
+	void __iomem *tx_dma_csr;
+	void __iomem *tx_dma_desc;
 
 	/* Rx buffers queue */
-	काष्ठा tse_buffer *rx_ring;
+	struct tse_buffer *rx_ring;
 	u32 rx_cons;
 	u32 rx_prod;
 	u32 rx_ring_size;
 	u32 rx_dma_buf_sz;
 
 	/* Tx ring buffer */
-	काष्ठा tse_buffer *tx_ring;
+	struct tse_buffer *tx_ring;
 	u32 tx_prod;
 	u32 tx_cons;
 	u32 tx_ring_size;
@@ -442,14 +441,14 @@
 	u32 rx_irq;
 
 	/* RX/TX MAC FIFO configs */
-	u32 tx_fअगरo_depth;
-	u32 rx_fअगरo_depth;
+	u32 tx_fifo_depth;
+	u32 rx_fifo_depth;
 
 	/* Hash filter settings */
 	u32 hash_filter;
 	u32 added_unicast;
 
-	/* Descriptor memory info क्रम managing SGDMA */
+	/* Descriptor memory info for managing SGDMA */
 	u32 txdescmem;
 	u32 rxdescmem;
 	dma_addr_t rxdescmem_busaddr;
@@ -459,77 +458,77 @@
 	dma_addr_t rxdescphys;
 	dma_addr_t txdescphys;
 
-	काष्ठा list_head txlisthd;
-	काष्ठा list_head rxlisthd;
+	struct list_head txlisthd;
+	struct list_head rxlisthd;
 
-	/* MAC command_config रेजिस्टर protection */
+	/* MAC command_config register protection */
 	spinlock_t mac_cfg_lock;
 	/* Tx path protection */
 	spinlock_t tx_lock;
-	/* Rx DMA & पूर्णांकerrupt control protection */
+	/* Rx DMA & interrupt control protection */
 	spinlock_t rxdma_irq_lock;
 
 	/* PHY */
-	पूर्णांक phy_addr;		/* PHY's MDIO address, -1 क्रम स्वतःdetection */
-	phy_पूर्णांकerface_t phy_अगरace;
-	काष्ठा mii_bus *mdio;
-	पूर्णांक oldspeed;
-	पूर्णांक oldduplex;
-	पूर्णांक oldlink;
+	int phy_addr;		/* PHY's MDIO address, -1 for autodetection */
+	phy_interface_t phy_iface;
+	struct mii_bus *mdio;
+	int oldspeed;
+	int oldduplex;
+	int oldlink;
 
 	/* ethtool msglvl option */
 	u32 msg_enable;
 
-	काष्ठा altera_dmaops *dmaops;
-पूर्ण;
+	struct altera_dmaops *dmaops;
+};
 
 /* Function prototypes
  */
-व्योम altera_tse_set_ethtool_ops(काष्ठा net_device *);
+void altera_tse_set_ethtool_ops(struct net_device *);
 
-अटल अंतरभूत
-u32 csrrd32(व्योम __iomem *mac, माप_प्रकार offs)
-अणु
-	व्योम __iomem *paddr = (व्योम __iomem *)((uपूर्णांकptr_t)mac + offs);
-	वापस पढ़ोl(paddr);
-पूर्ण
+static inline
+u32 csrrd32(void __iomem *mac, size_t offs)
+{
+	void __iomem *paddr = (void __iomem *)((uintptr_t)mac + offs);
+	return readl(paddr);
+}
 
-अटल अंतरभूत
-u16 csrrd16(व्योम __iomem *mac, माप_प्रकार offs)
-अणु
-	व्योम __iomem *paddr = (व्योम __iomem *)((uपूर्णांकptr_t)mac + offs);
-	वापस पढ़ोw(paddr);
-पूर्ण
+static inline
+u16 csrrd16(void __iomem *mac, size_t offs)
+{
+	void __iomem *paddr = (void __iomem *)((uintptr_t)mac + offs);
+	return readw(paddr);
+}
 
-अटल अंतरभूत
-u8 csrrd8(व्योम __iomem *mac, माप_प्रकार offs)
-अणु
-	व्योम __iomem *paddr = (व्योम __iomem *)((uपूर्णांकptr_t)mac + offs);
-	वापस पढ़ोb(paddr);
-पूर्ण
+static inline
+u8 csrrd8(void __iomem *mac, size_t offs)
+{
+	void __iomem *paddr = (void __iomem *)((uintptr_t)mac + offs);
+	return readb(paddr);
+}
 
-अटल अंतरभूत
-व्योम csrwr32(u32 val, व्योम __iomem *mac, माप_प्रकार offs)
-अणु
-	व्योम __iomem *paddr = (व्योम __iomem *)((uपूर्णांकptr_t)mac + offs);
+static inline
+void csrwr32(u32 val, void __iomem *mac, size_t offs)
+{
+	void __iomem *paddr = (void __iomem *)((uintptr_t)mac + offs);
 
-	ग_लिखोl(val, paddr);
-पूर्ण
+	writel(val, paddr);
+}
 
-अटल अंतरभूत
-व्योम csrwr16(u16 val, व्योम __iomem *mac, माप_प्रकार offs)
-अणु
-	व्योम __iomem *paddr = (व्योम __iomem *)((uपूर्णांकptr_t)mac + offs);
+static inline
+void csrwr16(u16 val, void __iomem *mac, size_t offs)
+{
+	void __iomem *paddr = (void __iomem *)((uintptr_t)mac + offs);
 
-	ग_लिखोw(val, paddr);
-पूर्ण
+	writew(val, paddr);
+}
 
-अटल अंतरभूत
-व्योम csrwr8(u8 val, व्योम __iomem *mac, माप_प्रकार offs)
-अणु
-	व्योम __iomem *paddr = (व्योम __iomem *)((uपूर्णांकptr_t)mac + offs);
+static inline
+void csrwr8(u8 val, void __iomem *mac, size_t offs)
+{
+	void __iomem *paddr = (void __iomem *)((uintptr_t)mac + offs);
 
-	ग_लिखोb(val, paddr);
-पूर्ण
+	writeb(val, paddr);
+}
 
-#पूर्ण_अगर /* __ALTERA_TSE_H__ */
+#endif /* __ALTERA_TSE_H__ */

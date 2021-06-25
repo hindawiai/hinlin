@@ -1,19 +1,18 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 2004-2008 Cavium Networks
  */
-#अगर_अघोषित __OCTEON_IRQ_H__
-#घोषणा __OCTEON_IRQ_H__
+#ifndef __OCTEON_IRQ_H__
+#define __OCTEON_IRQ_H__
 
-#घोषणा NR_IRQS OCTEON_IRQ_LAST
-#घोषणा MIPS_CPU_IRQ_BASE OCTEON_IRQ_SW0
+#define NR_IRQS OCTEON_IRQ_LAST
+#define MIPS_CPU_IRQ_BASE OCTEON_IRQ_SW0
 
-क्रमागत octeon_irq अणु
-/* 1 - 8 represent the 8 MIPS standard पूर्णांकerrupt sources */
+enum octeon_irq {
+/* 1 - 8 represent the 8 MIPS standard interrupt sources */
 	OCTEON_IRQ_SW0 = 1,
 	OCTEON_IRQ_SW1,
 /* CIU0, CUI2, CIU4 are 3, 4, 5 */
@@ -43,17 +42,17 @@
 	OCTEON_IRQ_TIMER1,
 	OCTEON_IRQ_TIMER2,
 	OCTEON_IRQ_TIMER3,
-#अगर_अघोषित CONFIG_PCI_MSI
+#ifndef CONFIG_PCI_MSI
 	OCTEON_IRQ_LAST = 127
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-#अगर_घोषित CONFIG_PCI_MSI
-/* 256 - 511 represent the MSI पूर्णांकerrupts 0-255 */
-#घोषणा OCTEON_IRQ_MSI_BIT0	(256)
+#ifdef CONFIG_PCI_MSI
+/* 256 - 511 represent the MSI interrupts 0-255 */
+#define OCTEON_IRQ_MSI_BIT0	(256)
 
-#घोषणा OCTEON_IRQ_MSI_LAST	 (OCTEON_IRQ_MSI_BIT0 + 255)
-#घोषणा OCTEON_IRQ_LAST		 (OCTEON_IRQ_MSI_LAST + 1)
-#पूर्ण_अगर
+#define OCTEON_IRQ_MSI_LAST	 (OCTEON_IRQ_MSI_BIT0 + 255)
+#define OCTEON_IRQ_LAST		 (OCTEON_IRQ_MSI_LAST + 1)
+#endif
 
-#पूर्ण_अगर
+#endif

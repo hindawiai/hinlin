@@ -1,117 +1,116 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: MIT
+// SPDX-License-Identifier: MIT
 /*
- * Copyright तऊ 2019 Intel Corporation
+ * Copyright © 2019 Intel Corporation
  */
 
-#समावेश "gem/i915_gem_context.h"
-#समावेश "gem/i915_gem_pm.h"
+#include "gem/i915_gem_context.h"
+#include "gem/i915_gem_pm.h"
 
-#समावेश "i915_drv.h"
-#समावेश "i915_globals.h"
+#include "i915_drv.h"
+#include "i915_globals.h"
 
-#समावेश "intel_context.h"
-#समावेश "intel_engine.h"
-#समावेश "intel_engine_pm.h"
-#समावेश "intel_ring.h"
+#include "intel_context.h"
+#include "intel_engine.h"
+#include "intel_engine_pm.h"
+#include "intel_ring.h"
 
-अटल काष्ठा i915_global_context अणु
-	काष्ठा i915_global base;
-	काष्ठा kmem_cache *slab_ce;
-पूर्ण global;
+static struct i915_global_context {
+	struct i915_global base;
+	struct kmem_cache *slab_ce;
+} global;
 
-अटल काष्ठा पूर्णांकel_context *पूर्णांकel_context_alloc(व्योम)
-अणु
-	वापस kmem_cache_zalloc(global.slab_ce, GFP_KERNEL);
-पूर्ण
+static struct intel_context *intel_context_alloc(void)
+{
+	return kmem_cache_zalloc(global.slab_ce, GFP_KERNEL);
+}
 
-अटल व्योम rcu_context_मुक्त(काष्ठा rcu_head *rcu)
-अणु
-	काष्ठा पूर्णांकel_context *ce = container_of(rcu, typeof(*ce), rcu);
+static void rcu_context_free(struct rcu_head *rcu)
+{
+	struct intel_context *ce = container_of(rcu, typeof(*ce), rcu);
 
-	kmem_cache_मुक्त(global.slab_ce, ce);
-पूर्ण
+	kmem_cache_free(global.slab_ce, ce);
+}
 
-व्योम पूर्णांकel_context_मुक्त(काष्ठा पूर्णांकel_context *ce)
-अणु
-	call_rcu(&ce->rcu, rcu_context_मुक्त);
-पूर्ण
+void intel_context_free(struct intel_context *ce)
+{
+	call_rcu(&ce->rcu, rcu_context_free);
+}
 
-काष्ठा पूर्णांकel_context *
-पूर्णांकel_context_create(काष्ठा पूर्णांकel_engine_cs *engine)
-अणु
-	काष्ठा पूर्णांकel_context *ce;
+struct intel_context *
+intel_context_create(struct intel_engine_cs *engine)
+{
+	struct intel_context *ce;
 
-	ce = पूर्णांकel_context_alloc();
-	अगर (!ce)
-		वापस ERR_PTR(-ENOMEM);
+	ce = intel_context_alloc();
+	if (!ce)
+		return ERR_PTR(-ENOMEM);
 
-	पूर्णांकel_context_init(ce, engine);
-	वापस ce;
-पूर्ण
+	intel_context_init(ce, engine);
+	return ce;
+}
 
-पूर्णांक पूर्णांकel_context_alloc_state(काष्ठा पूर्णांकel_context *ce)
-अणु
-	पूर्णांक err = 0;
+int intel_context_alloc_state(struct intel_context *ce)
+{
+	int err = 0;
 
-	अगर (mutex_lock_पूर्णांकerruptible(&ce->pin_mutex))
-		वापस -EINTR;
+	if (mutex_lock_interruptible(&ce->pin_mutex))
+		return -EINTR;
 
-	अगर (!test_bit(CONTEXT_ALLOC_BIT, &ce->flags)) अणु
-		अगर (पूर्णांकel_context_is_banned(ce)) अणु
+	if (!test_bit(CONTEXT_ALLOC_BIT, &ce->flags)) {
+		if (intel_context_is_banned(ce)) {
 			err = -EIO;
-			जाओ unlock;
-		पूर्ण
+			goto unlock;
+		}
 
 		err = ce->ops->alloc(ce);
-		अगर (unlikely(err))
-			जाओ unlock;
+		if (unlikely(err))
+			goto unlock;
 
 		set_bit(CONTEXT_ALLOC_BIT, &ce->flags);
-	पूर्ण
+	}
 
 unlock:
 	mutex_unlock(&ce->pin_mutex);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक पूर्णांकel_context_active_acquire(काष्ठा पूर्णांकel_context *ce)
-अणु
-	पूर्णांक err;
+static int intel_context_active_acquire(struct intel_context *ce)
+{
+	int err;
 
 	__i915_active_acquire(&ce->active);
 
-	अगर (पूर्णांकel_context_is_barrier(ce))
-		वापस 0;
+	if (intel_context_is_barrier(ce))
+		return 0;
 
-	/* Pपुनः_स्मृतिate tracking nodes */
-	err = i915_active_acquire_pपुनः_स्मृतिate_barrier(&ce->active,
+	/* Preallocate tracking nodes */
+	err = i915_active_acquire_preallocate_barrier(&ce->active,
 						      ce->engine);
-	अगर (err)
+	if (err)
 		i915_active_release(&ce->active);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम पूर्णांकel_context_active_release(काष्ठा पूर्णांकel_context *ce)
-अणु
-	/* Nodes pपुनः_स्मृतिated in पूर्णांकel_context_active() */
+static void intel_context_active_release(struct intel_context *ce)
+{
+	/* Nodes preallocated in intel_context_active() */
 	i915_active_acquire_barrier(&ce->active);
 	i915_active_release(&ce->active);
-पूर्ण
+}
 
-अटल पूर्णांक __context_pin_state(काष्ठा i915_vma *vma, काष्ठा i915_gem_ww_ctx *ww)
-अणु
-	अचिन्हित पूर्णांक bias = i915_ggtt_pin_bias(vma) | PIN_OFFSET_BIAS;
-	पूर्णांक err;
+static int __context_pin_state(struct i915_vma *vma, struct i915_gem_ww_ctx *ww)
+{
+	unsigned int bias = i915_ggtt_pin_bias(vma) | PIN_OFFSET_BIAS;
+	int err;
 
 	err = i915_ggtt_pin(vma, ww, 0, bias | PIN_HIGH);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = i915_active_acquire(&vma->active);
-	अगर (err)
-		जाओ err_unpin;
+	if (err)
+		goto err_unpin;
 
 	/*
 	 * And mark it as a globally pinned object to let the shrinker know
@@ -120,197 +119,197 @@ unlock:
 	i915_vma_make_unshrinkable(vma);
 	vma->obj->mm.dirty = true;
 
-	वापस 0;
+	return 0;
 
 err_unpin:
 	i915_vma_unpin(vma);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम __context_unpin_state(काष्ठा i915_vma *vma)
-अणु
+static void __context_unpin_state(struct i915_vma *vma)
+{
 	i915_vma_make_shrinkable(vma);
 	i915_active_release(&vma->active);
 	__i915_vma_unpin(vma);
-पूर्ण
+}
 
-अटल पूर्णांक __ring_active(काष्ठा पूर्णांकel_ring *ring,
-			 काष्ठा i915_gem_ww_ctx *ww)
-अणु
-	पूर्णांक err;
+static int __ring_active(struct intel_ring *ring,
+			 struct i915_gem_ww_ctx *ww)
+{
+	int err;
 
-	err = पूर्णांकel_ring_pin(ring, ww);
-	अगर (err)
-		वापस err;
+	err = intel_ring_pin(ring, ww);
+	if (err)
+		return err;
 
 	err = i915_active_acquire(&ring->vma->active);
-	अगर (err)
-		जाओ err_pin;
+	if (err)
+		goto err_pin;
 
-	वापस 0;
+	return 0;
 
 err_pin:
-	पूर्णांकel_ring_unpin(ring);
-	वापस err;
-पूर्ण
+	intel_ring_unpin(ring);
+	return err;
+}
 
-अटल व्योम __ring_retire(काष्ठा पूर्णांकel_ring *ring)
-अणु
+static void __ring_retire(struct intel_ring *ring)
+{
 	i915_active_release(&ring->vma->active);
-	पूर्णांकel_ring_unpin(ring);
-पूर्ण
+	intel_ring_unpin(ring);
+}
 
-अटल पूर्णांक पूर्णांकel_context_pre_pin(काष्ठा पूर्णांकel_context *ce,
-				 काष्ठा i915_gem_ww_ctx *ww)
-अणु
-	पूर्णांक err;
+static int intel_context_pre_pin(struct intel_context *ce,
+				 struct i915_gem_ww_ctx *ww)
+{
+	int err;
 
 	CE_TRACE(ce, "active\n");
 
 	err = __ring_active(ce->ring, ww);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	err = पूर्णांकel_समयline_pin(ce->समयline, ww);
-	अगर (err)
-		जाओ err_ring;
+	err = intel_timeline_pin(ce->timeline, ww);
+	if (err)
+		goto err_ring;
 
-	अगर (!ce->state)
-		वापस 0;
+	if (!ce->state)
+		return 0;
 
 	err = __context_pin_state(ce->state, ww);
-	अगर (err)
-		जाओ err_समयline;
+	if (err)
+		goto err_timeline;
 
 
-	वापस 0;
+	return 0;
 
-err_समयline:
-	पूर्णांकel_समयline_unpin(ce->समयline);
+err_timeline:
+	intel_timeline_unpin(ce->timeline);
 err_ring:
 	__ring_retire(ce->ring);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम पूर्णांकel_context_post_unpin(काष्ठा पूर्णांकel_context *ce)
-अणु
-	अगर (ce->state)
+static void intel_context_post_unpin(struct intel_context *ce)
+{
+	if (ce->state)
 		__context_unpin_state(ce->state);
 
-	पूर्णांकel_समयline_unpin(ce->समयline);
+	intel_timeline_unpin(ce->timeline);
 	__ring_retire(ce->ring);
-पूर्ण
+}
 
-पूर्णांक __पूर्णांकel_context_करो_pin_ww(काष्ठा पूर्णांकel_context *ce,
-			      काष्ठा i915_gem_ww_ctx *ww)
-अणु
-	bool hanकरोff = false;
-	व्योम *vaddr;
-	पूर्णांक err = 0;
+int __intel_context_do_pin_ww(struct intel_context *ce,
+			      struct i915_gem_ww_ctx *ww)
+{
+	bool handoff = false;
+	void *vaddr;
+	int err = 0;
 
-	अगर (unlikely(!test_bit(CONTEXT_ALLOC_BIT, &ce->flags))) अणु
-		err = पूर्णांकel_context_alloc_state(ce);
-		अगर (err)
-			वापस err;
-	पूर्ण
+	if (unlikely(!test_bit(CONTEXT_ALLOC_BIT, &ce->flags))) {
+		err = intel_context_alloc_state(ce);
+		if (err)
+			return err;
+	}
 
 	/*
-	 * We always pin the context/ring/समयline here, to ensure a pin
-	 * refcount क्रम __पूर्णांकel_context_active(), which prevent a lock
+	 * We always pin the context/ring/timeline here, to ensure a pin
+	 * refcount for __intel_context_active(), which prevent a lock
 	 * inversion of ce->pin_mutex vs dma_resv_lock().
 	 */
 
-	err = i915_gem_object_lock(ce->समयline->hwsp_ggtt->obj, ww);
-	अगर (!err && ce->ring->vma->obj)
+	err = i915_gem_object_lock(ce->timeline->hwsp_ggtt->obj, ww);
+	if (!err && ce->ring->vma->obj)
 		err = i915_gem_object_lock(ce->ring->vma->obj, ww);
-	अगर (!err && ce->state)
+	if (!err && ce->state)
 		err = i915_gem_object_lock(ce->state->obj, ww);
-	अगर (!err)
-		err = पूर्णांकel_context_pre_pin(ce, ww);
-	अगर (err)
-		वापस err;
+	if (!err)
+		err = intel_context_pre_pin(ce, ww);
+	if (err)
+		return err;
 
 	err = i915_active_acquire(&ce->active);
-	अगर (err)
-		जाओ err_ctx_unpin;
+	if (err)
+		goto err_ctx_unpin;
 
 	err = ce->ops->pre_pin(ce, ww, &vaddr);
-	अगर (err)
-		जाओ err_release;
+	if (err)
+		goto err_release;
 
-	err = mutex_lock_पूर्णांकerruptible(&ce->pin_mutex);
-	अगर (err)
-		जाओ err_post_unpin;
+	err = mutex_lock_interruptible(&ce->pin_mutex);
+	if (err)
+		goto err_post_unpin;
 
-	अगर (unlikely(पूर्णांकel_context_is_बंदd(ce))) अणु
+	if (unlikely(intel_context_is_closed(ce))) {
 		err = -ENOENT;
-		जाओ err_unlock;
-	पूर्ण
+		goto err_unlock;
+	}
 
-	अगर (likely(!atomic_add_unless(&ce->pin_count, 1, 0))) अणु
-		err = पूर्णांकel_context_active_acquire(ce);
-		अगर (unlikely(err))
-			जाओ err_unlock;
+	if (likely(!atomic_add_unless(&ce->pin_count, 1, 0))) {
+		err = intel_context_active_acquire(ce);
+		if (unlikely(err))
+			goto err_unlock;
 
 		err = ce->ops->pin(ce, vaddr);
-		अगर (err) अणु
-			पूर्णांकel_context_active_release(ce);
-			जाओ err_unlock;
-		पूर्ण
+		if (err) {
+			intel_context_active_release(ce);
+			goto err_unlock;
+		}
 
 		CE_TRACE(ce, "pin ring:{start:%08x, head:%04x, tail:%04x}\n",
 			 i915_ggtt_offset(ce->ring->vma),
 			 ce->ring->head, ce->ring->tail);
 
-		hanकरोff = true;
-		smp_mb__beक्रमe_atomic(); /* flush pin beक्रमe it is visible */
+		handoff = true;
+		smp_mb__before_atomic(); /* flush pin before it is visible */
 		atomic_inc(&ce->pin_count);
-	पूर्ण
+	}
 
-	GEM_BUG_ON(!पूर्णांकel_context_is_pinned(ce)); /* no overflow! */
+	GEM_BUG_ON(!intel_context_is_pinned(ce)); /* no overflow! */
 
 err_unlock:
 	mutex_unlock(&ce->pin_mutex);
 err_post_unpin:
-	अगर (!hanकरोff)
+	if (!handoff)
 		ce->ops->post_unpin(ce);
 err_release:
 	i915_active_release(&ce->active);
 err_ctx_unpin:
-	पूर्णांकel_context_post_unpin(ce);
+	intel_context_post_unpin(ce);
 
 	/*
 	 * Unlock the hwsp_ggtt object since it's shared.
 	 * In principle we can unlock all the global state locked above
 	 * since it's pinned and doesn't need fencing, and will
-	 * thus reमुख्य resident until it is explicitly unpinned.
+	 * thus remain resident until it is explicitly unpinned.
 	 */
-	i915_gem_ww_unlock_single(ce->समयline->hwsp_ggtt->obj);
+	i915_gem_ww_unlock_single(ce->timeline->hwsp_ggtt->obj);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक __पूर्णांकel_context_करो_pin(काष्ठा पूर्णांकel_context *ce)
-अणु
-	काष्ठा i915_gem_ww_ctx ww;
-	पूर्णांक err;
+int __intel_context_do_pin(struct intel_context *ce)
+{
+	struct i915_gem_ww_ctx ww;
+	int err;
 
 	i915_gem_ww_ctx_init(&ww, true);
 retry:
-	err = __पूर्णांकel_context_करो_pin_ww(ce, &ww);
-	अगर (err == -EDEADLK) अणु
+	err = __intel_context_do_pin_ww(ce, &ww);
+	if (err == -EDEADLK) {
 		err = i915_gem_ww_ctx_backoff(&ww);
-		अगर (!err)
-			जाओ retry;
-	पूर्ण
+		if (!err)
+			goto retry;
+	}
 	i915_gem_ww_ctx_fini(&ww);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम पूर्णांकel_context_unpin(काष्ठा पूर्णांकel_context *ce)
-अणु
-	अगर (!atomic_dec_and_test(&ce->pin_count))
-		वापस;
+void intel_context_unpin(struct intel_context *ce)
+{
+	if (!atomic_dec_and_test(&ce->pin_count))
+		return;
 
 	CE_TRACE(ce, "unpin\n");
 	ce->ops->unpin(ce);
@@ -319,52 +318,52 @@ retry:
 	/*
 	 * Once released, we may asynchronously drop the active reference.
 	 * As that may be the only reference keeping the context alive,
-	 * take an extra now so that it is not मुक्तd beक्रमe we finish
+	 * take an extra now so that it is not freed before we finish
 	 * dereferencing it.
 	 */
-	पूर्णांकel_context_get(ce);
-	पूर्णांकel_context_active_release(ce);
-	पूर्णांकel_context_put(ce);
-पूर्ण
+	intel_context_get(ce);
+	intel_context_active_release(ce);
+	intel_context_put(ce);
+}
 
 __i915_active_call
-अटल व्योम __पूर्णांकel_context_retire(काष्ठा i915_active *active)
-अणु
-	काष्ठा पूर्णांकel_context *ce = container_of(active, typeof(*ce), active);
+static void __intel_context_retire(struct i915_active *active)
+{
+	struct intel_context *ce = container_of(active, typeof(*ce), active);
 
 	CE_TRACE(ce, "retire runtime: { total:%lluns, avg:%lluns }\n",
-		 पूर्णांकel_context_get_total_runसमय_ns(ce),
-		 पूर्णांकel_context_get_avg_runसमय_ns(ce));
+		 intel_context_get_total_runtime_ns(ce),
+		 intel_context_get_avg_runtime_ns(ce));
 
 	set_bit(CONTEXT_VALID_BIT, &ce->flags);
-	पूर्णांकel_context_post_unpin(ce);
-	पूर्णांकel_context_put(ce);
-पूर्ण
+	intel_context_post_unpin(ce);
+	intel_context_put(ce);
+}
 
-अटल पूर्णांक __पूर्णांकel_context_active(काष्ठा i915_active *active)
-अणु
-	काष्ठा पूर्णांकel_context *ce = container_of(active, typeof(*ce), active);
+static int __intel_context_active(struct i915_active *active)
+{
+	struct intel_context *ce = container_of(active, typeof(*ce), active);
 
-	पूर्णांकel_context_get(ce);
+	intel_context_get(ce);
 
-	/* everything should alपढ़ोy be activated by पूर्णांकel_context_pre_pin() */
-	GEM_WARN_ON(!i915_active_acquire_अगर_busy(&ce->ring->vma->active));
-	__पूर्णांकel_ring_pin(ce->ring);
+	/* everything should already be activated by intel_context_pre_pin() */
+	GEM_WARN_ON(!i915_active_acquire_if_busy(&ce->ring->vma->active));
+	__intel_ring_pin(ce->ring);
 
-	__पूर्णांकel_समयline_pin(ce->समयline);
+	__intel_timeline_pin(ce->timeline);
 
-	अगर (ce->state) अणु
-		GEM_WARN_ON(!i915_active_acquire_अगर_busy(&ce->state->active));
+	if (ce->state) {
+		GEM_WARN_ON(!i915_active_acquire_if_busy(&ce->state->active));
 		__i915_vma_pin(ce->state);
 		i915_vma_make_unshrinkable(ce->state);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम
-पूर्णांकel_context_init(काष्ठा पूर्णांकel_context *ce, काष्ठा पूर्णांकel_engine_cs *engine)
-अणु
+void
+intel_context_init(struct intel_context *ce, struct intel_engine_cs *engine)
+{
 	GEM_BUG_ON(!engine->cops);
 	GEM_BUG_ON(!engine->gt->vm);
 
@@ -373,134 +372,134 @@ __i915_active_call
 	ce->engine = engine;
 	ce->ops = engine->cops;
 	ce->sseu = engine->sseu;
-	ce->ring = __पूर्णांकel_context_ring_size(SZ_4K);
+	ce->ring = __intel_context_ring_size(SZ_4K);
 
-	ewma_runसमय_init(&ce->runसमय.avg);
+	ewma_runtime_init(&ce->runtime.avg);
 
 	ce->vm = i915_vm_get(engine->gt->vm);
 
-	/* NB ce->संकेत_link/lock is used under RCU */
-	spin_lock_init(&ce->संकेत_lock);
-	INIT_LIST_HEAD(&ce->संकेतs);
+	/* NB ce->signal_link/lock is used under RCU */
+	spin_lock_init(&ce->signal_lock);
+	INIT_LIST_HEAD(&ce->signals);
 
 	mutex_init(&ce->pin_mutex);
 
 	i915_active_init(&ce->active,
-			 __पूर्णांकel_context_active, __पूर्णांकel_context_retire);
-पूर्ण
+			 __intel_context_active, __intel_context_retire);
+}
 
-व्योम पूर्णांकel_context_fini(काष्ठा पूर्णांकel_context *ce)
-अणु
-	अगर (ce->समयline)
-		पूर्णांकel_समयline_put(ce->समयline);
+void intel_context_fini(struct intel_context *ce)
+{
+	if (ce->timeline)
+		intel_timeline_put(ce->timeline);
 	i915_vm_put(ce->vm);
 
 	mutex_destroy(&ce->pin_mutex);
 	i915_active_fini(&ce->active);
-पूर्ण
+}
 
-अटल व्योम i915_global_context_shrink(व्योम)
-अणु
+static void i915_global_context_shrink(void)
+{
 	kmem_cache_shrink(global.slab_ce);
-पूर्ण
+}
 
-अटल व्योम i915_global_context_निकास(व्योम)
-अणु
+static void i915_global_context_exit(void)
+{
 	kmem_cache_destroy(global.slab_ce);
-पूर्ण
+}
 
-अटल काष्ठा i915_global_context global = अणु अणु
+static struct i915_global_context global = { {
 	.shrink = i915_global_context_shrink,
-	.निकास = i915_global_context_निकास,
-पूर्ण पूर्ण;
+	.exit = i915_global_context_exit,
+} };
 
-पूर्णांक __init i915_global_context_init(व्योम)
-अणु
-	global.slab_ce = KMEM_CACHE(पूर्णांकel_context, SLAB_HWCACHE_ALIGN);
-	अगर (!global.slab_ce)
-		वापस -ENOMEM;
+int __init i915_global_context_init(void)
+{
+	global.slab_ce = KMEM_CACHE(intel_context, SLAB_HWCACHE_ALIGN);
+	if (!global.slab_ce)
+		return -ENOMEM;
 
-	i915_global_रेजिस्टर(&global.base);
-	वापस 0;
-पूर्ण
+	i915_global_register(&global.base);
+	return 0;
+}
 
-व्योम पूर्णांकel_context_enter_engine(काष्ठा पूर्णांकel_context *ce)
-अणु
-	पूर्णांकel_engine_pm_get(ce->engine);
-	पूर्णांकel_समयline_enter(ce->समयline);
-पूर्ण
+void intel_context_enter_engine(struct intel_context *ce)
+{
+	intel_engine_pm_get(ce->engine);
+	intel_timeline_enter(ce->timeline);
+}
 
-व्योम पूर्णांकel_context_निकास_engine(काष्ठा पूर्णांकel_context *ce)
-अणु
-	पूर्णांकel_समयline_निकास(ce->समयline);
-	पूर्णांकel_engine_pm_put(ce->engine);
-पूर्ण
+void intel_context_exit_engine(struct intel_context *ce)
+{
+	intel_timeline_exit(ce->timeline);
+	intel_engine_pm_put(ce->engine);
+}
 
-पूर्णांक पूर्णांकel_context_prepare_remote_request(काष्ठा पूर्णांकel_context *ce,
-					 काष्ठा i915_request *rq)
-अणु
-	काष्ठा पूर्णांकel_समयline *tl = ce->समयline;
-	पूर्णांक err;
+int intel_context_prepare_remote_request(struct intel_context *ce,
+					 struct i915_request *rq)
+{
+	struct intel_timeline *tl = ce->timeline;
+	int err;
 
-	/* Only suitable क्रम use in remotely modअगरying this context */
+	/* Only suitable for use in remotely modifying this context */
 	GEM_BUG_ON(rq->context == ce);
 
-	अगर (rcu_access_poपूर्णांकer(rq->समयline) != tl) अणु /* समयline sharing! */
-		/* Queue this चयन after current activity by this context. */
+	if (rcu_access_pointer(rq->timeline) != tl) { /* timeline sharing! */
+		/* Queue this switch after current activity by this context. */
 		err = i915_active_fence_set(&tl->last_request, rq);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
 	/*
-	 * Guarantee context image and the समयline reमुख्यs pinned until the
-	 * modअगरying request is retired by setting the ce activity tracker.
+	 * Guarantee context image and the timeline remains pinned until the
+	 * modifying request is retired by setting the ce activity tracker.
 	 *
 	 * But we only need to take one pin on the account of it. Or in other
 	 * words transfer the pinned ce object to tracked active request.
 	 */
 	GEM_BUG_ON(i915_active_is_idle(&ce->active));
-	वापस i915_active_add_request(&ce->active, rq);
-पूर्ण
+	return i915_active_add_request(&ce->active, rq);
+}
 
-काष्ठा i915_request *पूर्णांकel_context_create_request(काष्ठा पूर्णांकel_context *ce)
-अणु
-	काष्ठा i915_gem_ww_ctx ww;
-	काष्ठा i915_request *rq;
-	पूर्णांक err;
+struct i915_request *intel_context_create_request(struct intel_context *ce)
+{
+	struct i915_gem_ww_ctx ww;
+	struct i915_request *rq;
+	int err;
 
 	i915_gem_ww_ctx_init(&ww, true);
 retry:
-	err = पूर्णांकel_context_pin_ww(ce, &ww);
-	अगर (!err) अणु
+	err = intel_context_pin_ww(ce, &ww);
+	if (!err) {
 		rq = i915_request_create(ce);
-		पूर्णांकel_context_unpin(ce);
-	पूर्ण अन्यथा अगर (err == -EDEADLK) अणु
+		intel_context_unpin(ce);
+	} else if (err == -EDEADLK) {
 		err = i915_gem_ww_ctx_backoff(&ww);
-		अगर (!err)
-			जाओ retry;
+		if (!err)
+			goto retry;
 		rq = ERR_PTR(err);
-	पूर्ण अन्यथा अणु
+	} else {
 		rq = ERR_PTR(err);
-	पूर्ण
+	}
 
 	i915_gem_ww_ctx_fini(&ww);
 
-	अगर (IS_ERR(rq))
-		वापस rq;
+	if (IS_ERR(rq))
+		return rq;
 
 	/*
-	 * समयline->mutex should be the inner lock, but is used as outer lock.
+	 * timeline->mutex should be the inner lock, but is used as outer lock.
 	 * Hack around this to shut up lockdep in selftests..
 	 */
-	lockdep_unpin_lock(&ce->समयline->mutex, rq->cookie);
-	mutex_release(&ce->समयline->mutex.dep_map, _RET_IP_);
-	mutex_acquire(&ce->समयline->mutex.dep_map, SINGLE_DEPTH_NESTING, 0, _RET_IP_);
-	rq->cookie = lockdep_pin_lock(&ce->समयline->mutex);
+	lockdep_unpin_lock(&ce->timeline->mutex, rq->cookie);
+	mutex_release(&ce->timeline->mutex.dep_map, _RET_IP_);
+	mutex_acquire(&ce->timeline->mutex.dep_map, SINGLE_DEPTH_NESTING, 0, _RET_IP_);
+	rq->cookie = lockdep_pin_lock(&ce->timeline->mutex);
 
-	वापस rq;
-पूर्ण
+	return rq;
+}
 
-#अगर IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
-#समावेश "selftest_context.c"
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
+#include "selftest_context.c"
+#endif

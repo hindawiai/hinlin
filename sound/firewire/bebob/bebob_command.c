@@ -1,22 +1,21 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * bebob_command.c - driver क्रम BeBoB based devices
+ * bebob_command.c - driver for BeBoB based devices
  *
  * Copyright (c) 2013-2014 Takashi Sakamoto
  */
 
-#समावेश "./bebob.h"
+#include "./bebob.h"
 
-पूर्णांक avc_audio_set_selector(काष्ठा fw_unit *unit, अचिन्हित पूर्णांक subunit_id,
-			   अचिन्हित पूर्णांक fb_id, अचिन्हित पूर्णांक num)
-अणु
+int avc_audio_set_selector(struct fw_unit *unit, unsigned int subunit_id,
+			   unsigned int fb_id, unsigned int num)
+{
 	u8 *buf;
-	पूर्णांक err;
+	int err;
 
 	buf = kzalloc(12, GFP_KERNEL);
-	अगर (buf == शून्य)
-		वापस -ENOMEM;
+	if (buf == NULL)
+		return -ENOMEM;
 
 	buf[0]  = 0x00;		/* AV/C CONTROL */
 	buf[1]  = 0x08 | (0x07 & subunit_id);	/* AUDIO SUBUNIT ID */
@@ -31,30 +30,30 @@
 	err = fcp_avc_transaction(unit, buf, 12, buf, 12,
 				  BIT(1) | BIT(2) | BIT(3) | BIT(4) | BIT(5) |
 				  BIT(6) | BIT(7) | BIT(8));
-	अगर (err < 0)
+	if (err < 0)
 		;
-	अन्यथा अगर (err < 9)
+	else if (err < 9)
 		err = -EIO;
-	अन्यथा अगर (buf[0] == 0x08) /* NOT IMPLEMENTED */
+	else if (buf[0] == 0x08) /* NOT IMPLEMENTED */
 		err = -ENOSYS;
-	अन्यथा अगर (buf[0] == 0x0a) /* REJECTED */
+	else if (buf[0] == 0x0a) /* REJECTED */
 		err = -EINVAL;
-	अन्यथा
+	else
 		err = 0;
 
-	kमुक्त(buf);
-	वापस err;
-पूर्ण
+	kfree(buf);
+	return err;
+}
 
-पूर्णांक avc_audio_get_selector(काष्ठा fw_unit *unit, अचिन्हित पूर्णांक subunit_id,
-			   अचिन्हित पूर्णांक fb_id, अचिन्हित पूर्णांक *num)
-अणु
+int avc_audio_get_selector(struct fw_unit *unit, unsigned int subunit_id,
+			   unsigned int fb_id, unsigned int *num)
+{
 	u8 *buf;
-	पूर्णांक err;
+	int err;
 
 	buf = kzalloc(12, GFP_KERNEL);
-	अगर (buf == शून्य)
-		वापस -ENOMEM;
+	if (buf == NULL)
+		return -ENOMEM;
 
 	buf[0]  = 0x01;		/* AV/C STATUS */
 	buf[1]  = 0x08 | (0x07 & subunit_id);	/* AUDIO SUBUNIT ID */
@@ -69,54 +68,54 @@
 	err = fcp_avc_transaction(unit, buf, 12, buf, 12,
 				  BIT(1) | BIT(2) | BIT(3) | BIT(4) | BIT(5) |
 				  BIT(6) | BIT(8));
-	अगर (err < 0)
+	if (err < 0)
 		;
-	अन्यथा अगर (err < 9)
+	else if (err < 9)
 		err = -EIO;
-	अन्यथा अगर (buf[0] == 0x08) /* NOT IMPLEMENTED */
+	else if (buf[0] == 0x08) /* NOT IMPLEMENTED */
 		err = -ENOSYS;
-	अन्यथा अगर (buf[0] == 0x0a) /* REJECTED */
+	else if (buf[0] == 0x0a) /* REJECTED */
 		err = -EINVAL;
-	अन्यथा अगर (buf[0] == 0x0b) /* IN TRANSITION */
+	else if (buf[0] == 0x0b) /* IN TRANSITION */
 		err = -EAGAIN;
-	अगर (err < 0)
-		जाओ end;
+	if (err < 0)
+		goto end;
 
 	*num = buf[7];
 	err = 0;
 end:
-	kमुक्त(buf);
-	वापस err;
-पूर्ण
+	kfree(buf);
+	return err;
+}
 
-अटल अंतरभूत व्योम
+static inline void
 avc_bridgeco_fill_extension_addr(u8 *buf, u8 *addr)
-अणु
+{
 	buf[1] = addr[0];
-	स_नकल(buf + 4, addr + 1, 5);
-पूर्ण
+	memcpy(buf + 4, addr + 1, 5);
+}
 
-अटल अंतरभूत व्योम
+static inline void
 avc_bridgeco_fill_plug_info_extension_command(u8 *buf, u8 *addr,
-					      अचिन्हित पूर्णांक itype)
-अणु
+					      unsigned int itype)
+{
 	buf[0] = 0x01;	/* AV/C STATUS */
 	buf[2] = 0x02;	/* AV/C GENERAL PLUG INFO */
 	buf[3] = 0xc0;	/* BridgeCo extension */
 	avc_bridgeco_fill_extension_addr(buf, addr);
 	buf[9] = itype;	/* info type */
-पूर्ण
+}
 
-पूर्णांक avc_bridgeco_get_plug_type(काष्ठा fw_unit *unit,
+int avc_bridgeco_get_plug_type(struct fw_unit *unit,
 			       u8 addr[AVC_BRIDGECO_ADDR_BYTES],
-			       क्रमागत avc_bridgeco_plug_type *type)
-अणु
+			       enum avc_bridgeco_plug_type *type)
+{
 	u8 *buf;
-	पूर्णांक err;
+	int err;
 
 	buf = kzalloc(12, GFP_KERNEL);
-	अगर (buf == शून्य)
-		वापस -ENOMEM;
+	if (buf == NULL)
+		return -ENOMEM;
 
 	/* Info type is 'plug type'. */
 	avc_bridgeco_fill_plug_info_extension_command(buf, addr, 0x00);
@@ -124,35 +123,35 @@ avc_bridgeco_fill_plug_info_extension_command(u8 *buf, u8 *addr,
 	err = fcp_avc_transaction(unit, buf, 12, buf, 12,
 				  BIT(1) | BIT(2) | BIT(3) | BIT(4) | BIT(5) |
 				  BIT(6) | BIT(7) | BIT(9));
-	अगर (err < 0)
+	if (err < 0)
 		;
-	अन्यथा अगर (err < 11)
+	else if (err < 11)
 		err = -EIO;
-	अन्यथा अगर (buf[0] == 0x08) /* NOT IMPLEMENTED */
+	else if (buf[0] == 0x08) /* NOT IMPLEMENTED */
 		err = -ENOSYS;
-	अन्यथा अगर (buf[0] == 0x0a) /* REJECTED */
+	else if (buf[0] == 0x0a) /* REJECTED */
 		err = -EINVAL;
-	अन्यथा अगर (buf[0] == 0x0b) /* IN TRANSITION */
+	else if (buf[0] == 0x0b) /* IN TRANSITION */
 		err = -EAGAIN;
-	अगर (err < 0)
-		जाओ end;
+	if (err < 0)
+		goto end;
 
 	*type = buf[10];
 	err = 0;
 end:
-	kमुक्त(buf);
-	वापस err;
-पूर्ण
+	kfree(buf);
+	return err;
+}
 
-पूर्णांक avc_bridgeco_get_plug_ch_count(काष्ठा fw_unit *unit, u8 addr[AVC_BRIDGECO_ADDR_BYTES],
-				   अचिन्हित पूर्णांक *ch_count)
-अणु
+int avc_bridgeco_get_plug_ch_count(struct fw_unit *unit, u8 addr[AVC_BRIDGECO_ADDR_BYTES],
+				   unsigned int *ch_count)
+{
 	u8 *buf;
-	पूर्णांक err;
+	int err;
 
 	buf = kzalloc(12, GFP_KERNEL);
-	अगर (buf == शून्य)
-		वापस -ENOMEM;
+	if (buf == NULL)
+		return -ENOMEM;
 
 	// Info type is 'plug type'.
 	avc_bridgeco_fill_plug_info_extension_command(buf, addr, 0x02);
@@ -160,31 +159,31 @@ end:
 	err = fcp_avc_transaction(unit, buf, 12, buf, 12,
 				  BIT(1) | BIT(2) | BIT(3) | BIT(4) | BIT(5) |
 				  BIT(6) | BIT(7) | BIT(9));
-	अगर (err < 0)
+	if (err < 0)
 		;
-	अन्यथा अगर (err < 11)
+	else if (err < 11)
 		err = -EIO;
-	अन्यथा अगर (buf[0] == 0x08) // NOT IMPLEMENTED
+	else if (buf[0] == 0x08) // NOT IMPLEMENTED
 		err = -ENOSYS;
-	अन्यथा अगर (buf[0] == 0x0a) // REJECTED
+	else if (buf[0] == 0x0a) // REJECTED
 		err = -EINVAL;
-	अन्यथा अगर (buf[0] == 0x0b) // IN TRANSITION
+	else if (buf[0] == 0x0b) // IN TRANSITION
 		err = -EAGAIN;
-	अगर (err < 0)
-		जाओ end;
+	if (err < 0)
+		goto end;
 
 	*ch_count = buf[10];
 	err = 0;
 end:
-	kमुक्त(buf);
-	वापस err;
-पूर्ण
+	kfree(buf);
+	return err;
+}
 
-पूर्णांक avc_bridgeco_get_plug_ch_pos(काष्ठा fw_unit *unit,
+int avc_bridgeco_get_plug_ch_pos(struct fw_unit *unit,
 				 u8 addr[AVC_BRIDGECO_ADDR_BYTES],
-				 u8 *buf, अचिन्हित पूर्णांक len)
-अणु
-	पूर्णांक err;
+				 u8 *buf, unsigned int len)
+{
+	int err;
 
 	/* Info type is 'channel position'. */
 	avc_bridgeco_fill_plug_info_extension_command(buf, addr, 0x03);
@@ -192,37 +191,37 @@ end:
 	err = fcp_avc_transaction(unit, buf, 12, buf, 256,
 				  BIT(1) | BIT(2) | BIT(3) | BIT(4) |
 				  BIT(5) | BIT(6) | BIT(7) | BIT(9));
-	अगर (err < 0)
+	if (err < 0)
 		;
-	अन्यथा अगर (err < 11)
+	else if (err < 11)
 		err = -EIO;
-	अन्यथा अगर (buf[0] == 0x08) /* NOT IMPLEMENTED */
+	else if (buf[0] == 0x08) /* NOT IMPLEMENTED */
 		err = -ENOSYS;
-	अन्यथा अगर (buf[0] == 0x0a) /* REJECTED */
+	else if (buf[0] == 0x0a) /* REJECTED */
 		err = -EINVAL;
-	अन्यथा अगर (buf[0] == 0x0b) /* IN TRANSITION */
+	else if (buf[0] == 0x0b) /* IN TRANSITION */
 		err = -EAGAIN;
-	अगर (err < 0)
-		जाओ end;
+	if (err < 0)
+		goto end;
 
-	/* Pick up specअगरic data. */
-	स_हटाओ(buf, buf + 10, err - 10);
+	/* Pick up specific data. */
+	memmove(buf, buf + 10, err - 10);
 	err = 0;
 end:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक avc_bridgeco_get_plug_section_type(काष्ठा fw_unit *unit,
+int avc_bridgeco_get_plug_section_type(struct fw_unit *unit,
 				       u8 addr[AVC_BRIDGECO_ADDR_BYTES],
-				       अचिन्हित पूर्णांक id, u8 *type)
-अणु
+				       unsigned int id, u8 *type)
+{
 	u8 *buf;
-	पूर्णांक err;
+	int err;
 
-	/* section info includes अक्षरactors but this module करोn't need it */
+	/* section info includes charactors but this module don't need it */
 	buf = kzalloc(12, GFP_KERNEL);
-	अगर (buf == शून्य)
-		वापस -ENOMEM;
+	if (buf == NULL)
+		return -ENOMEM;
 
 	/* Info type is 'section info'. */
 	avc_bridgeco_fill_plug_info_extension_command(buf, addr, 0x07);
@@ -231,35 +230,35 @@ end:
 	err = fcp_avc_transaction(unit, buf, 12, buf, 12,
 				  BIT(1) | BIT(2) | BIT(3) | BIT(4) | BIT(5) |
 				  BIT(6) | BIT(7) | BIT(9) | BIT(10));
-	अगर (err < 0)
+	if (err < 0)
 		;
-	अन्यथा अगर (err < 12)
+	else if (err < 12)
 		err = -EIO;
-	अन्यथा अगर (buf[0] == 0x08) /* NOT IMPLEMENTED */
+	else if (buf[0] == 0x08) /* NOT IMPLEMENTED */
 		err = -ENOSYS;
-	अन्यथा अगर (buf[0] == 0x0a) /* REJECTED */
+	else if (buf[0] == 0x0a) /* REJECTED */
 		err = -EINVAL;
-	अन्यथा अगर (buf[0] == 0x0b) /* IN TRANSITION */
+	else if (buf[0] == 0x0b) /* IN TRANSITION */
 		err = -EAGAIN;
-	अगर (err < 0)
-		जाओ end;
+	if (err < 0)
+		goto end;
 
 	*type = buf[11];
 	err = 0;
 end:
-	kमुक्त(buf);
-	वापस err;
-पूर्ण
+	kfree(buf);
+	return err;
+}
 
-पूर्णांक avc_bridgeco_get_plug_input(काष्ठा fw_unit *unit,
+int avc_bridgeco_get_plug_input(struct fw_unit *unit,
 				u8 addr[AVC_BRIDGECO_ADDR_BYTES], u8 input[7])
-अणु
-	पूर्णांक err;
+{
+	int err;
 	u8 *buf;
 
 	buf = kzalloc(18, GFP_KERNEL);
-	अगर (buf == शून्य)
-		वापस -ENOMEM;
+	if (buf == NULL)
+		return -ENOMEM;
 
 	/* Info type is 'plug input'. */
 	avc_bridgeco_fill_plug_info_extension_command(buf, addr, 0x05);
@@ -267,37 +266,37 @@ end:
 	err = fcp_avc_transaction(unit, buf, 16, buf, 16,
 				  BIT(1) | BIT(2) | BIT(3) | BIT(4) | BIT(5) |
 				  BIT(6) | BIT(7));
-	अगर (err < 0)
+	if (err < 0)
 		;
-	अन्यथा अगर (err < 16)
+	else if (err < 16)
 		err = -EIO;
-	अन्यथा अगर (buf[0] == 0x08) /* NOT IMPLEMENTED */
+	else if (buf[0] == 0x08) /* NOT IMPLEMENTED */
 		err = -ENOSYS;
-	अन्यथा अगर (buf[0] == 0x0a) /* REJECTED */
+	else if (buf[0] == 0x0a) /* REJECTED */
 		err = -EINVAL;
-	अन्यथा अगर (buf[0] == 0x0b) /* IN TRANSITION */
+	else if (buf[0] == 0x0b) /* IN TRANSITION */
 		err = -EAGAIN;
-	अगर (err < 0)
-		जाओ end;
+	if (err < 0)
+		goto end;
 
-	स_नकल(input, buf + 10, 5);
+	memcpy(input, buf + 10, 5);
 	err = 0;
 end:
-	kमुक्त(buf);
-	वापस err;
-पूर्ण
+	kfree(buf);
+	return err;
+}
 
-पूर्णांक avc_bridgeco_get_plug_strm_fmt(काष्ठा fw_unit *unit,
+int avc_bridgeco_get_plug_strm_fmt(struct fw_unit *unit,
 				   u8 addr[AVC_BRIDGECO_ADDR_BYTES], u8 *buf,
-				   अचिन्हित पूर्णांक *len, अचिन्हित पूर्णांक eid)
-अणु
-	पूर्णांक err;
+				   unsigned int *len, unsigned int eid)
+{
+	int err;
 
 	/* check given buffer */
-	अगर ((buf == शून्य) || (*len < 12)) अणु
+	if ((buf == NULL) || (*len < 12)) {
 		err = -EINVAL;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
 	buf[0] = 0x01;	/* AV/C STATUS */
 	buf[2] = 0x2f;	/* AV/C STREAM FORMAT SUPPORT */
@@ -308,25 +307,25 @@ end:
 	err = fcp_avc_transaction(unit, buf, 12, buf, *len,
 				  BIT(1) | BIT(2) | BIT(3) | BIT(4) | BIT(5) |
 				  BIT(6) | BIT(7) | BIT(10));
-	अगर (err < 0)
+	if (err < 0)
 		;
-	अन्यथा अगर (err < 12)
+	else if (err < 12)
 		err = -EIO;
-	अन्यथा अगर (buf[0] == 0x08)        /* NOT IMPLEMENTED */
+	else if (buf[0] == 0x08)        /* NOT IMPLEMENTED */
 		err = -ENOSYS;
-	अन्यथा अगर (buf[0] == 0x0a)        /* REJECTED */
+	else if (buf[0] == 0x0a)        /* REJECTED */
 		err = -EINVAL;
-	अन्यथा अगर (buf[0] == 0x0b)        /* IN TRANSITION */
+	else if (buf[0] == 0x0b)        /* IN TRANSITION */
 		err = -EAGAIN;
-	अन्यथा अगर (buf[10] != eid)
+	else if (buf[10] != eid)
 		err = -EIO;
-	अगर (err < 0)
-		जाओ end;
+	if (err < 0)
+		goto end;
 
 	/* Pick up 'stream format info'. */
-	स_हटाओ(buf, buf + 11, err - 11);
+	memmove(buf, buf + 11, err - 11);
 	*len = err - 11;
 	err = 0;
 end:
-	वापस err;
-पूर्ण
+	return err;
+}

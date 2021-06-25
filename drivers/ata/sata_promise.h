@@ -1,20 +1,19 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- *  sata_promise.h - Promise SATA common definitions and अंतरभूत funcs
+ *  sata_promise.h - Promise SATA common definitions and inline funcs
  *
  *  Copyright 2003-2004 Red Hat, Inc.
  *
- *  libata करोcumentation is available via 'make {ps|pdf}docs',
+ *  libata documentation is available via 'make {ps|pdf}docs',
  *  as Documentation/driver-api/libata.rst
  */
 
-#अगर_अघोषित __SATA_PROMISE_H__
-#घोषणा __SATA_PROMISE_H__
+#ifndef __SATA_PROMISE_H__
+#define __SATA_PROMISE_H__
 
-#समावेश <linux/ata.h>
+#include <linux/ata.h>
 
-क्रमागत pdc_packet_bits अणु
+enum pdc_packet_bits {
 	PDC_PKT_READ		= (1 << 2),
 	PDC_PKT_NODATA		= (1 << 3),
 
@@ -24,74 +23,74 @@
 	PDC_LAST_REG		= (1 << 3),
 
 	PDC_REG_DEVCTL		= (1 << 3) | (1 << 2) | (1 << 1),
-पूर्ण;
+};
 
-अटल अंतरभूत अचिन्हित पूर्णांक pdc_pkt_header(काष्ठा ata_taskfile *tf,
+static inline unsigned int pdc_pkt_header(struct ata_taskfile *tf,
 					  dma_addr_t sg_table,
-					  अचिन्हित पूर्णांक devno, u8 *buf)
-अणु
+					  unsigned int devno, u8 *buf)
+{
 	u8 dev_reg;
 	__le32 *buf32 = (__le32 *) buf;
 
 	/* set control bits (byte 0), zero delay seq id (byte 3),
 	 * and seq id (byte 2)
 	 */
-	चयन (tf->protocol) अणु
-	हाल ATA_PROT_DMA:
-		अगर (!(tf->flags & ATA_TFLAG_WRITE))
+	switch (tf->protocol) {
+	case ATA_PROT_DMA:
+		if (!(tf->flags & ATA_TFLAG_WRITE))
 			buf32[0] = cpu_to_le32(PDC_PKT_READ);
-		अन्यथा
+		else
 			buf32[0] = 0;
-		अवरोध;
+		break;
 
-	हाल ATA_PROT_NODATA:
+	case ATA_PROT_NODATA:
 		buf32[0] = cpu_to_le32(PDC_PKT_NODATA);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		BUG();
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	buf32[1] = cpu_to_le32(sg_table);	/* S/G table addr */
 	buf32[2] = 0;				/* no next-packet */
 
-	अगर (devno == 0)
+	if (devno == 0)
 		dev_reg = ATA_DEVICE_OBS;
-	अन्यथा
+	else
 		dev_reg = ATA_DEVICE_OBS | ATA_DEV1;
 
 	/* select device */
 	buf[12] = (1 << 5) | PDC_PKT_CLEAR_BSY | ATA_REG_DEVICE;
 	buf[13] = dev_reg;
 
-	/* device control रेजिस्टर */
+	/* device control register */
 	buf[14] = (1 << 5) | PDC_REG_DEVCTL;
 	buf[15] = tf->ctl;
 
-	वापस 16; 	/* offset of next byte */
-पूर्ण
+	return 16; 	/* offset of next byte */
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक pdc_pkt_footer(काष्ठा ata_taskfile *tf, u8 *buf,
-				  अचिन्हित पूर्णांक i)
-अणु
-	अगर (tf->flags & ATA_TFLAG_DEVICE) अणु
+static inline unsigned int pdc_pkt_footer(struct ata_taskfile *tf, u8 *buf,
+				  unsigned int i)
+{
+	if (tf->flags & ATA_TFLAG_DEVICE) {
 		buf[i++] = (1 << 5) | ATA_REG_DEVICE;
 		buf[i++] = tf->device;
-	पूर्ण
+	}
 
 	/* and finally the command itself; also includes end-of-pkt marker */
 	buf[i++] = (1 << 5) | PDC_LAST_REG | ATA_REG_CMD;
 	buf[i++] = tf->command;
 
-	वापस i;
-पूर्ण
+	return i;
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक pdc_prep_lba28(काष्ठा ata_taskfile *tf, u8 *buf, अचिन्हित पूर्णांक i)
-अणु
-	/* the "(1 << 5)" should be पढ़ो "(count << 5)" */
+static inline unsigned int pdc_prep_lba28(struct ata_taskfile *tf, u8 *buf, unsigned int i)
+{
+	/* the "(1 << 5)" should be read "(count << 5)" */
 
-	/* ATA command block रेजिस्टरs */
+	/* ATA command block registers */
 	buf[i++] = (1 << 5) | ATA_REG_FEATURE;
 	buf[i++] = tf->feature;
 
@@ -107,14 +106,14 @@
 	buf[i++] = (1 << 5) | ATA_REG_LBAH;
 	buf[i++] = tf->lbah;
 
-	वापस i;
-पूर्ण
+	return i;
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक pdc_prep_lba48(काष्ठा ata_taskfile *tf, u8 *buf, अचिन्हित पूर्णांक i)
-अणु
-	/* the "(2 << 5)" should be पढ़ो "(count << 5)" */
+static inline unsigned int pdc_prep_lba48(struct ata_taskfile *tf, u8 *buf, unsigned int i)
+{
+	/* the "(2 << 5)" should be read "(count << 5)" */
 
-	/* ATA command block रेजिस्टरs */
+	/* ATA command block registers */
 	buf[i++] = (2 << 5) | ATA_REG_FEATURE;
 	buf[i++] = tf->hob_feature;
 	buf[i++] = tf->feature;
@@ -135,8 +134,8 @@
 	buf[i++] = tf->hob_lbah;
 	buf[i++] = tf->lbah;
 
-	वापस i;
-पूर्ण
+	return i;
+}
 
 
-#पूर्ण_अगर /* __SATA_PROMISE_H__ */
+#endif /* __SATA_PROMISE_H__ */

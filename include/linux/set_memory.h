@@ -1,60 +1,59 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright 2017, Michael Ellerman, IBM Corporation.
  */
-#अगर_अघोषित _LINUX_SET_MEMORY_H_
-#घोषणा _LINUX_SET_MEMORY_H_
+#ifndef _LINUX_SET_MEMORY_H_
+#define _LINUX_SET_MEMORY_H_
 
-#अगर_घोषित CONFIG_ARCH_HAS_SET_MEMORY
-#समावेश <यंत्र/set_memory.h>
-#अन्यथा
-अटल अंतरभूत पूर्णांक set_memory_ro(अचिन्हित दीर्घ addr, पूर्णांक numpages) अणु वापस 0; पूर्ण
-अटल अंतरभूत पूर्णांक set_memory_rw(अचिन्हित दीर्घ addr, पूर्णांक numpages) अणु वापस 0; पूर्ण
-अटल अंतरभूत पूर्णांक set_memory_x(अचिन्हित दीर्घ addr,  पूर्णांक numpages) अणु वापस 0; पूर्ण
-अटल अंतरभूत पूर्णांक set_memory_nx(अचिन्हित दीर्घ addr, पूर्णांक numpages) अणु वापस 0; पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_ARCH_HAS_SET_MEMORY
+#include <asm/set_memory.h>
+#else
+static inline int set_memory_ro(unsigned long addr, int numpages) { return 0; }
+static inline int set_memory_rw(unsigned long addr, int numpages) { return 0; }
+static inline int set_memory_x(unsigned long addr,  int numpages) { return 0; }
+static inline int set_memory_nx(unsigned long addr, int numpages) { return 0; }
+#endif
 
-#अगर_अघोषित CONFIG_ARCH_HAS_SET_सूचीECT_MAP
-अटल अंतरभूत पूर्णांक set_direct_map_invalid_noflush(काष्ठा page *page)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत पूर्णांक set_direct_map_शेष_noflush(काष्ठा page *page)
-अणु
-	वापस 0;
-पूर्ण
+#ifndef CONFIG_ARCH_HAS_SET_DIRECT_MAP
+static inline int set_direct_map_invalid_noflush(struct page *page)
+{
+	return 0;
+}
+static inline int set_direct_map_default_noflush(struct page *page)
+{
+	return 0;
+}
 
-अटल अंतरभूत bool kernel_page_present(काष्ठा page *page)
-अणु
-	वापस true;
-पूर्ण
-#पूर्ण_अगर
+static inline bool kernel_page_present(struct page *page)
+{
+	return true;
+}
+#endif
 
-#अगर_अघोषित set_mce_nospec
-अटल अंतरभूत पूर्णांक set_mce_nospec(अचिन्हित दीर्घ pfn, bool unmap)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+#ifndef set_mce_nospec
+static inline int set_mce_nospec(unsigned long pfn, bool unmap)
+{
+	return 0;
+}
+#endif
 
-#अगर_अघोषित clear_mce_nospec
-अटल अंतरभूत पूर्णांक clear_mce_nospec(अचिन्हित दीर्घ pfn)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+#ifndef clear_mce_nospec
+static inline int clear_mce_nospec(unsigned long pfn)
+{
+	return 0;
+}
+#endif
 
-#अगर_अघोषित CONFIG_ARCH_HAS_MEM_ENCRYPT
-अटल अंतरभूत पूर्णांक set_memory_encrypted(अचिन्हित दीर्घ addr, पूर्णांक numpages)
-अणु
-	वापस 0;
-पूर्ण
+#ifndef CONFIG_ARCH_HAS_MEM_ENCRYPT
+static inline int set_memory_encrypted(unsigned long addr, int numpages)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक set_memory_decrypted(अचिन्हित दीर्घ addr, पूर्णांक numpages)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_ARCH_HAS_MEM_ENCRYPT */
+static inline int set_memory_decrypted(unsigned long addr, int numpages)
+{
+	return 0;
+}
+#endif /* CONFIG_ARCH_HAS_MEM_ENCRYPT */
 
-#पूर्ण_अगर /* _LINUX_SET_MEMORY_H_ */
+#endif /* _LINUX_SET_MEMORY_H_ */

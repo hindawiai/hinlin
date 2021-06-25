@@ -1,34 +1,33 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2009-2014  Realtek Corporation.*/
 
-#समावेश "../wifi.h"
-#समावेश "../core.h"
-#समावेश "../pci.h"
-#समावेश "reg.h"
-#समावेश "def.h"
-#समावेश "phy.h"
-#समावेश "../rtl8723com/phy_common.h"
-#समावेश "dm.h"
-#समावेश "../rtl8723com/dm_common.h"
-#समावेश "hw.h"
-#समावेश "fw.h"
-#समावेश "../rtl8723com/fw_common.h"
-#समावेश "trx.h"
-#समावेश "led.h"
-#समावेश "table.h"
-#समावेश "../btcoexist/rtl_btc.h"
+#include "../wifi.h"
+#include "../core.h"
+#include "../pci.h"
+#include "reg.h"
+#include "def.h"
+#include "phy.h"
+#include "../rtl8723com/phy_common.h"
+#include "dm.h"
+#include "../rtl8723com/dm_common.h"
+#include "hw.h"
+#include "fw.h"
+#include "../rtl8723com/fw_common.h"
+#include "trx.h"
+#include "led.h"
+#include "table.h"
+#include "../btcoexist/rtl_btc.h"
 
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/module.h>
+#include <linux/vmalloc.h>
+#include <linux/module.h>
 
-अटल व्योम rtl8723be_init_aspm_vars(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+static void rtl8723be_init_aspm_vars(struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
 
-	/*बंद ASPM क्रम AMD शेषly */
-	rtlpci->स्थिर_amdpci_aspm = 0;
+	/*close ASPM for AMD defaultly */
+	rtlpci->const_amdpci_aspm = 0;
 
 	/* ASPM PS mode.
 	 * 0 - Disable ASPM,
@@ -38,42 +37,42 @@
 	 * 4 - Always Enable ASPM without Clock Req.
 	 * set defult to RTL8192CE:3 RTL8192E:2
 	 */
-	rtlpci->स्थिर_pci_aspm = 3;
+	rtlpci->const_pci_aspm = 3;
 
-	/*Setting क्रम PCI-E device */
-	rtlpci->स्थिर_devicepci_aspm_setting = 0x03;
+	/*Setting for PCI-E device */
+	rtlpci->const_devicepci_aspm_setting = 0x03;
 
-	/*Setting क्रम PCI-E bridge */
-	rtlpci->स्थिर_hostpci_aspm_setting = 0x02;
+	/*Setting for PCI-E bridge */
+	rtlpci->const_hostpci_aspm_setting = 0x02;
 
 	/* In Hw/Sw Radio Off situation.
 	 * 0 - Default,
 	 * 1 - From ASPM setting without low Mac Pwr,
 	 * 2 - From ASPM setting with low Mac Pwr,
 	 * 3 - Bus D3
-	 * set शेष to RTL8192CE:0 RTL8192SE:2
+	 * set default to RTL8192CE:0 RTL8192SE:2
 	 */
-	rtlpci->स्थिर_hwsw_rfoff_d3 = 0;
+	rtlpci->const_hwsw_rfoff_d3 = 0;
 
-	/* This setting works क्रम those device with
-	 * backकरोor ASPM setting such as EPHY setting.
+	/* This setting works for those device with
+	 * backdoor ASPM setting such as EPHY setting.
 	 * 0 - Not support ASPM,
 	 * 1 - Support ASPM,
 	 * 2 - According to chipset.
 	 */
-	rtlpci->स्थिर_support_pciaspm = rtlpriv->cfg->mod_params->aspm_support;
-पूर्ण
+	rtlpci->const_support_pciaspm = rtlpriv->cfg->mod_params->aspm_support;
+}
 
-अटल पूर्णांक rtl8723be_init_sw_vars(काष्ठा ieee80211_hw *hw)
-अणु
-	पूर्णांक err = 0;
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
-	काष्ठा rtl_mac *mac = rtl_mac(rtl_priv(hw));
-	अक्षर *fw_name = "rtlwifi/rtl8723befw_36.bin";
+static int rtl8723be_init_sw_vars(struct ieee80211_hw *hw)
+{
+	int err = 0;
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+	struct rtl_mac *mac = rtl_mac(rtl_priv(hw));
+	char *fw_name = "rtlwifi/rtl8723befw_36.bin";
 
 	rtl8723be_bt_reg_init(hw);
-	rtlpriv->btcoexist.btc_ops = rtl_btc_get_ops_poपूर्णांकer();
+	rtlpriv->btcoexist.btc_ops = rtl_btc_get_ops_pointer();
 
 	rtlpriv->dm.dm_initialgain_enable = true;
 	rtlpriv->dm.dm_flag = 0;
@@ -123,91 +122,91 @@
 				     HSIMR_RON_INT_EN	|
 				     0);
 
-	/* क्रम LPS & IPS */
+	/* for LPS & IPS */
 	rtlpriv->psc.inactiveps = rtlpriv->cfg->mod_params->inactiveps;
 	rtlpriv->psc.swctrl_lps = rtlpriv->cfg->mod_params->swctrl_lps;
 	rtlpriv->psc.fwctrl_lps = rtlpriv->cfg->mod_params->fwctrl_lps;
 	rtlpci->msi_support = rtlpriv->cfg->mod_params->msi_support;
-	अगर (rtlpriv->cfg->mod_params->disable_watchकरोg)
+	if (rtlpriv->cfg->mod_params->disable_watchdog)
 		pr_info("watchdog disabled\n");
 	rtlpriv->psc.reg_fwctrl_lps = 2;
-	rtlpriv->psc.reg_max_lps_awakeपूर्णांकvl = 2;
-	/* क्रम ASPM, you can बंद aspm through
-	 * set स्थिर_support_pciaspm = 0
+	rtlpriv->psc.reg_max_lps_awakeintvl = 2;
+	/* for ASPM, you can close aspm through
+	 * set const_support_pciaspm = 0
 	 */
 	rtl8723be_init_aspm_vars(hw);
 
-	अगर (rtlpriv->psc.reg_fwctrl_lps == 1)
+	if (rtlpriv->psc.reg_fwctrl_lps == 1)
 		rtlpriv->psc.fwctrl_psmode = FW_PS_MIN_MODE;
-	अन्यथा अगर (rtlpriv->psc.reg_fwctrl_lps == 2)
+	else if (rtlpriv->psc.reg_fwctrl_lps == 2)
 		rtlpriv->psc.fwctrl_psmode = FW_PS_MAX_MODE;
-	अन्यथा अगर (rtlpriv->psc.reg_fwctrl_lps == 3)
+	else if (rtlpriv->psc.reg_fwctrl_lps == 3)
 		rtlpriv->psc.fwctrl_psmode = FW_PS_DTIM_MODE;
 
-	/*low घातer: Disable 32k */
-	rtlpriv->psc.low_घातer_enable = false;
+	/*low power: Disable 32k */
+	rtlpriv->psc.low_power_enable = false;
 
 	rtlpriv->rtlhal.earlymode_enable = false;
 
-	/* क्रम firmware buf */
+	/* for firmware buf */
 	rtlpriv->rtlhal.pfirmware = vzalloc(0x8000);
-	अगर (!rtlpriv->rtlhal.pfirmware) अणु
+	if (!rtlpriv->rtlhal.pfirmware) {
 		pr_err("Can't alloc buffer for fw.\n");
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
 	rtlpriv->max_fw_size = 0x8000;
 	pr_info("Using firmware %s\n", fw_name);
-	err = request_firmware_noरुको(THIS_MODULE, 1, fw_name,
+	err = request_firmware_nowait(THIS_MODULE, 1, fw_name,
 				      rtlpriv->io.dev, GFP_KERNEL, hw,
 				      rtl_fw_cb);
-	अगर (err) अणु
+	if (err) {
 		pr_err("Failed to request firmware!\n");
-		vमुक्त(rtlpriv->rtlhal.pfirmware);
-		rtlpriv->rtlhal.pfirmware = शून्य;
-		वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		vfree(rtlpriv->rtlhal.pfirmware);
+		rtlpriv->rtlhal.pfirmware = NULL;
+		return 1;
+	}
+	return 0;
+}
 
-अटल व्योम rtl8723be_deinit_sw_vars(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+static void rtl8723be_deinit_sw_vars(struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
 
-	अगर (rtlpriv->rtlhal.pfirmware) अणु
-		vमुक्त(rtlpriv->rtlhal.pfirmware);
-		rtlpriv->rtlhal.pfirmware = शून्य;
-	पूर्ण
-पूर्ण
+	if (rtlpriv->rtlhal.pfirmware) {
+		vfree(rtlpriv->rtlhal.pfirmware);
+		rtlpriv->rtlhal.pfirmware = NULL;
+	}
+}
 
 /* get bt coexist status */
-अटल bool rtl8723be_get_btc_status(व्योम)
-अणु
-	वापस true;
-पूर्ण
+static bool rtl8723be_get_btc_status(void)
+{
+	return true;
+}
 
-अटल bool is_fw_header(काष्ठा rtlwअगरi_firmware_header *hdr)
-अणु
-	वापस (le16_to_cpu(hdr->signature) & 0xfff0) == 0x5300;
-पूर्ण
+static bool is_fw_header(struct rtlwifi_firmware_header *hdr)
+{
+	return (le16_to_cpu(hdr->signature) & 0xfff0) == 0x5300;
+}
 
-अटल काष्ठा rtl_hal_ops rtl8723be_hal_ops = अणु
+static struct rtl_hal_ops rtl8723be_hal_ops = {
 	.init_sw_vars = rtl8723be_init_sw_vars,
 	.deinit_sw_vars = rtl8723be_deinit_sw_vars,
-	.पढ़ो_eeprom_info = rtl8723be_पढ़ो_eeprom_info,
-	.पूर्णांकerrupt_recognized = rtl8723be_पूर्णांकerrupt_recognized,
+	.read_eeprom_info = rtl8723be_read_eeprom_info,
+	.interrupt_recognized = rtl8723be_interrupt_recognized,
 	.hw_init = rtl8723be_hw_init,
 	.hw_disable = rtl8723be_card_disable,
 	.hw_suspend = rtl8723be_suspend,
 	.hw_resume = rtl8723be_resume,
-	.enable_पूर्णांकerrupt = rtl8723be_enable_पूर्णांकerrupt,
-	.disable_पूर्णांकerrupt = rtl8723be_disable_पूर्णांकerrupt,
+	.enable_interrupt = rtl8723be_enable_interrupt,
+	.disable_interrupt = rtl8723be_disable_interrupt,
 	.set_network_type = rtl8723be_set_network_type,
 	.set_chk_bssid = rtl8723be_set_check_bssid,
 	.set_qos = rtl8723be_set_qos,
-	.set_bcn_reg = rtl8723be_set_beacon_related_रेजिस्टरs,
-	.set_bcn_पूर्णांकv = rtl8723be_set_beacon_पूर्णांकerval,
-	.update_पूर्णांकerrupt_mask = rtl8723be_update_पूर्णांकerrupt_mask,
+	.set_bcn_reg = rtl8723be_set_beacon_related_registers,
+	.set_bcn_intv = rtl8723be_set_beacon_interval,
+	.update_interrupt_mask = rtl8723be_update_interrupt_mask,
 	.get_hw_reg = rtl8723be_get_hw_reg,
 	.set_hw_reg = rtl8723be_set_hw_reg,
 	.update_rate_tbl = rtl8723be_update_hal_rate_tbl,
@@ -217,14 +216,14 @@
 	.set_channel_access = rtl8723be_update_channel_access_setting,
 	.radio_onoff_checking = rtl8723be_gpio_radio_on_off_checking,
 	.set_bw_mode = rtl8723be_phy_set_bw_mode,
-	.चयन_channel = rtl8723be_phy_sw_chnl,
-	.dm_watchकरोg = rtl8723be_dm_watchकरोg,
+	.switch_channel = rtl8723be_phy_sw_chnl,
+	.dm_watchdog = rtl8723be_dm_watchdog,
 	.scan_operation_backup = rtl8723be_phy_scan_operation_backup,
-	.set_rf_घातer_state = rtl8723be_phy_set_rf_घातer_state,
+	.set_rf_power_state = rtl8723be_phy_set_rf_power_state,
 	.led_control = rtl8723be_led_control,
 	.set_desc = rtl8723be_set_desc,
 	.get_desc = rtl8723be_get_desc,
-	.is_tx_desc_बंदd = rtl8723be_is_tx_desc_बंदd,
+	.is_tx_desc_closed = rtl8723be_is_tx_desc_closed,
 	.tx_polling = rtl8723be_tx_polling,
 	.enable_hw_sec = rtl8723be_enable_hw_security_config,
 	.set_key = rtl8723be_set_key,
@@ -236,24 +235,24 @@
 	.fill_h2c_cmd = rtl8723be_fill_h2c_cmd,
 	.get_btc_status = rtl8723be_get_btc_status,
 	.is_fw_header = is_fw_header,
-पूर्ण;
+};
 
-अटल काष्ठा rtl_mod_params rtl8723be_mod_params = अणु
+static struct rtl_mod_params rtl8723be_mod_params = {
 	.sw_crypto = false,
 	.inactiveps = true,
 	.swctrl_lps = false,
 	.fwctrl_lps = true,
 	.msi_support = false,
 	.aspm_support = 1,
-	.disable_watchकरोg = false,
+	.disable_watchdog = false,
 	.debug_level = 0,
 	.debug_mask = 0,
 	.ant_sel = 0,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा rtl_hal_cfg rtl8723be_hal_cfg = अणु
+static const struct rtl_hal_cfg rtl8723be_hal_cfg = {
 	.bar_id = 2,
-	.ग_लिखो_पढ़ोback = true,
+	.write_readback = true,
 	.name = "rtl8723be_pci",
 	.alt_fw_name = "rtlwifi/rtl8723befw.bin",
 	.ops = &rtl8723be_hal_ops,
@@ -347,12 +346,12 @@
 
 	.maps[RTL_RC_HT_RATEMCS7] = DESC92C_RATEMCS7,
 	.maps[RTL_RC_HT_RATEMCS15] = DESC92C_RATEMCS15,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा pci_device_id rtl8723be_pci_ids[] = अणु
-	अणुRTL_PCI_DEVICE(PCI_VENDOR_ID_REALTEK, 0xB723, rtl8723be_hal_cfg)पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct pci_device_id rtl8723be_pci_ids[] = {
+	{RTL_PCI_DEVICE(PCI_VENDOR_ID_REALTEK, 0xB723, rtl8723be_hal_cfg)},
+	{},
+};
 
 MODULE_DEVICE_TABLE(pci, rtl8723be_pci_ids);
 
@@ -364,16 +363,16 @@ MODULE_FIRMWARE("rtlwifi/rtl8723befw.bin");
 MODULE_FIRMWARE("rtlwifi/rtl8723befw_36.bin");
 
 module_param_named(swenc, rtl8723be_mod_params.sw_crypto, bool, 0444);
-module_param_named(debug_level, rtl8723be_mod_params.debug_level, पूर्णांक, 0644);
-module_param_named(debug_mask, rtl8723be_mod_params.debug_mask, ulदीर्घ, 0644);
+module_param_named(debug_level, rtl8723be_mod_params.debug_level, int, 0644);
+module_param_named(debug_mask, rtl8723be_mod_params.debug_mask, ullong, 0644);
 module_param_named(ips, rtl8723be_mod_params.inactiveps, bool, 0444);
 module_param_named(swlps, rtl8723be_mod_params.swctrl_lps, bool, 0444);
 module_param_named(fwlps, rtl8723be_mod_params.fwctrl_lps, bool, 0444);
 module_param_named(msi, rtl8723be_mod_params.msi_support, bool, 0444);
-module_param_named(aspm, rtl8723be_mod_params.aspm_support, पूर्णांक, 0444);
-module_param_named(disable_watchकरोg, rtl8723be_mod_params.disable_watchकरोg,
+module_param_named(aspm, rtl8723be_mod_params.aspm_support, int, 0444);
+module_param_named(disable_watchdog, rtl8723be_mod_params.disable_watchdog,
 		   bool, 0444);
-module_param_named(ant_sel, rtl8723be_mod_params.ant_sel, पूर्णांक, 0444);
+module_param_named(ant_sel, rtl8723be_mod_params.ant_sel, int, 0444);
 MODULE_PARM_DESC(swenc, "Set to 1 for software crypto (default 0)\n");
 MODULE_PARM_DESC(ips, "Set to 0 to not use link power save (default 1)\n");
 MODULE_PARM_DESC(swlps, "Set to 1 to use SW control power save (default 0)\n");
@@ -382,18 +381,18 @@ MODULE_PARM_DESC(msi, "Set to 1 to use MSI interrupts mode (default 0)\n");
 MODULE_PARM_DESC(aspm, "Set to 1 to enable ASPM (default 1)\n");
 MODULE_PARM_DESC(debug_level, "Set debug level (0-5) (default 0)");
 MODULE_PARM_DESC(debug_mask, "Set debug mask (default 0)");
-MODULE_PARM_DESC(disable_watchकरोg,
+MODULE_PARM_DESC(disable_watchdog,
 		 "Set to 1 to disable the watchdog (default 0)\n");
 MODULE_PARM_DESC(ant_sel, "Set to 1 or 2 to force antenna number (default 0)\n");
 
-अटल SIMPLE_DEV_PM_OPS(rtlwअगरi_pm_ops, rtl_pci_suspend, rtl_pci_resume);
+static SIMPLE_DEV_PM_OPS(rtlwifi_pm_ops, rtl_pci_suspend, rtl_pci_resume);
 
-अटल काष्ठा pci_driver rtl8723be_driver = अणु
+static struct pci_driver rtl8723be_driver = {
 	.name = KBUILD_MODNAME,
 	.id_table = rtl8723be_pci_ids,
 	.probe = rtl_pci_probe,
-	.हटाओ = rtl_pci_disconnect,
-	.driver.pm = &rtlwअगरi_pm_ops,
-पूर्ण;
+	.remove = rtl_pci_disconnect,
+	.driver.pm = &rtlwifi_pm_ops,
+};
 
 module_pci_driver(rtl8723be_driver);

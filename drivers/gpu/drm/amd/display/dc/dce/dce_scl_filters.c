@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012-16 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,18 +22,18 @@
  * Authors: AMD
  *
  */
-#समावेश "transform.h"
+#include "transform.h"
 
 //=========================================
 // <num_taps>    = 2
 // <num_phases>  = 16
 // <scale_ratio> = 0.833333 (input/output)
 // <sharpness>   = 0
-// <CoefType>    = ModअगरiedLanczos
+// <CoefType>    = ModifiedLanczos
 // <CoefQuant>   = s1.10
 // <CoefOut>     = s1.12
 //=========================================
-अटल स्थिर uपूर्णांक16_t filter_2tap_16p[18] = अणु
+static const uint16_t filter_2tap_16p[18] = {
 		0x1000, 0x0000,
 		0x0FF0, 0x0010,
 		0x0FB0, 0x0050,
@@ -44,18 +43,18 @@
 		0x0BC4, 0x043C,
 		0x09FC, 0x0604,
 		0x0800, 0x0800
-पूर्ण;
+};
 
 //=========================================
 // <num_taps>    = 3
 // <num_phases>  = 16
 // <scale_ratio> = 0.83333 (input/output)
 // <sharpness>   = 0
-// <CoefType>    = ModअगरiedLanczos
+// <CoefType>    = ModifiedLanczos
 // <CoefQuant>   = 1.10
 // <CoefOut>     = 1.12
 //=========================================
-अटल स्थिर uपूर्णांक16_t filter_3tap_16p_upscale[27] = अणु
+static const uint16_t filter_3tap_16p_upscale[27] = {
 		0x0804, 0x07FC, 0x0000,
 		0x06AC, 0x0978, 0x3FDC,
 		0x055C, 0x0AF0, 0x3FB4,
@@ -65,18 +64,18 @@
 		0x0128, 0x0F5C, 0x3F7C,
 		0x007C, 0x0FD8, 0x3FAC,
 		0x0000, 0x1000, 0x0000
-पूर्ण;
+};
 
 //=========================================
 // <num_taps>    = 3
 // <num_phases>  = 16
 // <scale_ratio> = 1.16666 (input/output)
 // <sharpness>   = 0
-// <CoefType>    = ModअगरiedLanczos
+// <CoefType>    = ModifiedLanczos
 // <CoefQuant>   = 1.10
 // <CoefOut>     = 1.12
 //=========================================
-अटल स्थिर uपूर्णांक16_t filter_3tap_16p_116[27] = अणु
+static const uint16_t filter_3tap_16p_116[27] = {
 		0x0804, 0x07FC, 0x0000,
 		0x0700, 0x0914, 0x3FEC,
 		0x0604, 0x0A1C, 0x3FE0,
@@ -86,18 +85,18 @@
 		0x0274, 0x0D3C, 0x0050,
 		0x01C0, 0x0D94, 0x00AC,
 		0x0128, 0x0DB4, 0x0124
-पूर्ण;
+};
 
 //=========================================
 // <num_taps>    = 3
 // <num_phases>  = 16
 // <scale_ratio> = 1.49999 (input/output)
 // <sharpness>   = 0
-// <CoefType>    = ModअगरiedLanczos
+// <CoefType>    = ModifiedLanczos
 // <CoefQuant>   = 1.10
 // <CoefOut>     = 1.12
 //=========================================
-अटल स्थिर uपूर्णांक16_t filter_3tap_16p_149[27] = अणु
+static const uint16_t filter_3tap_16p_149[27] = {
 		0x0804, 0x07FC, 0x0000,
 		0x0730, 0x08CC, 0x0004,
 		0x0660, 0x098C, 0x0014,
@@ -107,18 +106,18 @@
 		0x0348, 0x0BB0, 0x0108,
 		0x029C, 0x0BEC, 0x0178,
 		0x0200, 0x0C00, 0x0200
-पूर्ण;
+};
 
 //=========================================
 // <num_taps>    = 3
 // <num_phases>  = 16
 // <scale_ratio> = 1.83332 (input/output)
 // <sharpness>   = 0
-// <CoefType>    = ModअगरiedLanczos
+// <CoefType>    = ModifiedLanczos
 // <CoefQuant>   = 1.10
 // <CoefOut>     = 1.12
 //=========================================
-अटल स्थिर uपूर्णांक16_t filter_3tap_16p_183[27] = अणु
+static const uint16_t filter_3tap_16p_183[27] = {
 		0x0804, 0x07FC, 0x0000,
 		0x0754, 0x0880, 0x002C,
 		0x06A8, 0x08F0, 0x0068,
@@ -128,18 +127,18 @@
 		0x0408, 0x0A20, 0x01D8,
 		0x036C, 0x0A40, 0x0254,
 		0x02DC, 0x0A48, 0x02DC
-पूर्ण;
+};
 
 //=========================================
 // <num_taps>    = 4
 // <num_phases>  = 16
 // <scale_ratio> = 0.83333 (input/output)
 // <sharpness>   = 0
-// <CoefType>    = ModअगरiedLanczos
+// <CoefType>    = ModifiedLanczos
 // <CoefQuant>   = 1.10
 // <CoefOut>     = 1.12
 //=========================================
-अटल स्थिर uपूर्णांक16_t filter_4tap_16p_upscale[36] = अणु
+static const uint16_t filter_4tap_16p_upscale[36] = {
 		0x0000, 0x1000, 0x0000, 0x0000,
 		0x3F74, 0x0FDC, 0x00B4, 0x3FFC,
 		0x3F0C, 0x0F70, 0x0194, 0x3FF0,
@@ -149,18 +148,18 @@
 		0x3EB8, 0x0BA0, 0x0644, 0x3F64,
 		0x3ED8, 0x0A54, 0x07A0, 0x3F34,
 		0x3F00, 0x08FC, 0x0900, 0x3F04
-पूर्ण;
+};
 
 //=========================================
 // <num_taps>    = 4
 // <num_phases>  = 16
 // <scale_ratio> = 1.16666 (input/output)
 // <sharpness>   = 0
-// <CoefType>    = ModअगरiedLanczos
+// <CoefType>    = ModifiedLanczos
 // <CoefQuant>   = 1.10
 // <CoefOut>     = 1.12
 //=========================================
-अटल स्थिर uपूर्णांक16_t filter_4tap_16p_116[36] = अणु
+static const uint16_t filter_4tap_16p_116[36] = {
 		0x01A8, 0x0CB4, 0x01A4, 0x0000,
 		0x0110, 0x0CB0, 0x0254, 0x3FEC,
 		0x0090, 0x0C80, 0x031C, 0x3FD4,
@@ -170,18 +169,18 @@
 		0x3F70, 0x0A60, 0x06C4, 0x3F6C,
 		0x3F5C, 0x098C, 0x07BC, 0x3F5C,
 		0x3F54, 0x08AC, 0x08AC, 0x3F54
-पूर्ण;
+};
 
 //=========================================
 // <num_taps>    = 4
 // <num_phases>  = 16
 // <scale_ratio> = 1.49999 (input/output)
 // <sharpness>   = 0
-// <CoefType>    = ModअगरiedLanczos
+// <CoefType>    = ModifiedLanczos
 // <CoefQuant>   = 1.10
 // <CoefOut>     = 1.12
 //=========================================
-अटल स्थिर uपूर्णांक16_t filter_4tap_16p_149[36] = अणु
+static const uint16_t filter_4tap_16p_149[36] = {
 		0x02B8, 0x0A90, 0x02B8, 0x0000,
 		0x0230, 0x0A90, 0x0350, 0x3FF0,
 		0x01B8, 0x0A78, 0x03F0, 0x3FE0,
@@ -191,18 +190,18 @@
 		0x0054, 0x0928, 0x06B4, 0x3FD0,
 		0x001C, 0x08A4, 0x0760, 0x3FE0,
 		0x3FFC, 0x0804, 0x0804, 0x3FFC
-पूर्ण;
+};
 
 //=========================================
 // <num_taps>    = 4
 // <num_phases>  = 16
 // <scale_ratio> = 1.83332 (input/output)
 // <sharpness>   = 0
-// <CoefType>    = ModअगरiedLanczos
+// <CoefType>    = ModifiedLanczos
 // <CoefQuant>   = 1.10
 // <CoefOut>     = 1.12
 //=========================================
-अटल स्थिर uपूर्णांक16_t filter_4tap_16p_183[36] = अणु
+static const uint16_t filter_4tap_16p_183[36] = {
 		0x03B0, 0x08A0, 0x03B0, 0x0000,
 		0x0348, 0x0898, 0x041C, 0x0004,
 		0x02DC, 0x0884, 0x0490, 0x0010,
@@ -212,18 +211,18 @@
 		0x0178, 0x07B8, 0x064C, 0x0084,
 		0x0130, 0x076C, 0x06B0, 0x00B4,
 		0x00F0, 0x0714, 0x0710, 0x00EC
-पूर्ण;
+};
 
 //=========================================
 // <num_taps>    = 2
 // <num_phases>  = 64
 // <scale_ratio> = 0.833333 (input/output)
 // <sharpness>   = 0
-// <CoefType> = ModअगरiedLanczos
+// <CoefType> = ModifiedLanczos
 // <CoefQuant> = s1.10
 // <CoefOut> = s1.12
 //=========================================
-अटल स्थिर uपूर्णांक16_t filter_2tap_64p[66] = अणु
+static const uint16_t filter_2tap_64p[66] = {
 		0x1000, 0x0000,
 		0x1000, 0x0000,
 		0x0FFC, 0x0004,
@@ -257,18 +256,18 @@
 		0x0900, 0x0700,
 		0x0880, 0x0780,
 		0x0800, 0x0800
-पूर्ण;
+};
 
 //=========================================
 // <num_taps>    = 3
 // <num_phases>  = 64
 // <scale_ratio> = 0.83333 (input/output)
 // <sharpness>   = 0
-// <CoefType>    = ModअगरiedLanczos
+// <CoefType>    = ModifiedLanczos
 // <CoefQuant>   = 1.10
 // <CoefOut>     = 1.12
 //=========================================
-अटल स्थिर uपूर्णांक16_t filter_3tap_64p_upscale[99] = अणु
+static const uint16_t filter_3tap_64p_upscale[99] = {
 		0x0804, 0x07FC, 0x0000,
 		0x07A8, 0x0860, 0x3FF8,
 		0x0754, 0x08BC, 0x3FF0,
@@ -302,18 +301,18 @@
 		0x0038, 0x0FF4, 0x3FD4,
 		0x0018, 0x1000, 0x3FE8,
 		0x0000, 0x1000, 0x0000
-पूर्ण;
+};
 
 //=========================================
 // <num_taps>    = 3
 // <num_phases>  = 64
 // <scale_ratio> = 1.16666 (input/output)
 // <sharpness>   = 0
-// <CoefType>    = ModअगरiedLanczos
+// <CoefType>    = ModifiedLanczos
 // <CoefQuant>   = 1.10
 // <CoefOut>     = 1.12
 //=========================================
-अटल स्थिर uपूर्णांक16_t filter_3tap_64p_116[99] = अणु
+static const uint16_t filter_3tap_64p_116[99] = {
 		0x0804, 0x07FC, 0x0000,
 		0x07C0, 0x0844, 0x3FFC,
 		0x0780, 0x0888, 0x3FF8,
@@ -347,18 +346,18 @@
 		0x0170, 0x0DAC, 0x00E4,
 		0x014C, 0x0DB0, 0x0104,
 		0x0128, 0x0DB4, 0x0124
-पूर्ण;
+};
 
 //=========================================
 // <num_taps>    = 3
 // <num_phases>  = 64
 // <scale_ratio> = 1.49999 (input/output)
 // <sharpness>   = 0
-// <CoefType>    = ModअगरiedLanczos
+// <CoefType>    = ModifiedLanczos
 // <CoefQuant>   = 1.10
 // <CoefOut>     = 1.12
 //=========================================
-अटल स्थिर uपूर्णांक16_t filter_3tap_64p_149[99] = अणु
+static const uint16_t filter_3tap_64p_149[99] = {
 		0x0804, 0x07FC, 0x0000,
 		0x07CC, 0x0834, 0x0000,
 		0x0798, 0x0868, 0x0000,
@@ -392,18 +391,18 @@
 		0x024C, 0x0BFC, 0x01B8,
 		0x0228, 0x0BFC, 0x01DC,
 		0x0200, 0x0C00, 0x0200
-पूर्ण;
+};
 
 //=========================================
 // <num_taps>    = 3
 // <num_phases>  = 64
 // <scale_ratio> = 1.83332 (input/output)
 // <sharpness>   = 0
-// <CoefType>    = ModअगरiedLanczos
+// <CoefType>    = ModifiedLanczos
 // <CoefQuant>   = 1.10
 // <CoefOut>     = 1.12
 //=========================================
-अटल स्थिर uपूर्णांक16_t filter_3tap_64p_183[99] = अणु
+static const uint16_t filter_3tap_64p_183[99] = {
 		0x0804, 0x07FC, 0x0000,
 		0x07D4, 0x0824, 0x0008,
 		0x07AC, 0x0840, 0x0014,
@@ -437,18 +436,18 @@
 		0x0324, 0x0A48, 0x0294,
 		0x0300, 0x0A48, 0x02B8,
 		0x02DC, 0x0A48, 0x02DC
-पूर्ण;
+};
 
 //=========================================
 // <num_taps>    = 4
 // <num_phases>  = 64
 // <scale_ratio> = 0.83333 (input/output)
 // <sharpness>   = 0
-// <CoefType>    = ModअगरiedLanczos
+// <CoefType>    = ModifiedLanczos
 // <CoefQuant>   = 1.10
 // <CoefOut>     = 1.12
 //=========================================
-अटल स्थिर uपूर्णांक16_t filter_4tap_64p_upscale[132] = अणु
+static const uint16_t filter_4tap_64p_upscale[132] = {
 		0x0000, 0x1000, 0x0000, 0x0000,
 		0x3FDC, 0x0FFC, 0x0028, 0x0000,
 		0x3FB4, 0x0FF8, 0x0054, 0x0000,
@@ -482,18 +481,18 @@
 		0x3EEC, 0x09AC, 0x0850, 0x3F18,
 		0x3EF8, 0x0954, 0x08A8, 0x3F0C,
 		0x3F00, 0x08FC, 0x0900, 0x3F04
-पूर्ण;
+};
 
 //=========================================
 // <num_taps>    = 4
 // <num_phases>  = 64
 // <scale_ratio> = 1.16666 (input/output)
 // <sharpness>   = 0
-// <CoefType>    = ModअगरiedLanczos
+// <CoefType>    = ModifiedLanczos
 // <CoefQuant>   = 1.10
 // <CoefOut>     = 1.12
 //=========================================
-अटल स्थिर uपूर्णांक16_t filter_4tap_64p_116[132] = अणु
+static const uint16_t filter_4tap_64p_116[132] = {
 		0x01A8, 0x0CB4, 0x01A4, 0x0000,
 		0x017C, 0x0CB8, 0x01D0, 0x3FFC,
 		0x0158, 0x0CB8, 0x01F8, 0x3FF8,
@@ -527,18 +526,18 @@
 		0x3F58, 0x091C, 0x0834, 0x3F58,
 		0x3F54, 0x08E4, 0x0870, 0x3F58,
 		0x3F54, 0x08AC, 0x08AC, 0x3F54
-पूर्ण;
+};
 
 //=========================================
 // <num_taps>    = 4
 // <num_phases>  = 64
 // <scale_ratio> = 1.49999 (input/output)
 // <sharpness>   = 0
-// <CoefType>    = ModअगरiedLanczos
+// <CoefType>    = ModifiedLanczos
 // <CoefQuant>   = 1.10
 // <CoefOut>     = 1.12
 //=========================================
-अटल स्थिर uपूर्णांक16_t filter_4tap_64p_149[132] = अणु
+static const uint16_t filter_4tap_64p_149[132] = {
 		0x02B8, 0x0A90, 0x02B8, 0x0000,
 		0x0294, 0x0A94, 0x02DC, 0x3FFC,
 		0x0274, 0x0A94, 0x0300, 0x3FF8,
@@ -572,18 +571,18 @@
 		0x0008, 0x0858, 0x07B4, 0x3FEC,
 		0x0000, 0x0830, 0x07DC, 0x3FF4,
 		0x3FFC, 0x0804, 0x0804, 0x3FFC
-पूर्ण;
+};
 
 //=========================================
 // <num_taps>    = 4
 // <num_phases>  = 64
 // <scale_ratio> = 1.83332 (input/output)
 // <sharpness>   = 0
-// <CoefType>    = ModअगरiedLanczos
+// <CoefType>    = ModifiedLanczos
 // <CoefQuant>   = 1.10
 // <CoefOut>     = 1.12
 //=========================================
-अटल स्थिर uपूर्णांक16_t filter_4tap_64p_183[132] = अणु
+static const uint16_t filter_4tap_64p_183[132] = {
 		0x03B0, 0x08A0, 0x03B0, 0x0000,
 		0x0394, 0x08A0, 0x03CC, 0x0000,
 		0x037C, 0x089C, 0x03E8, 0x0000,
@@ -617,18 +616,18 @@
 		0x0110, 0x0740, 0x06E0, 0x00D0,
 		0x0100, 0x072C, 0x06F8, 0x00DC,
 		0x00F0, 0x0714, 0x0710, 0x00EC
-पूर्ण;
+};
 
 //=========================================
 // <num_taps>    = 5
 // <num_phases>  = 64
 // <scale_ratio> = 0.83333 (input/output)
 // <sharpness>   = 0
-// <CoefType>    = ModअगरiedLanczos
+// <CoefType>    = ModifiedLanczos
 // <CoefQuant>   = 1.10
 // <CoefOut>     = 1.12
 //=========================================
-अटल स्थिर uपूर्णांक16_t filter_5tap_64p_upscale[165] = अणु
+static const uint16_t filter_5tap_64p_upscale[165] = {
 		0x3E40, 0x09C0, 0x09C0, 0x3E40, 0x0000,
 		0x3E50, 0x0964, 0x0A18, 0x3E34, 0x0000,
 		0x3E5C, 0x0908, 0x0A6C, 0x3E2C, 0x0004,
@@ -662,18 +661,18 @@
 		0x3FF0, 0x0064, 0x0FFC, 0x3FA4, 0x000C,
 		0x3FFC, 0x0030, 0x0FFC, 0x3FD4, 0x0004,
 		0x0000, 0x0000, 0x1000, 0x0000, 0x0000
-पूर्ण;
+};
 
 //=========================================
 // <num_taps>    = 5
 // <num_phases>  = 64
 // <scale_ratio> = 1.16666 (input/output)
 // <sharpness>   = 0
-// <CoefType>    = ModअगरiedLanczos
+// <CoefType>    = ModifiedLanczos
 // <CoefQuant>   = 1.10
 // <CoefOut>     = 1.12
 //=========================================
-अटल स्थिर uपूर्णांक16_t filter_5tap_64p_116[165] = अणु
+static const uint16_t filter_5tap_64p_116[165] = {
 		0x3EDC, 0x0924, 0x0924, 0x3EDC, 0x0000,
 		0x3ED8, 0x08EC, 0x095C, 0x3EE0, 0x0000,
 		0x3ED4, 0x08B0, 0x0994, 0x3EE8, 0x0000,
@@ -707,18 +706,18 @@
 		0x3F68, 0x0260, 0x0D04, 0x01A8, 0x3F8C,
 		0x3F74, 0x0230, 0x0D04, 0x01D4, 0x3F84,
 		0x3F7C, 0x0200, 0x0D08, 0x0200, 0x3F7C
-पूर्ण;
+};
 
 //=========================================
 // <num_taps>    = 5
 // <num_phases>  = 64
 // <scale_ratio> = 1.49999 (input/output)
 // <sharpness>   = 0
-// <CoefType>    = ModअगरiedLanczos
+// <CoefType>    = ModifiedLanczos
 // <CoefQuant>   = 1.10
 // <CoefOut>     = 1.12
 //=========================================
-अटल स्थिर uपूर्णांक16_t filter_5tap_64p_149[165] = अणु
+static const uint16_t filter_5tap_64p_149[165] = {
 		0x3FF4, 0x080C, 0x080C, 0x3FF4, 0x0000,
 		0x3FE8, 0x07E8, 0x0830, 0x0000, 0x0000,
 		0x3FDC, 0x07C8, 0x0850, 0x0010, 0x3FFC,
@@ -752,18 +751,18 @@
 		0x3F78, 0x0384, 0x0A90, 0x02F0, 0x3F84,
 		0x3F7C, 0x0360, 0x0A90, 0x0314, 0x3F80,
 		0x3F7C, 0x033C, 0x0A90, 0x033C, 0x3F7C
-पूर्ण;
+};
 
 //=========================================
 // <num_taps>    = 5
 // <num_phases>  = 64
 // <scale_ratio> = 1.83332 (input/output)
 // <sharpness>   = 0
-// <CoefType>    = ModअगरiedLanczos
+// <CoefType>    = ModifiedLanczos
 // <CoefQuant>   = 1.10
 // <CoefOut>     = 1.12
 //=========================================
-अटल स्थिर uपूर्णांक16_t filter_5tap_64p_183[165] = अणु
+static const uint16_t filter_5tap_64p_183[165] = {
 		0x0168, 0x069C, 0x0698, 0x0164, 0x0000,
 		0x0154, 0x068C, 0x06AC, 0x0174, 0x0000,
 		0x0144, 0x0674, 0x06C0, 0x0188, 0x0000,
@@ -797,18 +796,18 @@
 		0x0024, 0x042C, 0x07D4, 0x03CC, 0x0010,
 		0x0020, 0x0414, 0x07D4, 0x03E0, 0x0018,
 		0x001C, 0x03FC, 0x07D4, 0x03F8, 0x001C
-पूर्ण;
+};
 
 //=========================================
 // <num_taps>    = 6
 // <num_phases>  = 64
 // <scale_ratio> = 0.83333 (input/output)
 // <sharpness>   = 0
-// <CoefType>    = ModअगरiedLanczos
+// <CoefType>    = ModifiedLanczos
 // <CoefQuant>   = 1.10
 // <CoefOut>     = 1.12
 //=========================================
-अटल स्थिर uपूर्णांक16_t filter_6tap_64p_upscale[198] = अणु
+static const uint16_t filter_6tap_64p_upscale[198] = {
 		0x0000, 0x0000, 0x1000, 0x0000, 0x0000, 0x0000,
 		0x000C, 0x3FD0, 0x0FFC, 0x0034, 0x3FF4, 0x0000,
 		0x0018, 0x3F9C, 0x0FF8, 0x006C, 0x3FE8, 0x0000,
@@ -842,18 +841,18 @@
 		0x0068, 0x3DC4, 0x0A74, 0x0918, 0x3DF0, 0x0058,
 		0x0068, 0x3DCC, 0x0A20, 0x0970, 0x3DE0, 0x005C,
 		0x0064, 0x3DD4, 0x09C8, 0x09C8, 0x3DD4, 0x0064
-पूर्ण;
+};
 
 //=========================================
 // <num_taps>    = 6
 // <num_phases>  = 64
 // <scale_ratio> = 1.16666 (input/output)
 // <sharpness>   = 0
-// <CoefType>    = ModअगरiedLanczos
+// <CoefType>    = ModifiedLanczos
 // <CoefQuant>   = 1.10
 // <CoefOut>     = 1.12
 //=========================================
-अटल स्थिर uपूर्णांक16_t filter_6tap_64p_116[198] = अणु
+static const uint16_t filter_6tap_64p_116[198] = {
 		0x3F0C, 0x0240, 0x0D68, 0x0240, 0x3F0C, 0x0000,
 		0x3F18, 0x0210, 0x0D64, 0x0274, 0x3F00, 0x0000,
 		0x3F24, 0x01E0, 0x0D58, 0x02A8, 0x3EF8, 0x0004,
@@ -887,18 +886,18 @@
 		0x0008, 0x3EA4, 0x09D0, 0x08F4, 0x3E7C, 0x0014,
 		0x000C, 0x3E98, 0x0998, 0x092C, 0x3E84, 0x0014,
 		0x0010, 0x3E90, 0x0964, 0x0960, 0x3E8C, 0x0010
-पूर्ण;
+};
 
 //=========================================
 // <num_taps>    = 6
 // <num_phases>  = 64
 // <scale_ratio> = 1.49999 (input/output)
 // <sharpness>   = 0
-// <CoefType>    = ModअगरiedLanczos
+// <CoefType>    = ModifiedLanczos
 // <CoefQuant>   = 1.10
 // <CoefOut>     = 1.12
 //=========================================
-अटल स्थिर uपूर्णांक16_t filter_6tap_64p_149[198] = अणु
+static const uint16_t filter_6tap_64p_149[198] = {
 		0x3F14, 0x0394, 0x0AB0, 0x0394, 0x3F14, 0x0000,
 		0x3F18, 0x036C, 0x0AB0, 0x03B8, 0x3F14, 0x0000,
 		0x3F18, 0x0348, 0x0AAC, 0x03E0, 0x3F14, 0x0000,
@@ -932,18 +931,18 @@
 		0x3FA4, 0x0014, 0x08A4, 0x081C, 0x3FD0, 0x3FB8,
 		0x3FAC, 0x0000, 0x0880, 0x0840, 0x3FE0, 0x3FB4,
 		0x3FB0, 0x3FF0, 0x0860, 0x0860, 0x3FF0, 0x3FB0
-पूर्ण;
+};
 
 //=========================================
 // <num_taps>    = 6
 // <num_phases>  = 64
 // <scale_ratio> = 1.83332 (input/output)
 // <sharpness>   = 0
-// <CoefType>    = ModअगरiedLanczos
+// <CoefType>    = ModifiedLanczos
 // <CoefQuant>   = 1.10
 // <CoefOut>     = 1.12
 //=========================================
-अटल स्थिर uपूर्णांक16_t filter_6tap_64p_183[198] = अणु
+static const uint16_t filter_6tap_64p_183[198] = {
 		0x002C, 0x0420, 0x076C, 0x041C, 0x002C, 0x0000,
 		0x0028, 0x040C, 0x0768, 0x0430, 0x0034, 0x0000,
 		0x0020, 0x03F8, 0x0768, 0x0448, 0x003C, 0x3FFC,
@@ -977,18 +976,18 @@
 		0x3FCC, 0x01D8, 0x069C, 0x0660, 0x0190, 0x3FD0,
 		0x3FCC, 0x01C4, 0x068C, 0x0670, 0x01A4, 0x3FD0,
 		0x3FCC, 0x01B8, 0x0680, 0x067C, 0x01B4, 0x3FCC
-पूर्ण;
+};
 
 //=========================================
 // <num_taps>    = 7
 // <num_phases>  = 64
 // <scale_ratio> = 0.83333 (input/output)
 // <sharpness>   = 0
-// <CoefType>    = ModअगरiedLanczos
+// <CoefType>    = ModifiedLanczos
 // <CoefQuant>   = 1.10
 // <CoefOut>     = 1.12
 //=========================================
-अटल स्थिर uपूर्णांक16_t filter_7tap_64p_upscale[231] = अणु
+static const uint16_t filter_7tap_64p_upscale[231] = {
 		0x00B0, 0x3D98, 0x09BC, 0x09B8, 0x3D94, 0x00B0, 0x0000,
 		0x00AC, 0x3DA0, 0x0968, 0x0A10, 0x3D88, 0x00B4, 0x0000,
 		0x00A8, 0x3DAC, 0x0914, 0x0A60, 0x3D80, 0x00B8, 0x0000,
@@ -1022,18 +1021,18 @@
 		0x0004, 0x3FDC, 0x0070, 0x0FFC, 0x3F98, 0x0020, 0x3FFC,
 		0x0000, 0x3FF0, 0x0038, 0x0FFC, 0x3FCC, 0x0010, 0x0000,
 		0x0000, 0x0000, 0x0000, 0x1000, 0x0000, 0x0000, 0x0000
-पूर्ण;
+};
 
 //=========================================
 // <num_taps>    = 7
 // <num_phases>  = 64
 // <scale_ratio> = 1.16666 (input/output)
 // <sharpness>   = 0
-// <CoefType>    = ModअगरiedLanczos
+// <CoefType>    = ModifiedLanczos
 // <CoefQuant>   = 1.10
 // <CoefOut>     = 1.12
 //=========================================
-अटल स्थिर uपूर्णांक16_t filter_7tap_64p_116[231] = अणु
+static const uint16_t filter_7tap_64p_116[231] = {
 		0x0020, 0x3E58, 0x0988, 0x0988, 0x3E58, 0x0020, 0x0000,
 		0x0024, 0x3E4C, 0x0954, 0x09C0, 0x3E64, 0x0018, 0x0000,
 		0x002C, 0x3E44, 0x091C, 0x09F4, 0x3E70, 0x0010, 0x0000,
@@ -1067,18 +1066,18 @@
 		0x0048, 0x3EAC, 0x02C0, 0x0D3C, 0x01F4, 0x3EDC, 0x0040,
 		0x0048, 0x3EB8, 0x0290, 0x0D3C, 0x0224, 0x3ED0, 0x0040,
 		0x0044, 0x3EC4, 0x0258, 0x0D40, 0x0258, 0x3EC4, 0x0044
-पूर्ण;
+};
 
 //=========================================
 // <num_taps>    = 7
 // <num_phases>  = 64
 // <scale_ratio> = 1.49999 (input/output)
 // <sharpness>   = 0
-// <CoefType>    = ModअगरiedLanczos
+// <CoefType>    = ModifiedLanczos
 // <CoefQuant>   = 1.10
 // <CoefOut>     = 1.12
 //=========================================
-अटल स्थिर uपूर्णांक16_t filter_7tap_64p_149[231] = अणु
+static const uint16_t filter_7tap_64p_149[231] = {
 		0x3F68, 0x3FEC, 0x08A8, 0x08AC, 0x3FF0, 0x3F68, 0x0000,
 		0x3F70, 0x3FDC, 0x0888, 0x08CC, 0x0000, 0x3F60, 0x0000,
 		0x3F74, 0x3FC8, 0x0868, 0x08F0, 0x0014, 0x3F58, 0x0000,
@@ -1112,18 +1111,18 @@
 		0x0000, 0x3EC8, 0x041C, 0x0ACC, 0x0380, 0x3EC8, 0x0008,
 		0x0000, 0x3EC8, 0x03F4, 0x0AD0, 0x03A8, 0x3EC8, 0x0004,
 		0x0004, 0x3EC8, 0x03CC, 0x0AD0, 0x03CC, 0x3EC8, 0x0004
-पूर्ण;
+};
 
 //=========================================
 // <num_taps>    = 7
 // <num_phases>  = 64
 // <scale_ratio> = 1.83332 (input/output)
 // <sharpness>   = 0
-// <CoefType>    = ModअगरiedLanczos
+// <CoefType>    = ModifiedLanczos
 // <CoefQuant>   = 1.10
 // <CoefOut>     = 1.12
 //=========================================
-अटल स्थिर uपूर्णांक16_t filter_7tap_64p_183[231] = अणु
+static const uint16_t filter_7tap_64p_183[231] = {
 		0x3FA4, 0x01E8, 0x0674, 0x0674, 0x01E8, 0x3FA4, 0x0000,
 		0x3FA4, 0x01D4, 0x0668, 0x0684, 0x01F8, 0x3FA4, 0x0000,
 		0x3FA4, 0x01C4, 0x0658, 0x0690, 0x0208, 0x3FA8, 0x0000,
@@ -1157,18 +1156,18 @@
 		0x3FBC, 0x0050, 0x047C, 0x0760, 0x0428, 0x002C, 0x3FC4,
 		0x3FBC, 0x0048, 0x0464, 0x0764, 0x043C, 0x0034, 0x3FC4,
 		0x3FC0, 0x003C, 0x0454, 0x0764, 0x0450, 0x003C, 0x3FC0
-पूर्ण;
+};
 
 //=========================================
 // <num_taps>    = 8
 // <num_phases>  = 64
 // <scale_ratio> = 0.83333 (input/output)
 // <sharpness>   = 0
-// <CoefType>    = ModअगरiedLanczos
+// <CoefType>    = ModifiedLanczos
 // <CoefQuant>   = 1.10
 // <CoefOut>     = 1.12
 //=========================================
-अटल स्थिर uपूर्णांक16_t filter_8tap_64p_upscale[264] = अणु
+static const uint16_t filter_8tap_64p_upscale[264] = {
 		0x0000, 0x0000, 0x0000, 0x1000, 0x0000, 0x0000, 0x0000, 0x0000,
 		0x3FFC, 0x0014, 0x3FC8, 0x1000, 0x0038, 0x3FEC, 0x0004, 0x0000,
 		0x3FF4, 0x0024, 0x3F94, 0x0FFC, 0x0074, 0x3FD8, 0x000C, 0x0000,
@@ -1202,18 +1201,18 @@
 		0x3FCC, 0x00FC, 0x3D48, 0x0A84, 0x093C, 0x3D74, 0x00E8, 0x3FD4,
 		0x3FCC, 0x00F8, 0x3D50, 0x0A38, 0x0990, 0x3D64, 0x00F0, 0x3FD0,
 		0x3FD0, 0x00F4, 0x3D58, 0x09E0, 0x09E4, 0x3D5C, 0x00F4, 0x3FD0
-पूर्ण;
+};
 
 //=========================================
 // <num_taps>    = 8
 // <num_phases>  = 64
 // <scale_ratio> = 1.16666 (input/output)
 // <sharpness>   = 0
-// <CoefType>    = ModअगरiedLanczos
+// <CoefType>    = ModifiedLanczos
 // <CoefQuant>   = 1.10
 // <CoefOut>     = 1.12
 //=========================================
-अटल स्थिर uपूर्णांक16_t filter_8tap_64p_116[264] = अणु
+static const uint16_t filter_8tap_64p_116[264] = {
 		0x0080, 0x3E90, 0x0268, 0x0D14, 0x0264, 0x3E90, 0x0080, 0x0000,
 		0x007C, 0x3E9C, 0x0238, 0x0D14, 0x0298, 0x3E84, 0x0080, 0x0000,
 		0x0078, 0x3EAC, 0x0200, 0x0D10, 0x02D0, 0x3E78, 0x0084, 0x0000,
@@ -1247,18 +1246,18 @@
 		0x0018, 0x0018, 0x3E54, 0x09F4, 0x0920, 0x3E20, 0x003C, 0x000C,
 		0x0014, 0x0020, 0x3E48, 0x09C0, 0x0954, 0x3E2C, 0x0034, 0x0010,
 		0x0010, 0x002C, 0x3E3C, 0x098C, 0x0988, 0x3E38, 0x002C, 0x0010
-पूर्ण;
+};
 
 //=========================================
 // <num_taps>    = 8
 // <num_phases>  = 64
 // <scale_ratio> = 1.49999 (input/output)
 // <sharpness>   = 0
-// <CoefType>    = ModअगरiedLanczos
+// <CoefType>    = ModifiedLanczos
 // <CoefQuant>   = 1.10
 // <CoefOut>     = 1.12
 //=========================================
-अटल स्थिर uपूर्णांक16_t filter_8tap_64p_149[264] = अणु
+static const uint16_t filter_8tap_64p_149[264] = {
 		0x0008, 0x3E8C, 0x03F8, 0x0AE8, 0x03F8, 0x3E8C, 0x0008, 0x0000,
 		0x000C, 0x3E8C, 0x03D0, 0x0AE8, 0x0420, 0x3E90, 0x0000, 0x0000,
 		0x000C, 0x3E8C, 0x03AC, 0x0AE8, 0x0444, 0x3E90, 0x0000, 0x0000,
@@ -1292,18 +1291,18 @@
 		0x0030, 0x3F24, 0x0018, 0x08F0, 0x0874, 0x3FC0, 0x3F44, 0x002C,
 		0x002C, 0x3F2C, 0x0000, 0x08D4, 0x0894, 0x3FD8, 0x3F3C, 0x002C,
 		0x002C, 0x3F34, 0x3FEC, 0x08B4, 0x08B4, 0x3FEC, 0x3F34, 0x002C
-पूर्ण;
+};
 
 //=========================================
 // <num_taps>    = 8
 // <num_phases>  = 64
 // <scale_ratio> = 1.83332 (input/output)
 // <sharpness>   = 0
-// <CoefType>    = ModअगरiedLanczos
+// <CoefType>    = ModifiedLanczos
 // <CoefQuant>   = 1.10
 // <CoefOut>     = 1.12
 //=========================================
-अटल स्थिर uपूर्णांक16_t filter_8tap_64p_183[264] = अणु
+static const uint16_t filter_8tap_64p_183[264] = {
 		0x3F88, 0x0048, 0x047C, 0x0768, 0x047C, 0x0048, 0x3F88, 0x0000,
 		0x3F88, 0x003C, 0x0468, 0x076C, 0x0490, 0x0054, 0x3F84, 0x0000,
 		0x3F8C, 0x0034, 0x0454, 0x0768, 0x04A4, 0x005C, 0x3F84, 0x0000,
@@ -1337,110 +1336,110 @@
 		0x3FD0, 0x3F88, 0x0238, 0x06B0, 0x067C, 0x01F0, 0x3F7C, 0x3FD8,
 		0x3FD4, 0x3F84, 0x0228, 0x069C, 0x0688, 0x0204, 0x3F80, 0x3FD8,
 		0x3FD4, 0x3F84, 0x0214, 0x0694, 0x0694, 0x0214, 0x3F84, 0x3FD4
-पूर्ण;
+};
 
-स्थिर uपूर्णांक16_t *get_filter_3tap_16p(काष्ठा fixed31_32 ratio)
-अणु
-	अगर (ratio.value < dc_fixpt_one.value)
-		वापस filter_3tap_16p_upscale;
-	अन्यथा अगर (ratio.value < dc_fixpt_from_fraction(4, 3).value)
-		वापस filter_3tap_16p_116;
-	अन्यथा अगर (ratio.value < dc_fixpt_from_fraction(5, 3).value)
-		वापस filter_3tap_16p_149;
-	अन्यथा
-		वापस filter_3tap_16p_183;
-पूर्ण
+const uint16_t *get_filter_3tap_16p(struct fixed31_32 ratio)
+{
+	if (ratio.value < dc_fixpt_one.value)
+		return filter_3tap_16p_upscale;
+	else if (ratio.value < dc_fixpt_from_fraction(4, 3).value)
+		return filter_3tap_16p_116;
+	else if (ratio.value < dc_fixpt_from_fraction(5, 3).value)
+		return filter_3tap_16p_149;
+	else
+		return filter_3tap_16p_183;
+}
 
-स्थिर uपूर्णांक16_t *get_filter_3tap_64p(काष्ठा fixed31_32 ratio)
-अणु
-	अगर (ratio.value < dc_fixpt_one.value)
-		वापस filter_3tap_64p_upscale;
-	अन्यथा अगर (ratio.value < dc_fixpt_from_fraction(4, 3).value)
-		वापस filter_3tap_64p_116;
-	अन्यथा अगर (ratio.value < dc_fixpt_from_fraction(5, 3).value)
-		वापस filter_3tap_64p_149;
-	अन्यथा
-		वापस filter_3tap_64p_183;
-पूर्ण
+const uint16_t *get_filter_3tap_64p(struct fixed31_32 ratio)
+{
+	if (ratio.value < dc_fixpt_one.value)
+		return filter_3tap_64p_upscale;
+	else if (ratio.value < dc_fixpt_from_fraction(4, 3).value)
+		return filter_3tap_64p_116;
+	else if (ratio.value < dc_fixpt_from_fraction(5, 3).value)
+		return filter_3tap_64p_149;
+	else
+		return filter_3tap_64p_183;
+}
 
-स्थिर uपूर्णांक16_t *get_filter_4tap_16p(काष्ठा fixed31_32 ratio)
-अणु
-	अगर (ratio.value < dc_fixpt_one.value)
-		वापस filter_4tap_16p_upscale;
-	अन्यथा अगर (ratio.value < dc_fixpt_from_fraction(4, 3).value)
-		वापस filter_4tap_16p_116;
-	अन्यथा अगर (ratio.value < dc_fixpt_from_fraction(5, 3).value)
-		वापस filter_4tap_16p_149;
-	अन्यथा
-		वापस filter_4tap_16p_183;
-पूर्ण
+const uint16_t *get_filter_4tap_16p(struct fixed31_32 ratio)
+{
+	if (ratio.value < dc_fixpt_one.value)
+		return filter_4tap_16p_upscale;
+	else if (ratio.value < dc_fixpt_from_fraction(4, 3).value)
+		return filter_4tap_16p_116;
+	else if (ratio.value < dc_fixpt_from_fraction(5, 3).value)
+		return filter_4tap_16p_149;
+	else
+		return filter_4tap_16p_183;
+}
 
-स्थिर uपूर्णांक16_t *get_filter_4tap_64p(काष्ठा fixed31_32 ratio)
-अणु
-	अगर (ratio.value < dc_fixpt_one.value)
-		वापस filter_4tap_64p_upscale;
-	अन्यथा अगर (ratio.value < dc_fixpt_from_fraction(4, 3).value)
-		वापस filter_4tap_64p_116;
-	अन्यथा अगर (ratio.value < dc_fixpt_from_fraction(5, 3).value)
-		वापस filter_4tap_64p_149;
-	अन्यथा
-		वापस filter_4tap_64p_183;
-पूर्ण
+const uint16_t *get_filter_4tap_64p(struct fixed31_32 ratio)
+{
+	if (ratio.value < dc_fixpt_one.value)
+		return filter_4tap_64p_upscale;
+	else if (ratio.value < dc_fixpt_from_fraction(4, 3).value)
+		return filter_4tap_64p_116;
+	else if (ratio.value < dc_fixpt_from_fraction(5, 3).value)
+		return filter_4tap_64p_149;
+	else
+		return filter_4tap_64p_183;
+}
 
-स्थिर uपूर्णांक16_t *get_filter_5tap_64p(काष्ठा fixed31_32 ratio)
-अणु
-	अगर (ratio.value < dc_fixpt_one.value)
-		वापस filter_5tap_64p_upscale;
-	अन्यथा अगर (ratio.value < dc_fixpt_from_fraction(4, 3).value)
-		वापस filter_5tap_64p_116;
-	अन्यथा अगर (ratio.value < dc_fixpt_from_fraction(5, 3).value)
-		वापस filter_5tap_64p_149;
-	अन्यथा
-		वापस filter_5tap_64p_183;
-पूर्ण
+const uint16_t *get_filter_5tap_64p(struct fixed31_32 ratio)
+{
+	if (ratio.value < dc_fixpt_one.value)
+		return filter_5tap_64p_upscale;
+	else if (ratio.value < dc_fixpt_from_fraction(4, 3).value)
+		return filter_5tap_64p_116;
+	else if (ratio.value < dc_fixpt_from_fraction(5, 3).value)
+		return filter_5tap_64p_149;
+	else
+		return filter_5tap_64p_183;
+}
 
-स्थिर uपूर्णांक16_t *get_filter_6tap_64p(काष्ठा fixed31_32 ratio)
-अणु
-	अगर (ratio.value < dc_fixpt_one.value)
-		वापस filter_6tap_64p_upscale;
-	अन्यथा अगर (ratio.value < dc_fixpt_from_fraction(4, 3).value)
-		वापस filter_6tap_64p_116;
-	अन्यथा अगर (ratio.value < dc_fixpt_from_fraction(5, 3).value)
-		वापस filter_6tap_64p_149;
-	अन्यथा
-		वापस filter_6tap_64p_183;
-पूर्ण
+const uint16_t *get_filter_6tap_64p(struct fixed31_32 ratio)
+{
+	if (ratio.value < dc_fixpt_one.value)
+		return filter_6tap_64p_upscale;
+	else if (ratio.value < dc_fixpt_from_fraction(4, 3).value)
+		return filter_6tap_64p_116;
+	else if (ratio.value < dc_fixpt_from_fraction(5, 3).value)
+		return filter_6tap_64p_149;
+	else
+		return filter_6tap_64p_183;
+}
 
-स्थिर uपूर्णांक16_t *get_filter_7tap_64p(काष्ठा fixed31_32 ratio)
-अणु
-	अगर (ratio.value < dc_fixpt_one.value)
-		वापस filter_7tap_64p_upscale;
-	अन्यथा अगर (ratio.value < dc_fixpt_from_fraction(4, 3).value)
-		वापस filter_7tap_64p_116;
-	अन्यथा अगर (ratio.value < dc_fixpt_from_fraction(5, 3).value)
-		वापस filter_7tap_64p_149;
-	अन्यथा
-		वापस filter_7tap_64p_183;
-पूर्ण
+const uint16_t *get_filter_7tap_64p(struct fixed31_32 ratio)
+{
+	if (ratio.value < dc_fixpt_one.value)
+		return filter_7tap_64p_upscale;
+	else if (ratio.value < dc_fixpt_from_fraction(4, 3).value)
+		return filter_7tap_64p_116;
+	else if (ratio.value < dc_fixpt_from_fraction(5, 3).value)
+		return filter_7tap_64p_149;
+	else
+		return filter_7tap_64p_183;
+}
 
-स्थिर uपूर्णांक16_t *get_filter_8tap_64p(काष्ठा fixed31_32 ratio)
-अणु
-	अगर (ratio.value < dc_fixpt_one.value)
-		वापस filter_8tap_64p_upscale;
-	अन्यथा अगर (ratio.value < dc_fixpt_from_fraction(4, 3).value)
-		वापस filter_8tap_64p_116;
-	अन्यथा अगर (ratio.value < dc_fixpt_from_fraction(5, 3).value)
-		वापस filter_8tap_64p_149;
-	अन्यथा
-		वापस filter_8tap_64p_183;
-पूर्ण
+const uint16_t *get_filter_8tap_64p(struct fixed31_32 ratio)
+{
+	if (ratio.value < dc_fixpt_one.value)
+		return filter_8tap_64p_upscale;
+	else if (ratio.value < dc_fixpt_from_fraction(4, 3).value)
+		return filter_8tap_64p_116;
+	else if (ratio.value < dc_fixpt_from_fraction(5, 3).value)
+		return filter_8tap_64p_149;
+	else
+		return filter_8tap_64p_183;
+}
 
-स्थिर uपूर्णांक16_t *get_filter_2tap_16p(व्योम)
-अणु
-	वापस filter_2tap_16p;
-पूर्ण
+const uint16_t *get_filter_2tap_16p(void)
+{
+	return filter_2tap_16p;
+}
 
-स्थिर uपूर्णांक16_t *get_filter_2tap_64p(व्योम)
-अणु
-	वापस filter_2tap_64p;
-पूर्ण
+const uint16_t *get_filter_2tap_64p(void)
+{
+	return filter_2tap_64p;
+}

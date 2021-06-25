@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: (GPL-2.0 OR MPL-1.1) */
+/* SPDX-License-Identifier: (GPL-2.0 OR MPL-1.1) */
 /* --------------------------------------------------------------------
  *
  * Copyright (C) 1999 AbsoluteValue Systems, Inc.  All Rights Reserved.
@@ -14,17 +13,17 @@
  *
  *   Software distributed under the License is distributed on an "AS
  *   IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or
- *   implied. See the License क्रम the specअगरic language governing
+ *   implied. See the License for the specific language governing
  *   rights and limitations under the License.
  *
  *   Alternatively, the contents of this file may be used under the
  *   terms of the GNU Public License version 2 (the "GPL"), in which
- *   हाल the provisions of the GPL are applicable instead of the
+ *   case the provisions of the GPL are applicable instead of the
  *   above.  If you wish to allow the use of your version of this file
  *   only under the terms of the GPL and not to allow others to use
  *   your version of this file under the MPL, indicate your decision
  *   by deleting the provisions above and replace them with the notice
- *   and other provisions required by the GPL.  If you करो not delete
+ *   and other provisions required by the GPL.  If you do not delete
  *   the provisions above, a recipient may use your version of this
  *   file under either the MPL or the GPL.
  *
@@ -45,228 +44,228 @@
  * --------------------------------------------------------------------
  */
 
-#अगर_अघोषित _P80211MKMETASTRUCT_H
-#घोषणा _P80211MKMETASTRUCT_H
+#ifndef _P80211MKMETASTRUCT_H
+#define _P80211MKMETASTRUCT_H
 
-काष्ठा p80211msg_करोt11req_mibget अणु
+struct p80211msg_dot11req_mibget {
 	u32 msgcode;
 	u32 msglen;
 	u8 devname[WLAN_DEVNAMELEN_MAX];
-	काष्ठा p80211item_unk392 mibattribute;
-	काष्ठा p80211item_uपूर्णांक32 resultcode;
-पूर्ण __packed;
+	struct p80211item_unk392 mibattribute;
+	struct p80211item_uint32 resultcode;
+} __packed;
 
-काष्ठा p80211msg_करोt11req_mibset अणु
+struct p80211msg_dot11req_mibset {
 	u32 msgcode;
 	u32 msglen;
 	u8 devname[WLAN_DEVNAMELEN_MAX];
-	काष्ठा p80211item_unk392 mibattribute;
-	काष्ठा p80211item_uपूर्णांक32 resultcode;
-पूर्ण __packed;
+	struct p80211item_unk392 mibattribute;
+	struct p80211item_uint32 resultcode;
+} __packed;
 
-काष्ठा p80211msg_करोt11req_scan अणु
+struct p80211msg_dot11req_scan {
 	u32 msgcode;
 	u32 msglen;
 	u8 devname[WLAN_DEVNAMELEN_MAX];
-	काष्ठा p80211item_uपूर्णांक32 bsstype;
-	काष्ठा p80211item_pstr6 bssid;
+	struct p80211item_uint32 bsstype;
+	struct p80211item_pstr6 bssid;
 	u8 pad_0C[1];
-	काष्ठा p80211item_pstr32 ssid;
+	struct p80211item_pstr32 ssid;
 	u8 pad_1D[3];
-	काष्ठा p80211item_uपूर्णांक32 scantype;
-	काष्ठा p80211item_uपूर्णांक32 probedelay;
-	काष्ठा p80211item_pstr14 channellist;
+	struct p80211item_uint32 scantype;
+	struct p80211item_uint32 probedelay;
+	struct p80211item_pstr14 channellist;
 	u8 pad_2C[1];
-	काष्ठा p80211item_uपूर्णांक32 minchannelसमय;
-	काष्ठा p80211item_uपूर्णांक32 maxchannelसमय;
-	काष्ठा p80211item_uपूर्णांक32 resultcode;
-	काष्ठा p80211item_uपूर्णांक32 numbss;
-	काष्ठा p80211item_uपूर्णांक32 append;
-पूर्ण __packed;
+	struct p80211item_uint32 minchanneltime;
+	struct p80211item_uint32 maxchanneltime;
+	struct p80211item_uint32 resultcode;
+	struct p80211item_uint32 numbss;
+	struct p80211item_uint32 append;
+} __packed;
 
-काष्ठा p80211msg_करोt11req_scan_results अणु
+struct p80211msg_dot11req_scan_results {
 	u32 msgcode;
 	u32 msglen;
 	u8 devname[WLAN_DEVNAMELEN_MAX];
-	काष्ठा p80211item_uपूर्णांक32 bssindex;
-	काष्ठा p80211item_uपूर्णांक32 resultcode;
-	काष्ठा p80211item_uपूर्णांक32 संकेत;
-	काष्ठा p80211item_uपूर्णांक32 noise;
-	काष्ठा p80211item_pstr6 bssid;
+	struct p80211item_uint32 bssindex;
+	struct p80211item_uint32 resultcode;
+	struct p80211item_uint32 signal;
+	struct p80211item_uint32 noise;
+	struct p80211item_pstr6 bssid;
 	u8 pad_3C[1];
-	काष्ठा p80211item_pstr32 ssid;
+	struct p80211item_pstr32 ssid;
 	u8 pad_4D[3];
-	काष्ठा p80211item_uपूर्णांक32 bsstype;
-	काष्ठा p80211item_uपूर्णांक32 beaconperiod;
-	काष्ठा p80211item_uपूर्णांक32 dtimperiod;
-	काष्ठा p80211item_uपूर्णांक32 बारtamp;
-	काष्ठा p80211item_uपूर्णांक32 स_स्थानीय;
-	काष्ठा p80211item_uपूर्णांक32 fhdwellसमय;
-	काष्ठा p80211item_uपूर्णांक32 fhhopset;
-	काष्ठा p80211item_uपूर्णांक32 fhhoppattern;
-	काष्ठा p80211item_uपूर्णांक32 fhhopindex;
-	काष्ठा p80211item_uपूर्णांक32 dschannel;
-	काष्ठा p80211item_uपूर्णांक32 cfpcount;
-	काष्ठा p80211item_uपूर्णांक32 cfpperiod;
-	काष्ठा p80211item_uपूर्णांक32 cfpmaxduration;
-	काष्ठा p80211item_uपूर्णांक32 cfpdurreमुख्यing;
-	काष्ठा p80211item_uपूर्णांक32 ibssatimwinकरोw;
-	काष्ठा p80211item_uपूर्णांक32 cfpollable;
-	काष्ठा p80211item_uपूर्णांक32 cfpollreq;
-	काष्ठा p80211item_uपूर्णांक32 privacy;
-	काष्ठा p80211item_uपूर्णांक32 capinfo;
-	काष्ठा p80211item_uपूर्णांक32 basicrate1;
-	काष्ठा p80211item_uपूर्णांक32 basicrate2;
-	काष्ठा p80211item_uपूर्णांक32 basicrate3;
-	काष्ठा p80211item_uपूर्णांक32 basicrate4;
-	काष्ठा p80211item_uपूर्णांक32 basicrate5;
-	काष्ठा p80211item_uपूर्णांक32 basicrate6;
-	काष्ठा p80211item_uपूर्णांक32 basicrate7;
-	काष्ठा p80211item_uपूर्णांक32 basicrate8;
-	काष्ठा p80211item_uपूर्णांक32 supprate1;
-	काष्ठा p80211item_uपूर्णांक32 supprate2;
-	काष्ठा p80211item_uपूर्णांक32 supprate3;
-	काष्ठा p80211item_uपूर्णांक32 supprate4;
-	काष्ठा p80211item_uपूर्णांक32 supprate5;
-	काष्ठा p80211item_uपूर्णांक32 supprate6;
-	काष्ठा p80211item_uपूर्णांक32 supprate7;
-	काष्ठा p80211item_uपूर्णांक32 supprate8;
-पूर्ण __packed;
+	struct p80211item_uint32 bsstype;
+	struct p80211item_uint32 beaconperiod;
+	struct p80211item_uint32 dtimperiod;
+	struct p80211item_uint32 timestamp;
+	struct p80211item_uint32 localtime;
+	struct p80211item_uint32 fhdwelltime;
+	struct p80211item_uint32 fhhopset;
+	struct p80211item_uint32 fhhoppattern;
+	struct p80211item_uint32 fhhopindex;
+	struct p80211item_uint32 dschannel;
+	struct p80211item_uint32 cfpcount;
+	struct p80211item_uint32 cfpperiod;
+	struct p80211item_uint32 cfpmaxduration;
+	struct p80211item_uint32 cfpdurremaining;
+	struct p80211item_uint32 ibssatimwindow;
+	struct p80211item_uint32 cfpollable;
+	struct p80211item_uint32 cfpollreq;
+	struct p80211item_uint32 privacy;
+	struct p80211item_uint32 capinfo;
+	struct p80211item_uint32 basicrate1;
+	struct p80211item_uint32 basicrate2;
+	struct p80211item_uint32 basicrate3;
+	struct p80211item_uint32 basicrate4;
+	struct p80211item_uint32 basicrate5;
+	struct p80211item_uint32 basicrate6;
+	struct p80211item_uint32 basicrate7;
+	struct p80211item_uint32 basicrate8;
+	struct p80211item_uint32 supprate1;
+	struct p80211item_uint32 supprate2;
+	struct p80211item_uint32 supprate3;
+	struct p80211item_uint32 supprate4;
+	struct p80211item_uint32 supprate5;
+	struct p80211item_uint32 supprate6;
+	struct p80211item_uint32 supprate7;
+	struct p80211item_uint32 supprate8;
+} __packed;
 
-काष्ठा p80211msg_करोt11req_start अणु
+struct p80211msg_dot11req_start {
 	u32 msgcode;
 	u32 msglen;
 	u8 devname[WLAN_DEVNAMELEN_MAX];
-	काष्ठा p80211item_pstr32 ssid;
+	struct p80211item_pstr32 ssid;
 	u8 pad_12D[3];
-	काष्ठा p80211item_uपूर्णांक32 bsstype;
-	काष्ठा p80211item_uपूर्णांक32 beaconperiod;
-	काष्ठा p80211item_uपूर्णांक32 dtimperiod;
-	काष्ठा p80211item_uपूर्णांक32 cfpperiod;
-	काष्ठा p80211item_uपूर्णांक32 cfpmaxduration;
-	काष्ठा p80211item_uपूर्णांक32 fhdwellसमय;
-	काष्ठा p80211item_uपूर्णांक32 fhhopset;
-	काष्ठा p80211item_uपूर्णांक32 fhhoppattern;
-	काष्ठा p80211item_uपूर्णांक32 dschannel;
-	काष्ठा p80211item_uपूर्णांक32 ibssatimwinकरोw;
-	काष्ठा p80211item_uपूर्णांक32 probedelay;
-	काष्ठा p80211item_uपूर्णांक32 cfpollable;
-	काष्ठा p80211item_uपूर्णांक32 cfpollreq;
-	काष्ठा p80211item_uपूर्णांक32 basicrate1;
-	काष्ठा p80211item_uपूर्णांक32 basicrate2;
-	काष्ठा p80211item_uपूर्णांक32 basicrate3;
-	काष्ठा p80211item_uपूर्णांक32 basicrate4;
-	काष्ठा p80211item_uपूर्णांक32 basicrate5;
-	काष्ठा p80211item_uपूर्णांक32 basicrate6;
-	काष्ठा p80211item_uपूर्णांक32 basicrate7;
-	काष्ठा p80211item_uपूर्णांक32 basicrate8;
-	काष्ठा p80211item_uपूर्णांक32 operationalrate1;
-	काष्ठा p80211item_uपूर्णांक32 operationalrate2;
-	काष्ठा p80211item_uपूर्णांक32 operationalrate3;
-	काष्ठा p80211item_uपूर्णांक32 operationalrate4;
-	काष्ठा p80211item_uपूर्णांक32 operationalrate5;
-	काष्ठा p80211item_uपूर्णांक32 operationalrate6;
-	काष्ठा p80211item_uपूर्णांक32 operationalrate7;
-	काष्ठा p80211item_uपूर्णांक32 operationalrate8;
-	काष्ठा p80211item_uपूर्णांक32 resultcode;
-पूर्ण __packed;
+	struct p80211item_uint32 bsstype;
+	struct p80211item_uint32 beaconperiod;
+	struct p80211item_uint32 dtimperiod;
+	struct p80211item_uint32 cfpperiod;
+	struct p80211item_uint32 cfpmaxduration;
+	struct p80211item_uint32 fhdwelltime;
+	struct p80211item_uint32 fhhopset;
+	struct p80211item_uint32 fhhoppattern;
+	struct p80211item_uint32 dschannel;
+	struct p80211item_uint32 ibssatimwindow;
+	struct p80211item_uint32 probedelay;
+	struct p80211item_uint32 cfpollable;
+	struct p80211item_uint32 cfpollreq;
+	struct p80211item_uint32 basicrate1;
+	struct p80211item_uint32 basicrate2;
+	struct p80211item_uint32 basicrate3;
+	struct p80211item_uint32 basicrate4;
+	struct p80211item_uint32 basicrate5;
+	struct p80211item_uint32 basicrate6;
+	struct p80211item_uint32 basicrate7;
+	struct p80211item_uint32 basicrate8;
+	struct p80211item_uint32 operationalrate1;
+	struct p80211item_uint32 operationalrate2;
+	struct p80211item_uint32 operationalrate3;
+	struct p80211item_uint32 operationalrate4;
+	struct p80211item_uint32 operationalrate5;
+	struct p80211item_uint32 operationalrate6;
+	struct p80211item_uint32 operationalrate7;
+	struct p80211item_uint32 operationalrate8;
+	struct p80211item_uint32 resultcode;
+} __packed;
 
-काष्ठा p80211msg_lnxreq_अगरstate अणु
+struct p80211msg_lnxreq_ifstate {
 	u32 msgcode;
 	u32 msglen;
 	u8 devname[WLAN_DEVNAMELEN_MAX];
-	काष्ठा p80211item_uपूर्णांक32 अगरstate;
-	काष्ठा p80211item_uपूर्णांक32 resultcode;
-पूर्ण __packed;
+	struct p80211item_uint32 ifstate;
+	struct p80211item_uint32 resultcode;
+} __packed;
 
-काष्ठा p80211msg_lnxreq_wlansnअगरf अणु
+struct p80211msg_lnxreq_wlansniff {
 	u32 msgcode;
 	u32 msglen;
 	u8 devname[WLAN_DEVNAMELEN_MAX];
-	काष्ठा p80211item_uपूर्णांक32 enable;
-	काष्ठा p80211item_uपूर्णांक32 channel;
-	काष्ठा p80211item_uपूर्णांक32 prismheader;
-	काष्ठा p80211item_uपूर्णांक32 wlanheader;
-	काष्ठा p80211item_uपूर्णांक32 keepwepflags;
-	काष्ठा p80211item_uपूर्णांक32 stripfcs;
-	काष्ठा p80211item_uपूर्णांक32 packet_trunc;
-	काष्ठा p80211item_uपूर्णांक32 resultcode;
-पूर्ण __packed;
+	struct p80211item_uint32 enable;
+	struct p80211item_uint32 channel;
+	struct p80211item_uint32 prismheader;
+	struct p80211item_uint32 wlanheader;
+	struct p80211item_uint32 keepwepflags;
+	struct p80211item_uint32 stripfcs;
+	struct p80211item_uint32 packet_trunc;
+	struct p80211item_uint32 resultcode;
+} __packed;
 
-काष्ठा p80211msg_lnxreq_hostwep अणु
+struct p80211msg_lnxreq_hostwep {
 	u32 msgcode;
 	u32 msglen;
 	u8 devname[WLAN_DEVNAMELEN_MAX];
-	काष्ठा p80211item_uपूर्णांक32 resultcode;
-	काष्ठा p80211item_uपूर्णांक32 decrypt;
-	काष्ठा p80211item_uपूर्णांक32 encrypt;
-पूर्ण __packed;
+	struct p80211item_uint32 resultcode;
+	struct p80211item_uint32 decrypt;
+	struct p80211item_uint32 encrypt;
+} __packed;
 
-काष्ठा p80211msg_lnxreq_commsquality अणु
+struct p80211msg_lnxreq_commsquality {
 	u32 msgcode;
 	u32 msglen;
 	u8 devname[WLAN_DEVNAMELEN_MAX];
-	काष्ठा p80211item_uपूर्णांक32 resultcode;
-	काष्ठा p80211item_uपूर्णांक32 dbm;
-	काष्ठा p80211item_uपूर्णांक32 link;
-	काष्ठा p80211item_uपूर्णांक32 level;
-	काष्ठा p80211item_uपूर्णांक32 noise;
-	काष्ठा p80211item_uपूर्णांक32 txrate;
-पूर्ण __packed;
+	struct p80211item_uint32 resultcode;
+	struct p80211item_uint32 dbm;
+	struct p80211item_uint32 link;
+	struct p80211item_uint32 level;
+	struct p80211item_uint32 noise;
+	struct p80211item_uint32 txrate;
+} __packed;
 
-काष्ठा p80211msg_lnxreq_स्वतःjoin अणु
+struct p80211msg_lnxreq_autojoin {
 	u32 msgcode;
 	u32 msglen;
 	u8 devname[WLAN_DEVNAMELEN_MAX];
-	काष्ठा p80211item_pstr32 ssid;
+	struct p80211item_pstr32 ssid;
 	u8 pad_19D[3];
-	काष्ठा p80211item_uपूर्णांक32 authtype;
-	काष्ठा p80211item_uपूर्णांक32 resultcode;
-पूर्ण __packed;
+	struct p80211item_uint32 authtype;
+	struct p80211item_uint32 resultcode;
+} __packed;
 
-काष्ठा p80211msg_p2req_पढ़ोpda अणु
+struct p80211msg_p2req_readpda {
 	u32 msgcode;
 	u32 msglen;
 	u8 devname[WLAN_DEVNAMELEN_MAX];
-	काष्ठा p80211item_unk1024 pda;
-	काष्ठा p80211item_uपूर्णांक32 resultcode;
-पूर्ण __packed;
+	struct p80211item_unk1024 pda;
+	struct p80211item_uint32 resultcode;
+} __packed;
 
-काष्ठा p80211msg_p2req_ramdl_state अणु
+struct p80211msg_p2req_ramdl_state {
 	u32 msgcode;
 	u32 msglen;
 	u8 devname[WLAN_DEVNAMELEN_MAX];
-	काष्ठा p80211item_uपूर्णांक32 enable;
-	काष्ठा p80211item_uपूर्णांक32 exeaddr;
-	काष्ठा p80211item_uपूर्णांक32 resultcode;
-पूर्ण __packed;
+	struct p80211item_uint32 enable;
+	struct p80211item_uint32 exeaddr;
+	struct p80211item_uint32 resultcode;
+} __packed;
 
-काष्ठा p80211msg_p2req_ramdl_ग_लिखो अणु
+struct p80211msg_p2req_ramdl_write {
 	u32 msgcode;
 	u32 msglen;
 	u8 devname[WLAN_DEVNAMELEN_MAX];
-	काष्ठा p80211item_uपूर्णांक32 addr;
-	काष्ठा p80211item_uपूर्णांक32 len;
-	काष्ठा p80211item_unk4096 data;
-	काष्ठा p80211item_uपूर्णांक32 resultcode;
-पूर्ण __packed;
+	struct p80211item_uint32 addr;
+	struct p80211item_uint32 len;
+	struct p80211item_unk4096 data;
+	struct p80211item_uint32 resultcode;
+} __packed;
 
-काष्ठा p80211msg_p2req_flashdl_state अणु
+struct p80211msg_p2req_flashdl_state {
 	u32 msgcode;
 	u32 msglen;
 	u8 devname[WLAN_DEVNAMELEN_MAX];
-	काष्ठा p80211item_uपूर्णांक32 enable;
-	काष्ठा p80211item_uपूर्णांक32 resultcode;
-पूर्ण __packed;
+	struct p80211item_uint32 enable;
+	struct p80211item_uint32 resultcode;
+} __packed;
 
-काष्ठा p80211msg_p2req_flashdl_ग_लिखो अणु
+struct p80211msg_p2req_flashdl_write {
 	u32 msgcode;
 	u32 msglen;
 	u8 devname[WLAN_DEVNAMELEN_MAX];
-	काष्ठा p80211item_uपूर्णांक32 addr;
-	काष्ठा p80211item_uपूर्णांक32 len;
-	काष्ठा p80211item_unk4096 data;
-	काष्ठा p80211item_uपूर्णांक32 resultcode;
-पूर्ण __packed;
+	struct p80211item_uint32 addr;
+	struct p80211item_uint32 len;
+	struct p80211item_unk4096 data;
+	struct p80211item_uint32 resultcode;
+} __packed;
 
-#पूर्ण_अगर
+#endif

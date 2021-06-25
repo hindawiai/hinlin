@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,103 +20,103 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#समावेश "amdgpu_amdkfd.h"
-#समावेश "amd_shared.h"
+#include "amdgpu_amdkfd.h"
+#include "amd_shared.h"
 
-#समावेश "amdgpu.h"
-#समावेश "amdgpu_gfx.h"
-#समावेश "amdgpu_dma_buf.h"
-#समावेश <linux/module.h>
-#समावेश <linux/dma-buf.h>
-#समावेश "amdgpu_xgmi.h"
-#समावेश <uapi/linux/kfd_ioctl.h>
+#include "amdgpu.h"
+#include "amdgpu_gfx.h"
+#include "amdgpu_dma_buf.h"
+#include <linux/module.h>
+#include <linux/dma-buf.h>
+#include "amdgpu_xgmi.h"
+#include <uapi/linux/kfd_ioctl.h>
 
-/* Total memory size in प्रणाली memory and all GPU VRAM. Used to
- * estimate worst हाल amount of memory to reserve क्रम page tables
+/* Total memory size in system memory and all GPU VRAM. Used to
+ * estimate worst case amount of memory to reserve for page tables
  */
-uपूर्णांक64_t amdgpu_amdkfd_total_mem_size;
+uint64_t amdgpu_amdkfd_total_mem_size;
 
-अटल bool kfd_initialized;
+static bool kfd_initialized;
 
-पूर्णांक amdgpu_amdkfd_init(व्योम)
-अणु
-	काष्ठा sysinfo si;
-	पूर्णांक ret;
+int amdgpu_amdkfd_init(void)
+{
+	struct sysinfo si;
+	int ret;
 
 	si_meminfo(&si);
-	amdgpu_amdkfd_total_mem_size = si.मुक्तram - si.मुक्तhigh;
+	amdgpu_amdkfd_total_mem_size = si.freeram - si.freehigh;
 	amdgpu_amdkfd_total_mem_size *= si.mem_unit;
 
 	ret = kgd2kfd_init();
 	amdgpu_amdkfd_gpuvm_init_mem_limits();
 	kfd_initialized = !ret;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम amdgpu_amdkfd_fini(व्योम)
-अणु
-	अगर (kfd_initialized) अणु
-		kgd2kfd_निकास();
+void amdgpu_amdkfd_fini(void)
+{
+	if (kfd_initialized) {
+		kgd2kfd_exit();
 		kfd_initialized = false;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम amdgpu_amdkfd_device_probe(काष्ठा amdgpu_device *adev)
-अणु
+void amdgpu_amdkfd_device_probe(struct amdgpu_device *adev)
+{
 	bool vf = amdgpu_sriov_vf(adev);
 
-	अगर (!kfd_initialized)
-		वापस;
+	if (!kfd_initialized)
+		return;
 
-	adev->kfd.dev = kgd2kfd_probe((काष्ठा kgd_dev *)adev,
+	adev->kfd.dev = kgd2kfd_probe((struct kgd_dev *)adev,
 				      adev->pdev, adev->asic_type, vf);
 
-	अगर (adev->kfd.dev)
+	if (adev->kfd.dev)
 		amdgpu_amdkfd_total_mem_size += adev->gmc.real_vram_size;
-पूर्ण
+}
 
 /**
- * amdgpu_करोorbell_get_kfd_info - Report करोorbell configuration required to
+ * amdgpu_doorbell_get_kfd_info - Report doorbell configuration required to
  *                                setup amdkfd
  *
- * @adev: amdgpu_device poपूर्णांकer
- * @aperture_base: output वापसing करोorbell aperture base physical address
- * @aperture_size: output वापसing करोorbell aperture size in bytes
- * @start_offset: output वापसing # of करोorbell bytes reserved क्रम amdgpu.
+ * @adev: amdgpu_device pointer
+ * @aperture_base: output returning doorbell aperture base physical address
+ * @aperture_size: output returning doorbell aperture size in bytes
+ * @start_offset: output returning # of doorbell bytes reserved for amdgpu.
  *
- * amdgpu and amdkfd share the करोorbell aperture. amdgpu sets it up,
- * takes करोorbells required क्रम its own rings and reports the setup to amdkfd.
- * amdgpu reserved करोorbells are at the start of the करोorbell aperture.
+ * amdgpu and amdkfd share the doorbell aperture. amdgpu sets it up,
+ * takes doorbells required for its own rings and reports the setup to amdkfd.
+ * amdgpu reserved doorbells are at the start of the doorbell aperture.
  */
-अटल व्योम amdgpu_करोorbell_get_kfd_info(काष्ठा amdgpu_device *adev,
+static void amdgpu_doorbell_get_kfd_info(struct amdgpu_device *adev,
 					 phys_addr_t *aperture_base,
-					 माप_प्रकार *aperture_size,
-					 माप_प्रकार *start_offset)
-अणु
+					 size_t *aperture_size,
+					 size_t *start_offset)
+{
 	/*
-	 * The first num_करोorbells are used by amdgpu.
+	 * The first num_doorbells are used by amdgpu.
 	 * amdkfd takes whatever's left in the aperture.
 	 */
-	अगर (adev->करोorbell.size > adev->करोorbell.num_करोorbells * माप(u32)) अणु
-		*aperture_base = adev->करोorbell.base;
-		*aperture_size = adev->करोorbell.size;
-		*start_offset = adev->करोorbell.num_करोorbells * माप(u32);
-	पूर्ण अन्यथा अणु
+	if (adev->doorbell.size > adev->doorbell.num_doorbells * sizeof(u32)) {
+		*aperture_base = adev->doorbell.base;
+		*aperture_size = adev->doorbell.size;
+		*start_offset = adev->doorbell.num_doorbells * sizeof(u32);
+	} else {
 		*aperture_base = 0;
 		*aperture_size = 0;
 		*start_offset = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम amdgpu_amdkfd_device_init(काष्ठा amdgpu_device *adev)
-अणु
-	पूर्णांक i;
-	पूर्णांक last_valid_bit;
+void amdgpu_amdkfd_device_init(struct amdgpu_device *adev)
+{
+	int i;
+	int last_valid_bit;
 
-	अगर (adev->kfd.dev) अणु
-		काष्ठा kgd2kfd_shared_resources gpu_resources = अणु
-			.compute_vmid_biपंचांगap =
+	if (adev->kfd.dev) {
+		struct kgd2kfd_shared_resources gpu_resources = {
+			.compute_vmid_bitmap =
 				((1 << AMDGPU_NUM_VMID) - 1) -
 				((1 << adev->vm_manager.first_kfd_vmid) - 1),
 			.num_pipe_per_mec = adev->gfx.mec.num_pipe_per_mec,
@@ -126,172 +125,172 @@ uपूर्णांक64_t amdgpu_amdkfd_total_mem_size;
 					  << AMDGPU_GPU_PAGE_SHIFT,
 					  AMDGPU_GMC_HOLE_START),
 			.drm_render_minor = adev_to_drm(adev)->render->index,
-			.sdma_करोorbell_idx = adev->करोorbell_index.sdma_engine,
+			.sdma_doorbell_idx = adev->doorbell_index.sdma_engine,
 
-		पूर्ण;
+		};
 
 		/* this is going to have a few of the MSBs set that we need to
 		 * clear
 		 */
-		biपंचांगap_complement(gpu_resources.cp_queue_biपंचांगap,
-				  adev->gfx.mec.queue_biपंचांगap,
+		bitmap_complement(gpu_resources.cp_queue_bitmap,
+				  adev->gfx.mec.queue_bitmap,
 				  KGD_MAX_QUEUES);
 
-		/* According to linux/biपंचांगap.h we shouldn't use biपंचांगap_clear अगर
-		 * nbits is not compile समय स्थिरant
+		/* According to linux/bitmap.h we shouldn't use bitmap_clear if
+		 * nbits is not compile time constant
 		 */
 		last_valid_bit = 1 /* only first MEC can have compute queues */
 				* adev->gfx.mec.num_pipe_per_mec
 				* adev->gfx.mec.num_queue_per_pipe;
-		क्रम (i = last_valid_bit; i < KGD_MAX_QUEUES; ++i)
-			clear_bit(i, gpu_resources.cp_queue_biपंचांगap);
+		for (i = last_valid_bit; i < KGD_MAX_QUEUES; ++i)
+			clear_bit(i, gpu_resources.cp_queue_bitmap);
 
-		amdgpu_करोorbell_get_kfd_info(adev,
-				&gpu_resources.करोorbell_physical_address,
-				&gpu_resources.करोorbell_aperture_size,
-				&gpu_resources.करोorbell_start_offset);
+		amdgpu_doorbell_get_kfd_info(adev,
+				&gpu_resources.doorbell_physical_address,
+				&gpu_resources.doorbell_aperture_size,
+				&gpu_resources.doorbell_start_offset);
 
-		/* Since SOC15, BIF starts to अटलally use the
-		 * lower 12 bits of करोorbell addresses क्रम routing
-		 * based on settings in रेजिस्टरs like
+		/* Since SOC15, BIF starts to statically use the
+		 * lower 12 bits of doorbell addresses for routing
+		 * based on settings in registers like
 		 * SDMA0_DOORBELL_RANGE etc..
-		 * In order to route a करोorbell to CP engine, the lower
+		 * In order to route a doorbell to CP engine, the lower
 		 * 12 bits of its address has to be outside the range
-		 * set क्रम SDMA, VCN, and IH blocks.
+		 * set for SDMA, VCN, and IH blocks.
 		 */
-		अगर (adev->asic_type >= CHIP_VEGA10) अणु
-			gpu_resources.non_cp_करोorbells_start =
-					adev->करोorbell_index.first_non_cp;
-			gpu_resources.non_cp_करोorbells_end =
-					adev->करोorbell_index.last_non_cp;
-		पूर्ण
+		if (adev->asic_type >= CHIP_VEGA10) {
+			gpu_resources.non_cp_doorbells_start =
+					adev->doorbell_index.first_non_cp;
+			gpu_resources.non_cp_doorbells_end =
+					adev->doorbell_index.last_non_cp;
+		}
 
 		adev->kfd.init_complete = kgd2kfd_device_init(adev->kfd.dev,
 						adev_to_drm(adev), &gpu_resources);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम amdgpu_amdkfd_device_fini(काष्ठा amdgpu_device *adev)
-अणु
-	अगर (adev->kfd.dev) अणु
-		kgd2kfd_device_निकास(adev->kfd.dev);
-		adev->kfd.dev = शून्य;
-	पूर्ण
-पूर्ण
+void amdgpu_amdkfd_device_fini(struct amdgpu_device *adev)
+{
+	if (adev->kfd.dev) {
+		kgd2kfd_device_exit(adev->kfd.dev);
+		adev->kfd.dev = NULL;
+	}
+}
 
-व्योम amdgpu_amdkfd_पूर्णांकerrupt(काष्ठा amdgpu_device *adev,
-		स्थिर व्योम *ih_ring_entry)
-अणु
-	अगर (adev->kfd.dev)
-		kgd2kfd_पूर्णांकerrupt(adev->kfd.dev, ih_ring_entry);
-पूर्ण
+void amdgpu_amdkfd_interrupt(struct amdgpu_device *adev,
+		const void *ih_ring_entry)
+{
+	if (adev->kfd.dev)
+		kgd2kfd_interrupt(adev->kfd.dev, ih_ring_entry);
+}
 
-व्योम amdgpu_amdkfd_suspend(काष्ठा amdgpu_device *adev, bool run_pm)
-अणु
-	अगर (adev->kfd.dev)
+void amdgpu_amdkfd_suspend(struct amdgpu_device *adev, bool run_pm)
+{
+	if (adev->kfd.dev)
 		kgd2kfd_suspend(adev->kfd.dev, run_pm);
-पूर्ण
+}
 
-पूर्णांक amdgpu_amdkfd_resume(काष्ठा amdgpu_device *adev, bool run_pm)
-अणु
-	पूर्णांक r = 0;
+int amdgpu_amdkfd_resume(struct amdgpu_device *adev, bool run_pm)
+{
+	int r = 0;
 
-	अगर (adev->kfd.dev)
+	if (adev->kfd.dev)
 		r = kgd2kfd_resume(adev->kfd.dev, run_pm);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-पूर्णांक amdgpu_amdkfd_pre_reset(काष्ठा amdgpu_device *adev)
-अणु
-	पूर्णांक r = 0;
+int amdgpu_amdkfd_pre_reset(struct amdgpu_device *adev)
+{
+	int r = 0;
 
-	अगर (adev->kfd.dev)
+	if (adev->kfd.dev)
 		r = kgd2kfd_pre_reset(adev->kfd.dev);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-पूर्णांक amdgpu_amdkfd_post_reset(काष्ठा amdgpu_device *adev)
-अणु
-	पूर्णांक r = 0;
+int amdgpu_amdkfd_post_reset(struct amdgpu_device *adev)
+{
+	int r = 0;
 
-	अगर (adev->kfd.dev)
+	if (adev->kfd.dev)
 		r = kgd2kfd_post_reset(adev->kfd.dev);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-व्योम amdgpu_amdkfd_gpu_reset(काष्ठा kgd_dev *kgd)
-अणु
-	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)kgd;
+void amdgpu_amdkfd_gpu_reset(struct kgd_dev *kgd)
+{
+	struct amdgpu_device *adev = (struct amdgpu_device *)kgd;
 
-	अगर (amdgpu_device_should_recover_gpu(adev))
-		amdgpu_device_gpu_recover(adev, शून्य);
-पूर्ण
+	if (amdgpu_device_should_recover_gpu(adev))
+		amdgpu_device_gpu_recover(adev, NULL);
+}
 
-पूर्णांक amdgpu_amdkfd_alloc_gtt_mem(काष्ठा kgd_dev *kgd, माप_प्रकार size,
-				व्योम **mem_obj, uपूर्णांक64_t *gpu_addr,
-				व्योम **cpu_ptr, bool cp_mqd_gfx9)
-अणु
-	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)kgd;
-	काष्ठा amdgpu_bo *bo = शून्य;
-	काष्ठा amdgpu_bo_param bp;
-	पूर्णांक r;
-	व्योम *cpu_ptr_पंचांगp = शून्य;
+int amdgpu_amdkfd_alloc_gtt_mem(struct kgd_dev *kgd, size_t size,
+				void **mem_obj, uint64_t *gpu_addr,
+				void **cpu_ptr, bool cp_mqd_gfx9)
+{
+	struct amdgpu_device *adev = (struct amdgpu_device *)kgd;
+	struct amdgpu_bo *bo = NULL;
+	struct amdgpu_bo_param bp;
+	int r;
+	void *cpu_ptr_tmp = NULL;
 
-	स_रखो(&bp, 0, माप(bp));
+	memset(&bp, 0, sizeof(bp));
 	bp.size = size;
 	bp.byte_align = PAGE_SIZE;
-	bp.करोमुख्य = AMDGPU_GEM_DOMAIN_GTT;
+	bp.domain = AMDGPU_GEM_DOMAIN_GTT;
 	bp.flags = AMDGPU_GEM_CREATE_CPU_GTT_USWC;
-	bp.type = tपंचांग_bo_type_kernel;
-	bp.resv = शून्य;
-	bp.bo_ptr_size = माप(काष्ठा amdgpu_bo);
+	bp.type = ttm_bo_type_kernel;
+	bp.resv = NULL;
+	bp.bo_ptr_size = sizeof(struct amdgpu_bo);
 
-	अगर (cp_mqd_gfx9)
+	if (cp_mqd_gfx9)
 		bp.flags |= AMDGPU_GEM_CREATE_CP_MQD_GFX9;
 
 	r = amdgpu_bo_create(adev, &bp, &bo);
-	अगर (r) अणु
+	if (r) {
 		dev_err(adev->dev,
 			"failed to allocate BO for amdkfd (%d)\n", r);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
 	/* map the buffer */
 	r = amdgpu_bo_reserve(bo, true);
-	अगर (r) अणु
+	if (r) {
 		dev_err(adev->dev, "(%d) failed to reserve bo for amdkfd\n", r);
-		जाओ allocate_mem_reserve_bo_failed;
-	पूर्ण
+		goto allocate_mem_reserve_bo_failed;
+	}
 
 	r = amdgpu_bo_pin(bo, AMDGPU_GEM_DOMAIN_GTT);
-	अगर (r) अणु
+	if (r) {
 		dev_err(adev->dev, "(%d) failed to pin bo for amdkfd\n", r);
-		जाओ allocate_mem_pin_bo_failed;
-	पूर्ण
+		goto allocate_mem_pin_bo_failed;
+	}
 
-	r = amdgpu_tपंचांग_alloc_gart(&bo->tbo);
-	अगर (r) अणु
+	r = amdgpu_ttm_alloc_gart(&bo->tbo);
+	if (r) {
 		dev_err(adev->dev, "%p bind failed\n", bo);
-		जाओ allocate_mem_kmap_bo_failed;
-	पूर्ण
+		goto allocate_mem_kmap_bo_failed;
+	}
 
-	r = amdgpu_bo_kmap(bo, &cpu_ptr_पंचांगp);
-	अगर (r) अणु
+	r = amdgpu_bo_kmap(bo, &cpu_ptr_tmp);
+	if (r) {
 		dev_err(adev->dev,
 			"(%d) failed to map bo to kernel for amdkfd\n", r);
-		जाओ allocate_mem_kmap_bo_failed;
-	पूर्ण
+		goto allocate_mem_kmap_bo_failed;
+	}
 
 	*mem_obj = bo;
 	*gpu_addr = amdgpu_bo_gpu_offset(bo);
-	*cpu_ptr = cpu_ptr_पंचांगp;
+	*cpu_ptr = cpu_ptr_tmp;
 
 	amdgpu_bo_unreserve(bo);
 
-	वापस 0;
+	return 0;
 
 allocate_mem_kmap_bo_failed:
 	amdgpu_bo_unpin(bo);
@@ -300,158 +299,158 @@ allocate_mem_pin_bo_failed:
 allocate_mem_reserve_bo_failed:
 	amdgpu_bo_unref(&bo);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-व्योम amdgpu_amdkfd_मुक्त_gtt_mem(काष्ठा kgd_dev *kgd, व्योम *mem_obj)
-अणु
-	काष्ठा amdgpu_bo *bo = (काष्ठा amdgpu_bo *) mem_obj;
+void amdgpu_amdkfd_free_gtt_mem(struct kgd_dev *kgd, void *mem_obj)
+{
+	struct amdgpu_bo *bo = (struct amdgpu_bo *) mem_obj;
 
 	amdgpu_bo_reserve(bo, true);
 	amdgpu_bo_kunmap(bo);
 	amdgpu_bo_unpin(bo);
 	amdgpu_bo_unreserve(bo);
 	amdgpu_bo_unref(&(bo));
-पूर्ण
+}
 
-पूर्णांक amdgpu_amdkfd_alloc_gws(काष्ठा kgd_dev *kgd, माप_प्रकार size,
-				व्योम **mem_obj)
-अणु
-	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)kgd;
-	काष्ठा amdgpu_bo *bo = शून्य;
-	काष्ठा amdgpu_bo_user *ubo;
-	काष्ठा amdgpu_bo_param bp;
-	पूर्णांक r;
+int amdgpu_amdkfd_alloc_gws(struct kgd_dev *kgd, size_t size,
+				void **mem_obj)
+{
+	struct amdgpu_device *adev = (struct amdgpu_device *)kgd;
+	struct amdgpu_bo *bo = NULL;
+	struct amdgpu_bo_user *ubo;
+	struct amdgpu_bo_param bp;
+	int r;
 
-	स_रखो(&bp, 0, माप(bp));
+	memset(&bp, 0, sizeof(bp));
 	bp.size = size;
 	bp.byte_align = 1;
-	bp.करोमुख्य = AMDGPU_GEM_DOMAIN_GWS;
+	bp.domain = AMDGPU_GEM_DOMAIN_GWS;
 	bp.flags = AMDGPU_GEM_CREATE_NO_CPU_ACCESS;
-	bp.type = tपंचांग_bo_type_device;
-	bp.resv = शून्य;
-	bp.bo_ptr_size = माप(काष्ठा amdgpu_bo);
+	bp.type = ttm_bo_type_device;
+	bp.resv = NULL;
+	bp.bo_ptr_size = sizeof(struct amdgpu_bo);
 
 	r = amdgpu_bo_create_user(adev, &bp, &ubo);
-	अगर (r) अणु
+	if (r) {
 		dev_err(adev->dev,
 			"failed to allocate gws BO for amdkfd (%d)\n", r);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
 	bo = &ubo->bo;
 	*mem_obj = bo;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम amdgpu_amdkfd_मुक्त_gws(काष्ठा kgd_dev *kgd, व्योम *mem_obj)
-अणु
-	काष्ठा amdgpu_bo *bo = (काष्ठा amdgpu_bo *)mem_obj;
+void amdgpu_amdkfd_free_gws(struct kgd_dev *kgd, void *mem_obj)
+{
+	struct amdgpu_bo *bo = (struct amdgpu_bo *)mem_obj;
 
 	amdgpu_bo_unref(&bo);
-पूर्ण
+}
 
-uपूर्णांक32_t amdgpu_amdkfd_get_fw_version(काष्ठा kgd_dev *kgd,
-				      क्रमागत kgd_engine_type type)
-अणु
-	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)kgd;
+uint32_t amdgpu_amdkfd_get_fw_version(struct kgd_dev *kgd,
+				      enum kgd_engine_type type)
+{
+	struct amdgpu_device *adev = (struct amdgpu_device *)kgd;
 
-	चयन (type) अणु
-	हाल KGD_ENGINE_PFP:
-		वापस adev->gfx.pfp_fw_version;
+	switch (type) {
+	case KGD_ENGINE_PFP:
+		return adev->gfx.pfp_fw_version;
 
-	हाल KGD_ENGINE_ME:
-		वापस adev->gfx.me_fw_version;
+	case KGD_ENGINE_ME:
+		return adev->gfx.me_fw_version;
 
-	हाल KGD_ENGINE_CE:
-		वापस adev->gfx.ce_fw_version;
+	case KGD_ENGINE_CE:
+		return adev->gfx.ce_fw_version;
 
-	हाल KGD_ENGINE_MEC1:
-		वापस adev->gfx.mec_fw_version;
+	case KGD_ENGINE_MEC1:
+		return adev->gfx.mec_fw_version;
 
-	हाल KGD_ENGINE_MEC2:
-		वापस adev->gfx.mec2_fw_version;
+	case KGD_ENGINE_MEC2:
+		return adev->gfx.mec2_fw_version;
 
-	हाल KGD_ENGINE_RLC:
-		वापस adev->gfx.rlc_fw_version;
+	case KGD_ENGINE_RLC:
+		return adev->gfx.rlc_fw_version;
 
-	हाल KGD_ENGINE_SDMA1:
-		वापस adev->sdma.instance[0].fw_version;
+	case KGD_ENGINE_SDMA1:
+		return adev->sdma.instance[0].fw_version;
 
-	हाल KGD_ENGINE_SDMA2:
-		वापस adev->sdma.instance[1].fw_version;
+	case KGD_ENGINE_SDMA2:
+		return adev->sdma.instance[1].fw_version;
 
-	शेष:
-		वापस 0;
-	पूर्ण
+	default:
+		return 0;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम amdgpu_amdkfd_get_local_mem_info(काष्ठा kgd_dev *kgd,
-				      काष्ठा kfd_local_mem_info *mem_info)
-अणु
-	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)kgd;
+void amdgpu_amdkfd_get_local_mem_info(struct kgd_dev *kgd,
+				      struct kfd_local_mem_info *mem_info)
+{
+	struct amdgpu_device *adev = (struct amdgpu_device *)kgd;
 
-	स_रखो(mem_info, 0, माप(*mem_info));
+	memset(mem_info, 0, sizeof(*mem_info));
 
-	mem_info->local_mem_size_खुला = adev->gmc.visible_vram_size;
-	mem_info->local_mem_size_निजी = adev->gmc.real_vram_size -
+	mem_info->local_mem_size_public = adev->gmc.visible_vram_size;
+	mem_info->local_mem_size_private = adev->gmc.real_vram_size -
 						adev->gmc.visible_vram_size;
 
 	mem_info->vram_width = adev->gmc.vram_width;
 
 	pr_debug("Address base: %pap public 0x%llx private 0x%llx\n",
 			&adev->gmc.aper_base,
-			mem_info->local_mem_size_खुला,
-			mem_info->local_mem_size_निजी);
+			mem_info->local_mem_size_public,
+			mem_info->local_mem_size_private);
 
-	अगर (amdgpu_sriov_vf(adev))
-		mem_info->mem_clk_max = adev->घड़ी.शेष_mclk / 100;
-	अन्यथा अगर (adev->pm.dpm_enabled) अणु
-		अगर (amdgpu_emu_mode == 1)
+	if (amdgpu_sriov_vf(adev))
+		mem_info->mem_clk_max = adev->clock.default_mclk / 100;
+	else if (adev->pm.dpm_enabled) {
+		if (amdgpu_emu_mode == 1)
 			mem_info->mem_clk_max = 0;
-		अन्यथा
+		else
 			mem_info->mem_clk_max = amdgpu_dpm_get_mclk(adev, false) / 100;
-	पूर्ण अन्यथा
+	} else
 		mem_info->mem_clk_max = 100;
-पूर्ण
+}
 
-uपूर्णांक64_t amdgpu_amdkfd_get_gpu_घड़ी_counter(काष्ठा kgd_dev *kgd)
-अणु
-	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)kgd;
+uint64_t amdgpu_amdkfd_get_gpu_clock_counter(struct kgd_dev *kgd)
+{
+	struct amdgpu_device *adev = (struct amdgpu_device *)kgd;
 
-	अगर (adev->gfx.funcs->get_gpu_घड़ी_counter)
-		वापस adev->gfx.funcs->get_gpu_घड़ी_counter(adev);
-	वापस 0;
-पूर्ण
+	if (adev->gfx.funcs->get_gpu_clock_counter)
+		return adev->gfx.funcs->get_gpu_clock_counter(adev);
+	return 0;
+}
 
-uपूर्णांक32_t amdgpu_amdkfd_get_max_engine_घड़ी_in_mhz(काष्ठा kgd_dev *kgd)
-अणु
-	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)kgd;
+uint32_t amdgpu_amdkfd_get_max_engine_clock_in_mhz(struct kgd_dev *kgd)
+{
+	struct amdgpu_device *adev = (struct amdgpu_device *)kgd;
 
 	/* the sclk is in quantas of 10kHz */
-	अगर (amdgpu_sriov_vf(adev))
-		वापस adev->घड़ी.शेष_sclk / 100;
-	अन्यथा अगर (adev->pm.dpm_enabled)
-		वापस amdgpu_dpm_get_sclk(adev, false) / 100;
-	अन्यथा
-		वापस 100;
-पूर्ण
+	if (amdgpu_sriov_vf(adev))
+		return adev->clock.default_sclk / 100;
+	else if (adev->pm.dpm_enabled)
+		return amdgpu_dpm_get_sclk(adev, false) / 100;
+	else
+		return 100;
+}
 
-व्योम amdgpu_amdkfd_get_cu_info(काष्ठा kgd_dev *kgd, काष्ठा kfd_cu_info *cu_info)
-अणु
-	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)kgd;
-	काष्ठा amdgpu_cu_info acu_info = adev->gfx.cu_info;
+void amdgpu_amdkfd_get_cu_info(struct kgd_dev *kgd, struct kfd_cu_info *cu_info)
+{
+	struct amdgpu_device *adev = (struct amdgpu_device *)kgd;
+	struct amdgpu_cu_info acu_info = adev->gfx.cu_info;
 
-	स_रखो(cu_info, 0, माप(*cu_info));
-	अगर (माप(cu_info->cu_biपंचांगap) != माप(acu_info.biपंचांगap))
-		वापस;
+	memset(cu_info, 0, sizeof(*cu_info));
+	if (sizeof(cu_info->cu_bitmap) != sizeof(acu_info.bitmap))
+		return;
 
 	cu_info->cu_active_number = acu_info.number;
 	cu_info->cu_ao_mask = acu_info.ao_cu_mask;
-	स_नकल(&cu_info->cu_biपंचांगap[0], &acu_info.biपंचांगap[0],
-	       माप(acu_info.biपंचांगap));
+	memcpy(&cu_info->cu_bitmap[0], &acu_info.bitmap[0],
+	       sizeof(acu_info.bitmap));
 	cu_info->num_shader_engines = adev->gfx.config.max_shader_engines;
 	cu_info->num_shader_arrays_per_engine = adev->gfx.config.max_sh_per_se;
 	cu_info->num_cu_per_sh = adev->gfx.config.max_cu_per_sh;
@@ -460,232 +459,232 @@ uपूर्णांक32_t amdgpu_amdkfd_get_max_engine_घड़ी_in_mhz(�
 	cu_info->wave_front_size = acu_info.wave_front_size;
 	cu_info->max_scratch_slots_per_cu = acu_info.max_scratch_slots_per_cu;
 	cu_info->lds_size = acu_info.lds_size;
-पूर्ण
+}
 
-पूर्णांक amdgpu_amdkfd_get_dmabuf_info(काष्ठा kgd_dev *kgd, पूर्णांक dma_buf_fd,
-				  काष्ठा kgd_dev **dma_buf_kgd,
-				  uपूर्णांक64_t *bo_size, व्योम *metadata_buffer,
-				  माप_प्रकार buffer_size, uपूर्णांक32_t *metadata_size,
-				  uपूर्णांक32_t *flags)
-अणु
-	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)kgd;
-	काष्ठा dma_buf *dma_buf;
-	काष्ठा drm_gem_object *obj;
-	काष्ठा amdgpu_bo *bo;
-	uपूर्णांक64_t metadata_flags;
-	पूर्णांक r = -EINVAL;
+int amdgpu_amdkfd_get_dmabuf_info(struct kgd_dev *kgd, int dma_buf_fd,
+				  struct kgd_dev **dma_buf_kgd,
+				  uint64_t *bo_size, void *metadata_buffer,
+				  size_t buffer_size, uint32_t *metadata_size,
+				  uint32_t *flags)
+{
+	struct amdgpu_device *adev = (struct amdgpu_device *)kgd;
+	struct dma_buf *dma_buf;
+	struct drm_gem_object *obj;
+	struct amdgpu_bo *bo;
+	uint64_t metadata_flags;
+	int r = -EINVAL;
 
 	dma_buf = dma_buf_get(dma_buf_fd);
-	अगर (IS_ERR(dma_buf))
-		वापस PTR_ERR(dma_buf);
+	if (IS_ERR(dma_buf))
+		return PTR_ERR(dma_buf);
 
-	अगर (dma_buf->ops != &amdgpu_dmabuf_ops)
+	if (dma_buf->ops != &amdgpu_dmabuf_ops)
 		/* Can't handle non-graphics buffers */
-		जाओ out_put;
+		goto out_put;
 
 	obj = dma_buf->priv;
-	अगर (obj->dev->driver != adev_to_drm(adev)->driver)
-		/* Can't handle buffers from dअगरferent drivers */
-		जाओ out_put;
+	if (obj->dev->driver != adev_to_drm(adev)->driver)
+		/* Can't handle buffers from different drivers */
+		goto out_put;
 
 	adev = drm_to_adev(obj->dev);
 	bo = gem_to_amdgpu_bo(obj);
-	अगर (!(bo->preferred_करोमुख्यs & (AMDGPU_GEM_DOMAIN_VRAM |
+	if (!(bo->preferred_domains & (AMDGPU_GEM_DOMAIN_VRAM |
 				    AMDGPU_GEM_DOMAIN_GTT)))
 		/* Only VRAM and GTT BOs are supported */
-		जाओ out_put;
+		goto out_put;
 
 	r = 0;
-	अगर (dma_buf_kgd)
-		*dma_buf_kgd = (काष्ठा kgd_dev *)adev;
-	अगर (bo_size)
+	if (dma_buf_kgd)
+		*dma_buf_kgd = (struct kgd_dev *)adev;
+	if (bo_size)
 		*bo_size = amdgpu_bo_size(bo);
-	अगर (metadata_buffer)
+	if (metadata_buffer)
 		r = amdgpu_bo_get_metadata(bo, metadata_buffer, buffer_size,
 					   metadata_size, &metadata_flags);
-	अगर (flags) अणु
-		*flags = (bo->preferred_करोमुख्यs & AMDGPU_GEM_DOMAIN_VRAM) ?
+	if (flags) {
+		*flags = (bo->preferred_domains & AMDGPU_GEM_DOMAIN_VRAM) ?
 				KFD_IOC_ALLOC_MEM_FLAGS_VRAM
 				: KFD_IOC_ALLOC_MEM_FLAGS_GTT;
 
-		अगर (bo->flags & AMDGPU_GEM_CREATE_CPU_ACCESS_REQUIRED)
+		if (bo->flags & AMDGPU_GEM_CREATE_CPU_ACCESS_REQUIRED)
 			*flags |= KFD_IOC_ALLOC_MEM_FLAGS_PUBLIC;
-	पूर्ण
+	}
 
 out_put:
 	dma_buf_put(dma_buf);
-	वापस r;
-पूर्ण
+	return r;
+}
 
-uपूर्णांक64_t amdgpu_amdkfd_get_vram_usage(काष्ठा kgd_dev *kgd)
-अणु
-	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)kgd;
-	काष्ठा tपंचांग_resource_manager *vram_man = tपंचांग_manager_type(&adev->mman.bdev, TTM_PL_VRAM);
+uint64_t amdgpu_amdkfd_get_vram_usage(struct kgd_dev *kgd)
+{
+	struct amdgpu_device *adev = (struct amdgpu_device *)kgd;
+	struct ttm_resource_manager *vram_man = ttm_manager_type(&adev->mman.bdev, TTM_PL_VRAM);
 
-	वापस amdgpu_vram_mgr_usage(vram_man);
-पूर्ण
+	return amdgpu_vram_mgr_usage(vram_man);
+}
 
-uपूर्णांक64_t amdgpu_amdkfd_get_hive_id(काष्ठा kgd_dev *kgd)
-अणु
-	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)kgd;
+uint64_t amdgpu_amdkfd_get_hive_id(struct kgd_dev *kgd)
+{
+	struct amdgpu_device *adev = (struct amdgpu_device *)kgd;
 
-	वापस adev->gmc.xgmi.hive_id;
-पूर्ण
+	return adev->gmc.xgmi.hive_id;
+}
 
-uपूर्णांक64_t amdgpu_amdkfd_get_unique_id(काष्ठा kgd_dev *kgd)
-अणु
-	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)kgd;
+uint64_t amdgpu_amdkfd_get_unique_id(struct kgd_dev *kgd)
+{
+	struct amdgpu_device *adev = (struct amdgpu_device *)kgd;
 
-	वापस adev->unique_id;
-पूर्ण
+	return adev->unique_id;
+}
 
-uपूर्णांक8_t amdgpu_amdkfd_get_xgmi_hops_count(काष्ठा kgd_dev *dst, काष्ठा kgd_dev *src)
-अणु
-	काष्ठा amdgpu_device *peer_adev = (काष्ठा amdgpu_device *)src;
-	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)dst;
-	पूर्णांक ret = amdgpu_xgmi_get_hops_count(adev, peer_adev);
+uint8_t amdgpu_amdkfd_get_xgmi_hops_count(struct kgd_dev *dst, struct kgd_dev *src)
+{
+	struct amdgpu_device *peer_adev = (struct amdgpu_device *)src;
+	struct amdgpu_device *adev = (struct amdgpu_device *)dst;
+	int ret = amdgpu_xgmi_get_hops_count(adev, peer_adev);
 
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		DRM_ERROR("amdgpu: failed to get  xgmi hops count between node %d and %d. ret = %d\n",
 			adev->gmc.xgmi.physical_node_id,
 			peer_adev->gmc.xgmi.physical_node_id, ret);
 		ret = 0;
-	पूर्ण
-	वापस  (uपूर्णांक8_t)ret;
-पूर्ण
+	}
+	return  (uint8_t)ret;
+}
 
-uपूर्णांक64_t amdgpu_amdkfd_get_mmio_remap_phys_addr(काष्ठा kgd_dev *kgd)
-अणु
-	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)kgd;
+uint64_t amdgpu_amdkfd_get_mmio_remap_phys_addr(struct kgd_dev *kgd)
+{
+	struct amdgpu_device *adev = (struct amdgpu_device *)kgd;
 
-	वापस adev->rmmio_remap.bus_addr;
-पूर्ण
+	return adev->rmmio_remap.bus_addr;
+}
 
-uपूर्णांक32_t amdgpu_amdkfd_get_num_gws(काष्ठा kgd_dev *kgd)
-अणु
-	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)kgd;
+uint32_t amdgpu_amdkfd_get_num_gws(struct kgd_dev *kgd)
+{
+	struct amdgpu_device *adev = (struct amdgpu_device *)kgd;
 
-	वापस adev->gds.gws_size;
-पूर्ण
+	return adev->gds.gws_size;
+}
 
-uपूर्णांक32_t amdgpu_amdkfd_get_asic_rev_id(काष्ठा kgd_dev *kgd)
-अणु
-	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)kgd;
+uint32_t amdgpu_amdkfd_get_asic_rev_id(struct kgd_dev *kgd)
+{
+	struct amdgpu_device *adev = (struct amdgpu_device *)kgd;
 
-	वापस adev->rev_id;
-पूर्ण
+	return adev->rev_id;
+}
 
-पूर्णांक amdgpu_amdkfd_get_noretry(काष्ठा kgd_dev *kgd)
-अणु
-	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)kgd;
+int amdgpu_amdkfd_get_noretry(struct kgd_dev *kgd)
+{
+	struct amdgpu_device *adev = (struct amdgpu_device *)kgd;
 
-	वापस adev->gmc.noretry;
-पूर्ण
+	return adev->gmc.noretry;
+}
 
-पूर्णांक amdgpu_amdkfd_submit_ib(काष्ठा kgd_dev *kgd, क्रमागत kgd_engine_type engine,
-				uपूर्णांक32_t vmid, uपूर्णांक64_t gpu_addr,
-				uपूर्णांक32_t *ib_cmd, uपूर्णांक32_t ib_len)
-अणु
-	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)kgd;
-	काष्ठा amdgpu_job *job;
-	काष्ठा amdgpu_ib *ib;
-	काष्ठा amdgpu_ring *ring;
-	काष्ठा dma_fence *f = शून्य;
-	पूर्णांक ret;
+int amdgpu_amdkfd_submit_ib(struct kgd_dev *kgd, enum kgd_engine_type engine,
+				uint32_t vmid, uint64_t gpu_addr,
+				uint32_t *ib_cmd, uint32_t ib_len)
+{
+	struct amdgpu_device *adev = (struct amdgpu_device *)kgd;
+	struct amdgpu_job *job;
+	struct amdgpu_ib *ib;
+	struct amdgpu_ring *ring;
+	struct dma_fence *f = NULL;
+	int ret;
 
-	चयन (engine) अणु
-	हाल KGD_ENGINE_MEC1:
+	switch (engine) {
+	case KGD_ENGINE_MEC1:
 		ring = &adev->gfx.compute_ring[0];
-		अवरोध;
-	हाल KGD_ENGINE_SDMA1:
+		break;
+	case KGD_ENGINE_SDMA1:
 		ring = &adev->sdma.instance[0].ring;
-		अवरोध;
-	हाल KGD_ENGINE_SDMA2:
+		break;
+	case KGD_ENGINE_SDMA2:
 		ring = &adev->sdma.instance[1].ring;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		pr_err("Invalid engine in IB submission: %d\n", engine);
 		ret = -EINVAL;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	ret = amdgpu_job_alloc(adev, 1, &job, शून्य);
-	अगर (ret)
-		जाओ err;
+	ret = amdgpu_job_alloc(adev, 1, &job, NULL);
+	if (ret)
+		goto err;
 
 	ib = &job->ibs[0];
-	स_रखो(ib, 0, माप(काष्ठा amdgpu_ib));
+	memset(ib, 0, sizeof(struct amdgpu_ib));
 
 	ib->gpu_addr = gpu_addr;
 	ib->ptr = ib_cmd;
 	ib->length_dw = ib_len;
-	/* This works क्रम NO_HWS. TODO: need to handle without knowing VMID */
+	/* This works for NO_HWS. TODO: need to handle without knowing VMID */
 	job->vmid = vmid;
 
 	ret = amdgpu_ib_schedule(ring, 1, ib, job, &f);
 
-	अगर (ret) अणु
+	if (ret) {
 		DRM_ERROR("amdgpu: failed to schedule IB.\n");
-		जाओ err_ib_sched;
-	पूर्ण
+		goto err_ib_sched;
+	}
 
-	ret = dma_fence_रुको(f, false);
+	ret = dma_fence_wait(f, false);
 
 err_ib_sched:
 	dma_fence_put(f);
-	amdgpu_job_मुक्त(job);
+	amdgpu_job_free(job);
 err:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम amdgpu_amdkfd_set_compute_idle(काष्ठा kgd_dev *kgd, bool idle)
-अणु
-	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)kgd;
+void amdgpu_amdkfd_set_compute_idle(struct kgd_dev *kgd, bool idle)
+{
+	struct amdgpu_device *adev = (struct amdgpu_device *)kgd;
 
-	amdgpu_dpm_चयन_घातer_profile(adev,
-					PP_SMC_POWER_PROखाता_COMPUTE,
+	amdgpu_dpm_switch_power_profile(adev,
+					PP_SMC_POWER_PROFILE_COMPUTE,
 					!idle);
-पूर्ण
+}
 
-bool amdgpu_amdkfd_is_kfd_vmid(काष्ठा amdgpu_device *adev, u32 vmid)
-अणु
-	अगर (adev->kfd.dev)
-		वापस vmid >= adev->vm_manager.first_kfd_vmid;
+bool amdgpu_amdkfd_is_kfd_vmid(struct amdgpu_device *adev, u32 vmid)
+{
+	if (adev->kfd.dev)
+		return vmid >= adev->vm_manager.first_kfd_vmid;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-पूर्णांक amdgpu_amdkfd_flush_gpu_tlb_vmid(काष्ठा kgd_dev *kgd, uपूर्णांक16_t vmid)
-अणु
-	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)kgd;
+int amdgpu_amdkfd_flush_gpu_tlb_vmid(struct kgd_dev *kgd, uint16_t vmid)
+{
+	struct amdgpu_device *adev = (struct amdgpu_device *)kgd;
 
-	अगर (adev->family == AMDGPU_FAMILY_AI) अणु
-		पूर्णांक i;
+	if (adev->family == AMDGPU_FAMILY_AI) {
+		int i;
 
-		क्रम (i = 0; i < adev->num_vmhubs; i++)
+		for (i = 0; i < adev->num_vmhubs; i++)
 			amdgpu_gmc_flush_gpu_tlb(adev, vmid, i, 0);
-	पूर्ण अन्यथा अणु
+	} else {
 		amdgpu_gmc_flush_gpu_tlb(adev, vmid, AMDGPU_GFXHUB_0, 0);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक amdgpu_amdkfd_flush_gpu_tlb_pasid(काष्ठा kgd_dev *kgd, uपूर्णांक16_t pasid)
-अणु
-	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)kgd;
-	स्थिर uपूर्णांक32_t flush_type = 0;
+int amdgpu_amdkfd_flush_gpu_tlb_pasid(struct kgd_dev *kgd, uint16_t pasid)
+{
+	struct amdgpu_device *adev = (struct amdgpu_device *)kgd;
+	const uint32_t flush_type = 0;
 	bool all_hub = false;
 
-	अगर (adev->family == AMDGPU_FAMILY_AI)
+	if (adev->family == AMDGPU_FAMILY_AI)
 		all_hub = true;
 
-	वापस amdgpu_gmc_flush_gpu_tlb_pasid(adev, pasid, flush_type, all_hub);
-पूर्ण
+	return amdgpu_gmc_flush_gpu_tlb_pasid(adev, pasid, flush_type, all_hub);
+}
 
-bool amdgpu_amdkfd_have_atomics_support(काष्ठा kgd_dev *kgd)
-अणु
-	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)kgd;
+bool amdgpu_amdkfd_have_atomics_support(struct kgd_dev *kgd)
+{
+	struct amdgpu_device *adev = (struct amdgpu_device *)kgd;
 
-	वापस adev->have_atomics_support;
-पूर्ण
+	return adev->have_atomics_support;
+}

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * SCSI Primary Commands (SPC) parsing and emulation.
  *
@@ -8,55 +7,55 @@
  * Nicholas A. Bellinger <nab@kernel.org>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <यंत्र/unaligned.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <asm/unaligned.h>
 
-#समावेश <scsi/scsi_proto.h>
-#समावेश <scsi/scsi_common.h>
-#समावेश <scsi/scsi_tcq.h>
+#include <scsi/scsi_proto.h>
+#include <scsi/scsi_common.h>
+#include <scsi/scsi_tcq.h>
 
-#समावेश <target/target_core_base.h>
-#समावेश <target/target_core_backend.h>
-#समावेश <target/target_core_fabric.h>
+#include <target/target_core_base.h>
+#include <target/target_core_backend.h>
+#include <target/target_core_fabric.h>
 
-#समावेश "target_core_internal.h"
-#समावेश "target_core_alua.h"
-#समावेश "target_core_pr.h"
-#समावेश "target_core_ua.h"
-#समावेश "target_core_xcopy.h"
+#include "target_core_internal.h"
+#include "target_core_alua.h"
+#include "target_core_pr.h"
+#include "target_core_ua.h"
+#include "target_core_xcopy.h"
 
-अटल व्योम spc_fill_alua_data(काष्ठा se_lun *lun, अचिन्हित अक्षर *buf)
-अणु
-	काष्ठा t10_alua_tg_pt_gp *tg_pt_gp;
+static void spc_fill_alua_data(struct se_lun *lun, unsigned char *buf)
+{
+	struct t10_alua_tg_pt_gp *tg_pt_gp;
 
 	/*
-	 * Set SCCS क्रम MAINTEन_अंकCE_IN + REPORT_TARGET_PORT_GROUPS.
+	 * Set SCCS for MAINTENANCE_IN + REPORT_TARGET_PORT_GROUPS.
 	 */
 	buf[5]	= 0x80;
 
 	/*
-	 * Set TPGS field क्रम explicit and/or implicit ALUA access type
+	 * Set TPGS field for explicit and/or implicit ALUA access type
 	 * and opteration.
 	 *
 	 * See spc4r17 section 6.4.2 Table 135
 	 */
 	spin_lock(&lun->lun_tg_pt_gp_lock);
 	tg_pt_gp = lun->lun_tg_pt_gp;
-	अगर (tg_pt_gp)
+	if (tg_pt_gp)
 		buf[5] |= tg_pt_gp->tg_pt_gp_alua_access_type;
 	spin_unlock(&lun->lun_tg_pt_gp_lock);
-पूर्ण
+}
 
 sense_reason_t
-spc_emulate_inquiry_std(काष्ठा se_cmd *cmd, अचिन्हित अक्षर *buf)
-अणु
-	काष्ठा se_lun *lun = cmd->se_lun;
-	काष्ठा se_device *dev = cmd->se_dev;
-	काष्ठा se_session *sess = cmd->se_sess;
+spc_emulate_inquiry_std(struct se_cmd *cmd, unsigned char *buf)
+{
+	struct se_lun *lun = cmd->se_lun;
+	struct se_device *dev = cmd->se_dev;
+	struct se_session *sess = cmd->se_sess;
 
-	/* Set RMB (removable media) क्रम tape devices */
-	अगर (dev->transport->get_device_type(dev) == TYPE_TAPE)
+	/* Set RMB (removable media) for tape devices */
+	if (dev->transport->get_device_type(dev) == TYPE_TAPE)
 		buf[1] = 0x80;
 
 	buf[2] = 0x05; /* SPC-3 */
@@ -66,114 +65,114 @@ spc_emulate_inquiry_std(काष्ठा se_cmd *cmd, अचिन्हित
 	 *
 	 * SPC4 says:
 	 *   A RESPONSE DATA FORMAT field set to 2h indicates that the
-	 *   standard INQUIRY data is in the क्रमmat defined in this
-	 *   standard. Response data क्रमmat values less than 2h are
-	 *   obsolete. Response data क्रमmat values greater than 2h are
+	 *   standard INQUIRY data is in the format defined in this
+	 *   standard. Response data format values less than 2h are
+	 *   obsolete. Response data format values greater than 2h are
 	 *   reserved.
 	 */
 	buf[3] = 2;
 
 	/*
-	 * Enable SCCS and TPGS fields क्रम Emulated ALUA
+	 * Enable SCCS and TPGS fields for Emulated ALUA
 	 */
 	spc_fill_alua_data(lun, buf);
 
 	/*
-	 * Set Third-Party Copy (3PC) bit to indicate support क्रम EXTENDED_COPY
+	 * Set Third-Party Copy (3PC) bit to indicate support for EXTENDED_COPY
 	 */
-	अगर (dev->dev_attrib.emulate_3pc)
+	if (dev->dev_attrib.emulate_3pc)
 		buf[5] |= 0x8;
 	/*
 	 * Set Protection (PROTECT) bit when DIF has been enabled on the
 	 * device, and the fabric supports VERIFY + PASS.  Also report
-	 * PROTECT=1 अगर sess_prot_type has been configured to allow T10-PI
-	 * to unरक्षित devices.
+	 * PROTECT=1 if sess_prot_type has been configured to allow T10-PI
+	 * to unprotected devices.
 	 */
-	अगर (sess->sup_prot_ops & (TARGET_PROT_DIN_PASS | TARGET_PROT_DOUT_PASS)) अणु
-		अगर (dev->dev_attrib.pi_prot_type || cmd->se_sess->sess_prot_type)
+	if (sess->sup_prot_ops & (TARGET_PROT_DIN_PASS | TARGET_PROT_DOUT_PASS)) {
+		if (dev->dev_attrib.pi_prot_type || cmd->se_sess->sess_prot_type)
 			buf[5] |= 0x1;
-	पूर्ण
+	}
 
 	buf[7] = 0x2; /* CmdQue=1 */
 
 	/*
 	 * ASCII data fields described as being left-aligned shall have any
 	 * unused bytes at the end of the field (i.e., highest offset) and the
-	 * unused bytes shall be filled with ASCII space अक्षरacters (20h).
+	 * unused bytes shall be filled with ASCII space characters (20h).
 	 */
-	स_रखो(&buf[8], 0x20,
+	memset(&buf[8], 0x20,
 	       INQUIRY_VENDOR_LEN + INQUIRY_MODEL_LEN + INQUIRY_REVISION_LEN);
-	स_नकल(&buf[8], dev->t10_wwn.venकरोr,
-	       strnlen(dev->t10_wwn.venकरोr, INQUIRY_VENDOR_LEN));
-	स_नकल(&buf[16], dev->t10_wwn.model,
+	memcpy(&buf[8], dev->t10_wwn.vendor,
+	       strnlen(dev->t10_wwn.vendor, INQUIRY_VENDOR_LEN));
+	memcpy(&buf[16], dev->t10_wwn.model,
 	       strnlen(dev->t10_wwn.model, INQUIRY_MODEL_LEN));
-	स_नकल(&buf[32], dev->t10_wwn.revision,
+	memcpy(&buf[32], dev->t10_wwn.revision,
 	       strnlen(dev->t10_wwn.revision, INQUIRY_REVISION_LEN));
 	buf[4] = 31; /* Set additional length to 31 */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(spc_emulate_inquiry_std);
 
 /* unit serial number */
-अटल sense_reason_t
-spc_emulate_evpd_80(काष्ठा se_cmd *cmd, अचिन्हित अक्षर *buf)
-अणु
-	काष्ठा se_device *dev = cmd->se_dev;
+static sense_reason_t
+spc_emulate_evpd_80(struct se_cmd *cmd, unsigned char *buf)
+{
+	struct se_device *dev = cmd->se_dev;
 	u16 len;
 
-	अगर (dev->dev_flags & DF_EMULATED_VPD_UNIT_SERIAL) अणु
-		len = प्र_लिखो(&buf[4], "%s", dev->t10_wwn.unit_serial);
-		len++; /* Extra Byte क्रम शून्य Terminator */
+	if (dev->dev_flags & DF_EMULATED_VPD_UNIT_SERIAL) {
+		len = sprintf(&buf[4], "%s", dev->t10_wwn.unit_serial);
+		len++; /* Extra Byte for NULL Terminator */
 		buf[3] = len;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-व्योम spc_parse_naa_6h_venकरोr_specअगरic(काष्ठा se_device *dev,
-				      अचिन्हित अक्षर *buf)
-अणु
-	अचिन्हित अक्षर *p = &dev->t10_wwn.unit_serial[0];
-	पूर्णांक cnt;
+void spc_parse_naa_6h_vendor_specific(struct se_device *dev,
+				      unsigned char *buf)
+{
+	unsigned char *p = &dev->t10_wwn.unit_serial[0];
+	int cnt;
 	bool next = true;
 
 	/*
 	 * Generate up to 36 bits of VENDOR SPECIFIC IDENTIFIER starting on
-	 * byte 3 bit 3-0 क्रम NAA IEEE Registered Extended DESIGNATOR field
-	 * क्रमmat, followed by 64 bits of VENDOR SPECIFIC IDENTIFIER EXTENSION
+	 * byte 3 bit 3-0 for NAA IEEE Registered Extended DESIGNATOR field
+	 * format, followed by 64 bits of VENDOR SPECIFIC IDENTIFIER EXTENSION
 	 * to complete the payload.  These are based from VPD=0x80 PRODUCT SERIAL
 	 * NUMBER set via vpd_unit_serial in target_core_configfs.c to ensure
 	 * per device uniqeness.
 	 */
-	क्रम (cnt = 0; *p && cnt < 13; p++) अणु
-		पूर्णांक val = hex_to_bin(*p);
+	for (cnt = 0; *p && cnt < 13; p++) {
+		int val = hex_to_bin(*p);
 
-		अगर (val < 0)
-			जारी;
+		if (val < 0)
+			continue;
 
-		अगर (next) अणु
+		if (next) {
 			next = false;
 			buf[cnt++] |= val;
-		पूर्ण अन्यथा अणु
+		} else {
 			next = true;
 			buf[cnt] = val << 4;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*
- * Device identअगरication VPD, क्रम a complete list of
+ * Device identification VPD, for a complete list of
  * DESIGNATOR TYPEs see spc4r17 Table 459.
  */
 sense_reason_t
-spc_emulate_evpd_83(काष्ठा se_cmd *cmd, अचिन्हित अक्षर *buf)
-अणु
-	काष्ठा se_device *dev = cmd->se_dev;
-	काष्ठा se_lun *lun = cmd->se_lun;
-	काष्ठा se_portal_group *tpg = शून्य;
-	काष्ठा t10_alua_lu_gp_member *lu_gp_mem;
-	काष्ठा t10_alua_tg_pt_gp *tg_pt_gp;
-	अचिन्हित अक्षर *prod = &dev->t10_wwn.model[0];
+spc_emulate_evpd_83(struct se_cmd *cmd, unsigned char *buf)
+{
+	struct se_device *dev = cmd->se_dev;
+	struct se_lun *lun = cmd->se_lun;
+	struct se_portal_group *tpg = NULL;
+	struct t10_alua_lu_gp_member *lu_gp_mem;
+	struct t10_alua_tg_pt_gp *tg_pt_gp;
+	unsigned char *prod = &dev->t10_wwn.model[0];
 	u32 prod_len;
 	u32 unit_serial_len, off = 0;
 	u16 len = 0, id_len;
@@ -181,15 +180,15 @@ spc_emulate_evpd_83(काष्ठा se_cmd *cmd, अचिन्हित अ
 	off = 4;
 
 	/*
-	 * NAA IEEE Registered Extended Asचिन्हित designator क्रमmat, see
+	 * NAA IEEE Registered Extended Assigned designator format, see
 	 * spc4r17 section 7.7.3.6.5
 	 *
 	 * We depend upon a target_core_mod/ConfigFS provided
 	 * /sys/kernel/config/target/core/$HBA/$DEV/wwn/vpd_unit_serial
-	 * value in order to वापस the NAA id.
+	 * value in order to return the NAA id.
 	 */
-	अगर (!(dev->dev_flags & DF_EMULATED_VPD_UNIT_SERIAL))
-		जाओ check_t10_vend_desc;
+	if (!(dev->dev_flags & DF_EMULATED_VPD_UNIT_SERIAL))
+		goto check_t10_vend_desc;
 
 	/* CODE SET == Binary */
 	buf[off++] = 0x1;
@@ -197,15 +196,15 @@ spc_emulate_evpd_83(काष्ठा se_cmd *cmd, अचिन्हित अ
 	/* Set ASSOCIATION == addressed logical unit: 0)b */
 	buf[off] = 0x00;
 
-	/* Identअगरier/Designator type == NAA identअगरier */
+	/* Identifier/Designator type == NAA identifier */
 	buf[off++] |= 0x3;
 	off++;
 
-	/* Identअगरier/Designator length */
+	/* Identifier/Designator length */
 	buf[off++] = 0x10;
 
 	/*
-	 * Start NAA IEEE Registered Extended Identअगरier/Designator
+	 * Start NAA IEEE Registered Extended Identifier/Designator
 	 */
 	buf[off++] = (0x6 << 4);
 
@@ -217,49 +216,49 @@ spc_emulate_evpd_83(काष्ठा se_cmd *cmd, अचिन्हित अ
 	buf[off] = (0x5 << 4);
 
 	/*
-	 * Return ConfigFS Unit Serial Number inक्रमmation क्रम
+	 * Return ConfigFS Unit Serial Number information for
 	 * VENDOR_SPECIFIC_IDENTIFIER and
 	 * VENDOR_SPECIFIC_IDENTIFIER_EXTENTION
 	 */
-	spc_parse_naa_6h_venकरोr_specअगरic(dev, &buf[off]);
+	spc_parse_naa_6h_vendor_specific(dev, &buf[off]);
 
 	len = 20;
 	off = (len + 4);
 
 check_t10_vend_desc:
 	/*
-	 * T10 Venकरोr Identअगरier Page, see spc4r17 section 7.7.3.4
+	 * T10 Vendor Identifier Page, see spc4r17 section 7.7.3.4
 	 */
-	id_len = 8; /* For Venकरोr field */
+	id_len = 8; /* For Vendor field */
 	prod_len = 4; /* For VPD Header */
-	prod_len += 8; /* For Venकरोr field */
-	prod_len += म_माप(prod);
+	prod_len += 8; /* For Vendor field */
+	prod_len += strlen(prod);
 	prod_len++; /* For : */
 
-	अगर (dev->dev_flags & DF_EMULATED_VPD_UNIT_SERIAL) अणु
-		unit_serial_len = म_माप(&dev->t10_wwn.unit_serial[0]);
-		unit_serial_len++; /* For शून्य Terminator */
+	if (dev->dev_flags & DF_EMULATED_VPD_UNIT_SERIAL) {
+		unit_serial_len = strlen(&dev->t10_wwn.unit_serial[0]);
+		unit_serial_len++; /* For NULL Terminator */
 
-		id_len += प्र_लिखो(&buf[off+12], "%s:%s", prod,
+		id_len += sprintf(&buf[off+12], "%s:%s", prod,
 				&dev->t10_wwn.unit_serial[0]);
-	पूर्ण
+	}
 	buf[off] = 0x2; /* ASCII */
-	buf[off+1] = 0x1; /* T10 Venकरोr ID */
+	buf[off+1] = 0x1; /* T10 Vendor ID */
 	buf[off+2] = 0x0;
-	/* left align Venकरोr ID and pad with spaces */
-	स_रखो(&buf[off+4], 0x20, INQUIRY_VENDOR_LEN);
-	स_नकल(&buf[off+4], dev->t10_wwn.venकरोr,
-	       strnlen(dev->t10_wwn.venकरोr, INQUIRY_VENDOR_LEN));
-	/* Extra Byte क्रम शून्य Terminator */
+	/* left align Vendor ID and pad with spaces */
+	memset(&buf[off+4], 0x20, INQUIRY_VENDOR_LEN);
+	memcpy(&buf[off+4], dev->t10_wwn.vendor,
+	       strnlen(dev->t10_wwn.vendor, INQUIRY_VENDOR_LEN));
+	/* Extra Byte for NULL Terminator */
 	id_len++;
-	/* Identअगरier Length */
+	/* Identifier Length */
 	buf[off+3] = id_len;
-	/* Header size क्रम Designation descriptor */
+	/* Header size for Designation descriptor */
 	len += (id_len + 4);
 	off += (id_len + 4);
 
-	अगर (1) अणु
-		काष्ठा t10_alua_lu_gp *lu_gp;
+	if (1) {
+		struct t10_alua_lu_gp *lu_gp;
 		u32 padding, scsi_name_len, scsi_target_len;
 		u16 lu_gp_id = 0;
 		u16 tg_pt_gp_id = 0;
@@ -267,7 +266,7 @@ check_t10_vend_desc:
 
 		tpg = lun->lun_tpg;
 		/*
-		 * Relative target port identअगरer, see spc4r17
+		 * Relative target port identifer, see spc4r17
 		 * section 7.7.3.7
 		 *
 		 * Get the PROTOCOL IDENTIFIER as defined by spc4r17
@@ -278,7 +277,7 @@ check_t10_vend_desc:
 		buf[off] = 0x80; /* Set PIV=1 */
 		/* Set ASSOCIATION == target port: 01b */
 		buf[off] |= 0x10;
-		/* DESIGNATOR TYPE == Relative target port identअगरer */
+		/* DESIGNATOR TYPE == Relative target port identifer */
 		buf[off++] |= 0x4;
 		off++; /* Skip over Reserved */
 		buf[off++] = 4; /* DESIGNATOR LENGTH */
@@ -289,7 +288,7 @@ check_t10_vend_desc:
 		off += 2;
 		len += 8; /* Header size + Designation descriptor */
 		/*
-		 * Target port group identअगरier, see spc4r17
+		 * Target port group identifier, see spc4r17
 		 * section 7.7.3.8
 		 *
 		 * Get the PROTOCOL IDENTIFIER as defined by spc4r17
@@ -297,10 +296,10 @@ check_t10_vend_desc:
 		 */
 		spin_lock(&lun->lun_tg_pt_gp_lock);
 		tg_pt_gp = lun->lun_tg_pt_gp;
-		अगर (!tg_pt_gp) अणु
+		if (!tg_pt_gp) {
 			spin_unlock(&lun->lun_tg_pt_gp_lock);
-			जाओ check_lu_gp;
-		पूर्ण
+			goto check_lu_gp;
+		}
 		tg_pt_gp_id = tg_pt_gp->tg_pt_gp_id;
 		spin_unlock(&lun->lun_tg_pt_gp_lock);
 
@@ -309,7 +308,7 @@ check_t10_vend_desc:
 		buf[off] = 0x80; /* Set PIV=1 */
 		/* Set ASSOCIATION == target port: 01b */
 		buf[off] |= 0x10;
-		/* DESIGNATOR TYPE == Target port group identअगरier */
+		/* DESIGNATOR TYPE == Target port group identifier */
 		buf[off++] |= 0x5;
 		off++; /* Skip over Reserved */
 		buf[off++] = 4; /* DESIGNATOR LENGTH */
@@ -318,25 +317,25 @@ check_t10_vend_desc:
 		off += 2;
 		len += 8; /* Header size + Designation descriptor */
 		/*
-		 * Logical Unit Group identअगरier, see spc4r17
+		 * Logical Unit Group identifier, see spc4r17
 		 * section 7.7.3.8
 		 */
 check_lu_gp:
 		lu_gp_mem = dev->dev_alua_lu_gp_mem;
-		अगर (!lu_gp_mem)
-			जाओ check_scsi_name;
+		if (!lu_gp_mem)
+			goto check_scsi_name;
 
 		spin_lock(&lu_gp_mem->lu_gp_mem_lock);
 		lu_gp = lu_gp_mem->lu_gp;
-		अगर (!lu_gp) अणु
+		if (!lu_gp) {
 			spin_unlock(&lu_gp_mem->lu_gp_mem_lock);
-			जाओ check_scsi_name;
-		पूर्ण
+			goto check_scsi_name;
+		}
 		lu_gp_id = lu_gp->lu_gp_id;
 		spin_unlock(&lu_gp_mem->lu_gp_mem_lock);
 
 		buf[off++] |= 0x1; /* CODE SET == Binary */
-		/* DESIGNATOR TYPE == Logical Unit Group identअगरier */
+		/* DESIGNATOR TYPE == Logical Unit Group identifier */
 		buf[off++] |= 0x6;
 		off++; /* Skip over Reserved */
 		buf[off++] = 4; /* DESIGNATOR LENGTH */
@@ -361,27 +360,27 @@ check_scsi_name:
 		buf[off++] |= 0x8;
 		off += 2; /* Skip over Reserved and length */
 		/*
-		 * SCSI name string identअगरer containing, $FABRIC_MOD
-		 * dependent inक्रमmation.  For LIO-Target and iSCSI
+		 * SCSI name string identifer containing, $FABRIC_MOD
+		 * dependent information.  For LIO-Target and iSCSI
 		 * Target Port, this means "<iSCSI name>,t,0x<TPGT> in
 		 * UTF-8 encoding.
 		 */
 		tpgt = tpg->se_tpg_tfo->tpg_get_tag(tpg);
-		scsi_name_len = प्र_लिखो(&buf[off], "%s,t,0x%04x",
+		scsi_name_len = sprintf(&buf[off], "%s,t,0x%04x",
 					tpg->se_tpg_tfo->tpg_get_wwn(tpg), tpgt);
-		scsi_name_len += 1 /* Include  शून्य terminator */;
+		scsi_name_len += 1 /* Include  NULL terminator */;
 		/*
 		 * The null-terminated, null-padded (see 4.4.2) SCSI
-		 * NAME STRING field contains a UTF-8 क्रमmat string.
+		 * NAME STRING field contains a UTF-8 format string.
 		 * The number of bytes in the SCSI NAME STRING field
 		 * (i.e., the value in the DESIGNATOR LENGTH field)
 		 * shall be no larger than 256 and shall be a multiple
 		 * of four.
 		 */
 		padding = ((-scsi_name_len) & 3);
-		अगर (padding)
+		if (padding)
 			scsi_name_len += padding;
-		अगर (scsi_name_len > 256)
+		if (scsi_name_len > 256)
 			scsi_name_len = 256;
 
 		buf[off-1] = scsi_name_len;
@@ -401,26 +400,26 @@ check_scsi_name:
 		buf[off++] |= 0x8;
 		off += 2; /* Skip over Reserved and length */
 		/*
-		 * SCSI name string identअगरer containing, $FABRIC_MOD
-		 * dependent inक्रमmation.  For LIO-Target and iSCSI
+		 * SCSI name string identifer containing, $FABRIC_MOD
+		 * dependent information.  For LIO-Target and iSCSI
 		 * Target Port, this means "<iSCSI name>" in
 		 * UTF-8 encoding.
 		 */
-		scsi_target_len = प्र_लिखो(&buf[off], "%s",
+		scsi_target_len = sprintf(&buf[off], "%s",
 					  tpg->se_tpg_tfo->tpg_get_wwn(tpg));
-		scsi_target_len += 1 /* Include  शून्य terminator */;
+		scsi_target_len += 1 /* Include  NULL terminator */;
 		/*
 		 * The null-terminated, null-padded (see 4.4.2) SCSI
-		 * NAME STRING field contains a UTF-8 क्रमmat string.
+		 * NAME STRING field contains a UTF-8 format string.
 		 * The number of bytes in the SCSI NAME STRING field
 		 * (i.e., the value in the DESIGNATOR LENGTH field)
 		 * shall be no larger than 256 and shall be a multiple
 		 * of four.
 		 */
 		padding = ((-scsi_target_len) & 3);
-		अगर (padding)
+		if (padding)
 			scsi_target_len += padding;
-		अगर (scsi_target_len > 256)
+		if (scsi_target_len > 256)
 			scsi_target_len = 256;
 
 		buf[off-1] = scsi_target_len;
@@ -428,68 +427,68 @@ check_scsi_name:
 
 		/* Header size + Designation descriptor */
 		len += (scsi_target_len + 4);
-	पूर्ण
-	put_unaligned_be16(len, &buf[2]); /* Page Length क्रम VPD 0x83 */
-	वापस 0;
-पूर्ण
+	}
+	put_unaligned_be16(len, &buf[2]); /* Page Length for VPD 0x83 */
+	return 0;
+}
 EXPORT_SYMBOL(spc_emulate_evpd_83);
 
 /* Extended INQUIRY Data VPD Page */
-अटल sense_reason_t
-spc_emulate_evpd_86(काष्ठा se_cmd *cmd, अचिन्हित अक्षर *buf)
-अणु
-	काष्ठा se_device *dev = cmd->se_dev;
-	काष्ठा se_session *sess = cmd->se_sess;
+static sense_reason_t
+spc_emulate_evpd_86(struct se_cmd *cmd, unsigned char *buf)
+{
+	struct se_device *dev = cmd->se_dev;
+	struct se_session *sess = cmd->se_sess;
 
 	buf[3] = 0x3c;
 	/*
-	 * Set GRD_CHK + REF_CHK क्रम TYPE1 protection, or GRD_CHK
-	 * only क्रम TYPE3 protection.
+	 * Set GRD_CHK + REF_CHK for TYPE1 protection, or GRD_CHK
+	 * only for TYPE3 protection.
 	 */
-	अगर (sess->sup_prot_ops & (TARGET_PROT_DIN_PASS | TARGET_PROT_DOUT_PASS)) अणु
-		अगर (dev->dev_attrib.pi_prot_type == TARGET_DIF_TYPE1_PROT ||
+	if (sess->sup_prot_ops & (TARGET_PROT_DIN_PASS | TARGET_PROT_DOUT_PASS)) {
+		if (dev->dev_attrib.pi_prot_type == TARGET_DIF_TYPE1_PROT ||
 		    cmd->se_sess->sess_prot_type == TARGET_DIF_TYPE1_PROT)
 			buf[4] = 0x5;
-		अन्यथा अगर (dev->dev_attrib.pi_prot_type == TARGET_DIF_TYPE3_PROT ||
+		else if (dev->dev_attrib.pi_prot_type == TARGET_DIF_TYPE3_PROT ||
 			 cmd->se_sess->sess_prot_type == TARGET_DIF_TYPE3_PROT)
 			buf[4] = 0x4;
-	पूर्ण
+	}
 
 	/* logical unit supports type 1 and type 3 protection */
-	अगर ((dev->transport->get_device_type(dev) == TYPE_DISK) &&
+	if ((dev->transport->get_device_type(dev) == TYPE_DISK) &&
 	    (sess->sup_prot_ops & (TARGET_PROT_DIN_PASS | TARGET_PROT_DOUT_PASS)) &&
-	    (dev->dev_attrib.pi_prot_type || cmd->se_sess->sess_prot_type)) अणु
+	    (dev->dev_attrib.pi_prot_type || cmd->se_sess->sess_prot_type)) {
 		buf[4] |= (0x3 << 3);
-	पूर्ण
+	}
 
 	/* Set HEADSUP, ORDSUP, SIMPSUP */
 	buf[5] = 0x07;
 
 	/* If WriteCache emulation is enabled, set V_SUP */
-	अगर (target_check_wce(dev))
+	if (target_check_wce(dev))
 		buf[6] = 0x01;
 	/* If an LBA map is present set R_SUP */
 	spin_lock(&cmd->se_dev->t10_alua.lba_map_lock);
-	अगर (!list_empty(&dev->t10_alua.lba_map_list))
+	if (!list_empty(&dev->t10_alua.lba_map_list))
 		buf[8] = 0x10;
 	spin_unlock(&cmd->se_dev->t10_alua.lba_map_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Block Limits VPD page */
-अटल sense_reason_t
-spc_emulate_evpd_b0(काष्ठा se_cmd *cmd, अचिन्हित अक्षर *buf)
-अणु
-	काष्ठा se_device *dev = cmd->se_dev;
+static sense_reason_t
+spc_emulate_evpd_b0(struct se_cmd *cmd, unsigned char *buf)
+{
+	struct se_device *dev = cmd->se_dev;
 	u32 mtl = 0;
-	पूर्णांक have_tp = 0, opt, min;
+	int have_tp = 0, opt, min;
 
 	/*
 	 * Following spc3r22 section 6.5.3 Block Limits VPD page, when
 	 * emulate_tpu=1 or emulate_tpws=1 we will be expect a
-	 * dअगरferent page length क्रम Thin Provisioning.
+	 * different page length for Thin Provisioning.
 	 */
-	अगर (dev->dev_attrib.emulate_tpu || dev->dev_attrib.emulate_tpws)
+	if (dev->dev_attrib.emulate_tpu || dev->dev_attrib.emulate_tpws)
 		have_tp = 1;
 
 	buf[0] = dev->transport->get_device_type(dev);
@@ -500,42 +499,42 @@ spc_emulate_evpd_b0(काष्ठा se_cmd *cmd, अचिन्हित अ
 	/*
 	 * Set MAXIMUM COMPARE AND WRITE LENGTH
 	 */
-	अगर (dev->dev_attrib.emulate_caw)
+	if (dev->dev_attrib.emulate_caw)
 		buf[5] = 0x01;
 
 	/*
 	 * Set OPTIMAL TRANSFER LENGTH GRANULARITY
 	 */
-	अगर (dev->transport->get_io_min && (min = dev->transport->get_io_min(dev)))
+	if (dev->transport->get_io_min && (min = dev->transport->get_io_min(dev)))
 		put_unaligned_be16(min / dev->dev_attrib.block_size, &buf[6]);
-	अन्यथा
+	else
 		put_unaligned_be16(1, &buf[6]);
 
 	/*
 	 * Set MAXIMUM TRANSFER LENGTH
 	 *
-	 * XXX: Currently assumes single PAGE_SIZE per scatterlist क्रम fabrics
-	 * enक्रमcing maximum HW scatter-gather-list entry limit
+	 * XXX: Currently assumes single PAGE_SIZE per scatterlist for fabrics
+	 * enforcing maximum HW scatter-gather-list entry limit
 	 */
-	अगर (cmd->se_tfo->max_data_sg_nents) अणु
+	if (cmd->se_tfo->max_data_sg_nents) {
 		mtl = (cmd->se_tfo->max_data_sg_nents * PAGE_SIZE) /
 		       dev->dev_attrib.block_size;
-	पूर्ण
+	}
 	put_unaligned_be32(min_not_zero(mtl, dev->dev_attrib.hw_max_sectors), &buf[8]);
 
 	/*
 	 * Set OPTIMAL TRANSFER LENGTH
 	 */
-	अगर (dev->transport->get_io_opt && (opt = dev->transport->get_io_opt(dev)))
+	if (dev->transport->get_io_opt && (opt = dev->transport->get_io_opt(dev)))
 		put_unaligned_be32(opt / dev->dev_attrib.block_size, &buf[12]);
-	अन्यथा
+	else
 		put_unaligned_be32(dev->dev_attrib.optimal_sectors, &buf[12]);
 
 	/*
-	 * Exit now अगर we करोn't support TP.
+	 * Exit now if we don't support TP.
 	 */
-	अगर (!have_tp)
-		जाओ max_ग_लिखो_same;
+	if (!have_tp)
+		goto max_write_same;
 
 	/*
 	 * Set MAXIMUM UNMAP LBA COUNT
@@ -558,36 +557,36 @@ spc_emulate_evpd_b0(काष्ठा se_cmd *cmd, अचिन्हित अ
 	 */
 	put_unaligned_be32(dev->dev_attrib.unmap_granularity_alignment,
 			   &buf[32]);
-	अगर (dev->dev_attrib.unmap_granularity_alignment != 0)
+	if (dev->dev_attrib.unmap_granularity_alignment != 0)
 		buf[32] |= 0x80; /* Set the UGAVALID bit */
 
 	/*
 	 * MAXIMUM WRITE SAME LENGTH
 	 */
-max_ग_लिखो_same:
-	put_unaligned_be64(dev->dev_attrib.max_ग_लिखो_same_len, &buf[36]);
+max_write_same:
+	put_unaligned_be64(dev->dev_attrib.max_write_same_len, &buf[36]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Block Device Characteristics VPD page */
-अटल sense_reason_t
-spc_emulate_evpd_b1(काष्ठा se_cmd *cmd, अचिन्हित अक्षर *buf)
-अणु
-	काष्ठा se_device *dev = cmd->se_dev;
+static sense_reason_t
+spc_emulate_evpd_b1(struct se_cmd *cmd, unsigned char *buf)
+{
+	struct se_device *dev = cmd->se_dev;
 
 	buf[0] = dev->transport->get_device_type(dev);
 	buf[3] = 0x3c;
 	buf[5] = dev->dev_attrib.is_nonrot ? 1 : 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Thin Provisioning VPD */
-अटल sense_reason_t
-spc_emulate_evpd_b2(काष्ठा se_cmd *cmd, अचिन्हित अक्षर *buf)
-अणु
-	काष्ठा se_device *dev = cmd->se_dev;
+static sense_reason_t
+spc_emulate_evpd_b2(struct se_cmd *cmd, unsigned char *buf)
+{
+	struct se_device *dev = cmd->se_dev;
 
 	/*
 	 * From spc3r22 section 6.5.4 Thin Provisioning VPD page:
@@ -600,13 +599,13 @@ spc_emulate_evpd_b2(काष्ठा se_cmd *cmd, अचिन्हित अ
 	buf[0] = dev->transport->get_device_type(dev);
 
 	/*
-	 * Set Hardcoded length mentioned above क्रम DP=0
+	 * Set Hardcoded length mentioned above for DP=0
 	 */
 	put_unaligned_be16(0x0004, &buf[2]);
 
 	/*
 	 * The THRESHOLD EXPONENT field indicates the threshold set size in
-	 * LBAs as a घातer of 2 (i.e., the threshold set size is equal to
+	 * LBAs as a power of 2 (i.e., the threshold set size is equal to
 	 * 2(threshold exponent)).
 	 *
 	 * Note that this is currently set to 0x00 as mkp says it will be
@@ -618,179 +617,179 @@ spc_emulate_evpd_b2(काष्ठा se_cmd *cmd, अचिन्हित अ
 	/*
 	 * A TPU bit set to one indicates that the device server supports
 	 * the UNMAP command (see 5.25). A TPU bit set to zero indicates
-	 * that the device server करोes not support the UNMAP command.
+	 * that the device server does not support the UNMAP command.
 	 */
-	अगर (dev->dev_attrib.emulate_tpu != 0)
+	if (dev->dev_attrib.emulate_tpu != 0)
 		buf[5] = 0x80;
 
 	/*
 	 * A TPWS bit set to one indicates that the device server supports
 	 * the use of the WRITE SAME (16) command (see 5.42) to unmap LBAs.
-	 * A TPWS bit set to zero indicates that the device server करोes not
+	 * A TPWS bit set to zero indicates that the device server does not
 	 * support the use of the WRITE SAME (16) command to unmap LBAs.
 	 */
-	अगर (dev->dev_attrib.emulate_tpws != 0)
+	if (dev->dev_attrib.emulate_tpws != 0)
 		buf[5] |= 0x40 | 0x20;
 
 	/*
 	 * The unmap_zeroes_data set means that the underlying device supports
 	 * REQ_OP_DISCARD and has the discard_zeroes_data bit set. This
-	 * satisfies the SBC requirements क्रम LBPRZ, meaning that a subsequent
-	 * पढ़ो will वापस zeroes after an UNMAP or WRITE SAME (16) to an LBA
+	 * satisfies the SBC requirements for LBPRZ, meaning that a subsequent
+	 * read will return zeroes after an UNMAP or WRITE SAME (16) to an LBA
 	 * See sbc4r36 6.6.4.
 	 */
-	अगर (((dev->dev_attrib.emulate_tpu != 0) ||
+	if (((dev->dev_attrib.emulate_tpu != 0) ||
 	     (dev->dev_attrib.emulate_tpws != 0)) &&
 	     (dev->dev_attrib.unmap_zeroes_data != 0))
 		buf[5] |= 0x04;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Referrals VPD page */
-अटल sense_reason_t
-spc_emulate_evpd_b3(काष्ठा se_cmd *cmd, अचिन्हित अक्षर *buf)
-अणु
-	काष्ठा se_device *dev = cmd->se_dev;
+static sense_reason_t
+spc_emulate_evpd_b3(struct se_cmd *cmd, unsigned char *buf)
+{
+	struct se_device *dev = cmd->se_dev;
 
 	buf[0] = dev->transport->get_device_type(dev);
 	buf[3] = 0x0c;
 	put_unaligned_be32(dev->t10_alua.lba_map_segment_size, &buf[8]);
 	put_unaligned_be32(dev->t10_alua.lba_map_segment_multiplier, &buf[12]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sense_reason_t
-spc_emulate_evpd_00(काष्ठा se_cmd *cmd, अचिन्हित अक्षर *buf);
+static sense_reason_t
+spc_emulate_evpd_00(struct se_cmd *cmd, unsigned char *buf);
 
-अटल काष्ठा अणु
-	uपूर्णांक8_t		page;
-	sense_reason_t	(*emulate)(काष्ठा se_cmd *, अचिन्हित अक्षर *);
-पूर्ण evpd_handlers[] = अणु
-	अणु .page = 0x00, .emulate = spc_emulate_evpd_00 पूर्ण,
-	अणु .page = 0x80, .emulate = spc_emulate_evpd_80 पूर्ण,
-	अणु .page = 0x83, .emulate = spc_emulate_evpd_83 पूर्ण,
-	अणु .page = 0x86, .emulate = spc_emulate_evpd_86 पूर्ण,
-	अणु .page = 0xb0, .emulate = spc_emulate_evpd_b0 पूर्ण,
-	अणु .page = 0xb1, .emulate = spc_emulate_evpd_b1 पूर्ण,
-	अणु .page = 0xb2, .emulate = spc_emulate_evpd_b2 पूर्ण,
-	अणु .page = 0xb3, .emulate = spc_emulate_evpd_b3 पूर्ण,
-पूर्ण;
+static struct {
+	uint8_t		page;
+	sense_reason_t	(*emulate)(struct se_cmd *, unsigned char *);
+} evpd_handlers[] = {
+	{ .page = 0x00, .emulate = spc_emulate_evpd_00 },
+	{ .page = 0x80, .emulate = spc_emulate_evpd_80 },
+	{ .page = 0x83, .emulate = spc_emulate_evpd_83 },
+	{ .page = 0x86, .emulate = spc_emulate_evpd_86 },
+	{ .page = 0xb0, .emulate = spc_emulate_evpd_b0 },
+	{ .page = 0xb1, .emulate = spc_emulate_evpd_b1 },
+	{ .page = 0xb2, .emulate = spc_emulate_evpd_b2 },
+	{ .page = 0xb3, .emulate = spc_emulate_evpd_b3 },
+};
 
 /* supported vital product data pages */
-अटल sense_reason_t
-spc_emulate_evpd_00(काष्ठा se_cmd *cmd, अचिन्हित अक्षर *buf)
-अणु
-	पूर्णांक p;
+static sense_reason_t
+spc_emulate_evpd_00(struct se_cmd *cmd, unsigned char *buf)
+{
+	int p;
 
 	/*
 	 * Only report the INQUIRY EVPD=1 pages after a valid NAA
 	 * Registered Extended LUN WWN has been set via ConfigFS
 	 * during device creation/restart.
 	 */
-	अगर (cmd->se_dev->dev_flags & DF_EMULATED_VPD_UNIT_SERIAL) अणु
+	if (cmd->se_dev->dev_flags & DF_EMULATED_VPD_UNIT_SERIAL) {
 		buf[3] = ARRAY_SIZE(evpd_handlers);
-		क्रम (p = 0; p < ARRAY_SIZE(evpd_handlers); ++p)
+		for (p = 0; p < ARRAY_SIZE(evpd_handlers); ++p)
 			buf[p + 4] = evpd_handlers[p].page;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sense_reason_t
-spc_emulate_inquiry(काष्ठा se_cmd *cmd)
-अणु
-	काष्ठा se_device *dev = cmd->se_dev;
-	अचिन्हित अक्षर *rbuf;
-	अचिन्हित अक्षर *cdb = cmd->t_task_cdb;
-	अचिन्हित अक्षर *buf;
+static sense_reason_t
+spc_emulate_inquiry(struct se_cmd *cmd)
+{
+	struct se_device *dev = cmd->se_dev;
+	unsigned char *rbuf;
+	unsigned char *cdb = cmd->t_task_cdb;
+	unsigned char *buf;
 	sense_reason_t ret;
-	पूर्णांक p;
-	पूर्णांक len = 0;
+	int p;
+	int len = 0;
 
 	buf = kzalloc(SE_INQUIRY_BUF, GFP_KERNEL);
-	अगर (!buf) अणु
+	if (!buf) {
 		pr_err("Unable to allocate response buffer for INQUIRY\n");
-		वापस TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
-	पूर्ण
+		return TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
+	}
 
 	buf[0] = dev->transport->get_device_type(dev);
 
-	अगर (!(cdb[1] & 0x1)) अणु
-		अगर (cdb[2]) अणु
+	if (!(cdb[1] & 0x1)) {
+		if (cdb[2]) {
 			pr_err("INQUIRY with EVPD==0 but PAGE CODE=%02x\n",
 			       cdb[2]);
 			ret = TCM_INVALID_CDB_FIELD;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		ret = spc_emulate_inquiry_std(cmd, buf);
 		len = buf[4] + 5;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	क्रम (p = 0; p < ARRAY_SIZE(evpd_handlers); ++p) अणु
-		अगर (cdb[2] == evpd_handlers[p].page) अणु
+	for (p = 0; p < ARRAY_SIZE(evpd_handlers); ++p) {
+		if (cdb[2] == evpd_handlers[p].page) {
 			buf[1] = cdb[2];
 			ret = evpd_handlers[p].emulate(cmd, buf);
 			len = get_unaligned_be16(&buf[2]) + 4;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	pr_err("Unknown VPD Code: 0x%02x\n", cdb[2]);
 	ret = TCM_INVALID_CDB_FIELD;
 
 out:
 	rbuf = transport_kmap_data_sg(cmd);
-	अगर (rbuf) अणु
-		स_नकल(rbuf, buf, min_t(u32, SE_INQUIRY_BUF, cmd->data_length));
+	if (rbuf) {
+		memcpy(rbuf, buf, min_t(u32, SE_INQUIRY_BUF, cmd->data_length));
 		transport_kunmap_data_sg(cmd);
-	पूर्ण
-	kमुक्त(buf);
+	}
+	kfree(buf);
 
-	अगर (!ret)
+	if (!ret)
 		target_complete_cmd_with_length(cmd, GOOD, len);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक spc_modesense_rwrecovery(काष्ठा se_cmd *cmd, u8 pc, u8 *p)
-अणु
+static int spc_modesense_rwrecovery(struct se_cmd *cmd, u8 pc, u8 *p)
+{
 	p[0] = 0x01;
 	p[1] = 0x0a;
 
-	/* No changeable values क्रम now */
-	अगर (pc == 1)
-		जाओ out;
+	/* No changeable values for now */
+	if (pc == 1)
+		goto out;
 
 out:
-	वापस 12;
-पूर्ण
+	return 12;
+}
 
-अटल पूर्णांक spc_modesense_control(काष्ठा se_cmd *cmd, u8 pc, u8 *p)
-अणु
-	काष्ठा se_device *dev = cmd->se_dev;
-	काष्ठा se_session *sess = cmd->se_sess;
+static int spc_modesense_control(struct se_cmd *cmd, u8 pc, u8 *p)
+{
+	struct se_device *dev = cmd->se_dev;
+	struct se_session *sess = cmd->se_sess;
 
 	p[0] = 0x0a;
 	p[1] = 0x0a;
 
-	/* No changeable values क्रम now */
-	अगर (pc == 1)
-		जाओ out;
+	/* No changeable values for now */
+	if (pc == 1)
+		goto out;
 
 	/* GLTSD: No implicit save of log parameters */
 	p[2] = (1 << 1);
-	अगर (target_sense_desc_क्रमmat(dev))
-		/* D_SENSE: Descriptor क्रमmat sense data क्रम 64bit sectors */
+	if (target_sense_desc_format(dev))
+		/* D_SENSE: Descriptor format sense data for 64bit sectors */
 		p[2] |= (1 << 2);
 
 	/*
 	 * From spc4r23, 7.4.7 Control mode page
 	 *
-	 * The QUEUE ALGORITHM MODIFIER field (see table 368) specअगरies
-	 * restrictions on the algorithm used क्रम reordering commands
+	 * The QUEUE ALGORITHM MODIFIER field (see table 368) specifies
+	 * restrictions on the algorithm used for reordering commands
 	 * having the SIMPLE task attribute (see SAM-4).
 	 *
 	 *                    Table 368 -- QUEUE ALGORITHM MODIFIER field
@@ -798,19 +797,19 @@ out:
 	 *                          0h       Restricted reordering
 	 *                          1h       Unrestricted reordering allowed
 	 *                          2h to 7h    Reserved
-	 *                          8h to Fh    Venकरोr specअगरic
+	 *                          8h to Fh    Vendor specific
 	 *
-	 * A value of zero in the QUEUE ALGORITHM MODIFIER field specअगरies that
+	 * A value of zero in the QUEUE ALGORITHM MODIFIER field specifies that
 	 * the device server shall order the processing sequence of commands
-	 * having the SIMPLE task attribute such that data पूर्णांकegrity is मुख्यtained
-	 * क्रम that I_T nexus (i.e., अगर the transmission of new SCSI transport protocol
-	 * requests is halted at any समय, the final value of all data observable
-	 * on the medium shall be the same as अगर all the commands had been processed
+	 * having the SIMPLE task attribute such that data integrity is maintained
+	 * for that I_T nexus (i.e., if the transmission of new SCSI transport protocol
+	 * requests is halted at any time, the final value of all data observable
+	 * on the medium shall be the same as if all the commands had been processed
 	 * with the ORDERED task attribute).
 	 *
-	 * A value of one in the QUEUE ALGORITHM MODIFIER field specअगरies that the
+	 * A value of one in the QUEUE ALGORITHM MODIFIER field specifies that the
 	 * device server may reorder the processing sequence of commands having the
-	 * SIMPLE task attribute in any manner. Any data पूर्णांकegrity exposures related to
+	 * SIMPLE task attribute in any manner. Any data integrity exposures related to
 	 * command sequence order shall be explicitly handled by the application client
 	 * through the selection of appropriate ommands and task attributes.
 	 */
@@ -818,7 +817,7 @@ out:
 	/*
 	 * From spc4r17, section 7.4.6 Control mode Page
 	 *
-	 * Unit Attention पूर्णांकerlocks control (UN_INTLCK_CTRL) to code 00b
+	 * Unit Attention interlocks control (UN_INTLCK_CTRL) to code 00b
 	 *
 	 * 00b: The logical unit shall clear any unit attention condition
 	 * reported in the same I_T_L_Q nexus transaction as a CHECK CONDITION
@@ -834,36 +833,36 @@ out:
 	 *
 	 * 11b a The logical unit shall not clear any unit attention condition
 	 * reported in the same I_T_L_Q nexus transaction as a CHECK CONDITION
-	 * status and shall establish a unit attention condition क्रम the
+	 * status and shall establish a unit attention condition for the
 	 * initiator port associated with the I_T nexus on which the BUSY,
-	 * TASK SET FULL, or RESERVATION CONFLICT status is being वापसed.
+	 * TASK SET FULL, or RESERVATION CONFLICT status is being returned.
 	 * Depending on the status, the additional sense code shall be set to
 	 * PREVIOUS BUSY STATUS, PREVIOUS TASK SET FULL STATUS, or PREVIOUS
 	 * RESERVATION CONFLICT STATUS. Until it is cleared by a REQUEST SENSE
 	 * command, a unit attention condition shall be established only once
-	 * क्रम a BUSY, TASK SET FULL, or RESERVATION CONFLICT status regardless
+	 * for a BUSY, TASK SET FULL, or RESERVATION CONFLICT status regardless
 	 * to the number of commands completed with one of those status codes.
 	 */
-	चयन (dev->dev_attrib.emulate_ua_पूर्णांकlck_ctrl) अणु
-	हाल TARGET_UA_INTLCK_CTRL_ESTABLISH_UA:
+	switch (dev->dev_attrib.emulate_ua_intlck_ctrl) {
+	case TARGET_UA_INTLCK_CTRL_ESTABLISH_UA:
 		p[4] = 0x30;
-		अवरोध;
-	हाल TARGET_UA_INTLCK_CTRL_NO_CLEAR:
+		break;
+	case TARGET_UA_INTLCK_CTRL_NO_CLEAR:
 		p[4] = 0x20;
-		अवरोध;
-	शेष:	/* TARGET_UA_INTLCK_CTRL_CLEAR */
+		break;
+	default:	/* TARGET_UA_INTLCK_CTRL_CLEAR */
 		p[4] = 0x00;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	/*
 	 * From spc4r17, section 7.4.6 Control mode Page
 	 *
 	 * Task Aborted Status (TAS) bit set to zero.
 	 *
-	 * A task पातed status (TAS) bit set to zero specअगरies that पातed
+	 * A task aborted status (TAS) bit set to zero specifies that aborted
 	 * tasks shall be terminated by the device server without any response
-	 * to the application client. A TAS bit set to one specअगरies that tasks
-	 * पातed by the actions of an I_T nexus other than the I_T nexus on
+	 * to the application client. A TAS bit set to one specifies that tasks
+	 * aborted by the actions of an I_T nexus other than the I_T nexus on
 	 * which the command was received shall be completed with TASK ABORTED
 	 * status (see SAM-4).
 	 */
@@ -873,106 +872,106 @@ out:
 	 *
 	 * Application Tag Owner (ATO) bit set to one.
 	 *
-	 * If the ATO bit is set to one the device server shall not modअगरy the
+	 * If the ATO bit is set to one the device server shall not modify the
 	 * LOGICAL BLOCK APPLICATION TAG field and, depending on the protection
-	 * type, shall not modअगरy the contents of the LOGICAL BLOCK REFERENCE
+	 * type, shall not modify the contents of the LOGICAL BLOCK REFERENCE
 	 * TAG field.
 	 */
-	अगर (sess->sup_prot_ops & (TARGET_PROT_DIN_PASS | TARGET_PROT_DOUT_PASS)) अणु
-		अगर (dev->dev_attrib.pi_prot_type || sess->sess_prot_type)
+	if (sess->sup_prot_ops & (TARGET_PROT_DIN_PASS | TARGET_PROT_DOUT_PASS)) {
+		if (dev->dev_attrib.pi_prot_type || sess->sess_prot_type)
 			p[5] |= 0x80;
-	पूर्ण
+	}
 
 	p[8] = 0xff;
 	p[9] = 0xff;
 	p[11] = 30;
 
 out:
-	वापस 12;
-पूर्ण
+	return 12;
+}
 
-अटल पूर्णांक spc_modesense_caching(काष्ठा se_cmd *cmd, u8 pc, u8 *p)
-अणु
-	काष्ठा se_device *dev = cmd->se_dev;
+static int spc_modesense_caching(struct se_cmd *cmd, u8 pc, u8 *p)
+{
+	struct se_device *dev = cmd->se_dev;
 
 	p[0] = 0x08;
 	p[1] = 0x12;
 
-	/* No changeable values क्रम now */
-	अगर (pc == 1)
-		जाओ out;
+	/* No changeable values for now */
+	if (pc == 1)
+		goto out;
 
-	अगर (target_check_wce(dev))
+	if (target_check_wce(dev))
 		p[2] = 0x04; /* Write Cache Enable */
 	p[12] = 0x20; /* Disabled Read Ahead */
 
 out:
-	वापस 20;
-पूर्ण
+	return 20;
+}
 
-अटल पूर्णांक spc_modesense_inक्रमmational_exceptions(काष्ठा se_cmd *cmd, u8 pc, अचिन्हित अक्षर *p)
-अणु
+static int spc_modesense_informational_exceptions(struct se_cmd *cmd, u8 pc, unsigned char *p)
+{
 	p[0] = 0x1c;
 	p[1] = 0x0a;
 
-	/* No changeable values क्रम now */
-	अगर (pc == 1)
-		जाओ out;
+	/* No changeable values for now */
+	if (pc == 1)
+		goto out;
 
 out:
-	वापस 12;
-पूर्ण
+	return 12;
+}
 
-अटल काष्ठा अणु
-	uपूर्णांक8_t		page;
-	uपूर्णांक8_t		subpage;
-	पूर्णांक		(*emulate)(काष्ठा se_cmd *, u8, अचिन्हित अक्षर *);
-पूर्ण modesense_handlers[] = अणु
-	अणु .page = 0x01, .subpage = 0x00, .emulate = spc_modesense_rwrecovery पूर्ण,
-	अणु .page = 0x08, .subpage = 0x00, .emulate = spc_modesense_caching पूर्ण,
-	अणु .page = 0x0a, .subpage = 0x00, .emulate = spc_modesense_control पूर्ण,
-	अणु .page = 0x1c, .subpage = 0x00, .emulate = spc_modesense_inक्रमmational_exceptions पूर्ण,
-पूर्ण;
+static struct {
+	uint8_t		page;
+	uint8_t		subpage;
+	int		(*emulate)(struct se_cmd *, u8, unsigned char *);
+} modesense_handlers[] = {
+	{ .page = 0x01, .subpage = 0x00, .emulate = spc_modesense_rwrecovery },
+	{ .page = 0x08, .subpage = 0x00, .emulate = spc_modesense_caching },
+	{ .page = 0x0a, .subpage = 0x00, .emulate = spc_modesense_control },
+	{ .page = 0x1c, .subpage = 0x00, .emulate = spc_modesense_informational_exceptions },
+};
 
-अटल व्योम spc_modesense_ग_लिखो_protect(अचिन्हित अक्षर *buf, पूर्णांक type)
-अणु
+static void spc_modesense_write_protect(unsigned char *buf, int type)
+{
 	/*
-	 * I believe that the WP bit (bit 7) in the mode header is the same क्रम
+	 * I believe that the WP bit (bit 7) in the mode header is the same for
 	 * all device types..
 	 */
-	चयन (type) अणु
-	हाल TYPE_DISK:
-	हाल TYPE_TAPE:
-	शेष:
+	switch (type) {
+	case TYPE_DISK:
+	case TYPE_TAPE:
+	default:
 		buf[0] |= 0x80; /* WP bit */
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम spc_modesense_dpofua(अचिन्हित अक्षर *buf, पूर्णांक type)
-अणु
-	चयन (type) अणु
-	हाल TYPE_DISK:
+static void spc_modesense_dpofua(unsigned char *buf, int type)
+{
+	switch (type) {
+	case TYPE_DISK:
 		buf[0] |= 0x10; /* DPOFUA bit */
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-अटल पूर्णांक spc_modesense_blockdesc(अचिन्हित अक्षर *buf, u64 blocks, u32 block_size)
-अणु
+static int spc_modesense_blockdesc(unsigned char *buf, u64 blocks, u32 block_size)
+{
 	*buf++ = 8;
 	put_unaligned_be32(min(blocks, 0xffffffffull), buf);
 	buf += 4;
 	put_unaligned_be32(block_size, buf);
-	वापस 9;
-पूर्ण
+	return 9;
+}
 
-अटल पूर्णांक spc_modesense_दीर्घ_blockdesc(अचिन्हित अक्षर *buf, u64 blocks, u32 block_size)
-अणु
-	अगर (blocks <= 0xffffffff)
-		वापस spc_modesense_blockdesc(buf + 3, blocks, block_size) + 3;
+static int spc_modesense_long_blockdesc(unsigned char *buf, u64 blocks, u32 block_size)
+{
+	if (blocks <= 0xffffffff)
+		return spc_modesense_blockdesc(buf + 3, blocks, block_size) + 3;
 
 	*buf++ = 1;		/* LONGLBA */
 	buf += 2;
@@ -981,43 +980,43 @@ out:
 	buf += 12;
 	put_unaligned_be32(block_size, buf);
 
-	वापस 17;
-पूर्ण
+	return 17;
+}
 
-अटल sense_reason_t spc_emulate_modesense(काष्ठा se_cmd *cmd)
-अणु
-	काष्ठा se_device *dev = cmd->se_dev;
-	अक्षर *cdb = cmd->t_task_cdb;
-	अचिन्हित अक्षर buf[SE_MODE_PAGE_BUF], *rbuf;
-	पूर्णांक type = dev->transport->get_device_type(dev);
-	पूर्णांक ten = (cmd->t_task_cdb[0] == MODE_SENSE_10);
+static sense_reason_t spc_emulate_modesense(struct se_cmd *cmd)
+{
+	struct se_device *dev = cmd->se_dev;
+	char *cdb = cmd->t_task_cdb;
+	unsigned char buf[SE_MODE_PAGE_BUF], *rbuf;
+	int type = dev->transport->get_device_type(dev);
+	int ten = (cmd->t_task_cdb[0] == MODE_SENSE_10);
 	bool dbd = !!(cdb[1] & 0x08);
 	bool llba = ten ? !!(cdb[1] & 0x10) : false;
 	u8 pc = cdb[2] >> 6;
 	u8 page = cdb[2] & 0x3f;
 	u8 subpage = cdb[3];
-	पूर्णांक length = 0;
-	पूर्णांक ret;
-	पूर्णांक i;
+	int length = 0;
+	int ret;
+	int i;
 
-	स_रखो(buf, 0, SE_MODE_PAGE_BUF);
+	memset(buf, 0, SE_MODE_PAGE_BUF);
 
 	/*
-	 * Skip over MODE DATA LENGTH + MEDIUM TYPE fields to byte 3 क्रम
-	 * MODE_SENSE_10 and byte 2 क्रम MODE_SENSE (6).
+	 * Skip over MODE DATA LENGTH + MEDIUM TYPE fields to byte 3 for
+	 * MODE_SENSE_10 and byte 2 for MODE_SENSE (6).
 	 */
 	length = ten ? 3 : 2;
 
 	/* DEVICE-SPECIFIC PARAMETER */
-	अगर (cmd->se_lun->lun_access_ro || target_lun_is_rकरोnly(cmd))
-		spc_modesense_ग_लिखो_protect(&buf[length], type);
+	if (cmd->se_lun->lun_access_ro || target_lun_is_rdonly(cmd))
+		spc_modesense_write_protect(&buf[length], type);
 
 	/*
 	 * SBC only allows us to enable FUA and DPO together.  Fortunately
-	 * DPO is explicitly specअगरied as a hपूर्णांक, so a noop is a perfectly
+	 * DPO is explicitly specified as a hint, so a noop is a perfectly
 	 * valid implementation.
 	 */
-	अगर (target_check_fua(dev))
+	if (target_check_fua(dev))
 		spc_modesense_dpofua(&buf[length], type);
 
 	++length;
@@ -1025,414 +1024,414 @@ out:
 	/* BLOCK DESCRIPTOR */
 
 	/*
-	 * For now we only include a block descriptor क्रम disk (SBC)
-	 * devices; other command sets use a slightly dअगरferent क्रमmat.
+	 * For now we only include a block descriptor for disk (SBC)
+	 * devices; other command sets use a slightly different format.
 	 */
-	अगर (!dbd && type == TYPE_DISK) अणु
+	if (!dbd && type == TYPE_DISK) {
 		u64 blocks = dev->transport->get_blocks(dev);
 		u32 block_size = dev->dev_attrib.block_size;
 
-		अगर (ten) अणु
-			अगर (llba) अणु
-				length += spc_modesense_दीर्घ_blockdesc(&buf[length],
+		if (ten) {
+			if (llba) {
+				length += spc_modesense_long_blockdesc(&buf[length],
 								       blocks, block_size);
-			पूर्ण अन्यथा अणु
+			} else {
 				length += 3;
 				length += spc_modesense_blockdesc(&buf[length],
 								  blocks, block_size);
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			length += spc_modesense_blockdesc(&buf[length], blocks,
 							  block_size);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (ten)
+		}
+	} else {
+		if (ten)
 			length += 4;
-		अन्यथा
+		else
 			length += 1;
-	पूर्ण
+	}
 
-	अगर (page == 0x3f) अणु
-		अगर (subpage != 0x00 && subpage != 0xff) अणु
+	if (page == 0x3f) {
+		if (subpage != 0x00 && subpage != 0xff) {
 			pr_warn("MODE_SENSE: Invalid subpage code: 0x%02x\n", subpage);
-			वापस TCM_INVALID_CDB_FIELD;
-		पूर्ण
+			return TCM_INVALID_CDB_FIELD;
+		}
 
-		क्रम (i = 0; i < ARRAY_SIZE(modesense_handlers); ++i) अणु
+		for (i = 0; i < ARRAY_SIZE(modesense_handlers); ++i) {
 			/*
-			 * Tricky way to say all subpage 00h क्रम
-			 * subpage==0, all subpages क्रम subpage==0xff
+			 * Tricky way to say all subpage 00h for
+			 * subpage==0, all subpages for subpage==0xff
 			 * (and we just checked above that those are
 			 * the only two possibilities).
 			 */
-			अगर ((modesense_handlers[i].subpage & ~subpage) == 0) अणु
+			if ((modesense_handlers[i].subpage & ~subpage) == 0) {
 				ret = modesense_handlers[i].emulate(cmd, pc, &buf[length]);
-				अगर (!ten && length + ret >= 255)
-					अवरोध;
+				if (!ten && length + ret >= 255)
+					break;
 				length += ret;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		जाओ set_length;
-	पूर्ण
+		goto set_length;
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(modesense_handlers); ++i)
-		अगर (modesense_handlers[i].page == page &&
-		    modesense_handlers[i].subpage == subpage) अणु
+	for (i = 0; i < ARRAY_SIZE(modesense_handlers); ++i)
+		if (modesense_handlers[i].page == page &&
+		    modesense_handlers[i].subpage == subpage) {
 			length += modesense_handlers[i].emulate(cmd, pc, &buf[length]);
-			जाओ set_length;
-		पूर्ण
+			goto set_length;
+		}
 
 	/*
-	 * We करोn't पूर्णांकend to implement:
+	 * We don't intend to implement:
 	 *  - obsolete page 03h "format parameters" (checked by Solaris)
 	 */
-	अगर (page != 0x03)
+	if (page != 0x03)
 		pr_err("MODE SENSE: unimplemented page/subpage: 0x%02x/0x%02x\n",
 		       page, subpage);
 
-	वापस TCM_UNKNOWN_MODE_PAGE;
+	return TCM_UNKNOWN_MODE_PAGE;
 
 set_length:
-	अगर (ten)
+	if (ten)
 		put_unaligned_be16(length - 2, buf);
-	अन्यथा
+	else
 		buf[0] = length - 1;
 
 	rbuf = transport_kmap_data_sg(cmd);
-	अगर (rbuf) अणु
-		स_नकल(rbuf, buf, min_t(u32, SE_MODE_PAGE_BUF, cmd->data_length));
+	if (rbuf) {
+		memcpy(rbuf, buf, min_t(u32, SE_MODE_PAGE_BUF, cmd->data_length));
 		transport_kunmap_data_sg(cmd);
-	पूर्ण
+	}
 
 	target_complete_cmd_with_length(cmd, GOOD, length);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sense_reason_t spc_emulate_modeselect(काष्ठा se_cmd *cmd)
-अणु
-	अक्षर *cdb = cmd->t_task_cdb;
+static sense_reason_t spc_emulate_modeselect(struct se_cmd *cmd)
+{
+	char *cdb = cmd->t_task_cdb;
 	bool ten = cdb[0] == MODE_SELECT_10;
-	पूर्णांक off = ten ? 8 : 4;
+	int off = ten ? 8 : 4;
 	bool pf = !!(cdb[1] & 0x10);
 	u8 page, subpage;
-	अचिन्हित अक्षर *buf;
-	अचिन्हित अक्षर tbuf[SE_MODE_PAGE_BUF];
-	पूर्णांक length;
+	unsigned char *buf;
+	unsigned char tbuf[SE_MODE_PAGE_BUF];
+	int length;
 	sense_reason_t ret = 0;
-	पूर्णांक i;
+	int i;
 
-	अगर (!cmd->data_length) अणु
+	if (!cmd->data_length) {
 		target_complete_cmd(cmd, GOOD);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (cmd->data_length < off + 2)
-		वापस TCM_PARAMETER_LIST_LENGTH_ERROR;
+	if (cmd->data_length < off + 2)
+		return TCM_PARAMETER_LIST_LENGTH_ERROR;
 
 	buf = transport_kmap_data_sg(cmd);
-	अगर (!buf)
-		वापस TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
+	if (!buf)
+		return TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
 
-	अगर (!pf) अणु
+	if (!pf) {
 		ret = TCM_INVALID_CDB_FIELD;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	page = buf[off] & 0x3f;
 	subpage = buf[off] & 0x40 ? buf[off + 1] : 0;
 
-	क्रम (i = 0; i < ARRAY_SIZE(modesense_handlers); ++i)
-		अगर (modesense_handlers[i].page == page &&
-		    modesense_handlers[i].subpage == subpage) अणु
-			स_रखो(tbuf, 0, SE_MODE_PAGE_BUF);
+	for (i = 0; i < ARRAY_SIZE(modesense_handlers); ++i)
+		if (modesense_handlers[i].page == page &&
+		    modesense_handlers[i].subpage == subpage) {
+			memset(tbuf, 0, SE_MODE_PAGE_BUF);
 			length = modesense_handlers[i].emulate(cmd, 0, tbuf);
-			जाओ check_contents;
-		पूर्ण
+			goto check_contents;
+		}
 
 	ret = TCM_UNKNOWN_MODE_PAGE;
-	जाओ out;
+	goto out;
 
 check_contents:
-	अगर (cmd->data_length < off + length) अणु
+	if (cmd->data_length < off + length) {
 		ret = TCM_PARAMETER_LIST_LENGTH_ERROR;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (स_भेद(buf + off, tbuf, length))
+	if (memcmp(buf + off, tbuf, length))
 		ret = TCM_INVALID_PARAMETER_LIST;
 
 out:
 	transport_kunmap_data_sg(cmd);
 
-	अगर (!ret)
+	if (!ret)
 		target_complete_cmd(cmd, GOOD);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sense_reason_t spc_emulate_request_sense(काष्ठा se_cmd *cmd)
-अणु
-	अचिन्हित अक्षर *cdb = cmd->t_task_cdb;
-	अचिन्हित अक्षर *rbuf;
+static sense_reason_t spc_emulate_request_sense(struct se_cmd *cmd)
+{
+	unsigned char *cdb = cmd->t_task_cdb;
+	unsigned char *rbuf;
 	u8 ua_asc = 0, ua_ascq = 0;
-	अचिन्हित अक्षर buf[SE_SENSE_BUF];
-	bool desc_क्रमmat = target_sense_desc_क्रमmat(cmd->se_dev);
+	unsigned char buf[SE_SENSE_BUF];
+	bool desc_format = target_sense_desc_format(cmd->se_dev);
 
-	स_रखो(buf, 0, SE_SENSE_BUF);
+	memset(buf, 0, SE_SENSE_BUF);
 
-	अगर (cdb[1] & 0x01) अणु
+	if (cdb[1] & 0x01) {
 		pr_err("REQUEST_SENSE description emulation not"
 			" supported\n");
-		वापस TCM_INVALID_CDB_FIELD;
-	पूर्ण
+		return TCM_INVALID_CDB_FIELD;
+	}
 
 	rbuf = transport_kmap_data_sg(cmd);
-	अगर (!rbuf)
-		वापस TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
+	if (!rbuf)
+		return TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
 
-	अगर (!core_scsi3_ua_clear_क्रम_request_sense(cmd, &ua_asc, &ua_ascq))
-		scsi_build_sense_buffer(desc_क्रमmat, buf, UNIT_ATTENTION,
+	if (!core_scsi3_ua_clear_for_request_sense(cmd, &ua_asc, &ua_ascq))
+		scsi_build_sense_buffer(desc_format, buf, UNIT_ATTENTION,
 					ua_asc, ua_ascq);
-	अन्यथा
-		scsi_build_sense_buffer(desc_क्रमmat, buf, NO_SENSE, 0x0, 0x0);
+	else
+		scsi_build_sense_buffer(desc_format, buf, NO_SENSE, 0x0, 0x0);
 
-	स_नकल(rbuf, buf, min_t(u32, माप(buf), cmd->data_length));
+	memcpy(rbuf, buf, min_t(u32, sizeof(buf), cmd->data_length));
 	transport_kunmap_data_sg(cmd);
 
 	target_complete_cmd(cmd, GOOD);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-sense_reason_t spc_emulate_report_luns(काष्ठा se_cmd *cmd)
-अणु
-	काष्ठा se_dev_entry *deve;
-	काष्ठा se_session *sess = cmd->se_sess;
-	काष्ठा se_node_acl *nacl;
-	काष्ठा scsi_lun slun;
-	अचिन्हित अक्षर *buf;
+sense_reason_t spc_emulate_report_luns(struct se_cmd *cmd)
+{
+	struct se_dev_entry *deve;
+	struct se_session *sess = cmd->se_sess;
+	struct se_node_acl *nacl;
+	struct scsi_lun slun;
+	unsigned char *buf;
 	u32 lun_count = 0, offset = 8;
 	__be32 len;
 
 	buf = transport_kmap_data_sg(cmd);
-	अगर (cmd->data_length && !buf)
-		वापस TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
+	if (cmd->data_length && !buf)
+		return TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
 
 	/*
-	 * If no काष्ठा se_session poपूर्णांकer is present, this काष्ठा se_cmd is
+	 * If no struct se_session pointer is present, this struct se_cmd is
 	 * coming via a target_core_mod PASSTHROUGH op, and not through
-	 * a $FABRIC_MOD.  In that हाल, report LUN=0 only.
+	 * a $FABRIC_MOD.  In that case, report LUN=0 only.
 	 */
-	अगर (!sess)
-		जाओ करोne;
+	if (!sess)
+		goto done;
 
 	nacl = sess->se_node_acl;
 
-	rcu_पढ़ो_lock();
-	hlist_क्रम_each_entry_rcu(deve, &nacl->lun_entry_hlist, link) अणु
+	rcu_read_lock();
+	hlist_for_each_entry_rcu(deve, &nacl->lun_entry_hlist, link) {
 		/*
 		 * We determine the correct LUN LIST LENGTH even once we
 		 * have reached the initial allocation length.
 		 * See SPC2-R20 7.19.
 		 */
 		lun_count++;
-		अगर (offset >= cmd->data_length)
-			जारी;
+		if (offset >= cmd->data_length)
+			continue;
 
-		पूर्णांक_to_scsilun(deve->mapped_lun, &slun);
-		स_नकल(buf + offset, &slun,
+		int_to_scsilun(deve->mapped_lun, &slun);
+		memcpy(buf + offset, &slun,
 		       min(8u, cmd->data_length - offset));
 		offset += 8;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	}
+	rcu_read_unlock();
 
 	/*
 	 * See SPC3 r07, page 159.
 	 */
-करोne:
+done:
 	/*
-	 * If no LUNs are accessible, report भव LUN 0.
+	 * If no LUNs are accessible, report virtual LUN 0.
 	 */
-	अगर (lun_count == 0) अणु
-		पूर्णांक_to_scsilun(0, &slun);
-		अगर (cmd->data_length > 8)
-			स_नकल(buf + offset, &slun,
+	if (lun_count == 0) {
+		int_to_scsilun(0, &slun);
+		if (cmd->data_length > 8)
+			memcpy(buf + offset, &slun,
 			       min(8u, cmd->data_length - offset));
 		lun_count = 1;
-	पूर्ण
+	}
 
-	अगर (buf) अणु
+	if (buf) {
 		len = cpu_to_be32(lun_count * 8);
-		स_नकल(buf, &len, min_t(पूर्णांक, माप len, cmd->data_length));
+		memcpy(buf, &len, min_t(int, sizeof len, cmd->data_length));
 		transport_kunmap_data_sg(cmd);
-	पूर्ण
+	}
 
 	target_complete_cmd_with_length(cmd, GOOD, 8 + lun_count * 8);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(spc_emulate_report_luns);
 
-अटल sense_reason_t
-spc_emulate_testunitपढ़ोy(काष्ठा se_cmd *cmd)
-अणु
+static sense_reason_t
+spc_emulate_testunitready(struct se_cmd *cmd)
+{
 	target_complete_cmd(cmd, GOOD);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 sense_reason_t
-spc_parse_cdb(काष्ठा se_cmd *cmd, अचिन्हित पूर्णांक *size)
-अणु
-	काष्ठा se_device *dev = cmd->se_dev;
-	अचिन्हित अक्षर *cdb = cmd->t_task_cdb;
+spc_parse_cdb(struct se_cmd *cmd, unsigned int *size)
+{
+	struct se_device *dev = cmd->se_dev;
+	unsigned char *cdb = cmd->t_task_cdb;
 
-	अगर (!dev->dev_attrib.emulate_pr &&
+	if (!dev->dev_attrib.emulate_pr &&
 	    ((cdb[0] == PERSISTENT_RESERVE_IN) ||
 	     (cdb[0] == PERSISTENT_RESERVE_OUT) ||
 	     (cdb[0] == RELEASE || cdb[0] == RELEASE_10) ||
-	     (cdb[0] == RESERVE || cdb[0] == RESERVE_10))) अणु
-		वापस TCM_UNSUPPORTED_SCSI_OPCODE;
-	पूर्ण
+	     (cdb[0] == RESERVE || cdb[0] == RESERVE_10))) {
+		return TCM_UNSUPPORTED_SCSI_OPCODE;
+	}
 
-	चयन (cdb[0]) अणु
-	हाल MODE_SELECT:
+	switch (cdb[0]) {
+	case MODE_SELECT:
 		*size = cdb[4];
 		cmd->execute_cmd = spc_emulate_modeselect;
-		अवरोध;
-	हाल MODE_SELECT_10:
+		break;
+	case MODE_SELECT_10:
 		*size = get_unaligned_be16(&cdb[7]);
 		cmd->execute_cmd = spc_emulate_modeselect;
-		अवरोध;
-	हाल MODE_SENSE:
+		break;
+	case MODE_SENSE:
 		*size = cdb[4];
 		cmd->execute_cmd = spc_emulate_modesense;
-		अवरोध;
-	हाल MODE_SENSE_10:
+		break;
+	case MODE_SENSE_10:
 		*size = get_unaligned_be16(&cdb[7]);
 		cmd->execute_cmd = spc_emulate_modesense;
-		अवरोध;
-	हाल LOG_SELECT:
-	हाल LOG_SENSE:
+		break;
+	case LOG_SELECT:
+	case LOG_SENSE:
 		*size = get_unaligned_be16(&cdb[7]);
-		अवरोध;
-	हाल PERSISTENT_RESERVE_IN:
+		break;
+	case PERSISTENT_RESERVE_IN:
 		*size = get_unaligned_be16(&cdb[7]);
 		cmd->execute_cmd = target_scsi3_emulate_pr_in;
-		अवरोध;
-	हाल PERSISTENT_RESERVE_OUT:
+		break;
+	case PERSISTENT_RESERVE_OUT:
 		*size = get_unaligned_be32(&cdb[5]);
 		cmd->execute_cmd = target_scsi3_emulate_pr_out;
-		अवरोध;
-	हाल RELEASE:
-	हाल RELEASE_10:
-		अगर (cdb[0] == RELEASE_10)
+		break;
+	case RELEASE:
+	case RELEASE_10:
+		if (cdb[0] == RELEASE_10)
 			*size = get_unaligned_be16(&cdb[7]);
-		अन्यथा
+		else
 			*size = cmd->data_length;
 
 		cmd->execute_cmd = target_scsi2_reservation_release;
-		अवरोध;
-	हाल RESERVE:
-	हाल RESERVE_10:
+		break;
+	case RESERVE:
+	case RESERVE_10:
 		/*
-		 * The SPC-2 RESERVE करोes not contain a size in the SCSI CDB.
+		 * The SPC-2 RESERVE does not contain a size in the SCSI CDB.
 		 * Assume the passthrough or $FABRIC_MOD will tell us about it.
 		 */
-		अगर (cdb[0] == RESERVE_10)
+		if (cdb[0] == RESERVE_10)
 			*size = get_unaligned_be16(&cdb[7]);
-		अन्यथा
+		else
 			*size = cmd->data_length;
 
 		cmd->execute_cmd = target_scsi2_reservation_reserve;
-		अवरोध;
-	हाल REQUEST_SENSE:
+		break;
+	case REQUEST_SENSE:
 		*size = cdb[4];
 		cmd->execute_cmd = spc_emulate_request_sense;
-		अवरोध;
-	हाल INQUIRY:
+		break;
+	case INQUIRY:
 		*size = get_unaligned_be16(&cdb[3]);
 
 		/*
-		 * Do implicit HEAD_OF_QUEUE processing क्रम INQUIRY.
+		 * Do implicit HEAD_OF_QUEUE processing for INQUIRY.
 		 * See spc4r17 section 5.3
 		 */
 		cmd->sam_task_attr = TCM_HEAD_TAG;
 		cmd->execute_cmd = spc_emulate_inquiry;
-		अवरोध;
-	हाल SECURITY_PROTOCOL_IN:
-	हाल SECURITY_PROTOCOL_OUT:
+		break;
+	case SECURITY_PROTOCOL_IN:
+	case SECURITY_PROTOCOL_OUT:
 		*size = get_unaligned_be32(&cdb[6]);
-		अवरोध;
-	हाल EXTENDED_COPY:
+		break;
+	case EXTENDED_COPY:
 		*size = get_unaligned_be32(&cdb[10]);
-		cmd->execute_cmd = target_करो_xcopy;
-		अवरोध;
-	हाल RECEIVE_COPY_RESULTS:
+		cmd->execute_cmd = target_do_xcopy;
+		break;
+	case RECEIVE_COPY_RESULTS:
 		*size = get_unaligned_be32(&cdb[10]);
-		cmd->execute_cmd = target_करो_receive_copy_results;
-		अवरोध;
-	हाल READ_ATTRIBUTE:
-	हाल WRITE_ATTRIBUTE:
+		cmd->execute_cmd = target_do_receive_copy_results;
+		break;
+	case READ_ATTRIBUTE:
+	case WRITE_ATTRIBUTE:
 		*size = get_unaligned_be32(&cdb[10]);
-		अवरोध;
-	हाल RECEIVE_DIAGNOSTIC:
-	हाल SEND_DIAGNOSTIC:
+		break;
+	case RECEIVE_DIAGNOSTIC:
+	case SEND_DIAGNOSTIC:
 		*size = get_unaligned_be16(&cdb[3]);
-		अवरोध;
-	हाल WRITE_BUFFER:
+		break;
+	case WRITE_BUFFER:
 		*size = get_unaligned_be24(&cdb[6]);
-		अवरोध;
-	हाल REPORT_LUNS:
+		break;
+	case REPORT_LUNS:
 		cmd->execute_cmd = spc_emulate_report_luns;
 		*size = get_unaligned_be32(&cdb[6]);
 		/*
-		 * Do implicit HEAD_OF_QUEUE processing क्रम REPORT_LUNS
+		 * Do implicit HEAD_OF_QUEUE processing for REPORT_LUNS
 		 * See spc4r17 section 5.3
 		 */
 		cmd->sam_task_attr = TCM_HEAD_TAG;
-		अवरोध;
-	हाल TEST_UNIT_READY:
-		cmd->execute_cmd = spc_emulate_testunitपढ़ोy;
+		break;
+	case TEST_UNIT_READY:
+		cmd->execute_cmd = spc_emulate_testunitready;
 		*size = 0;
-		अवरोध;
-	हाल MAINTEन_अंकCE_IN:
-		अगर (dev->transport->get_device_type(dev) != TYPE_ROM) अणु
+		break;
+	case MAINTENANCE_IN:
+		if (dev->transport->get_device_type(dev) != TYPE_ROM) {
 			/*
-			 * MAINTEन_अंकCE_IN from SCC-2
-			 * Check क्रम emulated MI_REPORT_TARGET_PGS
+			 * MAINTENANCE_IN from SCC-2
+			 * Check for emulated MI_REPORT_TARGET_PGS
 			 */
-			अगर ((cdb[1] & 0x1f) == MI_REPORT_TARGET_PGS) अणु
+			if ((cdb[1] & 0x1f) == MI_REPORT_TARGET_PGS) {
 				cmd->execute_cmd =
 					target_emulate_report_target_port_groups;
-			पूर्ण
+			}
 			*size = get_unaligned_be32(&cdb[6]);
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
 			 * GPCMD_SEND_KEY from multi media commands
 			 */
 			*size = get_unaligned_be16(&cdb[8]);
-		पूर्ण
-		अवरोध;
-	हाल MAINTEन_अंकCE_OUT:
-		अगर (dev->transport->get_device_type(dev) != TYPE_ROM) अणु
+		}
+		break;
+	case MAINTENANCE_OUT:
+		if (dev->transport->get_device_type(dev) != TYPE_ROM) {
 			/*
-			 * MAINTEन_अंकCE_OUT from SCC-2
-			 * Check क्रम emulated MO_SET_TARGET_PGS.
+			 * MAINTENANCE_OUT from SCC-2
+			 * Check for emulated MO_SET_TARGET_PGS.
 			 */
-			अगर (cdb[1] == MO_SET_TARGET_PGS) अणु
+			if (cdb[1] == MO_SET_TARGET_PGS) {
 				cmd->execute_cmd =
 					target_emulate_set_target_port_groups;
-			पूर्ण
+			}
 			*size = get_unaligned_be32(&cdb[6]);
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
 			 * GPCMD_SEND_KEY from multi media commands
 			 */
 			*size = get_unaligned_be16(&cdb[8]);
-		पूर्ण
-		अवरोध;
-	शेष:
-		वापस TCM_UNSUPPORTED_SCSI_OPCODE;
-	पूर्ण
+		}
+		break;
+	default:
+		return TCM_UNSUPPORTED_SCSI_OPCODE;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(spc_parse_cdb);

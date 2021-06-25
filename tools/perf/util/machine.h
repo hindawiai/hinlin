@@ -1,296 +1,295 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __PERF_MACHINE_H
-#घोषणा __PERF_MACHINE_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __PERF_MACHINE_H
+#define __PERF_MACHINE_H
 
-#समावेश <sys/types.h>
-#समावेश <linux/rbtree.h>
-#समावेश "maps.h"
-#समावेश "dsos.h"
-#समावेश "rwsem.h"
+#include <sys/types.h>
+#include <linux/rbtree.h>
+#include "maps.h"
+#include "dsos.h"
+#include "rwsem.h"
 
-काष्ठा addr_location;
-काष्ठा branch_stack;
-काष्ठा dso;
-काष्ठा dso_id;
-काष्ठा evsel;
-काष्ठा perf_sample;
-काष्ठा symbol;
-काष्ठा target;
-काष्ठा thपढ़ो;
-जोड़ perf_event;
+struct addr_location;
+struct branch_stack;
+struct dso;
+struct dso_id;
+struct evsel;
+struct perf_sample;
+struct symbol;
+struct target;
+struct thread;
+union perf_event;
 
 /* Native host kernel uses -1 as pid index in machine */
-#घोषणा	HOST_KERNEL_ID			(-1)
-#घोषणा	DEFAULT_GUEST_KERNEL_ID		(0)
+#define	HOST_KERNEL_ID			(-1)
+#define	DEFAULT_GUEST_KERNEL_ID		(0)
 
-बाह्य स्थिर अक्षर *ref_reloc_sym_names[];
+extern const char *ref_reloc_sym_names[];
 
-काष्ठा vdso_info;
+struct vdso_info;
 
-#घोषणा THREADS__TABLE_BITS	8
-#घोषणा THREADS__TABLE_SIZE	(1 << THREADS__TABLE_BITS)
+#define THREADS__TABLE_BITS	8
+#define THREADS__TABLE_SIZE	(1 << THREADS__TABLE_BITS)
 
-काष्ठा thपढ़ोs अणु
-	काष्ठा rb_root_cached  entries;
-	काष्ठा rw_semaphore    lock;
-	अचिन्हित पूर्णांक	       nr;
-	काष्ठा list_head       dead;
-	काष्ठा thपढ़ो	       *last_match;
-पूर्ण;
+struct threads {
+	struct rb_root_cached  entries;
+	struct rw_semaphore    lock;
+	unsigned int	       nr;
+	struct list_head       dead;
+	struct thread	       *last_match;
+};
 
-काष्ठा machine अणु
-	काष्ठा rb_node	  rb_node;
+struct machine {
+	struct rb_node	  rb_node;
 	pid_t		  pid;
 	u16		  id_hdr_size;
 	bool		  comm_exec;
 	bool		  kptr_restrict_warned;
 	bool		  single_address_space;
-	अक्षर		  *root_dir;
-	अक्षर		  *mmap_name;
-	काष्ठा thपढ़ोs    thपढ़ोs[THREADS__TABLE_SIZE];
-	काष्ठा vdso_info  *vdso_info;
-	काष्ठा perf_env   *env;
-	काष्ठा dsos	  dsos;
-	काष्ठा maps	  kmaps;
-	काष्ठा map	  *vmlinux_map;
+	char		  *root_dir;
+	char		  *mmap_name;
+	struct threads    threads[THREADS__TABLE_SIZE];
+	struct vdso_info  *vdso_info;
+	struct perf_env   *env;
+	struct dsos	  dsos;
+	struct maps	  kmaps;
+	struct map	  *vmlinux_map;
 	u64		  kernel_start;
 	pid_t		  *current_tid;
-	जोड़ अणु /* Tool specअगरic area */
-		व्योम	  *priv;
+	union { /* Tool specific area */
+		void	  *priv;
 		u64	  db_id;
-	पूर्ण;
+	};
 	bool		  trampolines_mapped;
-पूर्ण;
+};
 
-अटल अंतरभूत काष्ठा thपढ़ोs *machine__thपढ़ोs(काष्ठा machine *machine, pid_t tid)
-अणु
+static inline struct threads *machine__threads(struct machine *machine, pid_t tid)
+{
 	/* Cast it to handle tid == -1 */
-	वापस &machine->thपढ़ोs[(अचिन्हित पूर्णांक)tid % THREADS__TABLE_SIZE];
-पूर्ण
+	return &machine->threads[(unsigned int)tid % THREADS__TABLE_SIZE];
+}
 
 /*
- * The मुख्य kernel (vmlinux) map
+ * The main kernel (vmlinux) map
  */
-अटल अंतरभूत
-काष्ठा map *machine__kernel_map(काष्ठा machine *machine)
-अणु
-	वापस machine->vmlinux_map;
-पूर्ण
+static inline
+struct map *machine__kernel_map(struct machine *machine)
+{
+	return machine->vmlinux_map;
+}
 
 /*
- * kernel (the one वापसed by machine__kernel_map()) plus kernel modules maps
+ * kernel (the one returned by machine__kernel_map()) plus kernel modules maps
  */
-अटल अंतरभूत
-काष्ठा maps *machine__kernel_maps(काष्ठा machine *machine)
-अणु
-	वापस &machine->kmaps;
-पूर्ण
+static inline
+struct maps *machine__kernel_maps(struct machine *machine)
+{
+	return &machine->kmaps;
+}
 
-पूर्णांक machine__get_kernel_start(काष्ठा machine *machine);
+int machine__get_kernel_start(struct machine *machine);
 
-अटल अंतरभूत u64 machine__kernel_start(काष्ठा machine *machine)
-अणु
-	अगर (!machine->kernel_start)
+static inline u64 machine__kernel_start(struct machine *machine)
+{
+	if (!machine->kernel_start)
 		machine__get_kernel_start(machine);
-	वापस machine->kernel_start;
-पूर्ण
+	return machine->kernel_start;
+}
 
-अटल अंतरभूत bool machine__kernel_ip(काष्ठा machine *machine, u64 ip)
-अणु
+static inline bool machine__kernel_ip(struct machine *machine, u64 ip)
+{
 	u64 kernel_start = machine__kernel_start(machine);
 
-	वापस ip >= kernel_start;
-पूर्ण
+	return ip >= kernel_start;
+}
 
-u8 machine__addr_cpumode(काष्ठा machine *machine, u8 cpumode, u64 addr);
+u8 machine__addr_cpumode(struct machine *machine, u8 cpumode, u64 addr);
 
-काष्ठा thपढ़ो *machine__find_thपढ़ो(काष्ठा machine *machine, pid_t pid,
+struct thread *machine__find_thread(struct machine *machine, pid_t pid,
 				    pid_t tid);
-काष्ठा thपढ़ो *machine__idle_thपढ़ो(काष्ठा machine *machine);
-काष्ठा comm *machine__thपढ़ो_exec_comm(काष्ठा machine *machine,
-				       काष्ठा thपढ़ो *thपढ़ो);
+struct thread *machine__idle_thread(struct machine *machine);
+struct comm *machine__thread_exec_comm(struct machine *machine,
+				       struct thread *thread);
 
-पूर्णांक machine__process_comm_event(काष्ठा machine *machine, जोड़ perf_event *event,
-				काष्ठा perf_sample *sample);
-पूर्णांक machine__process_निकास_event(काष्ठा machine *machine, जोड़ perf_event *event,
-				काष्ठा perf_sample *sample);
-पूर्णांक machine__process_विभाजन_event(काष्ठा machine *machine, जोड़ perf_event *event,
-				काष्ठा perf_sample *sample);
-पूर्णांक machine__process_lost_event(काष्ठा machine *machine, जोड़ perf_event *event,
-				काष्ठा perf_sample *sample);
-पूर्णांक machine__process_lost_samples_event(काष्ठा machine *machine, जोड़ perf_event *event,
-					काष्ठा perf_sample *sample);
-पूर्णांक machine__process_aux_event(काष्ठा machine *machine,
-			       जोड़ perf_event *event);
-पूर्णांक machine__process_itrace_start_event(काष्ठा machine *machine,
-					जोड़ perf_event *event);
-पूर्णांक machine__process_चयन_event(काष्ठा machine *machine,
-				  जोड़ perf_event *event);
-पूर्णांक machine__process_namespaces_event(काष्ठा machine *machine,
-				      जोड़ perf_event *event,
-				      काष्ठा perf_sample *sample);
-पूर्णांक machine__process_cgroup_event(काष्ठा machine *machine,
-				  जोड़ perf_event *event,
-				  काष्ठा perf_sample *sample);
-पूर्णांक machine__process_mmap_event(काष्ठा machine *machine, जोड़ perf_event *event,
-				काष्ठा perf_sample *sample);
-पूर्णांक machine__process_mmap2_event(काष्ठा machine *machine, जोड़ perf_event *event,
-				 काष्ठा perf_sample *sample);
-पूर्णांक machine__process_ksymbol(काष्ठा machine *machine,
-			     जोड़ perf_event *event,
-			     काष्ठा perf_sample *sample);
-पूर्णांक machine__process_text_poke(काष्ठा machine *machine,
-			       जोड़ perf_event *event,
-			       काष्ठा perf_sample *sample);
-पूर्णांक machine__process_event(काष्ठा machine *machine, जोड़ perf_event *event,
-				काष्ठा perf_sample *sample);
+int machine__process_comm_event(struct machine *machine, union perf_event *event,
+				struct perf_sample *sample);
+int machine__process_exit_event(struct machine *machine, union perf_event *event,
+				struct perf_sample *sample);
+int machine__process_fork_event(struct machine *machine, union perf_event *event,
+				struct perf_sample *sample);
+int machine__process_lost_event(struct machine *machine, union perf_event *event,
+				struct perf_sample *sample);
+int machine__process_lost_samples_event(struct machine *machine, union perf_event *event,
+					struct perf_sample *sample);
+int machine__process_aux_event(struct machine *machine,
+			       union perf_event *event);
+int machine__process_itrace_start_event(struct machine *machine,
+					union perf_event *event);
+int machine__process_switch_event(struct machine *machine,
+				  union perf_event *event);
+int machine__process_namespaces_event(struct machine *machine,
+				      union perf_event *event,
+				      struct perf_sample *sample);
+int machine__process_cgroup_event(struct machine *machine,
+				  union perf_event *event,
+				  struct perf_sample *sample);
+int machine__process_mmap_event(struct machine *machine, union perf_event *event,
+				struct perf_sample *sample);
+int machine__process_mmap2_event(struct machine *machine, union perf_event *event,
+				 struct perf_sample *sample);
+int machine__process_ksymbol(struct machine *machine,
+			     union perf_event *event,
+			     struct perf_sample *sample);
+int machine__process_text_poke(struct machine *machine,
+			       union perf_event *event,
+			       struct perf_sample *sample);
+int machine__process_event(struct machine *machine, union perf_event *event,
+				struct perf_sample *sample);
 
-प्रकार व्योम (*machine__process_t)(काष्ठा machine *machine, व्योम *data);
+typedef void (*machine__process_t)(struct machine *machine, void *data);
 
-काष्ठा machines अणु
-	काष्ठा machine host;
-	काष्ठा rb_root_cached guests;
-पूर्ण;
+struct machines {
+	struct machine host;
+	struct rb_root_cached guests;
+};
 
-व्योम machines__init(काष्ठा machines *machines);
-व्योम machines__निकास(काष्ठा machines *machines);
+void machines__init(struct machines *machines);
+void machines__exit(struct machines *machines);
 
-व्योम machines__process_guests(काष्ठा machines *machines,
-			      machine__process_t process, व्योम *data);
+void machines__process_guests(struct machines *machines,
+			      machine__process_t process, void *data);
 
-काष्ठा machine *machines__add(काष्ठा machines *machines, pid_t pid,
-			      स्थिर अक्षर *root_dir);
-काष्ठा machine *machines__find_host(काष्ठा machines *machines);
-काष्ठा machine *machines__find(काष्ठा machines *machines, pid_t pid);
-काष्ठा machine *machines__findnew(काष्ठा machines *machines, pid_t pid);
-काष्ठा machine *machines__find_guest(काष्ठा machines *machines, pid_t pid);
+struct machine *machines__add(struct machines *machines, pid_t pid,
+			      const char *root_dir);
+struct machine *machines__find_host(struct machines *machines);
+struct machine *machines__find(struct machines *machines, pid_t pid);
+struct machine *machines__findnew(struct machines *machines, pid_t pid);
+struct machine *machines__find_guest(struct machines *machines, pid_t pid);
 
-व्योम machines__set_id_hdr_size(काष्ठा machines *machines, u16 id_hdr_size);
-व्योम machines__set_comm_exec(काष्ठा machines *machines, bool comm_exec);
+void machines__set_id_hdr_size(struct machines *machines, u16 id_hdr_size);
+void machines__set_comm_exec(struct machines *machines, bool comm_exec);
 
-काष्ठा machine *machine__new_host(व्योम);
-काष्ठा machine *machine__new_kallsyms(व्योम);
-पूर्णांक machine__init(काष्ठा machine *machine, स्थिर अक्षर *root_dir, pid_t pid);
-व्योम machine__निकास(काष्ठा machine *machine);
-व्योम machine__delete_thपढ़ोs(काष्ठा machine *machine);
-व्योम machine__delete(काष्ठा machine *machine);
-व्योम machine__हटाओ_thपढ़ो(काष्ठा machine *machine, काष्ठा thपढ़ो *th);
+struct machine *machine__new_host(void);
+struct machine *machine__new_kallsyms(void);
+int machine__init(struct machine *machine, const char *root_dir, pid_t pid);
+void machine__exit(struct machine *machine);
+void machine__delete_threads(struct machine *machine);
+void machine__delete(struct machine *machine);
+void machine__remove_thread(struct machine *machine, struct thread *th);
 
-काष्ठा branch_info *sample__resolve_bstack(काष्ठा perf_sample *sample,
-					   काष्ठा addr_location *al);
-काष्ठा mem_info *sample__resolve_mem(काष्ठा perf_sample *sample,
-				     काष्ठा addr_location *al);
+struct branch_info *sample__resolve_bstack(struct perf_sample *sample,
+					   struct addr_location *al);
+struct mem_info *sample__resolve_mem(struct perf_sample *sample,
+				     struct addr_location *al);
 
-काष्ठा callchain_cursor;
+struct callchain_cursor;
 
-पूर्णांक thपढ़ो__resolve_callchain(काष्ठा thपढ़ो *thपढ़ो,
-			      काष्ठा callchain_cursor *cursor,
-			      काष्ठा evsel *evsel,
-			      काष्ठा perf_sample *sample,
-			      काष्ठा symbol **parent,
-			      काष्ठा addr_location *root_al,
-			      पूर्णांक max_stack);
+int thread__resolve_callchain(struct thread *thread,
+			      struct callchain_cursor *cursor,
+			      struct evsel *evsel,
+			      struct perf_sample *sample,
+			      struct symbol **parent,
+			      struct addr_location *root_al,
+			      int max_stack);
 
 /*
  * Default guest kernel is defined by parameter --guestkallsyms
- * and --guesपंचांगodules
+ * and --guestmodules
  */
-अटल अंतरभूत bool machine__is_शेष_guest(काष्ठा machine *machine)
-अणु
-	वापस machine ? machine->pid == DEFAULT_GUEST_KERNEL_ID : false;
-पूर्ण
+static inline bool machine__is_default_guest(struct machine *machine)
+{
+	return machine ? machine->pid == DEFAULT_GUEST_KERNEL_ID : false;
+}
 
-अटल अंतरभूत bool machine__is_host(काष्ठा machine *machine)
-अणु
-	वापस machine ? machine->pid == HOST_KERNEL_ID : false;
-पूर्ण
+static inline bool machine__is_host(struct machine *machine)
+{
+	return machine ? machine->pid == HOST_KERNEL_ID : false;
+}
 
-bool machine__is(काष्ठा machine *machine, स्थिर अक्षर *arch);
-पूर्णांक machine__nr_cpus_avail(काष्ठा machine *machine);
+bool machine__is(struct machine *machine, const char *arch);
+int machine__nr_cpus_avail(struct machine *machine);
 
-काष्ठा thपढ़ो *__machine__findnew_thपढ़ो(काष्ठा machine *machine, pid_t pid, pid_t tid);
-काष्ठा thपढ़ो *machine__findnew_thपढ़ो(काष्ठा machine *machine, pid_t pid, pid_t tid);
+struct thread *__machine__findnew_thread(struct machine *machine, pid_t pid, pid_t tid);
+struct thread *machine__findnew_thread(struct machine *machine, pid_t pid, pid_t tid);
 
-काष्ठा dso *machine__findnew_dso_id(काष्ठा machine *machine, स्थिर अक्षर *filename, काष्ठा dso_id *id);
-काष्ठा dso *machine__findnew_dso(काष्ठा machine *machine, स्थिर अक्षर *filename);
+struct dso *machine__findnew_dso_id(struct machine *machine, const char *filename, struct dso_id *id);
+struct dso *machine__findnew_dso(struct machine *machine, const char *filename);
 
-माप_प्रकार machine__ख_लिखो(काष्ठा machine *machine, खाता *fp);
+size_t machine__fprintf(struct machine *machine, FILE *fp);
 
-अटल अंतरभूत
-काष्ठा symbol *machine__find_kernel_symbol(काष्ठा machine *machine, u64 addr,
-					   काष्ठा map **mapp)
-अणु
-	वापस maps__find_symbol(&machine->kmaps, addr, mapp);
-पूर्ण
+static inline
+struct symbol *machine__find_kernel_symbol(struct machine *machine, u64 addr,
+					   struct map **mapp)
+{
+	return maps__find_symbol(&machine->kmaps, addr, mapp);
+}
 
-अटल अंतरभूत
-काष्ठा symbol *machine__find_kernel_symbol_by_name(काष्ठा machine *machine,
-						   स्थिर अक्षर *name,
-						   काष्ठा map **mapp)
-अणु
-	वापस maps__find_symbol_by_name(&machine->kmaps, name, mapp);
-पूर्ण
+static inline
+struct symbol *machine__find_kernel_symbol_by_name(struct machine *machine,
+						   const char *name,
+						   struct map **mapp)
+{
+	return maps__find_symbol_by_name(&machine->kmaps, name, mapp);
+}
 
-पूर्णांक arch__fix_module_text_start(u64 *start, u64 *size, स्थिर अक्षर *name);
+int arch__fix_module_text_start(u64 *start, u64 *size, const char *name);
 
-पूर्णांक machine__load_kallsyms(काष्ठा machine *machine, स्थिर अक्षर *filename);
+int machine__load_kallsyms(struct machine *machine, const char *filename);
 
-पूर्णांक machine__load_vmlinux_path(काष्ठा machine *machine);
+int machine__load_vmlinux_path(struct machine *machine);
 
-माप_प्रकार machine__ख_लिखो_dsos_buildid(काष्ठा machine *machine, खाता *fp,
-				     bool (skip)(काष्ठा dso *dso, पूर्णांक parm), पूर्णांक parm);
-माप_प्रकार machines__ख_लिखो_dsos(काष्ठा machines *machines, खाता *fp);
-माप_प्रकार machines__ख_लिखो_dsos_buildid(काष्ठा machines *machines, खाता *fp,
-				     bool (skip)(काष्ठा dso *dso, पूर्णांक parm), पूर्णांक parm);
+size_t machine__fprintf_dsos_buildid(struct machine *machine, FILE *fp,
+				     bool (skip)(struct dso *dso, int parm), int parm);
+size_t machines__fprintf_dsos(struct machines *machines, FILE *fp);
+size_t machines__fprintf_dsos_buildid(struct machines *machines, FILE *fp,
+				     bool (skip)(struct dso *dso, int parm), int parm);
 
-व्योम machine__destroy_kernel_maps(काष्ठा machine *machine);
-पूर्णांक machine__create_kernel_maps(काष्ठा machine *machine);
+void machine__destroy_kernel_maps(struct machine *machine);
+int machine__create_kernel_maps(struct machine *machine);
 
-पूर्णांक machines__create_kernel_maps(काष्ठा machines *machines, pid_t pid);
-पूर्णांक machines__create_guest_kernel_maps(काष्ठा machines *machines);
-व्योम machines__destroy_kernel_maps(काष्ठा machines *machines);
+int machines__create_kernel_maps(struct machines *machines, pid_t pid);
+int machines__create_guest_kernel_maps(struct machines *machines);
+void machines__destroy_kernel_maps(struct machines *machines);
 
-माप_प्रकार machine__ख_लिखो_vmlinux_path(काष्ठा machine *machine, खाता *fp);
+size_t machine__fprintf_vmlinux_path(struct machine *machine, FILE *fp);
 
-प्रकार पूर्णांक (*machine__dso_t)(काष्ठा dso *dso, काष्ठा machine *machine, व्योम *priv);
+typedef int (*machine__dso_t)(struct dso *dso, struct machine *machine, void *priv);
 
-पूर्णांक machine__क्रम_each_dso(काष्ठा machine *machine, machine__dso_t fn,
-			  व्योम *priv);
-पूर्णांक machine__क्रम_each_thपढ़ो(काष्ठा machine *machine,
-			     पूर्णांक (*fn)(काष्ठा thपढ़ो *thपढ़ो, व्योम *p),
-			     व्योम *priv);
-पूर्णांक machines__क्रम_each_thपढ़ो(काष्ठा machines *machines,
-			      पूर्णांक (*fn)(काष्ठा thपढ़ो *thपढ़ो, व्योम *p),
-			      व्योम *priv);
+int machine__for_each_dso(struct machine *machine, machine__dso_t fn,
+			  void *priv);
+int machine__for_each_thread(struct machine *machine,
+			     int (*fn)(struct thread *thread, void *p),
+			     void *priv);
+int machines__for_each_thread(struct machines *machines,
+			      int (*fn)(struct thread *thread, void *p),
+			      void *priv);
 
-pid_t machine__get_current_tid(काष्ठा machine *machine, पूर्णांक cpu);
-पूर्णांक machine__set_current_tid(काष्ठा machine *machine, पूर्णांक cpu, pid_t pid,
+pid_t machine__get_current_tid(struct machine *machine, int cpu);
+int machine__set_current_tid(struct machine *machine, int cpu, pid_t pid,
 			     pid_t tid);
 /*
  * For use with libtraceevent's tep_set_function_resolver()
  */
-अक्षर *machine__resolve_kernel_addr(व्योम *vmachine, अचिन्हित दीर्घ दीर्घ *addrp, अक्षर **modp);
+char *machine__resolve_kernel_addr(void *vmachine, unsigned long long *addrp, char **modp);
 
-व्योम machine__get_kallsyms_filename(काष्ठा machine *machine, अक्षर *buf,
-				    माप_प्रकार bufsz);
+void machine__get_kallsyms_filename(struct machine *machine, char *buf,
+				    size_t bufsz);
 
-पूर्णांक machine__create_extra_kernel_maps(काष्ठा machine *machine,
-				      काष्ठा dso *kernel);
+int machine__create_extra_kernel_maps(struct machine *machine,
+				      struct dso *kernel);
 
-/* Kernel-space maps क्रम symbols that are outside the मुख्य kernel map and module maps */
-काष्ठा extra_kernel_map अणु
+/* Kernel-space maps for symbols that are outside the main kernel map and module maps */
+struct extra_kernel_map {
 	u64 start;
 	u64 end;
 	u64 pgoff;
-	अक्षर name[KMAP_NAME_LEN];
-पूर्ण;
+	char name[KMAP_NAME_LEN];
+};
 
-पूर्णांक machine__create_extra_kernel_map(काष्ठा machine *machine,
-				     काष्ठा dso *kernel,
-				     काष्ठा extra_kernel_map *xm);
+int machine__create_extra_kernel_map(struct machine *machine,
+				     struct dso *kernel,
+				     struct extra_kernel_map *xm);
 
-पूर्णांक machine__map_x86_64_entry_trampolines(काष्ठा machine *machine,
-					  काष्ठा dso *kernel);
+int machine__map_x86_64_entry_trampolines(struct machine *machine,
+					  struct dso *kernel);
 
-#पूर्ण_अगर /* __PERF_MACHINE_H */
+#endif /* __PERF_MACHINE_H */

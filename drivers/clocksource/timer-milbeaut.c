@@ -1,190 +1,189 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2018 Socionext Inc.
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/irqवापस.h>
-#समावेश <linux/sched_घड़ी.h>
-#समावेश "timer-of.h"
+#include <linux/clk.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/irqreturn.h>
+#include <linux/sched_clock.h>
+#include "timer-of.h"
 
-#घोषणा MLB_TMR_TMCSR_OFS	0x0
-#घोषणा MLB_TMR_TMR_OFS		0x4
-#घोषणा MLB_TMR_TMRLR1_OFS	0x8
-#घोषणा MLB_TMR_TMRLR2_OFS	0xc
-#घोषणा MLB_TMR_REGSZPCH	0x10
+#define MLB_TMR_TMCSR_OFS	0x0
+#define MLB_TMR_TMR_OFS		0x4
+#define MLB_TMR_TMRLR1_OFS	0x8
+#define MLB_TMR_TMRLR2_OFS	0xc
+#define MLB_TMR_REGSZPCH	0x10
 
-#घोषणा MLB_TMR_TMCSR_OUTL	BIT(5)
-#घोषणा MLB_TMR_TMCSR_RELD	BIT(4)
-#घोषणा MLB_TMR_TMCSR_INTE	BIT(3)
-#घोषणा MLB_TMR_TMCSR_UF	BIT(2)
-#घोषणा MLB_TMR_TMCSR_CNTE	BIT(1)
-#घोषणा MLB_TMR_TMCSR_TRG	BIT(0)
+#define MLB_TMR_TMCSR_OUTL	BIT(5)
+#define MLB_TMR_TMCSR_RELD	BIT(4)
+#define MLB_TMR_TMCSR_INTE	BIT(3)
+#define MLB_TMR_TMCSR_UF	BIT(2)
+#define MLB_TMR_TMCSR_CNTE	BIT(1)
+#define MLB_TMR_TMCSR_TRG	BIT(0)
 
-#घोषणा MLB_TMR_TMCSR_CSL_DIV2	0
-#घोषणा MLB_TMR_DIV_CNT		2
+#define MLB_TMR_TMCSR_CSL_DIV2	0
+#define MLB_TMR_DIV_CNT		2
 
-#घोषणा MLB_TMR_SRC_CH		1
-#घोषणा MLB_TMR_EVT_CH		0
+#define MLB_TMR_SRC_CH		1
+#define MLB_TMR_EVT_CH		0
 
-#घोषणा MLB_TMR_SRC_CH_OFS	(MLB_TMR_REGSZPCH * MLB_TMR_SRC_CH)
-#घोषणा MLB_TMR_EVT_CH_OFS	(MLB_TMR_REGSZPCH * MLB_TMR_EVT_CH)
+#define MLB_TMR_SRC_CH_OFS	(MLB_TMR_REGSZPCH * MLB_TMR_SRC_CH)
+#define MLB_TMR_EVT_CH_OFS	(MLB_TMR_REGSZPCH * MLB_TMR_EVT_CH)
 
-#घोषणा MLB_TMR_SRC_TMCSR_OFS	(MLB_TMR_SRC_CH_OFS + MLB_TMR_TMCSR_OFS)
-#घोषणा MLB_TMR_SRC_TMR_OFS	(MLB_TMR_SRC_CH_OFS + MLB_TMR_TMR_OFS)
-#घोषणा MLB_TMR_SRC_TMRLR1_OFS	(MLB_TMR_SRC_CH_OFS + MLB_TMR_TMRLR1_OFS)
-#घोषणा MLB_TMR_SRC_TMRLR2_OFS	(MLB_TMR_SRC_CH_OFS + MLB_TMR_TMRLR2_OFS)
+#define MLB_TMR_SRC_TMCSR_OFS	(MLB_TMR_SRC_CH_OFS + MLB_TMR_TMCSR_OFS)
+#define MLB_TMR_SRC_TMR_OFS	(MLB_TMR_SRC_CH_OFS + MLB_TMR_TMR_OFS)
+#define MLB_TMR_SRC_TMRLR1_OFS	(MLB_TMR_SRC_CH_OFS + MLB_TMR_TMRLR1_OFS)
+#define MLB_TMR_SRC_TMRLR2_OFS	(MLB_TMR_SRC_CH_OFS + MLB_TMR_TMRLR2_OFS)
 
-#घोषणा MLB_TMR_EVT_TMCSR_OFS	(MLB_TMR_EVT_CH_OFS + MLB_TMR_TMCSR_OFS)
-#घोषणा MLB_TMR_EVT_TMR_OFS	(MLB_TMR_EVT_CH_OFS + MLB_TMR_TMR_OFS)
-#घोषणा MLB_TMR_EVT_TMRLR1_OFS	(MLB_TMR_EVT_CH_OFS + MLB_TMR_TMRLR1_OFS)
-#घोषणा MLB_TMR_EVT_TMRLR2_OFS	(MLB_TMR_EVT_CH_OFS + MLB_TMR_TMRLR2_OFS)
+#define MLB_TMR_EVT_TMCSR_OFS	(MLB_TMR_EVT_CH_OFS + MLB_TMR_TMCSR_OFS)
+#define MLB_TMR_EVT_TMR_OFS	(MLB_TMR_EVT_CH_OFS + MLB_TMR_TMR_OFS)
+#define MLB_TMR_EVT_TMRLR1_OFS	(MLB_TMR_EVT_CH_OFS + MLB_TMR_TMRLR1_OFS)
+#define MLB_TMR_EVT_TMRLR2_OFS	(MLB_TMR_EVT_CH_OFS + MLB_TMR_TMRLR2_OFS)
 
-#घोषणा MLB_TIMER_RATING	500
-#घोषणा MLB_TIMER_ONESHOT	0
-#घोषणा MLB_TIMER_PERIODIC	1
+#define MLB_TIMER_RATING	500
+#define MLB_TIMER_ONESHOT	0
+#define MLB_TIMER_PERIODIC	1
 
-अटल irqवापस_t mlb_समयr_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा घड़ी_event_device *clk = dev_id;
-	काष्ठा समयr_of *to = to_समयr_of(clk);
+static irqreturn_t mlb_timer_interrupt(int irq, void *dev_id)
+{
+	struct clock_event_device *clk = dev_id;
+	struct timer_of *to = to_timer_of(clk);
 	u32 val;
 
-	val = पढ़ोl_relaxed(समयr_of_base(to) + MLB_TMR_EVT_TMCSR_OFS);
+	val = readl_relaxed(timer_of_base(to) + MLB_TMR_EVT_TMCSR_OFS);
 	val &= ~MLB_TMR_TMCSR_UF;
-	ग_लिखोl_relaxed(val, समयr_of_base(to) + MLB_TMR_EVT_TMCSR_OFS);
+	writel_relaxed(val, timer_of_base(to) + MLB_TMR_EVT_TMCSR_OFS);
 
 	clk->event_handler(clk);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम mlb_evt_समयr_start(काष्ठा समयr_of *to, bool periodic)
-अणु
+static void mlb_evt_timer_start(struct timer_of *to, bool periodic)
+{
 	u32 val = MLB_TMR_TMCSR_CSL_DIV2;
 
 	val |= MLB_TMR_TMCSR_CNTE | MLB_TMR_TMCSR_TRG | MLB_TMR_TMCSR_INTE;
-	अगर (periodic)
+	if (periodic)
 		val |= MLB_TMR_TMCSR_RELD;
-	ग_लिखोl_relaxed(val, समयr_of_base(to) + MLB_TMR_EVT_TMCSR_OFS);
-पूर्ण
+	writel_relaxed(val, timer_of_base(to) + MLB_TMR_EVT_TMCSR_OFS);
+}
 
-अटल व्योम mlb_evt_समयr_stop(काष्ठा समयr_of *to)
-अणु
-	u32 val = पढ़ोl_relaxed(समयr_of_base(to) + MLB_TMR_EVT_TMCSR_OFS);
+static void mlb_evt_timer_stop(struct timer_of *to)
+{
+	u32 val = readl_relaxed(timer_of_base(to) + MLB_TMR_EVT_TMCSR_OFS);
 
 	val &= ~MLB_TMR_TMCSR_CNTE;
-	ग_लिखोl_relaxed(val, समयr_of_base(to) + MLB_TMR_EVT_TMCSR_OFS);
-पूर्ण
+	writel_relaxed(val, timer_of_base(to) + MLB_TMR_EVT_TMCSR_OFS);
+}
 
-अटल व्योम mlb_evt_समयr_रेजिस्टर_count(काष्ठा समयr_of *to, अचिन्हित दीर्घ cnt)
-अणु
-	ग_लिखोl_relaxed(cnt, समयr_of_base(to) + MLB_TMR_EVT_TMRLR1_OFS);
-पूर्ण
+static void mlb_evt_timer_register_count(struct timer_of *to, unsigned long cnt)
+{
+	writel_relaxed(cnt, timer_of_base(to) + MLB_TMR_EVT_TMRLR1_OFS);
+}
 
-अटल पूर्णांक mlb_set_state_periodic(काष्ठा घड़ी_event_device *clk)
-अणु
-	काष्ठा समयr_of *to = to_समयr_of(clk);
+static int mlb_set_state_periodic(struct clock_event_device *clk)
+{
+	struct timer_of *to = to_timer_of(clk);
 
-	mlb_evt_समयr_stop(to);
-	mlb_evt_समयr_रेजिस्टर_count(to, to->of_clk.period);
-	mlb_evt_समयr_start(to, MLB_TIMER_PERIODIC);
-	वापस 0;
-पूर्ण
+	mlb_evt_timer_stop(to);
+	mlb_evt_timer_register_count(to, to->of_clk.period);
+	mlb_evt_timer_start(to, MLB_TIMER_PERIODIC);
+	return 0;
+}
 
-अटल पूर्णांक mlb_set_state_oneshot(काष्ठा घड़ी_event_device *clk)
-अणु
-	काष्ठा समयr_of *to = to_समयr_of(clk);
+static int mlb_set_state_oneshot(struct clock_event_device *clk)
+{
+	struct timer_of *to = to_timer_of(clk);
 
-	mlb_evt_समयr_stop(to);
-	mlb_evt_समयr_start(to, MLB_TIMER_ONESHOT);
-	वापस 0;
-पूर्ण
+	mlb_evt_timer_stop(to);
+	mlb_evt_timer_start(to, MLB_TIMER_ONESHOT);
+	return 0;
+}
 
-अटल पूर्णांक mlb_set_state_shutकरोwn(काष्ठा घड़ी_event_device *clk)
-अणु
-	काष्ठा समयr_of *to = to_समयr_of(clk);
+static int mlb_set_state_shutdown(struct clock_event_device *clk)
+{
+	struct timer_of *to = to_timer_of(clk);
 
-	mlb_evt_समयr_stop(to);
-	वापस 0;
-पूर्ण
+	mlb_evt_timer_stop(to);
+	return 0;
+}
 
-अटल पूर्णांक mlb_clkevt_next_event(अचिन्हित दीर्घ event,
-				   काष्ठा घड़ी_event_device *clk)
-अणु
-	काष्ठा समयr_of *to = to_समयr_of(clk);
+static int mlb_clkevt_next_event(unsigned long event,
+				   struct clock_event_device *clk)
+{
+	struct timer_of *to = to_timer_of(clk);
 
-	mlb_evt_समयr_stop(to);
-	mlb_evt_समयr_रेजिस्टर_count(to, event);
-	mlb_evt_समयr_start(to, MLB_TIMER_ONESHOT);
-	वापस 0;
-पूर्ण
+	mlb_evt_timer_stop(to);
+	mlb_evt_timer_register_count(to, event);
+	mlb_evt_timer_start(to, MLB_TIMER_ONESHOT);
+	return 0;
+}
 
-अटल पूर्णांक mlb_config_घड़ी_source(काष्ठा समयr_of *to)
-अणु
+static int mlb_config_clock_source(struct timer_of *to)
+{
 	u32 val = MLB_TMR_TMCSR_CSL_DIV2;
 
-	ग_लिखोl_relaxed(val, समयr_of_base(to) + MLB_TMR_SRC_TMCSR_OFS);
-	ग_लिखोl_relaxed(~0, समयr_of_base(to) + MLB_TMR_SRC_TMRLR1_OFS);
-	ग_लिखोl_relaxed(~0, समयr_of_base(to) + MLB_TMR_SRC_TMRLR2_OFS);
+	writel_relaxed(val, timer_of_base(to) + MLB_TMR_SRC_TMCSR_OFS);
+	writel_relaxed(~0, timer_of_base(to) + MLB_TMR_SRC_TMRLR1_OFS);
+	writel_relaxed(~0, timer_of_base(to) + MLB_TMR_SRC_TMRLR2_OFS);
 	val |= MLB_TMR_TMCSR_RELD | MLB_TMR_TMCSR_CNTE | MLB_TMR_TMCSR_TRG;
-	ग_लिखोl_relaxed(val, समयr_of_base(to) + MLB_TMR_SRC_TMCSR_OFS);
-	वापस 0;
-पूर्ण
+	writel_relaxed(val, timer_of_base(to) + MLB_TMR_SRC_TMCSR_OFS);
+	return 0;
+}
 
-अटल पूर्णांक mlb_config_घड़ी_event(काष्ठा समयr_of *to)
-अणु
-	ग_लिखोl_relaxed(0, समयr_of_base(to) + MLB_TMR_EVT_TMCSR_OFS);
-	वापस 0;
-पूर्ण
+static int mlb_config_clock_event(struct timer_of *to)
+{
+	writel_relaxed(0, timer_of_base(to) + MLB_TMR_EVT_TMCSR_OFS);
+	return 0;
+}
 
-अटल काष्ठा समयr_of to = अणु
+static struct timer_of to = {
 	.flags = TIMER_OF_IRQ | TIMER_OF_BASE | TIMER_OF_CLOCK,
 
-	.clkevt = अणु
+	.clkevt = {
 		.name = "mlb-clkevt",
 		.rating = MLB_TIMER_RATING,
 		.cpumask = cpu_possible_mask,
 		.features = CLOCK_EVT_FEAT_DYNIRQ | CLOCK_EVT_FEAT_ONESHOT,
 		.set_state_oneshot = mlb_set_state_oneshot,
 		.set_state_periodic = mlb_set_state_periodic,
-		.set_state_shutकरोwn = mlb_set_state_shutकरोwn,
+		.set_state_shutdown = mlb_set_state_shutdown,
 		.set_next_event = mlb_clkevt_next_event,
-	पूर्ण,
+	},
 
-	.of_irq = अणु
+	.of_irq = {
 		.flags = IRQF_TIMER | IRQF_IRQPOLL,
-		.handler = mlb_समयr_पूर्णांकerrupt,
-	पूर्ण,
-पूर्ण;
+		.handler = mlb_timer_interrupt,
+	},
+};
 
-अटल u64 notrace mlb_समयr_sched_पढ़ो(व्योम)
-अणु
-	वापस ~पढ़ोl_relaxed(समयr_of_base(&to) + MLB_TMR_SRC_TMR_OFS);
-पूर्ण
+static u64 notrace mlb_timer_sched_read(void)
+{
+	return ~readl_relaxed(timer_of_base(&to) + MLB_TMR_SRC_TMR_OFS);
+}
 
-अटल पूर्णांक __init mlb_समयr_init(काष्ठा device_node *node)
-अणु
-	पूर्णांक ret;
-	अचिन्हित दीर्घ rate;
+static int __init mlb_timer_init(struct device_node *node)
+{
+	int ret;
+	unsigned long rate;
 
-	ret = समयr_of_init(node, &to);
-	अगर (ret)
-		वापस ret;
+	ret = timer_of_init(node, &to);
+	if (ret)
+		return ret;
 
-	rate = समयr_of_rate(&to) / MLB_TMR_DIV_CNT;
-	mlb_config_घड़ी_source(&to);
-	घड़ीsource_mmio_init(समयr_of_base(&to) + MLB_TMR_SRC_TMR_OFS,
+	rate = timer_of_rate(&to) / MLB_TMR_DIV_CNT;
+	mlb_config_clock_source(&to);
+	clocksource_mmio_init(timer_of_base(&to) + MLB_TMR_SRC_TMR_OFS,
 		node->name, rate, MLB_TIMER_RATING, 32,
-		घड़ीsource_mmio_पढ़ोl_करोwn);
-	sched_घड़ी_रेजिस्टर(mlb_समयr_sched_पढ़ो, 32, rate);
-	mlb_config_घड़ी_event(&to);
-	घड़ीevents_config_and_रेजिस्टर(&to.clkevt, समयr_of_rate(&to), 15,
+		clocksource_mmio_readl_down);
+	sched_clock_register(mlb_timer_sched_read, 32, rate);
+	mlb_config_clock_event(&to);
+	clockevents_config_and_register(&to.clkevt, timer_of_rate(&to), 15,
 		0xffffffff);
-	वापस 0;
-पूर्ण
-TIMER_OF_DECLARE(mlb_periसमयr, "socionext,milbeaut-timer",
-		mlb_समयr_init);
+	return 0;
+}
+TIMER_OF_DECLARE(mlb_peritimer, "socionext,milbeaut-timer",
+		mlb_timer_init);

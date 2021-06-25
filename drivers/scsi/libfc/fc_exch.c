@@ -1,156 +1,155 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright(c) 2007 Intel Corporation. All rights reserved.
  * Copyright(c) 2008 Red Hat, Inc.  All rights reserved.
  * Copyright(c) 2008 Mike Christie
  *
- * Maपूर्णांकained at www.Open-FCoE.org
+ * Maintained at www.Open-FCoE.org
  */
 
 /*
  * Fibre Channel exchange and sequence handling.
  */
 
-#समावेश <linux/समयr.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/err.h>
-#समावेश <linux/export.h>
-#समावेश <linux/log2.h>
+#include <linux/timer.h>
+#include <linux/slab.h>
+#include <linux/err.h>
+#include <linux/export.h>
+#include <linux/log2.h>
 
-#समावेश <scsi/fc/fc_fc2.h>
+#include <scsi/fc/fc_fc2.h>
 
-#समावेश <scsi/libfc.h>
+#include <scsi/libfc.h>
 
-#समावेश "fc_libfc.h"
+#include "fc_libfc.h"
 
-u16	fc_cpu_mask;		/* cpu mask क्रम possible cpus */
+u16	fc_cpu_mask;		/* cpu mask for possible cpus */
 EXPORT_SYMBOL(fc_cpu_mask);
-अटल u16	fc_cpu_order;	/* 2's घातer to represent total possible cpus */
-अटल काष्ठा kmem_cache *fc_em_cachep;	       /* cache क्रम exchanges */
-अटल काष्ठा workqueue_काष्ठा *fc_exch_workqueue;
+static u16	fc_cpu_order;	/* 2's power to represent total possible cpus */
+static struct kmem_cache *fc_em_cachep;	       /* cache for exchanges */
+static struct workqueue_struct *fc_exch_workqueue;
 
 /*
- * Structure and function definitions क्रम managing Fibre Channel Exchanges
+ * Structure and function definitions for managing Fibre Channel Exchanges
  * and Sequences.
  *
- * The three primary काष्ठाures used here are fc_exch_mgr, fc_exch, and fc_seq.
+ * The three primary structures used here are fc_exch_mgr, fc_exch, and fc_seq.
  *
- * fc_exch_mgr holds the exchange state क्रम an N port
+ * fc_exch_mgr holds the exchange state for an N port
  *
- * fc_exch holds state क्रम one exchange and links to its active sequence.
+ * fc_exch holds state for one exchange and links to its active sequence.
  *
- * fc_seq holds the state क्रम an inभागidual sequence.
+ * fc_seq holds the state for an individual sequence.
  */
 
 /**
- * काष्ठा fc_exch_pool - Per cpu exchange pool
- * @next_index:	  Next possible मुक्त exchange index
+ * struct fc_exch_pool - Per cpu exchange pool
+ * @next_index:	  Next possible free exchange index
  * @total_exches: Total allocated exchanges
  * @lock:	  Exch pool lock
  * @ex_list:	  List of exchanges
- * @left:	  Cache of मुक्त slot in exch array
- * @right:	  Cache of मुक्त slot in exch array
+ * @left:	  Cache of free slot in exch array
+ * @right:	  Cache of free slot in exch array
  *
- * This काष्ठाure manages per cpu exchanges in array of exchange poपूर्णांकers.
- * This array is allocated followed by काष्ठा fc_exch_pool memory क्रम
- * asचिन्हित range of exchanges to per cpu pool.
+ * This structure manages per cpu exchanges in array of exchange pointers.
+ * This array is allocated followed by struct fc_exch_pool memory for
+ * assigned range of exchanges to per cpu pool.
  */
-काष्ठा fc_exch_pool अणु
+struct fc_exch_pool {
 	spinlock_t	 lock;
-	काष्ठा list_head ex_list;
+	struct list_head ex_list;
 	u16		 next_index;
 	u16		 total_exches;
 
 	u16		 left;
 	u16		 right;
-पूर्ण ____cacheline_aligned_in_smp;
+} ____cacheline_aligned_in_smp;
 
 /**
- * काष्ठा fc_exch_mgr - The Exchange Manager (EM).
- * @class:	    Default class क्रम new sequences
+ * struct fc_exch_mgr - The Exchange Manager (EM).
+ * @class:	    Default class for new sequences
  * @kref:	    Reference counter
  * @min_xid:	    Minimum exchange ID
  * @max_xid:	    Maximum exchange ID
- * @ep_pool:	    Reserved exchange poपूर्णांकers
+ * @ep_pool:	    Reserved exchange pointers
  * @pool_max_index: Max exch array index in exch pool
  * @pool:	    Per cpu exch pool
  * @lport:	    Local exchange port
- * @stats:	    Statistics काष्ठाure
+ * @stats:	    Statistics structure
  *
- * This काष्ठाure is the center क्रम creating exchanges and sequences.
+ * This structure is the center for creating exchanges and sequences.
  * It manages the allocation of exchange IDs.
  */
-काष्ठा fc_exch_mgr अणु
-	काष्ठा fc_exch_pool __percpu *pool;
+struct fc_exch_mgr {
+	struct fc_exch_pool __percpu *pool;
 	mempool_t	*ep_pool;
-	काष्ठा fc_lport	*lport;
-	क्रमागत fc_class	class;
-	काष्ठा kref	kref;
+	struct fc_lport	*lport;
+	enum fc_class	class;
+	struct kref	kref;
 	u16		min_xid;
 	u16		max_xid;
 	u16		pool_max_index;
 
-	काष्ठा अणु
-		atomic_t no_मुक्त_exch;
-		atomic_t no_मुक्त_exch_xid;
+	struct {
+		atomic_t no_free_exch;
+		atomic_t no_free_exch_xid;
 		atomic_t xid_not_found;
 		atomic_t xid_busy;
 		atomic_t seq_not_found;
 		atomic_t non_bls_resp;
-	पूर्ण stats;
-पूर्ण;
+	} stats;
+};
 
 /**
- * काष्ठा fc_exch_mgr_anchor - primary काष्ठाure क्रम list of EMs
+ * struct fc_exch_mgr_anchor - primary structure for list of EMs
  * @ema_list: Exchange Manager Anchor list
  * @mp:	      Exchange Manager associated with this anchor
- * @match:    Routine to determine अगर this anchor's EM should be used
+ * @match:    Routine to determine if this anchor's EM should be used
  *
  * When walking the list of anchors the match routine will be called
- * क्रम each anchor to determine अगर that EM should be used. The last
+ * for each anchor to determine if that EM should be used. The last
  * anchor in the list will always match to handle any exchanges not
- * handled by other EMs. The non-शेष EMs would be added to the
+ * handled by other EMs. The non-default EMs would be added to the
  * anchor list by HW that provides offloads.
  */
-काष्ठा fc_exch_mgr_anchor अणु
-	काष्ठा list_head ema_list;
-	काष्ठा fc_exch_mgr *mp;
-	bool (*match)(काष्ठा fc_frame *);
-पूर्ण;
+struct fc_exch_mgr_anchor {
+	struct list_head ema_list;
+	struct fc_exch_mgr *mp;
+	bool (*match)(struct fc_frame *);
+};
 
-अटल व्योम fc_exch_rrq(काष्ठा fc_exch *);
-अटल व्योम fc_seq_ls_acc(काष्ठा fc_frame *);
-अटल व्योम fc_seq_ls_rjt(काष्ठा fc_frame *, क्रमागत fc_els_rjt_reason,
-			  क्रमागत fc_els_rjt_explan);
-अटल व्योम fc_exch_els_rec(काष्ठा fc_frame *);
-अटल व्योम fc_exch_els_rrq(काष्ठा fc_frame *);
+static void fc_exch_rrq(struct fc_exch *);
+static void fc_seq_ls_acc(struct fc_frame *);
+static void fc_seq_ls_rjt(struct fc_frame *, enum fc_els_rjt_reason,
+			  enum fc_els_rjt_explan);
+static void fc_exch_els_rec(struct fc_frame *);
+static void fc_exch_els_rrq(struct fc_frame *);
 
 /*
  * Internal implementation notes.
  *
- * The exchange manager is one by शेष in libfc but LLD may choose
+ * The exchange manager is one by default in libfc but LLD may choose
  * to have one per CPU. The sequence manager is one per exchange manager
  * and currently never separated.
  *
- * Section 9.8 in FC-FS-2 specअगरies:  "The SEQ_ID is a one-byte field
- * asचिन्हित by the Sequence Initiator that shall be unique क्रम a specअगरic
- * D_ID and S_ID pair जबतक the Sequence is खोलो."   Note that it isn't
- * qualअगरied by exchange ID, which one might think it would be.
- * In practice this limits the number of खोलो sequences and exchanges to 256
- * per session.	 For most tarमाला_लो we could treat this limit as per exchange.
+ * Section 9.8 in FC-FS-2 specifies:  "The SEQ_ID is a one-byte field
+ * assigned by the Sequence Initiator that shall be unique for a specific
+ * D_ID and S_ID pair while the Sequence is open."   Note that it isn't
+ * qualified by exchange ID, which one might think it would be.
+ * In practice this limits the number of open sequences and exchanges to 256
+ * per session.	 For most targets we could treat this limit as per exchange.
  *
- * The exchange and its sequence are मुक्तd when the last sequence is received.
- * It's possible क्रम the remote port to leave an exchange खोलो without
+ * The exchange and its sequence are freed when the last sequence is received.
+ * It's possible for the remote port to leave an exchange open without
  * sending any sequences.
  *
  * Notes on reference counts:
  *
- * Exchanges are reference counted and exchange माला_लो मुक्तd when the reference
+ * Exchanges are reference counted and exchange gets freed when the reference
  * count becomes zero.
  *
  * Timeouts:
- * Sequences are समयd out क्रम E_D_TOV and R_A_TOV.
+ * Sequences are timed out for E_D_TOV and R_A_TOV.
  *
  * Sequence event handling:
  *
@@ -162,27 +161,27 @@ EXPORT_SYMBOL(fc_cpu_mask);
  *	    This applies only to class F.
  *	    The sequence is marked complete.
  *	ULP completion.
- *	    The upper layer calls fc_exch_करोne() when करोne
+ *	    The upper layer calls fc_exch_done() when done
  *	    with exchange and sequence tuple.
  *	RX-inferred completion.
  *	    When we receive the next sequence on the same exchange, we can
  *	    retire the previous sequence ID.  (XXX not implemented).
  *	Timeout.
- *	    R_A_TOV मुक्तs the sequence ID.  If we're रुकोing क्रम ACK,
- *	    E_D_TOV causes पात and calls upper layer response handler
+ *	    R_A_TOV frees the sequence ID.  If we're waiting for ACK,
+ *	    E_D_TOV causes abort and calls upper layer response handler
  *	    with FC_EX_TIMEOUT error.
  *	Receive RJT
  *	    XXX defer.
  *	Send ABTS
- *	    On समयout.
+ *	    On timeout.
  *
  * The following events may occur on recipient sequences:
  *
  *	Receive
- *	    Allocate sequence क्रम first frame received.
+ *	    Allocate sequence for first frame received.
  *	    Hold during receive handler.
  *	    Release when final frame received.
- *	    Keep status of last N of these क्रम the ELS RES command.  XXX TBD.
+ *	    Keep status of last N of these for the ELS RES command.  XXX TBD.
  *	Receive ABTS
  *	    Deallocate sequence
  *	Send RJT
@@ -195,20 +194,20 @@ EXPORT_SYMBOL(fc_cpu_mask);
 /*
  * Locking notes:
  *
- * The EM code run in a per-CPU worker thपढ़ो.
+ * The EM code run in a per-CPU worker thread.
  *
- * To protect against concurrency between a worker thपढ़ो code and समयrs,
+ * To protect against concurrency between a worker thread code and timers,
  * sequence allocation and deallocation must be locked.
- *  - exchange refcnt can be करोne atomicly without locks.
+ *  - exchange refcnt can be done atomicly without locks.
  *  - sequence allocation must be locked by exch lock.
- *  - If the EM pool lock and ex_lock must be taken at the same समय, then the
- *    EM pool lock must be taken beक्रमe the ex_lock.
+ *  - If the EM pool lock and ex_lock must be taken at the same time, then the
+ *    EM pool lock must be taken before the ex_lock.
  */
 
 /*
- * opcode names क्रम debugging.
+ * opcode names for debugging.
  */
-अटल अक्षर *fc_exch_rctl_names[] = FC_RCTL_NAMES_INIT;
+static char *fc_exch_rctl_names[] = FC_RCTL_NAMES_INIT;
 
 /**
  * fc_exch_name_lookup() - Lookup name by opcode
@@ -216,64 +215,64 @@ EXPORT_SYMBOL(fc_cpu_mask);
  * @table:     Opcode/name table
  * @max_index: Index not to be exceeded
  *
- * This routine is used to determine a human-पढ़ोable string identअगरying
+ * This routine is used to determine a human-readable string identifying
  * a R_CTL opcode.
  */
-अटल अंतरभूत स्थिर अक्षर *fc_exch_name_lookup(अचिन्हित पूर्णांक op, अक्षर **table,
-					      अचिन्हित पूर्णांक max_index)
-अणु
-	स्थिर अक्षर *name = शून्य;
+static inline const char *fc_exch_name_lookup(unsigned int op, char **table,
+					      unsigned int max_index)
+{
+	const char *name = NULL;
 
-	अगर (op < max_index)
+	if (op < max_index)
 		name = table[op];
-	अगर (!name)
+	if (!name)
 		name = "unknown";
-	वापस name;
-पूर्ण
+	return name;
+}
 
 /**
- * fc_exch_rctl_name() - Wrapper routine क्रम fc_exch_name_lookup()
+ * fc_exch_rctl_name() - Wrapper routine for fc_exch_name_lookup()
  * @op: The opcode to be looked up
  */
-अटल स्थिर अक्षर *fc_exch_rctl_name(अचिन्हित पूर्णांक op)
-अणु
-	वापस fc_exch_name_lookup(op, fc_exch_rctl_names,
+static const char *fc_exch_rctl_name(unsigned int op)
+{
+	return fc_exch_name_lookup(op, fc_exch_rctl_names,
 				   ARRAY_SIZE(fc_exch_rctl_names));
-पूर्ण
+}
 
 /**
  * fc_exch_hold() - Increment an exchange's reference count
  * @ep: Echange to be held
  */
-अटल अंतरभूत व्योम fc_exch_hold(काष्ठा fc_exch *ep)
-अणु
+static inline void fc_exch_hold(struct fc_exch *ep)
+{
 	atomic_inc(&ep->ex_refcnt);
-पूर्ण
+}
 
 /**
  * fc_exch_setup_hdr() - Initialize a FC header by initializing some fields
- *			 and determine SOF and खातापूर्ण.
+ *			 and determine SOF and EOF.
  * @ep:	   The exchange to that will use the header
- * @fp:	   The frame whose header is to be modअगरied
- * @f_ctl: F_CTL bits that will be used क्रम the frame header
+ * @fp:	   The frame whose header is to be modified
+ * @f_ctl: F_CTL bits that will be used for the frame header
  *
  * The fields initialized by this routine are: fh_ox_id, fh_rx_id,
- * fh_seq_id, fh_seq_cnt and the SOF and खातापूर्ण.
+ * fh_seq_id, fh_seq_cnt and the SOF and EOF.
  */
-अटल व्योम fc_exch_setup_hdr(काष्ठा fc_exch *ep, काष्ठा fc_frame *fp,
+static void fc_exch_setup_hdr(struct fc_exch *ep, struct fc_frame *fp,
 			      u32 f_ctl)
-अणु
-	काष्ठा fc_frame_header *fh = fc_frame_header_get(fp);
+{
+	struct fc_frame_header *fh = fc_frame_header_get(fp);
 	u16 fill;
 
 	fr_sof(fp) = ep->class;
-	अगर (ep->seq.cnt)
+	if (ep->seq.cnt)
 		fr_sof(fp) = fc_sof_normal(ep->class);
 
-	अगर (f_ctl & FC_FC_END_SEQ) अणु
-		fr_eof(fp) = FC_खातापूर्ण_T;
-		अगर (fc_sof_needs_ack((क्रमागत fc_sof)ep->class))
-			fr_eof(fp) = FC_खातापूर्ण_N;
+	if (f_ctl & FC_FC_END_SEQ) {
+		fr_eof(fp) = FC_EOF_T;
+		if (fc_sof_needs_ack((enum fc_sof)ep->class))
+			fr_eof(fp) = FC_EOF_N;
 		/*
 		 * From F_CTL.
 		 * The number of fill bytes to make the length a 4-byte
@@ -284,122 +283,122 @@ EXPORT_SYMBOL(fc_cpu_mask);
 		 * the transport.
 		 */
 		fill = fr_len(fp) & 3;
-		अगर (fill) अणु
+		if (fill) {
 			fill = 4 - fill;
 			/* TODO, this may be a problem with fragmented skb */
 			skb_put(fp_skb(fp), fill);
 			hton24(fh->fh_f_ctl, f_ctl | fill);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		WARN_ON(fr_len(fp) % 4 != 0);	/* no pad to non last frame */
-		fr_eof(fp) = FC_खातापूर्ण_N;
-	पूर्ण
+		fr_eof(fp) = FC_EOF_N;
+	}
 
-	/* Initialize reमुख्यing fh fields from fc_fill_fc_hdr */
+	/* Initialize remaining fh fields from fc_fill_fc_hdr */
 	fh->fh_ox_id = htons(ep->oxid);
 	fh->fh_rx_id = htons(ep->rxid);
 	fh->fh_seq_id = ep->seq.id;
 	fh->fh_seq_cnt = htons(ep->seq.cnt);
-पूर्ण
+}
 
 /**
  * fc_exch_release() - Decrement an exchange's reference count
  * @ep: Exchange to be released
  *
  * If the reference count reaches zero and the exchange is complete,
- * it is मुक्तd.
+ * it is freed.
  */
-अटल व्योम fc_exch_release(काष्ठा fc_exch *ep)
-अणु
-	काष्ठा fc_exch_mgr *mp;
+static void fc_exch_release(struct fc_exch *ep)
+{
+	struct fc_exch_mgr *mp;
 
-	अगर (atomic_dec_and_test(&ep->ex_refcnt)) अणु
+	if (atomic_dec_and_test(&ep->ex_refcnt)) {
 		mp = ep->em;
-		अगर (ep->deकाष्ठाor)
-			ep->deकाष्ठाor(&ep->seq, ep->arg);
+		if (ep->destructor)
+			ep->destructor(&ep->seq, ep->arg);
 		WARN_ON(!(ep->esb_stat & ESB_ST_COMPLETE));
-		mempool_मुक्त(ep, mp->ep_pool);
-	पूर्ण
-पूर्ण
+		mempool_free(ep, mp->ep_pool);
+	}
+}
 
 /**
- * fc_exch_समयr_cancel() - cancel exch समयr
- * @ep:		The exchange whose समयr to be canceled
+ * fc_exch_timer_cancel() - cancel exch timer
+ * @ep:		The exchange whose timer to be canceled
  */
-अटल अंतरभूत व्योम fc_exch_समयr_cancel(काष्ठा fc_exch *ep)
-अणु
-	अगर (cancel_delayed_work(&ep->समयout_work)) अणु
+static inline void fc_exch_timer_cancel(struct fc_exch *ep)
+{
+	if (cancel_delayed_work(&ep->timeout_work)) {
 		FC_EXCH_DBG(ep, "Exchange timer canceled\n");
-		atomic_dec(&ep->ex_refcnt); /* drop hold क्रम समयr */
-	पूर्ण
-पूर्ण
+		atomic_dec(&ep->ex_refcnt); /* drop hold for timer */
+	}
+}
 
 /**
- * fc_exch_समयr_set_locked() - Start a समयr क्रम an exchange w/ the
+ * fc_exch_timer_set_locked() - Start a timer for an exchange w/ the
  *				the exchange lock held
- * @ep:		The exchange whose समयr will start
- * @समयr_msec: The समयout period
+ * @ep:		The exchange whose timer will start
+ * @timer_msec: The timeout period
  *
- * Used क्रम upper level protocols to समय out the exchange.
- * The समयr is cancelled when it fires or when the exchange completes.
+ * Used for upper level protocols to time out the exchange.
+ * The timer is cancelled when it fires or when the exchange completes.
  */
-अटल अंतरभूत व्योम fc_exch_समयr_set_locked(काष्ठा fc_exch *ep,
-					    अचिन्हित पूर्णांक समयr_msec)
-अणु
-	अगर (ep->state & (FC_EX_RST_CLEANUP | FC_EX_DONE))
-		वापस;
+static inline void fc_exch_timer_set_locked(struct fc_exch *ep,
+					    unsigned int timer_msec)
+{
+	if (ep->state & (FC_EX_RST_CLEANUP | FC_EX_DONE))
+		return;
 
-	FC_EXCH_DBG(ep, "Exchange timer armed : %d msecs\n", समयr_msec);
+	FC_EXCH_DBG(ep, "Exchange timer armed : %d msecs\n", timer_msec);
 
-	fc_exch_hold(ep);		/* hold क्रम समयr */
-	अगर (!queue_delayed_work(fc_exch_workqueue, &ep->समयout_work,
-				msecs_to_jअगरfies(समयr_msec))) अणु
+	fc_exch_hold(ep);		/* hold for timer */
+	if (!queue_delayed_work(fc_exch_workqueue, &ep->timeout_work,
+				msecs_to_jiffies(timer_msec))) {
 		FC_EXCH_DBG(ep, "Exchange already queued\n");
 		fc_exch_release(ep);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * fc_exch_समयr_set() - Lock the exchange and set the समयr
- * @ep:		The exchange whose समयr will start
- * @समयr_msec: The समयout period
+ * fc_exch_timer_set() - Lock the exchange and set the timer
+ * @ep:		The exchange whose timer will start
+ * @timer_msec: The timeout period
  */
-अटल व्योम fc_exch_समयr_set(काष्ठा fc_exch *ep, अचिन्हित पूर्णांक समयr_msec)
-अणु
+static void fc_exch_timer_set(struct fc_exch *ep, unsigned int timer_msec)
+{
 	spin_lock_bh(&ep->ex_lock);
-	fc_exch_समयr_set_locked(ep, समयr_msec);
+	fc_exch_timer_set_locked(ep, timer_msec);
 	spin_unlock_bh(&ep->ex_lock);
-पूर्ण
+}
 
 /**
- * fc_exch_करोne_locked() - Complete an exchange with the exchange lock held
+ * fc_exch_done_locked() - Complete an exchange with the exchange lock held
  * @ep: The exchange that is complete
  *
- * Note: May sleep अगर invoked from outside a response handler.
+ * Note: May sleep if invoked from outside a response handler.
  */
-अटल पूर्णांक fc_exch_करोne_locked(काष्ठा fc_exch *ep)
-अणु
-	पूर्णांक rc = 1;
+static int fc_exch_done_locked(struct fc_exch *ep)
+{
+	int rc = 1;
 
 	/*
-	 * We must check क्रम completion in हाल there are two thपढ़ोs
+	 * We must check for completion in case there are two threads
 	 * tyring to complete this. But the rrq code will reuse the
-	 * ep, and in that हाल we only clear the resp and set it as
-	 * complete, so it can be reused by the समयr to send the rrq.
+	 * ep, and in that case we only clear the resp and set it as
+	 * complete, so it can be reused by the timer to send the rrq.
 	 */
-	अगर (ep->state & FC_EX_DONE)
-		वापस rc;
+	if (ep->state & FC_EX_DONE)
+		return rc;
 	ep->esb_stat |= ESB_ST_COMPLETE;
 
-	अगर (!(ep->esb_stat & ESB_ST_REC_QUAL)) अणु
+	if (!(ep->esb_stat & ESB_ST_REC_QUAL)) {
 		ep->state |= FC_EX_DONE;
-		fc_exch_समयr_cancel(ep);
+		fc_exch_timer_cancel(ep);
 		rc = 0;
-	पूर्ण
-	वापस rc;
-पूर्ण
+	}
+	return rc;
+}
 
-अटल काष्ठा fc_exch fc_quarantine_exch;
+static struct fc_exch fc_quarantine_exch;
 
 /**
  * fc_exch_ptr_get() - Return an exchange from an exchange pool
@@ -407,35 +406,35 @@ EXPORT_SYMBOL(fc_cpu_mask);
  * @index: Index of the exchange within the pool
  *
  * Use the index to get an exchange from within an exchange pool. exches
- * will poपूर्णांक to an array of exchange poपूर्णांकers. The index will select
+ * will point to an array of exchange pointers. The index will select
  * the exchange within the array.
  */
-अटल अंतरभूत काष्ठा fc_exch *fc_exch_ptr_get(काष्ठा fc_exch_pool *pool,
+static inline struct fc_exch *fc_exch_ptr_get(struct fc_exch_pool *pool,
 					      u16 index)
-अणु
-	काष्ठा fc_exch **exches = (काष्ठा fc_exch **)(pool + 1);
-	वापस exches[index];
-पूर्ण
+{
+	struct fc_exch **exches = (struct fc_exch **)(pool + 1);
+	return exches[index];
+}
 
 /**
  * fc_exch_ptr_set() - Assign an exchange to a slot in an exchange pool
  * @pool:  The pool to assign the exchange to
- * @index: The index in the pool where the exchange will be asचिन्हित
+ * @index: The index in the pool where the exchange will be assigned
  * @ep:	   The exchange to assign to the pool
  */
-अटल अंतरभूत व्योम fc_exch_ptr_set(काष्ठा fc_exch_pool *pool, u16 index,
-				   काष्ठा fc_exch *ep)
-अणु
-	((काष्ठा fc_exch **)(pool + 1))[index] = ep;
-पूर्ण
+static inline void fc_exch_ptr_set(struct fc_exch_pool *pool, u16 index,
+				   struct fc_exch *ep)
+{
+	((struct fc_exch **)(pool + 1))[index] = ep;
+}
 
 /**
  * fc_exch_delete() - Delete an exchange
  * @ep: The exchange to be deleted
  */
-अटल व्योम fc_exch_delete(काष्ठा fc_exch *ep)
-अणु
-	काष्ठा fc_exch_pool *pool;
+static void fc_exch_delete(struct fc_exch *ep)
+{
+	struct fc_exch_pool *pool;
 	u16 index;
 
 	pool = ep->pool;
@@ -443,39 +442,39 @@ EXPORT_SYMBOL(fc_cpu_mask);
 	WARN_ON(pool->total_exches <= 0);
 	pool->total_exches--;
 
-	/* update cache of मुक्त slot */
+	/* update cache of free slot */
 	index = (ep->xid - ep->em->min_xid) >> fc_cpu_order;
-	अगर (!(ep->state & FC_EX_QUARANTINE)) अणु
-		अगर (pool->left == FC_XID_UNKNOWN)
+	if (!(ep->state & FC_EX_QUARANTINE)) {
+		if (pool->left == FC_XID_UNKNOWN)
 			pool->left = index;
-		अन्यथा अगर (pool->right == FC_XID_UNKNOWN)
+		else if (pool->right == FC_XID_UNKNOWN)
 			pool->right = index;
-		अन्यथा
+		else
 			pool->next_index = index;
-		fc_exch_ptr_set(pool, index, शून्य);
-	पूर्ण अन्यथा अणु
+		fc_exch_ptr_set(pool, index, NULL);
+	} else {
 		fc_exch_ptr_set(pool, index, &fc_quarantine_exch);
-	पूर्ण
+	}
 	list_del(&ep->ex_list);
 	spin_unlock_bh(&pool->lock);
-	fc_exch_release(ep);	/* drop hold क्रम exch in mp */
-पूर्ण
+	fc_exch_release(ep);	/* drop hold for exch in mp */
+}
 
-अटल पूर्णांक fc_seq_send_locked(काष्ठा fc_lport *lport, काष्ठा fc_seq *sp,
-			      काष्ठा fc_frame *fp)
-अणु
-	काष्ठा fc_exch *ep;
-	काष्ठा fc_frame_header *fh = fc_frame_header_get(fp);
-	पूर्णांक error = -ENXIO;
+static int fc_seq_send_locked(struct fc_lport *lport, struct fc_seq *sp,
+			      struct fc_frame *fp)
+{
+	struct fc_exch *ep;
+	struct fc_frame_header *fh = fc_frame_header_get(fp);
+	int error = -ENXIO;
 	u32 f_ctl;
 	u8 fh_type = fh->fh_type;
 
 	ep = fc_seq_exch(sp);
 
-	अगर (ep->esb_stat & (ESB_ST_COMPLETE | ESB_ST_ABNORMAL)) अणु
-		fc_frame_मुक्त(fp);
-		जाओ out;
-	पूर्ण
+	if (ep->esb_stat & (ESB_ST_COMPLETE | ESB_ST_ABNORMAL)) {
+		fc_frame_free(fp);
+		goto out;
+	}
 
 	WARN_ON(!(ep->esb_stat & ESB_ST_SEQ_INIT));
 
@@ -484,14 +483,14 @@ EXPORT_SYMBOL(fc_cpu_mask);
 	fr_encaps(fp) = ep->encaps;
 
 	/*
-	 * update sequence count अगर this frame is carrying
+	 * update sequence count if this frame is carrying
 	 * multiple FC frames when sequence offload is enabled
 	 * by LLD.
 	 */
-	अगर (fr_max_payload(fp))
-		sp->cnt += DIV_ROUND_UP((fr_len(fp) - माप(*fh)),
+	if (fr_max_payload(fp))
+		sp->cnt += DIV_ROUND_UP((fr_len(fp) - sizeof(*fh)),
 					fr_max_payload(fp));
-	अन्यथा
+	else
 		sp->cnt++;
 
 	/*
@@ -499,20 +498,20 @@ EXPORT_SYMBOL(fc_cpu_mask);
 	 */
 	error = lport->tt.frame_send(lport, fp);
 
-	अगर (fh_type == FC_TYPE_BLS)
-		जाओ out;
+	if (fh_type == FC_TYPE_BLS)
+		goto out;
 
 	/*
 	 * Update the exchange and sequence flags,
-	 * assuming all frames क्रम the sequence have been sent.
-	 * We can only be called to send once क्रम each sequence.
+	 * assuming all frames for the sequence have been sent.
+	 * We can only be called to send once for each sequence.
 	 */
 	ep->f_ctl = f_ctl & ~FC_FC_FIRST_SEQ;	/* not first seq */
-	अगर (f_ctl & FC_FC_SEQ_INIT)
+	if (f_ctl & FC_FC_SEQ_INIT)
 		ep->esb_stat &= ~ESB_ST_SEQ_INIT;
 out:
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /**
  * fc_seq_send() - Send a frame using existing sequence/exchange pair
@@ -520,347 +519,347 @@ out:
  * @sp:	   The sequence to be sent
  * @fp:	   The frame to be sent on the exchange
  *
- * Note: The frame will be मुक्तd either by a direct call to fc_frame_मुक्त(fp)
- * or indirectly by calling libfc_function_ढाँचा.frame_send().
+ * Note: The frame will be freed either by a direct call to fc_frame_free(fp)
+ * or indirectly by calling libfc_function_template.frame_send().
  */
-पूर्णांक fc_seq_send(काष्ठा fc_lport *lport, काष्ठा fc_seq *sp, काष्ठा fc_frame *fp)
-अणु
-	काष्ठा fc_exch *ep;
-	पूर्णांक error;
+int fc_seq_send(struct fc_lport *lport, struct fc_seq *sp, struct fc_frame *fp)
+{
+	struct fc_exch *ep;
+	int error;
 	ep = fc_seq_exch(sp);
 	spin_lock_bh(&ep->ex_lock);
 	error = fc_seq_send_locked(lport, sp, fp);
 	spin_unlock_bh(&ep->ex_lock);
-	वापस error;
-पूर्ण
+	return error;
+}
 EXPORT_SYMBOL(fc_seq_send);
 
 /**
- * fc_seq_alloc() - Allocate a sequence क्रम a given exchange
- * @ep:	    The exchange to allocate a new sequence क्रम
+ * fc_seq_alloc() - Allocate a sequence for a given exchange
+ * @ep:	    The exchange to allocate a new sequence for
  * @seq_id: The sequence ID to be used
  *
- * We करोn't support multiple originated sequences on the same exchange.
+ * We don't support multiple originated sequences on the same exchange.
  * By implication, any previously originated sequence on this exchange
- * is complete, and we पुनः_स्मृतिate the same sequence.
+ * is complete, and we reallocate the same sequence.
  */
-अटल काष्ठा fc_seq *fc_seq_alloc(काष्ठा fc_exch *ep, u8 seq_id)
-अणु
-	काष्ठा fc_seq *sp;
+static struct fc_seq *fc_seq_alloc(struct fc_exch *ep, u8 seq_id)
+{
+	struct fc_seq *sp;
 
 	sp = &ep->seq;
 	sp->ssb_stat = 0;
 	sp->cnt = 0;
 	sp->id = seq_id;
-	वापस sp;
-पूर्ण
+	return sp;
+}
 
 /**
  * fc_seq_start_next_locked() - Allocate a new sequence on the same
  *				exchange as the supplied sequence
- * @sp: The sequence/exchange to get a new sequence क्रम
+ * @sp: The sequence/exchange to get a new sequence for
  */
-अटल काष्ठा fc_seq *fc_seq_start_next_locked(काष्ठा fc_seq *sp)
-अणु
-	काष्ठा fc_exch *ep = fc_seq_exch(sp);
+static struct fc_seq *fc_seq_start_next_locked(struct fc_seq *sp)
+{
+	struct fc_exch *ep = fc_seq_exch(sp);
 
 	sp = fc_seq_alloc(ep, ep->seq_id++);
 	FC_EXCH_DBG(ep, "f_ctl %6x seq %2x\n",
 		    ep->f_ctl, sp->id);
-	वापस sp;
-पूर्ण
+	return sp;
+}
 
 /**
  * fc_seq_start_next() - Lock the exchange and get a new sequence
- *			 क्रम a given sequence/exchange pair
- * @sp: The sequence/exchange to get a new exchange क्रम
+ *			 for a given sequence/exchange pair
+ * @sp: The sequence/exchange to get a new exchange for
  */
-काष्ठा fc_seq *fc_seq_start_next(काष्ठा fc_seq *sp)
-अणु
-	काष्ठा fc_exch *ep = fc_seq_exch(sp);
+struct fc_seq *fc_seq_start_next(struct fc_seq *sp)
+{
+	struct fc_exch *ep = fc_seq_exch(sp);
 
 	spin_lock_bh(&ep->ex_lock);
 	sp = fc_seq_start_next_locked(sp);
 	spin_unlock_bh(&ep->ex_lock);
 
-	वापस sp;
-पूर्ण
+	return sp;
+}
 EXPORT_SYMBOL(fc_seq_start_next);
 
 /*
- * Set the response handler क्रम the exchange associated with a sequence.
+ * Set the response handler for the exchange associated with a sequence.
  *
- * Note: May sleep अगर invoked from outside a response handler.
+ * Note: May sleep if invoked from outside a response handler.
  */
-व्योम fc_seq_set_resp(काष्ठा fc_seq *sp,
-		     व्योम (*resp)(काष्ठा fc_seq *, काष्ठा fc_frame *, व्योम *),
-		     व्योम *arg)
-अणु
-	काष्ठा fc_exch *ep = fc_seq_exch(sp);
-	DEFINE_WAIT(रुको);
+void fc_seq_set_resp(struct fc_seq *sp,
+		     void (*resp)(struct fc_seq *, struct fc_frame *, void *),
+		     void *arg)
+{
+	struct fc_exch *ep = fc_seq_exch(sp);
+	DEFINE_WAIT(wait);
 
 	spin_lock_bh(&ep->ex_lock);
-	जबतक (ep->resp_active && ep->resp_task != current) अणु
-		prepare_to_रुको(&ep->resp_wq, &रुको, TASK_UNINTERRUPTIBLE);
+	while (ep->resp_active && ep->resp_task != current) {
+		prepare_to_wait(&ep->resp_wq, &wait, TASK_UNINTERRUPTIBLE);
 		spin_unlock_bh(&ep->ex_lock);
 
 		schedule();
 
 		spin_lock_bh(&ep->ex_lock);
-	पूर्ण
-	finish_रुको(&ep->resp_wq, &रुको);
+	}
+	finish_wait(&ep->resp_wq, &wait);
 	ep->resp = resp;
 	ep->arg = arg;
 	spin_unlock_bh(&ep->ex_lock);
-पूर्ण
+}
 EXPORT_SYMBOL(fc_seq_set_resp);
 
 /**
- * fc_exch_पात_locked() - Abort an exchange
- * @ep:	The exchange to be पातed
- * @समयr_msec: The period of समय to रुको beक्रमe पातing
+ * fc_exch_abort_locked() - Abort an exchange
+ * @ep:	The exchange to be aborted
+ * @timer_msec: The period of time to wait before aborting
  *
  * Abort an exchange and sequence. Generally called because of a
- * exchange समयout or an पात from the upper layer.
+ * exchange timeout or an abort from the upper layer.
  *
- * A समयr_msec can be specअगरied क्रम पात समयout, अगर non-zero
- * समयr_msec value is specअगरied then exchange resp handler
- * will be called with समयout error अगर no response to पात.
+ * A timer_msec can be specified for abort timeout, if non-zero
+ * timer_msec value is specified then exchange resp handler
+ * will be called with timeout error if no response to abort.
  *
  * Locking notes:  Called with exch lock held
  *
- * Return value: 0 on success अन्यथा error code
+ * Return value: 0 on success else error code
  */
-अटल पूर्णांक fc_exch_पात_locked(काष्ठा fc_exch *ep,
-				अचिन्हित पूर्णांक समयr_msec)
-अणु
-	काष्ठा fc_seq *sp;
-	काष्ठा fc_frame *fp;
-	पूर्णांक error;
+static int fc_exch_abort_locked(struct fc_exch *ep,
+				unsigned int timer_msec)
+{
+	struct fc_seq *sp;
+	struct fc_frame *fp;
+	int error;
 
-	FC_EXCH_DBG(ep, "exch: abort, time %d msecs\n", समयr_msec);
-	अगर (ep->esb_stat & (ESB_ST_COMPLETE | ESB_ST_ABNORMAL) ||
-	    ep->state & (FC_EX_DONE | FC_EX_RST_CLEANUP)) अणु
+	FC_EXCH_DBG(ep, "exch: abort, time %d msecs\n", timer_msec);
+	if (ep->esb_stat & (ESB_ST_COMPLETE | ESB_ST_ABNORMAL) ||
+	    ep->state & (FC_EX_DONE | FC_EX_RST_CLEANUP)) {
 		FC_EXCH_DBG(ep, "exch: already completed esb %x state %x\n",
 			    ep->esb_stat, ep->state);
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
 	/*
-	 * Send the पात on a new sequence अगर possible.
+	 * Send the abort on a new sequence if possible.
 	 */
 	sp = fc_seq_start_next_locked(&ep->seq);
-	अगर (!sp)
-		वापस -ENOMEM;
+	if (!sp)
+		return -ENOMEM;
 
-	अगर (समयr_msec)
-		fc_exch_समयr_set_locked(ep, समयr_msec);
+	if (timer_msec)
+		fc_exch_timer_set_locked(ep, timer_msec);
 
-	अगर (ep->sid) अणु
+	if (ep->sid) {
 		/*
-		 * Send an पात क्रम the sequence that समयd out.
+		 * Send an abort for the sequence that timed out.
 		 */
 		fp = fc_frame_alloc(ep->lp, 0);
-		अगर (fp) अणु
+		if (fp) {
 			ep->esb_stat |= ESB_ST_SEQ_INIT;
 			fc_fill_fc_hdr(fp, FC_RCTL_BA_ABTS, ep->did, ep->sid,
 				       FC_TYPE_BLS, FC_FC_END_SEQ |
 				       FC_FC_SEQ_INIT, 0);
 			error = fc_seq_send_locked(ep->lp, sp, fp);
-		पूर्ण अन्यथा अणु
+		} else {
 			error = -ENOBUFS;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		/*
-		 * If not logged पूर्णांकo the fabric, करोn't send ABTS but leave
-		 * sequence active until next समयout.
+		 * If not logged into the fabric, don't send ABTS but leave
+		 * sequence active until next timeout.
 		 */
 		error = 0;
-	पूर्ण
+	}
 	ep->esb_stat |= ESB_ST_ABNORMAL;
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /**
- * fc_seq_exch_पात() - Abort an exchange and sequence
- * @req_sp:	The sequence to be पातed
- * @समयr_msec: The period of समय to रुको beक्रमe पातing
+ * fc_seq_exch_abort() - Abort an exchange and sequence
+ * @req_sp:	The sequence to be aborted
+ * @timer_msec: The period of time to wait before aborting
  *
- * Generally called because of a समयout or an पात from the upper layer.
+ * Generally called because of a timeout or an abort from the upper layer.
  *
- * Return value: 0 on success अन्यथा error code
+ * Return value: 0 on success else error code
  */
-पूर्णांक fc_seq_exch_पात(स्थिर काष्ठा fc_seq *req_sp, अचिन्हित पूर्णांक समयr_msec)
-अणु
-	काष्ठा fc_exch *ep;
-	पूर्णांक error;
+int fc_seq_exch_abort(const struct fc_seq *req_sp, unsigned int timer_msec)
+{
+	struct fc_exch *ep;
+	int error;
 
 	ep = fc_seq_exch(req_sp);
 	spin_lock_bh(&ep->ex_lock);
-	error = fc_exch_पात_locked(ep, समयr_msec);
+	error = fc_exch_abort_locked(ep, timer_msec);
 	spin_unlock_bh(&ep->ex_lock);
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /**
  * fc_invoke_resp() - invoke ep->resp()
  * @ep:	   The exchange to be operated on
- * @fp:	   The frame poपूर्णांकer to pass through to ->resp()
- * @sp:	   The sequence poपूर्णांकer to pass through to ->resp()
+ * @fp:	   The frame pointer to pass through to ->resp()
+ * @sp:	   The sequence pointer to pass through to ->resp()
  *
  * Notes:
  * It is assumed that after initialization finished (this means the
  * first unlock of ex_lock after fc_exch_alloc()) ep->resp and ep->arg are
- * modअगरied only via fc_seq_set_resp(). This guarantees that none of these
- * two variables changes अगर ep->resp_active > 0.
+ * modified only via fc_seq_set_resp(). This guarantees that none of these
+ * two variables changes if ep->resp_active > 0.
  *
- * If an fc_seq_set_resp() call is busy modअगरying ep->resp and ep->arg when
+ * If an fc_seq_set_resp() call is busy modifying ep->resp and ep->arg when
  * this function is invoked, the first spin_lock_bh() call in this function
- * will रुको until fc_seq_set_resp() has finished modअगरying these variables.
+ * will wait until fc_seq_set_resp() has finished modifying these variables.
  *
- * Since fc_exch_करोne() invokes fc_seq_set_resp() it is guaranteed that that
- * ep->resp() won't be invoked after fc_exch_करोne() has वापसed.
+ * Since fc_exch_done() invokes fc_seq_set_resp() it is guaranteed that that
+ * ep->resp() won't be invoked after fc_exch_done() has returned.
  *
- * The response handler itself may invoke fc_exch_करोne(), which will clear the
- * ep->resp poपूर्णांकer.
+ * The response handler itself may invoke fc_exch_done(), which will clear the
+ * ep->resp pointer.
  *
  * Return value:
- * Returns true अगर and only अगर ep->resp has been invoked.
+ * Returns true if and only if ep->resp has been invoked.
  */
-अटल bool fc_invoke_resp(काष्ठा fc_exch *ep, काष्ठा fc_seq *sp,
-			   काष्ठा fc_frame *fp)
-अणु
-	व्योम (*resp)(काष्ठा fc_seq *, काष्ठा fc_frame *fp, व्योम *arg);
-	व्योम *arg;
+static bool fc_invoke_resp(struct fc_exch *ep, struct fc_seq *sp,
+			   struct fc_frame *fp)
+{
+	void (*resp)(struct fc_seq *, struct fc_frame *fp, void *arg);
+	void *arg;
 	bool res = false;
 
 	spin_lock_bh(&ep->ex_lock);
 	ep->resp_active++;
-	अगर (ep->resp_task != current)
-		ep->resp_task = !ep->resp_task ? current : शून्य;
+	if (ep->resp_task != current)
+		ep->resp_task = !ep->resp_task ? current : NULL;
 	resp = ep->resp;
 	arg = ep->arg;
 	spin_unlock_bh(&ep->ex_lock);
 
-	अगर (resp) अणु
+	if (resp) {
 		resp(sp, fp, arg);
 		res = true;
-	पूर्ण
+	}
 
 	spin_lock_bh(&ep->ex_lock);
-	अगर (--ep->resp_active == 0)
-		ep->resp_task = शून्य;
+	if (--ep->resp_active == 0)
+		ep->resp_task = NULL;
 	spin_unlock_bh(&ep->ex_lock);
 
-	अगर (ep->resp_active == 0)
+	if (ep->resp_active == 0)
 		wake_up(&ep->resp_wq);
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
 /**
- * fc_exch_समयout() - Handle exchange समयr expiration
- * @work: The work_काष्ठा identअगरying the exchange that समयd out
+ * fc_exch_timeout() - Handle exchange timer expiration
+ * @work: The work_struct identifying the exchange that timed out
  */
-अटल व्योम fc_exch_समयout(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा fc_exch *ep = container_of(work, काष्ठा fc_exch,
-					  समयout_work.work);
-	काष्ठा fc_seq *sp = &ep->seq;
+static void fc_exch_timeout(struct work_struct *work)
+{
+	struct fc_exch *ep = container_of(work, struct fc_exch,
+					  timeout_work.work);
+	struct fc_seq *sp = &ep->seq;
 	u32 e_stat;
-	पूर्णांक rc = 1;
+	int rc = 1;
 
 	FC_EXCH_DBG(ep, "Exchange timed out state %x\n", ep->state);
 
 	spin_lock_bh(&ep->ex_lock);
-	अगर (ep->state & (FC_EX_RST_CLEANUP | FC_EX_DONE))
-		जाओ unlock;
+	if (ep->state & (FC_EX_RST_CLEANUP | FC_EX_DONE))
+		goto unlock;
 
 	e_stat = ep->esb_stat;
-	अगर (e_stat & ESB_ST_COMPLETE) अणु
+	if (e_stat & ESB_ST_COMPLETE) {
 		ep->esb_stat = e_stat & ~ESB_ST_REC_QUAL;
 		spin_unlock_bh(&ep->ex_lock);
-		अगर (e_stat & ESB_ST_REC_QUAL)
+		if (e_stat & ESB_ST_REC_QUAL)
 			fc_exch_rrq(ep);
-		जाओ करोne;
-	पूर्ण अन्यथा अणु
-		अगर (e_stat & ESB_ST_ABNORMAL)
-			rc = fc_exch_करोne_locked(ep);
+		goto done;
+	} else {
+		if (e_stat & ESB_ST_ABNORMAL)
+			rc = fc_exch_done_locked(ep);
 		spin_unlock_bh(&ep->ex_lock);
-		अगर (!rc)
+		if (!rc)
 			fc_exch_delete(ep);
 		fc_invoke_resp(ep, sp, ERR_PTR(-FC_EX_TIMEOUT));
-		fc_seq_set_resp(sp, शून्य, ep->arg);
-		fc_seq_exch_पात(sp, 2 * ep->r_a_tov);
-		जाओ करोne;
-	पूर्ण
+		fc_seq_set_resp(sp, NULL, ep->arg);
+		fc_seq_exch_abort(sp, 2 * ep->r_a_tov);
+		goto done;
+	}
 unlock:
 	spin_unlock_bh(&ep->ex_lock);
-करोne:
+done:
 	/*
-	 * This release matches the hold taken when the समयr was set.
+	 * This release matches the hold taken when the timer was set.
 	 */
 	fc_exch_release(ep);
-पूर्ण
+}
 
 /**
- * fc_exch_em_alloc() - Allocate an exchange from a specअगरied EM.
- * @lport: The local port that the exchange is क्रम
+ * fc_exch_em_alloc() - Allocate an exchange from a specified EM.
+ * @lport: The local port that the exchange is for
  * @mp:	   The exchange manager that will allocate the exchange
  *
- * Returns poपूर्णांकer to allocated fc_exch with exch lock held.
+ * Returns pointer to allocated fc_exch with exch lock held.
  */
-अटल काष्ठा fc_exch *fc_exch_em_alloc(काष्ठा fc_lport *lport,
-					काष्ठा fc_exch_mgr *mp)
-अणु
-	काष्ठा fc_exch *ep;
-	अचिन्हित पूर्णांक cpu;
+static struct fc_exch *fc_exch_em_alloc(struct fc_lport *lport,
+					struct fc_exch_mgr *mp)
+{
+	struct fc_exch *ep;
+	unsigned int cpu;
 	u16 index;
-	काष्ठा fc_exch_pool *pool;
+	struct fc_exch_pool *pool;
 
-	/* allocate memory क्रम exchange */
+	/* allocate memory for exchange */
 	ep = mempool_alloc(mp->ep_pool, GFP_ATOMIC);
-	अगर (!ep) अणु
-		atomic_inc(&mp->stats.no_मुक्त_exch);
-		जाओ out;
-	पूर्ण
-	स_रखो(ep, 0, माप(*ep));
+	if (!ep) {
+		atomic_inc(&mp->stats.no_free_exch);
+		goto out;
+	}
+	memset(ep, 0, sizeof(*ep));
 
 	cpu = get_cpu();
 	pool = per_cpu_ptr(mp->pool, cpu);
 	spin_lock_bh(&pool->lock);
 	put_cpu();
 
-	/* peek cache of मुक्त slot */
-	अगर (pool->left != FC_XID_UNKNOWN) अणु
-		अगर (!WARN_ON(fc_exch_ptr_get(pool, pool->left))) अणु
+	/* peek cache of free slot */
+	if (pool->left != FC_XID_UNKNOWN) {
+		if (!WARN_ON(fc_exch_ptr_get(pool, pool->left))) {
 			index = pool->left;
 			pool->left = FC_XID_UNKNOWN;
-			जाओ hit;
-		पूर्ण
-	पूर्ण
-	अगर (pool->right != FC_XID_UNKNOWN) अणु
-		अगर (!WARN_ON(fc_exch_ptr_get(pool, pool->right))) अणु
+			goto hit;
+		}
+	}
+	if (pool->right != FC_XID_UNKNOWN) {
+		if (!WARN_ON(fc_exch_ptr_get(pool, pool->right))) {
 			index = pool->right;
 			pool->right = FC_XID_UNKNOWN;
-			जाओ hit;
-		पूर्ण
-	पूर्ण
+			goto hit;
+		}
+	}
 
 	index = pool->next_index;
 	/* allocate new exch from pool */
-	जबतक (fc_exch_ptr_get(pool, index)) अणु
+	while (fc_exch_ptr_get(pool, index)) {
 		index = index == mp->pool_max_index ? 0 : index + 1;
-		अगर (index == pool->next_index)
-			जाओ err;
-	पूर्ण
+		if (index == pool->next_index)
+			goto err;
+	}
 	pool->next_index = index == mp->pool_max_index ? 0 : index + 1;
 hit:
-	fc_exch_hold(ep);	/* hold क्रम exch in mp */
+	fc_exch_hold(ep);	/* hold for exch in mp */
 	spin_lock_init(&ep->ex_lock);
 	/*
-	 * Hold exch lock क्रम caller to prevent fc_exch_reset()
-	 * from releasing exch	जबतक fc_exch_alloc() caller is
+	 * Hold exch lock for caller to prevent fc_exch_reset()
+	 * from releasing exch	while fc_exch_alloc() caller is
 	 * still working on exch.
 	 */
 	spin_lock_bh(&ep->ex_lock);
@@ -882,122 +881,122 @@ hit:
 	ep->rxid = FC_XID_UNKNOWN;
 	ep->class = mp->class;
 	ep->resp_active = 0;
-	init_रुकोqueue_head(&ep->resp_wq);
-	INIT_DELAYED_WORK(&ep->समयout_work, fc_exch_समयout);
+	init_waitqueue_head(&ep->resp_wq);
+	INIT_DELAYED_WORK(&ep->timeout_work, fc_exch_timeout);
 out:
-	वापस ep;
+	return ep;
 err:
 	spin_unlock_bh(&pool->lock);
-	atomic_inc(&mp->stats.no_मुक्त_exch_xid);
-	mempool_मुक्त(ep, mp->ep_pool);
-	वापस शून्य;
-पूर्ण
+	atomic_inc(&mp->stats.no_free_exch_xid);
+	mempool_free(ep, mp->ep_pool);
+	return NULL;
+}
 
 /**
  * fc_exch_alloc() - Allocate an exchange from an EM on a
  *		     local port's list of EMs.
  * @lport: The local port that will own the exchange
- * @fp:	   The FC frame that the exchange will be क्रम
+ * @fp:	   The FC frame that the exchange will be for
  *
  * This function walks the list of exchange manager(EM)
- * anchors to select an EM क्रम a new exchange allocation. The
- * EM is selected when a शून्य match function poपूर्णांकer is encountered
- * or when a call to a match function वापसs true.
+ * anchors to select an EM for a new exchange allocation. The
+ * EM is selected when a NULL match function pointer is encountered
+ * or when a call to a match function returns true.
  */
-अटल काष्ठा fc_exch *fc_exch_alloc(काष्ठा fc_lport *lport,
-				     काष्ठा fc_frame *fp)
-अणु
-	काष्ठा fc_exch_mgr_anchor *ema;
-	काष्ठा fc_exch *ep;
+static struct fc_exch *fc_exch_alloc(struct fc_lport *lport,
+				     struct fc_frame *fp)
+{
+	struct fc_exch_mgr_anchor *ema;
+	struct fc_exch *ep;
 
-	list_क्रम_each_entry(ema, &lport->ema_list, ema_list) अणु
-		अगर (!ema->match || ema->match(fp)) अणु
+	list_for_each_entry(ema, &lport->ema_list, ema_list) {
+		if (!ema->match || ema->match(fp)) {
 			ep = fc_exch_em_alloc(lport, ema->mp);
-			अगर (ep)
-				वापस ep;
-		पूर्ण
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+			if (ep)
+				return ep;
+		}
+	}
+	return NULL;
+}
 
 /**
  * fc_exch_find() - Lookup and hold an exchange
  * @mp:	 The exchange manager to lookup the exchange from
  * @xid: The XID of the exchange to look up
  */
-अटल काष्ठा fc_exch *fc_exch_find(काष्ठा fc_exch_mgr *mp, u16 xid)
-अणु
-	काष्ठा fc_lport *lport = mp->lport;
-	काष्ठा fc_exch_pool *pool;
-	काष्ठा fc_exch *ep = शून्य;
+static struct fc_exch *fc_exch_find(struct fc_exch_mgr *mp, u16 xid)
+{
+	struct fc_lport *lport = mp->lport;
+	struct fc_exch_pool *pool;
+	struct fc_exch *ep = NULL;
 	u16 cpu = xid & fc_cpu_mask;
 
-	अगर (xid == FC_XID_UNKNOWN)
-		वापस शून्य;
+	if (xid == FC_XID_UNKNOWN)
+		return NULL;
 
-	अगर (cpu >= nr_cpu_ids || !cpu_possible(cpu)) अणु
+	if (cpu >= nr_cpu_ids || !cpu_possible(cpu)) {
 		pr_err("host%u: lport %6.6x: xid %d invalid CPU %d\n:",
 		       lport->host->host_no, lport->port_id, xid, cpu);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	अगर ((xid >= mp->min_xid) && (xid <= mp->max_xid)) अणु
+	if ((xid >= mp->min_xid) && (xid <= mp->max_xid)) {
 		pool = per_cpu_ptr(mp->pool, cpu);
 		spin_lock_bh(&pool->lock);
 		ep = fc_exch_ptr_get(pool, (xid - mp->min_xid) >> fc_cpu_order);
-		अगर (ep == &fc_quarantine_exch) अणु
+		if (ep == &fc_quarantine_exch) {
 			FC_LPORT_DBG(lport, "xid %x quarantined\n", xid);
-			ep = शून्य;
-		पूर्ण
-		अगर (ep) अणु
+			ep = NULL;
+		}
+		if (ep) {
 			WARN_ON(ep->xid != xid);
 			fc_exch_hold(ep);
-		पूर्ण
+		}
 		spin_unlock_bh(&pool->lock);
-	पूर्ण
-	वापस ep;
-पूर्ण
+	}
+	return ep;
+}
 
 
 /**
- * fc_exch_करोne() - Indicate that an exchange/sequence tuple is complete and
- *		    the memory allocated क्रम the related objects may be मुक्तd.
+ * fc_exch_done() - Indicate that an exchange/sequence tuple is complete and
+ *		    the memory allocated for the related objects may be freed.
  * @sp: The sequence that has completed
  *
- * Note: May sleep अगर invoked from outside a response handler.
+ * Note: May sleep if invoked from outside a response handler.
  */
-व्योम fc_exch_करोne(काष्ठा fc_seq *sp)
-अणु
-	काष्ठा fc_exch *ep = fc_seq_exch(sp);
-	पूर्णांक rc;
+void fc_exch_done(struct fc_seq *sp)
+{
+	struct fc_exch *ep = fc_seq_exch(sp);
+	int rc;
 
 	spin_lock_bh(&ep->ex_lock);
-	rc = fc_exch_करोne_locked(ep);
+	rc = fc_exch_done_locked(ep);
 	spin_unlock_bh(&ep->ex_lock);
 
-	fc_seq_set_resp(sp, शून्य, ep->arg);
-	अगर (!rc)
+	fc_seq_set_resp(sp, NULL, ep->arg);
+	if (!rc)
 		fc_exch_delete(ep);
-पूर्ण
-EXPORT_SYMBOL(fc_exch_करोne);
+}
+EXPORT_SYMBOL(fc_exch_done);
 
 /**
- * fc_exch_resp() - Allocate a new exchange क्रम a response frame
- * @lport: The local port that the exchange was क्रम
+ * fc_exch_resp() - Allocate a new exchange for a response frame
+ * @lport: The local port that the exchange was for
  * @mp:	   The exchange manager to allocate the exchange from
  * @fp:	   The response frame
  *
  * Sets the responder ID in the frame header.
  */
-अटल काष्ठा fc_exch *fc_exch_resp(काष्ठा fc_lport *lport,
-				    काष्ठा fc_exch_mgr *mp,
-				    काष्ठा fc_frame *fp)
-अणु
-	काष्ठा fc_exch *ep;
-	काष्ठा fc_frame_header *fh;
+static struct fc_exch *fc_exch_resp(struct fc_lport *lport,
+				    struct fc_exch_mgr *mp,
+				    struct fc_frame *fp)
+{
+	struct fc_exch *ep;
+	struct fc_frame_header *fh;
 
 	ep = fc_exch_alloc(lport, fp);
-	अगर (ep) अणु
+	if (ep) {
 		ep->class = fc_frame_class(fp);
 
 		/*
@@ -1018,33 +1017,33 @@ EXPORT_SYMBOL(fc_exch_करोne);
 		ep->rxid = ep->xid;
 		ep->oxid = ntohs(fh->fh_ox_id);
 		ep->esb_stat |= ESB_ST_RESP | ESB_ST_SEQ_INIT;
-		अगर ((ntoh24(fh->fh_f_ctl) & FC_FC_SEQ_INIT) == 0)
+		if ((ntoh24(fh->fh_f_ctl) & FC_FC_SEQ_INIT) == 0)
 			ep->esb_stat &= ~ESB_ST_SEQ_INIT;
 
-		fc_exch_hold(ep);	/* hold क्रम caller */
+		fc_exch_hold(ep);	/* hold for caller */
 		spin_unlock_bh(&ep->ex_lock);	/* lock from fc_exch_alloc */
-	पूर्ण
-	वापस ep;
-पूर्ण
+	}
+	return ep;
+}
 
 /**
  * fc_seq_lookup_recip() - Find a sequence where the other end
  *			   originated the sequence
  * @lport: The local port that the frame was sent to
  * @mp:	   The Exchange Manager to lookup the exchange from
- * @fp:	   The frame associated with the sequence we're looking क्रम
+ * @fp:	   The frame associated with the sequence we're looking for
  *
  * If fc_pf_rjt_reason is FC_RJT_NONE then this function will have a hold
  * on the ep that should be released by the caller.
  */
-अटल क्रमागत fc_pf_rjt_reason fc_seq_lookup_recip(काष्ठा fc_lport *lport,
-						 काष्ठा fc_exch_mgr *mp,
-						 काष्ठा fc_frame *fp)
-अणु
-	काष्ठा fc_frame_header *fh = fc_frame_header_get(fp);
-	काष्ठा fc_exch *ep = शून्य;
-	काष्ठा fc_seq *sp = शून्य;
-	क्रमागत fc_pf_rjt_reason reject = FC_RJT_NONE;
+static enum fc_pf_rjt_reason fc_seq_lookup_recip(struct fc_lport *lport,
+						 struct fc_exch_mgr *mp,
+						 struct fc_frame *fp)
+{
+	struct fc_frame_header *fh = fc_frame_header_get(fp);
+	struct fc_exch *ep = NULL;
+	struct fc_seq *sp = NULL;
+	enum fc_pf_rjt_reason reject = FC_RJT_NONE;
 	u32 f_ctl;
 	u16 xid;
 
@@ -1052,127 +1051,127 @@ EXPORT_SYMBOL(fc_exch_करोne);
 	WARN_ON((f_ctl & FC_FC_SEQ_CTX) != 0);
 
 	/*
-	 * Lookup or create the exchange अगर we will be creating the sequence.
+	 * Lookup or create the exchange if we will be creating the sequence.
 	 */
-	अगर (f_ctl & FC_FC_EX_CTX) अणु
+	if (f_ctl & FC_FC_EX_CTX) {
 		xid = ntohs(fh->fh_ox_id);	/* we originated exch */
 		ep = fc_exch_find(mp, xid);
-		अगर (!ep) अणु
+		if (!ep) {
 			atomic_inc(&mp->stats.xid_not_found);
 			reject = FC_RJT_OX_ID;
-			जाओ out;
-		पूर्ण
-		अगर (ep->rxid == FC_XID_UNKNOWN)
+			goto out;
+		}
+		if (ep->rxid == FC_XID_UNKNOWN)
 			ep->rxid = ntohs(fh->fh_rx_id);
-		अन्यथा अगर (ep->rxid != ntohs(fh->fh_rx_id)) अणु
+		else if (ep->rxid != ntohs(fh->fh_rx_id)) {
 			reject = FC_RJT_OX_ID;
-			जाओ rel;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			goto rel;
+		}
+	} else {
 		xid = ntohs(fh->fh_rx_id);	/* we are the responder */
 
 		/*
-		 * Special हाल क्रम MDS issuing an ELS TEST with a
+		 * Special case for MDS issuing an ELS TEST with a
 		 * bad rxid of 0.
-		 * XXX take this out once we करो the proper reject.
+		 * XXX take this out once we do the proper reject.
 		 */
-		अगर (xid == 0 && fh->fh_r_ctl == FC_RCTL_ELS_REQ &&
-		    fc_frame_payload_op(fp) == ELS_TEST) अणु
+		if (xid == 0 && fh->fh_r_ctl == FC_RCTL_ELS_REQ &&
+		    fc_frame_payload_op(fp) == ELS_TEST) {
 			fh->fh_rx_id = htons(FC_XID_UNKNOWN);
 			xid = FC_XID_UNKNOWN;
-		पूर्ण
+		}
 
 		/*
 		 * new sequence - find the exchange
 		 */
 		ep = fc_exch_find(mp, xid);
-		अगर ((f_ctl & FC_FC_FIRST_SEQ) && fc_sof_is_init(fr_sof(fp))) अणु
-			अगर (ep) अणु
+		if ((f_ctl & FC_FC_FIRST_SEQ) && fc_sof_is_init(fr_sof(fp))) {
+			if (ep) {
 				atomic_inc(&mp->stats.xid_busy);
 				reject = FC_RJT_RX_ID;
-				जाओ rel;
-			पूर्ण
+				goto rel;
+			}
 			ep = fc_exch_resp(lport, mp, fp);
-			अगर (!ep) अणु
+			if (!ep) {
 				reject = FC_RJT_EXCH_EST;	/* XXX */
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			xid = ep->xid;	/* get our XID */
-		पूर्ण अन्यथा अगर (!ep) अणु
+		} else if (!ep) {
 			atomic_inc(&mp->stats.xid_not_found);
 			reject = FC_RJT_RX_ID;	/* XID not found */
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	spin_lock_bh(&ep->ex_lock);
 	/*
-	 * At this poपूर्णांक, we have the exchange held.
+	 * At this point, we have the exchange held.
 	 * Find or create the sequence.
 	 */
-	अगर (fc_sof_is_init(fr_sof(fp))) अणु
+	if (fc_sof_is_init(fr_sof(fp))) {
 		sp = &ep->seq;
 		sp->ssb_stat |= SSB_ST_RESP;
 		sp->id = fh->fh_seq_id;
-	पूर्ण अन्यथा अणु
+	} else {
 		sp = &ep->seq;
-		अगर (sp->id != fh->fh_seq_id) अणु
+		if (sp->id != fh->fh_seq_id) {
 			atomic_inc(&mp->stats.seq_not_found);
-			अगर (f_ctl & FC_FC_END_SEQ) अणु
+			if (f_ctl & FC_FC_END_SEQ) {
 				/*
 				 * Update sequence_id based on incoming last
 				 * frame of sequence exchange. This is needed
-				 * क्रम FC target where DDP has been used
+				 * for FC target where DDP has been used
 				 * on target where, stack is indicated only
 				 * about last frame's (payload _header) header.
 				 * Whereas "seq_id" which is part of
 				 * frame_header is allocated by initiator
-				 * which is totally dअगरferent from "seq_id"
+				 * which is totally different from "seq_id"
 				 * allocated when XFER_RDY was sent by target.
-				 * To aव्योम false -ve which results पूर्णांकo not
-				 * sending RSP, hence ग_लिखो request on other
+				 * To avoid false -ve which results into not
+				 * sending RSP, hence write request on other
 				 * end never finishes.
 				 */
 				sp->ssb_stat |= SSB_ST_RESP;
 				sp->id = fh->fh_seq_id;
-			पूर्ण अन्यथा अणु
+			} else {
 				spin_unlock_bh(&ep->ex_lock);
 
 				/* sequence/exch should exist */
 				reject = FC_RJT_SEQ_ID;
-				जाओ rel;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto rel;
+			}
+		}
+	}
 	WARN_ON(ep != fc_seq_exch(sp));
 
-	अगर (f_ctl & FC_FC_SEQ_INIT)
+	if (f_ctl & FC_FC_SEQ_INIT)
 		ep->esb_stat |= ESB_ST_SEQ_INIT;
 	spin_unlock_bh(&ep->ex_lock);
 
 	fr_seq(fp) = sp;
 out:
-	वापस reject;
+	return reject;
 rel:
-	fc_exch_करोne(&ep->seq);
+	fc_exch_done(&ep->seq);
 	fc_exch_release(ep);	/* hold from fc_exch_find/fc_exch_resp */
-	वापस reject;
-पूर्ण
+	return reject;
+}
 
 /**
  * fc_seq_lookup_orig() - Find a sequence where this end
  *			  originated the sequence
  * @mp:	   The Exchange Manager to lookup the exchange from
- * @fp:	   The frame associated with the sequence we're looking क्रम
+ * @fp:	   The frame associated with the sequence we're looking for
  *
- * Does not hold the sequence क्रम the caller.
+ * Does not hold the sequence for the caller.
  */
-अटल काष्ठा fc_seq *fc_seq_lookup_orig(काष्ठा fc_exch_mgr *mp,
-					 काष्ठा fc_frame *fp)
-अणु
-	काष्ठा fc_frame_header *fh = fc_frame_header_get(fp);
-	काष्ठा fc_exch *ep;
-	काष्ठा fc_seq *sp = शून्य;
+static struct fc_seq *fc_seq_lookup_orig(struct fc_exch_mgr *mp,
+					 struct fc_frame *fp)
+{
+	struct fc_frame_header *fh = fc_frame_header_get(fp);
+	struct fc_exch *ep;
+	struct fc_seq *sp = NULL;
 	u32 f_ctl;
 	u16 xid;
 
@@ -1180,92 +1179,92 @@ rel:
 	WARN_ON((f_ctl & FC_FC_SEQ_CTX) != FC_FC_SEQ_CTX);
 	xid = ntohs((f_ctl & FC_FC_EX_CTX) ? fh->fh_ox_id : fh->fh_rx_id);
 	ep = fc_exch_find(mp, xid);
-	अगर (!ep)
-		वापस शून्य;
-	अगर (ep->seq.id == fh->fh_seq_id) अणु
+	if (!ep)
+		return NULL;
+	if (ep->seq.id == fh->fh_seq_id) {
 		/*
-		 * Save the RX_ID अगर we didn't previously know it.
+		 * Save the RX_ID if we didn't previously know it.
 		 */
 		sp = &ep->seq;
-		अगर ((f_ctl & FC_FC_EX_CTX) != 0 &&
-		    ep->rxid == FC_XID_UNKNOWN) अणु
+		if ((f_ctl & FC_FC_EX_CTX) != 0 &&
+		    ep->rxid == FC_XID_UNKNOWN) {
 			ep->rxid = ntohs(fh->fh_rx_id);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	fc_exch_release(ep);
-	वापस sp;
-पूर्ण
+	return sp;
+}
 
 /**
- * fc_exch_set_addr() - Set the source and destination IDs क्रम an exchange
- * @ep:	     The exchange to set the addresses क्रम
+ * fc_exch_set_addr() - Set the source and destination IDs for an exchange
+ * @ep:	     The exchange to set the addresses for
  * @orig_id: The originator's ID
  * @resp_id: The responder's ID
  *
- * Note this must be करोne beक्रमe the first sequence of the exchange is sent.
+ * Note this must be done before the first sequence of the exchange is sent.
  */
-अटल व्योम fc_exch_set_addr(काष्ठा fc_exch *ep,
+static void fc_exch_set_addr(struct fc_exch *ep,
 			     u32 orig_id, u32 resp_id)
-अणु
+{
 	ep->oid = orig_id;
-	अगर (ep->esb_stat & ESB_ST_RESP) अणु
+	if (ep->esb_stat & ESB_ST_RESP) {
 		ep->sid = resp_id;
 		ep->did = orig_id;
-	पूर्ण अन्यथा अणु
+	} else {
 		ep->sid = orig_id;
 		ep->did = resp_id;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * fc_seq_els_rsp_send() - Send an ELS response using inक्रमmation from
+ * fc_seq_els_rsp_send() - Send an ELS response using information from
  *			   the existing sequence/exchange.
  * @fp:	      The received frame
  * @els_cmd:  The ELS command to be sent
  * @els_data: The ELS data to be sent
  *
- * The received frame is not मुक्तd.
+ * The received frame is not freed.
  */
-व्योम fc_seq_els_rsp_send(काष्ठा fc_frame *fp, क्रमागत fc_els_cmd els_cmd,
-			 काष्ठा fc_seq_els_data *els_data)
-अणु
-	चयन (els_cmd) अणु
-	हाल ELS_LS_RJT:
+void fc_seq_els_rsp_send(struct fc_frame *fp, enum fc_els_cmd els_cmd,
+			 struct fc_seq_els_data *els_data)
+{
+	switch (els_cmd) {
+	case ELS_LS_RJT:
 		fc_seq_ls_rjt(fp, els_data->reason, els_data->explan);
-		अवरोध;
-	हाल ELS_LS_ACC:
+		break;
+	case ELS_LS_ACC:
 		fc_seq_ls_acc(fp);
-		अवरोध;
-	हाल ELS_RRQ:
+		break;
+	case ELS_RRQ:
 		fc_exch_els_rrq(fp);
-		अवरोध;
-	हाल ELS_REC:
+		break;
+	case ELS_REC:
 		fc_exch_els_rec(fp);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		FC_LPORT_DBG(fr_dev(fp), "Invalid ELS CMD:%x\n", els_cmd);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(fc_seq_els_rsp_send);
 
 /**
  * fc_seq_send_last() - Send a sequence that is the last in the exchange
  * @sp:	     The sequence that is to be sent
  * @fp:	     The frame that will be sent on the sequence
- * @rctl:    The R_CTL inक्रमmation to be sent
+ * @rctl:    The R_CTL information to be sent
  * @fh_type: The frame header type
  */
-अटल व्योम fc_seq_send_last(काष्ठा fc_seq *sp, काष्ठा fc_frame *fp,
-			     क्रमागत fc_rctl rctl, क्रमागत fc_fh_type fh_type)
-अणु
+static void fc_seq_send_last(struct fc_seq *sp, struct fc_frame *fp,
+			     enum fc_rctl rctl, enum fc_fh_type fh_type)
+{
 	u32 f_ctl;
-	काष्ठा fc_exch *ep = fc_seq_exch(sp);
+	struct fc_exch *ep = fc_seq_exch(sp);
 
 	f_ctl = FC_FC_LAST_SEQ | FC_FC_END_SEQ | FC_FC_SEQ_INIT;
 	f_ctl |= ep->f_ctl;
 	fc_fill_fc_hdr(fp, rctl, ep->did, ep->sid, fh_type, f_ctl, 0);
 	fc_seq_send_locked(ep->lp, sp, fp);
-पूर्ण
+}
 
 /**
  * fc_seq_send_ack() - Send an acknowledgement that we've received a frame
@@ -1274,24 +1273,24 @@ EXPORT_SYMBOL_GPL(fc_seq_els_rsp_send);
  *
  * Send ACK_1 (or equiv.) indicating we received something.
  */
-अटल व्योम fc_seq_send_ack(काष्ठा fc_seq *sp, स्थिर काष्ठा fc_frame *rx_fp)
-अणु
-	काष्ठा fc_frame *fp;
-	काष्ठा fc_frame_header *rx_fh;
-	काष्ठा fc_frame_header *fh;
-	काष्ठा fc_exch *ep = fc_seq_exch(sp);
-	काष्ठा fc_lport *lport = ep->lp;
-	अचिन्हित पूर्णांक f_ctl;
+static void fc_seq_send_ack(struct fc_seq *sp, const struct fc_frame *rx_fp)
+{
+	struct fc_frame *fp;
+	struct fc_frame_header *rx_fh;
+	struct fc_frame_header *fh;
+	struct fc_exch *ep = fc_seq_exch(sp);
+	struct fc_lport *lport = ep->lp;
+	unsigned int f_ctl;
 
 	/*
-	 * Don't send ACKs क्रम class 3.
+	 * Don't send ACKs for class 3.
 	 */
-	अगर (fc_sof_needs_ack(fr_sof(rx_fp))) अणु
+	if (fc_sof_needs_ack(fr_sof(rx_fp))) {
 		fp = fc_frame_alloc(lport, 0);
-		अगर (!fp) अणु
+		if (!fp) {
 			FC_EXCH_DBG(ep, "Drop ACK request, out of memory\n");
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		fh = fc_frame_header_get(fp);
 		fh->fh_r_ctl = FC_RCTL_ACK_1;
@@ -1301,7 +1300,7 @@ EXPORT_SYMBOL_GPL(fc_seq_els_rsp_send);
 		 * Form f_ctl by inverting EX_CTX and SEQ_CTX (bits 23, 22).
 		 * Echo FIRST_SEQ, LAST_SEQ, END_SEQ, END_CONN, SEQ_INIT.
 		 * Bits 9-8 are meaningful (retransmitted or unidirectional).
-		 * Last ACK uses bits 7-6 (जारी sequence),
+		 * Last ACK uses bits 7-6 (continue sequence),
 		 * bits 5-4 are meaningful (what kind of ACK to use).
 		 */
 		rx_fh = fc_frame_header_get(rx_fp);
@@ -1319,57 +1318,57 @@ EXPORT_SYMBOL_GPL(fc_seq_els_rsp_send);
 		fh->fh_parm_offset = htonl(1);	/* ack single frame */
 
 		fr_sof(fp) = fr_sof(rx_fp);
-		अगर (f_ctl & FC_FC_END_SEQ)
-			fr_eof(fp) = FC_खातापूर्ण_T;
-		अन्यथा
-			fr_eof(fp) = FC_खातापूर्ण_N;
+		if (f_ctl & FC_FC_END_SEQ)
+			fr_eof(fp) = FC_EOF_T;
+		else
+			fr_eof(fp) = FC_EOF_N;
 
 		lport->tt.frame_send(lport, fp);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * fc_exch_send_ba_rjt() - Send BLS Reject
  * @rx_fp:  The frame being rejected
  * @reason: The reason the frame is being rejected
- * @explan: The explanation क्रम the rejection
+ * @explan: The explanation for the rejection
  *
- * This is क्रम rejecting BA_ABTS only.
+ * This is for rejecting BA_ABTS only.
  */
-अटल व्योम fc_exch_send_ba_rjt(काष्ठा fc_frame *rx_fp,
-				क्रमागत fc_ba_rjt_reason reason,
-				क्रमागत fc_ba_rjt_explan explan)
-अणु
-	काष्ठा fc_frame *fp;
-	काष्ठा fc_frame_header *rx_fh;
-	काष्ठा fc_frame_header *fh;
-	काष्ठा fc_ba_rjt *rp;
-	काष्ठा fc_seq *sp;
-	काष्ठा fc_lport *lport;
-	अचिन्हित पूर्णांक f_ctl;
+static void fc_exch_send_ba_rjt(struct fc_frame *rx_fp,
+				enum fc_ba_rjt_reason reason,
+				enum fc_ba_rjt_explan explan)
+{
+	struct fc_frame *fp;
+	struct fc_frame_header *rx_fh;
+	struct fc_frame_header *fh;
+	struct fc_ba_rjt *rp;
+	struct fc_seq *sp;
+	struct fc_lport *lport;
+	unsigned int f_ctl;
 
 	lport = fr_dev(rx_fp);
 	sp = fr_seq(rx_fp);
-	fp = fc_frame_alloc(lport, माप(*rp));
-	अगर (!fp) अणु
+	fp = fc_frame_alloc(lport, sizeof(*rp));
+	if (!fp) {
 		FC_EXCH_DBG(fc_seq_exch(sp),
 			     "Drop BA_RJT request, out of memory\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 	fh = fc_frame_header_get(fp);
 	rx_fh = fc_frame_header_get(rx_fp);
 
-	स_रखो(fh, 0, माप(*fh) + माप(*rp));
+	memset(fh, 0, sizeof(*fh) + sizeof(*rp));
 
-	rp = fc_frame_payload_get(fp, माप(*rp));
+	rp = fc_frame_payload_get(fp, sizeof(*rp));
 	rp->br_reason = reason;
 	rp->br_explan = explan;
 
 	/*
 	 * seq_id, cs_ctl, df_ctl and param/offset are zero.
 	 */
-	स_नकल(fh->fh_s_id, rx_fh->fh_d_id, 3);
-	स_नकल(fh->fh_d_id, rx_fh->fh_s_id, 3);
+	memcpy(fh->fh_s_id, rx_fh->fh_d_id, 3);
+	memcpy(fh->fh_d_id, rx_fh->fh_s_id, 3);
 	fh->fh_ox_id = rx_fh->fh_ox_id;
 	fh->fh_rx_id = rx_fh->fh_rx_id;
 	fh->fh_seq_cnt = rx_fh->fh_seq_cnt;
@@ -1380,7 +1379,7 @@ EXPORT_SYMBOL_GPL(fc_seq_els_rsp_send);
 	 * Form f_ctl by inverting EX_CTX and SEQ_CTX (bits 23, 22).
 	 * Echo FIRST_SEQ, LAST_SEQ, END_SEQ, END_CONN, SEQ_INIT.
 	 * Bits 9-8 are meaningful (retransmitted or unidirectional).
-	 * Last ACK uses bits 7-6 (जारी sequence),
+	 * Last ACK uses bits 7-6 (continue sequence),
 	 * bits 5-4 are meaningful (what kind of ACK to use).
 	 * Always set LAST_SEQ, END_SEQ.
 	 */
@@ -1394,113 +1393,113 @@ EXPORT_SYMBOL_GPL(fc_seq_els_rsp_send);
 	hton24(fh->fh_f_ctl, f_ctl);
 
 	fr_sof(fp) = fc_sof_class(fr_sof(rx_fp));
-	fr_eof(fp) = FC_खातापूर्ण_T;
-	अगर (fc_sof_needs_ack(fr_sof(fp)))
-		fr_eof(fp) = FC_खातापूर्ण_N;
+	fr_eof(fp) = FC_EOF_T;
+	if (fc_sof_needs_ack(fr_sof(fp)))
+		fr_eof(fp) = FC_EOF_N;
 
 	lport->tt.frame_send(lport, fp);
-पूर्ण
+}
 
 /**
  * fc_exch_recv_abts() - Handle an incoming ABTS
- * @ep:	   The exchange the पात was on
+ * @ep:	   The exchange the abort was on
  * @rx_fp: The ABTS frame
  *
- * This would be क्रम target mode usually, but could be due to lost
- * FCP transfer पढ़ोy, confirm or RRQ. We always handle this as an
- * exchange पात, ignoring the parameter.
+ * This would be for target mode usually, but could be due to lost
+ * FCP transfer ready, confirm or RRQ. We always handle this as an
+ * exchange abort, ignoring the parameter.
  */
-अटल व्योम fc_exch_recv_abts(काष्ठा fc_exch *ep, काष्ठा fc_frame *rx_fp)
-अणु
-	काष्ठा fc_frame *fp;
-	काष्ठा fc_ba_acc *ap;
-	काष्ठा fc_frame_header *fh;
-	काष्ठा fc_seq *sp;
+static void fc_exch_recv_abts(struct fc_exch *ep, struct fc_frame *rx_fp)
+{
+	struct fc_frame *fp;
+	struct fc_ba_acc *ap;
+	struct fc_frame_header *fh;
+	struct fc_seq *sp;
 
-	अगर (!ep)
-		जाओ reject;
+	if (!ep)
+		goto reject;
 
 	FC_EXCH_DBG(ep, "exch: ABTS received\n");
-	fp = fc_frame_alloc(ep->lp, माप(*ap));
-	अगर (!fp) अणु
+	fp = fc_frame_alloc(ep->lp, sizeof(*ap));
+	if (!fp) {
 		FC_EXCH_DBG(ep, "Drop ABTS request, out of memory\n");
-		जाओ मुक्त;
-	पूर्ण
+		goto free;
+	}
 
 	spin_lock_bh(&ep->ex_lock);
-	अगर (ep->esb_stat & ESB_ST_COMPLETE) अणु
+	if (ep->esb_stat & ESB_ST_COMPLETE) {
 		spin_unlock_bh(&ep->ex_lock);
 		FC_EXCH_DBG(ep, "exch: ABTS rejected, exchange complete\n");
-		fc_frame_मुक्त(fp);
-		जाओ reject;
-	पूर्ण
-	अगर (!(ep->esb_stat & ESB_ST_REC_QUAL)) अणु
+		fc_frame_free(fp);
+		goto reject;
+	}
+	if (!(ep->esb_stat & ESB_ST_REC_QUAL)) {
 		ep->esb_stat |= ESB_ST_REC_QUAL;
-		fc_exch_hold(ep);		/* hold क्रम REC_QUAL */
-	पूर्ण
-	fc_exch_समयr_set_locked(ep, ep->r_a_tov);
+		fc_exch_hold(ep);		/* hold for REC_QUAL */
+	}
+	fc_exch_timer_set_locked(ep, ep->r_a_tov);
 	fh = fc_frame_header_get(fp);
-	ap = fc_frame_payload_get(fp, माप(*ap));
-	स_रखो(ap, 0, माप(*ap));
+	ap = fc_frame_payload_get(fp, sizeof(*ap));
+	memset(ap, 0, sizeof(*ap));
 	sp = &ep->seq;
 	ap->ba_high_seq_cnt = htons(0xffff);
-	अगर (sp->ssb_stat & SSB_ST_RESP) अणु
+	if (sp->ssb_stat & SSB_ST_RESP) {
 		ap->ba_seq_id = sp->id;
 		ap->ba_seq_id_val = FC_BA_SEQ_ID_VAL;
 		ap->ba_high_seq_cnt = fh->fh_seq_cnt;
 		ap->ba_low_seq_cnt = htons(sp->cnt);
-	पूर्ण
+	}
 	sp = fc_seq_start_next_locked(sp);
 	fc_seq_send_last(sp, fp, FC_RCTL_BA_ACC, FC_TYPE_BLS);
 	ep->esb_stat |= ESB_ST_ABNORMAL;
 	spin_unlock_bh(&ep->ex_lock);
 
-मुक्त:
-	fc_frame_मुक्त(rx_fp);
-	वापस;
+free:
+	fc_frame_free(rx_fp);
+	return;
 
 reject:
 	fc_exch_send_ba_rjt(rx_fp, FC_BA_RJT_UNABLE, FC_BA_RJT_INV_XID);
-	जाओ मुक्त;
-पूर्ण
+	goto free;
+}
 
 /**
- * fc_seq_assign() - Assign exchange and sequence क्रम incoming request
+ * fc_seq_assign() - Assign exchange and sequence for incoming request
  * @lport: The local port that received the request
  * @fp:    The request frame
  *
- * On success, the sequence poपूर्णांकer will be वापसed and also in fr_seq(@fp).
- * A reference will be held on the exchange/sequence क्रम the caller, which
+ * On success, the sequence pointer will be returned and also in fr_seq(@fp).
+ * A reference will be held on the exchange/sequence for the caller, which
  * must call fc_seq_release().
  */
-काष्ठा fc_seq *fc_seq_assign(काष्ठा fc_lport *lport, काष्ठा fc_frame *fp)
-अणु
-	काष्ठा fc_exch_mgr_anchor *ema;
+struct fc_seq *fc_seq_assign(struct fc_lport *lport, struct fc_frame *fp)
+{
+	struct fc_exch_mgr_anchor *ema;
 
 	WARN_ON(lport != fr_dev(fp));
 	WARN_ON(fr_seq(fp));
-	fr_seq(fp) = शून्य;
+	fr_seq(fp) = NULL;
 
-	list_क्रम_each_entry(ema, &lport->ema_list, ema_list)
-		अगर ((!ema->match || ema->match(fp)) &&
+	list_for_each_entry(ema, &lport->ema_list, ema_list)
+		if ((!ema->match || ema->match(fp)) &&
 		    fc_seq_lookup_recip(lport, ema->mp, fp) == FC_RJT_NONE)
-			अवरोध;
-	वापस fr_seq(fp);
-पूर्ण
+			break;
+	return fr_seq(fp);
+}
 EXPORT_SYMBOL(fc_seq_assign);
 
 /**
  * fc_seq_release() - Release the hold
  * @sp:    The sequence.
  */
-व्योम fc_seq_release(काष्ठा fc_seq *sp)
-अणु
+void fc_seq_release(struct fc_seq *sp)
+{
 	fc_exch_release(fc_seq_exch(sp));
-पूर्ण
+}
 EXPORT_SYMBOL(fc_seq_release);
 
 /**
- * fc_exch_recv_req() - Handler क्रम an incoming request
+ * fc_exch_recv_req() - Handler for an incoming request
  * @lport: The local port that received the request
  * @mp:	   The EM that the exchange is on
  * @fp:	   The request frame
@@ -1508,35 +1507,35 @@ EXPORT_SYMBOL(fc_seq_release);
  * This is used when the other end is originating the exchange
  * and the sequence.
  */
-अटल व्योम fc_exch_recv_req(काष्ठा fc_lport *lport, काष्ठा fc_exch_mgr *mp,
-			     काष्ठा fc_frame *fp)
-अणु
-	काष्ठा fc_frame_header *fh = fc_frame_header_get(fp);
-	काष्ठा fc_seq *sp = शून्य;
-	काष्ठा fc_exch *ep = शून्य;
-	क्रमागत fc_pf_rjt_reason reject;
+static void fc_exch_recv_req(struct fc_lport *lport, struct fc_exch_mgr *mp,
+			     struct fc_frame *fp)
+{
+	struct fc_frame_header *fh = fc_frame_header_get(fp);
+	struct fc_seq *sp = NULL;
+	struct fc_exch *ep = NULL;
+	enum fc_pf_rjt_reason reject;
 
-	/* We can have the wrong fc_lport at this poपूर्णांक with NPIV, which is a
+	/* We can have the wrong fc_lport at this point with NPIV, which is a
 	 * problem now that we know a new exchange needs to be allocated
 	 */
 	lport = fc_vport_id_lookup(lport, ntoh24(fh->fh_d_id));
-	अगर (!lport) अणु
-		fc_frame_मुक्त(fp);
-		वापस;
-	पूर्ण
+	if (!lport) {
+		fc_frame_free(fp);
+		return;
+	}
 	fr_dev(fp) = lport;
 
-	BUG_ON(fr_seq(fp));		/* XXX हटाओ later */
+	BUG_ON(fr_seq(fp));		/* XXX remove later */
 
 	/*
-	 * If the RX_ID is 0xffff, करोn't allocate an exchange.
-	 * The upper-level protocol may request one later, अगर needed.
+	 * If the RX_ID is 0xffff, don't allocate an exchange.
+	 * The upper-level protocol may request one later, if needed.
 	 */
-	अगर (fh->fh_rx_id == htons(FC_XID_UNKNOWN))
-		वापस fc_lport_recv(lport, fp);
+	if (fh->fh_rx_id == htons(FC_XID_UNKNOWN))
+		return fc_lport_recv(lport, fp);
 
 	reject = fc_seq_lookup_recip(lport, mp, fp);
-	अगर (reject == FC_RJT_NONE) अणु
+	if (reject == FC_RJT_NONE) {
 		sp = fr_seq(fp);	/* sequence will be held */
 		ep = fc_seq_exch(sp);
 		fc_seq_send_ack(sp, fp);
@@ -1549,376 +1548,376 @@ EXPORT_SYMBOL(fc_seq_release);
 		 * over the old one, so we shouldn't change the
 		 * sequence after this.
 		 *
-		 * The frame will be मुक्तd by the receive function.
+		 * The frame will be freed by the receive function.
 		 * If new exch resp handler is valid then call that
 		 * first.
 		 */
-		अगर (!fc_invoke_resp(ep, sp, fp))
+		if (!fc_invoke_resp(ep, sp, fp))
 			fc_lport_recv(lport, fp);
 		fc_exch_release(ep);	/* release from lookup */
-	पूर्ण अन्यथा अणु
+	} else {
 		FC_LPORT_DBG(lport, "exch/seq lookup failed: reject %x\n",
 			     reject);
-		fc_frame_मुक्त(fp);
-	पूर्ण
-पूर्ण
+		fc_frame_free(fp);
+	}
+}
 
 /**
- * fc_exch_recv_seq_resp() - Handler क्रम an incoming response where the other
+ * fc_exch_recv_seq_resp() - Handler for an incoming response where the other
  *			     end is the originator of the sequence that is a
  *			     response to our initial exchange
  * @mp: The EM that the exchange is on
  * @fp: The response frame
  */
-अटल व्योम fc_exch_recv_seq_resp(काष्ठा fc_exch_mgr *mp, काष्ठा fc_frame *fp)
-अणु
-	काष्ठा fc_frame_header *fh = fc_frame_header_get(fp);
-	काष्ठा fc_seq *sp;
-	काष्ठा fc_exch *ep;
-	क्रमागत fc_sof sof;
+static void fc_exch_recv_seq_resp(struct fc_exch_mgr *mp, struct fc_frame *fp)
+{
+	struct fc_frame_header *fh = fc_frame_header_get(fp);
+	struct fc_seq *sp;
+	struct fc_exch *ep;
+	enum fc_sof sof;
 	u32 f_ctl;
-	पूर्णांक rc;
+	int rc;
 
 	ep = fc_exch_find(mp, ntohs(fh->fh_ox_id));
-	अगर (!ep) अणु
+	if (!ep) {
 		atomic_inc(&mp->stats.xid_not_found);
-		जाओ out;
-	पूर्ण
-	अगर (ep->esb_stat & ESB_ST_COMPLETE) अणु
+		goto out;
+	}
+	if (ep->esb_stat & ESB_ST_COMPLETE) {
 		atomic_inc(&mp->stats.xid_not_found);
-		जाओ rel;
-	पूर्ण
-	अगर (ep->rxid == FC_XID_UNKNOWN)
+		goto rel;
+	}
+	if (ep->rxid == FC_XID_UNKNOWN)
 		ep->rxid = ntohs(fh->fh_rx_id);
-	अगर (ep->sid != 0 && ep->sid != ntoh24(fh->fh_d_id)) अणु
+	if (ep->sid != 0 && ep->sid != ntoh24(fh->fh_d_id)) {
 		atomic_inc(&mp->stats.xid_not_found);
-		जाओ rel;
-	पूर्ण
-	अगर (ep->did != ntoh24(fh->fh_s_id) &&
-	    ep->did != FC_FID_FLOGI) अणु
+		goto rel;
+	}
+	if (ep->did != ntoh24(fh->fh_s_id) &&
+	    ep->did != FC_FID_FLOGI) {
 		atomic_inc(&mp->stats.xid_not_found);
-		जाओ rel;
-	पूर्ण
+		goto rel;
+	}
 	sof = fr_sof(fp);
 	sp = &ep->seq;
-	अगर (fc_sof_is_init(sof)) अणु
+	if (fc_sof_is_init(sof)) {
 		sp->ssb_stat |= SSB_ST_RESP;
 		sp->id = fh->fh_seq_id;
-	पूर्ण
+	}
 
 	f_ctl = ntoh24(fh->fh_f_ctl);
 	fr_seq(fp) = sp;
 
 	spin_lock_bh(&ep->ex_lock);
-	अगर (f_ctl & FC_FC_SEQ_INIT)
+	if (f_ctl & FC_FC_SEQ_INIT)
 		ep->esb_stat |= ESB_ST_SEQ_INIT;
 	spin_unlock_bh(&ep->ex_lock);
 
-	अगर (fc_sof_needs_ack(sof))
+	if (fc_sof_needs_ack(sof))
 		fc_seq_send_ack(sp, fp);
 
-	अगर (fh->fh_type != FC_TYPE_FCP && fr_eof(fp) == FC_खातापूर्ण_T &&
+	if (fh->fh_type != FC_TYPE_FCP && fr_eof(fp) == FC_EOF_T &&
 	    (f_ctl & (FC_FC_LAST_SEQ | FC_FC_END_SEQ)) ==
-	    (FC_FC_LAST_SEQ | FC_FC_END_SEQ)) अणु
+	    (FC_FC_LAST_SEQ | FC_FC_END_SEQ)) {
 		spin_lock_bh(&ep->ex_lock);
-		rc = fc_exch_करोne_locked(ep);
+		rc = fc_exch_done_locked(ep);
 		WARN_ON(fc_seq_exch(sp) != ep);
 		spin_unlock_bh(&ep->ex_lock);
-		अगर (!rc) अणु
+		if (!rc) {
 			fc_exch_delete(ep);
-		पूर्ण अन्यथा अणु
+		} else {
 			FC_EXCH_DBG(ep, "ep is completed already,"
 					"hence skip calling the resp\n");
-			जाओ skip_resp;
-		पूर्ण
-	पूर्ण
+			goto skip_resp;
+		}
+	}
 
 	/*
 	 * Call the receive function.
-	 * The sequence is held (has a refcnt) क्रम us,
-	 * but not क्रम the receive function.
+	 * The sequence is held (has a refcnt) for us,
+	 * but not for the receive function.
 	 *
 	 * The receive function may allocate a new sequence
 	 * over the old one, so we shouldn't change the
 	 * sequence after this.
 	 *
-	 * The frame will be मुक्तd by the receive function.
+	 * The frame will be freed by the receive function.
 	 * If new exch resp handler is valid then call that
 	 * first.
 	 */
-	अगर (!fc_invoke_resp(ep, sp, fp))
-		fc_frame_मुक्त(fp);
+	if (!fc_invoke_resp(ep, sp, fp))
+		fc_frame_free(fp);
 
 skip_resp:
 	fc_exch_release(ep);
-	वापस;
+	return;
 rel:
 	fc_exch_release(ep);
 out:
-	fc_frame_मुक्त(fp);
-पूर्ण
+	fc_frame_free(fp);
+}
 
 /**
- * fc_exch_recv_resp() - Handler क्रम a sequence where other end is
+ * fc_exch_recv_resp() - Handler for a sequence where other end is
  *			 responding to our sequence
  * @mp: The EM that the exchange is on
  * @fp: The response frame
  */
-अटल व्योम fc_exch_recv_resp(काष्ठा fc_exch_mgr *mp, काष्ठा fc_frame *fp)
-अणु
-	काष्ठा fc_seq *sp;
+static void fc_exch_recv_resp(struct fc_exch_mgr *mp, struct fc_frame *fp)
+{
+	struct fc_seq *sp;
 
-	sp = fc_seq_lookup_orig(mp, fp);	/* करोesn't hold sequence */
+	sp = fc_seq_lookup_orig(mp, fp);	/* doesn't hold sequence */
 
-	अगर (!sp)
+	if (!sp)
 		atomic_inc(&mp->stats.xid_not_found);
-	अन्यथा
+	else
 		atomic_inc(&mp->stats.non_bls_resp);
 
-	fc_frame_मुक्त(fp);
-पूर्ण
+	fc_frame_free(fp);
+}
 
 /**
- * fc_exch_abts_resp() - Handler क्रम a response to an ABT
+ * fc_exch_abts_resp() - Handler for a response to an ABT
  * @ep: The exchange that the frame is on
  * @fp: The response frame
  *
  * This response would be to an ABTS cancelling an exchange or sequence.
  * The response can be either BA_ACC or BA_RJT
  */
-अटल व्योम fc_exch_abts_resp(काष्ठा fc_exch *ep, काष्ठा fc_frame *fp)
-अणु
-	काष्ठा fc_frame_header *fh;
-	काष्ठा fc_ba_acc *ap;
-	काष्ठा fc_seq *sp;
+static void fc_exch_abts_resp(struct fc_exch *ep, struct fc_frame *fp)
+{
+	struct fc_frame_header *fh;
+	struct fc_ba_acc *ap;
+	struct fc_seq *sp;
 	u16 low;
 	u16 high;
-	पूर्णांक rc = 1, has_rec = 0;
+	int rc = 1, has_rec = 0;
 
 	fh = fc_frame_header_get(fp);
 	FC_EXCH_DBG(ep, "exch: BLS rctl %x - %s\n", fh->fh_r_ctl,
 		    fc_exch_rctl_name(fh->fh_r_ctl));
 
-	अगर (cancel_delayed_work_sync(&ep->समयout_work)) अणु
+	if (cancel_delayed_work_sync(&ep->timeout_work)) {
 		FC_EXCH_DBG(ep, "Exchange timer canceled due to ABTS response\n");
-		fc_exch_release(ep);	/* release from pending समयr hold */
-	पूर्ण
+		fc_exch_release(ep);	/* release from pending timer hold */
+	}
 
 	spin_lock_bh(&ep->ex_lock);
-	चयन (fh->fh_r_ctl) अणु
-	हाल FC_RCTL_BA_ACC:
-		ap = fc_frame_payload_get(fp, माप(*ap));
-		अगर (!ap)
-			अवरोध;
+	switch (fh->fh_r_ctl) {
+	case FC_RCTL_BA_ACC:
+		ap = fc_frame_payload_get(fp, sizeof(*ap));
+		if (!ap)
+			break;
 
 		/*
-		 * Decide whether to establish a Recovery Qualअगरier.
-		 * We करो this अगर there is a non-empty SEQ_CNT range and
-		 * SEQ_ID is the same as the one we पातed.
+		 * Decide whether to establish a Recovery Qualifier.
+		 * We do this if there is a non-empty SEQ_CNT range and
+		 * SEQ_ID is the same as the one we aborted.
 		 */
 		low = ntohs(ap->ba_low_seq_cnt);
 		high = ntohs(ap->ba_high_seq_cnt);
-		अगर ((ep->esb_stat & ESB_ST_REC_QUAL) == 0 &&
+		if ((ep->esb_stat & ESB_ST_REC_QUAL) == 0 &&
 		    (ap->ba_seq_id_val != FC_BA_SEQ_ID_VAL ||
-		     ap->ba_seq_id == ep->seq_id) && low != high) अणु
+		     ap->ba_seq_id == ep->seq_id) && low != high) {
 			ep->esb_stat |= ESB_ST_REC_QUAL;
-			fc_exch_hold(ep);  /* hold क्रम recovery qualअगरier */
+			fc_exch_hold(ep);  /* hold for recovery qualifier */
 			has_rec = 1;
-		पूर्ण
-		अवरोध;
-	हाल FC_RCTL_BA_RJT:
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		}
+		break;
+	case FC_RCTL_BA_RJT:
+		break;
+	default:
+		break;
+	}
 
-	/* करो we need to करो some other checks here. Can we reuse more of
+	/* do we need to do some other checks here. Can we reuse more of
 	 * fc_exch_recv_seq_resp
 	 */
 	sp = &ep->seq;
 	/*
-	 * करो we want to check END_SEQ as well as LAST_SEQ here?
+	 * do we want to check END_SEQ as well as LAST_SEQ here?
 	 */
-	अगर (ep->fh_type != FC_TYPE_FCP &&
+	if (ep->fh_type != FC_TYPE_FCP &&
 	    ntoh24(fh->fh_f_ctl) & FC_FC_LAST_SEQ)
-		rc = fc_exch_करोne_locked(ep);
+		rc = fc_exch_done_locked(ep);
 	spin_unlock_bh(&ep->ex_lock);
 
 	fc_exch_hold(ep);
-	अगर (!rc)
+	if (!rc)
 		fc_exch_delete(ep);
-	अगर (!fc_invoke_resp(ep, sp, fp))
-		fc_frame_मुक्त(fp);
-	अगर (has_rec)
-		fc_exch_समयr_set(ep, ep->r_a_tov);
+	if (!fc_invoke_resp(ep, sp, fp))
+		fc_frame_free(fp);
+	if (has_rec)
+		fc_exch_timer_set(ep, ep->r_a_tov);
 	fc_exch_release(ep);
-पूर्ण
+}
 
 /**
- * fc_exch_recv_bls() - Handler क्रम a BLS sequence
+ * fc_exch_recv_bls() - Handler for a BLS sequence
  * @mp: The EM that the exchange is on
  * @fp: The request frame
  *
  * The BLS frame is always a sequence initiated by the remote side.
  * We may be either the originator or recipient of the exchange.
  */
-अटल व्योम fc_exch_recv_bls(काष्ठा fc_exch_mgr *mp, काष्ठा fc_frame *fp)
-अणु
-	काष्ठा fc_frame_header *fh;
-	काष्ठा fc_exch *ep;
+static void fc_exch_recv_bls(struct fc_exch_mgr *mp, struct fc_frame *fp)
+{
+	struct fc_frame_header *fh;
+	struct fc_exch *ep;
 	u32 f_ctl;
 
 	fh = fc_frame_header_get(fp);
 	f_ctl = ntoh24(fh->fh_f_ctl);
-	fr_seq(fp) = शून्य;
+	fr_seq(fp) = NULL;
 
 	ep = fc_exch_find(mp, (f_ctl & FC_FC_EX_CTX) ?
 			  ntohs(fh->fh_ox_id) : ntohs(fh->fh_rx_id));
-	अगर (ep && (f_ctl & FC_FC_SEQ_INIT)) अणु
+	if (ep && (f_ctl & FC_FC_SEQ_INIT)) {
 		spin_lock_bh(&ep->ex_lock);
 		ep->esb_stat |= ESB_ST_SEQ_INIT;
 		spin_unlock_bh(&ep->ex_lock);
-	पूर्ण
-	अगर (f_ctl & FC_FC_SEQ_CTX) अणु
+	}
+	if (f_ctl & FC_FC_SEQ_CTX) {
 		/*
 		 * A response to a sequence we initiated.
-		 * This should only be ACKs क्रम class 2 or F.
+		 * This should only be ACKs for class 2 or F.
 		 */
-		चयन (fh->fh_r_ctl) अणु
-		हाल FC_RCTL_ACK_1:
-		हाल FC_RCTL_ACK_0:
-			अवरोध;
-		शेष:
-			अगर (ep)
+		switch (fh->fh_r_ctl) {
+		case FC_RCTL_ACK_1:
+		case FC_RCTL_ACK_0:
+			break;
+		default:
+			if (ep)
 				FC_EXCH_DBG(ep, "BLS rctl %x - %s received\n",
 					    fh->fh_r_ctl,
 					    fc_exch_rctl_name(fh->fh_r_ctl));
-			अवरोध;
-		पूर्ण
-		fc_frame_मुक्त(fp);
-	पूर्ण अन्यथा अणु
-		चयन (fh->fh_r_ctl) अणु
-		हाल FC_RCTL_BA_RJT:
-		हाल FC_RCTL_BA_ACC:
-			अगर (ep)
+			break;
+		}
+		fc_frame_free(fp);
+	} else {
+		switch (fh->fh_r_ctl) {
+		case FC_RCTL_BA_RJT:
+		case FC_RCTL_BA_ACC:
+			if (ep)
 				fc_exch_abts_resp(ep, fp);
-			अन्यथा
-				fc_frame_मुक्त(fp);
-			अवरोध;
-		हाल FC_RCTL_BA_ABTS:
-			अगर (ep)
+			else
+				fc_frame_free(fp);
+			break;
+		case FC_RCTL_BA_ABTS:
+			if (ep)
 				fc_exch_recv_abts(ep, fp);
-			अन्यथा
-				fc_frame_मुक्त(fp);
-			अवरोध;
-		शेष:			/* ignore junk */
-			fc_frame_मुक्त(fp);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (ep)
+			else
+				fc_frame_free(fp);
+			break;
+		default:			/* ignore junk */
+			fc_frame_free(fp);
+			break;
+		}
+	}
+	if (ep)
 		fc_exch_release(ep);	/* release hold taken by fc_exch_find */
-पूर्ण
+}
 
 /**
  * fc_seq_ls_acc() - Accept sequence with LS_ACC
- * @rx_fp: The received frame, not मुक्तd here.
+ * @rx_fp: The received frame, not freed here.
  *
  * If this fails due to allocation or transmit congestion, assume the
  * originator will repeat the sequence.
  */
-अटल व्योम fc_seq_ls_acc(काष्ठा fc_frame *rx_fp)
-अणु
-	काष्ठा fc_lport *lport;
-	काष्ठा fc_els_ls_acc *acc;
-	काष्ठा fc_frame *fp;
-	काष्ठा fc_seq *sp;
+static void fc_seq_ls_acc(struct fc_frame *rx_fp)
+{
+	struct fc_lport *lport;
+	struct fc_els_ls_acc *acc;
+	struct fc_frame *fp;
+	struct fc_seq *sp;
 
 	lport = fr_dev(rx_fp);
 	sp = fr_seq(rx_fp);
-	fp = fc_frame_alloc(lport, माप(*acc));
-	अगर (!fp) अणु
+	fp = fc_frame_alloc(lport, sizeof(*acc));
+	if (!fp) {
 		FC_EXCH_DBG(fc_seq_exch(sp),
 			    "exch: drop LS_ACC, out of memory\n");
-		वापस;
-	पूर्ण
-	acc = fc_frame_payload_get(fp, माप(*acc));
-	स_रखो(acc, 0, माप(*acc));
+		return;
+	}
+	acc = fc_frame_payload_get(fp, sizeof(*acc));
+	memset(acc, 0, sizeof(*acc));
 	acc->la_cmd = ELS_LS_ACC;
 	fc_fill_reply_hdr(fp, rx_fp, FC_RCTL_ELS_REP, 0);
 	lport->tt.frame_send(lport, fp);
-पूर्ण
+}
 
 /**
  * fc_seq_ls_rjt() - Reject a sequence with ELS LS_RJT
- * @rx_fp: The received frame, not मुक्तd here.
+ * @rx_fp: The received frame, not freed here.
  * @reason: The reason the sequence is being rejected
- * @explan: The explanation क्रम the rejection
+ * @explan: The explanation for the rejection
  *
  * If this fails due to allocation or transmit congestion, assume the
  * originator will repeat the sequence.
  */
-अटल व्योम fc_seq_ls_rjt(काष्ठा fc_frame *rx_fp, क्रमागत fc_els_rjt_reason reason,
-			  क्रमागत fc_els_rjt_explan explan)
-अणु
-	काष्ठा fc_lport *lport;
-	काष्ठा fc_els_ls_rjt *rjt;
-	काष्ठा fc_frame *fp;
-	काष्ठा fc_seq *sp;
+static void fc_seq_ls_rjt(struct fc_frame *rx_fp, enum fc_els_rjt_reason reason,
+			  enum fc_els_rjt_explan explan)
+{
+	struct fc_lport *lport;
+	struct fc_els_ls_rjt *rjt;
+	struct fc_frame *fp;
+	struct fc_seq *sp;
 
 	lport = fr_dev(rx_fp);
 	sp = fr_seq(rx_fp);
-	fp = fc_frame_alloc(lport, माप(*rjt));
-	अगर (!fp) अणु
+	fp = fc_frame_alloc(lport, sizeof(*rjt));
+	if (!fp) {
 		FC_EXCH_DBG(fc_seq_exch(sp),
 			    "exch: drop LS_ACC, out of memory\n");
-		वापस;
-	पूर्ण
-	rjt = fc_frame_payload_get(fp, माप(*rjt));
-	स_रखो(rjt, 0, माप(*rjt));
+		return;
+	}
+	rjt = fc_frame_payload_get(fp, sizeof(*rjt));
+	memset(rjt, 0, sizeof(*rjt));
 	rjt->er_cmd = ELS_LS_RJT;
 	rjt->er_reason = reason;
 	rjt->er_explan = explan;
 	fc_fill_reply_hdr(fp, rx_fp, FC_RCTL_ELS_REP, 0);
 	lport->tt.frame_send(lport, fp);
-पूर्ण
+}
 
 /**
  * fc_exch_reset() - Reset an exchange
  * @ep: The exchange to be reset
  *
- * Note: May sleep अगर invoked from outside a response handler.
+ * Note: May sleep if invoked from outside a response handler.
  */
-अटल व्योम fc_exch_reset(काष्ठा fc_exch *ep)
-अणु
-	काष्ठा fc_seq *sp;
-	पूर्णांक rc = 1;
+static void fc_exch_reset(struct fc_exch *ep)
+{
+	struct fc_seq *sp;
+	int rc = 1;
 
 	spin_lock_bh(&ep->ex_lock);
 	ep->state |= FC_EX_RST_CLEANUP;
-	fc_exch_समयr_cancel(ep);
-	अगर (ep->esb_stat & ESB_ST_REC_QUAL)
-		atomic_dec(&ep->ex_refcnt);	/* drop hold क्रम rec_qual */
+	fc_exch_timer_cancel(ep);
+	if (ep->esb_stat & ESB_ST_REC_QUAL)
+		atomic_dec(&ep->ex_refcnt);	/* drop hold for rec_qual */
 	ep->esb_stat &= ~ESB_ST_REC_QUAL;
 	sp = &ep->seq;
-	rc = fc_exch_करोne_locked(ep);
+	rc = fc_exch_done_locked(ep);
 	spin_unlock_bh(&ep->ex_lock);
 
 	fc_exch_hold(ep);
 
-	अगर (!rc) अणु
+	if (!rc) {
 		fc_exch_delete(ep);
-	पूर्ण अन्यथा अणु
+	} else {
 		FC_EXCH_DBG(ep, "ep is completed already,"
 				"hence skip calling the resp\n");
-		जाओ skip_resp;
-	पूर्ण
+		goto skip_resp;
+	}
 
 	fc_invoke_resp(ep, sp, ERR_PTR(-FC_EX_CLOSED));
 skip_resp:
-	fc_seq_set_resp(sp, शून्य, ep->arg);
+	fc_seq_set_resp(sp, NULL, ep->arg);
 	fc_exch_release(ep);
-पूर्ण
+}
 
 /**
  * fc_exch_pool_reset() - Reset a per cpu exchange pool
@@ -1930,21 +1929,21 @@ skip_resp:
  * Resets a per cpu exches pool, releasing all of its sequences
  * and exchanges. If sid is non-zero then reset only exchanges
  * we sourced from the local port's FID. If did is non-zero then
- * only reset exchanges destined क्रम the local port's FID.
+ * only reset exchanges destined for the local port's FID.
  */
-अटल व्योम fc_exch_pool_reset(काष्ठा fc_lport *lport,
-			       काष्ठा fc_exch_pool *pool,
+static void fc_exch_pool_reset(struct fc_lport *lport,
+			       struct fc_exch_pool *pool,
 			       u32 sid, u32 did)
-अणु
-	काष्ठा fc_exch *ep;
-	काष्ठा fc_exch *next;
+{
+	struct fc_exch *ep;
+	struct fc_exch *next;
 
 	spin_lock_bh(&pool->lock);
 restart:
-	list_क्रम_each_entry_safe(ep, next, &pool->ex_list, ex_list) अणु
-		अगर ((lport == ep->lp) &&
+	list_for_each_entry_safe(ep, next, &pool->ex_list, ex_list) {
+		if ((lport == ep->lp) &&
 		    (sid == 0 || sid == ep->sid) &&
-		    (did == 0 || did == ep->did)) अणु
+		    (did == 0 || did == ep->did)) {
 			fc_exch_hold(ep);
 			spin_unlock_bh(&pool->lock);
 
@@ -1954,17 +1953,17 @@ restart:
 			spin_lock_bh(&pool->lock);
 
 			/*
-			 * must restart loop inहाल जबतक lock
-			 * was करोwn multiple eps were released.
+			 * must restart loop incase while lock
+			 * was down multiple eps were released.
 			 */
-			जाओ restart;
-		पूर्ण
-	पूर्ण
+			goto restart;
+		}
+	}
 	pool->next_index = 0;
 	pool->left = FC_XID_UNKNOWN;
 	pool->right = FC_XID_UNKNOWN;
 	spin_unlock_bh(&pool->lock);
-पूर्ण
+}
 
 /**
  * fc_exch_mgr_reset() - Reset all EMs of a local port
@@ -1975,20 +1974,20 @@ restart:
  * Reset all EMs associated with a given local port. Release all
  * sequences and exchanges. If sid is non-zero then reset only the
  * exchanges sent from the local port's FID. If did is non-zero then
- * reset only exchanges destined क्रम the local port's FID.
+ * reset only exchanges destined for the local port's FID.
  */
-व्योम fc_exch_mgr_reset(काष्ठा fc_lport *lport, u32 sid, u32 did)
-अणु
-	काष्ठा fc_exch_mgr_anchor *ema;
-	अचिन्हित पूर्णांक cpu;
+void fc_exch_mgr_reset(struct fc_lport *lport, u32 sid, u32 did)
+{
+	struct fc_exch_mgr_anchor *ema;
+	unsigned int cpu;
 
-	list_क्रम_each_entry(ema, &lport->ema_list, ema_list) अणु
-		क्रम_each_possible_cpu(cpu)
+	list_for_each_entry(ema, &lport->ema_list, ema_list) {
+		for_each_possible_cpu(cpu)
 			fc_exch_pool_reset(lport,
 					   per_cpu_ptr(ema->mp->pool, cpu),
 					   sid, did);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL(fc_exch_mgr_reset);
 
 /**
@@ -1996,84 +1995,84 @@ EXPORT_SYMBOL(fc_exch_mgr_reset);
  * @lport: The local port
  * @xid: The exchange ID
  *
- * Returns exchange poपूर्णांकer with hold क्रम caller, or शून्य अगर not found.
+ * Returns exchange pointer with hold for caller, or NULL if not found.
  */
-अटल काष्ठा fc_exch *fc_exch_lookup(काष्ठा fc_lport *lport, u32 xid)
-अणु
-	काष्ठा fc_exch_mgr_anchor *ema;
+static struct fc_exch *fc_exch_lookup(struct fc_lport *lport, u32 xid)
+{
+	struct fc_exch_mgr_anchor *ema;
 
-	list_क्रम_each_entry(ema, &lport->ema_list, ema_list)
-		अगर (ema->mp->min_xid <= xid && xid <= ema->mp->max_xid)
-			वापस fc_exch_find(ema->mp, xid);
-	वापस शून्य;
-पूर्ण
+	list_for_each_entry(ema, &lport->ema_list, ema_list)
+		if (ema->mp->min_xid <= xid && xid <= ema->mp->max_xid)
+			return fc_exch_find(ema->mp, xid);
+	return NULL;
+}
 
 /**
- * fc_exch_els_rec() - Handler क्रम ELS REC (Read Exchange Concise) requests
- * @rfp: The REC frame, not मुक्तd here.
+ * fc_exch_els_rec() - Handler for ELS REC (Read Exchange Concise) requests
+ * @rfp: The REC frame, not freed here.
  *
- * Note that the requesting port may be dअगरferent than the S_ID in the request.
+ * Note that the requesting port may be different than the S_ID in the request.
  */
-अटल व्योम fc_exch_els_rec(काष्ठा fc_frame *rfp)
-अणु
-	काष्ठा fc_lport *lport;
-	काष्ठा fc_frame *fp;
-	काष्ठा fc_exch *ep;
-	काष्ठा fc_els_rec *rp;
-	काष्ठा fc_els_rec_acc *acc;
-	क्रमागत fc_els_rjt_reason reason = ELS_RJT_LOGIC;
-	क्रमागत fc_els_rjt_explan explan;
+static void fc_exch_els_rec(struct fc_frame *rfp)
+{
+	struct fc_lport *lport;
+	struct fc_frame *fp;
+	struct fc_exch *ep;
+	struct fc_els_rec *rp;
+	struct fc_els_rec_acc *acc;
+	enum fc_els_rjt_reason reason = ELS_RJT_LOGIC;
+	enum fc_els_rjt_explan explan;
 	u32 sid;
 	u16 xid, rxid, oxid;
 
 	lport = fr_dev(rfp);
-	rp = fc_frame_payload_get(rfp, माप(*rp));
+	rp = fc_frame_payload_get(rfp, sizeof(*rp));
 	explan = ELS_EXPL_INV_LEN;
-	अगर (!rp)
-		जाओ reject;
+	if (!rp)
+		goto reject;
 	sid = ntoh24(rp->rec_s_id);
 	rxid = ntohs(rp->rec_rx_id);
 	oxid = ntohs(rp->rec_ox_id);
 
 	explan = ELS_EXPL_OXID_RXID;
-	अगर (sid == fc_host_port_id(lport->host))
+	if (sid == fc_host_port_id(lport->host))
 		xid = oxid;
-	अन्यथा
+	else
 		xid = rxid;
-	अगर (xid == FC_XID_UNKNOWN) अणु
+	if (xid == FC_XID_UNKNOWN) {
 		FC_LPORT_DBG(lport,
 			     "REC request from %x: invalid rxid %x oxid %x\n",
 			     sid, rxid, oxid);
-		जाओ reject;
-	पूर्ण
+		goto reject;
+	}
 	ep = fc_exch_lookup(lport, xid);
-	अगर (!ep) अणु
+	if (!ep) {
 		FC_LPORT_DBG(lport,
 			     "REC request from %x: rxid %x oxid %x not found\n",
 			     sid, rxid, oxid);
-		जाओ reject;
-	पूर्ण
+		goto reject;
+	}
 	FC_EXCH_DBG(ep, "REC request from %x: rxid %x oxid %x\n",
 		    sid, rxid, oxid);
-	अगर (ep->oid != sid || oxid != ep->oxid)
-		जाओ rel;
-	अगर (rxid != FC_XID_UNKNOWN && rxid != ep->rxid)
-		जाओ rel;
-	fp = fc_frame_alloc(lport, माप(*acc));
-	अगर (!fp) अणु
+	if (ep->oid != sid || oxid != ep->oxid)
+		goto rel;
+	if (rxid != FC_XID_UNKNOWN && rxid != ep->rxid)
+		goto rel;
+	fp = fc_frame_alloc(lport, sizeof(*acc));
+	if (!fp) {
 		FC_EXCH_DBG(ep, "Drop REC request, out of memory\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	acc = fc_frame_payload_get(fp, माप(*acc));
-	स_रखो(acc, 0, माप(*acc));
+	acc = fc_frame_payload_get(fp, sizeof(*acc));
+	memset(acc, 0, sizeof(*acc));
 	acc->reca_cmd = ELS_LS_ACC;
 	acc->reca_ox_id = rp->rec_ox_id;
-	स_नकल(acc->reca_ofid, rp->rec_s_id, 3);
+	memcpy(acc->reca_ofid, rp->rec_s_id, 3);
 	acc->reca_rx_id = htons(ep->rxid);
-	अगर (ep->sid == ep->oid)
+	if (ep->sid == ep->oid)
 		hton24(acc->reca_rfid, ep->did);
-	अन्यथा
+	else
 		hton24(acc->reca_rfid, ep->sid);
 	acc->reca_fc4value = htonl(ep->seq.rec_data);
 	acc->reca_e_stat = htonl(ep->esb_stat & (ESB_ST_RESP |
@@ -2083,88 +2082,88 @@ EXPORT_SYMBOL(fc_exch_mgr_reset);
 	lport->tt.frame_send(lport, fp);
 out:
 	fc_exch_release(ep);
-	वापस;
+	return;
 
 rel:
 	fc_exch_release(ep);
 reject:
 	fc_seq_ls_rjt(rfp, reason, explan);
-पूर्ण
+}
 
 /**
- * fc_exch_rrq_resp() - Handler क्रम RRQ responses
+ * fc_exch_rrq_resp() - Handler for RRQ responses
  * @sp:	 The sequence that the RRQ is on
  * @fp:	 The RRQ frame
  * @arg: The exchange that the RRQ is on
  *
  * TODO: fix error handler.
  */
-अटल व्योम fc_exch_rrq_resp(काष्ठा fc_seq *sp, काष्ठा fc_frame *fp, व्योम *arg)
-अणु
-	काष्ठा fc_exch *पातed_ep = arg;
-	अचिन्हित पूर्णांक op;
+static void fc_exch_rrq_resp(struct fc_seq *sp, struct fc_frame *fp, void *arg)
+{
+	struct fc_exch *aborted_ep = arg;
+	unsigned int op;
 
-	अगर (IS_ERR(fp)) अणु
-		पूर्णांक err = PTR_ERR(fp);
+	if (IS_ERR(fp)) {
+		int err = PTR_ERR(fp);
 
-		अगर (err == -FC_EX_CLOSED || err == -FC_EX_TIMEOUT)
-			जाओ cleanup;
-		FC_EXCH_DBG(पातed_ep, "Cannot process RRQ, "
+		if (err == -FC_EX_CLOSED || err == -FC_EX_TIMEOUT)
+			goto cleanup;
+		FC_EXCH_DBG(aborted_ep, "Cannot process RRQ, "
 			    "frame error %d\n", err);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	op = fc_frame_payload_op(fp);
-	fc_frame_मुक्त(fp);
+	fc_frame_free(fp);
 
-	चयन (op) अणु
-	हाल ELS_LS_RJT:
-		FC_EXCH_DBG(पातed_ep, "LS_RJT for RRQ\n");
+	switch (op) {
+	case ELS_LS_RJT:
+		FC_EXCH_DBG(aborted_ep, "LS_RJT for RRQ\n");
 		fallthrough;
-	हाल ELS_LS_ACC:
-		जाओ cleanup;
-	शेष:
-		FC_EXCH_DBG(पातed_ep, "unexpected response op %x for RRQ\n",
+	case ELS_LS_ACC:
+		goto cleanup;
+	default:
+		FC_EXCH_DBG(aborted_ep, "unexpected response op %x for RRQ\n",
 			    op);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 cleanup:
-	fc_exch_करोne(&पातed_ep->seq);
-	/* drop hold क्रम rec qual */
-	fc_exch_release(पातed_ep);
-पूर्ण
+	fc_exch_done(&aborted_ep->seq);
+	/* drop hold for rec qual */
+	fc_exch_release(aborted_ep);
+}
 
 
 /**
  * fc_exch_seq_send() - Send a frame using a new exchange and sequence
  * @lport:	The local port to send the frame on
  * @fp:		The frame to be sent
- * @resp:	The response handler क्रम this request
- * @deकाष्ठाor: The deकाष्ठाor क्रम the exchange
+ * @resp:	The response handler for this request
+ * @destructor: The destructor for the exchange
  * @arg:	The argument to be passed to the response handler
- * @समयr_msec: The समयout period क्रम the exchange
+ * @timer_msec: The timeout period for the exchange
  *
  * The exchange response handler is set in this routine to resp()
- * function poपूर्णांकer. It can be called in two scenarios: अगर a समयout
- * occurs or अगर a response frame is received क्रम the exchange. The
- * fc_frame poपूर्णांकer in response handler will also indicate समयout
+ * function pointer. It can be called in two scenarios: if a timeout
+ * occurs or if a response frame is received for the exchange. The
+ * fc_frame pointer in response handler will also indicate timeout
  * as error using IS_ERR related macros.
  *
- * The exchange deकाष्ठाor handler is also set in this routine.
- * The deकाष्ठाor handler is invoked by EM layer when exchange
- * is about to मुक्त, this can be used by caller to मुक्त its
- * resources aदीर्घ with exchange मुक्त.
+ * The exchange destructor handler is also set in this routine.
+ * The destructor handler is invoked by EM layer when exchange
+ * is about to free, this can be used by caller to free its
+ * resources along with exchange free.
  *
- * The arg is passed back to resp and deकाष्ठाor handler.
+ * The arg is passed back to resp and destructor handler.
  *
- * The समयout value (in msec) क्रम an exchange is set अगर non zero
- * समयr_msec argument is specअगरied. The समयr is canceled when
- * it fires or when the exchange is करोne. The exchange समयout handler
- * is रेजिस्टरed by EM layer.
+ * The timeout value (in msec) for an exchange is set if non zero
+ * timer_msec argument is specified. The timer is canceled when
+ * it fires or when the exchange is done. The exchange timeout handler
+ * is registered by EM layer.
  *
- * The frame poपूर्णांकer with some of the header's fields must be
- * filled beक्रमe calling this routine, those fields are:
+ * The frame pointer with some of the header's fields must be
+ * filled before calling this routine, those fields are:
  *
  * - routing control
  * - FC port did
@@ -2173,138 +2172,138 @@ cleanup:
  * - frame control
  * - parameter or relative offset
  */
-काष्ठा fc_seq *fc_exch_seq_send(काष्ठा fc_lport *lport,
-				काष्ठा fc_frame *fp,
-				व्योम (*resp)(काष्ठा fc_seq *,
-					     काष्ठा fc_frame *fp,
-					     व्योम *arg),
-				व्योम (*deकाष्ठाor)(काष्ठा fc_seq *, व्योम *),
-				व्योम *arg, u32 समयr_msec)
-अणु
-	काष्ठा fc_exch *ep;
-	काष्ठा fc_seq *sp = शून्य;
-	काष्ठा fc_frame_header *fh;
-	काष्ठा fc_fcp_pkt *fsp = शून्य;
-	पूर्णांक rc = 1;
+struct fc_seq *fc_exch_seq_send(struct fc_lport *lport,
+				struct fc_frame *fp,
+				void (*resp)(struct fc_seq *,
+					     struct fc_frame *fp,
+					     void *arg),
+				void (*destructor)(struct fc_seq *, void *),
+				void *arg, u32 timer_msec)
+{
+	struct fc_exch *ep;
+	struct fc_seq *sp = NULL;
+	struct fc_frame_header *fh;
+	struct fc_fcp_pkt *fsp = NULL;
+	int rc = 1;
 
 	ep = fc_exch_alloc(lport, fp);
-	अगर (!ep) अणु
-		fc_frame_मुक्त(fp);
-		वापस शून्य;
-	पूर्ण
+	if (!ep) {
+		fc_frame_free(fp);
+		return NULL;
+	}
 	ep->esb_stat |= ESB_ST_SEQ_INIT;
 	fh = fc_frame_header_get(fp);
 	fc_exch_set_addr(ep, ntoh24(fh->fh_s_id), ntoh24(fh->fh_d_id));
 	ep->resp = resp;
-	ep->deकाष्ठाor = deकाष्ठाor;
+	ep->destructor = destructor;
 	ep->arg = arg;
 	ep->r_a_tov = lport->r_a_tov;
 	ep->lp = lport;
 	sp = &ep->seq;
 
-	ep->fh_type = fh->fh_type; /* save क्रम possbile समयout handling */
+	ep->fh_type = fh->fh_type; /* save for possbile timeout handling */
 	ep->f_ctl = ntoh24(fh->fh_f_ctl);
 	fc_exch_setup_hdr(ep, fp, ep->f_ctl);
 	sp->cnt++;
 
-	अगर (ep->xid <= lport->lro_xid && fh->fh_r_ctl == FC_RCTL_DD_UNSOL_CMD) अणु
+	if (ep->xid <= lport->lro_xid && fh->fh_r_ctl == FC_RCTL_DD_UNSOL_CMD) {
 		fsp = fr_fsp(fp);
 		fc_fcp_ddp_setup(fr_fsp(fp), ep->xid);
-	पूर्ण
+	}
 
-	अगर (unlikely(lport->tt.frame_send(lport, fp)))
-		जाओ err;
+	if (unlikely(lport->tt.frame_send(lport, fp)))
+		goto err;
 
-	अगर (समयr_msec)
-		fc_exch_समयr_set_locked(ep, समयr_msec);
+	if (timer_msec)
+		fc_exch_timer_set_locked(ep, timer_msec);
 	ep->f_ctl &= ~FC_FC_FIRST_SEQ;	/* not first seq */
 
-	अगर (ep->f_ctl & FC_FC_SEQ_INIT)
+	if (ep->f_ctl & FC_FC_SEQ_INIT)
 		ep->esb_stat &= ~ESB_ST_SEQ_INIT;
 	spin_unlock_bh(&ep->ex_lock);
-	वापस sp;
+	return sp;
 err:
-	अगर (fsp)
-		fc_fcp_ddp_करोne(fsp);
-	rc = fc_exch_करोne_locked(ep);
+	if (fsp)
+		fc_fcp_ddp_done(fsp);
+	rc = fc_exch_done_locked(ep);
 	spin_unlock_bh(&ep->ex_lock);
-	अगर (!rc)
+	if (!rc)
 		fc_exch_delete(ep);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL(fc_exch_seq_send);
 
 /**
- * fc_exch_rrq() - Send an ELS RRQ (Reinstate Recovery Qualअगरier) command
+ * fc_exch_rrq() - Send an ELS RRQ (Reinstate Recovery Qualifier) command
  * @ep: The exchange to send the RRQ on
  *
  * This tells the remote port to stop blocking the use of
  * the exchange and the seq_cnt range.
  */
-अटल व्योम fc_exch_rrq(काष्ठा fc_exch *ep)
-अणु
-	काष्ठा fc_lport *lport;
-	काष्ठा fc_els_rrq *rrq;
-	काष्ठा fc_frame *fp;
+static void fc_exch_rrq(struct fc_exch *ep)
+{
+	struct fc_lport *lport;
+	struct fc_els_rrq *rrq;
+	struct fc_frame *fp;
 	u32 did;
 
 	lport = ep->lp;
 
-	fp = fc_frame_alloc(lport, माप(*rrq));
-	अगर (!fp)
-		जाओ retry;
+	fp = fc_frame_alloc(lport, sizeof(*rrq));
+	if (!fp)
+		goto retry;
 
-	rrq = fc_frame_payload_get(fp, माप(*rrq));
-	स_रखो(rrq, 0, माप(*rrq));
+	rrq = fc_frame_payload_get(fp, sizeof(*rrq));
+	memset(rrq, 0, sizeof(*rrq));
 	rrq->rrq_cmd = ELS_RRQ;
 	hton24(rrq->rrq_s_id, ep->sid);
 	rrq->rrq_ox_id = htons(ep->oxid);
 	rrq->rrq_rx_id = htons(ep->rxid);
 
 	did = ep->did;
-	अगर (ep->esb_stat & ESB_ST_RESP)
+	if (ep->esb_stat & ESB_ST_RESP)
 		did = ep->sid;
 
 	fc_fill_fc_hdr(fp, FC_RCTL_ELS_REQ, did,
 		       lport->port_id, FC_TYPE_ELS,
 		       FC_FC_FIRST_SEQ | FC_FC_END_SEQ | FC_FC_SEQ_INIT, 0);
 
-	अगर (fc_exch_seq_send(lport, fp, fc_exch_rrq_resp, शून्य, ep,
+	if (fc_exch_seq_send(lport, fp, fc_exch_rrq_resp, NULL, ep,
 			     lport->e_d_tov))
-		वापस;
+		return;
 
 retry:
 	FC_EXCH_DBG(ep, "exch: RRQ send failed\n");
 	spin_lock_bh(&ep->ex_lock);
-	अगर (ep->state & (FC_EX_RST_CLEANUP | FC_EX_DONE)) अणु
+	if (ep->state & (FC_EX_RST_CLEANUP | FC_EX_DONE)) {
 		spin_unlock_bh(&ep->ex_lock);
-		/* drop hold क्रम rec qual */
+		/* drop hold for rec qual */
 		fc_exch_release(ep);
-		वापस;
-	पूर्ण
+		return;
+	}
 	ep->esb_stat |= ESB_ST_REC_QUAL;
-	fc_exch_समयr_set_locked(ep, ep->r_a_tov);
+	fc_exch_timer_set_locked(ep, ep->r_a_tov);
 	spin_unlock_bh(&ep->ex_lock);
-पूर्ण
+}
 
 /**
- * fc_exch_els_rrq() - Handler क्रम ELS RRQ (Reset Recovery Qualअगरier) requests
- * @fp: The RRQ frame, not मुक्तd here.
+ * fc_exch_els_rrq() - Handler for ELS RRQ (Reset Recovery Qualifier) requests
+ * @fp: The RRQ frame, not freed here.
  */
-अटल व्योम fc_exch_els_rrq(काष्ठा fc_frame *fp)
-अणु
-	काष्ठा fc_lport *lport;
-	काष्ठा fc_exch *ep = शून्य;	/* request or subject exchange */
-	काष्ठा fc_els_rrq *rp;
+static void fc_exch_els_rrq(struct fc_frame *fp)
+{
+	struct fc_lport *lport;
+	struct fc_exch *ep = NULL;	/* request or subject exchange */
+	struct fc_els_rrq *rp;
 	u32 sid;
 	u16 xid;
-	क्रमागत fc_els_rjt_explan explan;
+	enum fc_els_rjt_explan explan;
 
 	lport = fr_dev(fp);
-	rp = fc_frame_payload_get(fp, माप(*rp));
+	rp = fc_frame_payload_get(fp, sizeof(*rp));
 	explan = ELS_EXPL_INV_LEN;
-	अगर (!rp)
-		जाओ reject;
+	if (!rp)
+		goto reject;
 
 	/*
 	 * lookup subject exchange.
@@ -2314,29 +2313,29 @@ retry:
 			ntohs(rp->rrq_ox_id) : ntohs(rp->rrq_rx_id);
 	ep = fc_exch_lookup(lport, xid);
 	explan = ELS_EXPL_OXID_RXID;
-	अगर (!ep)
-		जाओ reject;
+	if (!ep)
+		goto reject;
 	spin_lock_bh(&ep->ex_lock);
 	FC_EXCH_DBG(ep, "RRQ request from %x: xid %x rxid %x oxid %x\n",
 		    sid, xid, ntohs(rp->rrq_rx_id), ntohs(rp->rrq_ox_id));
-	अगर (ep->oxid != ntohs(rp->rrq_ox_id))
-		जाओ unlock_reject;
-	अगर (ep->rxid != ntohs(rp->rrq_rx_id) &&
+	if (ep->oxid != ntohs(rp->rrq_ox_id))
+		goto unlock_reject;
+	if (ep->rxid != ntohs(rp->rrq_rx_id) &&
 	    ep->rxid != FC_XID_UNKNOWN)
-		जाओ unlock_reject;
+		goto unlock_reject;
 	explan = ELS_EXPL_SID;
-	अगर (ep->sid != sid)
-		जाओ unlock_reject;
+	if (ep->sid != sid)
+		goto unlock_reject;
 
 	/*
-	 * Clear Recovery Qualअगरier state, and cancel समयr अगर complete.
+	 * Clear Recovery Qualifier state, and cancel timer if complete.
 	 */
-	अगर (ep->esb_stat & ESB_ST_REC_QUAL) अणु
+	if (ep->esb_stat & ESB_ST_REC_QUAL) {
 		ep->esb_stat &= ~ESB_ST_REC_QUAL;
-		atomic_dec(&ep->ex_refcnt);	/* drop hold क्रम rec qual */
-	पूर्ण
-	अगर (ep->esb_stat & ESB_ST_COMPLETE)
-		fc_exch_समयr_cancel(ep);
+		atomic_dec(&ep->ex_refcnt);	/* drop hold for rec qual */
+	}
+	if (ep->esb_stat & ESB_ST_COMPLETE)
+		fc_exch_timer_cancel(ep);
 
 	spin_unlock_bh(&ep->ex_lock);
 
@@ -2344,40 +2343,40 @@ retry:
 	 * Send LS_ACC.
 	 */
 	fc_seq_ls_acc(fp);
-	जाओ out;
+	goto out;
 
 unlock_reject:
 	spin_unlock_bh(&ep->ex_lock);
 reject:
 	fc_seq_ls_rjt(fp, ELS_RJT_LOGIC, explan);
 out:
-	अगर (ep)
+	if (ep)
 		fc_exch_release(ep);	/* drop hold from fc_exch_find */
-पूर्ण
+}
 
 /**
  * fc_exch_update_stats() - update exches stats to lport
  * @lport: The local port to update exchange manager stats
  */
-व्योम fc_exch_update_stats(काष्ठा fc_lport *lport)
-अणु
-	काष्ठा fc_host_statistics *st;
-	काष्ठा fc_exch_mgr_anchor *ema;
-	काष्ठा fc_exch_mgr *mp;
+void fc_exch_update_stats(struct fc_lport *lport)
+{
+	struct fc_host_statistics *st;
+	struct fc_exch_mgr_anchor *ema;
+	struct fc_exch_mgr *mp;
 
 	st = &lport->host_stats;
 
-	list_क्रम_each_entry(ema, &lport->ema_list, ema_list) अणु
+	list_for_each_entry(ema, &lport->ema_list, ema_list) {
 		mp = ema->mp;
-		st->fc_no_मुक्त_exch += atomic_पढ़ो(&mp->stats.no_मुक्त_exch);
-		st->fc_no_मुक्त_exch_xid +=
-				atomic_पढ़ो(&mp->stats.no_मुक्त_exch_xid);
-		st->fc_xid_not_found += atomic_पढ़ो(&mp->stats.xid_not_found);
-		st->fc_xid_busy += atomic_पढ़ो(&mp->stats.xid_busy);
-		st->fc_seq_not_found += atomic_पढ़ो(&mp->stats.seq_not_found);
-		st->fc_non_bls_resp += atomic_पढ़ो(&mp->stats.non_bls_resp);
-	पूर्ण
-पूर्ण
+		st->fc_no_free_exch += atomic_read(&mp->stats.no_free_exch);
+		st->fc_no_free_exch_xid +=
+				atomic_read(&mp->stats.no_free_exch_xid);
+		st->fc_xid_not_found += atomic_read(&mp->stats.xid_not_found);
+		st->fc_xid_busy += atomic_read(&mp->stats.xid_busy);
+		st->fc_seq_not_found += atomic_read(&mp->stats.seq_not_found);
+		st->fc_non_bls_resp += atomic_read(&mp->stats.non_bls_resp);
+	}
+}
 EXPORT_SYMBOL(fc_exch_update_stats);
 
 /**
@@ -2386,49 +2385,49 @@ EXPORT_SYMBOL(fc_exch_update_stats);
  * @mp:	   The exchange manager to be added to the local port
  * @match: The match routine that indicates when this EM should be used
  */
-काष्ठा fc_exch_mgr_anchor *fc_exch_mgr_add(काष्ठा fc_lport *lport,
-					   काष्ठा fc_exch_mgr *mp,
-					   bool (*match)(काष्ठा fc_frame *))
-अणु
-	काष्ठा fc_exch_mgr_anchor *ema;
+struct fc_exch_mgr_anchor *fc_exch_mgr_add(struct fc_lport *lport,
+					   struct fc_exch_mgr *mp,
+					   bool (*match)(struct fc_frame *))
+{
+	struct fc_exch_mgr_anchor *ema;
 
-	ema = kदो_स्मृति(माप(*ema), GFP_ATOMIC);
-	अगर (!ema)
-		वापस ema;
+	ema = kmalloc(sizeof(*ema), GFP_ATOMIC);
+	if (!ema)
+		return ema;
 
 	ema->mp = mp;
 	ema->match = match;
 	/* add EM anchor to EM anchors list */
 	list_add_tail(&ema->ema_list, &lport->ema_list);
 	kref_get(&mp->kref);
-	वापस ema;
-पूर्ण
+	return ema;
+}
 EXPORT_SYMBOL(fc_exch_mgr_add);
 
 /**
  * fc_exch_mgr_destroy() - Destroy an exchange manager
  * @kref: The reference to the EM to be destroyed
  */
-अटल व्योम fc_exch_mgr_destroy(काष्ठा kref *kref)
-अणु
-	काष्ठा fc_exch_mgr *mp = container_of(kref, काष्ठा fc_exch_mgr, kref);
+static void fc_exch_mgr_destroy(struct kref *kref)
+{
+	struct fc_exch_mgr *mp = container_of(kref, struct fc_exch_mgr, kref);
 
 	mempool_destroy(mp->ep_pool);
-	मुक्त_percpu(mp->pool);
-	kमुक्त(mp);
-पूर्ण
+	free_percpu(mp->pool);
+	kfree(mp);
+}
 
 /**
  * fc_exch_mgr_del() - Delete an EM from a local port's list
- * @ema: The exchange manager anchor identअगरying the EM to be deleted
+ * @ema: The exchange manager anchor identifying the EM to be deleted
  */
-व्योम fc_exch_mgr_del(काष्ठा fc_exch_mgr_anchor *ema)
-अणु
-	/* हटाओ EM anchor from EM anchors list */
+void fc_exch_mgr_del(struct fc_exch_mgr_anchor *ema)
+{
+	/* remove EM anchor from EM anchors list */
 	list_del(&ema->ema_list);
 	kref_put(&ema->mp->kref, fc_exch_mgr_destroy);
-	kमुक्त(ema);
-पूर्ण
+	kfree(ema);
+}
 EXPORT_SYMBOL(fc_exch_mgr_del);
 
 /**
@@ -2436,104 +2435,104 @@ EXPORT_SYMBOL(fc_exch_mgr_del);
  * @src: Source lport to clone exchange managers from
  * @dst: New lport that takes references to all the exchange managers
  */
-पूर्णांक fc_exch_mgr_list_clone(काष्ठा fc_lport *src, काष्ठा fc_lport *dst)
-अणु
-	काष्ठा fc_exch_mgr_anchor *ema, *पंचांगp;
+int fc_exch_mgr_list_clone(struct fc_lport *src, struct fc_lport *dst)
+{
+	struct fc_exch_mgr_anchor *ema, *tmp;
 
-	list_क्रम_each_entry(ema, &src->ema_list, ema_list) अणु
-		अगर (!fc_exch_mgr_add(dst, ema->mp, ema->match))
-			जाओ err;
-	पूर्ण
-	वापस 0;
+	list_for_each_entry(ema, &src->ema_list, ema_list) {
+		if (!fc_exch_mgr_add(dst, ema->mp, ema->match))
+			goto err;
+	}
+	return 0;
 err:
-	list_क्रम_each_entry_safe(ema, पंचांगp, &dst->ema_list, ema_list)
+	list_for_each_entry_safe(ema, tmp, &dst->ema_list, ema_list)
 		fc_exch_mgr_del(ema);
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 EXPORT_SYMBOL(fc_exch_mgr_list_clone);
 
 /**
  * fc_exch_mgr_alloc() - Allocate an exchange manager
  * @lport:   The local port that the new EM will be associated with
- * @class:   The शेष FC class क्रम new exchanges
- * @min_xid: The minimum XID क्रम exchanges from the new EM
- * @max_xid: The maximum XID क्रम exchanges from the new EM
- * @match:   The match routine क्रम the new EM
+ * @class:   The default FC class for new exchanges
+ * @min_xid: The minimum XID for exchanges from the new EM
+ * @max_xid: The maximum XID for exchanges from the new EM
+ * @match:   The match routine for the new EM
  */
-काष्ठा fc_exch_mgr *fc_exch_mgr_alloc(काष्ठा fc_lport *lport,
-				      क्रमागत fc_class class,
+struct fc_exch_mgr *fc_exch_mgr_alloc(struct fc_lport *lport,
+				      enum fc_class class,
 				      u16 min_xid, u16 max_xid,
-				      bool (*match)(काष्ठा fc_frame *))
-अणु
-	काष्ठा fc_exch_mgr *mp;
+				      bool (*match)(struct fc_frame *))
+{
+	struct fc_exch_mgr *mp;
 	u16 pool_exch_range;
-	माप_प्रकार pool_size;
-	अचिन्हित पूर्णांक cpu;
-	काष्ठा fc_exch_pool *pool;
+	size_t pool_size;
+	unsigned int cpu;
+	struct fc_exch_pool *pool;
 
-	अगर (max_xid <= min_xid || max_xid == FC_XID_UNKNOWN ||
-	    (min_xid & fc_cpu_mask) != 0) अणु
+	if (max_xid <= min_xid || max_xid == FC_XID_UNKNOWN ||
+	    (min_xid & fc_cpu_mask) != 0) {
 		FC_LPORT_DBG(lport, "Invalid min_xid 0x:%x and max_xid 0x:%x\n",
 			     min_xid, max_xid);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	/*
-	 * allocate memory क्रम EM
+	 * allocate memory for EM
 	 */
-	mp = kzalloc(माप(काष्ठा fc_exch_mgr), GFP_ATOMIC);
-	अगर (!mp)
-		वापस शून्य;
+	mp = kzalloc(sizeof(struct fc_exch_mgr), GFP_ATOMIC);
+	if (!mp)
+		return NULL;
 
 	mp->class = class;
 	mp->lport = lport;
-	/* adjust em exch xid range क्रम offload */
+	/* adjust em exch xid range for offload */
 	mp->min_xid = min_xid;
 
-       /* reduce range so per cpu pool fits पूर्णांकo PCPU_MIN_UNIT_SIZE pool */
-	pool_exch_range = (PCPU_MIN_UNIT_SIZE - माप(*pool)) /
-		माप(काष्ठा fc_exch *);
-	अगर ((max_xid - min_xid + 1) / (fc_cpu_mask + 1) > pool_exch_range) अणु
+       /* reduce range so per cpu pool fits into PCPU_MIN_UNIT_SIZE pool */
+	pool_exch_range = (PCPU_MIN_UNIT_SIZE - sizeof(*pool)) /
+		sizeof(struct fc_exch *);
+	if ((max_xid - min_xid + 1) / (fc_cpu_mask + 1) > pool_exch_range) {
 		mp->max_xid = pool_exch_range * (fc_cpu_mask + 1) +
 			min_xid - 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		mp->max_xid = max_xid;
 		pool_exch_range = (mp->max_xid - mp->min_xid + 1) /
 			(fc_cpu_mask + 1);
-	पूर्ण
+	}
 
 	mp->ep_pool = mempool_create_slab_pool(2, fc_em_cachep);
-	अगर (!mp->ep_pool)
-		जाओ मुक्त_mp;
+	if (!mp->ep_pool)
+		goto free_mp;
 
 	/*
 	 * Setup per cpu exch pool with entire exchange id range equally
-	 * भागided across all cpus. The exch poपूर्णांकers array memory is
-	 * allocated क्रम exch range per pool.
+	 * divided across all cpus. The exch pointers array memory is
+	 * allocated for exch range per pool.
 	 */
 	mp->pool_max_index = pool_exch_range - 1;
 
 	/*
 	 * Allocate and initialize per cpu exch pool
 	 */
-	pool_size = माप(*pool) + pool_exch_range * माप(काष्ठा fc_exch *);
-	mp->pool = __alloc_percpu(pool_size, __alignof__(काष्ठा fc_exch_pool));
-	अगर (!mp->pool)
-		जाओ मुक्त_mempool;
-	क्रम_each_possible_cpu(cpu) अणु
+	pool_size = sizeof(*pool) + pool_exch_range * sizeof(struct fc_exch *);
+	mp->pool = __alloc_percpu(pool_size, __alignof__(struct fc_exch_pool));
+	if (!mp->pool)
+		goto free_mempool;
+	for_each_possible_cpu(cpu) {
 		pool = per_cpu_ptr(mp->pool, cpu);
 		pool->next_index = 0;
 		pool->left = FC_XID_UNKNOWN;
 		pool->right = FC_XID_UNKNOWN;
 		spin_lock_init(&pool->lock);
 		INIT_LIST_HEAD(&pool->ex_list);
-	पूर्ण
+	}
 
 	kref_init(&mp->kref);
-	अगर (!fc_exch_mgr_add(lport, mp, match)) अणु
-		मुक्त_percpu(mp->pool);
-		जाओ मुक्त_mempool;
-	पूर्ण
+	if (!fc_exch_mgr_add(lport, mp, match)) {
+		free_percpu(mp->pool);
+		goto free_mempool;
+	}
 
 	/*
 	 * Above kref_init() sets mp->kref to 1 and then
@@ -2541,173 +2540,173 @@ EXPORT_SYMBOL(fc_exch_mgr_list_clone);
 	 * so adjust that extra increment.
 	 */
 	kref_put(&mp->kref, fc_exch_mgr_destroy);
-	वापस mp;
+	return mp;
 
-मुक्त_mempool:
+free_mempool:
 	mempool_destroy(mp->ep_pool);
-मुक्त_mp:
-	kमुक्त(mp);
-	वापस शून्य;
-पूर्ण
+free_mp:
+	kfree(mp);
+	return NULL;
+}
 EXPORT_SYMBOL(fc_exch_mgr_alloc);
 
 /**
- * fc_exch_mgr_मुक्त() - Free all exchange managers on a local port
- * @lport: The local port whose EMs are to be मुक्तd
+ * fc_exch_mgr_free() - Free all exchange managers on a local port
+ * @lport: The local port whose EMs are to be freed
  */
-व्योम fc_exch_mgr_मुक्त(काष्ठा fc_lport *lport)
-अणु
-	काष्ठा fc_exch_mgr_anchor *ema, *next;
+void fc_exch_mgr_free(struct fc_lport *lport)
+{
+	struct fc_exch_mgr_anchor *ema, *next;
 
 	flush_workqueue(fc_exch_workqueue);
-	list_क्रम_each_entry_safe(ema, next, &lport->ema_list, ema_list)
+	list_for_each_entry_safe(ema, next, &lport->ema_list, ema_list)
 		fc_exch_mgr_del(ema);
-पूर्ण
-EXPORT_SYMBOL(fc_exch_mgr_मुक्त);
+}
+EXPORT_SYMBOL(fc_exch_mgr_free);
 
 /**
- * fc_find_ema() - Lookup and वापस appropriate Exchange Manager Anchor depending
+ * fc_find_ema() - Lookup and return appropriate Exchange Manager Anchor depending
  * upon 'xid'.
  * @f_ctl: f_ctl
  * @lport: The local port the frame was received on
  * @fh: The received frame header
  */
-अटल काष्ठा fc_exch_mgr_anchor *fc_find_ema(u32 f_ctl,
-					      काष्ठा fc_lport *lport,
-					      काष्ठा fc_frame_header *fh)
-अणु
-	काष्ठा fc_exch_mgr_anchor *ema;
+static struct fc_exch_mgr_anchor *fc_find_ema(u32 f_ctl,
+					      struct fc_lport *lport,
+					      struct fc_frame_header *fh)
+{
+	struct fc_exch_mgr_anchor *ema;
 	u16 xid;
 
-	अगर (f_ctl & FC_FC_EX_CTX)
+	if (f_ctl & FC_FC_EX_CTX)
 		xid = ntohs(fh->fh_ox_id);
-	अन्यथा अणु
+	else {
 		xid = ntohs(fh->fh_rx_id);
-		अगर (xid == FC_XID_UNKNOWN)
-			वापस list_entry(lport->ema_list.prev,
+		if (xid == FC_XID_UNKNOWN)
+			return list_entry(lport->ema_list.prev,
 					  typeof(*ema), ema_list);
-	पूर्ण
+	}
 
-	list_क्रम_each_entry(ema, &lport->ema_list, ema_list) अणु
-		अगर ((xid >= ema->mp->min_xid) &&
+	list_for_each_entry(ema, &lport->ema_list, ema_list) {
+		if ((xid >= ema->mp->min_xid) &&
 		    (xid <= ema->mp->max_xid))
-			वापस ema;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+			return ema;
+	}
+	return NULL;
+}
 /**
- * fc_exch_recv() - Handler क्रम received frames
+ * fc_exch_recv() - Handler for received frames
  * @lport: The local port the frame was received on
  * @fp:	The received frame
  */
-व्योम fc_exch_recv(काष्ठा fc_lport *lport, काष्ठा fc_frame *fp)
-अणु
-	काष्ठा fc_frame_header *fh = fc_frame_header_get(fp);
-	काष्ठा fc_exch_mgr_anchor *ema;
+void fc_exch_recv(struct fc_lport *lport, struct fc_frame *fp)
+{
+	struct fc_frame_header *fh = fc_frame_header_get(fp);
+	struct fc_exch_mgr_anchor *ema;
 	u32 f_ctl;
 
 	/* lport lock ? */
-	अगर (!lport || lport->state == LPORT_ST_DISABLED) अणु
+	if (!lport || lport->state == LPORT_ST_DISABLED) {
 		FC_LIBFC_DBG("Receiving frames for an lport that "
 			     "has not been initialized correctly\n");
-		fc_frame_मुक्त(fp);
-		वापस;
-	पूर्ण
+		fc_frame_free(fp);
+		return;
+	}
 
 	f_ctl = ntoh24(fh->fh_f_ctl);
 	ema = fc_find_ema(f_ctl, lport, fh);
-	अगर (!ema) अणु
+	if (!ema) {
 		FC_LPORT_DBG(lport, "Unable to find Exchange Manager Anchor,"
 				    "fc_ctl <0x%x>, xid <0x%x>\n",
 				     f_ctl,
 				     (f_ctl & FC_FC_EX_CTX) ?
 				     ntohs(fh->fh_ox_id) :
 				     ntohs(fh->fh_rx_id));
-		fc_frame_मुक्त(fp);
-		वापस;
-	पूर्ण
+		fc_frame_free(fp);
+		return;
+	}
 
 	/*
 	 * If frame is marked invalid, just drop it.
 	 */
-	चयन (fr_eof(fp)) अणु
-	हाल FC_खातापूर्ण_T:
-		अगर (f_ctl & FC_FC_END_SEQ)
+	switch (fr_eof(fp)) {
+	case FC_EOF_T:
+		if (f_ctl & FC_FC_END_SEQ)
 			skb_trim(fp_skb(fp), fr_len(fp) - FC_FC_FILL(f_ctl));
 		fallthrough;
-	हाल FC_खातापूर्ण_N:
-		अगर (fh->fh_type == FC_TYPE_BLS)
+	case FC_EOF_N:
+		if (fh->fh_type == FC_TYPE_BLS)
 			fc_exch_recv_bls(ema->mp, fp);
-		अन्यथा अगर ((f_ctl & (FC_FC_EX_CTX | FC_FC_SEQ_CTX)) ==
+		else if ((f_ctl & (FC_FC_EX_CTX | FC_FC_SEQ_CTX)) ==
 			 FC_FC_EX_CTX)
 			fc_exch_recv_seq_resp(ema->mp, fp);
-		अन्यथा अगर (f_ctl & FC_FC_SEQ_CTX)
+		else if (f_ctl & FC_FC_SEQ_CTX)
 			fc_exch_recv_resp(ema->mp, fp);
-		अन्यथा	/* no EX_CTX and no SEQ_CTX */
+		else	/* no EX_CTX and no SEQ_CTX */
 			fc_exch_recv_req(lport, ema->mp, fp);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		FC_LPORT_DBG(lport, "dropping invalid frame (eof %x)",
 			     fr_eof(fp));
-		fc_frame_मुक्त(fp);
-	पूर्ण
-पूर्ण
+		fc_frame_free(fp);
+	}
+}
 EXPORT_SYMBOL(fc_exch_recv);
 
 /**
- * fc_exch_init() - Initialize the exchange layer क्रम a local port
- * @lport: The local port to initialize the exchange layer क्रम
+ * fc_exch_init() - Initialize the exchange layer for a local port
+ * @lport: The local port to initialize the exchange layer for
  */
-पूर्णांक fc_exch_init(काष्ठा fc_lport *lport)
-अणु
-	अगर (!lport->tt.exch_mgr_reset)
+int fc_exch_init(struct fc_lport *lport)
+{
+	if (!lport->tt.exch_mgr_reset)
 		lport->tt.exch_mgr_reset = fc_exch_mgr_reset;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(fc_exch_init);
 
 /**
  * fc_setup_exch_mgr() - Setup an exchange manager
  */
-पूर्णांक fc_setup_exch_mgr(व्योम)
-अणु
-	fc_em_cachep = kmem_cache_create("libfc_em", माप(काष्ठा fc_exch),
-					 0, SLAB_HWCACHE_ALIGN, शून्य);
-	अगर (!fc_em_cachep)
-		वापस -ENOMEM;
+int fc_setup_exch_mgr(void)
+{
+	fc_em_cachep = kmem_cache_create("libfc_em", sizeof(struct fc_exch),
+					 0, SLAB_HWCACHE_ALIGN, NULL);
+	if (!fc_em_cachep)
+		return -ENOMEM;
 
 	/*
 	 * Initialize fc_cpu_mask and fc_cpu_order. The
-	 * fc_cpu_mask is set क्रम nr_cpu_ids rounded up
-	 * to order of 2's * घातer and order is stored
+	 * fc_cpu_mask is set for nr_cpu_ids rounded up
+	 * to order of 2's * power and order is stored
 	 * in fc_cpu_order as this is later required in
 	 * mapping between an exch id and exch array index
 	 * in per cpu exch pool.
 	 *
 	 * This round up is required to align fc_cpu_mask
 	 * to exchange id's lower bits such that all incoming
-	 * frames of an exchange माला_लो delivered to the same
+	 * frames of an exchange gets delivered to the same
 	 * cpu on which exchange originated by simple bitwise
 	 * AND operation between fc_cpu_mask and exchange id.
 	 */
-	fc_cpu_order = ilog2(roundup_घात_of_two(nr_cpu_ids));
+	fc_cpu_order = ilog2(roundup_pow_of_two(nr_cpu_ids));
 	fc_cpu_mask = (1 << fc_cpu_order) - 1;
 
-	fc_exch_workqueue = create_singlethपढ़ो_workqueue("fc_exch_workqueue");
-	अगर (!fc_exch_workqueue)
-		जाओ err;
-	वापस 0;
+	fc_exch_workqueue = create_singlethread_workqueue("fc_exch_workqueue");
+	if (!fc_exch_workqueue)
+		goto err;
+	return 0;
 err:
 	kmem_cache_destroy(fc_em_cachep);
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
 /**
  * fc_destroy_exch_mgr() - Destroy an exchange manager
  */
-व्योम fc_destroy_exch_mgr(व्योम)
-अणु
+void fc_destroy_exch_mgr(void)
+{
 	destroy_workqueue(fc_exch_workqueue);
 	kmem_cache_destroy(fc_em_cachep);
-पूर्ण
+}

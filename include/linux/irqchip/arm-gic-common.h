@@ -1,47 +1,46 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * include/linux/irqchip/arm-gic-common.h
  *
  * Copyright (C) 2016 ARM Limited, All Rights Reserved.
  */
-#अगर_अघोषित __LINUX_IRQCHIP_ARM_GIC_COMMON_H
-#घोषणा __LINUX_IRQCHIP_ARM_GIC_COMMON_H
+#ifndef __LINUX_IRQCHIP_ARM_GIC_COMMON_H
+#define __LINUX_IRQCHIP_ARM_GIC_COMMON_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/ioport.h>
+#include <linux/types.h>
+#include <linux/ioport.h>
 
-#घोषणा GICD_INT_DEF_PRI		0xa0
-#घोषणा GICD_INT_DEF_PRI_X4		((GICD_INT_DEF_PRI << 24) |\
+#define GICD_INT_DEF_PRI		0xa0
+#define GICD_INT_DEF_PRI_X4		((GICD_INT_DEF_PRI << 24) |\
 					(GICD_INT_DEF_PRI << 16) |\
 					(GICD_INT_DEF_PRI << 8) |\
 					GICD_INT_DEF_PRI)
 
-क्रमागत gic_type अणु
+enum gic_type {
 	GIC_V2,
 	GIC_V3,
-पूर्ण;
+};
 
-काष्ठा gic_kvm_info अणु
+struct gic_kvm_info {
 	/* GIC type */
-	क्रमागत gic_type	type;
-	/* Virtual CPU पूर्णांकerface */
-	काष्ठा resource vcpu;
+	enum gic_type	type;
+	/* Virtual CPU interface */
+	struct resource vcpu;
 	/* Interrupt number */
-	अचिन्हित पूर्णांक	मुख्यt_irq;
-	/* Virtual control पूर्णांकerface */
-	काष्ठा resource vctrl;
+	unsigned int	maint_irq;
+	/* Virtual control interface */
+	struct resource vctrl;
 	/* vlpi support */
 	bool		has_v4;
 	/* rvpeid support */
 	bool		has_v4_1;
-पूर्ण;
+};
 
-स्थिर काष्ठा gic_kvm_info *gic_get_kvm_info(व्योम);
+const struct gic_kvm_info *gic_get_kvm_info(void);
 
-काष्ठा irq_करोमुख्य;
-काष्ठा fwnode_handle;
-पूर्णांक gicv2m_init(काष्ठा fwnode_handle *parent_handle,
-		काष्ठा irq_करोमुख्य *parent);
+struct irq_domain;
+struct fwnode_handle;
+int gicv2m_init(struct fwnode_handle *parent_handle,
+		struct irq_domain *parent);
 
-#पूर्ण_अगर /* __LINUX_IRQCHIP_ARM_GIC_COMMON_H */
+#endif /* __LINUX_IRQCHIP_ARM_GIC_COMMON_H */

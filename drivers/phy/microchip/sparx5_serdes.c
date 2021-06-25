@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /* Microchip Sparx5 Switch SerDes driver
  *
  * Copyright (c) 2020 Microchip Technology Inc. and its subsidiaries.
@@ -7,62 +6,62 @@
  * The Sparx5 Chip Register Model can be browsed at this location:
  * https://github.com/microchip-ung/sparx-5_reginfo
  * and the datasheet is available here:
- * https://ww1.microchip.com/करोwnloads/en/DeviceDoc/SparX-5_Family_L2L3_Enterprise_10G_Ethernet_Switches_Datasheet_00003822B.pdf
+ * https://ww1.microchip.com/downloads/en/DeviceDoc/SparX-5_Family_L2L3_Enterprise_10G_Ethernet_Switches_Datasheet_00003822B.pdf
  */
-#समावेश <linux/prपूर्णांकk.h>
-#समावेश <linux/module.h>
-#समावेश <linux/device.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/of.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/clk.h>
-#समावेश <linux/phy.h>
-#समावेश <linux/phy/phy.h>
+#include <linux/printk.h>
+#include <linux/module.h>
+#include <linux/device.h>
+#include <linux/netdevice.h>
+#include <linux/platform_device.h>
+#include <linux/of.h>
+#include <linux/io.h>
+#include <linux/clk.h>
+#include <linux/phy.h>
+#include <linux/phy/phy.h>
 
-#समावेश "sparx5_serdes.h"
+#include "sparx5_serdes.h"
 
-#घोषणा SPX5_CMU_MAX          14
+#define SPX5_CMU_MAX          14
 
-#घोषणा SPX5_SERDES_10G_START 13
-#घोषणा SPX5_SERDES_25G_START 25
+#define SPX5_SERDES_10G_START 13
+#define SPX5_SERDES_25G_START 25
 
-क्रमागत sparx5_10g28cmu_mode अणु
+enum sparx5_10g28cmu_mode {
 	SPX5_SD10G28_CMU_MAIN = 0,
 	SPX5_SD10G28_CMU_AUX1 = 1,
 	SPX5_SD10G28_CMU_AUX2 = 3,
 	SPX5_SD10G28_CMU_NONE = 4,
-पूर्ण;
+};
 
-क्रमागत sparx5_sd25g28_mode_preset_type अणु
+enum sparx5_sd25g28_mode_preset_type {
 	SPX5_SD25G28_MODE_PRESET_25000,
 	SPX5_SD25G28_MODE_PRESET_10000,
 	SPX5_SD25G28_MODE_PRESET_5000,
 	SPX5_SD25G28_MODE_PRESET_SD_2G5,
 	SPX5_SD25G28_MODE_PRESET_1000BASEX,
-पूर्ण;
+};
 
-क्रमागत sparx5_sd10g28_mode_preset_type अणु
+enum sparx5_sd10g28_mode_preset_type {
 	SPX5_SD10G28_MODE_PRESET_10000,
 	SPX5_SD10G28_MODE_PRESET_SFI_5000_6G,
 	SPX5_SD10G28_MODE_PRESET_SFI_5000_10G,
 	SPX5_SD10G28_MODE_PRESET_QSGMII,
 	SPX5_SD10G28_MODE_PRESET_SD_2G5,
 	SPX5_SD10G28_MODE_PRESET_1000BASEX,
-पूर्ण;
+};
 
-काष्ठा sparx5_serdes_io_resource अणु
-	क्रमागत sparx5_serdes_target id;
+struct sparx5_serdes_io_resource {
+	enum sparx5_serdes_target id;
 	phys_addr_t offset;
-पूर्ण;
+};
 
-काष्ठा sparx5_sd25g28_mode_preset अणु
+struct sparx5_sd25g28_mode_preset {
 	u8 bitwidth;
-	u8 tx_pre_भाग;
-	u8 fअगरo_ck_भाग;
-	u8 pre_भागsel;
-	u8 vco_भाग_mode;
-	u8 sel_भाग;
+	u8 tx_pre_div;
+	u8 fifo_ck_div;
+	u8 pre_divsel;
+	u8 vco_div_mode;
+	u8 sel_div;
 	u8 ck_bitwidth;
 	u8 subrate;
 	u8 com_txcal_en;
@@ -81,54 +80,54 @@
 	u8 cfg_pi_bw_3_0;
 	u8 tx_tap_dly;
 	u8 tx_tap_adv;
-पूर्ण;
+};
 
-काष्ठा sparx5_sd25g28_media_preset अणु
-	u8 cfg_eq_c_क्रमce_3_0;
+struct sparx5_sd25g28_media_preset {
+	u8 cfg_eq_c_force_3_0;
 	u8 cfg_vga_ctrl_byp_4_0;
-	u8 cfg_eq_r_क्रमce_3_0;
+	u8 cfg_eq_r_force_3_0;
 	u8 cfg_en_adv;
-	u8 cfg_en_मुख्य;
+	u8 cfg_en_main;
 	u8 cfg_en_dly;
 	u8 cfg_tap_adv_3_0;
-	u8 cfg_tap_मुख्य;
+	u8 cfg_tap_main;
 	u8 cfg_tap_dly_4_0;
 	u8 cfg_alos_thr_2_0;
-पूर्ण;
+};
 
-काष्ठा sparx5_sd25g28_args अणु
-	u8 अगर_width; /* UDL अगर-width: 10/16/20/32/64 */
+struct sparx5_sd25g28_args {
+	u8 if_width; /* UDL if-width: 10/16/20/32/64 */
 	bool skip_cmu_cfg:1; /* Enable/disable CMU cfg */
-	क्रमागत sparx5_10g28cmu_mode cmu_sel; /* Device/Mode serdes uses */
-	bool no_pwrcycle:1; /* Omit initial घातer-cycle */
+	enum sparx5_10g28cmu_mode cmu_sel; /* Device/Mode serdes uses */
+	bool no_pwrcycle:1; /* Omit initial power-cycle */
 	bool txinvert:1; /* Enable inversion of output data */
 	bool rxinvert:1; /* Enable inversion of input data */
 	u16 txswing; /* Set output level */
-	u8 rate; /* Rate of network पूर्णांकerface */
+	u8 rate; /* Rate of network interface */
 	u8 pi_bw_gen1;
 	u8 duty_cycle; /* Set output level to  half/full */
 	bool mute:1; /* Mute Output Buffer */
 	bool reg_rst:1;
 	u8 com_pll_reserve;
-पूर्ण;
+};
 
-काष्ठा sparx5_sd25g28_params अणु
+struct sparx5_sd25g28_params {
 	u8 reg_rst;
 	u8 cfg_jc_byp;
 	u8 cfg_common_reserve_7_0;
 	u8 r_reg_manual;
 	u8 r_d_width_ctrl_from_hwt;
 	u8 r_d_width_ctrl_2_0;
-	u8 r_txfअगरo_ck_भाग_pmad_2_0;
-	u8 r_rxfअगरo_ck_भाग_pmad_2_0;
+	u8 r_txfifo_ck_div_pmad_2_0;
+	u8 r_rxfifo_ck_div_pmad_2_0;
 	u8 cfg_pll_lol_set;
-	u8 cfg_vco_भाग_mode_1_0;
-	u8 cfg_pre_भागsel_1_0;
-	u8 cfg_sel_भाग_3_0;
+	u8 cfg_vco_div_mode_1_0;
+	u8 cfg_pre_divsel_1_0;
+	u8 cfg_sel_div_3_0;
 	u8 cfg_vco_start_code_3_0;
 	u8 cfg_pma_tx_ck_bitwidth_2_0;
-	u8 cfg_tx_preभाग_1_0;
-	u8 cfg_rxभाग_sel_2_0;
+	u8 cfg_tx_prediv_1_0;
+	u8 cfg_rxdiv_sel_2_0;
 	u8 cfg_tx_subrate_2_0;
 	u8 cfg_rx_subrate_2_0;
 	u8 r_multi_lane_mode;
@@ -155,8 +154,8 @@
 	u8 cfg_pd_sq;
 	u8 cfg_itx_ipdriver_base_2_0;
 	u8 cfg_tap_dly_4_0;
-	u8 cfg_tap_मुख्य;
-	u8 cfg_en_मुख्य;
+	u8 cfg_tap_main;
+	u8 cfg_en_main;
 	u8 cfg_tap_adv_3_0;
 	u8 cfg_en_adv;
 	u8 cfg_en_dly;
@@ -174,14 +173,14 @@
 	u8 cfg_txcal_man_en;
 	u8 cfg_phase_man_4_0;
 	u8 cfg_quad_man_1_0;
-	u8 cfg_txcal_shअगरt_code_5_0;
+	u8 cfg_txcal_shift_code_5_0;
 	u8 cfg_txcal_valid_sel_3_0;
 	u8 cfg_txcal_en;
 	u8 cfg_cdr_kf_2_0;
 	u8 cfg_cdr_m_7_0;
 	u8 cfg_pi_bw_3_0;
 	u8 cfg_pi_steps_1_0;
-	u8 cfg_dis_2nकरोrder;
+	u8 cfg_dis_2ndorder;
 	u8 cfg_ctle_rstn;
 	u8 r_dfe_rstn;
 	u8 cfg_alos_thr_2_0;
@@ -196,8 +195,8 @@
 	u8 cfg_vga_byp;
 	u8 cfg_agc_adpt_byp;
 	u8 cfg_eqr_byp;
-	u8 cfg_eqr_क्रमce_3_0;
-	u8 cfg_eqc_क्रमce_3_0;
+	u8 cfg_eqr_force_3_0;
+	u8 cfg_eqc_force_3_0;
 	u8 cfg_sum_setcm_en;
 	u8 cfg_init_pos_iscan_6_0;
 	u8 cfg_init_pos_ipi_6_0;
@@ -210,36 +209,36 @@
 	u8 cfg_rxlb_en;
 	u8 r_tx_pol_inv;
 	u8 r_rx_pol_inv;
-पूर्ण;
+};
 
-काष्ठा sparx5_sd10g28_media_preset अणु
+struct sparx5_sd10g28_media_preset {
 	u8 cfg_en_adv;
-	u8 cfg_en_मुख्य;
+	u8 cfg_en_main;
 	u8 cfg_en_dly;
 	u8 cfg_tap_adv_3_0;
-	u8 cfg_tap_मुख्य;
+	u8 cfg_tap_main;
 	u8 cfg_tap_dly_4_0;
 	u8 cfg_vga_ctrl_3_0;
 	u8 cfg_vga_cp_2_0;
 	u8 cfg_eq_res_3_0;
 	u8 cfg_eq_r_byp;
-	u8 cfg_eq_c_क्रमce_3_0;
+	u8 cfg_eq_c_force_3_0;
 	u8 cfg_alos_thr_3_0;
-पूर्ण;
+};
 
-काष्ठा sparx5_sd10g28_mode_preset अणु
-	u8 bwidth; /* पूर्णांकerface width: 10/16/20/32/64 */
-	क्रमागत sparx5_10g28cmu_mode cmu_sel; /* Device/Mode serdes uses */
-	u8 rate; /* Rate of network पूर्णांकerface */
+struct sparx5_sd10g28_mode_preset {
+	u8 bwidth; /* interface width: 10/16/20/32/64 */
+	enum sparx5_10g28cmu_mode cmu_sel; /* Device/Mode serdes uses */
+	u8 rate; /* Rate of network interface */
 	u8 dfe_tap;
 	u8 dfe_enable;
 	u8 pi_bw_gen1;
 	u8 duty_cycle; /* Set output level to  half/full */
-पूर्ण;
+};
 
-काष्ठा sparx5_sd10g28_args अणु
+struct sparx5_sd10g28_args {
 	bool skip_cmu_cfg:1; /* Enable/disable CMU cfg */
-	bool no_pwrcycle:1; /* Omit initial घातer-cycle */
+	bool no_pwrcycle:1; /* Omit initial power-cycle */
 	bool txinvert:1; /* Enable inversion of output data */
 	bool rxinvert:1; /* Enable inversion of input data */
 	bool txmargin:1; /* Set output level to  half/full */
@@ -247,9 +246,9 @@
 	bool mute:1; /* Mute Output Buffer */
 	bool is_6g:1;
 	bool reg_rst:1;
-पूर्ण;
+};
 
-काष्ठा sparx5_sd10g28_params अणु
+struct sparx5_sd10g28_params {
 	u8 cmu_sel;
 	u8 is_6g;
 	u8 skip_cmu_cfg;
@@ -260,7 +259,7 @@
 	u8 cfg_rxrate_1_0;
 	u8 r_d_width_ctrl_2_0;
 	u8 cfg_pma_tx_ck_bitwidth_2_0;
-	u8 cfg_rxभाग_sel_2_0;
+	u8 cfg_rxdiv_sel_2_0;
 	u8 r_pcs2pma_phymode_4_0;
 	u8 cfg_lane_id_2_0;
 	u8 cfg_cdrck_en;
@@ -283,16 +282,16 @@
 	u8 cfg_rxdet_str;
 	u8 r_multi_lane_mode;
 	u8 cfg_en_adv;
-	u8 cfg_en_मुख्य;
+	u8 cfg_en_main;
 	u8 cfg_en_dly;
 	u8 cfg_tap_adv_3_0;
-	u8 cfg_tap_मुख्य;
+	u8 cfg_tap_main;
 	u8 cfg_tap_dly_4_0;
 	u8 cfg_vga_ctrl_3_0;
 	u8 cfg_vga_cp_2_0;
 	u8 cfg_eq_res_3_0;
 	u8 cfg_eq_r_byp;
-	u8 cfg_eq_c_क्रमce_3_0;
+	u8 cfg_eq_c_force_3_0;
 	u8 cfg_en_dfedig;
 	u8 cfg_sum_setcm_en;
 	u8 cfg_en_preemph;
@@ -326,11 +325,11 @@
 	u8 r_cdr_m_gen2_7_0;
 	u8 r_cdr_m_gen3_7_0;
 	u8 r_cdr_m_gen4_7_0;
-	u8 r_en_स्वतः_cdr_rstn;
+	u8 r_en_auto_cdr_rstn;
 	u8 cfg_oscal_afe;
 	u8 cfg_pd_osdac_afe;
 	u8 cfg_resetb_oscal_afe[2];
-	u8 cfg_center_spपढ़ोing;
+	u8 cfg_center_spreading;
 	u8 cfg_m_cnt_maxval_4_0;
 	u8 cfg_ncnt_maxval_7_0;
 	u8 cfg_ncnt_maxval_10_8;
@@ -342,55 +341,55 @@
 	u8 r_tx_pol_inv;
 	u8 r_rx_pol_inv;
 	u8 fx_100;
-पूर्ण;
+};
 
-अटल काष्ठा sparx5_sd25g28_media_preset media_presets_25g[] = अणु
-	अणु /* ETH_MEDIA_DEFAULT */
+static struct sparx5_sd25g28_media_preset media_presets_25g[] = {
+	{ /* ETH_MEDIA_DEFAULT */
 		.cfg_en_adv               = 0,
-		.cfg_en_मुख्य              = 1,
+		.cfg_en_main              = 1,
 		.cfg_en_dly               = 0,
 		.cfg_tap_adv_3_0          = 0,
-		.cfg_tap_मुख्य             = 1,
+		.cfg_tap_main             = 1,
 		.cfg_tap_dly_4_0          = 0,
-		.cfg_eq_c_क्रमce_3_0       = 0xf,
+		.cfg_eq_c_force_3_0       = 0xf,
 		.cfg_vga_ctrl_byp_4_0     = 4,
-		.cfg_eq_r_क्रमce_3_0       = 12,
+		.cfg_eq_r_force_3_0       = 12,
 		.cfg_alos_thr_2_0         = 7,
-	पूर्ण,
-	अणु /* ETH_MEDIA_SR */
+	},
+	{ /* ETH_MEDIA_SR */
 		.cfg_en_adv               = 1,
-		.cfg_en_मुख्य              = 1,
+		.cfg_en_main              = 1,
 		.cfg_en_dly               = 1,
 		.cfg_tap_adv_3_0          = 0,
-		.cfg_tap_मुख्य             = 1,
+		.cfg_tap_main             = 1,
 		.cfg_tap_dly_4_0          = 0x10,
-		.cfg_eq_c_क्रमce_3_0       = 0xf,
+		.cfg_eq_c_force_3_0       = 0xf,
 		.cfg_vga_ctrl_byp_4_0     = 8,
-		.cfg_eq_r_क्रमce_3_0       = 4,
+		.cfg_eq_r_force_3_0       = 4,
 		.cfg_alos_thr_2_0         = 0,
-	पूर्ण,
-	अणु /* ETH_MEDIA_DAC */
+	},
+	{ /* ETH_MEDIA_DAC */
 		.cfg_en_adv               = 0,
-		.cfg_en_मुख्य              = 1,
+		.cfg_en_main              = 1,
 		.cfg_en_dly               = 0,
 		.cfg_tap_adv_3_0          = 0,
-		.cfg_tap_मुख्य             = 1,
+		.cfg_tap_main             = 1,
 		.cfg_tap_dly_4_0          = 0,
-		.cfg_eq_c_क्रमce_3_0       = 0xf,
+		.cfg_eq_c_force_3_0       = 0xf,
 		.cfg_vga_ctrl_byp_4_0     = 8,
-		.cfg_eq_r_क्रमce_3_0       = 0xc,
+		.cfg_eq_r_force_3_0       = 0xc,
 		.cfg_alos_thr_2_0         = 0,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा sparx5_sd25g28_mode_preset mode_presets_25g[] = अणु
-	अणु /* SPX5_SD25G28_MODE_PRESET_25000 */
+static struct sparx5_sd25g28_mode_preset mode_presets_25g[] = {
+	{ /* SPX5_SD25G28_MODE_PRESET_25000 */
 		.bitwidth           = 40,
-		.tx_pre_भाग         = 0,
-		.fअगरo_ck_भाग        = 0,
-		.pre_भागsel         = 1,
-		.vco_भाग_mode       = 0,
-		.sel_भाग            = 15,
+		.tx_pre_div         = 0,
+		.fifo_ck_div        = 0,
+		.pre_divsel         = 1,
+		.vco_div_mode       = 0,
+		.sel_div            = 15,
 		.ck_bitwidth        = 3,
 		.subrate            = 0,
 		.com_txcal_en       = 0,
@@ -409,14 +408,14 @@
 		.cfg_pi_bw_3_0      = 0,
 		.tx_tap_dly         = 8,
 		.tx_tap_adv         = 0xc,
-	पूर्ण,
-	अणु /* SPX5_SD25G28_MODE_PRESET_10000 */
+	},
+	{ /* SPX5_SD25G28_MODE_PRESET_10000 */
 		.bitwidth           = 64,
-		.tx_pre_भाग         = 0,
-		.fअगरo_ck_भाग        = 2,
-		.pre_भागsel         = 0,
-		.vco_भाग_mode       = 1,
-		.sel_भाग            = 9,
+		.tx_pre_div         = 0,
+		.fifo_ck_div        = 2,
+		.pre_divsel         = 0,
+		.vco_div_mode       = 1,
+		.sel_div            = 9,
 		.ck_bitwidth        = 0,
 		.subrate            = 0,
 		.com_txcal_en       = 1,
@@ -435,14 +434,14 @@
 		.r_dfe_rstn         = 1,
 		.tx_tap_dly         = 0,
 		.tx_tap_adv         = 0,
-	पूर्ण,
-	अणु /* SPX5_SD25G28_MODE_PRESET_5000 */
+	},
+	{ /* SPX5_SD25G28_MODE_PRESET_5000 */
 		.bitwidth           = 64,
-		.tx_pre_भाग         = 0,
-		.fअगरo_ck_भाग        = 2,
-		.pre_भागsel         = 0,
-		.vco_भाग_mode       = 2,
-		.sel_भाग            = 9,
+		.tx_pre_div         = 0,
+		.fifo_ck_div        = 2,
+		.pre_divsel         = 0,
+		.vco_div_mode       = 2,
+		.sel_div            = 9,
 		.ck_bitwidth        = 0,
 		.subrate            = 0,
 		.com_txcal_en       = 1,
@@ -458,14 +457,14 @@
 		.dfe_tap            = 0,
 		.tx_tap_dly         = 0,
 		.tx_tap_adv         = 0,
-	पूर्ण,
-	अणु /* SPX5_SD25G28_MODE_PRESET_SD_2G5 */
+	},
+	{ /* SPX5_SD25G28_MODE_PRESET_SD_2G5 */
 		.bitwidth           = 10,
-		.tx_pre_भाग         = 0,
-		.fअगरo_ck_भाग        = 0,
-		.pre_भागsel         = 0,
-		.vco_भाग_mode       = 1,
-		.sel_भाग            = 6,
+		.tx_pre_div         = 0,
+		.fifo_ck_div        = 0,
+		.pre_divsel         = 0,
+		.vco_div_mode       = 1,
+		.sel_div            = 6,
 		.ck_bitwidth        = 3,
 		.subrate            = 2,
 		.com_txcal_en       = 1,
@@ -481,14 +480,14 @@
 		.dfe_tap            = 0,
 		.tx_tap_dly         = 0,
 		.tx_tap_adv         = 0,
-	पूर्ण,
-	अणु /* SPX5_SD25G28_MODE_PRESET_1000BASEX */
+	},
+	{ /* SPX5_SD25G28_MODE_PRESET_1000BASEX */
 		.bitwidth           = 10,
-		.tx_pre_भाग         = 0,
-		.fअगरo_ck_भाग        = 1,
-		.pre_भागsel         = 0,
-		.vco_भाग_mode       = 1,
-		.sel_भाग            = 8,
+		.tx_pre_div         = 0,
+		.fifo_ck_div        = 1,
+		.pre_divsel         = 0,
+		.vco_div_mode       = 1,
+		.sel_div            = 8,
 		.ck_bitwidth        = 3,
 		.subrate            = 3,
 		.com_txcal_en       = 1,
@@ -504,56 +503,56 @@
 		.dfe_tap            = 0,
 		.tx_tap_dly         = 0,
 		.tx_tap_adv         = 0,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा sparx5_sd10g28_media_preset media_presets_10g[] = अणु
-	अणु /* ETH_MEDIA_DEFAULT */
+static struct sparx5_sd10g28_media_preset media_presets_10g[] = {
+	{ /* ETH_MEDIA_DEFAULT */
 		.cfg_en_adv               = 0,
-		.cfg_en_मुख्य              = 1,
+		.cfg_en_main              = 1,
 		.cfg_en_dly               = 0,
 		.cfg_tap_adv_3_0          = 0,
-		.cfg_tap_मुख्य             = 1,
+		.cfg_tap_main             = 1,
 		.cfg_tap_dly_4_0          = 0,
 		.cfg_vga_ctrl_3_0         = 5,
 		.cfg_vga_cp_2_0           = 0,
 		.cfg_eq_res_3_0           = 0xa,
 		.cfg_eq_r_byp             = 1,
-		.cfg_eq_c_क्रमce_3_0       = 0x8,
+		.cfg_eq_c_force_3_0       = 0x8,
 		.cfg_alos_thr_3_0         = 0x3,
-	पूर्ण,
-	अणु /* ETH_MEDIA_SR */
+	},
+	{ /* ETH_MEDIA_SR */
 		.cfg_en_adv               = 1,
-		.cfg_en_मुख्य              = 1,
+		.cfg_en_main              = 1,
 		.cfg_en_dly               = 1,
 		.cfg_tap_adv_3_0          = 0,
-		.cfg_tap_मुख्य             = 1,
+		.cfg_tap_main             = 1,
 		.cfg_tap_dly_4_0          = 0xc,
 		.cfg_vga_ctrl_3_0         = 0xa,
 		.cfg_vga_cp_2_0           = 0x4,
 		.cfg_eq_res_3_0           = 0xa,
 		.cfg_eq_r_byp             = 1,
-		.cfg_eq_c_क्रमce_3_0       = 0xF,
+		.cfg_eq_c_force_3_0       = 0xF,
 		.cfg_alos_thr_3_0         = 0x3,
-	पूर्ण,
-	अणु /* ETH_MEDIA_DAC */
+	},
+	{ /* ETH_MEDIA_DAC */
 		.cfg_en_adv               = 1,
-		.cfg_en_मुख्य              = 1,
+		.cfg_en_main              = 1,
 		.cfg_en_dly               = 1,
 		.cfg_tap_adv_3_0          = 12,
-		.cfg_tap_मुख्य             = 1,
+		.cfg_tap_main             = 1,
 		.cfg_tap_dly_4_0          = 8,
 		.cfg_vga_ctrl_3_0         = 0xa,
 		.cfg_vga_cp_2_0           = 4,
 		.cfg_eq_res_3_0           = 0xa,
 		.cfg_eq_r_byp             = 1,
-		.cfg_eq_c_क्रमce_3_0       = 0xf,
+		.cfg_eq_c_force_3_0       = 0xf,
 		.cfg_alos_thr_3_0         = 0x0,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल काष्ठा sparx5_sd10g28_mode_preset mode_presets_10g[] = अणु
-	अणु /* SPX5_SD10G28_MODE_PRESET_10000 */
+static struct sparx5_sd10g28_mode_preset mode_presets_10g[] = {
+	{ /* SPX5_SD10G28_MODE_PRESET_10000 */
 		.bwidth           = 64,
 		.cmu_sel          = SPX5_SD10G28_CMU_MAIN,
 		.rate             = 0x0,
@@ -561,8 +560,8 @@
 		.dfe_tap          = 0x1f,
 		.pi_bw_gen1       = 0x0,
 		.duty_cycle       = 0x2,
-	पूर्ण,
-	अणु /* SPX5_SD10G28_MODE_PRESET_SFI_5000_6G */
+	},
+	{ /* SPX5_SD10G28_MODE_PRESET_SFI_5000_6G */
 		.bwidth           = 16,
 		.cmu_sel          = SPX5_SD10G28_CMU_MAIN,
 		.rate             = 0x1,
@@ -570,8 +569,8 @@
 		.dfe_tap          = 0,
 		.pi_bw_gen1       = 0x5,
 		.duty_cycle       = 0x0,
-	पूर्ण,
-	अणु /* SPX5_SD10G28_MODE_PRESET_SFI_5000_10G */
+	},
+	{ /* SPX5_SD10G28_MODE_PRESET_SFI_5000_10G */
 		.bwidth           = 64,
 		.cmu_sel          = SPX5_SD10G28_CMU_MAIN,
 		.rate             = 0x1,
@@ -579,8 +578,8 @@
 		.dfe_tap          = 0,
 		.pi_bw_gen1       = 0x5,
 		.duty_cycle       = 0x0,
-	पूर्ण,
-	अणु /* SPX5_SD10G28_MODE_PRESET_QSGMII */
+	},
+	{ /* SPX5_SD10G28_MODE_PRESET_QSGMII */
 		.bwidth           = 20,
 		.cmu_sel          = SPX5_SD10G28_CMU_AUX1,
 		.rate             = 0x1,
@@ -588,8 +587,8 @@
 		.dfe_tap          = 0,
 		.pi_bw_gen1       = 0x5,
 		.duty_cycle       = 0x0,
-	पूर्ण,
-	अणु /* SPX5_SD10G28_MODE_PRESET_SD_2G5 */
+	},
+	{ /* SPX5_SD10G28_MODE_PRESET_SD_2G5 */
 		.bwidth           = 10,
 		.cmu_sel          = SPX5_SD10G28_CMU_AUX2,
 		.rate             = 0x2,
@@ -597,8 +596,8 @@
 		.dfe_tap          = 0,
 		.pi_bw_gen1       = 0x7,
 		.duty_cycle       = 0x0,
-	पूर्ण,
-	अणु /* SPX5_SD10G28_MODE_PRESET_1000BASEX */
+	},
+	{ /* SPX5_SD10G28_MODE_PRESET_1000BASEX */
 		.bwidth           = 10,
 		.cmu_sel          = SPX5_SD10G28_CMU_AUX1,
 		.rate             = 0x3,
@@ -606,125 +605,125 @@
 		.dfe_tap          = 0,
 		.pi_bw_gen1       = 0x7,
 		.duty_cycle       = 0x0,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-/* map from SD25G28 पूर्णांकerface width to configuration value */
-अटल u8 sd25g28_get_iw_setting(काष्ठा device *dev, स्थिर u8 पूर्णांकerface_width)
-अणु
-	चयन (पूर्णांकerface_width) अणु
-	हाल 10: वापस 0;
-	हाल 16: वापस 1;
-	हाल 32: वापस 3;
-	हाल 40: वापस 4;
-	हाल 64: वापस 5;
-	शेष:
+/* map from SD25G28 interface width to configuration value */
+static u8 sd25g28_get_iw_setting(struct device *dev, const u8 interface_width)
+{
+	switch (interface_width) {
+	case 10: return 0;
+	case 16: return 1;
+	case 32: return 3;
+	case 40: return 4;
+	case 64: return 5;
+	default:
 		dev_err(dev, "%s: Illegal value %d for interface width\n",
-		       __func__, पूर्णांकerface_width);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		       __func__, interface_width);
+	}
+	return 0;
+}
 
-/* map from SD10G28 पूर्णांकerface width to configuration value */
-अटल u8 sd10g28_get_iw_setting(काष्ठा device *dev, स्थिर u8 पूर्णांकerface_width)
-अणु
-	चयन (पूर्णांकerface_width) अणु
-	हाल 10: वापस 0;
-	हाल 16: वापस 1;
-	हाल 20: वापस 2;
-	हाल 32: वापस 3;
-	हाल 40: वापस 4;
-	हाल 64: वापस 7;
-	शेष:
+/* map from SD10G28 interface width to configuration value */
+static u8 sd10g28_get_iw_setting(struct device *dev, const u8 interface_width)
+{
+	switch (interface_width) {
+	case 10: return 0;
+	case 16: return 1;
+	case 20: return 2;
+	case 32: return 3;
+	case 40: return 4;
+	case 64: return 7;
+	default:
 		dev_err(dev, "%s: Illegal value %d for interface width\n", __func__,
-		       पूर्णांकerface_width);
-		वापस 0;
-	पूर्ण
-पूर्ण
+		       interface_width);
+		return 0;
+	}
+}
 
-अटल पूर्णांक sparx5_sd10g25_get_mode_preset(काष्ठा sparx5_serdes_macro *macro,
-					  काष्ठा sparx5_sd25g28_mode_preset *mode)
-अणु
-	चयन (macro->serdesmode) अणु
-	हाल SPX5_SD_MODE_SFI:
-		अगर (macro->speed == SPEED_25000)
+static int sparx5_sd10g25_get_mode_preset(struct sparx5_serdes_macro *macro,
+					  struct sparx5_sd25g28_mode_preset *mode)
+{
+	switch (macro->serdesmode) {
+	case SPX5_SD_MODE_SFI:
+		if (macro->speed == SPEED_25000)
 			*mode = mode_presets_25g[SPX5_SD25G28_MODE_PRESET_25000];
-		अन्यथा अगर (macro->speed == SPEED_10000)
+		else if (macro->speed == SPEED_10000)
 			*mode = mode_presets_25g[SPX5_SD25G28_MODE_PRESET_10000];
-		अन्यथा अगर (macro->speed == SPEED_5000)
+		else if (macro->speed == SPEED_5000)
 			*mode = mode_presets_25g[SPX5_SD25G28_MODE_PRESET_5000];
-		अवरोध;
-	हाल SPX5_SD_MODE_2G5:
+		break;
+	case SPX5_SD_MODE_2G5:
 		*mode = mode_presets_25g[SPX5_SD25G28_MODE_PRESET_SD_2G5];
-		अवरोध;
-	हाल SPX5_SD_MODE_1000BASEX:
+		break;
+	case SPX5_SD_MODE_1000BASEX:
 		*mode = mode_presets_25g[SPX5_SD25G28_MODE_PRESET_1000BASEX];
-		अवरोध;
-	हाल SPX5_SD_MODE_100FX:
+		break;
+	case SPX5_SD_MODE_100FX:
 		 /* Not supported */
-		वापस -EINVAL;
-	शेष:
+		return -EINVAL;
+	default:
 		*mode = mode_presets_25g[SPX5_SD25G28_MODE_PRESET_25000];
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	}
+	return 0;
+}
 
-अटल पूर्णांक sparx5_sd10g28_get_mode_preset(काष्ठा sparx5_serdes_macro *macro,
-					  काष्ठा sparx5_sd10g28_mode_preset *mode,
-					  काष्ठा sparx5_sd10g28_args *args)
-अणु
-	चयन (macro->serdesmode) अणु
-	हाल SPX5_SD_MODE_SFI:
-		अगर (macro->speed == SPEED_10000) अणु
+static int sparx5_sd10g28_get_mode_preset(struct sparx5_serdes_macro *macro,
+					  struct sparx5_sd10g28_mode_preset *mode,
+					  struct sparx5_sd10g28_args *args)
+{
+	switch (macro->serdesmode) {
+	case SPX5_SD_MODE_SFI:
+		if (macro->speed == SPEED_10000) {
 			*mode = mode_presets_10g[SPX5_SD10G28_MODE_PRESET_10000];
-		पूर्ण अन्यथा अगर (macro->speed == SPEED_5000) अणु
-			अगर (args->is_6g)
+		} else if (macro->speed == SPEED_5000) {
+			if (args->is_6g)
 				*mode = mode_presets_10g[SPX5_SD10G28_MODE_PRESET_SFI_5000_6G];
-			अन्यथा
+			else
 				*mode = mode_presets_10g[SPX5_SD10G28_MODE_PRESET_SFI_5000_10G];
-		पूर्ण अन्यथा अणु
+		} else {
 			dev_err(macro->priv->dev, "%s: Illegal speed: %02u, sidx: %02u, mode (%u)",
 			       __func__, macro->speed, macro->sidx,
 			       macro->serdesmode);
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
-	हाल SPX5_SD_MODE_QSGMII:
+			return -EINVAL;
+		}
+		break;
+	case SPX5_SD_MODE_QSGMII:
 		*mode = mode_presets_10g[SPX5_SD10G28_MODE_PRESET_QSGMII];
-		अवरोध;
-	हाल SPX5_SD_MODE_2G5:
+		break;
+	case SPX5_SD_MODE_2G5:
 		*mode = mode_presets_10g[SPX5_SD10G28_MODE_PRESET_SD_2G5];
-		अवरोध;
-	हाल SPX5_SD_MODE_100FX:
-	हाल SPX5_SD_MODE_1000BASEX:
+		break;
+	case SPX5_SD_MODE_100FX:
+	case SPX5_SD_MODE_1000BASEX:
 		*mode = mode_presets_10g[SPX5_SD10G28_MODE_PRESET_1000BASEX];
-		अवरोध;
-	शेष:
+		break;
+	default:
 		*mode = mode_presets_10g[SPX5_SD10G28_MODE_PRESET_10000];
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	}
+	return 0;
+}
 
-अटल व्योम sparx5_sd25g28_get_params(काष्ठा sparx5_serdes_macro *macro,
-				      काष्ठा sparx5_sd25g28_media_preset *media,
-				      काष्ठा sparx5_sd25g28_mode_preset *mode,
-				      काष्ठा sparx5_sd25g28_args *args,
-				      काष्ठा sparx5_sd25g28_params *params)
-अणु
+static void sparx5_sd25g28_get_params(struct sparx5_serdes_macro *macro,
+				      struct sparx5_sd25g28_media_preset *media,
+				      struct sparx5_sd25g28_mode_preset *mode,
+				      struct sparx5_sd25g28_args *args,
+				      struct sparx5_sd25g28_params *params)
+{
 	u8 iw = sd25g28_get_iw_setting(macro->priv->dev, mode->bitwidth);
-	काष्ठा sparx5_sd25g28_params init = अणु
+	struct sparx5_sd25g28_params init = {
 		.r_d_width_ctrl_2_0         = iw,
-		.r_txfअगरo_ck_भाग_pmad_2_0   = mode->fअगरo_ck_भाग,
-		.r_rxfअगरo_ck_भाग_pmad_2_0   = mode->fअगरo_ck_भाग,
-		.cfg_vco_भाग_mode_1_0       = mode->vco_भाग_mode,
-		.cfg_pre_भागsel_1_0         = mode->pre_भागsel,
-		.cfg_sel_भाग_3_0            = mode->sel_भाग,
+		.r_txfifo_ck_div_pmad_2_0   = mode->fifo_ck_div,
+		.r_rxfifo_ck_div_pmad_2_0   = mode->fifo_ck_div,
+		.cfg_vco_div_mode_1_0       = mode->vco_div_mode,
+		.cfg_pre_divsel_1_0         = mode->pre_divsel,
+		.cfg_sel_div_3_0            = mode->sel_div,
 		.cfg_vco_start_code_3_0     = 0,
 		.cfg_pma_tx_ck_bitwidth_2_0 = mode->ck_bitwidth,
-		.cfg_tx_preभाग_1_0          = mode->tx_pre_भाग,
-		.cfg_rxभाग_sel_2_0          = mode->ck_bitwidth,
+		.cfg_tx_prediv_1_0          = mode->tx_pre_div,
+		.cfg_rxdiv_sel_2_0          = mode->ck_bitwidth,
 		.cfg_tx_subrate_2_0         = mode->subrate,
 		.cfg_rx_subrate_2_0         = mode->subrate,
 		.r_multi_lane_mode          = 0,
@@ -751,8 +750,8 @@
 		.cfg_pd_sq                  = 1,
 		.cfg_itx_ipdriver_base_2_0  = mode->txmargin,
 		.cfg_tap_dly_4_0            = media->cfg_tap_dly_4_0,
-		.cfg_tap_मुख्य               = media->cfg_tap_मुख्य,
-		.cfg_en_मुख्य                = media->cfg_en_मुख्य,
+		.cfg_tap_main               = media->cfg_tap_main,
+		.cfg_en_main                = media->cfg_en_main,
 		.cfg_tap_adv_3_0            = media->cfg_tap_adv_3_0,
 		.cfg_en_adv                 = media->cfg_en_adv,
 		.cfg_en_dly                 = media->cfg_en_dly,
@@ -770,14 +769,14 @@
 		.cfg_txcal_man_en           = 1,
 		.cfg_phase_man_4_0          = 0,
 		.cfg_quad_man_1_0           = 0,
-		.cfg_txcal_shअगरt_code_5_0   = 2,
+		.cfg_txcal_shift_code_5_0   = 2,
 		.cfg_txcal_valid_sel_3_0    = 4,
 		.cfg_txcal_en               = 0,
 		.cfg_cdr_kf_2_0             = 1,
 		.cfg_cdr_m_7_0              = 6,
 		.cfg_pi_bw_3_0              = mode->cfg_pi_bw_3_0,
 		.cfg_pi_steps_1_0           = 0,
-		.cfg_dis_2nकरोrder           = 1,
+		.cfg_dis_2ndorder           = 1,
 		.cfg_ctle_rstn              = mode->cfg_ctle_rstn,
 		.r_dfe_rstn                 = mode->r_dfe_rstn,
 		.cfg_alos_thr_2_0           = media->cfg_alos_thr_2_0,
@@ -792,8 +791,8 @@
 		.cfg_vga_byp                = 1,
 		.cfg_agc_adpt_byp           = 1,
 		.cfg_eqr_byp                = 1,
-		.cfg_eqr_क्रमce_3_0          = media->cfg_eq_r_क्रमce_3_0,
-		.cfg_eqc_क्रमce_3_0          = media->cfg_eq_c_क्रमce_3_0,
+		.cfg_eqr_force_3_0          = media->cfg_eq_r_force_3_0,
+		.cfg_eqc_force_3_0          = media->cfg_eq_c_force_3_0,
 		.cfg_sum_setcm_en           = 1,
 		.cfg_pi_dfe_en              = 1,
 		.cfg_init_pos_iscan_6_0     = 6,
@@ -812,19 +811,19 @@
 		.cfg_rxlb_en                = 0,
 		.r_tx_pol_inv               = args->txinvert,
 		.r_rx_pol_inv               = args->rxinvert,
-	पूर्ण;
+	};
 
 	*params = init;
-पूर्ण
+}
 
-अटल व्योम sparx5_sd10g28_get_params(काष्ठा sparx5_serdes_macro *macro,
-				      काष्ठा sparx5_sd10g28_media_preset *media,
-				      काष्ठा sparx5_sd10g28_mode_preset *mode,
-				      काष्ठा sparx5_sd10g28_args *args,
-				      काष्ठा sparx5_sd10g28_params *params)
-अणु
+static void sparx5_sd10g28_get_params(struct sparx5_serdes_macro *macro,
+				      struct sparx5_sd10g28_media_preset *media,
+				      struct sparx5_sd10g28_mode_preset *mode,
+				      struct sparx5_sd10g28_args *args,
+				      struct sparx5_sd10g28_params *params)
+{
 	u8 iw = sd10g28_get_iw_setting(macro->priv->dev, mode->bwidth);
-	काष्ठा sparx5_sd10g28_params init = अणु
+	struct sparx5_sd10g28_params init = {
 		.skip_cmu_cfg                = args->skip_cmu_cfg,
 		.is_6g                       = args->is_6g,
 		.cmu_sel                     = mode->cmu_sel,
@@ -836,7 +835,7 @@
 		.fx_100                      = macro->serdesmode == SPX5_SD_MODE_100FX,
 		.r_d_width_ctrl_2_0          = iw,
 		.cfg_pma_tx_ck_bitwidth_2_0  = iw,
-		.cfg_rxभाग_sel_2_0           = iw,
+		.cfg_rxdiv_sel_2_0           = iw,
 		.r_pcs2pma_phymode_4_0       = 0,
 		.cfg_lane_id_2_0             = 0,
 		.cfg_cdrck_en                = 1,
@@ -859,16 +858,16 @@
 		.cfg_rxdet_str               = 0,
 		.r_multi_lane_mode           = 0,
 		.cfg_en_adv                  = media->cfg_en_adv,
-		.cfg_en_मुख्य                 = 1,
+		.cfg_en_main                 = 1,
 		.cfg_en_dly                  = media->cfg_en_dly,
 		.cfg_tap_adv_3_0             = media->cfg_tap_adv_3_0,
-		.cfg_tap_मुख्य                = media->cfg_tap_मुख्य,
+		.cfg_tap_main                = media->cfg_tap_main,
 		.cfg_tap_dly_4_0             = media->cfg_tap_dly_4_0,
 		.cfg_vga_ctrl_3_0            = media->cfg_vga_ctrl_3_0,
 		.cfg_vga_cp_2_0              = media->cfg_vga_cp_2_0,
 		.cfg_eq_res_3_0              = media->cfg_eq_res_3_0,
 		.cfg_eq_r_byp                = media->cfg_eq_r_byp,
-		.cfg_eq_c_क्रमce_3_0          = media->cfg_eq_c_क्रमce_3_0,
+		.cfg_eq_c_force_3_0          = media->cfg_eq_c_force_3_0,
 		.cfg_en_dfedig               = mode->dfe_enable,
 		.cfg_sum_setcm_en            = 1,
 		.cfg_en_preemph              = 0,
@@ -902,12 +901,12 @@
 		.r_cdr_m_gen2_7_0            = 2,
 		.r_cdr_m_gen3_7_0            = 2,
 		.r_cdr_m_gen4_7_0            = 2,
-		.r_en_स्वतः_cdr_rstn          = 0,
+		.r_en_auto_cdr_rstn          = 0,
 		.cfg_oscal_afe               = 1,
 		.cfg_pd_osdac_afe            = 0,
 		.cfg_resetb_oscal_afe[0]     = 0,
 		.cfg_resetb_oscal_afe[1]     = 1,
-		.cfg_center_spपढ़ोing        = 0,
+		.cfg_center_spreading        = 0,
 		.cfg_m_cnt_maxval_4_0        = 15,
 		.cfg_ncnt_maxval_7_0         = 32,
 		.cfg_ncnt_maxval_10_8        = 6,
@@ -918,16 +917,16 @@
 		.cfg_rxlb_en                 = 0,
 		.r_tx_pol_inv                = args->txinvert,
 		.r_rx_pol_inv                = args->rxinvert,
-	पूर्ण;
+	};
 
 	*params = init;
-पूर्ण
+}
 
-अटल व्योम sparx5_sd25g28_reset(व्योम __iomem *regs[],
-				 काष्ठा sparx5_sd25g28_params *params,
+static void sparx5_sd25g28_reset(void __iomem *regs[],
+				 struct sparx5_sd25g28_params *params,
 				 u32 sd_index)
-अणु
-	अगर (params->reg_rst == 1) अणु
+{
+	if (params->reg_rst == 1) {
 		sdx5_rmw_addr(SD_LANE_25G_SD_LANE_CFG_EXT_CFG_RST_SET(1),
 			 SD_LANE_25G_SD_LANE_CFG_EXT_CFG_RST,
 			 sdx5_addr(regs, SD_LANE_25G_SD_LANE_CFG(sd_index)));
@@ -937,15 +936,15 @@
 		sdx5_rmw_addr(SD_LANE_25G_SD_LANE_CFG_EXT_CFG_RST_SET(0),
 			 SD_LANE_25G_SD_LANE_CFG_EXT_CFG_RST,
 			 sdx5_addr(regs, SD_LANE_25G_SD_LANE_CFG(sd_index)));
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक sparx5_sd25g28_apply_params(काष्ठा sparx5_serdes_macro *macro,
-				       काष्ठा sparx5_sd25g28_params *params)
-अणु
-	काष्ठा sparx5_serdes_निजी *priv = macro->priv;
-	व्योम __iomem **regs = priv->regs;
-	काष्ठा device *dev = priv->dev;
+static int sparx5_sd25g28_apply_params(struct sparx5_serdes_macro *macro,
+				       struct sparx5_sd25g28_params *params)
+{
+	struct sparx5_serdes_private *priv = macro->priv;
+	void __iomem **regs = priv->regs;
+	struct device *dev = priv->dev;
 	u32 sd_index = macro->stpidx;
 	u32 value;
 
@@ -1037,9 +1036,9 @@
 		 SD25G_LANE_CMU_1A(sd_index));
 
 	sdx5_rmw(SD25G_LANE_CMU_30_R_TXFIFO_CK_DIV_PMAD_2_0_SET
-		 (params->r_txfअगरo_ck_भाग_pmad_2_0) |
+		 (params->r_txfifo_ck_div_pmad_2_0) |
 		 SD25G_LANE_CMU_30_R_RXFIFO_CK_DIV_PMAD_2_0_SET
-		 (params->r_rxfअगरo_ck_भाग_pmad_2_0),
+		 (params->r_rxfifo_ck_div_pmad_2_0),
 		 SD25G_LANE_CMU_30_R_TXFIFO_CK_DIV_PMAD_2_0 |
 		 SD25G_LANE_CMU_30_R_RXFIFO_CK_DIV_PMAD_2_0,
 		 priv,
@@ -1047,19 +1046,19 @@
 
 	sdx5_rmw(SD25G_LANE_CMU_0C_CFG_PLL_LOL_SET_SET(params->cfg_pll_lol_set) |
 		 SD25G_LANE_CMU_0C_CFG_VCO_DIV_MODE_1_0_SET
-		 (params->cfg_vco_भाग_mode_1_0),
+		 (params->cfg_vco_div_mode_1_0),
 		 SD25G_LANE_CMU_0C_CFG_PLL_LOL_SET |
 		 SD25G_LANE_CMU_0C_CFG_VCO_DIV_MODE_1_0,
 		 priv,
 		 SD25G_LANE_CMU_0C(sd_index));
 
 	sdx5_rmw(SD25G_LANE_CMU_0D_CFG_PRE_DIVSEL_1_0_SET
-		 (params->cfg_pre_भागsel_1_0),
+		 (params->cfg_pre_divsel_1_0),
 		 SD25G_LANE_CMU_0D_CFG_PRE_DIVSEL_1_0,
 		 priv,
 		 SD25G_LANE_CMU_0D(sd_index));
 
-	sdx5_rmw(SD25G_LANE_CMU_0E_CFG_SEL_DIV_3_0_SET(params->cfg_sel_भाग_3_0),
+	sdx5_rmw(SD25G_LANE_CMU_0E_CFG_SEL_DIV_3_0_SET(params->cfg_sel_div_3_0),
 		 SD25G_LANE_CMU_0E_CFG_SEL_DIV_3_0,
 		 priv,
 		 SD25G_LANE_CMU_0E(sd_index));
@@ -1076,13 +1075,13 @@
 		 SD25G_LANE_LANE_0C(sd_index));
 
 	sdx5_rmw(SD25G_LANE_LANE_01_LN_CFG_TX_PREDIV_1_0_SET
-		 (params->cfg_tx_preभाग_1_0),
+		 (params->cfg_tx_prediv_1_0),
 		 SD25G_LANE_LANE_01_LN_CFG_TX_PREDIV_1_0,
 		 priv,
 		 SD25G_LANE_LANE_01(sd_index));
 
 	sdx5_rmw(SD25G_LANE_LANE_18_LN_CFG_RXDIV_SEL_2_0_SET
-		 (params->cfg_rxभाग_sel_2_0),
+		 (params->cfg_rxdiv_sel_2_0),
 		 SD25G_LANE_LANE_18_LN_CFG_RXDIV_SEL_2_0,
 		 priv,
 		 SD25G_LANE_LANE_18(sd_index));
@@ -1172,7 +1171,7 @@
 		 SD25G_LANE_LANE_0B(sd_index));
 
 	sdx5_rmw(SD25G_LANE_LANE_0A_LN_CFG_TXCAL_SHIFT_CODE_5_0_SET
-		 (params->cfg_txcal_shअगरt_code_5_0),
+		 (params->cfg_txcal_shift_code_5_0),
 		 SD25G_LANE_LANE_0A_LN_CFG_TXCAL_SHIFT_CODE_5_0,
 		 priv,
 		 SD25G_LANE_LANE_0A(sd_index));
@@ -1199,7 +1198,7 @@
 		 SD25G_LANE_LANE_2B(sd_index));
 
 	sdx5_rmw(SD25G_LANE_LANE_2C_LN_CFG_DIS_2NDORDER_SET
-		 (params->cfg_dis_2nकरोrder),
+		 (params->cfg_dis_2ndorder),
 		 SD25G_LANE_LANE_2C_LN_CFG_DIS_2NDORDER,
 		 priv,
 		 SD25G_LANE_LANE_2C(sd_index));
@@ -1241,13 +1240,13 @@
 		 SD25G_LANE_LANE_21(sd_index));
 
 	sdx5_rmw(SD25G_LANE_LANE_22_LN_CFG_EQR_FORCE_3_0_SET
-		 (params->cfg_eqr_क्रमce_3_0),
+		 (params->cfg_eqr_force_3_0),
 		 SD25G_LANE_LANE_22_LN_CFG_EQR_FORCE_3_0,
 		 priv,
 		 SD25G_LANE_LANE_22(sd_index));
 
 	sdx5_rmw(SD25G_LANE_LANE_1C_LN_CFG_EQC_FORCE_3_0_SET
-		 (params->cfg_eqc_क्रमce_3_0) |
+		 (params->cfg_eqc_force_3_0) |
 		 SD25G_LANE_LANE_1C_LN_CFG_DFE_PD_SET(params->cfg_dfe_pd),
 		 SD25G_LANE_LANE_1C_LN_CFG_EQC_FORCE_3_0 |
 		 SD25G_LANE_LANE_1C_LN_CFG_DFE_PD,
@@ -1346,21 +1345,21 @@
 		 priv,
 		 SD25G_LANE_CMU_FF(sd_index));
 
-	value = पढ़ोl(sdx5_addr(regs, SD25G_LANE_CMU_C0(sd_index)));
+	value = readl(sdx5_addr(regs, SD25G_LANE_CMU_C0(sd_index)));
 	value = SD25G_LANE_CMU_C0_PLL_LOL_UDL_GET(value);
 
-	अगर (value) अणु
+	if (value) {
 		dev_err(dev, "25G PLL Loss of Lock: 0x%x\n", value);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	value = पढ़ोl(sdx5_addr(regs, SD_LANE_25G_SD_LANE_STAT(sd_index)));
+	value = readl(sdx5_addr(regs, SD_LANE_25G_SD_LANE_STAT(sd_index)));
 	value = SD_LANE_25G_SD_LANE_STAT_PMA_RST_DONE_GET(value);
 
-	अगर (value != 0x1) अणु
+	if (value != 0x1) {
 		dev_err(dev, "25G PMA Reset failed: 0x%x\n", value);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	sdx5_rmw(SD25G_LANE_CMU_2A_R_DBG_LOL_STATUS_SET(0x1),
 		 SD25G_LANE_CMU_2A_R_DBG_LOL_STATUS,
 		 priv,
@@ -1397,11 +1396,11 @@
 		 priv,
 		 SD25G_LANE_LANE_2E(sd_index));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sparx5_sd10g28_reset(व्योम __iomem *regs[], u32 lane_index)
-अणु
+static void sparx5_sd10g28_reset(void __iomem *regs[], u32 lane_index)
+{
 	/* Note: SerDes SD10G_LANE_1 is configured in 10G_LAN mode */
 	sdx5_rmw_addr(SD_LANE_SD_LANE_CFG_EXT_CFG_RST_SET(1),
 		      SD_LANE_SD_LANE_CFG_EXT_CFG_RST,
@@ -1412,22 +1411,22 @@
 	sdx5_rmw_addr(SD_LANE_SD_LANE_CFG_EXT_CFG_RST_SET(0),
 		      SD_LANE_SD_LANE_CFG_EXT_CFG_RST,
 		      sdx5_addr(regs, SD_LANE_SD_LANE_CFG(lane_index)));
-पूर्ण
+}
 
-अटल पूर्णांक sparx5_sd10g28_apply_params(काष्ठा sparx5_serdes_macro *macro,
-				       काष्ठा sparx5_sd10g28_params *params)
-अणु
-	काष्ठा sparx5_serdes_निजी *priv = macro->priv;
-	व्योम __iomem **regs = priv->regs;
-	काष्ठा device *dev = priv->dev;
+static int sparx5_sd10g28_apply_params(struct sparx5_serdes_macro *macro,
+				       struct sparx5_sd10g28_params *params)
+{
+	struct sparx5_serdes_private *priv = macro->priv;
+	void __iomem **regs = priv->regs;
+	struct device *dev = priv->dev;
 	u32 lane_index = macro->sidx;
 	u32 sd_index = macro->stpidx;
-	व्योम __iomem *sd_inst;
+	void __iomem *sd_inst;
 	u32 value;
 
-	अगर (params->is_6g)
+	if (params->is_6g)
 		sd_inst = sdx5_inst_get(priv, TARGET_SD6G_LANE, sd_index);
-	अन्यथा
+	else
 		sd_inst = sdx5_inst_get(priv, TARGET_SD10G_LANE, sd_index);
 
 	sdx5_rmw(SD_LANE_SD_LANE_CFG_MACRO_RST_SET(1),
@@ -1514,7 +1513,7 @@
 		      SD10G_LANE_LANE_01(sd_index));
 
 	sdx5_inst_rmw(SD10G_LANE_LANE_30_CFG_RXDIV_SEL_2_0_SET
-		      (params->cfg_rxभाग_sel_2_0),
+		      (params->cfg_rxdiv_sel_2_0),
 		      SD10G_LANE_LANE_30_CFG_RXDIV_SEL_2_0,
 		      sd_inst,
 		      SD10G_LANE_LANE_30(sd_index));
@@ -1554,7 +1553,7 @@
 		      SD10G_LANE_LANE_1A(sd_index));
 
 	sdx5_inst_rmw(SD10G_LANE_LANE_02_CFG_EN_ADV_SET(params->cfg_en_adv) |
-		      SD10G_LANE_LANE_02_CFG_EN_MAIN_SET(params->cfg_en_मुख्य) |
+		      SD10G_LANE_LANE_02_CFG_EN_MAIN_SET(params->cfg_en_main) |
 		      SD10G_LANE_LANE_02_CFG_EN_DLY_SET(params->cfg_en_dly) |
 		      SD10G_LANE_LANE_02_CFG_TAP_ADV_3_0_SET
 		      (params->cfg_tap_adv_3_0),
@@ -1565,7 +1564,7 @@
 		      sd_inst,
 		      SD10G_LANE_LANE_02(sd_index));
 
-	sdx5_inst_rmw(SD10G_LANE_LANE_03_CFG_TAP_MAIN_SET(params->cfg_tap_मुख्य),
+	sdx5_inst_rmw(SD10G_LANE_LANE_03_CFG_TAP_MAIN_SET(params->cfg_tap_main),
 		      SD10G_LANE_LANE_03_CFG_TAP_MAIN,
 		      sd_inst,
 		      SD10G_LANE_LANE_03(sd_index));
@@ -1600,7 +1599,7 @@
 		      SD10G_LANE_LANE_0D(sd_index));
 
 	sdx5_inst_rmw(SD10G_LANE_LANE_0E_CFG_EQC_FORCE_3_0_SET
-		      (params->cfg_eq_c_क्रमce_3_0) |
+		      (params->cfg_eq_c_force_3_0) |
 		      SD10G_LANE_LANE_0E_CFG_SUM_SETCM_EN_SET
 		      (params->cfg_sum_setcm_en),
 		      SD10G_LANE_LANE_0E_CFG_EQC_FORCE_3_0 |
@@ -1749,7 +1748,7 @@
 		      SD10G_LANE_LANE_41(sd_index));
 
 	sdx5_inst_rmw(SD10G_LANE_LANE_9E_R_EN_AUTO_CDR_RSTN_SET
-		      (params->r_en_स्वतः_cdr_rstn),
+		      (params->r_en_auto_cdr_rstn),
 		      SD10G_LANE_LANE_9E_R_EN_AUTO_CDR_RSTN,
 		      sd_inst,
 		      SD10G_LANE_LANE_9E(sd_index));
@@ -1832,12 +1831,12 @@
 
 	usleep_range(3000, 6000);
 
-	value = पढ़ोl(sdx5_addr(regs, SD_LANE_SD_LANE_STAT(lane_index)));
+	value = readl(sdx5_addr(regs, SD_LANE_SD_LANE_STAT(lane_index)));
 	value = SD_LANE_SD_LANE_STAT_PMA_RST_DONE_GET(value);
-	अगर (value != 1) अणु
+	if (value != 1) {
 		dev_err(dev, "10G PMA Reset failed: 0x%x\n", value);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	sdx5_rmw(SD_LANE_SD_SER_RST_SER_RST_SET(0x0),
 		 SD_LANE_SD_SER_RST_SER_RST,
@@ -1849,114 +1848,114 @@
 		 priv,
 		 SD_LANE_SD_DES_RST(lane_index));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sparx5_sd25g28_config(काष्ठा sparx5_serdes_macro *macro, bool reset)
-अणु
-	काष्ठा sparx5_sd25g28_media_preset media = media_presets_25g[macro->media];
-	काष्ठा sparx5_sd25g28_mode_preset mode;
-	काष्ठा sparx5_sd25g28_args args = अणु
+static int sparx5_sd25g28_config(struct sparx5_serdes_macro *macro, bool reset)
+{
+	struct sparx5_sd25g28_media_preset media = media_presets_25g[macro->media];
+	struct sparx5_sd25g28_mode_preset mode;
+	struct sparx5_sd25g28_args args = {
 		.rxinvert = 1,
 		.txinvert = 0,
 		.txswing = 240,
 		.com_pll_reserve = 0xf,
 		.reg_rst = reset,
-	पूर्ण;
-	काष्ठा sparx5_sd25g28_params params;
-	पूर्णांक err;
+	};
+	struct sparx5_sd25g28_params params;
+	int err;
 
 	err = sparx5_sd10g25_get_mode_preset(macro, &mode);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 	sparx5_sd25g28_get_params(macro, &media, &mode, &args, &params);
 	sparx5_sd25g28_reset(macro->priv->regs, &params, macro->stpidx);
-	वापस sparx5_sd25g28_apply_params(macro, &params);
-पूर्ण
+	return sparx5_sd25g28_apply_params(macro, &params);
+}
 
-अटल पूर्णांक sparx5_sd10g28_config(काष्ठा sparx5_serdes_macro *macro, bool reset)
-अणु
-	काष्ठा sparx5_sd10g28_media_preset media = media_presets_10g[macro->media];
-	काष्ठा sparx5_sd10g28_mode_preset mode;
-	काष्ठा sparx5_sd10g28_params params;
-	काष्ठा sparx5_sd10g28_args args = अणु
+static int sparx5_sd10g28_config(struct sparx5_serdes_macro *macro, bool reset)
+{
+	struct sparx5_sd10g28_media_preset media = media_presets_10g[macro->media];
+	struct sparx5_sd10g28_mode_preset mode;
+	struct sparx5_sd10g28_params params;
+	struct sparx5_sd10g28_args args = {
 		.is_6g = (macro->serdestype == SPX5_SDT_6G),
 		.txinvert = 0,
 		.rxinvert = 1,
 		.txswing = 240,
 		.reg_rst = reset,
-	पूर्ण;
-	पूर्णांक err;
+	};
+	int err;
 
 	err = sparx5_sd10g28_get_mode_preset(macro, &mode, &args);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 	sparx5_sd10g28_get_params(macro, &media, &mode, &args, &params);
 	sparx5_sd10g28_reset(macro->priv->regs, macro->sidx);
-	वापस sparx5_sd10g28_apply_params(macro, &params);
-पूर्ण
+	return sparx5_sd10g28_apply_params(macro, &params);
+}
 
-/* Power करोwn serdes TX driver */
-अटल पूर्णांक sparx5_serdes_घातer_save(काष्ठा sparx5_serdes_macro *macro, u32 pwdn)
-अणु
-	काष्ठा sparx5_serdes_निजी *priv = macro->priv;
-	व्योम __iomem *sd_inst;
+/* Power down serdes TX driver */
+static int sparx5_serdes_power_save(struct sparx5_serdes_macro *macro, u32 pwdn)
+{
+	struct sparx5_serdes_private *priv = macro->priv;
+	void __iomem *sd_inst;
 
-	अगर (macro->serdestype == SPX5_SDT_6G)
+	if (macro->serdestype == SPX5_SDT_6G)
 		sd_inst = sdx5_inst_get(priv, TARGET_SD6G_LANE, macro->stpidx);
-	अन्यथा अगर (macro->serdestype == SPX5_SDT_10G)
+	else if (macro->serdestype == SPX5_SDT_10G)
 		sd_inst = sdx5_inst_get(priv, TARGET_SD10G_LANE, macro->stpidx);
-	अन्यथा
+	else
 		sd_inst = sdx5_inst_get(priv, TARGET_SD25G_LANE, macro->stpidx);
 
-	अगर (macro->serdestype == SPX5_SDT_25G) अणु
+	if (macro->serdestype == SPX5_SDT_25G) {
 		sdx5_inst_rmw(SD25G_LANE_LANE_04_LN_CFG_PD_DRIVER_SET(pwdn),
 			      SD25G_LANE_LANE_04_LN_CFG_PD_DRIVER,
 			      sd_inst,
 			      SD25G_LANE_LANE_04(0));
-	पूर्ण अन्यथा अणु
+	} else {
 		/* 6G and 10G */
 		sdx5_inst_rmw(SD10G_LANE_LANE_06_CFG_PD_DRIVER_SET(pwdn),
 			      SD10G_LANE_LANE_06_CFG_PD_DRIVER,
 			      sd_inst,
 			      SD10G_LANE_LANE_06(0));
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक sparx5_serdes_घड़ी_config(काष्ठा sparx5_serdes_macro *macro)
-अणु
-	काष्ठा sparx5_serdes_निजी *priv = macro->priv;
+static int sparx5_serdes_clock_config(struct sparx5_serdes_macro *macro)
+{
+	struct sparx5_serdes_private *priv = macro->priv;
 
-	अगर (macro->serdesmode == SPX5_SD_MODE_100FX) अणु
-		u32 freq = priv->coreघड़ी == 250000000 ? 2 :
-			priv->coreघड़ी == 500000000 ? 1 : 0;
+	if (macro->serdesmode == SPX5_SD_MODE_100FX) {
+		u32 freq = priv->coreclock == 250000000 ? 2 :
+			priv->coreclock == 500000000 ? 1 : 0;
 
 		sdx5_rmw(SD_LANE_MISC_CORE_CLK_FREQ_SET(freq),
 			 SD_LANE_MISC_CORE_CLK_FREQ,
 			 priv,
 			 SD_LANE_MISC(macro->sidx));
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक sparx5_cmu_apply_cfg(काष्ठा sparx5_serdes_निजी *priv,
+static int sparx5_cmu_apply_cfg(struct sparx5_serdes_private *priv,
 				u32 cmu_idx,
-				व्योम __iomem *cmu_tgt,
-				व्योम __iomem *cmu_cfg_tgt,
+				void __iomem *cmu_tgt,
+				void __iomem *cmu_cfg_tgt,
 				u32 spd10g)
-अणु
-	व्योम __iomem **regs = priv->regs;
-	काष्ठा device *dev = priv->dev;
-	पूर्णांक value;
+{
+	void __iomem **regs = priv->regs;
+	struct device *dev = priv->dev;
+	int value;
 
 	cmu_tgt = sdx5_inst_get(priv, TARGET_SD_CMU, cmu_idx);
 	cmu_cfg_tgt = sdx5_inst_get(priv, TARGET_SD_CMU_CFG, cmu_idx);
 
-	अगर (cmu_idx == 1 || cmu_idx == 4 || cmu_idx == 7 ||
-	    cmu_idx == 10 || cmu_idx == 13) अणु
+	if (cmu_idx == 1 || cmu_idx == 4 || cmu_idx == 7 ||
+	    cmu_idx == 10 || cmu_idx == 13) {
 		spd10g = 0;
-	पूर्ण
+	}
 
 	sdx5_inst_rmw(SD_CMU_CFG_SD_CMU_CFG_EXT_CFG_RST_SET(1),
 		      SD_CMU_CFG_SD_CMU_CFG_EXT_CFG_RST,
@@ -2045,473 +2044,473 @@
 
 	msleep(20);
 
-	value = पढ़ोl(sdx5_addr(regs, SD_CMU_CMU_E0(cmu_idx)));
+	value = readl(sdx5_addr(regs, SD_CMU_CMU_E0(cmu_idx)));
 	value = SD_CMU_CMU_E0_PLL_LOL_UDL_GET(value);
 
-	अगर (value) अणु
+	if (value) {
 		dev_err(dev, "CMU PLL Loss of Lock: 0x%x\n", value);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	sdx5_inst_rmw(SD_CMU_CMU_0D_CFG_PMA_TX_CK_PD_SET(0),
 		      SD_CMU_CMU_0D_CFG_PMA_TX_CK_PD,
 		      cmu_tgt,
 		      SD_CMU_CMU_0D(cmu_idx));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sparx5_cmu_cfg(काष्ठा sparx5_serdes_निजी *priv, u32 cmu_idx)
-अणु
-	व्योम __iomem *cmu_tgt, *cmu_cfg_tgt;
+static int sparx5_cmu_cfg(struct sparx5_serdes_private *priv, u32 cmu_idx)
+{
+	void __iomem *cmu_tgt, *cmu_cfg_tgt;
 	u32 spd10g = 1;
 
-	अगर (cmu_idx == 1 || cmu_idx == 4 || cmu_idx == 7 ||
-	    cmu_idx == 10 || cmu_idx == 13) अणु
+	if (cmu_idx == 1 || cmu_idx == 4 || cmu_idx == 7 ||
+	    cmu_idx == 10 || cmu_idx == 13) {
 		spd10g = 0;
-	पूर्ण
+	}
 
 	cmu_tgt = sdx5_inst_get(priv, TARGET_SD_CMU, cmu_idx);
 	cmu_cfg_tgt = sdx5_inst_get(priv, TARGET_SD_CMU_CFG, cmu_idx);
 
-	वापस sparx5_cmu_apply_cfg(priv, cmu_idx, cmu_tgt, cmu_cfg_tgt, spd10g);
-पूर्ण
+	return sparx5_cmu_apply_cfg(priv, cmu_idx, cmu_tgt, cmu_cfg_tgt, spd10g);
+}
 
-अटल पूर्णांक sparx5_serdes_cmu_enable(काष्ठा sparx5_serdes_निजी *priv)
-अणु
-	पूर्णांक idx, err = 0;
+static int sparx5_serdes_cmu_enable(struct sparx5_serdes_private *priv)
+{
+	int idx, err = 0;
 
-	अगर (!priv->cmu_enabled) अणु
-		क्रम (idx = 0; idx < SPX5_CMU_MAX; idx++) अणु
+	if (!priv->cmu_enabled) {
+		for (idx = 0; idx < SPX5_CMU_MAX; idx++) {
 			err  = sparx5_cmu_cfg(priv, idx);
-			अगर (err) अणु
+			if (err) {
 				dev_err(priv->dev, "CMU %u, error: %d\n", idx, err);
-				जाओ leave;
-			पूर्ण
-		पूर्ण
+				goto leave;
+			}
+		}
 		priv->cmu_enabled = true;
-	पूर्ण
+	}
 leave:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक sparx5_serdes_get_serdesmode(phy_पूर्णांकerface_t porपंचांगode, पूर्णांक speed)
-अणु
-	चयन (porपंचांगode) अणु
-	हाल PHY_INTERFACE_MODE_1000BASEX:
-	हाल PHY_INTERFACE_MODE_2500BASEX:
-		अगर (speed == SPEED_2500)
-			वापस SPX5_SD_MODE_2G5;
-		अगर (speed == SPEED_100)
-			वापस SPX5_SD_MODE_100FX;
-		वापस SPX5_SD_MODE_1000BASEX;
-	हाल PHY_INTERFACE_MODE_SGMII:
-		/* The same Serdes mode is used क्रम both SGMII and 1000BaseX */
-		वापस SPX5_SD_MODE_1000BASEX;
-	हाल PHY_INTERFACE_MODE_QSGMII:
-		वापस SPX5_SD_MODE_QSGMII;
-	हाल PHY_INTERFACE_MODE_10GBASER:
-		वापस SPX5_SD_MODE_SFI;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+static int sparx5_serdes_get_serdesmode(phy_interface_t portmode, int speed)
+{
+	switch (portmode) {
+	case PHY_INTERFACE_MODE_1000BASEX:
+	case PHY_INTERFACE_MODE_2500BASEX:
+		if (speed == SPEED_2500)
+			return SPX5_SD_MODE_2G5;
+		if (speed == SPEED_100)
+			return SPX5_SD_MODE_100FX;
+		return SPX5_SD_MODE_1000BASEX;
+	case PHY_INTERFACE_MODE_SGMII:
+		/* The same Serdes mode is used for both SGMII and 1000BaseX */
+		return SPX5_SD_MODE_1000BASEX;
+	case PHY_INTERFACE_MODE_QSGMII:
+		return SPX5_SD_MODE_QSGMII;
+	case PHY_INTERFACE_MODE_10GBASER:
+		return SPX5_SD_MODE_SFI;
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल पूर्णांक sparx5_serdes_config(काष्ठा sparx5_serdes_macro *macro)
-अणु
-	काष्ठा device *dev = macro->priv->dev;
-	पूर्णांक serdesmode;
-	पूर्णांक err;
+static int sparx5_serdes_config(struct sparx5_serdes_macro *macro)
+{
+	struct device *dev = macro->priv->dev;
+	int serdesmode;
+	int err;
 
 	err = sparx5_serdes_cmu_enable(macro->priv);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	serdesmode = sparx5_serdes_get_serdesmode(macro->porपंचांगode, macro->speed);
-	अगर (serdesmode < 0) अणु
+	serdesmode = sparx5_serdes_get_serdesmode(macro->portmode, macro->speed);
+	if (serdesmode < 0) {
 		dev_err(dev, "SerDes %u, interface not supported: %s\n",
 			macro->sidx,
-			phy_modes(macro->porपंचांगode));
-		वापस serdesmode;
-	पूर्ण
+			phy_modes(macro->portmode));
+		return serdesmode;
+	}
 	macro->serdesmode = serdesmode;
 
-	sparx5_serdes_घड़ी_config(macro);
+	sparx5_serdes_clock_config(macro);
 
-	अगर (macro->serdestype == SPX5_SDT_25G)
+	if (macro->serdestype == SPX5_SDT_25G)
 		err = sparx5_sd25g28_config(macro, false);
-	अन्यथा
+	else
 		err = sparx5_sd10g28_config(macro, false);
-	अगर (err) अणु
+	if (err) {
 		dev_err(dev, "SerDes %u, config error: %d\n",
 			macro->sidx, err);
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-अटल पूर्णांक sparx5_serdes_घातer_on(काष्ठा phy *phy)
-अणु
-	काष्ठा sparx5_serdes_macro *macro = phy_get_drvdata(phy);
+static int sparx5_serdes_power_on(struct phy *phy)
+{
+	struct sparx5_serdes_macro *macro = phy_get_drvdata(phy);
 
-	वापस sparx5_serdes_घातer_save(macro, false);
-पूर्ण
+	return sparx5_serdes_power_save(macro, false);
+}
 
-अटल पूर्णांक sparx5_serdes_घातer_off(काष्ठा phy *phy)
-अणु
-	काष्ठा sparx5_serdes_macro *macro = phy_get_drvdata(phy);
+static int sparx5_serdes_power_off(struct phy *phy)
+{
+	struct sparx5_serdes_macro *macro = phy_get_drvdata(phy);
 
-	वापस sparx5_serdes_घातer_save(macro, true);
-पूर्ण
+	return sparx5_serdes_power_save(macro, true);
+}
 
-अटल पूर्णांक sparx5_serdes_set_mode(काष्ठा phy *phy, क्रमागत phy_mode mode, पूर्णांक submode)
-अणु
-	काष्ठा sparx5_serdes_macro *macro;
+static int sparx5_serdes_set_mode(struct phy *phy, enum phy_mode mode, int submode)
+{
+	struct sparx5_serdes_macro *macro;
 
-	अगर (mode != PHY_MODE_ETHERNET)
-		वापस -EINVAL;
+	if (mode != PHY_MODE_ETHERNET)
+		return -EINVAL;
 
-	चयन (submode) अणु
-	हाल PHY_INTERFACE_MODE_1000BASEX:
-	हाल PHY_INTERFACE_MODE_2500BASEX:
-	हाल PHY_INTERFACE_MODE_SGMII:
-	हाल PHY_INTERFACE_MODE_QSGMII:
-	हाल PHY_INTERFACE_MODE_10GBASER:
+	switch (submode) {
+	case PHY_INTERFACE_MODE_1000BASEX:
+	case PHY_INTERFACE_MODE_2500BASEX:
+	case PHY_INTERFACE_MODE_SGMII:
+	case PHY_INTERFACE_MODE_QSGMII:
+	case PHY_INTERFACE_MODE_10GBASER:
 		macro = phy_get_drvdata(phy);
-		macro->porपंचांगode = submode;
+		macro->portmode = submode;
 		sparx5_serdes_config(macro);
-		वापस 0;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		return 0;
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल पूर्णांक sparx5_serdes_set_media(काष्ठा phy *phy, क्रमागत phy_media media)
-अणु
-	काष्ठा sparx5_serdes_macro *macro = phy_get_drvdata(phy);
+static int sparx5_serdes_set_media(struct phy *phy, enum phy_media media)
+{
+	struct sparx5_serdes_macro *macro = phy_get_drvdata(phy);
 
-	अगर (media != macro->media) अणु
+	if (media != macro->media) {
 		macro->media = media;
-		अगर (macro->serdesmode != SPX5_SD_MODE_NONE)
+		if (macro->serdesmode != SPX5_SD_MODE_NONE)
 			sparx5_serdes_config(macro);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक sparx5_serdes_set_speed(काष्ठा phy *phy, पूर्णांक speed)
-अणु
-	काष्ठा sparx5_serdes_macro *macro = phy_get_drvdata(phy);
+static int sparx5_serdes_set_speed(struct phy *phy, int speed)
+{
+	struct sparx5_serdes_macro *macro = phy_get_drvdata(phy);
 
-	अगर (macro->sidx < SPX5_SERDES_10G_START && speed > SPEED_5000)
-		वापस -EINVAL;
-	अगर (macro->sidx < SPX5_SERDES_25G_START && speed > SPEED_10000)
-		वापस -EINVAL;
-	अगर (speed != macro->speed) अणु
+	if (macro->sidx < SPX5_SERDES_10G_START && speed > SPEED_5000)
+		return -EINVAL;
+	if (macro->sidx < SPX5_SERDES_25G_START && speed > SPEED_10000)
+		return -EINVAL;
+	if (speed != macro->speed) {
 		macro->speed = speed;
-		अगर (macro->serdesmode != SPX5_SD_MODE_NONE)
+		if (macro->serdesmode != SPX5_SD_MODE_NONE)
 			sparx5_serdes_config(macro);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक sparx5_serdes_reset(काष्ठा phy *phy)
-अणु
-	काष्ठा sparx5_serdes_macro *macro = phy_get_drvdata(phy);
-	पूर्णांक err;
+static int sparx5_serdes_reset(struct phy *phy)
+{
+	struct sparx5_serdes_macro *macro = phy_get_drvdata(phy);
+	int err;
 
 	err = sparx5_serdes_cmu_enable(macro->priv);
-	अगर (err)
-		वापस err;
-	अगर (macro->serdestype == SPX5_SDT_25G)
+	if (err)
+		return err;
+	if (macro->serdestype == SPX5_SDT_25G)
 		err = sparx5_sd25g28_config(macro, true);
-	अन्यथा
+	else
 		err = sparx5_sd10g28_config(macro, true);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&phy->dev, "SerDes %u, reset error: %d\n",
 			macro->sidx, err);
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-अटल पूर्णांक sparx5_serdes_validate(काष्ठा phy *phy, क्रमागत phy_mode mode,
-					पूर्णांक submode,
-					जोड़ phy_configure_opts *opts)
-अणु
-	काष्ठा sparx5_serdes_macro *macro = phy_get_drvdata(phy);
+static int sparx5_serdes_validate(struct phy *phy, enum phy_mode mode,
+					int submode,
+					union phy_configure_opts *opts)
+{
+	struct sparx5_serdes_macro *macro = phy_get_drvdata(phy);
 
-	अगर (mode != PHY_MODE_ETHERNET)
-		वापस -EINVAL;
+	if (mode != PHY_MODE_ETHERNET)
+		return -EINVAL;
 
-	अगर (macro->speed == 0)
-		वापस -EINVAL;
+	if (macro->speed == 0)
+		return -EINVAL;
 
-	अगर (macro->sidx < SPX5_SERDES_10G_START && macro->speed > SPEED_5000)
-		वापस -EINVAL;
-	अगर (macro->sidx < SPX5_SERDES_25G_START && macro->speed > SPEED_10000)
-		वापस -EINVAL;
+	if (macro->sidx < SPX5_SERDES_10G_START && macro->speed > SPEED_5000)
+		return -EINVAL;
+	if (macro->sidx < SPX5_SERDES_25G_START && macro->speed > SPEED_10000)
+		return -EINVAL;
 
-	चयन (submode) अणु
-	हाल PHY_INTERFACE_MODE_1000BASEX:
-		अगर (macro->speed != SPEED_100 && /* This is क्रम 100BASE-FX */
+	switch (submode) {
+	case PHY_INTERFACE_MODE_1000BASEX:
+		if (macro->speed != SPEED_100 && /* This is for 100BASE-FX */
 		    macro->speed != SPEED_1000)
-			वापस -EINVAL;
-		अवरोध;
-	हाल PHY_INTERFACE_MODE_SGMII:
-	हाल PHY_INTERFACE_MODE_2500BASEX:
-	हाल PHY_INTERFACE_MODE_QSGMII:
-		अगर (macro->speed >= SPEED_5000)
-			वापस -EINVAL;
-		अवरोध;
-	हाल PHY_INTERFACE_MODE_10GBASER:
-		अगर (macro->speed < SPEED_5000)
-			वापस -EINVAL;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return -EINVAL;
+		break;
+	case PHY_INTERFACE_MODE_SGMII:
+	case PHY_INTERFACE_MODE_2500BASEX:
+	case PHY_INTERFACE_MODE_QSGMII:
+		if (macro->speed >= SPEED_5000)
+			return -EINVAL;
+		break;
+	case PHY_INTERFACE_MODE_10GBASER:
+		if (macro->speed < SPEED_5000)
+			return -EINVAL;
+		break;
+	default:
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल स्थिर काष्ठा phy_ops sparx5_serdes_ops = अणु
-	.घातer_on	= sparx5_serdes_घातer_on,
-	.घातer_off	= sparx5_serdes_घातer_off,
+static const struct phy_ops sparx5_serdes_ops = {
+	.power_on	= sparx5_serdes_power_on,
+	.power_off	= sparx5_serdes_power_off,
 	.set_mode	= sparx5_serdes_set_mode,
 	.set_media	= sparx5_serdes_set_media,
 	.set_speed	= sparx5_serdes_set_speed,
 	.reset		= sparx5_serdes_reset,
 	.validate	= sparx5_serdes_validate,
 	.owner		= THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक sparx5_phy_create(काष्ठा sparx5_serdes_निजी *priv,
-			   पूर्णांक idx, काष्ठा phy **phy)
-अणु
-	काष्ठा sparx5_serdes_macro *macro;
+static int sparx5_phy_create(struct sparx5_serdes_private *priv,
+			   int idx, struct phy **phy)
+{
+	struct sparx5_serdes_macro *macro;
 
-	*phy = devm_phy_create(priv->dev, शून्य, &sparx5_serdes_ops);
-	अगर (IS_ERR(*phy))
-		वापस PTR_ERR(*phy);
+	*phy = devm_phy_create(priv->dev, NULL, &sparx5_serdes_ops);
+	if (IS_ERR(*phy))
+		return PTR_ERR(*phy);
 
-	macro = devm_kzalloc(priv->dev, माप(*macro), GFP_KERNEL);
-	अगर (!macro)
-		वापस -ENOMEM;
+	macro = devm_kzalloc(priv->dev, sizeof(*macro), GFP_KERNEL);
+	if (!macro)
+		return -ENOMEM;
 
 	macro->sidx = idx;
 	macro->priv = priv;
 	macro->speed = SPEED_UNKNOWN;
-	अगर (idx < SPX5_SERDES_10G_START) अणु
+	if (idx < SPX5_SERDES_10G_START) {
 		macro->serdestype = SPX5_SDT_6G;
 		macro->stpidx = macro->sidx;
-	पूर्ण अन्यथा अगर (idx < SPX5_SERDES_25G_START) अणु
+	} else if (idx < SPX5_SERDES_25G_START) {
 		macro->serdestype = SPX5_SDT_10G;
 		macro->stpidx = macro->sidx - SPX5_SERDES_10G_START;
-	पूर्ण अन्यथा अणु
+	} else {
 		macro->serdestype = SPX5_SDT_25G;
 		macro->stpidx = macro->sidx - SPX5_SERDES_25G_START;
-	पूर्ण
+	}
 
 	phy_set_drvdata(*phy, macro);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा sparx5_serdes_io_resource sparx5_serdes_iomap[] =  अणु
-	अणु TARGET_SD_CMU,          0x0 पूर्ण,      /* 0x610808000: sd_cmu_0 */
-	अणु TARGET_SD_CMU + 1,      0x8000 पूर्ण,   /* 0x610810000: sd_cmu_1 */
-	अणु TARGET_SD_CMU + 2,      0x10000 पूर्ण,  /* 0x610818000: sd_cmu_2 */
-	अणु TARGET_SD_CMU + 3,      0x18000 पूर्ण,  /* 0x610820000: sd_cmu_3 */
-	अणु TARGET_SD_CMU + 4,      0x20000 पूर्ण,  /* 0x610828000: sd_cmu_4 */
-	अणु TARGET_SD_CMU + 5,      0x28000 पूर्ण,  /* 0x610830000: sd_cmu_5 */
-	अणु TARGET_SD_CMU + 6,      0x30000 पूर्ण,  /* 0x610838000: sd_cmu_6 */
-	अणु TARGET_SD_CMU + 7,      0x38000 पूर्ण,  /* 0x610840000: sd_cmu_7 */
-	अणु TARGET_SD_CMU + 8,      0x40000 पूर्ण,  /* 0x610848000: sd_cmu_8 */
-	अणु TARGET_SD_CMU_CFG,      0x48000 पूर्ण,  /* 0x610850000: sd_cmu_cfg_0 */
-	अणु TARGET_SD_CMU_CFG + 1,  0x50000 पूर्ण,  /* 0x610858000: sd_cmu_cfg_1 */
-	अणु TARGET_SD_CMU_CFG + 2,  0x58000 पूर्ण,  /* 0x610860000: sd_cmu_cfg_2 */
-	अणु TARGET_SD_CMU_CFG + 3,  0x60000 पूर्ण,  /* 0x610868000: sd_cmu_cfg_3 */
-	अणु TARGET_SD_CMU_CFG + 4,  0x68000 पूर्ण,  /* 0x610870000: sd_cmu_cfg_4 */
-	अणु TARGET_SD_CMU_CFG + 5,  0x70000 पूर्ण,  /* 0x610878000: sd_cmu_cfg_5 */
-	अणु TARGET_SD_CMU_CFG + 6,  0x78000 पूर्ण,  /* 0x610880000: sd_cmu_cfg_6 */
-	अणु TARGET_SD_CMU_CFG + 7,  0x80000 पूर्ण,  /* 0x610888000: sd_cmu_cfg_7 */
-	अणु TARGET_SD_CMU_CFG + 8,  0x88000 पूर्ण,  /* 0x610890000: sd_cmu_cfg_8 */
-	अणु TARGET_SD6G_LANE,       0x90000 पूर्ण,  /* 0x610898000: sd6g_lane_0 */
-	अणु TARGET_SD6G_LANE + 1,   0x98000 पूर्ण,  /* 0x6108a0000: sd6g_lane_1 */
-	अणु TARGET_SD6G_LANE + 2,   0xa0000 पूर्ण,  /* 0x6108a8000: sd6g_lane_2 */
-	अणु TARGET_SD6G_LANE + 3,   0xa8000 पूर्ण,  /* 0x6108b0000: sd6g_lane_3 */
-	अणु TARGET_SD6G_LANE + 4,   0xb0000 पूर्ण,  /* 0x6108b8000: sd6g_lane_4 */
-	अणु TARGET_SD6G_LANE + 5,   0xb8000 पूर्ण,  /* 0x6108c0000: sd6g_lane_5 */
-	अणु TARGET_SD6G_LANE + 6,   0xc0000 पूर्ण,  /* 0x6108c8000: sd6g_lane_6 */
-	अणु TARGET_SD6G_LANE + 7,   0xc8000 पूर्ण,  /* 0x6108d0000: sd6g_lane_7 */
-	अणु TARGET_SD6G_LANE + 8,   0xd0000 पूर्ण,  /* 0x6108d8000: sd6g_lane_8 */
-	अणु TARGET_SD6G_LANE + 9,   0xd8000 पूर्ण,  /* 0x6108e0000: sd6g_lane_9 */
-	अणु TARGET_SD6G_LANE + 10,  0xe0000 पूर्ण,  /* 0x6108e8000: sd6g_lane_10 */
-	अणु TARGET_SD6G_LANE + 11,  0xe8000 पूर्ण,  /* 0x6108f0000: sd6g_lane_11 */
-	अणु TARGET_SD6G_LANE + 12,  0xf0000 पूर्ण,  /* 0x6108f8000: sd6g_lane_12 */
-	अणु TARGET_SD10G_LANE,      0xf8000 पूर्ण,  /* 0x610900000: sd10g_lane_0 */
-	अणु TARGET_SD10G_LANE + 1,  0x100000 पूर्ण, /* 0x610908000: sd10g_lane_1 */
-	अणु TARGET_SD10G_LANE + 2,  0x108000 पूर्ण, /* 0x610910000: sd10g_lane_2 */
-	अणु TARGET_SD10G_LANE + 3,  0x110000 पूर्ण, /* 0x610918000: sd10g_lane_3 */
-	अणु TARGET_SD_LANE,         0x1a0000 पूर्ण, /* 0x6109a8000: sd_lane_0 */
-	अणु TARGET_SD_LANE + 1,     0x1a8000 पूर्ण, /* 0x6109b0000: sd_lane_1 */
-	अणु TARGET_SD_LANE + 2,     0x1b0000 पूर्ण, /* 0x6109b8000: sd_lane_2 */
-	अणु TARGET_SD_LANE + 3,     0x1b8000 पूर्ण, /* 0x6109c0000: sd_lane_3 */
-	अणु TARGET_SD_LANE + 4,     0x1c0000 पूर्ण, /* 0x6109c8000: sd_lane_4 */
-	अणु TARGET_SD_LANE + 5,     0x1c8000 पूर्ण, /* 0x6109d0000: sd_lane_5 */
-	अणु TARGET_SD_LANE + 6,     0x1d0000 पूर्ण, /* 0x6109d8000: sd_lane_6 */
-	अणु TARGET_SD_LANE + 7,     0x1d8000 पूर्ण, /* 0x6109e0000: sd_lane_7 */
-	अणु TARGET_SD_LANE + 8,     0x1e0000 पूर्ण, /* 0x6109e8000: sd_lane_8 */
-	अणु TARGET_SD_LANE + 9,     0x1e8000 पूर्ण, /* 0x6109f0000: sd_lane_9 */
-	अणु TARGET_SD_LANE + 10,    0x1f0000 पूर्ण, /* 0x6109f8000: sd_lane_10 */
-	अणु TARGET_SD_LANE + 11,    0x1f8000 पूर्ण, /* 0x610a00000: sd_lane_11 */
-	अणु TARGET_SD_LANE + 12,    0x200000 पूर्ण, /* 0x610a08000: sd_lane_12 */
-	अणु TARGET_SD_LANE + 13,    0x208000 पूर्ण, /* 0x610a10000: sd_lane_13 */
-	अणु TARGET_SD_LANE + 14,    0x210000 पूर्ण, /* 0x610a18000: sd_lane_14 */
-	अणु TARGET_SD_LANE + 15,    0x218000 पूर्ण, /* 0x610a20000: sd_lane_15 */
-	अणु TARGET_SD_LANE + 16,    0x220000 पूर्ण, /* 0x610a28000: sd_lane_16 */
-	अणु TARGET_SD_CMU + 9,      0x400000 पूर्ण, /* 0x610c08000: sd_cmu_9 */
-	अणु TARGET_SD_CMU + 10,     0x408000 पूर्ण, /* 0x610c10000: sd_cmu_10 */
-	अणु TARGET_SD_CMU + 11,     0x410000 पूर्ण, /* 0x610c18000: sd_cmu_11 */
-	अणु TARGET_SD_CMU + 12,     0x418000 पूर्ण, /* 0x610c20000: sd_cmu_12 */
-	अणु TARGET_SD_CMU + 13,     0x420000 पूर्ण, /* 0x610c28000: sd_cmu_13 */
-	अणु TARGET_SD_CMU_CFG + 9,  0x428000 पूर्ण, /* 0x610c30000: sd_cmu_cfg_9 */
-	अणु TARGET_SD_CMU_CFG + 10, 0x430000 पूर्ण, /* 0x610c38000: sd_cmu_cfg_10 */
-	अणु TARGET_SD_CMU_CFG + 11, 0x438000 पूर्ण, /* 0x610c40000: sd_cmu_cfg_11 */
-	अणु TARGET_SD_CMU_CFG + 12, 0x440000 पूर्ण, /* 0x610c48000: sd_cmu_cfg_12 */
-	अणु TARGET_SD_CMU_CFG + 13, 0x448000 पूर्ण, /* 0x610c50000: sd_cmu_cfg_13 */
-	अणु TARGET_SD10G_LANE + 4,  0x450000 पूर्ण, /* 0x610c58000: sd10g_lane_4 */
-	अणु TARGET_SD10G_LANE + 5,  0x458000 पूर्ण, /* 0x610c60000: sd10g_lane_5 */
-	अणु TARGET_SD10G_LANE + 6,  0x460000 पूर्ण, /* 0x610c68000: sd10g_lane_6 */
-	अणु TARGET_SD10G_LANE + 7,  0x468000 पूर्ण, /* 0x610c70000: sd10g_lane_7 */
-	अणु TARGET_SD10G_LANE + 8,  0x470000 पूर्ण, /* 0x610c78000: sd10g_lane_8 */
-	अणु TARGET_SD10G_LANE + 9,  0x478000 पूर्ण, /* 0x610c80000: sd10g_lane_9 */
-	अणु TARGET_SD10G_LANE + 10, 0x480000 पूर्ण, /* 0x610c88000: sd10g_lane_10 */
-	अणु TARGET_SD10G_LANE + 11, 0x488000 पूर्ण, /* 0x610c90000: sd10g_lane_11 */
-	अणु TARGET_SD25G_LANE,      0x490000 पूर्ण, /* 0x610c98000: sd25g_lane_0 */
-	अणु TARGET_SD25G_LANE + 1,  0x498000 पूर्ण, /* 0x610ca0000: sd25g_lane_1 */
-	अणु TARGET_SD25G_LANE + 2,  0x4a0000 पूर्ण, /* 0x610ca8000: sd25g_lane_2 */
-	अणु TARGET_SD25G_LANE + 3,  0x4a8000 पूर्ण, /* 0x610cb0000: sd25g_lane_3 */
-	अणु TARGET_SD25G_LANE + 4,  0x4b0000 पूर्ण, /* 0x610cb8000: sd25g_lane_4 */
-	अणु TARGET_SD25G_LANE + 5,  0x4b8000 पूर्ण, /* 0x610cc0000: sd25g_lane_5 */
-	अणु TARGET_SD25G_LANE + 6,  0x4c0000 पूर्ण, /* 0x610cc8000: sd25g_lane_6 */
-	अणु TARGET_SD25G_LANE + 7,  0x4c8000 पूर्ण, /* 0x610cd0000: sd25g_lane_7 */
-	अणु TARGET_SD_LANE + 17,    0x550000 पूर्ण, /* 0x610d58000: sd_lane_17 */
-	अणु TARGET_SD_LANE + 18,    0x558000 पूर्ण, /* 0x610d60000: sd_lane_18 */
-	अणु TARGET_SD_LANE + 19,    0x560000 पूर्ण, /* 0x610d68000: sd_lane_19 */
-	अणु TARGET_SD_LANE + 20,    0x568000 पूर्ण, /* 0x610d70000: sd_lane_20 */
-	अणु TARGET_SD_LANE + 21,    0x570000 पूर्ण, /* 0x610d78000: sd_lane_21 */
-	अणु TARGET_SD_LANE + 22,    0x578000 पूर्ण, /* 0x610d80000: sd_lane_22 */
-	अणु TARGET_SD_LANE + 23,    0x580000 पूर्ण, /* 0x610d88000: sd_lane_23 */
-	अणु TARGET_SD_LANE + 24,    0x588000 पूर्ण, /* 0x610d90000: sd_lane_24 */
-	अणु TARGET_SD_LANE_25G,     0x590000 पूर्ण, /* 0x610d98000: sd_lane_25g_25 */
-	अणु TARGET_SD_LANE_25G + 1, 0x598000 पूर्ण, /* 0x610da0000: sd_lane_25g_26 */
-	अणु TARGET_SD_LANE_25G + 2, 0x5a0000 पूर्ण, /* 0x610da8000: sd_lane_25g_27 */
-	अणु TARGET_SD_LANE_25G + 3, 0x5a8000 पूर्ण, /* 0x610db0000: sd_lane_25g_28 */
-	अणु TARGET_SD_LANE_25G + 4, 0x5b0000 पूर्ण, /* 0x610db8000: sd_lane_25g_29 */
-	अणु TARGET_SD_LANE_25G + 5, 0x5b8000 पूर्ण, /* 0x610dc0000: sd_lane_25g_30 */
-	अणु TARGET_SD_LANE_25G + 6, 0x5c0000 पूर्ण, /* 0x610dc8000: sd_lane_25g_31 */
-	अणु TARGET_SD_LANE_25G + 7, 0x5c8000 पूर्ण, /* 0x610dd0000: sd_lane_25g_32 */
-पूर्ण;
+static struct sparx5_serdes_io_resource sparx5_serdes_iomap[] =  {
+	{ TARGET_SD_CMU,          0x0 },      /* 0x610808000: sd_cmu_0 */
+	{ TARGET_SD_CMU + 1,      0x8000 },   /* 0x610810000: sd_cmu_1 */
+	{ TARGET_SD_CMU + 2,      0x10000 },  /* 0x610818000: sd_cmu_2 */
+	{ TARGET_SD_CMU + 3,      0x18000 },  /* 0x610820000: sd_cmu_3 */
+	{ TARGET_SD_CMU + 4,      0x20000 },  /* 0x610828000: sd_cmu_4 */
+	{ TARGET_SD_CMU + 5,      0x28000 },  /* 0x610830000: sd_cmu_5 */
+	{ TARGET_SD_CMU + 6,      0x30000 },  /* 0x610838000: sd_cmu_6 */
+	{ TARGET_SD_CMU + 7,      0x38000 },  /* 0x610840000: sd_cmu_7 */
+	{ TARGET_SD_CMU + 8,      0x40000 },  /* 0x610848000: sd_cmu_8 */
+	{ TARGET_SD_CMU_CFG,      0x48000 },  /* 0x610850000: sd_cmu_cfg_0 */
+	{ TARGET_SD_CMU_CFG + 1,  0x50000 },  /* 0x610858000: sd_cmu_cfg_1 */
+	{ TARGET_SD_CMU_CFG + 2,  0x58000 },  /* 0x610860000: sd_cmu_cfg_2 */
+	{ TARGET_SD_CMU_CFG + 3,  0x60000 },  /* 0x610868000: sd_cmu_cfg_3 */
+	{ TARGET_SD_CMU_CFG + 4,  0x68000 },  /* 0x610870000: sd_cmu_cfg_4 */
+	{ TARGET_SD_CMU_CFG + 5,  0x70000 },  /* 0x610878000: sd_cmu_cfg_5 */
+	{ TARGET_SD_CMU_CFG + 6,  0x78000 },  /* 0x610880000: sd_cmu_cfg_6 */
+	{ TARGET_SD_CMU_CFG + 7,  0x80000 },  /* 0x610888000: sd_cmu_cfg_7 */
+	{ TARGET_SD_CMU_CFG + 8,  0x88000 },  /* 0x610890000: sd_cmu_cfg_8 */
+	{ TARGET_SD6G_LANE,       0x90000 },  /* 0x610898000: sd6g_lane_0 */
+	{ TARGET_SD6G_LANE + 1,   0x98000 },  /* 0x6108a0000: sd6g_lane_1 */
+	{ TARGET_SD6G_LANE + 2,   0xa0000 },  /* 0x6108a8000: sd6g_lane_2 */
+	{ TARGET_SD6G_LANE + 3,   0xa8000 },  /* 0x6108b0000: sd6g_lane_3 */
+	{ TARGET_SD6G_LANE + 4,   0xb0000 },  /* 0x6108b8000: sd6g_lane_4 */
+	{ TARGET_SD6G_LANE + 5,   0xb8000 },  /* 0x6108c0000: sd6g_lane_5 */
+	{ TARGET_SD6G_LANE + 6,   0xc0000 },  /* 0x6108c8000: sd6g_lane_6 */
+	{ TARGET_SD6G_LANE + 7,   0xc8000 },  /* 0x6108d0000: sd6g_lane_7 */
+	{ TARGET_SD6G_LANE + 8,   0xd0000 },  /* 0x6108d8000: sd6g_lane_8 */
+	{ TARGET_SD6G_LANE + 9,   0xd8000 },  /* 0x6108e0000: sd6g_lane_9 */
+	{ TARGET_SD6G_LANE + 10,  0xe0000 },  /* 0x6108e8000: sd6g_lane_10 */
+	{ TARGET_SD6G_LANE + 11,  0xe8000 },  /* 0x6108f0000: sd6g_lane_11 */
+	{ TARGET_SD6G_LANE + 12,  0xf0000 },  /* 0x6108f8000: sd6g_lane_12 */
+	{ TARGET_SD10G_LANE,      0xf8000 },  /* 0x610900000: sd10g_lane_0 */
+	{ TARGET_SD10G_LANE + 1,  0x100000 }, /* 0x610908000: sd10g_lane_1 */
+	{ TARGET_SD10G_LANE + 2,  0x108000 }, /* 0x610910000: sd10g_lane_2 */
+	{ TARGET_SD10G_LANE + 3,  0x110000 }, /* 0x610918000: sd10g_lane_3 */
+	{ TARGET_SD_LANE,         0x1a0000 }, /* 0x6109a8000: sd_lane_0 */
+	{ TARGET_SD_LANE + 1,     0x1a8000 }, /* 0x6109b0000: sd_lane_1 */
+	{ TARGET_SD_LANE + 2,     0x1b0000 }, /* 0x6109b8000: sd_lane_2 */
+	{ TARGET_SD_LANE + 3,     0x1b8000 }, /* 0x6109c0000: sd_lane_3 */
+	{ TARGET_SD_LANE + 4,     0x1c0000 }, /* 0x6109c8000: sd_lane_4 */
+	{ TARGET_SD_LANE + 5,     0x1c8000 }, /* 0x6109d0000: sd_lane_5 */
+	{ TARGET_SD_LANE + 6,     0x1d0000 }, /* 0x6109d8000: sd_lane_6 */
+	{ TARGET_SD_LANE + 7,     0x1d8000 }, /* 0x6109e0000: sd_lane_7 */
+	{ TARGET_SD_LANE + 8,     0x1e0000 }, /* 0x6109e8000: sd_lane_8 */
+	{ TARGET_SD_LANE + 9,     0x1e8000 }, /* 0x6109f0000: sd_lane_9 */
+	{ TARGET_SD_LANE + 10,    0x1f0000 }, /* 0x6109f8000: sd_lane_10 */
+	{ TARGET_SD_LANE + 11,    0x1f8000 }, /* 0x610a00000: sd_lane_11 */
+	{ TARGET_SD_LANE + 12,    0x200000 }, /* 0x610a08000: sd_lane_12 */
+	{ TARGET_SD_LANE + 13,    0x208000 }, /* 0x610a10000: sd_lane_13 */
+	{ TARGET_SD_LANE + 14,    0x210000 }, /* 0x610a18000: sd_lane_14 */
+	{ TARGET_SD_LANE + 15,    0x218000 }, /* 0x610a20000: sd_lane_15 */
+	{ TARGET_SD_LANE + 16,    0x220000 }, /* 0x610a28000: sd_lane_16 */
+	{ TARGET_SD_CMU + 9,      0x400000 }, /* 0x610c08000: sd_cmu_9 */
+	{ TARGET_SD_CMU + 10,     0x408000 }, /* 0x610c10000: sd_cmu_10 */
+	{ TARGET_SD_CMU + 11,     0x410000 }, /* 0x610c18000: sd_cmu_11 */
+	{ TARGET_SD_CMU + 12,     0x418000 }, /* 0x610c20000: sd_cmu_12 */
+	{ TARGET_SD_CMU + 13,     0x420000 }, /* 0x610c28000: sd_cmu_13 */
+	{ TARGET_SD_CMU_CFG + 9,  0x428000 }, /* 0x610c30000: sd_cmu_cfg_9 */
+	{ TARGET_SD_CMU_CFG + 10, 0x430000 }, /* 0x610c38000: sd_cmu_cfg_10 */
+	{ TARGET_SD_CMU_CFG + 11, 0x438000 }, /* 0x610c40000: sd_cmu_cfg_11 */
+	{ TARGET_SD_CMU_CFG + 12, 0x440000 }, /* 0x610c48000: sd_cmu_cfg_12 */
+	{ TARGET_SD_CMU_CFG + 13, 0x448000 }, /* 0x610c50000: sd_cmu_cfg_13 */
+	{ TARGET_SD10G_LANE + 4,  0x450000 }, /* 0x610c58000: sd10g_lane_4 */
+	{ TARGET_SD10G_LANE + 5,  0x458000 }, /* 0x610c60000: sd10g_lane_5 */
+	{ TARGET_SD10G_LANE + 6,  0x460000 }, /* 0x610c68000: sd10g_lane_6 */
+	{ TARGET_SD10G_LANE + 7,  0x468000 }, /* 0x610c70000: sd10g_lane_7 */
+	{ TARGET_SD10G_LANE + 8,  0x470000 }, /* 0x610c78000: sd10g_lane_8 */
+	{ TARGET_SD10G_LANE + 9,  0x478000 }, /* 0x610c80000: sd10g_lane_9 */
+	{ TARGET_SD10G_LANE + 10, 0x480000 }, /* 0x610c88000: sd10g_lane_10 */
+	{ TARGET_SD10G_LANE + 11, 0x488000 }, /* 0x610c90000: sd10g_lane_11 */
+	{ TARGET_SD25G_LANE,      0x490000 }, /* 0x610c98000: sd25g_lane_0 */
+	{ TARGET_SD25G_LANE + 1,  0x498000 }, /* 0x610ca0000: sd25g_lane_1 */
+	{ TARGET_SD25G_LANE + 2,  0x4a0000 }, /* 0x610ca8000: sd25g_lane_2 */
+	{ TARGET_SD25G_LANE + 3,  0x4a8000 }, /* 0x610cb0000: sd25g_lane_3 */
+	{ TARGET_SD25G_LANE + 4,  0x4b0000 }, /* 0x610cb8000: sd25g_lane_4 */
+	{ TARGET_SD25G_LANE + 5,  0x4b8000 }, /* 0x610cc0000: sd25g_lane_5 */
+	{ TARGET_SD25G_LANE + 6,  0x4c0000 }, /* 0x610cc8000: sd25g_lane_6 */
+	{ TARGET_SD25G_LANE + 7,  0x4c8000 }, /* 0x610cd0000: sd25g_lane_7 */
+	{ TARGET_SD_LANE + 17,    0x550000 }, /* 0x610d58000: sd_lane_17 */
+	{ TARGET_SD_LANE + 18,    0x558000 }, /* 0x610d60000: sd_lane_18 */
+	{ TARGET_SD_LANE + 19,    0x560000 }, /* 0x610d68000: sd_lane_19 */
+	{ TARGET_SD_LANE + 20,    0x568000 }, /* 0x610d70000: sd_lane_20 */
+	{ TARGET_SD_LANE + 21,    0x570000 }, /* 0x610d78000: sd_lane_21 */
+	{ TARGET_SD_LANE + 22,    0x578000 }, /* 0x610d80000: sd_lane_22 */
+	{ TARGET_SD_LANE + 23,    0x580000 }, /* 0x610d88000: sd_lane_23 */
+	{ TARGET_SD_LANE + 24,    0x588000 }, /* 0x610d90000: sd_lane_24 */
+	{ TARGET_SD_LANE_25G,     0x590000 }, /* 0x610d98000: sd_lane_25g_25 */
+	{ TARGET_SD_LANE_25G + 1, 0x598000 }, /* 0x610da0000: sd_lane_25g_26 */
+	{ TARGET_SD_LANE_25G + 2, 0x5a0000 }, /* 0x610da8000: sd_lane_25g_27 */
+	{ TARGET_SD_LANE_25G + 3, 0x5a8000 }, /* 0x610db0000: sd_lane_25g_28 */
+	{ TARGET_SD_LANE_25G + 4, 0x5b0000 }, /* 0x610db8000: sd_lane_25g_29 */
+	{ TARGET_SD_LANE_25G + 5, 0x5b8000 }, /* 0x610dc0000: sd_lane_25g_30 */
+	{ TARGET_SD_LANE_25G + 6, 0x5c0000 }, /* 0x610dc8000: sd_lane_25g_31 */
+	{ TARGET_SD_LANE_25G + 7, 0x5c8000 }, /* 0x610dd0000: sd_lane_25g_32 */
+};
 
 /* Client lookup function, uses serdes index */
-अटल काष्ठा phy *sparx5_serdes_xlate(काष्ठा device *dev,
-				     काष्ठा of_phandle_args *args)
-अणु
-	काष्ठा sparx5_serdes_निजी *priv = dev_get_drvdata(dev);
-	पूर्णांक idx;
-	अचिन्हित पूर्णांक sidx;
+static struct phy *sparx5_serdes_xlate(struct device *dev,
+				     struct of_phandle_args *args)
+{
+	struct sparx5_serdes_private *priv = dev_get_drvdata(dev);
+	int idx;
+	unsigned int sidx;
 
-	अगर (args->args_count != 1)
-		वापस ERR_PTR(-EINVAL);
+	if (args->args_count != 1)
+		return ERR_PTR(-EINVAL);
 
 	sidx = args->args[0];
 
-	/* Check validity: ERR_PTR(-ENODEV) अगर not valid */
-	क्रम (idx = 0; idx < SPX5_SERDES_MAX; idx++) अणु
-		काष्ठा sparx5_serdes_macro *macro =
+	/* Check validity: ERR_PTR(-ENODEV) if not valid */
+	for (idx = 0; idx < SPX5_SERDES_MAX; idx++) {
+		struct sparx5_serdes_macro *macro =
 			phy_get_drvdata(priv->phys[idx]);
 
-		अगर (sidx != macro->sidx)
-			जारी;
+		if (sidx != macro->sidx)
+			continue;
 
-		वापस priv->phys[idx];
-	पूर्ण
-	वापस ERR_PTR(-ENODEV);
-पूर्ण
+		return priv->phys[idx];
+	}
+	return ERR_PTR(-ENODEV);
+}
 
-अटल पूर्णांक sparx5_serdes_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *np = pdev->dev.of_node;
-	काष्ठा sparx5_serdes_निजी *priv;
-	काष्ठा phy_provider *provider;
-	काष्ठा resource *iores;
-	व्योम __iomem *iomem;
-	अचिन्हित दीर्घ घड़ी;
-	काष्ठा clk *clk;
-	पूर्णांक idx;
-	पूर्णांक err;
+static int sparx5_serdes_probe(struct platform_device *pdev)
+{
+	struct device_node *np = pdev->dev.of_node;
+	struct sparx5_serdes_private *priv;
+	struct phy_provider *provider;
+	struct resource *iores;
+	void __iomem *iomem;
+	unsigned long clock;
+	struct clk *clk;
+	int idx;
+	int err;
 
-	अगर (!np && !pdev->dev.platक्रमm_data)
-		वापस -ENODEV;
+	if (!np && !pdev->dev.platform_data)
+		return -ENODEV;
 
-	priv = devm_kzalloc(&pdev->dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, priv);
+	platform_set_drvdata(pdev, priv);
 	priv->dev = &pdev->dev;
 
-	/* Get coreघड़ी */
-	clk = devm_clk_get(priv->dev, शून्य);
-	अगर (IS_ERR(clk)) अणु
+	/* Get coreclock */
+	clk = devm_clk_get(priv->dev, NULL);
+	if (IS_ERR(clk)) {
 		dev_err(priv->dev, "Failed to get coreclock\n");
-		वापस PTR_ERR(clk);
-	पूर्ण
-	घड़ी = clk_get_rate(clk);
-	अगर (घड़ी == 0) अणु
-		dev_err(priv->dev, "Invalid coreclock %lu\n", घड़ी);
-		वापस -EINVAL;
-	पूर्ण
-	priv->coreघड़ी = घड़ी;
+		return PTR_ERR(clk);
+	}
+	clock = clk_get_rate(clk);
+	if (clock == 0) {
+		dev_err(priv->dev, "Invalid coreclock %lu\n", clock);
+		return -EINVAL;
+	}
+	priv->coreclock = clock;
 
-	iores = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!iores) अणु
+	iores = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!iores) {
 		dev_err(priv->dev, "Invalid resource\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	iomem = devm_ioremap(priv->dev, iores->start, resource_size(iores));
-	अगर (IS_ERR(iomem)) अणु
+	if (IS_ERR(iomem)) {
 		dev_err(priv->dev, "Unable to get serdes registers: %s\n",
 			iores->name);
-		वापस PTR_ERR(iomem);
-	पूर्ण
-	क्रम (idx = 0; idx < ARRAY_SIZE(sparx5_serdes_iomap); idx++) अणु
-		काष्ठा sparx5_serdes_io_resource *iomap = &sparx5_serdes_iomap[idx];
+		return PTR_ERR(iomem);
+	}
+	for (idx = 0; idx < ARRAY_SIZE(sparx5_serdes_iomap); idx++) {
+		struct sparx5_serdes_io_resource *iomap = &sparx5_serdes_iomap[idx];
 
 		priv->regs[iomap->id] = iomem + iomap->offset;
-	पूर्ण
-	क्रम (idx = 0; idx < SPX5_SERDES_MAX; idx++) अणु
+	}
+	for (idx = 0; idx < SPX5_SERDES_MAX; idx++) {
 		err = sparx5_phy_create(priv, idx, &priv->phys[idx]);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	provider = devm_of_phy_provider_रेजिस्टर(priv->dev, sparx5_serdes_xlate);
+	provider = devm_of_phy_provider_register(priv->dev, sparx5_serdes_xlate);
 
-	वापस PTR_ERR_OR_ZERO(provider);
-पूर्ण
+	return PTR_ERR_OR_ZERO(provider);
+}
 
-अटल स्थिर काष्ठा of_device_id sparx5_serdes_match[] = अणु
-	अणु .compatible = "microchip,sparx5-serdes" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id sparx5_serdes_match[] = {
+	{ .compatible = "microchip,sparx5-serdes" },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, sparx5_serdes_match);
 
-अटल काष्ठा platक्रमm_driver sparx5_serdes_driver = अणु
+static struct platform_driver sparx5_serdes_driver = {
 	.probe = sparx5_serdes_probe,
-	.driver = अणु
+	.driver = {
 		.name = "sparx5-serdes",
 		.of_match_table = sparx5_serdes_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(sparx5_serdes_driver);
+module_platform_driver(sparx5_serdes_driver);
 
 MODULE_DESCRIPTION("Microchip Sparx5 switch serdes driver");
 MODULE_AUTHOR("Steen Hegelund <steen.hegelund@microchip.com>");

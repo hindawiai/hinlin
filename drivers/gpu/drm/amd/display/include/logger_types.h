@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,65 +23,65 @@
  *
  */
 
-#अगर_अघोषित __DAL_LOGGER_TYPES_H__
-#घोषणा __DAL_LOGGER_TYPES_H__
+#ifndef __DAL_LOGGER_TYPES_H__
+#define __DAL_LOGGER_TYPES_H__
 
-#समावेश "os_types.h"
+#include "os_types.h"
 
-#घोषणा MAX_NAME_LEN 32
+#define MAX_NAME_LEN 32
 
-#घोषणा DC_LOG_ERROR(...) DRM_ERROR(__VA_ARGS__)
-#घोषणा DC_LOG_WARNING(...) DRM_WARN(__VA_ARGS__)
-#घोषणा DC_LOG_DEBUG(...) DRM_DEBUG_KMS(__VA_ARGS__)
-#घोषणा DC_LOG_DC(...) DRM_DEBUG_KMS(__VA_ARGS__)
-#घोषणा DC_LOG_DTN(...) DRM_DEBUG_KMS(__VA_ARGS__)
-#घोषणा DC_LOG_SURFACE(...) pr_debug("[SURFACE]:"__VA_ARGS__)
-#घोषणा DC_LOG_CURSOR(...) pr_debug("[CURSOR]:"__VA_ARGS__)
-#घोषणा DC_LOG_PFLIP(...) pr_debug("[PFLIP]:"__VA_ARGS__)
-#घोषणा DC_LOG_VBLANK(...) pr_debug("[VBLANK]:"__VA_ARGS__)
-#घोषणा DC_LOG_HW_HOTPLUG(...) DRM_DEBUG_KMS(__VA_ARGS__)
-#घोषणा DC_LOG_HW_LINK_TRAINING(...) pr_debug("[HW_LINK_TRAINING]:"__VA_ARGS__)
-#घोषणा DC_LOG_HW_SET_MODE(...) DRM_DEBUG_KMS(__VA_ARGS__)
-#घोषणा DC_LOG_HW_RESUME_S3(...) DRM_DEBUG_KMS(__VA_ARGS__)
-#घोषणा DC_LOG_HW_AUDIO(...) pr_debug("[HW_AUDIO]:"__VA_ARGS__)
-#घोषणा DC_LOG_HW_HPD_IRQ(...) DRM_DEBUG_KMS(__VA_ARGS__)
-#घोषणा DC_LOG_MST(...) DRM_DEBUG_KMS(__VA_ARGS__)
-#घोषणा DC_LOG_SCALER(...) pr_debug("[SCALER]:"__VA_ARGS__)
-#घोषणा DC_LOG_BIOS(...) pr_debug("[BIOS]:"__VA_ARGS__)
-#घोषणा DC_LOG_BANDWIDTH_CALCS(...) pr_debug("[BANDWIDTH_CALCS]:"__VA_ARGS__)
-#घोषणा DC_LOG_BANDWIDTH_VALIDATION(...) DRM_DEBUG_KMS(__VA_ARGS__)
-#घोषणा DC_LOG_I2C_AUX(...) DRM_DEBUG_KMS(__VA_ARGS__)
-#घोषणा DC_LOG_SYNC(...) DRM_DEBUG_KMS(__VA_ARGS__)
-#घोषणा DC_LOG_BACKLIGHT(...) DRM_DEBUG_KMS(__VA_ARGS__)
-#घोषणा DC_LOG_FEATURE_OVERRIDE(...) DRM_DEBUG_KMS(__VA_ARGS__)
-#घोषणा DC_LOG_DETECTION_EDID_PARSER(...) DRM_DEBUG_KMS(__VA_ARGS__)
-#घोषणा DC_LOG_DETECTION_DP_CAPS(...) DRM_DEBUG_KMS(__VA_ARGS__)
-#घोषणा DC_LOG_RESOURCE(...) DRM_DEBUG_KMS(__VA_ARGS__)
-#घोषणा DC_LOG_DML(...) pr_debug("[DML]:"__VA_ARGS__)
-#घोषणा DC_LOG_EVENT_MODE_SET(...) DRM_DEBUG_KMS(__VA_ARGS__)
-#घोषणा DC_LOG_EVENT_DETECTION(...) DRM_DEBUG_KMS(__VA_ARGS__)
-#घोषणा DC_LOG_EVENT_LINK_TRAINING(...) DRM_DEBUG_KMS(__VA_ARGS__)
-#घोषणा DC_LOG_EVENT_LINK_LOSS(...) DRM_DEBUG_KMS(__VA_ARGS__)
-#घोषणा DC_LOG_EVENT_UNDERFLOW(...) DRM_DEBUG_KMS(__VA_ARGS__)
-#घोषणा DC_LOG_IF_TRACE(...) pr_debug("[IF_TRACE]:"__VA_ARGS__)
-#घोषणा DC_LOG_PERF_TRACE(...) DRM_DEBUG_KMS(__VA_ARGS__)
-#घोषणा DC_LOG_RETIMER_REDRIVER(...) DRM_DEBUG_KMS(__VA_ARGS__)
-#घोषणा DC_LOG_GAMMA(...) pr_debug("[GAMMA]:"__VA_ARGS__)
-#घोषणा DC_LOG_ALL_GAMMA(...) pr_debug("[GAMMA]:"__VA_ARGS__)
-#घोषणा DC_LOG_ALL_TF_CHANNELS(...) pr_debug("[GAMMA]:"__VA_ARGS__)
-#घोषणा DC_LOG_DSC(...) DRM_DEBUG_KMS(__VA_ARGS__)
-#घोषणा DC_LOG_SMU(...) pr_debug("[SMU_MSG]:"__VA_ARGS__)
-#घोषणा DC_LOG_DWB(...) DRM_DEBUG_KMS(__VA_ARGS__)
+#define DC_LOG_ERROR(...) DRM_ERROR(__VA_ARGS__)
+#define DC_LOG_WARNING(...) DRM_WARN(__VA_ARGS__)
+#define DC_LOG_DEBUG(...) DRM_DEBUG_KMS(__VA_ARGS__)
+#define DC_LOG_DC(...) DRM_DEBUG_KMS(__VA_ARGS__)
+#define DC_LOG_DTN(...) DRM_DEBUG_KMS(__VA_ARGS__)
+#define DC_LOG_SURFACE(...) pr_debug("[SURFACE]:"__VA_ARGS__)
+#define DC_LOG_CURSOR(...) pr_debug("[CURSOR]:"__VA_ARGS__)
+#define DC_LOG_PFLIP(...) pr_debug("[PFLIP]:"__VA_ARGS__)
+#define DC_LOG_VBLANK(...) pr_debug("[VBLANK]:"__VA_ARGS__)
+#define DC_LOG_HW_HOTPLUG(...) DRM_DEBUG_KMS(__VA_ARGS__)
+#define DC_LOG_HW_LINK_TRAINING(...) pr_debug("[HW_LINK_TRAINING]:"__VA_ARGS__)
+#define DC_LOG_HW_SET_MODE(...) DRM_DEBUG_KMS(__VA_ARGS__)
+#define DC_LOG_HW_RESUME_S3(...) DRM_DEBUG_KMS(__VA_ARGS__)
+#define DC_LOG_HW_AUDIO(...) pr_debug("[HW_AUDIO]:"__VA_ARGS__)
+#define DC_LOG_HW_HPD_IRQ(...) DRM_DEBUG_KMS(__VA_ARGS__)
+#define DC_LOG_MST(...) DRM_DEBUG_KMS(__VA_ARGS__)
+#define DC_LOG_SCALER(...) pr_debug("[SCALER]:"__VA_ARGS__)
+#define DC_LOG_BIOS(...) pr_debug("[BIOS]:"__VA_ARGS__)
+#define DC_LOG_BANDWIDTH_CALCS(...) pr_debug("[BANDWIDTH_CALCS]:"__VA_ARGS__)
+#define DC_LOG_BANDWIDTH_VALIDATION(...) DRM_DEBUG_KMS(__VA_ARGS__)
+#define DC_LOG_I2C_AUX(...) DRM_DEBUG_KMS(__VA_ARGS__)
+#define DC_LOG_SYNC(...) DRM_DEBUG_KMS(__VA_ARGS__)
+#define DC_LOG_BACKLIGHT(...) DRM_DEBUG_KMS(__VA_ARGS__)
+#define DC_LOG_FEATURE_OVERRIDE(...) DRM_DEBUG_KMS(__VA_ARGS__)
+#define DC_LOG_DETECTION_EDID_PARSER(...) DRM_DEBUG_KMS(__VA_ARGS__)
+#define DC_LOG_DETECTION_DP_CAPS(...) DRM_DEBUG_KMS(__VA_ARGS__)
+#define DC_LOG_RESOURCE(...) DRM_DEBUG_KMS(__VA_ARGS__)
+#define DC_LOG_DML(...) pr_debug("[DML]:"__VA_ARGS__)
+#define DC_LOG_EVENT_MODE_SET(...) DRM_DEBUG_KMS(__VA_ARGS__)
+#define DC_LOG_EVENT_DETECTION(...) DRM_DEBUG_KMS(__VA_ARGS__)
+#define DC_LOG_EVENT_LINK_TRAINING(...) DRM_DEBUG_KMS(__VA_ARGS__)
+#define DC_LOG_EVENT_LINK_LOSS(...) DRM_DEBUG_KMS(__VA_ARGS__)
+#define DC_LOG_EVENT_UNDERFLOW(...) DRM_DEBUG_KMS(__VA_ARGS__)
+#define DC_LOG_IF_TRACE(...) pr_debug("[IF_TRACE]:"__VA_ARGS__)
+#define DC_LOG_PERF_TRACE(...) DRM_DEBUG_KMS(__VA_ARGS__)
+#define DC_LOG_RETIMER_REDRIVER(...) DRM_DEBUG_KMS(__VA_ARGS__)
+#define DC_LOG_GAMMA(...) pr_debug("[GAMMA]:"__VA_ARGS__)
+#define DC_LOG_ALL_GAMMA(...) pr_debug("[GAMMA]:"__VA_ARGS__)
+#define DC_LOG_ALL_TF_CHANNELS(...) pr_debug("[GAMMA]:"__VA_ARGS__)
+#define DC_LOG_DSC(...) DRM_DEBUG_KMS(__VA_ARGS__)
+#define DC_LOG_SMU(...) pr_debug("[SMU_MSG]:"__VA_ARGS__)
+#define DC_LOG_DWB(...) DRM_DEBUG_KMS(__VA_ARGS__)
 
-काष्ठा dal_logger;
+struct dal_logger;
 
-काष्ठा dc_log_buffer_ctx अणु
-	अक्षर *buf;
-	माप_प्रकार pos;
-	माप_प्रकार size;
-पूर्ण;
+struct dc_log_buffer_ctx {
+	char *buf;
+	size_t pos;
+	size_t size;
+};
 
-क्रमागत dc_log_type अणु
+enum dc_log_type {
 	LOG_ERROR = 0,
 	LOG_WARNING,
 	LOG_DEBUG,
@@ -125,12 +124,12 @@
 	LOG_ALL_TF_CHANNELS,
 	LOG_SAMPLE_1DLUT,
 	LOG_SECTION_TOTAL_COUNT
-पूर्ण;
+};
 
-#घोषणा DC_MIN_LOG_MASK ((1 << LOG_ERROR) | \
+#define DC_MIN_LOG_MASK ((1 << LOG_ERROR) | \
 		(1 << LOG_DETECTION_EDID_PARSER))
 
-#घोषणा DC_DEFAULT_LOG_MASK ((1ULL << LOG_ERROR) | \
+#define DC_DEFAULT_LOG_MASK ((1ULL << LOG_ERROR) | \
 		(1ULL << LOG_WARNING) | \
 		(1ULL << LOG_EVENT_MODE_SET) | \
 		(1ULL << LOG_EVENT_DETECTION) | \
@@ -163,4 +162,4 @@
 		(1ULL << LOG_HW_AUDIO)| \
 		(1ULL << LOG_BANDWIDTH_CALCS)*/
 
-#पूर्ण_अगर /* __DAL_LOGGER_TYPES_H__ */
+#endif /* __DAL_LOGGER_TYPES_H__ */

@@ -1,112 +1,111 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#समावेश <माला.स>
+#include <string.h>
 
-#समावेश "util/compress.h"
-#समावेश "util/debug.h"
+#include "util/compress.h"
+#include "util/debug.h"
 
-पूर्णांक zstd_init(काष्ठा zstd_data *data, पूर्णांक level)
-अणु
-	माप_प्रकार ret;
+int zstd_init(struct zstd_data *data, int level)
+{
+	size_t ret;
 
 	data->dstream = ZSTD_createDStream();
-	अगर (data->dstream == शून्य) अणु
+	if (data->dstream == NULL) {
 		pr_err("Couldn't create decompression stream.\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	ret = ZSTD_initDStream(data->dstream);
-	अगर (ZSTD_isError(ret)) अणु
+	if (ZSTD_isError(ret)) {
 		pr_err("Failed to initialize decompression stream: %s\n", ZSTD_getErrorName(ret));
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	अगर (!level)
-		वापस 0;
+	if (!level)
+		return 0;
 
 	data->cstream = ZSTD_createCStream();
-	अगर (data->cstream == शून्य) अणु
+	if (data->cstream == NULL) {
 		pr_err("Couldn't create compression stream.\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	ret = ZSTD_initCStream(data->cstream, level);
-	अगर (ZSTD_isError(ret)) अणु
+	if (ZSTD_isError(ret)) {
 		pr_err("Failed to initialize compression stream: %s\n", ZSTD_getErrorName(ret));
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक zstd_fini(काष्ठा zstd_data *data)
-अणु
-	अगर (data->dstream) अणु
-		ZSTD_मुक्तDStream(data->dstream);
-		data->dstream = शून्य;
-	पूर्ण
+int zstd_fini(struct zstd_data *data)
+{
+	if (data->dstream) {
+		ZSTD_freeDStream(data->dstream);
+		data->dstream = NULL;
+	}
 
-	अगर (data->cstream) अणु
-		ZSTD_मुक्तCStream(data->cstream);
-		data->cstream = शून्य;
-	पूर्ण
+	if (data->cstream) {
+		ZSTD_freeCStream(data->cstream);
+		data->cstream = NULL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-माप_प्रकार zstd_compress_stream_to_records(काष्ठा zstd_data *data, व्योम *dst, माप_प्रकार dst_size,
-				       व्योम *src, माप_प्रकार src_size, माप_प्रकार max_record_size,
-				       माप_प्रकार process_header(व्योम *record, माप_प्रकार increment))
-अणु
-	माप_प्रकार ret, size, compressed = 0;
-	ZSTD_inBuffer input = अणु src, src_size, 0 पूर्ण;
+size_t zstd_compress_stream_to_records(struct zstd_data *data, void *dst, size_t dst_size,
+				       void *src, size_t src_size, size_t max_record_size,
+				       size_t process_header(void *record, size_t increment))
+{
+	size_t ret, size, compressed = 0;
+	ZSTD_inBuffer input = { src, src_size, 0 };
 	ZSTD_outBuffer output;
-	व्योम *record;
+	void *record;
 
-	जबतक (input.pos < input.size) अणु
+	while (input.pos < input.size) {
 		record = dst;
 		size = process_header(record, 0);
 		compressed += size;
 		dst += size;
 		dst_size -= size;
-		output = (ZSTD_outBuffer)अणु dst, (dst_size > max_record_size) ?
-						max_record_size : dst_size, 0 पूर्ण;
+		output = (ZSTD_outBuffer){ dst, (dst_size > max_record_size) ?
+						max_record_size : dst_size, 0 };
 		ret = ZSTD_compressStream(data->cstream, &output, &input);
 		ZSTD_flushStream(data->cstream, &output);
-		अगर (ZSTD_isError(ret)) अणु
+		if (ZSTD_isError(ret)) {
 			pr_err("failed to compress %ld bytes: %s\n",
-				(दीर्घ)src_size, ZSTD_getErrorName(ret));
-			स_नकल(dst, src, src_size);
-			वापस src_size;
-		पूर्ण
+				(long)src_size, ZSTD_getErrorName(ret));
+			memcpy(dst, src, src_size);
+			return src_size;
+		}
 		size = output.pos;
 		size = process_header(record, size);
 		compressed += size;
 		dst += size;
 		dst_size -= size;
-	पूर्ण
+	}
 
-	वापस compressed;
-पूर्ण
+	return compressed;
+}
 
-माप_प्रकार zstd_decompress_stream(काष्ठा zstd_data *data, व्योम *src, माप_प्रकार src_size,
-			      व्योम *dst, माप_प्रकार dst_size)
-अणु
-	माप_प्रकार ret;
-	ZSTD_inBuffer input = अणु src, src_size, 0 पूर्ण;
-	ZSTD_outBuffer output = अणु dst, dst_size, 0 पूर्ण;
+size_t zstd_decompress_stream(struct zstd_data *data, void *src, size_t src_size,
+			      void *dst, size_t dst_size)
+{
+	size_t ret;
+	ZSTD_inBuffer input = { src, src_size, 0 };
+	ZSTD_outBuffer output = { dst, dst_size, 0 };
 
-	जबतक (input.pos < input.size) अणु
+	while (input.pos < input.size) {
 		ret = ZSTD_decompressStream(data->dstream, &output, &input);
-		अगर (ZSTD_isError(ret)) अणु
+		if (ZSTD_isError(ret)) {
 			pr_err("failed to decompress (B): %zd -> %zd, dst_size %zd : %s\n",
 			       src_size, output.size, dst_size, ZSTD_getErrorName(ret));
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		output.dst  = dst + output.pos;
 		output.size = dst_size - output.pos;
-	पूर्ण
+	}
 
-	वापस output.pos;
-पूर्ण
+	return output.pos;
+}

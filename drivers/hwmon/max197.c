@@ -1,236 +1,235 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Maxim MAX197 A/D Converter driver
  *
  * Copyright (c) 2012 Savoir-faire Linux Inc.
  *          Vivien Didelot <vivien.didelot@savoirfairelinux.com>
  *
- * For further inक्रमmation, see the Documentation/hwmon/max197.rst file.
+ * For further information, see the Documentation/hwmon/max197.rst file.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <linux/init.h>
-#समावेश <linux/err.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/device.h>
-#समावेश <linux/sysfs.h>
-#समावेश <linux/hwmon.h>
-#समावेश <linux/hwmon-sysfs.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/platक्रमm_data/max197.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/mod_devicetable.h>
+#include <linux/init.h>
+#include <linux/err.h>
+#include <linux/slab.h>
+#include <linux/mutex.h>
+#include <linux/device.h>
+#include <linux/sysfs.h>
+#include <linux/hwmon.h>
+#include <linux/hwmon-sysfs.h>
+#include <linux/platform_device.h>
+#include <linux/platform_data/max197.h>
 
-#घोषणा MAX199_LIMIT	4000		/* 4V */
-#घोषणा MAX197_LIMIT	10000		/* 10V */
+#define MAX199_LIMIT	4000		/* 4V */
+#define MAX197_LIMIT	10000		/* 10V */
 
-#घोषणा MAX197_NUM_CH	8		/* 8 Analog Input Channels */
+#define MAX197_NUM_CH	8		/* 8 Analog Input Channels */
 
-/* Control byte क्रमmat */
-#घोषणा MAX197_BIP	(1 << 3)	/* Bipolarity */
-#घोषणा MAX197_RNG	(1 << 4)	/* Full range */
+/* Control byte format */
+#define MAX197_BIP	(1 << 3)	/* Bipolarity */
+#define MAX197_RNG	(1 << 4)	/* Full range */
 
-#घोषणा MAX197_SCALE	12207		/* Scale coefficient क्रम raw data */
+#define MAX197_SCALE	12207		/* Scale coefficient for raw data */
 
 /* List of supported chips */
-क्रमागत max197_chips अणु max197, max199 पूर्ण;
+enum max197_chips { max197, max199 };
 
 /**
- * काष्ठा max197_data - device instance specअगरic data
- * @pdata:		Platक्रमm data.
+ * struct max197_data - device instance specific data
+ * @pdata:		Platform data.
  * @hwmon_dev:		The hwmon device.
  * @lock:		Read/Write mutex.
- * @limit:		Max range value (10V क्रम MAX197, 4V क्रम MAX199).
+ * @limit:		Max range value (10V for MAX197, 4V for MAX199).
  * @scale:		Need to scale.
  * @ctrl_bytes:		Channels control byte.
  */
-काष्ठा max197_data अणु
-	काष्ठा max197_platक्रमm_data *pdata;
-	काष्ठा device *hwmon_dev;
-	काष्ठा mutex lock;
-	पूर्णांक limit;
+struct max197_data {
+	struct max197_platform_data *pdata;
+	struct device *hwmon_dev;
+	struct mutex lock;
+	int limit;
 	bool scale;
 	u8 ctrl_bytes[MAX197_NUM_CH];
-पूर्ण;
+};
 
-अटल अंतरभूत व्योम max197_set_unipolarity(काष्ठा max197_data *data, पूर्णांक channel)
-अणु
+static inline void max197_set_unipolarity(struct max197_data *data, int channel)
+{
 	data->ctrl_bytes[channel] &= ~MAX197_BIP;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम max197_set_bipolarity(काष्ठा max197_data *data, पूर्णांक channel)
-अणु
+static inline void max197_set_bipolarity(struct max197_data *data, int channel)
+{
 	data->ctrl_bytes[channel] |= MAX197_BIP;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम max197_set_half_range(काष्ठा max197_data *data, पूर्णांक channel)
-अणु
+static inline void max197_set_half_range(struct max197_data *data, int channel)
+{
 	data->ctrl_bytes[channel] &= ~MAX197_RNG;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम max197_set_full_range(काष्ठा max197_data *data, पूर्णांक channel)
-अणु
+static inline void max197_set_full_range(struct max197_data *data, int channel)
+{
 	data->ctrl_bytes[channel] |= MAX197_RNG;
-पूर्ण
+}
 
-अटल अंतरभूत bool max197_is_bipolar(काष्ठा max197_data *data, पूर्णांक channel)
-अणु
-	वापस data->ctrl_bytes[channel] & MAX197_BIP;
-पूर्ण
+static inline bool max197_is_bipolar(struct max197_data *data, int channel)
+{
+	return data->ctrl_bytes[channel] & MAX197_BIP;
+}
 
-अटल अंतरभूत bool max197_is_full_range(काष्ठा max197_data *data, पूर्णांक channel)
-अणु
-	वापस data->ctrl_bytes[channel] & MAX197_RNG;
-पूर्ण
+static inline bool max197_is_full_range(struct max197_data *data, int channel)
+{
+	return data->ctrl_bytes[channel] & MAX197_RNG;
+}
 
-/* Function called on पढ़ो access on inअणु0,1,2,3,4,5,6,7पूर्ण_अणुmin,maxपूर्ण */
-अटल sमाप_प्रकार max197_show_range(काष्ठा device *dev,
-				 काष्ठा device_attribute *devattr, अक्षर *buf)
-अणु
-	काष्ठा max197_data *data = dev_get_drvdata(dev);
-	काष्ठा sensor_device_attribute_2 *attr = to_sensor_dev_attr_2(devattr);
-	पूर्णांक channel = attr->index;
+/* Function called on read access on in{0,1,2,3,4,5,6,7}_{min,max} */
+static ssize_t max197_show_range(struct device *dev,
+				 struct device_attribute *devattr, char *buf)
+{
+	struct max197_data *data = dev_get_drvdata(dev);
+	struct sensor_device_attribute_2 *attr = to_sensor_dev_attr_2(devattr);
+	int channel = attr->index;
 	bool is_min = attr->nr;
-	पूर्णांक range;
+	int range;
 
-	अगर (mutex_lock_पूर्णांकerruptible(&data->lock))
-		वापस -ERESTARTSYS;
+	if (mutex_lock_interruptible(&data->lock))
+		return -ERESTARTSYS;
 
 	range = max197_is_full_range(data, channel) ?
 		data->limit : data->limit / 2;
-	अगर (is_min) अणु
-		अगर (max197_is_bipolar(data, channel))
+	if (is_min) {
+		if (max197_is_bipolar(data, channel))
 			range = -range;
-		अन्यथा
+		else
 			range = 0;
-	पूर्ण
+	}
 
 	mutex_unlock(&data->lock);
 
-	वापस प्र_लिखो(buf, "%d\n", range);
-पूर्ण
+	return sprintf(buf, "%d\n", range);
+}
 
-/* Function called on ग_लिखो access on inअणु0,1,2,3,4,5,6,7पूर्ण_अणुmin,maxपूर्ण */
-अटल sमाप_प्रकार max197_store_range(काष्ठा device *dev,
-				  काष्ठा device_attribute *devattr,
-				  स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा max197_data *data = dev_get_drvdata(dev);
-	काष्ठा sensor_device_attribute_2 *attr = to_sensor_dev_attr_2(devattr);
-	पूर्णांक channel = attr->index;
+/* Function called on write access on in{0,1,2,3,4,5,6,7}_{min,max} */
+static ssize_t max197_store_range(struct device *dev,
+				  struct device_attribute *devattr,
+				  const char *buf, size_t count)
+{
+	struct max197_data *data = dev_get_drvdata(dev);
+	struct sensor_device_attribute_2 *attr = to_sensor_dev_attr_2(devattr);
+	int channel = attr->index;
 	bool is_min = attr->nr;
-	दीर्घ value;
-	पूर्णांक half = data->limit / 2;
-	पूर्णांक full = data->limit;
+	long value;
+	int half = data->limit / 2;
+	int full = data->limit;
 
-	अगर (kम_से_दीर्घ(buf, 10, &value))
-		वापस -EINVAL;
+	if (kstrtol(buf, 10, &value))
+		return -EINVAL;
 
-	अगर (is_min) अणु
-		अगर (value <= -full)
+	if (is_min) {
+		if (value <= -full)
 			value = -full;
-		अन्यथा अगर (value < 0)
+		else if (value < 0)
 			value = -half;
-		अन्यथा
+		else
 			value = 0;
-	पूर्ण अन्यथा अणु
-		अगर (value >= full)
+	} else {
+		if (value >= full)
 			value = full;
-		अन्यथा
+		else
 			value = half;
-	पूर्ण
+	}
 
-	अगर (mutex_lock_पूर्णांकerruptible(&data->lock))
-		वापस -ERESTARTSYS;
+	if (mutex_lock_interruptible(&data->lock))
+		return -ERESTARTSYS;
 
-	अगर (value == 0) अणु
+	if (value == 0) {
 		/* We can deduce only the polarity */
 		max197_set_unipolarity(data, channel);
-	पूर्ण अन्यथा अगर (value == -half) अणु
+	} else if (value == -half) {
 		max197_set_bipolarity(data, channel);
 		max197_set_half_range(data, channel);
-	पूर्ण अन्यथा अगर (value == -full) अणु
+	} else if (value == -full) {
 		max197_set_bipolarity(data, channel);
 		max197_set_full_range(data, channel);
-	पूर्ण अन्यथा अगर (value == half) अणु
+	} else if (value == half) {
 		/* We can deduce only the range */
 		max197_set_half_range(data, channel);
-	पूर्ण अन्यथा अगर (value == full) अणु
+	} else if (value == full) {
 		/* We can deduce only the range */
 		max197_set_full_range(data, channel);
-	पूर्ण
+	}
 
 	mutex_unlock(&data->lock);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-/* Function called on पढ़ो access on inअणु0,1,2,3,4,5,6,7पूर्ण_input */
-अटल sमाप_प्रकार max197_show_input(काष्ठा device *dev,
-				 काष्ठा device_attribute *devattr,
-				 अक्षर *buf)
-अणु
-	काष्ठा max197_data *data = dev_get_drvdata(dev);
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	पूर्णांक channel = attr->index;
+/* Function called on read access on in{0,1,2,3,4,5,6,7}_input */
+static ssize_t max197_show_input(struct device *dev,
+				 struct device_attribute *devattr,
+				 char *buf)
+{
+	struct max197_data *data = dev_get_drvdata(dev);
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	int channel = attr->index;
 	s32 value;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (mutex_lock_पूर्णांकerruptible(&data->lock))
-		वापस -ERESTARTSYS;
+	if (mutex_lock_interruptible(&data->lock))
+		return -ERESTARTSYS;
 
 	ret = data->pdata->convert(data->ctrl_bytes[channel]);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "conversion failed\n");
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 	value = ret;
 
 	/*
 	 * Coefficient to apply on raw value.
 	 * See Table 1. Full Scale and Zero Scale in the MAX197 datasheet.
 	 */
-	अगर (data->scale) अणु
+	if (data->scale) {
 		value *= MAX197_SCALE;
-		अगर (max197_is_full_range(data, channel))
+		if (max197_is_full_range(data, channel))
 			value *= 2;
 		value /= 10000;
-	पूर्ण
+	}
 
-	ret = प्र_लिखो(buf, "%d\n", value);
+	ret = sprintf(buf, "%d\n", value);
 
 unlock:
 	mutex_unlock(&data->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार name_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			 अक्षर *buf)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	वापस प्र_लिखो(buf, "%s\n", pdev->name);
-पूर्ण
+static ssize_t name_show(struct device *dev, struct device_attribute *attr,
+			 char *buf)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	return sprintf(buf, "%s\n", pdev->name);
+}
 
-#घोषणा MAX197_SENSOR_DEVICE_ATTR_CH(chan)				\
-	अटल SENSOR_DEVICE_ATTR(in##chan##_input, S_IRUGO,		\
-				  max197_show_input, शून्य, chan);	\
-	अटल SENSOR_DEVICE_ATTR_2(in##chan##_min, S_IRUGO | S_IWUSR,	\
+#define MAX197_SENSOR_DEVICE_ATTR_CH(chan)				\
+	static SENSOR_DEVICE_ATTR(in##chan##_input, S_IRUGO,		\
+				  max197_show_input, NULL, chan);	\
+	static SENSOR_DEVICE_ATTR_2(in##chan##_min, S_IRUGO | S_IWUSR,	\
 				    max197_show_range,			\
 				    max197_store_range,			\
 				    true, chan);			\
-	अटल SENSOR_DEVICE_ATTR_2(in##chan##_max, S_IRUGO | S_IWUSR,	\
+	static SENSOR_DEVICE_ATTR_2(in##chan##_max, S_IRUGO | S_IWUSR,	\
 				    max197_show_range,			\
 				    max197_store_range,			\
 				    false, chan)
 
-#घोषणा MAX197_SENSOR_DEV_ATTR_IN(chan)					\
+#define MAX197_SENSOR_DEV_ATTR_IN(chan)					\
 	&sensor_dev_attr_in##chan##_input.dev_attr.attr,		\
 	&sensor_dev_attr_in##chan##_max.dev_attr.attr,			\
 	&sensor_dev_attr_in##chan##_min.dev_attr.attr
 
-अटल DEVICE_ATTR_RO(name);
+static DEVICE_ATTR_RO(name);
 
 MAX197_SENSOR_DEVICE_ATTR_CH(0);
 MAX197_SENSOR_DEVICE_ATTR_CH(1);
@@ -241,8 +240,8 @@ MAX197_SENSOR_DEVICE_ATTR_CH(5);
 MAX197_SENSOR_DEVICE_ATTR_CH(6);
 MAX197_SENSOR_DEVICE_ATTR_CH(7);
 
-अटल स्थिर काष्ठा attribute_group max197_sysfs_group = अणु
-	.attrs = (काष्ठा attribute *[]) अणु
+static const struct attribute_group max197_sysfs_group = {
+	.attrs = (struct attribute *[]) {
 		&dev_attr_name.attr,
 		MAX197_SENSOR_DEV_ATTR_IN(0),
 		MAX197_SENSOR_DEV_ATTR_IN(1),
@@ -252,93 +251,93 @@ MAX197_SENSOR_DEVICE_ATTR_CH(7);
 		MAX197_SENSOR_DEV_ATTR_IN(5),
 		MAX197_SENSOR_DEV_ATTR_IN(6),
 		MAX197_SENSOR_DEV_ATTR_IN(7),
-		शून्य
-	पूर्ण,
-पूर्ण;
+		NULL
+	},
+};
 
-अटल पूर्णांक max197_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक ch, ret;
-	काष्ठा max197_data *data;
-	काष्ठा max197_platक्रमm_data *pdata = dev_get_platdata(&pdev->dev);
-	क्रमागत max197_chips chip = platक्रमm_get_device_id(pdev)->driver_data;
+static int max197_probe(struct platform_device *pdev)
+{
+	int ch, ret;
+	struct max197_data *data;
+	struct max197_platform_data *pdata = dev_get_platdata(&pdev->dev);
+	enum max197_chips chip = platform_get_device_id(pdev)->driver_data;
 
-	अगर (pdata == शून्य) अणु
+	if (pdata == NULL) {
 		dev_err(&pdev->dev, "no platform data supplied\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (pdata->convert == शून्य) अणु
+	if (pdata->convert == NULL) {
 		dev_err(&pdev->dev, "no convert function supplied\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	data = devm_kzalloc(&pdev->dev, माप(काष्ठा max197_data), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = devm_kzalloc(&pdev->dev, sizeof(struct max197_data), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
 	data->pdata = pdata;
 	mutex_init(&data->lock);
 
-	अगर (chip == max197) अणु
+	if (chip == max197) {
 		data->limit = MAX197_LIMIT;
 		data->scale = true;
-	पूर्ण अन्यथा अणु
+	} else {
 		data->limit = MAX199_LIMIT;
 		data->scale = false;
-	पूर्ण
+	}
 
-	क्रम (ch = 0; ch < MAX197_NUM_CH; ch++)
+	for (ch = 0; ch < MAX197_NUM_CH; ch++)
 		data->ctrl_bytes[ch] = (u8) ch;
 
-	platक्रमm_set_drvdata(pdev, data);
+	platform_set_drvdata(pdev, data);
 
 	ret = sysfs_create_group(&pdev->dev.kobj, &max197_sysfs_group);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "sysfs create group failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	data->hwmon_dev = hwmon_device_रेजिस्टर(&pdev->dev);
-	अगर (IS_ERR(data->hwmon_dev)) अणु
+	data->hwmon_dev = hwmon_device_register(&pdev->dev);
+	if (IS_ERR(data->hwmon_dev)) {
 		ret = PTR_ERR(data->hwmon_dev);
 		dev_err(&pdev->dev, "hwmon device register failed\n");
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	वापस 0;
+	return 0;
 
 error:
-	sysfs_हटाओ_group(&pdev->dev.kobj, &max197_sysfs_group);
-	वापस ret;
-पूर्ण
+	sysfs_remove_group(&pdev->dev.kobj, &max197_sysfs_group);
+	return ret;
+}
 
-अटल पूर्णांक max197_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा max197_data *data = platक्रमm_get_drvdata(pdev);
+static int max197_remove(struct platform_device *pdev)
+{
+	struct max197_data *data = platform_get_drvdata(pdev);
 
-	hwmon_device_unरेजिस्टर(data->hwmon_dev);
-	sysfs_हटाओ_group(&pdev->dev.kobj, &max197_sysfs_group);
+	hwmon_device_unregister(data->hwmon_dev);
+	sysfs_remove_group(&pdev->dev.kobj, &max197_sysfs_group);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा platक्रमm_device_id max197_device_ids[] = अणु
-	अणु "max197", max197 पूर्ण,
-	अणु "max199", max199 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(platक्रमm, max197_device_ids);
+static const struct platform_device_id max197_device_ids[] = {
+	{ "max197", max197 },
+	{ "max199", max199 },
+	{ }
+};
+MODULE_DEVICE_TABLE(platform, max197_device_ids);
 
-अटल काष्ठा platक्रमm_driver max197_driver = अणु
-	.driver = अणु
+static struct platform_driver max197_driver = {
+	.driver = {
 		.name = "max197",
-	पूर्ण,
+	},
 	.probe = max197_probe,
-	.हटाओ = max197_हटाओ,
+	.remove = max197_remove,
 	.id_table = max197_device_ids,
-पूर्ण;
-module_platक्रमm_driver(max197_driver);
+};
+module_platform_driver(max197_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Savoir-faire Linux Inc. <kernel@savoirfairelinux.com>");

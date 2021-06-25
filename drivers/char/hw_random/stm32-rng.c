@@ -1,219 +1,218 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (c) 2015, Daniel Thompson
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/hw_अक्रमom.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/iopoll.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/reset.h>
-#समावेश <linux/slab.h>
+#include <linux/clk.h>
+#include <linux/delay.h>
+#include <linux/hw_random.h>
+#include <linux/io.h>
+#include <linux/iopoll.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/of_address.h>
+#include <linux/of_platform.h>
+#include <linux/pm_runtime.h>
+#include <linux/reset.h>
+#include <linux/slab.h>
 
-#घोषणा RNG_CR 0x00
-#घोषणा RNG_CR_RNGEN BIT(2)
-#घोषणा RNG_CR_CED BIT(5)
+#define RNG_CR 0x00
+#define RNG_CR_RNGEN BIT(2)
+#define RNG_CR_CED BIT(5)
 
-#घोषणा RNG_SR 0x04
-#घोषणा RNG_SR_SEIS BIT(6)
-#घोषणा RNG_SR_CEIS BIT(5)
-#घोषणा RNG_SR_DRDY BIT(0)
+#define RNG_SR 0x04
+#define RNG_SR_SEIS BIT(6)
+#define RNG_SR_CEIS BIT(5)
+#define RNG_SR_DRDY BIT(0)
 
-#घोषणा RNG_DR 0x08
+#define RNG_DR 0x08
 
-काष्ठा sपंचांग32_rng_निजी अणु
-	काष्ठा hwrng rng;
-	व्योम __iomem *base;
-	काष्ठा clk *clk;
-	काष्ठा reset_control *rst;
+struct stm32_rng_private {
+	struct hwrng rng;
+	void __iomem *base;
+	struct clk *clk;
+	struct reset_control *rst;
 	bool ced;
-पूर्ण;
+};
 
-अटल पूर्णांक sपंचांग32_rng_पढ़ो(काष्ठा hwrng *rng, व्योम *data, माप_प्रकार max, bool रुको)
-अणु
-	काष्ठा sपंचांग32_rng_निजी *priv =
-	    container_of(rng, काष्ठा sपंचांग32_rng_निजी, rng);
+static int stm32_rng_read(struct hwrng *rng, void *data, size_t max, bool wait)
+{
+	struct stm32_rng_private *priv =
+	    container_of(rng, struct stm32_rng_private, rng);
 	u32 sr;
-	पूर्णांक retval = 0;
+	int retval = 0;
 
-	pm_runसमय_get_sync((काष्ठा device *) priv->rng.priv);
+	pm_runtime_get_sync((struct device *) priv->rng.priv);
 
-	जबतक (max > माप(u32)) अणु
-		sr = पढ़ोl_relaxed(priv->base + RNG_SR);
-		/* Manage समयout which is based on समयr and take */
-		/* care of initial delay समय when enabling rng	*/
-		अगर (!sr && रुको) अणु
-			retval = पढ़ोl_relaxed_poll_समयout_atomic(priv->base
+	while (max > sizeof(u32)) {
+		sr = readl_relaxed(priv->base + RNG_SR);
+		/* Manage timeout which is based on timer and take */
+		/* care of initial delay time when enabling rng	*/
+		if (!sr && wait) {
+			retval = readl_relaxed_poll_timeout_atomic(priv->base
 								   + RNG_SR,
 								   sr, sr,
 								   10, 50000);
-			अगर (retval)
-				dev_err((काष्ठा device *)priv->rng.priv,
+			if (retval)
+				dev_err((struct device *)priv->rng.priv,
 					"%s: timeout %x!\n", __func__, sr);
-		पूर्ण
+		}
 
-		/* If error detected or data not पढ़ोy... */
-		अगर (sr != RNG_SR_DRDY) अणु
-			अगर (WARN_ONCE(sr & (RNG_SR_SEIS | RNG_SR_CEIS),
+		/* If error detected or data not ready... */
+		if (sr != RNG_SR_DRDY) {
+			if (WARN_ONCE(sr & (RNG_SR_SEIS | RNG_SR_CEIS),
 					"bad RNG status - %x\n", sr))
-				ग_लिखोl_relaxed(0, priv->base + RNG_SR);
-			अवरोध;
-		पूर्ण
+				writel_relaxed(0, priv->base + RNG_SR);
+			break;
+		}
 
-		*(u32 *)data = पढ़ोl_relaxed(priv->base + RNG_DR);
+		*(u32 *)data = readl_relaxed(priv->base + RNG_DR);
 
-		retval += माप(u32);
-		data += माप(u32);
-		max -= माप(u32);
-	पूर्ण
+		retval += sizeof(u32);
+		data += sizeof(u32);
+		max -= sizeof(u32);
+	}
 
-	pm_runसमय_mark_last_busy((काष्ठा device *) priv->rng.priv);
-	pm_runसमय_put_sync_स्वतःsuspend((काष्ठा device *) priv->rng.priv);
+	pm_runtime_mark_last_busy((struct device *) priv->rng.priv);
+	pm_runtime_put_sync_autosuspend((struct device *) priv->rng.priv);
 
-	वापस retval || !रुको ? retval : -EIO;
-पूर्ण
+	return retval || !wait ? retval : -EIO;
+}
 
-अटल पूर्णांक sपंचांग32_rng_init(काष्ठा hwrng *rng)
-अणु
-	काष्ठा sपंचांग32_rng_निजी *priv =
-	    container_of(rng, काष्ठा sपंचांग32_rng_निजी, rng);
-	पूर्णांक err;
+static int stm32_rng_init(struct hwrng *rng)
+{
+	struct stm32_rng_private *priv =
+	    container_of(rng, struct stm32_rng_private, rng);
+	int err;
 
 	err = clk_prepare_enable(priv->clk);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (priv->ced)
-		ग_लिखोl_relaxed(RNG_CR_RNGEN, priv->base + RNG_CR);
-	अन्यथा
-		ग_लिखोl_relaxed(RNG_CR_RNGEN | RNG_CR_CED,
+	if (priv->ced)
+		writel_relaxed(RNG_CR_RNGEN, priv->base + RNG_CR);
+	else
+		writel_relaxed(RNG_CR_RNGEN | RNG_CR_CED,
 			       priv->base + RNG_CR);
 
 	/* clear error indicators */
-	ग_लिखोl_relaxed(0, priv->base + RNG_SR);
+	writel_relaxed(0, priv->base + RNG_SR);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sपंचांग32_rng_cleanup(काष्ठा hwrng *rng)
-अणु
-	काष्ठा sपंचांग32_rng_निजी *priv =
-	    container_of(rng, काष्ठा sपंचांग32_rng_निजी, rng);
+static void stm32_rng_cleanup(struct hwrng *rng)
+{
+	struct stm32_rng_private *priv =
+	    container_of(rng, struct stm32_rng_private, rng);
 
-	ग_लिखोl_relaxed(0, priv->base + RNG_CR);
+	writel_relaxed(0, priv->base + RNG_CR);
 	clk_disable_unprepare(priv->clk);
-पूर्ण
+}
 
-अटल पूर्णांक sपंचांग32_rng_probe(काष्ठा platक्रमm_device *ofdev)
-अणु
-	काष्ठा device *dev = &ofdev->dev;
-	काष्ठा device_node *np = ofdev->dev.of_node;
-	काष्ठा sपंचांग32_rng_निजी *priv;
-	काष्ठा resource res;
-	पूर्णांक err;
+static int stm32_rng_probe(struct platform_device *ofdev)
+{
+	struct device *dev = &ofdev->dev;
+	struct device_node *np = ofdev->dev.of_node;
+	struct stm32_rng_private *priv;
+	struct resource res;
+	int err;
 
-	priv = devm_kzalloc(dev, माप(काष्ठा sपंचांग32_rng_निजी), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(dev, sizeof(struct stm32_rng_private), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	err = of_address_to_resource(np, 0, &res);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	priv->base = devm_ioremap_resource(dev, &res);
-	अगर (IS_ERR(priv->base))
-		वापस PTR_ERR(priv->base);
+	if (IS_ERR(priv->base))
+		return PTR_ERR(priv->base);
 
-	priv->clk = devm_clk_get(&ofdev->dev, शून्य);
-	अगर (IS_ERR(priv->clk))
-		वापस PTR_ERR(priv->clk);
+	priv->clk = devm_clk_get(&ofdev->dev, NULL);
+	if (IS_ERR(priv->clk))
+		return PTR_ERR(priv->clk);
 
-	priv->rst = devm_reset_control_get(&ofdev->dev, शून्य);
-	अगर (!IS_ERR(priv->rst)) अणु
-		reset_control_निश्चित(priv->rst);
+	priv->rst = devm_reset_control_get(&ofdev->dev, NULL);
+	if (!IS_ERR(priv->rst)) {
+		reset_control_assert(priv->rst);
 		udelay(2);
-		reset_control_deनिश्चित(priv->rst);
-	पूर्ण
+		reset_control_deassert(priv->rst);
+	}
 
-	priv->ced = of_property_पढ़ो_bool(np, "clock-error-detect");
+	priv->ced = of_property_read_bool(np, "clock-error-detect");
 
 	dev_set_drvdata(dev, priv);
 
 	priv->rng.name = dev_driver_string(dev);
-#अगर_अघोषित CONFIG_PM
-	priv->rng.init = sपंचांग32_rng_init;
-	priv->rng.cleanup = sपंचांग32_rng_cleanup;
-#पूर्ण_अगर
-	priv->rng.पढ़ो = sपंचांग32_rng_पढ़ो;
-	priv->rng.priv = (अचिन्हित दीर्घ) dev;
+#ifndef CONFIG_PM
+	priv->rng.init = stm32_rng_init;
+	priv->rng.cleanup = stm32_rng_cleanup;
+#endif
+	priv->rng.read = stm32_rng_read;
+	priv->rng.priv = (unsigned long) dev;
 	priv->rng.quality = 900;
 
-	pm_runसमय_set_स्वतःsuspend_delay(dev, 100);
-	pm_runसमय_use_स्वतःsuspend(dev);
-	pm_runसमय_enable(dev);
+	pm_runtime_set_autosuspend_delay(dev, 100);
+	pm_runtime_use_autosuspend(dev);
+	pm_runtime_enable(dev);
 
-	वापस devm_hwrng_रेजिस्टर(dev, &priv->rng);
-पूर्ण
+	return devm_hwrng_register(dev, &priv->rng);
+}
 
-अटल पूर्णांक sपंचांग32_rng_हटाओ(काष्ठा platक्रमm_device *ofdev)
-अणु
-	pm_runसमय_disable(&ofdev->dev);
+static int stm32_rng_remove(struct platform_device *ofdev)
+{
+	pm_runtime_disable(&ofdev->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक sपंचांग32_rng_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा sपंचांग32_rng_निजी *priv = dev_get_drvdata(dev);
+#ifdef CONFIG_PM
+static int stm32_rng_runtime_suspend(struct device *dev)
+{
+	struct stm32_rng_private *priv = dev_get_drvdata(dev);
 
-	sपंचांग32_rng_cleanup(&priv->rng);
+	stm32_rng_cleanup(&priv->rng);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sपंचांग32_rng_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा sपंचांग32_rng_निजी *priv = dev_get_drvdata(dev);
+static int stm32_rng_runtime_resume(struct device *dev)
+{
+	struct stm32_rng_private *priv = dev_get_drvdata(dev);
 
-	वापस sपंचांग32_rng_init(&priv->rng);
-पूर्ण
-#पूर्ण_अगर
+	return stm32_rng_init(&priv->rng);
+}
+#endif
 
-अटल स्थिर काष्ठा dev_pm_ops sपंचांग32_rng_pm_ops = अणु
-	SET_RUNTIME_PM_OPS(sपंचांग32_rng_runसमय_suspend,
-			   sपंचांग32_rng_runसमय_resume, शून्य)
-	SET_SYSTEM_SLEEP_PM_OPS(pm_runसमय_क्रमce_suspend,
-				pm_runसमय_क्रमce_resume)
-पूर्ण;
+static const struct dev_pm_ops stm32_rng_pm_ops = {
+	SET_RUNTIME_PM_OPS(stm32_rng_runtime_suspend,
+			   stm32_rng_runtime_resume, NULL)
+	SET_SYSTEM_SLEEP_PM_OPS(pm_runtime_force_suspend,
+				pm_runtime_force_resume)
+};
 
 
-अटल स्थिर काष्ठा of_device_id sपंचांग32_rng_match[] = अणु
-	अणु
+static const struct of_device_id stm32_rng_match[] = {
+	{
 		.compatible = "st,stm32-rng",
-	पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
-MODULE_DEVICE_TABLE(of, sपंचांग32_rng_match);
+	},
+	{},
+};
+MODULE_DEVICE_TABLE(of, stm32_rng_match);
 
-अटल काष्ठा platक्रमm_driver sपंचांग32_rng_driver = अणु
-	.driver = अणु
+static struct platform_driver stm32_rng_driver = {
+	.driver = {
 		.name = "stm32-rng",
-		.pm = &sपंचांग32_rng_pm_ops,
-		.of_match_table = sपंचांग32_rng_match,
-	पूर्ण,
-	.probe = sपंचांग32_rng_probe,
-	.हटाओ = sपंचांग32_rng_हटाओ,
-पूर्ण;
+		.pm = &stm32_rng_pm_ops,
+		.of_match_table = stm32_rng_match,
+	},
+	.probe = stm32_rng_probe,
+	.remove = stm32_rng_remove,
+};
 
-module_platक्रमm_driver(sपंचांग32_rng_driver);
+module_platform_driver(stm32_rng_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Daniel Thompson <daniel.thompson@linaro.org>");

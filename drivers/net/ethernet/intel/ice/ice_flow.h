@@ -1,120 +1,119 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* Copyright (c) 2019, Intel Corporation. */
 
-#अगर_अघोषित _ICE_FLOW_H_
-#घोषणा _ICE_FLOW_H_
+#ifndef _ICE_FLOW_H_
+#define _ICE_FLOW_H_
 
-#घोषणा ICE_FLOW_ENTRY_HANDLE_INVAL	0
-#घोषणा ICE_FLOW_FLD_OFF_INVAL		0xffff
+#define ICE_FLOW_ENTRY_HANDLE_INVAL	0
+#define ICE_FLOW_FLD_OFF_INVAL		0xffff
 
 /* Generate flow hash field from flow field type(s) */
-#घोषणा ICE_FLOW_HASH_ETH	\
+#define ICE_FLOW_HASH_ETH	\
 	(BIT_ULL(ICE_FLOW_FIELD_IDX_ETH_DA) | \
 	 BIT_ULL(ICE_FLOW_FIELD_IDX_ETH_SA))
-#घोषणा ICE_FLOW_HASH_IPV4	\
+#define ICE_FLOW_HASH_IPV4	\
 	(BIT_ULL(ICE_FLOW_FIELD_IDX_IPV4_SA) | \
 	 BIT_ULL(ICE_FLOW_FIELD_IDX_IPV4_DA))
-#घोषणा ICE_FLOW_HASH_IPV6	\
+#define ICE_FLOW_HASH_IPV6	\
 	(BIT_ULL(ICE_FLOW_FIELD_IDX_IPV6_SA) | \
 	 BIT_ULL(ICE_FLOW_FIELD_IDX_IPV6_DA))
-#घोषणा ICE_FLOW_HASH_TCP_PORT	\
+#define ICE_FLOW_HASH_TCP_PORT	\
 	(BIT_ULL(ICE_FLOW_FIELD_IDX_TCP_SRC_PORT) | \
 	 BIT_ULL(ICE_FLOW_FIELD_IDX_TCP_DST_PORT))
-#घोषणा ICE_FLOW_HASH_UDP_PORT	\
+#define ICE_FLOW_HASH_UDP_PORT	\
 	(BIT_ULL(ICE_FLOW_FIELD_IDX_UDP_SRC_PORT) | \
 	 BIT_ULL(ICE_FLOW_FIELD_IDX_UDP_DST_PORT))
-#घोषणा ICE_FLOW_HASH_SCTP_PORT	\
+#define ICE_FLOW_HASH_SCTP_PORT	\
 	(BIT_ULL(ICE_FLOW_FIELD_IDX_SCTP_SRC_PORT) | \
 	 BIT_ULL(ICE_FLOW_FIELD_IDX_SCTP_DST_PORT))
 
-#घोषणा ICE_HASH_INVALID	0
-#घोषणा ICE_HASH_TCP_IPV4	(ICE_FLOW_HASH_IPV4 | ICE_FLOW_HASH_TCP_PORT)
-#घोषणा ICE_HASH_TCP_IPV6	(ICE_FLOW_HASH_IPV6 | ICE_FLOW_HASH_TCP_PORT)
-#घोषणा ICE_HASH_UDP_IPV4	(ICE_FLOW_HASH_IPV4 | ICE_FLOW_HASH_UDP_PORT)
-#घोषणा ICE_HASH_UDP_IPV6	(ICE_FLOW_HASH_IPV6 | ICE_FLOW_HASH_UDP_PORT)
+#define ICE_HASH_INVALID	0
+#define ICE_HASH_TCP_IPV4	(ICE_FLOW_HASH_IPV4 | ICE_FLOW_HASH_TCP_PORT)
+#define ICE_HASH_TCP_IPV6	(ICE_FLOW_HASH_IPV6 | ICE_FLOW_HASH_TCP_PORT)
+#define ICE_HASH_UDP_IPV4	(ICE_FLOW_HASH_IPV4 | ICE_FLOW_HASH_UDP_PORT)
+#define ICE_HASH_UDP_IPV6	(ICE_FLOW_HASH_IPV6 | ICE_FLOW_HASH_UDP_PORT)
 
-#घोषणा ICE_FLOW_HASH_GTP_TEID \
+#define ICE_FLOW_HASH_GTP_TEID \
 	(BIT_ULL(ICE_FLOW_FIELD_IDX_GTPC_TEID))
 
-#घोषणा ICE_FLOW_HASH_GTP_IPV4_TEID \
+#define ICE_FLOW_HASH_GTP_IPV4_TEID \
 	(ICE_FLOW_HASH_IPV4 | ICE_FLOW_HASH_GTP_TEID)
-#घोषणा ICE_FLOW_HASH_GTP_IPV6_TEID \
+#define ICE_FLOW_HASH_GTP_IPV6_TEID \
 	(ICE_FLOW_HASH_IPV6 | ICE_FLOW_HASH_GTP_TEID)
 
-#घोषणा ICE_FLOW_HASH_GTP_U_TEID \
+#define ICE_FLOW_HASH_GTP_U_TEID \
 	(BIT_ULL(ICE_FLOW_FIELD_IDX_GTPU_IP_TEID))
 
-#घोषणा ICE_FLOW_HASH_GTP_U_IPV4_TEID \
+#define ICE_FLOW_HASH_GTP_U_IPV4_TEID \
 	(ICE_FLOW_HASH_IPV4 | ICE_FLOW_HASH_GTP_U_TEID)
-#घोषणा ICE_FLOW_HASH_GTP_U_IPV6_TEID \
+#define ICE_FLOW_HASH_GTP_U_IPV6_TEID \
 	(ICE_FLOW_HASH_IPV6 | ICE_FLOW_HASH_GTP_U_TEID)
 
-#घोषणा ICE_FLOW_HASH_GTP_U_EH_TEID \
+#define ICE_FLOW_HASH_GTP_U_EH_TEID \
 	(BIT_ULL(ICE_FLOW_FIELD_IDX_GTPU_EH_TEID))
 
-#घोषणा ICE_FLOW_HASH_GTP_U_EH_QFI \
+#define ICE_FLOW_HASH_GTP_U_EH_QFI \
 	(BIT_ULL(ICE_FLOW_FIELD_IDX_GTPU_EH_QFI))
 
-#घोषणा ICE_FLOW_HASH_GTP_U_IPV4_EH \
+#define ICE_FLOW_HASH_GTP_U_IPV4_EH \
 	(ICE_FLOW_HASH_IPV4 | ICE_FLOW_HASH_GTP_U_EH_TEID | \
 	 ICE_FLOW_HASH_GTP_U_EH_QFI)
-#घोषणा ICE_FLOW_HASH_GTP_U_IPV6_EH \
+#define ICE_FLOW_HASH_GTP_U_IPV6_EH \
 	(ICE_FLOW_HASH_IPV6 | ICE_FLOW_HASH_GTP_U_EH_TEID | \
 	 ICE_FLOW_HASH_GTP_U_EH_QFI)
 
-#घोषणा ICE_FLOW_HASH_PPPOE_SESS_ID \
+#define ICE_FLOW_HASH_PPPOE_SESS_ID \
 	(BIT_ULL(ICE_FLOW_FIELD_IDX_PPPOE_SESS_ID))
 
-#घोषणा ICE_FLOW_HASH_PPPOE_SESS_ID_ETH \
+#define ICE_FLOW_HASH_PPPOE_SESS_ID_ETH \
 	(ICE_FLOW_HASH_ETH | ICE_FLOW_HASH_PPPOE_SESS_ID)
-#घोषणा ICE_FLOW_HASH_PPPOE_TCP_ID \
+#define ICE_FLOW_HASH_PPPOE_TCP_ID \
 	(ICE_FLOW_HASH_TCP_PORT | ICE_FLOW_HASH_PPPOE_SESS_ID)
-#घोषणा ICE_FLOW_HASH_PPPOE_UDP_ID \
+#define ICE_FLOW_HASH_PPPOE_UDP_ID \
 	(ICE_FLOW_HASH_UDP_PORT | ICE_FLOW_HASH_PPPOE_SESS_ID)
 
-#घोषणा ICE_FLOW_HASH_PFCP_SEID \
+#define ICE_FLOW_HASH_PFCP_SEID \
 	(BIT_ULL(ICE_FLOW_FIELD_IDX_PFCP_SEID))
-#घोषणा ICE_FLOW_HASH_PFCP_IPV4_SEID \
+#define ICE_FLOW_HASH_PFCP_IPV4_SEID \
 	(ICE_FLOW_HASH_IPV4 | ICE_FLOW_HASH_PFCP_SEID)
-#घोषणा ICE_FLOW_HASH_PFCP_IPV6_SEID \
+#define ICE_FLOW_HASH_PFCP_IPV6_SEID \
 	(ICE_FLOW_HASH_IPV6 | ICE_FLOW_HASH_PFCP_SEID)
 
-#घोषणा ICE_FLOW_HASH_L2TPV3_SESS_ID \
+#define ICE_FLOW_HASH_L2TPV3_SESS_ID \
 	(BIT_ULL(ICE_FLOW_FIELD_IDX_L2TPV3_SESS_ID))
-#घोषणा ICE_FLOW_HASH_L2TPV3_IPV4_SESS_ID \
+#define ICE_FLOW_HASH_L2TPV3_IPV4_SESS_ID \
 	(ICE_FLOW_HASH_IPV4 | ICE_FLOW_HASH_L2TPV3_SESS_ID)
-#घोषणा ICE_FLOW_HASH_L2TPV3_IPV6_SESS_ID \
+#define ICE_FLOW_HASH_L2TPV3_IPV6_SESS_ID \
 	(ICE_FLOW_HASH_IPV6 | ICE_FLOW_HASH_L2TPV3_SESS_ID)
 
-#घोषणा ICE_FLOW_HASH_ESP_SPI \
+#define ICE_FLOW_HASH_ESP_SPI \
 	(BIT_ULL(ICE_FLOW_FIELD_IDX_ESP_SPI))
-#घोषणा ICE_FLOW_HASH_ESP_IPV4_SPI \
+#define ICE_FLOW_HASH_ESP_IPV4_SPI \
 	(ICE_FLOW_HASH_IPV4 | ICE_FLOW_HASH_ESP_SPI)
-#घोषणा ICE_FLOW_HASH_ESP_IPV6_SPI \
+#define ICE_FLOW_HASH_ESP_IPV6_SPI \
 	(ICE_FLOW_HASH_IPV6 | ICE_FLOW_HASH_ESP_SPI)
 
-#घोषणा ICE_FLOW_HASH_AH_SPI \
+#define ICE_FLOW_HASH_AH_SPI \
 	(BIT_ULL(ICE_FLOW_FIELD_IDX_AH_SPI))
-#घोषणा ICE_FLOW_HASH_AH_IPV4_SPI \
+#define ICE_FLOW_HASH_AH_IPV4_SPI \
 	(ICE_FLOW_HASH_IPV4 | ICE_FLOW_HASH_AH_SPI)
-#घोषणा ICE_FLOW_HASH_AH_IPV6_SPI \
+#define ICE_FLOW_HASH_AH_IPV6_SPI \
 	(ICE_FLOW_HASH_IPV6 | ICE_FLOW_HASH_AH_SPI)
 
-#घोषणा ICE_FLOW_HASH_NAT_T_ESP_SPI \
+#define ICE_FLOW_HASH_NAT_T_ESP_SPI \
 	(BIT_ULL(ICE_FLOW_FIELD_IDX_NAT_T_ESP_SPI))
-#घोषणा ICE_FLOW_HASH_NAT_T_ESP_IPV4_SPI \
+#define ICE_FLOW_HASH_NAT_T_ESP_IPV4_SPI \
 	(ICE_FLOW_HASH_IPV4 | ICE_FLOW_HASH_NAT_T_ESP_SPI)
-#घोषणा ICE_FLOW_HASH_NAT_T_ESP_IPV6_SPI \
+#define ICE_FLOW_HASH_NAT_T_ESP_IPV6_SPI \
 	(ICE_FLOW_HASH_IPV6 | ICE_FLOW_HASH_NAT_T_ESP_SPI)
 
 /* Protocol header fields within a packet segment. A segment consists of one or
  * more protocol headers that make up a logical group of protocol headers. Each
  * logical group of protocol headers encapsulates or is encapsulated using/by
- * tunneling or encapsulation protocols क्रम network भवization such as GRE,
+ * tunneling or encapsulation protocols for network virtualization such as GRE,
  * VxLAN, etc.
  */
-क्रमागत ice_flow_seg_hdr अणु
+enum ice_flow_seg_hdr {
 	ICE_FLOW_SEG_HDR_NONE		= 0x00000000,
 	ICE_FLOW_SEG_HDR_ETH		= 0x00000001,
 	ICE_FLOW_SEG_HDR_VLAN		= 0x00000002,
@@ -140,29 +139,29 @@
 	ICE_FLOW_SEG_HDR_AH		= 0x00200000,
 	ICE_FLOW_SEG_HDR_NAT_T_ESP	= 0x00400000,
 	ICE_FLOW_SEG_HDR_ETH_NON_IP	= 0x00800000,
-	/* The following is an additive bit क्रम ICE_FLOW_SEG_HDR_IPV4 and
+	/* The following is an additive bit for ICE_FLOW_SEG_HDR_IPV4 and
 	 * ICE_FLOW_SEG_HDR_IPV6 which include the IPV4 other PTYPEs
 	 */
 	ICE_FLOW_SEG_HDR_IPV_OTHER      = 0x20000000,
-पूर्ण;
+};
 
 /* These segments all have the same PTYPES, but are otherwise distinguished by
  * the value of the gtp_eh_pdu and gtp_eh_pdu_link flags:
  *
  *                                gtp_eh_pdu     gtp_eh_pdu_link
  * ICE_FLOW_SEG_HDR_GTPU_IP           0              0
- * ICE_FLOW_SEG_HDR_GTPU_EH           1              करोn't care
+ * ICE_FLOW_SEG_HDR_GTPU_EH           1              don't care
  * ICE_FLOW_SEG_HDR_GTPU_DWN          1              0
  * ICE_FLOW_SEG_HDR_GTPU_UP           1              1
  */
-#घोषणा ICE_FLOW_SEG_HDR_GTPU (ICE_FLOW_SEG_HDR_GTPU_IP | \
+#define ICE_FLOW_SEG_HDR_GTPU (ICE_FLOW_SEG_HDR_GTPU_IP | \
 			       ICE_FLOW_SEG_HDR_GTPU_EH | \
 			       ICE_FLOW_SEG_HDR_GTPU_DWN | \
 			       ICE_FLOW_SEG_HDR_GTPU_UP)
-#घोषणा ICE_FLOW_SEG_HDR_PFCP (ICE_FLOW_SEG_HDR_PFCP_NODE | \
+#define ICE_FLOW_SEG_HDR_PFCP (ICE_FLOW_SEG_HDR_PFCP_NODE | \
 			       ICE_FLOW_SEG_HDR_PFCP_SESSION)
 
-क्रमागत ice_flow_field अणु
+enum ice_flow_field {
 	/* L2 */
 	ICE_FLOW_FIELD_IDX_ETH_DA,
 	ICE_FLOW_FIELD_IDX_ETH_SA,
@@ -222,13 +221,13 @@
 	ICE_FLOW_FIELD_IDX_AH_SPI,
 	/* NAT_T ESP */
 	ICE_FLOW_FIELD_IDX_NAT_T_ESP_SPI,
-	 /* The total number of क्रमागतs must not exceed 64 */
+	 /* The total number of enums must not exceed 64 */
 	ICE_FLOW_FIELD_IDX_MAX
-पूर्ण;
+};
 
-/* Flow headers and fields क्रम AVF support */
-क्रमागत ice_flow_avf_hdr_field अणु
-	/* Values 0 - 28 are reserved क्रम future use */
+/* Flow headers and fields for AVF support */
+enum ice_flow_avf_hdr_field {
+	/* Values 0 - 28 are reserved for future use */
 	ICE_AVF_FLOW_FIELD_INVALID		= 0,
 	ICE_AVF_FLOW_FIELD_UNICAST_IPV4_UDP	= 29,
 	ICE_AVF_FLOW_FIELD_MULTICAST_IPV4_UDP,
@@ -254,13 +253,13 @@
 	/* Values 51-62 are reserved */
 	ICE_AVF_FLOW_FIELD_L2_PAYLOAD		= 63,
 	ICE_AVF_FLOW_FIELD_MAX
-पूर्ण;
+};
 
 /* Supported RSS offloads  This macro is defined to support
  * VIRTCHNL_OP_GET_RSS_HENA_CAPS ops. PF driver sends the RSS hardware
  * capabilities to the caller of this ops.
  */
-#घोषणा ICE_DEFAULT_RSS_HENA ( \
+#define ICE_DEFAULT_RSS_HENA ( \
 	BIT_ULL(ICE_AVF_FLOW_FIELD_IPV4_UDP) | \
 	BIT_ULL(ICE_AVF_FLOW_FIELD_IPV4_SCTP) | \
 	BIT_ULL(ICE_AVF_FLOW_FIELD_IPV4_TCP) | \
@@ -278,140 +277,140 @@
 	BIT_ULL(ICE_AVF_FLOW_FIELD_UNICAST_IPV6_UDP) | \
 	BIT_ULL(ICE_AVF_FLOW_FIELD_MULTICAST_IPV6_UDP))
 
-क्रमागत ice_flow_dir अणु
+enum ice_flow_dir {
 	ICE_FLOW_RX		= 0x02,
-पूर्ण;
+};
 
-क्रमागत ice_flow_priority अणु
+enum ice_flow_priority {
 	ICE_FLOW_PRIO_LOW,
 	ICE_FLOW_PRIO_NORMAL,
 	ICE_FLOW_PRIO_HIGH
-पूर्ण;
+};
 
-#घोषणा ICE_FLOW_SEG_MAX		2
-#घोषणा ICE_FLOW_SEG_RAW_FLD_MAX	2
-#घोषणा ICE_FLOW_FV_EXTRACT_SZ		2
+#define ICE_FLOW_SEG_MAX		2
+#define ICE_FLOW_SEG_RAW_FLD_MAX	2
+#define ICE_FLOW_FV_EXTRACT_SZ		2
 
-#घोषणा ICE_FLOW_SET_HDRS(seg, val)	((seg)->hdrs |= (u32)(val))
+#define ICE_FLOW_SET_HDRS(seg, val)	((seg)->hdrs |= (u32)(val))
 
-काष्ठा ice_flow_seg_xtrct अणु
+struct ice_flow_seg_xtrct {
 	u8 prot_id;	/* Protocol ID of extracted header field */
 	u16 off;	/* Starting offset of the field in header in bytes */
 	u8 idx;		/* Index of FV entry used */
 	u8 disp;	/* Displacement of field in bits fr. FV entry's start */
-	u16 mask;	/* Mask क्रम field */
-पूर्ण;
+	u16 mask;	/* Mask for field */
+};
 
-क्रमागत ice_flow_fld_match_type अणु
+enum ice_flow_fld_match_type {
 	ICE_FLOW_FLD_TYPE_REG,		/* Value, mask */
 	ICE_FLOW_FLD_TYPE_RANGE,	/* Value, mask, last (upper bound) */
 	ICE_FLOW_FLD_TYPE_PREFIX,	/* IP address, prefix, size of prefix */
 	ICE_FLOW_FLD_TYPE_SIZE,		/* Value, mask, size of match */
-पूर्ण;
+};
 
-काष्ठा ice_flow_fld_loc अणु
-	/* Describe offsets of field inक्रमmation relative to the beginning of
+struct ice_flow_fld_loc {
+	/* Describe offsets of field information relative to the beginning of
 	 * input buffer provided when adding flow entries.
 	 */
 	u16 val;	/* Offset where the value is located */
 	u16 mask;	/* Offset where the mask/prefix value is located */
 	u16 last;	/* Length or offset where the upper value is located */
-पूर्ण;
+};
 
-काष्ठा ice_flow_fld_info अणु
-	क्रमागत ice_flow_fld_match_type type;
+struct ice_flow_fld_info {
+	enum ice_flow_fld_match_type type;
 	/* Location where to retrieve data from an input buffer */
-	काष्ठा ice_flow_fld_loc src;
-	/* Location where to put the data पूर्णांकo the final entry buffer */
-	काष्ठा ice_flow_fld_loc entry;
-	काष्ठा ice_flow_seg_xtrct xtrct;
-पूर्ण;
+	struct ice_flow_fld_loc src;
+	/* Location where to put the data into the final entry buffer */
+	struct ice_flow_fld_loc entry;
+	struct ice_flow_seg_xtrct xtrct;
+};
 
-काष्ठा ice_flow_seg_fld_raw अणु
-	काष्ठा ice_flow_fld_info info;
+struct ice_flow_seg_fld_raw {
+	struct ice_flow_fld_info info;
 	u16 off;	/* Offset from the start of the segment */
-पूर्ण;
+};
 
-काष्ठा ice_flow_seg_info अणु
-	u32 hdrs;	/* Biपंचांगask indicating protocol headers present */
-	u64 match;	/* Biपंचांगask indicating header fields to be matched */
-	u64 range;	/* Biपंचांगask indicating header fields matched as ranges */
+struct ice_flow_seg_info {
+	u32 hdrs;	/* Bitmask indicating protocol headers present */
+	u64 match;	/* Bitmask indicating header fields to be matched */
+	u64 range;	/* Bitmask indicating header fields matched as ranges */
 
-	काष्ठा ice_flow_fld_info fields[ICE_FLOW_FIELD_IDX_MAX];
+	struct ice_flow_fld_info fields[ICE_FLOW_FIELD_IDX_MAX];
 
 	u8 raws_cnt;	/* Number of raw fields to be matched */
-	काष्ठा ice_flow_seg_fld_raw raws[ICE_FLOW_SEG_RAW_FLD_MAX];
-पूर्ण;
+	struct ice_flow_seg_fld_raw raws[ICE_FLOW_SEG_RAW_FLD_MAX];
+};
 
-/* This काष्ठाure describes a flow entry, and is tracked only in this file */
-काष्ठा ice_flow_entry अणु
-	काष्ठा list_head l_entry;
+/* This structure describes a flow entry, and is tracked only in this file */
+struct ice_flow_entry {
+	struct list_head l_entry;
 
 	u64 id;
-	काष्ठा ice_flow_prof *prof;
+	struct ice_flow_prof *prof;
 	/* Flow entry's content */
-	व्योम *entry;
-	क्रमागत ice_flow_priority priority;
+	void *entry;
+	enum ice_flow_priority priority;
 	u16 vsi_handle;
 	u16 entry_sz;
-पूर्ण;
+};
 
-#घोषणा ICE_FLOW_ENTRY_HNDL(e)	((u64)(uपूर्णांकptr_t)e)
-#घोषणा ICE_FLOW_ENTRY_PTR(h)	((काष्ठा ice_flow_entry *)(uपूर्णांकptr_t)(h))
+#define ICE_FLOW_ENTRY_HNDL(e)	((u64)(uintptr_t)e)
+#define ICE_FLOW_ENTRY_PTR(h)	((struct ice_flow_entry *)(uintptr_t)(h))
 
-काष्ठा ice_flow_prof अणु
-	काष्ठा list_head l_entry;
+struct ice_flow_prof {
+	struct list_head l_entry;
 
 	u64 id;
-	क्रमागत ice_flow_dir dir;
+	enum ice_flow_dir dir;
 	u8 segs_cnt;
 
 	/* Keep track of flow entries associated with this flow profile */
-	काष्ठा mutex entries_lock;
-	काष्ठा list_head entries;
+	struct mutex entries_lock;
+	struct list_head entries;
 
-	काष्ठा ice_flow_seg_info segs[ICE_FLOW_SEG_MAX];
+	struct ice_flow_seg_info segs[ICE_FLOW_SEG_MAX];
 
 	/* software VSI handles referenced by this flow profile */
 	DECLARE_BITMAP(vsis, ICE_MAX_VSI);
-पूर्ण;
+};
 
-काष्ठा ice_rss_cfg अणु
-	काष्ठा list_head l_entry;
-	/* biपंचांगap of VSIs added to the RSS entry */
+struct ice_rss_cfg {
+	struct list_head l_entry;
+	/* bitmap of VSIs added to the RSS entry */
 	DECLARE_BITMAP(vsis, ICE_MAX_VSI);
 	u64 hashed_flds;
 	u32 packet_hdr;
-पूर्ण;
+};
 
-क्रमागत ice_status
-ice_flow_add_prof(काष्ठा ice_hw *hw, क्रमागत ice_block blk, क्रमागत ice_flow_dir dir,
-		  u64 prof_id, काष्ठा ice_flow_seg_info *segs, u8 segs_cnt,
-		  काष्ठा ice_flow_prof **prof);
-क्रमागत ice_status
-ice_flow_rem_prof(काष्ठा ice_hw *hw, क्रमागत ice_block blk, u64 prof_id);
-क्रमागत ice_status
-ice_flow_add_entry(काष्ठा ice_hw *hw, क्रमागत ice_block blk, u64 prof_id,
-		   u64 entry_id, u16 vsi, क्रमागत ice_flow_priority prio,
-		   व्योम *data, u64 *entry_h);
-क्रमागत ice_status
-ice_flow_rem_entry(काष्ठा ice_hw *hw, क्रमागत ice_block blk, u64 entry_h);
-व्योम
-ice_flow_set_fld(काष्ठा ice_flow_seg_info *seg, क्रमागत ice_flow_field fld,
+enum ice_status
+ice_flow_add_prof(struct ice_hw *hw, enum ice_block blk, enum ice_flow_dir dir,
+		  u64 prof_id, struct ice_flow_seg_info *segs, u8 segs_cnt,
+		  struct ice_flow_prof **prof);
+enum ice_status
+ice_flow_rem_prof(struct ice_hw *hw, enum ice_block blk, u64 prof_id);
+enum ice_status
+ice_flow_add_entry(struct ice_hw *hw, enum ice_block blk, u64 prof_id,
+		   u64 entry_id, u16 vsi, enum ice_flow_priority prio,
+		   void *data, u64 *entry_h);
+enum ice_status
+ice_flow_rem_entry(struct ice_hw *hw, enum ice_block blk, u64 entry_h);
+void
+ice_flow_set_fld(struct ice_flow_seg_info *seg, enum ice_flow_field fld,
 		 u16 val_loc, u16 mask_loc, u16 last_loc, bool range);
-व्योम
-ice_flow_add_fld_raw(काष्ठा ice_flow_seg_info *seg, u16 off, u8 len,
+void
+ice_flow_add_fld_raw(struct ice_flow_seg_info *seg, u16 off, u8 len,
 		     u16 val_loc, u16 mask_loc);
-व्योम ice_rem_vsi_rss_list(काष्ठा ice_hw *hw, u16 vsi_handle);
-क्रमागत ice_status ice_replay_rss_cfg(काष्ठा ice_hw *hw, u16 vsi_handle);
-क्रमागत ice_status
-ice_add_avf_rss_cfg(काष्ठा ice_hw *hw, u16 vsi_handle, u64 hashed_flds);
-क्रमागत ice_status ice_rem_vsi_rss_cfg(काष्ठा ice_hw *hw, u16 vsi_handle);
-क्रमागत ice_status
-ice_add_rss_cfg(काष्ठा ice_hw *hw, u16 vsi_handle, u64 hashed_flds,
+void ice_rem_vsi_rss_list(struct ice_hw *hw, u16 vsi_handle);
+enum ice_status ice_replay_rss_cfg(struct ice_hw *hw, u16 vsi_handle);
+enum ice_status
+ice_add_avf_rss_cfg(struct ice_hw *hw, u16 vsi_handle, u64 hashed_flds);
+enum ice_status ice_rem_vsi_rss_cfg(struct ice_hw *hw, u16 vsi_handle);
+enum ice_status
+ice_add_rss_cfg(struct ice_hw *hw, u16 vsi_handle, u64 hashed_flds,
 		u32 addl_hdrs);
-क्रमागत ice_status
-ice_rem_rss_cfg(काष्ठा ice_hw *hw, u16 vsi_handle, u64 hashed_flds,
+enum ice_status
+ice_rem_rss_cfg(struct ice_hw *hw, u16 vsi_handle, u64 hashed_flds,
 		u32 addl_hdrs);
-u64 ice_get_rss_cfg(काष्ठा ice_hw *hw, u16 vsi_handle, u32 hdrs);
-#पूर्ण_अगर /* _ICE_FLOW_H_ */
+u64 ice_get_rss_cfg(struct ice_hw *hw, u16 vsi_handle, u32 hdrs);
+#endif /* _ICE_FLOW_H_ */

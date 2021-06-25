@@ -1,19 +1,18 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Interface to the libusual.
  *
  * Copyright (c) 2005 Pete Zaitcev <zaitcev@redhat.com>
  * Copyright (c) 1999-2002 Matthew Dharm (mdharm-usb@one-eyed-alien.net)
- * Copyright (c) 1999 Michael Gee (michael@linuxspecअगरic.com)
+ * Copyright (c) 1999 Michael Gee (michael@linuxspecific.com)
  */
 
-#अगर_अघोषित __LINUX_USB_USUAL_H
-#घोषणा __LINUX_USB_USUAL_H
+#ifndef __LINUX_USB_USUAL_H
+#define __LINUX_USB_USUAL_H
 
 
-/* We should करो this क्रम cleanliness... But other usb_foo.h करो not करो this. */
-/* #समावेश <linux/usb.h> */
+/* We should do this for cleanliness... But other usb_foo.h do not do this. */
+/* #include <linux/usb.h> */
 
 /*
  * The flags field, which we store in usb_device_id.driver_info.
@@ -22,15 +21,15 @@
 
 /*
  * Static flag definitions.  We use this roundabout technique so that the
- * proc_info() routine can स्वतःmatically display a message क्रम each flag.
+ * proc_info() routine can automatically display a message for each flag.
  */
-#घोषणा US_DO_ALL_FLAGS						\
+#define US_DO_ALL_FLAGS						\
 	US_FLAG(SINGLE_LUN,	0x00000001)			\
 		/* allow access to only LUN 0 */		\
 	US_FLAG(NEED_OVERRIDE,	0x00000002)			\
 		/* unusual_devs entry is necessary */		\
 	US_FLAG(SCM_MULT_TARG,	0x00000004)			\
-		/* supports multiple tarमाला_लो */			\
+		/* supports multiple targets */			\
 	US_FLAG(FIX_INQUIRY,	0x00000008)			\
 		/* INQUIRY response needs faking */		\
 	US_FLAG(FIX_CAPACITY,	0x00000010)			\
@@ -44,13 +43,13 @@
 	US_FLAG(GO_SLOW,	0x00000100)			\
 		/* Need delay after Command phase */		\
 	US_FLAG(NO_WP_DETECT,	0x00000200)			\
-		/* Don't check क्रम ग_लिखो-protect */		\
+		/* Don't check for write-protect */		\
 	US_FLAG(MAX_SECTORS_64,	0x00000400)			\
 		/* Sets max_sectors to 64    */			\
 	US_FLAG(IGNORE_DEVICE,	0x00000800)			\
 		/* Don't claim device */			\
 	US_FLAG(CAPACITY_HEURISTICS,	0x00001000)		\
-		/* someबार sizes is too big */		\
+		/* sometimes sizes is too big */		\
 	US_FLAG(MAX_SECTORS_MIN,0x00002000)			\
 		/* Sets max_sectors to arch min */		\
 	US_FLAG(BULK_IGNORE_TAG,0x00004000)			\
@@ -90,13 +89,13 @@
 	US_FLAG(SENSE_AFTER_SYNC, 0x80000000)			\
 		/* Do REQUEST_SENSE after SYNCHRONIZE_CACHE */	\
 
-#घोषणा US_FLAG(name, value)	US_FL_##name = value ,
-क्रमागत अणु US_DO_ALL_FLAGS पूर्ण;
-#अघोषित US_FLAG
+#define US_FLAG(name, value)	US_FL_##name = value ,
+enum { US_DO_ALL_FLAGS };
+#undef US_FLAG
 
-#समावेश <linux/usb/storage.h>
+#include <linux/usb/storage.h>
 
-बाह्य पूर्णांक usb_usual_ignore_device(काष्ठा usb_पूर्णांकerface *पूर्णांकf);
-बाह्य स्थिर काष्ठा usb_device_id usb_storage_usb_ids[];
+extern int usb_usual_ignore_device(struct usb_interface *intf);
+extern const struct usb_device_id usb_storage_usb_ids[];
 
-#पूर्ण_अगर /* __LINUX_USB_USUAL_H */
+#endif /* __LINUX_USB_USUAL_H */

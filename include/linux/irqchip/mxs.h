@@ -1,12 +1,11 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2013 Freescale Semiconductor, Inc.
  */
 
-#अगर_अघोषित __LINUX_IRQCHIP_MXS_H
-#घोषणा __LINUX_IRQCHIP_MXS_H
+#ifndef __LINUX_IRQCHIP_MXS_H
+#define __LINUX_IRQCHIP_MXS_H
 
-बाह्य व्योम icoll_handle_irq(काष्ठा pt_regs *);
+extern void icoll_handle_irq(struct pt_regs *);
 
-#पूर्ण_अगर
+#endif

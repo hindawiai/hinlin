@@ -1,112 +1,111 @@
-<शैली गुरु>
 /*
  * Motorola CPCAP PMIC regulator driver
  *
  * Based on cpcap-regulator.c from Motorola Linux kernel tree
  * Copyright (C) 2009-2011 Motorola, Inc.
  *
- * Rewritten क्रम मुख्यline kernel to use device tree and regmap
+ * Rewritten for mainline kernel to use device tree and regmap
  * Copyright (C) 2017 Tony Lindgren <tony@atomide.com>
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of the GNU General Public License as
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
  * published by the Free Software Foundation version 2.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License क्रम more details.
+ * GNU General Public License for more details.
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/regulator/driver.h>
-#समावेश <linux/regulator/machine.h>
-#समावेश <linux/regulator/of_regulator.h>
-#समावेश <linux/mfd/motorola-cpcap.h>
+#include <linux/err.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_platform.h>
+#include <linux/regmap.h>
+#include <linux/regulator/driver.h>
+#include <linux/regulator/machine.h>
+#include <linux/regulator/of_regulator.h>
+#include <linux/mfd/motorola-cpcap.h>
 
 /*
- * Resource assignment रेजिस्टर bits. These seem to control the state
- * idle modes adn are used at least क्रम omap4.
+ * Resource assignment register bits. These seem to control the state
+ * idle modes adn are used at least for omap4.
  */
 
 /* CPCAP_REG_ASSIGN2 bits - Resource Assignment 2 */
-#घोषणा CPCAP_BIT_VSDIO_SEL		BIT(15)
-#घोषणा CPCAP_BIT_VDIG_SEL		BIT(14)
-#घोषणा CPCAP_BIT_VCAM_SEL		BIT(13)
-#घोषणा CPCAP_BIT_SW6_SEL		BIT(12)
-#घोषणा CPCAP_BIT_SW5_SEL		BIT(11)
-#घोषणा CPCAP_BIT_SW4_SEL		BIT(10)
-#घोषणा CPCAP_BIT_SW3_SEL		BIT(9)
-#घोषणा CPCAP_BIT_SW2_SEL		BIT(8)
-#घोषणा CPCAP_BIT_SW1_SEL		BIT(7)
+#define CPCAP_BIT_VSDIO_SEL		BIT(15)
+#define CPCAP_BIT_VDIG_SEL		BIT(14)
+#define CPCAP_BIT_VCAM_SEL		BIT(13)
+#define CPCAP_BIT_SW6_SEL		BIT(12)
+#define CPCAP_BIT_SW5_SEL		BIT(11)
+#define CPCAP_BIT_SW4_SEL		BIT(10)
+#define CPCAP_BIT_SW3_SEL		BIT(9)
+#define CPCAP_BIT_SW2_SEL		BIT(8)
+#define CPCAP_BIT_SW1_SEL		BIT(7)
 
 /* CPCAP_REG_ASSIGN3 bits - Resource Assignment 3 */
-#घोषणा CPCAP_BIT_VUSBINT2_SEL		BIT(15)
-#घोषणा CPCAP_BIT_VUSBINT1_SEL		BIT(14)
-#घोषणा CPCAP_BIT_VVIB_SEL		BIT(13)
-#घोषणा CPCAP_BIT_VWLAN1_SEL		BIT(12)
-#घोषणा CPCAP_BIT_VRF1_SEL		BIT(11)
-#घोषणा CPCAP_BIT_VHVIO_SEL		BIT(10)
-#घोषणा CPCAP_BIT_VDAC_SEL		BIT(9)
-#घोषणा CPCAP_BIT_VUSB_SEL		BIT(8)
-#घोषणा CPCAP_BIT_VSIM_SEL		BIT(7)
-#घोषणा CPCAP_BIT_VRFREF_SEL		BIT(6)
-#घोषणा CPCAP_BIT_VPLL_SEL		BIT(5)
-#घोषणा CPCAP_BIT_VFUSE_SEL		BIT(4)
-#घोषणा CPCAP_BIT_VCSI_SEL		BIT(3)
-#घोषणा CPCAP_BIT_SPARE_14_2		BIT(2)
-#घोषणा CPCAP_BIT_VWLAN2_SEL		BIT(1)
-#घोषणा CPCAP_BIT_VRF2_SEL		BIT(0)
+#define CPCAP_BIT_VUSBINT2_SEL		BIT(15)
+#define CPCAP_BIT_VUSBINT1_SEL		BIT(14)
+#define CPCAP_BIT_VVIB_SEL		BIT(13)
+#define CPCAP_BIT_VWLAN1_SEL		BIT(12)
+#define CPCAP_BIT_VRF1_SEL		BIT(11)
+#define CPCAP_BIT_VHVIO_SEL		BIT(10)
+#define CPCAP_BIT_VDAC_SEL		BIT(9)
+#define CPCAP_BIT_VUSB_SEL		BIT(8)
+#define CPCAP_BIT_VSIM_SEL		BIT(7)
+#define CPCAP_BIT_VRFREF_SEL		BIT(6)
+#define CPCAP_BIT_VPLL_SEL		BIT(5)
+#define CPCAP_BIT_VFUSE_SEL		BIT(4)
+#define CPCAP_BIT_VCSI_SEL		BIT(3)
+#define CPCAP_BIT_SPARE_14_2		BIT(2)
+#define CPCAP_BIT_VWLAN2_SEL		BIT(1)
+#define CPCAP_BIT_VRF2_SEL		BIT(0)
 
 /* CPCAP_REG_ASSIGN4 bits - Resource Assignment 4 */
-#घोषणा CPCAP_BIT_VAUDIO_SEL		BIT(0)
+#define CPCAP_BIT_VAUDIO_SEL		BIT(0)
 
 /*
- * Enable रेजिस्टर bits. At least CPCAP_BIT_AUDIO_LOW_PWR is generic,
+ * Enable register bits. At least CPCAP_BIT_AUDIO_LOW_PWR is generic,
  * and not limited to audio regulator. Let's use the Motorola kernel
- * naming क्रम now until we have a better understanding of the other
- * enable रेजिस्टर bits. No idea why BIT(3) is not defined.
+ * naming for now until we have a better understanding of the other
+ * enable register bits. No idea why BIT(3) is not defined.
  */
-#घोषणा CPCAP_BIT_AUDIO_LOW_PWR		BIT(6)
-#घोषणा CPCAP_BIT_AUD_LOWPWR_SPEED	BIT(5)
-#घोषणा CPCAP_BIT_VAUDIOPRISTBY		BIT(4)
-#घोषणा CPCAP_BIT_VAUDIO_MODE1		BIT(2)
-#घोषणा CPCAP_BIT_VAUDIO_MODE0		BIT(1)
-#घोषणा CPCAP_BIT_V_AUDIO_EN		BIT(0)
+#define CPCAP_BIT_AUDIO_LOW_PWR		BIT(6)
+#define CPCAP_BIT_AUD_LOWPWR_SPEED	BIT(5)
+#define CPCAP_BIT_VAUDIOPRISTBY		BIT(4)
+#define CPCAP_BIT_VAUDIO_MODE1		BIT(2)
+#define CPCAP_BIT_VAUDIO_MODE0		BIT(1)
+#define CPCAP_BIT_V_AUDIO_EN		BIT(0)
 
-#घोषणा CPCAP_BIT_AUDIO_NORMAL_MODE	0x00
+#define CPCAP_BIT_AUDIO_NORMAL_MODE	0x00
 
 /*
  * Off mode configuration bit. Used currently only by SW5 on omap4. There's
- * the following comment in Motorola Linux kernel tree क्रम it:
+ * the following comment in Motorola Linux kernel tree for it:
  *
  * When set in the regulator mode, the regulator assignment will be changed
  * to secondary when the regulator is disabled. The mode will be set back to
  * primary when the regulator is turned on.
  */
-#घोषणा CPCAP_REG_OFF_MODE_SEC		BIT(15)
+#define CPCAP_REG_OFF_MODE_SEC		BIT(15)
 
 /*
- * SoC specअगरic configuration क्रम CPCAP regulator. There are at least three
- * dअगरferent SoCs each with their own parameters: omap3, omap4 and tegra2.
+ * SoC specific configuration for CPCAP regulator. There are at least three
+ * different SoCs each with their own parameters: omap3, omap4 and tegra2.
  *
  * The assign_reg and assign_mask seem to allow toggling between primary
- * and secondary mode that at least omap4 uses क्रम off mode.
+ * and secondary mode that at least omap4 uses for off mode.
  */
-काष्ठा cpcap_regulator अणु
-	काष्ठा regulator_desc rdesc;
-	स्थिर u16 assign_reg;
-	स्थिर u16 assign_mask;
-पूर्ण;
+struct cpcap_regulator {
+	struct regulator_desc rdesc;
+	const u16 assign_reg;
+	const u16 assign_mask;
+};
 
-#घोषणा CPCAP_REG(_ID, reg, assignment_reg, assignment_mask, val_tbl,	\
+#define CPCAP_REG(_ID, reg, assignment_reg, assignment_mask, val_tbl,	\
 		mode_mask, volt_mask, mode_val, off_val,		\
-		volt_trans_समय) अणु					\
-	.rdesc = अणु							\
+		volt_trans_time) {					\
+	.rdesc = {							\
 		.name = #_ID,						\
 		.of_match = of_match_ptr(#_ID),				\
 		.ops = &cpcap_regulator_ops,				\
@@ -122,20 +121,20 @@
 		.enable_mask = (mode_mask),				\
 		.enable_val = (mode_val),				\
 		.disable_val = (off_val),				\
-		.ramp_delay = (volt_trans_समय),			\
+		.ramp_delay = (volt_trans_time),			\
 		.of_map_mode = cpcap_map_mode,				\
-	पूर्ण,								\
+	},								\
 	.assign_reg = (assignment_reg),					\
 	.assign_mask = (assignment_mask),				\
-पूर्ण
+}
 
-काष्ठा cpcap_ddata अणु
-	काष्ठा regmap *reg;
-	काष्ठा device *dev;
-	स्थिर काष्ठा cpcap_regulator *soc;
-पूर्ण;
+struct cpcap_ddata {
+	struct regmap *reg;
+	struct device *dev;
+	const struct cpcap_regulator *soc;
+};
 
-क्रमागत cpcap_regulator_id अणु
+enum cpcap_regulator_id {
 	CPCAP_SW1,
 	CPCAP_SW2,
 	CPCAP_SW3,
@@ -161,103 +160,103 @@
 	CPCAP_VUSB,
 	CPCAP_VAUDIO,
 	CPCAP_NR_REGULATORS,
-पूर्ण;
+};
 
 /*
- * We need to also configure regulator idle mode क्रम SoC off mode अगर
+ * We need to also configure regulator idle mode for SoC off mode if
  * CPCAP_REG_OFF_MODE_SEC is set.
  */
-अटल पूर्णांक cpcap_regulator_enable(काष्ठा regulator_dev *rdev)
-अणु
-	काष्ठा cpcap_regulator *regulator = rdev_get_drvdata(rdev);
-	पूर्णांक error;
+static int cpcap_regulator_enable(struct regulator_dev *rdev)
+{
+	struct cpcap_regulator *regulator = rdev_get_drvdata(rdev);
+	int error;
 
 	error = regulator_enable_regmap(rdev);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	अगर (rdev->desc->enable_val & CPCAP_REG_OFF_MODE_SEC) अणु
+	if (rdev->desc->enable_val & CPCAP_REG_OFF_MODE_SEC) {
 		error = regmap_update_bits(rdev->regmap, regulator->assign_reg,
 					   regulator->assign_mask,
 					   regulator->assign_mask);
-		अगर (error)
+		if (error)
 			regulator_disable_regmap(rdev);
-	पूर्ण
+	}
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
- * We need to also configure regulator idle mode क्रम SoC off mode अगर
+ * We need to also configure regulator idle mode for SoC off mode if
  * CPCAP_REG_OFF_MODE_SEC is set.
  */
-अटल पूर्णांक cpcap_regulator_disable(काष्ठा regulator_dev *rdev)
-अणु
-	काष्ठा cpcap_regulator *regulator = rdev_get_drvdata(rdev);
-	पूर्णांक error;
+static int cpcap_regulator_disable(struct regulator_dev *rdev)
+{
+	struct cpcap_regulator *regulator = rdev_get_drvdata(rdev);
+	int error;
 
-	अगर (rdev->desc->enable_val & CPCAP_REG_OFF_MODE_SEC) अणु
+	if (rdev->desc->enable_val & CPCAP_REG_OFF_MODE_SEC) {
 		error = regmap_update_bits(rdev->regmap, regulator->assign_reg,
 					   regulator->assign_mask, 0);
-		अगर (error)
-			वापस error;
-	पूर्ण
+		if (error)
+			return error;
+	}
 
 	error = regulator_disable_regmap(rdev);
-	अगर (error && (rdev->desc->enable_val & CPCAP_REG_OFF_MODE_SEC)) अणु
+	if (error && (rdev->desc->enable_val & CPCAP_REG_OFF_MODE_SEC)) {
 		regmap_update_bits(rdev->regmap, regulator->assign_reg,
 				   regulator->assign_mask,
 				   regulator->assign_mask);
-	पूर्ण
+	}
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल अचिन्हित पूर्णांक cpcap_map_mode(अचिन्हित पूर्णांक mode)
-अणु
-	चयन (mode) अणु
-	हाल CPCAP_BIT_AUDIO_NORMAL_MODE:
-		वापस REGULATOR_MODE_NORMAL;
-	हाल CPCAP_BIT_AUDIO_LOW_PWR:
-		वापस REGULATOR_MODE_STANDBY;
-	शेष:
-		वापस REGULATOR_MODE_INVALID;
-	पूर्ण
-पूर्ण
+static unsigned int cpcap_map_mode(unsigned int mode)
+{
+	switch (mode) {
+	case CPCAP_BIT_AUDIO_NORMAL_MODE:
+		return REGULATOR_MODE_NORMAL;
+	case CPCAP_BIT_AUDIO_LOW_PWR:
+		return REGULATOR_MODE_STANDBY;
+	default:
+		return REGULATOR_MODE_INVALID;
+	}
+}
 
-अटल अचिन्हित पूर्णांक cpcap_regulator_get_mode(काष्ठा regulator_dev *rdev)
-अणु
-	पूर्णांक value;
+static unsigned int cpcap_regulator_get_mode(struct regulator_dev *rdev)
+{
+	int value;
 
-	regmap_पढ़ो(rdev->regmap, rdev->desc->enable_reg, &value);
+	regmap_read(rdev->regmap, rdev->desc->enable_reg, &value);
 
-	अगर (value & CPCAP_BIT_AUDIO_LOW_PWR)
-		वापस REGULATOR_MODE_STANDBY;
+	if (value & CPCAP_BIT_AUDIO_LOW_PWR)
+		return REGULATOR_MODE_STANDBY;
 
-	वापस REGULATOR_MODE_NORMAL;
-पूर्ण
+	return REGULATOR_MODE_NORMAL;
+}
 
-अटल पूर्णांक cpcap_regulator_set_mode(काष्ठा regulator_dev *rdev,
-				    अचिन्हित पूर्णांक mode)
-अणु
-	पूर्णांक value;
+static int cpcap_regulator_set_mode(struct regulator_dev *rdev,
+				    unsigned int mode)
+{
+	int value;
 
-	चयन (mode) अणु
-	हाल REGULATOR_MODE_NORMAL:
+	switch (mode) {
+	case REGULATOR_MODE_NORMAL:
 		value = CPCAP_BIT_AUDIO_NORMAL_MODE;
-		अवरोध;
-	हाल REGULATOR_MODE_STANDBY:
+		break;
+	case REGULATOR_MODE_STANDBY:
 		value = CPCAP_BIT_AUDIO_LOW_PWR;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस regmap_update_bits(rdev->regmap, rdev->desc->enable_reg,
+	return regmap_update_bits(rdev->regmap, rdev->desc->enable_reg,
 				  CPCAP_BIT_AUDIO_LOW_PWR, value);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा regulator_ops cpcap_regulator_ops = अणु
+static const struct regulator_ops cpcap_regulator_ops = {
 	.enable = cpcap_regulator_enable,
 	.disable = cpcap_regulator_disable,
 	.is_enabled = regulator_is_enabled_regmap,
@@ -267,10 +266,10 @@
 	.set_voltage_sel = regulator_set_voltage_sel_regmap,
 	.get_mode = cpcap_regulator_get_mode,
 	.set_mode = cpcap_regulator_set_mode,
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक unknown_val_tbl[] = अणु 0, पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक sw2_sw4_val_tbl[] = अणु 612500, 625000, 637500,
+static const unsigned int unknown_val_tbl[] = { 0, };
+static const unsigned int sw2_sw4_val_tbl[] = { 612500, 625000, 637500,
 						650000, 662500, 675000,
 						687500, 700000, 712500,
 						725000, 737500, 750000,
@@ -292,50 +291,50 @@
 						1325000, 1337500, 1350000,
 						1362500, 1375000, 1387500,
 						1400000, 1412500, 1425000,
-						1437500, 1450000, 1462500, पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक sw5_val_tbl[] = अणु 0, 5050000, पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक vcam_val_tbl[] = अणु 2600000, 2700000, 2800000,
-					     2900000, पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक vcsi_val_tbl[] = अणु 1200000, 1800000, पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक vdac_val_tbl[] = अणु 1200000, 1500000, 1800000,
-					     2500000,पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक vdig_val_tbl[] = अणु 1200000, 1350000, 1500000,
-					     1875000, पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक vfuse_val_tbl[] = अणु 1500000, 1600000, 1700000,
+						1437500, 1450000, 1462500, };
+static const unsigned int sw5_val_tbl[] = { 0, 5050000, };
+static const unsigned int vcam_val_tbl[] = { 2600000, 2700000, 2800000,
+					     2900000, };
+static const unsigned int vcsi_val_tbl[] = { 1200000, 1800000, };
+static const unsigned int vdac_val_tbl[] = { 1200000, 1500000, 1800000,
+					     2500000,};
+static const unsigned int vdig_val_tbl[] = { 1200000, 1350000, 1500000,
+					     1875000, };
+static const unsigned int vfuse_val_tbl[] = { 1500000, 1600000, 1700000,
 					      1800000, 1900000, 2000000,
 					      2100000, 2200000, 2300000,
 					      2400000, 2500000, 2600000,
-					      2700000, 3150000, पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक vhvio_val_tbl[] = अणु 2775000, पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक vsdio_val_tbl[] = अणु 1500000, 1600000, 1800000,
+					      2700000, 3150000, };
+static const unsigned int vhvio_val_tbl[] = { 2775000, };
+static const unsigned int vsdio_val_tbl[] = { 1500000, 1600000, 1800000,
 					      2600000, 2700000, 2800000,
-					      2900000, 3000000, पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक vpll_val_tbl[] = अणु 1200000, 1300000, 1400000,
-					     1800000, पूर्ण;
-/* Quirk: 2775000 is beक्रमe 2500000 क्रम vrf1 regulator */
-अटल स्थिर अचिन्हित पूर्णांक vrf1_val_tbl[] = अणु 2775000, 2500000, पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक vrf2_val_tbl[] = अणु 0, 2775000, पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक vrfref_val_tbl[] = अणु 2500000, 2775000, पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक vwlan1_val_tbl[] = अणु 1800000, 1900000, पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक vwlan2_val_tbl[] = अणु 2775000, 3000000, 3300000,
-					       3300000, पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक vsim_val_tbl[] = अणु 1800000, 2900000, पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक vsimcard_val_tbl[] = अणु 1800000, 2900000, पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक vvib_val_tbl[] = अणु 1300000, 1800000, 2000000,
-					     3000000, पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक vusb_val_tbl[] = अणु 0, 3300000, पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक vaudio_val_tbl[] = अणु 0, 2775000, पूर्ण;
+					      2900000, 3000000, };
+static const unsigned int vpll_val_tbl[] = { 1200000, 1300000, 1400000,
+					     1800000, };
+/* Quirk: 2775000 is before 2500000 for vrf1 regulator */
+static const unsigned int vrf1_val_tbl[] = { 2775000, 2500000, };
+static const unsigned int vrf2_val_tbl[] = { 0, 2775000, };
+static const unsigned int vrfref_val_tbl[] = { 2500000, 2775000, };
+static const unsigned int vwlan1_val_tbl[] = { 1800000, 1900000, };
+static const unsigned int vwlan2_val_tbl[] = { 2775000, 3000000, 3300000,
+					       3300000, };
+static const unsigned int vsim_val_tbl[] = { 1800000, 2900000, };
+static const unsigned int vsimcard_val_tbl[] = { 1800000, 2900000, };
+static const unsigned int vvib_val_tbl[] = { 1300000, 1800000, 2000000,
+					     3000000, };
+static const unsigned int vusb_val_tbl[] = { 0, 3300000, };
+static const unsigned int vaudio_val_tbl[] = { 0, 2775000, };
 
 /*
- * SoC specअगरic configuration क्रम omap4. The data below is comes from Motorola
+ * SoC specific configuration for omap4. The data below is comes from Motorola
  * Linux kernel tree. It's basically the values of cpcap_regltr_data,
  * cpcap_regulator_mode_values and cpcap_regulator_off_mode_values, see
  * CPCAP_REG macro above.
  *
- * SW1 to SW4 and SW6 seems to be unused क्रम mapphone. Note that VSIM and
+ * SW1 to SW4 and SW6 seems to be unused for mapphone. Note that VSIM and
  * VSIMCARD have a shared resource assignment bit.
  */
-अटल स्थिर काष्ठा cpcap_regulator omap4_regulators[] = अणु
+static const struct cpcap_regulator omap4_regulators[] = {
 	CPCAP_REG(SW1, CPCAP_REG_S1C1, CPCAP_REG_ASSIGN2,
 		  CPCAP_BIT_SW1_SEL, unknown_val_tbl,
 		  0, 0, 0, 0, 0),
@@ -408,10 +407,10 @@
 	CPCAP_REG(VAUDIO, CPCAP_REG_VAUDIOC, CPCAP_REG_ASSIGN4,
 		  CPCAP_BIT_VAUDIO_SEL, vaudio_val_tbl,
 		  0x16, 0x1, 0x4, 0, 0),
-	अणु /* sentinel */ पूर्ण,
-पूर्ण;
+	{ /* sentinel */ },
+};
 
-अटल स्थिर काष्ठा cpcap_regulator xoom_regulators[] = अणु
+static const struct cpcap_regulator xoom_regulators[] = {
 	CPCAP_REG(SW1, CPCAP_REG_S1C1, CPCAP_REG_ASSIGN2,
 		  CPCAP_BIT_SW1_SEL, unknown_val_tbl,
 		  0, 0, 0, 0, 0),
@@ -484,89 +483,89 @@
 	CPCAP_REG(VAUDIO, CPCAP_REG_VAUDIOC, CPCAP_REG_ASSIGN4,
 		  CPCAP_BIT_VAUDIO_SEL, vaudio_val_tbl,
 		  0x16, 0x1, 0x4, 0, 0),
-	अणु /* sentinel */ पूर्ण,
-पूर्ण;
+	{ /* sentinel */ },
+};
 
-अटल स्थिर काष्ठा of_device_id cpcap_regulator_id_table[] = अणु
-	अणु
+static const struct of_device_id cpcap_regulator_id_table[] = {
+	{
 		.compatible = "motorola,cpcap-regulator",
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "motorola,mapphone-cpcap-regulator",
 		.data = omap4_regulators,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "motorola,xoom-cpcap-regulator",
 		.data = xoom_regulators,
-	पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+	},
+	{},
+};
 MODULE_DEVICE_TABLE(of, cpcap_regulator_id_table);
 
-अटल पूर्णांक cpcap_regulator_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा cpcap_ddata *ddata;
-	स्थिर काष्ठा cpcap_regulator *match_data;
-	काष्ठा regulator_config config;
-	पूर्णांक i;
+static int cpcap_regulator_probe(struct platform_device *pdev)
+{
+	struct cpcap_ddata *ddata;
+	const struct cpcap_regulator *match_data;
+	struct regulator_config config;
+	int i;
 
 	match_data = of_device_get_match_data(&pdev->dev);
-	अगर (!match_data) अणु
+	if (!match_data) {
 		dev_err(&pdev->dev, "no configuration data found\n");
 
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	ddata = devm_kzalloc(&pdev->dev, माप(*ddata), GFP_KERNEL);
-	अगर (!ddata)
-		वापस -ENOMEM;
+	ddata = devm_kzalloc(&pdev->dev, sizeof(*ddata), GFP_KERNEL);
+	if (!ddata)
+		return -ENOMEM;
 
-	ddata->reg = dev_get_regmap(pdev->dev.parent, शून्य);
-	अगर (!ddata->reg)
-		वापस -ENODEV;
+	ddata->reg = dev_get_regmap(pdev->dev.parent, NULL);
+	if (!ddata->reg)
+		return -ENODEV;
 
 	ddata->dev = &pdev->dev;
 	ddata->soc = match_data;
-	platक्रमm_set_drvdata(pdev, ddata);
+	platform_set_drvdata(pdev, ddata);
 
-	स_रखो(&config, 0, माप(config));
+	memset(&config, 0, sizeof(config));
 	config.dev = &pdev->dev;
 	config.regmap = ddata->reg;
 
-	क्रम (i = 0; i < CPCAP_NR_REGULATORS; i++) अणु
-		स्थिर काष्ठा cpcap_regulator *regulator = &ddata->soc[i];
-		काष्ठा regulator_dev *rdev;
+	for (i = 0; i < CPCAP_NR_REGULATORS; i++) {
+		const struct cpcap_regulator *regulator = &ddata->soc[i];
+		struct regulator_dev *rdev;
 
-		अगर (!regulator->rdesc.name)
-			अवरोध;
+		if (!regulator->rdesc.name)
+			break;
 
-		अगर (regulator->rdesc.volt_table == unknown_val_tbl)
-			जारी;
+		if (regulator->rdesc.volt_table == unknown_val_tbl)
+			continue;
 
-		config.driver_data = (व्योम *)regulator;
-		rdev = devm_regulator_रेजिस्टर(&pdev->dev,
+		config.driver_data = (void *)regulator;
+		rdev = devm_regulator_register(&pdev->dev,
 					       &regulator->rdesc,
 					       &config);
-		अगर (IS_ERR(rdev)) अणु
+		if (IS_ERR(rdev)) {
 			dev_err(&pdev->dev, "failed to register regulator %s\n",
 				regulator->rdesc.name);
 
-			वापस PTR_ERR(rdev);
-		पूर्ण
-	पूर्ण
+			return PTR_ERR(rdev);
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver cpcap_regulator_driver = अणु
+static struct platform_driver cpcap_regulator_driver = {
 	.probe		= cpcap_regulator_probe,
-	.driver		= अणु
+	.driver		= {
 		.name	= "cpcap-regulator",
 		.of_match_table = of_match_ptr(cpcap_regulator_id_table),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(cpcap_regulator_driver);
+module_platform_driver(cpcap_regulator_driver);
 
 MODULE_ALIAS("platform:cpcap-regulator");
 MODULE_AUTHOR("Tony Lindgren <tony@atomide.com>");

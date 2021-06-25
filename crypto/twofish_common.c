@@ -1,42 +1,41 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Common Twofish algorithm parts shared between the c and assembler
  * implementations
  *
- * Originally Twofish क्रम GPG
+ * Originally Twofish for GPG
  * By Matthew Skala <mskala@ansuz.sooke.bc.ca>, July 26, 1998
  * 256-bit key length added March 20, 1999
- * Some modअगरications to reduce the text size by Werner Koch, April, 1998
+ * Some modifications to reduce the text size by Werner Koch, April, 1998
  * Ported to the kerneli patch by Marc Mutz <Marc@Mutz.com>
  * Ported to CryptoAPI by Colin Slater <hoho@tacomeat.net>
  *
- * The original author has disclaimed all copyright पूर्णांकerest in this
- * code and thus put it in the खुला करोमुख्य. The subsequent authors
+ * The original author has disclaimed all copyright interest in this
+ * code and thus put it in the public domain. The subsequent authors
  * have put this under the GNU General Public License.
  *
  * This code is a "clean room" implementation, written from the paper
- * _Twofish: A 128-Bit Block Cipher_ by Bruce Schneier, John Kअन्यथाy,
+ * _Twofish: A 128-Bit Block Cipher_ by Bruce Schneier, John Kelsey,
  * Doug Whiting, David Wagner, Chris Hall, and Niels Ferguson, available
- * through http://www.counterpane.com/twofish.hपंचांगl
+ * through http://www.counterpane.com/twofish.html
  *
- * For background inक्रमmation on multiplication in finite fields, used क्रम
+ * For background information on multiplication in finite fields, used for
  * the matrix operations in the key schedule, see the book _Contemporary
  * Abstract Algebra_ by Joseph A. Gallian, especially chapter 22 in the
  * Third Edition.
  */
 
-#समावेश <crypto/twofish.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/crypto.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
+#include <crypto/twofish.h>
+#include <linux/bitops.h>
+#include <linux/crypto.h>
+#include <linux/errno.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/types.h>
 
 
-/* The large precomputed tables क्रम the Twofish cipher (twofish.c)
+/* The large precomputed tables for the Twofish cipher (twofish.c)
  * Taken from the same source as twofish.c
  * Marc Mutz <Marc@Mutz.com>
  */
@@ -44,7 +43,7 @@
 /* These two tables are the q0 and q1 permutations, exactly as described in
  * the Twofish paper. */
 
-अटल स्थिर u8 q0[256] = अणु
+static const u8 q0[256] = {
 	0xA9, 0x67, 0xB3, 0xE8, 0x04, 0xFD, 0xA3, 0x76, 0x9A, 0x92, 0x80, 0x78,
 	0xE4, 0xDD, 0xD1, 0x38, 0x0D, 0xC6, 0x35, 0x98, 0x18, 0xF7, 0xEC, 0x6C,
 	0x43, 0x75, 0x37, 0x26, 0xFA, 0x13, 0x94, 0x48, 0xF2, 0xD0, 0x8B, 0x30,
@@ -67,9 +66,9 @@
 	0x65, 0xBC, 0xDB, 0xF8, 0xC8, 0xA8, 0x2B, 0x40, 0xDC, 0xFE, 0x32, 0xA4,
 	0xCA, 0x10, 0x21, 0xF0, 0xD3, 0x5D, 0x0F, 0x00, 0x6F, 0x9D, 0x36, 0x42,
 	0x4A, 0x5E, 0xC1, 0xE0
-पूर्ण;
+};
 
-अटल स्थिर u8 q1[256] = अणु
+static const u8 q1[256] = {
 	0x75, 0xF3, 0xC6, 0xF4, 0xDB, 0x7B, 0xFB, 0xC8, 0x4A, 0xD3, 0xE6, 0x6B,
 	0x45, 0x7D, 0xE8, 0x4B, 0xD6, 0x32, 0xD8, 0xFD, 0x37, 0x71, 0xF1, 0xE1,
 	0x30, 0x0F, 0xF8, 0x1B, 0x87, 0xFA, 0x06, 0x3F, 0x5E, 0xBA, 0xAE, 0x5B,
@@ -92,23 +91,23 @@
 	0x89, 0xD4, 0xED, 0xAB, 0x12, 0xA2, 0x0D, 0x52, 0xBB, 0x02, 0x2F, 0xA9,
 	0xD7, 0x61, 0x1E, 0xB4, 0x50, 0x04, 0xF6, 0xC2, 0x16, 0x25, 0x86, 0x56,
 	0x55, 0x09, 0xBE, 0x91
-पूर्ण;
+};
 
 /* These MDS tables are actually tables of MDS composed with q0 and q1,
- * because it is only ever used that way and we can save some समय by
- * precomputing.  Of course the मुख्य saving comes from precomputing the
+ * because it is only ever used that way and we can save some time by
+ * precomputing.  Of course the main saving comes from precomputing the
  * GF(2^8) multiplication involved in the MDS matrix multiply; by looking
  * things up in these tables we reduce the matrix multiply to four lookups
- * and three XORs.  Semi-क्रमmally, the definition of these tables is:
+ * and three XORs.  Semi-formally, the definition of these tables is:
  * mds[0][i] = MDS (q1[i] 0 0 0)^T  mds[1][i] = MDS (0 q0[i] 0 0)^T
  * mds[2][i] = MDS (0 0 q1[i] 0)^T  mds[3][i] = MDS (0 0 0 q0[i])^T
- * where ^T means "transpose", the matrix multiply is perक्रमmed in GF(2^8)
+ * where ^T means "transpose", the matrix multiply is performed in GF(2^8)
  * represented as GF(2)[x]/v(x) where v(x)=x^8+x^6+x^5+x^3+1 as described
  * by Schneier et al, and I'm casually glossing over the byte/word
  * conversion issues. */
 
-अटल स्थिर u32 mds[4][256] = अणु
-	अणु
+static const u32 mds[4][256] = {
+	{
 	0xBCBC3275, 0xECEC21F3, 0x202043C6, 0xB3B3C9F4, 0xDADA03DB, 0x02028B7B,
 	0xE2E22BFB, 0x9E9EFAC8, 0xC9C9EC4A, 0xD4D409D3, 0x18186BE6, 0x1E1E9F6B,
 	0x98980E45, 0xB2B2387D, 0xA6A6D2E8, 0x2626B74B, 0x3C3C57D6, 0x93938A32,
@@ -151,9 +150,9 @@
 	0xE6E6540D, 0xDBDBF252, 0x92927BBB, 0xB7B7B602, 0x6969CA2F, 0x3939D9A9,
 	0xD3D30CD7, 0xA7A72361, 0xA2A2AD1E, 0xC3C399B4, 0x6C6C4450, 0x07070504,
 	0x04047FF6, 0x272746C2, 0xACACA716, 0xD0D07625, 0x50501386, 0xDCDCF756,
-	0x84841A55, 0xE1E15109, 0x7A7A25BE, 0x1313EF91पूर्ण,
+	0x84841A55, 0xE1E15109, 0x7A7A25BE, 0x1313EF91},
 
-	अणु
+	{
 	0xA9D93939, 0x67901717, 0xB3719C9C, 0xE8D2A6A6, 0x04050707, 0xFD985252,
 	0xA3658080, 0x76DFE4E4, 0x9A084545, 0x92024B4B, 0x80A0E0E0, 0x78665A5A,
 	0xE4DDAFAF, 0xDDB06A6A, 0xD1BF6363, 0x38362A2A, 0x0D54E6E6, 0xC6432020,
@@ -196,9 +195,9 @@
 	0x2BCF6E6E, 0x40507070, 0xDCEB8585, 0xFE750A0A, 0x328A9393, 0xA48DDFDF,
 	0xCA4C2929, 0x10141C1C, 0x2173D7D7, 0xF0CCB4B4, 0xD309D4D4, 0x5D108A8A,
 	0x0FE25151, 0x00000000, 0x6F9A1919, 0x9DE01A1A, 0x368F9494, 0x42E6C7C7,
-	0x4AECC9C9, 0x5EFDD2D2, 0xC1AB7F7F, 0xE0D8A8A8पूर्ण,
+	0x4AECC9C9, 0x5EFDD2D2, 0xC1AB7F7F, 0xE0D8A8A8},
 
-	अणु
+	{
 	0xBC75BC32, 0xECF3EC21, 0x20C62043, 0xB3F4B3C9, 0xDADBDA03, 0x027B028B,
 	0xE2FBE22B, 0x9EC89EFA, 0xC94AC9EC, 0xD4D3D409, 0x18E6186B, 0x1E6B1E9F,
 	0x9845980E, 0xB27DB238, 0xA6E8A6D2, 0x264B26B7, 0x3CD63C57, 0x9332938A,
@@ -241,9 +240,9 @@
 	0xE60DE654, 0xDB52DBF2, 0x92BB927B, 0xB702B7B6, 0x692F69CA, 0x39A939D9,
 	0xD3D7D30C, 0xA761A723, 0xA21EA2AD, 0xC3B4C399, 0x6C506C44, 0x07040705,
 	0x04F6047F, 0x27C22746, 0xAC16ACA7, 0xD025D076, 0x50865013, 0xDC56DCF7,
-	0x8455841A, 0xE109E151, 0x7ABE7A25, 0x139113EFपूर्ण,
+	0x8455841A, 0xE109E151, 0x7ABE7A25, 0x139113EF},
 
-	अणु
+	{
 	0xD939A9D9, 0x90176790, 0x719CB371, 0xD2A6E8D2, 0x05070405, 0x9852FD98,
 	0x6580A365, 0xDFE476DF, 0x08459A08, 0x024B9202, 0xA0E080A0, 0x665A7866,
 	0xDDAFE4DD, 0xB06ADDB0, 0xBF63D1BF, 0x362A3836, 0x54E60D54, 0x4320C643,
@@ -286,43 +285,43 @@
 	0xCF6E2BCF, 0x50704050, 0xEB85DCEB, 0x750AFE75, 0x8A93328A, 0x8DDFA48D,
 	0x4C29CA4C, 0x141C1014, 0x73D72173, 0xCCB4F0CC, 0x09D4D309, 0x108A5D10,
 	0xE2510FE2, 0x00000000, 0x9A196F9A, 0xE01A9DE0, 0x8F94368F, 0xE6C742E6,
-	0xECC94AEC, 0xFDD25EFD, 0xAB7FC1AB, 0xD8A8E0D8पूर्ण
-पूर्ण;
+	0xECC94AEC, 0xFDD25EFD, 0xAB7FC1AB, 0xD8A8E0D8}
+};
 
-/* The exp_to_poly and poly_to_exp tables are used to perक्रमm efficient
+/* The exp_to_poly and poly_to_exp tables are used to perform efficient
  * operations in GF(2^8) represented as GF(2)[x]/w(x) where
- * w(x)=x^8+x^6+x^3+x^2+1.  We care about करोing that because it's part of the
+ * w(x)=x^8+x^6+x^3+x^2+1.  We care about doing that because it's part of the
  * definition of the RS matrix in the key schedule.  Elements of that field
  * are polynomials of degree not greater than 7 and all coefficients 0 or 1,
  * which can be represented naturally by bytes (just substitute x=2).  In that
- * क्रमm, GF(2^8) addition is the same as bitwise XOR, but GF(2^8)
+ * form, GF(2^8) addition is the same as bitwise XOR, but GF(2^8)
  * multiplication is inefficient without hardware support.  To multiply
- * faster, I make use of the fact x is a generator क्रम the nonzero elements,
- * so that every element p of GF(2)[x]/w(x) is either 0 or equal to (x)^n क्रम
+ * faster, I make use of the fact x is a generator for the nonzero elements,
+ * so that every element p of GF(2)[x]/w(x) is either 0 or equal to (x)^n for
  * some n in 0..254.  Note that that caret is exponentiation in GF(2^8),
- * *not* polynomial notation.  So अगर I want to compute pq where p and q are
+ * *not* polynomial notation.  So if I want to compute pq where p and q are
  * in GF(2^8), I can just say:
- *    1. अगर p=0 or q=0 then pq=0
+ *    1. if p=0 or q=0 then pq=0
  *    2. otherwise, find m and n such that p=x^m and q=x^n
  *    3. pq=(x^m)(x^n)=x^(m+n), so add m and n and find pq
  * The translations in steps 2 and 3 are looked up in the tables
- * poly_to_exp (क्रम step 2) and exp_to_poly (क्रम step 3).  To see this
+ * poly_to_exp (for step 2) and exp_to_poly (for step 3).  To see this
  * in action, look at the CALC_S macro.  As additional wrinkles, note that
- * one of my opeअक्रमs is always a स्थिरant, so the poly_to_exp lookup on it
- * is करोne in advance; I included the original values in the comments so
- * पढ़ोers can have some chance of recognizing that this *is* the RS matrix
+ * one of my operands is always a constant, so the poly_to_exp lookup on it
+ * is done in advance; I included the original values in the comments so
+ * readers can have some chance of recognizing that this *is* the RS matrix
  * from the Twofish paper.  I've only included the table entries I actually
- * need; I never करो a lookup on a variable input of zero and the biggest
+ * need; I never do a lookup on a variable input of zero and the biggest
  * exponents I'll ever see are 254 (variable) and 237 (constant), so they'll
  * never sum to more than 491.	I'm repeating part of the exp_to_poly table
- * so that I करोn't have to करो mod-255 reduction in the exponent arithmetic.
- * Since I know my स्थिरant opeअक्रमs are never zero, I only have to worry
- * about zero values in the variable opeअक्रम, and I करो it with a simple
+ * so that I don't have to do mod-255 reduction in the exponent arithmetic.
+ * Since I know my constant operands are never zero, I only have to worry
+ * about zero values in the variable operand, and I do it with a simple
  * conditional branch.	I know conditionals are expensive, but I couldn't
- * see a non-horrible way of aव्योमing them, and I did manage to group the
- * statements so that each अगर covers four group multiplications. */
+ * see a non-horrible way of avoiding them, and I did manage to group the
+ * statements so that each if covers four group multiplications. */
 
-अटल स्थिर u8 poly_to_exp[255] = अणु
+static const u8 poly_to_exp[255] = {
 	0x00, 0x01, 0x17, 0x02, 0x2E, 0x18, 0x53, 0x03, 0x6A, 0x2F, 0x93, 0x19,
 	0x34, 0x54, 0x45, 0x04, 0x5C, 0x6B, 0xB6, 0x30, 0xA6, 0x94, 0x4B, 0x1A,
 	0x8C, 0x35, 0x81, 0x55, 0xAA, 0x46, 0x0D, 0x05, 0x24, 0x5D, 0x87, 0x6C,
@@ -345,9 +344,9 @@
 	0xD0, 0xDD, 0x77, 0xAD, 0xDA, 0xC5, 0x40, 0xF2, 0x39, 0xB0, 0xF7, 0x49,
 	0xB4, 0x0B, 0x7F, 0x51, 0x15, 0x43, 0x91, 0x10, 0x71, 0xBB, 0xEE, 0xBF,
 	0x85, 0xC8, 0xA1
-पूर्ण;
+};
 
-अटल स्थिर u8 exp_to_poly[492] = अणु
+static const u8 exp_to_poly[492] = {
 	0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x4D, 0x9A, 0x79, 0xF2,
 	0xA9, 0x1F, 0x3E, 0x7C, 0xF8, 0xBD, 0x37, 0x6E, 0xDC, 0xF5, 0xA7, 0x03,
 	0x06, 0x0C, 0x18, 0x30, 0x60, 0xC0, 0xCD, 0xD7, 0xE3, 0x8B, 0x5B, 0xB6,
@@ -389,12 +388,12 @@
 	0xB1, 0x2F, 0x5E, 0xBC, 0x35, 0x6A, 0xD4, 0xE5, 0x87, 0x43, 0x86, 0x41,
 	0x82, 0x49, 0x92, 0x69, 0xD2, 0xE9, 0x9F, 0x73, 0xE6, 0x81, 0x4F, 0x9E,
 	0x71, 0xE2, 0x89, 0x5F, 0xBE, 0x31, 0x62, 0xC4, 0xC5, 0xC7, 0xC3, 0xCB
-पूर्ण;
+};
 
 
-/* The table स्थिरants are indices of
+/* The table constants are indices of
  * S-box entries, preprocessed through q0 and q1. */
-अटल स्थिर u8 calc_sb_tbl[512] = अणु
+static const u8 calc_sb_tbl[512] = {
 	0xA9, 0x75, 0x67, 0xF3, 0xB3, 0xC6, 0xE8, 0xF4,
 	0x04, 0xDB, 0xFD, 0x7B, 0xA3, 0xFB, 0x76, 0xC8,
 	0x9A, 0x4A, 0x92, 0xD3, 0x80, 0xE6, 0x78, 0x6B,
@@ -459,137 +458,137 @@
 	0xD3, 0x50, 0x5D, 0x04, 0x0F, 0xF6, 0x00, 0xC2,
 	0x6F, 0x16, 0x9D, 0x25, 0x36, 0x86, 0x42, 0x56,
 	0x4A, 0x55, 0x5E, 0x09, 0xC1, 0xBE, 0xE0, 0x91
-पूर्ण;
+};
 
-/* Macro to perक्रमm one column of the RS matrix multiplication.  The
+/* Macro to perform one column of the RS matrix multiplication.  The
  * parameters a, b, c, and d are the four bytes of output; i is the index
- * of the key bytes, and w, x, y, and z, are the column of स्थिरants from
+ * of the key bytes, and w, x, y, and z, are the column of constants from
  * the RS matrix, preprocessed through the poly_to_exp table. */
 
-#घोषणा CALC_S(a, b, c, d, i, w, x, y, z) \
-   अगर (key[i]) अणु \
-      पंचांगp = poly_to_exp[key[i] - 1]; \
-      (a) ^= exp_to_poly[पंचांगp + (w)]; \
-      (b) ^= exp_to_poly[पंचांगp + (x)]; \
-      (c) ^= exp_to_poly[पंचांगp + (y)]; \
-      (d) ^= exp_to_poly[पंचांगp + (z)]; \
-   पूर्ण
+#define CALC_S(a, b, c, d, i, w, x, y, z) \
+   if (key[i]) { \
+      tmp = poly_to_exp[key[i] - 1]; \
+      (a) ^= exp_to_poly[tmp + (w)]; \
+      (b) ^= exp_to_poly[tmp + (x)]; \
+      (c) ^= exp_to_poly[tmp + (y)]; \
+      (d) ^= exp_to_poly[tmp + (z)]; \
+   }
 
-/* Macros to calculate the key-dependent S-boxes क्रम a 128-bit key using
+/* Macros to calculate the key-dependent S-boxes for a 128-bit key using
  * the S vector from CALC_S.  CALC_SB_2 computes a single entry in all
  * four S-boxes, where i is the index of the entry to compute, and a and b
  * are the index numbers preprocessed through the q0 and q1 tables
  * respectively. */
 
-#घोषणा CALC_SB_2(i, a, b) \
+#define CALC_SB_2(i, a, b) \
    ctx->s[0][i] = mds[0][q0[(a) ^ sa] ^ se]; \
    ctx->s[1][i] = mds[1][q0[(b) ^ sb] ^ sf]; \
    ctx->s[2][i] = mds[2][q1[(a) ^ sc] ^ sg]; \
    ctx->s[3][i] = mds[3][q1[(b) ^ sd] ^ sh]
 
-/* Macro exactly like CALC_SB_2, but क्रम 192-bit keys. */
+/* Macro exactly like CALC_SB_2, but for 192-bit keys. */
 
-#घोषणा CALC_SB192_2(i, a, b) \
+#define CALC_SB192_2(i, a, b) \
    ctx->s[0][i] = mds[0][q0[q0[(b) ^ sa] ^ se] ^ si]; \
    ctx->s[1][i] = mds[1][q0[q1[(b) ^ sb] ^ sf] ^ sj]; \
    ctx->s[2][i] = mds[2][q1[q0[(a) ^ sc] ^ sg] ^ sk]; \
    ctx->s[3][i] = mds[3][q1[q1[(a) ^ sd] ^ sh] ^ sl];
 
-/* Macro exactly like CALC_SB_2, but क्रम 256-bit keys. */
+/* Macro exactly like CALC_SB_2, but for 256-bit keys. */
 
-#घोषणा CALC_SB256_2(i, a, b) \
+#define CALC_SB256_2(i, a, b) \
    ctx->s[0][i] = mds[0][q0[q0[q1[(b) ^ sa] ^ se] ^ si] ^ sm]; \
    ctx->s[1][i] = mds[1][q0[q1[q1[(a) ^ sb] ^ sf] ^ sj] ^ sn]; \
    ctx->s[2][i] = mds[2][q1[q0[q0[(a) ^ sc] ^ sg] ^ sk] ^ so]; \
    ctx->s[3][i] = mds[3][q1[q1[q0[(b) ^ sd] ^ sh] ^ sl] ^ sp];
 
 /* Macros to calculate the whitening and round subkeys.  CALC_K_2 computes the
- * last two stages of the h() function क्रम a given index (either 2i or 2i+1).
- * a, b, c, and d are the four bytes going पूर्णांकo the last two stages.  For
+ * last two stages of the h() function for a given index (either 2i or 2i+1).
+ * a, b, c, and d are the four bytes going into the last two stages.  For
  * 128-bit keys, this is the entire h() function and a and c are the index
- * preprocessed through q0 and q1 respectively; क्रम दीर्घer keys they are the
+ * preprocessed through q0 and q1 respectively; for longer keys they are the
  * output of previous stages.  j is the index of the first key byte to use.
- * CALC_K computes a pair of subkeys क्रम 128-bit Twofish, by calling CALC_K_2
- * twice, करोing the Pseuकरो-Hadamard Transक्रमm, and करोing the necessary
- * rotations.  Its parameters are: a, the array to ग_लिखो the results पूर्णांकo,
+ * CALC_K computes a pair of subkeys for 128-bit Twofish, by calling CALC_K_2
+ * twice, doing the Pseudo-Hadamard Transform, and doing the necessary
+ * rotations.  Its parameters are: a, the array to write the results into,
  * j, the index of the first output entry, k and l, the preprocessed indices
- * क्रम index 2i, and m and n, the preprocessed indices क्रम index 2i+1.
- * CALC_K192_2 expands CALC_K_2 to handle 192-bit keys, by करोing an
+ * for index 2i, and m and n, the preprocessed indices for index 2i+1.
+ * CALC_K192_2 expands CALC_K_2 to handle 192-bit keys, by doing an
  * additional lookup-and-XOR stage.  The parameters a, b, c and d are the
- * four bytes going पूर्णांकo the last three stages.  For 192-bit keys, c = d
+ * four bytes going into the last three stages.  For 192-bit keys, c = d
  * are the index preprocessed through q0, and a = b are the index
  * preprocessed through q1; j is the index of the first key byte to use.
- * CALC_K192 is identical to CALC_K but क्रम using the CALC_K192_2 macro
+ * CALC_K192 is identical to CALC_K but for using the CALC_K192_2 macro
  * instead of CALC_K_2.
- * CALC_K256_2 expands CALC_K192_2 to handle 256-bit keys, by करोing an
+ * CALC_K256_2 expands CALC_K192_2 to handle 256-bit keys, by doing an
  * additional lookup-and-XOR stage.  The parameters a and b are the index
  * preprocessed through q0 and q1 respectively; j is the index of the first
- * key byte to use.  CALC_K256 is identical to CALC_K but क्रम using the
+ * key byte to use.  CALC_K256 is identical to CALC_K but for using the
  * CALC_K256_2 macro instead of CALC_K_2. */
 
-#घोषणा CALC_K_2(a, b, c, d, j) \
+#define CALC_K_2(a, b, c, d, j) \
      mds[0][q0[a ^ key[(j) + 8]] ^ key[j]] \
    ^ mds[1][q0[b ^ key[(j) + 9]] ^ key[(j) + 1]] \
    ^ mds[2][q1[c ^ key[(j) + 10]] ^ key[(j) + 2]] \
    ^ mds[3][q1[d ^ key[(j) + 11]] ^ key[(j) + 3]]
 
-#घोषणा CALC_K(a, j, k, l, m, n) \
+#define CALC_K(a, j, k, l, m, n) \
    x = CALC_K_2 (k, l, k, l, 0); \
    y = CALC_K_2 (m, n, m, n, 4); \
    y = rol32(y, 8); \
    x += y; y += x; ctx->a[j] = x; \
    ctx->a[(j) + 1] = rol32(y, 9)
 
-#घोषणा CALC_K192_2(a, b, c, d, j) \
+#define CALC_K192_2(a, b, c, d, j) \
    CALC_K_2 (q0[a ^ key[(j) + 16]], \
 	     q1[b ^ key[(j) + 17]], \
 	     q0[c ^ key[(j) + 18]], \
 	     q1[d ^ key[(j) + 19]], j)
 
-#घोषणा CALC_K192(a, j, k, l, m, n) \
+#define CALC_K192(a, j, k, l, m, n) \
    x = CALC_K192_2 (l, l, k, k, 0); \
    y = CALC_K192_2 (n, n, m, m, 4); \
    y = rol32(y, 8); \
    x += y; y += x; ctx->a[j] = x; \
    ctx->a[(j) + 1] = rol32(y, 9)
 
-#घोषणा CALC_K256_2(a, b, j) \
+#define CALC_K256_2(a, b, j) \
    CALC_K192_2 (q1[b ^ key[(j) + 24]], \
 	        q1[a ^ key[(j) + 25]], \
 	        q0[a ^ key[(j) + 26]], \
 	        q0[b ^ key[(j) + 27]], j)
 
-#घोषणा CALC_K256(a, j, k, l, m, n) \
+#define CALC_K256(a, j, k, l, m, n) \
    x = CALC_K256_2 (k, l, 0); \
    y = CALC_K256_2 (m, n, 4); \
    y = rol32(y, 8); \
    x += y; y += x; ctx->a[j] = x; \
    ctx->a[(j) + 1] = rol32(y, 9)
 
-/* Perक्रमm the key setup. */
-पूर्णांक __twofish_setkey(काष्ठा twofish_ctx *ctx, स्थिर u8 *key,
-		     अचिन्हित पूर्णांक key_len)
-अणु
-	पूर्णांक i, j, k;
+/* Perform the key setup. */
+int __twofish_setkey(struct twofish_ctx *ctx, const u8 *key,
+		     unsigned int key_len)
+{
+	int i, j, k;
 
-	/* Temporaries क्रम CALC_K. */
+	/* Temporaries for CALC_K. */
 	u32 x, y;
 
-	/* The S vector used to key the S-boxes, split up पूर्णांकo inभागidual bytes.
+	/* The S vector used to key the S-boxes, split up into individual bytes.
 	 * 128-bit keys use only sa through sh; 256-bit use all of them. */
 	u8 sa = 0, sb = 0, sc = 0, sd = 0, se = 0, sf = 0, sg = 0, sh = 0;
 	u8 si = 0, sj = 0, sk = 0, sl = 0, sm = 0, sn = 0, so = 0, sp = 0;
 
-	/* Temporary क्रम CALC_S. */
-	u8 पंचांगp;
+	/* Temporary for CALC_S. */
+	u8 tmp;
 
 	/* Check key length. */
-	अगर (key_len % 8)
-		वापस -EINVAL; /* unsupported key length */
+	if (key_len % 8)
+		return -EINVAL; /* unsupported key length */
 
 	/* Compute the first two words of the S vector.  The magic numbers are
 	 * the entries of the RS matrix, preprocessed through poly_to_exp. The
-	 * numbers in the comments are the original (polynomial क्रमm) matrix
+	 * numbers in the comments are the original (polynomial form) matrix
 	 * entries. */
 	CALC_S (sa, sb, sc, sd, 0, 0x00, 0x2D, 0x01, 0x2D); /* 01 A4 02 A4 */
 	CALC_S (sa, sb, sc, sd, 1, 0x2D, 0xA4, 0x44, 0x8A); /* A4 56 A1 55 */
@@ -608,7 +607,7 @@
 	CALC_S (se, sf, sg, sh, 14, 0xED, 0x37, 0x4F, 0xE0); /* DB 68 3D 9E */
 	CALC_S (se, sf, sg, sh, 15, 0xE0, 0xD0, 0x8C, 0x17); /* 9E E5 19 03 */
 
-	अगर (key_len == 24 || key_len == 32) अणु /* 192- or 256-bit key */
+	if (key_len == 24 || key_len == 32) { /* 192- or 256-bit key */
 		/* Calculate the third word of the S vector */
 		CALC_S (si, sj, sk, sl, 16, 0x00, 0x2D, 0x01, 0x2D); /* 01 A4 02 A4 */
 		CALC_S (si, sj, sk, sl, 17, 0x2D, 0xA4, 0x44, 0x8A); /* A4 56 A1 55 */
@@ -618,9 +617,9 @@
 		CALC_S (si, sj, sk, sl, 21, 0x96, 0x3C, 0x5B, 0xED); /* 58 C6 AE DB */
 		CALC_S (si, sj, sk, sl, 22, 0xED, 0x37, 0x4F, 0xE0); /* DB 68 3D 9E */
 		CALC_S (si, sj, sk, sl, 23, 0xE0, 0xD0, 0x8C, 0x17); /* 9E E5 19 03 */
-	पूर्ण
+	}
 
-	अगर (key_len == 32) अणु /* 256-bit key */
+	if (key_len == 32) { /* 256-bit key */
 		/* Calculate the fourth word of the S vector */
 		CALC_S (sm, sn, so, sp, 24, 0x00, 0x2D, 0x01, 0x2D); /* 01 A4 02 A4 */
 		CALC_S (sm, sn, so, sp, 25, 0x2D, 0xA4, 0x44, 0x8A); /* A4 56 A1 55 */
@@ -632,9 +631,9 @@
 		CALC_S (sm, sn, so, sp, 31, 0xE0, 0xD0, 0x8C, 0x17); /* 9E E5 19 03 */
 
 		/* Compute the S-boxes. */
-		क्रम ( i = j = 0, k = 1; i < 256; i++, j += 2, k += 2 ) अणु
+		for ( i = j = 0, k = 1; i < 256; i++, j += 2, k += 2 ) {
 			CALC_SB256_2( i, calc_sb_tbl[j], calc_sb_tbl[k] );
-		पूर्ण
+		}
 
 		/* CALC_K256/CALC_K192/CALC_K loops were unrolled.
 		 * Unrolling produced x2.5 more code (+18k on i386),
@@ -646,48 +645,48 @@
 		 *    CALC_K: ~70 insns
 		 */
 		/* Calculate whitening and round subkeys */
-		क्रम ( i = 0; i < 8; i += 2 ) अणु
+		for ( i = 0; i < 8; i += 2 ) {
 			CALC_K256 (w, i, q0[i], q1[i], q0[i+1], q1[i+1]);
-		पूर्ण
-		क्रम ( i = 0; i < 32; i += 2 ) अणु
+		}
+		for ( i = 0; i < 32; i += 2 ) {
 			CALC_K256 (k, i, q0[i+8], q1[i+8], q0[i+9], q1[i+9]);
-		पूर्ण
-	पूर्ण अन्यथा अगर (key_len == 24) अणु /* 192-bit key */
+		}
+	} else if (key_len == 24) { /* 192-bit key */
 		/* Compute the S-boxes. */
-		क्रम ( i = j = 0, k = 1; i < 256; i++, j += 2, k += 2 ) अणु
+		for ( i = j = 0, k = 1; i < 256; i++, j += 2, k += 2 ) {
 		        CALC_SB192_2( i, calc_sb_tbl[j], calc_sb_tbl[k] );
-		पूर्ण
+		}
 
 		/* Calculate whitening and round subkeys */
-		क्रम ( i = 0; i < 8; i += 2 ) अणु
+		for ( i = 0; i < 8; i += 2 ) {
 			CALC_K192 (w, i, q0[i], q1[i], q0[i+1], q1[i+1]);
-		पूर्ण
-		क्रम ( i = 0; i < 32; i += 2 ) अणु
+		}
+		for ( i = 0; i < 32; i += 2 ) {
 			CALC_K192 (k, i, q0[i+8], q1[i+8], q0[i+9], q1[i+9]);
-		पूर्ण
-	पूर्ण अन्यथा अणु /* 128-bit key */
+		}
+	} else { /* 128-bit key */
 		/* Compute the S-boxes. */
-		क्रम ( i = j = 0, k = 1; i < 256; i++, j += 2, k += 2 ) अणु
+		for ( i = j = 0, k = 1; i < 256; i++, j += 2, k += 2 ) {
 			CALC_SB_2( i, calc_sb_tbl[j], calc_sb_tbl[k] );
-		पूर्ण
+		}
 
 		/* Calculate whitening and round subkeys */
-		क्रम ( i = 0; i < 8; i += 2 ) अणु
+		for ( i = 0; i < 8; i += 2 ) {
 			CALC_K (w, i, q0[i], q1[i], q0[i+1], q1[i+1]);
-		पूर्ण
-		क्रम ( i = 0; i < 32; i += 2 ) अणु
+		}
+		for ( i = 0; i < 32; i += 2 ) {
 			CALC_K (k, i, q0[i+8], q1[i+8], q0[i+9], q1[i+9]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(__twofish_setkey);
 
-पूर्णांक twofish_setkey(काष्ठा crypto_tfm *tfm, स्थिर u8 *key, अचिन्हित पूर्णांक key_len)
-अणु
-	वापस __twofish_setkey(crypto_tfm_ctx(tfm), key, key_len);
-पूर्ण
+int twofish_setkey(struct crypto_tfm *tfm, const u8 *key, unsigned int key_len)
+{
+	return __twofish_setkey(crypto_tfm_ctx(tfm), key, key_len);
+}
 EXPORT_SYMBOL_GPL(twofish_setkey);
 
 MODULE_LICENSE("GPL");

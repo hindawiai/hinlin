@@ -1,13 +1,12 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2005-2018 Andes Technology Corporation
 
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/sfp-machine.h>
-#समावेश <math-emu/soft-fp.h>
-#समावेश <math-emu/single.h>
-व्योम fवर्ग_मूलs(व्योम *ft, व्योम *fa)
-अणु
+#include <linux/uaccess.h>
+#include <asm/sfp-machine.h>
+#include <math-emu/soft-fp.h>
+#include <math-emu/single.h>
+void fsqrts(void *ft, void *fa)
+{
 	FP_DECL_S(A);
 	FP_DECL_S(R);
 	FP_DECL_EX;
@@ -19,4 +18,4 @@
 	FP_PACK_SP(ft, R);
 
 	__FPU_FPCSR |= FP_CUR_EXCEPTIONS;
-पूर्ण
+}

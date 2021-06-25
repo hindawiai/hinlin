@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * netup-eeprom.h
  *
@@ -9,21 +8,21 @@
  * Copyright (C) 2009 Abylay Ospan <aospan@netup.ru>
  */
 
-#अगर_अघोषित NETUP_EEPROM_H
-#घोषणा NETUP_EEPROM_H
+#ifndef NETUP_EEPROM_H
+#define NETUP_EEPROM_H
 
-काष्ठा netup_port_info अणु
+struct netup_port_info {
 	u8 mac[6];/* card MAC address */
-पूर्ण;
+};
 
-काष्ठा netup_card_info अणु
-	काष्ठा netup_port_info port[2];/* ports - 1,2 */
+struct netup_card_info {
+	struct netup_port_info port[2];/* ports - 1,2 */
 	u8 rev;/* card revision */
-पूर्ण;
+};
 
-बाह्य पूर्णांक netup_eeprom_पढ़ो(काष्ठा i2c_adapter *i2c_adap, u8 addr);
-बाह्य पूर्णांक netup_eeprom_ग_लिखो(काष्ठा i2c_adapter *i2c_adap, u8 addr, u8 data);
-बाह्य व्योम netup_get_card_info(काष्ठा i2c_adapter *i2c_adap,
-				काष्ठा netup_card_info *cinfo);
+extern int netup_eeprom_read(struct i2c_adapter *i2c_adap, u8 addr);
+extern int netup_eeprom_write(struct i2c_adapter *i2c_adap, u8 addr, u8 data);
+extern void netup_get_card_info(struct i2c_adapter *i2c_adap,
+				struct netup_card_info *cinfo);
 
-#पूर्ण_अगर
+#endif

@@ -1,27 +1,26 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2017 Linaro Ltd.
  */
-#अगर_अघोषित __VENUS_FIRMWARE_H__
-#घोषणा __VENUS_FIRMWARE_H__
+#ifndef __VENUS_FIRMWARE_H__
+#define __VENUS_FIRMWARE_H__
 
-काष्ठा device;
+struct device;
 
-पूर्णांक venus_firmware_init(काष्ठा venus_core *core);
-व्योम venus_firmware_deinit(काष्ठा venus_core *core);
-पूर्णांक venus_boot(काष्ठा venus_core *core);
-पूर्णांक venus_shutकरोwn(काष्ठा venus_core *core);
-पूर्णांक venus_set_hw_state(काष्ठा venus_core *core, bool suspend);
+int venus_firmware_init(struct venus_core *core);
+void venus_firmware_deinit(struct venus_core *core);
+int venus_boot(struct venus_core *core);
+int venus_shutdown(struct venus_core *core);
+int venus_set_hw_state(struct venus_core *core, bool suspend);
 
-अटल अंतरभूत पूर्णांक venus_set_hw_state_suspend(काष्ठा venus_core *core)
-अणु
-	वापस venus_set_hw_state(core, false);
-पूर्ण
+static inline int venus_set_hw_state_suspend(struct venus_core *core)
+{
+	return venus_set_hw_state(core, false);
+}
 
-अटल अंतरभूत पूर्णांक venus_set_hw_state_resume(काष्ठा venus_core *core)
-अणु
-	वापस venus_set_hw_state(core, true);
-पूर्ण
+static inline int venus_set_hw_state_resume(struct venus_core *core)
+{
+	return venus_set_hw_state(core, true);
+}
 
-#पूर्ण_अगर
+#endif

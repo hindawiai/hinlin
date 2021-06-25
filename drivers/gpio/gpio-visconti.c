@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Toshiba Visconti GPIO Support
  *
@@ -9,152 +8,152 @@
  * Nobuhiro Iwamatsu <nobuhiro1.iwamatsu@toshiba.co.jp>
  */
 
-#समावेश <linux/gpio/driver.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/module.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/bitops.h>
+#include <linux/gpio/driver.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/module.h>
+#include <linux/io.h>
+#include <linux/of_irq.h>
+#include <linux/platform_device.h>
+#include <linux/bitops.h>
 
-/* रेजिस्टर offset */
-#घोषणा GPIO_सूची	0x00
-#घोषणा GPIO_IDATA	0x08
-#घोषणा GPIO_ODATA	0x10
-#घोषणा GPIO_OSET	0x18
-#घोषणा GPIO_OCLR	0x20
-#घोषणा GPIO_INTMODE	0x30
+/* register offset */
+#define GPIO_DIR	0x00
+#define GPIO_IDATA	0x08
+#define GPIO_ODATA	0x10
+#define GPIO_OSET	0x18
+#define GPIO_OCLR	0x20
+#define GPIO_INTMODE	0x30
 
-#घोषणा BASE_HW_IRQ 24
+#define BASE_HW_IRQ 24
 
-काष्ठा visconti_gpio अणु
-	व्योम __iomem *base;
-	spinlock_t lock; /* protect gpio रेजिस्टर */
-	काष्ठा gpio_chip gpio_chip;
-	काष्ठा irq_chip irq_chip;
-पूर्ण;
+struct visconti_gpio {
+	void __iomem *base;
+	spinlock_t lock; /* protect gpio register */
+	struct gpio_chip gpio_chip;
+	struct irq_chip irq_chip;
+};
 
-अटल पूर्णांक visconti_gpio_irq_set_type(काष्ठा irq_data *d, अचिन्हित पूर्णांक type)
-अणु
-	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(d);
-	काष्ठा visconti_gpio *priv = gpiochip_get_data(gc);
+static int visconti_gpio_irq_set_type(struct irq_data *d, unsigned int type)
+{
+	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
+	struct visconti_gpio *priv = gpiochip_get_data(gc);
 	u32 offset = irqd_to_hwirq(d);
 	u32 bit = BIT(offset);
-	u32 पूर्णांकc_type = IRQ_TYPE_EDGE_RISING;
-	u32 पूर्णांकmode, odata;
-	पूर्णांक ret = 0;
-	अचिन्हित दीर्घ flags;
+	u32 intc_type = IRQ_TYPE_EDGE_RISING;
+	u32 intmode, odata;
+	int ret = 0;
+	unsigned long flags;
 
 	spin_lock_irqsave(&priv->lock, flags);
 
-	odata = पढ़ोl(priv->base + GPIO_ODATA);
-	पूर्णांकmode = पढ़ोl(priv->base + GPIO_INTMODE);
+	odata = readl(priv->base + GPIO_ODATA);
+	intmode = readl(priv->base + GPIO_INTMODE);
 
-	चयन (type) अणु
-	हाल IRQ_TYPE_EDGE_RISING:
+	switch (type) {
+	case IRQ_TYPE_EDGE_RISING:
 		odata &= ~bit;
-		पूर्णांकmode &= ~bit;
-		अवरोध;
-	हाल IRQ_TYPE_EDGE_FALLING:
+		intmode &= ~bit;
+		break;
+	case IRQ_TYPE_EDGE_FALLING:
 		odata |= bit;
-		पूर्णांकmode &= ~bit;
-		अवरोध;
-	हाल IRQ_TYPE_EDGE_BOTH:
-		पूर्णांकmode |= bit;
-		अवरोध;
-	हाल IRQ_TYPE_LEVEL_HIGH:
-		पूर्णांकc_type = IRQ_TYPE_LEVEL_HIGH;
+		intmode &= ~bit;
+		break;
+	case IRQ_TYPE_EDGE_BOTH:
+		intmode |= bit;
+		break;
+	case IRQ_TYPE_LEVEL_HIGH:
+		intc_type = IRQ_TYPE_LEVEL_HIGH;
 		odata &= ~bit;
-		पूर्णांकmode &= ~bit;
-		अवरोध;
-	हाल IRQ_TYPE_LEVEL_LOW:
-		पूर्णांकc_type = IRQ_TYPE_LEVEL_HIGH;
+		intmode &= ~bit;
+		break;
+	case IRQ_TYPE_LEVEL_LOW:
+		intc_type = IRQ_TYPE_LEVEL_HIGH;
 		odata |= bit;
-		पूर्णांकmode &= ~bit;
-		अवरोध;
-	शेष:
+		intmode &= ~bit;
+		break;
+	default:
 		ret = -EINVAL;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	ग_लिखोl(odata, priv->base + GPIO_ODATA);
-	ग_लिखोl(पूर्णांकmode, priv->base + GPIO_INTMODE);
-	irq_set_irq_type(offset, पूर्णांकc_type);
+	writel(odata, priv->base + GPIO_ODATA);
+	writel(intmode, priv->base + GPIO_INTMODE);
+	irq_set_irq_type(offset, intc_type);
 
 	ret = irq_chip_set_type_parent(d, type);
 err:
 	spin_unlock_irqrestore(&priv->lock, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक visconti_gpio_child_to_parent_hwirq(काष्ठा gpio_chip *gc,
-					       अचिन्हित पूर्णांक child,
-					       अचिन्हित पूर्णांक child_type,
-					       अचिन्हित पूर्णांक *parent,
-					       अचिन्हित पूर्णांक *parent_type)
-अणु
-	/* Interrupts 0..15 mapped to पूर्णांकerrupts 24..39 on the GIC */
-	अगर (child < 16) अणु
-		/* All these पूर्णांकerrupts are level high in the CPU */
+static int visconti_gpio_child_to_parent_hwirq(struct gpio_chip *gc,
+					       unsigned int child,
+					       unsigned int child_type,
+					       unsigned int *parent,
+					       unsigned int *parent_type)
+{
+	/* Interrupts 0..15 mapped to interrupts 24..39 on the GIC */
+	if (child < 16) {
+		/* All these interrupts are level high in the CPU */
 		*parent_type = IRQ_TYPE_LEVEL_HIGH;
 		*parent = child + BASE_HW_IRQ;
-		वापस 0;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+		return 0;
+	}
+	return -EINVAL;
+}
 
-अटल व्योम *visconti_gpio_populate_parent_fwspec(काष्ठा gpio_chip *chip,
-						  अचिन्हित पूर्णांक parent_hwirq,
-						  अचिन्हित पूर्णांक parent_type)
-अणु
-	काष्ठा irq_fwspec *fwspec;
+static void *visconti_gpio_populate_parent_fwspec(struct gpio_chip *chip,
+						  unsigned int parent_hwirq,
+						  unsigned int parent_type)
+{
+	struct irq_fwspec *fwspec;
 
-	fwspec = kदो_स्मृति(माप(*fwspec), GFP_KERNEL);
-	अगर (!fwspec)
-		वापस शून्य;
+	fwspec = kmalloc(sizeof(*fwspec), GFP_KERNEL);
+	if (!fwspec)
+		return NULL;
 
-	fwspec->fwnode = chip->irq.parent_करोमुख्य->fwnode;
+	fwspec->fwnode = chip->irq.parent_domain->fwnode;
 	fwspec->param_count = 3;
 	fwspec->param[0] = 0;
 	fwspec->param[1] = parent_hwirq;
 	fwspec->param[2] = parent_type;
 
-	वापस fwspec;
-पूर्ण
+	return fwspec;
+}
 
-अटल पूर्णांक visconti_gpio_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा visconti_gpio *priv;
-	काष्ठा irq_chip *irq_chip;
-	काष्ठा gpio_irq_chip *girq;
-	काष्ठा irq_करोमुख्य *parent;
-	काष्ठा device_node *irq_parent;
-	काष्ठा fwnode_handle *fwnode;
-	पूर्णांक ret;
+static int visconti_gpio_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct visconti_gpio *priv;
+	struct irq_chip *irq_chip;
+	struct gpio_irq_chip *girq;
+	struct irq_domain *parent;
+	struct device_node *irq_parent;
+	struct fwnode_handle *fwnode;
+	int ret;
 
-	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	spin_lock_init(&priv->lock);
 
-	priv->base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(priv->base))
-		वापस PTR_ERR(priv->base);
+	priv->base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(priv->base))
+		return PTR_ERR(priv->base);
 
 	irq_parent = of_irq_find_parent(dev->of_node);
-	अगर (!irq_parent) अणु
+	if (!irq_parent) {
 		dev_err(dev, "No IRQ parent node\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	parent = irq_find_host(irq_parent);
-	अगर (!parent) अणु
+	if (!parent) {
 		dev_err(dev, "No IRQ parent domain\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	fwnode = of_node_to_fwnode(irq_parent);
 	of_node_put(irq_parent);
@@ -163,13 +162,13 @@ err:
 			 priv->base + GPIO_IDATA,
 			 priv->base + GPIO_OSET,
 			 priv->base + GPIO_OCLR,
-			 priv->base + GPIO_सूची,
-			 शून्य,
+			 priv->base + GPIO_DIR,
+			 NULL,
 			 0);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "unable to init generic GPIO\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	irq_chip = &priv->irq_chip;
 	irq_chip->name = dev_name(dev);
@@ -182,37 +181,37 @@ err:
 	girq = &priv->gpio_chip.irq;
 	girq->chip = irq_chip;
 	girq->fwnode = fwnode;
-	girq->parent_करोमुख्य = parent;
+	girq->parent_domain = parent;
 	girq->child_to_parent_hwirq = visconti_gpio_child_to_parent_hwirq;
 	girq->populate_parent_alloc_arg = visconti_gpio_populate_parent_fwspec;
-	girq->शेष_type = IRQ_TYPE_NONE;
+	girq->default_type = IRQ_TYPE_NONE;
 	girq->handler = handle_level_irq;
 
 	ret = devm_gpiochip_add_data(dev, &priv->gpio_chip, priv);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to add GPIO chip\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	platक्रमm_set_drvdata(pdev, priv);
+	platform_set_drvdata(pdev, priv);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा of_device_id visconti_gpio_of_match[] = अणु
-	अणु .compatible = "toshiba,gpio-tmpv7708", पूर्ण,
-	अणु /* end of table */ पूर्ण
-पूर्ण;
+static const struct of_device_id visconti_gpio_of_match[] = {
+	{ .compatible = "toshiba,gpio-tmpv7708", },
+	{ /* end of table */ }
+};
 MODULE_DEVICE_TABLE(of, visconti_gpio_of_match);
 
-अटल काष्ठा platक्रमm_driver visconti_gpio_driver = अणु
+static struct platform_driver visconti_gpio_driver = {
 	.probe		= visconti_gpio_probe,
-	.driver		= अणु
+	.driver		= {
 		.name	= "visconti_gpio",
 		.of_match_table = of_match_ptr(visconti_gpio_of_match),
-	पूर्ण
-पूर्ण;
-module_platक्रमm_driver(visconti_gpio_driver);
+	}
+};
+module_platform_driver(visconti_gpio_driver);
 
 MODULE_AUTHOR("Nobuhiro Iwamatsu <nobuhiro1.iwamatsu@toshiba.co.jp>");
 MODULE_DESCRIPTION("Toshiba Visconti GPIO Driver");

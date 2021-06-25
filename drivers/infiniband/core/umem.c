@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2005 Topspin Communications.  All rights reserved.
  * Copyright (c) 2005 Cisco Systems.  All rights reserved.
@@ -8,20 +7,20 @@
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -34,149 +33,149 @@
  * SOFTWARE.
  */
 
-#समावेश <linux/mm.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/sched/mm.h>
-#समावेश <linux/export.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/count_zeros.h>
-#समावेश <rdma/ib_umem_odp.h>
+#include <linux/mm.h>
+#include <linux/dma-mapping.h>
+#include <linux/sched/signal.h>
+#include <linux/sched/mm.h>
+#include <linux/export.h>
+#include <linux/slab.h>
+#include <linux/pagemap.h>
+#include <linux/count_zeros.h>
+#include <rdma/ib_umem_odp.h>
 
-#समावेश "uverbs.h"
+#include "uverbs.h"
 
-अटल व्योम __ib_umem_release(काष्ठा ib_device *dev, काष्ठा ib_umem *umem, पूर्णांक dirty)
-अणु
+static void __ib_umem_release(struct ib_device *dev, struct ib_umem *umem, int dirty)
+{
 	bool make_dirty = umem->writable && dirty;
-	काष्ठा scatterlist *sg;
-	अचिन्हित पूर्णांक i;
+	struct scatterlist *sg;
+	unsigned int i;
 
-	अगर (umem->nmap > 0)
+	if (umem->nmap > 0)
 		ib_dma_unmap_sg(dev, umem->sg_head.sgl, umem->sg_nents,
-				DMA_BIसूचीECTIONAL);
+				DMA_BIDIRECTIONAL);
 
-	क्रम_each_sg(umem->sg_head.sgl, sg, umem->sg_nents, i)
+	for_each_sg(umem->sg_head.sgl, sg, umem->sg_nents, i)
 		unpin_user_page_range_dirty_lock(sg_page(sg),
 			DIV_ROUND_UP(sg->length, PAGE_SIZE), make_dirty);
 
-	sg_मुक्त_table(&umem->sg_head);
-पूर्ण
+	sg_free_table(&umem->sg_head);
+}
 
 /**
- * ib_umem_find_best_pgsz - Find best HW page size to use क्रम this MR
+ * ib_umem_find_best_pgsz - Find best HW page size to use for this MR
  *
- * @umem: umem काष्ठा
- * @pgsz_biपंचांगap: biपंचांगap of HW supported page sizes
+ * @umem: umem struct
+ * @pgsz_bitmap: bitmap of HW supported page sizes
  * @virt: IOVA
  *
- * This helper is पूर्णांकended क्रम HW that support multiple page
- * sizes but can करो only a single page size in an MR.
+ * This helper is intended for HW that support multiple page
+ * sizes but can do only a single page size in an MR.
  *
- * Returns 0 अगर the umem requires page sizes not supported by
+ * Returns 0 if the umem requires page sizes not supported by
  * the driver to be mapped. Drivers always supporting PAGE_SIZE
  * or smaller will never see a 0 result.
  */
-अचिन्हित दीर्घ ib_umem_find_best_pgsz(काष्ठा ib_umem *umem,
-				     अचिन्हित दीर्घ pgsz_biपंचांगap,
-				     अचिन्हित दीर्घ virt)
-अणु
-	काष्ठा scatterlist *sg;
-	अचिन्हित दीर्घ va, pgoff;
+unsigned long ib_umem_find_best_pgsz(struct ib_umem *umem,
+				     unsigned long pgsz_bitmap,
+				     unsigned long virt)
+{
+	struct scatterlist *sg;
+	unsigned long va, pgoff;
 	dma_addr_t mask;
-	पूर्णांक i;
+	int i;
 
-	अगर (umem->is_odp) अणु
-		अचिन्हित पूर्णांक page_size = BIT(to_ib_umem_odp(umem)->page_shअगरt);
+	if (umem->is_odp) {
+		unsigned int page_size = BIT(to_ib_umem_odp(umem)->page_shift);
 
 		/* ODP must always be self consistent. */
-		अगर (!(pgsz_biपंचांगap & page_size))
-			वापस 0;
-		वापस page_size;
-	पूर्ण
+		if (!(pgsz_bitmap & page_size))
+			return 0;
+		return page_size;
+	}
 
-	/* rdma_क्रम_each_block() has a bug अगर the page size is smaller than the
+	/* rdma_for_each_block() has a bug if the page size is smaller than the
 	 * page size used to build the umem. For now prevent smaller page sizes
-	 * from being वापसed.
+	 * from being returned.
 	 */
-	pgsz_biपंचांगap &= GENMASK(BITS_PER_LONG - 1, PAGE_SHIFT);
+	pgsz_bitmap &= GENMASK(BITS_PER_LONG - 1, PAGE_SHIFT);
 
 	umem->iova = va = virt;
 	/* The best result is the smallest page size that results in the minimum
 	 * number of required pages. Compute the largest page size that could
-	 * work based on VA address bits that करोn't change.
+	 * work based on VA address bits that don't change.
 	 */
-	mask = pgsz_biपंचांगap &
+	mask = pgsz_bitmap &
 	       GENMASK(BITS_PER_LONG - 1,
 		       bits_per((umem->length - 1 + virt) ^ virt));
-	/* offset पूर्णांकo first SGL */
+	/* offset into first SGL */
 	pgoff = umem->address & ~PAGE_MASK;
 
-	क्रम_each_sg(umem->sg_head.sgl, sg, umem->nmap, i) अणु
-		/* Walk SGL and reduce max page size अगर VA/PA bits dअगरfer
-		 * क्रम any address.
+	for_each_sg(umem->sg_head.sgl, sg, umem->nmap, i) {
+		/* Walk SGL and reduce max page size if VA/PA bits differ
+		 * for any address.
 		 */
 		mask |= (sg_dma_address(sg) + pgoff) ^ va;
 		va += sg_dma_len(sg) - pgoff;
-		/* Except क्रम the last entry, the ending iova alignment sets
+		/* Except for the last entry, the ending iova alignment sets
 		 * the maximum possible page size as the low bits of the iova
 		 * must be zero when starting the next chunk.
 		 */
-		अगर (i != (umem->nmap - 1))
+		if (i != (umem->nmap - 1))
 			mask |= va;
 		pgoff = 0;
-	पूर्ण
+	}
 
 	/* The mask accumulates 1's in each position where the VA and physical
-	 * address dअगरfer, thus the length of trailing 0 is the largest page
+	 * address differ, thus the length of trailing 0 is the largest page
 	 * size that can pass the VA through to the physical.
 	 */
-	अगर (mask)
-		pgsz_biपंचांगap &= GENMASK(count_trailing_zeros(mask), 0);
-	वापस pgsz_biपंचांगap ? roundकरोwn_घात_of_two(pgsz_biपंचांगap) : 0;
-पूर्ण
+	if (mask)
+		pgsz_bitmap &= GENMASK(count_trailing_zeros(mask), 0);
+	return pgsz_bitmap ? rounddown_pow_of_two(pgsz_bitmap) : 0;
+}
 EXPORT_SYMBOL(ib_umem_find_best_pgsz);
 
 /**
  * ib_umem_get - Pin and DMA map userspace memory.
  *
  * @device: IB device to connect UMEM
- * @addr: userspace भव address to start at
+ * @addr: userspace virtual address to start at
  * @size: length of region to pin
- * @access: IB_ACCESS_xxx flags क्रम memory being pinned
+ * @access: IB_ACCESS_xxx flags for memory being pinned
  */
-काष्ठा ib_umem *ib_umem_get(काष्ठा ib_device *device, अचिन्हित दीर्घ addr,
-			    माप_प्रकार size, पूर्णांक access)
-अणु
-	काष्ठा ib_umem *umem;
-	काष्ठा page **page_list;
-	अचिन्हित दीर्घ lock_limit;
-	अचिन्हित दीर्घ new_pinned;
-	अचिन्हित दीर्घ cur_base;
-	अचिन्हित दीर्घ dma_attr = 0;
-	काष्ठा mm_काष्ठा *mm;
-	अचिन्हित दीर्घ npages;
-	पूर्णांक ret;
-	काष्ठा scatterlist *sg = शून्य;
-	अचिन्हित पूर्णांक gup_flags = FOLL_WRITE;
+struct ib_umem *ib_umem_get(struct ib_device *device, unsigned long addr,
+			    size_t size, int access)
+{
+	struct ib_umem *umem;
+	struct page **page_list;
+	unsigned long lock_limit;
+	unsigned long new_pinned;
+	unsigned long cur_base;
+	unsigned long dma_attr = 0;
+	struct mm_struct *mm;
+	unsigned long npages;
+	int ret;
+	struct scatterlist *sg = NULL;
+	unsigned int gup_flags = FOLL_WRITE;
 
 	/*
-	 * If the combination of the addr and size requested क्रम this memory
-	 * region causes an पूर्णांकeger overflow, वापस error.
+	 * If the combination of the addr and size requested for this memory
+	 * region causes an integer overflow, return error.
 	 */
-	अगर (((addr + size) < addr) ||
+	if (((addr + size) < addr) ||
 	    PAGE_ALIGN(addr + size) < (addr + size))
-		वापस ERR_PTR(-EINVAL);
+		return ERR_PTR(-EINVAL);
 
-	अगर (!can_करो_mlock())
-		वापस ERR_PTR(-EPERM);
+	if (!can_do_mlock())
+		return ERR_PTR(-EPERM);
 
-	अगर (access & IB_ACCESS_ON_DEMAND)
-		वापस ERR_PTR(-EOPNOTSUPP);
+	if (access & IB_ACCESS_ON_DEMAND)
+		return ERR_PTR(-EOPNOTSUPP);
 
-	umem = kzalloc(माप(*umem), GFP_KERNEL);
-	अगर (!umem)
-		वापस ERR_PTR(-ENOMEM);
+	umem = kzalloc(sizeof(*umem), GFP_KERNEL);
+	if (!umem)
+		return ERR_PTR(-ENOMEM);
 	umem->ibdev      = device;
 	umem->length     = size;
 	umem->address    = addr;
@@ -189,41 +188,41 @@ EXPORT_SYMBOL(ib_umem_find_best_pgsz);
 	umem->owning_mm = mm = current->mm;
 	mmgrab(mm);
 
-	page_list = (काष्ठा page **) __get_मुक्त_page(GFP_KERNEL);
-	अगर (!page_list) अणु
+	page_list = (struct page **) __get_free_page(GFP_KERNEL);
+	if (!page_list) {
 		ret = -ENOMEM;
-		जाओ umem_kमुक्त;
-	पूर्ण
+		goto umem_kfree;
+	}
 
 	npages = ib_umem_num_pages(umem);
-	अगर (npages == 0 || npages > अच_पूर्णांक_उच्च) अणु
+	if (npages == 0 || npages > UINT_MAX) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	lock_limit = rlimit(RLIMIT_MEMLOCK) >> PAGE_SHIFT;
 
-	new_pinned = atomic64_add_वापस(npages, &mm->pinned_vm);
-	अगर (new_pinned > lock_limit && !capable(CAP_IPC_LOCK)) अणु
+	new_pinned = atomic64_add_return(npages, &mm->pinned_vm);
+	if (new_pinned > lock_limit && !capable(CAP_IPC_LOCK)) {
 		atomic64_sub(npages, &mm->pinned_vm);
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	cur_base = addr & PAGE_MASK;
 
-	अगर (!umem->writable)
+	if (!umem->writable)
 		gup_flags |= FOLL_FORCE;
 
-	जबतक (npages) अणु
+	while (npages) {
 		cond_resched();
 		ret = pin_user_pages_fast(cur_base,
-					  min_t(अचिन्हित दीर्घ, npages,
+					  min_t(unsigned long, npages,
 						PAGE_SIZE /
-						माप(काष्ठा page *)),
+						sizeof(struct page *)),
 					  gup_flags | FOLL_LONGTERM, page_list);
-		अगर (ret < 0)
-			जाओ umem_release;
+		if (ret < 0)
+			goto umem_release;
 
 		cur_base += ret * PAGE_SIZE;
 		npages -= ret;
@@ -232,61 +231,61 @@ EXPORT_SYMBOL(ib_umem_find_best_pgsz);
 				ib_dma_max_seg_size(device), sg, npages,
 				GFP_KERNEL);
 		umem->sg_nents = umem->sg_head.nents;
-		अगर (IS_ERR(sg)) अणु
+		if (IS_ERR(sg)) {
 			unpin_user_pages_dirty_lock(page_list, ret, 0);
 			ret = PTR_ERR(sg);
-			जाओ umem_release;
-		पूर्ण
-	पूर्ण
+			goto umem_release;
+		}
+	}
 
-	अगर (access & IB_ACCESS_RELAXED_ORDERING)
+	if (access & IB_ACCESS_RELAXED_ORDERING)
 		dma_attr |= DMA_ATTR_WEAK_ORDERING;
 
 	umem->nmap =
 		ib_dma_map_sg_attrs(device, umem->sg_head.sgl, umem->sg_nents,
-				    DMA_BIसूचीECTIONAL, dma_attr);
+				    DMA_BIDIRECTIONAL, dma_attr);
 
-	अगर (!umem->nmap) अणु
+	if (!umem->nmap) {
 		ret = -ENOMEM;
-		जाओ umem_release;
-	पूर्ण
+		goto umem_release;
+	}
 
 	ret = 0;
-	जाओ out;
+	goto out;
 
 umem_release:
 	__ib_umem_release(device, umem, 0);
 	atomic64_sub(ib_umem_num_pages(umem), &mm->pinned_vm);
 out:
-	मुक्त_page((अचिन्हित दीर्घ) page_list);
-umem_kमुक्त:
-	अगर (ret) अणु
+	free_page((unsigned long) page_list);
+umem_kfree:
+	if (ret) {
 		mmdrop(umem->owning_mm);
-		kमुक्त(umem);
-	पूर्ण
-	वापस ret ? ERR_PTR(ret) : umem;
-पूर्ण
+		kfree(umem);
+	}
+	return ret ? ERR_PTR(ret) : umem;
+}
 EXPORT_SYMBOL(ib_umem_get);
 
 /**
  * ib_umem_release - release memory pinned with ib_umem_get
- * @umem: umem काष्ठा to release
+ * @umem: umem struct to release
  */
-व्योम ib_umem_release(काष्ठा ib_umem *umem)
-अणु
-	अगर (!umem)
-		वापस;
-	अगर (umem->is_dmabuf)
-		वापस ib_umem_dmabuf_release(to_ib_umem_dmabuf(umem));
-	अगर (umem->is_odp)
-		वापस ib_umem_odp_release(to_ib_umem_odp(umem));
+void ib_umem_release(struct ib_umem *umem)
+{
+	if (!umem)
+		return;
+	if (umem->is_dmabuf)
+		return ib_umem_dmabuf_release(to_ib_umem_dmabuf(umem));
+	if (umem->is_odp)
+		return ib_umem_odp_release(to_ib_umem_odp(umem));
 
 	__ib_umem_release(umem->ibdev, umem, 1);
 
 	atomic64_sub(ib_umem_num_pages(umem), &umem->owning_mm->pinned_vm);
 	mmdrop(umem->owning_mm);
-	kमुक्त(umem);
-पूर्ण
+	kfree(umem);
+}
 EXPORT_SYMBOL(ib_umem_release);
 
 /*
@@ -299,26 +298,26 @@ EXPORT_SYMBOL(ib_umem_release);
  *
  * Returns 0 on success, or an error code.
  */
-पूर्णांक ib_umem_copy_from(व्योम *dst, काष्ठा ib_umem *umem, माप_प्रकार offset,
-		      माप_प्रकार length)
-अणु
-	माप_प्रकार end = offset + length;
-	पूर्णांक ret;
+int ib_umem_copy_from(void *dst, struct ib_umem *umem, size_t offset,
+		      size_t length)
+{
+	size_t end = offset + length;
+	int ret;
 
-	अगर (offset > umem->length || length > umem->length - offset) अणु
+	if (offset > umem->length || length > umem->length - offset) {
 		pr_err("%s not in range. offset: %zd umem length: %zd end: %zd\n",
 		       __func__, offset, umem->length, end);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ret = sg_pcopy_to_buffer(umem->sg_head.sgl, umem->sg_nents, dst, length,
 				 offset + ib_umem_offset(umem));
 
-	अगर (ret < 0)
-		वापस ret;
-	अन्यथा अगर (ret != length)
-		वापस -EINVAL;
-	अन्यथा
-		वापस 0;
-पूर्ण
+	if (ret < 0)
+		return ret;
+	else if (ret != length)
+		return -EINVAL;
+	else
+		return 0;
+}
 EXPORT_SYMBOL(ib_umem_copy_from);

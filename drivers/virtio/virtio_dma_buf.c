@@ -1,89 +1,88 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * dma-bufs क्रम virtio exported objects
+ * dma-bufs for virtio exported objects
  *
  * Copyright (C) 2020 Google, Inc.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/virtio_dma_buf.h>
+#include <linux/module.h>
+#include <linux/virtio_dma_buf.h>
 
 /**
- * virtio_dma_buf_export - Creates a new dma-buf क्रम a virtio exported object
+ * virtio_dma_buf_export - Creates a new dma-buf for a virtio exported object
  * @exp_info: [in] see dma_buf_export(). ops MUST refer to a dma_buf_ops
- *	काष्ठा embedded in a virtio_dma_buf_ops.
+ *	struct embedded in a virtio_dma_buf_ops.
  *
  * This wraps dma_buf_export() to allow virtio drivers to create a dma-buf
- * क्रम an virtio exported object that can be queried by other virtio drivers
- * क्रम the object's UUID.
+ * for an virtio exported object that can be queried by other virtio drivers
+ * for the object's UUID.
  */
-काष्ठा dma_buf *virtio_dma_buf_export
-	(स्थिर काष्ठा dma_buf_export_info *exp_info)
-अणु
-	स्थिर काष्ठा virtio_dma_buf_ops *virtio_ops =
+struct dma_buf *virtio_dma_buf_export
+	(const struct dma_buf_export_info *exp_info)
+{
+	const struct virtio_dma_buf_ops *virtio_ops =
 		container_of(exp_info->ops,
-			     स्थिर काष्ठा virtio_dma_buf_ops, ops);
+			     const struct virtio_dma_buf_ops, ops);
 
-	अगर (!exp_info->ops ||
+	if (!exp_info->ops ||
 	    exp_info->ops->attach != &virtio_dma_buf_attach ||
-	    !virtio_ops->get_uuid) अणु
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+	    !virtio_ops->get_uuid) {
+		return ERR_PTR(-EINVAL);
+	}
 
-	वापस dma_buf_export(exp_info);
-पूर्ण
+	return dma_buf_export(exp_info);
+}
 EXPORT_SYMBOL(virtio_dma_buf_export);
 
 /**
- * virtio_dma_buf_attach - mandatory attach callback क्रम virtio dma-bufs
+ * virtio_dma_buf_attach - mandatory attach callback for virtio dma-bufs
  */
-पूर्णांक virtio_dma_buf_attach(काष्ठा dma_buf *dma_buf,
-			  काष्ठा dma_buf_attachment *attach)
-अणु
-	पूर्णांक ret;
-	स्थिर काष्ठा virtio_dma_buf_ops *ops =
+int virtio_dma_buf_attach(struct dma_buf *dma_buf,
+			  struct dma_buf_attachment *attach)
+{
+	int ret;
+	const struct virtio_dma_buf_ops *ops =
 		container_of(dma_buf->ops,
-			     स्थिर काष्ठा virtio_dma_buf_ops, ops);
+			     const struct virtio_dma_buf_ops, ops);
 
-	अगर (ops->device_attach) अणु
+	if (ops->device_attach) {
 		ret = ops->device_attach(dma_buf, attach);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (ret)
+			return ret;
+	}
+	return 0;
+}
 EXPORT_SYMBOL(virtio_dma_buf_attach);
 
 /**
- * is_virtio_dma_buf - वापसs true अगर the given dma-buf is a virtio dma-buf
+ * is_virtio_dma_buf - returns true if the given dma-buf is a virtio dma-buf
  * @dma_buf: buffer to query
  */
-bool is_virtio_dma_buf(काष्ठा dma_buf *dma_buf)
-अणु
-	वापस dma_buf->ops->attach == &virtio_dma_buf_attach;
-पूर्ण
+bool is_virtio_dma_buf(struct dma_buf *dma_buf)
+{
+	return dma_buf->ops->attach == &virtio_dma_buf_attach;
+}
 EXPORT_SYMBOL(is_virtio_dma_buf);
 
 /**
- * virtio_dma_buf_get_uuid - माला_लो a virtio dma-buf's exported object's uuid
+ * virtio_dma_buf_get_uuid - gets a virtio dma-buf's exported object's uuid
  * @dma_buf: [in] buffer to query
  * @uuid: [out] the uuid
  *
  * Returns: 0 on success, negative on failure.
  */
-पूर्णांक virtio_dma_buf_get_uuid(काष्ठा dma_buf *dma_buf,
+int virtio_dma_buf_get_uuid(struct dma_buf *dma_buf,
 			    uuid_t *uuid)
-अणु
-	स्थिर काष्ठा virtio_dma_buf_ops *ops =
+{
+	const struct virtio_dma_buf_ops *ops =
 		container_of(dma_buf->ops,
-			     स्थिर काष्ठा virtio_dma_buf_ops, ops);
+			     const struct virtio_dma_buf_ops, ops);
 
-	अगर (!is_virtio_dma_buf(dma_buf))
-		वापस -EINVAL;
+	if (!is_virtio_dma_buf(dma_buf))
+		return -EINVAL;
 
-	वापस ops->get_uuid(dma_buf, uuid);
-पूर्ण
+	return ops->get_uuid(dma_buf, uuid);
+}
 EXPORT_SYMBOL(virtio_dma_buf_get_uuid);
 
 MODULE_LICENSE("GPL");

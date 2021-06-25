@@ -1,70 +1,69 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
-/* Header file क्रम all dibusb-based-receivers.
+/* SPDX-License-Identifier: GPL-2.0-only */
+/* Header file for all dibusb-based-receivers.
  *
  * Copyright (C) 2004-5 Patrick Boettcher (patrick.boettcher@posteo.de)
  *
- * see Documentation/driver-api/media/drivers/dvb-usb.rst क्रम more inक्रमmation
+ * see Documentation/driver-api/media/drivers/dvb-usb.rst for more information
  */
-#अगर_अघोषित _DVB_USB_DIBUSB_H_
-#घोषणा _DVB_USB_DIBUSB_H_
+#ifndef _DVB_USB_DIBUSB_H_
+#define _DVB_USB_DIBUSB_H_
 
-#अगर_अघोषित DVB_USB_LOG_PREFIX
- #घोषणा DVB_USB_LOG_PREFIX "dibusb"
-#पूर्ण_अगर
-#समावेश "dvb-usb.h"
+#ifndef DVB_USB_LOG_PREFIX
+ #define DVB_USB_LOG_PREFIX "dibusb"
+#endif
+#include "dvb-usb.h"
 
-#समावेश "dib3000.h"
-#समावेश "dib3000mc.h"
-#समावेश "mt2060.h"
+#include "dib3000.h"
+#include "dib3000mc.h"
+#include "mt2060.h"
 
 /*
  * protocol of all dibusb related devices
  */
 
 /*
- * bulk msg to/from endpoपूर्णांक 0x01
+ * bulk msg to/from endpoint 0x01
  *
- * general काष्ठाure:
+ * general structure:
  * request_byte parameter_bytes
  */
 
-#घोषणा DIBUSB_REQ_START_READ			0x00
-#घोषणा DIBUSB_REQ_START_DEMOD			0x01
+#define DIBUSB_REQ_START_READ			0x00
+#define DIBUSB_REQ_START_DEMOD			0x01
 
 /*
- * i2c पढ़ो
- * bulk ग_लिखो: 0x02 ((7bit i2c_addr << 1) | 0x01) रेजिस्टर_bytes length_word
- * bulk पढ़ो:  byte_buffer (length_word bytes)
+ * i2c read
+ * bulk write: 0x02 ((7bit i2c_addr << 1) | 0x01) register_bytes length_word
+ * bulk read:  byte_buffer (length_word bytes)
  */
-#घोषणा DIBUSB_REQ_I2C_READ			0x02
+#define DIBUSB_REQ_I2C_READ			0x02
 
 /*
- * i2c ग_लिखो
- * bulk ग_लिखो: 0x03 (7bit i2c_addr << 1) रेजिस्टर_bytes value_bytes
+ * i2c write
+ * bulk write: 0x03 (7bit i2c_addr << 1) register_bytes value_bytes
  */
-#घोषणा DIBUSB_REQ_I2C_WRITE			0x03
+#define DIBUSB_REQ_I2C_WRITE			0x03
 
 /*
  * polling the value of the remote control
- * bulk ग_लिखो: 0x04
- * bulk पढ़ो:  byte_buffer (5 bytes)
+ * bulk write: 0x04
+ * bulk read:  byte_buffer (5 bytes)
  */
-#घोषणा DIBUSB_REQ_POLL_REMOTE       0x04
+#define DIBUSB_REQ_POLL_REMOTE       0x04
 
-/* additional status values क्रम Hauppauge Remote Control Protocol */
-#घोषणा DIBUSB_RC_HAUPPAUGE_KEY_PRESSED	0x01
-#घोषणा DIBUSB_RC_HAUPPAUGE_KEY_EMPTY	0x03
+/* additional status values for Hauppauge Remote Control Protocol */
+#define DIBUSB_RC_HAUPPAUGE_KEY_PRESSED	0x01
+#define DIBUSB_RC_HAUPPAUGE_KEY_EMPTY	0x03
 
 /* streaming mode:
- * bulk ग_लिखो: 0x05 mode_byte
+ * bulk write: 0x05 mode_byte
  *
  * mode_byte is mostly 0x00
  */
-#घोषणा DIBUSB_REQ_SET_STREAMING_MODE	0x05
+#define DIBUSB_REQ_SET_STREAMING_MODE	0x05
 
-/* पूर्णांकerrupt the पूर्णांकernal पढ़ो loop, when blocking */
-#घोषणा DIBUSB_REQ_INTR_READ			0x06
+/* interrupt the internal read loop, when blocking */
+#define DIBUSB_REQ_INTR_READ			0x06
 
 /* io control
  * 0x07 cmd_byte param_bytes
@@ -72,7 +71,7 @@
  * param_bytes can be up to 32 bytes
  *
  * cmd_byte function    parameter name
- * 0x00     घातer mode
+ * 0x00     power mode
  *                      0x00      sleep
  *                      0x01      wakeup
  *
@@ -81,52 +80,52 @@
  *
  *
  */
-#घोषणा DIBUSB_REQ_SET_IOCTL			0x07
+#define DIBUSB_REQ_SET_IOCTL			0x07
 
 /* IOCTL commands */
 
-/* change the घातer mode in firmware */
-#घोषणा DIBUSB_IOCTL_CMD_POWER_MODE		0x00
-#घोषणा DIBUSB_IOCTL_POWER_SLEEP			0x00
-#घोषणा DIBUSB_IOCTL_POWER_WAKEUP			0x01
+/* change the power mode in firmware */
+#define DIBUSB_IOCTL_CMD_POWER_MODE		0x00
+#define DIBUSB_IOCTL_POWER_SLEEP			0x00
+#define DIBUSB_IOCTL_POWER_WAKEUP			0x01
 
-/* modअगरy streaming of the FX2 */
-#घोषणा DIBUSB_IOCTL_CMD_ENABLE_STREAM	0x01
-#घोषणा DIBUSB_IOCTL_CMD_DISABLE_STREAM	0x02
+/* modify streaming of the FX2 */
+#define DIBUSB_IOCTL_CMD_ENABLE_STREAM	0x01
+#define DIBUSB_IOCTL_CMD_DISABLE_STREAM	0x02
 
-/* Max transfer size करोne by I2C transfer functions */
-#घोषणा MAX_XFER_SIZE  64
+/* Max transfer size done by I2C transfer functions */
+#define MAX_XFER_SIZE  64
 
-काष्ठा dibusb_state अणु
-	काष्ठा dib_fe_xfer_ops ops;
-	पूर्णांक mt2060_present;
+struct dibusb_state {
+	struct dib_fe_xfer_ops ops;
+	int mt2060_present;
 	u8 tuner_addr;
-पूर्ण;
+};
 
-काष्ठा dibusb_device_state अणु
-	/* क्रम RC5 remote control */
-	पूर्णांक old_toggle;
-	पूर्णांक last_repeat_count;
-पूर्ण;
+struct dibusb_device_state {
+	/* for RC5 remote control */
+	int old_toggle;
+	int last_repeat_count;
+};
 
-बाह्य काष्ठा i2c_algorithm dibusb_i2c_algo;
+extern struct i2c_algorithm dibusb_i2c_algo;
 
-बाह्य पूर्णांक dibusb_dib3000mc_frontend_attach(काष्ठा dvb_usb_adapter *);
-बाह्य पूर्णांक dibusb_dib3000mc_tuner_attach (काष्ठा dvb_usb_adapter *);
+extern int dibusb_dib3000mc_frontend_attach(struct dvb_usb_adapter *);
+extern int dibusb_dib3000mc_tuner_attach (struct dvb_usb_adapter *);
 
-बाह्य पूर्णांक dibusb_streaming_ctrl(काष्ठा dvb_usb_adapter *, पूर्णांक);
-बाह्य पूर्णांक dibusb_pid_filter(काष्ठा dvb_usb_adapter *, पूर्णांक, u16, पूर्णांक);
-बाह्य पूर्णांक dibusb_pid_filter_ctrl(काष्ठा dvb_usb_adapter *, पूर्णांक);
-बाह्य पूर्णांक dibusb2_0_streaming_ctrl(काष्ठा dvb_usb_adapter *, पूर्णांक);
+extern int dibusb_streaming_ctrl(struct dvb_usb_adapter *, int);
+extern int dibusb_pid_filter(struct dvb_usb_adapter *, int, u16, int);
+extern int dibusb_pid_filter_ctrl(struct dvb_usb_adapter *, int);
+extern int dibusb2_0_streaming_ctrl(struct dvb_usb_adapter *, int);
 
-बाह्य पूर्णांक dibusb_घातer_ctrl(काष्ठा dvb_usb_device *, पूर्णांक);
-बाह्य पूर्णांक dibusb2_0_घातer_ctrl(काष्ठा dvb_usb_device *, पूर्णांक);
+extern int dibusb_power_ctrl(struct dvb_usb_device *, int);
+extern int dibusb2_0_power_ctrl(struct dvb_usb_device *, int);
 
-#घोषणा DEFAULT_RC_INTERVAL 150
-//#घोषणा DEFAULT_RC_INTERVAL 100000
+#define DEFAULT_RC_INTERVAL 150
+//#define DEFAULT_RC_INTERVAL 100000
 
-बाह्य काष्ठा rc_map_table rc_map_dibusb_table[];
-बाह्य पूर्णांक dibusb_rc_query(काष्ठा dvb_usb_device *, u32 *, पूर्णांक *);
-बाह्य पूर्णांक dibusb_पढ़ो_eeprom_byte(काष्ठा dvb_usb_device *, u8, u8 *);
+extern struct rc_map_table rc_map_dibusb_table[];
+extern int dibusb_rc_query(struct dvb_usb_device *, u32 *, int *);
+extern int dibusb_read_eeprom_byte(struct dvb_usb_device *, u8, u8 *);
 
-#पूर्ण_अगर
+#endif

@@ -1,36 +1,35 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _ASMARM_SIGCONTEXT_H
-#घोषणा _ASMARM_SIGCONTEXT_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _ASMARM_SIGCONTEXT_H
+#define _ASMARM_SIGCONTEXT_H
 
 /*
- * Signal context काष्ठाure - contains all info to करो with the state
- * beक्रमe the संकेत handler was invoked.  Note: only add new entries
- * to the end of the काष्ठाure.
+ * Signal context structure - contains all info to do with the state
+ * before the signal handler was invoked.  Note: only add new entries
+ * to the end of the structure.
  */
-काष्ठा sigcontext अणु
-	अचिन्हित दीर्घ trap_no;
-	अचिन्हित दीर्घ error_code;
-	अचिन्हित दीर्घ oldmask;
-	अचिन्हित दीर्घ arm_r0;
-	अचिन्हित दीर्घ arm_r1;
-	अचिन्हित दीर्घ arm_r2;
-	अचिन्हित दीर्घ arm_r3;
-	अचिन्हित दीर्घ arm_r4;
-	अचिन्हित दीर्घ arm_r5;
-	अचिन्हित दीर्घ arm_r6;
-	अचिन्हित दीर्घ arm_r7;
-	अचिन्हित दीर्घ arm_r8;
-	अचिन्हित दीर्घ arm_r9;
-	अचिन्हित दीर्घ arm_r10;
-	अचिन्हित दीर्घ arm_fp;
-	अचिन्हित दीर्घ arm_ip;
-	अचिन्हित दीर्घ arm_sp;
-	अचिन्हित दीर्घ arm_lr;
-	अचिन्हित दीर्घ arm_pc;
-	अचिन्हित दीर्घ arm_cpsr;
-	अचिन्हित दीर्घ fault_address;
-पूर्ण;
+struct sigcontext {
+	unsigned long trap_no;
+	unsigned long error_code;
+	unsigned long oldmask;
+	unsigned long arm_r0;
+	unsigned long arm_r1;
+	unsigned long arm_r2;
+	unsigned long arm_r3;
+	unsigned long arm_r4;
+	unsigned long arm_r5;
+	unsigned long arm_r6;
+	unsigned long arm_r7;
+	unsigned long arm_r8;
+	unsigned long arm_r9;
+	unsigned long arm_r10;
+	unsigned long arm_fp;
+	unsigned long arm_ip;
+	unsigned long arm_sp;
+	unsigned long arm_lr;
+	unsigned long arm_pc;
+	unsigned long arm_cpsr;
+	unsigned long fault_address;
+};
 
 
-#पूर्ण_अगर
+#endif

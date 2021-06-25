@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- *  Driver क्रम Zarlink DVB-T MT352 demodulator
+ *  Driver for Zarlink DVB-T MT352 demodulator
  *
  *  Written by Holger Waechtler <holger@qanu.de>
  *	 and Daniel Mack <daniel@qanu.de>
@@ -9,7 +8,7 @@
  *  AVerMedia AVerTV DVB-T 771 support by
  *       Wolfram Joost <dbox2@frokaschwei.de>
  *
- *  Support क्रम Samsung TDTC9251DH01C(M) tuner
+ *  Support for Samsung TDTC9251DH01C(M) tuner
  *  Copyright (C) 2004 Antonio Mancuso <antonio.mancuso@digitaltelevision.it>
  *                     Amauri  Celani  <acelani@essegi.net>
  *
@@ -17,44 +16,44 @@
  *       Christopher Pascoe <c.pascoe@itee.uq.edu.au>
  */
 
-#अगर_अघोषित MT352_H
-#घोषणा MT352_H
+#ifndef MT352_H
+#define MT352_H
 
-#समावेश <linux/dvb/frontend.h>
+#include <linux/dvb/frontend.h>
 
-काष्ठा mt352_config
-अणु
+struct mt352_config
+{
 	/* the demodulator's i2c address */
 	u8 demod_address;
 
 	/* frequencies in kHz */
-	पूर्णांक adc_घड़ी;  // शेष: 20480
-	पूर्णांक अगर2;        // शेष: 36166
+	int adc_clock;  // default: 20480
+	int if2;        // default: 36166
 
-	/* set अगर no pll is connected to the secondary i2c bus */
-	पूर्णांक no_tuner;
+	/* set if no pll is connected to the secondary i2c bus */
+	int no_tuner;
 
-	/* Initialise the demodulator and PLL. Cannot be शून्य */
-	पूर्णांक (*demod_init)(काष्ठा dvb_frontend* fe);
-पूर्ण;
+	/* Initialise the demodulator and PLL. Cannot be NULL */
+	int (*demod_init)(struct dvb_frontend* fe);
+};
 
-#अगर IS_REACHABLE(CONFIG_DVB_MT352)
-बाह्य काष्ठा dvb_frontend* mt352_attach(स्थिर काष्ठा mt352_config* config,
-					 काष्ठा i2c_adapter* i2c);
-#अन्यथा
-अटल अंतरभूत काष्ठा dvb_frontend* mt352_attach(स्थिर काष्ठा mt352_config* config,
-					 काष्ठा i2c_adapter* i2c)
-अणु
-	prपूर्णांकk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
-	वापस शून्य;
-पूर्ण
-#पूर्ण_अगर // CONFIG_DVB_MT352
+#if IS_REACHABLE(CONFIG_DVB_MT352)
+extern struct dvb_frontend* mt352_attach(const struct mt352_config* config,
+					 struct i2c_adapter* i2c);
+#else
+static inline struct dvb_frontend* mt352_attach(const struct mt352_config* config,
+					 struct i2c_adapter* i2c)
+{
+	printk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
+	return NULL;
+}
+#endif // CONFIG_DVB_MT352
 
-अटल अंतरभूत पूर्णांक mt352_ग_लिखो(काष्ठा dvb_frontend *fe, स्थिर u8 buf[], पूर्णांक len) अणु
-	पूर्णांक r = 0;
-	अगर (fe->ops.ग_लिखो)
-		r = fe->ops.ग_लिखो(fe, buf, len);
-	वापस r;
-पूर्ण
+static inline int mt352_write(struct dvb_frontend *fe, const u8 buf[], int len) {
+	int r = 0;
+	if (fe->ops.write)
+		r = fe->ops.write(fe, buf, len);
+	return r;
+}
 
-#पूर्ण_अगर // MT352_H
+#endif // MT352_H

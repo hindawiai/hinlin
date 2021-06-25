@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Bestcomm FEC RX task microcode
  *
@@ -9,7 +8,7 @@
  * on Tue Mar 22 11:19:38 2005 GMT
  */
 
-#समावेश <यंत्र/types.h>
+#include <asm/types.h>
 
 /*
  * The header consists of the following fields:
@@ -23,7 +22,7 @@
  * The size fields contain the number of 32-bit words.
  */
 
-u32 bcom_fec_rx_task[] = अणु
+u32 bcom_fec_rx_task[] = {
 	/* header */
 	0x4243544b,
 	0x18060709,
@@ -72,5 +71,5 @@ u32 bcom_fec_rx_task[] = अणु
 	0x20000000,
 	0x00000000,
 	0x4000ffff,
-पूर्ण;
+};
 

@@ -1,28 +1,27 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ACPI_IO_H_
-#घोषणा _ACPI_IO_H_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ACPI_IO_H_
+#define _ACPI_IO_H_
 
-#समावेश <linux/पन.स>
+#include <linux/io.h>
 
-#समावेश <यंत्र/acpi.h>
+#include <asm/acpi.h>
 
-#अगर_अघोषित acpi_os_ioremap
-अटल अंतरभूत व्योम __iomem *acpi_os_ioremap(acpi_physical_address phys,
+#ifndef acpi_os_ioremap
+static inline void __iomem *acpi_os_ioremap(acpi_physical_address phys,
 					    acpi_size size)
-अणु
-       वापस ioremap_cache(phys, size);
-पूर्ण
-#पूर्ण_अगर
+{
+       return ioremap_cache(phys, size);
+}
+#endif
 
-बाह्य bool acpi_permanent_mmap;
+extern bool acpi_permanent_mmap;
 
-व्योम __iomem __ref
+void __iomem __ref
 *acpi_os_map_iomem(acpi_physical_address phys, acpi_size size);
-व्योम __ref acpi_os_unmap_iomem(व्योम __iomem *virt, acpi_size size);
-व्योम __iomem *acpi_os_get_iomem(acpi_physical_address phys, अचिन्हित पूर्णांक size);
+void __ref acpi_os_unmap_iomem(void __iomem *virt, acpi_size size);
+void __iomem *acpi_os_get_iomem(acpi_physical_address phys, unsigned int size);
 
-व्योम __iomem *acpi_os_map_generic_address(काष्ठा acpi_generic_address *addr);
-व्योम acpi_os_unmap_generic_address(काष्ठा acpi_generic_address *addr);
+void __iomem *acpi_os_map_generic_address(struct acpi_generic_address *addr);
+void acpi_os_unmap_generic_address(struct acpi_generic_address *addr);
 
-#पूर्ण_अगर
+#endif

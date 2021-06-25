@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * PCM3168A codec spi driver
  *
@@ -8,54 +7,54 @@
  * Author: Damien Horsley <Damien.Horsley@imgtec.com>
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/spi/spi.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/spi/spi.h>
 
-#समावेश <sound/soc.h>
+#include <sound/soc.h>
 
-#समावेश "pcm3168a.h"
+#include "pcm3168a.h"
 
-अटल पूर्णांक pcm3168a_spi_probe(काष्ठा spi_device *spi)
-अणु
-	काष्ठा regmap *regmap;
+static int pcm3168a_spi_probe(struct spi_device *spi)
+{
+	struct regmap *regmap;
 
 	regmap = devm_regmap_init_spi(spi, &pcm3168a_regmap);
-	अगर (IS_ERR(regmap))
-		वापस PTR_ERR(regmap);
+	if (IS_ERR(regmap))
+		return PTR_ERR(regmap);
 
-	वापस pcm3168a_probe(&spi->dev, regmap);
-पूर्ण
+	return pcm3168a_probe(&spi->dev, regmap);
+}
 
-अटल पूर्णांक pcm3168a_spi_हटाओ(काष्ठा spi_device *spi)
-अणु
-	pcm3168a_हटाओ(&spi->dev);
+static int pcm3168a_spi_remove(struct spi_device *spi)
+{
+	pcm3168a_remove(&spi->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा spi_device_id pcm3168a_spi_id[] = अणु
-	अणु "pcm3168a", पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct spi_device_id pcm3168a_spi_id[] = {
+	{ "pcm3168a", },
+	{ },
+};
 MODULE_DEVICE_TABLE(spi, pcm3168a_spi_id);
 
-अटल स्थिर काष्ठा of_device_id pcm3168a_of_match[] = अणु
-	अणु .compatible = "ti,pcm3168a", पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id pcm3168a_of_match[] = {
+	{ .compatible = "ti,pcm3168a", },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, pcm3168a_of_match);
 
-अटल काष्ठा spi_driver pcm3168a_spi_driver = अणु
+static struct spi_driver pcm3168a_spi_driver = {
 	.probe		= pcm3168a_spi_probe,
-	.हटाओ		= pcm3168a_spi_हटाओ,
+	.remove		= pcm3168a_spi_remove,
 	.id_table	= pcm3168a_spi_id,
-	.driver = अणु
+	.driver = {
 		.name	= "pcm3168a",
 		.of_match_table = pcm3168a_of_match,
 		.pm		= &pcm3168a_pm_ops,
-	पूर्ण,
-पूर्ण;
+	},
+};
 module_spi_driver(pcm3168a_spi_driver);
 
 MODULE_DESCRIPTION("PCM3168A SPI codec driver");

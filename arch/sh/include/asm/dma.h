@@ -1,147 +1,146 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0
+/* SPDX-License-Identifier: GPL-2.0
  *
- * include/यंत्र-sh/dma.h
+ * include/asm-sh/dma.h
  *
  * Copyright (C) 2003, 2004  Paul Mundt
  */
-#अगर_अघोषित __ASM_SH_DMA_H
-#घोषणा __ASM_SH_DMA_H
+#ifndef __ASM_SH_DMA_H
+#define __ASM_SH_DMA_H
 
-#समावेश <linux/spinlock.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/device.h>
-#समावेश <यंत्र-generic/dma.h>
+#include <linux/spinlock.h>
+#include <linux/wait.h>
+#include <linux/sched.h>
+#include <linux/device.h>
+#include <asm-generic/dma.h>
 
 /*
- * Read and ग_लिखो modes can mean drastically dअगरferent things depending on the
- * channel configuration. Consult your DMAC करोcumentation and module
- * implementation क्रम further clues.
+ * Read and write modes can mean drastically different things depending on the
+ * channel configuration. Consult your DMAC documentation and module
+ * implementation for further clues.
  */
-#घोषणा DMA_MODE_READ		0x00
-#घोषणा DMA_MODE_WRITE		0x01
-#घोषणा DMA_MODE_MASK		0x01
+#define DMA_MODE_READ		0x00
+#define DMA_MODE_WRITE		0x01
+#define DMA_MODE_MASK		0x01
 
-#घोषणा DMA_AUTOINIT		0x10
+#define DMA_AUTOINIT		0x10
 
 /*
  * DMAC (dma_info) flags
  */
-क्रमागत अणु
+enum {
 	DMAC_CHANNELS_CONFIGURED	= 0x01,
-	DMAC_CHANNELS_TEI_CAPABLE	= 0x02,	/* Transfer end पूर्णांकerrupt */
-पूर्ण;
+	DMAC_CHANNELS_TEI_CAPABLE	= 0x02,	/* Transfer end interrupt */
+};
 
 /*
  * DMA channel capabilities / flags
  */
-क्रमागत अणु
+enum {
 	DMA_CONFIGURED			= 0x01,
 
 	/*
-	 * Transfer end पूर्णांकerrupt, inherited from DMAC.
-	 * रुको_queue used in dma_रुको_क्रम_completion.
+	 * Transfer end interrupt, inherited from DMAC.
+	 * wait_queue used in dma_wait_for_completion.
 	 */
 	DMA_TEI_CAPABLE			= 0x02,
-पूर्ण;
+};
 
-बाह्य spinlock_t dma_spin_lock;
+extern spinlock_t dma_spin_lock;
 
-काष्ठा dma_channel;
+struct dma_channel;
 
-काष्ठा dma_ops अणु
-	पूर्णांक (*request)(काष्ठा dma_channel *chan);
-	व्योम (*मुक्त)(काष्ठा dma_channel *chan);
+struct dma_ops {
+	int (*request)(struct dma_channel *chan);
+	void (*free)(struct dma_channel *chan);
 
-	पूर्णांक (*get_residue)(काष्ठा dma_channel *chan);
-	पूर्णांक (*xfer)(काष्ठा dma_channel *chan);
-	पूर्णांक (*configure)(काष्ठा dma_channel *chan, अचिन्हित दीर्घ flags);
-	पूर्णांक (*extend)(काष्ठा dma_channel *chan, अचिन्हित दीर्घ op, व्योम *param);
-पूर्ण;
+	int (*get_residue)(struct dma_channel *chan);
+	int (*xfer)(struct dma_channel *chan);
+	int (*configure)(struct dma_channel *chan, unsigned long flags);
+	int (*extend)(struct dma_channel *chan, unsigned long op, void *param);
+};
 
-काष्ठा dma_channel अणु
-	अक्षर dev_id[16];		/* unique name per DMAC of channel */
+struct dma_channel {
+	char dev_id[16];		/* unique name per DMAC of channel */
 
-	अचिन्हित पूर्णांक chan;		/* DMAC channel number */
-	अचिन्हित पूर्णांक vchan;		/* Virtual channel number */
+	unsigned int chan;		/* DMAC channel number */
+	unsigned int vchan;		/* Virtual channel number */
 
-	अचिन्हित पूर्णांक mode;
-	अचिन्हित पूर्णांक count;
+	unsigned int mode;
+	unsigned int count;
 
-	अचिन्हित दीर्घ sar;
-	अचिन्हित दीर्घ dar;
+	unsigned long sar;
+	unsigned long dar;
 
-	स्थिर अक्षर **caps;
+	const char **caps;
 
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 	atomic_t busy;
 
-	रुको_queue_head_t रुको_queue;
+	wait_queue_head_t wait_queue;
 
-	काष्ठा device dev;
-	व्योम *priv_data;
-पूर्ण;
+	struct device dev;
+	void *priv_data;
+};
 
-काष्ठा dma_info अणु
-	काष्ठा platक्रमm_device *pdev;
+struct dma_info {
+	struct platform_device *pdev;
 
-	स्थिर अक्षर *name;
-	अचिन्हित पूर्णांक nr_channels;
-	अचिन्हित दीर्घ flags;
+	const char *name;
+	unsigned int nr_channels;
+	unsigned long flags;
 
-	काष्ठा dma_ops *ops;
-	काष्ठा dma_channel *channels;
+	struct dma_ops *ops;
+	struct dma_channel *channels;
 
-	काष्ठा list_head list;
-	पूर्णांक first_channel_nr;
-	पूर्णांक first_vchannel_nr;
-पूर्ण;
+	struct list_head list;
+	int first_channel_nr;
+	int first_vchannel_nr;
+};
 
-काष्ठा dma_chan_caps अणु
-	पूर्णांक ch_num;
-	स्थिर अक्षर **caplist;
-पूर्ण;
+struct dma_chan_caps {
+	int ch_num;
+	const char **caplist;
+};
 
-#घोषणा to_dma_channel(channel) container_of(channel, काष्ठा dma_channel, dev)
+#define to_dma_channel(channel) container_of(channel, struct dma_channel, dev)
 
 /* arch/sh/drivers/dma/dma-api.c */
-बाह्य पूर्णांक dma_xfer(अचिन्हित पूर्णांक chan, अचिन्हित दीर्घ from,
-		    अचिन्हित दीर्घ to, माप_प्रकार size, अचिन्हित पूर्णांक mode);
+extern int dma_xfer(unsigned int chan, unsigned long from,
+		    unsigned long to, size_t size, unsigned int mode);
 
-#घोषणा dma_ग_लिखो(chan, from, to, size)	\
+#define dma_write(chan, from, to, size)	\
 	dma_xfer(chan, from, to, size, DMA_MODE_WRITE)
-#घोषणा dma_ग_लिखो_page(chan, from, to)	\
-	dma_ग_लिखो(chan, from, to, PAGE_SIZE)
+#define dma_write_page(chan, from, to)	\
+	dma_write(chan, from, to, PAGE_SIZE)
 
-#घोषणा dma_पढ़ो(chan, from, to, size)	\
+#define dma_read(chan, from, to, size)	\
 	dma_xfer(chan, from, to, size, DMA_MODE_READ)
-#घोषणा dma_पढ़ो_page(chan, from, to)	\
-	dma_पढ़ो(chan, from, to, PAGE_SIZE)
+#define dma_read_page(chan, from, to)	\
+	dma_read(chan, from, to, PAGE_SIZE)
 
-बाह्य पूर्णांक request_dma_bycap(स्थिर अक्षर **dmac, स्थिर अक्षर **caps,
-			     स्थिर अक्षर *dev_id);
-बाह्य पूर्णांक get_dma_residue(अचिन्हित पूर्णांक chan);
-बाह्य काष्ठा dma_info *get_dma_info(अचिन्हित पूर्णांक chan);
-बाह्य काष्ठा dma_channel *get_dma_channel(अचिन्हित पूर्णांक chan);
-बाह्य व्योम dma_रुको_क्रम_completion(अचिन्हित पूर्णांक chan);
-बाह्य व्योम dma_configure_channel(अचिन्हित पूर्णांक chan, अचिन्हित दीर्घ flags);
+extern int request_dma_bycap(const char **dmac, const char **caps,
+			     const char *dev_id);
+extern int get_dma_residue(unsigned int chan);
+extern struct dma_info *get_dma_info(unsigned int chan);
+extern struct dma_channel *get_dma_channel(unsigned int chan);
+extern void dma_wait_for_completion(unsigned int chan);
+extern void dma_configure_channel(unsigned int chan, unsigned long flags);
 
-बाह्य पूर्णांक रेजिस्टर_dmac(काष्ठा dma_info *info);
-बाह्य व्योम unरेजिस्टर_dmac(काष्ठा dma_info *info);
-बाह्य काष्ठा dma_info *get_dma_info_by_name(स्थिर अक्षर *dmac_name);
+extern int register_dmac(struct dma_info *info);
+extern void unregister_dmac(struct dma_info *info);
+extern struct dma_info *get_dma_info_by_name(const char *dmac_name);
 
-बाह्य पूर्णांक dma_extend(अचिन्हित पूर्णांक chan, अचिन्हित दीर्घ op, व्योम *param);
-बाह्य पूर्णांक रेजिस्टर_chan_caps(स्थिर अक्षर *dmac, काष्ठा dma_chan_caps *capslist);
+extern int dma_extend(unsigned int chan, unsigned long op, void *param);
+extern int register_chan_caps(const char *dmac, struct dma_chan_caps *capslist);
 
 /* arch/sh/drivers/dma/dma-sysfs.c */
-बाह्य पूर्णांक dma_create_sysfs_files(काष्ठा dma_channel *, काष्ठा dma_info *);
-बाह्य व्योम dma_हटाओ_sysfs_files(काष्ठा dma_channel *, काष्ठा dma_info *);
+extern int dma_create_sysfs_files(struct dma_channel *, struct dma_info *);
+extern void dma_remove_sysfs_files(struct dma_channel *, struct dma_info *);
 
-#अगर_घोषित CONFIG_PCI
-बाह्य पूर्णांक isa_dma_bridge_buggy;
-#अन्यथा
-#घोषणा isa_dma_bridge_buggy	(0)
-#पूर्ण_अगर
+#ifdef CONFIG_PCI
+extern int isa_dma_bridge_buggy;
+#else
+#define isa_dma_bridge_buggy	(0)
+#endif
 
-#पूर्ण_अगर /* __ASM_SH_DMA_H */
+#endif /* __ASM_SH_DMA_H */

@@ -1,13 +1,12 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Xilinx AXIS FIFO: पूर्णांकerface to the Xilinx AXI-Stream FIFO IP core
+ * Xilinx AXIS FIFO: interface to the Xilinx AXI-Stream FIFO IP core
  *
  * Copyright (C) 2018 Jacob Feder
  *
  * Authors:  Jacob Feder <jacobsfeder@gmail.com>
  *
- * See Xilinx PG080 करोcument क्रम IP details
+ * See Xilinx PG080 document for IP details
  */
 
 /* ----------------------------
@@ -15,290 +14,290 @@
  * ----------------------------
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/device.h>
-#समावेश <linux/cdev.h>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/param.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/types.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/jअगरfies.h>
+#include <linux/kernel.h>
+#include <linux/wait.h>
+#include <linux/mutex.h>
+#include <linux/device.h>
+#include <linux/cdev.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/io.h>
+#include <linux/moduleparam.h>
+#include <linux/interrupt.h>
+#include <linux/param.h>
+#include <linux/fs.h>
+#include <linux/types.h>
+#include <linux/uaccess.h>
+#include <linux/jiffies.h>
 
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_platक्रमm.h>
+#include <linux/of_address.h>
+#include <linux/of_device.h>
+#include <linux/of_platform.h>
 
 /* ----------------------------
  *       driver parameters
  * ----------------------------
  */
 
-#घोषणा DRIVER_NAME "axis_fifo"
+#define DRIVER_NAME "axis_fifo"
 
-#घोषणा READ_BUF_SIZE 128U /* पढ़ो buffer length in words */
-#घोषणा WRITE_BUF_SIZE 128U /* ग_लिखो buffer length in words */
+#define READ_BUF_SIZE 128U /* read buffer length in words */
+#define WRITE_BUF_SIZE 128U /* write buffer length in words */
 
 /* ----------------------------
- *     IP रेजिस्टर offsets
+ *     IP register offsets
  * ----------------------------
  */
 
-#घोषणा XLLF_ISR_OFFSET  0x00000000  /* Interrupt Status */
-#घोषणा XLLF_IER_OFFSET  0x00000004  /* Interrupt Enable */
+#define XLLF_ISR_OFFSET  0x00000000  /* Interrupt Status */
+#define XLLF_IER_OFFSET  0x00000004  /* Interrupt Enable */
 
-#घोषणा XLLF_TDFR_OFFSET 0x00000008  /* Transmit Reset */
-#घोषणा XLLF_TDFV_OFFSET 0x0000000c  /* Transmit Vacancy */
-#घोषणा XLLF_TDFD_OFFSET 0x00000010  /* Transmit Data */
-#घोषणा XLLF_TLR_OFFSET  0x00000014  /* Transmit Length */
+#define XLLF_TDFR_OFFSET 0x00000008  /* Transmit Reset */
+#define XLLF_TDFV_OFFSET 0x0000000c  /* Transmit Vacancy */
+#define XLLF_TDFD_OFFSET 0x00000010  /* Transmit Data */
+#define XLLF_TLR_OFFSET  0x00000014  /* Transmit Length */
 
-#घोषणा XLLF_RDFR_OFFSET 0x00000018  /* Receive Reset */
-#घोषणा XLLF_RDFO_OFFSET 0x0000001c  /* Receive Occupancy */
-#घोषणा XLLF_RDFD_OFFSET 0x00000020  /* Receive Data */
-#घोषणा XLLF_RLR_OFFSET  0x00000024  /* Receive Length */
-#घोषणा XLLF_SRR_OFFSET  0x00000028  /* Local Link Reset */
-#घोषणा XLLF_TDR_OFFSET  0x0000002C  /* Transmit Destination */
-#घोषणा XLLF_RDR_OFFSET  0x00000030  /* Receive Destination */
+#define XLLF_RDFR_OFFSET 0x00000018  /* Receive Reset */
+#define XLLF_RDFO_OFFSET 0x0000001c  /* Receive Occupancy */
+#define XLLF_RDFD_OFFSET 0x00000020  /* Receive Data */
+#define XLLF_RLR_OFFSET  0x00000024  /* Receive Length */
+#define XLLF_SRR_OFFSET  0x00000028  /* Local Link Reset */
+#define XLLF_TDR_OFFSET  0x0000002C  /* Transmit Destination */
+#define XLLF_RDR_OFFSET  0x00000030  /* Receive Destination */
 
 /* ----------------------------
- *     reset रेजिस्टर masks
+ *     reset register masks
  * ----------------------------
  */
 
-#घोषणा XLLF_RDFR_RESET_MASK        0x000000a5 /* receive reset value */
-#घोषणा XLLF_TDFR_RESET_MASK        0x000000a5 /* Transmit reset value */
-#घोषणा XLLF_SRR_RESET_MASK         0x000000a5 /* Local Link reset value */
+#define XLLF_RDFR_RESET_MASK        0x000000a5 /* receive reset value */
+#define XLLF_TDFR_RESET_MASK        0x000000a5 /* Transmit reset value */
+#define XLLF_SRR_RESET_MASK         0x000000a5 /* Local Link reset value */
 
 /* ----------------------------
- *       पूर्णांकerrupt masks
+ *       interrupt masks
  * ----------------------------
  */
 
-#घोषणा XLLF_INT_RPURE_MASK       0x80000000 /* Receive under-पढ़ो */
-#घोषणा XLLF_INT_RPORE_MASK       0x40000000 /* Receive over-पढ़ो */
-#घोषणा XLLF_INT_RPUE_MASK        0x20000000 /* Receive underrun (empty) */
-#घोषणा XLLF_INT_TPOE_MASK        0x10000000 /* Transmit overrun */
-#घोषणा XLLF_INT_TC_MASK          0x08000000 /* Transmit complete */
-#घोषणा XLLF_INT_RC_MASK          0x04000000 /* Receive complete */
-#घोषणा XLLF_INT_TSE_MASK         0x02000000 /* Transmit length mismatch */
-#घोषणा XLLF_INT_TRC_MASK         0x01000000 /* Transmit reset complete */
-#घोषणा XLLF_INT_RRC_MASK         0x00800000 /* Receive reset complete */
-#घोषणा XLLF_INT_TFPF_MASK        0x00400000 /* Tx FIFO Programmable Full */
-#घोषणा XLLF_INT_TFPE_MASK        0x00200000 /* Tx FIFO Programmable Empty */
-#घोषणा XLLF_INT_RFPF_MASK        0x00100000 /* Rx FIFO Programmable Full */
-#घोषणा XLLF_INT_RFPE_MASK        0x00080000 /* Rx FIFO Programmable Empty */
-#घोषणा XLLF_INT_ALL_MASK         0xfff80000 /* All the पूर्णांकs */
-#घोषणा XLLF_INT_ERROR_MASK       0xf2000000 /* Error status पूर्णांकs */
-#घोषणा XLLF_INT_RXERROR_MASK     0xe0000000 /* Receive Error status पूर्णांकs */
-#घोषणा XLLF_INT_TXERROR_MASK     0x12000000 /* Transmit Error status पूर्णांकs */
+#define XLLF_INT_RPURE_MASK       0x80000000 /* Receive under-read */
+#define XLLF_INT_RPORE_MASK       0x40000000 /* Receive over-read */
+#define XLLF_INT_RPUE_MASK        0x20000000 /* Receive underrun (empty) */
+#define XLLF_INT_TPOE_MASK        0x10000000 /* Transmit overrun */
+#define XLLF_INT_TC_MASK          0x08000000 /* Transmit complete */
+#define XLLF_INT_RC_MASK          0x04000000 /* Receive complete */
+#define XLLF_INT_TSE_MASK         0x02000000 /* Transmit length mismatch */
+#define XLLF_INT_TRC_MASK         0x01000000 /* Transmit reset complete */
+#define XLLF_INT_RRC_MASK         0x00800000 /* Receive reset complete */
+#define XLLF_INT_TFPF_MASK        0x00400000 /* Tx FIFO Programmable Full */
+#define XLLF_INT_TFPE_MASK        0x00200000 /* Tx FIFO Programmable Empty */
+#define XLLF_INT_RFPF_MASK        0x00100000 /* Rx FIFO Programmable Full */
+#define XLLF_INT_RFPE_MASK        0x00080000 /* Rx FIFO Programmable Empty */
+#define XLLF_INT_ALL_MASK         0xfff80000 /* All the ints */
+#define XLLF_INT_ERROR_MASK       0xf2000000 /* Error status ints */
+#define XLLF_INT_RXERROR_MASK     0xe0000000 /* Receive Error status ints */
+#define XLLF_INT_TXERROR_MASK     0x12000000 /* Transmit Error status ints */
 
 /* ----------------------------
  *           globals
  * ----------------------------
  */
 
-अटल काष्ठा class *axis_fअगरo_driver_class; /* अक्षर device class */
+static struct class *axis_fifo_driver_class; /* char device class */
 
-अटल पूर्णांक पढ़ो_समयout = 1000; /* ms to रुको beक्रमe पढ़ो() बार out */
-अटल पूर्णांक ग_लिखो_समयout = 1000; /* ms to रुको beक्रमe ग_लिखो() बार out */
+static int read_timeout = 1000; /* ms to wait before read() times out */
+static int write_timeout = 1000; /* ms to wait before write() times out */
 
 /* ----------------------------
  * module command-line arguments
  * ----------------------------
  */
 
-module_param(पढ़ो_समयout, पूर्णांक, 0444);
-MODULE_PARM_DESC(पढ़ो_समयout, "ms to wait before blocking read() timing out; set to -1 for no timeout");
-module_param(ग_लिखो_समयout, पूर्णांक, 0444);
-MODULE_PARM_DESC(ग_लिखो_समयout, "ms to wait before blocking write() timing out; set to -1 for no timeout");
+module_param(read_timeout, int, 0444);
+MODULE_PARM_DESC(read_timeout, "ms to wait before blocking read() timing out; set to -1 for no timeout");
+module_param(write_timeout, int, 0444);
+MODULE_PARM_DESC(write_timeout, "ms to wait before blocking write() timing out; set to -1 for no timeout");
 
 /* ----------------------------
  *            types
  * ----------------------------
  */
 
-काष्ठा axis_fअगरo अणु
-	पूर्णांक irq; /* पूर्णांकerrupt */
-	व्योम __iomem *base_addr; /* kernel space memory */
+struct axis_fifo {
+	int irq; /* interrupt */
+	void __iomem *base_addr; /* kernel space memory */
 
-	अचिन्हित पूर्णांक rx_fअगरo_depth; /* max words in the receive fअगरo */
-	अचिन्हित पूर्णांक tx_fअगरo_depth; /* max words in the transmit fअगरo */
-	पूर्णांक has_rx_fअगरo; /* whether the IP has the rx fअगरo enabled */
-	पूर्णांक has_tx_fअगरo; /* whether the IP has the tx fअगरo enabled */
+	unsigned int rx_fifo_depth; /* max words in the receive fifo */
+	unsigned int tx_fifo_depth; /* max words in the transmit fifo */
+	int has_rx_fifo; /* whether the IP has the rx fifo enabled */
+	int has_tx_fifo; /* whether the IP has the tx fifo enabled */
 
-	रुको_queue_head_t पढ़ो_queue; /* रुको queue क्रम asynchronos पढ़ो */
-	काष्ठा mutex पढ़ो_lock; /* lock क्रम पढ़ोing */
-	रुको_queue_head_t ग_लिखो_queue; /* रुको queue क्रम asynchronos ग_लिखो */
-	काष्ठा mutex ग_लिखो_lock; /* lock क्रम writing */
-	अचिन्हित पूर्णांक ग_लिखो_flags; /* ग_लिखो file flags */
-	अचिन्हित पूर्णांक पढ़ो_flags; /* पढ़ो file flags */
+	wait_queue_head_t read_queue; /* wait queue for asynchronos read */
+	struct mutex read_lock; /* lock for reading */
+	wait_queue_head_t write_queue; /* wait queue for asynchronos write */
+	struct mutex write_lock; /* lock for writing */
+	unsigned int write_flags; /* write file flags */
+	unsigned int read_flags; /* read file flags */
 
-	काष्ठा device *dt_device; /* device created from the device tree */
-	काष्ठा device *device; /* device associated with अक्षर_device */
-	dev_t devt; /* our अक्षर device number */
-	काष्ठा cdev अक्षर_device; /* our अक्षर device */
-पूर्ण;
+	struct device *dt_device; /* device created from the device tree */
+	struct device *device; /* device associated with char_device */
+	dev_t devt; /* our char device number */
+	struct cdev char_device; /* our char device */
+};
 
 /* ----------------------------
  *         sysfs entries
  * ----------------------------
  */
 
-अटल sमाप_प्रकार sysfs_ग_लिखो(काष्ठा device *dev, स्थिर अक्षर *buf,
-			   माप_प्रकार count, अचिन्हित पूर्णांक addr_offset)
-अणु
-	काष्ठा axis_fअगरo *fअगरo = dev_get_drvdata(dev);
-	अचिन्हित दीर्घ पंचांगp;
-	पूर्णांक rc;
+static ssize_t sysfs_write(struct device *dev, const char *buf,
+			   size_t count, unsigned int addr_offset)
+{
+	struct axis_fifo *fifo = dev_get_drvdata(dev);
+	unsigned long tmp;
+	int rc;
 
-	rc = kम_से_अदीर्घ(buf, 0, &पंचांगp);
-	अगर (rc < 0)
-		वापस rc;
+	rc = kstrtoul(buf, 0, &tmp);
+	if (rc < 0)
+		return rc;
 
-	ioग_लिखो32(पंचांगp, fअगरo->base_addr + addr_offset);
+	iowrite32(tmp, fifo->base_addr + addr_offset);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार sysfs_पढ़ो(काष्ठा device *dev, अक्षर *buf,
-			  अचिन्हित पूर्णांक addr_offset)
-अणु
-	काष्ठा axis_fअगरo *fअगरo = dev_get_drvdata(dev);
-	अचिन्हित पूर्णांक पढ़ो_val;
-	अचिन्हित पूर्णांक len;
-	अक्षर पंचांगp[32];
+static ssize_t sysfs_read(struct device *dev, char *buf,
+			  unsigned int addr_offset)
+{
+	struct axis_fifo *fifo = dev_get_drvdata(dev);
+	unsigned int read_val;
+	unsigned int len;
+	char tmp[32];
 
-	पढ़ो_val = ioपढ़ो32(fअगरo->base_addr + addr_offset);
-	len =  snम_लिखो(पंचांगp, माप(पंचांगp), "0x%x\n", पढ़ो_val);
-	स_नकल(buf, पंचांगp, len);
+	read_val = ioread32(fifo->base_addr + addr_offset);
+	len =  snprintf(tmp, sizeof(tmp), "0x%x\n", read_val);
+	memcpy(buf, tmp, len);
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल sमाप_प्रकार isr_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			 स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	वापस sysfs_ग_लिखो(dev, buf, count, XLLF_ISR_OFFSET);
-पूर्ण
+static ssize_t isr_store(struct device *dev, struct device_attribute *attr,
+			 const char *buf, size_t count)
+{
+	return sysfs_write(dev, buf, count, XLLF_ISR_OFFSET);
+}
 
-अटल sमाप_प्रकार isr_show(काष्ठा device *dev,
-			काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	वापस sysfs_पढ़ो(dev, buf, XLLF_ISR_OFFSET);
-पूर्ण
+static ssize_t isr_show(struct device *dev,
+			struct device_attribute *attr, char *buf)
+{
+	return sysfs_read(dev, buf, XLLF_ISR_OFFSET);
+}
 
-अटल DEVICE_ATTR_RW(isr);
+static DEVICE_ATTR_RW(isr);
 
-अटल sमाप_प्रकार ier_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			 स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	वापस sysfs_ग_लिखो(dev, buf, count, XLLF_IER_OFFSET);
-पूर्ण
+static ssize_t ier_store(struct device *dev, struct device_attribute *attr,
+			 const char *buf, size_t count)
+{
+	return sysfs_write(dev, buf, count, XLLF_IER_OFFSET);
+}
 
-अटल sमाप_प्रकार ier_show(काष्ठा device *dev,
-			काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	वापस sysfs_पढ़ो(dev, buf, XLLF_IER_OFFSET);
-पूर्ण
+static ssize_t ier_show(struct device *dev,
+			struct device_attribute *attr, char *buf)
+{
+	return sysfs_read(dev, buf, XLLF_IER_OFFSET);
+}
 
-अटल DEVICE_ATTR_RW(ier);
+static DEVICE_ATTR_RW(ier);
 
-अटल sमाप_प्रकार tdfr_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			  स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	वापस sysfs_ग_लिखो(dev, buf, count, XLLF_TDFR_OFFSET);
-पूर्ण
+static ssize_t tdfr_store(struct device *dev, struct device_attribute *attr,
+			  const char *buf, size_t count)
+{
+	return sysfs_write(dev, buf, count, XLLF_TDFR_OFFSET);
+}
 
-अटल DEVICE_ATTR_WO(tdfr);
+static DEVICE_ATTR_WO(tdfr);
 
-अटल sमाप_प्रकार tdfv_show(काष्ठा device *dev,
-			 काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	वापस sysfs_पढ़ो(dev, buf, XLLF_TDFV_OFFSET);
-पूर्ण
+static ssize_t tdfv_show(struct device *dev,
+			 struct device_attribute *attr, char *buf)
+{
+	return sysfs_read(dev, buf, XLLF_TDFV_OFFSET);
+}
 
-अटल DEVICE_ATTR_RO(tdfv);
+static DEVICE_ATTR_RO(tdfv);
 
-अटल sमाप_प्रकार tdfd_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			  स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	वापस sysfs_ग_लिखो(dev, buf, count, XLLF_TDFD_OFFSET);
-पूर्ण
+static ssize_t tdfd_store(struct device *dev, struct device_attribute *attr,
+			  const char *buf, size_t count)
+{
+	return sysfs_write(dev, buf, count, XLLF_TDFD_OFFSET);
+}
 
-अटल DEVICE_ATTR_WO(tdfd);
+static DEVICE_ATTR_WO(tdfd);
 
-अटल sमाप_प्रकार tlr_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			 स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	वापस sysfs_ग_लिखो(dev, buf, count, XLLF_TLR_OFFSET);
-पूर्ण
+static ssize_t tlr_store(struct device *dev, struct device_attribute *attr,
+			 const char *buf, size_t count)
+{
+	return sysfs_write(dev, buf, count, XLLF_TLR_OFFSET);
+}
 
-अटल DEVICE_ATTR_WO(tlr);
+static DEVICE_ATTR_WO(tlr);
 
-अटल sमाप_प्रकार rdfr_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			  स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	वापस sysfs_ग_लिखो(dev, buf, count, XLLF_RDFR_OFFSET);
-पूर्ण
+static ssize_t rdfr_store(struct device *dev, struct device_attribute *attr,
+			  const char *buf, size_t count)
+{
+	return sysfs_write(dev, buf, count, XLLF_RDFR_OFFSET);
+}
 
-अटल DEVICE_ATTR_WO(rdfr);
+static DEVICE_ATTR_WO(rdfr);
 
-अटल sमाप_प्रकार rdfo_show(काष्ठा device *dev,
-			 काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	वापस sysfs_पढ़ो(dev, buf, XLLF_RDFO_OFFSET);
-पूर्ण
+static ssize_t rdfo_show(struct device *dev,
+			 struct device_attribute *attr, char *buf)
+{
+	return sysfs_read(dev, buf, XLLF_RDFO_OFFSET);
+}
 
-अटल DEVICE_ATTR_RO(rdfo);
+static DEVICE_ATTR_RO(rdfo);
 
-अटल sमाप_प्रकार rdfd_show(काष्ठा device *dev,
-			 काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	वापस sysfs_पढ़ो(dev, buf, XLLF_RDFD_OFFSET);
-पूर्ण
+static ssize_t rdfd_show(struct device *dev,
+			 struct device_attribute *attr, char *buf)
+{
+	return sysfs_read(dev, buf, XLLF_RDFD_OFFSET);
+}
 
-अटल DEVICE_ATTR_RO(rdfd);
+static DEVICE_ATTR_RO(rdfd);
 
-अटल sमाप_प्रकार rlr_show(काष्ठा device *dev,
-			काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	वापस sysfs_पढ़ो(dev, buf, XLLF_RLR_OFFSET);
-पूर्ण
+static ssize_t rlr_show(struct device *dev,
+			struct device_attribute *attr, char *buf)
+{
+	return sysfs_read(dev, buf, XLLF_RLR_OFFSET);
+}
 
-अटल DEVICE_ATTR_RO(rlr);
+static DEVICE_ATTR_RO(rlr);
 
-अटल sमाप_प्रकार srr_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			 स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	वापस sysfs_ग_लिखो(dev, buf, count, XLLF_SRR_OFFSET);
-पूर्ण
+static ssize_t srr_store(struct device *dev, struct device_attribute *attr,
+			 const char *buf, size_t count)
+{
+	return sysfs_write(dev, buf, count, XLLF_SRR_OFFSET);
+}
 
-अटल DEVICE_ATTR_WO(srr);
+static DEVICE_ATTR_WO(srr);
 
-अटल sमाप_प्रकार tdr_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			 स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	वापस sysfs_ग_लिखो(dev, buf, count, XLLF_TDR_OFFSET);
-पूर्ण
+static ssize_t tdr_store(struct device *dev, struct device_attribute *attr,
+			 const char *buf, size_t count)
+{
+	return sysfs_write(dev, buf, count, XLLF_TDR_OFFSET);
+}
 
-अटल DEVICE_ATTR_WO(tdr);
+static DEVICE_ATTR_WO(tdr);
 
-अटल sमाप_प्रकार rdr_show(काष्ठा device *dev,
-			काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	वापस sysfs_पढ़ो(dev, buf, XLLF_RDR_OFFSET);
-पूर्ण
+static ssize_t rdr_show(struct device *dev,
+			struct device_attribute *attr, char *buf)
+{
+	return sysfs_read(dev, buf, XLLF_RDR_OFFSET);
+}
 
-अटल DEVICE_ATTR_RO(rdr);
+static DEVICE_ATTR_RO(rdr);
 
-अटल काष्ठा attribute *axis_fअगरo_attrs[] = अणु
+static struct attribute *axis_fifo_attrs[] = {
 	&dev_attr_isr.attr,
 	&dev_attr_ier.attr,
 	&dev_attr_tdfr.attr,
@@ -312,511 +311,511 @@ MODULE_PARM_DESC(ग_लिखो_समयout, "ms to wait before blocking writ
 	&dev_attr_srr.attr,
 	&dev_attr_tdr.attr,
 	&dev_attr_rdr.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group axis_fअगरo_attrs_group = अणु
+static const struct attribute_group axis_fifo_attrs_group = {
 	.name = "ip_registers",
-	.attrs = axis_fअगरo_attrs,
-पूर्ण;
+	.attrs = axis_fifo_attrs,
+};
 
 /* ----------------------------
  *        implementation
  * ----------------------------
  */
 
-अटल व्योम reset_ip_core(काष्ठा axis_fअगरo *fअगरo)
-अणु
-	ioग_लिखो32(XLLF_SRR_RESET_MASK, fअगरo->base_addr + XLLF_SRR_OFFSET);
-	ioग_लिखो32(XLLF_TDFR_RESET_MASK, fअगरo->base_addr + XLLF_TDFR_OFFSET);
-	ioग_लिखो32(XLLF_RDFR_RESET_MASK, fअगरo->base_addr + XLLF_RDFR_OFFSET);
-	ioग_लिखो32(XLLF_INT_TC_MASK | XLLF_INT_RC_MASK | XLLF_INT_RPURE_MASK |
+static void reset_ip_core(struct axis_fifo *fifo)
+{
+	iowrite32(XLLF_SRR_RESET_MASK, fifo->base_addr + XLLF_SRR_OFFSET);
+	iowrite32(XLLF_TDFR_RESET_MASK, fifo->base_addr + XLLF_TDFR_OFFSET);
+	iowrite32(XLLF_RDFR_RESET_MASK, fifo->base_addr + XLLF_RDFR_OFFSET);
+	iowrite32(XLLF_INT_TC_MASK | XLLF_INT_RC_MASK | XLLF_INT_RPURE_MASK |
 		  XLLF_INT_RPORE_MASK | XLLF_INT_RPUE_MASK |
 		  XLLF_INT_TPOE_MASK | XLLF_INT_TSE_MASK,
-		  fअगरo->base_addr + XLLF_IER_OFFSET);
-	ioग_लिखो32(XLLF_INT_ALL_MASK, fअगरo->base_addr + XLLF_ISR_OFFSET);
-पूर्ण
+		  fifo->base_addr + XLLF_IER_OFFSET);
+	iowrite32(XLLF_INT_ALL_MASK, fifo->base_addr + XLLF_ISR_OFFSET);
+}
 
 /**
- * axis_fअगरo_ग_लिखो() - Read a packet from AXIS-FIFO अक्षरacter device.
+ * axis_fifo_write() - Read a packet from AXIS-FIFO character device.
  * @f Open file.
- * @buf User space buffer to पढ़ो to.
+ * @buf User space buffer to read to.
  * @len User space buffer length.
  * @off Buffer offset.
  *
  * As defined by the device's documentation, we need to check the device's
- * occupancy beक्रमe पढ़ोing the length रेजिस्टर and then the data. All these
+ * occupancy before reading the length register and then the data. All these
  * operations must be executed atomically, in order and one after the other
  * without missing any.
  *
- * Returns the number of bytes पढ़ो from the device or negative error code
+ * Returns the number of bytes read from the device or negative error code
  *	on failure.
  */
-अटल sमाप_प्रकार axis_fअगरo_पढ़ो(काष्ठा file *f, अक्षर __user *buf,
-			      माप_प्रकार len, loff_t *off)
-अणु
-	काष्ठा axis_fअगरo *fअगरo = (काष्ठा axis_fअगरo *)f->निजी_data;
-	माप_प्रकार bytes_available;
-	अचिन्हित पूर्णांक words_available;
-	अचिन्हित पूर्णांक copied;
-	अचिन्हित पूर्णांक copy;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक ret;
-	u32 पंचांगp_buf[READ_BUF_SIZE];
+static ssize_t axis_fifo_read(struct file *f, char __user *buf,
+			      size_t len, loff_t *off)
+{
+	struct axis_fifo *fifo = (struct axis_fifo *)f->private_data;
+	size_t bytes_available;
+	unsigned int words_available;
+	unsigned int copied;
+	unsigned int copy;
+	unsigned int i;
+	int ret;
+	u32 tmp_buf[READ_BUF_SIZE];
 
-	अगर (fअगरo->पढ़ो_flags & O_NONBLOCK) अणु
+	if (fifo->read_flags & O_NONBLOCK) {
 		/*
-		 * Device खोलोed in non-blocking mode. Try to lock it and then
-		 * check अगर any packet is available.
+		 * Device opened in non-blocking mode. Try to lock it and then
+		 * check if any packet is available.
 		 */
-		अगर (!mutex_trylock(&fअगरo->पढ़ो_lock))
-			वापस -EAGAIN;
+		if (!mutex_trylock(&fifo->read_lock))
+			return -EAGAIN;
 
-		अगर (!ioपढ़ो32(fअगरo->base_addr + XLLF_RDFO_OFFSET)) अणु
+		if (!ioread32(fifo->base_addr + XLLF_RDFO_OFFSET)) {
 			ret = -EAGAIN;
-			जाओ end_unlock;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		/* खोलोed in blocking mode
-		 * रुको क्रम a packet available पूर्णांकerrupt (or समयout)
-		 * अगर nothing is currently available
+			goto end_unlock;
+		}
+	} else {
+		/* opened in blocking mode
+		 * wait for a packet available interrupt (or timeout)
+		 * if nothing is currently available
 		 */
-		mutex_lock(&fअगरo->पढ़ो_lock);
-		ret = रुको_event_पूर्णांकerruptible_समयout(fअगरo->पढ़ो_queue,
-			ioपढ़ो32(fअगरo->base_addr + XLLF_RDFO_OFFSET),
-				 (पढ़ो_समयout >= 0) ?
-				  msecs_to_jअगरfies(पढ़ो_समयout) :
+		mutex_lock(&fifo->read_lock);
+		ret = wait_event_interruptible_timeout(fifo->read_queue,
+			ioread32(fifo->base_addr + XLLF_RDFO_OFFSET),
+				 (read_timeout >= 0) ?
+				  msecs_to_jiffies(read_timeout) :
 				  MAX_SCHEDULE_TIMEOUT);
 
-		अगर (ret <= 0) अणु
-			अगर (ret == 0) अणु
+		if (ret <= 0) {
+			if (ret == 0) {
 				ret = -EAGAIN;
-			पूर्ण अन्यथा अगर (ret != -ERESTARTSYS) अणु
-				dev_err(fअगरo->dt_device, "wait_event_interruptible_timeout() error in read (ret=%i)\n",
+			} else if (ret != -ERESTARTSYS) {
+				dev_err(fifo->dt_device, "wait_event_interruptible_timeout() error in read (ret=%i)\n",
 					ret);
-			पूर्ण
+			}
 
-			जाओ end_unlock;
-		पूर्ण
-	पूर्ण
+			goto end_unlock;
+		}
+	}
 
-	bytes_available = ioपढ़ो32(fअगरo->base_addr + XLLF_RLR_OFFSET);
-	अगर (!bytes_available) अणु
-		dev_err(fअगरo->dt_device, "received a packet of length 0 - fifo core will be reset\n");
-		reset_ip_core(fअगरo);
+	bytes_available = ioread32(fifo->base_addr + XLLF_RLR_OFFSET);
+	if (!bytes_available) {
+		dev_err(fifo->dt_device, "received a packet of length 0 - fifo core will be reset\n");
+		reset_ip_core(fifo);
 		ret = -EIO;
-		जाओ end_unlock;
-	पूर्ण
+		goto end_unlock;
+	}
 
-	अगर (bytes_available > len) अणु
-		dev_err(fअगरo->dt_device, "user read buffer too small (available bytes=%zu user buffer bytes=%zu) - fifo core will be reset\n",
+	if (bytes_available > len) {
+		dev_err(fifo->dt_device, "user read buffer too small (available bytes=%zu user buffer bytes=%zu) - fifo core will be reset\n",
 			bytes_available, len);
-		reset_ip_core(fअगरo);
+		reset_ip_core(fifo);
 		ret = -EINVAL;
-		जाओ end_unlock;
-	पूर्ण
+		goto end_unlock;
+	}
 
-	अगर (bytes_available % माप(u32)) अणु
+	if (bytes_available % sizeof(u32)) {
 		/* this probably can't happen unless IP
-		 * रेजिस्टरs were previously mishandled
+		 * registers were previously mishandled
 		 */
-		dev_err(fअगरo->dt_device, "received a packet that isn't word-aligned - fifo core will be reset\n");
-		reset_ip_core(fअगरo);
+		dev_err(fifo->dt_device, "received a packet that isn't word-aligned - fifo core will be reset\n");
+		reset_ip_core(fifo);
 		ret = -EIO;
-		जाओ end_unlock;
-	पूर्ण
+		goto end_unlock;
+	}
 
-	words_available = bytes_available / माप(u32);
+	words_available = bytes_available / sizeof(u32);
 
-	/* पढ़ो data पूर्णांकo an पूर्णांकermediate buffer, copying the contents
+	/* read data into an intermediate buffer, copying the contents
 	 * to userspace when the buffer is full
 	 */
 	copied = 0;
-	जबतक (words_available > 0) अणु
+	while (words_available > 0) {
 		copy = min(words_available, READ_BUF_SIZE);
 
-		क्रम (i = 0; i < copy; i++) अणु
-			पंचांगp_buf[i] = ioपढ़ो32(fअगरo->base_addr +
+		for (i = 0; i < copy; i++) {
+			tmp_buf[i] = ioread32(fifo->base_addr +
 					      XLLF_RDFD_OFFSET);
-		पूर्ण
+		}
 
-		अगर (copy_to_user(buf + copied * माप(u32), पंचांगp_buf,
-				 copy * माप(u32))) अणु
-			reset_ip_core(fअगरo);
+		if (copy_to_user(buf + copied * sizeof(u32), tmp_buf,
+				 copy * sizeof(u32))) {
+			reset_ip_core(fifo);
 			ret = -EFAULT;
-			जाओ end_unlock;
-		पूर्ण
+			goto end_unlock;
+		}
 
 		copied += copy;
 		words_available -= copy;
-	पूर्ण
+	}
 
 	ret = bytes_available;
 
 end_unlock:
-	mutex_unlock(&fअगरo->पढ़ो_lock);
+	mutex_unlock(&fifo->read_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * axis_fअगरo_ग_लिखो() - Write buffer to AXIS-FIFO अक्षरacter device.
+ * axis_fifo_write() - Write buffer to AXIS-FIFO character device.
  * @f Open file.
- * @buf User space buffer to ग_लिखो to the device.
+ * @buf User space buffer to write to the device.
  * @len User space buffer length.
  * @off Buffer offset.
  *
  * As defined by the device's documentation, we need to write to the device's
- * data buffer then to the device's packet length रेजिस्टर atomically. Also,
- * we need to lock beक्रमe checking अगर the device has available space to aव्योम
+ * data buffer then to the device's packet length register atomically. Also,
+ * we need to lock before checking if the device has available space to avoid
  * any concurrency issue.
  *
  * Returns the number of bytes written to the device or negative error code
  *	on failure.
  */
-अटल sमाप_प्रकार axis_fअगरo_ग_लिखो(काष्ठा file *f, स्थिर अक्षर __user *buf,
-			       माप_प्रकार len, loff_t *off)
-अणु
-	काष्ठा axis_fअगरo *fअगरo = (काष्ठा axis_fअगरo *)f->निजी_data;
-	अचिन्हित पूर्णांक words_to_ग_लिखो;
-	अचिन्हित पूर्णांक copied;
-	अचिन्हित पूर्णांक copy;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक ret;
-	u32 पंचांगp_buf[WRITE_BUF_SIZE];
+static ssize_t axis_fifo_write(struct file *f, const char __user *buf,
+			       size_t len, loff_t *off)
+{
+	struct axis_fifo *fifo = (struct axis_fifo *)f->private_data;
+	unsigned int words_to_write;
+	unsigned int copied;
+	unsigned int copy;
+	unsigned int i;
+	int ret;
+	u32 tmp_buf[WRITE_BUF_SIZE];
 
-	अगर (len % माप(u32)) अणु
-		dev_err(fअगरo->dt_device,
+	if (len % sizeof(u32)) {
+		dev_err(fifo->dt_device,
 			"tried to send a packet that isn't word-aligned\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	words_to_ग_लिखो = len / माप(u32);
+	words_to_write = len / sizeof(u32);
 
-	अगर (!words_to_ग_लिखो) अणु
-		dev_err(fअगरo->dt_device,
+	if (!words_to_write) {
+		dev_err(fifo->dt_device,
 			"tried to send a packet of length 0\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (words_to_ग_लिखो > fअगरo->tx_fअगरo_depth) अणु
-		dev_err(fअगरo->dt_device, "tried to write more words [%u] than slots in the fifo buffer [%u]\n",
-			words_to_ग_लिखो, fअगरo->tx_fअगरo_depth);
-		वापस -EINVAL;
-	पूर्ण
+	if (words_to_write > fifo->tx_fifo_depth) {
+		dev_err(fifo->dt_device, "tried to write more words [%u] than slots in the fifo buffer [%u]\n",
+			words_to_write, fifo->tx_fifo_depth);
+		return -EINVAL;
+	}
 
-	अगर (fअगरo->ग_लिखो_flags & O_NONBLOCK) अणु
+	if (fifo->write_flags & O_NONBLOCK) {
 		/*
-		 * Device खोलोed in non-blocking mode. Try to lock it and then
-		 * check अगर there is any room to ग_लिखो the given buffer.
+		 * Device opened in non-blocking mode. Try to lock it and then
+		 * check if there is any room to write the given buffer.
 		 */
-		अगर (!mutex_trylock(&fअगरo->ग_लिखो_lock))
-			वापस -EAGAIN;
+		if (!mutex_trylock(&fifo->write_lock))
+			return -EAGAIN;
 
-		अगर (words_to_ग_लिखो > ioपढ़ो32(fअगरo->base_addr +
-					      XLLF_TDFV_OFFSET)) अणु
+		if (words_to_write > ioread32(fifo->base_addr +
+					      XLLF_TDFV_OFFSET)) {
 			ret = -EAGAIN;
-			जाओ end_unlock;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		/* खोलोed in blocking mode */
+			goto end_unlock;
+		}
+	} else {
+		/* opened in blocking mode */
 
-		/* रुको क्रम an पूर्णांकerrupt (or समयout) अगर there isn't
-		 * currently enough room in the fअगरo
+		/* wait for an interrupt (or timeout) if there isn't
+		 * currently enough room in the fifo
 		 */
-		mutex_lock(&fअगरo->ग_लिखो_lock);
-		ret = रुको_event_पूर्णांकerruptible_समयout(fअगरo->ग_लिखो_queue,
-			ioपढ़ो32(fअगरo->base_addr + XLLF_TDFV_OFFSET)
-				 >= words_to_ग_लिखो,
-				 (ग_लिखो_समयout >= 0) ?
-				  msecs_to_jअगरfies(ग_लिखो_समयout) :
+		mutex_lock(&fifo->write_lock);
+		ret = wait_event_interruptible_timeout(fifo->write_queue,
+			ioread32(fifo->base_addr + XLLF_TDFV_OFFSET)
+				 >= words_to_write,
+				 (write_timeout >= 0) ?
+				  msecs_to_jiffies(write_timeout) :
 				  MAX_SCHEDULE_TIMEOUT);
 
-		अगर (ret <= 0) अणु
-			अगर (ret == 0) अणु
+		if (ret <= 0) {
+			if (ret == 0) {
 				ret = -EAGAIN;
-			पूर्ण अन्यथा अगर (ret != -ERESTARTSYS) अणु
-				dev_err(fअगरo->dt_device, "wait_event_interruptible_timeout() error in write (ret=%i)\n",
+			} else if (ret != -ERESTARTSYS) {
+				dev_err(fifo->dt_device, "wait_event_interruptible_timeout() error in write (ret=%i)\n",
 					ret);
-			पूर्ण
+			}
 
-			जाओ end_unlock;
-		पूर्ण
-	पूर्ण
+			goto end_unlock;
+		}
+	}
 
-	/* ग_लिखो data from an पूर्णांकermediate buffer पूर्णांकo the fअगरo IP, refilling
+	/* write data from an intermediate buffer into the fifo IP, refilling
 	 * the buffer with userspace data as needed
 	 */
 	copied = 0;
-	जबतक (words_to_ग_लिखो > 0) अणु
-		copy = min(words_to_ग_लिखो, WRITE_BUF_SIZE);
+	while (words_to_write > 0) {
+		copy = min(words_to_write, WRITE_BUF_SIZE);
 
-		अगर (copy_from_user(पंचांगp_buf, buf + copied * माप(u32),
-				   copy * माप(u32))) अणु
-			reset_ip_core(fअगरo);
+		if (copy_from_user(tmp_buf, buf + copied * sizeof(u32),
+				   copy * sizeof(u32))) {
+			reset_ip_core(fifo);
 			ret = -EFAULT;
-			जाओ end_unlock;
-		पूर्ण
+			goto end_unlock;
+		}
 
-		क्रम (i = 0; i < copy; i++)
-			ioग_लिखो32(पंचांगp_buf[i], fअगरo->base_addr +
+		for (i = 0; i < copy; i++)
+			iowrite32(tmp_buf[i], fifo->base_addr +
 				  XLLF_TDFD_OFFSET);
 
 		copied += copy;
-		words_to_ग_लिखो -= copy;
-	पूर्ण
+		words_to_write -= copy;
+	}
 
-	ret = copied * माप(u32);
+	ret = copied * sizeof(u32);
 
-	/* ग_लिखो packet size to fअगरo */
-	ioग_लिखो32(ret, fअगरo->base_addr + XLLF_TLR_OFFSET);
+	/* write packet size to fifo */
+	iowrite32(ret, fifo->base_addr + XLLF_TLR_OFFSET);
 
 end_unlock:
-	mutex_unlock(&fअगरo->ग_लिखो_lock);
+	mutex_unlock(&fifo->write_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल irqवापस_t axis_fअगरo_irq(पूर्णांक irq, व्योम *dw)
-अणु
-	काष्ठा axis_fअगरo *fअगरo = (काष्ठा axis_fअगरo *)dw;
-	अचिन्हित पूर्णांक pending_पूर्णांकerrupts;
+static irqreturn_t axis_fifo_irq(int irq, void *dw)
+{
+	struct axis_fifo *fifo = (struct axis_fifo *)dw;
+	unsigned int pending_interrupts;
 
-	करो अणु
-		pending_पूर्णांकerrupts = ioपढ़ो32(fअगरo->base_addr +
+	do {
+		pending_interrupts = ioread32(fifo->base_addr +
 					      XLLF_IER_OFFSET) &
-					      ioपढ़ो32(fअगरo->base_addr
+					      ioread32(fifo->base_addr
 					      + XLLF_ISR_OFFSET);
-		अगर (pending_पूर्णांकerrupts & XLLF_INT_RC_MASK) अणु
+		if (pending_interrupts & XLLF_INT_RC_MASK) {
 			/* packet received */
 
-			/* wake the पढ़ोer process अगर it is रुकोing */
-			wake_up(&fअगरo->पढ़ो_queue);
+			/* wake the reader process if it is waiting */
+			wake_up(&fifo->read_queue);
 
-			/* clear पूर्णांकerrupt */
-			ioग_लिखो32(XLLF_INT_RC_MASK & XLLF_INT_ALL_MASK,
-				  fअगरo->base_addr + XLLF_ISR_OFFSET);
-		पूर्ण अन्यथा अगर (pending_पूर्णांकerrupts & XLLF_INT_TC_MASK) अणु
+			/* clear interrupt */
+			iowrite32(XLLF_INT_RC_MASK & XLLF_INT_ALL_MASK,
+				  fifo->base_addr + XLLF_ISR_OFFSET);
+		} else if (pending_interrupts & XLLF_INT_TC_MASK) {
 			/* packet sent */
 
-			/* wake the ग_लिखोr process अगर it is रुकोing */
-			wake_up(&fअगरo->ग_लिखो_queue);
+			/* wake the writer process if it is waiting */
+			wake_up(&fifo->write_queue);
 
-			ioग_लिखो32(XLLF_INT_TC_MASK & XLLF_INT_ALL_MASK,
-				  fअगरo->base_addr + XLLF_ISR_OFFSET);
-		पूर्ण अन्यथा अगर (pending_पूर्णांकerrupts & XLLF_INT_TFPF_MASK) अणु
-			/* transmit fअगरo programmable full */
+			iowrite32(XLLF_INT_TC_MASK & XLLF_INT_ALL_MASK,
+				  fifo->base_addr + XLLF_ISR_OFFSET);
+		} else if (pending_interrupts & XLLF_INT_TFPF_MASK) {
+			/* transmit fifo programmable full */
 
-			ioग_लिखो32(XLLF_INT_TFPF_MASK & XLLF_INT_ALL_MASK,
-				  fअगरo->base_addr + XLLF_ISR_OFFSET);
-		पूर्ण अन्यथा अगर (pending_पूर्णांकerrupts & XLLF_INT_TFPE_MASK) अणु
-			/* transmit fअगरo programmable empty */
+			iowrite32(XLLF_INT_TFPF_MASK & XLLF_INT_ALL_MASK,
+				  fifo->base_addr + XLLF_ISR_OFFSET);
+		} else if (pending_interrupts & XLLF_INT_TFPE_MASK) {
+			/* transmit fifo programmable empty */
 
-			ioग_लिखो32(XLLF_INT_TFPE_MASK & XLLF_INT_ALL_MASK,
-				  fअगरo->base_addr + XLLF_ISR_OFFSET);
-		पूर्ण अन्यथा अगर (pending_पूर्णांकerrupts & XLLF_INT_RFPF_MASK) अणु
-			/* receive fअगरo programmable full */
+			iowrite32(XLLF_INT_TFPE_MASK & XLLF_INT_ALL_MASK,
+				  fifo->base_addr + XLLF_ISR_OFFSET);
+		} else if (pending_interrupts & XLLF_INT_RFPF_MASK) {
+			/* receive fifo programmable full */
 
-			ioग_लिखो32(XLLF_INT_RFPF_MASK & XLLF_INT_ALL_MASK,
-				  fअगरo->base_addr + XLLF_ISR_OFFSET);
-		पूर्ण अन्यथा अगर (pending_पूर्णांकerrupts & XLLF_INT_RFPE_MASK) अणु
-			/* receive fअगरo programmable empty */
+			iowrite32(XLLF_INT_RFPF_MASK & XLLF_INT_ALL_MASK,
+				  fifo->base_addr + XLLF_ISR_OFFSET);
+		} else if (pending_interrupts & XLLF_INT_RFPE_MASK) {
+			/* receive fifo programmable empty */
 
-			ioग_लिखो32(XLLF_INT_RFPE_MASK & XLLF_INT_ALL_MASK,
-				  fअगरo->base_addr + XLLF_ISR_OFFSET);
-		पूर्ण अन्यथा अगर (pending_पूर्णांकerrupts & XLLF_INT_TRC_MASK) अणु
-			/* transmit reset complete पूर्णांकerrupt */
+			iowrite32(XLLF_INT_RFPE_MASK & XLLF_INT_ALL_MASK,
+				  fifo->base_addr + XLLF_ISR_OFFSET);
+		} else if (pending_interrupts & XLLF_INT_TRC_MASK) {
+			/* transmit reset complete interrupt */
 
-			ioग_लिखो32(XLLF_INT_TRC_MASK & XLLF_INT_ALL_MASK,
-				  fअगरo->base_addr + XLLF_ISR_OFFSET);
-		पूर्ण अन्यथा अगर (pending_पूर्णांकerrupts & XLLF_INT_RRC_MASK) अणु
-			/* receive reset complete पूर्णांकerrupt */
+			iowrite32(XLLF_INT_TRC_MASK & XLLF_INT_ALL_MASK,
+				  fifo->base_addr + XLLF_ISR_OFFSET);
+		} else if (pending_interrupts & XLLF_INT_RRC_MASK) {
+			/* receive reset complete interrupt */
 
-			ioग_लिखो32(XLLF_INT_RRC_MASK & XLLF_INT_ALL_MASK,
-				  fअगरo->base_addr + XLLF_ISR_OFFSET);
-		पूर्ण अन्यथा अगर (pending_पूर्णांकerrupts & XLLF_INT_RPURE_MASK) अणु
-			/* receive fअगरo under-पढ़ो error पूर्णांकerrupt */
-			dev_err(fअगरo->dt_device,
+			iowrite32(XLLF_INT_RRC_MASK & XLLF_INT_ALL_MASK,
+				  fifo->base_addr + XLLF_ISR_OFFSET);
+		} else if (pending_interrupts & XLLF_INT_RPURE_MASK) {
+			/* receive fifo under-read error interrupt */
+			dev_err(fifo->dt_device,
 				"receive under-read interrupt\n");
 
-			ioग_लिखो32(XLLF_INT_RPURE_MASK & XLLF_INT_ALL_MASK,
-				  fअगरo->base_addr + XLLF_ISR_OFFSET);
-		पूर्ण अन्यथा अगर (pending_पूर्णांकerrupts & XLLF_INT_RPORE_MASK) अणु
-			/* receive over-पढ़ो error पूर्णांकerrupt */
-			dev_err(fअगरo->dt_device,
+			iowrite32(XLLF_INT_RPURE_MASK & XLLF_INT_ALL_MASK,
+				  fifo->base_addr + XLLF_ISR_OFFSET);
+		} else if (pending_interrupts & XLLF_INT_RPORE_MASK) {
+			/* receive over-read error interrupt */
+			dev_err(fifo->dt_device,
 				"receive over-read interrupt\n");
 
-			ioग_लिखो32(XLLF_INT_RPORE_MASK & XLLF_INT_ALL_MASK,
-				  fअगरo->base_addr + XLLF_ISR_OFFSET);
-		पूर्ण अन्यथा अगर (pending_पूर्णांकerrupts & XLLF_INT_RPUE_MASK) अणु
-			/* receive underrun error पूर्णांकerrupt */
-			dev_err(fअगरo->dt_device,
+			iowrite32(XLLF_INT_RPORE_MASK & XLLF_INT_ALL_MASK,
+				  fifo->base_addr + XLLF_ISR_OFFSET);
+		} else if (pending_interrupts & XLLF_INT_RPUE_MASK) {
+			/* receive underrun error interrupt */
+			dev_err(fifo->dt_device,
 				"receive underrun error interrupt\n");
 
-			ioग_लिखो32(XLLF_INT_RPUE_MASK & XLLF_INT_ALL_MASK,
-				  fअगरo->base_addr + XLLF_ISR_OFFSET);
-		पूर्ण अन्यथा अगर (pending_पूर्णांकerrupts & XLLF_INT_TPOE_MASK) अणु
-			/* transmit overrun error पूर्णांकerrupt */
-			dev_err(fअगरo->dt_device,
+			iowrite32(XLLF_INT_RPUE_MASK & XLLF_INT_ALL_MASK,
+				  fifo->base_addr + XLLF_ISR_OFFSET);
+		} else if (pending_interrupts & XLLF_INT_TPOE_MASK) {
+			/* transmit overrun error interrupt */
+			dev_err(fifo->dt_device,
 				"transmit overrun error interrupt\n");
 
-			ioग_लिखो32(XLLF_INT_TPOE_MASK & XLLF_INT_ALL_MASK,
-				  fअगरo->base_addr + XLLF_ISR_OFFSET);
-		पूर्ण अन्यथा अगर (pending_पूर्णांकerrupts & XLLF_INT_TSE_MASK) अणु
-			/* transmit length mismatch error पूर्णांकerrupt */
-			dev_err(fअगरo->dt_device,
+			iowrite32(XLLF_INT_TPOE_MASK & XLLF_INT_ALL_MASK,
+				  fifo->base_addr + XLLF_ISR_OFFSET);
+		} else if (pending_interrupts & XLLF_INT_TSE_MASK) {
+			/* transmit length mismatch error interrupt */
+			dev_err(fifo->dt_device,
 				"transmit length mismatch error interrupt\n");
 
-			ioग_लिखो32(XLLF_INT_TSE_MASK & XLLF_INT_ALL_MASK,
-				  fअगरo->base_addr + XLLF_ISR_OFFSET);
-		पूर्ण अन्यथा अगर (pending_पूर्णांकerrupts) अणु
-			/* unknown पूर्णांकerrupt type */
-			dev_err(fअगरo->dt_device,
+			iowrite32(XLLF_INT_TSE_MASK & XLLF_INT_ALL_MASK,
+				  fifo->base_addr + XLLF_ISR_OFFSET);
+		} else if (pending_interrupts) {
+			/* unknown interrupt type */
+			dev_err(fifo->dt_device,
 				"unknown interrupt(s) 0x%x\n",
-				pending_पूर्णांकerrupts);
+				pending_interrupts);
 
-			ioग_लिखो32(XLLF_INT_ALL_MASK,
-				  fअगरo->base_addr + XLLF_ISR_OFFSET);
-		पूर्ण
-	पूर्ण जबतक (pending_पूर्णांकerrupts);
+			iowrite32(XLLF_INT_ALL_MASK,
+				  fifo->base_addr + XLLF_ISR_OFFSET);
+		}
+	} while (pending_interrupts);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक axis_fअगरo_खोलो(काष्ठा inode *inod, काष्ठा file *f)
-अणु
-	काष्ठा axis_fअगरo *fअगरo = (काष्ठा axis_fअगरo *)container_of(inod->i_cdev,
-					काष्ठा axis_fअगरo, अक्षर_device);
-	f->निजी_data = fअगरo;
+static int axis_fifo_open(struct inode *inod, struct file *f)
+{
+	struct axis_fifo *fifo = (struct axis_fifo *)container_of(inod->i_cdev,
+					struct axis_fifo, char_device);
+	f->private_data = fifo;
 
-	अगर (((f->f_flags & O_ACCMODE) == O_WRONLY) ||
-	    ((f->f_flags & O_ACCMODE) == O_RDWR)) अणु
-		अगर (fअगरo->has_tx_fअगरo) अणु
-			fअगरo->ग_लिखो_flags = f->f_flags;
-		पूर्ण अन्यथा अणु
-			dev_err(fअगरo->dt_device, "tried to open device for write but the transmit fifo is disabled\n");
-			वापस -EPERM;
-		पूर्ण
-	पूर्ण
+	if (((f->f_flags & O_ACCMODE) == O_WRONLY) ||
+	    ((f->f_flags & O_ACCMODE) == O_RDWR)) {
+		if (fifo->has_tx_fifo) {
+			fifo->write_flags = f->f_flags;
+		} else {
+			dev_err(fifo->dt_device, "tried to open device for write but the transmit fifo is disabled\n");
+			return -EPERM;
+		}
+	}
 
-	अगर (((f->f_flags & O_ACCMODE) == O_RDONLY) ||
-	    ((f->f_flags & O_ACCMODE) == O_RDWR)) अणु
-		अगर (fअगरo->has_rx_fअगरo) अणु
-			fअगरo->पढ़ो_flags = f->f_flags;
-		पूर्ण अन्यथा अणु
-			dev_err(fअगरo->dt_device, "tried to open device for read but the receive fifo is disabled\n");
-			वापस -EPERM;
-		पूर्ण
-	पूर्ण
+	if (((f->f_flags & O_ACCMODE) == O_RDONLY) ||
+	    ((f->f_flags & O_ACCMODE) == O_RDWR)) {
+		if (fifo->has_rx_fifo) {
+			fifo->read_flags = f->f_flags;
+		} else {
+			dev_err(fifo->dt_device, "tried to open device for read but the receive fifo is disabled\n");
+			return -EPERM;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक axis_fअगरo_बंद(काष्ठा inode *inod, काष्ठा file *f)
-अणु
-	f->निजी_data = शून्य;
+static int axis_fifo_close(struct inode *inod, struct file *f)
+{
+	f->private_data = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations fops = अणु
+static const struct file_operations fops = {
 	.owner = THIS_MODULE,
-	.खोलो = axis_fअगरo_खोलो,
-	.release = axis_fअगरo_बंद,
-	.पढ़ो = axis_fअगरo_पढ़ो,
-	.ग_लिखो = axis_fअगरo_ग_लिखो
-पूर्ण;
+	.open = axis_fifo_open,
+	.release = axis_fifo_close,
+	.read = axis_fifo_read,
+	.write = axis_fifo_write
+};
 
-/* पढ़ो named property from the device tree */
-अटल पूर्णांक get_dts_property(काष्ठा axis_fअगरo *fअगरo,
-			    अक्षर *name, अचिन्हित पूर्णांक *var)
-अणु
-	पूर्णांक rc;
+/* read named property from the device tree */
+static int get_dts_property(struct axis_fifo *fifo,
+			    char *name, unsigned int *var)
+{
+	int rc;
 
-	rc = of_property_पढ़ो_u32(fअगरo->dt_device->of_node, name, var);
-	अगर (rc) अणु
-		dev_err(fअगरo->dt_device, "couldn't read IP dts property '%s'",
+	rc = of_property_read_u32(fifo->dt_device->of_node, name, var);
+	if (rc) {
+		dev_err(fifo->dt_device, "couldn't read IP dts property '%s'",
 			name);
-		वापस rc;
-	पूर्ण
-	dev_dbg(fअगरo->dt_device, "dts property '%s' = %u\n",
+		return rc;
+	}
+	dev_dbg(fifo->dt_device, "dts property '%s' = %u\n",
 		name, *var);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक axis_fअगरo_parse_dt(काष्ठा axis_fअगरo *fअगरo)
-अणु
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक value;
+static int axis_fifo_parse_dt(struct axis_fifo *fifo)
+{
+	int ret;
+	unsigned int value;
 
-	ret = get_dts_property(fअगरo, "xlnx,axi-str-rxd-tdata-width", &value);
-	अगर (ret) अणु
-		dev_err(fअगरo->dt_device, "missing xlnx,axi-str-rxd-tdata-width property\n");
-		जाओ end;
-	पूर्ण अन्यथा अगर (value != 32) अणु
-		dev_err(fअगरo->dt_device, "xlnx,axi-str-rxd-tdata-width only supports 32 bits\n");
+	ret = get_dts_property(fifo, "xlnx,axi-str-rxd-tdata-width", &value);
+	if (ret) {
+		dev_err(fifo->dt_device, "missing xlnx,axi-str-rxd-tdata-width property\n");
+		goto end;
+	} else if (value != 32) {
+		dev_err(fifo->dt_device, "xlnx,axi-str-rxd-tdata-width only supports 32 bits\n");
 		ret = -EIO;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
-	ret = get_dts_property(fअगरo, "xlnx,axi-str-txd-tdata-width", &value);
-	अगर (ret) अणु
-		dev_err(fअगरo->dt_device, "missing xlnx,axi-str-txd-tdata-width property\n");
-		जाओ end;
-	पूर्ण अन्यथा अगर (value != 32) अणु
-		dev_err(fअगरo->dt_device, "xlnx,axi-str-txd-tdata-width only supports 32 bits\n");
+	ret = get_dts_property(fifo, "xlnx,axi-str-txd-tdata-width", &value);
+	if (ret) {
+		dev_err(fifo->dt_device, "missing xlnx,axi-str-txd-tdata-width property\n");
+		goto end;
+	} else if (value != 32) {
+		dev_err(fifo->dt_device, "xlnx,axi-str-txd-tdata-width only supports 32 bits\n");
 		ret = -EIO;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
-	ret = get_dts_property(fअगरo, "xlnx,rx-fifo-depth",
-			       &fअगरo->rx_fअगरo_depth);
-	अगर (ret) अणु
-		dev_err(fअगरo->dt_device, "missing xlnx,rx-fifo-depth property\n");
+	ret = get_dts_property(fifo, "xlnx,rx-fifo-depth",
+			       &fifo->rx_fifo_depth);
+	if (ret) {
+		dev_err(fifo->dt_device, "missing xlnx,rx-fifo-depth property\n");
 		ret = -EIO;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
-	ret = get_dts_property(fअगरo, "xlnx,tx-fifo-depth",
-			       &fअगरo->tx_fअगरo_depth);
-	अगर (ret) अणु
-		dev_err(fअगरo->dt_device, "missing xlnx,tx-fifo-depth property\n");
+	ret = get_dts_property(fifo, "xlnx,tx-fifo-depth",
+			       &fifo->tx_fifo_depth);
+	if (ret) {
+		dev_err(fifo->dt_device, "missing xlnx,tx-fifo-depth property\n");
 		ret = -EIO;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
-	/* IP sets TDFV to fअगरo depth - 4 so we will करो the same */
-	fअगरo->tx_fअगरo_depth -= 4;
+	/* IP sets TDFV to fifo depth - 4 so we will do the same */
+	fifo->tx_fifo_depth -= 4;
 
-	ret = get_dts_property(fअगरo, "xlnx,use-rx-data", &fअगरo->has_rx_fअगरo);
-	अगर (ret) अणु
-		dev_err(fअगरo->dt_device, "missing xlnx,use-rx-data property\n");
+	ret = get_dts_property(fifo, "xlnx,use-rx-data", &fifo->has_rx_fifo);
+	if (ret) {
+		dev_err(fifo->dt_device, "missing xlnx,use-rx-data property\n");
 		ret = -EIO;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
-	ret = get_dts_property(fअगरo, "xlnx,use-tx-data", &fअगरo->has_tx_fअगरo);
-	अगर (ret) अणु
-		dev_err(fअगरo->dt_device, "missing xlnx,use-tx-data property\n");
+	ret = get_dts_property(fifo, "xlnx,use-tx-data", &fifo->has_tx_fifo);
+	if (ret) {
+		dev_err(fifo->dt_device, "missing xlnx,use-tx-data property\n");
 		ret = -EIO;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
 end:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक axis_fअगरo_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा resource *r_irq; /* पूर्णांकerrupt resources */
-	काष्ठा resource *r_mem; /* IO mem resources */
-	काष्ठा device *dev = &pdev->dev; /* OS device (from device tree) */
-	काष्ठा axis_fअगरo *fअगरo = शून्य;
+static int axis_fifo_probe(struct platform_device *pdev)
+{
+	struct resource *r_irq; /* interrupt resources */
+	struct resource *r_mem; /* IO mem resources */
+	struct device *dev = &pdev->dev; /* OS device (from device tree) */
+	struct axis_fifo *fifo = NULL;
 
-	अक्षर device_name[32];
+	char device_name[32];
 
-	पूर्णांक rc = 0; /* error वापस value */
+	int rc = 0; /* error return value */
 
 	/* ----------------------------
 	 *     init wrapper device
@@ -824,185 +823,185 @@ end:
 	 */
 
 	/* allocate device wrapper memory */
-	fअगरo = devm_kदो_स्मृति(dev, माप(*fअगरo), GFP_KERNEL);
-	अगर (!fअगरo)
-		वापस -ENOMEM;
+	fifo = devm_kmalloc(dev, sizeof(*fifo), GFP_KERNEL);
+	if (!fifo)
+		return -ENOMEM;
 
-	dev_set_drvdata(dev, fअगरo);
-	fअगरo->dt_device = dev;
+	dev_set_drvdata(dev, fifo);
+	fifo->dt_device = dev;
 
-	init_रुकोqueue_head(&fअगरo->पढ़ो_queue);
-	init_रुकोqueue_head(&fअगरo->ग_लिखो_queue);
+	init_waitqueue_head(&fifo->read_queue);
+	init_waitqueue_head(&fifo->write_queue);
 
-	mutex_init(&fअगरo->पढ़ो_lock);
-	mutex_init(&fअगरo->ग_लिखो_lock);
+	mutex_init(&fifo->read_lock);
+	mutex_init(&fifo->write_lock);
 
 	/* ----------------------------
 	 *   init device memory space
 	 * ----------------------------
 	 */
 
-	/* get iospace क्रम the device */
-	r_mem = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!r_mem) अणु
-		dev_err(fअगरo->dt_device, "invalid address\n");
+	/* get iospace for the device */
+	r_mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!r_mem) {
+		dev_err(fifo->dt_device, "invalid address\n");
 		rc = -ENODEV;
-		जाओ err_initial;
-	पूर्ण
+		goto err_initial;
+	}
 
 	/* request physical memory */
-	fअगरo->base_addr = devm_ioremap_resource(fअगरo->dt_device, r_mem);
-	अगर (IS_ERR(fअगरo->base_addr)) अणु
-		rc = PTR_ERR(fअगरo->base_addr);
-		जाओ err_initial;
-	पूर्ण
+	fifo->base_addr = devm_ioremap_resource(fifo->dt_device, r_mem);
+	if (IS_ERR(fifo->base_addr)) {
+		rc = PTR_ERR(fifo->base_addr);
+		goto err_initial;
+	}
 
-	dev_dbg(fअगरo->dt_device, "remapped memory to 0x%p\n", fअगरo->base_addr);
+	dev_dbg(fifo->dt_device, "remapped memory to 0x%p\n", fifo->base_addr);
 
 	/* create unique device name */
-	snम_लिखो(device_name, माप(device_name), "%s_%pa",
+	snprintf(device_name, sizeof(device_name), "%s_%pa",
 		 DRIVER_NAME, &r_mem->start);
 
-	dev_dbg(fअगरo->dt_device, "device name [%s]\n", device_name);
+	dev_dbg(fifo->dt_device, "device name [%s]\n", device_name);
 
 	/* ----------------------------
 	 *          init IP
 	 * ----------------------------
 	 */
 
-	rc = axis_fअगरo_parse_dt(fअगरo);
-	अगर (rc)
-		जाओ err_initial;
+	rc = axis_fifo_parse_dt(fifo);
+	if (rc)
+		goto err_initial;
 
-	reset_ip_core(fअगरo);
+	reset_ip_core(fifo);
 
 	/* ----------------------------
-	 *    init device पूर्णांकerrupts
+	 *    init device interrupts
 	 * ----------------------------
 	 */
 
 	/* get IRQ resource */
-	r_irq = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, 0);
-	अगर (!r_irq) अणु
-		dev_err(fअगरo->dt_device, "no IRQ found for 0x%pa\n",
+	r_irq = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
+	if (!r_irq) {
+		dev_err(fifo->dt_device, "no IRQ found for 0x%pa\n",
 			&r_mem->start);
 		rc = -EIO;
-		जाओ err_initial;
-	पूर्ण
+		goto err_initial;
+	}
 
 	/* request IRQ */
-	fअगरo->irq = r_irq->start;
-	rc = devm_request_irq(fअगरo->dt_device, fअगरo->irq, &axis_fअगरo_irq, 0,
-			      DRIVER_NAME, fअगरo);
-	अगर (rc) अणु
-		dev_err(fअगरo->dt_device, "couldn't allocate interrupt %i\n",
-			fअगरo->irq);
-		जाओ err_initial;
-	पूर्ण
+	fifo->irq = r_irq->start;
+	rc = devm_request_irq(fifo->dt_device, fifo->irq, &axis_fifo_irq, 0,
+			      DRIVER_NAME, fifo);
+	if (rc) {
+		dev_err(fifo->dt_device, "couldn't allocate interrupt %i\n",
+			fifo->irq);
+		goto err_initial;
+	}
 
 	/* ----------------------------
-	 *      init अक्षर device
+	 *      init char device
 	 * ----------------------------
 	 */
 
 	/* allocate device number */
-	rc = alloc_chrdev_region(&fअगरo->devt, 0, 1, DRIVER_NAME);
-	अगर (rc < 0)
-		जाओ err_initial;
-	dev_dbg(fअगरo->dt_device, "allocated device number major %i minor %i\n",
-		MAJOR(fअगरo->devt), MINOR(fअगरo->devt));
+	rc = alloc_chrdev_region(&fifo->devt, 0, 1, DRIVER_NAME);
+	if (rc < 0)
+		goto err_initial;
+	dev_dbg(fifo->dt_device, "allocated device number major %i minor %i\n",
+		MAJOR(fifo->devt), MINOR(fifo->devt));
 
 	/* create driver file */
-	fअगरo->device = device_create(axis_fअगरo_driver_class, शून्य, fअगरo->devt,
-				     शून्य, device_name);
-	अगर (IS_ERR(fअगरo->device)) अणु
-		dev_err(fअगरo->dt_device,
+	fifo->device = device_create(axis_fifo_driver_class, NULL, fifo->devt,
+				     NULL, device_name);
+	if (IS_ERR(fifo->device)) {
+		dev_err(fifo->dt_device,
 			"couldn't create driver file\n");
-		rc = PTR_ERR(fअगरo->device);
-		जाओ err_chrdev_region;
-	पूर्ण
-	dev_set_drvdata(fअगरo->device, fअगरo);
+		rc = PTR_ERR(fifo->device);
+		goto err_chrdev_region;
+	}
+	dev_set_drvdata(fifo->device, fifo);
 
-	/* create अक्षरacter device */
-	cdev_init(&fअगरo->अक्षर_device, &fops);
-	rc = cdev_add(&fअगरo->अक्षर_device, fअगरo->devt, 1);
-	अगर (rc < 0) अणु
-		dev_err(fअगरo->dt_device, "couldn't create character device\n");
-		जाओ err_dev;
-	पूर्ण
+	/* create character device */
+	cdev_init(&fifo->char_device, &fops);
+	rc = cdev_add(&fifo->char_device, fifo->devt, 1);
+	if (rc < 0) {
+		dev_err(fifo->dt_device, "couldn't create character device\n");
+		goto err_dev;
+	}
 
 	/* create sysfs entries */
-	rc = devm_device_add_group(fअगरo->device, &axis_fअगरo_attrs_group);
-	अगर (rc < 0) अणु
-		dev_err(fअगरo->dt_device, "couldn't register sysfs group\n");
-		जाओ err_cdev;
-	पूर्ण
+	rc = devm_device_add_group(fifo->device, &axis_fifo_attrs_group);
+	if (rc < 0) {
+		dev_err(fifo->dt_device, "couldn't register sysfs group\n");
+		goto err_cdev;
+	}
 
-	dev_info(fअगरo->dt_device, "axis-fifo created at %pa mapped to 0x%pa, irq=%i, major=%i, minor=%i\n",
-		 &r_mem->start, &fअगरo->base_addr, fअगरo->irq,
-		 MAJOR(fअगरo->devt), MINOR(fअगरo->devt));
+	dev_info(fifo->dt_device, "axis-fifo created at %pa mapped to 0x%pa, irq=%i, major=%i, minor=%i\n",
+		 &r_mem->start, &fifo->base_addr, fifo->irq,
+		 MAJOR(fifo->devt), MINOR(fifo->devt));
 
-	वापस 0;
+	return 0;
 
 err_cdev:
-	cdev_del(&fअगरo->अक्षर_device);
+	cdev_del(&fifo->char_device);
 err_dev:
-	device_destroy(axis_fअगरo_driver_class, fअगरo->devt);
+	device_destroy(axis_fifo_driver_class, fifo->devt);
 err_chrdev_region:
-	unरेजिस्टर_chrdev_region(fअगरo->devt, 1);
+	unregister_chrdev_region(fifo->devt, 1);
 err_initial:
-	dev_set_drvdata(dev, शून्य);
-	वापस rc;
-पूर्ण
+	dev_set_drvdata(dev, NULL);
+	return rc;
+}
 
-अटल पूर्णांक axis_fअगरo_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा axis_fअगरo *fअगरo = dev_get_drvdata(dev);
+static int axis_fifo_remove(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct axis_fifo *fifo = dev_get_drvdata(dev);
 
-	cdev_del(&fअगरo->अक्षर_device);
-	dev_set_drvdata(fअगरo->device, शून्य);
-	device_destroy(axis_fअगरo_driver_class, fअगरo->devt);
-	unरेजिस्टर_chrdev_region(fअगरo->devt, 1);
-	dev_set_drvdata(dev, शून्य);
+	cdev_del(&fifo->char_device);
+	dev_set_drvdata(fifo->device, NULL);
+	device_destroy(axis_fifo_driver_class, fifo->devt);
+	unregister_chrdev_region(fifo->devt, 1);
+	dev_set_drvdata(dev, NULL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id axis_fअगरo_of_match[] = अणु
-	अणु .compatible = "xlnx,axi-fifo-mm-s-4.1", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
-MODULE_DEVICE_TABLE(of, axis_fअगरo_of_match);
+static const struct of_device_id axis_fifo_of_match[] = {
+	{ .compatible = "xlnx,axi-fifo-mm-s-4.1", },
+	{},
+};
+MODULE_DEVICE_TABLE(of, axis_fifo_of_match);
 
-अटल काष्ठा platक्रमm_driver axis_fअगरo_driver = अणु
-	.driver = अणु
+static struct platform_driver axis_fifo_driver = {
+	.driver = {
 		.name = DRIVER_NAME,
-		.of_match_table	= axis_fअगरo_of_match,
-	पूर्ण,
-	.probe		= axis_fअगरo_probe,
-	.हटाओ		= axis_fअगरo_हटाओ,
-पूर्ण;
+		.of_match_table	= axis_fifo_of_match,
+	},
+	.probe		= axis_fifo_probe,
+	.remove		= axis_fifo_remove,
+};
 
-अटल पूर्णांक __init axis_fअगरo_init(व्योम)
-अणु
+static int __init axis_fifo_init(void)
+{
 	pr_info("axis-fifo driver loaded with parameters read_timeout = %i, write_timeout = %i\n",
-		पढ़ो_समयout, ग_लिखो_समयout);
-	axis_fअगरo_driver_class = class_create(THIS_MODULE, DRIVER_NAME);
-	अगर (IS_ERR(axis_fअगरo_driver_class))
-		वापस PTR_ERR(axis_fअगरo_driver_class);
-	वापस platक्रमm_driver_रेजिस्टर(&axis_fअगरo_driver);
-पूर्ण
+		read_timeout, write_timeout);
+	axis_fifo_driver_class = class_create(THIS_MODULE, DRIVER_NAME);
+	if (IS_ERR(axis_fifo_driver_class))
+		return PTR_ERR(axis_fifo_driver_class);
+	return platform_driver_register(&axis_fifo_driver);
+}
 
-module_init(axis_fअगरo_init);
+module_init(axis_fifo_init);
 
-अटल व्योम __निकास axis_fअगरo_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&axis_fअगरo_driver);
-	class_destroy(axis_fअगरo_driver_class);
-पूर्ण
+static void __exit axis_fifo_exit(void)
+{
+	platform_driver_unregister(&axis_fifo_driver);
+	class_destroy(axis_fifo_driver_class);
+}
 
-module_निकास(axis_fअगरo_निकास);
+module_exit(axis_fifo_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Jacob Feder <jacobsfeder@gmail.com>");

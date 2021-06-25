@@ -1,134 +1,133 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 1998, 2003 by Ralf Baechle
  */
-#अगर_अघोषित __ASM_MACH_JAZZ_FLOPPY_H
-#घोषणा __ASM_MACH_JAZZ_FLOPPY_H
+#ifndef __ASM_MACH_JAZZ_FLOPPY_H
+#define __ASM_MACH_JAZZ_FLOPPY_H
 
-#समावेश <linux/delay.h>
-#समावेश <linux/linkage.h>
-#समावेश <linux/types.h>
-#समावेश <linux/mm.h>
-#समावेश <यंत्र/addrspace.h>
-#समावेश <यंत्र/jazz.h>
-#समावेश <यंत्र/jazzdma.h>
+#include <linux/delay.h>
+#include <linux/linkage.h>
+#include <linux/types.h>
+#include <linux/mm.h>
+#include <asm/addrspace.h>
+#include <asm/jazz.h>
+#include <asm/jazzdma.h>
 
-अटल अंतरभूत अचिन्हित अक्षर fd_inb(अचिन्हित पूर्णांक base, अचिन्हित पूर्णांक reg)
-अणु
-	अचिन्हित अक्षर c;
+static inline unsigned char fd_inb(unsigned int base, unsigned int reg)
+{
+	unsigned char c;
 
-	c = *(अस्थिर अचिन्हित अक्षर *) (base + reg);
+	c = *(volatile unsigned char *) (base + reg);
 	udelay(1);
 
-	वापस c;
-पूर्ण
+	return c;
+}
 
-अटल अंतरभूत व्योम fd_outb(अचिन्हित अक्षर value, अचिन्हित पूर्णांक base, अचिन्हित पूर्णांक reg)
-अणु
-	*(अस्थिर अचिन्हित अक्षर *) (base + reg) = value;
-पूर्ण
+static inline void fd_outb(unsigned char value, unsigned int base, unsigned int reg)
+{
+	*(volatile unsigned char *) (base + reg) = value;
+}
 
 /*
  * How to access the floppy DMA functions.
  */
-अटल अंतरभूत व्योम fd_enable_dma(व्योम)
-अणु
+static inline void fd_enable_dma(void)
+{
 	vdma_enable(JAZZ_FLOPPY_DMA);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम fd_disable_dma(व्योम)
-अणु
+static inline void fd_disable_dma(void)
+{
 	vdma_disable(JAZZ_FLOPPY_DMA);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक fd_request_dma(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+static inline int fd_request_dma(void)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम fd_मुक्त_dma(व्योम)
-अणु
-पूर्ण
+static inline void fd_free_dma(void)
+{
+}
 
-अटल अंतरभूत व्योम fd_clear_dma_ff(व्योम)
-अणु
-पूर्ण
+static inline void fd_clear_dma_ff(void)
+{
+}
 
-अटल अंतरभूत व्योम fd_set_dma_mode(अक्षर mode)
-अणु
+static inline void fd_set_dma_mode(char mode)
+{
 	vdma_set_mode(JAZZ_FLOPPY_DMA, mode);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम fd_set_dma_addr(अक्षर *a)
-अणु
-	vdma_set_addr(JAZZ_FLOPPY_DMA, vdma_phys2log(CPHYSADDR((अचिन्हित दीर्घ)a)));
-पूर्ण
+static inline void fd_set_dma_addr(char *a)
+{
+	vdma_set_addr(JAZZ_FLOPPY_DMA, vdma_phys2log(CPHYSADDR((unsigned long)a)));
+}
 
-अटल अंतरभूत व्योम fd_set_dma_count(अचिन्हित पूर्णांक count)
-अणु
+static inline void fd_set_dma_count(unsigned int count)
+{
 	vdma_set_count(JAZZ_FLOPPY_DMA, count);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक fd_get_dma_residue(व्योम)
-अणु
-	वापस vdma_get_residue(JAZZ_FLOPPY_DMA);
-पूर्ण
+static inline int fd_get_dma_residue(void)
+{
+	return vdma_get_residue(JAZZ_FLOPPY_DMA);
+}
 
-अटल अंतरभूत व्योम fd_enable_irq(व्योम)
-अणु
-पूर्ण
+static inline void fd_enable_irq(void)
+{
+}
 
-अटल अंतरभूत व्योम fd_disable_irq(व्योम)
-अणु
-पूर्ण
+static inline void fd_disable_irq(void)
+{
+}
 
-अटल अंतरभूत पूर्णांक fd_request_irq(व्योम)
-अणु
-	वापस request_irq(FLOPPY_IRQ, floppy_पूर्णांकerrupt,
-			   0, "floppy", शून्य);
-पूर्ण
+static inline int fd_request_irq(void)
+{
+	return request_irq(FLOPPY_IRQ, floppy_interrupt,
+			   0, "floppy", NULL);
+}
 
-अटल अंतरभूत व्योम fd_मुक्त_irq(व्योम)
-अणु
-	मुक्त_irq(FLOPPY_IRQ, शून्य);
-पूर्ण
+static inline void fd_free_irq(void)
+{
+	free_irq(FLOPPY_IRQ, NULL);
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ fd_getfdaddr1(व्योम)
-अणु
-	वापस JAZZ_FDC_BASE;
-पूर्ण
+static inline unsigned long fd_getfdaddr1(void)
+{
+	return JAZZ_FDC_BASE;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ fd_dma_mem_alloc(अचिन्हित दीर्घ size)
-अणु
-	अचिन्हित दीर्घ mem;
+static inline unsigned long fd_dma_mem_alloc(unsigned long size)
+{
+	unsigned long mem;
 
 	mem = __get_dma_pages(GFP_KERNEL, get_order(size));
-	अगर(!mem)
-		वापस 0;
+	if(!mem)
+		return 0;
 	vdma_alloc(CPHYSADDR(mem), size);	/* XXX error checking */
 
-	वापस mem;
-पूर्ण
+	return mem;
+}
 
-अटल अंतरभूत व्योम fd_dma_mem_मुक्त(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ size)
-अणु
-	vdma_मुक्त(vdma_phys2log(CPHYSADDR(addr)));
-	मुक्त_pages(addr, get_order(size));
-पूर्ण
+static inline void fd_dma_mem_free(unsigned long addr, unsigned long size)
+{
+	vdma_free(vdma_phys2log(CPHYSADDR(addr)));
+	free_pages(addr, get_order(size));
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ fd_drive_type(अचिन्हित दीर्घ n)
-अणु
-	/* XXX This is wrong क्रम machines with ED 2.88mb disk drives like the
+static inline unsigned long fd_drive_type(unsigned long n)
+{
+	/* XXX This is wrong for machines with ED 2.88mb disk drives like the
 	   Olivetti M700.  Anyway, we should suck this from the ARC
 	   firmware.  */
-	अगर (n == 0)
-		वापस 4;	/* 3,5", 1.44mb */
+	if (n == 0)
+		return 4;	/* 3,5", 1.44mb */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#पूर्ण_अगर /* __ASM_MACH_JAZZ_FLOPPY_H */
+#endif /* __ASM_MACH_JAZZ_FLOPPY_H */

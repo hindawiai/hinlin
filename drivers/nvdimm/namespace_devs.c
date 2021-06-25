@@ -1,610 +1,609 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright(c) 2013-2015 Intel Corporation. All rights reserved.
  */
-#समावेश <linux/module.h>
-#समावेश <linux/device.h>
-#समावेश <linux/sort.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/list.h>
-#समावेश <linux/nd.h>
-#समावेश "nd-core.h"
-#समावेश "pmem.h"
-#समावेश "pfn.h"
-#समावेश "nd.h"
+#include <linux/module.h>
+#include <linux/device.h>
+#include <linux/sort.h>
+#include <linux/slab.h>
+#include <linux/list.h>
+#include <linux/nd.h>
+#include "nd-core.h"
+#include "pmem.h"
+#include "pfn.h"
+#include "nd.h"
 
-अटल व्योम namespace_io_release(काष्ठा device *dev)
-अणु
-	काष्ठा nd_namespace_io *nsio = to_nd_namespace_io(dev);
+static void namespace_io_release(struct device *dev)
+{
+	struct nd_namespace_io *nsio = to_nd_namespace_io(dev);
 
-	kमुक्त(nsio);
-पूर्ण
+	kfree(nsio);
+}
 
-अटल व्योम namespace_pmem_release(काष्ठा device *dev)
-अणु
-	काष्ठा nd_namespace_pmem *nspm = to_nd_namespace_pmem(dev);
-	काष्ठा nd_region *nd_region = to_nd_region(dev->parent);
+static void namespace_pmem_release(struct device *dev)
+{
+	struct nd_namespace_pmem *nspm = to_nd_namespace_pmem(dev);
+	struct nd_region *nd_region = to_nd_region(dev->parent);
 
-	अगर (nspm->id >= 0)
-		ida_simple_हटाओ(&nd_region->ns_ida, nspm->id);
-	kमुक्त(nspm->alt_name);
-	kमुक्त(nspm->uuid);
-	kमुक्त(nspm);
-पूर्ण
+	if (nspm->id >= 0)
+		ida_simple_remove(&nd_region->ns_ida, nspm->id);
+	kfree(nspm->alt_name);
+	kfree(nspm->uuid);
+	kfree(nspm);
+}
 
-अटल व्योम namespace_blk_release(काष्ठा device *dev)
-अणु
-	काष्ठा nd_namespace_blk *nsblk = to_nd_namespace_blk(dev);
-	काष्ठा nd_region *nd_region = to_nd_region(dev->parent);
+static void namespace_blk_release(struct device *dev)
+{
+	struct nd_namespace_blk *nsblk = to_nd_namespace_blk(dev);
+	struct nd_region *nd_region = to_nd_region(dev->parent);
 
-	अगर (nsblk->id >= 0)
-		ida_simple_हटाओ(&nd_region->ns_ida, nsblk->id);
-	kमुक्त(nsblk->alt_name);
-	kमुक्त(nsblk->uuid);
-	kमुक्त(nsblk->res);
-	kमुक्त(nsblk);
-पूर्ण
+	if (nsblk->id >= 0)
+		ida_simple_remove(&nd_region->ns_ida, nsblk->id);
+	kfree(nsblk->alt_name);
+	kfree(nsblk->uuid);
+	kfree(nsblk->res);
+	kfree(nsblk);
+}
 
-अटल bool is_namespace_pmem(स्थिर काष्ठा device *dev);
-अटल bool is_namespace_blk(स्थिर काष्ठा device *dev);
-अटल bool is_namespace_io(स्थिर काष्ठा device *dev);
+static bool is_namespace_pmem(const struct device *dev);
+static bool is_namespace_blk(const struct device *dev);
+static bool is_namespace_io(const struct device *dev);
 
-अटल पूर्णांक is_uuid_busy(काष्ठा device *dev, व्योम *data)
-अणु
-	u8 *uuid1 = data, *uuid2 = शून्य;
+static int is_uuid_busy(struct device *dev, void *data)
+{
+	u8 *uuid1 = data, *uuid2 = NULL;
 
-	अगर (is_namespace_pmem(dev)) अणु
-		काष्ठा nd_namespace_pmem *nspm = to_nd_namespace_pmem(dev);
+	if (is_namespace_pmem(dev)) {
+		struct nd_namespace_pmem *nspm = to_nd_namespace_pmem(dev);
 
 		uuid2 = nspm->uuid;
-	पूर्ण अन्यथा अगर (is_namespace_blk(dev)) अणु
-		काष्ठा nd_namespace_blk *nsblk = to_nd_namespace_blk(dev);
+	} else if (is_namespace_blk(dev)) {
+		struct nd_namespace_blk *nsblk = to_nd_namespace_blk(dev);
 
 		uuid2 = nsblk->uuid;
-	पूर्ण अन्यथा अगर (is_nd_btt(dev)) अणु
-		काष्ठा nd_btt *nd_btt = to_nd_btt(dev);
+	} else if (is_nd_btt(dev)) {
+		struct nd_btt *nd_btt = to_nd_btt(dev);
 
 		uuid2 = nd_btt->uuid;
-	पूर्ण अन्यथा अगर (is_nd_pfn(dev)) अणु
-		काष्ठा nd_pfn *nd_pfn = to_nd_pfn(dev);
+	} else if (is_nd_pfn(dev)) {
+		struct nd_pfn *nd_pfn = to_nd_pfn(dev);
 
 		uuid2 = nd_pfn->uuid;
-	पूर्ण
+	}
 
-	अगर (uuid2 && स_भेद(uuid1, uuid2, NSLABEL_UUID_LEN) == 0)
-		वापस -EBUSY;
+	if (uuid2 && memcmp(uuid1, uuid2, NSLABEL_UUID_LEN) == 0)
+		return -EBUSY;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक is_namespace_uuid_busy(काष्ठा device *dev, व्योम *data)
-अणु
-	अगर (is_nd_region(dev))
-		वापस device_क्रम_each_child(dev, data, is_uuid_busy);
-	वापस 0;
-पूर्ण
+static int is_namespace_uuid_busy(struct device *dev, void *data)
+{
+	if (is_nd_region(dev))
+		return device_for_each_child(dev, data, is_uuid_busy);
+	return 0;
+}
 
 /**
- * nd_is_uuid_unique - verअगरy that no other namespace has @uuid
+ * nd_is_uuid_unique - verify that no other namespace has @uuid
  * @dev: any device on a nvdimm_bus
  * @uuid: uuid to check
  */
-bool nd_is_uuid_unique(काष्ठा device *dev, u8 *uuid)
-अणु
-	काष्ठा nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(dev);
+bool nd_is_uuid_unique(struct device *dev, u8 *uuid)
+{
+	struct nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(dev);
 
-	अगर (!nvdimm_bus)
-		वापस false;
+	if (!nvdimm_bus)
+		return false;
 	WARN_ON_ONCE(!is_nvdimm_bus_locked(&nvdimm_bus->dev));
-	अगर (device_क्रम_each_child(&nvdimm_bus->dev, uuid,
+	if (device_for_each_child(&nvdimm_bus->dev, uuid,
 				is_namespace_uuid_busy) != 0)
-		वापस false;
-	वापस true;
-पूर्ण
+		return false;
+	return true;
+}
 
-bool pmem_should_map_pages(काष्ठा device *dev)
-अणु
-	काष्ठा nd_region *nd_region = to_nd_region(dev->parent);
-	काष्ठा nd_namespace_common *ndns = to_ndns(dev);
-	काष्ठा nd_namespace_io *nsio;
+bool pmem_should_map_pages(struct device *dev)
+{
+	struct nd_region *nd_region = to_nd_region(dev->parent);
+	struct nd_namespace_common *ndns = to_ndns(dev);
+	struct nd_namespace_io *nsio;
 
-	अगर (!IS_ENABLED(CONFIG_ZONE_DEVICE))
-		वापस false;
+	if (!IS_ENABLED(CONFIG_ZONE_DEVICE))
+		return false;
 
-	अगर (!test_bit(ND_REGION_PAGEMAP, &nd_region->flags))
-		वापस false;
+	if (!test_bit(ND_REGION_PAGEMAP, &nd_region->flags))
+		return false;
 
-	अगर (is_nd_pfn(dev) || is_nd_btt(dev))
-		वापस false;
+	if (is_nd_pfn(dev) || is_nd_btt(dev))
+		return false;
 
-	अगर (ndns->क्रमce_raw)
-		वापस false;
+	if (ndns->force_raw)
+		return false;
 
 	nsio = to_nd_namespace_io(dev);
-	अगर (region_पूर्णांकersects(nsio->res.start, resource_size(&nsio->res),
+	if (region_intersects(nsio->res.start, resource_size(&nsio->res),
 				IORESOURCE_SYSTEM_RAM,
 				IORES_DESC_NONE) == REGION_MIXED)
-		वापस false;
+		return false;
 
-	वापस ARCH_MEMREMAP_PMEM == MEMREMAP_WB;
-पूर्ण
+	return ARCH_MEMREMAP_PMEM == MEMREMAP_WB;
+}
 EXPORT_SYMBOL(pmem_should_map_pages);
 
-अचिन्हित पूर्णांक pmem_sector_size(काष्ठा nd_namespace_common *ndns)
-अणु
-	अगर (is_namespace_pmem(&ndns->dev)) अणु
-		काष्ठा nd_namespace_pmem *nspm;
+unsigned int pmem_sector_size(struct nd_namespace_common *ndns)
+{
+	if (is_namespace_pmem(&ndns->dev)) {
+		struct nd_namespace_pmem *nspm;
 
 		nspm = to_nd_namespace_pmem(&ndns->dev);
-		अगर (nspm->lbasize == 0 || nspm->lbasize == 512)
-			/* शेष */;
-		अन्यथा अगर (nspm->lbasize == 4096)
-			वापस 4096;
-		अन्यथा
+		if (nspm->lbasize == 0 || nspm->lbasize == 512)
+			/* default */;
+		else if (nspm->lbasize == 4096)
+			return 4096;
+		else
 			dev_WARN(&ndns->dev, "unsupported sector size: %ld\n",
 					nspm->lbasize);
-	पूर्ण
+	}
 
 	/*
 	 * There is no namespace label (is_namespace_io()), or the label
-	 * indicates the शेष sector size.
+	 * indicates the default sector size.
 	 */
-	वापस 512;
-पूर्ण
+	return 512;
+}
 EXPORT_SYMBOL(pmem_sector_size);
 
-स्थिर अक्षर *nvdimm_namespace_disk_name(काष्ठा nd_namespace_common *ndns,
-		अक्षर *name)
-अणु
-	काष्ठा nd_region *nd_region = to_nd_region(ndns->dev.parent);
-	स्थिर अक्षर *suffix = शून्य;
+const char *nvdimm_namespace_disk_name(struct nd_namespace_common *ndns,
+		char *name)
+{
+	struct nd_region *nd_region = to_nd_region(ndns->dev.parent);
+	const char *suffix = NULL;
 
-	अगर (ndns->claim && is_nd_btt(ndns->claim))
+	if (ndns->claim && is_nd_btt(ndns->claim))
 		suffix = "s";
 
-	अगर (is_namespace_pmem(&ndns->dev) || is_namespace_io(&ndns->dev)) अणु
-		पूर्णांक nsidx = 0;
+	if (is_namespace_pmem(&ndns->dev) || is_namespace_io(&ndns->dev)) {
+		int nsidx = 0;
 
-		अगर (is_namespace_pmem(&ndns->dev)) अणु
-			काष्ठा nd_namespace_pmem *nspm;
+		if (is_namespace_pmem(&ndns->dev)) {
+			struct nd_namespace_pmem *nspm;
 
 			nspm = to_nd_namespace_pmem(&ndns->dev);
 			nsidx = nspm->id;
-		पूर्ण
+		}
 
-		अगर (nsidx)
-			प्र_लिखो(name, "pmem%d.%d%s", nd_region->id, nsidx,
+		if (nsidx)
+			sprintf(name, "pmem%d.%d%s", nd_region->id, nsidx,
 					suffix ? suffix : "");
-		अन्यथा
-			प्र_लिखो(name, "pmem%d%s", nd_region->id,
+		else
+			sprintf(name, "pmem%d%s", nd_region->id,
 					suffix ? suffix : "");
-	पूर्ण अन्यथा अगर (is_namespace_blk(&ndns->dev)) अणु
-		काष्ठा nd_namespace_blk *nsblk;
+	} else if (is_namespace_blk(&ndns->dev)) {
+		struct nd_namespace_blk *nsblk;
 
 		nsblk = to_nd_namespace_blk(&ndns->dev);
-		प्र_लिखो(name, "ndblk%d.%d%s", nd_region->id, nsblk->id,
+		sprintf(name, "ndblk%d.%d%s", nd_region->id, nsblk->id,
 				suffix ? suffix : "");
-	पूर्ण अन्यथा अणु
-		वापस शून्य;
-	पूर्ण
+	} else {
+		return NULL;
+	}
 
-	वापस name;
-पूर्ण
+	return name;
+}
 EXPORT_SYMBOL(nvdimm_namespace_disk_name);
 
-स्थिर u8 *nd_dev_to_uuid(काष्ठा device *dev)
-अणु
-	अटल स्थिर u8 null_uuid[16];
+const u8 *nd_dev_to_uuid(struct device *dev)
+{
+	static const u8 null_uuid[16];
 
-	अगर (!dev)
-		वापस null_uuid;
+	if (!dev)
+		return null_uuid;
 
-	अगर (is_namespace_pmem(dev)) अणु
-		काष्ठा nd_namespace_pmem *nspm = to_nd_namespace_pmem(dev);
+	if (is_namespace_pmem(dev)) {
+		struct nd_namespace_pmem *nspm = to_nd_namespace_pmem(dev);
 
-		वापस nspm->uuid;
-	पूर्ण अन्यथा अगर (is_namespace_blk(dev)) अणु
-		काष्ठा nd_namespace_blk *nsblk = to_nd_namespace_blk(dev);
+		return nspm->uuid;
+	} else if (is_namespace_blk(dev)) {
+		struct nd_namespace_blk *nsblk = to_nd_namespace_blk(dev);
 
-		वापस nsblk->uuid;
-	पूर्ण अन्यथा
-		वापस null_uuid;
-पूर्ण
+		return nsblk->uuid;
+	} else
+		return null_uuid;
+}
 EXPORT_SYMBOL(nd_dev_to_uuid);
 
-अटल sमाप_प्रकार nstype_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा nd_region *nd_region = to_nd_region(dev->parent);
+static ssize_t nstype_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct nd_region *nd_region = to_nd_region(dev->parent);
 
-	वापस प्र_लिखो(buf, "%d\n", nd_region_to_nstype(nd_region));
-पूर्ण
-अटल DEVICE_ATTR_RO(nstype);
+	return sprintf(buf, "%d\n", nd_region_to_nstype(nd_region));
+}
+static DEVICE_ATTR_RO(nstype);
 
-अटल sमाप_प्रकार __alt_name_store(काष्ठा device *dev, स्थिर अक्षर *buf,
-		स्थिर माप_प्रकार len)
-अणु
-	अक्षर *input, *pos, *alt_name, **ns_altname;
-	sमाप_प्रकार rc;
+static ssize_t __alt_name_store(struct device *dev, const char *buf,
+		const size_t len)
+{
+	char *input, *pos, *alt_name, **ns_altname;
+	ssize_t rc;
 
-	अगर (is_namespace_pmem(dev)) अणु
-		काष्ठा nd_namespace_pmem *nspm = to_nd_namespace_pmem(dev);
+	if (is_namespace_pmem(dev)) {
+		struct nd_namespace_pmem *nspm = to_nd_namespace_pmem(dev);
 
 		ns_altname = &nspm->alt_name;
-	पूर्ण अन्यथा अगर (is_namespace_blk(dev)) अणु
-		काष्ठा nd_namespace_blk *nsblk = to_nd_namespace_blk(dev);
+	} else if (is_namespace_blk(dev)) {
+		struct nd_namespace_blk *nsblk = to_nd_namespace_blk(dev);
 
 		ns_altname = &nsblk->alt_name;
-	पूर्ण अन्यथा
-		वापस -ENXIO;
+	} else
+		return -ENXIO;
 
-	अगर (dev->driver || to_ndns(dev)->claim)
-		वापस -EBUSY;
+	if (dev->driver || to_ndns(dev)->claim)
+		return -EBUSY;
 
 	input = kstrndup(buf, len, GFP_KERNEL);
-	अगर (!input)
-		वापस -ENOMEM;
+	if (!input)
+		return -ENOMEM;
 
 	pos = strim(input);
-	अगर (म_माप(pos) + 1 > NSLABEL_NAME_LEN) अणु
+	if (strlen(pos) + 1 > NSLABEL_NAME_LEN) {
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	alt_name = kzalloc(NSLABEL_NAME_LEN, GFP_KERNEL);
-	अगर (!alt_name) अणु
+	if (!alt_name) {
 		rc = -ENOMEM;
-		जाओ out;
-	पूर्ण
-	kमुक्त(*ns_altname);
+		goto out;
+	}
+	kfree(*ns_altname);
 	*ns_altname = alt_name;
-	प्र_लिखो(*ns_altname, "%s", pos);
+	sprintf(*ns_altname, "%s", pos);
 	rc = len;
 
 out:
-	kमुक्त(input);
-	वापस rc;
-पूर्ण
+	kfree(input);
+	return rc;
+}
 
-अटल resource_माप_प्रकार nd_namespace_blk_size(काष्ठा nd_namespace_blk *nsblk)
-अणु
-	काष्ठा nd_region *nd_region = to_nd_region(nsblk->common.dev.parent);
-	काष्ठा nd_mapping *nd_mapping = &nd_region->mapping[0];
-	काष्ठा nvdimm_drvdata *ndd = to_ndd(nd_mapping);
-	काष्ठा nd_label_id label_id;
-	resource_माप_प्रकार size = 0;
-	काष्ठा resource *res;
+static resource_size_t nd_namespace_blk_size(struct nd_namespace_blk *nsblk)
+{
+	struct nd_region *nd_region = to_nd_region(nsblk->common.dev.parent);
+	struct nd_mapping *nd_mapping = &nd_region->mapping[0];
+	struct nvdimm_drvdata *ndd = to_ndd(nd_mapping);
+	struct nd_label_id label_id;
+	resource_size_t size = 0;
+	struct resource *res;
 
-	अगर (!nsblk->uuid)
-		वापस 0;
+	if (!nsblk->uuid)
+		return 0;
 	nd_label_gen_id(&label_id, nsblk->uuid, NSLABEL_FLAG_LOCAL);
-	क्रम_each_dpa_resource(ndd, res)
-		अगर (म_भेद(res->name, label_id.id) == 0)
+	for_each_dpa_resource(ndd, res)
+		if (strcmp(res->name, label_id.id) == 0)
 			size += resource_size(res);
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल bool __nd_namespace_blk_validate(काष्ठा nd_namespace_blk *nsblk)
-अणु
-	काष्ठा nd_region *nd_region = to_nd_region(nsblk->common.dev.parent);
-	काष्ठा nd_mapping *nd_mapping = &nd_region->mapping[0];
-	काष्ठा nvdimm_drvdata *ndd = to_ndd(nd_mapping);
-	काष्ठा nd_label_id label_id;
-	काष्ठा resource *res;
-	पूर्णांक count, i;
+static bool __nd_namespace_blk_validate(struct nd_namespace_blk *nsblk)
+{
+	struct nd_region *nd_region = to_nd_region(nsblk->common.dev.parent);
+	struct nd_mapping *nd_mapping = &nd_region->mapping[0];
+	struct nvdimm_drvdata *ndd = to_ndd(nd_mapping);
+	struct nd_label_id label_id;
+	struct resource *res;
+	int count, i;
 
-	अगर (!nsblk->uuid || !nsblk->lbasize || !ndd)
-		वापस false;
+	if (!nsblk->uuid || !nsblk->lbasize || !ndd)
+		return false;
 
 	count = 0;
 	nd_label_gen_id(&label_id, nsblk->uuid, NSLABEL_FLAG_LOCAL);
-	क्रम_each_dpa_resource(ndd, res) अणु
-		अगर (म_भेद(res->name, label_id.id) != 0)
-			जारी;
+	for_each_dpa_resource(ndd, res) {
+		if (strcmp(res->name, label_id.id) != 0)
+			continue;
 		/*
-		 * Resources with unacknowledged adjusपंचांगents indicate a
+		 * Resources with unacknowledged adjustments indicate a
 		 * failure to update labels
 		 */
-		अगर (res->flags & DPA_RESOURCE_ADJUSTED)
-			वापस false;
+		if (res->flags & DPA_RESOURCE_ADJUSTED)
+			return false;
 		count++;
-	पूर्ण
+	}
 
 	/* These values match after a successful label update */
-	अगर (count != nsblk->num_resources)
-		वापस false;
+	if (count != nsblk->num_resources)
+		return false;
 
-	क्रम (i = 0; i < nsblk->num_resources; i++) अणु
-		काष्ठा resource *found = शून्य;
+	for (i = 0; i < nsblk->num_resources; i++) {
+		struct resource *found = NULL;
 
-		क्रम_each_dpa_resource(ndd, res)
-			अगर (res == nsblk->res[i]) अणु
+		for_each_dpa_resource(ndd, res)
+			if (res == nsblk->res[i]) {
 				found = res;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 		/* stale resource */
-		अगर (!found)
-			वापस false;
-	पूर्ण
+		if (!found)
+			return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-resource_माप_प्रकार nd_namespace_blk_validate(काष्ठा nd_namespace_blk *nsblk)
-अणु
-	resource_माप_प्रकार size;
+resource_size_t nd_namespace_blk_validate(struct nd_namespace_blk *nsblk)
+{
+	resource_size_t size;
 
 	nvdimm_bus_lock(&nsblk->common.dev);
 	size = __nd_namespace_blk_validate(nsblk);
 	nvdimm_bus_unlock(&nsblk->common.dev);
 
-	वापस size;
-पूर्ण
+	return size;
+}
 EXPORT_SYMBOL(nd_namespace_blk_validate);
 
 
-अटल पूर्णांक nd_namespace_label_update(काष्ठा nd_region *nd_region,
-		काष्ठा device *dev)
-अणु
+static int nd_namespace_label_update(struct nd_region *nd_region,
+		struct device *dev)
+{
 	dev_WARN_ONCE(dev, dev->driver || to_ndns(dev)->claim,
 			"namespace must be idle during label update\n");
-	अगर (dev->driver || to_ndns(dev)->claim)
-		वापस 0;
+	if (dev->driver || to_ndns(dev)->claim)
+		return 0;
 
 	/*
-	 * Only allow label ग_लिखोs that will result in a valid namespace
+	 * Only allow label writes that will result in a valid namespace
 	 * or deletion of an existing namespace.
 	 */
-	अगर (is_namespace_pmem(dev)) अणु
-		काष्ठा nd_namespace_pmem *nspm = to_nd_namespace_pmem(dev);
-		resource_माप_प्रकार size = resource_size(&nspm->nsio.res);
+	if (is_namespace_pmem(dev)) {
+		struct nd_namespace_pmem *nspm = to_nd_namespace_pmem(dev);
+		resource_size_t size = resource_size(&nspm->nsio.res);
 
-		अगर (size == 0 && nspm->uuid)
+		if (size == 0 && nspm->uuid)
 			/* delete allocation */;
-		अन्यथा अगर (!nspm->uuid)
-			वापस 0;
+		else if (!nspm->uuid)
+			return 0;
 
-		वापस nd_pmem_namespace_label_update(nd_region, nspm, size);
-	पूर्ण अन्यथा अगर (is_namespace_blk(dev)) अणु
-		काष्ठा nd_namespace_blk *nsblk = to_nd_namespace_blk(dev);
-		resource_माप_प्रकार size = nd_namespace_blk_size(nsblk);
+		return nd_pmem_namespace_label_update(nd_region, nspm, size);
+	} else if (is_namespace_blk(dev)) {
+		struct nd_namespace_blk *nsblk = to_nd_namespace_blk(dev);
+		resource_size_t size = nd_namespace_blk_size(nsblk);
 
-		अगर (size == 0 && nsblk->uuid)
+		if (size == 0 && nsblk->uuid)
 			/* delete allocation */;
-		अन्यथा अगर (!nsblk->uuid || !nsblk->lbasize)
-			वापस 0;
+		else if (!nsblk->uuid || !nsblk->lbasize)
+			return 0;
 
-		वापस nd_blk_namespace_label_update(nd_region, nsblk, size);
-	पूर्ण अन्यथा
-		वापस -ENXIO;
-पूर्ण
+		return nd_blk_namespace_label_update(nd_region, nsblk, size);
+	} else
+		return -ENXIO;
+}
 
-अटल sमाप_प्रकार alt_name_store(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार len)
-अणु
-	काष्ठा nd_region *nd_region = to_nd_region(dev->parent);
-	sमाप_प्रकार rc;
+static ssize_t alt_name_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t len)
+{
+	struct nd_region *nd_region = to_nd_region(dev->parent);
+	ssize_t rc;
 
 	nd_device_lock(dev);
 	nvdimm_bus_lock(dev);
-	रुको_nvdimm_bus_probe_idle(dev);
+	wait_nvdimm_bus_probe_idle(dev);
 	rc = __alt_name_store(dev, buf, len);
-	अगर (rc >= 0)
+	if (rc >= 0)
 		rc = nd_namespace_label_update(nd_region, dev);
 	dev_dbg(dev, "%s(%zd)\n", rc < 0 ? "fail " : "", rc);
 	nvdimm_bus_unlock(dev);
 	nd_device_unlock(dev);
 
-	वापस rc < 0 ? rc : len;
-पूर्ण
+	return rc < 0 ? rc : len;
+}
 
-अटल sमाप_प्रकार alt_name_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	अक्षर *ns_altname;
+static ssize_t alt_name_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	char *ns_altname;
 
-	अगर (is_namespace_pmem(dev)) अणु
-		काष्ठा nd_namespace_pmem *nspm = to_nd_namespace_pmem(dev);
+	if (is_namespace_pmem(dev)) {
+		struct nd_namespace_pmem *nspm = to_nd_namespace_pmem(dev);
 
 		ns_altname = nspm->alt_name;
-	पूर्ण अन्यथा अगर (is_namespace_blk(dev)) अणु
-		काष्ठा nd_namespace_blk *nsblk = to_nd_namespace_blk(dev);
+	} else if (is_namespace_blk(dev)) {
+		struct nd_namespace_blk *nsblk = to_nd_namespace_blk(dev);
 
 		ns_altname = nsblk->alt_name;
-	पूर्ण अन्यथा
-		वापस -ENXIO;
+	} else
+		return -ENXIO;
 
-	वापस प्र_लिखो(buf, "%s\n", ns_altname ? ns_altname : "");
-पूर्ण
-अटल DEVICE_ATTR_RW(alt_name);
+	return sprintf(buf, "%s\n", ns_altname ? ns_altname : "");
+}
+static DEVICE_ATTR_RW(alt_name);
 
-अटल पूर्णांक scan_मुक्त(काष्ठा nd_region *nd_region,
-		काष्ठा nd_mapping *nd_mapping, काष्ठा nd_label_id *label_id,
-		resource_माप_प्रकार n)
-अणु
-	bool is_blk = म_भेदन(label_id->id, "blk", 3) == 0;
-	काष्ठा nvdimm_drvdata *ndd = to_ndd(nd_mapping);
-	पूर्णांक rc = 0;
+static int scan_free(struct nd_region *nd_region,
+		struct nd_mapping *nd_mapping, struct nd_label_id *label_id,
+		resource_size_t n)
+{
+	bool is_blk = strncmp(label_id->id, "blk", 3) == 0;
+	struct nvdimm_drvdata *ndd = to_ndd(nd_mapping);
+	int rc = 0;
 
-	जबतक (n) अणु
-		काष्ठा resource *res, *last;
-		resource_माप_प्रकार new_start;
+	while (n) {
+		struct resource *res, *last;
+		resource_size_t new_start;
 
-		last = शून्य;
-		क्रम_each_dpa_resource(ndd, res)
-			अगर (म_भेद(res->name, label_id->id) == 0)
+		last = NULL;
+		for_each_dpa_resource(ndd, res)
+			if (strcmp(res->name, label_id->id) == 0)
 				last = res;
 		res = last;
-		अगर (!res)
-			वापस 0;
+		if (!res)
+			return 0;
 
-		अगर (n >= resource_size(res)) अणु
+		if (n >= resource_size(res)) {
 			n -= resource_size(res);
 			nd_dbg_dpa(nd_region, ndd, res, "delete %d\n", rc);
-			nvdimm_मुक्त_dpa(ndd, res);
+			nvdimm_free_dpa(ndd, res);
 			/* retry with last resource deleted */
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/*
 		 * Keep BLK allocations relegated to high DPA as much as
 		 * possible
 		 */
-		अगर (is_blk)
+		if (is_blk)
 			new_start = res->start + n;
-		अन्यथा
+		else
 			new_start = res->start;
 
 		rc = adjust_resource(res, new_start, resource_size(res) - n);
-		अगर (rc == 0)
+		if (rc == 0)
 			res->flags |= DPA_RESOURCE_ADJUSTED;
 		nd_dbg_dpa(nd_region, ndd, res, "shrink %d\n", rc);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
- * shrink_dpa_allocation - क्रम each dimm in region मुक्त n bytes क्रम label_id
+ * shrink_dpa_allocation - for each dimm in region free n bytes for label_id
  * @nd_region: the set of dimms to reclaim @n bytes from
- * @label_id: unique identअगरier क्रम the namespace consuming this dpa range
+ * @label_id: unique identifier for the namespace consuming this dpa range
  * @n: number of bytes per-dimm to release
  *
  * Assumes resources are ordered.  Starting from the end try to
- * adjust_resource() the allocation to @n, but अगर @n is larger than the
+ * adjust_resource() the allocation to @n, but if @n is larger than the
  * allocation delete it and find the 'new' last allocation in the label
  * set.
  */
-अटल पूर्णांक shrink_dpa_allocation(काष्ठा nd_region *nd_region,
-		काष्ठा nd_label_id *label_id, resource_माप_प्रकार n)
-अणु
-	पूर्णांक i;
+static int shrink_dpa_allocation(struct nd_region *nd_region,
+		struct nd_label_id *label_id, resource_size_t n)
+{
+	int i;
 
-	क्रम (i = 0; i < nd_region->ndr_mappings; i++) अणु
-		काष्ठा nd_mapping *nd_mapping = &nd_region->mapping[i];
-		पूर्णांक rc;
+	for (i = 0; i < nd_region->ndr_mappings; i++) {
+		struct nd_mapping *nd_mapping = &nd_region->mapping[i];
+		int rc;
 
-		rc = scan_मुक्त(nd_region, nd_mapping, label_id, n);
-		अगर (rc)
-			वापस rc;
-	पूर्ण
+		rc = scan_free(nd_region, nd_mapping, label_id, n);
+		if (rc)
+			return rc;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल resource_माप_प्रकार init_dpa_allocation(काष्ठा nd_label_id *label_id,
-		काष्ठा nd_region *nd_region, काष्ठा nd_mapping *nd_mapping,
-		resource_माप_प्रकार n)
-अणु
-	bool is_blk = म_भेदन(label_id->id, "blk", 3) == 0;
-	काष्ठा nvdimm_drvdata *ndd = to_ndd(nd_mapping);
-	resource_माप_प्रकार first_dpa;
-	काष्ठा resource *res;
-	पूर्णांक rc = 0;
+static resource_size_t init_dpa_allocation(struct nd_label_id *label_id,
+		struct nd_region *nd_region, struct nd_mapping *nd_mapping,
+		resource_size_t n)
+{
+	bool is_blk = strncmp(label_id->id, "blk", 3) == 0;
+	struct nvdimm_drvdata *ndd = to_ndd(nd_mapping);
+	resource_size_t first_dpa;
+	struct resource *res;
+	int rc = 0;
 
 	/* allocate blk from highest dpa first */
-	अगर (is_blk)
+	if (is_blk)
 		first_dpa = nd_mapping->start + nd_mapping->size - n;
-	अन्यथा
+	else
 		first_dpa = nd_mapping->start;
 
-	/* first resource allocation क्रम this label-id or dimm */
+	/* first resource allocation for this label-id or dimm */
 	res = nvdimm_allocate_dpa(ndd, label_id, first_dpa, n);
-	अगर (!res)
+	if (!res)
 		rc = -EBUSY;
 
 	nd_dbg_dpa(nd_region, ndd, res, "init %d\n", rc);
-	वापस rc ? n : 0;
-पूर्ण
+	return rc ? n : 0;
+}
 
 
 /**
- * space_valid() - validate मुक्त dpa space against स्थिरraपूर्णांकs
- * @nd_region: hosting region of the मुक्त space
- * @ndd: dimm device data क्रम debug
+ * space_valid() - validate free dpa space against constraints
+ * @nd_region: hosting region of the free space
+ * @ndd: dimm device data for debug
  * @label_id: namespace id to allocate space
- * @prev: potential allocation that precedes मुक्त space
- * @next: allocation that follows the given मुक्त space range
+ * @prev: potential allocation that precedes free space
+ * @next: allocation that follows the given free space range
  * @exist: first allocation with same id in the mapping
- * @n: range that must satisfied क्रम pmem allocations
- * @valid: मुक्त space range to validate
+ * @n: range that must satisfied for pmem allocations
+ * @valid: free space range to validate
  *
- * BLK-space is valid as दीर्घ as it करोes not precede a PMEM
+ * BLK-space is valid as long as it does not precede a PMEM
  * allocation in a given region. PMEM-space must be contiguous
- * and adjacent to an existing existing allocation (अगर one
+ * and adjacent to an existing existing allocation (if one
  * exists).  If reserving PMEM any space is valid.
  */
-अटल व्योम space_valid(काष्ठा nd_region *nd_region, काष्ठा nvdimm_drvdata *ndd,
-		काष्ठा nd_label_id *label_id, काष्ठा resource *prev,
-		काष्ठा resource *next, काष्ठा resource *exist,
-		resource_माप_प्रकार n, काष्ठा resource *valid)
-अणु
-	bool is_reserve = म_भेद(label_id->id, "pmem-reserve") == 0;
-	bool is_pmem = म_भेदन(label_id->id, "pmem", 4) == 0;
-	अचिन्हित दीर्घ align;
+static void space_valid(struct nd_region *nd_region, struct nvdimm_drvdata *ndd,
+		struct nd_label_id *label_id, struct resource *prev,
+		struct resource *next, struct resource *exist,
+		resource_size_t n, struct resource *valid)
+{
+	bool is_reserve = strcmp(label_id->id, "pmem-reserve") == 0;
+	bool is_pmem = strncmp(label_id->id, "pmem", 4) == 0;
+	unsigned long align;
 
 	align = nd_region->align / nd_region->ndr_mappings;
 	valid->start = ALIGN(valid->start, align);
 	valid->end = ALIGN_DOWN(valid->end + 1, align) - 1;
 
-	अगर (valid->start >= valid->end)
-		जाओ invalid;
+	if (valid->start >= valid->end)
+		goto invalid;
 
-	अगर (is_reserve)
-		वापस;
+	if (is_reserve)
+		return;
 
-	अगर (!is_pmem) अणु
-		काष्ठा nd_mapping *nd_mapping = &nd_region->mapping[0];
-		काष्ठा nvdimm_bus *nvdimm_bus;
-		काष्ठा blk_alloc_info info = अणु
+	if (!is_pmem) {
+		struct nd_mapping *nd_mapping = &nd_region->mapping[0];
+		struct nvdimm_bus *nvdimm_bus;
+		struct blk_alloc_info info = {
 			.nd_mapping = nd_mapping,
 			.available = nd_mapping->size,
 			.res = valid,
-		पूर्ण;
+		};
 
 		WARN_ON(!is_nd_blk(&nd_region->dev));
 		nvdimm_bus = walk_to_nvdimm_bus(&nd_region->dev);
-		device_क्रम_each_child(&nvdimm_bus->dev, &info, alias_dpa_busy);
-		वापस;
-	पूर्ण
+		device_for_each_child(&nvdimm_bus->dev, &info, alias_dpa_busy);
+		return;
+	}
 
 	/* allocation needs to be contiguous, so this is all or nothing */
-	अगर (resource_size(valid) < n)
-		जाओ invalid;
+	if (resource_size(valid) < n)
+		goto invalid;
 
 	/* we've got all the space we need and no existing allocation */
-	अगर (!exist)
-		वापस;
+	if (!exist)
+		return;
 
 	/* allocation needs to be contiguous with the existing namespace */
-	अगर (valid->start == exist->end + 1
+	if (valid->start == exist->end + 1
 			|| valid->end == exist->start - 1)
-		वापस;
+		return;
 
  invalid:
 	/* truncate @valid size to 0 */
 	valid->end = valid->start - 1;
-पूर्ण
+}
 
-क्रमागत alloc_loc अणु
+enum alloc_loc {
 	ALLOC_ERR = 0, ALLOC_BEFORE, ALLOC_MID, ALLOC_AFTER,
-पूर्ण;
+};
 
-अटल resource_माप_प्रकार scan_allocate(काष्ठा nd_region *nd_region,
-		काष्ठा nd_mapping *nd_mapping, काष्ठा nd_label_id *label_id,
-		resource_माप_प्रकार n)
-अणु
-	resource_माप_प्रकार mapping_end = nd_mapping->start + nd_mapping->size - 1;
-	bool is_pmem = म_भेदन(label_id->id, "pmem", 4) == 0;
-	काष्ठा nvdimm_drvdata *ndd = to_ndd(nd_mapping);
-	काष्ठा resource *res, *exist = शून्य, valid;
-	स्थिर resource_माप_प्रकार to_allocate = n;
-	पूर्णांक first;
+static resource_size_t scan_allocate(struct nd_region *nd_region,
+		struct nd_mapping *nd_mapping, struct nd_label_id *label_id,
+		resource_size_t n)
+{
+	resource_size_t mapping_end = nd_mapping->start + nd_mapping->size - 1;
+	bool is_pmem = strncmp(label_id->id, "pmem", 4) == 0;
+	struct nvdimm_drvdata *ndd = to_ndd(nd_mapping);
+	struct resource *res, *exist = NULL, valid;
+	const resource_size_t to_allocate = n;
+	int first;
 
-	क्रम_each_dpa_resource(ndd, res)
-		अगर (म_भेद(label_id->id, res->name) == 0)
+	for_each_dpa_resource(ndd, res)
+		if (strcmp(label_id->id, res->name) == 0)
 			exist = res;
 
 	valid.start = nd_mapping->start;
@@ -612,1001 +611,1001 @@ EXPORT_SYMBOL(nd_namespace_blk_validate);
 	valid.name = "free space";
  retry:
 	first = 0;
-	क्रम_each_dpa_resource(ndd, res) अणु
-		काष्ठा resource *next = res->sibling, *new_res = शून्य;
-		resource_माप_प्रकार allocate, available = 0;
-		क्रमागत alloc_loc loc = ALLOC_ERR;
-		स्थिर अक्षर *action;
-		पूर्णांक rc = 0;
+	for_each_dpa_resource(ndd, res) {
+		struct resource *next = res->sibling, *new_res = NULL;
+		resource_size_t allocate, available = 0;
+		enum alloc_loc loc = ALLOC_ERR;
+		const char *action;
+		int rc = 0;
 
 		/* ignore resources outside this nd_mapping */
-		अगर (res->start > mapping_end)
-			जारी;
-		अगर (res->end < nd_mapping->start)
-			जारी;
+		if (res->start > mapping_end)
+			continue;
+		if (res->end < nd_mapping->start)
+			continue;
 
 		/* space at the beginning of the mapping */
-		अगर (!first++ && res->start > nd_mapping->start) अणु
+		if (!first++ && res->start > nd_mapping->start) {
 			valid.start = nd_mapping->start;
 			valid.end = res->start - 1;
-			space_valid(nd_region, ndd, label_id, शून्य, next, exist,
+			space_valid(nd_region, ndd, label_id, NULL, next, exist,
 					to_allocate, &valid);
 			available = resource_size(&valid);
-			अगर (available)
+			if (available)
 				loc = ALLOC_BEFORE;
-		पूर्ण
+		}
 
 		/* space between allocations */
-		अगर (!loc && next) अणु
+		if (!loc && next) {
 			valid.start = res->start + resource_size(res);
 			valid.end = min(mapping_end, next->start - 1);
 			space_valid(nd_region, ndd, label_id, res, next, exist,
 					to_allocate, &valid);
 			available = resource_size(&valid);
-			अगर (available)
+			if (available)
 				loc = ALLOC_MID;
-		पूर्ण
+		}
 
 		/* space at the end of the mapping */
-		अगर (!loc && !next) अणु
+		if (!loc && !next) {
 			valid.start = res->start + resource_size(res);
 			valid.end = mapping_end;
 			space_valid(nd_region, ndd, label_id, res, next, exist,
 					to_allocate, &valid);
 			available = resource_size(&valid);
-			अगर (available)
+			if (available)
 				loc = ALLOC_AFTER;
-		पूर्ण
+		}
 
-		अगर (!loc || !available)
-			जारी;
+		if (!loc || !available)
+			continue;
 		allocate = min(available, n);
-		चयन (loc) अणु
-		हाल ALLOC_BEFORE:
-			अगर (म_भेद(res->name, label_id->id) == 0) अणु
+		switch (loc) {
+		case ALLOC_BEFORE:
+			if (strcmp(res->name, label_id->id) == 0) {
 				/* adjust current resource up */
 				rc = adjust_resource(res, res->start - allocate,
 						resource_size(res) + allocate);
 				action = "cur grow up";
-			पूर्ण अन्यथा
+			} else
 				action = "allocate";
-			अवरोध;
-		हाल ALLOC_MID:
-			अगर (म_भेद(next->name, label_id->id) == 0) अणु
+			break;
+		case ALLOC_MID:
+			if (strcmp(next->name, label_id->id) == 0) {
 				/* adjust next resource up */
 				rc = adjust_resource(next, next->start
 						- allocate, resource_size(next)
 						+ allocate);
 				new_res = next;
 				action = "next grow up";
-			पूर्ण अन्यथा अगर (म_भेद(res->name, label_id->id) == 0) अणु
+			} else if (strcmp(res->name, label_id->id) == 0) {
 				action = "grow down";
-			पूर्ण अन्यथा
+			} else
 				action = "allocate";
-			अवरोध;
-		हाल ALLOC_AFTER:
-			अगर (म_भेद(res->name, label_id->id) == 0)
+			break;
+		case ALLOC_AFTER:
+			if (strcmp(res->name, label_id->id) == 0)
 				action = "grow down";
-			अन्यथा
+			else
 				action = "allocate";
-			अवरोध;
-		शेष:
-			वापस n;
-		पूर्ण
+			break;
+		default:
+			return n;
+		}
 
-		अगर (म_भेद(action, "allocate") == 0) अणु
+		if (strcmp(action, "allocate") == 0) {
 			/* BLK allocate bottom up */
-			अगर (!is_pmem)
+			if (!is_pmem)
 				valid.start += available - allocate;
 
 			new_res = nvdimm_allocate_dpa(ndd, label_id,
 					valid.start, allocate);
-			अगर (!new_res)
+			if (!new_res)
 				rc = -EBUSY;
-		पूर्ण अन्यथा अगर (म_भेद(action, "grow down") == 0) अणु
-			/* adjust current resource करोwn */
+		} else if (strcmp(action, "grow down") == 0) {
+			/* adjust current resource down */
 			rc = adjust_resource(res, res->start, resource_size(res)
 					+ allocate);
-			अगर (rc == 0)
+			if (rc == 0)
 				res->flags |= DPA_RESOURCE_ADJUSTED;
-		पूर्ण
+		}
 
-		अगर (!new_res)
+		if (!new_res)
 			new_res = res;
 
 		nd_dbg_dpa(nd_region, ndd, new_res, "%s(%d) %d\n",
 				action, loc, rc);
 
-		अगर (rc)
-			वापस n;
+		if (rc)
+			return n;
 
 		n -= allocate;
-		अगर (n) अणु
+		if (n) {
 			/*
 			 * Retry scan with newly inserted resources.
-			 * For example, अगर we did an ALLOC_BEFORE
+			 * For example, if we did an ALLOC_BEFORE
 			 * insertion there may also have been space
-			 * available क्रम an ALLOC_AFTER insertion, so we
+			 * available for an ALLOC_AFTER insertion, so we
 			 * need to check this same resource again
 			 */
-			जाओ retry;
-		पूर्ण अन्यथा
-			वापस 0;
-	पूर्ण
+			goto retry;
+		} else
+			return 0;
+	}
 
 	/*
-	 * If we allocated nothing in the BLK हाल it may be because we are in
-	 * an initial "pmem-reserve pass".  Only करो an initial BLK allocation
+	 * If we allocated nothing in the BLK case it may be because we are in
+	 * an initial "pmem-reserve pass".  Only do an initial BLK allocation
 	 * when none of the DPA space is reserved.
 	 */
-	अगर ((is_pmem || !ndd->dpa.child) && n == to_allocate)
-		वापस init_dpa_allocation(label_id, nd_region, nd_mapping, n);
-	वापस n;
-पूर्ण
+	if ((is_pmem || !ndd->dpa.child) && n == to_allocate)
+		return init_dpa_allocation(label_id, nd_region, nd_mapping, n);
+	return n;
+}
 
-अटल पूर्णांक merge_dpa(काष्ठा nd_region *nd_region,
-		काष्ठा nd_mapping *nd_mapping, काष्ठा nd_label_id *label_id)
-अणु
-	काष्ठा nvdimm_drvdata *ndd = to_ndd(nd_mapping);
-	काष्ठा resource *res;
+static int merge_dpa(struct nd_region *nd_region,
+		struct nd_mapping *nd_mapping, struct nd_label_id *label_id)
+{
+	struct nvdimm_drvdata *ndd = to_ndd(nd_mapping);
+	struct resource *res;
 
-	अगर (म_भेदन("pmem", label_id->id, 4) == 0)
-		वापस 0;
+	if (strncmp("pmem", label_id->id, 4) == 0)
+		return 0;
  retry:
-	क्रम_each_dpa_resource(ndd, res) अणु
-		पूर्णांक rc;
-		काष्ठा resource *next = res->sibling;
-		resource_माप_प्रकार end = res->start + resource_size(res);
+	for_each_dpa_resource(ndd, res) {
+		int rc;
+		struct resource *next = res->sibling;
+		resource_size_t end = res->start + resource_size(res);
 
-		अगर (!next || म_भेद(res->name, label_id->id) != 0
-				|| म_भेद(next->name, label_id->id) != 0
+		if (!next || strcmp(res->name, label_id->id) != 0
+				|| strcmp(next->name, label_id->id) != 0
 				|| end != next->start)
-			जारी;
+			continue;
 		end += resource_size(next);
-		nvdimm_मुक्त_dpa(ndd, next);
+		nvdimm_free_dpa(ndd, next);
 		rc = adjust_resource(res, res->start, end - res->start);
 		nd_dbg_dpa(nd_region, ndd, res, "merge %d\n", rc);
-		अगर (rc)
-			वापस rc;
+		if (rc)
+			return rc;
 		res->flags |= DPA_RESOURCE_ADJUSTED;
-		जाओ retry;
-	पूर्ण
+		goto retry;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक __reserve_मुक्त_pmem(काष्ठा device *dev, व्योम *data)
-अणु
-	काष्ठा nvdimm *nvdimm = data;
-	काष्ठा nd_region *nd_region;
-	काष्ठा nd_label_id label_id;
-	पूर्णांक i;
+int __reserve_free_pmem(struct device *dev, void *data)
+{
+	struct nvdimm *nvdimm = data;
+	struct nd_region *nd_region;
+	struct nd_label_id label_id;
+	int i;
 
-	अगर (!is_memory(dev))
-		वापस 0;
+	if (!is_memory(dev))
+		return 0;
 
 	nd_region = to_nd_region(dev);
-	अगर (nd_region->ndr_mappings == 0)
-		वापस 0;
+	if (nd_region->ndr_mappings == 0)
+		return 0;
 
-	स_रखो(&label_id, 0, माप(label_id));
-	म_जोड़ो(label_id.id, "pmem-reserve");
-	क्रम (i = 0; i < nd_region->ndr_mappings; i++) अणु
-		काष्ठा nd_mapping *nd_mapping = &nd_region->mapping[i];
-		resource_माप_प्रकार n, rem = 0;
+	memset(&label_id, 0, sizeof(label_id));
+	strcat(label_id.id, "pmem-reserve");
+	for (i = 0; i < nd_region->ndr_mappings; i++) {
+		struct nd_mapping *nd_mapping = &nd_region->mapping[i];
+		resource_size_t n, rem = 0;
 
-		अगर (nd_mapping->nvdimm != nvdimm)
-			जारी;
+		if (nd_mapping->nvdimm != nvdimm)
+			continue;
 
 		n = nd_pmem_available_dpa(nd_region, nd_mapping, &rem);
-		अगर (n == 0)
-			वापस 0;
+		if (n == 0)
+			return 0;
 		rem = scan_allocate(nd_region, nd_mapping, &label_id, n);
 		dev_WARN_ONCE(&nd_region->dev, rem,
 				"pmem reserve underrun: %#llx of %#llx bytes\n",
-				(अचिन्हित दीर्घ दीर्घ) n - rem,
-				(अचिन्हित दीर्घ दीर्घ) n);
-		वापस rem ? -ENXIO : 0;
-	पूर्ण
+				(unsigned long long) n - rem,
+				(unsigned long long) n);
+		return rem ? -ENXIO : 0;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम release_मुक्त_pmem(काष्ठा nvdimm_bus *nvdimm_bus,
-		काष्ठा nd_mapping *nd_mapping)
-अणु
-	काष्ठा nvdimm_drvdata *ndd = to_ndd(nd_mapping);
-	काष्ठा resource *res, *_res;
+void release_free_pmem(struct nvdimm_bus *nvdimm_bus,
+		struct nd_mapping *nd_mapping)
+{
+	struct nvdimm_drvdata *ndd = to_ndd(nd_mapping);
+	struct resource *res, *_res;
 
-	क्रम_each_dpa_resource_safe(ndd, res, _res)
-		अगर (म_भेद(res->name, "pmem-reserve") == 0)
-			nvdimm_मुक्त_dpa(ndd, res);
-पूर्ण
+	for_each_dpa_resource_safe(ndd, res, _res)
+		if (strcmp(res->name, "pmem-reserve") == 0)
+			nvdimm_free_dpa(ndd, res);
+}
 
-अटल पूर्णांक reserve_मुक्त_pmem(काष्ठा nvdimm_bus *nvdimm_bus,
-		काष्ठा nd_mapping *nd_mapping)
-अणु
-	काष्ठा nvdimm *nvdimm = nd_mapping->nvdimm;
-	पूर्णांक rc;
+static int reserve_free_pmem(struct nvdimm_bus *nvdimm_bus,
+		struct nd_mapping *nd_mapping)
+{
+	struct nvdimm *nvdimm = nd_mapping->nvdimm;
+	int rc;
 
-	rc = device_क्रम_each_child(&nvdimm_bus->dev, nvdimm,
-			__reserve_मुक्त_pmem);
-	अगर (rc)
-		release_मुक्त_pmem(nvdimm_bus, nd_mapping);
-	वापस rc;
-पूर्ण
+	rc = device_for_each_child(&nvdimm_bus->dev, nvdimm,
+			__reserve_free_pmem);
+	if (rc)
+		release_free_pmem(nvdimm_bus, nd_mapping);
+	return rc;
+}
 
 /**
- * grow_dpa_allocation - क्रम each dimm allocate n bytes क्रम @label_id
+ * grow_dpa_allocation - for each dimm allocate n bytes for @label_id
  * @nd_region: the set of dimms to allocate @n more bytes from
- * @label_id: unique identअगरier क्रम the namespace consuming this dpa range
+ * @label_id: unique identifier for the namespace consuming this dpa range
  * @n: number of bytes per-dimm to add to the existing allocation
  *
  * Assumes resources are ordered.  For BLK regions, first consume
- * BLK-only available DPA मुक्त space, then consume PMEM-aliased DPA
+ * BLK-only available DPA free space, then consume PMEM-aliased DPA
  * space starting at the highest DPA.  For PMEM regions start
- * allocations from the start of an पूर्णांकerleave set and end at the first
- * BLK allocation or the end of the पूर्णांकerleave set, whichever comes
+ * allocations from the start of an interleave set and end at the first
+ * BLK allocation or the end of the interleave set, whichever comes
  * first.
  */
-अटल पूर्णांक grow_dpa_allocation(काष्ठा nd_region *nd_region,
-		काष्ठा nd_label_id *label_id, resource_माप_प्रकार n)
-अणु
-	काष्ठा nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(&nd_region->dev);
-	bool is_pmem = म_भेदन(label_id->id, "pmem", 4) == 0;
-	पूर्णांक i;
+static int grow_dpa_allocation(struct nd_region *nd_region,
+		struct nd_label_id *label_id, resource_size_t n)
+{
+	struct nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(&nd_region->dev);
+	bool is_pmem = strncmp(label_id->id, "pmem", 4) == 0;
+	int i;
 
-	क्रम (i = 0; i < nd_region->ndr_mappings; i++) अणु
-		काष्ठा nd_mapping *nd_mapping = &nd_region->mapping[i];
-		resource_माप_प्रकार rem = n;
-		पूर्णांक rc, j;
+	for (i = 0; i < nd_region->ndr_mappings; i++) {
+		struct nd_mapping *nd_mapping = &nd_region->mapping[i];
+		resource_size_t rem = n;
+		int rc, j;
 
 		/*
-		 * In the BLK हाल try once with all unallocated PMEM
+		 * In the BLK case try once with all unallocated PMEM
 		 * reserved, and once without
 		 */
-		क्रम (j = is_pmem; j < 2; j++) अणु
+		for (j = is_pmem; j < 2; j++) {
 			bool blk_only = j == 0;
 
-			अगर (blk_only) अणु
-				rc = reserve_मुक्त_pmem(nvdimm_bus, nd_mapping);
-				अगर (rc)
-					वापस rc;
-			पूर्ण
+			if (blk_only) {
+				rc = reserve_free_pmem(nvdimm_bus, nd_mapping);
+				if (rc)
+					return rc;
+			}
 			rem = scan_allocate(nd_region, nd_mapping,
 					label_id, rem);
-			अगर (blk_only)
-				release_मुक्त_pmem(nvdimm_bus, nd_mapping);
+			if (blk_only)
+				release_free_pmem(nvdimm_bus, nd_mapping);
 
-			/* try again and allow encroachments पूर्णांकo PMEM */
-			अगर (rem == 0)
-				अवरोध;
-		पूर्ण
+			/* try again and allow encroachments into PMEM */
+			if (rem == 0)
+				break;
+		}
 
 		dev_WARN_ONCE(&nd_region->dev, rem,
 				"allocation underrun: %#llx of %#llx bytes\n",
-				(अचिन्हित दीर्घ दीर्घ) n - rem,
-				(अचिन्हित दीर्घ दीर्घ) n);
-		अगर (rem)
-			वापस -ENXIO;
+				(unsigned long long) n - rem,
+				(unsigned long long) n);
+		if (rem)
+			return -ENXIO;
 
 		rc = merge_dpa(nd_region, nd_mapping, label_id);
-		अगर (rc)
-			वापस rc;
-	पूर्ण
+		if (rc)
+			return rc;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम nd_namespace_pmem_set_resource(काष्ठा nd_region *nd_region,
-		काष्ठा nd_namespace_pmem *nspm, resource_माप_प्रकार size)
-अणु
-	काष्ठा resource *res = &nspm->nsio.res;
-	resource_माप_प्रकार offset = 0;
+static void nd_namespace_pmem_set_resource(struct nd_region *nd_region,
+		struct nd_namespace_pmem *nspm, resource_size_t size)
+{
+	struct resource *res = &nspm->nsio.res;
+	resource_size_t offset = 0;
 
-	अगर (size && !nspm->uuid) अणु
+	if (size && !nspm->uuid) {
 		WARN_ON_ONCE(1);
 		size = 0;
-	पूर्ण
+	}
 
-	अगर (size && nspm->uuid) अणु
-		काष्ठा nd_mapping *nd_mapping = &nd_region->mapping[0];
-		काष्ठा nvdimm_drvdata *ndd = to_ndd(nd_mapping);
-		काष्ठा nd_label_id label_id;
-		काष्ठा resource *res;
+	if (size && nspm->uuid) {
+		struct nd_mapping *nd_mapping = &nd_region->mapping[0];
+		struct nvdimm_drvdata *ndd = to_ndd(nd_mapping);
+		struct nd_label_id label_id;
+		struct resource *res;
 
-		अगर (!ndd) अणु
+		if (!ndd) {
 			size = 0;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		nd_label_gen_id(&label_id, nspm->uuid, 0);
 
 		/* calculate a spa offset from the dpa allocation offset */
-		क्रम_each_dpa_resource(ndd, res)
-			अगर (म_भेद(res->name, label_id.id) == 0) अणु
+		for_each_dpa_resource(ndd, res)
+			if (strcmp(res->name, label_id.id) == 0) {
 				offset = (res->start - nd_mapping->start)
 					* nd_region->ndr_mappings;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
 		WARN_ON_ONCE(1);
 		size = 0;
-	पूर्ण
+	}
 
  out:
 	res->start = nd_region->ndr_start + offset;
 	res->end = res->start + size - 1;
-पूर्ण
+}
 
-अटल bool uuid_not_set(स्थिर u8 *uuid, काष्ठा device *dev, स्थिर अक्षर *where)
-अणु
-	अगर (!uuid) अणु
+static bool uuid_not_set(const u8 *uuid, struct device *dev, const char *where)
+{
+	if (!uuid) {
 		dev_dbg(dev, "%s: uuid not set\n", where);
-		वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+		return true;
+	}
+	return false;
+}
 
-अटल sमाप_प्रकार __size_store(काष्ठा device *dev, अचिन्हित दीर्घ दीर्घ val)
-अणु
-	resource_माप_प्रकार allocated = 0, available = 0;
-	काष्ठा nd_region *nd_region = to_nd_region(dev->parent);
-	काष्ठा nd_namespace_common *ndns = to_ndns(dev);
-	काष्ठा nd_mapping *nd_mapping;
-	काष्ठा nvdimm_drvdata *ndd;
-	काष्ठा nd_label_id label_id;
-	u32 flags = 0, reमुख्यder;
-	पूर्णांक rc, i, id = -1;
-	u8 *uuid = शून्य;
+static ssize_t __size_store(struct device *dev, unsigned long long val)
+{
+	resource_size_t allocated = 0, available = 0;
+	struct nd_region *nd_region = to_nd_region(dev->parent);
+	struct nd_namespace_common *ndns = to_ndns(dev);
+	struct nd_mapping *nd_mapping;
+	struct nvdimm_drvdata *ndd;
+	struct nd_label_id label_id;
+	u32 flags = 0, remainder;
+	int rc, i, id = -1;
+	u8 *uuid = NULL;
 
-	अगर (dev->driver || ndns->claim)
-		वापस -EBUSY;
+	if (dev->driver || ndns->claim)
+		return -EBUSY;
 
-	अगर (is_namespace_pmem(dev)) अणु
-		काष्ठा nd_namespace_pmem *nspm = to_nd_namespace_pmem(dev);
+	if (is_namespace_pmem(dev)) {
+		struct nd_namespace_pmem *nspm = to_nd_namespace_pmem(dev);
 
 		uuid = nspm->uuid;
 		id = nspm->id;
-	पूर्ण अन्यथा अगर (is_namespace_blk(dev)) अणु
-		काष्ठा nd_namespace_blk *nsblk = to_nd_namespace_blk(dev);
+	} else if (is_namespace_blk(dev)) {
+		struct nd_namespace_blk *nsblk = to_nd_namespace_blk(dev);
 
 		uuid = nsblk->uuid;
 		flags = NSLABEL_FLAG_LOCAL;
 		id = nsblk->id;
-	पूर्ण
+	}
 
 	/*
-	 * We need a uuid क्रम the allocation-label and dimm(s) on which
+	 * We need a uuid for the allocation-label and dimm(s) on which
 	 * to store the label.
 	 */
-	अगर (uuid_not_set(uuid, dev, __func__))
-		वापस -ENXIO;
-	अगर (nd_region->ndr_mappings == 0) अणु
+	if (uuid_not_set(uuid, dev, __func__))
+		return -ENXIO;
+	if (nd_region->ndr_mappings == 0) {
 		dev_dbg(dev, "not associated with dimm(s)\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
-	भाग_u64_rem(val, nd_region->align, &reमुख्यder);
-	अगर (reमुख्यder) अणु
+	div_u64_rem(val, nd_region->align, &remainder);
+	if (remainder) {
 		dev_dbg(dev, "%llu is not %ldK aligned\n", val,
 				nd_region->align / SZ_1K);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	nd_label_gen_id(&label_id, uuid, flags);
-	क्रम (i = 0; i < nd_region->ndr_mappings; i++) अणु
+	for (i = 0; i < nd_region->ndr_mappings; i++) {
 		nd_mapping = &nd_region->mapping[i];
 		ndd = to_ndd(nd_mapping);
 
 		/*
-		 * All dimms in an पूर्णांकerleave set, or the base dimm क्रम a blk
-		 * region, need to be enabled क्रम the size to be changed.
+		 * All dimms in an interleave set, or the base dimm for a blk
+		 * region, need to be enabled for the size to be changed.
 		 */
-		अगर (!ndd)
-			वापस -ENXIO;
+		if (!ndd)
+			return -ENXIO;
 
 		allocated += nvdimm_allocated_dpa(ndd, &label_id);
-	पूर्ण
+	}
 	available = nd_region_allocatable_dpa(nd_region);
 
-	अगर (val > available + allocated)
-		वापस -ENOSPC;
+	if (val > available + allocated)
+		return -ENOSPC;
 
-	अगर (val == allocated)
-		वापस 0;
+	if (val == allocated)
+		return 0;
 
-	val = भाग_u64(val, nd_region->ndr_mappings);
-	allocated = भाग_u64(allocated, nd_region->ndr_mappings);
-	अगर (val < allocated)
+	val = div_u64(val, nd_region->ndr_mappings);
+	allocated = div_u64(allocated, nd_region->ndr_mappings);
+	if (val < allocated)
 		rc = shrink_dpa_allocation(nd_region, &label_id,
 				allocated - val);
-	अन्यथा
+	else
 		rc = grow_dpa_allocation(nd_region, &label_id, val - allocated);
 
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	अगर (is_namespace_pmem(dev)) अणु
-		काष्ठा nd_namespace_pmem *nspm = to_nd_namespace_pmem(dev);
+	if (is_namespace_pmem(dev)) {
+		struct nd_namespace_pmem *nspm = to_nd_namespace_pmem(dev);
 
 		nd_namespace_pmem_set_resource(nd_region, nspm,
 				val * nd_region->ndr_mappings);
-	पूर्ण
+	}
 
 	/*
-	 * Try to delete the namespace अगर we deleted all of its
-	 * allocation, this is not the seed or 0th device क्रम the
+	 * Try to delete the namespace if we deleted all of its
+	 * allocation, this is not the seed or 0th device for the
 	 * region, and it is not actively claimed by a btt, pfn, or dax
 	 * instance.
 	 */
-	अगर (val == 0 && id != 0 && nd_region->ns_seed != dev && !ndns->claim)
-		nd_device_unरेजिस्टर(dev, ND_ASYNC);
+	if (val == 0 && id != 0 && nd_region->ns_seed != dev && !ndns->claim)
+		nd_device_unregister(dev, ND_ASYNC);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल sमाप_प्रकार size_store(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार len)
-अणु
-	काष्ठा nd_region *nd_region = to_nd_region(dev->parent);
-	अचिन्हित दीर्घ दीर्घ val;
-	u8 **uuid = शून्य;
-	पूर्णांक rc;
+static ssize_t size_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t len)
+{
+	struct nd_region *nd_region = to_nd_region(dev->parent);
+	unsigned long long val;
+	u8 **uuid = NULL;
+	int rc;
 
-	rc = kम_से_अदीर्घl(buf, 0, &val);
-	अगर (rc)
-		वापस rc;
+	rc = kstrtoull(buf, 0, &val);
+	if (rc)
+		return rc;
 
 	nd_device_lock(dev);
 	nvdimm_bus_lock(dev);
-	रुको_nvdimm_bus_probe_idle(dev);
+	wait_nvdimm_bus_probe_idle(dev);
 	rc = __size_store(dev, val);
-	अगर (rc >= 0)
+	if (rc >= 0)
 		rc = nd_namespace_label_update(nd_region, dev);
 
-	अगर (is_namespace_pmem(dev)) अणु
-		काष्ठा nd_namespace_pmem *nspm = to_nd_namespace_pmem(dev);
+	if (is_namespace_pmem(dev)) {
+		struct nd_namespace_pmem *nspm = to_nd_namespace_pmem(dev);
 
 		uuid = &nspm->uuid;
-	पूर्ण अन्यथा अगर (is_namespace_blk(dev)) अणु
-		काष्ठा nd_namespace_blk *nsblk = to_nd_namespace_blk(dev);
+	} else if (is_namespace_blk(dev)) {
+		struct nd_namespace_blk *nsblk = to_nd_namespace_blk(dev);
 
 		uuid = &nsblk->uuid;
-	पूर्ण
+	}
 
-	अगर (rc == 0 && val == 0 && uuid) अणु
+	if (rc == 0 && val == 0 && uuid) {
 		/* setting size zero == 'delete namespace' */
-		kमुक्त(*uuid);
-		*uuid = शून्य;
-	पूर्ण
+		kfree(*uuid);
+		*uuid = NULL;
+	}
 
 	dev_dbg(dev, "%llx %s (%d)\n", val, rc < 0 ? "fail" : "success", rc);
 
 	nvdimm_bus_unlock(dev);
 	nd_device_unlock(dev);
 
-	वापस rc < 0 ? rc : len;
-पूर्ण
+	return rc < 0 ? rc : len;
+}
 
-resource_माप_प्रकार __nvdimm_namespace_capacity(काष्ठा nd_namespace_common *ndns)
-अणु
-	काष्ठा device *dev = &ndns->dev;
+resource_size_t __nvdimm_namespace_capacity(struct nd_namespace_common *ndns)
+{
+	struct device *dev = &ndns->dev;
 
-	अगर (is_namespace_pmem(dev)) अणु
-		काष्ठा nd_namespace_pmem *nspm = to_nd_namespace_pmem(dev);
+	if (is_namespace_pmem(dev)) {
+		struct nd_namespace_pmem *nspm = to_nd_namespace_pmem(dev);
 
-		वापस resource_size(&nspm->nsio.res);
-	पूर्ण अन्यथा अगर (is_namespace_blk(dev)) अणु
-		वापस nd_namespace_blk_size(to_nd_namespace_blk(dev));
-	पूर्ण अन्यथा अगर (is_namespace_io(dev)) अणु
-		काष्ठा nd_namespace_io *nsio = to_nd_namespace_io(dev);
+		return resource_size(&nspm->nsio.res);
+	} else if (is_namespace_blk(dev)) {
+		return nd_namespace_blk_size(to_nd_namespace_blk(dev));
+	} else if (is_namespace_io(dev)) {
+		struct nd_namespace_io *nsio = to_nd_namespace_io(dev);
 
-		वापस resource_size(&nsio->res);
-	पूर्ण अन्यथा
+		return resource_size(&nsio->res);
+	} else
 		WARN_ONCE(1, "unknown namespace type\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-resource_माप_प्रकार nvdimm_namespace_capacity(काष्ठा nd_namespace_common *ndns)
-अणु
-	resource_माप_प्रकार size;
+resource_size_t nvdimm_namespace_capacity(struct nd_namespace_common *ndns)
+{
+	resource_size_t size;
 
 	nvdimm_bus_lock(&ndns->dev);
 	size = __nvdimm_namespace_capacity(ndns);
 	nvdimm_bus_unlock(&ndns->dev);
 
-	वापस size;
-पूर्ण
+	return size;
+}
 EXPORT_SYMBOL(nvdimm_namespace_capacity);
 
-bool nvdimm_namespace_locked(काष्ठा nd_namespace_common *ndns)
-अणु
-	पूर्णांक i;
+bool nvdimm_namespace_locked(struct nd_namespace_common *ndns)
+{
+	int i;
 	bool locked = false;
-	काष्ठा device *dev = &ndns->dev;
-	काष्ठा nd_region *nd_region = to_nd_region(dev->parent);
+	struct device *dev = &ndns->dev;
+	struct nd_region *nd_region = to_nd_region(dev->parent);
 
-	क्रम (i = 0; i < nd_region->ndr_mappings; i++) अणु
-		काष्ठा nd_mapping *nd_mapping = &nd_region->mapping[i];
-		काष्ठा nvdimm *nvdimm = nd_mapping->nvdimm;
+	for (i = 0; i < nd_region->ndr_mappings; i++) {
+		struct nd_mapping *nd_mapping = &nd_region->mapping[i];
+		struct nvdimm *nvdimm = nd_mapping->nvdimm;
 
-		अगर (test_bit(NDD_LOCKED, &nvdimm->flags)) अणु
+		if (test_bit(NDD_LOCKED, &nvdimm->flags)) {
 			dev_dbg(dev, "%s locked\n", nvdimm_name(nvdimm));
 			locked = true;
-		पूर्ण
-	पूर्ण
-	वापस locked;
-पूर्ण
+		}
+	}
+	return locked;
+}
 EXPORT_SYMBOL(nvdimm_namespace_locked);
 
-अटल sमाप_प्रकार size_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%llu\n", (अचिन्हित दीर्घ दीर्घ)
+static ssize_t size_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%llu\n", (unsigned long long)
 			nvdimm_namespace_capacity(to_ndns(dev)));
-पूर्ण
-अटल DEVICE_ATTR(size, 0444, size_show, size_store);
+}
+static DEVICE_ATTR(size, 0444, size_show, size_store);
 
-अटल u8 *namespace_to_uuid(काष्ठा device *dev)
-अणु
-	अगर (is_namespace_pmem(dev)) अणु
-		काष्ठा nd_namespace_pmem *nspm = to_nd_namespace_pmem(dev);
+static u8 *namespace_to_uuid(struct device *dev)
+{
+	if (is_namespace_pmem(dev)) {
+		struct nd_namespace_pmem *nspm = to_nd_namespace_pmem(dev);
 
-		वापस nspm->uuid;
-	पूर्ण अन्यथा अगर (is_namespace_blk(dev)) अणु
-		काष्ठा nd_namespace_blk *nsblk = to_nd_namespace_blk(dev);
+		return nspm->uuid;
+	} else if (is_namespace_blk(dev)) {
+		struct nd_namespace_blk *nsblk = to_nd_namespace_blk(dev);
 
-		वापस nsblk->uuid;
-	पूर्ण अन्यथा
-		वापस ERR_PTR(-ENXIO);
-पूर्ण
+		return nsblk->uuid;
+	} else
+		return ERR_PTR(-ENXIO);
+}
 
-अटल sमाप_प्रकार uuid_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
+static ssize_t uuid_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
 	u8 *uuid = namespace_to_uuid(dev);
 
-	अगर (IS_ERR(uuid))
-		वापस PTR_ERR(uuid);
-	अगर (uuid)
-		वापस प्र_लिखो(buf, "%pUb\n", uuid);
-	वापस प्र_लिखो(buf, "\n");
-पूर्ण
+	if (IS_ERR(uuid))
+		return PTR_ERR(uuid);
+	if (uuid)
+		return sprintf(buf, "%pUb\n", uuid);
+	return sprintf(buf, "\n");
+}
 
 /**
- * namespace_update_uuid - check क्रम a unique uuid and whether we're "renaming"
+ * namespace_update_uuid - check for a unique uuid and whether we're "renaming"
  * @nd_region: parent region so we can updates all dimms in the set
- * @dev: namespace type क्रम generating label_id
+ * @dev: namespace type for generating label_id
  * @new_uuid: incoming uuid
  * @old_uuid: reference to the uuid storage location in the namespace object
  */
-अटल पूर्णांक namespace_update_uuid(काष्ठा nd_region *nd_region,
-		काष्ठा device *dev, u8 *new_uuid, u8 **old_uuid)
-अणु
+static int namespace_update_uuid(struct nd_region *nd_region,
+		struct device *dev, u8 *new_uuid, u8 **old_uuid)
+{
 	u32 flags = is_namespace_blk(dev) ? NSLABEL_FLAG_LOCAL : 0;
-	काष्ठा nd_label_id old_label_id;
-	काष्ठा nd_label_id new_label_id;
-	पूर्णांक i;
+	struct nd_label_id old_label_id;
+	struct nd_label_id new_label_id;
+	int i;
 
-	अगर (!nd_is_uuid_unique(dev, new_uuid))
-		वापस -EINVAL;
+	if (!nd_is_uuid_unique(dev, new_uuid))
+		return -EINVAL;
 
-	अगर (*old_uuid == शून्य)
-		जाओ out;
+	if (*old_uuid == NULL)
+		goto out;
 
 	/*
 	 * If we've already written a label with this uuid, then it's
-	 * too late to नाम because we can't reliably update the uuid
+	 * too late to rename because we can't reliably update the uuid
 	 * without losing the old namespace.  Userspace must delete this
-	 * namespace to abanकरोn the old uuid.
+	 * namespace to abandon the old uuid.
 	 */
-	क्रम (i = 0; i < nd_region->ndr_mappings; i++) अणु
-		काष्ठा nd_mapping *nd_mapping = &nd_region->mapping[i];
+	for (i = 0; i < nd_region->ndr_mappings; i++) {
+		struct nd_mapping *nd_mapping = &nd_region->mapping[i];
 
 		/*
 		 * This check by itself is sufficient because old_uuid
-		 * would be शून्य above अगर this uuid did not exist in the
+		 * would be NULL above if this uuid did not exist in the
 		 * currently written set.
 		 *
 		 * FIXME: can we delete uuid with zero dpa allocated?
 		 */
-		अगर (list_empty(&nd_mapping->labels))
-			वापस -EBUSY;
-	पूर्ण
+		if (list_empty(&nd_mapping->labels))
+			return -EBUSY;
+	}
 
 	nd_label_gen_id(&old_label_id, *old_uuid, flags);
 	nd_label_gen_id(&new_label_id, new_uuid, flags);
-	क्रम (i = 0; i < nd_region->ndr_mappings; i++) अणु
-		काष्ठा nd_mapping *nd_mapping = &nd_region->mapping[i];
-		काष्ठा nvdimm_drvdata *ndd = to_ndd(nd_mapping);
-		काष्ठा nd_label_ent *label_ent;
-		काष्ठा resource *res;
+	for (i = 0; i < nd_region->ndr_mappings; i++) {
+		struct nd_mapping *nd_mapping = &nd_region->mapping[i];
+		struct nvdimm_drvdata *ndd = to_ndd(nd_mapping);
+		struct nd_label_ent *label_ent;
+		struct resource *res;
 
-		क्रम_each_dpa_resource(ndd, res)
-			अगर (म_भेद(res->name, old_label_id.id) == 0)
-				प्र_लिखो((व्योम *) res->name, "%s",
+		for_each_dpa_resource(ndd, res)
+			if (strcmp(res->name, old_label_id.id) == 0)
+				sprintf((void *) res->name, "%s",
 						new_label_id.id);
 
 		mutex_lock(&nd_mapping->lock);
-		list_क्रम_each_entry(label_ent, &nd_mapping->labels, list) अणु
-			काष्ठा nd_namespace_label *nd_label = label_ent->label;
-			काष्ठा nd_label_id label_id;
+		list_for_each_entry(label_ent, &nd_mapping->labels, list) {
+			struct nd_namespace_label *nd_label = label_ent->label;
+			struct nd_label_id label_id;
 
-			अगर (!nd_label)
-				जारी;
+			if (!nd_label)
+				continue;
 			nd_label_gen_id(&label_id, nd_label->uuid,
 					__le32_to_cpu(nd_label->flags));
-			अगर (म_भेद(old_label_id.id, label_id.id) == 0)
+			if (strcmp(old_label_id.id, label_id.id) == 0)
 				set_bit(ND_LABEL_REAP, &label_ent->flags);
-		पूर्ण
+		}
 		mutex_unlock(&nd_mapping->lock);
-	पूर्ण
-	kमुक्त(*old_uuid);
+	}
+	kfree(*old_uuid);
  out:
 	*old_uuid = new_uuid;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार uuid_store(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार len)
-अणु
-	काष्ठा nd_region *nd_region = to_nd_region(dev->parent);
-	u8 *uuid = शून्य;
-	sमाप_प्रकार rc = 0;
+static ssize_t uuid_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t len)
+{
+	struct nd_region *nd_region = to_nd_region(dev->parent);
+	u8 *uuid = NULL;
+	ssize_t rc = 0;
 	u8 **ns_uuid;
 
-	अगर (is_namespace_pmem(dev)) अणु
-		काष्ठा nd_namespace_pmem *nspm = to_nd_namespace_pmem(dev);
+	if (is_namespace_pmem(dev)) {
+		struct nd_namespace_pmem *nspm = to_nd_namespace_pmem(dev);
 
 		ns_uuid = &nspm->uuid;
-	पूर्ण अन्यथा अगर (is_namespace_blk(dev)) अणु
-		काष्ठा nd_namespace_blk *nsblk = to_nd_namespace_blk(dev);
+	} else if (is_namespace_blk(dev)) {
+		struct nd_namespace_blk *nsblk = to_nd_namespace_blk(dev);
 
 		ns_uuid = &nsblk->uuid;
-	पूर्ण अन्यथा
-		वापस -ENXIO;
+	} else
+		return -ENXIO;
 
 	nd_device_lock(dev);
 	nvdimm_bus_lock(dev);
-	रुको_nvdimm_bus_probe_idle(dev);
-	अगर (to_ndns(dev)->claim)
+	wait_nvdimm_bus_probe_idle(dev);
+	if (to_ndns(dev)->claim)
 		rc = -EBUSY;
-	अगर (rc >= 0)
+	if (rc >= 0)
 		rc = nd_uuid_store(dev, &uuid, buf, len);
-	अगर (rc >= 0)
+	if (rc >= 0)
 		rc = namespace_update_uuid(nd_region, dev, uuid, ns_uuid);
-	अगर (rc >= 0)
+	if (rc >= 0)
 		rc = nd_namespace_label_update(nd_region, dev);
-	अन्यथा
-		kमुक्त(uuid);
+	else
+		kfree(uuid);
 	dev_dbg(dev, "result: %zd wrote: %s%s", rc, buf,
 			buf[len - 1] == '\n' ? "" : "\n");
 	nvdimm_bus_unlock(dev);
 	nd_device_unlock(dev);
 
-	वापस rc < 0 ? rc : len;
-पूर्ण
-अटल DEVICE_ATTR_RW(uuid);
+	return rc < 0 ? rc : len;
+}
+static DEVICE_ATTR_RW(uuid);
 
-अटल sमाप_प्रकार resource_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा resource *res;
+static ssize_t resource_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct resource *res;
 
-	अगर (is_namespace_pmem(dev)) अणु
-		काष्ठा nd_namespace_pmem *nspm = to_nd_namespace_pmem(dev);
+	if (is_namespace_pmem(dev)) {
+		struct nd_namespace_pmem *nspm = to_nd_namespace_pmem(dev);
 
 		res = &nspm->nsio.res;
-	पूर्ण अन्यथा अगर (is_namespace_io(dev)) अणु
-		काष्ठा nd_namespace_io *nsio = to_nd_namespace_io(dev);
+	} else if (is_namespace_io(dev)) {
+		struct nd_namespace_io *nsio = to_nd_namespace_io(dev);
 
 		res = &nsio->res;
-	पूर्ण अन्यथा
-		वापस -ENXIO;
+	} else
+		return -ENXIO;
 
-	/* no address to convey अगर the namespace has no allocation */
-	अगर (resource_size(res) == 0)
-		वापस -ENXIO;
-	वापस प्र_लिखो(buf, "%#llx\n", (अचिन्हित दीर्घ दीर्घ) res->start);
-पूर्ण
-अटल DEVICE_ATTR_ADMIN_RO(resource);
+	/* no address to convey if the namespace has no allocation */
+	if (resource_size(res) == 0)
+		return -ENXIO;
+	return sprintf(buf, "%#llx\n", (unsigned long long) res->start);
+}
+static DEVICE_ATTR_ADMIN_RO(resource);
 
-अटल स्थिर अचिन्हित दीर्घ blk_lbasize_supported[] = अणु 512, 520, 528,
-	4096, 4104, 4160, 4224, 0 पूर्ण;
+static const unsigned long blk_lbasize_supported[] = { 512, 520, 528,
+	4096, 4104, 4160, 4224, 0 };
 
-अटल स्थिर अचिन्हित दीर्घ pmem_lbasize_supported[] = अणु 512, 4096, 0 पूर्ण;
+static const unsigned long pmem_lbasize_supported[] = { 512, 4096, 0 };
 
-अटल sमाप_प्रकार sector_size_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	अगर (is_namespace_blk(dev)) अणु
-		काष्ठा nd_namespace_blk *nsblk = to_nd_namespace_blk(dev);
+static ssize_t sector_size_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	if (is_namespace_blk(dev)) {
+		struct nd_namespace_blk *nsblk = to_nd_namespace_blk(dev);
 
-		वापस nd_size_select_show(nsblk->lbasize,
+		return nd_size_select_show(nsblk->lbasize,
 				blk_lbasize_supported, buf);
-	पूर्ण
+	}
 
-	अगर (is_namespace_pmem(dev)) अणु
-		काष्ठा nd_namespace_pmem *nspm = to_nd_namespace_pmem(dev);
+	if (is_namespace_pmem(dev)) {
+		struct nd_namespace_pmem *nspm = to_nd_namespace_pmem(dev);
 
-		वापस nd_size_select_show(nspm->lbasize,
+		return nd_size_select_show(nspm->lbasize,
 				pmem_lbasize_supported, buf);
-	पूर्ण
-	वापस -ENXIO;
-पूर्ण
+	}
+	return -ENXIO;
+}
 
-अटल sमाप_प्रकार sector_size_store(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार len)
-अणु
-	काष्ठा nd_region *nd_region = to_nd_region(dev->parent);
-	स्थिर अचिन्हित दीर्घ *supported;
-	अचिन्हित दीर्घ *lbasize;
-	sमाप_प्रकार rc = 0;
+static ssize_t sector_size_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t len)
+{
+	struct nd_region *nd_region = to_nd_region(dev->parent);
+	const unsigned long *supported;
+	unsigned long *lbasize;
+	ssize_t rc = 0;
 
-	अगर (is_namespace_blk(dev)) अणु
-		काष्ठा nd_namespace_blk *nsblk = to_nd_namespace_blk(dev);
+	if (is_namespace_blk(dev)) {
+		struct nd_namespace_blk *nsblk = to_nd_namespace_blk(dev);
 
 		lbasize = &nsblk->lbasize;
 		supported = blk_lbasize_supported;
-	पूर्ण अन्यथा अगर (is_namespace_pmem(dev)) अणु
-		काष्ठा nd_namespace_pmem *nspm = to_nd_namespace_pmem(dev);
+	} else if (is_namespace_pmem(dev)) {
+		struct nd_namespace_pmem *nspm = to_nd_namespace_pmem(dev);
 
 		lbasize = &nspm->lbasize;
 		supported = pmem_lbasize_supported;
-	पूर्ण अन्यथा
-		वापस -ENXIO;
+	} else
+		return -ENXIO;
 
 	nd_device_lock(dev);
 	nvdimm_bus_lock(dev);
-	अगर (to_ndns(dev)->claim)
+	if (to_ndns(dev)->claim)
 		rc = -EBUSY;
-	अगर (rc >= 0)
+	if (rc >= 0)
 		rc = nd_size_select_store(dev, buf, lbasize, supported);
-	अगर (rc >= 0)
+	if (rc >= 0)
 		rc = nd_namespace_label_update(nd_region, dev);
 	dev_dbg(dev, "result: %zd %s: %s%s", rc, rc < 0 ? "tried" : "wrote",
 			buf, buf[len - 1] == '\n' ? "" : "\n");
 	nvdimm_bus_unlock(dev);
 	nd_device_unlock(dev);
 
-	वापस rc ? rc : len;
-पूर्ण
-अटल DEVICE_ATTR_RW(sector_size);
+	return rc ? rc : len;
+}
+static DEVICE_ATTR_RW(sector_size);
 
-अटल sमाप_प्रकार dpa_extents_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा nd_region *nd_region = to_nd_region(dev->parent);
-	काष्ठा nd_label_id label_id;
-	पूर्णांक count = 0, i;
-	u8 *uuid = शून्य;
+static ssize_t dpa_extents_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct nd_region *nd_region = to_nd_region(dev->parent);
+	struct nd_label_id label_id;
+	int count = 0, i;
+	u8 *uuid = NULL;
 	u32 flags = 0;
 
 	nvdimm_bus_lock(dev);
-	अगर (is_namespace_pmem(dev)) अणु
-		काष्ठा nd_namespace_pmem *nspm = to_nd_namespace_pmem(dev);
+	if (is_namespace_pmem(dev)) {
+		struct nd_namespace_pmem *nspm = to_nd_namespace_pmem(dev);
 
 		uuid = nspm->uuid;
 		flags = 0;
-	पूर्ण अन्यथा अगर (is_namespace_blk(dev)) अणु
-		काष्ठा nd_namespace_blk *nsblk = to_nd_namespace_blk(dev);
+	} else if (is_namespace_blk(dev)) {
+		struct nd_namespace_blk *nsblk = to_nd_namespace_blk(dev);
 
 		uuid = nsblk->uuid;
 		flags = NSLABEL_FLAG_LOCAL;
-	पूर्ण
+	}
 
-	अगर (!uuid)
-		जाओ out;
+	if (!uuid)
+		goto out;
 
 	nd_label_gen_id(&label_id, uuid, flags);
-	क्रम (i = 0; i < nd_region->ndr_mappings; i++) अणु
-		काष्ठा nd_mapping *nd_mapping = &nd_region->mapping[i];
-		काष्ठा nvdimm_drvdata *ndd = to_ndd(nd_mapping);
-		काष्ठा resource *res;
+	for (i = 0; i < nd_region->ndr_mappings; i++) {
+		struct nd_mapping *nd_mapping = &nd_region->mapping[i];
+		struct nvdimm_drvdata *ndd = to_ndd(nd_mapping);
+		struct resource *res;
 
-		क्रम_each_dpa_resource(ndd, res)
-			अगर (म_भेद(res->name, label_id.id) == 0)
+		for_each_dpa_resource(ndd, res)
+			if (strcmp(res->name, label_id.id) == 0)
 				count++;
-	पूर्ण
+	}
  out:
 	nvdimm_bus_unlock(dev);
 
-	वापस प्र_लिखो(buf, "%d\n", count);
-पूर्ण
-अटल DEVICE_ATTR_RO(dpa_extents);
+	return sprintf(buf, "%d\n", count);
+}
+static DEVICE_ATTR_RO(dpa_extents);
 
-अटल पूर्णांक btt_claim_class(काष्ठा device *dev)
-अणु
-	काष्ठा nd_region *nd_region = to_nd_region(dev->parent);
-	पूर्णांक i, loop_biपंचांगask = 0;
+static int btt_claim_class(struct device *dev)
+{
+	struct nd_region *nd_region = to_nd_region(dev->parent);
+	int i, loop_bitmask = 0;
 
-	क्रम (i = 0; i < nd_region->ndr_mappings; i++) अणु
-		काष्ठा nd_mapping *nd_mapping = &nd_region->mapping[i];
-		काष्ठा nvdimm_drvdata *ndd = to_ndd(nd_mapping);
-		काष्ठा nd_namespace_index *nsindex;
+	for (i = 0; i < nd_region->ndr_mappings; i++) {
+		struct nd_mapping *nd_mapping = &nd_region->mapping[i];
+		struct nvdimm_drvdata *ndd = to_ndd(nd_mapping);
+		struct nd_namespace_index *nsindex;
 
 		/*
-		 * If any of the DIMMs करो not support labels the only
-		 * possible BTT क्रमmat is v1.
+		 * If any of the DIMMs do not support labels the only
+		 * possible BTT format is v1.
 		 */
-		अगर (!ndd) अणु
-			loop_biपंचांगask = 0;
-			अवरोध;
-		पूर्ण
+		if (!ndd) {
+			loop_bitmask = 0;
+			break;
+		}
 
 		nsindex = to_namespace_index(ndd, ndd->ns_current);
-		अगर (nsindex == शून्य)
-			loop_biपंचांगask |= 1;
-		अन्यथा अणु
+		if (nsindex == NULL)
+			loop_bitmask |= 1;
+		else {
 			/* check whether existing labels are v1.1 or v1.2 */
-			अगर (__le16_to_cpu(nsindex->major) == 1
+			if (__le16_to_cpu(nsindex->major) == 1
 					&& __le16_to_cpu(nsindex->minor) == 1)
-				loop_biपंचांगask |= 2;
-			अन्यथा
-				loop_biपंचांगask |= 4;
-		पूर्ण
-	पूर्ण
+				loop_bitmask |= 2;
+			else
+				loop_bitmask |= 4;
+		}
+	}
 	/*
-	 * If nsindex is null loop_biपंचांगask's bit 0 will be set, and अगर an index
-	 * block is found, a v1.1 label क्रम any mapping will set bit 1, and a
+	 * If nsindex is null loop_bitmask's bit 0 will be set, and if an index
+	 * block is found, a v1.1 label for any mapping will set bit 1, and a
 	 * v1.2 label will set bit 2.
 	 *
 	 * At the end of the loop, at most one of the three bits must be set.
-	 * If multiple bits were set, it means the dअगरferent mappings disagree
+	 * If multiple bits were set, it means the different mappings disagree
 	 * about their labels, and this must be cleaned up first.
 	 *
-	 * If all the label index blocks are found to agree, nsindex of शून्य
+	 * If all the label index blocks are found to agree, nsindex of NULL
 	 * implies labels haven't been initialized yet, and when they will,
-	 * they will be of the 1.2 क्रमmat, so we can assume BTT2.0
+	 * they will be of the 1.2 format, so we can assume BTT2.0
 	 *
-	 * If 1.1 labels are found, we enक्रमce BTT1.1, and अगर 1.2 labels are
-	 * found, we enक्रमce BTT2.0
+	 * If 1.1 labels are found, we enforce BTT1.1, and if 1.2 labels are
+	 * found, we enforce BTT2.0
 	 *
-	 * If the loop was never entered, शेष to BTT1.1 (legacy namespaces)
+	 * If the loop was never entered, default to BTT1.1 (legacy namespaces)
 	 */
-	चयन (loop_biपंचांगask) अणु
-	हाल 0:
-	हाल 2:
-		वापस NVDIMM_CCLASS_BTT;
-	हाल 1:
-	हाल 4:
-		वापस NVDIMM_CCLASS_BTT2;
-	शेष:
-		वापस -ENXIO;
-	पूर्ण
-पूर्ण
+	switch (loop_bitmask) {
+	case 0:
+	case 2:
+		return NVDIMM_CCLASS_BTT;
+	case 1:
+	case 4:
+		return NVDIMM_CCLASS_BTT2;
+	default:
+		return -ENXIO;
+	}
+}
 
-अटल sमाप_प्रकार holder_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा nd_namespace_common *ndns = to_ndns(dev);
-	sमाप_प्रकार rc;
+static ssize_t holder_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct nd_namespace_common *ndns = to_ndns(dev);
+	ssize_t rc;
 
 	nd_device_lock(dev);
-	rc = प्र_लिखो(buf, "%s\n", ndns->claim ? dev_name(ndns->claim) : "");
+	rc = sprintf(buf, "%s\n", ndns->claim ? dev_name(ndns->claim) : "");
 	nd_device_unlock(dev);
 
-	वापस rc;
-पूर्ण
-अटल DEVICE_ATTR_RO(holder);
+	return rc;
+}
+static DEVICE_ATTR_RO(holder);
 
-अटल पूर्णांक __holder_class_store(काष्ठा device *dev, स्थिर अक्षर *buf)
-अणु
-	काष्ठा nd_namespace_common *ndns = to_ndns(dev);
+static int __holder_class_store(struct device *dev, const char *buf)
+{
+	struct nd_namespace_common *ndns = to_ndns(dev);
 
-	अगर (dev->driver || ndns->claim)
-		वापस -EBUSY;
+	if (dev->driver || ndns->claim)
+		return -EBUSY;
 
-	अगर (sysfs_streq(buf, "btt")) अणु
-		पूर्णांक rc = btt_claim_class(dev);
+	if (sysfs_streq(buf, "btt")) {
+		int rc = btt_claim_class(dev);
 
-		अगर (rc < NVDIMM_CCLASS_NONE)
-			वापस rc;
+		if (rc < NVDIMM_CCLASS_NONE)
+			return rc;
 		ndns->claim_class = rc;
-	पूर्ण अन्यथा अगर (sysfs_streq(buf, "pfn"))
+	} else if (sysfs_streq(buf, "pfn"))
 		ndns->claim_class = NVDIMM_CCLASS_PFN;
-	अन्यथा अगर (sysfs_streq(buf, "dax"))
+	else if (sysfs_streq(buf, "dax"))
 		ndns->claim_class = NVDIMM_CCLASS_DAX;
-	अन्यथा अगर (sysfs_streq(buf, ""))
+	else if (sysfs_streq(buf, ""))
 		ndns->claim_class = NVDIMM_CCLASS_NONE;
-	अन्यथा
-		वापस -EINVAL;
+	else
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार holder_class_store(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार len)
-अणु
-	काष्ठा nd_region *nd_region = to_nd_region(dev->parent);
-	पूर्णांक rc;
+static ssize_t holder_class_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t len)
+{
+	struct nd_region *nd_region = to_nd_region(dev->parent);
+	int rc;
 
 	nd_device_lock(dev);
 	nvdimm_bus_lock(dev);
-	रुको_nvdimm_bus_probe_idle(dev);
+	wait_nvdimm_bus_probe_idle(dev);
 	rc = __holder_class_store(dev, buf);
-	अगर (rc >= 0)
+	if (rc >= 0)
 		rc = nd_namespace_label_update(nd_region, dev);
 	dev_dbg(dev, "%s(%d)\n", rc < 0 ? "fail " : "", rc);
 	nvdimm_bus_unlock(dev);
 	nd_device_unlock(dev);
 
-	वापस rc < 0 ? rc : len;
-पूर्ण
+	return rc < 0 ? rc : len;
+}
 
-अटल sमाप_प्रकार holder_class_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा nd_namespace_common *ndns = to_ndns(dev);
-	sमाप_प्रकार rc;
+static ssize_t holder_class_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct nd_namespace_common *ndns = to_ndns(dev);
+	ssize_t rc;
 
 	nd_device_lock(dev);
-	अगर (ndns->claim_class == NVDIMM_CCLASS_NONE)
-		rc = प्र_लिखो(buf, "\n");
-	अन्यथा अगर ((ndns->claim_class == NVDIMM_CCLASS_BTT) ||
+	if (ndns->claim_class == NVDIMM_CCLASS_NONE)
+		rc = sprintf(buf, "\n");
+	else if ((ndns->claim_class == NVDIMM_CCLASS_BTT) ||
 			(ndns->claim_class == NVDIMM_CCLASS_BTT2))
-		rc = प्र_लिखो(buf, "btt\n");
-	अन्यथा अगर (ndns->claim_class == NVDIMM_CCLASS_PFN)
-		rc = प्र_लिखो(buf, "pfn\n");
-	अन्यथा अगर (ndns->claim_class == NVDIMM_CCLASS_DAX)
-		rc = प्र_लिखो(buf, "dax\n");
-	अन्यथा
-		rc = प्र_लिखो(buf, "<unknown>\n");
+		rc = sprintf(buf, "btt\n");
+	else if (ndns->claim_class == NVDIMM_CCLASS_PFN)
+		rc = sprintf(buf, "pfn\n");
+	else if (ndns->claim_class == NVDIMM_CCLASS_DAX)
+		rc = sprintf(buf, "dax\n");
+	else
+		rc = sprintf(buf, "<unknown>\n");
 	nd_device_unlock(dev);
 
-	वापस rc;
-पूर्ण
-अटल DEVICE_ATTR_RW(holder_class);
+	return rc;
+}
+static DEVICE_ATTR_RW(holder_class);
 
-अटल sमाप_प्रकार mode_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा nd_namespace_common *ndns = to_ndns(dev);
-	काष्ठा device *claim;
-	अक्षर *mode;
-	sमाप_प्रकार rc;
+static ssize_t mode_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct nd_namespace_common *ndns = to_ndns(dev);
+	struct device *claim;
+	char *mode;
+	ssize_t rc;
 
 	nd_device_lock(dev);
 	claim = ndns->claim;
-	अगर (claim && is_nd_btt(claim))
+	if (claim && is_nd_btt(claim))
 		mode = "safe";
-	अन्यथा अगर (claim && is_nd_pfn(claim))
+	else if (claim && is_nd_pfn(claim))
 		mode = "memory";
-	अन्यथा अगर (claim && is_nd_dax(claim))
+	else if (claim && is_nd_dax(claim))
 		mode = "dax";
-	अन्यथा अगर (!claim && pmem_should_map_pages(dev))
+	else if (!claim && pmem_should_map_pages(dev))
 		mode = "memory";
-	अन्यथा
+	else
 		mode = "raw";
-	rc = प्र_लिखो(buf, "%s\n", mode);
+	rc = sprintf(buf, "%s\n", mode);
 	nd_device_unlock(dev);
 
-	वापस rc;
-पूर्ण
-अटल DEVICE_ATTR_RO(mode);
+	return rc;
+}
+static DEVICE_ATTR_RO(mode);
 
-अटल sमाप_प्रकार क्रमce_raw_store(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार len)
-अणु
-	bool क्रमce_raw;
-	पूर्णांक rc = strtobool(buf, &क्रमce_raw);
+static ssize_t force_raw_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t len)
+{
+	bool force_raw;
+	int rc = strtobool(buf, &force_raw);
 
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	to_ndns(dev)->क्रमce_raw = क्रमce_raw;
-	वापस len;
-पूर्ण
+	to_ndns(dev)->force_raw = force_raw;
+	return len;
+}
 
-अटल sमाप_प्रकार क्रमce_raw_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%d\n", to_ndns(dev)->क्रमce_raw);
-पूर्ण
-अटल DEVICE_ATTR_RW(क्रमce_raw);
+static ssize_t force_raw_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%d\n", to_ndns(dev)->force_raw);
+}
+static DEVICE_ATTR_RW(force_raw);
 
-अटल काष्ठा attribute *nd_namespace_attributes[] = अणु
+static struct attribute *nd_namespace_attributes[] = {
 	&dev_attr_nstype.attr,
 	&dev_attr_size.attr,
 	&dev_attr_mode.attr,
@@ -1614,210 +1613,210 @@ EXPORT_SYMBOL(nvdimm_namespace_locked);
 	&dev_attr_holder.attr,
 	&dev_attr_resource.attr,
 	&dev_attr_alt_name.attr,
-	&dev_attr_क्रमce_raw.attr,
+	&dev_attr_force_raw.attr,
 	&dev_attr_sector_size.attr,
 	&dev_attr_dpa_extents.attr,
 	&dev_attr_holder_class.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल umode_t namespace_visible(काष्ठा kobject *kobj,
-		काष्ठा attribute *a, पूर्णांक n)
-अणु
-	काष्ठा device *dev = container_of(kobj, काष्ठा device, kobj);
+static umode_t namespace_visible(struct kobject *kobj,
+		struct attribute *a, int n)
+{
+	struct device *dev = container_of(kobj, struct device, kobj);
 
-	अगर (a == &dev_attr_resource.attr && is_namespace_blk(dev))
-		वापस 0;
+	if (a == &dev_attr_resource.attr && is_namespace_blk(dev))
+		return 0;
 
-	अगर (is_namespace_pmem(dev) || is_namespace_blk(dev)) अणु
-		अगर (a == &dev_attr_size.attr)
-			वापस 0644;
+	if (is_namespace_pmem(dev) || is_namespace_blk(dev)) {
+		if (a == &dev_attr_size.attr)
+			return 0644;
 
-		वापस a->mode;
-	पूर्ण
+		return a->mode;
+	}
 
 	/* base is_namespace_io() attributes */
-	अगर (a == &dev_attr_nstype.attr || a == &dev_attr_size.attr ||
+	if (a == &dev_attr_nstype.attr || a == &dev_attr_size.attr ||
 	    a == &dev_attr_holder.attr || a == &dev_attr_holder_class.attr ||
-	    a == &dev_attr_क्रमce_raw.attr || a == &dev_attr_mode.attr ||
+	    a == &dev_attr_force_raw.attr || a == &dev_attr_mode.attr ||
 	    a == &dev_attr_resource.attr)
-		वापस a->mode;
+		return a->mode;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा attribute_group nd_namespace_attribute_group = अणु
+static struct attribute_group nd_namespace_attribute_group = {
 	.attrs = nd_namespace_attributes,
 	.is_visible = namespace_visible,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *nd_namespace_attribute_groups[] = अणु
+static const struct attribute_group *nd_namespace_attribute_groups[] = {
 	&nd_device_attribute_group,
 	&nd_namespace_attribute_group,
 	&nd_numa_attribute_group,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा device_type namespace_io_device_type = अणु
+static const struct device_type namespace_io_device_type = {
 	.name = "nd_namespace_io",
 	.release = namespace_io_release,
 	.groups = nd_namespace_attribute_groups,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा device_type namespace_pmem_device_type = अणु
+static const struct device_type namespace_pmem_device_type = {
 	.name = "nd_namespace_pmem",
 	.release = namespace_pmem_release,
 	.groups = nd_namespace_attribute_groups,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा device_type namespace_blk_device_type = अणु
+static const struct device_type namespace_blk_device_type = {
 	.name = "nd_namespace_blk",
 	.release = namespace_blk_release,
 	.groups = nd_namespace_attribute_groups,
-पूर्ण;
+};
 
-अटल bool is_namespace_pmem(स्थिर काष्ठा device *dev)
-अणु
-	वापस dev ? dev->type == &namespace_pmem_device_type : false;
-पूर्ण
+static bool is_namespace_pmem(const struct device *dev)
+{
+	return dev ? dev->type == &namespace_pmem_device_type : false;
+}
 
-अटल bool is_namespace_blk(स्थिर काष्ठा device *dev)
-अणु
-	वापस dev ? dev->type == &namespace_blk_device_type : false;
-पूर्ण
+static bool is_namespace_blk(const struct device *dev)
+{
+	return dev ? dev->type == &namespace_blk_device_type : false;
+}
 
-अटल bool is_namespace_io(स्थिर काष्ठा device *dev)
-अणु
-	वापस dev ? dev->type == &namespace_io_device_type : false;
-पूर्ण
+static bool is_namespace_io(const struct device *dev)
+{
+	return dev ? dev->type == &namespace_io_device_type : false;
+}
 
-काष्ठा nd_namespace_common *nvdimm_namespace_common_probe(काष्ठा device *dev)
-अणु
-	काष्ठा nd_btt *nd_btt = is_nd_btt(dev) ? to_nd_btt(dev) : शून्य;
-	काष्ठा nd_pfn *nd_pfn = is_nd_pfn(dev) ? to_nd_pfn(dev) : शून्य;
-	काष्ठा nd_dax *nd_dax = is_nd_dax(dev) ? to_nd_dax(dev) : शून्य;
-	काष्ठा nd_namespace_common *ndns = शून्य;
-	resource_माप_प्रकार size;
+struct nd_namespace_common *nvdimm_namespace_common_probe(struct device *dev)
+{
+	struct nd_btt *nd_btt = is_nd_btt(dev) ? to_nd_btt(dev) : NULL;
+	struct nd_pfn *nd_pfn = is_nd_pfn(dev) ? to_nd_pfn(dev) : NULL;
+	struct nd_dax *nd_dax = is_nd_dax(dev) ? to_nd_dax(dev) : NULL;
+	struct nd_namespace_common *ndns = NULL;
+	resource_size_t size;
 
-	अगर (nd_btt || nd_pfn || nd_dax) अणु
-		अगर (nd_btt)
+	if (nd_btt || nd_pfn || nd_dax) {
+		if (nd_btt)
 			ndns = nd_btt->ndns;
-		अन्यथा अगर (nd_pfn)
+		else if (nd_pfn)
 			ndns = nd_pfn->ndns;
-		अन्यथा अगर (nd_dax)
+		else if (nd_dax)
 			ndns = nd_dax->nd_pfn.ndns;
 
-		अगर (!ndns)
-			वापस ERR_PTR(-ENODEV);
+		if (!ndns)
+			return ERR_PTR(-ENODEV);
 
 		/*
 		 * Flush any in-progess probes / removals in the driver
-		 * क्रम the raw personality of this namespace.
+		 * for the raw personality of this namespace.
 		 */
 		nd_device_lock(&ndns->dev);
 		nd_device_unlock(&ndns->dev);
-		अगर (ndns->dev.driver) अणु
+		if (ndns->dev.driver) {
 			dev_dbg(&ndns->dev, "is active, can't bind %s\n",
 					dev_name(dev));
-			वापस ERR_PTR(-EBUSY);
-		पूर्ण
-		अगर (dev_WARN_ONCE(&ndns->dev, ndns->claim != dev,
+			return ERR_PTR(-EBUSY);
+		}
+		if (dev_WARN_ONCE(&ndns->dev, ndns->claim != dev,
 					"host (%s) vs claim (%s) mismatch\n",
 					dev_name(dev),
 					dev_name(ndns->claim)))
-			वापस ERR_PTR(-ENXIO);
-	पूर्ण अन्यथा अणु
+			return ERR_PTR(-ENXIO);
+	} else {
 		ndns = to_ndns(dev);
-		अगर (ndns->claim) अणु
+		if (ndns->claim) {
 			dev_dbg(dev, "claimed by %s, failing probe\n",
 				dev_name(ndns->claim));
 
-			वापस ERR_PTR(-ENXIO);
-		पूर्ण
-	पूर्ण
+			return ERR_PTR(-ENXIO);
+		}
+	}
 
-	अगर (nvdimm_namespace_locked(ndns))
-		वापस ERR_PTR(-EACCES);
+	if (nvdimm_namespace_locked(ndns))
+		return ERR_PTR(-EACCES);
 
 	size = nvdimm_namespace_capacity(ndns);
-	अगर (size < ND_MIN_NAMESPACE_SIZE) अणु
+	if (size < ND_MIN_NAMESPACE_SIZE) {
 		dev_dbg(&ndns->dev, "%pa, too small must be at least %#x\n",
 				&size, ND_MIN_NAMESPACE_SIZE);
-		वापस ERR_PTR(-ENODEV);
-	पूर्ण
+		return ERR_PTR(-ENODEV);
+	}
 
 	/*
-	 * Note, alignment validation क्रम fsdax and devdax mode
+	 * Note, alignment validation for fsdax and devdax mode
 	 * namespaces happens in nd_pfn_validate() where infoblock
 	 * padding parameters can be applied.
 	 */
-	अगर (pmem_should_map_pages(dev)) अणु
-		काष्ठा nd_namespace_io *nsio = to_nd_namespace_io(&ndns->dev);
-		काष्ठा resource *res = &nsio->res;
+	if (pmem_should_map_pages(dev)) {
+		struct nd_namespace_io *nsio = to_nd_namespace_io(&ndns->dev);
+		struct resource *res = &nsio->res;
 
-		अगर (!IS_ALIGNED(res->start | (res->end + 1),
-					memremap_compat_align())) अणु
+		if (!IS_ALIGNED(res->start | (res->end + 1),
+					memremap_compat_align())) {
 			dev_err(&ndns->dev, "%pr misaligned, unable to map\n", res);
-			वापस ERR_PTR(-EOPNOTSUPP);
-		पूर्ण
-	पूर्ण
+			return ERR_PTR(-EOPNOTSUPP);
+		}
+	}
 
-	अगर (is_namespace_pmem(&ndns->dev)) अणु
-		काष्ठा nd_namespace_pmem *nspm;
+	if (is_namespace_pmem(&ndns->dev)) {
+		struct nd_namespace_pmem *nspm;
 
 		nspm = to_nd_namespace_pmem(&ndns->dev);
-		अगर (uuid_not_set(nspm->uuid, &ndns->dev, __func__))
-			वापस ERR_PTR(-ENODEV);
-	पूर्ण अन्यथा अगर (is_namespace_blk(&ndns->dev)) अणु
-		काष्ठा nd_namespace_blk *nsblk;
+		if (uuid_not_set(nspm->uuid, &ndns->dev, __func__))
+			return ERR_PTR(-ENODEV);
+	} else if (is_namespace_blk(&ndns->dev)) {
+		struct nd_namespace_blk *nsblk;
 
 		nsblk = to_nd_namespace_blk(&ndns->dev);
-		अगर (uuid_not_set(nsblk->uuid, &ndns->dev, __func__))
-			वापस ERR_PTR(-ENODEV);
-		अगर (!nsblk->lbasize) अणु
+		if (uuid_not_set(nsblk->uuid, &ndns->dev, __func__))
+			return ERR_PTR(-ENODEV);
+		if (!nsblk->lbasize) {
 			dev_dbg(&ndns->dev, "sector size not set\n");
-			वापस ERR_PTR(-ENODEV);
-		पूर्ण
-		अगर (!nd_namespace_blk_validate(nsblk))
-			वापस ERR_PTR(-ENODEV);
-	पूर्ण
+			return ERR_PTR(-ENODEV);
+		}
+		if (!nd_namespace_blk_validate(nsblk))
+			return ERR_PTR(-ENODEV);
+	}
 
-	वापस ndns;
-पूर्ण
+	return ndns;
+}
 EXPORT_SYMBOL(nvdimm_namespace_common_probe);
 
-पूर्णांक devm_namespace_enable(काष्ठा device *dev, काष्ठा nd_namespace_common *ndns,
-		resource_माप_प्रकार size)
-अणु
-	अगर (is_namespace_blk(&ndns->dev))
-		वापस 0;
-	वापस devm_nsio_enable(dev, to_nd_namespace_io(&ndns->dev), size);
-पूर्ण
+int devm_namespace_enable(struct device *dev, struct nd_namespace_common *ndns,
+		resource_size_t size)
+{
+	if (is_namespace_blk(&ndns->dev))
+		return 0;
+	return devm_nsio_enable(dev, to_nd_namespace_io(&ndns->dev), size);
+}
 EXPORT_SYMBOL_GPL(devm_namespace_enable);
 
-व्योम devm_namespace_disable(काष्ठा device *dev, काष्ठा nd_namespace_common *ndns)
-अणु
-	अगर (is_namespace_blk(&ndns->dev))
-		वापस;
+void devm_namespace_disable(struct device *dev, struct nd_namespace_common *ndns)
+{
+	if (is_namespace_blk(&ndns->dev))
+		return;
 	devm_nsio_disable(dev, to_nd_namespace_io(&ndns->dev));
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(devm_namespace_disable);
 
-अटल काष्ठा device **create_namespace_io(काष्ठा nd_region *nd_region)
-अणु
-	काष्ठा nd_namespace_io *nsio;
-	काष्ठा device *dev, **devs;
-	काष्ठा resource *res;
+static struct device **create_namespace_io(struct nd_region *nd_region)
+{
+	struct nd_namespace_io *nsio;
+	struct device *dev, **devs;
+	struct resource *res;
 
-	nsio = kzalloc(माप(*nsio), GFP_KERNEL);
-	अगर (!nsio)
-		वापस शून्य;
+	nsio = kzalloc(sizeof(*nsio), GFP_KERNEL);
+	if (!nsio)
+		return NULL;
 
-	devs = kसुस्मृति(2, माप(काष्ठा device *), GFP_KERNEL);
-	अगर (!devs) अणु
-		kमुक्त(nsio);
-		वापस शून्य;
-	पूर्ण
+	devs = kcalloc(2, sizeof(struct device *), GFP_KERNEL);
+	if (!devs) {
+		kfree(nsio);
+		return NULL;
+	}
 
 	dev = &nsio->common.dev;
 	dev->type = &namespace_io_device_type;
@@ -1829,94 +1828,94 @@ EXPORT_SYMBOL_GPL(devm_namespace_disable);
 	res->end = res->start + nd_region->ndr_size - 1;
 
 	devs[0] = dev;
-	वापस devs;
-पूर्ण
+	return devs;
+}
 
-अटल bool has_uuid_at_pos(काष्ठा nd_region *nd_region, u8 *uuid,
+static bool has_uuid_at_pos(struct nd_region *nd_region, u8 *uuid,
 		u64 cookie, u16 pos)
-अणु
-	काष्ठा nd_namespace_label *found = शून्य;
-	पूर्णांक i;
+{
+	struct nd_namespace_label *found = NULL;
+	int i;
 
-	क्रम (i = 0; i < nd_region->ndr_mappings; i++) अणु
-		काष्ठा nd_mapping *nd_mapping = &nd_region->mapping[i];
-		काष्ठा nd_पूर्णांकerleave_set *nd_set = nd_region->nd_set;
-		काष्ठा nvdimm_drvdata *ndd = to_ndd(nd_mapping);
-		काष्ठा nd_label_ent *label_ent;
+	for (i = 0; i < nd_region->ndr_mappings; i++) {
+		struct nd_mapping *nd_mapping = &nd_region->mapping[i];
+		struct nd_interleave_set *nd_set = nd_region->nd_set;
+		struct nvdimm_drvdata *ndd = to_ndd(nd_mapping);
+		struct nd_label_ent *label_ent;
 		bool found_uuid = false;
 
-		list_क्रम_each_entry(label_ent, &nd_mapping->labels, list) अणु
-			काष्ठा nd_namespace_label *nd_label = label_ent->label;
+		list_for_each_entry(label_ent, &nd_mapping->labels, list) {
+			struct nd_namespace_label *nd_label = label_ent->label;
 			u16 position, nlabel;
 			u64 isetcookie;
 
-			अगर (!nd_label)
-				जारी;
+			if (!nd_label)
+				continue;
 			isetcookie = __le64_to_cpu(nd_label->isetcookie);
 			position = __le16_to_cpu(nd_label->position);
 			nlabel = __le16_to_cpu(nd_label->nlabel);
 
-			अगर (isetcookie != cookie)
-				जारी;
+			if (isetcookie != cookie)
+				continue;
 
-			अगर (स_भेद(nd_label->uuid, uuid, NSLABEL_UUID_LEN) != 0)
-				जारी;
+			if (memcmp(nd_label->uuid, uuid, NSLABEL_UUID_LEN) != 0)
+				continue;
 
-			अगर (namespace_label_has(ndd, type_guid)
+			if (namespace_label_has(ndd, type_guid)
 					&& !guid_equal(&nd_set->type_guid,
-						&nd_label->type_guid)) अणु
+						&nd_label->type_guid)) {
 				dev_dbg(ndd->dev, "expect type_guid %pUb got %pUb\n",
 						&nd_set->type_guid,
 						&nd_label->type_guid);
-				जारी;
-			पूर्ण
+				continue;
+			}
 
-			अगर (found_uuid) अणु
+			if (found_uuid) {
 				dev_dbg(ndd->dev, "duplicate entry for uuid\n");
-				वापस false;
-			पूर्ण
+				return false;
+			}
 			found_uuid = true;
-			अगर (nlabel != nd_region->ndr_mappings)
-				जारी;
-			अगर (position != pos)
-				जारी;
+			if (nlabel != nd_region->ndr_mappings)
+				continue;
+			if (position != pos)
+				continue;
 			found = nd_label;
-			अवरोध;
-		पूर्ण
-		अगर (found)
-			अवरोध;
-	पूर्ण
-	वापस found != शून्य;
-पूर्ण
+			break;
+		}
+		if (found)
+			break;
+	}
+	return found != NULL;
+}
 
-अटल पूर्णांक select_pmem_id(काष्ठा nd_region *nd_region, u8 *pmem_id)
-अणु
-	पूर्णांक i;
+static int select_pmem_id(struct nd_region *nd_region, u8 *pmem_id)
+{
+	int i;
 
-	अगर (!pmem_id)
-		वापस -ENODEV;
+	if (!pmem_id)
+		return -ENODEV;
 
-	क्रम (i = 0; i < nd_region->ndr_mappings; i++) अणु
-		काष्ठा nd_mapping *nd_mapping = &nd_region->mapping[i];
-		काष्ठा nvdimm_drvdata *ndd = to_ndd(nd_mapping);
-		काष्ठा nd_namespace_label *nd_label = शून्य;
+	for (i = 0; i < nd_region->ndr_mappings; i++) {
+		struct nd_mapping *nd_mapping = &nd_region->mapping[i];
+		struct nvdimm_drvdata *ndd = to_ndd(nd_mapping);
+		struct nd_namespace_label *nd_label = NULL;
 		u64 hw_start, hw_end, pmem_start, pmem_end;
-		काष्ठा nd_label_ent *label_ent;
+		struct nd_label_ent *label_ent;
 
-		lockdep_निश्चित_held(&nd_mapping->lock);
-		list_क्रम_each_entry(label_ent, &nd_mapping->labels, list) अणु
+		lockdep_assert_held(&nd_mapping->lock);
+		list_for_each_entry(label_ent, &nd_mapping->labels, list) {
 			nd_label = label_ent->label;
-			अगर (!nd_label)
-				जारी;
-			अगर (स_भेद(nd_label->uuid, pmem_id, NSLABEL_UUID_LEN) == 0)
-				अवरोध;
-			nd_label = शून्य;
-		पूर्ण
+			if (!nd_label)
+				continue;
+			if (memcmp(nd_label->uuid, pmem_id, NSLABEL_UUID_LEN) == 0)
+				break;
+			nd_label = NULL;
+		}
 
-		अगर (!nd_label) अणु
+		if (!nd_label) {
 			WARN_ON(1);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		/*
 		 * Check that this label is compliant with the dpa
@@ -1926,60 +1925,60 @@ EXPORT_SYMBOL_GPL(devm_namespace_disable);
 		hw_end = hw_start + nd_mapping->size;
 		pmem_start = __le64_to_cpu(nd_label->dpa);
 		pmem_end = pmem_start + __le64_to_cpu(nd_label->rawsize);
-		अगर (pmem_start >= hw_start && pmem_start < hw_end
+		if (pmem_start >= hw_start && pmem_start < hw_end
 				&& pmem_end <= hw_end && pmem_end > hw_start)
 			/* pass */;
-		अन्यथा अणु
+		else {
 			dev_dbg(&nd_region->dev, "%s invalid label for %pUb\n",
 					dev_name(ndd->dev), nd_label->uuid);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		/* move recently validated label to the front of the list */
 		list_move(&label_ent->list, &nd_mapping->labels);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /**
- * create_namespace_pmem - validate पूर्णांकerleave set labelling, retrieve label0
+ * create_namespace_pmem - validate interleave set labelling, retrieve label0
  * @nd_region: region with mappings to validate
  * @nspm: target namespace to create
  * @nd_label: target pmem namespace label to evaluate
  */
-अटल काष्ठा device *create_namespace_pmem(काष्ठा nd_region *nd_region,
-		काष्ठा nd_namespace_index *nsindex,
-		काष्ठा nd_namespace_label *nd_label)
-अणु
-	u64 cookie = nd_region_पूर्णांकerleave_set_cookie(nd_region, nsindex);
-	u64 altcookie = nd_region_पूर्णांकerleave_set_altcookie(nd_region);
-	काष्ठा nd_label_ent *label_ent;
-	काष्ठा nd_namespace_pmem *nspm;
-	काष्ठा nd_mapping *nd_mapping;
-	resource_माप_प्रकार size = 0;
-	काष्ठा resource *res;
-	काष्ठा device *dev;
-	पूर्णांक rc = 0;
+static struct device *create_namespace_pmem(struct nd_region *nd_region,
+		struct nd_namespace_index *nsindex,
+		struct nd_namespace_label *nd_label)
+{
+	u64 cookie = nd_region_interleave_set_cookie(nd_region, nsindex);
+	u64 altcookie = nd_region_interleave_set_altcookie(nd_region);
+	struct nd_label_ent *label_ent;
+	struct nd_namespace_pmem *nspm;
+	struct nd_mapping *nd_mapping;
+	resource_size_t size = 0;
+	struct resource *res;
+	struct device *dev;
+	int rc = 0;
 	u16 i;
 
-	अगर (cookie == 0) अणु
+	if (cookie == 0) {
 		dev_dbg(&nd_region->dev, "invalid interleave-set-cookie\n");
-		वापस ERR_PTR(-ENXIO);
-	पूर्ण
+		return ERR_PTR(-ENXIO);
+	}
 
-	अगर (__le64_to_cpu(nd_label->isetcookie) != cookie) अणु
+	if (__le64_to_cpu(nd_label->isetcookie) != cookie) {
 		dev_dbg(&nd_region->dev, "invalid cookie in label: %pUb\n",
 				nd_label->uuid);
-		अगर (__le64_to_cpu(nd_label->isetcookie) != altcookie)
-			वापस ERR_PTR(-EAGAIN);
+		if (__le64_to_cpu(nd_label->isetcookie) != altcookie)
+			return ERR_PTR(-EAGAIN);
 
 		dev_dbg(&nd_region->dev, "valid altcookie in label: %pUb\n",
 				nd_label->uuid);
-	पूर्ण
+	}
 
-	nspm = kzalloc(माप(*nspm), GFP_KERNEL);
-	अगर (!nspm)
-		वापस ERR_PTR(-ENOMEM);
+	nspm = kzalloc(sizeof(*nspm), GFP_KERNEL);
+	if (!nspm)
+		return ERR_PTR(-ENOMEM);
 
 	nspm->id = -1;
 	dev = &nspm->nsio.common.dev;
@@ -1989,155 +1988,155 @@ EXPORT_SYMBOL_GPL(devm_namespace_disable);
 	res->name = dev_name(&nd_region->dev);
 	res->flags = IORESOURCE_MEM;
 
-	क्रम (i = 0; i < nd_region->ndr_mappings; i++) अणु
-		अगर (has_uuid_at_pos(nd_region, nd_label->uuid, cookie, i))
-			जारी;
-		अगर (has_uuid_at_pos(nd_region, nd_label->uuid, altcookie, i))
-			जारी;
-		अवरोध;
-	पूर्ण
+	for (i = 0; i < nd_region->ndr_mappings; i++) {
+		if (has_uuid_at_pos(nd_region, nd_label->uuid, cookie, i))
+			continue;
+		if (has_uuid_at_pos(nd_region, nd_label->uuid, altcookie, i))
+			continue;
+		break;
+	}
 
-	अगर (i < nd_region->ndr_mappings) अणु
-		काष्ठा nvdimm *nvdimm = nd_region->mapping[i].nvdimm;
+	if (i < nd_region->ndr_mappings) {
+		struct nvdimm *nvdimm = nd_region->mapping[i].nvdimm;
 
 		/*
-		 * Give up अगर we करोn't find an instance of a uuid at each
-		 * position (from 0 to nd_region->ndr_mappings - 1), or अगर we
+		 * Give up if we don't find an instance of a uuid at each
+		 * position (from 0 to nd_region->ndr_mappings - 1), or if we
 		 * find a dimm with two instances of the same uuid.
 		 */
 		dev_err(&nd_region->dev, "%s missing label for %pUb\n",
 				nvdimm_name(nvdimm), nd_label->uuid);
 		rc = -EINVAL;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	/*
-	 * Fix up each mapping's 'labels' to have the validated pmem label क्रम
-	 * that position at labels[0], and शून्य at labels[1].  In the process,
-	 * check that the namespace aligns with पूर्णांकerleave-set.  We know
-	 * that it करोes not overlap with any blk namespaces by virtue of
+	 * Fix up each mapping's 'labels' to have the validated pmem label for
+	 * that position at labels[0], and NULL at labels[1].  In the process,
+	 * check that the namespace aligns with interleave-set.  We know
+	 * that it does not overlap with any blk namespaces by virtue of
 	 * the dimm being enabled (i.e. nd_label_reserve_dpa()
 	 * succeeded).
 	 */
 	rc = select_pmem_id(nd_region, nd_label->uuid);
-	अगर (rc)
-		जाओ err;
+	if (rc)
+		goto err;
 
 	/* Calculate total size and populate namespace properties from label0 */
-	क्रम (i = 0; i < nd_region->ndr_mappings; i++) अणु
-		काष्ठा nd_namespace_label *label0;
-		काष्ठा nvdimm_drvdata *ndd;
+	for (i = 0; i < nd_region->ndr_mappings; i++) {
+		struct nd_namespace_label *label0;
+		struct nvdimm_drvdata *ndd;
 
 		nd_mapping = &nd_region->mapping[i];
 		label_ent = list_first_entry_or_null(&nd_mapping->labels,
 				typeof(*label_ent), list);
-		label0 = label_ent ? label_ent->label : शून्य;
+		label0 = label_ent ? label_ent->label : NULL;
 
-		अगर (!label0) अणु
+		if (!label0) {
 			WARN_ON(1);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		size += __le64_to_cpu(label0->rawsize);
-		अगर (__le16_to_cpu(label0->position) != 0)
-			जारी;
+		if (__le16_to_cpu(label0->position) != 0)
+			continue;
 		WARN_ON(nspm->alt_name || nspm->uuid);
-		nspm->alt_name = kmemdup((व्योम __क्रमce *) label0->name,
+		nspm->alt_name = kmemdup((void __force *) label0->name,
 				NSLABEL_NAME_LEN, GFP_KERNEL);
-		nspm->uuid = kmemdup((व्योम __क्रमce *) label0->uuid,
+		nspm->uuid = kmemdup((void __force *) label0->uuid,
 				NSLABEL_UUID_LEN, GFP_KERNEL);
 		nspm->lbasize = __le64_to_cpu(label0->lbasize);
 		ndd = to_ndd(nd_mapping);
-		अगर (namespace_label_has(ndd, असलtraction_guid))
+		if (namespace_label_has(ndd, abstraction_guid))
 			nspm->nsio.common.claim_class
-				= to_nvdimm_cclass(&label0->असलtraction_guid);
+				= to_nvdimm_cclass(&label0->abstraction_guid);
 
-	पूर्ण
+	}
 
-	अगर (!nspm->alt_name || !nspm->uuid) अणु
+	if (!nspm->alt_name || !nspm->uuid) {
 		rc = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	nd_namespace_pmem_set_resource(nd_region, nspm, size);
 
-	वापस dev;
+	return dev;
  err:
 	namespace_pmem_release(dev);
-	चयन (rc) अणु
-	हाल -EINVAL:
+	switch (rc) {
+	case -EINVAL:
 		dev_dbg(&nd_region->dev, "invalid label(s)\n");
-		अवरोध;
-	हाल -ENODEV:
+		break;
+	case -ENODEV:
 		dev_dbg(&nd_region->dev, "label not found\n");
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_dbg(&nd_region->dev, "unexpected err: %d\n", rc);
-		अवरोध;
-	पूर्ण
-	वापस ERR_PTR(rc);
-पूर्ण
+		break;
+	}
+	return ERR_PTR(rc);
+}
 
-काष्ठा resource *nsblk_add_resource(काष्ठा nd_region *nd_region,
-		काष्ठा nvdimm_drvdata *ndd, काष्ठा nd_namespace_blk *nsblk,
-		resource_माप_प्रकार start)
-अणु
-	काष्ठा nd_label_id label_id;
-	काष्ठा resource *res;
+struct resource *nsblk_add_resource(struct nd_region *nd_region,
+		struct nvdimm_drvdata *ndd, struct nd_namespace_blk *nsblk,
+		resource_size_t start)
+{
+	struct nd_label_id label_id;
+	struct resource *res;
 
 	nd_label_gen_id(&label_id, nsblk->uuid, NSLABEL_FLAG_LOCAL);
-	res = kपुनः_स्मृति(nsblk->res,
-			माप(व्योम *) * (nsblk->num_resources + 1),
+	res = krealloc(nsblk->res,
+			sizeof(void *) * (nsblk->num_resources + 1),
 			GFP_KERNEL);
-	अगर (!res)
-		वापस शून्य;
-	nsblk->res = (काष्ठा resource **) res;
-	क्रम_each_dpa_resource(ndd, res)
-		अगर (म_भेद(res->name, label_id.id) == 0
-				&& res->start == start) अणु
+	if (!res)
+		return NULL;
+	nsblk->res = (struct resource **) res;
+	for_each_dpa_resource(ndd, res)
+		if (strcmp(res->name, label_id.id) == 0
+				&& res->start == start) {
 			nsblk->res[nsblk->num_resources++] = res;
-			वापस res;
-		पूर्ण
-	वापस शून्य;
-पूर्ण
+			return res;
+		}
+	return NULL;
+}
 
-अटल काष्ठा device *nd_namespace_blk_create(काष्ठा nd_region *nd_region)
-अणु
-	काष्ठा nd_namespace_blk *nsblk;
-	काष्ठा device *dev;
+static struct device *nd_namespace_blk_create(struct nd_region *nd_region)
+{
+	struct nd_namespace_blk *nsblk;
+	struct device *dev;
 
-	अगर (!is_nd_blk(&nd_region->dev))
-		वापस शून्य;
+	if (!is_nd_blk(&nd_region->dev))
+		return NULL;
 
-	nsblk = kzalloc(माप(*nsblk), GFP_KERNEL);
-	अगर (!nsblk)
-		वापस शून्य;
+	nsblk = kzalloc(sizeof(*nsblk), GFP_KERNEL);
+	if (!nsblk)
+		return NULL;
 
 	dev = &nsblk->common.dev;
 	dev->type = &namespace_blk_device_type;
 	nsblk->id = ida_simple_get(&nd_region->ns_ida, 0, 0, GFP_KERNEL);
-	अगर (nsblk->id < 0) अणु
-		kमुक्त(nsblk);
-		वापस शून्य;
-	पूर्ण
+	if (nsblk->id < 0) {
+		kfree(nsblk);
+		return NULL;
+	}
 	dev_set_name(dev, "namespace%d.%d", nd_region->id, nsblk->id);
 	dev->parent = &nd_region->dev;
 
-	वापस &nsblk->common.dev;
-पूर्ण
+	return &nsblk->common.dev;
+}
 
-अटल काष्ठा device *nd_namespace_pmem_create(काष्ठा nd_region *nd_region)
-अणु
-	काष्ठा nd_namespace_pmem *nspm;
-	काष्ठा resource *res;
-	काष्ठा device *dev;
+static struct device *nd_namespace_pmem_create(struct nd_region *nd_region)
+{
+	struct nd_namespace_pmem *nspm;
+	struct resource *res;
+	struct device *dev;
 
-	अगर (!is_memory(&nd_region->dev))
-		वापस शून्य;
+	if (!is_memory(&nd_region->dev))
+		return NULL;
 
-	nspm = kzalloc(माप(*nspm), GFP_KERNEL);
-	अगर (!nspm)
-		वापस शून्य;
+	nspm = kzalloc(sizeof(*nspm), GFP_KERNEL);
+	if (!nspm)
+		return NULL;
 
 	dev = &nspm->nsio.common.dev;
 	dev->type = &namespace_pmem_device_type;
@@ -2147,144 +2146,144 @@ EXPORT_SYMBOL_GPL(devm_namespace_disable);
 	res->flags = IORESOURCE_MEM;
 
 	nspm->id = ida_simple_get(&nd_region->ns_ida, 0, 0, GFP_KERNEL);
-	अगर (nspm->id < 0) अणु
-		kमुक्त(nspm);
-		वापस शून्य;
-	पूर्ण
+	if (nspm->id < 0) {
+		kfree(nspm);
+		return NULL;
+	}
 	dev_set_name(dev, "namespace%d.%d", nd_region->id, nspm->id);
 	nd_namespace_pmem_set_resource(nd_region, nspm, 0);
 
-	वापस dev;
-पूर्ण
+	return dev;
+}
 
-व्योम nd_region_create_ns_seed(काष्ठा nd_region *nd_region)
-अणु
+void nd_region_create_ns_seed(struct nd_region *nd_region)
+{
 	WARN_ON(!is_nvdimm_bus_locked(&nd_region->dev));
 
-	अगर (nd_region_to_nstype(nd_region) == ND_DEVICE_NAMESPACE_IO)
-		वापस;
+	if (nd_region_to_nstype(nd_region) == ND_DEVICE_NAMESPACE_IO)
+		return;
 
-	अगर (is_nd_blk(&nd_region->dev))
+	if (is_nd_blk(&nd_region->dev))
 		nd_region->ns_seed = nd_namespace_blk_create(nd_region);
-	अन्यथा
+	else
 		nd_region->ns_seed = nd_namespace_pmem_create(nd_region);
 
 	/*
 	 * Seed creation failures are not fatal, provisioning is simply
 	 * disabled until memory becomes available
 	 */
-	अगर (!nd_region->ns_seed)
+	if (!nd_region->ns_seed)
 		dev_err(&nd_region->dev, "failed to create %s namespace\n",
 				is_nd_blk(&nd_region->dev) ? "blk" : "pmem");
-	अन्यथा
-		nd_device_रेजिस्टर(nd_region->ns_seed);
-पूर्ण
+	else
+		nd_device_register(nd_region->ns_seed);
+}
 
-व्योम nd_region_create_dax_seed(काष्ठा nd_region *nd_region)
-अणु
+void nd_region_create_dax_seed(struct nd_region *nd_region)
+{
 	WARN_ON(!is_nvdimm_bus_locked(&nd_region->dev));
 	nd_region->dax_seed = nd_dax_create(nd_region);
 	/*
 	 * Seed creation failures are not fatal, provisioning is simply
 	 * disabled until memory becomes available
 	 */
-	अगर (!nd_region->dax_seed)
+	if (!nd_region->dax_seed)
 		dev_err(&nd_region->dev, "failed to create dax namespace\n");
-पूर्ण
+}
 
-व्योम nd_region_create_pfn_seed(काष्ठा nd_region *nd_region)
-अणु
+void nd_region_create_pfn_seed(struct nd_region *nd_region)
+{
 	WARN_ON(!is_nvdimm_bus_locked(&nd_region->dev));
 	nd_region->pfn_seed = nd_pfn_create(nd_region);
 	/*
 	 * Seed creation failures are not fatal, provisioning is simply
 	 * disabled until memory becomes available
 	 */
-	अगर (!nd_region->pfn_seed)
+	if (!nd_region->pfn_seed)
 		dev_err(&nd_region->dev, "failed to create pfn namespace\n");
-पूर्ण
+}
 
-व्योम nd_region_create_btt_seed(काष्ठा nd_region *nd_region)
-अणु
+void nd_region_create_btt_seed(struct nd_region *nd_region)
+{
 	WARN_ON(!is_nvdimm_bus_locked(&nd_region->dev));
 	nd_region->btt_seed = nd_btt_create(nd_region);
 	/*
 	 * Seed creation failures are not fatal, provisioning is simply
 	 * disabled until memory becomes available
 	 */
-	अगर (!nd_region->btt_seed)
+	if (!nd_region->btt_seed)
 		dev_err(&nd_region->dev, "failed to create btt namespace\n");
-पूर्ण
+}
 
-अटल पूर्णांक add_namespace_resource(काष्ठा nd_region *nd_region,
-		काष्ठा nd_namespace_label *nd_label, काष्ठा device **devs,
-		पूर्णांक count)
-अणु
-	काष्ठा nd_mapping *nd_mapping = &nd_region->mapping[0];
-	काष्ठा nvdimm_drvdata *ndd = to_ndd(nd_mapping);
-	पूर्णांक i;
+static int add_namespace_resource(struct nd_region *nd_region,
+		struct nd_namespace_label *nd_label, struct device **devs,
+		int count)
+{
+	struct nd_mapping *nd_mapping = &nd_region->mapping[0];
+	struct nvdimm_drvdata *ndd = to_ndd(nd_mapping);
+	int i;
 
-	क्रम (i = 0; i < count; i++) अणु
+	for (i = 0; i < count; i++) {
 		u8 *uuid = namespace_to_uuid(devs[i]);
-		काष्ठा resource *res;
+		struct resource *res;
 
-		अगर (IS_ERR_OR_शून्य(uuid)) अणु
+		if (IS_ERR_OR_NULL(uuid)) {
 			WARN_ON(1);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (स_भेद(uuid, nd_label->uuid, NSLABEL_UUID_LEN) != 0)
-			जारी;
-		अगर (is_namespace_blk(devs[i])) अणु
+		if (memcmp(uuid, nd_label->uuid, NSLABEL_UUID_LEN) != 0)
+			continue;
+		if (is_namespace_blk(devs[i])) {
 			res = nsblk_add_resource(nd_region, ndd,
 					to_nd_namespace_blk(devs[i]),
 					__le64_to_cpu(nd_label->dpa));
-			अगर (!res)
-				वापस -ENXIO;
+			if (!res)
+				return -ENXIO;
 			nd_dbg_dpa(nd_region, ndd, res, "%d assign\n", count);
-		पूर्ण अन्यथा अणु
+		} else {
 			dev_err(&nd_region->dev,
 					"error: conflicting extents for uuid: %pUb\n",
 					nd_label->uuid);
-			वापस -ENXIO;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+			return -ENXIO;
+		}
+		break;
+	}
 
-	वापस i;
-पूर्ण
+	return i;
+}
 
-अटल काष्ठा device *create_namespace_blk(काष्ठा nd_region *nd_region,
-		काष्ठा nd_namespace_label *nd_label, पूर्णांक count)
-अणु
+static struct device *create_namespace_blk(struct nd_region *nd_region,
+		struct nd_namespace_label *nd_label, int count)
+{
 
-	काष्ठा nd_mapping *nd_mapping = &nd_region->mapping[0];
-	काष्ठा nd_पूर्णांकerleave_set *nd_set = nd_region->nd_set;
-	काष्ठा nvdimm_drvdata *ndd = to_ndd(nd_mapping);
-	काष्ठा nd_namespace_blk *nsblk;
-	अक्षर name[NSLABEL_NAME_LEN];
-	काष्ठा device *dev = शून्य;
-	काष्ठा resource *res;
+	struct nd_mapping *nd_mapping = &nd_region->mapping[0];
+	struct nd_interleave_set *nd_set = nd_region->nd_set;
+	struct nvdimm_drvdata *ndd = to_ndd(nd_mapping);
+	struct nd_namespace_blk *nsblk;
+	char name[NSLABEL_NAME_LEN];
+	struct device *dev = NULL;
+	struct resource *res;
 
-	अगर (namespace_label_has(ndd, type_guid)) अणु
-		अगर (!guid_equal(&nd_set->type_guid, &nd_label->type_guid)) अणु
+	if (namespace_label_has(ndd, type_guid)) {
+		if (!guid_equal(&nd_set->type_guid, &nd_label->type_guid)) {
 			dev_dbg(ndd->dev, "expect type_guid %pUb got %pUb\n",
 					&nd_set->type_guid,
 					&nd_label->type_guid);
-			वापस ERR_PTR(-EAGAIN);
-		पूर्ण
+			return ERR_PTR(-EAGAIN);
+		}
 
-		अगर (nd_label->isetcookie != __cpu_to_le64(nd_set->cookie2)) अणु
+		if (nd_label->isetcookie != __cpu_to_le64(nd_set->cookie2)) {
 			dev_dbg(ndd->dev, "expect cookie %#llx got %#llx\n",
 					nd_set->cookie2,
 					__le64_to_cpu(nd_label->isetcookie));
-			वापस ERR_PTR(-EAGAIN);
-		पूर्ण
-	पूर्ण
+			return ERR_PTR(-EAGAIN);
+		}
+	}
 
-	nsblk = kzalloc(माप(*nsblk), GFP_KERNEL);
-	अगर (!nsblk)
-		वापस ERR_PTR(-ENOMEM);
+	nsblk = kzalloc(sizeof(*nsblk), GFP_KERNEL);
+	if (!nsblk)
+		return ERR_PTR(-ENOMEM);
 	dev = &nsblk->common.dev;
 	dev->type = &namespace_blk_device_type;
 	dev->parent = &nd_region->dev;
@@ -2292,390 +2291,390 @@ EXPORT_SYMBOL_GPL(devm_namespace_disable);
 	nsblk->lbasize = __le64_to_cpu(nd_label->lbasize);
 	nsblk->uuid = kmemdup(nd_label->uuid, NSLABEL_UUID_LEN,
 			GFP_KERNEL);
-	अगर (namespace_label_has(ndd, असलtraction_guid))
+	if (namespace_label_has(ndd, abstraction_guid))
 		nsblk->common.claim_class
-			= to_nvdimm_cclass(&nd_label->असलtraction_guid);
-	अगर (!nsblk->uuid)
-		जाओ blk_err;
-	स_नकल(name, nd_label->name, NSLABEL_NAME_LEN);
-	अगर (name[0]) अणु
+			= to_nvdimm_cclass(&nd_label->abstraction_guid);
+	if (!nsblk->uuid)
+		goto blk_err;
+	memcpy(name, nd_label->name, NSLABEL_NAME_LEN);
+	if (name[0]) {
 		nsblk->alt_name = kmemdup(name, NSLABEL_NAME_LEN,
 				GFP_KERNEL);
-		अगर (!nsblk->alt_name)
-			जाओ blk_err;
-	पूर्ण
+		if (!nsblk->alt_name)
+			goto blk_err;
+	}
 	res = nsblk_add_resource(nd_region, ndd, nsblk,
 			__le64_to_cpu(nd_label->dpa));
-	अगर (!res)
-		जाओ blk_err;
+	if (!res)
+		goto blk_err;
 	nd_dbg_dpa(nd_region, ndd, res, "%d: assign\n", count);
-	वापस dev;
+	return dev;
  blk_err:
 	namespace_blk_release(dev);
-	वापस ERR_PTR(-ENXIO);
-पूर्ण
+	return ERR_PTR(-ENXIO);
+}
 
-अटल पूर्णांक cmp_dpa(स्थिर व्योम *a, स्थिर व्योम *b)
-अणु
-	स्थिर काष्ठा device *dev_a = *(स्थिर काष्ठा device **) a;
-	स्थिर काष्ठा device *dev_b = *(स्थिर काष्ठा device **) b;
-	काष्ठा nd_namespace_blk *nsblk_a, *nsblk_b;
-	काष्ठा nd_namespace_pmem *nspm_a, *nspm_b;
+static int cmp_dpa(const void *a, const void *b)
+{
+	const struct device *dev_a = *(const struct device **) a;
+	const struct device *dev_b = *(const struct device **) b;
+	struct nd_namespace_blk *nsblk_a, *nsblk_b;
+	struct nd_namespace_pmem *nspm_a, *nspm_b;
 
-	अगर (is_namespace_io(dev_a))
-		वापस 0;
+	if (is_namespace_io(dev_a))
+		return 0;
 
-	अगर (is_namespace_blk(dev_a)) अणु
+	if (is_namespace_blk(dev_a)) {
 		nsblk_a = to_nd_namespace_blk(dev_a);
 		nsblk_b = to_nd_namespace_blk(dev_b);
 
-		वापस स_भेद(&nsblk_a->res[0]->start, &nsblk_b->res[0]->start,
-				माप(resource_माप_प्रकार));
-	पूर्ण
+		return memcmp(&nsblk_a->res[0]->start, &nsblk_b->res[0]->start,
+				sizeof(resource_size_t));
+	}
 
 	nspm_a = to_nd_namespace_pmem(dev_a);
 	nspm_b = to_nd_namespace_pmem(dev_b);
 
-	वापस स_भेद(&nspm_a->nsio.res.start, &nspm_b->nsio.res.start,
-			माप(resource_माप_प्रकार));
-पूर्ण
+	return memcmp(&nspm_a->nsio.res.start, &nspm_b->nsio.res.start,
+			sizeof(resource_size_t));
+}
 
-अटल काष्ठा device **scan_labels(काष्ठा nd_region *nd_region)
-अणु
-	पूर्णांक i, count = 0;
-	काष्ठा device *dev, **devs = शून्य;
-	काष्ठा nd_label_ent *label_ent, *e;
-	काष्ठा nd_mapping *nd_mapping = &nd_region->mapping[0];
-	resource_माप_प्रकार map_end = nd_mapping->start + nd_mapping->size - 1;
+static struct device **scan_labels(struct nd_region *nd_region)
+{
+	int i, count = 0;
+	struct device *dev, **devs = NULL;
+	struct nd_label_ent *label_ent, *e;
+	struct nd_mapping *nd_mapping = &nd_region->mapping[0];
+	resource_size_t map_end = nd_mapping->start + nd_mapping->size - 1;
 
 	/* "safe" because create_namespace_pmem() might list_move() label_ent */
-	list_क्रम_each_entry_safe(label_ent, e, &nd_mapping->labels, list) अणु
-		काष्ठा nd_namespace_label *nd_label = label_ent->label;
-		काष्ठा device **__devs;
+	list_for_each_entry_safe(label_ent, e, &nd_mapping->labels, list) {
+		struct nd_namespace_label *nd_label = label_ent->label;
+		struct device **__devs;
 		u32 flags;
 
-		अगर (!nd_label)
-			जारी;
+		if (!nd_label)
+			continue;
 		flags = __le32_to_cpu(nd_label->flags);
-		अगर (is_nd_blk(&nd_region->dev)
+		if (is_nd_blk(&nd_region->dev)
 				== !!(flags & NSLABEL_FLAG_LOCAL))
 			/* pass, region matches label type */;
-		अन्यथा
-			जारी;
+		else
+			continue;
 
 		/* skip labels that describe extents outside of the region */
-		अगर (__le64_to_cpu(nd_label->dpa) < nd_mapping->start ||
+		if (__le64_to_cpu(nd_label->dpa) < nd_mapping->start ||
 		    __le64_to_cpu(nd_label->dpa) > map_end)
-				जारी;
+				continue;
 
 		i = add_namespace_resource(nd_region, nd_label, devs, count);
-		अगर (i < 0)
-			जाओ err;
-		अगर (i < count)
-			जारी;
-		__devs = kसुस्मृति(count + 2, माप(dev), GFP_KERNEL);
-		अगर (!__devs)
-			जाओ err;
-		स_नकल(__devs, devs, माप(dev) * count);
-		kमुक्त(devs);
+		if (i < 0)
+			goto err;
+		if (i < count)
+			continue;
+		__devs = kcalloc(count + 2, sizeof(dev), GFP_KERNEL);
+		if (!__devs)
+			goto err;
+		memcpy(__devs, devs, sizeof(dev) * count);
+		kfree(devs);
 		devs = __devs;
 
-		अगर (is_nd_blk(&nd_region->dev))
+		if (is_nd_blk(&nd_region->dev))
 			dev = create_namespace_blk(nd_region, nd_label, count);
-		अन्यथा अणु
-			काष्ठा nvdimm_drvdata *ndd = to_ndd(nd_mapping);
-			काष्ठा nd_namespace_index *nsindex;
+		else {
+			struct nvdimm_drvdata *ndd = to_ndd(nd_mapping);
+			struct nd_namespace_index *nsindex;
 
 			nsindex = to_namespace_index(ndd, ndd->ns_current);
 			dev = create_namespace_pmem(nd_region, nsindex, nd_label);
-		पूर्ण
+		}
 
-		अगर (IS_ERR(dev)) अणु
-			चयन (PTR_ERR(dev)) अणु
-			हाल -EAGAIN:
+		if (IS_ERR(dev)) {
+			switch (PTR_ERR(dev)) {
+			case -EAGAIN:
 				/* skip invalid labels */
-				जारी;
-			हाल -ENODEV:
+				continue;
+			case -ENODEV:
 				/* fallthrough to seed creation */
-				अवरोध;
-			शेष:
-				जाओ err;
-			पूर्ण
-		पूर्ण अन्यथा
+				break;
+			default:
+				goto err;
+			}
+		} else
 			devs[count++] = dev;
 
-	पूर्ण
+	}
 
 	dev_dbg(&nd_region->dev, "discovered %d %s namespace%s\n",
 			count, is_nd_blk(&nd_region->dev)
 			? "blk" : "pmem", count == 1 ? "" : "s");
 
-	अगर (count == 0) अणु
-		/* Publish a zero-sized namespace क्रम userspace to configure. */
-		nd_mapping_मुक्त_labels(nd_mapping);
+	if (count == 0) {
+		/* Publish a zero-sized namespace for userspace to configure. */
+		nd_mapping_free_labels(nd_mapping);
 
-		devs = kसुस्मृति(2, माप(dev), GFP_KERNEL);
-		अगर (!devs)
-			जाओ err;
-		अगर (is_nd_blk(&nd_region->dev)) अणु
-			काष्ठा nd_namespace_blk *nsblk;
+		devs = kcalloc(2, sizeof(dev), GFP_KERNEL);
+		if (!devs)
+			goto err;
+		if (is_nd_blk(&nd_region->dev)) {
+			struct nd_namespace_blk *nsblk;
 
-			nsblk = kzalloc(माप(*nsblk), GFP_KERNEL);
-			अगर (!nsblk)
-				जाओ err;
+			nsblk = kzalloc(sizeof(*nsblk), GFP_KERNEL);
+			if (!nsblk)
+				goto err;
 			dev = &nsblk->common.dev;
 			dev->type = &namespace_blk_device_type;
-		पूर्ण अन्यथा अणु
-			काष्ठा nd_namespace_pmem *nspm;
+		} else {
+			struct nd_namespace_pmem *nspm;
 
-			nspm = kzalloc(माप(*nspm), GFP_KERNEL);
-			अगर (!nspm)
-				जाओ err;
+			nspm = kzalloc(sizeof(*nspm), GFP_KERNEL);
+			if (!nspm)
+				goto err;
 			dev = &nspm->nsio.common.dev;
 			dev->type = &namespace_pmem_device_type;
 			nd_namespace_pmem_set_resource(nd_region, nspm, 0);
-		पूर्ण
+		}
 		dev->parent = &nd_region->dev;
 		devs[count++] = dev;
-	पूर्ण अन्यथा अगर (is_memory(&nd_region->dev)) अणु
+	} else if (is_memory(&nd_region->dev)) {
 		/* clean unselected labels */
-		क्रम (i = 0; i < nd_region->ndr_mappings; i++) अणु
-			काष्ठा list_head *l, *e;
+		for (i = 0; i < nd_region->ndr_mappings; i++) {
+			struct list_head *l, *e;
 			LIST_HEAD(list);
-			पूर्णांक j;
+			int j;
 
 			nd_mapping = &nd_region->mapping[i];
-			अगर (list_empty(&nd_mapping->labels)) अणु
+			if (list_empty(&nd_mapping->labels)) {
 				WARN_ON(1);
-				जारी;
-			पूर्ण
+				continue;
+			}
 
 			j = count;
-			list_क्रम_each_safe(l, e, &nd_mapping->labels) अणु
-				अगर (!j--)
-					अवरोध;
+			list_for_each_safe(l, e, &nd_mapping->labels) {
+				if (!j--)
+					break;
 				list_move_tail(l, &list);
-			पूर्ण
-			nd_mapping_मुक्त_labels(nd_mapping);
+			}
+			nd_mapping_free_labels(nd_mapping);
 			list_splice_init(&list, &nd_mapping->labels);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (count > 1)
-		sort(devs, count, माप(काष्ठा device *), cmp_dpa, शून्य);
+	if (count > 1)
+		sort(devs, count, sizeof(struct device *), cmp_dpa, NULL);
 
-	वापस devs;
+	return devs;
 
  err:
-	अगर (devs) अणु
-		क्रम (i = 0; devs[i]; i++)
-			अगर (is_nd_blk(&nd_region->dev))
+	if (devs) {
+		for (i = 0; devs[i]; i++)
+			if (is_nd_blk(&nd_region->dev))
 				namespace_blk_release(devs[i]);
-			अन्यथा
+			else
 				namespace_pmem_release(devs[i]);
-		kमुक्त(devs);
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		kfree(devs);
+	}
+	return NULL;
+}
 
-अटल काष्ठा device **create_namespaces(काष्ठा nd_region *nd_region)
-अणु
-	काष्ठा nd_mapping *nd_mapping;
-	काष्ठा device **devs;
-	पूर्णांक i;
+static struct device **create_namespaces(struct nd_region *nd_region)
+{
+	struct nd_mapping *nd_mapping;
+	struct device **devs;
+	int i;
 
-	अगर (nd_region->ndr_mappings == 0)
-		वापस शून्य;
+	if (nd_region->ndr_mappings == 0)
+		return NULL;
 
-	/* lock करोwn all mappings जबतक we scan labels */
-	क्रम (i = 0; i < nd_region->ndr_mappings; i++) अणु
+	/* lock down all mappings while we scan labels */
+	for (i = 0; i < nd_region->ndr_mappings; i++) {
 		nd_mapping = &nd_region->mapping[i];
 		mutex_lock_nested(&nd_mapping->lock, i);
-	पूर्ण
+	}
 
 	devs = scan_labels(nd_region);
 
-	क्रम (i = 0; i < nd_region->ndr_mappings; i++) अणु
-		पूर्णांक reverse = nd_region->ndr_mappings - 1 - i;
+	for (i = 0; i < nd_region->ndr_mappings; i++) {
+		int reverse = nd_region->ndr_mappings - 1 - i;
 
 		nd_mapping = &nd_region->mapping[reverse];
 		mutex_unlock(&nd_mapping->lock);
-	पूर्ण
+	}
 
-	वापस devs;
-पूर्ण
+	return devs;
+}
 
-अटल व्योम deactivate_labels(व्योम *region)
-अणु
-	काष्ठा nd_region *nd_region = region;
-	पूर्णांक i;
+static void deactivate_labels(void *region)
+{
+	struct nd_region *nd_region = region;
+	int i;
 
-	क्रम (i = 0; i < nd_region->ndr_mappings; i++) अणु
-		काष्ठा nd_mapping *nd_mapping = &nd_region->mapping[i];
-		काष्ठा nvdimm_drvdata *ndd = nd_mapping->ndd;
-		काष्ठा nvdimm *nvdimm = nd_mapping->nvdimm;
+	for (i = 0; i < nd_region->ndr_mappings; i++) {
+		struct nd_mapping *nd_mapping = &nd_region->mapping[i];
+		struct nvdimm_drvdata *ndd = nd_mapping->ndd;
+		struct nvdimm *nvdimm = nd_mapping->nvdimm;
 
 		mutex_lock(&nd_mapping->lock);
-		nd_mapping_मुक्त_labels(nd_mapping);
+		nd_mapping_free_labels(nd_mapping);
 		mutex_unlock(&nd_mapping->lock);
 
 		put_ndd(ndd);
-		nd_mapping->ndd = शून्य;
-		अगर (ndd)
+		nd_mapping->ndd = NULL;
+		if (ndd)
 			atomic_dec(&nvdimm->busy);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक init_active_labels(काष्ठा nd_region *nd_region)
-अणु
-	पूर्णांक i;
+static int init_active_labels(struct nd_region *nd_region)
+{
+	int i;
 
-	क्रम (i = 0; i < nd_region->ndr_mappings; i++) अणु
-		काष्ठा nd_mapping *nd_mapping = &nd_region->mapping[i];
-		काष्ठा nvdimm_drvdata *ndd = to_ndd(nd_mapping);
-		काष्ठा nvdimm *nvdimm = nd_mapping->nvdimm;
-		काष्ठा nd_label_ent *label_ent;
-		पूर्णांक count, j;
+	for (i = 0; i < nd_region->ndr_mappings; i++) {
+		struct nd_mapping *nd_mapping = &nd_region->mapping[i];
+		struct nvdimm_drvdata *ndd = to_ndd(nd_mapping);
+		struct nvdimm *nvdimm = nd_mapping->nvdimm;
+		struct nd_label_ent *label_ent;
+		int count, j;
 
 		/*
 		 * If the dimm is disabled then we may need to prevent
 		 * the region from being activated.
 		 */
-		अगर (!ndd) अणु
-			अगर (test_bit(NDD_LOCKED, &nvdimm->flags))
-				/* fail, label data may be unपढ़ोable */;
-			अन्यथा अगर (test_bit(NDD_LABELING, &nvdimm->flags))
+		if (!ndd) {
+			if (test_bit(NDD_LOCKED, &nvdimm->flags))
+				/* fail, label data may be unreadable */;
+			else if (test_bit(NDD_LABELING, &nvdimm->flags))
 				/* fail, labels needed to disambiguate dpa */;
-			अन्यथा
-				वापस 0;
+			else
+				return 0;
 
 			dev_err(&nd_region->dev, "%s: is %s, failing probe\n",
 					dev_name(&nd_mapping->nvdimm->dev),
 					test_bit(NDD_LOCKED, &nvdimm->flags)
 					? "locked" : "disabled");
-			वापस -ENXIO;
-		पूर्ण
+			return -ENXIO;
+		}
 		nd_mapping->ndd = ndd;
 		atomic_inc(&nvdimm->busy);
 		get_ndd(ndd);
 
 		count = nd_label_active_count(ndd);
 		dev_dbg(ndd->dev, "count: %d\n", count);
-		अगर (!count)
-			जारी;
-		क्रम (j = 0; j < count; j++) अणु
-			काष्ठा nd_namespace_label *label;
+		if (!count)
+			continue;
+		for (j = 0; j < count; j++) {
+			struct nd_namespace_label *label;
 
-			label_ent = kzalloc(माप(*label_ent), GFP_KERNEL);
-			अगर (!label_ent)
-				अवरोध;
+			label_ent = kzalloc(sizeof(*label_ent), GFP_KERNEL);
+			if (!label_ent)
+				break;
 			label = nd_label_active(ndd, j);
-			अगर (test_bit(NDD_NOBLK, &nvdimm->flags)) अणु
+			if (test_bit(NDD_NOBLK, &nvdimm->flags)) {
 				u32 flags = __le32_to_cpu(label->flags);
 
 				flags &= ~NSLABEL_FLAG_LOCAL;
 				label->flags = __cpu_to_le32(flags);
-			पूर्ण
+			}
 			label_ent->label = label;
 
 			mutex_lock(&nd_mapping->lock);
 			list_add_tail(&label_ent->list, &nd_mapping->labels);
 			mutex_unlock(&nd_mapping->lock);
-		पूर्ण
+		}
 
-		अगर (j < count)
-			अवरोध;
-	पूर्ण
+		if (j < count)
+			break;
+	}
 
-	अगर (i < nd_region->ndr_mappings) अणु
+	if (i < nd_region->ndr_mappings) {
 		deactivate_labels(nd_region);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	वापस devm_add_action_or_reset(&nd_region->dev, deactivate_labels,
+	return devm_add_action_or_reset(&nd_region->dev, deactivate_labels,
 			nd_region);
-पूर्ण
+}
 
-पूर्णांक nd_region_रेजिस्टर_namespaces(काष्ठा nd_region *nd_region, पूर्णांक *err)
-अणु
-	काष्ठा device **devs = शून्य;
-	पूर्णांक i, rc = 0, type;
+int nd_region_register_namespaces(struct nd_region *nd_region, int *err)
+{
+	struct device **devs = NULL;
+	int i, rc = 0, type;
 
 	*err = 0;
 	nvdimm_bus_lock(&nd_region->dev);
 	rc = init_active_labels(nd_region);
-	अगर (rc) अणु
+	if (rc) {
 		nvdimm_bus_unlock(&nd_region->dev);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	type = nd_region_to_nstype(nd_region);
-	चयन (type) अणु
-	हाल ND_DEVICE_NAMESPACE_IO:
+	switch (type) {
+	case ND_DEVICE_NAMESPACE_IO:
 		devs = create_namespace_io(nd_region);
-		अवरोध;
-	हाल ND_DEVICE_NAMESPACE_PMEM:
-	हाल ND_DEVICE_NAMESPACE_BLK:
+		break;
+	case ND_DEVICE_NAMESPACE_PMEM:
+	case ND_DEVICE_NAMESPACE_BLK:
 		devs = create_namespaces(nd_region);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 	nvdimm_bus_unlock(&nd_region->dev);
 
-	अगर (!devs)
-		वापस -ENODEV;
+	if (!devs)
+		return -ENODEV;
 
-	क्रम (i = 0; devs[i]; i++) अणु
-		काष्ठा device *dev = devs[i];
-		पूर्णांक id;
+	for (i = 0; devs[i]; i++) {
+		struct device *dev = devs[i];
+		int id;
 
-		अगर (type == ND_DEVICE_NAMESPACE_BLK) अणु
-			काष्ठा nd_namespace_blk *nsblk;
+		if (type == ND_DEVICE_NAMESPACE_BLK) {
+			struct nd_namespace_blk *nsblk;
 
 			nsblk = to_nd_namespace_blk(dev);
 			id = ida_simple_get(&nd_region->ns_ida, 0, 0,
 					GFP_KERNEL);
 			nsblk->id = id;
-		पूर्ण अन्यथा अगर (type == ND_DEVICE_NAMESPACE_PMEM) अणु
-			काष्ठा nd_namespace_pmem *nspm;
+		} else if (type == ND_DEVICE_NAMESPACE_PMEM) {
+			struct nd_namespace_pmem *nspm;
 
 			nspm = to_nd_namespace_pmem(dev);
 			id = ida_simple_get(&nd_region->ns_ida, 0, 0,
 					GFP_KERNEL);
 			nspm->id = id;
-		पूर्ण अन्यथा
+		} else
 			id = i;
 
-		अगर (id < 0)
-			अवरोध;
+		if (id < 0)
+			break;
 		dev_set_name(dev, "namespace%d.%d", nd_region->id, id);
-		nd_device_रेजिस्टर(dev);
-	पूर्ण
-	अगर (i)
+		nd_device_register(dev);
+	}
+	if (i)
 		nd_region->ns_seed = devs[0];
 
-	अगर (devs[i]) अणु
-		पूर्णांक j;
+	if (devs[i]) {
+		int j;
 
-		क्रम (j = i; devs[j]; j++) अणु
-			काष्ठा device *dev = devs[j];
+		for (j = i; devs[j]; j++) {
+			struct device *dev = devs[j];
 
 			device_initialize(dev);
 			put_device(dev);
-		पूर्ण
+		}
 		*err = j - i;
 		/*
-		 * All of the namespaces we tried to रेजिस्टर failed, so
+		 * All of the namespaces we tried to register failed, so
 		 * fail region activation.
 		 */
-		अगर (*err == 0)
+		if (*err == 0)
 			rc = -ENODEV;
-	पूर्ण
-	kमुक्त(devs);
+	}
+	kfree(devs);
 
-	अगर (rc == -ENODEV)
-		वापस rc;
+	if (rc == -ENODEV)
+		return rc;
 
-	वापस i;
-पूर्ण
+	return i;
+}

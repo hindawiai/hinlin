@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Battery driver क्रम wm8350 PMIC
+ * Battery driver for wm8350 PMIC
  *
  * Copyright 2007, 2008 Wolfson Microelectronics PLC.
  *
@@ -10,53 +9,53 @@
  * Copyright 2006  David Woodhouse <dwmw2@infradead.org>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/err.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/घातer_supply.h>
-#समावेश <linux/mfd/wm8350/supply.h>
-#समावेश <linux/mfd/wm8350/core.h>
-#समावेश <linux/mfd/wm8350/comparator.h>
+#include <linux/module.h>
+#include <linux/err.h>
+#include <linux/platform_device.h>
+#include <linux/power_supply.h>
+#include <linux/mfd/wm8350/supply.h>
+#include <linux/mfd/wm8350/core.h>
+#include <linux/mfd/wm8350/comparator.h>
 
-अटल पूर्णांक wm8350_पढ़ो_battery_uvolts(काष्ठा wm8350 *wm8350)
-अणु
-	वापस wm8350_पढ़ो_auxadc(wm8350, WM8350_AUXADC_BATT, 0, 0)
+static int wm8350_read_battery_uvolts(struct wm8350 *wm8350)
+{
+	return wm8350_read_auxadc(wm8350, WM8350_AUXADC_BATT, 0, 0)
 		* WM8350_AUX_COEFF;
-पूर्ण
+}
 
-अटल पूर्णांक wm8350_पढ़ो_line_uvolts(काष्ठा wm8350 *wm8350)
-अणु
-	वापस wm8350_पढ़ो_auxadc(wm8350, WM8350_AUXADC_LINE, 0, 0)
+static int wm8350_read_line_uvolts(struct wm8350 *wm8350)
+{
+	return wm8350_read_auxadc(wm8350, WM8350_AUXADC_LINE, 0, 0)
 		* WM8350_AUX_COEFF;
-पूर्ण
+}
 
-अटल पूर्णांक wm8350_पढ़ो_usb_uvolts(काष्ठा wm8350 *wm8350)
-अणु
-	वापस wm8350_पढ़ो_auxadc(wm8350, WM8350_AUXADC_USB, 0, 0)
+static int wm8350_read_usb_uvolts(struct wm8350 *wm8350)
+{
+	return wm8350_read_auxadc(wm8350, WM8350_AUXADC_USB, 0, 0)
 		* WM8350_AUX_COEFF;
-पूर्ण
+}
 
-#घोषणा WM8350_BATT_SUPPLY	1
-#घोषणा WM8350_USB_SUPPLY	2
-#घोषणा WM8350_LINE_SUPPLY	4
+#define WM8350_BATT_SUPPLY	1
+#define WM8350_USB_SUPPLY	2
+#define WM8350_LINE_SUPPLY	4
 
-अटल अंतरभूत पूर्णांक wm8350_अक्षरge_समय_min(काष्ठा wm8350 *wm8350, पूर्णांक min)
-अणु
-	अगर (!wm8350->घातer.rev_g_coeff)
-		वापस (((min - 30) / 15) & 0xf) << 8;
-	अन्यथा
-		वापस (((min - 30) / 30) & 0xf) << 8;
-पूर्ण
+static inline int wm8350_charge_time_min(struct wm8350 *wm8350, int min)
+{
+	if (!wm8350->power.rev_g_coeff)
+		return (((min - 30) / 15) & 0xf) << 8;
+	else
+		return (((min - 30) / 30) & 0xf) << 8;
+}
 
-अटल पूर्णांक wm8350_get_supplies(काष्ठा wm8350 *wm8350)
-अणु
+static int wm8350_get_supplies(struct wm8350 *wm8350)
+{
 	u16 sm, ov, co, chrg;
-	पूर्णांक supplies = 0;
+	int supplies = 0;
 
-	sm = wm8350_reg_पढ़ो(wm8350, WM8350_STATE_MACHINE_STATUS);
-	ov = wm8350_reg_पढ़ो(wm8350, WM8350_MISC_OVERRIDES);
-	co = wm8350_reg_पढ़ो(wm8350, WM8350_COMPARATOR_OVERRIDES);
-	chrg = wm8350_reg_पढ़ो(wm8350, WM8350_BATTERY_CHARGER_CONTROL_2);
+	sm = wm8350_reg_read(wm8350, WM8350_STATE_MACHINE_STATUS);
+	ov = wm8350_reg_read(wm8350, WM8350_MISC_OVERRIDES);
+	co = wm8350_reg_read(wm8350, WM8350_COMPARATOR_OVERRIDES);
+	chrg = wm8350_reg_read(wm8350, WM8350_BATTERY_CHARGER_CONTROL_2);
 
 	/* USB_SM */
 	sm = (sm & WM8350_USB_SM_MASK) >> WM8350_USB_SM_SHIFT;
@@ -65,474 +64,474 @@
 	chrg &= WM8350_CHG_ISEL_MASK;
 
 	/* If the USB state machine is active then we're using that with or
-	 * without battery, otherwise check क्रम wall supply */
-	अगर (((sm == WM8350_USB_SM_100_SLV) ||
+	 * without battery, otherwise check for wall supply */
+	if (((sm == WM8350_USB_SM_100_SLV) ||
 	     (sm == WM8350_USB_SM_500_SLV) ||
 	     (sm == WM8350_USB_SM_STDBY_SLV))
 	    && !(ov & WM8350_USB_LIMIT_OVRDE))
 		supplies = WM8350_USB_SUPPLY;
-	अन्यथा अगर (((sm == WM8350_USB_SM_100_SLV) ||
+	else if (((sm == WM8350_USB_SM_100_SLV) ||
 		  (sm == WM8350_USB_SM_500_SLV) ||
 		  (sm == WM8350_USB_SM_STDBY_SLV))
 		 && (ov & WM8350_USB_LIMIT_OVRDE) && (chrg == 0))
 		supplies = WM8350_USB_SUPPLY | WM8350_BATT_SUPPLY;
-	अन्यथा अगर (co & WM8350_WALL_FB_OVRDE)
+	else if (co & WM8350_WALL_FB_OVRDE)
 		supplies = WM8350_LINE_SUPPLY;
-	अन्यथा
+	else
 		supplies = WM8350_BATT_SUPPLY;
 
-	वापस supplies;
-पूर्ण
+	return supplies;
+}
 
-अटल पूर्णांक wm8350_अक्षरger_config(काष्ठा wm8350 *wm8350,
-				 काष्ठा wm8350_अक्षरger_policy *policy)
-अणु
+static int wm8350_charger_config(struct wm8350 *wm8350,
+				 struct wm8350_charger_policy *policy)
+{
 	u16 reg, eoc_mA, fast_limit_mA;
 
-	अगर (!policy) अणु
+	if (!policy) {
 		dev_warn(wm8350->dev,
 			 "No charger policy, charger not configured.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* make sure USB fast अक्षरge current is not > 500mA */
-	अगर (policy->fast_limit_USB_mA > 500) अणु
+	/* make sure USB fast charge current is not > 500mA */
+	if (policy->fast_limit_USB_mA > 500) {
 		dev_err(wm8350->dev, "USB fast charge > 500mA\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	eoc_mA = WM8350_CHG_EOC_mA(policy->eoc_mA);
 
 	wm8350_reg_unlock(wm8350);
 
-	reg = wm8350_reg_पढ़ो(wm8350, WM8350_BATTERY_CHARGER_CONTROL_1)
+	reg = wm8350_reg_read(wm8350, WM8350_BATTERY_CHARGER_CONTROL_1)
 		& WM8350_CHG_ENA_R168;
-	wm8350_reg_ग_लिखो(wm8350, WM8350_BATTERY_CHARGER_CONTROL_1,
+	wm8350_reg_write(wm8350, WM8350_BATTERY_CHARGER_CONTROL_1,
 			 reg | eoc_mA | policy->trickle_start_mV |
 			 WM8350_CHG_TRICKLE_TEMP_CHOKE |
 			 WM8350_CHG_TRICKLE_USB_CHOKE |
 			 WM8350_CHG_FAST_USB_THROTTLE);
 
-	अगर (wm8350_get_supplies(wm8350) & WM8350_USB_SUPPLY) अणु
+	if (wm8350_get_supplies(wm8350) & WM8350_USB_SUPPLY) {
 		fast_limit_mA =
 			WM8350_CHG_FAST_LIMIT_mA(policy->fast_limit_USB_mA);
-		wm8350_reg_ग_लिखो(wm8350, WM8350_BATTERY_CHARGER_CONTROL_2,
-			    policy->अक्षरge_mV | policy->trickle_अक्षरge_USB_mA |
-			    fast_limit_mA | wm8350_अक्षरge_समय_min(wm8350,
-						policy->अक्षरge_समयout));
+		wm8350_reg_write(wm8350, WM8350_BATTERY_CHARGER_CONTROL_2,
+			    policy->charge_mV | policy->trickle_charge_USB_mA |
+			    fast_limit_mA | wm8350_charge_time_min(wm8350,
+						policy->charge_timeout));
 
-	पूर्ण अन्यथा अणु
+	} else {
 		fast_limit_mA =
 			WM8350_CHG_FAST_LIMIT_mA(policy->fast_limit_mA);
-		wm8350_reg_ग_लिखो(wm8350, WM8350_BATTERY_CHARGER_CONTROL_2,
-			    policy->अक्षरge_mV | policy->trickle_अक्षरge_mA |
-			    fast_limit_mA | wm8350_अक्षरge_समय_min(wm8350,
-						policy->अक्षरge_समयout));
-	पूर्ण
+		wm8350_reg_write(wm8350, WM8350_BATTERY_CHARGER_CONTROL_2,
+			    policy->charge_mV | policy->trickle_charge_mA |
+			    fast_limit_mA | wm8350_charge_time_min(wm8350,
+						policy->charge_timeout));
+	}
 
 	wm8350_reg_lock(wm8350);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wm8350_batt_status(काष्ठा wm8350 *wm8350)
-अणु
+static int wm8350_batt_status(struct wm8350 *wm8350)
+{
 	u16 state;
 
-	state = wm8350_reg_पढ़ो(wm8350, WM8350_BATTERY_CHARGER_CONTROL_2);
+	state = wm8350_reg_read(wm8350, WM8350_BATTERY_CHARGER_CONTROL_2);
 	state &= WM8350_CHG_STS_MASK;
 
-	चयन (state) अणु
-	हाल WM8350_CHG_STS_OFF:
-		वापस POWER_SUPPLY_STATUS_DISCHARGING;
+	switch (state) {
+	case WM8350_CHG_STS_OFF:
+		return POWER_SUPPLY_STATUS_DISCHARGING;
 
-	हाल WM8350_CHG_STS_TRICKLE:
-	हाल WM8350_CHG_STS_FAST:
-		वापस POWER_SUPPLY_STATUS_CHARGING;
+	case WM8350_CHG_STS_TRICKLE:
+	case WM8350_CHG_STS_FAST:
+		return POWER_SUPPLY_STATUS_CHARGING;
 
-	शेष:
-		वापस POWER_SUPPLY_STATUS_UNKNOWN;
-	पूर्ण
-पूर्ण
+	default:
+		return POWER_SUPPLY_STATUS_UNKNOWN;
+	}
+}
 
-अटल sमाप_प्रकार अक्षरger_state_show(काष्ठा device *dev,
-				 काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा wm8350 *wm8350 = dev_get_drvdata(dev);
-	अक्षर *अक्षरge;
-	पूर्णांक state;
+static ssize_t charger_state_show(struct device *dev,
+				 struct device_attribute *attr, char *buf)
+{
+	struct wm8350 *wm8350 = dev_get_drvdata(dev);
+	char *charge;
+	int state;
 
-	state = wm8350_reg_पढ़ो(wm8350, WM8350_BATTERY_CHARGER_CONTROL_2) &
+	state = wm8350_reg_read(wm8350, WM8350_BATTERY_CHARGER_CONTROL_2) &
 	    WM8350_CHG_STS_MASK;
-	चयन (state) अणु
-	हाल WM8350_CHG_STS_OFF:
-		अक्षरge = "Charger Off";
-		अवरोध;
-	हाल WM8350_CHG_STS_TRICKLE:
-		अक्षरge = "Trickle Charging";
-		अवरोध;
-	हाल WM8350_CHG_STS_FAST:
-		अक्षरge = "Fast Charging";
-		अवरोध;
-	शेष:
-		वापस 0;
-	पूर्ण
+	switch (state) {
+	case WM8350_CHG_STS_OFF:
+		charge = "Charger Off";
+		break;
+	case WM8350_CHG_STS_TRICKLE:
+		charge = "Trickle Charging";
+		break;
+	case WM8350_CHG_STS_FAST:
+		charge = "Fast Charging";
+		break;
+	default:
+		return 0;
+	}
 
-	वापस प्र_लिखो(buf, "%s\n", अक्षरge);
-पूर्ण
+	return sprintf(buf, "%s\n", charge);
+}
 
-अटल DEVICE_ATTR_RO(अक्षरger_state);
+static DEVICE_ATTR_RO(charger_state);
 
-अटल irqवापस_t wm8350_अक्षरger_handler(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा wm8350 *wm8350 = data;
-	काष्ठा wm8350_घातer *घातer = &wm8350->घातer;
-	काष्ठा wm8350_अक्षरger_policy *policy = घातer->policy;
+static irqreturn_t wm8350_charger_handler(int irq, void *data)
+{
+	struct wm8350 *wm8350 = data;
+	struct wm8350_power *power = &wm8350->power;
+	struct wm8350_charger_policy *policy = power->policy;
 
-	चयन (irq - wm8350->irq_base) अणु
-	हाल WM8350_IRQ_CHG_BAT_FAIL:
+	switch (irq - wm8350->irq_base) {
+	case WM8350_IRQ_CHG_BAT_FAIL:
 		dev_err(wm8350->dev, "battery failed\n");
-		अवरोध;
-	हाल WM8350_IRQ_CHG_TO:
+		break;
+	case WM8350_IRQ_CHG_TO:
 		dev_err(wm8350->dev, "charger timeout\n");
-		घातer_supply_changed(घातer->battery);
-		अवरोध;
+		power_supply_changed(power->battery);
+		break;
 
-	हाल WM8350_IRQ_CHG_BAT_HOT:
-	हाल WM8350_IRQ_CHG_BAT_COLD:
-	हाल WM8350_IRQ_CHG_START:
-	हाल WM8350_IRQ_CHG_END:
-		घातer_supply_changed(घातer->battery);
-		अवरोध;
+	case WM8350_IRQ_CHG_BAT_HOT:
+	case WM8350_IRQ_CHG_BAT_COLD:
+	case WM8350_IRQ_CHG_START:
+	case WM8350_IRQ_CHG_END:
+		power_supply_changed(power->battery);
+		break;
 
-	हाल WM8350_IRQ_CHG_FAST_RDY:
+	case WM8350_IRQ_CHG_FAST_RDY:
 		dev_dbg(wm8350->dev, "fast charger ready\n");
-		wm8350_अक्षरger_config(wm8350, policy);
+		wm8350_charger_config(wm8350, policy);
 		wm8350_reg_unlock(wm8350);
 		wm8350_set_bits(wm8350, WM8350_BATTERY_CHARGER_CONTROL_1,
 				WM8350_CHG_FAST);
 		wm8350_reg_lock(wm8350);
-		अवरोध;
+		break;
 
-	हाल WM8350_IRQ_CHG_VBATT_LT_3P9:
+	case WM8350_IRQ_CHG_VBATT_LT_3P9:
 		dev_warn(wm8350->dev, "battery < 3.9V\n");
-		अवरोध;
-	हाल WM8350_IRQ_CHG_VBATT_LT_3P1:
+		break;
+	case WM8350_IRQ_CHG_VBATT_LT_3P1:
 		dev_warn(wm8350->dev, "battery < 3.1V\n");
-		अवरोध;
-	हाल WM8350_IRQ_CHG_VBATT_LT_2P85:
+		break;
+	case WM8350_IRQ_CHG_VBATT_LT_2P85:
 		dev_warn(wm8350->dev, "battery < 2.85V\n");
-		अवरोध;
+		break;
 
-		/* Supply change.  We will overnotअगरy but it should करो
+		/* Supply change.  We will overnotify but it should do
 		 * no harm. */
-	हाल WM8350_IRQ_EXT_USB_FB:
-	हाल WM8350_IRQ_EXT_WALL_FB:
-		wm8350_अक्षरger_config(wm8350, policy);
+	case WM8350_IRQ_EXT_USB_FB:
+	case WM8350_IRQ_EXT_WALL_FB:
+		wm8350_charger_config(wm8350, policy);
 		fallthrough;
-	हाल WM8350_IRQ_EXT_BAT_FB:
-		घातer_supply_changed(घातer->battery);
-		घातer_supply_changed(घातer->usb);
-		घातer_supply_changed(घातer->ac);
-		अवरोध;
+	case WM8350_IRQ_EXT_BAT_FB:
+		power_supply_changed(power->battery);
+		power_supply_changed(power->usb);
+		power_supply_changed(power->ac);
+		break;
 
-	शेष:
+	default:
 		dev_err(wm8350->dev, "Unknown interrupt %d\n", irq);
-	पूर्ण
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /*********************************************************************
  *		AC Power
  *********************************************************************/
-अटल पूर्णांक wm8350_ac_get_prop(काष्ठा घातer_supply *psy,
-			      क्रमागत घातer_supply_property psp,
-			      जोड़ घातer_supply_propval *val)
-अणु
-	काष्ठा wm8350 *wm8350 = dev_get_drvdata(psy->dev.parent);
-	पूर्णांक ret = 0;
+static int wm8350_ac_get_prop(struct power_supply *psy,
+			      enum power_supply_property psp,
+			      union power_supply_propval *val)
+{
+	struct wm8350 *wm8350 = dev_get_drvdata(psy->dev.parent);
+	int ret = 0;
 
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_ONLINE:
-		val->पूर्णांकval = !!(wm8350_get_supplies(wm8350) &
+	switch (psp) {
+	case POWER_SUPPLY_PROP_ONLINE:
+		val->intval = !!(wm8350_get_supplies(wm8350) &
 				 WM8350_LINE_SUPPLY);
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_VOLTAGE_NOW:
-		val->पूर्णांकval = wm8350_पढ़ो_line_uvolts(wm8350);
-		अवरोध;
-	शेष:
+		break;
+	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
+		val->intval = wm8350_read_line_uvolts(wm8350);
+		break;
+	default:
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
-	वापस ret;
-पूर्ण
+		break;
+	}
+	return ret;
+}
 
-अटल क्रमागत घातer_supply_property wm8350_ac_props[] = अणु
+static enum power_supply_property wm8350_ac_props[] = {
 	POWER_SUPPLY_PROP_ONLINE,
 	POWER_SUPPLY_PROP_VOLTAGE_NOW,
-पूर्ण;
+};
 
 /*********************************************************************
  *		USB Power
  *********************************************************************/
-अटल पूर्णांक wm8350_usb_get_prop(काष्ठा घातer_supply *psy,
-			       क्रमागत घातer_supply_property psp,
-			       जोड़ घातer_supply_propval *val)
-अणु
-	काष्ठा wm8350 *wm8350 = dev_get_drvdata(psy->dev.parent);
-	पूर्णांक ret = 0;
+static int wm8350_usb_get_prop(struct power_supply *psy,
+			       enum power_supply_property psp,
+			       union power_supply_propval *val)
+{
+	struct wm8350 *wm8350 = dev_get_drvdata(psy->dev.parent);
+	int ret = 0;
 
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_ONLINE:
-		val->पूर्णांकval = !!(wm8350_get_supplies(wm8350) &
+	switch (psp) {
+	case POWER_SUPPLY_PROP_ONLINE:
+		val->intval = !!(wm8350_get_supplies(wm8350) &
 				 WM8350_USB_SUPPLY);
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_VOLTAGE_NOW:
-		val->पूर्णांकval = wm8350_पढ़ो_usb_uvolts(wm8350);
-		अवरोध;
-	शेष:
+		break;
+	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
+		val->intval = wm8350_read_usb_uvolts(wm8350);
+		break;
+	default:
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
-	वापस ret;
-पूर्ण
+		break;
+	}
+	return ret;
+}
 
-अटल क्रमागत घातer_supply_property wm8350_usb_props[] = अणु
+static enum power_supply_property wm8350_usb_props[] = {
 	POWER_SUPPLY_PROP_ONLINE,
 	POWER_SUPPLY_PROP_VOLTAGE_NOW,
-पूर्ण;
+};
 
 /*********************************************************************
  *		Battery properties
  *********************************************************************/
 
-अटल पूर्णांक wm8350_bat_check_health(काष्ठा wm8350 *wm8350)
-अणु
+static int wm8350_bat_check_health(struct wm8350 *wm8350)
+{
 	u16 reg;
 
-	अगर (wm8350_पढ़ो_battery_uvolts(wm8350) < 2850000)
-		वापस POWER_SUPPLY_HEALTH_UNSPEC_FAILURE;
+	if (wm8350_read_battery_uvolts(wm8350) < 2850000)
+		return POWER_SUPPLY_HEALTH_UNSPEC_FAILURE;
 
-	reg = wm8350_reg_पढ़ो(wm8350, WM8350_CHARGER_OVERRIDES);
-	अगर (reg & WM8350_CHG_BATT_HOT_OVRDE)
-		वापस POWER_SUPPLY_HEALTH_OVERHEAT;
+	reg = wm8350_reg_read(wm8350, WM8350_CHARGER_OVERRIDES);
+	if (reg & WM8350_CHG_BATT_HOT_OVRDE)
+		return POWER_SUPPLY_HEALTH_OVERHEAT;
 
-	अगर (reg & WM8350_CHG_BATT_COLD_OVRDE)
-		वापस POWER_SUPPLY_HEALTH_COLD;
+	if (reg & WM8350_CHG_BATT_COLD_OVRDE)
+		return POWER_SUPPLY_HEALTH_COLD;
 
-	वापस POWER_SUPPLY_HEALTH_GOOD;
-पूर्ण
+	return POWER_SUPPLY_HEALTH_GOOD;
+}
 
-अटल पूर्णांक wm8350_bat_get_अक्षरge_type(काष्ठा wm8350 *wm8350)
-अणु
-	पूर्णांक state;
+static int wm8350_bat_get_charge_type(struct wm8350 *wm8350)
+{
+	int state;
 
-	state = wm8350_reg_पढ़ो(wm8350, WM8350_BATTERY_CHARGER_CONTROL_2) &
+	state = wm8350_reg_read(wm8350, WM8350_BATTERY_CHARGER_CONTROL_2) &
 	    WM8350_CHG_STS_MASK;
-	चयन (state) अणु
-	हाल WM8350_CHG_STS_OFF:
-		वापस POWER_SUPPLY_CHARGE_TYPE_NONE;
-	हाल WM8350_CHG_STS_TRICKLE:
-		वापस POWER_SUPPLY_CHARGE_TYPE_TRICKLE;
-	हाल WM8350_CHG_STS_FAST:
-		वापस POWER_SUPPLY_CHARGE_TYPE_FAST;
-	शेष:
-		वापस POWER_SUPPLY_CHARGE_TYPE_UNKNOWN;
-	पूर्ण
-पूर्ण
+	switch (state) {
+	case WM8350_CHG_STS_OFF:
+		return POWER_SUPPLY_CHARGE_TYPE_NONE;
+	case WM8350_CHG_STS_TRICKLE:
+		return POWER_SUPPLY_CHARGE_TYPE_TRICKLE;
+	case WM8350_CHG_STS_FAST:
+		return POWER_SUPPLY_CHARGE_TYPE_FAST;
+	default:
+		return POWER_SUPPLY_CHARGE_TYPE_UNKNOWN;
+	}
+}
 
-अटल पूर्णांक wm8350_bat_get_property(काष्ठा घातer_supply *psy,
-				   क्रमागत घातer_supply_property psp,
-				   जोड़ घातer_supply_propval *val)
-अणु
-	काष्ठा wm8350 *wm8350 = dev_get_drvdata(psy->dev.parent);
-	पूर्णांक ret = 0;
+static int wm8350_bat_get_property(struct power_supply *psy,
+				   enum power_supply_property psp,
+				   union power_supply_propval *val)
+{
+	struct wm8350 *wm8350 = dev_get_drvdata(psy->dev.parent);
+	int ret = 0;
 
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_STATUS:
-		val->पूर्णांकval = wm8350_batt_status(wm8350);
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_ONLINE:
-		val->पूर्णांकval = !!(wm8350_get_supplies(wm8350) &
+	switch (psp) {
+	case POWER_SUPPLY_PROP_STATUS:
+		val->intval = wm8350_batt_status(wm8350);
+		break;
+	case POWER_SUPPLY_PROP_ONLINE:
+		val->intval = !!(wm8350_get_supplies(wm8350) &
 				 WM8350_BATT_SUPPLY);
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_VOLTAGE_NOW:
-		val->पूर्णांकval = wm8350_पढ़ो_battery_uvolts(wm8350);
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_HEALTH:
-		val->पूर्णांकval = wm8350_bat_check_health(wm8350);
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_CHARGE_TYPE:
-		val->पूर्णांकval = wm8350_bat_get_अक्षरge_type(wm8350);
-		अवरोध;
-	शेष:
+		break;
+	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
+		val->intval = wm8350_read_battery_uvolts(wm8350);
+		break;
+	case POWER_SUPPLY_PROP_HEALTH:
+		val->intval = wm8350_bat_check_health(wm8350);
+		break;
+	case POWER_SUPPLY_PROP_CHARGE_TYPE:
+		val->intval = wm8350_bat_get_charge_type(wm8350);
+		break;
+	default:
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल क्रमागत घातer_supply_property wm8350_bat_props[] = अणु
+static enum power_supply_property wm8350_bat_props[] = {
 	POWER_SUPPLY_PROP_STATUS,
 	POWER_SUPPLY_PROP_ONLINE,
 	POWER_SUPPLY_PROP_VOLTAGE_NOW,
 	POWER_SUPPLY_PROP_HEALTH,
 	POWER_SUPPLY_PROP_CHARGE_TYPE,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा घातer_supply_desc wm8350_ac_desc = अणु
+static const struct power_supply_desc wm8350_ac_desc = {
 	.name		= "wm8350-ac",
 	.type		= POWER_SUPPLY_TYPE_MAINS,
 	.properties	= wm8350_ac_props,
 	.num_properties	= ARRAY_SIZE(wm8350_ac_props),
 	.get_property	= wm8350_ac_get_prop,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा घातer_supply_desc wm8350_battery_desc = अणु
+static const struct power_supply_desc wm8350_battery_desc = {
 	.name		= "wm8350-battery",
 	.properties	= wm8350_bat_props,
 	.num_properties	= ARRAY_SIZE(wm8350_bat_props),
 	.get_property	= wm8350_bat_get_property,
-	.use_क्रम_apm	= 1,
-पूर्ण;
+	.use_for_apm	= 1,
+};
 
-अटल स्थिर काष्ठा घातer_supply_desc wm8350_usb_desc = अणु
+static const struct power_supply_desc wm8350_usb_desc = {
 	.name		= "wm8350-usb",
 	.type		= POWER_SUPPLY_TYPE_USB,
 	.properties	= wm8350_usb_props,
 	.num_properties	= ARRAY_SIZE(wm8350_usb_props),
 	.get_property	= wm8350_usb_get_prop,
-पूर्ण;
+};
 
 /*********************************************************************
  *		Initialisation
  *********************************************************************/
 
-अटल व्योम wm8350_init_अक्षरger(काष्ठा wm8350 *wm8350)
-अणु
-	/* रेजिस्टर our पूर्णांकerest in अक्षरger events */
-	wm8350_रेजिस्टर_irq(wm8350, WM8350_IRQ_CHG_BAT_HOT,
-			    wm8350_अक्षरger_handler, 0, "Battery hot", wm8350);
-	wm8350_रेजिस्टर_irq(wm8350, WM8350_IRQ_CHG_BAT_COLD,
-			    wm8350_अक्षरger_handler, 0, "Battery cold", wm8350);
-	wm8350_रेजिस्टर_irq(wm8350, WM8350_IRQ_CHG_BAT_FAIL,
-			    wm8350_अक्षरger_handler, 0, "Battery fail", wm8350);
-	wm8350_रेजिस्टर_irq(wm8350, WM8350_IRQ_CHG_TO,
-			    wm8350_अक्षरger_handler, 0,
+static void wm8350_init_charger(struct wm8350 *wm8350)
+{
+	/* register our interest in charger events */
+	wm8350_register_irq(wm8350, WM8350_IRQ_CHG_BAT_HOT,
+			    wm8350_charger_handler, 0, "Battery hot", wm8350);
+	wm8350_register_irq(wm8350, WM8350_IRQ_CHG_BAT_COLD,
+			    wm8350_charger_handler, 0, "Battery cold", wm8350);
+	wm8350_register_irq(wm8350, WM8350_IRQ_CHG_BAT_FAIL,
+			    wm8350_charger_handler, 0, "Battery fail", wm8350);
+	wm8350_register_irq(wm8350, WM8350_IRQ_CHG_TO,
+			    wm8350_charger_handler, 0,
 			    "Charger timeout", wm8350);
-	wm8350_रेजिस्टर_irq(wm8350, WM8350_IRQ_CHG_END,
-			    wm8350_अक्षरger_handler, 0,
+	wm8350_register_irq(wm8350, WM8350_IRQ_CHG_END,
+			    wm8350_charger_handler, 0,
 			    "Charge end", wm8350);
-	wm8350_रेजिस्टर_irq(wm8350, WM8350_IRQ_CHG_START,
-			    wm8350_अक्षरger_handler, 0,
+	wm8350_register_irq(wm8350, WM8350_IRQ_CHG_START,
+			    wm8350_charger_handler, 0,
 			    "Charge start", wm8350);
-	wm8350_रेजिस्टर_irq(wm8350, WM8350_IRQ_CHG_FAST_RDY,
-			    wm8350_अक्षरger_handler, 0,
+	wm8350_register_irq(wm8350, WM8350_IRQ_CHG_FAST_RDY,
+			    wm8350_charger_handler, 0,
 			    "Fast charge ready", wm8350);
-	wm8350_रेजिस्टर_irq(wm8350, WM8350_IRQ_CHG_VBATT_LT_3P9,
-			    wm8350_अक्षरger_handler, 0,
+	wm8350_register_irq(wm8350, WM8350_IRQ_CHG_VBATT_LT_3P9,
+			    wm8350_charger_handler, 0,
 			    "Battery <3.9V", wm8350);
-	wm8350_रेजिस्टर_irq(wm8350, WM8350_IRQ_CHG_VBATT_LT_3P1,
-			    wm8350_अक्षरger_handler, 0,
+	wm8350_register_irq(wm8350, WM8350_IRQ_CHG_VBATT_LT_3P1,
+			    wm8350_charger_handler, 0,
 			    "Battery <3.1V", wm8350);
-	wm8350_रेजिस्टर_irq(wm8350, WM8350_IRQ_CHG_VBATT_LT_2P85,
-			    wm8350_अक्षरger_handler, 0,
+	wm8350_register_irq(wm8350, WM8350_IRQ_CHG_VBATT_LT_2P85,
+			    wm8350_charger_handler, 0,
 			    "Battery <2.85V", wm8350);
 
 	/* and supply change events */
-	wm8350_रेजिस्टर_irq(wm8350, WM8350_IRQ_EXT_USB_FB,
-			    wm8350_अक्षरger_handler, 0, "USB", wm8350);
-	wm8350_रेजिस्टर_irq(wm8350, WM8350_IRQ_EXT_WALL_FB,
-			    wm8350_अक्षरger_handler, 0, "Wall", wm8350);
-	wm8350_रेजिस्टर_irq(wm8350, WM8350_IRQ_EXT_BAT_FB,
-			    wm8350_अक्षरger_handler, 0, "Battery", wm8350);
-पूर्ण
+	wm8350_register_irq(wm8350, WM8350_IRQ_EXT_USB_FB,
+			    wm8350_charger_handler, 0, "USB", wm8350);
+	wm8350_register_irq(wm8350, WM8350_IRQ_EXT_WALL_FB,
+			    wm8350_charger_handler, 0, "Wall", wm8350);
+	wm8350_register_irq(wm8350, WM8350_IRQ_EXT_BAT_FB,
+			    wm8350_charger_handler, 0, "Battery", wm8350);
+}
 
-अटल व्योम मुक्त_अक्षरger_irq(काष्ठा wm8350 *wm8350)
-अणु
-	wm8350_मुक्त_irq(wm8350, WM8350_IRQ_CHG_BAT_HOT, wm8350);
-	wm8350_मुक्त_irq(wm8350, WM8350_IRQ_CHG_BAT_COLD, wm8350);
-	wm8350_मुक्त_irq(wm8350, WM8350_IRQ_CHG_BAT_FAIL, wm8350);
-	wm8350_मुक्त_irq(wm8350, WM8350_IRQ_CHG_TO, wm8350);
-	wm8350_मुक्त_irq(wm8350, WM8350_IRQ_CHG_END, wm8350);
-	wm8350_मुक्त_irq(wm8350, WM8350_IRQ_CHG_START, wm8350);
-	wm8350_मुक्त_irq(wm8350, WM8350_IRQ_CHG_VBATT_LT_3P9, wm8350);
-	wm8350_मुक्त_irq(wm8350, WM8350_IRQ_CHG_VBATT_LT_3P1, wm8350);
-	wm8350_मुक्त_irq(wm8350, WM8350_IRQ_CHG_VBATT_LT_2P85, wm8350);
-	wm8350_मुक्त_irq(wm8350, WM8350_IRQ_EXT_USB_FB, wm8350);
-	wm8350_मुक्त_irq(wm8350, WM8350_IRQ_EXT_WALL_FB, wm8350);
-	wm8350_मुक्त_irq(wm8350, WM8350_IRQ_EXT_BAT_FB, wm8350);
-पूर्ण
+static void free_charger_irq(struct wm8350 *wm8350)
+{
+	wm8350_free_irq(wm8350, WM8350_IRQ_CHG_BAT_HOT, wm8350);
+	wm8350_free_irq(wm8350, WM8350_IRQ_CHG_BAT_COLD, wm8350);
+	wm8350_free_irq(wm8350, WM8350_IRQ_CHG_BAT_FAIL, wm8350);
+	wm8350_free_irq(wm8350, WM8350_IRQ_CHG_TO, wm8350);
+	wm8350_free_irq(wm8350, WM8350_IRQ_CHG_END, wm8350);
+	wm8350_free_irq(wm8350, WM8350_IRQ_CHG_START, wm8350);
+	wm8350_free_irq(wm8350, WM8350_IRQ_CHG_VBATT_LT_3P9, wm8350);
+	wm8350_free_irq(wm8350, WM8350_IRQ_CHG_VBATT_LT_3P1, wm8350);
+	wm8350_free_irq(wm8350, WM8350_IRQ_CHG_VBATT_LT_2P85, wm8350);
+	wm8350_free_irq(wm8350, WM8350_IRQ_EXT_USB_FB, wm8350);
+	wm8350_free_irq(wm8350, WM8350_IRQ_EXT_WALL_FB, wm8350);
+	wm8350_free_irq(wm8350, WM8350_IRQ_EXT_BAT_FB, wm8350);
+}
 
-अटल पूर्णांक wm8350_घातer_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा wm8350 *wm8350 = platक्रमm_get_drvdata(pdev);
-	काष्ठा wm8350_घातer *घातer = &wm8350->घातer;
-	काष्ठा wm8350_अक्षरger_policy *policy = घातer->policy;
-	पूर्णांक ret;
+static int wm8350_power_probe(struct platform_device *pdev)
+{
+	struct wm8350 *wm8350 = platform_get_drvdata(pdev);
+	struct wm8350_power *power = &wm8350->power;
+	struct wm8350_charger_policy *policy = power->policy;
+	int ret;
 
-	घातer->ac = घातer_supply_रेजिस्टर(&pdev->dev, &wm8350_ac_desc, शून्य);
-	अगर (IS_ERR(घातer->ac))
-		वापस PTR_ERR(घातer->ac);
+	power->ac = power_supply_register(&pdev->dev, &wm8350_ac_desc, NULL);
+	if (IS_ERR(power->ac))
+		return PTR_ERR(power->ac);
 
-	घातer->battery = घातer_supply_रेजिस्टर(&pdev->dev, &wm8350_battery_desc,
-					       शून्य);
-	अगर (IS_ERR(घातer->battery)) अणु
-		ret = PTR_ERR(घातer->battery);
-		जाओ battery_failed;
-	पूर्ण
+	power->battery = power_supply_register(&pdev->dev, &wm8350_battery_desc,
+					       NULL);
+	if (IS_ERR(power->battery)) {
+		ret = PTR_ERR(power->battery);
+		goto battery_failed;
+	}
 
-	घातer->usb = घातer_supply_रेजिस्टर(&pdev->dev, &wm8350_usb_desc, शून्य);
-	अगर (IS_ERR(घातer->usb)) अणु
-		ret = PTR_ERR(घातer->usb);
-		जाओ usb_failed;
-	पूर्ण
+	power->usb = power_supply_register(&pdev->dev, &wm8350_usb_desc, NULL);
+	if (IS_ERR(power->usb)) {
+		ret = PTR_ERR(power->usb);
+		goto usb_failed;
+	}
 
-	ret = device_create_file(&pdev->dev, &dev_attr_अक्षरger_state);
-	अगर (ret < 0)
+	ret = device_create_file(&pdev->dev, &dev_attr_charger_state);
+	if (ret < 0)
 		dev_warn(wm8350->dev, "failed to add charge sysfs: %d\n", ret);
 	ret = 0;
 
-	wm8350_init_अक्षरger(wm8350);
-	अगर (wm8350_अक्षरger_config(wm8350, policy) == 0) अणु
+	wm8350_init_charger(wm8350);
+	if (wm8350_charger_config(wm8350, policy) == 0) {
 		wm8350_reg_unlock(wm8350);
 		wm8350_set_bits(wm8350, WM8350_POWER_MGMT_5, WM8350_CHG_ENA);
 		wm8350_reg_lock(wm8350);
-	पूर्ण
+	}
 
-	वापस ret;
+	return ret;
 
 usb_failed:
-	घातer_supply_unरेजिस्टर(घातer->battery);
+	power_supply_unregister(power->battery);
 battery_failed:
-	घातer_supply_unरेजिस्टर(घातer->ac);
+	power_supply_unregister(power->ac);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक wm8350_घातer_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा wm8350 *wm8350 = platक्रमm_get_drvdata(pdev);
-	काष्ठा wm8350_घातer *घातer = &wm8350->घातer;
+static int wm8350_power_remove(struct platform_device *pdev)
+{
+	struct wm8350 *wm8350 = platform_get_drvdata(pdev);
+	struct wm8350_power *power = &wm8350->power;
 
-	मुक्त_अक्षरger_irq(wm8350);
-	device_हटाओ_file(&pdev->dev, &dev_attr_अक्षरger_state);
-	घातer_supply_unरेजिस्टर(घातer->battery);
-	घातer_supply_unरेजिस्टर(घातer->ac);
-	घातer_supply_unरेजिस्टर(घातer->usb);
-	वापस 0;
-पूर्ण
+	free_charger_irq(wm8350);
+	device_remove_file(&pdev->dev, &dev_attr_charger_state);
+	power_supply_unregister(power->battery);
+	power_supply_unregister(power->ac);
+	power_supply_unregister(power->usb);
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver wm8350_घातer_driver = अणु
-	.probe = wm8350_घातer_probe,
-	.हटाओ = wm8350_घातer_हटाओ,
-	.driver = अणु
+static struct platform_driver wm8350_power_driver = {
+	.probe = wm8350_power_probe,
+	.remove = wm8350_power_remove,
+	.driver = {
 		.name = "wm8350-power",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(wm8350_घातer_driver);
+module_platform_driver(wm8350_power_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Power supply driver for WM8350");

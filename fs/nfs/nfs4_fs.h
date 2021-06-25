@@ -1,33 +1,32 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * linux/fs/nfs/nfs4_fs.h
  *
  * Copyright (C) 2005 Trond Myklebust
  *
- * NFSv4-specअगरic fileप्रणाली definitions and declarations
+ * NFSv4-specific filesystem definitions and declarations
  */
 
-#अगर_अघोषित __LINUX_FS_NFS_NFS4_FS_H
-#घोषणा __LINUX_FS_NFS_NFS4_FS_H
+#ifndef __LINUX_FS_NFS_NFS4_FS_H
+#define __LINUX_FS_NFS_NFS4_FS_H
 
-#अगर defined(CONFIG_NFS_V4_2)
-#घोषणा NFS4_MAX_MINOR_VERSION 2
-#या_अगर defined(CONFIG_NFS_V4_1)
-#घोषणा NFS4_MAX_MINOR_VERSION 1
-#अन्यथा
-#घोषणा NFS4_MAX_MINOR_VERSION 0
-#पूर्ण_अगर
+#if defined(CONFIG_NFS_V4_2)
+#define NFS4_MAX_MINOR_VERSION 2
+#elif defined(CONFIG_NFS_V4_1)
+#define NFS4_MAX_MINOR_VERSION 1
+#else
+#define NFS4_MAX_MINOR_VERSION 0
+#endif
 
-#अगर IS_ENABLED(CONFIG_NFS_V4)
+#if IS_ENABLED(CONFIG_NFS_V4)
 
-#घोषणा NFS4_MAX_LOOP_ON_RECOVER (10)
+#define NFS4_MAX_LOOP_ON_RECOVER (10)
 
-#समावेश <linux/seqlock.h>
+#include <linux/seqlock.h>
 
-काष्ठा idmap;
+struct idmap;
 
-क्रमागत nfs4_client_state अणु
+enum nfs4_client_state {
 	NFS4CLNT_MANAGER_RUNNING  = 0,
 	NFS4CLNT_CHECK_LEASE,
 	NFS4CLNT_LEASE_EXPIRED,
@@ -46,333 +45,333 @@
 	NFS4CLNT_RECALL_RUNNING,
 	NFS4CLNT_RECALL_ANY_LAYOUT_READ,
 	NFS4CLNT_RECALL_ANY_LAYOUT_RW,
-पूर्ण;
+};
 
-#घोषणा NFS4_RENEW_TIMEOUT		0x01
-#घोषणा NFS4_RENEW_DELEGATION_CB	0x02
+#define NFS4_RENEW_TIMEOUT		0x01
+#define NFS4_RENEW_DELEGATION_CB	0x02
 
-काष्ठा nfs_seqid_counter;
-काष्ठा nfs4_minor_version_ops अणु
+struct nfs_seqid_counter;
+struct nfs4_minor_version_ops {
 	u32	minor_version;
-	अचिन्हित init_caps;
+	unsigned init_caps;
 
-	पूर्णांक	(*init_client)(काष्ठा nfs_client *);
-	व्योम	(*shutकरोwn_client)(काष्ठा nfs_client *);
-	bool	(*match_stateid)(स्थिर nfs4_stateid *,
-			स्थिर nfs4_stateid *);
-	पूर्णांक	(*find_root_sec)(काष्ठा nfs_server *, काष्ठा nfs_fh *,
-			काष्ठा nfs_fsinfo *);
-	व्योम	(*मुक्त_lock_state)(काष्ठा nfs_server *,
-			काष्ठा nfs4_lock_state *);
-	पूर्णांक	(*test_and_मुक्त_expired)(काष्ठा nfs_server *,
-			nfs4_stateid *, स्थिर काष्ठा cred *);
-	काष्ठा nfs_seqid *
-		(*alloc_seqid)(काष्ठा nfs_seqid_counter *, gfp_t);
-	व्योम	(*session_trunk)(काष्ठा rpc_clnt *clnt,
-			काष्ठा rpc_xprt *xprt, व्योम *data);
-	स्थिर काष्ठा rpc_call_ops *call_sync_ops;
-	स्थिर काष्ठा nfs4_state_recovery_ops *reboot_recovery_ops;
-	स्थिर काष्ठा nfs4_state_recovery_ops *nograce_recovery_ops;
-	स्थिर काष्ठा nfs4_state_मुख्यtenance_ops *state_renewal_ops;
-	स्थिर काष्ठा nfs4_mig_recovery_ops *mig_recovery_ops;
-पूर्ण;
+	int	(*init_client)(struct nfs_client *);
+	void	(*shutdown_client)(struct nfs_client *);
+	bool	(*match_stateid)(const nfs4_stateid *,
+			const nfs4_stateid *);
+	int	(*find_root_sec)(struct nfs_server *, struct nfs_fh *,
+			struct nfs_fsinfo *);
+	void	(*free_lock_state)(struct nfs_server *,
+			struct nfs4_lock_state *);
+	int	(*test_and_free_expired)(struct nfs_server *,
+			nfs4_stateid *, const struct cred *);
+	struct nfs_seqid *
+		(*alloc_seqid)(struct nfs_seqid_counter *, gfp_t);
+	void	(*session_trunk)(struct rpc_clnt *clnt,
+			struct rpc_xprt *xprt, void *data);
+	const struct rpc_call_ops *call_sync_ops;
+	const struct nfs4_state_recovery_ops *reboot_recovery_ops;
+	const struct nfs4_state_recovery_ops *nograce_recovery_ops;
+	const struct nfs4_state_maintenance_ops *state_renewal_ops;
+	const struct nfs4_mig_recovery_ops *mig_recovery_ops;
+};
 
-#घोषणा NFS_SEQID_CONFIRMED 1
-काष्ठा nfs_seqid_counter अणु
-	kसमय_प्रकार create_समय;
-	पूर्णांक owner_id;
-	पूर्णांक flags;
+#define NFS_SEQID_CONFIRMED 1
+struct nfs_seqid_counter {
+	ktime_t create_time;
+	int owner_id;
+	int flags;
 	u32 counter;
 	spinlock_t lock;		/* Protects the list */
-	काष्ठा list_head list;		/* Defines sequence of RPC calls */
-	काष्ठा rpc_रुको_queue	रुको;	/* RPC call delay queue */
-पूर्ण;
+	struct list_head list;		/* Defines sequence of RPC calls */
+	struct rpc_wait_queue	wait;	/* RPC call delay queue */
+};
 
-काष्ठा nfs_seqid अणु
-	काष्ठा nfs_seqid_counter *sequence;
-	काष्ठा list_head list;
-	काष्ठा rpc_task *task;
-पूर्ण;
+struct nfs_seqid {
+	struct nfs_seqid_counter *sequence;
+	struct list_head list;
+	struct rpc_task *task;
+};
 
-अटल अंतरभूत व्योम nfs_confirm_seqid(काष्ठा nfs_seqid_counter *seqid, पूर्णांक status)
-अणु
-	अगर (seqid_mutating_err(-status))
+static inline void nfs_confirm_seqid(struct nfs_seqid_counter *seqid, int status)
+{
+	if (seqid_mutating_err(-status))
 		seqid->flags |= NFS_SEQID_CONFIRMED;
-पूर्ण
+}
 
 /*
- * NFS4 state_owners and lock_owners are simply labels क्रम ordered
+ * NFS4 state_owners and lock_owners are simply labels for ordered
  * sequences of RPC calls. Their sole purpose is to provide once-only
- * semantics by allowing the server to identअगरy replayed requests.
+ * semantics by allowing the server to identify replayed requests.
  */
-काष्ठा nfs4_state_owner अणु
-	काष्ठा nfs_server    *so_server;
-	काष्ठा list_head     so_lru;
-	अचिन्हित दीर्घ        so_expires;
-	काष्ठा rb_node	     so_server_node;
+struct nfs4_state_owner {
+	struct nfs_server    *so_server;
+	struct list_head     so_lru;
+	unsigned long        so_expires;
+	struct rb_node	     so_server_node;
 
-	स्थिर काष्ठा cred    *so_cred;	 /* Associated cred */
+	const struct cred    *so_cred;	 /* Associated cred */
 
 	spinlock_t	     so_lock;
 	atomic_t	     so_count;
-	अचिन्हित दीर्घ	     so_flags;
-	काष्ठा list_head     so_states;
-	काष्ठा nfs_seqid_counter so_seqid;
+	unsigned long	     so_flags;
+	struct list_head     so_states;
+	struct nfs_seqid_counter so_seqid;
 	seqcount_spinlock_t  so_reclaim_seqcount;
-	काष्ठा mutex	     so_delegवापस_mutex;
-पूर्ण;
+	struct mutex	     so_delegreturn_mutex;
+};
 
-क्रमागत अणु
+enum {
 	NFS_OWNER_RECLAIM_REBOOT,
 	NFS_OWNER_RECLAIM_NOGRACE
-पूर्ण;
+};
 
-#घोषणा NFS_LOCK_NEW		0
-#घोषणा NFS_LOCK_RECLAIM	1
-#घोषणा NFS_LOCK_EXPIRED	2
+#define NFS_LOCK_NEW		0
+#define NFS_LOCK_RECLAIM	1
+#define NFS_LOCK_EXPIRED	2
 
 /*
- * काष्ठा nfs4_state मुख्यtains the client-side state क्रम a given
+ * struct nfs4_state maintains the client-side state for a given
  * (state_owner,inode) tuple (OPEN) or state_owner (LOCK).
  *
  * OPEN:
  * In order to know when to OPEN_DOWNGRADE or CLOSE the state on the server,
- * we need to know how many files are खोलो क्रम पढ़ोing or writing on a
- * given inode. This inक्रमmation too is stored here.
+ * we need to know how many files are open for reading or writing on a
+ * given inode. This information too is stored here.
  *
  * LOCK: one nfs4_state (LOCK) to hold the lock stateid nfs4_state(OPEN)
  */
 
-काष्ठा nfs4_lock_state अणु
-	काष्ठा list_head	ls_locks;	/* Other lock stateids */
-	काष्ठा nfs4_state *	ls_state;	/* Poपूर्णांकer to खोलो state */
-#घोषणा NFS_LOCK_INITIALIZED 0
-#घोषणा NFS_LOCK_LOST        1
-	अचिन्हित दीर्घ		ls_flags;
-	काष्ठा nfs_seqid_counter	ls_seqid;
+struct nfs4_lock_state {
+	struct list_head	ls_locks;	/* Other lock stateids */
+	struct nfs4_state *	ls_state;	/* Pointer to open state */
+#define NFS_LOCK_INITIALIZED 0
+#define NFS_LOCK_LOST        1
+	unsigned long		ls_flags;
+	struct nfs_seqid_counter	ls_seqid;
 	nfs4_stateid		ls_stateid;
 	refcount_t		ls_count;
 	fl_owner_t		ls_owner;
-पूर्ण;
+};
 
-/* bits क्रम nfs4_state->flags */
-क्रमागत अणु
+/* bits for nfs4_state->flags */
+enum {
 	LK_STATE_IN_USE,
 	NFS_DELEGATED_STATE,		/* Current stateid is delegation */
 	NFS_OPEN_STATE,			/* OPEN stateid is set */
-	NFS_O_RDONLY_STATE,		/* OPEN stateid has पढ़ो-only state */
-	NFS_O_WRONLY_STATE,		/* OPEN stateid has ग_लिखो-only state */
-	NFS_O_RDWR_STATE,		/* OPEN stateid has पढ़ो/ग_लिखो state */
+	NFS_O_RDONLY_STATE,		/* OPEN stateid has read-only state */
+	NFS_O_WRONLY_STATE,		/* OPEN stateid has write-only state */
+	NFS_O_RDWR_STATE,		/* OPEN stateid has read/write state */
 	NFS_STATE_RECLAIM_REBOOT,	/* OPEN stateid server rebooted */
 	NFS_STATE_RECLAIM_NOGRACE,	/* OPEN stateid needs to recover state */
 	NFS_STATE_POSIX_LOCKS,		/* Posix locks are supported */
 	NFS_STATE_RECOVERY_FAILED,	/* OPEN stateid state recovery failed */
 	NFS_STATE_MAY_NOTIFY_LOCK,	/* server may CB_NOTIFY_LOCK */
 	NFS_STATE_CHANGE_WAIT,		/* A state changing operation is outstanding */
-	NFS_CLNT_DST_SSC_COPY_STATE,    /* dst server खोलो state on client*/
-	NFS_CLNT_SRC_SSC_COPY_STATE,    /* src server खोलो state on client*/
+	NFS_CLNT_DST_SSC_COPY_STATE,    /* dst server open state on client*/
+	NFS_CLNT_SRC_SSC_COPY_STATE,    /* src server open state on client*/
 	NFS_SRV_SSC_COPY_STATE,		/* ssc state on the dst server */
-पूर्ण;
+};
 
-काष्ठा nfs4_state अणु
-	काष्ठा list_head खोलो_states;	/* List of states क्रम the same state_owner */
-	काष्ठा list_head inode_states;	/* List of states क्रम the same inode */
-	काष्ठा list_head lock_states;	/* List of subservient lock stateids */
+struct nfs4_state {
+	struct list_head open_states;	/* List of states for the same state_owner */
+	struct list_head inode_states;	/* List of states for the same inode */
+	struct list_head lock_states;	/* List of subservient lock stateids */
 
-	काष्ठा nfs4_state_owner *owner;	/* Poपूर्णांकer to the खोलो owner */
-	काष्ठा inode *inode;		/* Poपूर्णांकer to the inode */
+	struct nfs4_state_owner *owner;	/* Pointer to the open owner */
+	struct inode *inode;		/* Pointer to the inode */
 
-	अचिन्हित दीर्घ flags;		/* Do we hold any locks? */
+	unsigned long flags;		/* Do we hold any locks? */
 	spinlock_t state_lock;		/* Protects the lock_states list */
 
-	seqlock_t seqlock;		/* Protects the stateid/खोलो_stateid */
+	seqlock_t seqlock;		/* Protects the stateid/open_stateid */
 	nfs4_stateid stateid;		/* Current stateid: may be delegation */
-	nfs4_stateid खोलो_stateid;	/* OPEN stateid */
+	nfs4_stateid open_stateid;	/* OPEN stateid */
 
-	/* The following 3 fields are रक्षित by owner->so_lock */
-	अचिन्हित पूर्णांक n_rकरोnly;		/* Number of पढ़ो-only references */
-	अचिन्हित पूर्णांक n_wronly;		/* Number of ग_लिखो-only references */
-	अचिन्हित पूर्णांक n_rdwr;		/* Number of पढ़ो/ग_लिखो references */
-	भ_शेषe_t state;			/* State on the server (R,W, or RW) */
+	/* The following 3 fields are protected by owner->so_lock */
+	unsigned int n_rdonly;		/* Number of read-only references */
+	unsigned int n_wronly;		/* Number of write-only references */
+	unsigned int n_rdwr;		/* Number of read/write references */
+	fmode_t state;			/* State on the server (R,W, or RW) */
 	refcount_t count;
 
-	रुको_queue_head_t रुकोq;
-	काष्ठा rcu_head rcu_head;
-पूर्ण;
+	wait_queue_head_t waitq;
+	struct rcu_head rcu_head;
+};
 
 
-काष्ठा nfs4_exception अणु
-	काष्ठा nfs4_state *state;
-	काष्ठा inode *inode;
+struct nfs4_exception {
+	struct nfs4_state *state;
+	struct inode *inode;
 	nfs4_stateid *stateid;
-	दीर्घ समयout;
-	अचिन्हित अक्षर task_is_privileged : 1;
-	अचिन्हित अक्षर delay : 1,
+	long timeout;
+	unsigned char task_is_privileged : 1;
+	unsigned char delay : 1,
 		      recovering : 1,
 		      retry : 1;
-	bool पूर्णांकerruptible;
-पूर्ण;
+	bool interruptible;
+};
 
-काष्ठा nfs4_state_recovery_ops अणु
-	पूर्णांक owner_flag_bit;
-	पूर्णांक state_flag_bit;
-	पूर्णांक (*recover_खोलो)(काष्ठा nfs4_state_owner *, काष्ठा nfs4_state *);
-	पूर्णांक (*recover_lock)(काष्ठा nfs4_state *, काष्ठा file_lock *);
-	पूर्णांक (*establish_clid)(काष्ठा nfs_client *, स्थिर काष्ठा cred *);
-	पूर्णांक (*reclaim_complete)(काष्ठा nfs_client *, स्थिर काष्ठा cred *);
-	पूर्णांक (*detect_trunking)(काष्ठा nfs_client *, काष्ठा nfs_client **,
-		स्थिर काष्ठा cred *);
-पूर्ण;
+struct nfs4_state_recovery_ops {
+	int owner_flag_bit;
+	int state_flag_bit;
+	int (*recover_open)(struct nfs4_state_owner *, struct nfs4_state *);
+	int (*recover_lock)(struct nfs4_state *, struct file_lock *);
+	int (*establish_clid)(struct nfs_client *, const struct cred *);
+	int (*reclaim_complete)(struct nfs_client *, const struct cred *);
+	int (*detect_trunking)(struct nfs_client *, struct nfs_client **,
+		const struct cred *);
+};
 
-काष्ठा nfs4_खोलोdata अणु
-	काष्ठा kref kref;
-	काष्ठा nfs_खोलोargs o_arg;
-	काष्ठा nfs_खोलोres o_res;
-	काष्ठा nfs_खोलो_confirmargs c_arg;
-	काष्ठा nfs_खोलो_confirmres c_res;
-	काष्ठा nfs4_string owner_name;
-	काष्ठा nfs4_string group_name;
-	काष्ठा nfs4_label *a_label;
-	काष्ठा nfs_fattr f_attr;
-	काष्ठा nfs4_label *f_label;
-	काष्ठा dentry *dir;
-	काष्ठा dentry *dentry;
-	काष्ठा nfs4_state_owner *owner;
-	काष्ठा nfs4_state *state;
-	काष्ठा iattr attrs;
-	काष्ठा nfs4_layoutget *lgp;
-	अचिन्हित दीर्घ बारtamp;
-	bool rpc_करोne;
+struct nfs4_opendata {
+	struct kref kref;
+	struct nfs_openargs o_arg;
+	struct nfs_openres o_res;
+	struct nfs_open_confirmargs c_arg;
+	struct nfs_open_confirmres c_res;
+	struct nfs4_string owner_name;
+	struct nfs4_string group_name;
+	struct nfs4_label *a_label;
+	struct nfs_fattr f_attr;
+	struct nfs4_label *f_label;
+	struct dentry *dir;
+	struct dentry *dentry;
+	struct nfs4_state_owner *owner;
+	struct nfs4_state *state;
+	struct iattr attrs;
+	struct nfs4_layoutget *lgp;
+	unsigned long timestamp;
+	bool rpc_done;
 	bool file_created;
 	bool is_recover;
 	bool cancelled;
-	पूर्णांक rpc_status;
-पूर्ण;
+	int rpc_status;
+};
 
-काष्ठा nfs4_add_xprt_data अणु
-	काष्ठा nfs_client	*clp;
-	स्थिर काष्ठा cred	*cred;
-पूर्ण;
+struct nfs4_add_xprt_data {
+	struct nfs_client	*clp;
+	const struct cred	*cred;
+};
 
-काष्ठा nfs4_state_मुख्यtenance_ops अणु
-	पूर्णांक (*sched_state_renewal)(काष्ठा nfs_client *, स्थिर काष्ठा cred *, अचिन्हित);
-	स्थिर काष्ठा cred * (*get_state_renewal_cred)(काष्ठा nfs_client *);
-	पूर्णांक (*renew_lease)(काष्ठा nfs_client *, स्थिर काष्ठा cred *);
-पूर्ण;
+struct nfs4_state_maintenance_ops {
+	int (*sched_state_renewal)(struct nfs_client *, const struct cred *, unsigned);
+	const struct cred * (*get_state_renewal_cred)(struct nfs_client *);
+	int (*renew_lease)(struct nfs_client *, const struct cred *);
+};
 
-काष्ठा nfs4_mig_recovery_ops अणु
-	पूर्णांक (*get_locations)(काष्ठा inode *, काष्ठा nfs4_fs_locations *,
-		काष्ठा page *, स्थिर काष्ठा cred *);
-	पूर्णांक (*fsid_present)(काष्ठा inode *, स्थिर काष्ठा cred *);
-पूर्ण;
+struct nfs4_mig_recovery_ops {
+	int (*get_locations)(struct inode *, struct nfs4_fs_locations *,
+		struct page *, const struct cred *);
+	int (*fsid_present)(struct inode *, const struct cred *);
+};
 
-बाह्य स्थिर काष्ठा dentry_operations nfs4_dentry_operations;
+extern const struct dentry_operations nfs4_dentry_operations;
 
 /* dir.c */
-पूर्णांक nfs_atomic_खोलो(काष्ठा inode *, काष्ठा dentry *, काष्ठा file *,
-		    अचिन्हित, umode_t);
+int nfs_atomic_open(struct inode *, struct dentry *, struct file *,
+		    unsigned, umode_t);
 
 /* fs_context.c */
-बाह्य काष्ठा file_प्रणाली_type nfs4_fs_type;
+extern struct file_system_type nfs4_fs_type;
 
 /* nfs4namespace.c */
-काष्ठा rpc_clnt *nfs4_negotiate_security(काष्ठा rpc_clnt *, काष्ठा inode *,
-					 स्थिर काष्ठा qstr *);
-पूर्णांक nfs4_submount(काष्ठा fs_context *, काष्ठा nfs_server *);
-पूर्णांक nfs4_replace_transport(काष्ठा nfs_server *server,
-				स्थिर काष्ठा nfs4_fs_locations *locations);
+struct rpc_clnt *nfs4_negotiate_security(struct rpc_clnt *, struct inode *,
+					 const struct qstr *);
+int nfs4_submount(struct fs_context *, struct nfs_server *);
+int nfs4_replace_transport(struct nfs_server *server,
+				const struct nfs4_fs_locations *locations);
 
 /* nfs4proc.c */
-बाह्य पूर्णांक nfs4_handle_exception(काष्ठा nfs_server *, पूर्णांक, काष्ठा nfs4_exception *);
-बाह्य पूर्णांक nfs4_async_handle_error(काष्ठा rpc_task *task,
-				   काष्ठा nfs_server *server,
-				   काष्ठा nfs4_state *state, दीर्घ *समयout);
-बाह्य पूर्णांक nfs4_call_sync(काष्ठा rpc_clnt *, काष्ठा nfs_server *,
-			  काष्ठा rpc_message *, काष्ठा nfs4_sequence_args *,
-			  काष्ठा nfs4_sequence_res *, पूर्णांक);
-बाह्य व्योम nfs4_init_sequence(काष्ठा nfs4_sequence_args *, काष्ठा nfs4_sequence_res *, पूर्णांक, पूर्णांक);
-बाह्य पूर्णांक nfs4_proc_setclientid(काष्ठा nfs_client *, u32, अचिन्हित लघु, स्थिर काष्ठा cred *, काष्ठा nfs4_setclientid_res *);
-बाह्य पूर्णांक nfs4_proc_setclientid_confirm(काष्ठा nfs_client *, काष्ठा nfs4_setclientid_res *arg, स्थिर काष्ठा cred *);
-बाह्य पूर्णांक nfs4_proc_get_rootfh(काष्ठा nfs_server *, काष्ठा nfs_fh *, काष्ठा nfs_fsinfo *, bool);
-बाह्य पूर्णांक nfs4_proc_bind_conn_to_session(काष्ठा nfs_client *, स्थिर काष्ठा cred *cred);
-बाह्य पूर्णांक nfs4_proc_exchange_id(काष्ठा nfs_client *clp, स्थिर काष्ठा cred *cred);
-बाह्य पूर्णांक nfs4_destroy_clientid(काष्ठा nfs_client *clp);
-बाह्य पूर्णांक nfs4_init_clientid(काष्ठा nfs_client *, स्थिर काष्ठा cred *);
-बाह्य पूर्णांक nfs41_init_clientid(काष्ठा nfs_client *, स्थिर काष्ठा cred *);
-बाह्य पूर्णांक nfs4_करो_बंद(काष्ठा nfs4_state *state, gfp_t gfp_mask, पूर्णांक रुको);
-बाह्य पूर्णांक nfs4_server_capabilities(काष्ठा nfs_server *server, काष्ठा nfs_fh *fhandle);
-बाह्य पूर्णांक nfs4_proc_fs_locations(काष्ठा rpc_clnt *, काष्ठा inode *, स्थिर काष्ठा qstr *,
-				  काष्ठा nfs4_fs_locations *, काष्ठा page *);
-बाह्य पूर्णांक nfs4_proc_get_locations(काष्ठा inode *, काष्ठा nfs4_fs_locations *,
-		काष्ठा page *page, स्थिर काष्ठा cred *);
-बाह्य पूर्णांक nfs4_proc_fsid_present(काष्ठा inode *, स्थिर काष्ठा cred *);
-बाह्य काष्ठा rpc_clnt *nfs4_proc_lookup_mountpoपूर्णांक(काष्ठा inode *,
-						    काष्ठा dentry *,
-						    काष्ठा nfs_fh *,
-						    काष्ठा nfs_fattr *);
-बाह्य पूर्णांक nfs4_proc_secinfo(काष्ठा inode *, स्थिर काष्ठा qstr *, काष्ठा nfs4_secinfo_flavors *);
-बाह्य स्थिर काष्ठा xattr_handler *nfs4_xattr_handlers[];
-बाह्य पूर्णांक nfs4_set_rw_stateid(nfs4_stateid *stateid,
-		स्थिर काष्ठा nfs_खोलो_context *ctx,
-		स्थिर काष्ठा nfs_lock_context *l_ctx,
-		भ_शेषe_t भ_शेषe);
-बाह्य पूर्णांक nfs4_proc_getattr(काष्ठा nfs_server *server, काष्ठा nfs_fh *fhandle,
-			     काष्ठा nfs_fattr *fattr, काष्ठा nfs4_label *label,
-			     काष्ठा inode *inode);
-बाह्य पूर्णांक update_खोलो_stateid(काष्ठा nfs4_state *state,
-				स्थिर nfs4_stateid *खोलो_stateid,
-				स्थिर nfs4_stateid *deleg_stateid,
-				भ_शेषe_t भ_शेषe);
+extern int nfs4_handle_exception(struct nfs_server *, int, struct nfs4_exception *);
+extern int nfs4_async_handle_error(struct rpc_task *task,
+				   struct nfs_server *server,
+				   struct nfs4_state *state, long *timeout);
+extern int nfs4_call_sync(struct rpc_clnt *, struct nfs_server *,
+			  struct rpc_message *, struct nfs4_sequence_args *,
+			  struct nfs4_sequence_res *, int);
+extern void nfs4_init_sequence(struct nfs4_sequence_args *, struct nfs4_sequence_res *, int, int);
+extern int nfs4_proc_setclientid(struct nfs_client *, u32, unsigned short, const struct cred *, struct nfs4_setclientid_res *);
+extern int nfs4_proc_setclientid_confirm(struct nfs_client *, struct nfs4_setclientid_res *arg, const struct cred *);
+extern int nfs4_proc_get_rootfh(struct nfs_server *, struct nfs_fh *, struct nfs_fsinfo *, bool);
+extern int nfs4_proc_bind_conn_to_session(struct nfs_client *, const struct cred *cred);
+extern int nfs4_proc_exchange_id(struct nfs_client *clp, const struct cred *cred);
+extern int nfs4_destroy_clientid(struct nfs_client *clp);
+extern int nfs4_init_clientid(struct nfs_client *, const struct cred *);
+extern int nfs41_init_clientid(struct nfs_client *, const struct cred *);
+extern int nfs4_do_close(struct nfs4_state *state, gfp_t gfp_mask, int wait);
+extern int nfs4_server_capabilities(struct nfs_server *server, struct nfs_fh *fhandle);
+extern int nfs4_proc_fs_locations(struct rpc_clnt *, struct inode *, const struct qstr *,
+				  struct nfs4_fs_locations *, struct page *);
+extern int nfs4_proc_get_locations(struct inode *, struct nfs4_fs_locations *,
+		struct page *page, const struct cred *);
+extern int nfs4_proc_fsid_present(struct inode *, const struct cred *);
+extern struct rpc_clnt *nfs4_proc_lookup_mountpoint(struct inode *,
+						    struct dentry *,
+						    struct nfs_fh *,
+						    struct nfs_fattr *);
+extern int nfs4_proc_secinfo(struct inode *, const struct qstr *, struct nfs4_secinfo_flavors *);
+extern const struct xattr_handler *nfs4_xattr_handlers[];
+extern int nfs4_set_rw_stateid(nfs4_stateid *stateid,
+		const struct nfs_open_context *ctx,
+		const struct nfs_lock_context *l_ctx,
+		fmode_t fmode);
+extern int nfs4_proc_getattr(struct nfs_server *server, struct nfs_fh *fhandle,
+			     struct nfs_fattr *fattr, struct nfs4_label *label,
+			     struct inode *inode);
+extern int update_open_stateid(struct nfs4_state *state,
+				const nfs4_stateid *open_stateid,
+				const nfs4_stateid *deleg_stateid,
+				fmode_t fmode);
 
-बाह्य पूर्णांक nfs4_proc_get_lease_समय(काष्ठा nfs_client *clp,
-		काष्ठा nfs_fsinfo *fsinfo);
-बाह्य व्योम nfs4_update_changeattr(काष्ठा inode *dir,
-				   काष्ठा nfs4_change_info *cinfo,
-				   अचिन्हित दीर्घ बारtamp,
-				   अचिन्हित दीर्घ cache_validity);
-बाह्य पूर्णांक nfs4_buf_to_pages_noslab(स्थिर व्योम *buf, माप_प्रकार buflen,
-				    काष्ठा page **pages);
+extern int nfs4_proc_get_lease_time(struct nfs_client *clp,
+		struct nfs_fsinfo *fsinfo);
+extern void nfs4_update_changeattr(struct inode *dir,
+				   struct nfs4_change_info *cinfo,
+				   unsigned long timestamp,
+				   unsigned long cache_validity);
+extern int nfs4_buf_to_pages_noslab(const void *buf, size_t buflen,
+				    struct page **pages);
 
-#अगर defined(CONFIG_NFS_V4_1)
-बाह्य पूर्णांक nfs41_sequence_करोne(काष्ठा rpc_task *, काष्ठा nfs4_sequence_res *);
-बाह्य पूर्णांक nfs4_proc_create_session(काष्ठा nfs_client *, स्थिर काष्ठा cred *);
-बाह्य पूर्णांक nfs4_proc_destroy_session(काष्ठा nfs4_session *, स्थिर काष्ठा cred *);
-बाह्य पूर्णांक nfs4_proc_layoutcommit(काष्ठा nfs4_layoutcommit_data *data,
+#if defined(CONFIG_NFS_V4_1)
+extern int nfs41_sequence_done(struct rpc_task *, struct nfs4_sequence_res *);
+extern int nfs4_proc_create_session(struct nfs_client *, const struct cred *);
+extern int nfs4_proc_destroy_session(struct nfs4_session *, const struct cred *);
+extern int nfs4_proc_layoutcommit(struct nfs4_layoutcommit_data *data,
 				  bool sync);
-बाह्य पूर्णांक nfs4_detect_session_trunking(काष्ठा nfs_client *clp,
-		काष्ठा nfs41_exchange_id_res *res, काष्ठा rpc_xprt *xprt);
+extern int nfs4_detect_session_trunking(struct nfs_client *clp,
+		struct nfs41_exchange_id_res *res, struct rpc_xprt *xprt);
 
-अटल अंतरभूत bool
-is_ds_only_client(काष्ठा nfs_client *clp)
-अणु
-	वापस (clp->cl_exchange_flags & EXCHGID4_FLAG_MASK_PNFS) ==
+static inline bool
+is_ds_only_client(struct nfs_client *clp)
+{
+	return (clp->cl_exchange_flags & EXCHGID4_FLAG_MASK_PNFS) ==
 		EXCHGID4_FLAG_USE_PNFS_DS;
-पूर्ण
+}
 
-अटल अंतरभूत bool
-is_ds_client(काष्ठा nfs_client *clp)
-अणु
-	वापस clp->cl_exchange_flags & EXCHGID4_FLAG_USE_PNFS_DS;
-पूर्ण
+static inline bool
+is_ds_client(struct nfs_client *clp)
+{
+	return clp->cl_exchange_flags & EXCHGID4_FLAG_USE_PNFS_DS;
+}
 
-अटल अंतरभूत bool
-_nfs4_state_protect(काष्ठा nfs_client *clp, अचिन्हित दीर्घ sp4_mode,
-		    काष्ठा rpc_clnt **clntp, काष्ठा rpc_message *msg)
-अणु
+static inline bool
+_nfs4_state_protect(struct nfs_client *clp, unsigned long sp4_mode,
+		    struct rpc_clnt **clntp, struct rpc_message *msg)
+{
 	rpc_authflavor_t flavor;
 
-	अगर (sp4_mode == NFS_SP4_MACH_CRED_CLEANUP ||
-	    sp4_mode == NFS_SP4_MACH_CRED_PNFS_CLEANUP) अणु
-		/* Using machine creds क्रम cleanup operations
-		 * is only relevent अगर the client credentials
-		 * might expire. So करोn't bother क्रम
+	if (sp4_mode == NFS_SP4_MACH_CRED_CLEANUP ||
+	    sp4_mode == NFS_SP4_MACH_CRED_PNFS_CLEANUP) {
+		/* Using machine creds for cleanup operations
+		 * is only relevent if the client credentials
+		 * might expire. So don't bother for
 		 * RPC_AUTH_UNIX.  If file was only exported to
 		 * sec=sys, the PUTFH would fail anyway.
 		 */
-		अगर ((*clntp)->cl_auth->au_flavor == RPC_AUTH_UNIX)
-			वापस false;
-	पूर्ण
-	अगर (test_bit(sp4_mode, &clp->cl_sp4_flags)) अणु
+		if ((*clntp)->cl_auth->au_flavor == RPC_AUTH_UNIX)
+			return false;
+	}
+	if (test_bit(sp4_mode, &clp->cl_sp4_flags)) {
 		msg->rpc_cred = rpc_machine_cred();
 
 		flavor = clp->cl_rpcclient->cl_auth->au_flavor;
@@ -380,290 +379,290 @@ _nfs4_state_protect(काष्ठा nfs_client *clp, अचिन्हित
 			     flavor != RPC_AUTH_GSS_KRB5P);
 		*clntp = clp->cl_rpcclient;
 
-		वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+		return true;
+	}
+	return false;
+}
 
 /*
- * Function responsible क्रम determining अगर an rpc_message should use the
- * machine cred under SP4_MACH_CRED and अगर so चयनing the credential and
+ * Function responsible for determining if an rpc_message should use the
+ * machine cred under SP4_MACH_CRED and if so switching the credential and
  * authflavor (using the nfs_client's rpc_clnt which will be krb5i/p).
- * Should be called beक्रमe rpc_call_sync/rpc_call_async.
+ * Should be called before rpc_call_sync/rpc_call_async.
  */
-अटल अंतरभूत व्योम
-nfs4_state_protect(काष्ठा nfs_client *clp, अचिन्हित दीर्घ sp4_mode,
-		   काष्ठा rpc_clnt **clntp, काष्ठा rpc_message *msg)
-अणु
+static inline void
+nfs4_state_protect(struct nfs_client *clp, unsigned long sp4_mode,
+		   struct rpc_clnt **clntp, struct rpc_message *msg)
+{
 	_nfs4_state_protect(clp, sp4_mode, clntp, msg);
-पूर्ण
+}
 
 /*
- * Special wrapper to nfs4_state_protect क्रम ग_लिखो.
- * If WRITE can use machine cred but COMMIT cannot, make sure all ग_लिखोs
- * that use machine cred use NFS_खाता_SYNC.
+ * Special wrapper to nfs4_state_protect for write.
+ * If WRITE can use machine cred but COMMIT cannot, make sure all writes
+ * that use machine cred use NFS_FILE_SYNC.
  */
-अटल अंतरभूत व्योम
-nfs4_state_protect_ग_लिखो(काष्ठा nfs_client *clp, काष्ठा rpc_clnt **clntp,
-			 काष्ठा rpc_message *msg, काष्ठा nfs_pgio_header *hdr)
-अणु
-	अगर (_nfs4_state_protect(clp, NFS_SP4_MACH_CRED_WRITE, clntp, msg) &&
+static inline void
+nfs4_state_protect_write(struct nfs_client *clp, struct rpc_clnt **clntp,
+			 struct rpc_message *msg, struct nfs_pgio_header *hdr)
+{
+	if (_nfs4_state_protect(clp, NFS_SP4_MACH_CRED_WRITE, clntp, msg) &&
 	    !test_bit(NFS_SP4_MACH_CRED_COMMIT, &clp->cl_sp4_flags))
-		hdr->args.stable = NFS_खाता_SYNC;
-पूर्ण
-#अन्यथा /* CONFIG_NFS_v4_1 */
-अटल अंतरभूत bool
-is_ds_only_client(काष्ठा nfs_client *clp)
-अणु
-	वापस false;
-पूर्ण
+		hdr->args.stable = NFS_FILE_SYNC;
+}
+#else /* CONFIG_NFS_v4_1 */
+static inline bool
+is_ds_only_client(struct nfs_client *clp)
+{
+	return false;
+}
 
-अटल अंतरभूत bool
-is_ds_client(काष्ठा nfs_client *clp)
-अणु
-	वापस false;
-पूर्ण
+static inline bool
+is_ds_client(struct nfs_client *clp)
+{
+	return false;
+}
 
-अटल अंतरभूत व्योम
-nfs4_state_protect(काष्ठा nfs_client *clp, अचिन्हित दीर्घ sp4_flags,
-		   काष्ठा rpc_clnt **clntp, काष्ठा rpc_message *msg)
-अणु
-पूर्ण
+static inline void
+nfs4_state_protect(struct nfs_client *clp, unsigned long sp4_flags,
+		   struct rpc_clnt **clntp, struct rpc_message *msg)
+{
+}
 
-अटल अंतरभूत व्योम
-nfs4_state_protect_ग_लिखो(काष्ठा nfs_client *clp, काष्ठा rpc_clnt **clntp,
-			 काष्ठा rpc_message *msg, काष्ठा nfs_pgio_header *hdr)
-अणु
-पूर्ण
-#पूर्ण_अगर /* CONFIG_NFS_V4_1 */
+static inline void
+nfs4_state_protect_write(struct nfs_client *clp, struct rpc_clnt **clntp,
+			 struct rpc_message *msg, struct nfs_pgio_header *hdr)
+{
+}
+#endif /* CONFIG_NFS_V4_1 */
 
-बाह्य स्थिर काष्ठा nfs4_minor_version_ops *nfs_v4_minor_ops[];
+extern const struct nfs4_minor_version_ops *nfs_v4_minor_ops[];
 
-बाह्य स्थिर u32 nfs4_fattr_biपंचांगap[3];
-बाह्य स्थिर u32 nfs4_statfs_biपंचांगap[3];
-बाह्य स्थिर u32 nfs4_pathconf_biपंचांगap[3];
-बाह्य स्थिर u32 nfs4_fsinfo_biपंचांगap[3];
-बाह्य स्थिर u32 nfs4_fs_locations_biपंचांगap[3];
+extern const u32 nfs4_fattr_bitmap[3];
+extern const u32 nfs4_statfs_bitmap[3];
+extern const u32 nfs4_pathconf_bitmap[3];
+extern const u32 nfs4_fsinfo_bitmap[3];
+extern const u32 nfs4_fs_locations_bitmap[3];
 
-व्योम nfs40_shutकरोwn_client(काष्ठा nfs_client *);
-व्योम nfs41_shutकरोwn_client(काष्ठा nfs_client *);
-पूर्णांक nfs40_init_client(काष्ठा nfs_client *);
-पूर्णांक nfs41_init_client(काष्ठा nfs_client *);
-व्योम nfs4_मुक्त_client(काष्ठा nfs_client *);
+void nfs40_shutdown_client(struct nfs_client *);
+void nfs41_shutdown_client(struct nfs_client *);
+int nfs40_init_client(struct nfs_client *);
+int nfs41_init_client(struct nfs_client *);
+void nfs4_free_client(struct nfs_client *);
 
-काष्ठा nfs_client *nfs4_alloc_client(स्थिर काष्ठा nfs_client_initdata *);
+struct nfs_client *nfs4_alloc_client(const struct nfs_client_initdata *);
 
 /* nfs4renewd.c */
-बाह्य व्योम nfs4_schedule_state_renewal(काष्ठा nfs_client *);
-बाह्य व्योम nfs4_renewd_prepare_shutकरोwn(काष्ठा nfs_server *);
-बाह्य व्योम nfs4_समाप्त_renewd(काष्ठा nfs_client *);
-बाह्य व्योम nfs4_renew_state(काष्ठा work_काष्ठा *);
-बाह्य व्योम nfs4_set_lease_period(काष्ठा nfs_client *clp, अचिन्हित दीर्घ lease);
+extern void nfs4_schedule_state_renewal(struct nfs_client *);
+extern void nfs4_renewd_prepare_shutdown(struct nfs_server *);
+extern void nfs4_kill_renewd(struct nfs_client *);
+extern void nfs4_renew_state(struct work_struct *);
+extern void nfs4_set_lease_period(struct nfs_client *clp, unsigned long lease);
 
 
 /* nfs4state.c */
-बाह्य स्थिर nfs4_stateid current_stateid;
+extern const nfs4_stateid current_stateid;
 
-स्थिर काष्ठा cred *nfs4_get_clid_cred(काष्ठा nfs_client *clp);
-स्थिर काष्ठा cred *nfs4_get_machine_cred(काष्ठा nfs_client *clp);
-स्थिर काष्ठा cred *nfs4_get_renew_cred(काष्ठा nfs_client *clp);
-पूर्णांक nfs4_discover_server_trunking(काष्ठा nfs_client *clp,
-			काष्ठा nfs_client **);
-पूर्णांक nfs40_discover_server_trunking(काष्ठा nfs_client *clp,
-			काष्ठा nfs_client **, स्थिर काष्ठा cred *);
-#अगर defined(CONFIG_NFS_V4_1)
-पूर्णांक nfs41_discover_server_trunking(काष्ठा nfs_client *clp,
-			काष्ठा nfs_client **, स्थिर काष्ठा cred *);
-बाह्य व्योम nfs4_schedule_session_recovery(काष्ठा nfs4_session *, पूर्णांक);
-बाह्य व्योम nfs41_notअगरy_server(काष्ठा nfs_client *);
-bool nfs4_check_serverowner_major_id(काष्ठा nfs41_server_owner *o1,
-			काष्ठा nfs41_server_owner *o2);
-#अन्यथा
-अटल अंतरभूत व्योम nfs4_schedule_session_recovery(काष्ठा nfs4_session *session, पूर्णांक err)
-अणु
-पूर्ण
-#पूर्ण_अगर /* CONFIG_NFS_V4_1 */
+const struct cred *nfs4_get_clid_cred(struct nfs_client *clp);
+const struct cred *nfs4_get_machine_cred(struct nfs_client *clp);
+const struct cred *nfs4_get_renew_cred(struct nfs_client *clp);
+int nfs4_discover_server_trunking(struct nfs_client *clp,
+			struct nfs_client **);
+int nfs40_discover_server_trunking(struct nfs_client *clp,
+			struct nfs_client **, const struct cred *);
+#if defined(CONFIG_NFS_V4_1)
+int nfs41_discover_server_trunking(struct nfs_client *clp,
+			struct nfs_client **, const struct cred *);
+extern void nfs4_schedule_session_recovery(struct nfs4_session *, int);
+extern void nfs41_notify_server(struct nfs_client *);
+bool nfs4_check_serverowner_major_id(struct nfs41_server_owner *o1,
+			struct nfs41_server_owner *o2);
+#else
+static inline void nfs4_schedule_session_recovery(struct nfs4_session *session, int err)
+{
+}
+#endif /* CONFIG_NFS_V4_1 */
 
-बाह्य काष्ठा nfs4_state_owner *nfs4_get_state_owner(काष्ठा nfs_server *, स्थिर काष्ठा cred *, gfp_t);
-बाह्य व्योम nfs4_put_state_owner(काष्ठा nfs4_state_owner *);
-बाह्य व्योम nfs4_purge_state_owners(काष्ठा nfs_server *, काष्ठा list_head *);
-बाह्य व्योम nfs4_मुक्त_state_owners(काष्ठा list_head *head);
-बाह्य काष्ठा nfs4_state * nfs4_get_खोलो_state(काष्ठा inode *, काष्ठा nfs4_state_owner *);
-बाह्य व्योम nfs4_put_खोलो_state(काष्ठा nfs4_state *);
-बाह्य व्योम nfs4_बंद_state(काष्ठा nfs4_state *, भ_शेषe_t);
-बाह्य व्योम nfs4_बंद_sync(काष्ठा nfs4_state *, भ_शेषe_t);
-बाह्य व्योम nfs4_state_set_mode_locked(काष्ठा nfs4_state *, भ_शेषe_t);
-बाह्य व्योम nfs_inode_find_state_and_recover(काष्ठा inode *inode,
-		स्थिर nfs4_stateid *stateid);
-बाह्य पूर्णांक nfs4_state_mark_reclaim_nograce(काष्ठा nfs_client *, काष्ठा nfs4_state *);
-बाह्य व्योम nfs4_schedule_lease_recovery(काष्ठा nfs_client *);
-बाह्य पूर्णांक nfs4_रुको_clnt_recover(काष्ठा nfs_client *clp);
-बाह्य पूर्णांक nfs4_client_recover_expired_lease(काष्ठा nfs_client *clp);
-बाह्य व्योम nfs4_schedule_state_manager(काष्ठा nfs_client *);
-बाह्य व्योम nfs4_schedule_path_करोwn_recovery(काष्ठा nfs_client *clp);
-बाह्य पूर्णांक nfs4_schedule_stateid_recovery(स्थिर काष्ठा nfs_server *, काष्ठा nfs4_state *);
-बाह्य पूर्णांक nfs4_schedule_migration_recovery(स्थिर काष्ठा nfs_server *);
-बाह्य व्योम nfs4_schedule_lease_moved_recovery(काष्ठा nfs_client *);
-बाह्य व्योम nfs41_handle_sequence_flag_errors(काष्ठा nfs_client *clp, u32 flags, bool);
-बाह्य व्योम nfs41_handle_server_scope(काष्ठा nfs_client *,
-				      काष्ठा nfs41_server_scope **);
-बाह्य व्योम nfs4_put_lock_state(काष्ठा nfs4_lock_state *lsp);
-बाह्य पूर्णांक nfs4_set_lock_state(काष्ठा nfs4_state *state, काष्ठा file_lock *fl);
-बाह्य पूर्णांक nfs4_select_rw_stateid(काष्ठा nfs4_state *, भ_शेषe_t,
-		स्थिर काष्ठा nfs_lock_context *, nfs4_stateid *,
-		स्थिर काष्ठा cred **);
-बाह्य bool nfs4_copy_खोलो_stateid(nfs4_stateid *dst,
-		काष्ठा nfs4_state *state);
+extern struct nfs4_state_owner *nfs4_get_state_owner(struct nfs_server *, const struct cred *, gfp_t);
+extern void nfs4_put_state_owner(struct nfs4_state_owner *);
+extern void nfs4_purge_state_owners(struct nfs_server *, struct list_head *);
+extern void nfs4_free_state_owners(struct list_head *head);
+extern struct nfs4_state * nfs4_get_open_state(struct inode *, struct nfs4_state_owner *);
+extern void nfs4_put_open_state(struct nfs4_state *);
+extern void nfs4_close_state(struct nfs4_state *, fmode_t);
+extern void nfs4_close_sync(struct nfs4_state *, fmode_t);
+extern void nfs4_state_set_mode_locked(struct nfs4_state *, fmode_t);
+extern void nfs_inode_find_state_and_recover(struct inode *inode,
+		const nfs4_stateid *stateid);
+extern int nfs4_state_mark_reclaim_nograce(struct nfs_client *, struct nfs4_state *);
+extern void nfs4_schedule_lease_recovery(struct nfs_client *);
+extern int nfs4_wait_clnt_recover(struct nfs_client *clp);
+extern int nfs4_client_recover_expired_lease(struct nfs_client *clp);
+extern void nfs4_schedule_state_manager(struct nfs_client *);
+extern void nfs4_schedule_path_down_recovery(struct nfs_client *clp);
+extern int nfs4_schedule_stateid_recovery(const struct nfs_server *, struct nfs4_state *);
+extern int nfs4_schedule_migration_recovery(const struct nfs_server *);
+extern void nfs4_schedule_lease_moved_recovery(struct nfs_client *);
+extern void nfs41_handle_sequence_flag_errors(struct nfs_client *clp, u32 flags, bool);
+extern void nfs41_handle_server_scope(struct nfs_client *,
+				      struct nfs41_server_scope **);
+extern void nfs4_put_lock_state(struct nfs4_lock_state *lsp);
+extern int nfs4_set_lock_state(struct nfs4_state *state, struct file_lock *fl);
+extern int nfs4_select_rw_stateid(struct nfs4_state *, fmode_t,
+		const struct nfs_lock_context *, nfs4_stateid *,
+		const struct cred **);
+extern bool nfs4_copy_open_stateid(nfs4_stateid *dst,
+		struct nfs4_state *state);
 
-बाह्य काष्ठा nfs_seqid *nfs_alloc_seqid(काष्ठा nfs_seqid_counter *counter, gfp_t gfp_mask);
-बाह्य पूर्णांक nfs_रुको_on_sequence(काष्ठा nfs_seqid *seqid, काष्ठा rpc_task *task);
-बाह्य व्योम nfs_increment_खोलो_seqid(पूर्णांक status, काष्ठा nfs_seqid *seqid);
-बाह्य व्योम nfs_increment_lock_seqid(पूर्णांक status, काष्ठा nfs_seqid *seqid);
-बाह्य व्योम nfs_release_seqid(काष्ठा nfs_seqid *seqid);
-बाह्य व्योम nfs_मुक्त_seqid(काष्ठा nfs_seqid *seqid);
-बाह्य पूर्णांक nfs4_setup_sequence(काष्ठा nfs_client *client,
-				काष्ठा nfs4_sequence_args *args,
-				काष्ठा nfs4_sequence_res *res,
-				काष्ठा rpc_task *task);
-बाह्य पूर्णांक nfs4_sequence_करोne(काष्ठा rpc_task *task,
-			      काष्ठा nfs4_sequence_res *res);
+extern struct nfs_seqid *nfs_alloc_seqid(struct nfs_seqid_counter *counter, gfp_t gfp_mask);
+extern int nfs_wait_on_sequence(struct nfs_seqid *seqid, struct rpc_task *task);
+extern void nfs_increment_open_seqid(int status, struct nfs_seqid *seqid);
+extern void nfs_increment_lock_seqid(int status, struct nfs_seqid *seqid);
+extern void nfs_release_seqid(struct nfs_seqid *seqid);
+extern void nfs_free_seqid(struct nfs_seqid *seqid);
+extern int nfs4_setup_sequence(struct nfs_client *client,
+				struct nfs4_sequence_args *args,
+				struct nfs4_sequence_res *res,
+				struct rpc_task *task);
+extern int nfs4_sequence_done(struct rpc_task *task,
+			      struct nfs4_sequence_res *res);
 
-बाह्य व्योम nfs4_मुक्त_lock_state(काष्ठा nfs_server *server, काष्ठा nfs4_lock_state *lsp);
-बाह्य पूर्णांक nfs4_proc_commit(काष्ठा file *dst, __u64 offset, __u32 count, काष्ठा nfs_commitres *res);
-बाह्य स्थिर nfs4_stateid zero_stateid;
-बाह्य स्थिर nfs4_stateid invalid_stateid;
+extern void nfs4_free_lock_state(struct nfs_server *server, struct nfs4_lock_state *lsp);
+extern int nfs4_proc_commit(struct file *dst, __u64 offset, __u32 count, struct nfs_commitres *res);
+extern const nfs4_stateid zero_stateid;
+extern const nfs4_stateid invalid_stateid;
 
 /* nfs4super.c */
-काष्ठा nfs_mount_info;
-बाह्य काष्ठा nfs_subversion nfs_v4;
-बाह्य bool nfs4_disable_idmapping;
-बाह्य अचिन्हित लघु max_session_slots;
-बाह्य अचिन्हित लघु max_session_cb_slots;
-बाह्य अचिन्हित लघु send_implementation_id;
-बाह्य bool recover_lost_locks;
+struct nfs_mount_info;
+extern struct nfs_subversion nfs_v4;
+extern bool nfs4_disable_idmapping;
+extern unsigned short max_session_slots;
+extern unsigned short max_session_cb_slots;
+extern unsigned short send_implementation_id;
+extern bool recover_lost_locks;
 
-#घोषणा NFS4_CLIENT_ID_UNIQ_LEN		(64)
-बाह्य अक्षर nfs4_client_id_uniquअगरier[NFS4_CLIENT_ID_UNIQ_LEN];
+#define NFS4_CLIENT_ID_UNIQ_LEN		(64)
+extern char nfs4_client_id_uniquifier[NFS4_CLIENT_ID_UNIQ_LEN];
 
-बाह्य पूर्णांक nfs4_try_get_tree(काष्ठा fs_context *);
-बाह्य पूर्णांक nfs4_get_referral_tree(काष्ठा fs_context *);
+extern int nfs4_try_get_tree(struct fs_context *);
+extern int nfs4_get_referral_tree(struct fs_context *);
 
 /* nfs4sysctl.c */
-#अगर_घोषित CONFIG_SYSCTL
-पूर्णांक nfs4_रेजिस्टर_sysctl(व्योम);
-व्योम nfs4_unरेजिस्टर_sysctl(व्योम);
-#अन्यथा
-अटल अंतरभूत पूर्णांक nfs4_रेजिस्टर_sysctl(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+#ifdef CONFIG_SYSCTL
+int nfs4_register_sysctl(void);
+void nfs4_unregister_sysctl(void);
+#else
+static inline int nfs4_register_sysctl(void)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम nfs4_unरेजिस्टर_sysctl(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर
+static inline void nfs4_unregister_sysctl(void)
+{
+}
+#endif
 
 /* nfs4xdr.c */
-बाह्य स्थिर काष्ठा rpc_procinfo nfs4_procedures[];
+extern const struct rpc_procinfo nfs4_procedures[];
 
-#अगर_घोषित CONFIG_NFS_V4_2
-बाह्य स्थिर u32 nfs42_maxsetxattr_overhead;
-बाह्य स्थिर u32 nfs42_maxgetxattr_overhead;
-बाह्य स्थिर u32 nfs42_maxlistxattrs_overhead;
-#पूर्ण_अगर
+#ifdef CONFIG_NFS_V4_2
+extern const u32 nfs42_maxsetxattr_overhead;
+extern const u32 nfs42_maxgetxattr_overhead;
+extern const u32 nfs42_maxlistxattrs_overhead;
+#endif
 
-काष्ठा nfs4_mount_data;
+struct nfs4_mount_data;
 
 /* callback_xdr.c */
-बाह्य स्थिर काष्ठा svc_version nfs4_callback_version1;
-बाह्य स्थिर काष्ठा svc_version nfs4_callback_version4;
+extern const struct svc_version nfs4_callback_version1;
+extern const struct svc_version nfs4_callback_version4;
 
-अटल अंतरभूत व्योम nfs4_stateid_copy(nfs4_stateid *dst, स्थिर nfs4_stateid *src)
-अणु
-	स_नकल(dst->data, src->data, माप(dst->data));
+static inline void nfs4_stateid_copy(nfs4_stateid *dst, const nfs4_stateid *src)
+{
+	memcpy(dst->data, src->data, sizeof(dst->data));
 	dst->type = src->type;
-पूर्ण
+}
 
-अटल अंतरभूत bool nfs4_stateid_match(स्थिर nfs4_stateid *dst, स्थिर nfs4_stateid *src)
-अणु
-	अगर (dst->type != src->type)
-		वापस false;
-	वापस स_भेद(dst->data, src->data, माप(dst->data)) == 0;
-पूर्ण
+static inline bool nfs4_stateid_match(const nfs4_stateid *dst, const nfs4_stateid *src)
+{
+	if (dst->type != src->type)
+		return false;
+	return memcmp(dst->data, src->data, sizeof(dst->data)) == 0;
+}
 
-अटल अंतरभूत bool nfs4_stateid_match_other(स्थिर nfs4_stateid *dst, स्थिर nfs4_stateid *src)
-अणु
-	वापस स_भेद(dst->other, src->other, NFS4_STATEID_OTHER_SIZE) == 0;
-पूर्ण
+static inline bool nfs4_stateid_match_other(const nfs4_stateid *dst, const nfs4_stateid *src)
+{
+	return memcmp(dst->other, src->other, NFS4_STATEID_OTHER_SIZE) == 0;
+}
 
-अटल अंतरभूत bool nfs4_stateid_is_newer(स्थिर nfs4_stateid *s1, स्थिर nfs4_stateid *s2)
-अणु
-	वापस (s32)(be32_to_cpu(s1->seqid) - be32_to_cpu(s2->seqid)) > 0;
-पूर्ण
+static inline bool nfs4_stateid_is_newer(const nfs4_stateid *s1, const nfs4_stateid *s2)
+{
+	return (s32)(be32_to_cpu(s1->seqid) - be32_to_cpu(s2->seqid)) > 0;
+}
 
-अटल अंतरभूत bool nfs4_stateid_is_next(स्थिर nfs4_stateid *s1, स्थिर nfs4_stateid *s2)
-अणु
+static inline bool nfs4_stateid_is_next(const nfs4_stateid *s1, const nfs4_stateid *s2)
+{
 	u32 seq1 = be32_to_cpu(s1->seqid);
 	u32 seq2 = be32_to_cpu(s2->seqid);
 
-	वापस seq2 == seq1 + 1U || (seq2 == 1U && seq1 == 0xffffffffU);
-पूर्ण
+	return seq2 == seq1 + 1U || (seq2 == 1U && seq1 == 0xffffffffU);
+}
 
-अटल अंतरभूत bool nfs4_stateid_match_or_older(स्थिर nfs4_stateid *dst, स्थिर nfs4_stateid *src)
-अणु
-	वापस nfs4_stateid_match_other(dst, src) &&
+static inline bool nfs4_stateid_match_or_older(const nfs4_stateid *dst, const nfs4_stateid *src)
+{
+	return nfs4_stateid_match_other(dst, src) &&
 		!(src->seqid && nfs4_stateid_is_newer(dst, src));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम nfs4_stateid_seqid_inc(nfs4_stateid *s1)
-अणु
+static inline void nfs4_stateid_seqid_inc(nfs4_stateid *s1)
+{
 	u32 seqid = be32_to_cpu(s1->seqid);
 
-	अगर (++seqid == 0)
+	if (++seqid == 0)
 		++seqid;
 	s1->seqid = cpu_to_be32(seqid);
-पूर्ण
+}
 
-अटल अंतरभूत bool nfs4_valid_खोलो_stateid(स्थिर काष्ठा nfs4_state *state)
-अणु
-	वापस test_bit(NFS_STATE_RECOVERY_FAILED, &state->flags) == 0;
-पूर्ण
+static inline bool nfs4_valid_open_stateid(const struct nfs4_state *state)
+{
+	return test_bit(NFS_STATE_RECOVERY_FAILED, &state->flags) == 0;
+}
 
-अटल अंतरभूत bool nfs4_state_match_खोलो_stateid_other(स्थिर काष्ठा nfs4_state *state,
-		स्थिर nfs4_stateid *stateid)
-अणु
-	वापस test_bit(NFS_OPEN_STATE, &state->flags) &&
-		nfs4_stateid_match_other(&state->खोलो_stateid, stateid);
-पूर्ण
+static inline bool nfs4_state_match_open_stateid_other(const struct nfs4_state *state,
+		const nfs4_stateid *stateid)
+{
+	return test_bit(NFS_OPEN_STATE, &state->flags) &&
+		nfs4_stateid_match_other(&state->open_stateid, stateid);
+}
 
 /* nfs42xattr.c */
-#अगर_घोषित CONFIG_NFS_V4_2
-बाह्य पूर्णांक __init nfs4_xattr_cache_init(व्योम);
-बाह्य व्योम nfs4_xattr_cache_निकास(व्योम);
-बाह्य व्योम nfs4_xattr_cache_add(काष्ठा inode *inode, स्थिर अक्षर *name,
-				 स्थिर अक्षर *buf, काष्ठा page **pages,
-				 sमाप_प्रकार buflen);
-बाह्य व्योम nfs4_xattr_cache_हटाओ(काष्ठा inode *inode, स्थिर अक्षर *name);
-बाह्य sमाप_प्रकार nfs4_xattr_cache_get(काष्ठा inode *inode, स्थिर अक्षर *name,
-				अक्षर *buf, sमाप_प्रकार buflen);
-बाह्य व्योम nfs4_xattr_cache_set_list(काष्ठा inode *inode, स्थिर अक्षर *buf,
-				      sमाप_प्रकार buflen);
-बाह्य sमाप_प्रकार nfs4_xattr_cache_list(काष्ठा inode *inode, अक्षर *buf,
-				     sमाप_प्रकार buflen);
-बाह्य व्योम nfs4_xattr_cache_zap(काष्ठा inode *inode);
-#अन्यथा
-अटल अंतरभूत व्योम nfs4_xattr_cache_zap(काष्ठा inode *inode)
-अणु
-पूर्ण
-#पूर्ण_अगर /* CONFIG_NFS_V4_2 */
+#ifdef CONFIG_NFS_V4_2
+extern int __init nfs4_xattr_cache_init(void);
+extern void nfs4_xattr_cache_exit(void);
+extern void nfs4_xattr_cache_add(struct inode *inode, const char *name,
+				 const char *buf, struct page **pages,
+				 ssize_t buflen);
+extern void nfs4_xattr_cache_remove(struct inode *inode, const char *name);
+extern ssize_t nfs4_xattr_cache_get(struct inode *inode, const char *name,
+				char *buf, ssize_t buflen);
+extern void nfs4_xattr_cache_set_list(struct inode *inode, const char *buf,
+				      ssize_t buflen);
+extern ssize_t nfs4_xattr_cache_list(struct inode *inode, char *buf,
+				     ssize_t buflen);
+extern void nfs4_xattr_cache_zap(struct inode *inode);
+#else
+static inline void nfs4_xattr_cache_zap(struct inode *inode)
+{
+}
+#endif /* CONFIG_NFS_V4_2 */
 
-#अन्यथा /* CONFIG_NFS_V4 */
+#else /* CONFIG_NFS_V4 */
 
-#घोषणा nfs4_बंद_state(a, b) करो अणु पूर्ण जबतक (0)
-#घोषणा nfs4_बंद_sync(a, b) करो अणु पूर्ण जबतक (0)
-#घोषणा nfs4_state_protect(a, b, c, d) करो अणु पूर्ण जबतक (0)
-#घोषणा nfs4_state_protect_ग_लिखो(a, b, c, d) करो अणु पूर्ण जबतक (0)
+#define nfs4_close_state(a, b) do { } while (0)
+#define nfs4_close_sync(a, b) do { } while (0)
+#define nfs4_state_protect(a, b, c, d) do { } while (0)
+#define nfs4_state_protect_write(a, b, c, d) do { } while (0)
 
 
-#पूर्ण_अगर /* CONFIG_NFS_V4 */
-#पूर्ण_अगर /* __LINUX_FS_NFS_NFS4_FS.H */
+#endif /* CONFIG_NFS_V4 */
+#endif /* __LINUX_FS_NFS_NFS4_FS.H */

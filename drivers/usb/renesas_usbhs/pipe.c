@@ -1,134 +1,133 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-1.0+
+// SPDX-License-Identifier: GPL-1.0+
 /*
  * Renesas USB driver
  *
  * Copyright (C) 2011 Renesas Solutions Corp.
  * Kuninori Morimoto <kuninori.morimoto.gx@renesas.com>
  */
-#समावेश <linux/delay.h>
-#समावेश <linux/slab.h>
-#समावेश "common.h"
-#समावेश "pipe.h"
+#include <linux/delay.h>
+#include <linux/slab.h>
+#include "common.h"
+#include "pipe.h"
 
 /*
  *		macros
  */
-#घोषणा usbhsp_addr_offset(p)	((usbhs_pipe_number(p) - 1) * 2)
+#define usbhsp_addr_offset(p)	((usbhs_pipe_number(p) - 1) * 2)
 
-#घोषणा usbhsp_flags_set(p, f)	((p)->flags |=  USBHS_PIPE_FLAGS_##f)
-#घोषणा usbhsp_flags_clr(p, f)	((p)->flags &= ~USBHS_PIPE_FLAGS_##f)
-#घोषणा usbhsp_flags_has(p, f)	((p)->flags &   USBHS_PIPE_FLAGS_##f)
-#घोषणा usbhsp_flags_init(p)	करो अणु(p)->flags = 0; पूर्ण जबतक (0)
+#define usbhsp_flags_set(p, f)	((p)->flags |=  USBHS_PIPE_FLAGS_##f)
+#define usbhsp_flags_clr(p, f)	((p)->flags &= ~USBHS_PIPE_FLAGS_##f)
+#define usbhsp_flags_has(p, f)	((p)->flags &   USBHS_PIPE_FLAGS_##f)
+#define usbhsp_flags_init(p)	do {(p)->flags = 0; } while (0)
 
 /*
- * क्रम debug
+ * for debug
  */
-अटल अक्षर *usbhsp_pipe_name[] = अणु
+static char *usbhsp_pipe_name[] = {
 	[USB_ENDPOINT_XFER_CONTROL]	= "DCP",
 	[USB_ENDPOINT_XFER_BULK]	= "BULK",
 	[USB_ENDPOINT_XFER_INT]		= "INT",
 	[USB_ENDPOINT_XFER_ISOC]	= "ISO",
-पूर्ण;
+};
 
-अक्षर *usbhs_pipe_name(काष्ठा usbhs_pipe *pipe)
-अणु
-	वापस usbhsp_pipe_name[usbhs_pipe_type(pipe)];
-पूर्ण
+char *usbhs_pipe_name(struct usbhs_pipe *pipe)
+{
+	return usbhsp_pipe_name[usbhs_pipe_type(pipe)];
+}
 
-अटल काष्ठा renesas_usbhs_driver_pipe_config
-*usbhsp_get_pipe_config(काष्ठा usbhs_priv *priv, पूर्णांक pipe_num)
-अणु
-	काष्ठा renesas_usbhs_driver_pipe_config *pipe_configs =
+static struct renesas_usbhs_driver_pipe_config
+*usbhsp_get_pipe_config(struct usbhs_priv *priv, int pipe_num)
+{
+	struct renesas_usbhs_driver_pipe_config *pipe_configs =
 					usbhs_get_dparam(priv, pipe_configs);
 
-	वापस &pipe_configs[pipe_num];
-पूर्ण
+	return &pipe_configs[pipe_num];
+}
 
 /*
  *		DCPCTR/PIPEnCTR functions
  */
-अटल व्योम usbhsp_pipectrl_set(काष्ठा usbhs_pipe *pipe, u16 mask, u16 val)
-अणु
-	काष्ठा usbhs_priv *priv = usbhs_pipe_to_priv(pipe);
-	पूर्णांक offset = usbhsp_addr_offset(pipe);
+static void usbhsp_pipectrl_set(struct usbhs_pipe *pipe, u16 mask, u16 val)
+{
+	struct usbhs_priv *priv = usbhs_pipe_to_priv(pipe);
+	int offset = usbhsp_addr_offset(pipe);
 
-	अगर (usbhs_pipe_is_dcp(pipe))
+	if (usbhs_pipe_is_dcp(pipe))
 		usbhs_bset(priv, DCPCTR, mask, val);
-	अन्यथा
+	else
 		usbhs_bset(priv, PIPEnCTR + offset, mask, val);
-पूर्ण
+}
 
-अटल u16 usbhsp_pipectrl_get(काष्ठा usbhs_pipe *pipe)
-अणु
-	काष्ठा usbhs_priv *priv = usbhs_pipe_to_priv(pipe);
-	पूर्णांक offset = usbhsp_addr_offset(pipe);
+static u16 usbhsp_pipectrl_get(struct usbhs_pipe *pipe)
+{
+	struct usbhs_priv *priv = usbhs_pipe_to_priv(pipe);
+	int offset = usbhsp_addr_offset(pipe);
 
-	अगर (usbhs_pipe_is_dcp(pipe))
-		वापस usbhs_पढ़ो(priv, DCPCTR);
-	अन्यथा
-		वापस usbhs_पढ़ो(priv, PIPEnCTR + offset);
-पूर्ण
+	if (usbhs_pipe_is_dcp(pipe))
+		return usbhs_read(priv, DCPCTR);
+	else
+		return usbhs_read(priv, PIPEnCTR + offset);
+}
 
 /*
  *		DCP/PIPE functions
  */
-अटल व्योम __usbhsp_pipe_xxx_set(काष्ठा usbhs_pipe *pipe,
+static void __usbhsp_pipe_xxx_set(struct usbhs_pipe *pipe,
 				  u16 dcp_reg, u16 pipe_reg,
 				  u16 mask, u16 val)
-अणु
-	काष्ठा usbhs_priv *priv = usbhs_pipe_to_priv(pipe);
+{
+	struct usbhs_priv *priv = usbhs_pipe_to_priv(pipe);
 
-	अगर (usbhs_pipe_is_dcp(pipe))
+	if (usbhs_pipe_is_dcp(pipe))
 		usbhs_bset(priv, dcp_reg, mask, val);
-	अन्यथा
+	else
 		usbhs_bset(priv, pipe_reg, mask, val);
-पूर्ण
+}
 
-अटल u16 __usbhsp_pipe_xxx_get(काष्ठा usbhs_pipe *pipe,
+static u16 __usbhsp_pipe_xxx_get(struct usbhs_pipe *pipe,
 				 u16 dcp_reg, u16 pipe_reg)
-अणु
-	काष्ठा usbhs_priv *priv = usbhs_pipe_to_priv(pipe);
+{
+	struct usbhs_priv *priv = usbhs_pipe_to_priv(pipe);
 
-	अगर (usbhs_pipe_is_dcp(pipe))
-		वापस usbhs_पढ़ो(priv, dcp_reg);
-	अन्यथा
-		वापस usbhs_पढ़ो(priv, pipe_reg);
-पूर्ण
+	if (usbhs_pipe_is_dcp(pipe))
+		return usbhs_read(priv, dcp_reg);
+	else
+		return usbhs_read(priv, pipe_reg);
+}
 
 /*
  *		DCPCFG/PIPECFG functions
  */
-अटल व्योम usbhsp_pipe_cfg_set(काष्ठा usbhs_pipe *pipe, u16 mask, u16 val)
-अणु
+static void usbhsp_pipe_cfg_set(struct usbhs_pipe *pipe, u16 mask, u16 val)
+{
 	__usbhsp_pipe_xxx_set(pipe, DCPCFG, PIPECFG, mask, val);
-पूर्ण
+}
 
-अटल u16 usbhsp_pipe_cfg_get(काष्ठा usbhs_pipe *pipe)
-अणु
-	वापस __usbhsp_pipe_xxx_get(pipe, DCPCFG, PIPECFG);
-पूर्ण
+static u16 usbhsp_pipe_cfg_get(struct usbhs_pipe *pipe)
+{
+	return __usbhsp_pipe_xxx_get(pipe, DCPCFG, PIPECFG);
+}
 
 /*
  *		PIPEnTRN/PIPEnTRE functions
  */
-अटल व्योम usbhsp_pipe_trn_set(काष्ठा usbhs_pipe *pipe, u16 mask, u16 val)
-अणु
-	काष्ठा usbhs_priv *priv = usbhs_pipe_to_priv(pipe);
-	काष्ठा device *dev = usbhs_priv_to_dev(priv);
-	पूर्णांक num = usbhs_pipe_number(pipe);
+static void usbhsp_pipe_trn_set(struct usbhs_pipe *pipe, u16 mask, u16 val)
+{
+	struct usbhs_priv *priv = usbhs_pipe_to_priv(pipe);
+	struct device *dev = usbhs_priv_to_dev(priv);
+	int num = usbhs_pipe_number(pipe);
 	u16 reg;
 
 	/*
 	 * It is impossible to calculate address,
-	 * since PIPEnTRN addresses were mapped अक्रमomly.
+	 * since PIPEnTRN addresses were mapped randomly.
 	 */
-#घोषणा CASE_PIPExTRN(a)		\
-	हाल 0x ## a:			\
+#define CASE_PIPExTRN(a)		\
+	case 0x ## a:			\
 		reg = PIPE ## a ## TRN;	\
-		अवरोध;
+		break;
 
-	चयन (num) अणु
+	switch (num) {
 	CASE_PIPExTRN(1);
 	CASE_PIPExTRN(2);
 	CASE_PIPExTRN(3);
@@ -141,30 +140,30 @@
 	CASE_PIPExTRN(F);
 	CASE_PIPExTRN(9);
 	CASE_PIPExTRN(A);
-	शेष:
+	default:
 		dev_err(dev, "unknown pipe (%d)\n", num);
-		वापस;
-	पूर्ण
+		return;
+	}
 	__usbhsp_pipe_xxx_set(pipe, 0, reg, mask, val);
-पूर्ण
+}
 
-अटल व्योम usbhsp_pipe_tre_set(काष्ठा usbhs_pipe *pipe, u16 mask, u16 val)
-अणु
-	काष्ठा usbhs_priv *priv = usbhs_pipe_to_priv(pipe);
-	काष्ठा device *dev = usbhs_priv_to_dev(priv);
-	पूर्णांक num = usbhs_pipe_number(pipe);
+static void usbhsp_pipe_tre_set(struct usbhs_pipe *pipe, u16 mask, u16 val)
+{
+	struct usbhs_priv *priv = usbhs_pipe_to_priv(pipe);
+	struct device *dev = usbhs_priv_to_dev(priv);
+	int num = usbhs_pipe_number(pipe);
 	u16 reg;
 
 	/*
 	 * It is impossible to calculate address,
-	 * since PIPEnTRE addresses were mapped अक्रमomly.
+	 * since PIPEnTRE addresses were mapped randomly.
 	 */
-#घोषणा CASE_PIPExTRE(a)			\
-	हाल 0x ## a:				\
+#define CASE_PIPExTRE(a)			\
+	case 0x ## a:				\
 		reg = PIPE ## a ## TRE;		\
-		अवरोध;
+		break;
 
-	चयन (num) अणु
+	switch (num) {
 	CASE_PIPExTRE(1);
 	CASE_PIPExTRE(2);
 	CASE_PIPExTRE(3);
@@ -177,43 +176,43 @@
 	CASE_PIPExTRE(F);
 	CASE_PIPExTRE(9);
 	CASE_PIPExTRE(A);
-	शेष:
+	default:
 		dev_err(dev, "unknown pipe (%d)\n", num);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	__usbhsp_pipe_xxx_set(pipe, 0, reg, mask, val);
-पूर्ण
+}
 
 /*
  *		PIPEBUF
  */
-अटल व्योम usbhsp_pipe_buf_set(काष्ठा usbhs_pipe *pipe, u16 mask, u16 val)
-अणु
-	अगर (usbhs_pipe_is_dcp(pipe))
-		वापस;
+static void usbhsp_pipe_buf_set(struct usbhs_pipe *pipe, u16 mask, u16 val)
+{
+	if (usbhs_pipe_is_dcp(pipe))
+		return;
 
 	__usbhsp_pipe_xxx_set(pipe, 0, PIPEBUF, mask, val);
-पूर्ण
+}
 
 /*
  *		DCPMAXP/PIPEMAXP
  */
-अटल व्योम usbhsp_pipe_maxp_set(काष्ठा usbhs_pipe *pipe, u16 mask, u16 val)
-अणु
+static void usbhsp_pipe_maxp_set(struct usbhs_pipe *pipe, u16 mask, u16 val)
+{
 	__usbhsp_pipe_xxx_set(pipe, DCPMAXP, PIPEMAXP, mask, val);
-पूर्ण
+}
 
 /*
  *		pipe control functions
  */
-अटल व्योम usbhsp_pipe_select(काष्ठा usbhs_pipe *pipe)
-अणु
-	काष्ठा usbhs_priv *priv = usbhs_pipe_to_priv(pipe);
+static void usbhsp_pipe_select(struct usbhs_pipe *pipe)
+{
+	struct usbhs_priv *priv = usbhs_pipe_to_priv(pipe);
 
 	/*
-	 * On pipe, this is necessary beक्रमe
-	 * accesses to below रेजिस्टरs.
+	 * On pipe, this is necessary before
+	 * accesses to below registers.
 	 *
 	 * PIPESEL	: usbhsp_pipe_select
 	 * PIPECFG	: usbhsp_pipe_cfg_xxx
@@ -223,25 +222,25 @@
 	 */
 
 	/*
-	 * अगर pipe is dcp, no pipe is selected.
-	 * it is no problem, because dcp have its रेजिस्टर
+	 * if pipe is dcp, no pipe is selected.
+	 * it is no problem, because dcp have its register
 	 */
-	usbhs_ग_लिखो(priv, PIPESEL, 0xF & usbhs_pipe_number(pipe));
-पूर्ण
+	usbhs_write(priv, PIPESEL, 0xF & usbhs_pipe_number(pipe));
+}
 
-अटल पूर्णांक usbhsp_pipe_barrier(काष्ठा usbhs_pipe *pipe)
-अणु
-	काष्ठा usbhs_priv *priv = usbhs_pipe_to_priv(pipe);
-	पूर्णांक समयout = 1024;
+static int usbhsp_pipe_barrier(struct usbhs_pipe *pipe)
+{
+	struct usbhs_priv *priv = usbhs_pipe_to_priv(pipe);
+	int timeout = 1024;
 	u16 mask = usbhs_mod_is_host(priv) ? (CSSTS | PID_MASK) : PID_MASK;
 
 	/*
 	 * make sure....
 	 *
-	 * Modअगरy these bits when CSSTS = 0, PID = NAK, and no pipe number is
-	 * specअगरied by the CURPIPE bits.
+	 * Modify these bits when CSSTS = 0, PID = NAK, and no pipe number is
+	 * specified by the CURPIPE bits.
 	 * When changing the setting of this bit after changing
-	 * the PID bits क्रम the selected pipe from BUF to NAK,
+	 * the PID bits for the selected pipe from BUF to NAK,
 	 * check that CSSTS = 0 and PBUSY = 0.
 	 */
 
@@ -253,51 +252,51 @@
 	 *  - "Pipe Control"
 	 *   - "Pipe Control Registers Switching Procedure"
 	 */
-	usbhs_ग_लिखो(priv, CFIFOSEL, 0);
+	usbhs_write(priv, CFIFOSEL, 0);
 	usbhs_pipe_disable(pipe);
 
-	करो अणु
-		अगर (!(usbhsp_pipectrl_get(pipe) & mask))
-			वापस 0;
+	do {
+		if (!(usbhsp_pipectrl_get(pipe) & mask))
+			return 0;
 
 		udelay(10);
 
-	पूर्ण जबतक (समयout--);
+	} while (timeout--);
 
-	वापस -EBUSY;
-पूर्ण
+	return -EBUSY;
+}
 
-पूर्णांक usbhs_pipe_is_accessible(काष्ठा usbhs_pipe *pipe)
-अणु
+int usbhs_pipe_is_accessible(struct usbhs_pipe *pipe)
+{
 	u16 val;
 
 	val = usbhsp_pipectrl_get(pipe);
-	अगर (val & BSTS)
-		वापस 0;
+	if (val & BSTS)
+		return 0;
 
-	वापस -EBUSY;
-पूर्ण
+	return -EBUSY;
+}
 
-bool usbhs_pipe_contains_transmittable_data(काष्ठा usbhs_pipe *pipe)
-अणु
+bool usbhs_pipe_contains_transmittable_data(struct usbhs_pipe *pipe)
+{
 	u16 val;
 
-	/* Do not support क्रम DCP pipe */
-	अगर (usbhs_pipe_is_dcp(pipe))
-		वापस false;
+	/* Do not support for DCP pipe */
+	if (usbhs_pipe_is_dcp(pipe))
+		return false;
 
 	val = usbhsp_pipectrl_get(pipe);
-	अगर (val & INBUFM)
-		वापस true;
+	if (val & INBUFM)
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /*
  *		PID ctrl
  */
-अटल व्योम __usbhsp_pid_try_nak_अगर_stall(काष्ठा usbhs_pipe *pipe)
-अणु
+static void __usbhsp_pid_try_nak_if_stall(struct usbhs_pipe *pipe)
+{
 	u16 pid = usbhsp_pipectrl_get(pipe);
 
 	pid &= PID_MASK;
@@ -306,45 +305,45 @@ bool usbhs_pipe_contains_transmittable_data(काष्ठा usbhs_pipe *pipe)
 	 * see
 	 * "Pipe n Control Register" - "PID"
 	 */
-	चयन (pid) अणु
-	हाल PID_STALL11:
+	switch (pid) {
+	case PID_STALL11:
 		usbhsp_pipectrl_set(pipe, PID_MASK, PID_STALL10);
 		fallthrough;
-	हाल PID_STALL10:
+	case PID_STALL10:
 		usbhsp_pipectrl_set(pipe, PID_MASK, PID_NAK);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम usbhs_pipe_disable(काष्ठा usbhs_pipe *pipe)
-अणु
-	पूर्णांक समयout = 1024;
+void usbhs_pipe_disable(struct usbhs_pipe *pipe)
+{
+	int timeout = 1024;
 	u16 val;
 
 	/* see "Pipe n Control Register" - "PID" */
-	__usbhsp_pid_try_nak_अगर_stall(pipe);
+	__usbhsp_pid_try_nak_if_stall(pipe);
 
 	usbhsp_pipectrl_set(pipe, PID_MASK, PID_NAK);
 
-	करो अणु
+	do {
 		val  = usbhsp_pipectrl_get(pipe);
 		val &= PBUSY;
-		अगर (!val)
-			अवरोध;
+		if (!val)
+			break;
 
 		udelay(10);
-	पूर्ण जबतक (समयout--);
-पूर्ण
+	} while (timeout--);
+}
 
-व्योम usbhs_pipe_enable(काष्ठा usbhs_pipe *pipe)
-अणु
+void usbhs_pipe_enable(struct usbhs_pipe *pipe)
+{
 	/* see "Pipe n Control Register" - "PID" */
-	__usbhsp_pid_try_nak_अगर_stall(pipe);
+	__usbhsp_pid_try_nak_if_stall(pipe);
 
 	usbhsp_pipectrl_set(pipe, PID_MASK, PID_BUF);
-पूर्ण
+}
 
-व्योम usbhs_pipe_stall(काष्ठा usbhs_pipe *pipe)
-अणु
+void usbhs_pipe_stall(struct usbhs_pipe *pipe)
+{
 	u16 pid = usbhsp_pipectrl_get(pipe);
 
 	pid &= PID_MASK;
@@ -353,75 +352,75 @@ bool usbhs_pipe_contains_transmittable_data(काष्ठा usbhs_pipe *pipe)
 	 * see
 	 * "Pipe n Control Register" - "PID"
 	 */
-	चयन (pid) अणु
-	हाल PID_NAK:
+	switch (pid) {
+	case PID_NAK:
 		usbhsp_pipectrl_set(pipe, PID_MASK, PID_STALL10);
-		अवरोध;
-	हाल PID_BUF:
+		break;
+	case PID_BUF:
 		usbhsp_pipectrl_set(pipe, PID_MASK, PID_STALL11);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-पूर्णांक usbhs_pipe_is_stall(काष्ठा usbhs_pipe *pipe)
-अणु
+int usbhs_pipe_is_stall(struct usbhs_pipe *pipe)
+{
 	u16 pid = usbhsp_pipectrl_get(pipe) & PID_MASK;
 
-	वापस (पूर्णांक)(pid == PID_STALL10 || pid == PID_STALL11);
-पूर्ण
+	return (int)(pid == PID_STALL10 || pid == PID_STALL11);
+}
 
-व्योम usbhs_pipe_set_trans_count_अगर_bulk(काष्ठा usbhs_pipe *pipe, पूर्णांक len)
-अणु
-	अगर (!usbhs_pipe_type_is(pipe, USB_ENDPOINT_XFER_BULK))
-		वापस;
+void usbhs_pipe_set_trans_count_if_bulk(struct usbhs_pipe *pipe, int len)
+{
+	if (!usbhs_pipe_type_is(pipe, USB_ENDPOINT_XFER_BULK))
+		return;
 
 	/*
-	 * clear and disable transfer counter क्रम IN/OUT pipe
+	 * clear and disable transfer counter for IN/OUT pipe
 	 */
 	usbhsp_pipe_tre_set(pipe, TRCLR | TRENB, TRCLR);
 
 	/*
 	 * Only IN direction bulk pipe can use transfer count.
 	 * Without using this function,
-	 * received data will अवरोध अगर it was large data size.
-	 * see PIPEnTRN/PIPEnTRE क्रम detail
+	 * received data will break if it was large data size.
+	 * see PIPEnTRN/PIPEnTRE for detail
 	 */
-	अगर (usbhs_pipe_is_dir_in(pipe)) अणु
-		पूर्णांक maxp = usbhs_pipe_get_maxpacket(pipe);
+	if (usbhs_pipe_is_dir_in(pipe)) {
+		int maxp = usbhs_pipe_get_maxpacket(pipe);
 
 		usbhsp_pipe_trn_set(pipe, 0xffff, DIV_ROUND_UP(len, maxp));
 		usbhsp_pipe_tre_set(pipe, TRENB, TRENB); /* enable */
-	पूर्ण
-पूर्ण
+	}
+}
 
 
 /*
  *		pipe setup
  */
-अटल पूर्णांक usbhsp_setup_pipecfg(काष्ठा usbhs_pipe *pipe, पूर्णांक is_host,
-				पूर्णांक dir_in, u16 *pipecfg)
-अणु
+static int usbhsp_setup_pipecfg(struct usbhs_pipe *pipe, int is_host,
+				int dir_in, u16 *pipecfg)
+{
 	u16 type = 0;
 	u16 bfre = 0;
 	u16 dblb = 0;
-	u16 cnपंचांगd = 0;
+	u16 cntmd = 0;
 	u16 dir = 0;
 	u16 epnum = 0;
 	u16 shtnak = 0;
-	अटल स्थिर u16 type_array[] = अणु
+	static const u16 type_array[] = {
 		[USB_ENDPOINT_XFER_BULK] = TYPE_BULK,
 		[USB_ENDPOINT_XFER_INT]  = TYPE_INT,
 		[USB_ENDPOINT_XFER_ISOC] = TYPE_ISO,
-	पूर्ण;
+	};
 
-	अगर (usbhs_pipe_is_dcp(pipe))
-		वापस -EINVAL;
+	if (usbhs_pipe_is_dcp(pipe))
+		return -EINVAL;
 
 	/*
 	 * PIPECFG
 	 *
 	 * see
-	 *  - "Register Descriptions" - "PIPECFG" रेजिस्टर
+	 *  - "Register Descriptions" - "PIPECFG" register
 	 *  - "Features"  - "Pipe configuration"
 	 *  - "Operation" - "Pipe Control"
 	 */
@@ -430,28 +429,28 @@ bool usbhs_pipe_contains_transmittable_data(काष्ठा usbhs_pipe *pipe)
 	type = type_array[usbhs_pipe_type(pipe)];
 
 	/* BFRE */
-	अगर (usbhs_pipe_type_is(pipe, USB_ENDPOINT_XFER_ISOC) ||
+	if (usbhs_pipe_type_is(pipe, USB_ENDPOINT_XFER_ISOC) ||
 	    usbhs_pipe_type_is(pipe, USB_ENDPOINT_XFER_BULK))
 		bfre = 0; /* FIXME */
 
 	/* DBLB: see usbhs_pipe_config_update() */
 
 	/* CNTMD */
-	अगर (usbhs_pipe_type_is(pipe, USB_ENDPOINT_XFER_BULK))
-		cnपंचांगd = 0; /* FIXME */
+	if (usbhs_pipe_type_is(pipe, USB_ENDPOINT_XFER_BULK))
+		cntmd = 0; /* FIXME */
 
-	/* सूची */
-	अगर (dir_in)
-		usbhsp_flags_set(pipe, IS_सूची_HOST);
+	/* DIR */
+	if (dir_in)
+		usbhsp_flags_set(pipe, IS_DIR_HOST);
 
-	अगर (!!is_host ^ !!dir_in)
-		dir |= सूची_OUT;
+	if (!!is_host ^ !!dir_in)
+		dir |= DIR_OUT;
 
-	अगर (!dir)
-		usbhsp_flags_set(pipe, IS_सूची_IN);
+	if (!dir)
+		usbhsp_flags_set(pipe, IS_DIR_IN);
 
 	/* SHTNAK */
-	अगर (usbhs_pipe_type_is(pipe, USB_ENDPOINT_XFER_BULK) &&
+	if (usbhs_pipe_type_is(pipe, USB_ENDPOINT_XFER_BULK) &&
 	    !dir)
 		shtnak = SHTNAK;
 
@@ -460,29 +459,29 @@ bool usbhs_pipe_contains_transmittable_data(काष्ठा usbhs_pipe *pipe)
 	*pipecfg = type		|
 		   bfre		|
 		   dblb		|
-		   cnपंचांगd	|
+		   cntmd	|
 		   dir		|
 		   shtnak	|
 		   epnum;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u16 usbhsp_setup_pipebuff(काष्ठा usbhs_pipe *pipe)
-अणु
-	काष्ठा usbhs_priv *priv = usbhs_pipe_to_priv(pipe);
-	काष्ठा device *dev = usbhs_priv_to_dev(priv);
-	पूर्णांक pipe_num = usbhs_pipe_number(pipe);
+static u16 usbhsp_setup_pipebuff(struct usbhs_pipe *pipe)
+{
+	struct usbhs_priv *priv = usbhs_pipe_to_priv(pipe);
+	struct device *dev = usbhs_priv_to_dev(priv);
+	int pipe_num = usbhs_pipe_number(pipe);
 	u16 buff_size;
 	u16 bufnmb;
 	u16 bufnmb_cnt;
-	काष्ठा renesas_usbhs_driver_pipe_config *pipe_config =
+	struct renesas_usbhs_driver_pipe_config *pipe_config =
 					usbhsp_get_pipe_config(priv, pipe_num);
 
 	/*
 	 * PIPEBUF
 	 *
 	 * see
-	 *  - "Register Descriptions" - "PIPEBUF" रेजिस्टर
+	 *  - "Register Descriptions" - "PIPEBUF" register
 	 *  - "Features"  - "Pipe configuration"
 	 *  - "Operation" - "FIFO Buffer Memory"
 	 *  - "Operation" - "Pipe Control"
@@ -490,32 +489,32 @@ bool usbhs_pipe_contains_transmittable_data(काष्ठा usbhs_pipe *pipe)
 	buff_size = pipe_config->bufsize;
 	bufnmb = pipe_config->bufnum;
 
-	/* change buff_size to रेजिस्टर value */
+	/* change buff_size to register value */
 	bufnmb_cnt = (buff_size / 64) - 1;
 
 	dev_dbg(dev, "pipe : %d : buff_size 0x%x: bufnmb 0x%x\n",
 		pipe_num, buff_size, bufnmb);
 
-	वापस	(0x1f & bufnmb_cnt)	<< 10 |
+	return	(0x1f & bufnmb_cnt)	<< 10 |
 		(0xff & bufnmb)		<<  0;
-पूर्ण
+}
 
-व्योम usbhs_pipe_config_update(काष्ठा usbhs_pipe *pipe, u16 devsel,
+void usbhs_pipe_config_update(struct usbhs_pipe *pipe, u16 devsel,
 			      u16 epnum, u16 maxp)
-अणु
-	काष्ठा usbhs_priv *priv = usbhs_pipe_to_priv(pipe);
-	पूर्णांक pipe_num = usbhs_pipe_number(pipe);
-	काष्ठा renesas_usbhs_driver_pipe_config *pipe_config =
+{
+	struct usbhs_priv *priv = usbhs_pipe_to_priv(pipe);
+	int pipe_num = usbhs_pipe_number(pipe);
+	struct renesas_usbhs_driver_pipe_config *pipe_config =
 					usbhsp_get_pipe_config(priv, pipe_num);
-	u16 dblb = pipe_config->द्विगुन_buf ? DBLB : 0;
+	u16 dblb = pipe_config->double_buf ? DBLB : 0;
 
-	अगर (devsel > 0xA) अणु
-		काष्ठा device *dev = usbhs_priv_to_dev(priv);
+	if (devsel > 0xA) {
+		struct device *dev = usbhs_priv_to_dev(priv);
 
 		dev_err(dev, "devsel error %d\n", devsel);
 
 		devsel = 0;
-	पूर्ण
+	}
 
 	usbhsp_pipe_barrier(pipe);
 
@@ -526,48 +525,48 @@ bool usbhs_pipe_contains_transmittable_data(काष्ठा usbhs_pipe *pipe)
 			     (devsel << 12) |
 			     maxp);
 
-	अगर (!usbhs_pipe_is_dcp(pipe))
+	if (!usbhs_pipe_is_dcp(pipe))
 		usbhsp_pipe_cfg_set(pipe,  0x000F | DBLB, epnum | dblb);
-पूर्ण
+}
 
 /*
  *		pipe control
  */
-पूर्णांक usbhs_pipe_get_maxpacket(काष्ठा usbhs_pipe *pipe)
-अणु
+int usbhs_pipe_get_maxpacket(struct usbhs_pipe *pipe)
+{
 	/*
 	 * see
 	 *	usbhs_pipe_config_update()
-	 *	usbhs_dcp_दो_स्मृति()
+	 *	usbhs_dcp_malloc()
 	 */
-	वापस pipe->maxp;
-पूर्ण
+	return pipe->maxp;
+}
 
-पूर्णांक usbhs_pipe_is_dir_in(काष्ठा usbhs_pipe *pipe)
-अणु
-	वापस usbhsp_flags_has(pipe, IS_सूची_IN);
-पूर्ण
+int usbhs_pipe_is_dir_in(struct usbhs_pipe *pipe)
+{
+	return usbhsp_flags_has(pipe, IS_DIR_IN);
+}
 
-पूर्णांक usbhs_pipe_is_dir_host(काष्ठा usbhs_pipe *pipe)
-अणु
-	वापस usbhsp_flags_has(pipe, IS_सूची_HOST);
-पूर्ण
+int usbhs_pipe_is_dir_host(struct usbhs_pipe *pipe)
+{
+	return usbhsp_flags_has(pipe, IS_DIR_HOST);
+}
 
-पूर्णांक usbhs_pipe_is_running(काष्ठा usbhs_pipe *pipe)
-अणु
-	वापस usbhsp_flags_has(pipe, IS_RUNNING);
-पूर्ण
+int usbhs_pipe_is_running(struct usbhs_pipe *pipe)
+{
+	return usbhsp_flags_has(pipe, IS_RUNNING);
+}
 
-व्योम usbhs_pipe_running(काष्ठा usbhs_pipe *pipe, पूर्णांक running)
-अणु
-	अगर (running)
+void usbhs_pipe_running(struct usbhs_pipe *pipe, int running)
+{
+	if (running)
 		usbhsp_flags_set(pipe, IS_RUNNING);
-	अन्यथा
+	else
 		usbhsp_flags_clr(pipe, IS_RUNNING);
-पूर्ण
+}
 
-व्योम usbhs_pipe_data_sequence(काष्ठा usbhs_pipe *pipe, पूर्णांक sequence)
-अणु
+void usbhs_pipe_data_sequence(struct usbhs_pipe *pipe, int sequence)
+{
 	u16 mask = (SQCLR | SQSET);
 	u16 val;
 
@@ -577,83 +576,83 @@ bool usbhs_pipe_contains_transmittable_data(काष्ठा usbhs_pipe *pipe)
 	 *  1  : data1
 	 *  -1 : no change
 	 */
-	चयन (sequence) अणु
-	हाल 0:
+	switch (sequence) {
+	case 0:
 		val = SQCLR;
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		val = SQSET;
-		अवरोध;
-	शेष:
-		वापस;
-	पूर्ण
+		break;
+	default:
+		return;
+	}
 
 	usbhsp_pipectrl_set(pipe, mask, val);
-पूर्ण
+}
 
-अटल पूर्णांक usbhs_pipe_get_data_sequence(काष्ठा usbhs_pipe *pipe)
-अणु
-	वापस !!(usbhsp_pipectrl_get(pipe) & SQMON);
-पूर्ण
+static int usbhs_pipe_get_data_sequence(struct usbhs_pipe *pipe)
+{
+	return !!(usbhsp_pipectrl_get(pipe) & SQMON);
+}
 
-व्योम usbhs_pipe_clear(काष्ठा usbhs_pipe *pipe)
-अणु
-	अगर (usbhs_pipe_is_dcp(pipe)) अणु
-		usbhs_fअगरo_clear_dcp(pipe);
-	पूर्ण अन्यथा अणु
+void usbhs_pipe_clear(struct usbhs_pipe *pipe)
+{
+	if (usbhs_pipe_is_dcp(pipe)) {
+		usbhs_fifo_clear_dcp(pipe);
+	} else {
 		usbhsp_pipectrl_set(pipe, ACLRM, ACLRM);
 		usbhsp_pipectrl_set(pipe, ACLRM, 0);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* Should call usbhsp_pipe_select() beक्रमe */
-व्योम usbhs_pipe_clear_without_sequence(काष्ठा usbhs_pipe *pipe,
-				       पूर्णांक needs_bfre, पूर्णांक bfre_enable)
-अणु
-	पूर्णांक sequence;
+/* Should call usbhsp_pipe_select() before */
+void usbhs_pipe_clear_without_sequence(struct usbhs_pipe *pipe,
+				       int needs_bfre, int bfre_enable)
+{
+	int sequence;
 
 	usbhsp_pipe_select(pipe);
 	sequence = usbhs_pipe_get_data_sequence(pipe);
-	अगर (needs_bfre)
+	if (needs_bfre)
 		usbhsp_pipe_cfg_set(pipe, BFRE, bfre_enable ? BFRE : 0);
 	usbhs_pipe_clear(pipe);
 	usbhs_pipe_data_sequence(pipe, sequence);
-पूर्ण
+}
 
-व्योम usbhs_pipe_config_change_bfre(काष्ठा usbhs_pipe *pipe, पूर्णांक enable)
-अणु
-	अगर (usbhs_pipe_is_dcp(pipe))
-		वापस;
+void usbhs_pipe_config_change_bfre(struct usbhs_pipe *pipe, int enable)
+{
+	if (usbhs_pipe_is_dcp(pipe))
+		return;
 
 	usbhsp_pipe_select(pipe);
-	/* check अगर the driver needs to change the BFRE value */
-	अगर (!(enable ^ !!(usbhsp_pipe_cfg_get(pipe) & BFRE)))
-		वापस;
+	/* check if the driver needs to change the BFRE value */
+	if (!(enable ^ !!(usbhsp_pipe_cfg_get(pipe) & BFRE)))
+		return;
 
 	usbhs_pipe_clear_without_sequence(pipe, 1, enable);
-पूर्ण
+}
 
-अटल काष्ठा usbhs_pipe *usbhsp_get_pipe(काष्ठा usbhs_priv *priv, u32 type)
-अणु
-	काष्ठा usbhs_pipe *pos, *pipe;
-	पूर्णांक i;
+static struct usbhs_pipe *usbhsp_get_pipe(struct usbhs_priv *priv, u32 type)
+{
+	struct usbhs_pipe *pos, *pipe;
+	int i;
 
 	/*
 	 * find target pipe
 	 */
-	pipe = शून्य;
-	usbhs_क्रम_each_pipe_with_dcp(pos, priv, i) अणु
-		अगर (!usbhs_pipe_type_is(pos, type))
-			जारी;
-		अगर (usbhsp_flags_has(pos, IS_USED))
-			जारी;
+	pipe = NULL;
+	usbhs_for_each_pipe_with_dcp(pos, priv, i) {
+		if (!usbhs_pipe_type_is(pos, type))
+			continue;
+		if (usbhsp_flags_has(pos, IS_USED))
+			continue;
 
 		pipe = pos;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (!pipe)
-		वापस शून्य;
+	if (!pipe)
+		return NULL;
 
 	/*
 	 * initialize pipe flags
@@ -661,51 +660,51 @@ bool usbhs_pipe_contains_transmittable_data(काष्ठा usbhs_pipe *pipe)
 	usbhsp_flags_init(pipe);
 	usbhsp_flags_set(pipe, IS_USED);
 
-	वापस pipe;
-पूर्ण
+	return pipe;
+}
 
-अटल व्योम usbhsp_put_pipe(काष्ठा usbhs_pipe *pipe)
-अणु
+static void usbhsp_put_pipe(struct usbhs_pipe *pipe)
+{
 	usbhsp_flags_init(pipe);
-पूर्ण
+}
 
-व्योम usbhs_pipe_init(काष्ठा usbhs_priv *priv,
-		     पूर्णांक (*dma_map_ctrl)(काष्ठा device *dma_dev,
-					 काष्ठा usbhs_pkt *pkt, पूर्णांक map))
-अणु
-	काष्ठा usbhs_pipe_info *info = usbhs_priv_to_pipeinfo(priv);
-	काष्ठा usbhs_pipe *pipe;
-	पूर्णांक i;
+void usbhs_pipe_init(struct usbhs_priv *priv,
+		     int (*dma_map_ctrl)(struct device *dma_dev,
+					 struct usbhs_pkt *pkt, int map))
+{
+	struct usbhs_pipe_info *info = usbhs_priv_to_pipeinfo(priv);
+	struct usbhs_pipe *pipe;
+	int i;
 
-	usbhs_क्रम_each_pipe_with_dcp(pipe, priv, i) अणु
+	usbhs_for_each_pipe_with_dcp(pipe, priv, i) {
 		usbhsp_flags_init(pipe);
-		pipe->fअगरo = शून्य;
-		pipe->mod_निजी = शून्य;
+		pipe->fifo = NULL;
+		pipe->mod_private = NULL;
 		INIT_LIST_HEAD(&pipe->list);
 
-		/* pipe क्रमce init */
+		/* pipe force init */
 		usbhs_pipe_clear(pipe);
-	पूर्ण
+	}
 
 	info->dma_map_ctrl = dma_map_ctrl;
-पूर्ण
+}
 
-काष्ठा usbhs_pipe *usbhs_pipe_दो_स्मृति(काष्ठा usbhs_priv *priv,
-				     पूर्णांक endpoपूर्णांक_type,
-				     पूर्णांक dir_in)
-अणु
-	काष्ठा device *dev = usbhs_priv_to_dev(priv);
-	काष्ठा usbhs_pipe *pipe;
-	पूर्णांक is_host = usbhs_mod_is_host(priv);
-	पूर्णांक ret;
+struct usbhs_pipe *usbhs_pipe_malloc(struct usbhs_priv *priv,
+				     int endpoint_type,
+				     int dir_in)
+{
+	struct device *dev = usbhs_priv_to_dev(priv);
+	struct usbhs_pipe *pipe;
+	int is_host = usbhs_mod_is_host(priv);
+	int ret;
 	u16 pipecfg, pipebuf;
 
-	pipe = usbhsp_get_pipe(priv, endpoपूर्णांक_type);
-	अगर (!pipe) अणु
+	pipe = usbhsp_get_pipe(priv, endpoint_type);
+	if (!pipe) {
 		dev_err(dev, "can't get pipe (%s)\n",
-			usbhsp_pipe_name[endpoपूर्णांक_type]);
-		वापस शून्य;
-	पूर्ण
+			usbhsp_pipe_name[endpoint_type]);
+		return NULL;
+	}
 
 	INIT_LIST_HEAD(&pipe->list);
 
@@ -713,15 +712,15 @@ bool usbhs_pipe_contains_transmittable_data(काष्ठा usbhs_pipe *pipe)
 
 	/* make sure pipe is not busy */
 	ret = usbhsp_pipe_barrier(pipe);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "pipe setup failed %d\n", usbhs_pipe_number(pipe));
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	अगर (usbhsp_setup_pipecfg(pipe, is_host, dir_in, &pipecfg)) अणु
+	if (usbhsp_setup_pipecfg(pipe, is_host, dir_in, &pipecfg)) {
 		dev_err(dev, "can't setup pipe\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	pipebuf  = usbhsp_setup_pipebuff(pipe);
 
@@ -742,38 +741,38 @@ bool usbhs_pipe_contains_transmittable_data(काष्ठा usbhs_pipe *pipe)
 	 * call usbhs_pipe_config_update() after this function !!
 	 */
 
-	वापस pipe;
-पूर्ण
+	return pipe;
+}
 
-व्योम usbhs_pipe_मुक्त(काष्ठा usbhs_pipe *pipe)
-अणु
+void usbhs_pipe_free(struct usbhs_pipe *pipe)
+{
 	usbhsp_pipe_select(pipe);
 	usbhsp_pipe_cfg_set(pipe, 0xFFFF, 0);
 	usbhsp_put_pipe(pipe);
-पूर्ण
+}
 
-व्योम usbhs_pipe_select_fअगरo(काष्ठा usbhs_pipe *pipe, काष्ठा usbhs_fअगरo *fअगरo)
-अणु
-	अगर (pipe->fअगरo)
-		pipe->fअगरo->pipe = शून्य;
+void usbhs_pipe_select_fifo(struct usbhs_pipe *pipe, struct usbhs_fifo *fifo)
+{
+	if (pipe->fifo)
+		pipe->fifo->pipe = NULL;
 
-	pipe->fअगरo = fअगरo;
+	pipe->fifo = fifo;
 
-	अगर (fअगरo)
-		fअगरo->pipe = pipe;
-पूर्ण
+	if (fifo)
+		fifo->pipe = pipe;
+}
 
 
 /*
  *		dcp control
  */
-काष्ठा usbhs_pipe *usbhs_dcp_दो_स्मृति(काष्ठा usbhs_priv *priv)
-अणु
-	काष्ठा usbhs_pipe *pipe;
+struct usbhs_pipe *usbhs_dcp_malloc(struct usbhs_priv *priv)
+{
+	struct usbhs_pipe *pipe;
 
 	pipe = usbhsp_get_pipe(priv, USB_ENDPOINT_XFER_CONTROL);
-	अगर (!pipe)
-		वापस शून्य;
+	if (!pipe)
+		return NULL;
 
 	INIT_LIST_HEAD(&pipe->list);
 
@@ -781,57 +780,57 @@ bool usbhs_pipe_contains_transmittable_data(काष्ठा usbhs_pipe *pipe)
 	 * call usbhs_pipe_config_update() after this function !!
 	 */
 
-	वापस pipe;
-पूर्ण
+	return pipe;
+}
 
-व्योम usbhs_dcp_control_transfer_करोne(काष्ठा usbhs_pipe *pipe)
-अणु
-	काष्ठा usbhs_priv *priv = usbhs_pipe_to_priv(pipe);
+void usbhs_dcp_control_transfer_done(struct usbhs_pipe *pipe)
+{
+	struct usbhs_priv *priv = usbhs_pipe_to_priv(pipe);
 
 	WARN_ON(!usbhs_pipe_is_dcp(pipe));
 
 	usbhs_pipe_enable(pipe);
 
-	अगर (!usbhs_mod_is_host(priv)) /* funconly */
+	if (!usbhs_mod_is_host(priv)) /* funconly */
 		usbhsp_pipectrl_set(pipe, CCPL, CCPL);
-पूर्ण
+}
 
-व्योम usbhs_dcp_dir_क्रम_host(काष्ठा usbhs_pipe *pipe, पूर्णांक dir_out)
-अणु
-	usbhsp_pipe_cfg_set(pipe, सूची_OUT,
-			    dir_out ? सूची_OUT : 0);
-पूर्ण
+void usbhs_dcp_dir_for_host(struct usbhs_pipe *pipe, int dir_out)
+{
+	usbhsp_pipe_cfg_set(pipe, DIR_OUT,
+			    dir_out ? DIR_OUT : 0);
+}
 
 /*
  *		pipe module function
  */
-पूर्णांक usbhs_pipe_probe(काष्ठा usbhs_priv *priv)
-अणु
-	काष्ठा usbhs_pipe_info *info = usbhs_priv_to_pipeinfo(priv);
-	काष्ठा usbhs_pipe *pipe;
-	काष्ठा device *dev = usbhs_priv_to_dev(priv);
-	काष्ठा renesas_usbhs_driver_pipe_config *pipe_configs =
+int usbhs_pipe_probe(struct usbhs_priv *priv)
+{
+	struct usbhs_pipe_info *info = usbhs_priv_to_pipeinfo(priv);
+	struct usbhs_pipe *pipe;
+	struct device *dev = usbhs_priv_to_dev(priv);
+	struct renesas_usbhs_driver_pipe_config *pipe_configs =
 					usbhs_get_dparam(priv, pipe_configs);
-	पूर्णांक pipe_size = usbhs_get_dparam(priv, pipe_size);
-	पूर्णांक i;
+	int pipe_size = usbhs_get_dparam(priv, pipe_size);
+	int i;
 
 	/* This driver expects 1st pipe is DCP */
-	अगर (pipe_configs[0].type != USB_ENDPOINT_XFER_CONTROL) अणु
+	if (pipe_configs[0].type != USB_ENDPOINT_XFER_CONTROL) {
 		dev_err(dev, "1st PIPE is not DCP\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	info->pipe = kसुस्मृति(pipe_size, माप(काष्ठा usbhs_pipe),
+	info->pipe = kcalloc(pipe_size, sizeof(struct usbhs_pipe),
 			     GFP_KERNEL);
-	अगर (!info->pipe)
-		वापस -ENOMEM;
+	if (!info->pipe)
+		return -ENOMEM;
 
 	info->size = pipe_size;
 
 	/*
 	 * init pipe
 	 */
-	usbhs_क्रम_each_pipe_with_dcp(pipe, priv, i) अणु
+	usbhs_for_each_pipe_with_dcp(pipe, priv, i) {
 		pipe->priv = priv;
 
 		usbhs_pipe_type(pipe) =
@@ -839,14 +838,14 @@ bool usbhs_pipe_contains_transmittable_data(काष्ठा usbhs_pipe *pipe)
 
 		dev_dbg(dev, "pipe %x\t: %s\n",
 			i, usbhsp_pipe_name[pipe_configs[i].type]);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम usbhs_pipe_हटाओ(काष्ठा usbhs_priv *priv)
-अणु
-	काष्ठा usbhs_pipe_info *info = usbhs_priv_to_pipeinfo(priv);
+void usbhs_pipe_remove(struct usbhs_priv *priv)
+{
+	struct usbhs_pipe_info *info = usbhs_priv_to_pipeinfo(priv);
 
-	kमुक्त(info->pipe);
-पूर्ण
+	kfree(info->pipe);
+}

@@ -1,192 +1,191 @@
-<शैली गुरु>
 /*
- * J-Core SoC PIT/घड़ीsource driver
+ * J-Core SoC PIT/clocksource driver
  *
  * Copyright (C) 2015-2016 Smart Energy Instruments, Inc.
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/घड़ीchips.h>
-#समावेश <linux/घड़ीsource.h>
-#समावेश <linux/sched_घड़ी.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/cpuhotplug.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_irq.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/interrupt.h>
+#include <linux/clockchips.h>
+#include <linux/clocksource.h>
+#include <linux/sched_clock.h>
+#include <linux/cpu.h>
+#include <linux/cpuhotplug.h>
+#include <linux/of_address.h>
+#include <linux/of_irq.h>
 
-#घोषणा PIT_IRQ_SHIFT		12
-#घोषणा PIT_PRIO_SHIFT		20
-#घोषणा PIT_ENABLE_SHIFT	26
-#घोषणा PIT_PRIO_MASK		0xf
+#define PIT_IRQ_SHIFT		12
+#define PIT_PRIO_SHIFT		20
+#define PIT_ENABLE_SHIFT	26
+#define PIT_PRIO_MASK		0xf
 
-#घोषणा REG_PITEN		0x00
-#घोषणा REG_THROT		0x10
-#घोषणा REG_COUNT		0x14
-#घोषणा REG_BUSPD		0x18
-#घोषणा REG_SECHI		0x20
-#घोषणा REG_SECLO		0x24
-#घोषणा REG_NSEC		0x28
+#define REG_PITEN		0x00
+#define REG_THROT		0x10
+#define REG_COUNT		0x14
+#define REG_BUSPD		0x18
+#define REG_SECHI		0x20
+#define REG_SECLO		0x24
+#define REG_NSEC		0x28
 
-काष्ठा jcore_pit अणु
-	काष्ठा घड़ी_event_device	ced;
-	व्योम __iomem			*base;
-	अचिन्हित दीर्घ			periodic_delta;
+struct jcore_pit {
+	struct clock_event_device	ced;
+	void __iomem			*base;
+	unsigned long			periodic_delta;
 	u32				enable_val;
-पूर्ण;
+};
 
-अटल व्योम __iomem *jcore_pit_base;
-अटल काष्ठा jcore_pit __percpu *jcore_pit_percpu;
+static void __iomem *jcore_pit_base;
+static struct jcore_pit __percpu *jcore_pit_percpu;
 
-अटल notrace u64 jcore_sched_घड़ी_पढ़ो(व्योम)
-अणु
+static notrace u64 jcore_sched_clock_read(void)
+{
 	u32 seclo, nsec, seclo0;
-	__iomem व्योम *base = jcore_pit_base;
+	__iomem void *base = jcore_pit_base;
 
-	seclo = पढ़ोl(base + REG_SECLO);
-	करो अणु
+	seclo = readl(base + REG_SECLO);
+	do {
 		seclo0 = seclo;
-		nsec  = पढ़ोl(base + REG_NSEC);
-		seclo = पढ़ोl(base + REG_SECLO);
-	पूर्ण जबतक (seclo0 != seclo);
+		nsec  = readl(base + REG_NSEC);
+		seclo = readl(base + REG_SECLO);
+	} while (seclo0 != seclo);
 
-	वापस seclo * NSEC_PER_SEC + nsec;
-पूर्ण
+	return seclo * NSEC_PER_SEC + nsec;
+}
 
-अटल u64 jcore_घड़ीsource_पढ़ो(काष्ठा घड़ीsource *cs)
-अणु
-	वापस jcore_sched_घड़ी_पढ़ो();
-पूर्ण
+static u64 jcore_clocksource_read(struct clocksource *cs)
+{
+	return jcore_sched_clock_read();
+}
 
-अटल पूर्णांक jcore_pit_disable(काष्ठा jcore_pit *pit)
-अणु
-	ग_लिखोl(0, pit->base + REG_PITEN);
-	वापस 0;
-पूर्ण
+static int jcore_pit_disable(struct jcore_pit *pit)
+{
+	writel(0, pit->base + REG_PITEN);
+	return 0;
+}
 
-अटल पूर्णांक jcore_pit_set(अचिन्हित दीर्घ delta, काष्ठा jcore_pit *pit)
-अणु
+static int jcore_pit_set(unsigned long delta, struct jcore_pit *pit)
+{
 	jcore_pit_disable(pit);
-	ग_लिखोl(delta, pit->base + REG_THROT);
-	ग_लिखोl(pit->enable_val, pit->base + REG_PITEN);
-	वापस 0;
-पूर्ण
+	writel(delta, pit->base + REG_THROT);
+	writel(pit->enable_val, pit->base + REG_PITEN);
+	return 0;
+}
 
-अटल पूर्णांक jcore_pit_set_state_shutकरोwn(काष्ठा घड़ी_event_device *ced)
-अणु
-	काष्ठा jcore_pit *pit = container_of(ced, काष्ठा jcore_pit, ced);
+static int jcore_pit_set_state_shutdown(struct clock_event_device *ced)
+{
+	struct jcore_pit *pit = container_of(ced, struct jcore_pit, ced);
 
-	वापस jcore_pit_disable(pit);
-पूर्ण
+	return jcore_pit_disable(pit);
+}
 
-अटल पूर्णांक jcore_pit_set_state_oneshot(काष्ठा घड़ी_event_device *ced)
-अणु
-	काष्ठा jcore_pit *pit = container_of(ced, काष्ठा jcore_pit, ced);
+static int jcore_pit_set_state_oneshot(struct clock_event_device *ced)
+{
+	struct jcore_pit *pit = container_of(ced, struct jcore_pit, ced);
 
-	वापस jcore_pit_disable(pit);
-पूर्ण
+	return jcore_pit_disable(pit);
+}
 
-अटल पूर्णांक jcore_pit_set_state_periodic(काष्ठा घड़ी_event_device *ced)
-अणु
-	काष्ठा jcore_pit *pit = container_of(ced, काष्ठा jcore_pit, ced);
+static int jcore_pit_set_state_periodic(struct clock_event_device *ced)
+{
+	struct jcore_pit *pit = container_of(ced, struct jcore_pit, ced);
 
-	वापस jcore_pit_set(pit->periodic_delta, pit);
-पूर्ण
+	return jcore_pit_set(pit->periodic_delta, pit);
+}
 
-अटल पूर्णांक jcore_pit_set_next_event(अचिन्हित दीर्घ delta,
-				    काष्ठा घड़ी_event_device *ced)
-अणु
-	काष्ठा jcore_pit *pit = container_of(ced, काष्ठा jcore_pit, ced);
+static int jcore_pit_set_next_event(unsigned long delta,
+				    struct clock_event_device *ced)
+{
+	struct jcore_pit *pit = container_of(ced, struct jcore_pit, ced);
 
-	वापस jcore_pit_set(delta, pit);
-पूर्ण
+	return jcore_pit_set(delta, pit);
+}
 
-अटल पूर्णांक jcore_pit_local_init(अचिन्हित cpu)
-अणु
-	काष्ठा jcore_pit *pit = this_cpu_ptr(jcore_pit_percpu);
-	अचिन्हित buspd, freq;
+static int jcore_pit_local_init(unsigned cpu)
+{
+	struct jcore_pit *pit = this_cpu_ptr(jcore_pit_percpu);
+	unsigned buspd, freq;
 
 	pr_info("Local J-Core PIT init on cpu %u\n", cpu);
 
-	buspd = पढ़ोl(pit->base + REG_BUSPD);
+	buspd = readl(pit->base + REG_BUSPD);
 	freq = DIV_ROUND_CLOSEST(NSEC_PER_SEC, buspd);
 	pit->periodic_delta = DIV_ROUND_CLOSEST(NSEC_PER_SEC, HZ * buspd);
 
-	घड़ीevents_config_and_रेजिस्टर(&pit->ced, freq, 1, अच_दीर्घ_उच्च);
+	clockevents_config_and_register(&pit->ced, freq, 1, ULONG_MAX);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल irqवापस_t jcore_समयr_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा jcore_pit *pit = this_cpu_ptr(dev_id);
+static irqreturn_t jcore_timer_interrupt(int irq, void *dev_id)
+{
+	struct jcore_pit *pit = this_cpu_ptr(dev_id);
 
-	अगर (घड़ीevent_state_oneshot(&pit->ced))
+	if (clockevent_state_oneshot(&pit->ced))
 		jcore_pit_disable(pit);
 
 	pit->ced.event_handler(&pit->ced);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक __init jcore_pit_init(काष्ठा device_node *node)
-अणु
-	पूर्णांक err;
-	अचिन्हित pit_irq, cpu;
-	अचिन्हित दीर्घ hwirq;
+static int __init jcore_pit_init(struct device_node *node)
+{
+	int err;
+	unsigned pit_irq, cpu;
+	unsigned long hwirq;
 	u32 irqprio, enable_val;
 
 	jcore_pit_base = of_iomap(node, 0);
-	अगर (!jcore_pit_base) अणु
+	if (!jcore_pit_base) {
 		pr_err("Error: Cannot map base address for J-Core PIT\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
 	pit_irq = irq_of_parse_and_map(node, 0);
-	अगर (!pit_irq) अणु
+	if (!pit_irq) {
 		pr_err("Error: J-Core PIT has no IRQ\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
 	pr_info("Initializing J-Core PIT at %p IRQ %d\n",
 		jcore_pit_base, pit_irq);
 
-	err = घड़ीsource_mmio_init(jcore_pit_base, "jcore_pit_cs",
+	err = clocksource_mmio_init(jcore_pit_base, "jcore_pit_cs",
 				    NSEC_PER_SEC, 400, 32,
-				    jcore_घड़ीsource_पढ़ो);
-	अगर (err) अणु
+				    jcore_clocksource_read);
+	if (err) {
 		pr_err("Error registering clocksource device: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	sched_घड़ी_रेजिस्टर(jcore_sched_घड़ी_पढ़ो, 32, NSEC_PER_SEC);
+	sched_clock_register(jcore_sched_clock_read, 32, NSEC_PER_SEC);
 
-	jcore_pit_percpu = alloc_percpu(काष्ठा jcore_pit);
-	अगर (!jcore_pit_percpu) अणु
+	jcore_pit_percpu = alloc_percpu(struct jcore_pit);
+	if (!jcore_pit_percpu) {
 		pr_err("Failed to allocate memory for clock event device\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	err = request_irq(pit_irq, jcore_समयr_पूर्णांकerrupt,
+	err = request_irq(pit_irq, jcore_timer_interrupt,
 			  IRQF_TIMER | IRQF_PERCPU,
 			  "jcore_pit", jcore_pit_percpu);
-	अगर (err) अणु
+	if (err) {
 		pr_err("pit irq request failed: %d\n", err);
-		मुक्त_percpu(jcore_pit_percpu);
-		वापस err;
-	पूर्ण
+		free_percpu(jcore_pit_percpu);
+		return err;
+	}
 
 	/*
 	 * The J-Core PIT is not hard-wired to a particular IRQ, but
-	 * पूर्णांकegrated with the पूर्णांकerrupt controller such that the IRQ it
+	 * integrated with the interrupt controller such that the IRQ it
 	 * generates is programmable, as follows:
 	 *
-	 * The bit layout of the PIT enable रेजिस्टर is:
+	 * The bit layout of the PIT enable register is:
 	 *
 	 *	.....e..ppppiiiiiiii............
 	 *
@@ -199,10 +198,10 @@
 	 * separately in the pppp bits.
 	 *
 	 * For the PIT included in AIC2 (current), the programming
-	 * पूर्णांकerface is equivalent modulo पूर्णांकerrupt mapping. This is
-	 * why a dअगरferent compatible tag was not used. However only
-	 * traps 64-127 (the ones actually पूर्णांकended to be used क्रम
-	 * पूर्णांकerrupts, rather than syscalls/exceptions/etc.) can be
+	 * interface is equivalent modulo interrupt mapping. This is
+	 * why a different compatible tag was not used. However only
+	 * traps 64-127 (the ones actually intended to be used for
+	 * interrupts, rather than syscalls/exceptions/etc.) can be
 	 * programmed (the high 2 bits of i are ignored) and the
 	 * priority pppp is <<2'd and or'd onto the irq number. This
 	 * choice seems to have been made on the hardware engineering
@@ -216,14 +215,14 @@
 		   | (hwirq << PIT_IRQ_SHIFT)
 		   | (irqprio << PIT_PRIO_SHIFT);
 
-	क्रम_each_present_cpu(cpu) अणु
-		काष्ठा jcore_pit *pit = per_cpu_ptr(jcore_pit_percpu, cpu);
+	for_each_present_cpu(cpu) {
+		struct jcore_pit *pit = per_cpu_ptr(jcore_pit_percpu, cpu);
 
 		pit->base = of_iomap(node, cpu);
-		अगर (!pit->base) अणु
+		if (!pit->base) {
 			pr_err("Unable to map PIT for cpu %u\n", cpu);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		pit->ced.name = "jcore_pit";
 		pit->ced.features = CLOCK_EVT_FEAT_PERIODIC
@@ -232,19 +231,19 @@
 		pit->ced.cpumask = cpumask_of(cpu);
 		pit->ced.rating = 400;
 		pit->ced.irq = pit_irq;
-		pit->ced.set_state_shutकरोwn = jcore_pit_set_state_shutकरोwn;
+		pit->ced.set_state_shutdown = jcore_pit_set_state_shutdown;
 		pit->ced.set_state_periodic = jcore_pit_set_state_periodic;
 		pit->ced.set_state_oneshot = jcore_pit_set_state_oneshot;
 		pit->ced.set_next_event = jcore_pit_set_next_event;
 
 		pit->enable_val = enable_val;
-	पूर्ण
+	}
 
 	cpuhp_setup_state(CPUHP_AP_JCORE_TIMER_STARTING,
 			  "clockevents/jcore:starting",
-			  jcore_pit_local_init, शून्य);
+			  jcore_pit_local_init, NULL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 TIMER_OF_DECLARE(jcore_pit, "jcore,pit", jcore_pit_init);

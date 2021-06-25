@@ -1,151 +1,150 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2017 Facebook
  */
-#समावेश <मानकघोष.स>
-#समावेश <माला.स>
-#समावेश <linux/bpf.h>
-#समावेश <linux/अगर_ether.h>
-#समावेश <linux/अगर_packet.h>
-#समावेश <linux/ip.h>
-#समावेश <linux/ipv6.h>
-#समावेश <linux/in.h>
-#समावेश <linux/tcp.h>
-#समावेश <linux/pkt_cls.h>
-#समावेश <bpf/bpf_helpers.h>
-#समावेश <bpf/bpf_endian.h>
+#include <stddef.h>
+#include <string.h>
+#include <linux/bpf.h>
+#include <linux/if_ether.h>
+#include <linux/if_packet.h>
+#include <linux/ip.h>
+#include <linux/ipv6.h>
+#include <linux/in.h>
+#include <linux/tcp.h>
+#include <linux/pkt_cls.h>
+#include <bpf/bpf_helpers.h>
+#include <bpf/bpf_endian.h>
 
-#घोषणा barrier() __यंत्र__ __अस्थिर__("": : :"memory")
-पूर्णांक _version SEC("version") = 1;
+#define barrier() __asm__ __volatile__("": : :"memory")
+int _version SEC("version") = 1;
 
-/* llvm will optimize both subprograms पूर्णांकo exactly the same BPF assembly
+/* llvm will optimize both subprograms into exactly the same BPF assembly
  *
  * Disassembly of section .text:
  *
  * 0000000000000000 test_pkt_access_subprog1:
- * ; 	वापस skb->len * 2;
+ * ; 	return skb->len * 2;
  *        0:	61 10 00 00 00 00 00 00	r0 = *(u32 *)(r1 + 0)
  *        1:	64 00 00 00 01 00 00 00	w0 <<= 1
- *        2:	95 00 00 00 00 00 00 00	निकास
+ *        2:	95 00 00 00 00 00 00 00	exit
  *
  * 0000000000000018 test_pkt_access_subprog2:
- * ; 	वापस skb->len * val;
+ * ; 	return skb->len * val;
  *        3:	61 10 00 00 00 00 00 00	r0 = *(u32 *)(r1 + 0)
  *        4:	64 00 00 00 01 00 00 00	w0 <<= 1
- *        5:	95 00 00 00 00 00 00 00	निकास
+ *        5:	95 00 00 00 00 00 00 00	exit
  *
- * Which makes it an पूर्णांकeresting test क्रम BTF-enabled verअगरier.
+ * Which makes it an interesting test for BTF-enabled verifier.
  */
-अटल __attribute__ ((noअंतरभूत))
-पूर्णांक test_pkt_access_subprog1(अस्थिर काष्ठा __sk_buff *skb)
-अणु
-	वापस skb->len * 2;
-पूर्ण
+static __attribute__ ((noinline))
+int test_pkt_access_subprog1(volatile struct __sk_buff *skb)
+{
+	return skb->len * 2;
+}
 
-अटल __attribute__ ((noअंतरभूत))
-पूर्णांक test_pkt_access_subprog2(पूर्णांक val, अस्थिर काष्ठा __sk_buff *skb)
-अणु
-	वापस skb->len * val;
-पूर्ण
+static __attribute__ ((noinline))
+int test_pkt_access_subprog2(int val, volatile struct __sk_buff *skb)
+{
+	return skb->len * val;
+}
 
-#घोषणा MAX_STACK (512 - 2 * 32)
+#define MAX_STACK (512 - 2 * 32)
 
-__attribute__ ((noअंतरभूत))
-पूर्णांक get_skb_len(काष्ठा __sk_buff *skb)
-अणु
-	अस्थिर अक्षर buf[MAX_STACK] = अणुपूर्ण;
+__attribute__ ((noinline))
+int get_skb_len(struct __sk_buff *skb)
+{
+	volatile char buf[MAX_STACK] = {};
 
-	वापस skb->len;
-पूर्ण
+	return skb->len;
+}
 
-__attribute__ ((noअंतरभूत))
-पूर्णांक get_स्थिरant(दीर्घ val)
-अणु
-	वापस val - 122;
-पूर्ण
+__attribute__ ((noinline))
+int get_constant(long val)
+{
+	return val - 122;
+}
 
-पूर्णांक get_skb_अगरindex(पूर्णांक, काष्ठा __sk_buff *skb, पूर्णांक);
+int get_skb_ifindex(int, struct __sk_buff *skb, int);
 
-__attribute__ ((noअंतरभूत))
-पूर्णांक test_pkt_access_subprog3(पूर्णांक val, काष्ठा __sk_buff *skb)
-अणु
-	वापस get_skb_len(skb) * get_skb_अगरindex(val, skb, get_स्थिरant(123));
-पूर्ण
+__attribute__ ((noinline))
+int test_pkt_access_subprog3(int val, struct __sk_buff *skb)
+{
+	return get_skb_len(skb) * get_skb_ifindex(val, skb, get_constant(123));
+}
 
-__attribute__ ((noअंतरभूत))
-पूर्णांक get_skb_अगरindex(पूर्णांक val, काष्ठा __sk_buff *skb, पूर्णांक var)
-अणु
-	अस्थिर अक्षर buf[MAX_STACK] = अणुपूर्ण;
+__attribute__ ((noinline))
+int get_skb_ifindex(int val, struct __sk_buff *skb, int var)
+{
+	volatile char buf[MAX_STACK] = {};
 
-	वापस skb->अगरindex * val * var;
-पूर्ण
+	return skb->ifindex * val * var;
+}
 
-__attribute__ ((noअंतरभूत))
-पूर्णांक test_pkt_ग_लिखो_access_subprog(काष्ठा __sk_buff *skb, __u32 off)
-अणु
-	व्योम *data = (व्योम *)(दीर्घ)skb->data;
-	व्योम *data_end = (व्योम *)(दीर्घ)skb->data_end;
-	काष्ठा tcphdr *tcp = शून्य;
+__attribute__ ((noinline))
+int test_pkt_write_access_subprog(struct __sk_buff *skb, __u32 off)
+{
+	void *data = (void *)(long)skb->data;
+	void *data_end = (void *)(long)skb->data_end;
+	struct tcphdr *tcp = NULL;
 
-	अगर (off > माप(काष्ठा ethhdr) + माप(काष्ठा ipv6hdr))
-		वापस -1;
+	if (off > sizeof(struct ethhdr) + sizeof(struct ipv6hdr))
+		return -1;
 
 	tcp = data + off;
-	अगर (tcp + 1 > data_end)
-		वापस -1;
-	/* make modअगरication to the packet data */
+	if (tcp + 1 > data_end)
+		return -1;
+	/* make modification to the packet data */
 	tcp->check++;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 SEC("classifier/test_pkt_access")
-पूर्णांक test_pkt_access(काष्ठा __sk_buff *skb)
-अणु
-	व्योम *data_end = (व्योम *)(दीर्घ)skb->data_end;
-	व्योम *data = (व्योम *)(दीर्घ)skb->data;
-	काष्ठा ethhdr *eth = (काष्ठा ethhdr *)(data);
-	काष्ठा tcphdr *tcp = शून्य;
+int test_pkt_access(struct __sk_buff *skb)
+{
+	void *data_end = (void *)(long)skb->data_end;
+	void *data = (void *)(long)skb->data;
+	struct ethhdr *eth = (struct ethhdr *)(data);
+	struct tcphdr *tcp = NULL;
 	__u8 proto = 255;
 	__u64 ihl_len;
 
-	अगर (eth + 1 > data_end)
-		वापस TC_ACT_SHOT;
+	if (eth + 1 > data_end)
+		return TC_ACT_SHOT;
 
-	अगर (eth->h_proto == bpf_htons(ETH_P_IP)) अणु
-		काष्ठा iphdr *iph = (काष्ठा iphdr *)(eth + 1);
+	if (eth->h_proto == bpf_htons(ETH_P_IP)) {
+		struct iphdr *iph = (struct iphdr *)(eth + 1);
 
-		अगर (iph + 1 > data_end)
-			वापस TC_ACT_SHOT;
+		if (iph + 1 > data_end)
+			return TC_ACT_SHOT;
 		ihl_len = iph->ihl * 4;
 		proto = iph->protocol;
-		tcp = (काष्ठा tcphdr *)((व्योम *)(iph) + ihl_len);
-	पूर्ण अन्यथा अगर (eth->h_proto == bpf_htons(ETH_P_IPV6)) अणु
-		काष्ठा ipv6hdr *ip6h = (काष्ठा ipv6hdr *)(eth + 1);
+		tcp = (struct tcphdr *)((void *)(iph) + ihl_len);
+	} else if (eth->h_proto == bpf_htons(ETH_P_IPV6)) {
+		struct ipv6hdr *ip6h = (struct ipv6hdr *)(eth + 1);
 
-		अगर (ip6h + 1 > data_end)
-			वापस TC_ACT_SHOT;
-		ihl_len = माप(*ip6h);
+		if (ip6h + 1 > data_end)
+			return TC_ACT_SHOT;
+		ihl_len = sizeof(*ip6h);
 		proto = ip6h->nexthdr;
-		tcp = (काष्ठा tcphdr *)((व्योम *)(ip6h) + ihl_len);
-	पूर्ण
+		tcp = (struct tcphdr *)((void *)(ip6h) + ihl_len);
+	}
 
-	अगर (test_pkt_access_subprog1(skb) != skb->len * 2)
-		वापस TC_ACT_SHOT;
-	अगर (test_pkt_access_subprog2(2, skb) != skb->len * 2)
-		वापस TC_ACT_SHOT;
-	अगर (test_pkt_access_subprog3(3, skb) != skb->len * 3 * skb->अगरindex)
-		वापस TC_ACT_SHOT;
-	अगर (tcp) अणु
-		अगर (test_pkt_ग_लिखो_access_subprog(skb, (व्योम *)tcp - data))
-			वापस TC_ACT_SHOT;
-		अगर (((व्योम *)(tcp) + 20) > data_end || proto != 6)
-			वापस TC_ACT_SHOT;
-		barrier(); /* to क्रमce ordering of checks */
-		अगर (((व्योम *)(tcp) + 18) > data_end)
-			वापस TC_ACT_SHOT;
-		अगर (tcp->urg_ptr == 123)
-			वापस TC_ACT_OK;
-	पूर्ण
+	if (test_pkt_access_subprog1(skb) != skb->len * 2)
+		return TC_ACT_SHOT;
+	if (test_pkt_access_subprog2(2, skb) != skb->len * 2)
+		return TC_ACT_SHOT;
+	if (test_pkt_access_subprog3(3, skb) != skb->len * 3 * skb->ifindex)
+		return TC_ACT_SHOT;
+	if (tcp) {
+		if (test_pkt_write_access_subprog(skb, (void *)tcp - data))
+			return TC_ACT_SHOT;
+		if (((void *)(tcp) + 20) > data_end || proto != 6)
+			return TC_ACT_SHOT;
+		barrier(); /* to force ordering of checks */
+		if (((void *)(tcp) + 18) > data_end)
+			return TC_ACT_SHOT;
+		if (tcp->urg_ptr == 123)
+			return TC_ACT_OK;
+	}
 
-	वापस TC_ACT_UNSPEC;
-पूर्ण
+	return TC_ACT_UNSPEC;
+}

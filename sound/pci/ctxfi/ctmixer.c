@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2008, Creative Technology Ltd. All Rights Reserved.
  *
- * @File	cपंचांगixer.c
+ * @File	ctmixer.c
  *
  * @Brief
  * This file contains the implementation of alsa mixer device functions.
@@ -13,16 +12,16 @@
  */
 
 
-#समावेश "ctmixer.h"
-#समावेश "ctamixer.h"
-#समावेश <linux/slab.h>
-#समावेश <sound/core.h>
-#समावेश <sound/control.h>
-#समावेश <sound/asoundef.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/tlv.h>
+#include "ctmixer.h"
+#include "ctamixer.h"
+#include <linux/slab.h>
+#include <sound/core.h>
+#include <sound/control.h>
+#include <sound/asoundef.h>
+#include <sound/pcm.h>
+#include <sound/tlv.h>
 
-क्रमागत CT_SUM_CTL अणु
+enum CT_SUM_CTL {
 	SUM_IN_F,
 	SUM_IN_R,
 	SUM_IN_C,
@@ -30,9 +29,9 @@
 	SUM_IN_F_C,
 
 	NUM_CT_SUMS
-पूर्ण;
+};
 
-क्रमागत CT_AMIXER_CTL अणु
+enum CT_AMIXER_CTL {
 	/* volume control mixers */
 	AMIXER_MASTER_F,
 	AMIXER_MASTER_R,
@@ -58,9 +57,9 @@
 
 	/* this should always be the last one */
 	NUM_CT_AMIXERS
-पूर्ण;
+};
 
-क्रमागत CTALSA_MIXER_CTL अणु
+enum CTALSA_MIXER_CTL {
 	/* volume control mixers */
 	MIXER_MASTER_P,
 	MIXER_PCM_P,
@@ -78,7 +77,7 @@
 	MIXER_MIC_C,
 	MIXER_SPDIFI_C,
 
-	/* चयन control mixers */
+	/* switch control mixers */
 	MIXER_PCM_C_S,
 	MIXER_LINEIN_C_S,
 	MIXER_MIC_C_S,
@@ -95,221 +94,221 @@
 
 	/* this should always be the last one */
 	NUM_CTALSA_MIXERS
-पूर्ण;
+};
 
-#घोषणा VOL_MIXER_START		MIXER_MASTER_P
-#घोषणा VOL_MIXER_END		MIXER_SPDIFI_C
-#घोषणा VOL_MIXER_NUM		(VOL_MIXER_END - VOL_MIXER_START + 1)
-#घोषणा SWH_MIXER_START		MIXER_PCM_C_S
-#घोषणा SWH_MIXER_END		MIXER_DIGITAL_IO_S
-#घोषणा SWH_CAPTURE_START	MIXER_PCM_C_S
-#घोषणा SWH_CAPTURE_END		MIXER_SPDIFI_C_S
+#define VOL_MIXER_START		MIXER_MASTER_P
+#define VOL_MIXER_END		MIXER_SPDIFI_C
+#define VOL_MIXER_NUM		(VOL_MIXER_END - VOL_MIXER_START + 1)
+#define SWH_MIXER_START		MIXER_PCM_C_S
+#define SWH_MIXER_END		MIXER_DIGITAL_IO_S
+#define SWH_CAPTURE_START	MIXER_PCM_C_S
+#define SWH_CAPTURE_END		MIXER_SPDIFI_C_S
 
-#घोषणा CHN_NUM		2
+#define CHN_NUM		2
 
-काष्ठा ct_kcontrol_init अणु
-	अचिन्हित अक्षर ctl;
-	अक्षर *name;
-पूर्ण;
+struct ct_kcontrol_init {
+	unsigned char ctl;
+	char *name;
+};
 
-अटल काष्ठा ct_kcontrol_init
-ct_kcontrol_init_table[NUM_CTALSA_MIXERS] = अणु
-	[MIXER_MASTER_P] = अणु
+static struct ct_kcontrol_init
+ct_kcontrol_init_table[NUM_CTALSA_MIXERS] = {
+	[MIXER_MASTER_P] = {
 		.ctl = 1,
 		.name = "Master Playback Volume",
-	पूर्ण,
-	[MIXER_MASTER_C] = अणु
+	},
+	[MIXER_MASTER_C] = {
 		.ctl = 1,
 		.name = "Master Capture Volume",
-	पूर्ण,
-	[MIXER_PCM_P] = अणु
+	},
+	[MIXER_PCM_P] = {
 		.ctl = 1,
 		.name = "PCM Playback Volume",
-	पूर्ण,
-	[MIXER_PCM_C] = अणु
+	},
+	[MIXER_PCM_C] = {
 		.ctl = 1,
 		.name = "PCM Capture Volume",
-	पूर्ण,
-	[MIXER_LINEIN_P] = अणु
+	},
+	[MIXER_LINEIN_P] = {
 		.ctl = 1,
 		.name = "Line Playback Volume",
-	पूर्ण,
-	[MIXER_LINEIN_C] = अणु
+	},
+	[MIXER_LINEIN_C] = {
 		.ctl = 1,
 		.name = "Line Capture Volume",
-	पूर्ण,
-	[MIXER_MIC_P] = अणु
+	},
+	[MIXER_MIC_P] = {
 		.ctl = 1,
 		.name = "Mic Playback Volume",
-	पूर्ण,
-	[MIXER_MIC_C] = अणु
+	},
+	[MIXER_MIC_C] = {
 		.ctl = 1,
 		.name = "Mic Capture Volume",
-	पूर्ण,
-	[MIXER_SPDIFI_P] = अणु
+	},
+	[MIXER_SPDIFI_P] = {
 		.ctl = 1,
 		.name = "IEC958 Playback Volume",
-	पूर्ण,
-	[MIXER_SPDIFI_C] = अणु
+	},
+	[MIXER_SPDIFI_C] = {
 		.ctl = 1,
 		.name = "IEC958 Capture Volume",
-	पूर्ण,
-	[MIXER_SPDIFO_P] = अणु
+	},
+	[MIXER_SPDIFO_P] = {
 		.ctl = 1,
 		.name = "Digital Playback Volume",
-	पूर्ण,
-	[MIXER_WAVEF_P] = अणु
+	},
+	[MIXER_WAVEF_P] = {
 		.ctl = 1,
 		.name = "Front Playback Volume",
-	पूर्ण,
-	[MIXER_WAVES_P] = अणु
+	},
+	[MIXER_WAVES_P] = {
 		.ctl = 1,
 		.name = "Side Playback Volume",
-	पूर्ण,
-	[MIXER_WAVEC_P] = अणु
+	},
+	[MIXER_WAVEC_P] = {
 		.ctl = 1,
 		.name = "Center/LFE Playback Volume",
-	पूर्ण,
-	[MIXER_WAVER_P] = अणु
+	},
+	[MIXER_WAVER_P] = {
 		.ctl = 1,
 		.name = "Surround Playback Volume",
-	पूर्ण,
-	[MIXER_PCM_C_S] = अणु
+	},
+	[MIXER_PCM_C_S] = {
 		.ctl = 1,
 		.name = "PCM Capture Switch",
-	पूर्ण,
-	[MIXER_LINEIN_C_S] = अणु
+	},
+	[MIXER_LINEIN_C_S] = {
 		.ctl = 1,
 		.name = "Line Capture Switch",
-	पूर्ण,
-	[MIXER_MIC_C_S] = अणु
+	},
+	[MIXER_MIC_C_S] = {
 		.ctl = 1,
 		.name = "Mic Capture Switch",
-	पूर्ण,
-	[MIXER_SPDIFI_C_S] = अणु
+	},
+	[MIXER_SPDIFI_C_S] = {
 		.ctl = 1,
 		.name = "IEC958 Capture Switch",
-	पूर्ण,
-	[MIXER_SPDIFO_P_S] = अणु
+	},
+	[MIXER_SPDIFO_P_S] = {
 		.ctl = 1,
 		.name = "Digital Playback Switch",
-	पूर्ण,
-	[MIXER_WAVEF_P_S] = अणु
+	},
+	[MIXER_WAVEF_P_S] = {
 		.ctl = 1,
 		.name = "Front Playback Switch",
-	पूर्ण,
-	[MIXER_WAVES_P_S] = अणु
+	},
+	[MIXER_WAVES_P_S] = {
 		.ctl = 1,
 		.name = "Side Playback Switch",
-	पूर्ण,
-	[MIXER_WAVEC_P_S] = अणु
+	},
+	[MIXER_WAVEC_P_S] = {
 		.ctl = 1,
 		.name = "Center/LFE Playback Switch",
-	पूर्ण,
-	[MIXER_WAVER_P_S] = अणु
+	},
+	[MIXER_WAVER_P_S] = {
 		.ctl = 1,
 		.name = "Surround Playback Switch",
-	पूर्ण,
-	[MIXER_DIGITAL_IO_S] = अणु
+	},
+	[MIXER_DIGITAL_IO_S] = {
 		.ctl = 0,
 		.name = "Digit-IO Playback Switch",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल व्योम
-ct_mixer_recording_select(काष्ठा ct_mixer *mixer, क्रमागत CT_AMIXER_CTL type);
+static void
+ct_mixer_recording_select(struct ct_mixer *mixer, enum CT_AMIXER_CTL type);
 
-अटल व्योम
-ct_mixer_recording_unselect(काष्ठा ct_mixer *mixer, क्रमागत CT_AMIXER_CTL type);
+static void
+ct_mixer_recording_unselect(struct ct_mixer *mixer, enum CT_AMIXER_CTL type);
 
-/* FIXME: this अटल looks like it would fail अगर more than one card was */
+/* FIXME: this static looks like it would fail if more than one card was */
 /* installed. */
-अटल काष्ठा snd_kcontrol *kctls[2] = अणुशून्यपूर्ण;
+static struct snd_kcontrol *kctls[2] = {NULL};
 
-अटल क्रमागत CT_AMIXER_CTL get_amixer_index(क्रमागत CTALSA_MIXER_CTL alsa_index)
-अणु
-	चयन (alsa_index) अणु
-	हाल MIXER_MASTER_P:	वापस AMIXER_MASTER_F;
-	हाल MIXER_MASTER_C:	वापस AMIXER_MASTER_F_C;
-	हाल MIXER_PCM_P:	वापस AMIXER_PCM_F;
-	हाल MIXER_PCM_C:
-	हाल MIXER_PCM_C_S:	वापस AMIXER_PCM_F_C;
-	हाल MIXER_LINEIN_P:	वापस AMIXER_LINEIN;
-	हाल MIXER_LINEIN_C:
-	हाल MIXER_LINEIN_C_S:	वापस AMIXER_LINEIN_C;
-	हाल MIXER_MIC_P:	वापस AMIXER_MIC;
-	हाल MIXER_MIC_C:
-	हाल MIXER_MIC_C_S:	वापस AMIXER_MIC_C;
-	हाल MIXER_SPDIFI_P:	वापस AMIXER_SPDIFI;
-	हाल MIXER_SPDIFI_C:
-	हाल MIXER_SPDIFI_C_S:	वापस AMIXER_SPDIFI_C;
-	हाल MIXER_SPDIFO_P:	वापस AMIXER_SPDIFO;
-	हाल MIXER_WAVEF_P:	वापस AMIXER_WAVE_F;
-	हाल MIXER_WAVES_P:	वापस AMIXER_WAVE_S;
-	हाल MIXER_WAVEC_P:	वापस AMIXER_WAVE_C;
-	हाल MIXER_WAVER_P:	वापस AMIXER_WAVE_R;
-	शेष:		वापस NUM_CT_AMIXERS;
-	पूर्ण
-पूर्ण
+static enum CT_AMIXER_CTL get_amixer_index(enum CTALSA_MIXER_CTL alsa_index)
+{
+	switch (alsa_index) {
+	case MIXER_MASTER_P:	return AMIXER_MASTER_F;
+	case MIXER_MASTER_C:	return AMIXER_MASTER_F_C;
+	case MIXER_PCM_P:	return AMIXER_PCM_F;
+	case MIXER_PCM_C:
+	case MIXER_PCM_C_S:	return AMIXER_PCM_F_C;
+	case MIXER_LINEIN_P:	return AMIXER_LINEIN;
+	case MIXER_LINEIN_C:
+	case MIXER_LINEIN_C_S:	return AMIXER_LINEIN_C;
+	case MIXER_MIC_P:	return AMIXER_MIC;
+	case MIXER_MIC_C:
+	case MIXER_MIC_C_S:	return AMIXER_MIC_C;
+	case MIXER_SPDIFI_P:	return AMIXER_SPDIFI;
+	case MIXER_SPDIFI_C:
+	case MIXER_SPDIFI_C_S:	return AMIXER_SPDIFI_C;
+	case MIXER_SPDIFO_P:	return AMIXER_SPDIFO;
+	case MIXER_WAVEF_P:	return AMIXER_WAVE_F;
+	case MIXER_WAVES_P:	return AMIXER_WAVE_S;
+	case MIXER_WAVEC_P:	return AMIXER_WAVE_C;
+	case MIXER_WAVER_P:	return AMIXER_WAVE_R;
+	default:		return NUM_CT_AMIXERS;
+	}
+}
 
-अटल क्रमागत CT_AMIXER_CTL get_recording_amixer(क्रमागत CT_AMIXER_CTL index)
-अणु
-	चयन (index) अणु
-	हाल AMIXER_MASTER_F:	वापस AMIXER_MASTER_F_C;
-	हाल AMIXER_PCM_F:	वापस AMIXER_PCM_F_C;
-	हाल AMIXER_SPDIFI:	वापस AMIXER_SPDIFI_C;
-	हाल AMIXER_LINEIN:	वापस AMIXER_LINEIN_C;
-	हाल AMIXER_MIC:	वापस AMIXER_MIC_C;
-	शेष:		वापस NUM_CT_AMIXERS;
-	पूर्ण
-पूर्ण
+static enum CT_AMIXER_CTL get_recording_amixer(enum CT_AMIXER_CTL index)
+{
+	switch (index) {
+	case AMIXER_MASTER_F:	return AMIXER_MASTER_F_C;
+	case AMIXER_PCM_F:	return AMIXER_PCM_F_C;
+	case AMIXER_SPDIFI:	return AMIXER_SPDIFI_C;
+	case AMIXER_LINEIN:	return AMIXER_LINEIN_C;
+	case AMIXER_MIC:	return AMIXER_MIC_C;
+	default:		return NUM_CT_AMIXERS;
+	}
+}
 
-अटल अचिन्हित अक्षर
-get_चयन_state(काष्ठा ct_mixer *mixer, क्रमागत CTALSA_MIXER_CTL type)
-अणु
-	वापस (mixer->चयन_state & (0x1 << (type - SWH_MIXER_START)))
+static unsigned char
+get_switch_state(struct ct_mixer *mixer, enum CTALSA_MIXER_CTL type)
+{
+	return (mixer->switch_state & (0x1 << (type - SWH_MIXER_START)))
 		? 1 : 0;
-पूर्ण
+}
 
-अटल व्योम
-set_चयन_state(काष्ठा ct_mixer *mixer,
-		 क्रमागत CTALSA_MIXER_CTL type, अचिन्हित अक्षर state)
-अणु
-	अगर (state)
-		mixer->चयन_state |= (0x1 << (type - SWH_MIXER_START));
-	अन्यथा
-		mixer->चयन_state &= ~(0x1 << (type - SWH_MIXER_START));
-पूर्ण
+static void
+set_switch_state(struct ct_mixer *mixer,
+		 enum CTALSA_MIXER_CTL type, unsigned char state)
+{
+	if (state)
+		mixer->switch_state |= (0x1 << (type - SWH_MIXER_START));
+	else
+		mixer->switch_state &= ~(0x1 << (type - SWH_MIXER_START));
+}
 
-#अगर 0 /* not used */
-/* Map पूर्णांकeger value ranging from 0 to 65535 to 14-bit भग्न value ranging
+#if 0 /* not used */
+/* Map integer value ranging from 0 to 65535 to 14-bit float value ranging
  * from 2^-6 to (1+1023/1024) */
-अटल अचिन्हित पूर्णांक uपूर्णांक16_to_भग्न14(अचिन्हित पूर्णांक x)
-अणु
-	अचिन्हित पूर्णांक i;
+static unsigned int uint16_to_float14(unsigned int x)
+{
+	unsigned int i;
 
-	अगर (x < 17)
-		वापस 0;
+	if (x < 17)
+		return 0;
 
 	x *= 2031;
 	x /= 65535;
 	x += 16;
 
 	/* i <= 6 */
-	क्रम (i = 0; !(x & 0x400); i++)
+	for (i = 0; !(x & 0x400); i++)
 		x <<= 1;
 
 	x = (((7 - i) & 0x7) << 10) | (x & 0x3ff);
 
-	वापस x;
-पूर्ण
+	return x;
+}
 
-अटल अचिन्हित पूर्णांक भग्न14_to_uपूर्णांक16(अचिन्हित पूर्णांक x)
-अणु
-	अचिन्हित पूर्णांक e;
+static unsigned int float14_to_uint16(unsigned int x)
+{
+	unsigned int e;
 
-	अगर (!x)
-		वापस x;
+	if (!x)
+		return x;
 
 	e = (x >> 10) & 0x7;
 	x &= 0x3ff;
@@ -319,327 +318,327 @@ set_चयन_state(काष्ठा ct_mixer *mixer,
 	x *= 65535;
 	x /= 2031;
 
-	वापस x;
-पूर्ण
-#पूर्ण_अगर /* not used */
+	return x;
+}
+#endif /* not used */
 
-#घोषणा VOL_SCALE	0x1c
-#घोषणा VOL_MAX		0x100
+#define VOL_SCALE	0x1c
+#define VOL_MAX		0x100
 
-अटल स्थिर DECLARE_TLV_DB_SCALE(ct_vol_db_scale, -6400, 25, 1);
+static const DECLARE_TLV_DB_SCALE(ct_vol_db_scale, -6400, 25, 1);
 
-अटल पूर्णांक ct_alsa_mix_volume_info(काष्ठा snd_kcontrol *kcontrol,
-				   काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int ct_alsa_mix_volume_info(struct snd_kcontrol *kcontrol,
+				   struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 2;
-	uinfo->value.पूर्णांकeger.min = 0;
-	uinfo->value.पूर्णांकeger.max = VOL_MAX;
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = VOL_MAX;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ct_alsa_mix_volume_get(काष्ठा snd_kcontrol *kcontrol,
-				  काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा ct_atc *atc = snd_kcontrol_chip(kcontrol);
-	क्रमागत CT_AMIXER_CTL type = get_amixer_index(kcontrol->निजी_value);
-	काष्ठा amixer *amixer;
-	पूर्णांक i, val;
+static int ct_alsa_mix_volume_get(struct snd_kcontrol *kcontrol,
+				  struct snd_ctl_elem_value *ucontrol)
+{
+	struct ct_atc *atc = snd_kcontrol_chip(kcontrol);
+	enum CT_AMIXER_CTL type = get_amixer_index(kcontrol->private_value);
+	struct amixer *amixer;
+	int i, val;
 
-	क्रम (i = 0; i < 2; i++) अणु
-		amixer = ((काष्ठा ct_mixer *)atc->mixer)->
+	for (i = 0; i < 2; i++) {
+		amixer = ((struct ct_mixer *)atc->mixer)->
 						amixers[type*CHN_NUM+i];
 		val = amixer->ops->get_scale(amixer) / VOL_SCALE;
-		अगर (val < 0)
+		if (val < 0)
 			val = 0;
-		अन्यथा अगर (val > VOL_MAX)
+		else if (val > VOL_MAX)
 			val = VOL_MAX;
-		ucontrol->value.पूर्णांकeger.value[i] = val;
-	पूर्ण
+		ucontrol->value.integer.value[i] = val;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ct_alsa_mix_volume_put(काष्ठा snd_kcontrol *kcontrol,
-				  काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा ct_atc *atc = snd_kcontrol_chip(kcontrol);
-	काष्ठा ct_mixer *mixer = atc->mixer;
-	क्रमागत CT_AMIXER_CTL type = get_amixer_index(kcontrol->निजी_value);
-	काष्ठा amixer *amixer;
-	पूर्णांक i, j, val, oval, change = 0;
+static int ct_alsa_mix_volume_put(struct snd_kcontrol *kcontrol,
+				  struct snd_ctl_elem_value *ucontrol)
+{
+	struct ct_atc *atc = snd_kcontrol_chip(kcontrol);
+	struct ct_mixer *mixer = atc->mixer;
+	enum CT_AMIXER_CTL type = get_amixer_index(kcontrol->private_value);
+	struct amixer *amixer;
+	int i, j, val, oval, change = 0;
 
-	क्रम (i = 0; i < 2; i++) अणु
-		val = ucontrol->value.पूर्णांकeger.value[i];
-		अगर (val < 0)
+	for (i = 0; i < 2; i++) {
+		val = ucontrol->value.integer.value[i];
+		if (val < 0)
 			val = 0;
-		अन्यथा अगर (val > VOL_MAX)
+		else if (val > VOL_MAX)
 			val = VOL_MAX;
 		val *= VOL_SCALE;
 		amixer = mixer->amixers[type*CHN_NUM+i];
 		oval = amixer->ops->get_scale(amixer);
-		अगर (val != oval) अणु
+		if (val != oval) {
 			amixer->ops->set_scale(amixer, val);
-			amixer->ops->commit_ग_लिखो(amixer);
+			amixer->ops->commit_write(amixer);
 			change = 1;
 			/* Synchronize Master/PCM playback AMIXERs. */
-			अगर (AMIXER_MASTER_F == type || AMIXER_PCM_F == type) अणु
-				क्रम (j = 1; j < 4; j++) अणु
+			if (AMIXER_MASTER_F == type || AMIXER_PCM_F == type) {
+				for (j = 1; j < 4; j++) {
 					amixer = mixer->
 						amixers[(type+j)*CHN_NUM+i];
 					amixer->ops->set_scale(amixer, val);
-					amixer->ops->commit_ग_लिखो(amixer);
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+					amixer->ops->commit_write(amixer);
+				}
+			}
+		}
+	}
 
-	वापस change;
-पूर्ण
+	return change;
+}
 
-अटल काष्ठा snd_kcontrol_new vol_ctl = अणु
+static struct snd_kcontrol_new vol_ctl = {
 	.access		= SNDRV_CTL_ELEM_ACCESS_READWRITE |
 			  SNDRV_CTL_ELEM_ACCESS_TLV_READ,
-	.अगरace		= SNDRV_CTL_ELEM_IFACE_MIXER,
+	.iface		= SNDRV_CTL_ELEM_IFACE_MIXER,
 	.info		= ct_alsa_mix_volume_info,
 	.get		= ct_alsa_mix_volume_get,
 	.put		= ct_alsa_mix_volume_put,
-	.tlv		= अणु .p =  ct_vol_db_scale पूर्ण,
-पूर्ण;
+	.tlv		= { .p =  ct_vol_db_scale },
+};
 
-अटल पूर्णांक output_चयन_info(काष्ठा snd_kcontrol *kcontrol,
-			      काष्ठा snd_ctl_elem_info *info)
-अणु
-	अटल स्थिर अक्षर *स्थिर names[3] = अणु
+static int output_switch_info(struct snd_kcontrol *kcontrol,
+			      struct snd_ctl_elem_info *info)
+{
+	static const char *const names[3] = {
 	  "FP Headphones", "Headphones", "Speakers"
-	पूर्ण;
+	};
 
-	वापस snd_ctl_क्रमागत_info(info, 1, 3, names);
-पूर्ण
+	return snd_ctl_enum_info(info, 1, 3, names);
+}
 
-अटल पूर्णांक output_चयन_get(काष्ठा snd_kcontrol *kcontrol,
-			     काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा ct_atc *atc = snd_kcontrol_chip(kcontrol);
-	ucontrol->value.क्रमागतerated.item[0] = atc->output_चयन_get(atc);
-	वापस 0;
-पूर्ण
+static int output_switch_get(struct snd_kcontrol *kcontrol,
+			     struct snd_ctl_elem_value *ucontrol)
+{
+	struct ct_atc *atc = snd_kcontrol_chip(kcontrol);
+	ucontrol->value.enumerated.item[0] = atc->output_switch_get(atc);
+	return 0;
+}
 
-अटल पूर्णांक output_चयन_put(काष्ठा snd_kcontrol *kcontrol,
-			     काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा ct_atc *atc = snd_kcontrol_chip(kcontrol);
-	अगर (ucontrol->value.क्रमागतerated.item[0] > 2)
-		वापस -EINVAL;
-	वापस atc->output_चयन_put(atc, ucontrol->value.क्रमागतerated.item[0]);
-पूर्ण
+static int output_switch_put(struct snd_kcontrol *kcontrol,
+			     struct snd_ctl_elem_value *ucontrol)
+{
+	struct ct_atc *atc = snd_kcontrol_chip(kcontrol);
+	if (ucontrol->value.enumerated.item[0] > 2)
+		return -EINVAL;
+	return atc->output_switch_put(atc, ucontrol->value.enumerated.item[0]);
+}
 
-अटल काष्ठा snd_kcontrol_new output_ctl = अणु
-	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+static struct snd_kcontrol_new output_ctl = {
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name = "Analog Output Playback Enum",
-	.info = output_चयन_info,
-	.get = output_चयन_get,
-	.put = output_चयन_put,
-पूर्ण;
+	.info = output_switch_info,
+	.get = output_switch_get,
+	.put = output_switch_put,
+};
 
-अटल पूर्णांक mic_source_चयन_info(काष्ठा snd_kcontrol *kcontrol,
-			      काष्ठा snd_ctl_elem_info *info)
-अणु
-	अटल स्थिर अक्षर *स्थिर names[3] = अणु
+static int mic_source_switch_info(struct snd_kcontrol *kcontrol,
+			      struct snd_ctl_elem_info *info)
+{
+	static const char *const names[3] = {
 	  "Mic", "FP Mic", "Aux"
-	पूर्ण;
+	};
 
-	वापस snd_ctl_क्रमागत_info(info, 1, 3, names);
-पूर्ण
+	return snd_ctl_enum_info(info, 1, 3, names);
+}
 
-अटल पूर्णांक mic_source_चयन_get(काष्ठा snd_kcontrol *kcontrol,
-			     काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा ct_atc *atc = snd_kcontrol_chip(kcontrol);
-	ucontrol->value.क्रमागतerated.item[0] = atc->mic_source_चयन_get(atc);
-	वापस 0;
-पूर्ण
+static int mic_source_switch_get(struct snd_kcontrol *kcontrol,
+			     struct snd_ctl_elem_value *ucontrol)
+{
+	struct ct_atc *atc = snd_kcontrol_chip(kcontrol);
+	ucontrol->value.enumerated.item[0] = atc->mic_source_switch_get(atc);
+	return 0;
+}
 
-अटल पूर्णांक mic_source_चयन_put(काष्ठा snd_kcontrol *kcontrol,
-			     काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा ct_atc *atc = snd_kcontrol_chip(kcontrol);
-	अगर (ucontrol->value.क्रमागतerated.item[0] > 2)
-		वापस -EINVAL;
-	वापस atc->mic_source_चयन_put(atc,
-					ucontrol->value.क्रमागतerated.item[0]);
-पूर्ण
+static int mic_source_switch_put(struct snd_kcontrol *kcontrol,
+			     struct snd_ctl_elem_value *ucontrol)
+{
+	struct ct_atc *atc = snd_kcontrol_chip(kcontrol);
+	if (ucontrol->value.enumerated.item[0] > 2)
+		return -EINVAL;
+	return atc->mic_source_switch_put(atc,
+					ucontrol->value.enumerated.item[0]);
+}
 
-अटल काष्ठा snd_kcontrol_new mic_source_ctl = अणु
-	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+static struct snd_kcontrol_new mic_source_ctl = {
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name = "Mic Source Capture Enum",
-	.info = mic_source_चयन_info,
-	.get = mic_source_चयन_get,
-	.put = mic_source_चयन_put,
-पूर्ण;
+	.info = mic_source_switch_info,
+	.get = mic_source_switch_get,
+	.put = mic_source_switch_put,
+};
 
-अटल व्योम
-करो_line_mic_चयन(काष्ठा ct_atc *atc, क्रमागत CTALSA_MIXER_CTL type)
-अणु
+static void
+do_line_mic_switch(struct ct_atc *atc, enum CTALSA_MIXER_CTL type)
+{
 
-	अगर (MIXER_LINEIN_C_S == type) अणु
+	if (MIXER_LINEIN_C_S == type) {
 		atc->select_line_in(atc);
-		set_चयन_state(atc->mixer, MIXER_MIC_C_S, 0);
-		snd_ctl_notअगरy(atc->card, SNDRV_CTL_EVENT_MASK_VALUE,
+		set_switch_state(atc->mixer, MIXER_MIC_C_S, 0);
+		snd_ctl_notify(atc->card, SNDRV_CTL_EVENT_MASK_VALUE,
 							&kctls[1]->id);
-	पूर्ण अन्यथा अगर (MIXER_MIC_C_S == type) अणु
+	} else if (MIXER_MIC_C_S == type) {
 		atc->select_mic_in(atc);
-		set_चयन_state(atc->mixer, MIXER_LINEIN_C_S, 0);
-		snd_ctl_notअगरy(atc->card, SNDRV_CTL_EVENT_MASK_VALUE,
+		set_switch_state(atc->mixer, MIXER_LINEIN_C_S, 0);
+		snd_ctl_notify(atc->card, SNDRV_CTL_EVENT_MASK_VALUE,
 							&kctls[0]->id);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम
-करो_digit_io_चयन(काष्ठा ct_atc *atc, पूर्णांक state)
-अणु
-	काष्ठा ct_mixer *mixer = atc->mixer;
+static void
+do_digit_io_switch(struct ct_atc *atc, int state)
+{
+	struct ct_mixer *mixer = atc->mixer;
 
-	अगर (state) अणु
+	if (state) {
 		atc->select_digit_io(atc);
-		atc->spdअगर_out_unmute(atc,
-				get_चयन_state(mixer, MIXER_SPDIFO_P_S));
-		atc->spdअगर_in_unmute(atc, 1);
+		atc->spdif_out_unmute(atc,
+				get_switch_state(mixer, MIXER_SPDIFO_P_S));
+		atc->spdif_in_unmute(atc, 1);
 		atc->line_in_unmute(atc, 0);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (get_चयन_state(mixer, MIXER_LINEIN_C_S))
+	if (get_switch_state(mixer, MIXER_LINEIN_C_S))
 		atc->select_line_in(atc);
-	अन्यथा अगर (get_चयन_state(mixer, MIXER_MIC_C_S))
+	else if (get_switch_state(mixer, MIXER_MIC_C_S))
 		atc->select_mic_in(atc);
 
-	atc->spdअगर_out_unmute(atc, 0);
-	atc->spdअगर_in_unmute(atc, 0);
+	atc->spdif_out_unmute(atc, 0);
+	atc->spdif_in_unmute(atc, 0);
 	atc->line_in_unmute(atc, 1);
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल व्योम करो_चयन(काष्ठा ct_atc *atc, क्रमागत CTALSA_MIXER_CTL type, पूर्णांक state)
-अणु
-	काष्ठा ct_mixer *mixer = atc->mixer;
-	काष्ठा capabilities cap = atc->capabilities(atc);
+static void do_switch(struct ct_atc *atc, enum CTALSA_MIXER_CTL type, int state)
+{
+	struct ct_mixer *mixer = atc->mixer;
+	struct capabilities cap = atc->capabilities(atc);
 
 	/* Do changes in mixer. */
-	अगर ((SWH_CAPTURE_START <= type) && (SWH_CAPTURE_END >= type)) अणु
-		अगर (state) अणु
+	if ((SWH_CAPTURE_START <= type) && (SWH_CAPTURE_END >= type)) {
+		if (state) {
 			ct_mixer_recording_select(mixer,
 						  get_amixer_index(type));
-		पूर्ण अन्यथा अणु
+		} else {
 			ct_mixer_recording_unselect(mixer,
 						    get_amixer_index(type));
-		पूर्ण
-	पूर्ण
+		}
+	}
 	/* Do changes out of mixer. */
-	अगर (!cap.dedicated_mic &&
-	    (MIXER_LINEIN_C_S == type || MIXER_MIC_C_S == type)) अणु
-		अगर (state)
-			करो_line_mic_चयन(atc, type);
+	if (!cap.dedicated_mic &&
+	    (MIXER_LINEIN_C_S == type || MIXER_MIC_C_S == type)) {
+		if (state)
+			do_line_mic_switch(atc, type);
 		atc->line_in_unmute(atc, state);
-	पूर्ण अन्यथा अगर (cap.dedicated_mic && (MIXER_LINEIN_C_S == type))
+	} else if (cap.dedicated_mic && (MIXER_LINEIN_C_S == type))
 		atc->line_in_unmute(atc, state);
-	अन्यथा अगर (cap.dedicated_mic && (MIXER_MIC_C_S == type))
+	else if (cap.dedicated_mic && (MIXER_MIC_C_S == type))
 		atc->mic_unmute(atc, state);
-	अन्यथा अगर (MIXER_SPDIFI_C_S == type)
-		atc->spdअगर_in_unmute(atc, state);
-	अन्यथा अगर (MIXER_WAVEF_P_S == type)
+	else if (MIXER_SPDIFI_C_S == type)
+		atc->spdif_in_unmute(atc, state);
+	else if (MIXER_WAVEF_P_S == type)
 		atc->line_front_unmute(atc, state);
-	अन्यथा अगर (MIXER_WAVES_P_S == type)
+	else if (MIXER_WAVES_P_S == type)
 		atc->line_surround_unmute(atc, state);
-	अन्यथा अगर (MIXER_WAVEC_P_S == type)
+	else if (MIXER_WAVEC_P_S == type)
 		atc->line_clfe_unmute(atc, state);
-	अन्यथा अगर (MIXER_WAVER_P_S == type)
+	else if (MIXER_WAVER_P_S == type)
 		atc->line_rear_unmute(atc, state);
-	अन्यथा अगर (MIXER_SPDIFO_P_S == type)
-		atc->spdअगर_out_unmute(atc, state);
-	अन्यथा अगर (MIXER_DIGITAL_IO_S == type)
-		करो_digit_io_चयन(atc, state);
+	else if (MIXER_SPDIFO_P_S == type)
+		atc->spdif_out_unmute(atc, state);
+	else if (MIXER_DIGITAL_IO_S == type)
+		do_digit_io_switch(atc, state);
 
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल पूर्णांक ct_alsa_mix_चयन_info(काष्ठा snd_kcontrol *kcontrol,
-				   काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int ct_alsa_mix_switch_info(struct snd_kcontrol *kcontrol,
+				   struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_BOOLEAN;
 	uinfo->count = 1;
-	uinfo->value.पूर्णांकeger.min = 0;
-	uinfo->value.पूर्णांकeger.max = 1;
-	uinfo->value.पूर्णांकeger.step = 1;
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = 1;
+	uinfo->value.integer.step = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ct_alsa_mix_चयन_get(काष्ठा snd_kcontrol *kcontrol,
-				  काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा ct_mixer *mixer =
-		((काष्ठा ct_atc *)snd_kcontrol_chip(kcontrol))->mixer;
-	क्रमागत CTALSA_MIXER_CTL type = kcontrol->निजी_value;
+static int ct_alsa_mix_switch_get(struct snd_kcontrol *kcontrol,
+				  struct snd_ctl_elem_value *ucontrol)
+{
+	struct ct_mixer *mixer =
+		((struct ct_atc *)snd_kcontrol_chip(kcontrol))->mixer;
+	enum CTALSA_MIXER_CTL type = kcontrol->private_value;
 
-	ucontrol->value.पूर्णांकeger.value[0] = get_चयन_state(mixer, type);
-	वापस 0;
-पूर्ण
+	ucontrol->value.integer.value[0] = get_switch_state(mixer, type);
+	return 0;
+}
 
-अटल पूर्णांक ct_alsa_mix_चयन_put(काष्ठा snd_kcontrol *kcontrol,
-				  काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा ct_atc *atc = snd_kcontrol_chip(kcontrol);
-	काष्ठा ct_mixer *mixer = atc->mixer;
-	क्रमागत CTALSA_MIXER_CTL type = kcontrol->निजी_value;
-	पूर्णांक state;
+static int ct_alsa_mix_switch_put(struct snd_kcontrol *kcontrol,
+				  struct snd_ctl_elem_value *ucontrol)
+{
+	struct ct_atc *atc = snd_kcontrol_chip(kcontrol);
+	struct ct_mixer *mixer = atc->mixer;
+	enum CTALSA_MIXER_CTL type = kcontrol->private_value;
+	int state;
 
-	state = ucontrol->value.पूर्णांकeger.value[0];
-	अगर (get_चयन_state(mixer, type) == state)
-		वापस 0;
+	state = ucontrol->value.integer.value[0];
+	if (get_switch_state(mixer, type) == state)
+		return 0;
 
-	set_चयन_state(mixer, type, state);
-	करो_चयन(atc, type, state);
+	set_switch_state(mixer, type, state);
+	do_switch(atc, type, state);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल काष्ठा snd_kcontrol_new swh_ctl = अणु
+static struct snd_kcontrol_new swh_ctl = {
 	.access		= SNDRV_CTL_ELEM_ACCESS_READWRITE,
-	.अगरace		= SNDRV_CTL_ELEM_IFACE_MIXER,
-	.info		= ct_alsa_mix_चयन_info,
-	.get		= ct_alsa_mix_चयन_get,
-	.put		= ct_alsa_mix_चयन_put
-पूर्ण;
+	.iface		= SNDRV_CTL_ELEM_IFACE_MIXER,
+	.info		= ct_alsa_mix_switch_info,
+	.get		= ct_alsa_mix_switch_get,
+	.put		= ct_alsa_mix_switch_put
+};
 
-अटल पूर्णांक ct_spdअगर_info(काष्ठा snd_kcontrol *kcontrol,
-			 काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int ct_spdif_info(struct snd_kcontrol *kcontrol,
+			 struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_IEC958;
 	uinfo->count = 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ct_spdअगर_get_mask(काष्ठा snd_kcontrol *kcontrol,
-			     काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
+static int ct_spdif_get_mask(struct snd_kcontrol *kcontrol,
+			     struct snd_ctl_elem_value *ucontrol)
+{
 	ucontrol->value.iec958.status[0] = 0xff;
 	ucontrol->value.iec958.status[1] = 0xff;
 	ucontrol->value.iec958.status[2] = 0xff;
 	ucontrol->value.iec958.status[3] = 0xff;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ct_spdअगर_get(काष्ठा snd_kcontrol *kcontrol,
-			काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा ct_atc *atc = snd_kcontrol_chip(kcontrol);
-	अचिन्हित पूर्णांक status;
+static int ct_spdif_get(struct snd_kcontrol *kcontrol,
+			struct snd_ctl_elem_value *ucontrol)
+{
+	struct ct_atc *atc = snd_kcontrol_chip(kcontrol);
+	unsigned int status;
 
-	atc->spdअगर_out_get_status(atc, &status);
+	atc->spdif_out_get_status(atc, &status);
 
-	अगर (status == 0)
+	if (status == 0)
 		status = SNDRV_PCM_DEFAULT_CON_SPDIF;
 
 	ucontrol->value.iec958.status[0] = (status >> 0) & 0xff;
@@ -647,580 +646,580 @@ set_चयन_state(काष्ठा ct_mixer *mixer,
 	ucontrol->value.iec958.status[2] = (status >> 16) & 0xff;
 	ucontrol->value.iec958.status[3] = (status >> 24) & 0xff;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ct_spdअगर_put(काष्ठा snd_kcontrol *kcontrol,
-			काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा ct_atc *atc = snd_kcontrol_chip(kcontrol);
-	पूर्णांक change;
-	अचिन्हित पूर्णांक status, old_status;
+static int ct_spdif_put(struct snd_kcontrol *kcontrol,
+			struct snd_ctl_elem_value *ucontrol)
+{
+	struct ct_atc *atc = snd_kcontrol_chip(kcontrol);
+	int change;
+	unsigned int status, old_status;
 
 	status = (ucontrol->value.iec958.status[0] << 0) |
 		 (ucontrol->value.iec958.status[1] << 8) |
 		 (ucontrol->value.iec958.status[2] << 16) |
 		 (ucontrol->value.iec958.status[3] << 24);
 
-	atc->spdअगर_out_get_status(atc, &old_status);
+	atc->spdif_out_get_status(atc, &old_status);
 	change = (old_status != status);
-	अगर (change)
-		atc->spdअगर_out_set_status(atc, status);
+	if (change)
+		atc->spdif_out_set_status(atc, status);
 
-	वापस change;
-पूर्ण
+	return change;
+}
 
-अटल काष्ठा snd_kcontrol_new iec958_mask_ctl = अणु
+static struct snd_kcontrol_new iec958_mask_ctl = {
 	.access		= SNDRV_CTL_ELEM_ACCESS_READ,
-	.अगरace		= SNDRV_CTL_ELEM_IFACE_PCM,
+	.iface		= SNDRV_CTL_ELEM_IFACE_PCM,
 	.name		= SNDRV_CTL_NAME_IEC958("", PLAYBACK, MASK),
 	.count		= 1,
-	.info		= ct_spdअगर_info,
-	.get		= ct_spdअगर_get_mask,
-	.निजी_value	= MIXER_IEC958_MASK
-पूर्ण;
+	.info		= ct_spdif_info,
+	.get		= ct_spdif_get_mask,
+	.private_value	= MIXER_IEC958_MASK
+};
 
-अटल काष्ठा snd_kcontrol_new iec958_शेष_ctl = अणु
-	.अगरace		= SNDRV_CTL_ELEM_IFACE_PCM,
+static struct snd_kcontrol_new iec958_default_ctl = {
+	.iface		= SNDRV_CTL_ELEM_IFACE_PCM,
 	.name		= SNDRV_CTL_NAME_IEC958("", PLAYBACK, DEFAULT),
 	.count		= 1,
-	.info		= ct_spdअगर_info,
-	.get		= ct_spdअगर_get,
-	.put		= ct_spdअगर_put,
-	.निजी_value	= MIXER_IEC958_DEFAULT
-पूर्ण;
+	.info		= ct_spdif_info,
+	.get		= ct_spdif_get,
+	.put		= ct_spdif_put,
+	.private_value	= MIXER_IEC958_DEFAULT
+};
 
-अटल काष्ठा snd_kcontrol_new iec958_ctl = अणु
+static struct snd_kcontrol_new iec958_ctl = {
 	.access		= SNDRV_CTL_ELEM_ACCESS_READWRITE,
-	.अगरace		= SNDRV_CTL_ELEM_IFACE_PCM,
+	.iface		= SNDRV_CTL_ELEM_IFACE_PCM,
 	.name		= SNDRV_CTL_NAME_IEC958("", PLAYBACK, PCM_STREAM),
 	.count		= 1,
-	.info		= ct_spdअगर_info,
-	.get		= ct_spdअगर_get,
-	.put		= ct_spdअगर_put,
-	.निजी_value	= MIXER_IEC958_STREAM
-पूर्ण;
+	.info		= ct_spdif_info,
+	.get		= ct_spdif_get,
+	.put		= ct_spdif_put,
+	.private_value	= MIXER_IEC958_STREAM
+};
 
-#घोषणा NUM_IEC958_CTL 3
+#define NUM_IEC958_CTL 3
 
-अटल पूर्णांक
-ct_mixer_kcontrol_new(काष्ठा ct_mixer *mixer, काष्ठा snd_kcontrol_new *new)
-अणु
-	काष्ठा snd_kcontrol *kctl;
-	पूर्णांक err;
+static int
+ct_mixer_kcontrol_new(struct ct_mixer *mixer, struct snd_kcontrol_new *new)
+{
+	struct snd_kcontrol *kctl;
+	int err;
 
 	kctl = snd_ctl_new1(new, mixer->atc);
-	अगर (!kctl)
-		वापस -ENOMEM;
+	if (!kctl)
+		return -ENOMEM;
 
-	अगर (SNDRV_CTL_ELEM_IFACE_PCM == kctl->id.अगरace)
+	if (SNDRV_CTL_ELEM_IFACE_PCM == kctl->id.iface)
 		kctl->id.device = IEC958;
 
 	err = snd_ctl_add(mixer->atc->card, kctl);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	चयन (new->निजी_value) अणु
-	हाल MIXER_LINEIN_C_S:
-		kctls[0] = kctl; अवरोध;
-	हाल MIXER_MIC_C_S:
-		kctls[1] = kctl; अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+	switch (new->private_value) {
+	case MIXER_LINEIN_C_S:
+		kctls[0] = kctl; break;
+	case MIXER_MIC_C_S:
+		kctls[1] = kctl; break;
+	default:
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ct_mixer_kcontrols_create(काष्ठा ct_mixer *mixer)
-अणु
-	क्रमागत CTALSA_MIXER_CTL type;
-	काष्ठा ct_atc *atc = mixer->atc;
-	काष्ठा capabilities cap = atc->capabilities(atc);
-	पूर्णांक err;
+static int ct_mixer_kcontrols_create(struct ct_mixer *mixer)
+{
+	enum CTALSA_MIXER_CTL type;
+	struct ct_atc *atc = mixer->atc;
+	struct capabilities cap = atc->capabilities(atc);
+	int err;
 
 	/* Create snd kcontrol instances on demand */
-	क्रम (type = VOL_MIXER_START; type <= VOL_MIXER_END; type++) अणु
-		अगर (ct_kcontrol_init_table[type].ctl) अणु
+	for (type = VOL_MIXER_START; type <= VOL_MIXER_END; type++) {
+		if (ct_kcontrol_init_table[type].ctl) {
 			vol_ctl.name = ct_kcontrol_init_table[type].name;
-			vol_ctl.निजी_value = (अचिन्हित दीर्घ)type;
+			vol_ctl.private_value = (unsigned long)type;
 			err = ct_mixer_kcontrol_new(mixer, &vol_ctl);
-			अगर (err)
-				वापस err;
-		पूर्ण
-	पूर्ण
+			if (err)
+				return err;
+		}
+	}
 
-	ct_kcontrol_init_table[MIXER_DIGITAL_IO_S].ctl = cap.digit_io_चयन;
+	ct_kcontrol_init_table[MIXER_DIGITAL_IO_S].ctl = cap.digit_io_switch;
 
-	क्रम (type = SWH_MIXER_START; type <= SWH_MIXER_END; type++) अणु
-		अगर (ct_kcontrol_init_table[type].ctl) अणु
+	for (type = SWH_MIXER_START; type <= SWH_MIXER_END; type++) {
+		if (ct_kcontrol_init_table[type].ctl) {
 			swh_ctl.name = ct_kcontrol_init_table[type].name;
-			swh_ctl.निजी_value = (अचिन्हित दीर्घ)type;
+			swh_ctl.private_value = (unsigned long)type;
 			err = ct_mixer_kcontrol_new(mixer, &swh_ctl);
-			अगर (err)
-				वापस err;
-		पूर्ण
-	पूर्ण
+			if (err)
+				return err;
+		}
+	}
 
 	err = ct_mixer_kcontrol_new(mixer, &iec958_mask_ctl);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	err = ct_mixer_kcontrol_new(mixer, &iec958_शेष_ctl);
-	अगर (err)
-		वापस err;
+	err = ct_mixer_kcontrol_new(mixer, &iec958_default_ctl);
+	if (err)
+		return err;
 
 	err = ct_mixer_kcontrol_new(mixer, &iec958_ctl);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (cap.output_चयन) अणु
+	if (cap.output_switch) {
 		err = ct_mixer_kcontrol_new(mixer, &output_ctl);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	अगर (cap.mic_source_चयन) अणु
+	if (cap.mic_source_switch) {
 		err = ct_mixer_kcontrol_new(mixer, &mic_source_ctl);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 	atc->line_front_unmute(atc, 1);
-	set_चयन_state(mixer, MIXER_WAVEF_P_S, 1);
+	set_switch_state(mixer, MIXER_WAVEF_P_S, 1);
 	atc->line_surround_unmute(atc, 0);
-	set_चयन_state(mixer, MIXER_WAVES_P_S, 0);
+	set_switch_state(mixer, MIXER_WAVES_P_S, 0);
 	atc->line_clfe_unmute(atc, 0);
-	set_चयन_state(mixer, MIXER_WAVEC_P_S, 0);
+	set_switch_state(mixer, MIXER_WAVEC_P_S, 0);
 	atc->line_rear_unmute(atc, 0);
-	set_चयन_state(mixer, MIXER_WAVER_P_S, 0);
-	atc->spdअगर_out_unmute(atc, 0);
-	set_चयन_state(mixer, MIXER_SPDIFO_P_S, 0);
+	set_switch_state(mixer, MIXER_WAVER_P_S, 0);
+	atc->spdif_out_unmute(atc, 0);
+	set_switch_state(mixer, MIXER_SPDIFO_P_S, 0);
 	atc->line_in_unmute(atc, 0);
-	अगर (cap.dedicated_mic)
+	if (cap.dedicated_mic)
 		atc->mic_unmute(atc, 0);
-	atc->spdअगर_in_unmute(atc, 0);
-	set_चयन_state(mixer, MIXER_PCM_C_S, 0);
-	set_चयन_state(mixer, MIXER_LINEIN_C_S, 0);
-	set_चयन_state(mixer, MIXER_SPDIFI_C_S, 0);
+	atc->spdif_in_unmute(atc, 0);
+	set_switch_state(mixer, MIXER_PCM_C_S, 0);
+	set_switch_state(mixer, MIXER_LINEIN_C_S, 0);
+	set_switch_state(mixer, MIXER_SPDIFI_C_S, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-ct_mixer_recording_select(काष्ठा ct_mixer *mixer, क्रमागत CT_AMIXER_CTL type)
-अणु
-	काष्ठा amixer *amix_d;
-	काष्ठा sum *sum_c;
-	पूर्णांक i;
+static void
+ct_mixer_recording_select(struct ct_mixer *mixer, enum CT_AMIXER_CTL type)
+{
+	struct amixer *amix_d;
+	struct sum *sum_c;
+	int i;
 
-	क्रम (i = 0; i < 2; i++) अणु
+	for (i = 0; i < 2; i++) {
 		amix_d = mixer->amixers[type*CHN_NUM+i];
 		sum_c = mixer->sums[SUM_IN_F_C*CHN_NUM+i];
 		amix_d->ops->set_sum(amix_d, sum_c);
-		amix_d->ops->commit_ग_लिखो(amix_d);
-	पूर्ण
-पूर्ण
+		amix_d->ops->commit_write(amix_d);
+	}
+}
 
-अटल व्योम
-ct_mixer_recording_unselect(काष्ठा ct_mixer *mixer, क्रमागत CT_AMIXER_CTL type)
-अणु
-	काष्ठा amixer *amix_d;
-	पूर्णांक i;
+static void
+ct_mixer_recording_unselect(struct ct_mixer *mixer, enum CT_AMIXER_CTL type)
+{
+	struct amixer *amix_d;
+	int i;
 
-	क्रम (i = 0; i < 2; i++) अणु
+	for (i = 0; i < 2; i++) {
 		amix_d = mixer->amixers[type*CHN_NUM+i];
-		amix_d->ops->set_sum(amix_d, शून्य);
-		amix_d->ops->commit_ग_लिखो(amix_d);
-	पूर्ण
-पूर्ण
+		amix_d->ops->set_sum(amix_d, NULL);
+		amix_d->ops->commit_write(amix_d);
+	}
+}
 
-अटल पूर्णांक ct_mixer_get_resources(काष्ठा ct_mixer *mixer)
-अणु
-	काष्ठा sum_mgr *sum_mgr;
-	काष्ठा sum *sum;
-	काष्ठा sum_desc sum_desc = अणु0पूर्ण;
-	काष्ठा amixer_mgr *amixer_mgr;
-	काष्ठा amixer *amixer;
-	काष्ठा amixer_desc am_desc = अणु0पूर्ण;
-	पूर्णांक err;
-	पूर्णांक i;
+static int ct_mixer_get_resources(struct ct_mixer *mixer)
+{
+	struct sum_mgr *sum_mgr;
+	struct sum *sum;
+	struct sum_desc sum_desc = {0};
+	struct amixer_mgr *amixer_mgr;
+	struct amixer *amixer;
+	struct amixer_desc am_desc = {0};
+	int err;
+	int i;
 
-	/* Allocate sum resources क्रम mixer obj */
-	sum_mgr = (काष्ठा sum_mgr *)mixer->atc->rsc_mgrs[SUM];
+	/* Allocate sum resources for mixer obj */
+	sum_mgr = (struct sum_mgr *)mixer->atc->rsc_mgrs[SUM];
 	sum_desc.msr = mixer->atc->msr;
-	क्रम (i = 0; i < (NUM_CT_SUMS * CHN_NUM); i++) अणु
+	for (i = 0; i < (NUM_CT_SUMS * CHN_NUM); i++) {
 		err = sum_mgr->get_sum(sum_mgr, &sum_desc, &sum);
-		अगर (err) अणु
+		if (err) {
 			dev_err(mixer->atc->card->dev,
 				"Failed to get sum resources for front output!\n");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		mixer->sums[i] = sum;
-	पूर्ण
-	अगर (err)
-		जाओ error1;
+	}
+	if (err)
+		goto error1;
 
-	/* Allocate amixer resources क्रम mixer obj */
-	amixer_mgr = (काष्ठा amixer_mgr *)mixer->atc->rsc_mgrs[AMIXER];
+	/* Allocate amixer resources for mixer obj */
+	amixer_mgr = (struct amixer_mgr *)mixer->atc->rsc_mgrs[AMIXER];
 	am_desc.msr = mixer->atc->msr;
-	क्रम (i = 0; i < (NUM_CT_AMIXERS * CHN_NUM); i++) अणु
+	for (i = 0; i < (NUM_CT_AMIXERS * CHN_NUM); i++) {
 		err = amixer_mgr->get_amixer(amixer_mgr, &am_desc, &amixer);
-		अगर (err) अणु
+		if (err) {
 			dev_err(mixer->atc->card->dev,
 				"Failed to get amixer resources for mixer obj!\n");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		mixer->amixers[i] = amixer;
-	पूर्ण
-	अगर (err)
-		जाओ error2;
+	}
+	if (err)
+		goto error2;
 
-	वापस 0;
+	return 0;
 
 error2:
-	क्रम (i = 0; i < (NUM_CT_AMIXERS * CHN_NUM); i++) अणु
-		अगर (शून्य != mixer->amixers[i]) अणु
+	for (i = 0; i < (NUM_CT_AMIXERS * CHN_NUM); i++) {
+		if (NULL != mixer->amixers[i]) {
 			amixer = mixer->amixers[i];
 			amixer_mgr->put_amixer(amixer_mgr, amixer);
-			mixer->amixers[i] = शून्य;
-		पूर्ण
-	पूर्ण
+			mixer->amixers[i] = NULL;
+		}
+	}
 error1:
-	क्रम (i = 0; i < (NUM_CT_SUMS * CHN_NUM); i++) अणु
-		अगर (शून्य != mixer->sums[i]) अणु
-			sum_mgr->put_sum(sum_mgr, (काष्ठा sum *)mixer->sums[i]);
-			mixer->sums[i] = शून्य;
-		पूर्ण
-	पूर्ण
+	for (i = 0; i < (NUM_CT_SUMS * CHN_NUM); i++) {
+		if (NULL != mixer->sums[i]) {
+			sum_mgr->put_sum(sum_mgr, (struct sum *)mixer->sums[i]);
+			mixer->sums[i] = NULL;
+		}
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक ct_mixer_get_mem(काष्ठा ct_mixer **rmixer)
-अणु
-	काष्ठा ct_mixer *mixer;
-	पूर्णांक err;
+static int ct_mixer_get_mem(struct ct_mixer **rmixer)
+{
+	struct ct_mixer *mixer;
+	int err;
 
-	*rmixer = शून्य;
-	/* Allocate mem क्रम mixer obj */
-	mixer = kzalloc(माप(*mixer), GFP_KERNEL);
-	अगर (!mixer)
-		वापस -ENOMEM;
+	*rmixer = NULL;
+	/* Allocate mem for mixer obj */
+	mixer = kzalloc(sizeof(*mixer), GFP_KERNEL);
+	if (!mixer)
+		return -ENOMEM;
 
-	mixer->amixers = kसुस्मृति(NUM_CT_AMIXERS * CHN_NUM, माप(व्योम *),
+	mixer->amixers = kcalloc(NUM_CT_AMIXERS * CHN_NUM, sizeof(void *),
 				 GFP_KERNEL);
-	अगर (!mixer->amixers) अणु
+	if (!mixer->amixers) {
 		err = -ENOMEM;
-		जाओ error1;
-	पूर्ण
-	mixer->sums = kसुस्मृति(NUM_CT_SUMS * CHN_NUM, माप(व्योम *),
+		goto error1;
+	}
+	mixer->sums = kcalloc(NUM_CT_SUMS * CHN_NUM, sizeof(void *),
 			      GFP_KERNEL);
-	अगर (!mixer->sums) अणु
+	if (!mixer->sums) {
 		err = -ENOMEM;
-		जाओ error2;
-	पूर्ण
+		goto error2;
+	}
 
 	*rmixer = mixer;
-	वापस 0;
+	return 0;
 
 error2:
-	kमुक्त(mixer->amixers);
+	kfree(mixer->amixers);
 error1:
-	kमुक्त(mixer);
-	वापस err;
-पूर्ण
+	kfree(mixer);
+	return err;
+}
 
-अटल पूर्णांक ct_mixer_topology_build(काष्ठा ct_mixer *mixer)
-अणु
-	काष्ठा sum *sum;
-	काष्ठा amixer *amix_d, *amix_s;
-	क्रमागत CT_AMIXER_CTL i, j;
-	क्रमागत CT_SUM_CTL k;
+static int ct_mixer_topology_build(struct ct_mixer *mixer)
+{
+	struct sum *sum;
+	struct amixer *amix_d, *amix_s;
+	enum CT_AMIXER_CTL i, j;
+	enum CT_SUM_CTL k;
 
 	/* Build topology from destination to source */
 
 	/* Set up Master mixer */
-	क्रम (i = AMIXER_MASTER_F, k = SUM_IN_F;
-					i <= AMIXER_MASTER_S; i++, k++) अणु
+	for (i = AMIXER_MASTER_F, k = SUM_IN_F;
+					i <= AMIXER_MASTER_S; i++, k++) {
 		amix_d = mixer->amixers[i*CHN_NUM];
 		sum = mixer->sums[k*CHN_NUM];
-		amix_d->ops->setup(amix_d, &sum->rsc, INIT_VOL, शून्य);
+		amix_d->ops->setup(amix_d, &sum->rsc, INIT_VOL, NULL);
 		amix_d = mixer->amixers[i*CHN_NUM+1];
 		sum = mixer->sums[k*CHN_NUM+1];
-		amix_d->ops->setup(amix_d, &sum->rsc, INIT_VOL, शून्य);
-	पूर्ण
+		amix_d->ops->setup(amix_d, &sum->rsc, INIT_VOL, NULL);
+	}
 
 	/* Set up Wave-out mixer */
-	क्रम (i = AMIXER_WAVE_F, j = AMIXER_MASTER_F;
-					i <= AMIXER_WAVE_S; i++, j++) अणु
+	for (i = AMIXER_WAVE_F, j = AMIXER_MASTER_F;
+					i <= AMIXER_WAVE_S; i++, j++) {
 		amix_d = mixer->amixers[i*CHN_NUM];
 		amix_s = mixer->amixers[j*CHN_NUM];
-		amix_d->ops->setup(amix_d, &amix_s->rsc, INIT_VOL, शून्य);
+		amix_d->ops->setup(amix_d, &amix_s->rsc, INIT_VOL, NULL);
 		amix_d = mixer->amixers[i*CHN_NUM+1];
 		amix_s = mixer->amixers[j*CHN_NUM+1];
-		amix_d->ops->setup(amix_d, &amix_s->rsc, INIT_VOL, शून्य);
-	पूर्ण
+		amix_d->ops->setup(amix_d, &amix_s->rsc, INIT_VOL, NULL);
+	}
 
 	/* Set up S/PDIF-out mixer */
 	amix_d = mixer->amixers[AMIXER_SPDIFO*CHN_NUM];
 	amix_s = mixer->amixers[AMIXER_MASTER_F*CHN_NUM];
-	amix_d->ops->setup(amix_d, &amix_s->rsc, INIT_VOL, शून्य);
+	amix_d->ops->setup(amix_d, &amix_s->rsc, INIT_VOL, NULL);
 	amix_d = mixer->amixers[AMIXER_SPDIFO*CHN_NUM+1];
 	amix_s = mixer->amixers[AMIXER_MASTER_F*CHN_NUM+1];
-	amix_d->ops->setup(amix_d, &amix_s->rsc, INIT_VOL, शून्य);
+	amix_d->ops->setup(amix_d, &amix_s->rsc, INIT_VOL, NULL);
 
 	/* Set up PCM-in mixer */
-	क्रम (i = AMIXER_PCM_F, k = SUM_IN_F; i <= AMIXER_PCM_S; i++, k++) अणु
+	for (i = AMIXER_PCM_F, k = SUM_IN_F; i <= AMIXER_PCM_S; i++, k++) {
 		amix_d = mixer->amixers[i*CHN_NUM];
 		sum = mixer->sums[k*CHN_NUM];
-		amix_d->ops->setup(amix_d, शून्य, INIT_VOL, sum);
+		amix_d->ops->setup(amix_d, NULL, INIT_VOL, sum);
 		amix_d = mixer->amixers[i*CHN_NUM+1];
 		sum = mixer->sums[k*CHN_NUM+1];
-		amix_d->ops->setup(amix_d, शून्य, INIT_VOL, sum);
-	पूर्ण
+		amix_d->ops->setup(amix_d, NULL, INIT_VOL, sum);
+	}
 
 	/* Set up Line-in mixer */
 	amix_d = mixer->amixers[AMIXER_LINEIN*CHN_NUM];
 	sum = mixer->sums[SUM_IN_F*CHN_NUM];
-	amix_d->ops->setup(amix_d, शून्य, INIT_VOL, sum);
+	amix_d->ops->setup(amix_d, NULL, INIT_VOL, sum);
 	amix_d = mixer->amixers[AMIXER_LINEIN*CHN_NUM+1];
 	sum = mixer->sums[SUM_IN_F*CHN_NUM+1];
-	amix_d->ops->setup(amix_d, शून्य, INIT_VOL, sum);
+	amix_d->ops->setup(amix_d, NULL, INIT_VOL, sum);
 
 	/* Set up Mic-in mixer */
 	amix_d = mixer->amixers[AMIXER_MIC*CHN_NUM];
 	sum = mixer->sums[SUM_IN_F*CHN_NUM];
-	amix_d->ops->setup(amix_d, शून्य, INIT_VOL, sum);
+	amix_d->ops->setup(amix_d, NULL, INIT_VOL, sum);
 	amix_d = mixer->amixers[AMIXER_MIC*CHN_NUM+1];
 	sum = mixer->sums[SUM_IN_F*CHN_NUM+1];
-	amix_d->ops->setup(amix_d, शून्य, INIT_VOL, sum);
+	amix_d->ops->setup(amix_d, NULL, INIT_VOL, sum);
 
 	/* Set up S/PDIF-in mixer */
 	amix_d = mixer->amixers[AMIXER_SPDIFI*CHN_NUM];
 	sum = mixer->sums[SUM_IN_F*CHN_NUM];
-	amix_d->ops->setup(amix_d, शून्य, INIT_VOL, sum);
+	amix_d->ops->setup(amix_d, NULL, INIT_VOL, sum);
 	amix_d = mixer->amixers[AMIXER_SPDIFI*CHN_NUM+1];
 	sum = mixer->sums[SUM_IN_F*CHN_NUM+1];
-	amix_d->ops->setup(amix_d, शून्य, INIT_VOL, sum);
+	amix_d->ops->setup(amix_d, NULL, INIT_VOL, sum);
 
 	/* Set up Master recording mixer */
 	amix_d = mixer->amixers[AMIXER_MASTER_F_C*CHN_NUM];
 	sum = mixer->sums[SUM_IN_F_C*CHN_NUM];
-	amix_d->ops->setup(amix_d, &sum->rsc, INIT_VOL, शून्य);
+	amix_d->ops->setup(amix_d, &sum->rsc, INIT_VOL, NULL);
 	amix_d = mixer->amixers[AMIXER_MASTER_F_C*CHN_NUM+1];
 	sum = mixer->sums[SUM_IN_F_C*CHN_NUM+1];
-	amix_d->ops->setup(amix_d, &sum->rsc, INIT_VOL, शून्य);
+	amix_d->ops->setup(amix_d, &sum->rsc, INIT_VOL, NULL);
 
 	/* Set up PCM-in recording mixer */
 	amix_d = mixer->amixers[AMIXER_PCM_F_C*CHN_NUM];
 	sum = mixer->sums[SUM_IN_F_C*CHN_NUM];
-	amix_d->ops->setup(amix_d, शून्य, INIT_VOL, sum);
+	amix_d->ops->setup(amix_d, NULL, INIT_VOL, sum);
 	amix_d = mixer->amixers[AMIXER_PCM_F_C*CHN_NUM+1];
 	sum = mixer->sums[SUM_IN_F_C*CHN_NUM+1];
-	amix_d->ops->setup(amix_d, शून्य, INIT_VOL, sum);
+	amix_d->ops->setup(amix_d, NULL, INIT_VOL, sum);
 
 	/* Set up Line-in recording mixer */
 	amix_d = mixer->amixers[AMIXER_LINEIN_C*CHN_NUM];
 	sum = mixer->sums[SUM_IN_F_C*CHN_NUM];
-	amix_d->ops->setup(amix_d, शून्य, INIT_VOL, sum);
+	amix_d->ops->setup(amix_d, NULL, INIT_VOL, sum);
 	amix_d = mixer->amixers[AMIXER_LINEIN_C*CHN_NUM+1];
 	sum = mixer->sums[SUM_IN_F_C*CHN_NUM+1];
-	amix_d->ops->setup(amix_d, शून्य, INIT_VOL, sum);
+	amix_d->ops->setup(amix_d, NULL, INIT_VOL, sum);
 
 	/* Set up Mic-in recording mixer */
 	amix_d = mixer->amixers[AMIXER_MIC_C*CHN_NUM];
 	sum = mixer->sums[SUM_IN_F_C*CHN_NUM];
-	amix_d->ops->setup(amix_d, शून्य, INIT_VOL, sum);
+	amix_d->ops->setup(amix_d, NULL, INIT_VOL, sum);
 	amix_d = mixer->amixers[AMIXER_MIC_C*CHN_NUM+1];
 	sum = mixer->sums[SUM_IN_F_C*CHN_NUM+1];
-	amix_d->ops->setup(amix_d, शून्य, INIT_VOL, sum);
+	amix_d->ops->setup(amix_d, NULL, INIT_VOL, sum);
 
 	/* Set up S/PDIF-in recording mixer */
 	amix_d = mixer->amixers[AMIXER_SPDIFI_C*CHN_NUM];
 	sum = mixer->sums[SUM_IN_F_C*CHN_NUM];
-	amix_d->ops->setup(amix_d, शून्य, INIT_VOL, sum);
+	amix_d->ops->setup(amix_d, NULL, INIT_VOL, sum);
 	amix_d = mixer->amixers[AMIXER_SPDIFI_C*CHN_NUM+1];
 	sum = mixer->sums[SUM_IN_F_C*CHN_NUM+1];
-	amix_d->ops->setup(amix_d, शून्य, INIT_VOL, sum);
+	amix_d->ops->setup(amix_d, NULL, INIT_VOL, sum);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mixer_set_input_port(काष्ठा amixer *amixer, काष्ठा rsc *rsc)
-अणु
+static int mixer_set_input_port(struct amixer *amixer, struct rsc *rsc)
+{
 	amixer->ops->set_input(amixer, rsc);
-	amixer->ops->commit_ग_लिखो(amixer);
+	amixer->ops->commit_write(amixer);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल क्रमागत CT_AMIXER_CTL port_to_amixer(क्रमागत MIXER_PORT_T type)
-अणु
-	चयन (type) अणु
-	हाल MIX_WAVE_FRONT:	वापस AMIXER_WAVE_F;
-	हाल MIX_WAVE_SURROUND:	वापस AMIXER_WAVE_S;
-	हाल MIX_WAVE_CENTLFE:	वापस AMIXER_WAVE_C;
-	हाल MIX_WAVE_REAR:	वापस AMIXER_WAVE_R;
-	हाल MIX_PCMO_FRONT:	वापस AMIXER_MASTER_F_C;
-	हाल MIX_SPDIF_OUT:	वापस AMIXER_SPDIFO;
-	हाल MIX_LINE_IN:	वापस AMIXER_LINEIN;
-	हाल MIX_MIC_IN:	वापस AMIXER_MIC;
-	हाल MIX_SPDIF_IN:	वापस AMIXER_SPDIFI;
-	हाल MIX_PCMI_FRONT:	वापस AMIXER_PCM_F;
-	हाल MIX_PCMI_SURROUND:	वापस AMIXER_PCM_S;
-	हाल MIX_PCMI_CENTLFE:	वापस AMIXER_PCM_C;
-	हाल MIX_PCMI_REAR:	वापस AMIXER_PCM_R;
-	शेष: 		वापस 0;
-	पूर्ण
-पूर्ण
+static enum CT_AMIXER_CTL port_to_amixer(enum MIXER_PORT_T type)
+{
+	switch (type) {
+	case MIX_WAVE_FRONT:	return AMIXER_WAVE_F;
+	case MIX_WAVE_SURROUND:	return AMIXER_WAVE_S;
+	case MIX_WAVE_CENTLFE:	return AMIXER_WAVE_C;
+	case MIX_WAVE_REAR:	return AMIXER_WAVE_R;
+	case MIX_PCMO_FRONT:	return AMIXER_MASTER_F_C;
+	case MIX_SPDIF_OUT:	return AMIXER_SPDIFO;
+	case MIX_LINE_IN:	return AMIXER_LINEIN;
+	case MIX_MIC_IN:	return AMIXER_MIC;
+	case MIX_SPDIF_IN:	return AMIXER_SPDIFI;
+	case MIX_PCMI_FRONT:	return AMIXER_PCM_F;
+	case MIX_PCMI_SURROUND:	return AMIXER_PCM_S;
+	case MIX_PCMI_CENTLFE:	return AMIXER_PCM_C;
+	case MIX_PCMI_REAR:	return AMIXER_PCM_R;
+	default: 		return 0;
+	}
+}
 
-अटल पूर्णांक mixer_get_output_ports(काष्ठा ct_mixer *mixer,
-				  क्रमागत MIXER_PORT_T type,
-				  काष्ठा rsc **rleft, काष्ठा rsc **rright)
-अणु
-	क्रमागत CT_AMIXER_CTL amix = port_to_amixer(type);
+static int mixer_get_output_ports(struct ct_mixer *mixer,
+				  enum MIXER_PORT_T type,
+				  struct rsc **rleft, struct rsc **rright)
+{
+	enum CT_AMIXER_CTL amix = port_to_amixer(type);
 
-	अगर (शून्य != rleft)
-		*rleft = &((काष्ठा amixer *)mixer->amixers[amix*CHN_NUM])->rsc;
+	if (NULL != rleft)
+		*rleft = &((struct amixer *)mixer->amixers[amix*CHN_NUM])->rsc;
 
-	अगर (शून्य != rright)
+	if (NULL != rright)
 		*rright =
-			&((काष्ठा amixer *)mixer->amixers[amix*CHN_NUM+1])->rsc;
+			&((struct amixer *)mixer->amixers[amix*CHN_NUM+1])->rsc;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mixer_set_input_left(काष्ठा ct_mixer *mixer,
-				क्रमागत MIXER_PORT_T type, काष्ठा rsc *rsc)
-अणु
-	क्रमागत CT_AMIXER_CTL amix = port_to_amixer(type);
+static int mixer_set_input_left(struct ct_mixer *mixer,
+				enum MIXER_PORT_T type, struct rsc *rsc)
+{
+	enum CT_AMIXER_CTL amix = port_to_amixer(type);
 
 	mixer_set_input_port(mixer->amixers[amix*CHN_NUM], rsc);
 	amix = get_recording_amixer(amix);
-	अगर (amix < NUM_CT_AMIXERS)
+	if (amix < NUM_CT_AMIXERS)
 		mixer_set_input_port(mixer->amixers[amix*CHN_NUM], rsc);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-mixer_set_input_right(काष्ठा ct_mixer *mixer,
-		      क्रमागत MIXER_PORT_T type, काष्ठा rsc *rsc)
-अणु
-	क्रमागत CT_AMIXER_CTL amix = port_to_amixer(type);
+static int
+mixer_set_input_right(struct ct_mixer *mixer,
+		      enum MIXER_PORT_T type, struct rsc *rsc)
+{
+	enum CT_AMIXER_CTL amix = port_to_amixer(type);
 
 	mixer_set_input_port(mixer->amixers[amix*CHN_NUM+1], rsc);
 	amix = get_recording_amixer(amix);
-	अगर (amix < NUM_CT_AMIXERS)
+	if (amix < NUM_CT_AMIXERS)
 		mixer_set_input_port(mixer->amixers[amix*CHN_NUM+1], rsc);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक mixer_resume(काष्ठा ct_mixer *mixer)
-अणु
-	पूर्णांक i, state;
-	काष्ठा amixer *amixer;
+#ifdef CONFIG_PM_SLEEP
+static int mixer_resume(struct ct_mixer *mixer)
+{
+	int i, state;
+	struct amixer *amixer;
 
 	/* resume topology and volume gain. */
-	क्रम (i = 0; i < NUM_CT_AMIXERS*CHN_NUM; i++) अणु
+	for (i = 0; i < NUM_CT_AMIXERS*CHN_NUM; i++) {
 		amixer = mixer->amixers[i];
-		amixer->ops->commit_ग_लिखो(amixer);
-	पूर्ण
+		amixer->ops->commit_write(amixer);
+	}
 
-	/* resume चयन state. */
-	क्रम (i = SWH_MIXER_START; i <= SWH_MIXER_END; i++) अणु
-		state = get_चयन_state(mixer, i);
-		करो_चयन(mixer->atc, i, state);
-	पूर्ण
+	/* resume switch state. */
+	for (i = SWH_MIXER_START; i <= SWH_MIXER_END; i++) {
+		state = get_switch_state(mixer, i);
+		do_switch(mixer->atc, i, state);
+	}
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-पूर्णांक ct_mixer_destroy(काष्ठा ct_mixer *mixer)
-अणु
-	काष्ठा sum_mgr *sum_mgr = (काष्ठा sum_mgr *)mixer->atc->rsc_mgrs[SUM];
-	काष्ठा amixer_mgr *amixer_mgr =
-			(काष्ठा amixer_mgr *)mixer->atc->rsc_mgrs[AMIXER];
-	काष्ठा amixer *amixer;
-	पूर्णांक i = 0;
+int ct_mixer_destroy(struct ct_mixer *mixer)
+{
+	struct sum_mgr *sum_mgr = (struct sum_mgr *)mixer->atc->rsc_mgrs[SUM];
+	struct amixer_mgr *amixer_mgr =
+			(struct amixer_mgr *)mixer->atc->rsc_mgrs[AMIXER];
+	struct amixer *amixer;
+	int i = 0;
 
 	/* Release amixer resources */
-	क्रम (i = 0; i < (NUM_CT_AMIXERS * CHN_NUM); i++) अणु
-		अगर (शून्य != mixer->amixers[i]) अणु
+	for (i = 0; i < (NUM_CT_AMIXERS * CHN_NUM); i++) {
+		if (NULL != mixer->amixers[i]) {
 			amixer = mixer->amixers[i];
 			amixer_mgr->put_amixer(amixer_mgr, amixer);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Release sum resources */
-	क्रम (i = 0; i < (NUM_CT_SUMS * CHN_NUM); i++) अणु
-		अगर (शून्य != mixer->sums[i])
-			sum_mgr->put_sum(sum_mgr, (काष्ठा sum *)mixer->sums[i]);
-	पूर्ण
+	for (i = 0; i < (NUM_CT_SUMS * CHN_NUM); i++) {
+		if (NULL != mixer->sums[i])
+			sum_mgr->put_sum(sum_mgr, (struct sum *)mixer->sums[i]);
+	}
 
-	/* Release mem asचिन्हित to mixer object */
-	kमुक्त(mixer->sums);
-	kमुक्त(mixer->amixers);
-	kमुक्त(mixer);
+	/* Release mem assigned to mixer object */
+	kfree(mixer->sums);
+	kfree(mixer->amixers);
+	kfree(mixer);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ct_mixer_create(काष्ठा ct_atc *atc, काष्ठा ct_mixer **rmixer)
-अणु
-	काष्ठा ct_mixer *mixer;
-	पूर्णांक err;
+int ct_mixer_create(struct ct_atc *atc, struct ct_mixer **rmixer)
+{
+	struct ct_mixer *mixer;
+	int err;
 
-	*rmixer = शून्य;
+	*rmixer = NULL;
 
-	/* Allocate mem क्रम mixer obj */
+	/* Allocate mem for mixer obj */
 	err = ct_mixer_get_mem(&mixer);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	mixer->चयन_state = 0;
+	mixer->switch_state = 0;
 	mixer->atc = atc;
 	/* Set operations */
 	mixer->get_output_ports = mixer_get_output_ports;
 	mixer->set_input_left = mixer_set_input_left;
 	mixer->set_input_right = mixer_set_input_right;
-#अगर_घोषित CONFIG_PM_SLEEP
+#ifdef CONFIG_PM_SLEEP
 	mixer->resume = mixer_resume;
-#पूर्ण_अगर
+#endif
 
-	/* Allocate chip resources क्रम mixer obj */
+	/* Allocate chip resources for mixer obj */
 	err = ct_mixer_get_resources(mixer);
-	अगर (err)
-		जाओ error;
+	if (err)
+		goto error;
 
-	/* Build पूर्णांकernal mixer topology */
+	/* Build internal mixer topology */
 	ct_mixer_topology_build(mixer);
 
 	*rmixer = mixer;
 
-	वापस 0;
+	return 0;
 
 error:
 	ct_mixer_destroy(mixer);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक ct_alsa_mix_create(काष्ठा ct_atc *atc,
-		       क्रमागत CTALSADEVS device,
-		       स्थिर अक्षर *device_name)
-अणु
-	पूर्णांक err;
+int ct_alsa_mix_create(struct ct_atc *atc,
+		       enum CTALSADEVS device,
+		       const char *device_name)
+{
+	int err;
 
 	/* Create snd kcontrol instances on demand */
 	/* vol_ctl.device = swh_ctl.device = device; */ /* better w/ device 0 */
-	err = ct_mixer_kcontrols_create((काष्ठा ct_mixer *)atc->mixer);
-	अगर (err)
-		वापस err;
+	err = ct_mixer_kcontrols_create((struct ct_mixer *)atc->mixer);
+	if (err)
+		return err;
 
-	म_नकल(atc->card->mixername, device_name);
+	strcpy(atc->card->mixername, device_name);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

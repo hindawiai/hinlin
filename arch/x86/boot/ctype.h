@@ -1,22 +1,21 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित BOOT_CTYPE_H
-#घोषणा BOOT_CTYPE_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef BOOT_CTYPE_H
+#define BOOT_CTYPE_H
 
-अटल अंतरभूत पूर्णांक है_अंक(पूर्णांक ch)
-अणु
-	वापस (ch >= '0') && (ch <= '9');
-पूर्ण
+static inline int isdigit(int ch)
+{
+	return (ch >= '0') && (ch <= '9');
+}
 
-अटल अंतरभूत पूर्णांक है_षष्ठादशक(पूर्णांक ch)
-अणु
-	अगर (है_अंक(ch))
-		वापस true;
+static inline int isxdigit(int ch)
+{
+	if (isdigit(ch))
+		return true;
 
-	अगर ((ch >= 'a') && (ch <= 'f'))
-		वापस true;
+	if ((ch >= 'a') && (ch <= 'f'))
+		return true;
 
-	वापस (ch >= 'A') && (ch <= 'F');
-पूर्ण
+	return (ch >= 'A') && (ch <= 'F');
+}
 
-#पूर्ण_अगर
+#endif

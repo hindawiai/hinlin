@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * STMicroelectronics pressures driver
  *
@@ -8,121 +7,121 @@
  * Denis Ciocca <denis.ciocca@st.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/iio/iपन.स>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/i2c.h>
+#include <linux/iio/iio.h>
 
-#समावेश <linux/iio/common/st_sensors.h>
-#समावेश <linux/iio/common/st_sensors_i2c.h>
-#समावेश "st_pressure.h"
+#include <linux/iio/common/st_sensors.h>
+#include <linux/iio/common/st_sensors_i2c.h>
+#include "st_pressure.h"
 
-अटल स्थिर काष्ठा of_device_id st_press_of_match[] = अणु
-	अणु
+static const struct of_device_id st_press_of_match[] = {
+	{
 		.compatible = "st,lps001wp-press",
 		.data = LPS001WP_PRESS_DEV_NAME,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "st,lps25h-press",
 		.data = LPS25H_PRESS_DEV_NAME,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "st,lps331ap-press",
 		.data = LPS331AP_PRESS_DEV_NAME,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "st,lps22hb-press",
 		.data = LPS22HB_PRESS_DEV_NAME,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "st,lps33hw",
 		.data = LPS33HW_PRESS_DEV_NAME,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "st,lps35hw",
 		.data = LPS35HW_PRESS_DEV_NAME,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "st,lps22hh",
 		.data = LPS22HH_PRESS_DEV_NAME,
-	पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+	},
+	{},
+};
 MODULE_DEVICE_TABLE(of, st_press_of_match);
 
-#अगर_घोषित CONFIG_ACPI
-अटल स्थिर काष्ठा acpi_device_id st_press_acpi_match[] = अणु
-	अणु"SNO9210", LPS22HBपूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+#ifdef CONFIG_ACPI
+static const struct acpi_device_id st_press_acpi_match[] = {
+	{"SNO9210", LPS22HB},
+	{ },
+};
 MODULE_DEVICE_TABLE(acpi, st_press_acpi_match);
-#पूर्ण_अगर
+#endif
 
-अटल स्थिर काष्ठा i2c_device_id st_press_id_table[] = अणु
-	अणु LPS001WP_PRESS_DEV_NAME, LPS001WP पूर्ण,
-	अणु LPS25H_PRESS_DEV_NAME,  LPS25H पूर्ण,
-	अणु LPS331AP_PRESS_DEV_NAME, LPS331AP पूर्ण,
-	अणु LPS22HB_PRESS_DEV_NAME, LPS22HB पूर्ण,
-	अणु LPS33HW_PRESS_DEV_NAME, LPS33HW पूर्ण,
-	अणु LPS35HW_PRESS_DEV_NAME, LPS35HW पूर्ण,
-	अणु LPS22HH_PRESS_DEV_NAME, LPS22HH पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct i2c_device_id st_press_id_table[] = {
+	{ LPS001WP_PRESS_DEV_NAME, LPS001WP },
+	{ LPS25H_PRESS_DEV_NAME,  LPS25H },
+	{ LPS331AP_PRESS_DEV_NAME, LPS331AP },
+	{ LPS22HB_PRESS_DEV_NAME, LPS22HB },
+	{ LPS33HW_PRESS_DEV_NAME, LPS33HW },
+	{ LPS35HW_PRESS_DEV_NAME, LPS35HW },
+	{ LPS22HH_PRESS_DEV_NAME, LPS22HH },
+	{},
+};
 MODULE_DEVICE_TABLE(i2c, st_press_id_table);
 
-अटल पूर्णांक st_press_i2c_probe(काष्ठा i2c_client *client,
-			      स्थिर काष्ठा i2c_device_id *id)
-अणु
-	स्थिर काष्ठा st_sensor_settings *settings;
-	काष्ठा st_sensor_data *press_data;
-	काष्ठा iio_dev *indio_dev;
-	पूर्णांक ret;
+static int st_press_i2c_probe(struct i2c_client *client,
+			      const struct i2c_device_id *id)
+{
+	const struct st_sensor_settings *settings;
+	struct st_sensor_data *press_data;
+	struct iio_dev *indio_dev;
+	int ret;
 
-	st_sensors_dev_name_probe(&client->dev, client->name, माप(client->name));
+	st_sensors_dev_name_probe(&client->dev, client->name, sizeof(client->name));
 
 	settings = st_press_get_settings(client->name);
-	अगर (!settings) अणु
+	if (!settings) {
 		dev_err(&client->dev, "device name %s not recognized.\n",
 			client->name);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	indio_dev = devm_iio_device_alloc(&client->dev, माप(*press_data));
-	अगर (!indio_dev)
-		वापस -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&client->dev, sizeof(*press_data));
+	if (!indio_dev)
+		return -ENOMEM;
 
 	press_data = iio_priv(indio_dev);
-	press_data->sensor_settings = (काष्ठा st_sensor_settings *)settings;
+	press_data->sensor_settings = (struct st_sensor_settings *)settings;
 
 	ret = st_sensors_i2c_configure(indio_dev, client);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	ret = st_press_common_probe(indio_dev);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक st_press_i2c_हटाओ(काष्ठा i2c_client *client)
-अणु
-	st_press_common_हटाओ(i2c_get_clientdata(client));
+static int st_press_i2c_remove(struct i2c_client *client)
+{
+	st_press_common_remove(i2c_get_clientdata(client));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा i2c_driver st_press_driver = अणु
-	.driver = अणु
+static struct i2c_driver st_press_driver = {
+	.driver = {
 		.name = "st-press-i2c",
 		.of_match_table = st_press_of_match,
 		.acpi_match_table = ACPI_PTR(st_press_acpi_match),
-	पूर्ण,
+	},
 	.probe = st_press_i2c_probe,
-	.हटाओ = st_press_i2c_हटाओ,
+	.remove = st_press_i2c_remove,
 	.id_table = st_press_id_table,
-पूर्ण;
+};
 module_i2c_driver(st_press_driver);
 
 MODULE_AUTHOR("Denis Ciocca <denis.ciocca@st.com>");

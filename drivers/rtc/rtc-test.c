@@ -1,202 +1,201 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * An RTC test device/driver
  * Copyright (C) 2005 Tower Technologies
  * Author: Alessandro Zummo <a.zummo@towertech.it>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/err.h>
-#समावेश <linux/rtc.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/module.h>
+#include <linux/err.h>
+#include <linux/rtc.h>
+#include <linux/platform_device.h>
 
-#घोषणा MAX_RTC_TEST 3
+#define MAX_RTC_TEST 3
 
-काष्ठा rtc_test_data अणु
-	काष्ठा rtc_device *rtc;
-	समय64_t offset;
-	काष्ठा समयr_list alarm;
+struct rtc_test_data {
+	struct rtc_device *rtc;
+	time64_t offset;
+	struct timer_list alarm;
 	bool alarm_en;
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device *pdev[MAX_RTC_TEST];
+static struct platform_device *pdev[MAX_RTC_TEST];
 
-अटल पूर्णांक test_rtc_पढ़ो_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
-अणु
-	काष्ठा rtc_test_data *rtd = dev_get_drvdata(dev);
-	समय64_t alarm;
+static int test_rtc_read_alarm(struct device *dev, struct rtc_wkalrm *alrm)
+{
+	struct rtc_test_data *rtd = dev_get_drvdata(dev);
+	time64_t alarm;
 
-	alarm = (rtd->alarm.expires - jअगरfies) / HZ;
-	alarm += kसमय_get_real_seconds() + rtd->offset;
+	alarm = (rtd->alarm.expires - jiffies) / HZ;
+	alarm += ktime_get_real_seconds() + rtd->offset;
 
-	rtc_समय64_to_पंचांग(alarm, &alrm->समय);
+	rtc_time64_to_tm(alarm, &alrm->time);
 	alrm->enabled = rtd->alarm_en;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक test_rtc_set_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
-अणु
-	काष्ठा rtc_test_data *rtd = dev_get_drvdata(dev);
-	kसमय_प्रकार समयout;
+static int test_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alrm)
+{
+	struct rtc_test_data *rtd = dev_get_drvdata(dev);
+	ktime_t timeout;
 	u64 expires;
 
-	समयout = rtc_पंचांग_to_समय64(&alrm->समय) - kसमय_get_real_seconds();
-	समयout -= rtd->offset;
+	timeout = rtc_tm_to_time64(&alrm->time) - ktime_get_real_seconds();
+	timeout -= rtd->offset;
 
-	del_समयr(&rtd->alarm);
+	del_timer(&rtd->alarm);
 
-	expires = jअगरfies + समयout * HZ;
-	अगर (expires > U32_MAX)
+	expires = jiffies + timeout * HZ;
+	if (expires > U32_MAX)
 		expires = U32_MAX;
 
 	rtd->alarm.expires = expires;
 
-	अगर (alrm->enabled)
-		add_समयr(&rtd->alarm);
+	if (alrm->enabled)
+		add_timer(&rtd->alarm);
 
 	rtd->alarm_en = alrm->enabled;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक test_rtc_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	काष्ठा rtc_test_data *rtd = dev_get_drvdata(dev);
+static int test_rtc_read_time(struct device *dev, struct rtc_time *tm)
+{
+	struct rtc_test_data *rtd = dev_get_drvdata(dev);
 
-	rtc_समय64_to_पंचांग(kसमय_get_real_seconds() + rtd->offset, पंचांग);
+	rtc_time64_to_tm(ktime_get_real_seconds() + rtd->offset, tm);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक test_rtc_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	काष्ठा rtc_test_data *rtd = dev_get_drvdata(dev);
+static int test_rtc_set_time(struct device *dev, struct rtc_time *tm)
+{
+	struct rtc_test_data *rtd = dev_get_drvdata(dev);
 
-	rtd->offset = rtc_पंचांग_to_समय64(पंचांग) - kसमय_get_real_seconds();
+	rtd->offset = rtc_tm_to_time64(tm) - ktime_get_real_seconds();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक test_rtc_alarm_irq_enable(काष्ठा device *dev, अचिन्हित पूर्णांक enable)
-अणु
-	काष्ठा rtc_test_data *rtd = dev_get_drvdata(dev);
+static int test_rtc_alarm_irq_enable(struct device *dev, unsigned int enable)
+{
+	struct rtc_test_data *rtd = dev_get_drvdata(dev);
 
 	rtd->alarm_en = enable;
-	अगर (enable)
-		add_समयr(&rtd->alarm);
-	अन्यथा
-		del_समयr(&rtd->alarm);
+	if (enable)
+		add_timer(&rtd->alarm);
+	else
+		del_timer(&rtd->alarm);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा rtc_class_ops test_rtc_ops_noalm = अणु
-	.पढ़ो_समय = test_rtc_पढ़ो_समय,
-	.set_समय = test_rtc_set_समय,
+static const struct rtc_class_ops test_rtc_ops_noalm = {
+	.read_time = test_rtc_read_time,
+	.set_time = test_rtc_set_time,
 	.alarm_irq_enable = test_rtc_alarm_irq_enable,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा rtc_class_ops test_rtc_ops = अणु
-	.पढ़ो_समय = test_rtc_पढ़ो_समय,
-	.set_समय = test_rtc_set_समय,
-	.पढ़ो_alarm = test_rtc_पढ़ो_alarm,
+static const struct rtc_class_ops test_rtc_ops = {
+	.read_time = test_rtc_read_time,
+	.set_time = test_rtc_set_time,
+	.read_alarm = test_rtc_read_alarm,
 	.set_alarm = test_rtc_set_alarm,
 	.alarm_irq_enable = test_rtc_alarm_irq_enable,
-पूर्ण;
+};
 
-अटल व्योम test_rtc_alarm_handler(काष्ठा समयr_list *t)
-अणु
-	काष्ठा rtc_test_data *rtd = from_समयr(rtd, t, alarm);
+static void test_rtc_alarm_handler(struct timer_list *t)
+{
+	struct rtc_test_data *rtd = from_timer(rtd, t, alarm);
 
 	rtc_update_irq(rtd->rtc, 1, RTC_AF | RTC_IRQF);
-पूर्ण
+}
 
-अटल पूर्णांक test_probe(काष्ठा platक्रमm_device *plat_dev)
-अणु
-	काष्ठा rtc_test_data *rtd;
+static int test_probe(struct platform_device *plat_dev)
+{
+	struct rtc_test_data *rtd;
 
-	rtd = devm_kzalloc(&plat_dev->dev, माप(*rtd), GFP_KERNEL);
-	अगर (!rtd)
-		वापस -ENOMEM;
+	rtd = devm_kzalloc(&plat_dev->dev, sizeof(*rtd), GFP_KERNEL);
+	if (!rtd)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(plat_dev, rtd);
+	platform_set_drvdata(plat_dev, rtd);
 
 	rtd->rtc = devm_rtc_allocate_device(&plat_dev->dev);
-	अगर (IS_ERR(rtd->rtc))
-		वापस PTR_ERR(rtd->rtc);
+	if (IS_ERR(rtd->rtc))
+		return PTR_ERR(rtd->rtc);
 
-	चयन (plat_dev->id) अणु
-	हाल 0:
+	switch (plat_dev->id) {
+	case 0:
 		rtd->rtc->ops = &test_rtc_ops_noalm;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		rtd->rtc->ops = &test_rtc_ops;
 		device_init_wakeup(&plat_dev->dev, 1);
-	पूर्ण
+	}
 
-	समयr_setup(&rtd->alarm, test_rtc_alarm_handler, 0);
+	timer_setup(&rtd->alarm, test_rtc_alarm_handler, 0);
 	rtd->alarm.expires = 0;
 
-	वापस devm_rtc_रेजिस्टर_device(rtd->rtc);
-पूर्ण
+	return devm_rtc_register_device(rtd->rtc);
+}
 
-अटल काष्ठा platक्रमm_driver test_driver = अणु
+static struct platform_driver test_driver = {
 	.probe	= test_probe,
-	.driver = अणु
+	.driver = {
 		.name = "rtc-test",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init test_init(व्योम)
-अणु
-	पूर्णांक i, err;
+static int __init test_init(void)
+{
+	int i, err;
 
-	err = platक्रमm_driver_रेजिस्टर(&test_driver);
-	अगर (err)
-		वापस err;
+	err = platform_driver_register(&test_driver);
+	if (err)
+		return err;
 
 	err = -ENOMEM;
-	क्रम (i = 0; i < MAX_RTC_TEST; i++) अणु
-		pdev[i] = platक्रमm_device_alloc("rtc-test", i);
-		अगर (!pdev[i])
-			जाओ निकास_मुक्त_mem;
-	पूर्ण
+	for (i = 0; i < MAX_RTC_TEST; i++) {
+		pdev[i] = platform_device_alloc("rtc-test", i);
+		if (!pdev[i])
+			goto exit_free_mem;
+	}
 
-	क्रम (i = 0; i < MAX_RTC_TEST; i++) अणु
-		err = platक्रमm_device_add(pdev[i]);
-		अगर (err)
-			जाओ निकास_device_del;
-	पूर्ण
+	for (i = 0; i < MAX_RTC_TEST; i++) {
+		err = platform_device_add(pdev[i]);
+		if (err)
+			goto exit_device_del;
+	}
 
-	वापस 0;
+	return 0;
 
-निकास_device_del:
-	क्रम (; i > 0; i--)
-		platक्रमm_device_del(pdev[i - 1]);
+exit_device_del:
+	for (; i > 0; i--)
+		platform_device_del(pdev[i - 1]);
 
-निकास_मुक्त_mem:
-	क्रम (i = 0; i < MAX_RTC_TEST; i++)
-		platक्रमm_device_put(pdev[i]);
+exit_free_mem:
+	for (i = 0; i < MAX_RTC_TEST; i++)
+		platform_device_put(pdev[i]);
 
-	platक्रमm_driver_unरेजिस्टर(&test_driver);
-	वापस err;
-पूर्ण
+	platform_driver_unregister(&test_driver);
+	return err;
+}
 
-अटल व्योम __निकास test_निकास(व्योम)
-अणु
-	पूर्णांक i;
+static void __exit test_exit(void)
+{
+	int i;
 
-	क्रम (i = 0; i < MAX_RTC_TEST; i++)
-		platक्रमm_device_unरेजिस्टर(pdev[i]);
+	for (i = 0; i < MAX_RTC_TEST; i++)
+		platform_device_unregister(pdev[i]);
 
-	platक्रमm_driver_unरेजिस्टर(&test_driver);
-पूर्ण
+	platform_driver_unregister(&test_driver);
+}
 
 MODULE_AUTHOR("Alessandro Zummo <a.zummo@towertech.it>");
 MODULE_DESCRIPTION("RTC test driver/device");
 MODULE_LICENSE("GPL v2");
 
 module_init(test_init);
-module_निकास(test_निकास);
+module_exit(test_exit);

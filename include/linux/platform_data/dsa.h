@@ -1,69 +1,68 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __DSA_PDATA_H
-#घोषणा __DSA_PDATA_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __DSA_PDATA_H
+#define __DSA_PDATA_H
 
-काष्ठा device;
-काष्ठा net_device;
+struct device;
+struct net_device;
 
-#घोषणा DSA_MAX_SWITCHES	4
-#घोषणा DSA_MAX_PORTS		12
-#घोषणा DSA_RTABLE_NONE		-1
+#define DSA_MAX_SWITCHES	4
+#define DSA_MAX_PORTS		12
+#define DSA_RTABLE_NONE		-1
 
-काष्ठा dsa_chip_data अणु
+struct dsa_chip_data {
 	/*
-	 * How to access the चयन configuration रेजिस्टरs.
+	 * How to access the switch configuration registers.
 	 */
-	काष्ठा device	*host_dev;
-	पूर्णांक		sw_addr;
+	struct device	*host_dev;
+	int		sw_addr;
 
 	/*
 	 * Reference to network devices
 	 */
-	काष्ठा device	*netdev[DSA_MAX_PORTS];
+	struct device	*netdev[DSA_MAX_PORTS];
 
-	/* set to size of eeprom अगर supported by the चयन */
-	पूर्णांक		eeprom_len;
+	/* set to size of eeprom if supported by the switch */
+	int		eeprom_len;
 
-	/* Device tree node poपूर्णांकer क्रम this specअगरic चयन chip
-	 * used during चयन setup in हाल additional properties
+	/* Device tree node pointer for this specific switch chip
+	 * used during switch setup in case additional properties
 	 * and resources needs to be used
 	 */
-	काष्ठा device_node *of_node;
+	struct device_node *of_node;
 
 	/*
-	 * The names of the चयन's ports.  Use "cpu" to
-	 * designate the चयन port that the cpu is connected to,
+	 * The names of the switch's ports.  Use "cpu" to
+	 * designate the switch port that the cpu is connected to,
 	 * "dsa" to indicate that this port is a DSA link to
-	 * another चयन, शून्य to indicate the port is unused,
+	 * another switch, NULL to indicate the port is unused,
 	 * or any other string to indicate this is a physical port.
 	 */
-	अक्षर		*port_names[DSA_MAX_PORTS];
-	काष्ठा device_node *port_dn[DSA_MAX_PORTS];
+	char		*port_names[DSA_MAX_PORTS];
+	struct device_node *port_dn[DSA_MAX_PORTS];
 
 	/*
 	 * An array of which element [a] indicates which port on this
-	 * चयन should be used to send packets to that are destined
-	 * क्रम चयन a. Can be शून्य अगर there is only one चयन chip.
+	 * switch should be used to send packets to that are destined
+	 * for switch a. Can be NULL if there is only one switch chip.
 	 */
 	s8		rtable[DSA_MAX_SWITCHES];
-पूर्ण;
+};
 
-काष्ठा dsa_platक्रमm_data अणु
+struct dsa_platform_data {
 	/*
-	 * Reference to a Linux network पूर्णांकerface that connects
-	 * to the root चयन chip of the tree.
+	 * Reference to a Linux network interface that connects
+	 * to the root switch chip of the tree.
 	 */
-	काष्ठा device	*netdev;
-	काष्ठा net_device *of_netdev;
+	struct device	*netdev;
+	struct net_device *of_netdev;
 
 	/*
-	 * Info काष्ठाs describing each of the चयन chips
-	 * connected via this network पूर्णांकerface.
+	 * Info structs describing each of the switch chips
+	 * connected via this network interface.
 	 */
-	पूर्णांक		nr_chips;
-	काष्ठा dsa_chip_data	*chip;
-पूर्ण;
+	int		nr_chips;
+	struct dsa_chip_data	*chip;
+};
 
 
-#पूर्ण_अगर /* __DSA_PDATA_H */
+#endif /* __DSA_PDATA_H */

@@ -1,41 +1,40 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB */
+/* SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB */
 /*
  * Copyright (c) 2016 Mellanox Technologies Ltd. All rights reserved.
  * Copyright (c) 2015 System Fabric Works, Inc. All rights reserved.
  */
 
-#अगर_अघोषित RXE_PARAM_H
-#घोषणा RXE_PARAM_H
+#ifndef RXE_PARAM_H
+#define RXE_PARAM_H
 
-#समावेश <uapi/rdma/rdma_user_rxe.h>
+#include <uapi/rdma/rdma_user_rxe.h>
 
-अटल अंतरभूत क्रमागत ib_mtu rxe_mtu_पूर्णांक_to_क्रमागत(पूर्णांक mtu)
-अणु
-	अगर (mtu < 256)
-		वापस 0;
-	अन्यथा अगर (mtu < 512)
-		वापस IB_MTU_256;
-	अन्यथा अगर (mtu < 1024)
-		वापस IB_MTU_512;
-	अन्यथा अगर (mtu < 2048)
-		वापस IB_MTU_1024;
-	अन्यथा अगर (mtu < 4096)
-		वापस IB_MTU_2048;
-	अन्यथा
-		वापस IB_MTU_4096;
-पूर्ण
+static inline enum ib_mtu rxe_mtu_int_to_enum(int mtu)
+{
+	if (mtu < 256)
+		return 0;
+	else if (mtu < 512)
+		return IB_MTU_256;
+	else if (mtu < 1024)
+		return IB_MTU_512;
+	else if (mtu < 2048)
+		return IB_MTU_1024;
+	else if (mtu < 4096)
+		return IB_MTU_2048;
+	else
+		return IB_MTU_4096;
+}
 
-/* Find the IB mtu क्रम a given network MTU. */
-अटल अंतरभूत क्रमागत ib_mtu eth_mtu_पूर्णांक_to_क्रमागत(पूर्णांक mtu)
-अणु
+/* Find the IB mtu for a given network MTU. */
+static inline enum ib_mtu eth_mtu_int_to_enum(int mtu)
+{
 	mtu -= RXE_MAX_HDR_LENGTH;
 
-	वापस rxe_mtu_पूर्णांक_to_क्रमागत(mtu);
-पूर्ण
+	return rxe_mtu_int_to_enum(mtu);
+}
 
-/* शेष/initial rxe device parameter settings */
-क्रमागत rxe_device_param अणु
+/* default/initial rxe device parameter settings */
+enum rxe_device_param {
 	RXE_MAX_MR_SIZE			= -1ull,
 	RXE_PAGE_SIZE_CAP		= 0xfffff000,
 	RXE_MAX_QP			= 0x10000,
@@ -52,10 +51,10 @@
 					| IB_DEVICE_MEM_MGT_EXTENSIONS
 					| IB_DEVICE_ALLOW_USER_UNREG,
 	RXE_MAX_SGE			= 32,
-	RXE_MAX_WQE_SIZE		= माप(काष्ठा rxe_send_wqe) +
-					  माप(काष्ठा ib_sge) * RXE_MAX_SGE,
+	RXE_MAX_WQE_SIZE		= sizeof(struct rxe_send_wqe) +
+					  sizeof(struct ib_sge) * RXE_MAX_SGE,
 	RXE_MAX_INLINE_DATA		= RXE_MAX_WQE_SIZE -
-					  माप(काष्ठा rxe_send_wqe),
+					  sizeof(struct rxe_send_wqe),
 	RXE_MAX_SGE_RD			= 32,
 	RXE_MAX_CQ			= 16384,
 	RXE_MAX_LOG_CQE			= 15,
@@ -99,15 +98,15 @@
 	RXE_INFLIGHT_SKBS_PER_QP_HIGH	= 64,
 	RXE_INFLIGHT_SKBS_PER_QP_LOW	= 16,
 
-	/* Delay beक्रमe calling arbiter समयr */
+	/* Delay before calling arbiter timer */
 	RXE_NSEC_ARB_TIMER_DELAY	= 200,
 
 	/* IBTA v1.4 A3.3.1 VENDOR INFORMATION section */
 	RXE_VENDOR_ID			= 0XFFFFFF,
-पूर्ण;
+};
 
-/* शेष/initial rxe port parameters */
-क्रमागत rxe_port_param अणु
+/* default/initial rxe port parameters */
+enum rxe_port_param {
 	RXE_PORT_GID_TBL_LEN		= 1024,
 	RXE_PORT_PORT_CAP_FLAGS		= RDMA_CORE_CAP_PROT_ROCE_UDP_ENCAP,
 	RXE_PORT_MAX_MSG_SZ		= 0x800000,
@@ -125,13 +124,13 @@
 	RXE_PORT_PKEY_TBL_LEN		= 1,
 	RXE_PORT_PHYS_STATE		= IB_PORT_PHYS_STATE_POLLING,
 	RXE_PORT_SUBNET_PREFIX		= 0xfe80000000000000ULL,
-पूर्ण;
+};
 
-/* शेष/initial port info parameters */
-क्रमागत rxe_port_info_param अणु
+/* default/initial port info parameters */
+enum rxe_port_info_param {
 	RXE_PORT_INFO_VL_CAP		= 4,	/* 1-8 */
 	RXE_PORT_INFO_MTU_CAP		= 5,	/* 4096 */
 	RXE_PORT_INFO_OPER_VL		= 1,	/* 1 */
-पूर्ण;
+};
 
-#पूर्ण_अगर /* RXE_PARAM_H */
+#endif /* RXE_PARAM_H */

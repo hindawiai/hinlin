@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Cryptographic API.
  *
@@ -8,27 +7,27 @@
  * Copyright (c) 2005 Dag Arne Osvik <da@osvik.no>
  */
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/compiler.h>
-#समावेश <linux/crypto.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/fips.h>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/types.h>
+#include <linux/bitops.h>
+#include <linux/compiler.h>
+#include <linux/crypto.h>
+#include <linux/errno.h>
+#include <linux/fips.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/string.h>
+#include <linux/types.h>
 
-#समावेश <यंत्र/unaligned.h>
+#include <asm/unaligned.h>
 
-#समावेश <crypto/des.h>
-#समावेश <crypto/पूर्णांकernal/des.h>
+#include <crypto/des.h>
+#include <crypto/internal/des.h>
 
-#घोषणा ROL(x, r) ((x) = rol32((x), (r)))
-#घोषणा ROR(x, r) ((x) = ror32((x), (r)))
+#define ROL(x, r) ((x) = rol32((x), (r)))
+#define ROR(x, r) ((x) = ror32((x), (r)))
 
-/* Lookup tables क्रम key expansion */
+/* Lookup tables for key expansion */
 
-अटल स्थिर u8 pc1[256] = अणु
+static const u8 pc1[256] = {
 	0x00, 0x00, 0x40, 0x04, 0x10, 0x10, 0x50, 0x14,
 	0x04, 0x40, 0x44, 0x44, 0x14, 0x50, 0x54, 0x54,
 	0x02, 0x02, 0x42, 0x06, 0x12, 0x12, 0x52, 0x16,
@@ -61,9 +60,9 @@
 	0xac, 0xe8, 0xec, 0xec, 0xbc, 0xf8, 0xfc, 0xfc,
 	0xaa, 0xaa, 0xea, 0xae, 0xba, 0xba, 0xfa, 0xbe,
 	0xae, 0xea, 0xee, 0xee, 0xbe, 0xfa, 0xfe, 0xfe
-पूर्ण;
+};
 
-अटल स्थिर u8 rs[256] = अणु
+static const u8 rs[256] = {
 	0x00, 0x00, 0x80, 0x80, 0x02, 0x02, 0x82, 0x82,
 	0x04, 0x04, 0x84, 0x84, 0x06, 0x06, 0x86, 0x86,
 	0x08, 0x08, 0x88, 0x88, 0x0a, 0x0a, 0x8a, 0x8a,
@@ -96,9 +95,9 @@
 	0x74, 0x74, 0xf4, 0xf4, 0x76, 0x76, 0xf6, 0xf6,
 	0x78, 0x78, 0xf8, 0xf8, 0x7a, 0x7a, 0xfa, 0xfa,
 	0x7c, 0x7c, 0xfc, 0xfc, 0x7e, 0x7e, 0xfe, 0xfe
-पूर्ण;
+};
 
-अटल स्थिर u32 pc2[1024] = अणु
+static const u32 pc2[1024] = {
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	0x00040000, 0x00000000, 0x04000000, 0x00100000,
 	0x00400000, 0x00000008, 0x00000800, 0x40000000,
@@ -356,11 +355,11 @@
 	0x00024c00, 0x05018008, 0x28182040, 0x10240034,
 	0x02024c00, 0x05018000, 0x281020c0, 0x00241034,
 	0x02024c00, 0x05018008, 0x281820c0, 0x10241034
-पूर्ण;
+};
 
 /* S-box lookup tables */
 
-अटल स्थिर u32 S1[64] = अणु
+static const u32 S1[64] = {
 	0x01010400, 0x00000000, 0x00010000, 0x01010404,
 	0x01010004, 0x00010404, 0x00000004, 0x00010000,
 	0x00000400, 0x01010400, 0x01010404, 0x00000400,
@@ -377,9 +376,9 @@
 	0x01000004, 0x00000404, 0x00010404, 0x01010400,
 	0x00000404, 0x01000400, 0x01000400, 0x00000000,
 	0x00010004, 0x00010400, 0x00000000, 0x01010004
-पूर्ण;
+};
 
-अटल स्थिर u32 S2[64] = अणु
+static const u32 S2[64] = {
 	0x80108020, 0x80008000, 0x00008000, 0x00108020,
 	0x00100000, 0x00000020, 0x80100020, 0x80008020,
 	0x80000020, 0x80108020, 0x80108000, 0x80000000,
@@ -396,9 +395,9 @@
 	0x00100020, 0x80008020, 0x80000020, 0x00100020,
 	0x00108000, 0x00000000, 0x80008000, 0x00008020,
 	0x80000000, 0x80100020, 0x80108020, 0x00108000
-पूर्ण;
+};
 
-अटल स्थिर u32 S3[64] = अणु
+static const u32 S3[64] = {
 	0x00000208, 0x08020200, 0x00000000, 0x08020008,
 	0x08000200, 0x00000000, 0x00020208, 0x08000200,
 	0x00020008, 0x08000008, 0x08000008, 0x00020000,
@@ -415,9 +414,9 @@
 	0x00000008, 0x00020208, 0x00020200, 0x08000008,
 	0x08020000, 0x08000208, 0x00000208, 0x08020000,
 	0x00020208, 0x00000008, 0x08020008, 0x00020200
-पूर्ण;
+};
 
-अटल स्थिर u32 S4[64] = अणु
+static const u32 S4[64] = {
 	0x00802001, 0x00002081, 0x00002081, 0x00000080,
 	0x00802080, 0x00800081, 0x00800001, 0x00002001,
 	0x00000000, 0x00802000, 0x00802000, 0x00802081,
@@ -434,9 +433,9 @@
 	0x00800001, 0x00002001, 0x00802080, 0x00800081,
 	0x00002001, 0x00002080, 0x00800000, 0x00802001,
 	0x00000080, 0x00800000, 0x00002000, 0x00802080
-पूर्ण;
+};
 
-अटल स्थिर u32 S5[64] = अणु
+static const u32 S5[64] = {
 	0x00000100, 0x02080100, 0x02080000, 0x42000100,
 	0x00080000, 0x00000100, 0x40000000, 0x02080000,
 	0x40080100, 0x00080000, 0x02000100, 0x40080100,
@@ -453,9 +452,9 @@
 	0x02080000, 0x00000000, 0x40080000, 0x42000000,
 	0x00080100, 0x02000100, 0x40000100, 0x00080000,
 	0x00000000, 0x40080000, 0x02080100, 0x40000100
-पूर्ण;
+};
 
-अटल स्थिर u32 S6[64] = अणु
+static const u32 S6[64] = {
 	0x20000010, 0x20400000, 0x00004000, 0x20404010,
 	0x20400000, 0x00000010, 0x20404010, 0x00400000,
 	0x20004000, 0x00404010, 0x00400000, 0x20000010,
@@ -472,9 +471,9 @@
 	0x00000010, 0x00004000, 0x20400000, 0x00404010,
 	0x00004000, 0x00400010, 0x20004010, 0x00000000,
 	0x20404000, 0x20000000, 0x00400010, 0x20004010
-पूर्ण;
+};
 
-अटल स्थिर u32 S7[64] = अणु
+static const u32 S7[64] = {
 	0x00200000, 0x04200002, 0x04000802, 0x00000000,
 	0x00000800, 0x04000802, 0x00200802, 0x04200800,
 	0x04200802, 0x00200000, 0x00000000, 0x04000002,
@@ -491,9 +490,9 @@
 	0x00200800, 0x00000000, 0x00000002, 0x04200802,
 	0x00000000, 0x00200802, 0x04200000, 0x00000800,
 	0x04000002, 0x04000800, 0x00000800, 0x00200002
-पूर्ण;
+};
 
-अटल स्थिर u32 S8[64] = अणु
+static const u32 S8[64] = {
 	0x10001040, 0x00001000, 0x00040000, 0x10041040,
 	0x10000000, 0x10001040, 0x00000040, 0x10000000,
 	0x00040040, 0x10040000, 0x10041040, 0x00041000,
@@ -510,11 +509,11 @@
 	0x10040000, 0x10001000, 0x10001040, 0x00000000,
 	0x10041040, 0x00041000, 0x00041000, 0x00001040,
 	0x00001040, 0x00040040, 0x10000000, 0x10041000
-पूर्ण;
+};
 
 /* Encryption components: IP, FP, and round function */
 
-#घोषणा IP(L, R, T)		\
+#define IP(L, R, T)		\
 	ROL(R, 4);		\
 	T  = L;			\
 	L ^= R;			\
@@ -547,7 +546,7 @@
 	L ^= T;			\
 	ROL(L, 1);
 
-#घोषणा FP(L, R, T)		\
+#define FP(L, R, T)		\
 	ROR(L, 1);		\
 	T  = L;			\
 	L ^= R;			\
@@ -580,7 +579,7 @@
 	L ^= T;			\
 	ROR(R, 4);
 
-#घोषणा ROUND(L, R, A, B, K, d)					\
+#define ROUND(L, R, A, B, K, d)					\
 	B = K[0];			A = K[1];	K += d;	\
 	B ^= R;				A ^= R;			\
 	B &= 0x3f3f3f3f;		ROR(A, 4);		\
@@ -594,38 +593,38 @@
 	L ^= S1[0xff & (A >> 8)];
 
 /*
- * PC2 lookup tables are organized as 2 consecutive sets of 4 पूर्णांकerleaved
- * tables of 128 elements.  One set is क्रम C_i and the other क्रम D_i, जबतक
- * the 4 पूर्णांकerleaved tables correspond to four 7-bit subsets of C_i or D_i.
+ * PC2 lookup tables are organized as 2 consecutive sets of 4 interleaved
+ * tables of 128 elements.  One set is for C_i and the other for D_i, while
+ * the 4 interleaved tables correspond to four 7-bit subsets of C_i or D_i.
  *
  * After PC1 each of the variables a,b,c,d contains a 7 bit subset of C_i
- * or D_i in bits 7-1 (bit 0 being the least signअगरicant).
+ * or D_i in bits 7-1 (bit 0 being the least significant).
  */
 
-#घोषणा T1(x) pt[2 * (x) + 0]
-#घोषणा T2(x) pt[2 * (x) + 1]
-#घोषणा T3(x) pt[2 * (x) + 2]
-#घोषणा T4(x) pt[2 * (x) + 3]
+#define T1(x) pt[2 * (x) + 0]
+#define T2(x) pt[2 * (x) + 1]
+#define T3(x) pt[2 * (x) + 2]
+#define T4(x) pt[2 * (x) + 3]
 
-#घोषणा DES_PC2(a, b, c, d) (T4(d) | T3(c) | T2(b) | T1(a))
+#define DES_PC2(a, b, c, d) (T4(d) | T3(c) | T2(b) | T1(a))
 
 /*
  * Encryption key expansion
  *
- * RFC2451: Weak key checks SHOULD be perक्रमmed.
+ * RFC2451: Weak key checks SHOULD be performed.
  *
  * FIPS 74:
  *
  *   Keys having duals are keys which produce all zeros, all ones, or
- *   alternating zero-one patterns in the C and D रेजिस्टरs after Permuted
+ *   alternating zero-one patterns in the C and D registers after Permuted
  *   Choice 1 has operated on the key.
  *
  */
-अटल अचिन्हित दीर्घ des_ekey(u32 *pe, स्थिर u8 *k)
-अणु
-	/* K&R: दीर्घ is at least 32 bits */
-	अचिन्हित दीर्घ a, b, c, d, w;
-	स्थिर u32 *pt = pc2;
+static unsigned long des_ekey(u32 *pe, const u8 *k)
+{
+	/* K&R: long is at least 32 bits */
+	unsigned long a, b, c, d, w;
+	const u32 *pt = pc2;
 
 	d = k[4]; d &= 0x0e; d <<= 4; d |= k[0] & 0x1e; d = pc1[d];
 	c = k[5]; c &= 0x0e; c <<= 4; c |= k[1] & 0x1e; c = pc1[c];
@@ -649,7 +648,7 @@
 	pe[ 1 * 2 + 0] = DES_PC2(c, d, a, b); b = rs[b];
 	pe[ 0 * 2 + 0] = DES_PC2(b, c, d, a);
 
-	/* Check अगर first half is weak */
+	/* Check if first half is weak */
 	w  = (a ^ c) | (b ^ d) | (rs[a] ^ c) | (b ^ rs[d]);
 
 	/* Skip to next table set */
@@ -660,7 +659,7 @@
 	b = k[2]; b &= 0xe0; b >>= 4; b |= k[6] & 0xf0; b = pc1[b + 1];
 	a = k[3]; a &= 0xe0; a >>= 4; a |= k[7] & 0xf0; a = pc1[a + 1];
 
-	/* Check अगर second half is weak */
+	/* Check if second half is weak */
 	w |= (a ^ c) | (b ^ d) | (rs[a] ^ c) | (b ^ rs[d]);
 
 	pe[15 * 2 + 1] = DES_PC2(a, b, c, d); d = rs[d];
@@ -681,7 +680,7 @@
 	pe[ 0 * 2 + 1] = DES_PC2(b, c, d, a);
 
 	/* Fixup: 2413 5768 -> 1357 2468 */
-	क्रम (d = 0; d < 16; ++d) अणु
+	for (d = 0; d < 16; ++d) {
 		a = pe[2 * d];
 		b = pe[2 * d + 1];
 		c = a ^ b;
@@ -691,32 +690,32 @@
 		ROL(b, 18);
 		pe[2 * d] = a;
 		pe[2 * d + 1] = b;
-	पूर्ण
+	}
 
-	/* Zero अगर weak key */
-	वापस w;
-पूर्ण
+	/* Zero if weak key */
+	return w;
+}
 
-पूर्णांक des_expand_key(काष्ठा des_ctx *ctx, स्थिर u8 *key, अचिन्हित पूर्णांक keylen)
-अणु
-	अगर (keylen != DES_KEY_SIZE)
-		वापस -EINVAL;
+int des_expand_key(struct des_ctx *ctx, const u8 *key, unsigned int keylen)
+{
+	if (keylen != DES_KEY_SIZE)
+		return -EINVAL;
 
-	वापस des_ekey(ctx->expkey, key) ? 0 : -ENOKEY;
-पूर्ण
+	return des_ekey(ctx->expkey, key) ? 0 : -ENOKEY;
+}
 EXPORT_SYMBOL_GPL(des_expand_key);
 
 /*
  * Decryption key expansion
  *
- * No weak key checking is perक्रमmed, as this is only used by triple DES
+ * No weak key checking is performed, as this is only used by triple DES
  *
  */
-अटल व्योम dkey(u32 *pe, स्थिर u8 *k)
-अणु
-	/* K&R: दीर्घ is at least 32 bits */
-	अचिन्हित दीर्घ a, b, c, d;
-	स्थिर u32 *pt = pc2;
+static void dkey(u32 *pe, const u8 *k)
+{
+	/* K&R: long is at least 32 bits */
+	unsigned long a, b, c, d;
+	const u32 *pt = pc2;
 
 	d = k[4]; d &= 0x0e; d <<= 4; d |= k[0] & 0x1e; d = pc1[d];
 	c = k[5]; c &= 0x0e; c <<= 4; c |= k[1] & 0x1e; c = pc1[c];
@@ -766,7 +765,7 @@ EXPORT_SYMBOL_GPL(des_expand_key);
 	pe[15 * 2 + 1] = DES_PC2(b, c, d, a);
 
 	/* Fixup: 2413 5768 -> 1357 2468 */
-	क्रम (d = 0; d < 16; ++d) अणु
+	for (d = 0; d < 16; ++d) {
 		a = pe[2 * d];
 		b = pe[2 * d + 1];
 		c = a ^ b;
@@ -776,128 +775,128 @@ EXPORT_SYMBOL_GPL(des_expand_key);
 		ROL(b, 18);
 		pe[2 * d] = a;
 		pe[2 * d + 1] = b;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम des_encrypt(स्थिर काष्ठा des_ctx *ctx, u8 *dst, स्थिर u8 *src)
-अणु
-	स्थिर u32 *K = ctx->expkey;
+void des_encrypt(const struct des_ctx *ctx, u8 *dst, const u8 *src)
+{
+	const u32 *K = ctx->expkey;
 	u32 L, R, A, B;
-	पूर्णांक i;
+	int i;
 
 	L = get_unaligned_le32(src);
 	R = get_unaligned_le32(src + 4);
 
 	IP(L, R, A);
-	क्रम (i = 0; i < 8; i++) अणु
+	for (i = 0; i < 8; i++) {
 		ROUND(L, R, A, B, K, 2);
 		ROUND(R, L, A, B, K, 2);
-	पूर्ण
+	}
 	FP(R, L, A);
 
 	put_unaligned_le32(R, dst);
 	put_unaligned_le32(L, dst + 4);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(des_encrypt);
 
-व्योम des_decrypt(स्थिर काष्ठा des_ctx *ctx, u8 *dst, स्थिर u8 *src)
-अणु
-	स्थिर u32 *K = ctx->expkey + DES_EXPKEY_WORDS - 2;
+void des_decrypt(const struct des_ctx *ctx, u8 *dst, const u8 *src)
+{
+	const u32 *K = ctx->expkey + DES_EXPKEY_WORDS - 2;
 	u32 L, R, A, B;
-	पूर्णांक i;
+	int i;
 
 	L = get_unaligned_le32(src);
 	R = get_unaligned_le32(src + 4);
 
 	IP(L, R, A);
-	क्रम (i = 0; i < 8; i++) अणु
+	for (i = 0; i < 8; i++) {
 		ROUND(L, R, A, B, K, -2);
 		ROUND(R, L, A, B, K, -2);
-	पूर्ण
+	}
 	FP(R, L, A);
 
 	put_unaligned_le32(R, dst);
 	put_unaligned_le32(L, dst + 4);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(des_decrypt);
 
-पूर्णांक des3_ede_expand_key(काष्ठा des3_ede_ctx *ctx, स्थिर u8 *key,
-			अचिन्हित पूर्णांक keylen)
-अणु
+int des3_ede_expand_key(struct des3_ede_ctx *ctx, const u8 *key,
+			unsigned int keylen)
+{
 	u32 *pe = ctx->expkey;
-	पूर्णांक err;
+	int err;
 
-	अगर (keylen != DES3_EDE_KEY_SIZE)
-		वापस -EINVAL;
+	if (keylen != DES3_EDE_KEY_SIZE)
+		return -EINVAL;
 
-	err = des3_ede_verअगरy_key(key, keylen, true);
-	अगर (err && err != -ENOKEY)
-		वापस err;
+	err = des3_ede_verify_key(key, keylen, true);
+	if (err && err != -ENOKEY)
+		return err;
 
 	des_ekey(pe, key); pe += DES_EXPKEY_WORDS; key += DES_KEY_SIZE;
 	dkey(pe, key); pe += DES_EXPKEY_WORDS; key += DES_KEY_SIZE;
 	des_ekey(pe, key);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL_GPL(des3_ede_expand_key);
 
-व्योम des3_ede_encrypt(स्थिर काष्ठा des3_ede_ctx *dctx, u8 *dst, स्थिर u8 *src)
-अणु
-	स्थिर u32 *K = dctx->expkey;
+void des3_ede_encrypt(const struct des3_ede_ctx *dctx, u8 *dst, const u8 *src)
+{
+	const u32 *K = dctx->expkey;
 	u32 L, R, A, B;
-	पूर्णांक i;
+	int i;
 
 	L = get_unaligned_le32(src);
 	R = get_unaligned_le32(src + 4);
 
 	IP(L, R, A);
-	क्रम (i = 0; i < 8; i++) अणु
+	for (i = 0; i < 8; i++) {
 		ROUND(L, R, A, B, K, 2);
 		ROUND(R, L, A, B, K, 2);
-	पूर्ण
-	क्रम (i = 0; i < 8; i++) अणु
+	}
+	for (i = 0; i < 8; i++) {
 		ROUND(R, L, A, B, K, 2);
 		ROUND(L, R, A, B, K, 2);
-	पूर्ण
-	क्रम (i = 0; i < 8; i++) अणु
+	}
+	for (i = 0; i < 8; i++) {
 		ROUND(L, R, A, B, K, 2);
 		ROUND(R, L, A, B, K, 2);
-	पूर्ण
+	}
 	FP(R, L, A);
 
 	put_unaligned_le32(R, dst);
 	put_unaligned_le32(L, dst + 4);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(des3_ede_encrypt);
 
-व्योम des3_ede_decrypt(स्थिर काष्ठा des3_ede_ctx *dctx, u8 *dst, स्थिर u8 *src)
-अणु
-	स्थिर u32 *K = dctx->expkey + DES3_EDE_EXPKEY_WORDS - 2;
+void des3_ede_decrypt(const struct des3_ede_ctx *dctx, u8 *dst, const u8 *src)
+{
+	const u32 *K = dctx->expkey + DES3_EDE_EXPKEY_WORDS - 2;
 	u32 L, R, A, B;
-	पूर्णांक i;
+	int i;
 
 	L = get_unaligned_le32(src);
 	R = get_unaligned_le32(src + 4);
 
 	IP(L, R, A);
-	क्रम (i = 0; i < 8; i++) अणु
+	for (i = 0; i < 8; i++) {
 		ROUND(L, R, A, B, K, -2);
 		ROUND(R, L, A, B, K, -2);
-	पूर्ण
-	क्रम (i = 0; i < 8; i++) अणु
+	}
+	for (i = 0; i < 8; i++) {
 		ROUND(R, L, A, B, K, -2);
 		ROUND(L, R, A, B, K, -2);
-	पूर्ण
-	क्रम (i = 0; i < 8; i++) अणु
+	}
+	for (i = 0; i < 8; i++) {
 		ROUND(L, R, A, B, K, -2);
 		ROUND(R, L, A, B, K, -2);
-	पूर्ण
+	}
 	FP(R, L, A);
 
 	put_unaligned_le32(R, dst);
 	put_unaligned_le32(L, dst + 4);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(des3_ede_decrypt);
 
 MODULE_LICENSE("GPL");

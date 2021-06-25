@@ -1,22 +1,21 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (C) 2008-2013 Jozsef Kadlecsik <kadlec@netfilter.org> */
 
 /* Kernel module implementing an IP set type: the list:set type */
 
-#समावेश <linux/module.h>
-#समावेश <linux/ip.h>
-#समावेश <linux/rculist.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/त्रुटिसं.स>
+#include <linux/module.h>
+#include <linux/ip.h>
+#include <linux/rculist.h>
+#include <linux/skbuff.h>
+#include <linux/errno.h>
 
-#समावेश <linux/netfilter/ipset/ip_set.h>
-#समावेश <linux/netfilter/ipset/ip_set_list.h>
+#include <linux/netfilter/ipset/ip_set.h>
+#include <linux/netfilter/ipset/ip_set_list.h>
 
-#घोषणा IPSET_TYPE_REV_MIN	0
+#define IPSET_TYPE_REV_MIN	0
 /*				1    Counters support added */
 /*				2    Comments support added */
-#घोषणा IPSET_TYPE_REV_MAX	3 /* skbinfo support added */
+#define IPSET_TYPE_REV_MAX	3 /* skbinfo support added */
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Jozsef Kadlecsik <kadlec@netfilter.org>");
@@ -24,576 +23,576 @@ IP_SET_MODULE_DESC("list:set", IPSET_TYPE_REV_MIN, IPSET_TYPE_REV_MAX);
 MODULE_ALIAS("ip_set_list:set");
 
 /* Member elements  */
-काष्ठा set_elem अणु
-	काष्ठा rcu_head rcu;
-	काष्ठा list_head list;
-	काष्ठा ip_set *set;	/* Sigh, in order to cleanup reference */
+struct set_elem {
+	struct rcu_head rcu;
+	struct list_head list;
+	struct ip_set *set;	/* Sigh, in order to cleanup reference */
 	ip_set_id_t id;
-पूर्ण __aligned(__alignof__(u64));
+} __aligned(__alignof__(u64));
 
-काष्ठा set_adt_elem अणु
+struct set_adt_elem {
 	ip_set_id_t id;
 	ip_set_id_t refid;
-	पूर्णांक beक्रमe;
-पूर्ण;
+	int before;
+};
 
-/* Type काष्ठाure */
-काष्ठा list_set अणु
+/* Type structure */
+struct list_set {
 	u32 size;		/* size of set list array */
-	काष्ठा समयr_list gc;	/* garbage collection */
-	काष्ठा ip_set *set;	/* attached to this ip_set */
-	काष्ठा net *net;	/* namespace */
-	काष्ठा list_head members; /* the set members */
-पूर्ण;
+	struct timer_list gc;	/* garbage collection */
+	struct ip_set *set;	/* attached to this ip_set */
+	struct net *net;	/* namespace */
+	struct list_head members; /* the set members */
+};
 
-अटल पूर्णांक
-list_set_ktest(काष्ठा ip_set *set, स्थिर काष्ठा sk_buff *skb,
-	       स्थिर काष्ठा xt_action_param *par,
-	       काष्ठा ip_set_adt_opt *opt, स्थिर काष्ठा ip_set_ext *ext)
-अणु
-	काष्ठा list_set *map = set->data;
-	काष्ठा ip_set_ext *mext = &opt->ext;
-	काष्ठा set_elem *e;
+static int
+list_set_ktest(struct ip_set *set, const struct sk_buff *skb,
+	       const struct xt_action_param *par,
+	       struct ip_set_adt_opt *opt, const struct ip_set_ext *ext)
+{
+	struct list_set *map = set->data;
+	struct ip_set_ext *mext = &opt->ext;
+	struct set_elem *e;
 	u32 flags = opt->cmdflags;
-	पूर्णांक ret;
+	int ret;
 
 	/* Don't lookup sub-counters at all */
 	opt->cmdflags &= ~IPSET_FLAG_MATCH_COUNTERS;
-	अगर (opt->cmdflags & IPSET_FLAG_SKIP_SUBCOUNTER_UPDATE)
+	if (opt->cmdflags & IPSET_FLAG_SKIP_SUBCOUNTER_UPDATE)
 		opt->cmdflags |= IPSET_FLAG_SKIP_COUNTER_UPDATE;
-	list_क्रम_each_entry_rcu(e, &map->members, list) अणु
+	list_for_each_entry_rcu(e, &map->members, list) {
 		ret = ip_set_test(e->id, skb, par, opt);
-		अगर (ret <= 0)
-			जारी;
-		अगर (ip_set_match_extensions(set, ext, mext, flags, e))
-			वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (ret <= 0)
+			continue;
+		if (ip_set_match_extensions(set, ext, mext, flags, e))
+			return 1;
+	}
+	return 0;
+}
 
-अटल पूर्णांक
-list_set_kadd(काष्ठा ip_set *set, स्थिर काष्ठा sk_buff *skb,
-	      स्थिर काष्ठा xt_action_param *par,
-	      काष्ठा ip_set_adt_opt *opt, स्थिर काष्ठा ip_set_ext *ext)
-अणु
-	काष्ठा list_set *map = set->data;
-	काष्ठा set_elem *e;
-	पूर्णांक ret;
+static int
+list_set_kadd(struct ip_set *set, const struct sk_buff *skb,
+	      const struct xt_action_param *par,
+	      struct ip_set_adt_opt *opt, const struct ip_set_ext *ext)
+{
+	struct list_set *map = set->data;
+	struct set_elem *e;
+	int ret;
 
-	list_क्रम_each_entry(e, &map->members, list) अणु
-		अगर (SET_WITH_TIMEOUT(set) &&
-		    ip_set_समयout_expired(ext_समयout(e, set)))
-			जारी;
+	list_for_each_entry(e, &map->members, list) {
+		if (SET_WITH_TIMEOUT(set) &&
+		    ip_set_timeout_expired(ext_timeout(e, set)))
+			continue;
 		ret = ip_set_add(e->id, skb, par, opt);
-		अगर (ret == 0)
-			वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (ret == 0)
+			return ret;
+	}
+	return 0;
+}
 
-अटल पूर्णांक
-list_set_kdel(काष्ठा ip_set *set, स्थिर काष्ठा sk_buff *skb,
-	      स्थिर काष्ठा xt_action_param *par,
-	      काष्ठा ip_set_adt_opt *opt, स्थिर काष्ठा ip_set_ext *ext)
-अणु
-	काष्ठा list_set *map = set->data;
-	काष्ठा set_elem *e;
-	पूर्णांक ret;
+static int
+list_set_kdel(struct ip_set *set, const struct sk_buff *skb,
+	      const struct xt_action_param *par,
+	      struct ip_set_adt_opt *opt, const struct ip_set_ext *ext)
+{
+	struct list_set *map = set->data;
+	struct set_elem *e;
+	int ret;
 
-	list_क्रम_each_entry(e, &map->members, list) अणु
-		अगर (SET_WITH_TIMEOUT(set) &&
-		    ip_set_समयout_expired(ext_समयout(e, set)))
-			जारी;
+	list_for_each_entry(e, &map->members, list) {
+		if (SET_WITH_TIMEOUT(set) &&
+		    ip_set_timeout_expired(ext_timeout(e, set)))
+			continue;
 		ret = ip_set_del(e->id, skb, par, opt);
-		अगर (ret == 0)
-			वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (ret == 0)
+			return ret;
+	}
+	return 0;
+}
 
-अटल पूर्णांक
-list_set_kadt(काष्ठा ip_set *set, स्थिर काष्ठा sk_buff *skb,
-	      स्थिर काष्ठा xt_action_param *par,
-	      क्रमागत ipset_adt adt, काष्ठा ip_set_adt_opt *opt)
-अणु
-	काष्ठा ip_set_ext ext = IP_SET_INIT_KEXT(skb, opt, set);
-	पूर्णांक ret = -EINVAL;
+static int
+list_set_kadt(struct ip_set *set, const struct sk_buff *skb,
+	      const struct xt_action_param *par,
+	      enum ipset_adt adt, struct ip_set_adt_opt *opt)
+{
+	struct ip_set_ext ext = IP_SET_INIT_KEXT(skb, opt, set);
+	int ret = -EINVAL;
 
-	rcu_पढ़ो_lock();
-	चयन (adt) अणु
-	हाल IPSET_TEST:
+	rcu_read_lock();
+	switch (adt) {
+	case IPSET_TEST:
 		ret = list_set_ktest(set, skb, par, opt, &ext);
-		अवरोध;
-	हाल IPSET_ADD:
+		break;
+	case IPSET_ADD:
 		ret = list_set_kadd(set, skb, par, opt, &ext);
-		अवरोध;
-	हाल IPSET_DEL:
+		break;
+	case IPSET_DEL:
 		ret = list_set_kdel(set, skb, par, opt, &ext);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+		break;
+	default:
+		break;
+	}
+	rcu_read_unlock();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Userspace पूर्णांकerfaces: we are रक्षित by the nfnl mutex */
+/* Userspace interfaces: we are protected by the nfnl mutex */
 
-अटल व्योम
-__list_set_del_rcu(काष्ठा rcu_head * rcu)
-अणु
-	काष्ठा set_elem *e = container_of(rcu, काष्ठा set_elem, rcu);
-	काष्ठा ip_set *set = e->set;
+static void
+__list_set_del_rcu(struct rcu_head * rcu)
+{
+	struct set_elem *e = container_of(rcu, struct set_elem, rcu);
+	struct ip_set *set = e->set;
 
 	ip_set_ext_destroy(set, e);
-	kमुक्त(e);
-पूर्ण
+	kfree(e);
+}
 
-अटल व्योम
-list_set_del(काष्ठा ip_set *set, काष्ठा set_elem *e)
-अणु
-	काष्ठा list_set *map = set->data;
+static void
+list_set_del(struct ip_set *set, struct set_elem *e)
+{
+	struct list_set *map = set->data;
 
 	set->elements--;
 	list_del_rcu(&e->list);
 	ip_set_put_byindex(map->net, e->id);
 	call_rcu(&e->rcu, __list_set_del_rcu);
-पूर्ण
+}
 
-अटल व्योम
-list_set_replace(काष्ठा ip_set *set, काष्ठा set_elem *e, काष्ठा set_elem *old)
-अणु
-	काष्ठा list_set *map = set->data;
+static void
+list_set_replace(struct ip_set *set, struct set_elem *e, struct set_elem *old)
+{
+	struct list_set *map = set->data;
 
 	list_replace_rcu(&old->list, &e->list);
 	ip_set_put_byindex(map->net, old->id);
 	call_rcu(&old->rcu, __list_set_del_rcu);
-पूर्ण
+}
 
-अटल व्योम
-set_cleanup_entries(काष्ठा ip_set *set)
-अणु
-	काष्ठा list_set *map = set->data;
-	काष्ठा set_elem *e, *n;
+static void
+set_cleanup_entries(struct ip_set *set)
+{
+	struct list_set *map = set->data;
+	struct set_elem *e, *n;
 
-	list_क्रम_each_entry_safe(e, n, &map->members, list)
-		अगर (ip_set_समयout_expired(ext_समयout(e, set)))
+	list_for_each_entry_safe(e, n, &map->members, list)
+		if (ip_set_timeout_expired(ext_timeout(e, set)))
 			list_set_del(set, e);
-पूर्ण
+}
 
-अटल पूर्णांक
-list_set_utest(काष्ठा ip_set *set, व्योम *value, स्थिर काष्ठा ip_set_ext *ext,
-	       काष्ठा ip_set_ext *mext, u32 flags)
-अणु
-	काष्ठा list_set *map = set->data;
-	काष्ठा set_adt_elem *d = value;
-	काष्ठा set_elem *e, *next, *prev = शून्य;
-	पूर्णांक ret;
+static int
+list_set_utest(struct ip_set *set, void *value, const struct ip_set_ext *ext,
+	       struct ip_set_ext *mext, u32 flags)
+{
+	struct list_set *map = set->data;
+	struct set_adt_elem *d = value;
+	struct set_elem *e, *next, *prev = NULL;
+	int ret;
 
-	list_क्रम_each_entry(e, &map->members, list) अणु
-		अगर (SET_WITH_TIMEOUT(set) &&
-		    ip_set_समयout_expired(ext_समयout(e, set)))
-			जारी;
-		अन्यथा अगर (e->id != d->id) अणु
+	list_for_each_entry(e, &map->members, list) {
+		if (SET_WITH_TIMEOUT(set) &&
+		    ip_set_timeout_expired(ext_timeout(e, set)))
+			continue;
+		else if (e->id != d->id) {
 			prev = e;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (d->beक्रमe == 0) अणु
+		if (d->before == 0) {
 			ret = 1;
-		पूर्ण अन्यथा अगर (d->beक्रमe > 0) अणु
+		} else if (d->before > 0) {
 			next = list_next_entry(e, list);
 			ret = !list_is_last(&e->list, &map->members) &&
 			      next->id == d->refid;
-		पूर्ण अन्यथा अणु
+		} else {
 			ret = prev && prev->id == d->refid;
-		पूर्ण
-		वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+		return ret;
+	}
+	return 0;
+}
 
-अटल व्योम
-list_set_init_extensions(काष्ठा ip_set *set, स्थिर काष्ठा ip_set_ext *ext,
-			 काष्ठा set_elem *e)
-अणु
-	अगर (SET_WITH_COUNTER(set))
+static void
+list_set_init_extensions(struct ip_set *set, const struct ip_set_ext *ext,
+			 struct set_elem *e)
+{
+	if (SET_WITH_COUNTER(set))
 		ip_set_init_counter(ext_counter(e, set), ext);
-	अगर (SET_WITH_COMMENT(set))
+	if (SET_WITH_COMMENT(set))
 		ip_set_init_comment(set, ext_comment(e, set), ext);
-	अगर (SET_WITH_SKBINFO(set))
+	if (SET_WITH_SKBINFO(set))
 		ip_set_init_skbinfo(ext_skbinfo(e, set), ext);
-	/* Update समयout last */
-	अगर (SET_WITH_TIMEOUT(set))
-		ip_set_समयout_set(ext_समयout(e, set), ext->समयout);
-पूर्ण
+	/* Update timeout last */
+	if (SET_WITH_TIMEOUT(set))
+		ip_set_timeout_set(ext_timeout(e, set), ext->timeout);
+}
 
-अटल पूर्णांक
-list_set_uadd(काष्ठा ip_set *set, व्योम *value, स्थिर काष्ठा ip_set_ext *ext,
-	      काष्ठा ip_set_ext *mext, u32 flags)
-अणु
-	काष्ठा list_set *map = set->data;
-	काष्ठा set_adt_elem *d = value;
-	काष्ठा set_elem *e, *n, *prev, *next;
+static int
+list_set_uadd(struct ip_set *set, void *value, const struct ip_set_ext *ext,
+	      struct ip_set_ext *mext, u32 flags)
+{
+	struct list_set *map = set->data;
+	struct set_adt_elem *d = value;
+	struct set_elem *e, *n, *prev, *next;
 	bool flag_exist = flags & IPSET_FLAG_EXIST;
 
 	/* Find where to add the new entry */
-	n = prev = next = शून्य;
-	list_क्रम_each_entry(e, &map->members, list) अणु
-		अगर (SET_WITH_TIMEOUT(set) &&
-		    ip_set_समयout_expired(ext_समयout(e, set)))
-			जारी;
-		अन्यथा अगर (d->id == e->id)
+	n = prev = next = NULL;
+	list_for_each_entry(e, &map->members, list) {
+		if (SET_WITH_TIMEOUT(set) &&
+		    ip_set_timeout_expired(ext_timeout(e, set)))
+			continue;
+		else if (d->id == e->id)
 			n = e;
-		अन्यथा अगर (d->beक्रमe == 0 || e->id != d->refid)
-			जारी;
-		अन्यथा अगर (d->beक्रमe > 0)
+		else if (d->before == 0 || e->id != d->refid)
+			continue;
+		else if (d->before > 0)
 			next = e;
-		अन्यथा
+		else
 			prev = e;
-	पूर्ण
+	}
 
-	/* If beक्रमe/after is used on an empty set */
-	अगर ((d->beक्रमe > 0 && !next) ||
-	    (d->beक्रमe < 0 && !prev))
-		वापस -IPSET_ERR_REF_EXIST;
+	/* If before/after is used on an empty set */
+	if ((d->before > 0 && !next) ||
+	    (d->before < 0 && !prev))
+		return -IPSET_ERR_REF_EXIST;
 
-	/* Re-add alपढ़ोy existing element */
-	अगर (n) अणु
-		अगर (!flag_exist)
-			वापस -IPSET_ERR_EXIST;
+	/* Re-add already existing element */
+	if (n) {
+		if (!flag_exist)
+			return -IPSET_ERR_EXIST;
 		/* Update extensions */
 		ip_set_ext_destroy(set, n);
 		list_set_init_extensions(set, ext, n);
 
-		/* Set is alपढ़ोy added to the list */
+		/* Set is already added to the list */
 		ip_set_put_byindex(map->net, d->id);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	/* Add new entry */
-	अगर (d->beक्रमe == 0) अणु
+	if (d->before == 0) {
 		/* Append  */
-		n = list_empty(&map->members) ? शून्य :
-		    list_last_entry(&map->members, काष्ठा set_elem, list);
-	पूर्ण अन्यथा अगर (d->beक्रमe > 0) अणु
+		n = list_empty(&map->members) ? NULL :
+		    list_last_entry(&map->members, struct set_elem, list);
+	} else if (d->before > 0) {
 		/* Insert after next element */
-		अगर (!list_is_last(&next->list, &map->members))
+		if (!list_is_last(&next->list, &map->members))
 			n = list_next_entry(next, list);
-	पूर्ण अन्यथा अणु
-		/* Insert beक्रमe prev element */
-		अगर (prev->list.prev != &map->members)
+	} else {
+		/* Insert before prev element */
+		if (prev->list.prev != &map->members)
 			n = list_prev_entry(prev, list);
-	पूर्ण
-	/* Can we replace a समयd out entry? */
-	अगर (n &&
+	}
+	/* Can we replace a timed out entry? */
+	if (n &&
 	    !(SET_WITH_TIMEOUT(set) &&
-	      ip_set_समयout_expired(ext_समयout(n, set))))
-		n = शून्य;
+	      ip_set_timeout_expired(ext_timeout(n, set))))
+		n = NULL;
 
 	e = kzalloc(set->dsize, GFP_ATOMIC);
-	अगर (!e)
-		वापस -ENOMEM;
+	if (!e)
+		return -ENOMEM;
 	e->id = d->id;
 	e->set = set;
 	INIT_LIST_HEAD(&e->list);
 	list_set_init_extensions(set, ext, e);
-	अगर (n)
+	if (n)
 		list_set_replace(set, e, n);
-	अन्यथा अगर (next)
+	else if (next)
 		list_add_tail_rcu(&e->list, &next->list);
-	अन्यथा अगर (prev)
+	else if (prev)
 		list_add_rcu(&e->list, &prev->list);
-	अन्यथा
+	else
 		list_add_tail_rcu(&e->list, &map->members);
 	set->elements++;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-list_set_udel(काष्ठा ip_set *set, व्योम *value, स्थिर काष्ठा ip_set_ext *ext,
-	      काष्ठा ip_set_ext *mext, u32 flags)
-अणु
-	काष्ठा list_set *map = set->data;
-	काष्ठा set_adt_elem *d = value;
-	काष्ठा set_elem *e, *next, *prev = शून्य;
+static int
+list_set_udel(struct ip_set *set, void *value, const struct ip_set_ext *ext,
+	      struct ip_set_ext *mext, u32 flags)
+{
+	struct list_set *map = set->data;
+	struct set_adt_elem *d = value;
+	struct set_elem *e, *next, *prev = NULL;
 
-	list_क्रम_each_entry(e, &map->members, list) अणु
-		अगर (SET_WITH_TIMEOUT(set) &&
-		    ip_set_समयout_expired(ext_समयout(e, set)))
-			जारी;
-		अन्यथा अगर (e->id != d->id) अणु
+	list_for_each_entry(e, &map->members, list) {
+		if (SET_WITH_TIMEOUT(set) &&
+		    ip_set_timeout_expired(ext_timeout(e, set)))
+			continue;
+		else if (e->id != d->id) {
 			prev = e;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (d->beक्रमe > 0) अणु
+		if (d->before > 0) {
 			next = list_next_entry(e, list);
-			अगर (list_is_last(&e->list, &map->members) ||
+			if (list_is_last(&e->list, &map->members) ||
 			    next->id != d->refid)
-				वापस -IPSET_ERR_REF_EXIST;
-		पूर्ण अन्यथा अगर (d->beक्रमe < 0) अणु
-			अगर (!prev || prev->id != d->refid)
-				वापस -IPSET_ERR_REF_EXIST;
-		पूर्ण
+				return -IPSET_ERR_REF_EXIST;
+		} else if (d->before < 0) {
+			if (!prev || prev->id != d->refid)
+				return -IPSET_ERR_REF_EXIST;
+		}
 		list_set_del(set, e);
-		वापस 0;
-	पूर्ण
-	वापस d->beक्रमe != 0 ? -IPSET_ERR_REF_EXIST : -IPSET_ERR_EXIST;
-पूर्ण
+		return 0;
+	}
+	return d->before != 0 ? -IPSET_ERR_REF_EXIST : -IPSET_ERR_EXIST;
+}
 
-अटल पूर्णांक
-list_set_uadt(काष्ठा ip_set *set, काष्ठा nlattr *tb[],
-	      क्रमागत ipset_adt adt, u32 *lineno, u32 flags, bool retried)
-अणु
-	काष्ठा list_set *map = set->data;
+static int
+list_set_uadt(struct ip_set *set, struct nlattr *tb[],
+	      enum ipset_adt adt, u32 *lineno, u32 flags, bool retried)
+{
+	struct list_set *map = set->data;
 	ipset_adtfn adtfn = set->variant->adt[adt];
-	काष्ठा set_adt_elem e = अणु .refid = IPSET_INVALID_ID पूर्ण;
-	काष्ठा ip_set_ext ext = IP_SET_INIT_UEXT(set);
-	काष्ठा ip_set *s;
-	पूर्णांक ret = 0;
+	struct set_adt_elem e = { .refid = IPSET_INVALID_ID };
+	struct ip_set_ext ext = IP_SET_INIT_UEXT(set);
+	struct ip_set *s;
+	int ret = 0;
 
-	अगर (tb[IPSET_ATTR_LINENO])
+	if (tb[IPSET_ATTR_LINENO])
 		*lineno = nla_get_u32(tb[IPSET_ATTR_LINENO]);
 
-	अगर (unlikely(!tb[IPSET_ATTR_NAME] ||
+	if (unlikely(!tb[IPSET_ATTR_NAME] ||
 		     !ip_set_optattr_netorder(tb, IPSET_ATTR_CADT_FLAGS)))
-		वापस -IPSET_ERR_PROTOCOL;
+		return -IPSET_ERR_PROTOCOL;
 
 	ret = ip_set_get_extensions(set, tb, &ext);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	e.id = ip_set_get_byname(map->net, nla_data(tb[IPSET_ATTR_NAME]), &s);
-	अगर (e.id == IPSET_INVALID_ID)
-		वापस -IPSET_ERR_NAME;
+	if (e.id == IPSET_INVALID_ID)
+		return -IPSET_ERR_NAME;
 	/* "Loop detection" */
-	अगर (s->type->features & IPSET_TYPE_NAME) अणु
+	if (s->type->features & IPSET_TYPE_NAME) {
 		ret = -IPSET_ERR_LOOP;
-		जाओ finish;
-	पूर्ण
+		goto finish;
+	}
 
-	अगर (tb[IPSET_ATTR_CADT_FLAGS]) अणु
+	if (tb[IPSET_ATTR_CADT_FLAGS]) {
 		u32 f = ip_set_get_h32(tb[IPSET_ATTR_CADT_FLAGS]);
 
-		e.beक्रमe = f & IPSET_FLAG_BEFORE;
-	पूर्ण
+		e.before = f & IPSET_FLAG_BEFORE;
+	}
 
-	अगर (e.beक्रमe && !tb[IPSET_ATTR_NAMEREF]) अणु
+	if (e.before && !tb[IPSET_ATTR_NAMEREF]) {
 		ret = -IPSET_ERR_BEFORE;
-		जाओ finish;
-	पूर्ण
+		goto finish;
+	}
 
-	अगर (tb[IPSET_ATTR_NAMEREF]) अणु
+	if (tb[IPSET_ATTR_NAMEREF]) {
 		e.refid = ip_set_get_byname(map->net,
 					    nla_data(tb[IPSET_ATTR_NAMEREF]),
 					    &s);
-		अगर (e.refid == IPSET_INVALID_ID) अणु
+		if (e.refid == IPSET_INVALID_ID) {
 			ret = -IPSET_ERR_NAMEREF;
-			जाओ finish;
-		पूर्ण
-		अगर (!e.beक्रमe)
-			e.beक्रमe = -1;
-	पूर्ण
-	अगर (adt != IPSET_TEST && SET_WITH_TIMEOUT(set))
+			goto finish;
+		}
+		if (!e.before)
+			e.before = -1;
+	}
+	if (adt != IPSET_TEST && SET_WITH_TIMEOUT(set))
 		set_cleanup_entries(set);
 
 	ret = adtfn(set, &e, &ext, &ext, flags);
 
 finish:
-	अगर (e.refid != IPSET_INVALID_ID)
+	if (e.refid != IPSET_INVALID_ID)
 		ip_set_put_byindex(map->net, e.refid);
-	अगर (adt != IPSET_ADD || ret)
+	if (adt != IPSET_ADD || ret)
 		ip_set_put_byindex(map->net, e.id);
 
-	वापस ip_set_eexist(ret, flags) ? 0 : ret;
-पूर्ण
+	return ip_set_eexist(ret, flags) ? 0 : ret;
+}
 
-अटल व्योम
-list_set_flush(काष्ठा ip_set *set)
-अणु
-	काष्ठा list_set *map = set->data;
-	काष्ठा set_elem *e, *n;
+static void
+list_set_flush(struct ip_set *set)
+{
+	struct list_set *map = set->data;
+	struct set_elem *e, *n;
 
-	list_क्रम_each_entry_safe(e, n, &map->members, list)
+	list_for_each_entry_safe(e, n, &map->members, list)
 		list_set_del(set, e);
 	set->elements = 0;
 	set->ext_size = 0;
-पूर्ण
+}
 
-अटल व्योम
-list_set_destroy(काष्ठा ip_set *set)
-अणु
-	काष्ठा list_set *map = set->data;
-	काष्ठा set_elem *e, *n;
+static void
+list_set_destroy(struct ip_set *set)
+{
+	struct list_set *map = set->data;
+	struct set_elem *e, *n;
 
-	अगर (SET_WITH_TIMEOUT(set))
-		del_समयr_sync(&map->gc);
+	if (SET_WITH_TIMEOUT(set))
+		del_timer_sync(&map->gc);
 
-	list_क्रम_each_entry_safe(e, n, &map->members, list) अणु
+	list_for_each_entry_safe(e, n, &map->members, list) {
 		list_del(&e->list);
 		ip_set_put_byindex(map->net, e->id);
 		ip_set_ext_destroy(set, e);
-		kमुक्त(e);
-	पूर्ण
-	kमुक्त(map);
+		kfree(e);
+	}
+	kfree(map);
 
-	set->data = शून्य;
-पूर्ण
+	set->data = NULL;
+}
 
 /* Calculate the actual memory size of the set data */
-अटल माप_प्रकार
-list_set_memsize(स्थिर काष्ठा list_set *map, माप_प्रकार dsize)
-अणु
-	काष्ठा set_elem *e;
+static size_t
+list_set_memsize(const struct list_set *map, size_t dsize)
+{
+	struct set_elem *e;
 	u32 n = 0;
 
-	rcu_पढ़ो_lock();
-	list_क्रम_each_entry_rcu(e, &map->members, list)
+	rcu_read_lock();
+	list_for_each_entry_rcu(e, &map->members, list)
 		n++;
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस (माप(*map) + n * dsize);
-पूर्ण
+	return (sizeof(*map) + n * dsize);
+}
 
-अटल पूर्णांक
-list_set_head(काष्ठा ip_set *set, काष्ठा sk_buff *skb)
-अणु
-	स्थिर काष्ठा list_set *map = set->data;
-	काष्ठा nlattr *nested;
-	माप_प्रकार memsize = list_set_memsize(map, set->dsize) + set->ext_size;
+static int
+list_set_head(struct ip_set *set, struct sk_buff *skb)
+{
+	const struct list_set *map = set->data;
+	struct nlattr *nested;
+	size_t memsize = list_set_memsize(map, set->dsize) + set->ext_size;
 
 	nested = nla_nest_start(skb, IPSET_ATTR_DATA);
-	अगर (!nested)
-		जाओ nla_put_failure;
-	अगर (nla_put_net32(skb, IPSET_ATTR_SIZE, htonl(map->size)) ||
+	if (!nested)
+		goto nla_put_failure;
+	if (nla_put_net32(skb, IPSET_ATTR_SIZE, htonl(map->size)) ||
 	    nla_put_net32(skb, IPSET_ATTR_REFERENCES, htonl(set->ref)) ||
 	    nla_put_net32(skb, IPSET_ATTR_MEMSIZE, htonl(memsize)) ||
 	    nla_put_net32(skb, IPSET_ATTR_ELEMENTS, htonl(set->elements)))
-		जाओ nla_put_failure;
-	अगर (unlikely(ip_set_put_flags(skb, set)))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
+	if (unlikely(ip_set_put_flags(skb, set)))
+		goto nla_put_failure;
 	nla_nest_end(skb, nested);
 
-	वापस 0;
+	return 0;
 nla_put_failure:
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल पूर्णांक
-list_set_list(स्थिर काष्ठा ip_set *set,
-	      काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
-अणु
-	स्थिर काष्ठा list_set *map = set->data;
-	काष्ठा nlattr *atd, *nested;
+static int
+list_set_list(const struct ip_set *set,
+	      struct sk_buff *skb, struct netlink_callback *cb)
+{
+	const struct list_set *map = set->data;
+	struct nlattr *atd, *nested;
 	u32 i = 0, first = cb->args[IPSET_CB_ARG0];
-	अक्षर name[IPSET_MAXNAMELEN];
-	काष्ठा set_elem *e;
-	पूर्णांक ret = 0;
+	char name[IPSET_MAXNAMELEN];
+	struct set_elem *e;
+	int ret = 0;
 
 	atd = nla_nest_start(skb, IPSET_ATTR_ADT);
-	अगर (!atd)
-		वापस -EMSGSIZE;
+	if (!atd)
+		return -EMSGSIZE;
 
-	rcu_पढ़ो_lock();
-	list_क्रम_each_entry_rcu(e, &map->members, list) अणु
-		अगर (i < first ||
+	rcu_read_lock();
+	list_for_each_entry_rcu(e, &map->members, list) {
+		if (i < first ||
 		    (SET_WITH_TIMEOUT(set) &&
-		     ip_set_समयout_expired(ext_समयout(e, set)))) अणु
+		     ip_set_timeout_expired(ext_timeout(e, set)))) {
 			i++;
-			जारी;
-		पूर्ण
+			continue;
+		}
 		nested = nla_nest_start(skb, IPSET_ATTR_DATA);
-		अगर (!nested)
-			जाओ nla_put_failure;
+		if (!nested)
+			goto nla_put_failure;
 		ip_set_name_byindex(map->net, e->id, name);
-		अगर (nla_put_string(skb, IPSET_ATTR_NAME, name))
-			जाओ nla_put_failure;
-		अगर (ip_set_put_extensions(skb, set, e, true))
-			जाओ nla_put_failure;
+		if (nla_put_string(skb, IPSET_ATTR_NAME, name))
+			goto nla_put_failure;
+		if (ip_set_put_extensions(skb, set, e, true))
+			goto nla_put_failure;
 		nla_nest_end(skb, nested);
 		i++;
-	पूर्ण
+	}
 
 	nla_nest_end(skb, atd);
 	/* Set listing finished */
 	cb->args[IPSET_CB_ARG0] = 0;
-	जाओ out;
+	goto out;
 
 nla_put_failure:
 	nla_nest_cancel(skb, nested);
-	अगर (unlikely(i == first)) अणु
+	if (unlikely(i == first)) {
 		nla_nest_cancel(skb, atd);
 		cb->args[IPSET_CB_ARG0] = 0;
 		ret = -EMSGSIZE;
-	पूर्ण अन्यथा अणु
+	} else {
 		cb->args[IPSET_CB_ARG0] = i;
 		nla_nest_end(skb, atd);
-	पूर्ण
+	}
 out:
-	rcu_पढ़ो_unlock();
-	वापस ret;
-पूर्ण
+	rcu_read_unlock();
+	return ret;
+}
 
-अटल bool
-list_set_same_set(स्थिर काष्ठा ip_set *a, स्थिर काष्ठा ip_set *b)
-अणु
-	स्थिर काष्ठा list_set *x = a->data;
-	स्थिर काष्ठा list_set *y = b->data;
+static bool
+list_set_same_set(const struct ip_set *a, const struct ip_set *b)
+{
+	const struct list_set *x = a->data;
+	const struct list_set *y = b->data;
 
-	वापस x->size == y->size &&
-	       a->समयout == b->समयout &&
+	return x->size == y->size &&
+	       a->timeout == b->timeout &&
 	       a->extensions == b->extensions;
-पूर्ण
+}
 
-अटल स्थिर काष्ठा ip_set_type_variant set_variant = अणु
+static const struct ip_set_type_variant set_variant = {
 	.kadt	= list_set_kadt,
 	.uadt	= list_set_uadt,
-	.adt	= अणु
+	.adt	= {
 		[IPSET_ADD] = list_set_uadd,
 		[IPSET_DEL] = list_set_udel,
 		[IPSET_TEST] = list_set_utest,
-	पूर्ण,
+	},
 	.destroy = list_set_destroy,
 	.flush	= list_set_flush,
 	.head	= list_set_head,
 	.list	= list_set_list,
 	.same_set = list_set_same_set,
-पूर्ण;
+};
 
-अटल व्योम
-list_set_gc(काष्ठा समयr_list *t)
-अणु
-	काष्ठा list_set *map = from_समयr(map, t, gc);
-	काष्ठा ip_set *set = map->set;
+static void
+list_set_gc(struct timer_list *t)
+{
+	struct list_set *map = from_timer(map, t, gc);
+	struct ip_set *set = map->set;
 
 	spin_lock_bh(&set->lock);
 	set_cleanup_entries(set);
 	spin_unlock_bh(&set->lock);
 
-	map->gc.expires = jअगरfies + IPSET_GC_PERIOD(set->समयout) * HZ;
-	add_समयr(&map->gc);
-पूर्ण
+	map->gc.expires = jiffies + IPSET_GC_PERIOD(set->timeout) * HZ;
+	add_timer(&map->gc);
+}
 
-अटल व्योम
-list_set_gc_init(काष्ठा ip_set *set, व्योम (*gc)(काष्ठा समयr_list *t))
-अणु
-	काष्ठा list_set *map = set->data;
+static void
+list_set_gc_init(struct ip_set *set, void (*gc)(struct timer_list *t))
+{
+	struct list_set *map = set->data;
 
-	समयr_setup(&map->gc, gc, 0);
-	mod_समयr(&map->gc, jअगरfies + IPSET_GC_PERIOD(set->समयout) * HZ);
-पूर्ण
+	timer_setup(&map->gc, gc, 0);
+	mod_timer(&map->gc, jiffies + IPSET_GC_PERIOD(set->timeout) * HZ);
+}
 
 /* Create list:set type of sets */
 
-अटल bool
-init_list_set(काष्ठा net *net, काष्ठा ip_set *set, u32 size)
-अणु
-	काष्ठा list_set *map;
+static bool
+init_list_set(struct net *net, struct ip_set *set, u32 size)
+{
+	struct list_set *map;
 
-	map = kzalloc(माप(*map), GFP_KERNEL);
-	अगर (!map)
-		वापस false;
+	map = kzalloc(sizeof(*map), GFP_KERNEL);
+	if (!map)
+		return false;
 
 	map->size = size;
 	map->net = net;
@@ -601,38 +600,38 @@ init_list_set(काष्ठा net *net, काष्ठा ip_set *set, u32 s
 	INIT_LIST_HEAD(&map->members);
 	set->data = map;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक
-list_set_create(काष्ठा net *net, काष्ठा ip_set *set, काष्ठा nlattr *tb[],
+static int
+list_set_create(struct net *net, struct ip_set *set, struct nlattr *tb[],
 		u32 flags)
-अणु
+{
 	u32 size = IP_SET_LIST_DEFAULT_SIZE;
 
-	अगर (unlikely(!ip_set_optattr_netorder(tb, IPSET_ATTR_SIZE) ||
+	if (unlikely(!ip_set_optattr_netorder(tb, IPSET_ATTR_SIZE) ||
 		     !ip_set_optattr_netorder(tb, IPSET_ATTR_TIMEOUT) ||
 		     !ip_set_optattr_netorder(tb, IPSET_ATTR_CADT_FLAGS)))
-		वापस -IPSET_ERR_PROTOCOL;
+		return -IPSET_ERR_PROTOCOL;
 
-	अगर (tb[IPSET_ATTR_SIZE])
+	if (tb[IPSET_ATTR_SIZE])
 		size = ip_set_get_h32(tb[IPSET_ATTR_SIZE]);
-	अगर (size < IP_SET_LIST_MIN_SIZE)
+	if (size < IP_SET_LIST_MIN_SIZE)
 		size = IP_SET_LIST_MIN_SIZE;
 
 	set->variant = &set_variant;
-	set->dsize = ip_set_elem_len(set, tb, माप(काष्ठा set_elem),
-				     __alignof__(काष्ठा set_elem));
-	अगर (!init_list_set(net, set, size))
-		वापस -ENOMEM;
-	अगर (tb[IPSET_ATTR_TIMEOUT]) अणु
-		set->समयout = ip_set_समयout_uget(tb[IPSET_ATTR_TIMEOUT]);
+	set->dsize = ip_set_elem_len(set, tb, sizeof(struct set_elem),
+				     __alignof__(struct set_elem));
+	if (!init_list_set(net, set, size))
+		return -ENOMEM;
+	if (tb[IPSET_ATTR_TIMEOUT]) {
+		set->timeout = ip_set_timeout_uget(tb[IPSET_ATTR_TIMEOUT]);
 		list_set_gc_init(set, list_set_gc);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल काष्ठा ip_set_type list_set_type __पढ़ो_mostly = अणु
+static struct ip_set_type list_set_type __read_mostly = {
 	.name		= "list:set",
 	.protocol	= IPSET_PROTOCOL,
 	.features	= IPSET_TYPE_NAME | IPSET_DUMP_LAST,
@@ -641,42 +640,42 @@ list_set_create(काष्ठा net *net, काष्ठा ip_set *set, क
 	.revision_min	= IPSET_TYPE_REV_MIN,
 	.revision_max	= IPSET_TYPE_REV_MAX,
 	.create		= list_set_create,
-	.create_policy	= अणु
-		[IPSET_ATTR_SIZE]	= अणु .type = NLA_U32 पूर्ण,
-		[IPSET_ATTR_TIMEOUT]	= अणु .type = NLA_U32 पूर्ण,
-		[IPSET_ATTR_CADT_FLAGS]	= अणु .type = NLA_U32 पूर्ण,
-	पूर्ण,
-	.adt_policy	= अणु
-		[IPSET_ATTR_NAME]	= अणु .type = NLA_STRING,
-					    .len = IPSET_MAXNAMELEN पूर्ण,
-		[IPSET_ATTR_NAMEREF]	= अणु .type = NLA_STRING,
-					    .len = IPSET_MAXNAMELEN पूर्ण,
-		[IPSET_ATTR_TIMEOUT]	= अणु .type = NLA_U32 पूर्ण,
-		[IPSET_ATTR_LINENO]	= अणु .type = NLA_U32 पूर्ण,
-		[IPSET_ATTR_CADT_FLAGS]	= अणु .type = NLA_U32 पूर्ण,
-		[IPSET_ATTR_BYTES]	= अणु .type = NLA_U64 पूर्ण,
-		[IPSET_ATTR_PACKETS]	= अणु .type = NLA_U64 पूर्ण,
-		[IPSET_ATTR_COMMENT]	= अणु .type = NLA_NUL_STRING,
-					    .len  = IPSET_MAX_COMMENT_SIZE पूर्ण,
-		[IPSET_ATTR_SKBMARK]	= अणु .type = NLA_U64 पूर्ण,
-		[IPSET_ATTR_SKBPRIO]	= अणु .type = NLA_U32 पूर्ण,
-		[IPSET_ATTR_SKBQUEUE]	= अणु .type = NLA_U16 पूर्ण,
-	पूर्ण,
+	.create_policy	= {
+		[IPSET_ATTR_SIZE]	= { .type = NLA_U32 },
+		[IPSET_ATTR_TIMEOUT]	= { .type = NLA_U32 },
+		[IPSET_ATTR_CADT_FLAGS]	= { .type = NLA_U32 },
+	},
+	.adt_policy	= {
+		[IPSET_ATTR_NAME]	= { .type = NLA_STRING,
+					    .len = IPSET_MAXNAMELEN },
+		[IPSET_ATTR_NAMEREF]	= { .type = NLA_STRING,
+					    .len = IPSET_MAXNAMELEN },
+		[IPSET_ATTR_TIMEOUT]	= { .type = NLA_U32 },
+		[IPSET_ATTR_LINENO]	= { .type = NLA_U32 },
+		[IPSET_ATTR_CADT_FLAGS]	= { .type = NLA_U32 },
+		[IPSET_ATTR_BYTES]	= { .type = NLA_U64 },
+		[IPSET_ATTR_PACKETS]	= { .type = NLA_U64 },
+		[IPSET_ATTR_COMMENT]	= { .type = NLA_NUL_STRING,
+					    .len  = IPSET_MAX_COMMENT_SIZE },
+		[IPSET_ATTR_SKBMARK]	= { .type = NLA_U64 },
+		[IPSET_ATTR_SKBPRIO]	= { .type = NLA_U32 },
+		[IPSET_ATTR_SKBQUEUE]	= { .type = NLA_U16 },
+	},
 	.me		= THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक __init
-list_set_init(व्योम)
-अणु
-	वापस ip_set_type_रेजिस्टर(&list_set_type);
-पूर्ण
+static int __init
+list_set_init(void)
+{
+	return ip_set_type_register(&list_set_type);
+}
 
-अटल व्योम __निकास
-list_set_fini(व्योम)
-अणु
+static void __exit
+list_set_fini(void)
+{
 	rcu_barrier();
-	ip_set_type_unरेजिस्टर(&list_set_type);
-पूर्ण
+	ip_set_type_unregister(&list_set_type);
+}
 
 module_init(list_set_init);
-module_निकास(list_set_fini);
+module_exit(list_set_fini);

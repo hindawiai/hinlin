@@ -1,104 +1,103 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * NET		Generic infraकाष्ठाure क्रम INET connection oriented protocols.
+ * NET		Generic infrastructure for INET connection oriented protocols.
  *
- *		Definitions क्रम inet_connection_sock 
+ *		Definitions for inet_connection_sock 
  *
  * Authors:	Many people, see the TCP sources
  *
  * 		From code originally in TCP
  */
-#अगर_अघोषित _INET_CONNECTION_SOCK_H
-#घोषणा _INET_CONNECTION_SOCK_H
+#ifndef _INET_CONNECTION_SOCK_H
+#define _INET_CONNECTION_SOCK_H
 
-#समावेश <linux/compiler.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/समयr.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/sockptr.h>
+#include <linux/compiler.h>
+#include <linux/string.h>
+#include <linux/timer.h>
+#include <linux/poll.h>
+#include <linux/kernel.h>
+#include <linux/sockptr.h>
 
-#समावेश <net/inet_sock.h>
-#समावेश <net/request_sock.h>
+#include <net/inet_sock.h>
+#include <net/request_sock.h>
 
-/* Cancel समयrs, when they are not required. */
-#अघोषित INET_CSK_CLEAR_TIMERS
+/* Cancel timers, when they are not required. */
+#undef INET_CSK_CLEAR_TIMERS
 
-काष्ठा inet_bind_bucket;
-काष्ठा tcp_congestion_ops;
+struct inet_bind_bucket;
+struct tcp_congestion_ops;
 
 /*
- * Poपूर्णांकers to address related TCP functions
+ * Pointers to address related TCP functions
  * (i.e. things that depend on the address family)
  */
-काष्ठा inet_connection_sock_af_ops अणु
-	पूर्णांक	    (*queue_xmit)(काष्ठा sock *sk, काष्ठा sk_buff *skb, काष्ठा flowi *fl);
-	व्योम	    (*send_check)(काष्ठा sock *sk, काष्ठा sk_buff *skb);
-	पूर्णांक	    (*rebuild_header)(काष्ठा sock *sk);
-	व्योम	    (*sk_rx_dst_set)(काष्ठा sock *sk, स्थिर काष्ठा sk_buff *skb);
-	पूर्णांक	    (*conn_request)(काष्ठा sock *sk, काष्ठा sk_buff *skb);
-	काष्ठा sock *(*syn_recv_sock)(स्थिर काष्ठा sock *sk, काष्ठा sk_buff *skb,
-				      काष्ठा request_sock *req,
-				      काष्ठा dst_entry *dst,
-				      काष्ठा request_sock *req_unhash,
+struct inet_connection_sock_af_ops {
+	int	    (*queue_xmit)(struct sock *sk, struct sk_buff *skb, struct flowi *fl);
+	void	    (*send_check)(struct sock *sk, struct sk_buff *skb);
+	int	    (*rebuild_header)(struct sock *sk);
+	void	    (*sk_rx_dst_set)(struct sock *sk, const struct sk_buff *skb);
+	int	    (*conn_request)(struct sock *sk, struct sk_buff *skb);
+	struct sock *(*syn_recv_sock)(const struct sock *sk, struct sk_buff *skb,
+				      struct request_sock *req,
+				      struct dst_entry *dst,
+				      struct request_sock *req_unhash,
 				      bool *own_req);
 	u16	    net_header_len;
 	u16	    net_frag_header_len;
 	u16	    sockaddr_len;
-	पूर्णांक	    (*setsockopt)(काष्ठा sock *sk, पूर्णांक level, पूर्णांक optname,
-				  sockptr_t optval, अचिन्हित पूर्णांक optlen);
-	पूर्णांक	    (*माला_लोockopt)(काष्ठा sock *sk, पूर्णांक level, पूर्णांक optname,
-				  अक्षर __user *optval, पूर्णांक __user *optlen);
-	व्योम	    (*addr2sockaddr)(काष्ठा sock *sk, काष्ठा sockaddr *);
-	व्योम	    (*mtu_reduced)(काष्ठा sock *sk);
-पूर्ण;
+	int	    (*setsockopt)(struct sock *sk, int level, int optname,
+				  sockptr_t optval, unsigned int optlen);
+	int	    (*getsockopt)(struct sock *sk, int level, int optname,
+				  char __user *optval, int __user *optlen);
+	void	    (*addr2sockaddr)(struct sock *sk, struct sockaddr *);
+	void	    (*mtu_reduced)(struct sock *sk);
+};
 
 /** inet_connection_sock - INET connection oriented sock
  *
  * @icsk_accept_queue:	   FIFO of established children
  * @icsk_bind_hash:	   Bind node
- * @icsk_समयout:	   Timeout
- * @icsk_retransmit_समयr: Resend (no ack)
- * @icsk_rto:		   Retransmit समयout
+ * @icsk_timeout:	   Timeout
+ * @icsk_retransmit_timer: Resend (no ack)
+ * @icsk_rto:		   Retransmit timeout
  * @icsk_pmtu_cookie	   Last pmtu seen by socket
  * @icsk_ca_ops		   Pluggable congestion control hook
- * @icsk_af_ops		   Operations which are AF_INETअणु4,6पूर्ण specअगरic
+ * @icsk_af_ops		   Operations which are AF_INET{4,6} specific
  * @icsk_ulp_ops	   Pluggable ULP control hook
- * @icsk_ulp_data	   ULP निजी data
+ * @icsk_ulp_data	   ULP private data
  * @icsk_clean_acked	   Clean acked data hook
  * @icsk_listen_portaddr_node	hash to the portaddr listener hashtable
  * @icsk_ca_state:	   Congestion control state
- * @icsk_retransmits:	   Number of unrecovered [RTO] समयouts
- * @icsk_pending:	   Scheduled समयr event
+ * @icsk_retransmits:	   Number of unrecovered [RTO] timeouts
+ * @icsk_pending:	   Scheduled timer event
  * @icsk_backoff:	   Backoff
  * @icsk_syn_retries:      Number of allowed SYN (or equivalent) retries
- * @icsk_probes_out:	   unanswered 0 winकरोw probes
+ * @icsk_probes_out:	   unanswered 0 window probes
  * @icsk_ext_hdr_len:	   Network protocol overhead (IP/IPv6 options)
  * @icsk_ack:		   Delayed ACK control data
  * @icsk_mtup;		   MTU probing control data
- * @icsk_probes_tstamp:    Probe बारtamp (cleared by non-zero winकरोw ack)
- * @icsk_user_समयout:	   TCP_USER_TIMEOUT value
+ * @icsk_probes_tstamp:    Probe timestamp (cleared by non-zero window ack)
+ * @icsk_user_timeout:	   TCP_USER_TIMEOUT value
  */
-काष्ठा inet_connection_sock अणु
+struct inet_connection_sock {
 	/* inet_sock has to be the first member! */
-	काष्ठा inet_sock	  icsk_inet;
-	काष्ठा request_sock_queue icsk_accept_queue;
-	काष्ठा inet_bind_bucket	  *icsk_bind_hash;
-	अचिन्हित दीर्घ		  icsk_समयout;
- 	काष्ठा समयr_list	  icsk_retransmit_समयr;
- 	काष्ठा समयr_list	  icsk_delack_समयr;
+	struct inet_sock	  icsk_inet;
+	struct request_sock_queue icsk_accept_queue;
+	struct inet_bind_bucket	  *icsk_bind_hash;
+	unsigned long		  icsk_timeout;
+ 	struct timer_list	  icsk_retransmit_timer;
+ 	struct timer_list	  icsk_delack_timer;
 	__u32			  icsk_rto;
 	__u32                     icsk_rto_min;
 	__u32                     icsk_delack_max;
 	__u32			  icsk_pmtu_cookie;
-	स्थिर काष्ठा tcp_congestion_ops *icsk_ca_ops;
-	स्थिर काष्ठा inet_connection_sock_af_ops *icsk_af_ops;
-	स्थिर काष्ठा tcp_ulp_ops  *icsk_ulp_ops;
-	व्योम __rcu		  *icsk_ulp_data;
-	व्योम (*icsk_clean_acked)(काष्ठा sock *sk, u32 acked_seq);
-	काष्ठा hlist_node         icsk_listen_portaddr_node;
-	अचिन्हित पूर्णांक		  (*icsk_sync_mss)(काष्ठा sock *sk, u32 pmtu);
+	const struct tcp_congestion_ops *icsk_ca_ops;
+	const struct inet_connection_sock_af_ops *icsk_af_ops;
+	const struct tcp_ulp_ops  *icsk_ulp_ops;
+	void __rcu		  *icsk_ulp_data;
+	void (*icsk_clean_acked)(struct sock *sk, u32 acked_seq);
+	struct hlist_node         icsk_listen_portaddr_node;
+	unsigned int		  (*icsk_sync_mss)(struct sock *sk, u32 pmtu);
 	__u8			  icsk_ca_state:5,
 				  icsk_ca_initialized:1,
 				  icsk_ca_setsockopt:1,
@@ -109,241 +108,241 @@
 	__u8			  icsk_syn_retries;
 	__u8			  icsk_probes_out;
 	__u16			  icsk_ext_hdr_len;
-	काष्ठा अणु
+	struct {
 		__u8		  pending;	 /* ACK is pending			   */
 		__u8		  quick;	 /* Scheduled number of quick acks	   */
-		__u8		  pingpong;	 /* The session is पूर्णांकeractive		   */
+		__u8		  pingpong;	 /* The session is interactive		   */
 		__u8		  retry;	 /* Number of attempts			   */
-		__u32		  ato;		 /* Predicted tick of soft घड़ी	   */
-		अचिन्हित दीर्घ	  समयout;	 /* Currently scheduled समयout		   */
-		__u32		  lrcvसमय;	 /* बारtamp of last received data packet */
+		__u32		  ato;		 /* Predicted tick of soft clock	   */
+		unsigned long	  timeout;	 /* Currently scheduled timeout		   */
+		__u32		  lrcvtime;	 /* timestamp of last received data packet */
 		__u16		  last_seg_size; /* Size of last incoming segment	   */
-		__u16		  rcv_mss;	 /* MSS used क्रम delayed ACK decisions	   */
-	पूर्ण icsk_ack;
-	काष्ठा अणु
+		__u16		  rcv_mss;	 /* MSS used for delayed ACK decisions	   */
+	} icsk_ack;
+	struct {
 		/* Range of MTUs to search */
-		पूर्णांक		  search_high;
-		पूर्णांक		  search_low;
+		int		  search_high;
+		int		  search_low;
 
-		/* Inक्रमmation on the current probe. */
+		/* Information on the current probe. */
 		u32		  probe_size:31,
-		/* Is the MTUP feature enabled क्रम this connection? */
+		/* Is the MTUP feature enabled for this connection? */
 				  enabled:1;
 
-		u32		  probe_बारtamp;
-	पूर्ण icsk_mtup;
+		u32		  probe_timestamp;
+	} icsk_mtup;
 	u32			  icsk_probes_tstamp;
-	u32			  icsk_user_समयout;
+	u32			  icsk_user_timeout;
 
-	u64			  icsk_ca_priv[104 / माप(u64)];
-#घोषणा ICSK_CA_PRIV_SIZE      (13 * माप(u64))
-पूर्ण;
+	u64			  icsk_ca_priv[104 / sizeof(u64)];
+#define ICSK_CA_PRIV_SIZE      (13 * sizeof(u64))
+};
 
-#घोषणा ICSK_TIME_RETRANS	1	/* Retransmit समयr */
-#घोषणा ICSK_TIME_DACK		2	/* Delayed ack समयr */
-#घोषणा ICSK_TIME_PROBE0	3	/* Zero winकरोw probe समयr */
-#घोषणा ICSK_TIME_LOSS_PROBE	5	/* Tail loss probe समयr */
-#घोषणा ICSK_TIME_REO_TIMEOUT	6	/* Reordering समयr */
+#define ICSK_TIME_RETRANS	1	/* Retransmit timer */
+#define ICSK_TIME_DACK		2	/* Delayed ack timer */
+#define ICSK_TIME_PROBE0	3	/* Zero window probe timer */
+#define ICSK_TIME_LOSS_PROBE	5	/* Tail loss probe timer */
+#define ICSK_TIME_REO_TIMEOUT	6	/* Reordering timer */
 
-अटल अंतरभूत काष्ठा inet_connection_sock *inet_csk(स्थिर काष्ठा sock *sk)
-अणु
-	वापस (काष्ठा inet_connection_sock *)sk;
-पूर्ण
+static inline struct inet_connection_sock *inet_csk(const struct sock *sk)
+{
+	return (struct inet_connection_sock *)sk;
+}
 
-अटल अंतरभूत व्योम *inet_csk_ca(स्थिर काष्ठा sock *sk)
-अणु
-	वापस (व्योम *)inet_csk(sk)->icsk_ca_priv;
-पूर्ण
+static inline void *inet_csk_ca(const struct sock *sk)
+{
+	return (void *)inet_csk(sk)->icsk_ca_priv;
+}
 
-काष्ठा sock *inet_csk_clone_lock(स्थिर काष्ठा sock *sk,
-				 स्थिर काष्ठा request_sock *req,
-				 स्थिर gfp_t priority);
+struct sock *inet_csk_clone_lock(const struct sock *sk,
+				 const struct request_sock *req,
+				 const gfp_t priority);
 
-क्रमागत inet_csk_ack_state_t अणु
+enum inet_csk_ack_state_t {
 	ICSK_ACK_SCHED	= 1,
 	ICSK_ACK_TIMER  = 2,
 	ICSK_ACK_PUSHED = 4,
 	ICSK_ACK_PUSHED2 = 8,
 	ICSK_ACK_NOW = 16	/* Send the next ACK immediately (once) */
-पूर्ण;
+};
 
-व्योम inet_csk_init_xmit_समयrs(काष्ठा sock *sk,
-			       व्योम (*retransmit_handler)(काष्ठा समयr_list *),
-			       व्योम (*delack_handler)(काष्ठा समयr_list *),
-			       व्योम (*keepalive_handler)(काष्ठा समयr_list *));
-व्योम inet_csk_clear_xmit_समयrs(काष्ठा sock *sk);
+void inet_csk_init_xmit_timers(struct sock *sk,
+			       void (*retransmit_handler)(struct timer_list *),
+			       void (*delack_handler)(struct timer_list *),
+			       void (*keepalive_handler)(struct timer_list *));
+void inet_csk_clear_xmit_timers(struct sock *sk);
 
-अटल अंतरभूत व्योम inet_csk_schedule_ack(काष्ठा sock *sk)
-अणु
+static inline void inet_csk_schedule_ack(struct sock *sk)
+{
 	inet_csk(sk)->icsk_ack.pending |= ICSK_ACK_SCHED;
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक inet_csk_ack_scheduled(स्थिर काष्ठा sock *sk)
-अणु
-	वापस inet_csk(sk)->icsk_ack.pending & ICSK_ACK_SCHED;
-पूर्ण
+static inline int inet_csk_ack_scheduled(const struct sock *sk)
+{
+	return inet_csk(sk)->icsk_ack.pending & ICSK_ACK_SCHED;
+}
 
-अटल अंतरभूत व्योम inet_csk_delack_init(काष्ठा sock *sk)
-अणु
-	स_रखो(&inet_csk(sk)->icsk_ack, 0, माप(inet_csk(sk)->icsk_ack));
-पूर्ण
+static inline void inet_csk_delack_init(struct sock *sk)
+{
+	memset(&inet_csk(sk)->icsk_ack, 0, sizeof(inet_csk(sk)->icsk_ack));
+}
 
-व्योम inet_csk_delete_keepalive_समयr(काष्ठा sock *sk);
-व्योम inet_csk_reset_keepalive_समयr(काष्ठा sock *sk, अचिन्हित दीर्घ समयout);
+void inet_csk_delete_keepalive_timer(struct sock *sk);
+void inet_csk_reset_keepalive_timer(struct sock *sk, unsigned long timeout);
 
-अटल अंतरभूत व्योम inet_csk_clear_xmit_समयr(काष्ठा sock *sk, स्थिर पूर्णांक what)
-अणु
-	काष्ठा inet_connection_sock *icsk = inet_csk(sk);
+static inline void inet_csk_clear_xmit_timer(struct sock *sk, const int what)
+{
+	struct inet_connection_sock *icsk = inet_csk(sk);
 
-	अगर (what == ICSK_TIME_RETRANS || what == ICSK_TIME_PROBE0) अणु
+	if (what == ICSK_TIME_RETRANS || what == ICSK_TIME_PROBE0) {
 		icsk->icsk_pending = 0;
-#अगर_घोषित INET_CSK_CLEAR_TIMERS
-		sk_stop_समयr(sk, &icsk->icsk_retransmit_समयr);
-#पूर्ण_अगर
-	पूर्ण अन्यथा अगर (what == ICSK_TIME_DACK) अणु
+#ifdef INET_CSK_CLEAR_TIMERS
+		sk_stop_timer(sk, &icsk->icsk_retransmit_timer);
+#endif
+	} else if (what == ICSK_TIME_DACK) {
 		icsk->icsk_ack.pending = 0;
 		icsk->icsk_ack.retry = 0;
-#अगर_घोषित INET_CSK_CLEAR_TIMERS
-		sk_stop_समयr(sk, &icsk->icsk_delack_समयr);
-#पूर्ण_अगर
-	पूर्ण अन्यथा अणु
+#ifdef INET_CSK_CLEAR_TIMERS
+		sk_stop_timer(sk, &icsk->icsk_delack_timer);
+#endif
+	} else {
 		pr_debug("inet_csk BUG: unknown timer value\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- *	Reset the retransmission समयr
+ *	Reset the retransmission timer
  */
-अटल अंतरभूत व्योम inet_csk_reset_xmit_समयr(काष्ठा sock *sk, स्थिर पूर्णांक what,
-					     अचिन्हित दीर्घ when,
-					     स्थिर अचिन्हित दीर्घ max_when)
-अणु
-	काष्ठा inet_connection_sock *icsk = inet_csk(sk);
+static inline void inet_csk_reset_xmit_timer(struct sock *sk, const int what,
+					     unsigned long when,
+					     const unsigned long max_when)
+{
+	struct inet_connection_sock *icsk = inet_csk(sk);
 
-	अगर (when > max_when) अणु
+	if (when > max_when) {
 		pr_debug("reset_xmit_timer: sk=%p %d when=0x%lx, caller=%p\n",
-			 sk, what, when, (व्योम *)_THIS_IP_);
+			 sk, what, when, (void *)_THIS_IP_);
 		when = max_when;
-	पूर्ण
+	}
 
-	अगर (what == ICSK_TIME_RETRANS || what == ICSK_TIME_PROBE0 ||
-	    what == ICSK_TIME_LOSS_PROBE || what == ICSK_TIME_REO_TIMEOUT) अणु
+	if (what == ICSK_TIME_RETRANS || what == ICSK_TIME_PROBE0 ||
+	    what == ICSK_TIME_LOSS_PROBE || what == ICSK_TIME_REO_TIMEOUT) {
 		icsk->icsk_pending = what;
-		icsk->icsk_समयout = jअगरfies + when;
-		sk_reset_समयr(sk, &icsk->icsk_retransmit_समयr, icsk->icsk_समयout);
-	पूर्ण अन्यथा अगर (what == ICSK_TIME_DACK) अणु
+		icsk->icsk_timeout = jiffies + when;
+		sk_reset_timer(sk, &icsk->icsk_retransmit_timer, icsk->icsk_timeout);
+	} else if (what == ICSK_TIME_DACK) {
 		icsk->icsk_ack.pending |= ICSK_ACK_TIMER;
-		icsk->icsk_ack.समयout = jअगरfies + when;
-		sk_reset_समयr(sk, &icsk->icsk_delack_समयr, icsk->icsk_ack.समयout);
-	पूर्ण अन्यथा अणु
+		icsk->icsk_ack.timeout = jiffies + when;
+		sk_reset_timer(sk, &icsk->icsk_delack_timer, icsk->icsk_ack.timeout);
+	} else {
 		pr_debug("inet_csk BUG: unknown timer value\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ
-inet_csk_rto_backoff(स्थिर काष्ठा inet_connection_sock *icsk,
-		     अचिन्हित दीर्घ max_when)
-अणु
+static inline unsigned long
+inet_csk_rto_backoff(const struct inet_connection_sock *icsk,
+		     unsigned long max_when)
+{
         u64 when = (u64)icsk->icsk_rto << icsk->icsk_backoff;
 
-        वापस (अचिन्हित दीर्घ)min_t(u64, when, max_when);
-पूर्ण
+        return (unsigned long)min_t(u64, when, max_when);
+}
 
-काष्ठा sock *inet_csk_accept(काष्ठा sock *sk, पूर्णांक flags, पूर्णांक *err, bool kern);
+struct sock *inet_csk_accept(struct sock *sk, int flags, int *err, bool kern);
 
-पूर्णांक inet_csk_get_port(काष्ठा sock *sk, अचिन्हित लघु snum);
+int inet_csk_get_port(struct sock *sk, unsigned short snum);
 
-काष्ठा dst_entry *inet_csk_route_req(स्थिर काष्ठा sock *sk, काष्ठा flowi4 *fl4,
-				     स्थिर काष्ठा request_sock *req);
-काष्ठा dst_entry *inet_csk_route_child_sock(स्थिर काष्ठा sock *sk,
-					    काष्ठा sock *newsk,
-					    स्थिर काष्ठा request_sock *req);
+struct dst_entry *inet_csk_route_req(const struct sock *sk, struct flowi4 *fl4,
+				     const struct request_sock *req);
+struct dst_entry *inet_csk_route_child_sock(const struct sock *sk,
+					    struct sock *newsk,
+					    const struct request_sock *req);
 
-काष्ठा sock *inet_csk_reqsk_queue_add(काष्ठा sock *sk,
-				      काष्ठा request_sock *req,
-				      काष्ठा sock *child);
-व्योम inet_csk_reqsk_queue_hash_add(काष्ठा sock *sk, काष्ठा request_sock *req,
-				   अचिन्हित दीर्घ समयout);
-काष्ठा sock *inet_csk_complete_hashdance(काष्ठा sock *sk, काष्ठा sock *child,
-					 काष्ठा request_sock *req,
+struct sock *inet_csk_reqsk_queue_add(struct sock *sk,
+				      struct request_sock *req,
+				      struct sock *child);
+void inet_csk_reqsk_queue_hash_add(struct sock *sk, struct request_sock *req,
+				   unsigned long timeout);
+struct sock *inet_csk_complete_hashdance(struct sock *sk, struct sock *child,
+					 struct request_sock *req,
 					 bool own_req);
 
-अटल अंतरभूत व्योम inet_csk_reqsk_queue_added(काष्ठा sock *sk)
-अणु
+static inline void inet_csk_reqsk_queue_added(struct sock *sk)
+{
 	reqsk_queue_added(&inet_csk(sk)->icsk_accept_queue);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक inet_csk_reqsk_queue_len(स्थिर काष्ठा sock *sk)
-अणु
-	वापस reqsk_queue_len(&inet_csk(sk)->icsk_accept_queue);
-पूर्ण
+static inline int inet_csk_reqsk_queue_len(const struct sock *sk)
+{
+	return reqsk_queue_len(&inet_csk(sk)->icsk_accept_queue);
+}
 
-अटल अंतरभूत पूर्णांक inet_csk_reqsk_queue_is_full(स्थिर काष्ठा sock *sk)
-अणु
-	वापस inet_csk_reqsk_queue_len(sk) >= sk->sk_max_ack_backlog;
-पूर्ण
+static inline int inet_csk_reqsk_queue_is_full(const struct sock *sk)
+{
+	return inet_csk_reqsk_queue_len(sk) >= sk->sk_max_ack_backlog;
+}
 
-bool inet_csk_reqsk_queue_drop(काष्ठा sock *sk, काष्ठा request_sock *req);
-व्योम inet_csk_reqsk_queue_drop_and_put(काष्ठा sock *sk, काष्ठा request_sock *req);
+bool inet_csk_reqsk_queue_drop(struct sock *sk, struct request_sock *req);
+void inet_csk_reqsk_queue_drop_and_put(struct sock *sk, struct request_sock *req);
 
-अटल अंतरभूत व्योम inet_csk_prepare_क्रम_destroy_sock(काष्ठा sock *sk)
-अणु
-	/* The below has to be करोne to allow calling inet_csk_destroy_sock */
+static inline void inet_csk_prepare_for_destroy_sock(struct sock *sk)
+{
+	/* The below has to be done to allow calling inet_csk_destroy_sock */
 	sock_set_flag(sk, SOCK_DEAD);
 	percpu_counter_inc(sk->sk_prot->orphan_count);
-पूर्ण
+}
 
-व्योम inet_csk_destroy_sock(काष्ठा sock *sk);
-व्योम inet_csk_prepare_क्रमced_बंद(काष्ठा sock *sk);
+void inet_csk_destroy_sock(struct sock *sk);
+void inet_csk_prepare_forced_close(struct sock *sk);
 
 /*
- * LISTEN is a special हाल क्रम poll..
+ * LISTEN is a special case for poll..
  */
-अटल अंतरभूत __poll_t inet_csk_listen_poll(स्थिर काष्ठा sock *sk)
-अणु
-	वापस !reqsk_queue_empty(&inet_csk(sk)->icsk_accept_queue) ?
+static inline __poll_t inet_csk_listen_poll(const struct sock *sk)
+{
+	return !reqsk_queue_empty(&inet_csk(sk)->icsk_accept_queue) ?
 			(EPOLLIN | EPOLLRDNORM) : 0;
-पूर्ण
+}
 
-पूर्णांक inet_csk_listen_start(काष्ठा sock *sk, पूर्णांक backlog);
-व्योम inet_csk_listen_stop(काष्ठा sock *sk);
+int inet_csk_listen_start(struct sock *sk, int backlog);
+void inet_csk_listen_stop(struct sock *sk);
 
-व्योम inet_csk_addr2sockaddr(काष्ठा sock *sk, काष्ठा sockaddr *uaddr);
+void inet_csk_addr2sockaddr(struct sock *sk, struct sockaddr *uaddr);
 
 /* update the fast reuse flag when adding a socket */
-व्योम inet_csk_update_fastreuse(काष्ठा inet_bind_bucket *tb,
-			       काष्ठा sock *sk);
+void inet_csk_update_fastreuse(struct inet_bind_bucket *tb,
+			       struct sock *sk);
 
-काष्ठा dst_entry *inet_csk_update_pmtu(काष्ठा sock *sk, u32 mtu);
+struct dst_entry *inet_csk_update_pmtu(struct sock *sk, u32 mtu);
 
-#घोषणा TCP_PINGPONG_THRESH	3
+#define TCP_PINGPONG_THRESH	3
 
-अटल अंतरभूत व्योम inet_csk_enter_pingpong_mode(काष्ठा sock *sk)
-अणु
+static inline void inet_csk_enter_pingpong_mode(struct sock *sk)
+{
 	inet_csk(sk)->icsk_ack.pingpong = TCP_PINGPONG_THRESH;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम inet_csk_निकास_pingpong_mode(काष्ठा sock *sk)
-अणु
+static inline void inet_csk_exit_pingpong_mode(struct sock *sk)
+{
 	inet_csk(sk)->icsk_ack.pingpong = 0;
-पूर्ण
+}
 
-अटल अंतरभूत bool inet_csk_in_pingpong_mode(काष्ठा sock *sk)
-अणु
-	वापस inet_csk(sk)->icsk_ack.pingpong >= TCP_PINGPONG_THRESH;
-पूर्ण
+static inline bool inet_csk_in_pingpong_mode(struct sock *sk)
+{
+	return inet_csk(sk)->icsk_ack.pingpong >= TCP_PINGPONG_THRESH;
+}
 
-अटल अंतरभूत व्योम inet_csk_inc_pingpong_cnt(काष्ठा sock *sk)
-अणु
-	काष्ठा inet_connection_sock *icsk = inet_csk(sk);
+static inline void inet_csk_inc_pingpong_cnt(struct sock *sk)
+{
+	struct inet_connection_sock *icsk = inet_csk(sk);
 
-	अगर (icsk->icsk_ack.pingpong < U8_MAX)
+	if (icsk->icsk_ack.pingpong < U8_MAX)
 		icsk->icsk_ack.pingpong++;
-पूर्ण
+}
 
-अटल अंतरभूत bool inet_csk_has_ulp(काष्ठा sock *sk)
-अणु
-	वापस inet_sk(sk)->is_icsk && !!inet_csk(sk)->icsk_ulp_ops;
-पूर्ण
+static inline bool inet_csk_has_ulp(struct sock *sk)
+{
+	return inet_sk(sk)->is_icsk && !!inet_csk(sk)->icsk_ulp_ops;
+}
 
-#पूर्ण_अगर /* _INET_CONNECTION_SOCK_H */
+#endif /* _INET_CONNECTION_SOCK_H */

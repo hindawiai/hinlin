@@ -1,42 +1,41 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
 * Copyright (C) 2006 Red Hat, Inc. All Rights Reserved.
 * Written by David Howells (dhowells@redhat.com)
 */
 
-#समावेश <linux/nfs_fs.h>
-#समावेश "nfs4_fs.h"
-#समावेश "internal.h"
+#include <linux/nfs_fs.h>
+#include "nfs4_fs.h"
+#include "internal.h"
 
-#घोषणा NFSDBG_FACILITY		NFSDBG_CLIENT
+#define NFSDBG_FACILITY		NFSDBG_CLIENT
 
-पूर्णांक nfs4_get_rootfh(काष्ठा nfs_server *server, काष्ठा nfs_fh *mntfh, bool auth_probe)
-अणु
-	काष्ठा nfs_fsinfo fsinfo;
-	पूर्णांक ret = -ENOMEM;
+int nfs4_get_rootfh(struct nfs_server *server, struct nfs_fh *mntfh, bool auth_probe)
+{
+	struct nfs_fsinfo fsinfo;
+	int ret = -ENOMEM;
 
 	fsinfo.fattr = nfs_alloc_fattr();
-	अगर (fsinfo.fattr == शून्य)
-		जाओ out;
+	if (fsinfo.fattr == NULL)
+		goto out;
 
 	/* Start by getting the root filehandle from the server */
 	ret = nfs4_proc_get_rootfh(server, mntfh, &fsinfo, auth_probe);
-	अगर (ret < 0) अणु
-		dprपूर्णांकk("nfs4_get_rootfh: getroot error = %d\n", -ret);
-		जाओ out;
-	पूर्ण
+	if (ret < 0) {
+		dprintk("nfs4_get_rootfh: getroot error = %d\n", -ret);
+		goto out;
+	}
 
-	अगर (!(fsinfo.fattr->valid & NFS_ATTR_FATTR_TYPE)
-			|| !S_ISसूची(fsinfo.fattr->mode)) अणु
-		prपूर्णांकk(KERN_ERR "nfs4_get_rootfh:"
+	if (!(fsinfo.fattr->valid & NFS_ATTR_FATTR_TYPE)
+			|| !S_ISDIR(fsinfo.fattr->mode)) {
+		printk(KERN_ERR "nfs4_get_rootfh:"
 		       " getroot encountered non-directory\n");
-		ret = -ENOTसूची;
-		जाओ out;
-	पूर्ण
+		ret = -ENOTDIR;
+		goto out;
+	}
 
-	स_नकल(&server->fsid, &fsinfo.fattr->fsid, माप(server->fsid));
+	memcpy(&server->fsid, &fsinfo.fattr->fsid, sizeof(server->fsid));
 out:
-	nfs_मुक्त_fattr(fsinfo.fattr);
-	वापस ret;
-पूर्ण
+	nfs_free_fattr(fsinfo.fattr);
+	return ret;
+}

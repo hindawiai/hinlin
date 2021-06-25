@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /****************************************************************
 
  Siano Mobile Silicon, Inc.
@@ -9,85 +8,85 @@
 
  ****************************************************************/
 
-#समावेश <linux/export.h>
-#समावेश <यंत्र/byteorder.h>
+#include <linux/export.h>
+#include <asm/byteorder.h>
 
-#समावेश "smsendian.h"
-#समावेश "smscoreapi.h"
+#include "smsendian.h"
+#include "smscoreapi.h"
 
-व्योम smsendian_handle_tx_message(व्योम *buffer)
-अणु
-#अगर_घोषित __BIG_ENDIAN
-	काष्ठा sms_msg_data *msg = (काष्ठा sms_msg_data *)buffer;
-	पूर्णांक i;
-	पूर्णांक msg_words;
+void smsendian_handle_tx_message(void *buffer)
+{
+#ifdef __BIG_ENDIAN
+	struct sms_msg_data *msg = (struct sms_msg_data *)buffer;
+	int i;
+	int msg_words;
 
-	चयन (msg->x_msg_header.msg_type) अणु
-	हाल MSG_SMS_DATA_DOWNLOAD_REQ:
-	अणु
-		msg->msg_data[0] = le32_to_cpu((__क्रमce __le32)(msg->msg_data[0]));
-		अवरोध;
-	पूर्ण
+	switch (msg->x_msg_header.msg_type) {
+	case MSG_SMS_DATA_DOWNLOAD_REQ:
+	{
+		msg->msg_data[0] = le32_to_cpu((__force __le32)(msg->msg_data[0]));
+		break;
+	}
 
-	शेष:
+	default:
 		msg_words = (msg->x_msg_header.msg_length -
-				माप(काष्ठा sms_msg_hdr))/4;
+				sizeof(struct sms_msg_hdr))/4;
 
-		क्रम (i = 0; i < msg_words; i++)
-			msg->msg_data[i] = le32_to_cpu((__क्रमce __le32)msg->msg_data[i]);
+		for (i = 0; i < msg_words; i++)
+			msg->msg_data[i] = le32_to_cpu((__force __le32)msg->msg_data[i]);
 
-		अवरोध;
-	पूर्ण
-#पूर्ण_अगर /* __BIG_ENDIAN */
-पूर्ण
+		break;
+	}
+#endif /* __BIG_ENDIAN */
+}
 EXPORT_SYMBOL_GPL(smsendian_handle_tx_message);
 
-व्योम smsendian_handle_rx_message(व्योम *buffer)
-अणु
-#अगर_घोषित __BIG_ENDIAN
-	काष्ठा sms_msg_data *msg = (काष्ठा sms_msg_data *)buffer;
-	पूर्णांक i;
-	पूर्णांक msg_words;
+void smsendian_handle_rx_message(void *buffer)
+{
+#ifdef __BIG_ENDIAN
+	struct sms_msg_data *msg = (struct sms_msg_data *)buffer;
+	int i;
+	int msg_words;
 
-	चयन (msg->x_msg_header.msg_type) अणु
-	हाल MSG_SMS_GET_VERSION_EX_RES:
-	अणु
-		काष्ठा sms_version_res *ver =
-			(काष्ठा sms_version_res *) msg;
-		ver->chip_model = le16_to_cpu((__क्रमce __le16)ver->chip_model);
-		अवरोध;
-	पूर्ण
+	switch (msg->x_msg_header.msg_type) {
+	case MSG_SMS_GET_VERSION_EX_RES:
+	{
+		struct sms_version_res *ver =
+			(struct sms_version_res *) msg;
+		ver->chip_model = le16_to_cpu((__force __le16)ver->chip_model);
+		break;
+	}
 
-	हाल MSG_SMS_DVBT_BDA_DATA:
-	हाल MSG_SMS_DAB_CHANNEL:
-	हाल MSG_SMS_DATA_MSG:
-	अणु
-		अवरोध;
-	पूर्ण
+	case MSG_SMS_DVBT_BDA_DATA:
+	case MSG_SMS_DAB_CHANNEL:
+	case MSG_SMS_DATA_MSG:
+	{
+		break;
+	}
 
-	शेष:
-	अणु
+	default:
+	{
 		msg_words = (msg->x_msg_header.msg_length -
-				माप(काष्ठा sms_msg_hdr))/4;
+				sizeof(struct sms_msg_hdr))/4;
 
-		क्रम (i = 0; i < msg_words; i++)
-			msg->msg_data[i] = le32_to_cpu((__क्रमce __le32)msg->msg_data[i]);
+		for (i = 0; i < msg_words; i++)
+			msg->msg_data[i] = le32_to_cpu((__force __le32)msg->msg_data[i]);
 
-		अवरोध;
-	पूर्ण
-	पूर्ण
-#पूर्ण_अगर /* __BIG_ENDIAN */
-पूर्ण
+		break;
+	}
+	}
+#endif /* __BIG_ENDIAN */
+}
 EXPORT_SYMBOL_GPL(smsendian_handle_rx_message);
 
-व्योम smsendian_handle_message_header(व्योम *msg)
-अणु
-#अगर_घोषित __BIG_ENDIAN
-	काष्ठा sms_msg_hdr *phdr = (काष्ठा sms_msg_hdr *)msg;
+void smsendian_handle_message_header(void *msg)
+{
+#ifdef __BIG_ENDIAN
+	struct sms_msg_hdr *phdr = (struct sms_msg_hdr *)msg;
 
-	phdr->msg_type = le16_to_cpu((__क्रमce __le16)phdr->msg_type);
-	phdr->msg_length = le16_to_cpu((__क्रमce __le16)phdr->msg_length);
-	phdr->msg_flags = le16_to_cpu((__क्रमce __le16)phdr->msg_flags);
-#पूर्ण_अगर /* __BIG_ENDIAN */
-पूर्ण
+	phdr->msg_type = le16_to_cpu((__force __le16)phdr->msg_type);
+	phdr->msg_length = le16_to_cpu((__force __le16)phdr->msg_length);
+	phdr->msg_flags = le16_to_cpu((__force __le16)phdr->msg_flags);
+#endif /* __BIG_ENDIAN */
+}
 EXPORT_SYMBOL_GPL(smsendian_handle_message_header);

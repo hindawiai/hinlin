@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
  * Module Name: exresolv - AML Interpreter object resolution
@@ -8,27 +7,27 @@
  *
  *****************************************************************************/
 
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
-#समावेश "amlcode.h"
-#समावेश "acdispat.h"
-#समावेश "acinterp.h"
-#समावेश "acnamesp.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
+#include "amlcode.h"
+#include "acdispat.h"
+#include "acinterp.h"
+#include "acnamesp.h"
 
-#घोषणा _COMPONENT          ACPI_EXECUTER
+#define _COMPONENT          ACPI_EXECUTER
 ACPI_MODULE_NAME("exresolv")
 
 /* Local prototypes */
-अटल acpi_status
-acpi_ex_resolve_object_to_value(जोड़ acpi_opeअक्रम_object **stack_ptr,
-				काष्ठा acpi_walk_state *walk_state);
+static acpi_status
+acpi_ex_resolve_object_to_value(union acpi_operand_object **stack_ptr,
+				struct acpi_walk_state *walk_state);
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ex_resolve_to_value
  *
- * PARAMETERS:  **stack_ptr         - Poपूर्णांकs to entry on obj_stack, which can
- *                                    be either an (जोड़ acpi_opeअक्रम_object *)
+ * PARAMETERS:  **stack_ptr         - Points to entry on obj_stack, which can
+ *                                    be either an (union acpi_operand_object *)
  *                                    or an acpi_handle.
  *              walk_state          - Current method state
  *
@@ -39,90 +38,90 @@ acpi_ex_resolve_object_to_value(जोड़ acpi_opeअक्रम_object **st
  ******************************************************************************/
 
 acpi_status
-acpi_ex_resolve_to_value(जोड़ acpi_opeअक्रम_object **stack_ptr,
-			 काष्ठा acpi_walk_state *walk_state)
-अणु
+acpi_ex_resolve_to_value(union acpi_operand_object **stack_ptr,
+			 struct acpi_walk_state *walk_state)
+{
 	acpi_status status;
 
 	ACPI_FUNCTION_TRACE_PTR(ex_resolve_to_value, stack_ptr);
 
-	अगर (!stack_ptr || !*stack_ptr) अणु
+	if (!stack_ptr || !*stack_ptr) {
 		ACPI_ERROR((AE_INFO, "Internal - null pointer"));
-		वापस_ACPI_STATUS(AE_AML_NO_OPERAND);
-	पूर्ण
+		return_ACPI_STATUS(AE_AML_NO_OPERAND);
+	}
 
 	/*
-	 * The entity poपूर्णांकed to by the stack_ptr can be either
-	 * 1) A valid जोड़ acpi_opeअक्रम_object, or
-	 * 2) A काष्ठा acpi_namespace_node (named_obj)
+	 * The entity pointed to by the stack_ptr can be either
+	 * 1) A valid union acpi_operand_object, or
+	 * 2) A struct acpi_namespace_node (named_obj)
 	 */
-	अगर (ACPI_GET_DESCRIPTOR_TYPE(*stack_ptr) == ACPI_DESC_TYPE_OPERAND) अणु
+	if (ACPI_GET_DESCRIPTOR_TYPE(*stack_ptr) == ACPI_DESC_TYPE_OPERAND) {
 		status = acpi_ex_resolve_object_to_value(stack_ptr, walk_state);
-		अगर (ACPI_FAILURE(status)) अणु
-			वापस_ACPI_STATUS(status);
-		पूर्ण
+		if (ACPI_FAILURE(status)) {
+			return_ACPI_STATUS(status);
+		}
 
-		अगर (!*stack_ptr) अणु
+		if (!*stack_ptr) {
 			ACPI_ERROR((AE_INFO, "Internal - null pointer"));
-			वापस_ACPI_STATUS(AE_AML_NO_OPERAND);
-		पूर्ण
-	पूर्ण
+			return_ACPI_STATUS(AE_AML_NO_OPERAND);
+		}
+	}
 
 	/*
-	 * Object on the stack may have changed अगर acpi_ex_resolve_object_to_value()
-	 * was called (i.e., we can't use an _अन्यथा_ here.)
+	 * Object on the stack may have changed if acpi_ex_resolve_object_to_value()
+	 * was called (i.e., we can't use an _else_ here.)
 	 */
-	अगर (ACPI_GET_DESCRIPTOR_TYPE(*stack_ptr) == ACPI_DESC_TYPE_NAMED) अणु
+	if (ACPI_GET_DESCRIPTOR_TYPE(*stack_ptr) == ACPI_DESC_TYPE_NAMED) {
 		status =
-		    acpi_ex_resolve_node_to_value(ACPI_CAST_INसूचीECT_PTR
-						  (काष्ठा acpi_namespace_node,
+		    acpi_ex_resolve_node_to_value(ACPI_CAST_INDIRECT_PTR
+						  (struct acpi_namespace_node,
 						   stack_ptr), walk_state);
-		अगर (ACPI_FAILURE(status)) अणु
-			वापस_ACPI_STATUS(status);
-		पूर्ण
-	पूर्ण
+		if (ACPI_FAILURE(status)) {
+			return_ACPI_STATUS(status);
+		}
+	}
 
 	ACPI_DEBUG_PRINT((ACPI_DB_EXEC, "Resolved object %p\n", *stack_ptr));
-	वापस_ACPI_STATUS(AE_OK);
-पूर्ण
+	return_ACPI_STATUS(AE_OK);
+}
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ex_resolve_object_to_value
  *
- * PARAMETERS:  stack_ptr       - Poपूर्णांकer to an पूर्णांकernal object
+ * PARAMETERS:  stack_ptr       - Pointer to an internal object
  *              walk_state      - Current method state
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Retrieve the value from an पूर्णांकernal object. The Reference type
+ * DESCRIPTION: Retrieve the value from an internal object. The Reference type
  *              uses the associated AML opcode to determine the value.
  *
  ******************************************************************************/
 
-अटल acpi_status
-acpi_ex_resolve_object_to_value(जोड़ acpi_opeअक्रम_object **stack_ptr,
-				काष्ठा acpi_walk_state *walk_state)
-अणु
+static acpi_status
+acpi_ex_resolve_object_to_value(union acpi_operand_object **stack_ptr,
+				struct acpi_walk_state *walk_state)
+{
 	acpi_status status = AE_OK;
-	जोड़ acpi_opeअक्रम_object *stack_desc;
-	जोड़ acpi_opeअक्रम_object *obj_desc = शून्य;
+	union acpi_operand_object *stack_desc;
+	union acpi_operand_object *obj_desc = NULL;
 	u8 ref_type;
 
 	ACPI_FUNCTION_TRACE(ex_resolve_object_to_value);
 
 	stack_desc = *stack_ptr;
 
-	/* This is an object of type जोड़ acpi_opeअक्रम_object */
+	/* This is an object of type union acpi_operand_object */
 
-	चयन (stack_desc->common.type) अणु
-	हाल ACPI_TYPE_LOCAL_REFERENCE:
+	switch (stack_desc->common.type) {
+	case ACPI_TYPE_LOCAL_REFERENCE:
 
 		ref_type = stack_desc->reference.class;
 
-		चयन (ref_type) अणु
-		हाल ACPI_REFCLASS_LOCAL:
-		हाल ACPI_REFCLASS_ARG:
+		switch (ref_type) {
+		case ACPI_REFCLASS_LOCAL:
+		case ACPI_REFCLASS_ARG:
 			/*
 			 * Get the local from the method's state info
 			 * Note: this increments the local's object reference count
@@ -132,9 +131,9 @@ acpi_ex_resolve_object_to_value(जोड़ acpi_opeअक्रम_object **st
 							       reference.value,
 							       walk_state,
 							       &obj_desc);
-			अगर (ACPI_FAILURE(status)) अणु
-				वापस_ACPI_STATUS(status);
-			पूर्ण
+			if (ACPI_FAILURE(status)) {
+				return_ACPI_STATUS(status);
+			}
 
 			ACPI_DEBUG_PRINT((ACPI_DB_EXEC,
 					  "[Arg/Local %X] ValueObj is %p\n",
@@ -145,43 +144,43 @@ acpi_ex_resolve_object_to_value(जोड़ acpi_opeअक्रम_object **st
 			 * Now we can delete the original Reference Object and
 			 * replace it with the resolved value
 			 */
-			acpi_ut_हटाओ_reference(stack_desc);
+			acpi_ut_remove_reference(stack_desc);
 			*stack_ptr = obj_desc;
-			अवरोध;
+			break;
 
-		हाल ACPI_REFCLASS_INDEX:
+		case ACPI_REFCLASS_INDEX:
 
-			चयन (stack_desc->reference.target_type) अणु
-			हाल ACPI_TYPE_BUFFER_FIELD:
+			switch (stack_desc->reference.target_type) {
+			case ACPI_TYPE_BUFFER_FIELD:
 
-				/* Just वापस - करो not dereference */
-				अवरोध;
+				/* Just return - do not dereference */
+				break;
 
-			हाल ACPI_TYPE_PACKAGE:
+			case ACPI_TYPE_PACKAGE:
 
-				/* If method call or copy_object - करो not dereference */
+				/* If method call or copy_object - do not dereference */
 
-				अगर ((walk_state->opcode ==
+				if ((walk_state->opcode ==
 				     AML_INT_METHODCALL_OP)
 				    || (walk_state->opcode ==
-					AML_COPY_OBJECT_OP)) अणु
-					अवरोध;
-				पूर्ण
+					AML_COPY_OBJECT_OP)) {
+					break;
+				}
 
 				/* Otherwise, dereference the package_index to a package element */
 
 				obj_desc = *stack_desc->reference.where;
-				अगर (obj_desc) अणु
+				if (obj_desc) {
 					/*
-					 * Valid object descriptor, copy poपूर्णांकer to वापस value
+					 * Valid object descriptor, copy pointer to return value
 					 * (i.e., dereference the package index)
-					 * Delete the ref object, increment the वापसed object
+					 * Delete the ref object, increment the returned object
 					 */
 					acpi_ut_add_reference(obj_desc);
 					*stack_ptr = obj_desc;
-				पूर्ण अन्यथा अणु
+				} else {
 					/*
-					 * A शून्य object descriptor means an uninitialized element of
+					 * A NULL object descriptor means an uninitialized element of
 					 * the package, can't dereference it
 					 */
 					ACPI_ERROR((AE_INFO,
@@ -189,10 +188,10 @@ acpi_ex_resolve_object_to_value(जोड़ acpi_opeअक्रम_object **st
 						    "NULL package element Idx=%p",
 						    stack_desc));
 					status = AE_AML_UNINITIALIZED_ELEMENT;
-				पूर्ण
-				अवरोध;
+				}
+				break;
 
-			शेष:
+			default:
 
 				/* Invalid reference object */
 
@@ -201,255 +200,255 @@ acpi_ex_resolve_object_to_value(जोड़ acpi_opeअक्रम_object **st
 					    stack_desc->reference.target_type,
 					    stack_desc));
 				status = AE_AML_INTERNAL;
-				अवरोध;
-			पूर्ण
-			अवरोध;
+				break;
+			}
+			break;
 
-		हाल ACPI_REFCLASS_REFOF:
-		हाल ACPI_REFCLASS_DEBUG:
-		हाल ACPI_REFCLASS_TABLE:
+		case ACPI_REFCLASS_REFOF:
+		case ACPI_REFCLASS_DEBUG:
+		case ACPI_REFCLASS_TABLE:
 
-			/* Just leave the object as-is, करो not dereference */
+			/* Just leave the object as-is, do not dereference */
 
-			अवरोध;
+			break;
 
-		हाल ACPI_REFCLASS_NAME:	/* Reference to a named object */
+		case ACPI_REFCLASS_NAME:	/* Reference to a named object */
 
 			/* Dereference the name */
 
-			अगर ((stack_desc->reference.node->type ==
+			if ((stack_desc->reference.node->type ==
 			     ACPI_TYPE_DEVICE)
 			    || (stack_desc->reference.node->type ==
-				ACPI_TYPE_THERMAL)) अणु
+				ACPI_TYPE_THERMAL)) {
 
-				/* These node types करो not have 'real' subobjects */
+				/* These node types do not have 'real' subobjects */
 
-				*stack_ptr = (व्योम *)stack_desc->reference.node;
-			पूर्ण अन्यथा अणु
-				/* Get the object poपूर्णांकed to by the namespace node */
+				*stack_ptr = (void *)stack_desc->reference.node;
+			} else {
+				/* Get the object pointed to by the namespace node */
 
 				*stack_ptr =
 				    (stack_desc->reference.node)->object;
 				acpi_ut_add_reference(*stack_ptr);
-			पूर्ण
+			}
 
-			acpi_ut_हटाओ_reference(stack_desc);
-			अवरोध;
+			acpi_ut_remove_reference(stack_desc);
+			break;
 
-		शेष:
+		default:
 
 			ACPI_ERROR((AE_INFO,
 				    "Unknown Reference type 0x%X in %p",
 				    ref_type, stack_desc));
 			status = AE_AML_INTERNAL;
-			अवरोध;
-		पूर्ण
-		अवरोध;
+			break;
+		}
+		break;
 
-	हाल ACPI_TYPE_BUFFER:
+	case ACPI_TYPE_BUFFER:
 
 		status = acpi_ds_get_buffer_arguments(stack_desc);
-		अवरोध;
+		break;
 
-	हाल ACPI_TYPE_PACKAGE:
+	case ACPI_TYPE_PACKAGE:
 
 		status = acpi_ds_get_package_arguments(stack_desc);
-		अवरोध;
+		break;
 
-	हाल ACPI_TYPE_BUFFER_FIELD:
-	हाल ACPI_TYPE_LOCAL_REGION_FIELD:
-	हाल ACPI_TYPE_LOCAL_BANK_FIELD:
-	हाल ACPI_TYPE_LOCAL_INDEX_FIELD:
+	case ACPI_TYPE_BUFFER_FIELD:
+	case ACPI_TYPE_LOCAL_REGION_FIELD:
+	case ACPI_TYPE_LOCAL_BANK_FIELD:
+	case ACPI_TYPE_LOCAL_INDEX_FIELD:
 
 		ACPI_DEBUG_PRINT((ACPI_DB_EXEC,
 				  "FieldRead SourceDesc=%p Type=%X\n",
 				  stack_desc, stack_desc->common.type));
 
 		status =
-		    acpi_ex_पढ़ो_data_from_field(walk_state, stack_desc,
+		    acpi_ex_read_data_from_field(walk_state, stack_desc,
 						 &obj_desc);
 
-		/* Remove a reference to the original opeअक्रम, then override */
+		/* Remove a reference to the original operand, then override */
 
-		acpi_ut_हटाओ_reference(*stack_ptr);
-		*stack_ptr = (व्योम *)obj_desc;
-		अवरोध;
+		acpi_ut_remove_reference(*stack_ptr);
+		*stack_ptr = (void *)obj_desc;
+		break;
 
-	शेष:
+	default:
 
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	return_ACPI_STATUS(status);
+}
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ex_resolve_multiple
  *
  * PARAMETERS:  walk_state          - Current state (contains AML opcode)
- *              opeअक्रम             - Starting poपूर्णांक क्रम resolution
- *              वापस_type         - Where the object type is वापसed
- *              वापस_desc         - Where the resolved object is वापसed
+ *              operand             - Starting point for resolution
+ *              return_type         - Where the object type is returned
+ *              return_desc         - Where the resolved object is returned
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Return the base object and type. Traverse a reference list अगर
+ * DESCRIPTION: Return the base object and type. Traverse a reference list if
  *              necessary to get to the base object.
  *
  ******************************************************************************/
 
 acpi_status
-acpi_ex_resolve_multiple(काष्ठा acpi_walk_state *walk_state,
-			 जोड़ acpi_opeअक्रम_object *opeअक्रम,
-			 acpi_object_type *वापस_type,
-			 जोड़ acpi_opeअक्रम_object **वापस_desc)
-अणु
-	जोड़ acpi_opeअक्रम_object *obj_desc = ACPI_CAST_PTR(व्योम, opeअक्रम);
-	काष्ठा acpi_namespace_node *node =
-	    ACPI_CAST_PTR(काष्ठा acpi_namespace_node, opeअक्रम);
+acpi_ex_resolve_multiple(struct acpi_walk_state *walk_state,
+			 union acpi_operand_object *operand,
+			 acpi_object_type *return_type,
+			 union acpi_operand_object **return_desc)
+{
+	union acpi_operand_object *obj_desc = ACPI_CAST_PTR(void, operand);
+	struct acpi_namespace_node *node =
+	    ACPI_CAST_PTR(struct acpi_namespace_node, operand);
 	acpi_object_type type;
 	acpi_status status;
 
 	ACPI_FUNCTION_TRACE(acpi_ex_resolve_multiple);
 
-	/* Opeअक्रम can be either a namespace node or an opeअक्रम descriptor */
+	/* Operand can be either a namespace node or an operand descriptor */
 
-	चयन (ACPI_GET_DESCRIPTOR_TYPE(obj_desc)) अणु
-	हाल ACPI_DESC_TYPE_OPERAND:
+	switch (ACPI_GET_DESCRIPTOR_TYPE(obj_desc)) {
+	case ACPI_DESC_TYPE_OPERAND:
 
 		type = obj_desc->common.type;
-		अवरोध;
+		break;
 
-	हाल ACPI_DESC_TYPE_NAMED:
+	case ACPI_DESC_TYPE_NAMED:
 
-		type = ((काष्ठा acpi_namespace_node *)obj_desc)->type;
+		type = ((struct acpi_namespace_node *)obj_desc)->type;
 		obj_desc = acpi_ns_get_attached_object(node);
 
-		/* If we had an Alias node, use the attached object क्रम type info */
+		/* If we had an Alias node, use the attached object for type info */
 
-		अगर (type == ACPI_TYPE_LOCAL_ALIAS) अणु
-			type = ((काष्ठा acpi_namespace_node *)obj_desc)->type;
-			obj_desc = acpi_ns_get_attached_object((काष्ठा
+		if (type == ACPI_TYPE_LOCAL_ALIAS) {
+			type = ((struct acpi_namespace_node *)obj_desc)->type;
+			obj_desc = acpi_ns_get_attached_object((struct
 								acpi_namespace_node
 								*)obj_desc);
-		पूर्ण
+		}
 
-		चयन (type) अणु
-		हाल ACPI_TYPE_DEVICE:
-		हाल ACPI_TYPE_THERMAL:
+		switch (type) {
+		case ACPI_TYPE_DEVICE:
+		case ACPI_TYPE_THERMAL:
 
 			/* These types have no attached subobject */
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 
 			/* All other types require a subobject */
 
-			अगर (!obj_desc) अणु
+			if (!obj_desc) {
 				ACPI_ERROR((AE_INFO,
 					    "[%4.4s] Node is unresolved or uninitialized",
 					    acpi_ut_get_node_name(node)));
-				वापस_ACPI_STATUS(AE_AML_UNINITIALIZED_NODE);
-			पूर्ण
-			अवरोध;
-		पूर्ण
-		अवरोध;
+				return_ACPI_STATUS(AE_AML_UNINITIALIZED_NODE);
+			}
+			break;
+		}
+		break;
 
-	शेष:
-		वापस_ACPI_STATUS(AE_AML_OPERAND_TYPE);
-	पूर्ण
+	default:
+		return_ACPI_STATUS(AE_AML_OPERAND_TYPE);
+	}
 
-	/* If type is anything other than a reference, we are करोne */
+	/* If type is anything other than a reference, we are done */
 
-	अगर (type != ACPI_TYPE_LOCAL_REFERENCE) अणु
-		जाओ निकास;
-	पूर्ण
+	if (type != ACPI_TYPE_LOCAL_REFERENCE) {
+		goto exit;
+	}
 
 	/*
 	 * For reference objects created via the ref_of, Index, or Load/load_table
-	 * चालकs, we need to get to the base object (as per the ACPI
-	 * specअगरication of the object_type and size_of चालकs). This means
+	 * operators, we need to get to the base object (as per the ACPI
+	 * specification of the object_type and size_of operators). This means
 	 * traversing the list of possibly many nested references.
 	 */
-	जबतक (obj_desc->common.type == ACPI_TYPE_LOCAL_REFERENCE) अणु
-		चयन (obj_desc->reference.class) अणु
-		हाल ACPI_REFCLASS_REFOF:
-		हाल ACPI_REFCLASS_NAME:
+	while (obj_desc->common.type == ACPI_TYPE_LOCAL_REFERENCE) {
+		switch (obj_desc->reference.class) {
+		case ACPI_REFCLASS_REFOF:
+		case ACPI_REFCLASS_NAME:
 
-			/* Dereference the reference poपूर्णांकer */
+			/* Dereference the reference pointer */
 
-			अगर (obj_desc->reference.class == ACPI_REFCLASS_REFOF) अणु
+			if (obj_desc->reference.class == ACPI_REFCLASS_REFOF) {
 				node = obj_desc->reference.object;
-			पूर्ण अन्यथा अणु	/* AML_INT_NAMEPATH_OP */
+			} else {	/* AML_INT_NAMEPATH_OP */
 
 				node = obj_desc->reference.node;
-			पूर्ण
+			}
 
-			/* All "References" poपूर्णांक to a NS node */
+			/* All "References" point to a NS node */
 
-			अगर (ACPI_GET_DESCRIPTOR_TYPE(node) !=
-			    ACPI_DESC_TYPE_NAMED) अणु
+			if (ACPI_GET_DESCRIPTOR_TYPE(node) !=
+			    ACPI_DESC_TYPE_NAMED) {
 				ACPI_ERROR((AE_INFO,
 					    "Not a namespace node %p [%s]",
 					    node,
 					    acpi_ut_get_descriptor_name(node)));
-				वापस_ACPI_STATUS(AE_AML_INTERNAL);
-			पूर्ण
+				return_ACPI_STATUS(AE_AML_INTERNAL);
+			}
 
 			/* Get the attached object */
 
 			obj_desc = acpi_ns_get_attached_object(node);
-			अगर (!obj_desc) अणु
+			if (!obj_desc) {
 
 				/* No object, use the NS node type */
 
 				type = acpi_ns_get_type(node);
-				जाओ निकास;
-			पूर्ण
+				goto exit;
+			}
 
-			/* Check क्रम circular references */
+			/* Check for circular references */
 
-			अगर (obj_desc == opeअक्रम) अणु
-				वापस_ACPI_STATUS(AE_AML_CIRCULAR_REFERENCE);
-			पूर्ण
-			अवरोध;
+			if (obj_desc == operand) {
+				return_ACPI_STATUS(AE_AML_CIRCULAR_REFERENCE);
+			}
+			break;
 
-		हाल ACPI_REFCLASS_INDEX:
+		case ACPI_REFCLASS_INDEX:
 
-			/* Get the type of this reference (index पूर्णांकo another object) */
+			/* Get the type of this reference (index into another object) */
 
 			type = obj_desc->reference.target_type;
-			अगर (type != ACPI_TYPE_PACKAGE) अणु
-				जाओ निकास;
-			पूर्ण
+			if (type != ACPI_TYPE_PACKAGE) {
+				goto exit;
+			}
 
 			/*
-			 * The मुख्य object is a package, we want to get the type
-			 * of the inभागidual package element that is referenced by
+			 * The main object is a package, we want to get the type
+			 * of the individual package element that is referenced by
 			 * the index.
 			 *
 			 * This could of course in turn be another reference object.
 			 */
 			obj_desc = *(obj_desc->reference.where);
-			अगर (!obj_desc) अणु
+			if (!obj_desc) {
 
-				/* शून्य package elements are allowed */
+				/* NULL package elements are allowed */
 
 				type = 0;	/* Uninitialized */
-				जाओ निकास;
-			पूर्ण
-			अवरोध;
+				goto exit;
+			}
+			break;
 
-		हाल ACPI_REFCLASS_TABLE:
+		case ACPI_REFCLASS_TABLE:
 
 			type = ACPI_TYPE_DDB_HANDLE;
-			जाओ निकास;
+			goto exit;
 
-		हाल ACPI_REFCLASS_LOCAL:
-		हाल ACPI_REFCLASS_ARG:
+		case ACPI_REFCLASS_LOCAL:
+		case ACPI_REFCLASS_ARG:
 
-			अगर (वापस_desc) अणु
+			if (return_desc) {
 				status =
 				    acpi_ds_method_data_get_value(obj_desc->
 								  reference.
@@ -459,11 +458,11 @@ acpi_ex_resolve_multiple(काष्ठा acpi_walk_state *walk_state,
 								  value,
 								  walk_state,
 								  &obj_desc);
-				अगर (ACPI_FAILURE(status)) अणु
-					वापस_ACPI_STATUS(status);
-				पूर्ण
-				acpi_ut_हटाओ_reference(obj_desc);
-			पूर्ण अन्यथा अणु
+				if (ACPI_FAILURE(status)) {
+					return_ACPI_STATUS(status);
+				}
+				acpi_ut_remove_reference(obj_desc);
+			} else {
 				status =
 				    acpi_ds_method_data_get_node(obj_desc->
 								 reference.
@@ -473,68 +472,68 @@ acpi_ex_resolve_multiple(काष्ठा acpi_walk_state *walk_state,
 								 value,
 								 walk_state,
 								 &node);
-				अगर (ACPI_FAILURE(status)) अणु
-					वापस_ACPI_STATUS(status);
-				पूर्ण
+				if (ACPI_FAILURE(status)) {
+					return_ACPI_STATUS(status);
+				}
 
 				obj_desc = acpi_ns_get_attached_object(node);
-				अगर (!obj_desc) अणु
+				if (!obj_desc) {
 					type = ACPI_TYPE_ANY;
-					जाओ निकास;
-				पूर्ण
-			पूर्ण
-			अवरोध;
+					goto exit;
+				}
+			}
+			break;
 
-		हाल ACPI_REFCLASS_DEBUG:
+		case ACPI_REFCLASS_DEBUG:
 
 			/* The Debug Object is of type "DebugObject" */
 
 			type = ACPI_TYPE_DEBUG_OBJECT;
-			जाओ निकास;
+			goto exit;
 
-		शेष:
+		default:
 
 			ACPI_ERROR((AE_INFO,
 				    "Unknown Reference Class 0x%2.2X",
 				    obj_desc->reference.class));
-			वापस_ACPI_STATUS(AE_AML_INTERNAL);
-		पूर्ण
-	पूर्ण
+			return_ACPI_STATUS(AE_AML_INTERNAL);
+		}
+	}
 
 	/*
 	 * Now we are guaranteed to have an object that has not been created
-	 * via the ref_of or Index चालकs.
+	 * via the ref_of or Index operators.
 	 */
 	type = obj_desc->common.type;
 
-निकास:
-	/* Convert पूर्णांकernal types to बाह्यal types */
+exit:
+	/* Convert internal types to external types */
 
-	चयन (type) अणु
-	हाल ACPI_TYPE_LOCAL_REGION_FIELD:
-	हाल ACPI_TYPE_LOCAL_BANK_FIELD:
-	हाल ACPI_TYPE_LOCAL_INDEX_FIELD:
+	switch (type) {
+	case ACPI_TYPE_LOCAL_REGION_FIELD:
+	case ACPI_TYPE_LOCAL_BANK_FIELD:
+	case ACPI_TYPE_LOCAL_INDEX_FIELD:
 
 		type = ACPI_TYPE_FIELD_UNIT;
-		अवरोध;
+		break;
 
-	हाल ACPI_TYPE_LOCAL_SCOPE:
+	case ACPI_TYPE_LOCAL_SCOPE:
 
-		/* Per ACPI Specअगरication, Scope is untyped */
+		/* Per ACPI Specification, Scope is untyped */
 
 		type = ACPI_TYPE_ANY;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 
 		/* No change to Type required */
 
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	*वापस_type = type;
-	अगर (वापस_desc) अणु
-		*वापस_desc = obj_desc;
-	पूर्ण
-	वापस_ACPI_STATUS(AE_OK);
-पूर्ण
+	*return_type = type;
+	if (return_desc) {
+		*return_desc = obj_desc;
+	}
+	return_ACPI_STATUS(AE_OK);
+}

@@ -1,196 +1,195 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Driver क्रम watchकरोg device controlled through GPIO-line
+ * Driver for watchdog device controlled through GPIO-line
  *
  * Author: 2013, Alexander Shiyan <shc_work@mail.ru>
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/module.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/watchकरोg.h>
+#include <linux/err.h>
+#include <linux/delay.h>
+#include <linux/module.h>
+#include <linux/gpio/consumer.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/watchdog.h>
 
-अटल bool nowayout = WATCHDOG_NOWAYOUT;
+static bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout,
 		"Watchdog cannot be stopped once started (default="
 				__MODULE_STRING(WATCHDOG_NOWAYOUT) ")");
 
-#घोषणा SOFT_TIMEOUT_MIN	1
-#घोषणा SOFT_TIMEOUT_DEF	60
+#define SOFT_TIMEOUT_MIN	1
+#define SOFT_TIMEOUT_DEF	60
 
-क्रमागत अणु
+enum {
 	HW_ALGO_TOGGLE,
 	HW_ALGO_LEVEL,
-पूर्ण;
+};
 
-काष्ठा gpio_wdt_priv अणु
-	काष्ठा gpio_desc	*gpiod;
+struct gpio_wdt_priv {
+	struct gpio_desc	*gpiod;
 	bool			state;
 	bool			always_running;
-	अचिन्हित पूर्णांक		hw_algo;
-	काष्ठा watchकरोg_device	wdd;
-पूर्ण;
+	unsigned int		hw_algo;
+	struct watchdog_device	wdd;
+};
 
-अटल व्योम gpio_wdt_disable(काष्ठा gpio_wdt_priv *priv)
-अणु
+static void gpio_wdt_disable(struct gpio_wdt_priv *priv)
+{
 	/* Eternal ping */
 	gpiod_set_value_cansleep(priv->gpiod, 1);
 
 	/* Put GPIO back to tristate */
-	अगर (priv->hw_algo == HW_ALGO_TOGGLE)
+	if (priv->hw_algo == HW_ALGO_TOGGLE)
 		gpiod_direction_input(priv->gpiod);
-पूर्ण
+}
 
-अटल पूर्णांक gpio_wdt_ping(काष्ठा watchकरोg_device *wdd)
-अणु
-	काष्ठा gpio_wdt_priv *priv = watchकरोg_get_drvdata(wdd);
+static int gpio_wdt_ping(struct watchdog_device *wdd)
+{
+	struct gpio_wdt_priv *priv = watchdog_get_drvdata(wdd);
 
-	चयन (priv->hw_algo) अणु
-	हाल HW_ALGO_TOGGLE:
+	switch (priv->hw_algo) {
+	case HW_ALGO_TOGGLE:
 		/* Toggle output pin */
 		priv->state = !priv->state;
 		gpiod_set_value_cansleep(priv->gpiod, priv->state);
-		अवरोध;
-	हाल HW_ALGO_LEVEL:
+		break;
+	case HW_ALGO_LEVEL:
 		/* Pulse */
 		gpiod_set_value_cansleep(priv->gpiod, 1);
 		udelay(1);
 		gpiod_set_value_cansleep(priv->gpiod, 0);
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	}
+	return 0;
+}
 
-अटल पूर्णांक gpio_wdt_start(काष्ठा watchकरोg_device *wdd)
-अणु
-	काष्ठा gpio_wdt_priv *priv = watchकरोg_get_drvdata(wdd);
+static int gpio_wdt_start(struct watchdog_device *wdd)
+{
+	struct gpio_wdt_priv *priv = watchdog_get_drvdata(wdd);
 
 	priv->state = 0;
 	gpiod_direction_output(priv->gpiod, priv->state);
 
 	set_bit(WDOG_HW_RUNNING, &wdd->status);
 
-	वापस gpio_wdt_ping(wdd);
-पूर्ण
+	return gpio_wdt_ping(wdd);
+}
 
-अटल पूर्णांक gpio_wdt_stop(काष्ठा watchकरोg_device *wdd)
-अणु
-	काष्ठा gpio_wdt_priv *priv = watchकरोg_get_drvdata(wdd);
+static int gpio_wdt_stop(struct watchdog_device *wdd)
+{
+	struct gpio_wdt_priv *priv = watchdog_get_drvdata(wdd);
 
-	अगर (!priv->always_running) अणु
+	if (!priv->always_running) {
 		gpio_wdt_disable(priv);
-	पूर्ण अन्यथा अणु
+	} else {
 		set_bit(WDOG_HW_RUNNING, &wdd->status);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा watchकरोg_info gpio_wdt_ident = अणु
+static const struct watchdog_info gpio_wdt_ident = {
 	.options	= WDIOF_MAGICCLOSE | WDIOF_KEEPALIVEPING |
 			  WDIOF_SETTIMEOUT,
 	.identity	= "GPIO Watchdog",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा watchकरोg_ops gpio_wdt_ops = अणु
+static const struct watchdog_ops gpio_wdt_ops = {
 	.owner		= THIS_MODULE,
 	.start		= gpio_wdt_start,
 	.stop		= gpio_wdt_stop,
 	.ping		= gpio_wdt_ping,
-पूर्ण;
+};
 
-अटल पूर्णांक gpio_wdt_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा device_node *np = dev->of_node;
-	काष्ठा gpio_wdt_priv *priv;
-	क्रमागत gpiod_flags gflags;
-	अचिन्हित पूर्णांक hw_margin;
-	स्थिर अक्षर *algo;
-	पूर्णांक ret;
+static int gpio_wdt_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct device_node *np = dev->of_node;
+	struct gpio_wdt_priv *priv;
+	enum gpiod_flags gflags;
+	unsigned int hw_margin;
+	const char *algo;
+	int ret;
 
-	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, priv);
+	platform_set_drvdata(pdev, priv);
 
-	ret = of_property_पढ़ो_string(np, "hw_algo", &algo);
-	अगर (ret)
-		वापस ret;
-	अगर (!म_भेद(algo, "toggle")) अणु
+	ret = of_property_read_string(np, "hw_algo", &algo);
+	if (ret)
+		return ret;
+	if (!strcmp(algo, "toggle")) {
 		priv->hw_algo = HW_ALGO_TOGGLE;
 		gflags = GPIOD_IN;
-	पूर्ण अन्यथा अगर (!म_भेद(algo, "level")) अणु
+	} else if (!strcmp(algo, "level")) {
 		priv->hw_algo = HW_ALGO_LEVEL;
 		gflags = GPIOD_OUT_LOW;
-	पूर्ण अन्यथा अणु
-		वापस -EINVAL;
-	पूर्ण
+	} else {
+		return -EINVAL;
+	}
 
-	priv->gpiod = devm_gpiod_get(dev, शून्य, gflags);
-	अगर (IS_ERR(priv->gpiod))
-		वापस PTR_ERR(priv->gpiod);
+	priv->gpiod = devm_gpiod_get(dev, NULL, gflags);
+	if (IS_ERR(priv->gpiod))
+		return PTR_ERR(priv->gpiod);
 
-	ret = of_property_पढ़ो_u32(np,
+	ret = of_property_read_u32(np,
 				   "hw_margin_ms", &hw_margin);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	/* Disallow values lower than 2 and higher than 65535 ms */
-	अगर (hw_margin < 2 || hw_margin > 65535)
-		वापस -EINVAL;
+	if (hw_margin < 2 || hw_margin > 65535)
+		return -EINVAL;
 
-	priv->always_running = of_property_पढ़ो_bool(np,
+	priv->always_running = of_property_read_bool(np,
 						     "always-running");
 
-	watchकरोg_set_drvdata(&priv->wdd, priv);
+	watchdog_set_drvdata(&priv->wdd, priv);
 
 	priv->wdd.info		= &gpio_wdt_ident;
 	priv->wdd.ops		= &gpio_wdt_ops;
-	priv->wdd.min_समयout	= SOFT_TIMEOUT_MIN;
+	priv->wdd.min_timeout	= SOFT_TIMEOUT_MIN;
 	priv->wdd.max_hw_heartbeat_ms = hw_margin;
 	priv->wdd.parent	= dev;
-	priv->wdd.समयout	= SOFT_TIMEOUT_DEF;
+	priv->wdd.timeout	= SOFT_TIMEOUT_DEF;
 
-	watchकरोg_init_समयout(&priv->wdd, 0, dev);
-	watchकरोg_set_nowayout(&priv->wdd, nowayout);
+	watchdog_init_timeout(&priv->wdd, 0, dev);
+	watchdog_set_nowayout(&priv->wdd, nowayout);
 
-	watchकरोg_stop_on_reboot(&priv->wdd);
+	watchdog_stop_on_reboot(&priv->wdd);
 
-	अगर (priv->always_running)
+	if (priv->always_running)
 		gpio_wdt_start(&priv->wdd);
 
-	वापस devm_watchकरोg_रेजिस्टर_device(dev, &priv->wdd);
-पूर्ण
+	return devm_watchdog_register_device(dev, &priv->wdd);
+}
 
-अटल स्थिर काष्ठा of_device_id gpio_wdt_dt_ids[] = अणु
-	अणु .compatible = "linux,wdt-gpio", पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id gpio_wdt_dt_ids[] = {
+	{ .compatible = "linux,wdt-gpio", },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, gpio_wdt_dt_ids);
 
-अटल काष्ठा platक्रमm_driver gpio_wdt_driver = अणु
-	.driver	= अणु
+static struct platform_driver gpio_wdt_driver = {
+	.driver	= {
 		.name		= "gpio-wdt",
 		.of_match_table	= gpio_wdt_dt_ids,
-	पूर्ण,
+	},
 	.probe	= gpio_wdt_probe,
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_GPIO_WATCHDOG_ARCH_INITCALL
-अटल पूर्णांक __init gpio_wdt_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&gpio_wdt_driver);
-पूर्ण
+#ifdef CONFIG_GPIO_WATCHDOG_ARCH_INITCALL
+static int __init gpio_wdt_init(void)
+{
+	return platform_driver_register(&gpio_wdt_driver);
+}
 arch_initcall(gpio_wdt_init);
-#अन्यथा
-module_platक्रमm_driver(gpio_wdt_driver);
-#पूर्ण_अगर
+#else
+module_platform_driver(gpio_wdt_driver);
+#endif
 
 MODULE_AUTHOR("Alexander Shiyan <shc_work@mail.ru>");
 MODULE_DESCRIPTION("GPIO Watchdog");

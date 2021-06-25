@@ -1,237 +1,236 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#समावेश <त्रुटिसं.स>
-#समावेश <stdbool.h>
-#समावेश <मानकपन.स>
-#समावेश <मानक_निवेशt.h>
-#समावेश <मानककोष.स>
-#समावेश <unistd.h>
-#समावेश <माला.स>
-#समावेश <समय.स>
-#समावेश <arpa/inet.h>
+#include <errno.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <time.h>
+#include <arpa/inet.h>
 
-#समावेश <libmnl/libmnl.h>
-#समावेश <linux/netfilter.h>
-#समावेश <linux/netfilter/nfnetlink.h>
-#समावेश <linux/netfilter/nfnetlink_queue.h>
+#include <libmnl/libmnl.h>
+#include <linux/netfilter.h>
+#include <linux/netfilter/nfnetlink.h>
+#include <linux/netfilter/nfnetlink_queue.h>
 
-काष्ठा options अणु
+struct options {
 	bool count_packets;
 	bool gso_enabled;
-	पूर्णांक verbose;
-	अचिन्हित पूर्णांक queue_num;
-	अचिन्हित पूर्णांक समयout;
-	uपूर्णांक32_t verdict;
-	uपूर्णांक32_t delay_ms;
-पूर्ण;
+	int verbose;
+	unsigned int queue_num;
+	unsigned int timeout;
+	uint32_t verdict;
+	uint32_t delay_ms;
+};
 
-अटल अचिन्हित पूर्णांक queue_stats[5];
-अटल काष्ठा options opts;
+static unsigned int queue_stats[5];
+static struct options opts;
 
-अटल व्योम help(स्थिर अक्षर *p)
-अणु
-	म_लिखो("Usage: %s [-c|-v [-vv] ] [-t timeout] [-q queue_num] [-Qdst_queue ] [ -d ms_delay ] [-G]\n", p);
-पूर्ण
+static void help(const char *p)
+{
+	printf("Usage: %s [-c|-v [-vv] ] [-t timeout] [-q queue_num] [-Qdst_queue ] [ -d ms_delay ] [-G]\n", p);
+}
 
-अटल पूर्णांक parse_attr_cb(स्थिर काष्ठा nlattr *attr, व्योम *data)
-अणु
-	स्थिर काष्ठा nlattr **tb = data;
-	पूर्णांक type = mnl_attr_get_type(attr);
+static int parse_attr_cb(const struct nlattr *attr, void *data)
+{
+	const struct nlattr **tb = data;
+	int type = mnl_attr_get_type(attr);
 
 	/* skip unsupported attribute in user-space */
-	अगर (mnl_attr_type_valid(attr, NFQA_MAX) < 0)
-		वापस MNL_CB_OK;
+	if (mnl_attr_type_valid(attr, NFQA_MAX) < 0)
+		return MNL_CB_OK;
 
-	चयन (type) अणु
-	हाल NFQA_MARK:
-	हाल NFQA_IFINDEX_INDEV:
-	हाल NFQA_IFINDEX_OUTDEV:
-	हाल NFQA_IFINDEX_PHYSINDEV:
-	हाल NFQA_IFINDEX_PHYSOUTDEV:
-		अगर (mnl_attr_validate(attr, MNL_TYPE_U32) < 0) अणु
-			लिखो_त्रुटि("mnl_attr_validate");
-			वापस MNL_CB_ERROR;
-		पूर्ण
-		अवरोध;
-	हाल NFQA_TIMESTAMP:
-		अगर (mnl_attr_validate2(attr, MNL_TYPE_UNSPEC,
-		    माप(काष्ठा nfqnl_msg_packet_बारtamp)) < 0) अणु
-			लिखो_त्रुटि("mnl_attr_validate2");
-			वापस MNL_CB_ERROR;
-		पूर्ण
-		अवरोध;
-	हाल NFQA_HWADDR:
-		अगर (mnl_attr_validate2(attr, MNL_TYPE_UNSPEC,
-		    माप(काष्ठा nfqnl_msg_packet_hw)) < 0) अणु
-			लिखो_त्रुटि("mnl_attr_validate2");
-			वापस MNL_CB_ERROR;
-		पूर्ण
-		अवरोध;
-	हाल NFQA_PAYLOAD:
-		अवरोध;
-	पूर्ण
+	switch (type) {
+	case NFQA_MARK:
+	case NFQA_IFINDEX_INDEV:
+	case NFQA_IFINDEX_OUTDEV:
+	case NFQA_IFINDEX_PHYSINDEV:
+	case NFQA_IFINDEX_PHYSOUTDEV:
+		if (mnl_attr_validate(attr, MNL_TYPE_U32) < 0) {
+			perror("mnl_attr_validate");
+			return MNL_CB_ERROR;
+		}
+		break;
+	case NFQA_TIMESTAMP:
+		if (mnl_attr_validate2(attr, MNL_TYPE_UNSPEC,
+		    sizeof(struct nfqnl_msg_packet_timestamp)) < 0) {
+			perror("mnl_attr_validate2");
+			return MNL_CB_ERROR;
+		}
+		break;
+	case NFQA_HWADDR:
+		if (mnl_attr_validate2(attr, MNL_TYPE_UNSPEC,
+		    sizeof(struct nfqnl_msg_packet_hw)) < 0) {
+			perror("mnl_attr_validate2");
+			return MNL_CB_ERROR;
+		}
+		break;
+	case NFQA_PAYLOAD:
+		break;
+	}
 	tb[type] = attr;
-	वापस MNL_CB_OK;
-पूर्ण
+	return MNL_CB_OK;
+}
 
-अटल पूर्णांक queue_cb(स्थिर काष्ठा nlmsghdr *nlh, व्योम *data)
-अणु
-	काष्ठा nlattr *tb[NFQA_MAX+1] = अणु 0 पूर्ण;
-	काष्ठा nfqnl_msg_packet_hdr *ph = शून्य;
-	uपूर्णांक32_t id = 0;
+static int queue_cb(const struct nlmsghdr *nlh, void *data)
+{
+	struct nlattr *tb[NFQA_MAX+1] = { 0 };
+	struct nfqnl_msg_packet_hdr *ph = NULL;
+	uint32_t id = 0;
 
-	(व्योम)data;
+	(void)data;
 
-	mnl_attr_parse(nlh, माप(काष्ठा nfgenmsg), parse_attr_cb, tb);
-	अगर (tb[NFQA_PACKET_HDR]) अणु
+	mnl_attr_parse(nlh, sizeof(struct nfgenmsg), parse_attr_cb, tb);
+	if (tb[NFQA_PACKET_HDR]) {
 		ph = mnl_attr_get_payload(tb[NFQA_PACKET_HDR]);
 		id = ntohl(ph->packet_id);
 
-		अगर (opts.verbose > 0)
-			म_लिखो("packet hook=%u, hwproto 0x%x",
+		if (opts.verbose > 0)
+			printf("packet hook=%u, hwproto 0x%x",
 				ntohs(ph->hw_protocol), ph->hook);
 
-		अगर (ph->hook >= 5) अणु
-			ख_लिखो(मानक_त्रुटि, "Unknown hook %d\n", ph->hook);
-			वापस MNL_CB_ERROR;
-		पूर्ण
+		if (ph->hook >= 5) {
+			fprintf(stderr, "Unknown hook %d\n", ph->hook);
+			return MNL_CB_ERROR;
+		}
 
-		अगर (opts.verbose > 0) अणु
-			uपूर्णांक32_t skbinfo = 0;
+		if (opts.verbose > 0) {
+			uint32_t skbinfo = 0;
 
-			अगर (tb[NFQA_SKB_INFO])
+			if (tb[NFQA_SKB_INFO])
 				skbinfo = ntohl(mnl_attr_get_u32(tb[NFQA_SKB_INFO]));
-			अगर (skbinfo & NFQA_SKB_CSUMNOTREADY)
-				म_लिखो(" csumnotready");
-			अगर (skbinfo & NFQA_SKB_GSO)
-				म_लिखो(" gso");
-			अगर (skbinfo & NFQA_SKB_CSUM_NOTVERIFIED)
-				म_लिखो(" csumnotverified");
-			माला_दो("");
-		पूर्ण
+			if (skbinfo & NFQA_SKB_CSUMNOTREADY)
+				printf(" csumnotready");
+			if (skbinfo & NFQA_SKB_GSO)
+				printf(" gso");
+			if (skbinfo & NFQA_SKB_CSUM_NOTVERIFIED)
+				printf(" csumnotverified");
+			puts("");
+		}
 
-		अगर (opts.count_packets)
+		if (opts.count_packets)
 			queue_stats[ph->hook]++;
-	पूर्ण
+	}
 
-	वापस MNL_CB_OK + id;
-पूर्ण
+	return MNL_CB_OK + id;
+}
 
-अटल काष्ठा nlmsghdr *
-nfq_build_cfg_request(अक्षर *buf, uपूर्णांक8_t command, पूर्णांक queue_num)
-अणु
-	काष्ठा nlmsghdr *nlh = mnl_nlmsg_put_header(buf);
-	काष्ठा nfqnl_msg_config_cmd cmd = अणु
+static struct nlmsghdr *
+nfq_build_cfg_request(char *buf, uint8_t command, int queue_num)
+{
+	struct nlmsghdr *nlh = mnl_nlmsg_put_header(buf);
+	struct nfqnl_msg_config_cmd cmd = {
 		.command = command,
 		.pf = htons(AF_INET),
-	पूर्ण;
-	काष्ठा nfgenmsg *nfg;
+	};
+	struct nfgenmsg *nfg;
 
 	nlh->nlmsg_type	= (NFNL_SUBSYS_QUEUE << 8) | NFQNL_MSG_CONFIG;
 	nlh->nlmsg_flags = NLM_F_REQUEST;
 
-	nfg = mnl_nlmsg_put_extra_header(nlh, माप(*nfg));
+	nfg = mnl_nlmsg_put_extra_header(nlh, sizeof(*nfg));
 
 	nfg->nfgen_family = AF_UNSPEC;
 	nfg->version = NFNETLINK_V0;
 	nfg->res_id = htons(queue_num);
 
-	mnl_attr_put(nlh, NFQA_CFG_CMD, माप(cmd), &cmd);
+	mnl_attr_put(nlh, NFQA_CFG_CMD, sizeof(cmd), &cmd);
 
-	वापस nlh;
-पूर्ण
+	return nlh;
+}
 
-अटल काष्ठा nlmsghdr *
-nfq_build_cfg_params(अक्षर *buf, uपूर्णांक8_t mode, पूर्णांक range, पूर्णांक queue_num)
-अणु
-	काष्ठा nlmsghdr *nlh = mnl_nlmsg_put_header(buf);
-	काष्ठा nfqnl_msg_config_params params = अणु
+static struct nlmsghdr *
+nfq_build_cfg_params(char *buf, uint8_t mode, int range, int queue_num)
+{
+	struct nlmsghdr *nlh = mnl_nlmsg_put_header(buf);
+	struct nfqnl_msg_config_params params = {
 		.copy_range = htonl(range),
 		.copy_mode = mode,
-	पूर्ण;
-	काष्ठा nfgenmsg *nfg;
+	};
+	struct nfgenmsg *nfg;
 
 	nlh->nlmsg_type	= (NFNL_SUBSYS_QUEUE << 8) | NFQNL_MSG_CONFIG;
 	nlh->nlmsg_flags = NLM_F_REQUEST;
 
-	nfg = mnl_nlmsg_put_extra_header(nlh, माप(*nfg));
+	nfg = mnl_nlmsg_put_extra_header(nlh, sizeof(*nfg));
 	nfg->nfgen_family = AF_UNSPEC;
 	nfg->version = NFNETLINK_V0;
 	nfg->res_id = htons(queue_num);
 
-	mnl_attr_put(nlh, NFQA_CFG_PARAMS, माप(params), &params);
+	mnl_attr_put(nlh, NFQA_CFG_PARAMS, sizeof(params), &params);
 
-	वापस nlh;
-पूर्ण
+	return nlh;
+}
 
-अटल काष्ठा nlmsghdr *
-nfq_build_verdict(अक्षर *buf, पूर्णांक id, पूर्णांक queue_num, uपूर्णांक32_t verd)
-अणु
-	काष्ठा nfqnl_msg_verdict_hdr vh = अणु
+static struct nlmsghdr *
+nfq_build_verdict(char *buf, int id, int queue_num, uint32_t verd)
+{
+	struct nfqnl_msg_verdict_hdr vh = {
 		.verdict = htonl(verd),
 		.id = htonl(id),
-	पूर्ण;
-	काष्ठा nlmsghdr *nlh;
-	काष्ठा nfgenmsg *nfg;
+	};
+	struct nlmsghdr *nlh;
+	struct nfgenmsg *nfg;
 
 	nlh = mnl_nlmsg_put_header(buf);
 	nlh->nlmsg_type = (NFNL_SUBSYS_QUEUE << 8) | NFQNL_MSG_VERDICT;
 	nlh->nlmsg_flags = NLM_F_REQUEST;
-	nfg = mnl_nlmsg_put_extra_header(nlh, माप(*nfg));
+	nfg = mnl_nlmsg_put_extra_header(nlh, sizeof(*nfg));
 	nfg->nfgen_family = AF_UNSPEC;
 	nfg->version = NFNETLINK_V0;
 	nfg->res_id = htons(queue_num);
 
-	mnl_attr_put(nlh, NFQA_VERDICT_HDR, माप(vh), &vh);
+	mnl_attr_put(nlh, NFQA_VERDICT_HDR, sizeof(vh), &vh);
 
-	वापस nlh;
-पूर्ण
+	return nlh;
+}
 
-अटल व्योम prपूर्णांक_stats(व्योम)
-अणु
-	अचिन्हित पूर्णांक last, total;
-	पूर्णांक i;
+static void print_stats(void)
+{
+	unsigned int last, total;
+	int i;
 
 	total = 0;
 	last = queue_stats[0];
 
-	क्रम (i = 0; i < 5; i++) अणु
-		म_लिखो("hook %d packets %08u\n", i, queue_stats[i]);
+	for (i = 0; i < 5; i++) {
+		printf("hook %d packets %08u\n", i, queue_stats[i]);
 		last = queue_stats[i];
 		total += last;
-	पूर्ण
+	}
 
-	म_लिखो("%u packets total\n", total);
-पूर्ण
+	printf("%u packets total\n", total);
+}
 
-काष्ठा mnl_socket *खोलो_queue(व्योम)
-अणु
-	अक्षर buf[MNL_SOCKET_BUFFER_SIZE];
-	अचिन्हित पूर्णांक queue_num;
-	काष्ठा mnl_socket *nl;
-	काष्ठा nlmsghdr *nlh;
-	काष्ठा समयval tv;
-	uपूर्णांक32_t flags;
+struct mnl_socket *open_queue(void)
+{
+	char buf[MNL_SOCKET_BUFFER_SIZE];
+	unsigned int queue_num;
+	struct mnl_socket *nl;
+	struct nlmsghdr *nlh;
+	struct timeval tv;
+	uint32_t flags;
 
-	nl = mnl_socket_खोलो(NETLINK_NETFILTER);
-	अगर (nl == शून्य) अणु
-		लिखो_त्रुटि("mnl_socket_open");
-		निकास(निकास_त्रुटि);
-	पूर्ण
+	nl = mnl_socket_open(NETLINK_NETFILTER);
+	if (nl == NULL) {
+		perror("mnl_socket_open");
+		exit(EXIT_FAILURE);
+	}
 
-	अगर (mnl_socket_bind(nl, 0, MNL_SOCKET_AUTOPID) < 0) अणु
-		लिखो_त्रुटि("mnl_socket_bind");
-		निकास(निकास_त्रुटि);
-	पूर्ण
+	if (mnl_socket_bind(nl, 0, MNL_SOCKET_AUTOPID) < 0) {
+		perror("mnl_socket_bind");
+		exit(EXIT_FAILURE);
+	}
 
 	queue_num = opts.queue_num;
 	nlh = nfq_build_cfg_request(buf, NFQNL_CFG_CMD_BIND, queue_num);
 
-	अगर (mnl_socket_sendto(nl, nlh, nlh->nlmsg_len) < 0) अणु
-		लिखो_त्रुटि("mnl_socket_sendto");
-		निकास(निकास_त्रुटि);
-	पूर्ण
+	if (mnl_socket_sendto(nl, nlh, nlh->nlmsg_len) < 0) {
+		perror("mnl_socket_sendto");
+		exit(EXIT_FAILURE);
+	}
 
 	nlh = nfq_build_cfg_params(buf, NFQNL_COPY_PACKET, 0xFFFF, queue_num);
 
@@ -240,157 +239,157 @@ nfq_build_verdict(अक्षर *buf, पूर्णांक id, पूर�
 	mnl_attr_put_u32(nlh, NFQA_CFG_FLAGS, htonl(flags));
 	mnl_attr_put_u32(nlh, NFQA_CFG_MASK, htonl(flags));
 
-	अगर (mnl_socket_sendto(nl, nlh, nlh->nlmsg_len) < 0) अणु
-		लिखो_त्रुटि("mnl_socket_sendto");
-		निकास(निकास_त्रुटि);
-	पूर्ण
+	if (mnl_socket_sendto(nl, nlh, nlh->nlmsg_len) < 0) {
+		perror("mnl_socket_sendto");
+		exit(EXIT_FAILURE);
+	}
 
-	स_रखो(&tv, 0, माप(tv));
-	tv.tv_sec = opts.समयout;
-	अगर (opts.समयout && setsockopt(mnl_socket_get_fd(nl),
+	memset(&tv, 0, sizeof(tv));
+	tv.tv_sec = opts.timeout;
+	if (opts.timeout && setsockopt(mnl_socket_get_fd(nl),
 				       SOL_SOCKET, SO_RCVTIMEO,
-				       &tv, माप(tv))) अणु
-		लिखो_त्रुटि("setsockopt(SO_RCVTIMEO)");
-		निकास(निकास_त्रुटि);
-	पूर्ण
+				       &tv, sizeof(tv))) {
+		perror("setsockopt(SO_RCVTIMEO)");
+		exit(EXIT_FAILURE);
+	}
 
-	वापस nl;
-पूर्ण
+	return nl;
+}
 
-अटल व्योम sleep_ms(uपूर्णांक32_t delay)
-अणु
-	काष्ठा बारpec ts = अणु .tv_sec = delay / 1000 पूर्ण;
+static void sleep_ms(uint32_t delay)
+{
+	struct timespec ts = { .tv_sec = delay / 1000 };
 
 	delay %= 1000;
 
 	ts.tv_nsec = delay * 1000llu * 1000llu;
 
-	nanosleep(&ts, शून्य);
-पूर्ण
+	nanosleep(&ts, NULL);
+}
 
-अटल पूर्णांक मुख्यloop(व्योम)
-अणु
-	अचिन्हित पूर्णांक buflen = 64 * 1024 + MNL_SOCKET_BUFFER_SIZE;
-	काष्ठा mnl_socket *nl;
-	काष्ठा nlmsghdr *nlh;
-	अचिन्हित पूर्णांक portid;
-	अक्षर *buf;
-	पूर्णांक ret;
+static int mainloop(void)
+{
+	unsigned int buflen = 64 * 1024 + MNL_SOCKET_BUFFER_SIZE;
+	struct mnl_socket *nl;
+	struct nlmsghdr *nlh;
+	unsigned int portid;
+	char *buf;
+	int ret;
 
-	buf = दो_स्मृति(buflen);
-	अगर (!buf) अणु
-		लिखो_त्रुटि("malloc");
-		निकास(निकास_त्रुटि);
-	पूर्ण
+	buf = malloc(buflen);
+	if (!buf) {
+		perror("malloc");
+		exit(EXIT_FAILURE);
+	}
 
-	nl = खोलो_queue();
+	nl = open_queue();
 	portid = mnl_socket_get_portid(nl);
 
-	क्रम (;;) अणु
-		uपूर्णांक32_t id;
+	for (;;) {
+		uint32_t id;
 
 		ret = mnl_socket_recvfrom(nl, buf, buflen);
-		अगर (ret == -1) अणु
-			अगर (त्रुटि_सं == ENOBUFS || त्रुटि_सं == EINTR)
-				जारी;
+		if (ret == -1) {
+			if (errno == ENOBUFS || errno == EINTR)
+				continue;
 
-			अगर (त्रुटि_सं == EAGAIN) अणु
-				त्रुटि_सं = 0;
+			if (errno == EAGAIN) {
+				errno = 0;
 				ret = 0;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			लिखो_त्रुटि("mnl_socket_recvfrom");
-			निकास(निकास_त्रुटि);
-		पूर्ण
+			perror("mnl_socket_recvfrom");
+			exit(EXIT_FAILURE);
+		}
 
-		ret = mnl_cb_run(buf, ret, 0, portid, queue_cb, शून्य);
-		अगर (ret < 0) अणु
-			लिखो_त्रुटि("mnl_cb_run");
-			निकास(निकास_त्रुटि);
-		पूर्ण
+		ret = mnl_cb_run(buf, ret, 0, portid, queue_cb, NULL);
+		if (ret < 0) {
+			perror("mnl_cb_run");
+			exit(EXIT_FAILURE);
+		}
 
 		id = ret - MNL_CB_OK;
-		अगर (opts.delay_ms)
+		if (opts.delay_ms)
 			sleep_ms(opts.delay_ms);
 
 		nlh = nfq_build_verdict(buf, id, opts.queue_num, opts.verdict);
-		अगर (mnl_socket_sendto(nl, nlh, nlh->nlmsg_len) < 0) अणु
-			लिखो_त्रुटि("mnl_socket_sendto");
-			निकास(निकास_त्रुटि);
-		पूर्ण
-	पूर्ण
+		if (mnl_socket_sendto(nl, nlh, nlh->nlmsg_len) < 0) {
+			perror("mnl_socket_sendto");
+			exit(EXIT_FAILURE);
+		}
+	}
 
-	mnl_socket_बंद(nl);
+	mnl_socket_close(nl);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम parse_opts(पूर्णांक argc, अक्षर **argv)
-अणु
-	पूर्णांक c;
+static void parse_opts(int argc, char **argv)
+{
+	int c;
 
-	जबतक ((c = getopt(argc, argv, "chvt:q:Q:d:G")) != -1) अणु
-		चयन (c) अणु
-		हाल 'c':
+	while ((c = getopt(argc, argv, "chvt:q:Q:d:G")) != -1) {
+		switch (c) {
+		case 'c':
 			opts.count_packets = true;
-			अवरोध;
-		हाल 'h':
+			break;
+		case 'h':
 			help(argv[0]);
-			निकास(0);
-			अवरोध;
-		हाल 'q':
-			opts.queue_num = म_से_प(optarg);
-			अगर (opts.queue_num > 0xffff)
+			exit(0);
+			break;
+		case 'q':
+			opts.queue_num = atoi(optarg);
+			if (opts.queue_num > 0xffff)
 				opts.queue_num = 0;
-			अवरोध;
-		हाल 'Q':
-			opts.verdict = म_से_प(optarg);
-			अगर (opts.verdict > 0xffff) अणु
-				ख_लिखो(मानक_त्रुटि, "Expected destination queue number\n");
-				निकास(1);
-			पूर्ण
+			break;
+		case 'Q':
+			opts.verdict = atoi(optarg);
+			if (opts.verdict > 0xffff) {
+				fprintf(stderr, "Expected destination queue number\n");
+				exit(1);
+			}
 
 			opts.verdict <<= 16;
 			opts.verdict |= NF_QUEUE;
-			अवरोध;
-		हाल 'd':
-			opts.delay_ms = म_से_प(optarg);
-			अगर (opts.delay_ms == 0) अणु
-				ख_लिखो(मानक_त्रुटि, "Expected nonzero delay (in milliseconds)\n");
-				निकास(1);
-			पूर्ण
-			अवरोध;
-		हाल 't':
-			opts.समयout = म_से_प(optarg);
-			अवरोध;
-		हाल 'G':
+			break;
+		case 'd':
+			opts.delay_ms = atoi(optarg);
+			if (opts.delay_ms == 0) {
+				fprintf(stderr, "Expected nonzero delay (in milliseconds)\n");
+				exit(1);
+			}
+			break;
+		case 't':
+			opts.timeout = atoi(optarg);
+			break;
+		case 'G':
 			opts.gso_enabled = false;
-			अवरोध;
-		हाल 'v':
+			break;
+		case 'v':
 			opts.verbose++;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (opts.verdict != NF_ACCEPT && (opts.verdict >> 16 == opts.queue_num)) अणु
-		ख_लिखो(मानक_त्रुटि, "Cannot use same destination and source queue\n");
-		निकास(1);
-	पूर्ण
-पूर्ण
+	if (opts.verdict != NF_ACCEPT && (opts.verdict >> 16 == opts.queue_num)) {
+		fprintf(stderr, "Cannot use same destination and source queue\n");
+		exit(1);
+	}
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
-	पूर्णांक ret;
+int main(int argc, char *argv[])
+{
+	int ret;
 
 	opts.verdict = NF_ACCEPT;
 	opts.gso_enabled = true;
 
 	parse_opts(argc, argv);
 
-	ret = मुख्यloop();
-	अगर (opts.count_packets)
-		prपूर्णांक_stats();
+	ret = mainloop();
+	if (opts.count_packets)
+		print_stats();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

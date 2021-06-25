@@ -1,32 +1,31 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2008-2009 Michal Simek <monstr@monstr.eu>
  * Copyright (C) 2008-2009 PetaLogix
- * Copyright (C) 2006 Aपंचांगark Techno, Inc.
+ * Copyright (C) 2006 Atmark Techno, Inc.
  */
 
-#अगर_अघोषित _ASM_MICROBLAZE_REGISTERS_H
-#घोषणा _ASM_MICROBLAZE_REGISTERS_H
+#ifndef _ASM_MICROBLAZE_REGISTERS_H
+#define _ASM_MICROBLAZE_REGISTERS_H
 
-#घोषणा MSR_BE	(1<<0) /* 0x001 */
-#घोषणा MSR_IE	(1<<1) /* 0x002 */
-#घोषणा MSR_C	(1<<2) /* 0x004 */
-#घोषणा MSR_BIP	(1<<3) /* 0x008 */
-#घोषणा MSR_FSL	(1<<4) /* 0x010 */
-#घोषणा MSR_ICE	(1<<5) /* 0x020 */
-#घोषणा MSR_DZ	(1<<6) /* 0x040 */
-#घोषणा MSR_DCE	(1<<7) /* 0x080 */
-#घोषणा MSR_EE	(1<<8) /* 0x100 */
-#घोषणा MSR_EIP	(1<<9) /* 0x200 */
-#घोषणा MSR_CC	(1<<31)
+#define MSR_BE	(1<<0) /* 0x001 */
+#define MSR_IE	(1<<1) /* 0x002 */
+#define MSR_C	(1<<2) /* 0x004 */
+#define MSR_BIP	(1<<3) /* 0x008 */
+#define MSR_FSL	(1<<4) /* 0x010 */
+#define MSR_ICE	(1<<5) /* 0x020 */
+#define MSR_DZ	(1<<6) /* 0x040 */
+#define MSR_DCE	(1<<7) /* 0x080 */
+#define MSR_EE	(1<<8) /* 0x100 */
+#define MSR_EIP	(1<<9) /* 0x200 */
+#define MSR_CC	(1<<31)
 
-/* Floating Poपूर्णांक Status Register (FSR) Bits */
-#घोषणा FSR_IO		(1<<4) /* Invalid operation */
-#घोषणा FSR_DZ		(1<<3) /* Divide-by-zero */
-#घोषणा FSR_OF		(1<<2) /* Overflow */
-#घोषणा FSR_UF		(1<<1) /* Underflow */
-#घोषणा FSR_DO		(1<<0) /* Denormalized opeअक्रम error */
+/* Floating Point Status Register (FSR) Bits */
+#define FSR_IO		(1<<4) /* Invalid operation */
+#define FSR_DZ		(1<<3) /* Divide-by-zero */
+#define FSR_OF		(1<<2) /* Overflow */
+#define FSR_UF		(1<<1) /* Underflow */
+#define FSR_DO		(1<<0) /* Denormalized operand error */
 
 /* Machine State Register (MSR) Fields */
 # define MSR_UM		(1<<11) /* User Mode */
@@ -41,6 +40,6 @@
 
 /* Exception State Register (ESR) Fields */
 # define	  ESR_DIZ	(1<<11) /* Zone Protection */
-# define	  ESR_S		(1<<10) /* Store inकाष्ठाion */
+# define	  ESR_S		(1<<10) /* Store instruction */
 
-#पूर्ण_अगर /* _ASM_MICROBLAZE_REGISTERS_H */
+#endif /* _ASM_MICROBLAZE_REGISTERS_H */

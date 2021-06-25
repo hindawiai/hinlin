@@ -1,211 +1,210 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- *  cpufreq.h - definitions क्रम libcpufreq
+ *  cpufreq.h - definitions for libcpufreq
  *
- *  Copyright (C) 2004-2009  Dominik Broकरोwski <linux@करोminikbroकरोwski.de>
+ *  Copyright (C) 2004-2009  Dominik Brodowski <linux@dominikbrodowski.de>
  */
 
-#अगर_अघोषित __CPUPOWER_CPUFREQ_H__
-#घोषणा __CPUPOWER_CPUFREQ_H__
+#ifndef __CPUPOWER_CPUFREQ_H__
+#define __CPUPOWER_CPUFREQ_H__
 
-काष्ठा cpufreq_policy अणु
-	अचिन्हित दीर्घ min;
-	अचिन्हित दीर्घ max;
-	अक्षर *governor;
-पूर्ण;
+struct cpufreq_policy {
+	unsigned long min;
+	unsigned long max;
+	char *governor;
+};
 
-काष्ठा cpufreq_available_governors अणु
-	अक्षर *governor;
-	काष्ठा cpufreq_available_governors *next;
-	काष्ठा cpufreq_available_governors *first;
-पूर्ण;
+struct cpufreq_available_governors {
+	char *governor;
+	struct cpufreq_available_governors *next;
+	struct cpufreq_available_governors *first;
+};
 
-काष्ठा cpufreq_available_frequencies अणु
-	अचिन्हित दीर्घ frequency;
-	काष्ठा cpufreq_available_frequencies *next;
-	काष्ठा cpufreq_available_frequencies *first;
-पूर्ण;
-
-
-काष्ठा cpufreq_affected_cpus अणु
-	अचिन्हित पूर्णांक cpu;
-	काष्ठा cpufreq_affected_cpus *next;
-	काष्ठा cpufreq_affected_cpus *first;
-पूर्ण;
-
-काष्ठा cpufreq_stats अणु
-	अचिन्हित दीर्घ frequency;
-	अचिन्हित दीर्घ दीर्घ समय_in_state;
-	काष्ठा cpufreq_stats *next;
-	काष्ठा cpufreq_stats *first;
-पूर्ण;
+struct cpufreq_available_frequencies {
+	unsigned long frequency;
+	struct cpufreq_available_frequencies *next;
+	struct cpufreq_available_frequencies *first;
+};
 
 
+struct cpufreq_affected_cpus {
+	unsigned int cpu;
+	struct cpufreq_affected_cpus *next;
+	struct cpufreq_affected_cpus *first;
+};
 
-#अगर_घोषित __cplusplus
-बाह्य "C" अणु
-#पूर्ण_अगर
+struct cpufreq_stats {
+	unsigned long frequency;
+	unsigned long long time_in_state;
+	struct cpufreq_stats *next;
+	struct cpufreq_stats *first;
+};
+
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* determine current CPU frequency
  * - _kernel variant means kernel's opinion of CPU frequency
  * - _hardware variant means actual hardware CPU frequency,
  *    which is only available to root.
  *
- * वापसs 0 on failure, अन्यथा frequency in kHz.
+ * returns 0 on failure, else frequency in kHz.
  */
 
-अचिन्हित दीर्घ cpufreq_get_freq_kernel(अचिन्हित पूर्णांक cpu);
+unsigned long cpufreq_get_freq_kernel(unsigned int cpu);
 
-अचिन्हित दीर्घ cpufreq_get_freq_hardware(अचिन्हित पूर्णांक cpu);
+unsigned long cpufreq_get_freq_hardware(unsigned int cpu);
 
-#घोषणा cpufreq_get(cpu) cpufreq_get_freq_kernel(cpu);
+#define cpufreq_get(cpu) cpufreq_get_freq_kernel(cpu);
 
 
 /* determine CPU transition latency
  *
- * वापसs 0 on failure, अन्यथा transition latency in 10^(-9) s = nanoseconds
+ * returns 0 on failure, else transition latency in 10^(-9) s = nanoseconds
  */
-अचिन्हित दीर्घ cpufreq_get_transition_latency(अचिन्हित पूर्णांक cpu);
+unsigned long cpufreq_get_transition_latency(unsigned int cpu);
 
 
 /* determine hardware CPU frequency limits
  *
  * These may be limited further by thermal, energy or other
- * considerations by cpufreq policy notअगरiers in the kernel.
+ * considerations by cpufreq policy notifiers in the kernel.
  */
 
-पूर्णांक cpufreq_get_hardware_limits(अचिन्हित पूर्णांक cpu,
-				अचिन्हित दीर्घ *min,
-				अचिन्हित दीर्घ *max);
+int cpufreq_get_hardware_limits(unsigned int cpu,
+				unsigned long *min,
+				unsigned long *max);
 
 
 /* determine CPUfreq driver used
  *
- * Remember to call cpufreq_put_driver when no दीर्घer needed
- * to aव्योम memory leakage, please.
+ * Remember to call cpufreq_put_driver when no longer needed
+ * to avoid memory leakage, please.
  */
 
-अक्षर *cpufreq_get_driver(अचिन्हित पूर्णांक cpu);
+char *cpufreq_get_driver(unsigned int cpu);
 
-व्योम cpufreq_put_driver(अक्षर *ptr);
+void cpufreq_put_driver(char *ptr);
 
 
 /* determine CPUfreq policy currently used
  *
- * Remember to call cpufreq_put_policy when no दीर्घer needed
- * to aव्योम memory leakage, please.
+ * Remember to call cpufreq_put_policy when no longer needed
+ * to avoid memory leakage, please.
  */
 
 
-काष्ठा cpufreq_policy *cpufreq_get_policy(अचिन्हित पूर्णांक cpu);
+struct cpufreq_policy *cpufreq_get_policy(unsigned int cpu);
 
-व्योम cpufreq_put_policy(काष्ठा cpufreq_policy *policy);
+void cpufreq_put_policy(struct cpufreq_policy *policy);
 
 
 /* determine CPUfreq governors currently available
  *
- * may be modअगरied by modprobe'ing or rmmod'ing other governors. Please
- * मुक्त allocated memory by calling cpufreq_put_available_governors
+ * may be modified by modprobe'ing or rmmod'ing other governors. Please
+ * free allocated memory by calling cpufreq_put_available_governors
  * after use.
  */
 
 
-काष्ठा cpufreq_available_governors
-*cpufreq_get_available_governors(अचिन्हित पूर्णांक cpu);
+struct cpufreq_available_governors
+*cpufreq_get_available_governors(unsigned int cpu);
 
-व्योम cpufreq_put_available_governors(
-	काष्ठा cpufreq_available_governors *first);
+void cpufreq_put_available_governors(
+	struct cpufreq_available_governors *first);
 
 
 /* determine CPU frequency states available
  *
- * Only present on _some_ ->target() cpufreq drivers. For inक्रमmation purposes
- * only. Please मुक्त allocated memory by calling
+ * Only present on _some_ ->target() cpufreq drivers. For information purposes
+ * only. Please free allocated memory by calling
  * cpufreq_put_frequencies after use.
  */
 
-काष्ठा cpufreq_available_frequencies
-*cpufreq_get_available_frequencies(अचिन्हित पूर्णांक cpu);
+struct cpufreq_available_frequencies
+*cpufreq_get_available_frequencies(unsigned int cpu);
 
-व्योम cpufreq_put_available_frequencies(
-		काष्ठा cpufreq_available_frequencies *first);
+void cpufreq_put_available_frequencies(
+		struct cpufreq_available_frequencies *first);
 
-काष्ठा cpufreq_available_frequencies
-*cpufreq_get_boost_frequencies(अचिन्हित पूर्णांक cpu);
+struct cpufreq_available_frequencies
+*cpufreq_get_boost_frequencies(unsigned int cpu);
 
-व्योम cpufreq_put_boost_frequencies(
-		काष्ठा cpufreq_available_frequencies *first);
+void cpufreq_put_boost_frequencies(
+		struct cpufreq_available_frequencies *first);
 
 
 /* determine affected CPUs
  *
- * Remember to call cpufreq_put_affected_cpus when no दीर्घer needed
- * to aव्योम memory leakage, please.
+ * Remember to call cpufreq_put_affected_cpus when no longer needed
+ * to avoid memory leakage, please.
  */
 
-काष्ठा cpufreq_affected_cpus *cpufreq_get_affected_cpus(अचिन्हित
-							पूर्णांक cpu);
+struct cpufreq_affected_cpus *cpufreq_get_affected_cpus(unsigned
+							int cpu);
 
-व्योम cpufreq_put_affected_cpus(काष्ठा cpufreq_affected_cpus *first);
+void cpufreq_put_affected_cpus(struct cpufreq_affected_cpus *first);
 
 
 /* determine related CPUs
  *
- * Remember to call cpufreq_put_related_cpus when no दीर्घer needed
- * to aव्योम memory leakage, please.
+ * Remember to call cpufreq_put_related_cpus when no longer needed
+ * to avoid memory leakage, please.
  */
 
-काष्ठा cpufreq_affected_cpus *cpufreq_get_related_cpus(अचिन्हित
-							पूर्णांक cpu);
+struct cpufreq_affected_cpus *cpufreq_get_related_cpus(unsigned
+							int cpu);
 
-व्योम cpufreq_put_related_cpus(काष्ठा cpufreq_affected_cpus *first);
+void cpufreq_put_related_cpus(struct cpufreq_affected_cpus *first);
 
 
-/* determine stats क्रम cpufreq subप्रणाली
+/* determine stats for cpufreq subsystem
  *
  * This is not available in all kernel versions or configurations.
  */
 
-काष्ठा cpufreq_stats *cpufreq_get_stats(अचिन्हित पूर्णांक cpu,
-					अचिन्हित दीर्घ दीर्घ *total_समय);
+struct cpufreq_stats *cpufreq_get_stats(unsigned int cpu,
+					unsigned long long *total_time);
 
-व्योम cpufreq_put_stats(काष्ठा cpufreq_stats *stats);
+void cpufreq_put_stats(struct cpufreq_stats *stats);
 
-अचिन्हित दीर्घ cpufreq_get_transitions(अचिन्हित पूर्णांक cpu);
+unsigned long cpufreq_get_transitions(unsigned int cpu);
 
 
 /* set new cpufreq policy
  *
- * Tries to set the passed policy as new policy as बंद as possible,
- * but results may dअगरfer depending e.g. on governors being available.
+ * Tries to set the passed policy as new policy as close as possible,
+ * but results may differ depending e.g. on governors being available.
  */
 
-पूर्णांक cpufreq_set_policy(अचिन्हित पूर्णांक cpu, काष्ठा cpufreq_policy *policy);
+int cpufreq_set_policy(unsigned int cpu, struct cpufreq_policy *policy);
 
 
-/* modअगरy a policy by only changing min/max freq or governor
+/* modify a policy by only changing min/max freq or governor
  *
- * Does not check whether result is what was पूर्णांकended.
+ * Does not check whether result is what was intended.
  */
 
-पूर्णांक cpufreq_modअगरy_policy_min(अचिन्हित पूर्णांक cpu, अचिन्हित दीर्घ min_freq);
-पूर्णांक cpufreq_modअगरy_policy_max(अचिन्हित पूर्णांक cpu, अचिन्हित दीर्घ max_freq);
-पूर्णांक cpufreq_modअगरy_policy_governor(अचिन्हित पूर्णांक cpu, अक्षर *governor);
+int cpufreq_modify_policy_min(unsigned int cpu, unsigned long min_freq);
+int cpufreq_modify_policy_max(unsigned int cpu, unsigned long max_freq);
+int cpufreq_modify_policy_governor(unsigned int cpu, char *governor);
 
 
-/* set a specअगरic frequency
+/* set a specific frequency
  *
- * Does only work अगर userspace governor can be used and no बाह्यal
- * पूर्णांकerference (other calls to this function or to set/modअगरy_policy)
- * occurs. Also करोes not work on ->range() cpufreq drivers.
+ * Does only work if userspace governor can be used and no external
+ * interference (other calls to this function or to set/modify_policy)
+ * occurs. Also does not work on ->range() cpufreq drivers.
  */
 
-पूर्णांक cpufreq_set_frequency(अचिन्हित पूर्णांक cpu,
-				अचिन्हित दीर्घ target_frequency);
+int cpufreq_set_frequency(unsigned int cpu,
+				unsigned long target_frequency);
 
-#अगर_घोषित __cplusplus
-पूर्ण
-#पूर्ण_अगर
+#ifdef __cplusplus
+}
+#endif
 
-#पूर्ण_अगर /* _CPUFREQ_H */
+#endif /* _CPUFREQ_H */

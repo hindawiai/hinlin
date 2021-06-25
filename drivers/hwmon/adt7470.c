@@ -1,152 +1,151 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * A hwmon driver क्रम the Analog Devices ADT7470
+ * A hwmon driver for the Analog Devices ADT7470
  * Copyright (C) 2007 IBM
  *
  * Author: Darrick J. Wong <darrick.wong@oracle.com>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/hwmon.h>
-#समावेश <linux/hwmon-sysfs.h>
-#समावेश <linux/err.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/log2.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/util_macros.h>
+#include <linux/module.h>
+#include <linux/jiffies.h>
+#include <linux/i2c.h>
+#include <linux/hwmon.h>
+#include <linux/hwmon-sysfs.h>
+#include <linux/err.h>
+#include <linux/mutex.h>
+#include <linux/delay.h>
+#include <linux/log2.h>
+#include <linux/kthread.h>
+#include <linux/slab.h>
+#include <linux/util_macros.h>
 
 /* Addresses to scan */
-अटल स्थिर अचिन्हित लघु normal_i2c[] = अणु 0x2C, 0x2E, 0x2F, I2C_CLIENT_END पूर्ण;
+static const unsigned short normal_i2c[] = { 0x2C, 0x2E, 0x2F, I2C_CLIENT_END };
 
-/* ADT7470 रेजिस्टरs */
-#घोषणा ADT7470_REG_BASE_ADDR			0x20
-#घोषणा ADT7470_REG_TEMP_BASE_ADDR		0x20
-#घोषणा ADT7470_REG_TEMP_MAX_ADDR		0x29
-#घोषणा ADT7470_REG_FAN_BASE_ADDR		0x2A
-#घोषणा ADT7470_REG_FAN_MAX_ADDR		0x31
-#घोषणा ADT7470_REG_PWM_BASE_ADDR		0x32
-#घोषणा ADT7470_REG_PWM_MAX_ADDR		0x35
-#घोषणा ADT7470_REG_PWM_MAX_BASE_ADDR		0x38
-#घोषणा ADT7470_REG_PWM_MAX_MAX_ADDR		0x3B
-#घोषणा ADT7470_REG_CFG				0x40
-#घोषणा		ADT7470_FSPD_MASK		0x04
-#घोषणा ADT7470_REG_ALARM1			0x41
-#घोषणा		ADT7470_R1T_ALARM		0x01
-#घोषणा		ADT7470_R2T_ALARM		0x02
-#घोषणा		ADT7470_R3T_ALARM		0x04
-#घोषणा		ADT7470_R4T_ALARM		0x08
-#घोषणा		ADT7470_R5T_ALARM		0x10
-#घोषणा		ADT7470_R6T_ALARM		0x20
-#घोषणा		ADT7470_R7T_ALARM		0x40
-#घोषणा		ADT7470_OOL_ALARM		0x80
-#घोषणा ADT7470_REG_ALARM2			0x42
-#घोषणा		ADT7470_R8T_ALARM		0x01
-#घोषणा		ADT7470_R9T_ALARM		0x02
-#घोषणा		ADT7470_R10T_ALARM		0x04
-#घोषणा		ADT7470_FAN1_ALARM		0x10
-#घोषणा		ADT7470_FAN2_ALARM		0x20
-#घोषणा		ADT7470_FAN3_ALARM		0x40
-#घोषणा		ADT7470_FAN4_ALARM		0x80
-#घोषणा ADT7470_REG_TEMP_LIMITS_BASE_ADDR	0x44
-#घोषणा ADT7470_REG_TEMP_LIMITS_MAX_ADDR	0x57
-#घोषणा ADT7470_REG_FAN_MIN_BASE_ADDR		0x58
-#घोषणा ADT7470_REG_FAN_MIN_MAX_ADDR		0x5F
-#घोषणा ADT7470_REG_FAN_MAX_BASE_ADDR		0x60
-#घोषणा ADT7470_REG_FAN_MAX_MAX_ADDR		0x67
-#घोषणा ADT7470_REG_PWM_CFG_BASE_ADDR		0x68
-#घोषणा ADT7470_REG_PWM12_CFG			0x68
-#घोषणा		ADT7470_PWM2_AUTO_MASK		0x40
-#घोषणा		ADT7470_PWM1_AUTO_MASK		0x80
-#घोषणा		ADT7470_PWM_AUTO_MASK		0xC0
-#घोषणा ADT7470_REG_PWM34_CFG			0x69
-#घोषणा		ADT7470_PWM3_AUTO_MASK		0x40
-#घोषणा		ADT7470_PWM4_AUTO_MASK		0x80
-#घोषणा	ADT7470_REG_PWM_MIN_BASE_ADDR		0x6A
-#घोषणा ADT7470_REG_PWM_MIN_MAX_ADDR		0x6D
-#घोषणा ADT7470_REG_PWM_TEMP_MIN_BASE_ADDR	0x6E
-#घोषणा ADT7470_REG_PWM_TEMP_MIN_MAX_ADDR	0x71
-#घोषणा ADT7470_REG_CFG_2			0x74
-#घोषणा ADT7470_REG_ACOUSTICS12			0x75
-#घोषणा ADT7470_REG_ACOUSTICS34			0x76
-#घोषणा ADT7470_REG_DEVICE			0x3D
-#घोषणा ADT7470_REG_VENDOR			0x3E
-#घोषणा ADT7470_REG_REVISION			0x3F
-#घोषणा ADT7470_REG_ALARM1_MASK			0x72
-#घोषणा ADT7470_REG_ALARM2_MASK			0x73
-#घोषणा ADT7470_REG_PWM_AUTO_TEMP_BASE_ADDR	0x7C
-#घोषणा ADT7470_REG_PWM_AUTO_TEMP_MAX_ADDR	0x7D
-#घोषणा ADT7470_REG_MAX_ADDR			0x81
+/* ADT7470 registers */
+#define ADT7470_REG_BASE_ADDR			0x20
+#define ADT7470_REG_TEMP_BASE_ADDR		0x20
+#define ADT7470_REG_TEMP_MAX_ADDR		0x29
+#define ADT7470_REG_FAN_BASE_ADDR		0x2A
+#define ADT7470_REG_FAN_MAX_ADDR		0x31
+#define ADT7470_REG_PWM_BASE_ADDR		0x32
+#define ADT7470_REG_PWM_MAX_ADDR		0x35
+#define ADT7470_REG_PWM_MAX_BASE_ADDR		0x38
+#define ADT7470_REG_PWM_MAX_MAX_ADDR		0x3B
+#define ADT7470_REG_CFG				0x40
+#define		ADT7470_FSPD_MASK		0x04
+#define ADT7470_REG_ALARM1			0x41
+#define		ADT7470_R1T_ALARM		0x01
+#define		ADT7470_R2T_ALARM		0x02
+#define		ADT7470_R3T_ALARM		0x04
+#define		ADT7470_R4T_ALARM		0x08
+#define		ADT7470_R5T_ALARM		0x10
+#define		ADT7470_R6T_ALARM		0x20
+#define		ADT7470_R7T_ALARM		0x40
+#define		ADT7470_OOL_ALARM		0x80
+#define ADT7470_REG_ALARM2			0x42
+#define		ADT7470_R8T_ALARM		0x01
+#define		ADT7470_R9T_ALARM		0x02
+#define		ADT7470_R10T_ALARM		0x04
+#define		ADT7470_FAN1_ALARM		0x10
+#define		ADT7470_FAN2_ALARM		0x20
+#define		ADT7470_FAN3_ALARM		0x40
+#define		ADT7470_FAN4_ALARM		0x80
+#define ADT7470_REG_TEMP_LIMITS_BASE_ADDR	0x44
+#define ADT7470_REG_TEMP_LIMITS_MAX_ADDR	0x57
+#define ADT7470_REG_FAN_MIN_BASE_ADDR		0x58
+#define ADT7470_REG_FAN_MIN_MAX_ADDR		0x5F
+#define ADT7470_REG_FAN_MAX_BASE_ADDR		0x60
+#define ADT7470_REG_FAN_MAX_MAX_ADDR		0x67
+#define ADT7470_REG_PWM_CFG_BASE_ADDR		0x68
+#define ADT7470_REG_PWM12_CFG			0x68
+#define		ADT7470_PWM2_AUTO_MASK		0x40
+#define		ADT7470_PWM1_AUTO_MASK		0x80
+#define		ADT7470_PWM_AUTO_MASK		0xC0
+#define ADT7470_REG_PWM34_CFG			0x69
+#define		ADT7470_PWM3_AUTO_MASK		0x40
+#define		ADT7470_PWM4_AUTO_MASK		0x80
+#define	ADT7470_REG_PWM_MIN_BASE_ADDR		0x6A
+#define ADT7470_REG_PWM_MIN_MAX_ADDR		0x6D
+#define ADT7470_REG_PWM_TEMP_MIN_BASE_ADDR	0x6E
+#define ADT7470_REG_PWM_TEMP_MIN_MAX_ADDR	0x71
+#define ADT7470_REG_CFG_2			0x74
+#define ADT7470_REG_ACOUSTICS12			0x75
+#define ADT7470_REG_ACOUSTICS34			0x76
+#define ADT7470_REG_DEVICE			0x3D
+#define ADT7470_REG_VENDOR			0x3E
+#define ADT7470_REG_REVISION			0x3F
+#define ADT7470_REG_ALARM1_MASK			0x72
+#define ADT7470_REG_ALARM2_MASK			0x73
+#define ADT7470_REG_PWM_AUTO_TEMP_BASE_ADDR	0x7C
+#define ADT7470_REG_PWM_AUTO_TEMP_MAX_ADDR	0x7D
+#define ADT7470_REG_MAX_ADDR			0x81
 
-#घोषणा ADT7470_TEMP_COUNT	10
-#घोषणा ADT7470_TEMP_REG(x)	(ADT7470_REG_TEMP_BASE_ADDR + (x))
-#घोषणा ADT7470_TEMP_MIN_REG(x) (ADT7470_REG_TEMP_LIMITS_BASE_ADDR + ((x) * 2))
-#घोषणा ADT7470_TEMP_MAX_REG(x) (ADT7470_REG_TEMP_LIMITS_BASE_ADDR + \
+#define ADT7470_TEMP_COUNT	10
+#define ADT7470_TEMP_REG(x)	(ADT7470_REG_TEMP_BASE_ADDR + (x))
+#define ADT7470_TEMP_MIN_REG(x) (ADT7470_REG_TEMP_LIMITS_BASE_ADDR + ((x) * 2))
+#define ADT7470_TEMP_MAX_REG(x) (ADT7470_REG_TEMP_LIMITS_BASE_ADDR + \
 				((x) * 2) + 1)
 
-#घोषणा ADT7470_FAN_COUNT	4
-#घोषणा ADT7470_REG_FAN(x)	(ADT7470_REG_FAN_BASE_ADDR + ((x) * 2))
-#घोषणा ADT7470_REG_FAN_MIN(x)	(ADT7470_REG_FAN_MIN_BASE_ADDR + ((x) * 2))
-#घोषणा ADT7470_REG_FAN_MAX(x)	(ADT7470_REG_FAN_MAX_BASE_ADDR + ((x) * 2))
+#define ADT7470_FAN_COUNT	4
+#define ADT7470_REG_FAN(x)	(ADT7470_REG_FAN_BASE_ADDR + ((x) * 2))
+#define ADT7470_REG_FAN_MIN(x)	(ADT7470_REG_FAN_MIN_BASE_ADDR + ((x) * 2))
+#define ADT7470_REG_FAN_MAX(x)	(ADT7470_REG_FAN_MAX_BASE_ADDR + ((x) * 2))
 
-#घोषणा ADT7470_PWM_COUNT	4
-#घोषणा ADT7470_REG_PWM(x)	(ADT7470_REG_PWM_BASE_ADDR + (x))
-#घोषणा ADT7470_REG_PWM_MAX(x)	(ADT7470_REG_PWM_MAX_BASE_ADDR + (x))
-#घोषणा ADT7470_REG_PWM_MIN(x)	(ADT7470_REG_PWM_MIN_BASE_ADDR + (x))
-#घोषणा ADT7470_REG_PWM_TMIN(x)	(ADT7470_REG_PWM_TEMP_MIN_BASE_ADDR + (x))
-#घोषणा ADT7470_REG_PWM_CFG(x)	(ADT7470_REG_PWM_CFG_BASE_ADDR + ((x) / 2))
-#घोषणा ADT7470_REG_PWM_AUTO_TEMP(x)	(ADT7470_REG_PWM_AUTO_TEMP_BASE_ADDR + \
+#define ADT7470_PWM_COUNT	4
+#define ADT7470_REG_PWM(x)	(ADT7470_REG_PWM_BASE_ADDR + (x))
+#define ADT7470_REG_PWM_MAX(x)	(ADT7470_REG_PWM_MAX_BASE_ADDR + (x))
+#define ADT7470_REG_PWM_MIN(x)	(ADT7470_REG_PWM_MIN_BASE_ADDR + (x))
+#define ADT7470_REG_PWM_TMIN(x)	(ADT7470_REG_PWM_TEMP_MIN_BASE_ADDR + (x))
+#define ADT7470_REG_PWM_CFG(x)	(ADT7470_REG_PWM_CFG_BASE_ADDR + ((x) / 2))
+#define ADT7470_REG_PWM_AUTO_TEMP(x)	(ADT7470_REG_PWM_AUTO_TEMP_BASE_ADDR + \
 					((x) / 2))
 
-#घोषणा ALARM2(x)		((x) << 8)
+#define ALARM2(x)		((x) << 8)
 
-#घोषणा ADT7470_VENDOR		0x41
-#घोषणा ADT7470_DEVICE		0x70
+#define ADT7470_VENDOR		0x41
+#define ADT7470_DEVICE		0x70
 /* datasheet only mentions a revision 2 */
-#घोषणा ADT7470_REVISION	0x02
+#define ADT7470_REVISION	0x02
 
-/* "all temps" according to hwmon sysfs पूर्णांकerface spec */
-#घोषणा ADT7470_PWM_ALL_TEMPS	0x3FF
+/* "all temps" according to hwmon sysfs interface spec */
+#define ADT7470_PWM_ALL_TEMPS	0x3FF
 
-/* How often करो we reपढ़ो sensors values? (In jअगरfies) */
-#घोषणा SENSOR_REFRESH_INTERVAL	(5 * HZ)
+/* How often do we reread sensors values? (In jiffies) */
+#define SENSOR_REFRESH_INTERVAL	(5 * HZ)
 
-/* How often करो we reपढ़ो sensor limit values? (In jअगरfies) */
-#घोषणा LIMIT_REFRESH_INTERVAL	(60 * HZ)
+/* How often do we reread sensor limit values? (In jiffies) */
+#define LIMIT_REFRESH_INTERVAL	(60 * HZ)
 
-/* Wait at least 200ms per sensor क्रम 10 sensors */
-#घोषणा TEMP_COLLECTION_TIME	2000
+/* Wait at least 200ms per sensor for 10 sensors */
+#define TEMP_COLLECTION_TIME	2000
 
-/* स्वतः update thing won't fire more than every 2s */
-#घोषणा AUTO_UPDATE_INTERVAL	2000
+/* auto update thing won't fire more than every 2s */
+#define AUTO_UPDATE_INTERVAL	2000
 
-/* datasheet says to भागide this number by the fan पढ़ोing to get fan rpm */
-#घोषणा FAN_PERIOD_TO_RPM(x)	((90000 * 60) / (x))
-#घोषणा FAN_RPM_TO_PERIOD	FAN_PERIOD_TO_RPM
-#घोषणा FAN_PERIOD_INVALID	65535
-#घोषणा FAN_DATA_VALID(x)	((x) && (x) != FAN_PERIOD_INVALID)
+/* datasheet says to divide this number by the fan reading to get fan rpm */
+#define FAN_PERIOD_TO_RPM(x)	((90000 * 60) / (x))
+#define FAN_RPM_TO_PERIOD	FAN_PERIOD_TO_RPM
+#define FAN_PERIOD_INVALID	65535
+#define FAN_DATA_VALID(x)	((x) && (x) != FAN_PERIOD_INVALID)
 
-/* Config रेजिस्टरs 1 and 2 include fields क्रम selecting the PWM frequency */
-#घोषणा ADT7470_CFG_LF		0x40
-#घोषणा ADT7470_FREQ_MASK	0x70
-#घोषणा ADT7470_FREQ_SHIFT	4
+/* Config registers 1 and 2 include fields for selecting the PWM frequency */
+#define ADT7470_CFG_LF		0x40
+#define ADT7470_FREQ_MASK	0x70
+#define ADT7470_FREQ_SHIFT	4
 
-काष्ठा adt7470_data अणु
-	काष्ठा i2c_client	*client;
-	काष्ठा mutex		lock;
-	अक्षर			sensors_valid;
-	अक्षर			limits_valid;
-	अचिन्हित दीर्घ		sensors_last_updated;	/* In jअगरfies */
-	अचिन्हित दीर्घ		limits_last_updated;	/* In jअगरfies */
+struct adt7470_data {
+	struct i2c_client	*client;
+	struct mutex		lock;
+	char			sensors_valid;
+	char			limits_valid;
+	unsigned long		sensors_last_updated;	/* In jiffies */
+	unsigned long		limits_last_updated;	/* In jiffies */
 
-	पूर्णांक			num_temp_sensors;	/* -1 = probe */
-	पूर्णांक			temperatures_probed;
+	int			num_temp_sensors;	/* -1 = probe */
+	int			temperatures_probed;
 
 	s8			temp[ADT7470_TEMP_COUNT];
 	s8			temp_min[ADT7470_TEMP_COUNT];
@@ -156,1020 +155,1020 @@
 	u16			fan_max[ADT7470_FAN_COUNT];
 	u16			alarm;
 	u16			alarms_mask;
-	u8			क्रमce_pwm_max;
+	u8			force_pwm_max;
 	u8			pwm[ADT7470_PWM_COUNT];
 	u8			pwm_max[ADT7470_PWM_COUNT];
-	u8			pwm_स्वतःmatic[ADT7470_PWM_COUNT];
+	u8			pwm_automatic[ADT7470_PWM_COUNT];
 	u8			pwm_min[ADT7470_PWM_COUNT];
-	s8			pwm_पंचांगin[ADT7470_PWM_COUNT];
-	u8			pwm_स्वतः_temp[ADT7470_PWM_COUNT];
+	s8			pwm_tmin[ADT7470_PWM_COUNT];
+	u8			pwm_auto_temp[ADT7470_PWM_COUNT];
 
-	काष्ठा task_काष्ठा	*स्वतः_update;
-	अचिन्हित पूर्णांक		स्वतः_update_पूर्णांकerval;
-पूर्ण;
+	struct task_struct	*auto_update;
+	unsigned int		auto_update_interval;
+};
 
 /*
- * 16-bit रेजिस्टरs on the ADT7470 are low-byte first.  The data sheet says
- * that the low byte must be पढ़ो beक्रमe the high byte.
+ * 16-bit registers on the ADT7470 are low-byte first.  The data sheet says
+ * that the low byte must be read before the high byte.
  */
-अटल अंतरभूत पूर्णांक adt7470_पढ़ो_word_data(काष्ठा i2c_client *client, u8 reg)
-अणु
+static inline int adt7470_read_word_data(struct i2c_client *client, u8 reg)
+{
 	u16 foo;
-	foo = i2c_smbus_पढ़ो_byte_data(client, reg);
-	foo |= ((u16)i2c_smbus_पढ़ो_byte_data(client, reg + 1) << 8);
-	वापस foo;
-पूर्ण
+	foo = i2c_smbus_read_byte_data(client, reg);
+	foo |= ((u16)i2c_smbus_read_byte_data(client, reg + 1) << 8);
+	return foo;
+}
 
-अटल अंतरभूत पूर्णांक adt7470_ग_लिखो_word_data(काष्ठा i2c_client *client, u8 reg,
+static inline int adt7470_write_word_data(struct i2c_client *client, u8 reg,
 					  u16 value)
-अणु
-	वापस i2c_smbus_ग_लिखो_byte_data(client, reg, value & 0xFF)
-	       || i2c_smbus_ग_लिखो_byte_data(client, reg + 1, value >> 8);
-पूर्ण
+{
+	return i2c_smbus_write_byte_data(client, reg, value & 0xFF)
+	       || i2c_smbus_write_byte_data(client, reg + 1, value >> 8);
+}
 
-/* Probe क्रम temperature sensors.  Assumes lock is held */
-अटल पूर्णांक adt7470_पढ़ो_temperatures(काष्ठा i2c_client *client,
-				     काष्ठा adt7470_data *data)
-अणु
-	अचिन्हित दीर्घ res;
-	पूर्णांक i;
+/* Probe for temperature sensors.  Assumes lock is held */
+static int adt7470_read_temperatures(struct i2c_client *client,
+				     struct adt7470_data *data)
+{
+	unsigned long res;
+	int i;
 	u8 cfg, pwm[4], pwm_cfg[2];
 
-	/* save pwm[1-4] config रेजिस्टर */
-	pwm_cfg[0] = i2c_smbus_पढ़ो_byte_data(client, ADT7470_REG_PWM_CFG(0));
-	pwm_cfg[1] = i2c_smbus_पढ़ो_byte_data(client, ADT7470_REG_PWM_CFG(2));
+	/* save pwm[1-4] config register */
+	pwm_cfg[0] = i2c_smbus_read_byte_data(client, ADT7470_REG_PWM_CFG(0));
+	pwm_cfg[1] = i2c_smbus_read_byte_data(client, ADT7470_REG_PWM_CFG(2));
 
 	/* set manual pwm to whatever it is set to now */
-	क्रम (i = 0; i < ADT7470_FAN_COUNT; i++)
-		pwm[i] = i2c_smbus_पढ़ो_byte_data(client, ADT7470_REG_PWM(i));
+	for (i = 0; i < ADT7470_FAN_COUNT; i++)
+		pwm[i] = i2c_smbus_read_byte_data(client, ADT7470_REG_PWM(i));
 
 	/* put pwm in manual mode */
-	i2c_smbus_ग_लिखो_byte_data(client, ADT7470_REG_PWM_CFG(0),
+	i2c_smbus_write_byte_data(client, ADT7470_REG_PWM_CFG(0),
 		pwm_cfg[0] & ~(ADT7470_PWM_AUTO_MASK));
-	i2c_smbus_ग_लिखो_byte_data(client, ADT7470_REG_PWM_CFG(2),
+	i2c_smbus_write_byte_data(client, ADT7470_REG_PWM_CFG(2),
 		pwm_cfg[1] & ~(ADT7470_PWM_AUTO_MASK));
 
-	/* ग_लिखो pwm control to whatever it was */
-	क्रम (i = 0; i < ADT7470_FAN_COUNT; i++)
-		i2c_smbus_ग_लिखो_byte_data(client, ADT7470_REG_PWM(i), pwm[i]);
+	/* write pwm control to whatever it was */
+	for (i = 0; i < ADT7470_FAN_COUNT; i++)
+		i2c_smbus_write_byte_data(client, ADT7470_REG_PWM(i), pwm[i]);
 
-	/* start पढ़ोing temperature sensors */
-	cfg = i2c_smbus_पढ़ो_byte_data(client, ADT7470_REG_CFG);
+	/* start reading temperature sensors */
+	cfg = i2c_smbus_read_byte_data(client, ADT7470_REG_CFG);
 	cfg |= 0x80;
-	i2c_smbus_ग_लिखो_byte_data(client, ADT7470_REG_CFG, cfg);
+	i2c_smbus_write_byte_data(client, ADT7470_REG_CFG, cfg);
 
 	/* Delay is 200ms * number of temp sensors. */
-	res = msleep_पूर्णांकerruptible((data->num_temp_sensors >= 0 ?
+	res = msleep_interruptible((data->num_temp_sensors >= 0 ?
 				    data->num_temp_sensors * 200 :
 				    TEMP_COLLECTION_TIME));
 
-	/* करोne पढ़ोing temperature sensors */
-	cfg = i2c_smbus_पढ़ो_byte_data(client, ADT7470_REG_CFG);
+	/* done reading temperature sensors */
+	cfg = i2c_smbus_read_byte_data(client, ADT7470_REG_CFG);
 	cfg &= ~0x80;
-	i2c_smbus_ग_लिखो_byte_data(client, ADT7470_REG_CFG, cfg);
+	i2c_smbus_write_byte_data(client, ADT7470_REG_CFG, cfg);
 
-	/* restore pwm[1-4] config रेजिस्टरs */
-	i2c_smbus_ग_लिखो_byte_data(client, ADT7470_REG_PWM_CFG(0), pwm_cfg[0]);
-	i2c_smbus_ग_लिखो_byte_data(client, ADT7470_REG_PWM_CFG(2), pwm_cfg[1]);
+	/* restore pwm[1-4] config registers */
+	i2c_smbus_write_byte_data(client, ADT7470_REG_PWM_CFG(0), pwm_cfg[0]);
+	i2c_smbus_write_byte_data(client, ADT7470_REG_PWM_CFG(2), pwm_cfg[1]);
 
-	अगर (res) अणु
+	if (res) {
 		pr_err("ha ha, interrupted\n");
-		वापस -EAGAIN;
-	पूर्ण
+		return -EAGAIN;
+	}
 
-	/* Only count fans अगर we have to */
-	अगर (data->num_temp_sensors >= 0)
-		वापस 0;
+	/* Only count fans if we have to */
+	if (data->num_temp_sensors >= 0)
+		return 0;
 
-	क्रम (i = 0; i < ADT7470_TEMP_COUNT; i++) अणु
-		data->temp[i] = i2c_smbus_पढ़ो_byte_data(client,
+	for (i = 0; i < ADT7470_TEMP_COUNT; i++) {
+		data->temp[i] = i2c_smbus_read_byte_data(client,
 						ADT7470_TEMP_REG(i));
-		अगर (data->temp[i])
+		if (data->temp[i])
 			data->num_temp_sensors = i + 1;
-	पूर्ण
+	}
 	data->temperatures_probed = 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक adt7470_update_thपढ़ो(व्योम *p)
-अणु
-	काष्ठा i2c_client *client = p;
-	काष्ठा adt7470_data *data = i2c_get_clientdata(client);
+static int adt7470_update_thread(void *p)
+{
+	struct i2c_client *client = p;
+	struct adt7470_data *data = i2c_get_clientdata(client);
 
-	जबतक (!kthपढ़ो_should_stop()) अणु
+	while (!kthread_should_stop()) {
 		mutex_lock(&data->lock);
-		adt7470_पढ़ो_temperatures(client, data);
+		adt7470_read_temperatures(client, data);
 		mutex_unlock(&data->lock);
 
 		set_current_state(TASK_INTERRUPTIBLE);
-		अगर (kthपढ़ो_should_stop())
-			अवरोध;
+		if (kthread_should_stop())
+			break;
 
-		schedule_समयout(msecs_to_jअगरfies(data->स्वतः_update_पूर्णांकerval));
-	पूर्ण
+		schedule_timeout(msecs_to_jiffies(data->auto_update_interval));
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक adt7470_update_sensors(काष्ठा adt7470_data *data)
-अणु
-	काष्ठा i2c_client *client = data->client;
+static int adt7470_update_sensors(struct adt7470_data *data)
+{
+	struct i2c_client *client = data->client;
 	u8 cfg;
-	पूर्णांक i;
+	int i;
 
-	अगर (!data->temperatures_probed)
-		adt7470_पढ़ो_temperatures(client, data);
-	अन्यथा
-		क्रम (i = 0; i < ADT7470_TEMP_COUNT; i++)
-			data->temp[i] = i2c_smbus_पढ़ो_byte_data(client,
+	if (!data->temperatures_probed)
+		adt7470_read_temperatures(client, data);
+	else
+		for (i = 0; i < ADT7470_TEMP_COUNT; i++)
+			data->temp[i] = i2c_smbus_read_byte_data(client,
 						ADT7470_TEMP_REG(i));
 
-	क्रम (i = 0; i < ADT7470_FAN_COUNT; i++)
-		data->fan[i] = adt7470_पढ़ो_word_data(client,
+	for (i = 0; i < ADT7470_FAN_COUNT; i++)
+		data->fan[i] = adt7470_read_word_data(client,
 						ADT7470_REG_FAN(i));
 
-	क्रम (i = 0; i < ADT7470_PWM_COUNT; i++) अणु
-		पूर्णांक reg;
-		पूर्णांक reg_mask;
+	for (i = 0; i < ADT7470_PWM_COUNT; i++) {
+		int reg;
+		int reg_mask;
 
-		data->pwm[i] = i2c_smbus_पढ़ो_byte_data(client,
+		data->pwm[i] = i2c_smbus_read_byte_data(client,
 						ADT7470_REG_PWM(i));
 
-		अगर (i % 2)
+		if (i % 2)
 			reg_mask = ADT7470_PWM2_AUTO_MASK;
-		अन्यथा
+		else
 			reg_mask = ADT7470_PWM1_AUTO_MASK;
 
 		reg = ADT7470_REG_PWM_CFG(i);
-		अगर (i2c_smbus_पढ़ो_byte_data(client, reg) & reg_mask)
-			data->pwm_स्वतःmatic[i] = 1;
-		अन्यथा
-			data->pwm_स्वतःmatic[i] = 0;
+		if (i2c_smbus_read_byte_data(client, reg) & reg_mask)
+			data->pwm_automatic[i] = 1;
+		else
+			data->pwm_automatic[i] = 0;
 
 		reg = ADT7470_REG_PWM_AUTO_TEMP(i);
-		cfg = i2c_smbus_पढ़ो_byte_data(client, reg);
-		अगर (!(i % 2))
-			data->pwm_स्वतः_temp[i] = cfg >> 4;
-		अन्यथा
-			data->pwm_स्वतः_temp[i] = cfg & 0xF;
-	पूर्ण
+		cfg = i2c_smbus_read_byte_data(client, reg);
+		if (!(i % 2))
+			data->pwm_auto_temp[i] = cfg >> 4;
+		else
+			data->pwm_auto_temp[i] = cfg & 0xF;
+	}
 
-	अगर (i2c_smbus_पढ़ो_byte_data(client, ADT7470_REG_CFG) &
+	if (i2c_smbus_read_byte_data(client, ADT7470_REG_CFG) &
 	    ADT7470_FSPD_MASK)
-		data->क्रमce_pwm_max = 1;
-	अन्यथा
-		data->क्रमce_pwm_max = 0;
+		data->force_pwm_max = 1;
+	else
+		data->force_pwm_max = 0;
 
-	data->alarm = i2c_smbus_पढ़ो_byte_data(client, ADT7470_REG_ALARM1);
-	अगर (data->alarm & ADT7470_OOL_ALARM)
-		data->alarm |= ALARM2(i2c_smbus_पढ़ो_byte_data(client,
+	data->alarm = i2c_smbus_read_byte_data(client, ADT7470_REG_ALARM1);
+	if (data->alarm & ADT7470_OOL_ALARM)
+		data->alarm |= ALARM2(i2c_smbus_read_byte_data(client,
 							ADT7470_REG_ALARM2));
-	data->alarms_mask = adt7470_पढ़ो_word_data(client,
+	data->alarms_mask = adt7470_read_word_data(client,
 						   ADT7470_REG_ALARM1_MASK);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक adt7470_update_limits(काष्ठा adt7470_data *data)
-अणु
-	काष्ठा i2c_client *client = data->client;
-	पूर्णांक i;
+static int adt7470_update_limits(struct adt7470_data *data)
+{
+	struct i2c_client *client = data->client;
+	int i;
 
-	क्रम (i = 0; i < ADT7470_TEMP_COUNT; i++) अणु
-		data->temp_min[i] = i2c_smbus_पढ़ो_byte_data(client,
+	for (i = 0; i < ADT7470_TEMP_COUNT; i++) {
+		data->temp_min[i] = i2c_smbus_read_byte_data(client,
 						ADT7470_TEMP_MIN_REG(i));
-		data->temp_max[i] = i2c_smbus_पढ़ो_byte_data(client,
+		data->temp_max[i] = i2c_smbus_read_byte_data(client,
 						ADT7470_TEMP_MAX_REG(i));
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < ADT7470_FAN_COUNT; i++) अणु
-		data->fan_min[i] = adt7470_पढ़ो_word_data(client,
+	for (i = 0; i < ADT7470_FAN_COUNT; i++) {
+		data->fan_min[i] = adt7470_read_word_data(client,
 						ADT7470_REG_FAN_MIN(i));
-		data->fan_max[i] = adt7470_पढ़ो_word_data(client,
+		data->fan_max[i] = adt7470_read_word_data(client,
 						ADT7470_REG_FAN_MAX(i));
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < ADT7470_PWM_COUNT; i++) अणु
-		data->pwm_max[i] = i2c_smbus_पढ़ो_byte_data(client,
+	for (i = 0; i < ADT7470_PWM_COUNT; i++) {
+		data->pwm_max[i] = i2c_smbus_read_byte_data(client,
 						ADT7470_REG_PWM_MAX(i));
-		data->pwm_min[i] = i2c_smbus_पढ़ो_byte_data(client,
+		data->pwm_min[i] = i2c_smbus_read_byte_data(client,
 						ADT7470_REG_PWM_MIN(i));
-		data->pwm_पंचांगin[i] = i2c_smbus_पढ़ो_byte_data(client,
+		data->pwm_tmin[i] = i2c_smbus_read_byte_data(client,
 						ADT7470_REG_PWM_TMIN(i));
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा adt7470_data *adt7470_update_device(काष्ठा device *dev)
-अणु
-	काष्ठा adt7470_data *data = dev_get_drvdata(dev);
-	अचिन्हित दीर्घ local_jअगरfies = jअगरfies;
-	पूर्णांक need_sensors = 1;
-	पूर्णांक need_limits = 1;
-	पूर्णांक err;
+static struct adt7470_data *adt7470_update_device(struct device *dev)
+{
+	struct adt7470_data *data = dev_get_drvdata(dev);
+	unsigned long local_jiffies = jiffies;
+	int need_sensors = 1;
+	int need_limits = 1;
+	int err;
 
 	/*
-	 * Figure out अगर we need to update the shaकरोw रेजिस्टरs.
+	 * Figure out if we need to update the shadow registers.
 	 * Lockless means that we may occasionally report out of
 	 * date data.
 	 */
-	अगर (समय_beक्रमe(local_jअगरfies, data->sensors_last_updated +
+	if (time_before(local_jiffies, data->sensors_last_updated +
 			SENSOR_REFRESH_INTERVAL) &&
 	    data->sensors_valid)
 		need_sensors = 0;
 
-	अगर (समय_beक्रमe(local_jअगरfies, data->limits_last_updated +
+	if (time_before(local_jiffies, data->limits_last_updated +
 			LIMIT_REFRESH_INTERVAL) &&
 	    data->limits_valid)
 		need_limits = 0;
 
-	अगर (!need_sensors && !need_limits)
-		वापस data;
+	if (!need_sensors && !need_limits)
+		return data;
 
 	mutex_lock(&data->lock);
-	अगर (need_sensors) अणु
+	if (need_sensors) {
 		err = adt7470_update_sensors(data);
-		अगर (err < 0)
-			जाओ out;
-		data->sensors_last_updated = local_jअगरfies;
+		if (err < 0)
+			goto out;
+		data->sensors_last_updated = local_jiffies;
 		data->sensors_valid = 1;
-	पूर्ण
+	}
 
-	अगर (need_limits) अणु
+	if (need_limits) {
 		err = adt7470_update_limits(data);
-		अगर (err < 0)
-			जाओ out;
-		data->limits_last_updated = local_jअगरfies;
+		if (err < 0)
+			goto out;
+		data->limits_last_updated = local_jiffies;
 		data->limits_valid = 1;
-	पूर्ण
+	}
 out:
 	mutex_unlock(&data->lock);
 
-	वापस err < 0 ? ERR_PTR(err) : data;
-पूर्ण
+	return err < 0 ? ERR_PTR(err) : data;
+}
 
-अटल sमाप_प्रकार स्वतः_update_पूर्णांकerval_show(काष्ठा device *dev,
-					 काष्ठा device_attribute *devattr,
-					 अक्षर *buf)
-अणु
-	काष्ठा adt7470_data *data = adt7470_update_device(dev);
+static ssize_t auto_update_interval_show(struct device *dev,
+					 struct device_attribute *devattr,
+					 char *buf)
+{
+	struct adt7470_data *data = adt7470_update_device(dev);
 
-	अगर (IS_ERR(data))
-		वापस PTR_ERR(data);
+	if (IS_ERR(data))
+		return PTR_ERR(data);
 
-	वापस प्र_लिखो(buf, "%d\n", data->स्वतः_update_पूर्णांकerval);
-पूर्ण
+	return sprintf(buf, "%d\n", data->auto_update_interval);
+}
 
-अटल sमाप_प्रकार स्वतः_update_पूर्णांकerval_store(काष्ठा device *dev,
-					  काष्ठा device_attribute *devattr,
-					  स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा adt7470_data *data = dev_get_drvdata(dev);
-	दीर्घ temp;
+static ssize_t auto_update_interval_store(struct device *dev,
+					  struct device_attribute *devattr,
+					  const char *buf, size_t count)
+{
+	struct adt7470_data *data = dev_get_drvdata(dev);
+	long temp;
 
-	अगर (kम_से_दीर्घ(buf, 10, &temp))
-		वापस -EINVAL;
+	if (kstrtol(buf, 10, &temp))
+		return -EINVAL;
 
 	temp = clamp_val(temp, 0, 60000);
 
 	mutex_lock(&data->lock);
-	data->स्वतः_update_पूर्णांकerval = temp;
+	data->auto_update_interval = temp;
 	mutex_unlock(&data->lock);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार num_temp_sensors_show(काष्ठा device *dev,
-				     काष्ठा device_attribute *devattr,
-				     अक्षर *buf)
-अणु
-	काष्ठा adt7470_data *data = adt7470_update_device(dev);
+static ssize_t num_temp_sensors_show(struct device *dev,
+				     struct device_attribute *devattr,
+				     char *buf)
+{
+	struct adt7470_data *data = adt7470_update_device(dev);
 
-	अगर (IS_ERR(data))
-		वापस PTR_ERR(data);
+	if (IS_ERR(data))
+		return PTR_ERR(data);
 
-	वापस प्र_लिखो(buf, "%d\n", data->num_temp_sensors);
-पूर्ण
+	return sprintf(buf, "%d\n", data->num_temp_sensors);
+}
 
-अटल sमाप_प्रकार num_temp_sensors_store(काष्ठा device *dev,
-				      काष्ठा device_attribute *devattr,
-				      स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा adt7470_data *data = dev_get_drvdata(dev);
-	दीर्घ temp;
+static ssize_t num_temp_sensors_store(struct device *dev,
+				      struct device_attribute *devattr,
+				      const char *buf, size_t count)
+{
+	struct adt7470_data *data = dev_get_drvdata(dev);
+	long temp;
 
-	अगर (kम_से_दीर्घ(buf, 10, &temp))
-		वापस -EINVAL;
+	if (kstrtol(buf, 10, &temp))
+		return -EINVAL;
 
 	temp = clamp_val(temp, -1, 10);
 
 	mutex_lock(&data->lock);
 	data->num_temp_sensors = temp;
-	अगर (temp < 0)
+	if (temp < 0)
 		data->temperatures_probed = 0;
 	mutex_unlock(&data->lock);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार temp_min_show(काष्ठा device *dev,
-			     काष्ठा device_attribute *devattr, अक्षर *buf)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा adt7470_data *data = adt7470_update_device(dev);
+static ssize_t temp_min_show(struct device *dev,
+			     struct device_attribute *devattr, char *buf)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct adt7470_data *data = adt7470_update_device(dev);
 
-	अगर (IS_ERR(data))
-		वापस PTR_ERR(data);
+	if (IS_ERR(data))
+		return PTR_ERR(data);
 
-	वापस प्र_लिखो(buf, "%d\n", 1000 * data->temp_min[attr->index]);
-पूर्ण
+	return sprintf(buf, "%d\n", 1000 * data->temp_min[attr->index]);
+}
 
-अटल sमाप_प्रकार temp_min_store(काष्ठा device *dev,
-			      काष्ठा device_attribute *devattr,
-			      स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा adt7470_data *data = dev_get_drvdata(dev);
-	काष्ठा i2c_client *client = data->client;
-	दीर्घ temp;
+static ssize_t temp_min_store(struct device *dev,
+			      struct device_attribute *devattr,
+			      const char *buf, size_t count)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct adt7470_data *data = dev_get_drvdata(dev);
+	struct i2c_client *client = data->client;
+	long temp;
 
-	अगर (kम_से_दीर्घ(buf, 10, &temp))
-		वापस -EINVAL;
+	if (kstrtol(buf, 10, &temp))
+		return -EINVAL;
 
 	temp = clamp_val(temp, -128000, 127000);
 	temp = DIV_ROUND_CLOSEST(temp, 1000);
 
 	mutex_lock(&data->lock);
 	data->temp_min[attr->index] = temp;
-	i2c_smbus_ग_लिखो_byte_data(client, ADT7470_TEMP_MIN_REG(attr->index),
+	i2c_smbus_write_byte_data(client, ADT7470_TEMP_MIN_REG(attr->index),
 				  temp);
 	mutex_unlock(&data->lock);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार temp_max_show(काष्ठा device *dev,
-			     काष्ठा device_attribute *devattr, अक्षर *buf)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा adt7470_data *data = adt7470_update_device(dev);
+static ssize_t temp_max_show(struct device *dev,
+			     struct device_attribute *devattr, char *buf)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct adt7470_data *data = adt7470_update_device(dev);
 
-	अगर (IS_ERR(data))
-		वापस PTR_ERR(data);
+	if (IS_ERR(data))
+		return PTR_ERR(data);
 
-	वापस प्र_लिखो(buf, "%d\n", 1000 * data->temp_max[attr->index]);
-पूर्ण
+	return sprintf(buf, "%d\n", 1000 * data->temp_max[attr->index]);
+}
 
-अटल sमाप_प्रकार temp_max_store(काष्ठा device *dev,
-			      काष्ठा device_attribute *devattr,
-			      स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा adt7470_data *data = dev_get_drvdata(dev);
-	काष्ठा i2c_client *client = data->client;
-	दीर्घ temp;
+static ssize_t temp_max_store(struct device *dev,
+			      struct device_attribute *devattr,
+			      const char *buf, size_t count)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct adt7470_data *data = dev_get_drvdata(dev);
+	struct i2c_client *client = data->client;
+	long temp;
 
-	अगर (kम_से_दीर्घ(buf, 10, &temp))
-		वापस -EINVAL;
+	if (kstrtol(buf, 10, &temp))
+		return -EINVAL;
 
 	temp = clamp_val(temp, -128000, 127000);
 	temp = DIV_ROUND_CLOSEST(temp, 1000);
 
 	mutex_lock(&data->lock);
 	data->temp_max[attr->index] = temp;
-	i2c_smbus_ग_लिखो_byte_data(client, ADT7470_TEMP_MAX_REG(attr->index),
+	i2c_smbus_write_byte_data(client, ADT7470_TEMP_MAX_REG(attr->index),
 				  temp);
 	mutex_unlock(&data->lock);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार temp_show(काष्ठा device *dev, काष्ठा device_attribute *devattr,
-			 अक्षर *buf)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा adt7470_data *data = adt7470_update_device(dev);
+static ssize_t temp_show(struct device *dev, struct device_attribute *devattr,
+			 char *buf)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct adt7470_data *data = adt7470_update_device(dev);
 
-	अगर (IS_ERR(data))
-		वापस PTR_ERR(data);
+	if (IS_ERR(data))
+		return PTR_ERR(data);
 
-	वापस प्र_लिखो(buf, "%d\n", 1000 * data->temp[attr->index]);
-पूर्ण
+	return sprintf(buf, "%d\n", 1000 * data->temp[attr->index]);
+}
 
-अटल sमाप_प्रकार alarm_mask_show(काष्ठा device *dev,
-			   काष्ठा device_attribute *devattr,
-			   अक्षर *buf)
-अणु
-	काष्ठा adt7470_data *data = adt7470_update_device(dev);
+static ssize_t alarm_mask_show(struct device *dev,
+			   struct device_attribute *devattr,
+			   char *buf)
+{
+	struct adt7470_data *data = adt7470_update_device(dev);
 
-	अगर (IS_ERR(data))
-		वापस PTR_ERR(data);
+	if (IS_ERR(data))
+		return PTR_ERR(data);
 
-	वापस प्र_लिखो(buf, "%x\n", data->alarms_mask);
-पूर्ण
+	return sprintf(buf, "%x\n", data->alarms_mask);
+}
 
-अटल sमाप_प्रकार alarm_mask_store(काष्ठा device *dev,
-				काष्ठा device_attribute *devattr,
-				स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा adt7470_data *data = dev_get_drvdata(dev);
-	दीर्घ mask;
+static ssize_t alarm_mask_store(struct device *dev,
+				struct device_attribute *devattr,
+				const char *buf, size_t count)
+{
+	struct adt7470_data *data = dev_get_drvdata(dev);
+	long mask;
 
-	अगर (kम_से_अदीर्घ(buf, 0, &mask))
-		वापस -EINVAL;
+	if (kstrtoul(buf, 0, &mask))
+		return -EINVAL;
 
-	अगर (mask & ~0xffff)
-		वापस -EINVAL;
+	if (mask & ~0xffff)
+		return -EINVAL;
 
 	mutex_lock(&data->lock);
 	data->alarms_mask = mask;
-	adt7470_ग_लिखो_word_data(data->client, ADT7470_REG_ALARM1_MASK, mask);
+	adt7470_write_word_data(data->client, ADT7470_REG_ALARM1_MASK, mask);
 	mutex_unlock(&data->lock);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार fan_max_show(काष्ठा device *dev,
-			    काष्ठा device_attribute *devattr, अक्षर *buf)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा adt7470_data *data = adt7470_update_device(dev);
+static ssize_t fan_max_show(struct device *dev,
+			    struct device_attribute *devattr, char *buf)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct adt7470_data *data = adt7470_update_device(dev);
 
-	अगर (IS_ERR(data))
-		वापस PTR_ERR(data);
+	if (IS_ERR(data))
+		return PTR_ERR(data);
 
-	अगर (FAN_DATA_VALID(data->fan_max[attr->index]))
-		वापस प्र_लिखो(buf, "%d\n",
+	if (FAN_DATA_VALID(data->fan_max[attr->index]))
+		return sprintf(buf, "%d\n",
 			       FAN_PERIOD_TO_RPM(data->fan_max[attr->index]));
-	अन्यथा
-		वापस प्र_लिखो(buf, "0\n");
-पूर्ण
+	else
+		return sprintf(buf, "0\n");
+}
 
-अटल sमाप_प्रकार fan_max_store(काष्ठा device *dev,
-			     काष्ठा device_attribute *devattr,
-			     स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा adt7470_data *data = dev_get_drvdata(dev);
-	काष्ठा i2c_client *client = data->client;
-	दीर्घ temp;
+static ssize_t fan_max_store(struct device *dev,
+			     struct device_attribute *devattr,
+			     const char *buf, size_t count)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct adt7470_data *data = dev_get_drvdata(dev);
+	struct i2c_client *client = data->client;
+	long temp;
 
-	अगर (kम_से_दीर्घ(buf, 10, &temp) || !temp)
-		वापस -EINVAL;
+	if (kstrtol(buf, 10, &temp) || !temp)
+		return -EINVAL;
 
 	temp = FAN_RPM_TO_PERIOD(temp);
 	temp = clamp_val(temp, 1, 65534);
 
 	mutex_lock(&data->lock);
 	data->fan_max[attr->index] = temp;
-	adt7470_ग_लिखो_word_data(client, ADT7470_REG_FAN_MAX(attr->index), temp);
+	adt7470_write_word_data(client, ADT7470_REG_FAN_MAX(attr->index), temp);
 	mutex_unlock(&data->lock);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार fan_min_show(काष्ठा device *dev,
-			    काष्ठा device_attribute *devattr, अक्षर *buf)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा adt7470_data *data = adt7470_update_device(dev);
+static ssize_t fan_min_show(struct device *dev,
+			    struct device_attribute *devattr, char *buf)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct adt7470_data *data = adt7470_update_device(dev);
 
-	अगर (IS_ERR(data))
-		वापस PTR_ERR(data);
+	if (IS_ERR(data))
+		return PTR_ERR(data);
 
-	अगर (FAN_DATA_VALID(data->fan_min[attr->index]))
-		वापस प्र_लिखो(buf, "%d\n",
+	if (FAN_DATA_VALID(data->fan_min[attr->index]))
+		return sprintf(buf, "%d\n",
 			       FAN_PERIOD_TO_RPM(data->fan_min[attr->index]));
-	अन्यथा
-		वापस प्र_लिखो(buf, "0\n");
-पूर्ण
+	else
+		return sprintf(buf, "0\n");
+}
 
-अटल sमाप_प्रकार fan_min_store(काष्ठा device *dev,
-			     काष्ठा device_attribute *devattr,
-			     स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा adt7470_data *data = dev_get_drvdata(dev);
-	काष्ठा i2c_client *client = data->client;
-	दीर्घ temp;
+static ssize_t fan_min_store(struct device *dev,
+			     struct device_attribute *devattr,
+			     const char *buf, size_t count)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct adt7470_data *data = dev_get_drvdata(dev);
+	struct i2c_client *client = data->client;
+	long temp;
 
-	अगर (kम_से_दीर्घ(buf, 10, &temp) || !temp)
-		वापस -EINVAL;
+	if (kstrtol(buf, 10, &temp) || !temp)
+		return -EINVAL;
 
 	temp = FAN_RPM_TO_PERIOD(temp);
 	temp = clamp_val(temp, 1, 65534);
 
 	mutex_lock(&data->lock);
 	data->fan_min[attr->index] = temp;
-	adt7470_ग_लिखो_word_data(client, ADT7470_REG_FAN_MIN(attr->index), temp);
+	adt7470_write_word_data(client, ADT7470_REG_FAN_MIN(attr->index), temp);
 	mutex_unlock(&data->lock);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार fan_show(काष्ठा device *dev, काष्ठा device_attribute *devattr,
-			अक्षर *buf)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा adt7470_data *data = adt7470_update_device(dev);
+static ssize_t fan_show(struct device *dev, struct device_attribute *devattr,
+			char *buf)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct adt7470_data *data = adt7470_update_device(dev);
 
-	अगर (IS_ERR(data))
-		वापस PTR_ERR(data);
+	if (IS_ERR(data))
+		return PTR_ERR(data);
 
-	अगर (FAN_DATA_VALID(data->fan[attr->index]))
-		वापस प्र_लिखो(buf, "%d\n",
+	if (FAN_DATA_VALID(data->fan[attr->index]))
+		return sprintf(buf, "%d\n",
 			       FAN_PERIOD_TO_RPM(data->fan[attr->index]));
-	अन्यथा
-		वापस प्र_लिखो(buf, "0\n");
-पूर्ण
+	else
+		return sprintf(buf, "0\n");
+}
 
-अटल sमाप_प्रकार क्रमce_pwm_max_show(काष्ठा device *dev,
-				  काष्ठा device_attribute *devattr, अक्षर *buf)
-अणु
-	काष्ठा adt7470_data *data = adt7470_update_device(dev);
+static ssize_t force_pwm_max_show(struct device *dev,
+				  struct device_attribute *devattr, char *buf)
+{
+	struct adt7470_data *data = adt7470_update_device(dev);
 
-	अगर (IS_ERR(data))
-		वापस PTR_ERR(data);
+	if (IS_ERR(data))
+		return PTR_ERR(data);
 
-	वापस प्र_लिखो(buf, "%d\n", data->क्रमce_pwm_max);
-पूर्ण
+	return sprintf(buf, "%d\n", data->force_pwm_max);
+}
 
-अटल sमाप_प्रकार क्रमce_pwm_max_store(काष्ठा device *dev,
-				   काष्ठा device_attribute *devattr,
-				   स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा adt7470_data *data = dev_get_drvdata(dev);
-	काष्ठा i2c_client *client = data->client;
-	दीर्घ temp;
+static ssize_t force_pwm_max_store(struct device *dev,
+				   struct device_attribute *devattr,
+				   const char *buf, size_t count)
+{
+	struct adt7470_data *data = dev_get_drvdata(dev);
+	struct i2c_client *client = data->client;
+	long temp;
 	u8 reg;
 
-	अगर (kम_से_दीर्घ(buf, 10, &temp))
-		वापस -EINVAL;
+	if (kstrtol(buf, 10, &temp))
+		return -EINVAL;
 
 	mutex_lock(&data->lock);
-	data->क्रमce_pwm_max = temp;
-	reg = i2c_smbus_पढ़ो_byte_data(client, ADT7470_REG_CFG);
-	अगर (temp)
+	data->force_pwm_max = temp;
+	reg = i2c_smbus_read_byte_data(client, ADT7470_REG_CFG);
+	if (temp)
 		reg |= ADT7470_FSPD_MASK;
-	अन्यथा
+	else
 		reg &= ~ADT7470_FSPD_MASK;
-	i2c_smbus_ग_लिखो_byte_data(client, ADT7470_REG_CFG, reg);
+	i2c_smbus_write_byte_data(client, ADT7470_REG_CFG, reg);
 	mutex_unlock(&data->lock);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार pwm_show(काष्ठा device *dev, काष्ठा device_attribute *devattr,
-			अक्षर *buf)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा adt7470_data *data = adt7470_update_device(dev);
+static ssize_t pwm_show(struct device *dev, struct device_attribute *devattr,
+			char *buf)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct adt7470_data *data = adt7470_update_device(dev);
 
-	अगर (IS_ERR(data))
-		वापस PTR_ERR(data);
+	if (IS_ERR(data))
+		return PTR_ERR(data);
 
-	वापस प्र_लिखो(buf, "%d\n", data->pwm[attr->index]);
-पूर्ण
+	return sprintf(buf, "%d\n", data->pwm[attr->index]);
+}
 
-अटल sमाप_प्रकार pwm_store(काष्ठा device *dev, काष्ठा device_attribute *devattr,
-			 स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा adt7470_data *data = dev_get_drvdata(dev);
-	काष्ठा i2c_client *client = data->client;
-	दीर्घ temp;
+static ssize_t pwm_store(struct device *dev, struct device_attribute *devattr,
+			 const char *buf, size_t count)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct adt7470_data *data = dev_get_drvdata(dev);
+	struct i2c_client *client = data->client;
+	long temp;
 
-	अगर (kम_से_दीर्घ(buf, 10, &temp))
-		वापस -EINVAL;
+	if (kstrtol(buf, 10, &temp))
+		return -EINVAL;
 
 	temp = clamp_val(temp, 0, 255);
 
 	mutex_lock(&data->lock);
 	data->pwm[attr->index] = temp;
-	i2c_smbus_ग_लिखो_byte_data(client, ADT7470_REG_PWM(attr->index), temp);
+	i2c_smbus_write_byte_data(client, ADT7470_REG_PWM(attr->index), temp);
 	mutex_unlock(&data->lock);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
 /* These are the valid PWM frequencies to the nearest Hz */
-अटल स्थिर पूर्णांक adt7470_freq_map[] = अणु
+static const int adt7470_freq_map[] = {
 	11, 15, 22, 29, 35, 44, 59, 88, 1400, 22500
-पूर्ण;
+};
 
-अटल sमाप_प्रकार pwm1_freq_show(काष्ठा device *dev,
-			      काष्ठा device_attribute *devattr, अक्षर *buf)
-अणु
-	काष्ठा adt7470_data *data = adt7470_update_device(dev);
-	अचिन्हित अक्षर cfg_reg_1;
-	अचिन्हित अक्षर cfg_reg_2;
-	पूर्णांक index;
+static ssize_t pwm1_freq_show(struct device *dev,
+			      struct device_attribute *devattr, char *buf)
+{
+	struct adt7470_data *data = adt7470_update_device(dev);
+	unsigned char cfg_reg_1;
+	unsigned char cfg_reg_2;
+	int index;
 
 	mutex_lock(&data->lock);
-	cfg_reg_1 = i2c_smbus_पढ़ो_byte_data(data->client, ADT7470_REG_CFG);
-	cfg_reg_2 = i2c_smbus_पढ़ो_byte_data(data->client, ADT7470_REG_CFG_2);
+	cfg_reg_1 = i2c_smbus_read_byte_data(data->client, ADT7470_REG_CFG);
+	cfg_reg_2 = i2c_smbus_read_byte_data(data->client, ADT7470_REG_CFG_2);
 	mutex_unlock(&data->lock);
 
 	index = (cfg_reg_2 & ADT7470_FREQ_MASK) >> ADT7470_FREQ_SHIFT;
-	अगर (!(cfg_reg_1 & ADT7470_CFG_LF))
+	if (!(cfg_reg_1 & ADT7470_CFG_LF))
 		index += 8;
-	अगर (index >= ARRAY_SIZE(adt7470_freq_map))
+	if (index >= ARRAY_SIZE(adt7470_freq_map))
 		index = ARRAY_SIZE(adt7470_freq_map) - 1;
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%d\n", adt7470_freq_map[index]);
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "%d\n", adt7470_freq_map[index]);
+}
 
-अटल sमाप_प्रकार pwm1_freq_store(काष्ठा device *dev,
-			       काष्ठा device_attribute *devattr,
-			       स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा adt7470_data *data = dev_get_drvdata(dev);
-	काष्ठा i2c_client *client = data->client;
-	दीर्घ freq;
-	पूर्णांक index;
-	पूर्णांक low_freq = ADT7470_CFG_LF;
-	अचिन्हित अक्षर val;
+static ssize_t pwm1_freq_store(struct device *dev,
+			       struct device_attribute *devattr,
+			       const char *buf, size_t count)
+{
+	struct adt7470_data *data = dev_get_drvdata(dev);
+	struct i2c_client *client = data->client;
+	long freq;
+	int index;
+	int low_freq = ADT7470_CFG_LF;
+	unsigned char val;
 
-	अगर (kम_से_दीर्घ(buf, 10, &freq))
-		वापस -EINVAL;
+	if (kstrtol(buf, 10, &freq))
+		return -EINVAL;
 
-	/* Round the user value given to the बंदst available frequency */
-	index = find_बंदst(freq, adt7470_freq_map,
+	/* Round the user value given to the closest available frequency */
+	index = find_closest(freq, adt7470_freq_map,
 			     ARRAY_SIZE(adt7470_freq_map));
 
-	अगर (index >= 8) अणु
+	if (index >= 8) {
 		index -= 8;
 		low_freq = 0;
-	पूर्ण
+	}
 
 	mutex_lock(&data->lock);
 	/* Configuration Register 1 */
-	val = i2c_smbus_पढ़ो_byte_data(client, ADT7470_REG_CFG);
-	i2c_smbus_ग_लिखो_byte_data(client, ADT7470_REG_CFG,
+	val = i2c_smbus_read_byte_data(client, ADT7470_REG_CFG);
+	i2c_smbus_write_byte_data(client, ADT7470_REG_CFG,
 				  (val & ~ADT7470_CFG_LF) | low_freq);
 	/* Configuration Register 2 */
-	val = i2c_smbus_पढ़ो_byte_data(client, ADT7470_REG_CFG_2);
-	i2c_smbus_ग_लिखो_byte_data(client, ADT7470_REG_CFG_2,
+	val = i2c_smbus_read_byte_data(client, ADT7470_REG_CFG_2);
+	i2c_smbus_write_byte_data(client, ADT7470_REG_CFG_2,
 		(val & ~ADT7470_FREQ_MASK) | (index << ADT7470_FREQ_SHIFT));
 	mutex_unlock(&data->lock);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार pwm_max_show(काष्ठा device *dev,
-			    काष्ठा device_attribute *devattr, अक्षर *buf)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा adt7470_data *data = adt7470_update_device(dev);
+static ssize_t pwm_max_show(struct device *dev,
+			    struct device_attribute *devattr, char *buf)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct adt7470_data *data = adt7470_update_device(dev);
 
-	अगर (IS_ERR(data))
-		वापस PTR_ERR(data);
+	if (IS_ERR(data))
+		return PTR_ERR(data);
 
-	वापस प्र_लिखो(buf, "%d\n", data->pwm_max[attr->index]);
-पूर्ण
+	return sprintf(buf, "%d\n", data->pwm_max[attr->index]);
+}
 
-अटल sमाप_प्रकार pwm_max_store(काष्ठा device *dev,
-			     काष्ठा device_attribute *devattr,
-			     स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा adt7470_data *data = dev_get_drvdata(dev);
-	काष्ठा i2c_client *client = data->client;
-	दीर्घ temp;
+static ssize_t pwm_max_store(struct device *dev,
+			     struct device_attribute *devattr,
+			     const char *buf, size_t count)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct adt7470_data *data = dev_get_drvdata(dev);
+	struct i2c_client *client = data->client;
+	long temp;
 
-	अगर (kम_से_दीर्घ(buf, 10, &temp))
-		वापस -EINVAL;
+	if (kstrtol(buf, 10, &temp))
+		return -EINVAL;
 
 	temp = clamp_val(temp, 0, 255);
 
 	mutex_lock(&data->lock);
 	data->pwm_max[attr->index] = temp;
-	i2c_smbus_ग_लिखो_byte_data(client, ADT7470_REG_PWM_MAX(attr->index),
+	i2c_smbus_write_byte_data(client, ADT7470_REG_PWM_MAX(attr->index),
 				  temp);
 	mutex_unlock(&data->lock);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार pwm_min_show(काष्ठा device *dev,
-			    काष्ठा device_attribute *devattr, अक्षर *buf)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा adt7470_data *data = adt7470_update_device(dev);
+static ssize_t pwm_min_show(struct device *dev,
+			    struct device_attribute *devattr, char *buf)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct adt7470_data *data = adt7470_update_device(dev);
 
-	अगर (IS_ERR(data))
-		वापस PTR_ERR(data);
+	if (IS_ERR(data))
+		return PTR_ERR(data);
 
-	वापस प्र_लिखो(buf, "%d\n", data->pwm_min[attr->index]);
-पूर्ण
+	return sprintf(buf, "%d\n", data->pwm_min[attr->index]);
+}
 
-अटल sमाप_प्रकार pwm_min_store(काष्ठा device *dev,
-			     काष्ठा device_attribute *devattr,
-			     स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा adt7470_data *data = dev_get_drvdata(dev);
-	काष्ठा i2c_client *client = data->client;
-	दीर्घ temp;
+static ssize_t pwm_min_store(struct device *dev,
+			     struct device_attribute *devattr,
+			     const char *buf, size_t count)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct adt7470_data *data = dev_get_drvdata(dev);
+	struct i2c_client *client = data->client;
+	long temp;
 
-	अगर (kम_से_दीर्घ(buf, 10, &temp))
-		वापस -EINVAL;
+	if (kstrtol(buf, 10, &temp))
+		return -EINVAL;
 
 	temp = clamp_val(temp, 0, 255);
 
 	mutex_lock(&data->lock);
 	data->pwm_min[attr->index] = temp;
-	i2c_smbus_ग_लिखो_byte_data(client, ADT7470_REG_PWM_MIN(attr->index),
+	i2c_smbus_write_byte_data(client, ADT7470_REG_PWM_MIN(attr->index),
 				  temp);
 	mutex_unlock(&data->lock);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार pwm_पंचांगax_show(काष्ठा device *dev,
-			     काष्ठा device_attribute *devattr, अक्षर *buf)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा adt7470_data *data = adt7470_update_device(dev);
+static ssize_t pwm_tmax_show(struct device *dev,
+			     struct device_attribute *devattr, char *buf)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct adt7470_data *data = adt7470_update_device(dev);
 
-	अगर (IS_ERR(data))
-		वापस PTR_ERR(data);
+	if (IS_ERR(data))
+		return PTR_ERR(data);
 
-	/* the datasheet says that पंचांगax = पंचांगin + 20C */
-	वापस प्र_लिखो(buf, "%d\n", 1000 * (20 + data->pwm_पंचांगin[attr->index]));
-पूर्ण
+	/* the datasheet says that tmax = tmin + 20C */
+	return sprintf(buf, "%d\n", 1000 * (20 + data->pwm_tmin[attr->index]));
+}
 
-अटल sमाप_प्रकार pwm_पंचांगin_show(काष्ठा device *dev,
-			     काष्ठा device_attribute *devattr, अक्षर *buf)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा adt7470_data *data = adt7470_update_device(dev);
+static ssize_t pwm_tmin_show(struct device *dev,
+			     struct device_attribute *devattr, char *buf)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct adt7470_data *data = adt7470_update_device(dev);
 
-	अगर (IS_ERR(data))
-		वापस PTR_ERR(data);
+	if (IS_ERR(data))
+		return PTR_ERR(data);
 
-	वापस प्र_लिखो(buf, "%d\n", 1000 * data->pwm_पंचांगin[attr->index]);
-पूर्ण
+	return sprintf(buf, "%d\n", 1000 * data->pwm_tmin[attr->index]);
+}
 
-अटल sमाप_प्रकार pwm_पंचांगin_store(काष्ठा device *dev,
-			      काष्ठा device_attribute *devattr,
-			      स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा adt7470_data *data = dev_get_drvdata(dev);
-	काष्ठा i2c_client *client = data->client;
-	दीर्घ temp;
+static ssize_t pwm_tmin_store(struct device *dev,
+			      struct device_attribute *devattr,
+			      const char *buf, size_t count)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct adt7470_data *data = dev_get_drvdata(dev);
+	struct i2c_client *client = data->client;
+	long temp;
 
-	अगर (kम_से_दीर्घ(buf, 10, &temp))
-		वापस -EINVAL;
+	if (kstrtol(buf, 10, &temp))
+		return -EINVAL;
 
 	temp = clamp_val(temp, -128000, 127000);
 	temp = DIV_ROUND_CLOSEST(temp, 1000);
 
 	mutex_lock(&data->lock);
-	data->pwm_पंचांगin[attr->index] = temp;
-	i2c_smbus_ग_लिखो_byte_data(client, ADT7470_REG_PWM_TMIN(attr->index),
+	data->pwm_tmin[attr->index] = temp;
+	i2c_smbus_write_byte_data(client, ADT7470_REG_PWM_TMIN(attr->index),
 				  temp);
 	mutex_unlock(&data->lock);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार pwm_स्वतः_show(काष्ठा device *dev,
-			     काष्ठा device_attribute *devattr, अक्षर *buf)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा adt7470_data *data = adt7470_update_device(dev);
+static ssize_t pwm_auto_show(struct device *dev,
+			     struct device_attribute *devattr, char *buf)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct adt7470_data *data = adt7470_update_device(dev);
 
-	अगर (IS_ERR(data))
-		वापस PTR_ERR(data);
+	if (IS_ERR(data))
+		return PTR_ERR(data);
 
-	वापस प्र_लिखो(buf, "%d\n", 1 + data->pwm_स्वतःmatic[attr->index]);
-पूर्ण
+	return sprintf(buf, "%d\n", 1 + data->pwm_automatic[attr->index]);
+}
 
-अटल sमाप_प्रकार pwm_स्वतः_store(काष्ठा device *dev,
-			      काष्ठा device_attribute *devattr,
-			      स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा adt7470_data *data = dev_get_drvdata(dev);
-	काष्ठा i2c_client *client = data->client;
-	पूर्णांक pwm_स्वतः_reg = ADT7470_REG_PWM_CFG(attr->index);
-	पूर्णांक pwm_स्वतः_reg_mask;
-	दीर्घ temp;
+static ssize_t pwm_auto_store(struct device *dev,
+			      struct device_attribute *devattr,
+			      const char *buf, size_t count)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct adt7470_data *data = dev_get_drvdata(dev);
+	struct i2c_client *client = data->client;
+	int pwm_auto_reg = ADT7470_REG_PWM_CFG(attr->index);
+	int pwm_auto_reg_mask;
+	long temp;
 	u8 reg;
 
-	अगर (kम_से_दीर्घ(buf, 10, &temp))
-		वापस -EINVAL;
+	if (kstrtol(buf, 10, &temp))
+		return -EINVAL;
 
-	अगर (attr->index % 2)
-		pwm_स्वतः_reg_mask = ADT7470_PWM2_AUTO_MASK;
-	अन्यथा
-		pwm_स्वतः_reg_mask = ADT7470_PWM1_AUTO_MASK;
+	if (attr->index % 2)
+		pwm_auto_reg_mask = ADT7470_PWM2_AUTO_MASK;
+	else
+		pwm_auto_reg_mask = ADT7470_PWM1_AUTO_MASK;
 
-	अगर (temp != 2 && temp != 1)
-		वापस -EINVAL;
+	if (temp != 2 && temp != 1)
+		return -EINVAL;
 	temp--;
 
 	mutex_lock(&data->lock);
-	data->pwm_स्वतःmatic[attr->index] = temp;
-	reg = i2c_smbus_पढ़ो_byte_data(client, pwm_स्वतः_reg);
-	अगर (temp)
-		reg |= pwm_स्वतः_reg_mask;
-	अन्यथा
-		reg &= ~pwm_स्वतः_reg_mask;
-	i2c_smbus_ग_लिखो_byte_data(client, pwm_स्वतः_reg, reg);
+	data->pwm_automatic[attr->index] = temp;
+	reg = i2c_smbus_read_byte_data(client, pwm_auto_reg);
+	if (temp)
+		reg |= pwm_auto_reg_mask;
+	else
+		reg &= ~pwm_auto_reg_mask;
+	i2c_smbus_write_byte_data(client, pwm_auto_reg, reg);
 	mutex_unlock(&data->lock);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार pwm_स्वतः_temp_show(काष्ठा device *dev,
-				  काष्ठा device_attribute *devattr, अक्षर *buf)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा adt7470_data *data = adt7470_update_device(dev);
+static ssize_t pwm_auto_temp_show(struct device *dev,
+				  struct device_attribute *devattr, char *buf)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct adt7470_data *data = adt7470_update_device(dev);
 	u8 ctrl;
 
-	अगर (IS_ERR(data))
-		वापस PTR_ERR(data);
+	if (IS_ERR(data))
+		return PTR_ERR(data);
 
-	ctrl = data->pwm_स्वतः_temp[attr->index];
-	अगर (ctrl)
-		वापस प्र_लिखो(buf, "%d\n", 1 << (ctrl - 1));
-	अन्यथा
-		वापस प्र_लिखो(buf, "%d\n", ADT7470_PWM_ALL_TEMPS);
-पूर्ण
+	ctrl = data->pwm_auto_temp[attr->index];
+	if (ctrl)
+		return sprintf(buf, "%d\n", 1 << (ctrl - 1));
+	else
+		return sprintf(buf, "%d\n", ADT7470_PWM_ALL_TEMPS);
+}
 
-अटल पूर्णांक cvt_स्वतः_temp(पूर्णांक input)
-अणु
-	अगर (input == ADT7470_PWM_ALL_TEMPS)
-		वापस 0;
-	अगर (input < 1 || !is_घातer_of_2(input))
-		वापस -EINVAL;
-	वापस ilog2(input) + 1;
-पूर्ण
+static int cvt_auto_temp(int input)
+{
+	if (input == ADT7470_PWM_ALL_TEMPS)
+		return 0;
+	if (input < 1 || !is_power_of_2(input))
+		return -EINVAL;
+	return ilog2(input) + 1;
+}
 
-अटल sमाप_प्रकार pwm_स्वतः_temp_store(काष्ठा device *dev,
-				   काष्ठा device_attribute *devattr,
-				   स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा adt7470_data *data = dev_get_drvdata(dev);
-	काष्ठा i2c_client *client = data->client;
-	पूर्णांक pwm_स्वतः_reg = ADT7470_REG_PWM_AUTO_TEMP(attr->index);
-	दीर्घ temp;
+static ssize_t pwm_auto_temp_store(struct device *dev,
+				   struct device_attribute *devattr,
+				   const char *buf, size_t count)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct adt7470_data *data = dev_get_drvdata(dev);
+	struct i2c_client *client = data->client;
+	int pwm_auto_reg = ADT7470_REG_PWM_AUTO_TEMP(attr->index);
+	long temp;
 	u8 reg;
 
-	अगर (kम_से_दीर्घ(buf, 10, &temp))
-		वापस -EINVAL;
+	if (kstrtol(buf, 10, &temp))
+		return -EINVAL;
 
-	temp = cvt_स्वतः_temp(temp);
-	अगर (temp < 0)
-		वापस temp;
+	temp = cvt_auto_temp(temp);
+	if (temp < 0)
+		return temp;
 
 	mutex_lock(&data->lock);
-	data->pwm_स्वतःmatic[attr->index] = temp;
-	reg = i2c_smbus_पढ़ो_byte_data(client, pwm_स्वतः_reg);
+	data->pwm_automatic[attr->index] = temp;
+	reg = i2c_smbus_read_byte_data(client, pwm_auto_reg);
 
-	अगर (!(attr->index % 2)) अणु
+	if (!(attr->index % 2)) {
 		reg &= 0xF;
 		reg |= (temp << 4) & 0xF0;
-	पूर्ण अन्यथा अणु
+	} else {
 		reg &= 0xF0;
 		reg |= temp & 0xF;
-	पूर्ण
+	}
 
-	i2c_smbus_ग_लिखो_byte_data(client, pwm_स्वतः_reg, reg);
+	i2c_smbus_write_byte_data(client, pwm_auto_reg, reg);
 	mutex_unlock(&data->lock);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार alarm_show(काष्ठा device *dev,
-			  काष्ठा device_attribute *devattr, अक्षर *buf)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा adt7470_data *data = adt7470_update_device(dev);
+static ssize_t alarm_show(struct device *dev,
+			  struct device_attribute *devattr, char *buf)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct adt7470_data *data = adt7470_update_device(dev);
 
-	अगर (data->alarm & attr->index)
-		वापस प्र_लिखो(buf, "1\n");
-	अन्यथा
-		वापस प्र_लिखो(buf, "0\n");
-पूर्ण
+	if (data->alarm & attr->index)
+		return sprintf(buf, "1\n");
+	else
+		return sprintf(buf, "0\n");
+}
 
-अटल DEVICE_ATTR_RW(alarm_mask);
-अटल DEVICE_ATTR_RW(num_temp_sensors);
-अटल DEVICE_ATTR_RW(स्वतः_update_पूर्णांकerval);
+static DEVICE_ATTR_RW(alarm_mask);
+static DEVICE_ATTR_RW(num_temp_sensors);
+static DEVICE_ATTR_RW(auto_update_interval);
 
-अटल SENSOR_DEVICE_ATTR_RW(temp1_max, temp_max, 0);
-अटल SENSOR_DEVICE_ATTR_RW(temp2_max, temp_max, 1);
-अटल SENSOR_DEVICE_ATTR_RW(temp3_max, temp_max, 2);
-अटल SENSOR_DEVICE_ATTR_RW(temp4_max, temp_max, 3);
-अटल SENSOR_DEVICE_ATTR_RW(temp5_max, temp_max, 4);
-अटल SENSOR_DEVICE_ATTR_RW(temp6_max, temp_max, 5);
-अटल SENSOR_DEVICE_ATTR_RW(temp7_max, temp_max, 6);
-अटल SENSOR_DEVICE_ATTR_RW(temp8_max, temp_max, 7);
-अटल SENSOR_DEVICE_ATTR_RW(temp9_max, temp_max, 8);
-अटल SENSOR_DEVICE_ATTR_RW(temp10_max, temp_max, 9);
+static SENSOR_DEVICE_ATTR_RW(temp1_max, temp_max, 0);
+static SENSOR_DEVICE_ATTR_RW(temp2_max, temp_max, 1);
+static SENSOR_DEVICE_ATTR_RW(temp3_max, temp_max, 2);
+static SENSOR_DEVICE_ATTR_RW(temp4_max, temp_max, 3);
+static SENSOR_DEVICE_ATTR_RW(temp5_max, temp_max, 4);
+static SENSOR_DEVICE_ATTR_RW(temp6_max, temp_max, 5);
+static SENSOR_DEVICE_ATTR_RW(temp7_max, temp_max, 6);
+static SENSOR_DEVICE_ATTR_RW(temp8_max, temp_max, 7);
+static SENSOR_DEVICE_ATTR_RW(temp9_max, temp_max, 8);
+static SENSOR_DEVICE_ATTR_RW(temp10_max, temp_max, 9);
 
-अटल SENSOR_DEVICE_ATTR_RW(temp1_min, temp_min, 0);
-अटल SENSOR_DEVICE_ATTR_RW(temp2_min, temp_min, 1);
-अटल SENSOR_DEVICE_ATTR_RW(temp3_min, temp_min, 2);
-अटल SENSOR_DEVICE_ATTR_RW(temp4_min, temp_min, 3);
-अटल SENSOR_DEVICE_ATTR_RW(temp5_min, temp_min, 4);
-अटल SENSOR_DEVICE_ATTR_RW(temp6_min, temp_min, 5);
-अटल SENSOR_DEVICE_ATTR_RW(temp7_min, temp_min, 6);
-अटल SENSOR_DEVICE_ATTR_RW(temp8_min, temp_min, 7);
-अटल SENSOR_DEVICE_ATTR_RW(temp9_min, temp_min, 8);
-अटल SENSOR_DEVICE_ATTR_RW(temp10_min, temp_min, 9);
+static SENSOR_DEVICE_ATTR_RW(temp1_min, temp_min, 0);
+static SENSOR_DEVICE_ATTR_RW(temp2_min, temp_min, 1);
+static SENSOR_DEVICE_ATTR_RW(temp3_min, temp_min, 2);
+static SENSOR_DEVICE_ATTR_RW(temp4_min, temp_min, 3);
+static SENSOR_DEVICE_ATTR_RW(temp5_min, temp_min, 4);
+static SENSOR_DEVICE_ATTR_RW(temp6_min, temp_min, 5);
+static SENSOR_DEVICE_ATTR_RW(temp7_min, temp_min, 6);
+static SENSOR_DEVICE_ATTR_RW(temp8_min, temp_min, 7);
+static SENSOR_DEVICE_ATTR_RW(temp9_min, temp_min, 8);
+static SENSOR_DEVICE_ATTR_RW(temp10_min, temp_min, 9);
 
-अटल SENSOR_DEVICE_ATTR_RO(temp1_input, temp, 0);
-अटल SENSOR_DEVICE_ATTR_RO(temp2_input, temp, 1);
-अटल SENSOR_DEVICE_ATTR_RO(temp3_input, temp, 2);
-अटल SENSOR_DEVICE_ATTR_RO(temp4_input, temp, 3);
-अटल SENSOR_DEVICE_ATTR_RO(temp5_input, temp, 4);
-अटल SENSOR_DEVICE_ATTR_RO(temp6_input, temp, 5);
-अटल SENSOR_DEVICE_ATTR_RO(temp7_input, temp, 6);
-अटल SENSOR_DEVICE_ATTR_RO(temp8_input, temp, 7);
-अटल SENSOR_DEVICE_ATTR_RO(temp9_input, temp, 8);
-अटल SENSOR_DEVICE_ATTR_RO(temp10_input, temp, 9);
+static SENSOR_DEVICE_ATTR_RO(temp1_input, temp, 0);
+static SENSOR_DEVICE_ATTR_RO(temp2_input, temp, 1);
+static SENSOR_DEVICE_ATTR_RO(temp3_input, temp, 2);
+static SENSOR_DEVICE_ATTR_RO(temp4_input, temp, 3);
+static SENSOR_DEVICE_ATTR_RO(temp5_input, temp, 4);
+static SENSOR_DEVICE_ATTR_RO(temp6_input, temp, 5);
+static SENSOR_DEVICE_ATTR_RO(temp7_input, temp, 6);
+static SENSOR_DEVICE_ATTR_RO(temp8_input, temp, 7);
+static SENSOR_DEVICE_ATTR_RO(temp9_input, temp, 8);
+static SENSOR_DEVICE_ATTR_RO(temp10_input, temp, 9);
 
-अटल SENSOR_DEVICE_ATTR_RO(temp1_alarm, alarm, ADT7470_R1T_ALARM);
-अटल SENSOR_DEVICE_ATTR_RO(temp2_alarm, alarm, ADT7470_R2T_ALARM);
-अटल SENSOR_DEVICE_ATTR_RO(temp3_alarm, alarm, ADT7470_R3T_ALARM);
-अटल SENSOR_DEVICE_ATTR_RO(temp4_alarm, alarm, ADT7470_R4T_ALARM);
-अटल SENSOR_DEVICE_ATTR_RO(temp5_alarm, alarm, ADT7470_R5T_ALARM);
-अटल SENSOR_DEVICE_ATTR_RO(temp6_alarm, alarm, ADT7470_R6T_ALARM);
-अटल SENSOR_DEVICE_ATTR_RO(temp7_alarm, alarm, ADT7470_R7T_ALARM);
-अटल SENSOR_DEVICE_ATTR_RO(temp8_alarm, alarm, ALARM2(ADT7470_R8T_ALARM));
-अटल SENSOR_DEVICE_ATTR_RO(temp9_alarm, alarm, ALARM2(ADT7470_R9T_ALARM));
-अटल SENSOR_DEVICE_ATTR_RO(temp10_alarm, alarm, ALARM2(ADT7470_R10T_ALARM));
+static SENSOR_DEVICE_ATTR_RO(temp1_alarm, alarm, ADT7470_R1T_ALARM);
+static SENSOR_DEVICE_ATTR_RO(temp2_alarm, alarm, ADT7470_R2T_ALARM);
+static SENSOR_DEVICE_ATTR_RO(temp3_alarm, alarm, ADT7470_R3T_ALARM);
+static SENSOR_DEVICE_ATTR_RO(temp4_alarm, alarm, ADT7470_R4T_ALARM);
+static SENSOR_DEVICE_ATTR_RO(temp5_alarm, alarm, ADT7470_R5T_ALARM);
+static SENSOR_DEVICE_ATTR_RO(temp6_alarm, alarm, ADT7470_R6T_ALARM);
+static SENSOR_DEVICE_ATTR_RO(temp7_alarm, alarm, ADT7470_R7T_ALARM);
+static SENSOR_DEVICE_ATTR_RO(temp8_alarm, alarm, ALARM2(ADT7470_R8T_ALARM));
+static SENSOR_DEVICE_ATTR_RO(temp9_alarm, alarm, ALARM2(ADT7470_R9T_ALARM));
+static SENSOR_DEVICE_ATTR_RO(temp10_alarm, alarm, ALARM2(ADT7470_R10T_ALARM));
 
-अटल SENSOR_DEVICE_ATTR_RW(fan1_max, fan_max, 0);
-अटल SENSOR_DEVICE_ATTR_RW(fan2_max, fan_max, 1);
-अटल SENSOR_DEVICE_ATTR_RW(fan3_max, fan_max, 2);
-अटल SENSOR_DEVICE_ATTR_RW(fan4_max, fan_max, 3);
+static SENSOR_DEVICE_ATTR_RW(fan1_max, fan_max, 0);
+static SENSOR_DEVICE_ATTR_RW(fan2_max, fan_max, 1);
+static SENSOR_DEVICE_ATTR_RW(fan3_max, fan_max, 2);
+static SENSOR_DEVICE_ATTR_RW(fan4_max, fan_max, 3);
 
-अटल SENSOR_DEVICE_ATTR_RW(fan1_min, fan_min, 0);
-अटल SENSOR_DEVICE_ATTR_RW(fan2_min, fan_min, 1);
-अटल SENSOR_DEVICE_ATTR_RW(fan3_min, fan_min, 2);
-अटल SENSOR_DEVICE_ATTR_RW(fan4_min, fan_min, 3);
+static SENSOR_DEVICE_ATTR_RW(fan1_min, fan_min, 0);
+static SENSOR_DEVICE_ATTR_RW(fan2_min, fan_min, 1);
+static SENSOR_DEVICE_ATTR_RW(fan3_min, fan_min, 2);
+static SENSOR_DEVICE_ATTR_RW(fan4_min, fan_min, 3);
 
-अटल SENSOR_DEVICE_ATTR_RO(fan1_input, fan, 0);
-अटल SENSOR_DEVICE_ATTR_RO(fan2_input, fan, 1);
-अटल SENSOR_DEVICE_ATTR_RO(fan3_input, fan, 2);
-अटल SENSOR_DEVICE_ATTR_RO(fan4_input, fan, 3);
+static SENSOR_DEVICE_ATTR_RO(fan1_input, fan, 0);
+static SENSOR_DEVICE_ATTR_RO(fan2_input, fan, 1);
+static SENSOR_DEVICE_ATTR_RO(fan3_input, fan, 2);
+static SENSOR_DEVICE_ATTR_RO(fan4_input, fan, 3);
 
-अटल SENSOR_DEVICE_ATTR_RO(fan1_alarm, alarm, ALARM2(ADT7470_FAN1_ALARM));
-अटल SENSOR_DEVICE_ATTR_RO(fan2_alarm, alarm, ALARM2(ADT7470_FAN2_ALARM));
-अटल SENSOR_DEVICE_ATTR_RO(fan3_alarm, alarm, ALARM2(ADT7470_FAN3_ALARM));
-अटल SENSOR_DEVICE_ATTR_RO(fan4_alarm, alarm, ALARM2(ADT7470_FAN4_ALARM));
+static SENSOR_DEVICE_ATTR_RO(fan1_alarm, alarm, ALARM2(ADT7470_FAN1_ALARM));
+static SENSOR_DEVICE_ATTR_RO(fan2_alarm, alarm, ALARM2(ADT7470_FAN2_ALARM));
+static SENSOR_DEVICE_ATTR_RO(fan3_alarm, alarm, ALARM2(ADT7470_FAN3_ALARM));
+static SENSOR_DEVICE_ATTR_RO(fan4_alarm, alarm, ALARM2(ADT7470_FAN4_ALARM));
 
-अटल SENSOR_DEVICE_ATTR_RW(क्रमce_pwm_max, क्रमce_pwm_max, 0);
+static SENSOR_DEVICE_ATTR_RW(force_pwm_max, force_pwm_max, 0);
 
-अटल SENSOR_DEVICE_ATTR_RW(pwm1, pwm, 0);
-अटल SENSOR_DEVICE_ATTR_RW(pwm2, pwm, 1);
-अटल SENSOR_DEVICE_ATTR_RW(pwm3, pwm, 2);
-अटल SENSOR_DEVICE_ATTR_RW(pwm4, pwm, 3);
+static SENSOR_DEVICE_ATTR_RW(pwm1, pwm, 0);
+static SENSOR_DEVICE_ATTR_RW(pwm2, pwm, 1);
+static SENSOR_DEVICE_ATTR_RW(pwm3, pwm, 2);
+static SENSOR_DEVICE_ATTR_RW(pwm4, pwm, 3);
 
-अटल DEVICE_ATTR_RW(pwm1_freq);
+static DEVICE_ATTR_RW(pwm1_freq);
 
-अटल SENSOR_DEVICE_ATTR_RW(pwm1_स्वतः_poपूर्णांक1_pwm, pwm_min, 0);
-अटल SENSOR_DEVICE_ATTR_RW(pwm2_स्वतः_poपूर्णांक1_pwm, pwm_min, 1);
-अटल SENSOR_DEVICE_ATTR_RW(pwm3_स्वतः_poपूर्णांक1_pwm, pwm_min, 2);
-अटल SENSOR_DEVICE_ATTR_RW(pwm4_स्वतः_poपूर्णांक1_pwm, pwm_min, 3);
+static SENSOR_DEVICE_ATTR_RW(pwm1_auto_point1_pwm, pwm_min, 0);
+static SENSOR_DEVICE_ATTR_RW(pwm2_auto_point1_pwm, pwm_min, 1);
+static SENSOR_DEVICE_ATTR_RW(pwm3_auto_point1_pwm, pwm_min, 2);
+static SENSOR_DEVICE_ATTR_RW(pwm4_auto_point1_pwm, pwm_min, 3);
 
-अटल SENSOR_DEVICE_ATTR_RW(pwm1_स्वतः_poपूर्णांक2_pwm, pwm_max, 0);
-अटल SENSOR_DEVICE_ATTR_RW(pwm2_स्वतः_poपूर्णांक2_pwm, pwm_max, 1);
-अटल SENSOR_DEVICE_ATTR_RW(pwm3_स्वतः_poपूर्णांक2_pwm, pwm_max, 2);
-अटल SENSOR_DEVICE_ATTR_RW(pwm4_स्वतः_poपूर्णांक2_pwm, pwm_max, 3);
+static SENSOR_DEVICE_ATTR_RW(pwm1_auto_point2_pwm, pwm_max, 0);
+static SENSOR_DEVICE_ATTR_RW(pwm2_auto_point2_pwm, pwm_max, 1);
+static SENSOR_DEVICE_ATTR_RW(pwm3_auto_point2_pwm, pwm_max, 2);
+static SENSOR_DEVICE_ATTR_RW(pwm4_auto_point2_pwm, pwm_max, 3);
 
-अटल SENSOR_DEVICE_ATTR_RW(pwm1_स्वतः_poपूर्णांक1_temp, pwm_पंचांगin, 0);
-अटल SENSOR_DEVICE_ATTR_RW(pwm2_स्वतः_poपूर्णांक1_temp, pwm_पंचांगin, 1);
-अटल SENSOR_DEVICE_ATTR_RW(pwm3_स्वतः_poपूर्णांक1_temp, pwm_पंचांगin, 2);
-अटल SENSOR_DEVICE_ATTR_RW(pwm4_स्वतः_poपूर्णांक1_temp, pwm_पंचांगin, 3);
+static SENSOR_DEVICE_ATTR_RW(pwm1_auto_point1_temp, pwm_tmin, 0);
+static SENSOR_DEVICE_ATTR_RW(pwm2_auto_point1_temp, pwm_tmin, 1);
+static SENSOR_DEVICE_ATTR_RW(pwm3_auto_point1_temp, pwm_tmin, 2);
+static SENSOR_DEVICE_ATTR_RW(pwm4_auto_point1_temp, pwm_tmin, 3);
 
-अटल SENSOR_DEVICE_ATTR_RO(pwm1_स्वतः_poपूर्णांक2_temp, pwm_पंचांगax, 0);
-अटल SENSOR_DEVICE_ATTR_RO(pwm2_स्वतः_poपूर्णांक2_temp, pwm_पंचांगax, 1);
-अटल SENSOR_DEVICE_ATTR_RO(pwm3_स्वतः_poपूर्णांक2_temp, pwm_पंचांगax, 2);
-अटल SENSOR_DEVICE_ATTR_RO(pwm4_स्वतः_poपूर्णांक2_temp, pwm_पंचांगax, 3);
+static SENSOR_DEVICE_ATTR_RO(pwm1_auto_point2_temp, pwm_tmax, 0);
+static SENSOR_DEVICE_ATTR_RO(pwm2_auto_point2_temp, pwm_tmax, 1);
+static SENSOR_DEVICE_ATTR_RO(pwm3_auto_point2_temp, pwm_tmax, 2);
+static SENSOR_DEVICE_ATTR_RO(pwm4_auto_point2_temp, pwm_tmax, 3);
 
-अटल SENSOR_DEVICE_ATTR_RW(pwm1_enable, pwm_स्वतः, 0);
-अटल SENSOR_DEVICE_ATTR_RW(pwm2_enable, pwm_स्वतः, 1);
-अटल SENSOR_DEVICE_ATTR_RW(pwm3_enable, pwm_स्वतः, 2);
-अटल SENSOR_DEVICE_ATTR_RW(pwm4_enable, pwm_स्वतः, 3);
+static SENSOR_DEVICE_ATTR_RW(pwm1_enable, pwm_auto, 0);
+static SENSOR_DEVICE_ATTR_RW(pwm2_enable, pwm_auto, 1);
+static SENSOR_DEVICE_ATTR_RW(pwm3_enable, pwm_auto, 2);
+static SENSOR_DEVICE_ATTR_RW(pwm4_enable, pwm_auto, 3);
 
-अटल SENSOR_DEVICE_ATTR_RW(pwm1_स्वतः_channels_temp, pwm_स्वतः_temp, 0);
-अटल SENSOR_DEVICE_ATTR_RW(pwm2_स्वतः_channels_temp, pwm_स्वतः_temp, 1);
-अटल SENSOR_DEVICE_ATTR_RW(pwm3_स्वतः_channels_temp, pwm_स्वतः_temp, 2);
-अटल SENSOR_DEVICE_ATTR_RW(pwm4_स्वतः_channels_temp, pwm_स्वतः_temp, 3);
+static SENSOR_DEVICE_ATTR_RW(pwm1_auto_channels_temp, pwm_auto_temp, 0);
+static SENSOR_DEVICE_ATTR_RW(pwm2_auto_channels_temp, pwm_auto_temp, 1);
+static SENSOR_DEVICE_ATTR_RW(pwm3_auto_channels_temp, pwm_auto_temp, 2);
+static SENSOR_DEVICE_ATTR_RW(pwm4_auto_channels_temp, pwm_auto_temp, 3);
 
-अटल काष्ठा attribute *adt7470_attrs[] = अणु
+static struct attribute *adt7470_attrs[] = {
 	&dev_attr_alarm_mask.attr,
 	&dev_attr_num_temp_sensors.attr,
-	&dev_attr_स्वतः_update_पूर्णांकerval.attr,
+	&dev_attr_auto_update_interval.attr,
 	&sensor_dev_attr_temp1_max.dev_attr.attr,
 	&sensor_dev_attr_temp2_max.dev_attr.attr,
 	&sensor_dev_attr_temp3_max.dev_attr.attr,
@@ -1226,92 +1225,92 @@ out:
 	&sensor_dev_attr_fan2_alarm.dev_attr.attr,
 	&sensor_dev_attr_fan3_alarm.dev_attr.attr,
 	&sensor_dev_attr_fan4_alarm.dev_attr.attr,
-	&sensor_dev_attr_क्रमce_pwm_max.dev_attr.attr,
+	&sensor_dev_attr_force_pwm_max.dev_attr.attr,
 	&sensor_dev_attr_pwm1.dev_attr.attr,
 	&dev_attr_pwm1_freq.attr,
 	&sensor_dev_attr_pwm2.dev_attr.attr,
 	&sensor_dev_attr_pwm3.dev_attr.attr,
 	&sensor_dev_attr_pwm4.dev_attr.attr,
-	&sensor_dev_attr_pwm1_स्वतः_poपूर्णांक1_pwm.dev_attr.attr,
-	&sensor_dev_attr_pwm2_स्वतः_poपूर्णांक1_pwm.dev_attr.attr,
-	&sensor_dev_attr_pwm3_स्वतः_poपूर्णांक1_pwm.dev_attr.attr,
-	&sensor_dev_attr_pwm4_स्वतः_poपूर्णांक1_pwm.dev_attr.attr,
-	&sensor_dev_attr_pwm1_स्वतः_poपूर्णांक2_pwm.dev_attr.attr,
-	&sensor_dev_attr_pwm2_स्वतः_poपूर्णांक2_pwm.dev_attr.attr,
-	&sensor_dev_attr_pwm3_स्वतः_poपूर्णांक2_pwm.dev_attr.attr,
-	&sensor_dev_attr_pwm4_स्वतः_poपूर्णांक2_pwm.dev_attr.attr,
-	&sensor_dev_attr_pwm1_स्वतः_poपूर्णांक1_temp.dev_attr.attr,
-	&sensor_dev_attr_pwm2_स्वतः_poपूर्णांक1_temp.dev_attr.attr,
-	&sensor_dev_attr_pwm3_स्वतः_poपूर्णांक1_temp.dev_attr.attr,
-	&sensor_dev_attr_pwm4_स्वतः_poपूर्णांक1_temp.dev_attr.attr,
-	&sensor_dev_attr_pwm1_स्वतः_poपूर्णांक2_temp.dev_attr.attr,
-	&sensor_dev_attr_pwm2_स्वतः_poपूर्णांक2_temp.dev_attr.attr,
-	&sensor_dev_attr_pwm3_स्वतः_poपूर्णांक2_temp.dev_attr.attr,
-	&sensor_dev_attr_pwm4_स्वतः_poपूर्णांक2_temp.dev_attr.attr,
+	&sensor_dev_attr_pwm1_auto_point1_pwm.dev_attr.attr,
+	&sensor_dev_attr_pwm2_auto_point1_pwm.dev_attr.attr,
+	&sensor_dev_attr_pwm3_auto_point1_pwm.dev_attr.attr,
+	&sensor_dev_attr_pwm4_auto_point1_pwm.dev_attr.attr,
+	&sensor_dev_attr_pwm1_auto_point2_pwm.dev_attr.attr,
+	&sensor_dev_attr_pwm2_auto_point2_pwm.dev_attr.attr,
+	&sensor_dev_attr_pwm3_auto_point2_pwm.dev_attr.attr,
+	&sensor_dev_attr_pwm4_auto_point2_pwm.dev_attr.attr,
+	&sensor_dev_attr_pwm1_auto_point1_temp.dev_attr.attr,
+	&sensor_dev_attr_pwm2_auto_point1_temp.dev_attr.attr,
+	&sensor_dev_attr_pwm3_auto_point1_temp.dev_attr.attr,
+	&sensor_dev_attr_pwm4_auto_point1_temp.dev_attr.attr,
+	&sensor_dev_attr_pwm1_auto_point2_temp.dev_attr.attr,
+	&sensor_dev_attr_pwm2_auto_point2_temp.dev_attr.attr,
+	&sensor_dev_attr_pwm3_auto_point2_temp.dev_attr.attr,
+	&sensor_dev_attr_pwm4_auto_point2_temp.dev_attr.attr,
 	&sensor_dev_attr_pwm1_enable.dev_attr.attr,
 	&sensor_dev_attr_pwm2_enable.dev_attr.attr,
 	&sensor_dev_attr_pwm3_enable.dev_attr.attr,
 	&sensor_dev_attr_pwm4_enable.dev_attr.attr,
-	&sensor_dev_attr_pwm1_स्वतः_channels_temp.dev_attr.attr,
-	&sensor_dev_attr_pwm2_स्वतः_channels_temp.dev_attr.attr,
-	&sensor_dev_attr_pwm3_स्वतः_channels_temp.dev_attr.attr,
-	&sensor_dev_attr_pwm4_स्वतः_channels_temp.dev_attr.attr,
-	शून्य
-पूर्ण;
+	&sensor_dev_attr_pwm1_auto_channels_temp.dev_attr.attr,
+	&sensor_dev_attr_pwm2_auto_channels_temp.dev_attr.attr,
+	&sensor_dev_attr_pwm3_auto_channels_temp.dev_attr.attr,
+	&sensor_dev_attr_pwm4_auto_channels_temp.dev_attr.attr,
+	NULL
+};
 
 ATTRIBUTE_GROUPS(adt7470);
 
-/* Return 0 अगर detection is successful, -ENODEV otherwise */
-अटल पूर्णांक adt7470_detect(काष्ठा i2c_client *client,
-			  काष्ठा i2c_board_info *info)
-अणु
-	काष्ठा i2c_adapter *adapter = client->adapter;
-	पूर्णांक venकरोr, device, revision;
+/* Return 0 if detection is successful, -ENODEV otherwise */
+static int adt7470_detect(struct i2c_client *client,
+			  struct i2c_board_info *info)
+{
+	struct i2c_adapter *adapter = client->adapter;
+	int vendor, device, revision;
 
-	अगर (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA))
-		वापस -ENODEV;
+	if (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA))
+		return -ENODEV;
 
-	venकरोr = i2c_smbus_पढ़ो_byte_data(client, ADT7470_REG_VENDOR);
-	अगर (venकरोr != ADT7470_VENDOR)
-		वापस -ENODEV;
+	vendor = i2c_smbus_read_byte_data(client, ADT7470_REG_VENDOR);
+	if (vendor != ADT7470_VENDOR)
+		return -ENODEV;
 
-	device = i2c_smbus_पढ़ो_byte_data(client, ADT7470_REG_DEVICE);
-	अगर (device != ADT7470_DEVICE)
-		वापस -ENODEV;
+	device = i2c_smbus_read_byte_data(client, ADT7470_REG_DEVICE);
+	if (device != ADT7470_DEVICE)
+		return -ENODEV;
 
-	revision = i2c_smbus_पढ़ो_byte_data(client, ADT7470_REG_REVISION);
-	अगर (revision != ADT7470_REVISION)
-		वापस -ENODEV;
+	revision = i2c_smbus_read_byte_data(client, ADT7470_REG_REVISION);
+	if (revision != ADT7470_REVISION)
+		return -ENODEV;
 
 	strlcpy(info->type, "adt7470", I2C_NAME_SIZE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम adt7470_init_client(काष्ठा i2c_client *client)
-अणु
-	पूर्णांक reg = i2c_smbus_पढ़ो_byte_data(client, ADT7470_REG_CFG);
+static void adt7470_init_client(struct i2c_client *client)
+{
+	int reg = i2c_smbus_read_byte_data(client, ADT7470_REG_CFG);
 
-	अगर (reg < 0) अणु
+	if (reg < 0) {
 		dev_err(&client->dev, "cannot read configuration register\n");
-	पूर्ण अन्यथा अणु
-		/* start monitoring (and करो a self-test) */
-		i2c_smbus_ग_लिखो_byte_data(client, ADT7470_REG_CFG, reg | 3);
-	पूर्ण
-पूर्ण
+	} else {
+		/* start monitoring (and do a self-test) */
+		i2c_smbus_write_byte_data(client, ADT7470_REG_CFG, reg | 3);
+	}
+}
 
-अटल पूर्णांक adt7470_probe(काष्ठा i2c_client *client)
-अणु
-	काष्ठा device *dev = &client->dev;
-	काष्ठा adt7470_data *data;
-	काष्ठा device *hwmon_dev;
+static int adt7470_probe(struct i2c_client *client)
+{
+	struct device *dev = &client->dev;
+	struct adt7470_data *data;
+	struct device *hwmon_dev;
 
-	data = devm_kzalloc(dev, माप(काष्ठा adt7470_data), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = devm_kzalloc(dev, sizeof(struct adt7470_data), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
 	data->num_temp_sensors = -1;
-	data->स्वतः_update_पूर्णांकerval = AUTO_UPDATE_INTERVAL;
+	data->auto_update_interval = AUTO_UPDATE_INTERVAL;
 
 	i2c_set_clientdata(client, data);
 	data->client = client;
@@ -1323,47 +1322,47 @@ ATTRIBUTE_GROUPS(adt7470);
 	adt7470_init_client(client);
 
 	/* Register sysfs hooks */
-	hwmon_dev = devm_hwmon_device_रेजिस्टर_with_groups(dev, client->name,
+	hwmon_dev = devm_hwmon_device_register_with_groups(dev, client->name,
 							   data,
 							   adt7470_groups);
 
-	अगर (IS_ERR(hwmon_dev))
-		वापस PTR_ERR(hwmon_dev);
+	if (IS_ERR(hwmon_dev))
+		return PTR_ERR(hwmon_dev);
 
-	data->स्वतः_update = kthपढ़ो_run(adt7470_update_thपढ़ो, client, "%s",
+	data->auto_update = kthread_run(adt7470_update_thread, client, "%s",
 					dev_name(hwmon_dev));
-	अगर (IS_ERR(data->स्वतः_update)) अणु
-		वापस PTR_ERR(data->स्वतः_update);
-	पूर्ण
+	if (IS_ERR(data->auto_update)) {
+		return PTR_ERR(data->auto_update);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक adt7470_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा adt7470_data *data = i2c_get_clientdata(client);
+static int adt7470_remove(struct i2c_client *client)
+{
+	struct adt7470_data *data = i2c_get_clientdata(client);
 
-	kthपढ़ो_stop(data->स्वतः_update);
-	वापस 0;
-पूर्ण
+	kthread_stop(data->auto_update);
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id adt7470_id[] = अणु
-	अणु "adt7470", 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id adt7470_id[] = {
+	{ "adt7470", 0 },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, adt7470_id);
 
-अटल काष्ठा i2c_driver adt7470_driver = अणु
+static struct i2c_driver adt7470_driver = {
 	.class		= I2C_CLASS_HWMON,
-	.driver = अणु
+	.driver = {
 		.name	= "adt7470",
-	पूर्ण,
+	},
 	.probe_new	= adt7470_probe,
-	.हटाओ		= adt7470_हटाओ,
+	.remove		= adt7470_remove,
 	.id_table	= adt7470_id,
 	.detect		= adt7470_detect,
 	.address_list	= normal_i2c,
-पूर्ण;
+};
 
 module_i2c_driver(adt7470_driver);
 

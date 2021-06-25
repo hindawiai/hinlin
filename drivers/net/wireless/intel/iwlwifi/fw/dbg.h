@@ -1,325 +1,324 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause */
+/* SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause */
 /*
  * Copyright (C) 2005-2014, 2018-2019 Intel Corporation
  * Copyright (C) 2013-2015 Intel Mobile Communications GmbH
  * Copyright (C) 2015-2017 Intel Deutschland GmbH
  */
-#अगर_अघोषित __iwl_fw_dbg_h__
-#घोषणा __iwl_fw_dbg_h__
-#समावेश <linux/workqueue.h>
-#समावेश <net/cfg80211.h>
-#समावेश "runtime.h"
-#समावेश "iwl-prph.h"
-#समावेश "iwl-io.h"
-#समावेश "file.h"
-#समावेश "error-dump.h"
-#समावेश "api/commands.h"
-#समावेश "api/dbg-tlv.h"
-#समावेश "api/alive.h"
+#ifndef __iwl_fw_dbg_h__
+#define __iwl_fw_dbg_h__
+#include <linux/workqueue.h>
+#include <net/cfg80211.h>
+#include "runtime.h"
+#include "iwl-prph.h"
+#include "iwl-io.h"
+#include "file.h"
+#include "error-dump.h"
+#include "api/commands.h"
+#include "api/dbg-tlv.h"
+#include "api/alive.h"
 
 /**
- * काष्ठा iwl_fw_dump_desc - describes the dump
+ * struct iwl_fw_dump_desc - describes the dump
  * @len: length of trig_desc->data
  * @trig_desc: the description of the dump
  */
-काष्ठा iwl_fw_dump_desc अणु
-	माप_प्रकार len;
+struct iwl_fw_dump_desc {
+	size_t len;
 	/* must be last */
-	काष्ठा iwl_fw_error_dump_trigger_desc trig_desc;
-पूर्ण;
+	struct iwl_fw_error_dump_trigger_desc trig_desc;
+};
 
 /**
- * काष्ठा iwl_fw_dbg_params - रेजिस्टर values to restore
+ * struct iwl_fw_dbg_params - register values to restore
  * @in_sample: DBGC_IN_SAMPLE value
  * @out_ctrl: DBGC_OUT_CTRL value
  */
-काष्ठा iwl_fw_dbg_params अणु
+struct iwl_fw_dbg_params {
 	u32 in_sample;
 	u32 out_ctrl;
-पूर्ण;
+};
 
-बाह्य स्थिर काष्ठा iwl_fw_dump_desc iwl_dump_desc_निश्चित;
+extern const struct iwl_fw_dump_desc iwl_dump_desc_assert;
 
-पूर्णांक iwl_fw_dbg_collect_desc(काष्ठा iwl_fw_runसमय *fwrt,
-			    स्थिर काष्ठा iwl_fw_dump_desc *desc,
-			    bool monitor_only, अचिन्हित पूर्णांक delay);
-पूर्णांक iwl_fw_dbg_error_collect(काष्ठा iwl_fw_runसमय *fwrt,
-			     क्रमागत iwl_fw_dbg_trigger trig_type);
-पूर्णांक iwl_fw_dbg_ini_collect(काष्ठा iwl_fw_runसमय *fwrt,
-			   काष्ठा iwl_fwrt_dump_data *dump_data);
-पूर्णांक iwl_fw_dbg_collect(काष्ठा iwl_fw_runसमय *fwrt,
-		       क्रमागत iwl_fw_dbg_trigger trig, स्थिर अक्षर *str,
-		       माप_प्रकार len, काष्ठा iwl_fw_dbg_trigger_tlv *trigger);
-पूर्णांक iwl_fw_dbg_collect_trig(काष्ठा iwl_fw_runसमय *fwrt,
-			    काष्ठा iwl_fw_dbg_trigger_tlv *trigger,
-			    स्थिर अक्षर *fmt, ...) __म_लिखो(3, 4);
-पूर्णांक iwl_fw_start_dbg_conf(काष्ठा iwl_fw_runसमय *fwrt, u8 id);
+int iwl_fw_dbg_collect_desc(struct iwl_fw_runtime *fwrt,
+			    const struct iwl_fw_dump_desc *desc,
+			    bool monitor_only, unsigned int delay);
+int iwl_fw_dbg_error_collect(struct iwl_fw_runtime *fwrt,
+			     enum iwl_fw_dbg_trigger trig_type);
+int iwl_fw_dbg_ini_collect(struct iwl_fw_runtime *fwrt,
+			   struct iwl_fwrt_dump_data *dump_data);
+int iwl_fw_dbg_collect(struct iwl_fw_runtime *fwrt,
+		       enum iwl_fw_dbg_trigger trig, const char *str,
+		       size_t len, struct iwl_fw_dbg_trigger_tlv *trigger);
+int iwl_fw_dbg_collect_trig(struct iwl_fw_runtime *fwrt,
+			    struct iwl_fw_dbg_trigger_tlv *trigger,
+			    const char *fmt, ...) __printf(3, 4);
+int iwl_fw_start_dbg_conf(struct iwl_fw_runtime *fwrt, u8 id);
 
-#घोषणा iwl_fw_dbg_trigger_enabled(fw, id) (अणु			\
-	व्योम *__dbg_trigger = (fw)->dbg.trigger_tlv[(id)];	\
+#define iwl_fw_dbg_trigger_enabled(fw, id) ({			\
+	void *__dbg_trigger = (fw)->dbg.trigger_tlv[(id)];	\
 	unlikely(__dbg_trigger);				\
-पूर्ण)
+})
 
-अटल अंतरभूत काष्ठा iwl_fw_dbg_trigger_tlv*
-_iwl_fw_dbg_get_trigger(स्थिर काष्ठा iwl_fw *fw, क्रमागत iwl_fw_dbg_trigger id)
-अणु
-	वापस fw->dbg.trigger_tlv[id];
-पूर्ण
+static inline struct iwl_fw_dbg_trigger_tlv*
+_iwl_fw_dbg_get_trigger(const struct iwl_fw *fw, enum iwl_fw_dbg_trigger id)
+{
+	return fw->dbg.trigger_tlv[id];
+}
 
-#घोषणा iwl_fw_dbg_get_trigger(fw, id) (अणु			\
-	BUILD_BUG_ON(!__builtin_स्थिरant_p(id));		\
+#define iwl_fw_dbg_get_trigger(fw, id) ({			\
+	BUILD_BUG_ON(!__builtin_constant_p(id));		\
 	BUILD_BUG_ON((id) >= FW_DBG_TRIGGER_MAX);		\
 	_iwl_fw_dbg_get_trigger((fw), (id));			\
-पूर्ण)
+})
 
-अटल अंतरभूत bool
-iwl_fw_dbg_trigger_vअगर_match(काष्ठा iwl_fw_dbg_trigger_tlv *trig,
-			     काष्ठा wireless_dev *wdev)
-अणु
-	u32 trig_vअगर = le32_to_cpu(trig->vअगर_type);
+static inline bool
+iwl_fw_dbg_trigger_vif_match(struct iwl_fw_dbg_trigger_tlv *trig,
+			     struct wireless_dev *wdev)
+{
+	u32 trig_vif = le32_to_cpu(trig->vif_type);
 
-	वापस trig_vअगर == IWL_FW_DBG_CONF_VIF_ANY ||
-	       wdev->अगरtype == trig_vअगर;
-पूर्ण
+	return trig_vif == IWL_FW_DBG_CONF_VIF_ANY ||
+	       wdev->iftype == trig_vif;
+}
 
-अटल अंतरभूत bool
-iwl_fw_dbg_trigger_stop_conf_match(काष्ठा iwl_fw_runसमय *fwrt,
-				   काष्ठा iwl_fw_dbg_trigger_tlv *trig)
-अणु
-	वापस ((trig->mode & IWL_FW_DBG_TRIGGER_STOP) &&
+static inline bool
+iwl_fw_dbg_trigger_stop_conf_match(struct iwl_fw_runtime *fwrt,
+				   struct iwl_fw_dbg_trigger_tlv *trig)
+{
+	return ((trig->mode & IWL_FW_DBG_TRIGGER_STOP) &&
 		(fwrt->dump.conf == FW_DBG_INVALID ||
 		(BIT(fwrt->dump.conf) & le32_to_cpu(trig->stop_conf_ids))));
-पूर्ण
+}
 
-अटल अंतरभूत bool
-iwl_fw_dbg_no_trig_winकरोw(काष्ठा iwl_fw_runसमय *fwrt, u32 id, u32 dis_usec)
-अणु
-	अचिन्हित दीर्घ wind_jअगरf = usecs_to_jअगरfies(dis_usec);
+static inline bool
+iwl_fw_dbg_no_trig_window(struct iwl_fw_runtime *fwrt, u32 id, u32 dis_usec)
+{
+	unsigned long wind_jiff = usecs_to_jiffies(dis_usec);
 
 	/* If this is the first event checked, jump to update start ts */
-	अगर (fwrt->dump.non_collect_ts_start[id] &&
-	    (समय_after(fwrt->dump.non_collect_ts_start[id] + wind_jअगरf,
-			jअगरfies)))
-		वापस true;
+	if (fwrt->dump.non_collect_ts_start[id] &&
+	    (time_after(fwrt->dump.non_collect_ts_start[id] + wind_jiff,
+			jiffies)))
+		return true;
 
-	fwrt->dump.non_collect_ts_start[id] = jअगरfies;
-	वापस false;
-पूर्ण
+	fwrt->dump.non_collect_ts_start[id] = jiffies;
+	return false;
+}
 
-अटल अंतरभूत bool
-iwl_fw_dbg_trigger_check_stop(काष्ठा iwl_fw_runसमय *fwrt,
-			      काष्ठा wireless_dev *wdev,
-			      काष्ठा iwl_fw_dbg_trigger_tlv *trig)
-अणु
+static inline bool
+iwl_fw_dbg_trigger_check_stop(struct iwl_fw_runtime *fwrt,
+			      struct wireless_dev *wdev,
+			      struct iwl_fw_dbg_trigger_tlv *trig)
+{
 	u32 usec = le16_to_cpu(trig->trig_dis_ms) * USEC_PER_MSEC;
 
-	अगर (wdev && !iwl_fw_dbg_trigger_vअगर_match(trig, wdev))
-		वापस false;
+	if (wdev && !iwl_fw_dbg_trigger_vif_match(trig, wdev))
+		return false;
 
-	अगर (iwl_fw_dbg_no_trig_winकरोw(fwrt, le32_to_cpu(trig->id), usec)) अणु
+	if (iwl_fw_dbg_no_trig_window(fwrt, le32_to_cpu(trig->id), usec)) {
 		IWL_WARN(fwrt, "Trigger %d occurred while no-collect window.\n",
 			 trig->id);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	वापस iwl_fw_dbg_trigger_stop_conf_match(fwrt, trig);
-पूर्ण
+	return iwl_fw_dbg_trigger_stop_conf_match(fwrt, trig);
+}
 
-अटल अंतरभूत काष्ठा iwl_fw_dbg_trigger_tlv*
-_iwl_fw_dbg_trigger_on(काष्ठा iwl_fw_runसमय *fwrt,
-		       काष्ठा wireless_dev *wdev,
-		       स्थिर क्रमागत iwl_fw_dbg_trigger id)
-अणु
-	काष्ठा iwl_fw_dbg_trigger_tlv *trig;
+static inline struct iwl_fw_dbg_trigger_tlv*
+_iwl_fw_dbg_trigger_on(struct iwl_fw_runtime *fwrt,
+		       struct wireless_dev *wdev,
+		       const enum iwl_fw_dbg_trigger id)
+{
+	struct iwl_fw_dbg_trigger_tlv *trig;
 
-	अगर (iwl_trans_dbg_ini_valid(fwrt->trans))
-		वापस शून्य;
+	if (iwl_trans_dbg_ini_valid(fwrt->trans))
+		return NULL;
 
-	अगर (!iwl_fw_dbg_trigger_enabled(fwrt->fw, id))
-		वापस शून्य;
+	if (!iwl_fw_dbg_trigger_enabled(fwrt->fw, id))
+		return NULL;
 
 	trig = _iwl_fw_dbg_get_trigger(fwrt->fw, id);
 
-	अगर (!iwl_fw_dbg_trigger_check_stop(fwrt, wdev, trig))
-		वापस शून्य;
+	if (!iwl_fw_dbg_trigger_check_stop(fwrt, wdev, trig))
+		return NULL;
 
-	वापस trig;
-पूर्ण
+	return trig;
+}
 
-#घोषणा iwl_fw_dbg_trigger_on(fwrt, wdev, id) (अणु		\
-	BUILD_BUG_ON(!__builtin_स्थिरant_p(id));		\
+#define iwl_fw_dbg_trigger_on(fwrt, wdev, id) ({		\
+	BUILD_BUG_ON(!__builtin_constant_p(id));		\
 	BUILD_BUG_ON((id) >= FW_DBG_TRIGGER_MAX);		\
 	_iwl_fw_dbg_trigger_on((fwrt), (wdev), (id));		\
-पूर्ण)
+})
 
-अटल अंतरभूत व्योम
-_iwl_fw_dbg_trigger_simple_stop(काष्ठा iwl_fw_runसमय *fwrt,
-				काष्ठा wireless_dev *wdev,
-				काष्ठा iwl_fw_dbg_trigger_tlv *trigger)
-अणु
-	अगर (!trigger)
-		वापस;
+static inline void
+_iwl_fw_dbg_trigger_simple_stop(struct iwl_fw_runtime *fwrt,
+				struct wireless_dev *wdev,
+				struct iwl_fw_dbg_trigger_tlv *trigger)
+{
+	if (!trigger)
+		return;
 
-	अगर (!iwl_fw_dbg_trigger_check_stop(fwrt, wdev, trigger))
-		वापस;
+	if (!iwl_fw_dbg_trigger_check_stop(fwrt, wdev, trigger))
+		return;
 
-	iwl_fw_dbg_collect_trig(fwrt, trigger, शून्य);
-पूर्ण
+	iwl_fw_dbg_collect_trig(fwrt, trigger, NULL);
+}
 
-#घोषणा iwl_fw_dbg_trigger_simple_stop(fwrt, wdev, trig)	\
+#define iwl_fw_dbg_trigger_simple_stop(fwrt, wdev, trig)	\
 	_iwl_fw_dbg_trigger_simple_stop((fwrt), (wdev),		\
 					iwl_fw_dbg_get_trigger((fwrt)->fw,\
 							       (trig)))
-व्योम iwl_fw_dbg_stop_restart_recording(काष्ठा iwl_fw_runसमय *fwrt,
-				       काष्ठा iwl_fw_dbg_params *params,
+void iwl_fw_dbg_stop_restart_recording(struct iwl_fw_runtime *fwrt,
+				       struct iwl_fw_dbg_params *params,
 				       bool stop);
 
-#अगर_घोषित CONFIG_IWLWIFI_DEBUGFS
-अटल अंतरभूत व्योम iwl_fw_set_dbg_rec_on(काष्ठा iwl_fw_runसमय *fwrt)
-अणु
-	अगर (fwrt->cur_fw_img == IWL_UCODE_REGULAR &&
+#ifdef CONFIG_IWLWIFI_DEBUGFS
+static inline void iwl_fw_set_dbg_rec_on(struct iwl_fw_runtime *fwrt)
+{
+	if (fwrt->cur_fw_img == IWL_UCODE_REGULAR &&
 	    (fwrt->fw->dbg.dest_tlv ||
 	     fwrt->trans->dbg.ini_dest != IWL_FW_INI_LOCATION_INVALID))
 		fwrt->trans->dbg.rec_on = true;
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-अटल अंतरभूत व्योम iwl_fw_dump_conf_clear(काष्ठा iwl_fw_runसमय *fwrt)
-अणु
+static inline void iwl_fw_dump_conf_clear(struct iwl_fw_runtime *fwrt)
+{
 	fwrt->dump.conf = FW_DBG_INVALID;
-पूर्ण
+}
 
-व्योम iwl_fw_error_dump_wk(काष्ठा work_काष्ठा *work);
+void iwl_fw_error_dump_wk(struct work_struct *work);
 
-अटल अंतरभूत bool iwl_fw_dbg_type_on(काष्ठा iwl_fw_runसमय *fwrt, u32 type)
-अणु
-	वापस (fwrt->fw->dbg.dump_mask & BIT(type));
-पूर्ण
+static inline bool iwl_fw_dbg_type_on(struct iwl_fw_runtime *fwrt, u32 type)
+{
+	return (fwrt->fw->dbg.dump_mask & BIT(type));
+}
 
-अटल अंतरभूत bool iwl_fw_dbg_is_d3_debug_enabled(काष्ठा iwl_fw_runसमय *fwrt)
-अणु
-	वापस fw_has_capa(&fwrt->fw->ucode_capa,
+static inline bool iwl_fw_dbg_is_d3_debug_enabled(struct iwl_fw_runtime *fwrt)
+{
+	return fw_has_capa(&fwrt->fw->ucode_capa,
 			   IWL_UCODE_TLV_CAPA_D3_DEBUG) &&
 		fwrt->trans->cfg->d3_debug_data_length && fwrt->ops &&
 		fwrt->ops->d3_debug_enable &&
 		fwrt->ops->d3_debug_enable(fwrt->ops_ctx) &&
 		iwl_fw_dbg_type_on(fwrt, IWL_FW_ERROR_DUMP_D3_DEBUG_DATA);
-पूर्ण
+}
 
-अटल अंतरभूत bool iwl_fw_dbg_is_paging_enabled(काष्ठा iwl_fw_runसमय *fwrt)
-अणु
-	वापस iwl_fw_dbg_type_on(fwrt, IWL_FW_ERROR_DUMP_PAGING) &&
+static inline bool iwl_fw_dbg_is_paging_enabled(struct iwl_fw_runtime *fwrt)
+{
+	return iwl_fw_dbg_type_on(fwrt, IWL_FW_ERROR_DUMP_PAGING) &&
 		!fwrt->trans->trans_cfg->gen2 &&
 		fwrt->cur_fw_img < IWL_UCODE_TYPE_MAX &&
 		fwrt->fw->img[fwrt->cur_fw_img].paging_mem_size &&
 		fwrt->fw_paging_db[0].fw_paging_block;
-पूर्ण
+}
 
-व्योम iwl_fw_dbg_पढ़ो_d3_debug_data(काष्ठा iwl_fw_runसमय *fwrt);
+void iwl_fw_dbg_read_d3_debug_data(struct iwl_fw_runtime *fwrt);
 
-अटल अंतरभूत व्योम iwl_fw_flush_dumps(काष्ठा iwl_fw_runसमय *fwrt)
-अणु
-	पूर्णांक i;
+static inline void iwl_fw_flush_dumps(struct iwl_fw_runtime *fwrt)
+{
+	int i;
 
-	iwl_dbg_tlv_del_समयrs(fwrt->trans);
-	क्रम (i = 0; i < IWL_FW_RUNTIME_DUMP_WK_NUM; i++)
+	iwl_dbg_tlv_del_timers(fwrt->trans);
+	for (i = 0; i < IWL_FW_RUNTIME_DUMP_WK_NUM; i++)
 		flush_delayed_work(&fwrt->dump.wks[i].wk);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_IWLWIFI_DEBUGFS
-अटल अंतरभूत व्योम iwl_fw_cancel_बारtamp(काष्ठा iwl_fw_runसमय *fwrt)
-अणु
-	fwrt->बारtamp.delay = 0;
-	cancel_delayed_work_sync(&fwrt->बारtamp.wk);
-पूर्ण
+#ifdef CONFIG_IWLWIFI_DEBUGFS
+static inline void iwl_fw_cancel_timestamp(struct iwl_fw_runtime *fwrt)
+{
+	fwrt->timestamp.delay = 0;
+	cancel_delayed_work_sync(&fwrt->timestamp.wk);
+}
 
-व्योम iwl_fw_trigger_बारtamp(काष्ठा iwl_fw_runसमय *fwrt, u32 delay);
+void iwl_fw_trigger_timestamp(struct iwl_fw_runtime *fwrt, u32 delay);
 
-अटल अंतरभूत व्योम iwl_fw_suspend_बारtamp(काष्ठा iwl_fw_runसमय *fwrt)
-अणु
-	cancel_delayed_work_sync(&fwrt->बारtamp.wk);
-पूर्ण
+static inline void iwl_fw_suspend_timestamp(struct iwl_fw_runtime *fwrt)
+{
+	cancel_delayed_work_sync(&fwrt->timestamp.wk);
+}
 
-अटल अंतरभूत व्योम iwl_fw_resume_बारtamp(काष्ठा iwl_fw_runसमय *fwrt)
-अणु
-	अगर (!fwrt->बारtamp.delay)
-		वापस;
+static inline void iwl_fw_resume_timestamp(struct iwl_fw_runtime *fwrt)
+{
+	if (!fwrt->timestamp.delay)
+		return;
 
-	schedule_delayed_work(&fwrt->बारtamp.wk,
-			      round_jअगरfies_relative(fwrt->बारtamp.delay));
-पूर्ण
+	schedule_delayed_work(&fwrt->timestamp.wk,
+			      round_jiffies_relative(fwrt->timestamp.delay));
+}
 
-#अन्यथा
+#else
 
-अटल अंतरभूत व्योम iwl_fw_cancel_बारtamp(काष्ठा iwl_fw_runसमय *fwrt) अणुपूर्ण
+static inline void iwl_fw_cancel_timestamp(struct iwl_fw_runtime *fwrt) {}
 
-अटल अंतरभूत व्योम iwl_fw_trigger_बारtamp(काष्ठा iwl_fw_runसमय *fwrt,
-					    u32 delay) अणुपूर्ण
+static inline void iwl_fw_trigger_timestamp(struct iwl_fw_runtime *fwrt,
+					    u32 delay) {}
 
-अटल अंतरभूत व्योम iwl_fw_suspend_बारtamp(काष्ठा iwl_fw_runसमय *fwrt) अणुपूर्ण
+static inline void iwl_fw_suspend_timestamp(struct iwl_fw_runtime *fwrt) {}
 
-अटल अंतरभूत व्योम iwl_fw_resume_बारtamp(काष्ठा iwl_fw_runसमय *fwrt) अणुपूर्ण
+static inline void iwl_fw_resume_timestamp(struct iwl_fw_runtime *fwrt) {}
 
-#पूर्ण_अगर /* CONFIG_IWLWIFI_DEBUGFS */
+#endif /* CONFIG_IWLWIFI_DEBUGFS */
 
-व्योम iwl_fw_dbg_stop_sync(काष्ठा iwl_fw_runसमय *fwrt);
+void iwl_fw_dbg_stop_sync(struct iwl_fw_runtime *fwrt);
 
-अटल अंतरभूत व्योम iwl_fw_lmac1_set_alive_err_table(काष्ठा iwl_trans *trans,
+static inline void iwl_fw_lmac1_set_alive_err_table(struct iwl_trans *trans,
 						    u32 lmac_error_event_table)
-अणु
-	अगर (!(trans->dbg.error_event_table_tlv_status &
+{
+	if (!(trans->dbg.error_event_table_tlv_status &
 	      IWL_ERROR_EVENT_TABLE_LMAC1) ||
 	    WARN_ON(trans->dbg.lmac_error_event_table[0] !=
 		    lmac_error_event_table))
 		trans->dbg.lmac_error_event_table[0] = lmac_error_event_table;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम iwl_fw_umac_set_alive_err_table(काष्ठा iwl_trans *trans,
+static inline void iwl_fw_umac_set_alive_err_table(struct iwl_trans *trans,
 						   u32 umac_error_event_table)
-अणु
-	अगर (!(trans->dbg.error_event_table_tlv_status &
+{
+	if (!(trans->dbg.error_event_table_tlv_status &
 	      IWL_ERROR_EVENT_TABLE_UMAC) ||
 	    WARN_ON(trans->dbg.umac_error_event_table !=
 		    umac_error_event_table))
 		trans->dbg.umac_error_event_table = umac_error_event_table;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम iwl_fw_error_collect(काष्ठा iwl_fw_runसमय *fwrt)
-अणु
-	क्रमागत iwl_fw_ini_समय_poपूर्णांक tp_id;
+static inline void iwl_fw_error_collect(struct iwl_fw_runtime *fwrt)
+{
+	enum iwl_fw_ini_time_point tp_id;
 
-	अगर (!iwl_trans_dbg_ini_valid(fwrt->trans)) अणु
-		iwl_fw_dbg_collect_desc(fwrt, &iwl_dump_desc_निश्चित, false, 0);
-		वापस;
-	पूर्ण
+	if (!iwl_trans_dbg_ini_valid(fwrt->trans)) {
+		iwl_fw_dbg_collect_desc(fwrt, &iwl_dump_desc_assert, false, 0);
+		return;
+	}
 
-	अगर (fwrt->trans->dbg.hw_error) अणु
+	if (fwrt->trans->dbg.hw_error) {
 		tp_id = IWL_FW_INI_TIME_POINT_FW_HW_ERROR;
 		fwrt->trans->dbg.hw_error = false;
-	पूर्ण अन्यथा अणु
+	} else {
 		tp_id = IWL_FW_INI_TIME_POINT_FW_ASSERT;
-	पूर्ण
+	}
 
-	iwl_dbg_tlv_समय_poपूर्णांक(fwrt, tp_id, शून्य);
-पूर्ण
+	iwl_dbg_tlv_time_point(fwrt, tp_id, NULL);
+}
 
-व्योम iwl_fw_error_prपूर्णांक_fseq_regs(काष्ठा iwl_fw_runसमय *fwrt);
+void iwl_fw_error_print_fseq_regs(struct iwl_fw_runtime *fwrt);
 
-अटल अंतरभूत व्योम iwl_fwrt_update_fw_versions(काष्ठा iwl_fw_runसमय *fwrt,
-					       काष्ठा iwl_lmac_alive *lmac,
-					       काष्ठा iwl_umac_alive *umac)
-अणु
-	अगर (lmac) अणु
+static inline void iwl_fwrt_update_fw_versions(struct iwl_fw_runtime *fwrt,
+					       struct iwl_lmac_alive *lmac,
+					       struct iwl_umac_alive *umac)
+{
+	if (lmac) {
 		fwrt->dump.fw_ver.type = lmac->ver_type;
 		fwrt->dump.fw_ver.subtype = lmac->ver_subtype;
 		fwrt->dump.fw_ver.lmac_major = le32_to_cpu(lmac->ucode_major);
 		fwrt->dump.fw_ver.lmac_minor = le32_to_cpu(lmac->ucode_minor);
-	पूर्ण
+	}
 
-	अगर (umac) अणु
+	if (umac) {
 		fwrt->dump.fw_ver.umac_major = le32_to_cpu(umac->umac_major);
 		fwrt->dump.fw_ver.umac_minor = le32_to_cpu(umac->umac_minor);
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर  /* __iwl_fw_dbg_h__ */
+	}
+}
+#endif  /* __iwl_fw_dbg_h__ */

@@ -1,17 +1,16 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * ALSA sequencer MIDI-through client
  * Copyright (c) 1999-2000 by Takashi Iwai <tiwai@suse.de>
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <sound/core.h>
-#समावेश "seq_clientmgr.h"
-#समावेश <sound/initval.h>
-#समावेश <sound/asoundef.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <sound/core.h>
+#include "seq_clientmgr.h"
+#include <sound/initval.h>
+#include <sound/asoundef.h>
 
 /*
 
@@ -19,19 +18,19 @@
 
   This gives a simple midi-through client.  All the normal input events
   are redirected to output port immediately.
-  The routing can be करोne via aconnect program in alsa-utils.
+  The routing can be done via aconnect program in alsa-utils.
 
-  Each client has a अटल client number 62 (= SNDRV_SEQ_CLIENT_DUMMY).
-  If you want to स्वतः-load this module, you may add the following alias
+  Each client has a static client number 62 (= SNDRV_SEQ_CLIENT_DUMMY).
+  If you want to auto-load this module, you may add the following alias
   in your /etc/conf.modules file.
 
 	alias snd-seq-client-62  snd-seq-dummy
 
-  The module is loaded on demand क्रम client 62, or /proc/asound/seq/
-  is accessed.  If you करोn't need this module to be loaded, alias
+  The module is loaded on demand for client 62, or /proc/asound/seq/
+  is accessed.  If you don't need this module to be loaded, alias
   snd-seq-client-62 as "off".  This will help modprobe.
 
-  The number of ports to be created can be specअगरied via the module
+  The number of ports to be created can be specified via the module
   parameter "ports".  For example, to create four ports, add the
   following option in a configuration file under /etc/modprobe.d/:
 
@@ -49,165 +48,165 @@
 MODULE_AUTHOR("Takashi Iwai <tiwai@suse.de>");
 MODULE_DESCRIPTION("ALSA sequencer MIDI-through client");
 MODULE_LICENSE("GPL");
-MODULE_ALIAS("snd-seq-client-" __stringअगरy(SNDRV_SEQ_CLIENT_DUMMY));
+MODULE_ALIAS("snd-seq-client-" __stringify(SNDRV_SEQ_CLIENT_DUMMY));
 
-अटल पूर्णांक ports = 1;
-अटल bool duplex;
+static int ports = 1;
+static bool duplex;
 
-module_param(ports, पूर्णांक, 0444);
+module_param(ports, int, 0444);
 MODULE_PARM_DESC(ports, "number of ports to be created");
 module_param(duplex, bool, 0444);
 MODULE_PARM_DESC(duplex, "create DUPLEX ports");
 
-काष्ठा snd_seq_dummy_port अणु
-	पूर्णांक client;
-	पूर्णांक port;
-	पूर्णांक duplex;
-	पूर्णांक connect;
-पूर्ण;
+struct snd_seq_dummy_port {
+	int client;
+	int port;
+	int duplex;
+	int connect;
+};
 
-अटल पूर्णांक my_client = -1;
+static int my_client = -1;
 
 /*
  * event input callback - just redirect events to subscribers
  */
-अटल पूर्णांक
-dummy_input(काष्ठा snd_seq_event *ev, पूर्णांक direct, व्योम *निजी_data,
-	    पूर्णांक atomic, पूर्णांक hop)
-अणु
-	काष्ठा snd_seq_dummy_port *p;
-	काष्ठा snd_seq_event पंचांगpev;
+static int
+dummy_input(struct snd_seq_event *ev, int direct, void *private_data,
+	    int atomic, int hop)
+{
+	struct snd_seq_dummy_port *p;
+	struct snd_seq_event tmpev;
 
-	p = निजी_data;
-	अगर (ev->source.client == SNDRV_SEQ_CLIENT_SYSTEM ||
+	p = private_data;
+	if (ev->source.client == SNDRV_SEQ_CLIENT_SYSTEM ||
 	    ev->type == SNDRV_SEQ_EVENT_KERNEL_ERROR)
-		वापस 0; /* ignore प्रणाली messages */
-	पंचांगpev = *ev;
-	अगर (p->duplex)
-		पंचांगpev.source.port = p->connect;
-	अन्यथा
-		पंचांगpev.source.port = p->port;
-	पंचांगpev.dest.client = SNDRV_SEQ_ADDRESS_SUBSCRIBERS;
-	वापस snd_seq_kernel_client_dispatch(p->client, &पंचांगpev, atomic, hop);
-पूर्ण
+		return 0; /* ignore system messages */
+	tmpev = *ev;
+	if (p->duplex)
+		tmpev.source.port = p->connect;
+	else
+		tmpev.source.port = p->port;
+	tmpev.dest.client = SNDRV_SEQ_ADDRESS_SUBSCRIBERS;
+	return snd_seq_kernel_client_dispatch(p->client, &tmpev, atomic, hop);
+}
 
 /*
- * मुक्त_निजी callback
+ * free_private callback
  */
-अटल व्योम
-dummy_मुक्त(व्योम *निजी_data)
-अणु
-	kमुक्त(निजी_data);
-पूर्ण
+static void
+dummy_free(void *private_data)
+{
+	kfree(private_data);
+}
 
 /*
  * create a port
  */
-अटल काष्ठा snd_seq_dummy_port __init *
-create_port(पूर्णांक idx, पूर्णांक type)
-अणु
-	काष्ठा snd_seq_port_info pinfo;
-	काष्ठा snd_seq_port_callback pcb;
-	काष्ठा snd_seq_dummy_port *rec;
+static struct snd_seq_dummy_port __init *
+create_port(int idx, int type)
+{
+	struct snd_seq_port_info pinfo;
+	struct snd_seq_port_callback pcb;
+	struct snd_seq_dummy_port *rec;
 
-	अगर ((rec = kzalloc(माप(*rec), GFP_KERNEL)) == शून्य)
-		वापस शून्य;
+	if ((rec = kzalloc(sizeof(*rec), GFP_KERNEL)) == NULL)
+		return NULL;
 
 	rec->client = my_client;
 	rec->duplex = duplex;
 	rec->connect = 0;
-	स_रखो(&pinfo, 0, माप(pinfo));
+	memset(&pinfo, 0, sizeof(pinfo));
 	pinfo.addr.client = my_client;
-	अगर (duplex)
-		प्र_लिखो(pinfo.name, "Midi Through Port-%d:%c", idx,
+	if (duplex)
+		sprintf(pinfo.name, "Midi Through Port-%d:%c", idx,
 			(type ? 'B' : 'A'));
-	अन्यथा
-		प्र_लिखो(pinfo.name, "Midi Through Port-%d", idx);
+	else
+		sprintf(pinfo.name, "Midi Through Port-%d", idx);
 	pinfo.capability = SNDRV_SEQ_PORT_CAP_READ | SNDRV_SEQ_PORT_CAP_SUBS_READ;
 	pinfo.capability |= SNDRV_SEQ_PORT_CAP_WRITE | SNDRV_SEQ_PORT_CAP_SUBS_WRITE;
-	अगर (duplex)
+	if (duplex)
 		pinfo.capability |= SNDRV_SEQ_PORT_CAP_DUPLEX;
 	pinfo.type = SNDRV_SEQ_PORT_TYPE_MIDI_GENERIC
 		| SNDRV_SEQ_PORT_TYPE_SOFTWARE
 		| SNDRV_SEQ_PORT_TYPE_PORT;
-	स_रखो(&pcb, 0, माप(pcb));
+	memset(&pcb, 0, sizeof(pcb));
 	pcb.owner = THIS_MODULE;
 	pcb.event_input = dummy_input;
-	pcb.निजी_मुक्त = dummy_मुक्त;
-	pcb.निजी_data = rec;
+	pcb.private_free = dummy_free;
+	pcb.private_data = rec;
 	pinfo.kernel = &pcb;
-	अगर (snd_seq_kernel_client_ctl(my_client, SNDRV_SEQ_IOCTL_CREATE_PORT, &pinfo) < 0) अणु
-		kमुक्त(rec);
-		वापस शून्य;
-	पूर्ण
+	if (snd_seq_kernel_client_ctl(my_client, SNDRV_SEQ_IOCTL_CREATE_PORT, &pinfo) < 0) {
+		kfree(rec);
+		return NULL;
+	}
 	rec->port = pinfo.addr.port;
-	वापस rec;
-पूर्ण
+	return rec;
+}
 
 /*
- * रेजिस्टर client and create ports
+ * register client and create ports
  */
-अटल पूर्णांक __init
-रेजिस्टर_client(व्योम)
-अणु
-	काष्ठा snd_seq_dummy_port *rec1, *rec2;
-	पूर्णांक i;
+static int __init
+register_client(void)
+{
+	struct snd_seq_dummy_port *rec1, *rec2;
+	int i;
 
-	अगर (ports < 1) अणु
+	if (ports < 1) {
 		pr_err("ALSA: seq_dummy: invalid number of ports %d\n", ports);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* create client */
-	my_client = snd_seq_create_kernel_client(शून्य, SNDRV_SEQ_CLIENT_DUMMY,
+	my_client = snd_seq_create_kernel_client(NULL, SNDRV_SEQ_CLIENT_DUMMY,
 						 "Midi Through");
-	अगर (my_client < 0)
-		वापस my_client;
+	if (my_client < 0)
+		return my_client;
 
 	/* create ports */
-	क्रम (i = 0; i < ports; i++) अणु
+	for (i = 0; i < ports; i++) {
 		rec1 = create_port(i, 0);
-		अगर (rec1 == शून्य) अणु
+		if (rec1 == NULL) {
 			snd_seq_delete_kernel_client(my_client);
-			वापस -ENOMEM;
-		पूर्ण
-		अगर (duplex) अणु
+			return -ENOMEM;
+		}
+		if (duplex) {
 			rec2 = create_port(i, 1);
-			अगर (rec2 == शून्य) अणु
+			if (rec2 == NULL) {
 				snd_seq_delete_kernel_client(my_client);
-				वापस -ENOMEM;
-			पूर्ण
+				return -ENOMEM;
+			}
 			rec1->connect = rec2->port;
 			rec2->connect = rec1->port;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * delete client अगर exists
+ * delete client if exists
  */
-अटल व्योम __निकास
-delete_client(व्योम)
-अणु
-	अगर (my_client >= 0)
+static void __exit
+delete_client(void)
+{
+	if (my_client >= 0)
 		snd_seq_delete_kernel_client(my_client);
-पूर्ण
+}
 
 /*
  *  Init part
  */
 
-अटल पूर्णांक __init alsa_seq_dummy_init(व्योम)
-अणु
-	वापस रेजिस्टर_client();
-पूर्ण
+static int __init alsa_seq_dummy_init(void)
+{
+	return register_client();
+}
 
-अटल व्योम __निकास alsa_seq_dummy_निकास(व्योम)
-अणु
+static void __exit alsa_seq_dummy_exit(void)
+{
 	delete_client();
-पूर्ण
+}
 
 module_init(alsa_seq_dummy_init)
-module_निकास(alsa_seq_dummy_निकास)
+module_exit(alsa_seq_dummy_exit)

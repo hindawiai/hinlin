@@ -1,35 +1,34 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0 OR BSD-3-Clause)
-/* raw.c - Raw sockets क्रम protocol family CAN
+// SPDX-License-Identifier: (GPL-2.0 OR BSD-3-Clause)
+/* raw.c - Raw sockets for protocol family CAN
  *
  * Copyright (c) 2002-2007 Volkswagen Group Electronic Research
  * All rights reserved.
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary क्रमm must reproduce the above copyright
+ * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
- *    करोcumentation and/or other materials provided with the distribution.
+ *    documentation and/or other materials provided with the distribution.
  * 3. Neither the name of Volkswagen nor the names of its contributors
- *    may be used to enकरोrse or promote products derived from this software
- *    without specअगरic prior written permission.
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
  *
  * Alternatively, provided that this notice is retained in full, this
  * software may be distributed under the terms of the GNU General
- * Public License ("GPL") version 2, in which हाल the provisions of the
+ * Public License ("GPL") version 2, in which case the provisions of the
  * GPL apply INSTEAD OF those given above.
  *
- * The provided data काष्ठाures and बाह्यal पूर्णांकerfaces from this code
+ * The provided data structures and external interfaces from this code
  * are not restricted to be used by modules with a GPL compatible license.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -40,773 +39,773 @@
  *
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/uपन.स>
-#समावेश <linux/net.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/socket.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/can.h>
-#समावेश <linux/can/core.h>
-#समावेश <linux/can/skb.h>
-#समावेश <linux/can/raw.h>
-#समावेश <net/sock.h>
-#समावेश <net/net_namespace.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/uio.h>
+#include <linux/net.h>
+#include <linux/slab.h>
+#include <linux/netdevice.h>
+#include <linux/socket.h>
+#include <linux/if_arp.h>
+#include <linux/skbuff.h>
+#include <linux/can.h>
+#include <linux/can/core.h>
+#include <linux/can/skb.h>
+#include <linux/can/raw.h>
+#include <net/sock.h>
+#include <net/net_namespace.h>
 
 MODULE_DESCRIPTION("PF_CAN raw protocol");
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_AUTHOR("Urs Thuermann <urs.thuermann@volkswagen.de>");
 MODULE_ALIAS("can-proto-1");
 
-#घोषणा RAW_MIN_NAMELEN CAN_REQUIRED_SIZE(काष्ठा sockaddr_can, can_अगरindex)
+#define RAW_MIN_NAMELEN CAN_REQUIRED_SIZE(struct sockaddr_can, can_ifindex)
 
-#घोषणा MASK_ALL 0
+#define MASK_ALL 0
 
 /* A raw socket has a list of can_filters attached to it, each receiving
  * the CAN frames matching that filter.  If the filter list is empty,
- * no CAN frames will be received by the socket.  The शेष after
- * खोलोing the socket, is to have one filter which receives all frames.
+ * no CAN frames will be received by the socket.  The default after
+ * opening the socket, is to have one filter which receives all frames.
  * The filter list is allocated dynamically with the exception of the
- * list containing only one item.  This common हाल is optimized by
- * storing the single filter in dfilter, to aव्योम using dynamic memory.
+ * list containing only one item.  This common case is optimized by
+ * storing the single filter in dfilter, to avoid using dynamic memory.
  */
 
-काष्ठा uniqframe अणु
-	पूर्णांक skbcnt;
-	स्थिर काष्ठा sk_buff *skb;
-	अचिन्हित पूर्णांक join_rx_count;
-पूर्ण;
+struct uniqframe {
+	int skbcnt;
+	const struct sk_buff *skb;
+	unsigned int join_rx_count;
+};
 
-काष्ठा raw_sock अणु
-	काष्ठा sock sk;
-	पूर्णांक bound;
-	पूर्णांक अगरindex;
-	काष्ठा list_head notअगरier;
-	पूर्णांक loopback;
-	पूर्णांक recv_own_msgs;
-	पूर्णांक fd_frames;
-	पूर्णांक join_filters;
-	पूर्णांक count;                 /* number of active filters */
-	काष्ठा can_filter dfilter; /* शेष/single filter */
-	काष्ठा can_filter *filter; /* poपूर्णांकer to filter(s) */
+struct raw_sock {
+	struct sock sk;
+	int bound;
+	int ifindex;
+	struct list_head notifier;
+	int loopback;
+	int recv_own_msgs;
+	int fd_frames;
+	int join_filters;
+	int count;                 /* number of active filters */
+	struct can_filter dfilter; /* default/single filter */
+	struct can_filter *filter; /* pointer to filter(s) */
 	can_err_mask_t err_mask;
-	काष्ठा uniqframe __percpu *uniq;
-पूर्ण;
+	struct uniqframe __percpu *uniq;
+};
 
-अटल LIST_HEAD(raw_notअगरier_list);
-अटल DEFINE_SPINLOCK(raw_notअगरier_lock);
-अटल काष्ठा raw_sock *raw_busy_notअगरier;
+static LIST_HEAD(raw_notifier_list);
+static DEFINE_SPINLOCK(raw_notifier_lock);
+static struct raw_sock *raw_busy_notifier;
 
-/* Return poपूर्णांकer to store the extra msg flags क्रम raw_recvmsg().
- * We use the space of one अचिन्हित पूर्णांक beyond the 'struct sockaddr_can'
+/* Return pointer to store the extra msg flags for raw_recvmsg().
+ * We use the space of one unsigned int beyond the 'struct sockaddr_can'
  * in skb->cb.
  */
-अटल अंतरभूत अचिन्हित पूर्णांक *raw_flags(काष्ठा sk_buff *skb)
-अणु
-	sock_skb_cb_check_size(माप(काष्ठा sockaddr_can) +
-			       माप(अचिन्हित पूर्णांक));
+static inline unsigned int *raw_flags(struct sk_buff *skb)
+{
+	sock_skb_cb_check_size(sizeof(struct sockaddr_can) +
+			       sizeof(unsigned int));
 
-	/* वापस poपूर्णांकer after काष्ठा sockaddr_can */
-	वापस (अचिन्हित पूर्णांक *)(&((काष्ठा sockaddr_can *)skb->cb)[1]);
-पूर्ण
+	/* return pointer after struct sockaddr_can */
+	return (unsigned int *)(&((struct sockaddr_can *)skb->cb)[1]);
+}
 
-अटल अंतरभूत काष्ठा raw_sock *raw_sk(स्थिर काष्ठा sock *sk)
-अणु
-	वापस (काष्ठा raw_sock *)sk;
-पूर्ण
+static inline struct raw_sock *raw_sk(const struct sock *sk)
+{
+	return (struct raw_sock *)sk;
+}
 
-अटल व्योम raw_rcv(काष्ठा sk_buff *oskb, व्योम *data)
-अणु
-	काष्ठा sock *sk = (काष्ठा sock *)data;
-	काष्ठा raw_sock *ro = raw_sk(sk);
-	काष्ठा sockaddr_can *addr;
-	काष्ठा sk_buff *skb;
-	अचिन्हित पूर्णांक *pflags;
+static void raw_rcv(struct sk_buff *oskb, void *data)
+{
+	struct sock *sk = (struct sock *)data;
+	struct raw_sock *ro = raw_sk(sk);
+	struct sockaddr_can *addr;
+	struct sk_buff *skb;
+	unsigned int *pflags;
 
 	/* check the received tx sock reference */
-	अगर (!ro->recv_own_msgs && oskb->sk == sk)
-		वापस;
+	if (!ro->recv_own_msgs && oskb->sk == sk)
+		return;
 
-	/* करो not pass non-CAN2.0 frames to a legacy socket */
-	अगर (!ro->fd_frames && oskb->len != CAN_MTU)
-		वापस;
+	/* do not pass non-CAN2.0 frames to a legacy socket */
+	if (!ro->fd_frames && oskb->len != CAN_MTU)
+		return;
 
-	/* eliminate multiple filter matches क्रम the same skb */
-	अगर (this_cpu_ptr(ro->uniq)->skb == oskb &&
-	    this_cpu_ptr(ro->uniq)->skbcnt == can_skb_prv(oskb)->skbcnt) अणु
-		अगर (ro->join_filters) अणु
+	/* eliminate multiple filter matches for the same skb */
+	if (this_cpu_ptr(ro->uniq)->skb == oskb &&
+	    this_cpu_ptr(ro->uniq)->skbcnt == can_skb_prv(oskb)->skbcnt) {
+		if (ro->join_filters) {
 			this_cpu_inc(ro->uniq->join_rx_count);
 			/* drop frame until all enabled filters matched */
-			अगर (this_cpu_ptr(ro->uniq)->join_rx_count < ro->count)
-				वापस;
-		पूर्ण अन्यथा अणु
-			वापस;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			if (this_cpu_ptr(ro->uniq)->join_rx_count < ro->count)
+				return;
+		} else {
+			return;
+		}
+	} else {
 		this_cpu_ptr(ro->uniq)->skb = oskb;
 		this_cpu_ptr(ro->uniq)->skbcnt = can_skb_prv(oskb)->skbcnt;
 		this_cpu_ptr(ro->uniq)->join_rx_count = 1;
 		/* drop first frame to check all enabled filters? */
-		अगर (ro->join_filters && ro->count > 1)
-			वापस;
-	पूर्ण
+		if (ro->join_filters && ro->count > 1)
+			return;
+	}
 
-	/* clone the given skb to be able to enqueue it पूर्णांकo the rcv queue */
+	/* clone the given skb to be able to enqueue it into the rcv queue */
 	skb = skb_clone(oskb, GFP_ATOMIC);
-	अगर (!skb)
-		वापस;
+	if (!skb)
+		return;
 
 	/* Put the datagram to the queue so that raw_recvmsg() can get
-	 * it from there. We need to pass the पूर्णांकerface index to
-	 * raw_recvmsg(). We pass a whole काष्ठा sockaddr_can in
-	 * skb->cb containing the पूर्णांकerface index.
+	 * it from there. We need to pass the interface index to
+	 * raw_recvmsg(). We pass a whole struct sockaddr_can in
+	 * skb->cb containing the interface index.
 	 */
 
-	sock_skb_cb_check_size(माप(काष्ठा sockaddr_can));
-	addr = (काष्ठा sockaddr_can *)skb->cb;
-	स_रखो(addr, 0, माप(*addr));
+	sock_skb_cb_check_size(sizeof(struct sockaddr_can));
+	addr = (struct sockaddr_can *)skb->cb;
+	memset(addr, 0, sizeof(*addr));
 	addr->can_family = AF_CAN;
-	addr->can_अगरindex = skb->dev->अगरindex;
+	addr->can_ifindex = skb->dev->ifindex;
 
-	/* add CAN specअगरic message flags क्रम raw_recvmsg() */
+	/* add CAN specific message flags for raw_recvmsg() */
 	pflags = raw_flags(skb);
 	*pflags = 0;
-	अगर (oskb->sk)
+	if (oskb->sk)
 		*pflags |= MSG_DONTROUTE;
-	अगर (oskb->sk == sk)
+	if (oskb->sk == sk)
 		*pflags |= MSG_CONFIRM;
 
-	अगर (sock_queue_rcv_skb(sk, skb) < 0)
-		kमुक्त_skb(skb);
-पूर्ण
+	if (sock_queue_rcv_skb(sk, skb) < 0)
+		kfree_skb(skb);
+}
 
-अटल पूर्णांक raw_enable_filters(काष्ठा net *net, काष्ठा net_device *dev,
-			      काष्ठा sock *sk, काष्ठा can_filter *filter,
-			      पूर्णांक count)
-अणु
-	पूर्णांक err = 0;
-	पूर्णांक i;
+static int raw_enable_filters(struct net *net, struct net_device *dev,
+			      struct sock *sk, struct can_filter *filter,
+			      int count)
+{
+	int err = 0;
+	int i;
 
-	क्रम (i = 0; i < count; i++) अणु
-		err = can_rx_रेजिस्टर(net, dev, filter[i].can_id,
+	for (i = 0; i < count; i++) {
+		err = can_rx_register(net, dev, filter[i].can_id,
 				      filter[i].can_mask,
 				      raw_rcv, sk, "raw", sk);
-		अगर (err) अणु
-			/* clean up successfully रेजिस्टरed filters */
-			जबतक (--i >= 0)
-				can_rx_unरेजिस्टर(net, dev, filter[i].can_id,
+		if (err) {
+			/* clean up successfully registered filters */
+			while (--i >= 0)
+				can_rx_unregister(net, dev, filter[i].can_id,
 						  filter[i].can_mask,
 						  raw_rcv, sk);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक raw_enable_errfilter(काष्ठा net *net, काष्ठा net_device *dev,
-				काष्ठा sock *sk, can_err_mask_t err_mask)
-अणु
-	पूर्णांक err = 0;
+static int raw_enable_errfilter(struct net *net, struct net_device *dev,
+				struct sock *sk, can_err_mask_t err_mask)
+{
+	int err = 0;
 
-	अगर (err_mask)
-		err = can_rx_रेजिस्टर(net, dev, 0, err_mask | CAN_ERR_FLAG,
+	if (err_mask)
+		err = can_rx_register(net, dev, 0, err_mask | CAN_ERR_FLAG,
 				      raw_rcv, sk, "raw", sk);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम raw_disable_filters(काष्ठा net *net, काष्ठा net_device *dev,
-				काष्ठा sock *sk, काष्ठा can_filter *filter,
-				पूर्णांक count)
-अणु
-	पूर्णांक i;
+static void raw_disable_filters(struct net *net, struct net_device *dev,
+				struct sock *sk, struct can_filter *filter,
+				int count)
+{
+	int i;
 
-	क्रम (i = 0; i < count; i++)
-		can_rx_unरेजिस्टर(net, dev, filter[i].can_id,
+	for (i = 0; i < count; i++)
+		can_rx_unregister(net, dev, filter[i].can_id,
 				  filter[i].can_mask, raw_rcv, sk);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम raw_disable_errfilter(काष्ठा net *net,
-					 काष्ठा net_device *dev,
-					 काष्ठा sock *sk,
+static inline void raw_disable_errfilter(struct net *net,
+					 struct net_device *dev,
+					 struct sock *sk,
 					 can_err_mask_t err_mask)
 
-अणु
-	अगर (err_mask)
-		can_rx_unरेजिस्टर(net, dev, 0, err_mask | CAN_ERR_FLAG,
+{
+	if (err_mask)
+		can_rx_unregister(net, dev, 0, err_mask | CAN_ERR_FLAG,
 				  raw_rcv, sk);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम raw_disable_allfilters(काष्ठा net *net,
-					  काष्ठा net_device *dev,
-					  काष्ठा sock *sk)
-अणु
-	काष्ठा raw_sock *ro = raw_sk(sk);
+static inline void raw_disable_allfilters(struct net *net,
+					  struct net_device *dev,
+					  struct sock *sk)
+{
+	struct raw_sock *ro = raw_sk(sk);
 
 	raw_disable_filters(net, dev, sk, ro->filter, ro->count);
 	raw_disable_errfilter(net, dev, sk, ro->err_mask);
-पूर्ण
+}
 
-अटल पूर्णांक raw_enable_allfilters(काष्ठा net *net, काष्ठा net_device *dev,
-				 काष्ठा sock *sk)
-अणु
-	काष्ठा raw_sock *ro = raw_sk(sk);
-	पूर्णांक err;
+static int raw_enable_allfilters(struct net *net, struct net_device *dev,
+				 struct sock *sk)
+{
+	struct raw_sock *ro = raw_sk(sk);
+	int err;
 
 	err = raw_enable_filters(net, dev, sk, ro->filter, ro->count);
-	अगर (!err) अणु
+	if (!err) {
 		err = raw_enable_errfilter(net, dev, sk, ro->err_mask);
-		अगर (err)
+		if (err)
 			raw_disable_filters(net, dev, sk, ro->filter,
 					    ro->count);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम raw_notअगरy(काष्ठा raw_sock *ro, अचिन्हित दीर्घ msg,
-		       काष्ठा net_device *dev)
-अणु
-	काष्ठा sock *sk = &ro->sk;
+static void raw_notify(struct raw_sock *ro, unsigned long msg,
+		       struct net_device *dev)
+{
+	struct sock *sk = &ro->sk;
 
-	अगर (!net_eq(dev_net(dev), sock_net(sk)))
-		वापस;
+	if (!net_eq(dev_net(dev), sock_net(sk)))
+		return;
 
-	अगर (ro->अगरindex != dev->अगरindex)
-		वापस;
+	if (ro->ifindex != dev->ifindex)
+		return;
 
-	चयन (msg) अणु
-	हाल NETDEV_UNREGISTER:
+	switch (msg) {
+	case NETDEV_UNREGISTER:
 		lock_sock(sk);
-		/* हटाओ current filters & unरेजिस्टर */
-		अगर (ro->bound)
+		/* remove current filters & unregister */
+		if (ro->bound)
 			raw_disable_allfilters(dev_net(dev), dev, sk);
 
-		अगर (ro->count > 1)
-			kमुक्त(ro->filter);
+		if (ro->count > 1)
+			kfree(ro->filter);
 
-		ro->अगरindex = 0;
+		ro->ifindex = 0;
 		ro->bound = 0;
 		ro->count = 0;
 		release_sock(sk);
 
 		sk->sk_err = ENODEV;
-		अगर (!sock_flag(sk, SOCK_DEAD))
+		if (!sock_flag(sk, SOCK_DEAD))
 			sk->sk_error_report(sk);
-		अवरोध;
+		break;
 
-	हाल NETDEV_DOWN:
+	case NETDEV_DOWN:
 		sk->sk_err = ENETDOWN;
-		अगर (!sock_flag(sk, SOCK_DEAD))
+		if (!sock_flag(sk, SOCK_DEAD))
 			sk->sk_error_report(sk);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल पूर्णांक raw_notअगरier(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ msg,
-			व्योम *ptr)
-अणु
-	काष्ठा net_device *dev = netdev_notअगरier_info_to_dev(ptr);
+static int raw_notifier(struct notifier_block *nb, unsigned long msg,
+			void *ptr)
+{
+	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
 
-	अगर (dev->type != ARPHRD_CAN)
-		वापस NOTIFY_DONE;
-	अगर (msg != NETDEV_UNREGISTER && msg != NETDEV_DOWN)
-		वापस NOTIFY_DONE;
-	अगर (unlikely(raw_busy_notअगरier)) /* Check क्रम reentrant bug. */
-		वापस NOTIFY_DONE;
+	if (dev->type != ARPHRD_CAN)
+		return NOTIFY_DONE;
+	if (msg != NETDEV_UNREGISTER && msg != NETDEV_DOWN)
+		return NOTIFY_DONE;
+	if (unlikely(raw_busy_notifier)) /* Check for reentrant bug. */
+		return NOTIFY_DONE;
 
-	spin_lock(&raw_notअगरier_lock);
-	list_क्रम_each_entry(raw_busy_notअगरier, &raw_notअगरier_list, notअगरier) अणु
-		spin_unlock(&raw_notअगरier_lock);
-		raw_notअगरy(raw_busy_notअगरier, msg, dev);
-		spin_lock(&raw_notअगरier_lock);
-	पूर्ण
-	raw_busy_notअगरier = शून्य;
-	spin_unlock(&raw_notअगरier_lock);
-	वापस NOTIFY_DONE;
-पूर्ण
+	spin_lock(&raw_notifier_lock);
+	list_for_each_entry(raw_busy_notifier, &raw_notifier_list, notifier) {
+		spin_unlock(&raw_notifier_lock);
+		raw_notify(raw_busy_notifier, msg, dev);
+		spin_lock(&raw_notifier_lock);
+	}
+	raw_busy_notifier = NULL;
+	spin_unlock(&raw_notifier_lock);
+	return NOTIFY_DONE;
+}
 
-अटल पूर्णांक raw_init(काष्ठा sock *sk)
-अणु
-	काष्ठा raw_sock *ro = raw_sk(sk);
+static int raw_init(struct sock *sk)
+{
+	struct raw_sock *ro = raw_sk(sk);
 
 	ro->bound            = 0;
-	ro->अगरindex          = 0;
+	ro->ifindex          = 0;
 
-	/* set शेष filter to single entry dfilter */
+	/* set default filter to single entry dfilter */
 	ro->dfilter.can_id   = 0;
 	ro->dfilter.can_mask = MASK_ALL;
 	ro->filter           = &ro->dfilter;
 	ro->count            = 1;
 
-	/* set शेष loopback behaviour */
+	/* set default loopback behaviour */
 	ro->loopback         = 1;
 	ro->recv_own_msgs    = 0;
 	ro->fd_frames        = 0;
 	ro->join_filters     = 0;
 
 	/* alloc_percpu provides zero'ed memory */
-	ro->uniq = alloc_percpu(काष्ठा uniqframe);
-	अगर (unlikely(!ro->uniq))
-		वापस -ENOMEM;
+	ro->uniq = alloc_percpu(struct uniqframe);
+	if (unlikely(!ro->uniq))
+		return -ENOMEM;
 
-	/* set notअगरier */
-	spin_lock(&raw_notअगरier_lock);
-	list_add_tail(&ro->notअगरier, &raw_notअगरier_list);
-	spin_unlock(&raw_notअगरier_lock);
+	/* set notifier */
+	spin_lock(&raw_notifier_lock);
+	list_add_tail(&ro->notifier, &raw_notifier_list);
+	spin_unlock(&raw_notifier_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक raw_release(काष्ठा socket *sock)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा raw_sock *ro;
+static int raw_release(struct socket *sock)
+{
+	struct sock *sk = sock->sk;
+	struct raw_sock *ro;
 
-	अगर (!sk)
-		वापस 0;
+	if (!sk)
+		return 0;
 
 	ro = raw_sk(sk);
 
-	spin_lock(&raw_notअगरier_lock);
-	जबतक (raw_busy_notअगरier == ro) अणु
-		spin_unlock(&raw_notअगरier_lock);
-		schedule_समयout_unपूर्णांकerruptible(1);
-		spin_lock(&raw_notअगरier_lock);
-	पूर्ण
-	list_del(&ro->notअगरier);
-	spin_unlock(&raw_notअगरier_lock);
+	spin_lock(&raw_notifier_lock);
+	while (raw_busy_notifier == ro) {
+		spin_unlock(&raw_notifier_lock);
+		schedule_timeout_uninterruptible(1);
+		spin_lock(&raw_notifier_lock);
+	}
+	list_del(&ro->notifier);
+	spin_unlock(&raw_notifier_lock);
 
 	lock_sock(sk);
 
-	/* हटाओ current filters & unरेजिस्टर */
-	अगर (ro->bound) अणु
-		अगर (ro->अगरindex) अणु
-			काष्ठा net_device *dev;
+	/* remove current filters & unregister */
+	if (ro->bound) {
+		if (ro->ifindex) {
+			struct net_device *dev;
 
-			dev = dev_get_by_index(sock_net(sk), ro->अगरindex);
-			अगर (dev) अणु
+			dev = dev_get_by_index(sock_net(sk), ro->ifindex);
+			if (dev) {
 				raw_disable_allfilters(dev_net(dev), dev, sk);
 				dev_put(dev);
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			raw_disable_allfilters(sock_net(sk), शून्य, sk);
-		पूर्ण
-	पूर्ण
+			}
+		} else {
+			raw_disable_allfilters(sock_net(sk), NULL, sk);
+		}
+	}
 
-	अगर (ro->count > 1)
-		kमुक्त(ro->filter);
+	if (ro->count > 1)
+		kfree(ro->filter);
 
-	ro->अगरindex = 0;
+	ro->ifindex = 0;
 	ro->bound = 0;
 	ro->count = 0;
-	मुक्त_percpu(ro->uniq);
+	free_percpu(ro->uniq);
 
 	sock_orphan(sk);
-	sock->sk = शून्य;
+	sock->sk = NULL;
 
 	release_sock(sk);
 	sock_put(sk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक raw_bind(काष्ठा socket *sock, काष्ठा sockaddr *uaddr, पूर्णांक len)
-अणु
-	काष्ठा sockaddr_can *addr = (काष्ठा sockaddr_can *)uaddr;
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा raw_sock *ro = raw_sk(sk);
-	पूर्णांक अगरindex;
-	पूर्णांक err = 0;
-	पूर्णांक notअगरy_enetकरोwn = 0;
+static int raw_bind(struct socket *sock, struct sockaddr *uaddr, int len)
+{
+	struct sockaddr_can *addr = (struct sockaddr_can *)uaddr;
+	struct sock *sk = sock->sk;
+	struct raw_sock *ro = raw_sk(sk);
+	int ifindex;
+	int err = 0;
+	int notify_enetdown = 0;
 
-	अगर (len < RAW_MIN_NAMELEN)
-		वापस -EINVAL;
-	अगर (addr->can_family != AF_CAN)
-		वापस -EINVAL;
+	if (len < RAW_MIN_NAMELEN)
+		return -EINVAL;
+	if (addr->can_family != AF_CAN)
+		return -EINVAL;
 
 	lock_sock(sk);
 
-	अगर (ro->bound && addr->can_अगरindex == ro->अगरindex)
-		जाओ out;
+	if (ro->bound && addr->can_ifindex == ro->ifindex)
+		goto out;
 
-	अगर (addr->can_अगरindex) अणु
-		काष्ठा net_device *dev;
+	if (addr->can_ifindex) {
+		struct net_device *dev;
 
-		dev = dev_get_by_index(sock_net(sk), addr->can_अगरindex);
-		अगर (!dev) अणु
+		dev = dev_get_by_index(sock_net(sk), addr->can_ifindex);
+		if (!dev) {
 			err = -ENODEV;
-			जाओ out;
-		पूर्ण
-		अगर (dev->type != ARPHRD_CAN) अणु
+			goto out;
+		}
+		if (dev->type != ARPHRD_CAN) {
 			dev_put(dev);
 			err = -ENODEV;
-			जाओ out;
-		पूर्ण
-		अगर (!(dev->flags & IFF_UP))
-			notअगरy_enetकरोwn = 1;
+			goto out;
+		}
+		if (!(dev->flags & IFF_UP))
+			notify_enetdown = 1;
 
-		अगरindex = dev->अगरindex;
+		ifindex = dev->ifindex;
 
-		/* filters set by शेष/setsockopt */
+		/* filters set by default/setsockopt */
 		err = raw_enable_allfilters(sock_net(sk), dev, sk);
 		dev_put(dev);
-	पूर्ण अन्यथा अणु
-		अगरindex = 0;
+	} else {
+		ifindex = 0;
 
-		/* filters set by शेष/setsockopt */
-		err = raw_enable_allfilters(sock_net(sk), शून्य, sk);
-	पूर्ण
+		/* filters set by default/setsockopt */
+		err = raw_enable_allfilters(sock_net(sk), NULL, sk);
+	}
 
-	अगर (!err) अणु
-		अगर (ro->bound) अणु
-			/* unरेजिस्टर old filters */
-			अगर (ro->अगरindex) अणु
-				काष्ठा net_device *dev;
+	if (!err) {
+		if (ro->bound) {
+			/* unregister old filters */
+			if (ro->ifindex) {
+				struct net_device *dev;
 
 				dev = dev_get_by_index(sock_net(sk),
-						       ro->अगरindex);
-				अगर (dev) अणु
+						       ro->ifindex);
+				if (dev) {
 					raw_disable_allfilters(dev_net(dev),
 							       dev, sk);
 					dev_put(dev);
-				पूर्ण
-			पूर्ण अन्यथा अणु
-				raw_disable_allfilters(sock_net(sk), शून्य, sk);
-			पूर्ण
-		पूर्ण
-		ro->अगरindex = अगरindex;
+				}
+			} else {
+				raw_disable_allfilters(sock_net(sk), NULL, sk);
+			}
+		}
+		ro->ifindex = ifindex;
 		ro->bound = 1;
-	पूर्ण
+	}
 
  out:
 	release_sock(sk);
 
-	अगर (notअगरy_enetकरोwn) अणु
+	if (notify_enetdown) {
 		sk->sk_err = ENETDOWN;
-		अगर (!sock_flag(sk, SOCK_DEAD))
+		if (!sock_flag(sk, SOCK_DEAD))
 			sk->sk_error_report(sk);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक raw_getname(काष्ठा socket *sock, काष्ठा sockaddr *uaddr,
-		       पूर्णांक peer)
-अणु
-	काष्ठा sockaddr_can *addr = (काष्ठा sockaddr_can *)uaddr;
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा raw_sock *ro = raw_sk(sk);
+static int raw_getname(struct socket *sock, struct sockaddr *uaddr,
+		       int peer)
+{
+	struct sockaddr_can *addr = (struct sockaddr_can *)uaddr;
+	struct sock *sk = sock->sk;
+	struct raw_sock *ro = raw_sk(sk);
 
-	अगर (peer)
-		वापस -EOPNOTSUPP;
+	if (peer)
+		return -EOPNOTSUPP;
 
-	स_रखो(addr, 0, RAW_MIN_NAMELEN);
+	memset(addr, 0, RAW_MIN_NAMELEN);
 	addr->can_family  = AF_CAN;
-	addr->can_अगरindex = ro->अगरindex;
+	addr->can_ifindex = ro->ifindex;
 
-	वापस RAW_MIN_NAMELEN;
-पूर्ण
+	return RAW_MIN_NAMELEN;
+}
 
-अटल पूर्णांक raw_setsockopt(काष्ठा socket *sock, पूर्णांक level, पूर्णांक optname,
-			  sockptr_t optval, अचिन्हित पूर्णांक optlen)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा raw_sock *ro = raw_sk(sk);
-	काष्ठा can_filter *filter = शून्य;  /* dyn. alloc'ed filters */
-	काष्ठा can_filter sfilter;         /* single filter */
-	काष्ठा net_device *dev = शून्य;
+static int raw_setsockopt(struct socket *sock, int level, int optname,
+			  sockptr_t optval, unsigned int optlen)
+{
+	struct sock *sk = sock->sk;
+	struct raw_sock *ro = raw_sk(sk);
+	struct can_filter *filter = NULL;  /* dyn. alloc'ed filters */
+	struct can_filter sfilter;         /* single filter */
+	struct net_device *dev = NULL;
 	can_err_mask_t err_mask = 0;
-	पूर्णांक count = 0;
-	पूर्णांक err = 0;
+	int count = 0;
+	int err = 0;
 
-	अगर (level != SOL_CAN_RAW)
-		वापस -EINVAL;
+	if (level != SOL_CAN_RAW)
+		return -EINVAL;
 
-	चयन (optname) अणु
-	हाल CAN_RAW_FILTER:
-		अगर (optlen % माप(काष्ठा can_filter) != 0)
-			वापस -EINVAL;
+	switch (optname) {
+	case CAN_RAW_FILTER:
+		if (optlen % sizeof(struct can_filter) != 0)
+			return -EINVAL;
 
-		अगर (optlen > CAN_RAW_FILTER_MAX * माप(काष्ठा can_filter))
-			वापस -EINVAL;
+		if (optlen > CAN_RAW_FILTER_MAX * sizeof(struct can_filter))
+			return -EINVAL;
 
-		count = optlen / माप(काष्ठा can_filter);
+		count = optlen / sizeof(struct can_filter);
 
-		अगर (count > 1) अणु
-			/* filter करोes not fit पूर्णांकo dfilter => alloc space */
+		if (count > 1) {
+			/* filter does not fit into dfilter => alloc space */
 			filter = memdup_sockptr(optval, optlen);
-			अगर (IS_ERR(filter))
-				वापस PTR_ERR(filter);
-		पूर्ण अन्यथा अगर (count == 1) अणु
-			अगर (copy_from_sockptr(&sfilter, optval, माप(sfilter)))
-				वापस -EFAULT;
-		पूर्ण
+			if (IS_ERR(filter))
+				return PTR_ERR(filter);
+		} else if (count == 1) {
+			if (copy_from_sockptr(&sfilter, optval, sizeof(sfilter)))
+				return -EFAULT;
+		}
 
 		lock_sock(sk);
 
-		अगर (ro->bound && ro->अगरindex)
-			dev = dev_get_by_index(sock_net(sk), ro->अगरindex);
+		if (ro->bound && ro->ifindex)
+			dev = dev_get_by_index(sock_net(sk), ro->ifindex);
 
-		अगर (ro->bound) अणु
-			/* (try to) रेजिस्टर the new filters */
-			अगर (count == 1)
+		if (ro->bound) {
+			/* (try to) register the new filters */
+			if (count == 1)
 				err = raw_enable_filters(sock_net(sk), dev, sk,
 							 &sfilter, 1);
-			अन्यथा
+			else
 				err = raw_enable_filters(sock_net(sk), dev, sk,
 							 filter, count);
-			अगर (err) अणु
-				अगर (count > 1)
-					kमुक्त(filter);
-				जाओ out_fil;
-			पूर्ण
+			if (err) {
+				if (count > 1)
+					kfree(filter);
+				goto out_fil;
+			}
 
-			/* हटाओ old filter registrations */
+			/* remove old filter registrations */
 			raw_disable_filters(sock_net(sk), dev, sk, ro->filter,
 					    ro->count);
-		पूर्ण
+		}
 
-		/* हटाओ old filter space */
-		अगर (ro->count > 1)
-			kमुक्त(ro->filter);
+		/* remove old filter space */
+		if (ro->count > 1)
+			kfree(ro->filter);
 
 		/* link new filters to the socket */
-		अगर (count == 1) अणु
-			/* copy filter data क्रम single filter */
+		if (count == 1) {
+			/* copy filter data for single filter */
 			ro->dfilter = sfilter;
 			filter = &ro->dfilter;
-		पूर्ण
+		}
 		ro->filter = filter;
 		ro->count  = count;
 
  out_fil:
-		अगर (dev)
+		if (dev)
 			dev_put(dev);
 
 		release_sock(sk);
 
-		अवरोध;
+		break;
 
-	हाल CAN_RAW_ERR_FILTER:
-		अगर (optlen != माप(err_mask))
-			वापस -EINVAL;
+	case CAN_RAW_ERR_FILTER:
+		if (optlen != sizeof(err_mask))
+			return -EINVAL;
 
-		अगर (copy_from_sockptr(&err_mask, optval, optlen))
-			वापस -EFAULT;
+		if (copy_from_sockptr(&err_mask, optval, optlen))
+			return -EFAULT;
 
 		err_mask &= CAN_ERR_MASK;
 
 		lock_sock(sk);
 
-		अगर (ro->bound && ro->अगरindex)
-			dev = dev_get_by_index(sock_net(sk), ro->अगरindex);
+		if (ro->bound && ro->ifindex)
+			dev = dev_get_by_index(sock_net(sk), ro->ifindex);
 
-		/* हटाओ current error mask */
-		अगर (ro->bound) अणु
-			/* (try to) रेजिस्टर the new err_mask */
+		/* remove current error mask */
+		if (ro->bound) {
+			/* (try to) register the new err_mask */
 			err = raw_enable_errfilter(sock_net(sk), dev, sk,
 						   err_mask);
 
-			अगर (err)
-				जाओ out_err;
+			if (err)
+				goto out_err;
 
-			/* हटाओ old err_mask registration */
+			/* remove old err_mask registration */
 			raw_disable_errfilter(sock_net(sk), dev, sk,
 					      ro->err_mask);
-		पूर्ण
+		}
 
 		/* link new err_mask to the socket */
 		ro->err_mask = err_mask;
 
  out_err:
-		अगर (dev)
+		if (dev)
 			dev_put(dev);
 
 		release_sock(sk);
 
-		अवरोध;
+		break;
 
-	हाल CAN_RAW_LOOPBACK:
-		अगर (optlen != माप(ro->loopback))
-			वापस -EINVAL;
+	case CAN_RAW_LOOPBACK:
+		if (optlen != sizeof(ro->loopback))
+			return -EINVAL;
 
-		अगर (copy_from_sockptr(&ro->loopback, optval, optlen))
-			वापस -EFAULT;
+		if (copy_from_sockptr(&ro->loopback, optval, optlen))
+			return -EFAULT;
 
-		अवरोध;
+		break;
 
-	हाल CAN_RAW_RECV_OWN_MSGS:
-		अगर (optlen != माप(ro->recv_own_msgs))
-			वापस -EINVAL;
+	case CAN_RAW_RECV_OWN_MSGS:
+		if (optlen != sizeof(ro->recv_own_msgs))
+			return -EINVAL;
 
-		अगर (copy_from_sockptr(&ro->recv_own_msgs, optval, optlen))
-			वापस -EFAULT;
+		if (copy_from_sockptr(&ro->recv_own_msgs, optval, optlen))
+			return -EFAULT;
 
-		अवरोध;
+		break;
 
-	हाल CAN_RAW_FD_FRAMES:
-		अगर (optlen != माप(ro->fd_frames))
-			वापस -EINVAL;
+	case CAN_RAW_FD_FRAMES:
+		if (optlen != sizeof(ro->fd_frames))
+			return -EINVAL;
 
-		अगर (copy_from_sockptr(&ro->fd_frames, optval, optlen))
-			वापस -EFAULT;
+		if (copy_from_sockptr(&ro->fd_frames, optval, optlen))
+			return -EFAULT;
 
-		अवरोध;
+		break;
 
-	हाल CAN_RAW_JOIN_FILTERS:
-		अगर (optlen != माप(ro->join_filters))
-			वापस -EINVAL;
+	case CAN_RAW_JOIN_FILTERS:
+		if (optlen != sizeof(ro->join_filters))
+			return -EINVAL;
 
-		अगर (copy_from_sockptr(&ro->join_filters, optval, optlen))
-			वापस -EFAULT;
+		if (copy_from_sockptr(&ro->join_filters, optval, optlen))
+			return -EFAULT;
 
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -ENOPROTOOPT;
-	पूर्ण
-	वापस err;
-पूर्ण
+	default:
+		return -ENOPROTOOPT;
+	}
+	return err;
+}
 
-अटल पूर्णांक raw_माला_लोockopt(काष्ठा socket *sock, पूर्णांक level, पूर्णांक optname,
-			  अक्षर __user *optval, पूर्णांक __user *optlen)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा raw_sock *ro = raw_sk(sk);
-	पूर्णांक len;
-	व्योम *val;
-	पूर्णांक err = 0;
+static int raw_getsockopt(struct socket *sock, int level, int optname,
+			  char __user *optval, int __user *optlen)
+{
+	struct sock *sk = sock->sk;
+	struct raw_sock *ro = raw_sk(sk);
+	int len;
+	void *val;
+	int err = 0;
 
-	अगर (level != SOL_CAN_RAW)
-		वापस -EINVAL;
-	अगर (get_user(len, optlen))
-		वापस -EFAULT;
-	अगर (len < 0)
-		वापस -EINVAL;
+	if (level != SOL_CAN_RAW)
+		return -EINVAL;
+	if (get_user(len, optlen))
+		return -EFAULT;
+	if (len < 0)
+		return -EINVAL;
 
-	चयन (optname) अणु
-	हाल CAN_RAW_FILTER:
+	switch (optname) {
+	case CAN_RAW_FILTER:
 		lock_sock(sk);
-		अगर (ro->count > 0) अणु
-			पूर्णांक fsize = ro->count * माप(काष्ठा can_filter);
+		if (ro->count > 0) {
+			int fsize = ro->count * sizeof(struct can_filter);
 
-			/* user space buffer to small क्रम filter list? */
-			अगर (len < fsize) अणु
-				/* वापस -दुस्फल and needed space in optlen */
-				err = -दुस्फल;
-				अगर (put_user(fsize, optlen))
+			/* user space buffer to small for filter list? */
+			if (len < fsize) {
+				/* return -ERANGE and needed space in optlen */
+				err = -ERANGE;
+				if (put_user(fsize, optlen))
 					err = -EFAULT;
-			पूर्ण अन्यथा अणु
-				अगर (len > fsize)
+			} else {
+				if (len > fsize)
 					len = fsize;
-				अगर (copy_to_user(optval, ro->filter, len))
+				if (copy_to_user(optval, ro->filter, len))
 					err = -EFAULT;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			len = 0;
-		पूर्ण
+		}
 		release_sock(sk);
 
-		अगर (!err)
+		if (!err)
 			err = put_user(len, optlen);
-		वापस err;
+		return err;
 
-	हाल CAN_RAW_ERR_FILTER:
-		अगर (len > माप(can_err_mask_t))
-			len = माप(can_err_mask_t);
+	case CAN_RAW_ERR_FILTER:
+		if (len > sizeof(can_err_mask_t))
+			len = sizeof(can_err_mask_t);
 		val = &ro->err_mask;
-		अवरोध;
+		break;
 
-	हाल CAN_RAW_LOOPBACK:
-		अगर (len > माप(पूर्णांक))
-			len = माप(पूर्णांक);
+	case CAN_RAW_LOOPBACK:
+		if (len > sizeof(int))
+			len = sizeof(int);
 		val = &ro->loopback;
-		अवरोध;
+		break;
 
-	हाल CAN_RAW_RECV_OWN_MSGS:
-		अगर (len > माप(पूर्णांक))
-			len = माप(पूर्णांक);
+	case CAN_RAW_RECV_OWN_MSGS:
+		if (len > sizeof(int))
+			len = sizeof(int);
 		val = &ro->recv_own_msgs;
-		अवरोध;
+		break;
 
-	हाल CAN_RAW_FD_FRAMES:
-		अगर (len > माप(पूर्णांक))
-			len = माप(पूर्णांक);
+	case CAN_RAW_FD_FRAMES:
+		if (len > sizeof(int))
+			len = sizeof(int);
 		val = &ro->fd_frames;
-		अवरोध;
+		break;
 
-	हाल CAN_RAW_JOIN_FILTERS:
-		अगर (len > माप(पूर्णांक))
-			len = माप(पूर्णांक);
+	case CAN_RAW_JOIN_FILTERS:
+		if (len > sizeof(int))
+			len = sizeof(int);
 		val = &ro->join_filters;
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -ENOPROTOOPT;
-	पूर्ण
+	default:
+		return -ENOPROTOOPT;
+	}
 
-	अगर (put_user(len, optlen))
-		वापस -EFAULT;
-	अगर (copy_to_user(optval, val, len))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+	if (put_user(len, optlen))
+		return -EFAULT;
+	if (copy_to_user(optval, val, len))
+		return -EFAULT;
+	return 0;
+}
 
-अटल पूर्णांक raw_sendmsg(काष्ठा socket *sock, काष्ठा msghdr *msg, माप_प्रकार size)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा raw_sock *ro = raw_sk(sk);
-	काष्ठा sk_buff *skb;
-	काष्ठा net_device *dev;
-	पूर्णांक अगरindex;
-	पूर्णांक err;
+static int raw_sendmsg(struct socket *sock, struct msghdr *msg, size_t size)
+{
+	struct sock *sk = sock->sk;
+	struct raw_sock *ro = raw_sk(sk);
+	struct sk_buff *skb;
+	struct net_device *dev;
+	int ifindex;
+	int err;
 
-	अगर (msg->msg_name) अणु
-		DECLARE_SOCKADDR(काष्ठा sockaddr_can *, addr, msg->msg_name);
+	if (msg->msg_name) {
+		DECLARE_SOCKADDR(struct sockaddr_can *, addr, msg->msg_name);
 
-		अगर (msg->msg_namelen < RAW_MIN_NAMELEN)
-			वापस -EINVAL;
+		if (msg->msg_namelen < RAW_MIN_NAMELEN)
+			return -EINVAL;
 
-		अगर (addr->can_family != AF_CAN)
-			वापस -EINVAL;
+		if (addr->can_family != AF_CAN)
+			return -EINVAL;
 
-		अगरindex = addr->can_अगरindex;
-	पूर्ण अन्यथा अणु
-		अगरindex = ro->अगरindex;
-	पूर्ण
+		ifindex = addr->can_ifindex;
+	} else {
+		ifindex = ro->ifindex;
+	}
 
-	dev = dev_get_by_index(sock_net(sk), अगरindex);
-	अगर (!dev)
-		वापस -ENXIO;
+	dev = dev_get_by_index(sock_net(sk), ifindex);
+	if (!dev)
+		return -ENXIO;
 
 	err = -EINVAL;
-	अगर (ro->fd_frames && dev->mtu == CANFD_MTU) अणु
-		अगर (unlikely(size != CANFD_MTU && size != CAN_MTU))
-			जाओ put_dev;
-	पूर्ण अन्यथा अणु
-		अगर (unlikely(size != CAN_MTU))
-			जाओ put_dev;
-	पूर्ण
+	if (ro->fd_frames && dev->mtu == CANFD_MTU) {
+		if (unlikely(size != CANFD_MTU && size != CAN_MTU))
+			goto put_dev;
+	} else {
+		if (unlikely(size != CAN_MTU))
+			goto put_dev;
+	}
 
-	skb = sock_alloc_send_skb(sk, size + माप(काष्ठा can_skb_priv),
+	skb = sock_alloc_send_skb(sk, size + sizeof(struct can_skb_priv),
 				  msg->msg_flags & MSG_DONTWAIT, &err);
-	अगर (!skb)
-		जाओ put_dev;
+	if (!skb)
+		goto put_dev;
 
 	can_skb_reserve(skb);
-	can_skb_prv(skb)->अगरindex = dev->अगरindex;
+	can_skb_prv(skb)->ifindex = dev->ifindex;
 	can_skb_prv(skb)->skbcnt = 0;
 
-	err = स_नकल_from_msg(skb_put(skb, size), msg, size);
-	अगर (err < 0)
-		जाओ मुक्त_skb;
+	err = memcpy_from_msg(skb_put(skb, size), msg, size);
+	if (err < 0)
+		goto free_skb;
 
-	skb_setup_tx_बारtamp(skb, sk->sk_tsflags);
+	skb_setup_tx_timestamp(skb, sk->sk_tsflags);
 
 	skb->dev = dev;
 	skb->sk = sk;
@@ -816,73 +815,73 @@ MODULE_ALIAS("can-proto-1");
 
 	dev_put(dev);
 
-	अगर (err)
-		जाओ send_failed;
+	if (err)
+		goto send_failed;
 
-	वापस size;
+	return size;
 
-मुक्त_skb:
-	kमुक्त_skb(skb);
+free_skb:
+	kfree_skb(skb);
 put_dev:
 	dev_put(dev);
 send_failed:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक raw_recvmsg(काष्ठा socket *sock, काष्ठा msghdr *msg, माप_प्रकार size,
-		       पूर्णांक flags)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा sk_buff *skb;
-	पूर्णांक err = 0;
-	पूर्णांक noblock;
+static int raw_recvmsg(struct socket *sock, struct msghdr *msg, size_t size,
+		       int flags)
+{
+	struct sock *sk = sock->sk;
+	struct sk_buff *skb;
+	int err = 0;
+	int noblock;
 
 	noblock = flags & MSG_DONTWAIT;
 	flags &= ~MSG_DONTWAIT;
 
-	अगर (flags & MSG_ERRQUEUE)
-		वापस sock_recv_errqueue(sk, msg, size,
+	if (flags & MSG_ERRQUEUE)
+		return sock_recv_errqueue(sk, msg, size,
 					  SOL_CAN_RAW, SCM_CAN_RAW_ERRQUEUE);
 
 	skb = skb_recv_datagram(sk, flags, noblock, &err);
-	अगर (!skb)
-		वापस err;
+	if (!skb)
+		return err;
 
-	अगर (size < skb->len)
+	if (size < skb->len)
 		msg->msg_flags |= MSG_TRUNC;
-	अन्यथा
+	else
 		size = skb->len;
 
-	err = स_नकल_to_msg(msg, skb->data, size);
-	अगर (err < 0) अणु
-		skb_मुक्त_datagram(sk, skb);
-		वापस err;
-	पूर्ण
+	err = memcpy_to_msg(msg, skb->data, size);
+	if (err < 0) {
+		skb_free_datagram(sk, skb);
+		return err;
+	}
 
 	sock_recv_ts_and_drops(msg, sk, skb);
 
-	अगर (msg->msg_name) अणु
+	if (msg->msg_name) {
 		__sockaddr_check_size(RAW_MIN_NAMELEN);
 		msg->msg_namelen = RAW_MIN_NAMELEN;
-		स_नकल(msg->msg_name, skb->cb, msg->msg_namelen);
-	पूर्ण
+		memcpy(msg->msg_name, skb->cb, msg->msg_namelen);
+	}
 
 	/* assign the flags that have been recorded in raw_rcv() */
 	msg->msg_flags |= *(raw_flags(skb));
 
-	skb_मुक्त_datagram(sk, skb);
+	skb_free_datagram(sk, skb);
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल पूर्णांक raw_sock_no_ioctlcmd(काष्ठा socket *sock, अचिन्हित पूर्णांक cmd,
-				अचिन्हित दीर्घ arg)
-अणु
-	/* no ioctls क्रम socket layer -> hand it करोwn to NIC layer */
-	वापस -ENOIOCTLCMD;
-पूर्ण
+static int raw_sock_no_ioctlcmd(struct socket *sock, unsigned int cmd,
+				unsigned long arg)
+{
+	/* no ioctls for socket layer -> hand it down to NIC layer */
+	return -ENOIOCTLCMD;
+}
 
-अटल स्थिर काष्ठा proto_ops raw_ops = अणु
+static const struct proto_ops raw_ops = {
 	.family        = PF_CAN,
 	.release       = raw_release,
 	.bind          = raw_bind,
@@ -894,53 +893,53 @@ send_failed:
 	.ioctl         = raw_sock_no_ioctlcmd,
 	.gettstamp     = sock_gettstamp,
 	.listen        = sock_no_listen,
-	.shutकरोwn      = sock_no_shutकरोwn,
+	.shutdown      = sock_no_shutdown,
 	.setsockopt    = raw_setsockopt,
-	.माला_लोockopt    = raw_माला_लोockopt,
+	.getsockopt    = raw_getsockopt,
 	.sendmsg       = raw_sendmsg,
 	.recvmsg       = raw_recvmsg,
 	.mmap          = sock_no_mmap,
 	.sendpage      = sock_no_sendpage,
-पूर्ण;
+};
 
-अटल काष्ठा proto raw_proto __पढ़ो_mostly = अणु
+static struct proto raw_proto __read_mostly = {
 	.name       = "CAN_RAW",
 	.owner      = THIS_MODULE,
-	.obj_size   = माप(काष्ठा raw_sock),
+	.obj_size   = sizeof(struct raw_sock),
 	.init       = raw_init,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा can_proto raw_can_proto = अणु
+static const struct can_proto raw_can_proto = {
 	.type       = SOCK_RAW,
 	.protocol   = CAN_RAW,
 	.ops        = &raw_ops,
 	.prot       = &raw_proto,
-पूर्ण;
+};
 
-अटल काष्ठा notअगरier_block canraw_notअगरier = अणु
-	.notअगरier_call = raw_notअगरier
-पूर्ण;
+static struct notifier_block canraw_notifier = {
+	.notifier_call = raw_notifier
+};
 
-अटल __init पूर्णांक raw_module_init(व्योम)
-अणु
-	पूर्णांक err;
+static __init int raw_module_init(void)
+{
+	int err;
 
 	pr_info("can: raw protocol\n");
 
-	err = can_proto_रेजिस्टर(&raw_can_proto);
-	अगर (err < 0)
+	err = can_proto_register(&raw_can_proto);
+	if (err < 0)
 		pr_err("can: registration of raw protocol failed\n");
-	अन्यथा
-		रेजिस्टर_netdevice_notअगरier(&canraw_notअगरier);
+	else
+		register_netdevice_notifier(&canraw_notifier);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल __निकास व्योम raw_module_निकास(व्योम)
-अणु
-	can_proto_unरेजिस्टर(&raw_can_proto);
-	unरेजिस्टर_netdevice_notअगरier(&canraw_notअगरier);
-पूर्ण
+static __exit void raw_module_exit(void)
+{
+	can_proto_unregister(&raw_can_proto);
+	unregister_netdevice_notifier(&canraw_notifier);
+}
 
 module_init(raw_module_init);
-module_निकास(raw_module_निकास);
+module_exit(raw_module_exit);

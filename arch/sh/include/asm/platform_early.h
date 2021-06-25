@@ -1,62 +1,61 @@
-<शैली गुरु>
-/* SPDX--License-Identअगरier: GPL-2.0 */
+/* SPDX--License-Identifier: GPL-2.0 */
 
-#अगर_अघोषित __PLATFORM_EARLY__
-#घोषणा __PLATFORM_EARLY__
+#ifndef __PLATFORM_EARLY__
+#define __PLATFORM_EARLY__
 
-#समावेश <linux/types.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/slab.h>
+#include <linux/types.h>
+#include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
+#include <linux/slab.h>
 
-काष्ठा sh_early_platक्रमm_driver अणु
-	स्थिर अक्षर *class_str;
-	काष्ठा platक्रमm_driver *pdrv;
-	काष्ठा list_head list;
-	पूर्णांक requested_id;
-	अक्षर *buffer;
-	पूर्णांक bufsize;
-पूर्ण;
+struct sh_early_platform_driver {
+	const char *class_str;
+	struct platform_driver *pdrv;
+	struct list_head list;
+	int requested_id;
+	char *buffer;
+	int bufsize;
+};
 
-#घोषणा EARLY_PLATFORM_ID_UNSET -2
-#घोषणा EARLY_PLATFORM_ID_ERROR -3
+#define EARLY_PLATFORM_ID_UNSET -2
+#define EARLY_PLATFORM_ID_ERROR -3
 
-बाह्य पूर्णांक sh_early_platक्रमm_driver_रेजिस्टर(काष्ठा sh_early_platक्रमm_driver *epdrv,
-					  अक्षर *buf);
-बाह्य व्योम sh_early_platक्रमm_add_devices(काष्ठा platक्रमm_device **devs, पूर्णांक num);
+extern int sh_early_platform_driver_register(struct sh_early_platform_driver *epdrv,
+					  char *buf);
+extern void sh_early_platform_add_devices(struct platform_device **devs, int num);
 
-अटल अंतरभूत पूर्णांक is_sh_early_platक्रमm_device(काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस !pdev->dev.driver;
-पूर्ण
+static inline int is_sh_early_platform_device(struct platform_device *pdev)
+{
+	return !pdev->dev.driver;
+}
 
-बाह्य व्योम sh_early_platक्रमm_driver_रेजिस्टर_all(अक्षर *class_str);
-बाह्य पूर्णांक sh_early_platक्रमm_driver_probe(अक्षर *class_str,
-				       पूर्णांक nr_probe, पूर्णांक user_only);
+extern void sh_early_platform_driver_register_all(char *class_str);
+extern int sh_early_platform_driver_probe(char *class_str,
+				       int nr_probe, int user_only);
 
-#घोषणा sh_early_platक्रमm_init(class_string, platdrv)		\
-	sh_early_platक्रमm_init_buffer(class_string, platdrv, शून्य, 0)
+#define sh_early_platform_init(class_string, platdrv)		\
+	sh_early_platform_init_buffer(class_string, platdrv, NULL, 0)
 
-#अगर_अघोषित MODULE
-#घोषणा sh_early_platक्रमm_init_buffer(class_string, platdrv, buf, bufsiz)	\
-अटल __initdata काष्ठा sh_early_platक्रमm_driver early_driver = अणु		\
+#ifndef MODULE
+#define sh_early_platform_init_buffer(class_string, platdrv, buf, bufsiz)	\
+static __initdata struct sh_early_platform_driver early_driver = {		\
 	.class_str = class_string,					\
 	.buffer = buf,							\
 	.bufsize = bufsiz,						\
 	.pdrv = platdrv,						\
 	.requested_id = EARLY_PLATFORM_ID_UNSET,			\
-पूर्ण;									\
-अटल पूर्णांक __init sh_early_platक्रमm_driver_setup_func(अक्षर *buffer)	\
-अणु									\
-	वापस sh_early_platक्रमm_driver_रेजिस्टर(&early_driver, buffer);	\
-पूर्ण									\
-early_param(class_string, sh_early_platक्रमm_driver_setup_func)
-#अन्यथा /* MODULE */
-#घोषणा sh_early_platक्रमm_init_buffer(class_string, platdrv, buf, bufsiz)	\
-अटल अंतरभूत अक्षर *sh_early_platक्रमm_driver_setup_func(व्योम)		\
-अणु									\
-	वापस bufsiz ? buf : शून्य;					\
-पूर्ण
-#पूर्ण_अगर /* MODULE */
+};									\
+static int __init sh_early_platform_driver_setup_func(char *buffer)	\
+{									\
+	return sh_early_platform_driver_register(&early_driver, buffer);	\
+}									\
+early_param(class_string, sh_early_platform_driver_setup_func)
+#else /* MODULE */
+#define sh_early_platform_init_buffer(class_string, platdrv, buf, bufsiz)	\
+static inline char *sh_early_platform_driver_setup_func(void)		\
+{									\
+	return bufsiz ? buf : NULL;					\
+}
+#endif /* MODULE */
 
-#पूर्ण_अगर /* __PLATFORM_EARLY__ */
+#endif /* __PLATFORM_EARLY__ */

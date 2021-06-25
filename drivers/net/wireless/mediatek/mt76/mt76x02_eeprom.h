@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: ISC */
+/* SPDX-License-Identifier: ISC */
 /*
  * Copyright (C) 2016 Felix Fietkau <nbd@nbd.name>
  * Copyright (C) 2018 Lorenzo Bianconi <lorenzo.bianconi83@gmail.com>
  */
 
-#अगर_अघोषित __MT76x02_EEPROM_H
-#घोषणा __MT76x02_EEPROM_H
+#ifndef __MT76x02_EEPROM_H
+#define __MT76x02_EEPROM_H
 
-#समावेश "mt76x02.h"
+#include "mt76x02.h"
 
-क्रमागत mt76x02_eeprom_field अणु
+enum mt76x02_eeprom_field {
 	MT_EE_CHIP_ID =				0x000,
 	MT_EE_VERSION =				0x002,
 	MT_EE_MAC_ADDR =			0x004,
@@ -44,8 +43,8 @@
 	MT_EE_TX_POWER_1_START_2G =		0x05c,
 
 	/* used as byte arrays */
-#घोषणा MT_TX_POWER_GROUP_SIZE_5G		5
-#घोषणा MT_TX_POWER_GROUPS_5G			6
+#define MT_TX_POWER_GROUP_SIZE_5G		5
+#define MT_TX_POWER_GROUPS_5G			6
 	MT_EE_TX_POWER_0_START_5G =		0x062,
 	MT_EE_TSSI_SLOPE_2G =			0x06e,
 
@@ -96,93 +95,93 @@
 	MT_EE_USAGE_MAP_END =			0x1fc,
 
 	__MT_EE_MAX
-पूर्ण;
+};
 
-#घोषणा MT_EE_ANTENNA_DUAL			BIT(15)
+#define MT_EE_ANTENNA_DUAL			BIT(15)
 
-#घोषणा MT_EE_NIC_CONF_0_RX_PATH		GENMASK(3, 0)
-#घोषणा MT_EE_NIC_CONF_0_TX_PATH		GENMASK(7, 4)
-#घोषणा MT_EE_NIC_CONF_0_PA_TYPE		GENMASK(9, 8)
-#घोषणा MT_EE_NIC_CONF_0_PA_INT_2G		BIT(8)
-#घोषणा MT_EE_NIC_CONF_0_PA_INT_5G		BIT(9)
-#घोषणा MT_EE_NIC_CONF_0_PA_IO_CURRENT		BIT(10)
-#घोषणा MT_EE_NIC_CONF_0_BOARD_TYPE		GENMASK(13, 12)
+#define MT_EE_NIC_CONF_0_RX_PATH		GENMASK(3, 0)
+#define MT_EE_NIC_CONF_0_TX_PATH		GENMASK(7, 4)
+#define MT_EE_NIC_CONF_0_PA_TYPE		GENMASK(9, 8)
+#define MT_EE_NIC_CONF_0_PA_INT_2G		BIT(8)
+#define MT_EE_NIC_CONF_0_PA_INT_5G		BIT(9)
+#define MT_EE_NIC_CONF_0_PA_IO_CURRENT		BIT(10)
+#define MT_EE_NIC_CONF_0_BOARD_TYPE		GENMASK(13, 12)
 
-#घोषणा MT_EE_NIC_CONF_1_HW_RF_CTRL		BIT(0)
-#घोषणा MT_EE_NIC_CONF_1_TEMP_TX_ALC		BIT(1)
-#घोषणा MT_EE_NIC_CONF_1_LNA_EXT_2G		BIT(2)
-#घोषणा MT_EE_NIC_CONF_1_LNA_EXT_5G		BIT(3)
-#घोषणा MT_EE_NIC_CONF_1_TX_ALC_EN		BIT(13)
+#define MT_EE_NIC_CONF_1_HW_RF_CTRL		BIT(0)
+#define MT_EE_NIC_CONF_1_TEMP_TX_ALC		BIT(1)
+#define MT_EE_NIC_CONF_1_LNA_EXT_2G		BIT(2)
+#define MT_EE_NIC_CONF_1_LNA_EXT_5G		BIT(3)
+#define MT_EE_NIC_CONF_1_TX_ALC_EN		BIT(13)
 
-#घोषणा MT_EE_NIC_CONF_2_ANT_OPT		BIT(3)
-#घोषणा MT_EE_NIC_CONF_2_ANT_DIV		BIT(4)
-#घोषणा MT_EE_NIC_CONF_2_XTAL_OPTION		GENMASK(10, 9)
+#define MT_EE_NIC_CONF_2_ANT_OPT		BIT(3)
+#define MT_EE_NIC_CONF_2_ANT_DIV		BIT(4)
+#define MT_EE_NIC_CONF_2_XTAL_OPTION		GENMASK(10, 9)
 
-#घोषणा MT_EFUSE_USAGE_MAP_SIZE			(MT_EE_USAGE_MAP_END - \
+#define MT_EFUSE_USAGE_MAP_SIZE			(MT_EE_USAGE_MAP_END - \
 						 MT_EE_USAGE_MAP_START + 1)
 
-क्रमागत mt76x02_eeprom_modes अणु
+enum mt76x02_eeprom_modes {
 	MT_EE_READ,
 	MT_EE_PHYSICAL_READ,
-पूर्ण;
+};
 
-क्रमागत mt76x02_board_type अणु
+enum mt76x02_board_type {
 	BOARD_TYPE_2GHZ = 1,
 	BOARD_TYPE_5GHZ = 2,
-पूर्ण;
+};
 
-अटल अंतरभूत bool mt76x02_field_valid(u8 val)
-अणु
-	वापस val != 0 && val != 0xff;
-पूर्ण
+static inline bool mt76x02_field_valid(u8 val)
+{
+	return val != 0 && val != 0xff;
+}
 
-अटल अंतरभूत पूर्णांक
-mt76x02_sign_extend(u32 val, अचिन्हित पूर्णांक size)
-अणु
+static inline int
+mt76x02_sign_extend(u32 val, unsigned int size)
+{
 	bool sign = val & BIT(size - 1);
 
 	val &= BIT(size - 1) - 1;
 
-	वापस sign ? val : -val;
-पूर्ण
+	return sign ? val : -val;
+}
 
-अटल अंतरभूत पूर्णांक
-mt76x02_sign_extend_optional(u32 val, अचिन्हित पूर्णांक size)
-अणु
+static inline int
+mt76x02_sign_extend_optional(u32 val, unsigned int size)
+{
 	bool enable = val & BIT(size);
 
-	वापस enable ? mt76x02_sign_extend(val, size) : 0;
-पूर्ण
+	return enable ? mt76x02_sign_extend(val, size) : 0;
+}
 
-अटल अंतरभूत s8 mt76x02_rate_घातer_val(u8 val)
-अणु
-	अगर (!mt76x02_field_valid(val))
-		वापस 0;
+static inline s8 mt76x02_rate_power_val(u8 val)
+{
+	if (!mt76x02_field_valid(val))
+		return 0;
 
-	वापस mt76x02_sign_extend_optional(val, 7);
-पूर्ण
+	return mt76x02_sign_extend_optional(val, 7);
+}
 
-अटल अंतरभूत पूर्णांक
-mt76x02_eeprom_get(काष्ठा mt76x02_dev *dev,
-		   क्रमागत mt76x02_eeprom_field field)
-अणु
-	अगर ((field & 1) || field >= __MT_EE_MAX)
-		वापस -1;
+static inline int
+mt76x02_eeprom_get(struct mt76x02_dev *dev,
+		   enum mt76x02_eeprom_field field)
+{
+	if ((field & 1) || field >= __MT_EE_MAX)
+		return -1;
 
-	वापस get_unaligned_le16(dev->mt76.eeprom.data + field);
-पूर्ण
+	return get_unaligned_le16(dev->mt76.eeprom.data + field);
+}
 
-bool mt76x02_ext_pa_enabled(काष्ठा mt76x02_dev *dev, क्रमागत nl80211_band band);
-पूर्णांक mt76x02_get_efuse_data(काष्ठा mt76x02_dev *dev, u16 base, व्योम *buf,
-			   पूर्णांक len, क्रमागत mt76x02_eeprom_modes mode);
-व्योम mt76x02_get_rx_gain(काष्ठा mt76x02_dev *dev, क्रमागत nl80211_band band,
+bool mt76x02_ext_pa_enabled(struct mt76x02_dev *dev, enum nl80211_band band);
+int mt76x02_get_efuse_data(struct mt76x02_dev *dev, u16 base, void *buf,
+			   int len, enum mt76x02_eeprom_modes mode);
+void mt76x02_get_rx_gain(struct mt76x02_dev *dev, enum nl80211_band band,
 			 u16 *rssi_offset, s8 *lna_2g, s8 *lna_5g);
-u8 mt76x02_get_lna_gain(काष्ठा mt76x02_dev *dev,
+u8 mt76x02_get_lna_gain(struct mt76x02_dev *dev,
 			s8 *lna_2g, s8 *lna_5g,
-			काष्ठा ieee80211_channel *chan);
-व्योम mt76x02_eeprom_parse_hw_cap(काष्ठा mt76x02_dev *dev);
-पूर्णांक mt76x02_eeprom_copy(काष्ठा mt76x02_dev *dev,
-			क्रमागत mt76x02_eeprom_field field,
-			व्योम *dest, पूर्णांक len);
+			struct ieee80211_channel *chan);
+void mt76x02_eeprom_parse_hw_cap(struct mt76x02_dev *dev);
+int mt76x02_eeprom_copy(struct mt76x02_dev *dev,
+			enum mt76x02_eeprom_field field,
+			void *dest, int len);
 
-#पूर्ण_अगर /* __MT76x02_EEPROM_H */
+#endif /* __MT76x02_EEPROM_H */

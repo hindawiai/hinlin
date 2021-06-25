@@ -1,547 +1,546 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2012-2016, The Linux Foundation. All rights reserved.
  * Copyright (C) 2017 Linaro Ltd.
  */
-#समावेश <linux/slab.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/list.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/videodev2.h>
+#include <linux/slab.h>
+#include <linux/mutex.h>
+#include <linux/list.h>
+#include <linux/completion.h>
+#include <linux/platform_device.h>
+#include <linux/videodev2.h>
 
-#समावेश "core.h"
-#समावेश "hfi.h"
-#समावेश "hfi_cmds.h"
-#समावेश "hfi_venus.h"
+#include "core.h"
+#include "hfi.h"
+#include "hfi_cmds.h"
+#include "hfi_venus.h"
 
-#घोषणा TIMEOUT		msecs_to_jअगरfies(1000)
+#define TIMEOUT		msecs_to_jiffies(1000)
 
-अटल u32 to_codec_type(u32 pixfmt)
-अणु
-	चयन (pixfmt) अणु
-	हाल V4L2_PIX_FMT_H264:
-	हाल V4L2_PIX_FMT_H264_NO_SC:
-		वापस HFI_VIDEO_CODEC_H264;
-	हाल V4L2_PIX_FMT_H263:
-		वापस HFI_VIDEO_CODEC_H263;
-	हाल V4L2_PIX_FMT_MPEG1:
-		वापस HFI_VIDEO_CODEC_MPEG1;
-	हाल V4L2_PIX_FMT_MPEG2:
-		वापस HFI_VIDEO_CODEC_MPEG2;
-	हाल V4L2_PIX_FMT_MPEG4:
-		वापस HFI_VIDEO_CODEC_MPEG4;
-	हाल V4L2_PIX_FMT_VC1_ANNEX_G:
-	हाल V4L2_PIX_FMT_VC1_ANNEX_L:
-		वापस HFI_VIDEO_CODEC_VC1;
-	हाल V4L2_PIX_FMT_VP8:
-		वापस HFI_VIDEO_CODEC_VP8;
-	हाल V4L2_PIX_FMT_VP9:
-		वापस HFI_VIDEO_CODEC_VP9;
-	हाल V4L2_PIX_FMT_XVID:
-		वापस HFI_VIDEO_CODEC_DIVX;
-	हाल V4L2_PIX_FMT_HEVC:
-		वापस HFI_VIDEO_CODEC_HEVC;
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+static u32 to_codec_type(u32 pixfmt)
+{
+	switch (pixfmt) {
+	case V4L2_PIX_FMT_H264:
+	case V4L2_PIX_FMT_H264_NO_SC:
+		return HFI_VIDEO_CODEC_H264;
+	case V4L2_PIX_FMT_H263:
+		return HFI_VIDEO_CODEC_H263;
+	case V4L2_PIX_FMT_MPEG1:
+		return HFI_VIDEO_CODEC_MPEG1;
+	case V4L2_PIX_FMT_MPEG2:
+		return HFI_VIDEO_CODEC_MPEG2;
+	case V4L2_PIX_FMT_MPEG4:
+		return HFI_VIDEO_CODEC_MPEG4;
+	case V4L2_PIX_FMT_VC1_ANNEX_G:
+	case V4L2_PIX_FMT_VC1_ANNEX_L:
+		return HFI_VIDEO_CODEC_VC1;
+	case V4L2_PIX_FMT_VP8:
+		return HFI_VIDEO_CODEC_VP8;
+	case V4L2_PIX_FMT_VP9:
+		return HFI_VIDEO_CODEC_VP9;
+	case V4L2_PIX_FMT_XVID:
+		return HFI_VIDEO_CODEC_DIVX;
+	case V4L2_PIX_FMT_HEVC:
+		return HFI_VIDEO_CODEC_HEVC;
+	default:
+		return 0;
+	}
+}
 
-पूर्णांक hfi_core_init(काष्ठा venus_core *core)
-अणु
-	पूर्णांक ret = 0;
+int hfi_core_init(struct venus_core *core)
+{
+	int ret = 0;
 
 	mutex_lock(&core->lock);
 
-	अगर (core->state >= CORE_INIT)
-		जाओ unlock;
+	if (core->state >= CORE_INIT)
+		goto unlock;
 
-	reinit_completion(&core->करोne);
+	reinit_completion(&core->done);
 
 	ret = core->ops->core_init(core);
-	अगर (ret)
-		जाओ unlock;
+	if (ret)
+		goto unlock;
 
-	ret = रुको_क्रम_completion_समयout(&core->करोne, TIMEOUT);
-	अगर (!ret) अणु
+	ret = wait_for_completion_timeout(&core->done, TIMEOUT);
+	if (!ret) {
 		ret = -ETIMEDOUT;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	ret = 0;
 
-	अगर (core->error != HFI_ERR_NONE) अणु
+	if (core->error != HFI_ERR_NONE) {
 		ret = -EIO;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	core->state = CORE_INIT;
 unlock:
 	mutex_unlock(&core->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक hfi_core_deinit(काष्ठा venus_core *core, bool blocking)
-अणु
-	पूर्णांक ret = 0, empty;
+int hfi_core_deinit(struct venus_core *core, bool blocking)
+{
+	int ret = 0, empty;
 
 	mutex_lock(&core->lock);
 
-	अगर (core->state == CORE_UNINIT)
-		जाओ unlock;
+	if (core->state == CORE_UNINIT)
+		goto unlock;
 
 	empty = list_empty(&core->instances);
 
-	अगर (!empty && !blocking) अणु
+	if (!empty && !blocking) {
 		ret = -EBUSY;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर (!empty) अणु
+	if (!empty) {
 		mutex_unlock(&core->lock);
-		रुको_var_event(&core->insts_count,
-			       !atomic_पढ़ो(&core->insts_count));
+		wait_var_event(&core->insts_count,
+			       !atomic_read(&core->insts_count));
 		mutex_lock(&core->lock);
-	पूर्ण
+	}
 
 	ret = core->ops->core_deinit(core);
 
-	अगर (!ret)
+	if (!ret)
 		core->state = CORE_UNINIT;
 
 unlock:
 	mutex_unlock(&core->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक hfi_core_suspend(काष्ठा venus_core *core)
-अणु
-	अगर (core->state != CORE_INIT)
-		वापस 0;
+int hfi_core_suspend(struct venus_core *core)
+{
+	if (core->state != CORE_INIT)
+		return 0;
 
-	वापस core->ops->suspend(core);
-पूर्ण
+	return core->ops->suspend(core);
+}
 
-पूर्णांक hfi_core_resume(काष्ठा venus_core *core, bool क्रमce)
-अणु
-	अगर (!क्रमce && core->state != CORE_INIT)
-		वापस 0;
+int hfi_core_resume(struct venus_core *core, bool force)
+{
+	if (!force && core->state != CORE_INIT)
+		return 0;
 
-	वापस core->ops->resume(core);
-पूर्ण
+	return core->ops->resume(core);
+}
 
-पूर्णांक hfi_core_trigger_ssr(काष्ठा venus_core *core, u32 type)
-अणु
-	वापस core->ops->core_trigger_ssr(core, type);
-पूर्ण
+int hfi_core_trigger_ssr(struct venus_core *core, u32 type)
+{
+	return core->ops->core_trigger_ssr(core, type);
+}
 
-पूर्णांक hfi_core_ping(काष्ठा venus_core *core)
-अणु
-	पूर्णांक ret;
+int hfi_core_ping(struct venus_core *core)
+{
+	int ret;
 
 	mutex_lock(&core->lock);
 
 	ret = core->ops->core_ping(core, 0xbeef);
-	अगर (ret)
-		जाओ unlock;
+	if (ret)
+		goto unlock;
 
-	ret = रुको_क्रम_completion_समयout(&core->करोne, TIMEOUT);
-	अगर (!ret) अणु
+	ret = wait_for_completion_timeout(&core->done, TIMEOUT);
+	if (!ret) {
 		ret = -ETIMEDOUT;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 	ret = 0;
-	अगर (core->error != HFI_ERR_NONE)
+	if (core->error != HFI_ERR_NONE)
 		ret = -ENODEV;
 unlock:
 	mutex_unlock(&core->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक रुको_session_msg(काष्ठा venus_inst *inst)
-अणु
-	पूर्णांक ret;
+static int wait_session_msg(struct venus_inst *inst)
+{
+	int ret;
 
-	ret = रुको_क्रम_completion_समयout(&inst->करोne, TIMEOUT);
-	अगर (!ret)
-		वापस -ETIMEDOUT;
+	ret = wait_for_completion_timeout(&inst->done, TIMEOUT);
+	if (!ret)
+		return -ETIMEDOUT;
 
-	अगर (inst->error != HFI_ERR_NONE)
-		वापस -EIO;
+	if (inst->error != HFI_ERR_NONE)
+		return -EIO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hfi_session_create(काष्ठा venus_inst *inst, स्थिर काष्ठा hfi_inst_ops *ops)
-अणु
-	काष्ठा venus_core *core = inst->core;
+int hfi_session_create(struct venus_inst *inst, const struct hfi_inst_ops *ops)
+{
+	struct venus_core *core = inst->core;
 	bool max;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!ops)
-		वापस -EINVAL;
+	if (!ops)
+		return -EINVAL;
 
 	inst->state = INST_UNINIT;
-	init_completion(&inst->करोne);
+	init_completion(&inst->done);
 	inst->ops = ops;
 
 	mutex_lock(&core->lock);
 
 	max = atomic_add_unless(&core->insts_count, 1,
 				core->max_sessions_supported);
-	अगर (!max) अणु
+	if (!max) {
 		ret = -EAGAIN;
-	पूर्ण अन्यथा अणु
+	} else {
 		list_add_tail(&inst->list, &core->instances);
 		ret = 0;
-	पूर्ण
+	}
 
 	mutex_unlock(&core->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(hfi_session_create);
 
-पूर्णांक hfi_session_init(काष्ठा venus_inst *inst, u32 pixfmt)
-अणु
-	काष्ठा venus_core *core = inst->core;
-	स्थिर काष्ठा hfi_ops *ops = core->ops;
-	पूर्णांक ret;
+int hfi_session_init(struct venus_inst *inst, u32 pixfmt)
+{
+	struct venus_core *core = inst->core;
+	const struct hfi_ops *ops = core->ops;
+	int ret;
 
 	/*
-	 * If core shutकरोwn is in progress or अगर we are in प्रणाली
-	 * recovery, वापस an error as during प्रणाली error recovery
+	 * If core shutdown is in progress or if we are in system
+	 * recovery, return an error as during system error recovery
 	 * session_init() can't pass successfully
 	 */
 	mutex_lock(&core->lock);
-	अगर (!core->ops || core->sys_error) अणु
+	if (!core->ops || core->sys_error) {
 		mutex_unlock(&core->lock);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 	mutex_unlock(&core->lock);
 
-	अगर (inst->state != INST_UNINIT)
-		वापस -EALREADY;
+	if (inst->state != INST_UNINIT)
+		return -EALREADY;
 
 	inst->hfi_codec = to_codec_type(pixfmt);
-	reinit_completion(&inst->करोne);
+	reinit_completion(&inst->done);
 
 	ret = ops->session_init(inst, inst->session_type, inst->hfi_codec);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = रुको_session_msg(inst);
-	अगर (ret)
-		वापस ret;
+	ret = wait_session_msg(inst);
+	if (ret)
+		return ret;
 
 	inst->state = INST_INIT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(hfi_session_init);
 
-व्योम hfi_session_destroy(काष्ठा venus_inst *inst)
-अणु
-	काष्ठा venus_core *core = inst->core;
+void hfi_session_destroy(struct venus_inst *inst)
+{
+	struct venus_core *core = inst->core;
 
 	mutex_lock(&core->lock);
 	list_del_init(&inst->list);
-	अगर (atomic_dec_and_test(&core->insts_count))
+	if (atomic_dec_and_test(&core->insts_count))
 		wake_up_var(&core->insts_count);
 	mutex_unlock(&core->lock);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(hfi_session_destroy);
 
-पूर्णांक hfi_session_deinit(काष्ठा venus_inst *inst)
-अणु
-	स्थिर काष्ठा hfi_ops *ops = inst->core->ops;
-	पूर्णांक ret;
+int hfi_session_deinit(struct venus_inst *inst)
+{
+	const struct hfi_ops *ops = inst->core->ops;
+	int ret;
 
-	अगर (inst->state == INST_UNINIT)
-		वापस 0;
+	if (inst->state == INST_UNINIT)
+		return 0;
 
-	अगर (inst->state < INST_INIT)
-		वापस -EINVAL;
+	if (inst->state < INST_INIT)
+		return -EINVAL;
 
-	reinit_completion(&inst->करोne);
+	reinit_completion(&inst->done);
 
 	ret = ops->session_end(inst);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = रुको_session_msg(inst);
-	अगर (ret)
-		वापस ret;
+	ret = wait_session_msg(inst);
+	if (ret)
+		return ret;
 
 	inst->state = INST_UNINIT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(hfi_session_deinit);
 
-पूर्णांक hfi_session_start(काष्ठा venus_inst *inst)
-अणु
-	स्थिर काष्ठा hfi_ops *ops = inst->core->ops;
-	पूर्णांक ret;
+int hfi_session_start(struct venus_inst *inst)
+{
+	const struct hfi_ops *ops = inst->core->ops;
+	int ret;
 
-	अगर (inst->state != INST_LOAD_RESOURCES)
-		वापस -EINVAL;
+	if (inst->state != INST_LOAD_RESOURCES)
+		return -EINVAL;
 
-	reinit_completion(&inst->करोne);
+	reinit_completion(&inst->done);
 
 	ret = ops->session_start(inst);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = रुको_session_msg(inst);
-	अगर (ret)
-		वापस ret;
+	ret = wait_session_msg(inst);
+	if (ret)
+		return ret;
 
 	inst->state = INST_START;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(hfi_session_start);
 
-पूर्णांक hfi_session_stop(काष्ठा venus_inst *inst)
-अणु
-	स्थिर काष्ठा hfi_ops *ops = inst->core->ops;
-	पूर्णांक ret;
+int hfi_session_stop(struct venus_inst *inst)
+{
+	const struct hfi_ops *ops = inst->core->ops;
+	int ret;
 
-	अगर (inst->state != INST_START)
-		वापस -EINVAL;
+	if (inst->state != INST_START)
+		return -EINVAL;
 
-	reinit_completion(&inst->करोne);
+	reinit_completion(&inst->done);
 
 	ret = ops->session_stop(inst);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = रुको_session_msg(inst);
-	अगर (ret)
-		वापस ret;
+	ret = wait_session_msg(inst);
+	if (ret)
+		return ret;
 
 	inst->state = INST_STOP;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(hfi_session_stop);
 
-पूर्णांक hfi_session_जारी(काष्ठा venus_inst *inst)
-अणु
-	काष्ठा venus_core *core = inst->core;
+int hfi_session_continue(struct venus_inst *inst)
+{
+	struct venus_core *core = inst->core;
 
-	अगर (core->res->hfi_version == HFI_VERSION_1XX)
-		वापस 0;
+	if (core->res->hfi_version == HFI_VERSION_1XX)
+		return 0;
 
-	वापस core->ops->session_जारी(inst);
-पूर्ण
-EXPORT_SYMBOL_GPL(hfi_session_जारी);
+	return core->ops->session_continue(inst);
+}
+EXPORT_SYMBOL_GPL(hfi_session_continue);
 
-पूर्णांक hfi_session_पात(काष्ठा venus_inst *inst)
-अणु
-	स्थिर काष्ठा hfi_ops *ops = inst->core->ops;
-	पूर्णांक ret;
+int hfi_session_abort(struct venus_inst *inst)
+{
+	const struct hfi_ops *ops = inst->core->ops;
+	int ret;
 
-	reinit_completion(&inst->करोne);
+	reinit_completion(&inst->done);
 
-	ret = ops->session_पात(inst);
-	अगर (ret)
-		वापस ret;
+	ret = ops->session_abort(inst);
+	if (ret)
+		return ret;
 
-	ret = रुको_session_msg(inst);
-	अगर (ret)
-		वापस ret;
+	ret = wait_session_msg(inst);
+	if (ret)
+		return ret;
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(hfi_session_पात);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(hfi_session_abort);
 
-पूर्णांक hfi_session_load_res(काष्ठा venus_inst *inst)
-अणु
-	स्थिर काष्ठा hfi_ops *ops = inst->core->ops;
-	पूर्णांक ret;
+int hfi_session_load_res(struct venus_inst *inst)
+{
+	const struct hfi_ops *ops = inst->core->ops;
+	int ret;
 
-	अगर (inst->state != INST_INIT)
-		वापस -EINVAL;
+	if (inst->state != INST_INIT)
+		return -EINVAL;
 
-	reinit_completion(&inst->करोne);
+	reinit_completion(&inst->done);
 
 	ret = ops->session_load_res(inst);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = रुको_session_msg(inst);
-	अगर (ret)
-		वापस ret;
+	ret = wait_session_msg(inst);
+	if (ret)
+		return ret;
 
 	inst->state = INST_LOAD_RESOURCES;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hfi_session_unload_res(काष्ठा venus_inst *inst)
-अणु
-	स्थिर काष्ठा hfi_ops *ops = inst->core->ops;
-	पूर्णांक ret;
+int hfi_session_unload_res(struct venus_inst *inst)
+{
+	const struct hfi_ops *ops = inst->core->ops;
+	int ret;
 
-	अगर (inst->state != INST_STOP)
-		वापस -EINVAL;
+	if (inst->state != INST_STOP)
+		return -EINVAL;
 
-	reinit_completion(&inst->करोne);
+	reinit_completion(&inst->done);
 
 	ret = ops->session_release_res(inst);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = रुको_session_msg(inst);
-	अगर (ret)
-		वापस ret;
+	ret = wait_session_msg(inst);
+	if (ret)
+		return ret;
 
 	inst->state = INST_RELEASE_RESOURCES;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(hfi_session_unload_res);
 
-पूर्णांक hfi_session_flush(काष्ठा venus_inst *inst, u32 type, bool block)
-अणु
-	स्थिर काष्ठा hfi_ops *ops = inst->core->ops;
-	पूर्णांक ret;
+int hfi_session_flush(struct venus_inst *inst, u32 type, bool block)
+{
+	const struct hfi_ops *ops = inst->core->ops;
+	int ret;
 
-	reinit_completion(&inst->करोne);
+	reinit_completion(&inst->done);
 
 	ret = ops->session_flush(inst, type);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (block) अणु
-		ret = रुको_session_msg(inst);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	if (block) {
+		ret = wait_session_msg(inst);
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(hfi_session_flush);
 
-पूर्णांक hfi_session_set_buffers(काष्ठा venus_inst *inst, काष्ठा hfi_buffer_desc *bd)
-अणु
-	स्थिर काष्ठा hfi_ops *ops = inst->core->ops;
+int hfi_session_set_buffers(struct venus_inst *inst, struct hfi_buffer_desc *bd)
+{
+	const struct hfi_ops *ops = inst->core->ops;
 
-	वापस ops->session_set_buffers(inst, bd);
-पूर्ण
+	return ops->session_set_buffers(inst, bd);
+}
 
-पूर्णांक hfi_session_unset_buffers(काष्ठा venus_inst *inst,
-			      काष्ठा hfi_buffer_desc *bd)
-अणु
-	स्थिर काष्ठा hfi_ops *ops = inst->core->ops;
-	पूर्णांक ret;
+int hfi_session_unset_buffers(struct venus_inst *inst,
+			      struct hfi_buffer_desc *bd)
+{
+	const struct hfi_ops *ops = inst->core->ops;
+	int ret;
 
-	reinit_completion(&inst->करोne);
+	reinit_completion(&inst->done);
 
 	ret = ops->session_unset_buffers(inst, bd);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (!bd->response_required)
-		वापस 0;
+	if (!bd->response_required)
+		return 0;
 
-	ret = रुको_session_msg(inst);
-	अगर (ret)
-		वापस ret;
+	ret = wait_session_msg(inst);
+	if (ret)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hfi_session_get_property(काष्ठा venus_inst *inst, u32 ptype,
-			     जोड़ hfi_get_property *hprop)
-अणु
-	स्थिर काष्ठा hfi_ops *ops = inst->core->ops;
-	पूर्णांक ret;
+int hfi_session_get_property(struct venus_inst *inst, u32 ptype,
+			     union hfi_get_property *hprop)
+{
+	const struct hfi_ops *ops = inst->core->ops;
+	int ret;
 
-	अगर (inst->state < INST_INIT || inst->state >= INST_STOP)
-		वापस -EINVAL;
+	if (inst->state < INST_INIT || inst->state >= INST_STOP)
+		return -EINVAL;
 
-	reinit_completion(&inst->करोne);
+	reinit_completion(&inst->done);
 
 	ret = ops->session_get_property(inst, ptype);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = रुको_session_msg(inst);
-	अगर (ret)
-		वापस ret;
+	ret = wait_session_msg(inst);
+	if (ret)
+		return ret;
 
 	*hprop = inst->hprop;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(hfi_session_get_property);
 
-पूर्णांक hfi_session_set_property(काष्ठा venus_inst *inst, u32 ptype, व्योम *pdata)
-अणु
-	स्थिर काष्ठा hfi_ops *ops = inst->core->ops;
+int hfi_session_set_property(struct venus_inst *inst, u32 ptype, void *pdata)
+{
+	const struct hfi_ops *ops = inst->core->ops;
 
-	अगर (inst->state < INST_INIT || inst->state >= INST_STOP)
-		वापस -EINVAL;
+	if (inst->state < INST_INIT || inst->state >= INST_STOP)
+		return -EINVAL;
 
-	वापस ops->session_set_property(inst, ptype, pdata);
-पूर्ण
+	return ops->session_set_property(inst, ptype, pdata);
+}
 EXPORT_SYMBOL_GPL(hfi_session_set_property);
 
-पूर्णांक hfi_session_process_buf(काष्ठा venus_inst *inst, काष्ठा hfi_frame_data *fd)
-अणु
-	स्थिर काष्ठा hfi_ops *ops = inst->core->ops;
+int hfi_session_process_buf(struct venus_inst *inst, struct hfi_frame_data *fd)
+{
+	const struct hfi_ops *ops = inst->core->ops;
 
-	अगर (fd->buffer_type == HFI_BUFFER_INPUT)
-		वापस ops->session_etb(inst, fd);
-	अन्यथा अगर (fd->buffer_type == HFI_BUFFER_OUTPUT ||
+	if (fd->buffer_type == HFI_BUFFER_INPUT)
+		return ops->session_etb(inst, fd);
+	else if (fd->buffer_type == HFI_BUFFER_OUTPUT ||
 		 fd->buffer_type == HFI_BUFFER_OUTPUT2)
-		वापस ops->session_ftb(inst, fd);
+		return ops->session_ftb(inst, fd);
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 EXPORT_SYMBOL_GPL(hfi_session_process_buf);
 
-irqवापस_t hfi_isr_thपढ़ो(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा venus_core *core = dev_id;
+irqreturn_t hfi_isr_thread(int irq, void *dev_id)
+{
+	struct venus_core *core = dev_id;
 
-	वापस core->ops->isr_thपढ़ो(core);
-पूर्ण
+	return core->ops->isr_thread(core);
+}
 
-irqवापस_t hfi_isr(पूर्णांक irq, व्योम *dev)
-अणु
-	काष्ठा venus_core *core = dev;
+irqreturn_t hfi_isr(int irq, void *dev)
+{
+	struct venus_core *core = dev;
 
-	वापस core->ops->isr(core);
-पूर्ण
+	return core->ops->isr(core);
+}
 
-पूर्णांक hfi_create(काष्ठा venus_core *core, स्थिर काष्ठा hfi_core_ops *ops)
-अणु
-	पूर्णांक ret;
+int hfi_create(struct venus_core *core, const struct hfi_core_ops *ops)
+{
+	int ret;
 
-	अगर (!ops)
-		वापस -EINVAL;
+	if (!ops)
+		return -EINVAL;
 
 	atomic_set(&core->insts_count, 0);
 	core->core_ops = ops;
 	core->state = CORE_UNINIT;
-	init_completion(&core->करोne);
+	init_completion(&core->done);
 	pkt_set_version(core->res->hfi_version);
 	ret = venus_hfi_create(core);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम hfi_destroy(काष्ठा venus_core *core)
-अणु
+void hfi_destroy(struct venus_core *core)
+{
 	venus_hfi_destroy(core);
-पूर्ण
+}
 
-व्योम hfi_reinit(काष्ठा venus_core *core)
-अणु
+void hfi_reinit(struct venus_core *core)
+{
 	venus_hfi_queues_reinit(core);
-पूर्ण
+}

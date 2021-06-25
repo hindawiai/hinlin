@@ -1,85 +1,84 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*:
- * Hibernate support specअगरic क्रम ARM64
+ * Hibernate support specific for ARM64
  *
  * Derived from work on ARM hibernation support by:
  *
- * Ubuntu project, hibernation support क्रम mach-करोve
+ * Ubuntu project, hibernation support for mach-dove
  * Copyright (C) 2010 Nokia Corporation (Hiroshi Doyu)
  * Copyright (C) 2010 Texas Instruments, Inc. (Teerth Reddy et al.)
  *  https://lkml.org/lkml/2010/6/18/4
- *  https://lists.linux-foundation.org/pipermail/linux-pm/2010-June/027422.hपंचांगl
+ *  https://lists.linux-foundation.org/pipermail/linux-pm/2010-June/027422.html
  *  https://patchwork.kernel.org/patch/96442/
  *
  * Copyright (C) 2006 Rafael J. Wysocki <rjw@sisk.pl>
  */
-#घोषणा pr_fmt(x) "hibernate: " x
-#समावेश <linux/cpu.h>
-#समावेश <linux/kvm_host.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/suspend.h>
-#समावेश <linux/utsname.h>
+#define pr_fmt(x) "hibernate: " x
+#include <linux/cpu.h>
+#include <linux/kvm_host.h>
+#include <linux/pm.h>
+#include <linux/sched.h>
+#include <linux/suspend.h>
+#include <linux/utsname.h>
 
-#समावेश <यंत्र/barrier.h>
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <यंत्र/cputype.h>
-#समावेश <यंत्र/daअगरflags.h>
-#समावेश <यंत्र/irqflags.h>
-#समावेश <यंत्र/kexec.h>
-#समावेश <यंत्र/memory.h>
-#समावेश <यंत्र/mmu_context.h>
-#समावेश <यंत्र/mte.h>
-#समावेश <यंत्र/sections.h>
-#समावेश <यंत्र/smp.h>
-#समावेश <यंत्र/smp_plat.h>
-#समावेश <यंत्र/suspend.h>
-#समावेश <यंत्र/sysreg.h>
-#समावेश <यंत्र/trans_pgd.h>
-#समावेश <यंत्र/virt.h>
+#include <asm/barrier.h>
+#include <asm/cacheflush.h>
+#include <asm/cputype.h>
+#include <asm/daifflags.h>
+#include <asm/irqflags.h>
+#include <asm/kexec.h>
+#include <asm/memory.h>
+#include <asm/mmu_context.h>
+#include <asm/mte.h>
+#include <asm/sections.h>
+#include <asm/smp.h>
+#include <asm/smp_plat.h>
+#include <asm/suspend.h>
+#include <asm/sysreg.h>
+#include <asm/trans_pgd.h>
+#include <asm/virt.h>
 
 /*
  * Hibernate core relies on this value being 0 on resume, and marks it
  * __nosavedata assuming it will keep the resume kernel's '0' value. This
- * करोesn't happen with either KASLR.
+ * doesn't happen with either KASLR.
  *
  * defined as "__visible int in_suspend __nosavedata" in
- * kernel/घातer/hibernate.c
+ * kernel/power/hibernate.c
  */
-बाह्य पूर्णांक in_suspend;
+extern int in_suspend;
 
 /* Do we need to reset el2? */
-#घोषणा el2_reset_needed() (is_hyp_mode_available() && !is_kernel_in_hyp_mode())
+#define el2_reset_needed() (is_hyp_mode_available() && !is_kernel_in_hyp_mode())
 
-/* temporary el2 vectors in the __hibernate_निकास_text section. */
-बाह्य अक्षर hibernate_el2_vectors[];
+/* temporary el2 vectors in the __hibernate_exit_text section. */
+extern char hibernate_el2_vectors[];
 
 /* hyp-stub vectors, used to restore el2 during resume from hibernate. */
-बाह्य अक्षर __hyp_stub_vectors[];
+extern char __hyp_stub_vectors[];
 
 /*
  * The logical cpu number we should resume on, initialised to a non-cpu
  * number.
  */
-अटल पूर्णांक sleep_cpu = -EINVAL;
+static int sleep_cpu = -EINVAL;
 
 /*
  * Values that may not change over hibernate/resume. We put the build number
- * and date in here so that we guarantee not to resume with a dअगरferent
+ * and date in here so that we guarantee not to resume with a different
  * kernel.
  */
-काष्ठा arch_hibernate_hdr_invariants अणु
-	अक्षर		uts_version[__NEW_UTS_LEN + 1];
-पूर्ण;
+struct arch_hibernate_hdr_invariants {
+	char		uts_version[__NEW_UTS_LEN + 1];
+};
 
 /* These values need to be know across a hibernate/restore. */
-अटल काष्ठा arch_hibernate_hdr अणु
-	काष्ठा arch_hibernate_hdr_invariants invariants;
+static struct arch_hibernate_hdr {
+	struct arch_hibernate_hdr_invariants invariants;
 
-	/* These are needed to find the relocated kernel अगर built with kaslr */
+	/* These are needed to find the relocated kernel if built with kaslr */
 	phys_addr_t	ttbr1_el1;
-	व्योम		(*reenter_kernel)(व्योम);
+	void		(*reenter_kernel)(void);
 
 	/*
 	 * We need to know where the __hyp_stub_vectors are after restore to
@@ -88,314 +87,314 @@
 	phys_addr_t	__hyp_stub_vectors;
 
 	u64		sleep_cpu_mpidr;
-पूर्ण resume_hdr;
+} resume_hdr;
 
-अटल अंतरभूत व्योम arch_hdr_invariants(काष्ठा arch_hibernate_hdr_invariants *i)
-अणु
-	स_रखो(i, 0, माप(*i));
-	स_नकल(i->uts_version, init_utsname()->version, माप(i->uts_version));
-पूर्ण
+static inline void arch_hdr_invariants(struct arch_hibernate_hdr_invariants *i)
+{
+	memset(i, 0, sizeof(*i));
+	memcpy(i->uts_version, init_utsname()->version, sizeof(i->uts_version));
+}
 
-पूर्णांक pfn_is_nosave(अचिन्हित दीर्घ pfn)
-अणु
-	अचिन्हित दीर्घ nosave_begin_pfn = sym_to_pfn(&__nosave_begin);
-	अचिन्हित दीर्घ nosave_end_pfn = sym_to_pfn(&__nosave_end - 1);
+int pfn_is_nosave(unsigned long pfn)
+{
+	unsigned long nosave_begin_pfn = sym_to_pfn(&__nosave_begin);
+	unsigned long nosave_end_pfn = sym_to_pfn(&__nosave_end - 1);
 
-	वापस ((pfn >= nosave_begin_pfn) && (pfn <= nosave_end_pfn)) ||
+	return ((pfn >= nosave_begin_pfn) && (pfn <= nosave_end_pfn)) ||
 		crash_is_nosave(pfn);
-पूर्ण
+}
 
-व्योम notrace save_processor_state(व्योम)
-अणु
+void notrace save_processor_state(void)
+{
 	WARN_ON(num_online_cpus() != 1);
-पूर्ण
+}
 
-व्योम notrace restore_processor_state(व्योम)
-अणु
-पूर्ण
+void notrace restore_processor_state(void)
+{
+}
 
-पूर्णांक arch_hibernation_header_save(व्योम *addr, अचिन्हित पूर्णांक max_size)
-अणु
-	काष्ठा arch_hibernate_hdr *hdr = addr;
+int arch_hibernation_header_save(void *addr, unsigned int max_size)
+{
+	struct arch_hibernate_hdr *hdr = addr;
 
-	अगर (max_size < माप(*hdr))
-		वापस -EOVERFLOW;
+	if (max_size < sizeof(*hdr))
+		return -EOVERFLOW;
 
 	arch_hdr_invariants(&hdr->invariants);
 	hdr->ttbr1_el1		= __pa_symbol(swapper_pg_dir);
 	hdr->reenter_kernel	= _cpu_resume;
 
 	/* We can't use __hyp_get_vectors() because kvm may still be loaded */
-	अगर (el2_reset_needed())
+	if (el2_reset_needed())
 		hdr->__hyp_stub_vectors = __pa_symbol(__hyp_stub_vectors);
-	अन्यथा
+	else
 		hdr->__hyp_stub_vectors = 0;
 
 	/* Save the mpidr of the cpu we called cpu_suspend() on... */
-	अगर (sleep_cpu < 0) अणु
+	if (sleep_cpu < 0) {
 		pr_err("Failing to hibernate on an unknown CPU.\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	hdr->sleep_cpu_mpidr = cpu_logical_map(sleep_cpu);
 	pr_info("Hibernating on CPU %d [mpidr:0x%llx]\n", sleep_cpu,
 		hdr->sleep_cpu_mpidr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(arch_hibernation_header_save);
 
-पूर्णांक arch_hibernation_header_restore(व्योम *addr)
-अणु
-	पूर्णांक ret;
-	काष्ठा arch_hibernate_hdr_invariants invariants;
-	काष्ठा arch_hibernate_hdr *hdr = addr;
+int arch_hibernation_header_restore(void *addr)
+{
+	int ret;
+	struct arch_hibernate_hdr_invariants invariants;
+	struct arch_hibernate_hdr *hdr = addr;
 
 	arch_hdr_invariants(&invariants);
-	अगर (स_भेद(&hdr->invariants, &invariants, माप(invariants))) अणु
+	if (memcmp(&hdr->invariants, &invariants, sizeof(invariants))) {
 		pr_crit("Hibernate image not generated by this kernel!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	sleep_cpu = get_logical_index(hdr->sleep_cpu_mpidr);
 	pr_info("Hibernated on CPU %d [mpidr:0x%llx]\n", sleep_cpu,
 		hdr->sleep_cpu_mpidr);
-	अगर (sleep_cpu < 0) अणु
+	if (sleep_cpu < 0) {
 		pr_crit("Hibernated on a CPU not known to this kernel!\n");
 		sleep_cpu = -EINVAL;
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ret = bringup_hibernate_cpu(sleep_cpu);
-	अगर (ret) अणु
+	if (ret) {
 		sleep_cpu = -EINVAL;
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	resume_hdr = *hdr;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(arch_hibernation_header_restore);
 
-अटल व्योम *hibernate_page_alloc(व्योम *arg)
-अणु
-	वापस (व्योम *)get_safe_page((__क्रमce gfp_t)(अचिन्हित दीर्घ)arg);
-पूर्ण
+static void *hibernate_page_alloc(void *arg)
+{
+	return (void *)get_safe_page((__force gfp_t)(unsigned long)arg);
+}
 
 /*
- * Copies length bytes, starting at src_start पूर्णांकo an new page,
- * perक्रमm cache मुख्यtenance, then maps it at the specअगरied address low
+ * Copies length bytes, starting at src_start into an new page,
+ * perform cache maintenance, then maps it at the specified address low
  * address as executable.
  *
  * This is used by hibernate to copy the code it needs to execute when
  * overwriting the kernel text. This function generates a new set of page
- * tables, which it loads पूर्णांकo ttbr0.
+ * tables, which it loads into ttbr0.
  *
  * Length is provided as we probably only want 4K of data, even on a 64K
- * page प्रणाली.
+ * page system.
  */
-अटल पूर्णांक create_safe_exec_page(व्योम *src_start, माप_प्रकार length,
+static int create_safe_exec_page(void *src_start, size_t length,
 				 phys_addr_t *phys_dst_addr)
-अणु
-	काष्ठा trans_pgd_info trans_info = अणु
+{
+	struct trans_pgd_info trans_info = {
 		.trans_alloc_page	= hibernate_page_alloc,
-		.trans_alloc_arg	= (__क्रमce व्योम *)GFP_ATOMIC,
-	पूर्ण;
+		.trans_alloc_arg	= (__force void *)GFP_ATOMIC,
+	};
 
-	व्योम *page = (व्योम *)get_safe_page(GFP_ATOMIC);
+	void *page = (void *)get_safe_page(GFP_ATOMIC);
 	phys_addr_t trans_ttbr0;
-	अचिन्हित दीर्घ t0sz;
-	पूर्णांक rc;
+	unsigned long t0sz;
+	int rc;
 
-	अगर (!page)
-		वापस -ENOMEM;
+	if (!page)
+		return -ENOMEM;
 
-	स_नकल(page, src_start, length);
-	__flush_icache_range((अचिन्हित दीर्घ)page, (अचिन्हित दीर्घ)page + length);
+	memcpy(page, src_start, length);
+	__flush_icache_range((unsigned long)page, (unsigned long)page + length);
 	rc = trans_pgd_idmap_page(&trans_info, &trans_ttbr0, &t0sz, page);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	/*
 	 * Load our new page tables. A strict BBM approach requires that we
-	 * ensure that TLBs are मुक्त of any entries that may overlap with the
+	 * ensure that TLBs are free of any entries that may overlap with the
 	 * global mappings we are about to install.
 	 *
-	 * For a real hibernate/resume cycle TTBR0 currently poपूर्णांकs to a zero
-	 * page, but TLBs may contain stale ASID-tagged entries (e.g. क्रम EFI
-	 * runसमय services), जबतक क्रम a userspace-driven test_resume cycle it
-	 * poपूर्णांकs to userspace page tables (and we must poपूर्णांक it at a zero page
+	 * For a real hibernate/resume cycle TTBR0 currently points to a zero
+	 * page, but TLBs may contain stale ASID-tagged entries (e.g. for EFI
+	 * runtime services), while for a userspace-driven test_resume cycle it
+	 * points to userspace page tables (and we must point it at a zero page
 	 * ourselves).
 	 *
-	 * We change T0SZ as part of installing the idmap. This is unकरोne by
-	 * cpu_uninstall_idmap() in __cpu_suspend_निकास().
+	 * We change T0SZ as part of installing the idmap. This is undone by
+	 * cpu_uninstall_idmap() in __cpu_suspend_exit().
 	 */
 	cpu_set_reserved_ttbr0();
 	local_flush_tlb_all();
 	__cpu_set_tcr_t0sz(t0sz);
-	ग_लिखो_sysreg(trans_ttbr0, ttbr0_el1);
+	write_sysreg(trans_ttbr0, ttbr0_el1);
 	isb();
 
 	*phys_dst_addr = virt_to_phys(page);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा dcache_clean_range(start, end)	__flush_dcache_area(start, (end - start))
+#define dcache_clean_range(start, end)	__flush_dcache_area(start, (end - start))
 
-#अगर_घोषित CONFIG_ARM64_MTE
+#ifdef CONFIG_ARM64_MTE
 
-अटल DEFINE_XARRAY(mte_pages);
+static DEFINE_XARRAY(mte_pages);
 
-अटल पूर्णांक save_tags(काष्ठा page *page, अचिन्हित दीर्घ pfn)
-अणु
-	व्योम *tag_storage, *ret;
+static int save_tags(struct page *page, unsigned long pfn)
+{
+	void *tag_storage, *ret;
 
 	tag_storage = mte_allocate_tag_storage();
-	अगर (!tag_storage)
-		वापस -ENOMEM;
+	if (!tag_storage)
+		return -ENOMEM;
 
 	mte_save_page_tags(page_address(page), tag_storage);
 
 	ret = xa_store(&mte_pages, pfn, tag_storage, GFP_KERNEL);
-	अगर (WARN(xa_is_err(ret), "Failed to store MTE tags")) अणु
-		mte_मुक्त_tag_storage(tag_storage);
-		वापस xa_err(ret);
-	पूर्ण अन्यथा अगर (WARN(ret, "swsusp: %s: Duplicate entry", __func__)) अणु
-		mte_मुक्त_tag_storage(ret);
-	पूर्ण
+	if (WARN(xa_is_err(ret), "Failed to store MTE tags")) {
+		mte_free_tag_storage(tag_storage);
+		return xa_err(ret);
+	} else if (WARN(ret, "swsusp: %s: Duplicate entry", __func__)) {
+		mte_free_tag_storage(ret);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम swsusp_mte_मुक्त_storage(व्योम)
-अणु
+static void swsusp_mte_free_storage(void)
+{
 	XA_STATE(xa_state, &mte_pages, 0);
-	व्योम *tags;
+	void *tags;
 
 	xa_lock(&mte_pages);
-	xas_क्रम_each(&xa_state, tags, अच_दीर्घ_उच्च) अणु
-		mte_मुक्त_tag_storage(tags);
-	पूर्ण
+	xas_for_each(&xa_state, tags, ULONG_MAX) {
+		mte_free_tag_storage(tags);
+	}
 	xa_unlock(&mte_pages);
 
 	xa_destroy(&mte_pages);
-पूर्ण
+}
 
-अटल पूर्णांक swsusp_mte_save_tags(व्योम)
-अणु
-	काष्ठा zone *zone;
-	अचिन्हित दीर्घ pfn, max_zone_pfn;
-	पूर्णांक ret = 0;
-	पूर्णांक n = 0;
+static int swsusp_mte_save_tags(void)
+{
+	struct zone *zone;
+	unsigned long pfn, max_zone_pfn;
+	int ret = 0;
+	int n = 0;
 
-	अगर (!प्रणाली_supports_mte())
-		वापस 0;
+	if (!system_supports_mte())
+		return 0;
 
-	क्रम_each_populated_zone(zone) अणु
+	for_each_populated_zone(zone) {
 		max_zone_pfn = zone_end_pfn(zone);
-		क्रम (pfn = zone->zone_start_pfn; pfn < max_zone_pfn; pfn++) अणु
-			काष्ठा page *page = pfn_to_online_page(pfn);
+		for (pfn = zone->zone_start_pfn; pfn < max_zone_pfn; pfn++) {
+			struct page *page = pfn_to_online_page(pfn);
 
-			अगर (!page)
-				जारी;
+			if (!page)
+				continue;
 
-			अगर (!test_bit(PG_mte_tagged, &page->flags))
-				जारी;
+			if (!test_bit(PG_mte_tagged, &page->flags))
+				continue;
 
 			ret = save_tags(page, pfn);
-			अगर (ret) अणु
-				swsusp_mte_मुक्त_storage();
-				जाओ out;
-			पूर्ण
+			if (ret) {
+				swsusp_mte_free_storage();
+				goto out;
+			}
 
 			n++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	pr_info("Saved %d MTE pages\n", n);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम swsusp_mte_restore_tags(व्योम)
-अणु
+static void swsusp_mte_restore_tags(void)
+{
 	XA_STATE(xa_state, &mte_pages, 0);
-	पूर्णांक n = 0;
-	व्योम *tags;
+	int n = 0;
+	void *tags;
 
 	xa_lock(&mte_pages);
-	xas_क्रम_each(&xa_state, tags, अच_दीर्घ_उच्च) अणु
-		अचिन्हित दीर्घ pfn = xa_state.xa_index;
-		काष्ठा page *page = pfn_to_online_page(pfn);
+	xas_for_each(&xa_state, tags, ULONG_MAX) {
+		unsigned long pfn = xa_state.xa_index;
+		struct page *page = pfn_to_online_page(pfn);
 
 		/*
 		 * It is not required to invoke page_kasan_tag_reset(page)
-		 * at this poपूर्णांक since the tags stored in page->flags are
-		 * alपढ़ोy restored.
+		 * at this point since the tags stored in page->flags are
+		 * already restored.
 		 */
 		mte_restore_page_tags(page_address(page), tags);
 
-		mte_मुक्त_tag_storage(tags);
+		mte_free_tag_storage(tags);
 		n++;
-	पूर्ण
+	}
 	xa_unlock(&mte_pages);
 
 	pr_info("Restored %d MTE pages\n", n);
 
 	xa_destroy(&mte_pages);
-पूर्ण
+}
 
-#अन्यथा	/* CONFIG_ARM64_MTE */
+#else	/* CONFIG_ARM64_MTE */
 
-अटल पूर्णांक swsusp_mte_save_tags(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+static int swsusp_mte_save_tags(void)
+{
+	return 0;
+}
 
-अटल व्योम swsusp_mte_restore_tags(व्योम)
-अणु
-पूर्ण
+static void swsusp_mte_restore_tags(void)
+{
+}
 
-#पूर्ण_अगर	/* CONFIG_ARM64_MTE */
+#endif	/* CONFIG_ARM64_MTE */
 
-पूर्णांक swsusp_arch_suspend(व्योम)
-अणु
-	पूर्णांक ret = 0;
-	अचिन्हित दीर्घ flags;
-	काष्ठा sleep_stack_data state;
+int swsusp_arch_suspend(void)
+{
+	int ret = 0;
+	unsigned long flags;
+	struct sleep_stack_data state;
 
-	अगर (cpus_are_stuck_in_kernel()) अणु
+	if (cpus_are_stuck_in_kernel()) {
 		pr_err("Can't hibernate: no mechanism to offline secondary CPUs.\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	flags = local_daअगर_save();
+	flags = local_daif_save();
 
-	अगर (__cpu_suspend_enter(&state)) अणु
+	if (__cpu_suspend_enter(&state)) {
 		/* make the crash dump kernel image visible/saveable */
 		crash_prepare_suspend();
 
 		ret = swsusp_mte_save_tags();
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		sleep_cpu = smp_processor_id();
 		ret = swsusp_save();
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Clean kernel core startup/idle code to PoC*/
 		dcache_clean_range(__mmuoff_data_start, __mmuoff_data_end);
 		dcache_clean_range(__idmap_text_start, __idmap_text_end);
 
 		/* Clean kvm setup code to PoC? */
-		अगर (el2_reset_needed()) अणु
+		if (el2_reset_needed()) {
 			dcache_clean_range(__hyp_idmap_text_start, __hyp_idmap_text_end);
 			dcache_clean_range(__hyp_text_start, __hyp_text_end);
-		पूर्ण
+		}
 
 		swsusp_mte_restore_tags();
 
-		/* make the crash dump kernel image रक्षित again */
+		/* make the crash dump kernel image protected again */
 		crash_post_resume();
 
 		/*
@@ -405,105 +404,105 @@ out:
 		in_suspend = 0;
 
 		sleep_cpu = -EINVAL;
-		__cpu_suspend_निकास();
+		__cpu_suspend_exit();
 
 		/*
-		 * Just in हाल the boot kernel did turn the SSBD
+		 * Just in case the boot kernel did turn the SSBD
 		 * mitigation off behind our back, let's set the state
 		 * to what we expect it to be.
 		 */
-		spectre_v4_enable_mitigation(शून्य);
-	पूर्ण
+		spectre_v4_enable_mitigation(NULL);
+	}
 
-	local_daअगर_restore(flags);
+	local_daif_restore(flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Setup then Resume from the hibernate image using swsusp_arch_suspend_निकास().
+ * Setup then Resume from the hibernate image using swsusp_arch_suspend_exit().
  *
  * Memory allocated by get_safe_page() will be dealt with by the hibernate code,
- * we करोn't need to मुक्त it here.
+ * we don't need to free it here.
  */
-पूर्णांक swsusp_arch_resume(व्योम)
-अणु
-	पूर्णांक rc;
-	व्योम *zero_page;
-	माप_प्रकार निकास_size;
-	pgd_t *पंचांगp_pg_dir;
-	व्योम __noवापस (*hibernate_निकास)(phys_addr_t, phys_addr_t, व्योम *,
-					  व्योम *, phys_addr_t, phys_addr_t);
-	काष्ठा trans_pgd_info trans_info = अणु
+int swsusp_arch_resume(void)
+{
+	int rc;
+	void *zero_page;
+	size_t exit_size;
+	pgd_t *tmp_pg_dir;
+	void __noreturn (*hibernate_exit)(phys_addr_t, phys_addr_t, void *,
+					  void *, phys_addr_t, phys_addr_t);
+	struct trans_pgd_info trans_info = {
 		.trans_alloc_page	= hibernate_page_alloc,
-		.trans_alloc_arg	= (व्योम *)GFP_ATOMIC,
-	पूर्ण;
+		.trans_alloc_arg	= (void *)GFP_ATOMIC,
+	};
 
 	/*
-	 * Restoring the memory image will overग_लिखो the ttbr1 page tables.
+	 * Restoring the memory image will overwrite the ttbr1 page tables.
 	 * Create a second copy of just the linear map, and use this when
 	 * restoring.
 	 */
-	rc = trans_pgd_create_copy(&trans_info, &पंचांगp_pg_dir, PAGE_OFFSET,
+	rc = trans_pgd_create_copy(&trans_info, &tmp_pg_dir, PAGE_OFFSET,
 				   PAGE_END);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	/*
-	 * We need a zero page that is zero beक्रमe & after resume in order to
-	 * to अवरोध beक्रमe make on the ttbr1 page tables.
+	 * We need a zero page that is zero before & after resume in order to
+	 * to break before make on the ttbr1 page tables.
 	 */
-	zero_page = (व्योम *)get_safe_page(GFP_ATOMIC);
-	अगर (!zero_page) अणु
+	zero_page = (void *)get_safe_page(GFP_ATOMIC);
+	if (!zero_page) {
 		pr_err("Failed to allocate zero page.\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	निकास_size = __hibernate_निकास_text_end - __hibernate_निकास_text_start;
+	exit_size = __hibernate_exit_text_end - __hibernate_exit_text_start;
 	/*
-	 * Copy swsusp_arch_suspend_निकास() to a safe page. This will generate
+	 * Copy swsusp_arch_suspend_exit() to a safe page. This will generate
 	 * a new set of ttbr0 page tables and load them.
 	 */
-	rc = create_safe_exec_page(__hibernate_निकास_text_start, निकास_size,
-				   (phys_addr_t *)&hibernate_निकास);
-	अगर (rc) अणु
+	rc = create_safe_exec_page(__hibernate_exit_text_start, exit_size,
+				   (phys_addr_t *)&hibernate_exit);
+	if (rc) {
 		pr_err("Failed to create safe executable page for hibernate_exit code.\n");
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	/*
-	 * The hibernate निकास text contains a set of el2 vectors, that will
+	 * The hibernate exit text contains a set of el2 vectors, that will
 	 * be executed at el2 with the mmu off in order to reload hyp-stub.
 	 */
-	__flush_dcache_area(hibernate_निकास, निकास_size);
+	__flush_dcache_area(hibernate_exit, exit_size);
 
 	/*
-	 * KASLR will cause the el2 vectors to be in a dअगरferent location in
-	 * the resumed kernel. Load hibernate's temporary copy पूर्णांकo el2.
+	 * KASLR will cause the el2 vectors to be in a different location in
+	 * the resumed kernel. Load hibernate's temporary copy into el2.
 	 *
-	 * We can skip this step अगर we booted at EL1, or are running with VHE.
+	 * We can skip this step if we booted at EL1, or are running with VHE.
 	 */
-	अगर (el2_reset_needed()) अणु
-		phys_addr_t el2_vectors = (phys_addr_t)hibernate_निकास;
+	if (el2_reset_needed()) {
+		phys_addr_t el2_vectors = (phys_addr_t)hibernate_exit;
 		el2_vectors += hibernate_el2_vectors -
-			       __hibernate_निकास_text_start;     /* offset */
+			       __hibernate_exit_text_start;     /* offset */
 
 		__hyp_set_vectors(el2_vectors);
-	पूर्ण
+	}
 
-	hibernate_निकास(virt_to_phys(पंचांगp_pg_dir), resume_hdr.ttbr1_el1,
+	hibernate_exit(virt_to_phys(tmp_pg_dir), resume_hdr.ttbr1_el1,
 		       resume_hdr.reenter_kernel, restore_pblist,
 		       resume_hdr.__hyp_stub_vectors, virt_to_phys(zero_page));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hibernate_resume_nonboot_cpu_disable(व्योम)
-अणु
-	अगर (sleep_cpu < 0) अणु
+int hibernate_resume_nonboot_cpu_disable(void)
+{
+	if (sleep_cpu < 0) {
 		pr_err("Failing to resume from hibernate on an unknown CPU.\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	वापस मुक्तze_secondary_cpus(sleep_cpu);
-पूर्ण
+	return freeze_secondary_cpus(sleep_cpu);
+}

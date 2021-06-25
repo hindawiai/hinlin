@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* Measure mqueue समयout latency
+/* Measure mqueue timeout latency
  *              by: john stultz (john.stultz@linaro.org)
  *		(C) Copyright Linaro 2013
  *
  *		Inspired with permission from example test by:
- *			Roमुख्य Francoise <roमुख्य@orebokech.com>
+ *			Romain Francoise <romain@orebokech.com>
  *              Licensed under the GPLv2
  *
  *  To build:
  *	$ gcc mqueue-lat.c -o mqueue-lat -lrt
  *
- *   This program is मुक्त software: you can redistribute it and/or modअगरy
+ *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
  *   the Free Software Foundation, either version 2 of the License, or
  *   (at your option) any later version.
@@ -18,98 +17,98 @@
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License क्रम more details.
+ *   GNU General Public License for more details.
  */
 
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <समय.स>
-#समावेश <sys/समय.स>
-#समावेश <sys/समयx.h>
-#समावेश <माला.स>
-#समावेश <संकेत.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <mqueue.h>
-#समावेश "../kselftest.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <sys/time.h>
+#include <sys/timex.h>
+#include <string.h>
+#include <signal.h>
+#include <errno.h>
+#include <mqueue.h>
+#include "../kselftest.h"
 
-#घोषणा NSEC_PER_SEC 1000000000ULL
+#define NSEC_PER_SEC 1000000000ULL
 
-#घोषणा TARGET_TIMEOUT		100000000	/* 100ms in nanoseconds */
-#घोषणा UNRESONABLE_LATENCY	40000000	/* 40ms in nanosecs */
+#define TARGET_TIMEOUT		100000000	/* 100ms in nanoseconds */
+#define UNRESONABLE_LATENCY	40000000	/* 40ms in nanosecs */
 
 
-दीर्घ दीर्घ बारpec_sub(काष्ठा बारpec a, काष्ठा बारpec b)
-अणु
-	दीर्घ दीर्घ ret = NSEC_PER_SEC * b.tv_sec + b.tv_nsec;
+long long timespec_sub(struct timespec a, struct timespec b)
+{
+	long long ret = NSEC_PER_SEC * b.tv_sec + b.tv_nsec;
 
 	ret -= NSEC_PER_SEC * a.tv_sec + a.tv_nsec;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-काष्ठा बारpec बारpec_add(काष्ठा बारpec ts, अचिन्हित दीर्घ दीर्घ ns)
-अणु
+struct timespec timespec_add(struct timespec ts, unsigned long long ns)
+{
 	ts.tv_nsec += ns;
-	जबतक (ts.tv_nsec >= NSEC_PER_SEC) अणु
+	while (ts.tv_nsec >= NSEC_PER_SEC) {
 		ts.tv_nsec -= NSEC_PER_SEC;
 		ts.tv_sec++;
-	पूर्ण
-	वापस ts;
-पूर्ण
+	}
+	return ts;
+}
 
-पूर्णांक mqueue_lat_test(व्योम)
-अणु
+int mqueue_lat_test(void)
+{
 
 	mqd_t q;
-	काष्ठा mq_attr attr;
-	काष्ठा बारpec start, end, now, target;
-	पूर्णांक i, count, ret;
+	struct mq_attr attr;
+	struct timespec start, end, now, target;
+	int i, count, ret;
 
-	q = mq_खोलो("/foo", O_CREAT | O_RDONLY, 0666, शून्य);
-	अगर (q < 0) अणु
-		लिखो_त्रुटि("mq_open");
-		वापस -1;
-	पूर्ण
+	q = mq_open("/foo", O_CREAT | O_RDONLY, 0666, NULL);
+	if (q < 0) {
+		perror("mq_open");
+		return -1;
+	}
 	mq_getattr(q, &attr);
 
 
 	count = 100;
-	घड़ी_समय_लो(CLOCK_MONOTONIC, &start);
+	clock_gettime(CLOCK_MONOTONIC, &start);
 
-	क्रम (i = 0; i < count; i++) अणु
-		अक्षर buf[attr.mq_msgsize];
+	for (i = 0; i < count; i++) {
+		char buf[attr.mq_msgsize];
 
-		घड़ी_समय_लो(CLOCK_REALTIME, &now);
+		clock_gettime(CLOCK_REALTIME, &now);
 		target = now;
-		target = बारpec_add(now, TARGET_TIMEOUT); /* 100ms */
+		target = timespec_add(now, TARGET_TIMEOUT); /* 100ms */
 
-		ret = mq_समयdreceive(q, buf, माप(buf), शून्य, &target);
-		अगर (ret < 0 && त्रुटि_सं != ETIMEDOUT) अणु
-			लिखो_त्रुटि("mq_timedreceive");
-			वापस -1;
-		पूर्ण
-	पूर्ण
-	घड़ी_समय_लो(CLOCK_MONOTONIC, &end);
+		ret = mq_timedreceive(q, buf, sizeof(buf), NULL, &target);
+		if (ret < 0 && errno != ETIMEDOUT) {
+			perror("mq_timedreceive");
+			return -1;
+		}
+	}
+	clock_gettime(CLOCK_MONOTONIC, &end);
 
-	mq_बंद(q);
+	mq_close(q);
 
-	अगर ((बारpec_sub(start, end)/count) > TARGET_TIMEOUT + UNRESONABLE_LATENCY)
-		वापस -1;
+	if ((timespec_sub(start, end)/count) > TARGET_TIMEOUT + UNRESONABLE_LATENCY)
+		return -1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-	पूर्णांक ret;
+int main(int argc, char **argv)
+{
+	int ret;
 
-	म_लिखो("Mqueue latency :                          ");
-	ख_साफ(मानक_निकास);
+	printf("Mqueue latency :                          ");
+	fflush(stdout);
 
 	ret = mqueue_lat_test();
-	अगर (ret < 0) अणु
-		म_लिखो("[FAILED]\n");
-		वापस ksft_निकास_fail();
-	पूर्ण
-	म_लिखो("[OK]\n");
-	वापस ksft_निकास_pass();
-पूर्ण
+	if (ret < 0) {
+		printf("[FAILED]\n");
+		return ksft_exit_fail();
+	}
+	printf("[OK]\n");
+	return ksft_exit_pass();
+}

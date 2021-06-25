@@ -1,301 +1,300 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-/* net/sched/sch_aपंचांग.c - ATM VC selection "queueing discipline" */
+// SPDX-License-Identifier: GPL-2.0-only
+/* net/sched/sch_atm.c - ATM VC selection "queueing discipline" */
 
 /* Written 1998-2000 by Werner Almesberger, EPFL ICA */
 
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/aपंचांगdev.h>
-#समावेश <linux/aपंचांगclip.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश <linux/file.h>		/* क्रम fput */
-#समावेश <net/netlink.h>
-#समावेश <net/pkt_sched.h>
-#समावेश <net/pkt_cls.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/string.h>
+#include <linux/errno.h>
+#include <linux/skbuff.h>
+#include <linux/atmdev.h>
+#include <linux/atmclip.h>
+#include <linux/rtnetlink.h>
+#include <linux/file.h>		/* for fput */
+#include <net/netlink.h>
+#include <net/pkt_sched.h>
+#include <net/pkt_cls.h>
 
 /*
- * The ATM queuing discipline provides a framework क्रम invoking classअगरiers
+ * The ATM queuing discipline provides a framework for invoking classifiers
  * (aka "filters"), which in turn select classes of this queuing discipline.
  * Each class maps the flow(s) it is handling to a given VC. Multiple classes
  * may share the same VC.
  *
- * When creating a class, VCs are specअगरied by passing the number of the खोलो
+ * When creating a class, VCs are specified by passing the number of the open
  * socket descriptor by which the calling process references the VC. The kernel
- * keeps the VC खोलो at least until all classes using it are हटाओd.
+ * keeps the VC open at least until all classes using it are removed.
  *
- * In this file, most functions are named aपंचांग_tc_* to aव्योम confusion with all
- * the aपंचांग_* in net/aपंचांग. This naming convention dअगरfers from what's used in the
+ * In this file, most functions are named atm_tc_* to avoid confusion with all
+ * the atm_* in net/atm. This naming convention differs from what's used in the
  * rest of net/sched.
  *
  * Known bugs:
- *  - someबार messes up the IP stack
+ *  - sometimes messes up the IP stack
  *  - any manipulations besides the few operations described in the README, are
- *    untested and likely to crash the प्रणाली
- *  - should lock the flow जबतक there is data in the queue (?)
+ *    untested and likely to crash the system
+ *  - should lock the flow while there is data in the queue (?)
  */
 
-#घोषणा VCC2FLOW(vcc) ((काष्ठा aपंचांग_flow_data *) ((vcc)->user_back))
+#define VCC2FLOW(vcc) ((struct atm_flow_data *) ((vcc)->user_back))
 
-काष्ठा aपंचांग_flow_data अणु
-	काष्ठा Qdisc_class_common common;
-	काष्ठा Qdisc		*q;	/* FIFO, TBF, etc. */
-	काष्ठा tcf_proto __rcu	*filter_list;
-	काष्ठा tcf_block	*block;
-	काष्ठा aपंचांग_vcc		*vcc;	/* VCC; शून्य अगर VCC is बंदd */
-	व्योम			(*old_pop)(काष्ठा aपंचांग_vcc *vcc,
-					   काष्ठा sk_buff *skb); /* chaining */
-	काष्ठा aपंचांग_qdisc_data	*parent;	/* parent qdisc */
-	काष्ठा socket		*sock;		/* क्रम closing */
-	पूर्णांक			ref;		/* reference count */
-	काष्ठा gnet_stats_basic_packed	bstats;
-	काष्ठा gnet_stats_queue	qstats;
-	काष्ठा list_head	list;
-	काष्ठा aपंचांग_flow_data	*excess;	/* flow क्रम excess traffic;
-						   शून्य to set CLP instead */
-	पूर्णांक			hdr_len;
-	अचिन्हित अक्षर		hdr[];		/* header data; MUST BE LAST */
-पूर्ण;
+struct atm_flow_data {
+	struct Qdisc_class_common common;
+	struct Qdisc		*q;	/* FIFO, TBF, etc. */
+	struct tcf_proto __rcu	*filter_list;
+	struct tcf_block	*block;
+	struct atm_vcc		*vcc;	/* VCC; NULL if VCC is closed */
+	void			(*old_pop)(struct atm_vcc *vcc,
+					   struct sk_buff *skb); /* chaining */
+	struct atm_qdisc_data	*parent;	/* parent qdisc */
+	struct socket		*sock;		/* for closing */
+	int			ref;		/* reference count */
+	struct gnet_stats_basic_packed	bstats;
+	struct gnet_stats_queue	qstats;
+	struct list_head	list;
+	struct atm_flow_data	*excess;	/* flow for excess traffic;
+						   NULL to set CLP instead */
+	int			hdr_len;
+	unsigned char		hdr[];		/* header data; MUST BE LAST */
+};
 
-काष्ठा aपंचांग_qdisc_data अणु
-	काष्ठा aपंचांग_flow_data	link;		/* unclassअगरied skbs go here */
-	काष्ठा list_head	flows;		/* NB: "link" is also on this
+struct atm_qdisc_data {
+	struct atm_flow_data	link;		/* unclassified skbs go here */
+	struct list_head	flows;		/* NB: "link" is also on this
 						   list */
-	काष्ठा tasklet_काष्ठा	task;		/* dequeue tasklet */
-पूर्ण;
+	struct tasklet_struct	task;		/* dequeue tasklet */
+};
 
 /* ------------------------- Class/flow operations ------------------------- */
 
-अटल अंतरभूत काष्ठा aपंचांग_flow_data *lookup_flow(काष्ठा Qdisc *sch, u32 classid)
-अणु
-	काष्ठा aपंचांग_qdisc_data *p = qdisc_priv(sch);
-	काष्ठा aपंचांग_flow_data *flow;
+static inline struct atm_flow_data *lookup_flow(struct Qdisc *sch, u32 classid)
+{
+	struct atm_qdisc_data *p = qdisc_priv(sch);
+	struct atm_flow_data *flow;
 
-	list_क्रम_each_entry(flow, &p->flows, list) अणु
-		अगर (flow->common.classid == classid)
-			वापस flow;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	list_for_each_entry(flow, &p->flows, list) {
+		if (flow->common.classid == classid)
+			return flow;
+	}
+	return NULL;
+}
 
-अटल पूर्णांक aपंचांग_tc_graft(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg,
-			काष्ठा Qdisc *new, काष्ठा Qdisc **old,
-			काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा aपंचांग_qdisc_data *p = qdisc_priv(sch);
-	काष्ठा aपंचांग_flow_data *flow = (काष्ठा aपंचांग_flow_data *)arg;
+static int atm_tc_graft(struct Qdisc *sch, unsigned long arg,
+			struct Qdisc *new, struct Qdisc **old,
+			struct netlink_ext_ack *extack)
+{
+	struct atm_qdisc_data *p = qdisc_priv(sch);
+	struct atm_flow_data *flow = (struct atm_flow_data *)arg;
 
 	pr_debug("atm_tc_graft(sch %p,[qdisc %p],flow %p,new %p,old %p)\n",
 		sch, p, flow, new, old);
-	अगर (list_empty(&flow->list))
-		वापस -EINVAL;
-	अगर (!new)
+	if (list_empty(&flow->list))
+		return -EINVAL;
+	if (!new)
 		new = &noop_qdisc;
 	*old = flow->q;
 	flow->q = new;
-	अगर (*old)
+	if (*old)
 		qdisc_reset(*old);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा Qdisc *aपंचांग_tc_leaf(काष्ठा Qdisc *sch, अचिन्हित दीर्घ cl)
-अणु
-	काष्ठा aपंचांग_flow_data *flow = (काष्ठा aपंचांग_flow_data *)cl;
+static struct Qdisc *atm_tc_leaf(struct Qdisc *sch, unsigned long cl)
+{
+	struct atm_flow_data *flow = (struct atm_flow_data *)cl;
 
 	pr_debug("atm_tc_leaf(sch %p,flow %p)\n", sch, flow);
-	वापस flow ? flow->q : शून्य;
-पूर्ण
+	return flow ? flow->q : NULL;
+}
 
-अटल अचिन्हित दीर्घ aपंचांग_tc_find(काष्ठा Qdisc *sch, u32 classid)
-अणु
-	काष्ठा aपंचांग_qdisc_data *p __maybe_unused = qdisc_priv(sch);
-	काष्ठा aपंचांग_flow_data *flow;
+static unsigned long atm_tc_find(struct Qdisc *sch, u32 classid)
+{
+	struct atm_qdisc_data *p __maybe_unused = qdisc_priv(sch);
+	struct atm_flow_data *flow;
 
 	pr_debug("%s(sch %p,[qdisc %p],classid %x)\n", __func__, sch, p, classid);
 	flow = lookup_flow(sch, classid);
 	pr_debug("%s: flow %p\n", __func__, flow);
-	वापस (अचिन्हित दीर्घ)flow;
-पूर्ण
+	return (unsigned long)flow;
+}
 
-अटल अचिन्हित दीर्घ aपंचांग_tc_bind_filter(काष्ठा Qdisc *sch,
-					अचिन्हित दीर्घ parent, u32 classid)
-अणु
-	काष्ठा aपंचांग_qdisc_data *p __maybe_unused = qdisc_priv(sch);
-	काष्ठा aपंचांग_flow_data *flow;
+static unsigned long atm_tc_bind_filter(struct Qdisc *sch,
+					unsigned long parent, u32 classid)
+{
+	struct atm_qdisc_data *p __maybe_unused = qdisc_priv(sch);
+	struct atm_flow_data *flow;
 
 	pr_debug("%s(sch %p,[qdisc %p],classid %x)\n", __func__, sch, p, classid);
 	flow = lookup_flow(sch, classid);
-	अगर (flow)
+	if (flow)
 		flow->ref++;
 	pr_debug("%s: flow %p\n", __func__, flow);
-	वापस (अचिन्हित दीर्घ)flow;
-पूर्ण
+	return (unsigned long)flow;
+}
 
 /*
- * aपंचांग_tc_put handles all deकाष्ठाions, including the ones that are explicitly
- * requested (aपंचांग_tc_destroy, etc.). The assumption here is that we never drop
+ * atm_tc_put handles all destructions, including the ones that are explicitly
+ * requested (atm_tc_destroy, etc.). The assumption here is that we never drop
  * anything that still seems to be in use.
  */
-अटल व्योम aपंचांग_tc_put(काष्ठा Qdisc *sch, अचिन्हित दीर्घ cl)
-अणु
-	काष्ठा aपंचांग_qdisc_data *p = qdisc_priv(sch);
-	काष्ठा aपंचांग_flow_data *flow = (काष्ठा aपंचांग_flow_data *)cl;
+static void atm_tc_put(struct Qdisc *sch, unsigned long cl)
+{
+	struct atm_qdisc_data *p = qdisc_priv(sch);
+	struct atm_flow_data *flow = (struct atm_flow_data *)cl;
 
 	pr_debug("atm_tc_put(sch %p,[qdisc %p],flow %p)\n", sch, p, flow);
-	अगर (--flow->ref)
-		वापस;
+	if (--flow->ref)
+		return;
 	pr_debug("atm_tc_put: destroying\n");
 	list_del_init(&flow->list);
 	pr_debug("atm_tc_put: qdisc %p\n", flow->q);
 	qdisc_put(flow->q);
 	tcf_block_put(flow->block);
-	अगर (flow->sock) अणु
+	if (flow->sock) {
 		pr_debug("atm_tc_put: f_count %ld\n",
 			file_count(flow->sock->file));
 		flow->vcc->pop = flow->old_pop;
 		sockfd_put(flow->sock);
-	पूर्ण
-	अगर (flow->excess)
-		aपंचांग_tc_put(sch, (अचिन्हित दीर्घ)flow->excess);
-	अगर (flow != &p->link)
-		kमुक्त(flow);
+	}
+	if (flow->excess)
+		atm_tc_put(sch, (unsigned long)flow->excess);
+	if (flow != &p->link)
+		kfree(flow);
 	/*
-	 * If flow == &p->link, the qdisc no दीर्घer works at this poपूर्णांक and
-	 * needs to be हटाओd. (By the caller of aपंचांग_tc_put.)
+	 * If flow == &p->link, the qdisc no longer works at this point and
+	 * needs to be removed. (By the caller of atm_tc_put.)
 	 */
-पूर्ण
+}
 
-अटल व्योम sch_aपंचांग_pop(काष्ठा aपंचांग_vcc *vcc, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा aपंचांग_qdisc_data *p = VCC2FLOW(vcc)->parent;
+static void sch_atm_pop(struct atm_vcc *vcc, struct sk_buff *skb)
+{
+	struct atm_qdisc_data *p = VCC2FLOW(vcc)->parent;
 
 	pr_debug("sch_atm_pop(vcc %p,skb %p,[qdisc %p])\n", vcc, skb, p);
 	VCC2FLOW(vcc)->old_pop(vcc, skb);
 	tasklet_schedule(&p->task);
-पूर्ण
+}
 
-अटल स्थिर u8 llc_oui_ip[] = अणु
+static const u8 llc_oui_ip[] = {
 	0xaa,			/* DSAP: non-ISO */
 	0xaa,			/* SSAP: non-ISO */
-	0x03,			/* Ctrl: Unnumbered Inक्रमmation Command PDU */
+	0x03,			/* Ctrl: Unnumbered Information Command PDU */
 	0x00,			/* OUI: EtherType */
 	0x00, 0x00,
 	0x08, 0x00
-पूर्ण;				/* Ethertype IP (0800) */
+};				/* Ethertype IP (0800) */
 
-अटल स्थिर काष्ठा nla_policy aपंचांग_policy[TCA_ATM_MAX + 1] = अणु
-	[TCA_ATM_FD]		= अणु .type = NLA_U32 पूर्ण,
-	[TCA_ATM_EXCESS]	= अणु .type = NLA_U32 पूर्ण,
-पूर्ण;
+static const struct nla_policy atm_policy[TCA_ATM_MAX + 1] = {
+	[TCA_ATM_FD]		= { .type = NLA_U32 },
+	[TCA_ATM_EXCESS]	= { .type = NLA_U32 },
+};
 
-अटल पूर्णांक aपंचांग_tc_change(काष्ठा Qdisc *sch, u32 classid, u32 parent,
-			 काष्ठा nlattr **tca, अचिन्हित दीर्घ *arg,
-			 काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा aपंचांग_qdisc_data *p = qdisc_priv(sch);
-	काष्ठा aपंचांग_flow_data *flow = (काष्ठा aपंचांग_flow_data *)*arg;
-	काष्ठा aपंचांग_flow_data *excess = शून्य;
-	काष्ठा nlattr *opt = tca[TCA_OPTIONS];
-	काष्ठा nlattr *tb[TCA_ATM_MAX + 1];
-	काष्ठा socket *sock;
-	पूर्णांक fd, error, hdr_len;
-	व्योम *hdr;
+static int atm_tc_change(struct Qdisc *sch, u32 classid, u32 parent,
+			 struct nlattr **tca, unsigned long *arg,
+			 struct netlink_ext_ack *extack)
+{
+	struct atm_qdisc_data *p = qdisc_priv(sch);
+	struct atm_flow_data *flow = (struct atm_flow_data *)*arg;
+	struct atm_flow_data *excess = NULL;
+	struct nlattr *opt = tca[TCA_OPTIONS];
+	struct nlattr *tb[TCA_ATM_MAX + 1];
+	struct socket *sock;
+	int fd, error, hdr_len;
+	void *hdr;
 
 	pr_debug("atm_tc_change(sch %p,[qdisc %p],classid %x,parent %x,"
 		"flow %p,opt %p)\n", sch, p, classid, parent, flow, opt);
 	/*
-	 * The concept of parents करोesn't apply क्रम this qdisc.
+	 * The concept of parents doesn't apply for this qdisc.
 	 */
-	अगर (parent && parent != TC_H_ROOT && parent != sch->handle)
-		वापस -EINVAL;
+	if (parent && parent != TC_H_ROOT && parent != sch->handle)
+		return -EINVAL;
 	/*
 	 * ATM classes cannot be changed. In order to change properties of the
-	 * ATM connection, that socket needs to be modअगरied directly (via the
-	 * native ATM API. In order to send a flow to a dअगरferent VC, the old
-	 * class needs to be हटाओd and a new one added. (This may be changed
+	 * ATM connection, that socket needs to be modified directly (via the
+	 * native ATM API. In order to send a flow to a different VC, the old
+	 * class needs to be removed and a new one added. (This may be changed
 	 * later.)
 	 */
-	अगर (flow)
-		वापस -EBUSY;
-	अगर (opt == शून्य)
-		वापस -EINVAL;
+	if (flow)
+		return -EBUSY;
+	if (opt == NULL)
+		return -EINVAL;
 
-	error = nla_parse_nested_deprecated(tb, TCA_ATM_MAX, opt, aपंचांग_policy,
-					    शून्य);
-	अगर (error < 0)
-		वापस error;
+	error = nla_parse_nested_deprecated(tb, TCA_ATM_MAX, opt, atm_policy,
+					    NULL);
+	if (error < 0)
+		return error;
 
-	अगर (!tb[TCA_ATM_FD])
-		वापस -EINVAL;
+	if (!tb[TCA_ATM_FD])
+		return -EINVAL;
 	fd = nla_get_u32(tb[TCA_ATM_FD]);
 	pr_debug("atm_tc_change: fd %d\n", fd);
-	अगर (tb[TCA_ATM_HDR]) अणु
+	if (tb[TCA_ATM_HDR]) {
 		hdr_len = nla_len(tb[TCA_ATM_HDR]);
 		hdr = nla_data(tb[TCA_ATM_HDR]);
-	पूर्ण अन्यथा अणु
+	} else {
 		hdr_len = RFC1483LLC_LEN;
-		hdr = शून्य;	/* शेष LLC/SNAP क्रम IP */
-	पूर्ण
-	अगर (!tb[TCA_ATM_EXCESS])
-		excess = शून्य;
-	अन्यथा अणु
-		excess = (काष्ठा aपंचांग_flow_data *)
-			aपंचांग_tc_find(sch, nla_get_u32(tb[TCA_ATM_EXCESS]));
-		अगर (!excess)
-			वापस -ENOENT;
-	पूर्ण
+		hdr = NULL;	/* default LLC/SNAP for IP */
+	}
+	if (!tb[TCA_ATM_EXCESS])
+		excess = NULL;
+	else {
+		excess = (struct atm_flow_data *)
+			atm_tc_find(sch, nla_get_u32(tb[TCA_ATM_EXCESS]));
+		if (!excess)
+			return -ENOENT;
+	}
 	pr_debug("atm_tc_change: type %d, payload %d, hdr_len %d\n",
 		 opt->nla_type, nla_len(opt), hdr_len);
 	sock = sockfd_lookup(fd, &error);
-	अगर (!sock)
-		वापस error;	/* f_count++ */
+	if (!sock)
+		return error;	/* f_count++ */
 	pr_debug("atm_tc_change: f_count %ld\n", file_count(sock->file));
-	अगर (sock->ops->family != PF_ATMSVC && sock->ops->family != PF_ATMPVC) अणु
+	if (sock->ops->family != PF_ATMSVC && sock->ops->family != PF_ATMPVC) {
 		error = -EPROTOTYPE;
-		जाओ err_out;
-	पूर्ण
-	/* @@@ should check अगर the socket is really operational or we'll crash
+		goto err_out;
+	}
+	/* @@@ should check if the socket is really operational or we'll crash
 	   on vcc->send */
-	अगर (classid) अणु
-		अगर (TC_H_MAJ(classid ^ sch->handle)) अणु
+	if (classid) {
+		if (TC_H_MAJ(classid ^ sch->handle)) {
 			pr_debug("atm_tc_change: classid mismatch\n");
 			error = -EINVAL;
-			जाओ err_out;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		पूर्णांक i;
-		अचिन्हित दीर्घ cl;
+			goto err_out;
+		}
+	} else {
+		int i;
+		unsigned long cl;
 
-		क्रम (i = 1; i < 0x8000; i++) अणु
+		for (i = 1; i < 0x8000; i++) {
 			classid = TC_H_MAKE(sch->handle, 0x8000 | i);
-			cl = aपंचांग_tc_find(sch, classid);
-			अगर (!cl)
-				अवरोध;
-		पूर्ण
-	पूर्ण
+			cl = atm_tc_find(sch, classid);
+			if (!cl)
+				break;
+		}
+	}
 	pr_debug("atm_tc_change: new id %x\n", classid);
-	flow = kzalloc(माप(काष्ठा aपंचांग_flow_data) + hdr_len, GFP_KERNEL);
+	flow = kzalloc(sizeof(struct atm_flow_data) + hdr_len, GFP_KERNEL);
 	pr_debug("atm_tc_change: flow %p\n", flow);
-	अगर (!flow) अणु
+	if (!flow) {
 		error = -ENOBUFS;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
 	error = tcf_block_get(&flow->block, &flow->filter_list, sch,
 			      extack);
-	अगर (error) अणु
-		kमुक्त(flow);
-		जाओ err_out;
-	पूर्ण
+	if (error) {
+		kfree(flow);
+		goto err_out;
+	}
 
-	flow->q = qdisc_create_dflt(sch->dev_queue, &pfअगरo_qdisc_ops, classid,
+	flow->q = qdisc_create_dflt(sch->dev_queue, &pfifo_qdisc_ops, classid,
 				    extack);
-	अगर (!flow->q)
+	if (!flow->q)
 		flow->q = &noop_qdisc;
 	pr_debug("atm_tc_change: qdisc %p\n", flow->q);
 	flow->sock = sock;
@@ -304,406 +303,406 @@
 	pr_debug("atm_tc_change: vcc %p\n", flow->vcc);
 	flow->old_pop = flow->vcc->pop;
 	flow->parent = p;
-	flow->vcc->pop = sch_aपंचांग_pop;
+	flow->vcc->pop = sch_atm_pop;
 	flow->common.classid = classid;
 	flow->ref = 1;
 	flow->excess = excess;
 	list_add(&flow->list, &p->link.list);
 	flow->hdr_len = hdr_len;
-	अगर (hdr)
-		स_नकल(flow->hdr, hdr, hdr_len);
-	अन्यथा
-		स_नकल(flow->hdr, llc_oui_ip, माप(llc_oui_ip));
-	*arg = (अचिन्हित दीर्घ)flow;
-	वापस 0;
+	if (hdr)
+		memcpy(flow->hdr, hdr, hdr_len);
+	else
+		memcpy(flow->hdr, llc_oui_ip, sizeof(llc_oui_ip));
+	*arg = (unsigned long)flow;
+	return 0;
 err_out:
 	sockfd_put(sock);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक aपंचांग_tc_delete(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg,
-			 काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा aपंचांग_qdisc_data *p = qdisc_priv(sch);
-	काष्ठा aपंचांग_flow_data *flow = (काष्ठा aपंचांग_flow_data *)arg;
+static int atm_tc_delete(struct Qdisc *sch, unsigned long arg,
+			 struct netlink_ext_ack *extack)
+{
+	struct atm_qdisc_data *p = qdisc_priv(sch);
+	struct atm_flow_data *flow = (struct atm_flow_data *)arg;
 
 	pr_debug("atm_tc_delete(sch %p,[qdisc %p],flow %p)\n", sch, p, flow);
-	अगर (list_empty(&flow->list))
-		वापस -EINVAL;
-	अगर (rcu_access_poपूर्णांकer(flow->filter_list) || flow == &p->link)
-		वापस -EBUSY;
+	if (list_empty(&flow->list))
+		return -EINVAL;
+	if (rcu_access_pointer(flow->filter_list) || flow == &p->link)
+		return -EBUSY;
 	/*
-	 * Reference count must be 2: one क्रम "keepalive" (set at class
-	 * creation), and one क्रम the reference held when calling delete.
+	 * Reference count must be 2: one for "keepalive" (set at class
+	 * creation), and one for the reference held when calling delete.
 	 */
-	अगर (flow->ref < 2) अणु
+	if (flow->ref < 2) {
 		pr_err("atm_tc_delete: flow->ref == %d\n", flow->ref);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (flow->ref > 2)
-		वापस -EBUSY;	/* catch references via excess, etc. */
-	aपंचांग_tc_put(sch, arg);
-	वापस 0;
-पूर्ण
+		return -EINVAL;
+	}
+	if (flow->ref > 2)
+		return -EBUSY;	/* catch references via excess, etc. */
+	atm_tc_put(sch, arg);
+	return 0;
+}
 
-अटल व्योम aपंचांग_tc_walk(काष्ठा Qdisc *sch, काष्ठा qdisc_walker *walker)
-अणु
-	काष्ठा aपंचांग_qdisc_data *p = qdisc_priv(sch);
-	काष्ठा aपंचांग_flow_data *flow;
+static void atm_tc_walk(struct Qdisc *sch, struct qdisc_walker *walker)
+{
+	struct atm_qdisc_data *p = qdisc_priv(sch);
+	struct atm_flow_data *flow;
 
 	pr_debug("atm_tc_walk(sch %p,[qdisc %p],walker %p)\n", sch, p, walker);
-	अगर (walker->stop)
-		वापस;
-	list_क्रम_each_entry(flow, &p->flows, list) अणु
-		अगर (walker->count >= walker->skip &&
-		    walker->fn(sch, (अचिन्हित दीर्घ)flow, walker) < 0) अणु
+	if (walker->stop)
+		return;
+	list_for_each_entry(flow, &p->flows, list) {
+		if (walker->count >= walker->skip &&
+		    walker->fn(sch, (unsigned long)flow, walker) < 0) {
 			walker->stop = 1;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		walker->count++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल काष्ठा tcf_block *aपंचांग_tc_tcf_block(काष्ठा Qdisc *sch, अचिन्हित दीर्घ cl,
-					  काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा aपंचांग_qdisc_data *p = qdisc_priv(sch);
-	काष्ठा aपंचांग_flow_data *flow = (काष्ठा aपंचांग_flow_data *)cl;
+static struct tcf_block *atm_tc_tcf_block(struct Qdisc *sch, unsigned long cl,
+					  struct netlink_ext_ack *extack)
+{
+	struct atm_qdisc_data *p = qdisc_priv(sch);
+	struct atm_flow_data *flow = (struct atm_flow_data *)cl;
 
 	pr_debug("atm_tc_find_tcf(sch %p,[qdisc %p],flow %p)\n", sch, p, flow);
-	वापस flow ? flow->block : p->link.block;
-पूर्ण
+	return flow ? flow->block : p->link.block;
+}
 
 /* --------------------------- Qdisc operations ---------------------------- */
 
-अटल पूर्णांक aपंचांग_tc_enqueue(काष्ठा sk_buff *skb, काष्ठा Qdisc *sch,
-			  काष्ठा sk_buff **to_मुक्त)
-अणु
-	काष्ठा aपंचांग_qdisc_data *p = qdisc_priv(sch);
-	काष्ठा aपंचांग_flow_data *flow;
-	काष्ठा tcf_result res;
-	पूर्णांक result;
-	पूर्णांक ret = NET_XMIT_SUCCESS | __NET_XMIT_BYPASS;
+static int atm_tc_enqueue(struct sk_buff *skb, struct Qdisc *sch,
+			  struct sk_buff **to_free)
+{
+	struct atm_qdisc_data *p = qdisc_priv(sch);
+	struct atm_flow_data *flow;
+	struct tcf_result res;
+	int result;
+	int ret = NET_XMIT_SUCCESS | __NET_XMIT_BYPASS;
 
 	pr_debug("atm_tc_enqueue(skb %p,sch %p,[qdisc %p])\n", skb, sch, p);
 	result = TC_ACT_OK;	/* be nice to gcc */
-	flow = शून्य;
-	अगर (TC_H_MAJ(skb->priority) != sch->handle ||
-	    !(flow = (काष्ठा aपंचांग_flow_data *)aपंचांग_tc_find(sch, skb->priority))) अणु
-		काष्ठा tcf_proto *fl;
+	flow = NULL;
+	if (TC_H_MAJ(skb->priority) != sch->handle ||
+	    !(flow = (struct atm_flow_data *)atm_tc_find(sch, skb->priority))) {
+		struct tcf_proto *fl;
 
-		list_क्रम_each_entry(flow, &p->flows, list) अणु
+		list_for_each_entry(flow, &p->flows, list) {
 			fl = rcu_dereference_bh(flow->filter_list);
-			अगर (fl) अणु
-				result = tcf_classअगरy(skb, fl, &res, true);
-				अगर (result < 0)
-					जारी;
-				flow = (काष्ठा aपंचांग_flow_data *)res.class;
-				अगर (!flow)
+			if (fl) {
+				result = tcf_classify(skb, fl, &res, true);
+				if (result < 0)
+					continue;
+				flow = (struct atm_flow_data *)res.class;
+				if (!flow)
 					flow = lookup_flow(sch, res.classid);
-				जाओ करोne;
-			पूर्ण
-		पूर्ण
-		flow = शून्य;
-करोne:
+				goto done;
+			}
+		}
+		flow = NULL;
+done:
 		;
-	पूर्ण
-	अगर (!flow) अणु
+	}
+	if (!flow) {
 		flow = &p->link;
-	पूर्ण अन्यथा अणु
-		अगर (flow->vcc)
-			ATM_SKB(skb)->aपंचांग_options = flow->vcc->aपंचांग_options;
+	} else {
+		if (flow->vcc)
+			ATM_SKB(skb)->atm_options = flow->vcc->atm_options;
 		/*@@@ looks good ... but it's not supposed to work :-) */
-#अगर_घोषित CONFIG_NET_CLS_ACT
-		चयन (result) अणु
-		हाल TC_ACT_QUEUED:
-		हाल TC_ACT_STOLEN:
-		हाल TC_ACT_TRAP:
-			__qdisc_drop(skb, to_मुक्त);
-			वापस NET_XMIT_SUCCESS | __NET_XMIT_STOLEN;
-		हाल TC_ACT_SHOT:
-			__qdisc_drop(skb, to_मुक्त);
-			जाओ drop;
-		हाल TC_ACT_RECLASSIFY:
-			अगर (flow->excess)
+#ifdef CONFIG_NET_CLS_ACT
+		switch (result) {
+		case TC_ACT_QUEUED:
+		case TC_ACT_STOLEN:
+		case TC_ACT_TRAP:
+			__qdisc_drop(skb, to_free);
+			return NET_XMIT_SUCCESS | __NET_XMIT_STOLEN;
+		case TC_ACT_SHOT:
+			__qdisc_drop(skb, to_free);
+			goto drop;
+		case TC_ACT_RECLASSIFY:
+			if (flow->excess)
 				flow = flow->excess;
-			अन्यथा
-				ATM_SKB(skb)->aपंचांग_options |= ATM_ATMOPT_CLP;
-			अवरोध;
-		पूर्ण
-#पूर्ण_अगर
-	पूर्ण
+			else
+				ATM_SKB(skb)->atm_options |= ATM_ATMOPT_CLP;
+			break;
+		}
+#endif
+	}
 
-	ret = qdisc_enqueue(skb, flow->q, to_मुक्त);
-	अगर (ret != NET_XMIT_SUCCESS) अणु
+	ret = qdisc_enqueue(skb, flow->q, to_free);
+	if (ret != NET_XMIT_SUCCESS) {
 drop: __maybe_unused
-		अगर (net_xmit_drop_count(ret)) अणु
+		if (net_xmit_drop_count(ret)) {
 			qdisc_qstats_drop(sch);
-			अगर (flow)
+			if (flow)
 				flow->qstats.drops++;
-		पूर्ण
-		वापस ret;
-	पूर्ण
+		}
+		return ret;
+	}
 	/*
-	 * Okay, this may seem weird. We pretend we've dropped the packet अगर
-	 * it goes via ATM. The reason क्रम this is that the outer qdisc
-	 * expects to be able to q->dequeue the packet later on अगर we वापस
+	 * Okay, this may seem weird. We pretend we've dropped the packet if
+	 * it goes via ATM. The reason for this is that the outer qdisc
+	 * expects to be able to q->dequeue the packet later on if we return
 	 * success at this place. Also, sch->q.qdisc needs to reflect whether
-	 * there is a packet egligible क्रम dequeuing or not. Note that the
+	 * there is a packet egligible for dequeuing or not. Note that the
 	 * statistics of the outer qdisc are necessarily wrong because of all
-	 * this. There's currently no correct solution क्रम this.
+	 * this. There's currently no correct solution for this.
 	 */
-	अगर (flow == &p->link) अणु
+	if (flow == &p->link) {
 		sch->q.qlen++;
-		वापस NET_XMIT_SUCCESS;
-	पूर्ण
+		return NET_XMIT_SUCCESS;
+	}
 	tasklet_schedule(&p->task);
-	वापस NET_XMIT_SUCCESS | __NET_XMIT_BYPASS;
-पूर्ण
+	return NET_XMIT_SUCCESS | __NET_XMIT_BYPASS;
+}
 
 /*
  * Dequeue packets and send them over ATM. Note that we quite deliberately
- * aव्योम checking net_device's flow control here, simply because sch_aपंचांग
- * uses its own channels, which have nothing to करो with any CLIP/LANE/or
- * non-ATM पूर्णांकerfaces.
+ * avoid checking net_device's flow control here, simply because sch_atm
+ * uses its own channels, which have nothing to do with any CLIP/LANE/or
+ * non-ATM interfaces.
  */
 
-अटल व्योम sch_aपंचांग_dequeue(काष्ठा tasklet_काष्ठा *t)
-अणु
-	काष्ठा aपंचांग_qdisc_data *p = from_tasklet(p, t, task);
-	काष्ठा Qdisc *sch = qdisc_from_priv(p);
-	काष्ठा aपंचांग_flow_data *flow;
-	काष्ठा sk_buff *skb;
+static void sch_atm_dequeue(struct tasklet_struct *t)
+{
+	struct atm_qdisc_data *p = from_tasklet(p, t, task);
+	struct Qdisc *sch = qdisc_from_priv(p);
+	struct atm_flow_data *flow;
+	struct sk_buff *skb;
 
 	pr_debug("sch_atm_dequeue(sch %p,[qdisc %p])\n", sch, p);
-	list_क्रम_each_entry(flow, &p->flows, list) अणु
-		अगर (flow == &p->link)
-			जारी;
+	list_for_each_entry(flow, &p->flows, list) {
+		if (flow == &p->link)
+			continue;
 		/*
 		 * If traffic is properly shaped, this won't generate nasty
 		 * little bursts. Otherwise, it may ... (but that's okay)
 		 */
-		जबतक ((skb = flow->q->ops->peek(flow->q))) अणु
-			अगर (!aपंचांग_may_send(flow->vcc, skb->truesize))
-				अवरोध;
+		while ((skb = flow->q->ops->peek(flow->q))) {
+			if (!atm_may_send(flow->vcc, skb->truesize))
+				break;
 
 			skb = qdisc_dequeue_peeked(flow->q);
-			अगर (unlikely(!skb))
-				अवरोध;
+			if (unlikely(!skb))
+				break;
 
 			qdisc_bstats_update(sch, skb);
 			bstats_update(&flow->bstats, skb);
 			pr_debug("atm_tc_dequeue: sending on class %p\n", flow);
-			/* हटाओ any LL header somebody अन्यथा has attached */
+			/* remove any LL header somebody else has attached */
 			skb_pull(skb, skb_network_offset(skb));
-			अगर (skb_headroom(skb) < flow->hdr_len) अणु
-				काष्ठा sk_buff *new;
+			if (skb_headroom(skb) < flow->hdr_len) {
+				struct sk_buff *new;
 
-				new = skb_पुनः_स्मृति_headroom(skb, flow->hdr_len);
-				dev_kमुक्त_skb(skb);
-				अगर (!new)
-					जारी;
+				new = skb_realloc_headroom(skb, flow->hdr_len);
+				dev_kfree_skb(skb);
+				if (!new)
+					continue;
 				skb = new;
-			पूर्ण
+			}
 			pr_debug("sch_atm_dequeue: ip %p, data %p\n",
 				 skb_network_header(skb), skb->data);
 			ATM_SKB(skb)->vcc = flow->vcc;
-			स_नकल(skb_push(skb, flow->hdr_len), flow->hdr,
+			memcpy(skb_push(skb, flow->hdr_len), flow->hdr,
 			       flow->hdr_len);
 			refcount_add(skb->truesize,
-				   &sk_aपंचांग(flow->vcc)->sk_wmem_alloc);
-			/* aपंचांग.aपंचांग_options are alपढ़ोy set by aपंचांग_tc_enqueue */
+				   &sk_atm(flow->vcc)->sk_wmem_alloc);
+			/* atm.atm_options are already set by atm_tc_enqueue */
 			flow->vcc->send(flow->vcc, skb);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल काष्ठा sk_buff *aपंचांग_tc_dequeue(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा aपंचांग_qdisc_data *p = qdisc_priv(sch);
-	काष्ठा sk_buff *skb;
+static struct sk_buff *atm_tc_dequeue(struct Qdisc *sch)
+{
+	struct atm_qdisc_data *p = qdisc_priv(sch);
+	struct sk_buff *skb;
 
 	pr_debug("atm_tc_dequeue(sch %p,[qdisc %p])\n", sch, p);
 	tasklet_schedule(&p->task);
 	skb = qdisc_dequeue_peeked(p->link.q);
-	अगर (skb)
+	if (skb)
 		sch->q.qlen--;
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल काष्ठा sk_buff *aपंचांग_tc_peek(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा aपंचांग_qdisc_data *p = qdisc_priv(sch);
+static struct sk_buff *atm_tc_peek(struct Qdisc *sch)
+{
+	struct atm_qdisc_data *p = qdisc_priv(sch);
 
 	pr_debug("atm_tc_peek(sch %p,[qdisc %p])\n", sch, p);
 
-	वापस p->link.q->ops->peek(p->link.q);
-पूर्ण
+	return p->link.q->ops->peek(p->link.q);
+}
 
-अटल पूर्णांक aपंचांग_tc_init(काष्ठा Qdisc *sch, काष्ठा nlattr *opt,
-		       काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा aपंचांग_qdisc_data *p = qdisc_priv(sch);
-	पूर्णांक err;
+static int atm_tc_init(struct Qdisc *sch, struct nlattr *opt,
+		       struct netlink_ext_ack *extack)
+{
+	struct atm_qdisc_data *p = qdisc_priv(sch);
+	int err;
 
 	pr_debug("atm_tc_init(sch %p,[qdisc %p],opt %p)\n", sch, p, opt);
 	INIT_LIST_HEAD(&p->flows);
 	INIT_LIST_HEAD(&p->link.list);
 	list_add(&p->link.list, &p->flows);
 	p->link.q = qdisc_create_dflt(sch->dev_queue,
-				      &pfअगरo_qdisc_ops, sch->handle, extack);
-	अगर (!p->link.q)
+				      &pfifo_qdisc_ops, sch->handle, extack);
+	if (!p->link.q)
 		p->link.q = &noop_qdisc;
 	pr_debug("atm_tc_init: link (%p) qdisc %p\n", &p->link, p->link.q);
-	p->link.vcc = शून्य;
-	p->link.sock = शून्य;
+	p->link.vcc = NULL;
+	p->link.sock = NULL;
 	p->link.common.classid = sch->handle;
 	p->link.ref = 1;
 
 	err = tcf_block_get(&p->link.block, &p->link.filter_list, sch,
 			    extack);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	tasklet_setup(&p->task, sch_aपंचांग_dequeue);
-	वापस 0;
-पूर्ण
+	tasklet_setup(&p->task, sch_atm_dequeue);
+	return 0;
+}
 
-अटल व्योम aपंचांग_tc_reset(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा aपंचांग_qdisc_data *p = qdisc_priv(sch);
-	काष्ठा aपंचांग_flow_data *flow;
+static void atm_tc_reset(struct Qdisc *sch)
+{
+	struct atm_qdisc_data *p = qdisc_priv(sch);
+	struct atm_flow_data *flow;
 
 	pr_debug("atm_tc_reset(sch %p,[qdisc %p])\n", sch, p);
-	list_क्रम_each_entry(flow, &p->flows, list)
+	list_for_each_entry(flow, &p->flows, list)
 		qdisc_reset(flow->q);
 	sch->q.qlen = 0;
-पूर्ण
+}
 
-अटल व्योम aपंचांग_tc_destroy(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा aपंचांग_qdisc_data *p = qdisc_priv(sch);
-	काष्ठा aपंचांग_flow_data *flow, *पंचांगp;
+static void atm_tc_destroy(struct Qdisc *sch)
+{
+	struct atm_qdisc_data *p = qdisc_priv(sch);
+	struct atm_flow_data *flow, *tmp;
 
 	pr_debug("atm_tc_destroy(sch %p,[qdisc %p])\n", sch, p);
-	list_क्रम_each_entry(flow, &p->flows, list) अणु
+	list_for_each_entry(flow, &p->flows, list) {
 		tcf_block_put(flow->block);
-		flow->block = शून्य;
-	पूर्ण
+		flow->block = NULL;
+	}
 
-	list_क्रम_each_entry_safe(flow, पंचांगp, &p->flows, list) अणु
-		अगर (flow->ref > 1)
+	list_for_each_entry_safe(flow, tmp, &p->flows, list) {
+		if (flow->ref > 1)
 			pr_err("atm_destroy: %p->ref = %d\n", flow, flow->ref);
-		aपंचांग_tc_put(sch, (अचिन्हित दीर्घ)flow);
-	पूर्ण
-	tasklet_समाप्त(&p->task);
-पूर्ण
+		atm_tc_put(sch, (unsigned long)flow);
+	}
+	tasklet_kill(&p->task);
+}
 
-अटल पूर्णांक aपंचांग_tc_dump_class(काष्ठा Qdisc *sch, अचिन्हित दीर्घ cl,
-			     काष्ठा sk_buff *skb, काष्ठा tcmsg *tcm)
-अणु
-	काष्ठा aपंचांग_qdisc_data *p = qdisc_priv(sch);
-	काष्ठा aपंचांग_flow_data *flow = (काष्ठा aपंचांग_flow_data *)cl;
-	काष्ठा nlattr *nest;
+static int atm_tc_dump_class(struct Qdisc *sch, unsigned long cl,
+			     struct sk_buff *skb, struct tcmsg *tcm)
+{
+	struct atm_qdisc_data *p = qdisc_priv(sch);
+	struct atm_flow_data *flow = (struct atm_flow_data *)cl;
+	struct nlattr *nest;
 
 	pr_debug("atm_tc_dump_class(sch %p,[qdisc %p],flow %p,skb %p,tcm %p)\n",
 		sch, p, flow, skb, tcm);
-	अगर (list_empty(&flow->list))
-		वापस -EINVAL;
+	if (list_empty(&flow->list))
+		return -EINVAL;
 	tcm->tcm_handle = flow->common.classid;
 	tcm->tcm_info = flow->q->handle;
 
 	nest = nla_nest_start_noflag(skb, TCA_OPTIONS);
-	अगर (nest == शून्य)
-		जाओ nla_put_failure;
+	if (nest == NULL)
+		goto nla_put_failure;
 
-	अगर (nla_put(skb, TCA_ATM_HDR, flow->hdr_len, flow->hdr))
-		जाओ nla_put_failure;
-	अगर (flow->vcc) अणु
-		काष्ठा sockaddr_aपंचांगpvc pvc;
-		पूर्णांक state;
+	if (nla_put(skb, TCA_ATM_HDR, flow->hdr_len, flow->hdr))
+		goto nla_put_failure;
+	if (flow->vcc) {
+		struct sockaddr_atmpvc pvc;
+		int state;
 
-		स_रखो(&pvc, 0, माप(pvc));
+		memset(&pvc, 0, sizeof(pvc));
 		pvc.sap_family = AF_ATMPVC;
 		pvc.sap_addr.itf = flow->vcc->dev ? flow->vcc->dev->number : -1;
 		pvc.sap_addr.vpi = flow->vcc->vpi;
 		pvc.sap_addr.vci = flow->vcc->vci;
-		अगर (nla_put(skb, TCA_ATM_ADDR, माप(pvc), &pvc))
-			जाओ nla_put_failure;
+		if (nla_put(skb, TCA_ATM_ADDR, sizeof(pvc), &pvc))
+			goto nla_put_failure;
 		state = ATM_VF2VS(flow->vcc->flags);
-		अगर (nla_put_u32(skb, TCA_ATM_STATE, state))
-			जाओ nla_put_failure;
-	पूर्ण
-	अगर (flow->excess) अणु
-		अगर (nla_put_u32(skb, TCA_ATM_EXCESS, flow->common.classid))
-			जाओ nla_put_failure;
-	पूर्ण अन्यथा अणु
-		अगर (nla_put_u32(skb, TCA_ATM_EXCESS, 0))
-			जाओ nla_put_failure;
-	पूर्ण
-	वापस nla_nest_end(skb, nest);
+		if (nla_put_u32(skb, TCA_ATM_STATE, state))
+			goto nla_put_failure;
+	}
+	if (flow->excess) {
+		if (nla_put_u32(skb, TCA_ATM_EXCESS, flow->common.classid))
+			goto nla_put_failure;
+	} else {
+		if (nla_put_u32(skb, TCA_ATM_EXCESS, 0))
+			goto nla_put_failure;
+	}
+	return nla_nest_end(skb, nest);
 
 nla_put_failure:
 	nla_nest_cancel(skb, nest);
-	वापस -1;
-पूर्ण
-अटल पूर्णांक
-aपंचांग_tc_dump_class_stats(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg,
-			काष्ठा gnet_dump *d)
-अणु
-	काष्ठा aपंचांग_flow_data *flow = (काष्ठा aपंचांग_flow_data *)arg;
+	return -1;
+}
+static int
+atm_tc_dump_class_stats(struct Qdisc *sch, unsigned long arg,
+			struct gnet_dump *d)
+{
+	struct atm_flow_data *flow = (struct atm_flow_data *)arg;
 
-	अगर (gnet_stats_copy_basic(qdisc_root_sleeping_running(sch),
-				  d, शून्य, &flow->bstats) < 0 ||
-	    gnet_stats_copy_queue(d, शून्य, &flow->qstats, flow->q->q.qlen) < 0)
-		वापस -1;
+	if (gnet_stats_copy_basic(qdisc_root_sleeping_running(sch),
+				  d, NULL, &flow->bstats) < 0 ||
+	    gnet_stats_copy_queue(d, NULL, &flow->qstats, flow->q->q.qlen) < 0)
+		return -1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक aपंचांग_tc_dump(काष्ठा Qdisc *sch, काष्ठा sk_buff *skb)
-अणु
-	वापस 0;
-पूर्ण
+static int atm_tc_dump(struct Qdisc *sch, struct sk_buff *skb)
+{
+	return 0;
+}
 
-अटल स्थिर काष्ठा Qdisc_class_ops aपंचांग_class_ops = अणु
-	.graft		= aपंचांग_tc_graft,
-	.leaf		= aपंचांग_tc_leaf,
-	.find		= aपंचांग_tc_find,
-	.change		= aपंचांग_tc_change,
-	.delete		= aपंचांग_tc_delete,
-	.walk		= aपंचांग_tc_walk,
-	.tcf_block	= aपंचांग_tc_tcf_block,
-	.bind_tcf	= aपंचांग_tc_bind_filter,
-	.unbind_tcf	= aपंचांग_tc_put,
-	.dump		= aपंचांग_tc_dump_class,
-	.dump_stats	= aपंचांग_tc_dump_class_stats,
-पूर्ण;
+static const struct Qdisc_class_ops atm_class_ops = {
+	.graft		= atm_tc_graft,
+	.leaf		= atm_tc_leaf,
+	.find		= atm_tc_find,
+	.change		= atm_tc_change,
+	.delete		= atm_tc_delete,
+	.walk		= atm_tc_walk,
+	.tcf_block	= atm_tc_tcf_block,
+	.bind_tcf	= atm_tc_bind_filter,
+	.unbind_tcf	= atm_tc_put,
+	.dump		= atm_tc_dump_class,
+	.dump_stats	= atm_tc_dump_class_stats,
+};
 
-अटल काष्ठा Qdisc_ops aपंचांग_qdisc_ops __पढ़ो_mostly = अणु
-	.cl_ops		= &aपंचांग_class_ops,
+static struct Qdisc_ops atm_qdisc_ops __read_mostly = {
+	.cl_ops		= &atm_class_ops,
 	.id		= "atm",
-	.priv_size	= माप(काष्ठा aपंचांग_qdisc_data),
-	.enqueue	= aपंचांग_tc_enqueue,
-	.dequeue	= aपंचांग_tc_dequeue,
-	.peek		= aपंचांग_tc_peek,
-	.init		= aपंचांग_tc_init,
-	.reset		= aपंचांग_tc_reset,
-	.destroy	= aपंचांग_tc_destroy,
-	.dump		= aपंचांग_tc_dump,
+	.priv_size	= sizeof(struct atm_qdisc_data),
+	.enqueue	= atm_tc_enqueue,
+	.dequeue	= atm_tc_dequeue,
+	.peek		= atm_tc_peek,
+	.init		= atm_tc_init,
+	.reset		= atm_tc_reset,
+	.destroy	= atm_tc_destroy,
+	.dump		= atm_tc_dump,
 	.owner		= THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक __init aपंचांग_init(व्योम)
-अणु
-	वापस रेजिस्टर_qdisc(&aपंचांग_qdisc_ops);
-पूर्ण
+static int __init atm_init(void)
+{
+	return register_qdisc(&atm_qdisc_ops);
+}
 
-अटल व्योम __निकास aपंचांग_निकास(व्योम)
-अणु
-	unरेजिस्टर_qdisc(&aपंचांग_qdisc_ops);
-पूर्ण
+static void __exit atm_exit(void)
+{
+	unregister_qdisc(&atm_qdisc_ops);
+}
 
-module_init(aपंचांग_init)
-module_निकास(aपंचांग_निकास)
+module_init(atm_init)
+module_exit(atm_exit)
 MODULE_LICENSE("GPL");

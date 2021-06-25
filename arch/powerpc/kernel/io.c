@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * I/O string operations
  *    Copyright (C) 1995-1996 Gary Thomas (gdt@linuxppc.org)
@@ -8,200 +7,200 @@
  * Largely rewritten by Cort Dougan (cort@cs.nmt.edu)
  * and Paul Mackerras.
  *
- * Adapted क्रम iSeries by Mike Corrigan (mikejc@us.ibm.com)
+ * Adapted for iSeries by Mike Corrigan (mikejc@us.ibm.com)
  * PPC64 updates by Dave Engebretsen (engebret@us.ibm.com)
  *
  * Rewritten in C by Stephen Rothwell.
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/compiler.h>
-#समावेश <linux/export.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/compiler.h>
+#include <linux/export.h>
 
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/firmware.h>
-#समावेश <यंत्र/bug.h>
+#include <asm/io.h>
+#include <asm/firmware.h>
+#include <asm/bug.h>
 
-/* See definition in पन.स */
+/* See definition in io.h */
 bool isa_io_special;
 
-व्योम _insb(स्थिर अस्थिर u8 __iomem *port, व्योम *buf, दीर्घ count)
-अणु
+void _insb(const volatile u8 __iomem *port, void *buf, long count)
+{
 	u8 *tbuf = buf;
-	u8 पंचांगp;
+	u8 tmp;
 
-	अगर (unlikely(count <= 0))
-		वापस;
-	यंत्र अस्थिर("sync");
-	करो अणु
-		पंचांगp = *port;
+	if (unlikely(count <= 0))
+		return;
+	asm volatile("sync");
+	do {
+		tmp = *port;
 		eieio();
-		*tbuf++ = पंचांगp;
-	पूर्ण जबतक (--count != 0);
-	यंत्र अस्थिर("twi 0,%0,0; isync" : : "r" (पंचांगp));
-पूर्ण
+		*tbuf++ = tmp;
+	} while (--count != 0);
+	asm volatile("twi 0,%0,0; isync" : : "r" (tmp));
+}
 EXPORT_SYMBOL(_insb);
 
-व्योम _outsb(अस्थिर u8 __iomem *port, स्थिर व्योम *buf, दीर्घ count)
-अणु
-	स्थिर u8 *tbuf = buf;
+void _outsb(volatile u8 __iomem *port, const void *buf, long count)
+{
+	const u8 *tbuf = buf;
 
-	अगर (unlikely(count <= 0))
-		वापस;
-	यंत्र अस्थिर("sync");
-	करो अणु
+	if (unlikely(count <= 0))
+		return;
+	asm volatile("sync");
+	do {
 		*port = *tbuf++;
-	पूर्ण जबतक (--count != 0);
-	यंत्र अस्थिर("sync");
-पूर्ण
+	} while (--count != 0);
+	asm volatile("sync");
+}
 EXPORT_SYMBOL(_outsb);
 
-व्योम _insw_ns(स्थिर अस्थिर u16 __iomem *port, व्योम *buf, दीर्घ count)
-अणु
+void _insw_ns(const volatile u16 __iomem *port, void *buf, long count)
+{
 	u16 *tbuf = buf;
-	u16 पंचांगp;
+	u16 tmp;
 
-	अगर (unlikely(count <= 0))
-		वापस;
-	यंत्र अस्थिर("sync");
-	करो अणु
-		पंचांगp = *port;
+	if (unlikely(count <= 0))
+		return;
+	asm volatile("sync");
+	do {
+		tmp = *port;
 		eieio();
-		*tbuf++ = पंचांगp;
-	पूर्ण जबतक (--count != 0);
-	यंत्र अस्थिर("twi 0,%0,0; isync" : : "r" (पंचांगp));
-पूर्ण
+		*tbuf++ = tmp;
+	} while (--count != 0);
+	asm volatile("twi 0,%0,0; isync" : : "r" (tmp));
+}
 EXPORT_SYMBOL(_insw_ns);
 
-व्योम _outsw_ns(अस्थिर u16 __iomem *port, स्थिर व्योम *buf, दीर्घ count)
-अणु
-	स्थिर u16 *tbuf = buf;
+void _outsw_ns(volatile u16 __iomem *port, const void *buf, long count)
+{
+	const u16 *tbuf = buf;
 
-	अगर (unlikely(count <= 0))
-		वापस;
-	यंत्र अस्थिर("sync");
-	करो अणु
+	if (unlikely(count <= 0))
+		return;
+	asm volatile("sync");
+	do {
 		*port = *tbuf++;
-	पूर्ण जबतक (--count != 0);
-	यंत्र अस्थिर("sync");
-पूर्ण
+	} while (--count != 0);
+	asm volatile("sync");
+}
 EXPORT_SYMBOL(_outsw_ns);
 
-व्योम _insl_ns(स्थिर अस्थिर u32 __iomem *port, व्योम *buf, दीर्घ count)
-अणु
+void _insl_ns(const volatile u32 __iomem *port, void *buf, long count)
+{
 	u32 *tbuf = buf;
-	u32 पंचांगp;
+	u32 tmp;
 
-	अगर (unlikely(count <= 0))
-		वापस;
-	यंत्र अस्थिर("sync");
-	करो अणु
-		पंचांगp = *port;
+	if (unlikely(count <= 0))
+		return;
+	asm volatile("sync");
+	do {
+		tmp = *port;
 		eieio();
-		*tbuf++ = पंचांगp;
-	पूर्ण जबतक (--count != 0);
-	यंत्र अस्थिर("twi 0,%0,0; isync" : : "r" (पंचांगp));
-पूर्ण
+		*tbuf++ = tmp;
+	} while (--count != 0);
+	asm volatile("twi 0,%0,0; isync" : : "r" (tmp));
+}
 EXPORT_SYMBOL(_insl_ns);
 
-व्योम _outsl_ns(अस्थिर u32 __iomem *port, स्थिर व्योम *buf, दीर्घ count)
-अणु
-	स्थिर u32 *tbuf = buf;
+void _outsl_ns(volatile u32 __iomem *port, const void *buf, long count)
+{
+	const u32 *tbuf = buf;
 
-	अगर (unlikely(count <= 0))
-		वापस;
-	यंत्र अस्थिर("sync");
-	करो अणु
+	if (unlikely(count <= 0))
+		return;
+	asm volatile("sync");
+	do {
 		*port = *tbuf++;
-	पूर्ण जबतक (--count != 0);
-	यंत्र अस्थिर("sync");
-पूर्ण
+	} while (--count != 0);
+	asm volatile("sync");
+}
 EXPORT_SYMBOL(_outsl_ns);
 
-#घोषणा IO_CHECK_ALIGN(v,a) ((((अचिन्हित दीर्घ)(v)) & ((a) - 1)) == 0)
+#define IO_CHECK_ALIGN(v,a) ((((unsigned long)(v)) & ((a) - 1)) == 0)
 
-notrace व्योम
-_स_रखो_io(अस्थिर व्योम __iomem *addr, पूर्णांक c, अचिन्हित दीर्घ n)
-अणु
-	व्योम *p = (व्योम __क्रमce *)addr;
+notrace void
+_memset_io(volatile void __iomem *addr, int c, unsigned long n)
+{
+	void *p = (void __force *)addr;
 	u32 lc = c;
 	lc |= lc << 8;
 	lc |= lc << 16;
 
-	__यंत्र__ __अस्थिर__ ("sync" : : : "memory");
-	जबतक(n && !IO_CHECK_ALIGN(p, 4)) अणु
-		*((अस्थिर u8 *)p) = c;
+	__asm__ __volatile__ ("sync" : : : "memory");
+	while(n && !IO_CHECK_ALIGN(p, 4)) {
+		*((volatile u8 *)p) = c;
 		p++;
 		n--;
-	पूर्ण
-	जबतक(n >= 4) अणु
-		*((अस्थिर u32 *)p) = lc;
+	}
+	while(n >= 4) {
+		*((volatile u32 *)p) = lc;
 		p += 4;
 		n -= 4;
-	पूर्ण
-	जबतक(n) अणु
-		*((अस्थिर u8 *)p) = c;
+	}
+	while(n) {
+		*((volatile u8 *)p) = c;
 		p++;
 		n--;
-	पूर्ण
-	__यंत्र__ __अस्थिर__ ("sync" : : : "memory");
-पूर्ण
-EXPORT_SYMBOL(_स_रखो_io);
+	}
+	__asm__ __volatile__ ("sync" : : : "memory");
+}
+EXPORT_SYMBOL(_memset_io);
 
-व्योम _स_नकल_fromio(व्योम *dest, स्थिर अस्थिर व्योम __iomem *src,
-		    अचिन्हित दीर्घ n)
-अणु
-	व्योम *vsrc = (व्योम __क्रमce *) src;
+void _memcpy_fromio(void *dest, const volatile void __iomem *src,
+		    unsigned long n)
+{
+	void *vsrc = (void __force *) src;
 
-	__यंत्र__ __अस्थिर__ ("sync" : : : "memory");
-	जबतक(n && (!IO_CHECK_ALIGN(vsrc, 4) || !IO_CHECK_ALIGN(dest, 4))) अणु
-		*((u8 *)dest) = *((अस्थिर u8 *)vsrc);
+	__asm__ __volatile__ ("sync" : : : "memory");
+	while(n && (!IO_CHECK_ALIGN(vsrc, 4) || !IO_CHECK_ALIGN(dest, 4))) {
+		*((u8 *)dest) = *((volatile u8 *)vsrc);
 		eieio();
 		vsrc++;
 		dest++;
 		n--;
-	पूर्ण
-	जबतक(n >= 4) अणु
-		*((u32 *)dest) = *((अस्थिर u32 *)vsrc);
+	}
+	while(n >= 4) {
+		*((u32 *)dest) = *((volatile u32 *)vsrc);
 		eieio();
 		vsrc += 4;
 		dest += 4;
 		n -= 4;
-	पूर्ण
-	जबतक(n) अणु
-		*((u8 *)dest) = *((अस्थिर u8 *)vsrc);
+	}
+	while(n) {
+		*((u8 *)dest) = *((volatile u8 *)vsrc);
 		eieio();
 		vsrc++;
 		dest++;
 		n--;
-	पूर्ण
-	__यंत्र__ __अस्थिर__ ("sync" : : : "memory");
-पूर्ण
-EXPORT_SYMBOL(_स_नकल_fromio);
+	}
+	__asm__ __volatile__ ("sync" : : : "memory");
+}
+EXPORT_SYMBOL(_memcpy_fromio);
 
-व्योम _स_नकल_toio(अस्थिर व्योम __iomem *dest, स्थिर व्योम *src, अचिन्हित दीर्घ n)
-अणु
-	व्योम *vdest = (व्योम __क्रमce *) dest;
+void _memcpy_toio(volatile void __iomem *dest, const void *src, unsigned long n)
+{
+	void *vdest = (void __force *) dest;
 
-	__यंत्र__ __अस्थिर__ ("sync" : : : "memory");
-	जबतक(n && (!IO_CHECK_ALIGN(vdest, 4) || !IO_CHECK_ALIGN(src, 4))) अणु
-		*((अस्थिर u8 *)vdest) = *((u8 *)src);
+	__asm__ __volatile__ ("sync" : : : "memory");
+	while(n && (!IO_CHECK_ALIGN(vdest, 4) || !IO_CHECK_ALIGN(src, 4))) {
+		*((volatile u8 *)vdest) = *((u8 *)src);
 		src++;
 		vdest++;
 		n--;
-	पूर्ण
-	जबतक(n >= 4) अणु
-		*((अस्थिर u32 *)vdest) = *((अस्थिर u32 *)src);
+	}
+	while(n >= 4) {
+		*((volatile u32 *)vdest) = *((volatile u32 *)src);
 		src += 4;
 		vdest += 4;
 		n-=4;
-	पूर्ण
-	जबतक(n) अणु
-		*((अस्थिर u8 *)vdest) = *((u8 *)src);
+	}
+	while(n) {
+		*((volatile u8 *)vdest) = *((u8 *)src);
 		src++;
 		vdest++;
 		n--;
-	पूर्ण
-	__यंत्र__ __अस्थिर__ ("sync" : : : "memory");
-पूर्ण
-EXPORT_SYMBOL(_स_नकल_toio);
+	}
+	__asm__ __volatile__ ("sync" : : : "memory");
+}
+EXPORT_SYMBOL(_memcpy_toio);

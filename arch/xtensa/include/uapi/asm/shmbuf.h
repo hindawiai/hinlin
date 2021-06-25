@@ -1,52 +1,51 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 /*
- * include/यंत्र-xtensa/shmbuf.h
+ * include/asm-xtensa/shmbuf.h
  *
- * The shmid64_ds काष्ठाure क्रम Xtensa architecture.
- * Note extra padding because this काष्ठाure is passed back and क्रमth
+ * The shmid64_ds structure for Xtensa architecture.
+ * Note extra padding because this structure is passed back and forth
  * between kernel and user space, but the padding is on the wrong
- * side क्रम big-endian xtensa, क्रम historic reasons.
+ * side for big-endian xtensa, for historic reasons.
  *
- * Pad space is left क्रम:
+ * Pad space is left for:
  * - 2 miscellaneous 32-bit values
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 2001 - 2005 Tensilica Inc.
  */
 
-#अगर_अघोषित _XTENSA_SHMBUF_H
-#घोषणा _XTENSA_SHMBUF_H
+#ifndef _XTENSA_SHMBUF_H
+#define _XTENSA_SHMBUF_H
 
-काष्ठा shmid64_ds अणु
-	काष्ठा ipc64_perm	shm_perm;	/* operation perms */
-	माप_प्रकार			shm_segsz;	/* size of segment (bytes) */
-	अचिन्हित दीर्घ		shm_aसमय;	/* last attach समय */
-	अचिन्हित दीर्घ		shm_aसमय_high;
-	अचिन्हित दीर्घ		shm_dसमय;	/* last detach समय */
-	अचिन्हित दीर्घ		shm_dसमय_high;
-	अचिन्हित दीर्घ		shm_स_समय;	/* last change समय */
-	अचिन्हित दीर्घ		shm_स_समय_high;
+struct shmid64_ds {
+	struct ipc64_perm	shm_perm;	/* operation perms */
+	size_t			shm_segsz;	/* size of segment (bytes) */
+	unsigned long		shm_atime;	/* last attach time */
+	unsigned long		shm_atime_high;
+	unsigned long		shm_dtime;	/* last detach time */
+	unsigned long		shm_dtime_high;
+	unsigned long		shm_ctime;	/* last change time */
+	unsigned long		shm_ctime_high;
 	__kernel_pid_t		shm_cpid;	/* pid of creator */
-	__kernel_pid_t		shm_lpid;	/* pid of last चालक */
-	अचिन्हित दीर्घ		shm_nattch;	/* no. of current attaches */
-	अचिन्हित दीर्घ		__unused4;
-	अचिन्हित दीर्घ		__unused5;
-पूर्ण;
+	__kernel_pid_t		shm_lpid;	/* pid of last operator */
+	unsigned long		shm_nattch;	/* no. of current attaches */
+	unsigned long		__unused4;
+	unsigned long		__unused5;
+};
 
-काष्ठा shminfo64 अणु
-	अचिन्हित दीर्घ	shmmax;
-	अचिन्हित दीर्घ	shmmin;
-	अचिन्हित दीर्घ	shmmni;
-	अचिन्हित दीर्घ	shmseg;
-	अचिन्हित दीर्घ	shmall;
-	अचिन्हित दीर्घ	__unused1;
-	अचिन्हित दीर्घ	__unused2;
-	अचिन्हित दीर्घ	__unused3;
-	अचिन्हित दीर्घ	__unused4;
-पूर्ण;
+struct shminfo64 {
+	unsigned long	shmmax;
+	unsigned long	shmmin;
+	unsigned long	shmmni;
+	unsigned long	shmseg;
+	unsigned long	shmall;
+	unsigned long	__unused1;
+	unsigned long	__unused2;
+	unsigned long	__unused3;
+	unsigned long	__unused4;
+};
 
-#पूर्ण_अगर	/* _XTENSA_SHMBUF_H */
+#endif	/* _XTENSA_SHMBUF_H */

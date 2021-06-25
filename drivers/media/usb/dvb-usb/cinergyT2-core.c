@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * TerraTec Cinergy T2/qanu USB2 DVB-T adapter.
  *
@@ -14,32 +13,32 @@
  *  Protocol Spec published on http://qanu.de/specs/terratec_cinergyT2.pdf
  */
 
-#समावेश "cinergyT2.h"
+#include "cinergyT2.h"
 
 
 /* debug */
-पूर्णांक dvb_usb_cinergyt2_debug;
+int dvb_usb_cinergyt2_debug;
 
-module_param_named(debug, dvb_usb_cinergyt2_debug, पूर्णांक, 0644);
+module_param_named(debug, dvb_usb_cinergyt2_debug, int, 0644);
 MODULE_PARM_DESC(debug, "set debugging level (1=info, xfer=2, rc=4 (or-able)).");
 
 DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 
-काष्ठा cinergyt2_state अणु
+struct cinergyt2_state {
 	u8 rc_counter;
-	अचिन्हित अक्षर data[64];
-पूर्ण;
+	unsigned char data[64];
+};
 
 /* We are missing a release hook with usb_device data */
-अटल काष्ठा dvb_usb_device *cinergyt2_usb_device;
+static struct dvb_usb_device *cinergyt2_usb_device;
 
-अटल काष्ठा dvb_usb_device_properties cinergyt2_properties;
+static struct dvb_usb_device_properties cinergyt2_properties;
 
-अटल पूर्णांक cinergyt2_streaming_ctrl(काष्ठा dvb_usb_adapter *adap, पूर्णांक enable)
-अणु
-	काष्ठा dvb_usb_device *d = adap->dev;
-	काष्ठा cinergyt2_state *st = d->priv;
-	पूर्णांक ret;
+static int cinergyt2_streaming_ctrl(struct dvb_usb_adapter *adap, int enable)
+{
+	struct dvb_usb_device *d = adap->dev;
+	struct cinergyt2_state *st = d->priv;
+	int ret;
 
 	mutex_lock(&d->data_mutex);
 	st->data[0] = CINERGYT2_EP1_CONTROL_STREAM_TRANSFER;
@@ -48,13 +47,13 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 	ret = dvb_usb_generic_rw(d, st->data, 2, st->data, 64, 0);
 	mutex_unlock(&d->data_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cinergyt2_घातer_ctrl(काष्ठा dvb_usb_device *d, पूर्णांक enable)
-अणु
-	काष्ठा cinergyt2_state *st = d->priv;
-	पूर्णांक ret;
+static int cinergyt2_power_ctrl(struct dvb_usb_device *d, int enable)
+{
+	struct cinergyt2_state *st = d->priv;
+	int ret;
 
 	mutex_lock(&d->data_mutex);
 	st->data[0] = CINERGYT2_EP1_SLEEP_MODE;
@@ -63,14 +62,14 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 	ret = dvb_usb_generic_rw(d, st->data, 2, st->data, 3, 0);
 	mutex_unlock(&d->data_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cinergyt2_frontend_attach(काष्ठा dvb_usb_adapter *adap)
-अणु
-	काष्ठा dvb_usb_device *d = adap->dev;
-	काष्ठा cinergyt2_state *st = d->priv;
-	पूर्णांक ret;
+static int cinergyt2_frontend_attach(struct dvb_usb_adapter *adap)
+{
+	struct dvb_usb_device *d = adap->dev;
+	struct cinergyt2_state *st = d->priv;
+	int ret;
 
 	adap->fe_adap[0].fe = cinergyt2_fe_attach(adap->dev);
 
@@ -78,61 +77,61 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 	st->data[0] = CINERGYT2_EP1_GET_FIRMWARE_VERSION;
 
 	ret = dvb_usb_generic_rw(d, st->data, 1, st->data, 3, 0);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		deb_rc("cinergyt2_power_ctrl() Failed to retrieve sleep state info\n");
-	पूर्ण
+	}
 	mutex_unlock(&d->data_mutex);
 
-	/* Copy this poपूर्णांकer as we are gonna need it in the release phase */
+	/* Copy this pointer as we are gonna need it in the release phase */
 	cinergyt2_usb_device = adap->dev;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा rc_map_table rc_map_cinergyt2_table[] = अणु
-	अणु 0x0401, KEY_POWER पूर्ण,
-	अणु 0x0402, KEY_1 पूर्ण,
-	अणु 0x0403, KEY_2 पूर्ण,
-	अणु 0x0404, KEY_3 पूर्ण,
-	अणु 0x0405, KEY_4 पूर्ण,
-	अणु 0x0406, KEY_5 पूर्ण,
-	अणु 0x0407, KEY_6 पूर्ण,
-	अणु 0x0408, KEY_7 पूर्ण,
-	अणु 0x0409, KEY_8 पूर्ण,
-	अणु 0x040a, KEY_9 पूर्ण,
-	अणु 0x040c, KEY_0 पूर्ण,
-	अणु 0x040b, KEY_VIDEO पूर्ण,
-	अणु 0x040d, KEY_REFRESH पूर्ण,
-	अणु 0x040e, KEY_SELECT पूर्ण,
-	अणु 0x040f, KEY_EPG पूर्ण,
-	अणु 0x0410, KEY_UP पूर्ण,
-	अणु 0x0414, KEY_DOWN पूर्ण,
-	अणु 0x0411, KEY_LEFT पूर्ण,
-	अणु 0x0413, KEY_RIGHT पूर्ण,
-	अणु 0x0412, KEY_OK पूर्ण,
-	अणु 0x0415, KEY_TEXT पूर्ण,
-	अणु 0x0416, KEY_INFO पूर्ण,
-	अणु 0x0417, KEY_RED पूर्ण,
-	अणु 0x0418, KEY_GREEN पूर्ण,
-	अणु 0x0419, KEY_YELLOW पूर्ण,
-	अणु 0x041a, KEY_BLUE पूर्ण,
-	अणु 0x041c, KEY_VOLUMEUP पूर्ण,
-	अणु 0x041e, KEY_VOLUMEDOWN पूर्ण,
-	अणु 0x041d, KEY_MUTE पूर्ण,
-	अणु 0x041b, KEY_CHANNELUP पूर्ण,
-	अणु 0x041f, KEY_CHANNELDOWN पूर्ण,
-	अणु 0x0440, KEY_PAUSE पूर्ण,
-	अणु 0x044c, KEY_PLAY पूर्ण,
-	अणु 0x0458, KEY_RECORD पूर्ण,
-	अणु 0x0454, KEY_PREVIOUS पूर्ण,
-	अणु 0x0448, KEY_STOP पूर्ण,
-	अणु 0x045c, KEY_NEXT पूर्ण
-पूर्ण;
+static struct rc_map_table rc_map_cinergyt2_table[] = {
+	{ 0x0401, KEY_POWER },
+	{ 0x0402, KEY_1 },
+	{ 0x0403, KEY_2 },
+	{ 0x0404, KEY_3 },
+	{ 0x0405, KEY_4 },
+	{ 0x0406, KEY_5 },
+	{ 0x0407, KEY_6 },
+	{ 0x0408, KEY_7 },
+	{ 0x0409, KEY_8 },
+	{ 0x040a, KEY_9 },
+	{ 0x040c, KEY_0 },
+	{ 0x040b, KEY_VIDEO },
+	{ 0x040d, KEY_REFRESH },
+	{ 0x040e, KEY_SELECT },
+	{ 0x040f, KEY_EPG },
+	{ 0x0410, KEY_UP },
+	{ 0x0414, KEY_DOWN },
+	{ 0x0411, KEY_LEFT },
+	{ 0x0413, KEY_RIGHT },
+	{ 0x0412, KEY_OK },
+	{ 0x0415, KEY_TEXT },
+	{ 0x0416, KEY_INFO },
+	{ 0x0417, KEY_RED },
+	{ 0x0418, KEY_GREEN },
+	{ 0x0419, KEY_YELLOW },
+	{ 0x041a, KEY_BLUE },
+	{ 0x041c, KEY_VOLUMEUP },
+	{ 0x041e, KEY_VOLUMEDOWN },
+	{ 0x041d, KEY_MUTE },
+	{ 0x041b, KEY_CHANNELUP },
+	{ 0x041f, KEY_CHANNELDOWN },
+	{ 0x0440, KEY_PAUSE },
+	{ 0x044c, KEY_PLAY },
+	{ 0x0458, KEY_RECORD },
+	{ 0x0454, KEY_PREVIOUS },
+	{ 0x0448, KEY_STOP },
+	{ 0x045c, KEY_NEXT }
+};
 
-/* Number of keypresses to ignore beक्रमe detect repeating */
-#घोषणा RC_REPEAT_DELAY 3
+/* Number of keypresses to ignore before detect repeating */
+#define RC_REPEAT_DELAY 3
 
-अटल पूर्णांक repeatable_keys[] = अणु
+static int repeatable_keys[] = {
 	KEY_UP,
 	KEY_DOWN,
 	KEY_LEFT,
@@ -141,12 +140,12 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 	KEY_VOLUMEDOWN,
 	KEY_CHANNELUP,
 	KEY_CHANNELDOWN
-पूर्ण;
+};
 
-अटल पूर्णांक cinergyt2_rc_query(काष्ठा dvb_usb_device *d, u32 *event, पूर्णांक *state)
-अणु
-	काष्ठा cinergyt2_state *st = d->priv;
-	पूर्णांक i, ret;
+static int cinergyt2_rc_query(struct dvb_usb_device *d, u32 *event, int *state)
+{
+	struct cinergyt2_state *st = d->priv;
+	int i, ret;
 
 	*state = REMOTE_NO_KEY_PRESSED;
 
@@ -154,109 +153,109 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 	st->data[0] = CINERGYT2_EP1_GET_RC_EVENTS;
 
 	ret = dvb_usb_generic_rw(d, st->data, 1, st->data, 5, 0);
-	अगर (ret < 0)
-		जाओ ret;
+	if (ret < 0)
+		goto ret;
 
-	अगर (st->data[4] == 0xff) अणु
+	if (st->data[4] == 0xff) {
 		/* key repeat */
 		st->rc_counter++;
-		अगर (st->rc_counter > RC_REPEAT_DELAY) अणु
-			क्रम (i = 0; i < ARRAY_SIZE(repeatable_keys); i++) अणु
-				अगर (d->last_event == repeatable_keys[i]) अणु
+		if (st->rc_counter > RC_REPEAT_DELAY) {
+			for (i = 0; i < ARRAY_SIZE(repeatable_keys); i++) {
+				if (d->last_event == repeatable_keys[i]) {
 					*state = REMOTE_KEY_REPEAT;
 					*event = d->last_event;
 					deb_rc("repeat key, event %x\n",
 						   *event);
-					जाओ ret;
-				पूर्ण
-			पूर्ण
+					goto ret;
+				}
+			}
 			deb_rc("repeated key (non repeatable)\n");
-		पूर्ण
-		जाओ ret;
-	पूर्ण
+		}
+		goto ret;
+	}
 
 	/* hack to pass checksum on the custom field */
 	st->data[2] = ~st->data[1];
 	dvb_usb_nec_rc_key_to_event(d, st->data, event, state);
-	अगर (st->data[0] != 0) अणु
-		अगर (*event != d->last_event)
+	if (st->data[0] != 0) {
+		if (*event != d->last_event)
 			st->rc_counter = 0;
 
 		deb_rc("key: %*ph\n", 5, st->data);
-	पूर्ण
+	}
 
 ret:
 	mutex_unlock(&d->data_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cinergyt2_usb_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
-				स्थिर काष्ठा usb_device_id *id)
-अणु
-	वापस dvb_usb_device_init(पूर्णांकf, &cinergyt2_properties,
-				   THIS_MODULE, शून्य, adapter_nr);
-पूर्ण
+static int cinergyt2_usb_probe(struct usb_interface *intf,
+				const struct usb_device_id *id)
+{
+	return dvb_usb_device_init(intf, &cinergyt2_properties,
+				   THIS_MODULE, NULL, adapter_nr);
+}
 
-अटल काष्ठा usb_device_id cinergyt2_usb_table[] = अणु
-	अणु USB_DEVICE(USB_VID_TERRATEC, 0x0038) पूर्ण,
-	अणु 0 पूर्ण
-पूर्ण;
+static struct usb_device_id cinergyt2_usb_table[] = {
+	{ USB_DEVICE(USB_VID_TERRATEC, 0x0038) },
+	{ 0 }
+};
 
 MODULE_DEVICE_TABLE(usb, cinergyt2_usb_table);
 
-अटल काष्ठा dvb_usb_device_properties cinergyt2_properties = अणु
-	.size_of_priv = माप(काष्ठा cinergyt2_state),
+static struct dvb_usb_device_properties cinergyt2_properties = {
+	.size_of_priv = sizeof(struct cinergyt2_state),
 	.num_adapters = 1,
-	.adapter = अणु
-		अणु
+	.adapter = {
+		{
 		.num_frontends = 1,
-		.fe = अणुअणु
+		.fe = {{
 			.streaming_ctrl   = cinergyt2_streaming_ctrl,
 			.frontend_attach  = cinergyt2_frontend_attach,
 
-			/* parameter क्रम the MPEG2-data transfer */
-			.stream = अणु
+			/* parameter for the MPEG2-data transfer */
+			.stream = {
 				.type = USB_BULK,
 				.count = 5,
-				.endpoपूर्णांक = 0x02,
-				.u = अणु
-					.bulk = अणु
+				.endpoint = 0x02,
+				.u = {
+					.bulk = {
 						.buffersize = 512,
-					पूर्ण
-				पूर्ण
-			पूर्ण,
-		पूर्णपूर्ण,
-		पूर्ण
-	पूर्ण,
+					}
+				}
+			},
+		}},
+		}
+	},
 
-	.घातer_ctrl       = cinergyt2_घातer_ctrl,
+	.power_ctrl       = cinergyt2_power_ctrl,
 
-	.rc.legacy = अणु
-		.rc_पूर्णांकerval      = 50,
+	.rc.legacy = {
+		.rc_interval      = 50,
 		.rc_map_table     = rc_map_cinergyt2_table,
 		.rc_map_size      = ARRAY_SIZE(rc_map_cinergyt2_table),
 		.rc_query         = cinergyt2_rc_query,
-	पूर्ण,
+	},
 
-	.generic_bulk_ctrl_endpoपूर्णांक = 1,
+	.generic_bulk_ctrl_endpoint = 1,
 
 	.num_device_descs = 1,
-	.devices = अणु
-		अणु .name = "TerraTec/qanu USB2.0 Highspeed DVB-T Receiver",
-		  .cold_ids = अणुशून्यपूर्ण,
-		  .warm_ids = अणु &cinergyt2_usb_table[0], शून्य पूर्ण,
-		पूर्ण,
-		अणु शून्य पूर्ण,
-	पूर्ण
-पूर्ण;
+	.devices = {
+		{ .name = "TerraTec/qanu USB2.0 Highspeed DVB-T Receiver",
+		  .cold_ids = {NULL},
+		  .warm_ids = { &cinergyt2_usb_table[0], NULL },
+		},
+		{ NULL },
+	}
+};
 
 
-अटल काष्ठा usb_driver cinergyt2_driver = अणु
+static struct usb_driver cinergyt2_driver = {
 	.name		= "cinergyT2",
 	.probe		= cinergyt2_usb_probe,
-	.disconnect	= dvb_usb_device_निकास,
+	.disconnect	= dvb_usb_device_exit,
 	.id_table	= cinergyt2_usb_table
-पूर्ण;
+};
 
 module_usb_driver(cinergyt2_driver);
 

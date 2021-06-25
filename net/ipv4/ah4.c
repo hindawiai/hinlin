@@ -1,32 +1,31 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#घोषणा pr_fmt(fmt) "IPsec: " fmt
+// SPDX-License-Identifier: GPL-2.0-only
+#define pr_fmt(fmt) "IPsec: " fmt
 
-#समावेश <crypto/algapi.h>
-#समावेश <crypto/hash.h>
-#समावेश <linux/err.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <net/ip.h>
-#समावेश <net/xfrm.h>
-#समावेश <net/ah.h>
-#समावेश <linux/crypto.h>
-#समावेश <linux/pfkeyv2.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <net/icmp.h>
-#समावेश <net/protocol.h>
+#include <crypto/algapi.h>
+#include <crypto/hash.h>
+#include <linux/err.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <net/ip.h>
+#include <net/xfrm.h>
+#include <net/ah.h>
+#include <linux/crypto.h>
+#include <linux/pfkeyv2.h>
+#include <linux/scatterlist.h>
+#include <net/icmp.h>
+#include <net/protocol.h>
 
-काष्ठा ah_skb_cb अणु
-	काष्ठा xfrm_skb_cb xfrm;
-	व्योम *पंचांगp;
-पूर्ण;
+struct ah_skb_cb {
+	struct xfrm_skb_cb xfrm;
+	void *tmp;
+};
 
-#घोषणा AH_SKB_CB(__skb) ((काष्ठा ah_skb_cb *)&((__skb)->cb[0]))
+#define AH_SKB_CB(__skb) ((struct ah_skb_cb *)&((__skb)->cb[0]))
 
-अटल व्योम *ah_alloc_पंचांगp(काष्ठा crypto_ahash *ahash, पूर्णांक nfrags,
-			  अचिन्हित पूर्णांक size)
-अणु
-	अचिन्हित पूर्णांक len;
+static void *ah_alloc_tmp(struct crypto_ahash *ahash, int nfrags,
+			  unsigned int size)
+{
+	unsigned int len;
 
 	len = size + crypto_ahash_digestsize(ahash) +
 	      (crypto_ahash_alignmask(ahash) &
@@ -34,161 +33,161 @@
 
 	len = ALIGN(len, crypto_tfm_ctx_alignment());
 
-	len += माप(काष्ठा ahash_request) + crypto_ahash_reqsize(ahash);
-	len = ALIGN(len, __alignof__(काष्ठा scatterlist));
+	len += sizeof(struct ahash_request) + crypto_ahash_reqsize(ahash);
+	len = ALIGN(len, __alignof__(struct scatterlist));
 
-	len += माप(काष्ठा scatterlist) * nfrags;
+	len += sizeof(struct scatterlist) * nfrags;
 
-	वापस kदो_स्मृति(len, GFP_ATOMIC);
-पूर्ण
+	return kmalloc(len, GFP_ATOMIC);
+}
 
-अटल अंतरभूत u8 *ah_पंचांगp_auth(व्योम *पंचांगp, अचिन्हित पूर्णांक offset)
-अणु
-	वापस पंचांगp + offset;
-पूर्ण
+static inline u8 *ah_tmp_auth(void *tmp, unsigned int offset)
+{
+	return tmp + offset;
+}
 
-अटल अंतरभूत u8 *ah_पंचांगp_icv(काष्ठा crypto_ahash *ahash, व्योम *पंचांगp,
-			     अचिन्हित पूर्णांक offset)
-अणु
-	वापस PTR_ALIGN((u8 *)पंचांगp + offset, crypto_ahash_alignmask(ahash) + 1);
-पूर्ण
+static inline u8 *ah_tmp_icv(struct crypto_ahash *ahash, void *tmp,
+			     unsigned int offset)
+{
+	return PTR_ALIGN((u8 *)tmp + offset, crypto_ahash_alignmask(ahash) + 1);
+}
 
-अटल अंतरभूत काष्ठा ahash_request *ah_पंचांगp_req(काष्ठा crypto_ahash *ahash,
+static inline struct ahash_request *ah_tmp_req(struct crypto_ahash *ahash,
 					       u8 *icv)
-अणु
-	काष्ठा ahash_request *req;
+{
+	struct ahash_request *req;
 
-	req = (व्योम *)PTR_ALIGN(icv + crypto_ahash_digestsize(ahash),
+	req = (void *)PTR_ALIGN(icv + crypto_ahash_digestsize(ahash),
 				crypto_tfm_ctx_alignment());
 
 	ahash_request_set_tfm(req, ahash);
 
-	वापस req;
-पूर्ण
+	return req;
+}
 
-अटल अंतरभूत काष्ठा scatterlist *ah_req_sg(काष्ठा crypto_ahash *ahash,
-					     काष्ठा ahash_request *req)
-अणु
-	वापस (व्योम *)ALIGN((अचिन्हित दीर्घ)(req + 1) +
+static inline struct scatterlist *ah_req_sg(struct crypto_ahash *ahash,
+					     struct ahash_request *req)
+{
+	return (void *)ALIGN((unsigned long)(req + 1) +
 			     crypto_ahash_reqsize(ahash),
-			     __alignof__(काष्ठा scatterlist));
-पूर्ण
+			     __alignof__(struct scatterlist));
+}
 
 /* Clear mutable options and find final destination to substitute
- * पूर्णांकo IP header क्रम icv calculation. Options are alपढ़ोy checked
- * क्रम validity, so paranoia is not required. */
+ * into IP header for icv calculation. Options are already checked
+ * for validity, so paranoia is not required. */
 
-अटल पूर्णांक ip_clear_mutable_options(स्थिर काष्ठा iphdr *iph, __be32 *daddr)
-अणु
-	अचिन्हित अक्षर *optptr = (अचिन्हित अक्षर *)(iph+1);
-	पूर्णांक  l = iph->ihl*4 - माप(काष्ठा iphdr);
-	पूर्णांक  optlen;
+static int ip_clear_mutable_options(const struct iphdr *iph, __be32 *daddr)
+{
+	unsigned char *optptr = (unsigned char *)(iph+1);
+	int  l = iph->ihl*4 - sizeof(struct iphdr);
+	int  optlen;
 
-	जबतक (l > 0) अणु
-		चयन (*optptr) अणु
-		हाल IPOPT_END:
-			वापस 0;
-		हाल IPOPT_NOOP:
+	while (l > 0) {
+		switch (*optptr) {
+		case IPOPT_END:
+			return 0;
+		case IPOPT_NOOP:
 			l--;
 			optptr++;
-			जारी;
-		पूर्ण
+			continue;
+		}
 		optlen = optptr[1];
-		अगर (optlen<2 || optlen>l)
-			वापस -EINVAL;
-		चयन (*optptr) अणु
-		हाल IPOPT_SEC:
-		हाल 0x85:	/* Some "Extended Security" crap. */
-		हाल IPOPT_CIPSO:
-		हाल IPOPT_RA:
-		हाल 0x80|21:	/* RFC1770 */
-			अवरोध;
-		हाल IPOPT_LSRR:
-		हाल IPOPT_SSRR:
-			अगर (optlen < 6)
-				वापस -EINVAL;
-			स_नकल(daddr, optptr+optlen-4, 4);
+		if (optlen<2 || optlen>l)
+			return -EINVAL;
+		switch (*optptr) {
+		case IPOPT_SEC:
+		case 0x85:	/* Some "Extended Security" crap. */
+		case IPOPT_CIPSO:
+		case IPOPT_RA:
+		case 0x80|21:	/* RFC1770 */
+			break;
+		case IPOPT_LSRR:
+		case IPOPT_SSRR:
+			if (optlen < 6)
+				return -EINVAL;
+			memcpy(daddr, optptr+optlen-4, 4);
 			fallthrough;
-		शेष:
-			स_रखो(optptr, 0, optlen);
-		पूर्ण
+		default:
+			memset(optptr, 0, optlen);
+		}
 		l -= optlen;
 		optptr += optlen;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल व्योम ah_output_करोne(काष्ठा crypto_async_request *base, पूर्णांक err)
-अणु
+static void ah_output_done(struct crypto_async_request *base, int err)
+{
 	u8 *icv;
-	काष्ठा iphdr *iph;
-	काष्ठा sk_buff *skb = base->data;
-	काष्ठा xfrm_state *x = skb_dst(skb)->xfrm;
-	काष्ठा ah_data *ahp = x->data;
-	काष्ठा iphdr *top_iph = ip_hdr(skb);
-	काष्ठा ip_auth_hdr *ah = ip_auth_hdr(skb);
-	पूर्णांक ihl = ip_hdrlen(skb);
+	struct iphdr *iph;
+	struct sk_buff *skb = base->data;
+	struct xfrm_state *x = skb_dst(skb)->xfrm;
+	struct ah_data *ahp = x->data;
+	struct iphdr *top_iph = ip_hdr(skb);
+	struct ip_auth_hdr *ah = ip_auth_hdr(skb);
+	int ihl = ip_hdrlen(skb);
 
-	iph = AH_SKB_CB(skb)->पंचांगp;
-	icv = ah_पंचांगp_icv(ahp->ahash, iph, ihl);
-	स_नकल(ah->auth_data, icv, ahp->icv_trunc_len);
+	iph = AH_SKB_CB(skb)->tmp;
+	icv = ah_tmp_icv(ahp->ahash, iph, ihl);
+	memcpy(ah->auth_data, icv, ahp->icv_trunc_len);
 
 	top_iph->tos = iph->tos;
 	top_iph->ttl = iph->ttl;
 	top_iph->frag_off = iph->frag_off;
-	अगर (top_iph->ihl != 5) अणु
+	if (top_iph->ihl != 5) {
 		top_iph->daddr = iph->daddr;
-		स_नकल(top_iph+1, iph+1, top_iph->ihl*4 - माप(काष्ठा iphdr));
-	पूर्ण
+		memcpy(top_iph+1, iph+1, top_iph->ihl*4 - sizeof(struct iphdr));
+	}
 
-	kमुक्त(AH_SKB_CB(skb)->पंचांगp);
+	kfree(AH_SKB_CB(skb)->tmp);
 	xfrm_output_resume(skb->sk, skb, err);
-पूर्ण
+}
 
-अटल पूर्णांक ah_output(काष्ठा xfrm_state *x, काष्ठा sk_buff *skb)
-अणु
-	पूर्णांक err;
-	पूर्णांक nfrags;
-	पूर्णांक ihl;
+static int ah_output(struct xfrm_state *x, struct sk_buff *skb)
+{
+	int err;
+	int nfrags;
+	int ihl;
 	u8 *icv;
-	काष्ठा sk_buff *trailer;
-	काष्ठा crypto_ahash *ahash;
-	काष्ठा ahash_request *req;
-	काष्ठा scatterlist *sg;
-	काष्ठा iphdr *iph, *top_iph;
-	काष्ठा ip_auth_hdr *ah;
-	काष्ठा ah_data *ahp;
-	पूर्णांक seqhi_len = 0;
+	struct sk_buff *trailer;
+	struct crypto_ahash *ahash;
+	struct ahash_request *req;
+	struct scatterlist *sg;
+	struct iphdr *iph, *top_iph;
+	struct ip_auth_hdr *ah;
+	struct ah_data *ahp;
+	int seqhi_len = 0;
 	__be32 *seqhi;
-	पूर्णांक sglists = 0;
-	काष्ठा scatterlist *seqhisg;
+	int sglists = 0;
+	struct scatterlist *seqhisg;
 
 	ahp = x->data;
 	ahash = ahp->ahash;
 
-	अगर ((err = skb_cow_data(skb, 0, &trailer)) < 0)
-		जाओ out;
+	if ((err = skb_cow_data(skb, 0, &trailer)) < 0)
+		goto out;
 	nfrags = err;
 
 	skb_push(skb, -skb_network_offset(skb));
 	ah = ip_auth_hdr(skb);
 	ihl = ip_hdrlen(skb);
 
-	अगर (x->props.flags & XFRM_STATE_ESN) अणु
+	if (x->props.flags & XFRM_STATE_ESN) {
 		sglists = 1;
-		seqhi_len = माप(*seqhi);
-	पूर्ण
+		seqhi_len = sizeof(*seqhi);
+	}
 	err = -ENOMEM;
-	iph = ah_alloc_पंचांगp(ahash, nfrags + sglists, ihl + seqhi_len);
-	अगर (!iph)
-		जाओ out;
-	seqhi = (__be32 *)((अक्षर *)iph + ihl);
-	icv = ah_पंचांगp_icv(ahash, seqhi, seqhi_len);
-	req = ah_पंचांगp_req(ahash, icv);
+	iph = ah_alloc_tmp(ahash, nfrags + sglists, ihl + seqhi_len);
+	if (!iph)
+		goto out;
+	seqhi = (__be32 *)((char *)iph + ihl);
+	icv = ah_tmp_icv(ahash, seqhi, seqhi_len);
+	req = ah_tmp_req(ahash, icv);
 	sg = ah_req_sg(ahash, req);
 	seqhisg = sg + nfrags;
 
-	स_रखो(ah->auth_data, 0, ahp->icv_trunc_len);
+	memset(ah->auth_data, 0, ahp->icv_trunc_len);
 
 	top_iph = ip_hdr(skb);
 
@@ -196,13 +195,13 @@
 	iph->ttl = top_iph->ttl;
 	iph->frag_off = top_iph->frag_off;
 
-	अगर (top_iph->ihl != 5) अणु
+	if (top_iph->ihl != 5) {
 		iph->daddr = top_iph->daddr;
-		स_नकल(iph+1, top_iph+1, top_iph->ihl*4 - माप(काष्ठा iphdr));
+		memcpy(iph+1, top_iph+1, top_iph->ihl*4 - sizeof(struct iphdr));
 		err = ip_clear_mutable_options(top_iph, &top_iph->daddr);
-		अगर (err)
-			जाओ out_मुक्त;
-	पूर्ण
+		if (err)
+			goto out_free;
+	}
 
 	ah->nexthdr = *skb_mac_header(skb);
 	*skb_mac_header(skb) = IPPROTO_AH;
@@ -213,10 +212,10 @@
 	top_iph->ttl = 0;
 	top_iph->check = 0;
 
-	अगर (x->props.flags & XFRM_STATE_ALIGN4)
-		ah->hdrlen  = (XFRM_ALIGN4(माप(*ah) + ahp->icv_trunc_len) >> 2) - 2;
-	अन्यथा
-		ah->hdrlen  = (XFRM_ALIGN8(माप(*ah) + ahp->icv_trunc_len) >> 2) - 2;
+	if (x->props.flags & XFRM_STATE_ALIGN4)
+		ah->hdrlen  = (XFRM_ALIGN4(sizeof(*ah) + ahp->icv_trunc_len) >> 2) - 2;
+	else
+		ah->hdrlen  = (XFRM_ALIGN8(sizeof(*ah) + ahp->icv_trunc_len) >> 2) - 2;
 
 	ah->reserved = 0;
 	ah->spi = x->id.spi;
@@ -224,377 +223,377 @@
 
 	sg_init_table(sg, nfrags + sglists);
 	err = skb_to_sgvec_nomark(skb, sg, 0, skb->len);
-	अगर (unlikely(err < 0))
-		जाओ out_मुक्त;
+	if (unlikely(err < 0))
+		goto out_free;
 
-	अगर (x->props.flags & XFRM_STATE_ESN) अणु
+	if (x->props.flags & XFRM_STATE_ESN) {
 		/* Attach seqhi sg right after packet payload */
 		*seqhi = htonl(XFRM_SKB_CB(skb)->seq.output.hi);
 		sg_set_buf(seqhisg, seqhi, seqhi_len);
-	पूर्ण
+	}
 	ahash_request_set_crypt(req, sg, icv, skb->len + seqhi_len);
-	ahash_request_set_callback(req, 0, ah_output_करोne, skb);
+	ahash_request_set_callback(req, 0, ah_output_done, skb);
 
-	AH_SKB_CB(skb)->पंचांगp = iph;
+	AH_SKB_CB(skb)->tmp = iph;
 
 	err = crypto_ahash_digest(req);
-	अगर (err) अणु
-		अगर (err == -EINPROGRESS)
-			जाओ out;
+	if (err) {
+		if (err == -EINPROGRESS)
+			goto out;
 
-		अगर (err == -ENOSPC)
+		if (err == -ENOSPC)
 			err = NET_XMIT_DROP;
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-	स_नकल(ah->auth_data, icv, ahp->icv_trunc_len);
+	memcpy(ah->auth_data, icv, ahp->icv_trunc_len);
 
 	top_iph->tos = iph->tos;
 	top_iph->ttl = iph->ttl;
 	top_iph->frag_off = iph->frag_off;
-	अगर (top_iph->ihl != 5) अणु
+	if (top_iph->ihl != 5) {
 		top_iph->daddr = iph->daddr;
-		स_नकल(top_iph+1, iph+1, top_iph->ihl*4 - माप(काष्ठा iphdr));
-	पूर्ण
+		memcpy(top_iph+1, iph+1, top_iph->ihl*4 - sizeof(struct iphdr));
+	}
 
-out_मुक्त:
-	kमुक्त(iph);
+out_free:
+	kfree(iph);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम ah_input_करोne(काष्ठा crypto_async_request *base, पूर्णांक err)
-अणु
+static void ah_input_done(struct crypto_async_request *base, int err)
+{
 	u8 *auth_data;
 	u8 *icv;
-	काष्ठा iphdr *work_iph;
-	काष्ठा sk_buff *skb = base->data;
-	काष्ठा xfrm_state *x = xfrm_input_state(skb);
-	काष्ठा ah_data *ahp = x->data;
-	काष्ठा ip_auth_hdr *ah = ip_auth_hdr(skb);
-	पूर्णांक ihl = ip_hdrlen(skb);
-	पूर्णांक ah_hlen = (ah->hdrlen + 2) << 2;
+	struct iphdr *work_iph;
+	struct sk_buff *skb = base->data;
+	struct xfrm_state *x = xfrm_input_state(skb);
+	struct ah_data *ahp = x->data;
+	struct ip_auth_hdr *ah = ip_auth_hdr(skb);
+	int ihl = ip_hdrlen(skb);
+	int ah_hlen = (ah->hdrlen + 2) << 2;
 
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
-	work_iph = AH_SKB_CB(skb)->पंचांगp;
-	auth_data = ah_पंचांगp_auth(work_iph, ihl);
-	icv = ah_पंचांगp_icv(ahp->ahash, auth_data, ahp->icv_trunc_len);
+	work_iph = AH_SKB_CB(skb)->tmp;
+	auth_data = ah_tmp_auth(work_iph, ihl);
+	icv = ah_tmp_icv(ahp->ahash, auth_data, ahp->icv_trunc_len);
 
 	err = crypto_memneq(icv, auth_data, ahp->icv_trunc_len) ? -EBADMSG : 0;
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	err = ah->nexthdr;
 
 	skb->network_header += ah_hlen;
-	स_नकल(skb_network_header(skb), work_iph, ihl);
+	memcpy(skb_network_header(skb), work_iph, ihl);
 	__skb_pull(skb, ah_hlen + ihl);
 
-	अगर (x->props.mode == XFRM_MODE_TUNNEL)
+	if (x->props.mode == XFRM_MODE_TUNNEL)
 		skb_reset_transport_header(skb);
-	अन्यथा
+	else
 		skb_set_transport_header(skb, -ihl);
 out:
-	kमुक्त(AH_SKB_CB(skb)->पंचांगp);
+	kfree(AH_SKB_CB(skb)->tmp);
 	xfrm_input_resume(skb, err);
-पूर्ण
+}
 
-अटल पूर्णांक ah_input(काष्ठा xfrm_state *x, काष्ठा sk_buff *skb)
-अणु
-	पूर्णांक ah_hlen;
-	पूर्णांक ihl;
-	पूर्णांक nexthdr;
-	पूर्णांक nfrags;
+static int ah_input(struct xfrm_state *x, struct sk_buff *skb)
+{
+	int ah_hlen;
+	int ihl;
+	int nexthdr;
+	int nfrags;
 	u8 *auth_data;
 	u8 *icv;
-	काष्ठा sk_buff *trailer;
-	काष्ठा crypto_ahash *ahash;
-	काष्ठा ahash_request *req;
-	काष्ठा scatterlist *sg;
-	काष्ठा iphdr *iph, *work_iph;
-	काष्ठा ip_auth_hdr *ah;
-	काष्ठा ah_data *ahp;
-	पूर्णांक err = -ENOMEM;
-	पूर्णांक seqhi_len = 0;
+	struct sk_buff *trailer;
+	struct crypto_ahash *ahash;
+	struct ahash_request *req;
+	struct scatterlist *sg;
+	struct iphdr *iph, *work_iph;
+	struct ip_auth_hdr *ah;
+	struct ah_data *ahp;
+	int err = -ENOMEM;
+	int seqhi_len = 0;
 	__be32 *seqhi;
-	पूर्णांक sglists = 0;
-	काष्ठा scatterlist *seqhisg;
+	int sglists = 0;
+	struct scatterlist *seqhisg;
 
-	अगर (!pskb_may_pull(skb, माप(*ah)))
-		जाओ out;
+	if (!pskb_may_pull(skb, sizeof(*ah)))
+		goto out;
 
-	ah = (काष्ठा ip_auth_hdr *)skb->data;
+	ah = (struct ip_auth_hdr *)skb->data;
 	ahp = x->data;
 	ahash = ahp->ahash;
 
 	nexthdr = ah->nexthdr;
 	ah_hlen = (ah->hdrlen + 2) << 2;
 
-	अगर (x->props.flags & XFRM_STATE_ALIGN4) अणु
-		अगर (ah_hlen != XFRM_ALIGN4(माप(*ah) + ahp->icv_full_len) &&
-		    ah_hlen != XFRM_ALIGN4(माप(*ah) + ahp->icv_trunc_len))
-			जाओ out;
-	पूर्ण अन्यथा अणु
-		अगर (ah_hlen != XFRM_ALIGN8(माप(*ah) + ahp->icv_full_len) &&
-		    ah_hlen != XFRM_ALIGN8(माप(*ah) + ahp->icv_trunc_len))
-			जाओ out;
-	पूर्ण
+	if (x->props.flags & XFRM_STATE_ALIGN4) {
+		if (ah_hlen != XFRM_ALIGN4(sizeof(*ah) + ahp->icv_full_len) &&
+		    ah_hlen != XFRM_ALIGN4(sizeof(*ah) + ahp->icv_trunc_len))
+			goto out;
+	} else {
+		if (ah_hlen != XFRM_ALIGN8(sizeof(*ah) + ahp->icv_full_len) &&
+		    ah_hlen != XFRM_ALIGN8(sizeof(*ah) + ahp->icv_trunc_len))
+			goto out;
+	}
 
-	अगर (!pskb_may_pull(skb, ah_hlen))
-		जाओ out;
+	if (!pskb_may_pull(skb, ah_hlen))
+		goto out;
 
-	/* We are going to _हटाओ_ AH header to keep sockets happy,
+	/* We are going to _remove_ AH header to keep sockets happy,
 	 * so... Later this can change. */
-	अगर (skb_unclone(skb, GFP_ATOMIC))
-		जाओ out;
+	if (skb_unclone(skb, GFP_ATOMIC))
+		goto out;
 
 	skb->ip_summed = CHECKSUM_NONE;
 
 
-	अगर ((err = skb_cow_data(skb, 0, &trailer)) < 0)
-		जाओ out;
+	if ((err = skb_cow_data(skb, 0, &trailer)) < 0)
+		goto out;
 	nfrags = err;
 
-	ah = (काष्ठा ip_auth_hdr *)skb->data;
+	ah = (struct ip_auth_hdr *)skb->data;
 	iph = ip_hdr(skb);
 	ihl = ip_hdrlen(skb);
 
-	अगर (x->props.flags & XFRM_STATE_ESN) अणु
+	if (x->props.flags & XFRM_STATE_ESN) {
 		sglists = 1;
-		seqhi_len = माप(*seqhi);
-	पूर्ण
+		seqhi_len = sizeof(*seqhi);
+	}
 
-	work_iph = ah_alloc_पंचांगp(ahash, nfrags + sglists, ihl +
+	work_iph = ah_alloc_tmp(ahash, nfrags + sglists, ihl +
 				ahp->icv_trunc_len + seqhi_len);
-	अगर (!work_iph) अणु
+	if (!work_iph) {
 		err = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	seqhi = (__be32 *)((अक्षर *)work_iph + ihl);
-	auth_data = ah_पंचांगp_auth(seqhi, seqhi_len);
-	icv = ah_पंचांगp_icv(ahash, auth_data, ahp->icv_trunc_len);
-	req = ah_पंचांगp_req(ahash, icv);
+	seqhi = (__be32 *)((char *)work_iph + ihl);
+	auth_data = ah_tmp_auth(seqhi, seqhi_len);
+	icv = ah_tmp_icv(ahash, auth_data, ahp->icv_trunc_len);
+	req = ah_tmp_req(ahash, icv);
 	sg = ah_req_sg(ahash, req);
 	seqhisg = sg + nfrags;
 
-	स_नकल(work_iph, iph, ihl);
-	स_नकल(auth_data, ah->auth_data, ahp->icv_trunc_len);
-	स_रखो(ah->auth_data, 0, ahp->icv_trunc_len);
+	memcpy(work_iph, iph, ihl);
+	memcpy(auth_data, ah->auth_data, ahp->icv_trunc_len);
+	memset(ah->auth_data, 0, ahp->icv_trunc_len);
 
 	iph->ttl = 0;
 	iph->tos = 0;
 	iph->frag_off = 0;
 	iph->check = 0;
-	अगर (ihl > माप(*iph)) अणु
+	if (ihl > sizeof(*iph)) {
 		__be32 dummy;
 		err = ip_clear_mutable_options(iph, &dummy);
-		अगर (err)
-			जाओ out_मुक्त;
-	पूर्ण
+		if (err)
+			goto out_free;
+	}
 
 	skb_push(skb, ihl);
 
 	sg_init_table(sg, nfrags + sglists);
 	err = skb_to_sgvec_nomark(skb, sg, 0, skb->len);
-	अगर (unlikely(err < 0))
-		जाओ out_मुक्त;
+	if (unlikely(err < 0))
+		goto out_free;
 
-	अगर (x->props.flags & XFRM_STATE_ESN) अणु
+	if (x->props.flags & XFRM_STATE_ESN) {
 		/* Attach seqhi sg right after packet payload */
 		*seqhi = XFRM_SKB_CB(skb)->seq.input.hi;
 		sg_set_buf(seqhisg, seqhi, seqhi_len);
-	पूर्ण
+	}
 	ahash_request_set_crypt(req, sg, icv, skb->len + seqhi_len);
-	ahash_request_set_callback(req, 0, ah_input_करोne, skb);
+	ahash_request_set_callback(req, 0, ah_input_done, skb);
 
-	AH_SKB_CB(skb)->पंचांगp = work_iph;
+	AH_SKB_CB(skb)->tmp = work_iph;
 
 	err = crypto_ahash_digest(req);
-	अगर (err) अणु
-		अगर (err == -EINPROGRESS)
-			जाओ out;
+	if (err) {
+		if (err == -EINPROGRESS)
+			goto out;
 
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
 	err = crypto_memneq(icv, auth_data, ahp->icv_trunc_len) ? -EBADMSG : 0;
-	अगर (err)
-		जाओ out_मुक्त;
+	if (err)
+		goto out_free;
 
 	skb->network_header += ah_hlen;
-	स_नकल(skb_network_header(skb), work_iph, ihl);
+	memcpy(skb_network_header(skb), work_iph, ihl);
 	__skb_pull(skb, ah_hlen + ihl);
-	अगर (x->props.mode == XFRM_MODE_TUNNEL)
+	if (x->props.mode == XFRM_MODE_TUNNEL)
 		skb_reset_transport_header(skb);
-	अन्यथा
+	else
 		skb_set_transport_header(skb, -ihl);
 
 	err = nexthdr;
 
-out_मुक्त:
-	kमुक्त (work_iph);
+out_free:
+	kfree (work_iph);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक ah4_err(काष्ठा sk_buff *skb, u32 info)
-अणु
-	काष्ठा net *net = dev_net(skb->dev);
-	स्थिर काष्ठा iphdr *iph = (स्थिर काष्ठा iphdr *)skb->data;
-	काष्ठा ip_auth_hdr *ah = (काष्ठा ip_auth_hdr *)(skb->data+(iph->ihl<<2));
-	काष्ठा xfrm_state *x;
+static int ah4_err(struct sk_buff *skb, u32 info)
+{
+	struct net *net = dev_net(skb->dev);
+	const struct iphdr *iph = (const struct iphdr *)skb->data;
+	struct ip_auth_hdr *ah = (struct ip_auth_hdr *)(skb->data+(iph->ihl<<2));
+	struct xfrm_state *x;
 
-	चयन (icmp_hdr(skb)->type) अणु
-	हाल ICMP_DEST_UNREACH:
-		अगर (icmp_hdr(skb)->code != ICMP_FRAG_NEEDED)
-			वापस 0;
-	हाल ICMP_REसूचीECT:
-		अवरोध;
-	शेष:
-		वापस 0;
-	पूर्ण
+	switch (icmp_hdr(skb)->type) {
+	case ICMP_DEST_UNREACH:
+		if (icmp_hdr(skb)->code != ICMP_FRAG_NEEDED)
+			return 0;
+	case ICMP_REDIRECT:
+		break;
+	default:
+		return 0;
+	}
 
-	x = xfrm_state_lookup(net, skb->mark, (स्थिर xfrm_address_t *)&iph->daddr,
+	x = xfrm_state_lookup(net, skb->mark, (const xfrm_address_t *)&iph->daddr,
 			      ah->spi, IPPROTO_AH, AF_INET);
-	अगर (!x)
-		वापस 0;
+	if (!x)
+		return 0;
 
-	अगर (icmp_hdr(skb)->type == ICMP_DEST_UNREACH)
+	if (icmp_hdr(skb)->type == ICMP_DEST_UNREACH)
 		ipv4_update_pmtu(skb, net, info, 0, IPPROTO_AH);
-	अन्यथा
+	else
 		ipv4_redirect(skb, net, 0, IPPROTO_AH);
 	xfrm_state_put(x);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ah_init_state(काष्ठा xfrm_state *x)
-अणु
-	काष्ठा ah_data *ahp = शून्य;
-	काष्ठा xfrm_algo_desc *aalg_desc;
-	काष्ठा crypto_ahash *ahash;
+static int ah_init_state(struct xfrm_state *x)
+{
+	struct ah_data *ahp = NULL;
+	struct xfrm_algo_desc *aalg_desc;
+	struct crypto_ahash *ahash;
 
-	अगर (!x->aalg)
-		जाओ error;
+	if (!x->aalg)
+		goto error;
 
-	अगर (x->encap)
-		जाओ error;
+	if (x->encap)
+		goto error;
 
-	ahp = kzalloc(माप(*ahp), GFP_KERNEL);
-	अगर (!ahp)
-		वापस -ENOMEM;
+	ahp = kzalloc(sizeof(*ahp), GFP_KERNEL);
+	if (!ahp)
+		return -ENOMEM;
 
 	ahash = crypto_alloc_ahash(x->aalg->alg_name, 0, 0);
-	अगर (IS_ERR(ahash))
-		जाओ error;
+	if (IS_ERR(ahash))
+		goto error;
 
 	ahp->ahash = ahash;
-	अगर (crypto_ahash_setkey(ahash, x->aalg->alg_key,
+	if (crypto_ahash_setkey(ahash, x->aalg->alg_key,
 				(x->aalg->alg_key_len + 7) / 8))
-		जाओ error;
+		goto error;
 
 	/*
-	 * Lookup the algorithm description मुख्यtained by xfrm_algo,
-	 * verअगरy crypto transक्रमm properties, and store inक्रमmation
-	 * we need क्रम AH processing.  This lookup cannot fail here
+	 * Lookup the algorithm description maintained by xfrm_algo,
+	 * verify crypto transform properties, and store information
+	 * we need for AH processing.  This lookup cannot fail here
 	 * after a successful crypto_alloc_ahash().
 	 */
 	aalg_desc = xfrm_aalg_get_byname(x->aalg->alg_name, 0);
 	BUG_ON(!aalg_desc);
 
-	अगर (aalg_desc->uinfo.auth.icv_fullbits/8 !=
-	    crypto_ahash_digestsize(ahash)) अणु
+	if (aalg_desc->uinfo.auth.icv_fullbits/8 !=
+	    crypto_ahash_digestsize(ahash)) {
 		pr_info("%s: %s digestsize %u != %hu\n",
 			__func__, x->aalg->alg_name,
 			crypto_ahash_digestsize(ahash),
 			aalg_desc->uinfo.auth.icv_fullbits / 8);
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	ahp->icv_full_len = aalg_desc->uinfo.auth.icv_fullbits/8;
 	ahp->icv_trunc_len = x->aalg->alg_trunc_len/8;
 
-	अगर (x->props.flags & XFRM_STATE_ALIGN4)
-		x->props.header_len = XFRM_ALIGN4(माप(काष्ठा ip_auth_hdr) +
+	if (x->props.flags & XFRM_STATE_ALIGN4)
+		x->props.header_len = XFRM_ALIGN4(sizeof(struct ip_auth_hdr) +
 						  ahp->icv_trunc_len);
-	अन्यथा
-		x->props.header_len = XFRM_ALIGN8(माप(काष्ठा ip_auth_hdr) +
+	else
+		x->props.header_len = XFRM_ALIGN8(sizeof(struct ip_auth_hdr) +
 						  ahp->icv_trunc_len);
-	अगर (x->props.mode == XFRM_MODE_TUNNEL)
-		x->props.header_len += माप(काष्ठा iphdr);
+	if (x->props.mode == XFRM_MODE_TUNNEL)
+		x->props.header_len += sizeof(struct iphdr);
 	x->data = ahp;
 
-	वापस 0;
+	return 0;
 
 error:
-	अगर (ahp) अणु
-		crypto_मुक्त_ahash(ahp->ahash);
-		kमुक्त(ahp);
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+	if (ahp) {
+		crypto_free_ahash(ahp->ahash);
+		kfree(ahp);
+	}
+	return -EINVAL;
+}
 
-अटल व्योम ah_destroy(काष्ठा xfrm_state *x)
-अणु
-	काष्ठा ah_data *ahp = x->data;
+static void ah_destroy(struct xfrm_state *x)
+{
+	struct ah_data *ahp = x->data;
 
-	अगर (!ahp)
-		वापस;
+	if (!ahp)
+		return;
 
-	crypto_मुक्त_ahash(ahp->ahash);
-	kमुक्त(ahp);
-पूर्ण
+	crypto_free_ahash(ahp->ahash);
+	kfree(ahp);
+}
 
-अटल पूर्णांक ah4_rcv_cb(काष्ठा sk_buff *skb, पूर्णांक err)
-अणु
-	वापस 0;
-पूर्ण
+static int ah4_rcv_cb(struct sk_buff *skb, int err)
+{
+	return 0;
+}
 
-अटल स्थिर काष्ठा xfrm_type ah_type =
-अणु
+static const struct xfrm_type ah_type =
+{
 	.description	= "AH4",
 	.owner		= THIS_MODULE,
 	.proto	     	= IPPROTO_AH,
 	.flags		= XFRM_TYPE_REPLAY_PROT,
 	.init_state	= ah_init_state,
-	.deकाष्ठाor	= ah_destroy,
+	.destructor	= ah_destroy,
 	.input		= ah_input,
 	.output		= ah_output
-पूर्ण;
+};
 
-अटल काष्ठा xfrm4_protocol ah4_protocol = अणु
+static struct xfrm4_protocol ah4_protocol = {
 	.handler	=	xfrm4_rcv,
 	.input_handler	=	xfrm_input,
 	.cb_handler	=	ah4_rcv_cb,
 	.err_handler	=	ah4_err,
 	.priority	=	0,
-पूर्ण;
+};
 
-अटल पूर्णांक __init ah4_init(व्योम)
-अणु
-	अगर (xfrm_रेजिस्टर_type(&ah_type, AF_INET) < 0) अणु
+static int __init ah4_init(void)
+{
+	if (xfrm_register_type(&ah_type, AF_INET) < 0) {
 		pr_info("%s: can't add xfrm type\n", __func__);
-		वापस -EAGAIN;
-	पूर्ण
-	अगर (xfrm4_protocol_रेजिस्टर(&ah4_protocol, IPPROTO_AH) < 0) अणु
+		return -EAGAIN;
+	}
+	if (xfrm4_protocol_register(&ah4_protocol, IPPROTO_AH) < 0) {
 		pr_info("%s: can't add protocol\n", __func__);
-		xfrm_unरेजिस्टर_type(&ah_type, AF_INET);
-		वापस -EAGAIN;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		xfrm_unregister_type(&ah_type, AF_INET);
+		return -EAGAIN;
+	}
+	return 0;
+}
 
-अटल व्योम __निकास ah4_fini(व्योम)
-अणु
-	अगर (xfrm4_protocol_deरेजिस्टर(&ah4_protocol, IPPROTO_AH) < 0)
+static void __exit ah4_fini(void)
+{
+	if (xfrm4_protocol_deregister(&ah4_protocol, IPPROTO_AH) < 0)
 		pr_info("%s: can't remove protocol\n", __func__);
-	xfrm_unरेजिस्टर_type(&ah_type, AF_INET);
-पूर्ण
+	xfrm_unregister_type(&ah_type, AF_INET);
+}
 
 module_init(ah4_init);
-module_निकास(ah4_fini);
+module_exit(ah4_fini);
 MODULE_LICENSE("GPL");
 MODULE_ALIAS_XFRM_TYPE(AF_INET, XFRM_PROTO_AH);

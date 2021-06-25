@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2012 ARM Ltd.
  */
-#अगर_अघोषित __ASM_DEVICE_H
-#घोषणा __ASM_DEVICE_H
+#ifndef __ASM_DEVICE_H
+#define __ASM_DEVICE_H
 
-काष्ठा dev_archdata अणु
-पूर्ण;
+struct dev_archdata {
+};
 
-काष्ठा pdev_archdata अणु
-पूर्ण;
+struct pdev_archdata {
+};
 
-#पूर्ण_अगर
+#endif

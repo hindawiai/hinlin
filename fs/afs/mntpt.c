@@ -1,226 +1,225 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
-/* mountpoपूर्णांक management
+// SPDX-License-Identifier: GPL-2.0-or-later
+/* mountpoint management
  *
  * Copyright (C) 2002 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/mount.h>
-#समावेश <linux/namei.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/fs_context.h>
-#समावेश "internal.h"
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/fs.h>
+#include <linux/pagemap.h>
+#include <linux/mount.h>
+#include <linux/namei.h>
+#include <linux/gfp.h>
+#include <linux/fs_context.h>
+#include "internal.h"
 
 
-अटल काष्ठा dentry *afs_mntpt_lookup(काष्ठा inode *dir,
-				       काष्ठा dentry *dentry,
-				       अचिन्हित पूर्णांक flags);
-अटल पूर्णांक afs_mntpt_खोलो(काष्ठा inode *inode, काष्ठा file *file);
-अटल व्योम afs_mntpt_expiry_समयd_out(काष्ठा work_काष्ठा *work);
+static struct dentry *afs_mntpt_lookup(struct inode *dir,
+				       struct dentry *dentry,
+				       unsigned int flags);
+static int afs_mntpt_open(struct inode *inode, struct file *file);
+static void afs_mntpt_expiry_timed_out(struct work_struct *work);
 
-स्थिर काष्ठा file_operations afs_mntpt_file_operations = अणु
-	.खोलो		= afs_mntpt_खोलो,
+const struct file_operations afs_mntpt_file_operations = {
+	.open		= afs_mntpt_open,
 	.llseek		= noop_llseek,
-पूर्ण;
+};
 
-स्थिर काष्ठा inode_operations afs_mntpt_inode_operations = अणु
+const struct inode_operations afs_mntpt_inode_operations = {
 	.lookup		= afs_mntpt_lookup,
-	.पढ़ोlink	= page_पढ़ोlink,
+	.readlink	= page_readlink,
 	.getattr	= afs_getattr,
-पूर्ण;
+};
 
-स्थिर काष्ठा inode_operations afs_स्वतःcell_inode_operations = अणु
+const struct inode_operations afs_autocell_inode_operations = {
 	.getattr	= afs_getattr,
-पूर्ण;
+};
 
-अटल LIST_HEAD(afs_vfsmounts);
-अटल DECLARE_DELAYED_WORK(afs_mntpt_expiry_समयr, afs_mntpt_expiry_समयd_out);
+static LIST_HEAD(afs_vfsmounts);
+static DECLARE_DELAYED_WORK(afs_mntpt_expiry_timer, afs_mntpt_expiry_timed_out);
 
-अटल अचिन्हित दीर्घ afs_mntpt_expiry_समयout = 10 * 60;
+static unsigned long afs_mntpt_expiry_timeout = 10 * 60;
 
-अटल स्थिर अक्षर afs_root_volume[] = "root.cell";
+static const char afs_root_volume[] = "root.cell";
 
 /*
  * no valid lookup procedure on this sort of dir
  */
-अटल काष्ठा dentry *afs_mntpt_lookup(काष्ठा inode *dir,
-				       काष्ठा dentry *dentry,
-				       अचिन्हित पूर्णांक flags)
-अणु
+static struct dentry *afs_mntpt_lookup(struct inode *dir,
+				       struct dentry *dentry,
+				       unsigned int flags)
+{
 	_enter("%p,%p{%pd2}", dir, dentry, dentry);
-	वापस ERR_PTR(-EREMOTE);
-पूर्ण
+	return ERR_PTR(-EREMOTE);
+}
 
 /*
- * no valid खोलो procedure on this sort of dir
+ * no valid open procedure on this sort of dir
  */
-अटल पूर्णांक afs_mntpt_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
+static int afs_mntpt_open(struct inode *inode, struct file *file)
+{
 	_enter("%p,%p{%pD2}", inode, file, file);
-	वापस -EREMOTE;
-पूर्ण
+	return -EREMOTE;
+}
 
 /*
- * Set the parameters क्रम the proposed superblock.
+ * Set the parameters for the proposed superblock.
  */
-अटल पूर्णांक afs_mntpt_set_params(काष्ठा fs_context *fc, काष्ठा dentry *mntpt)
-अणु
-	काष्ठा afs_fs_context *ctx = fc->fs_निजी;
-	काष्ठा afs_super_info *src_as = AFS_FS_S(mntpt->d_sb);
-	काष्ठा afs_vnode *vnode = AFS_FS_I(d_inode(mntpt));
-	काष्ठा afs_cell *cell;
-	स्थिर अक्षर *p;
-	पूर्णांक ret;
+static int afs_mntpt_set_params(struct fs_context *fc, struct dentry *mntpt)
+{
+	struct afs_fs_context *ctx = fc->fs_private;
+	struct afs_super_info *src_as = AFS_FS_S(mntpt->d_sb);
+	struct afs_vnode *vnode = AFS_FS_I(d_inode(mntpt));
+	struct afs_cell *cell;
+	const char *p;
+	int ret;
 
-	अगर (fc->net_ns != src_as->net_ns) अणु
+	if (fc->net_ns != src_as->net_ns) {
 		put_net(fc->net_ns);
 		fc->net_ns = get_net(src_as->net_ns);
-	पूर्ण
+	}
 
-	अगर (src_as->volume && src_as->volume->type == AFSVL_RWVOL) अणु
+	if (src_as->volume && src_as->volume->type == AFSVL_RWVOL) {
 		ctx->type = AFSVL_RWVOL;
-		ctx->क्रमce = true;
-	पूर्ण
-	अगर (ctx->cell) अणु
+		ctx->force = true;
+	}
+	if (ctx->cell) {
 		afs_unuse_cell(ctx->net, ctx->cell, afs_cell_trace_unuse_mntpt);
-		ctx->cell = शून्य;
-	पूर्ण
-	अगर (test_bit(AFS_VNODE_PSEUDOसूची, &vnode->flags)) अणु
-		/* अगर the directory is a pseuकरो directory, use the d_name */
-		अचिन्हित size = mntpt->d_name.len;
+		ctx->cell = NULL;
+	}
+	if (test_bit(AFS_VNODE_PSEUDODIR, &vnode->flags)) {
+		/* if the directory is a pseudo directory, use the d_name */
+		unsigned size = mntpt->d_name.len;
 
-		अगर (size < 2)
-			वापस -ENOENT;
+		if (size < 2)
+			return -ENOENT;
 
 		p = mntpt->d_name.name;
-		अगर (mntpt->d_name.name[0] == '.') अणु
+		if (mntpt->d_name.name[0] == '.') {
 			size--;
 			p++;
 			ctx->type = AFSVL_RWVOL;
-			ctx->क्रमce = true;
-		पूर्ण
-		अगर (size > AFS_MAXCELLNAME)
-			वापस -ENAMETOOLONG;
+			ctx->force = true;
+		}
+		if (size > AFS_MAXCELLNAME)
+			return -ENAMETOOLONG;
 
-		cell = afs_lookup_cell(ctx->net, p, size, शून्य, false);
-		अगर (IS_ERR(cell)) अणु
+		cell = afs_lookup_cell(ctx->net, p, size, NULL, false);
+		if (IS_ERR(cell)) {
 			pr_err("kAFS: unable to lookup cell '%pd'\n", mntpt);
-			वापस PTR_ERR(cell);
-		पूर्ण
+			return PTR_ERR(cell);
+		}
 		ctx->cell = cell;
 
 		ctx->volname = afs_root_volume;
-		ctx->volnamesz = माप(afs_root_volume) - 1;
-	पूर्ण अन्यथा अणु
-		/* पढ़ो the contents of the AFS special symlink */
-		काष्ठा page *page;
-		loff_t size = i_size_पढ़ो(d_inode(mntpt));
-		अक्षर *buf;
+		ctx->volnamesz = sizeof(afs_root_volume) - 1;
+	} else {
+		/* read the contents of the AFS special symlink */
+		struct page *page;
+		loff_t size = i_size_read(d_inode(mntpt));
+		char *buf;
 
-		अगर (src_as->cell)
+		if (src_as->cell)
 			ctx->cell = afs_use_cell(src_as->cell, afs_cell_trace_use_mntpt);
 
-		अगर (size < 2 || size > PAGE_SIZE - 1)
-			वापस -EINVAL;
+		if (size < 2 || size > PAGE_SIZE - 1)
+			return -EINVAL;
 
-		page = पढ़ो_mapping_page(d_inode(mntpt)->i_mapping, 0, शून्य);
-		अगर (IS_ERR(page))
-			वापस PTR_ERR(page);
+		page = read_mapping_page(d_inode(mntpt)->i_mapping, 0, NULL);
+		if (IS_ERR(page))
+			return PTR_ERR(page);
 
-		अगर (PageError(page)) अणु
+		if (PageError(page)) {
 			ret = afs_bad(AFS_FS_I(d_inode(mntpt)), afs_file_error_mntpt);
 			put_page(page);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		buf = kmap(page);
 		ret = -EINVAL;
-		अगर (buf[size - 1] == '.')
+		if (buf[size - 1] == '.')
 			ret = vfs_parse_fs_string(fc, "source", buf, size - 1);
 		kunmap(page);
 		put_page(page);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+		if (ret < 0)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * create a vfsmount to be स्वतःmounted
+ * create a vfsmount to be automounted
  */
-अटल काष्ठा vfsmount *afs_mntpt_करो_स्वतःmount(काष्ठा dentry *mntpt)
-अणु
-	काष्ठा fs_context *fc;
-	काष्ठा vfsmount *mnt;
-	पूर्णांक ret;
+static struct vfsmount *afs_mntpt_do_automount(struct dentry *mntpt)
+{
+	struct fs_context *fc;
+	struct vfsmount *mnt;
+	int ret;
 
 	BUG_ON(!d_inode(mntpt));
 
-	fc = fs_context_क्रम_submount(&afs_fs_type, mntpt);
-	अगर (IS_ERR(fc))
-		वापस ERR_CAST(fc);
+	fc = fs_context_for_submount(&afs_fs_type, mntpt);
+	if (IS_ERR(fc))
+		return ERR_CAST(fc);
 
 	ret = afs_mntpt_set_params(fc, mntpt);
-	अगर (!ret)
+	if (!ret)
 		mnt = fc_mount(fc);
-	अन्यथा
+	else
 		mnt = ERR_PTR(ret);
 
 	put_fs_context(fc);
-	वापस mnt;
-पूर्ण
+	return mnt;
+}
 
 /*
- * handle an स्वतःmount poपूर्णांक
+ * handle an automount point
  */
-काष्ठा vfsmount *afs_d_स्वतःmount(काष्ठा path *path)
-अणु
-	काष्ठा vfsmount *newmnt;
+struct vfsmount *afs_d_automount(struct path *path)
+{
+	struct vfsmount *newmnt;
 
 	_enter("{%pd}", path->dentry);
 
-	newmnt = afs_mntpt_करो_स्वतःmount(path->dentry);
-	अगर (IS_ERR(newmnt))
-		वापस newmnt;
+	newmnt = afs_mntpt_do_automount(path->dentry);
+	if (IS_ERR(newmnt))
+		return newmnt;
 
 	mntget(newmnt); /* prevent immediate expiration */
 	mnt_set_expiry(newmnt, &afs_vfsmounts);
-	queue_delayed_work(afs_wq, &afs_mntpt_expiry_समयr,
-			   afs_mntpt_expiry_समयout * HZ);
+	queue_delayed_work(afs_wq, &afs_mntpt_expiry_timer,
+			   afs_mntpt_expiry_timeout * HZ);
 	_leave(" = %p", newmnt);
-	वापस newmnt;
-पूर्ण
+	return newmnt;
+}
 
 /*
- * handle mountpoपूर्णांक expiry समयr going off
+ * handle mountpoint expiry timer going off
  */
-अटल व्योम afs_mntpt_expiry_समयd_out(काष्ठा work_काष्ठा *work)
-अणु
+static void afs_mntpt_expiry_timed_out(struct work_struct *work)
+{
 	_enter("");
 
-	अगर (!list_empty(&afs_vfsmounts)) अणु
-		mark_mounts_क्रम_expiry(&afs_vfsmounts);
-		queue_delayed_work(afs_wq, &afs_mntpt_expiry_समयr,
-				   afs_mntpt_expiry_समयout * HZ);
-	पूर्ण
+	if (!list_empty(&afs_vfsmounts)) {
+		mark_mounts_for_expiry(&afs_vfsmounts);
+		queue_delayed_work(afs_wq, &afs_mntpt_expiry_timer,
+				   afs_mntpt_expiry_timeout * HZ);
+	}
 
 	_leave("");
-पूर्ण
+}
 
 /*
- * समाप्त the AFS mountpoपूर्णांक समयr अगर it's still running
+ * kill the AFS mountpoint timer if it's still running
  */
-व्योम afs_mntpt_समाप्त_समयr(व्योम)
-अणु
+void afs_mntpt_kill_timer(void)
+{
 	_enter("");
 
 	ASSERT(list_empty(&afs_vfsmounts));
-	cancel_delayed_work_sync(&afs_mntpt_expiry_समयr);
-पूर्ण
+	cancel_delayed_work_sync(&afs_mntpt_expiry_timer);
+}

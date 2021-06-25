@@ -1,43 +1,42 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/bpf.h>
-#समावेश <linux/in.h>
-#समावेश <sys/socket.h>
+#include <linux/stddef.h>
+#include <linux/bpf.h>
+#include <linux/in.h>
+#include <sys/socket.h>
 
-#समावेश <bpf/bpf_helpers.h>
-#समावेश <bpf/bpf_endian.h>
+#include <bpf/bpf_helpers.h>
+#include <bpf/bpf_endian.h>
 
-#समावेश <bpf_sockopt_helpers.h>
+#include <bpf_sockopt_helpers.h>
 
-#घोषणा SERV4_IP		0xc0a801feU /* 192.168.1.254 */
-#घोषणा SERV4_PORT		4040
+#define SERV4_IP		0xc0a801feU /* 192.168.1.254 */
+#define SERV4_PORT		4040
 
 SEC("cgroup/recvmsg4")
-पूर्णांक recvmsg4_prog(काष्ठा bpf_sock_addr *ctx)
-अणु
-	काष्ठा bpf_sock *sk;
+int recvmsg4_prog(struct bpf_sock_addr *ctx)
+{
+	struct bpf_sock *sk;
 	__u32 user_ip4;
 	__u16 user_port;
 
 	sk = ctx->sk;
-	अगर (!sk)
-		वापस 1;
+	if (!sk)
+		return 1;
 
-	अगर (sk->family != AF_INET)
-		वापस 1;
+	if (sk->family != AF_INET)
+		return 1;
 
-	अगर (ctx->type != SOCK_STREAM && ctx->type != SOCK_DGRAM)
-		वापस 1;
+	if (ctx->type != SOCK_STREAM && ctx->type != SOCK_DGRAM)
+		return 1;
 
-	अगर (!get_set_sk_priority(ctx))
-		वापस 1;
+	if (!get_set_sk_priority(ctx))
+		return 1;
 
 	ctx->user_ip4 = bpf_htonl(SERV4_IP);
 	ctx->user_port = bpf_htons(SERV4_PORT);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अक्षर _license[] SEC("license") = "GPL";
+char _license[] SEC("license") = "GPL";

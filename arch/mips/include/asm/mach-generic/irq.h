@@ -1,34 +1,33 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 2003 by Ralf Baechle
  */
-#अगर_अघोषित __ASM_MACH_GENERIC_IRQ_H
-#घोषणा __ASM_MACH_GENERIC_IRQ_H
+#ifndef __ASM_MACH_GENERIC_IRQ_H
+#define __ASM_MACH_GENERIC_IRQ_H
 
-#अगर_अघोषित NR_IRQS
-#घोषणा NR_IRQS 256
-#पूर्ण_अगर
+#ifndef NR_IRQS
+#define NR_IRQS 256
+#endif
 
-#अगर_घोषित CONFIG_I8259
-#अगर_अघोषित I8259A_IRQ_BASE
-#घोषणा I8259A_IRQ_BASE 0
-#पूर्ण_अगर
-#पूर्ण_अगर
+#ifdef CONFIG_I8259
+#ifndef I8259A_IRQ_BASE
+#define I8259A_IRQ_BASE 0
+#endif
+#endif
 
-#अगर_घोषित CONFIG_IRQ_MIPS_CPU
+#ifdef CONFIG_IRQ_MIPS_CPU
 
-#अगर_अघोषित MIPS_CPU_IRQ_BASE
-#अगर_घोषित CONFIG_I8259
-#घोषणा MIPS_CPU_IRQ_BASE 16
-#अन्यथा
-#घोषणा MIPS_CPU_IRQ_BASE 0
-#पूर्ण_अगर /* CONFIG_I8259 */
-#पूर्ण_अगर
+#ifndef MIPS_CPU_IRQ_BASE
+#ifdef CONFIG_I8259
+#define MIPS_CPU_IRQ_BASE 16
+#else
+#define MIPS_CPU_IRQ_BASE 0
+#endif /* CONFIG_I8259 */
+#endif
 
-#पूर्ण_अगर /* CONFIG_IRQ_MIPS_CPU */
+#endif /* CONFIG_IRQ_MIPS_CPU */
 
-#पूर्ण_अगर /* __ASM_MACH_GENERIC_IRQ_H */
+#endif /* __ASM_MACH_GENERIC_IRQ_H */

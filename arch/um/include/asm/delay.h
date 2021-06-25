@@ -1,31 +1,30 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __UM_DELAY_H
-#घोषणा __UM_DELAY_H
-#समावेश <यंत्र-generic/delay.h>
-#समावेश <linux/समय-पूर्णांकernal.h>
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __UM_DELAY_H
+#define __UM_DELAY_H
+#include <asm-generic/delay.h>
+#include <linux/time-internal.h>
 
-अटल अंतरभूत व्योम um_ndelay(अचिन्हित दीर्घ nsecs)
-अणु
-	अगर (समय_प्रकारravel_mode == TT_MODE_INFCPU ||
-	    समय_प्रकारravel_mode == TT_MODE_EXTERNAL) अणु
-		समय_प्रकारravel_ndelay(nsecs);
-		वापस;
-	पूर्ण
+static inline void um_ndelay(unsigned long nsecs)
+{
+	if (time_travel_mode == TT_MODE_INFCPU ||
+	    time_travel_mode == TT_MODE_EXTERNAL) {
+		time_travel_ndelay(nsecs);
+		return;
+	}
 	ndelay(nsecs);
-पूर्ण
-#अघोषित ndelay
-#घोषणा ndelay um_ndelay
+}
+#undef ndelay
+#define ndelay um_ndelay
 
-अटल अंतरभूत व्योम um_udelay(अचिन्हित दीर्घ usecs)
-अणु
-	अगर (समय_प्रकारravel_mode == TT_MODE_INFCPU ||
-	    समय_प्रकारravel_mode == TT_MODE_EXTERNAL) अणु
-		समय_प्रकारravel_ndelay(1000 * usecs);
-		वापस;
-	पूर्ण
+static inline void um_udelay(unsigned long usecs)
+{
+	if (time_travel_mode == TT_MODE_INFCPU ||
+	    time_travel_mode == TT_MODE_EXTERNAL) {
+		time_travel_ndelay(1000 * usecs);
+		return;
+	}
 	udelay(usecs);
-पूर्ण
-#अघोषित udelay
-#घोषणा udelay um_udelay
-#पूर्ण_अगर /* __UM_DELAY_H */
+}
+#undef udelay
+#define udelay um_udelay
+#endif /* __UM_DELAY_H */

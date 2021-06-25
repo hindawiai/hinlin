@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * linux/drivers/video/omap2/omapfb-sysfs.c
  *
@@ -10,96 +9,96 @@
  * by Imre Deak.
  */
 
-#समावेश <linux/fb.h>
-#समावेश <linux/sysfs.h>
-#समावेश <linux/device.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/omapfb.h>
+#include <linux/fb.h>
+#include <linux/sysfs.h>
+#include <linux/device.h>
+#include <linux/uaccess.h>
+#include <linux/platform_device.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/omapfb.h>
 
-#समावेश <video/omapfb_dss.h>
-#समावेश <video/omapvrfb.h>
+#include <video/omapfb_dss.h>
+#include <video/omapvrfb.h>
 
-#समावेश "omapfb.h"
+#include "omapfb.h"
 
-अटल sमाप_प्रकार show_rotate_type(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा fb_info *fbi = dev_get_drvdata(dev);
-	काष्ठा omapfb_info *ofbi = FB2OFB(fbi);
+static ssize_t show_rotate_type(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct fb_info *fbi = dev_get_drvdata(dev);
+	struct omapfb_info *ofbi = FB2OFB(fbi);
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", ofbi->rotation_type);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%d\n", ofbi->rotation_type);
+}
 
-अटल sमाप_प्रकार store_rotate_type(काष्ठा device *dev,
-		काष्ठा device_attribute *attr,
-		स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा fb_info *fbi = dev_get_drvdata(dev);
-	काष्ठा omapfb_info *ofbi = FB2OFB(fbi);
-	काष्ठा omapfb2_mem_region *rg;
-	पूर्णांक rot_type;
-	पूर्णांक r;
+static ssize_t store_rotate_type(struct device *dev,
+		struct device_attribute *attr,
+		const char *buf, size_t count)
+{
+	struct fb_info *fbi = dev_get_drvdata(dev);
+	struct omapfb_info *ofbi = FB2OFB(fbi);
+	struct omapfb2_mem_region *rg;
+	int rot_type;
+	int r;
 
-	r = kstrtoपूर्णांक(buf, 0, &rot_type);
-	अगर (r)
-		वापस r;
+	r = kstrtoint(buf, 0, &rot_type);
+	if (r)
+		return r;
 
-	अगर (rot_type != OMAP_DSS_ROT_DMA && rot_type != OMAP_DSS_ROT_VRFB)
-		वापस -EINVAL;
+	if (rot_type != OMAP_DSS_ROT_DMA && rot_type != OMAP_DSS_ROT_VRFB)
+		return -EINVAL;
 
 	lock_fb_info(fbi);
 
 	r = 0;
-	अगर (rot_type == ofbi->rotation_type)
-		जाओ out;
+	if (rot_type == ofbi->rotation_type)
+		goto out;
 
 	rg = omapfb_get_mem_region(ofbi->region);
 
-	अगर (rg->size) अणु
+	if (rg->size) {
 		r = -EBUSY;
-		जाओ put_region;
-	पूर्ण
+		goto put_region;
+	}
 
 	ofbi->rotation_type = rot_type;
 
 	/*
-	 * Since the VRAM क्रम this FB is not allocated at the moment we करोn't
-	 * need to करो any further parameter checking at this poपूर्णांक.
+	 * Since the VRAM for this FB is not allocated at the moment we don't
+	 * need to do any further parameter checking at this point.
 	 */
 put_region:
 	omapfb_put_mem_region(rg);
 out:
 	unlock_fb_info(fbi);
 
-	वापस r ? r : count;
-पूर्ण
+	return r ? r : count;
+}
 
 
-अटल sमाप_प्रकार show_mirror(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा fb_info *fbi = dev_get_drvdata(dev);
-	काष्ठा omapfb_info *ofbi = FB2OFB(fbi);
+static ssize_t show_mirror(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct fb_info *fbi = dev_get_drvdata(dev);
+	struct omapfb_info *ofbi = FB2OFB(fbi);
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", ofbi->mirror);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%d\n", ofbi->mirror);
+}
 
-अटल sमाप_प्रकार store_mirror(काष्ठा device *dev,
-		काष्ठा device_attribute *attr,
-		स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा fb_info *fbi = dev_get_drvdata(dev);
-	काष्ठा omapfb_info *ofbi = FB2OFB(fbi);
+static ssize_t store_mirror(struct device *dev,
+		struct device_attribute *attr,
+		const char *buf, size_t count)
+{
+	struct fb_info *fbi = dev_get_drvdata(dev);
+	struct omapfb_info *ofbi = FB2OFB(fbi);
 	bool mirror;
-	पूर्णांक r;
-	काष्ठा fb_var_screeninfo new_var;
+	int r;
+	struct fb_var_screeninfo new_var;
 
 	r = strtobool(buf, &mirror);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	lock_fb_info(fbi);
 
@@ -107,17 +106,17 @@ out:
 
 	omapfb_get_mem_region(ofbi->region);
 
-	स_नकल(&new_var, &fbi->var, माप(new_var));
+	memcpy(&new_var, &fbi->var, sizeof(new_var));
 	r = check_fb_var(fbi, &new_var);
-	अगर (r)
-		जाओ out;
-	स_नकल(&fbi->var, &new_var, माप(fbi->var));
+	if (r)
+		goto out;
+	memcpy(&fbi->var, &new_var, sizeof(fbi->var));
 
 	set_fb_fix(fbi);
 
 	r = omapfb_apply_changes(fbi, 0);
-	अगर (r)
-		जाओ out;
+	if (r)
+		goto out;
 
 	r = count;
 out:
@@ -125,137 +124,137 @@ out:
 
 	unlock_fb_info(fbi);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल sमाप_प्रकार show_overlays(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा fb_info *fbi = dev_get_drvdata(dev);
-	काष्ठा omapfb_info *ofbi = FB2OFB(fbi);
-	काष्ठा omapfb2_device *fbdev = ofbi->fbdev;
-	sमाप_प्रकार l = 0;
-	पूर्णांक t;
+static ssize_t show_overlays(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct fb_info *fbi = dev_get_drvdata(dev);
+	struct omapfb_info *ofbi = FB2OFB(fbi);
+	struct omapfb2_device *fbdev = ofbi->fbdev;
+	ssize_t l = 0;
+	int t;
 
 	lock_fb_info(fbi);
 	omapfb_lock(fbdev);
 
-	क्रम (t = 0; t < ofbi->num_overlays; t++) अणु
-		काष्ठा omap_overlay *ovl = ofbi->overlays[t];
-		पूर्णांक ovlnum;
+	for (t = 0; t < ofbi->num_overlays; t++) {
+		struct omap_overlay *ovl = ofbi->overlays[t];
+		int ovlnum;
 
-		क्रम (ovlnum = 0; ovlnum < fbdev->num_overlays; ++ovlnum)
-			अगर (ovl == fbdev->overlays[ovlnum])
-				अवरोध;
+		for (ovlnum = 0; ovlnum < fbdev->num_overlays; ++ovlnum)
+			if (ovl == fbdev->overlays[ovlnum])
+				break;
 
-		l += scnम_लिखो(buf + l, PAGE_SIZE - l, "%s%d",
+		l += scnprintf(buf + l, PAGE_SIZE - l, "%s%d",
 				t == 0 ? "" : ",", ovlnum);
-	पूर्ण
+	}
 
-	l += scnम_लिखो(buf + l, PAGE_SIZE - l, "\n");
+	l += scnprintf(buf + l, PAGE_SIZE - l, "\n");
 
 	omapfb_unlock(fbdev);
 	unlock_fb_info(fbi);
 
-	वापस l;
-पूर्ण
+	return l;
+}
 
-अटल काष्ठा omapfb_info *get_overlay_fb(काष्ठा omapfb2_device *fbdev,
-		काष्ठा omap_overlay *ovl)
-अणु
-	पूर्णांक i, t;
+static struct omapfb_info *get_overlay_fb(struct omapfb2_device *fbdev,
+		struct omap_overlay *ovl)
+{
+	int i, t;
 
-	क्रम (i = 0; i < fbdev->num_fbs; i++) अणु
-		काष्ठा omapfb_info *ofbi = FB2OFB(fbdev->fbs[i]);
+	for (i = 0; i < fbdev->num_fbs; i++) {
+		struct omapfb_info *ofbi = FB2OFB(fbdev->fbs[i]);
 
-		क्रम (t = 0; t < ofbi->num_overlays; t++) अणु
-			अगर (ofbi->overlays[t] == ovl)
-				वापस ofbi;
-		पूर्ण
-	पूर्ण
+		for (t = 0; t < ofbi->num_overlays; t++) {
+			if (ofbi->overlays[t] == ovl)
+				return ofbi;
+		}
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल sमाप_प्रकार store_overlays(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा fb_info *fbi = dev_get_drvdata(dev);
-	काष्ठा omapfb_info *ofbi = FB2OFB(fbi);
-	काष्ठा omapfb2_device *fbdev = ofbi->fbdev;
-	काष्ठा omap_overlay *ovls[OMAPFB_MAX_OVL_PER_FB];
-	काष्ठा omap_overlay *ovl;
-	पूर्णांक num_ovls, r, i;
-	पूर्णांक len;
+static ssize_t store_overlays(struct device *dev, struct device_attribute *attr,
+		const char *buf, size_t count)
+{
+	struct fb_info *fbi = dev_get_drvdata(dev);
+	struct omapfb_info *ofbi = FB2OFB(fbi);
+	struct omapfb2_device *fbdev = ofbi->fbdev;
+	struct omap_overlay *ovls[OMAPFB_MAX_OVL_PER_FB];
+	struct omap_overlay *ovl;
+	int num_ovls, r, i;
+	int len;
 	bool added = false;
 
 	num_ovls = 0;
 
-	len = म_माप(buf);
-	अगर (buf[len - 1] == '\n')
+	len = strlen(buf);
+	if (buf[len - 1] == '\n')
 		len = len - 1;
 
 	lock_fb_info(fbi);
 	omapfb_lock(fbdev);
 
-	अगर (len > 0) अणु
-		अक्षर *p = (अक्षर *)buf;
-		पूर्णांक ovlnum;
+	if (len > 0) {
+		char *p = (char *)buf;
+		int ovlnum;
 
-		जबतक (p < buf + len) अणु
-			पूर्णांक found;
-			अगर (num_ovls == OMAPFB_MAX_OVL_PER_FB) अणु
+		while (p < buf + len) {
+			int found;
+			if (num_ovls == OMAPFB_MAX_OVL_PER_FB) {
 				r = -EINVAL;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
-			ovlnum = simple_म_से_अदीर्घ(p, &p, 0);
-			अगर (ovlnum > fbdev->num_overlays) अणु
+			ovlnum = simple_strtoul(p, &p, 0);
+			if (ovlnum > fbdev->num_overlays) {
 				r = -EINVAL;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
 			found = 0;
-			क्रम (i = 0; i < num_ovls; ++i) अणु
-				अगर (ovls[i] == fbdev->overlays[ovlnum]) अणु
+			for (i = 0; i < num_ovls; ++i) {
+				if (ovls[i] == fbdev->overlays[ovlnum]) {
 					found = 1;
-					अवरोध;
-				पूर्ण
-			पूर्ण
+					break;
+				}
+			}
 
-			अगर (!found)
+			if (!found)
 				ovls[num_ovls++] = fbdev->overlays[ovlnum];
 
 			p++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्रम (i = 0; i < num_ovls; ++i) अणु
-		काष्ठा omapfb_info *ofbi2 = get_overlay_fb(fbdev, ovls[i]);
-		अगर (ofbi2 && ofbi2 != ofbi) अणु
+	for (i = 0; i < num_ovls; ++i) {
+		struct omapfb_info *ofbi2 = get_overlay_fb(fbdev, ovls[i]);
+		if (ofbi2 && ofbi2 != ofbi) {
 			dev_err(fbdev->dev, "overlay already in use\n");
 			r = -EINVAL;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	/* detach unused overlays */
-	क्रम (i = 0; i < ofbi->num_overlays; ++i) अणु
-		पूर्णांक t, found;
+	for (i = 0; i < ofbi->num_overlays; ++i) {
+		int t, found;
 
 		ovl = ofbi->overlays[i];
 
 		found = 0;
 
-		क्रम (t = 0; t < num_ovls; ++t) अणु
-			अगर (ovl == ovls[t]) अणु
+		for (t = 0; t < num_ovls; ++t) {
+			if (ovl == ovls[t]) {
 				found = 1;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
-		अगर (found)
-			जारी;
+		if (found)
+			continue;
 
 		DBG("detaching %d\n", ofbi->overlays[i]->id);
 
@@ -263,132 +262,132 @@ out:
 
 		omapfb_overlay_enable(ovl, 0);
 
-		अगर (ovl->manager)
+		if (ovl->manager)
 			ovl->manager->apply(ovl->manager);
 
 		omapfb_put_mem_region(ofbi->region);
 
-		क्रम (t = i + 1; t < ofbi->num_overlays; t++) अणु
+		for (t = i + 1; t < ofbi->num_overlays; t++) {
 			ofbi->rotation[t-1] = ofbi->rotation[t];
 			ofbi->overlays[t-1] = ofbi->overlays[t];
-		पूर्ण
+		}
 
 		ofbi->num_overlays--;
 		i--;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < num_ovls; ++i) अणु
-		पूर्णांक t, found;
+	for (i = 0; i < num_ovls; ++i) {
+		int t, found;
 
 		ovl = ovls[i];
 
 		found = 0;
 
-		क्रम (t = 0; t < ofbi->num_overlays; ++t) अणु
-			अगर (ovl == ofbi->overlays[t]) अणु
+		for (t = 0; t < ofbi->num_overlays; ++t) {
+			if (ovl == ofbi->overlays[t]) {
 				found = 1;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
-		अगर (found)
-			जारी;
+		if (found)
+			continue;
 		ofbi->rotation[ofbi->num_overlays] = 0;
 		ofbi->overlays[ofbi->num_overlays++] = ovl;
 
 		added = true;
-	पूर्ण
+	}
 
-	अगर (added) अणु
+	if (added) {
 		omapfb_get_mem_region(ofbi->region);
 
 		r = omapfb_apply_changes(fbi, 0);
 
 		omapfb_put_mem_region(ofbi->region);
 
-		अगर (r)
-			जाओ out;
-	पूर्ण
+		if (r)
+			goto out;
+	}
 
 	r = count;
 out:
 	omapfb_unlock(fbdev);
 	unlock_fb_info(fbi);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल sमाप_प्रकार show_overlays_rotate(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा fb_info *fbi = dev_get_drvdata(dev);
-	काष्ठा omapfb_info *ofbi = FB2OFB(fbi);
-	sमाप_प्रकार l = 0;
-	पूर्णांक t;
+static ssize_t show_overlays_rotate(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct fb_info *fbi = dev_get_drvdata(dev);
+	struct omapfb_info *ofbi = FB2OFB(fbi);
+	ssize_t l = 0;
+	int t;
 
 	lock_fb_info(fbi);
 
-	क्रम (t = 0; t < ofbi->num_overlays; t++) अणु
-		l += scnम_लिखो(buf + l, PAGE_SIZE - l, "%s%d",
+	for (t = 0; t < ofbi->num_overlays; t++) {
+		l += scnprintf(buf + l, PAGE_SIZE - l, "%s%d",
 				t == 0 ? "" : ",", ofbi->rotation[t]);
-	पूर्ण
+	}
 
-	l += scnम_लिखो(buf + l, PAGE_SIZE - l, "\n");
+	l += scnprintf(buf + l, PAGE_SIZE - l, "\n");
 
 	unlock_fb_info(fbi);
 
-	वापस l;
-पूर्ण
+	return l;
+}
 
-अटल sमाप_प्रकार store_overlays_rotate(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा fb_info *fbi = dev_get_drvdata(dev);
-	काष्ठा omapfb_info *ofbi = FB2OFB(fbi);
-	पूर्णांक num_ovls = 0, r, i;
-	पूर्णांक len;
+static ssize_t store_overlays_rotate(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct fb_info *fbi = dev_get_drvdata(dev);
+	struct omapfb_info *ofbi = FB2OFB(fbi);
+	int num_ovls = 0, r, i;
+	int len;
 	bool changed = false;
 	u8 rotation[OMAPFB_MAX_OVL_PER_FB];
 
-	len = म_माप(buf);
-	अगर (buf[len - 1] == '\n')
+	len = strlen(buf);
+	if (buf[len - 1] == '\n')
 		len = len - 1;
 
 	lock_fb_info(fbi);
 
-	अगर (len > 0) अणु
-		अक्षर *p = (अक्षर *)buf;
+	if (len > 0) {
+		char *p = (char *)buf;
 
-		जबतक (p < buf + len) अणु
-			पूर्णांक rot;
+		while (p < buf + len) {
+			int rot;
 
-			अगर (num_ovls == ofbi->num_overlays) अणु
+			if (num_ovls == ofbi->num_overlays) {
 				r = -EINVAL;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
-			rot = simple_म_से_अदीर्घ(p, &p, 0);
-			अगर (rot < 0 || rot > 3) अणु
+			rot = simple_strtoul(p, &p, 0);
+			if (rot < 0 || rot > 3) {
 				r = -EINVAL;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
-			अगर (ofbi->rotation[num_ovls] != rot)
+			if (ofbi->rotation[num_ovls] != rot)
 				changed = true;
 
 			rotation[num_ovls++] = rot;
 
 			p++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (num_ovls != ofbi->num_overlays) अणु
+	if (num_ovls != ofbi->num_overlays) {
 		r = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (changed) अणु
-		क्रम (i = 0; i < num_ovls; ++i)
+	if (changed) {
+		for (i = 0; i < num_ovls; ++i)
 			ofbi->rotation[i] = rotation[i];
 
 		omapfb_get_mem_region(ofbi->region);
@@ -397,148 +396,148 @@ out:
 
 		omapfb_put_mem_region(ofbi->region);
 
-		अगर (r)
-			जाओ out;
+		if (r)
+			goto out;
 
 		/* FIXME error handling? */
-	पूर्ण
+	}
 
 	r = count;
 out:
 	unlock_fb_info(fbi);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल sमाप_प्रकार show_size(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा fb_info *fbi = dev_get_drvdata(dev);
-	काष्ठा omapfb_info *ofbi = FB2OFB(fbi);
+static ssize_t show_size(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct fb_info *fbi = dev_get_drvdata(dev);
+	struct omapfb_info *ofbi = FB2OFB(fbi);
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%lu\n", ofbi->region->size);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%lu\n", ofbi->region->size);
+}
 
-अटल sमाप_प्रकार store_size(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा fb_info *fbi = dev_get_drvdata(dev);
-	काष्ठा omapfb_info *ofbi = FB2OFB(fbi);
-	काष्ठा omapfb2_device *fbdev = ofbi->fbdev;
-	काष्ठा omap_dss_device *display = fb2display(fbi);
-	काष्ठा omapfb2_mem_region *rg;
-	अचिन्हित दीर्घ size;
-	पूर्णांक r;
-	पूर्णांक i;
+static ssize_t store_size(struct device *dev, struct device_attribute *attr,
+		const char *buf, size_t count)
+{
+	struct fb_info *fbi = dev_get_drvdata(dev);
+	struct omapfb_info *ofbi = FB2OFB(fbi);
+	struct omapfb2_device *fbdev = ofbi->fbdev;
+	struct omap_dss_device *display = fb2display(fbi);
+	struct omapfb2_mem_region *rg;
+	unsigned long size;
+	int r;
+	int i;
 
-	r = kम_से_अदीर्घ(buf, 0, &size);
-	अगर (r)
-		वापस r;
+	r = kstrtoul(buf, 0, &size);
+	if (r)
+		return r;
 
 	size = PAGE_ALIGN(size);
 
 	lock_fb_info(fbi);
 
-	अगर (display && display->driver->sync)
+	if (display && display->driver->sync)
 		display->driver->sync(display);
 
 	rg = ofbi->region;
 
-	करोwn_ग_लिखो_nested(&rg->lock, rg->id);
+	down_write_nested(&rg->lock, rg->id);
 	atomic_inc(&rg->lock_count);
 
-	अगर (atomic_पढ़ो(&rg->map_count)) अणु
+	if (atomic_read(&rg->map_count)) {
 		r = -EBUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	क्रम (i = 0; i < fbdev->num_fbs; i++) अणु
-		काष्ठा omapfb_info *ofbi2 = FB2OFB(fbdev->fbs[i]);
-		पूर्णांक j;
+	for (i = 0; i < fbdev->num_fbs; i++) {
+		struct omapfb_info *ofbi2 = FB2OFB(fbdev->fbs[i]);
+		int j;
 
-		अगर (ofbi2->region != rg)
-			जारी;
+		if (ofbi2->region != rg)
+			continue;
 
-		क्रम (j = 0; j < ofbi2->num_overlays; j++) अणु
-			काष्ठा omap_overlay *ovl;
+		for (j = 0; j < ofbi2->num_overlays; j++) {
+			struct omap_overlay *ovl;
 			ovl = ofbi2->overlays[j];
-			अगर (ovl->is_enabled(ovl)) अणु
+			if (ovl->is_enabled(ovl)) {
 				r = -EBUSY;
-				जाओ out;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto out;
+			}
+		}
+	}
 
-	अगर (size != ofbi->region->size) अणु
-		r = omapfb_पुनः_स्मृति_fbmem(fbi, size, ofbi->region->type);
-		अगर (r) अणु
+	if (size != ofbi->region->size) {
+		r = omapfb_realloc_fbmem(fbi, size, ofbi->region->type);
+		if (r) {
 			dev_err(dev, "realloc fbmem failed\n");
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	r = count;
 out:
 	atomic_dec(&rg->lock_count);
-	up_ग_लिखो(&rg->lock);
+	up_write(&rg->lock);
 
 	unlock_fb_info(fbi);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल sमाप_प्रकार show_phys(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा fb_info *fbi = dev_get_drvdata(dev);
-	काष्ठा omapfb_info *ofbi = FB2OFB(fbi);
+static ssize_t show_phys(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct fb_info *fbi = dev_get_drvdata(dev);
+	struct omapfb_info *ofbi = FB2OFB(fbi);
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%0x\n", ofbi->region->paddr);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%0x\n", ofbi->region->paddr);
+}
 
-अटल sमाप_प्रकार show_virt(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा fb_info *fbi = dev_get_drvdata(dev);
-	काष्ठा omapfb_info *ofbi = FB2OFB(fbi);
+static ssize_t show_virt(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct fb_info *fbi = dev_get_drvdata(dev);
+	struct omapfb_info *ofbi = FB2OFB(fbi);
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%p\n", ofbi->region->vaddr);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%p\n", ofbi->region->vaddr);
+}
 
-अटल sमाप_प्रकार show_upd_mode(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा fb_info *fbi = dev_get_drvdata(dev);
-	क्रमागत omapfb_update_mode mode;
-	पूर्णांक r;
+static ssize_t show_upd_mode(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct fb_info *fbi = dev_get_drvdata(dev);
+	enum omapfb_update_mode mode;
+	int r;
 
 	r = omapfb_get_update_mode(fbi, &mode);
 
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%u\n", (अचिन्हित)mode);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%u\n", (unsigned)mode);
+}
 
-अटल sमाप_प्रकार store_upd_mode(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा fb_info *fbi = dev_get_drvdata(dev);
-	अचिन्हित mode;
-	पूर्णांक r;
+static ssize_t store_upd_mode(struct device *dev, struct device_attribute *attr,
+		const char *buf, size_t count)
+{
+	struct fb_info *fbi = dev_get_drvdata(dev);
+	unsigned mode;
+	int r;
 
-	r = kstrtouपूर्णांक(buf, 0, &mode);
-	अगर (r)
-		वापस r;
+	r = kstrtouint(buf, 0, &mode);
+	if (r)
+		return r;
 
 	r = omapfb_set_update_mode(fbi, mode);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल काष्ठा device_attribute omapfb_attrs[] = अणु
+static struct device_attribute omapfb_attrs[] = {
 	__ATTR(rotate_type, S_IRUGO | S_IWUSR, show_rotate_type,
 			store_rotate_type),
 	__ATTR(mirror, S_IRUGO | S_IWUSR, show_mirror, store_mirror),
@@ -546,43 +545,43 @@ out:
 	__ATTR(overlays, S_IRUGO | S_IWUSR, show_overlays, store_overlays),
 	__ATTR(overlays_rotate, S_IRUGO | S_IWUSR, show_overlays_rotate,
 			store_overlays_rotate),
-	__ATTR(phys_addr, S_IRUGO, show_phys, शून्य),
-	__ATTR(virt_addr, S_IRUGO, show_virt, शून्य),
+	__ATTR(phys_addr, S_IRUGO, show_phys, NULL),
+	__ATTR(virt_addr, S_IRUGO, show_virt, NULL),
 	__ATTR(update_mode, S_IRUGO | S_IWUSR, show_upd_mode, store_upd_mode),
-पूर्ण;
+};
 
-पूर्णांक omapfb_create_sysfs(काष्ठा omapfb2_device *fbdev)
-अणु
-	पूर्णांक i;
-	पूर्णांक r;
+int omapfb_create_sysfs(struct omapfb2_device *fbdev)
+{
+	int i;
+	int r;
 
 	DBG("create sysfs for fbs\n");
-	क्रम (i = 0; i < fbdev->num_fbs; i++) अणु
-		पूर्णांक t;
-		क्रम (t = 0; t < ARRAY_SIZE(omapfb_attrs); t++) अणु
+	for (i = 0; i < fbdev->num_fbs; i++) {
+		int t;
+		for (t = 0; t < ARRAY_SIZE(omapfb_attrs); t++) {
 			r = device_create_file(fbdev->fbs[i]->dev,
 					&omapfb_attrs[t]);
 
-			अगर (r) अणु
+			if (r) {
 				dev_err(fbdev->dev, "failed to create sysfs "
 						"file\n");
-				वापस r;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return r;
+			}
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम omapfb_हटाओ_sysfs(काष्ठा omapfb2_device *fbdev)
-अणु
-	पूर्णांक i, t;
+void omapfb_remove_sysfs(struct omapfb2_device *fbdev)
+{
+	int i, t;
 
 	DBG("remove sysfs for fbs\n");
-	क्रम (i = 0; i < fbdev->num_fbs; i++) अणु
-		क्रम (t = 0; t < ARRAY_SIZE(omapfb_attrs); t++)
-			device_हटाओ_file(fbdev->fbs[i]->dev,
+	for (i = 0; i < fbdev->num_fbs; i++) {
+		for (t = 0; t < ARRAY_SIZE(omapfb_attrs); t++)
+			device_remove_file(fbdev->fbs[i]->dev,
 					&omapfb_attrs[t]);
-	पूर्ण
-पूर्ण
+	}
+}
 

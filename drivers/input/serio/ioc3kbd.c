@@ -1,170 +1,169 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * SGI IOC3 PS/2 controller driver क्रम linux
+ * SGI IOC3 PS/2 controller driver for linux
  *
- * Copyright (C) 2019 Thomas Bogenकरोerfer <tbogenकरोerfer@suse.de>
+ * Copyright (C) 2019 Thomas Bogendoerfer <tbogendoerfer@suse.de>
  *
  * Based on code Copyright (C) 2005 Stanislaw Skowronek <skylark@unaligned.org>
  *               Copyright (C) 2009 Johannes Dickgreber <tanzy@gmx.de>
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/serपन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/delay.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/serio.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
 
-#समावेश <यंत्र/sn/ioc3.h>
+#include <asm/sn/ioc3.h>
 
-काष्ठा ioc3kbd_data अणु
-	काष्ठा ioc3_serioregs __iomem *regs;
-	काष्ठा serio *kbd, *aux;
+struct ioc3kbd_data {
+	struct ioc3_serioregs __iomem *regs;
+	struct serio *kbd, *aux;
 	bool kbd_exists, aux_exists;
-	पूर्णांक irq;
-पूर्ण;
+	int irq;
+};
 
-अटल पूर्णांक ioc3kbd_रुको(काष्ठा ioc3_serioregs __iomem *regs, u32 mask)
-अणु
-	अचिन्हित दीर्घ समयout = 0;
+static int ioc3kbd_wait(struct ioc3_serioregs __iomem *regs, u32 mask)
+{
+	unsigned long timeout = 0;
 
-	जबतक ((पढ़ोl(&regs->km_csr) & mask) && (समयout < 250)) अणु
+	while ((readl(&regs->km_csr) & mask) && (timeout < 250)) {
 		udelay(50);
-		समयout++;
-	पूर्ण
-	वापस (समयout >= 250) ? -ETIMEDOUT : 0;
-पूर्ण
+		timeout++;
+	}
+	return (timeout >= 250) ? -ETIMEDOUT : 0;
+}
 
-अटल पूर्णांक ioc3kbd_ग_लिखो(काष्ठा serio *dev, u8 val)
-अणु
-	काष्ठा ioc3kbd_data *d = dev->port_data;
-	पूर्णांक ret;
+static int ioc3kbd_write(struct serio *dev, u8 val)
+{
+	struct ioc3kbd_data *d = dev->port_data;
+	int ret;
 
-	ret = ioc3kbd_रुको(d->regs, KM_CSR_K_WRT_PEND);
-	अगर (ret)
-		वापस ret;
+	ret = ioc3kbd_wait(d->regs, KM_CSR_K_WRT_PEND);
+	if (ret)
+		return ret;
 
-	ग_लिखोl(val, &d->regs->k_wd);
+	writel(val, &d->regs->k_wd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ioc3kbd_start(काष्ठा serio *dev)
-अणु
-	काष्ठा ioc3kbd_data *d = dev->port_data;
+static int ioc3kbd_start(struct serio *dev)
+{
+	struct ioc3kbd_data *d = dev->port_data;
 
 	d->kbd_exists = true;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ioc3kbd_stop(काष्ठा serio *dev)
-अणु
-	काष्ठा ioc3kbd_data *d = dev->port_data;
+static void ioc3kbd_stop(struct serio *dev)
+{
+	struct ioc3kbd_data *d = dev->port_data;
 
 	d->kbd_exists = false;
-पूर्ण
+}
 
-अटल पूर्णांक ioc3aux_ग_लिखो(काष्ठा serio *dev, u8 val)
-अणु
-	काष्ठा ioc3kbd_data *d = dev->port_data;
-	पूर्णांक ret;
+static int ioc3aux_write(struct serio *dev, u8 val)
+{
+	struct ioc3kbd_data *d = dev->port_data;
+	int ret;
 
-	ret = ioc3kbd_रुको(d->regs, KM_CSR_M_WRT_PEND);
-	अगर (ret)
-		वापस ret;
+	ret = ioc3kbd_wait(d->regs, KM_CSR_M_WRT_PEND);
+	if (ret)
+		return ret;
 
-	ग_लिखोl(val, &d->regs->m_wd);
+	writel(val, &d->regs->m_wd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ioc3aux_start(काष्ठा serio *dev)
-अणु
-	काष्ठा ioc3kbd_data *d = dev->port_data;
+static int ioc3aux_start(struct serio *dev)
+{
+	struct ioc3kbd_data *d = dev->port_data;
 
 	d->aux_exists = true;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ioc3aux_stop(काष्ठा serio *dev)
-अणु
-	काष्ठा ioc3kbd_data *d = dev->port_data;
+static void ioc3aux_stop(struct serio *dev)
+{
+	struct ioc3kbd_data *d = dev->port_data;
 
 	d->aux_exists = false;
-पूर्ण
+}
 
-अटल व्योम ioc3kbd_process_data(काष्ठा serio *dev, u32 data)
-अणु
-	अगर (data & KM_RD_VALID_0)
-		serio_पूर्णांकerrupt(dev, (data >> KM_RD_DATA_0_SHIFT) & 0xff, 0);
-	अगर (data & KM_RD_VALID_1)
-		serio_पूर्णांकerrupt(dev, (data >> KM_RD_DATA_1_SHIFT) & 0xff, 0);
-	अगर (data & KM_RD_VALID_2)
-		serio_पूर्णांकerrupt(dev, (data >> KM_RD_DATA_2_SHIFT) & 0xff, 0);
-पूर्ण
+static void ioc3kbd_process_data(struct serio *dev, u32 data)
+{
+	if (data & KM_RD_VALID_0)
+		serio_interrupt(dev, (data >> KM_RD_DATA_0_SHIFT) & 0xff, 0);
+	if (data & KM_RD_VALID_1)
+		serio_interrupt(dev, (data >> KM_RD_DATA_1_SHIFT) & 0xff, 0);
+	if (data & KM_RD_VALID_2)
+		serio_interrupt(dev, (data >> KM_RD_DATA_2_SHIFT) & 0xff, 0);
+}
 
-अटल irqवापस_t ioc3kbd_पूर्णांकr(पूर्णांक itq, व्योम *dev_id)
-अणु
-	काष्ठा ioc3kbd_data *d = dev_id;
+static irqreturn_t ioc3kbd_intr(int itq, void *dev_id)
+{
+	struct ioc3kbd_data *d = dev_id;
 	u32 data_k, data_m;
 
-	data_k = पढ़ोl(&d->regs->k_rd);
-	अगर (d->kbd_exists)
+	data_k = readl(&d->regs->k_rd);
+	if (d->kbd_exists)
 		ioc3kbd_process_data(d->kbd, data_k);
 
-	data_m = पढ़ोl(&d->regs->m_rd);
-	अगर (d->aux_exists)
+	data_m = readl(&d->regs->m_rd);
+	if (d->aux_exists)
 		ioc3kbd_process_data(d->aux, data_m);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक ioc3kbd_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा ioc3_serioregs __iomem *regs;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा ioc3kbd_data *d;
-	काष्ठा serio *sk, *sa;
-	पूर्णांक irq, ret;
+static int ioc3kbd_probe(struct platform_device *pdev)
+{
+	struct ioc3_serioregs __iomem *regs;
+	struct device *dev = &pdev->dev;
+	struct ioc3kbd_data *d;
+	struct serio *sk, *sa;
+	int irq, ret;
 
-	regs = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(regs))
-		वापस PTR_ERR(regs);
+	regs = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(regs))
+		return PTR_ERR(regs);
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0)
-		वापस -ENXIO;
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0)
+		return -ENXIO;
 
-	d = devm_kzalloc(dev, माप(*d), GFP_KERNEL);
-	अगर (!d)
-		वापस -ENOMEM;
+	d = devm_kzalloc(dev, sizeof(*d), GFP_KERNEL);
+	if (!d)
+		return -ENOMEM;
 
-	sk = kzalloc(माप(*sk), GFP_KERNEL);
-	अगर (!sk)
-		वापस -ENOMEM;
+	sk = kzalloc(sizeof(*sk), GFP_KERNEL);
+	if (!sk)
+		return -ENOMEM;
 
-	sa = kzalloc(माप(*sa), GFP_KERNEL);
-	अगर (!sa) अणु
-		kमुक्त(sk);
-		वापस -ENOMEM;
-	पूर्ण
+	sa = kzalloc(sizeof(*sa), GFP_KERNEL);
+	if (!sa) {
+		kfree(sk);
+		return -ENOMEM;
+	}
 
 	sk->id.type = SERIO_8042;
-	sk->ग_लिखो = ioc3kbd_ग_लिखो;
+	sk->write = ioc3kbd_write;
 	sk->start = ioc3kbd_start;
 	sk->stop = ioc3kbd_stop;
-	snम_लिखो(sk->name, माप(sk->name), "IOC3 keyboard %d", pdev->id);
-	snम_लिखो(sk->phys, माप(sk->phys), "ioc3/serio%dkbd", pdev->id);
+	snprintf(sk->name, sizeof(sk->name), "IOC3 keyboard %d", pdev->id);
+	snprintf(sk->phys, sizeof(sk->phys), "ioc3/serio%dkbd", pdev->id);
 	sk->port_data = d;
 	sk->dev.parent = dev;
 
 	sa->id.type = SERIO_8042;
-	sa->ग_लिखो = ioc3aux_ग_लिखो;
+	sa->write = ioc3aux_write;
 	sa->start = ioc3aux_start;
 	sa->stop = ioc3aux_stop;
-	snम_लिखो(sa->name, माप(sa->name), "IOC3 auxiliary %d", pdev->id);
-	snम_लिखो(sa->phys, माप(sa->phys), "ioc3/serio%daux", pdev->id);
+	snprintf(sa->name, sizeof(sa->name), "IOC3 auxiliary %d", pdev->id);
+	snprintf(sa->phys, sizeof(sa->phys), "ioc3/serio%daux", pdev->id);
 	sa->port_data = d;
 	sa->dev.parent = dev;
 
@@ -173,44 +172,44 @@
 	d->aux = sa;
 	d->irq = irq;
 
-	platक्रमm_set_drvdata(pdev, d);
-	serio_रेजिस्टर_port(d->kbd);
-	serio_रेजिस्टर_port(d->aux);
+	platform_set_drvdata(pdev, d);
+	serio_register_port(d->kbd);
+	serio_register_port(d->aux);
 
-	ret = request_irq(irq, ioc3kbd_पूर्णांकr, IRQF_SHARED, "ioc3-kbd", d);
-	अगर (ret) अणु
+	ret = request_irq(irq, ioc3kbd_intr, IRQF_SHARED, "ioc3-kbd", d);
+	if (ret) {
 		dev_err(dev, "could not request IRQ %d\n", irq);
-		serio_unरेजिस्टर_port(d->kbd);
-		serio_unरेजिस्टर_port(d->aux);
-		वापस ret;
-	पूर्ण
+		serio_unregister_port(d->kbd);
+		serio_unregister_port(d->aux);
+		return ret;
+	}
 
 	/* enable ports */
-	ग_लिखोl(KM_CSR_K_CLAMP_3 | KM_CSR_M_CLAMP_3, &regs->km_csr);
+	writel(KM_CSR_K_CLAMP_3 | KM_CSR_M_CLAMP_3, &regs->km_csr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ioc3kbd_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा ioc3kbd_data *d = platक्रमm_get_drvdata(pdev);
+static int ioc3kbd_remove(struct platform_device *pdev)
+{
+	struct ioc3kbd_data *d = platform_get_drvdata(pdev);
 
-	मुक्त_irq(d->irq, d);
+	free_irq(d->irq, d);
 
-	serio_unरेजिस्टर_port(d->kbd);
-	serio_unरेजिस्टर_port(d->aux);
+	serio_unregister_port(d->kbd);
+	serio_unregister_port(d->aux);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver ioc3kbd_driver = अणु
+static struct platform_driver ioc3kbd_driver = {
 	.probe          = ioc3kbd_probe,
-	.हटाओ         = ioc3kbd_हटाओ,
-	.driver = अणु
+	.remove         = ioc3kbd_remove,
+	.driver = {
 		.name = "ioc3-kbd",
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(ioc3kbd_driver);
+	},
+};
+module_platform_driver(ioc3kbd_driver);
 
 MODULE_AUTHOR("Thomas Bogendoerfer <tbogendoerfer@suse.de>");
 MODULE_DESCRIPTION("SGI IOC3 serio driver");

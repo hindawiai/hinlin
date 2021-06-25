@@ -1,16 +1,15 @@
-<शैली गुरु>
 /*
  * unicode.c
  *
  * PURPOSE
- *	Routines क्रम converting between UTF-8 and OSTA Compressed Unicode.
+ *	Routines for converting between UTF-8 and OSTA Compressed Unicode.
  *      Also handles filename mangling
  *
  * DESCRIPTION
- *	OSTA Compressed Unicode is explained in the OSTA UDF specअगरication.
+ *	OSTA Compressed Unicode is explained in the OSTA UDF specification.
  *		http://www.osta.org/
  *	UTF-8 is explained in the IETF RFC XXXX.
- *		ftp://ftp.पूर्णांकernic.net/rfc/rfcxxxx.txt
+ *		ftp://ftp.internic.net/rfc/rfcxxxx.txt
  *
  * COPYRIGHT
  *	This file is distributed under the terms of the GNU General Public
@@ -19,239 +18,239 @@
  *	Each contributing author retains all rights to their own work.
  */
 
-#समावेश "udfdecl.h"
+#include "udfdecl.h"
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>	/* क्रम स_रखो */
-#समावेश <linux/nls.h>
-#समावेश <linux/crc-itu-t.h>
-#समावेश <linux/slab.h>
+#include <linux/kernel.h>
+#include <linux/string.h>	/* for memset */
+#include <linux/nls.h>
+#include <linux/crc-itu-t.h>
+#include <linux/slab.h>
 
-#समावेश "udf_sb.h"
+#include "udf_sb.h"
 
-#घोषणा PLANE_SIZE 0x10000
-#घोषणा UNICODE_MAX 0x10ffff
-#घोषणा SURROGATE_MASK 0xfffff800
-#घोषणा SURROGATE_PAIR 0x0000d800
-#घोषणा SURROGATE_LOW  0x00000400
-#घोषणा SURROGATE_अक्षर_बिटS 10
-#घोषणा SURROGATE_CHAR_MASK ((1 << SURROGATE_अक्षर_बिटS) - 1)
+#define PLANE_SIZE 0x10000
+#define UNICODE_MAX 0x10ffff
+#define SURROGATE_MASK 0xfffff800
+#define SURROGATE_PAIR 0x0000d800
+#define SURROGATE_LOW  0x00000400
+#define SURROGATE_CHAR_BITS 10
+#define SURROGATE_CHAR_MASK ((1 << SURROGATE_CHAR_BITS) - 1)
 
-#घोषणा ILLEGAL_CHAR_MARK	'_'
-#घोषणा EXT_MARK		'.'
-#घोषणा CRC_MARK		'#'
-#घोषणा EXT_SIZE		5
-/* Number of अक्षरs we need to store generated CRC to make filename unique */
-#घोषणा CRC_LEN			5
+#define ILLEGAL_CHAR_MARK	'_'
+#define EXT_MARK		'.'
+#define CRC_MARK		'#'
+#define EXT_SIZE		5
+/* Number of chars we need to store generated CRC to make filename unique */
+#define CRC_LEN			5
 
-अटल unicode_t get_utf16_अक्षर(स्थिर uपूर्णांक8_t *str_i, पूर्णांक str_i_max_len,
-				पूर्णांक str_i_idx, पूर्णांक u_ch, unicode_t *ret)
-अणु
+static unicode_t get_utf16_char(const uint8_t *str_i, int str_i_max_len,
+				int str_i_idx, int u_ch, unicode_t *ret)
+{
 	unicode_t c;
-	पूर्णांक start_idx = str_i_idx;
+	int start_idx = str_i_idx;
 
 	/* Expand OSTA compressed Unicode to Unicode */
 	c = str_i[str_i_idx++];
-	अगर (u_ch > 1)
+	if (u_ch > 1)
 		c = (c << 8) | str_i[str_i_idx++];
-	अगर ((c & SURROGATE_MASK) == SURROGATE_PAIR) अणु
+	if ((c & SURROGATE_MASK) == SURROGATE_PAIR) {
 		unicode_t next;
 
-		/* Trailing surrogate अक्षर */
-		अगर (str_i_idx >= str_i_max_len) अणु
+		/* Trailing surrogate char */
+		if (str_i_idx >= str_i_max_len) {
 			c = UNICODE_MAX + 1;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		/* Low surrogate must follow the high one... */
-		अगर (c & SURROGATE_LOW) अणु
+		if (c & SURROGATE_LOW) {
 			c = UNICODE_MAX + 1;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		WARN_ON_ONCE(u_ch != 2);
 		next = str_i[str_i_idx++] << 8;
 		next |= str_i[str_i_idx++];
-		अगर ((next & SURROGATE_MASK) != SURROGATE_PAIR ||
-		    !(next & SURROGATE_LOW)) अणु
+		if ((next & SURROGATE_MASK) != SURROGATE_PAIR ||
+		    !(next & SURROGATE_LOW)) {
 			c = UNICODE_MAX + 1;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		c = PLANE_SIZE +
-		    ((c & SURROGATE_CHAR_MASK) << SURROGATE_अक्षर_बिटS) +
+		    ((c & SURROGATE_CHAR_MASK) << SURROGATE_CHAR_BITS) +
 		    (next & SURROGATE_CHAR_MASK);
-	पूर्ण
+	}
 out:
 	*ret = c;
-	वापस str_i_idx - start_idx;
-पूर्ण
+	return str_i_idx - start_idx;
+}
 
 
-अटल पूर्णांक udf_name_conv_अक्षर(uपूर्णांक8_t *str_o, पूर्णांक str_o_max_len,
-			      पूर्णांक *str_o_idx,
-			      स्थिर uपूर्णांक8_t *str_i, पूर्णांक str_i_max_len,
-			      पूर्णांक *str_i_idx,
-			      पूर्णांक u_ch, पूर्णांक *needsCRC,
-			      पूर्णांक (*conv_f)(ब_अक्षर_प्रकार, अचिन्हित अक्षर *, पूर्णांक),
-			      पूर्णांक translate)
-अणु
+static int udf_name_conv_char(uint8_t *str_o, int str_o_max_len,
+			      int *str_o_idx,
+			      const uint8_t *str_i, int str_i_max_len,
+			      int *str_i_idx,
+			      int u_ch, int *needsCRC,
+			      int (*conv_f)(wchar_t, unsigned char *, int),
+			      int translate)
+{
 	unicode_t c;
-	पूर्णांक illChar = 0;
-	पूर्णांक len, gotch = 0;
+	int illChar = 0;
+	int len, gotch = 0;
 
-	जबतक (!gotch && *str_i_idx < str_i_max_len) अणु
-		अगर (*str_o_idx >= str_o_max_len) अणु
+	while (!gotch && *str_i_idx < str_i_max_len) {
+		if (*str_o_idx >= str_o_max_len) {
 			*needsCRC = 1;
-			वापस gotch;
-		पूर्ण
+			return gotch;
+		}
 
-		len = get_utf16_अक्षर(str_i, str_i_max_len, *str_i_idx, u_ch,
+		len = get_utf16_char(str_i, str_i_max_len, *str_i_idx, u_ch,
 				     &c);
-		/* These अक्षरs cannot be converted. Replace them. */
-		अगर (c == 0 || c > UNICODE_MAX || (conv_f && c > MAX_WCHAR_T) ||
-		    (translate && c == '/')) अणु
+		/* These chars cannot be converted. Replace them. */
+		if (c == 0 || c > UNICODE_MAX || (conv_f && c > MAX_WCHAR_T) ||
+		    (translate && c == '/')) {
 			illChar = 1;
-			अगर (!translate)
+			if (!translate)
 				gotch = 1;
-		पूर्ण अन्यथा अगर (illChar)
-			अवरोध;
-		अन्यथा
+		} else if (illChar)
+			break;
+		else
 			gotch = 1;
 		*str_i_idx += len;
-	पूर्ण
-	अगर (illChar) अणु
+	}
+	if (illChar) {
 		*needsCRC = 1;
 		c = ILLEGAL_CHAR_MARK;
 		gotch = 1;
-	पूर्ण
-	अगर (gotch) अणु
-		अगर (conv_f) अणु
+	}
+	if (gotch) {
+		if (conv_f) {
 			len = conv_f(c, &str_o[*str_o_idx],
 				     str_o_max_len - *str_o_idx);
-		पूर्ण अन्यथा अणु
+		} else {
 			len = utf32_to_utf8(c, &str_o[*str_o_idx],
 					    str_o_max_len - *str_o_idx);
-			अगर (len < 0)
+			if (len < 0)
 				len = -ENAMETOOLONG;
-		पूर्ण
-		/* Valid अक्षरacter? */
-		अगर (len >= 0)
+		}
+		/* Valid character? */
+		if (len >= 0)
 			*str_o_idx += len;
-		अन्यथा अगर (len == -ENAMETOOLONG) अणु
+		else if (len == -ENAMETOOLONG) {
 			*needsCRC = 1;
 			gotch = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			str_o[(*str_o_idx)++] = ILLEGAL_CHAR_MARK;
 			*needsCRC = 1;
-		पूर्ण
-	पूर्ण
-	वापस gotch;
-पूर्ण
+		}
+	}
+	return gotch;
+}
 
-अटल पूर्णांक udf_name_from_CS0(काष्ठा super_block *sb,
-			     uपूर्णांक8_t *str_o, पूर्णांक str_max_len,
-			     स्थिर uपूर्णांक8_t *ocu, पूर्णांक ocu_len,
-			     पूर्णांक translate)
-अणु
-	uपूर्णांक32_t c;
-	uपूर्णांक8_t cmp_id;
-	पूर्णांक idx, len;
-	पूर्णांक u_ch;
-	पूर्णांक needsCRC = 0;
-	पूर्णांक ext_i_len, ext_max_len;
-	पूर्णांक str_o_len = 0;	/* Length of resulting output */
-	पूर्णांक ext_o_len = 0;	/* Extension output length */
-	पूर्णांक ext_crc_len = 0;	/* Extension output length अगर used with CRC */
-	पूर्णांक i_ext = -1;		/* Extension position in input buffer */
-	पूर्णांक o_crc = 0;		/* Righपंचांगost possible output pos क्रम CRC+ext */
-	अचिन्हित लघु valueCRC;
-	uपूर्णांक8_t ext[EXT_SIZE * NLS_MAX_CHARSET_SIZE + 1];
-	uपूर्णांक8_t crc[CRC_LEN];
-	पूर्णांक (*conv_f)(ब_अक्षर_प्रकार, अचिन्हित अक्षर *, पूर्णांक);
+static int udf_name_from_CS0(struct super_block *sb,
+			     uint8_t *str_o, int str_max_len,
+			     const uint8_t *ocu, int ocu_len,
+			     int translate)
+{
+	uint32_t c;
+	uint8_t cmp_id;
+	int idx, len;
+	int u_ch;
+	int needsCRC = 0;
+	int ext_i_len, ext_max_len;
+	int str_o_len = 0;	/* Length of resulting output */
+	int ext_o_len = 0;	/* Extension output length */
+	int ext_crc_len = 0;	/* Extension output length if used with CRC */
+	int i_ext = -1;		/* Extension position in input buffer */
+	int o_crc = 0;		/* Rightmost possible output pos for CRC+ext */
+	unsigned short valueCRC;
+	uint8_t ext[EXT_SIZE * NLS_MAX_CHARSET_SIZE + 1];
+	uint8_t crc[CRC_LEN];
+	int (*conv_f)(wchar_t, unsigned char *, int);
 
-	अगर (str_max_len <= 0)
-		वापस 0;
+	if (str_max_len <= 0)
+		return 0;
 
-	अगर (ocu_len == 0) अणु
-		स_रखो(str_o, 0, str_max_len);
-		वापस 0;
-	पूर्ण
+	if (ocu_len == 0) {
+		memset(str_o, 0, str_max_len);
+		return 0;
+	}
 
-	अगर (UDF_QUERY_FLAG(sb, UDF_FLAG_NLS_MAP))
-		conv_f = UDF_SB(sb)->s_nls_map->uni2अक्षर;
-	अन्यथा
-		conv_f = शून्य;
+	if (UDF_QUERY_FLAG(sb, UDF_FLAG_NLS_MAP))
+		conv_f = UDF_SB(sb)->s_nls_map->uni2char;
+	else
+		conv_f = NULL;
 
 	cmp_id = ocu[0];
-	अगर (cmp_id != 8 && cmp_id != 16) अणु
-		स_रखो(str_o, 0, str_max_len);
+	if (cmp_id != 8 && cmp_id != 16) {
+		memset(str_o, 0, str_max_len);
 		pr_err("unknown compression code (%u)\n", cmp_id);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	u_ch = cmp_id >> 3;
 
 	ocu++;
 	ocu_len--;
 
-	अगर (ocu_len % u_ch) अणु
+	if (ocu_len % u_ch) {
 		pr_err("incorrect filename length (%d)\n", ocu_len + 1);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (translate) अणु
-		/* Look क्रम extension */
-		क्रम (idx = ocu_len - u_ch, ext_i_len = 0;
+	if (translate) {
+		/* Look for extension */
+		for (idx = ocu_len - u_ch, ext_i_len = 0;
 		     (idx >= 0) && (ext_i_len < EXT_SIZE);
-		     idx -= u_ch, ext_i_len++) अणु
+		     idx -= u_ch, ext_i_len++) {
 			c = ocu[idx];
-			अगर (u_ch > 1)
+			if (u_ch > 1)
 				c = (c << 8) | ocu[idx + 1];
 
-			अगर (c == EXT_MARK) अणु
-				अगर (ext_i_len)
+			if (c == EXT_MARK) {
+				if (ext_i_len)
 					i_ext = idx;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		अगर (i_ext >= 0) अणु
+				break;
+			}
+		}
+		if (i_ext >= 0) {
 			/* Convert extension */
-			ext_max_len = min_t(पूर्णांक, माप(ext), str_max_len);
+			ext_max_len = min_t(int, sizeof(ext), str_max_len);
 			ext[ext_o_len++] = EXT_MARK;
 			idx = i_ext + u_ch;
-			जबतक (udf_name_conv_अक्षर(ext, ext_max_len, &ext_o_len,
+			while (udf_name_conv_char(ext, ext_max_len, &ext_o_len,
 						  ocu, ocu_len, &idx,
 						  u_ch, &needsCRC,
-						  conv_f, translate)) अणु
-				अगर ((ext_o_len + CRC_LEN) < str_max_len)
+						  conv_f, translate)) {
+				if ((ext_o_len + CRC_LEN) < str_max_len)
 					ext_crc_len = ext_o_len;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	idx = 0;
-	जबतक (1) अणु
-		अगर (translate && (idx == i_ext)) अणु
-			अगर (str_o_len > (str_max_len - ext_o_len))
+	while (1) {
+		if (translate && (idx == i_ext)) {
+			if (str_o_len > (str_max_len - ext_o_len))
 				needsCRC = 1;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (!udf_name_conv_अक्षर(str_o, str_max_len, &str_o_len,
+		if (!udf_name_conv_char(str_o, str_max_len, &str_o_len,
 					ocu, ocu_len, &idx,
 					u_ch, &needsCRC, conv_f, translate))
-			अवरोध;
+			break;
 
-		अगर (translate &&
+		if (translate &&
 		    (str_o_len <= (str_max_len - ext_o_len - CRC_LEN)))
 			o_crc = str_o_len;
-	पूर्ण
+	}
 
-	अगर (translate) अणु
-		अगर (str_o_len <= 2 && str_o[0] == '.' &&
+	if (translate) {
+		if (str_o_len <= 2 && str_o[0] == '.' &&
 		    (str_o_len == 1 || str_o[1] == '.'))
 			needsCRC = 1;
-		अगर (needsCRC) अणु
+		if (needsCRC) {
 			str_o_len = o_crc;
 			valueCRC = crc_itu_t(0, ocu, ocu_len);
 			crc[0] = CRC_MARK;
@@ -259,145 +258,145 @@ out:
 			crc[2] = hex_asc_upper_lo(valueCRC >> 8);
 			crc[3] = hex_asc_upper_hi(valueCRC);
 			crc[4] = hex_asc_upper_lo(valueCRC);
-			len = min_t(पूर्णांक, CRC_LEN, str_max_len - str_o_len);
-			स_नकल(&str_o[str_o_len], crc, len);
+			len = min_t(int, CRC_LEN, str_max_len - str_o_len);
+			memcpy(&str_o[str_o_len], crc, len);
 			str_o_len += len;
 			ext_o_len = ext_crc_len;
-		पूर्ण
-		अगर (ext_o_len > 0) अणु
-			स_नकल(&str_o[str_o_len], ext, ext_o_len);
+		}
+		if (ext_o_len > 0) {
+			memcpy(&str_o[str_o_len], ext, ext_o_len);
 			str_o_len += ext_o_len;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस str_o_len;
-पूर्ण
+	return str_o_len;
+}
 
-अटल पूर्णांक udf_name_to_CS0(काष्ठा super_block *sb,
-			   uपूर्णांक8_t *ocu, पूर्णांक ocu_max_len,
-			   स्थिर uपूर्णांक8_t *str_i, पूर्णांक str_len)
-अणु
-	पूर्णांक i, len;
-	अचिन्हित पूर्णांक max_val;
-	पूर्णांक u_len, u_ch;
-	unicode_t uni_अक्षर;
-	पूर्णांक (*conv_f)(स्थिर अचिन्हित अक्षर *, पूर्णांक, ब_अक्षर_प्रकार *);
+static int udf_name_to_CS0(struct super_block *sb,
+			   uint8_t *ocu, int ocu_max_len,
+			   const uint8_t *str_i, int str_len)
+{
+	int i, len;
+	unsigned int max_val;
+	int u_len, u_ch;
+	unicode_t uni_char;
+	int (*conv_f)(const unsigned char *, int, wchar_t *);
 
-	अगर (ocu_max_len <= 0)
-		वापस 0;
+	if (ocu_max_len <= 0)
+		return 0;
 
-	अगर (UDF_QUERY_FLAG(sb, UDF_FLAG_NLS_MAP))
-		conv_f = UDF_SB(sb)->s_nls_map->अक्षर2uni;
-	अन्यथा
-		conv_f = शून्य;
+	if (UDF_QUERY_FLAG(sb, UDF_FLAG_NLS_MAP))
+		conv_f = UDF_SB(sb)->s_nls_map->char2uni;
+	else
+		conv_f = NULL;
 
-	स_रखो(ocu, 0, ocu_max_len);
+	memset(ocu, 0, ocu_max_len);
 	ocu[0] = 8;
 	max_val = 0xff;
 	u_ch = 1;
 
 try_again:
 	u_len = 1;
-	क्रम (i = 0; i < str_len; i += len) अणु
+	for (i = 0; i < str_len; i += len) {
 		/* Name didn't fit? */
-		अगर (u_len + u_ch > ocu_max_len)
-			वापस 0;
-		अगर (conv_f) अणु
-			ब_अक्षर_प्रकार wअक्षर;
+		if (u_len + u_ch > ocu_max_len)
+			return 0;
+		if (conv_f) {
+			wchar_t wchar;
 
-			len = conv_f(&str_i[i], str_len - i, &wअक्षर);
-			अगर (len > 0)
-				uni_अक्षर = wअक्षर;
-		पूर्ण अन्यथा अणु
+			len = conv_f(&str_i[i], str_len - i, &wchar);
+			if (len > 0)
+				uni_char = wchar;
+		} else {
 			len = utf8_to_utf32(&str_i[i], str_len - i,
-					    &uni_अक्षर);
-		पूर्ण
-		/* Invalid अक्षरacter, deal with it */
-		अगर (len <= 0 || uni_अक्षर > UNICODE_MAX) अणु
+					    &uni_char);
+		}
+		/* Invalid character, deal with it */
+		if (len <= 0 || uni_char > UNICODE_MAX) {
 			len = 1;
-			uni_अक्षर = '?';
-		पूर्ण
+			uni_char = '?';
+		}
 
-		अगर (uni_अक्षर > max_val) अणु
+		if (uni_char > max_val) {
 			unicode_t c;
 
-			अगर (max_val == 0xff) अणु
+			if (max_val == 0xff) {
 				max_val = 0xffff;
 				ocu[0] = 0x10;
 				u_ch = 2;
-				जाओ try_again;
-			पूर्ण
+				goto try_again;
+			}
 			/*
-			 * Use UTF-16 encoding क्रम अक्षरs outside we
+			 * Use UTF-16 encoding for chars outside we
 			 * cannot encode directly.
 			 */
-			अगर (u_len + 2 * u_ch > ocu_max_len)
-				वापस 0;
+			if (u_len + 2 * u_ch > ocu_max_len)
+				return 0;
 
-			uni_अक्षर -= PLANE_SIZE;
+			uni_char -= PLANE_SIZE;
 			c = SURROGATE_PAIR |
-			    ((uni_अक्षर >> SURROGATE_अक्षर_बिटS) &
+			    ((uni_char >> SURROGATE_CHAR_BITS) &
 			     SURROGATE_CHAR_MASK);
-			ocu[u_len++] = (uपूर्णांक8_t)(c >> 8);
-			ocu[u_len++] = (uपूर्णांक8_t)(c & 0xff);
-			uni_अक्षर = SURROGATE_PAIR | SURROGATE_LOW |
-					(uni_अक्षर & SURROGATE_CHAR_MASK);
-		पूर्ण
+			ocu[u_len++] = (uint8_t)(c >> 8);
+			ocu[u_len++] = (uint8_t)(c & 0xff);
+			uni_char = SURROGATE_PAIR | SURROGATE_LOW |
+					(uni_char & SURROGATE_CHAR_MASK);
+		}
 
-		अगर (max_val == 0xffff)
-			ocu[u_len++] = (uपूर्णांक8_t)(uni_अक्षर >> 8);
-		ocu[u_len++] = (uपूर्णांक8_t)(uni_अक्षर & 0xff);
-	पूर्ण
+		if (max_val == 0xffff)
+			ocu[u_len++] = (uint8_t)(uni_char >> 8);
+		ocu[u_len++] = (uint8_t)(uni_char & 0xff);
+	}
 
-	वापस u_len;
-पूर्ण
+	return u_len;
+}
 
 /*
- * Convert CS0 dstring to output अक्षरset. Warning: This function may truncate
- * input string अगर it is too दीर्घ as it is used क्रम inक्रमmational strings only
+ * Convert CS0 dstring to output charset. Warning: This function may truncate
+ * input string if it is too long as it is used for informational strings only
  * and it is better to truncate the string than to refuse mounting a media.
  */
-पूर्णांक udf_dstrCS0toChar(काष्ठा super_block *sb, uपूर्णांक8_t *utf_o, पूर्णांक o_len,
-		      स्थिर uपूर्णांक8_t *ocu_i, पूर्णांक i_len)
-अणु
-	पूर्णांक s_len = 0;
+int udf_dstrCS0toChar(struct super_block *sb, uint8_t *utf_o, int o_len,
+		      const uint8_t *ocu_i, int i_len)
+{
+	int s_len = 0;
 
-	अगर (i_len > 0) अणु
+	if (i_len > 0) {
 		s_len = ocu_i[i_len - 1];
-		अगर (s_len >= i_len) अणु
+		if (s_len >= i_len) {
 			pr_warn("incorrect dstring lengths (%d/%d),"
 				" truncating\n", s_len, i_len);
 			s_len = i_len - 1;
 			/* 2-byte encoding? Need to round properly... */
-			अगर (ocu_i[0] == 16)
+			if (ocu_i[0] == 16)
 				s_len -= (s_len - 1) & 2;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस udf_name_from_CS0(sb, utf_o, o_len, ocu_i, s_len, 0);
-पूर्ण
+	return udf_name_from_CS0(sb, utf_o, o_len, ocu_i, s_len, 0);
+}
 
-पूर्णांक udf_get_filename(काष्ठा super_block *sb, स्थिर uपूर्णांक8_t *sname, पूर्णांक slen,
-		     uपूर्णांक8_t *dname, पूर्णांक dlen)
-अणु
-	पूर्णांक ret;
+int udf_get_filename(struct super_block *sb, const uint8_t *sname, int slen,
+		     uint8_t *dname, int dlen)
+{
+	int ret;
 
-	अगर (!slen)
-		वापस -EIO;
+	if (!slen)
+		return -EIO;
 
-	अगर (dlen <= 0)
-		वापस 0;
+	if (dlen <= 0)
+		return 0;
 
 	ret = udf_name_from_CS0(sb, dname, dlen, sname, slen, 1);
 	/* Zero length filename isn't valid... */
-	अगर (ret == 0)
+	if (ret == 0)
 		ret = -EINVAL;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक udf_put_filename(काष्ठा super_block *sb, स्थिर uपूर्णांक8_t *sname, पूर्णांक slen,
-		     uपूर्णांक8_t *dname, पूर्णांक dlen)
-अणु
-	वापस udf_name_to_CS0(sb, dname, dlen, sname, slen);
-पूर्ण
+int udf_put_filename(struct super_block *sb, const uint8_t *sname, int slen,
+		     uint8_t *dname, int dlen)
+{
+	return udf_name_to_CS0(sb, dname, dlen, sname, slen);
+}
 

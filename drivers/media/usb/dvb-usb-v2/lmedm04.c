@@ -1,6 +1,5 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-/* DVB USB compliant linux driver क्रम
+// SPDX-License-Identifier: GPL-2.0-only
+/* DVB USB compliant linux driver for
  *
  * DM04/QQBOX DVB-S USB BOX	LME2510C + SHARP:BS2F7HZ7395
  *				LME2510C + LG TDQY-P001F
@@ -40,83 +39,83 @@
  * Copyright (C) 2010 Malcolm Priestley (tvboxspy@gmail.com)
  * LME2510(C)(C) Leaguerme (Shenzhen) MicroElectronics Co., Ltd.
  *
- * see Documentation/driver-api/media/drivers/dvb-usb.rst क्रम more inक्रमmation
+ * see Documentation/driver-api/media/drivers/dvb-usb.rst for more information
  *
  * Known Issues :
- *	LME2510: Non Intel USB chipsets fail to मुख्यtain High Speed on
+ *	LME2510: Non Intel USB chipsets fail to maintain High Speed on
  * Boot or Hot Plug.
  *
  * QQbox suffers from noise on LNB voltage.
  *
- *	LME2510: SHARP:BS2F7HZ0194(MV0194) cannot cold reset and share प्रणाली
+ *	LME2510: SHARP:BS2F7HZ0194(MV0194) cannot cold reset and share system
  * with other tuners. After a cold reset streaming will not start.
  *
  * M88RS2000 suffers from loss of lock.
  */
-#घोषणा DVB_USB_LOG_PREFIX "LME2510(C)"
-#समावेश <linux/usb.h>
-#समावेश <linux/usb/input.h>
-#समावेश <media/rc-core.h>
+#define DVB_USB_LOG_PREFIX "LME2510(C)"
+#include <linux/usb.h>
+#include <linux/usb/input.h>
+#include <media/rc-core.h>
 
-#समावेश "dvb_usb.h"
-#समावेश "lmedm04.h"
-#समावेश "tda826x.h"
-#समावेश "tda10086.h"
-#समावेश "stv0288.h"
-#समावेश "ix2505v.h"
-#समावेश "stv0299.h"
-#समावेश "dvb-pll.h"
-#समावेश "z0194a.h"
-#समावेश "m88rs2000.h"
-#समावेश "ts2020.h"
+#include "dvb_usb.h"
+#include "lmedm04.h"
+#include "tda826x.h"
+#include "tda10086.h"
+#include "stv0288.h"
+#include "ix2505v.h"
+#include "stv0299.h"
+#include "dvb-pll.h"
+#include "z0194a.h"
+#include "m88rs2000.h"
+#include "ts2020.h"
 
 
-#घोषणा LME2510_C_S7395	"dvb-usb-lme2510c-s7395.fw";
-#घोषणा LME2510_C_LG	"dvb-usb-lme2510c-lg.fw";
-#घोषणा LME2510_C_S0194	"dvb-usb-lme2510c-s0194.fw";
-#घोषणा LME2510_C_RS2000 "dvb-usb-lme2510c-rs2000.fw";
-#घोषणा LME2510_LG	"dvb-usb-lme2510-lg.fw";
-#घोषणा LME2510_S0194	"dvb-usb-lme2510-s0194.fw";
+#define LME2510_C_S7395	"dvb-usb-lme2510c-s7395.fw";
+#define LME2510_C_LG	"dvb-usb-lme2510c-lg.fw";
+#define LME2510_C_S0194	"dvb-usb-lme2510c-s0194.fw";
+#define LME2510_C_RS2000 "dvb-usb-lme2510c-rs2000.fw";
+#define LME2510_LG	"dvb-usb-lme2510-lg.fw";
+#define LME2510_S0194	"dvb-usb-lme2510-s0194.fw";
 
 /* debug */
-अटल पूर्णांक dvb_usb_lme2510_debug;
-#घोषणा lme_debug(var, level, args...) करो अणु \
-	अगर ((var >= level)) \
+static int dvb_usb_lme2510_debug;
+#define lme_debug(var, level, args...) do { \
+	if ((var >= level)) \
 		pr_debug(DVB_USB_LOG_PREFIX": " args); \
-पूर्ण जबतक (0)
-#घोषणा deb_info(level, args...) lme_debug(dvb_usb_lme2510_debug, level, args)
-#घोषणा debug_data_snipet(level, name, p) \
+} while (0)
+#define deb_info(level, args...) lme_debug(dvb_usb_lme2510_debug, level, args)
+#define debug_data_snipet(level, name, p) \
 	 deb_info(level, name" (%8phN)", p);
-#घोषणा info(args...) pr_info(DVB_USB_LOG_PREFIX": "args)
+#define info(args...) pr_info(DVB_USB_LOG_PREFIX": "args)
 
-module_param_named(debug, dvb_usb_lme2510_debug, पूर्णांक, 0644);
+module_param_named(debug, dvb_usb_lme2510_debug, int, 0644);
 MODULE_PARM_DESC(debug, "set debugging level (1=info (or-able)).");
 
-अटल पूर्णांक dvb_usb_lme2510_firmware;
-module_param_named(firmware, dvb_usb_lme2510_firmware, पूर्णांक, 0644);
+static int dvb_usb_lme2510_firmware;
+module_param_named(firmware, dvb_usb_lme2510_firmware, int, 0644);
 MODULE_PARM_DESC(firmware, "set default firmware 0=Sharp7395 1=LG");
 
-अटल पूर्णांक pid_filter;
-module_param_named(pid, pid_filter, पूर्णांक, 0644);
+static int pid_filter;
+module_param_named(pid, pid_filter, int, 0644);
 MODULE_PARM_DESC(pid, "set default 0=default 1=off 2=on");
 
 
 DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 
-#घोषणा TUNER_DEFAULT	0x0
-#घोषणा TUNER_LG	0x1
-#घोषणा TUNER_S7395	0x2
-#घोषणा TUNER_S0194	0x3
-#घोषणा TUNER_RS2000	0x4
+#define TUNER_DEFAULT	0x0
+#define TUNER_LG	0x1
+#define TUNER_S7395	0x2
+#define TUNER_S0194	0x3
+#define TUNER_RS2000	0x4
 
-काष्ठा lme2510_state अणु
-	अचिन्हित दीर्घ पूर्णांक_urb_due;
-	क्रमागत fe_status lock_status;
+struct lme2510_state {
+	unsigned long int_urb_due;
+	enum fe_status lock_status;
 	u8 id;
 	u8 tuner_config;
-	u8 संकेत_level;
-	u8 संकेत_sn;
-	u8 समय_key;
+	u8 signal_level;
+	u8 signal_sn;
+	u8 time_key;
 	u8 i2c_talk_onoff;
 	u8 i2c_gate;
 	u8 i2c_tuner_gate_w;
@@ -125,70 +124,70 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 	u8 stream_on;
 	u8 pid_size;
 	u8 pid_off;
-	u8 पूर्णांक_buffer[128];
-	काष्ठा urb *lme_urb;
+	u8 int_buffer[128];
+	struct urb *lme_urb;
 	u8 usb_buffer[64];
 	/* Frontend original calls */
-	पूर्णांक (*fe_पढ़ो_status)(काष्ठा dvb_frontend *, क्रमागत fe_status *);
-	पूर्णांक (*fe_पढ़ो_संकेत_strength)(काष्ठा dvb_frontend *, u16 *);
-	पूर्णांक (*fe_पढ़ो_snr)(काष्ठा dvb_frontend *, u16 *);
-	पूर्णांक (*fe_पढ़ो_ber)(काष्ठा dvb_frontend *, u32 *);
-	पूर्णांक (*fe_पढ़ो_ucblocks)(काष्ठा dvb_frontend *, u32 *);
-	पूर्णांक (*fe_set_voltage)(काष्ठा dvb_frontend *, क्रमागत fe_sec_voltage);
+	int (*fe_read_status)(struct dvb_frontend *, enum fe_status *);
+	int (*fe_read_signal_strength)(struct dvb_frontend *, u16 *);
+	int (*fe_read_snr)(struct dvb_frontend *, u16 *);
+	int (*fe_read_ber)(struct dvb_frontend *, u32 *);
+	int (*fe_read_ucblocks)(struct dvb_frontend *, u32 *);
+	int (*fe_set_voltage)(struct dvb_frontend *, enum fe_sec_voltage);
 	u8 dvb_usb_lme2510_firmware;
-पूर्ण;
+};
 
-अटल पूर्णांक lme2510_usb_talk(काष्ठा dvb_usb_device *d,
-			    u8 *wbuf, पूर्णांक wlen, u8 *rbuf, पूर्णांक rlen)
-अणु
-	काष्ठा lme2510_state *st = d->priv;
-	पूर्णांक ret = 0;
+static int lme2510_usb_talk(struct dvb_usb_device *d,
+			    u8 *wbuf, int wlen, u8 *rbuf, int rlen)
+{
+	struct lme2510_state *st = d->priv;
+	int ret = 0;
 
-	अगर (max(wlen, rlen) > माप(st->usb_buffer))
-		वापस -EINVAL;
+	if (max(wlen, rlen) > sizeof(st->usb_buffer))
+		return -EINVAL;
 
-	ret = mutex_lock_पूर्णांकerruptible(&d->usb_mutex);
-	अगर (ret < 0)
-		वापस -EAGAIN;
+	ret = mutex_lock_interruptible(&d->usb_mutex);
+	if (ret < 0)
+		return -EAGAIN;
 
-	स_नकल(st->usb_buffer, wbuf, wlen);
+	memcpy(st->usb_buffer, wbuf, wlen);
 
 	ret = dvb_usbv2_generic_rw_locked(d, st->usb_buffer, wlen,
 					  st->usb_buffer, rlen);
 
-	अगर (rlen)
-		स_नकल(rbuf, st->usb_buffer, rlen);
+	if (rlen)
+		memcpy(rbuf, st->usb_buffer, rlen);
 
 	mutex_unlock(&d->usb_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक lme2510_stream_restart(काष्ठा dvb_usb_device *d)
-अणु
-	काष्ठा lme2510_state *st = d->priv;
+static int lme2510_stream_restart(struct dvb_usb_device *d)
+{
+	struct lme2510_state *st = d->priv;
 	u8 all_pids[] = LME_ALL_PIDS;
 	u8 stream_on[] = LME_ST_ON_W;
 	u8 rbuff[1];
-	अगर (st->pid_off)
-		lme2510_usb_talk(d, all_pids, माप(all_pids),
-				 rbuff, माप(rbuff));
+	if (st->pid_off)
+		lme2510_usb_talk(d, all_pids, sizeof(all_pids),
+				 rbuff, sizeof(rbuff));
 	/*Restart Stream Command*/
-	वापस lme2510_usb_talk(d, stream_on, माप(stream_on),
-				rbuff, माप(rbuff));
-पूर्ण
+	return lme2510_usb_talk(d, stream_on, sizeof(stream_on),
+				rbuff, sizeof(rbuff));
+}
 
-अटल पूर्णांक lme2510_enable_pid(काष्ठा dvb_usb_device *d, u8 index, u16 pid_out)
-अणु
-	काष्ठा lme2510_state *st = d->priv;
-	अटल u8 pid_buff[] = LME_ZERO_PID;
-	अटल u8 rbuf[1];
+static int lme2510_enable_pid(struct dvb_usb_device *d, u8 index, u16 pid_out)
+{
+	struct lme2510_state *st = d->priv;
+	static u8 pid_buff[] = LME_ZERO_PID;
+	static u8 rbuf[1];
 	u8 pid_no = index * 2;
 	u8 pid_len = pid_no + 2;
-	पूर्णांक ret = 0;
+	int ret = 0;
 	deb_info(1, "PID Setting Pid %04x", pid_out);
 
-	अगर (st->pid_size == 0)
+	if (st->pid_size == 0)
 		ret |= lme2510_stream_restart(d);
 
 	pid_buff[2] = pid_no;
@@ -196,31 +195,31 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 	pid_buff[4] = pid_no + 1;
 	pid_buff[5] = (u8)(pid_out >> 8);
 
-	अगर (pid_len > st->pid_size)
+	if (pid_len > st->pid_size)
 		st->pid_size = pid_len;
 	pid_buff[7] = 0x80 + st->pid_size;
 
 	ret |= lme2510_usb_talk(d, pid_buff ,
-		माप(pid_buff) , rbuf, माप(rbuf));
+		sizeof(pid_buff) , rbuf, sizeof(rbuf));
 
-	अगर (st->stream_on)
+	if (st->stream_on)
 		ret |= lme2510_stream_restart(d);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Convert range from 0x00-0xff to 0x0000-0xffff */
-#घोषणा reg_to_16bits(x)	((x) | ((x) << 8))
+#define reg_to_16bits(x)	((x) | ((x) << 8))
 
-अटल व्योम lme2510_update_stats(काष्ठा dvb_usb_adapter *adap)
-अणु
-	काष्ठा lme2510_state *st = adap_to_priv(adap);
-	काष्ठा dvb_frontend *fe = adap->fe[0];
-	काष्ठा dtv_frontend_properties *c;
-	u32 s_पंचांगp = 0, c_पंचांगp = 0;
+static void lme2510_update_stats(struct dvb_usb_adapter *adap)
+{
+	struct lme2510_state *st = adap_to_priv(adap);
+	struct dvb_frontend *fe = adap->fe[0];
+	struct dtv_frontend_properties *c;
+	u32 s_tmp = 0, c_tmp = 0;
 
-	अगर (!fe)
-		वापस;
+	if (!fe)
+		return;
 
 	c = &fe->dtv_property_cache;
 
@@ -233,75 +232,75 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 	c->post_bit_error.len = 1;
 	c->post_bit_error.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
 
-	अगर (st->i2c_talk_onoff) अणु
+	if (st->i2c_talk_onoff) {
 		c->strength.len = 1;
 		c->strength.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
 		c->cnr.len = 1;
 		c->cnr.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	चयन (st->tuner_config) अणु
-	हाल TUNER_LG:
-		s_पंचांगp = reg_to_16bits(0xff - st->संकेत_level);
-		c_पंचांगp = reg_to_16bits(0xff - st->संकेत_sn);
-		अवरोध;
-	हाल TUNER_S7395:
-	हाल TUNER_S0194:
-		s_पंचांगp = 0xffff - (((st->संकेत_level * 2) << 8) * 5 / 4);
-		c_पंचांगp = reg_to_16bits((0xff - st->संकेत_sn - 0xa1) * 3);
-		अवरोध;
-	हाल TUNER_RS2000:
-		s_पंचांगp = reg_to_16bits(st->संकेत_level);
-		c_पंचांगp = reg_to_16bits(st->संकेत_sn);
-	पूर्ण
+	switch (st->tuner_config) {
+	case TUNER_LG:
+		s_tmp = reg_to_16bits(0xff - st->signal_level);
+		c_tmp = reg_to_16bits(0xff - st->signal_sn);
+		break;
+	case TUNER_S7395:
+	case TUNER_S0194:
+		s_tmp = 0xffff - (((st->signal_level * 2) << 8) * 5 / 4);
+		c_tmp = reg_to_16bits((0xff - st->signal_sn - 0xa1) * 3);
+		break;
+	case TUNER_RS2000:
+		s_tmp = reg_to_16bits(st->signal_level);
+		c_tmp = reg_to_16bits(st->signal_sn);
+	}
 
 	c->strength.len = 1;
 	c->strength.stat[0].scale = FE_SCALE_RELATIVE;
-	c->strength.stat[0].uvalue = (u64)s_पंचांगp;
+	c->strength.stat[0].uvalue = (u64)s_tmp;
 
 	c->cnr.len = 1;
 	c->cnr.stat[0].scale = FE_SCALE_RELATIVE;
-	c->cnr.stat[0].uvalue = (u64)c_पंचांगp;
-पूर्ण
+	c->cnr.stat[0].uvalue = (u64)c_tmp;
+}
 
-अटल व्योम lme2510_पूर्णांक_response(काष्ठा urb *lme_urb)
-अणु
-	काष्ठा dvb_usb_adapter *adap = lme_urb->context;
-	काष्ठा lme2510_state *st = adap_to_priv(adap);
+static void lme2510_int_response(struct urb *lme_urb)
+{
+	struct dvb_usb_adapter *adap = lme_urb->context;
+	struct lme2510_state *st = adap_to_priv(adap);
 	u8 *ibuf, *rbuf;
-	पूर्णांक i = 0, offset;
+	int i = 0, offset;
 	u32 key;
-	u8 संकेत_lock = 0;
+	u8 signal_lock = 0;
 
-	चयन (lme_urb->status) अणु
-	हाल 0:
-	हाल -ETIMEDOUT:
-		अवरोध;
-	हाल -ECONNRESET:
-	हाल -ENOENT:
-	हाल -ESHUTDOWN:
-		वापस;
-	शेष:
+	switch (lme_urb->status) {
+	case 0:
+	case -ETIMEDOUT:
+		break;
+	case -ECONNRESET:
+	case -ENOENT:
+	case -ESHUTDOWN:
+		return;
+	default:
 		info("Error %x", lme_urb->status);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	rbuf = (u8 *) lme_urb->transfer_buffer;
 
 	offset = ((lme_urb->actual_length/8) > 4)
 			? 4 : (lme_urb->actual_length/8) ;
 
-	क्रम (i = 0; i < offset; ++i) अणु
+	for (i = 0; i < offset; ++i) {
 		ibuf = (u8 *)&rbuf[i*8];
 		deb_info(5, "INT O/S C =%02x C/O=%02x Type =%02x%02x",
 		offset, i, ibuf[0], ibuf[1]);
 
-		चयन (ibuf[0]) अणु
-		हाल 0xaa:
+		switch (ibuf[0]) {
+		case 0xaa:
 			debug_data_snipet(1, "INT Remote data snippet", ibuf);
-			अगर (!adap_to_d(adap)->rc_dev)
-				अवरोध;
+			if (!adap_to_d(adap)->rc_dev)
+				break;
 
 			key = RC_SCANCODE_NEC32(ibuf[2] << 24 |
 						ibuf[3] << 16 |
@@ -309,291 +308,291 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 						ibuf[5]);
 
 			deb_info(1, "INT Key = 0x%08x", key);
-			rc_keyकरोwn(adap_to_d(adap)->rc_dev, RC_PROTO_NEC32, key,
+			rc_keydown(adap_to_d(adap)->rc_dev, RC_PROTO_NEC32, key,
 				   0);
-			अवरोध;
-		हाल 0xbb:
-			चयन (st->tuner_config) अणु
-			हाल TUNER_LG:
-				संकेत_lock = ibuf[2] & BIT(5);
-				st->संकेत_level = ibuf[4];
-				st->संकेत_sn = ibuf[3];
-				st->समय_key = ibuf[7];
-				अवरोध;
-			हाल TUNER_S7395:
-			हाल TUNER_S0194:
-				/* Tweak क्रम earlier firmware*/
-				अगर (ibuf[1] == 0x03) अणु
-					संकेत_lock = ibuf[2] & BIT(4);
-					st->संकेत_level = ibuf[3];
-					st->संकेत_sn = ibuf[4];
-				पूर्ण अन्यथा अणु
-					st->संकेत_level = ibuf[4];
-					st->संकेत_sn = ibuf[5];
-				पूर्ण
-				अवरोध;
-			हाल TUNER_RS2000:
-				संकेत_lock = ibuf[2] & 0xee;
-				st->संकेत_level = ibuf[5];
-				st->संकेत_sn = ibuf[4];
-				st->समय_key = ibuf[7];
-				अवरोध;
-			शेष:
-				अवरोध;
-			पूर्ण
+			break;
+		case 0xbb:
+			switch (st->tuner_config) {
+			case TUNER_LG:
+				signal_lock = ibuf[2] & BIT(5);
+				st->signal_level = ibuf[4];
+				st->signal_sn = ibuf[3];
+				st->time_key = ibuf[7];
+				break;
+			case TUNER_S7395:
+			case TUNER_S0194:
+				/* Tweak for earlier firmware*/
+				if (ibuf[1] == 0x03) {
+					signal_lock = ibuf[2] & BIT(4);
+					st->signal_level = ibuf[3];
+					st->signal_sn = ibuf[4];
+				} else {
+					st->signal_level = ibuf[4];
+					st->signal_sn = ibuf[5];
+				}
+				break;
+			case TUNER_RS2000:
+				signal_lock = ibuf[2] & 0xee;
+				st->signal_level = ibuf[5];
+				st->signal_sn = ibuf[4];
+				st->time_key = ibuf[7];
+				break;
+			default:
+				break;
+			}
 
 			/* Interrupt will also throw just BIT 0 as lock */
-			संकेत_lock |= ibuf[2] & BIT(0);
+			signal_lock |= ibuf[2] & BIT(0);
 
-			अगर (!संकेत_lock)
+			if (!signal_lock)
 				st->lock_status &= ~FE_HAS_LOCK;
 
 			lme2510_update_stats(adap);
 
 			debug_data_snipet(5, "INT Remote data snippet in", ibuf);
-		अवरोध;
-		हाल 0xcc:
+		break;
+		case 0xcc:
 			debug_data_snipet(1, "INT Control data snippet", ibuf);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			debug_data_snipet(1, "INT Unknown data snippet", ibuf);
-		अवरोध;
-		पूर्ण
-	पूर्ण
+		break;
+		}
+	}
 
 	usb_submit_urb(lme_urb, GFP_ATOMIC);
 
-	/* Interrupt urb is due every 48 msecs जबतक streaming the buffer
-	 * stores up to 4 periods अगर missed. Allow 200 msec क्रम next पूर्णांकerrupt.
+	/* Interrupt urb is due every 48 msecs while streaming the buffer
+	 * stores up to 4 periods if missed. Allow 200 msec for next interrupt.
 	 */
-	st->पूर्णांक_urb_due = jअगरfies + msecs_to_jअगरfies(200);
-पूर्ण
+	st->int_urb_due = jiffies + msecs_to_jiffies(200);
+}
 
-अटल पूर्णांक lme2510_पूर्णांक_पढ़ो(काष्ठा dvb_usb_adapter *adap)
-अणु
-	काष्ठा dvb_usb_device *d = adap_to_d(adap);
-	काष्ठा lme2510_state *lme_पूर्णांक = adap_to_priv(adap);
-	काष्ठा usb_host_endpoपूर्णांक *ep;
+static int lme2510_int_read(struct dvb_usb_adapter *adap)
+{
+	struct dvb_usb_device *d = adap_to_d(adap);
+	struct lme2510_state *lme_int = adap_to_priv(adap);
+	struct usb_host_endpoint *ep;
 
-	lme_पूर्णांक->lme_urb = usb_alloc_urb(0, GFP_KERNEL);
+	lme_int->lme_urb = usb_alloc_urb(0, GFP_KERNEL);
 
-	अगर (lme_पूर्णांक->lme_urb == शून्य)
-			वापस -ENOMEM;
+	if (lme_int->lme_urb == NULL)
+			return -ENOMEM;
 
-	usb_fill_पूर्णांक_urb(lme_पूर्णांक->lme_urb,
+	usb_fill_int_urb(lme_int->lme_urb,
 			 d->udev,
-			 usb_rcvपूर्णांकpipe(d->udev, 0xa),
-			 lme_पूर्णांक->पूर्णांक_buffer,
-			 माप(lme_पूर्णांक->पूर्णांक_buffer),
-			 lme2510_पूर्णांक_response,
+			 usb_rcvintpipe(d->udev, 0xa),
+			 lme_int->int_buffer,
+			 sizeof(lme_int->int_buffer),
+			 lme2510_int_response,
 			 adap,
 			 8);
 
-	/* Quirk of pipe reporting PIPE_BULK but behaves as पूर्णांकerrupt */
-	ep = usb_pipe_endpoपूर्णांक(d->udev, lme_पूर्णांक->lme_urb->pipe);
+	/* Quirk of pipe reporting PIPE_BULK but behaves as interrupt */
+	ep = usb_pipe_endpoint(d->udev, lme_int->lme_urb->pipe);
 
-	अगर (usb_endpoपूर्णांक_type(&ep->desc) == USB_ENDPOINT_XFER_BULK)
-		lme_पूर्णांक->lme_urb->pipe = usb_rcvbulkpipe(d->udev, 0xa);
+	if (usb_endpoint_type(&ep->desc) == USB_ENDPOINT_XFER_BULK)
+		lme_int->lme_urb->pipe = usb_rcvbulkpipe(d->udev, 0xa);
 
-	usb_submit_urb(lme_पूर्णांक->lme_urb, GFP_KERNEL);
+	usb_submit_urb(lme_int->lme_urb, GFP_KERNEL);
 	info("INT Interrupt Service Started");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lme2510_pid_filter_ctrl(काष्ठा dvb_usb_adapter *adap, पूर्णांक onoff)
-अणु
-	काष्ठा dvb_usb_device *d = adap_to_d(adap);
-	काष्ठा lme2510_state *st = adap_to_priv(adap);
-	अटल u8 clear_pid_reg[] = LME_ALL_PIDS;
-	अटल u8 rbuf[1];
-	पूर्णांक ret = 0;
+static int lme2510_pid_filter_ctrl(struct dvb_usb_adapter *adap, int onoff)
+{
+	struct dvb_usb_device *d = adap_to_d(adap);
+	struct lme2510_state *st = adap_to_priv(adap);
+	static u8 clear_pid_reg[] = LME_ALL_PIDS;
+	static u8 rbuf[1];
+	int ret = 0;
 
 	deb_info(1, "PID Clearing Filter");
 
 	mutex_lock(&d->i2c_mutex);
 
-	अगर (!onoff) अणु
+	if (!onoff) {
 		ret |= lme2510_usb_talk(d, clear_pid_reg,
-			माप(clear_pid_reg), rbuf, माप(rbuf));
+			sizeof(clear_pid_reg), rbuf, sizeof(rbuf));
 		st->pid_off = true;
-	पूर्ण अन्यथा
+	} else
 		st->pid_off = false;
 
 	st->pid_size = 0;
 
 	mutex_unlock(&d->i2c_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lme2510_pid_filter(काष्ठा dvb_usb_adapter *adap, पूर्णांक index, u16 pid,
-	पूर्णांक onoff)
-अणु
-	काष्ठा dvb_usb_device *d = adap_to_d(adap);
-	पूर्णांक ret = 0;
+static int lme2510_pid_filter(struct dvb_usb_adapter *adap, int index, u16 pid,
+	int onoff)
+{
+	struct dvb_usb_device *d = adap_to_d(adap);
+	int ret = 0;
 
 	deb_info(3, "%s PID=%04x Index=%04x onoff=%02x", __func__,
 		pid, index, onoff);
 
-	अगर (onoff) अणु
+	if (onoff) {
 		mutex_lock(&d->i2c_mutex);
 		ret |= lme2510_enable_pid(d, index, pid);
 		mutex_unlock(&d->i2c_mutex);
-	पूर्ण
+	}
 
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
-अटल पूर्णांक lme2510_वापस_status(काष्ठा dvb_usb_device *d)
-अणु
-	पूर्णांक ret;
+static int lme2510_return_status(struct dvb_usb_device *d)
+{
+	int ret;
 	u8 *data;
 
 	data = kzalloc(6, GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	if (!data)
+		return -ENOMEM;
 
 	ret = usb_control_msg(d->udev, usb_rcvctrlpipe(d->udev, 0),
 			      0x06, 0x80, 0x0302, 0x00,
 			      data, 0x6, 200);
-	अगर (ret != 6)
+	if (ret != 6)
 		ret = -EINVAL;
-	अन्यथा
+	else
 		ret = data[2];
 
 	info("Firmware Status: %6ph", data);
 
-	kमुक्त(data);
-	वापस ret;
-पूर्ण
+	kfree(data);
+	return ret;
+}
 
-अटल पूर्णांक lme2510_msg(काष्ठा dvb_usb_device *d,
-		u8 *wbuf, पूर्णांक wlen, u8 *rbuf, पूर्णांक rlen)
-अणु
-	काष्ठा lme2510_state *st = d->priv;
+static int lme2510_msg(struct dvb_usb_device *d,
+		u8 *wbuf, int wlen, u8 *rbuf, int rlen)
+{
+	struct lme2510_state *st = d->priv;
 
 	st->i2c_talk_onoff = 1;
 
-	वापस lme2510_usb_talk(d, wbuf, wlen, rbuf, rlen);
-पूर्ण
+	return lme2510_usb_talk(d, wbuf, wlen, rbuf, rlen);
+}
 
-अटल पूर्णांक lme2510_i2c_xfer(काष्ठा i2c_adapter *adap, काष्ठा i2c_msg msg[],
-				 पूर्णांक num)
-अणु
-	काष्ठा dvb_usb_device *d = i2c_get_adapdata(adap);
-	काष्ठा lme2510_state *st = d->priv;
-	अटल u8 obuf[64], ibuf[64];
-	पूर्णांक i, पढ़ो, पढ़ो_o;
+static int lme2510_i2c_xfer(struct i2c_adapter *adap, struct i2c_msg msg[],
+				 int num)
+{
+	struct dvb_usb_device *d = i2c_get_adapdata(adap);
+	struct lme2510_state *st = d->priv;
+	static u8 obuf[64], ibuf[64];
+	int i, read, read_o;
 	u16 len;
 	u8 gate;
 
 	mutex_lock(&d->i2c_mutex);
 
-	क्रम (i = 0; i < num; i++) अणु
-		पढ़ो_o = msg[i].flags & I2C_M_RD;
-		पढ़ो = i + 1 < num && msg[i + 1].flags & I2C_M_RD;
-		पढ़ो |= पढ़ो_o;
+	for (i = 0; i < num; i++) {
+		read_o = msg[i].flags & I2C_M_RD;
+		read = i + 1 < num && msg[i + 1].flags & I2C_M_RD;
+		read |= read_o;
 		gate = (msg[i].addr == st->i2c_tuner_addr)
-			? (पढ़ो)	? st->i2c_tuner_gate_r
+			? (read)	? st->i2c_tuner_gate_r
 					: st->i2c_tuner_gate_w
 			: st->i2c_gate;
-		obuf[0] = gate | (पढ़ो << 7);
+		obuf[0] = gate | (read << 7);
 
-		अगर (gate == 5)
-			obuf[1] = (पढ़ो) ? 2 : msg[i].len + 1;
-		अन्यथा
-			obuf[1] = msg[i].len + पढ़ो + 1;
+		if (gate == 5)
+			obuf[1] = (read) ? 2 : msg[i].len + 1;
+		else
+			obuf[1] = msg[i].len + read + 1;
 
 		obuf[2] = msg[i].addr << 1;
 
-		अगर (पढ़ो) अणु
-			अगर (पढ़ो_o)
+		if (read) {
+			if (read_o)
 				len = 3;
-			अन्यथा अणु
-				स_नकल(&obuf[3], msg[i].buf, msg[i].len);
+			else {
+				memcpy(&obuf[3], msg[i].buf, msg[i].len);
 				obuf[msg[i].len+3] = msg[i+1].len;
 				len = msg[i].len+4;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			स_नकल(&obuf[3], msg[i].buf, msg[i].len);
+			}
+		} else {
+			memcpy(&obuf[3], msg[i].buf, msg[i].len);
 			len = msg[i].len+3;
-		पूर्ण
+		}
 
-		अगर (lme2510_msg(d, obuf, len, ibuf, 64) < 0) अणु
+		if (lme2510_msg(d, obuf, len, ibuf, 64) < 0) {
 			deb_info(1, "i2c transfer failed.");
 			mutex_unlock(&d->i2c_mutex);
-			वापस -EAGAIN;
-		पूर्ण
+			return -EAGAIN;
+		}
 
-		अगर (पढ़ो) अणु
-			अगर (पढ़ो_o)
-				स_नकल(msg[i].buf, &ibuf[1], msg[i].len);
-			अन्यथा अणु
-				स_नकल(msg[i+1].buf, &ibuf[1], msg[i+1].len);
+		if (read) {
+			if (read_o)
+				memcpy(msg[i].buf, &ibuf[1], msg[i].len);
+			else {
+				memcpy(msg[i+1].buf, &ibuf[1], msg[i+1].len);
 				i++;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	mutex_unlock(&d->i2c_mutex);
-	वापस i;
-पूर्ण
+	return i;
+}
 
-अटल u32 lme2510_i2c_func(काष्ठा i2c_adapter *adapter)
-अणु
-	वापस I2C_FUNC_I2C;
-पूर्ण
+static u32 lme2510_i2c_func(struct i2c_adapter *adapter)
+{
+	return I2C_FUNC_I2C;
+}
 
-अटल काष्ठा i2c_algorithm lme2510_i2c_algo = अणु
+static struct i2c_algorithm lme2510_i2c_algo = {
 	.master_xfer   = lme2510_i2c_xfer,
 	.functionality = lme2510_i2c_func,
-पूर्ण;
+};
 
-अटल पूर्णांक lme2510_streaming_ctrl(काष्ठा dvb_frontend *fe, पूर्णांक onoff)
-अणु
-	काष्ठा dvb_usb_adapter *adap = fe_to_adap(fe);
-	काष्ठा dvb_usb_device *d = adap_to_d(adap);
-	काष्ठा lme2510_state *st = adap_to_priv(adap);
-	अटल u8 clear_reg_3[] = LME_ALL_PIDS;
-	अटल u8 rbuf[1];
-	पूर्णांक ret = 0, rlen = माप(rbuf);
+static int lme2510_streaming_ctrl(struct dvb_frontend *fe, int onoff)
+{
+	struct dvb_usb_adapter *adap = fe_to_adap(fe);
+	struct dvb_usb_device *d = adap_to_d(adap);
+	struct lme2510_state *st = adap_to_priv(adap);
+	static u8 clear_reg_3[] = LME_ALL_PIDS;
+	static u8 rbuf[1];
+	int ret = 0, rlen = sizeof(rbuf);
 
 	deb_info(1, "STM  (%02x)", onoff);
 
 	/* Streaming is started by FE_HAS_LOCK */
-	अगर (onoff == 1)
+	if (onoff == 1)
 		st->stream_on = 1;
-	अन्यथा अणु
+	else {
 		deb_info(1, "STM Steam Off");
-		/* mutex is here only to aव्योम collision with I2C */
+		/* mutex is here only to avoid collision with I2C */
 		mutex_lock(&d->i2c_mutex);
 
 		ret = lme2510_usb_talk(d, clear_reg_3,
-				माप(clear_reg_3), rbuf, rlen);
+				sizeof(clear_reg_3), rbuf, rlen);
 		st->stream_on = 0;
 		st->i2c_talk_onoff = 1;
 
 		mutex_unlock(&d->i2c_mutex);
-	पूर्ण
+	}
 
-	वापस (ret < 0) ? -ENODEV : 0;
-पूर्ण
+	return (ret < 0) ? -ENODEV : 0;
+}
 
-अटल u8 check_sum(u8 *p, u8 len)
-अणु
+static u8 check_sum(u8 *p, u8 len)
+{
 	u8 sum = 0;
-	जबतक (len--)
+	while (len--)
 		sum += *p++;
-	वापस sum;
-पूर्ण
+	return sum;
+}
 
-अटल पूर्णांक lme2510_करोwnload_firmware(काष्ठा dvb_usb_device *d,
-					स्थिर काष्ठा firmware *fw)
-अणु
-	पूर्णांक ret = 0;
+static int lme2510_download_firmware(struct dvb_usb_device *d,
+					const struct firmware *fw)
+{
+	int ret = 0;
 	u8 *data;
 	u16 j, wlen, len_in, start, end;
 	u8 packet_size, dlen, i;
@@ -603,36 +602,36 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 	len_in = 1;
 
 	data = kzalloc(128, GFP_KERNEL);
-	अगर (!data) अणु
+	if (!data) {
 		info("FRM Could not start Firmware Download"\
 			"(Buffer allocation failed)");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	info("FRM Starting Firmware Download");
 
-	क्रम (i = 1; i < 3; i++) अणु
+	for (i = 1; i < 3; i++) {
 		start = (i == 1) ? 0 : 512;
 		end = (i == 1) ? 512 : fw->size;
-		क्रम (j = start; j < end; j += (packet_size+1)) अणु
+		for (j = start; j < end; j += (packet_size+1)) {
 			fw_data = (u8 *)(fw->data + j);
-			अगर ((end - j) > packet_size) अणु
+			if ((end - j) > packet_size) {
 				data[0] = i;
 				dlen = packet_size;
-			पूर्ण अन्यथा अणु
+			} else {
 				data[0] = i | 0x80;
 				dlen = (u8)(end - j)-1;
-			पूर्ण
+			}
 			data[1] = dlen;
-			स_नकल(&data[2], fw_data, dlen+1);
+			memcpy(&data[2], fw_data, dlen+1);
 			wlen = (u8) dlen + 4;
 			data[wlen-1] = check_sum(fw_data, dlen+1);
 			deb_info(1, "Data S=%02x:E=%02x CS= %02x", data[3],
 				data[dlen+2], data[dlen+3]);
 			lme2510_usb_talk(d, data, wlen, data, len_in);
 			ret |= (data[0] == 0x88) ? 0 : -1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	data[0] = 0x8a;
 	len_in = 1;
@@ -640,140 +639,140 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 	lme2510_usb_talk(d, data, len_in, data, len_in);
 	msleep(400);
 
-	अगर (ret < 0)
+	if (ret < 0)
 		info("FRM Firmware Download Failed (%04x)" , ret);
-	अन्यथा
+	else
 		info("FRM Firmware Download Completed - Resetting Device");
 
-	kमुक्त(data);
-	वापस RECONNECTS_USB;
-पूर्ण
+	kfree(data);
+	return RECONNECTS_USB;
+}
 
-अटल व्योम lme_coldreset(काष्ठा dvb_usb_device *d)
-अणु
-	u8 data[1] = अणु0पूर्ण;
+static void lme_coldreset(struct dvb_usb_device *d)
+{
+	u8 data[1] = {0};
 	data[0] = 0x0a;
 	info("FRM Firmware Cold Reset");
 
-	lme2510_usb_talk(d, data, माप(data), data, माप(data));
+	lme2510_usb_talk(d, data, sizeof(data), data, sizeof(data));
 
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल स्थिर अक्षर fw_c_s7395[] = LME2510_C_S7395;
-अटल स्थिर अक्षर fw_c_lg[] = LME2510_C_LG;
-अटल स्थिर अक्षर fw_c_s0194[] = LME2510_C_S0194;
-अटल स्थिर अक्षर fw_c_rs2000[] = LME2510_C_RS2000;
-अटल स्थिर अक्षर fw_lg[] = LME2510_LG;
-अटल स्थिर अक्षर fw_s0194[] = LME2510_S0194;
+static const char fw_c_s7395[] = LME2510_C_S7395;
+static const char fw_c_lg[] = LME2510_C_LG;
+static const char fw_c_s0194[] = LME2510_C_S0194;
+static const char fw_c_rs2000[] = LME2510_C_RS2000;
+static const char fw_lg[] = LME2510_LG;
+static const char fw_s0194[] = LME2510_S0194;
 
-अटल स्थिर अक्षर *lme_firmware_चयन(काष्ठा dvb_usb_device *d, पूर्णांक cold)
-अणु
-	काष्ठा lme2510_state *st = d->priv;
-	काष्ठा usb_device *udev = d->udev;
-	स्थिर काष्ठा firmware *fw = शून्य;
-	स्थिर अक्षर *fw_lme;
-	पूर्णांक ret = 0;
+static const char *lme_firmware_switch(struct dvb_usb_device *d, int cold)
+{
+	struct lme2510_state *st = d->priv;
+	struct usb_device *udev = d->udev;
+	const struct firmware *fw = NULL;
+	const char *fw_lme;
+	int ret = 0;
 
 	cold = (cold > 0) ? (cold & 1) : 0;
 
-	चयन (le16_to_cpu(udev->descriptor.idProduct)) अणु
-	हाल 0x1122:
-		चयन (st->dvb_usb_lme2510_firmware) अणु
-		शेष:
-		हाल TUNER_S0194:
+	switch (le16_to_cpu(udev->descriptor.idProduct)) {
+	case 0x1122:
+		switch (st->dvb_usb_lme2510_firmware) {
+		default:
+		case TUNER_S0194:
 			fw_lme = fw_s0194;
 			ret = request_firmware(&fw, fw_lme, &udev->dev);
-			अगर (ret == 0) अणु
+			if (ret == 0) {
 				st->dvb_usb_lme2510_firmware = TUNER_S0194;
 				cold = 0;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			fallthrough;
-		हाल TUNER_LG:
+		case TUNER_LG:
 			fw_lme = fw_lg;
 			ret = request_firmware(&fw, fw_lme, &udev->dev);
-			अगर (ret == 0) अणु
+			if (ret == 0) {
 				st->dvb_usb_lme2510_firmware = TUNER_LG;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			st->dvb_usb_lme2510_firmware = TUNER_DEFAULT;
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल 0x1120:
-		चयन (st->dvb_usb_lme2510_firmware) अणु
-		शेष:
-		हाल TUNER_S7395:
+			break;
+		}
+		break;
+	case 0x1120:
+		switch (st->dvb_usb_lme2510_firmware) {
+		default:
+		case TUNER_S7395:
 			fw_lme = fw_c_s7395;
 			ret = request_firmware(&fw, fw_lme, &udev->dev);
-			अगर (ret == 0) अणु
+			if (ret == 0) {
 				st->dvb_usb_lme2510_firmware = TUNER_S7395;
 				cold = 0;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			fallthrough;
-		हाल TUNER_LG:
+		case TUNER_LG:
 			fw_lme = fw_c_lg;
 			ret = request_firmware(&fw, fw_lme, &udev->dev);
-			अगर (ret == 0) अणु
+			if (ret == 0) {
 				st->dvb_usb_lme2510_firmware = TUNER_LG;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			fallthrough;
-		हाल TUNER_S0194:
+		case TUNER_S0194:
 			fw_lme = fw_c_s0194;
 			ret = request_firmware(&fw, fw_lme, &udev->dev);
-			अगर (ret == 0) अणु
+			if (ret == 0) {
 				st->dvb_usb_lme2510_firmware = TUNER_S0194;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			st->dvb_usb_lme2510_firmware = TUNER_DEFAULT;
 			cold = 0;
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल 0x22f0:
+			break;
+		}
+		break;
+	case 0x22f0:
 		fw_lme = fw_c_rs2000;
 		st->dvb_usb_lme2510_firmware = TUNER_RS2000;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		fw_lme = fw_c_s7395;
-	पूर्ण
+	}
 
 	release_firmware(fw);
 
-	अगर (cold) अणु
+	if (cold) {
 		dvb_usb_lme2510_firmware = st->dvb_usb_lme2510_firmware;
 		info("FRM Changing to %s firmware", fw_lme);
 		lme_coldreset(d);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	वापस fw_lme;
-पूर्ण
+	return fw_lme;
+}
 
-अटल काष्ठा tda10086_config tda10086_config = अणु
+static struct tda10086_config tda10086_config = {
 	.demod_address = 0x0e,
 	.invert = 0,
 	.diseqc_tone = 1,
 	.xtal_freq = TDA10086_XTAL_16M,
-पूर्ण;
+};
 
-अटल काष्ठा stv0288_config lme_config = अणु
+static struct stv0288_config lme_config = {
 	.demod_address = 0x68,
 	.min_delay_ms = 15,
 	.inittab = s7395_inittab,
-पूर्ण;
+};
 
-अटल काष्ठा ix2505v_config lme_tuner = अणु
+static struct ix2505v_config lme_tuner = {
 	.tuner_address = 0x60,
 	.min_delay_ms = 100,
 	.tuner_gain = 0x0,
-	.tuner_अक्षरgepump = 0x3,
-पूर्ण;
+	.tuner_chargepump = 0x3,
+};
 
-अटल काष्ठा stv0299_config sharp_z0194_config = अणु
+static struct stv0299_config sharp_z0194_config = {
 	.demod_address = 0x68,
 	.inittab = sharp_z0194a_inittab,
 	.mclk = 88000000UL,
@@ -783,236 +782,236 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 	.volt13_op0_op1 = STV0299_VOLT13_OP1,
 	.min_delay_ms = 100,
 	.set_symbol_rate = sharp_z0194a_set_symbol_rate,
-पूर्ण;
+};
 
-अटल काष्ठा m88rs2000_config m88rs2000_config = अणु
+static struct m88rs2000_config m88rs2000_config = {
 	.demod_addr = 0x68
-पूर्ण;
+};
 
-अटल काष्ठा ts2020_config ts2020_config = अणु
+static struct ts2020_config ts2020_config = {
 	.tuner_address = 0x60,
-	.clk_out_भाग = 7,
-	.करोnt_poll = true
-पूर्ण;
+	.clk_out_div = 7,
+	.dont_poll = true
+};
 
-अटल पूर्णांक dm04_lme2510_set_voltage(काष्ठा dvb_frontend *fe,
-				    क्रमागत fe_sec_voltage voltage)
-अणु
-	काष्ठा dvb_usb_device *d = fe_to_d(fe);
-	काष्ठा lme2510_state *st = fe_to_priv(fe);
-	अटल u8 voltage_low[] = LME_VOLTAGE_L;
-	अटल u8 voltage_high[] = LME_VOLTAGE_H;
-	अटल u8 rbuf[1];
-	पूर्णांक ret = 0, len = 3, rlen = 1;
+static int dm04_lme2510_set_voltage(struct dvb_frontend *fe,
+				    enum fe_sec_voltage voltage)
+{
+	struct dvb_usb_device *d = fe_to_d(fe);
+	struct lme2510_state *st = fe_to_priv(fe);
+	static u8 voltage_low[] = LME_VOLTAGE_L;
+	static u8 voltage_high[] = LME_VOLTAGE_H;
+	static u8 rbuf[1];
+	int ret = 0, len = 3, rlen = 1;
 
 	mutex_lock(&d->i2c_mutex);
 
-	चयन (voltage) अणु
-	हाल SEC_VOLTAGE_18:
+	switch (voltage) {
+	case SEC_VOLTAGE_18:
 		ret |= lme2510_usb_talk(d,
 			voltage_high, len, rbuf, rlen);
-		अवरोध;
+		break;
 
-	हाल SEC_VOLTAGE_OFF:
-	हाल SEC_VOLTAGE_13:
-	शेष:
+	case SEC_VOLTAGE_OFF:
+	case SEC_VOLTAGE_13:
+	default:
 		ret |= lme2510_usb_talk(d,
 				voltage_low, len, rbuf, rlen);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	mutex_unlock(&d->i2c_mutex);
 
-	अगर (st->tuner_config == TUNER_RS2000)
-		अगर (st->fe_set_voltage)
+	if (st->tuner_config == TUNER_RS2000)
+		if (st->fe_set_voltage)
 			st->fe_set_voltage(fe, voltage);
 
 
-	वापस (ret < 0) ? -ENODEV : 0;
-पूर्ण
+	return (ret < 0) ? -ENODEV : 0;
+}
 
-अटल पूर्णांक dm04_पढ़ो_status(काष्ठा dvb_frontend *fe, क्रमागत fe_status *status)
-अणु
-	काष्ठा dvb_usb_device *d = fe_to_d(fe);
-	काष्ठा lme2510_state *st = d->priv;
-	पूर्णांक ret = 0;
+static int dm04_read_status(struct dvb_frontend *fe, enum fe_status *status)
+{
+	struct dvb_usb_device *d = fe_to_d(fe);
+	struct lme2510_state *st = d->priv;
+	int ret = 0;
 
-	अगर (st->i2c_talk_onoff) अणु
-		अगर (st->fe_पढ़ो_status) अणु
-			ret = st->fe_पढ़ो_status(fe, status);
-			अगर (ret < 0)
-				वापस ret;
-		पूर्ण
+	if (st->i2c_talk_onoff) {
+		if (st->fe_read_status) {
+			ret = st->fe_read_status(fe, status);
+			if (ret < 0)
+				return ret;
+		}
 
 		st->lock_status = *status;
 
-		अगर (*status & FE_HAS_LOCK && st->stream_on) अणु
+		if (*status & FE_HAS_LOCK && st->stream_on) {
 			mutex_lock(&d->i2c_mutex);
 
 			st->i2c_talk_onoff = 0;
 			ret = lme2510_stream_restart(d);
 
 			mutex_unlock(&d->i2c_mutex);
-		पूर्ण
+		}
 
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* Timeout of पूर्णांकerrupt reached on RS2000 */
-	अगर (st->tuner_config == TUNER_RS2000 &&
-	    समय_after(jअगरfies, st->पूर्णांक_urb_due))
+	/* Timeout of interrupt reached on RS2000 */
+	if (st->tuner_config == TUNER_RS2000 &&
+	    time_after(jiffies, st->int_urb_due))
 		st->lock_status &= ~FE_HAS_LOCK;
 
 	*status = st->lock_status;
 
-	अगर (!(*status & FE_HAS_LOCK)) अणु
-		काष्ठा dvb_usb_adapter *adap = fe_to_adap(fe);
+	if (!(*status & FE_HAS_LOCK)) {
+		struct dvb_usb_adapter *adap = fe_to_adap(fe);
 
 		st->i2c_talk_onoff = 1;
 
 		lme2510_update_stats(adap);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक dm04_पढ़ो_संकेत_strength(काष्ठा dvb_frontend *fe, u16 *strength)
-अणु
-	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
-	काष्ठा lme2510_state *st = fe_to_priv(fe);
+static int dm04_read_signal_strength(struct dvb_frontend *fe, u16 *strength)
+{
+	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
+	struct lme2510_state *st = fe_to_priv(fe);
 
-	अगर (st->fe_पढ़ो_संकेत_strength && !st->stream_on)
-		वापस st->fe_पढ़ो_संकेत_strength(fe, strength);
+	if (st->fe_read_signal_strength && !st->stream_on)
+		return st->fe_read_signal_strength(fe, strength);
 
-	अगर (c->strength.stat[0].scale == FE_SCALE_RELATIVE)
+	if (c->strength.stat[0].scale == FE_SCALE_RELATIVE)
 		*strength = (u16)c->strength.stat[0].uvalue;
-	अन्यथा
+	else
 		*strength = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dm04_पढ़ो_snr(काष्ठा dvb_frontend *fe, u16 *snr)
-अणु
-	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
-	काष्ठा lme2510_state *st = fe_to_priv(fe);
+static int dm04_read_snr(struct dvb_frontend *fe, u16 *snr)
+{
+	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
+	struct lme2510_state *st = fe_to_priv(fe);
 
-	अगर (st->fe_पढ़ो_snr && !st->stream_on)
-		वापस st->fe_पढ़ो_snr(fe, snr);
+	if (st->fe_read_snr && !st->stream_on)
+		return st->fe_read_snr(fe, snr);
 
-	अगर (c->cnr.stat[0].scale == FE_SCALE_RELATIVE)
+	if (c->cnr.stat[0].scale == FE_SCALE_RELATIVE)
 		*snr = (u16)c->cnr.stat[0].uvalue;
-	अन्यथा
+	else
 		*snr = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dm04_पढ़ो_ber(काष्ठा dvb_frontend *fe, u32 *ber)
-अणु
-	काष्ठा lme2510_state *st = fe_to_priv(fe);
+static int dm04_read_ber(struct dvb_frontend *fe, u32 *ber)
+{
+	struct lme2510_state *st = fe_to_priv(fe);
 
-	अगर (st->fe_पढ़ो_ber && !st->stream_on)
-		वापस st->fe_पढ़ो_ber(fe, ber);
+	if (st->fe_read_ber && !st->stream_on)
+		return st->fe_read_ber(fe, ber);
 
 	*ber = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dm04_पढ़ो_ucblocks(काष्ठा dvb_frontend *fe, u32 *ucblocks)
-अणु
-	काष्ठा lme2510_state *st = fe_to_priv(fe);
+static int dm04_read_ucblocks(struct dvb_frontend *fe, u32 *ucblocks)
+{
+	struct lme2510_state *st = fe_to_priv(fe);
 
-	अगर (st->fe_पढ़ो_ucblocks && !st->stream_on)
-		वापस st->fe_पढ़ो_ucblocks(fe, ucblocks);
+	if (st->fe_read_ucblocks && !st->stream_on)
+		return st->fe_read_ucblocks(fe, ucblocks);
 
 	*ucblocks = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lme_name(काष्ठा dvb_usb_adapter *adap)
-अणु
-	काष्ठा dvb_usb_device *d = adap_to_d(adap);
-	काष्ठा lme2510_state *st = adap_to_priv(adap);
-	स्थिर अक्षर *desc = d->name;
-	अटल स्थिर अक्षर * स्थिर fe_name[] = अणु
+static int lme_name(struct dvb_usb_adapter *adap)
+{
+	struct dvb_usb_device *d = adap_to_d(adap);
+	struct lme2510_state *st = adap_to_priv(adap);
+	const char *desc = d->name;
+	static const char * const fe_name[] = {
 		"", " LG TDQY-P001F", " SHARP:BS2F7HZ7395",
-		" SHARP:BS2F7HZ0194", " RS2000"पूर्ण;
-	अक्षर *name = adap->fe[0]->ops.info.name;
+		" SHARP:BS2F7HZ0194", " RS2000"};
+	char *name = adap->fe[0]->ops.info.name;
 
 	strscpy(name, desc, 128);
 	strlcat(name, fe_name[st->tuner_config], 128);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dm04_lme2510_frontend_attach(काष्ठा dvb_usb_adapter *adap)
-अणु
-	काष्ठा dvb_usb_device *d = adap_to_d(adap);
-	काष्ठा lme2510_state *st = d->priv;
-	पूर्णांक ret = 0;
+static int dm04_lme2510_frontend_attach(struct dvb_usb_adapter *adap)
+{
+	struct dvb_usb_device *d = adap_to_d(adap);
+	struct lme2510_state *st = d->priv;
+	int ret = 0;
 
 	st->i2c_talk_onoff = 1;
-	चयन (le16_to_cpu(d->udev->descriptor.idProduct)) अणु
-	हाल 0x1122:
-	हाल 0x1120:
+	switch (le16_to_cpu(d->udev->descriptor.idProduct)) {
+	case 0x1122:
+	case 0x1120:
 		st->i2c_gate = 4;
 		adap->fe[0] = dvb_attach(tda10086_attach,
 			&tda10086_config, &d->i2c_adap);
-		अगर (adap->fe[0]) अणु
+		if (adap->fe[0]) {
 			info("TUN Found Frontend TDA10086");
 			st->i2c_tuner_gate_w = 4;
 			st->i2c_tuner_gate_r = 4;
 			st->i2c_tuner_addr = 0x60;
 			st->tuner_config = TUNER_LG;
-			अगर (st->dvb_usb_lme2510_firmware != TUNER_LG) अणु
+			if (st->dvb_usb_lme2510_firmware != TUNER_LG) {
 				st->dvb_usb_lme2510_firmware = TUNER_LG;
-				ret = lme_firmware_चयन(d, 1) ? 0 : -ENODEV;
-			पूर्ण
-			अवरोध;
-		पूर्ण
+				ret = lme_firmware_switch(d, 1) ? 0 : -ENODEV;
+			}
+			break;
+		}
 
 		st->i2c_gate = 4;
 		adap->fe[0] = dvb_attach(stv0299_attach,
 				&sharp_z0194_config, &d->i2c_adap);
-		अगर (adap->fe[0]) अणु
+		if (adap->fe[0]) {
 			info("FE Found Stv0299");
 			st->i2c_tuner_gate_w = 4;
 			st->i2c_tuner_gate_r = 5;
 			st->i2c_tuner_addr = 0x60;
 			st->tuner_config = TUNER_S0194;
-			अगर (st->dvb_usb_lme2510_firmware != TUNER_S0194) अणु
+			if (st->dvb_usb_lme2510_firmware != TUNER_S0194) {
 				st->dvb_usb_lme2510_firmware = TUNER_S0194;
-				ret = lme_firmware_चयन(d, 1) ? 0 : -ENODEV;
-			पूर्ण
-			अवरोध;
-		पूर्ण
+				ret = lme_firmware_switch(d, 1) ? 0 : -ENODEV;
+			}
+			break;
+		}
 
 		st->i2c_gate = 5;
 		adap->fe[0] = dvb_attach(stv0288_attach, &lme_config,
 			&d->i2c_adap);
 
-		अगर (adap->fe[0]) अणु
+		if (adap->fe[0]) {
 			info("FE Found Stv0288");
 			st->i2c_tuner_gate_w = 4;
 			st->i2c_tuner_gate_r = 5;
 			st->i2c_tuner_addr = 0x60;
 			st->tuner_config = TUNER_S7395;
-			अगर (st->dvb_usb_lme2510_firmware != TUNER_S7395) अणु
+			if (st->dvb_usb_lme2510_firmware != TUNER_S7395) {
 				st->dvb_usb_lme2510_firmware = TUNER_S7395;
-				ret = lme_firmware_चयन(d, 1) ? 0 : -ENODEV;
-			पूर्ण
-			अवरोध;
-		पूर्ण
+				ret = lme_firmware_switch(d, 1) ? 0 : -ENODEV;
+			}
+			break;
+		}
 		fallthrough;
-	हाल 0x22f0:
+	case 0x22f0:
 		st->i2c_gate = 5;
 		adap->fe[0] = dvb_attach(m88rs2000_attach,
 			&m88rs2000_config, &d->i2c_adap);
 
-		अगर (adap->fe[0]) अणु
+		if (adap->fe[0]) {
 			info("FE Found M88RS2000");
 			st->i2c_tuner_gate_w = 5;
 			st->i2c_tuner_gate_r = 5;
@@ -1020,97 +1019,97 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 			st->tuner_config = TUNER_RS2000;
 			st->fe_set_voltage =
 				adap->fe[0]->ops.set_voltage;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+		}
+		break;
+	}
 
-	अगर (adap->fe[0] == शून्य) अणु
+	if (adap->fe[0] == NULL) {
 		info("DM04/QQBOX Not Powered up or not Supported");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (ret) अणु
-		अगर (adap->fe[0]) अणु
+	if (ret) {
+		if (adap->fe[0]) {
 			dvb_frontend_detach(adap->fe[0]);
-			adap->fe[0] = शून्य;
-		पूर्ण
-		d->rc_map = शून्य;
-		वापस -ENODEV;
-	पूर्ण
+			adap->fe[0] = NULL;
+		}
+		d->rc_map = NULL;
+		return -ENODEV;
+	}
 
-	st->fe_पढ़ो_status = adap->fe[0]->ops.पढ़ो_status;
-	st->fe_पढ़ो_संकेत_strength = adap->fe[0]->ops.पढ़ो_संकेत_strength;
-	st->fe_पढ़ो_snr = adap->fe[0]->ops.पढ़ो_snr;
-	st->fe_पढ़ो_ber = adap->fe[0]->ops.पढ़ो_ber;
-	st->fe_पढ़ो_ucblocks = adap->fe[0]->ops.पढ़ो_ucblocks;
+	st->fe_read_status = adap->fe[0]->ops.read_status;
+	st->fe_read_signal_strength = adap->fe[0]->ops.read_signal_strength;
+	st->fe_read_snr = adap->fe[0]->ops.read_snr;
+	st->fe_read_ber = adap->fe[0]->ops.read_ber;
+	st->fe_read_ucblocks = adap->fe[0]->ops.read_ucblocks;
 
-	adap->fe[0]->ops.पढ़ो_status = dm04_पढ़ो_status;
-	adap->fe[0]->ops.पढ़ो_संकेत_strength = dm04_पढ़ो_संकेत_strength;
-	adap->fe[0]->ops.पढ़ो_snr = dm04_पढ़ो_snr;
-	adap->fe[0]->ops.पढ़ो_ber = dm04_पढ़ो_ber;
-	adap->fe[0]->ops.पढ़ो_ucblocks = dm04_पढ़ो_ucblocks;
+	adap->fe[0]->ops.read_status = dm04_read_status;
+	adap->fe[0]->ops.read_signal_strength = dm04_read_signal_strength;
+	adap->fe[0]->ops.read_snr = dm04_read_snr;
+	adap->fe[0]->ops.read_ber = dm04_read_ber;
+	adap->fe[0]->ops.read_ucblocks = dm04_read_ucblocks;
 	adap->fe[0]->ops.set_voltage = dm04_lme2510_set_voltage;
 
 	ret = lme_name(adap);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक dm04_lme2510_tuner(काष्ठा dvb_usb_adapter *adap)
-अणु
-	काष्ठा dvb_usb_device *d = adap_to_d(adap);
-	काष्ठा lme2510_state *st = adap_to_priv(adap);
-	अटल स्थिर अक्षर * स्थिर tun_msg[] = अणु"", "TDA8263", "IX2505V", "DVB_PLL_OPERA", "RS2000"पूर्ण;
-	पूर्णांक ret = 0;
+static int dm04_lme2510_tuner(struct dvb_usb_adapter *adap)
+{
+	struct dvb_usb_device *d = adap_to_d(adap);
+	struct lme2510_state *st = adap_to_priv(adap);
+	static const char * const tun_msg[] = {"", "TDA8263", "IX2505V", "DVB_PLL_OPERA", "RS2000"};
+	int ret = 0;
 
-	चयन (st->tuner_config) अणु
-	हाल TUNER_LG:
-		अगर (dvb_attach(tda826x_attach, adap->fe[0], 0x60,
+	switch (st->tuner_config) {
+	case TUNER_LG:
+		if (dvb_attach(tda826x_attach, adap->fe[0], 0x60,
 			&d->i2c_adap, 1))
 			ret = st->tuner_config;
-		अवरोध;
-	हाल TUNER_S7395:
-		अगर (dvb_attach(ix2505v_attach , adap->fe[0], &lme_tuner,
+		break;
+	case TUNER_S7395:
+		if (dvb_attach(ix2505v_attach , adap->fe[0], &lme_tuner,
 			&d->i2c_adap))
 			ret = st->tuner_config;
-		अवरोध;
-	हाल TUNER_S0194:
-		अगर (dvb_attach(dvb_pll_attach , adap->fe[0], 0x60,
+		break;
+	case TUNER_S0194:
+		if (dvb_attach(dvb_pll_attach , adap->fe[0], 0x60,
 			&d->i2c_adap, DVB_PLL_OPERA1))
 			ret = st->tuner_config;
-		अवरोध;
-	हाल TUNER_RS2000:
-		अगर (dvb_attach(ts2020_attach, adap->fe[0],
+		break;
+	case TUNER_RS2000:
+		if (dvb_attach(ts2020_attach, adap->fe[0],
 			       &ts2020_config, &d->i2c_adap))
 			ret = st->tuner_config;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	अगर (ret) अणु
+	if (ret) {
 		info("TUN Found %s tuner", tun_msg[ret]);
-	पूर्ण अन्यथा अणु
+	} else {
 		info("TUN No tuner found");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	/* Start the Interrupt*/
-	ret = lme2510_पूर्णांक_पढ़ो(adap);
-	अगर (ret < 0) अणु
+	ret = lme2510_int_read(adap);
+	if (ret < 0) {
 		info("INT Unable to start Interrupt Service");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक lme2510_घातerup(काष्ठा dvb_usb_device *d, पूर्णांक onoff)
-अणु
-	काष्ठा lme2510_state *st = d->priv;
-	अटल u8 lnb_on[] = LNB_ON;
-	अटल u8 lnb_off[] = LNB_OFF;
-	अटल u8 rbuf[1];
-	पूर्णांक ret = 0, len = 3, rlen = 1;
+static int lme2510_powerup(struct dvb_usb_device *d, int onoff)
+{
+	struct lme2510_state *st = d->priv;
+	static u8 lnb_on[] = LNB_ON;
+	static u8 lnb_off[] = LNB_OFF;
+	static u8 rbuf[1];
+	int ret = 0, len = 3, rlen = 1;
 
 	mutex_lock(&d->i2c_mutex);
 
@@ -1120,93 +1119,93 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 
 	mutex_unlock(&d->i2c_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक lme2510_get_adapter_count(काष्ठा dvb_usb_device *d)
-अणु
-	वापस 1;
-पूर्ण
+static int lme2510_get_adapter_count(struct dvb_usb_device *d)
+{
+	return 1;
+}
 
-अटल पूर्णांक lme2510_identअगरy_state(काष्ठा dvb_usb_device *d, स्थिर अक्षर **name)
-अणु
-	काष्ठा lme2510_state *st = d->priv;
-	पूर्णांक status;
+static int lme2510_identify_state(struct dvb_usb_device *d, const char **name)
+{
+	struct lme2510_state *st = d->priv;
+	int status;
 
 	usb_reset_configuration(d->udev);
 
-	usb_set_पूर्णांकerface(d->udev,
+	usb_set_interface(d->udev,
 		d->props->bInterfaceNumber, 1);
 
 	st->dvb_usb_lme2510_firmware = dvb_usb_lme2510_firmware;
 
-	status = lme2510_वापस_status(d);
-	अगर (status == 0x44) अणु
-		*name = lme_firmware_चयन(d, 0);
-		वापस COLD;
-	पूर्ण
+	status = lme2510_return_status(d);
+	if (status == 0x44) {
+		*name = lme_firmware_switch(d, 0);
+		return COLD;
+	}
 
-	अगर (status != 0x47)
-		वापस -EINVAL;
+	if (status != 0x47)
+		return -EINVAL;
 
-	वापस WARM;
-पूर्ण
+	return WARM;
+}
 
-अटल पूर्णांक lme2510_get_stream_config(काष्ठा dvb_frontend *fe, u8 *ts_type,
-		काष्ठा usb_data_stream_properties *stream)
-अणु
-	काष्ठा dvb_usb_adapter *adap = fe_to_adap(fe);
-	काष्ठा dvb_usb_device *d;
+static int lme2510_get_stream_config(struct dvb_frontend *fe, u8 *ts_type,
+		struct usb_data_stream_properties *stream)
+{
+	struct dvb_usb_adapter *adap = fe_to_adap(fe);
+	struct dvb_usb_device *d;
 
-	अगर (adap == शून्य)
-		वापस 0;
+	if (adap == NULL)
+		return 0;
 
 	d = adap_to_d(adap);
 
 	/* Turn PID filter on the fly by module option */
-	अगर (pid_filter == 2) अणु
+	if (pid_filter == 2) {
 		adap->pid_filtering  = true;
 		adap->max_feed_count = 15;
-	पूर्ण
+	}
 
-	अगर (!(le16_to_cpu(d->udev->descriptor.idProduct)
+	if (!(le16_to_cpu(d->udev->descriptor.idProduct)
 		== 0x1122))
-		stream->endpoपूर्णांक = 0x8;
+		stream->endpoint = 0x8;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lme2510_get_rc_config(काष्ठा dvb_usb_device *d,
-	काष्ठा dvb_usb_rc *rc)
-अणु
+static int lme2510_get_rc_config(struct dvb_usb_device *d,
+	struct dvb_usb_rc *rc)
+{
 	rc->allowed_protos = RC_PROTO_BIT_NEC32;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम lme2510_निकास(काष्ठा dvb_usb_device *d)
-अणु
-	काष्ठा lme2510_state *st = d->priv;
+static void lme2510_exit(struct dvb_usb_device *d)
+{
+	struct lme2510_state *st = d->priv;
 
-	अगर (st->lme_urb) अणु
-		usb_समाप्त_urb(st->lme_urb);
-		usb_मुक्त_urb(st->lme_urb);
+	if (st->lme_urb) {
+		usb_kill_urb(st->lme_urb);
+		usb_free_urb(st->lme_urb);
 		info("Interrupt Service Stopped");
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल काष्ठा dvb_usb_device_properties lme2510_props = अणु
+static struct dvb_usb_device_properties lme2510_props = {
 	.driver_name = KBUILD_MODNAME,
 	.owner = THIS_MODULE,
 	.bInterfaceNumber = 0,
 	.adapter_nr = adapter_nr,
-	.size_of_priv = माप(काष्ठा lme2510_state),
-	.generic_bulk_ctrl_endpoपूर्णांक = 0x01,
-	.generic_bulk_ctrl_endpoपूर्णांक_response = 0x01,
+	.size_of_priv = sizeof(struct lme2510_state),
+	.generic_bulk_ctrl_endpoint = 0x01,
+	.generic_bulk_ctrl_endpoint_response = 0x01,
 
-	.करोwnload_firmware = lme2510_करोwnload_firmware,
+	.download_firmware = lme2510_download_firmware,
 
-	.घातer_ctrl       = lme2510_घातerup,
-	.identअगरy_state   = lme2510_identअगरy_state,
+	.power_ctrl       = lme2510_powerup,
+	.identify_state   = lme2510_identify_state,
 	.i2c_algo         = &lme2510_i2c_algo,
 
 	.frontend_attach  = dm04_lme2510_frontend_attach,
@@ -1217,9 +1216,9 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 
 	.get_rc_config = lme2510_get_rc_config,
 
-	.निकास = lme2510_निकास,
-	.adapter = अणु
-		अणु
+	.exit = lme2510_exit,
+	.adapter = {
+		{
 			.caps = DVB_USB_ADAP_HAS_PID_FILTER|
 				DVB_USB_ADAP_PID_FILTER_CAN_BE_TURNED_OFF,
 			.pid_filter_count = 15,
@@ -1227,32 +1226,32 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 			.pid_filter_ctrl  = lme2510_pid_filter_ctrl,
 			.stream =
 			DVB_USB_STREAM_BULK(0x86, 10, 4096),
-		पूर्ण,
-		अणु
-		पूर्ण
-	पूर्ण,
-पूर्ण;
+		},
+		{
+		}
+	},
+};
 
-अटल स्थिर काष्ठा usb_device_id lme2510_id_table[] = अणु
-	अणु	DVB_USB_DEVICE(0x3344, 0x1122, &lme2510_props,
-		"DM04_LME2510_DVB-S", RC_MAP_LME2510)	पूर्ण,
-	अणु	DVB_USB_DEVICE(0x3344, 0x1120, &lme2510_props,
-		"DM04_LME2510C_DVB-S", RC_MAP_LME2510)	पूर्ण,
-	अणु	DVB_USB_DEVICE(0x3344, 0x22f0, &lme2510_props,
-		"DM04_LME2510C_DVB-S RS2000", RC_MAP_LME2510)	पूर्ण,
-	अणुपूर्ण		/* Terminating entry */
-पूर्ण;
+static const struct usb_device_id lme2510_id_table[] = {
+	{	DVB_USB_DEVICE(0x3344, 0x1122, &lme2510_props,
+		"DM04_LME2510_DVB-S", RC_MAP_LME2510)	},
+	{	DVB_USB_DEVICE(0x3344, 0x1120, &lme2510_props,
+		"DM04_LME2510C_DVB-S", RC_MAP_LME2510)	},
+	{	DVB_USB_DEVICE(0x3344, 0x22f0, &lme2510_props,
+		"DM04_LME2510C_DVB-S RS2000", RC_MAP_LME2510)	},
+	{}		/* Terminating entry */
+};
 
 MODULE_DEVICE_TABLE(usb, lme2510_id_table);
 
-अटल काष्ठा usb_driver lme2510_driver = अणु
+static struct usb_driver lme2510_driver = {
 	.name		= KBUILD_MODNAME,
 	.probe		= dvb_usbv2_probe,
 	.disconnect	= dvb_usbv2_disconnect,
 	.id_table	= lme2510_id_table,
 	.no_dynamic_id = 1,
 	.soft_unbind = 1,
-पूर्ण;
+};
 
 module_usb_driver(lme2510_driver);
 

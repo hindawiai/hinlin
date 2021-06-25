@@ -1,11 +1,10 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2021 SiFive
  */
-#अगर_अघोषित ASM_VENDOR_LIST_H
-#घोषणा ASM_VENDOR_LIST_H
+#ifndef ASM_VENDOR_LIST_H
+#define ASM_VENDOR_LIST_H
 
-#घोषणा SIFIVE_VENDOR_ID	0x489
+#define SIFIVE_VENDOR_ID	0x489
 
-#पूर्ण_अगर
+#endif

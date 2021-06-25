@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /* SCTP kernel implementation
  * (C) Copyright IBM Corp. 2001, 2004
  * Copyright (c) 1999-2000 Cisco, Inc.
@@ -8,240 +7,240 @@
  * Copyright (c) 2001 Nokia, Inc.
  * Copyright (c) 2001 La Monte H.P. Yarroll
  *
- * This असलtraction carries sctp events to the ULP (sockets).
+ * This abstraction carries sctp events to the ULP (sockets).
  *
  * Please send any bug reports or fixes you make to the
  * email address(es):
  *    lksctp developers <linux-sctp@vger.kernel.org>
  *
- * Written or modअगरied by:
+ * Written or modified by:
  *    Jon Grimm             <jgrimm@us.ibm.com>
  *    La Monte H.P. Yarroll <piggy@acm.org>
  *    Sridhar Samudrala     <sri@us.ibm.com>
  */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/types.h>
-#समावेश <linux/skbuff.h>
-#समावेश <net/sock.h>
-#समावेश <net/busy_poll.h>
-#समावेश <net/sctp/काष्ठाs.h>
-#समावेश <net/sctp/sctp.h>
-#समावेश <net/sctp/sm.h>
+#include <linux/slab.h>
+#include <linux/types.h>
+#include <linux/skbuff.h>
+#include <net/sock.h>
+#include <net/busy_poll.h>
+#include <net/sctp/structs.h>
+#include <net/sctp/sctp.h>
+#include <net/sctp/sm.h>
 
-/* Forward declarations क्रम पूर्णांकernal helpers.  */
-अटल काष्ठा sctp_ulpevent *sctp_ulpq_reयंत्र(काष्ठा sctp_ulpq *ulpq,
-					      काष्ठा sctp_ulpevent *);
-अटल काष्ठा sctp_ulpevent *sctp_ulpq_order(काष्ठा sctp_ulpq *,
-					      काष्ठा sctp_ulpevent *);
-अटल व्योम sctp_ulpq_reयंत्र_drain(काष्ठा sctp_ulpq *ulpq);
+/* Forward declarations for internal helpers.  */
+static struct sctp_ulpevent *sctp_ulpq_reasm(struct sctp_ulpq *ulpq,
+					      struct sctp_ulpevent *);
+static struct sctp_ulpevent *sctp_ulpq_order(struct sctp_ulpq *,
+					      struct sctp_ulpevent *);
+static void sctp_ulpq_reasm_drain(struct sctp_ulpq *ulpq);
 
 /* 1st Level Abstractions */
 
 /* Initialize a ULP queue from a block of memory.  */
-काष्ठा sctp_ulpq *sctp_ulpq_init(काष्ठा sctp_ulpq *ulpq,
-				 काष्ठा sctp_association *asoc)
-अणु
-	स_रखो(ulpq, 0, माप(काष्ठा sctp_ulpq));
+struct sctp_ulpq *sctp_ulpq_init(struct sctp_ulpq *ulpq,
+				 struct sctp_association *asoc)
+{
+	memset(ulpq, 0, sizeof(struct sctp_ulpq));
 
 	ulpq->asoc = asoc;
-	skb_queue_head_init(&ulpq->reयंत्र);
-	skb_queue_head_init(&ulpq->reयंत्र_uo);
+	skb_queue_head_init(&ulpq->reasm);
+	skb_queue_head_init(&ulpq->reasm_uo);
 	skb_queue_head_init(&ulpq->lobby);
 	ulpq->pd_mode  = 0;
 
-	वापस ulpq;
-पूर्ण
+	return ulpq;
+}
 
 
 /* Flush the reassembly and ordering queues.  */
-व्योम sctp_ulpq_flush(काष्ठा sctp_ulpq *ulpq)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा sctp_ulpevent *event;
+void sctp_ulpq_flush(struct sctp_ulpq *ulpq)
+{
+	struct sk_buff *skb;
+	struct sctp_ulpevent *event;
 
-	जबतक ((skb = __skb_dequeue(&ulpq->lobby)) != शून्य) अणु
+	while ((skb = __skb_dequeue(&ulpq->lobby)) != NULL) {
 		event = sctp_skb2event(skb);
-		sctp_ulpevent_मुक्त(event);
-	पूर्ण
+		sctp_ulpevent_free(event);
+	}
 
-	जबतक ((skb = __skb_dequeue(&ulpq->reयंत्र)) != शून्य) अणु
+	while ((skb = __skb_dequeue(&ulpq->reasm)) != NULL) {
 		event = sctp_skb2event(skb);
-		sctp_ulpevent_मुक्त(event);
-	पूर्ण
+		sctp_ulpevent_free(event);
+	}
 
-	जबतक ((skb = __skb_dequeue(&ulpq->reयंत्र_uo)) != शून्य) अणु
+	while ((skb = __skb_dequeue(&ulpq->reasm_uo)) != NULL) {
 		event = sctp_skb2event(skb);
-		sctp_ulpevent_मुक्त(event);
-	पूर्ण
-पूर्ण
+		sctp_ulpevent_free(event);
+	}
+}
 
 /* Dispose of a ulpqueue.  */
-व्योम sctp_ulpq_मुक्त(काष्ठा sctp_ulpq *ulpq)
-अणु
+void sctp_ulpq_free(struct sctp_ulpq *ulpq)
+{
 	sctp_ulpq_flush(ulpq);
-पूर्ण
+}
 
 /* Process an incoming DATA chunk.  */
-पूर्णांक sctp_ulpq_tail_data(काष्ठा sctp_ulpq *ulpq, काष्ठा sctp_chunk *chunk,
+int sctp_ulpq_tail_data(struct sctp_ulpq *ulpq, struct sctp_chunk *chunk,
 			gfp_t gfp)
-अणु
-	काष्ठा sk_buff_head temp;
-	काष्ठा sctp_ulpevent *event;
-	पूर्णांक event_eor = 0;
+{
+	struct sk_buff_head temp;
+	struct sctp_ulpevent *event;
+	int event_eor = 0;
 
 	/* Create an event from the incoming chunk. */
 	event = sctp_ulpevent_make_rcvmsg(chunk->asoc, chunk, gfp);
-	अगर (!event)
-		वापस -ENOMEM;
+	if (!event)
+		return -ENOMEM;
 
 	event->ssn = ntohs(chunk->subh.data_hdr->ssn);
 	event->ppid = chunk->subh.data_hdr->ppid;
 
-	/* Do reassembly अगर needed.  */
-	event = sctp_ulpq_reयंत्र(ulpq, event);
+	/* Do reassembly if needed.  */
+	event = sctp_ulpq_reasm(ulpq, event);
 
-	/* Do ordering अगर needed.  */
-	अगर (event) अणु
+	/* Do ordering if needed.  */
+	if (event) {
 		/* Create a temporary list to collect chunks on.  */
 		skb_queue_head_init(&temp);
 		__skb_queue_tail(&temp, sctp_event2skb(event));
 
-		अगर (event->msg_flags & MSG_EOR)
+		if (event->msg_flags & MSG_EOR)
 			event = sctp_ulpq_order(ulpq, event);
-	पूर्ण
+	}
 
-	/* Send event to the ULP.  'event' is the sctp_ulpevent क्रम
+	/* Send event to the ULP.  'event' is the sctp_ulpevent for
 	 * very first SKB on the 'temp' list.
 	 */
-	अगर (event) अणु
+	if (event) {
 		event_eor = (event->msg_flags & MSG_EOR) ? 1 : 0;
 		sctp_ulpq_tail_event(ulpq, &temp);
-	पूर्ण
+	}
 
-	वापस event_eor;
-पूर्ण
+	return event_eor;
+}
 
-/* Add a new event क्रम propagation to the ULP.  */
-/* Clear the partial delivery mode क्रम this socket.   Note: This
+/* Add a new event for propagation to the ULP.  */
+/* Clear the partial delivery mode for this socket.   Note: This
  * assumes that no association is currently in partial delivery mode.
  */
-पूर्णांक sctp_clear_pd(काष्ठा sock *sk, काष्ठा sctp_association *asoc)
-अणु
-	काष्ठा sctp_sock *sp = sctp_sk(sk);
+int sctp_clear_pd(struct sock *sk, struct sctp_association *asoc)
+{
+	struct sctp_sock *sp = sctp_sk(sk);
 
-	अगर (atomic_dec_and_test(&sp->pd_mode)) अणु
+	if (atomic_dec_and_test(&sp->pd_mode)) {
 		/* This means there are no other associations in PD, so
 		 * we can go ahead and clear out the lobby in one shot
 		 */
-		अगर (!skb_queue_empty(&sp->pd_lobby)) अणु
+		if (!skb_queue_empty(&sp->pd_lobby)) {
 			skb_queue_splice_tail_init(&sp->pd_lobby,
 						   &sk->sk_receive_queue);
-			वापस 1;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return 1;
+		}
+	} else {
 		/* There are other associations in PD, so we only need to
-		 * pull stuff out of the lobby that beदीर्घs to the
-		 * associations that is निकासing PD (all of its notअगरications
+		 * pull stuff out of the lobby that belongs to the
+		 * associations that is exiting PD (all of its notifications
 		 * are posted here).
 		 */
-		अगर (!skb_queue_empty(&sp->pd_lobby) && asoc) अणु
-			काष्ठा sk_buff *skb, *पंचांगp;
-			काष्ठा sctp_ulpevent *event;
+		if (!skb_queue_empty(&sp->pd_lobby) && asoc) {
+			struct sk_buff *skb, *tmp;
+			struct sctp_ulpevent *event;
 
-			sctp_skb_क्रम_each(skb, &sp->pd_lobby, पंचांगp) अणु
+			sctp_skb_for_each(skb, &sp->pd_lobby, tmp) {
 				event = sctp_skb2event(skb);
-				अगर (event->asoc == asoc) अणु
+				if (event->asoc == asoc) {
 					__skb_unlink(skb, &sp->pd_lobby);
 					__skb_queue_tail(&sk->sk_receive_queue,
 							 skb);
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				}
+			}
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Set the pd_mode on the socket and ulpq */
-अटल व्योम sctp_ulpq_set_pd(काष्ठा sctp_ulpq *ulpq)
-अणु
-	काष्ठा sctp_sock *sp = sctp_sk(ulpq->asoc->base.sk);
+static void sctp_ulpq_set_pd(struct sctp_ulpq *ulpq)
+{
+	struct sctp_sock *sp = sctp_sk(ulpq->asoc->base.sk);
 
 	atomic_inc(&sp->pd_mode);
 	ulpq->pd_mode = 1;
-पूर्ण
+}
 
-/* Clear the pd_mode and restart any pending messages रुकोing क्रम delivery. */
-अटल पूर्णांक sctp_ulpq_clear_pd(काष्ठा sctp_ulpq *ulpq)
-अणु
+/* Clear the pd_mode and restart any pending messages waiting for delivery. */
+static int sctp_ulpq_clear_pd(struct sctp_ulpq *ulpq)
+{
 	ulpq->pd_mode = 0;
-	sctp_ulpq_reयंत्र_drain(ulpq);
-	वापस sctp_clear_pd(ulpq->asoc->base.sk, ulpq->asoc);
-पूर्ण
+	sctp_ulpq_reasm_drain(ulpq);
+	return sctp_clear_pd(ulpq->asoc->base.sk, ulpq->asoc);
+}
 
-पूर्णांक sctp_ulpq_tail_event(काष्ठा sctp_ulpq *ulpq, काष्ठा sk_buff_head *skb_list)
-अणु
-	काष्ठा sock *sk = ulpq->asoc->base.sk;
-	काष्ठा sctp_sock *sp = sctp_sk(sk);
-	काष्ठा sctp_ulpevent *event;
-	काष्ठा sk_buff_head *queue;
-	काष्ठा sk_buff *skb;
-	पूर्णांक clear_pd = 0;
+int sctp_ulpq_tail_event(struct sctp_ulpq *ulpq, struct sk_buff_head *skb_list)
+{
+	struct sock *sk = ulpq->asoc->base.sk;
+	struct sctp_sock *sp = sctp_sk(sk);
+	struct sctp_ulpevent *event;
+	struct sk_buff_head *queue;
+	struct sk_buff *skb;
+	int clear_pd = 0;
 
 	skb = __skb_peek(skb_list);
 	event = sctp_skb2event(skb);
 
-	/* If the socket is just going to throw this away, करो not
+	/* If the socket is just going to throw this away, do not
 	 * even try to deliver it.
 	 */
-	अगर (sk->sk_shutकरोwn & RCV_SHUTDOWN &&
-	    (sk->sk_shutकरोwn & SEND_SHUTDOWN ||
-	     !sctp_ulpevent_is_notअगरication(event)))
-		जाओ out_मुक्त;
+	if (sk->sk_shutdown & RCV_SHUTDOWN &&
+	    (sk->sk_shutdown & SEND_SHUTDOWN ||
+	     !sctp_ulpevent_is_notification(event)))
+		goto out_free;
 
-	अगर (!sctp_ulpevent_is_notअगरication(event)) अणु
+	if (!sctp_ulpevent_is_notification(event)) {
 		sk_mark_napi_id(sk, skb);
 		sk_incoming_cpu_update(sk);
-	पूर्ण
-	/* Check अगर the user wishes to receive this event.  */
-	अगर (!sctp_ulpevent_is_enabled(event, ulpq->asoc->subscribe))
-		जाओ out_मुक्त;
+	}
+	/* Check if the user wishes to receive this event.  */
+	if (!sctp_ulpevent_is_enabled(event, ulpq->asoc->subscribe))
+		goto out_free;
 
 	/* If we are in partial delivery mode, post to the lobby until
 	 * partial delivery is cleared, unless, of course _this_ is
 	 * the association the cause of the partial delivery.
 	 */
 
-	अगर (atomic_पढ़ो(&sp->pd_mode) == 0) अणु
+	if (atomic_read(&sp->pd_mode) == 0) {
 		queue = &sk->sk_receive_queue;
-	पूर्ण अन्यथा अणु
-		अगर (ulpq->pd_mode) अणु
+	} else {
+		if (ulpq->pd_mode) {
 			/* If the association is in partial delivery, we
 			 * need to finish delivering the partially processed
-			 * packet beक्रमe passing any other data.  This is
-			 * because we करोn't truly support stream पूर्णांकerleaving.
+			 * packet before passing any other data.  This is
+			 * because we don't truly support stream interleaving.
 			 */
-			अगर ((event->msg_flags & MSG_NOTIFICATION) ||
+			if ((event->msg_flags & MSG_NOTIFICATION) ||
 			    (SCTP_DATA_NOT_FRAG ==
 				    (event->msg_flags & SCTP_DATA_FRAG_MASK)))
 				queue = &sp->pd_lobby;
-			अन्यथा अणु
+			else {
 				clear_pd = event->msg_flags & MSG_EOR;
 				queue = &sk->sk_receive_queue;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			/*
-			 * If fragment पूर्णांकerleave is enabled, we
+			 * If fragment interleave is enabled, we
 			 * can queue this to the receive queue instead
 			 * of the lobby.
 			 */
-			अगर (sp->frag_पूर्णांकerleave)
+			if (sp->frag_interleave)
 				queue = &sk->sk_receive_queue;
-			अन्यथा
+			else
 				queue = &sp->pd_lobby;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	skb_queue_splice_tail_init(skb_list, queue);
 
@@ -249,127 +248,127 @@
 	 * rolling again?  Move pending data to the receive
 	 * queue.
 	 */
-	अगर (clear_pd)
+	if (clear_pd)
 		sctp_ulpq_clear_pd(ulpq);
 
-	अगर (queue == &sk->sk_receive_queue && !sp->data_पढ़ोy_संकेतled) अणु
-		अगर (!sock_owned_by_user(sk))
-			sp->data_पढ़ोy_संकेतled = 1;
-		sk->sk_data_पढ़ोy(sk);
-	पूर्ण
-	वापस 1;
+	if (queue == &sk->sk_receive_queue && !sp->data_ready_signalled) {
+		if (!sock_owned_by_user(sk))
+			sp->data_ready_signalled = 1;
+		sk->sk_data_ready(sk);
+	}
+	return 1;
 
-out_मुक्त:
-	अगर (skb_list)
+out_free:
+	if (skb_list)
 		sctp_queue_purge_ulpevents(skb_list);
-	अन्यथा
-		sctp_ulpevent_मुक्त(event);
+	else
+		sctp_ulpevent_free(event);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* 2nd Level Abstractions */
 
 /* Helper function to store chunks that need to be reassembled.  */
-अटल व्योम sctp_ulpq_store_reयंत्र(काष्ठा sctp_ulpq *ulpq,
-					 काष्ठा sctp_ulpevent *event)
-अणु
-	काष्ठा sk_buff *pos;
-	काष्ठा sctp_ulpevent *cevent;
+static void sctp_ulpq_store_reasm(struct sctp_ulpq *ulpq,
+					 struct sctp_ulpevent *event)
+{
+	struct sk_buff *pos;
+	struct sctp_ulpevent *cevent;
 	__u32 tsn, ctsn;
 
 	tsn = event->tsn;
 
-	/* See अगर it beदीर्घs at the end. */
-	pos = skb_peek_tail(&ulpq->reयंत्र);
-	अगर (!pos) अणु
-		__skb_queue_tail(&ulpq->reयंत्र, sctp_event2skb(event));
-		वापस;
-	पूर्ण
+	/* See if it belongs at the end. */
+	pos = skb_peek_tail(&ulpq->reasm);
+	if (!pos) {
+		__skb_queue_tail(&ulpq->reasm, sctp_event2skb(event));
+		return;
+	}
 
 	/* Short circuit just dropping it at the end. */
 	cevent = sctp_skb2event(pos);
 	ctsn = cevent->tsn;
-	अगर (TSN_lt(ctsn, tsn)) अणु
-		__skb_queue_tail(&ulpq->reयंत्र, sctp_event2skb(event));
-		वापस;
-	पूर्ण
+	if (TSN_lt(ctsn, tsn)) {
+		__skb_queue_tail(&ulpq->reasm, sctp_event2skb(event));
+		return;
+	}
 
 	/* Find the right place in this list. We store them by TSN.  */
-	skb_queue_walk(&ulpq->reयंत्र, pos) अणु
+	skb_queue_walk(&ulpq->reasm, pos) {
 		cevent = sctp_skb2event(pos);
 		ctsn = cevent->tsn;
 
-		अगर (TSN_lt(tsn, ctsn))
-			अवरोध;
-	पूर्ण
+		if (TSN_lt(tsn, ctsn))
+			break;
+	}
 
-	/* Insert beक्रमe pos. */
-	__skb_queue_beक्रमe(&ulpq->reयंत्र, pos, sctp_event2skb(event));
+	/* Insert before pos. */
+	__skb_queue_before(&ulpq->reasm, pos, sctp_event2skb(event));
 
-पूर्ण
+}
 
-/* Helper function to वापस an event corresponding to the reassembled
+/* Helper function to return an event corresponding to the reassembled
  * datagram.
  * This routine creates a re-assembled skb given the first and last skb's
- * as stored in the reassembly queue. The skb's may be non-linear अगर the sctp
+ * as stored in the reassembly queue. The skb's may be non-linear if the sctp
  * payload was fragmented on the way and ip had to reassemble them.
  * We add the rest of skb's to the first skb's fraglist.
  */
-काष्ठा sctp_ulpevent *sctp_make_reassembled_event(काष्ठा net *net,
-						  काष्ठा sk_buff_head *queue,
-						  काष्ठा sk_buff *f_frag,
-						  काष्ठा sk_buff *l_frag)
-अणु
-	काष्ठा sk_buff *pos;
-	काष्ठा sk_buff *new = शून्य;
-	काष्ठा sctp_ulpevent *event;
-	काष्ठा sk_buff *pnext, *last;
-	काष्ठा sk_buff *list = skb_shinfo(f_frag)->frag_list;
+struct sctp_ulpevent *sctp_make_reassembled_event(struct net *net,
+						  struct sk_buff_head *queue,
+						  struct sk_buff *f_frag,
+						  struct sk_buff *l_frag)
+{
+	struct sk_buff *pos;
+	struct sk_buff *new = NULL;
+	struct sctp_ulpevent *event;
+	struct sk_buff *pnext, *last;
+	struct sk_buff *list = skb_shinfo(f_frag)->frag_list;
 
-	/* Store the poपूर्णांकer to the 2nd skb */
-	अगर (f_frag == l_frag)
-		pos = शून्य;
-	अन्यथा
+	/* Store the pointer to the 2nd skb */
+	if (f_frag == l_frag)
+		pos = NULL;
+	else
 		pos = f_frag->next;
 
-	/* Get the last skb in the f_frag's frag_list अगर present. */
-	क्रम (last = list; list; last = list, list = list->next)
+	/* Get the last skb in the f_frag's frag_list if present. */
+	for (last = list; list; last = list, list = list->next)
 		;
 
-	/* Add the list of reमुख्यing fragments to the first fragments
+	/* Add the list of remaining fragments to the first fragments
 	 * frag_list.
 	 */
-	अगर (last)
+	if (last)
 		last->next = pos;
-	अन्यथा अणु
-		अगर (skb_cloned(f_frag)) अणु
-			/* This is a cloned skb, we can't just modअगरy
-			 * the frag_list.  We need a new skb to करो that.
-			 * Instead of calling skb_unshare(), we'll करो it
-			 * ourselves since we need to delay the मुक्त.
+	else {
+		if (skb_cloned(f_frag)) {
+			/* This is a cloned skb, we can't just modify
+			 * the frag_list.  We need a new skb to do that.
+			 * Instead of calling skb_unshare(), we'll do it
+			 * ourselves since we need to delay the free.
 			 */
 			new = skb_copy(f_frag, GFP_ATOMIC);
-			अगर (!new)
-				वापस शून्य;	/* try again later */
+			if (!new)
+				return NULL;	/* try again later */
 
 			sctp_skb_set_owner_r(new, f_frag->sk);
 
 			skb_shinfo(new)->frag_list = pos;
-		पूर्ण अन्यथा
+		} else
 			skb_shinfo(f_frag)->frag_list = pos;
-	पूर्ण
+	}
 
 	/* Remove the first fragment from the reassembly queue.  */
 	__skb_unlink(f_frag, queue);
 
-	/* अगर we did unshare, then मुक्त the old skb and re-assign */
-	अगर (new) अणु
-		kमुक्त_skb(f_frag);
+	/* if we did unshare, then free the old skb and re-assign */
+	if (new) {
+		kfree_skb(f_frag);
 		f_frag = new;
-	पूर्ण
+	}
 
-	जबतक (pos) अणु
+	while (pos) {
 
 		pnext = pos->next;
 
@@ -380,216 +379,216 @@ out_मुक्त:
 		/* Remove the fragment from the reassembly queue.  */
 		__skb_unlink(pos, queue);
 
-		/* Break अगर we have reached the last fragment.  */
-		अगर (pos == l_frag)
-			अवरोध;
+		/* Break if we have reached the last fragment.  */
+		if (pos == l_frag)
+			break;
 		pos->next = pnext;
 		pos = pnext;
-	पूर्ण
+	}
 
 	event = sctp_skb2event(f_frag);
 	SCTP_INC_STATS(net, SCTP_MIB_REASMUSRMSGS);
 
-	वापस event;
-पूर्ण
+	return event;
+}
 
 
-/* Helper function to check अगर an incoming chunk has filled up the last
- * missing fragment in a SCTP datagram and वापस the corresponding event.
+/* Helper function to check if an incoming chunk has filled up the last
+ * missing fragment in a SCTP datagram and return the corresponding event.
  */
-अटल काष्ठा sctp_ulpevent *sctp_ulpq_retrieve_reassembled(काष्ठा sctp_ulpq *ulpq)
-अणु
-	काष्ठा sk_buff *pos;
-	काष्ठा sctp_ulpevent *cevent;
-	काष्ठा sk_buff *first_frag = शून्य;
+static struct sctp_ulpevent *sctp_ulpq_retrieve_reassembled(struct sctp_ulpq *ulpq)
+{
+	struct sk_buff *pos;
+	struct sctp_ulpevent *cevent;
+	struct sk_buff *first_frag = NULL;
 	__u32 ctsn, next_tsn;
-	काष्ठा sctp_ulpevent *retval = शून्य;
-	काष्ठा sk_buff *pd_first = शून्य;
-	काष्ठा sk_buff *pd_last = शून्य;
-	माप_प्रकार pd_len = 0;
-	काष्ठा sctp_association *asoc;
-	u32 pd_poपूर्णांक;
+	struct sctp_ulpevent *retval = NULL;
+	struct sk_buff *pd_first = NULL;
+	struct sk_buff *pd_last = NULL;
+	size_t pd_len = 0;
+	struct sctp_association *asoc;
+	u32 pd_point;
 
-	/* Initialized to 0 just to aव्योम compiler warning message.  Will
+	/* Initialized to 0 just to avoid compiler warning message.  Will
 	 * never be used with this value. It is referenced only after it
 	 * is set when we find the first fragment of a message.
 	 */
 	next_tsn = 0;
 
-	/* The chunks are held in the reयंत्र queue sorted by TSN.
-	 * Walk through the queue sequentially and look क्रम a sequence of
+	/* The chunks are held in the reasm queue sorted by TSN.
+	 * Walk through the queue sequentially and look for a sequence of
 	 * fragmented chunks that complete a datagram.
 	 * 'first_frag' and next_tsn are reset when we find a chunk which
 	 * is the first fragment of a datagram. Once these 2 fields are set
-	 * we expect to find the reमुख्यing middle fragments and the last
-	 * fragment in order. If not, first_frag is reset to शून्य and we
+	 * we expect to find the remaining middle fragments and the last
+	 * fragment in order. If not, first_frag is reset to NULL and we
 	 * start the next pass when we find another first fragment.
 	 *
-	 * There is a potential to करो partial delivery अगर user sets
+	 * There is a potential to do partial delivery if user sets
 	 * SCTP_PARTIAL_DELIVERY_POINT option. Lets count some things here
-	 * to see अगर can करो PD.
+	 * to see if can do PD.
 	 */
-	skb_queue_walk(&ulpq->reयंत्र, pos) अणु
+	skb_queue_walk(&ulpq->reasm, pos) {
 		cevent = sctp_skb2event(pos);
 		ctsn = cevent->tsn;
 
-		चयन (cevent->msg_flags & SCTP_DATA_FRAG_MASK) अणु
-		हाल SCTP_DATA_FIRST_FRAG:
+		switch (cevent->msg_flags & SCTP_DATA_FRAG_MASK) {
+		case SCTP_DATA_FIRST_FRAG:
 			/* If this "FIRST_FRAG" is the first
 			 * element in the queue, then count it towards
 			 * possible PD.
 			 */
-			अगर (skb_queue_is_first(&ulpq->reयंत्र, pos)) अणु
+			if (skb_queue_is_first(&ulpq->reasm, pos)) {
 			    pd_first = pos;
 			    pd_last = pos;
 			    pd_len = pos->len;
-			पूर्ण अन्यथा अणु
-			    pd_first = शून्य;
-			    pd_last = शून्य;
+			} else {
+			    pd_first = NULL;
+			    pd_last = NULL;
 			    pd_len = 0;
-			पूर्ण
+			}
 
 			first_frag = pos;
 			next_tsn = ctsn + 1;
-			अवरोध;
+			break;
 
-		हाल SCTP_DATA_MIDDLE_FRAG:
-			अगर ((first_frag) && (ctsn == next_tsn)) अणु
+		case SCTP_DATA_MIDDLE_FRAG:
+			if ((first_frag) && (ctsn == next_tsn)) {
 				next_tsn++;
-				अगर (pd_first) अणु
+				if (pd_first) {
 				    pd_last = pos;
 				    pd_len += pos->len;
-				पूर्ण
-			पूर्ण अन्यथा
-				first_frag = शून्य;
-			अवरोध;
+				}
+			} else
+				first_frag = NULL;
+			break;
 
-		हाल SCTP_DATA_LAST_FRAG:
-			अगर (first_frag && (ctsn == next_tsn))
-				जाओ found;
-			अन्यथा
-				first_frag = शून्य;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+		case SCTP_DATA_LAST_FRAG:
+			if (first_frag && (ctsn == next_tsn))
+				goto found;
+			else
+				first_frag = NULL;
+			break;
+		}
+	}
 
 	asoc = ulpq->asoc;
-	अगर (pd_first) अणु
+	if (pd_first) {
 		/* Make sure we can enter partial deliver.
-		 * We can trigger partial delivery only अगर framgent
-		 * पूर्णांकerleave is set, or the socket is not alपढ़ोy
+		 * We can trigger partial delivery only if framgent
+		 * interleave is set, or the socket is not already
 		 * in  partial delivery.
 		 */
-		अगर (!sctp_sk(asoc->base.sk)->frag_पूर्णांकerleave &&
-		    atomic_पढ़ो(&sctp_sk(asoc->base.sk)->pd_mode))
-			जाओ करोne;
+		if (!sctp_sk(asoc->base.sk)->frag_interleave &&
+		    atomic_read(&sctp_sk(asoc->base.sk)->pd_mode))
+			goto done;
 
 		cevent = sctp_skb2event(pd_first);
-		pd_poपूर्णांक = sctp_sk(asoc->base.sk)->pd_poपूर्णांक;
-		अगर (pd_poपूर्णांक && pd_poपूर्णांक <= pd_len) अणु
+		pd_point = sctp_sk(asoc->base.sk)->pd_point;
+		if (pd_point && pd_point <= pd_len) {
 			retval = sctp_make_reassembled_event(asoc->base.net,
-							     &ulpq->reयंत्र,
+							     &ulpq->reasm,
 							     pd_first, pd_last);
-			अगर (retval)
+			if (retval)
 				sctp_ulpq_set_pd(ulpq);
-		पूर्ण
-	पूर्ण
-करोne:
-	वापस retval;
+		}
+	}
+done:
+	return retval;
 found:
 	retval = sctp_make_reassembled_event(ulpq->asoc->base.net,
-					     &ulpq->reयंत्र, first_frag, pos);
-	अगर (retval)
+					     &ulpq->reasm, first_frag, pos);
+	if (retval)
 		retval->msg_flags |= MSG_EOR;
-	जाओ करोne;
-पूर्ण
+	goto done;
+}
 
 /* Retrieve the next set of fragments of a partial message. */
-अटल काष्ठा sctp_ulpevent *sctp_ulpq_retrieve_partial(काष्ठा sctp_ulpq *ulpq)
-अणु
-	काष्ठा sk_buff *pos, *last_frag, *first_frag;
-	काष्ठा sctp_ulpevent *cevent;
+static struct sctp_ulpevent *sctp_ulpq_retrieve_partial(struct sctp_ulpq *ulpq)
+{
+	struct sk_buff *pos, *last_frag, *first_frag;
+	struct sctp_ulpevent *cevent;
 	__u32 ctsn, next_tsn;
-	पूर्णांक is_last;
-	काष्ठा sctp_ulpevent *retval;
+	int is_last;
+	struct sctp_ulpevent *retval;
 
-	/* The chunks are held in the reयंत्र queue sorted by TSN.
-	 * Walk through the queue sequentially and look क्रम the first
+	/* The chunks are held in the reasm queue sorted by TSN.
+	 * Walk through the queue sequentially and look for the first
 	 * sequence of fragmented chunks.
 	 */
 
-	अगर (skb_queue_empty(&ulpq->reयंत्र))
-		वापस शून्य;
+	if (skb_queue_empty(&ulpq->reasm))
+		return NULL;
 
-	last_frag = first_frag = शून्य;
-	retval = शून्य;
+	last_frag = first_frag = NULL;
+	retval = NULL;
 	next_tsn = 0;
 	is_last = 0;
 
-	skb_queue_walk(&ulpq->reयंत्र, pos) अणु
+	skb_queue_walk(&ulpq->reasm, pos) {
 		cevent = sctp_skb2event(pos);
 		ctsn = cevent->tsn;
 
-		चयन (cevent->msg_flags & SCTP_DATA_FRAG_MASK) अणु
-		हाल SCTP_DATA_FIRST_FRAG:
-			अगर (!first_frag)
-				वापस शून्य;
-			जाओ करोne;
-		हाल SCTP_DATA_MIDDLE_FRAG:
-			अगर (!first_frag) अणु
+		switch (cevent->msg_flags & SCTP_DATA_FRAG_MASK) {
+		case SCTP_DATA_FIRST_FRAG:
+			if (!first_frag)
+				return NULL;
+			goto done;
+		case SCTP_DATA_MIDDLE_FRAG:
+			if (!first_frag) {
 				first_frag = pos;
 				next_tsn = ctsn + 1;
 				last_frag = pos;
-			पूर्ण अन्यथा अगर (next_tsn == ctsn) अणु
+			} else if (next_tsn == ctsn) {
 				next_tsn++;
 				last_frag = pos;
-			पूर्ण अन्यथा
-				जाओ करोne;
-			अवरोध;
-		हाल SCTP_DATA_LAST_FRAG:
-			अगर (!first_frag)
+			} else
+				goto done;
+			break;
+		case SCTP_DATA_LAST_FRAG:
+			if (!first_frag)
 				first_frag = pos;
-			अन्यथा अगर (ctsn != next_tsn)
-				जाओ करोne;
+			else if (ctsn != next_tsn)
+				goto done;
 			last_frag = pos;
 			is_last = 1;
-			जाओ करोne;
-		शेष:
-			वापस शून्य;
-		पूर्ण
-	पूर्ण
+			goto done;
+		default:
+			return NULL;
+		}
+	}
 
 	/* We have the reassembled event. There is no need to look
 	 * further.
 	 */
-करोne:
-	retval = sctp_make_reassembled_event(ulpq->asoc->base.net, &ulpq->reयंत्र,
+done:
+	retval = sctp_make_reassembled_event(ulpq->asoc->base.net, &ulpq->reasm,
 					     first_frag, last_frag);
-	अगर (retval && is_last)
+	if (retval && is_last)
 		retval->msg_flags |= MSG_EOR;
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 
-/* Helper function to reassemble chunks.  Hold chunks on the reयंत्र queue that
+/* Helper function to reassemble chunks.  Hold chunks on the reasm queue that
  * need reassembling.
  */
-अटल काष्ठा sctp_ulpevent *sctp_ulpq_reयंत्र(काष्ठा sctp_ulpq *ulpq,
-						काष्ठा sctp_ulpevent *event)
-अणु
-	काष्ठा sctp_ulpevent *retval = शून्य;
+static struct sctp_ulpevent *sctp_ulpq_reasm(struct sctp_ulpq *ulpq,
+						struct sctp_ulpevent *event)
+{
+	struct sctp_ulpevent *retval = NULL;
 
-	/* Check अगर this is part of a fragmented message.  */
-	अगर (SCTP_DATA_NOT_FRAG == (event->msg_flags & SCTP_DATA_FRAG_MASK)) अणु
+	/* Check if this is part of a fragmented message.  */
+	if (SCTP_DATA_NOT_FRAG == (event->msg_flags & SCTP_DATA_FRAG_MASK)) {
 		event->msg_flags |= MSG_EOR;
-		वापस event;
-	पूर्ण
+		return event;
+	}
 
-	sctp_ulpq_store_reयंत्र(ulpq, event);
-	अगर (!ulpq->pd_mode)
+	sctp_ulpq_store_reasm(ulpq, event);
+	if (!ulpq->pd_mode)
 		retval = sctp_ulpq_retrieve_reassembled(ulpq);
-	अन्यथा अणु
+	else {
 		__u32 ctsn, ctsnap;
 
 		/* Do not even bother unless this is the next tsn to
@@ -597,77 +596,77 @@ found:
 		 */
 		ctsn = event->tsn;
 		ctsnap = sctp_tsnmap_get_ctsn(&ulpq->asoc->peer.tsn_map);
-		अगर (TSN_lte(ctsn, ctsnap))
+		if (TSN_lte(ctsn, ctsnap))
 			retval = sctp_ulpq_retrieve_partial(ulpq);
-	पूर्ण
+	}
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-/* Retrieve the first part (sequential fragments) क्रम partial delivery.  */
-अटल काष्ठा sctp_ulpevent *sctp_ulpq_retrieve_first(काष्ठा sctp_ulpq *ulpq)
-अणु
-	काष्ठा sk_buff *pos, *last_frag, *first_frag;
-	काष्ठा sctp_ulpevent *cevent;
+/* Retrieve the first part (sequential fragments) for partial delivery.  */
+static struct sctp_ulpevent *sctp_ulpq_retrieve_first(struct sctp_ulpq *ulpq)
+{
+	struct sk_buff *pos, *last_frag, *first_frag;
+	struct sctp_ulpevent *cevent;
 	__u32 ctsn, next_tsn;
-	काष्ठा sctp_ulpevent *retval;
+	struct sctp_ulpevent *retval;
 
-	/* The chunks are held in the reयंत्र queue sorted by TSN.
-	 * Walk through the queue sequentially and look क्रम a sequence of
+	/* The chunks are held in the reasm queue sorted by TSN.
+	 * Walk through the queue sequentially and look for a sequence of
 	 * fragmented chunks that start a datagram.
 	 */
 
-	अगर (skb_queue_empty(&ulpq->reयंत्र))
-		वापस शून्य;
+	if (skb_queue_empty(&ulpq->reasm))
+		return NULL;
 
-	last_frag = first_frag = शून्य;
-	retval = शून्य;
+	last_frag = first_frag = NULL;
+	retval = NULL;
 	next_tsn = 0;
 
-	skb_queue_walk(&ulpq->reयंत्र, pos) अणु
+	skb_queue_walk(&ulpq->reasm, pos) {
 		cevent = sctp_skb2event(pos);
 		ctsn = cevent->tsn;
 
-		चयन (cevent->msg_flags & SCTP_DATA_FRAG_MASK) अणु
-		हाल SCTP_DATA_FIRST_FRAG:
-			अगर (!first_frag) अणु
+		switch (cevent->msg_flags & SCTP_DATA_FRAG_MASK) {
+		case SCTP_DATA_FIRST_FRAG:
+			if (!first_frag) {
 				first_frag = pos;
 				next_tsn = ctsn + 1;
 				last_frag = pos;
-			पूर्ण अन्यथा
-				जाओ करोne;
-			अवरोध;
+			} else
+				goto done;
+			break;
 
-		हाल SCTP_DATA_MIDDLE_FRAG:
-			अगर (!first_frag)
-				वापस शून्य;
-			अगर (ctsn == next_tsn) अणु
+		case SCTP_DATA_MIDDLE_FRAG:
+			if (!first_frag)
+				return NULL;
+			if (ctsn == next_tsn) {
 				next_tsn++;
 				last_frag = pos;
-			पूर्ण अन्यथा
-				जाओ करोne;
-			अवरोध;
+			} else
+				goto done;
+			break;
 
-		हाल SCTP_DATA_LAST_FRAG:
-			अगर (!first_frag)
-				वापस शून्य;
-			अन्यथा
-				जाओ करोne;
-			अवरोध;
+		case SCTP_DATA_LAST_FRAG:
+			if (!first_frag)
+				return NULL;
+			else
+				goto done;
+			break;
 
-		शेष:
-			वापस शून्य;
-		पूर्ण
-	पूर्ण
+		default:
+			return NULL;
+		}
+	}
 
 	/* We have the reassembled event. There is no need to look
 	 * further.
 	 */
-करोne:
-	retval = sctp_make_reassembled_event(ulpq->asoc->base.net, &ulpq->reयंत्र,
+done:
+	retval = sctp_make_reassembled_event(ulpq->asoc->base.net, &ulpq->reasm,
 					     first_frag, last_frag);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 /*
  * Flush out stale fragments from the reassembly queue when processing
@@ -677,102 +676,102 @@ found:
  *
  * After receiving and processing a FORWARD TSN, the data receiver MUST
  * take cautions in updating its re-assembly queue.  The receiver MUST
- * हटाओ any partially reassembled message, which is still missing one
- * or more TSNs earlier than or equal to the new cumulative TSN poपूर्णांक.
+ * remove any partially reassembled message, which is still missing one
+ * or more TSNs earlier than or equal to the new cumulative TSN point.
  * In the event that the receiver has invoked the partial delivery API,
- * a notअगरication SHOULD also be generated to inक्रमm the upper layer API
+ * a notification SHOULD also be generated to inform the upper layer API
  * that the message being partially delivered will NOT be completed.
  */
-व्योम sctp_ulpq_reयंत्र_flushtsn(काष्ठा sctp_ulpq *ulpq, __u32 fwd_tsn)
-अणु
-	काष्ठा sk_buff *pos, *पंचांगp;
-	काष्ठा sctp_ulpevent *event;
+void sctp_ulpq_reasm_flushtsn(struct sctp_ulpq *ulpq, __u32 fwd_tsn)
+{
+	struct sk_buff *pos, *tmp;
+	struct sctp_ulpevent *event;
 	__u32 tsn;
 
-	अगर (skb_queue_empty(&ulpq->reयंत्र))
-		वापस;
+	if (skb_queue_empty(&ulpq->reasm))
+		return;
 
-	skb_queue_walk_safe(&ulpq->reयंत्र, pos, पंचांगp) अणु
+	skb_queue_walk_safe(&ulpq->reasm, pos, tmp) {
 		event = sctp_skb2event(pos);
 		tsn = event->tsn;
 
-		/* Since the entire message must be abanकरोned by the
+		/* Since the entire message must be abandoned by the
 		 * sender (item A3 in Section 3.5, RFC 3758), we can
-		 * मुक्त all fragments on the list that are less then
-		 * or equal to ctsn_poपूर्णांक
+		 * free all fragments on the list that are less then
+		 * or equal to ctsn_point
 		 */
-		अगर (TSN_lte(tsn, fwd_tsn)) अणु
-			__skb_unlink(pos, &ulpq->reयंत्र);
-			sctp_ulpevent_मुक्त(event);
-		पूर्ण अन्यथा
-			अवरोध;
-	पूर्ण
-पूर्ण
+		if (TSN_lte(tsn, fwd_tsn)) {
+			__skb_unlink(pos, &ulpq->reasm);
+			sctp_ulpevent_free(event);
+		} else
+			break;
+	}
+}
 
 /*
  * Drain the reassembly queue.  If we just cleared parted delivery, it
- * is possible that the reassembly queue will contain alपढ़ोy reassembled
+ * is possible that the reassembly queue will contain already reassembled
  * messages.  Retrieve any such messages and give them to the user.
  */
-अटल व्योम sctp_ulpq_reयंत्र_drain(काष्ठा sctp_ulpq *ulpq)
-अणु
-	काष्ठा sctp_ulpevent *event = शून्य;
+static void sctp_ulpq_reasm_drain(struct sctp_ulpq *ulpq)
+{
+	struct sctp_ulpevent *event = NULL;
 
-	अगर (skb_queue_empty(&ulpq->reयंत्र))
-		वापस;
+	if (skb_queue_empty(&ulpq->reasm))
+		return;
 
-	जबतक ((event = sctp_ulpq_retrieve_reassembled(ulpq)) != शून्य) अणु
-		काष्ठा sk_buff_head temp;
+	while ((event = sctp_ulpq_retrieve_reassembled(ulpq)) != NULL) {
+		struct sk_buff_head temp;
 
 		skb_queue_head_init(&temp);
 		__skb_queue_tail(&temp, sctp_event2skb(event));
 
-		/* Do ordering अगर needed.  */
-		अगर (event->msg_flags & MSG_EOR)
+		/* Do ordering if needed.  */
+		if (event->msg_flags & MSG_EOR)
 			event = sctp_ulpq_order(ulpq, event);
 
 		/* Send event to the ULP.  'event' is the
-		 * sctp_ulpevent क्रम  very first SKB on the  temp' list.
+		 * sctp_ulpevent for  very first SKB on the  temp' list.
 		 */
-		अगर (event)
+		if (event)
 			sctp_ulpq_tail_event(ulpq, &temp);
-	पूर्ण
-पूर्ण
+	}
+}
 
 
 /* Helper function to gather skbs that have possibly become
  * ordered by an incoming chunk.
  */
-अटल व्योम sctp_ulpq_retrieve_ordered(काष्ठा sctp_ulpq *ulpq,
-					      काष्ठा sctp_ulpevent *event)
-अणु
-	काष्ठा sk_buff_head *event_list;
-	काष्ठा sk_buff *pos, *पंचांगp;
-	काष्ठा sctp_ulpevent *cevent;
-	काष्ठा sctp_stream *stream;
+static void sctp_ulpq_retrieve_ordered(struct sctp_ulpq *ulpq,
+					      struct sctp_ulpevent *event)
+{
+	struct sk_buff_head *event_list;
+	struct sk_buff *pos, *tmp;
+	struct sctp_ulpevent *cevent;
+	struct sctp_stream *stream;
 	__u16 sid, csid, cssn;
 
 	sid = event->stream;
 	stream  = &ulpq->asoc->stream;
 
-	event_list = (काष्ठा sk_buff_head *) sctp_event2skb(event)->prev;
+	event_list = (struct sk_buff_head *) sctp_event2skb(event)->prev;
 
 	/* We are holding the chunks by stream, by SSN.  */
-	sctp_skb_क्रम_each(pos, &ulpq->lobby, पंचांगp) अणु
-		cevent = (काष्ठा sctp_ulpevent *) pos->cb;
+	sctp_skb_for_each(pos, &ulpq->lobby, tmp) {
+		cevent = (struct sctp_ulpevent *) pos->cb;
 		csid = cevent->stream;
 		cssn = cevent->ssn;
 
 		/* Have we gone too far?  */
-		अगर (csid > sid)
-			अवरोध;
+		if (csid > sid)
+			break;
 
 		/* Have we not gone far enough?  */
-		अगर (csid < sid)
-			जारी;
+		if (csid < sid)
+			continue;
 
-		अगर (cssn != sctp_ssn_peek(stream, in, sid))
-			अवरोध;
+		if (cssn != sctp_ssn_peek(stream, in, sid))
+			break;
 
 		/* Found it, so mark in the stream. */
 		sctp_ssn_next(stream, in, sid);
@@ -781,357 +780,357 @@ found:
 
 		/* Attach all gathered skbs to the event.  */
 		__skb_queue_tail(event_list, pos);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* Helper function to store chunks needing ordering.  */
-अटल व्योम sctp_ulpq_store_ordered(काष्ठा sctp_ulpq *ulpq,
-					   काष्ठा sctp_ulpevent *event)
-अणु
-	काष्ठा sk_buff *pos;
-	काष्ठा sctp_ulpevent *cevent;
+static void sctp_ulpq_store_ordered(struct sctp_ulpq *ulpq,
+					   struct sctp_ulpevent *event)
+{
+	struct sk_buff *pos;
+	struct sctp_ulpevent *cevent;
 	__u16 sid, csid;
 	__u16 ssn, cssn;
 
 	pos = skb_peek_tail(&ulpq->lobby);
-	अगर (!pos) अणु
+	if (!pos) {
 		__skb_queue_tail(&ulpq->lobby, sctp_event2skb(event));
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	sid = event->stream;
 	ssn = event->ssn;
 
-	cevent = (काष्ठा sctp_ulpevent *) pos->cb;
+	cevent = (struct sctp_ulpevent *) pos->cb;
 	csid = cevent->stream;
 	cssn = cevent->ssn;
-	अगर (sid > csid) अणु
+	if (sid > csid) {
 		__skb_queue_tail(&ulpq->lobby, sctp_event2skb(event));
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर ((sid == csid) && SSN_lt(cssn, ssn)) अणु
+	if ((sid == csid) && SSN_lt(cssn, ssn)) {
 		__skb_queue_tail(&ulpq->lobby, sctp_event2skb(event));
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Find the right place in this list.  We store them by
 	 * stream ID and then by SSN.
 	 */
-	skb_queue_walk(&ulpq->lobby, pos) अणु
-		cevent = (काष्ठा sctp_ulpevent *) pos->cb;
+	skb_queue_walk(&ulpq->lobby, pos) {
+		cevent = (struct sctp_ulpevent *) pos->cb;
 		csid = cevent->stream;
 		cssn = cevent->ssn;
 
-		अगर (csid > sid)
-			अवरोध;
-		अगर (csid == sid && SSN_lt(ssn, cssn))
-			अवरोध;
-	पूर्ण
+		if (csid > sid)
+			break;
+		if (csid == sid && SSN_lt(ssn, cssn))
+			break;
+	}
 
 
-	/* Insert beक्रमe pos. */
-	__skb_queue_beक्रमe(&ulpq->lobby, pos, sctp_event2skb(event));
-पूर्ण
+	/* Insert before pos. */
+	__skb_queue_before(&ulpq->lobby, pos, sctp_event2skb(event));
+}
 
-अटल काष्ठा sctp_ulpevent *sctp_ulpq_order(काष्ठा sctp_ulpq *ulpq,
-					     काष्ठा sctp_ulpevent *event)
-अणु
+static struct sctp_ulpevent *sctp_ulpq_order(struct sctp_ulpq *ulpq,
+					     struct sctp_ulpevent *event)
+{
 	__u16 sid, ssn;
-	काष्ठा sctp_stream *stream;
+	struct sctp_stream *stream;
 
-	/* Check अगर this message needs ordering.  */
-	अगर (event->msg_flags & SCTP_DATA_UNORDERED)
-		वापस event;
+	/* Check if this message needs ordering.  */
+	if (event->msg_flags & SCTP_DATA_UNORDERED)
+		return event;
 
-	/* Note: The stream ID must be verअगरied beक्रमe this routine.  */
+	/* Note: The stream ID must be verified before this routine.  */
 	sid = event->stream;
 	ssn = event->ssn;
 	stream  = &ulpq->asoc->stream;
 
-	/* Is this the expected SSN क्रम this stream ID?  */
-	अगर (ssn != sctp_ssn_peek(stream, in, sid)) अणु
+	/* Is this the expected SSN for this stream ID?  */
+	if (ssn != sctp_ssn_peek(stream, in, sid)) {
 		/* We've received something out of order, so find where it
 		 * needs to be placed.  We order by stream and then by SSN.
 		 */
 		sctp_ulpq_store_ordered(ulpq, event);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	/* Mark that the next chunk has been found.  */
 	sctp_ssn_next(stream, in, sid);
 
-	/* Go find any other chunks that were रुकोing क्रम
+	/* Go find any other chunks that were waiting for
 	 * ordering.
 	 */
 	sctp_ulpq_retrieve_ordered(ulpq, event);
 
-	वापस event;
-पूर्ण
+	return event;
+}
 
 /* Helper function to gather skbs that have possibly become
- * ordered by क्रमward tsn skipping their dependencies.
+ * ordered by forward tsn skipping their dependencies.
  */
-अटल व्योम sctp_ulpq_reap_ordered(काष्ठा sctp_ulpq *ulpq, __u16 sid)
-अणु
-	काष्ठा sk_buff *pos, *पंचांगp;
-	काष्ठा sctp_ulpevent *cevent;
-	काष्ठा sctp_ulpevent *event;
-	काष्ठा sctp_stream *stream;
-	काष्ठा sk_buff_head temp;
-	काष्ठा sk_buff_head *lobby = &ulpq->lobby;
+static void sctp_ulpq_reap_ordered(struct sctp_ulpq *ulpq, __u16 sid)
+{
+	struct sk_buff *pos, *tmp;
+	struct sctp_ulpevent *cevent;
+	struct sctp_ulpevent *event;
+	struct sctp_stream *stream;
+	struct sk_buff_head temp;
+	struct sk_buff_head *lobby = &ulpq->lobby;
 	__u16 csid, cssn;
 
 	stream = &ulpq->asoc->stream;
 
 	/* We are holding the chunks by stream, by SSN.  */
 	skb_queue_head_init(&temp);
-	event = शून्य;
-	sctp_skb_क्रम_each(pos, lobby, पंचांगp) अणु
-		cevent = (काष्ठा sctp_ulpevent *) pos->cb;
+	event = NULL;
+	sctp_skb_for_each(pos, lobby, tmp) {
+		cevent = (struct sctp_ulpevent *) pos->cb;
 		csid = cevent->stream;
 		cssn = cevent->ssn;
 
 		/* Have we gone too far?  */
-		अगर (csid > sid)
-			अवरोध;
+		if (csid > sid)
+			break;
 
 		/* Have we not gone far enough?  */
-		अगर (csid < sid)
-			जारी;
+		if (csid < sid)
+			continue;
 
-		/* see अगर this ssn has been marked by skipping */
-		अगर (!SSN_lt(cssn, sctp_ssn_peek(stream, in, csid)))
-			अवरोध;
+		/* see if this ssn has been marked by skipping */
+		if (!SSN_lt(cssn, sctp_ssn_peek(stream, in, csid)))
+			break;
 
 		__skb_unlink(pos, lobby);
-		अगर (!event)
+		if (!event)
 			/* Create a temporary list to collect chunks on.  */
 			event = sctp_skb2event(pos);
 
 		/* Attach all gathered skbs to the event.  */
 		__skb_queue_tail(&temp, pos);
-	पूर्ण
+	}
 
-	/* If we didn't reap any data, see अगर the next expected SSN
-	 * is next on the queue and अगर so, use that.
+	/* If we didn't reap any data, see if the next expected SSN
+	 * is next on the queue and if so, use that.
 	 */
-	अगर (event == शून्य && pos != (काष्ठा sk_buff *)lobby) अणु
-		cevent = (काष्ठा sctp_ulpevent *) pos->cb;
+	if (event == NULL && pos != (struct sk_buff *)lobby) {
+		cevent = (struct sctp_ulpevent *) pos->cb;
 		csid = cevent->stream;
 		cssn = cevent->ssn;
 
-		अगर (csid == sid && cssn == sctp_ssn_peek(stream, in, csid)) अणु
+		if (csid == sid && cssn == sctp_ssn_peek(stream, in, csid)) {
 			sctp_ssn_next(stream, in, csid);
 			__skb_unlink(pos, lobby);
 			__skb_queue_tail(&temp, pos);
 			event = sctp_skb2event(pos);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* Send event to the ULP.  'event' is the sctp_ulpevent क्रम
+	/* Send event to the ULP.  'event' is the sctp_ulpevent for
 	 * very first SKB on the 'temp' list.
 	 */
-	अगर (event) अणु
-		/* see अगर we have more ordered that we can deliver */
+	if (event) {
+		/* see if we have more ordered that we can deliver */
 		sctp_ulpq_retrieve_ordered(ulpq, event);
 		sctp_ulpq_tail_event(ulpq, &temp);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* Skip over an SSN. This is used during the processing of
- * Forwared TSN chunk to skip over the abanकरोned ordered data
+ * Forwared TSN chunk to skip over the abandoned ordered data
  */
-व्योम sctp_ulpq_skip(काष्ठा sctp_ulpq *ulpq, __u16 sid, __u16 ssn)
-अणु
-	काष्ठा sctp_stream *stream;
+void sctp_ulpq_skip(struct sctp_ulpq *ulpq, __u16 sid, __u16 ssn)
+{
+	struct sctp_stream *stream;
 
-	/* Note: The stream ID must be verअगरied beक्रमe this routine.  */
+	/* Note: The stream ID must be verified before this routine.  */
 	stream  = &ulpq->asoc->stream;
 
 	/* Is this an old SSN?  If so ignore. */
-	अगर (SSN_lt(ssn, sctp_ssn_peek(stream, in, sid)))
-		वापस;
+	if (SSN_lt(ssn, sctp_ssn_peek(stream, in, sid)))
+		return;
 
-	/* Mark that we are no दीर्घer expecting this SSN or lower. */
+	/* Mark that we are no longer expecting this SSN or lower. */
 	sctp_ssn_skip(stream, in, sid, ssn);
 
-	/* Go find any other chunks that were रुकोing क्रम
-	 * ordering and deliver them अगर needed.
+	/* Go find any other chunks that were waiting for
+	 * ordering and deliver them if needed.
 	 */
 	sctp_ulpq_reap_ordered(ulpq, sid);
-पूर्ण
+}
 
-__u16 sctp_ulpq_renege_list(काष्ठा sctp_ulpq *ulpq, काष्ठा sk_buff_head *list,
+__u16 sctp_ulpq_renege_list(struct sctp_ulpq *ulpq, struct sk_buff_head *list,
 			    __u16 needed)
-अणु
-	__u16 मुक्तd = 0;
+{
+	__u16 freed = 0;
 	__u32 tsn, last_tsn;
-	काष्ठा sk_buff *skb, *flist, *last;
-	काष्ठा sctp_ulpevent *event;
-	काष्ठा sctp_tsnmap *tsnmap;
+	struct sk_buff *skb, *flist, *last;
+	struct sctp_ulpevent *event;
+	struct sctp_tsnmap *tsnmap;
 
 	tsnmap = &ulpq->asoc->peer.tsn_map;
 
-	जबतक ((skb = skb_peek_tail(list)) != शून्य) अणु
+	while ((skb = skb_peek_tail(list)) != NULL) {
 		event = sctp_skb2event(skb);
 		tsn = event->tsn;
 
-		/* Don't renege below the Cumulative TSN ACK Poपूर्णांक. */
-		अगर (TSN_lte(tsn, sctp_tsnmap_get_ctsn(tsnmap)))
-			अवरोध;
+		/* Don't renege below the Cumulative TSN ACK Point. */
+		if (TSN_lte(tsn, sctp_tsnmap_get_ctsn(tsnmap)))
+			break;
 
 		/* Events in ordering queue may have multiple fragments
 		 * corresponding to additional TSNs.  Sum the total
-		 * मुक्तd space; find the last TSN.
+		 * freed space; find the last TSN.
 		 */
-		मुक्तd += skb_headlen(skb);
+		freed += skb_headlen(skb);
 		flist = skb_shinfo(skb)->frag_list;
-		क्रम (last = flist; flist; flist = flist->next) अणु
+		for (last = flist; flist; flist = flist->next) {
 			last = flist;
-			मुक्तd += skb_headlen(last);
-		पूर्ण
-		अगर (last)
+			freed += skb_headlen(last);
+		}
+		if (last)
 			last_tsn = sctp_skb2event(last)->tsn;
-		अन्यथा
+		else
 			last_tsn = tsn;
 
 		/* Unlink the event, then renege all applicable TSNs. */
 		__skb_unlink(skb, list);
-		sctp_ulpevent_मुक्त(event);
-		जबतक (TSN_lte(tsn, last_tsn)) अणु
+		sctp_ulpevent_free(event);
+		while (TSN_lte(tsn, last_tsn)) {
 			sctp_tsnmap_renege(tsnmap, tsn);
 			tsn++;
-		पूर्ण
-		अगर (मुक्तd >= needed)
-			वापस मुक्तd;
-	पूर्ण
+		}
+		if (freed >= needed)
+			return freed;
+	}
 
-	वापस मुक्तd;
-पूर्ण
+	return freed;
+}
 
 /* Renege 'needed' bytes from the ordering queue. */
-अटल __u16 sctp_ulpq_renege_order(काष्ठा sctp_ulpq *ulpq, __u16 needed)
-अणु
-	वापस sctp_ulpq_renege_list(ulpq, &ulpq->lobby, needed);
-पूर्ण
+static __u16 sctp_ulpq_renege_order(struct sctp_ulpq *ulpq, __u16 needed)
+{
+	return sctp_ulpq_renege_list(ulpq, &ulpq->lobby, needed);
+}
 
 /* Renege 'needed' bytes from the reassembly queue. */
-अटल __u16 sctp_ulpq_renege_frags(काष्ठा sctp_ulpq *ulpq, __u16 needed)
-अणु
-	वापस sctp_ulpq_renege_list(ulpq, &ulpq->reयंत्र, needed);
-पूर्ण
+static __u16 sctp_ulpq_renege_frags(struct sctp_ulpq *ulpq, __u16 needed)
+{
+	return sctp_ulpq_renege_list(ulpq, &ulpq->reasm, needed);
+}
 
 /* Partial deliver the first message as there is pressure on rwnd. */
-व्योम sctp_ulpq_partial_delivery(काष्ठा sctp_ulpq *ulpq,
+void sctp_ulpq_partial_delivery(struct sctp_ulpq *ulpq,
 				gfp_t gfp)
-अणु
-	काष्ठा sctp_ulpevent *event;
-	काष्ठा sctp_association *asoc;
-	काष्ठा sctp_sock *sp;
+{
+	struct sctp_ulpevent *event;
+	struct sctp_association *asoc;
+	struct sctp_sock *sp;
 	__u32 ctsn;
-	काष्ठा sk_buff *skb;
+	struct sk_buff *skb;
 
 	asoc = ulpq->asoc;
 	sp = sctp_sk(asoc->base.sk);
 
-	/* If the association is alपढ़ोy in Partial Delivery mode
-	 * we have nothing to करो.
+	/* If the association is already in Partial Delivery mode
+	 * we have nothing to do.
 	 */
-	अगर (ulpq->pd_mode)
-		वापस;
+	if (ulpq->pd_mode)
+		return;
 
-	/* Data must be at or below the Cumulative TSN ACK Poपूर्णांक to
+	/* Data must be at or below the Cumulative TSN ACK Point to
 	 * start partial delivery.
 	 */
-	skb = skb_peek(&asoc->ulpq.reयंत्र);
-	अगर (skb != शून्य) अणु
+	skb = skb_peek(&asoc->ulpq.reasm);
+	if (skb != NULL) {
 		ctsn = sctp_skb2event(skb)->tsn;
-		अगर (!TSN_lte(ctsn, sctp_tsnmap_get_ctsn(&asoc->peer.tsn_map)))
-			वापस;
-	पूर्ण
+		if (!TSN_lte(ctsn, sctp_tsnmap_get_ctsn(&asoc->peer.tsn_map)))
+			return;
+	}
 
-	/* If the user enabled fragment पूर्णांकerleave socket option,
+	/* If the user enabled fragment interleave socket option,
 	 * multiple associations can enter partial delivery.
-	 * Otherwise, we can only enter partial delivery अगर the
+	 * Otherwise, we can only enter partial delivery if the
 	 * socket is not in partial deliver mode.
 	 */
-	अगर (sp->frag_पूर्णांकerleave || atomic_पढ़ो(&sp->pd_mode) == 0) अणु
+	if (sp->frag_interleave || atomic_read(&sp->pd_mode) == 0) {
 		/* Is partial delivery possible?  */
 		event = sctp_ulpq_retrieve_first(ulpq);
 		/* Send event to the ULP.   */
-		अगर (event) अणु
-			काष्ठा sk_buff_head temp;
+		if (event) {
+			struct sk_buff_head temp;
 
 			skb_queue_head_init(&temp);
 			__skb_queue_tail(&temp, sctp_event2skb(event));
 			sctp_ulpq_tail_event(ulpq, &temp);
 			sctp_ulpq_set_pd(ulpq);
-			वापस;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			return;
+		}
+	}
+}
 
-/* Renege some packets to make room क्रम an incoming chunk.  */
-व्योम sctp_ulpq_renege(काष्ठा sctp_ulpq *ulpq, काष्ठा sctp_chunk *chunk,
+/* Renege some packets to make room for an incoming chunk.  */
+void sctp_ulpq_renege(struct sctp_ulpq *ulpq, struct sctp_chunk *chunk,
 		      gfp_t gfp)
-अणु
-	काष्ठा sctp_association *asoc = ulpq->asoc;
-	__u32 मुक्तd = 0;
+{
+	struct sctp_association *asoc = ulpq->asoc;
+	__u32 freed = 0;
 	__u16 needed;
 
 	needed = ntohs(chunk->chunk_hdr->length) -
-		 माप(काष्ठा sctp_data_chunk);
+		 sizeof(struct sctp_data_chunk);
 
-	अगर (skb_queue_empty(&asoc->base.sk->sk_receive_queue)) अणु
-		मुक्तd = sctp_ulpq_renege_order(ulpq, needed);
-		अगर (मुक्तd < needed)
-			मुक्तd += sctp_ulpq_renege_frags(ulpq, needed - मुक्तd);
-	पूर्ण
-	/* If able to मुक्त enough room, accept this chunk. */
-	अगर (sk_rmem_schedule(asoc->base.sk, chunk->skb, needed) &&
-	    मुक्तd >= needed) अणु
-		पूर्णांक retval = sctp_ulpq_tail_data(ulpq, chunk, gfp);
+	if (skb_queue_empty(&asoc->base.sk->sk_receive_queue)) {
+		freed = sctp_ulpq_renege_order(ulpq, needed);
+		if (freed < needed)
+			freed += sctp_ulpq_renege_frags(ulpq, needed - freed);
+	}
+	/* If able to free enough room, accept this chunk. */
+	if (sk_rmem_schedule(asoc->base.sk, chunk->skb, needed) &&
+	    freed >= needed) {
+		int retval = sctp_ulpq_tail_data(ulpq, chunk, gfp);
 		/*
-		 * Enter partial delivery अगर chunk has not been
+		 * Enter partial delivery if chunk has not been
 		 * delivered; otherwise, drain the reassembly queue.
 		 */
-		अगर (retval <= 0)
+		if (retval <= 0)
 			sctp_ulpq_partial_delivery(ulpq, gfp);
-		अन्यथा अगर (retval == 1)
-			sctp_ulpq_reयंत्र_drain(ulpq);
-	पूर्ण
+		else if (retval == 1)
+			sctp_ulpq_reasm_drain(ulpq);
+	}
 
 	sk_mem_reclaim(asoc->base.sk);
-पूर्ण
+}
 
 
 
-/* Notअगरy the application अगर an association is पातed and in
+/* Notify the application if an association is aborted and in
  * partial delivery mode.  Send up any pending received messages.
  */
-व्योम sctp_ulpq_पात_pd(काष्ठा sctp_ulpq *ulpq, gfp_t gfp)
-अणु
-	काष्ठा sctp_ulpevent *ev = शून्य;
-	काष्ठा sctp_sock *sp;
-	काष्ठा sock *sk;
+void sctp_ulpq_abort_pd(struct sctp_ulpq *ulpq, gfp_t gfp)
+{
+	struct sctp_ulpevent *ev = NULL;
+	struct sctp_sock *sp;
+	struct sock *sk;
 
-	अगर (!ulpq->pd_mode)
-		वापस;
+	if (!ulpq->pd_mode)
+		return;
 
 	sk = ulpq->asoc->base.sk;
 	sp = sctp_sk(sk);
-	अगर (sctp_ulpevent_type_enabled(ulpq->asoc->subscribe,
+	if (sctp_ulpevent_type_enabled(ulpq->asoc->subscribe,
 				       SCTP_PARTIAL_DELIVERY_EVENT))
 		ev = sctp_ulpevent_make_pdapi(ulpq->asoc,
 					      SCTP_PARTIAL_DELIVERY_ABORTED,
 					      0, 0, 0, gfp);
-	अगर (ev)
+	if (ev)
 		__skb_queue_tail(&sk->sk_receive_queue, sctp_event2skb(ev));
 
-	/* If there is data रुकोing, send it up the socket now. */
-	अगर ((sctp_ulpq_clear_pd(ulpq) || ev) && !sp->data_पढ़ोy_संकेतled) अणु
-		sp->data_पढ़ोy_संकेतled = 1;
-		sk->sk_data_पढ़ोy(sk);
-	पूर्ण
-पूर्ण
+	/* If there is data waiting, send it up the socket now. */
+	if ((sctp_ulpq_clear_pd(ulpq) || ev) && !sp->data_ready_signalled) {
+		sp->data_ready_signalled = 1;
+		sk->sk_data_ready(sk);
+	}
+}

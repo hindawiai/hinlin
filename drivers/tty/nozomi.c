@@ -1,17 +1,16 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0+ OR BSD-3-Clause)
+// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
 /*
  * nozomi.c  -- HSDPA driver Broadband Wireless Data Card - Globe Trotter
  *
  * Written by: Ulf Jakobsson,
- *             Jan थkerfeldt,
+ *             Jan Åkerfeldt,
  *             Stefan Thomasson,
  *
- * Maपूर्णांकained by: Paul Hardwick (p.hardwick@option.com)
+ * Maintained by: Paul Hardwick (p.hardwick@option.com)
  *
  * Patches:
- *          Locking code changes क्रम Vodafone by Sphere Systems Ltd,
- *                              Andrew Bird (ajb@sphereप्रणालीs.co.uk )
+ *          Locking code changes for Vodafone by Sphere Systems Ltd,
+ *                              Andrew Bird (ajb@spheresystems.co.uk )
  *                              & Phil Sanderson
  *
  * Source has been ported from an implementation made by Filip Aben @ Option
@@ -26,118 +25,118 @@
  * --------------------------------------------------------------------------
  */
 
-/* Enable this to have a lot of debug prपूर्णांकouts */
-#घोषणा DEBUG
+/* Enable this to have a lot of debug printouts */
+#define DEBUG
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/tty_driver.h>
-#समावेश <linux/tty_flip.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/serial.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kmod.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kfअगरo.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/slab.h>
-#समावेश <यंत्र/byteorder.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/ioport.h>
+#include <linux/tty.h>
+#include <linux/tty_driver.h>
+#include <linux/tty_flip.h>
+#include <linux/sched.h>
+#include <linux/serial.h>
+#include <linux/interrupt.h>
+#include <linux/kmod.h>
+#include <linux/init.h>
+#include <linux/kfifo.h>
+#include <linux/uaccess.h>
+#include <linux/slab.h>
+#include <asm/byteorder.h>
 
-#समावेश <linux/delay.h>
+#include <linux/delay.h>
 
-/* Default debug prपूर्णांकout level */
-#घोषणा NOZOMI_DEBUG_LEVEL 0x00
-अटल पूर्णांक debug = NOZOMI_DEBUG_LEVEL;
-module_param(debug, पूर्णांक, S_IRUGO | S_IWUSR);
+/* Default debug printout level */
+#define NOZOMI_DEBUG_LEVEL 0x00
+static int debug = NOZOMI_DEBUG_LEVEL;
+module_param(debug, int, S_IRUGO | S_IWUSR);
 
 /*    Macros definitions */
-#घोषणा DBG_(lvl, fmt, args...)				\
-करो अणु							\
-	अगर (lvl & debug)				\
+#define DBG_(lvl, fmt, args...)				\
+do {							\
+	if (lvl & debug)				\
 		pr_debug("[%d] %s(): " fmt "\n",	\
 			 __LINE__, __func__,  ##args);	\
-पूर्ण जबतक (0)
+} while (0)
 
-#घोषणा DBG1(args...) DBG_(0x01, ##args)
-#घोषणा DBG2(args...) DBG_(0x02, ##args)
-#घोषणा DBG3(args...) DBG_(0x04, ##args)
-#घोषणा DBG4(args...) DBG_(0x08, ##args)
+#define DBG1(args...) DBG_(0x01, ##args)
+#define DBG2(args...) DBG_(0x02, ##args)
+#define DBG3(args...) DBG_(0x04, ##args)
+#define DBG4(args...) DBG_(0x08, ##args)
 
-/* TODO: reग_लिखो to optimize macros... */
+/* TODO: rewrite to optimize macros... */
 
-#घोषणा TMP_BUF_MAX 256
+#define TMP_BUF_MAX 256
 
-#घोषणा DUMP(buf__, len__)						\
-	करो अणु								\
-		अक्षर tbuf[TMP_BUF_MAX] = अणु0पूर्ण;				\
-		अगर (len__ > 1) अणु					\
+#define DUMP(buf__, len__)						\
+	do {								\
+		char tbuf[TMP_BUF_MAX] = {0};				\
+		if (len__ > 1) {					\
 			u32 data_len = min_t(u32, len__, TMP_BUF_MAX);	\
 			strscpy(tbuf, buf__, data_len);			\
-			अगर (tbuf[data_len - 2] == '\r')			\
+			if (tbuf[data_len - 2] == '\r')			\
 				tbuf[data_len - 2] = 'r';		\
 			DBG1("SENDING: '%s' (%d+n)", tbuf, len__);	\
-		पूर्ण अन्यथा अणु						\
+		} else {						\
 			DBG1("SENDING: '%s' (%d)", tbuf, len__);	\
-		पूर्ण							\
-	पूर्ण जबतक (0)
+		}							\
+	} while (0)
 
 /*    Defines */
-#घोषणा NOZOMI_NAME		"nozomi"
-#घोषणा NOZOMI_NAME_TTY		"nozomi_tty"
+#define NOZOMI_NAME		"nozomi"
+#define NOZOMI_NAME_TTY		"nozomi_tty"
 
-#घोषणा NTTY_TTY_MAXMINORS	256
-#घोषणा NTTY_FIFO_BUFFER_SIZE	8192
+#define NTTY_TTY_MAXMINORS	256
+#define NTTY_FIFO_BUFFER_SIZE	8192
 
-/* Must be घातer of 2 */
-#घोषणा FIFO_BUFFER_SIZE_UL	8192
+/* Must be power of 2 */
+#define FIFO_BUFFER_SIZE_UL	8192
 
-/* Size of पंचांगp send buffer to card */
-#घोषणा SEND_BUF_MAX		1024
-#घोषणा RECEIVE_BUF_MAX		4
+/* Size of tmp send buffer to card */
+#define SEND_BUF_MAX		1024
+#define RECEIVE_BUF_MAX		4
 
 
-#घोषणा R_IIR			0x0000	/* Interrupt Identity Register */
-#घोषणा R_FCR			0x0000	/* Flow Control Register */
-#घोषणा R_IER			0x0004	/* Interrupt Enable Register */
+#define R_IIR			0x0000	/* Interrupt Identity Register */
+#define R_FCR			0x0000	/* Flow Control Register */
+#define R_IER			0x0004	/* Interrupt Enable Register */
 
-#घोषणा NOZOMI_CONFIG_MAGIC	0xEFEFFEFE
-#घोषणा TOGGLE_VALID		0x0000
+#define NOZOMI_CONFIG_MAGIC	0xEFEFFEFE
+#define TOGGLE_VALID		0x0000
 
-/* Definition of पूर्णांकerrupt tokens */
-#घोषणा MDM_DL1			0x0001
-#घोषणा MDM_UL1			0x0002
-#घोषणा MDM_DL2			0x0004
-#घोषणा MDM_UL2			0x0008
-#घोषणा DIAG_DL1		0x0010
-#घोषणा DIAG_DL2		0x0020
-#घोषणा DIAG_UL			0x0040
-#घोषणा APP1_DL			0x0080
-#घोषणा APP1_UL			0x0100
-#घोषणा APP2_DL			0x0200
-#घोषणा APP2_UL			0x0400
-#घोषणा CTRL_DL			0x0800
-#घोषणा CTRL_UL			0x1000
-#घोषणा RESET			0x8000
+/* Definition of interrupt tokens */
+#define MDM_DL1			0x0001
+#define MDM_UL1			0x0002
+#define MDM_DL2			0x0004
+#define MDM_UL2			0x0008
+#define DIAG_DL1		0x0010
+#define DIAG_DL2		0x0020
+#define DIAG_UL			0x0040
+#define APP1_DL			0x0080
+#define APP1_UL			0x0100
+#define APP2_DL			0x0200
+#define APP2_UL			0x0400
+#define CTRL_DL			0x0800
+#define CTRL_UL			0x1000
+#define RESET			0x8000
 
-#घोषणा MDM_DL			(MDM_DL1  | MDM_DL2)
-#घोषणा MDM_UL			(MDM_UL1  | MDM_UL2)
-#घोषणा DIAG_DL			(DIAG_DL1 | DIAG_DL2)
+#define MDM_DL			(MDM_DL1  | MDM_DL2)
+#define MDM_UL			(MDM_UL1  | MDM_UL2)
+#define DIAG_DL			(DIAG_DL1 | DIAG_DL2)
 
-/* modem संकेत definition */
-#घोषणा CTRL_DSR		0x0001
-#घोषणा CTRL_DCD		0x0002
-#घोषणा CTRL_RI			0x0004
-#घोषणा CTRL_CTS		0x0008
+/* modem signal definition */
+#define CTRL_DSR		0x0001
+#define CTRL_DCD		0x0002
+#define CTRL_RI			0x0004
+#define CTRL_CTS		0x0008
 
-#घोषणा CTRL_DTR		0x0001
-#घोषणा CTRL_RTS		0x0002
+#define CTRL_DTR		0x0001
+#define CTRL_RTS		0x0002
 
-#घोषणा MAX_PORT		4
-#घोषणा NOZOMI_MAX_PORTS	5
-#घोषणा NOZOMI_MAX_CARDS	(NTTY_TTY_MAXMINORS / MAX_PORT)
+#define MAX_PORT		4
+#define NOZOMI_MAX_PORTS	5
+#define NOZOMI_MAX_CARDS	(NTTY_TTY_MAXMINORS / MAX_PORT)
 
 /*    Type definitions */
 
@@ -145,66 +144,66 @@ module_param(debug, पूर्णांक, S_IRUGO | S_IWUSR);
  * There are two types of nozomi cards,
  * one with 2048 memory and with 8192 memory
  */
-क्रमागत card_type अणु
-	F32_2 = 2048,	/* 512 bytes करोwnlink + uplink * 2 -> 2048 */
-	F32_8 = 8192,	/* 3072 bytes करोwnl. + 1024 bytes uplink * 2 -> 8192 */
-पूर्ण;
+enum card_type {
+	F32_2 = 2048,	/* 512 bytes downlink + uplink * 2 -> 2048 */
+	F32_8 = 8192,	/* 3072 bytes downl. + 1024 bytes uplink * 2 -> 8192 */
+};
 
 /* Initialization states a card can be in */
-क्रमागत card_state अणु
+enum card_state {
 	NOZOMI_STATE_UNKNOWN	= 0,
 	NOZOMI_STATE_ENABLED	= 1,	/* pci device enabled */
-	NOZOMI_STATE_ALLOCATED	= 2,	/* config setup करोne */
+	NOZOMI_STATE_ALLOCATED	= 2,	/* config setup done */
 	NOZOMI_STATE_READY	= 3,	/* flowcontrols received */
-पूर्ण;
+};
 
-/* Two dअगरferent toggle channels exist */
-क्रमागत channel_type अणु
+/* Two different toggle channels exist */
+enum channel_type {
 	CH_A = 0,
 	CH_B = 1,
-पूर्ण;
+};
 
-/* Port definition क्रम the card regarding flow control */
-क्रमागत ctrl_port_type अणु
+/* Port definition for the card regarding flow control */
+enum ctrl_port_type {
 	CTRL_CMD	= 0,
 	CTRL_MDM	= 1,
 	CTRL_DIAG	= 2,
 	CTRL_APP1	= 3,
 	CTRL_APP2	= 4,
 	CTRL_ERROR	= -1,
-पूर्ण;
+};
 
 /* Ports that the nozomi has */
-क्रमागत port_type अणु
+enum port_type {
 	PORT_MDM	= 0,
 	PORT_DIAG	= 1,
 	PORT_APP1	= 2,
 	PORT_APP2	= 3,
 	PORT_CTRL	= 4,
 	PORT_ERROR	= -1,
-पूर्ण;
+};
 
-#अगर_घोषित __BIG_ENDIAN
+#ifdef __BIG_ENDIAN
 /* Big endian */
 
-काष्ठा toggles अणु
-	अचिन्हित पूर्णांक enabled:5;	/*
-				 * Toggle fields are valid अगर enabled is 0,
-				 * अन्यथा A-channels must always be used.
+struct toggles {
+	unsigned int enabled:5;	/*
+				 * Toggle fields are valid if enabled is 0,
+				 * else A-channels must always be used.
 				 */
-	अचिन्हित पूर्णांक diag_dl:1;
-	अचिन्हित पूर्णांक mdm_dl:1;
-	अचिन्हित पूर्णांक mdm_ul:1;
-पूर्ण __attribute__ ((packed));
+	unsigned int diag_dl:1;
+	unsigned int mdm_dl:1;
+	unsigned int mdm_ul:1;
+} __attribute__ ((packed));
 
-/* Configuration table to पढ़ो at startup of card */
-/* Is क्रम now only needed during initialization phase */
-काष्ठा config_table अणु
+/* Configuration table to read at startup of card */
+/* Is for now only needed during initialization phase */
+struct config_table {
 	u32 signature;
-	u16 product_inक्रमmation;
+	u16 product_information;
 	u16 version;
 	u8 pad3[3];
-	काष्ठा toggles toggle;
+	struct toggles toggle;
 	u8 pad1[4];
 	u16 dl_mdm_len1;	/*
 				 * If this is 64, it can hold
@@ -230,46 +229,46 @@ module_param(debug, पूर्णांक, S_IRUGO | S_IWUSR);
 	u16 ul_app1_len;
 	u16 ul_app2_len;
 	u16 ul_ctrl_len;
-पूर्ण __attribute__ ((packed));
+} __attribute__ ((packed));
 
-/* This stores all control करोwnlink flags */
-काष्ठा ctrl_dl अणु
+/* This stores all control downlink flags */
+struct ctrl_dl {
 	u8 port;
-	अचिन्हित पूर्णांक reserved:4;
-	अचिन्हित पूर्णांक CTS:1;
-	अचिन्हित पूर्णांक RI:1;
-	अचिन्हित पूर्णांक DCD:1;
-	अचिन्हित पूर्णांक DSR:1;
-पूर्ण __attribute__ ((packed));
+	unsigned int reserved:4;
+	unsigned int CTS:1;
+	unsigned int RI:1;
+	unsigned int DCD:1;
+	unsigned int DSR:1;
+} __attribute__ ((packed));
 
 /* This stores all control uplink flags */
-काष्ठा ctrl_ul अणु
+struct ctrl_ul {
 	u8 port;
-	अचिन्हित पूर्णांक reserved:6;
-	अचिन्हित पूर्णांक RTS:1;
-	अचिन्हित पूर्णांक DTR:1;
-पूर्ण __attribute__ ((packed));
+	unsigned int reserved:6;
+	unsigned int RTS:1;
+	unsigned int DTR:1;
+} __attribute__ ((packed));
 
-#अन्यथा
+#else
 /* Little endian */
 
-/* This represents the toggle inक्रमmation */
-काष्ठा toggles अणु
-	अचिन्हित पूर्णांक mdm_ul:1;
-	अचिन्हित पूर्णांक mdm_dl:1;
-	अचिन्हित पूर्णांक diag_dl:1;
-	अचिन्हित पूर्णांक enabled:5;	/*
-				 * Toggle fields are valid अगर enabled is 0,
-				 * अन्यथा A-channels must always be used.
+/* This represents the toggle information */
+struct toggles {
+	unsigned int mdm_ul:1;
+	unsigned int mdm_dl:1;
+	unsigned int diag_dl:1;
+	unsigned int enabled:5;	/*
+				 * Toggle fields are valid if enabled is 0,
+				 * else A-channels must always be used.
 				 */
-पूर्ण __attribute__ ((packed));
+} __attribute__ ((packed));
 
-/* Configuration table to पढ़ो at startup of card */
-काष्ठा config_table अणु
+/* Configuration table to read at startup of card */
+struct config_table {
 	u32 signature;
 	u16 version;
-	u16 product_inक्रमmation;
-	काष्ठा toggles toggle;
+	u16 product_information;
+	struct toggles toggle;
 	u8 pad1[7];
 	u16 dl_start;
 	u16 dl_mdm_len1;	/*
@@ -290,200 +289,200 @@ module_param(debug, पूर्णांक, S_IRUGO | S_IWUSR);
 	u16 ul_app1_len;
 	u16 ul_app2_len;
 	u16 ul_ctrl_len;
-पूर्ण __attribute__ ((packed));
+} __attribute__ ((packed));
 
-/* This stores all control करोwnlink flags */
-काष्ठा ctrl_dl अणु
-	अचिन्हित पूर्णांक DSR:1;
-	अचिन्हित पूर्णांक DCD:1;
-	अचिन्हित पूर्णांक RI:1;
-	अचिन्हित पूर्णांक CTS:1;
-	अचिन्हित पूर्णांक reserved:4;
+/* This stores all control downlink flags */
+struct ctrl_dl {
+	unsigned int DSR:1;
+	unsigned int DCD:1;
+	unsigned int RI:1;
+	unsigned int CTS:1;
+	unsigned int reserved:4;
 	u8 port;
-पूर्ण __attribute__ ((packed));
+} __attribute__ ((packed));
 
 /* This stores all control uplink flags */
-काष्ठा ctrl_ul अणु
-	अचिन्हित पूर्णांक DTR:1;
-	अचिन्हित पूर्णांक RTS:1;
-	अचिन्हित पूर्णांक reserved:6;
+struct ctrl_ul {
+	unsigned int DTR:1;
+	unsigned int RTS:1;
+	unsigned int reserved:6;
 	u8 port;
-पूर्ण __attribute__ ((packed));
-#पूर्ण_अगर
+} __attribute__ ((packed));
+#endif
 
-/* This holds all inक्रमmation that is needed regarding a port */
-काष्ठा port अणु
-	काष्ठा tty_port port;
+/* This holds all information that is needed regarding a port */
+struct port {
+	struct tty_port port;
 	u8 update_flow_control;
-	काष्ठा ctrl_ul ctrl_ul;
-	काष्ठा ctrl_dl ctrl_dl;
-	काष्ठा kfअगरo fअगरo_ul;
-	व्योम __iomem *dl_addr[2];
+	struct ctrl_ul ctrl_ul;
+	struct ctrl_dl ctrl_dl;
+	struct kfifo fifo_ul;
+	void __iomem *dl_addr[2];
 	u32 dl_size[2];
 	u8 toggle_dl;
-	व्योम __iomem *ul_addr[2];
+	void __iomem *ul_addr[2];
 	u32 ul_size[2];
 	u8 toggle_ul;
 	u16 token_dl;
 
-	रुको_queue_head_t tty_रुको;
-	काष्ठा async_icount tty_icount;
+	wait_queue_head_t tty_wait;
+	struct async_icount tty_icount;
 
-	काष्ठा nozomi *dc;
-पूर्ण;
+	struct nozomi *dc;
+};
 
-/* Private data one क्रम each card in the प्रणाली */
-काष्ठा nozomi अणु
-	व्योम __iomem *base_addr;
-	अचिन्हित दीर्घ flip;
+/* Private data one for each card in the system */
+struct nozomi {
+	void __iomem *base_addr;
+	unsigned long flip;
 
-	/* Poपूर्णांकers to रेजिस्टरs */
-	व्योम __iomem *reg_iir;
-	व्योम __iomem *reg_fcr;
-	व्योम __iomem *reg_ier;
+	/* Pointers to registers */
+	void __iomem *reg_iir;
+	void __iomem *reg_fcr;
+	void __iomem *reg_ier;
 
 	u16 last_ier;
-	क्रमागत card_type card_type;
-	काष्ठा config_table config_table;	/* Configuration table */
-	काष्ठा pci_dev *pdev;
-	काष्ठा port port[NOZOMI_MAX_PORTS];
+	enum card_type card_type;
+	struct config_table config_table;	/* Configuration table */
+	struct pci_dev *pdev;
+	struct port port[NOZOMI_MAX_PORTS];
 	u8 *send_buf;
 
-	spinlock_t spin_mutex;	/* secures access to रेजिस्टरs and tty */
+	spinlock_t spin_mutex;	/* secures access to registers and tty */
 
-	अचिन्हित पूर्णांक index_start;
-	क्रमागत card_state state;
-	u32 खोलो_ttys;
-पूर्ण;
+	unsigned int index_start;
+	enum card_state state;
+	u32 open_ttys;
+};
 
 /* Global variables */
-अटल स्थिर काष्ठा pci_device_id nozomi_pci_tbl[] = अणु
-	अणुPCI_DEVICE(0x1931, 0x000c)पूर्ण,	/* Nozomi HSDPA */
-	अणुपूर्ण,
-पूर्ण;
+static const struct pci_device_id nozomi_pci_tbl[] = {
+	{PCI_DEVICE(0x1931, 0x000c)},	/* Nozomi HSDPA */
+	{},
+};
 
 MODULE_DEVICE_TABLE(pci, nozomi_pci_tbl);
 
-अटल काष्ठा nozomi *ndevs[NOZOMI_MAX_CARDS];
-अटल काष्ठा tty_driver *ntty_driver;
+static struct nozomi *ndevs[NOZOMI_MAX_CARDS];
+static struct tty_driver *ntty_driver;
 
-अटल स्थिर काष्ठा tty_port_operations noz_tty_port_ops;
+static const struct tty_port_operations noz_tty_port_ops;
 
 /*
  * find card by tty_index
  */
-अटल अंतरभूत काष्ठा nozomi *get_dc_by_tty(स्थिर काष्ठा tty_काष्ठा *tty)
-अणु
-	वापस tty ? ndevs[tty->index / MAX_PORT] : शून्य;
-पूर्ण
+static inline struct nozomi *get_dc_by_tty(const struct tty_struct *tty)
+{
+	return tty ? ndevs[tty->index / MAX_PORT] : NULL;
+}
 
-अटल अंतरभूत काष्ठा port *get_port_by_tty(स्थिर काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा nozomi *ndev = get_dc_by_tty(tty);
-	वापस ndev ? &ndev->port[tty->index % MAX_PORT] : शून्य;
-पूर्ण
+static inline struct port *get_port_by_tty(const struct tty_struct *tty)
+{
+	struct nozomi *ndev = get_dc_by_tty(tty);
+	return ndev ? &ndev->port[tty->index % MAX_PORT] : NULL;
+}
 
 /*
  * TODO:
  * -Optimize
- * -Reग_लिखो cleaner
+ * -Rewrite cleaner
  */
 
-अटल व्योम पढ़ो_mem32(u32 *buf, स्थिर व्योम __iomem *mem_addr_start,
+static void read_mem32(u32 *buf, const void __iomem *mem_addr_start,
 			u32 size_bytes)
-अणु
+{
 	u32 i = 0;
-	स्थिर u32 __iomem *ptr = mem_addr_start;
+	const u32 __iomem *ptr = mem_addr_start;
 	u16 *buf16;
 
-	अगर (unlikely(!ptr || !buf))
-		जाओ out;
+	if (unlikely(!ptr || !buf))
+		goto out;
 
-	/* लघुcut क्रम extremely often used हालs */
-	चयन (size_bytes) अणु
-	हाल 2:	/* 2 bytes */
+	/* shortcut for extremely often used cases */
+	switch (size_bytes) {
+	case 2:	/* 2 bytes */
 		buf16 = (u16 *) buf;
-		*buf16 = __le16_to_cpu(पढ़ोw(ptr));
-		जाओ out;
-	हाल 4:	/* 4 bytes */
-		*(buf) = __le32_to_cpu(पढ़ोl(ptr));
-		जाओ out;
-	पूर्ण
+		*buf16 = __le16_to_cpu(readw(ptr));
+		goto out;
+	case 4:	/* 4 bytes */
+		*(buf) = __le32_to_cpu(readl(ptr));
+		goto out;
+	}
 
-	जबतक (i < size_bytes) अणु
-		अगर (size_bytes - i == 2) अणु
+	while (i < size_bytes) {
+		if (size_bytes - i == 2) {
 			/* Handle 2 bytes in the end */
 			buf16 = (u16 *) buf;
-			*(buf16) = __le16_to_cpu(पढ़ोw(ptr));
+			*(buf16) = __le16_to_cpu(readw(ptr));
 			i += 2;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Read 4 bytes */
-			*(buf) = __le32_to_cpu(पढ़ोl(ptr));
+			*(buf) = __le32_to_cpu(readl(ptr));
 			i += 4;
-		पूर्ण
+		}
 		buf++;
 		ptr++;
-	पूर्ण
+	}
 out:
-	वापस;
-पूर्ण
+	return;
+}
 
 /*
  * TODO:
  * -Optimize
- * -Reग_लिखो cleaner
+ * -Rewrite cleaner
  */
-अटल u32 ग_लिखो_mem32(व्योम __iomem *mem_addr_start, स्थिर u32 *buf,
+static u32 write_mem32(void __iomem *mem_addr_start, const u32 *buf,
 			u32 size_bytes)
-अणु
+{
 	u32 i = 0;
 	u32 __iomem *ptr = mem_addr_start;
-	स्थिर u16 *buf16;
+	const u16 *buf16;
 
-	अगर (unlikely(!ptr || !buf))
-		वापस 0;
+	if (unlikely(!ptr || !buf))
+		return 0;
 
-	/* लघुcut क्रम extremely often used हालs */
-	चयन (size_bytes) अणु
-	हाल 2:	/* 2 bytes */
-		buf16 = (स्थिर u16 *)buf;
-		ग_लिखोw(__cpu_to_le16(*buf16), ptr);
-		वापस 2;
-	हाल 1: /*
-		 * also needs to ग_लिखो 4 bytes in this हाल
+	/* shortcut for extremely often used cases */
+	switch (size_bytes) {
+	case 2:	/* 2 bytes */
+		buf16 = (const u16 *)buf;
+		writew(__cpu_to_le16(*buf16), ptr);
+		return 2;
+	case 1: /*
+		 * also needs to write 4 bytes in this case
 		 * so falling through..
 		 */
 		fallthrough;
-	हाल 4: /* 4 bytes */
-		ग_लिखोl(__cpu_to_le32(*buf), ptr);
-		वापस 4;
-	पूर्ण
+	case 4: /* 4 bytes */
+		writel(__cpu_to_le32(*buf), ptr);
+		return 4;
+	}
 
-	जबतक (i < size_bytes) अणु
-		अगर (size_bytes - i == 2) अणु
+	while (i < size_bytes) {
+		if (size_bytes - i == 2) {
 			/* 2 bytes */
-			buf16 = (स्थिर u16 *)buf;
-			ग_लिखोw(__cpu_to_le16(*buf16), ptr);
+			buf16 = (const u16 *)buf;
+			writew(__cpu_to_le16(*buf16), ptr);
 			i += 2;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* 4 bytes */
-			ग_लिखोl(__cpu_to_le32(*buf), ptr);
+			writel(__cpu_to_le32(*buf), ptr);
 			i += 4;
-		पूर्ण
+		}
 		buf++;
 		ptr++;
-	पूर्ण
-	वापस i;
-पूर्ण
+	}
+	return i;
+}
 
-/* Setup poपूर्णांकers to dअगरferent channels and also setup buffer sizes. */
-अटल व्योम nozomi_setup_memory(काष्ठा nozomi *dc)
-अणु
-	व्योम __iomem *offset = dc->base_addr + dc->config_table.dl_start;
+/* Setup pointers to different channels and also setup buffer sizes. */
+static void nozomi_setup_memory(struct nozomi *dc)
+{
+	void __iomem *offset = dc->base_addr + dc->config_table.dl_start;
 	/* The length reported is including the length field of 4 bytes,
 	 * hence subtract with 4.
 	 */
-	स्थिर u16 buff_offset = 4;
+	const u16 buff_offset = 4;
 
 	/* Modem port dl configuration */
 	dc->port[PORT_MDM].dl_addr[CH_A] = offset;
@@ -556,16 +555,16 @@ out:
 				(offset += dc->config_table.ul_app2_len);
 	dc->port[PORT_CTRL].ul_size[CH_A] =
 				dc->config_table.ul_ctrl_len - buff_offset;
-पूर्ण
+}
 
 /* Dump config table under initalization phase */
-#अगर_घोषित DEBUG
-अटल व्योम dump_table(स्थिर काष्ठा nozomi *dc)
-अणु
+#ifdef DEBUG
+static void dump_table(const struct nozomi *dc)
+{
 	DBG3("signature: 0x%08X", dc->config_table.signature);
 	DBG3("version: 0x%04X", dc->config_table.version);
 	DBG3("product_information: 0x%04X", \
-				dc->config_table.product_inक्रमmation);
+				dc->config_table.product_information);
 	DBG3("toggle enabled: %d", dc->config_table.toggle.enabled);
 	DBG3("toggle up_mdm: %d", dc->config_table.toggle.mdm_ul);
 	DBG3("toggle dl_mdm: %d", dc->config_table.toggle.mdm_dl);
@@ -600,29 +599,29 @@ out:
 	   dc->config_table.ul_app2_len);
 	DBG3("ul_ctrl_len: 0x%04X, %d", dc->config_table.ul_ctrl_len,
 	   dc->config_table.ul_ctrl_len);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम dump_table(स्थिर काष्ठा nozomi *dc) अणु पूर्ण
-#पूर्ण_अगर
+}
+#else
+static inline void dump_table(const struct nozomi *dc) { }
+#endif
 
 /*
- * Read configuration table from card under पूर्णांकalization phase
- * Returns 1 अगर ok, अन्यथा 0
+ * Read configuration table from card under intalization phase
+ * Returns 1 if ok, else 0
  */
-अटल पूर्णांक nozomi_पढ़ो_config_table(काष्ठा nozomi *dc)
-अणु
-	पढ़ो_mem32((u32 *) &dc->config_table, dc->base_addr + 0,
-						माप(काष्ठा config_table));
+static int nozomi_read_config_table(struct nozomi *dc)
+{
+	read_mem32((u32 *) &dc->config_table, dc->base_addr + 0,
+						sizeof(struct config_table));
 
-	अगर (dc->config_table.signature != NOZOMI_CONFIG_MAGIC) अणु
+	if (dc->config_table.signature != NOZOMI_CONFIG_MAGIC) {
 		dev_err(&dc->pdev->dev, "ConfigTable Bad! 0x%08X != 0x%08X\n",
 			dc->config_table.signature, NOZOMI_CONFIG_MAGIC);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर ((dc->config_table.version == 0)
-	    || (dc->config_table.toggle.enabled == TOGGLE_VALID)) अणु
-		पूर्णांक i;
+	if ((dc->config_table.version == 0)
+	    || (dc->config_table.toggle.enabled == TOGGLE_VALID)) {
+		int i;
 		DBG1("Second phase, configuring card");
 
 		nozomi_setup_memory(dc);
@@ -636,22 +635,22 @@ out:
 
 		dump_table(dc);
 
-		क्रम (i = PORT_MDM; i < MAX_PORT; i++) अणु
-			स_रखो(&dc->port[i].ctrl_dl, 0, माप(काष्ठा ctrl_dl));
-			स_रखो(&dc->port[i].ctrl_ul, 0, माप(काष्ठा ctrl_ul));
-		पूर्ण
+		for (i = PORT_MDM; i < MAX_PORT; i++) {
+			memset(&dc->port[i].ctrl_dl, 0, sizeof(struct ctrl_dl));
+			memset(&dc->port[i].ctrl_ul, 0, sizeof(struct ctrl_ul));
+		}
 
 		/* Enable control channel */
 		dc->last_ier = dc->last_ier | CTRL_DL;
-		ग_लिखोw(dc->last_ier, dc->reg_ier);
+		writew(dc->last_ier, dc->reg_ier);
 
 		dc->state = NOZOMI_STATE_ALLOCATED;
 		dev_info(&dc->pdev->dev, "Initialization OK!\n");
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	अगर ((dc->config_table.version > 0)
-	    && (dc->config_table.toggle.enabled != TOGGLE_VALID)) अणु
+	if ((dc->config_table.version > 0)
+	    && (dc->config_table.toggle.enabled != TOGGLE_VALID)) {
 		u32 offset = 0;
 		DBG1("First phase: pushing upload buffers, clearing download");
 
@@ -662,256 +661,256 @@ out:
 		nozomi_setup_memory(dc);
 
 		/*
-		 * We should send ALL channel pair tokens back aदीर्घ
+		 * We should send ALL channel pair tokens back along
 		 * with reset token
 		 */
 
 		/* push upload modem buffers */
-		ग_लिखो_mem32(dc->port[PORT_MDM].ul_addr[CH_A],
+		write_mem32(dc->port[PORT_MDM].ul_addr[CH_A],
 			(u32 *) &offset, 4);
-		ग_लिखो_mem32(dc->port[PORT_MDM].ul_addr[CH_B],
+		write_mem32(dc->port[PORT_MDM].ul_addr[CH_B],
 			(u32 *) &offset, 4);
 
-		ग_लिखोw(MDM_UL | DIAG_DL | MDM_DL, dc->reg_fcr);
+		writew(MDM_UL | DIAG_DL | MDM_DL, dc->reg_fcr);
 
 		DBG1("First phase done");
-	पूर्ण
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-/* Enable uplink पूर्णांकerrupts  */
-अटल व्योम enable_transmit_ul(क्रमागत port_type port, काष्ठा nozomi *dc)
-अणु
-	अटल स्थिर u16 mask[] = अणुMDM_UL, DIAG_UL, APP1_UL, APP2_UL, CTRL_ULपूर्ण;
+/* Enable uplink interrupts  */
+static void enable_transmit_ul(enum port_type port, struct nozomi *dc)
+{
+	static const u16 mask[] = {MDM_UL, DIAG_UL, APP1_UL, APP2_UL, CTRL_UL};
 
-	अगर (port < NOZOMI_MAX_PORTS) अणु
+	if (port < NOZOMI_MAX_PORTS) {
 		dc->last_ier |= mask[port];
-		ग_लिखोw(dc->last_ier, dc->reg_ier);
-	पूर्ण अन्यथा अणु
+		writew(dc->last_ier, dc->reg_ier);
+	} else {
 		dev_err(&dc->pdev->dev, "Called with wrong port?\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* Disable uplink पूर्णांकerrupts  */
-अटल व्योम disable_transmit_ul(क्रमागत port_type port, काष्ठा nozomi *dc)
-अणु
-	अटल स्थिर u16 mask[] =
-		अणु~MDM_UL, ~DIAG_UL, ~APP1_UL, ~APP2_UL, ~CTRL_ULपूर्ण;
+/* Disable uplink interrupts  */
+static void disable_transmit_ul(enum port_type port, struct nozomi *dc)
+{
+	static const u16 mask[] =
+		{~MDM_UL, ~DIAG_UL, ~APP1_UL, ~APP2_UL, ~CTRL_UL};
 
-	अगर (port < NOZOMI_MAX_PORTS) अणु
+	if (port < NOZOMI_MAX_PORTS) {
 		dc->last_ier &= mask[port];
-		ग_लिखोw(dc->last_ier, dc->reg_ier);
-	पूर्ण अन्यथा अणु
+		writew(dc->last_ier, dc->reg_ier);
+	} else {
 		dev_err(&dc->pdev->dev, "Called with wrong port?\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* Enable करोwnlink पूर्णांकerrupts */
-अटल व्योम enable_transmit_dl(क्रमागत port_type port, काष्ठा nozomi *dc)
-अणु
-	अटल स्थिर u16 mask[] = अणुMDM_DL, DIAG_DL, APP1_DL, APP2_DL, CTRL_DLपूर्ण;
+/* Enable downlink interrupts */
+static void enable_transmit_dl(enum port_type port, struct nozomi *dc)
+{
+	static const u16 mask[] = {MDM_DL, DIAG_DL, APP1_DL, APP2_DL, CTRL_DL};
 
-	अगर (port < NOZOMI_MAX_PORTS) अणु
+	if (port < NOZOMI_MAX_PORTS) {
 		dc->last_ier |= mask[port];
-		ग_लिखोw(dc->last_ier, dc->reg_ier);
-	पूर्ण अन्यथा अणु
+		writew(dc->last_ier, dc->reg_ier);
+	} else {
 		dev_err(&dc->pdev->dev, "Called with wrong port?\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* Disable करोwnlink पूर्णांकerrupts */
-अटल व्योम disable_transmit_dl(क्रमागत port_type port, काष्ठा nozomi *dc)
-अणु
-	अटल स्थिर u16 mask[] =
-		अणु~MDM_DL, ~DIAG_DL, ~APP1_DL, ~APP2_DL, ~CTRL_DLपूर्ण;
+/* Disable downlink interrupts */
+static void disable_transmit_dl(enum port_type port, struct nozomi *dc)
+{
+	static const u16 mask[] =
+		{~MDM_DL, ~DIAG_DL, ~APP1_DL, ~APP2_DL, ~CTRL_DL};
 
-	अगर (port < NOZOMI_MAX_PORTS) अणु
+	if (port < NOZOMI_MAX_PORTS) {
 		dc->last_ier &= mask[port];
-		ग_लिखोw(dc->last_ier, dc->reg_ier);
-	पूर्ण अन्यथा अणु
+		writew(dc->last_ier, dc->reg_ier);
+	} else {
 		dev_err(&dc->pdev->dev, "Called with wrong port?\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Return 1 - send buffer to card and ack.
- * Return 0 - करोn't ack, don't send buffer to card.
+ * Return 0 - don't ack, don't send buffer to card.
  */
-अटल पूर्णांक send_data(क्रमागत port_type index, काष्ठा nozomi *dc)
-अणु
+static int send_data(enum port_type index, struct nozomi *dc)
+{
 	u32 size = 0;
-	काष्ठा port *port = &dc->port[index];
-	स्थिर u8 toggle = port->toggle_ul;
-	व्योम __iomem *addr = port->ul_addr[toggle];
-	स्थिर u32 ul_size = port->ul_size[toggle];
+	struct port *port = &dc->port[index];
+	const u8 toggle = port->toggle_ul;
+	void __iomem *addr = port->ul_addr[toggle];
+	const u32 ul_size = port->ul_size[toggle];
 
-	/* Get data from tty and place in buf क्रम now */
-	size = kfअगरo_out(&port->fअगरo_ul, dc->send_buf,
+	/* Get data from tty and place in buf for now */
+	size = kfifo_out(&port->fifo_ul, dc->send_buf,
 			   ul_size < SEND_BUF_MAX ? ul_size : SEND_BUF_MAX);
 
-	अगर (size == 0) अणु
+	if (size == 0) {
 		DBG4("No more data to send, disable link:");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* DUMP(buf, size); */
 
 	/* Write length + data */
-	ग_लिखो_mem32(addr, (u32 *) &size, 4);
-	ग_लिखो_mem32(addr + 4, (u32 *) dc->send_buf, size);
+	write_mem32(addr, (u32 *) &size, 4);
+	write_mem32(addr + 4, (u32 *) dc->send_buf, size);
 
 	tty_port_tty_wakeup(&port->port);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-/* If all data has been पढ़ो, वापस 1, अन्यथा 0 */
-अटल पूर्णांक receive_data(क्रमागत port_type index, काष्ठा nozomi *dc)
-अणु
-	u8 buf[RECEIVE_BUF_MAX] = अणु 0 पूर्ण;
-	पूर्णांक size;
+/* If all data has been read, return 1, else 0 */
+static int receive_data(enum port_type index, struct nozomi *dc)
+{
+	u8 buf[RECEIVE_BUF_MAX] = { 0 };
+	int size;
 	u32 offset = 4;
-	काष्ठा port *port = &dc->port[index];
-	व्योम __iomem *addr = port->dl_addr[port->toggle_dl];
-	काष्ठा tty_काष्ठा *tty = tty_port_tty_get(&port->port);
-	पूर्णांक i, ret;
+	struct port *port = &dc->port[index];
+	void __iomem *addr = port->dl_addr[port->toggle_dl];
+	struct tty_struct *tty = tty_port_tty_get(&port->port);
+	int i, ret;
 
-	size = __le32_to_cpu(पढ़ोl(addr));
+	size = __le32_to_cpu(readl(addr));
 
-	अगर (tty && tty_throttled(tty)) अणु
+	if (tty && tty_throttled(tty)) {
 		DBG1("No room in tty, don't read data, don't ack interrupt, "
 			"disable interrupt");
 
-		/* disable पूर्णांकerrupt in करोwnlink... */
+		/* disable interrupt in downlink... */
 		disable_transmit_dl(index, dc);
 		ret = 0;
-		जाओ put;
-	पूर्ण
+		goto put;
+	}
 
-	अगर (unlikely(size == 0)) अणु
+	if (unlikely(size == 0)) {
 		dev_err(&dc->pdev->dev, "size == 0?\n");
 		ret = 1;
-		जाओ put;
-	पूर्ण
+		goto put;
+	}
 
-	जबतक (size > 0) अणु
-		पढ़ो_mem32((u32 *) buf, addr + offset, RECEIVE_BUF_MAX);
+	while (size > 0) {
+		read_mem32((u32 *) buf, addr + offset, RECEIVE_BUF_MAX);
 
-		अगर (size == 1) अणु
-			tty_insert_flip_अक्षर(&port->port, buf[0], TTY_NORMAL);
+		if (size == 1) {
+			tty_insert_flip_char(&port->port, buf[0], TTY_NORMAL);
 			size = 0;
-		पूर्ण अन्यथा अगर (size < RECEIVE_BUF_MAX) अणु
+		} else if (size < RECEIVE_BUF_MAX) {
 			size -= tty_insert_flip_string(&port->port,
-					(अक्षर *)buf, size);
-		पूर्ण अन्यथा अणु
+					(char *)buf, size);
+		} else {
 			i = tty_insert_flip_string(&port->port,
-					(अक्षर *)buf, RECEIVE_BUF_MAX);
+					(char *)buf, RECEIVE_BUF_MAX);
 			size -= i;
 			offset += i;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	set_bit(index, &dc->flip);
 	ret = 1;
 put:
 	tty_kref_put(tty);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Debug क्रम पूर्णांकerrupts */
-#अगर_घोषित DEBUG
-अटल अक्षर *पूर्णांकerrupt2str(u16 पूर्णांकerrupt)
-अणु
-	अटल अक्षर buf[TMP_BUF_MAX];
-	अक्षर *p = buf;
+/* Debug for interrupts */
+#ifdef DEBUG
+static char *interrupt2str(u16 interrupt)
+{
+	static char buf[TMP_BUF_MAX];
+	char *p = buf;
 
-	अगर (पूर्णांकerrupt & MDM_DL1)
-		p += scnम_लिखो(p, TMP_BUF_MAX, "MDM_DL1 ");
-	अगर (पूर्णांकerrupt & MDM_DL2)
-		p += scnम_लिखो(p, TMP_BUF_MAX - (p - buf), "MDM_DL2 ");
-	अगर (पूर्णांकerrupt & MDM_UL1)
-		p += scnम_लिखो(p, TMP_BUF_MAX - (p - buf), "MDM_UL1 ");
-	अगर (पूर्णांकerrupt & MDM_UL2)
-		p += scnम_लिखो(p, TMP_BUF_MAX - (p - buf), "MDM_UL2 ");
-	अगर (पूर्णांकerrupt & DIAG_DL1)
-		p += scnम_लिखो(p, TMP_BUF_MAX - (p - buf), "DIAG_DL1 ");
-	अगर (पूर्णांकerrupt & DIAG_DL2)
-		p += scnम_लिखो(p, TMP_BUF_MAX - (p - buf), "DIAG_DL2 ");
+	if (interrupt & MDM_DL1)
+		p += scnprintf(p, TMP_BUF_MAX, "MDM_DL1 ");
+	if (interrupt & MDM_DL2)
+		p += scnprintf(p, TMP_BUF_MAX - (p - buf), "MDM_DL2 ");
+	if (interrupt & MDM_UL1)
+		p += scnprintf(p, TMP_BUF_MAX - (p - buf), "MDM_UL1 ");
+	if (interrupt & MDM_UL2)
+		p += scnprintf(p, TMP_BUF_MAX - (p - buf), "MDM_UL2 ");
+	if (interrupt & DIAG_DL1)
+		p += scnprintf(p, TMP_BUF_MAX - (p - buf), "DIAG_DL1 ");
+	if (interrupt & DIAG_DL2)
+		p += scnprintf(p, TMP_BUF_MAX - (p - buf), "DIAG_DL2 ");
 
-	अगर (पूर्णांकerrupt & DIAG_UL)
-		p += scnम_लिखो(p, TMP_BUF_MAX - (p - buf), "DIAG_UL ");
+	if (interrupt & DIAG_UL)
+		p += scnprintf(p, TMP_BUF_MAX - (p - buf), "DIAG_UL ");
 
-	अगर (पूर्णांकerrupt & APP1_DL)
-		p += scnम_लिखो(p, TMP_BUF_MAX - (p - buf), "APP1_DL ");
-	अगर (पूर्णांकerrupt & APP2_DL)
-		p += scnम_लिखो(p, TMP_BUF_MAX - (p - buf), "APP2_DL ");
+	if (interrupt & APP1_DL)
+		p += scnprintf(p, TMP_BUF_MAX - (p - buf), "APP1_DL ");
+	if (interrupt & APP2_DL)
+		p += scnprintf(p, TMP_BUF_MAX - (p - buf), "APP2_DL ");
 
-	अगर (पूर्णांकerrupt & APP1_UL)
-		p += scnम_लिखो(p, TMP_BUF_MAX - (p - buf), "APP1_UL ");
-	अगर (पूर्णांकerrupt & APP2_UL)
-		p += scnम_लिखो(p, TMP_BUF_MAX - (p - buf), "APP2_UL ");
+	if (interrupt & APP1_UL)
+		p += scnprintf(p, TMP_BUF_MAX - (p - buf), "APP1_UL ");
+	if (interrupt & APP2_UL)
+		p += scnprintf(p, TMP_BUF_MAX - (p - buf), "APP2_UL ");
 
-	अगर (पूर्णांकerrupt & CTRL_DL)
-		p += scnम_लिखो(p, TMP_BUF_MAX - (p - buf), "CTRL_DL ");
-	अगर (पूर्णांकerrupt & CTRL_UL)
-		p += scnम_लिखो(p, TMP_BUF_MAX - (p - buf), "CTRL_UL ");
+	if (interrupt & CTRL_DL)
+		p += scnprintf(p, TMP_BUF_MAX - (p - buf), "CTRL_DL ");
+	if (interrupt & CTRL_UL)
+		p += scnprintf(p, TMP_BUF_MAX - (p - buf), "CTRL_UL ");
 
-	अगर (पूर्णांकerrupt & RESET)
-		p += scnम_लिखो(p, TMP_BUF_MAX - (p - buf), "RESET ");
+	if (interrupt & RESET)
+		p += scnprintf(p, TMP_BUF_MAX - (p - buf), "RESET ");
 
-	वापस buf;
-पूर्ण
-#पूर्ण_अगर
+	return buf;
+}
+#endif
 
 /*
  * Receive flow control
- * Return 1 - If ok, अन्यथा 0
+ * Return 1 - If ok, else 0
  */
-अटल पूर्णांक receive_flow_control(काष्ठा nozomi *dc)
-अणु
-	क्रमागत port_type port = PORT_MDM;
-	काष्ठा ctrl_dl ctrl_dl;
-	काष्ठा ctrl_dl old_ctrl;
+static int receive_flow_control(struct nozomi *dc)
+{
+	enum port_type port = PORT_MDM;
+	struct ctrl_dl ctrl_dl;
+	struct ctrl_dl old_ctrl;
 	u16 enable_ier = 0;
 
-	पढ़ो_mem32((u32 *) &ctrl_dl, dc->port[PORT_CTRL].dl_addr[CH_A], 2);
+	read_mem32((u32 *) &ctrl_dl, dc->port[PORT_CTRL].dl_addr[CH_A], 2);
 
-	चयन (ctrl_dl.port) अणु
-	हाल CTRL_CMD:
+	switch (ctrl_dl.port) {
+	case CTRL_CMD:
 		DBG1("The Base Band sends this value as a response to a "
 			"request for IMSI detach sent over the control "
 			"channel uplink (see section 7.6.1).");
-		अवरोध;
-	हाल CTRL_MDM:
+		break;
+	case CTRL_MDM:
 		port = PORT_MDM;
 		enable_ier = MDM_DL;
-		अवरोध;
-	हाल CTRL_DIAG:
+		break;
+	case CTRL_DIAG:
 		port = PORT_DIAG;
 		enable_ier = DIAG_DL;
-		अवरोध;
-	हाल CTRL_APP1:
+		break;
+	case CTRL_APP1:
 		port = PORT_APP1;
 		enable_ier = APP1_DL;
-		अवरोध;
-	हाल CTRL_APP2:
+		break;
+	case CTRL_APP2:
 		port = PORT_APP2;
 		enable_ier = APP2_DL;
-		अगर (dc->state == NOZOMI_STATE_ALLOCATED) अणु
+		if (dc->state == NOZOMI_STATE_ALLOCATED) {
 			/*
 			 * After card initialization the flow control
-			 * received क्रम APP2 is always the last
+			 * received for APP2 is always the last
 			 */
 			dc->state = NOZOMI_STATE_READY;
 			dev_info(&dc->pdev->dev, "Device READY!\n");
-		पूर्ण
-		अवरोध;
-	शेष:
+		}
+		break;
+	default:
 		dev_err(&dc->pdev->dev,
 			"ERROR: flow control received for non-existing port\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	DBG1("0x%04X->0x%04X", *((u16 *)&dc->port[port].ctrl_dl),
 	   *((u16 *)&ctrl_dl));
@@ -919,340 +918,340 @@ put:
 	old_ctrl = dc->port[port].ctrl_dl;
 	dc->port[port].ctrl_dl = ctrl_dl;
 
-	अगर (old_ctrl.CTS == 1 && ctrl_dl.CTS == 0) अणु
+	if (old_ctrl.CTS == 1 && ctrl_dl.CTS == 0) {
 		DBG1("Disable interrupt (0x%04X) on port: %d",
 			enable_ier, port);
 		disable_transmit_ul(port, dc);
 
-	पूर्ण अन्यथा अगर (old_ctrl.CTS == 0 && ctrl_dl.CTS == 1) अणु
+	} else if (old_ctrl.CTS == 0 && ctrl_dl.CTS == 1) {
 
-		अगर (kfअगरo_len(&dc->port[port].fअगरo_ul)) अणु
+		if (kfifo_len(&dc->port[port].fifo_ul)) {
 			DBG1("Enable interrupt (0x%04X) on port: %d",
 				enable_ier, port);
 			DBG1("Data in buffer [%d], enable transmit! ",
-				kfअगरo_len(&dc->port[port].fअगरo_ul));
+				kfifo_len(&dc->port[port].fifo_ul));
 			enable_transmit_ul(port, dc);
-		पूर्ण अन्यथा अणु
+		} else {
 			DBG1("No data in buffer...");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (*(u16 *)&old_ctrl == *(u16 *)&ctrl_dl) अणु
+	if (*(u16 *)&old_ctrl == *(u16 *)&ctrl_dl) {
 		DBG1(" No change in mctrl");
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 	/* Update statistics */
-	अगर (old_ctrl.CTS != ctrl_dl.CTS)
+	if (old_ctrl.CTS != ctrl_dl.CTS)
 		dc->port[port].tty_icount.cts++;
-	अगर (old_ctrl.DSR != ctrl_dl.DSR)
+	if (old_ctrl.DSR != ctrl_dl.DSR)
 		dc->port[port].tty_icount.dsr++;
-	अगर (old_ctrl.RI != ctrl_dl.RI)
+	if (old_ctrl.RI != ctrl_dl.RI)
 		dc->port[port].tty_icount.rng++;
-	अगर (old_ctrl.DCD != ctrl_dl.DCD)
+	if (old_ctrl.DCD != ctrl_dl.DCD)
 		dc->port[port].tty_icount.dcd++;
 
-	wake_up_पूर्णांकerruptible(&dc->port[port].tty_रुको);
+	wake_up_interruptible(&dc->port[port].tty_wait);
 
 	DBG1("port: %d DCD(%d), CTS(%d), RI(%d), DSR(%d)",
 	   port,
 	   dc->port[port].tty_icount.dcd, dc->port[port].tty_icount.cts,
 	   dc->port[port].tty_icount.rng, dc->port[port].tty_icount.dsr);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल क्रमागत ctrl_port_type port2ctrl(क्रमागत port_type port,
-					स्थिर काष्ठा nozomi *dc)
-अणु
-	चयन (port) अणु
-	हाल PORT_MDM:
-		वापस CTRL_MDM;
-	हाल PORT_DIAG:
-		वापस CTRL_DIAG;
-	हाल PORT_APP1:
-		वापस CTRL_APP1;
-	हाल PORT_APP2:
-		वापस CTRL_APP2;
-	शेष:
+static enum ctrl_port_type port2ctrl(enum port_type port,
+					const struct nozomi *dc)
+{
+	switch (port) {
+	case PORT_MDM:
+		return CTRL_MDM;
+	case PORT_DIAG:
+		return CTRL_DIAG;
+	case PORT_APP1:
+		return CTRL_APP1;
+	case PORT_APP2:
+		return CTRL_APP2;
+	default:
 		dev_err(&dc->pdev->dev,
 			"ERROR: send flow control " \
 			"received for non-existing port\n");
-	पूर्ण
-	वापस CTRL_ERROR;
-पूर्ण
+	}
+	return CTRL_ERROR;
+}
 
 /*
- * Send flow control, can only update one channel at a समय
+ * Send flow control, can only update one channel at a time
  * Return 0 - If we have updated all flow control
  * Return 1 - If we need to update more flow control, ack current enable more
  */
-अटल पूर्णांक send_flow_control(काष्ठा nozomi *dc)
-अणु
+static int send_flow_control(struct nozomi *dc)
+{
 	u32 i, more_flow_control_to_be_updated = 0;
 	u16 *ctrl;
 
-	क्रम (i = PORT_MDM; i < MAX_PORT; i++) अणु
-		अगर (dc->port[i].update_flow_control) अणु
-			अगर (more_flow_control_to_be_updated) अणु
+	for (i = PORT_MDM; i < MAX_PORT; i++) {
+		if (dc->port[i].update_flow_control) {
+			if (more_flow_control_to_be_updated) {
 				/* We have more flow control to be updated */
-				वापस 1;
-			पूर्ण
+				return 1;
+			}
 			dc->port[i].ctrl_ul.port = port2ctrl(i, dc);
 			ctrl = (u16 *)&dc->port[i].ctrl_ul;
-			ग_लिखो_mem32(dc->port[PORT_CTRL].ul_addr[0], \
+			write_mem32(dc->port[PORT_CTRL].ul_addr[0], \
 				(u32 *) ctrl, 2);
 			dc->port[i].update_flow_control = 0;
 			more_flow_control_to_be_updated = 1;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+	}
+	return 0;
+}
 
 /*
- * Handle करोwnlink data, ports that are handled are modem and diagnostics
+ * Handle downlink data, ports that are handled are modem and diagnostics
  * Return 1 - ok
  * Return 0 - toggle fields are out of sync
  */
-अटल पूर्णांक handle_data_dl(काष्ठा nozomi *dc, क्रमागत port_type port, u8 *toggle,
-			u16 पढ़ो_iir, u16 mask1, u16 mask2)
-अणु
-	अगर (*toggle == 0 && पढ़ो_iir & mask1) अणु
-		अगर (receive_data(port, dc)) अणु
-			ग_लिखोw(mask1, dc->reg_fcr);
+static int handle_data_dl(struct nozomi *dc, enum port_type port, u8 *toggle,
+			u16 read_iir, u16 mask1, u16 mask2)
+{
+	if (*toggle == 0 && read_iir & mask1) {
+		if (receive_data(port, dc)) {
+			writew(mask1, dc->reg_fcr);
 			*toggle = !(*toggle);
-		पूर्ण
+		}
 
-		अगर (पढ़ो_iir & mask2) अणु
-			अगर (receive_data(port, dc)) अणु
-				ग_लिखोw(mask2, dc->reg_fcr);
+		if (read_iir & mask2) {
+			if (receive_data(port, dc)) {
+				writew(mask2, dc->reg_fcr);
 				*toggle = !(*toggle);
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अगर (*toggle == 1 && पढ़ो_iir & mask2) अणु
-		अगर (receive_data(port, dc)) अणु
-			ग_लिखोw(mask2, dc->reg_fcr);
+			}
+		}
+	} else if (*toggle == 1 && read_iir & mask2) {
+		if (receive_data(port, dc)) {
+			writew(mask2, dc->reg_fcr);
 			*toggle = !(*toggle);
-		पूर्ण
+		}
 
-		अगर (पढ़ो_iir & mask1) अणु
-			अगर (receive_data(port, dc)) अणु
-				ग_लिखोw(mask1, dc->reg_fcr);
+		if (read_iir & mask1) {
+			if (receive_data(port, dc)) {
+				writew(mask1, dc->reg_fcr);
 				*toggle = !(*toggle);
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			}
+		}
+	} else {
 		dev_err(&dc->pdev->dev, "port out of sync!, toggle:%d\n",
 			*toggle);
-		वापस 0;
-	पूर्ण
-	वापस 1;
-पूर्ण
+		return 0;
+	}
+	return 1;
+}
 
 /*
- * Handle uplink data, this is currently क्रम the modem port
+ * Handle uplink data, this is currently for the modem port
  * Return 1 - ok
  * Return 0 - toggle field are out of sync
  */
-अटल पूर्णांक handle_data_ul(काष्ठा nozomi *dc, क्रमागत port_type port, u16 पढ़ो_iir)
-अणु
+static int handle_data_ul(struct nozomi *dc, enum port_type port, u16 read_iir)
+{
 	u8 *toggle = &(dc->port[port].toggle_ul);
 
-	अगर (*toggle == 0 && पढ़ो_iir & MDM_UL1) अणु
+	if (*toggle == 0 && read_iir & MDM_UL1) {
 		dc->last_ier &= ~MDM_UL;
-		ग_लिखोw(dc->last_ier, dc->reg_ier);
-		अगर (send_data(port, dc)) अणु
-			ग_लिखोw(MDM_UL1, dc->reg_fcr);
+		writew(dc->last_ier, dc->reg_ier);
+		if (send_data(port, dc)) {
+			writew(MDM_UL1, dc->reg_fcr);
 			dc->last_ier = dc->last_ier | MDM_UL;
-			ग_लिखोw(dc->last_ier, dc->reg_ier);
+			writew(dc->last_ier, dc->reg_ier);
 			*toggle = !*toggle;
-		पूर्ण
+		}
 
-		अगर (पढ़ो_iir & MDM_UL2) अणु
+		if (read_iir & MDM_UL2) {
 			dc->last_ier &= ~MDM_UL;
-			ग_लिखोw(dc->last_ier, dc->reg_ier);
-			अगर (send_data(port, dc)) अणु
-				ग_लिखोw(MDM_UL2, dc->reg_fcr);
+			writew(dc->last_ier, dc->reg_ier);
+			if (send_data(port, dc)) {
+				writew(MDM_UL2, dc->reg_fcr);
 				dc->last_ier = dc->last_ier | MDM_UL;
-				ग_लिखोw(dc->last_ier, dc->reg_ier);
+				writew(dc->last_ier, dc->reg_ier);
 				*toggle = !*toggle;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-	पूर्ण अन्यथा अगर (*toggle == 1 && पढ़ो_iir & MDM_UL2) अणु
+	} else if (*toggle == 1 && read_iir & MDM_UL2) {
 		dc->last_ier &= ~MDM_UL;
-		ग_लिखोw(dc->last_ier, dc->reg_ier);
-		अगर (send_data(port, dc)) अणु
-			ग_लिखोw(MDM_UL2, dc->reg_fcr);
+		writew(dc->last_ier, dc->reg_ier);
+		if (send_data(port, dc)) {
+			writew(MDM_UL2, dc->reg_fcr);
 			dc->last_ier = dc->last_ier | MDM_UL;
-			ग_लिखोw(dc->last_ier, dc->reg_ier);
+			writew(dc->last_ier, dc->reg_ier);
 			*toggle = !*toggle;
-		पूर्ण
+		}
 
-		अगर (पढ़ो_iir & MDM_UL1) अणु
+		if (read_iir & MDM_UL1) {
 			dc->last_ier &= ~MDM_UL;
-			ग_लिखोw(dc->last_ier, dc->reg_ier);
-			अगर (send_data(port, dc)) अणु
-				ग_लिखोw(MDM_UL1, dc->reg_fcr);
+			writew(dc->last_ier, dc->reg_ier);
+			if (send_data(port, dc)) {
+				writew(MDM_UL1, dc->reg_fcr);
 				dc->last_ier = dc->last_ier | MDM_UL;
-				ग_लिखोw(dc->last_ier, dc->reg_ier);
+				writew(dc->last_ier, dc->reg_ier);
 				*toggle = !*toggle;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		ग_लिखोw(पढ़ो_iir & MDM_UL, dc->reg_fcr);
+			}
+		}
+	} else {
+		writew(read_iir & MDM_UL, dc->reg_fcr);
 		dev_err(&dc->pdev->dev, "port out of sync!\n");
-		वापस 0;
-	पूर्ण
-	वापस 1;
-पूर्ण
+		return 0;
+	}
+	return 1;
+}
 
-अटल irqवापस_t पूर्णांकerrupt_handler(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा nozomi *dc = dev_id;
-	अचिन्हित पूर्णांक a;
-	u16 पढ़ो_iir;
+static irqreturn_t interrupt_handler(int irq, void *dev_id)
+{
+	struct nozomi *dc = dev_id;
+	unsigned int a;
+	u16 read_iir;
 
-	अगर (!dc)
-		वापस IRQ_NONE;
+	if (!dc)
+		return IRQ_NONE;
 
 	spin_lock(&dc->spin_mutex);
-	पढ़ो_iir = पढ़ोw(dc->reg_iir);
+	read_iir = readw(dc->reg_iir);
 
-	/* Card हटाओd */
-	अगर (पढ़ो_iir == (u16)-1)
-		जाओ none;
+	/* Card removed */
+	if (read_iir == (u16)-1)
+		goto none;
 	/*
-	 * Just handle पूर्णांकerrupt enabled in IER
+	 * Just handle interrupt enabled in IER
 	 * (by masking with dc->last_ier)
 	 */
-	पढ़ो_iir &= dc->last_ier;
+	read_iir &= dc->last_ier;
 
-	अगर (पढ़ो_iir == 0)
-		जाओ none;
+	if (read_iir == 0)
+		goto none;
 
 
-	DBG4("%s irq:0x%04X, prev:0x%04X", पूर्णांकerrupt2str(पढ़ो_iir), पढ़ो_iir,
+	DBG4("%s irq:0x%04X, prev:0x%04X", interrupt2str(read_iir), read_iir,
 		dc->last_ier);
 
-	अगर (पढ़ो_iir & RESET) अणु
-		अगर (unlikely(!nozomi_पढ़ो_config_table(dc))) अणु
+	if (read_iir & RESET) {
+		if (unlikely(!nozomi_read_config_table(dc))) {
 			dc->last_ier = 0x0;
-			ग_लिखोw(dc->last_ier, dc->reg_ier);
+			writew(dc->last_ier, dc->reg_ier);
 			dev_err(&dc->pdev->dev, "Could not read status from "
 				"card, we should disable interface\n");
-		पूर्ण अन्यथा अणु
-			ग_लिखोw(RESET, dc->reg_fcr);
-		पूर्ण
-		/* No more useful info अगर this was the reset पूर्णांकerrupt. */
-		जाओ निकास_handler;
-	पूर्ण
-	अगर (पढ़ो_iir & CTRL_UL) अणु
+		} else {
+			writew(RESET, dc->reg_fcr);
+		}
+		/* No more useful info if this was the reset interrupt. */
+		goto exit_handler;
+	}
+	if (read_iir & CTRL_UL) {
 		DBG1("CTRL_UL");
 		dc->last_ier &= ~CTRL_UL;
-		ग_लिखोw(dc->last_ier, dc->reg_ier);
-		अगर (send_flow_control(dc)) अणु
-			ग_लिखोw(CTRL_UL, dc->reg_fcr);
+		writew(dc->last_ier, dc->reg_ier);
+		if (send_flow_control(dc)) {
+			writew(CTRL_UL, dc->reg_fcr);
 			dc->last_ier = dc->last_ier | CTRL_UL;
-			ग_लिखोw(dc->last_ier, dc->reg_ier);
-		पूर्ण
-	पूर्ण
-	अगर (पढ़ो_iir & CTRL_DL) अणु
+			writew(dc->last_ier, dc->reg_ier);
+		}
+	}
+	if (read_iir & CTRL_DL) {
 		receive_flow_control(dc);
-		ग_लिखोw(CTRL_DL, dc->reg_fcr);
-	पूर्ण
-	अगर (पढ़ो_iir & MDM_DL) अणु
-		अगर (!handle_data_dl(dc, PORT_MDM,
-				&(dc->port[PORT_MDM].toggle_dl), पढ़ो_iir,
-				MDM_DL1, MDM_DL2)) अणु
+		writew(CTRL_DL, dc->reg_fcr);
+	}
+	if (read_iir & MDM_DL) {
+		if (!handle_data_dl(dc, PORT_MDM,
+				&(dc->port[PORT_MDM].toggle_dl), read_iir,
+				MDM_DL1, MDM_DL2)) {
 			dev_err(&dc->pdev->dev, "MDM_DL out of sync!\n");
-			जाओ निकास_handler;
-		पूर्ण
-	पूर्ण
-	अगर (पढ़ो_iir & MDM_UL) अणु
-		अगर (!handle_data_ul(dc, PORT_MDM, पढ़ो_iir)) अणु
+			goto exit_handler;
+		}
+	}
+	if (read_iir & MDM_UL) {
+		if (!handle_data_ul(dc, PORT_MDM, read_iir)) {
 			dev_err(&dc->pdev->dev, "MDM_UL out of sync!\n");
-			जाओ निकास_handler;
-		पूर्ण
-	पूर्ण
-	अगर (पढ़ो_iir & DIAG_DL) अणु
-		अगर (!handle_data_dl(dc, PORT_DIAG,
-				&(dc->port[PORT_DIAG].toggle_dl), पढ़ो_iir,
-				DIAG_DL1, DIAG_DL2)) अणु
+			goto exit_handler;
+		}
+	}
+	if (read_iir & DIAG_DL) {
+		if (!handle_data_dl(dc, PORT_DIAG,
+				&(dc->port[PORT_DIAG].toggle_dl), read_iir,
+				DIAG_DL1, DIAG_DL2)) {
 			dev_err(&dc->pdev->dev, "DIAG_DL out of sync!\n");
-			जाओ निकास_handler;
-		पूर्ण
-	पूर्ण
-	अगर (पढ़ो_iir & DIAG_UL) अणु
+			goto exit_handler;
+		}
+	}
+	if (read_iir & DIAG_UL) {
 		dc->last_ier &= ~DIAG_UL;
-		ग_लिखोw(dc->last_ier, dc->reg_ier);
-		अगर (send_data(PORT_DIAG, dc)) अणु
-			ग_लिखोw(DIAG_UL, dc->reg_fcr);
+		writew(dc->last_ier, dc->reg_ier);
+		if (send_data(PORT_DIAG, dc)) {
+			writew(DIAG_UL, dc->reg_fcr);
 			dc->last_ier = dc->last_ier | DIAG_UL;
-			ग_लिखोw(dc->last_ier, dc->reg_ier);
-		पूर्ण
-	पूर्ण
-	अगर (पढ़ो_iir & APP1_DL) अणु
-		अगर (receive_data(PORT_APP1, dc))
-			ग_लिखोw(APP1_DL, dc->reg_fcr);
-	पूर्ण
-	अगर (पढ़ो_iir & APP1_UL) अणु
+			writew(dc->last_ier, dc->reg_ier);
+		}
+	}
+	if (read_iir & APP1_DL) {
+		if (receive_data(PORT_APP1, dc))
+			writew(APP1_DL, dc->reg_fcr);
+	}
+	if (read_iir & APP1_UL) {
 		dc->last_ier &= ~APP1_UL;
-		ग_लिखोw(dc->last_ier, dc->reg_ier);
-		अगर (send_data(PORT_APP1, dc)) अणु
-			ग_लिखोw(APP1_UL, dc->reg_fcr);
+		writew(dc->last_ier, dc->reg_ier);
+		if (send_data(PORT_APP1, dc)) {
+			writew(APP1_UL, dc->reg_fcr);
 			dc->last_ier = dc->last_ier | APP1_UL;
-			ग_लिखोw(dc->last_ier, dc->reg_ier);
-		पूर्ण
-	पूर्ण
-	अगर (पढ़ो_iir & APP2_DL) अणु
-		अगर (receive_data(PORT_APP2, dc))
-			ग_लिखोw(APP2_DL, dc->reg_fcr);
-	पूर्ण
-	अगर (पढ़ो_iir & APP2_UL) अणु
+			writew(dc->last_ier, dc->reg_ier);
+		}
+	}
+	if (read_iir & APP2_DL) {
+		if (receive_data(PORT_APP2, dc))
+			writew(APP2_DL, dc->reg_fcr);
+	}
+	if (read_iir & APP2_UL) {
 		dc->last_ier &= ~APP2_UL;
-		ग_लिखोw(dc->last_ier, dc->reg_ier);
-		अगर (send_data(PORT_APP2, dc)) अणु
-			ग_लिखोw(APP2_UL, dc->reg_fcr);
+		writew(dc->last_ier, dc->reg_ier);
+		if (send_data(PORT_APP2, dc)) {
+			writew(APP2_UL, dc->reg_fcr);
 			dc->last_ier = dc->last_ier | APP2_UL;
-			ग_लिखोw(dc->last_ier, dc->reg_ier);
-		पूर्ण
-	पूर्ण
+			writew(dc->last_ier, dc->reg_ier);
+		}
+	}
 
-निकास_handler:
+exit_handler:
 	spin_unlock(&dc->spin_mutex);
 
-	क्रम (a = 0; a < NOZOMI_MAX_PORTS; a++)
-		अगर (test_and_clear_bit(a, &dc->flip))
+	for (a = 0; a < NOZOMI_MAX_PORTS; a++)
+		if (test_and_clear_bit(a, &dc->flip))
 			tty_flip_buffer_push(&dc->port[a].port);
 
-	वापस IRQ_HANDLED;
+	return IRQ_HANDLED;
 none:
 	spin_unlock(&dc->spin_mutex);
-	वापस IRQ_NONE;
-पूर्ण
+	return IRQ_NONE;
+}
 
-अटल व्योम nozomi_get_card_type(काष्ठा nozomi *dc)
-अणु
-	पूर्णांक i;
+static void nozomi_get_card_type(struct nozomi *dc)
+{
+	int i;
 	u32 size = 0;
 
-	क्रम (i = 0; i < 6; i++)
+	for (i = 0; i < 6; i++)
 		size += pci_resource_len(dc->pdev, i);
 
-	/* Assume card type F32_8 अगर no match */
+	/* Assume card type F32_8 if no match */
 	dc->card_type = size == 2048 ? F32_2 : F32_8;
 
 	dev_info(&dc->pdev->dev, "Card type is: %d\n", dc->card_type);
-पूर्ण
+}
 
-अटल व्योम nozomi_setup_निजी_data(काष्ठा nozomi *dc)
-अणु
-	व्योम __iomem *offset = dc->base_addr + dc->card_type / 2;
-	अचिन्हित पूर्णांक i;
+static void nozomi_setup_private_data(struct nozomi *dc)
+{
+	void __iomem *offset = dc->base_addr + dc->card_type / 2;
+	unsigned int i;
 
-	dc->reg_fcr = (व्योम __iomem *)(offset + R_FCR);
-	dc->reg_iir = (व्योम __iomem *)(offset + R_IIR);
-	dc->reg_ier = (व्योम __iomem *)(offset + R_IER);
+	dc->reg_fcr = (void __iomem *)(offset + R_FCR);
+	dc->reg_iir = (void __iomem *)(offset + R_IIR);
+	dc->reg_ier = (void __iomem *)(offset + R_IER);
 	dc->last_ier = 0;
 	dc->flip = 0;
 
@@ -1261,126 +1260,126 @@ none:
 	dc->port[PORT_APP1].token_dl = APP1_DL;
 	dc->port[PORT_APP2].token_dl = APP2_DL;
 
-	क्रम (i = 0; i < MAX_PORT; i++)
-		init_रुकोqueue_head(&dc->port[i].tty_रुको);
-पूर्ण
+	for (i = 0; i < MAX_PORT; i++)
+		init_waitqueue_head(&dc->port[i].tty_wait);
+}
 
-अटल sमाप_प्रकार card_type_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			  अक्षर *buf)
-अणु
-	स्थिर काष्ठा nozomi *dc = dev_get_drvdata(dev);
+static ssize_t card_type_show(struct device *dev, struct device_attribute *attr,
+			  char *buf)
+{
+	const struct nozomi *dc = dev_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%d\n", dc->card_type);
-पूर्ण
-अटल DEVICE_ATTR_RO(card_type);
+	return sprintf(buf, "%d\n", dc->card_type);
+}
+static DEVICE_ATTR_RO(card_type);
 
-अटल sमाप_प्रकार खोलो_ttys_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			  अक्षर *buf)
-अणु
-	स्थिर काष्ठा nozomi *dc = dev_get_drvdata(dev);
+static ssize_t open_ttys_show(struct device *dev, struct device_attribute *attr,
+			  char *buf)
+{
+	const struct nozomi *dc = dev_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%u\n", dc->खोलो_ttys);
-पूर्ण
-अटल DEVICE_ATTR_RO(खोलो_ttys);
+	return sprintf(buf, "%u\n", dc->open_ttys);
+}
+static DEVICE_ATTR_RO(open_ttys);
 
-अटल व्योम make_sysfs_files(काष्ठा nozomi *dc)
-अणु
-	अगर (device_create_file(&dc->pdev->dev, &dev_attr_card_type))
+static void make_sysfs_files(struct nozomi *dc)
+{
+	if (device_create_file(&dc->pdev->dev, &dev_attr_card_type))
 		dev_err(&dc->pdev->dev,
 			"Could not create sysfs file for card_type\n");
-	अगर (device_create_file(&dc->pdev->dev, &dev_attr_खोलो_ttys))
+	if (device_create_file(&dc->pdev->dev, &dev_attr_open_ttys))
 		dev_err(&dc->pdev->dev,
 			"Could not create sysfs file for open_ttys\n");
-पूर्ण
+}
 
-अटल व्योम हटाओ_sysfs_files(काष्ठा nozomi *dc)
-अणु
-	device_हटाओ_file(&dc->pdev->dev, &dev_attr_card_type);
-	device_हटाओ_file(&dc->pdev->dev, &dev_attr_खोलो_ttys);
-पूर्ण
+static void remove_sysfs_files(struct nozomi *dc)
+{
+	device_remove_file(&dc->pdev->dev, &dev_attr_card_type);
+	device_remove_file(&dc->pdev->dev, &dev_attr_open_ttys);
+}
 
-/* Allocate memory क्रम one device */
-अटल पूर्णांक nozomi_card_init(काष्ठा pci_dev *pdev,
-				      स्थिर काष्ठा pci_device_id *ent)
-अणु
-	पूर्णांक ret;
-	काष्ठा nozomi *dc = शून्य;
-	पूर्णांक ndev_idx;
-	पूर्णांक i;
+/* Allocate memory for one device */
+static int nozomi_card_init(struct pci_dev *pdev,
+				      const struct pci_device_id *ent)
+{
+	int ret;
+	struct nozomi *dc = NULL;
+	int ndev_idx;
+	int i;
 
-	क्रम (ndev_idx = 0; ndev_idx < ARRAY_SIZE(ndevs); ndev_idx++)
-		अगर (!ndevs[ndev_idx])
-			अवरोध;
+	for (ndev_idx = 0; ndev_idx < ARRAY_SIZE(ndevs); ndev_idx++)
+		if (!ndevs[ndev_idx])
+			break;
 
-	अगर (ndev_idx >= ARRAY_SIZE(ndevs)) अणु
+	if (ndev_idx >= ARRAY_SIZE(ndevs)) {
 		dev_err(&pdev->dev, "no free tty range for this card left\n");
 		ret = -EIO;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	dc = kzalloc(माप(काष्ठा nozomi), GFP_KERNEL);
-	अगर (unlikely(!dc)) अणु
+	dc = kzalloc(sizeof(struct nozomi), GFP_KERNEL);
+	if (unlikely(!dc)) {
 		dev_err(&pdev->dev, "Could not allocate memory\n");
 		ret = -ENOMEM;
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
 	dc->pdev = pdev;
 
 	ret = pci_enable_device(dc->pdev);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "Failed to enable PCI Device\n");
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
 	ret = pci_request_regions(dc->pdev, NOZOMI_NAME);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "I/O address 0x%04x already in use\n",
-			(पूर्णांक) /* nozomi_निजी.io_addr */ 0);
-		जाओ err_disable_device;
-	पूर्ण
+			(int) /* nozomi_private.io_addr */ 0);
+		goto err_disable_device;
+	}
 
 	/* Find out what card type it is */
 	nozomi_get_card_type(dc);
 
 	dc->base_addr = pci_iomap(dc->pdev, 0, dc->card_type);
-	अगर (!dc->base_addr) अणु
+	if (!dc->base_addr) {
 		dev_err(&pdev->dev, "Unable to map card MMIO\n");
 		ret = -ENODEV;
-		जाओ err_rel_regs;
-	पूर्ण
+		goto err_rel_regs;
+	}
 
-	dc->send_buf = kदो_स्मृति(SEND_BUF_MAX, GFP_KERNEL);
-	अगर (!dc->send_buf) अणु
+	dc->send_buf = kmalloc(SEND_BUF_MAX, GFP_KERNEL);
+	if (!dc->send_buf) {
 		dev_err(&pdev->dev, "Could not allocate send buffer?\n");
 		ret = -ENOMEM;
-		जाओ err_मुक्त_sbuf;
-	पूर्ण
+		goto err_free_sbuf;
+	}
 
-	क्रम (i = PORT_MDM; i < MAX_PORT; i++) अणु
-		अगर (kfअगरo_alloc(&dc->port[i].fअगरo_ul, FIFO_BUFFER_SIZE_UL,
-					GFP_KERNEL)) अणु
+	for (i = PORT_MDM; i < MAX_PORT; i++) {
+		if (kfifo_alloc(&dc->port[i].fifo_ul, FIFO_BUFFER_SIZE_UL,
+					GFP_KERNEL)) {
 			dev_err(&pdev->dev,
 					"Could not allocate kfifo buffer\n");
 			ret = -ENOMEM;
-			जाओ err_मुक्त_kfअगरo;
-		पूर्ण
-	पूर्ण
+			goto err_free_kfifo;
+		}
+	}
 
 	spin_lock_init(&dc->spin_mutex);
 
-	nozomi_setup_निजी_data(dc);
+	nozomi_setup_private_data(dc);
 
-	/* Disable all पूर्णांकerrupts */
+	/* Disable all interrupts */
 	dc->last_ier = 0;
-	ग_लिखोw(dc->last_ier, dc->reg_ier);
+	writew(dc->last_ier, dc->reg_ier);
 
-	ret = request_irq(pdev->irq, &पूर्णांकerrupt_handler, IRQF_SHARED,
+	ret = request_irq(pdev->irq, &interrupt_handler, IRQF_SHARED,
 			NOZOMI_NAME, dc);
-	अगर (unlikely(ret)) अणु
+	if (unlikely(ret)) {
 		dev_err(&pdev->dev, "can't request irq %d\n", pdev->irq);
-		जाओ err_मुक्त_kfअगरo;
-	पूर्ण
+		goto err_free_kfifo;
+	}
 
 	DBG1("base_addr: %p", dc->base_addr);
 
@@ -1391,81 +1390,81 @@ none:
 
 	pci_set_drvdata(pdev, dc);
 
-	/* Enable RESET पूर्णांकerrupt */
+	/* Enable RESET interrupt */
 	dc->last_ier = RESET;
-	ioग_लिखो16(dc->last_ier, dc->reg_ier);
+	iowrite16(dc->last_ier, dc->reg_ier);
 
 	dc->state = NOZOMI_STATE_ENABLED;
 
-	क्रम (i = 0; i < MAX_PORT; i++) अणु
-		काष्ठा device *tty_dev;
-		काष्ठा port *port = &dc->port[i];
+	for (i = 0; i < MAX_PORT; i++) {
+		struct device *tty_dev;
+		struct port *port = &dc->port[i];
 		port->dc = dc;
 		tty_port_init(&port->port);
 		port->port.ops = &noz_tty_port_ops;
-		tty_dev = tty_port_रेजिस्टर_device(&port->port, ntty_driver,
+		tty_dev = tty_port_register_device(&port->port, ntty_driver,
 				dc->index_start + i, &pdev->dev);
 
-		अगर (IS_ERR(tty_dev)) अणु
+		if (IS_ERR(tty_dev)) {
 			ret = PTR_ERR(tty_dev);
 			dev_err(&pdev->dev, "Could not allocate tty?\n");
 			tty_port_destroy(&port->port);
-			जाओ err_मुक्त_tty;
-		पूर्ण
-	पूर्ण
+			goto err_free_tty;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
-err_मुक्त_tty:
-	क्रम (i = 0; i < MAX_PORT; ++i) अणु
-		tty_unरेजिस्टर_device(ntty_driver, dc->index_start + i);
+err_free_tty:
+	for (i = 0; i < MAX_PORT; ++i) {
+		tty_unregister_device(ntty_driver, dc->index_start + i);
 		tty_port_destroy(&dc->port[i].port);
-	पूर्ण
-err_मुक्त_kfअगरo:
-	क्रम (i = 0; i < MAX_PORT; i++)
-		kfअगरo_मुक्त(&dc->port[i].fअगरo_ul);
-err_मुक्त_sbuf:
-	kमुक्त(dc->send_buf);
+	}
+err_free_kfifo:
+	for (i = 0; i < MAX_PORT; i++)
+		kfifo_free(&dc->port[i].fifo_ul);
+err_free_sbuf:
+	kfree(dc->send_buf);
 	iounmap(dc->base_addr);
 err_rel_regs:
 	pci_release_regions(pdev);
 err_disable_device:
 	pci_disable_device(pdev);
-err_मुक्त:
-	kमुक्त(dc);
+err_free:
+	kfree(dc);
 err:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम tty_निकास(काष्ठा nozomi *dc)
-अणु
-	अचिन्हित पूर्णांक i;
+static void tty_exit(struct nozomi *dc)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < MAX_PORT; ++i)
+	for (i = 0; i < MAX_PORT; ++i)
 		tty_port_tty_hangup(&dc->port[i].port, false);
 
-	/* Racy below - surely should रुको क्रम scheduled work to be करोne or
+	/* Racy below - surely should wait for scheduled work to be done or
 	   complete off a hangup method ? */
-	जबतक (dc->खोलो_ttys)
+	while (dc->open_ttys)
 		msleep(1);
-	क्रम (i = 0; i < MAX_PORT; ++i) अणु
-		tty_unरेजिस्टर_device(ntty_driver, dc->index_start + i);
+	for (i = 0; i < MAX_PORT; ++i) {
+		tty_unregister_device(ntty_driver, dc->index_start + i);
 		tty_port_destroy(&dc->port[i].port);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* Deallocate memory क्रम one device */
-अटल व्योम nozomi_card_निकास(काष्ठा pci_dev *pdev)
-अणु
-	पूर्णांक i;
-	काष्ठा ctrl_ul ctrl;
-	काष्ठा nozomi *dc = pci_get_drvdata(pdev);
+/* Deallocate memory for one device */
+static void nozomi_card_exit(struct pci_dev *pdev)
+{
+	int i;
+	struct ctrl_ul ctrl;
+	struct nozomi *dc = pci_get_drvdata(pdev);
 
-	/* Disable all पूर्णांकerrupts */
+	/* Disable all interrupts */
 	dc->last_ier = 0;
-	ग_लिखोw(dc->last_ier, dc->reg_ier);
+	writew(dc->last_ier, dc->reg_ier);
 
-	tty_निकास(dc);
+	tty_exit(dc);
 
 	/* Send 0x0001, command card to resend the reset token.  */
 	/* This is to get the reset when the module is reloaded. */
@@ -1476,17 +1475,17 @@ err:
 	DBG1("sending flow control 0x%04X", *((u16 *)&ctrl));
 
 	/* Setup dc->reg addresses to we can use defines here */
-	ग_लिखो_mem32(dc->port[PORT_CTRL].ul_addr[0], (u32 *)&ctrl, 2);
-	ग_लिखोw(CTRL_UL, dc->reg_fcr);	/* push the token to the card. */
+	write_mem32(dc->port[PORT_CTRL].ul_addr[0], (u32 *)&ctrl, 2);
+	writew(CTRL_UL, dc->reg_fcr);	/* push the token to the card. */
 
-	हटाओ_sysfs_files(dc);
+	remove_sysfs_files(dc);
 
-	मुक्त_irq(pdev->irq, dc);
+	free_irq(pdev->irq, dc);
 
-	क्रम (i = 0; i < MAX_PORT; i++)
-		kfअगरo_मुक्त(&dc->port[i].fअगरo_ul);
+	for (i = 0; i < MAX_PORT; i++)
+		kfifo_free(&dc->port[i].fifo_ul);
 
-	kमुक्त(dc->send_buf);
+	kfree(dc->send_buf);
 
 	iounmap(dc->base_addr);
 
@@ -1494,30 +1493,30 @@ err:
 
 	pci_disable_device(pdev);
 
-	ndevs[dc->index_start / MAX_PORT] = शून्य;
+	ndevs[dc->index_start / MAX_PORT] = NULL;
 
-	kमुक्त(dc);
-पूर्ण
+	kfree(dc);
+}
 
-अटल व्योम set_rts(स्थिर काष्ठा tty_काष्ठा *tty, पूर्णांक rts)
-अणु
-	काष्ठा port *port = get_port_by_tty(tty);
+static void set_rts(const struct tty_struct *tty, int rts)
+{
+	struct port *port = get_port_by_tty(tty);
 
 	port->ctrl_ul.RTS = rts;
 	port->update_flow_control = 1;
 	enable_transmit_ul(PORT_CTRL, get_dc_by_tty(tty));
-पूर्ण
+}
 
-अटल व्योम set_dtr(स्थिर काष्ठा tty_काष्ठा *tty, पूर्णांक dtr)
-अणु
-	काष्ठा port *port = get_port_by_tty(tty);
+static void set_dtr(const struct tty_struct *tty, int dtr)
+{
+	struct port *port = get_port_by_tty(tty);
 
 	DBG1("SETTING DTR index: %d, dtr: %d", tty->index, dtr);
 
 	port->ctrl_ul.DTR = dtr;
 	port->update_flow_control = 1;
 	enable_transmit_ul(PORT_CTRL, get_dc_by_tty(tty));
-पूर्ण
+}
 
 /*
  * ----------------------------------------------------------------------------
@@ -1525,174 +1524,174 @@ err:
  * ----------------------------------------------------------------------------
  */
 
-अटल पूर्णांक ntty_install(काष्ठा tty_driver *driver, काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा port *port = get_port_by_tty(tty);
-	काष्ठा nozomi *dc = get_dc_by_tty(tty);
-	पूर्णांक ret;
-	अगर (!port || !dc || dc->state != NOZOMI_STATE_READY)
-		वापस -ENODEV;
+static int ntty_install(struct tty_driver *driver, struct tty_struct *tty)
+{
+	struct port *port = get_port_by_tty(tty);
+	struct nozomi *dc = get_dc_by_tty(tty);
+	int ret;
+	if (!port || !dc || dc->state != NOZOMI_STATE_READY)
+		return -ENODEV;
 	ret = tty_standard_install(driver, tty);
-	अगर (ret == 0)
+	if (ret == 0)
 		tty->driver_data = port;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ntty_cleanup(काष्ठा tty_काष्ठा *tty)
-अणु
-	tty->driver_data = शून्य;
-पूर्ण
+static void ntty_cleanup(struct tty_struct *tty)
+{
+	tty->driver_data = NULL;
+}
 
-अटल पूर्णांक ntty_activate(काष्ठा tty_port *tport, काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा port *port = container_of(tport, काष्ठा port, port);
-	काष्ठा nozomi *dc = port->dc;
-	अचिन्हित दीर्घ flags;
+static int ntty_activate(struct tty_port *tport, struct tty_struct *tty)
+{
+	struct port *port = container_of(tport, struct port, port);
+	struct nozomi *dc = port->dc;
+	unsigned long flags;
 
 	DBG1("open: %d", port->token_dl);
 	spin_lock_irqsave(&dc->spin_mutex, flags);
 	dc->last_ier = dc->last_ier | port->token_dl;
-	ग_लिखोw(dc->last_ier, dc->reg_ier);
-	dc->खोलो_ttys++;
+	writew(dc->last_ier, dc->reg_ier);
+	dc->open_ttys++;
 	spin_unlock_irqrestore(&dc->spin_mutex, flags);
-	prपूर्णांकk("noz: activated %d: %p\n", tty->index, tport);
-	वापस 0;
-पूर्ण
+	printk("noz: activated %d: %p\n", tty->index, tport);
+	return 0;
+}
 
-अटल पूर्णांक ntty_खोलो(काष्ठा tty_काष्ठा *tty, काष्ठा file *filp)
-अणु
-	काष्ठा port *port = tty->driver_data;
-	वापस tty_port_खोलो(&port->port, tty, filp);
-पूर्ण
+static int ntty_open(struct tty_struct *tty, struct file *filp)
+{
+	struct port *port = tty->driver_data;
+	return tty_port_open(&port->port, tty, filp);
+}
 
-अटल व्योम ntty_shutकरोwn(काष्ठा tty_port *tport)
-अणु
-	काष्ठा port *port = container_of(tport, काष्ठा port, port);
-	काष्ठा nozomi *dc = port->dc;
-	अचिन्हित दीर्घ flags;
+static void ntty_shutdown(struct tty_port *tport)
+{
+	struct port *port = container_of(tport, struct port, port);
+	struct nozomi *dc = port->dc;
+	unsigned long flags;
 
 	DBG1("close: %d", port->token_dl);
 	spin_lock_irqsave(&dc->spin_mutex, flags);
 	dc->last_ier &= ~(port->token_dl);
-	ग_लिखोw(dc->last_ier, dc->reg_ier);
-	dc->खोलो_ttys--;
+	writew(dc->last_ier, dc->reg_ier);
+	dc->open_ttys--;
 	spin_unlock_irqrestore(&dc->spin_mutex, flags);
-	prपूर्णांकk("noz: shutdown %p\n", tport);
-पूर्ण
+	printk("noz: shutdown %p\n", tport);
+}
 
-अटल व्योम ntty_बंद(काष्ठा tty_काष्ठा *tty, काष्ठा file *filp)
-अणु
-	काष्ठा port *port = tty->driver_data;
-	अगर (port)
-		tty_port_बंद(&port->port, tty, filp);
-पूर्ण
+static void ntty_close(struct tty_struct *tty, struct file *filp)
+{
+	struct port *port = tty->driver_data;
+	if (port)
+		tty_port_close(&port->port, tty, filp);
+}
 
-अटल व्योम ntty_hangup(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा port *port = tty->driver_data;
+static void ntty_hangup(struct tty_struct *tty)
+{
+	struct port *port = tty->driver_data;
 	tty_port_hangup(&port->port);
-पूर्ण
+}
 
 /*
- * called when the userspace process ग_लिखोs to the tty (/dev/noz*).
- * Data is inserted पूर्णांकo a fअगरo, which is then पढ़ो and transferred to the modem.
+ * called when the userspace process writes to the tty (/dev/noz*).
+ * Data is inserted into a fifo, which is then read and transferred to the modem.
  */
-अटल पूर्णांक ntty_ग_लिखो(काष्ठा tty_काष्ठा *tty, स्थिर अचिन्हित अक्षर *buffer,
-		      पूर्णांक count)
-अणु
-	पूर्णांक rval = -EINVAL;
-	काष्ठा nozomi *dc = get_dc_by_tty(tty);
-	काष्ठा port *port = tty->driver_data;
-	अचिन्हित दीर्घ flags;
+static int ntty_write(struct tty_struct *tty, const unsigned char *buffer,
+		      int count)
+{
+	int rval = -EINVAL;
+	struct nozomi *dc = get_dc_by_tty(tty);
+	struct port *port = tty->driver_data;
+	unsigned long flags;
 
-	अगर (!dc || !port)
-		वापस -ENODEV;
+	if (!dc || !port)
+		return -ENODEV;
 
-	rval = kfअगरo_in(&port->fअगरo_ul, (अचिन्हित अक्षर *)buffer, count);
+	rval = kfifo_in(&port->fifo_ul, (unsigned char *)buffer, count);
 
 	spin_lock_irqsave(&dc->spin_mutex, flags);
 	/* CTS is only valid on the modem channel */
-	अगर (port == &(dc->port[PORT_MDM])) अणु
-		अगर (port->ctrl_dl.CTS) अणु
+	if (port == &(dc->port[PORT_MDM])) {
+		if (port->ctrl_dl.CTS) {
 			DBG4("Enable interrupt");
 			enable_transmit_ul(tty->index % MAX_PORT, dc);
-		पूर्ण अन्यथा अणु
+		} else {
 			dev_err(&dc->pdev->dev,
 				"CTS not active on modem port?\n");
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		enable_transmit_ul(tty->index % MAX_PORT, dc);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&dc->spin_mutex, flags);
 
-	वापस rval;
-पूर्ण
+	return rval;
+}
 
 /*
  * Calculate how much is left in device
  * This method is called by the upper tty layer.
  *   #according to sources N_TTY.c it expects a value >= 0 and
- *    करोes not check क्रम negative values.
+ *    does not check for negative values.
  *
  * If the port is unplugged report lots of room and let the bits
- * dribble away so we करोn't block anything.
+ * dribble away so we don't block anything.
  */
-अटल पूर्णांक ntty_ग_लिखो_room(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा port *port = tty->driver_data;
-	पूर्णांक room = 4096;
-	स्थिर काष्ठा nozomi *dc = get_dc_by_tty(tty);
+static int ntty_write_room(struct tty_struct *tty)
+{
+	struct port *port = tty->driver_data;
+	int room = 4096;
+	const struct nozomi *dc = get_dc_by_tty(tty);
 
-	अगर (dc)
-		room = kfअगरo_avail(&port->fअगरo_ul);
+	if (dc)
+		room = kfifo_avail(&port->fifo_ul);
 
-	वापस room;
-पूर्ण
+	return room;
+}
 
 /* Gets io control parameters */
-अटल पूर्णांक ntty_tiocmget(काष्ठा tty_काष्ठा *tty)
-अणु
-	स्थिर काष्ठा port *port = tty->driver_data;
-	स्थिर काष्ठा ctrl_dl *ctrl_dl = &port->ctrl_dl;
-	स्थिर काष्ठा ctrl_ul *ctrl_ul = &port->ctrl_ul;
+static int ntty_tiocmget(struct tty_struct *tty)
+{
+	const struct port *port = tty->driver_data;
+	const struct ctrl_dl *ctrl_dl = &port->ctrl_dl;
+	const struct ctrl_ul *ctrl_ul = &port->ctrl_ul;
 
 	/* Note: these could change under us but it is not clear this
-	   matters अगर so */
-	वापस (ctrl_ul->RTS ? TIOCM_RTS : 0)
+	   matters if so */
+	return (ctrl_ul->RTS ? TIOCM_RTS : 0)
 		| (ctrl_ul->DTR ? TIOCM_DTR : 0)
 		| (ctrl_dl->DCD ? TIOCM_CAR : 0)
 		| (ctrl_dl->RI  ? TIOCM_RNG : 0)
 		| (ctrl_dl->DSR ? TIOCM_DSR : 0)
 		| (ctrl_dl->CTS ? TIOCM_CTS : 0);
-पूर्ण
+}
 
 /* Sets io controls parameters */
-अटल पूर्णांक ntty_tiocmset(काष्ठा tty_काष्ठा *tty,
-					अचिन्हित पूर्णांक set, अचिन्हित पूर्णांक clear)
-अणु
-	काष्ठा nozomi *dc = get_dc_by_tty(tty);
-	अचिन्हित दीर्घ flags;
+static int ntty_tiocmset(struct tty_struct *tty,
+					unsigned int set, unsigned int clear)
+{
+	struct nozomi *dc = get_dc_by_tty(tty);
+	unsigned long flags;
 
 	spin_lock_irqsave(&dc->spin_mutex, flags);
-	अगर (set & TIOCM_RTS)
+	if (set & TIOCM_RTS)
 		set_rts(tty, 1);
-	अन्यथा अगर (clear & TIOCM_RTS)
+	else if (clear & TIOCM_RTS)
 		set_rts(tty, 0);
 
-	अगर (set & TIOCM_DTR)
+	if (set & TIOCM_DTR)
 		set_dtr(tty, 1);
-	अन्यथा अगर (clear & TIOCM_DTR)
+	else if (clear & TIOCM_DTR)
 		set_dtr(tty, 0);
 	spin_unlock_irqrestore(&dc->spin_mutex, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ntty_cflags_changed(काष्ठा port *port, अचिन्हित दीर्घ flags,
-		काष्ठा async_icount *cprev)
-अणु
-	स्थिर काष्ठा async_icount cnow = port->tty_icount;
-	पूर्णांक ret;
+static int ntty_cflags_changed(struct port *port, unsigned long flags,
+		struct async_icount *cprev)
+{
+	const struct async_icount cnow = port->tty_icount;
+	int ret;
 
 	ret = ((flags & TIOCM_RNG) && (cnow.rng != cprev->rng))
 		|| ((flags & TIOCM_DSR) && (cnow.dsr != cprev->dsr))
@@ -1701,14 +1700,14 @@ err:
 
 	*cprev = cnow;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ntty_tiocgicount(काष्ठा tty_काष्ठा *tty,
-				काष्ठा serial_icounter_काष्ठा *icount)
-अणु
-	काष्ठा port *port = tty->driver_data;
-	स्थिर काष्ठा async_icount cnow = port->tty_icount;
+static int ntty_tiocgicount(struct tty_struct *tty,
+				struct serial_icounter_struct *icount)
+{
+	struct port *port = tty->driver_data;
+	const struct async_icount cnow = port->tty_icount;
 
 	icount->cts = cnow.cts;
 	icount->dsr = cnow.dsr;
@@ -1721,115 +1720,115 @@ err:
 	icount->parity = cnow.parity;
 	icount->brk = cnow.brk;
 	icount->buf_overrun = cnow.buf_overrun;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ntty_ioctl(काष्ठा tty_काष्ठा *tty,
-		      अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा port *port = tty->driver_data;
-	पूर्णांक rval = -ENOIOCTLCMD;
+static int ntty_ioctl(struct tty_struct *tty,
+		      unsigned int cmd, unsigned long arg)
+{
+	struct port *port = tty->driver_data;
+	int rval = -ENOIOCTLCMD;
 
-	चयन (cmd) अणु
-	हाल TIOCMIWAIT: अणु
-		काष्ठा async_icount cprev = port->tty_icount;
+	switch (cmd) {
+	case TIOCMIWAIT: {
+		struct async_icount cprev = port->tty_icount;
 
-		rval = रुको_event_पूर्णांकerruptible(port->tty_रुको,
+		rval = wait_event_interruptible(port->tty_wait,
 				ntty_cflags_changed(port, arg, &cprev));
-		अवरोध;
-	पूर्ण
-	शेष:
+		break;
+	}
+	default:
 		DBG1("ERR: 0x%08X, %d", cmd, cmd);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस rval;
-पूर्ण
+	return rval;
+}
 
 /*
- * Called by the upper tty layer when tty buffers are पढ़ोy
+ * Called by the upper tty layer when tty buffers are ready
  * to receive data again after a call to throttle.
  */
-अटल व्योम ntty_unthrottle(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा nozomi *dc = get_dc_by_tty(tty);
-	अचिन्हित दीर्घ flags;
+static void ntty_unthrottle(struct tty_struct *tty)
+{
+	struct nozomi *dc = get_dc_by_tty(tty);
+	unsigned long flags;
 
 	spin_lock_irqsave(&dc->spin_mutex, flags);
 	enable_transmit_dl(tty->index % MAX_PORT, dc);
 	set_rts(tty, 1);
 
 	spin_unlock_irqrestore(&dc->spin_mutex, flags);
-पूर्ण
+}
 
 /*
  * Called by the upper tty layer when the tty buffers are almost full.
  * The driver should stop send more data.
  */
-अटल व्योम ntty_throttle(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा nozomi *dc = get_dc_by_tty(tty);
-	अचिन्हित दीर्घ flags;
+static void ntty_throttle(struct tty_struct *tty)
+{
+	struct nozomi *dc = get_dc_by_tty(tty);
+	unsigned long flags;
 
 	spin_lock_irqsave(&dc->spin_mutex, flags);
 	set_rts(tty, 0);
 	spin_unlock_irqrestore(&dc->spin_mutex, flags);
-पूर्ण
+}
 
-/* Returns number of अक्षरs in buffer, called by tty layer */
-अटल s32 ntty_अक्षरs_in_buffer(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा port *port = tty->driver_data;
-	काष्ठा nozomi *dc = get_dc_by_tty(tty);
+/* Returns number of chars in buffer, called by tty layer */
+static s32 ntty_chars_in_buffer(struct tty_struct *tty)
+{
+	struct port *port = tty->driver_data;
+	struct nozomi *dc = get_dc_by_tty(tty);
 	s32 rval = 0;
 
-	अगर (unlikely(!dc || !port)) अणु
-		जाओ निकास_in_buffer;
-	पूर्ण
+	if (unlikely(!dc || !port)) {
+		goto exit_in_buffer;
+	}
 
-	rval = kfअगरo_len(&port->fअगरo_ul);
+	rval = kfifo_len(&port->fifo_ul);
 
-निकास_in_buffer:
-	वापस rval;
-पूर्ण
+exit_in_buffer:
+	return rval;
+}
 
-अटल स्थिर काष्ठा tty_port_operations noz_tty_port_ops = अणु
+static const struct tty_port_operations noz_tty_port_ops = {
 	.activate = ntty_activate,
-	.shutकरोwn = ntty_shutकरोwn,
-पूर्ण;
+	.shutdown = ntty_shutdown,
+};
 
-अटल स्थिर काष्ठा tty_operations tty_ops = अणु
+static const struct tty_operations tty_ops = {
 	.ioctl = ntty_ioctl,
-	.खोलो = ntty_खोलो,
-	.बंद = ntty_बंद,
+	.open = ntty_open,
+	.close = ntty_close,
 	.hangup = ntty_hangup,
-	.ग_लिखो = ntty_ग_लिखो,
-	.ग_लिखो_room = ntty_ग_लिखो_room,
+	.write = ntty_write,
+	.write_room = ntty_write_room,
 	.unthrottle = ntty_unthrottle,
 	.throttle = ntty_throttle,
-	.अक्षरs_in_buffer = ntty_अक्षरs_in_buffer,
+	.chars_in_buffer = ntty_chars_in_buffer,
 	.tiocmget = ntty_tiocmget,
 	.tiocmset = ntty_tiocmset,
 	.get_icount = ntty_tiocgicount,
 	.install = ntty_install,
 	.cleanup = ntty_cleanup,
-पूर्ण;
+};
 
 /* Module initialization */
-अटल काष्ठा pci_driver nozomi_driver = अणु
+static struct pci_driver nozomi_driver = {
 	.name = NOZOMI_NAME,
 	.id_table = nozomi_pci_tbl,
 	.probe = nozomi_card_init,
-	.हटाओ = nozomi_card_निकास,
-पूर्ण;
+	.remove = nozomi_card_exit,
+};
 
-अटल __init पूर्णांक nozomi_init(व्योम)
-अणु
-	पूर्णांक ret;
+static __init int nozomi_init(void)
+{
+	int ret;
 
 	ntty_driver = alloc_tty_driver(NTTY_TTY_MAXMINORS);
-	अगर (!ntty_driver)
-		वापस -ENOMEM;
+	if (!ntty_driver)
+		return -ENOMEM;
 
 	ntty_driver->driver_name = NOZOMI_NAME_TTY;
 	ntty_driver->name = "noz";
@@ -1844,35 +1843,35 @@ err:
 	ntty_driver->init_termios.c_ospeed = 115200;
 	tty_set_operations(ntty_driver, &tty_ops);
 
-	ret = tty_रेजिस्टर_driver(ntty_driver);
-	अगर (ret) अणु
-		prपूर्णांकk(KERN_ERR "Nozomi: failed to register ntty driver\n");
-		जाओ मुक्त_tty;
-	पूर्ण
+	ret = tty_register_driver(ntty_driver);
+	if (ret) {
+		printk(KERN_ERR "Nozomi: failed to register ntty driver\n");
+		goto free_tty;
+	}
 
-	ret = pci_रेजिस्टर_driver(&nozomi_driver);
-	अगर (ret) अणु
-		prपूर्णांकk(KERN_ERR "Nozomi: can't register pci driver\n");
-		जाओ unr_tty;
-	पूर्ण
+	ret = pci_register_driver(&nozomi_driver);
+	if (ret) {
+		printk(KERN_ERR "Nozomi: can't register pci driver\n");
+		goto unr_tty;
+	}
 
-	वापस 0;
+	return 0;
 unr_tty:
-	tty_unरेजिस्टर_driver(ntty_driver);
-मुक्त_tty:
+	tty_unregister_driver(ntty_driver);
+free_tty:
 	put_tty_driver(ntty_driver);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल __निकास व्योम nozomi_निकास(व्योम)
-अणु
-	pci_unरेजिस्टर_driver(&nozomi_driver);
-	tty_unरेजिस्टर_driver(ntty_driver);
+static __exit void nozomi_exit(void)
+{
+	pci_unregister_driver(&nozomi_driver);
+	tty_unregister_driver(ntty_driver);
 	put_tty_driver(ntty_driver);
-पूर्ण
+}
 
 module_init(nozomi_init);
-module_निकास(nozomi_निकास);
+module_exit(nozomi_exit);
 
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_DESCRIPTION("Nozomi driver");

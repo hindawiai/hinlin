@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Rockchip RK805 PMIC Power Key driver
  *
@@ -8,96 +7,96 @@
  * Author: Joseph Chen <chenjh@rock-chips.com>
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/init.h>
-#समावेश <linux/input.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/errno.h>
+#include <linux/init.h>
+#include <linux/input.h>
+#include <linux/interrupt.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
 
-अटल irqवापस_t pwrkey_fall_irq(पूर्णांक irq, व्योम *_pwr)
-अणु
-	काष्ठा input_dev *pwr = _pwr;
+static irqreturn_t pwrkey_fall_irq(int irq, void *_pwr)
+{
+	struct input_dev *pwr = _pwr;
 
 	input_report_key(pwr, KEY_POWER, 1);
 	input_sync(pwr);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t pwrkey_rise_irq(पूर्णांक irq, व्योम *_pwr)
-अणु
-	काष्ठा input_dev *pwr = _pwr;
+static irqreturn_t pwrkey_rise_irq(int irq, void *_pwr)
+{
+	struct input_dev *pwr = _pwr;
 
 	input_report_key(pwr, KEY_POWER, 0);
 	input_sync(pwr);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक rk805_pwrkey_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा input_dev *pwr;
-	पूर्णांक fall_irq, rise_irq;
-	पूर्णांक err;
+static int rk805_pwrkey_probe(struct platform_device *pdev)
+{
+	struct input_dev *pwr;
+	int fall_irq, rise_irq;
+	int err;
 
 	pwr = devm_input_allocate_device(&pdev->dev);
-	अगर (!pwr) अणु
+	if (!pwr) {
 		dev_err(&pdev->dev, "Can't allocate power button\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	pwr->name = "rk805 pwrkey";
 	pwr->phys = "rk805_pwrkey/input0";
 	pwr->id.bustype = BUS_HOST;
 	input_set_capability(pwr, EV_KEY, KEY_POWER);
 
-	fall_irq = platक्रमm_get_irq(pdev, 0);
-	अगर (fall_irq < 0)
-		वापस fall_irq;
+	fall_irq = platform_get_irq(pdev, 0);
+	if (fall_irq < 0)
+		return fall_irq;
 
-	rise_irq = platक्रमm_get_irq(pdev, 1);
-	अगर (rise_irq < 0)
-		वापस rise_irq;
+	rise_irq = platform_get_irq(pdev, 1);
+	if (rise_irq < 0)
+		return rise_irq;
 
 	err = devm_request_any_context_irq(&pwr->dev, fall_irq,
 					   pwrkey_fall_irq,
 					   IRQF_TRIGGER_FALLING | IRQF_ONESHOT,
 					   "rk805_pwrkey_fall", pwr);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		dev_err(&pdev->dev, "Can't register fall irq: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	err = devm_request_any_context_irq(&pwr->dev, rise_irq,
 					   pwrkey_rise_irq,
 					   IRQF_TRIGGER_RISING | IRQF_ONESHOT,
 					   "rk805_pwrkey_rise", pwr);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		dev_err(&pdev->dev, "Can't register rise irq: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	err = input_रेजिस्टर_device(pwr);
-	अगर (err) अणु
+	err = input_register_device(pwr);
+	if (err) {
 		dev_err(&pdev->dev, "Can't register power button: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	platक्रमm_set_drvdata(pdev, pwr);
+	platform_set_drvdata(pdev, pwr);
 	device_init_wakeup(&pdev->dev, true);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver rk805_pwrkey_driver = अणु
+static struct platform_driver rk805_pwrkey_driver = {
 	.probe	= rk805_pwrkey_probe,
-	.driver	= अणु
+	.driver	= {
 		.name = "rk805-pwrkey",
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(rk805_pwrkey_driver);
+	},
+};
+module_platform_driver(rk805_pwrkey_driver);
 
 MODULE_AUTHOR("Joseph Chen <chenjh@rock-chips.com>");
 MODULE_DESCRIPTION("RK805 PMIC Power Key driver");

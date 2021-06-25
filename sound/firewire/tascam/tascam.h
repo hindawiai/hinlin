@@ -1,138 +1,137 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * tascam.h - a part of driver क्रम TASCAM FireWire series
+ * tascam.h - a part of driver for TASCAM FireWire series
  *
  * Copyright (c) 2015 Takashi Sakamoto
  */
 
-#अगर_अघोषित SOUND_TASCAM_H_INCLUDED
-#घोषणा SOUND_TASCAM_H_INCLUDED
+#ifndef SOUND_TASCAM_H_INCLUDED
+#define SOUND_TASCAM_H_INCLUDED
 
-#समावेश <linux/device.h>
-#समावेश <linux/firewire.h>
-#समावेश <linux/firewire-स्थिरants.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/compat.h>
-#समावेश <linux/sched/संकेत.स>
+#include <linux/device.h>
+#include <linux/firewire.h>
+#include <linux/firewire-constants.h>
+#include <linux/module.h>
+#include <linux/mod_devicetable.h>
+#include <linux/mutex.h>
+#include <linux/slab.h>
+#include <linux/compat.h>
+#include <linux/sched/signal.h>
 
-#समावेश <sound/core.h>
-#समावेश <sound/initval.h>
-#समावेश <sound/info.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/pcm_params.h>
-#समावेश <sound/firewire.h>
-#समावेश <sound/hwdep.h>
-#समावेश <sound/rawmidi.h>
+#include <sound/core.h>
+#include <sound/initval.h>
+#include <sound/info.h>
+#include <sound/pcm.h>
+#include <sound/pcm_params.h>
+#include <sound/firewire.h>
+#include <sound/hwdep.h>
+#include <sound/rawmidi.h>
 
-#समावेश "../lib.h"
-#समावेश "../amdtp-stream.h"
-#समावेश "../iso-resources.h"
+#include "../lib.h"
+#include "../amdtp-stream.h"
+#include "../iso-resources.h"
 
-काष्ठा snd_tscm_spec अणु
-	स्थिर अक्षर *स्थिर name;
+struct snd_tscm_spec {
+	const char *const name;
 	bool has_adat;
-	bool has_spdअगर;
-	अचिन्हित पूर्णांक pcm_capture_analog_channels;
-	अचिन्हित पूर्णांक pcm_playback_analog_channels;
-	अचिन्हित पूर्णांक midi_capture_ports;
-	अचिन्हित पूर्णांक midi_playback_ports;
-पूर्ण;
+	bool has_spdif;
+	unsigned int pcm_capture_analog_channels;
+	unsigned int pcm_playback_analog_channels;
+	unsigned int midi_capture_ports;
+	unsigned int midi_playback_ports;
+};
 
-#घोषणा TSCM_MIDI_IN_PORT_MAX	4
-#घोषणा TSCM_MIDI_OUT_PORT_MAX	4
+#define TSCM_MIDI_IN_PORT_MAX	4
+#define TSCM_MIDI_OUT_PORT_MAX	4
 
-काष्ठा snd_fw_async_midi_port अणु
-	काष्ठा fw_device *parent;
-	काष्ठा work_काष्ठा work;
+struct snd_fw_async_midi_port {
+	struct fw_device *parent;
+	struct work_struct work;
 	bool idling;
-	kसमय_प्रकार next_kसमय;
+	ktime_t next_ktime;
 	bool error;
 
-	काष्ठा fw_transaction transaction;
+	struct fw_transaction transaction;
 
 	u8 buf[4];
 	u8 running_status;
 	bool on_sysex;
 
-	काष्ठा snd_rawmidi_substream *substream;
-	पूर्णांक consume_bytes;
-पूर्ण;
+	struct snd_rawmidi_substream *substream;
+	int consume_bytes;
+};
 
-#घोषणा SND_TSCM_QUEUE_COUNT	16
+#define SND_TSCM_QUEUE_COUNT	16
 
-काष्ठा snd_tscm अणु
-	काष्ठा snd_card *card;
-	काष्ठा fw_unit *unit;
+struct snd_tscm {
+	struct snd_card *card;
+	struct fw_unit *unit;
 
-	काष्ठा mutex mutex;
+	struct mutex mutex;
 	spinlock_t lock;
 
-	bool रेजिस्टरed;
-	काष्ठा delayed_work dwork;
-	स्थिर काष्ठा snd_tscm_spec *spec;
+	bool registered;
+	struct delayed_work dwork;
+	const struct snd_tscm_spec *spec;
 
-	काष्ठा fw_iso_resources tx_resources;
-	काष्ठा fw_iso_resources rx_resources;
-	काष्ठा amdtp_stream tx_stream;
-	काष्ठा amdtp_stream rx_stream;
-	अचिन्हित पूर्णांक substreams_counter;
+	struct fw_iso_resources tx_resources;
+	struct fw_iso_resources rx_resources;
+	struct amdtp_stream tx_stream;
+	struct amdtp_stream rx_stream;
+	unsigned int substreams_counter;
 
-	पूर्णांक dev_lock_count;
+	int dev_lock_count;
 	bool dev_lock_changed;
-	रुको_queue_head_t hwdep_रुको;
+	wait_queue_head_t hwdep_wait;
 
 	/* For MIDI message incoming transactions. */
-	काष्ठा fw_address_handler async_handler;
-	काष्ठा snd_rawmidi_substream *tx_midi_substreams[TSCM_MIDI_IN_PORT_MAX];
+	struct fw_address_handler async_handler;
+	struct snd_rawmidi_substream *tx_midi_substreams[TSCM_MIDI_IN_PORT_MAX];
 
 	/* For MIDI message outgoing transactions. */
-	काष्ठा snd_fw_async_midi_port out_ports[TSCM_MIDI_OUT_PORT_MAX];
+	struct snd_fw_async_midi_port out_ports[TSCM_MIDI_OUT_PORT_MAX];
 
-	// A cache of status inक्रमmation in tx isoc packets.
+	// A cache of status information in tx isoc packets.
 	__be32 state[SNDRV_FIREWIRE_TASCAM_STATE_COUNT];
-	काष्ठा snd_hwdep *hwdep;
-	काष्ठा snd_firewire_tascam_change queue[SND_TSCM_QUEUE_COUNT];
-	अचिन्हित पूर्णांक pull_pos;
-	अचिन्हित पूर्णांक push_pos;
+	struct snd_hwdep *hwdep;
+	struct snd_firewire_tascam_change queue[SND_TSCM_QUEUE_COUNT];
+	unsigned int pull_pos;
+	unsigned int push_pos;
 
-	काष्ठा amdtp_करोमुख्य करोमुख्य;
-पूर्ण;
+	struct amdtp_domain domain;
+};
 
-#घोषणा TSCM_ADDR_BASE			0xffff00000000ull
+#define TSCM_ADDR_BASE			0xffff00000000ull
 
-#घोषणा TSCM_OFFSET_FIRMWARE_REGISTER	0x0000
-#घोषणा TSCM_OFFSET_FIRMWARE_FPGA	0x0004
-#घोषणा TSCM_OFFSET_FIRMWARE_ARM	0x0008
-#घोषणा TSCM_OFFSET_FIRMWARE_HW		0x000c
+#define TSCM_OFFSET_FIRMWARE_REGISTER	0x0000
+#define TSCM_OFFSET_FIRMWARE_FPGA	0x0004
+#define TSCM_OFFSET_FIRMWARE_ARM	0x0008
+#define TSCM_OFFSET_FIRMWARE_HW		0x000c
 
-#घोषणा TSCM_OFFSET_ISOC_TX_CH		0x0200
-#घोषणा TSCM_OFFSET_UNKNOWN		0x0204
-#घोषणा TSCM_OFFSET_START_STREAMING	0x0208
-#घोषणा TSCM_OFFSET_ISOC_RX_CH		0x020c
-#घोषणा TSCM_OFFSET_ISOC_RX_ON		0x0210	/* Little conviction. */
-#घोषणा TSCM_OFFSET_TX_PCM_CHANNELS	0x0214
-#घोषणा TSCM_OFFSET_RX_PCM_CHANNELS	0x0218
-#घोषणा TSCM_OFFSET_MULTIPLEX_MODE	0x021c
-#घोषणा TSCM_OFFSET_ISOC_TX_ON		0x0220
+#define TSCM_OFFSET_ISOC_TX_CH		0x0200
+#define TSCM_OFFSET_UNKNOWN		0x0204
+#define TSCM_OFFSET_START_STREAMING	0x0208
+#define TSCM_OFFSET_ISOC_RX_CH		0x020c
+#define TSCM_OFFSET_ISOC_RX_ON		0x0210	/* Little conviction. */
+#define TSCM_OFFSET_TX_PCM_CHANNELS	0x0214
+#define TSCM_OFFSET_RX_PCM_CHANNELS	0x0218
+#define TSCM_OFFSET_MULTIPLEX_MODE	0x021c
+#define TSCM_OFFSET_ISOC_TX_ON		0x0220
 /* Unknown				0x0224 */
-#घोषणा TSCM_OFFSET_CLOCK_STATUS	0x0228
-#घोषणा TSCM_OFFSET_SET_OPTION		0x022c
+#define TSCM_OFFSET_CLOCK_STATUS	0x0228
+#define TSCM_OFFSET_SET_OPTION		0x022c
 
-#घोषणा TSCM_OFFSET_MIDI_TX_ON		0x0300
-#घोषणा TSCM_OFFSET_MIDI_TX_ADDR_HI	0x0304
-#घोषणा TSCM_OFFSET_MIDI_TX_ADDR_LO	0x0308
+#define TSCM_OFFSET_MIDI_TX_ON		0x0300
+#define TSCM_OFFSET_MIDI_TX_ADDR_HI	0x0304
+#define TSCM_OFFSET_MIDI_TX_ADDR_LO	0x0308
 
-#घोषणा TSCM_OFFSET_LED_POWER		0x0404
+#define TSCM_OFFSET_LED_POWER		0x0404
 
-#घोषणा TSCM_OFFSET_MIDI_RX_QUAD	0x4000
+#define TSCM_OFFSET_MIDI_RX_QUAD	0x4000
 
-// Although FE-8 supports the above रेजिस्टरs, it has no I/O पूर्णांकerfaces क्रम
-// audio samples and music messages. Otherwise it supports another notअगरication
-// क्रम status and control message as well as LED brightening. The message
+// Although FE-8 supports the above registers, it has no I/O interfaces for
+// audio samples and music messages. Otherwise it supports another notification
+// for status and control message as well as LED brightening. The message
 // consists of quadlet-aligned data up to 32 quadlets. The first byte of message
 // is fixed to 0x40. The second byte is between 0x00 to 0x1f and represent each
 // control:
@@ -141,8 +140,8 @@
 //   knob:	0x14-0x1b
 //   sensing:	0x0b
 //
-// The rest two bytes represent state of the controls; e.g. current value क्रम
-// fader and knob, biपंचांगasks क्रम button and sensing.
+// The rest two bytes represent state of the controls; e.g. current value for
+// fader and knob, bitmasks for button and sensing.
 // Just after turning on, 32 quadlets messages with 0x00-0x1f are immediately
 // sent in one transaction. After, several quadlets are sent in one transaction.
 //
@@ -150,65 +149,65 @@
 // TSCM_OFFSET_FE8_CTL_TX_ADDR_HI	0x0314
 // TSCM_OFFSET_FE8_CTL_TX_ADDR_LO	0x0318
 
-क्रमागत snd_tscm_घड़ी अणु
+enum snd_tscm_clock {
 	SND_TSCM_CLOCK_INTERNAL = 0,
 	SND_TSCM_CLOCK_WORD	= 1,
 	SND_TSCM_CLOCK_SPDIF	= 2,
 	SND_TSCM_CLOCK_ADAT	= 3,
-पूर्ण;
+};
 
-पूर्णांक amdtp_tscm_init(काष्ठा amdtp_stream *s, काष्ठा fw_unit *unit,
-		  क्रमागत amdtp_stream_direction dir, अचिन्हित पूर्णांक pcm_channels);
-पूर्णांक amdtp_tscm_set_parameters(काष्ठा amdtp_stream *s, अचिन्हित पूर्णांक rate);
-पूर्णांक amdtp_tscm_add_pcm_hw_स्थिरraपूर्णांकs(काष्ठा amdtp_stream *s,
-				      काष्ठा snd_pcm_runसमय *runसमय);
+int amdtp_tscm_init(struct amdtp_stream *s, struct fw_unit *unit,
+		  enum amdtp_stream_direction dir, unsigned int pcm_channels);
+int amdtp_tscm_set_parameters(struct amdtp_stream *s, unsigned int rate);
+int amdtp_tscm_add_pcm_hw_constraints(struct amdtp_stream *s,
+				      struct snd_pcm_runtime *runtime);
 
-पूर्णांक snd_tscm_stream_get_rate(काष्ठा snd_tscm *tscm, अचिन्हित पूर्णांक *rate);
-पूर्णांक snd_tscm_stream_get_घड़ी(काष्ठा snd_tscm *tscm,
-			      क्रमागत snd_tscm_घड़ी *घड़ी);
-पूर्णांक snd_tscm_stream_init_duplex(काष्ठा snd_tscm *tscm);
-व्योम snd_tscm_stream_update_duplex(काष्ठा snd_tscm *tscm);
-व्योम snd_tscm_stream_destroy_duplex(काष्ठा snd_tscm *tscm);
-पूर्णांक snd_tscm_stream_reserve_duplex(काष्ठा snd_tscm *tscm, अचिन्हित पूर्णांक rate,
-				   अचिन्हित पूर्णांक frames_per_period,
-				   अचिन्हित पूर्णांक frames_per_buffer);
-पूर्णांक snd_tscm_stream_start_duplex(काष्ठा snd_tscm *tscm, अचिन्हित पूर्णांक rate);
-व्योम snd_tscm_stream_stop_duplex(काष्ठा snd_tscm *tscm);
+int snd_tscm_stream_get_rate(struct snd_tscm *tscm, unsigned int *rate);
+int snd_tscm_stream_get_clock(struct snd_tscm *tscm,
+			      enum snd_tscm_clock *clock);
+int snd_tscm_stream_init_duplex(struct snd_tscm *tscm);
+void snd_tscm_stream_update_duplex(struct snd_tscm *tscm);
+void snd_tscm_stream_destroy_duplex(struct snd_tscm *tscm);
+int snd_tscm_stream_reserve_duplex(struct snd_tscm *tscm, unsigned int rate,
+				   unsigned int frames_per_period,
+				   unsigned int frames_per_buffer);
+int snd_tscm_stream_start_duplex(struct snd_tscm *tscm, unsigned int rate);
+void snd_tscm_stream_stop_duplex(struct snd_tscm *tscm);
 
-व्योम snd_tscm_stream_lock_changed(काष्ठा snd_tscm *tscm);
-पूर्णांक snd_tscm_stream_lock_try(काष्ठा snd_tscm *tscm);
-व्योम snd_tscm_stream_lock_release(काष्ठा snd_tscm *tscm);
+void snd_tscm_stream_lock_changed(struct snd_tscm *tscm);
+int snd_tscm_stream_lock_try(struct snd_tscm *tscm);
+void snd_tscm_stream_lock_release(struct snd_tscm *tscm);
 
-व्योम snd_fw_async_midi_port_init(काष्ठा snd_fw_async_midi_port *port);
+void snd_fw_async_midi_port_init(struct snd_fw_async_midi_port *port);
 
-अटल अंतरभूत व्योम
-snd_fw_async_midi_port_run(काष्ठा snd_fw_async_midi_port *port,
-			   काष्ठा snd_rawmidi_substream *substream)
-अणु
-	अगर (!port->error) अणु
+static inline void
+snd_fw_async_midi_port_run(struct snd_fw_async_midi_port *port,
+			   struct snd_rawmidi_substream *substream)
+{
+	if (!port->error) {
 		port->substream = substream;
 		schedule_work(&port->work);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम
-snd_fw_async_midi_port_finish(काष्ठा snd_fw_async_midi_port *port)
-अणु
-	port->substream = शून्य;
+static inline void
+snd_fw_async_midi_port_finish(struct snd_fw_async_midi_port *port)
+{
+	port->substream = NULL;
 	cancel_work_sync(&port->work);
 	port->error = false;
-पूर्ण
+}
 
-पूर्णांक snd_tscm_transaction_रेजिस्टर(काष्ठा snd_tscm *tscm);
-पूर्णांक snd_tscm_transaction_reरेजिस्टर(काष्ठा snd_tscm *tscm);
-व्योम snd_tscm_transaction_unरेजिस्टर(काष्ठा snd_tscm *tscm);
+int snd_tscm_transaction_register(struct snd_tscm *tscm);
+int snd_tscm_transaction_reregister(struct snd_tscm *tscm);
+void snd_tscm_transaction_unregister(struct snd_tscm *tscm);
 
-व्योम snd_tscm_proc_init(काष्ठा snd_tscm *tscm);
+void snd_tscm_proc_init(struct snd_tscm *tscm);
 
-पूर्णांक snd_tscm_create_pcm_devices(काष्ठा snd_tscm *tscm);
+int snd_tscm_create_pcm_devices(struct snd_tscm *tscm);
 
-पूर्णांक snd_tscm_create_midi_devices(काष्ठा snd_tscm *tscm);
+int snd_tscm_create_midi_devices(struct snd_tscm *tscm);
 
-पूर्णांक snd_tscm_create_hwdep_device(काष्ठा snd_tscm *tscm);
+int snd_tscm_create_hwdep_device(struct snd_tscm *tscm);
 
-#पूर्ण_अगर
+#endif

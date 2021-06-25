@@ -1,103 +1,102 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2015 Linaro Ltd.
  * Author: Pi-Cheng Chen <pi-cheng.chen@linaro.org>
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/cpufreq.h>
-#समावेश <linux/cpumask.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_opp.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/thermal.h>
+#include <linux/clk.h>
+#include <linux/cpu.h>
+#include <linux/cpufreq.h>
+#include <linux/cpumask.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/pm_opp.h>
+#include <linux/regulator/consumer.h>
+#include <linux/slab.h>
+#include <linux/thermal.h>
 
-#घोषणा MIN_VOLT_SHIFT		(100000)
-#घोषणा MAX_VOLT_SHIFT		(200000)
-#घोषणा MAX_VOLT_LIMIT		(1150000)
-#घोषणा VOLT_TOL		(10000)
+#define MIN_VOLT_SHIFT		(100000)
+#define MAX_VOLT_SHIFT		(200000)
+#define MAX_VOLT_LIMIT		(1150000)
+#define VOLT_TOL		(10000)
 
 /*
- * The काष्ठा mtk_cpu_dvfs_info holds necessary inक्रमmation क्रम करोing CPU DVFS
- * on each CPU घातer/घड़ी करोमुख्य of Mediatek SoCs. Each CPU cluster in
- * Mediatek SoCs has two voltage inमाला_दो, Vproc and Vsram. In some हालs the two
- * voltage inमाला_दो need to be controlled under a hardware limitation:
+ * The struct mtk_cpu_dvfs_info holds necessary information for doing CPU DVFS
+ * on each CPU power/clock domain of Mediatek SoCs. Each CPU cluster in
+ * Mediatek SoCs has two voltage inputs, Vproc and Vsram. In some cases the two
+ * voltage inputs need to be controlled under a hardware limitation:
  * 100mV < Vsram - Vproc < 200mV
  *
- * When scaling the घड़ी frequency of a CPU घड़ी करोमुख्य, the घड़ी source
- * needs to be चयनed to another stable PLL घड़ी temporarily until
+ * When scaling the clock frequency of a CPU clock domain, the clock source
+ * needs to be switched to another stable PLL clock temporarily until
  * the original PLL becomes stable at target frequency.
  */
-काष्ठा mtk_cpu_dvfs_info अणु
-	काष्ठा cpumask cpus;
-	काष्ठा device *cpu_dev;
-	काष्ठा regulator *proc_reg;
-	काष्ठा regulator *sram_reg;
-	काष्ठा clk *cpu_clk;
-	काष्ठा clk *पूर्णांकer_clk;
-	काष्ठा list_head list_head;
-	पूर्णांक पूर्णांकermediate_voltage;
+struct mtk_cpu_dvfs_info {
+	struct cpumask cpus;
+	struct device *cpu_dev;
+	struct regulator *proc_reg;
+	struct regulator *sram_reg;
+	struct clk *cpu_clk;
+	struct clk *inter_clk;
+	struct list_head list_head;
+	int intermediate_voltage;
 	bool need_voltage_tracking;
-पूर्ण;
+};
 
-अटल LIST_HEAD(dvfs_info_list);
+static LIST_HEAD(dvfs_info_list);
 
-अटल काष्ठा mtk_cpu_dvfs_info *mtk_cpu_dvfs_info_lookup(पूर्णांक cpu)
-अणु
-	काष्ठा mtk_cpu_dvfs_info *info;
+static struct mtk_cpu_dvfs_info *mtk_cpu_dvfs_info_lookup(int cpu)
+{
+	struct mtk_cpu_dvfs_info *info;
 
-	list_क्रम_each_entry(info, &dvfs_info_list, list_head) अणु
-		अगर (cpumask_test_cpu(cpu, &info->cpus))
-			वापस info;
-	पूर्ण
+	list_for_each_entry(info, &dvfs_info_list, list_head) {
+		if (cpumask_test_cpu(cpu, &info->cpus))
+			return info;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक mtk_cpufreq_voltage_tracking(काष्ठा mtk_cpu_dvfs_info *info,
-					पूर्णांक new_vproc)
-अणु
-	काष्ठा regulator *proc_reg = info->proc_reg;
-	काष्ठा regulator *sram_reg = info->sram_reg;
-	पूर्णांक old_vproc, old_vsram, new_vsram, vsram, vproc, ret;
+static int mtk_cpufreq_voltage_tracking(struct mtk_cpu_dvfs_info *info,
+					int new_vproc)
+{
+	struct regulator *proc_reg = info->proc_reg;
+	struct regulator *sram_reg = info->sram_reg;
+	int old_vproc, old_vsram, new_vsram, vsram, vproc, ret;
 
 	old_vproc = regulator_get_voltage(proc_reg);
-	अगर (old_vproc < 0) अणु
+	if (old_vproc < 0) {
 		pr_err("%s: invalid Vproc value: %d\n", __func__, old_vproc);
-		वापस old_vproc;
-	पूर्ण
+		return old_vproc;
+	}
 	/* Vsram should not exceed the maximum allowed voltage of SoC. */
 	new_vsram = min(new_vproc + MIN_VOLT_SHIFT, MAX_VOLT_LIMIT);
 
-	अगर (old_vproc < new_vproc) अणु
+	if (old_vproc < new_vproc) {
 		/*
 		 * When scaling up voltages, Vsram and Vproc scale up step
 		 * by step. At each step, set Vsram to (Vproc + 200mV) first,
 		 * then set Vproc to (Vsram - 100mV).
-		 * Keep करोing it until Vsram and Vproc hit target voltages.
+		 * Keep doing it until Vsram and Vproc hit target voltages.
 		 */
-		करो अणु
+		do {
 			old_vsram = regulator_get_voltage(sram_reg);
-			अगर (old_vsram < 0) अणु
+			if (old_vsram < 0) {
 				pr_err("%s: invalid Vsram value: %d\n",
 				       __func__, old_vsram);
-				वापस old_vsram;
-			पूर्ण
+				return old_vsram;
+			}
 			old_vproc = regulator_get_voltage(proc_reg);
-			अगर (old_vproc < 0) अणु
+			if (old_vproc < 0) {
 				pr_err("%s: invalid Vproc value: %d\n",
 				       __func__, old_vproc);
-				वापस old_vproc;
-			पूर्ण
+				return old_vproc;
+			}
 
 			vsram = min(new_vsram, old_vproc + MAX_VOLT_SHIFT);
 
-			अगर (vsram + VOLT_TOL >= MAX_VOLT_LIMIT) अणु
+			if (vsram + VOLT_TOL >= MAX_VOLT_LIMIT) {
 				vsram = MAX_VOLT_LIMIT;
 
 				/*
@@ -106,62 +105,62 @@
 				 */
 				ret = regulator_set_voltage(sram_reg, vsram,
 							    vsram);
-				अगर (ret)
+				if (ret)
 					ret = regulator_set_voltage(sram_reg,
 							vsram - VOLT_TOL,
 							vsram);
 
 				vproc = new_vproc;
-			पूर्ण अन्यथा अणु
+			} else {
 				ret = regulator_set_voltage(sram_reg, vsram,
 							    vsram + VOLT_TOL);
 
 				vproc = vsram - MIN_VOLT_SHIFT;
-			पूर्ण
-			अगर (ret)
-				वापस ret;
+			}
+			if (ret)
+				return ret;
 
 			ret = regulator_set_voltage(proc_reg, vproc,
 						    vproc + VOLT_TOL);
-			अगर (ret) अणु
+			if (ret) {
 				regulator_set_voltage(sram_reg, old_vsram,
 						      old_vsram);
-				वापस ret;
-			पूर्ण
-		पूर्ण जबतक (vproc < new_vproc || vsram < new_vsram);
-	पूर्ण अन्यथा अगर (old_vproc > new_vproc) अणु
+				return ret;
+			}
+		} while (vproc < new_vproc || vsram < new_vsram);
+	} else if (old_vproc > new_vproc) {
 		/*
-		 * When scaling करोwn voltages, Vsram and Vproc scale करोwn step
+		 * When scaling down voltages, Vsram and Vproc scale down step
 		 * by step. At each step, set Vproc to (Vsram - 200mV) first,
 		 * then set Vproc to (Vproc + 100mV).
-		 * Keep करोing it until Vsram and Vproc hit target voltages.
+		 * Keep doing it until Vsram and Vproc hit target voltages.
 		 */
-		करो अणु
+		do {
 			old_vproc = regulator_get_voltage(proc_reg);
-			अगर (old_vproc < 0) अणु
+			if (old_vproc < 0) {
 				pr_err("%s: invalid Vproc value: %d\n",
 				       __func__, old_vproc);
-				वापस old_vproc;
-			पूर्ण
+				return old_vproc;
+			}
 			old_vsram = regulator_get_voltage(sram_reg);
-			अगर (old_vsram < 0) अणु
+			if (old_vsram < 0) {
 				pr_err("%s: invalid Vsram value: %d\n",
 				       __func__, old_vsram);
-				वापस old_vsram;
-			पूर्ण
+				return old_vsram;
+			}
 
 			vproc = max(new_vproc, old_vsram - MAX_VOLT_SHIFT);
 			ret = regulator_set_voltage(proc_reg, vproc,
 						    vproc + VOLT_TOL);
-			अगर (ret)
-				वापस ret;
+			if (ret)
+				return ret;
 
-			अगर (vproc == new_vproc)
+			if (vproc == new_vproc)
 				vsram = new_vsram;
-			अन्यथा
+			else
 				vsram = max(new_vsram, vproc + MIN_VOLT_SHIFT);
 
-			अगर (vsram + VOLT_TOL >= MAX_VOLT_LIMIT) अणु
+			if (vsram + VOLT_TOL >= MAX_VOLT_LIMIT) {
 				vsram = MAX_VOLT_LIMIT;
 
 				/*
@@ -170,401 +169,401 @@
 				 */
 				ret = regulator_set_voltage(sram_reg, vsram,
 							    vsram);
-				अगर (ret)
+				if (ret)
 					ret = regulator_set_voltage(sram_reg,
 							vsram - VOLT_TOL,
 							vsram);
-			पूर्ण अन्यथा अणु
+			} else {
 				ret = regulator_set_voltage(sram_reg, vsram,
 							    vsram + VOLT_TOL);
-			पूर्ण
+			}
 
-			अगर (ret) अणु
+			if (ret) {
 				regulator_set_voltage(proc_reg, old_vproc,
 						      old_vproc);
-				वापस ret;
-			पूर्ण
-		पूर्ण जबतक (vproc > new_vproc + VOLT_TOL ||
+				return ret;
+			}
+		} while (vproc > new_vproc + VOLT_TOL ||
 			 vsram > new_vsram + VOLT_TOL);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mtk_cpufreq_set_voltage(काष्ठा mtk_cpu_dvfs_info *info, पूर्णांक vproc)
-अणु
-	अगर (info->need_voltage_tracking)
-		वापस mtk_cpufreq_voltage_tracking(info, vproc);
-	अन्यथा
-		वापस regulator_set_voltage(info->proc_reg, vproc,
+static int mtk_cpufreq_set_voltage(struct mtk_cpu_dvfs_info *info, int vproc)
+{
+	if (info->need_voltage_tracking)
+		return mtk_cpufreq_voltage_tracking(info, vproc);
+	else
+		return regulator_set_voltage(info->proc_reg, vproc,
 					     vproc + VOLT_TOL);
-पूर्ण
+}
 
-अटल पूर्णांक mtk_cpufreq_set_target(काष्ठा cpufreq_policy *policy,
-				  अचिन्हित पूर्णांक index)
-अणु
-	काष्ठा cpufreq_frequency_table *freq_table = policy->freq_table;
-	काष्ठा clk *cpu_clk = policy->clk;
-	काष्ठा clk *armpll = clk_get_parent(cpu_clk);
-	काष्ठा mtk_cpu_dvfs_info *info = policy->driver_data;
-	काष्ठा device *cpu_dev = info->cpu_dev;
-	काष्ठा dev_pm_opp *opp;
-	दीर्घ freq_hz, old_freq_hz;
-	पूर्णांक vproc, old_vproc, पूर्णांकer_vproc, target_vproc, ret;
+static int mtk_cpufreq_set_target(struct cpufreq_policy *policy,
+				  unsigned int index)
+{
+	struct cpufreq_frequency_table *freq_table = policy->freq_table;
+	struct clk *cpu_clk = policy->clk;
+	struct clk *armpll = clk_get_parent(cpu_clk);
+	struct mtk_cpu_dvfs_info *info = policy->driver_data;
+	struct device *cpu_dev = info->cpu_dev;
+	struct dev_pm_opp *opp;
+	long freq_hz, old_freq_hz;
+	int vproc, old_vproc, inter_vproc, target_vproc, ret;
 
-	पूर्णांकer_vproc = info->पूर्णांकermediate_voltage;
+	inter_vproc = info->intermediate_voltage;
 
 	old_freq_hz = clk_get_rate(cpu_clk);
 	old_vproc = regulator_get_voltage(info->proc_reg);
-	अगर (old_vproc < 0) अणु
+	if (old_vproc < 0) {
 		pr_err("%s: invalid Vproc value: %d\n", __func__, old_vproc);
-		वापस old_vproc;
-	पूर्ण
+		return old_vproc;
+	}
 
 	freq_hz = freq_table[index].frequency * 1000;
 
-	opp = dev_pm_opp_find_freq_उच्चमान(cpu_dev, &freq_hz);
-	अगर (IS_ERR(opp)) अणु
+	opp = dev_pm_opp_find_freq_ceil(cpu_dev, &freq_hz);
+	if (IS_ERR(opp)) {
 		pr_err("cpu%d: failed to find OPP for %ld\n",
 		       policy->cpu, freq_hz);
-		वापस PTR_ERR(opp);
-	पूर्ण
+		return PTR_ERR(opp);
+	}
 	vproc = dev_pm_opp_get_voltage(opp);
 	dev_pm_opp_put(opp);
 
 	/*
-	 * If the new voltage or the पूर्णांकermediate voltage is higher than the
+	 * If the new voltage or the intermediate voltage is higher than the
 	 * current voltage, scale up voltage first.
 	 */
-	target_vproc = (पूर्णांकer_vproc > vproc) ? पूर्णांकer_vproc : vproc;
-	अगर (old_vproc < target_vproc) अणु
+	target_vproc = (inter_vproc > vproc) ? inter_vproc : vproc;
+	if (old_vproc < target_vproc) {
 		ret = mtk_cpufreq_set_voltage(info, target_vproc);
-		अगर (ret) अणु
+		if (ret) {
 			pr_err("cpu%d: failed to scale up voltage!\n",
 			       policy->cpu);
 			mtk_cpufreq_set_voltage(info, old_vproc);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	/* Reparent the CPU घड़ी to पूर्णांकermediate घड़ी. */
-	ret = clk_set_parent(cpu_clk, info->पूर्णांकer_clk);
-	अगर (ret) अणु
+	/* Reparent the CPU clock to intermediate clock. */
+	ret = clk_set_parent(cpu_clk, info->inter_clk);
+	if (ret) {
 		pr_err("cpu%d: failed to re-parent cpu clock!\n",
 		       policy->cpu);
 		mtk_cpufreq_set_voltage(info, old_vproc);
 		WARN_ON(1);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* Set the original PLL to target rate. */
 	ret = clk_set_rate(armpll, freq_hz);
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("cpu%d: failed to scale cpu clock rate!\n",
 		       policy->cpu);
 		clk_set_parent(cpu_clk, armpll);
 		mtk_cpufreq_set_voltage(info, old_vproc);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* Set parent of CPU घड़ी back to the original PLL. */
+	/* Set parent of CPU clock back to the original PLL. */
 	ret = clk_set_parent(cpu_clk, armpll);
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("cpu%d: failed to re-parent cpu clock!\n",
 		       policy->cpu);
-		mtk_cpufreq_set_voltage(info, पूर्णांकer_vproc);
+		mtk_cpufreq_set_voltage(info, inter_vproc);
 		WARN_ON(1);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/*
-	 * If the new voltage is lower than the पूर्णांकermediate voltage or the
-	 * original voltage, scale करोwn to the new voltage.
+	 * If the new voltage is lower than the intermediate voltage or the
+	 * original voltage, scale down to the new voltage.
 	 */
-	अगर (vproc < पूर्णांकer_vproc || vproc < old_vproc) अणु
+	if (vproc < inter_vproc || vproc < old_vproc) {
 		ret = mtk_cpufreq_set_voltage(info, vproc);
-		अगर (ret) अणु
+		if (ret) {
 			pr_err("cpu%d: failed to scale down voltage!\n",
 			       policy->cpu);
-			clk_set_parent(cpu_clk, info->पूर्णांकer_clk);
+			clk_set_parent(cpu_clk, info->inter_clk);
 			clk_set_rate(armpll, old_freq_hz);
 			clk_set_parent(cpu_clk, armpll);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा DYNAMIC_POWER "dynamic-power-coefficient"
+#define DYNAMIC_POWER "dynamic-power-coefficient"
 
-अटल पूर्णांक mtk_cpu_dvfs_info_init(काष्ठा mtk_cpu_dvfs_info *info, पूर्णांक cpu)
-अणु
-	काष्ठा device *cpu_dev;
-	काष्ठा regulator *proc_reg = ERR_PTR(-ENODEV);
-	काष्ठा regulator *sram_reg = ERR_PTR(-ENODEV);
-	काष्ठा clk *cpu_clk = ERR_PTR(-ENODEV);
-	काष्ठा clk *पूर्णांकer_clk = ERR_PTR(-ENODEV);
-	काष्ठा dev_pm_opp *opp;
-	अचिन्हित दीर्घ rate;
-	पूर्णांक ret;
+static int mtk_cpu_dvfs_info_init(struct mtk_cpu_dvfs_info *info, int cpu)
+{
+	struct device *cpu_dev;
+	struct regulator *proc_reg = ERR_PTR(-ENODEV);
+	struct regulator *sram_reg = ERR_PTR(-ENODEV);
+	struct clk *cpu_clk = ERR_PTR(-ENODEV);
+	struct clk *inter_clk = ERR_PTR(-ENODEV);
+	struct dev_pm_opp *opp;
+	unsigned long rate;
+	int ret;
 
 	cpu_dev = get_cpu_device(cpu);
-	अगर (!cpu_dev) अणु
+	if (!cpu_dev) {
 		pr_err("failed to get cpu%d device\n", cpu);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	cpu_clk = clk_get(cpu_dev, "cpu");
-	अगर (IS_ERR(cpu_clk)) अणु
-		अगर (PTR_ERR(cpu_clk) == -EPROBE_DEFER)
+	if (IS_ERR(cpu_clk)) {
+		if (PTR_ERR(cpu_clk) == -EPROBE_DEFER)
 			pr_warn("cpu clk for cpu%d not ready, retry.\n", cpu);
-		अन्यथा
+		else
 			pr_err("failed to get cpu clk for cpu%d\n", cpu);
 
 		ret = PTR_ERR(cpu_clk);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	पूर्णांकer_clk = clk_get(cpu_dev, "intermediate");
-	अगर (IS_ERR(पूर्णांकer_clk)) अणु
-		अगर (PTR_ERR(पूर्णांकer_clk) == -EPROBE_DEFER)
+	inter_clk = clk_get(cpu_dev, "intermediate");
+	if (IS_ERR(inter_clk)) {
+		if (PTR_ERR(inter_clk) == -EPROBE_DEFER)
 			pr_warn("intermediate clk for cpu%d not ready, retry.\n",
 				cpu);
-		अन्यथा
+		else
 			pr_err("failed to get intermediate clk for cpu%d\n",
 			       cpu);
 
-		ret = PTR_ERR(पूर्णांकer_clk);
-		जाओ out_मुक्त_resources;
-	पूर्ण
+		ret = PTR_ERR(inter_clk);
+		goto out_free_resources;
+	}
 
 	proc_reg = regulator_get_optional(cpu_dev, "proc");
-	अगर (IS_ERR(proc_reg)) अणु
-		अगर (PTR_ERR(proc_reg) == -EPROBE_DEFER)
+	if (IS_ERR(proc_reg)) {
+		if (PTR_ERR(proc_reg) == -EPROBE_DEFER)
 			pr_warn("proc regulator for cpu%d not ready, retry.\n",
 				cpu);
-		अन्यथा
+		else
 			pr_err("failed to get proc regulator for cpu%d\n",
 			       cpu);
 
 		ret = PTR_ERR(proc_reg);
-		जाओ out_मुक्त_resources;
-	पूर्ण
+		goto out_free_resources;
+	}
 
-	/* Both presence and असलence of sram regulator are valid हालs. */
+	/* Both presence and absence of sram regulator are valid cases. */
 	sram_reg = regulator_get_exclusive(cpu_dev, "sram");
 
-	/* Get OPP-sharing inक्रमmation from "operating-points-v2" bindings */
+	/* Get OPP-sharing information from "operating-points-v2" bindings */
 	ret = dev_pm_opp_of_get_sharing_cpus(cpu_dev, &info->cpus);
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("failed to get OPP-sharing information for cpu%d\n",
 		       cpu);
-		जाओ out_मुक्त_resources;
-	पूर्ण
+		goto out_free_resources;
+	}
 
 	ret = dev_pm_opp_of_cpumask_add_table(&info->cpus);
-	अगर (ret) अणु
+	if (ret) {
 		pr_warn("no OPP table for cpu%d\n", cpu);
-		जाओ out_मुक्त_resources;
-	पूर्ण
+		goto out_free_resources;
+	}
 
-	/* Search a safe voltage क्रम पूर्णांकermediate frequency. */
-	rate = clk_get_rate(पूर्णांकer_clk);
-	opp = dev_pm_opp_find_freq_उच्चमान(cpu_dev, &rate);
-	अगर (IS_ERR(opp)) अणु
+	/* Search a safe voltage for intermediate frequency. */
+	rate = clk_get_rate(inter_clk);
+	opp = dev_pm_opp_find_freq_ceil(cpu_dev, &rate);
+	if (IS_ERR(opp)) {
 		pr_err("failed to get intermediate opp for cpu%d\n", cpu);
 		ret = PTR_ERR(opp);
-		जाओ out_मुक्त_opp_table;
-	पूर्ण
-	info->पूर्णांकermediate_voltage = dev_pm_opp_get_voltage(opp);
+		goto out_free_opp_table;
+	}
+	info->intermediate_voltage = dev_pm_opp_get_voltage(opp);
 	dev_pm_opp_put(opp);
 
 	info->cpu_dev = cpu_dev;
 	info->proc_reg = proc_reg;
-	info->sram_reg = IS_ERR(sram_reg) ? शून्य : sram_reg;
+	info->sram_reg = IS_ERR(sram_reg) ? NULL : sram_reg;
 	info->cpu_clk = cpu_clk;
-	info->पूर्णांकer_clk = पूर्णांकer_clk;
+	info->inter_clk = inter_clk;
 
 	/*
 	 * If SRAM regulator is present, software "voltage tracking" is needed
-	 * क्रम this CPU घातer करोमुख्य.
+	 * for this CPU power domain.
 	 */
 	info->need_voltage_tracking = !IS_ERR(sram_reg);
 
-	वापस 0;
+	return 0;
 
-out_मुक्त_opp_table:
-	dev_pm_opp_of_cpumask_हटाओ_table(&info->cpus);
+out_free_opp_table:
+	dev_pm_opp_of_cpumask_remove_table(&info->cpus);
 
-out_मुक्त_resources:
-	अगर (!IS_ERR(proc_reg))
+out_free_resources:
+	if (!IS_ERR(proc_reg))
 		regulator_put(proc_reg);
-	अगर (!IS_ERR(sram_reg))
+	if (!IS_ERR(sram_reg))
 		regulator_put(sram_reg);
-	अगर (!IS_ERR(cpu_clk))
+	if (!IS_ERR(cpu_clk))
 		clk_put(cpu_clk);
-	अगर (!IS_ERR(पूर्णांकer_clk))
-		clk_put(पूर्णांकer_clk);
+	if (!IS_ERR(inter_clk))
+		clk_put(inter_clk);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम mtk_cpu_dvfs_info_release(काष्ठा mtk_cpu_dvfs_info *info)
-अणु
-	अगर (!IS_ERR(info->proc_reg))
+static void mtk_cpu_dvfs_info_release(struct mtk_cpu_dvfs_info *info)
+{
+	if (!IS_ERR(info->proc_reg))
 		regulator_put(info->proc_reg);
-	अगर (!IS_ERR(info->sram_reg))
+	if (!IS_ERR(info->sram_reg))
 		regulator_put(info->sram_reg);
-	अगर (!IS_ERR(info->cpu_clk))
+	if (!IS_ERR(info->cpu_clk))
 		clk_put(info->cpu_clk);
-	अगर (!IS_ERR(info->पूर्णांकer_clk))
-		clk_put(info->पूर्णांकer_clk);
+	if (!IS_ERR(info->inter_clk))
+		clk_put(info->inter_clk);
 
-	dev_pm_opp_of_cpumask_हटाओ_table(&info->cpus);
-पूर्ण
+	dev_pm_opp_of_cpumask_remove_table(&info->cpus);
+}
 
-अटल पूर्णांक mtk_cpufreq_init(काष्ठा cpufreq_policy *policy)
-अणु
-	काष्ठा mtk_cpu_dvfs_info *info;
-	काष्ठा cpufreq_frequency_table *freq_table;
-	पूर्णांक ret;
+static int mtk_cpufreq_init(struct cpufreq_policy *policy)
+{
+	struct mtk_cpu_dvfs_info *info;
+	struct cpufreq_frequency_table *freq_table;
+	int ret;
 
 	info = mtk_cpu_dvfs_info_lookup(policy->cpu);
-	अगर (!info) अणु
+	if (!info) {
 		pr_err("dvfs info for cpu%d is not initialized.\n",
 		       policy->cpu);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ret = dev_pm_opp_init_cpufreq_table(info->cpu_dev, &freq_table);
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("failed to init cpufreq table for cpu%d: %d\n",
 		       policy->cpu, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	cpumask_copy(policy->cpus, &info->cpus);
 	policy->freq_table = freq_table;
 	policy->driver_data = info;
 	policy->clk = info->cpu_clk;
 
-	dev_pm_opp_of_रेजिस्टर_em(info->cpu_dev, policy->cpus);
+	dev_pm_opp_of_register_em(info->cpu_dev, policy->cpus);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mtk_cpufreq_निकास(काष्ठा cpufreq_policy *policy)
-अणु
-	काष्ठा mtk_cpu_dvfs_info *info = policy->driver_data;
+static int mtk_cpufreq_exit(struct cpufreq_policy *policy)
+{
+	struct mtk_cpu_dvfs_info *info = policy->driver_data;
 
-	dev_pm_opp_मुक्त_cpufreq_table(info->cpu_dev, &policy->freq_table);
+	dev_pm_opp_free_cpufreq_table(info->cpu_dev, &policy->freq_table);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा cpufreq_driver mtk_cpufreq_driver = अणु
+static struct cpufreq_driver mtk_cpufreq_driver = {
 	.flags = CPUFREQ_NEED_INITIAL_FREQ_CHECK |
 		 CPUFREQ_HAVE_GOVERNOR_PER_POLICY |
 		 CPUFREQ_IS_COOLING_DEV,
-	.verअगरy = cpufreq_generic_frequency_table_verअगरy,
+	.verify = cpufreq_generic_frequency_table_verify,
 	.target_index = mtk_cpufreq_set_target,
 	.get = cpufreq_generic_get,
 	.init = mtk_cpufreq_init,
-	.निकास = mtk_cpufreq_निकास,
+	.exit = mtk_cpufreq_exit,
 	.name = "mtk-cpufreq",
 	.attr = cpufreq_generic_attr,
-पूर्ण;
+};
 
-अटल पूर्णांक mtk_cpufreq_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा mtk_cpu_dvfs_info *info, *पंचांगp;
-	पूर्णांक cpu, ret;
+static int mtk_cpufreq_probe(struct platform_device *pdev)
+{
+	struct mtk_cpu_dvfs_info *info, *tmp;
+	int cpu, ret;
 
-	क्रम_each_possible_cpu(cpu) अणु
+	for_each_possible_cpu(cpu) {
 		info = mtk_cpu_dvfs_info_lookup(cpu);
-		अगर (info)
-			जारी;
+		if (info)
+			continue;
 
-		info = devm_kzalloc(&pdev->dev, माप(*info), GFP_KERNEL);
-		अगर (!info) अणु
+		info = devm_kzalloc(&pdev->dev, sizeof(*info), GFP_KERNEL);
+		if (!info) {
 			ret = -ENOMEM;
-			जाओ release_dvfs_info_list;
-		पूर्ण
+			goto release_dvfs_info_list;
+		}
 
 		ret = mtk_cpu_dvfs_info_init(info, cpu);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&pdev->dev,
 				"failed to initialize dvfs info for cpu%d\n",
 				cpu);
-			जाओ release_dvfs_info_list;
-		पूर्ण
+			goto release_dvfs_info_list;
+		}
 
 		list_add(&info->list_head, &dvfs_info_list);
-	पूर्ण
+	}
 
-	ret = cpufreq_रेजिस्टर_driver(&mtk_cpufreq_driver);
-	अगर (ret) अणु
+	ret = cpufreq_register_driver(&mtk_cpufreq_driver);
+	if (ret) {
 		dev_err(&pdev->dev, "failed to register mtk cpufreq driver\n");
-		जाओ release_dvfs_info_list;
-	पूर्ण
+		goto release_dvfs_info_list;
+	}
 
-	वापस 0;
+	return 0;
 
 release_dvfs_info_list:
-	list_क्रम_each_entry_safe(info, पंचांगp, &dvfs_info_list, list_head) अणु
+	list_for_each_entry_safe(info, tmp, &dvfs_info_list, list_head) {
 		mtk_cpu_dvfs_info_release(info);
 		list_del(&info->list_head);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा platक्रमm_driver mtk_cpufreq_platdrv = अणु
-	.driver = अणु
+static struct platform_driver mtk_cpufreq_platdrv = {
+	.driver = {
 		.name	= "mtk-cpufreq",
-	पूर्ण,
+	},
 	.probe		= mtk_cpufreq_probe,
-पूर्ण;
+};
 
 /* List of machines supported by this driver */
-अटल स्थिर काष्ठा of_device_id mtk_cpufreq_machines[] __initस्थिर = अणु
-	अणु .compatible = "mediatek,mt2701", पूर्ण,
-	अणु .compatible = "mediatek,mt2712", पूर्ण,
-	अणु .compatible = "mediatek,mt7622", पूर्ण,
-	अणु .compatible = "mediatek,mt7623", पूर्ण,
-	अणु .compatible = "mediatek,mt8167", पूर्ण,
-	अणु .compatible = "mediatek,mt817x", पूर्ण,
-	अणु .compatible = "mediatek,mt8173", पूर्ण,
-	अणु .compatible = "mediatek,mt8176", पूर्ण,
-	अणु .compatible = "mediatek,mt8183", पूर्ण,
-	अणु .compatible = "mediatek,mt8516", पूर्ण,
+static const struct of_device_id mtk_cpufreq_machines[] __initconst = {
+	{ .compatible = "mediatek,mt2701", },
+	{ .compatible = "mediatek,mt2712", },
+	{ .compatible = "mediatek,mt7622", },
+	{ .compatible = "mediatek,mt7623", },
+	{ .compatible = "mediatek,mt8167", },
+	{ .compatible = "mediatek,mt817x", },
+	{ .compatible = "mediatek,mt8173", },
+	{ .compatible = "mediatek,mt8176", },
+	{ .compatible = "mediatek,mt8183", },
+	{ .compatible = "mediatek,mt8516", },
 
-	अणु पूर्ण
-पूर्ण;
+	{ }
+};
 MODULE_DEVICE_TABLE(of, mtk_cpufreq_machines);
 
-अटल पूर्णांक __init mtk_cpufreq_driver_init(व्योम)
-अणु
-	काष्ठा device_node *np;
-	स्थिर काष्ठा of_device_id *match;
-	काष्ठा platक्रमm_device *pdev;
-	पूर्णांक err;
+static int __init mtk_cpufreq_driver_init(void)
+{
+	struct device_node *np;
+	const struct of_device_id *match;
+	struct platform_device *pdev;
+	int err;
 
 	np = of_find_node_by_path("/");
-	अगर (!np)
-		वापस -ENODEV;
+	if (!np)
+		return -ENODEV;
 
 	match = of_match_node(mtk_cpufreq_machines, np);
 	of_node_put(np);
-	अगर (!match) अणु
+	if (!match) {
 		pr_debug("Machine is not compatible with mtk-cpufreq\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	err = platक्रमm_driver_रेजिस्टर(&mtk_cpufreq_platdrv);
-	अगर (err)
-		वापस err;
+	err = platform_driver_register(&mtk_cpufreq_platdrv);
+	if (err)
+		return err;
 
 	/*
 	 * Since there's no place to hold device registration code and no
@@ -572,15 +571,15 @@ MODULE_DEVICE_TABLE(of, mtk_cpufreq_machines);
 	 * and the device registration codes are put here to handle defer
 	 * probing.
 	 */
-	pdev = platक्रमm_device_रेजिस्टर_simple("mtk-cpufreq", -1, शून्य, 0);
-	अगर (IS_ERR(pdev)) अणु
+	pdev = platform_device_register_simple("mtk-cpufreq", -1, NULL, 0);
+	if (IS_ERR(pdev)) {
 		pr_err("failed to register mtk-cpufreq platform device\n");
-		platक्रमm_driver_unरेजिस्टर(&mtk_cpufreq_platdrv);
-		वापस PTR_ERR(pdev);
-	पूर्ण
+		platform_driver_unregister(&mtk_cpufreq_platdrv);
+		return PTR_ERR(pdev);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 device_initcall(mtk_cpufreq_driver_init);
 
 MODULE_DESCRIPTION("MediaTek CPUFreq driver");

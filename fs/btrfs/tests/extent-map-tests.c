@@ -1,304 +1,303 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2017 Oracle.  All rights reserved.
  */
 
-#समावेश <linux/types.h>
-#समावेश "btrfs-tests.h"
-#समावेश "../ctree.h"
-#समावेश "../volumes.h"
-#समावेश "../disk-io.h"
-#समावेश "../block-group.h"
+#include <linux/types.h>
+#include "btrfs-tests.h"
+#include "../ctree.h"
+#include "../volumes.h"
+#include "../disk-io.h"
+#include "../block-group.h"
 
-अटल व्योम मुक्त_extent_map_tree(काष्ठा extent_map_tree *em_tree)
-अणु
-	काष्ठा extent_map *em;
-	काष्ठा rb_node *node;
+static void free_extent_map_tree(struct extent_map_tree *em_tree)
+{
+	struct extent_map *em;
+	struct rb_node *node;
 
-	जबतक (!RB_EMPTY_ROOT(&em_tree->map.rb_root)) अणु
+	while (!RB_EMPTY_ROOT(&em_tree->map.rb_root)) {
 		node = rb_first_cached(&em_tree->map);
-		em = rb_entry(node, काष्ठा extent_map, rb_node);
-		हटाओ_extent_mapping(em_tree, em);
+		em = rb_entry(node, struct extent_map, rb_node);
+		remove_extent_mapping(em_tree, em);
 
-#अगर_घोषित CONFIG_BTRFS_DEBUG
-		अगर (refcount_पढ़ो(&em->refs) != 1) अणु
+#ifdef CONFIG_BTRFS_DEBUG
+		if (refcount_read(&em->refs) != 1) {
 			test_err(
 "em leak: em (start 0x%llx len 0x%llx block_start 0x%llx block_len 0x%llx) refs %d",
 				 em->start, em->len, em->block_start,
-				 em->block_len, refcount_पढ़ो(&em->refs));
+				 em->block_len, refcount_read(&em->refs));
 
 			refcount_set(&em->refs, 1);
-		पूर्ण
-#पूर्ण_अगर
-		मुक्त_extent_map(em);
-	पूर्ण
-पूर्ण
+		}
+#endif
+		free_extent_map(em);
+	}
+}
 
 /*
  * Test scenario:
  *
- * Suppose that no extent map has been loaded पूर्णांकo memory yet, there is a file
- * extent [0, 16K), followed by another file extent [16K, 20K), two dio पढ़ोs
- * are entering btrfs_get_extent() concurrently, t1 is पढ़ोing [8K, 16K), t2 is
- * पढ़ोing [0, 8K)
+ * Suppose that no extent map has been loaded into memory yet, there is a file
+ * extent [0, 16K), followed by another file extent [16K, 20K), two dio reads
+ * are entering btrfs_get_extent() concurrently, t1 is reading [8K, 16K), t2 is
+ * reading [0, 8K)
  *
  *     t1                            t2
  *  btrfs_get_extent()              btrfs_get_extent()
  *    -> lookup_extent_mapping()      ->lookup_extent_mapping()
  *    -> add_extent_mapping(0, 16K)
- *    -> वापस em
+ *    -> return em
  *                                    ->add_extent_mapping(0, 16K)
  *                                    -> #handle -EEXIST
  */
-अटल पूर्णांक test_हाल_1(काष्ठा btrfs_fs_info *fs_info,
-		काष्ठा extent_map_tree *em_tree)
-अणु
-	काष्ठा extent_map *em;
+static int test_case_1(struct btrfs_fs_info *fs_info,
+		struct extent_map_tree *em_tree)
+{
+	struct extent_map *em;
 	u64 start = 0;
 	u64 len = SZ_8K;
-	पूर्णांक ret;
+	int ret;
 
 	em = alloc_extent_map();
-	अगर (!em) अणु
+	if (!em) {
 		test_std_err(TEST_ALLOC_EXTENT_MAP);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	/* Add [0, 16K) */
 	em->start = 0;
 	em->len = SZ_16K;
 	em->block_start = 0;
 	em->block_len = SZ_16K;
-	ग_लिखो_lock(&em_tree->lock);
+	write_lock(&em_tree->lock);
 	ret = add_extent_mapping(em_tree, em, 0);
-	ग_लिखो_unlock(&em_tree->lock);
-	अगर (ret < 0) अणु
+	write_unlock(&em_tree->lock);
+	if (ret < 0) {
 		test_err("cannot add extent range [0, 16K)");
-		जाओ out;
-	पूर्ण
-	मुक्त_extent_map(em);
+		goto out;
+	}
+	free_extent_map(em);
 
 	/* Add [16K, 20K) following [0, 16K)  */
 	em = alloc_extent_map();
-	अगर (!em) अणु
+	if (!em) {
 		test_std_err(TEST_ALLOC_EXTENT_MAP);
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	em->start = SZ_16K;
 	em->len = SZ_4K;
-	em->block_start = SZ_32K; /* aव्योम merging */
+	em->block_start = SZ_32K; /* avoid merging */
 	em->block_len = SZ_4K;
-	ग_लिखो_lock(&em_tree->lock);
+	write_lock(&em_tree->lock);
 	ret = add_extent_mapping(em_tree, em, 0);
-	ग_लिखो_unlock(&em_tree->lock);
-	अगर (ret < 0) अणु
+	write_unlock(&em_tree->lock);
+	if (ret < 0) {
 		test_err("cannot add extent range [16K, 20K)");
-		जाओ out;
-	पूर्ण
-	मुक्त_extent_map(em);
+		goto out;
+	}
+	free_extent_map(em);
 
 	em = alloc_extent_map();
-	अगर (!em) अणु
+	if (!em) {
 		test_std_err(TEST_ALLOC_EXTENT_MAP);
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Add [0, 8K), should वापस [0, 16K) instead. */
+	/* Add [0, 8K), should return [0, 16K) instead. */
 	em->start = start;
 	em->len = len;
 	em->block_start = start;
 	em->block_len = len;
-	ग_लिखो_lock(&em_tree->lock);
+	write_lock(&em_tree->lock);
 	ret = btrfs_add_extent_mapping(fs_info, em_tree, &em, em->start, em->len);
-	ग_लिखो_unlock(&em_tree->lock);
-	अगर (ret) अणु
+	write_unlock(&em_tree->lock);
+	if (ret) {
 		test_err("case1 [%llu %llu]: ret %d", start, start + len, ret);
-		जाओ out;
-	पूर्ण
-	अगर (em &&
+		goto out;
+	}
+	if (em &&
 	    (em->start != 0 || extent_map_end(em) != SZ_16K ||
-	     em->block_start != 0 || em->block_len != SZ_16K)) अणु
+	     em->block_start != 0 || em->block_len != SZ_16K)) {
 		test_err(
 "case1 [%llu %llu]: ret %d return a wrong em (start %llu len %llu block_start %llu block_len %llu",
 			 start, start + len, ret, em->start, em->len,
 			 em->block_start, em->block_len);
 		ret = -EINVAL;
-	पूर्ण
-	मुक्त_extent_map(em);
+	}
+	free_extent_map(em);
 out:
-	मुक्त_extent_map_tree(em_tree);
+	free_extent_map_tree(em_tree);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Test scenario:
  *
- * Reading the अंतरभूत ending up with EEXIST, ie. पढ़ो an अंतरभूत
- * extent and discard page cache and पढ़ो it again.
+ * Reading the inline ending up with EEXIST, ie. read an inline
+ * extent and discard page cache and read it again.
  */
-अटल पूर्णांक test_हाल_2(काष्ठा btrfs_fs_info *fs_info,
-		काष्ठा extent_map_tree *em_tree)
-अणु
-	काष्ठा extent_map *em;
-	पूर्णांक ret;
+static int test_case_2(struct btrfs_fs_info *fs_info,
+		struct extent_map_tree *em_tree)
+{
+	struct extent_map *em;
+	int ret;
 
 	em = alloc_extent_map();
-	अगर (!em) अणु
+	if (!em) {
 		test_std_err(TEST_ALLOC_EXTENT_MAP);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	/* Add [0, 1K) */
 	em->start = 0;
 	em->len = SZ_1K;
 	em->block_start = EXTENT_MAP_INLINE;
 	em->block_len = (u64)-1;
-	ग_लिखो_lock(&em_tree->lock);
+	write_lock(&em_tree->lock);
 	ret = add_extent_mapping(em_tree, em, 0);
-	ग_लिखो_unlock(&em_tree->lock);
-	अगर (ret < 0) अणु
+	write_unlock(&em_tree->lock);
+	if (ret < 0) {
 		test_err("cannot add extent range [0, 1K)");
-		जाओ out;
-	पूर्ण
-	मुक्त_extent_map(em);
+		goto out;
+	}
+	free_extent_map(em);
 
 	/* Add [4K, 8K) following [0, 1K)  */
 	em = alloc_extent_map();
-	अगर (!em) अणु
+	if (!em) {
 		test_std_err(TEST_ALLOC_EXTENT_MAP);
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	em->start = SZ_4K;
 	em->len = SZ_4K;
 	em->block_start = SZ_4K;
 	em->block_len = SZ_4K;
-	ग_लिखो_lock(&em_tree->lock);
+	write_lock(&em_tree->lock);
 	ret = add_extent_mapping(em_tree, em, 0);
-	ग_लिखो_unlock(&em_tree->lock);
-	अगर (ret < 0) अणु
+	write_unlock(&em_tree->lock);
+	if (ret < 0) {
 		test_err("cannot add extent range [4K, 8K)");
-		जाओ out;
-	पूर्ण
-	मुक्त_extent_map(em);
+		goto out;
+	}
+	free_extent_map(em);
 
 	em = alloc_extent_map();
-	अगर (!em) अणु
+	if (!em) {
 		test_std_err(TEST_ALLOC_EXTENT_MAP);
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* Add [0, 1K) */
 	em->start = 0;
 	em->len = SZ_1K;
 	em->block_start = EXTENT_MAP_INLINE;
 	em->block_len = (u64)-1;
-	ग_लिखो_lock(&em_tree->lock);
+	write_lock(&em_tree->lock);
 	ret = btrfs_add_extent_mapping(fs_info, em_tree, &em, em->start, em->len);
-	ग_लिखो_unlock(&em_tree->lock);
-	अगर (ret) अणु
+	write_unlock(&em_tree->lock);
+	if (ret) {
 		test_err("case2 [0 1K]: ret %d", ret);
-		जाओ out;
-	पूर्ण
-	अगर (em &&
+		goto out;
+	}
+	if (em &&
 	    (em->start != 0 || extent_map_end(em) != SZ_1K ||
-	     em->block_start != EXTENT_MAP_INLINE || em->block_len != (u64)-1)) अणु
+	     em->block_start != EXTENT_MAP_INLINE || em->block_len != (u64)-1)) {
 		test_err(
 "case2 [0 1K]: ret %d return a wrong em (start %llu len %llu block_start %llu block_len %llu",
 			 ret, em->start, em->len, em->block_start,
 			 em->block_len);
 		ret = -EINVAL;
-	पूर्ण
-	मुक्त_extent_map(em);
+	}
+	free_extent_map(em);
 out:
-	मुक्त_extent_map_tree(em_tree);
+	free_extent_map_tree(em_tree);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __test_हाल_3(काष्ठा btrfs_fs_info *fs_info,
-		काष्ठा extent_map_tree *em_tree, u64 start)
-अणु
-	काष्ठा extent_map *em;
+static int __test_case_3(struct btrfs_fs_info *fs_info,
+		struct extent_map_tree *em_tree, u64 start)
+{
+	struct extent_map *em;
 	u64 len = SZ_4K;
-	पूर्णांक ret;
+	int ret;
 
 	em = alloc_extent_map();
-	अगर (!em) अणु
+	if (!em) {
 		test_std_err(TEST_ALLOC_EXTENT_MAP);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	/* Add [4K, 8K) */
 	em->start = SZ_4K;
 	em->len = SZ_4K;
 	em->block_start = SZ_4K;
 	em->block_len = SZ_4K;
-	ग_लिखो_lock(&em_tree->lock);
+	write_lock(&em_tree->lock);
 	ret = add_extent_mapping(em_tree, em, 0);
-	ग_लिखो_unlock(&em_tree->lock);
-	अगर (ret < 0) अणु
+	write_unlock(&em_tree->lock);
+	if (ret < 0) {
 		test_err("cannot add extent range [4K, 8K)");
-		जाओ out;
-	पूर्ण
-	मुक्त_extent_map(em);
+		goto out;
+	}
+	free_extent_map(em);
 
 	em = alloc_extent_map();
-	अगर (!em) अणु
+	if (!em) {
 		test_std_err(TEST_ALLOC_EXTENT_MAP);
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* Add [0, 16K) */
 	em->start = 0;
 	em->len = SZ_16K;
 	em->block_start = 0;
 	em->block_len = SZ_16K;
-	ग_लिखो_lock(&em_tree->lock);
+	write_lock(&em_tree->lock);
 	ret = btrfs_add_extent_mapping(fs_info, em_tree, &em, start, len);
-	ग_लिखो_unlock(&em_tree->lock);
-	अगर (ret) अणु
+	write_unlock(&em_tree->lock);
+	if (ret) {
 		test_err("case3 [0x%llx 0x%llx): ret %d",
 			 start, start + len, ret);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	/*
 	 * Since bytes within em are contiguous, em->block_start is identical to
 	 * em->start.
 	 */
-	अगर (em &&
+	if (em &&
 	    (start < em->start || start + len > extent_map_end(em) ||
-	     em->start != em->block_start || em->len != em->block_len)) अणु
+	     em->start != em->block_start || em->len != em->block_len)) {
 		test_err(
 "case3 [0x%llx 0x%llx): ret %d em (start 0x%llx len 0x%llx block_start 0x%llx block_len 0x%llx)",
 			 start, start + len, ret, em->start, em->len,
 			 em->block_start, em->block_len);
 		ret = -EINVAL;
-	पूर्ण
-	मुक्त_extent_map(em);
+	}
+	free_extent_map(em);
 out:
-	मुक्त_extent_map_tree(em_tree);
+	free_extent_map_tree(em_tree);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Test scenario:
  *
- * Suppose that no extent map has been loaded पूर्णांकo memory yet.
+ * Suppose that no extent map has been loaded into memory yet.
  * There is a file extent [0, 16K), two jobs are running concurrently
- * against it, t1 is buffered writing to [4K, 8K) and t2 is करोing dio
- * पढ़ो from [0, 4K) or [8K, 12K) or [12K, 16K).
+ * against it, t1 is buffered writing to [4K, 8K) and t2 is doing dio
+ * read from [0, 4K) or [8K, 12K) or [12K, 16K).
  *
- * t1 goes ahead of t2 and adds em [4K, 8K) पूर्णांकo tree.
+ * t1 goes ahead of t2 and adds em [4K, 8K) into tree.
  *
  *         t1                       t2
  *  cow_file_range()	     btrfs_get_extent()
@@ -306,110 +305,110 @@ out:
  *   -> add_extent_mapping()
  *                            -> add_extent_mapping()
  */
-अटल पूर्णांक test_हाल_3(काष्ठा btrfs_fs_info *fs_info,
-		काष्ठा extent_map_tree *em_tree)
-अणु
-	पूर्णांक ret;
+static int test_case_3(struct btrfs_fs_info *fs_info,
+		struct extent_map_tree *em_tree)
+{
+	int ret;
 
-	ret = __test_हाल_3(fs_info, em_tree, 0);
-	अगर (ret)
-		वापस ret;
-	ret = __test_हाल_3(fs_info, em_tree, SZ_8K);
-	अगर (ret)
-		वापस ret;
-	ret = __test_हाल_3(fs_info, em_tree, (12 * SZ_1K));
+	ret = __test_case_3(fs_info, em_tree, 0);
+	if (ret)
+		return ret;
+	ret = __test_case_3(fs_info, em_tree, SZ_8K);
+	if (ret)
+		return ret;
+	ret = __test_case_3(fs_info, em_tree, (12 * SZ_1K));
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __test_हाल_4(काष्ठा btrfs_fs_info *fs_info,
-		काष्ठा extent_map_tree *em_tree, u64 start)
-अणु
-	काष्ठा extent_map *em;
+static int __test_case_4(struct btrfs_fs_info *fs_info,
+		struct extent_map_tree *em_tree, u64 start)
+{
+	struct extent_map *em;
 	u64 len = SZ_4K;
-	पूर्णांक ret;
+	int ret;
 
 	em = alloc_extent_map();
-	अगर (!em) अणु
+	if (!em) {
 		test_std_err(TEST_ALLOC_EXTENT_MAP);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	/* Add [0K, 8K) */
 	em->start = 0;
 	em->len = SZ_8K;
 	em->block_start = 0;
 	em->block_len = SZ_8K;
-	ग_लिखो_lock(&em_tree->lock);
+	write_lock(&em_tree->lock);
 	ret = add_extent_mapping(em_tree, em, 0);
-	ग_लिखो_unlock(&em_tree->lock);
-	अगर (ret < 0) अणु
+	write_unlock(&em_tree->lock);
+	if (ret < 0) {
 		test_err("cannot add extent range [0, 8K)");
-		जाओ out;
-	पूर्ण
-	मुक्त_extent_map(em);
+		goto out;
+	}
+	free_extent_map(em);
 
 	em = alloc_extent_map();
-	अगर (!em) अणु
+	if (!em) {
 		test_std_err(TEST_ALLOC_EXTENT_MAP);
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* Add [8K, 32K) */
 	em->start = SZ_8K;
 	em->len = 24 * SZ_1K;
-	em->block_start = SZ_16K; /* aव्योम merging */
+	em->block_start = SZ_16K; /* avoid merging */
 	em->block_len = 24 * SZ_1K;
-	ग_लिखो_lock(&em_tree->lock);
+	write_lock(&em_tree->lock);
 	ret = add_extent_mapping(em_tree, em, 0);
-	ग_लिखो_unlock(&em_tree->lock);
-	अगर (ret < 0) अणु
+	write_unlock(&em_tree->lock);
+	if (ret < 0) {
 		test_err("cannot add extent range [8K, 32K)");
-		जाओ out;
-	पूर्ण
-	मुक्त_extent_map(em);
+		goto out;
+	}
+	free_extent_map(em);
 
 	em = alloc_extent_map();
-	अगर (!em) अणु
+	if (!em) {
 		test_std_err(TEST_ALLOC_EXTENT_MAP);
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	/* Add [0K, 32K) */
 	em->start = 0;
 	em->len = SZ_32K;
 	em->block_start = 0;
 	em->block_len = SZ_32K;
-	ग_लिखो_lock(&em_tree->lock);
+	write_lock(&em_tree->lock);
 	ret = btrfs_add_extent_mapping(fs_info, em_tree, &em, start, len);
-	ग_लिखो_unlock(&em_tree->lock);
-	अगर (ret) अणु
+	write_unlock(&em_tree->lock);
+	if (ret) {
 		test_err("case4 [0x%llx 0x%llx): ret %d",
 			 start, len, ret);
-		जाओ out;
-	पूर्ण
-	अगर (em && (start < em->start || start + len > extent_map_end(em))) अणु
+		goto out;
+	}
+	if (em && (start < em->start || start + len > extent_map_end(em))) {
 		test_err(
 "case4 [0x%llx 0x%llx): ret %d, added wrong em (start 0x%llx len 0x%llx block_start 0x%llx block_len 0x%llx)",
 			 start, len, ret, em->start, em->len, em->block_start,
 			 em->block_len);
 		ret = -EINVAL;
-	पूर्ण
-	मुक्त_extent_map(em);
+	}
+	free_extent_map(em);
 out:
-	मुक्त_extent_map_tree(em_tree);
+	free_extent_map_tree(em_tree);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Test scenario:
  *
- * Suppose that no extent map has been loaded पूर्णांकo memory yet.
+ * Suppose that no extent map has been loaded into memory yet.
  * There is a file extent [0, 32K), two jobs are running concurrently
- * against it, t1 is करोing dio ग_लिखो to [8K, 32K) and t2 is करोing dio
- * पढ़ो from [0, 4K) or [4K, 8K).
+ * against it, t1 is doing dio write to [8K, 32K) and t2 is doing dio
+ * read from [0, 4K) or [4K, 8K).
  *
  * t1 goes ahead of t2 and splits em [0, 32K) to em [0K, 8K) and [8K 32K).
  *
@@ -428,20 +427,20 @@ out:
  *                                             # handle -EEXIST when adding
  *                                             # [0, 32K)
  */
-अटल पूर्णांक test_हाल_4(काष्ठा btrfs_fs_info *fs_info,
-		काष्ठा extent_map_tree *em_tree)
-अणु
-	पूर्णांक ret;
+static int test_case_4(struct btrfs_fs_info *fs_info,
+		struct extent_map_tree *em_tree)
+{
+	int ret;
 
-	ret = __test_हाल_4(fs_info, em_tree, 0);
-	अगर (ret)
-		वापस ret;
-	ret = __test_हाल_4(fs_info, em_tree, SZ_4K);
+	ret = __test_case_4(fs_info, em_tree, 0);
+	if (ret)
+		return ret;
+	ret = __test_case_4(fs_info, em_tree, SZ_4K);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-काष्ठा rmap_test_vector अणु
+struct rmap_test_vector {
 	u64 raid_type;
 	u64 physical_start;
 	u64 data_stripe_size;
@@ -452,29 +451,29 @@ out:
 	bool expected_mapped_addr;
 	/* Physical to logical addresses */
 	u64 mapped_logical[5];
-पूर्ण;
+};
 
-अटल पूर्णांक test_rmap_block(काष्ठा btrfs_fs_info *fs_info,
-			   काष्ठा rmap_test_vector *test)
-अणु
-	काष्ठा extent_map *em;
-	काष्ठा map_lookup *map = शून्य;
-	u64 *logical = शून्य;
-	पूर्णांक i, out_ndaddrs, out_stripe_len;
-	पूर्णांक ret;
+static int test_rmap_block(struct btrfs_fs_info *fs_info,
+			   struct rmap_test_vector *test)
+{
+	struct extent_map *em;
+	struct map_lookup *map = NULL;
+	u64 *logical = NULL;
+	int i, out_ndaddrs, out_stripe_len;
+	int ret;
 
 	em = alloc_extent_map();
-	अगर (!em) अणु
+	if (!em) {
 		test_std_err(TEST_ALLOC_EXTENT_MAP);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	map = kदो_स्मृति(map_lookup_size(test->num_stripes), GFP_KERNEL);
-	अगर (!map) अणु
-		kमुक्त(em);
+	map = kmalloc(map_lookup_size(test->num_stripes), GFP_KERNEL);
+	if (!map) {
+		kfree(em);
 		test_std_err(TEST_ALLOC_EXTENT_MAP);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	set_bit(EXTENT_FLAG_FS_MAPPING, &em->flags);
 	/* Start at 4GiB logical address */
@@ -488,77 +487,77 @@ out:
 	map->stripe_len = BTRFS_STRIPE_LEN;
 	map->type = test->raid_type;
 
-	क्रम (i = 0; i < map->num_stripes; i++) अणु
-		काष्ठा btrfs_device *dev = btrfs_alloc_dummy_device(fs_info);
+	for (i = 0; i < map->num_stripes; i++) {
+		struct btrfs_device *dev = btrfs_alloc_dummy_device(fs_info);
 
-		अगर (IS_ERR(dev)) अणु
+		if (IS_ERR(dev)) {
 			test_err("cannot allocate device");
 			ret = PTR_ERR(dev);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		map->stripes[i].dev = dev;
 		map->stripes[i].physical = test->data_stripe_phys_start[i];
-	पूर्ण
+	}
 
-	ग_लिखो_lock(&fs_info->mapping_tree.lock);
+	write_lock(&fs_info->mapping_tree.lock);
 	ret = add_extent_mapping(&fs_info->mapping_tree, em, 0);
-	ग_लिखो_unlock(&fs_info->mapping_tree.lock);
-	अगर (ret) अणु
+	write_unlock(&fs_info->mapping_tree.lock);
+	if (ret) {
 		test_err("error adding block group mapping to mapping tree");
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-	ret = btrfs_rmap_block(fs_info, em->start, शून्य, btrfs_sb_offset(1),
+	ret = btrfs_rmap_block(fs_info, em->start, NULL, btrfs_sb_offset(1),
 			       &logical, &out_ndaddrs, &out_stripe_len);
-	अगर (ret || (out_ndaddrs == 0 && test->expected_mapped_addr)) अणु
+	if (ret || (out_ndaddrs == 0 && test->expected_mapped_addr)) {
 		test_err("didn't rmap anything but expected %d",
 			 test->expected_mapped_addr);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (out_stripe_len != BTRFS_STRIPE_LEN) अणु
+	if (out_stripe_len != BTRFS_STRIPE_LEN) {
 		test_err("calculated stripe length doesn't match");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (out_ndaddrs != test->expected_mapped_addr) अणु
-		क्रम (i = 0; i < out_ndaddrs; i++)
+	if (out_ndaddrs != test->expected_mapped_addr) {
+		for (i = 0; i < out_ndaddrs; i++)
 			test_msg("mapped %llu", logical[i]);
 		test_err("unexpected number of mapped addresses: %d", out_ndaddrs);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	क्रम (i = 0; i < out_ndaddrs; i++) अणु
-		अगर (logical[i] != test->mapped_logical[i]) अणु
+	for (i = 0; i < out_ndaddrs; i++) {
+		if (logical[i] != test->mapped_logical[i]) {
 			test_err("unexpected logical address mapped");
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	ret = 0;
 out:
-	ग_लिखो_lock(&fs_info->mapping_tree.lock);
-	हटाओ_extent_mapping(&fs_info->mapping_tree, em);
-	ग_लिखो_unlock(&fs_info->mapping_tree.lock);
+	write_lock(&fs_info->mapping_tree.lock);
+	remove_extent_mapping(&fs_info->mapping_tree, em);
+	write_unlock(&fs_info->mapping_tree.lock);
 	/* For us */
-	मुक्त_extent_map(em);
-out_मुक्त:
+	free_extent_map(em);
+out_free:
 	/* For the tree */
-	मुक्त_extent_map(em);
-	kमुक्त(logical);
-	वापस ret;
-पूर्ण
+	free_extent_map(em);
+	kfree(logical);
+	return ret;
+}
 
-पूर्णांक btrfs_test_extent_map(व्योम)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = शून्य;
-	काष्ठा extent_map_tree *em_tree;
-	पूर्णांक ret = 0, i;
-	काष्ठा rmap_test_vector rmap_tests[] = अणु
-		अणु
+int btrfs_test_extent_map(void)
+{
+	struct btrfs_fs_info *fs_info = NULL;
+	struct extent_map_tree *em_tree;
+	int ret = 0, i;
+	struct rmap_test_vector rmap_tests[] = {
+		{
 			/*
 			 * Test a chunk with 2 data stripes one of which
-			 * पूर्णांकeresects the physical address of the super block
+			 * interesects the physical address of the super block
 			 * is correctly recognised.
 			 */
 			.raid_type = BTRFS_BLOCK_GROUP_RAID1,
@@ -567,11 +566,11 @@ out_मुक्त:
 			.num_data_stripes = 2,
 			.num_stripes = 2,
 			.data_stripe_phys_start =
-				अणुSZ_64M - SZ_4M, SZ_64M - SZ_4M + SZ_256Mपूर्ण,
+				{SZ_64M - SZ_4M, SZ_64M - SZ_4M + SZ_256M},
 			.expected_mapped_addr = true,
-			.mapped_logical= अणुSZ_4G + SZ_4Mपूर्ण
-		पूर्ण,
-		अणु
+			.mapped_logical= {SZ_4G + SZ_4M}
+		},
+		{
 			/*
 			 * Test that out-of-range physical addresses are
 			 * ignored
@@ -583,53 +582,53 @@ out_मुक्त:
 			.data_stripe_size = SZ_256M,
 			.num_data_stripes = 1,
 			.num_stripes = 1,
-			.data_stripe_phys_start = अणुSZ_256Mपूर्ण,
+			.data_stripe_phys_start = {SZ_256M},
 			.expected_mapped_addr = false,
-			.mapped_logical = अणु0पूर्ण
-		पूर्ण
-	पूर्ण;
+			.mapped_logical = {0}
+		}
+	};
 
 	test_msg("running extent_map tests");
 
 	/*
 	 * Note: the fs_info is not set up completely, we only need
-	 * fs_info::fsid क्रम the tracepoपूर्णांक.
+	 * fs_info::fsid for the tracepoint.
 	 */
 	fs_info = btrfs_alloc_dummy_fs_info(PAGE_SIZE, PAGE_SIZE);
-	अगर (!fs_info) अणु
+	if (!fs_info) {
 		test_std_err(TEST_ALLOC_FS_INFO);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	em_tree = kzalloc(माप(*em_tree), GFP_KERNEL);
-	अगर (!em_tree) अणु
+	em_tree = kzalloc(sizeof(*em_tree), GFP_KERNEL);
+	if (!em_tree) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	extent_map_tree_init(em_tree);
 
-	ret = test_हाल_1(fs_info, em_tree);
-	अगर (ret)
-		जाओ out;
-	ret = test_हाल_2(fs_info, em_tree);
-	अगर (ret)
-		जाओ out;
-	ret = test_हाल_3(fs_info, em_tree);
-	अगर (ret)
-		जाओ out;
-	ret = test_हाल_4(fs_info, em_tree);
+	ret = test_case_1(fs_info, em_tree);
+	if (ret)
+		goto out;
+	ret = test_case_2(fs_info, em_tree);
+	if (ret)
+		goto out;
+	ret = test_case_3(fs_info, em_tree);
+	if (ret)
+		goto out;
+	ret = test_case_4(fs_info, em_tree);
 
 	test_msg("running rmap tests");
-	क्रम (i = 0; i < ARRAY_SIZE(rmap_tests); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(rmap_tests); i++) {
 		ret = test_rmap_block(fs_info, &rmap_tests[i]);
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+		if (ret)
+			goto out;
+	}
 
 out:
-	kमुक्त(em_tree);
-	btrfs_मुक्त_dummy_fs_info(fs_info);
+	kfree(em_tree);
+	btrfs_free_dummy_fs_info(fs_info);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

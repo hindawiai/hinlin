@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Amlogic Secure Monitor driver
  *
@@ -7,91 +6,91 @@
  * Author: Carlo Caione <carlo@endlessm.com>
  */
 
-#घोषणा pr_fmt(fmt) "meson-sm: " fmt
+#define pr_fmt(fmt) "meson-sm: " fmt
 
-#समावेश <linux/arm-smccc.h>
-#समावेश <linux/bug.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/prपूर्णांकk.h>
-#समावेश <linux/types.h>
-#समावेश <linux/sizes.h>
- #समावेश <linux/slab.h>
+#include <linux/arm-smccc.h>
+#include <linux/bug.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
+#include <linux/printk.h>
+#include <linux/types.h>
+#include <linux/sizes.h>
+ #include <linux/slab.h>
 
-#समावेश <linux/firmware/meson/meson_sm.h>
+#include <linux/firmware/meson/meson_sm.h>
 
-काष्ठा meson_sm_cmd अणु
-	अचिन्हित पूर्णांक index;
+struct meson_sm_cmd {
+	unsigned int index;
 	u32 smc_id;
-पूर्ण;
-#घोषणा CMD(d, s) अणु .index = (d), .smc_id = (s), पूर्ण
+};
+#define CMD(d, s) { .index = (d), .smc_id = (s), }
 
-काष्ठा meson_sm_chip अणु
-	अचिन्हित पूर्णांक shmem_size;
+struct meson_sm_chip {
+	unsigned int shmem_size;
 	u32 cmd_shmem_in_base;
 	u32 cmd_shmem_out_base;
-	काष्ठा meson_sm_cmd cmd[];
-पूर्ण;
+	struct meson_sm_cmd cmd[];
+};
 
-अटल स्थिर काष्ठा meson_sm_chip gxbb_chip = अणु
+static const struct meson_sm_chip gxbb_chip = {
 	.shmem_size		= SZ_4K,
 	.cmd_shmem_in_base	= 0x82000020,
 	.cmd_shmem_out_base	= 0x82000021,
-	.cmd = अणु
+	.cmd = {
 		CMD(SM_EFUSE_READ,	0x82000030),
 		CMD(SM_EFUSE_WRITE,	0x82000031),
 		CMD(SM_EFUSE_USER_MAX,	0x82000033),
 		CMD(SM_GET_CHIP_ID,	0x82000044),
 		CMD(SM_A1_PWRC_SET,	0x82000093),
 		CMD(SM_A1_PWRC_GET,	0x82000095),
-		अणु /* sentinel */ पूर्ण,
-	पूर्ण,
-पूर्ण;
+		{ /* sentinel */ },
+	},
+};
 
-काष्ठा meson_sm_firmware अणु
-	स्थिर काष्ठा meson_sm_chip *chip;
-	व्योम __iomem *sm_shmem_in_base;
-	व्योम __iomem *sm_shmem_out_base;
-पूर्ण;
+struct meson_sm_firmware {
+	const struct meson_sm_chip *chip;
+	void __iomem *sm_shmem_in_base;
+	void __iomem *sm_shmem_out_base;
+};
 
-अटल u32 meson_sm_get_cmd(स्थिर काष्ठा meson_sm_chip *chip,
-			    अचिन्हित पूर्णांक cmd_index)
-अणु
-	स्थिर काष्ठा meson_sm_cmd *cmd = chip->cmd;
+static u32 meson_sm_get_cmd(const struct meson_sm_chip *chip,
+			    unsigned int cmd_index)
+{
+	const struct meson_sm_cmd *cmd = chip->cmd;
 
-	जबतक (cmd->smc_id && cmd->index != cmd_index)
+	while (cmd->smc_id && cmd->index != cmd_index)
 		cmd++;
 
-	वापस cmd->smc_id;
-पूर्ण
+	return cmd->smc_id;
+}
 
-अटल u32 __meson_sm_call(u32 cmd, u32 arg0, u32 arg1, u32 arg2,
+static u32 __meson_sm_call(u32 cmd, u32 arg0, u32 arg1, u32 arg2,
 			   u32 arg3, u32 arg4)
-अणु
-	काष्ठा arm_smccc_res res;
+{
+	struct arm_smccc_res res;
 
 	arm_smccc_smc(cmd, arg0, arg1, arg2, arg3, arg4, 0, 0, &res);
-	वापस res.a0;
-पूर्ण
+	return res.a0;
+}
 
-अटल व्योम __iomem *meson_sm_map_shmem(u32 cmd_shmem, अचिन्हित पूर्णांक size)
-अणु
+static void __iomem *meson_sm_map_shmem(u32 cmd_shmem, unsigned int size)
+{
 	u32 sm_phy_base;
 
 	sm_phy_base = __meson_sm_call(cmd_shmem, 0, 0, 0, 0, 0);
-	अगर (!sm_phy_base)
-		वापस 0;
+	if (!sm_phy_base)
+		return 0;
 
-	वापस ioremap_cache(sm_phy_base, size);
-पूर्ण
+	return ioremap_cache(sm_phy_base, size);
+}
 
 /**
  * meson_sm_call - generic SMC32 call to the secure-monitor
  *
- * @fw:		Poपूर्णांकer to secure-monitor firmware
+ * @fw:		Pointer to secure-monitor firmware
  * @cmd_index:	Index of the SMC32 function ID
  * @ret:	Returned value
  * @arg0:	SMC32 Argument 0
@@ -102,31 +101,31 @@
  *
  * Return:	0 on success, a negative value on error
  */
-पूर्णांक meson_sm_call(काष्ठा meson_sm_firmware *fw, अचिन्हित पूर्णांक cmd_index,
+int meson_sm_call(struct meson_sm_firmware *fw, unsigned int cmd_index,
 		  u32 *ret, u32 arg0, u32 arg1, u32 arg2, u32 arg3, u32 arg4)
-अणु
+{
 	u32 cmd, lret;
 
-	अगर (!fw->chip)
-		वापस -ENOENT;
+	if (!fw->chip)
+		return -ENOENT;
 
 	cmd = meson_sm_get_cmd(fw->chip, cmd_index);
-	अगर (!cmd)
-		वापस -EINVAL;
+	if (!cmd)
+		return -EINVAL;
 
 	lret = __meson_sm_call(cmd, arg0, arg1, arg2, arg3, arg4);
 
-	अगर (ret)
+	if (ret)
 		*ret = lret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(meson_sm_call);
 
 /**
- * meson_sm_call_पढ़ो - retrieve data from secure-monitor
+ * meson_sm_call_read - retrieve data from secure-monitor
  *
- * @fw:		Poपूर्णांकer to secure-monitor firmware
+ * @fw:		Pointer to secure-monitor firmware
  * @buffer:	Buffer to store the retrieved data
  * @bsize:	Size of the buffer
  * @cmd_index:	Index of the SMC32 function ID
@@ -136,48 +135,48 @@ EXPORT_SYMBOL(meson_sm_call);
  * @arg3:	SMC32 Argument 3
  * @arg4:	SMC32 Argument 4
  *
- * Return:	size of पढ़ो data on success, a negative value on error
- *		When 0 is वापसed there is no guarantee about the amount of
- *		data पढ़ो and bsize bytes are copied in buffer.
+ * Return:	size of read data on success, a negative value on error
+ *		When 0 is returned there is no guarantee about the amount of
+ *		data read and bsize bytes are copied in buffer.
  */
-पूर्णांक meson_sm_call_पढ़ो(काष्ठा meson_sm_firmware *fw, व्योम *buffer,
-		       अचिन्हित पूर्णांक bsize, अचिन्हित पूर्णांक cmd_index, u32 arg0,
+int meson_sm_call_read(struct meson_sm_firmware *fw, void *buffer,
+		       unsigned int bsize, unsigned int cmd_index, u32 arg0,
 		       u32 arg1, u32 arg2, u32 arg3, u32 arg4)
-अणु
+{
 	u32 size;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!fw->chip)
-		वापस -ENOENT;
+	if (!fw->chip)
+		return -ENOENT;
 
-	अगर (!fw->chip->cmd_shmem_out_base)
-		वापस -EINVAL;
+	if (!fw->chip->cmd_shmem_out_base)
+		return -EINVAL;
 
-	अगर (bsize > fw->chip->shmem_size)
-		वापस -EINVAL;
+	if (bsize > fw->chip->shmem_size)
+		return -EINVAL;
 
-	अगर (meson_sm_call(fw, cmd_index, &size, arg0, arg1, arg2, arg3, arg4) < 0)
-		वापस -EINVAL;
+	if (meson_sm_call(fw, cmd_index, &size, arg0, arg1, arg2, arg3, arg4) < 0)
+		return -EINVAL;
 
-	अगर (size > bsize)
-		वापस -EINVAL;
+	if (size > bsize)
+		return -EINVAL;
 
 	ret = size;
 
-	अगर (!size)
+	if (!size)
 		size = bsize;
 
-	अगर (buffer)
-		स_नकल(buffer, fw->sm_shmem_out_base, size);
+	if (buffer)
+		memcpy(buffer, fw->sm_shmem_out_base, size);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(meson_sm_call_पढ़ो);
+	return ret;
+}
+EXPORT_SYMBOL(meson_sm_call_read);
 
 /**
- * meson_sm_call_ग_लिखो - send data to secure-monitor
+ * meson_sm_call_write - send data to secure-monitor
  *
- * @fw:		Poपूर्णांकer to secure-monitor firmware
+ * @fw:		Pointer to secure-monitor firmware
  * @buffer:	Buffer containing data to send
  * @size:	Size of the data to send
  * @cmd_index:	Index of the SMC32 function ID
@@ -189,147 +188,147 @@ EXPORT_SYMBOL(meson_sm_call_पढ़ो);
  *
  * Return:	size of sent data on success, a negative value on error
  */
-पूर्णांक meson_sm_call_ग_लिखो(काष्ठा meson_sm_firmware *fw, व्योम *buffer,
-			अचिन्हित पूर्णांक size, अचिन्हित पूर्णांक cmd_index, u32 arg0,
+int meson_sm_call_write(struct meson_sm_firmware *fw, void *buffer,
+			unsigned int size, unsigned int cmd_index, u32 arg0,
 			u32 arg1, u32 arg2, u32 arg3, u32 arg4)
-अणु
+{
 	u32 written;
 
-	अगर (!fw->chip)
-		वापस -ENOENT;
+	if (!fw->chip)
+		return -ENOENT;
 
-	अगर (size > fw->chip->shmem_size)
-		वापस -EINVAL;
+	if (size > fw->chip->shmem_size)
+		return -EINVAL;
 
-	अगर (!fw->chip->cmd_shmem_in_base)
-		वापस -EINVAL;
+	if (!fw->chip->cmd_shmem_in_base)
+		return -EINVAL;
 
-	स_नकल(fw->sm_shmem_in_base, buffer, size);
+	memcpy(fw->sm_shmem_in_base, buffer, size);
 
-	अगर (meson_sm_call(fw, cmd_index, &written, arg0, arg1, arg2, arg3, arg4) < 0)
-		वापस -EINVAL;
+	if (meson_sm_call(fw, cmd_index, &written, arg0, arg1, arg2, arg3, arg4) < 0)
+		return -EINVAL;
 
-	अगर (!written)
-		वापस -EINVAL;
+	if (!written)
+		return -EINVAL;
 
-	वापस written;
-पूर्ण
-EXPORT_SYMBOL(meson_sm_call_ग_लिखो);
+	return written;
+}
+EXPORT_SYMBOL(meson_sm_call_write);
 
 /**
- * meson_sm_get - get poपूर्णांकer to meson_sm_firmware काष्ठाure.
+ * meson_sm_get - get pointer to meson_sm_firmware structure.
  *
- * @sm_node:		Poपूर्णांकer to the secure-monitor Device Tree node.
+ * @sm_node:		Pointer to the secure-monitor Device Tree node.
  *
- * Return:		शून्य is the secure-monitor device is not पढ़ोy.
+ * Return:		NULL is the secure-monitor device is not ready.
  */
-काष्ठा meson_sm_firmware *meson_sm_get(काष्ठा device_node *sm_node)
-अणु
-	काष्ठा platक्रमm_device *pdev = of_find_device_by_node(sm_node);
+struct meson_sm_firmware *meson_sm_get(struct device_node *sm_node)
+{
+	struct platform_device *pdev = of_find_device_by_node(sm_node);
 
-	अगर (!pdev)
-		वापस शून्य;
+	if (!pdev)
+		return NULL;
 
-	वापस platक्रमm_get_drvdata(pdev);
-पूर्ण
+	return platform_get_drvdata(pdev);
+}
 EXPORT_SYMBOL_GPL(meson_sm_get);
 
-#घोषणा SM_CHIP_ID_LENGTH	119
-#घोषणा SM_CHIP_ID_OFFSET	4
-#घोषणा SM_CHIP_ID_SIZE		12
+#define SM_CHIP_ID_LENGTH	119
+#define SM_CHIP_ID_OFFSET	4
+#define SM_CHIP_ID_SIZE		12
 
-अटल sमाप_प्रकार serial_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			 अक्षर *buf)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	काष्ठा meson_sm_firmware *fw;
-	uपूर्णांक8_t *id_buf;
-	पूर्णांक ret;
+static ssize_t serial_show(struct device *dev, struct device_attribute *attr,
+			 char *buf)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct meson_sm_firmware *fw;
+	uint8_t *id_buf;
+	int ret;
 
-	fw = platक्रमm_get_drvdata(pdev);
+	fw = platform_get_drvdata(pdev);
 
-	id_buf = kदो_स्मृति(SM_CHIP_ID_LENGTH, GFP_KERNEL);
-	अगर (!id_buf)
-		वापस -ENOMEM;
+	id_buf = kmalloc(SM_CHIP_ID_LENGTH, GFP_KERNEL);
+	if (!id_buf)
+		return -ENOMEM;
 
-	ret = meson_sm_call_पढ़ो(fw, id_buf, SM_CHIP_ID_LENGTH, SM_GET_CHIP_ID,
+	ret = meson_sm_call_read(fw, id_buf, SM_CHIP_ID_LENGTH, SM_GET_CHIP_ID,
 				 0, 0, 0, 0, 0);
-	अगर (ret < 0) अणु
-		kमुक्त(id_buf);
-		वापस ret;
-	पूर्ण
+	if (ret < 0) {
+		kfree(id_buf);
+		return ret;
+	}
 
-	ret = प्र_लिखो(buf, "%12phN\n", &id_buf[SM_CHIP_ID_OFFSET]);
+	ret = sprintf(buf, "%12phN\n", &id_buf[SM_CHIP_ID_OFFSET]);
 
-	kमुक्त(id_buf);
+	kfree(id_buf);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल DEVICE_ATTR_RO(serial);
+static DEVICE_ATTR_RO(serial);
 
-अटल काष्ठा attribute *meson_sm_sysfs_attributes[] = अणु
+static struct attribute *meson_sm_sysfs_attributes[] = {
 	&dev_attr_serial.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group meson_sm_sysfs_attr_group = अणु
+static const struct attribute_group meson_sm_sysfs_attr_group = {
 	.attrs = meson_sm_sysfs_attributes,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id meson_sm_ids[] = अणु
-	अणु .compatible = "amlogic,meson-gxbb-sm", .data = &gxbb_chip पूर्ण,
-	अणु /* sentinel */ पूर्ण,
-पूर्ण;
+static const struct of_device_id meson_sm_ids[] = {
+	{ .compatible = "amlogic,meson-gxbb-sm", .data = &gxbb_chip },
+	{ /* sentinel */ },
+};
 
-अटल पूर्णांक __init meson_sm_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	स्थिर काष्ठा meson_sm_chip *chip;
-	काष्ठा meson_sm_firmware *fw;
+static int __init meson_sm_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	const struct meson_sm_chip *chip;
+	struct meson_sm_firmware *fw;
 
-	fw = devm_kzalloc(dev, माप(*fw), GFP_KERNEL);
-	अगर (!fw)
-		वापस -ENOMEM;
+	fw = devm_kzalloc(dev, sizeof(*fw), GFP_KERNEL);
+	if (!fw)
+		return -ENOMEM;
 
 	chip = of_match_device(meson_sm_ids, dev)->data;
 
-	अगर (chip->cmd_shmem_in_base) अणु
+	if (chip->cmd_shmem_in_base) {
 		fw->sm_shmem_in_base = meson_sm_map_shmem(chip->cmd_shmem_in_base,
 							  chip->shmem_size);
-		अगर (WARN_ON(!fw->sm_shmem_in_base))
-			जाओ out;
-	पूर्ण
+		if (WARN_ON(!fw->sm_shmem_in_base))
+			goto out;
+	}
 
-	अगर (chip->cmd_shmem_out_base) अणु
+	if (chip->cmd_shmem_out_base) {
 		fw->sm_shmem_out_base = meson_sm_map_shmem(chip->cmd_shmem_out_base,
 							   chip->shmem_size);
-		अगर (WARN_ON(!fw->sm_shmem_out_base))
-			जाओ out_in_base;
-	पूर्ण
+		if (WARN_ON(!fw->sm_shmem_out_base))
+			goto out_in_base;
+	}
 
 	fw->chip = chip;
 
-	platक्रमm_set_drvdata(pdev, fw);
+	platform_set_drvdata(pdev, fw);
 
 	pr_info("secure-monitor enabled\n");
 
-	अगर (sysfs_create_group(&pdev->dev.kobj, &meson_sm_sysfs_attr_group))
-		जाओ out_in_base;
+	if (sysfs_create_group(&pdev->dev.kobj, &meson_sm_sysfs_attr_group))
+		goto out_in_base;
 
-	वापस 0;
+	return 0;
 
 out_in_base:
 	iounmap(fw->sm_shmem_in_base);
 out:
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल काष्ठा platक्रमm_driver meson_sm_driver = अणु
-	.driver = अणु
+static struct platform_driver meson_sm_driver = {
+	.driver = {
 		.name = "meson-sm",
 		.of_match_table = of_match_ptr(meson_sm_ids),
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver_probe(meson_sm_driver, meson_sm_probe);
+	},
+};
+module_platform_driver_probe(meson_sm_driver, meson_sm_probe);
 MODULE_LICENSE("GPL v2");

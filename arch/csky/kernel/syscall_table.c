@@ -1,15 +1,14 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-// Copyright (C) 2018 Hangzhou C-SKY Microप्रणालीs co.,ltd.
+// SPDX-License-Identifier: GPL-2.0
+// Copyright (C) 2018 Hangzhou C-SKY Microsystems co.,ltd.
 
-#समावेश <linux/syscalls.h>
-#समावेश <यंत्र/syscalls.h>
+#include <linux/syscalls.h>
+#include <asm/syscalls.h>
 
-#अघोषित __SYSCALL
-#घोषणा __SYSCALL(nr, call)[nr] = (call),
+#undef __SYSCALL
+#define __SYSCALL(nr, call)[nr] = (call),
 
-#घोषणा sys_fadvise64_64 sys_csky_fadvise64_64
-व्योम * स्थिर sys_call_table[__NR_syscalls] __page_aligned_data = अणु
+#define sys_fadvise64_64 sys_csky_fadvise64_64
+void * const sys_call_table[__NR_syscalls] __page_aligned_data = {
 	[0 ... __NR_syscalls - 1] = sys_ni_syscall,
-#समावेश <यंत्र/unistd.h>
-पूर्ण;
+#include <asm/unistd.h>
+};

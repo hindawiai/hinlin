@@ -1,11 +1,10 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: MIT
+// SPDX-License-Identifier: MIT
 /* Copyright Red Hat Inc 2010.
  * Author : Dave Airlie <airlied@redhat.com>
  */
 
-#समावेश <drm/radeon_drm.h>
-#समावेश "radeon.h"
+#include <drm/radeon_drm.h>
+#include "radeon.h"
 
-#घोषणा CREATE_TRACE_POINTS
-#समावेश "radeon_trace.h"
+#define CREATE_TRACE_POINTS
+#include "radeon_trace.h"

@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *
- *  hda_पूर्णांकel.c - Implementation of primary alsa driver code base
- *                क्रम Intel HD Audio.
+ *  hda_intel.c - Implementation of primary alsa driver code base
+ *                for Intel HD Audio.
  *
  *  Copyright(c) 2004 Intel Corporation. All rights reserved.
  *
@@ -12,55 +11,55 @@
  *
  *  CONTACTS:
  *
- *  Matt Jared		matt.jared@पूर्णांकel.com
- *  Andy Kopp		andy.kopp@पूर्णांकel.com
- *  Dan Kogan		dan.d.kogan@पूर्णांकel.com
+ *  Matt Jared		matt.jared@intel.com
+ *  Andy Kopp		andy.kopp@intel.com
+ *  Dan Kogan		dan.d.kogan@intel.com
  *
  *  CHANGES:
  *
- *  2004.12.01	Major reग_लिखो by tiwai, merged the work of pshou
+ *  2004.12.01	Major rewrite by tiwai, merged the work of pshou
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/घड़ीsource.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/completion.h>
-#समावेश <linux/acpi.h>
-#समावेश <linux/pgtable.h>
+#include <linux/delay.h>
+#include <linux/interrupt.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/dma-mapping.h>
+#include <linux/moduleparam.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/pci.h>
+#include <linux/mutex.h>
+#include <linux/io.h>
+#include <linux/pm_runtime.h>
+#include <linux/clocksource.h>
+#include <linux/time.h>
+#include <linux/completion.h>
+#include <linux/acpi.h>
+#include <linux/pgtable.h>
 
-#अगर_घोषित CONFIG_X86
-/* क्रम snoop control */
-#समावेश <यंत्र/set_memory.h>
-#समावेश <यंत्र/cpufeature.h>
-#पूर्ण_अगर
-#समावेश <sound/core.h>
-#समावेश <sound/initval.h>
-#समावेश <sound/hdaudपन.स>
-#समावेश <sound/hda_i915.h>
-#समावेश <sound/पूर्णांकel-dsp-config.h>
-#समावेश <linux/vgaarb.h>
-#समावेश <linux/vga_चयनeroo.h>
-#समावेश <linux/firmware.h>
-#समावेश <sound/hda_codec.h>
-#समावेश "hda_controller.h"
-#समावेश "hda_intel.h"
+#ifdef CONFIG_X86
+/* for snoop control */
+#include <asm/set_memory.h>
+#include <asm/cpufeature.h>
+#endif
+#include <sound/core.h>
+#include <sound/initval.h>
+#include <sound/hdaudio.h>
+#include <sound/hda_i915.h>
+#include <sound/intel-dsp-config.h>
+#include <linux/vgaarb.h>
+#include <linux/vga_switcheroo.h>
+#include <linux/firmware.h>
+#include <sound/hda_codec.h>
+#include "hda_controller.h"
+#include "hda_intel.h"
 
-#घोषणा CREATE_TRACE_POINTS
-#समावेश "hda_intel_trace.h"
+#define CREATE_TRACE_POINTS
+#include "hda_intel_trace.h"
 
 /* position fix mode */
-क्रमागत अणु
+enum {
 	POS_FIX_AUTO,
 	POS_FIX_LPIB,
 	POS_FIX_POSBUF,
@@ -68,161 +67,161 @@
 	POS_FIX_COMBO,
 	POS_FIX_SKL,
 	POS_FIX_FIFO,
-पूर्ण;
+};
 
-/* Defines क्रम ATI HD Audio support in SB450 south bridge */
-#घोषणा ATI_SB450_HDAUDIO_MISC_CNTR2_ADDR   0x42
-#घोषणा ATI_SB450_HDAUDIO_ENABLE_SNOOP      0x02
+/* Defines for ATI HD Audio support in SB450 south bridge */
+#define ATI_SB450_HDAUDIO_MISC_CNTR2_ADDR   0x42
+#define ATI_SB450_HDAUDIO_ENABLE_SNOOP      0x02
 
-/* Defines क्रम Nvidia HDA support */
-#घोषणा NVIDIA_HDA_TRANSREG_ADDR      0x4e
-#घोषणा NVIDIA_HDA_ENABLE_COHBITS     0x0f
-#घोषणा NVIDIA_HDA_ISTRM_COH          0x4d
-#घोषणा NVIDIA_HDA_OSTRM_COH          0x4c
-#घोषणा NVIDIA_HDA_ENABLE_COHBIT      0x01
+/* Defines for Nvidia HDA support */
+#define NVIDIA_HDA_TRANSREG_ADDR      0x4e
+#define NVIDIA_HDA_ENABLE_COHBITS     0x0f
+#define NVIDIA_HDA_ISTRM_COH          0x4d
+#define NVIDIA_HDA_OSTRM_COH          0x4c
+#define NVIDIA_HDA_ENABLE_COHBIT      0x01
 
-/* Defines क्रम Intel SCH HDA snoop control */
-#घोषणा INTEL_HDA_CGCTL	 0x48
-#घोषणा INTEL_HDA_CGCTL_MISCBDCGE        (0x1 << 6)
-#घोषणा INTEL_SCH_HDA_DEVC      0x78
-#घोषणा INTEL_SCH_HDA_DEVC_NOSNOOP       (0x1<<11)
+/* Defines for Intel SCH HDA snoop control */
+#define INTEL_HDA_CGCTL	 0x48
+#define INTEL_HDA_CGCTL_MISCBDCGE        (0x1 << 6)
+#define INTEL_SCH_HDA_DEVC      0x78
+#define INTEL_SCH_HDA_DEVC_NOSNOOP       (0x1<<11)
 
 /* Define VIA HD Audio Device ID*/
-#घोषणा VIA_HDAC_DEVICE_ID		0x3288
+#define VIA_HDAC_DEVICE_ID		0x3288
 
 /* max number of SDs */
 /* ICH, ATI and VIA have 4 playback and 4 capture */
-#घोषणा ICH6_NUM_CAPTURE	4
-#घोषणा ICH6_NUM_PLAYBACK	4
+#define ICH6_NUM_CAPTURE	4
+#define ICH6_NUM_PLAYBACK	4
 
 /* ULI has 6 playback and 5 capture */
-#घोषणा ULI_NUM_CAPTURE		5
-#घोषणा ULI_NUM_PLAYBACK	6
+#define ULI_NUM_CAPTURE		5
+#define ULI_NUM_PLAYBACK	6
 
 /* ATI HDMI may have up to 8 playbacks and 0 capture */
-#घोषणा ATIHDMI_NUM_CAPTURE	0
-#घोषणा ATIHDMI_NUM_PLAYBACK	8
+#define ATIHDMI_NUM_CAPTURE	0
+#define ATIHDMI_NUM_PLAYBACK	8
 
 /* TERA has 4 playback and 3 capture */
-#घोषणा TERA_NUM_CAPTURE	3
-#घोषणा TERA_NUM_PLAYBACK	4
+#define TERA_NUM_CAPTURE	3
+#define TERA_NUM_PLAYBACK	4
 
 
-अटल पूर्णांक index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;
-अटल अक्षर *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;
-अटल bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_PNP;
-अटल अक्षर *model[SNDRV_CARDS];
-अटल पूर्णांक position_fix[SNDRV_CARDS] = अणु[0 ... (SNDRV_CARDS-1)] = -1पूर्ण;
-अटल पूर्णांक bdl_pos_adj[SNDRV_CARDS] = अणु[0 ... (SNDRV_CARDS-1)] = -1पूर्ण;
-अटल पूर्णांक probe_mask[SNDRV_CARDS] = अणु[0 ... (SNDRV_CARDS-1)] = -1पूर्ण;
-अटल पूर्णांक probe_only[SNDRV_CARDS];
-अटल पूर्णांक jackpoll_ms[SNDRV_CARDS];
-अटल पूर्णांक single_cmd = -1;
-अटल पूर्णांक enable_msi = -1;
-#अगर_घोषित CONFIG_SND_HDA_PATCH_LOADER
-अटल अक्षर *patch[SNDRV_CARDS];
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_SND_HDA_INPUT_BEEP
-अटल bool beep_mode[SNDRV_CARDS] = अणु[0 ... (SNDRV_CARDS-1)] =
-					CONFIG_SND_HDA_INPUT_BEEP_MODEपूर्ण;
-#पूर्ण_अगर
-अटल bool dmic_detect = 1;
+static int index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;
+static char *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;
+static bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_PNP;
+static char *model[SNDRV_CARDS];
+static int position_fix[SNDRV_CARDS] = {[0 ... (SNDRV_CARDS-1)] = -1};
+static int bdl_pos_adj[SNDRV_CARDS] = {[0 ... (SNDRV_CARDS-1)] = -1};
+static int probe_mask[SNDRV_CARDS] = {[0 ... (SNDRV_CARDS-1)] = -1};
+static int probe_only[SNDRV_CARDS];
+static int jackpoll_ms[SNDRV_CARDS];
+static int single_cmd = -1;
+static int enable_msi = -1;
+#ifdef CONFIG_SND_HDA_PATCH_LOADER
+static char *patch[SNDRV_CARDS];
+#endif
+#ifdef CONFIG_SND_HDA_INPUT_BEEP
+static bool beep_mode[SNDRV_CARDS] = {[0 ... (SNDRV_CARDS-1)] =
+					CONFIG_SND_HDA_INPUT_BEEP_MODE};
+#endif
+static bool dmic_detect = 1;
 
-module_param_array(index, पूर्णांक, शून्य, 0444);
+module_param_array(index, int, NULL, 0444);
 MODULE_PARM_DESC(index, "Index value for Intel HD audio interface.");
-module_param_array(id, अक्षरp, शून्य, 0444);
+module_param_array(id, charp, NULL, 0444);
 MODULE_PARM_DESC(id, "ID string for Intel HD audio interface.");
-module_param_array(enable, bool, शून्य, 0444);
+module_param_array(enable, bool, NULL, 0444);
 MODULE_PARM_DESC(enable, "Enable Intel HD audio interface.");
-module_param_array(model, अक्षरp, शून्य, 0444);
+module_param_array(model, charp, NULL, 0444);
 MODULE_PARM_DESC(model, "Use the given board model.");
-module_param_array(position_fix, पूर्णांक, शून्य, 0444);
+module_param_array(position_fix, int, NULL, 0444);
 MODULE_PARM_DESC(position_fix, "DMA pointer read method."
 		 "(-1 = system default, 0 = auto, 1 = LPIB, 2 = POSBUF, 3 = VIACOMBO, 4 = COMBO, 5 = SKL+, 6 = FIFO).");
-module_param_array(bdl_pos_adj, पूर्णांक, शून्य, 0644);
+module_param_array(bdl_pos_adj, int, NULL, 0644);
 MODULE_PARM_DESC(bdl_pos_adj, "BDL position adjustment offset.");
-module_param_array(probe_mask, पूर्णांक, शून्य, 0444);
+module_param_array(probe_mask, int, NULL, 0444);
 MODULE_PARM_DESC(probe_mask, "Bitmask to probe codecs (default = -1).");
-module_param_array(probe_only, पूर्णांक, शून्य, 0444);
+module_param_array(probe_only, int, NULL, 0444);
 MODULE_PARM_DESC(probe_only, "Only probing and no codec initialization.");
-module_param_array(jackpoll_ms, पूर्णांक, शून्य, 0444);
+module_param_array(jackpoll_ms, int, NULL, 0444);
 MODULE_PARM_DESC(jackpoll_ms, "Ms between polling for jack events (default = 0, using unsol events only)");
-module_param(single_cmd, bपूर्णांक, 0444);
+module_param(single_cmd, bint, 0444);
 MODULE_PARM_DESC(single_cmd, "Use single command to communicate with codecs "
 		 "(for debugging only).");
-module_param(enable_msi, bपूर्णांक, 0444);
+module_param(enable_msi, bint, 0444);
 MODULE_PARM_DESC(enable_msi, "Enable Message Signaled Interrupt (MSI)");
-#अगर_घोषित CONFIG_SND_HDA_PATCH_LOADER
-module_param_array(patch, अक्षरp, शून्य, 0444);
+#ifdef CONFIG_SND_HDA_PATCH_LOADER
+module_param_array(patch, charp, NULL, 0444);
 MODULE_PARM_DESC(patch, "Patch file for Intel HD audio interface.");
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_SND_HDA_INPUT_BEEP
-module_param_array(beep_mode, bool, शून्य, 0444);
+#endif
+#ifdef CONFIG_SND_HDA_INPUT_BEEP
+module_param_array(beep_mode, bool, NULL, 0444);
 MODULE_PARM_DESC(beep_mode, "Select HDA Beep registration mode "
 			    "(0=off, 1=on) (default=1).");
-#पूर्ण_अगर
+#endif
 module_param(dmic_detect, bool, 0444);
 MODULE_PARM_DESC(dmic_detect, "Allow DSP driver selection (bypass this driver) "
 			     "(0=off, 1=on) (default=1); "
 		 "deprecated, use snd-intel-dspcfg.dsp_driver option instead");
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक param_set_xपूर्णांक(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp);
-अटल स्थिर काष्ठा kernel_param_ops param_ops_xपूर्णांक = अणु
-	.set = param_set_xपूर्णांक,
-	.get = param_get_पूर्णांक,
-पूर्ण;
-#घोषणा param_check_xपूर्णांक param_check_पूर्णांक
+#ifdef CONFIG_PM
+static int param_set_xint(const char *val, const struct kernel_param *kp);
+static const struct kernel_param_ops param_ops_xint = {
+	.set = param_set_xint,
+	.get = param_get_int,
+};
+#define param_check_xint param_check_int
 
-अटल पूर्णांक घातer_save = CONFIG_SND_HDA_POWER_SAVE_DEFAULT;
-module_param(घातer_save, xपूर्णांक, 0644);
-MODULE_PARM_DESC(घातer_save, "Automatic power-saving timeout "
+static int power_save = CONFIG_SND_HDA_POWER_SAVE_DEFAULT;
+module_param(power_save, xint, 0644);
+MODULE_PARM_DESC(power_save, "Automatic power-saving timeout "
 		 "(in second, 0 = disable).");
 
-अटल bool pm_blacklist = true;
+static bool pm_blacklist = true;
 module_param(pm_blacklist, bool, 0644);
 MODULE_PARM_DESC(pm_blacklist, "Enable power-management denylist");
 
-/* reset the HD-audio controller in घातer save mode.
- * this may give more घातer-saving, but will take दीर्घer समय to
+/* reset the HD-audio controller in power save mode.
+ * this may give more power-saving, but will take longer time to
  * wake up.
  */
-अटल bool घातer_save_controller = 1;
-module_param(घातer_save_controller, bool, 0644);
-MODULE_PARM_DESC(घातer_save_controller, "Reset controller in power save mode.");
-#अन्यथा
-#घोषणा घातer_save	0
-#पूर्ण_अगर /* CONFIG_PM */
+static bool power_save_controller = 1;
+module_param(power_save_controller, bool, 0644);
+MODULE_PARM_DESC(power_save_controller, "Reset controller in power save mode.");
+#else
+#define power_save	0
+#endif /* CONFIG_PM */
 
-अटल पूर्णांक align_buffer_size = -1;
-module_param(align_buffer_size, bपूर्णांक, 0644);
+static int align_buffer_size = -1;
+module_param(align_buffer_size, bint, 0644);
 MODULE_PARM_DESC(align_buffer_size,
 		"Force buffer and period sizes to be multiple of 128 bytes.");
 
-#अगर_घोषित CONFIG_X86
-अटल पूर्णांक hda_snoop = -1;
-module_param_named(snoop, hda_snoop, bपूर्णांक, 0444);
+#ifdef CONFIG_X86
+static int hda_snoop = -1;
+module_param_named(snoop, hda_snoop, bint, 0444);
 MODULE_PARM_DESC(snoop, "Enable/disable snooping");
-#अन्यथा
-#घोषणा hda_snoop		true
-#पूर्ण_अगर
+#else
+#define hda_snoop		true
+#endif
 
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Intel HDA driver");
 
-#अगर defined(CONFIG_PM) && defined(CONFIG_VGA_SWITCHEROO)
-#अगर IS_ENABLED(CONFIG_SND_HDA_CODEC_HDMI)
-#घोषणा SUPPORT_VGA_SWITCHEROO
-#पूर्ण_अगर
-#पूर्ण_अगर
+#if defined(CONFIG_PM) && defined(CONFIG_VGA_SWITCHEROO)
+#if IS_ENABLED(CONFIG_SND_HDA_CODEC_HDMI)
+#define SUPPORT_VGA_SWITCHEROO
+#endif
+#endif
 
 
 /*
  */
 
 /* driver types */
-क्रमागत अणु
+enum {
 	AZX_DRIVER_ICH,
 	AZX_DRIVER_PCH,
 	AZX_DRIVER_SCH,
@@ -242,108 +241,108 @@ MODULE_DESCRIPTION("Intel HDA driver");
 	AZX_DRIVER_ZHAOXIN,
 	AZX_DRIVER_GENERIC,
 	AZX_NUM_DRIVERS, /* keep this as last entry */
-पूर्ण;
+};
 
-#घोषणा azx_get_snoop_type(chip) \
+#define azx_get_snoop_type(chip) \
 	(((chip)->driver_caps & AZX_DCAPS_SNOOP_MASK) >> 10)
-#घोषणा AZX_DCAPS_SNOOP_TYPE(type) ((AZX_SNOOP_TYPE_ ## type) << 10)
+#define AZX_DCAPS_SNOOP_TYPE(type) ((AZX_SNOOP_TYPE_ ## type) << 10)
 
-/* quirks क्रम old Intel chipsets */
-#घोषणा AZX_DCAPS_INTEL_ICH \
-	(AZX_DCAPS_OLD_SSYNC | AZX_DCAPS_NO_ALIGN_बफ_मानE)
+/* quirks for old Intel chipsets */
+#define AZX_DCAPS_INTEL_ICH \
+	(AZX_DCAPS_OLD_SSYNC | AZX_DCAPS_NO_ALIGN_BUFSIZE)
 
-/* quirks क्रम Intel PCH */
-#घोषणा AZX_DCAPS_INTEL_PCH_BASE \
-	(AZX_DCAPS_NO_ALIGN_बफ_मानE | AZX_DCAPS_COUNT_LPIB_DELAY |\
+/* quirks for Intel PCH */
+#define AZX_DCAPS_INTEL_PCH_BASE \
+	(AZX_DCAPS_NO_ALIGN_BUFSIZE | AZX_DCAPS_COUNT_LPIB_DELAY |\
 	 AZX_DCAPS_SNOOP_TYPE(SCH))
 
-/* PCH up to IVB; no runसमय PM; bind with i915 gfx */
-#घोषणा AZX_DCAPS_INTEL_PCH_NOPM \
+/* PCH up to IVB; no runtime PM; bind with i915 gfx */
+#define AZX_DCAPS_INTEL_PCH_NOPM \
 	(AZX_DCAPS_INTEL_PCH_BASE | AZX_DCAPS_I915_COMPONENT)
 
-/* PCH क्रम HSW/BDW; with runसमय PM */
-/* no i915 binding क्रम this as HSW/BDW has another controller क्रम HDMI */
-#घोषणा AZX_DCAPS_INTEL_PCH \
+/* PCH for HSW/BDW; with runtime PM */
+/* no i915 binding for this as HSW/BDW has another controller for HDMI */
+#define AZX_DCAPS_INTEL_PCH \
 	(AZX_DCAPS_INTEL_PCH_BASE | AZX_DCAPS_PM_RUNTIME)
 
 /* HSW HDMI */
-#घोषणा AZX_DCAPS_INTEL_HASWELL \
-	(/*AZX_DCAPS_ALIGN_बफ_मानE |*/ AZX_DCAPS_COUNT_LPIB_DELAY |\
+#define AZX_DCAPS_INTEL_HASWELL \
+	(/*AZX_DCAPS_ALIGN_BUFSIZE |*/ AZX_DCAPS_COUNT_LPIB_DELAY |\
 	 AZX_DCAPS_PM_RUNTIME | AZX_DCAPS_I915_COMPONENT |\
 	 AZX_DCAPS_SNOOP_TYPE(SCH))
 
-/* Broadwell HDMI can't use position buffer reliably, क्रमce to use LPIB */
-#घोषणा AZX_DCAPS_INTEL_BROADWELL \
-	(/*AZX_DCAPS_ALIGN_बफ_मानE |*/ AZX_DCAPS_POSFIX_LPIB |\
+/* Broadwell HDMI can't use position buffer reliably, force to use LPIB */
+#define AZX_DCAPS_INTEL_BROADWELL \
+	(/*AZX_DCAPS_ALIGN_BUFSIZE |*/ AZX_DCAPS_POSFIX_LPIB |\
 	 AZX_DCAPS_PM_RUNTIME | AZX_DCAPS_I915_COMPONENT |\
 	 AZX_DCAPS_SNOOP_TYPE(SCH))
 
-#घोषणा AZX_DCAPS_INTEL_BAYTRAIL \
+#define AZX_DCAPS_INTEL_BAYTRAIL \
 	(AZX_DCAPS_INTEL_PCH_BASE | AZX_DCAPS_I915_COMPONENT)
 
-#घोषणा AZX_DCAPS_INTEL_BRASWELL \
+#define AZX_DCAPS_INTEL_BRASWELL \
 	(AZX_DCAPS_INTEL_PCH_BASE | AZX_DCAPS_PM_RUNTIME |\
 	 AZX_DCAPS_I915_COMPONENT)
 
-#घोषणा AZX_DCAPS_INTEL_SKYLAKE \
+#define AZX_DCAPS_INTEL_SKYLAKE \
 	(AZX_DCAPS_INTEL_PCH_BASE | AZX_DCAPS_PM_RUNTIME |\
 	 AZX_DCAPS_SEPARATE_STREAM_TAG | AZX_DCAPS_I915_COMPONENT)
 
-#घोषणा AZX_DCAPS_INTEL_BROXTON		AZX_DCAPS_INTEL_SKYLAKE
+#define AZX_DCAPS_INTEL_BROXTON		AZX_DCAPS_INTEL_SKYLAKE
 
-/* quirks क्रम ATI SB / AMD Hudson */
-#घोषणा AZX_DCAPS_PRESET_ATI_SB \
+/* quirks for ATI SB / AMD Hudson */
+#define AZX_DCAPS_PRESET_ATI_SB \
 	(AZX_DCAPS_NO_TCSEL | AZX_DCAPS_POSFIX_LPIB |\
 	 AZX_DCAPS_SNOOP_TYPE(ATI))
 
-/* quirks क्रम ATI/AMD HDMI */
-#घोषणा AZX_DCAPS_PRESET_ATI_HDMI \
+/* quirks for ATI/AMD HDMI */
+#define AZX_DCAPS_PRESET_ATI_HDMI \
 	(AZX_DCAPS_NO_TCSEL | AZX_DCAPS_POSFIX_LPIB|\
 	 AZX_DCAPS_NO_MSI64)
 
-/* quirks क्रम ATI HDMI with snoop off */
-#घोषणा AZX_DCAPS_PRESET_ATI_HDMI_NS \
+/* quirks for ATI HDMI with snoop off */
+#define AZX_DCAPS_PRESET_ATI_HDMI_NS \
 	(AZX_DCAPS_PRESET_ATI_HDMI | AZX_DCAPS_SNOOP_OFF)
 
-/* quirks क्रम AMD SB */
-#घोषणा AZX_DCAPS_PRESET_AMD_SB \
+/* quirks for AMD SB */
+#define AZX_DCAPS_PRESET_AMD_SB \
 	(AZX_DCAPS_NO_TCSEL | AZX_DCAPS_AMD_WORKAROUND |\
 	 AZX_DCAPS_SNOOP_TYPE(ATI) | AZX_DCAPS_PM_RUNTIME)
 
-/* quirks क्रम Nvidia */
-#घोषणा AZX_DCAPS_PRESET_NVIDIA \
+/* quirks for Nvidia */
+#define AZX_DCAPS_PRESET_NVIDIA \
 	(AZX_DCAPS_NO_MSI | AZX_DCAPS_CORBRP_SELF_CLEAR |\
 	 AZX_DCAPS_SNOOP_TYPE(NVIDIA))
 
-#घोषणा AZX_DCAPS_PRESET_CTHDA \
+#define AZX_DCAPS_PRESET_CTHDA \
 	(AZX_DCAPS_NO_MSI | AZX_DCAPS_POSFIX_LPIB |\
 	 AZX_DCAPS_NO_64BIT |\
 	 AZX_DCAPS_4K_BDLE_BOUNDARY | AZX_DCAPS_SNOOP_OFF)
 
 /*
- * vga_चयनeroo support
+ * vga_switcheroo support
  */
-#अगर_घोषित SUPPORT_VGA_SWITCHEROO
-#घोषणा use_vga_चयनeroo(chip)	((chip)->use_vga_चयनeroo)
-#घोषणा needs_eld_notअगरy_link(chip)	((chip)->bus.keep_घातer)
-#अन्यथा
-#घोषणा use_vga_चयनeroo(chip)	0
-#घोषणा needs_eld_notअगरy_link(chip)	false
-#पूर्ण_अगर
+#ifdef SUPPORT_VGA_SWITCHEROO
+#define use_vga_switcheroo(chip)	((chip)->use_vga_switcheroo)
+#define needs_eld_notify_link(chip)	((chip)->bus.keep_power)
+#else
+#define use_vga_switcheroo(chip)	0
+#define needs_eld_notify_link(chip)	false
+#endif
 
-#घोषणा CONTROLLER_IN_GPU(pci) (((pci)->device == 0x0a0c) || \
+#define CONTROLLER_IN_GPU(pci) (((pci)->device == 0x0a0c) || \
 					((pci)->device == 0x0c0c) || \
 					((pci)->device == 0x0d0c) || \
 					((pci)->device == 0x160c) || \
 					((pci)->device == 0x490d))
 
-#घोषणा IS_BXT(pci) ((pci)->venकरोr == 0x8086 && (pci)->device == 0x5a98)
+#define IS_BXT(pci) ((pci)->vendor == 0x8086 && (pci)->device == 0x5a98)
 
-अटल स्थिर अक्षर * स्थिर driver_लघु_names[] = अणु
+static const char * const driver_short_names[] = {
 	[AZX_DRIVER_ICH] = "HDA Intel",
 	[AZX_DRIVER_PCH] = "HDA Intel PCH",
 	[AZX_DRIVER_SCH] = "HDA Intel MID",
-	[AZX_DRIVER_SKL] = "HDA Intel PCH", /* kept old name क्रम compatibility */
+	[AZX_DRIVER_SKL] = "HDA Intel PCH", /* kept old name for compatibility */
 	[AZX_DRIVER_HDMI] = "HDA Intel HDMI",
 	[AZX_DRIVER_ATI] = "HDA ATI SB",
 	[AZX_DRIVER_ATIHDMI] = "HDA ATI HDMI",
@@ -358,54 +357,54 @@ MODULE_DESCRIPTION("Intel HDA driver");
 	[AZX_DRIVER_CMEDIA] = "HDA C-Media",
 	[AZX_DRIVER_ZHAOXIN] = "HDA Zhaoxin",
 	[AZX_DRIVER_GENERIC] = "HD-Audio Generic",
-पूर्ण;
+};
 
-अटल पूर्णांक azx_acquire_irq(काष्ठा azx *chip, पूर्णांक करो_disconnect);
-अटल व्योम set_शेष_घातer_save(काष्ठा azx *chip);
+static int azx_acquire_irq(struct azx *chip, int do_disconnect);
+static void set_default_power_save(struct azx *chip);
 
 /*
- * initialize the PCI रेजिस्टरs
+ * initialize the PCI registers
  */
-/* update bits in a PCI रेजिस्टर byte */
-अटल व्योम update_pci_byte(काष्ठा pci_dev *pci, अचिन्हित पूर्णांक reg,
-			    अचिन्हित अक्षर mask, अचिन्हित अक्षर val)
-अणु
-	अचिन्हित अक्षर data;
+/* update bits in a PCI register byte */
+static void update_pci_byte(struct pci_dev *pci, unsigned int reg,
+			    unsigned char mask, unsigned char val)
+{
+	unsigned char data;
 
-	pci_पढ़ो_config_byte(pci, reg, &data);
+	pci_read_config_byte(pci, reg, &data);
 	data &= ~mask;
 	data |= (val & mask);
-	pci_ग_लिखो_config_byte(pci, reg, data);
-पूर्ण
+	pci_write_config_byte(pci, reg, data);
+}
 
-अटल व्योम azx_init_pci(काष्ठा azx *chip)
-अणु
-	पूर्णांक snoop_type = azx_get_snoop_type(chip);
+static void azx_init_pci(struct azx *chip)
+{
+	int snoop_type = azx_get_snoop_type(chip);
 
-	/* Clear bits 0-2 of PCI रेजिस्टर TCSEL (at offset 0x44)
+	/* Clear bits 0-2 of PCI register TCSEL (at offset 0x44)
 	 * TCSEL == Traffic Class Select Register, which sets PCI express QOS
-	 * Ensuring these bits are 0 clears playback अटल on some HD Audio
+	 * Ensuring these bits are 0 clears playback static on some HD Audio
 	 * codecs.
-	 * The PCI रेजिस्टर TCSEL is defined in the Intel manuals.
+	 * The PCI register TCSEL is defined in the Intel manuals.
 	 */
-	अगर (!(chip->driver_caps & AZX_DCAPS_NO_TCSEL)) अणु
+	if (!(chip->driver_caps & AZX_DCAPS_NO_TCSEL)) {
 		dev_dbg(chip->card->dev, "Clearing TCSEL\n");
 		update_pci_byte(chip->pci, AZX_PCIREG_TCSEL, 0x07, 0);
-	पूर्ण
+	}
 
 	/* For ATI SB450/600/700/800/900 and AMD Hudson azalia HD audio,
 	 * we need to enable snoop.
 	 */
-	अगर (snoop_type == AZX_SNOOP_TYPE_ATI) अणु
+	if (snoop_type == AZX_SNOOP_TYPE_ATI) {
 		dev_dbg(chip->card->dev, "Setting ATI snoop: %d\n",
 			azx_snoop(chip));
 		update_pci_byte(chip->pci,
 				ATI_SB450_HDAUDIO_MISC_CNTR2_ADDR, 0x07,
 				azx_snoop(chip) ? ATI_SB450_HDAUDIO_ENABLE_SNOOP : 0);
-	पूर्ण
+	}
 
 	/* For NVIDIA HDA, enable snoop */
-	अगर (snoop_type == AZX_SNOOP_TYPE_NVIDIA) अणु
+	if (snoop_type == AZX_SNOOP_TYPE_NVIDIA) {
 		dev_dbg(chip->card->dev, "Setting Nvidia snoop: %d\n",
 			azx_snoop(chip));
 		update_pci_byte(chip->pci,
@@ -417,42 +416,42 @@ MODULE_DESCRIPTION("Intel HDA driver");
 		update_pci_byte(chip->pci,
 				NVIDIA_HDA_OSTRM_COH,
 				0x01, NVIDIA_HDA_ENABLE_COHBIT);
-	पूर्ण
+	}
 
-	/* Enable SCH/PCH snoop अगर needed */
-	अगर (snoop_type == AZX_SNOOP_TYPE_SCH) अणु
-		अचिन्हित लघु snoop;
-		pci_पढ़ो_config_word(chip->pci, INTEL_SCH_HDA_DEVC, &snoop);
-		अगर ((!azx_snoop(chip) && !(snoop & INTEL_SCH_HDA_DEVC_NOSNOOP)) ||
-		    (azx_snoop(chip) && (snoop & INTEL_SCH_HDA_DEVC_NOSNOOP))) अणु
+	/* Enable SCH/PCH snoop if needed */
+	if (snoop_type == AZX_SNOOP_TYPE_SCH) {
+		unsigned short snoop;
+		pci_read_config_word(chip->pci, INTEL_SCH_HDA_DEVC, &snoop);
+		if ((!azx_snoop(chip) && !(snoop & INTEL_SCH_HDA_DEVC_NOSNOOP)) ||
+		    (azx_snoop(chip) && (snoop & INTEL_SCH_HDA_DEVC_NOSNOOP))) {
 			snoop &= ~INTEL_SCH_HDA_DEVC_NOSNOOP;
-			अगर (!azx_snoop(chip))
+			if (!azx_snoop(chip))
 				snoop |= INTEL_SCH_HDA_DEVC_NOSNOOP;
-			pci_ग_लिखो_config_word(chip->pci, INTEL_SCH_HDA_DEVC, snoop);
-			pci_पढ़ो_config_word(chip->pci,
+			pci_write_config_word(chip->pci, INTEL_SCH_HDA_DEVC, snoop);
+			pci_read_config_word(chip->pci,
 				INTEL_SCH_HDA_DEVC, &snoop);
-		पूर्ण
+		}
 		dev_dbg(chip->card->dev, "SCH snoop: %s\n",
 			(snoop & INTEL_SCH_HDA_DEVC_NOSNOOP) ?
 			"Disabled" : "Enabled");
-        पूर्ण
-पूर्ण
+        }
+}
 
 /*
  * In BXT-P A0, HD-Audio DMA requests is later than expected,
- * and makes an audio stream sensitive to प्रणाली latencies when
+ * and makes an audio stream sensitive to system latencies when
  * 24/32 bits are playing.
- * Adjusting threshold of DMA fअगरo to क्रमce the DMA request
- * sooner to improve latency tolerance at the expense of घातer.
+ * Adjusting threshold of DMA fifo to force the DMA request
+ * sooner to improve latency tolerance at the expense of power.
  */
-अटल व्योम bxt_reduce_dma_latency(काष्ठा azx *chip)
-अणु
+static void bxt_reduce_dma_latency(struct azx *chip)
+{
 	u32 val;
 
-	val = azx_पढ़ोl(chip, VS_EM4L);
+	val = azx_readl(chip, VS_EM4L);
 	val &= (0x3 << 20);
-	azx_ग_लिखोl(chip, VS_EM4L, val);
-पूर्ण
+	azx_writel(chip, VS_EM4L, val);
+}
 
 /*
  * ML_LCAP bits:
@@ -463,319 +462,319 @@ MODULE_DESCRIPTION("Intel HDA driver");
  *  bit 4: 96 MHz Supported
  *  bit 5: 192 MHz Supported
  */
-अटल पूर्णांक पूर्णांकel_get_lctl_scf(काष्ठा azx *chip)
-अणु
-	काष्ठा hdac_bus *bus = azx_bus(chip);
-	अटल स्थिर पूर्णांक preferred_bits[] = अणु 2, 3, 1, 4, 5 पूर्ण;
+static int intel_get_lctl_scf(struct azx *chip)
+{
+	struct hdac_bus *bus = azx_bus(chip);
+	static const int preferred_bits[] = { 2, 3, 1, 4, 5 };
 	u32 val, t;
-	पूर्णांक i;
+	int i;
 
-	val = पढ़ोl(bus->mlcap + AZX_ML_BASE + AZX_REG_ML_LCAP);
+	val = readl(bus->mlcap + AZX_ML_BASE + AZX_REG_ML_LCAP);
 
-	क्रम (i = 0; i < ARRAY_SIZE(preferred_bits); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(preferred_bits); i++) {
 		t = preferred_bits[i];
-		अगर (val & (1 << t))
-			वापस t;
-	पूर्ण
+		if (val & (1 << t))
+			return t;
+	}
 
 	dev_warn(chip->card->dev, "set audio clock frequency to 6MHz");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक पूर्णांकel_ml_lctl_set_घातer(काष्ठा azx *chip, पूर्णांक state)
-अणु
-	काष्ठा hdac_bus *bus = azx_bus(chip);
+static int intel_ml_lctl_set_power(struct azx *chip, int state)
+{
+	struct hdac_bus *bus = azx_bus(chip);
 	u32 val;
-	पूर्णांक समयout;
+	int timeout;
 
 	/*
-	 * the codecs are sharing the first link setting by शेष
-	 * If other links are enabled क्रम stream, they need similar fix
+	 * the codecs are sharing the first link setting by default
+	 * If other links are enabled for stream, they need similar fix
 	 */
-	val = पढ़ोl(bus->mlcap + AZX_ML_BASE + AZX_REG_ML_LCTL);
+	val = readl(bus->mlcap + AZX_ML_BASE + AZX_REG_ML_LCTL);
 	val &= ~AZX_MLCTL_SPA;
 	val |= state << AZX_MLCTL_SPA_SHIFT;
-	ग_लिखोl(val, bus->mlcap + AZX_ML_BASE + AZX_REG_ML_LCTL);
-	/* रुको क्रम CPA */
-	समयout = 50;
-	जबतक (समयout) अणु
-		अगर (((पढ़ोl(bus->mlcap + AZX_ML_BASE + AZX_REG_ML_LCTL)) &
+	writel(val, bus->mlcap + AZX_ML_BASE + AZX_REG_ML_LCTL);
+	/* wait for CPA */
+	timeout = 50;
+	while (timeout) {
+		if (((readl(bus->mlcap + AZX_ML_BASE + AZX_REG_ML_LCTL)) &
 		    AZX_MLCTL_CPA) == (state << AZX_MLCTL_CPA_SHIFT))
-			वापस 0;
-		समयout--;
+			return 0;
+		timeout--;
 		udelay(10);
-	पूर्ण
+	}
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल व्योम पूर्णांकel_init_lctl(काष्ठा azx *chip)
-अणु
-	काष्ठा hdac_bus *bus = azx_bus(chip);
+static void intel_init_lctl(struct azx *chip)
+{
+	struct hdac_bus *bus = azx_bus(chip);
 	u32 val;
-	पूर्णांक ret;
+	int ret;
 
-	/* 0. check lctl रेजिस्टर value is correct or not */
-	val = पढ़ोl(bus->mlcap + AZX_ML_BASE + AZX_REG_ML_LCTL);
-	/* अगर SCF is alपढ़ोy set, let's use it */
-	अगर ((val & ML_LCTL_SCF_MASK) != 0)
-		वापस;
+	/* 0. check lctl register value is correct or not */
+	val = readl(bus->mlcap + AZX_ML_BASE + AZX_REG_ML_LCTL);
+	/* if SCF is already set, let's use it */
+	if ((val & ML_LCTL_SCF_MASK) != 0)
+		return;
 
 	/*
-	 * Beक्रमe operating on SPA, CPA must match SPA.
+	 * Before operating on SPA, CPA must match SPA.
 	 * Any deviation may result in undefined behavior.
 	 */
-	अगर (((val & AZX_MLCTL_SPA) >> AZX_MLCTL_SPA_SHIFT) !=
+	if (((val & AZX_MLCTL_SPA) >> AZX_MLCTL_SPA_SHIFT) !=
 		((val & AZX_MLCTL_CPA) >> AZX_MLCTL_CPA_SHIFT))
-		वापस;
+		return;
 
-	/* 1. turn link करोwn: set SPA to 0 and रुको CPA to 0 */
-	ret = पूर्णांकel_ml_lctl_set_घातer(chip, 0);
+	/* 1. turn link down: set SPA to 0 and wait CPA to 0 */
+	ret = intel_ml_lctl_set_power(chip, 0);
 	udelay(100);
-	अगर (ret)
-		जाओ set_spa;
+	if (ret)
+		goto set_spa;
 
-	/* 2. update SCF to select a properly audio घड़ी*/
+	/* 2. update SCF to select a properly audio clock*/
 	val &= ~ML_LCTL_SCF_MASK;
-	val |= पूर्णांकel_get_lctl_scf(chip);
-	ग_लिखोl(val, bus->mlcap + AZX_ML_BASE + AZX_REG_ML_LCTL);
+	val |= intel_get_lctl_scf(chip);
+	writel(val, bus->mlcap + AZX_ML_BASE + AZX_REG_ML_LCTL);
 
 set_spa:
-	/* 4. turn link up: set SPA to 1 and रुको CPA to 1 */
-	पूर्णांकel_ml_lctl_set_घातer(chip, 1);
+	/* 4. turn link up: set SPA to 1 and wait CPA to 1 */
+	intel_ml_lctl_set_power(chip, 1);
 	udelay(100);
-पूर्ण
+}
 
-अटल व्योम hda_पूर्णांकel_init_chip(काष्ठा azx *chip, bool full_reset)
-अणु
-	काष्ठा hdac_bus *bus = azx_bus(chip);
-	काष्ठा pci_dev *pci = chip->pci;
+static void hda_intel_init_chip(struct azx *chip, bool full_reset)
+{
+	struct hdac_bus *bus = azx_bus(chip);
+	struct pci_dev *pci = chip->pci;
 	u32 val;
 
 	snd_hdac_set_codec_wakeup(bus, true);
-	अगर (chip->driver_type == AZX_DRIVER_SKL) अणु
-		pci_पढ़ो_config_dword(pci, INTEL_HDA_CGCTL, &val);
+	if (chip->driver_type == AZX_DRIVER_SKL) {
+		pci_read_config_dword(pci, INTEL_HDA_CGCTL, &val);
 		val = val & ~INTEL_HDA_CGCTL_MISCBDCGE;
-		pci_ग_लिखो_config_dword(pci, INTEL_HDA_CGCTL, val);
-	पूर्ण
+		pci_write_config_dword(pci, INTEL_HDA_CGCTL, val);
+	}
 	azx_init_chip(chip, full_reset);
-	अगर (chip->driver_type == AZX_DRIVER_SKL) अणु
-		pci_पढ़ो_config_dword(pci, INTEL_HDA_CGCTL, &val);
+	if (chip->driver_type == AZX_DRIVER_SKL) {
+		pci_read_config_dword(pci, INTEL_HDA_CGCTL, &val);
 		val = val | INTEL_HDA_CGCTL_MISCBDCGE;
-		pci_ग_लिखो_config_dword(pci, INTEL_HDA_CGCTL, val);
-	पूर्ण
+		pci_write_config_dword(pci, INTEL_HDA_CGCTL, val);
+	}
 
 	snd_hdac_set_codec_wakeup(bus, false);
 
-	/* reduce dma latency to aव्योम noise */
-	अगर (IS_BXT(pci))
+	/* reduce dma latency to avoid noise */
+	if (IS_BXT(pci))
 		bxt_reduce_dma_latency(chip);
 
-	अगर (bus->mlcap != शून्य)
-		पूर्णांकel_init_lctl(chip);
-पूर्ण
+	if (bus->mlcap != NULL)
+		intel_init_lctl(chip);
+}
 
-/* calculate runसमय delay from LPIB */
-अटल पूर्णांक azx_get_delay_from_lpib(काष्ठा azx *chip, काष्ठा azx_dev *azx_dev,
-				   अचिन्हित पूर्णांक pos)
-अणु
-	काष्ठा snd_pcm_substream *substream = azx_dev->core.substream;
-	पूर्णांक stream = substream->stream;
-	अचिन्हित पूर्णांक lpib_pos = azx_get_pos_lpib(chip, azx_dev);
-	पूर्णांक delay;
+/* calculate runtime delay from LPIB */
+static int azx_get_delay_from_lpib(struct azx *chip, struct azx_dev *azx_dev,
+				   unsigned int pos)
+{
+	struct snd_pcm_substream *substream = azx_dev->core.substream;
+	int stream = substream->stream;
+	unsigned int lpib_pos = azx_get_pos_lpib(chip, azx_dev);
+	int delay;
 
-	अगर (stream == SNDRV_PCM_STREAM_PLAYBACK)
+	if (stream == SNDRV_PCM_STREAM_PLAYBACK)
 		delay = pos - lpib_pos;
-	अन्यथा
+	else
 		delay = lpib_pos - pos;
-	अगर (delay < 0) अणु
-		अगर (delay >= azx_dev->core.delay_negative_threshold)
+	if (delay < 0) {
+		if (delay >= azx_dev->core.delay_negative_threshold)
 			delay = 0;
-		अन्यथा
+		else
 			delay += azx_dev->core.bufsize;
-	पूर्ण
+	}
 
-	अगर (delay >= azx_dev->core.period_bytes) अणु
+	if (delay >= azx_dev->core.period_bytes) {
 		dev_info(chip->card->dev,
 			 "Unstable LPIB (%d >= %d); disabling LPIB delay counting\n",
 			 delay, azx_dev->core.period_bytes);
 		delay = 0;
 		chip->driver_caps &= ~AZX_DCAPS_COUNT_LPIB_DELAY;
-		chip->get_delay[stream] = शून्य;
-	पूर्ण
+		chip->get_delay[stream] = NULL;
+	}
 
-	वापस bytes_to_frames(substream->runसमय, delay);
-पूर्ण
+	return bytes_to_frames(substream->runtime, delay);
+}
 
-अटल पूर्णांक azx_position_ok(काष्ठा azx *chip, काष्ठा azx_dev *azx_dev);
+static int azx_position_ok(struct azx *chip, struct azx_dev *azx_dev);
 
 /* called from IRQ */
-अटल पूर्णांक azx_position_check(काष्ठा azx *chip, काष्ठा azx_dev *azx_dev)
-अणु
-	काष्ठा hda_पूर्णांकel *hda = container_of(chip, काष्ठा hda_पूर्णांकel, chip);
-	पूर्णांक ok;
+static int azx_position_check(struct azx *chip, struct azx_dev *azx_dev)
+{
+	struct hda_intel *hda = container_of(chip, struct hda_intel, chip);
+	int ok;
 
 	ok = azx_position_ok(chip, azx_dev);
-	अगर (ok == 1) अणु
+	if (ok == 1) {
 		azx_dev->irq_pending = 0;
-		वापस ok;
-	पूर्ण अन्यथा अगर (ok == 0) अणु
+		return ok;
+	} else if (ok == 0) {
 		/* bogus IRQ, process it later */
 		azx_dev->irq_pending = 1;
 		schedule_work(&hda->irq_pending_work);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-#घोषणा display_घातer(chip, enable) \
-	snd_hdac_display_घातer(azx_bus(chip), HDA_CODEC_IDX_CONTROLLER, enable)
+#define display_power(chip, enable) \
+	snd_hdac_display_power(azx_bus(chip), HDA_CODEC_IDX_CONTROLLER, enable)
 
 /*
- * Check whether the current DMA position is acceptable क्रम updating
- * periods.  Returns non-zero अगर it's OK.
+ * Check whether the current DMA position is acceptable for updating
+ * periods.  Returns non-zero if it's OK.
  *
  * Many HD-audio controllers appear pretty inaccurate about
- * the update-IRQ timing.  The IRQ is issued beक्रमe actually the
+ * the update-IRQ timing.  The IRQ is issued before actually the
  * data is processed.  So, we need to process it afterwords in a
  * workqueue.
  */
-अटल पूर्णांक azx_position_ok(काष्ठा azx *chip, काष्ठा azx_dev *azx_dev)
-अणु
-	काष्ठा snd_pcm_substream *substream = azx_dev->core.substream;
-	पूर्णांक stream = substream->stream;
+static int azx_position_ok(struct azx *chip, struct azx_dev *azx_dev)
+{
+	struct snd_pcm_substream *substream = azx_dev->core.substream;
+	int stream = substream->stream;
 	u32 wallclk;
-	अचिन्हित पूर्णांक pos;
+	unsigned int pos;
 
-	wallclk = azx_पढ़ोl(chip, WALLCLK) - azx_dev->core.start_wallclk;
-	अगर (wallclk < (azx_dev->core.period_wallclk * 2) / 3)
-		वापस -1;	/* bogus (too early) पूर्णांकerrupt */
+	wallclk = azx_readl(chip, WALLCLK) - azx_dev->core.start_wallclk;
+	if (wallclk < (azx_dev->core.period_wallclk * 2) / 3)
+		return -1;	/* bogus (too early) interrupt */
 
-	अगर (chip->get_position[stream])
+	if (chip->get_position[stream])
 		pos = chip->get_position[stream](chip, azx_dev);
-	अन्यथा अणु /* use the position buffer as शेष */
+	else { /* use the position buffer as default */
 		pos = azx_get_pos_posbuf(chip, azx_dev);
-		अगर (!pos || pos == (u32)-1) अणु
+		if (!pos || pos == (u32)-1) {
 			dev_info(chip->card->dev,
 				 "Invalid position buffer, using LPIB read method instead.\n");
 			chip->get_position[stream] = azx_get_pos_lpib;
-			अगर (chip->get_position[0] == azx_get_pos_lpib &&
+			if (chip->get_position[0] == azx_get_pos_lpib &&
 			    chip->get_position[1] == azx_get_pos_lpib)
 				azx_bus(chip)->use_posbuf = false;
 			pos = azx_get_pos_lpib(chip, azx_dev);
-			chip->get_delay[stream] = शून्य;
-		पूर्ण अन्यथा अणु
+			chip->get_delay[stream] = NULL;
+		} else {
 			chip->get_position[stream] = azx_get_pos_posbuf;
-			अगर (chip->driver_caps & AZX_DCAPS_COUNT_LPIB_DELAY)
+			if (chip->driver_caps & AZX_DCAPS_COUNT_LPIB_DELAY)
 				chip->get_delay[stream] = azx_get_delay_from_lpib;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (pos >= azx_dev->core.bufsize)
+	if (pos >= azx_dev->core.bufsize)
 		pos = 0;
 
-	अगर (WARN_ONCE(!azx_dev->core.period_bytes,
+	if (WARN_ONCE(!azx_dev->core.period_bytes,
 		      "hda-intel: zero azx_dev->period_bytes"))
-		वापस -1; /* this shouldn't happen! */
-	अगर (wallclk < (azx_dev->core.period_wallclk * 5) / 4 &&
+		return -1; /* this shouldn't happen! */
+	if (wallclk < (azx_dev->core.period_wallclk * 5) / 4 &&
 	    pos % azx_dev->core.period_bytes > azx_dev->core.period_bytes / 2)
 		/* NG - it's below the first next period boundary */
-		वापस chip->bdl_pos_adj ? 0 : -1;
+		return chip->bdl_pos_adj ? 0 : -1;
 	azx_dev->core.start_wallclk += wallclk;
-	वापस 1; /* OK, it's fine */
-पूर्ण
+	return 1; /* OK, it's fine */
+}
 
 /*
- * The work क्रम pending PCM period updates.
+ * The work for pending PCM period updates.
  */
-अटल व्योम azx_irq_pending_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा hda_पूर्णांकel *hda = container_of(work, काष्ठा hda_पूर्णांकel, irq_pending_work);
-	काष्ठा azx *chip = &hda->chip;
-	काष्ठा hdac_bus *bus = azx_bus(chip);
-	काष्ठा hdac_stream *s;
-	पूर्णांक pending, ok;
+static void azx_irq_pending_work(struct work_struct *work)
+{
+	struct hda_intel *hda = container_of(work, struct hda_intel, irq_pending_work);
+	struct azx *chip = &hda->chip;
+	struct hdac_bus *bus = azx_bus(chip);
+	struct hdac_stream *s;
+	int pending, ok;
 
-	अगर (!hda->irq_pending_warned) अणु
+	if (!hda->irq_pending_warned) {
 		dev_info(chip->card->dev,
 			 "IRQ timing workaround is activated for card #%d. Suggest a bigger bdl_pos_adj.\n",
 			 chip->card->number);
 		hda->irq_pending_warned = 1;
-	पूर्ण
+	}
 
-	क्रम (;;) अणु
+	for (;;) {
 		pending = 0;
 		spin_lock_irq(&bus->reg_lock);
-		list_क्रम_each_entry(s, &bus->stream_list, list) अणु
-			काष्ठा azx_dev *azx_dev = stream_to_azx_dev(s);
-			अगर (!azx_dev->irq_pending ||
+		list_for_each_entry(s, &bus->stream_list, list) {
+			struct azx_dev *azx_dev = stream_to_azx_dev(s);
+			if (!azx_dev->irq_pending ||
 			    !s->substream ||
 			    !s->running)
-				जारी;
+				continue;
 			ok = azx_position_ok(chip, azx_dev);
-			अगर (ok > 0) अणु
+			if (ok > 0) {
 				azx_dev->irq_pending = 0;
 				spin_unlock(&bus->reg_lock);
 				snd_pcm_period_elapsed(s->substream);
 				spin_lock(&bus->reg_lock);
-			पूर्ण अन्यथा अगर (ok < 0) अणु
+			} else if (ok < 0) {
 				pending = 0;	/* too early */
-			पूर्ण अन्यथा
+			} else
 				pending++;
-		पूर्ण
+		}
 		spin_unlock_irq(&bus->reg_lock);
-		अगर (!pending)
-			वापस;
+		if (!pending)
+			return;
 		msleep(1);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* clear irq_pending flags and assure no on-going workq */
-अटल व्योम azx_clear_irq_pending(काष्ठा azx *chip)
-अणु
-	काष्ठा hdac_bus *bus = azx_bus(chip);
-	काष्ठा hdac_stream *s;
+static void azx_clear_irq_pending(struct azx *chip)
+{
+	struct hdac_bus *bus = azx_bus(chip);
+	struct hdac_stream *s;
 
 	spin_lock_irq(&bus->reg_lock);
-	list_क्रम_each_entry(s, &bus->stream_list, list) अणु
-		काष्ठा azx_dev *azx_dev = stream_to_azx_dev(s);
+	list_for_each_entry(s, &bus->stream_list, list) {
+		struct azx_dev *azx_dev = stream_to_azx_dev(s);
 		azx_dev->irq_pending = 0;
-	पूर्ण
+	}
 	spin_unlock_irq(&bus->reg_lock);
-पूर्ण
+}
 
-अटल पूर्णांक azx_acquire_irq(काष्ठा azx *chip, पूर्णांक करो_disconnect)
-अणु
-	काष्ठा hdac_bus *bus = azx_bus(chip);
+static int azx_acquire_irq(struct azx *chip, int do_disconnect)
+{
+	struct hdac_bus *bus = azx_bus(chip);
 
-	अगर (request_irq(chip->pci->irq, azx_पूर्णांकerrupt,
+	if (request_irq(chip->pci->irq, azx_interrupt,
 			chip->msi ? 0 : IRQF_SHARED,
-			chip->card->irq_descr, chip)) अणु
+			chip->card->irq_descr, chip)) {
 		dev_err(chip->card->dev,
 			"unable to grab IRQ %d, disabling device\n",
 			chip->pci->irq);
-		अगर (करो_disconnect)
+		if (do_disconnect)
 			snd_card_disconnect(chip->card);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 	bus->irq = chip->pci->irq;
 	chip->card->sync_irq = bus->irq;
-	pci_पूर्णांकx(chip->pci, !chip->msi);
-	वापस 0;
-पूर्ण
+	pci_intx(chip->pci, !chip->msi);
+	return 0;
+}
 
 /* get the current DMA position with correction on VIA chips */
-अटल अचिन्हित पूर्णांक azx_via_get_position(काष्ठा azx *chip,
-					 काष्ठा azx_dev *azx_dev)
-अणु
-	अचिन्हित पूर्णांक link_pos, mini_pos, bound_pos;
-	अचिन्हित पूर्णांक mod_link_pos, mod_dma_pos, mod_mini_pos;
-	अचिन्हित पूर्णांक fअगरo_size;
+static unsigned int azx_via_get_position(struct azx *chip,
+					 struct azx_dev *azx_dev)
+{
+	unsigned int link_pos, mini_pos, bound_pos;
+	unsigned int mod_link_pos, mod_dma_pos, mod_mini_pos;
+	unsigned int fifo_size;
 
 	link_pos = snd_hdac_stream_get_pos_lpib(azx_stream(azx_dev));
-	अगर (azx_dev->core.substream->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
+	if (azx_dev->core.substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
 		/* Playback, no problem using link position */
-		वापस link_pos;
-	पूर्ण
+		return link_pos;
+	}
 
 	/* Capture */
 	/* For new chipset,
@@ -784,728 +783,728 @@ set_spa:
 	mod_dma_pos = le32_to_cpu(*azx_dev->core.posbuf);
 	mod_dma_pos %= azx_dev->core.period_bytes;
 
-	fअगरo_size = azx_stream(azx_dev)->fअगरo_size - 1;
+	fifo_size = azx_stream(azx_dev)->fifo_size - 1;
 
-	अगर (azx_dev->insufficient) अणु
+	if (azx_dev->insufficient) {
 		/* Link position never gather than FIFO size */
-		अगर (link_pos <= fअगरo_size)
-			वापस 0;
+		if (link_pos <= fifo_size)
+			return 0;
 
 		azx_dev->insufficient = 0;
-	पूर्ण
+	}
 
-	अगर (link_pos <= fअगरo_size)
-		mini_pos = azx_dev->core.bufsize + link_pos - fअगरo_size;
-	अन्यथा
-		mini_pos = link_pos - fअगरo_size;
+	if (link_pos <= fifo_size)
+		mini_pos = azx_dev->core.bufsize + link_pos - fifo_size;
+	else
+		mini_pos = link_pos - fifo_size;
 
 	/* Find nearest previous boudary */
 	mod_mini_pos = mini_pos % azx_dev->core.period_bytes;
 	mod_link_pos = link_pos % azx_dev->core.period_bytes;
-	अगर (mod_link_pos >= fअगरo_size)
+	if (mod_link_pos >= fifo_size)
 		bound_pos = link_pos - mod_link_pos;
-	अन्यथा अगर (mod_dma_pos >= mod_mini_pos)
+	else if (mod_dma_pos >= mod_mini_pos)
 		bound_pos = mini_pos - mod_mini_pos;
-	अन्यथा अणु
+	else {
 		bound_pos = mini_pos - mod_mini_pos + azx_dev->core.period_bytes;
-		अगर (bound_pos >= azx_dev->core.bufsize)
+		if (bound_pos >= azx_dev->core.bufsize)
 			bound_pos = 0;
-	पूर्ण
+	}
 
 	/* Calculate real DMA position we want */
-	वापस bound_pos + mod_dma_pos;
-पूर्ण
+	return bound_pos + mod_dma_pos;
+}
 
-#घोषणा AMD_FIFO_SIZE	32
+#define AMD_FIFO_SIZE	32
 
 /* get the current DMA position with FIFO size correction */
-अटल अचिन्हित पूर्णांक azx_get_pos_fअगरo(काष्ठा azx *chip, काष्ठा azx_dev *azx_dev)
-अणु
-	काष्ठा snd_pcm_substream *substream = azx_dev->core.substream;
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	अचिन्हित पूर्णांक pos, delay;
+static unsigned int azx_get_pos_fifo(struct azx *chip, struct azx_dev *azx_dev)
+{
+	struct snd_pcm_substream *substream = azx_dev->core.substream;
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	unsigned int pos, delay;
 
 	pos = snd_hdac_stream_get_pos_lpib(azx_stream(azx_dev));
-	अगर (!runसमय)
-		वापस pos;
+	if (!runtime)
+		return pos;
 
-	runसमय->delay = AMD_FIFO_SIZE;
-	delay = frames_to_bytes(runसमय, AMD_FIFO_SIZE);
-	अगर (azx_dev->insufficient) अणु
-		अगर (pos < delay) अणु
+	runtime->delay = AMD_FIFO_SIZE;
+	delay = frames_to_bytes(runtime, AMD_FIFO_SIZE);
+	if (azx_dev->insufficient) {
+		if (pos < delay) {
 			delay = pos;
-			runसमय->delay = bytes_to_frames(runसमय, pos);
-		पूर्ण अन्यथा अणु
+			runtime->delay = bytes_to_frames(runtime, pos);
+		} else {
 			azx_dev->insufficient = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* correct the DMA position क्रम capture stream */
-	अगर (substream->stream == SNDRV_PCM_STREAM_CAPTURE) अणु
-		अगर (pos < delay)
+	/* correct the DMA position for capture stream */
+	if (substream->stream == SNDRV_PCM_STREAM_CAPTURE) {
+		if (pos < delay)
 			pos += azx_dev->core.bufsize;
 		pos -= delay;
-	पूर्ण
+	}
 
-	वापस pos;
-पूर्ण
+	return pos;
+}
 
-अटल पूर्णांक azx_get_delay_from_fअगरo(काष्ठा azx *chip, काष्ठा azx_dev *azx_dev,
-				   अचिन्हित पूर्णांक pos)
-अणु
-	काष्ठा snd_pcm_substream *substream = azx_dev->core.substream;
+static int azx_get_delay_from_fifo(struct azx *chip, struct azx_dev *azx_dev,
+				   unsigned int pos)
+{
+	struct snd_pcm_substream *substream = azx_dev->core.substream;
 
-	/* just पढ़ो back the calculated value in the above */
-	वापस substream->runसमय->delay;
-पूर्ण
+	/* just read back the calculated value in the above */
+	return substream->runtime->delay;
+}
 
-अटल अचिन्हित पूर्णांक azx_skl_get_dpib_pos(काष्ठा azx *chip,
-					 काष्ठा azx_dev *azx_dev)
-अणु
-	वापस _snd_hdac_chip_पढ़ोl(azx_bus(chip),
+static unsigned int azx_skl_get_dpib_pos(struct azx *chip,
+					 struct azx_dev *azx_dev)
+{
+	return _snd_hdac_chip_readl(azx_bus(chip),
 				    AZX_REG_VS_SDXDPIB_XBASE +
 				    (AZX_REG_VS_SDXDPIB_XINTERVAL *
 				     azx_dev->core.index));
-पूर्ण
+}
 
 /* get the current DMA position with correction on SKL+ chips */
-अटल अचिन्हित पूर्णांक azx_get_pos_skl(काष्ठा azx *chip, काष्ठा azx_dev *azx_dev)
-अणु
-	/* DPIB रेजिस्टर gives a more accurate position क्रम playback */
-	अगर (azx_dev->core.substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
-		वापस azx_skl_get_dpib_pos(chip, azx_dev);
+static unsigned int azx_get_pos_skl(struct azx *chip, struct azx_dev *azx_dev)
+{
+	/* DPIB register gives a more accurate position for playback */
+	if (azx_dev->core.substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+		return azx_skl_get_dpib_pos(chip, azx_dev);
 
-	/* For capture, we need to पढ़ो posbuf, but it requires a delay
-	 * क्रम the possible boundary overlap; the पढ़ो of DPIB fetches the
+	/* For capture, we need to read posbuf, but it requires a delay
+	 * for the possible boundary overlap; the read of DPIB fetches the
 	 * actual posbuf
 	 */
 	udelay(20);
 	azx_skl_get_dpib_pos(chip, azx_dev);
-	वापस azx_get_pos_posbuf(chip, azx_dev);
-पूर्ण
+	return azx_get_pos_posbuf(chip, azx_dev);
+}
 
-#अगर_घोषित CONFIG_PM
-अटल DEFINE_MUTEX(card_list_lock);
-अटल LIST_HEAD(card_list);
+#ifdef CONFIG_PM
+static DEFINE_MUTEX(card_list_lock);
+static LIST_HEAD(card_list);
 
-अटल व्योम azx_add_card_list(काष्ठा azx *chip)
-अणु
-	काष्ठा hda_पूर्णांकel *hda = container_of(chip, काष्ठा hda_पूर्णांकel, chip);
+static void azx_add_card_list(struct azx *chip)
+{
+	struct hda_intel *hda = container_of(chip, struct hda_intel, chip);
 	mutex_lock(&card_list_lock);
 	list_add(&hda->list, &card_list);
 	mutex_unlock(&card_list_lock);
-पूर्ण
+}
 
-अटल व्योम azx_del_card_list(काष्ठा azx *chip)
-अणु
-	काष्ठा hda_पूर्णांकel *hda = container_of(chip, काष्ठा hda_पूर्णांकel, chip);
+static void azx_del_card_list(struct azx *chip)
+{
+	struct hda_intel *hda = container_of(chip, struct hda_intel, chip);
 	mutex_lock(&card_list_lock);
 	list_del_init(&hda->list);
 	mutex_unlock(&card_list_lock);
-पूर्ण
+}
 
-/* trigger घातer-save check at writing parameter */
-अटल पूर्णांक param_set_xपूर्णांक(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp)
-अणु
-	काष्ठा hda_पूर्णांकel *hda;
-	काष्ठा azx *chip;
-	पूर्णांक prev = घातer_save;
-	पूर्णांक ret = param_set_पूर्णांक(val, kp);
+/* trigger power-save check at writing parameter */
+static int param_set_xint(const char *val, const struct kernel_param *kp)
+{
+	struct hda_intel *hda;
+	struct azx *chip;
+	int prev = power_save;
+	int ret = param_set_int(val, kp);
 
-	अगर (ret || prev == घातer_save)
-		वापस ret;
+	if (ret || prev == power_save)
+		return ret;
 
 	mutex_lock(&card_list_lock);
-	list_क्रम_each_entry(hda, &card_list, list) अणु
+	list_for_each_entry(hda, &card_list, list) {
 		chip = &hda->chip;
-		अगर (!hda->probe_जारीd || chip->disabled)
-			जारी;
-		snd_hda_set_घातer_save(&chip->bus, घातer_save * 1000);
-	पूर्ण
+		if (!hda->probe_continued || chip->disabled)
+			continue;
+		snd_hda_set_power_save(&chip->bus, power_save * 1000);
+	}
 	mutex_unlock(&card_list_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * घातer management
+ * power management
  */
-अटल bool azx_is_pm_पढ़ोy(काष्ठा snd_card *card)
-अणु
-	काष्ठा azx *chip;
-	काष्ठा hda_पूर्णांकel *hda;
+static bool azx_is_pm_ready(struct snd_card *card)
+{
+	struct azx *chip;
+	struct hda_intel *hda;
 
-	अगर (!card)
-		वापस false;
-	chip = card->निजी_data;
-	hda = container_of(chip, काष्ठा hda_पूर्णांकel, chip);
-	अगर (chip->disabled || hda->init_failed || !chip->running)
-		वापस false;
-	वापस true;
-पूर्ण
+	if (!card)
+		return false;
+	chip = card->private_data;
+	hda = container_of(chip, struct hda_intel, chip);
+	if (chip->disabled || hda->init_failed || !chip->running)
+		return false;
+	return true;
+}
 
-अटल व्योम __azx_runसमय_suspend(काष्ठा azx *chip)
-अणु
+static void __azx_runtime_suspend(struct azx *chip)
+{
 	azx_stop_chip(chip);
 	azx_enter_link_reset(chip);
 	azx_clear_irq_pending(chip);
-	display_घातer(chip, false);
-पूर्ण
+	display_power(chip, false);
+}
 
-अटल व्योम __azx_runसमय_resume(काष्ठा azx *chip)
-अणु
-	काष्ठा hda_पूर्णांकel *hda = container_of(chip, काष्ठा hda_पूर्णांकel, chip);
-	काष्ठा hdac_bus *bus = azx_bus(chip);
-	काष्ठा hda_codec *codec;
-	पूर्णांक status;
+static void __azx_runtime_resume(struct azx *chip)
+{
+	struct hda_intel *hda = container_of(chip, struct hda_intel, chip);
+	struct hdac_bus *bus = azx_bus(chip);
+	struct hda_codec *codec;
+	int status;
 
-	display_घातer(chip, true);
-	अगर (hda->need_i915_घातer)
+	display_power(chip, true);
+	if (hda->need_i915_power)
 		snd_hdac_i915_set_bclk(bus);
 
-	/* Read STATESTS beक्रमe controller reset */
-	status = azx_पढ़ोw(chip, STATESTS);
+	/* Read STATESTS before controller reset */
+	status = azx_readw(chip, STATESTS);
 
 	azx_init_pci(chip);
-	hda_पूर्णांकel_init_chip(chip, true);
+	hda_intel_init_chip(chip, true);
 
-	/* Aव्योम codec resume अगर runसमय resume is क्रम प्रणाली suspend */
-	अगर (!chip->pm_prepared) अणु
-		list_क्रम_each_codec(codec, &chip->bus) अणु
-			अगर (codec->relaxed_resume)
-				जारी;
+	/* Avoid codec resume if runtime resume is for system suspend */
+	if (!chip->pm_prepared) {
+		list_for_each_codec(codec, &chip->bus) {
+			if (codec->relaxed_resume)
+				continue;
 
-			अगर (codec->क्रमced_resume || (status & (1 << codec->addr)))
+			if (codec->forced_resume || (status & (1 << codec->addr)))
 				pm_request_resume(hda_codec_dev(codec));
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* घातer करोwn again क्रम link-controlled chips */
-	अगर (!hda->need_i915_घातer)
-		display_घातer(chip, false);
-पूर्ण
+	/* power down again for link-controlled chips */
+	if (!hda->need_i915_power)
+		display_power(chip, false);
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक azx_prepare(काष्ठा device *dev)
-अणु
-	काष्ठा snd_card *card = dev_get_drvdata(dev);
-	काष्ठा azx *chip;
+#ifdef CONFIG_PM_SLEEP
+static int azx_prepare(struct device *dev)
+{
+	struct snd_card *card = dev_get_drvdata(dev);
+	struct azx *chip;
 
-	अगर (!azx_is_pm_पढ़ोy(card))
-		वापस 0;
+	if (!azx_is_pm_ready(card))
+		return 0;
 
-	chip = card->निजी_data;
+	chip = card->private_data;
 	chip->pm_prepared = 1;
-	snd_घातer_change_state(card, SNDRV_CTL_POWER_D3hot);
+	snd_power_change_state(card, SNDRV_CTL_POWER_D3hot);
 
 	flush_work(&azx_bus(chip)->unsol_work);
 
-	/* HDA controller always requires dअगरferent WAKEEN क्रम runसमय suspend
-	 * and प्रणाली suspend, so करोn't use direct-complete here.
+	/* HDA controller always requires different WAKEEN for runtime suspend
+	 * and system suspend, so don't use direct-complete here.
 	 */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम azx_complete(काष्ठा device *dev)
-अणु
-	काष्ठा snd_card *card = dev_get_drvdata(dev);
-	काष्ठा azx *chip;
+static void azx_complete(struct device *dev)
+{
+	struct snd_card *card = dev_get_drvdata(dev);
+	struct azx *chip;
 
-	अगर (!azx_is_pm_पढ़ोy(card))
-		वापस;
+	if (!azx_is_pm_ready(card))
+		return;
 
-	chip = card->निजी_data;
-	snd_घातer_change_state(card, SNDRV_CTL_POWER_D0);
+	chip = card->private_data;
+	snd_power_change_state(card, SNDRV_CTL_POWER_D0);
 	chip->pm_prepared = 0;
-पूर्ण
+}
 
-अटल पूर्णांक azx_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा snd_card *card = dev_get_drvdata(dev);
-	काष्ठा azx *chip;
-	काष्ठा hdac_bus *bus;
+static int azx_suspend(struct device *dev)
+{
+	struct snd_card *card = dev_get_drvdata(dev);
+	struct azx *chip;
+	struct hdac_bus *bus;
 
-	अगर (!azx_is_pm_पढ़ोy(card))
-		वापस 0;
+	if (!azx_is_pm_ready(card))
+		return 0;
 
-	chip = card->निजी_data;
+	chip = card->private_data;
 	bus = azx_bus(chip);
-	__azx_runसमय_suspend(chip);
-	अगर (bus->irq >= 0) अणु
-		मुक्त_irq(bus->irq, chip);
+	__azx_runtime_suspend(chip);
+	if (bus->irq >= 0) {
+		free_irq(bus->irq, chip);
 		bus->irq = -1;
 		chip->card->sync_irq = -1;
-	पूर्ण
+	}
 
-	अगर (chip->msi)
+	if (chip->msi)
 		pci_disable_msi(chip->pci);
 
 	trace_azx_suspend(chip);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक azx_resume(काष्ठा device *dev)
-अणु
-	काष्ठा snd_card *card = dev_get_drvdata(dev);
-	काष्ठा azx *chip;
+static int azx_resume(struct device *dev)
+{
+	struct snd_card *card = dev_get_drvdata(dev);
+	struct azx *chip;
 
-	अगर (!azx_is_pm_पढ़ोy(card))
-		वापस 0;
+	if (!azx_is_pm_ready(card))
+		return 0;
 
-	chip = card->निजी_data;
-	अगर (chip->msi)
-		अगर (pci_enable_msi(chip->pci) < 0)
+	chip = card->private_data;
+	if (chip->msi)
+		if (pci_enable_msi(chip->pci) < 0)
 			chip->msi = 0;
-	अगर (azx_acquire_irq(chip, 1) < 0)
-		वापस -EIO;
+	if (azx_acquire_irq(chip, 1) < 0)
+		return -EIO;
 
-	__azx_runसमय_resume(chip);
+	__azx_runtime_resume(chip);
 
 	trace_azx_resume(chip);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* put codec करोwn to D3 at hibernation क्रम Intel SKL+;
+/* put codec down to D3 at hibernation for Intel SKL+;
  * otherwise BIOS may still access the codec and screw up the driver
  */
-अटल पूर्णांक azx_मुक्तze_noirq(काष्ठा device *dev)
-अणु
-	काष्ठा snd_card *card = dev_get_drvdata(dev);
-	काष्ठा azx *chip = card->निजी_data;
-	काष्ठा pci_dev *pci = to_pci_dev(dev);
+static int azx_freeze_noirq(struct device *dev)
+{
+	struct snd_card *card = dev_get_drvdata(dev);
+	struct azx *chip = card->private_data;
+	struct pci_dev *pci = to_pci_dev(dev);
 
-	अगर (!azx_is_pm_पढ़ोy(card))
-		वापस 0;
-	अगर (chip->driver_type == AZX_DRIVER_SKL)
-		pci_set_घातer_state(pci, PCI_D3hot);
+	if (!azx_is_pm_ready(card))
+		return 0;
+	if (chip->driver_type == AZX_DRIVER_SKL)
+		pci_set_power_state(pci, PCI_D3hot);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक azx_thaw_noirq(काष्ठा device *dev)
-अणु
-	काष्ठा snd_card *card = dev_get_drvdata(dev);
-	काष्ठा azx *chip = card->निजी_data;
-	काष्ठा pci_dev *pci = to_pci_dev(dev);
+static int azx_thaw_noirq(struct device *dev)
+{
+	struct snd_card *card = dev_get_drvdata(dev);
+	struct azx *chip = card->private_data;
+	struct pci_dev *pci = to_pci_dev(dev);
 
-	अगर (!azx_is_pm_पढ़ोy(card))
-		वापस 0;
-	अगर (chip->driver_type == AZX_DRIVER_SKL)
-		pci_set_घातer_state(pci, PCI_D0);
+	if (!azx_is_pm_ready(card))
+		return 0;
+	if (chip->driver_type == AZX_DRIVER_SKL)
+		pci_set_power_state(pci, PCI_D0);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PM_SLEEP */
+	return 0;
+}
+#endif /* CONFIG_PM_SLEEP */
 
-अटल पूर्णांक azx_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा snd_card *card = dev_get_drvdata(dev);
-	काष्ठा azx *chip;
+static int azx_runtime_suspend(struct device *dev)
+{
+	struct snd_card *card = dev_get_drvdata(dev);
+	struct azx *chip;
 
-	अगर (!azx_is_pm_पढ़ोy(card))
-		वापस 0;
-	chip = card->निजी_data;
+	if (!azx_is_pm_ready(card))
+		return 0;
+	chip = card->private_data;
 
 	/* enable controller wake up event */
-	azx_ग_लिखोw(chip, WAKEEN, azx_पढ़ोw(chip, WAKEEN) | STATESTS_INT_MASK);
+	azx_writew(chip, WAKEEN, azx_readw(chip, WAKEEN) | STATESTS_INT_MASK);
 
-	__azx_runसमय_suspend(chip);
-	trace_azx_runसमय_suspend(chip);
-	वापस 0;
-पूर्ण
+	__azx_runtime_suspend(chip);
+	trace_azx_runtime_suspend(chip);
+	return 0;
+}
 
-अटल पूर्णांक azx_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा snd_card *card = dev_get_drvdata(dev);
-	काष्ठा azx *chip;
+static int azx_runtime_resume(struct device *dev)
+{
+	struct snd_card *card = dev_get_drvdata(dev);
+	struct azx *chip;
 
-	अगर (!azx_is_pm_पढ़ोy(card))
-		वापस 0;
-	chip = card->निजी_data;
-	__azx_runसमय_resume(chip);
+	if (!azx_is_pm_ready(card))
+		return 0;
+	chip = card->private_data;
+	__azx_runtime_resume(chip);
 
 	/* disable controller Wake Up event*/
-	azx_ग_लिखोw(chip, WAKEEN, azx_पढ़ोw(chip, WAKEEN) & ~STATESTS_INT_MASK);
+	azx_writew(chip, WAKEEN, azx_readw(chip, WAKEEN) & ~STATESTS_INT_MASK);
 
-	trace_azx_runसमय_resume(chip);
-	वापस 0;
-पूर्ण
+	trace_azx_runtime_resume(chip);
+	return 0;
+}
 
-अटल पूर्णांक azx_runसमय_idle(काष्ठा device *dev)
-अणु
-	काष्ठा snd_card *card = dev_get_drvdata(dev);
-	काष्ठा azx *chip;
-	काष्ठा hda_पूर्णांकel *hda;
+static int azx_runtime_idle(struct device *dev)
+{
+	struct snd_card *card = dev_get_drvdata(dev);
+	struct azx *chip;
+	struct hda_intel *hda;
 
-	अगर (!card)
-		वापस 0;
+	if (!card)
+		return 0;
 
-	chip = card->निजी_data;
-	hda = container_of(chip, काष्ठा hda_पूर्णांकel, chip);
-	अगर (chip->disabled || hda->init_failed)
-		वापस 0;
+	chip = card->private_data;
+	hda = container_of(chip, struct hda_intel, chip);
+	if (chip->disabled || hda->init_failed)
+		return 0;
 
-	अगर (!घातer_save_controller || !azx_has_pm_runसमय(chip) ||
-	    azx_bus(chip)->codec_घातered || !chip->running)
-		वापस -EBUSY;
+	if (!power_save_controller || !azx_has_pm_runtime(chip) ||
+	    azx_bus(chip)->codec_powered || !chip->running)
+		return -EBUSY;
 
-	/* ELD notअगरication माला_लो broken when HD-audio bus is off */
-	अगर (needs_eld_notअगरy_link(chip))
-		वापस -EBUSY;
+	/* ELD notification gets broken when HD-audio bus is off */
+	if (needs_eld_notify_link(chip))
+		return -EBUSY;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops azx_pm = अणु
+static const struct dev_pm_ops azx_pm = {
 	SET_SYSTEM_SLEEP_PM_OPS(azx_suspend, azx_resume)
-#अगर_घोषित CONFIG_PM_SLEEP
+#ifdef CONFIG_PM_SLEEP
 	.prepare = azx_prepare,
 	.complete = azx_complete,
-	.मुक्तze_noirq = azx_मुक्तze_noirq,
+	.freeze_noirq = azx_freeze_noirq,
 	.thaw_noirq = azx_thaw_noirq,
-#पूर्ण_अगर
-	SET_RUNTIME_PM_OPS(azx_runसमय_suspend, azx_runसमय_resume, azx_runसमय_idle)
-पूर्ण;
+#endif
+	SET_RUNTIME_PM_OPS(azx_runtime_suspend, azx_runtime_resume, azx_runtime_idle)
+};
 
-#घोषणा AZX_PM_OPS	&azx_pm
-#अन्यथा
-#घोषणा azx_add_card_list(chip) /* NOP */
-#घोषणा azx_del_card_list(chip) /* NOP */
-#घोषणा AZX_PM_OPS	शून्य
-#पूर्ण_अगर /* CONFIG_PM */
+#define AZX_PM_OPS	&azx_pm
+#else
+#define azx_add_card_list(chip) /* NOP */
+#define azx_del_card_list(chip) /* NOP */
+#define AZX_PM_OPS	NULL
+#endif /* CONFIG_PM */
 
 
-अटल पूर्णांक azx_probe_जारी(काष्ठा azx *chip);
+static int azx_probe_continue(struct azx *chip);
 
-#अगर_घोषित SUPPORT_VGA_SWITCHEROO
-अटल काष्ठा pci_dev *get_bound_vga(काष्ठा pci_dev *pci);
+#ifdef SUPPORT_VGA_SWITCHEROO
+static struct pci_dev *get_bound_vga(struct pci_dev *pci);
 
-अटल व्योम azx_vs_set_state(काष्ठा pci_dev *pci,
-			     क्रमागत vga_चयनeroo_state state)
-अणु
-	काष्ठा snd_card *card = pci_get_drvdata(pci);
-	काष्ठा azx *chip = card->निजी_data;
-	काष्ठा hda_पूर्णांकel *hda = container_of(chip, काष्ठा hda_पूर्णांकel, chip);
-	काष्ठा hda_codec *codec;
+static void azx_vs_set_state(struct pci_dev *pci,
+			     enum vga_switcheroo_state state)
+{
+	struct snd_card *card = pci_get_drvdata(pci);
+	struct azx *chip = card->private_data;
+	struct hda_intel *hda = container_of(chip, struct hda_intel, chip);
+	struct hda_codec *codec;
 	bool disabled;
 
-	रुको_क्रम_completion(&hda->probe_रुको);
-	अगर (hda->init_failed)
-		वापस;
+	wait_for_completion(&hda->probe_wait);
+	if (hda->init_failed)
+		return;
 
 	disabled = (state == VGA_SWITCHEROO_OFF);
-	अगर (chip->disabled == disabled)
-		वापस;
+	if (chip->disabled == disabled)
+		return;
 
-	अगर (!hda->probe_जारीd) अणु
+	if (!hda->probe_continued) {
 		chip->disabled = disabled;
-		अगर (!disabled) अणु
+		if (!disabled) {
 			dev_info(chip->card->dev,
 				 "Start delayed initialization\n");
-			अगर (azx_probe_जारी(chip) < 0)
+			if (azx_probe_continue(chip) < 0)
 				dev_err(chip->card->dev, "initialization error\n");
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		dev_info(chip->card->dev, "%s via vga_switcheroo\n",
 			 disabled ? "Disabling" : "Enabling");
-		अगर (disabled) अणु
-			list_क्रम_each_codec(codec, &chip->bus) अणु
-				pm_runसमय_suspend(hda_codec_dev(codec));
-				pm_runसमय_disable(hda_codec_dev(codec));
-			पूर्ण
-			pm_runसमय_suspend(card->dev);
-			pm_runसमय_disable(card->dev);
-			/* when we get suspended by vga_चयनeroo we end up in D3cold,
+		if (disabled) {
+			list_for_each_codec(codec, &chip->bus) {
+				pm_runtime_suspend(hda_codec_dev(codec));
+				pm_runtime_disable(hda_codec_dev(codec));
+			}
+			pm_runtime_suspend(card->dev);
+			pm_runtime_disable(card->dev);
+			/* when we get suspended by vga_switcheroo we end up in D3cold,
 			 * however we have no ACPI handle, so pci/acpi can't put us there,
 			 * put ourselves there */
 			pci->current_state = PCI_D3cold;
 			chip->disabled = true;
-			अगर (snd_hda_lock_devices(&chip->bus))
+			if (snd_hda_lock_devices(&chip->bus))
 				dev_warn(chip->card->dev,
 					 "Cannot lock devices!\n");
-		पूर्ण अन्यथा अणु
+		} else {
 			snd_hda_unlock_devices(&chip->bus);
 			chip->disabled = false;
-			pm_runसमय_enable(card->dev);
-			list_क्रम_each_codec(codec, &chip->bus) अणु
-				pm_runसमय_enable(hda_codec_dev(codec));
-				pm_runसमय_resume(hda_codec_dev(codec));
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			pm_runtime_enable(card->dev);
+			list_for_each_codec(codec, &chip->bus) {
+				pm_runtime_enable(hda_codec_dev(codec));
+				pm_runtime_resume(hda_codec_dev(codec));
+			}
+		}
+	}
+}
 
-अटल bool azx_vs_can_चयन(काष्ठा pci_dev *pci)
-अणु
-	काष्ठा snd_card *card = pci_get_drvdata(pci);
-	काष्ठा azx *chip = card->निजी_data;
-	काष्ठा hda_पूर्णांकel *hda = container_of(chip, काष्ठा hda_पूर्णांकel, chip);
+static bool azx_vs_can_switch(struct pci_dev *pci)
+{
+	struct snd_card *card = pci_get_drvdata(pci);
+	struct azx *chip = card->private_data;
+	struct hda_intel *hda = container_of(chip, struct hda_intel, chip);
 
-	रुको_क्रम_completion(&hda->probe_रुको);
-	अगर (hda->init_failed)
-		वापस false;
-	अगर (chip->disabled || !hda->probe_जारीd)
-		वापस true;
-	अगर (snd_hda_lock_devices(&chip->bus))
-		वापस false;
+	wait_for_completion(&hda->probe_wait);
+	if (hda->init_failed)
+		return false;
+	if (chip->disabled || !hda->probe_continued)
+		return true;
+	if (snd_hda_lock_devices(&chip->bus))
+		return false;
 	snd_hda_unlock_devices(&chip->bus);
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
- * The discrete GPU cannot घातer करोwn unless the HDA controller runसमय
- * suspends, so activate runसमय PM on codecs even अगर घातer_save == 0.
+ * The discrete GPU cannot power down unless the HDA controller runtime
+ * suspends, so activate runtime PM on codecs even if power_save == 0.
  */
-अटल व्योम setup_vga_चयनeroo_runसमय_pm(काष्ठा azx *chip)
-अणु
-	काष्ठा hda_पूर्णांकel *hda = container_of(chip, काष्ठा hda_पूर्णांकel, chip);
-	काष्ठा hda_codec *codec;
+static void setup_vga_switcheroo_runtime_pm(struct azx *chip)
+{
+	struct hda_intel *hda = container_of(chip, struct hda_intel, chip);
+	struct hda_codec *codec;
 
-	अगर (hda->use_vga_चयनeroo && !needs_eld_notअगरy_link(chip)) अणु
-		list_क्रम_each_codec(codec, &chip->bus)
-			codec->स्वतः_runसमय_pm = 1;
-		/* reset the घातer save setup */
-		अगर (chip->running)
-			set_शेष_घातer_save(chip);
-	पूर्ण
-पूर्ण
+	if (hda->use_vga_switcheroo && !needs_eld_notify_link(chip)) {
+		list_for_each_codec(codec, &chip->bus)
+			codec->auto_runtime_pm = 1;
+		/* reset the power save setup */
+		if (chip->running)
+			set_default_power_save(chip);
+	}
+}
 
-अटल व्योम azx_vs_gpu_bound(काष्ठा pci_dev *pci,
-			     क्रमागत vga_चयनeroo_client_id client_id)
-अणु
-	काष्ठा snd_card *card = pci_get_drvdata(pci);
-	काष्ठा azx *chip = card->निजी_data;
+static void azx_vs_gpu_bound(struct pci_dev *pci,
+			     enum vga_switcheroo_client_id client_id)
+{
+	struct snd_card *card = pci_get_drvdata(pci);
+	struct azx *chip = card->private_data;
 
-	अगर (client_id == VGA_SWITCHEROO_DIS)
-		chip->bus.keep_घातer = 0;
-	setup_vga_चयनeroo_runसमय_pm(chip);
-पूर्ण
+	if (client_id == VGA_SWITCHEROO_DIS)
+		chip->bus.keep_power = 0;
+	setup_vga_switcheroo_runtime_pm(chip);
+}
 
-अटल व्योम init_vga_चयनeroo(काष्ठा azx *chip)
-अणु
-	काष्ठा hda_पूर्णांकel *hda = container_of(chip, काष्ठा hda_पूर्णांकel, chip);
-	काष्ठा pci_dev *p = get_bound_vga(chip->pci);
-	काष्ठा pci_dev *parent;
-	अगर (p) अणु
+static void init_vga_switcheroo(struct azx *chip)
+{
+	struct hda_intel *hda = container_of(chip, struct hda_intel, chip);
+	struct pci_dev *p = get_bound_vga(chip->pci);
+	struct pci_dev *parent;
+	if (p) {
 		dev_info(chip->card->dev,
 			 "Handle vga_switcheroo audio client\n");
-		hda->use_vga_चयनeroo = 1;
+		hda->use_vga_switcheroo = 1;
 
 		/* cleared in either gpu_bound op or codec probe, or when its
 		 * upstream port has _PR3 (i.e. dGPU).
 		 */
 		parent = pci_upstream_bridge(p);
-		chip->bus.keep_घातer = parent ? !pci_pr3_present(parent) : 1;
+		chip->bus.keep_power = parent ? !pci_pr3_present(parent) : 1;
 		chip->driver_caps |= AZX_DCAPS_PM_RUNTIME;
 		pci_dev_put(p);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल स्थिर काष्ठा vga_चयनeroo_client_ops azx_vs_ops = अणु
+static const struct vga_switcheroo_client_ops azx_vs_ops = {
 	.set_gpu_state = azx_vs_set_state,
-	.can_चयन = azx_vs_can_चयन,
+	.can_switch = azx_vs_can_switch,
 	.gpu_bound = azx_vs_gpu_bound,
-पूर्ण;
+};
 
-अटल पूर्णांक रेजिस्टर_vga_चयनeroo(काष्ठा azx *chip)
-अणु
-	काष्ठा hda_पूर्णांकel *hda = container_of(chip, काष्ठा hda_पूर्णांकel, chip);
-	काष्ठा pci_dev *p;
-	पूर्णांक err;
+static int register_vga_switcheroo(struct azx *chip)
+{
+	struct hda_intel *hda = container_of(chip, struct hda_intel, chip);
+	struct pci_dev *p;
+	int err;
 
-	अगर (!hda->use_vga_चयनeroo)
-		वापस 0;
+	if (!hda->use_vga_switcheroo)
+		return 0;
 
 	p = get_bound_vga(chip->pci);
-	err = vga_चयनeroo_रेजिस्टर_audio_client(chip->pci, &azx_vs_ops, p);
+	err = vga_switcheroo_register_audio_client(chip->pci, &azx_vs_ops, p);
 	pci_dev_put(p);
 
-	अगर (err < 0)
-		वापस err;
-	hda->vga_चयनeroo_रेजिस्टरed = 1;
+	if (err < 0)
+		return err;
+	hda->vga_switcheroo_registered = 1;
 
-	वापस 0;
-पूर्ण
-#अन्यथा
-#घोषणा init_vga_चयनeroo(chip)		/* NOP */
-#घोषणा रेजिस्टर_vga_चयनeroo(chip)		0
-#घोषणा check_hdmi_disabled(pci)	false
-#घोषणा setup_vga_चयनeroo_runसमय_pm(chip)	/* NOP */
-#पूर्ण_अगर /* SUPPORT_VGA_SWITCHER */
+	return 0;
+}
+#else
+#define init_vga_switcheroo(chip)		/* NOP */
+#define register_vga_switcheroo(chip)		0
+#define check_hdmi_disabled(pci)	false
+#define setup_vga_switcheroo_runtime_pm(chip)	/* NOP */
+#endif /* SUPPORT_VGA_SWITCHER */
 
 /*
- * deकाष्ठाor
+ * destructor
  */
-अटल व्योम azx_मुक्त(काष्ठा azx *chip)
-अणु
-	काष्ठा pci_dev *pci = chip->pci;
-	काष्ठा hda_पूर्णांकel *hda = container_of(chip, काष्ठा hda_पूर्णांकel, chip);
-	काष्ठा hdac_bus *bus = azx_bus(chip);
+static void azx_free(struct azx *chip)
+{
+	struct pci_dev *pci = chip->pci;
+	struct hda_intel *hda = container_of(chip, struct hda_intel, chip);
+	struct hdac_bus *bus = azx_bus(chip);
 
-	अगर (hda->मुक्तd)
-		वापस;
+	if (hda->freed)
+		return;
 
-	अगर (azx_has_pm_runसमय(chip) && chip->running)
-		pm_runसमय_get_noresume(&pci->dev);
+	if (azx_has_pm_runtime(chip) && chip->running)
+		pm_runtime_get_noresume(&pci->dev);
 	chip->running = 0;
 
 	azx_del_card_list(chip);
 
 	hda->init_failed = 1; /* to be sure */
-	complete_all(&hda->probe_रुको);
+	complete_all(&hda->probe_wait);
 
-	अगर (use_vga_चयनeroo(hda)) अणु
-		अगर (chip->disabled && hda->probe_जारीd)
+	if (use_vga_switcheroo(hda)) {
+		if (chip->disabled && hda->probe_continued)
 			snd_hda_unlock_devices(&chip->bus);
-		अगर (hda->vga_चयनeroo_रेजिस्टरed)
-			vga_चयनeroo_unरेजिस्टर_client(chip->pci);
-	पूर्ण
+		if (hda->vga_switcheroo_registered)
+			vga_switcheroo_unregister_client(chip->pci);
+	}
 
-	अगर (bus->chip_init) अणु
+	if (bus->chip_init) {
 		azx_clear_irq_pending(chip);
 		azx_stop_all_streams(chip);
 		azx_stop_chip(chip);
-	पूर्ण
+	}
 
-	अगर (bus->irq >= 0)
-		मुक्त_irq(bus->irq, (व्योम*)chip);
-	अगर (chip->msi)
+	if (bus->irq >= 0)
+		free_irq(bus->irq, (void*)chip);
+	if (chip->msi)
 		pci_disable_msi(chip->pci);
 	iounmap(bus->remap_addr);
 
-	azx_मुक्त_stream_pages(chip);
-	azx_मुक्त_streams(chip);
-	snd_hdac_bus_निकास(bus);
+	azx_free_stream_pages(chip);
+	azx_free_streams(chip);
+	snd_hdac_bus_exit(bus);
 
-	अगर (chip->region_requested)
+	if (chip->region_requested)
 		pci_release_regions(chip->pci);
 
 	pci_disable_device(chip->pci);
-#अगर_घोषित CONFIG_SND_HDA_PATCH_LOADER
+#ifdef CONFIG_SND_HDA_PATCH_LOADER
 	release_firmware(chip->fw);
-#पूर्ण_अगर
-	display_घातer(chip, false);
+#endif
+	display_power(chip, false);
 
-	अगर (chip->driver_caps & AZX_DCAPS_I915_COMPONENT)
-		snd_hdac_i915_निकास(bus);
+	if (chip->driver_caps & AZX_DCAPS_I915_COMPONENT)
+		snd_hdac_i915_exit(bus);
 
-	hda->मुक्तd = 1;
-पूर्ण
+	hda->freed = 1;
+}
 
-अटल पूर्णांक azx_dev_disconnect(काष्ठा snd_device *device)
-अणु
-	काष्ठा azx *chip = device->device_data;
-	काष्ठा hdac_bus *bus = azx_bus(chip);
+static int azx_dev_disconnect(struct snd_device *device)
+{
+	struct azx *chip = device->device_data;
+	struct hdac_bus *bus = azx_bus(chip);
 
-	chip->bus.shutकरोwn = 1;
+	chip->bus.shutdown = 1;
 	cancel_work_sync(&bus->unsol_work);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक azx_dev_मुक्त(काष्ठा snd_device *device)
-अणु
-	azx_मुक्त(device->device_data);
-	वापस 0;
-पूर्ण
+static int azx_dev_free(struct snd_device *device)
+{
+	azx_free(device->device_data);
+	return 0;
+}
 
-#अगर_घोषित SUPPORT_VGA_SWITCHEROO
-#अगर_घोषित CONFIG_ACPI
-/* ATPX is in the पूर्णांकegrated GPU's namespace */
-अटल bool atpx_present(व्योम)
-अणु
-	काष्ठा pci_dev *pdev = शून्य;
+#ifdef SUPPORT_VGA_SWITCHEROO
+#ifdef CONFIG_ACPI
+/* ATPX is in the integrated GPU's namespace */
+static bool atpx_present(void)
+{
+	struct pci_dev *pdev = NULL;
 	acpi_handle dhandle, atpx_handle;
 	acpi_status status;
 
-	जबतक ((pdev = pci_get_class(PCI_CLASS_DISPLAY_VGA << 8, pdev)) != शून्य) अणु
+	while ((pdev = pci_get_class(PCI_CLASS_DISPLAY_VGA << 8, pdev)) != NULL) {
 		dhandle = ACPI_HANDLE(&pdev->dev);
-		अगर (dhandle) अणु
+		if (dhandle) {
 			status = acpi_get_handle(dhandle, "ATPX", &atpx_handle);
-			अगर (ACPI_SUCCESS(status)) अणु
+			if (ACPI_SUCCESS(status)) {
 				pci_dev_put(pdev);
-				वापस true;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	जबतक ((pdev = pci_get_class(PCI_CLASS_DISPLAY_OTHER << 8, pdev)) != शून्य) अणु
+				return true;
+			}
+		}
+	}
+	while ((pdev = pci_get_class(PCI_CLASS_DISPLAY_OTHER << 8, pdev)) != NULL) {
 		dhandle = ACPI_HANDLE(&pdev->dev);
-		अगर (dhandle) अणु
+		if (dhandle) {
 			status = acpi_get_handle(dhandle, "ATPX", &atpx_handle);
-			अगर (ACPI_SUCCESS(status)) अणु
+			if (ACPI_SUCCESS(status)) {
 				pci_dev_put(pdev);
-				वापस true;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस false;
-पूर्ण
-#अन्यथा
-अटल bool atpx_present(व्योम)
-अणु
-	वापस false;
-पूर्ण
-#पूर्ण_अगर
+				return true;
+			}
+		}
+	}
+	return false;
+}
+#else
+static bool atpx_present(void)
+{
+	return false;
+}
+#endif
 
 /*
- * Check of disabled HDMI controller by vga_चयनeroo
+ * Check of disabled HDMI controller by vga_switcheroo
  */
-अटल काष्ठा pci_dev *get_bound_vga(काष्ठा pci_dev *pci)
-अणु
-	काष्ठा pci_dev *p;
+static struct pci_dev *get_bound_vga(struct pci_dev *pci)
+{
+	struct pci_dev *p;
 
 	/* check only discrete GPU */
-	चयन (pci->venकरोr) अणु
-	हाल PCI_VENDOR_ID_ATI:
-	हाल PCI_VENDOR_ID_AMD:
-		अगर (pci->devfn == 1) अणु
-			p = pci_get_करोमुख्य_bus_and_slot(pci_करोमुख्य_nr(pci->bus),
+	switch (pci->vendor) {
+	case PCI_VENDOR_ID_ATI:
+	case PCI_VENDOR_ID_AMD:
+		if (pci->devfn == 1) {
+			p = pci_get_domain_bus_and_slot(pci_domain_nr(pci->bus),
 							pci->bus->number, 0);
-			अगर (p) अणु
-				/* ATPX is in the पूर्णांकegrated GPU's ACPI namespace
+			if (p) {
+				/* ATPX is in the integrated GPU's ACPI namespace
 				 * rather than the dGPU's namespace. However,
 				 * the dGPU is the one who is involved in
-				 * vgaचयनeroo.
+				 * vgaswitcheroo.
 				 */
-				अगर (((p->class >> 16) == PCI_BASE_CLASS_DISPLAY) &&
+				if (((p->class >> 16) == PCI_BASE_CLASS_DISPLAY) &&
 				    atpx_present())
-					वापस p;
+					return p;
 				pci_dev_put(p);
-			पूर्ण
-		पूर्ण
-		अवरोध;
-	हाल PCI_VENDOR_ID_NVIDIA:
-		अगर (pci->devfn == 1) अणु
-			p = pci_get_करोमुख्य_bus_and_slot(pci_करोमुख्य_nr(pci->bus),
+			}
+		}
+		break;
+	case PCI_VENDOR_ID_NVIDIA:
+		if (pci->devfn == 1) {
+			p = pci_get_domain_bus_and_slot(pci_domain_nr(pci->bus),
 							pci->bus->number, 0);
-			अगर (p) अणु
-				अगर ((p->class >> 16) == PCI_BASE_CLASS_DISPLAY)
-					वापस p;
+			if (p) {
+				if ((p->class >> 16) == PCI_BASE_CLASS_DISPLAY)
+					return p;
 				pci_dev_put(p);
-			पूर्ण
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+			}
+		}
+		break;
+	}
+	return NULL;
+}
 
-अटल bool check_hdmi_disabled(काष्ठा pci_dev *pci)
-अणु
+static bool check_hdmi_disabled(struct pci_dev *pci)
+{
 	bool vga_inactive = false;
-	काष्ठा pci_dev *p = get_bound_vga(pci);
+	struct pci_dev *p = get_bound_vga(pci);
 
-	अगर (p) अणु
-		अगर (vga_चयनeroo_get_client_state(p) == VGA_SWITCHEROO_OFF)
+	if (p) {
+		if (vga_switcheroo_get_client_state(p) == VGA_SWITCHEROO_OFF)
 			vga_inactive = true;
 		pci_dev_put(p);
-	पूर्ण
-	वापस vga_inactive;
-पूर्ण
-#पूर्ण_अगर /* SUPPORT_VGA_SWITCHEROO */
+	}
+	return vga_inactive;
+}
+#endif /* SUPPORT_VGA_SWITCHEROO */
 
 /*
- * allow/deny-listing क्रम position_fix
+ * allow/deny-listing for position_fix
  */
-अटल स्थिर काष्ठा snd_pci_quirk position_fix_list[] = अणु
+static const struct snd_pci_quirk position_fix_list[] = {
 	SND_PCI_QUIRK(0x1028, 0x01cc, "Dell D820", POS_FIX_LPIB),
 	SND_PCI_QUIRK(0x1028, 0x01de, "Dell Precision 390", POS_FIX_LPIB),
 	SND_PCI_QUIRK(0x103c, 0x306d, "HP dv3", POS_FIX_LPIB),
@@ -1520,86 +1519,86 @@ set_spa:
 	SND_PCI_QUIRK(0x1565, 0x8218, "Biostar Microtech", POS_FIX_LPIB),
 	SND_PCI_QUIRK(0x1849, 0x0888, "775Dual-VSTA", POS_FIX_LPIB),
 	SND_PCI_QUIRK(0x8086, 0x2503, "DG965OT AAD63733-203", POS_FIX_LPIB),
-	अणुपूर्ण
-पूर्ण;
+	{}
+};
 
-अटल पूर्णांक check_position_fix(काष्ठा azx *chip, पूर्णांक fix)
-अणु
-	स्थिर काष्ठा snd_pci_quirk *q;
+static int check_position_fix(struct azx *chip, int fix)
+{
+	const struct snd_pci_quirk *q;
 
-	चयन (fix) अणु
-	हाल POS_FIX_AUTO:
-	हाल POS_FIX_LPIB:
-	हाल POS_FIX_POSBUF:
-	हाल POS_FIX_VIACOMBO:
-	हाल POS_FIX_COMBO:
-	हाल POS_FIX_SKL:
-	हाल POS_FIX_FIFO:
-		वापस fix;
-	पूर्ण
+	switch (fix) {
+	case POS_FIX_AUTO:
+	case POS_FIX_LPIB:
+	case POS_FIX_POSBUF:
+	case POS_FIX_VIACOMBO:
+	case POS_FIX_COMBO:
+	case POS_FIX_SKL:
+	case POS_FIX_FIFO:
+		return fix;
+	}
 
 	q = snd_pci_quirk_lookup(chip->pci, position_fix_list);
-	अगर (q) अणु
+	if (q) {
 		dev_info(chip->card->dev,
 			 "position_fix set to %d for device %04x:%04x\n",
-			 q->value, q->subvenकरोr, q->subdevice);
-		वापस q->value;
-	पूर्ण
+			 q->value, q->subvendor, q->subdevice);
+		return q->value;
+	}
 
 	/* Check VIA/ATI HD Audio Controller exist */
-	अगर (chip->driver_type == AZX_DRIVER_VIA) अणु
+	if (chip->driver_type == AZX_DRIVER_VIA) {
 		dev_dbg(chip->card->dev, "Using VIACOMBO position fix\n");
-		वापस POS_FIX_VIACOMBO;
-	पूर्ण
-	अगर (chip->driver_caps & AZX_DCAPS_AMD_WORKAROUND) अणु
+		return POS_FIX_VIACOMBO;
+	}
+	if (chip->driver_caps & AZX_DCAPS_AMD_WORKAROUND) {
 		dev_dbg(chip->card->dev, "Using FIFO position fix\n");
-		वापस POS_FIX_FIFO;
-	पूर्ण
-	अगर (chip->driver_caps & AZX_DCAPS_POSFIX_LPIB) अणु
+		return POS_FIX_FIFO;
+	}
+	if (chip->driver_caps & AZX_DCAPS_POSFIX_LPIB) {
 		dev_dbg(chip->card->dev, "Using LPIB position fix\n");
-		वापस POS_FIX_LPIB;
-	पूर्ण
-	अगर (chip->driver_type == AZX_DRIVER_SKL) अणु
+		return POS_FIX_LPIB;
+	}
+	if (chip->driver_type == AZX_DRIVER_SKL) {
 		dev_dbg(chip->card->dev, "Using SKL position fix\n");
-		वापस POS_FIX_SKL;
-	पूर्ण
-	वापस POS_FIX_AUTO;
-पूर्ण
+		return POS_FIX_SKL;
+	}
+	return POS_FIX_AUTO;
+}
 
-अटल व्योम assign_position_fix(काष्ठा azx *chip, पूर्णांक fix)
-अणु
-	अटल स्थिर azx_get_pos_callback_t callbacks[] = अणु
-		[POS_FIX_AUTO] = शून्य,
+static void assign_position_fix(struct azx *chip, int fix)
+{
+	static const azx_get_pos_callback_t callbacks[] = {
+		[POS_FIX_AUTO] = NULL,
 		[POS_FIX_LPIB] = azx_get_pos_lpib,
 		[POS_FIX_POSBUF] = azx_get_pos_posbuf,
 		[POS_FIX_VIACOMBO] = azx_via_get_position,
 		[POS_FIX_COMBO] = azx_get_pos_lpib,
 		[POS_FIX_SKL] = azx_get_pos_skl,
-		[POS_FIX_FIFO] = azx_get_pos_fअगरo,
-	पूर्ण;
+		[POS_FIX_FIFO] = azx_get_pos_fifo,
+	};
 
 	chip->get_position[0] = chip->get_position[1] = callbacks[fix];
 
-	/* combo mode uses LPIB only क्रम playback */
-	अगर (fix == POS_FIX_COMBO)
-		chip->get_position[1] = शून्य;
+	/* combo mode uses LPIB only for playback */
+	if (fix == POS_FIX_COMBO)
+		chip->get_position[1] = NULL;
 
-	अगर ((fix == POS_FIX_POSBUF || fix == POS_FIX_SKL) &&
-	    (chip->driver_caps & AZX_DCAPS_COUNT_LPIB_DELAY)) अणु
+	if ((fix == POS_FIX_POSBUF || fix == POS_FIX_SKL) &&
+	    (chip->driver_caps & AZX_DCAPS_COUNT_LPIB_DELAY)) {
 		chip->get_delay[0] = chip->get_delay[1] =
 			azx_get_delay_from_lpib;
-	पूर्ण
+	}
 
-	अगर (fix == POS_FIX_FIFO)
+	if (fix == POS_FIX_FIFO)
 		chip->get_delay[0] = chip->get_delay[1] =
-			azx_get_delay_from_fअगरo;
-पूर्ण
+			azx_get_delay_from_fifo;
+}
 
 /*
- * deny-lists क्रम probe_mask
+ * deny-lists for probe_mask
  */
-अटल स्थिर काष्ठा snd_pci_quirk probe_mask_list[] = अणु
-	/* Thinkpad often अवरोधs the controller communication when accessing
+static const struct snd_pci_quirk probe_mask_list[] = {
+	/* Thinkpad often breaks the controller communication when accessing
 	 * to the non-working (or non-existing) modem codec slot.
 	 */
 	SND_PCI_QUIRK(0x1014, 0x05b7, "Thinkpad Z60", 0x01),
@@ -1609,44 +1608,44 @@ set_spa:
 	SND_PCI_QUIRK(0x1028, 0x20ac, "Dell Studio Desktop", 0x01),
 	/* including bogus ALC268 in slot#2 that conflicts with ALC888 */
 	SND_PCI_QUIRK(0x17c0, 0x4085, "Medion MD96630", 0x01),
-	/* क्रमced codec slots */
+	/* forced codec slots */
 	SND_PCI_QUIRK(0x1043, 0x1262, "ASUS W5Fm", 0x103),
 	SND_PCI_QUIRK(0x1046, 0x1262, "ASUS W5F", 0x103),
 	/* WinFast VP200 H (Teradici) user reported broken communication */
 	SND_PCI_QUIRK(0x3a21, 0x040d, "WinFast VP200 H", 0x101),
-	अणुपूर्ण
-पूर्ण;
+	{}
+};
 
-#घोषणा AZX_FORCE_CODEC_MASK	0x100
+#define AZX_FORCE_CODEC_MASK	0x100
 
-अटल व्योम check_probe_mask(काष्ठा azx *chip, पूर्णांक dev)
-अणु
-	स्थिर काष्ठा snd_pci_quirk *q;
+static void check_probe_mask(struct azx *chip, int dev)
+{
+	const struct snd_pci_quirk *q;
 
 	chip->codec_probe_mask = probe_mask[dev];
-	अगर (chip->codec_probe_mask == -1) अणु
+	if (chip->codec_probe_mask == -1) {
 		q = snd_pci_quirk_lookup(chip->pci, probe_mask_list);
-		अगर (q) अणु
+		if (q) {
 			dev_info(chip->card->dev,
 				 "probe_mask set to 0x%x for device %04x:%04x\n",
-				 q->value, q->subvenकरोr, q->subdevice);
+				 q->value, q->subvendor, q->subdevice);
 			chip->codec_probe_mask = q->value;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* check क्रमced option */
-	अगर (chip->codec_probe_mask != -1 &&
-	    (chip->codec_probe_mask & AZX_FORCE_CODEC_MASK)) अणु
+	/* check forced option */
+	if (chip->codec_probe_mask != -1 &&
+	    (chip->codec_probe_mask & AZX_FORCE_CODEC_MASK)) {
 		azx_bus(chip)->codec_mask = chip->codec_probe_mask & 0xff;
 		dev_info(chip->card->dev, "codec_mask forced to 0x%x\n",
-			 (पूर्णांक)azx_bus(chip)->codec_mask);
-	पूर्ण
-पूर्ण
+			 (int)azx_bus(chip)->codec_mask);
+	}
+}
 
 /*
- * allow/deny-list क्रम enable_msi
+ * allow/deny-list for enable_msi
  */
-अटल स्थिर काष्ठा snd_pci_quirk msi_deny_list[] = अणु
+static const struct snd_pci_quirk msi_deny_list[] = {
 	SND_PCI_QUIRK(0x103c, 0x2191, "HP", 0), /* AMD Hudson */
 	SND_PCI_QUIRK(0x103c, 0x2192, "HP", 0), /* AMD Hudson */
 	SND_PCI_QUIRK(0x103c, 0x21f7, "HP", 0), /* AMD Hudson */
@@ -1657,129 +1656,129 @@ set_spa:
 	SND_PCI_QUIRK(0x1179, 0xfb44, "Toshiba Satellite C870", 0), /* AMD Hudson */
 	SND_PCI_QUIRK(0x1849, 0x0888, "ASRock", 0), /* Athlon64 X2 + nvidia */
 	SND_PCI_QUIRK(0xa0a0, 0x0575, "Aopen MZ915-M", 0), /* ICH6 */
-	अणुपूर्ण
-पूर्ण;
+	{}
+};
 
-अटल व्योम check_msi(काष्ठा azx *chip)
-अणु
-	स्थिर काष्ठा snd_pci_quirk *q;
+static void check_msi(struct azx *chip)
+{
+	const struct snd_pci_quirk *q;
 
-	अगर (enable_msi >= 0) अणु
+	if (enable_msi >= 0) {
 		chip->msi = !!enable_msi;
-		वापस;
-	पूर्ण
-	chip->msi = 1;	/* enable MSI as शेष */
+		return;
+	}
+	chip->msi = 1;	/* enable MSI as default */
 	q = snd_pci_quirk_lookup(chip->pci, msi_deny_list);
-	अगर (q) अणु
+	if (q) {
 		dev_info(chip->card->dev,
 			 "msi for device %04x:%04x set to %d\n",
-			 q->subvenकरोr, q->subdevice, q->value);
+			 q->subvendor, q->subdevice, q->value);
 		chip->msi = q->value;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* NVidia chipsets seem to cause troubles with MSI */
-	अगर (chip->driver_caps & AZX_DCAPS_NO_MSI) अणु
+	if (chip->driver_caps & AZX_DCAPS_NO_MSI) {
 		dev_info(chip->card->dev, "Disabling MSI\n");
 		chip->msi = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* check the snoop mode availability */
-अटल व्योम azx_check_snoop_available(काष्ठा azx *chip)
-अणु
-	पूर्णांक snoop = hda_snoop;
+static void azx_check_snoop_available(struct azx *chip)
+{
+	int snoop = hda_snoop;
 
-	अगर (snoop >= 0) अणु
+	if (snoop >= 0) {
 		dev_info(chip->card->dev, "Force to %s mode by module option\n",
 			 snoop ? "snoop" : "non-snoop");
 		chip->snoop = snoop;
 		chip->uc_buffer = !snoop;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	snoop = true;
-	अगर (azx_get_snoop_type(chip) == AZX_SNOOP_TYPE_NONE &&
-	    chip->driver_type == AZX_DRIVER_VIA) अणु
-		/* क्रमce to non-snoop mode क्रम a new VIA controller
+	if (azx_get_snoop_type(chip) == AZX_SNOOP_TYPE_NONE &&
+	    chip->driver_type == AZX_DRIVER_VIA) {
+		/* force to non-snoop mode for a new VIA controller
 		 * when BIOS is set
 		 */
 		u8 val;
-		pci_पढ़ो_config_byte(chip->pci, 0x42, &val);
-		अगर (!(val & 0x80) && (chip->pci->revision == 0x30 ||
+		pci_read_config_byte(chip->pci, 0x42, &val);
+		if (!(val & 0x80) && (chip->pci->revision == 0x30 ||
 				      chip->pci->revision == 0x20))
 			snoop = false;
-	पूर्ण
+	}
 
-	अगर (chip->driver_caps & AZX_DCAPS_SNOOP_OFF)
+	if (chip->driver_caps & AZX_DCAPS_SNOOP_OFF)
 		snoop = false;
 
 	chip->snoop = snoop;
-	अगर (!snoop) अणु
+	if (!snoop) {
 		dev_info(chip->card->dev, "Force to non-snoop mode\n");
-		/* C-Media requires non-cached pages only क्रम CORB/RIRB */
-		अगर (chip->driver_type != AZX_DRIVER_CMEDIA)
+		/* C-Media requires non-cached pages only for CORB/RIRB */
+		if (chip->driver_type != AZX_DRIVER_CMEDIA)
 			chip->uc_buffer = true;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम azx_probe_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा hda_पूर्णांकel *hda = container_of(work, काष्ठा hda_पूर्णांकel, probe_work);
-	azx_probe_जारी(&hda->chip);
-पूर्ण
+static void azx_probe_work(struct work_struct *work)
+{
+	struct hda_intel *hda = container_of(work, struct hda_intel, probe_work);
+	azx_probe_continue(&hda->chip);
+}
 
-अटल पूर्णांक शेष_bdl_pos_adj(काष्ठा azx *chip)
-अणु
+static int default_bdl_pos_adj(struct azx *chip)
+{
 	/* some exceptions: Atoms seem problematic with value 1 */
-	अगर (chip->pci->venकरोr == PCI_VENDOR_ID_INTEL) अणु
-		चयन (chip->pci->device) अणु
-		हाल 0x0f04: /* Baytrail */
-		हाल 0x2284: /* Braswell */
-			वापस 32;
-		पूर्ण
-	पूर्ण
+	if (chip->pci->vendor == PCI_VENDOR_ID_INTEL) {
+		switch (chip->pci->device) {
+		case 0x0f04: /* Baytrail */
+		case 0x2284: /* Braswell */
+			return 32;
+		}
+	}
 
-	चयन (chip->driver_type) अणु
-	हाल AZX_DRIVER_ICH:
-	हाल AZX_DRIVER_PCH:
-		वापस 1;
-	शेष:
-		वापस 32;
-	पूर्ण
-पूर्ण
+	switch (chip->driver_type) {
+	case AZX_DRIVER_ICH:
+	case AZX_DRIVER_PCH:
+		return 1;
+	default:
+		return 32;
+	}
+}
 
 /*
- * स्थिरructor
+ * constructor
  */
-अटल स्थिर काष्ठा hda_controller_ops pci_hda_ops;
+static const struct hda_controller_ops pci_hda_ops;
 
-अटल पूर्णांक azx_create(काष्ठा snd_card *card, काष्ठा pci_dev *pci,
-		      पूर्णांक dev, अचिन्हित पूर्णांक driver_caps,
-		      काष्ठा azx **rchip)
-अणु
-	अटल स्थिर काष्ठा snd_device_ops ops = अणु
+static int azx_create(struct snd_card *card, struct pci_dev *pci,
+		      int dev, unsigned int driver_caps,
+		      struct azx **rchip)
+{
+	static const struct snd_device_ops ops = {
 		.dev_disconnect = azx_dev_disconnect,
-		.dev_मुक्त = azx_dev_मुक्त,
-	पूर्ण;
-	काष्ठा hda_पूर्णांकel *hda;
-	काष्ठा azx *chip;
-	पूर्णांक err;
+		.dev_free = azx_dev_free,
+	};
+	struct hda_intel *hda;
+	struct azx *chip;
+	int err;
 
-	*rchip = शून्य;
+	*rchip = NULL;
 
 	err = pci_enable_device(pci);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	hda = devm_kzalloc(&pci->dev, माप(*hda), GFP_KERNEL);
-	अगर (!hda) अणु
+	hda = devm_kzalloc(&pci->dev, sizeof(*hda), GFP_KERNEL);
+	if (!hda) {
 		pci_disable_device(pci);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	chip = &hda->chip;
-	mutex_init(&chip->खोलो_mutex);
+	mutex_init(&chip->open_mutex);
 	chip->card = card;
 	chip->pci = pci;
 	chip->ops = &pci_hda_ops;
@@ -1787,404 +1786,404 @@ set_spa:
 	chip->driver_type = driver_caps & 0xff;
 	check_msi(chip);
 	chip->dev_index = dev;
-	अगर (jackpoll_ms[dev] >= 50 && jackpoll_ms[dev] <= 60000)
-		chip->jackpoll_पूर्णांकerval = msecs_to_jअगरfies(jackpoll_ms[dev]);
+	if (jackpoll_ms[dev] >= 50 && jackpoll_ms[dev] <= 60000)
+		chip->jackpoll_interval = msecs_to_jiffies(jackpoll_ms[dev]);
 	INIT_LIST_HEAD(&chip->pcm_list);
 	INIT_WORK(&hda->irq_pending_work, azx_irq_pending_work);
 	INIT_LIST_HEAD(&hda->list);
-	init_vga_चयनeroo(chip);
-	init_completion(&hda->probe_रुको);
+	init_vga_switcheroo(chip);
+	init_completion(&hda->probe_wait);
 
 	assign_position_fix(chip, check_position_fix(chip, position_fix[dev]));
 
 	check_probe_mask(chip, dev);
 
-	अगर (single_cmd < 0) /* allow fallback to single_cmd at errors */
+	if (single_cmd < 0) /* allow fallback to single_cmd at errors */
 		chip->fallback_to_single_cmd = 1;
-	अन्यथा /* explicitly set to single_cmd or not */
+	else /* explicitly set to single_cmd or not */
 		chip->single_cmd = single_cmd;
 
 	azx_check_snoop_available(chip);
 
-	अगर (bdl_pos_adj[dev] < 0)
-		chip->bdl_pos_adj = शेष_bdl_pos_adj(chip);
-	अन्यथा
+	if (bdl_pos_adj[dev] < 0)
+		chip->bdl_pos_adj = default_bdl_pos_adj(chip);
+	else
 		chip->bdl_pos_adj = bdl_pos_adj[dev];
 
 	err = azx_bus_init(chip, model[dev]);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		pci_disable_device(pci);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	/* use the non-cached pages in non-snoop mode */
-	अगर (!azx_snoop(chip))
+	if (!azx_snoop(chip))
 		azx_bus(chip)->dma_type = SNDRV_DMA_TYPE_DEV_UC;
 
-	अगर (chip->driver_type == AZX_DRIVER_NVIDIA) अणु
+	if (chip->driver_type == AZX_DRIVER_NVIDIA) {
 		dev_dbg(chip->card->dev, "Enable delay in RIRB handling\n");
-		chip->bus.core.needs_damn_दीर्घ_delay = 1;
-	पूर्ण
+		chip->bus.core.needs_damn_long_delay = 1;
+	}
 
 	err = snd_device_new(card, SNDRV_DEV_LOWLEVEL, chip, &ops);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		dev_err(card->dev, "Error creating device [card]!\n");
-		azx_मुक्त(chip);
-		वापस err;
-	पूर्ण
+		azx_free(chip);
+		return err;
+	}
 
-	/* जारी probing in work context as may trigger request module */
+	/* continue probing in work context as may trigger request module */
 	INIT_WORK(&hda->probe_work, azx_probe_work);
 
 	*rchip = chip;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक azx_first_init(काष्ठा azx *chip)
-अणु
-	पूर्णांक dev = chip->dev_index;
-	काष्ठा pci_dev *pci = chip->pci;
-	काष्ठा snd_card *card = chip->card;
-	काष्ठा hdac_bus *bus = azx_bus(chip);
-	पूर्णांक err;
-	अचिन्हित लघु gcap;
-	अचिन्हित पूर्णांक dma_bits = 64;
+static int azx_first_init(struct azx *chip)
+{
+	int dev = chip->dev_index;
+	struct pci_dev *pci = chip->pci;
+	struct snd_card *card = chip->card;
+	struct hdac_bus *bus = azx_bus(chip);
+	int err;
+	unsigned short gcap;
+	unsigned int dma_bits = 64;
 
-#अगर BITS_PER_LONG != 64
+#if BITS_PER_LONG != 64
 	/* Fix up base address on ULI M5461 */
-	अगर (chip->driver_type == AZX_DRIVER_ULI) अणु
-		u16 पंचांगp3;
-		pci_पढ़ो_config_word(pci, 0x40, &पंचांगp3);
-		pci_ग_लिखो_config_word(pci, 0x40, पंचांगp3 | 0x10);
-		pci_ग_लिखो_config_dword(pci, PCI_BASE_ADDRESS_1, 0);
-	पूर्ण
-#पूर्ण_अगर
+	if (chip->driver_type == AZX_DRIVER_ULI) {
+		u16 tmp3;
+		pci_read_config_word(pci, 0x40, &tmp3);
+		pci_write_config_word(pci, 0x40, tmp3 | 0x10);
+		pci_write_config_dword(pci, PCI_BASE_ADDRESS_1, 0);
+	}
+#endif
 
 	err = pci_request_regions(pci, "ICH HD audio");
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 	chip->region_requested = 1;
 
 	bus->addr = pci_resource_start(pci, 0);
 	bus->remap_addr = pci_ioremap_bar(pci, 0);
-	अगर (bus->remap_addr == शून्य) अणु
+	if (bus->remap_addr == NULL) {
 		dev_err(card->dev, "ioremap error\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
-	अगर (chip->driver_type == AZX_DRIVER_SKL)
+	if (chip->driver_type == AZX_DRIVER_SKL)
 		snd_hdac_bus_parse_capabilities(bus);
 
 	/*
-	 * Some Intel CPUs has always running समयr (ART) feature and
-	 * controller may have Global समय sync reporting capability, so
-	 * check both of these beक्रमe declaring synchronized समय reporting
+	 * Some Intel CPUs has always running timer (ART) feature and
+	 * controller may have Global time sync reporting capability, so
+	 * check both of these before declaring synchronized time reporting
 	 * capability SNDRV_PCM_INFO_HAS_LINK_SYNCHRONIZED_ATIME
 	 */
 	chip->gts_present = false;
 
-#अगर_घोषित CONFIG_X86
-	अगर (bus->ppcap && boot_cpu_has(X86_FEATURE_ART))
+#ifdef CONFIG_X86
+	if (bus->ppcap && boot_cpu_has(X86_FEATURE_ART))
 		chip->gts_present = true;
-#पूर्ण_अगर
+#endif
 
-	अगर (chip->msi) अणु
-		अगर (chip->driver_caps & AZX_DCAPS_NO_MSI64) अणु
+	if (chip->msi) {
+		if (chip->driver_caps & AZX_DCAPS_NO_MSI64) {
 			dev_dbg(card->dev, "Disabling 64bit MSI\n");
 			pci->no_64bit_msi = true;
-		पूर्ण
-		अगर (pci_enable_msi(pci) < 0)
+		}
+		if (pci_enable_msi(pci) < 0)
 			chip->msi = 0;
-	पूर्ण
+	}
 
 	pci_set_master(pci);
 
-	gcap = azx_पढ़ोw(chip, GCAP);
+	gcap = azx_readw(chip, GCAP);
 	dev_dbg(card->dev, "chipset global capabilities = 0x%x\n", gcap);
 
 	/* AMD devices support 40 or 48bit DMA, take the safe one */
-	अगर (chip->pci->venकरोr == PCI_VENDOR_ID_AMD)
+	if (chip->pci->vendor == PCI_VENDOR_ID_AMD)
 		dma_bits = 40;
 
-	/* disable SB600 64bit support क्रम safety */
-	अगर (chip->pci->venकरोr == PCI_VENDOR_ID_ATI) अणु
-		काष्ठा pci_dev *p_smbus;
+	/* disable SB600 64bit support for safety */
+	if (chip->pci->vendor == PCI_VENDOR_ID_ATI) {
+		struct pci_dev *p_smbus;
 		dma_bits = 40;
 		p_smbus = pci_get_device(PCI_VENDOR_ID_ATI,
 					 PCI_DEVICE_ID_ATI_SBX00_SMBUS,
-					 शून्य);
-		अगर (p_smbus) अणु
-			अगर (p_smbus->revision < 0x30)
+					 NULL);
+		if (p_smbus) {
+			if (p_smbus->revision < 0x30)
 				gcap &= ~AZX_GCAP_64OK;
 			pci_dev_put(p_smbus);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* NVidia hardware normally only supports up to 40 bits of DMA */
-	अगर (chip->pci->venकरोr == PCI_VENDOR_ID_NVIDIA)
+	if (chip->pci->vendor == PCI_VENDOR_ID_NVIDIA)
 		dma_bits = 40;
 
 	/* disable 64bit DMA address on some devices */
-	अगर (chip->driver_caps & AZX_DCAPS_NO_64BIT) अणु
+	if (chip->driver_caps & AZX_DCAPS_NO_64BIT) {
 		dev_dbg(card->dev, "Disabling 64bit DMA\n");
 		gcap &= ~AZX_GCAP_64OK;
-	पूर्ण
+	}
 
-	/* disable buffer size rounding to 128-byte multiples अगर supported */
-	अगर (align_buffer_size >= 0)
+	/* disable buffer size rounding to 128-byte multiples if supported */
+	if (align_buffer_size >= 0)
 		chip->align_buffer_size = !!align_buffer_size;
-	अन्यथा अणु
-		अगर (chip->driver_caps & AZX_DCAPS_NO_ALIGN_बफ_मानE)
+	else {
+		if (chip->driver_caps & AZX_DCAPS_NO_ALIGN_BUFSIZE)
 			chip->align_buffer_size = 0;
-		अन्यथा
+		else
 			chip->align_buffer_size = 1;
-	पूर्ण
+	}
 
-	/* allow 64bit DMA address अगर supported by H/W */
-	अगर (!(gcap & AZX_GCAP_64OK))
+	/* allow 64bit DMA address if supported by H/W */
+	if (!(gcap & AZX_GCAP_64OK))
 		dma_bits = 32;
-	अगर (dma_set_mask_and_coherent(&pci->dev, DMA_BIT_MASK(dma_bits)))
+	if (dma_set_mask_and_coherent(&pci->dev, DMA_BIT_MASK(dma_bits)))
 		dma_set_mask_and_coherent(&pci->dev, DMA_BIT_MASK(32));
 
-	/* पढ़ो number of streams from GCAP रेजिस्टर instead of using
+	/* read number of streams from GCAP register instead of using
 	 * hardcoded value
 	 */
 	chip->capture_streams = (gcap >> 8) & 0x0f;
 	chip->playback_streams = (gcap >> 12) & 0x0f;
-	अगर (!chip->playback_streams && !chip->capture_streams) अणु
-		/* gcap didn't give any info, चयनing to old method */
+	if (!chip->playback_streams && !chip->capture_streams) {
+		/* gcap didn't give any info, switching to old method */
 
-		चयन (chip->driver_type) अणु
-		हाल AZX_DRIVER_ULI:
+		switch (chip->driver_type) {
+		case AZX_DRIVER_ULI:
 			chip->playback_streams = ULI_NUM_PLAYBACK;
 			chip->capture_streams = ULI_NUM_CAPTURE;
-			अवरोध;
-		हाल AZX_DRIVER_ATIHDMI:
-		हाल AZX_DRIVER_ATIHDMI_NS:
+			break;
+		case AZX_DRIVER_ATIHDMI:
+		case AZX_DRIVER_ATIHDMI_NS:
 			chip->playback_streams = ATIHDMI_NUM_PLAYBACK;
 			chip->capture_streams = ATIHDMI_NUM_CAPTURE;
-			अवरोध;
-		हाल AZX_DRIVER_GENERIC:
-		शेष:
+			break;
+		case AZX_DRIVER_GENERIC:
+		default:
 			chip->playback_streams = ICH6_NUM_PLAYBACK;
 			chip->capture_streams = ICH6_NUM_CAPTURE;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	chip->capture_index_offset = 0;
 	chip->playback_index_offset = chip->capture_streams;
 	chip->num_streams = chip->playback_streams + chip->capture_streams;
 
-	/* sanity check क्रम the SDxCTL.STRM field overflow */
-	अगर (chip->num_streams > 15 &&
-	    (chip->driver_caps & AZX_DCAPS_SEPARATE_STREAM_TAG) == 0) अणु
+	/* sanity check for the SDxCTL.STRM field overflow */
+	if (chip->num_streams > 15 &&
+	    (chip->driver_caps & AZX_DCAPS_SEPARATE_STREAM_TAG) == 0) {
 		dev_warn(chip->card->dev, "number of I/O streams is %d, "
 			 "forcing separate stream tags", chip->num_streams);
 		chip->driver_caps |= AZX_DCAPS_SEPARATE_STREAM_TAG;
-	पूर्ण
+	}
 
 	/* initialize streams */
 	err = azx_init_streams(chip);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	err = azx_alloc_stream_pages(chip);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	/* initialize chip */
 	azx_init_pci(chip);
 
 	snd_hdac_i915_set_bclk(bus);
 
-	hda_पूर्णांकel_init_chip(chip, (probe_only[dev] & 2) == 0);
+	hda_intel_init_chip(chip, (probe_only[dev] & 2) == 0);
 
 	/* codec detection */
-	अगर (!azx_bus(chip)->codec_mask) अणु
+	if (!azx_bus(chip)->codec_mask) {
 		dev_err(card->dev, "no codecs found!\n");
-		/* keep running the rest क्रम the runसमय PM */
-	पूर्ण
+		/* keep running the rest for the runtime PM */
+	}
 
-	अगर (azx_acquire_irq(chip, 0) < 0)
-		वापस -EBUSY;
+	if (azx_acquire_irq(chip, 0) < 0)
+		return -EBUSY;
 
-	म_नकल(card->driver, "HDA-Intel");
-	strscpy(card->लघुname, driver_लघु_names[chip->driver_type],
-		माप(card->लघुname));
-	snम_लिखो(card->दीर्घname, माप(card->दीर्घname),
+	strcpy(card->driver, "HDA-Intel");
+	strscpy(card->shortname, driver_short_names[chip->driver_type],
+		sizeof(card->shortname));
+	snprintf(card->longname, sizeof(card->longname),
 		 "%s at 0x%lx irq %i",
-		 card->लघुname, bus->addr, bus->irq);
+		 card->shortname, bus->addr, bus->irq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_SND_HDA_PATCH_LOADER
-/* callback from request_firmware_noरुको() */
-अटल व्योम azx_firmware_cb(स्थिर काष्ठा firmware *fw, व्योम *context)
-अणु
-	काष्ठा snd_card *card = context;
-	काष्ठा azx *chip = card->निजी_data;
+#ifdef CONFIG_SND_HDA_PATCH_LOADER
+/* callback from request_firmware_nowait() */
+static void azx_firmware_cb(const struct firmware *fw, void *context)
+{
+	struct snd_card *card = context;
+	struct azx *chip = card->private_data;
 
-	अगर (fw)
+	if (fw)
 		chip->fw = fw;
-	अन्यथा
+	else
 		dev_err(card->dev, "Cannot load firmware, continue without patching\n");
-	अगर (!chip->disabled) अणु
-		/* जारी probing */
-		azx_probe_जारी(chip);
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर
+	if (!chip->disabled) {
+		/* continue probing */
+		azx_probe_continue(chip);
+	}
+}
+#endif
 
-अटल पूर्णांक disable_msi_reset_irq(काष्ठा azx *chip)
-अणु
-	काष्ठा hdac_bus *bus = azx_bus(chip);
-	पूर्णांक err;
+static int disable_msi_reset_irq(struct azx *chip)
+{
+	struct hdac_bus *bus = azx_bus(chip);
+	int err;
 
-	मुक्त_irq(bus->irq, chip);
+	free_irq(bus->irq, chip);
 	bus->irq = -1;
 	chip->card->sync_irq = -1;
 	pci_disable_msi(chip->pci);
 	chip->msi = 0;
 	err = azx_acquire_irq(chip, 1);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम pcm_mmap_prepare(काष्ठा snd_pcm_substream *substream,
-			     काष्ठा vm_area_काष्ठा *area)
-अणु
-#अगर_घोषित CONFIG_X86
-	काष्ठा azx_pcm *apcm = snd_pcm_substream_chip(substream);
-	काष्ठा azx *chip = apcm->chip;
-	अगर (chip->uc_buffer)
-		area->vm_page_prot = pgprot_ग_लिखोcombine(area->vm_page_prot);
-#पूर्ण_अगर
-पूर्ण
+static void pcm_mmap_prepare(struct snd_pcm_substream *substream,
+			     struct vm_area_struct *area)
+{
+#ifdef CONFIG_X86
+	struct azx_pcm *apcm = snd_pcm_substream_chip(substream);
+	struct azx *chip = apcm->chip;
+	if (chip->uc_buffer)
+		area->vm_page_prot = pgprot_writecombine(area->vm_page_prot);
+#endif
+}
 
-/* Denylist क्रम skipping the whole probe:
+/* Denylist for skipping the whole probe:
  * some HD-audio PCI entries are exposed without any codecs, and such devices
  * should be ignored from the beginning.
  */
-अटल स्थिर काष्ठा pci_device_id driver_denylist[] = अणु
-	अणु PCI_DEVICE_SUB(0x1022, 0x1487, 0x1043, 0x874f) पूर्ण, /* ASUS ROG Zenith II / Strix */
-	अणु PCI_DEVICE_SUB(0x1022, 0x1487, 0x1462, 0xcb59) पूर्ण, /* MSI TRX40 Creator */
-	अणु PCI_DEVICE_SUB(0x1022, 0x1487, 0x1462, 0xcb60) पूर्ण, /* MSI TRX40 */
-	अणुपूर्ण
-पूर्ण;
+static const struct pci_device_id driver_denylist[] = {
+	{ PCI_DEVICE_SUB(0x1022, 0x1487, 0x1043, 0x874f) }, /* ASUS ROG Zenith II / Strix */
+	{ PCI_DEVICE_SUB(0x1022, 0x1487, 0x1462, 0xcb59) }, /* MSI TRX40 Creator */
+	{ PCI_DEVICE_SUB(0x1022, 0x1487, 0x1462, 0xcb60) }, /* MSI TRX40 */
+	{}
+};
 
-अटल स्थिर काष्ठा hda_controller_ops pci_hda_ops = अणु
+static const struct hda_controller_ops pci_hda_ops = {
 	.disable_msi_reset_irq = disable_msi_reset_irq,
 	.pcm_mmap_prepare = pcm_mmap_prepare,
 	.position_check = azx_position_check,
-पूर्ण;
+};
 
-अटल पूर्णांक azx_probe(काष्ठा pci_dev *pci,
-		     स्थिर काष्ठा pci_device_id *pci_id)
-अणु
-	अटल पूर्णांक dev;
-	काष्ठा snd_card *card;
-	काष्ठा hda_पूर्णांकel *hda;
-	काष्ठा azx *chip;
+static int azx_probe(struct pci_dev *pci,
+		     const struct pci_device_id *pci_id)
+{
+	static int dev;
+	struct snd_card *card;
+	struct hda_intel *hda;
+	struct azx *chip;
 	bool schedule_probe;
-	पूर्णांक err;
+	int err;
 
-	अगर (pci_match_id(driver_denylist, pci)) अणु
+	if (pci_match_id(driver_denylist, pci)) {
 		dev_info(&pci->dev, "Skipping the device on the denylist\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (dev >= SNDRV_CARDS)
-		वापस -ENODEV;
-	अगर (!enable[dev]) अणु
+	if (dev >= SNDRV_CARDS)
+		return -ENODEV;
+	if (!enable[dev]) {
 		dev++;
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	/*
-	 * stop probe अगर another Intel's DSP driver should be activated
+	 * stop probe if another Intel's DSP driver should be activated
 	 */
-	अगर (dmic_detect) अणु
-		err = snd_पूर्णांकel_dsp_driver_probe(pci);
-		अगर (err != SND_INTEL_DSP_DRIVER_ANY && err != SND_INTEL_DSP_DRIVER_LEGACY) अणु
+	if (dmic_detect) {
+		err = snd_intel_dsp_driver_probe(pci);
+		if (err != SND_INTEL_DSP_DRIVER_ANY && err != SND_INTEL_DSP_DRIVER_LEGACY) {
 			dev_dbg(&pci->dev, "HDAudio driver not selected, aborting probe\n");
-			वापस -ENODEV;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return -ENODEV;
+		}
+	} else {
 		dev_warn(&pci->dev, "dmic_detect option is deprecated, pass snd-intel-dspcfg.dsp_driver=1 option instead\n");
-	पूर्ण
+	}
 
 	err = snd_card_new(&pci->dev, index[dev], id[dev], THIS_MODULE,
 			   0, &card);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		dev_err(&pci->dev, "Error creating card!\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	err = azx_create(card, pci, dev, pci_id->driver_data, &chip);
-	अगर (err < 0)
-		जाओ out_मुक्त;
-	card->निजी_data = chip;
-	hda = container_of(chip, काष्ठा hda_पूर्णांकel, chip);
+	if (err < 0)
+		goto out_free;
+	card->private_data = chip;
+	hda = container_of(chip, struct hda_intel, chip);
 
 	pci_set_drvdata(pci, card);
 
-	err = रेजिस्टर_vga_चयनeroo(chip);
-	अगर (err < 0) अणु
+	err = register_vga_switcheroo(chip);
+	if (err < 0) {
 		dev_err(card->dev, "Error registering vga_switcheroo client\n");
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-	अगर (check_hdmi_disabled(pci)) अणु
+	if (check_hdmi_disabled(pci)) {
 		dev_info(card->dev, "VGA controller is disabled\n");
 		dev_info(card->dev, "Delaying initialization\n");
 		chip->disabled = true;
-	पूर्ण
+	}
 
 	schedule_probe = !chip->disabled;
 
-#अगर_घोषित CONFIG_SND_HDA_PATCH_LOADER
-	अगर (patch[dev] && *patch[dev]) अणु
+#ifdef CONFIG_SND_HDA_PATCH_LOADER
+	if (patch[dev] && *patch[dev]) {
 		dev_info(card->dev, "Applying patch firmware '%s'\n",
 			 patch[dev]);
-		err = request_firmware_noरुको(THIS_MODULE, true, patch[dev],
+		err = request_firmware_nowait(THIS_MODULE, true, patch[dev],
 					      &pci->dev, GFP_KERNEL, card,
 					      azx_firmware_cb);
-		अगर (err < 0)
-			जाओ out_मुक्त;
-		schedule_probe = false; /* जारीd in azx_firmware_cb() */
-	पूर्ण
-#पूर्ण_अगर /* CONFIG_SND_HDA_PATCH_LOADER */
+		if (err < 0)
+			goto out_free;
+		schedule_probe = false; /* continued in azx_firmware_cb() */
+	}
+#endif /* CONFIG_SND_HDA_PATCH_LOADER */
 
-#अगर_अघोषित CONFIG_SND_HDA_I915
-	अगर (CONTROLLER_IN_GPU(pci))
+#ifndef CONFIG_SND_HDA_I915
+	if (CONTROLLER_IN_GPU(pci))
 		dev_err(card->dev, "Haswell/Broadwell HDMI/DP must build in CONFIG_SND_HDA_I915\n");
-#पूर्ण_अगर
+#endif
 
-	अगर (schedule_probe)
+	if (schedule_probe)
 		schedule_work(&hda->probe_work);
 
 	dev++;
-	अगर (chip->disabled)
-		complete_all(&hda->probe_रुको);
-	वापस 0;
+	if (chip->disabled)
+		complete_all(&hda->probe_wait);
+	return 0;
 
-out_मुक्त:
-	snd_card_मुक्त(card);
-	वापस err;
-पूर्ण
+out_free:
+	snd_card_free(card);
+	return err;
+}
 
-#अगर_घोषित CONFIG_PM
-/* On some boards setting घातer_save to a non 0 value leads to clicking /
- * popping sounds when ever we enter/leave घातersaving mode. Ideally we would
- * figure out how to aव्योम these sounds, but that is not always feasible.
- * So we keep a list of devices where we disable घातersaving as its known
+#ifdef CONFIG_PM
+/* On some boards setting power_save to a non 0 value leads to clicking /
+ * popping sounds when ever we enter/leave powersaving mode. Ideally we would
+ * figure out how to avoid these sounds, but that is not always feasible.
+ * So we keep a list of devices where we disable powersaving as its known
  * to causes problems on these devices.
  */
-अटल स्थिर काष्ठा snd_pci_quirk घातer_save_denylist[] = अणु
+static const struct snd_pci_quirk power_save_denylist[] = {
 	/* https://bugzilla.redhat.com/show_bug.cgi?id=1525104 */
 	SND_PCI_QUIRK(0x1849, 0xc892, "Asrock B85M-ITX", 0),
 	/* https://bugzilla.redhat.com/show_bug.cgi?id=1525104 */
@@ -2196,7 +2195,7 @@ out_मुक्त:
 	/* https://bugzilla.redhat.com/show_bug.cgi?id=1525104 */
 	SND_PCI_QUIRK(0x1028, 0x0497, "Dell Precision T3600", 0),
 	/* https://bugzilla.redhat.com/show_bug.cgi?id=1525104 */
-	/* Note the P55A-UD3 and Z87-D3HP share the subsys id क्रम the HDA dev */
+	/* Note the P55A-UD3 and Z87-D3HP share the subsys id for the HDA dev */
 	SND_PCI_QUIRK(0x1458, 0xa002, "Gigabyte P55A-UD3 / Z87-D3HP", 0),
 	/* https://bugzilla.redhat.com/show_bug.cgi?id=1525104 */
 	SND_PCI_QUIRK(0x8086, 0x2040, "Intel DZ77BH-55K", 0),
@@ -2214,156 +2213,156 @@ out_मुक्त:
 	SND_PCI_QUIRK(0x17aa, 0x36a7, "Lenovo C50 All in one", 0),
 	/* https://bugs.launchpad.net/bugs/1821663 */
 	SND_PCI_QUIRK(0x1631, 0xe017, "Packard Bell NEC IMEDIA 5204", 0),
-	अणुपूर्ण
-पूर्ण;
-#पूर्ण_अगर /* CONFIG_PM */
+	{}
+};
+#endif /* CONFIG_PM */
 
-अटल व्योम set_शेष_घातer_save(काष्ठा azx *chip)
-अणु
-	पूर्णांक val = घातer_save;
+static void set_default_power_save(struct azx *chip)
+{
+	int val = power_save;
 
-#अगर_घोषित CONFIG_PM
-	अगर (pm_blacklist) अणु
-		स्थिर काष्ठा snd_pci_quirk *q;
+#ifdef CONFIG_PM
+	if (pm_blacklist) {
+		const struct snd_pci_quirk *q;
 
-		q = snd_pci_quirk_lookup(chip->pci, घातer_save_denylist);
-		अगर (q && val) अणु
+		q = snd_pci_quirk_lookup(chip->pci, power_save_denylist);
+		if (q && val) {
 			dev_info(chip->card->dev, "device %04x:%04x is on the power_save denylist, forcing power_save to 0\n",
-				 q->subvenकरोr, q->subdevice);
+				 q->subvendor, q->subdevice);
 			val = 0;
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर /* CONFIG_PM */
-	snd_hda_set_घातer_save(&chip->bus, val * 1000);
-पूर्ण
+		}
+	}
+#endif /* CONFIG_PM */
+	snd_hda_set_power_save(&chip->bus, val * 1000);
+}
 
-/* number of codec slots क्रम each chipset: 0 = शेष slots (i.e. 4) */
-अटल स्थिर अचिन्हित पूर्णांक azx_max_codecs[AZX_NUM_DRIVERS] = अणु
+/* number of codec slots for each chipset: 0 = default slots (i.e. 4) */
+static const unsigned int azx_max_codecs[AZX_NUM_DRIVERS] = {
 	[AZX_DRIVER_NVIDIA] = 8,
 	[AZX_DRIVER_TERA] = 1,
-पूर्ण;
+};
 
-अटल पूर्णांक azx_probe_जारी(काष्ठा azx *chip)
-अणु
-	काष्ठा hda_पूर्णांकel *hda = container_of(chip, काष्ठा hda_पूर्णांकel, chip);
-	काष्ठा hdac_bus *bus = azx_bus(chip);
-	काष्ठा pci_dev *pci = chip->pci;
-	पूर्णांक dev = chip->dev_index;
-	पूर्णांक err;
+static int azx_probe_continue(struct azx *chip)
+{
+	struct hda_intel *hda = container_of(chip, struct hda_intel, chip);
+	struct hdac_bus *bus = azx_bus(chip);
+	struct pci_dev *pci = chip->pci;
+	int dev = chip->dev_index;
+	int err;
 
 	to_hda_bus(bus)->bus_probing = 1;
-	hda->probe_जारीd = 1;
+	hda->probe_continued = 1;
 
-	/* bind with i915 अगर needed */
-	अगर (chip->driver_caps & AZX_DCAPS_I915_COMPONENT) अणु
+	/* bind with i915 if needed */
+	if (chip->driver_caps & AZX_DCAPS_I915_COMPONENT) {
 		err = snd_hdac_i915_init(bus);
-		अगर (err < 0) अणु
-			/* अगर the controller is bound only with HDMI/DP
-			 * (क्रम HSW and BDW), we need to पात the probe;
-			 * क्रम other chips, still जारी probing as other
+		if (err < 0) {
+			/* if the controller is bound only with HDMI/DP
+			 * (for HSW and BDW), we need to abort the probe;
+			 * for other chips, still continue probing as other
 			 * codecs can be on the same link.
 			 */
-			अगर (CONTROLLER_IN_GPU(pci)) अणु
+			if (CONTROLLER_IN_GPU(pci)) {
 				dev_err(chip->card->dev,
 					"HSW/BDW HD-audio HDMI/DP requires binding with gfx driver\n");
-				जाओ out_मुक्त;
-			पूर्ण अन्यथा अणु
-				/* करोn't bother any दीर्घer */
+				goto out_free;
+			} else {
+				/* don't bother any longer */
 				chip->driver_caps &= ~AZX_DCAPS_I915_COMPONENT;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		/* HSW/BDW controllers need this घातer */
-		अगर (CONTROLLER_IN_GPU(pci))
-			hda->need_i915_घातer = true;
-	पूर्ण
+		/* HSW/BDW controllers need this power */
+		if (CONTROLLER_IN_GPU(pci))
+			hda->need_i915_power = true;
+	}
 
-	/* Request display घातer well क्रम the HDA controller or codec. For
+	/* Request display power well for the HDA controller or codec. For
 	 * Haswell/Broadwell, both the display HDA controller and codec need
-	 * this घातer. For other platक्रमms, like Baytrail/Braswell, only the
-	 * display codec needs the घातer and it can be released after probe.
+	 * this power. For other platforms, like Baytrail/Braswell, only the
+	 * display codec needs the power and it can be released after probe.
 	 */
-	display_घातer(chip, true);
+	display_power(chip, true);
 
 	err = azx_first_init(chip);
-	अगर (err < 0)
-		जाओ out_मुक्त;
+	if (err < 0)
+		goto out_free;
 
-#अगर_घोषित CONFIG_SND_HDA_INPUT_BEEP
+#ifdef CONFIG_SND_HDA_INPUT_BEEP
 	chip->beep_mode = beep_mode[dev];
-#पूर्ण_अगर
+#endif
 
 	/* create codec instances */
-	अगर (bus->codec_mask) अणु
+	if (bus->codec_mask) {
 		err = azx_probe_codecs(chip, azx_max_codecs[chip->driver_type]);
-		अगर (err < 0)
-			जाओ out_मुक्त;
-	पूर्ण
+		if (err < 0)
+			goto out_free;
+	}
 
-#अगर_घोषित CONFIG_SND_HDA_PATCH_LOADER
-	अगर (chip->fw) अणु
+#ifdef CONFIG_SND_HDA_PATCH_LOADER
+	if (chip->fw) {
 		err = snd_hda_load_patch(&chip->bus, chip->fw->size,
 					 chip->fw->data);
-		अगर (err < 0)
-			जाओ out_मुक्त;
-#अगर_अघोषित CONFIG_PM
-		release_firmware(chip->fw); /* no दीर्घer needed */
-		chip->fw = शून्य;
-#पूर्ण_अगर
-	पूर्ण
-#पूर्ण_अगर
-	अगर (bus->codec_mask && !(probe_only[dev] & 1)) अणु
+		if (err < 0)
+			goto out_free;
+#ifndef CONFIG_PM
+		release_firmware(chip->fw); /* no longer needed */
+		chip->fw = NULL;
+#endif
+	}
+#endif
+	if (bus->codec_mask && !(probe_only[dev] & 1)) {
 		err = azx_codec_configure(chip);
-		अगर (err < 0)
-			जाओ out_मुक्त;
-	पूर्ण
+		if (err < 0)
+			goto out_free;
+	}
 
-	err = snd_card_रेजिस्टर(chip->card);
-	अगर (err < 0)
-		जाओ out_मुक्त;
+	err = snd_card_register(chip->card);
+	if (err < 0)
+		goto out_free;
 
-	setup_vga_चयनeroo_runसमय_pm(chip);
+	setup_vga_switcheroo_runtime_pm(chip);
 
 	chip->running = 1;
 	azx_add_card_list(chip);
 
-	set_शेष_घातer_save(chip);
+	set_default_power_save(chip);
 
-	अगर (azx_has_pm_runसमय(chip)) अणु
-		pm_runसमय_use_स्वतःsuspend(&pci->dev);
-		pm_runसमय_allow(&pci->dev);
-		pm_runसमय_put_स्वतःsuspend(&pci->dev);
-	पूर्ण
+	if (azx_has_pm_runtime(chip)) {
+		pm_runtime_use_autosuspend(&pci->dev);
+		pm_runtime_allow(&pci->dev);
+		pm_runtime_put_autosuspend(&pci->dev);
+	}
 
-out_मुक्त:
-	अगर (err < 0) अणु
-		azx_मुक्त(chip);
-		वापस err;
-	पूर्ण
+out_free:
+	if (err < 0) {
+		azx_free(chip);
+		return err;
+	}
 
-	अगर (!hda->need_i915_घातer)
-		display_घातer(chip, false);
-	complete_all(&hda->probe_रुको);
+	if (!hda->need_i915_power)
+		display_power(chip, false);
+	complete_all(&hda->probe_wait);
 	to_hda_bus(bus)->bus_probing = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम azx_हटाओ(काष्ठा pci_dev *pci)
-अणु
-	काष्ठा snd_card *card = pci_get_drvdata(pci);
-	काष्ठा azx *chip;
-	काष्ठा hda_पूर्णांकel *hda;
+static void azx_remove(struct pci_dev *pci)
+{
+	struct snd_card *card = pci_get_drvdata(pci);
+	struct azx *chip;
+	struct hda_intel *hda;
 
-	अगर (card) अणु
+	if (card) {
 		/* cancel the pending probing work */
-		chip = card->निजी_data;
-		hda = container_of(chip, काष्ठा hda_पूर्णांकel, chip);
+		chip = card->private_data;
+		hda = container_of(chip, struct hda_intel, chip);
 		/* FIXME: below is an ugly workaround.
 		 * Both device_release_driver() and driver_probe_device()
-		 * take *both* the device's and its parent's lock beक्रमe
-		 * calling the हटाओ() and probe() callbacks.  The codec
+		 * take *both* the device's and its parent's lock before
+		 * calling the remove() and probe() callbacks.  The codec
 		 * probe takes the locks of both the codec itself and its
-		 * parent, i.e. the PCI controller dev.  Meanजबतक, when
+		 * parent, i.e. the PCI controller dev.  Meanwhile, when
 		 * the PCI controller is unbound, it takes its lock, too
 		 * ==> ouch, a deadlock!
 		 * As a workaround, we unlock temporarily here the controller
@@ -2373,392 +2372,392 @@ out_मुक्त:
 		cancel_work_sync(&hda->probe_work);
 		device_lock(&pci->dev);
 
-		snd_card_मुक्त(card);
-	पूर्ण
-पूर्ण
+		snd_card_free(card);
+	}
+}
 
-अटल व्योम azx_shutकरोwn(काष्ठा pci_dev *pci)
-अणु
-	काष्ठा snd_card *card = pci_get_drvdata(pci);
-	काष्ठा azx *chip;
+static void azx_shutdown(struct pci_dev *pci)
+{
+	struct snd_card *card = pci_get_drvdata(pci);
+	struct azx *chip;
 
-	अगर (!card)
-		वापस;
-	chip = card->निजी_data;
-	अगर (chip && chip->running)
+	if (!card)
+		return;
+	chip = card->private_data;
+	if (chip && chip->running)
 		azx_stop_chip(chip);
-पूर्ण
+}
 
 /* PCI IDs */
-अटल स्थिर काष्ठा pci_device_id azx_ids[] = अणु
+static const struct pci_device_id azx_ids[] = {
 	/* CPT */
-	अणु PCI_DEVICE(0x8086, 0x1c20),
-	  .driver_data = AZX_DRIVER_PCH | AZX_DCAPS_INTEL_PCH_NOPM पूर्ण,
+	{ PCI_DEVICE(0x8086, 0x1c20),
+	  .driver_data = AZX_DRIVER_PCH | AZX_DCAPS_INTEL_PCH_NOPM },
 	/* PBG */
-	अणु PCI_DEVICE(0x8086, 0x1d20),
-	  .driver_data = AZX_DRIVER_PCH | AZX_DCAPS_INTEL_PCH_NOPM पूर्ण,
-	/* Panther Poपूर्णांक */
-	अणु PCI_DEVICE(0x8086, 0x1e20),
-	  .driver_data = AZX_DRIVER_PCH | AZX_DCAPS_INTEL_PCH_NOPM पूर्ण,
-	/* Lynx Poपूर्णांक */
-	अणु PCI_DEVICE(0x8086, 0x8c20),
-	  .driver_data = AZX_DRIVER_PCH | AZX_DCAPS_INTEL_PCH पूर्ण,
+	{ PCI_DEVICE(0x8086, 0x1d20),
+	  .driver_data = AZX_DRIVER_PCH | AZX_DCAPS_INTEL_PCH_NOPM },
+	/* Panther Point */
+	{ PCI_DEVICE(0x8086, 0x1e20),
+	  .driver_data = AZX_DRIVER_PCH | AZX_DCAPS_INTEL_PCH_NOPM },
+	/* Lynx Point */
+	{ PCI_DEVICE(0x8086, 0x8c20),
+	  .driver_data = AZX_DRIVER_PCH | AZX_DCAPS_INTEL_PCH },
 	/* 9 Series */
-	अणु PCI_DEVICE(0x8086, 0x8ca0),
-	  .driver_data = AZX_DRIVER_PCH | AZX_DCAPS_INTEL_PCH पूर्ण,
+	{ PCI_DEVICE(0x8086, 0x8ca0),
+	  .driver_data = AZX_DRIVER_PCH | AZX_DCAPS_INTEL_PCH },
 	/* Wellsburg */
-	अणु PCI_DEVICE(0x8086, 0x8d20),
-	  .driver_data = AZX_DRIVER_PCH | AZX_DCAPS_INTEL_PCH पूर्ण,
-	अणु PCI_DEVICE(0x8086, 0x8d21),
-	  .driver_data = AZX_DRIVER_PCH | AZX_DCAPS_INTEL_PCH पूर्ण,
+	{ PCI_DEVICE(0x8086, 0x8d20),
+	  .driver_data = AZX_DRIVER_PCH | AZX_DCAPS_INTEL_PCH },
+	{ PCI_DEVICE(0x8086, 0x8d21),
+	  .driver_data = AZX_DRIVER_PCH | AZX_DCAPS_INTEL_PCH },
 	/* Lewisburg */
-	अणु PCI_DEVICE(0x8086, 0xa1f0),
-	  .driver_data = AZX_DRIVER_PCH | AZX_DCAPS_INTEL_SKYLAKE पूर्ण,
-	अणु PCI_DEVICE(0x8086, 0xa270),
-	  .driver_data = AZX_DRIVER_PCH | AZX_DCAPS_INTEL_SKYLAKE पूर्ण,
-	/* Lynx Poपूर्णांक-LP */
-	अणु PCI_DEVICE(0x8086, 0x9c20),
-	  .driver_data = AZX_DRIVER_PCH | AZX_DCAPS_INTEL_PCH पूर्ण,
-	/* Lynx Poपूर्णांक-LP */
-	अणु PCI_DEVICE(0x8086, 0x9c21),
-	  .driver_data = AZX_DRIVER_PCH | AZX_DCAPS_INTEL_PCH पूर्ण,
-	/* Wildcat Poपूर्णांक-LP */
-	अणु PCI_DEVICE(0x8086, 0x9ca0),
-	  .driver_data = AZX_DRIVER_PCH | AZX_DCAPS_INTEL_PCH पूर्ण,
-	/* Sunrise Poपूर्णांक */
-	अणु PCI_DEVICE(0x8086, 0xa170),
-	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKE पूर्ण,
-	/* Sunrise Poपूर्णांक-LP */
-	अणु PCI_DEVICE(0x8086, 0x9d70),
-	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKE पूर्ण,
+	{ PCI_DEVICE(0x8086, 0xa1f0),
+	  .driver_data = AZX_DRIVER_PCH | AZX_DCAPS_INTEL_SKYLAKE },
+	{ PCI_DEVICE(0x8086, 0xa270),
+	  .driver_data = AZX_DRIVER_PCH | AZX_DCAPS_INTEL_SKYLAKE },
+	/* Lynx Point-LP */
+	{ PCI_DEVICE(0x8086, 0x9c20),
+	  .driver_data = AZX_DRIVER_PCH | AZX_DCAPS_INTEL_PCH },
+	/* Lynx Point-LP */
+	{ PCI_DEVICE(0x8086, 0x9c21),
+	  .driver_data = AZX_DRIVER_PCH | AZX_DCAPS_INTEL_PCH },
+	/* Wildcat Point-LP */
+	{ PCI_DEVICE(0x8086, 0x9ca0),
+	  .driver_data = AZX_DRIVER_PCH | AZX_DCAPS_INTEL_PCH },
+	/* Sunrise Point */
+	{ PCI_DEVICE(0x8086, 0xa170),
+	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKE },
+	/* Sunrise Point-LP */
+	{ PCI_DEVICE(0x8086, 0x9d70),
+	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKE },
 	/* Kabylake */
-	अणु PCI_DEVICE(0x8086, 0xa171),
-	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKE पूर्ण,
+	{ PCI_DEVICE(0x8086, 0xa171),
+	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKE },
 	/* Kabylake-LP */
-	अणु PCI_DEVICE(0x8086, 0x9d71),
-	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKE पूर्ण,
+	{ PCI_DEVICE(0x8086, 0x9d71),
+	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKE },
 	/* Kabylake-H */
-	अणु PCI_DEVICE(0x8086, 0xa2f0),
-	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKE पूर्ण,
+	{ PCI_DEVICE(0x8086, 0xa2f0),
+	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKE },
 	/* Coffelake */
-	अणु PCI_DEVICE(0x8086, 0xa348),
-	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKEपूर्ण,
+	{ PCI_DEVICE(0x8086, 0xa348),
+	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKE},
 	/* Cannonlake */
-	अणु PCI_DEVICE(0x8086, 0x9dc8),
-	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKEपूर्ण,
+	{ PCI_DEVICE(0x8086, 0x9dc8),
+	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKE},
 	/* CometLake-LP */
-	अणु PCI_DEVICE(0x8086, 0x02C8),
-	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKEपूर्ण,
+	{ PCI_DEVICE(0x8086, 0x02C8),
+	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKE},
 	/* CometLake-H */
-	अणु PCI_DEVICE(0x8086, 0x06C8),
-	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKEपूर्ण,
-	अणु PCI_DEVICE(0x8086, 0xf1c8),
-	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKEपूर्ण,
+	{ PCI_DEVICE(0x8086, 0x06C8),
+	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKE},
+	{ PCI_DEVICE(0x8086, 0xf1c8),
+	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKE},
 	/* CometLake-S */
-	अणु PCI_DEVICE(0x8086, 0xa3f0),
-	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKEपूर्ण,
+	{ PCI_DEVICE(0x8086, 0xa3f0),
+	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKE},
 	/* CometLake-R */
-	अणु PCI_DEVICE(0x8086, 0xf0c8),
-	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKEपूर्ण,
+	{ PCI_DEVICE(0x8086, 0xf0c8),
+	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKE},
 	/* Icelake */
-	अणु PCI_DEVICE(0x8086, 0x34c8),
-	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKEपूर्ण,
+	{ PCI_DEVICE(0x8086, 0x34c8),
+	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKE},
 	/* Icelake-H */
-	अणु PCI_DEVICE(0x8086, 0x3dc8),
-	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKEपूर्ण,
+	{ PCI_DEVICE(0x8086, 0x3dc8),
+	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKE},
 	/* Jasperlake */
-	अणु PCI_DEVICE(0x8086, 0x38c8),
-	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKEपूर्ण,
-	अणु PCI_DEVICE(0x8086, 0x4dc8),
-	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKEपूर्ण,
+	{ PCI_DEVICE(0x8086, 0x38c8),
+	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKE},
+	{ PCI_DEVICE(0x8086, 0x4dc8),
+	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKE},
 	/* Tigerlake */
-	अणु PCI_DEVICE(0x8086, 0xa0c8),
-	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKEपूर्ण,
+	{ PCI_DEVICE(0x8086, 0xa0c8),
+	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKE},
 	/* Tigerlake-H */
-	अणु PCI_DEVICE(0x8086, 0x43c8),
-	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKEपूर्ण,
+	{ PCI_DEVICE(0x8086, 0x43c8),
+	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKE},
 	/* DG1 */
-	अणु PCI_DEVICE(0x8086, 0x490d),
-	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKEपूर्ण,
+	{ PCI_DEVICE(0x8086, 0x490d),
+	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKE},
 	/* Alderlake-S */
-	अणु PCI_DEVICE(0x8086, 0x7ad0),
-	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKEपूर्ण,
+	{ PCI_DEVICE(0x8086, 0x7ad0),
+	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKE},
 	/* Alderlake-P */
-	अणु PCI_DEVICE(0x8086, 0x51c8),
-	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKEपूर्ण,
+	{ PCI_DEVICE(0x8086, 0x51c8),
+	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKE},
 	/* Alderlake-M */
-	अणु PCI_DEVICE(0x8086, 0x51cc),
-	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKEपूर्ण,
+	{ PCI_DEVICE(0x8086, 0x51cc),
+	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKE},
 	/* Elkhart Lake */
-	अणु PCI_DEVICE(0x8086, 0x4b55),
-	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKEपूर्ण,
-	अणु PCI_DEVICE(0x8086, 0x4b58),
-	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKEपूर्ण,
+	{ PCI_DEVICE(0x8086, 0x4b55),
+	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKE},
+	{ PCI_DEVICE(0x8086, 0x4b58),
+	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_SKYLAKE},
 	/* Broxton-P(Apollolake) */
-	अणु PCI_DEVICE(0x8086, 0x5a98),
-	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_BROXTON पूर्ण,
+	{ PCI_DEVICE(0x8086, 0x5a98),
+	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_BROXTON },
 	/* Broxton-T */
-	अणु PCI_DEVICE(0x8086, 0x1a98),
-	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_BROXTON पूर्ण,
+	{ PCI_DEVICE(0x8086, 0x1a98),
+	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_BROXTON },
 	/* Gemini-Lake */
-	अणु PCI_DEVICE(0x8086, 0x3198),
-	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_BROXTON पूर्ण,
+	{ PCI_DEVICE(0x8086, 0x3198),
+	  .driver_data = AZX_DRIVER_SKL | AZX_DCAPS_INTEL_BROXTON },
 	/* Haswell */
-	अणु PCI_DEVICE(0x8086, 0x0a0c),
-	  .driver_data = AZX_DRIVER_HDMI | AZX_DCAPS_INTEL_HASWELL पूर्ण,
-	अणु PCI_DEVICE(0x8086, 0x0c0c),
-	  .driver_data = AZX_DRIVER_HDMI | AZX_DCAPS_INTEL_HASWELL पूर्ण,
-	अणु PCI_DEVICE(0x8086, 0x0d0c),
-	  .driver_data = AZX_DRIVER_HDMI | AZX_DCAPS_INTEL_HASWELL पूर्ण,
+	{ PCI_DEVICE(0x8086, 0x0a0c),
+	  .driver_data = AZX_DRIVER_HDMI | AZX_DCAPS_INTEL_HASWELL },
+	{ PCI_DEVICE(0x8086, 0x0c0c),
+	  .driver_data = AZX_DRIVER_HDMI | AZX_DCAPS_INTEL_HASWELL },
+	{ PCI_DEVICE(0x8086, 0x0d0c),
+	  .driver_data = AZX_DRIVER_HDMI | AZX_DCAPS_INTEL_HASWELL },
 	/* Broadwell */
-	अणु PCI_DEVICE(0x8086, 0x160c),
-	  .driver_data = AZX_DRIVER_HDMI | AZX_DCAPS_INTEL_BROADWELL पूर्ण,
+	{ PCI_DEVICE(0x8086, 0x160c),
+	  .driver_data = AZX_DRIVER_HDMI | AZX_DCAPS_INTEL_BROADWELL },
 	/* 5 Series/3400 */
-	अणु PCI_DEVICE(0x8086, 0x3b56),
-	  .driver_data = AZX_DRIVER_SCH | AZX_DCAPS_INTEL_PCH_NOPM पूर्ण,
+	{ PCI_DEVICE(0x8086, 0x3b56),
+	  .driver_data = AZX_DRIVER_SCH | AZX_DCAPS_INTEL_PCH_NOPM },
 	/* Poulsbo */
-	अणु PCI_DEVICE(0x8086, 0x811b),
-	  .driver_data = AZX_DRIVER_SCH | AZX_DCAPS_INTEL_PCH_BASE पूर्ण,
+	{ PCI_DEVICE(0x8086, 0x811b),
+	  .driver_data = AZX_DRIVER_SCH | AZX_DCAPS_INTEL_PCH_BASE },
 	/* Oaktrail */
-	अणु PCI_DEVICE(0x8086, 0x080a),
-	  .driver_data = AZX_DRIVER_SCH | AZX_DCAPS_INTEL_PCH_BASE पूर्ण,
+	{ PCI_DEVICE(0x8086, 0x080a),
+	  .driver_data = AZX_DRIVER_SCH | AZX_DCAPS_INTEL_PCH_BASE },
 	/* BayTrail */
-	अणु PCI_DEVICE(0x8086, 0x0f04),
-	  .driver_data = AZX_DRIVER_PCH | AZX_DCAPS_INTEL_BAYTRAIL पूर्ण,
+	{ PCI_DEVICE(0x8086, 0x0f04),
+	  .driver_data = AZX_DRIVER_PCH | AZX_DCAPS_INTEL_BAYTRAIL },
 	/* Braswell */
-	अणु PCI_DEVICE(0x8086, 0x2284),
-	  .driver_data = AZX_DRIVER_PCH | AZX_DCAPS_INTEL_BRASWELL पूर्ण,
+	{ PCI_DEVICE(0x8086, 0x2284),
+	  .driver_data = AZX_DRIVER_PCH | AZX_DCAPS_INTEL_BRASWELL },
 	/* ICH6 */
-	अणु PCI_DEVICE(0x8086, 0x2668),
-	  .driver_data = AZX_DRIVER_ICH | AZX_DCAPS_INTEL_ICH पूर्ण,
+	{ PCI_DEVICE(0x8086, 0x2668),
+	  .driver_data = AZX_DRIVER_ICH | AZX_DCAPS_INTEL_ICH },
 	/* ICH7 */
-	अणु PCI_DEVICE(0x8086, 0x27d8),
-	  .driver_data = AZX_DRIVER_ICH | AZX_DCAPS_INTEL_ICH पूर्ण,
+	{ PCI_DEVICE(0x8086, 0x27d8),
+	  .driver_data = AZX_DRIVER_ICH | AZX_DCAPS_INTEL_ICH },
 	/* ESB2 */
-	अणु PCI_DEVICE(0x8086, 0x269a),
-	  .driver_data = AZX_DRIVER_ICH | AZX_DCAPS_INTEL_ICH पूर्ण,
+	{ PCI_DEVICE(0x8086, 0x269a),
+	  .driver_data = AZX_DRIVER_ICH | AZX_DCAPS_INTEL_ICH },
 	/* ICH8 */
-	अणु PCI_DEVICE(0x8086, 0x284b),
-	  .driver_data = AZX_DRIVER_ICH | AZX_DCAPS_INTEL_ICH पूर्ण,
+	{ PCI_DEVICE(0x8086, 0x284b),
+	  .driver_data = AZX_DRIVER_ICH | AZX_DCAPS_INTEL_ICH },
 	/* ICH9 */
-	अणु PCI_DEVICE(0x8086, 0x293e),
-	  .driver_data = AZX_DRIVER_ICH | AZX_DCAPS_INTEL_ICH पूर्ण,
+	{ PCI_DEVICE(0x8086, 0x293e),
+	  .driver_data = AZX_DRIVER_ICH | AZX_DCAPS_INTEL_ICH },
 	/* ICH9 */
-	अणु PCI_DEVICE(0x8086, 0x293f),
-	  .driver_data = AZX_DRIVER_ICH | AZX_DCAPS_INTEL_ICH पूर्ण,
+	{ PCI_DEVICE(0x8086, 0x293f),
+	  .driver_data = AZX_DRIVER_ICH | AZX_DCAPS_INTEL_ICH },
 	/* ICH10 */
-	अणु PCI_DEVICE(0x8086, 0x3a3e),
-	  .driver_data = AZX_DRIVER_ICH | AZX_DCAPS_INTEL_ICH पूर्ण,
+	{ PCI_DEVICE(0x8086, 0x3a3e),
+	  .driver_data = AZX_DRIVER_ICH | AZX_DCAPS_INTEL_ICH },
 	/* ICH10 */
-	अणु PCI_DEVICE(0x8086, 0x3a6e),
-	  .driver_data = AZX_DRIVER_ICH | AZX_DCAPS_INTEL_ICH पूर्ण,
+	{ PCI_DEVICE(0x8086, 0x3a6e),
+	  .driver_data = AZX_DRIVER_ICH | AZX_DCAPS_INTEL_ICH },
 	/* Generic Intel */
-	अणु PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCI_ANY_ID),
+	{ PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCI_ANY_ID),
 	  .class = PCI_CLASS_MULTIMEDIA_HD_AUDIO << 8,
 	  .class_mask = 0xffffff,
-	  .driver_data = AZX_DRIVER_ICH | AZX_DCAPS_NO_ALIGN_बफ_मानE पूर्ण,
+	  .driver_data = AZX_DRIVER_ICH | AZX_DCAPS_NO_ALIGN_BUFSIZE },
 	/* ATI SB 450/600/700/800/900 */
-	अणु PCI_DEVICE(0x1002, 0x437b),
-	  .driver_data = AZX_DRIVER_ATI | AZX_DCAPS_PRESET_ATI_SB पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0x4383),
-	  .driver_data = AZX_DRIVER_ATI | AZX_DCAPS_PRESET_ATI_SB पूर्ण,
+	{ PCI_DEVICE(0x1002, 0x437b),
+	  .driver_data = AZX_DRIVER_ATI | AZX_DCAPS_PRESET_ATI_SB },
+	{ PCI_DEVICE(0x1002, 0x4383),
+	  .driver_data = AZX_DRIVER_ATI | AZX_DCAPS_PRESET_ATI_SB },
 	/* AMD Hudson */
-	अणु PCI_DEVICE(0x1022, 0x780d),
-	  .driver_data = AZX_DRIVER_GENERIC | AZX_DCAPS_PRESET_ATI_SB पूर्ण,
+	{ PCI_DEVICE(0x1022, 0x780d),
+	  .driver_data = AZX_DRIVER_GENERIC | AZX_DCAPS_PRESET_ATI_SB },
 	/* AMD, X370 & co */
-	अणु PCI_DEVICE(0x1022, 0x1457),
-	  .driver_data = AZX_DRIVER_GENERIC | AZX_DCAPS_PRESET_AMD_SB पूर्ण,
+	{ PCI_DEVICE(0x1022, 0x1457),
+	  .driver_data = AZX_DRIVER_GENERIC | AZX_DCAPS_PRESET_AMD_SB },
 	/* AMD, X570 & co */
-	अणु PCI_DEVICE(0x1022, 0x1487),
-	  .driver_data = AZX_DRIVER_GENERIC | AZX_DCAPS_PRESET_AMD_SB पूर्ण,
+	{ PCI_DEVICE(0x1022, 0x1487),
+	  .driver_data = AZX_DRIVER_GENERIC | AZX_DCAPS_PRESET_AMD_SB },
 	/* AMD Stoney */
-	अणु PCI_DEVICE(0x1022, 0x157a),
+	{ PCI_DEVICE(0x1022, 0x157a),
 	  .driver_data = AZX_DRIVER_GENERIC | AZX_DCAPS_PRESET_ATI_SB |
-			 AZX_DCAPS_PM_RUNTIME पूर्ण,
+			 AZX_DCAPS_PM_RUNTIME },
 	/* AMD Raven */
-	अणु PCI_DEVICE(0x1022, 0x15e3),
-	  .driver_data = AZX_DRIVER_GENERIC | AZX_DCAPS_PRESET_AMD_SB पूर्ण,
+	{ PCI_DEVICE(0x1022, 0x15e3),
+	  .driver_data = AZX_DRIVER_GENERIC | AZX_DCAPS_PRESET_AMD_SB },
 	/* ATI HDMI */
-	अणु PCI_DEVICE(0x1002, 0x0002),
+	{ PCI_DEVICE(0x1002, 0x0002),
 	  .driver_data = AZX_DRIVER_ATIHDMI_NS | AZX_DCAPS_PRESET_ATI_HDMI_NS |
-	  AZX_DCAPS_PM_RUNTIME पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0x1308),
-	  .driver_data = AZX_DRIVER_ATIHDMI_NS | AZX_DCAPS_PRESET_ATI_HDMI_NS पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0x157a),
-	  .driver_data = AZX_DRIVER_ATIHDMI_NS | AZX_DCAPS_PRESET_ATI_HDMI_NS पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0x15b3),
-	  .driver_data = AZX_DRIVER_ATIHDMI_NS | AZX_DCAPS_PRESET_ATI_HDMI_NS पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0x793b),
-	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0x7919),
-	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0x960f),
-	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0x970f),
-	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0x9840),
-	  .driver_data = AZX_DRIVER_ATIHDMI_NS | AZX_DCAPS_PRESET_ATI_HDMI_NS पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0xaa00),
-	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0xaa08),
-	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0xaa10),
-	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0xaa18),
-	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0xaa20),
-	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0xaa28),
-	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0xaa30),
-	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0xaa38),
-	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0xaa40),
-	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0xaa48),
-	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0xaa50),
-	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0xaa58),
-	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0xaa60),
-	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0xaa68),
-	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0xaa80),
-	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0xaa88),
-	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0xaa90),
-	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0xaa98),
-	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0x9902),
-	  .driver_data = AZX_DRIVER_ATIHDMI_NS | AZX_DCAPS_PRESET_ATI_HDMI_NS पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0xaaa0),
-	  .driver_data = AZX_DRIVER_ATIHDMI_NS | AZX_DCAPS_PRESET_ATI_HDMI_NS पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0xaaa8),
-	  .driver_data = AZX_DRIVER_ATIHDMI_NS | AZX_DCAPS_PRESET_ATI_HDMI_NS पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0xaab0),
-	  .driver_data = AZX_DRIVER_ATIHDMI_NS | AZX_DCAPS_PRESET_ATI_HDMI_NS पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0xaac0),
+	  AZX_DCAPS_PM_RUNTIME },
+	{ PCI_DEVICE(0x1002, 0x1308),
+	  .driver_data = AZX_DRIVER_ATIHDMI_NS | AZX_DCAPS_PRESET_ATI_HDMI_NS },
+	{ PCI_DEVICE(0x1002, 0x157a),
+	  .driver_data = AZX_DRIVER_ATIHDMI_NS | AZX_DCAPS_PRESET_ATI_HDMI_NS },
+	{ PCI_DEVICE(0x1002, 0x15b3),
+	  .driver_data = AZX_DRIVER_ATIHDMI_NS | AZX_DCAPS_PRESET_ATI_HDMI_NS },
+	{ PCI_DEVICE(0x1002, 0x793b),
+	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI },
+	{ PCI_DEVICE(0x1002, 0x7919),
+	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI },
+	{ PCI_DEVICE(0x1002, 0x960f),
+	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI },
+	{ PCI_DEVICE(0x1002, 0x970f),
+	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI },
+	{ PCI_DEVICE(0x1002, 0x9840),
+	  .driver_data = AZX_DRIVER_ATIHDMI_NS | AZX_DCAPS_PRESET_ATI_HDMI_NS },
+	{ PCI_DEVICE(0x1002, 0xaa00),
+	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI },
+	{ PCI_DEVICE(0x1002, 0xaa08),
+	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI },
+	{ PCI_DEVICE(0x1002, 0xaa10),
+	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI },
+	{ PCI_DEVICE(0x1002, 0xaa18),
+	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI },
+	{ PCI_DEVICE(0x1002, 0xaa20),
+	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI },
+	{ PCI_DEVICE(0x1002, 0xaa28),
+	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI },
+	{ PCI_DEVICE(0x1002, 0xaa30),
+	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI },
+	{ PCI_DEVICE(0x1002, 0xaa38),
+	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI },
+	{ PCI_DEVICE(0x1002, 0xaa40),
+	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI },
+	{ PCI_DEVICE(0x1002, 0xaa48),
+	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI },
+	{ PCI_DEVICE(0x1002, 0xaa50),
+	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI },
+	{ PCI_DEVICE(0x1002, 0xaa58),
+	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI },
+	{ PCI_DEVICE(0x1002, 0xaa60),
+	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI },
+	{ PCI_DEVICE(0x1002, 0xaa68),
+	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI },
+	{ PCI_DEVICE(0x1002, 0xaa80),
+	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI },
+	{ PCI_DEVICE(0x1002, 0xaa88),
+	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI },
+	{ PCI_DEVICE(0x1002, 0xaa90),
+	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI },
+	{ PCI_DEVICE(0x1002, 0xaa98),
+	  .driver_data = AZX_DRIVER_ATIHDMI | AZX_DCAPS_PRESET_ATI_HDMI },
+	{ PCI_DEVICE(0x1002, 0x9902),
+	  .driver_data = AZX_DRIVER_ATIHDMI_NS | AZX_DCAPS_PRESET_ATI_HDMI_NS },
+	{ PCI_DEVICE(0x1002, 0xaaa0),
+	  .driver_data = AZX_DRIVER_ATIHDMI_NS | AZX_DCAPS_PRESET_ATI_HDMI_NS },
+	{ PCI_DEVICE(0x1002, 0xaaa8),
+	  .driver_data = AZX_DRIVER_ATIHDMI_NS | AZX_DCAPS_PRESET_ATI_HDMI_NS },
+	{ PCI_DEVICE(0x1002, 0xaab0),
+	  .driver_data = AZX_DRIVER_ATIHDMI_NS | AZX_DCAPS_PRESET_ATI_HDMI_NS },
+	{ PCI_DEVICE(0x1002, 0xaac0),
 	  .driver_data = AZX_DRIVER_ATIHDMI_NS | AZX_DCAPS_PRESET_ATI_HDMI_NS |
-	  AZX_DCAPS_PM_RUNTIME पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0xaac8),
+	  AZX_DCAPS_PM_RUNTIME },
+	{ PCI_DEVICE(0x1002, 0xaac8),
 	  .driver_data = AZX_DRIVER_ATIHDMI_NS | AZX_DCAPS_PRESET_ATI_HDMI_NS |
-	  AZX_DCAPS_PM_RUNTIME पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0xaad8),
+	  AZX_DCAPS_PM_RUNTIME },
+	{ PCI_DEVICE(0x1002, 0xaad8),
 	  .driver_data = AZX_DRIVER_ATIHDMI_NS | AZX_DCAPS_PRESET_ATI_HDMI_NS |
-	  AZX_DCAPS_PM_RUNTIME पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0xaae0),
+	  AZX_DCAPS_PM_RUNTIME },
+	{ PCI_DEVICE(0x1002, 0xaae0),
 	  .driver_data = AZX_DRIVER_ATIHDMI_NS | AZX_DCAPS_PRESET_ATI_HDMI_NS |
-	  AZX_DCAPS_PM_RUNTIME पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0xaae8),
+	  AZX_DCAPS_PM_RUNTIME },
+	{ PCI_DEVICE(0x1002, 0xaae8),
 	  .driver_data = AZX_DRIVER_ATIHDMI_NS | AZX_DCAPS_PRESET_ATI_HDMI_NS |
-	  AZX_DCAPS_PM_RUNTIME पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0xaaf0),
+	  AZX_DCAPS_PM_RUNTIME },
+	{ PCI_DEVICE(0x1002, 0xaaf0),
 	  .driver_data = AZX_DRIVER_ATIHDMI_NS | AZX_DCAPS_PRESET_ATI_HDMI_NS |
-	  AZX_DCAPS_PM_RUNTIME पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0xaaf8),
+	  AZX_DCAPS_PM_RUNTIME },
+	{ PCI_DEVICE(0x1002, 0xaaf8),
 	  .driver_data = AZX_DRIVER_ATIHDMI_NS | AZX_DCAPS_PRESET_ATI_HDMI_NS |
-	  AZX_DCAPS_PM_RUNTIME पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0xab00),
+	  AZX_DCAPS_PM_RUNTIME },
+	{ PCI_DEVICE(0x1002, 0xab00),
 	  .driver_data = AZX_DRIVER_ATIHDMI_NS | AZX_DCAPS_PRESET_ATI_HDMI_NS |
-	  AZX_DCAPS_PM_RUNTIME पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0xab08),
+	  AZX_DCAPS_PM_RUNTIME },
+	{ PCI_DEVICE(0x1002, 0xab08),
 	  .driver_data = AZX_DRIVER_ATIHDMI_NS | AZX_DCAPS_PRESET_ATI_HDMI_NS |
-	  AZX_DCAPS_PM_RUNTIME पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0xab10),
+	  AZX_DCAPS_PM_RUNTIME },
+	{ PCI_DEVICE(0x1002, 0xab10),
 	  .driver_data = AZX_DRIVER_ATIHDMI_NS | AZX_DCAPS_PRESET_ATI_HDMI_NS |
-	  AZX_DCAPS_PM_RUNTIME पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0xab18),
+	  AZX_DCAPS_PM_RUNTIME },
+	{ PCI_DEVICE(0x1002, 0xab18),
 	  .driver_data = AZX_DRIVER_ATIHDMI_NS | AZX_DCAPS_PRESET_ATI_HDMI_NS |
-	  AZX_DCAPS_PM_RUNTIME पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0xab20),
+	  AZX_DCAPS_PM_RUNTIME },
+	{ PCI_DEVICE(0x1002, 0xab20),
 	  .driver_data = AZX_DRIVER_ATIHDMI_NS | AZX_DCAPS_PRESET_ATI_HDMI_NS |
-	  AZX_DCAPS_PM_RUNTIME पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0xab28),
+	  AZX_DCAPS_PM_RUNTIME },
+	{ PCI_DEVICE(0x1002, 0xab28),
 	  .driver_data = AZX_DRIVER_ATIHDMI_NS | AZX_DCAPS_PRESET_ATI_HDMI_NS |
-	  AZX_DCAPS_PM_RUNTIME पूर्ण,
-	अणु PCI_DEVICE(0x1002, 0xab38),
+	  AZX_DCAPS_PM_RUNTIME },
+	{ PCI_DEVICE(0x1002, 0xab38),
 	  .driver_data = AZX_DRIVER_ATIHDMI_NS | AZX_DCAPS_PRESET_ATI_HDMI_NS |
-	  AZX_DCAPS_PM_RUNTIME पूर्ण,
+	  AZX_DCAPS_PM_RUNTIME },
 	/* VIA VT8251/VT8237A */
-	अणु PCI_DEVICE(0x1106, 0x3288), .driver_data = AZX_DRIVER_VIA पूर्ण,
+	{ PCI_DEVICE(0x1106, 0x3288), .driver_data = AZX_DRIVER_VIA },
 	/* VIA GFX VT7122/VX900 */
-	अणु PCI_DEVICE(0x1106, 0x9170), .driver_data = AZX_DRIVER_GENERIC पूर्ण,
+	{ PCI_DEVICE(0x1106, 0x9170), .driver_data = AZX_DRIVER_GENERIC },
 	/* VIA GFX VT6122/VX11 */
-	अणु PCI_DEVICE(0x1106, 0x9140), .driver_data = AZX_DRIVER_GENERIC पूर्ण,
+	{ PCI_DEVICE(0x1106, 0x9140), .driver_data = AZX_DRIVER_GENERIC },
 	/* SIS966 */
-	अणु PCI_DEVICE(0x1039, 0x7502), .driver_data = AZX_DRIVER_SIS पूर्ण,
+	{ PCI_DEVICE(0x1039, 0x7502), .driver_data = AZX_DRIVER_SIS },
 	/* ULI M5461 */
-	अणु PCI_DEVICE(0x10b9, 0x5461), .driver_data = AZX_DRIVER_ULI पूर्ण,
+	{ PCI_DEVICE(0x10b9, 0x5461), .driver_data = AZX_DRIVER_ULI },
 	/* NVIDIA MCP */
-	अणु PCI_DEVICE(PCI_VENDOR_ID_NVIDIA, PCI_ANY_ID),
+	{ PCI_DEVICE(PCI_VENDOR_ID_NVIDIA, PCI_ANY_ID),
 	  .class = PCI_CLASS_MULTIMEDIA_HD_AUDIO << 8,
 	  .class_mask = 0xffffff,
-	  .driver_data = AZX_DRIVER_NVIDIA | AZX_DCAPS_PRESET_NVIDIA पूर्ण,
+	  .driver_data = AZX_DRIVER_NVIDIA | AZX_DCAPS_PRESET_NVIDIA },
 	/* Teradici */
-	अणु PCI_DEVICE(0x6549, 0x1200),
-	  .driver_data = AZX_DRIVER_TERA | AZX_DCAPS_NO_64BIT पूर्ण,
-	अणु PCI_DEVICE(0x6549, 0x2200),
-	  .driver_data = AZX_DRIVER_TERA | AZX_DCAPS_NO_64BIT पूर्ण,
+	{ PCI_DEVICE(0x6549, 0x1200),
+	  .driver_data = AZX_DRIVER_TERA | AZX_DCAPS_NO_64BIT },
+	{ PCI_DEVICE(0x6549, 0x2200),
+	  .driver_data = AZX_DRIVER_TERA | AZX_DCAPS_NO_64BIT },
 	/* Creative X-Fi (CA0110-IBG) */
 	/* CTHDA chips */
-	अणु PCI_DEVICE(0x1102, 0x0010),
-	  .driver_data = AZX_DRIVER_CTHDA | AZX_DCAPS_PRESET_CTHDA पूर्ण,
-	अणु PCI_DEVICE(0x1102, 0x0012),
-	  .driver_data = AZX_DRIVER_CTHDA | AZX_DCAPS_PRESET_CTHDA पूर्ण,
-#अगर !IS_ENABLED(CONFIG_SND_CTXFI)
+	{ PCI_DEVICE(0x1102, 0x0010),
+	  .driver_data = AZX_DRIVER_CTHDA | AZX_DCAPS_PRESET_CTHDA },
+	{ PCI_DEVICE(0x1102, 0x0012),
+	  .driver_data = AZX_DRIVER_CTHDA | AZX_DCAPS_PRESET_CTHDA },
+#if !IS_ENABLED(CONFIG_SND_CTXFI)
 	/* the following entry conflicts with snd-ctxfi driver,
 	 * as ctxfi driver mutates from HD-audio to native mode with
 	 * a special command sequence.
 	 */
-	अणु PCI_DEVICE(PCI_VENDOR_ID_CREATIVE, PCI_ANY_ID),
+	{ PCI_DEVICE(PCI_VENDOR_ID_CREATIVE, PCI_ANY_ID),
 	  .class = PCI_CLASS_MULTIMEDIA_HD_AUDIO << 8,
 	  .class_mask = 0xffffff,
 	  .driver_data = AZX_DRIVER_CTX | AZX_DCAPS_CTX_WORKAROUND |
-	  AZX_DCAPS_NO_64BIT | AZX_DCAPS_POSFIX_LPIB पूर्ण,
-#अन्यथा
+	  AZX_DCAPS_NO_64BIT | AZX_DCAPS_POSFIX_LPIB },
+#else
 	/* this entry seems still valid -- i.e. without emu20kx chip */
-	अणु PCI_DEVICE(0x1102, 0x0009),
+	{ PCI_DEVICE(0x1102, 0x0009),
 	  .driver_data = AZX_DRIVER_CTX | AZX_DCAPS_CTX_WORKAROUND |
-	  AZX_DCAPS_NO_64BIT | AZX_DCAPS_POSFIX_LPIB पूर्ण,
-#पूर्ण_अगर
+	  AZX_DCAPS_NO_64BIT | AZX_DCAPS_POSFIX_LPIB },
+#endif
 	/* CM8888 */
-	अणु PCI_DEVICE(0x13f6, 0x5011),
+	{ PCI_DEVICE(0x13f6, 0x5011),
 	  .driver_data = AZX_DRIVER_CMEDIA |
-	  AZX_DCAPS_NO_MSI | AZX_DCAPS_POSFIX_LPIB | AZX_DCAPS_SNOOP_OFF पूर्ण,
+	  AZX_DCAPS_NO_MSI | AZX_DCAPS_POSFIX_LPIB | AZX_DCAPS_SNOOP_OFF },
 	/* Vortex86MX */
-	अणु PCI_DEVICE(0x17f3, 0x3010), .driver_data = AZX_DRIVER_GENERIC पूर्ण,
+	{ PCI_DEVICE(0x17f3, 0x3010), .driver_data = AZX_DRIVER_GENERIC },
 	/* VMware HDAudio */
-	अणु PCI_DEVICE(0x15ad, 0x1977), .driver_data = AZX_DRIVER_GENERIC पूर्ण,
-	/* AMD/ATI Generic, PCI class code and Venकरोr ID क्रम HD Audio */
-	अणु PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_ANY_ID),
+	{ PCI_DEVICE(0x15ad, 0x1977), .driver_data = AZX_DRIVER_GENERIC },
+	/* AMD/ATI Generic, PCI class code and Vendor ID for HD Audio */
+	{ PCI_DEVICE(PCI_VENDOR_ID_ATI, PCI_ANY_ID),
 	  .class = PCI_CLASS_MULTIMEDIA_HD_AUDIO << 8,
 	  .class_mask = 0xffffff,
-	  .driver_data = AZX_DRIVER_GENERIC | AZX_DCAPS_PRESET_ATI_HDMI पूर्ण,
-	अणु PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_ANY_ID),
+	  .driver_data = AZX_DRIVER_GENERIC | AZX_DCAPS_PRESET_ATI_HDMI },
+	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_ANY_ID),
 	  .class = PCI_CLASS_MULTIMEDIA_HD_AUDIO << 8,
 	  .class_mask = 0xffffff,
-	  .driver_data = AZX_DRIVER_GENERIC | AZX_DCAPS_PRESET_ATI_HDMI पूर्ण,
+	  .driver_data = AZX_DRIVER_GENERIC | AZX_DCAPS_PRESET_ATI_HDMI },
 	/* Zhaoxin */
-	अणु PCI_DEVICE(0x1d17, 0x3288), .driver_data = AZX_DRIVER_ZHAOXIN पूर्ण,
-	अणु 0, पूर्ण
-पूर्ण;
+	{ PCI_DEVICE(0x1d17, 0x3288), .driver_data = AZX_DRIVER_ZHAOXIN },
+	{ 0, }
+};
 MODULE_DEVICE_TABLE(pci, azx_ids);
 
 /* pci_driver definition */
-अटल काष्ठा pci_driver azx_driver = अणु
+static struct pci_driver azx_driver = {
 	.name = KBUILD_MODNAME,
 	.id_table = azx_ids,
 	.probe = azx_probe,
-	.हटाओ = azx_हटाओ,
-	.shutकरोwn = azx_shutकरोwn,
-	.driver = अणु
+	.remove = azx_remove,
+	.shutdown = azx_shutdown,
+	.driver = {
 		.pm = AZX_PM_OPS,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 module_pci_driver(azx_driver);

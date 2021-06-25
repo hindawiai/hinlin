@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2004 Topspin Communications.  All rights reserved.
  * Copyright (c) 2005 Cisco Systems.  All rights reserved.
@@ -7,20 +6,20 @@
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -33,50 +32,50 @@
  * SOFTWARE.
  */
 
-#समावेश <linux/त्रुटिसं.स>
+#include <linux/errno.h>
 
-#समावेश "mthca_dev.h"
+#include "mthca_dev.h"
 
-पूर्णांक mthca_pd_alloc(काष्ठा mthca_dev *dev, पूर्णांक privileged, काष्ठा mthca_pd *pd)
-अणु
-	पूर्णांक err = 0;
+int mthca_pd_alloc(struct mthca_dev *dev, int privileged, struct mthca_pd *pd)
+{
+	int err = 0;
 
 	pd->privileged = privileged;
 
 	atomic_set(&pd->sqp_count, 0);
 	pd->pd_num = mthca_alloc(&dev->pd_table.alloc);
-	अगर (pd->pd_num == -1)
-		वापस -ENOMEM;
+	if (pd->pd_num == -1)
+		return -ENOMEM;
 
-	अगर (privileged) अणु
+	if (privileged) {
 		err = mthca_mr_alloc_notrans(dev, pd->pd_num,
 					     MTHCA_MPT_FLAG_LOCAL_READ |
 					     MTHCA_MPT_FLAG_LOCAL_WRITE,
-					     &pd->nपंचांगr);
-		अगर (err)
-			mthca_मुक्त(&dev->pd_table.alloc, pd->pd_num);
-	पूर्ण
+					     &pd->ntmr);
+		if (err)
+			mthca_free(&dev->pd_table.alloc, pd->pd_num);
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम mthca_pd_मुक्त(काष्ठा mthca_dev *dev, काष्ठा mthca_pd *pd)
-अणु
-	अगर (pd->privileged)
-		mthca_मुक्त_mr(dev, &pd->nपंचांगr);
-	mthca_मुक्त(&dev->pd_table.alloc, pd->pd_num);
-पूर्ण
+void mthca_pd_free(struct mthca_dev *dev, struct mthca_pd *pd)
+{
+	if (pd->privileged)
+		mthca_free_mr(dev, &pd->ntmr);
+	mthca_free(&dev->pd_table.alloc, pd->pd_num);
+}
 
-पूर्णांक mthca_init_pd_table(काष्ठा mthca_dev *dev)
-अणु
-	वापस mthca_alloc_init(&dev->pd_table.alloc,
+int mthca_init_pd_table(struct mthca_dev *dev)
+{
+	return mthca_alloc_init(&dev->pd_table.alloc,
 				dev->limits.num_pds,
 				(1 << 24) - 1,
 				dev->limits.reserved_pds);
-पूर्ण
+}
 
-व्योम mthca_cleanup_pd_table(काष्ठा mthca_dev *dev)
-अणु
-	/* XXX check अगर any PDs are still allocated? */
+void mthca_cleanup_pd_table(struct mthca_dev *dev)
+{
+	/* XXX check if any PDs are still allocated? */
 	mthca_alloc_cleanup(&dev->pd_table.alloc);
-पूर्ण
+}

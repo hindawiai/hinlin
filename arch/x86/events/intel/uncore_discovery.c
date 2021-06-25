@@ -1,110 +1,109 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Support Intel uncore PerfMon discovery mechanism.
  * Copyright(c) 2021 Intel Corporation.
  */
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश "uncore.h"
-#समावेश "uncore_discovery.h"
+#include "uncore.h"
+#include "uncore_discovery.h"
 
-अटल काष्ठा rb_root discovery_tables = RB_ROOT;
-अटल पूर्णांक num_discovered_types[UNCORE_ACCESS_MAX];
+static struct rb_root discovery_tables = RB_ROOT;
+static int num_discovered_types[UNCORE_ACCESS_MAX];
 
-अटल bool has_generic_discovery_table(व्योम)
-अणु
-	काष्ठा pci_dev *dev;
-	पूर्णांक dvsec;
+static bool has_generic_discovery_table(void)
+{
+	struct pci_dev *dev;
+	int dvsec;
 
-	dev = pci_get_device(PCI_VENDOR_ID_INTEL, UNCORE_DISCOVERY_TABLE_DEVICE, शून्य);
-	अगर (!dev)
-		वापस false;
+	dev = pci_get_device(PCI_VENDOR_ID_INTEL, UNCORE_DISCOVERY_TABLE_DEVICE, NULL);
+	if (!dev)
+		return false;
 
 	/* A discovery table device has the unique capability ID. */
 	dvsec = pci_find_next_ext_capability(dev, 0, UNCORE_EXT_CAP_ID_DISCOVERY);
 	pci_dev_put(dev);
-	अगर (dvsec)
-		वापस true;
+	if (dvsec)
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक logical_die_id;
+static int logical_die_id;
 
-अटल पूर्णांक get_device_die_id(काष्ठा pci_dev *dev)
-अणु
-	पूर्णांक cpu, node = pcibus_to_node(dev->bus);
+static int get_device_die_id(struct pci_dev *dev)
+{
+	int cpu, node = pcibus_to_node(dev->bus);
 
 	/*
 	 * If the NUMA info is not available, assume that the logical die id is
 	 * continuous in the order in which the discovery table devices are
 	 * detected.
 	 */
-	अगर (node < 0)
-		वापस logical_die_id++;
+	if (node < 0)
+		return logical_die_id++;
 
-	क्रम_each_cpu(cpu, cpumask_of_node(node)) अणु
-		काष्ठा cpuinfo_x86 *c = &cpu_data(cpu);
+	for_each_cpu(cpu, cpumask_of_node(node)) {
+		struct cpuinfo_x86 *c = &cpu_data(cpu);
 
-		अगर (c->initialized && cpu_to_node(cpu) == node)
-			वापस c->logical_die_id;
-	पूर्ण
+		if (c->initialized && cpu_to_node(cpu) == node)
+			return c->logical_die_id;
+	}
 
 	/*
-	 * All CPUs of a node may be offlined. For this हाल,
+	 * All CPUs of a node may be offlined. For this case,
 	 * the PCI and MMIO type of uncore blocks which are
-	 * क्रमागतerated by the device will be unavailable.
+	 * enumerated by the device will be unavailable.
 	 */
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-#घोषणा __node_2_type(cur)	\
-	rb_entry((cur), काष्ठा पूर्णांकel_uncore_discovery_type, node)
+#define __node_2_type(cur)	\
+	rb_entry((cur), struct intel_uncore_discovery_type, node)
 
-अटल अंतरभूत पूर्णांक __type_cmp(स्थिर व्योम *key, स्थिर काष्ठा rb_node *b)
-अणु
-	काष्ठा पूर्णांकel_uncore_discovery_type *type_b = __node_2_type(b);
-	स्थिर u16 *type_id = key;
+static inline int __type_cmp(const void *key, const struct rb_node *b)
+{
+	struct intel_uncore_discovery_type *type_b = __node_2_type(b);
+	const u16 *type_id = key;
 
-	अगर (type_b->type > *type_id)
-		वापस -1;
-	अन्यथा अगर (type_b->type < *type_id)
-		वापस 1;
+	if (type_b->type > *type_id)
+		return -1;
+	else if (type_b->type < *type_id)
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत काष्ठा पूर्णांकel_uncore_discovery_type *
+static inline struct intel_uncore_discovery_type *
 search_uncore_discovery_type(u16 type_id)
-अणु
-	काष्ठा rb_node *node = rb_find(&type_id, &discovery_tables, __type_cmp);
+{
+	struct rb_node *node = rb_find(&type_id, &discovery_tables, __type_cmp);
 
-	वापस (node) ? __node_2_type(node) : शून्य;
-पूर्ण
+	return (node) ? __node_2_type(node) : NULL;
+}
 
-अटल अंतरभूत bool __type_less(काष्ठा rb_node *a, स्थिर काष्ठा rb_node *b)
-अणु
-	वापस (__node_2_type(a)->type < __node_2_type(b)->type);
-पूर्ण
+static inline bool __type_less(struct rb_node *a, const struct rb_node *b)
+{
+	return (__node_2_type(a)->type < __node_2_type(b)->type);
+}
 
-अटल काष्ठा पूर्णांकel_uncore_discovery_type *
-add_uncore_discovery_type(काष्ठा uncore_unit_discovery *unit)
-अणु
-	काष्ठा पूर्णांकel_uncore_discovery_type *type;
+static struct intel_uncore_discovery_type *
+add_uncore_discovery_type(struct uncore_unit_discovery *unit)
+{
+	struct intel_uncore_discovery_type *type;
 
-	अगर (unit->access_type >= UNCORE_ACCESS_MAX) अणु
+	if (unit->access_type >= UNCORE_ACCESS_MAX) {
 		pr_warn("Unsupported access type %d\n", unit->access_type);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	type = kzalloc(माप(काष्ठा पूर्णांकel_uncore_discovery_type), GFP_KERNEL);
-	अगर (!type)
-		वापस शून्य;
+	type = kzalloc(sizeof(struct intel_uncore_discovery_type), GFP_KERNEL);
+	if (!type)
+		return NULL;
 
-	type->box_ctrl_die = kसुस्मृति(__uncore_max_dies, माप(u64), GFP_KERNEL);
-	अगर (!type->box_ctrl_die)
-		जाओ मुक्त_type;
+	type->box_ctrl_die = kcalloc(__uncore_max_dies, sizeof(u64), GFP_KERNEL);
+	if (!type->box_ctrl_die)
+		goto free_type;
 
 	type->access_type = unit->access_type;
 	num_discovered_types[type->access_type]++;
@@ -112,62 +111,62 @@ add_uncore_discovery_type(काष्ठा uncore_unit_discovery *unit)
 
 	rb_add(&type->node, &discovery_tables, __type_less);
 
-	वापस type;
+	return type;
 
-मुक्त_type:
-	kमुक्त(type);
+free_type:
+	kfree(type);
 
-	वापस शून्य;
+	return NULL;
 
-पूर्ण
+}
 
-अटल काष्ठा पूर्णांकel_uncore_discovery_type *
-get_uncore_discovery_type(काष्ठा uncore_unit_discovery *unit)
-अणु
-	काष्ठा पूर्णांकel_uncore_discovery_type *type;
+static struct intel_uncore_discovery_type *
+get_uncore_discovery_type(struct uncore_unit_discovery *unit)
+{
+	struct intel_uncore_discovery_type *type;
 
 	type = search_uncore_discovery_type(unit->box_type);
-	अगर (type)
-		वापस type;
+	if (type)
+		return type;
 
-	वापस add_uncore_discovery_type(unit);
-पूर्ण
+	return add_uncore_discovery_type(unit);
+}
 
-अटल व्योम
-uncore_insert_box_info(काष्ठा uncore_unit_discovery *unit,
-		       पूर्णांक die, bool parsed)
-अणु
-	काष्ठा पूर्णांकel_uncore_discovery_type *type;
-	अचिन्हित पूर्णांक *box_offset, *ids;
-	पूर्णांक i;
+static void
+uncore_insert_box_info(struct uncore_unit_discovery *unit,
+		       int die, bool parsed)
+{
+	struct intel_uncore_discovery_type *type;
+	unsigned int *box_offset, *ids;
+	int i;
 
-	अगर (WARN_ON_ONCE(!unit->ctl || !unit->ctl_offset || !unit->ctr_offset))
-		वापस;
+	if (WARN_ON_ONCE(!unit->ctl || !unit->ctl_offset || !unit->ctr_offset))
+		return;
 
-	अगर (parsed) अणु
+	if (parsed) {
 		type = search_uncore_discovery_type(unit->box_type);
-		अगर (WARN_ON_ONCE(!type))
-			वापस;
+		if (WARN_ON_ONCE(!type))
+			return;
 		/* Store the first box of each die */
-		अगर (!type->box_ctrl_die[die])
+		if (!type->box_ctrl_die[die])
 			type->box_ctrl_die[die] = unit->ctl;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	type = get_uncore_discovery_type(unit);
-	अगर (!type)
-		वापस;
+	if (!type)
+		return;
 
-	box_offset = kसुस्मृति(type->num_boxes + 1, माप(अचिन्हित पूर्णांक), GFP_KERNEL);
-	अगर (!box_offset)
-		वापस;
+	box_offset = kcalloc(type->num_boxes + 1, sizeof(unsigned int), GFP_KERNEL);
+	if (!box_offset)
+		return;
 
-	ids = kसुस्मृति(type->num_boxes + 1, माप(अचिन्हित पूर्णांक), GFP_KERNEL);
-	अगर (!ids)
-		जाओ मुक्त_box_offset;
+	ids = kcalloc(type->num_boxes + 1, sizeof(unsigned int), GFP_KERNEL);
+	if (!ids)
+		goto free_box_offset;
 
-	/* Store generic inक्रमmation क्रम the first box */
-	अगर (!type->num_boxes) अणु
+	/* Store generic information for the first box */
+	if (!type->num_boxes) {
 		type->box_ctrl = unit->ctl;
 		type->box_ctrl_die[die] = unit->ctl;
 		type->num_counters = unit->num_regs;
@@ -175,148 +174,148 @@ uncore_insert_box_info(काष्ठा uncore_unit_discovery *unit,
 		type->ctl_offset = unit->ctl_offset;
 		type->ctr_offset = unit->ctr_offset;
 		*ids = unit->box_id;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
-	क्रम (i = 0; i < type->num_boxes; i++) अणु
+	for (i = 0; i < type->num_boxes; i++) {
 		ids[i] = type->ids[i];
 		box_offset[i] = type->box_offset[i];
 
-		अगर (WARN_ON_ONCE(unit->box_id == ids[i]))
-			जाओ मुक्त_ids;
-	पूर्ण
+		if (WARN_ON_ONCE(unit->box_id == ids[i]))
+			goto free_ids;
+	}
 	ids[i] = unit->box_id;
 	box_offset[i] = unit->ctl - type->box_ctrl;
-	kमुक्त(type->ids);
-	kमुक्त(type->box_offset);
+	kfree(type->ids);
+	kfree(type->box_offset);
 end:
 	type->ids = ids;
 	type->box_offset = box_offset;
 	type->num_boxes++;
-	वापस;
+	return;
 
-मुक्त_ids:
-	kमुक्त(ids);
+free_ids:
+	kfree(ids);
 
-मुक्त_box_offset:
-	kमुक्त(box_offset);
+free_box_offset:
+	kfree(box_offset);
 
-पूर्ण
+}
 
-अटल पूर्णांक parse_discovery_table(काष्ठा pci_dev *dev, पूर्णांक die,
+static int parse_discovery_table(struct pci_dev *dev, int die,
 				 u32 bar_offset, bool *parsed)
-अणु
-	काष्ठा uncore_global_discovery global;
-	काष्ठा uncore_unit_discovery unit;
-	व्योम __iomem *io_addr;
-	resource_माप_प्रकार addr;
-	अचिन्हित दीर्घ size;
+{
+	struct uncore_global_discovery global;
+	struct uncore_unit_discovery unit;
+	void __iomem *io_addr;
+	resource_size_t addr;
+	unsigned long size;
 	u32 val;
-	पूर्णांक i;
+	int i;
 
-	pci_पढ़ो_config_dword(dev, bar_offset, &val);
+	pci_read_config_dword(dev, bar_offset, &val);
 
-	अगर (val & UNCORE_DISCOVERY_MASK)
-		वापस -EINVAL;
+	if (val & UNCORE_DISCOVERY_MASK)
+		return -EINVAL;
 
-	addr = (resource_माप_प्रकार)(val & ~UNCORE_DISCOVERY_MASK);
+	addr = (resource_size_t)(val & ~UNCORE_DISCOVERY_MASK);
 	size = UNCORE_DISCOVERY_GLOBAL_MAP_SIZE;
 	io_addr = ioremap(addr, size);
-	अगर (!io_addr)
-		वापस -ENOMEM;
+	if (!io_addr)
+		return -ENOMEM;
 
 	/* Read Global Discovery State */
-	स_नकल_fromio(&global, io_addr, माप(काष्ठा uncore_global_discovery));
-	अगर (uncore_discovery_invalid_unit(global)) अणु
+	memcpy_fromio(&global, io_addr, sizeof(struct uncore_global_discovery));
+	if (uncore_discovery_invalid_unit(global)) {
 		pr_info("Invalid Global Discovery State: 0x%llx 0x%llx 0x%llx\n",
 			global.table1, global.ctl, global.table3);
 		iounmap(io_addr);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	iounmap(io_addr);
 
 	size = (1 + global.max_units) * global.stride * 8;
 	io_addr = ioremap(addr, size);
-	अगर (!io_addr)
-		वापस -ENOMEM;
+	if (!io_addr)
+		return -ENOMEM;
 
 	/* Parsing Unit Discovery State */
-	क्रम (i = 0; i < global.max_units; i++) अणु
-		स_नकल_fromio(&unit, io_addr + (i + 1) * (global.stride * 8),
-			      माप(काष्ठा uncore_unit_discovery));
+	for (i = 0; i < global.max_units; i++) {
+		memcpy_fromio(&unit, io_addr + (i + 1) * (global.stride * 8),
+			      sizeof(struct uncore_unit_discovery));
 
-		अगर (uncore_discovery_invalid_unit(unit))
-			जारी;
+		if (uncore_discovery_invalid_unit(unit))
+			continue;
 
-		अगर (unit.access_type >= UNCORE_ACCESS_MAX)
-			जारी;
+		if (unit.access_type >= UNCORE_ACCESS_MAX)
+			continue;
 
 		uncore_insert_box_info(&unit, die, *parsed);
-	पूर्ण
+	}
 
 	*parsed = true;
 	iounmap(io_addr);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-bool पूर्णांकel_uncore_has_discovery_tables(व्योम)
-अणु
+bool intel_uncore_has_discovery_tables(void)
+{
 	u32 device, val, entry_id, bar_offset;
-	पूर्णांक die, dvsec = 0, ret = true;
-	काष्ठा pci_dev *dev = शून्य;
+	int die, dvsec = 0, ret = true;
+	struct pci_dev *dev = NULL;
 	bool parsed = false;
 
-	अगर (has_generic_discovery_table())
+	if (has_generic_discovery_table())
 		device = UNCORE_DISCOVERY_TABLE_DEVICE;
-	अन्यथा
+	else
 		device = PCI_ANY_ID;
 
 	/*
 	 * Start a new search and iterates through the list of
 	 * the discovery table devices.
 	 */
-	जबतक ((dev = pci_get_device(PCI_VENDOR_ID_INTEL, device, dev)) != शून्य) अणु
-		जबतक ((dvsec = pci_find_next_ext_capability(dev, dvsec, UNCORE_EXT_CAP_ID_DISCOVERY))) अणु
-			pci_पढ़ो_config_dword(dev, dvsec + UNCORE_DISCOVERY_DVSEC_OFFSET, &val);
+	while ((dev = pci_get_device(PCI_VENDOR_ID_INTEL, device, dev)) != NULL) {
+		while ((dvsec = pci_find_next_ext_capability(dev, dvsec, UNCORE_EXT_CAP_ID_DISCOVERY))) {
+			pci_read_config_dword(dev, dvsec + UNCORE_DISCOVERY_DVSEC_OFFSET, &val);
 			entry_id = val & UNCORE_DISCOVERY_DVSEC_ID_MASK;
-			अगर (entry_id != UNCORE_DISCOVERY_DVSEC_ID_PMON)
-				जारी;
+			if (entry_id != UNCORE_DISCOVERY_DVSEC_ID_PMON)
+				continue;
 
-			pci_पढ़ो_config_dword(dev, dvsec + UNCORE_DISCOVERY_DVSEC2_OFFSET, &val);
+			pci_read_config_dword(dev, dvsec + UNCORE_DISCOVERY_DVSEC2_OFFSET, &val);
 
-			अगर (val & ~UNCORE_DISCOVERY_DVSEC2_BIR_MASK) अणु
+			if (val & ~UNCORE_DISCOVERY_DVSEC2_BIR_MASK) {
 				ret = false;
-				जाओ err;
-			पूर्ण
+				goto err;
+			}
 			bar_offset = UNCORE_DISCOVERY_BIR_BASE +
 				     (val & UNCORE_DISCOVERY_DVSEC2_BIR_MASK) * UNCORE_DISCOVERY_BIR_STEP;
 
 			die = get_device_die_id(dev);
-			अगर (die < 0)
-				जारी;
+			if (die < 0)
+				continue;
 
 			parse_discovery_table(dev, die, bar_offset, &parsed);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* None of the discovery tables are available */
-	अगर (!parsed)
+	if (!parsed)
 		ret = false;
 err:
 	pci_dev_put(dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम पूर्णांकel_uncore_clear_discovery_tables(व्योम)
-अणु
-	काष्ठा पूर्णांकel_uncore_discovery_type *type, *next;
+void intel_uncore_clear_discovery_tables(void)
+{
+	struct intel_uncore_discovery_type *type, *next;
 
-	rbtree_postorder_क्रम_each_entry_safe(type, next, &discovery_tables, node) अणु
-		kमुक्त(type->box_ctrl_die);
-		kमुक्त(type);
-	पूर्ण
-पूर्ण
+	rbtree_postorder_for_each_entry_safe(type, next, &discovery_tables, node) {
+		kfree(type->box_ctrl_die);
+		kfree(type);
+	}
+}
 
 DEFINE_UNCORE_FORMAT_ATTR(event, event, "config:0-7");
 DEFINE_UNCORE_FORMAT_ATTR(umask, umask, "config:8-15");
@@ -324,300 +323,300 @@ DEFINE_UNCORE_FORMAT_ATTR(edge, edge, "config:18");
 DEFINE_UNCORE_FORMAT_ATTR(inv, inv, "config:23");
 DEFINE_UNCORE_FORMAT_ATTR(thresh, thresh, "config:24-31");
 
-अटल काष्ठा attribute *generic_uncore_क्रमmats_attr[] = अणु
-	&क्रमmat_attr_event.attr,
-	&क्रमmat_attr_umask.attr,
-	&क्रमmat_attr_edge.attr,
-	&क्रमmat_attr_inv.attr,
-	&क्रमmat_attr_thresh.attr,
-	शून्य,
-पूर्ण;
+static struct attribute *generic_uncore_formats_attr[] = {
+	&format_attr_event.attr,
+	&format_attr_umask.attr,
+	&format_attr_edge.attr,
+	&format_attr_inv.attr,
+	&format_attr_thresh.attr,
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group generic_uncore_क्रमmat_group = अणु
+static const struct attribute_group generic_uncore_format_group = {
 	.name = "format",
-	.attrs = generic_uncore_क्रमmats_attr,
-पूर्ण;
+	.attrs = generic_uncore_formats_attr,
+};
 
-अटल व्योम पूर्णांकel_generic_uncore_msr_init_box(काष्ठा पूर्णांकel_uncore_box *box)
-अणु
+static void intel_generic_uncore_msr_init_box(struct intel_uncore_box *box)
+{
 	wrmsrl(uncore_msr_box_ctl(box), GENERIC_PMON_BOX_CTL_INT);
-पूर्ण
+}
 
-अटल व्योम पूर्णांकel_generic_uncore_msr_disable_box(काष्ठा पूर्णांकel_uncore_box *box)
-अणु
+static void intel_generic_uncore_msr_disable_box(struct intel_uncore_box *box)
+{
 	wrmsrl(uncore_msr_box_ctl(box), GENERIC_PMON_BOX_CTL_FRZ);
-पूर्ण
+}
 
-अटल व्योम पूर्णांकel_generic_uncore_msr_enable_box(काष्ठा पूर्णांकel_uncore_box *box)
-अणु
+static void intel_generic_uncore_msr_enable_box(struct intel_uncore_box *box)
+{
 	wrmsrl(uncore_msr_box_ctl(box), 0);
-पूर्ण
+}
 
-अटल व्योम पूर्णांकel_generic_uncore_msr_enable_event(काष्ठा पूर्णांकel_uncore_box *box,
-					    काष्ठा perf_event *event)
-अणु
-	काष्ठा hw_perf_event *hwc = &event->hw;
+static void intel_generic_uncore_msr_enable_event(struct intel_uncore_box *box,
+					    struct perf_event *event)
+{
+	struct hw_perf_event *hwc = &event->hw;
 
 	wrmsrl(hwc->config_base, hwc->config);
-पूर्ण
+}
 
-अटल व्योम पूर्णांकel_generic_uncore_msr_disable_event(काष्ठा पूर्णांकel_uncore_box *box,
-					     काष्ठा perf_event *event)
-अणु
-	काष्ठा hw_perf_event *hwc = &event->hw;
+static void intel_generic_uncore_msr_disable_event(struct intel_uncore_box *box,
+					     struct perf_event *event)
+{
+	struct hw_perf_event *hwc = &event->hw;
 
 	wrmsrl(hwc->config_base, 0);
-पूर्ण
+}
 
-अटल काष्ठा पूर्णांकel_uncore_ops generic_uncore_msr_ops = अणु
-	.init_box		= पूर्णांकel_generic_uncore_msr_init_box,
-	.disable_box		= पूर्णांकel_generic_uncore_msr_disable_box,
-	.enable_box		= पूर्णांकel_generic_uncore_msr_enable_box,
-	.disable_event		= पूर्णांकel_generic_uncore_msr_disable_event,
-	.enable_event		= पूर्णांकel_generic_uncore_msr_enable_event,
-	.पढ़ो_counter		= uncore_msr_पढ़ो_counter,
-पूर्ण;
+static struct intel_uncore_ops generic_uncore_msr_ops = {
+	.init_box		= intel_generic_uncore_msr_init_box,
+	.disable_box		= intel_generic_uncore_msr_disable_box,
+	.enable_box		= intel_generic_uncore_msr_enable_box,
+	.disable_event		= intel_generic_uncore_msr_disable_event,
+	.enable_event		= intel_generic_uncore_msr_enable_event,
+	.read_counter		= uncore_msr_read_counter,
+};
 
-अटल व्योम पूर्णांकel_generic_uncore_pci_init_box(काष्ठा पूर्णांकel_uncore_box *box)
-अणु
-	काष्ठा pci_dev *pdev = box->pci_dev;
-	पूर्णांक box_ctl = uncore_pci_box_ctl(box);
+static void intel_generic_uncore_pci_init_box(struct intel_uncore_box *box)
+{
+	struct pci_dev *pdev = box->pci_dev;
+	int box_ctl = uncore_pci_box_ctl(box);
 
 	__set_bit(UNCORE_BOX_FLAG_CTL_OFFS8, &box->flags);
-	pci_ग_लिखो_config_dword(pdev, box_ctl, GENERIC_PMON_BOX_CTL_INT);
-पूर्ण
+	pci_write_config_dword(pdev, box_ctl, GENERIC_PMON_BOX_CTL_INT);
+}
 
-अटल व्योम पूर्णांकel_generic_uncore_pci_disable_box(काष्ठा पूर्णांकel_uncore_box *box)
-अणु
-	काष्ठा pci_dev *pdev = box->pci_dev;
-	पूर्णांक box_ctl = uncore_pci_box_ctl(box);
+static void intel_generic_uncore_pci_disable_box(struct intel_uncore_box *box)
+{
+	struct pci_dev *pdev = box->pci_dev;
+	int box_ctl = uncore_pci_box_ctl(box);
 
-	pci_ग_लिखो_config_dword(pdev, box_ctl, GENERIC_PMON_BOX_CTL_FRZ);
-पूर्ण
+	pci_write_config_dword(pdev, box_ctl, GENERIC_PMON_BOX_CTL_FRZ);
+}
 
-अटल व्योम पूर्णांकel_generic_uncore_pci_enable_box(काष्ठा पूर्णांकel_uncore_box *box)
-अणु
-	काष्ठा pci_dev *pdev = box->pci_dev;
-	पूर्णांक box_ctl = uncore_pci_box_ctl(box);
+static void intel_generic_uncore_pci_enable_box(struct intel_uncore_box *box)
+{
+	struct pci_dev *pdev = box->pci_dev;
+	int box_ctl = uncore_pci_box_ctl(box);
 
-	pci_ग_लिखो_config_dword(pdev, box_ctl, 0);
-पूर्ण
+	pci_write_config_dword(pdev, box_ctl, 0);
+}
 
-अटल व्योम पूर्णांकel_generic_uncore_pci_enable_event(काष्ठा पूर्णांकel_uncore_box *box,
-					    काष्ठा perf_event *event)
-अणु
-	काष्ठा pci_dev *pdev = box->pci_dev;
-	काष्ठा hw_perf_event *hwc = &event->hw;
+static void intel_generic_uncore_pci_enable_event(struct intel_uncore_box *box,
+					    struct perf_event *event)
+{
+	struct pci_dev *pdev = box->pci_dev;
+	struct hw_perf_event *hwc = &event->hw;
 
-	pci_ग_लिखो_config_dword(pdev, hwc->config_base, hwc->config);
-पूर्ण
+	pci_write_config_dword(pdev, hwc->config_base, hwc->config);
+}
 
-अटल व्योम पूर्णांकel_generic_uncore_pci_disable_event(काष्ठा पूर्णांकel_uncore_box *box,
-					     काष्ठा perf_event *event)
-अणु
-	काष्ठा pci_dev *pdev = box->pci_dev;
-	काष्ठा hw_perf_event *hwc = &event->hw;
+static void intel_generic_uncore_pci_disable_event(struct intel_uncore_box *box,
+					     struct perf_event *event)
+{
+	struct pci_dev *pdev = box->pci_dev;
+	struct hw_perf_event *hwc = &event->hw;
 
-	pci_ग_लिखो_config_dword(pdev, hwc->config_base, 0);
-पूर्ण
+	pci_write_config_dword(pdev, hwc->config_base, 0);
+}
 
-अटल u64 पूर्णांकel_generic_uncore_pci_पढ़ो_counter(काष्ठा पूर्णांकel_uncore_box *box,
-					   काष्ठा perf_event *event)
-अणु
-	काष्ठा pci_dev *pdev = box->pci_dev;
-	काष्ठा hw_perf_event *hwc = &event->hw;
+static u64 intel_generic_uncore_pci_read_counter(struct intel_uncore_box *box,
+					   struct perf_event *event)
+{
+	struct pci_dev *pdev = box->pci_dev;
+	struct hw_perf_event *hwc = &event->hw;
 	u64 count = 0;
 
-	pci_पढ़ो_config_dword(pdev, hwc->event_base, (u32 *)&count);
-	pci_पढ़ो_config_dword(pdev, hwc->event_base + 4, (u32 *)&count + 1);
+	pci_read_config_dword(pdev, hwc->event_base, (u32 *)&count);
+	pci_read_config_dword(pdev, hwc->event_base + 4, (u32 *)&count + 1);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल काष्ठा पूर्णांकel_uncore_ops generic_uncore_pci_ops = अणु
-	.init_box	= पूर्णांकel_generic_uncore_pci_init_box,
-	.disable_box	= पूर्णांकel_generic_uncore_pci_disable_box,
-	.enable_box	= पूर्णांकel_generic_uncore_pci_enable_box,
-	.disable_event	= पूर्णांकel_generic_uncore_pci_disable_event,
-	.enable_event	= पूर्णांकel_generic_uncore_pci_enable_event,
-	.पढ़ो_counter	= पूर्णांकel_generic_uncore_pci_पढ़ो_counter,
-पूर्ण;
+static struct intel_uncore_ops generic_uncore_pci_ops = {
+	.init_box	= intel_generic_uncore_pci_init_box,
+	.disable_box	= intel_generic_uncore_pci_disable_box,
+	.enable_box	= intel_generic_uncore_pci_enable_box,
+	.disable_event	= intel_generic_uncore_pci_disable_event,
+	.enable_event	= intel_generic_uncore_pci_enable_event,
+	.read_counter	= intel_generic_uncore_pci_read_counter,
+};
 
-#घोषणा UNCORE_GENERIC_MMIO_SIZE		0x4000
+#define UNCORE_GENERIC_MMIO_SIZE		0x4000
 
-अटल अचिन्हित पूर्णांक generic_uncore_mmio_box_ctl(काष्ठा पूर्णांकel_uncore_box *box)
-अणु
-	काष्ठा पूर्णांकel_uncore_type *type = box->pmu->type;
+static unsigned int generic_uncore_mmio_box_ctl(struct intel_uncore_box *box)
+{
+	struct intel_uncore_type *type = box->pmu->type;
 
-	अगर (!type->box_ctls || !type->box_ctls[box->dieid] || !type->mmio_offsets)
-		वापस 0;
+	if (!type->box_ctls || !type->box_ctls[box->dieid] || !type->mmio_offsets)
+		return 0;
 
-	वापस type->box_ctls[box->dieid] + type->mmio_offsets[box->pmu->pmu_idx];
-पूर्ण
+	return type->box_ctls[box->dieid] + type->mmio_offsets[box->pmu->pmu_idx];
+}
 
-अटल व्योम पूर्णांकel_generic_uncore_mmio_init_box(काष्ठा पूर्णांकel_uncore_box *box)
-अणु
-	अचिन्हित पूर्णांक box_ctl = generic_uncore_mmio_box_ctl(box);
-	काष्ठा पूर्णांकel_uncore_type *type = box->pmu->type;
-	resource_माप_प्रकार addr;
+static void intel_generic_uncore_mmio_init_box(struct intel_uncore_box *box)
+{
+	unsigned int box_ctl = generic_uncore_mmio_box_ctl(box);
+	struct intel_uncore_type *type = box->pmu->type;
+	resource_size_t addr;
 
-	अगर (!box_ctl) अणु
+	if (!box_ctl) {
 		pr_warn("Uncore type %d box %d: Invalid box control address.\n",
 			type->type_id, type->box_ids[box->pmu->pmu_idx]);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	addr = box_ctl;
 	box->io_addr = ioremap(addr, UNCORE_GENERIC_MMIO_SIZE);
-	अगर (!box->io_addr) अणु
+	if (!box->io_addr) {
 		pr_warn("Uncore type %d box %d: ioremap error for 0x%llx.\n",
 			type->type_id, type->box_ids[box->pmu->pmu_idx],
-			(अचिन्हित दीर्घ दीर्घ)addr);
-		वापस;
-	पूर्ण
+			(unsigned long long)addr);
+		return;
+	}
 
-	ग_लिखोl(GENERIC_PMON_BOX_CTL_INT, box->io_addr);
-पूर्ण
+	writel(GENERIC_PMON_BOX_CTL_INT, box->io_addr);
+}
 
-अटल व्योम पूर्णांकel_generic_uncore_mmio_disable_box(काष्ठा पूर्णांकel_uncore_box *box)
-अणु
-	अगर (!box->io_addr)
-		वापस;
+static void intel_generic_uncore_mmio_disable_box(struct intel_uncore_box *box)
+{
+	if (!box->io_addr)
+		return;
 
-	ग_लिखोl(GENERIC_PMON_BOX_CTL_FRZ, box->io_addr);
-पूर्ण
+	writel(GENERIC_PMON_BOX_CTL_FRZ, box->io_addr);
+}
 
-अटल व्योम पूर्णांकel_generic_uncore_mmio_enable_box(काष्ठा पूर्णांकel_uncore_box *box)
-अणु
-	अगर (!box->io_addr)
-		वापस;
+static void intel_generic_uncore_mmio_enable_box(struct intel_uncore_box *box)
+{
+	if (!box->io_addr)
+		return;
 
-	ग_लिखोl(0, box->io_addr);
-पूर्ण
+	writel(0, box->io_addr);
+}
 
-अटल व्योम पूर्णांकel_generic_uncore_mmio_enable_event(काष्ठा पूर्णांकel_uncore_box *box,
-					     काष्ठा perf_event *event)
-अणु
-	काष्ठा hw_perf_event *hwc = &event->hw;
+static void intel_generic_uncore_mmio_enable_event(struct intel_uncore_box *box,
+					     struct perf_event *event)
+{
+	struct hw_perf_event *hwc = &event->hw;
 
-	अगर (!box->io_addr)
-		वापस;
+	if (!box->io_addr)
+		return;
 
-	ग_लिखोl(hwc->config, box->io_addr + hwc->config_base);
-पूर्ण
+	writel(hwc->config, box->io_addr + hwc->config_base);
+}
 
-अटल व्योम पूर्णांकel_generic_uncore_mmio_disable_event(काष्ठा पूर्णांकel_uncore_box *box,
-					      काष्ठा perf_event *event)
-अणु
-	काष्ठा hw_perf_event *hwc = &event->hw;
+static void intel_generic_uncore_mmio_disable_event(struct intel_uncore_box *box,
+					      struct perf_event *event)
+{
+	struct hw_perf_event *hwc = &event->hw;
 
-	अगर (!box->io_addr)
-		वापस;
+	if (!box->io_addr)
+		return;
 
-	ग_लिखोl(0, box->io_addr + hwc->config_base);
-पूर्ण
+	writel(0, box->io_addr + hwc->config_base);
+}
 
-अटल काष्ठा पूर्णांकel_uncore_ops generic_uncore_mmio_ops = अणु
-	.init_box	= पूर्णांकel_generic_uncore_mmio_init_box,
-	.निकास_box	= uncore_mmio_निकास_box,
-	.disable_box	= पूर्णांकel_generic_uncore_mmio_disable_box,
-	.enable_box	= पूर्णांकel_generic_uncore_mmio_enable_box,
-	.disable_event	= पूर्णांकel_generic_uncore_mmio_disable_event,
-	.enable_event	= पूर्णांकel_generic_uncore_mmio_enable_event,
-	.पढ़ो_counter	= uncore_mmio_पढ़ो_counter,
-पूर्ण;
+static struct intel_uncore_ops generic_uncore_mmio_ops = {
+	.init_box	= intel_generic_uncore_mmio_init_box,
+	.exit_box	= uncore_mmio_exit_box,
+	.disable_box	= intel_generic_uncore_mmio_disable_box,
+	.enable_box	= intel_generic_uncore_mmio_enable_box,
+	.disable_event	= intel_generic_uncore_mmio_disable_event,
+	.enable_event	= intel_generic_uncore_mmio_enable_event,
+	.read_counter	= uncore_mmio_read_counter,
+};
 
-अटल bool uncore_update_uncore_type(क्रमागत uncore_access_type type_id,
-				      काष्ठा पूर्णांकel_uncore_type *uncore,
-				      काष्ठा पूर्णांकel_uncore_discovery_type *type)
-अणु
+static bool uncore_update_uncore_type(enum uncore_access_type type_id,
+				      struct intel_uncore_type *uncore,
+				      struct intel_uncore_discovery_type *type)
+{
 	uncore->type_id = type->type;
 	uncore->num_boxes = type->num_boxes;
 	uncore->num_counters = type->num_counters;
 	uncore->perf_ctr_bits = type->counter_width;
 	uncore->box_ids = type->ids;
 
-	चयन (type_id) अणु
-	हाल UNCORE_ACCESS_MSR:
+	switch (type_id) {
+	case UNCORE_ACCESS_MSR:
 		uncore->ops = &generic_uncore_msr_ops;
-		uncore->perf_ctr = (अचिन्हित पूर्णांक)type->box_ctrl + type->ctr_offset;
-		uncore->event_ctl = (अचिन्हित पूर्णांक)type->box_ctrl + type->ctl_offset;
-		uncore->box_ctl = (अचिन्हित पूर्णांक)type->box_ctrl;
+		uncore->perf_ctr = (unsigned int)type->box_ctrl + type->ctr_offset;
+		uncore->event_ctl = (unsigned int)type->box_ctrl + type->ctl_offset;
+		uncore->box_ctl = (unsigned int)type->box_ctrl;
 		uncore->msr_offsets = type->box_offset;
-		अवरोध;
-	हाल UNCORE_ACCESS_PCI:
+		break;
+	case UNCORE_ACCESS_PCI:
 		uncore->ops = &generic_uncore_pci_ops;
-		uncore->perf_ctr = (अचिन्हित पूर्णांक)UNCORE_DISCOVERY_PCI_BOX_CTRL(type->box_ctrl) + type->ctr_offset;
-		uncore->event_ctl = (अचिन्हित पूर्णांक)UNCORE_DISCOVERY_PCI_BOX_CTRL(type->box_ctrl) + type->ctl_offset;
-		uncore->box_ctl = (अचिन्हित पूर्णांक)UNCORE_DISCOVERY_PCI_BOX_CTRL(type->box_ctrl);
+		uncore->perf_ctr = (unsigned int)UNCORE_DISCOVERY_PCI_BOX_CTRL(type->box_ctrl) + type->ctr_offset;
+		uncore->event_ctl = (unsigned int)UNCORE_DISCOVERY_PCI_BOX_CTRL(type->box_ctrl) + type->ctl_offset;
+		uncore->box_ctl = (unsigned int)UNCORE_DISCOVERY_PCI_BOX_CTRL(type->box_ctrl);
 		uncore->box_ctls = type->box_ctrl_die;
 		uncore->pci_offsets = type->box_offset;
-		अवरोध;
-	हाल UNCORE_ACCESS_MMIO:
+		break;
+	case UNCORE_ACCESS_MMIO:
 		uncore->ops = &generic_uncore_mmio_ops;
-		uncore->perf_ctr = (अचिन्हित पूर्णांक)type->ctr_offset;
-		uncore->event_ctl = (अचिन्हित पूर्णांक)type->ctl_offset;
-		uncore->box_ctl = (अचिन्हित पूर्णांक)type->box_ctrl;
+		uncore->perf_ctr = (unsigned int)type->ctr_offset;
+		uncore->event_ctl = (unsigned int)type->ctl_offset;
+		uncore->box_ctl = (unsigned int)type->box_ctrl;
 		uncore->box_ctls = type->box_ctrl_die;
 		uncore->mmio_offsets = type->box_offset;
 		uncore->mmio_map_size = UNCORE_GENERIC_MMIO_SIZE;
-		अवरोध;
-	शेष:
-		वापस false;
-	पूर्ण
+		break;
+	default:
+		return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल काष्ठा पूर्णांकel_uncore_type **
-पूर्णांकel_uncore_generic_init_uncores(क्रमागत uncore_access_type type_id)
-अणु
-	काष्ठा पूर्णांकel_uncore_discovery_type *type;
-	काष्ठा पूर्णांकel_uncore_type **uncores;
-	काष्ठा पूर्णांकel_uncore_type *uncore;
-	काष्ठा rb_node *node;
-	पूर्णांक i = 0;
+static struct intel_uncore_type **
+intel_uncore_generic_init_uncores(enum uncore_access_type type_id)
+{
+	struct intel_uncore_discovery_type *type;
+	struct intel_uncore_type **uncores;
+	struct intel_uncore_type *uncore;
+	struct rb_node *node;
+	int i = 0;
 
-	uncores = kसुस्मृति(num_discovered_types[type_id] + 1,
-			  माप(काष्ठा पूर्णांकel_uncore_type *), GFP_KERNEL);
-	अगर (!uncores)
-		वापस empty_uncore;
+	uncores = kcalloc(num_discovered_types[type_id] + 1,
+			  sizeof(struct intel_uncore_type *), GFP_KERNEL);
+	if (!uncores)
+		return empty_uncore;
 
-	क्रम (node = rb_first(&discovery_tables); node; node = rb_next(node)) अणु
-		type = rb_entry(node, काष्ठा पूर्णांकel_uncore_discovery_type, node);
-		अगर (type->access_type != type_id)
-			जारी;
+	for (node = rb_first(&discovery_tables); node; node = rb_next(node)) {
+		type = rb_entry(node, struct intel_uncore_discovery_type, node);
+		if (type->access_type != type_id)
+			continue;
 
-		uncore = kzalloc(माप(काष्ठा पूर्णांकel_uncore_type), GFP_KERNEL);
-		अगर (!uncore)
-			अवरोध;
+		uncore = kzalloc(sizeof(struct intel_uncore_type), GFP_KERNEL);
+		if (!uncore)
+			break;
 
 		uncore->event_mask = GENERIC_PMON_RAW_EVENT_MASK;
-		uncore->क्रमmat_group = &generic_uncore_क्रमmat_group;
+		uncore->format_group = &generic_uncore_format_group;
 
-		अगर (!uncore_update_uncore_type(type_id, uncore, type)) अणु
-			kमुक्त(uncore);
-			जारी;
-		पूर्ण
+		if (!uncore_update_uncore_type(type_id, uncore, type)) {
+			kfree(uncore);
+			continue;
+		}
 		uncores[i++] = uncore;
-	पूर्ण
+	}
 
-	वापस uncores;
-पूर्ण
+	return uncores;
+}
 
-व्योम पूर्णांकel_uncore_generic_uncore_cpu_init(व्योम)
-अणु
-	uncore_msr_uncores = पूर्णांकel_uncore_generic_init_uncores(UNCORE_ACCESS_MSR);
-पूर्ण
+void intel_uncore_generic_uncore_cpu_init(void)
+{
+	uncore_msr_uncores = intel_uncore_generic_init_uncores(UNCORE_ACCESS_MSR);
+}
 
-पूर्णांक पूर्णांकel_uncore_generic_uncore_pci_init(व्योम)
-अणु
-	uncore_pci_uncores = पूर्णांकel_uncore_generic_init_uncores(UNCORE_ACCESS_PCI);
+int intel_uncore_generic_uncore_pci_init(void)
+{
+	uncore_pci_uncores = intel_uncore_generic_init_uncores(UNCORE_ACCESS_PCI);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम पूर्णांकel_uncore_generic_uncore_mmio_init(व्योम)
-अणु
-	uncore_mmio_uncores = पूर्णांकel_uncore_generic_init_uncores(UNCORE_ACCESS_MMIO);
-पूर्ण
+void intel_uncore_generic_uncore_mmio_init(void)
+{
+	uncore_mmio_uncores = intel_uncore_generic_init_uncores(UNCORE_ACCESS_MMIO);
+}

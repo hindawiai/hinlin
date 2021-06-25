@@ -1,66 +1,65 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2020, The Linux Foundation. All rights reserved.
  */
-#समावेश "hfi_platform.h"
+#include "hfi_platform.h"
 
-स्थिर काष्ठा hfi_platक्रमm *hfi_platक्रमm_get(क्रमागत hfi_version version)
-अणु
-	चयन (version) अणु
-	हाल HFI_VERSION_4XX:
-		वापस &hfi_plat_v4;
-	हाल HFI_VERSION_6XX:
-		वापस &hfi_plat_v6;
-	शेष:
-		अवरोध;
-	पूर्ण
+const struct hfi_platform *hfi_platform_get(enum hfi_version version)
+{
+	switch (version) {
+	case HFI_VERSION_4XX:
+		return &hfi_plat_v4;
+	case HFI_VERSION_6XX:
+		return &hfi_plat_v6;
+	default:
+		break;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अचिन्हित दीर्घ
-hfi_platक्रमm_get_codec_vpp_freq(क्रमागत hfi_version version, u32 codec, u32 session_type)
-अणु
-	स्थिर काष्ठा hfi_platक्रमm *plat;
-	अचिन्हित दीर्घ freq = 0;
+unsigned long
+hfi_platform_get_codec_vpp_freq(enum hfi_version version, u32 codec, u32 session_type)
+{
+	const struct hfi_platform *plat;
+	unsigned long freq = 0;
 
-	plat = hfi_platक्रमm_get(version);
-	अगर (!plat)
-		वापस 0;
+	plat = hfi_platform_get(version);
+	if (!plat)
+		return 0;
 
-	अगर (plat->codec_vpp_freq)
+	if (plat->codec_vpp_freq)
 		freq = plat->codec_vpp_freq(session_type, codec);
 
-	वापस freq;
-पूर्ण
+	return freq;
+}
 
-अचिन्हित दीर्घ
-hfi_platक्रमm_get_codec_vsp_freq(क्रमागत hfi_version version, u32 codec, u32 session_type)
-अणु
-	स्थिर काष्ठा hfi_platक्रमm *plat;
-	अचिन्हित दीर्घ freq = 0;
+unsigned long
+hfi_platform_get_codec_vsp_freq(enum hfi_version version, u32 codec, u32 session_type)
+{
+	const struct hfi_platform *plat;
+	unsigned long freq = 0;
 
-	plat = hfi_platक्रमm_get(version);
-	अगर (!plat)
-		वापस 0;
+	plat = hfi_platform_get(version);
+	if (!plat)
+		return 0;
 
-	अगर (plat->codec_vpp_freq)
+	if (plat->codec_vpp_freq)
 		freq = plat->codec_vsp_freq(session_type, codec);
 
-	वापस freq;
-पूर्ण
+	return freq;
+}
 
-u8 hfi_platक्रमm_num_vpp_pipes(क्रमागत hfi_version version)
-अणु
-	स्थिर काष्ठा hfi_platक्रमm *plat;
+u8 hfi_platform_num_vpp_pipes(enum hfi_version version)
+{
+	const struct hfi_platform *plat;
 
-	plat = hfi_platक्रमm_get(version);
-	अगर (!plat)
-		वापस 0;
+	plat = hfi_platform_get(version);
+	if (!plat)
+		return 0;
 
-	अगर (plat->num_vpp_pipes)
-		वापस plat->num_vpp_pipes();
+	if (plat->num_vpp_pipes)
+		return plat->num_vpp_pipes();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

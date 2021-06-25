@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Aic7xxx SCSI host adapter firmware assembler symbol table implementation
  *
@@ -6,20 +5,20 @@
  * Copyright (c) 2002 Adaptec Inc.
  * All rights reserved.
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions, and the following disclaimer,
- *    without modअगरication.
- * 2. Redistributions in binary क्रमm must reproduce at minimum a disclaimer
+ *    without modification.
+ * 2. Redistributions in binary form must reproduce at minimum a disclaimer
  *    substantially similar to the "NO WARRANTY" disclaimer below
  *    ("Disclaimer") and any redistribution must be conditioned upon
- *    including a substantially similar Disclaimer requirement क्रम further
+ *    including a substantially similar Disclaimer requirement for further
  *    binary redistribution.
  * 3. Neither the names of the above-listed copyright holders nor the names
- *    of any contributors may be used to enकरोrse or promote products derived
- *    from this software without specअगरic prior written permission.
+ *    of any contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
  * Alternatively, this software may be distributed under the terms of the
  * GNU General Public License ("GPL") version 2 as published by the Free
@@ -38,325 +37,325 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: //depot/aic7xxx/aic7xxx/aicयंत्र/aicयंत्र_symbol.c#24 $
+ * $Id: //depot/aic7xxx/aic7xxx/aicasm/aicasm_symbol.c#24 $
  *
  * $FreeBSD$
  */
 
-#समावेश <sys/types.h>
+#include <sys/types.h>
 
-#समावेश "aicdb.h"
-#समावेश <fcntl.h>
-#समावेश <पूर्णांकtypes.h>
-#समावेश <regex.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <sysनिकासs.h>
+#include "aicdb.h"
+#include <fcntl.h>
+#include <inttypes.h>
+#include <regex.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sysexits.h>
 
-#समावेश "aicasm_symbol.h"
-#समावेश "aicasm.h"
+#include "aicasm_symbol.h"
+#include "aicasm.h"
 
-अटल DB *symtable;
+static DB *symtable;
 
 symbol_t *
-symbol_create(अक्षर *name)
-अणु
+symbol_create(char *name)
+{
 	symbol_t *new_symbol;
 
-	new_symbol = (symbol_t *)दो_स्मृति(माप(symbol_t));
-	अगर (new_symbol == शून्य) अणु
-		लिखो_त्रुटि("Unable to create new symbol");
-		निकास(EX_SOFTWARE);
-	पूर्ण
-	स_रखो(new_symbol, 0, माप(*new_symbol));
+	new_symbol = (symbol_t *)malloc(sizeof(symbol_t));
+	if (new_symbol == NULL) {
+		perror("Unable to create new symbol");
+		exit(EX_SOFTWARE);
+	}
+	memset(new_symbol, 0, sizeof(*new_symbol));
 	new_symbol->name = strdup(name);
-	अगर (new_symbol->name == शून्य)
+	if (new_symbol->name == NULL)
 		 stop("Unable to strdup symbol name", EX_SOFTWARE);
 	new_symbol->type = UNINITIALIZED;
 	new_symbol->count = 1;
-	वापस (new_symbol);
-पूर्ण
+	return (new_symbol);
+}
 
-व्योम
+void
 symbol_delete(symbol_t *symbol)
-अणु
-	अगर (symtable != शून्य) अणु
+{
+	if (symtable != NULL) {
 		DBT	 key;
 
 		key.data = symbol->name;
-		key.size = म_माप(symbol->name);
+		key.size = strlen(symbol->name);
 		symtable->del(symtable, &key, /*flags*/0);
-	पूर्ण
-	चयन(symbol->type) अणु
-	हाल SCBLOC:
-	हाल SRAMLOC:
-	हाल REGISTER:
-		अगर (symbol->info.rinfo != शून्य)
-			मुक्त(symbol->info.rinfo);
-		अवरोध;
-	हाल ALIAS:
-		अगर (symbol->info.ainfo != शून्य)
-			मुक्त(symbol->info.ainfo);
-		अवरोध;
-	हाल MASK:
-	हाल FIELD:
-	हाल ENUM:
-	हाल ENUM_ENTRY:
-		अगर (symbol->info.finfo != शून्य) अणु
-			symlist_मुक्त(&symbol->info.finfo->symrefs);
-			मुक्त(symbol->info.finfo);
-		पूर्ण
-		अवरोध;
-	हाल DOWNLOAD_CONST:
-	हाल CONST:
-		अगर (symbol->info.cinfo != शून्य)
-			मुक्त(symbol->info.cinfo);
-		अवरोध;
-	हाल LABEL:
-		अगर (symbol->info.linfo != शून्य)
-			मुक्त(symbol->info.linfo);
-		अवरोध;
-	हाल UNINITIALIZED:
-	शेष:
-		अवरोध;
-	पूर्ण
-	मुक्त(symbol->name);
-	मुक्त(symbol);
-पूर्ण
+	}
+	switch(symbol->type) {
+	case SCBLOC:
+	case SRAMLOC:
+	case REGISTER:
+		if (symbol->info.rinfo != NULL)
+			free(symbol->info.rinfo);
+		break;
+	case ALIAS:
+		if (symbol->info.ainfo != NULL)
+			free(symbol->info.ainfo);
+		break;
+	case MASK:
+	case FIELD:
+	case ENUM:
+	case ENUM_ENTRY:
+		if (symbol->info.finfo != NULL) {
+			symlist_free(&symbol->info.finfo->symrefs);
+			free(symbol->info.finfo);
+		}
+		break;
+	case DOWNLOAD_CONST:
+	case CONST:
+		if (symbol->info.cinfo != NULL)
+			free(symbol->info.cinfo);
+		break;
+	case LABEL:
+		if (symbol->info.linfo != NULL)
+			free(symbol->info.linfo);
+		break;
+	case UNINITIALIZED:
+	default:
+		break;
+	}
+	free(symbol->name);
+	free(symbol);
+}
 
-व्योम
-symtable_खोलो()
-अणु
-	symtable = dbखोलो(/*filename*/शून्य,
+void
+symtable_open()
+{
+	symtable = dbopen(/*filename*/NULL,
 			  O_CREAT | O_NONBLOCK | O_RDWR, /*mode*/0, DB_HASH,
-			  /*खोलोinfo*/शून्य);
+			  /*openinfo*/NULL);
 
-	अगर (symtable == शून्य) अणु
-		लिखो_त्रुटि("Symbol table creation failed");
-		निकास(EX_SOFTWARE);
+	if (symtable == NULL) {
+		perror("Symbol table creation failed");
+		exit(EX_SOFTWARE);
 		/* NOTREACHED */
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम
-symtable_बंद()
-अणु
-	अगर (symtable != शून्य) अणु
+void
+symtable_close()
+{
+	if (symtable != NULL) {
 		DBT	 key;
 		DBT	 data;
 
-		जबतक (symtable->seq(symtable, &key, &data, R_FIRST) == 0) अणु
+		while (symtable->seq(symtable, &key, &data, R_FIRST) == 0) {
 			symbol_t *stored_ptr;
 
-			स_नकल(&stored_ptr, data.data, माप(stored_ptr));
+			memcpy(&stored_ptr, data.data, sizeof(stored_ptr));
 			symbol_delete(stored_ptr);
-		पूर्ण
-		symtable->बंद(symtable);
-	पूर्ण
-पूर्ण
+		}
+		symtable->close(symtable);
+	}
+}
 
 /*
- * The semantics of get is to वापस an uninitialized symbol entry
- * अगर a lookup fails.
+ * The semantics of get is to return an uninitialized symbol entry
+ * if a lookup fails.
  */
 symbol_t *
-symtable_get(अक्षर *name)
-अणु
+symtable_get(char *name)
+{
 	symbol_t *stored_ptr;
 	DBT	  key;
 	DBT	  data;
-	पूर्णांक	  retval;
+	int	  retval;
 
-	key.data = (व्योम *)name;
-	key.size = म_माप(name);
+	key.data = (void *)name;
+	key.size = strlen(name);
 
-	अगर ((retval = symtable->get(symtable, &key, &data, /*flags*/0)) != 0) अणु
-		अगर (retval == -1) अणु
-			लिखो_त्रुटि("Symbol table get operation failed");
-			निकास(EX_SOFTWARE);
+	if ((retval = symtable->get(symtable, &key, &data, /*flags*/0)) != 0) {
+		if (retval == -1) {
+			perror("Symbol table get operation failed");
+			exit(EX_SOFTWARE);
 			/* NOTREACHED */
-		पूर्ण अन्यथा अगर (retval == 1) अणु
+		} else if (retval == 1) {
 			/* Symbol wasn't found, so create a new one */
 			symbol_t *new_symbol;
 
 			new_symbol = symbol_create(name);
 			data.data = &new_symbol;
-			data.size = माप(new_symbol);
-			अगर (symtable->put(symtable, &key, &data,
-					  /*flags*/0) !=0) अणु
-				लिखो_त्रुटि("Symtable put failed");
-				निकास(EX_SOFTWARE);
-			पूर्ण
-			वापस (new_symbol);
-		पूर्ण अन्यथा अणु
-			लिखो_त्रुटि("Unexpected return value from db get routine");
-			निकास(EX_SOFTWARE);
+			data.size = sizeof(new_symbol);
+			if (symtable->put(symtable, &key, &data,
+					  /*flags*/0) !=0) {
+				perror("Symtable put failed");
+				exit(EX_SOFTWARE);
+			}
+			return (new_symbol);
+		} else {
+			perror("Unexpected return value from db get routine");
+			exit(EX_SOFTWARE);
 			/* NOTREACHED */
-		पूर्ण
-	पूर्ण
-	स_नकल(&stored_ptr, data.data, माप(stored_ptr));
+		}
+	}
+	memcpy(&stored_ptr, data.data, sizeof(stored_ptr));
 	stored_ptr->count++;
 	data.data = &stored_ptr;
-	अगर (symtable->put(symtable, &key, &data, /*flags*/0) !=0) अणु
-		लिखो_त्रुटि("Symtable put failed");
-		निकास(EX_SOFTWARE);
-	पूर्ण
-	वापस (stored_ptr);
-पूर्ण
+	if (symtable->put(symtable, &key, &data, /*flags*/0) !=0) {
+		perror("Symtable put failed");
+		exit(EX_SOFTWARE);
+	}
+	return (stored_ptr);
+}
 
 symbol_node_t *
-symlist_search(symlist_t *symlist, अक्षर *symname)
-अणु
+symlist_search(symlist_t *symlist, char *symname)
+{
 	symbol_node_t *curnode;
 
 	curnode = SLIST_FIRST(symlist);
-	जबतक(curnode != शून्य) अणु
-		अगर (म_भेद(symname, curnode->symbol->name) == 0)
-			अवरोध;
+	while(curnode != NULL) {
+		if (strcmp(symname, curnode->symbol->name) == 0)
+			break;
 		curnode = SLIST_NEXT(curnode, links);
-	पूर्ण
-	वापस (curnode);
-पूर्ण
+	}
+	return (curnode);
+}
 
-व्योम
-symlist_add(symlist_t *symlist, symbol_t *symbol, पूर्णांक how)
-अणु
+void
+symlist_add(symlist_t *symlist, symbol_t *symbol, int how)
+{
 	symbol_node_t *newnode;
 
-	newnode = (symbol_node_t *)दो_स्मृति(माप(symbol_node_t));
-	अगर (newnode == शून्य) अणु
+	newnode = (symbol_node_t *)malloc(sizeof(symbol_node_t));
+	if (newnode == NULL) {
 		stop("symlist_add: Unable to malloc symbol_node", EX_SOFTWARE);
 		/* NOTREACHED */
-	पूर्ण
+	}
 	newnode->symbol = symbol;
-	अगर (how == SYMLIST_SORT) अणु
+	if (how == SYMLIST_SORT) {
 		symbol_node_t *curnode;
-		पूर्णांक field;
+		int field;
 
 		field = FALSE;
-		चयन(symbol->type) अणु
-		हाल REGISTER:
-		हाल SCBLOC:
-		हाल SRAMLOC:
-			अवरोध;
-		हाल FIELD:
-		हाल MASK:
-		हाल ENUM:
-		हाल ENUM_ENTRY:
+		switch(symbol->type) {
+		case REGISTER:
+		case SCBLOC:
+		case SRAMLOC:
+			break;
+		case FIELD:
+		case MASK:
+		case ENUM:
+		case ENUM_ENTRY:
 			field = TRUE;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			stop("symlist_add: Invalid symbol type for sorting",
 			     EX_SOFTWARE);
 			/* NOTREACHED */
-		पूर्ण
+		}
 
 		curnode = SLIST_FIRST(symlist);
-		अगर (curnode == शून्य
+		if (curnode == NULL
 		 || (field
 		  && (curnode->symbol->type > newnode->symbol->type
 		   || (curnode->symbol->type == newnode->symbol->type
 		    && (curnode->symbol->info.finfo->value >
 			newnode->symbol->info.finfo->value))))
 		 || (!field && (curnode->symbol->info.rinfo->address >
-				newnode->symbol->info.rinfo->address))) अणु
+				newnode->symbol->info.rinfo->address))) {
 			SLIST_INSERT_HEAD(symlist, newnode, links);
-			वापस;
-		पूर्ण
+			return;
+		}
 
-		जबतक (1) अणु
-			अगर (SLIST_NEXT(curnode, links) == शून्य) अणु
+		while (1) {
+			if (SLIST_NEXT(curnode, links) == NULL) {
 				SLIST_INSERT_AFTER(curnode, newnode,
 						   links);
-				अवरोध;
-			पूर्ण अन्यथा अणु
+				break;
+			} else {
 				symbol_t *cursymbol;
 
 				cursymbol = SLIST_NEXT(curnode, links)->symbol;
-				अगर ((field
+				if ((field
 				  && (cursymbol->type > symbol->type
 				   || (cursymbol->type == symbol->type
 				    && (cursymbol->info.finfo->value >
 					symbol->info.finfo->value))))
 				 || (!field
 				   && (cursymbol->info.rinfo->address >
-				       symbol->info.rinfo->address))) अणु
+				       symbol->info.rinfo->address))) {
 					SLIST_INSERT_AFTER(curnode, newnode,
 							   links);
-					अवरोध;
-				पूर्ण
-			पूर्ण
+					break;
+				}
+			}
 			curnode = SLIST_NEXT(curnode, links);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		SLIST_INSERT_HEAD(symlist, newnode, links);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम
-symlist_मुक्त(symlist_t *symlist)
-अणु
+void
+symlist_free(symlist_t *symlist)
+{
 	symbol_node_t *node1, *node2;
 
 	node1 = SLIST_FIRST(symlist);
-	जबतक (node1 != शून्य) अणु
+	while (node1 != NULL) {
 		node2 = SLIST_NEXT(node1, links);
-		मुक्त(node1);
+		free(node1);
 		node1 = node2;
-	पूर्ण
+	}
 	SLIST_INIT(symlist);
-पूर्ण
+}
 
-व्योम
+void
 symlist_merge(symlist_t *symlist_dest, symlist_t *symlist_src1,
 	      symlist_t *symlist_src2)
-अणु
+{
 	symbol_node_t *node;
 
 	*symlist_dest = *symlist_src1;
-	जबतक((node = SLIST_FIRST(symlist_src2)) != शून्य) अणु
+	while((node = SLIST_FIRST(symlist_src2)) != NULL) {
 		SLIST_REMOVE_HEAD(symlist_src2, links);
 		SLIST_INSERT_HEAD(symlist_dest, node, links);
-	पूर्ण
+	}
 
 	/* These are now empty */
 	SLIST_INIT(symlist_src1);
 	SLIST_INIT(symlist_src2);
-पूर्ण
+}
 
-व्योम
-aic_prपूर्णांक_file_prologue(खाता *ofile)
-अणु
+void
+aic_print_file_prologue(FILE *ofile)
+{
 
-	अगर (ofile == शून्य)
-		वापस;
+	if (ofile == NULL)
+		return;
 
-	ख_लिखो(ofile,
+	fprintf(ofile,
 "/*\n"
 " * DO NOT EDIT - This file is automatically generated\n"
 " *		 from the following source files:\n"
 " *\n"
 "%s */\n",
 		versions);
-पूर्ण
+}
 
-व्योम
-aic_prपूर्णांक_include(खाता *dfile, अक्षर *include_file)
-अणु
+void
+aic_print_include(FILE *dfile, char *include_file)
+{
 
-	अगर (dfile == शून्य)
-		वापस;
-	ख_लिखो(dfile, "\n#include \"%s\"\n\n", include_file);
-पूर्ण
+	if (dfile == NULL)
+		return;
+	fprintf(dfile, "\n#include \"%s\"\n\n", include_file);
+}
 
-व्योम
-aic_prपूर्णांक_reg_dump_types(खाता *ofile)
-अणु
-	अगर (ofile == शून्य)
-		वापस;
+void
+aic_print_reg_dump_types(FILE *ofile)
+{
+	if (ofile == NULL)
+		return;
 
-	ख_लिखो(ofile,
+	fprintf(ofile,
 "typedef int (%sreg_print_t)(u_int, u_int *, u_int);\n"
 "typedef struct %sreg_parse_entry {\n"
 "	char	*name;\n"
@@ -365,42 +364,42 @@ aic_prपूर्णांक_reg_dump_types(खाता *ofile)
 "} %sreg_parse_entry_t;\n"
 "\n",
 		prefix, prefix, prefix);
-पूर्ण
+}
 
-अटल व्योम
-aic_prपूर्णांक_reg_dump_start(खाता *dfile, symbol_node_t *regnode)
-अणु
-	अगर (dfile == शून्य)
-		वापस;
+static void
+aic_print_reg_dump_start(FILE *dfile, symbol_node_t *regnode)
+{
+	if (dfile == NULL)
+		return;
 
-	ख_लिखो(dfile,
+	fprintf(dfile,
 "static const %sreg_parse_entry_t %s_parse_table[] = {\n",
 		prefix,
 		regnode->symbol->name);
-पूर्ण
+}
 
-अटल व्योम
-aic_prपूर्णांक_reg_dump_end(खाता *ofile, खाता *dfile,
-		       symbol_node_t *regnode, u_पूर्णांक num_entries)
-अणु
-	अक्षर *lower_name;
-	अक्षर *letter;
+static void
+aic_print_reg_dump_end(FILE *ofile, FILE *dfile,
+		       symbol_node_t *regnode, u_int num_entries)
+{
+	char *lower_name;
+	char *letter;
 
 	lower_name = strdup(regnode->symbol->name);
-	अगर (lower_name == शून्य)
+	if (lower_name == NULL)
 		 stop("Unable to strdup symbol name", EX_SOFTWARE);
 
-	क्रम (letter = lower_name; *letter != '\0'; letter++)
-		*letter = छोटे(*letter);
+	for (letter = lower_name; *letter != '\0'; letter++)
+		*letter = tolower(*letter);
 
-	अगर (dfile != शून्य) अणु
-		अगर (num_entries != 0)
-			ख_लिखो(dfile,
+	if (dfile != NULL) {
+		if (num_entries != 0)
+			fprintf(dfile,
 "\n"
 "};\n"
 "\n");
 
-		ख_लिखो(dfile,
+		fprintf(dfile,
 "int\n"
 "%s%s_print(u_int regvalue, u_int *cur_col, u_int wrap)\n"
 "{\n"
@@ -416,9 +415,9 @@ aic_prपूर्णांक_reg_dump_end(खाता *ofile, खाता *d
 			num_entries,
 			regnode->symbol->name,
 			regnode->symbol->info.rinfo->address);
-	पूर्ण
+	}
 
-	ख_लिखो(ofile,
+	fprintf(ofile,
 "#if AIC_DEBUG_REGISTERS\n"
 "%sreg_print_t %s%s_print;\n"
 "#else\n"
@@ -434,257 +433,257 @@ aic_prपूर्णांक_reg_dump_end(खाता *ofile, खाता *d
 		prefix,
 		regnode->symbol->name,
 		regnode->symbol->info.rinfo->address);
-पूर्ण
+}
 
-अटल व्योम
-aic_prपूर्णांक_reg_dump_entry(खाता *dfile, symbol_node_t *curnode)
-अणु
-	पूर्णांक num_tअसल;
+static void
+aic_print_reg_dump_entry(FILE *dfile, symbol_node_t *curnode)
+{
+	int num_tabs;
 
-	अगर (dfile == शून्य)
-		वापस;
+	if (dfile == NULL)
+		return;
 
-	ख_लिखो(dfile,
+	fprintf(dfile,
 "	{ \"%s\",",
 		curnode->symbol->name);
 
-	num_tअसल = 3 - (म_माप(curnode->symbol->name) + 5) / 8;
+	num_tabs = 3 - (strlen(curnode->symbol->name) + 5) / 8;
 
-	जबतक (num_tअसल-- > 0)
-		ख_अक्षर_दो('\t', dfile);
-	ख_लिखो(dfile, "0x%02x, 0x%02x }",
+	while (num_tabs-- > 0)
+		fputc('\t', dfile);
+	fprintf(dfile, "0x%02x, 0x%02x }",
 		curnode->symbol->info.finfo->value,
 		curnode->symbol->info.finfo->mask);
-पूर्ण
+}
 
-व्योम
-symtable_dump(खाता *ofile, खाता *dfile)
-अणु
+void
+symtable_dump(FILE *ofile, FILE *dfile)
+{
 	/*
-	 * Sort the रेजिस्टरs by address with a simple insertion sort.
-	 * Put biपंचांगasks next to the first रेजिस्टर that defines them.
-	 * Put स्थिरants at the end.
+	 * Sort the registers by address with a simple insertion sort.
+	 * Put bitmasks next to the first register that defines them.
+	 * Put constants at the end.
 	 */
-	symlist_t	 रेजिस्टरs;
+	symlist_t	 registers;
 	symlist_t	 masks;
-	symlist_t	 स्थिरants;
-	symlist_t	 करोwnload_स्थिरants;
+	symlist_t	 constants;
+	symlist_t	 download_constants;
 	symlist_t	 aliases;
 	symlist_t	 exported_labels;
 	symbol_node_t	*curnode;
 	symbol_node_t	*regnode;
 	DBT		 key;
 	DBT		 data;
-	पूर्णांक		 flag;
-	पूर्णांक		 reg_count = 0, reg_used = 0;
-	u_पूर्णांक		 i;
+	int		 flag;
+	int		 reg_count = 0, reg_used = 0;
+	u_int		 i;
 
-	अगर (symtable == शून्य)
-		वापस;
+	if (symtable == NULL)
+		return;
 
-	SLIST_INIT(&रेजिस्टरs);
+	SLIST_INIT(&registers);
 	SLIST_INIT(&masks);
-	SLIST_INIT(&स्थिरants);
-	SLIST_INIT(&करोwnload_स्थिरants);
+	SLIST_INIT(&constants);
+	SLIST_INIT(&download_constants);
 	SLIST_INIT(&aliases);
 	SLIST_INIT(&exported_labels);
 	flag = R_FIRST;
-	जबतक (symtable->seq(symtable, &key, &data, flag) == 0) अणु
+	while (symtable->seq(symtable, &key, &data, flag) == 0) {
 		symbol_t *cursym;
 
-		स_नकल(&cursym, data.data, माप(cursym));
-		चयन(cursym->type) अणु
-		हाल REGISTER:
-		हाल SCBLOC:
-		हाल SRAMLOC:
-			symlist_add(&रेजिस्टरs, cursym, SYMLIST_SORT);
-			अवरोध;
-		हाल MASK:
-		हाल FIELD:
-		हाल ENUM:
-		हाल ENUM_ENTRY:
+		memcpy(&cursym, data.data, sizeof(cursym));
+		switch(cursym->type) {
+		case REGISTER:
+		case SCBLOC:
+		case SRAMLOC:
+			symlist_add(&registers, cursym, SYMLIST_SORT);
+			break;
+		case MASK:
+		case FIELD:
+		case ENUM:
+		case ENUM_ENTRY:
 			symlist_add(&masks, cursym, SYMLIST_SORT);
-			अवरोध;
-		हाल CONST:
-			symlist_add(&स्थिरants, cursym,
+			break;
+		case CONST:
+			symlist_add(&constants, cursym,
 				    SYMLIST_INSERT_HEAD);
-			अवरोध;
-		हाल DOWNLOAD_CONST:
-			symlist_add(&करोwnload_स्थिरants, cursym,
+			break;
+		case DOWNLOAD_CONST:
+			symlist_add(&download_constants, cursym,
 				    SYMLIST_INSERT_HEAD);
-			अवरोध;
-		हाल ALIAS:
+			break;
+		case ALIAS:
 			symlist_add(&aliases, cursym,
 				    SYMLIST_INSERT_HEAD);
-			अवरोध;
-		हाल LABEL:
-			अगर (cursym->info.linfo->exported == 0)
-				अवरोध;
+			break;
+		case LABEL:
+			if (cursym->info.linfo->exported == 0)
+				break;
 			symlist_add(&exported_labels, cursym,
 				    SYMLIST_INSERT_HEAD);
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
+			break;
+		default:
+			break;
+		}
 		flag = R_NEXT;
-	पूर्ण
+	}
 
 	/* Register dianostic functions/declarations first. */
-	aic_prपूर्णांक_file_prologue(ofile);
-	aic_prपूर्णांक_reg_dump_types(ofile);
-	aic_prपूर्णांक_file_prologue(dfile);
-	aic_prपूर्णांक_include(dfile, stock_include_file);
-	SLIST_FOREACH(curnode, &रेजिस्टरs, links) अणु
+	aic_print_file_prologue(ofile);
+	aic_print_reg_dump_types(ofile);
+	aic_print_file_prologue(dfile);
+	aic_print_include(dfile, stock_include_file);
+	SLIST_FOREACH(curnode, &registers, links) {
 
-		अगर (curnode->symbol->करोnt_generate_debug_code)
-			जारी;
+		if (curnode->symbol->dont_generate_debug_code)
+			continue;
 
-		चयन(curnode->symbol->type) अणु
-		हाल REGISTER:
-		हाल SCBLOC:
-		हाल SRAMLOC:
-		अणु
+		switch(curnode->symbol->type) {
+		case REGISTER:
+		case SCBLOC:
+		case SRAMLOC:
+		{
 			symlist_t	*fields;
 			symbol_node_t	*fieldnode;
-			पूर्णांक		 num_entries;
+			int		 num_entries;
 
 			num_entries = 0;
 			reg_count++;
-			अगर (curnode->symbol->count == 1)
-				अवरोध;
+			if (curnode->symbol->count == 1)
+				break;
 			fields = &curnode->symbol->info.rinfo->fields;
-			SLIST_FOREACH(fieldnode, fields, links) अणु
-				अगर (num_entries == 0)
-					aic_prपूर्णांक_reg_dump_start(dfile,
+			SLIST_FOREACH(fieldnode, fields, links) {
+				if (num_entries == 0)
+					aic_print_reg_dump_start(dfile,
 								 curnode);
-				अन्यथा अगर (dfile != शून्य)
-					ख_माला_दो(",\n", dfile);
+				else if (dfile != NULL)
+					fputs(",\n", dfile);
 				num_entries++;
-				aic_prपूर्णांक_reg_dump_entry(dfile, fieldnode);
-			पूर्ण
-			aic_prपूर्णांक_reg_dump_end(ofile, dfile,
+				aic_print_reg_dump_entry(dfile, fieldnode);
+			}
+			aic_print_reg_dump_end(ofile, dfile,
 					       curnode, num_entries);
 			reg_used++;
-		पूर्ण
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	ख_लिखो(मानक_त्रुटि, "%s: %d of %d register definitions used\n", appname,
+		}
+		default:
+			break;
+		}
+	}
+	fprintf(stderr, "%s: %d of %d register definitions used\n", appname,
 		reg_used, reg_count);
 
 	/* Fold in the masks and bits */
-	जबतक (SLIST_FIRST(&masks) != शून्य) अणु
-		अक्षर *regname;
+	while (SLIST_FIRST(&masks) != NULL) {
+		char *regname;
 
 		curnode = SLIST_FIRST(&masks);
 		SLIST_REMOVE_HEAD(&masks, links);
 
 		regnode = SLIST_FIRST(&curnode->symbol->info.finfo->symrefs);
 		regname = regnode->symbol->name;
-		regnode = symlist_search(&रेजिस्टरs, regname);
+		regnode = symlist_search(&registers, regname);
 		SLIST_INSERT_AFTER(regnode, curnode, links);
-	पूर्ण
+	}
 
 	/* Add the aliases */
-	जबतक (SLIST_FIRST(&aliases) != शून्य) अणु
-		अक्षर *regname;
+	while (SLIST_FIRST(&aliases) != NULL) {
+		char *regname;
 
 		curnode = SLIST_FIRST(&aliases);
 		SLIST_REMOVE_HEAD(&aliases, links);
 
 		regname = curnode->symbol->info.ainfo->parent->name;
-		regnode = symlist_search(&रेजिस्टरs, regname);
+		regnode = symlist_search(&registers, regname);
 		SLIST_INSERT_AFTER(regnode, curnode, links);
-	पूर्ण
+	}
 
-	/* Output generated #घोषणाs. */
-	जबतक (SLIST_FIRST(&रेजिस्टरs) != शून्य) अणु
+	/* Output generated #defines. */
+	while (SLIST_FIRST(&registers) != NULL) {
 		symbol_node_t *curnode;
-		u_पूर्णांक value;
-		अक्षर *tab_str;
-		अक्षर *tab_str2;
+		u_int value;
+		char *tab_str;
+		char *tab_str2;
 
-		curnode = SLIST_FIRST(&रेजिस्टरs);
-		SLIST_REMOVE_HEAD(&रेजिस्टरs, links);
-		चयन(curnode->symbol->type) अणु
-		हाल REGISTER:
-		हाल SCBLOC:
-		हाल SRAMLOC:
-			ख_लिखो(ofile, "\n");
+		curnode = SLIST_FIRST(&registers);
+		SLIST_REMOVE_HEAD(&registers, links);
+		switch(curnode->symbol->type) {
+		case REGISTER:
+		case SCBLOC:
+		case SRAMLOC:
+			fprintf(ofile, "\n");
 			value = curnode->symbol->info.rinfo->address;
 			tab_str = "\t";
 			tab_str2 = "\t\t";
-			अवरोध;
-		हाल ALIAS:
-		अणु
+			break;
+		case ALIAS:
+		{
 			symbol_t *parent;
 
 			parent = curnode->symbol->info.ainfo->parent;
 			value = parent->info.rinfo->address;
 			tab_str = "\t";
 			tab_str2 = "\t\t";
-			अवरोध;
-		पूर्ण
-		हाल MASK:
-		हाल FIELD:
-		हाल ENUM:
-		हाल ENUM_ENTRY:
+			break;
+		}
+		case MASK:
+		case FIELD:
+		case ENUM:
+		case ENUM_ENTRY:
 			value = curnode->symbol->info.finfo->value;
 			tab_str = "\t\t";
 			tab_str2 = "\t";
-			अवरोध;
-		शेष:
+			break;
+		default:
 			value = 0; /* Quiet compiler */
-			tab_str = शून्य;
-			tab_str2 = शून्य;
+			tab_str = NULL;
+			tab_str2 = NULL;
 			stop("symtable_dump: Invalid symbol type "
 			     "encountered", EX_SOFTWARE);
-			अवरोध;
-		पूर्ण
-		ख_लिखो(ofile, "#define%s%-16s%s0x%02x\n",
+			break;
+		}
+		fprintf(ofile, "#define%s%-16s%s0x%02x\n",
 			tab_str, curnode->symbol->name, tab_str2,
 			value);
-		मुक्त(curnode);
-	पूर्ण
-	ख_लिखो(ofile, "\n\n");
+		free(curnode);
+	}
+	fprintf(ofile, "\n\n");
 
-	जबतक (SLIST_FIRST(&स्थिरants) != शून्य) अणु
+	while (SLIST_FIRST(&constants) != NULL) {
 		symbol_node_t *curnode;
 
-		curnode = SLIST_FIRST(&स्थिरants);
-		SLIST_REMOVE_HEAD(&स्थिरants, links);
-		ख_लिखो(ofile, "#define\t%-8s\t0x%02x\n",
+		curnode = SLIST_FIRST(&constants);
+		SLIST_REMOVE_HEAD(&constants, links);
+		fprintf(ofile, "#define\t%-8s\t0x%02x\n",
 			curnode->symbol->name,
 			curnode->symbol->info.cinfo->value);
-		मुक्त(curnode);
-	पूर्ण
+		free(curnode);
+	}
 
-	ख_लिखो(ofile, "\n\n/* Downloaded Constant Definitions */\n");
+	fprintf(ofile, "\n\n/* Downloaded Constant Definitions */\n");
 
-	क्रम (i = 0; SLIST_FIRST(&करोwnload_स्थिरants) != शून्य; i++) अणु
+	for (i = 0; SLIST_FIRST(&download_constants) != NULL; i++) {
 		symbol_node_t *curnode;
 
-		curnode = SLIST_FIRST(&करोwnload_स्थिरants);
-		SLIST_REMOVE_HEAD(&करोwnload_स्थिरants, links);
-		ख_लिखो(ofile, "#define\t%-8s\t0x%02x\n",
+		curnode = SLIST_FIRST(&download_constants);
+		SLIST_REMOVE_HEAD(&download_constants, links);
+		fprintf(ofile, "#define\t%-8s\t0x%02x\n",
 			curnode->symbol->name,
 			curnode->symbol->info.cinfo->value);
-		मुक्त(curnode);
-	पूर्ण
-	ख_लिखो(ofile, "#define\tDOWNLOAD_CONST_COUNT\t0x%02x\n", i);
+		free(curnode);
+	}
+	fprintf(ofile, "#define\tDOWNLOAD_CONST_COUNT\t0x%02x\n", i);
 
-	ख_लिखो(ofile, "\n\n/* Exported Labels */\n");
+	fprintf(ofile, "\n\n/* Exported Labels */\n");
 
-	जबतक (SLIST_FIRST(&exported_labels) != शून्य) अणु
+	while (SLIST_FIRST(&exported_labels) != NULL) {
 		symbol_node_t *curnode;
 
 		curnode = SLIST_FIRST(&exported_labels);
 		SLIST_REMOVE_HEAD(&exported_labels, links);
-		ख_लिखो(ofile, "#define\tLABEL_%-8s\t0x%02x\n",
+		fprintf(ofile, "#define\tLABEL_%-8s\t0x%02x\n",
 			curnode->symbol->name,
 			curnode->symbol->info.linfo->address);
-		मुक्त(curnode);
-	पूर्ण
-पूर्ण
+		free(curnode);
+	}
+}
 

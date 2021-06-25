@@ -1,63 +1,62 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * omap2-restart.c - code common to all OMAP2xxx machines.
  *
  * Copyright (C) 2012 Texas Instruments
  * Paul Walmsley
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/पन.स>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/clk.h>
+#include <linux/io.h>
 
-#समावेश "soc.h"
-#समावेश "common.h"
-#समावेश "prm.h"
+#include "soc.h"
+#include "common.h"
+#include "prm.h"
 
 /*
- * reset_virt_prcm_set_ck, reset_sys_ck: poपूर्णांकers to the virt_prcm_set
- * घड़ी and the sys_ck.  Used during the reset process
+ * reset_virt_prcm_set_ck, reset_sys_ck: pointers to the virt_prcm_set
+ * clock and the sys_ck.  Used during the reset process
  */
-अटल काष्ठा clk *reset_virt_prcm_set_ck, *reset_sys_ck;
+static struct clk *reset_virt_prcm_set_ck, *reset_sys_ck;
 
 /* Reboot handling */
 
 /**
- * omap2xxx_restart - Set DPLL to bypass mode क्रम reboot to work
+ * omap2xxx_restart - Set DPLL to bypass mode for reboot to work
  *
  * Set the DPLL to bypass so that reboot completes successfully.  No
- * वापस value.
+ * return value.
  */
-व्योम omap2xxx_restart(क्रमागत reboot_mode mode, स्थिर अक्षर *cmd)
-अणु
+void omap2xxx_restart(enum reboot_mode mode, const char *cmd)
+{
 	u32 rate;
 
 	rate = clk_get_rate(reset_sys_ck);
 	clk_set_rate(reset_virt_prcm_set_ck, rate);
 
-	/* XXX Should save the cmd argument क्रम use after the reboot */
+	/* XXX Should save the cmd argument for use after the reboot */
 
-	omap_prm_reset_प्रणाली();
-पूर्ण
+	omap_prm_reset_system();
+}
 
 /**
- * omap2xxx_common_look_up_clks_क्रम_reset - look up घड़ीs needed क्रम restart
+ * omap2xxx_common_look_up_clks_for_reset - look up clocks needed for restart
  *
- * Some घड़ीs need to be looked up in advance क्रम the SoC restart
+ * Some clocks need to be looked up in advance for the SoC restart
  * operation to work - see omap2xxx_restart().  Returns -EINVAL upon
  * error or 0 upon success.
  */
-अटल पूर्णांक __init omap2xxx_common_look_up_clks_क्रम_reset(व्योम)
-अणु
-	reset_virt_prcm_set_ck = clk_get(शून्य, "virt_prcm_set");
-	अगर (IS_ERR(reset_virt_prcm_set_ck))
-		वापस -EINVAL;
+static int __init omap2xxx_common_look_up_clks_for_reset(void)
+{
+	reset_virt_prcm_set_ck = clk_get(NULL, "virt_prcm_set");
+	if (IS_ERR(reset_virt_prcm_set_ck))
+		return -EINVAL;
 
-	reset_sys_ck = clk_get(शून्य, "sys_ck");
-	अगर (IS_ERR(reset_sys_ck))
-		वापस -EINVAL;
+	reset_sys_ck = clk_get(NULL, "sys_ck");
+	if (IS_ERR(reset_sys_ck))
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
-omap_postcore_initcall(omap2xxx_common_look_up_clks_क्रम_reset);
+	return 0;
+}
+omap_postcore_initcall(omap2xxx_common_look_up_clks_for_reset);

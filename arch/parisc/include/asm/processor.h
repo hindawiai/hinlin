@@ -1,188 +1,187 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * include/यंत्र-parisc/processor.h
+ * include/asm-parisc/processor.h
  *
  * Copyright (C) 1994 Linus Torvalds
  * Copyright (C) 2001 Grant Grundler
  */
 
-#अगर_अघोषित __ASM_PARISC_PROCESSOR_H
-#घोषणा __ASM_PARISC_PROCESSOR_H
+#ifndef __ASM_PARISC_PROCESSOR_H
+#define __ASM_PARISC_PROCESSOR_H
 
-#अगर_अघोषित __ASSEMBLY__
-#समावेश <linux/thपढ़ोs.h>
+#ifndef __ASSEMBLY__
+#include <linux/threads.h>
 
-#समावेश <यंत्र/prefetch.h>
-#समावेश <यंत्र/hardware.h>
-#समावेश <यंत्र/pdc.h>
-#समावेश <यंत्र/ptrace.h>
-#समावेश <यंत्र/types.h>
-#समावेश <यंत्र/percpu.h>
-#पूर्ण_अगर /* __ASSEMBLY__ */
+#include <asm/prefetch.h>
+#include <asm/hardware.h>
+#include <asm/pdc.h>
+#include <asm/ptrace.h>
+#include <asm/types.h>
+#include <asm/percpu.h>
+#endif /* __ASSEMBLY__ */
 
-#घोषणा HAVE_ARCH_PICK_MMAP_LAYOUT
+#define HAVE_ARCH_PICK_MMAP_LAYOUT
 
-#घोषणा TASK_SIZE_OF(tsk)       ((tsk)->thपढ़ो.task_size)
-#घोषणा TASK_SIZE	        TASK_SIZE_OF(current)
-#घोषणा TASK_UNMAPPED_BASE      (current->thपढ़ो.map_base)
+#define TASK_SIZE_OF(tsk)       ((tsk)->thread.task_size)
+#define TASK_SIZE	        TASK_SIZE_OF(current)
+#define TASK_UNMAPPED_BASE      (current->thread.map_base)
 
-#घोषणा DEFAULT_TASK_SIZE32	(0xFFF00000UL)
-#घोषणा DEFAULT_MAP_BASE32	(0x40000000UL)
+#define DEFAULT_TASK_SIZE32	(0xFFF00000UL)
+#define DEFAULT_MAP_BASE32	(0x40000000UL)
 
-#अगर_घोषित CONFIG_64BIT
-#घोषणा DEFAULT_TASK_SIZE       (MAX_ADDRESS-0xf000000)
-#घोषणा DEFAULT_MAP_BASE        (0x200000000UL)
-#अन्यथा
-#घोषणा DEFAULT_TASK_SIZE	DEFAULT_TASK_SIZE32
-#घोषणा DEFAULT_MAP_BASE	DEFAULT_MAP_BASE32
-#पूर्ण_अगर
+#ifdef CONFIG_64BIT
+#define DEFAULT_TASK_SIZE       (MAX_ADDRESS-0xf000000)
+#define DEFAULT_MAP_BASE        (0x200000000UL)
+#else
+#define DEFAULT_TASK_SIZE	DEFAULT_TASK_SIZE32
+#define DEFAULT_MAP_BASE	DEFAULT_MAP_BASE32
+#endif
 
-#अगर_घोषित __KERNEL__
+#ifdef __KERNEL__
 
-/* XXX: STACK_TOP actually should be STACK_BOTTOM क्रम parisc.
+/* XXX: STACK_TOP actually should be STACK_BOTTOM for parisc.
  * prumpf */
 
-#घोषणा STACK_TOP	TASK_SIZE
-#घोषणा STACK_TOP_MAX	DEFAULT_TASK_SIZE
+#define STACK_TOP	TASK_SIZE
+#define STACK_TOP_MAX	DEFAULT_TASK_SIZE
 
-#पूर्ण_अगर
+#endif
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-अचिन्हित दीर्घ calc_max_stack_size(अचिन्हित दीर्घ stack_max);
+unsigned long calc_max_stack_size(unsigned long stack_max);
 
 /*
- * Data detected about CPUs at boot समय which is the same क्रम all CPU's.
+ * Data detected about CPUs at boot time which is the same for all CPU's.
  * HP boxes are SMP - ie identical processors.
  *
- * FIXME: some CPU rev info may be processor specअगरic...
+ * FIXME: some CPU rev info may be processor specific...
  */
-काष्ठा प्रणाली_cpuinfo_parisc अणु
-	अचिन्हित पूर्णांक	cpu_count;
-	अचिन्हित पूर्णांक	cpu_hz;
-	अचिन्हित पूर्णांक	hversion;
-	अचिन्हित पूर्णांक	sversion;
-	क्रमागत cpu_type	cpu_type;
+struct system_cpuinfo_parisc {
+	unsigned int	cpu_count;
+	unsigned int	cpu_hz;
+	unsigned int	hversion;
+	unsigned int	sversion;
+	enum cpu_type	cpu_type;
 
-	काष्ठा अणु
-		काष्ठा pdc_model model;
-		अचिन्हित दीर्घ versions;
-		अचिन्हित दीर्घ cpuid;
-		अचिन्हित दीर्घ capabilities;
-		अक्षर   sys_model_name[81]; /* PDC-ROM वापसes this model name */
-	पूर्ण pdc;
+	struct {
+		struct pdc_model model;
+		unsigned long versions;
+		unsigned long cpuid;
+		unsigned long capabilities;
+		char   sys_model_name[81]; /* PDC-ROM returnes this model name */
+	} pdc;
 
-	स्थिर अक्षर	*cpu_name;	/* e.g. "PA7300LC (PCX-L2)" */
-	स्थिर अक्षर	*family_name;	/* e.g. "1.1e" */
-पूर्ण;
+	const char	*cpu_name;	/* e.g. "PA7300LC (PCX-L2)" */
+	const char	*family_name;	/* e.g. "1.1e" */
+};
 
 
-/* Per CPU data काष्ठाure - ie varies per CPU.  */
-काष्ठा cpuinfo_parisc अणु
-	अचिन्हित दीर्घ it_value;     /* Interval Timer at last समयr Intr */
-	अचिन्हित दीर्घ irq_count;    /* number of IRQ's since boot */
-	अचिन्हित दीर्घ cpuid;        /* aka slot_number or set to NO_PROC_ID */
-	अचिन्हित दीर्घ hpa;          /* Host Physical address */
-	अचिन्हित दीर्घ txn_addr;     /* MMIO addr of EIR or id_eid */
-#अगर_घोषित CONFIG_SMP
-	अचिन्हित दीर्घ pending_ipi;  /* biपंचांगap of type ipi_message_type */
-#पूर्ण_अगर
-	अचिन्हित दीर्घ bh_count;     /* number of बार bh was invoked */
-	अचिन्हित दीर्घ fp_rev;
-	अचिन्हित दीर्घ fp_model;
-	अचिन्हित दीर्घ cpu_num;      /* CPU number from PAT firmware */
-	अचिन्हित दीर्घ cpu_loc;      /* CPU location from PAT firmware */
-	अचिन्हित पूर्णांक state;
-	काष्ठा parisc_device *dev;
-पूर्ण;
+/* Per CPU data structure - ie varies per CPU.  */
+struct cpuinfo_parisc {
+	unsigned long it_value;     /* Interval Timer at last timer Intr */
+	unsigned long irq_count;    /* number of IRQ's since boot */
+	unsigned long cpuid;        /* aka slot_number or set to NO_PROC_ID */
+	unsigned long hpa;          /* Host Physical address */
+	unsigned long txn_addr;     /* MMIO addr of EIR or id_eid */
+#ifdef CONFIG_SMP
+	unsigned long pending_ipi;  /* bitmap of type ipi_message_type */
+#endif
+	unsigned long bh_count;     /* number of times bh was invoked */
+	unsigned long fp_rev;
+	unsigned long fp_model;
+	unsigned long cpu_num;      /* CPU number from PAT firmware */
+	unsigned long cpu_loc;      /* CPU location from PAT firmware */
+	unsigned int state;
+	struct parisc_device *dev;
+};
 
-बाह्य काष्ठा प्रणाली_cpuinfo_parisc boot_cpu_data;
-DECLARE_PER_CPU(काष्ठा cpuinfo_parisc, cpu_data);
+extern struct system_cpuinfo_parisc boot_cpu_data;
+DECLARE_PER_CPU(struct cpuinfo_parisc, cpu_data);
 
-#घोषणा CPU_HVERSION ((boot_cpu_data.hversion >> 4) & 0x0FFF)
+#define CPU_HVERSION ((boot_cpu_data.hversion >> 4) & 0x0FFF)
 
-प्रकार काष्ठा अणु
-	पूर्णांक seg;  
-पूर्ण mm_segment_t;
+typedef struct {
+	int seg;  
+} mm_segment_t;
 
-#घोषणा ARCH_MIN_TASKALIGN	8
+#define ARCH_MIN_TASKALIGN	8
 
-काष्ठा thपढ़ो_काष्ठा अणु
-	काष्ठा pt_regs regs;
-	अचिन्हित दीर्घ  task_size;
-	अचिन्हित दीर्घ  map_base;
-	अचिन्हित दीर्घ  flags;
-पूर्ण; 
+struct thread_struct {
+	struct pt_regs regs;
+	unsigned long  task_size;
+	unsigned long  map_base;
+	unsigned long  flags;
+}; 
 
-#घोषणा task_pt_regs(tsk) ((काष्ठा pt_regs *)&((tsk)->thपढ़ो.regs))
+#define task_pt_regs(tsk) ((struct pt_regs *)&((tsk)->thread.regs))
 
-/* Thपढ़ो काष्ठा flags. */
-#घोषणा PARISC_UAC_NOPRINT	(1UL << 0)	/* see prctl and unaligned.c */
-#घोषणा PARISC_UAC_SIGBUS	(1UL << 1)
-#घोषणा PARISC_KERNEL_DEATH	(1UL << 31)	/* see die_अगर_kernel()... */
+/* Thread struct flags. */
+#define PARISC_UAC_NOPRINT	(1UL << 0)	/* see prctl and unaligned.c */
+#define PARISC_UAC_SIGBUS	(1UL << 1)
+#define PARISC_KERNEL_DEATH	(1UL << 31)	/* see die_if_kernel()... */
 
-#घोषणा PARISC_UAC_SHIFT	0
-#घोषणा PARISC_UAC_MASK		(PARISC_UAC_NOPRINT|PARISC_UAC_SIGBUS)
+#define PARISC_UAC_SHIFT	0
+#define PARISC_UAC_MASK		(PARISC_UAC_NOPRINT|PARISC_UAC_SIGBUS)
 
-#घोषणा SET_UNALIGN_CTL(task,value)                                       \
-        (अणु                                                                \
-        (task)->thपढ़ो.flags = (((task)->thपढ़ो.flags & ~PARISC_UAC_MASK) \
+#define SET_UNALIGN_CTL(task,value)                                       \
+        ({                                                                \
+        (task)->thread.flags = (((task)->thread.flags & ~PARISC_UAC_MASK) \
                                 | (((value) << PARISC_UAC_SHIFT) &        \
                                    PARISC_UAC_MASK));                     \
         0;                                                                \
-        पूर्ण)
+        })
 
-#घोषणा GET_UNALIGN_CTL(task,addr)                                        \
-        (अणु                                                                \
-        put_user(((task)->thपढ़ो.flags & PARISC_UAC_MASK)                 \
-                 >> PARISC_UAC_SHIFT, (पूर्णांक __user *) (addr));             \
-        पूर्ण)
+#define GET_UNALIGN_CTL(task,addr)                                        \
+        ({                                                                \
+        put_user(((task)->thread.flags & PARISC_UAC_MASK)                 \
+                 >> PARISC_UAC_SHIFT, (int __user *) (addr));             \
+        })
 
-#घोषणा INIT_THREAD अणु \
-	.regs = अणु	.gr	= अणु 0, पूर्ण, \
-			.fr	= अणु 0, पूर्ण, \
-			.sr	= अणु 0, पूर्ण, \
-			.iasq	= अणु 0, पूर्ण, \
-			.iaoq	= अणु 0, पूर्ण, \
+#define INIT_THREAD { \
+	.regs = {	.gr	= { 0, }, \
+			.fr	= { 0, }, \
+			.sr	= { 0, }, \
+			.iasq	= { 0, }, \
+			.iaoq	= { 0, }, \
 			.cr27	= 0, \
-		पूर्ण, \
+		}, \
 	.task_size	= DEFAULT_TASK_SIZE, \
 	.map_base	= DEFAULT_MAP_BASE, \
 	.flags		= 0 \
-	पूर्ण
+	}
 
-काष्ठा task_काष्ठा;
-व्योम show_trace(काष्ठा task_काष्ठा *task, अचिन्हित दीर्घ *stack);
+struct task_struct;
+void show_trace(struct task_struct *task, unsigned long *stack);
 
 /*
- * Start user thपढ़ो in another space.
+ * Start user thread in another space.
  *
  * Note that we set both the iaoq and r31 to the new pc. When
- * the kernel initially calls execve it will वापस through an
+ * the kernel initially calls execve it will return through an
  * rfi path that will use the values in the iaoq. The execve
- * syscall path will वापस through the gateway page, and
+ * syscall path will return through the gateway page, and
  * that uses r31 to branch to.
  *
  * For ELF we clear r23, because the dynamic linker uses it to pass
  * the address of the finalizer function.
  *
- * We also initialize sr3 to an illegal value (illegal क्रम our
- * implementation, not क्रम the architecture).
+ * We also initialize sr3 to an illegal value (illegal for our
+ * implementation, not for the architecture).
  */
-प्रकार अचिन्हित पूर्णांक elf_caddr_t;
+typedef unsigned int elf_caddr_t;
 
-/* The ELF abi wants things करोne a "wee bit" dअगरferently than
- * som करोes.  Supporting this behavior here aव्योमs
+/* The ELF abi wants things done a "wee bit" differently than
+ * som does.  Supporting this behavior here avoids
  * having our own version of create_elf_tables.
  *
  * Oh, and yes, that is not a typo, we are really passing argc in r25
  * and argv in r24 (rather than r26 and r25).  This is because that's
- * where __libc_start_मुख्य wants them.
+ * where __libc_start_main wants them.
  *
- * Duplicated from dl-machine.h क्रम the benefit of पढ़ोers:
+ * Duplicated from dl-machine.h for the benefit of readers:
  *
- *  Our initial stack layout is rather dअगरferent from everyone अन्यथा's
+ *  Our initial stack layout is rather different from everyone else's
  *  due to the unique PA-RISC ABI.  As far as I know it looks like
  *  this:
 
@@ -194,13 +193,13 @@ DECLARE_PER_CPU(काष्ठा cpuinfo_parisc, cpu_data);
    |	    ELF auxiliary info	     |
    |         (up to 28 words)        |
    |---------------------------------|
-   |		   शून्य		     |
+   |		   NULL		     |
    |---------------------------------|
-   |	   Environment poपूर्णांकers	     |
+   |	   Environment pointers	     |
    |---------------------------------|
-   |		   शून्य		     |
+   |		   NULL		     |
    |---------------------------------|
-   |        Argument poपूर्णांकers        |
+   |        Argument pointers        |
    |---------------------------------| <- argv
    |          argc (1 word)          |
    |---------------------------------| <- bprm->exec (HACK!)
@@ -212,12 +211,12 @@ DECLARE_PER_CPU(काष्ठा cpuinfo_parisc, cpu_data);
    |---------------------------------| (mm->env_start, mm->arg_end)
    |           arg strings           |
    |---------------------------------|
-   | additional faked arg strings अगर |
+   | additional faked arg strings if |
    | we're invoked via binfmt_script |
    |---------------------------------| (mm->arg_start)
    stack base is at TASK_SIZE - rlim_max.
 
-on करोwnward growing arches, it looks like this:
+on downward growing arches, it looks like this:
    stack base at TASK_SIZE
    | filename passed to execve
    | env strings
@@ -229,22 +228,22 @@ on करोwnward growing arches, it looks like this:
    | argvs
    | argc
 
- *  The pleasant part of this is that अगर we need to skip arguments we
- *  can just decrement argc and move argv, because the stack poपूर्णांकer
+ *  The pleasant part of this is that if we need to skip arguments we
+ *  can just decrement argc and move argv, because the stack pointer
  *  is utterly unrelated to the location of the environment and
  *  argument vectors.
  *
  * Note that the S/390 people took the easy way out and hacked their
- * GCC to make the stack grow करोwnwards.
+ * GCC to make the stack grow downwards.
  *
  * Final Note: For entry from syscall, the W (wide) bit of the PSW
- * is stuffed पूर्णांकo the lowest bit of the user sp (%r30), so we fill
+ * is stuffed into the lowest bit of the user sp (%r30), so we fill
  * it in here from the current->personality
  */
 
-#घोषणा USER_WIDE_MODE	(!is_32bit_task())
+#define USER_WIDE_MODE	(!is_32bit_task())
 
-#घोषणा start_thपढ़ो(regs, new_pc, new_sp) करो अणु		\
+#define start_thread(regs, new_pc, new_sp) do {		\
 	elf_addr_t *sp = (elf_addr_t *)new_sp;		\
 	__u32 spaceid = (__u32)current->mm->context;	\
 	elf_addr_t pc = (elf_addr_t)new_pc | 3;		\
@@ -265,40 +264,40 @@ on करोwnward growing arches, it looks like this:
 	regs->fr[ 1] = 0LL;                            	\
 	regs->fr[ 2] = 0LL;                            	\
 	regs->fr[ 3] = 0LL;                            	\
-	regs->gr[30] = (((अचिन्हित दीर्घ)sp + 63) &~ 63) | (USER_WIDE_MODE ? 1 : 0); \
+	regs->gr[30] = (((unsigned long)sp + 63) &~ 63) | (USER_WIDE_MODE ? 1 : 0); \
 	regs->gr[31] = pc;				\
 							\
 	get_user(regs->gr[25], (argv - 1));		\
-	regs->gr[24] = (दीर्घ) argv;			\
+	regs->gr[24] = (long) argv;			\
 	regs->gr[23] = 0;				\
-पूर्ण जबतक(0)
+} while(0)
 
-काष्ठा mm_काष्ठा;
+struct mm_struct;
 
-/* Free all resources held by a thपढ़ो. */
-बाह्य व्योम release_thपढ़ो(काष्ठा task_काष्ठा *);
+/* Free all resources held by a thread. */
+extern void release_thread(struct task_struct *);
 
-बाह्य अचिन्हित दीर्घ get_wchan(काष्ठा task_काष्ठा *p);
+extern unsigned long get_wchan(struct task_struct *p);
 
-#घोषणा KSTK_EIP(tsk)	((tsk)->thपढ़ो.regs.iaoq[0])
-#घोषणा KSTK_ESP(tsk)	((tsk)->thपढ़ो.regs.gr[30])
+#define KSTK_EIP(tsk)	((tsk)->thread.regs.iaoq[0])
+#define KSTK_ESP(tsk)	((tsk)->thread.regs.gr[30])
 
-#घोषणा cpu_relax()	barrier()
+#define cpu_relax()	barrier()
 
 /*
- * parisc_requires_coherency() is used to identअगरy the combined VIPT/PIPT
+ * parisc_requires_coherency() is used to identify the combined VIPT/PIPT
  * cached CPUs which require a guarantee of coherency (no inequivalent aliases
- * with dअगरferent data, whether clean or not) to operate
+ * with different data, whether clean or not) to operate
  */
-#अगर_घोषित CONFIG_PA8X00
-बाह्य पूर्णांक _parisc_requires_coherency;
-#घोषणा parisc_requires_coherency()	_parisc_requires_coherency
-#अन्यथा
-#घोषणा parisc_requires_coherency()	(0)
-#पूर्ण_अगर
+#ifdef CONFIG_PA8X00
+extern int _parisc_requires_coherency;
+#define parisc_requires_coherency()	_parisc_requires_coherency
+#else
+#define parisc_requires_coherency()	(0)
+#endif
 
-बाह्य पूर्णांक running_on_qemu;
+extern int running_on_qemu;
 
-#पूर्ण_अगर /* __ASSEMBLY__ */
+#endif /* __ASSEMBLY__ */
 
-#पूर्ण_अगर /* __ASM_PARISC_PROCESSOR_H */
+#endif /* __ASM_PARISC_PROCESSOR_H */

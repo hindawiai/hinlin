@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /* Hisilicon Hibmc SoC drm driver
  *
  * Based on the bochs drm driver.
@@ -12,46 +11,46 @@
  *	Jianhua Li <lijianhua@huawei.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
+#include <linux/module.h>
+#include <linux/pci.h>
 
-#समावेश <drm/drm_atomic_helper.h>
-#समावेश <drm/drm_drv.h>
-#समावेश <drm/drm_gem_framebuffer_helper.h>
-#समावेश <drm/drm_gem_vram_helper.h>
-#समावेश <drm/drm_irq.h>
-#समावेश <drm/drm_managed.h>
-#समावेश <drm/drm_vblank.h>
+#include <drm/drm_atomic_helper.h>
+#include <drm/drm_drv.h>
+#include <drm/drm_gem_framebuffer_helper.h>
+#include <drm/drm_gem_vram_helper.h>
+#include <drm/drm_irq.h>
+#include <drm/drm_managed.h>
+#include <drm/drm_vblank.h>
 
-#समावेश "hibmc_drm_drv.h"
-#समावेश "hibmc_drm_regs.h"
+#include "hibmc_drm_drv.h"
+#include "hibmc_drm_regs.h"
 
 DEFINE_DRM_GEM_FOPS(hibmc_fops);
 
-अटल irqवापस_t hibmc_drm_पूर्णांकerrupt(पूर्णांक irq, व्योम *arg)
-अणु
-	काष्ठा drm_device *dev = (काष्ठा drm_device *)arg;
-	काष्ठा hibmc_drm_निजी *priv = to_hibmc_drm_निजी(dev);
+static irqreturn_t hibmc_drm_interrupt(int irq, void *arg)
+{
+	struct drm_device *dev = (struct drm_device *)arg;
+	struct hibmc_drm_private *priv = to_hibmc_drm_private(dev);
 	u32 status;
 
-	status = पढ़ोl(priv->mmio + HIBMC_RAW_INTERRUPT);
+	status = readl(priv->mmio + HIBMC_RAW_INTERRUPT);
 
-	अगर (status & HIBMC_RAW_INTERRUPT_VBLANK(1)) अणु
-		ग_लिखोl(HIBMC_RAW_INTERRUPT_VBLANK(1),
+	if (status & HIBMC_RAW_INTERRUPT_VBLANK(1)) {
+		writel(HIBMC_RAW_INTERRUPT_VBLANK(1),
 		       priv->mmio + HIBMC_RAW_INTERRUPT);
 		drm_handle_vblank(dev, 0);
-	पूर्ण
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक hibmc_dumb_create(काष्ठा drm_file *file, काष्ठा drm_device *dev,
-			     काष्ठा drm_mode_create_dumb *args)
-अणु
-	वापस drm_gem_vram_fill_create_dumb(file, dev, 0, 128, args);
-पूर्ण
+static int hibmc_dumb_create(struct drm_file *file, struct drm_device *dev,
+			     struct drm_mode_create_dumb *args)
+{
+	return drm_gem_vram_fill_create_dumb(file, dev, 0, 128, args);
+}
 
-अटल स्थिर काष्ठा drm_driver hibmc_driver = अणु
+static const struct drm_driver hibmc_driver = {
 	.driver_features	= DRIVER_GEM | DRIVER_MODESET | DRIVER_ATOMIC,
 	.fops			= &hibmc_fops,
 	.name			= "hibmc",
@@ -63,43 +62,43 @@ DEFINE_DRM_GEM_FOPS(hibmc_fops);
 	.dumb_create            = hibmc_dumb_create,
 	.dumb_map_offset        = drm_gem_vram_driver_dumb_mmap_offset,
 	.gem_prime_mmap		= drm_gem_prime_mmap,
-	.irq_handler		= hibmc_drm_पूर्णांकerrupt,
-पूर्ण;
+	.irq_handler		= hibmc_drm_interrupt,
+};
 
-अटल पूर्णांक __maybe_unused hibmc_pm_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा drm_device *drm_dev = dev_get_drvdata(dev);
+static int __maybe_unused hibmc_pm_suspend(struct device *dev)
+{
+	struct drm_device *drm_dev = dev_get_drvdata(dev);
 
-	वापस drm_mode_config_helper_suspend(drm_dev);
-पूर्ण
+	return drm_mode_config_helper_suspend(drm_dev);
+}
 
-अटल पूर्णांक  __maybe_unused hibmc_pm_resume(काष्ठा device *dev)
-अणु
-	काष्ठा drm_device *drm_dev = dev_get_drvdata(dev);
+static int  __maybe_unused hibmc_pm_resume(struct device *dev)
+{
+	struct drm_device *drm_dev = dev_get_drvdata(dev);
 
-	वापस drm_mode_config_helper_resume(drm_dev);
-पूर्ण
+	return drm_mode_config_helper_resume(drm_dev);
+}
 
-अटल स्थिर काष्ठा dev_pm_ops hibmc_pm_ops = अणु
+static const struct dev_pm_ops hibmc_pm_ops = {
 	SET_SYSTEM_SLEEP_PM_OPS(hibmc_pm_suspend,
 				hibmc_pm_resume)
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा drm_mode_config_funcs hibmc_mode_funcs = अणु
+static const struct drm_mode_config_funcs hibmc_mode_funcs = {
 	.mode_valid = drm_vram_helper_mode_valid,
 	.atomic_check = drm_atomic_helper_check,
 	.atomic_commit = drm_atomic_helper_commit,
 	.fb_create = drm_gem_fb_create,
-पूर्ण;
+};
 
-अटल पूर्णांक hibmc_kms_init(काष्ठा hibmc_drm_निजी *priv)
-अणु
-	काष्ठा drm_device *dev = &priv->dev;
-	पूर्णांक ret;
+static int hibmc_kms_init(struct hibmc_drm_private *priv)
+{
+	struct drm_device *dev = &priv->dev;
+	int ret;
 
 	ret = drmm_mode_config_init(dev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	dev->mode_config.min_width = 0;
 	dev->mode_config.min_height = 0;
@@ -108,83 +107,83 @@ DEFINE_DRM_GEM_FOPS(hibmc_fops);
 
 	dev->mode_config.fb_base = priv->fb_base;
 	dev->mode_config.preferred_depth = 32;
-	dev->mode_config.prefer_shaकरोw = 1;
+	dev->mode_config.prefer_shadow = 1;
 
-	dev->mode_config.funcs = (व्योम *)&hibmc_mode_funcs;
+	dev->mode_config.funcs = (void *)&hibmc_mode_funcs;
 
 	ret = hibmc_de_init(priv);
-	अगर (ret) अणु
+	if (ret) {
 		drm_err(dev, "failed to init de: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = hibmc_vdac_init(priv);
-	अगर (ret) अणु
+	if (ret) {
 		drm_err(dev, "failed to init vdac: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * It can operate in one of three modes: 0, 1 or Sleep.
  */
-व्योम hibmc_set_घातer_mode(काष्ठा hibmc_drm_निजी *priv, u32 घातer_mode)
-अणु
+void hibmc_set_power_mode(struct hibmc_drm_private *priv, u32 power_mode)
+{
 	u32 control_value = 0;
-	व्योम __iomem   *mmio = priv->mmio;
+	void __iomem   *mmio = priv->mmio;
 	u32 input = 1;
 
-	अगर (घातer_mode > HIBMC_PW_MODE_CTL_MODE_SLEEP)
-		वापस;
+	if (power_mode > HIBMC_PW_MODE_CTL_MODE_SLEEP)
+		return;
 
-	अगर (घातer_mode == HIBMC_PW_MODE_CTL_MODE_SLEEP)
+	if (power_mode == HIBMC_PW_MODE_CTL_MODE_SLEEP)
 		input = 0;
 
-	control_value = पढ़ोl(mmio + HIBMC_POWER_MODE_CTRL);
+	control_value = readl(mmio + HIBMC_POWER_MODE_CTRL);
 	control_value &= ~(HIBMC_PW_MODE_CTL_MODE_MASK |
 			   HIBMC_PW_MODE_CTL_OSC_INPUT_MASK);
-	control_value |= HIBMC_FIELD(HIBMC_PW_MODE_CTL_MODE, घातer_mode);
+	control_value |= HIBMC_FIELD(HIBMC_PW_MODE_CTL_MODE, power_mode);
 	control_value |= HIBMC_FIELD(HIBMC_PW_MODE_CTL_OSC_INPUT, input);
-	ग_लिखोl(control_value, mmio + HIBMC_POWER_MODE_CTRL);
-पूर्ण
+	writel(control_value, mmio + HIBMC_POWER_MODE_CTRL);
+}
 
-व्योम hibmc_set_current_gate(काष्ठा hibmc_drm_निजी *priv, अचिन्हित पूर्णांक gate)
-अणु
+void hibmc_set_current_gate(struct hibmc_drm_private *priv, unsigned int gate)
+{
 	u32 gate_reg;
 	u32 mode;
-	व्योम __iomem   *mmio = priv->mmio;
+	void __iomem   *mmio = priv->mmio;
 
-	/* Get current घातer mode. */
-	mode = (पढ़ोl(mmio + HIBMC_POWER_MODE_CTRL) &
+	/* Get current power mode. */
+	mode = (readl(mmio + HIBMC_POWER_MODE_CTRL) &
 		HIBMC_PW_MODE_CTL_MODE_MASK) >> HIBMC_PW_MODE_CTL_MODE_SHIFT;
 
-	चयन (mode) अणु
-	हाल HIBMC_PW_MODE_CTL_MODE_MODE0:
+	switch (mode) {
+	case HIBMC_PW_MODE_CTL_MODE_MODE0:
 		gate_reg = HIBMC_MODE0_GATE;
-		अवरोध;
+		break;
 
-	हाल HIBMC_PW_MODE_CTL_MODE_MODE1:
+	case HIBMC_PW_MODE_CTL_MODE_MODE1:
 		gate_reg = HIBMC_MODE1_GATE;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		gate_reg = HIBMC_MODE0_GATE;
-		अवरोध;
-	पूर्ण
-	ग_लिखोl(gate, mmio + gate_reg);
-पूर्ण
+		break;
+	}
+	writel(gate, mmio + gate_reg);
+}
 
-अटल व्योम hibmc_hw_config(काष्ठा hibmc_drm_निजी *priv)
-अणु
+static void hibmc_hw_config(struct hibmc_drm_private *priv)
+{
 	u32 reg;
 
-	/* On hardware reset, घातer mode 0 is शेष. */
-	hibmc_set_घातer_mode(priv, HIBMC_PW_MODE_CTL_MODE_MODE0);
+	/* On hardware reset, power mode 0 is default. */
+	hibmc_set_power_mode(priv, HIBMC_PW_MODE_CTL_MODE_MODE0);
 
-	/* Enable display घातer gate & LOCALMEM घातer gate*/
-	reg = पढ़ोl(priv->mmio + HIBMC_CURRENT_GATE);
+	/* Enable display power gate & LOCALMEM power gate*/
+	reg = readl(priv->mmio + HIBMC_CURRENT_GATE);
 	reg &= ~HIBMC_CURR_GATE_DISPLAY_MASK;
 	reg &= ~HIBMC_CURR_GATE_LOCALMEM_MASK;
 	reg |= HIBMC_CURR_GATE_DISPLAY(1);
@@ -194,190 +193,190 @@ DEFINE_DRM_GEM_FOPS(hibmc_fops);
 
 	/*
 	 * Reset the memory controller. If the memory controller
-	 * is not reset in chip,the प्रणाली might hang when sw accesses
+	 * is not reset in chip,the system might hang when sw accesses
 	 * the memory.The memory should be resetted after
 	 * changing the MXCLK.
 	 */
-	reg = पढ़ोl(priv->mmio + HIBMC_MISC_CTRL);
+	reg = readl(priv->mmio + HIBMC_MISC_CTRL);
 	reg &= ~HIBMC_MSCCTL_LOCALMEM_RESET_MASK;
 	reg |= HIBMC_MSCCTL_LOCALMEM_RESET(0);
-	ग_लिखोl(reg, priv->mmio + HIBMC_MISC_CTRL);
+	writel(reg, priv->mmio + HIBMC_MISC_CTRL);
 
 	reg &= ~HIBMC_MSCCTL_LOCALMEM_RESET_MASK;
 	reg |= HIBMC_MSCCTL_LOCALMEM_RESET(1);
 
-	ग_लिखोl(reg, priv->mmio + HIBMC_MISC_CTRL);
-पूर्ण
+	writel(reg, priv->mmio + HIBMC_MISC_CTRL);
+}
 
-अटल पूर्णांक hibmc_hw_map(काष्ठा hibmc_drm_निजी *priv)
-अणु
-	काष्ठा drm_device *dev = &priv->dev;
-	काष्ठा pci_dev *pdev = to_pci_dev(dev->dev);
-	resource_माप_प्रकार addr, size, ioaddr, iosize;
+static int hibmc_hw_map(struct hibmc_drm_private *priv)
+{
+	struct drm_device *dev = &priv->dev;
+	struct pci_dev *pdev = to_pci_dev(dev->dev);
+	resource_size_t addr, size, ioaddr, iosize;
 
 	ioaddr = pci_resource_start(pdev, 1);
 	iosize = pci_resource_len(pdev, 1);
 	priv->mmio = devm_ioremap(dev->dev, ioaddr, iosize);
-	अगर (!priv->mmio) अणु
+	if (!priv->mmio) {
 		drm_err(dev, "Cannot map mmio region\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	addr = pci_resource_start(pdev, 0);
 	size = pci_resource_len(pdev, 0);
 	priv->fb_map = devm_ioremap(dev->dev, addr, size);
-	अगर (!priv->fb_map) अणु
+	if (!priv->fb_map) {
 		drm_err(dev, "Cannot map framebuffer\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	priv->fb_base = addr;
 	priv->fb_size = size;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hibmc_hw_init(काष्ठा hibmc_drm_निजी *priv)
-अणु
-	पूर्णांक ret;
+static int hibmc_hw_init(struct hibmc_drm_private *priv)
+{
+	int ret;
 
 	ret = hibmc_hw_map(priv);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	hibmc_hw_config(priv);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hibmc_unload(काष्ठा drm_device *dev)
-अणु
-	drm_atomic_helper_shutकरोwn(dev);
+static int hibmc_unload(struct drm_device *dev)
+{
+	drm_atomic_helper_shutdown(dev);
 
-	अगर (dev->irq_enabled)
+	if (dev->irq_enabled)
 		drm_irq_uninstall(dev);
 
 	pci_disable_msi(to_pci_dev(dev->dev));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hibmc_load(काष्ठा drm_device *dev)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(dev->dev);
-	काष्ठा hibmc_drm_निजी *priv = to_hibmc_drm_निजी(dev);
-	पूर्णांक ret;
+static int hibmc_load(struct drm_device *dev)
+{
+	struct pci_dev *pdev = to_pci_dev(dev->dev);
+	struct hibmc_drm_private *priv = to_hibmc_drm_private(dev);
+	int ret;
 
 	ret = hibmc_hw_init(priv);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	ret = drmm_vram_helper_init(dev, pci_resource_start(pdev, 0), priv->fb_size);
-	अगर (ret) अणु
+	if (ret) {
 		drm_err(dev, "Error initializing VRAM MM; %d\n", ret);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	ret = hibmc_kms_init(priv);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	ret = drm_vblank_init(dev, dev->mode_config.num_crtc);
-	अगर (ret) अणु
+	if (ret) {
 		drm_err(dev, "failed to initialize vblank: %d\n", ret);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	ret = pci_enable_msi(pdev);
-	अगर (ret) अणु
+	if (ret) {
 		drm_warn(dev, "enabling MSI failed: %d\n", ret);
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = drm_irq_install(dev, pdev->irq);
-		अगर (ret)
+		if (ret)
 			drm_warn(dev, "install irq failed: %d\n", ret);
-	पूर्ण
+	}
 
 	/* reset all the states of crtc/plane/encoder/connector */
 	drm_mode_config_reset(dev);
 
-	वापस 0;
+	return 0;
 
 err:
 	hibmc_unload(dev);
 	drm_err(dev, "failed to initialize drm driver: %d\n", ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक hibmc_pci_probe(काष्ठा pci_dev *pdev,
-			   स्थिर काष्ठा pci_device_id *ent)
-अणु
-	काष्ठा hibmc_drm_निजी *priv;
-	काष्ठा drm_device *dev;
-	पूर्णांक ret;
+static int hibmc_pci_probe(struct pci_dev *pdev,
+			   const struct pci_device_id *ent)
+{
+	struct hibmc_drm_private *priv;
+	struct drm_device *dev;
+	int ret;
 
-	ret = drm_fb_helper_हटाओ_conflicting_pci_framebuffers(pdev,
+	ret = drm_fb_helper_remove_conflicting_pci_framebuffers(pdev,
 								"hibmcdrmfb");
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	priv = devm_drm_dev_alloc(&pdev->dev, &hibmc_driver,
-				  काष्ठा hibmc_drm_निजी, dev);
-	अगर (IS_ERR(priv)) अणु
+				  struct hibmc_drm_private, dev);
+	if (IS_ERR(priv)) {
 		DRM_ERROR("failed to allocate drm_device\n");
-		वापस PTR_ERR(priv);
-	पूर्ण
+		return PTR_ERR(priv);
+	}
 
 	dev = &priv->dev;
 	pci_set_drvdata(pdev, dev);
 
 	ret = pcim_enable_device(pdev);
-	अगर (ret) अणु
+	if (ret) {
 		drm_err(dev, "failed to enable pci device: %d\n", ret);
-		जाओ err_वापस;
-	पूर्ण
+		goto err_return;
+	}
 
 	ret = hibmc_load(dev);
-	अगर (ret) अणु
+	if (ret) {
 		drm_err(dev, "failed to load hibmc: %d\n", ret);
-		जाओ err_वापस;
-	पूर्ण
+		goto err_return;
+	}
 
-	ret = drm_dev_रेजिस्टर(dev, 0);
-	अगर (ret) अणु
+	ret = drm_dev_register(dev, 0);
+	if (ret) {
 		drm_err(dev, "failed to register drv for userspace access: %d\n",
 			  ret);
-		जाओ err_unload;
-	पूर्ण
+		goto err_unload;
+	}
 
 	drm_fbdev_generic_setup(dev, dev->mode_config.preferred_depth);
 
-	वापस 0;
+	return 0;
 
 err_unload:
 	hibmc_unload(dev);
-err_वापस:
-	वापस ret;
-पूर्ण
+err_return:
+	return ret;
+}
 
-अटल व्योम hibmc_pci_हटाओ(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा drm_device *dev = pci_get_drvdata(pdev);
+static void hibmc_pci_remove(struct pci_dev *pdev)
+{
+	struct drm_device *dev = pci_get_drvdata(pdev);
 
-	drm_dev_unरेजिस्टर(dev);
+	drm_dev_unregister(dev);
 	hibmc_unload(dev);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा pci_device_id hibmc_pci_table[] = अणु
-	अणु PCI_VDEVICE(HUAWEI, 0x1711) पूर्ण,
-	अणु0,पूर्ण
-पूर्ण;
+static const struct pci_device_id hibmc_pci_table[] = {
+	{ PCI_VDEVICE(HUAWEI, 0x1711) },
+	{0,}
+};
 
-अटल काष्ठा pci_driver hibmc_pci_driver = अणु
+static struct pci_driver hibmc_pci_driver = {
 	.name =		"hibmc-drm",
 	.id_table =	hibmc_pci_table,
 	.probe =	hibmc_pci_probe,
-	.हटाओ =	hibmc_pci_हटाओ,
+	.remove =	hibmc_pci_remove,
 	.driver.pm =    &hibmc_pm_ops,
-पूर्ण;
+};
 
 module_pci_driver(hibmc_pci_driver);
 

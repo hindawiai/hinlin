@@ -1,348 +1,347 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * ACPI Hardware Watchकरोg (WDAT) driver.
+ * ACPI Hardware Watchdog (WDAT) driver.
  *
  * Copyright (C) 2016, Intel Corporation
- * Author: Mika Westerberg <mika.westerberg@linux.पूर्णांकel.com>
+ * Author: Mika Westerberg <mika.westerberg@linux.intel.com>
  */
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/watchकरोg.h>
+#include <linux/acpi.h>
+#include <linux/ioport.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/pm.h>
+#include <linux/watchdog.h>
 
-#घोषणा MAX_WDAT_ACTIONS ACPI_WDAT_ACTION_RESERVED
+#define MAX_WDAT_ACTIONS ACPI_WDAT_ACTION_RESERVED
 
 /**
- * काष्ठा wdat_inकाष्ठाion - Single ACPI WDAT inकाष्ठाion
- * @entry: Copy of the ACPI table inकाष्ठाion
- * @reg: Register the inकाष्ठाion is accessing
- * @node: Next inकाष्ठाion in action sequence
+ * struct wdat_instruction - Single ACPI WDAT instruction
+ * @entry: Copy of the ACPI table instruction
+ * @reg: Register the instruction is accessing
+ * @node: Next instruction in action sequence
  */
-काष्ठा wdat_inकाष्ठाion अणु
-	काष्ठा acpi_wdat_entry entry;
-	व्योम __iomem *reg;
-	काष्ठा list_head node;
-पूर्ण;
+struct wdat_instruction {
+	struct acpi_wdat_entry entry;
+	void __iomem *reg;
+	struct list_head node;
+};
 
 /**
- * काष्ठा wdat_wdt - ACPI WDAT watchकरोg device
- * @pdev: Parent platक्रमm device
- * @wdd: Watchकरोg core device
- * @period: How दीर्घ is one watchकरोg period in ms
- * @stopped_in_sleep: Is this watchकरोg stopped by the firmware in S1-S5
- * @stopped: Was the watchकरोg stopped by the driver in suspend
- * @inकाष्ठाions: An array of inकाष्ठाion lists indexed by an action number from
- *                the WDAT table. There can be %शून्य entries क्रम not implemented
+ * struct wdat_wdt - ACPI WDAT watchdog device
+ * @pdev: Parent platform device
+ * @wdd: Watchdog core device
+ * @period: How long is one watchdog period in ms
+ * @stopped_in_sleep: Is this watchdog stopped by the firmware in S1-S5
+ * @stopped: Was the watchdog stopped by the driver in suspend
+ * @instructions: An array of instruction lists indexed by an action number from
+ *                the WDAT table. There can be %NULL entries for not implemented
  *                actions.
  */
-काष्ठा wdat_wdt अणु
-	काष्ठा platक्रमm_device *pdev;
-	काष्ठा watchकरोg_device wdd;
-	अचिन्हित पूर्णांक period;
+struct wdat_wdt {
+	struct platform_device *pdev;
+	struct watchdog_device wdd;
+	unsigned int period;
 	bool stopped_in_sleep;
 	bool stopped;
-	काष्ठा list_head *inकाष्ठाions[MAX_WDAT_ACTIONS];
-पूर्ण;
+	struct list_head *instructions[MAX_WDAT_ACTIONS];
+};
 
-#घोषणा to_wdat_wdt(wdd) container_of(wdd, काष्ठा wdat_wdt, wdd)
+#define to_wdat_wdt(wdd) container_of(wdd, struct wdat_wdt, wdd)
 
-अटल bool nowayout = WATCHDOG_NOWAYOUT;
+static bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout, "Watchdog cannot be stopped once started (default="
 		 __MODULE_STRING(WATCHDOG_NOWAYOUT) ")");
 
-#घोषणा WDAT_DEFAULT_TIMEOUT	30
+#define WDAT_DEFAULT_TIMEOUT	30
 
-अटल पूर्णांक समयout = WDAT_DEFAULT_TIMEOUT;
-module_param(समयout, पूर्णांक, 0);
-MODULE_PARM_DESC(समयout, "Watchdog timeout in seconds (default="
+static int timeout = WDAT_DEFAULT_TIMEOUT;
+module_param(timeout, int, 0);
+MODULE_PARM_DESC(timeout, "Watchdog timeout in seconds (default="
 		 __MODULE_STRING(WDAT_DEFAULT_TIMEOUT) ")");
 
-अटल पूर्णांक wdat_wdt_पढ़ो(काष्ठा wdat_wdt *wdat,
-	 स्थिर काष्ठा wdat_inकाष्ठाion *instr, u32 *value)
-अणु
-	स्थिर काष्ठा acpi_generic_address *gas = &instr->entry.रेजिस्टर_region;
+static int wdat_wdt_read(struct wdat_wdt *wdat,
+	 const struct wdat_instruction *instr, u32 *value)
+{
+	const struct acpi_generic_address *gas = &instr->entry.register_region;
 
-	चयन (gas->access_width) अणु
-	हाल 1:
-		*value = ioपढ़ो8(instr->reg);
-		अवरोध;
-	हाल 2:
-		*value = ioपढ़ो16(instr->reg);
-		अवरोध;
-	हाल 3:
-		*value = ioपढ़ो32(instr->reg);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (gas->access_width) {
+	case 1:
+		*value = ioread8(instr->reg);
+		break;
+	case 2:
+		*value = ioread16(instr->reg);
+		break;
+	case 3:
+		*value = ioread32(instr->reg);
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	dev_dbg(&wdat->pdev->dev, "Read %#x from 0x%08llx\n", *value,
 		gas->address);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wdat_wdt_ग_लिखो(काष्ठा wdat_wdt *wdat,
-	स्थिर काष्ठा wdat_inकाष्ठाion *instr, u32 value)
-अणु
-	स्थिर काष्ठा acpi_generic_address *gas = &instr->entry.रेजिस्टर_region;
+static int wdat_wdt_write(struct wdat_wdt *wdat,
+	const struct wdat_instruction *instr, u32 value)
+{
+	const struct acpi_generic_address *gas = &instr->entry.register_region;
 
-	चयन (gas->access_width) अणु
-	हाल 1:
-		ioग_लिखो8((u8)value, instr->reg);
-		अवरोध;
-	हाल 2:
-		ioग_लिखो16((u16)value, instr->reg);
-		अवरोध;
-	हाल 3:
-		ioग_लिखो32(value, instr->reg);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (gas->access_width) {
+	case 1:
+		iowrite8((u8)value, instr->reg);
+		break;
+	case 2:
+		iowrite16((u16)value, instr->reg);
+		break;
+	case 3:
+		iowrite32(value, instr->reg);
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	dev_dbg(&wdat->pdev->dev, "Wrote %#x to 0x%08llx\n", value,
 		gas->address);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wdat_wdt_run_action(काष्ठा wdat_wdt *wdat, अचिन्हित पूर्णांक action,
+static int wdat_wdt_run_action(struct wdat_wdt *wdat, unsigned int action,
 			       u32 param, u32 *retval)
-अणु
-	काष्ठा wdat_inकाष्ठाion *instr;
+{
+	struct wdat_instruction *instr;
 
-	अगर (action >= ARRAY_SIZE(wdat->inकाष्ठाions))
-		वापस -EINVAL;
+	if (action >= ARRAY_SIZE(wdat->instructions))
+		return -EINVAL;
 
-	अगर (!wdat->inकाष्ठाions[action])
-		वापस -EOPNOTSUPP;
+	if (!wdat->instructions[action])
+		return -EOPNOTSUPP;
 
 	dev_dbg(&wdat->pdev->dev, "Running action %#x\n", action);
 
-	/* Run each inकाष्ठाion sequentially */
-	list_क्रम_each_entry(instr, wdat->inकाष्ठाions[action], node) अणु
-		स्थिर काष्ठा acpi_wdat_entry *entry = &instr->entry;
-		स्थिर काष्ठा acpi_generic_address *gas;
+	/* Run each instruction sequentially */
+	list_for_each_entry(instr, wdat->instructions[action], node) {
+		const struct acpi_wdat_entry *entry = &instr->entry;
+		const struct acpi_generic_address *gas;
 		u32 flags, value, mask, x, y;
 		bool preserve;
-		पूर्णांक ret;
+		int ret;
 
-		gas = &entry->रेजिस्टर_region;
+		gas = &entry->register_region;
 
-		preserve = entry->inकाष्ठाion & ACPI_WDAT_PRESERVE_REGISTER;
-		flags = entry->inकाष्ठाion & ~ACPI_WDAT_PRESERVE_REGISTER;
+		preserve = entry->instruction & ACPI_WDAT_PRESERVE_REGISTER;
+		flags = entry->instruction & ~ACPI_WDAT_PRESERVE_REGISTER;
 		value = entry->value;
 		mask = entry->mask;
 
-		चयन (flags) अणु
-		हाल ACPI_WDAT_READ_VALUE:
-			ret = wdat_wdt_पढ़ो(wdat, instr, &x);
-			अगर (ret)
-				वापस ret;
+		switch (flags) {
+		case ACPI_WDAT_READ_VALUE:
+			ret = wdat_wdt_read(wdat, instr, &x);
+			if (ret)
+				return ret;
 			x >>= gas->bit_offset;
 			x &= mask;
-			अगर (retval)
+			if (retval)
 				*retval = x == value;
-			अवरोध;
+			break;
 
-		हाल ACPI_WDAT_READ_COUNTDOWN:
-			ret = wdat_wdt_पढ़ो(wdat, instr, &x);
-			अगर (ret)
-				वापस ret;
+		case ACPI_WDAT_READ_COUNTDOWN:
+			ret = wdat_wdt_read(wdat, instr, &x);
+			if (ret)
+				return ret;
 			x >>= gas->bit_offset;
 			x &= mask;
-			अगर (retval)
+			if (retval)
 				*retval = x;
-			अवरोध;
+			break;
 
-		हाल ACPI_WDAT_WRITE_VALUE:
+		case ACPI_WDAT_WRITE_VALUE:
 			x = value & mask;
 			x <<= gas->bit_offset;
-			अगर (preserve) अणु
-				ret = wdat_wdt_पढ़ो(wdat, instr, &y);
-				अगर (ret)
-					वापस ret;
+			if (preserve) {
+				ret = wdat_wdt_read(wdat, instr, &y);
+				if (ret)
+					return ret;
 				y = y & ~(mask << gas->bit_offset);
 				x |= y;
-			पूर्ण
-			ret = wdat_wdt_ग_लिखो(wdat, instr, x);
-			अगर (ret)
-				वापस ret;
-			अवरोध;
+			}
+			ret = wdat_wdt_write(wdat, instr, x);
+			if (ret)
+				return ret;
+			break;
 
-		हाल ACPI_WDAT_WRITE_COUNTDOWN:
+		case ACPI_WDAT_WRITE_COUNTDOWN:
 			x = param;
 			x &= mask;
 			x <<= gas->bit_offset;
-			अगर (preserve) अणु
-				ret = wdat_wdt_पढ़ो(wdat, instr, &y);
-				अगर (ret)
-					वापस ret;
+			if (preserve) {
+				ret = wdat_wdt_read(wdat, instr, &y);
+				if (ret)
+					return ret;
 				y = y & ~(mask << gas->bit_offset);
 				x |= y;
-			पूर्ण
-			ret = wdat_wdt_ग_लिखो(wdat, instr, x);
-			अगर (ret)
-				वापस ret;
-			अवरोध;
+			}
+			ret = wdat_wdt_write(wdat, instr, x);
+			if (ret)
+				return ret;
+			break;
 
-		शेष:
+		default:
 			dev_err(&wdat->pdev->dev, "Unknown instruction: %u\n",
 				flags);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wdat_wdt_enable_reboot(काष्ठा wdat_wdt *wdat)
-अणु
-	पूर्णांक ret;
+static int wdat_wdt_enable_reboot(struct wdat_wdt *wdat)
+{
+	int ret;
 
 	/*
-	 * WDAT specअगरication says that the watchकरोg is required to reboot
-	 * the प्रणाली when it fires. However, it also states that it is
-	 * recommeded to make it configurable through hardware रेजिस्टर. We
-	 * enable reboot now अगर it is configurable, just in हाल.
+	 * WDAT specification says that the watchdog is required to reboot
+	 * the system when it fires. However, it also states that it is
+	 * recommeded to make it configurable through hardware register. We
+	 * enable reboot now if it is configurable, just in case.
 	 */
-	ret = wdat_wdt_run_action(wdat, ACPI_WDAT_SET_REBOOT, 0, शून्य);
-	अगर (ret && ret != -EOPNOTSUPP) अणु
+	ret = wdat_wdt_run_action(wdat, ACPI_WDAT_SET_REBOOT, 0, NULL);
+	if (ret && ret != -EOPNOTSUPP) {
 		dev_err(&wdat->pdev->dev,
 			"Failed to enable reboot when watchdog triggers\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम wdat_wdt_boot_status(काष्ठा wdat_wdt *wdat)
-अणु
+static void wdat_wdt_boot_status(struct wdat_wdt *wdat)
+{
 	u32 boot_status = 0;
-	पूर्णांक ret;
+	int ret;
 
 	ret = wdat_wdt_run_action(wdat, ACPI_WDAT_GET_STATUS, 0, &boot_status);
-	अगर (ret && ret != -EOPNOTSUPP) अणु
+	if (ret && ret != -EOPNOTSUPP) {
 		dev_err(&wdat->pdev->dev, "Failed to read boot status\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (boot_status)
+	if (boot_status)
 		wdat->wdd.bootstatus = WDIOF_CARDRESET;
 
-	/* Clear the boot status in हाल BIOS did not करो it */
-	ret = wdat_wdt_run_action(wdat, ACPI_WDAT_SET_STATUS, 0, शून्य);
-	अगर (ret && ret != -EOPNOTSUPP)
+	/* Clear the boot status in case BIOS did not do it */
+	ret = wdat_wdt_run_action(wdat, ACPI_WDAT_SET_STATUS, 0, NULL);
+	if (ret && ret != -EOPNOTSUPP)
 		dev_err(&wdat->pdev->dev, "Failed to clear boot status\n");
-पूर्ण
+}
 
-अटल व्योम wdat_wdt_set_running(काष्ठा wdat_wdt *wdat)
-अणु
+static void wdat_wdt_set_running(struct wdat_wdt *wdat)
+{
 	u32 running = 0;
-	पूर्णांक ret;
+	int ret;
 
 	ret = wdat_wdt_run_action(wdat, ACPI_WDAT_GET_RUNNING_STATE, 0,
 				  &running);
-	अगर (ret && ret != -EOPNOTSUPP)
+	if (ret && ret != -EOPNOTSUPP)
 		dev_err(&wdat->pdev->dev, "Failed to read running state\n");
 
-	अगर (running)
+	if (running)
 		set_bit(WDOG_HW_RUNNING, &wdat->wdd.status);
-पूर्ण
+}
 
-अटल पूर्णांक wdat_wdt_start(काष्ठा watchकरोg_device *wdd)
-अणु
-	वापस wdat_wdt_run_action(to_wdat_wdt(wdd),
-				   ACPI_WDAT_SET_RUNNING_STATE, 0, शून्य);
-पूर्ण
+static int wdat_wdt_start(struct watchdog_device *wdd)
+{
+	return wdat_wdt_run_action(to_wdat_wdt(wdd),
+				   ACPI_WDAT_SET_RUNNING_STATE, 0, NULL);
+}
 
-अटल पूर्णांक wdat_wdt_stop(काष्ठा watchकरोg_device *wdd)
-अणु
-	वापस wdat_wdt_run_action(to_wdat_wdt(wdd),
-				   ACPI_WDAT_SET_STOPPED_STATE, 0, शून्य);
-पूर्ण
+static int wdat_wdt_stop(struct watchdog_device *wdd)
+{
+	return wdat_wdt_run_action(to_wdat_wdt(wdd),
+				   ACPI_WDAT_SET_STOPPED_STATE, 0, NULL);
+}
 
-अटल पूर्णांक wdat_wdt_ping(काष्ठा watchकरोg_device *wdd)
-अणु
-	वापस wdat_wdt_run_action(to_wdat_wdt(wdd), ACPI_WDAT_RESET, 0, शून्य);
-पूर्ण
+static int wdat_wdt_ping(struct watchdog_device *wdd)
+{
+	return wdat_wdt_run_action(to_wdat_wdt(wdd), ACPI_WDAT_RESET, 0, NULL);
+}
 
-अटल पूर्णांक wdat_wdt_set_समयout(काष्ठा watchकरोg_device *wdd,
-				अचिन्हित पूर्णांक समयout)
-अणु
-	काष्ठा wdat_wdt *wdat = to_wdat_wdt(wdd);
-	अचिन्हित पूर्णांक periods;
-	पूर्णांक ret;
+static int wdat_wdt_set_timeout(struct watchdog_device *wdd,
+				unsigned int timeout)
+{
+	struct wdat_wdt *wdat = to_wdat_wdt(wdd);
+	unsigned int periods;
+	int ret;
 
-	periods = समयout * 1000 / wdat->period;
-	ret = wdat_wdt_run_action(wdat, ACPI_WDAT_SET_COUNTDOWN, periods, शून्य);
-	अगर (!ret)
-		wdd->समयout = समयout;
-	वापस ret;
-पूर्ण
+	periods = timeout * 1000 / wdat->period;
+	ret = wdat_wdt_run_action(wdat, ACPI_WDAT_SET_COUNTDOWN, periods, NULL);
+	if (!ret)
+		wdd->timeout = timeout;
+	return ret;
+}
 
-अटल अचिन्हित पूर्णांक wdat_wdt_get_समयleft(काष्ठा watchकरोg_device *wdd)
-अणु
-	काष्ठा wdat_wdt *wdat = to_wdat_wdt(wdd);
+static unsigned int wdat_wdt_get_timeleft(struct watchdog_device *wdd)
+{
+	struct wdat_wdt *wdat = to_wdat_wdt(wdd);
 	u32 periods = 0;
 
 	wdat_wdt_run_action(wdat, ACPI_WDAT_GET_CURRENT_COUNTDOWN, 0, &periods);
-	वापस periods * wdat->period / 1000;
-पूर्ण
+	return periods * wdat->period / 1000;
+}
 
-अटल स्थिर काष्ठा watchकरोg_info wdat_wdt_info = अणु
+static const struct watchdog_info wdat_wdt_info = {
 	.options = WDIOF_SETTIMEOUT | WDIOF_KEEPALIVEPING | WDIOF_MAGICCLOSE,
 	.firmware_version = 0,
 	.identity = "wdat_wdt",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा watchकरोg_ops wdat_wdt_ops = अणु
+static const struct watchdog_ops wdat_wdt_ops = {
 	.owner = THIS_MODULE,
 	.start = wdat_wdt_start,
 	.stop = wdat_wdt_stop,
 	.ping = wdat_wdt_ping,
-	.set_समयout = wdat_wdt_set_समयout,
-	.get_समयleft = wdat_wdt_get_समयleft,
-पूर्ण;
+	.set_timeout = wdat_wdt_set_timeout,
+	.get_timeleft = wdat_wdt_get_timeleft,
+};
 
-अटल पूर्णांक wdat_wdt_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	स्थिर काष्ठा acpi_wdat_entry *entries;
-	स्थिर काष्ठा acpi_table_wdat *tbl;
-	काष्ठा wdat_wdt *wdat;
-	काष्ठा resource *res;
-	व्योम __iomem **regs;
+static int wdat_wdt_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	const struct acpi_wdat_entry *entries;
+	const struct acpi_table_wdat *tbl;
+	struct wdat_wdt *wdat;
+	struct resource *res;
+	void __iomem **regs;
 	acpi_status status;
-	पूर्णांक i, ret;
+	int i, ret;
 
 	status = acpi_get_table(ACPI_SIG_WDAT, 0,
-				(काष्ठा acpi_table_header **)&tbl);
-	अगर (ACPI_FAILURE(status))
-		वापस -ENODEV;
+				(struct acpi_table_header **)&tbl);
+	if (ACPI_FAILURE(status))
+		return -ENODEV;
 
-	wdat = devm_kzalloc(dev, माप(*wdat), GFP_KERNEL);
-	अगर (!wdat)
-		वापस -ENOMEM;
+	wdat = devm_kzalloc(dev, sizeof(*wdat), GFP_KERNEL);
+	if (!wdat)
+		return -ENOMEM;
 
-	regs = devm_kसुस्मृति(dev, pdev->num_resources, माप(*regs),
+	regs = devm_kcalloc(dev, pdev->num_resources, sizeof(*regs),
 			    GFP_KERNEL);
-	अगर (!regs)
-		वापस -ENOMEM;
+	if (!regs)
+		return -ENOMEM;
 
-	/* WDAT specअगरication wants to have >= 1ms period */
-	अगर (tbl->समयr_period < 1)
-		वापस -EINVAL;
-	अगर (tbl->min_count > tbl->max_count)
-		वापस -EINVAL;
+	/* WDAT specification wants to have >= 1ms period */
+	if (tbl->timer_period < 1)
+		return -EINVAL;
+	if (tbl->min_count > tbl->max_count)
+		return -EINVAL;
 
-	wdat->period = tbl->समयr_period;
+	wdat->period = tbl->timer_period;
 	wdat->wdd.min_hw_heartbeat_ms = wdat->period * tbl->min_count;
 	wdat->wdd.max_hw_heartbeat_ms = wdat->period * tbl->max_count;
 	wdat->stopped_in_sleep = tbl->flags & ACPI_WDAT_STOPPED;
@@ -351,198 +350,198 @@ MODULE_PARM_DESC(समयout, "Watchdog timeout in seconds (default="
 	wdat->pdev = pdev;
 
 	/* Request and map all resources */
-	क्रम (i = 0; i < pdev->num_resources; i++) अणु
-		व्योम __iomem *reg;
+	for (i = 0; i < pdev->num_resources; i++) {
+		void __iomem *reg;
 
 		res = &pdev->resource[i];
-		अगर (resource_type(res) == IORESOURCE_MEM) अणु
+		if (resource_type(res) == IORESOURCE_MEM) {
 			reg = devm_ioremap_resource(dev, res);
-			अगर (IS_ERR(reg))
-				वापस PTR_ERR(reg);
-		पूर्ण अन्यथा अगर (resource_type(res) == IORESOURCE_IO) अणु
+			if (IS_ERR(reg))
+				return PTR_ERR(reg);
+		} else if (resource_type(res) == IORESOURCE_IO) {
 			reg = devm_ioport_map(dev, res->start, 1);
-			अगर (!reg)
-				वापस -ENOMEM;
-		पूर्ण अन्यथा अणु
+			if (!reg)
+				return -ENOMEM;
+		} else {
 			dev_err(dev, "Unsupported resource\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		regs[i] = reg;
-	पूर्ण
+	}
 
-	entries = (काष्ठा acpi_wdat_entry *)(tbl + 1);
-	क्रम (i = 0; i < tbl->entries; i++) अणु
-		स्थिर काष्ठा acpi_generic_address *gas;
-		काष्ठा wdat_inकाष्ठाion *instr;
-		काष्ठा list_head *inकाष्ठाions;
-		अचिन्हित पूर्णांक action;
-		काष्ठा resource r;
-		पूर्णांक j;
+	entries = (struct acpi_wdat_entry *)(tbl + 1);
+	for (i = 0; i < tbl->entries; i++) {
+		const struct acpi_generic_address *gas;
+		struct wdat_instruction *instr;
+		struct list_head *instructions;
+		unsigned int action;
+		struct resource r;
+		int j;
 
 		action = entries[i].action;
-		अगर (action >= MAX_WDAT_ACTIONS) अणु
+		if (action >= MAX_WDAT_ACTIONS) {
 			dev_dbg(dev, "Skipping unknown action: %u\n", action);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		instr = devm_kzalloc(dev, माप(*instr), GFP_KERNEL);
-		अगर (!instr)
-			वापस -ENOMEM;
+		instr = devm_kzalloc(dev, sizeof(*instr), GFP_KERNEL);
+		if (!instr)
+			return -ENOMEM;
 
 		INIT_LIST_HEAD(&instr->node);
 		instr->entry = entries[i];
 
-		gas = &entries[i].रेजिस्टर_region;
+		gas = &entries[i].register_region;
 
-		स_रखो(&r, 0, माप(r));
+		memset(&r, 0, sizeof(r));
 		r.start = gas->address;
 		r.end = r.start + ACPI_ACCESS_BYTE_WIDTH(gas->access_width) - 1;
-		अगर (gas->space_id == ACPI_ADR_SPACE_SYSTEM_MEMORY) अणु
+		if (gas->space_id == ACPI_ADR_SPACE_SYSTEM_MEMORY) {
 			r.flags = IORESOURCE_MEM;
-		पूर्ण अन्यथा अगर (gas->space_id == ACPI_ADR_SPACE_SYSTEM_IO) अणु
+		} else if (gas->space_id == ACPI_ADR_SPACE_SYSTEM_IO) {
 			r.flags = IORESOURCE_IO;
-		पूर्ण अन्यथा अणु
+		} else {
 			dev_dbg(dev, "Unsupported address space: %d\n",
 				gas->space_id);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/* Find the matching resource */
-		क्रम (j = 0; j < pdev->num_resources; j++) अणु
+		for (j = 0; j < pdev->num_resources; j++) {
 			res = &pdev->resource[j];
-			अगर (resource_contains(res, &r)) अणु
+			if (resource_contains(res, &r)) {
 				instr->reg = regs[j] + r.start - res->start;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
-		अगर (!instr->reg) अणु
+		if (!instr->reg) {
 			dev_err(dev, "I/O resource not found\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		inकाष्ठाions = wdat->inकाष्ठाions[action];
-		अगर (!inकाष्ठाions) अणु
-			inकाष्ठाions = devm_kzalloc(dev,
-						    माप(*inकाष्ठाions),
+		instructions = wdat->instructions[action];
+		if (!instructions) {
+			instructions = devm_kzalloc(dev,
+						    sizeof(*instructions),
 						    GFP_KERNEL);
-			अगर (!inकाष्ठाions)
-				वापस -ENOMEM;
+			if (!instructions)
+				return -ENOMEM;
 
-			INIT_LIST_HEAD(inकाष्ठाions);
-			wdat->inकाष्ठाions[action] = inकाष्ठाions;
-		पूर्ण
+			INIT_LIST_HEAD(instructions);
+			wdat->instructions[action] = instructions;
+		}
 
-		list_add_tail(&instr->node, inकाष्ठाions);
-	पूर्ण
+		list_add_tail(&instr->node, instructions);
+	}
 
 	wdat_wdt_boot_status(wdat);
 	wdat_wdt_set_running(wdat);
 
 	ret = wdat_wdt_enable_reboot(wdat);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	platक्रमm_set_drvdata(pdev, wdat);
+	platform_set_drvdata(pdev, wdat);
 
 	/*
-	 * Set initial समयout so that userspace has समय to configure the
-	 * watchकरोg properly after it has खोलोed the device. In some हालs
-	 * the BIOS शेष is too लघु and causes immediate reboot.
+	 * Set initial timeout so that userspace has time to configure the
+	 * watchdog properly after it has opened the device. In some cases
+	 * the BIOS default is too short and causes immediate reboot.
 	 */
-	अगर (समयout * 1000 < wdat->wdd.min_hw_heartbeat_ms ||
-	    समयout * 1000 > wdat->wdd.max_hw_heartbeat_ms) अणु
+	if (timeout * 1000 < wdat->wdd.min_hw_heartbeat_ms ||
+	    timeout * 1000 > wdat->wdd.max_hw_heartbeat_ms) {
 		dev_warn(dev, "Invalid timeout %d given, using %d\n",
-			 समयout, WDAT_DEFAULT_TIMEOUT);
-		समयout = WDAT_DEFAULT_TIMEOUT;
-	पूर्ण
+			 timeout, WDAT_DEFAULT_TIMEOUT);
+		timeout = WDAT_DEFAULT_TIMEOUT;
+	}
 
-	ret = wdat_wdt_set_समयout(&wdat->wdd, समयout);
-	अगर (ret)
-		वापस ret;
+	ret = wdat_wdt_set_timeout(&wdat->wdd, timeout);
+	if (ret)
+		return ret;
 
-	watchकरोg_set_nowayout(&wdat->wdd, nowayout);
-	वापस devm_watchकरोg_रेजिस्टर_device(dev, &wdat->wdd);
-पूर्ण
+	watchdog_set_nowayout(&wdat->wdd, nowayout);
+	return devm_watchdog_register_device(dev, &wdat->wdd);
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक wdat_wdt_suspend_noirq(काष्ठा device *dev)
-अणु
-	काष्ठा wdat_wdt *wdat = dev_get_drvdata(dev);
-	पूर्णांक ret;
+#ifdef CONFIG_PM_SLEEP
+static int wdat_wdt_suspend_noirq(struct device *dev)
+{
+	struct wdat_wdt *wdat = dev_get_drvdata(dev);
+	int ret;
 
-	अगर (!watchकरोg_active(&wdat->wdd))
-		वापस 0;
+	if (!watchdog_active(&wdat->wdd))
+		return 0;
 
 	/*
-	 * We need to stop the watchकरोg अगर firmare is not करोing it or अगर we
+	 * We need to stop the watchdog if firmare is not doing it or if we
 	 * are going suspend to idle (where firmware is not involved). If
-	 * firmware is stopping the watchकरोg we kick it here one more समय
-	 * to give it some समय.
+	 * firmware is stopping the watchdog we kick it here one more time
+	 * to give it some time.
 	 */
 	wdat->stopped = false;
-	अगर (acpi_target_प्रणाली_state() == ACPI_STATE_S0 ||
-	    !wdat->stopped_in_sleep) अणु
+	if (acpi_target_system_state() == ACPI_STATE_S0 ||
+	    !wdat->stopped_in_sleep) {
 		ret = wdat_wdt_stop(&wdat->wdd);
-		अगर (!ret)
+		if (!ret)
 			wdat->stopped = true;
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = wdat_wdt_ping(&wdat->wdd);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक wdat_wdt_resume_noirq(काष्ठा device *dev)
-अणु
-	काष्ठा wdat_wdt *wdat = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static int wdat_wdt_resume_noirq(struct device *dev)
+{
+	struct wdat_wdt *wdat = dev_get_drvdata(dev);
+	int ret;
 
-	अगर (!watchकरोg_active(&wdat->wdd))
-		वापस 0;
+	if (!watchdog_active(&wdat->wdd))
+		return 0;
 
-	अगर (!wdat->stopped) अणु
+	if (!wdat->stopped) {
 		/*
-		 * Looks like the boot firmware reinitializes the watchकरोg
-		 * beक्रमe it hands off to the OS on resume from sleep so we
-		 * stop and reprogram the watchकरोg here.
+		 * Looks like the boot firmware reinitializes the watchdog
+		 * before it hands off to the OS on resume from sleep so we
+		 * stop and reprogram the watchdog here.
 		 */
 		ret = wdat_wdt_stop(&wdat->wdd);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		ret = wdat_wdt_set_समयout(&wdat->wdd, wdat->wdd.समयout);
-		अगर (ret)
-			वापस ret;
+		ret = wdat_wdt_set_timeout(&wdat->wdd, wdat->wdd.timeout);
+		if (ret)
+			return ret;
 
 		ret = wdat_wdt_enable_reboot(wdat);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		ret = wdat_wdt_ping(&wdat->wdd);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस wdat_wdt_start(&wdat->wdd);
-पूर्ण
-#पूर्ण_अगर
+	return wdat_wdt_start(&wdat->wdd);
+}
+#endif
 
-अटल स्थिर काष्ठा dev_pm_ops wdat_wdt_pm_ops = अणु
+static const struct dev_pm_ops wdat_wdt_pm_ops = {
 	SET_NOIRQ_SYSTEM_SLEEP_PM_OPS(wdat_wdt_suspend_noirq,
 				      wdat_wdt_resume_noirq)
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_driver wdat_wdt_driver = अणु
+static struct platform_driver wdat_wdt_driver = {
 	.probe = wdat_wdt_probe,
-	.driver = अणु
+	.driver = {
 		.name = "wdat_wdt",
 		.pm = &wdat_wdt_pm_ops,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(wdat_wdt_driver);
+module_platform_driver(wdat_wdt_driver);
 
 MODULE_AUTHOR("Mika Westerberg <mika.westerberg@linux.intel.com>");
 MODULE_DESCRIPTION("ACPI Hardware Watchdog (WDAT) driver");

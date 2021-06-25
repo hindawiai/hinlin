@@ -1,7 +1,6 @@
-<शैली गुरु>
 /*======================================================================
 
-    Device driver क्रम the PCMCIA control functionality of StrongARM
+    Device driver for the PCMCIA control functionality of StrongARM
     SA-1100 microprocessors.
 
     The contents of this file are subject to the Mozilla Public
@@ -11,7 +10,7 @@
 
     Software distributed under the License is distributed on an "AS
     IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or
-    implied. See the License क्रम the specअगरic language governing
+    implied. See the License for the specific language governing
     rights and limitations under the License.
 
     The initial developer of the original code is John G. Dorsey
@@ -20,75 +19,75 @@
 
     Alternatively, the contents of this file may be used under the
     terms of the GNU Public License version 2 (the "GPL"), in which
-    हाल the provisions of the GPL are applicable instead of the
+    case the provisions of the GPL are applicable instead of the
     above.  If you wish to allow the use of your version of this file
     only under the terms of the GPL and not to allow others to use
     your version of this file under the MPL, indicate your decision
     by deleting the provisions above and replace them with the notice
-    and other provisions required by the GPL.  If you करो not delete
+    and other provisions required by the GPL.  If you do not delete
     the provisions above, a recipient may use your version of this
     file under either the MPL or the GPL.
 
 ======================================================================*/
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/cpufreq.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/slab.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/cpufreq.h>
+#include <linux/ioport.h>
+#include <linux/kernel.h>
+#include <linux/spinlock.h>
+#include <linux/io.h>
+#include <linux/slab.h>
 
-#समावेश <mach/hardware.h>
-#समावेश <यंत्र/irq.h>
+#include <mach/hardware.h>
+#include <asm/irq.h>
 
-#समावेश "soc_common.h"
-#समावेश "sa11xx_base.h"
+#include "soc_common.h"
+#include "sa11xx_base.h"
 
 
 /*
- * sa1100_pcmcia_शेष_mecr_timing
+ * sa1100_pcmcia_default_mecr_timing
  * ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
  *
- * Calculate MECR घड़ी रुको states क्रम given CPU घड़ी
- * speed and command रुको state. This function can be over-
- * written by a board specअगरic version.
+ * Calculate MECR clock wait states for given CPU clock
+ * speed and command wait state. This function can be over-
+ * written by a board specific version.
  *
- * The शेष is to simply calculate the BS values as specअगरied in
+ * The default is to simply calculate the BS values as specified in
  * the INTEL SA1100 development manual
  * "Expansion Memory (PCMCIA) Configuration Register (MECR)"
  * that's section 10.2.5 in _my_ version of the manual ;)
  */
-अटल अचिन्हित पूर्णांक
-sa1100_pcmcia_शेष_mecr_timing(काष्ठा soc_pcmcia_socket *skt,
-				  अचिन्हित पूर्णांक cpu_speed,
-				  अचिन्हित पूर्णांक cmd_समय)
-अणु
-	वापस sa1100_pcmcia_mecr_bs(cmd_समय, cpu_speed);
-पूर्ण
+static unsigned int
+sa1100_pcmcia_default_mecr_timing(struct soc_pcmcia_socket *skt,
+				  unsigned int cpu_speed,
+				  unsigned int cmd_time)
+{
+	return sa1100_pcmcia_mecr_bs(cmd_time, cpu_speed);
+}
 
 /* sa1100_pcmcia_set_mecr()
  * ^^^^^^^^^^^^^^^^^^^^^^^^
  *
- * set MECR value क्रम socket <sock> based on this sockets
+ * set MECR value for socket <sock> based on this sockets
  * io, mem and attribute space access speed.
- * Call board specअगरic BS value calculation to allow boards
+ * Call board specific BS value calculation to allow boards
  * to tweak the BS values.
  */
-अटल पूर्णांक
-sa1100_pcmcia_set_mecr(काष्ठा soc_pcmcia_socket *skt, अचिन्हित पूर्णांक cpu_घड़ी)
-अणु
-	काष्ठा soc_pcmcia_timing timing;
+static int
+sa1100_pcmcia_set_mecr(struct soc_pcmcia_socket *skt, unsigned int cpu_clock)
+{
+	struct soc_pcmcia_timing timing;
 	u32 mecr, old_mecr;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक bs_io, bs_mem, bs_attr;
+	unsigned long flags;
+	unsigned int bs_io, bs_mem, bs_attr;
 
 	soc_common_pcmcia_get_timing(skt, &timing);
 
-	bs_io = skt->ops->get_timing(skt, cpu_घड़ी, timing.io);
-	bs_mem = skt->ops->get_timing(skt, cpu_घड़ी, timing.mem);
-	bs_attr = skt->ops->get_timing(skt, cpu_घड़ी, timing.attr);
+	bs_io = skt->ops->get_timing(skt, cpu_clock, timing.io);
+	bs_mem = skt->ops->get_timing(skt, cpu_clock, timing.mem);
+	bs_attr = skt->ops->get_timing(skt, cpu_clock, timing.attr);
 
 	local_irq_save(flags);
 
@@ -97,7 +96,7 @@ sa1100_pcmcia_set_mecr(काष्ठा soc_pcmcia_socket *skt, अचिन�
 	MECR_BSIO_SET(mecr, skt->nr, bs_io);
 	MECR_BSA_SET(mecr, skt->nr, bs_attr);
 	MECR_BSM_SET(mecr, skt->nr, bs_mem);
-	अगर (old_mecr != mecr)
+	if (old_mecr != mecr)
 		MECR = mecr;
 
 	local_irq_restore(flags);
@@ -107,72 +106,72 @@ sa1100_pcmcia_set_mecr(काष्ठा soc_pcmcia_socket *skt, अचिन�
 	      MECR_BSM_GET(mecr, skt->nr), MECR_BSA_GET(mecr, skt->nr),
 	      MECR_BSIO_GET(mecr, skt->nr));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_CPU_FREQ
-अटल पूर्णांक
-sa1100_pcmcia_frequency_change(काष्ठा soc_pcmcia_socket *skt,
-			       अचिन्हित दीर्घ val,
-			       काष्ठा cpufreq_freqs *freqs)
-अणु
-	चयन (val) अणु
-	हाल CPUFREQ_PRECHANGE:
-		अगर (freqs->new > freqs->old)
+#ifdef CONFIG_CPU_FREQ
+static int
+sa1100_pcmcia_frequency_change(struct soc_pcmcia_socket *skt,
+			       unsigned long val,
+			       struct cpufreq_freqs *freqs)
+{
+	switch (val) {
+	case CPUFREQ_PRECHANGE:
+		if (freqs->new > freqs->old)
 			sa1100_pcmcia_set_mecr(skt, freqs->new);
-		अवरोध;
+		break;
 
-	हाल CPUFREQ_POSTCHANGE:
-		अगर (freqs->new < freqs->old)
+	case CPUFREQ_POSTCHANGE:
+		if (freqs->new < freqs->old)
 			sa1100_pcmcia_set_mecr(skt, freqs->new);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#पूर्ण_अगर
+#endif
 
-अटल पूर्णांक
-sa1100_pcmcia_set_timing(काष्ठा soc_pcmcia_socket *skt)
-अणु
-	अचिन्हित दीर्घ clk = clk_get_rate(skt->clk);
+static int
+sa1100_pcmcia_set_timing(struct soc_pcmcia_socket *skt)
+{
+	unsigned long clk = clk_get_rate(skt->clk);
 
-	वापस sa1100_pcmcia_set_mecr(skt, clk / 1000);
-पूर्ण
+	return sa1100_pcmcia_set_mecr(skt, clk / 1000);
+}
 
-अटल पूर्णांक
-sa1100_pcmcia_show_timing(काष्ठा soc_pcmcia_socket *skt, अक्षर *buf)
-अणु
-	काष्ठा soc_pcmcia_timing timing;
-	अचिन्हित पूर्णांक घड़ी = clk_get_rate(skt->clk) / 1000;
-	अचिन्हित दीर्घ mecr = MECR;
-	अक्षर *p = buf;
+static int
+sa1100_pcmcia_show_timing(struct soc_pcmcia_socket *skt, char *buf)
+{
+	struct soc_pcmcia_timing timing;
+	unsigned int clock = clk_get_rate(skt->clk) / 1000;
+	unsigned long mecr = MECR;
+	char *p = buf;
 
 	soc_common_pcmcia_get_timing(skt, &timing);
 
-	p+=प्र_लिखो(p, "I/O      : %uns (%uns)\n", timing.io,
-		   sa1100_pcmcia_cmd_समय(घड़ी, MECR_BSIO_GET(mecr, skt->nr)));
+	p+=sprintf(p, "I/O      : %uns (%uns)\n", timing.io,
+		   sa1100_pcmcia_cmd_time(clock, MECR_BSIO_GET(mecr, skt->nr)));
 
-	p+=प्र_लिखो(p, "attribute: %uns (%uns)\n", timing.attr,
-		   sa1100_pcmcia_cmd_समय(घड़ी, MECR_BSA_GET(mecr, skt->nr)));
+	p+=sprintf(p, "attribute: %uns (%uns)\n", timing.attr,
+		   sa1100_pcmcia_cmd_time(clock, MECR_BSA_GET(mecr, skt->nr)));
 
-	p+=प्र_लिखो(p, "common   : %uns (%uns)\n", timing.mem,
-		   sa1100_pcmcia_cmd_समय(घड़ी, MECR_BSM_GET(mecr, skt->nr)));
+	p+=sprintf(p, "common   : %uns (%uns)\n", timing.mem,
+		   sa1100_pcmcia_cmd_time(clock, MECR_BSM_GET(mecr, skt->nr)));
 
-	वापस p - buf;
-पूर्ण
+	return p - buf;
+}
 
-अटल स्थिर अक्षर *skt_names[] = अणु
+static const char *skt_names[] = {
 	"PCMCIA socket 0",
 	"PCMCIA socket 1",
-पूर्ण;
+};
 
-#घोषणा SKT_DEV_INFO_SIZE(n) \
-	(माप(काष्ठा skt_dev_info) + (n)*माप(काष्ठा soc_pcmcia_socket))
+#define SKT_DEV_INFO_SIZE(n) \
+	(sizeof(struct skt_dev_info) + (n)*sizeof(struct soc_pcmcia_socket))
 
-पूर्णांक sa11xx_drv_pcmcia_add_one(काष्ठा soc_pcmcia_socket *skt)
-अणु
+int sa11xx_drv_pcmcia_add_one(struct soc_pcmcia_socket *skt)
+{
 	skt->res_skt.start = _PCMCIA(skt->nr);
 	skt->res_skt.end = _PCMCIA(skt->nr) + PCMCIASp - 1;
 	skt->res_skt.name = skt_names[skt->nr];
@@ -193,50 +192,50 @@ sa1100_pcmcia_show_timing(काष्ठा soc_pcmcia_socket *skt, अक्�
 	skt->res_attr.name = "attribute";
 	skt->res_attr.flags = IORESOURCE_MEM;
 
-	वापस soc_pcmcia_add_one(skt);
-पूर्ण
+	return soc_pcmcia_add_one(skt);
+}
 EXPORT_SYMBOL(sa11xx_drv_pcmcia_add_one);
 
-व्योम sa11xx_drv_pcmcia_ops(काष्ठा pcmcia_low_level *ops)
-अणु
+void sa11xx_drv_pcmcia_ops(struct pcmcia_low_level *ops)
+{
 	/*
-	 * set शेष MECR calculation अगर the board specअगरic
-	 * code did not specअगरy one...
+	 * set default MECR calculation if the board specific
+	 * code did not specify one...
 	 */
-	अगर (!ops->get_timing)
-		ops->get_timing = sa1100_pcmcia_शेष_mecr_timing;
+	if (!ops->get_timing)
+		ops->get_timing = sa1100_pcmcia_default_mecr_timing;
 
-	/* Provide our SA11x0 specअगरic timing routines. */
+	/* Provide our SA11x0 specific timing routines. */
 	ops->set_timing  = sa1100_pcmcia_set_timing;
 	ops->show_timing = sa1100_pcmcia_show_timing;
-#अगर_घोषित CONFIG_CPU_FREQ
+#ifdef CONFIG_CPU_FREQ
 	ops->frequency_change = sa1100_pcmcia_frequency_change;
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 EXPORT_SYMBOL(sa11xx_drv_pcmcia_ops);
 
-पूर्णांक sa11xx_drv_pcmcia_probe(काष्ठा device *dev, काष्ठा pcmcia_low_level *ops,
-			    पूर्णांक first, पूर्णांक nr)
-अणु
-	काष्ठा skt_dev_info *sinfo;
-	काष्ठा soc_pcmcia_socket *skt;
-	पूर्णांक i, ret = 0;
-	काष्ठा clk *clk;
+int sa11xx_drv_pcmcia_probe(struct device *dev, struct pcmcia_low_level *ops,
+			    int first, int nr)
+{
+	struct skt_dev_info *sinfo;
+	struct soc_pcmcia_socket *skt;
+	int i, ret = 0;
+	struct clk *clk;
 
-	clk = devm_clk_get(dev, शून्य);
-	अगर (IS_ERR(clk))
-		वापस PTR_ERR(clk);
+	clk = devm_clk_get(dev, NULL);
+	if (IS_ERR(clk))
+		return PTR_ERR(clk);
 
 	sa11xx_drv_pcmcia_ops(ops);
 
 	sinfo = devm_kzalloc(dev, SKT_DEV_INFO_SIZE(nr), GFP_KERNEL);
-	अगर (!sinfo)
-		वापस -ENOMEM;
+	if (!sinfo)
+		return -ENOMEM;
 
 	sinfo->nskt = nr;
 
-	/* Initialize processor specअगरic parameters */
-	क्रम (i = 0; i < nr; i++) अणु
+	/* Initialize processor specific parameters */
+	for (i = 0; i < nr; i++) {
 		skt = &sinfo->skt[i];
 
 		skt->nr = first + i;
@@ -244,19 +243,19 @@ EXPORT_SYMBOL(sa11xx_drv_pcmcia_ops);
 		soc_pcmcia_init_one(skt, ops, dev);
 
 		ret = sa11xx_drv_pcmcia_add_one(skt);
-		अगर (ret)
-			अवरोध;
-	पूर्ण
+		if (ret)
+			break;
+	}
 
-	अगर (ret) अणु
-		जबतक (--i >= 0)
-			soc_pcmcia_हटाओ_one(&sinfo->skt[i]);
-	पूर्ण अन्यथा अणु
+	if (ret) {
+		while (--i >= 0)
+			soc_pcmcia_remove_one(&sinfo->skt[i]);
+	} else {
 		dev_set_drvdata(dev, sinfo);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(sa11xx_drv_pcmcia_probe);
 
 MODULE_AUTHOR("John Dorsey <john+@cs.cmu.edu>");

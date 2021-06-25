@@ -1,156 +1,155 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 
 /*
- * GPIO driver क्रम the AMD G series FCH (eg. GX-412TC)
+ * GPIO driver for the AMD G series FCH (eg. GX-412TC)
  *
  * Copyright (C) 2018 metux IT consult
  * Author: Enrico Weigelt, metux IT consult <info@metux.net>
  *
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/gpio/driver.h>
-#समावेश <linux/platक्रमm_data/gpio/gpio-amd-fch.h>
-#समावेश <linux/spinlock.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/gpio/driver.h>
+#include <linux/platform_data/gpio/gpio-amd-fch.h>
+#include <linux/spinlock.h>
 
-#घोषणा AMD_FCH_MMIO_BASE		0xFED80000
-#घोषणा AMD_FCH_GPIO_BANK0_BASE		0x1500
-#घोषणा AMD_FCH_GPIO_SIZE		0x0300
+#define AMD_FCH_MMIO_BASE		0xFED80000
+#define AMD_FCH_GPIO_BANK0_BASE		0x1500
+#define AMD_FCH_GPIO_SIZE		0x0300
 
-#घोषणा AMD_FCH_GPIO_FLAG_सूचीECTION	BIT(23)
-#घोषणा AMD_FCH_GPIO_FLAG_WRITE		BIT(22)
-#घोषणा AMD_FCH_GPIO_FLAG_READ		BIT(16)
+#define AMD_FCH_GPIO_FLAG_DIRECTION	BIT(23)
+#define AMD_FCH_GPIO_FLAG_WRITE		BIT(22)
+#define AMD_FCH_GPIO_FLAG_READ		BIT(16)
 
-अटल स्थिर काष्ठा resource amd_fch_gpio_iores =
+static const struct resource amd_fch_gpio_iores =
 	DEFINE_RES_MEM_NAMED(
 		AMD_FCH_MMIO_BASE + AMD_FCH_GPIO_BANK0_BASE,
 		AMD_FCH_GPIO_SIZE,
 		"amd-fch-gpio-iomem");
 
-काष्ठा amd_fch_gpio_priv अणु
-	काष्ठा gpio_chip		gc;
-	व्योम __iomem			*base;
-	काष्ठा amd_fch_gpio_pdata	*pdata;
+struct amd_fch_gpio_priv {
+	struct gpio_chip		gc;
+	void __iomem			*base;
+	struct amd_fch_gpio_pdata	*pdata;
 	spinlock_t			lock;
-पूर्ण;
+};
 
-अटल व्योम __iomem *amd_fch_gpio_addr(काष्ठा amd_fch_gpio_priv *priv,
-				       अचिन्हित पूर्णांक gpio)
-अणु
-	वापस priv->base + priv->pdata->gpio_reg[gpio]*माप(u32);
-पूर्ण
+static void __iomem *amd_fch_gpio_addr(struct amd_fch_gpio_priv *priv,
+				       unsigned int gpio)
+{
+	return priv->base + priv->pdata->gpio_reg[gpio]*sizeof(u32);
+}
 
-अटल पूर्णांक amd_fch_gpio_direction_input(काष्ठा gpio_chip *gc,
-					अचिन्हित पूर्णांक offset)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा amd_fch_gpio_priv *priv = gpiochip_get_data(gc);
-	व्योम __iomem *ptr = amd_fch_gpio_addr(priv, offset);
+static int amd_fch_gpio_direction_input(struct gpio_chip *gc,
+					unsigned int offset)
+{
+	unsigned long flags;
+	struct amd_fch_gpio_priv *priv = gpiochip_get_data(gc);
+	void __iomem *ptr = amd_fch_gpio_addr(priv, offset);
 
 	spin_lock_irqsave(&priv->lock, flags);
-	ग_लिखोl_relaxed(पढ़ोl_relaxed(ptr) & ~AMD_FCH_GPIO_FLAG_सूचीECTION, ptr);
+	writel_relaxed(readl_relaxed(ptr) & ~AMD_FCH_GPIO_FLAG_DIRECTION, ptr);
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक amd_fch_gpio_direction_output(काष्ठा gpio_chip *gc,
-					 अचिन्हित पूर्णांक gpio, पूर्णांक value)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा amd_fch_gpio_priv *priv = gpiochip_get_data(gc);
-	व्योम __iomem *ptr = amd_fch_gpio_addr(priv, gpio);
+static int amd_fch_gpio_direction_output(struct gpio_chip *gc,
+					 unsigned int gpio, int value)
+{
+	unsigned long flags;
+	struct amd_fch_gpio_priv *priv = gpiochip_get_data(gc);
+	void __iomem *ptr = amd_fch_gpio_addr(priv, gpio);
 	u32 val;
 
 	spin_lock_irqsave(&priv->lock, flags);
 
-	val = पढ़ोl_relaxed(ptr);
-	अगर (value)
+	val = readl_relaxed(ptr);
+	if (value)
 		val |= AMD_FCH_GPIO_FLAG_WRITE;
-	अन्यथा
+	else
 		val &= ~AMD_FCH_GPIO_FLAG_WRITE;
 
-	ग_लिखोl_relaxed(val | AMD_FCH_GPIO_FLAG_सूचीECTION, ptr);
+	writel_relaxed(val | AMD_FCH_GPIO_FLAG_DIRECTION, ptr);
 
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक amd_fch_gpio_get_direction(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio)
-अणु
-	पूर्णांक ret;
-	अचिन्हित दीर्घ flags;
-	काष्ठा amd_fch_gpio_priv *priv = gpiochip_get_data(gc);
-	व्योम __iomem *ptr = amd_fch_gpio_addr(priv, gpio);
+static int amd_fch_gpio_get_direction(struct gpio_chip *gc, unsigned int gpio)
+{
+	int ret;
+	unsigned long flags;
+	struct amd_fch_gpio_priv *priv = gpiochip_get_data(gc);
+	void __iomem *ptr = amd_fch_gpio_addr(priv, gpio);
 
 	spin_lock_irqsave(&priv->lock, flags);
-	ret = (पढ़ोl_relaxed(ptr) & AMD_FCH_GPIO_FLAG_सूचीECTION);
+	ret = (readl_relaxed(ptr) & AMD_FCH_GPIO_FLAG_DIRECTION);
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	वापस ret ? GPIO_LINE_सूचीECTION_OUT : GPIO_LINE_सूचीECTION_IN;
-पूर्ण
+	return ret ? GPIO_LINE_DIRECTION_OUT : GPIO_LINE_DIRECTION_IN;
+}
 
-अटल व्योम amd_fch_gpio_set(काष्ठा gpio_chip *gc,
-			     अचिन्हित पूर्णांक gpio, पूर्णांक value)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा amd_fch_gpio_priv *priv = gpiochip_get_data(gc);
-	व्योम __iomem *ptr = amd_fch_gpio_addr(priv, gpio);
+static void amd_fch_gpio_set(struct gpio_chip *gc,
+			     unsigned int gpio, int value)
+{
+	unsigned long flags;
+	struct amd_fch_gpio_priv *priv = gpiochip_get_data(gc);
+	void __iomem *ptr = amd_fch_gpio_addr(priv, gpio);
 	u32 mask;
 
 	spin_lock_irqsave(&priv->lock, flags);
 
-	mask = पढ़ोl_relaxed(ptr);
-	अगर (value)
+	mask = readl_relaxed(ptr);
+	if (value)
 		mask |= AMD_FCH_GPIO_FLAG_WRITE;
-	अन्यथा
+	else
 		mask &= ~AMD_FCH_GPIO_FLAG_WRITE;
-	ग_लिखोl_relaxed(mask, ptr);
+	writel_relaxed(mask, ptr);
 
 	spin_unlock_irqrestore(&priv->lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक amd_fch_gpio_get(काष्ठा gpio_chip *gc,
-			    अचिन्हित पूर्णांक offset)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
-	काष्ठा amd_fch_gpio_priv *priv = gpiochip_get_data(gc);
-	व्योम __iomem *ptr = amd_fch_gpio_addr(priv, offset);
+static int amd_fch_gpio_get(struct gpio_chip *gc,
+			    unsigned int offset)
+{
+	unsigned long flags;
+	int ret;
+	struct amd_fch_gpio_priv *priv = gpiochip_get_data(gc);
+	void __iomem *ptr = amd_fch_gpio_addr(priv, offset);
 
 	spin_lock_irqsave(&priv->lock, flags);
-	ret = (पढ़ोl_relaxed(ptr) & AMD_FCH_GPIO_FLAG_READ);
+	ret = (readl_relaxed(ptr) & AMD_FCH_GPIO_FLAG_READ);
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक amd_fch_gpio_request(काष्ठा gpio_chip *chip,
-				अचिन्हित पूर्णांक gpio_pin)
-अणु
-	वापस 0;
-पूर्ण
+static int amd_fch_gpio_request(struct gpio_chip *chip,
+				unsigned int gpio_pin)
+{
+	return 0;
+}
 
-अटल पूर्णांक amd_fch_gpio_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा amd_fch_gpio_priv *priv;
-	काष्ठा amd_fch_gpio_pdata *pdata;
+static int amd_fch_gpio_probe(struct platform_device *pdev)
+{
+	struct amd_fch_gpio_priv *priv;
+	struct amd_fch_gpio_pdata *pdata;
 
 	pdata = dev_get_platdata(&pdev->dev);
-	अगर (!pdata) अणु
+	if (!pdata) {
 		dev_err(&pdev->dev, "no platform_data\n");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
-	priv = devm_kzalloc(&pdev->dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	priv->pdata	= pdata;
 
@@ -170,22 +169,22 @@
 	spin_lock_init(&priv->lock);
 
 	priv->base = devm_ioremap_resource(&pdev->dev, &amd_fch_gpio_iores);
-	अगर (IS_ERR(priv->base))
-		वापस PTR_ERR(priv->base);
+	if (IS_ERR(priv->base))
+		return PTR_ERR(priv->base);
 
-	platक्रमm_set_drvdata(pdev, priv);
+	platform_set_drvdata(pdev, priv);
 
-	वापस devm_gpiochip_add_data(&pdev->dev, &priv->gc, priv);
-पूर्ण
+	return devm_gpiochip_add_data(&pdev->dev, &priv->gc, priv);
+}
 
-अटल काष्ठा platक्रमm_driver amd_fch_gpio_driver = अणु
-	.driver = अणु
+static struct platform_driver amd_fch_gpio_driver = {
+	.driver = {
 		.name = AMD_FCH_GPIO_DRIVER_NAME,
-	पूर्ण,
+	},
 	.probe = amd_fch_gpio_probe,
-पूर्ण;
+};
 
-module_platक्रमm_driver(amd_fch_gpio_driver);
+module_platform_driver(amd_fch_gpio_driver);
 
 MODULE_AUTHOR("Enrico Weigelt, metux IT consult <info@metux.net>");
 MODULE_DESCRIPTION("AMD G-series FCH GPIO driver");

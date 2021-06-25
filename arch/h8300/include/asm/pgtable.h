@@ -1,44 +1,43 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _H8300_PGTABLE_H
-#घोषणा _H8300_PGTABLE_H
-#समावेश <यंत्र-generic/pgtable-nopud.h>
-बाह्य व्योम paging_init(व्योम);
-#घोषणा PAGE_NONE		__pgprot(0)    /* these mean nothing to NO_MM */
-#घोषणा PAGE_SHARED		__pgprot(0)    /* these mean nothing to NO_MM */
-#घोषणा PAGE_COPY		__pgprot(0)    /* these mean nothing to NO_MM */
-#घोषणा PAGE_READONLY	__pgprot(0)    /* these mean nothing to NO_MM */
-#घोषणा PAGE_KERNEL		__pgprot(0)    /* these mean nothing to NO_MM */
-#घोषणा __swp_type(x)		(0)
-#घोषणा __swp_offset(x)		(0)
-#घोषणा __swp_entry(typ, off)	((swp_entry_t) अणु ((typ) | ((off) << 7)) पूर्ण)
-#घोषणा __pte_to_swp_entry(pte)	((swp_entry_t) अणु pte_val(pte) पूर्ण)
-#घोषणा __swp_entry_to_pte(x)	((pte_t) अणु (x).val पूर्ण)
-#घोषणा kern_addr_valid(addr)	(1)
-#घोषणा pgprot_ग_लिखोcombine(prot)  (prot)
-#घोषणा pgprot_noncached pgprot_ग_लिखोcombine
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _H8300_PGTABLE_H
+#define _H8300_PGTABLE_H
+#include <asm-generic/pgtable-nopud.h>
+extern void paging_init(void);
+#define PAGE_NONE		__pgprot(0)    /* these mean nothing to NO_MM */
+#define PAGE_SHARED		__pgprot(0)    /* these mean nothing to NO_MM */
+#define PAGE_COPY		__pgprot(0)    /* these mean nothing to NO_MM */
+#define PAGE_READONLY	__pgprot(0)    /* these mean nothing to NO_MM */
+#define PAGE_KERNEL		__pgprot(0)    /* these mean nothing to NO_MM */
+#define __swp_type(x)		(0)
+#define __swp_offset(x)		(0)
+#define __swp_entry(typ, off)	((swp_entry_t) { ((typ) | ((off) << 7)) })
+#define __pte_to_swp_entry(pte)	((swp_entry_t) { pte_val(pte) })
+#define __swp_entry_to_pte(x)	((pte_t) { (x).val })
+#define kern_addr_valid(addr)	(1)
+#define pgprot_writecombine(prot)  (prot)
+#define pgprot_noncached pgprot_writecombine
 
-अटल अंतरभूत पूर्णांक pte_file(pte_t pte) अणु वापस 0; पूर्ण
-#घोषणा swapper_pg_dir ((pgd_t *) 0)
+static inline int pte_file(pte_t pte) { return 0; }
+#define swapper_pg_dir ((pgd_t *) 0)
 /*
  * ZERO_PAGE is a global shared page that is always zero: used
- * क्रम zero-mapped memory areas etc..
+ * for zero-mapped memory areas etc..
  */
-#घोषणा ZERO_PAGE(vaddr)	(virt_to_page(0))
+#define ZERO_PAGE(vaddr)	(virt_to_page(0))
 
 /*
- * These would be in other places but having them here reduces the dअगरfs.
+ * These would be in other places but having them here reduces the diffs.
  */
-बाह्य अचिन्हित पूर्णांक kobjsize(स्थिर व्योम *objp);
-बाह्य पूर्णांक is_in_rom(अचिन्हित दीर्घ);
+extern unsigned int kobjsize(const void *objp);
+extern int is_in_rom(unsigned long);
 
 /*
- * All 32bit addresses are effectively valid क्रम vदो_स्मृति...
- * Sort of meaningless क्रम non-VM tarमाला_लो.
+ * All 32bit addresses are effectively valid for vmalloc...
+ * Sort of meaningless for non-VM targets.
  */
-#घोषणा	VMALLOC_START	0
-#घोषणा	VMALLOC_END	0xffffffff
+#define	VMALLOC_START	0
+#define	VMALLOC_END	0xffffffff
 
-#घोषणा arch_enter_lazy_cpu_mode()    करो अणुपूर्ण जबतक (0)
+#define arch_enter_lazy_cpu_mode()    do {} while (0)
 
-#पूर्ण_अगर /* _H8300_PGTABLE_H */
+#endif /* _H8300_PGTABLE_H */

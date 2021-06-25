@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * NETLINK      Netlink attributes
  *
@@ -7,606 +6,606 @@
  * 				Alexey Kuznetsov <kuznet@ms2.inr.ac.ru>
  */
 
-#समावेश <linux/export.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/types.h>
-#समावेश <net/netlink.h>
+#include <linux/export.h>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/jiffies.h>
+#include <linux/skbuff.h>
+#include <linux/string.h>
+#include <linux/types.h>
+#include <net/netlink.h>
 
 /* For these data types, attribute length should be exactly the given
- * size. However, to मुख्यtain compatibility with broken commands, अगर the
- * attribute length करोes not match the expected size a warning is emitted
+ * size. However, to maintain compatibility with broken commands, if the
+ * attribute length does not match the expected size a warning is emitted
  * to the user that the command is sending invalid data and needs to be fixed.
  */
-अटल स्थिर u8 nla_attr_len[NLA_TYPE_MAX+1] = अणु
-	[NLA_U8]	= माप(u8),
-	[NLA_U16]	= माप(u16),
-	[NLA_U32]	= माप(u32),
-	[NLA_U64]	= माप(u64),
-	[NLA_S8]	= माप(s8),
-	[NLA_S16]	= माप(s16),
-	[NLA_S32]	= माप(s32),
-	[NLA_S64]	= माप(s64),
-पूर्ण;
+static const u8 nla_attr_len[NLA_TYPE_MAX+1] = {
+	[NLA_U8]	= sizeof(u8),
+	[NLA_U16]	= sizeof(u16),
+	[NLA_U32]	= sizeof(u32),
+	[NLA_U64]	= sizeof(u64),
+	[NLA_S8]	= sizeof(s8),
+	[NLA_S16]	= sizeof(s16),
+	[NLA_S32]	= sizeof(s32),
+	[NLA_S64]	= sizeof(s64),
+};
 
-अटल स्थिर u8 nla_attr_minlen[NLA_TYPE_MAX+1] = अणु
-	[NLA_U8]	= माप(u8),
-	[NLA_U16]	= माप(u16),
-	[NLA_U32]	= माप(u32),
-	[NLA_U64]	= माप(u64),
-	[NLA_MSECS]	= माप(u64),
+static const u8 nla_attr_minlen[NLA_TYPE_MAX+1] = {
+	[NLA_U8]	= sizeof(u8),
+	[NLA_U16]	= sizeof(u16),
+	[NLA_U32]	= sizeof(u32),
+	[NLA_U64]	= sizeof(u64),
+	[NLA_MSECS]	= sizeof(u64),
 	[NLA_NESTED]	= NLA_HDRLEN,
-	[NLA_S8]	= माप(s8),
-	[NLA_S16]	= माप(s16),
-	[NLA_S32]	= माप(s32),
-	[NLA_S64]	= माप(s64),
-पूर्ण;
+	[NLA_S8]	= sizeof(s8),
+	[NLA_S16]	= sizeof(s16),
+	[NLA_S32]	= sizeof(s32),
+	[NLA_S64]	= sizeof(s64),
+};
 
 /*
  * Nested policies might refer back to the original
- * policy in some हालs, and userspace could try to
+ * policy in some cases, and userspace could try to
  * abuse that and recurse by nesting in the right
- * ways. Limit recursion to aव्योम this problem.
+ * ways. Limit recursion to avoid this problem.
  */
-#घोषणा MAX_POLICY_RECURSION_DEPTH	10
+#define MAX_POLICY_RECURSION_DEPTH	10
 
-अटल पूर्णांक __nla_validate_parse(स्थिर काष्ठा nlattr *head, पूर्णांक len, पूर्णांक maxtype,
-				स्थिर काष्ठा nla_policy *policy,
-				अचिन्हित पूर्णांक validate,
-				काष्ठा netlink_ext_ack *extack,
-				काष्ठा nlattr **tb, अचिन्हित पूर्णांक depth);
+static int __nla_validate_parse(const struct nlattr *head, int len, int maxtype,
+				const struct nla_policy *policy,
+				unsigned int validate,
+				struct netlink_ext_ack *extack,
+				struct nlattr **tb, unsigned int depth);
 
-अटल पूर्णांक validate_nla_bitfield32(स्थिर काष्ठा nlattr *nla,
-				   स्थिर u32 valid_flags_mask)
-अणु
-	स्थिर काष्ठा nla_bitfield32 *bf = nla_data(nla);
+static int validate_nla_bitfield32(const struct nlattr *nla,
+				   const u32 valid_flags_mask)
+{
+	const struct nla_bitfield32 *bf = nla_data(nla);
 
-	अगर (!valid_flags_mask)
-		वापस -EINVAL;
+	if (!valid_flags_mask)
+		return -EINVAL;
 
 	/*disallow invalid bit selector */
-	अगर (bf->selector & ~valid_flags_mask)
-		वापस -EINVAL;
+	if (bf->selector & ~valid_flags_mask)
+		return -EINVAL;
 
 	/*disallow invalid bit values */
-	अगर (bf->value & ~valid_flags_mask)
-		वापस -EINVAL;
+	if (bf->value & ~valid_flags_mask)
+		return -EINVAL;
 
 	/*disallow valid bit values that are not selected*/
-	अगर (bf->value & ~bf->selector)
-		वापस -EINVAL;
+	if (bf->value & ~bf->selector)
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nla_validate_array(स्थिर काष्ठा nlattr *head, पूर्णांक len, पूर्णांक maxtype,
-			      स्थिर काष्ठा nla_policy *policy,
-			      काष्ठा netlink_ext_ack *extack,
-			      अचिन्हित पूर्णांक validate, अचिन्हित पूर्णांक depth)
-अणु
-	स्थिर काष्ठा nlattr *entry;
-	पूर्णांक rem;
+static int nla_validate_array(const struct nlattr *head, int len, int maxtype,
+			      const struct nla_policy *policy,
+			      struct netlink_ext_ack *extack,
+			      unsigned int validate, unsigned int depth)
+{
+	const struct nlattr *entry;
+	int rem;
 
-	nla_क्रम_each_attr(entry, head, len, rem) अणु
-		पूर्णांक ret;
+	nla_for_each_attr(entry, head, len, rem) {
+		int ret;
 
-		अगर (nla_len(entry) == 0)
-			जारी;
+		if (nla_len(entry) == 0)
+			continue;
 
-		अगर (nla_len(entry) < NLA_HDRLEN) अणु
+		if (nla_len(entry) < NLA_HDRLEN) {
 			NL_SET_ERR_MSG_ATTR_POL(extack, entry, policy,
 						"Array element too short");
-			वापस -दुस्फल;
-		पूर्ण
+			return -ERANGE;
+		}
 
 		ret = __nla_validate_parse(nla_data(entry), nla_len(entry),
 					   maxtype, policy, validate, extack,
-					   शून्य, depth + 1);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+					   NULL, depth + 1);
+		if (ret < 0)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम nla_get_range_अचिन्हित(स्थिर काष्ठा nla_policy *pt,
-			    काष्ठा netlink_range_validation *range)
-अणु
+void nla_get_range_unsigned(const struct nla_policy *pt,
+			    struct netlink_range_validation *range)
+{
 	WARN_ON_ONCE(pt->validation_type != NLA_VALIDATE_RANGE_PTR &&
 		     (pt->min < 0 || pt->max < 0));
 
 	range->min = 0;
 
-	चयन (pt->type) अणु
-	हाल NLA_U8:
+	switch (pt->type) {
+	case NLA_U8:
 		range->max = U8_MAX;
-		अवरोध;
-	हाल NLA_U16:
-	हाल NLA_BINARY:
+		break;
+	case NLA_U16:
+	case NLA_BINARY:
 		range->max = U16_MAX;
-		अवरोध;
-	हाल NLA_U32:
+		break;
+	case NLA_U32:
 		range->max = U32_MAX;
-		अवरोध;
-	हाल NLA_U64:
-	हाल NLA_MSECS:
+		break;
+	case NLA_U64:
+	case NLA_MSECS:
 		range->max = U64_MAX;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		WARN_ON_ONCE(1);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	चयन (pt->validation_type) अणु
-	हाल NLA_VALIDATE_RANGE:
-	हाल NLA_VALIDATE_RANGE_WARN_TOO_LONG:
+	switch (pt->validation_type) {
+	case NLA_VALIDATE_RANGE:
+	case NLA_VALIDATE_RANGE_WARN_TOO_LONG:
 		range->min = pt->min;
 		range->max = pt->max;
-		अवरोध;
-	हाल NLA_VALIDATE_RANGE_PTR:
+		break;
+	case NLA_VALIDATE_RANGE_PTR:
 		*range = *pt->range;
-		अवरोध;
-	हाल NLA_VALIDATE_MIN:
+		break;
+	case NLA_VALIDATE_MIN:
 		range->min = pt->min;
-		अवरोध;
-	हाल NLA_VALIDATE_MAX:
+		break;
+	case NLA_VALIDATE_MAX:
 		range->max = pt->max;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-अटल पूर्णांक nla_validate_range_अचिन्हित(स्थिर काष्ठा nla_policy *pt,
-				       स्थिर काष्ठा nlattr *nla,
-				       काष्ठा netlink_ext_ack *extack,
-				       अचिन्हित पूर्णांक validate)
-अणु
-	काष्ठा netlink_range_validation range;
+static int nla_validate_range_unsigned(const struct nla_policy *pt,
+				       const struct nlattr *nla,
+				       struct netlink_ext_ack *extack,
+				       unsigned int validate)
+{
+	struct netlink_range_validation range;
 	u64 value;
 
-	चयन (pt->type) अणु
-	हाल NLA_U8:
+	switch (pt->type) {
+	case NLA_U8:
 		value = nla_get_u8(nla);
-		अवरोध;
-	हाल NLA_U16:
+		break;
+	case NLA_U16:
 		value = nla_get_u16(nla);
-		अवरोध;
-	हाल NLA_U32:
+		break;
+	case NLA_U32:
 		value = nla_get_u32(nla);
-		अवरोध;
-	हाल NLA_U64:
-	हाल NLA_MSECS:
+		break;
+	case NLA_U64:
+	case NLA_MSECS:
 		value = nla_get_u64(nla);
-		अवरोध;
-	हाल NLA_BINARY:
+		break;
+	case NLA_BINARY:
 		value = nla_len(nla);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	nla_get_range_अचिन्हित(pt, &range);
+	nla_get_range_unsigned(pt, &range);
 
-	अगर (pt->validation_type == NLA_VALIDATE_RANGE_WARN_TOO_LONG &&
-	    pt->type == NLA_BINARY && value > range.max) अणु
+	if (pt->validation_type == NLA_VALIDATE_RANGE_WARN_TOO_LONG &&
+	    pt->type == NLA_BINARY && value > range.max) {
 		pr_warn_ratelimited("netlink: '%s': attribute type %d has an invalid length.\n",
 				    current->comm, pt->type);
-		अगर (validate & NL_VALIDATE_STRICT_ATTRS) अणु
+		if (validate & NL_VALIDATE_STRICT_ATTRS) {
 			NL_SET_ERR_MSG_ATTR_POL(extack, nla, pt,
 						"invalid attribute length");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		/* this assumes min <= max (करोn't validate against min) */
-		वापस 0;
-	पूर्ण
+		/* this assumes min <= max (don't validate against min) */
+		return 0;
+	}
 
-	अगर (value < range.min || value > range.max) अणु
+	if (value < range.min || value > range.max) {
 		bool binary = pt->type == NLA_BINARY;
 
-		अगर (binary)
+		if (binary)
 			NL_SET_ERR_MSG_ATTR_POL(extack, nla, pt,
 						"binary attribute size out of range");
-		अन्यथा
+		else
 			NL_SET_ERR_MSG_ATTR_POL(extack, nla, pt,
 						"integer out of range");
 
-		वापस -दुस्फल;
-	पूर्ण
+		return -ERANGE;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम nla_get_range_चिन्हित(स्थिर काष्ठा nla_policy *pt,
-			  काष्ठा netlink_range_validation_चिन्हित *range)
-अणु
-	चयन (pt->type) अणु
-	हाल NLA_S8:
+void nla_get_range_signed(const struct nla_policy *pt,
+			  struct netlink_range_validation_signed *range)
+{
+	switch (pt->type) {
+	case NLA_S8:
 		range->min = S8_MIN;
 		range->max = S8_MAX;
-		अवरोध;
-	हाल NLA_S16:
+		break;
+	case NLA_S16:
 		range->min = S16_MIN;
 		range->max = S16_MAX;
-		अवरोध;
-	हाल NLA_S32:
+		break;
+	case NLA_S32:
 		range->min = S32_MIN;
 		range->max = S32_MAX;
-		अवरोध;
-	हाल NLA_S64:
+		break;
+	case NLA_S64:
 		range->min = S64_MIN;
 		range->max = S64_MAX;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		WARN_ON_ONCE(1);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	चयन (pt->validation_type) अणु
-	हाल NLA_VALIDATE_RANGE:
+	switch (pt->validation_type) {
+	case NLA_VALIDATE_RANGE:
 		range->min = pt->min;
 		range->max = pt->max;
-		अवरोध;
-	हाल NLA_VALIDATE_RANGE_PTR:
-		*range = *pt->range_चिन्हित;
-		अवरोध;
-	हाल NLA_VALIDATE_MIN:
+		break;
+	case NLA_VALIDATE_RANGE_PTR:
+		*range = *pt->range_signed;
+		break;
+	case NLA_VALIDATE_MIN:
 		range->min = pt->min;
-		अवरोध;
-	हाल NLA_VALIDATE_MAX:
+		break;
+	case NLA_VALIDATE_MAX:
 		range->max = pt->max;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-अटल पूर्णांक nla_validate_पूर्णांक_range_चिन्हित(स्थिर काष्ठा nla_policy *pt,
-					 स्थिर काष्ठा nlattr *nla,
-					 काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा netlink_range_validation_चिन्हित range;
+static int nla_validate_int_range_signed(const struct nla_policy *pt,
+					 const struct nlattr *nla,
+					 struct netlink_ext_ack *extack)
+{
+	struct netlink_range_validation_signed range;
 	s64 value;
 
-	चयन (pt->type) अणु
-	हाल NLA_S8:
+	switch (pt->type) {
+	case NLA_S8:
 		value = nla_get_s8(nla);
-		अवरोध;
-	हाल NLA_S16:
+		break;
+	case NLA_S16:
 		value = nla_get_s16(nla);
-		अवरोध;
-	हाल NLA_S32:
+		break;
+	case NLA_S32:
 		value = nla_get_s32(nla);
-		अवरोध;
-	हाल NLA_S64:
+		break;
+	case NLA_S64:
 		value = nla_get_s64(nla);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	nla_get_range_चिन्हित(pt, &range);
+	nla_get_range_signed(pt, &range);
 
-	अगर (value < range.min || value > range.max) अणु
+	if (value < range.min || value > range.max) {
 		NL_SET_ERR_MSG_ATTR_POL(extack, nla, pt,
 					"integer out of range");
-		वापस -दुस्फल;
-	पूर्ण
+		return -ERANGE;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nla_validate_पूर्णांक_range(स्थिर काष्ठा nla_policy *pt,
-				  स्थिर काष्ठा nlattr *nla,
-				  काष्ठा netlink_ext_ack *extack,
-				  अचिन्हित पूर्णांक validate)
-अणु
-	चयन (pt->type) अणु
-	हाल NLA_U8:
-	हाल NLA_U16:
-	हाल NLA_U32:
-	हाल NLA_U64:
-	हाल NLA_MSECS:
-	हाल NLA_BINARY:
-		वापस nla_validate_range_अचिन्हित(pt, nla, extack, validate);
-	हाल NLA_S8:
-	हाल NLA_S16:
-	हाल NLA_S32:
-	हाल NLA_S64:
-		वापस nla_validate_पूर्णांक_range_चिन्हित(pt, nla, extack);
-	शेष:
+static int nla_validate_int_range(const struct nla_policy *pt,
+				  const struct nlattr *nla,
+				  struct netlink_ext_ack *extack,
+				  unsigned int validate)
+{
+	switch (pt->type) {
+	case NLA_U8:
+	case NLA_U16:
+	case NLA_U32:
+	case NLA_U64:
+	case NLA_MSECS:
+	case NLA_BINARY:
+		return nla_validate_range_unsigned(pt, nla, extack, validate);
+	case NLA_S8:
+	case NLA_S16:
+	case NLA_S32:
+	case NLA_S64:
+		return nla_validate_int_range_signed(pt, nla, extack);
+	default:
 		WARN_ON(1);
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		return -EINVAL;
+	}
+}
 
-अटल पूर्णांक nla_validate_mask(स्थिर काष्ठा nla_policy *pt,
-			     स्थिर काष्ठा nlattr *nla,
-			     काष्ठा netlink_ext_ack *extack)
-अणु
+static int nla_validate_mask(const struct nla_policy *pt,
+			     const struct nlattr *nla,
+			     struct netlink_ext_ack *extack)
+{
 	u64 value;
 
-	चयन (pt->type) अणु
-	हाल NLA_U8:
+	switch (pt->type) {
+	case NLA_U8:
 		value = nla_get_u8(nla);
-		अवरोध;
-	हाल NLA_U16:
+		break;
+	case NLA_U16:
 		value = nla_get_u16(nla);
-		अवरोध;
-	हाल NLA_U32:
+		break;
+	case NLA_U32:
 		value = nla_get_u32(nla);
-		अवरोध;
-	हाल NLA_U64:
+		break;
+	case NLA_U64:
 		value = nla_get_u64(nla);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	अगर (value & ~(u64)pt->mask) अणु
+	if (value & ~(u64)pt->mask) {
 		NL_SET_ERR_MSG_ATTR(extack, nla, "reserved bit set");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक validate_nla(स्थिर काष्ठा nlattr *nla, पूर्णांक maxtype,
-			स्थिर काष्ठा nla_policy *policy, अचिन्हित पूर्णांक validate,
-			काष्ठा netlink_ext_ack *extack, अचिन्हित पूर्णांक depth)
-अणु
+static int validate_nla(const struct nlattr *nla, int maxtype,
+			const struct nla_policy *policy, unsigned int validate,
+			struct netlink_ext_ack *extack, unsigned int depth)
+{
 	u16 strict_start_type = policy[0].strict_start_type;
-	स्थिर काष्ठा nla_policy *pt;
-	पूर्णांक minlen = 0, attrlen = nla_len(nla), type = nla_type(nla);
-	पूर्णांक err = -दुस्फल;
+	const struct nla_policy *pt;
+	int minlen = 0, attrlen = nla_len(nla), type = nla_type(nla);
+	int err = -ERANGE;
 
-	अगर (strict_start_type && type >= strict_start_type)
+	if (strict_start_type && type >= strict_start_type)
 		validate |= NL_VALIDATE_STRICT;
 
-	अगर (type <= 0 || type > maxtype)
-		वापस 0;
+	if (type <= 0 || type > maxtype)
+		return 0;
 
 	pt = &policy[type];
 
 	BUG_ON(pt->type > NLA_TYPE_MAX);
 
-	अगर (nla_attr_len[pt->type] && attrlen != nla_attr_len[pt->type]) अणु
+	if (nla_attr_len[pt->type] && attrlen != nla_attr_len[pt->type]) {
 		pr_warn_ratelimited("netlink: '%s': attribute type %d has an invalid length.\n",
 				    current->comm, type);
-		अगर (validate & NL_VALIDATE_STRICT_ATTRS) अणु
+		if (validate & NL_VALIDATE_STRICT_ATTRS) {
 			NL_SET_ERR_MSG_ATTR_POL(extack, nla, pt,
 						"invalid attribute length");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	अगर (validate & NL_VALIDATE_NESTED) अणु
-		अगर ((pt->type == NLA_NESTED || pt->type == NLA_NESTED_ARRAY) &&
-		    !(nla->nla_type & NLA_F_NESTED)) अणु
+	if (validate & NL_VALIDATE_NESTED) {
+		if ((pt->type == NLA_NESTED || pt->type == NLA_NESTED_ARRAY) &&
+		    !(nla->nla_type & NLA_F_NESTED)) {
 			NL_SET_ERR_MSG_ATTR_POL(extack, nla, pt,
 						"NLA_F_NESTED is missing");
-			वापस -EINVAL;
-		पूर्ण
-		अगर (pt->type != NLA_NESTED && pt->type != NLA_NESTED_ARRAY &&
-		    pt->type != NLA_UNSPEC && (nla->nla_type & NLA_F_NESTED)) अणु
+			return -EINVAL;
+		}
+		if (pt->type != NLA_NESTED && pt->type != NLA_NESTED_ARRAY &&
+		    pt->type != NLA_UNSPEC && (nla->nla_type & NLA_F_NESTED)) {
 			NL_SET_ERR_MSG_ATTR_POL(extack, nla, pt,
 						"NLA_F_NESTED not expected");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	चयन (pt->type) अणु
-	हाल NLA_REJECT:
-		अगर (extack && pt->reject_message) अणु
+	switch (pt->type) {
+	case NLA_REJECT:
+		if (extack && pt->reject_message) {
 			NL_SET_BAD_ATTR(extack, nla);
 			extack->_msg = pt->reject_message;
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		err = -EINVAL;
-		जाओ out_err;
+		goto out_err;
 
-	हाल NLA_FLAG:
-		अगर (attrlen > 0)
-			जाओ out_err;
-		अवरोध;
+	case NLA_FLAG:
+		if (attrlen > 0)
+			goto out_err;
+		break;
 
-	हाल NLA_BITFIELD32:
-		अगर (attrlen != माप(काष्ठा nla_bitfield32))
-			जाओ out_err;
+	case NLA_BITFIELD32:
+		if (attrlen != sizeof(struct nla_bitfield32))
+			goto out_err;
 
 		err = validate_nla_bitfield32(nla, pt->bitfield32_valid);
-		अगर (err)
-			जाओ out_err;
-		अवरोध;
+		if (err)
+			goto out_err;
+		break;
 
-	हाल NLA_NUL_STRING:
-		अगर (pt->len)
-			minlen = min_t(पूर्णांक, attrlen, pt->len + 1);
-		अन्यथा
+	case NLA_NUL_STRING:
+		if (pt->len)
+			minlen = min_t(int, attrlen, pt->len + 1);
+		else
 			minlen = attrlen;
 
-		अगर (!minlen || स_प्रथम(nla_data(nla), '\0', minlen) == शून्य) अणु
+		if (!minlen || memchr(nla_data(nla), '\0', minlen) == NULL) {
 			err = -EINVAL;
-			जाओ out_err;
-		पूर्ण
+			goto out_err;
+		}
 		fallthrough;
 
-	हाल NLA_STRING:
-		अगर (attrlen < 1)
-			जाओ out_err;
+	case NLA_STRING:
+		if (attrlen < 1)
+			goto out_err;
 
-		अगर (pt->len) अणु
-			अक्षर *buf = nla_data(nla);
+		if (pt->len) {
+			char *buf = nla_data(nla);
 
-			अगर (buf[attrlen - 1] == '\0')
+			if (buf[attrlen - 1] == '\0')
 				attrlen--;
 
-			अगर (attrlen > pt->len)
-				जाओ out_err;
-		पूर्ण
-		अवरोध;
+			if (attrlen > pt->len)
+				goto out_err;
+		}
+		break;
 
-	हाल NLA_BINARY:
-		अगर (pt->len && attrlen > pt->len)
-			जाओ out_err;
-		अवरोध;
+	case NLA_BINARY:
+		if (pt->len && attrlen > pt->len)
+			goto out_err;
+		break;
 
-	हाल NLA_NESTED:
-		/* a nested attributes is allowed to be empty; अगर its not,
+	case NLA_NESTED:
+		/* a nested attributes is allowed to be empty; if its not,
 		 * it must have a size of at least NLA_HDRLEN.
 		 */
-		अगर (attrlen == 0)
-			अवरोध;
-		अगर (attrlen < NLA_HDRLEN)
-			जाओ out_err;
-		अगर (pt->nested_policy) अणु
+		if (attrlen == 0)
+			break;
+		if (attrlen < NLA_HDRLEN)
+			goto out_err;
+		if (pt->nested_policy) {
 			err = __nla_validate_parse(nla_data(nla), nla_len(nla),
 						   pt->len, pt->nested_policy,
-						   validate, extack, शून्य,
+						   validate, extack, NULL,
 						   depth + 1);
-			अगर (err < 0) अणु
+			if (err < 0) {
 				/*
-				 * वापस directly to preserve the inner
-				 * error message/attribute poपूर्णांकer
+				 * return directly to preserve the inner
+				 * error message/attribute pointer
 				 */
-				वापस err;
-			पूर्ण
-		पूर्ण
-		अवरोध;
-	हाल NLA_NESTED_ARRAY:
-		/* a nested array attribute is allowed to be empty; अगर its not,
+				return err;
+			}
+		}
+		break;
+	case NLA_NESTED_ARRAY:
+		/* a nested array attribute is allowed to be empty; if its not,
 		 * it must have a size of at least NLA_HDRLEN.
 		 */
-		अगर (attrlen == 0)
-			अवरोध;
-		अगर (attrlen < NLA_HDRLEN)
-			जाओ out_err;
-		अगर (pt->nested_policy) अणु
-			पूर्णांक err;
+		if (attrlen == 0)
+			break;
+		if (attrlen < NLA_HDRLEN)
+			goto out_err;
+		if (pt->nested_policy) {
+			int err;
 
 			err = nla_validate_array(nla_data(nla), nla_len(nla),
 						 pt->len, pt->nested_policy,
 						 extack, validate, depth);
-			अगर (err < 0) अणु
+			if (err < 0) {
 				/*
-				 * वापस directly to preserve the inner
-				 * error message/attribute poपूर्णांकer
+				 * return directly to preserve the inner
+				 * error message/attribute pointer
 				 */
-				वापस err;
-			पूर्ण
-		पूर्ण
-		अवरोध;
+				return err;
+			}
+		}
+		break;
 
-	हाल NLA_UNSPEC:
-		अगर (validate & NL_VALIDATE_UNSPEC) अणु
+	case NLA_UNSPEC:
+		if (validate & NL_VALIDATE_UNSPEC) {
 			NL_SET_ERR_MSG_ATTR(extack, nla,
 					    "Unsupported attribute");
-			वापस -EINVAL;
-		पूर्ण
-		अगर (attrlen < pt->len)
-			जाओ out_err;
-		अवरोध;
+			return -EINVAL;
+		}
+		if (attrlen < pt->len)
+			goto out_err;
+		break;
 
-	शेष:
-		अगर (pt->len)
+	default:
+		if (pt->len)
 			minlen = pt->len;
-		अन्यथा
+		else
 			minlen = nla_attr_minlen[pt->type];
 
-		अगर (attrlen < minlen)
-			जाओ out_err;
-	पूर्ण
+		if (attrlen < minlen)
+			goto out_err;
+	}
 
 	/* further validation */
-	चयन (pt->validation_type) अणु
-	हाल NLA_VALIDATE_NONE:
-		/* nothing to करो */
-		अवरोध;
-	हाल NLA_VALIDATE_RANGE_PTR:
-	हाल NLA_VALIDATE_RANGE:
-	हाल NLA_VALIDATE_RANGE_WARN_TOO_LONG:
-	हाल NLA_VALIDATE_MIN:
-	हाल NLA_VALIDATE_MAX:
-		err = nla_validate_पूर्णांक_range(pt, nla, extack, validate);
-		अगर (err)
-			वापस err;
-		अवरोध;
-	हाल NLA_VALIDATE_MASK:
+	switch (pt->validation_type) {
+	case NLA_VALIDATE_NONE:
+		/* nothing to do */
+		break;
+	case NLA_VALIDATE_RANGE_PTR:
+	case NLA_VALIDATE_RANGE:
+	case NLA_VALIDATE_RANGE_WARN_TOO_LONG:
+	case NLA_VALIDATE_MIN:
+	case NLA_VALIDATE_MAX:
+		err = nla_validate_int_range(pt, nla, extack, validate);
+		if (err)
+			return err;
+		break;
+	case NLA_VALIDATE_MASK:
 		err = nla_validate_mask(pt, nla, extack);
-		अगर (err)
-			वापस err;
-		अवरोध;
-	हाल NLA_VALIDATE_FUNCTION:
-		अगर (pt->validate) अणु
+		if (err)
+			return err;
+		break;
+	case NLA_VALIDATE_FUNCTION:
+		if (pt->validate) {
 			err = pt->validate(nla, extack);
-			अगर (err)
-				वापस err;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+			if (err)
+				return err;
+		}
+		break;
+	}
 
-	वापस 0;
+	return 0;
 out_err:
 	NL_SET_ERR_MSG_ATTR_POL(extack, nla, pt,
 				"Attribute failed policy validation");
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक __nla_validate_parse(स्थिर काष्ठा nlattr *head, पूर्णांक len, पूर्णांक maxtype,
-				स्थिर काष्ठा nla_policy *policy,
-				अचिन्हित पूर्णांक validate,
-				काष्ठा netlink_ext_ack *extack,
-				काष्ठा nlattr **tb, अचिन्हित पूर्णांक depth)
-अणु
-	स्थिर काष्ठा nlattr *nla;
-	पूर्णांक rem;
+static int __nla_validate_parse(const struct nlattr *head, int len, int maxtype,
+				const struct nla_policy *policy,
+				unsigned int validate,
+				struct netlink_ext_ack *extack,
+				struct nlattr **tb, unsigned int depth)
+{
+	const struct nlattr *nla;
+	int rem;
 
-	अगर (depth >= MAX_POLICY_RECURSION_DEPTH) अणु
+	if (depth >= MAX_POLICY_RECURSION_DEPTH) {
 		NL_SET_ERR_MSG(extack,
 			       "allowed policy recursion depth exceeded");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (tb)
-		स_रखो(tb, 0, माप(काष्ठा nlattr *) * (maxtype + 1));
+	if (tb)
+		memset(tb, 0, sizeof(struct nlattr *) * (maxtype + 1));
 
-	nla_क्रम_each_attr(nla, head, len, rem) अणु
+	nla_for_each_attr(nla, head, len, rem) {
 		u16 type = nla_type(nla);
 
-		अगर (type == 0 || type > maxtype) अणु
-			अगर (validate & NL_VALIDATE_MAXTYPE) अणु
+		if (type == 0 || type > maxtype) {
+			if (validate & NL_VALIDATE_MAXTYPE) {
 				NL_SET_ERR_MSG_ATTR(extack, nla,
 						    "Unknown attribute type");
-				वापस -EINVAL;
-			पूर्ण
-			जारी;
-		पूर्ण
-		अगर (policy) अणु
-			पूर्णांक err = validate_nla(nla, maxtype, policy,
+				return -EINVAL;
+			}
+			continue;
+		}
+		if (policy) {
+			int err = validate_nla(nla, maxtype, policy,
 					       validate, extack, depth);
 
-			अगर (err < 0)
-				वापस err;
-		पूर्ण
+			if (err < 0)
+				return err;
+		}
 
-		अगर (tb)
-			tb[type] = (काष्ठा nlattr *)nla;
-	पूर्ण
+		if (tb)
+			tb[type] = (struct nlattr *)nla;
+	}
 
-	अगर (unlikely(rem > 0)) अणु
+	if (unlikely(rem > 0)) {
 		pr_warn_ratelimited("netlink: %d bytes leftover after parsing attributes in process `%s'.\n",
 				    rem, current->comm);
 		NL_SET_ERR_MSG(extack, "bytes leftover after parsing attributes");
-		अगर (validate & NL_VALIDATE_TRAILING)
-			वापस -EINVAL;
-	पूर्ण
+		if (validate & NL_VALIDATE_TRAILING)
+			return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * __nla_validate - Validate a stream of attributes
@@ -615,22 +614,22 @@ out_err:
  * @maxtype: maximum attribute type to be expected
  * @policy: validation policy
  * @validate: validation strictness
- * @extack: extended ACK report काष्ठा
+ * @extack: extended ACK report struct
  *
- * Validates all attributes in the specअगरied attribute stream against the
- * specअगरied policy. Validation depends on the validate flags passed, see
- * &क्रमागत netlink_validation क्रम more details on that.
- * See करोcumenation of काष्ठा nla_policy क्रम more details.
+ * Validates all attributes in the specified attribute stream against the
+ * specified policy. Validation depends on the validate flags passed, see
+ * &enum netlink_validation for more details on that.
+ * See documenation of struct nla_policy for more details.
  *
  * Returns 0 on success or a negative error code.
  */
-पूर्णांक __nla_validate(स्थिर काष्ठा nlattr *head, पूर्णांक len, पूर्णांक maxtype,
-		   स्थिर काष्ठा nla_policy *policy, अचिन्हित पूर्णांक validate,
-		   काष्ठा netlink_ext_ack *extack)
-अणु
-	वापस __nla_validate_parse(head, len, maxtype, policy, validate,
-				    extack, शून्य, 0);
-पूर्ण
+int __nla_validate(const struct nlattr *head, int len, int maxtype,
+		   const struct nla_policy *policy, unsigned int validate,
+		   struct netlink_ext_ack *extack)
+{
+	return __nla_validate_parse(head, len, maxtype, policy, validate,
+				    extack, NULL, 0);
+}
 EXPORT_SYMBOL(__nla_validate);
 
 /**
@@ -644,78 +643,78 @@ EXPORT_SYMBOL(__nla_validate);
  *
  * Returns 0 on success or a negative error code.
  */
-पूर्णांक
-nla_policy_len(स्थिर काष्ठा nla_policy *p, पूर्णांक n)
-अणु
-	पूर्णांक i, len = 0;
+int
+nla_policy_len(const struct nla_policy *p, int n)
+{
+	int i, len = 0;
 
-	क्रम (i = 0; i < n; i++, p++) अणु
-		अगर (p->len)
+	for (i = 0; i < n; i++, p++) {
+		if (p->len)
 			len += nla_total_size(p->len);
-		अन्यथा अगर (nla_attr_len[p->type])
+		else if (nla_attr_len[p->type])
 			len += nla_total_size(nla_attr_len[p->type]);
-		अन्यथा अगर (nla_attr_minlen[p->type])
+		else if (nla_attr_minlen[p->type])
 			len += nla_total_size(nla_attr_minlen[p->type]);
-	पूर्ण
+	}
 
-	वापस len;
-पूर्ण
+	return len;
+}
 EXPORT_SYMBOL(nla_policy_len);
 
 /**
- * __nla_parse - Parse a stream of attributes पूर्णांकo a tb buffer
+ * __nla_parse - Parse a stream of attributes into a tb buffer
  * @tb: destination array with maxtype+1 elements
  * @maxtype: maximum attribute type to be expected
  * @head: head of attribute stream
  * @len: length of attribute stream
  * @policy: validation policy
  * @validate: validation strictness
- * @extack: extended ACK poपूर्णांकer
+ * @extack: extended ACK pointer
  *
- * Parses a stream of attributes and stores a poपूर्णांकer to each attribute in
+ * Parses a stream of attributes and stores a pointer to each attribute in
  * the tb array accessible via the attribute type.
  * Validation is controlled by the @validate parameter.
  *
  * Returns 0 on success or a negative error code.
  */
-पूर्णांक __nla_parse(काष्ठा nlattr **tb, पूर्णांक maxtype,
-		स्थिर काष्ठा nlattr *head, पूर्णांक len,
-		स्थिर काष्ठा nla_policy *policy, अचिन्हित पूर्णांक validate,
-		काष्ठा netlink_ext_ack *extack)
-अणु
-	वापस __nla_validate_parse(head, len, maxtype, policy, validate,
+int __nla_parse(struct nlattr **tb, int maxtype,
+		const struct nlattr *head, int len,
+		const struct nla_policy *policy, unsigned int validate,
+		struct netlink_ext_ack *extack)
+{
+	return __nla_validate_parse(head, len, maxtype, policy, validate,
 				    extack, tb, 0);
-पूर्ण
+}
 EXPORT_SYMBOL(__nla_parse);
 
 /**
- * nla_find - Find a specअगरic attribute in a stream of attributes
+ * nla_find - Find a specific attribute in a stream of attributes
  * @head: head of attribute stream
  * @len: length of attribute stream
- * @attrtype: type of attribute to look क्रम
+ * @attrtype: type of attribute to look for
  *
- * Returns the first attribute in the stream matching the specअगरied type.
+ * Returns the first attribute in the stream matching the specified type.
  */
-काष्ठा nlattr *nla_find(स्थिर काष्ठा nlattr *head, पूर्णांक len, पूर्णांक attrtype)
-अणु
-	स्थिर काष्ठा nlattr *nla;
-	पूर्णांक rem;
+struct nlattr *nla_find(const struct nlattr *head, int len, int attrtype)
+{
+	const struct nlattr *nla;
+	int rem;
 
-	nla_क्रम_each_attr(nla, head, len, rem)
-		अगर (nla_type(nla) == attrtype)
-			वापस (काष्ठा nlattr *)nla;
+	nla_for_each_attr(nla, head, len, rem)
+		if (nla_type(nla) == attrtype)
+			return (struct nlattr *)nla;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL(nla_find);
 
 /**
- * nla_strscpy - Copy string attribute payload पूर्णांकo a sized buffer
+ * nla_strscpy - Copy string attribute payload into a sized buffer
  * @dst: Where to copy the string to.
  * @nla: Attribute to copy the string from.
  * @dstsize: Size of destination buffer.
  *
- * Copies at most dstsize - 1 bytes पूर्णांकo the destination buffer.
+ * Copies at most dstsize - 1 bytes into the destination buffer.
  * Unlike strlcpy the destination buffer is always padded out.
  *
  * Return:
@@ -723,257 +722,257 @@ EXPORT_SYMBOL(nla_find);
  * * -E2BIG - If @dstsize is 0 or greater than U16_MAX or @nla length greater
  *            than @dstsize.
  */
-sमाप_प्रकार nla_strscpy(अक्षर *dst, स्थिर काष्ठा nlattr *nla, माप_प्रकार dstsize)
-अणु
-	माप_प्रकार srclen = nla_len(nla);
-	अक्षर *src = nla_data(nla);
-	sमाप_प्रकार ret;
-	माप_प्रकार len;
+ssize_t nla_strscpy(char *dst, const struct nlattr *nla, size_t dstsize)
+{
+	size_t srclen = nla_len(nla);
+	char *src = nla_data(nla);
+	ssize_t ret;
+	size_t len;
 
-	अगर (dstsize == 0 || WARN_ON_ONCE(dstsize > U16_MAX))
-		वापस -E2BIG;
+	if (dstsize == 0 || WARN_ON_ONCE(dstsize > U16_MAX))
+		return -E2BIG;
 
-	अगर (srclen > 0 && src[srclen - 1] == '\0')
+	if (srclen > 0 && src[srclen - 1] == '\0')
 		srclen--;
 
-	अगर (srclen >= dstsize) अणु
+	if (srclen >= dstsize) {
 		len = dstsize - 1;
 		ret = -E2BIG;
-	पूर्ण अन्यथा अणु
+	} else {
 		len = srclen;
 		ret = len;
-	पूर्ण
+	}
 
-	स_नकल(dst, src, len);
+	memcpy(dst, src, len);
 	/* Zero pad end of dst. */
-	स_रखो(dst + len, 0, dstsize - len);
+	memset(dst + len, 0, dstsize - len);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(nla_strscpy);
 
 /**
- * nla_strdup - Copy string attribute payload पूर्णांकo a newly allocated buffer
+ * nla_strdup - Copy string attribute payload into a newly allocated buffer
  * @nla: attribute to copy the string from
- * @flags: the type of memory to allocate (see kदो_स्मृति).
+ * @flags: the type of memory to allocate (see kmalloc).
  *
- * Returns a poपूर्णांकer to the allocated buffer or शून्य on error.
+ * Returns a pointer to the allocated buffer or NULL on error.
  */
-अक्षर *nla_strdup(स्थिर काष्ठा nlattr *nla, gfp_t flags)
-अणु
-	माप_प्रकार srclen = nla_len(nla);
-	अक्षर *src = nla_data(nla), *dst;
+char *nla_strdup(const struct nlattr *nla, gfp_t flags)
+{
+	size_t srclen = nla_len(nla);
+	char *src = nla_data(nla), *dst;
 
-	अगर (srclen > 0 && src[srclen - 1] == '\0')
+	if (srclen > 0 && src[srclen - 1] == '\0')
 		srclen--;
 
-	dst = kदो_स्मृति(srclen + 1, flags);
-	अगर (dst != शून्य) अणु
-		स_नकल(dst, src, srclen);
+	dst = kmalloc(srclen + 1, flags);
+	if (dst != NULL) {
+		memcpy(dst, src, srclen);
 		dst[srclen] = '\0';
-	पूर्ण
-	वापस dst;
-पूर्ण
+	}
+	return dst;
+}
 EXPORT_SYMBOL(nla_strdup);
 
 /**
- * nla_स_नकल - Copy a netlink attribute पूर्णांकo another memory area
- * @dest: where to copy to स_नकल
+ * nla_memcpy - Copy a netlink attribute into another memory area
+ * @dest: where to copy to memcpy
  * @src: netlink attribute to copy from
  * @count: size of the destination area
  *
  * Note: The number of bytes copied is limited by the length of
- *       attribute's payload. स_नकल
+ *       attribute's payload. memcpy
  *
  * Returns the number of bytes copied.
  */
-पूर्णांक nla_स_नकल(व्योम *dest, स्थिर काष्ठा nlattr *src, पूर्णांक count)
-अणु
-	पूर्णांक minlen = min_t(पूर्णांक, count, nla_len(src));
+int nla_memcpy(void *dest, const struct nlattr *src, int count)
+{
+	int minlen = min_t(int, count, nla_len(src));
 
-	स_नकल(dest, nla_data(src), minlen);
-	अगर (count > minlen)
-		स_रखो(dest + minlen, 0, count - minlen);
+	memcpy(dest, nla_data(src), minlen);
+	if (count > minlen)
+		memset(dest + minlen, 0, count - minlen);
 
-	वापस minlen;
-पूर्ण
-EXPORT_SYMBOL(nla_स_नकल);
+	return minlen;
+}
+EXPORT_SYMBOL(nla_memcpy);
 
 /**
- * nla_स_भेद - Compare an attribute with sized memory area
+ * nla_memcmp - Compare an attribute with sized memory area
  * @nla: netlink attribute
  * @data: memory area
  * @size: size of memory area
  */
-पूर्णांक nla_स_भेद(स्थिर काष्ठा nlattr *nla, स्थिर व्योम *data,
-			     माप_प्रकार size)
-अणु
-	पूर्णांक d = nla_len(nla) - size;
+int nla_memcmp(const struct nlattr *nla, const void *data,
+			     size_t size)
+{
+	int d = nla_len(nla) - size;
 
-	अगर (d == 0)
-		d = स_भेद(nla_data(nla), data, size);
+	if (d == 0)
+		d = memcmp(nla_data(nla), data, size);
 
-	वापस d;
-पूर्ण
-EXPORT_SYMBOL(nla_स_भेद);
+	return d;
+}
+EXPORT_SYMBOL(nla_memcmp);
 
 /**
- * nla_म_भेद - Compare a string attribute against a string
+ * nla_strcmp - Compare a string attribute against a string
  * @nla: netlink string attribute
  * @str: another string
  */
-पूर्णांक nla_म_भेद(स्थिर काष्ठा nlattr *nla, स्थिर अक्षर *str)
-अणु
-	पूर्णांक len = म_माप(str);
-	अक्षर *buf = nla_data(nla);
-	पूर्णांक attrlen = nla_len(nla);
-	पूर्णांक d;
+int nla_strcmp(const struct nlattr *nla, const char *str)
+{
+	int len = strlen(str);
+	char *buf = nla_data(nla);
+	int attrlen = nla_len(nla);
+	int d;
 
-	जबतक (attrlen > 0 && buf[attrlen - 1] == '\0')
+	while (attrlen > 0 && buf[attrlen - 1] == '\0')
 		attrlen--;
 
 	d = attrlen - len;
-	अगर (d == 0)
-		d = स_भेद(nla_data(nla), str, len);
+	if (d == 0)
+		d = memcmp(nla_data(nla), str, len);
 
-	वापस d;
-पूर्ण
-EXPORT_SYMBOL(nla_म_भेद);
+	return d;
+}
+EXPORT_SYMBOL(nla_strcmp);
 
-#अगर_घोषित CONFIG_NET
+#ifdef CONFIG_NET
 /**
- * __nla_reserve - reserve room क्रम attribute on the skb
+ * __nla_reserve - reserve room for attribute on the skb
  * @skb: socket buffer to reserve room on
  * @attrtype: attribute type
  * @attrlen: length of attribute payload
  *
  * Adds a netlink attribute header to a socket buffer and reserves
- * room क्रम the payload but करोes not copy it.
+ * room for the payload but does not copy it.
  *
  * The caller is responsible to ensure that the skb provides enough
- * tailroom क्रम the attribute header and payload.
+ * tailroom for the attribute header and payload.
  */
-काष्ठा nlattr *__nla_reserve(काष्ठा sk_buff *skb, पूर्णांक attrtype, पूर्णांक attrlen)
-अणु
-	काष्ठा nlattr *nla;
+struct nlattr *__nla_reserve(struct sk_buff *skb, int attrtype, int attrlen)
+{
+	struct nlattr *nla;
 
 	nla = skb_put(skb, nla_total_size(attrlen));
 	nla->nla_type = attrtype;
 	nla->nla_len = nla_attr_size(attrlen);
 
-	स_रखो((अचिन्हित अक्षर *) nla + nla->nla_len, 0, nla_padlen(attrlen));
+	memset((unsigned char *) nla + nla->nla_len, 0, nla_padlen(attrlen));
 
-	वापस nla;
-पूर्ण
+	return nla;
+}
 EXPORT_SYMBOL(__nla_reserve);
 
 /**
- * __nla_reserve_64bit - reserve room क्रम attribute on the skb and align it
+ * __nla_reserve_64bit - reserve room for attribute on the skb and align it
  * @skb: socket buffer to reserve room on
  * @attrtype: attribute type
  * @attrlen: length of attribute payload
- * @padattr: attribute type क्रम the padding
+ * @padattr: attribute type for the padding
  *
  * Adds a netlink attribute header to a socket buffer and reserves
- * room क्रम the payload but करोes not copy it. It also ensure that this
+ * room for the payload but does not copy it. It also ensure that this
  * attribute will have a 64-bit aligned nla_data() area.
  *
  * The caller is responsible to ensure that the skb provides enough
- * tailroom क्रम the attribute header and payload.
+ * tailroom for the attribute header and payload.
  */
-काष्ठा nlattr *__nla_reserve_64bit(काष्ठा sk_buff *skb, पूर्णांक attrtype,
-				   पूर्णांक attrlen, पूर्णांक padattr)
-अणु
+struct nlattr *__nla_reserve_64bit(struct sk_buff *skb, int attrtype,
+				   int attrlen, int padattr)
+{
 	nla_align_64bit(skb, padattr);
 
-	वापस __nla_reserve(skb, attrtype, attrlen);
-पूर्ण
+	return __nla_reserve(skb, attrtype, attrlen);
+}
 EXPORT_SYMBOL(__nla_reserve_64bit);
 
 /**
- * __nla_reserve_nohdr - reserve room क्रम attribute without header
+ * __nla_reserve_nohdr - reserve room for attribute without header
  * @skb: socket buffer to reserve room on
  * @attrlen: length of attribute payload
  *
- * Reserves room क्रम attribute payload without a header.
+ * Reserves room for attribute payload without a header.
  *
  * The caller is responsible to ensure that the skb provides enough
- * tailroom क्रम the payload.
+ * tailroom for the payload.
  */
-व्योम *__nla_reserve_nohdr(काष्ठा sk_buff *skb, पूर्णांक attrlen)
-अणु
-	वापस skb_put_zero(skb, NLA_ALIGN(attrlen));
-पूर्ण
+void *__nla_reserve_nohdr(struct sk_buff *skb, int attrlen)
+{
+	return skb_put_zero(skb, NLA_ALIGN(attrlen));
+}
 EXPORT_SYMBOL(__nla_reserve_nohdr);
 
 /**
- * nla_reserve - reserve room क्रम attribute on the skb
+ * nla_reserve - reserve room for attribute on the skb
  * @skb: socket buffer to reserve room on
  * @attrtype: attribute type
  * @attrlen: length of attribute payload
  *
  * Adds a netlink attribute header to a socket buffer and reserves
- * room क्रम the payload but करोes not copy it.
+ * room for the payload but does not copy it.
  *
- * Returns शून्य अगर the tailroom of the skb is insufficient to store
+ * Returns NULL if the tailroom of the skb is insufficient to store
  * the attribute header and payload.
  */
-काष्ठा nlattr *nla_reserve(काष्ठा sk_buff *skb, पूर्णांक attrtype, पूर्णांक attrlen)
-अणु
-	अगर (unlikely(skb_tailroom(skb) < nla_total_size(attrlen)))
-		वापस शून्य;
+struct nlattr *nla_reserve(struct sk_buff *skb, int attrtype, int attrlen)
+{
+	if (unlikely(skb_tailroom(skb) < nla_total_size(attrlen)))
+		return NULL;
 
-	वापस __nla_reserve(skb, attrtype, attrlen);
-पूर्ण
+	return __nla_reserve(skb, attrtype, attrlen);
+}
 EXPORT_SYMBOL(nla_reserve);
 
 /**
- * nla_reserve_64bit - reserve room क्रम attribute on the skb and align it
+ * nla_reserve_64bit - reserve room for attribute on the skb and align it
  * @skb: socket buffer to reserve room on
  * @attrtype: attribute type
  * @attrlen: length of attribute payload
- * @padattr: attribute type क्रम the padding
+ * @padattr: attribute type for the padding
  *
  * Adds a netlink attribute header to a socket buffer and reserves
- * room क्रम the payload but करोes not copy it. It also ensure that this
+ * room for the payload but does not copy it. It also ensure that this
  * attribute will have a 64-bit aligned nla_data() area.
  *
- * Returns शून्य अगर the tailroom of the skb is insufficient to store
+ * Returns NULL if the tailroom of the skb is insufficient to store
  * the attribute header and payload.
  */
-काष्ठा nlattr *nla_reserve_64bit(काष्ठा sk_buff *skb, पूर्णांक attrtype, पूर्णांक attrlen,
-				 पूर्णांक padattr)
-अणु
-	माप_प्रकार len;
+struct nlattr *nla_reserve_64bit(struct sk_buff *skb, int attrtype, int attrlen,
+				 int padattr)
+{
+	size_t len;
 
-	अगर (nla_need_padding_क्रम_64bit(skb))
+	if (nla_need_padding_for_64bit(skb))
 		len = nla_total_size_64bit(attrlen);
-	अन्यथा
+	else
 		len = nla_total_size(attrlen);
-	अगर (unlikely(skb_tailroom(skb) < len))
-		वापस शून्य;
+	if (unlikely(skb_tailroom(skb) < len))
+		return NULL;
 
-	वापस __nla_reserve_64bit(skb, attrtype, attrlen, padattr);
-पूर्ण
+	return __nla_reserve_64bit(skb, attrtype, attrlen, padattr);
+}
 EXPORT_SYMBOL(nla_reserve_64bit);
 
 /**
- * nla_reserve_nohdr - reserve room क्रम attribute without header
+ * nla_reserve_nohdr - reserve room for attribute without header
  * @skb: socket buffer to reserve room on
  * @attrlen: length of attribute payload
  *
- * Reserves room क्रम attribute payload without a header.
+ * Reserves room for attribute payload without a header.
  *
- * Returns शून्य अगर the tailroom of the skb is insufficient to store
+ * Returns NULL if the tailroom of the skb is insufficient to store
  * the attribute payload.
  */
-व्योम *nla_reserve_nohdr(काष्ठा sk_buff *skb, पूर्णांक attrlen)
-अणु
-	अगर (unlikely(skb_tailroom(skb) < NLA_ALIGN(attrlen)))
-		वापस शून्य;
+void *nla_reserve_nohdr(struct sk_buff *skb, int attrlen)
+{
+	if (unlikely(skb_tailroom(skb) < NLA_ALIGN(attrlen)))
+		return NULL;
 
-	वापस __nla_reserve_nohdr(skb, attrlen);
-पूर्ण
+	return __nla_reserve_nohdr(skb, attrlen);
+}
 EXPORT_SYMBOL(nla_reserve_nohdr);
 
 /**
@@ -984,16 +983,16 @@ EXPORT_SYMBOL(nla_reserve_nohdr);
  * @data: head of attribute payload
  *
  * The caller is responsible to ensure that the skb provides enough
- * tailroom क्रम the attribute header and payload.
+ * tailroom for the attribute header and payload.
  */
-व्योम __nla_put(काष्ठा sk_buff *skb, पूर्णांक attrtype, पूर्णांक attrlen,
-			     स्थिर व्योम *data)
-अणु
-	काष्ठा nlattr *nla;
+void __nla_put(struct sk_buff *skb, int attrtype, int attrlen,
+			     const void *data)
+{
+	struct nlattr *nla;
 
 	nla = __nla_reserve(skb, attrtype, attrlen);
-	स_नकल(nla_data(nla), data, attrlen);
-पूर्ण
+	memcpy(nla_data(nla), data, attrlen);
+}
 EXPORT_SYMBOL(__nla_put);
 
 /**
@@ -1002,19 +1001,19 @@ EXPORT_SYMBOL(__nla_put);
  * @attrtype: attribute type
  * @attrlen: length of attribute payload
  * @data: head of attribute payload
- * @padattr: attribute type क्रम the padding
+ * @padattr: attribute type for the padding
  *
  * The caller is responsible to ensure that the skb provides enough
- * tailroom क्रम the attribute header and payload.
+ * tailroom for the attribute header and payload.
  */
-व्योम __nla_put_64bit(काष्ठा sk_buff *skb, पूर्णांक attrtype, पूर्णांक attrlen,
-		     स्थिर व्योम *data, पूर्णांक padattr)
-अणु
-	काष्ठा nlattr *nla;
+void __nla_put_64bit(struct sk_buff *skb, int attrtype, int attrlen,
+		     const void *data, int padattr)
+{
+	struct nlattr *nla;
 
 	nla = __nla_reserve_64bit(skb, attrtype, attrlen, padattr);
-	स_नकल(nla_data(nla), data, attrlen);
-पूर्ण
+	memcpy(nla_data(nla), data, attrlen);
+}
 EXPORT_SYMBOL(__nla_put_64bit);
 
 /**
@@ -1024,15 +1023,15 @@ EXPORT_SYMBOL(__nla_put_64bit);
  * @data: head of attribute payload
  *
  * The caller is responsible to ensure that the skb provides enough
- * tailroom क्रम the attribute payload.
+ * tailroom for the attribute payload.
  */
-व्योम __nla_put_nohdr(काष्ठा sk_buff *skb, पूर्णांक attrlen, स्थिर व्योम *data)
-अणु
-	व्योम *start;
+void __nla_put_nohdr(struct sk_buff *skb, int attrlen, const void *data)
+{
+	void *start;
 
 	start = __nla_reserve_nohdr(skb, attrlen);
-	स_नकल(start, data, attrlen);
-पूर्ण
+	memcpy(start, data, attrlen);
+}
 EXPORT_SYMBOL(__nla_put_nohdr);
 
 /**
@@ -1042,17 +1041,17 @@ EXPORT_SYMBOL(__nla_put_nohdr);
  * @attrlen: length of attribute payload
  * @data: head of attribute payload
  *
- * Returns -EMSGSIZE अगर the tailroom of the skb is insufficient to store
+ * Returns -EMSGSIZE if the tailroom of the skb is insufficient to store
  * the attribute header and payload.
  */
-पूर्णांक nla_put(काष्ठा sk_buff *skb, पूर्णांक attrtype, पूर्णांक attrlen, स्थिर व्योम *data)
-अणु
-	अगर (unlikely(skb_tailroom(skb) < nla_total_size(attrlen)))
-		वापस -EMSGSIZE;
+int nla_put(struct sk_buff *skb, int attrtype, int attrlen, const void *data)
+{
+	if (unlikely(skb_tailroom(skb) < nla_total_size(attrlen)))
+		return -EMSGSIZE;
 
 	__nla_put(skb, attrtype, attrlen, data);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(nla_put);
 
 /**
@@ -1061,26 +1060,26 @@ EXPORT_SYMBOL(nla_put);
  * @attrtype: attribute type
  * @attrlen: length of attribute payload
  * @data: head of attribute payload
- * @padattr: attribute type क्रम the padding
+ * @padattr: attribute type for the padding
  *
- * Returns -EMSGSIZE अगर the tailroom of the skb is insufficient to store
+ * Returns -EMSGSIZE if the tailroom of the skb is insufficient to store
  * the attribute header and payload.
  */
-पूर्णांक nla_put_64bit(काष्ठा sk_buff *skb, पूर्णांक attrtype, पूर्णांक attrlen,
-		  स्थिर व्योम *data, पूर्णांक padattr)
-अणु
-	माप_प्रकार len;
+int nla_put_64bit(struct sk_buff *skb, int attrtype, int attrlen,
+		  const void *data, int padattr)
+{
+	size_t len;
 
-	अगर (nla_need_padding_क्रम_64bit(skb))
+	if (nla_need_padding_for_64bit(skb))
 		len = nla_total_size_64bit(attrlen);
-	अन्यथा
+	else
 		len = nla_total_size(attrlen);
-	अगर (unlikely(skb_tailroom(skb) < len))
-		वापस -EMSGSIZE;
+	if (unlikely(skb_tailroom(skb) < len))
+		return -EMSGSIZE;
 
 	__nla_put_64bit(skb, attrtype, attrlen, data, padattr);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(nla_put_64bit);
 
 /**
@@ -1089,17 +1088,17 @@ EXPORT_SYMBOL(nla_put_64bit);
  * @attrlen: length of attribute payload
  * @data: head of attribute payload
  *
- * Returns -EMSGSIZE अगर the tailroom of the skb is insufficient to store
+ * Returns -EMSGSIZE if the tailroom of the skb is insufficient to store
  * the attribute payload.
  */
-पूर्णांक nla_put_nohdr(काष्ठा sk_buff *skb, पूर्णांक attrlen, स्थिर व्योम *data)
-अणु
-	अगर (unlikely(skb_tailroom(skb) < NLA_ALIGN(attrlen)))
-		वापस -EMSGSIZE;
+int nla_put_nohdr(struct sk_buff *skb, int attrlen, const void *data)
+{
+	if (unlikely(skb_tailroom(skb) < NLA_ALIGN(attrlen)))
+		return -EMSGSIZE;
 
 	__nla_put_nohdr(skb, attrlen, data);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(nla_put_nohdr);
 
 /**
@@ -1108,16 +1107,16 @@ EXPORT_SYMBOL(nla_put_nohdr);
  * @attrlen: length of attribute payload
  * @data: head of attribute payload
  *
- * Returns -EMSGSIZE अगर the tailroom of the skb is insufficient to store
+ * Returns -EMSGSIZE if the tailroom of the skb is insufficient to store
  * the attribute payload.
  */
-पूर्णांक nla_append(काष्ठा sk_buff *skb, पूर्णांक attrlen, स्थिर व्योम *data)
-अणु
-	अगर (unlikely(skb_tailroom(skb) < NLA_ALIGN(attrlen)))
-		वापस -EMSGSIZE;
+int nla_append(struct sk_buff *skb, int attrlen, const void *data)
+{
+	if (unlikely(skb_tailroom(skb) < NLA_ALIGN(attrlen)))
+		return -EMSGSIZE;
 
 	skb_put_data(skb, data, attrlen);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(nla_append);
-#पूर्ण_अगर
+#endif

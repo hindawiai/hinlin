@@ -1,65 +1,64 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* Copyright(c) 2007-2011  Realtek Corporation.*/
 
-#अगर_अघोषित	__HALBT_PRECOMP_H__
-#घोषणा __HALBT_PRECOMP_H__
+#ifndef	__HALBT_PRECOMP_H__
+#define __HALBT_PRECOMP_H__
 /*************************************************************
  * include files
  *************************************************************/
-#समावेश "../wifi.h"
-#समावेश "../efuse.h"
-#समावेश "../base.h"
-#समावेश "../regd.h"
-#समावेश "../cam.h"
-#समावेश "../ps.h"
-#समावेश "../pci.h"
+#include "../wifi.h"
+#include "../efuse.h"
+#include "../base.h"
+#include "../regd.h"
+#include "../cam.h"
+#include "../ps.h"
+#include "../pci.h"
 
-#समावेश "halbtcoutsrc.h"
+#include "halbtcoutsrc.h"
 
 /* Interface type */
-#घोषणा RT_PCI_INTERFACE	1
-#घोषणा RT_USB_INTERFACE	2
-#घोषणा RT_SDIO_INTERFACE	3
-#घोषणा DEV_BUS_TYPE		RT_PCI_INTERFACE
+#define RT_PCI_INTERFACE	1
+#define RT_USB_INTERFACE	2
+#define RT_SDIO_INTERFACE	3
+#define DEV_BUS_TYPE		RT_PCI_INTERFACE
 
-#समावेश "halbtc8192e2ant.h"
-#समावेश "halbtc8723b1ant.h"
-#समावेश "halbtc8723b2ant.h"
-#समावेश "halbtc8821a2ant.h"
-#समावेश "halbtc8821a1ant.h"
+#include "halbtc8192e2ant.h"
+#include "halbtc8723b1ant.h"
+#include "halbtc8723b2ant.h"
+#include "halbtc8821a2ant.h"
+#include "halbtc8821a1ant.h"
 
-#घोषणा BIT0	0x00000001
-#घोषणा BIT1	0x00000002
-#घोषणा BIT2	0x00000004
-#घोषणा BIT3	0x00000008
-#घोषणा BIT4	0x00000010
-#घोषणा BIT5	0x00000020
-#घोषणा BIT6	0x00000040
-#घोषणा BIT7	0x00000080
-#घोषणा BIT8	0x00000100
-#घोषणा BIT9	0x00000200
-#घोषणा BIT10	0x00000400
-#घोषणा BIT11	0x00000800
-#घोषणा BIT12	0x00001000
-#घोषणा BIT13	0x00002000
-#घोषणा BIT14	0x00004000
-#घोषणा BIT15	0x00008000
-#घोषणा BIT16	0x00010000
-#घोषणा BIT17	0x00020000
-#घोषणा BIT18	0x00040000
-#घोषणा BIT19	0x00080000
-#घोषणा BIT20	0x00100000
-#घोषणा BIT21	0x00200000
-#घोषणा BIT22	0x00400000
-#घोषणा BIT23	0x00800000
-#घोषणा BIT24	0x01000000
-#घोषणा BIT25	0x02000000
-#घोषणा BIT26	0x04000000
-#घोषणा BIT27	0x08000000
-#घोषणा BIT28	0x10000000
-#घोषणा BIT29	0x20000000
-#घोषणा BIT30	0x40000000
-#घोषणा BIT31	0x80000000
+#define BIT0	0x00000001
+#define BIT1	0x00000002
+#define BIT2	0x00000004
+#define BIT3	0x00000008
+#define BIT4	0x00000010
+#define BIT5	0x00000020
+#define BIT6	0x00000040
+#define BIT7	0x00000080
+#define BIT8	0x00000100
+#define BIT9	0x00000200
+#define BIT10	0x00000400
+#define BIT11	0x00000800
+#define BIT12	0x00001000
+#define BIT13	0x00002000
+#define BIT14	0x00004000
+#define BIT15	0x00008000
+#define BIT16	0x00010000
+#define BIT17	0x00020000
+#define BIT18	0x00040000
+#define BIT19	0x00080000
+#define BIT20	0x00100000
+#define BIT21	0x00200000
+#define BIT22	0x00400000
+#define BIT23	0x00800000
+#define BIT24	0x01000000
+#define BIT25	0x02000000
+#define BIT26	0x04000000
+#define BIT27	0x08000000
+#define BIT28	0x10000000
+#define BIT29	0x20000000
+#define BIT30	0x40000000
+#define BIT31	0x80000000
 
-#पूर्ण_अगर	/* __HALBT_PRECOMP_H__ */
+#endif	/* __HALBT_PRECOMP_H__ */

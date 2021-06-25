@@ -1,320 +1,319 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /* Public-key operation keyctls
  *
  * Copyright (C) 2016 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/err.h>
-#समावेश <linux/key.h>
-#समावेश <linux/keyctl.h>
-#समावेश <linux/parser.h>
-#समावेश <linux/uaccess.h>
-#समावेश <keys/user-type.h>
-#समावेश "internal.h"
+#include <linux/slab.h>
+#include <linux/err.h>
+#include <linux/key.h>
+#include <linux/keyctl.h>
+#include <linux/parser.h>
+#include <linux/uaccess.h>
+#include <keys/user-type.h>
+#include "internal.h"
 
-अटल व्योम keyctl_pkey_params_मुक्त(काष्ठा kernel_pkey_params *params)
-अणु
-	kमुक्त(params->info);
+static void keyctl_pkey_params_free(struct kernel_pkey_params *params)
+{
+	kfree(params->info);
 	key_put(params->key);
-पूर्ण
+}
 
-क्रमागत अणु
+enum {
 	Opt_err,
 	Opt_enc,		/* "enc=<encoding>" eg. "enc=oaep" */
 	Opt_hash,		/* "hash=<digest-name>" eg. "hash=sha1" */
-पूर्ण;
+};
 
-अटल स्थिर match_table_t param_keys = अणु
-	अणु Opt_enc,	"enc=%s" पूर्ण,
-	अणु Opt_hash,	"hash=%s" पूर्ण,
-	अणु Opt_err,	शून्य पूर्ण
-पूर्ण;
+static const match_table_t param_keys = {
+	{ Opt_enc,	"enc=%s" },
+	{ Opt_hash,	"hash=%s" },
+	{ Opt_err,	NULL }
+};
 
 /*
- * Parse the inक्रमmation string which consists of key=val pairs.
+ * Parse the information string which consists of key=val pairs.
  */
-अटल पूर्णांक keyctl_pkey_params_parse(काष्ठा kernel_pkey_params *params)
-अणु
-	अचिन्हित दीर्घ token_mask = 0;
+static int keyctl_pkey_params_parse(struct kernel_pkey_params *params)
+{
+	unsigned long token_mask = 0;
 	substring_t args[MAX_OPT_ARGS];
-	अक्षर *c = params->info, *p, *q;
-	पूर्णांक token;
+	char *c = params->info, *p, *q;
+	int token;
 
-	जबतक ((p = strsep(&c, " \t"))) अणु
-		अगर (*p == '\0' || *p == ' ' || *p == '\t')
-			जारी;
+	while ((p = strsep(&c, " \t"))) {
+		if (*p == '\0' || *p == ' ' || *p == '\t')
+			continue;
 		token = match_token(p, param_keys, args);
-		अगर (token == Opt_err)
-			वापस -EINVAL;
-		अगर (__test_and_set_bit(token, &token_mask))
-			वापस -EINVAL;
+		if (token == Opt_err)
+			return -EINVAL;
+		if (__test_and_set_bit(token, &token_mask))
+			return -EINVAL;
 		q = args[0].from;
-		अगर (!q[0])
-			वापस -EINVAL;
+		if (!q[0])
+			return -EINVAL;
 
-		चयन (token) अणु
-		हाल Opt_enc:
+		switch (token) {
+		case Opt_enc:
 			params->encoding = q;
-			अवरोध;
+			break;
 
-		हाल Opt_hash:
+		case Opt_hash:
 			params->hash_algo = q;
-			अवरोध;
+			break;
 
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+		default:
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Interpret parameters.  Callers must always call the मुक्त function
- * on params, even अगर an error is वापसed.
+ * Interpret parameters.  Callers must always call the free function
+ * on params, even if an error is returned.
  */
-अटल पूर्णांक keyctl_pkey_params_get(key_serial_t id,
-				  स्थिर अक्षर __user *_info,
-				  काष्ठा kernel_pkey_params *params)
-अणु
+static int keyctl_pkey_params_get(key_serial_t id,
+				  const char __user *_info,
+				  struct kernel_pkey_params *params)
+{
 	key_ref_t key_ref;
-	व्योम *p;
-	पूर्णांक ret;
+	void *p;
+	int ret;
 
-	स_रखो(params, 0, माप(*params));
+	memset(params, 0, sizeof(*params));
 	params->encoding = "raw";
 
 	p = strndup_user(_info, PAGE_SIZE);
-	अगर (IS_ERR(p))
-		वापस PTR_ERR(p);
+	if (IS_ERR(p))
+		return PTR_ERR(p);
 	params->info = p;
 
 	ret = keyctl_pkey_params_parse(params);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	key_ref = lookup_user_key(id, 0, KEY_NEED_SEARCH);
-	अगर (IS_ERR(key_ref))
-		वापस PTR_ERR(key_ref);
+	if (IS_ERR(key_ref))
+		return PTR_ERR(key_ref);
 	params->key = key_ref_to_ptr(key_ref);
 
-	अगर (!params->key->type->asym_query)
-		वापस -EOPNOTSUPP;
+	if (!params->key->type->asym_query)
+		return -EOPNOTSUPP;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Get parameters from userspace.  Callers must always call the मुक्त function
- * on params, even अगर an error is वापसed.
+ * Get parameters from userspace.  Callers must always call the free function
+ * on params, even if an error is returned.
  */
-अटल पूर्णांक keyctl_pkey_params_get_2(स्थिर काष्ठा keyctl_pkey_params __user *_params,
-				    स्थिर अक्षर __user *_info,
-				    पूर्णांक op,
-				    काष्ठा kernel_pkey_params *params)
-अणु
-	काष्ठा keyctl_pkey_params uparams;
-	काष्ठा kernel_pkey_query info;
-	पूर्णांक ret;
+static int keyctl_pkey_params_get_2(const struct keyctl_pkey_params __user *_params,
+				    const char __user *_info,
+				    int op,
+				    struct kernel_pkey_params *params)
+{
+	struct keyctl_pkey_params uparams;
+	struct kernel_pkey_query info;
+	int ret;
 
-	स_रखो(params, 0, माप(*params));
+	memset(params, 0, sizeof(*params));
 	params->encoding = "raw";
 
-	अगर (copy_from_user(&uparams, _params, माप(uparams)) != 0)
-		वापस -EFAULT;
+	if (copy_from_user(&uparams, _params, sizeof(uparams)) != 0)
+		return -EFAULT;
 
 	ret = keyctl_pkey_params_get(uparams.key_id, _info, params);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	ret = params->key->type->asym_query(params, &info);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	चयन (op) अणु
-	हाल KEYCTL_PKEY_ENCRYPT:
-	हाल KEYCTL_PKEY_DECRYPT:
-		अगर (uparams.in_len  > info.max_enc_size ||
+	switch (op) {
+	case KEYCTL_PKEY_ENCRYPT:
+	case KEYCTL_PKEY_DECRYPT:
+		if (uparams.in_len  > info.max_enc_size ||
 		    uparams.out_len > info.max_dec_size)
-			वापस -EINVAL;
-		अवरोध;
-	हाल KEYCTL_PKEY_SIGN:
-	हाल KEYCTL_PKEY_VERIFY:
-		अगर (uparams.in_len  > info.max_sig_size ||
+			return -EINVAL;
+		break;
+	case KEYCTL_PKEY_SIGN:
+	case KEYCTL_PKEY_VERIFY:
+		if (uparams.in_len  > info.max_sig_size ||
 		    uparams.out_len > info.max_data_size)
-			वापस -EINVAL;
-		अवरोध;
-	शेष:
+			return -EINVAL;
+		break;
+	default:
 		BUG();
-	पूर्ण
+	}
 
 	params->in_len  = uparams.in_len;
 	params->out_len = uparams.out_len;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Query inक्रमmation about an asymmetric key.
+ * Query information about an asymmetric key.
  */
-दीर्घ keyctl_pkey_query(key_serial_t id,
-		       स्थिर अक्षर __user *_info,
-		       काष्ठा keyctl_pkey_query __user *_res)
-अणु
-	काष्ठा kernel_pkey_params params;
-	काष्ठा kernel_pkey_query res;
-	दीर्घ ret;
+long keyctl_pkey_query(key_serial_t id,
+		       const char __user *_info,
+		       struct keyctl_pkey_query __user *_res)
+{
+	struct kernel_pkey_params params;
+	struct kernel_pkey_query res;
+	long ret;
 
 	ret = keyctl_pkey_params_get(id, _info, &params);
-	अगर (ret < 0)
-		जाओ error;
+	if (ret < 0)
+		goto error;
 
 	ret = params.key->type->asym_query(&params, &res);
-	अगर (ret < 0)
-		जाओ error;
+	if (ret < 0)
+		goto error;
 
 	ret = -EFAULT;
-	अगर (copy_to_user(_res, &res, माप(res)) == 0 &&
-	    clear_user(_res->__spare, माप(_res->__spare)) == 0)
+	if (copy_to_user(_res, &res, sizeof(res)) == 0 &&
+	    clear_user(_res->__spare, sizeof(_res->__spare)) == 0)
 		ret = 0;
 
 error:
-	keyctl_pkey_params_मुक्त(&params);
-	वापस ret;
-पूर्ण
+	keyctl_pkey_params_free(&params);
+	return ret;
+}
 
 /*
  * Encrypt/decrypt/sign
  *
- * Encrypt data, decrypt data or sign data using a खुला key.
+ * Encrypt data, decrypt data or sign data using a public key.
  *
- * _info is a string of supplementary inक्रमmation in key=val क्रमmat.  For
+ * _info is a string of supplementary information in key=val format.  For
  * instance, it might contain:
  *
  *	"enc=pkcs1 hash=sha256"
  *
- * where enc= specअगरies the encoding and hash= selects the OID to go in that
- * particular encoding अगर required.  If enc= isn't supplied, it's assumed that
+ * where enc= specifies the encoding and hash= selects the OID to go in that
+ * particular encoding if required.  If enc= isn't supplied, it's assumed that
  * the caller is supplying raw values.
  *
- * If successful, the amount of data written पूर्णांकo the output buffer is
- * वापसed.
+ * If successful, the amount of data written into the output buffer is
+ * returned.
  */
-दीर्घ keyctl_pkey_e_d_s(पूर्णांक op,
-		       स्थिर काष्ठा keyctl_pkey_params __user *_params,
-		       स्थिर अक्षर __user *_info,
-		       स्थिर व्योम __user *_in,
-		       व्योम __user *_out)
-अणु
-	काष्ठा kernel_pkey_params params;
-	व्योम *in, *out;
-	दीर्घ ret;
+long keyctl_pkey_e_d_s(int op,
+		       const struct keyctl_pkey_params __user *_params,
+		       const char __user *_info,
+		       const void __user *_in,
+		       void __user *_out)
+{
+	struct kernel_pkey_params params;
+	void *in, *out;
+	long ret;
 
 	ret = keyctl_pkey_params_get_2(_params, _info, op, &params);
-	अगर (ret < 0)
-		जाओ error_params;
+	if (ret < 0)
+		goto error_params;
 
 	ret = -EOPNOTSUPP;
-	अगर (!params.key->type->asym_eds_op)
-		जाओ error_params;
+	if (!params.key->type->asym_eds_op)
+		goto error_params;
 
-	चयन (op) अणु
-	हाल KEYCTL_PKEY_ENCRYPT:
+	switch (op) {
+	case KEYCTL_PKEY_ENCRYPT:
 		params.op = kernel_pkey_encrypt;
-		अवरोध;
-	हाल KEYCTL_PKEY_DECRYPT:
+		break;
+	case KEYCTL_PKEY_DECRYPT:
 		params.op = kernel_pkey_decrypt;
-		अवरोध;
-	हाल KEYCTL_PKEY_SIGN:
+		break;
+	case KEYCTL_PKEY_SIGN:
 		params.op = kernel_pkey_sign;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		BUG();
-	पूर्ण
+	}
 
 	in = memdup_user(_in, params.in_len);
-	अगर (IS_ERR(in)) अणु
+	if (IS_ERR(in)) {
 		ret = PTR_ERR(in);
-		जाओ error_params;
-	पूर्ण
+		goto error_params;
+	}
 
 	ret = -ENOMEM;
-	out = kदो_स्मृति(params.out_len, GFP_KERNEL);
-	अगर (!out)
-		जाओ error_in;
+	out = kmalloc(params.out_len, GFP_KERNEL);
+	if (!out)
+		goto error_in;
 
 	ret = params.key->type->asym_eds_op(&params, in, out);
-	अगर (ret < 0)
-		जाओ error_out;
+	if (ret < 0)
+		goto error_out;
 
-	अगर (copy_to_user(_out, out, ret) != 0)
+	if (copy_to_user(_out, out, ret) != 0)
 		ret = -EFAULT;
 
 error_out:
-	kमुक्त(out);
+	kfree(out);
 error_in:
-	kमुक्त(in);
+	kfree(in);
 error_params:
-	keyctl_pkey_params_मुक्त(&params);
-	वापस ret;
-पूर्ण
+	keyctl_pkey_params_free(&params);
+	return ret;
+}
 
 /*
- * Verअगरy a signature.
+ * Verify a signature.
  *
- * Verअगरy a खुला key signature using the given key, or अगर not given, search
- * क्रम a matching key.
+ * Verify a public key signature using the given key, or if not given, search
+ * for a matching key.
  *
- * _info is a string of supplementary inक्रमmation in key=val क्रमmat.  For
+ * _info is a string of supplementary information in key=val format.  For
  * instance, it might contain:
  *
  *	"enc=pkcs1 hash=sha256"
  *
- * where enc= specअगरies the signature blob encoding and hash= selects the OID
+ * where enc= specifies the signature blob encoding and hash= selects the OID
  * to go in that particular encoding.  If enc= isn't supplied, it's assumed
  * that the caller is supplying raw values.
  *
- * If successful, 0 is वापसed.
+ * If successful, 0 is returned.
  */
-दीर्घ keyctl_pkey_verअगरy(स्थिर काष्ठा keyctl_pkey_params __user *_params,
-			स्थिर अक्षर __user *_info,
-			स्थिर व्योम __user *_in,
-			स्थिर व्योम __user *_in2)
-अणु
-	काष्ठा kernel_pkey_params params;
-	व्योम *in, *in2;
-	दीर्घ ret;
+long keyctl_pkey_verify(const struct keyctl_pkey_params __user *_params,
+			const char __user *_info,
+			const void __user *_in,
+			const void __user *_in2)
+{
+	struct kernel_pkey_params params;
+	void *in, *in2;
+	long ret;
 
 	ret = keyctl_pkey_params_get_2(_params, _info, KEYCTL_PKEY_VERIFY,
 				       &params);
-	अगर (ret < 0)
-		जाओ error_params;
+	if (ret < 0)
+		goto error_params;
 
 	ret = -EOPNOTSUPP;
-	अगर (!params.key->type->asym_verअगरy_signature)
-		जाओ error_params;
+	if (!params.key->type->asym_verify_signature)
+		goto error_params;
 
 	in = memdup_user(_in, params.in_len);
-	अगर (IS_ERR(in)) अणु
+	if (IS_ERR(in)) {
 		ret = PTR_ERR(in);
-		जाओ error_params;
-	पूर्ण
+		goto error_params;
+	}
 
 	in2 = memdup_user(_in2, params.in2_len);
-	अगर (IS_ERR(in2)) अणु
+	if (IS_ERR(in2)) {
 		ret = PTR_ERR(in2);
-		जाओ error_in;
-	पूर्ण
+		goto error_in;
+	}
 
-	params.op = kernel_pkey_verअगरy;
-	ret = params.key->type->asym_verअगरy_signature(&params, in, in2);
+	params.op = kernel_pkey_verify;
+	ret = params.key->type->asym_verify_signature(&params, in, in2);
 
-	kमुक्त(in2);
+	kfree(in2);
 error_in:
-	kमुक्त(in);
+	kfree(in);
 error_params:
-	keyctl_pkey_params_मुक्त(&params);
-	वापस ret;
-पूर्ण
+	keyctl_pkey_params_free(&params);
+	return ret;
+}

@@ -1,49 +1,48 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * TXx9 SoC DMA Controller
  */
 
-#अगर_अघोषित __ASM_TXX9_DMAC_H
-#घोषणा __ASM_TXX9_DMAC_H
+#ifndef __ASM_TXX9_DMAC_H
+#define __ASM_TXX9_DMAC_H
 
-#समावेश <linux/dmaengine.h>
+#include <linux/dmaengine.h>
 
-#घोषणा TXX9_DMA_MAX_NR_CHANNELS	4
+#define TXX9_DMA_MAX_NR_CHANNELS	4
 
 /**
- * काष्ठा txx9dmac_platक्रमm_data - Controller configuration parameters
- * @स_नकल_chan: Channel used क्रम DMA_MEMCPY
- * @have_64bit_regs: DMAC have 64 bit रेजिस्टरs
+ * struct txx9dmac_platform_data - Controller configuration parameters
+ * @memcpy_chan: Channel used for DMA_MEMCPY
+ * @have_64bit_regs: DMAC have 64 bit registers
  */
-काष्ठा txx9dmac_platक्रमm_data अणु
-	पूर्णांक	स_नकल_chan;
+struct txx9dmac_platform_data {
+	int	memcpy_chan;
 	bool	have_64bit_regs;
-पूर्ण;
+};
 
 /**
- * काष्ठा txx9dmac_chan_platक्रमm_data - Channel configuration parameters
- * @dmac_dev: A platक्रमm device क्रम DMAC
+ * struct txx9dmac_chan_platform_data - Channel configuration parameters
+ * @dmac_dev: A platform device for DMAC
  */
-काष्ठा txx9dmac_chan_platक्रमm_data अणु
-	काष्ठा platक्रमm_device *dmac_dev;
-पूर्ण;
+struct txx9dmac_chan_platform_data {
+	struct platform_device *dmac_dev;
+};
 
 /**
- * काष्ठा txx9dmac_slave - Controller-specअगरic inक्रमmation about a slave
- * @tx_reg: physical address of data रेजिस्टर used क्रम
+ * struct txx9dmac_slave - Controller-specific information about a slave
+ * @tx_reg: physical address of data register used for
  *	memory-to-peripheral transfers
- * @rx_reg: physical address of data रेजिस्टर used क्रम
+ * @rx_reg: physical address of data register used for
  *	peripheral-to-memory transfers
- * @reg_width: peripheral रेजिस्टर width
+ * @reg_width: peripheral register width
  */
-काष्ठा txx9dmac_slave अणु
+struct txx9dmac_slave {
 	u64		tx_reg;
 	u64		rx_reg;
-	अचिन्हित पूर्णांक	reg_width;
-पूर्ण;
+	unsigned int	reg_width;
+};
 
-व्योम txx9_dmac_init(पूर्णांक id, अचिन्हित दीर्घ baseaddr, पूर्णांक irq,
-		    स्थिर काष्ठा txx9dmac_platक्रमm_data *pdata);
+void txx9_dmac_init(int id, unsigned long baseaddr, int irq,
+		    const struct txx9dmac_platform_data *pdata);
 
-#पूर्ण_अगर /* __ASM_TXX9_DMAC_H */
+#endif /* __ASM_TXX9_DMAC_H */

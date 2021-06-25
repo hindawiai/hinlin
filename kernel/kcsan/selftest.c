@@ -1,142 +1,141 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * KCSAN लघु boot-समय selftests.
+ * KCSAN short boot-time selftests.
  *
  * Copyright (C) 2019, Google LLC.
  */
 
-#घोषणा pr_fmt(fmt) "kcsan: " fmt
+#define pr_fmt(fmt) "kcsan: " fmt
 
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/prपूर्णांकk.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/types.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/printk.h>
+#include <linux/random.h>
+#include <linux/types.h>
 
-#समावेश "encoding.h"
+#include "encoding.h"
 
-#घोषणा ITERS_PER_TEST 2000
+#define ITERS_PER_TEST 2000
 
 /* Test requirements. */
-अटल bool test_requires(व्योम)
-अणु
-	/* अक्रमom should be initialized क्रम the below tests */
-	वापस pअक्रमom_u32() + pअक्रमom_u32() != 0;
-पूर्ण
+static bool test_requires(void)
+{
+	/* random should be initialized for the below tests */
+	return prandom_u32() + prandom_u32() != 0;
+}
 
 /*
- * Test watchpoपूर्णांक encode and decode: check that encoding some access's info,
+ * Test watchpoint encode and decode: check that encoding some access's info,
  * and then subsequent decode preserves the access's info.
  */
-अटल bool test_encode_decode(व्योम)
-अणु
-	पूर्णांक i;
+static bool test_encode_decode(void)
+{
+	int i;
 
-	क्रम (i = 0; i < ITERS_PER_TEST; ++i) अणु
-		माप_प्रकार size = pअक्रमom_u32_max(MAX_ENCODABLE_SIZE) + 1;
-		bool is_ग_लिखो = !!pअक्रमom_u32_max(2);
-		अचिन्हित दीर्घ addr;
+	for (i = 0; i < ITERS_PER_TEST; ++i) {
+		size_t size = prandom_u32_max(MAX_ENCODABLE_SIZE) + 1;
+		bool is_write = !!prandom_u32_max(2);
+		unsigned long addr;
 
-		pअक्रमom_bytes(&addr, माप(addr));
-		अगर (addr < PAGE_SIZE)
+		prandom_bytes(&addr, sizeof(addr));
+		if (addr < PAGE_SIZE)
 			addr = PAGE_SIZE;
 
-		अगर (WARN_ON(!check_encodable(addr, size)))
-			वापस false;
+		if (WARN_ON(!check_encodable(addr, size)))
+			return false;
 
 		/* Encode and decode */
-		अणु
-			स्थिर दीर्घ encoded_watchpoपूर्णांक =
-				encode_watchpoपूर्णांक(addr, size, is_ग_लिखो);
-			अचिन्हित दीर्घ verअगर_masked_addr;
-			माप_प्रकार verअगर_size;
-			bool verअगर_is_ग_लिखो;
+		{
+			const long encoded_watchpoint =
+				encode_watchpoint(addr, size, is_write);
+			unsigned long verif_masked_addr;
+			size_t verif_size;
+			bool verif_is_write;
 
-			/* Check special watchpoपूर्णांकs */
-			अगर (WARN_ON(decode_watchpoपूर्णांक(
-				    INVALID_WATCHPOINT, &verअगर_masked_addr,
-				    &verअगर_size, &verअगर_is_ग_लिखो)))
-				वापस false;
-			अगर (WARN_ON(decode_watchpoपूर्णांक(
-				    CONSUMED_WATCHPOINT, &verअगर_masked_addr,
-				    &verअगर_size, &verअगर_is_ग_लिखो)))
-				वापस false;
+			/* Check special watchpoints */
+			if (WARN_ON(decode_watchpoint(
+				    INVALID_WATCHPOINT, &verif_masked_addr,
+				    &verif_size, &verif_is_write)))
+				return false;
+			if (WARN_ON(decode_watchpoint(
+				    CONSUMED_WATCHPOINT, &verif_masked_addr,
+				    &verif_size, &verif_is_write)))
+				return false;
 
-			/* Check decoding watchpoपूर्णांक वापसs same data */
-			अगर (WARN_ON(!decode_watchpoपूर्णांक(
-				    encoded_watchpoपूर्णांक, &verअगर_masked_addr,
-				    &verअगर_size, &verअगर_is_ग_लिखो)))
-				वापस false;
-			अगर (WARN_ON(verअगर_masked_addr !=
+			/* Check decoding watchpoint returns same data */
+			if (WARN_ON(!decode_watchpoint(
+				    encoded_watchpoint, &verif_masked_addr,
+				    &verif_size, &verif_is_write)))
+				return false;
+			if (WARN_ON(verif_masked_addr !=
 				    (addr & WATCHPOINT_ADDR_MASK)))
-				जाओ fail;
-			अगर (WARN_ON(verअगर_size != size))
-				जाओ fail;
-			अगर (WARN_ON(is_ग_लिखो != verअगर_is_ग_लिखो))
-				जाओ fail;
+				goto fail;
+			if (WARN_ON(verif_size != size))
+				goto fail;
+			if (WARN_ON(is_write != verif_is_write))
+				goto fail;
 
-			जारी;
+			continue;
 fail:
 			pr_err("%s fail: %s %zu bytes @ %lx -> encoded: %lx -> %s %zu bytes @ %lx\n",
-			       __func__, is_ग_लिखो ? "write" : "read", size,
-			       addr, encoded_watchpoपूर्णांक,
-			       verअगर_is_ग_लिखो ? "write" : "read", verअगर_size,
-			       verअगर_masked_addr);
-			वापस false;
-		पूर्ण
-	पूर्ण
+			       __func__, is_write ? "write" : "read", size,
+			       addr, encoded_watchpoint,
+			       verif_is_write ? "write" : "read", verif_size,
+			       verif_masked_addr);
+			return false;
+		}
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /* Test access matching function. */
-अटल bool test_matching_access(व्योम)
-अणु
-	अगर (WARN_ON(!matching_access(10, 1, 10, 1)))
-		वापस false;
-	अगर (WARN_ON(!matching_access(10, 2, 11, 1)))
-		वापस false;
-	अगर (WARN_ON(!matching_access(10, 1, 9, 2)))
-		वापस false;
-	अगर (WARN_ON(matching_access(10, 1, 11, 1)))
-		वापस false;
-	अगर (WARN_ON(matching_access(9, 1, 10, 1)))
-		वापस false;
+static bool test_matching_access(void)
+{
+	if (WARN_ON(!matching_access(10, 1, 10, 1)))
+		return false;
+	if (WARN_ON(!matching_access(10, 2, 11, 1)))
+		return false;
+	if (WARN_ON(!matching_access(10, 1, 9, 2)))
+		return false;
+	if (WARN_ON(matching_access(10, 1, 11, 1)))
+		return false;
+	if (WARN_ON(matching_access(9, 1, 10, 1)))
+		return false;
 
 	/*
 	 * An access of size 0 could match another access, as demonstrated here.
 	 * Rather than add more comparisons to 'matching_access()', which would
-	 * end up in the fast-path क्रम *all* checks, check_access() simply
-	 * वापसs क्रम all accesses of size 0.
+	 * end up in the fast-path for *all* checks, check_access() simply
+	 * returns for all accesses of size 0.
 	 */
-	अगर (WARN_ON(!matching_access(8, 8, 12, 0)))
-		वापस false;
+	if (WARN_ON(!matching_access(8, 8, 12, 0)))
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक __init kcsan_selftest(व्योम)
-अणु
-	पूर्णांक passed = 0;
-	पूर्णांक total = 0;
+static int __init kcsan_selftest(void)
+{
+	int passed = 0;
+	int total = 0;
 
-#घोषणा RUN_TEST(करो_test)                                                      \
-	करो अणु                                                                   \
+#define RUN_TEST(do_test)                                                      \
+	do {                                                                   \
 		++total;                                                       \
-		अगर (करो_test())                                                 \
+		if (do_test())                                                 \
 			++passed;                                              \
-		अन्यथा                                                           \
-			pr_err("selftest: " #करो_test " failed");               \
-	पूर्ण जबतक (0)
+		else                                                           \
+			pr_err("selftest: " #do_test " failed");               \
+	} while (0)
 
 	RUN_TEST(test_requires);
 	RUN_TEST(test_encode_decode);
 	RUN_TEST(test_matching_access);
 
 	pr_info("selftest: %d/%d tests passed\n", passed, total);
-	अगर (passed != total)
+	if (passed != total)
 		panic("selftests failed");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 postcore_initcall(kcsan_selftest);

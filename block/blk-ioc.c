@@ -1,22 +1,21 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Functions related to io context handling
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/bपन.स>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sched/task.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/bio.h>
+#include <linux/blkdev.h>
+#include <linux/slab.h>
+#include <linux/sched/task.h>
 
-#समावेश "blk.h"
+#include "blk.h"
 
 /*
  * For io context allocations
  */
-अटल काष्ठा kmem_cache *iocontext_cachep;
+static struct kmem_cache *iocontext_cachep;
 
 /**
  * get_io_context - increment reference count to io_context
@@ -24,92 +23,92 @@
  *
  * Increment reference count to @ioc.
  */
-व्योम get_io_context(काष्ठा io_context *ioc)
-अणु
-	BUG_ON(atomic_दीर्घ_पढ़ो(&ioc->refcount) <= 0);
-	atomic_दीर्घ_inc(&ioc->refcount);
-पूर्ण
+void get_io_context(struct io_context *ioc)
+{
+	BUG_ON(atomic_long_read(&ioc->refcount) <= 0);
+	atomic_long_inc(&ioc->refcount);
+}
 
-अटल व्योम icq_मुक्त_icq_rcu(काष्ठा rcu_head *head)
-अणु
-	काष्ठा io_cq *icq = container_of(head, काष्ठा io_cq, __rcu_head);
+static void icq_free_icq_rcu(struct rcu_head *head)
+{
+	struct io_cq *icq = container_of(head, struct io_cq, __rcu_head);
 
-	kmem_cache_मुक्त(icq->__rcu_icq_cache, icq);
-पूर्ण
+	kmem_cache_free(icq->__rcu_icq_cache, icq);
+}
 
 /*
- * Exit an icq. Called with ioc locked क्रम blk-mq, and with both ioc
- * and queue locked क्रम legacy.
+ * Exit an icq. Called with ioc locked for blk-mq, and with both ioc
+ * and queue locked for legacy.
  */
-अटल व्योम ioc_निकास_icq(काष्ठा io_cq *icq)
-अणु
-	काष्ठा elevator_type *et = icq->q->elevator->type;
+static void ioc_exit_icq(struct io_cq *icq)
+{
+	struct elevator_type *et = icq->q->elevator->type;
 
-	अगर (icq->flags & ICQ_EXITED)
-		वापस;
+	if (icq->flags & ICQ_EXITED)
+		return;
 
-	अगर (et->ops.निकास_icq)
-		et->ops.निकास_icq(icq);
+	if (et->ops.exit_icq)
+		et->ops.exit_icq(icq);
 
 	icq->flags |= ICQ_EXITED;
-पूर्ण
+}
 
 /*
- * Release an icq. Called with ioc locked क्रम blk-mq, and with both ioc
- * and queue locked क्रम legacy.
+ * Release an icq. Called with ioc locked for blk-mq, and with both ioc
+ * and queue locked for legacy.
  */
-अटल व्योम ioc_destroy_icq(काष्ठा io_cq *icq)
-अणु
-	काष्ठा io_context *ioc = icq->ioc;
-	काष्ठा request_queue *q = icq->q;
-	काष्ठा elevator_type *et = q->elevator->type;
+static void ioc_destroy_icq(struct io_cq *icq)
+{
+	struct io_context *ioc = icq->ioc;
+	struct request_queue *q = icq->q;
+	struct elevator_type *et = q->elevator->type;
 
-	lockdep_निश्चित_held(&ioc->lock);
+	lockdep_assert_held(&ioc->lock);
 
 	radix_tree_delete(&ioc->icq_tree, icq->q->id);
 	hlist_del_init(&icq->ioc_node);
 	list_del_init(&icq->q_node);
 
 	/*
-	 * Both setting lookup hपूर्णांक to and clearing it from @icq are करोne
-	 * under queue_lock.  If it's not poपूर्णांकing to @icq now, it never
-	 * will.  Hपूर्णांक assignment itself can race safely.
+	 * Both setting lookup hint to and clearing it from @icq are done
+	 * under queue_lock.  If it's not pointing to @icq now, it never
+	 * will.  Hint assignment itself can race safely.
 	 */
-	अगर (rcu_access_poपूर्णांकer(ioc->icq_hपूर्णांक) == icq)
-		rcu_assign_poपूर्णांकer(ioc->icq_hपूर्णांक, शून्य);
+	if (rcu_access_pointer(ioc->icq_hint) == icq)
+		rcu_assign_pointer(ioc->icq_hint, NULL);
 
-	ioc_निकास_icq(icq);
+	ioc_exit_icq(icq);
 
 	/*
-	 * @icq->q might have gone away by the समय RCU callback runs
+	 * @icq->q might have gone away by the time RCU callback runs
 	 * making it impossible to determine icq_cache.  Record it in @icq.
 	 */
 	icq->__rcu_icq_cache = et->icq_cache;
 	icq->flags |= ICQ_DESTROYED;
-	call_rcu(&icq->__rcu_head, icq_मुक्त_icq_rcu);
-पूर्ण
+	call_rcu(&icq->__rcu_head, icq_free_icq_rcu);
+}
 
 /*
- * Slow path क्रम ioc release in put_io_context().  Perक्रमms द्विगुन-lock
- * dancing to unlink all icq's and then मुक्तs ioc.
+ * Slow path for ioc release in put_io_context().  Performs double-lock
+ * dancing to unlink all icq's and then frees ioc.
  */
-अटल व्योम ioc_release_fn(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा io_context *ioc = container_of(work, काष्ठा io_context,
+static void ioc_release_fn(struct work_struct *work)
+{
+	struct io_context *ioc = container_of(work, struct io_context,
 					      release_work);
 	spin_lock_irq(&ioc->lock);
 
-	जबतक (!hlist_empty(&ioc->icq_list)) अणु
-		काष्ठा io_cq *icq = hlist_entry(ioc->icq_list.first,
-						काष्ठा io_cq, ioc_node);
-		काष्ठा request_queue *q = icq->q;
+	while (!hlist_empty(&ioc->icq_list)) {
+		struct io_cq *icq = hlist_entry(ioc->icq_list.first,
+						struct io_cq, ioc_node);
+		struct request_queue *q = icq->q;
 
-		अगर (spin_trylock(&q->queue_lock)) अणु
+		if (spin_trylock(&q->queue_lock)) {
 			ioc_destroy_icq(icq);
 			spin_unlock(&q->queue_lock);
-		पूर्ण अन्यथा अणु
-			/* Make sure q and icq cannot be मुक्तd. */
-			rcu_पढ़ो_lock();
+		} else {
+			/* Make sure q and icq cannot be freed. */
+			rcu_read_lock();
 
 			/* Re-acquire the locks in the correct order. */
 			spin_unlock(&ioc->lock);
@@ -120,125 +119,125 @@
 			 * The icq may have been destroyed when the ioc lock
 			 * was released.
 			 */
-			अगर (!(icq->flags & ICQ_DESTROYED))
+			if (!(icq->flags & ICQ_DESTROYED))
 				ioc_destroy_icq(icq);
 
 			spin_unlock(&q->queue_lock);
-			rcu_पढ़ो_unlock();
-		पूर्ण
-	पूर्ण
+			rcu_read_unlock();
+		}
+	}
 
 	spin_unlock_irq(&ioc->lock);
 
-	kmem_cache_मुक्त(iocontext_cachep, ioc);
-पूर्ण
+	kmem_cache_free(iocontext_cachep, ioc);
+}
 
 /**
  * put_io_context - put a reference of io_context
  * @ioc: io_context to put
  *
- * Decrement reference count of @ioc and release it अगर the count reaches
+ * Decrement reference count of @ioc and release it if the count reaches
  * zero.
  */
-व्योम put_io_context(काष्ठा io_context *ioc)
-अणु
-	अचिन्हित दीर्घ flags;
-	bool मुक्त_ioc = false;
+void put_io_context(struct io_context *ioc)
+{
+	unsigned long flags;
+	bool free_ioc = false;
 
-	अगर (ioc == शून्य)
-		वापस;
+	if (ioc == NULL)
+		return;
 
-	BUG_ON(atomic_दीर्घ_पढ़ो(&ioc->refcount) <= 0);
+	BUG_ON(atomic_long_read(&ioc->refcount) <= 0);
 
 	/*
-	 * Releasing ioc requires reverse order द्विगुन locking and we may
-	 * alपढ़ोy be holding a queue_lock.  Do it asynchronously from wq.
+	 * Releasing ioc requires reverse order double locking and we may
+	 * already be holding a queue_lock.  Do it asynchronously from wq.
 	 */
-	अगर (atomic_दीर्घ_dec_and_test(&ioc->refcount)) अणु
+	if (atomic_long_dec_and_test(&ioc->refcount)) {
 		spin_lock_irqsave(&ioc->lock, flags);
-		अगर (!hlist_empty(&ioc->icq_list))
-			queue_work(प्रणाली_घातer_efficient_wq,
+		if (!hlist_empty(&ioc->icq_list))
+			queue_work(system_power_efficient_wq,
 					&ioc->release_work);
-		अन्यथा
-			मुक्त_ioc = true;
+		else
+			free_ioc = true;
 		spin_unlock_irqrestore(&ioc->lock, flags);
-	पूर्ण
+	}
 
-	अगर (मुक्त_ioc)
-		kmem_cache_मुक्त(iocontext_cachep, ioc);
-पूर्ण
+	if (free_ioc)
+		kmem_cache_free(iocontext_cachep, ioc);
+}
 
 /**
  * put_io_context_active - put active reference on ioc
- * @ioc: ioc of पूर्णांकerest
+ * @ioc: ioc of interest
  *
- * Unकरो get_io_context_active().  If active reference reaches zero after
- * put, @ioc can never issue further IOs and ioscheds are notअगरied.
+ * Undo get_io_context_active().  If active reference reaches zero after
+ * put, @ioc can never issue further IOs and ioscheds are notified.
  */
-व्योम put_io_context_active(काष्ठा io_context *ioc)
-अणु
-	काष्ठा io_cq *icq;
+void put_io_context_active(struct io_context *ioc)
+{
+	struct io_cq *icq;
 
-	अगर (!atomic_dec_and_test(&ioc->active_ref)) अणु
+	if (!atomic_dec_and_test(&ioc->active_ref)) {
 		put_io_context(ioc);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	spin_lock_irq(&ioc->lock);
-	hlist_क्रम_each_entry(icq, &ioc->icq_list, ioc_node) अणु
-		अगर (icq->flags & ICQ_EXITED)
-			जारी;
+	hlist_for_each_entry(icq, &ioc->icq_list, ioc_node) {
+		if (icq->flags & ICQ_EXITED)
+			continue;
 
-		ioc_निकास_icq(icq);
-	पूर्ण
+		ioc_exit_icq(icq);
+	}
 	spin_unlock_irq(&ioc->lock);
 
 	put_io_context(ioc);
-पूर्ण
+}
 
-/* Called by the निकासing task */
-व्योम निकास_io_context(काष्ठा task_काष्ठा *task)
-अणु
-	काष्ठा io_context *ioc;
+/* Called by the exiting task */
+void exit_io_context(struct task_struct *task)
+{
+	struct io_context *ioc;
 
 	task_lock(task);
 	ioc = task->io_context;
-	task->io_context = शून्य;
+	task->io_context = NULL;
 	task_unlock(task);
 
 	atomic_dec(&ioc->nr_tasks);
 	put_io_context_active(ioc);
-पूर्ण
+}
 
-अटल व्योम __ioc_clear_queue(काष्ठा list_head *icq_list)
-अणु
-	अचिन्हित दीर्घ flags;
+static void __ioc_clear_queue(struct list_head *icq_list)
+{
+	unsigned long flags;
 
-	rcu_पढ़ो_lock();
-	जबतक (!list_empty(icq_list)) अणु
-		काष्ठा io_cq *icq = list_entry(icq_list->next,
-						काष्ठा io_cq, q_node);
-		काष्ठा io_context *ioc = icq->ioc;
+	rcu_read_lock();
+	while (!list_empty(icq_list)) {
+		struct io_cq *icq = list_entry(icq_list->next,
+						struct io_cq, q_node);
+		struct io_context *ioc = icq->ioc;
 
 		spin_lock_irqsave(&ioc->lock, flags);
-		अगर (icq->flags & ICQ_DESTROYED) अणु
+		if (icq->flags & ICQ_DESTROYED) {
 			spin_unlock_irqrestore(&ioc->lock, flags);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		ioc_destroy_icq(icq);
 		spin_unlock_irqrestore(&ioc->lock, flags);
-	पूर्ण
-	rcu_पढ़ो_unlock();
-पूर्ण
+	}
+	rcu_read_unlock();
+}
 
 /**
- * ioc_clear_queue - अवरोध any ioc association with the specअगरied queue
+ * ioc_clear_queue - break any ioc association with the specified queue
  * @q: request_queue being cleared
  *
- * Walk @q->icq_list and निकास all io_cq's.
+ * Walk @q->icq_list and exit all io_cq's.
  */
-व्योम ioc_clear_queue(काष्ठा request_queue *q)
-अणु
+void ioc_clear_queue(struct request_queue *q)
+{
 	LIST_HEAD(icq_list);
 
 	spin_lock_irq(&q->queue_lock);
@@ -246,20 +245,20 @@
 	spin_unlock_irq(&q->queue_lock);
 
 	__ioc_clear_queue(&icq_list);
-पूर्ण
+}
 
-पूर्णांक create_task_io_context(काष्ठा task_काष्ठा *task, gfp_t gfp_flags, पूर्णांक node)
-अणु
-	काष्ठा io_context *ioc;
-	पूर्णांक ret;
+int create_task_io_context(struct task_struct *task, gfp_t gfp_flags, int node)
+{
+	struct io_context *ioc;
+	int ret;
 
 	ioc = kmem_cache_alloc_node(iocontext_cachep, gfp_flags | __GFP_ZERO,
 				    node);
-	अगर (unlikely(!ioc))
-		वापस -ENOMEM;
+	if (unlikely(!ioc))
+		return -ENOMEM;
 
 	/* initialize */
-	atomic_दीर्घ_set(&ioc->refcount, 1);
+	atomic_long_set(&ioc->refcount, 1);
 	atomic_set(&ioc->nr_tasks, 1);
 	atomic_set(&ioc->active_ref, 1);
 	spin_lock_init(&ioc->lock);
@@ -268,59 +267,59 @@
 	INIT_WORK(&ioc->release_work, ioc_release_fn);
 
 	/*
-	 * Try to install.  ioc shouldn't be installed अगर someone अन्यथा
-	 * alपढ़ोy did or @task, which isn't %current, is निकासing.  Note
-	 * that we need to allow ioc creation on निकासing %current as निकास
-	 * path may issue IOs from e.g. निकास_files().  The निकास path is
-	 * responsible क्रम not issuing IO after निकास_io_context().
+	 * Try to install.  ioc shouldn't be installed if someone else
+	 * already did or @task, which isn't %current, is exiting.  Note
+	 * that we need to allow ioc creation on exiting %current as exit
+	 * path may issue IOs from e.g. exit_files().  The exit path is
+	 * responsible for not issuing IO after exit_io_context().
 	 */
 	task_lock(task);
-	अगर (!task->io_context &&
+	if (!task->io_context &&
 	    (task == current || !(task->flags & PF_EXITING)))
 		task->io_context = ioc;
-	अन्यथा
-		kmem_cache_मुक्त(iocontext_cachep, ioc);
+	else
+		kmem_cache_free(iocontext_cachep, ioc);
 
 	ret = task->io_context ? 0 : -EBUSY;
 
 	task_unlock(task);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * get_task_io_context - get io_context of a task
- * @task: task of पूर्णांकerest
- * @gfp_flags: allocation flags, used अगर allocation is necessary
- * @node: allocation node, used अगर allocation is necessary
+ * @task: task of interest
+ * @gfp_flags: allocation flags, used if allocation is necessary
+ * @node: allocation node, used if allocation is necessary
  *
- * Return io_context of @task.  If it करोesn't exist, it is created with
- * @gfp_flags and @node.  The वापसed io_context has its reference count
+ * Return io_context of @task.  If it doesn't exist, it is created with
+ * @gfp_flags and @node.  The returned io_context has its reference count
  * incremented.
  *
  * This function always goes through task_lock() and it's better to use
- * %current->io_context + get_io_context() क्रम %current.
+ * %current->io_context + get_io_context() for %current.
  */
-काष्ठा io_context *get_task_io_context(काष्ठा task_काष्ठा *task,
-				       gfp_t gfp_flags, पूर्णांक node)
-अणु
-	काष्ठा io_context *ioc;
+struct io_context *get_task_io_context(struct task_struct *task,
+				       gfp_t gfp_flags, int node)
+{
+	struct io_context *ioc;
 
-	might_sleep_अगर(gfpflags_allow_blocking(gfp_flags));
+	might_sleep_if(gfpflags_allow_blocking(gfp_flags));
 
-	करो अणु
+	do {
 		task_lock(task);
 		ioc = task->io_context;
-		अगर (likely(ioc)) अणु
+		if (likely(ioc)) {
 			get_io_context(ioc);
 			task_unlock(task);
-			वापस ioc;
-		पूर्ण
+			return ioc;
+		}
 		task_unlock(task);
-	पूर्ण जबतक (!create_task_io_context(task, gfp_flags, node));
+	} while (!create_task_io_context(task, gfp_flags, node));
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /**
  * ioc_lookup_icq - lookup io_cq from ioc
@@ -330,62 +329,62 @@
  * Look up io_cq associated with @ioc - @q pair from @ioc.  Must be called
  * with @q->queue_lock held.
  */
-काष्ठा io_cq *ioc_lookup_icq(काष्ठा io_context *ioc, काष्ठा request_queue *q)
-अणु
-	काष्ठा io_cq *icq;
+struct io_cq *ioc_lookup_icq(struct io_context *ioc, struct request_queue *q)
+{
+	struct io_cq *icq;
 
-	lockdep_निश्चित_held(&q->queue_lock);
+	lockdep_assert_held(&q->queue_lock);
 
 	/*
-	 * icq's are indexed from @ioc using radix tree and hपूर्णांक poपूर्णांकer,
-	 * both of which are रक्षित with RCU.  All removals are करोne
-	 * holding both q and ioc locks, and we're holding q lock - अगर we
-	 * find a icq which poपूर्णांकs to us, it's guaranteed to be valid.
+	 * icq's are indexed from @ioc using radix tree and hint pointer,
+	 * both of which are protected with RCU.  All removals are done
+	 * holding both q and ioc locks, and we're holding q lock - if we
+	 * find a icq which points to us, it's guaranteed to be valid.
 	 */
-	rcu_पढ़ो_lock();
-	icq = rcu_dereference(ioc->icq_hपूर्णांक);
-	अगर (icq && icq->q == q)
-		जाओ out;
+	rcu_read_lock();
+	icq = rcu_dereference(ioc->icq_hint);
+	if (icq && icq->q == q)
+		goto out;
 
 	icq = radix_tree_lookup(&ioc->icq_tree, q->id);
-	अगर (icq && icq->q == q)
-		rcu_assign_poपूर्णांकer(ioc->icq_hपूर्णांक, icq);	/* allowed to race */
-	अन्यथा
-		icq = शून्य;
+	if (icq && icq->q == q)
+		rcu_assign_pointer(ioc->icq_hint, icq);	/* allowed to race */
+	else
+		icq = NULL;
 out:
-	rcu_पढ़ो_unlock();
-	वापस icq;
-पूर्ण
+	rcu_read_unlock();
+	return icq;
+}
 EXPORT_SYMBOL(ioc_lookup_icq);
 
 /**
  * ioc_create_icq - create and link io_cq
- * @ioc: io_context of पूर्णांकerest
- * @q: request_queue of पूर्णांकerest
+ * @ioc: io_context of interest
+ * @q: request_queue of interest
  * @gfp_mask: allocation mask
  *
- * Make sure io_cq linking @ioc and @q exists.  If icq करोesn't exist, they
+ * Make sure io_cq linking @ioc and @q exists.  If icq doesn't exist, they
  * will be created using @gfp_mask.
  *
- * The caller is responsible क्रम ensuring @ioc won't go away and @q is
- * alive and will stay alive until this function वापसs.
+ * The caller is responsible for ensuring @ioc won't go away and @q is
+ * alive and will stay alive until this function returns.
  */
-काष्ठा io_cq *ioc_create_icq(काष्ठा io_context *ioc, काष्ठा request_queue *q,
+struct io_cq *ioc_create_icq(struct io_context *ioc, struct request_queue *q,
 			     gfp_t gfp_mask)
-अणु
-	काष्ठा elevator_type *et = q->elevator->type;
-	काष्ठा io_cq *icq;
+{
+	struct elevator_type *et = q->elevator->type;
+	struct io_cq *icq;
 
 	/* allocate stuff */
 	icq = kmem_cache_alloc_node(et->icq_cache, gfp_mask | __GFP_ZERO,
 				    q->node);
-	अगर (!icq)
-		वापस शून्य;
+	if (!icq)
+		return NULL;
 
-	अगर (radix_tree_maybe_preload(gfp_mask) < 0) अणु
-		kmem_cache_मुक्त(et->icq_cache, icq);
-		वापस शून्य;
-	पूर्ण
+	if (radix_tree_maybe_preload(gfp_mask) < 0) {
+		kmem_cache_free(et->icq_cache, icq);
+		return NULL;
+	}
 
 	icq->ioc = ioc;
 	icq->q = q;
@@ -396,28 +395,28 @@ EXPORT_SYMBOL(ioc_lookup_icq);
 	spin_lock_irq(&q->queue_lock);
 	spin_lock(&ioc->lock);
 
-	अगर (likely(!radix_tree_insert(&ioc->icq_tree, q->id, icq))) अणु
+	if (likely(!radix_tree_insert(&ioc->icq_tree, q->id, icq))) {
 		hlist_add_head(&icq->ioc_node, &ioc->icq_list);
 		list_add(&icq->q_node, &q->icq_list);
-		अगर (et->ops.init_icq)
+		if (et->ops.init_icq)
 			et->ops.init_icq(icq);
-	पूर्ण अन्यथा अणु
-		kmem_cache_मुक्त(et->icq_cache, icq);
+	} else {
+		kmem_cache_free(et->icq_cache, icq);
 		icq = ioc_lookup_icq(ioc, q);
-		अगर (!icq)
-			prपूर्णांकk(KERN_ERR "cfq: icq link failed!\n");
-	पूर्ण
+		if (!icq)
+			printk(KERN_ERR "cfq: icq link failed!\n");
+	}
 
 	spin_unlock(&ioc->lock);
 	spin_unlock_irq(&q->queue_lock);
 	radix_tree_preload_end();
-	वापस icq;
-पूर्ण
+	return icq;
+}
 
-अटल पूर्णांक __init blk_ioc_init(व्योम)
-अणु
+static int __init blk_ioc_init(void)
+{
 	iocontext_cachep = kmem_cache_create("blkdev_ioc",
-			माप(काष्ठा io_context), 0, SLAB_PANIC, शून्य);
-	वापस 0;
-पूर्ण
+			sizeof(struct io_context), 0, SLAB_PANIC, NULL);
+	return 0;
+}
 subsys_initcall(blk_ioc_init);

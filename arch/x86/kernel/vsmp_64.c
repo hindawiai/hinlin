@@ -1,154 +1,153 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * vSMPowered(पंचांग) प्रणालीs specअगरic initialization
+ * vSMPowered(tm) systems specific initialization
  * Copyright (C) 2005 ScaleMP Inc.
  *
  * Ravikiran Thirumalai <kiran@scalemp.com>,
  * Shai Fultheim <shai@scalemp.com>
- * Paravirt ops पूर्णांकegration: Glauber de Oliveira Costa <gcosta@redhat.com>,
+ * Paravirt ops integration: Glauber de Oliveira Costa <gcosta@redhat.com>,
  *			     Ravikiran Thirumalai <kiran@scalemp.com>
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/pci_ids.h>
-#समावेश <linux/pci_regs.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/irq.h>
+#include <linux/init.h>
+#include <linux/pci_ids.h>
+#include <linux/pci_regs.h>
+#include <linux/smp.h>
+#include <linux/irq.h>
 
-#समावेश <यंत्र/apic.h>
-#समावेश <यंत्र/pci-direct.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/paravirt.h>
-#समावेश <यंत्र/setup.h>
+#include <asm/apic.h>
+#include <asm/pci-direct.h>
+#include <asm/io.h>
+#include <asm/paravirt.h>
+#include <asm/setup.h>
 
-#घोषणा TOPOLOGY_REGISTER_OFFSET 0x10
+#define TOPOLOGY_REGISTER_OFFSET 0x10
 
-#अगर_घोषित CONFIG_PCI
-अटल व्योम __init set_vsmp_ctl(व्योम)
-अणु
-	व्योम __iomem *address;
-	अचिन्हित पूर्णांक cap, ctl, cfg;
+#ifdef CONFIG_PCI
+static void __init set_vsmp_ctl(void)
+{
+	void __iomem *address;
+	unsigned int cap, ctl, cfg;
 
 	/* set vSMP magic bits to indicate vSMP capable kernel */
-	cfg = पढ़ो_pci_config(0, 0x1f, 0, PCI_BASE_ADDRESS_0);
+	cfg = read_pci_config(0, 0x1f, 0, PCI_BASE_ADDRESS_0);
 	address = early_ioremap(cfg, 8);
-	cap = पढ़ोl(address);
-	ctl = पढ़ोl(address + 4);
-	prपूर्णांकk(KERN_INFO "vSMP CTL: capabilities:0x%08x  control:0x%08x\n",
+	cap = readl(address);
+	ctl = readl(address + 4);
+	printk(KERN_INFO "vSMP CTL: capabilities:0x%08x  control:0x%08x\n",
 	       cap, ctl);
 
-	/* If possible, let the vSMP foundation route the पूर्णांकerrupt optimally */
-#अगर_घोषित CONFIG_SMP
-	अगर (cap & ctl & BIT(8)) अणु
+	/* If possible, let the vSMP foundation route the interrupt optimally */
+#ifdef CONFIG_SMP
+	if (cap & ctl & BIT(8)) {
 		ctl &= ~BIT(8);
 
-#अगर_घोषित CONFIG_PROC_FS
+#ifdef CONFIG_PROC_FS
 		/* Don't let users change irq affinity via procfs */
 		no_irq_affinity = 1;
-#पूर्ण_अगर
-	पूर्ण
-#पूर्ण_अगर
+#endif
+	}
+#endif
 
-	ग_लिखोl(ctl, address + 4);
-	ctl = पढ़ोl(address + 4);
+	writel(ctl, address + 4);
+	ctl = readl(address + 4);
 	pr_info("vSMP CTL: control set to:0x%08x\n", ctl);
 
 	early_iounmap(address, 8);
-पूर्ण
-अटल पूर्णांक is_vsmp = -1;
+}
+static int is_vsmp = -1;
 
-अटल व्योम __init detect_vsmp_box(व्योम)
-अणु
+static void __init detect_vsmp_box(void)
+{
 	is_vsmp = 0;
 
-	अगर (!early_pci_allowed())
-		वापस;
+	if (!early_pci_allowed())
+		return;
 
-	/* Check अगर we are running on a ScaleMP vSMPowered box */
-	अगर (पढ़ो_pci_config(0, 0x1f, 0, PCI_VENDOR_ID) ==
+	/* Check if we are running on a ScaleMP vSMPowered box */
+	if (read_pci_config(0, 0x1f, 0, PCI_VENDOR_ID) ==
 	     (PCI_VENDOR_ID_SCALEMP | (PCI_DEVICE_ID_SCALEMP_VSMP_CTL << 16)))
 		is_vsmp = 1;
-पूर्ण
+}
 
-अटल पूर्णांक is_vsmp_box(व्योम)
-अणु
-	अगर (is_vsmp != -1)
-		वापस is_vsmp;
-	अन्यथा अणु
+static int is_vsmp_box(void)
+{
+	if (is_vsmp != -1)
+		return is_vsmp;
+	else {
 		WARN_ON_ONCE(1);
-		वापस 0;
-	पूर्ण
-पूर्ण
+		return 0;
+	}
+}
 
-#अन्यथा
-अटल व्योम __init detect_vsmp_box(व्योम)
-अणु
-पूर्ण
-अटल पूर्णांक is_vsmp_box(व्योम)
-अणु
-	वापस 0;
-पूर्ण
-अटल व्योम __init set_vsmp_ctl(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर
+#else
+static void __init detect_vsmp_box(void)
+{
+}
+static int is_vsmp_box(void)
+{
+	return 0;
+}
+static void __init set_vsmp_ctl(void)
+{
+}
+#endif
 
-अटल व्योम __init vsmp_cap_cpus(व्योम)
-अणु
-#अगर !defined(CONFIG_X86_VSMP) && defined(CONFIG_SMP) && defined(CONFIG_PCI)
-	व्योम __iomem *address;
-	अचिन्हित पूर्णांक cfg, topology, node_shअगरt, maxcpus;
+static void __init vsmp_cap_cpus(void)
+{
+#if !defined(CONFIG_X86_VSMP) && defined(CONFIG_SMP) && defined(CONFIG_PCI)
+	void __iomem *address;
+	unsigned int cfg, topology, node_shift, maxcpus;
 
 	/*
 	 * CONFIG_X86_VSMP is not configured, so limit the number CPUs to the
 	 * ones present in the first board, unless explicitly overridden by
 	 * setup_max_cpus
 	 */
-	अगर (setup_max_cpus != NR_CPUS)
-		वापस;
+	if (setup_max_cpus != NR_CPUS)
+		return;
 
-	/* Read the vSMP Foundation topology रेजिस्टर */
-	cfg = पढ़ो_pci_config(0, 0x1f, 0, PCI_BASE_ADDRESS_0);
+	/* Read the vSMP Foundation topology register */
+	cfg = read_pci_config(0, 0x1f, 0, PCI_BASE_ADDRESS_0);
 	address = early_ioremap(cfg + TOPOLOGY_REGISTER_OFFSET, 4);
-	अगर (WARN_ON(!address))
-		वापस;
+	if (WARN_ON(!address))
+		return;
 
-	topology = पढ़ोl(address);
-	node_shअगरt = (topology >> 16) & 0x7;
-	अगर (!node_shअगरt)
+	topology = readl(address);
+	node_shift = (topology >> 16) & 0x7;
+	if (!node_shift)
 		/* The value 0 should be decoded as 8 */
-		node_shअगरt = 8;
-	maxcpus = (topology & ((1 << node_shअगरt) - 1)) + 1;
+		node_shift = 8;
+	maxcpus = (topology & ((1 << node_shift) - 1)) + 1;
 
 	pr_info("vSMP CTL: Capping CPUs to %d (CONFIG_X86_VSMP is unset)\n",
 		maxcpus);
 	setup_max_cpus = maxcpus;
 	early_iounmap(address, 4);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल पूर्णांक apicid_phys_pkg_id(पूर्णांक initial_apic_id, पूर्णांक index_msb)
-अणु
-	वापस hard_smp_processor_id() >> index_msb;
-पूर्ण
+static int apicid_phys_pkg_id(int initial_apic_id, int index_msb)
+{
+	return hard_smp_processor_id() >> index_msb;
+}
 
-अटल व्योम vsmp_apic_post_init(व्योम)
-अणु
+static void vsmp_apic_post_init(void)
+{
 	/* need to update phys_pkg_id */
 	apic->phys_pkg_id = apicid_phys_pkg_id;
-पूर्ण
+}
 
-व्योम __init vsmp_init(व्योम)
-अणु
+void __init vsmp_init(void)
+{
 	detect_vsmp_box();
-	अगर (!is_vsmp_box())
-		वापस;
+	if (!is_vsmp_box())
+		return;
 
-	x86_platक्रमm.apic_post_init = vsmp_apic_post_init;
+	x86_platform.apic_post_init = vsmp_apic_post_init;
 
 	vsmp_cap_cpus();
 
 	set_vsmp_ctl();
-	वापस;
-पूर्ण
+	return;
+}

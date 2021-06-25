@@ -1,21 +1,20 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __NETNS_CORE_H__
-#घोषणा __NETNS_CORE_H__
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __NETNS_CORE_H__
+#define __NETNS_CORE_H__
 
-काष्ठा ctl_table_header;
-काष्ठा prot_inuse;
+struct ctl_table_header;
+struct prot_inuse;
 
-काष्ठा netns_core अणु
+struct netns_core {
 	/* core sysctls */
-	काष्ठा ctl_table_header	*sysctl_hdr;
+	struct ctl_table_header	*sysctl_hdr;
 
-	पूर्णांक	sysctl_somaxconn;
+	int	sysctl_somaxconn;
 
-#अगर_घोषित CONFIG_PROC_FS
-	पूर्णांक __percpu *sock_inuse;
-	काष्ठा prot_inuse __percpu *prot_inuse;
-#पूर्ण_अगर
-पूर्ण;
+#ifdef CONFIG_PROC_FS
+	int __percpu *sock_inuse;
+	struct prot_inuse __percpu *prot_inuse;
+#endif
+};
 
-#पूर्ण_अगर
+#endif

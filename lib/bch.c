@@ -1,121 +1,120 @@
-<शैली गुरु>
 /*
  * Generic binary BCH encoding/decoding library
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published by
  * the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  *
- * You should have received a copy of the GNU General Public License aदीर्घ with
- * this program; अगर not, ग_लिखो to the Free Software Foundation, Inc., 51
- * Franklin St, Fअगरth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 51
+ * Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Copyright तऊ 2011 Parrot S.A.
+ * Copyright © 2011 Parrot S.A.
  *
  * Author: Ivan Djelic <ivan.djelic@parrot.com>
  *
  * Description:
  *
- * This library provides runसमय configurable encoding/decoding of binary
+ * This library provides runtime configurable encoding/decoding of binary
  * Bose-Chaudhuri-Hocquenghem (BCH) codes.
  *
- * Call bch_init to get a poपूर्णांकer to a newly allocated bch_control काष्ठाure क्रम
+ * Call bch_init to get a pointer to a newly allocated bch_control structure for
  * the given m (Galois field order), t (error correction capability) and
  * (optional) primitive polynomial parameters.
  *
  * Call bch_encode to compute and store ecc parity bytes to a given buffer.
  * Call bch_decode to detect and locate errors in received data.
  *
- * On प्रणालीs supporting hw BCH features, पूर्णांकermediate results may be provided
- * to bch_decode in order to skip certain steps. See bch_decode() करोcumentation
- * क्रम details.
+ * On systems supporting hw BCH features, intermediate results may be provided
+ * to bch_decode in order to skip certain steps. See bch_decode() documentation
+ * for details.
  *
- * Option CONFIG_BCH_CONST_PARAMS can be used to क्रमce fixed values of
+ * Option CONFIG_BCH_CONST_PARAMS can be used to force fixed values of
  * parameters m and t; thus allowing extra compiler optimizations and providing
- * better (up to 2x) encoding perक्रमmance. Using this option makes sense when
+ * better (up to 2x) encoding performance. Using this option makes sense when
  * (m,t) are fixed and known in advance, e.g. when using BCH error correction
- * on a particular न_अंकD flash device.
+ * on a particular NAND flash device.
  *
  * Algorithmic details:
  *
- * Encoding is perक्रमmed by processing 32 input bits in parallel, using 4
- * reमुख्यder lookup tables.
+ * Encoding is performed by processing 32 input bits in parallel, using 4
+ * remainder lookup tables.
  *
- * The final stage of decoding involves the following पूर्णांकernal steps:
+ * The final stage of decoding involves the following internal steps:
  * a. Syndrome computation
  * b. Error locator polynomial computation using Berlekamp-Massey algorithm
  * c. Error locator root finding (by far the most expensive step)
  *
- * In this implementation, step c is not perक्रमmed using the usual Chien search.
+ * In this implementation, step c is not performed using the usual Chien search.
  * Instead, an alternative approach described in [1] is used. It consists in
  * factoring the error locator polynomial using the Berlekamp Trace algorithm
- * (BTA) करोwn to a certain degree (4), after which ad hoc low-degree polynomial
+ * (BTA) down to a certain degree (4), after which ad hoc low-degree polynomial
  * solving techniques [2] are used. The resulting algorithm, called BTZ, yields
- * much better perक्रमmance than Chien search क्रम usual (m,t) values (typically
+ * much better performance than Chien search for usual (m,t) values (typically
  * m >= 13, t < 32, see [1]).
  *
  * [1] B. Biswas, V. Herbert. Efficient root finding of polynomials over fields
- * of अक्षरacteristic 2, in: Western European Workshop on Research in Cryptology
+ * of characteristic 2, in: Western European Workshop on Research in Cryptology
  * - WEWoRC 2009, Graz, Austria, LNCS, Springer, July 2009, to appear.
  * [2] [Zin96] V.A. Zinoviev. On the solution of equations of degree 10 over
  * finite fields GF(2^q). In Rapport de recherche INRIA no 2829, 1996.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/bitops.h>
-#समावेश <यंत्र/byteorder.h>
-#समावेश <linux/bch.h>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/bitops.h>
+#include <asm/byteorder.h>
+#include <linux/bch.h>
 
-#अगर defined(CONFIG_BCH_CONST_PARAMS)
-#घोषणा GF_M(_p)               (CONFIG_BCH_CONST_M)
-#घोषणा GF_T(_p)               (CONFIG_BCH_CONST_T)
-#घोषणा GF_N(_p)               ((1 << (CONFIG_BCH_CONST_M))-1)
-#घोषणा BCH_MAX_M              (CONFIG_BCH_CONST_M)
-#घोषणा BCH_MAX_T	       (CONFIG_BCH_CONST_T)
-#अन्यथा
-#घोषणा GF_M(_p)               ((_p)->m)
-#घोषणा GF_T(_p)               ((_p)->t)
-#घोषणा GF_N(_p)               ((_p)->n)
-#घोषणा BCH_MAX_M              15 /* 2KB */
-#घोषणा BCH_MAX_T              64 /* 64 bit correction */
-#पूर्ण_अगर
+#if defined(CONFIG_BCH_CONST_PARAMS)
+#define GF_M(_p)               (CONFIG_BCH_CONST_M)
+#define GF_T(_p)               (CONFIG_BCH_CONST_T)
+#define GF_N(_p)               ((1 << (CONFIG_BCH_CONST_M))-1)
+#define BCH_MAX_M              (CONFIG_BCH_CONST_M)
+#define BCH_MAX_T	       (CONFIG_BCH_CONST_T)
+#else
+#define GF_M(_p)               ((_p)->m)
+#define GF_T(_p)               ((_p)->t)
+#define GF_N(_p)               ((_p)->n)
+#define BCH_MAX_M              15 /* 2KB */
+#define BCH_MAX_T              64 /* 64 bit correction */
+#endif
 
-#घोषणा BCH_ECC_WORDS(_p)      DIV_ROUND_UP(GF_M(_p)*GF_T(_p), 32)
-#घोषणा BCH_ECC_BYTES(_p)      DIV_ROUND_UP(GF_M(_p)*GF_T(_p), 8)
+#define BCH_ECC_WORDS(_p)      DIV_ROUND_UP(GF_M(_p)*GF_T(_p), 32)
+#define BCH_ECC_BYTES(_p)      DIV_ROUND_UP(GF_M(_p)*GF_T(_p), 8)
 
-#घोषणा BCH_ECC_MAX_WORDS      DIV_ROUND_UP(BCH_MAX_M * BCH_MAX_T, 32)
+#define BCH_ECC_MAX_WORDS      DIV_ROUND_UP(BCH_MAX_M * BCH_MAX_T, 32)
 
-#अगर_अघोषित dbg
-#घोषणा dbg(_fmt, args...)     करो अणुपूर्ण जबतक (0)
-#पूर्ण_अगर
+#ifndef dbg
+#define dbg(_fmt, args...)     do {} while (0)
+#endif
 
 /*
  * represent a polynomial over GF(2^m)
  */
-काष्ठा gf_poly अणु
-	अचिन्हित पूर्णांक deg;    /* polynomial degree */
-	अचिन्हित पूर्णांक c[];   /* polynomial terms */
-पूर्ण;
+struct gf_poly {
+	unsigned int deg;    /* polynomial degree */
+	unsigned int c[];   /* polynomial terms */
+};
 
 /* given its degree, compute a polynomial size in bytes */
-#घोषणा GF_POLY_SZ(_d) (माप(काष्ठा gf_poly)+((_d)+1)*माप(अचिन्हित पूर्णांक))
+#define GF_POLY_SZ(_d) (sizeof(struct gf_poly)+((_d)+1)*sizeof(unsigned int))
 
 /* polynomial of degree 1 */
-काष्ठा gf_poly_deg1 अणु
-	काष्ठा gf_poly poly;
-	अचिन्हित पूर्णांक   c[2];
-पूर्ण;
+struct gf_poly_deg1 {
+	struct gf_poly poly;
+	unsigned int   c[2];
+};
 
-अटल u8 swap_bits_table[] = अणु
+static u8 swap_bits_table[] = {
 	0x00, 0x80, 0x40, 0xc0, 0x20, 0xa0, 0x60, 0xe0,
 	0x10, 0x90, 0x50, 0xd0, 0x30, 0xb0, 0x70, 0xf0,
 	0x08, 0x88, 0x48, 0xc8, 0x28, 0xa8, 0x68, 0xe8,
@@ -148,139 +147,139 @@
 	0x17, 0x97, 0x57, 0xd7, 0x37, 0xb7, 0x77, 0xf7,
 	0x0f, 0x8f, 0x4f, 0xcf, 0x2f, 0xaf, 0x6f, 0xef,
 	0x1f, 0x9f, 0x5f, 0xdf, 0x3f, 0xbf, 0x7f, 0xff,
-पूर्ण;
+};
 
-अटल u8 swap_bits(काष्ठा bch_control *bch, u8 in)
-अणु
-	अगर (!bch->swap_bits)
-		वापस in;
+static u8 swap_bits(struct bch_control *bch, u8 in)
+{
+	if (!bch->swap_bits)
+		return in;
 
-	वापस swap_bits_table[in];
-पूर्ण
+	return swap_bits_table[in];
+}
 
 /*
- * same as bch_encode(), but process input data one byte at a समय
+ * same as bch_encode(), but process input data one byte at a time
  */
-अटल व्योम bch_encode_unaligned(काष्ठा bch_control *bch,
-				 स्थिर अचिन्हित अक्षर *data, अचिन्हित पूर्णांक len,
-				 uपूर्णांक32_t *ecc)
-अणु
-	पूर्णांक i;
-	स्थिर uपूर्णांक32_t *p;
-	स्थिर पूर्णांक l = BCH_ECC_WORDS(bch)-1;
+static void bch_encode_unaligned(struct bch_control *bch,
+				 const unsigned char *data, unsigned int len,
+				 uint32_t *ecc)
+{
+	int i;
+	const uint32_t *p;
+	const int l = BCH_ECC_WORDS(bch)-1;
 
-	जबतक (len--) अणु
-		u8 पंचांगp = swap_bits(bch, *data++);
+	while (len--) {
+		u8 tmp = swap_bits(bch, *data++);
 
-		p = bch->mod8_tab + (l+1)*(((ecc[0] >> 24)^(पंचांगp)) & 0xff);
+		p = bch->mod8_tab + (l+1)*(((ecc[0] >> 24)^(tmp)) & 0xff);
 
-		क्रम (i = 0; i < l; i++)
+		for (i = 0; i < l; i++)
 			ecc[i] = ((ecc[i] << 8)|(ecc[i+1] >> 24))^(*p++);
 
 		ecc[l] = (ecc[l] << 8)^(*p);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * convert ecc bytes to aligned, zero-padded 32-bit ecc words
  */
-अटल व्योम load_ecc8(काष्ठा bch_control *bch, uपूर्णांक32_t *dst,
-		      स्थिर uपूर्णांक8_t *src)
-अणु
-	uपूर्णांक8_t pad[4] = अणु0, 0, 0, 0पूर्ण;
-	अचिन्हित पूर्णांक i, nwords = BCH_ECC_WORDS(bch)-1;
+static void load_ecc8(struct bch_control *bch, uint32_t *dst,
+		      const uint8_t *src)
+{
+	uint8_t pad[4] = {0, 0, 0, 0};
+	unsigned int i, nwords = BCH_ECC_WORDS(bch)-1;
 
-	क्रम (i = 0; i < nwords; i++, src += 4)
+	for (i = 0; i < nwords; i++, src += 4)
 		dst[i] = ((u32)swap_bits(bch, src[0]) << 24) |
 			((u32)swap_bits(bch, src[1]) << 16) |
 			((u32)swap_bits(bch, src[2]) << 8) |
 			swap_bits(bch, src[3]);
 
-	स_नकल(pad, src, BCH_ECC_BYTES(bch)-4*nwords);
+	memcpy(pad, src, BCH_ECC_BYTES(bch)-4*nwords);
 	dst[nwords] = ((u32)swap_bits(bch, pad[0]) << 24) |
 		((u32)swap_bits(bch, pad[1]) << 16) |
 		((u32)swap_bits(bch, pad[2]) << 8) |
 		swap_bits(bch, pad[3]);
-पूर्ण
+}
 
 /*
  * convert 32-bit ecc words to ecc bytes
  */
-अटल व्योम store_ecc8(काष्ठा bch_control *bch, uपूर्णांक8_t *dst,
-		       स्थिर uपूर्णांक32_t *src)
-अणु
-	uपूर्णांक8_t pad[4];
-	अचिन्हित पूर्णांक i, nwords = BCH_ECC_WORDS(bch)-1;
+static void store_ecc8(struct bch_control *bch, uint8_t *dst,
+		       const uint32_t *src)
+{
+	uint8_t pad[4];
+	unsigned int i, nwords = BCH_ECC_WORDS(bch)-1;
 
-	क्रम (i = 0; i < nwords; i++) अणु
+	for (i = 0; i < nwords; i++) {
 		*dst++ = swap_bits(bch, src[i] >> 24);
 		*dst++ = swap_bits(bch, src[i] >> 16);
 		*dst++ = swap_bits(bch, src[i] >> 8);
 		*dst++ = swap_bits(bch, src[i]);
-	पूर्ण
+	}
 	pad[0] = swap_bits(bch, src[nwords] >> 24);
 	pad[1] = swap_bits(bch, src[nwords] >> 16);
 	pad[2] = swap_bits(bch, src[nwords] >> 8);
 	pad[3] = swap_bits(bch, src[nwords]);
-	स_नकल(dst, pad, BCH_ECC_BYTES(bch)-4*nwords);
-पूर्ण
+	memcpy(dst, pad, BCH_ECC_BYTES(bch)-4*nwords);
+}
 
 /**
  * bch_encode - calculate BCH ecc parity of data
- * @bch:   BCH control काष्ठाure
+ * @bch:   BCH control structure
  * @data:  data to encode
  * @len:   data length in bytes
  * @ecc:   ecc parity data, must be initialized by caller
  *
  * The @ecc parity array is used both as input and output parameter, in order to
  * allow incremental computations. It should be of the size indicated by member
- * @ecc_bytes of @bch, and should be initialized to 0 beक्रमe the first call.
+ * @ecc_bytes of @bch, and should be initialized to 0 before the first call.
  *
  * The exact number of computed ecc parity bits is given by member @ecc_bits of
- * @bch; it may be less than m*t क्रम large values of t.
+ * @bch; it may be less than m*t for large values of t.
  */
-व्योम bch_encode(काष्ठा bch_control *bch, स्थिर uपूर्णांक8_t *data,
-		अचिन्हित पूर्णांक len, uपूर्णांक8_t *ecc)
-अणु
-	स्थिर अचिन्हित पूर्णांक l = BCH_ECC_WORDS(bch)-1;
-	अचिन्हित पूर्णांक i, mlen;
-	अचिन्हित दीर्घ m;
-	uपूर्णांक32_t w, r[BCH_ECC_MAX_WORDS];
-	स्थिर माप_प्रकार r_bytes = BCH_ECC_WORDS(bch) * माप(*r);
-	स्थिर uपूर्णांक32_t * स्थिर tab0 = bch->mod8_tab;
-	स्थिर uपूर्णांक32_t * स्थिर tab1 = tab0 + 256*(l+1);
-	स्थिर uपूर्णांक32_t * स्थिर tab2 = tab1 + 256*(l+1);
-	स्थिर uपूर्णांक32_t * स्थिर tab3 = tab2 + 256*(l+1);
-	स्थिर uपूर्णांक32_t *pdata, *p0, *p1, *p2, *p3;
+void bch_encode(struct bch_control *bch, const uint8_t *data,
+		unsigned int len, uint8_t *ecc)
+{
+	const unsigned int l = BCH_ECC_WORDS(bch)-1;
+	unsigned int i, mlen;
+	unsigned long m;
+	uint32_t w, r[BCH_ECC_MAX_WORDS];
+	const size_t r_bytes = BCH_ECC_WORDS(bch) * sizeof(*r);
+	const uint32_t * const tab0 = bch->mod8_tab;
+	const uint32_t * const tab1 = tab0 + 256*(l+1);
+	const uint32_t * const tab2 = tab1 + 256*(l+1);
+	const uint32_t * const tab3 = tab2 + 256*(l+1);
+	const uint32_t *pdata, *p0, *p1, *p2, *p3;
 
-	अगर (WARN_ON(r_bytes > माप(r)))
-		वापस;
+	if (WARN_ON(r_bytes > sizeof(r)))
+		return;
 
-	अगर (ecc) अणु
-		/* load ecc parity bytes पूर्णांकo पूर्णांकernal 32-bit buffer */
+	if (ecc) {
+		/* load ecc parity bytes into internal 32-bit buffer */
 		load_ecc8(bch, bch->ecc_buf, ecc);
-	पूर्ण अन्यथा अणु
-		स_रखो(bch->ecc_buf, 0, r_bytes);
-	पूर्ण
+	} else {
+		memset(bch->ecc_buf, 0, r_bytes);
+	}
 
 	/* process first unaligned data bytes */
-	m = ((अचिन्हित दीर्घ)data) & 3;
-	अगर (m) अणु
+	m = ((unsigned long)data) & 3;
+	if (m) {
 		mlen = (len < (4-m)) ? len : 4-m;
 		bch_encode_unaligned(bch, data, mlen, bch->ecc_buf);
 		data += mlen;
 		len  -= mlen;
-	पूर्ण
+	}
 
 	/* process 32-bit aligned data words */
-	pdata = (uपूर्णांक32_t *)data;
+	pdata = (uint32_t *)data;
 	mlen  = len/4;
 	data += 4*mlen;
 	len  -= 4*mlen;
-	स_नकल(r, bch->ecc_buf, r_bytes);
+	memcpy(r, bch->ecc_buf, r_bytes);
 
 	/*
-	 * split each 32-bit word पूर्णांकo 4 polynomials of weight 8 as follows:
+	 * split each 32-bit word into 4 polynomials of weight 8 as follows:
 	 *
 	 * 31 ...24  23 ...16  15 ... 8  7 ... 0
 	 * xxxxxxxx  yyyyyyyy  zzzzzzzz  tttttttt
@@ -290,10 +289,10 @@
 	 * xxxxxxxx  00000000  00000000  00000000  mod g = r3 (precomputed)
 	 * xxxxxxxx  yyyyyyyy  zzzzzzzz  tttttttt  mod g = r0^r1^r2^r3
 	 */
-	जबतक (mlen--) अणु
-		/* input data is पढ़ो in big-endian क्रमmat */
+	while (mlen--) {
+		/* input data is read in big-endian format */
 		w = cpu_to_be32(*pdata++);
-		अगर (bch->swap_bits)
+		if (bch->swap_bits)
 			w = (u32)swap_bits(bch, w) |
 			    ((u32)swap_bits(bch, w >> 8) << 8) |
 			    ((u32)swap_bits(bch, w >> 16) << 16) |
@@ -304,381 +303,381 @@
 		p2 = tab2 + (l+1)*((w >> 16) & 0xff);
 		p3 = tab3 + (l+1)*((w >> 24) & 0xff);
 
-		क्रम (i = 0; i < l; i++)
+		for (i = 0; i < l; i++)
 			r[i] = r[i+1]^p0[i]^p1[i]^p2[i]^p3[i];
 
 		r[l] = p0[l]^p1[l]^p2[l]^p3[l];
-	पूर्ण
-	स_नकल(bch->ecc_buf, r, r_bytes);
+	}
+	memcpy(bch->ecc_buf, r, r_bytes);
 
 	/* process last unaligned bytes */
-	अगर (len)
+	if (len)
 		bch_encode_unaligned(bch, data, len, bch->ecc_buf);
 
-	/* store ecc parity bytes पूर्णांकo original parity buffer */
-	अगर (ecc)
+	/* store ecc parity bytes into original parity buffer */
+	if (ecc)
 		store_ecc8(bch, ecc, bch->ecc_buf);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(bch_encode);
 
-अटल अंतरभूत पूर्णांक modulo(काष्ठा bch_control *bch, अचिन्हित पूर्णांक v)
-अणु
-	स्थिर अचिन्हित पूर्णांक n = GF_N(bch);
-	जबतक (v >= n) अणु
+static inline int modulo(struct bch_control *bch, unsigned int v)
+{
+	const unsigned int n = GF_N(bch);
+	while (v >= n) {
 		v -= n;
 		v = (v & n) + (v >> GF_M(bch));
-	पूर्ण
-	वापस v;
-पूर्ण
+	}
+	return v;
+}
 
 /*
- * लघुer and faster modulo function, only works when v < 2N.
+ * shorter and faster modulo function, only works when v < 2N.
  */
-अटल अंतरभूत पूर्णांक mod_s(काष्ठा bch_control *bch, अचिन्हित पूर्णांक v)
-अणु
-	स्थिर अचिन्हित पूर्णांक n = GF_N(bch);
-	वापस (v < n) ? v : v-n;
-पूर्ण
+static inline int mod_s(struct bch_control *bch, unsigned int v)
+{
+	const unsigned int n = GF_N(bch);
+	return (v < n) ? v : v-n;
+}
 
-अटल अंतरभूत पूर्णांक deg(अचिन्हित पूर्णांक poly)
-अणु
-	/* polynomial degree is the most-signअगरicant bit index */
-	वापस fls(poly)-1;
-पूर्ण
+static inline int deg(unsigned int poly)
+{
+	/* polynomial degree is the most-significant bit index */
+	return fls(poly)-1;
+}
 
-अटल अंतरभूत पूर्णांक parity(अचिन्हित पूर्णांक x)
-अणु
+static inline int parity(unsigned int x)
+{
 	/*
-	 * खुला करोमुख्य code snippet, lअगरted from
-	 * http://www-graphics.stanक्रमd.edu/~seander/bithacks.hपंचांगl
+	 * public domain code snippet, lifted from
+	 * http://www-graphics.stanford.edu/~seander/bithacks.html
 	 */
 	x ^= x >> 1;
 	x ^= x >> 2;
 	x = (x & 0x11111111U) * 0x11111111U;
-	वापस (x >> 28) & 1;
-पूर्ण
+	return (x >> 28) & 1;
+}
 
-/* Galois field basic operations: multiply, भागide, inverse, etc. */
+/* Galois field basic operations: multiply, divide, inverse, etc. */
 
-अटल अंतरभूत अचिन्हित पूर्णांक gf_mul(काष्ठा bch_control *bch, अचिन्हित पूर्णांक a,
-				  अचिन्हित पूर्णांक b)
-अणु
-	वापस (a && b) ? bch->a_घात_tab[mod_s(bch, bch->a_log_tab[a]+
+static inline unsigned int gf_mul(struct bch_control *bch, unsigned int a,
+				  unsigned int b)
+{
+	return (a && b) ? bch->a_pow_tab[mod_s(bch, bch->a_log_tab[a]+
 					       bch->a_log_tab[b])] : 0;
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक gf_sqr(काष्ठा bch_control *bch, अचिन्हित पूर्णांक a)
-अणु
-	वापस a ? bch->a_घात_tab[mod_s(bch, 2*bch->a_log_tab[a])] : 0;
-पूर्ण
+static inline unsigned int gf_sqr(struct bch_control *bch, unsigned int a)
+{
+	return a ? bch->a_pow_tab[mod_s(bch, 2*bch->a_log_tab[a])] : 0;
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक gf_भाग(काष्ठा bch_control *bch, अचिन्हित पूर्णांक a,
-				  अचिन्हित पूर्णांक b)
-अणु
-	वापस a ? bch->a_घात_tab[mod_s(bch, bch->a_log_tab[a]+
+static inline unsigned int gf_div(struct bch_control *bch, unsigned int a,
+				  unsigned int b)
+{
+	return a ? bch->a_pow_tab[mod_s(bch, bch->a_log_tab[a]+
 					GF_N(bch)-bch->a_log_tab[b])] : 0;
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक gf_inv(काष्ठा bch_control *bch, अचिन्हित पूर्णांक a)
-अणु
-	वापस bch->a_घात_tab[GF_N(bch)-bch->a_log_tab[a]];
-पूर्ण
+static inline unsigned int gf_inv(struct bch_control *bch, unsigned int a)
+{
+	return bch->a_pow_tab[GF_N(bch)-bch->a_log_tab[a]];
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक a_घात(काष्ठा bch_control *bch, पूर्णांक i)
-अणु
-	वापस bch->a_घात_tab[modulo(bch, i)];
-पूर्ण
+static inline unsigned int a_pow(struct bch_control *bch, int i)
+{
+	return bch->a_pow_tab[modulo(bch, i)];
+}
 
-अटल अंतरभूत पूर्णांक a_log(काष्ठा bch_control *bch, अचिन्हित पूर्णांक x)
-अणु
-	वापस bch->a_log_tab[x];
-पूर्ण
+static inline int a_log(struct bch_control *bch, unsigned int x)
+{
+	return bch->a_log_tab[x];
+}
 
-अटल अंतरभूत पूर्णांक a_ilog(काष्ठा bch_control *bch, अचिन्हित पूर्णांक x)
-अणु
-	वापस mod_s(bch, GF_N(bch)-bch->a_log_tab[x]);
-पूर्ण
+static inline int a_ilog(struct bch_control *bch, unsigned int x)
+{
+	return mod_s(bch, GF_N(bch)-bch->a_log_tab[x]);
+}
 
 /*
- * compute 2t syndromes of ecc polynomial, i.e. ecc(a^j) क्रम j=1..2t
+ * compute 2t syndromes of ecc polynomial, i.e. ecc(a^j) for j=1..2t
  */
-अटल व्योम compute_syndromes(काष्ठा bch_control *bch, uपूर्णांक32_t *ecc,
-			      अचिन्हित पूर्णांक *syn)
-अणु
-	पूर्णांक i, j, s;
-	अचिन्हित पूर्णांक m;
-	uपूर्णांक32_t poly;
-	स्थिर पूर्णांक t = GF_T(bch);
+static void compute_syndromes(struct bch_control *bch, uint32_t *ecc,
+			      unsigned int *syn)
+{
+	int i, j, s;
+	unsigned int m;
+	uint32_t poly;
+	const int t = GF_T(bch);
 
 	s = bch->ecc_bits;
 
 	/* make sure extra bits in last ecc word are cleared */
-	m = ((अचिन्हित पूर्णांक)s) & 31;
-	अगर (m)
+	m = ((unsigned int)s) & 31;
+	if (m)
 		ecc[s/32] &= ~((1u << (32-m))-1);
-	स_रखो(syn, 0, 2*t*माप(*syn));
+	memset(syn, 0, 2*t*sizeof(*syn));
 
-	/* compute v(a^j) क्रम j=1 .. 2t-1 */
-	करो अणु
+	/* compute v(a^j) for j=1 .. 2t-1 */
+	do {
 		poly = *ecc++;
 		s -= 32;
-		जबतक (poly) अणु
+		while (poly) {
 			i = deg(poly);
-			क्रम (j = 0; j < 2*t; j += 2)
-				syn[j] ^= a_घात(bch, (j+1)*(i+s));
+			for (j = 0; j < 2*t; j += 2)
+				syn[j] ^= a_pow(bch, (j+1)*(i+s));
 
 			poly ^= (1 << i);
-		पूर्ण
-	पूर्ण जबतक (s > 0);
+		}
+	} while (s > 0);
 
 	/* v(a^(2j)) = v(a^j)^2 */
-	क्रम (j = 0; j < t; j++)
+	for (j = 0; j < t; j++)
 		syn[2*j+1] = gf_sqr(bch, syn[j]);
-पूर्ण
+}
 
-अटल व्योम gf_poly_copy(काष्ठा gf_poly *dst, काष्ठा gf_poly *src)
-अणु
-	स_नकल(dst, src, GF_POLY_SZ(src->deg));
-पूर्ण
+static void gf_poly_copy(struct gf_poly *dst, struct gf_poly *src)
+{
+	memcpy(dst, src, GF_POLY_SZ(src->deg));
+}
 
-अटल पूर्णांक compute_error_locator_polynomial(काष्ठा bch_control *bch,
-					    स्थिर अचिन्हित पूर्णांक *syn)
-अणु
-	स्थिर अचिन्हित पूर्णांक t = GF_T(bch);
-	स्थिर अचिन्हित पूर्णांक n = GF_N(bch);
-	अचिन्हित पूर्णांक i, j, पंचांगp, l, pd = 1, d = syn[0];
-	काष्ठा gf_poly *elp = bch->elp;
-	काष्ठा gf_poly *pelp = bch->poly_2t[0];
-	काष्ठा gf_poly *elp_copy = bch->poly_2t[1];
-	पूर्णांक k, pp = -1;
+static int compute_error_locator_polynomial(struct bch_control *bch,
+					    const unsigned int *syn)
+{
+	const unsigned int t = GF_T(bch);
+	const unsigned int n = GF_N(bch);
+	unsigned int i, j, tmp, l, pd = 1, d = syn[0];
+	struct gf_poly *elp = bch->elp;
+	struct gf_poly *pelp = bch->poly_2t[0];
+	struct gf_poly *elp_copy = bch->poly_2t[1];
+	int k, pp = -1;
 
-	स_रखो(pelp, 0, GF_POLY_SZ(2*t));
-	स_रखो(elp, 0, GF_POLY_SZ(2*t));
+	memset(pelp, 0, GF_POLY_SZ(2*t));
+	memset(elp, 0, GF_POLY_SZ(2*t));
 
 	pelp->deg = 0;
 	pelp->c[0] = 1;
 	elp->deg = 0;
 	elp->c[0] = 1;
 
-	/* use simplअगरied binary Berlekamp-Massey algorithm */
-	क्रम (i = 0; (i < t) && (elp->deg <= t); i++) अणु
-		अगर (d) अणु
+	/* use simplified binary Berlekamp-Massey algorithm */
+	for (i = 0; (i < t) && (elp->deg <= t); i++) {
+		if (d) {
 			k = 2*i-pp;
 			gf_poly_copy(elp_copy, elp);
 			/* e[i+1](X) = e[i](X)+di*dp^-1*X^2(i-p)*e[p](X) */
-			पंचांगp = a_log(bch, d)+n-a_log(bch, pd);
-			क्रम (j = 0; j <= pelp->deg; j++) अणु
-				अगर (pelp->c[j]) अणु
+			tmp = a_log(bch, d)+n-a_log(bch, pd);
+			for (j = 0; j <= pelp->deg; j++) {
+				if (pelp->c[j]) {
 					l = a_log(bch, pelp->c[j]);
-					elp->c[j+k] ^= a_घात(bch, पंचांगp+l);
-				पूर्ण
-			पूर्ण
+					elp->c[j+k] ^= a_pow(bch, tmp+l);
+				}
+			}
 			/* compute l[i+1] = max(l[i]->c[l[p]+2*(i-p]) */
-			पंचांगp = pelp->deg+k;
-			अगर (पंचांगp > elp->deg) अणु
-				elp->deg = पंचांगp;
+			tmp = pelp->deg+k;
+			if (tmp > elp->deg) {
+				elp->deg = tmp;
 				gf_poly_copy(pelp, elp_copy);
 				pd = d;
 				pp = 2*i;
-			पूर्ण
-		पूर्ण
+			}
+		}
 		/* di+1 = S(2i+3)+elp[i+1].1*S(2i+2)+...+elp[i+1].lS(2i+3-l) */
-		अगर (i < t-1) अणु
+		if (i < t-1) {
 			d = syn[2*i+2];
-			क्रम (j = 1; j <= elp->deg; j++)
+			for (j = 1; j <= elp->deg; j++)
 				d ^= gf_mul(bch, elp->c[j], syn[2*i+2-j]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	dbg("elp=%s\n", gf_poly_str(elp));
-	वापस (elp->deg > t) ? -1 : (पूर्णांक)elp->deg;
-पूर्ण
+	return (elp->deg > t) ? -1 : (int)elp->deg;
+}
 
 /*
- * solve a m x m linear प्रणाली in GF(2) with an expected number of solutions,
- * and वापस the number of found solutions
+ * solve a m x m linear system in GF(2) with an expected number of solutions,
+ * and return the number of found solutions
  */
-अटल पूर्णांक solve_linear_प्रणाली(काष्ठा bch_control *bch, अचिन्हित पूर्णांक *rows,
-			       अचिन्हित पूर्णांक *sol, पूर्णांक nsol)
-अणु
-	स्थिर पूर्णांक m = GF_M(bch);
-	अचिन्हित पूर्णांक पंचांगp, mask;
-	पूर्णांक rem, c, r, p, k, param[BCH_MAX_M];
+static int solve_linear_system(struct bch_control *bch, unsigned int *rows,
+			       unsigned int *sol, int nsol)
+{
+	const int m = GF_M(bch);
+	unsigned int tmp, mask;
+	int rem, c, r, p, k, param[BCH_MAX_M];
 
 	k = 0;
 	mask = 1 << m;
 
 	/* Gaussian elimination */
-	क्रम (c = 0; c < m; c++) अणु
+	for (c = 0; c < m; c++) {
 		rem = 0;
 		p = c-k;
-		/* find suitable row क्रम elimination */
-		क्रम (r = p; r < m; r++) अणु
-			अगर (rows[r] & mask) अणु
-				अगर (r != p) अणु
-					पंचांगp = rows[r];
+		/* find suitable row for elimination */
+		for (r = p; r < m; r++) {
+			if (rows[r] & mask) {
+				if (r != p) {
+					tmp = rows[r];
 					rows[r] = rows[p];
-					rows[p] = पंचांगp;
-				पूर्ण
+					rows[p] = tmp;
+				}
 				rem = r+1;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		अगर (rem) अणु
-			/* perक्रमm elimination on reमुख्यing rows */
-			पंचांगp = rows[p];
-			क्रम (r = rem; r < m; r++) अणु
-				अगर (rows[r] & mask)
-					rows[r] ^= पंचांगp;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				break;
+			}
+		}
+		if (rem) {
+			/* perform elimination on remaining rows */
+			tmp = rows[p];
+			for (r = rem; r < m; r++) {
+				if (rows[r] & mask)
+					rows[r] ^= tmp;
+			}
+		} else {
 			/* elimination not needed, store defective row index */
 			param[k++] = c;
-		पूर्ण
+		}
 		mask >>= 1;
-	पूर्ण
-	/* reग_लिखो प्रणाली, inserting fake parameter rows */
-	अगर (k > 0) अणु
+	}
+	/* rewrite system, inserting fake parameter rows */
+	if (k > 0) {
 		p = k;
-		क्रम (r = m-1; r >= 0; r--) अणु
-			अगर ((r > m-1-k) && rows[r])
-				/* प्रणाली has no solution */
-				वापस 0;
+		for (r = m-1; r >= 0; r--) {
+			if ((r > m-1-k) && rows[r])
+				/* system has no solution */
+				return 0;
 
 			rows[r] = (p && (r == param[p-1])) ?
 				p--, 1u << (m-r) : rows[r-p];
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (nsol != (1 << k))
+	if (nsol != (1 << k))
 		/* unexpected number of solutions */
-		वापस 0;
+		return 0;
 
-	क्रम (p = 0; p < nsol; p++) अणु
-		/* set parameters क्रम p-th solution */
-		क्रम (c = 0; c < k; c++)
+	for (p = 0; p < nsol; p++) {
+		/* set parameters for p-th solution */
+		for (c = 0; c < k; c++)
 			rows[param[c]] = (rows[param[c]] & ~1)|((p >> c) & 1);
 
 		/* compute unique solution */
-		पंचांगp = 0;
-		क्रम (r = m-1; r >= 0; r--) अणु
-			mask = rows[r] & (पंचांगp|1);
-			पंचांगp |= parity(mask) << (m-r);
-		पूर्ण
-		sol[p] = पंचांगp >> 1;
-	पूर्ण
-	वापस nsol;
-पूर्ण
+		tmp = 0;
+		for (r = m-1; r >= 0; r--) {
+			mask = rows[r] & (tmp|1);
+			tmp |= parity(mask) << (m-r);
+		}
+		sol[p] = tmp >> 1;
+	}
+	return nsol;
+}
 
 /*
- * this function builds and solves a linear प्रणाली क्रम finding roots of a degree
+ * this function builds and solves a linear system for finding roots of a degree
  * 4 affine monic polynomial X^4+aX^2+bX+c over GF(2^m).
  */
-अटल पूर्णांक find_affine4_roots(काष्ठा bch_control *bch, अचिन्हित पूर्णांक a,
-			      अचिन्हित पूर्णांक b, अचिन्हित पूर्णांक c,
-			      अचिन्हित पूर्णांक *roots)
-अणु
-	पूर्णांक i, j, k;
-	स्थिर पूर्णांक m = GF_M(bch);
-	अचिन्हित पूर्णांक mask = 0xff, t, rows[16] = अणु0,पूर्ण;
+static int find_affine4_roots(struct bch_control *bch, unsigned int a,
+			      unsigned int b, unsigned int c,
+			      unsigned int *roots)
+{
+	int i, j, k;
+	const int m = GF_M(bch);
+	unsigned int mask = 0xff, t, rows[16] = {0,};
 
 	j = a_log(bch, b);
 	k = a_log(bch, a);
 	rows[0] = c;
 
-	/* build linear प्रणाली to solve X^4+aX^2+bX+c = 0 */
-	क्रम (i = 0; i < m; i++) अणु
-		rows[i+1] = bch->a_घात_tab[4*i]^
-			(a ? bch->a_घात_tab[mod_s(bch, k)] : 0)^
-			(b ? bch->a_घात_tab[mod_s(bch, j)] : 0);
+	/* build linear system to solve X^4+aX^2+bX+c = 0 */
+	for (i = 0; i < m; i++) {
+		rows[i+1] = bch->a_pow_tab[4*i]^
+			(a ? bch->a_pow_tab[mod_s(bch, k)] : 0)^
+			(b ? bch->a_pow_tab[mod_s(bch, j)] : 0);
 		j++;
 		k += 2;
-	पूर्ण
+	}
 	/*
-	 * transpose 16x16 matrix beक्रमe passing it to linear solver
+	 * transpose 16x16 matrix before passing it to linear solver
 	 * warning: this code assumes m < 16
 	 */
-	क्रम (j = 8; j != 0; j >>= 1, mask ^= (mask << j)) अणु
-		क्रम (k = 0; k < 16; k = (k+j+1) & ~j) अणु
+	for (j = 8; j != 0; j >>= 1, mask ^= (mask << j)) {
+		for (k = 0; k < 16; k = (k+j+1) & ~j) {
 			t = ((rows[k] >> j)^rows[k+j]) & mask;
 			rows[k] ^= (t << j);
 			rows[k+j] ^= t;
-		पूर्ण
-	पूर्ण
-	वापस solve_linear_प्रणाली(bch, rows, roots, 4);
-पूर्ण
+		}
+	}
+	return solve_linear_system(bch, rows, roots, 4);
+}
 
 /*
- * compute root r of a degree 1 polynomial over GF(2^m) (वापसed as log(1/r))
+ * compute root r of a degree 1 polynomial over GF(2^m) (returned as log(1/r))
  */
-अटल पूर्णांक find_poly_deg1_roots(काष्ठा bch_control *bch, काष्ठा gf_poly *poly,
-				अचिन्हित पूर्णांक *roots)
-अणु
-	पूर्णांक n = 0;
+static int find_poly_deg1_roots(struct bch_control *bch, struct gf_poly *poly,
+				unsigned int *roots)
+{
+	int n = 0;
 
-	अगर (poly->c[0])
+	if (poly->c[0])
 		/* poly[X] = bX+c with c!=0, root=c/b */
 		roots[n++] = mod_s(bch, GF_N(bch)-bch->a_log_tab[poly->c[0]]+
 				   bch->a_log_tab[poly->c[1]]);
-	वापस n;
-पूर्ण
+	return n;
+}
 
 /*
  * compute roots of a degree 2 polynomial over GF(2^m)
  */
-अटल पूर्णांक find_poly_deg2_roots(काष्ठा bch_control *bch, काष्ठा gf_poly *poly,
-				अचिन्हित पूर्णांक *roots)
-अणु
-	पूर्णांक n = 0, i, l0, l1, l2;
-	अचिन्हित पूर्णांक u, v, r;
+static int find_poly_deg2_roots(struct bch_control *bch, struct gf_poly *poly,
+				unsigned int *roots)
+{
+	int n = 0, i, l0, l1, l2;
+	unsigned int u, v, r;
 
-	अगर (poly->c[0] && poly->c[1]) अणु
+	if (poly->c[0] && poly->c[1]) {
 
 		l0 = bch->a_log_tab[poly->c[0]];
 		l1 = bch->a_log_tab[poly->c[1]];
 		l2 = bch->a_log_tab[poly->c[2]];
 
-		/* using z=a/bX, transक्रमm aX^2+bX+c पूर्णांकo z^2+z+u (u=ac/b^2) */
-		u = a_घात(bch, l0+l2+2*(GF_N(bch)-l1));
+		/* using z=a/bX, transform aX^2+bX+c into z^2+z+u (u=ac/b^2) */
+		u = a_pow(bch, l0+l2+2*(GF_N(bch)-l1));
 		/*
 		 * let u = sum(li.a^i) i=0..m-1; then compute r = sum(li.xi):
 		 * r^2+r = sum(li.(xi^2+xi)) = sum(li.(a^i+Tr(a^i).a^k)) =
 		 * u + sum(li.Tr(a^i).a^k) = u+a^k.Tr(sum(li.a^i)) = u+a^k.Tr(u)
-		 * i.e. r and r+1 are roots अगरf Tr(u)=0
+		 * i.e. r and r+1 are roots iff Tr(u)=0
 		 */
 		r = 0;
 		v = u;
-		जबतक (v) अणु
+		while (v) {
 			i = deg(v);
 			r ^= bch->xi_tab[i];
 			v ^= (1 << i);
-		पूर्ण
-		/* verअगरy root */
-		अगर ((gf_sqr(bch, r)^r) == u) अणु
-			/* reverse z=a/bX transक्रमmation and compute log(1/r) */
+		}
+		/* verify root */
+		if ((gf_sqr(bch, r)^r) == u) {
+			/* reverse z=a/bX transformation and compute log(1/r) */
 			roots[n++] = modulo(bch, 2*GF_N(bch)-l1-
 					    bch->a_log_tab[r]+l2);
 			roots[n++] = modulo(bch, 2*GF_N(bch)-l1-
 					    bch->a_log_tab[r^1]+l2);
-		पूर्ण
-	पूर्ण
-	वापस n;
-पूर्ण
+		}
+	}
+	return n;
+}
 
 /*
  * compute roots of a degree 3 polynomial over GF(2^m)
  */
-अटल पूर्णांक find_poly_deg3_roots(काष्ठा bch_control *bch, काष्ठा gf_poly *poly,
-				अचिन्हित पूर्णांक *roots)
-अणु
-	पूर्णांक i, n = 0;
-	अचिन्हित पूर्णांक a, b, c, a2, b2, c2, e3, पंचांगp[4];
+static int find_poly_deg3_roots(struct bch_control *bch, struct gf_poly *poly,
+				unsigned int *roots)
+{
+	int i, n = 0;
+	unsigned int a, b, c, a2, b2, c2, e3, tmp[4];
 
-	अगर (poly->c[0]) अणु
-		/* transक्रमm polynomial पूर्णांकo monic X^3 + a2X^2 + b2X + c2 */
+	if (poly->c[0]) {
+		/* transform polynomial into monic X^3 + a2X^2 + b2X + c2 */
 		e3 = poly->c[3];
-		c2 = gf_भाग(bch, poly->c[0], e3);
-		b2 = gf_भाग(bch, poly->c[1], e3);
-		a2 = gf_भाग(bch, poly->c[2], e3);
+		c2 = gf_div(bch, poly->c[0], e3);
+		b2 = gf_div(bch, poly->c[1], e3);
+		a2 = gf_div(bch, poly->c[2], e3);
 
 		/* (X+a2)(X^3+a2X^2+b2X+c2) = X^4+aX^2+bX+c (affine) */
 		c = gf_mul(bch, a2, c2);           /* c = a2c2      */
@@ -686,341 +685,341 @@ EXPORT_SYMBOL_GPL(bch_encode);
 		a = gf_sqr(bch, a2)^b2;            /* a = a2^2 + b2 */
 
 		/* find the 4 roots of this affine polynomial */
-		अगर (find_affine4_roots(bch, a, b, c, पंचांगp) == 4) अणु
-			/* हटाओ a2 from final list of roots */
-			क्रम (i = 0; i < 4; i++) अणु
-				अगर (पंचांगp[i] != a2)
-					roots[n++] = a_ilog(bch, पंचांगp[i]);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस n;
-पूर्ण
+		if (find_affine4_roots(bch, a, b, c, tmp) == 4) {
+			/* remove a2 from final list of roots */
+			for (i = 0; i < 4; i++) {
+				if (tmp[i] != a2)
+					roots[n++] = a_ilog(bch, tmp[i]);
+			}
+		}
+	}
+	return n;
+}
 
 /*
  * compute roots of a degree 4 polynomial over GF(2^m)
  */
-अटल पूर्णांक find_poly_deg4_roots(काष्ठा bch_control *bch, काष्ठा gf_poly *poly,
-				अचिन्हित पूर्णांक *roots)
-अणु
-	पूर्णांक i, l, n = 0;
-	अचिन्हित पूर्णांक a, b, c, d, e = 0, f, a2, b2, c2, e4;
+static int find_poly_deg4_roots(struct bch_control *bch, struct gf_poly *poly,
+				unsigned int *roots)
+{
+	int i, l, n = 0;
+	unsigned int a, b, c, d, e = 0, f, a2, b2, c2, e4;
 
-	अगर (poly->c[0] == 0)
-		वापस 0;
+	if (poly->c[0] == 0)
+		return 0;
 
-	/* transक्रमm polynomial पूर्णांकo monic X^4 + aX^3 + bX^2 + cX + d */
+	/* transform polynomial into monic X^4 + aX^3 + bX^2 + cX + d */
 	e4 = poly->c[4];
-	d = gf_भाग(bch, poly->c[0], e4);
-	c = gf_भाग(bch, poly->c[1], e4);
-	b = gf_भाग(bch, poly->c[2], e4);
-	a = gf_भाग(bch, poly->c[3], e4);
+	d = gf_div(bch, poly->c[0], e4);
+	c = gf_div(bch, poly->c[1], e4);
+	b = gf_div(bch, poly->c[2], e4);
+	a = gf_div(bch, poly->c[3], e4);
 
-	/* use Y=1/X transक्रमmation to get an affine polynomial */
-	अगर (a) अणु
+	/* use Y=1/X transformation to get an affine polynomial */
+	if (a) {
 		/* first, eliminate cX by using z=X+e with ae^2+c=0 */
-		अगर (c) अणु
+		if (c) {
 			/* compute e such that e^2 = c/a */
-			f = gf_भाग(bch, c, a);
+			f = gf_div(bch, c, a);
 			l = a_log(bch, f);
 			l += (l & 1) ? GF_N(bch) : 0;
-			e = a_घात(bch, l/2);
+			e = a_pow(bch, l/2);
 			/*
-			 * use transक्रमmation z=X+e:
+			 * use transformation z=X+e:
 			 * z^4+e^4 + a(z^3+ez^2+e^2z+e^3) + b(z^2+e^2) +cz+ce+d
 			 * z^4 + az^3 + (ae+b)z^2 + (ae^2+c)z+e^4+be^2+ae^3+ce+d
 			 * z^4 + az^3 + (ae+b)z^2 + e^4+be^2+d
 			 * z^4 + az^3 +     b'z^2 + d'
 			 */
-			d = a_घात(bch, 2*l)^gf_mul(bch, b, f)^d;
+			d = a_pow(bch, 2*l)^gf_mul(bch, b, f)^d;
 			b = gf_mul(bch, a, e)^b;
-		पूर्ण
+		}
 		/* now, use Y=1/X to get Y^4 + b/dY^2 + a/dY + 1/d */
-		अगर (d == 0)
+		if (d == 0)
 			/* assume all roots have multiplicity 1 */
-			वापस 0;
+			return 0;
 
 		c2 = gf_inv(bch, d);
-		b2 = gf_भाग(bch, a, d);
-		a2 = gf_भाग(bch, b, d);
-	पूर्ण अन्यथा अणु
-		/* polynomial is alपढ़ोy affine */
+		b2 = gf_div(bch, a, d);
+		a2 = gf_div(bch, b, d);
+	} else {
+		/* polynomial is already affine */
 		c2 = d;
 		b2 = c;
 		a2 = b;
-	पूर्ण
+	}
 	/* find the 4 roots of this affine polynomial */
-	अगर (find_affine4_roots(bch, a2, b2, c2, roots) == 4) अणु
-		क्रम (i = 0; i < 4; i++) अणु
-			/* post-process roots (reverse transक्रमmations) */
+	if (find_affine4_roots(bch, a2, b2, c2, roots) == 4) {
+		for (i = 0; i < 4; i++) {
+			/* post-process roots (reverse transformations) */
 			f = a ? gf_inv(bch, roots[i]) : roots[i];
 			roots[i] = a_ilog(bch, f^e);
-		पूर्ण
+		}
 		n = 4;
-	पूर्ण
-	वापस n;
-पूर्ण
+	}
+	return n;
+}
 
 /*
  * build monic, log-based representation of a polynomial
  */
-अटल व्योम gf_poly_logrep(काष्ठा bch_control *bch,
-			   स्थिर काष्ठा gf_poly *a, पूर्णांक *rep)
-अणु
-	पूर्णांक i, d = a->deg, l = GF_N(bch)-a_log(bch, a->c[a->deg]);
+static void gf_poly_logrep(struct bch_control *bch,
+			   const struct gf_poly *a, int *rep)
+{
+	int i, d = a->deg, l = GF_N(bch)-a_log(bch, a->c[a->deg]);
 
 	/* represent 0 values with -1; warning, rep[d] is not set to 1 */
-	क्रम (i = 0; i < d; i++)
+	for (i = 0; i < d; i++)
 		rep[i] = a->c[i] ? mod_s(bch, a_log(bch, a->c[i])+l) : -1;
-पूर्ण
+}
 
 /*
- * compute polynomial Euclidean भागision reमुख्यder in GF(2^m)[X]
+ * compute polynomial Euclidean division remainder in GF(2^m)[X]
  */
-अटल व्योम gf_poly_mod(काष्ठा bch_control *bch, काष्ठा gf_poly *a,
-			स्थिर काष्ठा gf_poly *b, पूर्णांक *rep)
-अणु
-	पूर्णांक la, p, m;
-	अचिन्हित पूर्णांक i, j, *c = a->c;
-	स्थिर अचिन्हित पूर्णांक d = b->deg;
+static void gf_poly_mod(struct bch_control *bch, struct gf_poly *a,
+			const struct gf_poly *b, int *rep)
+{
+	int la, p, m;
+	unsigned int i, j, *c = a->c;
+	const unsigned int d = b->deg;
 
-	अगर (a->deg < d)
-		वापस;
+	if (a->deg < d)
+		return;
 
 	/* reuse or compute log representation of denominator */
-	अगर (!rep) अणु
+	if (!rep) {
 		rep = bch->cache;
 		gf_poly_logrep(bch, b, rep);
-	पूर्ण
+	}
 
-	क्रम (j = a->deg; j >= d; j--) अणु
-		अगर (c[j]) अणु
+	for (j = a->deg; j >= d; j--) {
+		if (c[j]) {
 			la = a_log(bch, c[j]);
 			p = j-d;
-			क्रम (i = 0; i < d; i++, p++) अणु
+			for (i = 0; i < d; i++, p++) {
 				m = rep[i];
-				अगर (m >= 0)
-					c[p] ^= bch->a_घात_tab[mod_s(bch,
+				if (m >= 0)
+					c[p] ^= bch->a_pow_tab[mod_s(bch,
 								     m+la)];
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 	a->deg = d-1;
-	जबतक (!c[a->deg] && a->deg)
+	while (!c[a->deg] && a->deg)
 		a->deg--;
-पूर्ण
+}
 
 /*
- * compute polynomial Euclidean भागision quotient in GF(2^m)[X]
+ * compute polynomial Euclidean division quotient in GF(2^m)[X]
  */
-अटल व्योम gf_poly_भाग(काष्ठा bch_control *bch, काष्ठा gf_poly *a,
-			स्थिर काष्ठा gf_poly *b, काष्ठा gf_poly *q)
-अणु
-	अगर (a->deg >= b->deg) अणु
+static void gf_poly_div(struct bch_control *bch, struct gf_poly *a,
+			const struct gf_poly *b, struct gf_poly *q)
+{
+	if (a->deg >= b->deg) {
 		q->deg = a->deg-b->deg;
-		/* compute a mod b (modअगरies a) */
-		gf_poly_mod(bch, a, b, शून्य);
+		/* compute a mod b (modifies a) */
+		gf_poly_mod(bch, a, b, NULL);
 		/* quotient is stored in upper part of polynomial a */
-		स_नकल(q->c, &a->c[b->deg], (1+q->deg)*माप(अचिन्हित पूर्णांक));
-	पूर्ण अन्यथा अणु
+		memcpy(q->c, &a->c[b->deg], (1+q->deg)*sizeof(unsigned int));
+	} else {
 		q->deg = 0;
 		q->c[0] = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * compute polynomial GCD (Greatest Common Divisor) in GF(2^m)[X]
  */
-अटल काष्ठा gf_poly *gf_poly_gcd(काष्ठा bch_control *bch, काष्ठा gf_poly *a,
-				   काष्ठा gf_poly *b)
-अणु
-	काष्ठा gf_poly *पंचांगp;
+static struct gf_poly *gf_poly_gcd(struct bch_control *bch, struct gf_poly *a,
+				   struct gf_poly *b)
+{
+	struct gf_poly *tmp;
 
 	dbg("gcd(%s,%s)=", gf_poly_str(a), gf_poly_str(b));
 
-	अगर (a->deg < b->deg) अणु
-		पंचांगp = b;
+	if (a->deg < b->deg) {
+		tmp = b;
 		b = a;
-		a = पंचांगp;
-	पूर्ण
+		a = tmp;
+	}
 
-	जबतक (b->deg > 0) अणु
-		gf_poly_mod(bch, a, b, शून्य);
-		पंचांगp = b;
+	while (b->deg > 0) {
+		gf_poly_mod(bch, a, b, NULL);
+		tmp = b;
 		b = a;
-		a = पंचांगp;
-	पूर्ण
+		a = tmp;
+	}
 
 	dbg("%s\n", gf_poly_str(a));
 
-	वापस a;
-पूर्ण
+	return a;
+}
 
 /*
- * Given a polynomial f and an पूर्णांकeger k, compute Tr(a^kX) mod f
- * This is used in Berlekamp Trace algorithm क्रम splitting polynomials
+ * Given a polynomial f and an integer k, compute Tr(a^kX) mod f
+ * This is used in Berlekamp Trace algorithm for splitting polynomials
  */
-अटल व्योम compute_trace_bk_mod(काष्ठा bch_control *bch, पूर्णांक k,
-				 स्थिर काष्ठा gf_poly *f, काष्ठा gf_poly *z,
-				 काष्ठा gf_poly *out)
-अणु
-	स्थिर पूर्णांक m = GF_M(bch);
-	पूर्णांक i, j;
+static void compute_trace_bk_mod(struct bch_control *bch, int k,
+				 const struct gf_poly *f, struct gf_poly *z,
+				 struct gf_poly *out)
+{
+	const int m = GF_M(bch);
+	int i, j;
 
 	/* z contains z^2j mod f */
 	z->deg = 1;
 	z->c[0] = 0;
-	z->c[1] = bch->a_घात_tab[k];
+	z->c[1] = bch->a_pow_tab[k];
 
 	out->deg = 0;
-	स_रखो(out, 0, GF_POLY_SZ(f->deg));
+	memset(out, 0, GF_POLY_SZ(f->deg));
 
 	/* compute f log representation only once */
 	gf_poly_logrep(bch, f, bch->cache);
 
-	क्रम (i = 0; i < m; i++) अणु
+	for (i = 0; i < m; i++) {
 		/* add a^(k*2^i)(z^(2^i) mod f) and compute (z^(2^i) mod f)^2 */
-		क्रम (j = z->deg; j >= 0; j--) अणु
+		for (j = z->deg; j >= 0; j--) {
 			out->c[j] ^= z->c[j];
 			z->c[2*j] = gf_sqr(bch, z->c[j]);
 			z->c[2*j+1] = 0;
-		पूर्ण
-		अगर (z->deg > out->deg)
+		}
+		if (z->deg > out->deg)
 			out->deg = z->deg;
 
-		अगर (i < m-1) अणु
+		if (i < m-1) {
 			z->deg *= 2;
 			/* z^(2(i+1)) mod f = (z^(2^i) mod f)^2 mod f */
 			gf_poly_mod(bch, z, f, bch->cache);
-		पूर्ण
-	पूर्ण
-	जबतक (!out->c[out->deg] && out->deg)
+		}
+	}
+	while (!out->c[out->deg] && out->deg)
 		out->deg--;
 
-	dbg("Tr(a^%d.X) mod f = %s\न", k, gf_poly_str(out));
-पूर्ण
+	dbg("Tr(a^%d.X) mod f = %s\n", k, gf_poly_str(out));
+}
 
 /*
  * factor a polynomial using Berlekamp Trace algorithm (BTA)
  */
-अटल व्योम factor_polynomial(काष्ठा bch_control *bch, पूर्णांक k, काष्ठा gf_poly *f,
-			      काष्ठा gf_poly **g, काष्ठा gf_poly **h)
-अणु
-	काष्ठा gf_poly *f2 = bch->poly_2t[0];
-	काष्ठा gf_poly *q  = bch->poly_2t[1];
-	काष्ठा gf_poly *tk = bch->poly_2t[2];
-	काष्ठा gf_poly *z  = bch->poly_2t[3];
-	काष्ठा gf_poly *gcd;
+static void factor_polynomial(struct bch_control *bch, int k, struct gf_poly *f,
+			      struct gf_poly **g, struct gf_poly **h)
+{
+	struct gf_poly *f2 = bch->poly_2t[0];
+	struct gf_poly *q  = bch->poly_2t[1];
+	struct gf_poly *tk = bch->poly_2t[2];
+	struct gf_poly *z  = bch->poly_2t[3];
+	struct gf_poly *gcd;
 
 	dbg("factoring %s...\n", gf_poly_str(f));
 
 	*g = f;
-	*h = शून्य;
+	*h = NULL;
 
 	/* tk = Tr(a^k.X) mod f */
 	compute_trace_bk_mod(bch, k, f, z, tk);
 
-	अगर (tk->deg > 0) अणु
-		/* compute g = gcd(f, tk) (deकाष्ठाive operation) */
+	if (tk->deg > 0) {
+		/* compute g = gcd(f, tk) (destructive operation) */
 		gf_poly_copy(f2, f);
 		gcd = gf_poly_gcd(bch, f2, tk);
-		अगर (gcd->deg < f->deg) अणु
-			/* compute h=f/gcd(f,tk); this will modअगरy f and q */
-			gf_poly_भाग(bch, f, gcd, q);
+		if (gcd->deg < f->deg) {
+			/* compute h=f/gcd(f,tk); this will modify f and q */
+			gf_poly_div(bch, f, gcd, q);
 			/* store g and h in-place (clobbering f) */
-			*h = &((काष्ठा gf_poly_deg1 *)f)[gcd->deg].poly;
+			*h = &((struct gf_poly_deg1 *)f)[gcd->deg].poly;
 			gf_poly_copy(*g, gcd);
 			gf_poly_copy(*h, q);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*
  * find roots of a polynomial, using BTZ algorithm; see the beginning of this
- * file क्रम details
+ * file for details
  */
-अटल पूर्णांक find_poly_roots(काष्ठा bch_control *bch, अचिन्हित पूर्णांक k,
-			   काष्ठा gf_poly *poly, अचिन्हित पूर्णांक *roots)
-अणु
-	पूर्णांक cnt;
-	काष्ठा gf_poly *f1, *f2;
+static int find_poly_roots(struct bch_control *bch, unsigned int k,
+			   struct gf_poly *poly, unsigned int *roots)
+{
+	int cnt;
+	struct gf_poly *f1, *f2;
 
-	चयन (poly->deg) अणु
+	switch (poly->deg) {
 		/* handle low degree polynomials with ad hoc techniques */
-	हाल 1:
+	case 1:
 		cnt = find_poly_deg1_roots(bch, poly, roots);
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		cnt = find_poly_deg2_roots(bch, poly, roots);
-		अवरोध;
-	हाल 3:
+		break;
+	case 3:
 		cnt = find_poly_deg3_roots(bch, poly, roots);
-		अवरोध;
-	हाल 4:
+		break;
+	case 4:
 		cnt = find_poly_deg4_roots(bch, poly, roots);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		/* factor polynomial using Berlekamp Trace Algorithm (BTA) */
 		cnt = 0;
-		अगर (poly->deg && (k <= GF_M(bch))) अणु
+		if (poly->deg && (k <= GF_M(bch))) {
 			factor_polynomial(bch, k, poly, &f1, &f2);
-			अगर (f1)
+			if (f1)
 				cnt += find_poly_roots(bch, k+1, f1, roots);
-			अगर (f2)
+			if (f2)
 				cnt += find_poly_roots(bch, k+1, f2, roots+cnt);
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	वापस cnt;
-पूर्ण
+		}
+		break;
+	}
+	return cnt;
+}
 
-#अगर defined(USE_CHIEN_SEARCH)
+#if defined(USE_CHIEN_SEARCH)
 /*
- * exhaustive root search (Chien) implementation - not used, included only क्रम
+ * exhaustive root search (Chien) implementation - not used, included only for
  * reference/comparison tests
  */
-अटल पूर्णांक chien_search(काष्ठा bch_control *bch, अचिन्हित पूर्णांक len,
-			काष्ठा gf_poly *p, अचिन्हित पूर्णांक *roots)
-अणु
-	पूर्णांक m;
-	अचिन्हित पूर्णांक i, j, syn, syn0, count = 0;
-	स्थिर अचिन्हित पूर्णांक k = 8*len+bch->ecc_bits;
+static int chien_search(struct bch_control *bch, unsigned int len,
+			struct gf_poly *p, unsigned int *roots)
+{
+	int m;
+	unsigned int i, j, syn, syn0, count = 0;
+	const unsigned int k = 8*len+bch->ecc_bits;
 
 	/* use a log-based representation of polynomial */
 	gf_poly_logrep(bch, p, bch->cache);
 	bch->cache[p->deg] = 0;
-	syn0 = gf_भाग(bch, p->c[0], p->c[p->deg]);
+	syn0 = gf_div(bch, p->c[0], p->c[p->deg]);
 
-	क्रम (i = GF_N(bch)-k+1; i <= GF_N(bch); i++) अणु
+	for (i = GF_N(bch)-k+1; i <= GF_N(bch); i++) {
 		/* compute elp(a^i) */
-		क्रम (j = 1, syn = syn0; j <= p->deg; j++) अणु
+		for (j = 1, syn = syn0; j <= p->deg; j++) {
 			m = bch->cache[j];
-			अगर (m >= 0)
-				syn ^= a_घात(bch, m+j*i);
-		पूर्ण
-		अगर (syn == 0) अणु
+			if (m >= 0)
+				syn ^= a_pow(bch, m+j*i);
+		}
+		if (syn == 0) {
 			roots[count++] = GF_N(bch)-i;
-			अगर (count == p->deg)
-				अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस (count == p->deg) ? count : 0;
-पूर्ण
-#घोषणा find_poly_roots(_p, _k, _elp, _loc) chien_search(_p, len, _elp, _loc)
-#पूर्ण_अगर /* USE_CHIEN_SEARCH */
+			if (count == p->deg)
+				break;
+		}
+	}
+	return (count == p->deg) ? count : 0;
+}
+#define find_poly_roots(_p, _k, _elp, _loc) chien_search(_p, len, _elp, _loc)
+#endif /* USE_CHIEN_SEARCH */
 
 /**
  * bch_decode - decode received codeword and find bit error locations
- * @bch:      BCH control काष्ठाure
- * @data:     received data, ignored अगर @calc_ecc is provided
+ * @bch:      BCH control structure
+ * @data:     received data, ignored if @calc_ecc is provided
  * @len:      data length in bytes, must always be provided
- * @recv_ecc: received ecc, अगर शून्य then assume it was XORed in @calc_ecc
- * @calc_ecc: calculated ecc, अगर शून्य then calc_ecc is computed from @data
- * @syn:      hw computed syndrome data (अगर शून्य, syndrome is calculated)
+ * @recv_ecc: received ecc, if NULL then assume it was XORed in @calc_ecc
+ * @calc_ecc: calculated ecc, if NULL then calc_ecc is computed from @data
+ * @syn:      hw computed syndrome data (if NULL, syndrome is calculated)
  * @errloc:   output array of error locations
  *
  * Returns:
- *  The number of errors found, or -EBADMSG अगर decoding failed, or -EINVAL अगर
+ *  The number of errors found, or -EBADMSG if decoding failed, or -EINVAL if
  *  invalid parameters were provided
  *
  * Depending on the available hw BCH support and the need to compute @calc_ecc
@@ -1028,419 +1027,419 @@ EXPORT_SYMBOL_GPL(bch_encode);
  * the following parameter configurations -
  *
  * by providing @data and @recv_ecc only:
- *   bch_decode(@bch, @data, @len, @recv_ecc, शून्य, शून्य, @errloc)
+ *   bch_decode(@bch, @data, @len, @recv_ecc, NULL, NULL, @errloc)
  *
  * by providing @recv_ecc and @calc_ecc:
- *   bch_decode(@bch, शून्य, @len, @recv_ecc, @calc_ecc, शून्य, @errloc)
+ *   bch_decode(@bch, NULL, @len, @recv_ecc, @calc_ecc, NULL, @errloc)
  *
  * by providing ecc = recv_ecc XOR calc_ecc:
- *   bch_decode(@bch, शून्य, @len, शून्य, ecc, शून्य, @errloc)
+ *   bch_decode(@bch, NULL, @len, NULL, ecc, NULL, @errloc)
  *
  * by providing syndrome results @syn:
- *   bch_decode(@bch, शून्य, @len, शून्य, शून्य, @syn, @errloc)
+ *   bch_decode(@bch, NULL, @len, NULL, NULL, @syn, @errloc)
  *
- * Once bch_decode() has successfully वापसed with a positive value, error
- * locations वापसed in array @errloc should be पूर्णांकerpreted as follows -
+ * Once bch_decode() has successfully returned with a positive value, error
+ * locations returned in array @errloc should be interpreted as follows -
  *
- * अगर (errloc[n] >= 8*len), then n-th error is located in ecc (no need क्रम
+ * if (errloc[n] >= 8*len), then n-th error is located in ecc (no need for
  * data correction)
  *
- * अगर (errloc[n] < 8*len), then n-th error is located in data and can be
+ * if (errloc[n] < 8*len), then n-th error is located in data and can be
  * corrected with statement data[errloc[n]/8] ^= 1 << (errloc[n] % 8);
  *
- * Note that this function करोes not perक्रमm any data correction by itself, it
+ * Note that this function does not perform any data correction by itself, it
  * merely indicates error locations.
  */
-पूर्णांक bch_decode(काष्ठा bch_control *bch, स्थिर uपूर्णांक8_t *data, अचिन्हित पूर्णांक len,
-	       स्थिर uपूर्णांक8_t *recv_ecc, स्थिर uपूर्णांक8_t *calc_ecc,
-	       स्थिर अचिन्हित पूर्णांक *syn, अचिन्हित पूर्णांक *errloc)
-अणु
-	स्थिर अचिन्हित पूर्णांक ecc_words = BCH_ECC_WORDS(bch);
-	अचिन्हित पूर्णांक nbits;
-	पूर्णांक i, err, nroots;
-	uपूर्णांक32_t sum;
+int bch_decode(struct bch_control *bch, const uint8_t *data, unsigned int len,
+	       const uint8_t *recv_ecc, const uint8_t *calc_ecc,
+	       const unsigned int *syn, unsigned int *errloc)
+{
+	const unsigned int ecc_words = BCH_ECC_WORDS(bch);
+	unsigned int nbits;
+	int i, err, nroots;
+	uint32_t sum;
 
 	/* sanity check: make sure data length can be handled */
-	अगर (8*len > (bch->n-bch->ecc_bits))
-		वापस -EINVAL;
+	if (8*len > (bch->n-bch->ecc_bits))
+		return -EINVAL;
 
-	/* अगर caller करोes not provide syndromes, compute them */
-	अगर (!syn) अणु
-		अगर (!calc_ecc) अणु
-			/* compute received data ecc पूर्णांकo an पूर्णांकernal buffer */
-			अगर (!data || !recv_ecc)
-				वापस -EINVAL;
-			bch_encode(bch, data, len, शून्य);
-		पूर्ण अन्यथा अणु
+	/* if caller does not provide syndromes, compute them */
+	if (!syn) {
+		if (!calc_ecc) {
+			/* compute received data ecc into an internal buffer */
+			if (!data || !recv_ecc)
+				return -EINVAL;
+			bch_encode(bch, data, len, NULL);
+		} else {
 			/* load provided calculated ecc */
 			load_ecc8(bch, bch->ecc_buf, calc_ecc);
-		पूर्ण
+		}
 		/* load received ecc or assume it was XORed in calc_ecc */
-		अगर (recv_ecc) अणु
+		if (recv_ecc) {
 			load_ecc8(bch, bch->ecc_buf2, recv_ecc);
 			/* XOR received and calculated ecc */
-			क्रम (i = 0, sum = 0; i < (पूर्णांक)ecc_words; i++) अणु
+			for (i = 0, sum = 0; i < (int)ecc_words; i++) {
 				bch->ecc_buf[i] ^= bch->ecc_buf2[i];
 				sum |= bch->ecc_buf[i];
-			पूर्ण
-			अगर (!sum)
+			}
+			if (!sum)
 				/* no error found */
-				वापस 0;
-		पूर्ण
+				return 0;
+		}
 		compute_syndromes(bch, bch->ecc_buf, bch->syn);
 		syn = bch->syn;
-	पूर्ण
+	}
 
 	err = compute_error_locator_polynomial(bch, syn);
-	अगर (err > 0) अणु
+	if (err > 0) {
 		nroots = find_poly_roots(bch, 1, bch->elp, errloc);
-		अगर (err != nroots)
+		if (err != nroots)
 			err = -1;
-	पूर्ण
-	अगर (err > 0) अणु
-		/* post-process raw error locations क्रम easier correction */
+	}
+	if (err > 0) {
+		/* post-process raw error locations for easier correction */
 		nbits = (len*8)+bch->ecc_bits;
-		क्रम (i = 0; i < err; i++) अणु
-			अगर (errloc[i] >= nbits) अणु
+		for (i = 0; i < err; i++) {
+			if (errloc[i] >= nbits) {
 				err = -1;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			errloc[i] = nbits-1-errloc[i];
-			अगर (!bch->swap_bits)
+			if (!bch->swap_bits)
 				errloc[i] = (errloc[i] & ~7) |
 					    (7-(errloc[i] & 7));
-		पूर्ण
-	पूर्ण
-	वापस (err >= 0) ? err : -EBADMSG;
-पूर्ण
+		}
+	}
+	return (err >= 0) ? err : -EBADMSG;
+}
 EXPORT_SYMBOL_GPL(bch_decode);
 
 /*
  * generate Galois field lookup tables
  */
-अटल पूर्णांक build_gf_tables(काष्ठा bch_control *bch, अचिन्हित पूर्णांक poly)
-अणु
-	अचिन्हित पूर्णांक i, x = 1;
-	स्थिर अचिन्हित पूर्णांक k = 1 << deg(poly);
+static int build_gf_tables(struct bch_control *bch, unsigned int poly)
+{
+	unsigned int i, x = 1;
+	const unsigned int k = 1 << deg(poly);
 
 	/* primitive polynomial must be of degree m */
-	अगर (k != (1u << GF_M(bch)))
-		वापस -1;
+	if (k != (1u << GF_M(bch)))
+		return -1;
 
-	क्रम (i = 0; i < GF_N(bch); i++) अणु
-		bch->a_घात_tab[i] = x;
+	for (i = 0; i < GF_N(bch); i++) {
+		bch->a_pow_tab[i] = x;
 		bch->a_log_tab[x] = i;
-		अगर (i && (x == 1))
+		if (i && (x == 1))
 			/* polynomial is not primitive (a^i=1 with 0<i<2^m-1) */
-			वापस -1;
+			return -1;
 		x <<= 1;
-		अगर (x & k)
+		if (x & k)
 			x ^= poly;
-	पूर्ण
-	bch->a_घात_tab[GF_N(bch)] = 1;
+	}
+	bch->a_pow_tab[GF_N(bch)] = 1;
 	bch->a_log_tab[0] = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * compute generator polynomial reमुख्यder tables क्रम fast encoding
+ * compute generator polynomial remainder tables for fast encoding
  */
-अटल व्योम build_mod8_tables(काष्ठा bch_control *bch, स्थिर uपूर्णांक32_t *g)
-अणु
-	पूर्णांक i, j, b, d;
-	uपूर्णांक32_t data, hi, lo, *tab;
-	स्थिर पूर्णांक l = BCH_ECC_WORDS(bch);
-	स्थिर पूर्णांक plen = DIV_ROUND_UP(bch->ecc_bits+1, 32);
-	स्थिर पूर्णांक ecclen = DIV_ROUND_UP(bch->ecc_bits, 32);
+static void build_mod8_tables(struct bch_control *bch, const uint32_t *g)
+{
+	int i, j, b, d;
+	uint32_t data, hi, lo, *tab;
+	const int l = BCH_ECC_WORDS(bch);
+	const int plen = DIV_ROUND_UP(bch->ecc_bits+1, 32);
+	const int ecclen = DIV_ROUND_UP(bch->ecc_bits, 32);
 
-	स_रखो(bch->mod8_tab, 0, 4*256*l*माप(*bch->mod8_tab));
+	memset(bch->mod8_tab, 0, 4*256*l*sizeof(*bch->mod8_tab));
 
-	क्रम (i = 0; i < 256; i++) अणु
+	for (i = 0; i < 256; i++) {
 		/* p(X)=i is a small polynomial of weight <= 8 */
-		क्रम (b = 0; b < 4; b++) अणु
+		for (b = 0; b < 4; b++) {
 			/* we want to compute (p(X).X^(8*b+deg(g))) mod g(X) */
 			tab = bch->mod8_tab + (b*256+i)*l;
 			data = i << (8*b);
-			जबतक (data) अणु
+			while (data) {
 				d = deg(data);
 				/* subtract X^d.g(X) from p(X).X^(8*b+deg(g)) */
 				data ^= g[0] >> (31-d);
-				क्रम (j = 0; j < ecclen; j++) अणु
+				for (j = 0; j < ecclen; j++) {
 					hi = (d < 31) ? g[j] << (d+1) : 0;
 					lo = (j+1 < plen) ?
 						g[j+1] >> (31-d) : 0;
 					tab[j] ^= hi|lo;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+				}
+			}
+		}
+	}
+}
 
 /*
- * build a base क्रम factoring degree 2 polynomials
+ * build a base for factoring degree 2 polynomials
  */
-अटल पूर्णांक build_deg2_base(काष्ठा bch_control *bch)
-अणु
-	स्थिर पूर्णांक m = GF_M(bch);
-	पूर्णांक i, j, r;
-	अचिन्हित पूर्णांक sum, x, y, reमुख्यing, ak = 0, xi[BCH_MAX_M];
+static int build_deg2_base(struct bch_control *bch)
+{
+	const int m = GF_M(bch);
+	int i, j, r;
+	unsigned int sum, x, y, remaining, ak = 0, xi[BCH_MAX_M];
 
 	/* find k s.t. Tr(a^k) = 1 and 0 <= k < m */
-	क्रम (i = 0; i < m; i++) अणु
-		क्रम (j = 0, sum = 0; j < m; j++)
-			sum ^= a_घात(bch, i*(1 << j));
+	for (i = 0; i < m; i++) {
+		for (j = 0, sum = 0; j < m; j++)
+			sum ^= a_pow(bch, i*(1 << j));
 
-		अगर (sum) अणु
-			ak = bch->a_घात_tab[i];
-			अवरोध;
-		पूर्ण
-	पूर्ण
+		if (sum) {
+			ak = bch->a_pow_tab[i];
+			break;
+		}
+	}
 	/* find xi, i=0..m-1 such that xi^2+xi = a^i+Tr(a^i).a^k */
-	reमुख्यing = m;
-	स_रखो(xi, 0, माप(xi));
+	remaining = m;
+	memset(xi, 0, sizeof(xi));
 
-	क्रम (x = 0; (x <= GF_N(bch)) && reमुख्यing; x++) अणु
+	for (x = 0; (x <= GF_N(bch)) && remaining; x++) {
 		y = gf_sqr(bch, x)^x;
-		क्रम (i = 0; i < 2; i++) अणु
+		for (i = 0; i < 2; i++) {
 			r = a_log(bch, y);
-			अगर (y && (r < m) && !xi[r]) अणु
+			if (y && (r < m) && !xi[r]) {
 				bch->xi_tab[r] = x;
 				xi[r] = 1;
-				reमुख्यing--;
+				remaining--;
 				dbg("x%d = %x\n", r, x);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			y ^= ak;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	/* should not happen but check anyway */
-	वापस reमुख्यing ? -1 : 0;
-पूर्ण
+	return remaining ? -1 : 0;
+}
 
-अटल व्योम *bch_alloc(माप_प्रकार size, पूर्णांक *err)
-अणु
-	व्योम *ptr;
+static void *bch_alloc(size_t size, int *err)
+{
+	void *ptr;
 
-	ptr = kदो_स्मृति(size, GFP_KERNEL);
-	अगर (ptr == शून्य)
+	ptr = kmalloc(size, GFP_KERNEL);
+	if (ptr == NULL)
 		*err = 1;
-	वापस ptr;
-पूर्ण
+	return ptr;
+}
 
 /*
- * compute generator polynomial क्रम given (m,t) parameters.
+ * compute generator polynomial for given (m,t) parameters.
  */
-अटल uपूर्णांक32_t *compute_generator_polynomial(काष्ठा bch_control *bch)
-अणु
-	स्थिर अचिन्हित पूर्णांक m = GF_M(bch);
-	स्थिर अचिन्हित पूर्णांक t = GF_T(bch);
-	पूर्णांक n, err = 0;
-	अचिन्हित पूर्णांक i, j, nbits, r, word, *roots;
-	काष्ठा gf_poly *g;
-	uपूर्णांक32_t *genpoly;
+static uint32_t *compute_generator_polynomial(struct bch_control *bch)
+{
+	const unsigned int m = GF_M(bch);
+	const unsigned int t = GF_T(bch);
+	int n, err = 0;
+	unsigned int i, j, nbits, r, word, *roots;
+	struct gf_poly *g;
+	uint32_t *genpoly;
 
 	g = bch_alloc(GF_POLY_SZ(m*t), &err);
-	roots = bch_alloc((bch->n+1)*माप(*roots), &err);
-	genpoly = bch_alloc(DIV_ROUND_UP(m*t+1, 32)*माप(*genpoly), &err);
+	roots = bch_alloc((bch->n+1)*sizeof(*roots), &err);
+	genpoly = bch_alloc(DIV_ROUND_UP(m*t+1, 32)*sizeof(*genpoly), &err);
 
-	अगर (err) अणु
-		kमुक्त(genpoly);
-		genpoly = शून्य;
-		जाओ finish;
-	पूर्ण
+	if (err) {
+		kfree(genpoly);
+		genpoly = NULL;
+		goto finish;
+	}
 
-	/* क्रमागतerate all roots of g(X) */
-	स_रखो(roots , 0, (bch->n+1)*माप(*roots));
-	क्रम (i = 0; i < t; i++) अणु
-		क्रम (j = 0, r = 2*i+1; j < m; j++) अणु
+	/* enumerate all roots of g(X) */
+	memset(roots , 0, (bch->n+1)*sizeof(*roots));
+	for (i = 0; i < t; i++) {
+		for (j = 0, r = 2*i+1; j < m; j++) {
 			roots[r] = 1;
 			r = mod_s(bch, 2*r);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	/* build generator polynomial g(X) */
 	g->deg = 0;
 	g->c[0] = 1;
-	क्रम (i = 0; i < GF_N(bch); i++) अणु
-		अगर (roots[i]) अणु
+	for (i = 0; i < GF_N(bch); i++) {
+		if (roots[i]) {
 			/* multiply g(X) by (X+root) */
-			r = bch->a_घात_tab[i];
+			r = bch->a_pow_tab[i];
 			g->c[g->deg+1] = 1;
-			क्रम (j = g->deg; j > 0; j--)
+			for (j = g->deg; j > 0; j--)
 				g->c[j] = gf_mul(bch, g->c[j], r)^g->c[j-1];
 
 			g->c[0] = gf_mul(bch, g->c[0], r);
 			g->deg++;
-		पूर्ण
-	पूर्ण
-	/* store left-justअगरied binary representation of g(X) */
+		}
+	}
+	/* store left-justified binary representation of g(X) */
 	n = g->deg+1;
 	i = 0;
 
-	जबतक (n > 0) अणु
+	while (n > 0) {
 		nbits = (n > 32) ? 32 : n;
-		क्रम (j = 0, word = 0; j < nbits; j++) अणु
-			अगर (g->c[n-1-j])
+		for (j = 0, word = 0; j < nbits; j++) {
+			if (g->c[n-1-j])
 				word |= 1u << (31-j);
-		पूर्ण
+		}
 		genpoly[i++] = word;
 		n -= nbits;
-	पूर्ण
+	}
 	bch->ecc_bits = g->deg;
 
 finish:
-	kमुक्त(g);
-	kमुक्त(roots);
+	kfree(g);
+	kfree(roots);
 
-	वापस genpoly;
-पूर्ण
+	return genpoly;
+}
 
 /**
  * bch_init - initialize a BCH encoder/decoder
  * @m:          Galois field order, should be in the range 5-15
  * @t:          maximum error correction capability, in bits
- * @prim_poly:  user-provided primitive polynomial (or 0 to use शेष)
+ * @prim_poly:  user-provided primitive polynomial (or 0 to use default)
  * @swap_bits:  swap bits within data and syndrome bytes
  *
  * Returns:
- *  a newly allocated BCH control काष्ठाure अगर successful, शून्य otherwise
+ *  a newly allocated BCH control structure if successful, NULL otherwise
  *
- * This initialization can take some समय, as lookup tables are built क्रम fast
- * encoding/decoding; make sure not to call this function from a समय critical
+ * This initialization can take some time, as lookup tables are built for fast
+ * encoding/decoding; make sure not to call this function from a time critical
  * path. Usually, bch_init() should be called on module/driver init and
- * bch_मुक्त() should be called to release memory on निकास.
+ * bch_free() should be called to release memory on exit.
  *
  * You may provide your own primitive polynomial of degree @m in argument
- * @prim_poly, or let bch_init() use its शेष polynomial.
+ * @prim_poly, or let bch_init() use its default polynomial.
  *
- * Once bch_init() has successfully वापसed a poपूर्णांकer to a newly allocated
- * BCH control काष्ठाure, ecc length in bytes is given by member @ecc_bytes of
- * the काष्ठाure.
+ * Once bch_init() has successfully returned a pointer to a newly allocated
+ * BCH control structure, ecc length in bytes is given by member @ecc_bytes of
+ * the structure.
  */
-काष्ठा bch_control *bch_init(पूर्णांक m, पूर्णांक t, अचिन्हित पूर्णांक prim_poly,
+struct bch_control *bch_init(int m, int t, unsigned int prim_poly,
 			     bool swap_bits)
-अणु
-	पूर्णांक err = 0;
-	अचिन्हित पूर्णांक i, words;
-	uपूर्णांक32_t *genpoly;
-	काष्ठा bch_control *bch = शून्य;
+{
+	int err = 0;
+	unsigned int i, words;
+	uint32_t *genpoly;
+	struct bch_control *bch = NULL;
 
-	स्थिर पूर्णांक min_m = 5;
+	const int min_m = 5;
 
-	/* शेष primitive polynomials */
-	अटल स्थिर अचिन्हित पूर्णांक prim_poly_tab[] = अणु
+	/* default primitive polynomials */
+	static const unsigned int prim_poly_tab[] = {
 		0x25, 0x43, 0x83, 0x11d, 0x211, 0x409, 0x805, 0x1053, 0x201b,
 		0x402b, 0x8003,
-	पूर्ण;
+	};
 
-#अगर defined(CONFIG_BCH_CONST_PARAMS)
-	अगर ((m != (CONFIG_BCH_CONST_M)) || (t != (CONFIG_BCH_CONST_T))) अणु
-		prपूर्णांकk(KERN_ERR "bch encoder/decoder was configured to support "
+#if defined(CONFIG_BCH_CONST_PARAMS)
+	if ((m != (CONFIG_BCH_CONST_M)) || (t != (CONFIG_BCH_CONST_T))) {
+		printk(KERN_ERR "bch encoder/decoder was configured to support "
 		       "parameters m=%d, t=%d only!\n",
 		       CONFIG_BCH_CONST_M, CONFIG_BCH_CONST_T);
-		जाओ fail;
-	पूर्ण
-#पूर्ण_अगर
-	अगर ((m < min_m) || (m > BCH_MAX_M))
+		goto fail;
+	}
+#endif
+	if ((m < min_m) || (m > BCH_MAX_M))
 		/*
 		 * values of m greater than 15 are not currently supported;
 		 * supporting m > 15 would require changing table base type
-		 * (uपूर्णांक16_t) and a small patch in matrix transposition
+		 * (uint16_t) and a small patch in matrix transposition
 		 */
-		जाओ fail;
+		goto fail;
 
-	अगर (t > BCH_MAX_T)
+	if (t > BCH_MAX_T)
 		/*
-		 * we can support larger than 64 bits अगर necessary, at the
+		 * we can support larger than 64 bits if necessary, at the
 		 * cost of higher stack usage.
 		 */
-		जाओ fail;
+		goto fail;
 
 	/* sanity checks */
-	अगर ((t < 1) || (m*t >= ((1 << m)-1)))
+	if ((t < 1) || (m*t >= ((1 << m)-1)))
 		/* invalid t value */
-		जाओ fail;
+		goto fail;
 
-	/* select a primitive polynomial क्रम generating GF(2^m) */
-	अगर (prim_poly == 0)
+	/* select a primitive polynomial for generating GF(2^m) */
+	if (prim_poly == 0)
 		prim_poly = prim_poly_tab[m-min_m];
 
-	bch = kzalloc(माप(*bch), GFP_KERNEL);
-	अगर (bch == शून्य)
-		जाओ fail;
+	bch = kzalloc(sizeof(*bch), GFP_KERNEL);
+	if (bch == NULL)
+		goto fail;
 
 	bch->m = m;
 	bch->t = t;
 	bch->n = (1 << m)-1;
 	words  = DIV_ROUND_UP(m*t, 32);
 	bch->ecc_bytes = DIV_ROUND_UP(m*t, 8);
-	bch->a_घात_tab = bch_alloc((1+bch->n)*माप(*bch->a_घात_tab), &err);
-	bch->a_log_tab = bch_alloc((1+bch->n)*माप(*bch->a_log_tab), &err);
-	bch->mod8_tab  = bch_alloc(words*1024*माप(*bch->mod8_tab), &err);
-	bch->ecc_buf   = bch_alloc(words*माप(*bch->ecc_buf), &err);
-	bch->ecc_buf2  = bch_alloc(words*माप(*bch->ecc_buf2), &err);
-	bch->xi_tab    = bch_alloc(m*माप(*bch->xi_tab), &err);
-	bch->syn       = bch_alloc(2*t*माप(*bch->syn), &err);
-	bch->cache     = bch_alloc(2*t*माप(*bch->cache), &err);
-	bch->elp       = bch_alloc((t+1)*माप(काष्ठा gf_poly_deg1), &err);
+	bch->a_pow_tab = bch_alloc((1+bch->n)*sizeof(*bch->a_pow_tab), &err);
+	bch->a_log_tab = bch_alloc((1+bch->n)*sizeof(*bch->a_log_tab), &err);
+	bch->mod8_tab  = bch_alloc(words*1024*sizeof(*bch->mod8_tab), &err);
+	bch->ecc_buf   = bch_alloc(words*sizeof(*bch->ecc_buf), &err);
+	bch->ecc_buf2  = bch_alloc(words*sizeof(*bch->ecc_buf2), &err);
+	bch->xi_tab    = bch_alloc(m*sizeof(*bch->xi_tab), &err);
+	bch->syn       = bch_alloc(2*t*sizeof(*bch->syn), &err);
+	bch->cache     = bch_alloc(2*t*sizeof(*bch->cache), &err);
+	bch->elp       = bch_alloc((t+1)*sizeof(struct gf_poly_deg1), &err);
 	bch->swap_bits = swap_bits;
 
-	क्रम (i = 0; i < ARRAY_SIZE(bch->poly_2t); i++)
+	for (i = 0; i < ARRAY_SIZE(bch->poly_2t); i++)
 		bch->poly_2t[i] = bch_alloc(GF_POLY_SZ(2*t), &err);
 
-	अगर (err)
-		जाओ fail;
+	if (err)
+		goto fail;
 
 	err = build_gf_tables(bch, prim_poly);
-	अगर (err)
-		जाओ fail;
+	if (err)
+		goto fail;
 
-	/* use generator polynomial क्रम computing encoding tables */
+	/* use generator polynomial for computing encoding tables */
 	genpoly = compute_generator_polynomial(bch);
-	अगर (genpoly == शून्य)
-		जाओ fail;
+	if (genpoly == NULL)
+		goto fail;
 
 	build_mod8_tables(bch, genpoly);
-	kमुक्त(genpoly);
+	kfree(genpoly);
 
 	err = build_deg2_base(bch);
-	अगर (err)
-		जाओ fail;
+	if (err)
+		goto fail;
 
-	वापस bch;
+	return bch;
 
 fail:
-	bch_मुक्त(bch);
-	वापस शून्य;
-पूर्ण
+	bch_free(bch);
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(bch_init);
 
 /**
- *  bch_मुक्त - मुक्त the BCH control काष्ठाure
- *  @bch:    BCH control काष्ठाure to release
+ *  bch_free - free the BCH control structure
+ *  @bch:    BCH control structure to release
  */
-व्योम bch_मुक्त(काष्ठा bch_control *bch)
-अणु
-	अचिन्हित पूर्णांक i;
+void bch_free(struct bch_control *bch)
+{
+	unsigned int i;
 
-	अगर (bch) अणु
-		kमुक्त(bch->a_घात_tab);
-		kमुक्त(bch->a_log_tab);
-		kमुक्त(bch->mod8_tab);
-		kमुक्त(bch->ecc_buf);
-		kमुक्त(bch->ecc_buf2);
-		kमुक्त(bch->xi_tab);
-		kमुक्त(bch->syn);
-		kमुक्त(bch->cache);
-		kमुक्त(bch->elp);
+	if (bch) {
+		kfree(bch->a_pow_tab);
+		kfree(bch->a_log_tab);
+		kfree(bch->mod8_tab);
+		kfree(bch->ecc_buf);
+		kfree(bch->ecc_buf2);
+		kfree(bch->xi_tab);
+		kfree(bch->syn);
+		kfree(bch->cache);
+		kfree(bch->elp);
 
-		क्रम (i = 0; i < ARRAY_SIZE(bch->poly_2t); i++)
-			kमुक्त(bch->poly_2t[i]);
+		for (i = 0; i < ARRAY_SIZE(bch->poly_2t); i++)
+			kfree(bch->poly_2t[i]);
 
-		kमुक्त(bch);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(bch_मुक्त);
+		kfree(bch);
+	}
+}
+EXPORT_SYMBOL_GPL(bch_free);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Ivan Djelic <ivan.djelic@parrot.com>");

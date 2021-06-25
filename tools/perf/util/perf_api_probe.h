@@ -1,18 +1,17 @@
-<शैली गुरु>
 
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __PERF_API_PROBE_H
-#घोषणा __PERF_API_PROBE_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __PERF_API_PROBE_H
+#define __PERF_API_PROBE_H
 
-#समावेश <stdbool.h>
+#include <stdbool.h>
 
-bool perf_can_aux_sample(व्योम);
-bool perf_can_comm_exec(व्योम);
-bool perf_can_record_cpu_wide(व्योम);
-bool perf_can_record_चयन_events(व्योम);
-bool perf_can_record_text_poke_events(व्योम);
-bool perf_can_sample_identअगरier(व्योम);
-bool perf_can_record_build_id(व्योम);
-bool perf_can_record_cgroup(व्योम);
+bool perf_can_aux_sample(void);
+bool perf_can_comm_exec(void);
+bool perf_can_record_cpu_wide(void);
+bool perf_can_record_switch_events(void);
+bool perf_can_record_text_poke_events(void);
+bool perf_can_sample_identifier(void);
+bool perf_can_record_build_id(void);
+bool perf_can_record_cgroup(void);
 
-#पूर्ण_अगर // __PERF_API_PROBE_H
+#endif // __PERF_API_PROBE_H

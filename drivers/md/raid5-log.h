@@ -1,155 +1,154 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _RAID5_LOG_H
-#घोषणा _RAID5_LOG_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _RAID5_LOG_H
+#define _RAID5_LOG_H
 
-बाह्य पूर्णांक r5l_init_log(काष्ठा r5conf *conf, काष्ठा md_rdev *rdev);
-बाह्य व्योम r5l_निकास_log(काष्ठा r5conf *conf);
-बाह्य पूर्णांक r5l_ग_लिखो_stripe(काष्ठा r5l_log *log, काष्ठा stripe_head *head_sh);
-बाह्य व्योम r5l_ग_लिखो_stripe_run(काष्ठा r5l_log *log);
-बाह्य व्योम r5l_flush_stripe_to_raid(काष्ठा r5l_log *log);
-बाह्य व्योम r5l_stripe_ग_लिखो_finished(काष्ठा stripe_head *sh);
-बाह्य पूर्णांक r5l_handle_flush_request(काष्ठा r5l_log *log, काष्ठा bio *bio);
-बाह्य व्योम r5l_quiesce(काष्ठा r5l_log *log, पूर्णांक quiesce);
-बाह्य bool r5l_log_disk_error(काष्ठा r5conf *conf);
-बाह्य bool r5c_is_ग_लिखोback(काष्ठा r5l_log *log);
-बाह्य पूर्णांक
-r5c_try_caching_ग_लिखो(काष्ठा r5conf *conf, काष्ठा stripe_head *sh,
-		      काष्ठा stripe_head_state *s, पूर्णांक disks);
-बाह्य व्योम
-r5c_finish_stripe_ग_लिखो_out(काष्ठा r5conf *conf, काष्ठा stripe_head *sh,
-			    काष्ठा stripe_head_state *s);
-बाह्य व्योम r5c_release_extra_page(काष्ठा stripe_head *sh);
-बाह्य व्योम r5c_use_extra_page(काष्ठा stripe_head *sh);
-बाह्य व्योम r5l_wake_reclaim(काष्ठा r5l_log *log, sector_t space);
-बाह्य व्योम r5c_handle_cached_data_endio(काष्ठा r5conf *conf,
-	काष्ठा stripe_head *sh, पूर्णांक disks);
-बाह्य पूर्णांक r5c_cache_data(काष्ठा r5l_log *log, काष्ठा stripe_head *sh);
-बाह्य व्योम r5c_make_stripe_ग_लिखो_out(काष्ठा stripe_head *sh);
-बाह्य व्योम r5c_flush_cache(काष्ठा r5conf *conf, पूर्णांक num);
-बाह्य व्योम r5c_check_stripe_cache_usage(काष्ठा r5conf *conf);
-बाह्य व्योम r5c_check_cached_full_stripe(काष्ठा r5conf *conf);
-बाह्य काष्ठा md_sysfs_entry r5c_journal_mode;
-बाह्य व्योम r5c_update_on_rdev_error(काष्ठा mddev *mddev,
-				     काष्ठा md_rdev *rdev);
-बाह्य bool r5c_big_stripe_cached(काष्ठा r5conf *conf, sector_t sect);
-बाह्य पूर्णांक r5l_start(काष्ठा r5l_log *log);
+extern int r5l_init_log(struct r5conf *conf, struct md_rdev *rdev);
+extern void r5l_exit_log(struct r5conf *conf);
+extern int r5l_write_stripe(struct r5l_log *log, struct stripe_head *head_sh);
+extern void r5l_write_stripe_run(struct r5l_log *log);
+extern void r5l_flush_stripe_to_raid(struct r5l_log *log);
+extern void r5l_stripe_write_finished(struct stripe_head *sh);
+extern int r5l_handle_flush_request(struct r5l_log *log, struct bio *bio);
+extern void r5l_quiesce(struct r5l_log *log, int quiesce);
+extern bool r5l_log_disk_error(struct r5conf *conf);
+extern bool r5c_is_writeback(struct r5l_log *log);
+extern int
+r5c_try_caching_write(struct r5conf *conf, struct stripe_head *sh,
+		      struct stripe_head_state *s, int disks);
+extern void
+r5c_finish_stripe_write_out(struct r5conf *conf, struct stripe_head *sh,
+			    struct stripe_head_state *s);
+extern void r5c_release_extra_page(struct stripe_head *sh);
+extern void r5c_use_extra_page(struct stripe_head *sh);
+extern void r5l_wake_reclaim(struct r5l_log *log, sector_t space);
+extern void r5c_handle_cached_data_endio(struct r5conf *conf,
+	struct stripe_head *sh, int disks);
+extern int r5c_cache_data(struct r5l_log *log, struct stripe_head *sh);
+extern void r5c_make_stripe_write_out(struct stripe_head *sh);
+extern void r5c_flush_cache(struct r5conf *conf, int num);
+extern void r5c_check_stripe_cache_usage(struct r5conf *conf);
+extern void r5c_check_cached_full_stripe(struct r5conf *conf);
+extern struct md_sysfs_entry r5c_journal_mode;
+extern void r5c_update_on_rdev_error(struct mddev *mddev,
+				     struct md_rdev *rdev);
+extern bool r5c_big_stripe_cached(struct r5conf *conf, sector_t sect);
+extern int r5l_start(struct r5l_log *log);
 
-बाह्य काष्ठा dma_async_tx_descriptor *
-ops_run_partial_parity(काष्ठा stripe_head *sh, काष्ठा raid5_percpu *percpu,
-		       काष्ठा dma_async_tx_descriptor *tx);
-बाह्य पूर्णांक ppl_init_log(काष्ठा r5conf *conf);
-बाह्य व्योम ppl_निकास_log(काष्ठा r5conf *conf);
-बाह्य पूर्णांक ppl_ग_लिखो_stripe(काष्ठा r5conf *conf, काष्ठा stripe_head *sh);
-बाह्य व्योम ppl_ग_लिखो_stripe_run(काष्ठा r5conf *conf);
-बाह्य व्योम ppl_stripe_ग_लिखो_finished(काष्ठा stripe_head *sh);
-बाह्य पूर्णांक ppl_modअगरy_log(काष्ठा r5conf *conf, काष्ठा md_rdev *rdev, bool add);
-बाह्य व्योम ppl_quiesce(काष्ठा r5conf *conf, पूर्णांक quiesce);
-बाह्य पूर्णांक ppl_handle_flush_request(काष्ठा r5l_log *log, काष्ठा bio *bio);
-बाह्य काष्ठा md_sysfs_entry ppl_ग_लिखो_hपूर्णांक;
+extern struct dma_async_tx_descriptor *
+ops_run_partial_parity(struct stripe_head *sh, struct raid5_percpu *percpu,
+		       struct dma_async_tx_descriptor *tx);
+extern int ppl_init_log(struct r5conf *conf);
+extern void ppl_exit_log(struct r5conf *conf);
+extern int ppl_write_stripe(struct r5conf *conf, struct stripe_head *sh);
+extern void ppl_write_stripe_run(struct r5conf *conf);
+extern void ppl_stripe_write_finished(struct stripe_head *sh);
+extern int ppl_modify_log(struct r5conf *conf, struct md_rdev *rdev, bool add);
+extern void ppl_quiesce(struct r5conf *conf, int quiesce);
+extern int ppl_handle_flush_request(struct r5l_log *log, struct bio *bio);
+extern struct md_sysfs_entry ppl_write_hint;
 
-अटल अंतरभूत bool raid5_has_log(काष्ठा r5conf *conf)
-अणु
-	वापस test_bit(MD_HAS_JOURNAL, &conf->mddev->flags);
-पूर्ण
+static inline bool raid5_has_log(struct r5conf *conf)
+{
+	return test_bit(MD_HAS_JOURNAL, &conf->mddev->flags);
+}
 
-अटल अंतरभूत bool raid5_has_ppl(काष्ठा r5conf *conf)
-अणु
-	वापस test_bit(MD_HAS_PPL, &conf->mddev->flags);
-पूर्ण
+static inline bool raid5_has_ppl(struct r5conf *conf)
+{
+	return test_bit(MD_HAS_PPL, &conf->mddev->flags);
+}
 
-अटल अंतरभूत पूर्णांक log_stripe(काष्ठा stripe_head *sh, काष्ठा stripe_head_state *s)
-अणु
-	काष्ठा r5conf *conf = sh->raid_conf;
+static inline int log_stripe(struct stripe_head *sh, struct stripe_head_state *s)
+{
+	struct r5conf *conf = sh->raid_conf;
 
-	अगर (conf->log) अणु
-		अगर (!test_bit(STRIPE_R5C_CACHING, &sh->state)) अणु
+	if (conf->log) {
+		if (!test_bit(STRIPE_R5C_CACHING, &sh->state)) {
 			/* writing out phase */
-			अगर (s->रुकोing_extra_page)
-				वापस 0;
-			वापस r5l_ग_लिखो_stripe(conf->log, sh);
-		पूर्ण अन्यथा अगर (test_bit(STRIPE_LOG_TRAPPED, &sh->state)) अणु
+			if (s->waiting_extra_page)
+				return 0;
+			return r5l_write_stripe(conf->log, sh);
+		} else if (test_bit(STRIPE_LOG_TRAPPED, &sh->state)) {
 			/* caching phase */
-			वापस r5c_cache_data(conf->log, sh);
-		पूर्ण
-	पूर्ण अन्यथा अगर (raid5_has_ppl(conf)) अणु
-		वापस ppl_ग_लिखो_stripe(conf, sh);
-	पूर्ण
+			return r5c_cache_data(conf->log, sh);
+		}
+	} else if (raid5_has_ppl(conf)) {
+		return ppl_write_stripe(conf, sh);
+	}
 
-	वापस -EAGAIN;
-पूर्ण
+	return -EAGAIN;
+}
 
-अटल अंतरभूत व्योम log_stripe_ग_लिखो_finished(काष्ठा stripe_head *sh)
-अणु
-	काष्ठा r5conf *conf = sh->raid_conf;
+static inline void log_stripe_write_finished(struct stripe_head *sh)
+{
+	struct r5conf *conf = sh->raid_conf;
 
-	अगर (conf->log)
-		r5l_stripe_ग_लिखो_finished(sh);
-	अन्यथा अगर (raid5_has_ppl(conf))
-		ppl_stripe_ग_लिखो_finished(sh);
-पूर्ण
+	if (conf->log)
+		r5l_stripe_write_finished(sh);
+	else if (raid5_has_ppl(conf))
+		ppl_stripe_write_finished(sh);
+}
 
-अटल अंतरभूत व्योम log_ग_लिखो_stripe_run(काष्ठा r5conf *conf)
-अणु
-	अगर (conf->log)
-		r5l_ग_लिखो_stripe_run(conf->log);
-	अन्यथा अगर (raid5_has_ppl(conf))
-		ppl_ग_लिखो_stripe_run(conf);
-पूर्ण
+static inline void log_write_stripe_run(struct r5conf *conf)
+{
+	if (conf->log)
+		r5l_write_stripe_run(conf->log);
+	else if (raid5_has_ppl(conf))
+		ppl_write_stripe_run(conf);
+}
 
-अटल अंतरभूत व्योम log_flush_stripe_to_raid(काष्ठा r5conf *conf)
-अणु
-	अगर (conf->log)
+static inline void log_flush_stripe_to_raid(struct r5conf *conf)
+{
+	if (conf->log)
 		r5l_flush_stripe_to_raid(conf->log);
-	अन्यथा अगर (raid5_has_ppl(conf))
-		ppl_ग_लिखो_stripe_run(conf);
-पूर्ण
+	else if (raid5_has_ppl(conf))
+		ppl_write_stripe_run(conf);
+}
 
-अटल अंतरभूत पूर्णांक log_handle_flush_request(काष्ठा r5conf *conf, काष्ठा bio *bio)
-अणु
-	पूर्णांक ret = -ENODEV;
+static inline int log_handle_flush_request(struct r5conf *conf, struct bio *bio)
+{
+	int ret = -ENODEV;
 
-	अगर (conf->log)
+	if (conf->log)
 		ret = r5l_handle_flush_request(conf->log, bio);
-	अन्यथा अगर (raid5_has_ppl(conf))
+	else if (raid5_has_ppl(conf))
 		ret = ppl_handle_flush_request(conf->log, bio);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत व्योम log_quiesce(काष्ठा r5conf *conf, पूर्णांक quiesce)
-अणु
-	अगर (conf->log)
+static inline void log_quiesce(struct r5conf *conf, int quiesce)
+{
+	if (conf->log)
 		r5l_quiesce(conf->log, quiesce);
-	अन्यथा अगर (raid5_has_ppl(conf))
+	else if (raid5_has_ppl(conf))
 		ppl_quiesce(conf, quiesce);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम log_निकास(काष्ठा r5conf *conf)
-अणु
-	अगर (conf->log)
-		r5l_निकास_log(conf);
-	अन्यथा अगर (raid5_has_ppl(conf))
-		ppl_निकास_log(conf);
-पूर्ण
+static inline void log_exit(struct r5conf *conf)
+{
+	if (conf->log)
+		r5l_exit_log(conf);
+	else if (raid5_has_ppl(conf))
+		ppl_exit_log(conf);
+}
 
-अटल अंतरभूत पूर्णांक log_init(काष्ठा r5conf *conf, काष्ठा md_rdev *journal_dev,
+static inline int log_init(struct r5conf *conf, struct md_rdev *journal_dev,
 			   bool ppl)
-अणु
-	अगर (journal_dev)
-		वापस r5l_init_log(conf, journal_dev);
-	अन्यथा अगर (ppl)
-		वापस ppl_init_log(conf);
+{
+	if (journal_dev)
+		return r5l_init_log(conf, journal_dev);
+	else if (ppl)
+		return ppl_init_log(conf);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक log_modअगरy(काष्ठा r5conf *conf, काष्ठा md_rdev *rdev, bool add)
-अणु
-	अगर (raid5_has_ppl(conf))
-		वापस ppl_modअगरy_log(conf, rdev, add);
+static inline int log_modify(struct r5conf *conf, struct md_rdev *rdev, bool add)
+{
+	if (raid5_has_ppl(conf))
+		return ppl_modify_log(conf, rdev, add);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#पूर्ण_अगर
+#endif

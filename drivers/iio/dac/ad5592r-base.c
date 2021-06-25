@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * AD5592R Digital <-> Analog converters driver
  *
@@ -7,129 +6,129 @@
  * Author: Paul Cercueil <paul.cercueil@analog.com>
  */
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/of.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/gpio/driver.h>
-#समावेश <linux/property.h>
+#include <linux/bitops.h>
+#include <linux/delay.h>
+#include <linux/iio/iio.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/of.h>
+#include <linux/regulator/consumer.h>
+#include <linux/gpio/consumer.h>
+#include <linux/gpio/driver.h>
+#include <linux/property.h>
 
-#समावेश <dt-bindings/iio/adi,ad5592r.h>
+#include <dt-bindings/iio/adi,ad5592r.h>
 
-#समावेश "ad5592r-base.h"
+#include "ad5592r-base.h"
 
-अटल पूर्णांक ad5592r_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित offset)
-अणु
-	काष्ठा ad5592r_state *st = gpiochip_get_data(chip);
-	पूर्णांक ret = 0;
+static int ad5592r_gpio_get(struct gpio_chip *chip, unsigned offset)
+{
+	struct ad5592r_state *st = gpiochip_get_data(chip);
+	int ret = 0;
 	u8 val;
 
 	mutex_lock(&st->gpio_lock);
 
-	अगर (st->gpio_out & BIT(offset))
+	if (st->gpio_out & BIT(offset))
 		val = st->gpio_val;
-	अन्यथा
-		ret = st->ops->gpio_पढ़ो(st, &val);
+	else
+		ret = st->ops->gpio_read(st, &val);
 
 	mutex_unlock(&st->gpio_lock);
 
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस !!(val & BIT(offset));
-पूर्ण
+	return !!(val & BIT(offset));
+}
 
-अटल व्योम ad5592r_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित offset, पूर्णांक value)
-अणु
-	काष्ठा ad5592r_state *st = gpiochip_get_data(chip);
+static void ad5592r_gpio_set(struct gpio_chip *chip, unsigned offset, int value)
+{
+	struct ad5592r_state *st = gpiochip_get_data(chip);
 
 	mutex_lock(&st->gpio_lock);
 
-	अगर (value)
+	if (value)
 		st->gpio_val |= BIT(offset);
-	अन्यथा
+	else
 		st->gpio_val &= ~BIT(offset);
 
-	st->ops->reg_ग_लिखो(st, AD5592R_REG_GPIO_SET, st->gpio_val);
+	st->ops->reg_write(st, AD5592R_REG_GPIO_SET, st->gpio_val);
 
 	mutex_unlock(&st->gpio_lock);
-पूर्ण
+}
 
-अटल पूर्णांक ad5592r_gpio_direction_input(काष्ठा gpio_chip *chip, अचिन्हित offset)
-अणु
-	काष्ठा ad5592r_state *st = gpiochip_get_data(chip);
-	पूर्णांक ret;
+static int ad5592r_gpio_direction_input(struct gpio_chip *chip, unsigned offset)
+{
+	struct ad5592r_state *st = gpiochip_get_data(chip);
+	int ret;
 
 	mutex_lock(&st->gpio_lock);
 
 	st->gpio_out &= ~BIT(offset);
 	st->gpio_in |= BIT(offset);
 
-	ret = st->ops->reg_ग_लिखो(st, AD5592R_REG_GPIO_OUT_EN, st->gpio_out);
-	अगर (ret < 0)
-		जाओ err_unlock;
+	ret = st->ops->reg_write(st, AD5592R_REG_GPIO_OUT_EN, st->gpio_out);
+	if (ret < 0)
+		goto err_unlock;
 
-	ret = st->ops->reg_ग_लिखो(st, AD5592R_REG_GPIO_IN_EN, st->gpio_in);
+	ret = st->ops->reg_write(st, AD5592R_REG_GPIO_IN_EN, st->gpio_in);
 
 err_unlock:
 	mutex_unlock(&st->gpio_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ad5592r_gpio_direction_output(काष्ठा gpio_chip *chip,
-					 अचिन्हित offset, पूर्णांक value)
-अणु
-	काष्ठा ad5592r_state *st = gpiochip_get_data(chip);
-	पूर्णांक ret;
+static int ad5592r_gpio_direction_output(struct gpio_chip *chip,
+					 unsigned offset, int value)
+{
+	struct ad5592r_state *st = gpiochip_get_data(chip);
+	int ret;
 
 	mutex_lock(&st->gpio_lock);
 
-	अगर (value)
+	if (value)
 		st->gpio_val |= BIT(offset);
-	अन्यथा
+	else
 		st->gpio_val &= ~BIT(offset);
 
 	st->gpio_in &= ~BIT(offset);
 	st->gpio_out |= BIT(offset);
 
-	ret = st->ops->reg_ग_लिखो(st, AD5592R_REG_GPIO_SET, st->gpio_val);
-	अगर (ret < 0)
-		जाओ err_unlock;
+	ret = st->ops->reg_write(st, AD5592R_REG_GPIO_SET, st->gpio_val);
+	if (ret < 0)
+		goto err_unlock;
 
-	ret = st->ops->reg_ग_लिखो(st, AD5592R_REG_GPIO_OUT_EN, st->gpio_out);
-	अगर (ret < 0)
-		जाओ err_unlock;
+	ret = st->ops->reg_write(st, AD5592R_REG_GPIO_OUT_EN, st->gpio_out);
+	if (ret < 0)
+		goto err_unlock;
 
-	ret = st->ops->reg_ग_लिखो(st, AD5592R_REG_GPIO_IN_EN, st->gpio_in);
+	ret = st->ops->reg_write(st, AD5592R_REG_GPIO_IN_EN, st->gpio_in);
 
 err_unlock:
 	mutex_unlock(&st->gpio_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ad5592r_gpio_request(काष्ठा gpio_chip *chip, अचिन्हित offset)
-अणु
-	काष्ठा ad5592r_state *st = gpiochip_get_data(chip);
+static int ad5592r_gpio_request(struct gpio_chip *chip, unsigned offset)
+{
+	struct ad5592r_state *st = gpiochip_get_data(chip);
 
-	अगर (!(st->gpio_map & BIT(offset))) अणु
+	if (!(st->gpio_map & BIT(offset))) {
 		dev_err(st->dev, "GPIO %d is reserved by alternate function\n",
 			offset);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ad5592r_gpio_init(काष्ठा ad5592r_state *st)
-अणु
-	अगर (!st->gpio_map)
-		वापस 0;
+static int ad5592r_gpio_init(struct ad5592r_state *st)
+{
+	if (!st->gpio_map)
+		return 0;
 
 	st->gpiochip.label = dev_name(st->dev);
 	st->gpiochip.base = -1;
@@ -145,282 +144,282 @@ err_unlock:
 
 	mutex_init(&st->gpio_lock);
 
-	वापस gpiochip_add_data(&st->gpiochip, st);
-पूर्ण
+	return gpiochip_add_data(&st->gpiochip, st);
+}
 
-अटल व्योम ad5592r_gpio_cleanup(काष्ठा ad5592r_state *st)
-अणु
-	अगर (st->gpio_map)
-		gpiochip_हटाओ(&st->gpiochip);
-पूर्ण
+static void ad5592r_gpio_cleanup(struct ad5592r_state *st)
+{
+	if (st->gpio_map)
+		gpiochip_remove(&st->gpiochip);
+}
 
-अटल पूर्णांक ad5592r_reset(काष्ठा ad5592r_state *st)
-अणु
-	काष्ठा gpio_desc *gpio;
+static int ad5592r_reset(struct ad5592r_state *st)
+{
+	struct gpio_desc *gpio;
 
 	gpio = devm_gpiod_get_optional(st->dev, "reset", GPIOD_OUT_LOW);
-	अगर (IS_ERR(gpio))
-		वापस PTR_ERR(gpio);
+	if (IS_ERR(gpio))
+		return PTR_ERR(gpio);
 
-	अगर (gpio) अणु
+	if (gpio) {
 		udelay(1);
 		gpiod_set_value(gpio, 1);
-	पूर्ण अन्यथा अणु
+	} else {
 		mutex_lock(&st->lock);
 		/* Writing this magic value resets the device */
-		st->ops->reg_ग_लिखो(st, AD5592R_REG_RESET, 0xdac);
+		st->ops->reg_write(st, AD5592R_REG_RESET, 0xdac);
 		mutex_unlock(&st->lock);
-	पूर्ण
+	}
 
 	udelay(250);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ad5592r_get_vref(काष्ठा ad5592r_state *st)
-अणु
-	पूर्णांक ret;
+static int ad5592r_get_vref(struct ad5592r_state *st)
+{
+	int ret;
 
-	अगर (st->reg) अणु
+	if (st->reg) {
 		ret = regulator_get_voltage(st->reg);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
-		वापस ret / 1000;
-	पूर्ण अन्यथा अणु
-		वापस 2500;
-	पूर्ण
-पूर्ण
+		return ret / 1000;
+	} else {
+		return 2500;
+	}
+}
 
-अटल पूर्णांक ad5592r_set_channel_modes(काष्ठा ad5592r_state *st)
-अणु
-	स्थिर काष्ठा ad5592r_rw_ops *ops = st->ops;
-	पूर्णांक ret;
-	अचिन्हित i;
-	u8 pullकरोwn = 0, tristate = 0, dac = 0, adc = 0;
-	u16 पढ़ो_back;
+static int ad5592r_set_channel_modes(struct ad5592r_state *st)
+{
+	const struct ad5592r_rw_ops *ops = st->ops;
+	int ret;
+	unsigned i;
+	u8 pulldown = 0, tristate = 0, dac = 0, adc = 0;
+	u16 read_back;
 
-	क्रम (i = 0; i < st->num_channels; i++) अणु
-		चयन (st->channel_modes[i]) अणु
-		हाल CH_MODE_DAC:
+	for (i = 0; i < st->num_channels; i++) {
+		switch (st->channel_modes[i]) {
+		case CH_MODE_DAC:
 			dac |= BIT(i);
-			अवरोध;
+			break;
 
-		हाल CH_MODE_ADC:
+		case CH_MODE_ADC:
 			adc |= BIT(i);
-			अवरोध;
+			break;
 
-		हाल CH_MODE_DAC_AND_ADC:
+		case CH_MODE_DAC_AND_ADC:
 			dac |= BIT(i);
 			adc |= BIT(i);
-			अवरोध;
+			break;
 
-		हाल CH_MODE_GPIO:
+		case CH_MODE_GPIO:
 			st->gpio_map |= BIT(i);
 			st->gpio_in |= BIT(i); /* Default to input */
-			अवरोध;
+			break;
 
-		हाल CH_MODE_UNUSED:
-		शेष:
-			चयन (st->channel_ofख_स्थितिe[i]) अणु
-			हाल CH_OFFSTATE_OUT_TRISTATE:
+		case CH_MODE_UNUSED:
+		default:
+			switch (st->channel_offstate[i]) {
+			case CH_OFFSTATE_OUT_TRISTATE:
 				tristate |= BIT(i);
-				अवरोध;
+				break;
 
-			हाल CH_OFFSTATE_OUT_LOW:
+			case CH_OFFSTATE_OUT_LOW:
 				st->gpio_out |= BIT(i);
-				अवरोध;
+				break;
 
-			हाल CH_OFFSTATE_OUT_HIGH:
+			case CH_OFFSTATE_OUT_HIGH:
 				st->gpio_out |= BIT(i);
 				st->gpio_val |= BIT(i);
-				अवरोध;
+				break;
 
-			हाल CH_OFFSTATE_PULLDOWN:
-			शेष:
-				pullकरोwn |= BIT(i);
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			case CH_OFFSTATE_PULLDOWN:
+			default:
+				pulldown |= BIT(i);
+				break;
+			}
+		}
+	}
 
 	mutex_lock(&st->lock);
 
-	/* Pull करोwn unused pins to GND */
-	ret = ops->reg_ग_लिखो(st, AD5592R_REG_PULLDOWN, pullकरोwn);
-	अगर (ret)
-		जाओ err_unlock;
+	/* Pull down unused pins to GND */
+	ret = ops->reg_write(st, AD5592R_REG_PULLDOWN, pulldown);
+	if (ret)
+		goto err_unlock;
 
-	ret = ops->reg_ग_लिखो(st, AD5592R_REG_TRISTATE, tristate);
-	अगर (ret)
-		जाओ err_unlock;
+	ret = ops->reg_write(st, AD5592R_REG_TRISTATE, tristate);
+	if (ret)
+		goto err_unlock;
 
 	/* Configure pins that we use */
-	ret = ops->reg_ग_लिखो(st, AD5592R_REG_DAC_EN, dac);
-	अगर (ret)
-		जाओ err_unlock;
+	ret = ops->reg_write(st, AD5592R_REG_DAC_EN, dac);
+	if (ret)
+		goto err_unlock;
 
-	ret = ops->reg_ग_लिखो(st, AD5592R_REG_ADC_EN, adc);
-	अगर (ret)
-		जाओ err_unlock;
+	ret = ops->reg_write(st, AD5592R_REG_ADC_EN, adc);
+	if (ret)
+		goto err_unlock;
 
-	ret = ops->reg_ग_लिखो(st, AD5592R_REG_GPIO_SET, st->gpio_val);
-	अगर (ret)
-		जाओ err_unlock;
+	ret = ops->reg_write(st, AD5592R_REG_GPIO_SET, st->gpio_val);
+	if (ret)
+		goto err_unlock;
 
-	ret = ops->reg_ग_लिखो(st, AD5592R_REG_GPIO_OUT_EN, st->gpio_out);
-	अगर (ret)
-		जाओ err_unlock;
+	ret = ops->reg_write(st, AD5592R_REG_GPIO_OUT_EN, st->gpio_out);
+	if (ret)
+		goto err_unlock;
 
-	ret = ops->reg_ग_लिखो(st, AD5592R_REG_GPIO_IN_EN, st->gpio_in);
-	अगर (ret)
-		जाओ err_unlock;
+	ret = ops->reg_write(st, AD5592R_REG_GPIO_IN_EN, st->gpio_in);
+	if (ret)
+		goto err_unlock;
 
-	/* Verअगरy that we can पढ़ो back at least one रेजिस्टर */
-	ret = ops->reg_पढ़ो(st, AD5592R_REG_ADC_EN, &पढ़ो_back);
-	अगर (!ret && (पढ़ो_back & 0xff) != adc)
+	/* Verify that we can read back at least one register */
+	ret = ops->reg_read(st, AD5592R_REG_ADC_EN, &read_back);
+	if (!ret && (read_back & 0xff) != adc)
 		ret = -EIO;
 
 err_unlock:
 	mutex_unlock(&st->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ad5592r_reset_channel_modes(काष्ठा ad5592r_state *st)
-अणु
-	पूर्णांक i;
+static int ad5592r_reset_channel_modes(struct ad5592r_state *st)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(st->channel_modes); i++)
+	for (i = 0; i < ARRAY_SIZE(st->channel_modes); i++)
 		st->channel_modes[i] = CH_MODE_UNUSED;
 
-	वापस ad5592r_set_channel_modes(st);
-पूर्ण
+	return ad5592r_set_channel_modes(st);
+}
 
-अटल पूर्णांक ad5592r_ग_लिखो_raw(काष्ठा iio_dev *iio_dev,
-	काष्ठा iio_chan_spec स्थिर *chan, पूर्णांक val, पूर्णांक val2, दीर्घ mask)
-अणु
-	काष्ठा ad5592r_state *st = iio_priv(iio_dev);
-	पूर्णांक ret;
+static int ad5592r_write_raw(struct iio_dev *iio_dev,
+	struct iio_chan_spec const *chan, int val, int val2, long mask)
+{
+	struct ad5592r_state *st = iio_priv(iio_dev);
+	int ret;
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_RAW:
+	switch (mask) {
+	case IIO_CHAN_INFO_RAW:
 
-		अगर (val >= (1 << chan->scan_type.realbits) || val < 0)
-			वापस -EINVAL;
+		if (val >= (1 << chan->scan_type.realbits) || val < 0)
+			return -EINVAL;
 
-		अगर (!chan->output)
-			वापस -EINVAL;
+		if (!chan->output)
+			return -EINVAL;
 
 		mutex_lock(&st->lock);
-		ret = st->ops->ग_लिखो_dac(st, chan->channel, val);
-		अगर (!ret)
+		ret = st->ops->write_dac(st, chan->channel, val);
+		if (!ret)
 			st->cached_dac[chan->channel] = val;
 		mutex_unlock(&st->lock);
-		वापस ret;
-	हाल IIO_CHAN_INFO_SCALE:
-		अगर (chan->type == IIO_VOLTAGE) अणु
+		return ret;
+	case IIO_CHAN_INFO_SCALE:
+		if (chan->type == IIO_VOLTAGE) {
 			bool gain;
 
-			अगर (val == st->scale_avail[0][0] &&
+			if (val == st->scale_avail[0][0] &&
 				val2 == st->scale_avail[0][1])
 				gain = false;
-			अन्यथा अगर (val == st->scale_avail[1][0] &&
+			else if (val == st->scale_avail[1][0] &&
 				 val2 == st->scale_avail[1][1])
 				gain = true;
-			अन्यथा
-				वापस -EINVAL;
+			else
+				return -EINVAL;
 
 			mutex_lock(&st->lock);
 
-			ret = st->ops->reg_पढ़ो(st, AD5592R_REG_CTRL,
+			ret = st->ops->reg_read(st, AD5592R_REG_CTRL,
 						&st->cached_gp_ctrl);
-			अगर (ret < 0) अणु
+			if (ret < 0) {
 				mutex_unlock(&st->lock);
-				वापस ret;
-			पूर्ण
+				return ret;
+			}
 
-			अगर (chan->output) अणु
-				अगर (gain)
+			if (chan->output) {
+				if (gain)
 					st->cached_gp_ctrl |=
 						AD5592R_REG_CTRL_DAC_RANGE;
-				अन्यथा
+				else
 					st->cached_gp_ctrl &=
 						~AD5592R_REG_CTRL_DAC_RANGE;
-			पूर्ण अन्यथा अणु
-				अगर (gain)
+			} else {
+				if (gain)
 					st->cached_gp_ctrl |=
 						AD5592R_REG_CTRL_ADC_RANGE;
-				अन्यथा
+				else
 					st->cached_gp_ctrl &=
 						~AD5592R_REG_CTRL_ADC_RANGE;
-			पूर्ण
+			}
 
-			ret = st->ops->reg_ग_लिखो(st, AD5592R_REG_CTRL,
+			ret = st->ops->reg_write(st, AD5592R_REG_CTRL,
 						 st->cached_gp_ctrl);
 			mutex_unlock(&st->lock);
 
-			वापस ret;
-		पूर्ण
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+			return ret;
+		}
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ad5592r_पढ़ो_raw(काष्ठा iio_dev *iio_dev,
-			   काष्ठा iio_chan_spec स्थिर *chan,
-			   पूर्णांक *val, पूर्णांक *val2, दीर्घ m)
-अणु
-	काष्ठा ad5592r_state *st = iio_priv(iio_dev);
-	u16 पढ़ो_val;
-	पूर्णांक ret, mult;
+static int ad5592r_read_raw(struct iio_dev *iio_dev,
+			   struct iio_chan_spec const *chan,
+			   int *val, int *val2, long m)
+{
+	struct ad5592r_state *st = iio_priv(iio_dev);
+	u16 read_val;
+	int ret, mult;
 
-	चयन (m) अणु
-	हाल IIO_CHAN_INFO_RAW:
-		अगर (!chan->output) अणु
+	switch (m) {
+	case IIO_CHAN_INFO_RAW:
+		if (!chan->output) {
 			mutex_lock(&st->lock);
-			ret = st->ops->पढ़ो_adc(st, chan->channel, &पढ़ो_val);
+			ret = st->ops->read_adc(st, chan->channel, &read_val);
 			mutex_unlock(&st->lock);
-			अगर (ret)
-				वापस ret;
+			if (ret)
+				return ret;
 
-			अगर ((पढ़ो_val >> 12 & 0x7) != (chan->channel & 0x7)) अणु
+			if ((read_val >> 12 & 0x7) != (chan->channel & 0x7)) {
 				dev_err(st->dev, "Error while reading channel %u\n",
 						chan->channel);
-				वापस -EIO;
-			पूर्ण
+				return -EIO;
+			}
 
-			पढ़ो_val &= GENMASK(11, 0);
+			read_val &= GENMASK(11, 0);
 
-		पूर्ण अन्यथा अणु
+		} else {
 			mutex_lock(&st->lock);
-			पढ़ो_val = st->cached_dac[chan->channel];
+			read_val = st->cached_dac[chan->channel];
 			mutex_unlock(&st->lock);
-		पूर्ण
+		}
 
 		dev_dbg(st->dev, "Channel %u read: 0x%04hX\n",
-				chan->channel, पढ़ो_val);
+				chan->channel, read_val);
 
-		*val = (पूर्णांक) पढ़ो_val;
-		वापस IIO_VAL_INT;
-	हाल IIO_CHAN_INFO_SCALE:
+		*val = (int) read_val;
+		return IIO_VAL_INT;
+	case IIO_CHAN_INFO_SCALE:
 		*val = ad5592r_get_vref(st);
 
-		अगर (chan->type == IIO_TEMP) अणु
-			s64 पंचांगp = *val * (3767897513LL / 25LL);
-			*val = भाग_s64_rem(पंचांगp, 1000000000LL, val2);
+		if (chan->type == IIO_TEMP) {
+			s64 tmp = *val * (3767897513LL / 25LL);
+			*val = div_s64_rem(tmp, 1000000000LL, val2);
 
-			वापस IIO_VAL_INT_PLUS_MICRO;
-		पूर्ण
+			return IIO_VAL_INT_PLUS_MICRO;
+		}
 
 		mutex_lock(&st->lock);
 
-		अगर (chan->output)
+		if (chan->output)
 			mult = !!(st->cached_gp_ctrl &
 				AD5592R_REG_CTRL_DAC_RANGE);
-		अन्यथा
+		else
 			mult = !!(st->cached_gp_ctrl &
 				AD5592R_REG_CTRL_ADC_RANGE);
 
@@ -430,69 +429,69 @@ err_unlock:
 
 		*val2 = chan->scan_type.realbits;
 
-		वापस IIO_VAL_FRACTIONAL_LOG2;
-	हाल IIO_CHAN_INFO_OFFSET:
+		return IIO_VAL_FRACTIONAL_LOG2;
+	case IIO_CHAN_INFO_OFFSET:
 		ret = ad5592r_get_vref(st);
 
 		mutex_lock(&st->lock);
 
-		अगर (st->cached_gp_ctrl & AD5592R_REG_CTRL_ADC_RANGE)
+		if (st->cached_gp_ctrl & AD5592R_REG_CTRL_ADC_RANGE)
 			*val = (-34365 * 25) / ret;
-		अन्यथा
+		else
 			*val = (-75365 * 25) / ret;
 
 		mutex_unlock(&st->lock);
 
-		वापस IIO_VAL_INT;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		return IIO_VAL_INT;
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल पूर्णांक ad5592r_ग_लिखो_raw_get_fmt(काष्ठा iio_dev *indio_dev,
-				 काष्ठा iio_chan_spec स्थिर *chan, दीर्घ mask)
-अणु
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_SCALE:
-		वापस IIO_VAL_INT_PLUS_न_अंकO;
+static int ad5592r_write_raw_get_fmt(struct iio_dev *indio_dev,
+				 struct iio_chan_spec const *chan, long mask)
+{
+	switch (mask) {
+	case IIO_CHAN_INFO_SCALE:
+		return IIO_VAL_INT_PLUS_NANO;
 
-	शेष:
-		वापस IIO_VAL_INT_PLUS_MICRO;
-	पूर्ण
+	default:
+		return IIO_VAL_INT_PLUS_MICRO;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल स्थिर काष्ठा iio_info ad5592r_info = अणु
-	.पढ़ो_raw = ad5592r_पढ़ो_raw,
-	.ग_लिखो_raw = ad5592r_ग_लिखो_raw,
-	.ग_लिखो_raw_get_fmt = ad5592r_ग_लिखो_raw_get_fmt,
-पूर्ण;
+static const struct iio_info ad5592r_info = {
+	.read_raw = ad5592r_read_raw,
+	.write_raw = ad5592r_write_raw,
+	.write_raw_get_fmt = ad5592r_write_raw_get_fmt,
+};
 
-अटल sमाप_प्रकार ad5592r_show_scale_available(काष्ठा iio_dev *iio_dev,
-					   uपूर्णांकptr_t निजी,
-					   स्थिर काष्ठा iio_chan_spec *chan,
-					   अक्षर *buf)
-अणु
-	काष्ठा ad5592r_state *st = iio_priv(iio_dev);
+static ssize_t ad5592r_show_scale_available(struct iio_dev *iio_dev,
+					   uintptr_t private,
+					   const struct iio_chan_spec *chan,
+					   char *buf)
+{
+	struct ad5592r_state *st = iio_priv(iio_dev);
 
-	वापस प्र_लिखो(buf, "%d.%09u %d.%09u\n",
+	return sprintf(buf, "%d.%09u %d.%09u\n",
 		st->scale_avail[0][0], st->scale_avail[0][1],
 		st->scale_avail[1][0], st->scale_avail[1][1]);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा iio_chan_spec_ext_info ad5592r_ext_info[] = अणु
-	अणु
+static const struct iio_chan_spec_ext_info ad5592r_ext_info[] = {
+	{
 	 .name = "scale_available",
-	 .पढ़ो = ad5592r_show_scale_available,
+	 .read = ad5592r_show_scale_available,
 	 .shared = IIO_SHARED_BY_TYPE,
-	 पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+	 },
+	{},
+};
 
-अटल व्योम ad5592r_setup_channel(काष्ठा iio_dev *iio_dev,
-		काष्ठा iio_chan_spec *chan, bool output, अचिन्हित id)
-अणु
+static void ad5592r_setup_channel(struct iio_dev *iio_dev,
+		struct iio_chan_spec *chan, bool output, unsigned id)
+{
 	chan->type = IIO_VOLTAGE;
 	chan->indexed = 1;
 	chan->output = output;
@@ -503,65 +502,65 @@ err_unlock:
 	chan->scan_type.realbits = 12;
 	chan->scan_type.storagebits = 16;
 	chan->ext_info = ad5592r_ext_info;
-पूर्ण
+}
 
-अटल पूर्णांक ad5592r_alloc_channels(काष्ठा iio_dev *iio_dev)
-अणु
-	काष्ठा ad5592r_state *st = iio_priv(iio_dev);
-	अचिन्हित i, curr_channel = 0,
+static int ad5592r_alloc_channels(struct iio_dev *iio_dev)
+{
+	struct ad5592r_state *st = iio_priv(iio_dev);
+	unsigned i, curr_channel = 0,
 		 num_channels = st->num_channels;
-	काष्ठा iio_chan_spec *channels;
-	काष्ठा fwnode_handle *child;
-	u32 reg, पंचांगp;
-	पूर्णांक ret;
+	struct iio_chan_spec *channels;
+	struct fwnode_handle *child;
+	u32 reg, tmp;
+	int ret;
 
-	device_क्रम_each_child_node(st->dev, child) अणु
-		ret = fwnode_property_पढ़ो_u32(child, "reg", &reg);
-		अगर (ret || reg >= ARRAY_SIZE(st->channel_modes))
-			जारी;
+	device_for_each_child_node(st->dev, child) {
+		ret = fwnode_property_read_u32(child, "reg", &reg);
+		if (ret || reg >= ARRAY_SIZE(st->channel_modes))
+			continue;
 
-		ret = fwnode_property_पढ़ो_u32(child, "adi,mode", &पंचांगp);
-		अगर (!ret)
-			st->channel_modes[reg] = पंचांगp;
+		ret = fwnode_property_read_u32(child, "adi,mode", &tmp);
+		if (!ret)
+			st->channel_modes[reg] = tmp;
 
-		fwnode_property_पढ़ो_u32(child, "adi,off-state", &पंचांगp);
-		अगर (!ret)
-			st->channel_ofख_स्थितिe[reg] = पंचांगp;
-	पूर्ण
+		fwnode_property_read_u32(child, "adi,off-state", &tmp);
+		if (!ret)
+			st->channel_offstate[reg] = tmp;
+	}
 
-	channels = devm_kसुस्मृति(st->dev,
-			1 + 2 * num_channels, माप(*channels),
+	channels = devm_kcalloc(st->dev,
+			1 + 2 * num_channels, sizeof(*channels),
 			GFP_KERNEL);
-	अगर (!channels)
-		वापस -ENOMEM;
+	if (!channels)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < num_channels; i++) अणु
-		चयन (st->channel_modes[i]) अणु
-		हाल CH_MODE_DAC:
+	for (i = 0; i < num_channels; i++) {
+		switch (st->channel_modes[i]) {
+		case CH_MODE_DAC:
 			ad5592r_setup_channel(iio_dev, &channels[curr_channel],
 					true, i);
 			curr_channel++;
-			अवरोध;
+			break;
 
-		हाल CH_MODE_ADC:
+		case CH_MODE_ADC:
 			ad5592r_setup_channel(iio_dev, &channels[curr_channel],
 					false, i);
 			curr_channel++;
-			अवरोध;
+			break;
 
-		हाल CH_MODE_DAC_AND_ADC:
+		case CH_MODE_DAC_AND_ADC:
 			ad5592r_setup_channel(iio_dev, &channels[curr_channel],
 					true, i);
 			curr_channel++;
 			ad5592r_setup_channel(iio_dev, &channels[curr_channel],
 					false, i);
 			curr_channel++;
-			अवरोध;
+			break;
 
-		शेष:
-			जारी;
-		पूर्ण
-	पूर्ण
+		default:
+			continue;
+		}
+	}
 
 	channels[curr_channel].type = IIO_TEMP;
 	channels[curr_channel].channel = 8;
@@ -573,29 +572,29 @@ err_unlock:
 	iio_dev->num_channels = curr_channel;
 	iio_dev->channels = channels;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ad5592r_init_scales(काष्ठा ad5592r_state *st, पूर्णांक vref_mV)
-अणु
-	s64 पंचांगp = (s64)vref_mV * 1000000000LL >> 12;
+static void ad5592r_init_scales(struct ad5592r_state *st, int vref_mV)
+{
+	s64 tmp = (s64)vref_mV * 1000000000LL >> 12;
 
 	st->scale_avail[0][0] =
-		भाग_s64_rem(पंचांगp, 1000000000LL, &st->scale_avail[0][1]);
+		div_s64_rem(tmp, 1000000000LL, &st->scale_avail[0][1]);
 	st->scale_avail[1][0] =
-		भाग_s64_rem(पंचांगp * 2, 1000000000LL, &st->scale_avail[1][1]);
-पूर्ण
+		div_s64_rem(tmp * 2, 1000000000LL, &st->scale_avail[1][1]);
+}
 
-पूर्णांक ad5592r_probe(काष्ठा device *dev, स्थिर अक्षर *name,
-		स्थिर काष्ठा ad5592r_rw_ops *ops)
-अणु
-	काष्ठा iio_dev *iio_dev;
-	काष्ठा ad5592r_state *st;
-	पूर्णांक ret;
+int ad5592r_probe(struct device *dev, const char *name,
+		const struct ad5592r_rw_ops *ops)
+{
+	struct iio_dev *iio_dev;
+	struct ad5592r_state *st;
+	int ret;
 
-	iio_dev = devm_iio_device_alloc(dev, माप(*st));
-	अगर (!iio_dev)
-		वापस -ENOMEM;
+	iio_dev = devm_iio_device_alloc(dev, sizeof(*st));
+	if (!iio_dev)
+		return -ENOMEM;
 
 	st = iio_priv(iio_dev);
 	st->dev = dev;
@@ -604,81 +603,81 @@ err_unlock:
 	dev_set_drvdata(dev, iio_dev);
 
 	st->reg = devm_regulator_get_optional(dev, "vref");
-	अगर (IS_ERR(st->reg)) अणु
-		अगर ((PTR_ERR(st->reg) != -ENODEV) && dev->of_node)
-			वापस PTR_ERR(st->reg);
+	if (IS_ERR(st->reg)) {
+		if ((PTR_ERR(st->reg) != -ENODEV) && dev->of_node)
+			return PTR_ERR(st->reg);
 
-		st->reg = शून्य;
-	पूर्ण अन्यथा अणु
+		st->reg = NULL;
+	} else {
 		ret = regulator_enable(st->reg);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	iio_dev->name = name;
 	iio_dev->info = &ad5592r_info;
-	iio_dev->modes = INDIO_सूचीECT_MODE;
+	iio_dev->modes = INDIO_DIRECT_MODE;
 
 	mutex_init(&st->lock);
 
 	ad5592r_init_scales(st, ad5592r_get_vref(st));
 
 	ret = ad5592r_reset(st);
-	अगर (ret)
-		जाओ error_disable_reg;
+	if (ret)
+		goto error_disable_reg;
 
-	ret = ops->reg_ग_लिखो(st, AD5592R_REG_PD,
-		     (st->reg == शून्य) ? AD5592R_REG_PD_EN_REF : 0);
-	अगर (ret)
-		जाओ error_disable_reg;
+	ret = ops->reg_write(st, AD5592R_REG_PD,
+		     (st->reg == NULL) ? AD5592R_REG_PD_EN_REF : 0);
+	if (ret)
+		goto error_disable_reg;
 
 	ret = ad5592r_alloc_channels(iio_dev);
-	अगर (ret)
-		जाओ error_disable_reg;
+	if (ret)
+		goto error_disable_reg;
 
 	ret = ad5592r_set_channel_modes(st);
-	अगर (ret)
-		जाओ error_reset_ch_modes;
+	if (ret)
+		goto error_reset_ch_modes;
 
-	ret = iio_device_रेजिस्टर(iio_dev);
-	अगर (ret)
-		जाओ error_reset_ch_modes;
+	ret = iio_device_register(iio_dev);
+	if (ret)
+		goto error_reset_ch_modes;
 
 	ret = ad5592r_gpio_init(st);
-	अगर (ret)
-		जाओ error_dev_unरेजिस्टर;
+	if (ret)
+		goto error_dev_unregister;
 
-	वापस 0;
+	return 0;
 
-error_dev_unरेजिस्टर:
-	iio_device_unरेजिस्टर(iio_dev);
+error_dev_unregister:
+	iio_device_unregister(iio_dev);
 
 error_reset_ch_modes:
 	ad5592r_reset_channel_modes(st);
 
 error_disable_reg:
-	अगर (st->reg)
+	if (st->reg)
 		regulator_disable(st->reg);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(ad5592r_probe);
 
-पूर्णांक ad5592r_हटाओ(काष्ठा device *dev)
-अणु
-	काष्ठा iio_dev *iio_dev = dev_get_drvdata(dev);
-	काष्ठा ad5592r_state *st = iio_priv(iio_dev);
+int ad5592r_remove(struct device *dev)
+{
+	struct iio_dev *iio_dev = dev_get_drvdata(dev);
+	struct ad5592r_state *st = iio_priv(iio_dev);
 
-	iio_device_unरेजिस्टर(iio_dev);
+	iio_device_unregister(iio_dev);
 	ad5592r_reset_channel_modes(st);
 	ad5592r_gpio_cleanup(st);
 
-	अगर (st->reg)
+	if (st->reg)
 		regulator_disable(st->reg);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(ad5592r_हटाओ);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(ad5592r_remove);
 
 MODULE_AUTHOR("Paul Cercueil <paul.cercueil@analog.com>");
 MODULE_DESCRIPTION("Analog Devices AD5592R multi-channel converters");

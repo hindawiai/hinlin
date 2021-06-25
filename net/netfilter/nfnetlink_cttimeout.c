@@ -1,657 +1,656 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * (C) 2012 by Pablo Neira Ayuso <pablo@netfilter.org>
  * (C) 2012 by Vyatta Inc. <http://www.vyatta.com>
  */
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/rculist.h>
-#समावेश <linux/rculist_nulls.h>
-#समावेश <linux/types.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/security.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/netlink.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/slab.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/rculist.h>
+#include <linux/rculist_nulls.h>
+#include <linux/types.h>
+#include <linux/timer.h>
+#include <linux/security.h>
+#include <linux/skbuff.h>
+#include <linux/errno.h>
+#include <linux/netlink.h>
+#include <linux/spinlock.h>
+#include <linux/interrupt.h>
+#include <linux/slab.h>
 
-#समावेश <linux/netfilter.h>
-#समावेश <net/netlink.h>
-#समावेश <net/netns/generic.h>
-#समावेश <net/sock.h>
-#समावेश <net/netfilter/nf_conntrack.h>
-#समावेश <net/netfilter/nf_conntrack_core.h>
-#समावेश <net/netfilter/nf_conntrack_l4proto.h>
-#समावेश <net/netfilter/nf_conntrack_tuple.h>
-#समावेश <net/netfilter/nf_conntrack_समयout.h>
+#include <linux/netfilter.h>
+#include <net/netlink.h>
+#include <net/netns/generic.h>
+#include <net/sock.h>
+#include <net/netfilter/nf_conntrack.h>
+#include <net/netfilter/nf_conntrack_core.h>
+#include <net/netfilter/nf_conntrack_l4proto.h>
+#include <net/netfilter/nf_conntrack_tuple.h>
+#include <net/netfilter/nf_conntrack_timeout.h>
 
-#समावेश <linux/netfilter/nfnetlink.h>
-#समावेश <linux/netfilter/nfnetlink_ctसमयout.h>
+#include <linux/netfilter/nfnetlink.h>
+#include <linux/netfilter/nfnetlink_cttimeout.h>
 
-अटल अचिन्हित पूर्णांक nfct_समयout_id __पढ़ो_mostly;
+static unsigned int nfct_timeout_id __read_mostly;
 
-काष्ठा nfct_समयout_pernet अणु
-	काष्ठा list_head	nfct_समयout_list;
-पूर्ण;
+struct nfct_timeout_pernet {
+	struct list_head	nfct_timeout_list;
+};
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Pablo Neira Ayuso <pablo@netfilter.org>");
 MODULE_DESCRIPTION("cttimeout: Extended Netfilter Connection Tracking timeout tuning");
 
-अटल स्थिर काष्ठा nla_policy ctसमयout_nla_policy[CTA_TIMEOUT_MAX+1] = अणु
-	[CTA_TIMEOUT_NAME]	= अणु .type = NLA_NUL_STRING,
-				    .len  = CTNL_TIMEOUT_NAME_MAX - 1पूर्ण,
-	[CTA_TIMEOUT_L3PROTO]	= अणु .type = NLA_U16 पूर्ण,
-	[CTA_TIMEOUT_L4PROTO]	= अणु .type = NLA_U8 पूर्ण,
-	[CTA_TIMEOUT_DATA]	= अणु .type = NLA_NESTED पूर्ण,
-पूर्ण;
+static const struct nla_policy cttimeout_nla_policy[CTA_TIMEOUT_MAX+1] = {
+	[CTA_TIMEOUT_NAME]	= { .type = NLA_NUL_STRING,
+				    .len  = CTNL_TIMEOUT_NAME_MAX - 1},
+	[CTA_TIMEOUT_L3PROTO]	= { .type = NLA_U16 },
+	[CTA_TIMEOUT_L4PROTO]	= { .type = NLA_U8 },
+	[CTA_TIMEOUT_DATA]	= { .type = NLA_NESTED },
+};
 
-अटल काष्ठा nfct_समयout_pernet *nfct_समयout_pernet(काष्ठा net *net)
-अणु
-	वापस net_generic(net, nfct_समयout_id);
-पूर्ण
+static struct nfct_timeout_pernet *nfct_timeout_pernet(struct net *net)
+{
+	return net_generic(net, nfct_timeout_id);
+}
 
-अटल पूर्णांक
-ctnl_समयout_parse_policy(व्योम *समयout,
-			  स्थिर काष्ठा nf_conntrack_l4proto *l4proto,
-			  काष्ठा net *net, स्थिर काष्ठा nlattr *attr)
-अणु
-	काष्ठा nlattr **tb;
-	पूर्णांक ret = 0;
+static int
+ctnl_timeout_parse_policy(void *timeout,
+			  const struct nf_conntrack_l4proto *l4proto,
+			  struct net *net, const struct nlattr *attr)
+{
+	struct nlattr **tb;
+	int ret = 0;
 
-	tb = kसुस्मृति(l4proto->ctnl_समयout.nlattr_max + 1, माप(*tb),
+	tb = kcalloc(l4proto->ctnl_timeout.nlattr_max + 1, sizeof(*tb),
 		     GFP_KERNEL);
 
-	अगर (!tb)
-		वापस -ENOMEM;
+	if (!tb)
+		return -ENOMEM;
 
 	ret = nla_parse_nested_deprecated(tb,
-					  l4proto->ctnl_समयout.nlattr_max,
+					  l4proto->ctnl_timeout.nlattr_max,
 					  attr,
-					  l4proto->ctnl_समयout.nla_policy,
-					  शून्य);
-	अगर (ret < 0)
-		जाओ err;
+					  l4proto->ctnl_timeout.nla_policy,
+					  NULL);
+	if (ret < 0)
+		goto err;
 
-	ret = l4proto->ctnl_समयout.nlattr_to_obj(tb, net, समयout);
+	ret = l4proto->ctnl_timeout.nlattr_to_obj(tb, net, timeout);
 
 err:
-	kमुक्त(tb);
-	वापस ret;
-पूर्ण
+	kfree(tb);
+	return ret;
+}
 
-अटल पूर्णांक ctसमयout_new_समयout(काष्ठा sk_buff *skb,
-				 स्थिर काष्ठा nfnl_info *info,
-				 स्थिर काष्ठा nlattr * स्थिर cda[])
-अणु
-	काष्ठा nfct_समयout_pernet *pernet = nfct_समयout_pernet(info->net);
+static int cttimeout_new_timeout(struct sk_buff *skb,
+				 const struct nfnl_info *info,
+				 const struct nlattr * const cda[])
+{
+	struct nfct_timeout_pernet *pernet = nfct_timeout_pernet(info->net);
 	__u16 l3num;
 	__u8 l4num;
-	स्थिर काष्ठा nf_conntrack_l4proto *l4proto;
-	काष्ठा ctnl_समयout *समयout, *matching = शून्य;
-	अक्षर *name;
-	पूर्णांक ret;
+	const struct nf_conntrack_l4proto *l4proto;
+	struct ctnl_timeout *timeout, *matching = NULL;
+	char *name;
+	int ret;
 
-	अगर (!cda[CTA_TIMEOUT_NAME] ||
+	if (!cda[CTA_TIMEOUT_NAME] ||
 	    !cda[CTA_TIMEOUT_L3PROTO] ||
 	    !cda[CTA_TIMEOUT_L4PROTO] ||
 	    !cda[CTA_TIMEOUT_DATA])
-		वापस -EINVAL;
+		return -EINVAL;
 
 	name = nla_data(cda[CTA_TIMEOUT_NAME]);
 	l3num = ntohs(nla_get_be16(cda[CTA_TIMEOUT_L3PROTO]));
 	l4num = nla_get_u8(cda[CTA_TIMEOUT_L4PROTO]);
 
-	list_क्रम_each_entry(समयout, &pernet->nfct_समयout_list, head) अणु
-		अगर (म_भेदन(समयout->name, name, CTNL_TIMEOUT_NAME_MAX) != 0)
-			जारी;
+	list_for_each_entry(timeout, &pernet->nfct_timeout_list, head) {
+		if (strncmp(timeout->name, name, CTNL_TIMEOUT_NAME_MAX) != 0)
+			continue;
 
-		अगर (info->nlh->nlmsg_flags & NLM_F_EXCL)
-			वापस -EEXIST;
+		if (info->nlh->nlmsg_flags & NLM_F_EXCL)
+			return -EEXIST;
 
-		matching = समयout;
-		अवरोध;
-	पूर्ण
+		matching = timeout;
+		break;
+	}
 
-	अगर (matching) अणु
-		अगर (info->nlh->nlmsg_flags & NLM_F_REPLACE) अणु
-			/* You cannot replace one समयout policy by another of
-			 * dअगरferent kind, sorry.
+	if (matching) {
+		if (info->nlh->nlmsg_flags & NLM_F_REPLACE) {
+			/* You cannot replace one timeout policy by another of
+			 * different kind, sorry.
 			 */
-			अगर (matching->समयout.l3num != l3num ||
-			    matching->समयout.l4proto->l4proto != l4num)
-				वापस -EINVAL;
+			if (matching->timeout.l3num != l3num ||
+			    matching->timeout.l4proto->l4proto != l4num)
+				return -EINVAL;
 
-			वापस ctnl_समयout_parse_policy(&matching->समयout.data,
-							 matching->समयout.l4proto,
+			return ctnl_timeout_parse_policy(&matching->timeout.data,
+							 matching->timeout.l4proto,
 							 info->net,
 							 cda[CTA_TIMEOUT_DATA]);
-		पूर्ण
+		}
 
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	l4proto = nf_ct_l4proto_find(l4num);
 
 	/* This protocol is not supportted, skip. */
-	अगर (l4proto->l4proto != l4num) अणु
+	if (l4proto->l4proto != l4num) {
 		ret = -EOPNOTSUPP;
-		जाओ err_proto_put;
-	पूर्ण
+		goto err_proto_put;
+	}
 
-	समयout = kzalloc(माप(काष्ठा ctnl_समयout) +
-			  l4proto->ctnl_समयout.obj_size, GFP_KERNEL);
-	अगर (समयout == शून्य) अणु
+	timeout = kzalloc(sizeof(struct ctnl_timeout) +
+			  l4proto->ctnl_timeout.obj_size, GFP_KERNEL);
+	if (timeout == NULL) {
 		ret = -ENOMEM;
-		जाओ err_proto_put;
-	पूर्ण
+		goto err_proto_put;
+	}
 
-	ret = ctnl_समयout_parse_policy(&समयout->समयout.data, l4proto,
+	ret = ctnl_timeout_parse_policy(&timeout->timeout.data, l4proto,
 					info->net, cda[CTA_TIMEOUT_DATA]);
-	अगर (ret < 0)
-		जाओ err;
+	if (ret < 0)
+		goto err;
 
-	म_नकल(समयout->name, nla_data(cda[CTA_TIMEOUT_NAME]));
-	समयout->समयout.l3num = l3num;
-	समयout->समयout.l4proto = l4proto;
-	refcount_set(&समयout->refcnt, 1);
-	list_add_tail_rcu(&समयout->head, &pernet->nfct_समयout_list);
+	strcpy(timeout->name, nla_data(cda[CTA_TIMEOUT_NAME]));
+	timeout->timeout.l3num = l3num;
+	timeout->timeout.l4proto = l4proto;
+	refcount_set(&timeout->refcnt, 1);
+	list_add_tail_rcu(&timeout->head, &pernet->nfct_timeout_list);
 
-	वापस 0;
+	return 0;
 err:
-	kमुक्त(समयout);
+	kfree(timeout);
 err_proto_put:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक
-ctnl_समयout_fill_info(काष्ठा sk_buff *skb, u32 portid, u32 seq, u32 type,
-		       पूर्णांक event, काष्ठा ctnl_समयout *समयout)
-अणु
-	काष्ठा nlmsghdr *nlh;
-	अचिन्हित पूर्णांक flags = portid ? NLM_F_MULTI : 0;
-	स्थिर काष्ठा nf_conntrack_l4proto *l4proto = समयout->समयout.l4proto;
-	काष्ठा nlattr *nest_parms;
-	पूर्णांक ret;
+static int
+ctnl_timeout_fill_info(struct sk_buff *skb, u32 portid, u32 seq, u32 type,
+		       int event, struct ctnl_timeout *timeout)
+{
+	struct nlmsghdr *nlh;
+	unsigned int flags = portid ? NLM_F_MULTI : 0;
+	const struct nf_conntrack_l4proto *l4proto = timeout->timeout.l4proto;
+	struct nlattr *nest_parms;
+	int ret;
 
 	event = nfnl_msg_type(NFNL_SUBSYS_CTNETLINK_TIMEOUT, event);
 	nlh = nfnl_msg_put(skb, portid, seq, event, flags, AF_UNSPEC,
 			   NFNETLINK_V0, 0);
-	अगर (!nlh)
-		जाओ nlmsg_failure;
+	if (!nlh)
+		goto nlmsg_failure;
 
-	अगर (nla_put_string(skb, CTA_TIMEOUT_NAME, समयout->name) ||
+	if (nla_put_string(skb, CTA_TIMEOUT_NAME, timeout->name) ||
 	    nla_put_be16(skb, CTA_TIMEOUT_L3PROTO,
-			 htons(समयout->समयout.l3num)) ||
+			 htons(timeout->timeout.l3num)) ||
 	    nla_put_u8(skb, CTA_TIMEOUT_L4PROTO, l4proto->l4proto) ||
 	    nla_put_be32(skb, CTA_TIMEOUT_USE,
-			 htonl(refcount_पढ़ो(&समयout->refcnt))))
-		जाओ nla_put_failure;
+			 htonl(refcount_read(&timeout->refcnt))))
+		goto nla_put_failure;
 
 	nest_parms = nla_nest_start(skb, CTA_TIMEOUT_DATA);
-	अगर (!nest_parms)
-		जाओ nla_put_failure;
+	if (!nest_parms)
+		goto nla_put_failure;
 
-	ret = l4proto->ctnl_समयout.obj_to_nlattr(skb, &समयout->समयout.data);
-	अगर (ret < 0)
-		जाओ nla_put_failure;
+	ret = l4proto->ctnl_timeout.obj_to_nlattr(skb, &timeout->timeout.data);
+	if (ret < 0)
+		goto nla_put_failure;
 
 	nla_nest_end(skb, nest_parms);
 
 	nlmsg_end(skb, nlh);
-	वापस skb->len;
+	return skb->len;
 
 nlmsg_failure:
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल पूर्णांक
-ctnl_समयout_dump(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा nfct_समयout_pernet *pernet;
-	काष्ठा net *net = sock_net(skb->sk);
-	काष्ठा ctnl_समयout *cur, *last;
+static int
+ctnl_timeout_dump(struct sk_buff *skb, struct netlink_callback *cb)
+{
+	struct nfct_timeout_pernet *pernet;
+	struct net *net = sock_net(skb->sk);
+	struct ctnl_timeout *cur, *last;
 
-	अगर (cb->args[2])
-		वापस 0;
+	if (cb->args[2])
+		return 0;
 
-	last = (काष्ठा ctnl_समयout *)cb->args[1];
-	अगर (cb->args[1])
+	last = (struct ctnl_timeout *)cb->args[1];
+	if (cb->args[1])
 		cb->args[1] = 0;
 
-	rcu_पढ़ो_lock();
-	pernet = nfct_समयout_pernet(net);
-	list_क्रम_each_entry_rcu(cur, &pernet->nfct_समयout_list, head) अणु
-		अगर (last) अणु
-			अगर (cur != last)
-				जारी;
+	rcu_read_lock();
+	pernet = nfct_timeout_pernet(net);
+	list_for_each_entry_rcu(cur, &pernet->nfct_timeout_list, head) {
+		if (last) {
+			if (cur != last)
+				continue;
 
-			last = शून्य;
-		पूर्ण
-		अगर (ctnl_समयout_fill_info(skb, NETLINK_CB(cb->skb).portid,
+			last = NULL;
+		}
+		if (ctnl_timeout_fill_info(skb, NETLINK_CB(cb->skb).portid,
 					   cb->nlh->nlmsg_seq,
 					   NFNL_MSG_TYPE(cb->nlh->nlmsg_type),
-					   IPCTNL_MSG_TIMEOUT_NEW, cur) < 0) अणु
-			cb->args[1] = (अचिन्हित दीर्घ)cur;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (!cb->args[1])
+					   IPCTNL_MSG_TIMEOUT_NEW, cur) < 0) {
+			cb->args[1] = (unsigned long)cur;
+			break;
+		}
+	}
+	if (!cb->args[1])
 		cb->args[2] = 1;
-	rcu_पढ़ो_unlock();
-	वापस skb->len;
-पूर्ण
+	rcu_read_unlock();
+	return skb->len;
+}
 
-अटल पूर्णांक ctसमयout_get_समयout(काष्ठा sk_buff *skb,
-				 स्थिर काष्ठा nfnl_info *info,
-				 स्थिर काष्ठा nlattr * स्थिर cda[])
-अणु
-	काष्ठा nfct_समयout_pernet *pernet = nfct_समयout_pernet(info->net);
-	पूर्णांक ret = -ENOENT;
-	अक्षर *name;
-	काष्ठा ctnl_समयout *cur;
+static int cttimeout_get_timeout(struct sk_buff *skb,
+				 const struct nfnl_info *info,
+				 const struct nlattr * const cda[])
+{
+	struct nfct_timeout_pernet *pernet = nfct_timeout_pernet(info->net);
+	int ret = -ENOENT;
+	char *name;
+	struct ctnl_timeout *cur;
 
-	अगर (info->nlh->nlmsg_flags & NLM_F_DUMP) अणु
-		काष्ठा netlink_dump_control c = अणु
-			.dump = ctnl_समयout_dump,
-		पूर्ण;
-		वापस netlink_dump_start(info->sk, skb, info->nlh, &c);
-	पूर्ण
+	if (info->nlh->nlmsg_flags & NLM_F_DUMP) {
+		struct netlink_dump_control c = {
+			.dump = ctnl_timeout_dump,
+		};
+		return netlink_dump_start(info->sk, skb, info->nlh, &c);
+	}
 
-	अगर (!cda[CTA_TIMEOUT_NAME])
-		वापस -EINVAL;
+	if (!cda[CTA_TIMEOUT_NAME])
+		return -EINVAL;
 	name = nla_data(cda[CTA_TIMEOUT_NAME]);
 
-	list_क्रम_each_entry(cur, &pernet->nfct_समयout_list, head) अणु
-		काष्ठा sk_buff *skb2;
+	list_for_each_entry(cur, &pernet->nfct_timeout_list, head) {
+		struct sk_buff *skb2;
 
-		अगर (म_भेदन(cur->name, name, CTNL_TIMEOUT_NAME_MAX) != 0)
-			जारी;
+		if (strncmp(cur->name, name, CTNL_TIMEOUT_NAME_MAX) != 0)
+			continue;
 
 		skb2 = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-		अगर (skb2 == शून्य) अणु
+		if (skb2 == NULL) {
 			ret = -ENOMEM;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		ret = ctnl_समयout_fill_info(skb2, NETLINK_CB(skb).portid,
+		ret = ctnl_timeout_fill_info(skb2, NETLINK_CB(skb).portid,
 					     info->nlh->nlmsg_seq,
 					     NFNL_MSG_TYPE(info->nlh->nlmsg_type),
 					     IPCTNL_MSG_TIMEOUT_NEW, cur);
-		अगर (ret <= 0) अणु
-			kमुक्त_skb(skb2);
-			अवरोध;
-		पूर्ण
+		if (ret <= 0) {
+			kfree_skb(skb2);
+			break;
+		}
 		ret = netlink_unicast(info->sk, skb2, NETLINK_CB(skb).portid,
 				      MSG_DONTWAIT);
-		अगर (ret > 0)
+		if (ret > 0)
 			ret = 0;
 
-		/* this aव्योमs a loop in nfnetlink. */
-		वापस ret == -EAGAIN ? -ENOBUFS : ret;
-	पूर्ण
-	वापस ret;
-पूर्ण
+		/* this avoids a loop in nfnetlink. */
+		return ret == -EAGAIN ? -ENOBUFS : ret;
+	}
+	return ret;
+}
 
-/* try to delete object, fail अगर it is still in use. */
-अटल पूर्णांक ctnl_समयout_try_del(काष्ठा net *net, काष्ठा ctnl_समयout *समयout)
-अणु
-	पूर्णांक ret = 0;
+/* try to delete object, fail if it is still in use. */
+static int ctnl_timeout_try_del(struct net *net, struct ctnl_timeout *timeout)
+{
+	int ret = 0;
 
-	/* We want to aव्योम races with ctnl_समयout_put. So only when the
+	/* We want to avoid races with ctnl_timeout_put. So only when the
 	 * current refcnt is 1, we decrease it to 0.
 	 */
-	अगर (refcount_dec_अगर_one(&समयout->refcnt)) अणु
-		/* We are रक्षित by nfnl mutex. */
-		list_del_rcu(&समयout->head);
-		nf_ct_unसमयout(net, &समयout->समयout);
-		kमुक्त_rcu(समयout, rcu_head);
-	पूर्ण अन्यथा अणु
+	if (refcount_dec_if_one(&timeout->refcnt)) {
+		/* We are protected by nfnl mutex. */
+		list_del_rcu(&timeout->head);
+		nf_ct_untimeout(net, &timeout->timeout);
+		kfree_rcu(timeout, rcu_head);
+	} else {
 		ret = -EBUSY;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल पूर्णांक ctसमयout_del_समयout(काष्ठा sk_buff *skb,
-				 स्थिर काष्ठा nfnl_info *info,
-				 स्थिर काष्ठा nlattr * स्थिर cda[])
-अणु
-	काष्ठा nfct_समयout_pernet *pernet = nfct_समयout_pernet(info->net);
-	काष्ठा ctnl_समयout *cur, *पंचांगp;
-	पूर्णांक ret = -ENOENT;
-	अक्षर *name;
+static int cttimeout_del_timeout(struct sk_buff *skb,
+				 const struct nfnl_info *info,
+				 const struct nlattr * const cda[])
+{
+	struct nfct_timeout_pernet *pernet = nfct_timeout_pernet(info->net);
+	struct ctnl_timeout *cur, *tmp;
+	int ret = -ENOENT;
+	char *name;
 
-	अगर (!cda[CTA_TIMEOUT_NAME]) अणु
-		list_क्रम_each_entry_safe(cur, पंचांगp, &pernet->nfct_समयout_list,
+	if (!cda[CTA_TIMEOUT_NAME]) {
+		list_for_each_entry_safe(cur, tmp, &pernet->nfct_timeout_list,
 					 head)
-			ctnl_समयout_try_del(info->net, cur);
+			ctnl_timeout_try_del(info->net, cur);
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	name = nla_data(cda[CTA_TIMEOUT_NAME]);
 
-	list_क्रम_each_entry(cur, &pernet->nfct_समयout_list, head) अणु
-		अगर (म_भेदन(cur->name, name, CTNL_TIMEOUT_NAME_MAX) != 0)
-			जारी;
+	list_for_each_entry(cur, &pernet->nfct_timeout_list, head) {
+		if (strncmp(cur->name, name, CTNL_TIMEOUT_NAME_MAX) != 0)
+			continue;
 
-		ret = ctnl_समयout_try_del(info->net, cur);
-		अगर (ret < 0)
-			वापस ret;
+		ret = ctnl_timeout_try_del(info->net, cur);
+		if (ret < 0)
+			return ret;
 
-		अवरोध;
-	पूर्ण
-	वापस ret;
-पूर्ण
+		break;
+	}
+	return ret;
+}
 
-अटल पूर्णांक ctसमयout_शेष_set(काष्ठा sk_buff *skb,
-				 स्थिर काष्ठा nfnl_info *info,
-				 स्थिर काष्ठा nlattr * स्थिर cda[])
-अणु
-	स्थिर काष्ठा nf_conntrack_l4proto *l4proto;
+static int cttimeout_default_set(struct sk_buff *skb,
+				 const struct nfnl_info *info,
+				 const struct nlattr * const cda[])
+{
+	const struct nf_conntrack_l4proto *l4proto;
 	__u8 l4num;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!cda[CTA_TIMEOUT_L3PROTO] ||
+	if (!cda[CTA_TIMEOUT_L3PROTO] ||
 	    !cda[CTA_TIMEOUT_L4PROTO] ||
 	    !cda[CTA_TIMEOUT_DATA])
-		वापस -EINVAL;
+		return -EINVAL;
 
 	l4num = nla_get_u8(cda[CTA_TIMEOUT_L4PROTO]);
 	l4proto = nf_ct_l4proto_find(l4num);
 
 	/* This protocol is not supported, skip. */
-	अगर (l4proto->l4proto != l4num) अणु
+	if (l4proto->l4proto != l4num) {
 		ret = -EOPNOTSUPP;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	ret = ctnl_समयout_parse_policy(शून्य, l4proto, info->net,
+	ret = ctnl_timeout_parse_policy(NULL, l4proto, info->net,
 					cda[CTA_TIMEOUT_DATA]);
-	अगर (ret < 0)
-		जाओ err;
+	if (ret < 0)
+		goto err;
 
-	वापस 0;
+	return 0;
 err:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक
-ctसमयout_शेष_fill_info(काष्ठा net *net, काष्ठा sk_buff *skb, u32 portid,
-			    u32 seq, u32 type, पूर्णांक event, u16 l3num,
-			    स्थिर काष्ठा nf_conntrack_l4proto *l4proto,
-			    स्थिर अचिन्हित पूर्णांक *समयouts)
-अणु
-	काष्ठा nlmsghdr *nlh;
-	अचिन्हित पूर्णांक flags = portid ? NLM_F_MULTI : 0;
-	काष्ठा nlattr *nest_parms;
-	पूर्णांक ret;
+static int
+cttimeout_default_fill_info(struct net *net, struct sk_buff *skb, u32 portid,
+			    u32 seq, u32 type, int event, u16 l3num,
+			    const struct nf_conntrack_l4proto *l4proto,
+			    const unsigned int *timeouts)
+{
+	struct nlmsghdr *nlh;
+	unsigned int flags = portid ? NLM_F_MULTI : 0;
+	struct nlattr *nest_parms;
+	int ret;
 
 	event = nfnl_msg_type(NFNL_SUBSYS_CTNETLINK_TIMEOUT, event);
 	nlh = nfnl_msg_put(skb, portid, seq, event, flags, AF_UNSPEC,
 			   NFNETLINK_V0, 0);
-	अगर (!nlh)
-		जाओ nlmsg_failure;
+	if (!nlh)
+		goto nlmsg_failure;
 
-	अगर (nla_put_be16(skb, CTA_TIMEOUT_L3PROTO, htons(l3num)) ||
+	if (nla_put_be16(skb, CTA_TIMEOUT_L3PROTO, htons(l3num)) ||
 	    nla_put_u8(skb, CTA_TIMEOUT_L4PROTO, l4proto->l4proto))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
 	nest_parms = nla_nest_start(skb, CTA_TIMEOUT_DATA);
-	अगर (!nest_parms)
-		जाओ nla_put_failure;
+	if (!nest_parms)
+		goto nla_put_failure;
 
-	ret = l4proto->ctnl_समयout.obj_to_nlattr(skb, समयouts);
-	अगर (ret < 0)
-		जाओ nla_put_failure;
+	ret = l4proto->ctnl_timeout.obj_to_nlattr(skb, timeouts);
+	if (ret < 0)
+		goto nla_put_failure;
 
 	nla_nest_end(skb, nest_parms);
 
 	nlmsg_end(skb, nlh);
-	वापस skb->len;
+	return skb->len;
 
 nlmsg_failure:
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल पूर्णांक ctसमयout_शेष_get(काष्ठा sk_buff *skb,
-				 स्थिर काष्ठा nfnl_info *info,
-				 स्थिर काष्ठा nlattr * स्थिर cda[])
-अणु
-	स्थिर काष्ठा nf_conntrack_l4proto *l4proto;
-	अचिन्हित पूर्णांक *समयouts = शून्य;
-	काष्ठा sk_buff *skb2;
-	पूर्णांक ret, err;
+static int cttimeout_default_get(struct sk_buff *skb,
+				 const struct nfnl_info *info,
+				 const struct nlattr * const cda[])
+{
+	const struct nf_conntrack_l4proto *l4proto;
+	unsigned int *timeouts = NULL;
+	struct sk_buff *skb2;
+	int ret, err;
 	__u16 l3num;
 	__u8 l4num;
 
-	अगर (!cda[CTA_TIMEOUT_L3PROTO] || !cda[CTA_TIMEOUT_L4PROTO])
-		वापस -EINVAL;
+	if (!cda[CTA_TIMEOUT_L3PROTO] || !cda[CTA_TIMEOUT_L4PROTO])
+		return -EINVAL;
 
 	l3num = ntohs(nla_get_be16(cda[CTA_TIMEOUT_L3PROTO]));
 	l4num = nla_get_u8(cda[CTA_TIMEOUT_L4PROTO]);
 	l4proto = nf_ct_l4proto_find(l4num);
 
 	err = -EOPNOTSUPP;
-	अगर (l4proto->l4proto != l4num)
-		जाओ err;
+	if (l4proto->l4proto != l4num)
+		goto err;
 
-	चयन (l4proto->l4proto) अणु
-	हाल IPPROTO_ICMP:
-		समयouts = &nf_icmp_pernet(info->net)->समयout;
-		अवरोध;
-	हाल IPPROTO_TCP:
-		समयouts = nf_tcp_pernet(info->net)->समयouts;
-		अवरोध;
-	हाल IPPROTO_UDP:
-	हाल IPPROTO_UDPLITE:
-		समयouts = nf_udp_pernet(info->net)->समयouts;
-		अवरोध;
-	हाल IPPROTO_DCCP:
-#अगर_घोषित CONFIG_NF_CT_PROTO_DCCP
-		समयouts = nf_dccp_pernet(info->net)->dccp_समयout;
-#पूर्ण_अगर
-		अवरोध;
-	हाल IPPROTO_ICMPV6:
-		समयouts = &nf_icmpv6_pernet(info->net)->समयout;
-		अवरोध;
-	हाल IPPROTO_SCTP:
-#अगर_घोषित CONFIG_NF_CT_PROTO_SCTP
-		समयouts = nf_sctp_pernet(info->net)->समयouts;
-#पूर्ण_अगर
-		अवरोध;
-	हाल IPPROTO_GRE:
-#अगर_घोषित CONFIG_NF_CT_PROTO_GRE
-		समयouts = nf_gre_pernet(info->net)->समयouts;
-#पूर्ण_अगर
-		अवरोध;
-	हाल 255:
-		समयouts = &nf_generic_pernet(info->net)->समयout;
-		अवरोध;
-	शेष:
+	switch (l4proto->l4proto) {
+	case IPPROTO_ICMP:
+		timeouts = &nf_icmp_pernet(info->net)->timeout;
+		break;
+	case IPPROTO_TCP:
+		timeouts = nf_tcp_pernet(info->net)->timeouts;
+		break;
+	case IPPROTO_UDP:
+	case IPPROTO_UDPLITE:
+		timeouts = nf_udp_pernet(info->net)->timeouts;
+		break;
+	case IPPROTO_DCCP:
+#ifdef CONFIG_NF_CT_PROTO_DCCP
+		timeouts = nf_dccp_pernet(info->net)->dccp_timeout;
+#endif
+		break;
+	case IPPROTO_ICMPV6:
+		timeouts = &nf_icmpv6_pernet(info->net)->timeout;
+		break;
+	case IPPROTO_SCTP:
+#ifdef CONFIG_NF_CT_PROTO_SCTP
+		timeouts = nf_sctp_pernet(info->net)->timeouts;
+#endif
+		break;
+	case IPPROTO_GRE:
+#ifdef CONFIG_NF_CT_PROTO_GRE
+		timeouts = nf_gre_pernet(info->net)->timeouts;
+#endif
+		break;
+	case 255:
+		timeouts = &nf_generic_pernet(info->net)->timeout;
+		break;
+	default:
 		WARN_ONCE(1, "Missing timeouts for proto %d", l4proto->l4proto);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (!समयouts)
-		जाओ err;
+	if (!timeouts)
+		goto err;
 
 	skb2 = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	अगर (skb2 == शून्य) अणु
+	if (skb2 == NULL) {
 		err = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	ret = ctसमयout_शेष_fill_info(info->net, skb2,
+	ret = cttimeout_default_fill_info(info->net, skb2,
 					  NETLINK_CB(skb).portid,
 					  info->nlh->nlmsg_seq,
 					  NFNL_MSG_TYPE(info->nlh->nlmsg_type),
 					  IPCTNL_MSG_TIMEOUT_DEFAULT_SET,
-					  l3num, l4proto, समयouts);
-	अगर (ret <= 0) अणु
-		kमुक्त_skb(skb2);
+					  l3num, l4proto, timeouts);
+	if (ret <= 0) {
+		kfree_skb(skb2);
 		err = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 	ret = netlink_unicast(info->sk, skb2, NETLINK_CB(skb).portid,
 			      MSG_DONTWAIT);
-	अगर (ret > 0)
+	if (ret > 0)
 		ret = 0;
 
-	/* this aव्योमs a loop in nfnetlink. */
-	वापस ret == -EAGAIN ? -ENOBUFS : ret;
+	/* this avoids a loop in nfnetlink. */
+	return ret == -EAGAIN ? -ENOBUFS : ret;
 err:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल काष्ठा nf_ct_समयout *ctnl_समयout_find_get(काष्ठा net *net,
-						   स्थिर अक्षर *name)
-अणु
-	काष्ठा nfct_समयout_pernet *pernet = nfct_समयout_pernet(net);
-	काष्ठा ctnl_समयout *समयout, *matching = शून्य;
+static struct nf_ct_timeout *ctnl_timeout_find_get(struct net *net,
+						   const char *name)
+{
+	struct nfct_timeout_pernet *pernet = nfct_timeout_pernet(net);
+	struct ctnl_timeout *timeout, *matching = NULL;
 
-	list_क्रम_each_entry_rcu(समयout, &pernet->nfct_समयout_list, head) अणु
-		अगर (म_भेदन(समयout->name, name, CTNL_TIMEOUT_NAME_MAX) != 0)
-			जारी;
+	list_for_each_entry_rcu(timeout, &pernet->nfct_timeout_list, head) {
+		if (strncmp(timeout->name, name, CTNL_TIMEOUT_NAME_MAX) != 0)
+			continue;
 
-		अगर (!try_module_get(THIS_MODULE))
-			जाओ err;
+		if (!try_module_get(THIS_MODULE))
+			goto err;
 
-		अगर (!refcount_inc_not_zero(&समयout->refcnt)) अणु
+		if (!refcount_inc_not_zero(&timeout->refcnt)) {
 			module_put(THIS_MODULE);
-			जाओ err;
-		पूर्ण
-		matching = समयout;
-		अवरोध;
-	पूर्ण
+			goto err;
+		}
+		matching = timeout;
+		break;
+	}
 err:
-	वापस matching ? &matching->समयout : शून्य;
-पूर्ण
+	return matching ? &matching->timeout : NULL;
+}
 
-अटल व्योम ctnl_समयout_put(काष्ठा nf_ct_समयout *t)
-अणु
-	काष्ठा ctnl_समयout *समयout =
-		container_of(t, काष्ठा ctnl_समयout, समयout);
+static void ctnl_timeout_put(struct nf_ct_timeout *t)
+{
+	struct ctnl_timeout *timeout =
+		container_of(t, struct ctnl_timeout, timeout);
 
-	अगर (refcount_dec_and_test(&समयout->refcnt))
-		kमुक्त_rcu(समयout, rcu_head);
+	if (refcount_dec_and_test(&timeout->refcnt))
+		kfree_rcu(timeout, rcu_head);
 
 	module_put(THIS_MODULE);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा nfnl_callback ctसमयout_cb[IPCTNL_MSG_TIMEOUT_MAX] = अणु
-	[IPCTNL_MSG_TIMEOUT_NEW] = अणु
-		.call		= ctसमयout_new_समयout,
+static const struct nfnl_callback cttimeout_cb[IPCTNL_MSG_TIMEOUT_MAX] = {
+	[IPCTNL_MSG_TIMEOUT_NEW] = {
+		.call		= cttimeout_new_timeout,
 		.type		= NFNL_CB_MUTEX,
 		.attr_count	= CTA_TIMEOUT_MAX,
-		.policy		= ctसमयout_nla_policy
-	पूर्ण,
-	[IPCTNL_MSG_TIMEOUT_GET] = अणु
-		.call		= ctसमयout_get_समयout,
+		.policy		= cttimeout_nla_policy
+	},
+	[IPCTNL_MSG_TIMEOUT_GET] = {
+		.call		= cttimeout_get_timeout,
 		.type		= NFNL_CB_MUTEX,
 		.attr_count	= CTA_TIMEOUT_MAX,
-		.policy		= ctसमयout_nla_policy
-	पूर्ण,
-	[IPCTNL_MSG_TIMEOUT_DELETE] = अणु
-		.call		= ctसमयout_del_समयout,
+		.policy		= cttimeout_nla_policy
+	},
+	[IPCTNL_MSG_TIMEOUT_DELETE] = {
+		.call		= cttimeout_del_timeout,
 		.type		= NFNL_CB_MUTEX,
 		.attr_count	= CTA_TIMEOUT_MAX,
-		.policy		= ctसमयout_nla_policy
-	पूर्ण,
-	[IPCTNL_MSG_TIMEOUT_DEFAULT_SET] = अणु
-		.call		= ctसमयout_शेष_set,
+		.policy		= cttimeout_nla_policy
+	},
+	[IPCTNL_MSG_TIMEOUT_DEFAULT_SET] = {
+		.call		= cttimeout_default_set,
 		.type		= NFNL_CB_MUTEX,
 		.attr_count	= CTA_TIMEOUT_MAX,
-		.policy		= ctसमयout_nla_policy
-	पूर्ण,
-	[IPCTNL_MSG_TIMEOUT_DEFAULT_GET] = अणु
-		.call		= ctसमयout_शेष_get,
+		.policy		= cttimeout_nla_policy
+	},
+	[IPCTNL_MSG_TIMEOUT_DEFAULT_GET] = {
+		.call		= cttimeout_default_get,
 		.type		= NFNL_CB_MUTEX,
 		.attr_count	= CTA_TIMEOUT_MAX,
-		.policy		= ctसमयout_nla_policy
-	पूर्ण,
-पूर्ण;
+		.policy		= cttimeout_nla_policy
+	},
+};
 
-अटल स्थिर काष्ठा nfnetlink_subप्रणाली ctसमयout_subsys = अणु
+static const struct nfnetlink_subsystem cttimeout_subsys = {
 	.name				= "conntrack_timeout",
 	.subsys_id			= NFNL_SUBSYS_CTNETLINK_TIMEOUT,
 	.cb_count			= IPCTNL_MSG_TIMEOUT_MAX,
-	.cb				= ctसमयout_cb,
-पूर्ण;
+	.cb				= cttimeout_cb,
+};
 
 MODULE_ALIAS_NFNL_SUBSYS(NFNL_SUBSYS_CTNETLINK_TIMEOUT);
 
-अटल पूर्णांक __net_init ctसमयout_net_init(काष्ठा net *net)
-अणु
-	काष्ठा nfct_समयout_pernet *pernet = nfct_समयout_pernet(net);
+static int __net_init cttimeout_net_init(struct net *net)
+{
+	struct nfct_timeout_pernet *pernet = nfct_timeout_pernet(net);
 
-	INIT_LIST_HEAD(&pernet->nfct_समयout_list);
+	INIT_LIST_HEAD(&pernet->nfct_timeout_list);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __net_निकास ctसमयout_net_निकास(काष्ठा net *net)
-अणु
-	काष्ठा nfct_समयout_pernet *pernet = nfct_समयout_pernet(net);
-	काष्ठा ctnl_समयout *cur, *पंचांगp;
+static void __net_exit cttimeout_net_exit(struct net *net)
+{
+	struct nfct_timeout_pernet *pernet = nfct_timeout_pernet(net);
+	struct ctnl_timeout *cur, *tmp;
 
 	nf_ct_unconfirmed_destroy(net);
-	nf_ct_unसमयout(net, शून्य);
+	nf_ct_untimeout(net, NULL);
 
-	list_क्रम_each_entry_safe(cur, पंचांगp, &pernet->nfct_समयout_list, head) अणु
+	list_for_each_entry_safe(cur, tmp, &pernet->nfct_timeout_list, head) {
 		list_del_rcu(&cur->head);
 
-		अगर (refcount_dec_and_test(&cur->refcnt))
-			kमुक्त_rcu(cur, rcu_head);
-	पूर्ण
-पूर्ण
+		if (refcount_dec_and_test(&cur->refcnt))
+			kfree_rcu(cur, rcu_head);
+	}
+}
 
-अटल काष्ठा pernet_operations ctसमयout_ops = अणु
-	.init	= ctसमयout_net_init,
-	.निकास	= ctसमयout_net_निकास,
-	.id     = &nfct_समयout_id,
-	.size   = माप(काष्ठा nfct_समयout_pernet),
-पूर्ण;
+static struct pernet_operations cttimeout_ops = {
+	.init	= cttimeout_net_init,
+	.exit	= cttimeout_net_exit,
+	.id     = &nfct_timeout_id,
+	.size   = sizeof(struct nfct_timeout_pernet),
+};
 
-अटल पूर्णांक __init ctसमयout_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init cttimeout_init(void)
+{
+	int ret;
 
-	ret = रेजिस्टर_pernet_subsys(&ctसमयout_ops);
-	अगर (ret < 0)
-		वापस ret;
+	ret = register_pernet_subsys(&cttimeout_ops);
+	if (ret < 0)
+		return ret;
 
-	ret = nfnetlink_subsys_रेजिस्टर(&ctसमयout_subsys);
-	अगर (ret < 0) अणु
+	ret = nfnetlink_subsys_register(&cttimeout_subsys);
+	if (ret < 0) {
 		pr_err("cttimeout_init: cannot register cttimeout with "
 			"nfnetlink.\n");
-		जाओ err_out;
-	पूर्ण
-	RCU_INIT_POINTER(nf_ct_समयout_find_get_hook, ctnl_समयout_find_get);
-	RCU_INIT_POINTER(nf_ct_समयout_put_hook, ctnl_समयout_put);
-	वापस 0;
+		goto err_out;
+	}
+	RCU_INIT_POINTER(nf_ct_timeout_find_get_hook, ctnl_timeout_find_get);
+	RCU_INIT_POINTER(nf_ct_timeout_put_hook, ctnl_timeout_put);
+	return 0;
 
 err_out:
-	unरेजिस्टर_pernet_subsys(&ctसमयout_ops);
-	वापस ret;
-पूर्ण
+	unregister_pernet_subsys(&cttimeout_ops);
+	return ret;
+}
 
-अटल व्योम __निकास ctसमयout_निकास(व्योम)
-अणु
-	nfnetlink_subsys_unरेजिस्टर(&ctसमयout_subsys);
+static void __exit cttimeout_exit(void)
+{
+	nfnetlink_subsys_unregister(&cttimeout_subsys);
 
-	unरेजिस्टर_pernet_subsys(&ctसमयout_ops);
-	RCU_INIT_POINTER(nf_ct_समयout_find_get_hook, शून्य);
-	RCU_INIT_POINTER(nf_ct_समयout_put_hook, शून्य);
+	unregister_pernet_subsys(&cttimeout_ops);
+	RCU_INIT_POINTER(nf_ct_timeout_find_get_hook, NULL);
+	RCU_INIT_POINTER(nf_ct_timeout_put_hook, NULL);
 	synchronize_rcu();
-पूर्ण
+}
 
-module_init(ctसमयout_init);
-module_निकास(ctसमयout_निकास);
+module_init(cttimeout_init);
+module_exit(cttimeout_exit);

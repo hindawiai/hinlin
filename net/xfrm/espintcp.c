@@ -1,305 +1,304 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <net/tcp.h>
-#समावेश <net/strparser.h>
-#समावेश <net/xfrm.h>
-#समावेश <net/esp.h>
-#समावेश <net/espपूर्णांकcp.h>
-#समावेश <linux/skmsg.h>
-#समावेश <net/inet_common.h>
-#अगर IS_ENABLED(CONFIG_IPV6)
-#समावेश <net/ipv6_stubs.h>
-#पूर्ण_अगर
+// SPDX-License-Identifier: GPL-2.0
+#include <net/tcp.h>
+#include <net/strparser.h>
+#include <net/xfrm.h>
+#include <net/esp.h>
+#include <net/espintcp.h>
+#include <linux/skmsg.h>
+#include <net/inet_common.h>
+#if IS_ENABLED(CONFIG_IPV6)
+#include <net/ipv6_stubs.h>
+#endif
 
-अटल व्योम handle_nonesp(काष्ठा espपूर्णांकcp_ctx *ctx, काष्ठा sk_buff *skb,
-			  काष्ठा sock *sk)
-अणु
-	अगर (atomic_पढ़ो(&sk->sk_rmem_alloc) >= sk->sk_rcvbuf ||
-	    !sk_rmem_schedule(sk, skb, skb->truesize)) अणु
+static void handle_nonesp(struct espintcp_ctx *ctx, struct sk_buff *skb,
+			  struct sock *sk)
+{
+	if (atomic_read(&sk->sk_rmem_alloc) >= sk->sk_rcvbuf ||
+	    !sk_rmem_schedule(sk, skb, skb->truesize)) {
 		XFRM_INC_STATS(sock_net(sk), LINUX_MIB_XFRMINERROR);
-		kमुक्त_skb(skb);
-		वापस;
-	पूर्ण
+		kfree_skb(skb);
+		return;
+	}
 
 	skb_set_owner_r(skb, sk);
 
-	स_रखो(skb->cb, 0, माप(skb->cb));
+	memset(skb->cb, 0, sizeof(skb->cb));
 	skb_queue_tail(&ctx->ike_queue, skb);
-	ctx->saved_data_पढ़ोy(sk);
-पूर्ण
+	ctx->saved_data_ready(sk);
+}
 
-अटल व्योम handle_esp(काष्ठा sk_buff *skb, काष्ठा sock *sk)
-अणु
-	काष्ठा tcp_skb_cb *tcp_cb = (काष्ठा tcp_skb_cb *)skb->cb;
+static void handle_esp(struct sk_buff *skb, struct sock *sk)
+{
+	struct tcp_skb_cb *tcp_cb = (struct tcp_skb_cb *)skb->cb;
 
 	skb_reset_transport_header(skb);
 
 	/* restore IP CB, we need at least IP6CB->nhoff */
-	स_हटाओ(skb->cb, &tcp_cb->header, माप(tcp_cb->header));
+	memmove(skb->cb, &tcp_cb->header, sizeof(tcp_cb->header));
 
-	rcu_पढ़ो_lock();
-	skb->dev = dev_get_by_index_rcu(sock_net(sk), skb->skb_iअगर);
+	rcu_read_lock();
+	skb->dev = dev_get_by_index_rcu(sock_net(sk), skb->skb_iif);
 	local_bh_disable();
-#अगर IS_ENABLED(CONFIG_IPV6)
-	अगर (sk->sk_family == AF_INET6)
+#if IS_ENABLED(CONFIG_IPV6)
+	if (sk->sk_family == AF_INET6)
 		ipv6_stub->xfrm6_rcv_encap(skb, IPPROTO_ESP, 0, TCP_ENCAP_ESPINTCP);
-	अन्यथा
-#पूर्ण_अगर
+	else
+#endif
 		xfrm4_rcv_encap(skb, IPPROTO_ESP, 0, TCP_ENCAP_ESPINTCP);
 	local_bh_enable();
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_unlock();
+}
 
-अटल व्योम espपूर्णांकcp_rcv(काष्ठा strparser *strp, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा espपूर्णांकcp_ctx *ctx = container_of(strp, काष्ठा espपूर्णांकcp_ctx,
+static void espintcp_rcv(struct strparser *strp, struct sk_buff *skb)
+{
+	struct espintcp_ctx *ctx = container_of(strp, struct espintcp_ctx,
 						strp);
-	काष्ठा strp_msg *rxm = strp_msg(skb);
-	पूर्णांक len = rxm->full_len - 2;
+	struct strp_msg *rxm = strp_msg(skb);
+	int len = rxm->full_len - 2;
 	u32 nonesp_marker;
-	पूर्णांक err;
+	int err;
 
 	/* keepalive packet? */
-	अगर (unlikely(len == 1)) अणु
+	if (unlikely(len == 1)) {
 		u8 data;
 
 		err = skb_copy_bits(skb, rxm->offset + 2, &data, 1);
-		अगर (err < 0) अणु
+		if (err < 0) {
 			XFRM_INC_STATS(sock_net(strp->sk), LINUX_MIB_XFRMINHDRERROR);
-			kमुक्त_skb(skb);
-			वापस;
-		पूर्ण
+			kfree_skb(skb);
+			return;
+		}
 
-		अगर (data == 0xff) अणु
-			kमुक्त_skb(skb);
-			वापस;
-		पूर्ण
-	पूर्ण
+		if (data == 0xff) {
+			kfree_skb(skb);
+			return;
+		}
+	}
 
-	/* drop other लघु messages */
-	अगर (unlikely(len <= माप(nonesp_marker))) अणु
+	/* drop other short messages */
+	if (unlikely(len <= sizeof(nonesp_marker))) {
 		XFRM_INC_STATS(sock_net(strp->sk), LINUX_MIB_XFRMINHDRERROR);
-		kमुक्त_skb(skb);
-		वापस;
-	पूर्ण
+		kfree_skb(skb);
+		return;
+	}
 
 	err = skb_copy_bits(skb, rxm->offset + 2, &nonesp_marker,
-			    माप(nonesp_marker));
-	अगर (err < 0) अणु
+			    sizeof(nonesp_marker));
+	if (err < 0) {
 		XFRM_INC_STATS(sock_net(strp->sk), LINUX_MIB_XFRMINHDRERROR);
-		kमुक्त_skb(skb);
-		वापस;
-	पूर्ण
+		kfree_skb(skb);
+		return;
+	}
 
-	/* हटाओ header, leave non-ESP marker/SPI */
-	अगर (!__pskb_pull(skb, rxm->offset + 2)) अणु
+	/* remove header, leave non-ESP marker/SPI */
+	if (!__pskb_pull(skb, rxm->offset + 2)) {
 		XFRM_INC_STATS(sock_net(strp->sk), LINUX_MIB_XFRMINERROR);
-		kमुक्त_skb(skb);
-		वापस;
-	पूर्ण
+		kfree_skb(skb);
+		return;
+	}
 
-	अगर (pskb_trim(skb, rxm->full_len - 2) != 0) अणु
+	if (pskb_trim(skb, rxm->full_len - 2) != 0) {
 		XFRM_INC_STATS(sock_net(strp->sk), LINUX_MIB_XFRMINERROR);
-		kमुक्त_skb(skb);
-		वापस;
-	पूर्ण
+		kfree_skb(skb);
+		return;
+	}
 
-	अगर (nonesp_marker == 0)
+	if (nonesp_marker == 0)
 		handle_nonesp(ctx, skb, strp->sk);
-	अन्यथा
+	else
 		handle_esp(skb, strp->sk);
-पूर्ण
+}
 
-अटल पूर्णांक espपूर्णांकcp_parse(काष्ठा strparser *strp, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा strp_msg *rxm = strp_msg(skb);
+static int espintcp_parse(struct strparser *strp, struct sk_buff *skb)
+{
+	struct strp_msg *rxm = strp_msg(skb);
 	__be16 blen;
 	u16 len;
-	पूर्णांक err;
+	int err;
 
-	अगर (skb->len < rxm->offset + 2)
-		वापस 0;
+	if (skb->len < rxm->offset + 2)
+		return 0;
 
-	err = skb_copy_bits(skb, rxm->offset, &blen, माप(blen));
-	अगर (err < 0)
-		वापस err;
+	err = skb_copy_bits(skb, rxm->offset, &blen, sizeof(blen));
+	if (err < 0)
+		return err;
 
 	len = be16_to_cpu(blen);
-	अगर (len < 2)
-		वापस -EINVAL;
+	if (len < 2)
+		return -EINVAL;
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल पूर्णांक espपूर्णांकcp_recvmsg(काष्ठा sock *sk, काष्ठा msghdr *msg, माप_प्रकार len,
-			    पूर्णांक nonblock, पूर्णांक flags, पूर्णांक *addr_len)
-अणु
-	काष्ठा espपूर्णांकcp_ctx *ctx = espपूर्णांकcp_अ_लोtx(sk);
-	काष्ठा sk_buff *skb;
-	पूर्णांक err = 0;
-	पूर्णांक copied;
-	पूर्णांक off = 0;
+static int espintcp_recvmsg(struct sock *sk, struct msghdr *msg, size_t len,
+			    int nonblock, int flags, int *addr_len)
+{
+	struct espintcp_ctx *ctx = espintcp_getctx(sk);
+	struct sk_buff *skb;
+	int err = 0;
+	int copied;
+	int off = 0;
 
 	flags |= nonblock ? MSG_DONTWAIT : 0;
 
 	skb = __skb_recv_datagram(sk, &ctx->ike_queue, flags, &off, &err);
-	अगर (!skb) अणु
-		अगर (err == -EAGAIN && sk->sk_shutकरोwn & RCV_SHUTDOWN)
-			वापस 0;
-		वापस err;
-	पूर्ण
+	if (!skb) {
+		if (err == -EAGAIN && sk->sk_shutdown & RCV_SHUTDOWN)
+			return 0;
+		return err;
+	}
 
 	copied = len;
-	अगर (copied > skb->len)
+	if (copied > skb->len)
 		copied = skb->len;
-	अन्यथा अगर (copied < skb->len)
+	else if (copied < skb->len)
 		msg->msg_flags |= MSG_TRUNC;
 
 	err = skb_copy_datagram_msg(skb, 0, msg, copied);
-	अगर (unlikely(err)) अणु
-		kमुक्त_skb(skb);
-		वापस err;
-	पूर्ण
+	if (unlikely(err)) {
+		kfree_skb(skb);
+		return err;
+	}
 
-	अगर (flags & MSG_TRUNC)
+	if (flags & MSG_TRUNC)
 		copied = skb->len;
-	kमुक्त_skb(skb);
-	वापस copied;
-पूर्ण
+	kfree_skb(skb);
+	return copied;
+}
 
-पूर्णांक espपूर्णांकcp_queue_out(काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा espपूर्णांकcp_ctx *ctx = espपूर्णांकcp_अ_लोtx(sk);
+int espintcp_queue_out(struct sock *sk, struct sk_buff *skb)
+{
+	struct espintcp_ctx *ctx = espintcp_getctx(sk);
 
-	अगर (skb_queue_len(&ctx->out_queue) >= netdev_max_backlog)
-		वापस -ENOBUFS;
+	if (skb_queue_len(&ctx->out_queue) >= netdev_max_backlog)
+		return -ENOBUFS;
 
 	__skb_queue_tail(&ctx->out_queue, skb);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(espपूर्णांकcp_queue_out);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(espintcp_queue_out);
 
-/* espपूर्णांकcp length field is 2B and length includes the length field's size */
-#घोषणा MAX_ESPINTCP_MSG (((1 << 16) - 1) - 2)
+/* espintcp length field is 2B and length includes the length field's size */
+#define MAX_ESPINTCP_MSG (((1 << 16) - 1) - 2)
 
-अटल पूर्णांक espपूर्णांकcp_sendskb_locked(काष्ठा sock *sk, काष्ठा espपूर्णांकcp_msg *emsg,
-				   पूर्णांक flags)
-अणु
-	करो अणु
-		पूर्णांक ret;
+static int espintcp_sendskb_locked(struct sock *sk, struct espintcp_msg *emsg,
+				   int flags)
+{
+	do {
+		int ret;
 
 		ret = skb_send_sock_locked(sk, emsg->skb,
 					   emsg->offset, emsg->len);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
 		emsg->len -= ret;
 		emsg->offset += ret;
-	पूर्ण जबतक (emsg->len > 0);
+	} while (emsg->len > 0);
 
-	kमुक्त_skb(emsg->skb);
-	स_रखो(emsg, 0, माप(*emsg));
+	kfree_skb(emsg->skb);
+	memset(emsg, 0, sizeof(*emsg));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक espपूर्णांकcp_sendskmsg_locked(काष्ठा sock *sk,
-				     काष्ठा espपूर्णांकcp_msg *emsg, पूर्णांक flags)
-अणु
-	काष्ठा sk_msg *skmsg = &emsg->skmsg;
-	काष्ठा scatterlist *sg;
-	पूर्णांक करोne = 0;
-	पूर्णांक ret;
+static int espintcp_sendskmsg_locked(struct sock *sk,
+				     struct espintcp_msg *emsg, int flags)
+{
+	struct sk_msg *skmsg = &emsg->skmsg;
+	struct scatterlist *sg;
+	int done = 0;
+	int ret;
 
 	flags |= MSG_SENDPAGE_NOTLAST;
 	sg = &skmsg->sg.data[skmsg->sg.start];
-	करो अणु
-		माप_प्रकार size = sg->length - emsg->offset;
-		पूर्णांक offset = sg->offset + emsg->offset;
-		काष्ठा page *p;
+	do {
+		size_t size = sg->length - emsg->offset;
+		int offset = sg->offset + emsg->offset;
+		struct page *p;
 
 		emsg->offset = 0;
 
-		अगर (sg_is_last(sg))
+		if (sg_is_last(sg))
 			flags &= ~MSG_SENDPAGE_NOTLAST;
 
 		p = sg_page(sg);
 retry:
-		ret = करो_tcp_sendpages(sk, p, offset, size, flags);
-		अगर (ret < 0) अणु
+		ret = do_tcp_sendpages(sk, p, offset, size, flags);
+		if (ret < 0) {
 			emsg->offset = offset - sg->offset;
-			skmsg->sg.start += करोne;
-			वापस ret;
-		पूर्ण
+			skmsg->sg.start += done;
+			return ret;
+		}
 
-		अगर (ret != size) अणु
+		if (ret != size) {
 			offset += ret;
 			size -= ret;
-			जाओ retry;
-		पूर्ण
+			goto retry;
+		}
 
-		करोne++;
+		done++;
 		put_page(p);
-		sk_mem_unअक्षरge(sk, sg->length);
+		sk_mem_uncharge(sk, sg->length);
 		sg = sg_next(sg);
-	पूर्ण जबतक (sg);
+	} while (sg);
 
-	स_रखो(emsg, 0, माप(*emsg));
+	memset(emsg, 0, sizeof(*emsg));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक espपूर्णांकcp_push_msgs(काष्ठा sock *sk, पूर्णांक flags)
-अणु
-	काष्ठा espपूर्णांकcp_ctx *ctx = espपूर्णांकcp_अ_लोtx(sk);
-	काष्ठा espपूर्णांकcp_msg *emsg = &ctx->partial;
-	पूर्णांक err;
+static int espintcp_push_msgs(struct sock *sk, int flags)
+{
+	struct espintcp_ctx *ctx = espintcp_getctx(sk);
+	struct espintcp_msg *emsg = &ctx->partial;
+	int err;
 
-	अगर (!emsg->len)
-		वापस 0;
+	if (!emsg->len)
+		return 0;
 
-	अगर (ctx->tx_running)
-		वापस -EAGAIN;
+	if (ctx->tx_running)
+		return -EAGAIN;
 	ctx->tx_running = 1;
 
-	अगर (emsg->skb)
-		err = espपूर्णांकcp_sendskb_locked(sk, emsg, flags);
-	अन्यथा
-		err = espपूर्णांकcp_sendskmsg_locked(sk, emsg, flags);
-	अगर (err == -EAGAIN) अणु
+	if (emsg->skb)
+		err = espintcp_sendskb_locked(sk, emsg, flags);
+	else
+		err = espintcp_sendskmsg_locked(sk, emsg, flags);
+	if (err == -EAGAIN) {
 		ctx->tx_running = 0;
-		वापस flags & MSG_DONTWAIT ? -EAGAIN : 0;
-	पूर्ण
-	अगर (!err)
-		स_रखो(emsg, 0, माप(*emsg));
+		return flags & MSG_DONTWAIT ? -EAGAIN : 0;
+	}
+	if (!err)
+		memset(emsg, 0, sizeof(*emsg));
 
 	ctx->tx_running = 0;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक espपूर्णांकcp_push_skb(काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा espपूर्णांकcp_ctx *ctx = espपूर्णांकcp_अ_लोtx(sk);
-	काष्ठा espपूर्णांकcp_msg *emsg = &ctx->partial;
-	अचिन्हित पूर्णांक len;
-	पूर्णांक offset;
+int espintcp_push_skb(struct sock *sk, struct sk_buff *skb)
+{
+	struct espintcp_ctx *ctx = espintcp_getctx(sk);
+	struct espintcp_msg *emsg = &ctx->partial;
+	unsigned int len;
+	int offset;
 
-	अगर (sk->sk_state != TCP_ESTABLISHED) अणु
-		kमुक्त_skb(skb);
-		वापस -ECONNRESET;
-	पूर्ण
+	if (sk->sk_state != TCP_ESTABLISHED) {
+		kfree_skb(skb);
+		return -ECONNRESET;
+	}
 
 	offset = skb_transport_offset(skb);
 	len = skb->len - offset;
 
-	espपूर्णांकcp_push_msgs(sk, 0);
+	espintcp_push_msgs(sk, 0);
 
-	अगर (emsg->len) अणु
-		kमुक्त_skb(skb);
-		वापस -ENOBUFS;
-	पूर्ण
+	if (emsg->len) {
+		kfree_skb(skb);
+		return -ENOBUFS;
+	}
 
 	skb_set_owner_w(skb, sk);
 
@@ -307,66 +306,66 @@ retry:
 	emsg->len = len;
 	emsg->skb = skb;
 
-	espपूर्णांकcp_push_msgs(sk, 0);
+	espintcp_push_msgs(sk, 0);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(espपूर्णांकcp_push_skb);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(espintcp_push_skb);
 
-अटल पूर्णांक espपूर्णांकcp_sendmsg(काष्ठा sock *sk, काष्ठा msghdr *msg, माप_प्रकार size)
-अणु
-	दीर्घ समयo = sock_sndसमयo(sk, msg->msg_flags & MSG_DONTWAIT);
-	काष्ठा espपूर्णांकcp_ctx *ctx = espपूर्णांकcp_अ_लोtx(sk);
-	काष्ठा espपूर्णांकcp_msg *emsg = &ctx->partial;
-	काष्ठा iov_iter pfx_iter;
-	काष्ठा kvec pfx_iov = अणुपूर्ण;
-	माप_प्रकार msglen = size + 2;
-	अक्षर buf[2] = अणु0पूर्ण;
-	पूर्णांक err, end;
+static int espintcp_sendmsg(struct sock *sk, struct msghdr *msg, size_t size)
+{
+	long timeo = sock_sndtimeo(sk, msg->msg_flags & MSG_DONTWAIT);
+	struct espintcp_ctx *ctx = espintcp_getctx(sk);
+	struct espintcp_msg *emsg = &ctx->partial;
+	struct iov_iter pfx_iter;
+	struct kvec pfx_iov = {};
+	size_t msglen = size + 2;
+	char buf[2] = {0};
+	int err, end;
 
-	अगर (msg->msg_flags & ~MSG_DONTWAIT)
-		वापस -EOPNOTSUPP;
+	if (msg->msg_flags & ~MSG_DONTWAIT)
+		return -EOPNOTSUPP;
 
-	अगर (size > MAX_ESPINTCP_MSG)
-		वापस -EMSGSIZE;
+	if (size > MAX_ESPINTCP_MSG)
+		return -EMSGSIZE;
 
-	अगर (msg->msg_controllen)
-		वापस -EOPNOTSUPP;
+	if (msg->msg_controllen)
+		return -EOPNOTSUPP;
 
 	lock_sock(sk);
 
-	err = espपूर्णांकcp_push_msgs(sk, msg->msg_flags & MSG_DONTWAIT);
-	अगर (err < 0) अणु
-		अगर (err != -EAGAIN || !(msg->msg_flags & MSG_DONTWAIT))
+	err = espintcp_push_msgs(sk, msg->msg_flags & MSG_DONTWAIT);
+	if (err < 0) {
+		if (err != -EAGAIN || !(msg->msg_flags & MSG_DONTWAIT))
 			err = -ENOBUFS;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	sk_msg_init(&emsg->skmsg);
-	जबतक (1) अणु
-		/* only -ENOMEM is possible since we करोn't coalesce */
+	while (1) {
+		/* only -ENOMEM is possible since we don't coalesce */
 		err = sk_msg_alloc(sk, &emsg->skmsg, msglen, 0);
-		अगर (!err)
-			अवरोध;
+		if (!err)
+			break;
 
-		err = sk_stream_रुको_memory(sk, &समयo);
-		अगर (err)
-			जाओ fail;
-	पूर्ण
+		err = sk_stream_wait_memory(sk, &timeo);
+		if (err)
+			goto fail;
+	}
 
 	*((__be16 *)buf) = cpu_to_be16(msglen);
 	pfx_iov.iov_base = buf;
-	pfx_iov.iov_len = माप(buf);
+	pfx_iov.iov_len = sizeof(buf);
 	iov_iter_kvec(&pfx_iter, WRITE, &pfx_iov, 1, pfx_iov.iov_len);
 
 	err = sk_msg_memcopy_from_iter(sk, &pfx_iter, &emsg->skmsg,
 				       pfx_iov.iov_len);
-	अगर (err < 0)
-		जाओ fail;
+	if (err < 0)
+		goto fail;
 
 	err = sk_msg_memcopy_from_iter(sk, &msg->msg_iter, &emsg->skmsg, size);
-	अगर (err < 0)
-		जाओ fail;
+	if (err < 0)
+		goto fail;
 
 	end = emsg->skmsg.sg.end;
 	emsg->len = size;
@@ -375,93 +374,93 @@ EXPORT_SYMBOL_GPL(espपूर्णांकcp_push_skb);
 
 	tcp_rate_check_app_limited(sk);
 
-	err = espपूर्णांकcp_push_msgs(sk, msg->msg_flags & MSG_DONTWAIT);
+	err = espintcp_push_msgs(sk, msg->msg_flags & MSG_DONTWAIT);
 	/* this message could be partially sent, keep it */
 
 	release_sock(sk);
 
-	वापस size;
+	return size;
 
 fail:
-	sk_msg_मुक्त(sk, &emsg->skmsg);
-	स_रखो(emsg, 0, माप(*emsg));
+	sk_msg_free(sk, &emsg->skmsg);
+	memset(emsg, 0, sizeof(*emsg));
 unlock:
 	release_sock(sk);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल काष्ठा proto espपूर्णांकcp_prot __ro_after_init;
-अटल काष्ठा proto_ops espपूर्णांकcp_ops __ro_after_init;
-अटल काष्ठा proto espपूर्णांकcp6_prot;
-अटल काष्ठा proto_ops espपूर्णांकcp6_ops;
-अटल DEFINE_MUTEX(tcpv6_prot_mutex);
+static struct proto espintcp_prot __ro_after_init;
+static struct proto_ops espintcp_ops __ro_after_init;
+static struct proto espintcp6_prot;
+static struct proto_ops espintcp6_ops;
+static DEFINE_MUTEX(tcpv6_prot_mutex);
 
-अटल व्योम espपूर्णांकcp_data_पढ़ोy(काष्ठा sock *sk)
-अणु
-	काष्ठा espपूर्णांकcp_ctx *ctx = espपूर्णांकcp_अ_लोtx(sk);
+static void espintcp_data_ready(struct sock *sk)
+{
+	struct espintcp_ctx *ctx = espintcp_getctx(sk);
 
-	strp_data_पढ़ोy(&ctx->strp);
-पूर्ण
+	strp_data_ready(&ctx->strp);
+}
 
-अटल व्योम espपूर्णांकcp_tx_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा espपूर्णांकcp_ctx *ctx = container_of(work,
-						काष्ठा espपूर्णांकcp_ctx, work);
-	काष्ठा sock *sk = ctx->strp.sk;
+static void espintcp_tx_work(struct work_struct *work)
+{
+	struct espintcp_ctx *ctx = container_of(work,
+						struct espintcp_ctx, work);
+	struct sock *sk = ctx->strp.sk;
 
 	lock_sock(sk);
-	अगर (!ctx->tx_running)
-		espपूर्णांकcp_push_msgs(sk, 0);
+	if (!ctx->tx_running)
+		espintcp_push_msgs(sk, 0);
 	release_sock(sk);
-पूर्ण
+}
 
-अटल व्योम espपूर्णांकcp_ग_लिखो_space(काष्ठा sock *sk)
-अणु
-	काष्ठा espपूर्णांकcp_ctx *ctx = espपूर्णांकcp_अ_लोtx(sk);
+static void espintcp_write_space(struct sock *sk)
+{
+	struct espintcp_ctx *ctx = espintcp_getctx(sk);
 
 	schedule_work(&ctx->work);
-	ctx->saved_ग_लिखो_space(sk);
-पूर्ण
+	ctx->saved_write_space(sk);
+}
 
-अटल व्योम espपूर्णांकcp_deकाष्ठा(काष्ठा sock *sk)
-अणु
-	काष्ठा espपूर्णांकcp_ctx *ctx = espपूर्णांकcp_अ_लोtx(sk);
+static void espintcp_destruct(struct sock *sk)
+{
+	struct espintcp_ctx *ctx = espintcp_getctx(sk);
 
-	ctx->saved_deकाष्ठा(sk);
-	kमुक्त(ctx);
-पूर्ण
+	ctx->saved_destruct(sk);
+	kfree(ctx);
+}
 
-bool tcp_is_ulp_esp(काष्ठा sock *sk)
-अणु
-	वापस sk->sk_prot == &espपूर्णांकcp_prot || sk->sk_prot == &espपूर्णांकcp6_prot;
-पूर्ण
+bool tcp_is_ulp_esp(struct sock *sk)
+{
+	return sk->sk_prot == &espintcp_prot || sk->sk_prot == &espintcp6_prot;
+}
 EXPORT_SYMBOL_GPL(tcp_is_ulp_esp);
 
-अटल व्योम build_protos(काष्ठा proto *espपूर्णांकcp_prot,
-			 काष्ठा proto_ops *espपूर्णांकcp_ops,
-			 स्थिर काष्ठा proto *orig_prot,
-			 स्थिर काष्ठा proto_ops *orig_ops);
-अटल पूर्णांक espपूर्णांकcp_init_sk(काष्ठा sock *sk)
-अणु
-	काष्ठा inet_connection_sock *icsk = inet_csk(sk);
-	काष्ठा strp_callbacks cb = अणु
-		.rcv_msg = espपूर्णांकcp_rcv,
-		.parse_msg = espपूर्णांकcp_parse,
-	पूर्ण;
-	काष्ठा espपूर्णांकcp_ctx *ctx;
-	पूर्णांक err;
+static void build_protos(struct proto *espintcp_prot,
+			 struct proto_ops *espintcp_ops,
+			 const struct proto *orig_prot,
+			 const struct proto_ops *orig_ops);
+static int espintcp_init_sk(struct sock *sk)
+{
+	struct inet_connection_sock *icsk = inet_csk(sk);
+	struct strp_callbacks cb = {
+		.rcv_msg = espintcp_rcv,
+		.parse_msg = espintcp_parse,
+	};
+	struct espintcp_ctx *ctx;
+	int err;
 
-	/* sockmap is not compatible with espपूर्णांकcp */
-	अगर (sk->sk_user_data)
-		वापस -EBUSY;
+	/* sockmap is not compatible with espintcp */
+	if (sk->sk_user_data)
+		return -EBUSY;
 
-	ctx = kzalloc(माप(*ctx), GFP_KERNEL);
-	अगर (!ctx)
-		वापस -ENOMEM;
+	ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
+	if (!ctx)
+		return -ENOMEM;
 
 	err = strp_init(&ctx->strp, sk, &cb);
-	अगर (err)
-		जाओ मुक्त;
+	if (err)
+		goto free;
 
 	__sk_dst_reset(sk);
 
@@ -469,56 +468,56 @@ EXPORT_SYMBOL_GPL(tcp_is_ulp_esp);
 	skb_queue_head_init(&ctx->ike_queue);
 	skb_queue_head_init(&ctx->out_queue);
 
-	अगर (sk->sk_family == AF_INET) अणु
-		sk->sk_prot = &espपूर्णांकcp_prot;
-		sk->sk_socket->ops = &espपूर्णांकcp_ops;
-	पूर्ण अन्यथा अणु
+	if (sk->sk_family == AF_INET) {
+		sk->sk_prot = &espintcp_prot;
+		sk->sk_socket->ops = &espintcp_ops;
+	} else {
 		mutex_lock(&tcpv6_prot_mutex);
-		अगर (!espपूर्णांकcp6_prot.recvmsg)
-			build_protos(&espपूर्णांकcp6_prot, &espपूर्णांकcp6_ops, sk->sk_prot, sk->sk_socket->ops);
+		if (!espintcp6_prot.recvmsg)
+			build_protos(&espintcp6_prot, &espintcp6_ops, sk->sk_prot, sk->sk_socket->ops);
 		mutex_unlock(&tcpv6_prot_mutex);
 
-		sk->sk_prot = &espपूर्णांकcp6_prot;
-		sk->sk_socket->ops = &espपूर्णांकcp6_ops;
-	पूर्ण
-	ctx->saved_data_पढ़ोy = sk->sk_data_पढ़ोy;
-	ctx->saved_ग_लिखो_space = sk->sk_ग_लिखो_space;
-	ctx->saved_deकाष्ठा = sk->sk_deकाष्ठा;
-	sk->sk_data_पढ़ोy = espपूर्णांकcp_data_पढ़ोy;
-	sk->sk_ग_लिखो_space = espपूर्णांकcp_ग_लिखो_space;
-	sk->sk_deकाष्ठा = espपूर्णांकcp_deकाष्ठा;
-	rcu_assign_poपूर्णांकer(icsk->icsk_ulp_data, ctx);
-	INIT_WORK(&ctx->work, espपूर्णांकcp_tx_work);
+		sk->sk_prot = &espintcp6_prot;
+		sk->sk_socket->ops = &espintcp6_ops;
+	}
+	ctx->saved_data_ready = sk->sk_data_ready;
+	ctx->saved_write_space = sk->sk_write_space;
+	ctx->saved_destruct = sk->sk_destruct;
+	sk->sk_data_ready = espintcp_data_ready;
+	sk->sk_write_space = espintcp_write_space;
+	sk->sk_destruct = espintcp_destruct;
+	rcu_assign_pointer(icsk->icsk_ulp_data, ctx);
+	INIT_WORK(&ctx->work, espintcp_tx_work);
 
-	/* aव्योम using task_frag */
+	/* avoid using task_frag */
 	sk->sk_allocation = GFP_ATOMIC;
 
-	वापस 0;
+	return 0;
 
-मुक्त:
-	kमुक्त(ctx);
-	वापस err;
-पूर्ण
+free:
+	kfree(ctx);
+	return err;
+}
 
-अटल व्योम espपूर्णांकcp_release(काष्ठा sock *sk)
-अणु
-	काष्ठा espपूर्णांकcp_ctx *ctx = espपूर्णांकcp_अ_लोtx(sk);
-	काष्ठा sk_buff_head queue;
-	काष्ठा sk_buff *skb;
+static void espintcp_release(struct sock *sk)
+{
+	struct espintcp_ctx *ctx = espintcp_getctx(sk);
+	struct sk_buff_head queue;
+	struct sk_buff *skb;
 
 	__skb_queue_head_init(&queue);
 	skb_queue_splice_init(&ctx->out_queue, &queue);
 
-	जबतक ((skb = __skb_dequeue(&queue)))
-		espपूर्णांकcp_push_skb(sk, skb);
+	while ((skb = __skb_dequeue(&queue)))
+		espintcp_push_skb(sk, skb);
 
 	tcp_release_cb(sk);
-पूर्ण
+}
 
-अटल व्योम espपूर्णांकcp_बंद(काष्ठा sock *sk, दीर्घ समयout)
-अणु
-	काष्ठा espपूर्णांकcp_ctx *ctx = espपूर्णांकcp_अ_लोtx(sk);
-	काष्ठा espपूर्णांकcp_msg *emsg = &ctx->partial;
+static void espintcp_close(struct sock *sk, long timeout)
+{
+	struct espintcp_ctx *ctx = espintcp_getctx(sk);
+	struct espintcp_msg *emsg = &ctx->partial;
 
 	strp_stop(&ctx->strp);
 
@@ -526,57 +525,57 @@ EXPORT_SYMBOL_GPL(tcp_is_ulp_esp);
 	barrier();
 
 	cancel_work_sync(&ctx->work);
-	strp_करोne(&ctx->strp);
+	strp_done(&ctx->strp);
 
 	skb_queue_purge(&ctx->out_queue);
 	skb_queue_purge(&ctx->ike_queue);
 
-	अगर (emsg->len) अणु
-		अगर (emsg->skb)
-			kमुक्त_skb(emsg->skb);
-		अन्यथा
-			sk_msg_मुक्त(sk, &emsg->skmsg);
-	पूर्ण
+	if (emsg->len) {
+		if (emsg->skb)
+			kfree_skb(emsg->skb);
+		else
+			sk_msg_free(sk, &emsg->skmsg);
+	}
 
-	tcp_बंद(sk, समयout);
-पूर्ण
+	tcp_close(sk, timeout);
+}
 
-अटल __poll_t espपूर्णांकcp_poll(काष्ठा file *file, काष्ठा socket *sock,
-			      poll_table *रुको)
-अणु
-	__poll_t mask = datagram_poll(file, sock, रुको);
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा espपूर्णांकcp_ctx *ctx = espपूर्णांकcp_अ_लोtx(sk);
+static __poll_t espintcp_poll(struct file *file, struct socket *sock,
+			      poll_table *wait)
+{
+	__poll_t mask = datagram_poll(file, sock, wait);
+	struct sock *sk = sock->sk;
+	struct espintcp_ctx *ctx = espintcp_getctx(sk);
 
-	अगर (!skb_queue_empty(&ctx->ike_queue))
+	if (!skb_queue_empty(&ctx->ike_queue))
 		mask |= EPOLLIN | EPOLLRDNORM;
 
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
-अटल व्योम build_protos(काष्ठा proto *espपूर्णांकcp_prot,
-			 काष्ठा proto_ops *espपूर्णांकcp_ops,
-			 स्थिर काष्ठा proto *orig_prot,
-			 स्थिर काष्ठा proto_ops *orig_ops)
-अणु
-	स_नकल(espपूर्णांकcp_prot, orig_prot, माप(काष्ठा proto));
-	स_नकल(espपूर्णांकcp_ops, orig_ops, माप(काष्ठा proto_ops));
-	espपूर्णांकcp_prot->sendmsg = espपूर्णांकcp_sendmsg;
-	espपूर्णांकcp_prot->recvmsg = espपूर्णांकcp_recvmsg;
-	espपूर्णांकcp_prot->बंद = espपूर्णांकcp_बंद;
-	espपूर्णांकcp_prot->release_cb = espपूर्णांकcp_release;
-	espपूर्णांकcp_ops->poll = espपूर्णांकcp_poll;
-पूर्ण
+static void build_protos(struct proto *espintcp_prot,
+			 struct proto_ops *espintcp_ops,
+			 const struct proto *orig_prot,
+			 const struct proto_ops *orig_ops)
+{
+	memcpy(espintcp_prot, orig_prot, sizeof(struct proto));
+	memcpy(espintcp_ops, orig_ops, sizeof(struct proto_ops));
+	espintcp_prot->sendmsg = espintcp_sendmsg;
+	espintcp_prot->recvmsg = espintcp_recvmsg;
+	espintcp_prot->close = espintcp_close;
+	espintcp_prot->release_cb = espintcp_release;
+	espintcp_ops->poll = espintcp_poll;
+}
 
-अटल काष्ठा tcp_ulp_ops espपूर्णांकcp_ulp __पढ़ो_mostly = अणु
+static struct tcp_ulp_ops espintcp_ulp __read_mostly = {
 	.name = "espintcp",
 	.owner = THIS_MODULE,
-	.init = espपूर्णांकcp_init_sk,
-पूर्ण;
+	.init = espintcp_init_sk,
+};
 
-व्योम __init espपूर्णांकcp_init(व्योम)
-अणु
-	build_protos(&espपूर्णांकcp_prot, &espपूर्णांकcp_ops, &tcp_prot, &inet_stream_ops);
+void __init espintcp_init(void)
+{
+	build_protos(&espintcp_prot, &espintcp_ops, &tcp_prot, &inet_stream_ops);
 
-	tcp_रेजिस्टर_ulp(&espपूर्णांकcp_ulp);
-पूर्ण
+	tcp_register_ulp(&espintcp_ulp);
+}

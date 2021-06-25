@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  H8S TPU Driver
  *
@@ -7,153 +6,153 @@
  *
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/घड़ीsource.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_irq.h>
+#include <linux/errno.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/clocksource.h>
+#include <linux/clk.h>
+#include <linux/io.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/of_irq.h>
 
-#घोषणा TCR	0x0
-#घोषणा TSR	0x5
-#घोषणा TCNT	0x6
+#define TCR	0x0
+#define TSR	0x5
+#define TCNT	0x6
 
-#घोषणा TCFV	0x10
+#define TCFV	0x10
 
-काष्ठा tpu_priv अणु
-	काष्ठा घड़ीsource cs;
-	व्योम __iomem *mapbase1;
-	व्योम __iomem *mapbase2;
+struct tpu_priv {
+	struct clocksource cs;
+	void __iomem *mapbase1;
+	void __iomem *mapbase2;
 	raw_spinlock_t lock;
-	अचिन्हित पूर्णांक cs_enabled;
-पूर्ण;
+	unsigned int cs_enabled;
+};
 
-अटल अंतरभूत अचिन्हित दीर्घ पढ़ो_tcnt32(काष्ठा tpu_priv *p)
-अणु
-	अचिन्हित दीर्घ tcnt;
+static inline unsigned long read_tcnt32(struct tpu_priv *p)
+{
+	unsigned long tcnt;
 
-	tcnt = ioपढ़ो16be(p->mapbase1 + TCNT) << 16;
-	tcnt |= ioपढ़ो16be(p->mapbase2 + TCNT);
-	वापस tcnt;
-पूर्ण
+	tcnt = ioread16be(p->mapbase1 + TCNT) << 16;
+	tcnt |= ioread16be(p->mapbase2 + TCNT);
+	return tcnt;
+}
 
-अटल पूर्णांक tpu_get_counter(काष्ठा tpu_priv *p, अचिन्हित दीर्घ दीर्घ *val)
-अणु
-	अचिन्हित दीर्घ v1, v2, v3;
-	पूर्णांक o1, o2;
+static int tpu_get_counter(struct tpu_priv *p, unsigned long long *val)
+{
+	unsigned long v1, v2, v3;
+	int o1, o2;
 
-	o1 = ioपढ़ो8(p->mapbase1 + TSR) & TCFV;
+	o1 = ioread8(p->mapbase1 + TSR) & TCFV;
 
-	/* Make sure the समयr value is stable. Stolen from acpi_pm.c */
-	करो अणु
+	/* Make sure the timer value is stable. Stolen from acpi_pm.c */
+	do {
 		o2 = o1;
-		v1 = पढ़ो_tcnt32(p);
-		v2 = पढ़ो_tcnt32(p);
-		v3 = पढ़ो_tcnt32(p);
-		o1 = ioपढ़ो8(p->mapbase1 + TSR) & TCFV;
-	पूर्ण जबतक (unlikely((o1 != o2) || (v1 > v2 && v1 < v3)
+		v1 = read_tcnt32(p);
+		v2 = read_tcnt32(p);
+		v3 = read_tcnt32(p);
+		o1 = ioread8(p->mapbase1 + TSR) & TCFV;
+	} while (unlikely((o1 != o2) || (v1 > v2 && v1 < v3)
 			  || (v2 > v3 && v2 < v1) || (v3 > v1 && v3 < v2)));
 
 	*val = v2;
-	वापस o1;
-पूर्ण
+	return o1;
+}
 
-अटल अंतरभूत काष्ठा tpu_priv *cs_to_priv(काष्ठा घड़ीsource *cs)
-अणु
-	वापस container_of(cs, काष्ठा tpu_priv, cs);
-पूर्ण
+static inline struct tpu_priv *cs_to_priv(struct clocksource *cs)
+{
+	return container_of(cs, struct tpu_priv, cs);
+}
 
-अटल u64 tpu_घड़ीsource_पढ़ो(काष्ठा घड़ीsource *cs)
-अणु
-	काष्ठा tpu_priv *p = cs_to_priv(cs);
-	अचिन्हित दीर्घ flags;
-	अचिन्हित दीर्घ दीर्घ value;
+static u64 tpu_clocksource_read(struct clocksource *cs)
+{
+	struct tpu_priv *p = cs_to_priv(cs);
+	unsigned long flags;
+	unsigned long long value;
 
 	raw_spin_lock_irqsave(&p->lock, flags);
-	अगर (tpu_get_counter(p, &value))
+	if (tpu_get_counter(p, &value))
 		value += 0x100000000;
 	raw_spin_unlock_irqrestore(&p->lock, flags);
 
-	वापस value;
-पूर्ण
+	return value;
+}
 
-अटल पूर्णांक tpu_घड़ीsource_enable(काष्ठा घड़ीsource *cs)
-अणु
-	काष्ठा tpu_priv *p = cs_to_priv(cs);
+static int tpu_clocksource_enable(struct clocksource *cs)
+{
+	struct tpu_priv *p = cs_to_priv(cs);
 
 	WARN_ON(p->cs_enabled);
 
-	ioग_लिखो16be(0, p->mapbase1 + TCNT);
-	ioग_लिखो16be(0, p->mapbase2 + TCNT);
-	ioग_लिखो8(0x0f, p->mapbase1 + TCR);
-	ioग_लिखो8(0x03, p->mapbase2 + TCR);
+	iowrite16be(0, p->mapbase1 + TCNT);
+	iowrite16be(0, p->mapbase2 + TCNT);
+	iowrite8(0x0f, p->mapbase1 + TCR);
+	iowrite8(0x03, p->mapbase2 + TCR);
 
 	p->cs_enabled = true;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tpu_घड़ीsource_disable(काष्ठा घड़ीsource *cs)
-अणु
-	काष्ठा tpu_priv *p = cs_to_priv(cs);
+static void tpu_clocksource_disable(struct clocksource *cs)
+{
+	struct tpu_priv *p = cs_to_priv(cs);
 
 	WARN_ON(!p->cs_enabled);
 
-	ioग_लिखो8(0, p->mapbase1 + TCR);
-	ioग_लिखो8(0, p->mapbase2 + TCR);
+	iowrite8(0, p->mapbase1 + TCR);
+	iowrite8(0, p->mapbase2 + TCR);
 	p->cs_enabled = false;
-पूर्ण
+}
 
-अटल काष्ठा tpu_priv tpu_priv = अणु
-	.cs = अणु
+static struct tpu_priv tpu_priv = {
+	.cs = {
 		.name = "H8S_TPU",
 		.rating = 200,
-		.पढ़ो = tpu_घड़ीsource_पढ़ो,
-		.enable = tpu_घड़ीsource_enable,
-		.disable = tpu_घड़ीsource_disable,
-		.mask = CLOCKSOURCE_MASK(माप(अचिन्हित दीर्घ) * 8),
+		.read = tpu_clocksource_read,
+		.enable = tpu_clocksource_enable,
+		.disable = tpu_clocksource_disable,
+		.mask = CLOCKSOURCE_MASK(sizeof(unsigned long) * 8),
 		.flags = CLOCK_SOURCE_IS_CONTINUOUS,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-#घोषणा CH_L 0
-#घोषणा CH_H 1
+#define CH_L 0
+#define CH_H 1
 
-अटल पूर्णांक __init h8300_tpu_init(काष्ठा device_node *node)
-अणु
-	व्योम __iomem *base[2];
-	काष्ठा clk *clk;
-	पूर्णांक ret = -ENXIO;
+static int __init h8300_tpu_init(struct device_node *node)
+{
+	void __iomem *base[2];
+	struct clk *clk;
+	int ret = -ENXIO;
 
 	clk = of_clk_get(node, 0);
-	अगर (IS_ERR(clk)) अणु
+	if (IS_ERR(clk)) {
 		pr_err("failed to get clock for clocksource\n");
-		वापस PTR_ERR(clk);
-	पूर्ण
+		return PTR_ERR(clk);
+	}
 
 	base[CH_L] = of_iomap(node, CH_L);
-	अगर (!base[CH_L]) अणु
+	if (!base[CH_L]) {
 		pr_err("failed to map registers for clocksource\n");
-		जाओ मुक्त_clk;
-	पूर्ण
+		goto free_clk;
+	}
 	base[CH_H] = of_iomap(node, CH_H);
-	अगर (!base[CH_H]) अणु
+	if (!base[CH_H]) {
 		pr_err("failed to map registers for clocksource\n");
-		जाओ unmap_L;
-	पूर्ण
+		goto unmap_L;
+	}
 
 	tpu_priv.mapbase1 = base[CH_L];
 	tpu_priv.mapbase2 = base[CH_H];
 
-	वापस घड़ीsource_रेजिस्टर_hz(&tpu_priv.cs, clk_get_rate(clk) / 64);
+	return clocksource_register_hz(&tpu_priv.cs, clk_get_rate(clk) / 64);
 
 unmap_L:
 	iounmap(base[CH_H]);
-मुक्त_clk:
+free_clk:
 	clk_put(clk);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 TIMER_OF_DECLARE(h8300_tpu, "renesas,tpu", h8300_tpu_init);

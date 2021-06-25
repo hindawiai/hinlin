@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * mtu3_debug.h - debug header
  *
@@ -8,45 +7,45 @@
  * Author: Chunfeng Yun <chunfeng.yun@mediatek.com>
  */
 
-#अगर_अघोषित __MTU3_DEBUG_H__
-#घोषणा __MTU3_DEBUG_H__
+#ifndef __MTU3_DEBUG_H__
+#define __MTU3_DEBUG_H__
 
-#समावेश <linux/debugfs.h>
+#include <linux/debugfs.h>
 
-काष्ठा ssusb_mtk;
+struct ssusb_mtk;
 
-#घोषणा MTU3_DEBUGFS_NAME_LEN 32
+#define MTU3_DEBUGFS_NAME_LEN 32
 
-काष्ठा mtu3_regset अणु
-	अक्षर name[MTU3_DEBUGFS_NAME_LEN];
-	काष्ठा debugfs_regset32 regset;
-पूर्ण;
+struct mtu3_regset {
+	char name[MTU3_DEBUGFS_NAME_LEN];
+	struct debugfs_regset32 regset;
+};
 
-काष्ठा mtu3_file_map अणु
-	स्थिर अक्षर *name;
-	पूर्णांक (*show)(काष्ठा seq_file *s, व्योम *unused);
-पूर्ण;
+struct mtu3_file_map {
+	const char *name;
+	int (*show)(struct seq_file *s, void *unused);
+};
 
-#अगर IS_ENABLED(CONFIG_DEBUG_FS)
-व्योम ssusb_dev_debugfs_init(काष्ठा ssusb_mtk *ssusb);
-व्योम ssusb_dr_debugfs_init(काष्ठा ssusb_mtk *ssusb);
-व्योम ssusb_debugfs_create_root(काष्ठा ssusb_mtk *ssusb);
-व्योम ssusb_debugfs_हटाओ_root(काष्ठा ssusb_mtk *ssusb);
+#if IS_ENABLED(CONFIG_DEBUG_FS)
+void ssusb_dev_debugfs_init(struct ssusb_mtk *ssusb);
+void ssusb_dr_debugfs_init(struct ssusb_mtk *ssusb);
+void ssusb_debugfs_create_root(struct ssusb_mtk *ssusb);
+void ssusb_debugfs_remove_root(struct ssusb_mtk *ssusb);
 
-#अन्यथा
-अटल अंतरभूत व्योम ssusb_dev_debugfs_init(काष्ठा ssusb_mtk *ssusb) अणुपूर्ण
-अटल अंतरभूत व्योम ssusb_dr_debugfs_init(काष्ठा ssusb_mtk *ssusb) अणुपूर्ण
-अटल अंतरभूत व्योम ssusb_debugfs_create_root(काष्ठा ssusb_mtk *ssusb) अणुपूर्ण
-अटल अंतरभूत व्योम ssusb_debugfs_हटाओ_root(काष्ठा ssusb_mtk *ssusb) अणुपूर्ण
+#else
+static inline void ssusb_dev_debugfs_init(struct ssusb_mtk *ssusb) {}
+static inline void ssusb_dr_debugfs_init(struct ssusb_mtk *ssusb) {}
+static inline void ssusb_debugfs_create_root(struct ssusb_mtk *ssusb) {}
+static inline void ssusb_debugfs_remove_root(struct ssusb_mtk *ssusb) {}
 
-#पूर्ण_अगर /* CONFIG_DEBUG_FS */
+#endif /* CONFIG_DEBUG_FS */
 
-#अगर IS_ENABLED(CONFIG_TRACING)
-व्योम mtu3_dbg_trace(काष्ठा device *dev, स्थिर अक्षर *fmt, ...);
+#if IS_ENABLED(CONFIG_TRACING)
+void mtu3_dbg_trace(struct device *dev, const char *fmt, ...);
 
-#अन्यथा
-अटल अंतरभूत व्योम mtu3_dbg_trace(काष्ठा device *dev, स्थिर अक्षर *fmt, ...) अणुपूर्ण
+#else
+static inline void mtu3_dbg_trace(struct device *dev, const char *fmt, ...) {}
 
-#पूर्ण_अगर /* CONFIG_TRACING */
+#endif /* CONFIG_TRACING */
 
-#पूर्ण_अगर /* __MTU3_DEBUG_H__ */
+#endif /* __MTU3_DEBUG_H__ */

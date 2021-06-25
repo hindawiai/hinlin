@@ -1,18 +1,17 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-/* String matching match क्रम iptables
+// SPDX-License-Identifier: GPL-2.0-only
+/* String matching match for iptables
  *
  * (C) 2005 Pablo Neira Ayuso <pablo@eurodev.net>
  */
 
-#समावेश <linux/gfp.h>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/netfilter/x_tables.h>
-#समावेश <linux/netfilter/xt_माला.स>
-#समावेश <linux/textsearch.h>
+#include <linux/gfp.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/skbuff.h>
+#include <linux/netfilter/x_tables.h>
+#include <linux/netfilter/xt_string.h>
+#include <linux/textsearch.h>
 
 MODULE_AUTHOR("Pablo Neira Ayuso <pablo@eurodev.net>");
 MODULE_DESCRIPTION("Xtables: string-based matching");
@@ -21,74 +20,74 @@ MODULE_ALIAS("ipt_string");
 MODULE_ALIAS("ip6t_string");
 MODULE_ALIAS("ebt_string");
 
-अटल bool
-string_mt(स्थिर काष्ठा sk_buff *skb, काष्ठा xt_action_param *par)
-अणु
-	स्थिर काष्ठा xt_string_info *conf = par->matchinfo;
+static bool
+string_mt(const struct sk_buff *skb, struct xt_action_param *par)
+{
+	const struct xt_string_info *conf = par->matchinfo;
 	bool invert;
 
 	invert = conf->u.v1.flags & XT_STRING_FLAG_INVERT;
 
-	वापस (skb_find_text((काष्ठा sk_buff *)skb, conf->from_offset,
+	return (skb_find_text((struct sk_buff *)skb, conf->from_offset,
 			     conf->to_offset, conf->config)
-			     != अच_पूर्णांक_उच्च) ^ invert;
-पूर्ण
+			     != UINT_MAX) ^ invert;
+}
 
-#घोषणा STRING_TEXT_PRIV(m) ((काष्ठा xt_string_info *)(m))
+#define STRING_TEXT_PRIV(m) ((struct xt_string_info *)(m))
 
-अटल पूर्णांक string_mt_check(स्थिर काष्ठा xt_mtchk_param *par)
-अणु
-	काष्ठा xt_string_info *conf = par->matchinfo;
-	काष्ठा ts_config *ts_conf;
-	पूर्णांक flags = TS_AUTOLOAD;
+static int string_mt_check(const struct xt_mtchk_param *par)
+{
+	struct xt_string_info *conf = par->matchinfo;
+	struct ts_config *ts_conf;
+	int flags = TS_AUTOLOAD;
 
-	/* Damn, can't handle this हाल properly with iptables... */
-	अगर (conf->from_offset > conf->to_offset)
-		वापस -EINVAL;
-	अगर (conf->algo[XT_STRING_MAX_ALGO_NAME_SIZE - 1] != '\0')
-		वापस -EINVAL;
-	अगर (conf->patlen > XT_STRING_MAX_PATTERN_SIZE)
-		वापस -EINVAL;
-	अगर (conf->u.v1.flags &
+	/* Damn, can't handle this case properly with iptables... */
+	if (conf->from_offset > conf->to_offset)
+		return -EINVAL;
+	if (conf->algo[XT_STRING_MAX_ALGO_NAME_SIZE - 1] != '\0')
+		return -EINVAL;
+	if (conf->patlen > XT_STRING_MAX_PATTERN_SIZE)
+		return -EINVAL;
+	if (conf->u.v1.flags &
 	    ~(XT_STRING_FLAG_IGNORECASE | XT_STRING_FLAG_INVERT))
-		वापस -EINVAL;
-	अगर (conf->u.v1.flags & XT_STRING_FLAG_IGNORECASE)
+		return -EINVAL;
+	if (conf->u.v1.flags & XT_STRING_FLAG_IGNORECASE)
 		flags |= TS_IGNORECASE;
 	ts_conf = textsearch_prepare(conf->algo, conf->pattern, conf->patlen,
 				     GFP_KERNEL, flags);
-	अगर (IS_ERR(ts_conf))
-		वापस PTR_ERR(ts_conf);
+	if (IS_ERR(ts_conf))
+		return PTR_ERR(ts_conf);
 
 	conf->config = ts_conf;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम string_mt_destroy(स्थिर काष्ठा xt_mtdtor_param *par)
-अणु
+static void string_mt_destroy(const struct xt_mtdtor_param *par)
+{
 	textsearch_destroy(STRING_TEXT_PRIV(par->matchinfo)->config);
-पूर्ण
+}
 
-अटल काष्ठा xt_match xt_string_mt_reg __पढ़ो_mostly = अणु
+static struct xt_match xt_string_mt_reg __read_mostly = {
 	.name       = "string",
 	.revision   = 1,
 	.family     = NFPROTO_UNSPEC,
 	.checkentry = string_mt_check,
 	.match      = string_mt,
 	.destroy    = string_mt_destroy,
-	.matchsize  = माप(काष्ठा xt_string_info),
-	.usersize   = दुरत्व(काष्ठा xt_string_info, config),
+	.matchsize  = sizeof(struct xt_string_info),
+	.usersize   = offsetof(struct xt_string_info, config),
 	.me         = THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक __init string_mt_init(व्योम)
-अणु
-	वापस xt_रेजिस्टर_match(&xt_string_mt_reg);
-पूर्ण
+static int __init string_mt_init(void)
+{
+	return xt_register_match(&xt_string_mt_reg);
+}
 
-अटल व्योम __निकास string_mt_निकास(व्योम)
-अणु
-	xt_unरेजिस्टर_match(&xt_string_mt_reg);
-पूर्ण
+static void __exit string_mt_exit(void)
+{
+	xt_unregister_match(&xt_string_mt_reg);
+}
 
 module_init(string_mt_init);
-module_निकास(string_mt_निकास);
+module_exit(string_mt_exit);

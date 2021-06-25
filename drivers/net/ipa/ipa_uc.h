@@ -1,33 +1,32 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
 /* Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
  * Copyright (C) 2019-2020 Linaro Ltd.
  */
-#अगर_अघोषित _IPA_UC_H_
-#घोषणा _IPA_UC_H_
+#ifndef _IPA_UC_H_
+#define _IPA_UC_H_
 
-काष्ठा ipa;
+struct ipa;
 
 /**
- * ipa_uc_setup() - set up the IPA microcontroller subप्रणाली
- * @ipa:	IPA poपूर्णांकer
+ * ipa_uc_setup() - set up the IPA microcontroller subsystem
+ * @ipa:	IPA pointer
  */
-व्योम ipa_uc_setup(काष्ठा ipa *ipa);
+void ipa_uc_setup(struct ipa *ipa);
 
 /**
- * ipa_uc_tearकरोwn() - inverse of ipa_uc_setup()
- * @ipa:	IPA poपूर्णांकer
+ * ipa_uc_teardown() - inverse of ipa_uc_setup()
+ * @ipa:	IPA pointer
  */
-व्योम ipa_uc_tearकरोwn(काष्ठा ipa *ipa);
+void ipa_uc_teardown(struct ipa *ipa);
 
 /**
- * ipa_uc_panic_notअगरier()
- * @ipa:	IPA poपूर्णांकer
+ * ipa_uc_panic_notifier()
+ * @ipa:	IPA pointer
  *
- * Notअगरier function called when the प्रणाली crashes, to inक्रमm the
+ * Notifier function called when the system crashes, to inform the
  * microcontroller of the event.
  */
-व्योम ipa_uc_panic_notअगरier(काष्ठा ipa *ipa);
+void ipa_uc_panic_notifier(struct ipa *ipa);
 
-#पूर्ण_अगर /* _IPA_UC_H_ */
+#endif /* _IPA_UC_H_ */

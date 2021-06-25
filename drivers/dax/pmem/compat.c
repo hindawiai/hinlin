@@ -1,72 +1,71 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2016 - 2018 Intel Corporation. All rights reserved. */
-#समावेश <linux/percpu-refcount.h>
-#समावेश <linux/memremap.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pfn_t.h>
-#समावेश <linux/nd.h>
-#समावेश "../bus.h"
+#include <linux/percpu-refcount.h>
+#include <linux/memremap.h>
+#include <linux/module.h>
+#include <linux/pfn_t.h>
+#include <linux/nd.h>
+#include "../bus.h"
 
-/* we need the निजी definitions to implement compat suport */
-#समावेश "../dax-private.h"
+/* we need the private definitions to implement compat suport */
+#include "../dax-private.h"
 
-अटल पूर्णांक dax_pmem_compat_probe(काष्ठा device *dev)
-अणु
-	काष्ठा dev_dax *dev_dax = __dax_pmem_probe(dev, DEV_DAX_CLASS);
-	पूर्णांक rc;
+static int dax_pmem_compat_probe(struct device *dev)
+{
+	struct dev_dax *dev_dax = __dax_pmem_probe(dev, DEV_DAX_CLASS);
+	int rc;
 
-	अगर (IS_ERR(dev_dax))
-		वापस PTR_ERR(dev_dax);
+	if (IS_ERR(dev_dax))
+		return PTR_ERR(dev_dax);
 
-        अगर (!devres_खोलो_group(&dev_dax->dev, dev_dax, GFP_KERNEL))
-		वापस -ENOMEM;
+        if (!devres_open_group(&dev_dax->dev, dev_dax, GFP_KERNEL))
+		return -ENOMEM;
 
 	device_lock(&dev_dax->dev);
 	rc = dev_dax_probe(dev_dax);
 	device_unlock(&dev_dax->dev);
 
-	devres_बंद_group(&dev_dax->dev, dev_dax);
-	अगर (rc)
+	devres_close_group(&dev_dax->dev, dev_dax);
+	if (rc)
 		devres_release_group(&dev_dax->dev, dev_dax);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक dax_pmem_compat_release(काष्ठा device *dev, व्योम *data)
-अणु
+static int dax_pmem_compat_release(struct device *dev, void *data)
+{
 	device_lock(dev);
 	devres_release_group(dev, to_dev_dax(dev));
 	device_unlock(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम dax_pmem_compat_हटाओ(काष्ठा device *dev)
-अणु
-	device_क्रम_each_child(dev, शून्य, dax_pmem_compat_release);
-पूर्ण
+static void dax_pmem_compat_remove(struct device *dev)
+{
+	device_for_each_child(dev, NULL, dax_pmem_compat_release);
+}
 
-अटल काष्ठा nd_device_driver dax_pmem_compat_driver = अणु
+static struct nd_device_driver dax_pmem_compat_driver = {
 	.probe = dax_pmem_compat_probe,
-	.हटाओ = dax_pmem_compat_हटाओ,
-	.drv = अणु
+	.remove = dax_pmem_compat_remove,
+	.drv = {
 		.name = "dax_pmem_compat",
-	पूर्ण,
+	},
 	.type = ND_DRIVER_DAX_PMEM,
-पूर्ण;
+};
 
-अटल पूर्णांक __init dax_pmem_compat_init(व्योम)
-अणु
-	वापस nd_driver_रेजिस्टर(&dax_pmem_compat_driver);
-पूर्ण
+static int __init dax_pmem_compat_init(void)
+{
+	return nd_driver_register(&dax_pmem_compat_driver);
+}
 module_init(dax_pmem_compat_init);
 
-अटल व्योम __निकास dax_pmem_compat_निकास(व्योम)
-अणु
-	driver_unरेजिस्टर(&dax_pmem_compat_driver.drv);
-पूर्ण
-module_निकास(dax_pmem_compat_निकास);
+static void __exit dax_pmem_compat_exit(void)
+{
+	driver_unregister(&dax_pmem_compat_driver.drv);
+}
+module_exit(dax_pmem_compat_exit);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Intel Corporation");

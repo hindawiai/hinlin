@@ -1,39 +1,38 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2004 IBM Corporation
  * Copyright (C) 2014 Intel Corporation
  *
  * Authors:
  * Leendert van Doorn <leendert@watson.ibm.com>
- * Dave Safक्रमd <safक्रमd@watson.ibm.com>
+ * Dave Safford <safford@watson.ibm.com>
  * Reiner Sailer <sailer@watson.ibm.com>
  * Kylene Hall <kjhall@us.ibm.com>
  *
- * Device driver क्रम TCG/TCPA TPM (trusted platक्रमm module).
- * Specअगरications at www.trustedcomputinggroup.org
+ * Device driver for TCG/TCPA TPM (trusted platform module).
+ * Specifications at www.trustedcomputinggroup.org
  */
 
-#समावेश <linux/poll.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/मुक्तzer.h>
-#समावेश <linux/tpm_eventlog.h>
+#include <linux/poll.h>
+#include <linux/slab.h>
+#include <linux/mutex.h>
+#include <linux/spinlock.h>
+#include <linux/freezer.h>
+#include <linux/tpm_eventlog.h>
 
-#समावेश "tpm.h"
+#include "tpm.h"
 
-#घोषणा TPM_MAX_ORDINAL 243
+#define TPM_MAX_ORDINAL 243
 
 /*
  * Array with one entry per ordinal defining the maximum amount
- * of समय the chip could take to वापस the result.  The ordinal
- * designation of लघु, medium or दीर्घ is defined in a table in
- * TCG Specअगरication TPM Main Part 2 TPM Structures Section 17. The
+ * of time the chip could take to return the result.  The ordinal
+ * designation of short, medium or long is defined in a table in
+ * TCG Specification TPM Main Part 2 TPM Structures Section 17. The
  * values of the SHORT, MEDIUM, and LONG durations are retrieved
- * from the chip during initialization with a call to tpm_get_समयouts.
+ * from the chip during initialization with a call to tpm_get_timeouts.
  */
-अटल स्थिर u8 tpm1_ordinal_duration[TPM_MAX_ORDINAL] = अणु
+static const u8 tpm1_ordinal_duration[TPM_MAX_ORDINAL] = {
 	TPM_UNDEFINED,		/* 0 */
 	TPM_UNDEFINED,
 	TPM_UNDEFINED,
@@ -277,457 +276,457 @@
 	TPM_SHORT,		/* 240 */
 	TPM_UNDEFINED,
 	TPM_MEDIUM,
-पूर्ण;
+};
 
 /**
  * tpm1_calc_ordinal_duration() - calculate the maximum command duration
  * @chip:    TPM chip to use.
  * @ordinal: TPM command ordinal.
  *
- * The function वापसs the maximum amount of समय the chip could take
- * to वापस the result क्रम a particular ordinal in jअगरfies.
+ * The function returns the maximum amount of time the chip could take
+ * to return the result for a particular ordinal in jiffies.
  *
- * Return: A maximal duration समय क्रम an ordinal in jअगरfies.
+ * Return: A maximal duration time for an ordinal in jiffies.
  */
-अचिन्हित दीर्घ tpm1_calc_ordinal_duration(काष्ठा tpm_chip *chip, u32 ordinal)
-अणु
-	पूर्णांक duration_idx = TPM_UNDEFINED;
-	पूर्णांक duration = 0;
+unsigned long tpm1_calc_ordinal_duration(struct tpm_chip *chip, u32 ordinal)
+{
+	int duration_idx = TPM_UNDEFINED;
+	int duration = 0;
 
 	/*
-	 * We only have a duration table क्रम रक्षित commands, where the upper
+	 * We only have a duration table for protected commands, where the upper
 	 * 16 bits are 0. For the few other ordinals the fallback will be used.
 	 */
-	अगर (ordinal < TPM_MAX_ORDINAL)
+	if (ordinal < TPM_MAX_ORDINAL)
 		duration_idx = tpm1_ordinal_duration[ordinal];
 
-	अगर (duration_idx != TPM_UNDEFINED)
+	if (duration_idx != TPM_UNDEFINED)
 		duration = chip->duration[duration_idx];
-	अगर (duration <= 0)
-		वापस 2 * 60 * HZ;
-	अन्यथा
-		वापस duration;
-पूर्ण
+	if (duration <= 0)
+		return 2 * 60 * HZ;
+	else
+		return duration;
+}
 
-#घोषणा TPM_ORD_STARTUP 153
-#घोषणा TPM_ST_CLEAR 1
+#define TPM_ORD_STARTUP 153
+#define TPM_ST_CLEAR 1
 
 /**
  * tpm_startup() - turn on the TPM
  * @chip: TPM chip to use
  *
  * Normally the firmware should start the TPM. This function is provided as a
- * workaround अगर this करोes not happen. A legal हाल क्रम this could be क्रम
+ * workaround if this does not happen. A legal case for this could be for
  * example when a TPM emulator is used.
  *
  * Return: same as tpm_transmit_cmd()
  */
-अटल पूर्णांक tpm1_startup(काष्ठा tpm_chip *chip)
-अणु
-	काष्ठा tpm_buf buf;
-	पूर्णांक rc;
+static int tpm1_startup(struct tpm_chip *chip)
+{
+	struct tpm_buf buf;
+	int rc;
 
 	dev_info(&chip->dev, "starting up the TPM manually\n");
 
 	rc = tpm_buf_init(&buf, TPM_TAG_RQU_COMMAND, TPM_ORD_STARTUP);
-	अगर (rc < 0)
-		वापस rc;
+	if (rc < 0)
+		return rc;
 
 	tpm_buf_append_u16(&buf, TPM_ST_CLEAR);
 
 	rc = tpm_transmit_cmd(chip, &buf, 0, "attempting to start the TPM");
 	tpm_buf_destroy(&buf);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक tpm1_get_समयouts(काष्ठा tpm_chip *chip)
-अणु
+int tpm1_get_timeouts(struct tpm_chip *chip)
+{
 	cap_t cap;
-	अचिन्हित दीर्घ समयout_old[4], समयout_chip[4], समयout_eff[4];
-	अचिन्हित दीर्घ durations[3];
-	sमाप_प्रकार rc;
+	unsigned long timeout_old[4], timeout_chip[4], timeout_eff[4];
+	unsigned long durations[3];
+	ssize_t rc;
 
-	rc = tpm1_अ_लोap(chip, TPM_CAP_PROP_TIS_TIMEOUT, &cap, शून्य,
-			 माप(cap.समयout));
-	अगर (rc == TPM_ERR_INVALID_POSTINIT) अणु
-		अगर (tpm1_startup(chip))
-			वापस rc;
+	rc = tpm1_getcap(chip, TPM_CAP_PROP_TIS_TIMEOUT, &cap, NULL,
+			 sizeof(cap.timeout));
+	if (rc == TPM_ERR_INVALID_POSTINIT) {
+		if (tpm1_startup(chip))
+			return rc;
 
-		rc = tpm1_अ_लोap(chip, TPM_CAP_PROP_TIS_TIMEOUT, &cap,
+		rc = tpm1_getcap(chip, TPM_CAP_PROP_TIS_TIMEOUT, &cap,
 				 "attempting to determine the timeouts",
-				 माप(cap.समयout));
-	पूर्ण
+				 sizeof(cap.timeout));
+	}
 
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(&chip->dev, "A TPM error (%zd) occurred attempting to determine the timeouts\n",
 			rc);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	समयout_old[0] = jअगरfies_to_usecs(chip->समयout_a);
-	समयout_old[1] = jअगरfies_to_usecs(chip->समयout_b);
-	समयout_old[2] = jअगरfies_to_usecs(chip->समयout_c);
-	समयout_old[3] = jअगरfies_to_usecs(chip->समयout_d);
-	समयout_chip[0] = be32_to_cpu(cap.समयout.a);
-	समयout_chip[1] = be32_to_cpu(cap.समयout.b);
-	समयout_chip[2] = be32_to_cpu(cap.समयout.c);
-	समयout_chip[3] = be32_to_cpu(cap.समयout.d);
-	स_नकल(समयout_eff, समयout_chip, माप(समयout_eff));
+	timeout_old[0] = jiffies_to_usecs(chip->timeout_a);
+	timeout_old[1] = jiffies_to_usecs(chip->timeout_b);
+	timeout_old[2] = jiffies_to_usecs(chip->timeout_c);
+	timeout_old[3] = jiffies_to_usecs(chip->timeout_d);
+	timeout_chip[0] = be32_to_cpu(cap.timeout.a);
+	timeout_chip[1] = be32_to_cpu(cap.timeout.b);
+	timeout_chip[2] = be32_to_cpu(cap.timeout.c);
+	timeout_chip[3] = be32_to_cpu(cap.timeout.d);
+	memcpy(timeout_eff, timeout_chip, sizeof(timeout_eff));
 
 	/*
-	 * Provide ability क्रम venकरोr overrides of समयout values in हाल
+	 * Provide ability for vendor overrides of timeout values in case
 	 * of misreporting.
 	 */
-	अगर (chip->ops->update_समयouts)
-		chip->ops->update_समयouts(chip, समयout_eff);
+	if (chip->ops->update_timeouts)
+		chip->ops->update_timeouts(chip, timeout_eff);
 
-	अगर (!chip->समयout_adjusted) अणु
-		/* Restore शेष अगर chip reported 0 */
-		अचिन्हित पूर्णांक i;
+	if (!chip->timeout_adjusted) {
+		/* Restore default if chip reported 0 */
+		unsigned int i;
 
-		क्रम (i = 0; i < ARRAY_SIZE(समयout_eff); i++) अणु
-			अगर (समयout_eff[i])
-				जारी;
+		for (i = 0; i < ARRAY_SIZE(timeout_eff); i++) {
+			if (timeout_eff[i])
+				continue;
 
-			समयout_eff[i] = समयout_old[i];
-			chip->समयout_adjusted = true;
-		पूर्ण
+			timeout_eff[i] = timeout_old[i];
+			chip->timeout_adjusted = true;
+		}
 
-		अगर (समयout_eff[0] != 0 && समयout_eff[0] < 1000) अणु
-			/* समयouts in msec rather usec */
-			क्रम (i = 0; i != ARRAY_SIZE(समयout_eff); i++)
-				समयout_eff[i] *= 1000;
-			chip->समयout_adjusted = true;
-		पूर्ण
-	पूर्ण
+		if (timeout_eff[0] != 0 && timeout_eff[0] < 1000) {
+			/* timeouts in msec rather usec */
+			for (i = 0; i != ARRAY_SIZE(timeout_eff); i++)
+				timeout_eff[i] *= 1000;
+			chip->timeout_adjusted = true;
+		}
+	}
 
-	/* Report adjusted समयouts */
-	अगर (chip->समयout_adjusted) अणु
+	/* Report adjusted timeouts */
+	if (chip->timeout_adjusted) {
 		dev_info(&chip->dev, HW_ERR "Adjusting reported timeouts: A %lu->%luus B %lu->%luus C %lu->%luus D %lu->%luus\n",
-			 समयout_chip[0], समयout_eff[0],
-			 समयout_chip[1], समयout_eff[1],
-			 समयout_chip[2], समयout_eff[2],
-			 समयout_chip[3], समयout_eff[3]);
-	पूर्ण
+			 timeout_chip[0], timeout_eff[0],
+			 timeout_chip[1], timeout_eff[1],
+			 timeout_chip[2], timeout_eff[2],
+			 timeout_chip[3], timeout_eff[3]);
+	}
 
-	chip->समयout_a = usecs_to_jअगरfies(समयout_eff[0]);
-	chip->समयout_b = usecs_to_jअगरfies(समयout_eff[1]);
-	chip->समयout_c = usecs_to_jअगरfies(समयout_eff[2]);
-	chip->समयout_d = usecs_to_jअगरfies(समयout_eff[3]);
+	chip->timeout_a = usecs_to_jiffies(timeout_eff[0]);
+	chip->timeout_b = usecs_to_jiffies(timeout_eff[1]);
+	chip->timeout_c = usecs_to_jiffies(timeout_eff[2]);
+	chip->timeout_d = usecs_to_jiffies(timeout_eff[3]);
 
-	rc = tpm1_अ_लोap(chip, TPM_CAP_PROP_TIS_DURATION, &cap,
+	rc = tpm1_getcap(chip, TPM_CAP_PROP_TIS_DURATION, &cap,
 			 "attempting to determine the durations",
-			  माप(cap.duration));
-	अगर (rc)
-		वापस rc;
+			  sizeof(cap.duration));
+	if (rc)
+		return rc;
 
 	chip->duration[TPM_SHORT] =
-		usecs_to_jअगरfies(be32_to_cpu(cap.duration.tpm_लघु));
+		usecs_to_jiffies(be32_to_cpu(cap.duration.tpm_short));
 	chip->duration[TPM_MEDIUM] =
-		usecs_to_jअगरfies(be32_to_cpu(cap.duration.tpm_medium));
+		usecs_to_jiffies(be32_to_cpu(cap.duration.tpm_medium));
 	chip->duration[TPM_LONG] =
-		usecs_to_jअगरfies(be32_to_cpu(cap.duration.tpm_दीर्घ));
+		usecs_to_jiffies(be32_to_cpu(cap.duration.tpm_long));
 	chip->duration[TPM_LONG_LONG] = 0; /* not used under 1.2 */
 
 	/*
-	 * Provide the ability क्रम venकरोr overrides of duration values in हाल
+	 * Provide the ability for vendor overrides of duration values in case
 	 * of misreporting.
 	 */
-	अगर (chip->ops->update_durations)
+	if (chip->ops->update_durations)
 		chip->ops->update_durations(chip, durations);
 
-	अगर (chip->duration_adjusted) अणु
+	if (chip->duration_adjusted) {
 		dev_info(&chip->dev, HW_ERR "Adjusting reported durations.");
 		chip->duration[TPM_SHORT] = durations[0];
 		chip->duration[TPM_MEDIUM] = durations[1];
 		chip->duration[TPM_LONG] = durations[2];
-	पूर्ण
+	}
 
-	/* The Broadcom BCM0102 chipset in a Dell Latitude D820 माला_लो the above
+	/* The Broadcom BCM0102 chipset in a Dell Latitude D820 gets the above
 	 * value wrong and apparently reports msecs rather than usecs. So we
 	 * fix up the resulting too-small TPM_SHORT value to make things work.
 	 * We also scale the TPM_MEDIUM and -_LONG values by 1000.
 	 */
-	अगर (chip->duration[TPM_SHORT] < (HZ / 100)) अणु
+	if (chip->duration[TPM_SHORT] < (HZ / 100)) {
 		chip->duration[TPM_SHORT] = HZ;
 		chip->duration[TPM_MEDIUM] *= 1000;
 		chip->duration[TPM_LONG] *= 1000;
 		chip->duration_adjusted = true;
 		dev_info(&chip->dev, "Adjusting TPM timeout parameters.");
-	पूर्ण
+	}
 
 	chip->flags |= TPM_CHIP_FLAG_HAVE_TIMEOUTS;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा TPM_ORD_PCR_EXTEND 20
-पूर्णांक tpm1_pcr_extend(काष्ठा tpm_chip *chip, u32 pcr_idx, स्थिर u8 *hash,
-		    स्थिर अक्षर *log_msg)
-अणु
-	काष्ठा tpm_buf buf;
-	पूर्णांक rc;
+#define TPM_ORD_PCR_EXTEND 20
+int tpm1_pcr_extend(struct tpm_chip *chip, u32 pcr_idx, const u8 *hash,
+		    const char *log_msg)
+{
+	struct tpm_buf buf;
+	int rc;
 
 	rc = tpm_buf_init(&buf, TPM_TAG_RQU_COMMAND, TPM_ORD_PCR_EXTEND);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	tpm_buf_append_u32(&buf, pcr_idx);
 	tpm_buf_append(&buf, hash, TPM_DIGEST_SIZE);
 
 	rc = tpm_transmit_cmd(chip, &buf, TPM_DIGEST_SIZE, log_msg);
 	tpm_buf_destroy(&buf);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-#घोषणा TPM_ORD_GET_CAP 101
-sमाप_प्रकार tpm1_अ_लोap(काष्ठा tpm_chip *chip, u32 subcap_id, cap_t *cap,
-		    स्थिर अक्षर *desc, माप_प्रकार min_cap_length)
-अणु
-	काष्ठा tpm_buf buf;
-	पूर्णांक rc;
+#define TPM_ORD_GET_CAP 101
+ssize_t tpm1_getcap(struct tpm_chip *chip, u32 subcap_id, cap_t *cap,
+		    const char *desc, size_t min_cap_length)
+{
+	struct tpm_buf buf;
+	int rc;
 
 	rc = tpm_buf_init(&buf, TPM_TAG_RQU_COMMAND, TPM_ORD_GET_CAP);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	अगर (subcap_id == TPM_CAP_VERSION_1_1 ||
-	    subcap_id == TPM_CAP_VERSION_1_2) अणु
+	if (subcap_id == TPM_CAP_VERSION_1_1 ||
+	    subcap_id == TPM_CAP_VERSION_1_2) {
 		tpm_buf_append_u32(&buf, subcap_id);
 		tpm_buf_append_u32(&buf, 0);
-	पूर्ण अन्यथा अणु
-		अगर (subcap_id == TPM_CAP_FLAG_PERM ||
+	} else {
+		if (subcap_id == TPM_CAP_FLAG_PERM ||
 		    subcap_id == TPM_CAP_FLAG_VOL)
 			tpm_buf_append_u32(&buf, TPM_CAP_FLAG);
-		अन्यथा
+		else
 			tpm_buf_append_u32(&buf, TPM_CAP_PROP);
 
 		tpm_buf_append_u32(&buf, 4);
 		tpm_buf_append_u32(&buf, subcap_id);
-	पूर्ण
+	}
 	rc = tpm_transmit_cmd(chip, &buf, min_cap_length, desc);
-	अगर (!rc)
+	if (!rc)
 		*cap = *(cap_t *)&buf.data[TPM_HEADER_SIZE + 4];
 	tpm_buf_destroy(&buf);
-	वापस rc;
-पूर्ण
-EXPORT_SYMBOL_GPL(tpm1_अ_लोap);
+	return rc;
+}
+EXPORT_SYMBOL_GPL(tpm1_getcap);
 
-#घोषणा TPM_ORD_GET_RANDOM 70
-काष्ठा tpm1_get_अक्रमom_out अणु
+#define TPM_ORD_GET_RANDOM 70
+struct tpm1_get_random_out {
 	__be32 rng_data_len;
 	u8 rng_data[TPM_MAX_RNG_DATA];
-पूर्ण __packed;
+} __packed;
 
 /**
- * tpm1_get_अक्रमom() - get अक्रमom bytes from the TPM's RNG
- * @chip:	a &काष्ठा tpm_chip instance
- * @dest:	destination buffer क्रम the अक्रमom bytes
- * @max:	the maximum number of bytes to ग_लिखो to @dest
+ * tpm1_get_random() - get random bytes from the TPM's RNG
+ * @chip:	a &struct tpm_chip instance
+ * @dest:	destination buffer for the random bytes
+ * @max:	the maximum number of bytes to write to @dest
  *
  * Return:
- * *  number of bytes पढ़ो
- * * -त्रुटि_सं (positive TPM वापस codes are masked to -EIO)
+ * *  number of bytes read
+ * * -errno (positive TPM return codes are masked to -EIO)
  */
-पूर्णांक tpm1_get_अक्रमom(काष्ठा tpm_chip *chip, u8 *dest, माप_प्रकार max)
-अणु
-	काष्ठा tpm1_get_अक्रमom_out *out;
+int tpm1_get_random(struct tpm_chip *chip, u8 *dest, size_t max)
+{
+	struct tpm1_get_random_out *out;
 	u32 num_bytes =  min_t(u32, max, TPM_MAX_RNG_DATA);
-	काष्ठा tpm_buf buf;
+	struct tpm_buf buf;
 	u32 total = 0;
-	पूर्णांक retries = 5;
+	int retries = 5;
 	u32 recd;
-	पूर्णांक rc;
+	int rc;
 
 	rc = tpm_buf_init(&buf, TPM_TAG_RQU_COMMAND, TPM_ORD_GET_RANDOM);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	करो अणु
+	do {
 		tpm_buf_append_u32(&buf, num_bytes);
 
-		rc = tpm_transmit_cmd(chip, &buf, माप(out->rng_data_len),
+		rc = tpm_transmit_cmd(chip, &buf, sizeof(out->rng_data_len),
 				      "attempting get random");
-		अगर (rc) अणु
-			अगर (rc > 0)
+		if (rc) {
+			if (rc > 0)
 				rc = -EIO;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		out = (काष्ठा tpm1_get_अक्रमom_out *)&buf.data[TPM_HEADER_SIZE];
+		out = (struct tpm1_get_random_out *)&buf.data[TPM_HEADER_SIZE];
 
 		recd = be32_to_cpu(out->rng_data_len);
-		अगर (recd > num_bytes) अणु
+		if (recd > num_bytes) {
 			rc = -EFAULT;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अगर (tpm_buf_length(&buf) < TPM_HEADER_SIZE +
-					   माप(out->rng_data_len) + recd) अणु
+		if (tpm_buf_length(&buf) < TPM_HEADER_SIZE +
+					   sizeof(out->rng_data_len) + recd) {
 			rc = -EFAULT;
-			जाओ out;
-		पूर्ण
-		स_नकल(dest, out->rng_data, recd);
+			goto out;
+		}
+		memcpy(dest, out->rng_data, recd);
 
 		dest += recd;
 		total += recd;
 		num_bytes -= recd;
 
 		tpm_buf_reset(&buf, TPM_TAG_RQU_COMMAND, TPM_ORD_GET_RANDOM);
-	पूर्ण जबतक (retries-- && total < max);
+	} while (retries-- && total < max);
 
-	rc = total ? (पूर्णांक)total : -EIO;
+	rc = total ? (int)total : -EIO;
 out:
 	tpm_buf_destroy(&buf);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-#घोषणा TPM_ORD_PCRREAD 21
-पूर्णांक tpm1_pcr_पढ़ो(काष्ठा tpm_chip *chip, u32 pcr_idx, u8 *res_buf)
-अणु
-	काष्ठा tpm_buf buf;
-	पूर्णांक rc;
+#define TPM_ORD_PCRREAD 21
+int tpm1_pcr_read(struct tpm_chip *chip, u32 pcr_idx, u8 *res_buf)
+{
+	struct tpm_buf buf;
+	int rc;
 
 	rc = tpm_buf_init(&buf, TPM_TAG_RQU_COMMAND, TPM_ORD_PCRREAD);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	tpm_buf_append_u32(&buf, pcr_idx);
 
 	rc = tpm_transmit_cmd(chip, &buf, TPM_DIGEST_SIZE,
 			      "attempting to read a pcr value");
-	अगर (rc)
-		जाओ out;
+	if (rc)
+		goto out;
 
-	अगर (tpm_buf_length(&buf) < TPM_DIGEST_SIZE) अणु
+	if (tpm_buf_length(&buf) < TPM_DIGEST_SIZE) {
 		rc = -EFAULT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	स_नकल(res_buf, &buf.data[TPM_HEADER_SIZE], TPM_DIGEST_SIZE);
+	memcpy(res_buf, &buf.data[TPM_HEADER_SIZE], TPM_DIGEST_SIZE);
 
 out:
 	tpm_buf_destroy(&buf);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-#घोषणा TPM_ORD_CONTINUE_SELFTEST 83
+#define TPM_ORD_CONTINUE_SELFTEST 83
 /**
- * tpm_जारी_selftest() - run TPM's selftest
+ * tpm_continue_selftest() - run TPM's selftest
  * @chip: TPM chip to use
  *
- * Returns 0 on success, < 0 in हाल of fatal error or a value > 0 representing
+ * Returns 0 on success, < 0 in case of fatal error or a value > 0 representing
  * a TPM error code.
  */
-अटल पूर्णांक tpm1_जारी_selftest(काष्ठा tpm_chip *chip)
-अणु
-	काष्ठा tpm_buf buf;
-	पूर्णांक rc;
+static int tpm1_continue_selftest(struct tpm_chip *chip)
+{
+	struct tpm_buf buf;
+	int rc;
 
 	rc = tpm_buf_init(&buf, TPM_TAG_RQU_COMMAND, TPM_ORD_CONTINUE_SELFTEST);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	rc = tpm_transmit_cmd(chip, &buf, 0, "continue selftest");
 	tpm_buf_destroy(&buf);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
- * tpm1_करो_selftest - have the TPM जारी its selftest and रुको until it
+ * tpm1_do_selftest - have the TPM continue its selftest and wait until it
  *                   can receive further commands
  * @chip: TPM chip to use
  *
- * Returns 0 on success, < 0 in हाल of fatal error or a value > 0 representing
+ * Returns 0 on success, < 0 in case of fatal error or a value > 0 representing
  * a TPM error code.
  */
-पूर्णांक tpm1_करो_selftest(काष्ठा tpm_chip *chip)
-अणु
-	पूर्णांक rc;
-	अचिन्हित पूर्णांक loops;
-	अचिन्हित पूर्णांक delay_msec = 100;
-	अचिन्हित दीर्घ duration;
+int tpm1_do_selftest(struct tpm_chip *chip)
+{
+	int rc;
+	unsigned int loops;
+	unsigned int delay_msec = 100;
+	unsigned long duration;
 	u8 dummy[TPM_DIGEST_SIZE];
 
 	duration = tpm1_calc_ordinal_duration(chip, TPM_ORD_CONTINUE_SELFTEST);
 
-	loops = jअगरfies_to_msecs(duration) / delay_msec;
+	loops = jiffies_to_msecs(duration) / delay_msec;
 
-	rc = tpm1_जारी_selftest(chip);
-	अगर (rc == TPM_ERR_INVALID_POSTINIT) अणु
+	rc = tpm1_continue_selftest(chip);
+	if (rc == TPM_ERR_INVALID_POSTINIT) {
 		chip->flags |= TPM_CHIP_FLAG_ALWAYS_POWERED;
 		dev_info(&chip->dev, "TPM not ready (%d)\n", rc);
-	पूर्ण
-	/* This may fail अगर there was no TPM driver during a suspend/resume
-	 * cycle; some may वापस 10 (BAD_ORDINAL), others 28 (FAILEDSELFTEST)
+	}
+	/* This may fail if there was no TPM driver during a suspend/resume
+	 * cycle; some may return 10 (BAD_ORDINAL), others 28 (FAILEDSELFTEST)
 	 */
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	करो अणु
-		/* Attempt to पढ़ो a PCR value */
-		rc = tpm1_pcr_पढ़ो(chip, 0, dummy);
+	do {
+		/* Attempt to read a PCR value */
+		rc = tpm1_pcr_read(chip, 0, dummy);
 
-		/* Some buggy TPMs will not respond to tpm_tis_पढ़ोy() क्रम
-		 * around 300ms जबतक the self test is ongoing, keep trying
+		/* Some buggy TPMs will not respond to tpm_tis_ready() for
+		 * around 300ms while the self test is ongoing, keep trying
 		 * until the self test duration expires.
 		 */
-		अगर (rc == -ETIME) अणु
+		if (rc == -ETIME) {
 			dev_info(&chip->dev, HW_ERR "TPM command timed out during continue self test");
 			tpm_msleep(delay_msec);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (rc == TPM_ERR_DISABLED || rc == TPM_ERR_DEACTIVATED) अणु
+		if (rc == TPM_ERR_DISABLED || rc == TPM_ERR_DEACTIVATED) {
 			dev_info(&chip->dev, "TPM is disabled/deactivated (0x%X)\n",
 				 rc);
 			/* TPM is disabled and/or deactivated; driver can
-			 * proceed and TPM करोes handle commands क्रम
+			 * proceed and TPM does handle commands for
 			 * suspend/resume correctly
 			 */
-			वापस 0;
-		पूर्ण
-		अगर (rc != TPM_WARN_DOING_SELFTEST)
-			वापस rc;
+			return 0;
+		}
+		if (rc != TPM_WARN_DOING_SELFTEST)
+			return rc;
 		tpm_msleep(delay_msec);
-	पूर्ण जबतक (--loops > 0);
+	} while (--loops > 0);
 
-	वापस rc;
-पूर्ण
-EXPORT_SYMBOL_GPL(tpm1_करो_selftest);
+	return rc;
+}
+EXPORT_SYMBOL_GPL(tpm1_do_selftest);
 
 /**
- * tpm1_स्वतः_startup - Perक्रमm the standard स्वतःmatic TPM initialization
+ * tpm1_auto_startup - Perform the standard automatic TPM initialization
  *                     sequence
  * @chip: TPM chip to use
  *
- * Returns 0 on success, < 0 in हाल of fatal error.
+ * Returns 0 on success, < 0 in case of fatal error.
  */
-पूर्णांक tpm1_स्वतः_startup(काष्ठा tpm_chip *chip)
-अणु
-	पूर्णांक rc;
+int tpm1_auto_startup(struct tpm_chip *chip)
+{
+	int rc;
 
-	rc = tpm1_get_समयouts(chip);
-	अगर (rc)
-		जाओ out;
-	rc = tpm1_करो_selftest(chip);
-	अगर (rc) अणु
+	rc = tpm1_get_timeouts(chip);
+	if (rc)
+		goto out;
+	rc = tpm1_do_selftest(chip);
+	if (rc) {
 		dev_err(&chip->dev, "TPM self test failed\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	वापस rc;
+	return rc;
 out:
-	अगर (rc > 0)
+	if (rc > 0)
 		rc = -ENODEV;
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-#घोषणा TPM_ORD_SAVESTATE 152
+#define TPM_ORD_SAVESTATE 152
 
 /**
  * tpm1_pm_suspend() - pm suspend handler
  * @chip: TPM chip to use.
- * @tpm_suspend_pcr: flush pcr क्रम buggy TPM chips.
+ * @tpm_suspend_pcr: flush pcr for buggy TPM chips.
  *
  * The functions saves the TPM state to be restored on resume.
  *
@@ -735,53 +734,53 @@ out:
  * * 0 on success,
  * * < 0 on error.
  */
-पूर्णांक tpm1_pm_suspend(काष्ठा tpm_chip *chip, u32 tpm_suspend_pcr)
-अणु
-	u8 dummy_hash[TPM_DIGEST_SIZE] = अणु 0 पूर्ण;
-	काष्ठा tpm_buf buf;
-	अचिन्हित पूर्णांक try;
-	पूर्णांक rc;
+int tpm1_pm_suspend(struct tpm_chip *chip, u32 tpm_suspend_pcr)
+{
+	u8 dummy_hash[TPM_DIGEST_SIZE] = { 0 };
+	struct tpm_buf buf;
+	unsigned int try;
+	int rc;
 
 
-	/* क्रम buggy tpm, flush pcrs with extend to selected dummy */
-	अगर (tpm_suspend_pcr)
+	/* for buggy tpm, flush pcrs with extend to selected dummy */
+	if (tpm_suspend_pcr)
 		rc = tpm1_pcr_extend(chip, tpm_suspend_pcr, dummy_hash,
 				     "extending dummy pcr before suspend");
 
 	rc = tpm_buf_init(&buf, TPM_TAG_RQU_COMMAND, TPM_ORD_SAVESTATE);
-	अगर (rc)
-		वापस rc;
-	/* now करो the actual savestate */
-	क्रम (try = 0; try < TPM_RETRY; try++) अणु
-		rc = tpm_transmit_cmd(chip, &buf, 0, शून्य);
+	if (rc)
+		return rc;
+	/* now do the actual savestate */
+	for (try = 0; try < TPM_RETRY; try++) {
+		rc = tpm_transmit_cmd(chip, &buf, 0, NULL);
 		/*
 		 * If the TPM indicates that it is too busy to respond to
-		 * this command then retry beक्रमe giving up.  It can take
-		 * several seconds क्रम this TPM to be पढ़ोy.
+		 * this command then retry before giving up.  It can take
+		 * several seconds for this TPM to be ready.
 		 *
-		 * This can happen अगर the TPM has alपढ़ोy been sent the
-		 * SaveState command beक्रमe the driver has loaded.  TCG 1.2
-		 * specअगरication states that any communication after SaveState
+		 * This can happen if the TPM has already been sent the
+		 * SaveState command before the driver has loaded.  TCG 1.2
+		 * specification states that any communication after SaveState
 		 * may cause the TPM to invalidate previously saved state.
 		 */
-		अगर (rc != TPM_WARN_RETRY)
-			अवरोध;
+		if (rc != TPM_WARN_RETRY)
+			break;
 		tpm_msleep(TPM_TIMEOUT_RETRY);
 
 		tpm_buf_reset(&buf, TPM_TAG_RQU_COMMAND, TPM_ORD_SAVESTATE);
-	पूर्ण
+	}
 
-	अगर (rc)
+	if (rc)
 		dev_err(&chip->dev, "Error (%d) sending savestate before suspend\n",
 			rc);
-	अन्यथा अगर (try > 0)
+	else if (try > 0)
 		dev_warn(&chip->dev, "TPM savestate took %dms\n",
 			 try * TPM_TIMEOUT_RETRY);
 
 	tpm_buf_destroy(&buf);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
  * tpm1_get_pcr_allocation() - initialize the allocated bank
@@ -793,17 +792,17 @@ out:
  * * 0 on success,
  * * < 0 on error.
  */
-पूर्णांक tpm1_get_pcr_allocation(काष्ठा tpm_chip *chip)
-अणु
-	chip->allocated_banks = kसुस्मृति(1, माप(*chip->allocated_banks),
+int tpm1_get_pcr_allocation(struct tpm_chip *chip)
+{
+	chip->allocated_banks = kcalloc(1, sizeof(*chip->allocated_banks),
 					GFP_KERNEL);
-	अगर (!chip->allocated_banks)
-		वापस -ENOMEM;
+	if (!chip->allocated_banks)
+		return -ENOMEM;
 
 	chip->allocated_banks[0].alg_id = TPM_ALG_SHA1;
 	chip->allocated_banks[0].digest_size = hash_digest_size[HASH_ALGO_SHA1];
 	chip->allocated_banks[0].crypto_id = HASH_ALGO_SHA1;
 	chip->nr_allocated_banks = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

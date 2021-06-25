@@ -1,151 +1,150 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Support क्रम Medअगरield PNW Camera Imaging ISP subप्रणाली.
+ * Support for Medifield PNW Camera Imaging ISP subsystem.
  *
  * Copyright (c) 2010 Intel Corporation. All Rights Reserved.
  *
  * Copyright (c) 2010 Silicon Hive www.siliconhive.com.
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of the GNU General Public License version
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
  * 2 as published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License क्रम more details.
+ * GNU General Public License for more details.
  *
  *
  */
 /*
  * ISP MMU management wrap code
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/mm.h>		/* क्रम GFP_ATOMIC */
-#समावेश <linux/slab.h>		/* क्रम kदो_स्मृति */
-#समावेश <linux/list.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/sizes.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/gfp.h>
+#include <linux/mm.h>		/* for GFP_ATOMIC */
+#include <linux/slab.h>		/* for kmalloc */
+#include <linux/list.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/string.h>
+#include <linux/errno.h>
+#include <linux/sizes.h>
 
-#अगर_घोषित CONFIG_X86
-#समावेश <यंत्र/set_memory.h>
-#पूर्ण_अगर
+#ifdef CONFIG_X86
+#include <asm/set_memory.h>
+#endif
 
-#समावेश "atomisp_internal.h"
-#समावेश "mmu/isp_mmu.h"
+#include "atomisp_internal.h"
+#include "mmu/isp_mmu.h"
 
 /*
  * 64-bit x86 processor physical address layout:
  * 0		- 0x7fffffff		DDR RAM	(2GB)
  * 0x80000000	- 0xffffffff		MMIO	(2GB)
  * 0x100000000	- 0x3fffffffffff	DDR RAM	(64TB)
- * So अगर the प्रणाली has more than 2GB DDR memory, the lower 2GB occupies the
+ * So if the system has more than 2GB DDR memory, the lower 2GB occupies the
  * physical address 0 - 0x7fffffff and the rest will start from 0x100000000.
- * We have to make sure memory is allocated from the lower 2GB क्रम devices
+ * We have to make sure memory is allocated from the lower 2GB for devices
  * that are only 32-bit capable(e.g. the ISP MMU).
  *
- * For any confusion, contact bin.gao@पूर्णांकel.com.
+ * For any confusion, contact bin.gao@intel.com.
  */
-#घोषणा NR_PAGES_2GB	(SZ_2G / PAGE_SIZE)
+#define NR_PAGES_2GB	(SZ_2G / PAGE_SIZE)
 
-अटल व्योम मुक्त_mmu_map(काष्ठा isp_mmu *mmu, अचिन्हित पूर्णांक start_isp_virt,
-			 अचिन्हित पूर्णांक end_isp_virt);
+static void free_mmu_map(struct isp_mmu *mmu, unsigned int start_isp_virt,
+			 unsigned int end_isp_virt);
 
-अटल अचिन्हित पूर्णांक atomisp_get_pte(phys_addr_t pt, अचिन्हित पूर्णांक idx)
-अणु
-	अचिन्हित पूर्णांक *pt_virt = phys_to_virt(pt);
+static unsigned int atomisp_get_pte(phys_addr_t pt, unsigned int idx)
+{
+	unsigned int *pt_virt = phys_to_virt(pt);
 
-	वापस *(pt_virt + idx);
-पूर्ण
+	return *(pt_virt + idx);
+}
 
-अटल व्योम atomisp_set_pte(phys_addr_t pt,
-			    अचिन्हित पूर्णांक idx, अचिन्हित पूर्णांक pte)
-अणु
-	अचिन्हित पूर्णांक *pt_virt = phys_to_virt(pt);
+static void atomisp_set_pte(phys_addr_t pt,
+			    unsigned int idx, unsigned int pte)
+{
+	unsigned int *pt_virt = phys_to_virt(pt);
 	*(pt_virt + idx) = pte;
-पूर्ण
+}
 
-अटल व्योम *isp_pt_phys_to_virt(phys_addr_t phys)
-अणु
-	वापस phys_to_virt(phys);
-पूर्ण
+static void *isp_pt_phys_to_virt(phys_addr_t phys)
+{
+	return phys_to_virt(phys);
+}
 
-अटल phys_addr_t isp_pte_to_pgaddr(काष्ठा isp_mmu *mmu,
-				     अचिन्हित पूर्णांक pte)
-अणु
-	वापस mmu->driver->pte_to_phys(mmu, pte);
-पूर्ण
+static phys_addr_t isp_pte_to_pgaddr(struct isp_mmu *mmu,
+				     unsigned int pte)
+{
+	return mmu->driver->pte_to_phys(mmu, pte);
+}
 
-अटल अचिन्हित पूर्णांक isp_pgaddr_to_pte_valid(काष्ठा isp_mmu *mmu,
+static unsigned int isp_pgaddr_to_pte_valid(struct isp_mmu *mmu,
 	phys_addr_t phys)
-अणु
-	अचिन्हित पूर्णांक pte = mmu->driver->phys_to_pte(mmu, phys);
+{
+	unsigned int pte = mmu->driver->phys_to_pte(mmu, phys);
 
-	वापस (अचिन्हित पूर्णांक)(pte | ISP_PTE_VALID_MASK(mmu));
-पूर्ण
+	return (unsigned int)(pte | ISP_PTE_VALID_MASK(mmu));
+}
 
 /*
  * allocate a uncacheable page table.
- * वापस physical address.
+ * return physical address.
  */
-अटल phys_addr_t alloc_page_table(काष्ठा isp_mmu *mmu)
-अणु
-	पूर्णांक i;
+static phys_addr_t alloc_page_table(struct isp_mmu *mmu)
+{
+	int i;
 	phys_addr_t page;
-	व्योम *virt;
+	void *virt;
 
-	virt = (व्योम *)__get_मुक्त_page(GFP_KERNEL | GFP_DMA32);
+	virt = (void *)__get_free_page(GFP_KERNEL | GFP_DMA32);
 
-	अगर (!virt)
-		वापस (phys_addr_t)शून्य_PAGE;
+	if (!virt)
+		return (phys_addr_t)NULL_PAGE;
 
 	/*
 	 * we need a uncacheable page table.
 	 */
-#अगर_घोषित	CONFIG_X86
-	set_memory_uc((अचिन्हित दीर्घ)virt, 1);
-#पूर्ण_अगर
+#ifdef	CONFIG_X86
+	set_memory_uc((unsigned long)virt, 1);
+#endif
 
 	page = virt_to_phys(virt);
 
-	क्रम (i = 0; i < 1024; i++) अणु
+	for (i = 0; i < 1024; i++) {
 		/* NEED CHECK */
 		atomisp_set_pte(page, i, mmu->driver->null_pte);
-	पूर्ण
+	}
 
-	वापस page;
-पूर्ण
+	return page;
+}
 
-अटल व्योम मुक्त_page_table(काष्ठा isp_mmu *mmu, phys_addr_t page)
-अणु
-	व्योम *virt;
+static void free_page_table(struct isp_mmu *mmu, phys_addr_t page)
+{
+	void *virt;
 
 	page &= ISP_PAGE_MASK;
 	/*
-	 * reset the page to ग_लिखो back beक्रमe मुक्त
+	 * reset the page to write back before free
 	 */
 	virt = phys_to_virt(page);
 
-#अगर_घोषित	CONFIG_X86
-	set_memory_wb((अचिन्हित दीर्घ)virt, 1);
-#पूर्ण_अगर
+#ifdef	CONFIG_X86
+	set_memory_wb((unsigned long)virt, 1);
+#endif
 
-	मुक्त_page((अचिन्हित दीर्घ)virt);
-पूर्ण
+	free_page((unsigned long)virt);
+}
 
-अटल व्योम mmu_remap_error(काष्ठा isp_mmu *mmu,
-			    phys_addr_t l1_pt, अचिन्हित पूर्णांक l1_idx,
-			    phys_addr_t l2_pt, अचिन्हित पूर्णांक l2_idx,
-			    अचिन्हित पूर्णांक isp_virt, phys_addr_t old_phys,
+static void mmu_remap_error(struct isp_mmu *mmu,
+			    phys_addr_t l1_pt, unsigned int l1_idx,
+			    phys_addr_t l2_pt, unsigned int l2_idx,
+			    unsigned int isp_virt, phys_addr_t old_phys,
 			    phys_addr_t new_phys)
-अणु
+{
 	dev_err(atomisp_dev, "address remap:\n\n"
 		"\tL1 PT: virt = %p, phys = 0x%llx, idx = %d\n"
 		"\tL2 PT: virt = %p, phys = 0x%llx, idx = %d\n"
@@ -157,13 +156,13 @@
 		(u64)l2_pt, l2_idx, isp_virt,
 		(u64)old_phys, isp_virt,
 		(u64)new_phys);
-पूर्ण
+}
 
-अटल व्योम mmu_unmap_l2_pte_error(काष्ठा isp_mmu *mmu,
-				   phys_addr_t l1_pt, अचिन्हित पूर्णांक l1_idx,
-				   phys_addr_t l2_pt, अचिन्हित पूर्णांक l2_idx,
-				   अचिन्हित पूर्णांक isp_virt, अचिन्हित पूर्णांक pte)
-अणु
+static void mmu_unmap_l2_pte_error(struct isp_mmu *mmu,
+				   phys_addr_t l1_pt, unsigned int l1_idx,
+				   phys_addr_t l2_pt, unsigned int l2_idx,
+				   unsigned int isp_virt, unsigned int pte)
+{
 	dev_err(atomisp_dev, "unmap invalid L2 pte:\n\n"
 		"\tL1 PT: virt = %p, phys = 0x%llx, idx = %d\n"
 		"\tL2 PT: virt = %p, phys = 0x%llx, idx = %d\n"
@@ -173,37 +172,37 @@
 		isp_pt_phys_to_virt(l2_pt),
 		(u64)l2_pt, l2_idx, isp_virt,
 		pte);
-पूर्ण
+}
 
-अटल व्योम mmu_unmap_l1_pte_error(काष्ठा isp_mmu *mmu,
-				   phys_addr_t l1_pt, अचिन्हित पूर्णांक l1_idx,
-				   अचिन्हित पूर्णांक isp_virt, अचिन्हित पूर्णांक pte)
-अणु
+static void mmu_unmap_l1_pte_error(struct isp_mmu *mmu,
+				   phys_addr_t l1_pt, unsigned int l1_idx,
+				   unsigned int isp_virt, unsigned int pte)
+{
 	dev_err(atomisp_dev, "unmap invalid L1 pte (L2 PT):\n\n"
 		"\tL1 PT: virt = %p, phys = 0x%llx, idx = %d\n"
 		"\tisp_virt = 0x%x, l1_pte(L2 PT) = 0x%x\n",
 		isp_pt_phys_to_virt(l1_pt),
-		(u64)l1_pt, l1_idx, (अचिन्हित पूर्णांक)isp_virt,
+		(u64)l1_pt, l1_idx, (unsigned int)isp_virt,
 		pte);
-पूर्ण
+}
 
-अटल व्योम mmu_unmap_l1_pt_error(काष्ठा isp_mmu *mmu, अचिन्हित पूर्णांक pte)
-अणु
+static void mmu_unmap_l1_pt_error(struct isp_mmu *mmu, unsigned int pte)
+{
 	dev_err(atomisp_dev, "unmap invalid L1PT:\n\n"
-		"L1PT = 0x%x\n", (अचिन्हित पूर्णांक)pte);
-पूर्ण
+		"L1PT = 0x%x\n", (unsigned int)pte);
+}
 
 /*
- * Update L2 page table according to isp भव address and page physical
+ * Update L2 page table according to isp virtual address and page physical
  * address
  */
-अटल पूर्णांक mmu_l2_map(काष्ठा isp_mmu *mmu, phys_addr_t l1_pt,
-		      अचिन्हित पूर्णांक l1_idx, phys_addr_t l2_pt,
-		      अचिन्हित पूर्णांक start, अचिन्हित पूर्णांक end, phys_addr_t phys)
-अणु
-	अचिन्हित पूर्णांक ptr;
-	अचिन्हित पूर्णांक idx;
-	अचिन्हित पूर्णांक pte;
+static int mmu_l2_map(struct isp_mmu *mmu, phys_addr_t l1_pt,
+		      unsigned int l1_idx, phys_addr_t l2_pt,
+		      unsigned int start, unsigned int end, phys_addr_t phys)
+{
+	unsigned int ptr;
+	unsigned int idx;
+	unsigned int pte;
 
 	l2_pt &= ISP_PAGE_MASK;
 
@@ -212,20 +211,20 @@
 	phys &= ISP_PAGE_MASK;
 
 	ptr = start;
-	करो अणु
+	do {
 		idx = ISP_PTR_TO_L2_IDX(ptr);
 
 		pte = atomisp_get_pte(l2_pt, idx);
 
-		अगर (ISP_PTE_VALID(mmu, pte)) अणु
+		if (ISP_PTE_VALID(mmu, pte)) {
 			mmu_remap_error(mmu, l1_pt, l1_idx,
 					l2_pt, idx, ptr, pte, phys);
 
-			/* मुक्त all mapped pages */
-			मुक्त_mmu_map(mmu, start, ptr);
+			/* free all mapped pages */
+			free_mmu_map(mmu, start, ptr);
 
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		pte = isp_pgaddr_to_pte_valid(mmu, phys);
 
@@ -233,24 +232,24 @@
 		mmu->l2_pgt_refcount[l1_idx]++;
 		ptr += (1U << ISP_L2PT_OFFSET);
 		phys += (1U << ISP_L2PT_OFFSET);
-	पूर्ण जबतक (ptr < end && idx < ISP_L2PT_PTES - 1);
+	} while (ptr < end && idx < ISP_L2PT_PTES - 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Update L1 page table according to isp भव address and page physical
+ * Update L1 page table according to isp virtual address and page physical
  * address
  */
-अटल पूर्णांक mmu_l1_map(काष्ठा isp_mmu *mmu, phys_addr_t l1_pt,
-		      अचिन्हित पूर्णांक start, अचिन्हित पूर्णांक end,
+static int mmu_l1_map(struct isp_mmu *mmu, phys_addr_t l1_pt,
+		      unsigned int start, unsigned int end,
 		      phys_addr_t phys)
-अणु
+{
 	phys_addr_t l2_pt;
-	अचिन्हित पूर्णांक ptr, l1_aligned;
-	अचिन्हित पूर्णांक idx;
-	अचिन्हित पूर्णांक l2_pte;
-	पूर्णांक ret;
+	unsigned int ptr, l1_aligned;
+	unsigned int idx;
+	unsigned int l2_pte;
+	int ret;
 
 	l1_pt &= ISP_PAGE_MASK;
 
@@ -259,88 +258,88 @@
 	phys &= ISP_PAGE_MASK;
 
 	ptr = start;
-	करो अणु
+	do {
 		idx = ISP_PTR_TO_L1_IDX(ptr);
 
 		l2_pte = atomisp_get_pte(l1_pt, idx);
 
-		अगर (!ISP_PTE_VALID(mmu, l2_pte)) अणु
+		if (!ISP_PTE_VALID(mmu, l2_pte)) {
 			l2_pt = alloc_page_table(mmu);
-			अगर (l2_pt == शून्य_PAGE) अणु
+			if (l2_pt == NULL_PAGE) {
 				dev_err(atomisp_dev,
 					"alloc page table fail.\n");
 
-				/* मुक्त all mapped pages */
-				मुक्त_mmu_map(mmu, start, ptr);
+				/* free all mapped pages */
+				free_mmu_map(mmu, start, ptr);
 
-				वापस -ENOMEM;
-			पूर्ण
+				return -ENOMEM;
+			}
 
 			l2_pte = isp_pgaddr_to_pte_valid(mmu, l2_pt);
 
 			atomisp_set_pte(l1_pt, idx, l2_pte);
 			mmu->l2_pgt_refcount[idx] = 0;
-		पूर्ण
+		}
 
 		l2_pt = isp_pte_to_pgaddr(mmu, l2_pte);
 
 		l1_aligned = (ptr & ISP_PAGE_MASK) + (1U << ISP_L1PT_OFFSET);
 
-		अगर (l1_aligned < end) अणु
+		if (l1_aligned < end) {
 			ret = mmu_l2_map(mmu, l1_pt, idx,
 					 l2_pt, ptr, l1_aligned, phys);
 			phys += (l1_aligned - ptr);
 			ptr = l1_aligned;
-		पूर्ण अन्यथा अणु
+		} else {
 			ret = mmu_l2_map(mmu, l1_pt, idx,
 					 l2_pt, ptr, end, phys);
 			phys += (end - ptr);
 			ptr = end;
-		पूर्ण
+		}
 
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(atomisp_dev, "setup mapping in L2PT fail.\n");
 
-			/* मुक्त all mapped pages */
-			मुक्त_mmu_map(mmu, start, ptr);
+			/* free all mapped pages */
+			free_mmu_map(mmu, start, ptr);
 
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण जबतक (ptr < end && idx < ISP_L1PT_PTES);
+			return -EINVAL;
+		}
+	} while (ptr < end && idx < ISP_L1PT_PTES);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Update page table according to isp भव address and page physical
+ * Update page table according to isp virtual address and page physical
  * address
  */
-अटल पूर्णांक mmu_map(काष्ठा isp_mmu *mmu, अचिन्हित पूर्णांक isp_virt,
-		   phys_addr_t phys, अचिन्हित पूर्णांक pgnr)
-अणु
-	अचिन्हित पूर्णांक start, end;
+static int mmu_map(struct isp_mmu *mmu, unsigned int isp_virt,
+		   phys_addr_t phys, unsigned int pgnr)
+{
+	unsigned int start, end;
 	phys_addr_t l1_pt;
-	पूर्णांक ret;
+	int ret;
 
 	mutex_lock(&mmu->pt_mutex);
-	अगर (!ISP_PTE_VALID(mmu, mmu->l1_pte)) अणु
+	if (!ISP_PTE_VALID(mmu, mmu->l1_pte)) {
 		/*
-		 * allocate 1 new page क्रम L1 page table
+		 * allocate 1 new page for L1 page table
 		 */
 		l1_pt = alloc_page_table(mmu);
-		अगर (l1_pt == शून्य_PAGE) अणु
+		if (l1_pt == NULL_PAGE) {
 			dev_err(atomisp_dev, "alloc page table fail.\n");
 			mutex_unlock(&mmu->pt_mutex);
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 
 		/*
 		 * setup L1 page table physical addr to MMU
 		 */
 		mmu->base_address = l1_pt;
 		mmu->l1_pte = isp_pgaddr_to_pte_valid(mmu, l1_pt);
-		स_रखो(mmu->l2_pgt_refcount, 0, माप(पूर्णांक) * ISP_L1PT_PTES);
-	पूर्ण
+		memset(mmu->l2_pgt_refcount, 0, sizeof(int) * ISP_L1PT_PTES);
+	}
 
 	l1_pt = isp_pte_to_pgaddr(mmu, mmu->l1_pte);
 
@@ -350,24 +349,24 @@
 
 	ret = mmu_l1_map(mmu, l1_pt, start, end, phys);
 
-	अगर (ret)
+	if (ret)
 		dev_err(atomisp_dev, "setup mapping in L1PT fail.\n");
 
 	mutex_unlock(&mmu->pt_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Free L2 page table according to isp भव address and page physical
+ * Free L2 page table according to isp virtual address and page physical
  * address
  */
-अटल व्योम mmu_l2_unmap(काष्ठा isp_mmu *mmu, phys_addr_t l1_pt,
-			 अचिन्हित पूर्णांक l1_idx, phys_addr_t l2_pt,
-			 अचिन्हित पूर्णांक start, अचिन्हित पूर्णांक end)
-अणु
-	अचिन्हित पूर्णांक ptr;
-	अचिन्हित पूर्णांक idx;
-	अचिन्हित पूर्णांक pte;
+static void mmu_l2_unmap(struct isp_mmu *mmu, phys_addr_t l1_pt,
+			 unsigned int l1_idx, phys_addr_t l2_pt,
+			 unsigned int start, unsigned int end)
+{
+	unsigned int ptr;
+	unsigned int idx;
+	unsigned int pte;
 
 	l2_pt &= ISP_PAGE_MASK;
 
@@ -375,37 +374,37 @@
 	end = ISP_PAGE_ALIGN(end);
 
 	ptr = start;
-	करो अणु
+	do {
 		idx = ISP_PTR_TO_L2_IDX(ptr);
 
 		pte = atomisp_get_pte(l2_pt, idx);
 
-		अगर (!ISP_PTE_VALID(mmu, pte))
+		if (!ISP_PTE_VALID(mmu, pte))
 			mmu_unmap_l2_pte_error(mmu, l1_pt, l1_idx,
 					       l2_pt, idx, ptr, pte);
 
 		atomisp_set_pte(l2_pt, idx, mmu->driver->null_pte);
 		mmu->l2_pgt_refcount[l1_idx]--;
 		ptr += (1U << ISP_L2PT_OFFSET);
-	पूर्ण जबतक (ptr < end && idx < ISP_L2PT_PTES - 1);
+	} while (ptr < end && idx < ISP_L2PT_PTES - 1);
 
-	अगर (mmu->l2_pgt_refcount[l1_idx] == 0) अणु
-		मुक्त_page_table(mmu, l2_pt);
+	if (mmu->l2_pgt_refcount[l1_idx] == 0) {
+		free_page_table(mmu, l2_pt);
 		atomisp_set_pte(l1_pt, l1_idx, mmu->driver->null_pte);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Free L1 page table according to isp भव address and page physical
+ * Free L1 page table according to isp virtual address and page physical
  * address
  */
-अटल व्योम mmu_l1_unmap(काष्ठा isp_mmu *mmu, phys_addr_t l1_pt,
-			 अचिन्हित पूर्णांक start, अचिन्हित पूर्णांक end)
-अणु
+static void mmu_l1_unmap(struct isp_mmu *mmu, phys_addr_t l1_pt,
+			 unsigned int start, unsigned int end)
+{
 	phys_addr_t l2_pt;
-	अचिन्हित पूर्णांक ptr, l1_aligned;
-	अचिन्हित पूर्णांक idx;
-	अचिन्हित पूर्णांक l2_pte;
+	unsigned int ptr, l1_aligned;
+	unsigned int idx;
+	unsigned int l2_pte;
 
 	l1_pt &= ISP_PAGE_MASK;
 
@@ -413,51 +412,51 @@
 	end = ISP_PAGE_ALIGN(end);
 
 	ptr = start;
-	करो अणु
+	do {
 		idx = ISP_PTR_TO_L1_IDX(ptr);
 
 		l2_pte = atomisp_get_pte(l1_pt, idx);
 
-		अगर (!ISP_PTE_VALID(mmu, l2_pte)) अणु
+		if (!ISP_PTE_VALID(mmu, l2_pte)) {
 			mmu_unmap_l1_pte_error(mmu, l1_pt, idx, ptr, l2_pte);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		l2_pt = isp_pte_to_pgaddr(mmu, l2_pte);
 
 		l1_aligned = (ptr & ISP_PAGE_MASK) + (1U << ISP_L1PT_OFFSET);
 
-		अगर (l1_aligned < end) अणु
+		if (l1_aligned < end) {
 			mmu_l2_unmap(mmu, l1_pt, idx, l2_pt, ptr, l1_aligned);
 			ptr = l1_aligned;
-		पूर्ण अन्यथा अणु
+		} else {
 			mmu_l2_unmap(mmu, l1_pt, idx, l2_pt, ptr, end);
 			ptr = end;
-		पूर्ण
+		}
 		/*
-		 * use the same L2 page next समय, so we करोn't
-		 * need to invalidate and मुक्त this PT.
+		 * use the same L2 page next time, so we don't
+		 * need to invalidate and free this PT.
 		 */
-		/*      atomisp_set_pte(l1_pt, idx, शून्य_PTE); */
-	पूर्ण जबतक (ptr < end && idx < ISP_L1PT_PTES);
-पूर्ण
+		/*      atomisp_set_pte(l1_pt, idx, NULL_PTE); */
+	} while (ptr < end && idx < ISP_L1PT_PTES);
+}
 
 /*
- * Free page table according to isp भव address and page physical
+ * Free page table according to isp virtual address and page physical
  * address
  */
-अटल व्योम mmu_unmap(काष्ठा isp_mmu *mmu, अचिन्हित पूर्णांक isp_virt,
-		      अचिन्हित पूर्णांक pgnr)
-अणु
-	अचिन्हित पूर्णांक start, end;
+static void mmu_unmap(struct isp_mmu *mmu, unsigned int isp_virt,
+		      unsigned int pgnr)
+{
+	unsigned int start, end;
 	phys_addr_t l1_pt;
 
 	mutex_lock(&mmu->pt_mutex);
-	अगर (!ISP_PTE_VALID(mmu, mmu->l1_pte)) अणु
+	if (!ISP_PTE_VALID(mmu, mmu->l1_pte)) {
 		mmu_unmap_l1_pt_error(mmu, mmu->l1_pte);
 		mutex_unlock(&mmu->pt_mutex);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	l1_pt = isp_pte_to_pgaddr(mmu, mmu->l1_pte);
 
@@ -466,103 +465,103 @@
 
 	mmu_l1_unmap(mmu, l1_pt, start, end);
 	mutex_unlock(&mmu->pt_mutex);
-पूर्ण
+}
 
 /*
- * Free page tables according to isp start भव address and end भव
+ * Free page tables according to isp start virtual address and end virtual
  * address.
  */
-अटल व्योम मुक्त_mmu_map(काष्ठा isp_mmu *mmu, अचिन्हित पूर्णांक start_isp_virt,
-			 अचिन्हित पूर्णांक end_isp_virt)
-अणु
-	अचिन्हित पूर्णांक pgnr;
-	अचिन्हित पूर्णांक start, end;
+static void free_mmu_map(struct isp_mmu *mmu, unsigned int start_isp_virt,
+			 unsigned int end_isp_virt)
+{
+	unsigned int pgnr;
+	unsigned int start, end;
 
 	start = (start_isp_virt) & ISP_PAGE_MASK;
 	end = (end_isp_virt) & ISP_PAGE_MASK;
 	pgnr = (end - start) >> ISP_PAGE_OFFSET;
 	mmu_unmap(mmu, start, pgnr);
-पूर्ण
+}
 
-पूर्णांक isp_mmu_map(काष्ठा isp_mmu *mmu, अचिन्हित पूर्णांक isp_virt,
-		phys_addr_t phys, अचिन्हित पूर्णांक pgnr)
-अणु
-	वापस mmu_map(mmu, isp_virt, phys, pgnr);
-पूर्ण
+int isp_mmu_map(struct isp_mmu *mmu, unsigned int isp_virt,
+		phys_addr_t phys, unsigned int pgnr)
+{
+	return mmu_map(mmu, isp_virt, phys, pgnr);
+}
 
-व्योम isp_mmu_unmap(काष्ठा isp_mmu *mmu, अचिन्हित पूर्णांक isp_virt,
-		   अचिन्हित पूर्णांक pgnr)
-अणु
+void isp_mmu_unmap(struct isp_mmu *mmu, unsigned int isp_virt,
+		   unsigned int pgnr)
+{
 	mmu_unmap(mmu, isp_virt, pgnr);
-पूर्ण
+}
 
-अटल व्योम isp_mmu_flush_tlb_range_शेष(काष्ठा isp_mmu *mmu,
-	अचिन्हित पूर्णांक start,
-	अचिन्हित पूर्णांक size)
-अणु
+static void isp_mmu_flush_tlb_range_default(struct isp_mmu *mmu,
+	unsigned int start,
+	unsigned int size)
+{
 	isp_mmu_flush_tlb(mmu);
-पूर्ण
+}
 
-/*MMU init क्रम पूर्णांकernal काष्ठाure*/
-पूर्णांक isp_mmu_init(काष्ठा isp_mmu *mmu, काष्ठा isp_mmu_client *driver)
-अणु
-	अगर (!mmu)		/* error */
-		वापस -EINVAL;
-	अगर (!driver)		/* error */
-		वापस -EINVAL;
+/*MMU init for internal structure*/
+int isp_mmu_init(struct isp_mmu *mmu, struct isp_mmu_client *driver)
+{
+	if (!mmu)		/* error */
+		return -EINVAL;
+	if (!driver)		/* error */
+		return -EINVAL;
 
-	अगर (!driver->name)
+	if (!driver->name)
 		dev_warn(atomisp_dev, "NULL name for MMU driver...\n");
 
 	mmu->driver = driver;
 
-	अगर (!driver->tlb_flush_all) अणु
+	if (!driver->tlb_flush_all) {
 		dev_err(atomisp_dev, "tlb_flush_all operation not provided.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!driver->tlb_flush_range)
-		driver->tlb_flush_range = isp_mmu_flush_tlb_range_शेष;
+	if (!driver->tlb_flush_range)
+		driver->tlb_flush_range = isp_mmu_flush_tlb_range_default;
 
-	अगर (!driver->pte_valid_mask) अणु
+	if (!driver->pte_valid_mask) {
 		dev_err(atomisp_dev, "PTE_MASK is missing from mmu driver\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	mmu->l1_pte = driver->null_pte;
 
 	mutex_init(&mmu->pt_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*Free L1 and L2 page table*/
-व्योम isp_mmu_निकास(काष्ठा isp_mmu *mmu)
-अणु
-	अचिन्हित पूर्णांक idx;
-	अचिन्हित पूर्णांक pte;
+void isp_mmu_exit(struct isp_mmu *mmu)
+{
+	unsigned int idx;
+	unsigned int pte;
 	phys_addr_t l1_pt, l2_pt;
 
-	अगर (!mmu)
-		वापस;
+	if (!mmu)
+		return;
 
-	अगर (!ISP_PTE_VALID(mmu, mmu->l1_pte)) अणु
+	if (!ISP_PTE_VALID(mmu, mmu->l1_pte)) {
 		dev_warn(atomisp_dev, "invalid L1PT: pte = 0x%x\n",
-			 (अचिन्हित पूर्णांक)mmu->l1_pte);
-		वापस;
-	पूर्ण
+			 (unsigned int)mmu->l1_pte);
+		return;
+	}
 
 	l1_pt = isp_pte_to_pgaddr(mmu, mmu->l1_pte);
 
-	क्रम (idx = 0; idx < ISP_L1PT_PTES; idx++) अणु
+	for (idx = 0; idx < ISP_L1PT_PTES; idx++) {
 		pte = atomisp_get_pte(l1_pt, idx);
 
-		अगर (ISP_PTE_VALID(mmu, pte)) अणु
+		if (ISP_PTE_VALID(mmu, pte)) {
 			l2_pt = isp_pte_to_pgaddr(mmu, pte);
 
-			मुक्त_page_table(mmu, l2_pt);
-		पूर्ण
-	पूर्ण
+			free_page_table(mmu, l2_pt);
+		}
+	}
 
-	मुक्त_page_table(mmu, l1_pt);
-पूर्ण
+	free_page_table(mmu, l1_pt);
+}

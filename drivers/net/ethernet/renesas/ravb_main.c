@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Renesas Ethernet AVB device driver
  *
  * Copyright (C) 2014-2019 Renesas Electronics Corporation
@@ -9,116 +8,116 @@
  * Based on the SuperH Ethernet driver
  */
 
-#समावेश <linux/cache.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/err.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/अगर_vlan.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/list.h>
-#समावेश <linux/module.h>
-#समावेश <linux/net_tstamp.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/of_mdपन.स>
-#समावेश <linux/of_net.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/sys_soc.h>
+#include <linux/cache.h>
+#include <linux/clk.h>
+#include <linux/delay.h>
+#include <linux/dma-mapping.h>
+#include <linux/err.h>
+#include <linux/etherdevice.h>
+#include <linux/ethtool.h>
+#include <linux/if_vlan.h>
+#include <linux/kernel.h>
+#include <linux/list.h>
+#include <linux/module.h>
+#include <linux/net_tstamp.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/of_irq.h>
+#include <linux/of_mdio.h>
+#include <linux/of_net.h>
+#include <linux/pm_runtime.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/sys_soc.h>
 
-#समावेश <यंत्र/भाग64.h>
+#include <asm/div64.h>
 
-#समावेश "ravb.h"
+#include "ravb.h"
 
-#घोषणा RAVB_DEF_MSG_ENABLE \
+#define RAVB_DEF_MSG_ENABLE \
 		(NETIF_MSG_LINK	  | \
 		 NETIF_MSG_TIMER  | \
 		 NETIF_MSG_RX_ERR | \
 		 NETIF_MSG_TX_ERR)
 
-अटल स्थिर अक्षर *ravb_rx_irqs[NUM_RX_QUEUE] = अणु
+static const char *ravb_rx_irqs[NUM_RX_QUEUE] = {
 	"ch0", /* RAVB_BE */
 	"ch1", /* RAVB_NC */
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *ravb_tx_irqs[NUM_TX_QUEUE] = अणु
+static const char *ravb_tx_irqs[NUM_TX_QUEUE] = {
 	"ch18", /* RAVB_BE */
 	"ch19", /* RAVB_NC */
-पूर्ण;
+};
 
-व्योम ravb_modअगरy(काष्ठा net_device *ndev, क्रमागत ravb_reg reg, u32 clear,
+void ravb_modify(struct net_device *ndev, enum ravb_reg reg, u32 clear,
 		 u32 set)
-अणु
-	ravb_ग_लिखो(ndev, (ravb_पढ़ो(ndev, reg) & ~clear) | set, reg);
-पूर्ण
+{
+	ravb_write(ndev, (ravb_read(ndev, reg) & ~clear) | set, reg);
+}
 
-पूर्णांक ravb_रुको(काष्ठा net_device *ndev, क्रमागत ravb_reg reg, u32 mask, u32 value)
-अणु
-	पूर्णांक i;
+int ravb_wait(struct net_device *ndev, enum ravb_reg reg, u32 mask, u32 value)
+{
+	int i;
 
-	क्रम (i = 0; i < 10000; i++) अणु
-		अगर ((ravb_पढ़ो(ndev, reg) & mask) == value)
-			वापस 0;
+	for (i = 0; i < 10000; i++) {
+		if ((ravb_read(ndev, reg) & mask) == value)
+			return 0;
 		udelay(10);
-	पूर्ण
-	वापस -ETIMEDOUT;
-पूर्ण
+	}
+	return -ETIMEDOUT;
+}
 
-अटल पूर्णांक ravb_config(काष्ठा net_device *ndev)
-अणु
-	पूर्णांक error;
+static int ravb_config(struct net_device *ndev)
+{
+	int error;
 
 	/* Set config mode */
-	ravb_modअगरy(ndev, CCC, CCC_OPC, CCC_OPC_CONFIG);
-	/* Check अगर the operating mode is changed to the config mode */
-	error = ravb_रुको(ndev, CSR, CSR_OPS, CSR_OPS_CONFIG);
-	अगर (error)
+	ravb_modify(ndev, CCC, CCC_OPC, CCC_OPC_CONFIG);
+	/* Check if the operating mode is changed to the config mode */
+	error = ravb_wait(ndev, CSR, CSR_OPS, CSR_OPS_CONFIG);
+	if (error)
 		netdev_err(ndev, "failed to switch device to config mode\n");
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल व्योम ravb_set_rate(काष्ठा net_device *ndev)
-अणु
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
+static void ravb_set_rate(struct net_device *ndev)
+{
+	struct ravb_private *priv = netdev_priv(ndev);
 
-	चयन (priv->speed) अणु
-	हाल 100:		/* 100BASE */
-		ravb_ग_लिखो(ndev, GECMR_SPEED_100, GECMR);
-		अवरोध;
-	हाल 1000:		/* 1000BASE */
-		ravb_ग_लिखो(ndev, GECMR_SPEED_1000, GECMR);
-		अवरोध;
-	पूर्ण
-पूर्ण
+	switch (priv->speed) {
+	case 100:		/* 100BASE */
+		ravb_write(ndev, GECMR_SPEED_100, GECMR);
+		break;
+	case 1000:		/* 1000BASE */
+		ravb_write(ndev, GECMR_SPEED_1000, GECMR);
+		break;
+	}
+}
 
-अटल व्योम ravb_set_buffer_align(काष्ठा sk_buff *skb)
-अणु
-	u32 reserve = (अचिन्हित दीर्घ)skb->data & (RAVB_ALIGN - 1);
+static void ravb_set_buffer_align(struct sk_buff *skb)
+{
+	u32 reserve = (unsigned long)skb->data & (RAVB_ALIGN - 1);
 
-	अगर (reserve)
+	if (reserve)
 		skb_reserve(skb, RAVB_ALIGN - reserve);
-पूर्ण
+}
 
-/* Get MAC address from the MAC address रेजिस्टरs
+/* Get MAC address from the MAC address registers
  *
- * Ethernet AVB device करोesn't have ROM क्रम MAC address.
- * This function माला_लो the MAC address that was used by a bootloader.
+ * Ethernet AVB device doesn't have ROM for MAC address.
+ * This function gets the MAC address that was used by a bootloader.
  */
-अटल व्योम ravb_पढ़ो_mac_address(काष्ठा device_node *np,
-				  काष्ठा net_device *ndev)
-अणु
-	पूर्णांक ret;
+static void ravb_read_mac_address(struct device_node *np,
+				  struct net_device *ndev)
+{
+	int ret;
 
 	ret = of_get_mac_address(np, ndev->dev_addr);
-	अगर (ret) अणु
-		u32 mahr = ravb_पढ़ो(ndev, MAHR);
-		u32 malr = ravb_पढ़ो(ndev, MALR);
+	if (ret) {
+		u32 mahr = ravb_read(ndev, MAHR);
+		u32 malr = ravb_read(ndev, MALR);
 
 		ndev->dev_addr[0] = (mahr >> 24) & 0xFF;
 		ndev->dev_addr[1] = (mahr >> 16) & 0xFF;
@@ -126,981 +125,981 @@
 		ndev->dev_addr[3] = (mahr >>  0) & 0xFF;
 		ndev->dev_addr[4] = (malr >>  8) & 0xFF;
 		ndev->dev_addr[5] = (malr >>  0) & 0xFF;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम ravb_mdio_ctrl(काष्ठा mdiobb_ctrl *ctrl, u32 mask, पूर्णांक set)
-अणु
-	काष्ठा ravb_निजी *priv = container_of(ctrl, काष्ठा ravb_निजी,
+static void ravb_mdio_ctrl(struct mdiobb_ctrl *ctrl, u32 mask, int set)
+{
+	struct ravb_private *priv = container_of(ctrl, struct ravb_private,
 						 mdiobb);
 
-	ravb_modअगरy(priv->ndev, PIR, mask, set ? mask : 0);
-पूर्ण
+	ravb_modify(priv->ndev, PIR, mask, set ? mask : 0);
+}
 
 /* MDC pin control */
-अटल व्योम ravb_set_mdc(काष्ठा mdiobb_ctrl *ctrl, पूर्णांक level)
-अणु
+static void ravb_set_mdc(struct mdiobb_ctrl *ctrl, int level)
+{
 	ravb_mdio_ctrl(ctrl, PIR_MDC, level);
-पूर्ण
+}
 
 /* Data I/O pin control */
-अटल व्योम ravb_set_mdio_dir(काष्ठा mdiobb_ctrl *ctrl, पूर्णांक output)
-अणु
+static void ravb_set_mdio_dir(struct mdiobb_ctrl *ctrl, int output)
+{
 	ravb_mdio_ctrl(ctrl, PIR_MMD, output);
-पूर्ण
+}
 
 /* Set data bit */
-अटल व्योम ravb_set_mdio_data(काष्ठा mdiobb_ctrl *ctrl, पूर्णांक value)
-अणु
+static void ravb_set_mdio_data(struct mdiobb_ctrl *ctrl, int value)
+{
 	ravb_mdio_ctrl(ctrl, PIR_MDO, value);
-पूर्ण
+}
 
 /* Get data bit */
-अटल पूर्णांक ravb_get_mdio_data(काष्ठा mdiobb_ctrl *ctrl)
-अणु
-	काष्ठा ravb_निजी *priv = container_of(ctrl, काष्ठा ravb_निजी,
+static int ravb_get_mdio_data(struct mdiobb_ctrl *ctrl)
+{
+	struct ravb_private *priv = container_of(ctrl, struct ravb_private,
 						 mdiobb);
 
-	वापस (ravb_पढ़ो(priv->ndev, PIR) & PIR_MDI) != 0;
-पूर्ण
+	return (ravb_read(priv->ndev, PIR) & PIR_MDI) != 0;
+}
 
-/* MDIO bus control काष्ठा */
-अटल स्थिर काष्ठा mdiobb_ops bb_ops = अणु
+/* MDIO bus control struct */
+static const struct mdiobb_ops bb_ops = {
 	.owner = THIS_MODULE,
 	.set_mdc = ravb_set_mdc,
 	.set_mdio_dir = ravb_set_mdio_dir,
 	.set_mdio_data = ravb_set_mdio_data,
 	.get_mdio_data = ravb_get_mdio_data,
-पूर्ण;
+};
 
-/* Free TX skb function क्रम AVB-IP */
-अटल पूर्णांक ravb_tx_मुक्त(काष्ठा net_device *ndev, पूर्णांक q, bool मुक्त_txed_only)
-अणु
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
-	काष्ठा net_device_stats *stats = &priv->stats[q];
-	पूर्णांक num_tx_desc = priv->num_tx_desc;
-	काष्ठा ravb_tx_desc *desc;
-	पूर्णांक मुक्त_num = 0;
-	पूर्णांक entry;
+/* Free TX skb function for AVB-IP */
+static int ravb_tx_free(struct net_device *ndev, int q, bool free_txed_only)
+{
+	struct ravb_private *priv = netdev_priv(ndev);
+	struct net_device_stats *stats = &priv->stats[q];
+	int num_tx_desc = priv->num_tx_desc;
+	struct ravb_tx_desc *desc;
+	int free_num = 0;
+	int entry;
 	u32 size;
 
-	क्रम (; priv->cur_tx[q] - priv->dirty_tx[q] > 0; priv->dirty_tx[q]++) अणु
+	for (; priv->cur_tx[q] - priv->dirty_tx[q] > 0; priv->dirty_tx[q]++) {
 		bool txed;
 
 		entry = priv->dirty_tx[q] % (priv->num_tx_ring[q] *
 					     num_tx_desc);
 		desc = &priv->tx_ring[q][entry];
 		txed = desc->die_dt == DT_FEMPTY;
-		अगर (मुक्त_txed_only && !txed)
-			अवरोध;
-		/* Descriptor type must be checked beक्रमe all other पढ़ोs */
+		if (free_txed_only && !txed)
+			break;
+		/* Descriptor type must be checked before all other reads */
 		dma_rmb();
 		size = le16_to_cpu(desc->ds_tagl) & TX_DS;
 		/* Free the original skb. */
-		अगर (priv->tx_skb[q][entry / num_tx_desc]) अणु
+		if (priv->tx_skb[q][entry / num_tx_desc]) {
 			dma_unmap_single(ndev->dev.parent, le32_to_cpu(desc->dptr),
 					 size, DMA_TO_DEVICE);
 			/* Last packet descriptor? */
-			अगर (entry % num_tx_desc == num_tx_desc - 1) अणु
+			if (entry % num_tx_desc == num_tx_desc - 1) {
 				entry /= num_tx_desc;
-				dev_kमुक्त_skb_any(priv->tx_skb[q][entry]);
-				priv->tx_skb[q][entry] = शून्य;
-				अगर (txed)
+				dev_kfree_skb_any(priv->tx_skb[q][entry]);
+				priv->tx_skb[q][entry] = NULL;
+				if (txed)
 					stats->tx_packets++;
-			पूर्ण
-			मुक्त_num++;
-		पूर्ण
-		अगर (txed)
+			}
+			free_num++;
+		}
+		if (txed)
 			stats->tx_bytes += size;
 		desc->die_dt = DT_EEMPTY;
-	पूर्ण
-	वापस मुक्त_num;
-पूर्ण
+	}
+	return free_num;
+}
 
-/* Free skb's and DMA buffers क्रम Ethernet AVB */
-अटल व्योम ravb_ring_मुक्त(काष्ठा net_device *ndev, पूर्णांक q)
-अणु
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
-	पूर्णांक num_tx_desc = priv->num_tx_desc;
-	पूर्णांक ring_size;
-	पूर्णांक i;
+/* Free skb's and DMA buffers for Ethernet AVB */
+static void ravb_ring_free(struct net_device *ndev, int q)
+{
+	struct ravb_private *priv = netdev_priv(ndev);
+	int num_tx_desc = priv->num_tx_desc;
+	int ring_size;
+	int i;
 
-	अगर (priv->rx_ring[q]) अणु
-		क्रम (i = 0; i < priv->num_rx_ring[q]; i++) अणु
-			काष्ठा ravb_ex_rx_desc *desc = &priv->rx_ring[q][i];
+	if (priv->rx_ring[q]) {
+		for (i = 0; i < priv->num_rx_ring[q]; i++) {
+			struct ravb_ex_rx_desc *desc = &priv->rx_ring[q][i];
 
-			अगर (!dma_mapping_error(ndev->dev.parent,
+			if (!dma_mapping_error(ndev->dev.parent,
 					       le32_to_cpu(desc->dptr)))
 				dma_unmap_single(ndev->dev.parent,
 						 le32_to_cpu(desc->dptr),
 						 RX_BUF_SZ,
 						 DMA_FROM_DEVICE);
-		पूर्ण
-		ring_size = माप(काष्ठा ravb_ex_rx_desc) *
+		}
+		ring_size = sizeof(struct ravb_ex_rx_desc) *
 			    (priv->num_rx_ring[q] + 1);
-		dma_मुक्त_coherent(ndev->dev.parent, ring_size, priv->rx_ring[q],
+		dma_free_coherent(ndev->dev.parent, ring_size, priv->rx_ring[q],
 				  priv->rx_desc_dma[q]);
-		priv->rx_ring[q] = शून्य;
-	पूर्ण
+		priv->rx_ring[q] = NULL;
+	}
 
-	अगर (priv->tx_ring[q]) अणु
-		ravb_tx_मुक्त(ndev, q, false);
+	if (priv->tx_ring[q]) {
+		ravb_tx_free(ndev, q, false);
 
-		ring_size = माप(काष्ठा ravb_tx_desc) *
+		ring_size = sizeof(struct ravb_tx_desc) *
 			    (priv->num_tx_ring[q] * num_tx_desc + 1);
-		dma_मुक्त_coherent(ndev->dev.parent, ring_size, priv->tx_ring[q],
+		dma_free_coherent(ndev->dev.parent, ring_size, priv->tx_ring[q],
 				  priv->tx_desc_dma[q]);
-		priv->tx_ring[q] = शून्य;
-	पूर्ण
+		priv->tx_ring[q] = NULL;
+	}
 
 	/* Free RX skb ringbuffer */
-	अगर (priv->rx_skb[q]) अणु
-		क्रम (i = 0; i < priv->num_rx_ring[q]; i++)
-			dev_kमुक्त_skb(priv->rx_skb[q][i]);
-	पूर्ण
-	kमुक्त(priv->rx_skb[q]);
-	priv->rx_skb[q] = शून्य;
+	if (priv->rx_skb[q]) {
+		for (i = 0; i < priv->num_rx_ring[q]; i++)
+			dev_kfree_skb(priv->rx_skb[q][i]);
+	}
+	kfree(priv->rx_skb[q]);
+	priv->rx_skb[q] = NULL;
 
 	/* Free aligned TX buffers */
-	kमुक्त(priv->tx_align[q]);
-	priv->tx_align[q] = शून्य;
+	kfree(priv->tx_align[q]);
+	priv->tx_align[q] = NULL;
 
 	/* Free TX skb ringbuffer.
-	 * SKBs are मुक्तd by ravb_tx_मुक्त() call above.
+	 * SKBs are freed by ravb_tx_free() call above.
 	 */
-	kमुक्त(priv->tx_skb[q]);
-	priv->tx_skb[q] = शून्य;
-पूर्ण
+	kfree(priv->tx_skb[q]);
+	priv->tx_skb[q] = NULL;
+}
 
-/* Format skb and descriptor buffer क्रम Ethernet AVB */
-अटल व्योम ravb_ring_क्रमmat(काष्ठा net_device *ndev, पूर्णांक q)
-अणु
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
-	पूर्णांक num_tx_desc = priv->num_tx_desc;
-	काष्ठा ravb_ex_rx_desc *rx_desc;
-	काष्ठा ravb_tx_desc *tx_desc;
-	काष्ठा ravb_desc *desc;
-	पूर्णांक rx_ring_size = माप(*rx_desc) * priv->num_rx_ring[q];
-	पूर्णांक tx_ring_size = माप(*tx_desc) * priv->num_tx_ring[q] *
+/* Format skb and descriptor buffer for Ethernet AVB */
+static void ravb_ring_format(struct net_device *ndev, int q)
+{
+	struct ravb_private *priv = netdev_priv(ndev);
+	int num_tx_desc = priv->num_tx_desc;
+	struct ravb_ex_rx_desc *rx_desc;
+	struct ravb_tx_desc *tx_desc;
+	struct ravb_desc *desc;
+	int rx_ring_size = sizeof(*rx_desc) * priv->num_rx_ring[q];
+	int tx_ring_size = sizeof(*tx_desc) * priv->num_tx_ring[q] *
 			   num_tx_desc;
 	dma_addr_t dma_addr;
-	पूर्णांक i;
+	int i;
 
 	priv->cur_rx[q] = 0;
 	priv->cur_tx[q] = 0;
 	priv->dirty_rx[q] = 0;
 	priv->dirty_tx[q] = 0;
 
-	स_रखो(priv->rx_ring[q], 0, rx_ring_size);
+	memset(priv->rx_ring[q], 0, rx_ring_size);
 	/* Build RX ring buffer */
-	क्रम (i = 0; i < priv->num_rx_ring[q]; i++) अणु
+	for (i = 0; i < priv->num_rx_ring[q]; i++) {
 		/* RX descriptor */
 		rx_desc = &priv->rx_ring[q][i];
 		rx_desc->ds_cc = cpu_to_le16(RX_BUF_SZ);
 		dma_addr = dma_map_single(ndev->dev.parent, priv->rx_skb[q][i]->data,
 					  RX_BUF_SZ,
 					  DMA_FROM_DEVICE);
-		/* We just set the data size to 0 क्रम a failed mapping which
+		/* We just set the data size to 0 for a failed mapping which
 		 * should prevent DMA from happening...
 		 */
-		अगर (dma_mapping_error(ndev->dev.parent, dma_addr))
+		if (dma_mapping_error(ndev->dev.parent, dma_addr))
 			rx_desc->ds_cc = cpu_to_le16(0);
 		rx_desc->dptr = cpu_to_le32(dma_addr);
 		rx_desc->die_dt = DT_FEMPTY;
-	पूर्ण
+	}
 	rx_desc = &priv->rx_ring[q][i];
 	rx_desc->dptr = cpu_to_le32((u32)priv->rx_desc_dma[q]);
 	rx_desc->die_dt = DT_LINKFIX; /* type */
 
-	स_रखो(priv->tx_ring[q], 0, tx_ring_size);
+	memset(priv->tx_ring[q], 0, tx_ring_size);
 	/* Build TX ring buffer */
-	क्रम (i = 0, tx_desc = priv->tx_ring[q]; i < priv->num_tx_ring[q];
-	     i++, tx_desc++) अणु
+	for (i = 0, tx_desc = priv->tx_ring[q]; i < priv->num_tx_ring[q];
+	     i++, tx_desc++) {
 		tx_desc->die_dt = DT_EEMPTY;
-		अगर (num_tx_desc > 1) अणु
+		if (num_tx_desc > 1) {
 			tx_desc++;
 			tx_desc->die_dt = DT_EEMPTY;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	tx_desc->dptr = cpu_to_le32((u32)priv->tx_desc_dma[q]);
 	tx_desc->die_dt = DT_LINKFIX; /* type */
 
-	/* RX descriptor base address क्रम best efक्रमt */
+	/* RX descriptor base address for best effort */
 	desc = &priv->desc_bat[RX_QUEUE_OFFSET + q];
 	desc->die_dt = DT_LINKFIX; /* type */
 	desc->dptr = cpu_to_le32((u32)priv->rx_desc_dma[q]);
 
-	/* TX descriptor base address क्रम best efक्रमt */
+	/* TX descriptor base address for best effort */
 	desc = &priv->desc_bat[q];
 	desc->die_dt = DT_LINKFIX; /* type */
 	desc->dptr = cpu_to_le32((u32)priv->tx_desc_dma[q]);
-पूर्ण
+}
 
-/* Init skb and descriptor buffer क्रम Ethernet AVB */
-अटल पूर्णांक ravb_ring_init(काष्ठा net_device *ndev, पूर्णांक q)
-अणु
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
-	पूर्णांक num_tx_desc = priv->num_tx_desc;
-	काष्ठा sk_buff *skb;
-	पूर्णांक ring_size;
-	पूर्णांक i;
+/* Init skb and descriptor buffer for Ethernet AVB */
+static int ravb_ring_init(struct net_device *ndev, int q)
+{
+	struct ravb_private *priv = netdev_priv(ndev);
+	int num_tx_desc = priv->num_tx_desc;
+	struct sk_buff *skb;
+	int ring_size;
+	int i;
 
 	/* Allocate RX and TX skb rings */
-	priv->rx_skb[q] = kसुस्मृति(priv->num_rx_ring[q],
-				  माप(*priv->rx_skb[q]), GFP_KERNEL);
-	priv->tx_skb[q] = kसुस्मृति(priv->num_tx_ring[q],
-				  माप(*priv->tx_skb[q]), GFP_KERNEL);
-	अगर (!priv->rx_skb[q] || !priv->tx_skb[q])
-		जाओ error;
+	priv->rx_skb[q] = kcalloc(priv->num_rx_ring[q],
+				  sizeof(*priv->rx_skb[q]), GFP_KERNEL);
+	priv->tx_skb[q] = kcalloc(priv->num_tx_ring[q],
+				  sizeof(*priv->tx_skb[q]), GFP_KERNEL);
+	if (!priv->rx_skb[q] || !priv->tx_skb[q])
+		goto error;
 
-	क्रम (i = 0; i < priv->num_rx_ring[q]; i++) अणु
+	for (i = 0; i < priv->num_rx_ring[q]; i++) {
 		skb = netdev_alloc_skb(ndev, RX_BUF_SZ + RAVB_ALIGN - 1);
-		अगर (!skb)
-			जाओ error;
+		if (!skb)
+			goto error;
 		ravb_set_buffer_align(skb);
 		priv->rx_skb[q][i] = skb;
-	पूर्ण
+	}
 
-	अगर (num_tx_desc > 1) अणु
-		/* Allocate rings क्रम the aligned buffers */
-		priv->tx_align[q] = kदो_स्मृति(DPTR_ALIGN * priv->num_tx_ring[q] +
+	if (num_tx_desc > 1) {
+		/* Allocate rings for the aligned buffers */
+		priv->tx_align[q] = kmalloc(DPTR_ALIGN * priv->num_tx_ring[q] +
 					    DPTR_ALIGN - 1, GFP_KERNEL);
-		अगर (!priv->tx_align[q])
-			जाओ error;
-	पूर्ण
+		if (!priv->tx_align[q])
+			goto error;
+	}
 
 	/* Allocate all RX descriptors. */
-	ring_size = माप(काष्ठा ravb_ex_rx_desc) * (priv->num_rx_ring[q] + 1);
+	ring_size = sizeof(struct ravb_ex_rx_desc) * (priv->num_rx_ring[q] + 1);
 	priv->rx_ring[q] = dma_alloc_coherent(ndev->dev.parent, ring_size,
 					      &priv->rx_desc_dma[q],
 					      GFP_KERNEL);
-	अगर (!priv->rx_ring[q])
-		जाओ error;
+	if (!priv->rx_ring[q])
+		goto error;
 
 	priv->dirty_rx[q] = 0;
 
 	/* Allocate all TX descriptors. */
-	ring_size = माप(काष्ठा ravb_tx_desc) *
+	ring_size = sizeof(struct ravb_tx_desc) *
 		    (priv->num_tx_ring[q] * num_tx_desc + 1);
 	priv->tx_ring[q] = dma_alloc_coherent(ndev->dev.parent, ring_size,
 					      &priv->tx_desc_dma[q],
 					      GFP_KERNEL);
-	अगर (!priv->tx_ring[q])
-		जाओ error;
+	if (!priv->tx_ring[q])
+		goto error;
 
-	वापस 0;
+	return 0;
 
 error:
-	ravb_ring_मुक्त(ndev, q);
+	ravb_ring_free(ndev, q);
 
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
 /* E-MAC init function */
-अटल व्योम ravb_emac_init(काष्ठा net_device *ndev)
-अणु
-	/* Receive frame limit set रेजिस्टर */
-	ravb_ग_लिखो(ndev, ndev->mtu + ETH_HLEN + VLAN_HLEN + ETH_FCS_LEN, RFLR);
+static void ravb_emac_init(struct net_device *ndev)
+{
+	/* Receive frame limit set register */
+	ravb_write(ndev, ndev->mtu + ETH_HLEN + VLAN_HLEN + ETH_FCS_LEN, RFLR);
 
 	/* EMAC Mode: PAUSE prohibition; Duplex; RX Checksum; TX; RX */
-	ravb_ग_लिखो(ndev, ECMR_ZPF | ECMR_DM |
+	ravb_write(ndev, ECMR_ZPF | ECMR_DM |
 		   (ndev->features & NETIF_F_RXCSUM ? ECMR_RCSC : 0) |
 		   ECMR_TE | ECMR_RE, ECMR);
 
 	ravb_set_rate(ndev);
 
 	/* Set MAC address */
-	ravb_ग_लिखो(ndev,
+	ravb_write(ndev,
 		   (ndev->dev_addr[0] << 24) | (ndev->dev_addr[1] << 16) |
 		   (ndev->dev_addr[2] << 8)  | (ndev->dev_addr[3]), MAHR);
-	ravb_ग_लिखो(ndev,
+	ravb_write(ndev,
 		   (ndev->dev_addr[4] << 8)  | (ndev->dev_addr[5]), MALR);
 
-	/* E-MAC status रेजिस्टर clear */
-	ravb_ग_लिखो(ndev, ECSR_ICD | ECSR_MPD, ECSR);
+	/* E-MAC status register clear */
+	ravb_write(ndev, ECSR_ICD | ECSR_MPD, ECSR);
 
-	/* E-MAC पूर्णांकerrupt enable रेजिस्टर */
-	ravb_ग_लिखो(ndev, ECSIPR_ICDIP | ECSIPR_MPDIP | ECSIPR_LCHNGIP, ECSIPR);
-पूर्ण
+	/* E-MAC interrupt enable register */
+	ravb_write(ndev, ECSIPR_ICDIP | ECSIPR_MPDIP | ECSIPR_LCHNGIP, ECSIPR);
+}
 
-/* Device init function क्रम Ethernet AVB */
-अटल पूर्णांक ravb_dmac_init(काष्ठा net_device *ndev)
-अणु
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
-	पूर्णांक error;
+/* Device init function for Ethernet AVB */
+static int ravb_dmac_init(struct net_device *ndev)
+{
+	struct ravb_private *priv = netdev_priv(ndev);
+	int error;
 
 	/* Set CONFIG mode */
 	error = ravb_config(ndev);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	error = ravb_ring_init(ndev, RAVB_BE);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 	error = ravb_ring_init(ndev, RAVB_NC);
-	अगर (error) अणु
-		ravb_ring_मुक्त(ndev, RAVB_BE);
-		वापस error;
-	पूर्ण
+	if (error) {
+		ravb_ring_free(ndev, RAVB_BE);
+		return error;
+	}
 
-	/* Descriptor क्रमmat */
-	ravb_ring_क्रमmat(ndev, RAVB_BE);
-	ravb_ring_क्रमmat(ndev, RAVB_NC);
+	/* Descriptor format */
+	ravb_ring_format(ndev, RAVB_BE);
+	ravb_ring_format(ndev, RAVB_NC);
 
 	/* Set AVB RX */
-	ravb_ग_लिखो(ndev,
+	ravb_write(ndev,
 		   RCR_EFFS | RCR_ENCF | RCR_ETS0 | RCR_ESF | 0x18000000, RCR);
 
 	/* Set FIFO size */
-	ravb_ग_लिखो(ndev, TGC_TQP_AVBMODE1 | 0x00112200, TGC);
+	ravb_write(ndev, TGC_TQP_AVBMODE1 | 0x00112200, TGC);
 
 	/* Timestamp enable */
-	ravb_ग_लिखो(ndev, TCCR_TFEN, TCCR);
+	ravb_write(ndev, TCCR_TFEN, TCCR);
 
 	/* Interrupt init: */
-	अगर (priv->chip_id == RCAR_GEN3) अणु
+	if (priv->chip_id == RCAR_GEN3) {
 		/* Clear DIL.DPLx */
-		ravb_ग_लिखो(ndev, 0, DIL);
-		/* Set queue specअगरic पूर्णांकerrupt */
-		ravb_ग_लिखो(ndev, CIE_CRIE | CIE_CTIE | CIE_CL0M, CIE);
-	पूर्ण
+		ravb_write(ndev, 0, DIL);
+		/* Set queue specific interrupt */
+		ravb_write(ndev, CIE_CRIE | CIE_CTIE | CIE_CL0M, CIE);
+	}
 	/* Frame receive */
-	ravb_ग_लिखो(ndev, RIC0_FRE0 | RIC0_FRE1, RIC0);
+	ravb_write(ndev, RIC0_FRE0 | RIC0_FRE1, RIC0);
 	/* Disable FIFO full warning */
-	ravb_ग_लिखो(ndev, 0, RIC1);
+	ravb_write(ndev, 0, RIC1);
 	/* Receive FIFO full error, descriptor empty */
-	ravb_ग_लिखो(ndev, RIC2_QFE0 | RIC2_QFE1 | RIC2_RFFE, RIC2);
-	/* Frame transmitted, बारtamp FIFO updated */
-	ravb_ग_लिखो(ndev, TIC_FTE0 | TIC_FTE1 | TIC_TFUE, TIC);
+	ravb_write(ndev, RIC2_QFE0 | RIC2_QFE1 | RIC2_RFFE, RIC2);
+	/* Frame transmitted, timestamp FIFO updated */
+	ravb_write(ndev, TIC_FTE0 | TIC_FTE1 | TIC_TFUE, TIC);
 
 	/* Setting the control will start the AVB-DMAC process. */
-	ravb_modअगरy(ndev, CCC, CCC_OPC, CCC_OPC_OPERATION);
+	ravb_modify(ndev, CCC, CCC_OPC, CCC_OPC_OPERATION);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ravb_get_tx_tstamp(काष्ठा net_device *ndev)
-अणु
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
-	काष्ठा ravb_tstamp_skb *ts_skb, *ts_skb2;
-	काष्ठा skb_shared_hwtstamps shhwtstamps;
-	काष्ठा sk_buff *skb;
-	काष्ठा बारpec64 ts;
+static void ravb_get_tx_tstamp(struct net_device *ndev)
+{
+	struct ravb_private *priv = netdev_priv(ndev);
+	struct ravb_tstamp_skb *ts_skb, *ts_skb2;
+	struct skb_shared_hwtstamps shhwtstamps;
+	struct sk_buff *skb;
+	struct timespec64 ts;
 	u16 tag, tfa_tag;
-	पूर्णांक count;
+	int count;
 	u32 tfa2;
 
-	count = (ravb_पढ़ो(ndev, TSR) & TSR_TFFL) >> 8;
-	जबतक (count--) अणु
-		tfa2 = ravb_पढ़ो(ndev, TFA2);
+	count = (ravb_read(ndev, TSR) & TSR_TFFL) >> 8;
+	while (count--) {
+		tfa2 = ravb_read(ndev, TFA2);
 		tfa_tag = (tfa2 & TFA2_TST) >> 16;
-		ts.tv_nsec = (u64)ravb_पढ़ो(ndev, TFA0);
+		ts.tv_nsec = (u64)ravb_read(ndev, TFA0);
 		ts.tv_sec = ((u64)(tfa2 & TFA2_TSV) << 32) |
-			    ravb_पढ़ो(ndev, TFA1);
-		स_रखो(&shhwtstamps, 0, माप(shhwtstamps));
-		shhwtstamps.hwtstamp = बारpec64_to_kसमय(ts);
-		list_क्रम_each_entry_safe(ts_skb, ts_skb2, &priv->ts_skb_list,
-					 list) अणु
+			    ravb_read(ndev, TFA1);
+		memset(&shhwtstamps, 0, sizeof(shhwtstamps));
+		shhwtstamps.hwtstamp = timespec64_to_ktime(ts);
+		list_for_each_entry_safe(ts_skb, ts_skb2, &priv->ts_skb_list,
+					 list) {
 			skb = ts_skb->skb;
 			tag = ts_skb->tag;
 			list_del(&ts_skb->list);
-			kमुक्त(ts_skb);
-			अगर (tag == tfa_tag) अणु
+			kfree(ts_skb);
+			if (tag == tfa_tag) {
 				skb_tstamp_tx(skb, &shhwtstamps);
 				dev_consume_skb_any(skb);
-				अवरोध;
-			पूर्ण अन्यथा अणु
-				dev_kमुक्त_skb_any(skb);
-			पूर्ण
-		पूर्ण
-		ravb_modअगरy(ndev, TCCR, TCCR_TFR, TCCR_TFR);
-	पूर्ण
-पूर्ण
+				break;
+			} else {
+				dev_kfree_skb_any(skb);
+			}
+		}
+		ravb_modify(ndev, TCCR, TCCR_TFR, TCCR_TFR);
+	}
+}
 
-अटल व्योम ravb_rx_csum(काष्ठा sk_buff *skb)
-अणु
+static void ravb_rx_csum(struct sk_buff *skb)
+{
 	u8 *hw_csum;
 
-	/* The hardware checksum is contained in माप(__sum16) (2) bytes
+	/* The hardware checksum is contained in sizeof(__sum16) (2) bytes
 	 * appended to packet data
 	 */
-	अगर (unlikely(skb->len < माप(__sum16)))
-		वापस;
-	hw_csum = skb_tail_poपूर्णांकer(skb) - माप(__sum16);
-	skb->csum = csum_unfold((__क्रमce __sum16)get_unaligned_le16(hw_csum));
+	if (unlikely(skb->len < sizeof(__sum16)))
+		return;
+	hw_csum = skb_tail_pointer(skb) - sizeof(__sum16);
+	skb->csum = csum_unfold((__force __sum16)get_unaligned_le16(hw_csum));
 	skb->ip_summed = CHECKSUM_COMPLETE;
-	skb_trim(skb, skb->len - माप(__sum16));
-पूर्ण
+	skb_trim(skb, skb->len - sizeof(__sum16));
+}
 
-/* Packet receive function क्रम Ethernet AVB */
-अटल bool ravb_rx(काष्ठा net_device *ndev, पूर्णांक *quota, पूर्णांक q)
-अणु
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
-	पूर्णांक entry = priv->cur_rx[q] % priv->num_rx_ring[q];
-	पूर्णांक boguscnt = (priv->dirty_rx[q] + priv->num_rx_ring[q]) -
+/* Packet receive function for Ethernet AVB */
+static bool ravb_rx(struct net_device *ndev, int *quota, int q)
+{
+	struct ravb_private *priv = netdev_priv(ndev);
+	int entry = priv->cur_rx[q] % priv->num_rx_ring[q];
+	int boguscnt = (priv->dirty_rx[q] + priv->num_rx_ring[q]) -
 			priv->cur_rx[q];
-	काष्ठा net_device_stats *stats = &priv->stats[q];
-	काष्ठा ravb_ex_rx_desc *desc;
-	काष्ठा sk_buff *skb;
+	struct net_device_stats *stats = &priv->stats[q];
+	struct ravb_ex_rx_desc *desc;
+	struct sk_buff *skb;
 	dma_addr_t dma_addr;
-	काष्ठा बारpec64 ts;
+	struct timespec64 ts;
 	u8  desc_status;
 	u16 pkt_len;
-	पूर्णांक limit;
+	int limit;
 
 	boguscnt = min(boguscnt, *quota);
 	limit = boguscnt;
 	desc = &priv->rx_ring[q][entry];
-	जबतक (desc->die_dt != DT_FEMPTY) अणु
-		/* Descriptor type must be checked beक्रमe all other पढ़ोs */
+	while (desc->die_dt != DT_FEMPTY) {
+		/* Descriptor type must be checked before all other reads */
 		dma_rmb();
 		desc_status = desc->msc;
 		pkt_len = le16_to_cpu(desc->ds_cc) & RX_DS;
 
-		अगर (--boguscnt < 0)
-			अवरोध;
+		if (--boguscnt < 0)
+			break;
 
 		/* We use 0-byte descriptors to mark the DMA mapping errors */
-		अगर (!pkt_len)
-			जारी;
+		if (!pkt_len)
+			continue;
 
-		अगर (desc_status & MSC_MC)
+		if (desc_status & MSC_MC)
 			stats->multicast++;
 
-		अगर (desc_status & (MSC_CRC | MSC_RFE | MSC_RTSF | MSC_RTLF |
-				   MSC_CEEF)) अणु
+		if (desc_status & (MSC_CRC | MSC_RFE | MSC_RTSF | MSC_RTLF |
+				   MSC_CEEF)) {
 			stats->rx_errors++;
-			अगर (desc_status & MSC_CRC)
+			if (desc_status & MSC_CRC)
 				stats->rx_crc_errors++;
-			अगर (desc_status & MSC_RFE)
+			if (desc_status & MSC_RFE)
 				stats->rx_frame_errors++;
-			अगर (desc_status & (MSC_RTLF | MSC_RTSF))
+			if (desc_status & (MSC_RTLF | MSC_RTSF))
 				stats->rx_length_errors++;
-			अगर (desc_status & MSC_CEEF)
+			if (desc_status & MSC_CEEF)
 				stats->rx_missed_errors++;
-		पूर्ण अन्यथा अणु
+		} else {
 			u32 get_ts = priv->tstamp_rx_ctrl & RAVB_RXTSTAMP_TYPE;
 
 			skb = priv->rx_skb[q][entry];
-			priv->rx_skb[q][entry] = शून्य;
+			priv->rx_skb[q][entry] = NULL;
 			dma_unmap_single(ndev->dev.parent, le32_to_cpu(desc->dptr),
 					 RX_BUF_SZ,
 					 DMA_FROM_DEVICE);
 			get_ts &= (q == RAVB_NC) ?
 					RAVB_RXTSTAMP_TYPE_V2_L2_EVENT :
 					~RAVB_RXTSTAMP_TYPE_V2_L2_EVENT;
-			अगर (get_ts) अणु
-				काष्ठा skb_shared_hwtstamps *shhwtstamps;
+			if (get_ts) {
+				struct skb_shared_hwtstamps *shhwtstamps;
 
 				shhwtstamps = skb_hwtstamps(skb);
-				स_रखो(shhwtstamps, 0, माप(*shhwtstamps));
+				memset(shhwtstamps, 0, sizeof(*shhwtstamps));
 				ts.tv_sec = ((u64) le16_to_cpu(desc->ts_sh) <<
 					     32) | le32_to_cpu(desc->ts_sl);
 				ts.tv_nsec = le32_to_cpu(desc->ts_n);
-				shhwtstamps->hwtstamp = बारpec64_to_kसमय(ts);
-			पूर्ण
+				shhwtstamps->hwtstamp = timespec64_to_ktime(ts);
+			}
 
 			skb_put(skb, pkt_len);
 			skb->protocol = eth_type_trans(skb, ndev);
-			अगर (ndev->features & NETIF_F_RXCSUM)
+			if (ndev->features & NETIF_F_RXCSUM)
 				ravb_rx_csum(skb);
 			napi_gro_receive(&priv->napi[q], skb);
 			stats->rx_packets++;
 			stats->rx_bytes += pkt_len;
-		पूर्ण
+		}
 
 		entry = (++priv->cur_rx[q]) % priv->num_rx_ring[q];
 		desc = &priv->rx_ring[q][entry];
-	पूर्ण
+	}
 
 	/* Refill the RX ring buffers. */
-	क्रम (; priv->cur_rx[q] - priv->dirty_rx[q] > 0; priv->dirty_rx[q]++) अणु
+	for (; priv->cur_rx[q] - priv->dirty_rx[q] > 0; priv->dirty_rx[q]++) {
 		entry = priv->dirty_rx[q] % priv->num_rx_ring[q];
 		desc = &priv->rx_ring[q][entry];
 		desc->ds_cc = cpu_to_le16(RX_BUF_SZ);
 
-		अगर (!priv->rx_skb[q][entry]) अणु
+		if (!priv->rx_skb[q][entry]) {
 			skb = netdev_alloc_skb(ndev,
 					       RX_BUF_SZ +
 					       RAVB_ALIGN - 1);
-			अगर (!skb)
-				अवरोध;	/* Better luck next round. */
+			if (!skb)
+				break;	/* Better luck next round. */
 			ravb_set_buffer_align(skb);
 			dma_addr = dma_map_single(ndev->dev.parent, skb->data,
 						  le16_to_cpu(desc->ds_cc),
 						  DMA_FROM_DEVICE);
-			skb_checksum_none_निश्चित(skb);
-			/* We just set the data size to 0 क्रम a failed mapping
+			skb_checksum_none_assert(skb);
+			/* We just set the data size to 0 for a failed mapping
 			 * which should prevent DMA  from happening...
 			 */
-			अगर (dma_mapping_error(ndev->dev.parent, dma_addr))
+			if (dma_mapping_error(ndev->dev.parent, dma_addr))
 				desc->ds_cc = cpu_to_le16(0);
 			desc->dptr = cpu_to_le32(dma_addr);
 			priv->rx_skb[q][entry] = skb;
-		पूर्ण
-		/* Descriptor type must be set after all the above ग_लिखोs */
+		}
+		/* Descriptor type must be set after all the above writes */
 		dma_wmb();
 		desc->die_dt = DT_FEMPTY;
-	पूर्ण
+	}
 
 	*quota -= limit - (++boguscnt);
 
-	वापस boguscnt <= 0;
-पूर्ण
+	return boguscnt <= 0;
+}
 
-अटल व्योम ravb_rcv_snd_disable(काष्ठा net_device *ndev)
-अणु
+static void ravb_rcv_snd_disable(struct net_device *ndev)
+{
 	/* Disable TX and RX */
-	ravb_modअगरy(ndev, ECMR, ECMR_RE | ECMR_TE, 0);
-पूर्ण
+	ravb_modify(ndev, ECMR, ECMR_RE | ECMR_TE, 0);
+}
 
-अटल व्योम ravb_rcv_snd_enable(काष्ठा net_device *ndev)
-अणु
+static void ravb_rcv_snd_enable(struct net_device *ndev)
+{
 	/* Enable TX and RX */
-	ravb_modअगरy(ndev, ECMR, ECMR_RE | ECMR_TE, ECMR_RE | ECMR_TE);
-पूर्ण
+	ravb_modify(ndev, ECMR, ECMR_RE | ECMR_TE, ECMR_RE | ECMR_TE);
+}
 
-/* function क्रम रुकोing dma process finished */
-अटल पूर्णांक ravb_stop_dma(काष्ठा net_device *ndev)
-अणु
-	पूर्णांक error;
+/* function for waiting dma process finished */
+static int ravb_stop_dma(struct net_device *ndev)
+{
+	int error;
 
-	/* Wait क्रम stopping the hardware TX process */
-	error = ravb_रुको(ndev, TCCR,
+	/* Wait for stopping the hardware TX process */
+	error = ravb_wait(ndev, TCCR,
 			  TCCR_TSRQ0 | TCCR_TSRQ1 | TCCR_TSRQ2 | TCCR_TSRQ3, 0);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	error = ravb_रुको(ndev, CSR, CSR_TPO0 | CSR_TPO1 | CSR_TPO2 | CSR_TPO3,
+	error = ravb_wait(ndev, CSR, CSR_TPO0 | CSR_TPO1 | CSR_TPO2 | CSR_TPO3,
 			  0);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	/* Stop the E-MAC's RX/TX processes. */
 	ravb_rcv_snd_disable(ndev);
 
-	/* Wait क्रम stopping the RX DMA process */
-	error = ravb_रुको(ndev, CSR, CSR_RPO, 0);
-	अगर (error)
-		वापस error;
+	/* Wait for stopping the RX DMA process */
+	error = ravb_wait(ndev, CSR, CSR_RPO, 0);
+	if (error)
+		return error;
 
 	/* Stop AVB-DMAC process */
-	वापस ravb_config(ndev);
-पूर्ण
+	return ravb_config(ndev);
+}
 
-/* E-MAC पूर्णांकerrupt handler */
-अटल व्योम ravb_emac_पूर्णांकerrupt_unlocked(काष्ठा net_device *ndev)
-अणु
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
+/* E-MAC interrupt handler */
+static void ravb_emac_interrupt_unlocked(struct net_device *ndev)
+{
+	struct ravb_private *priv = netdev_priv(ndev);
 	u32 ecsr, psr;
 
-	ecsr = ravb_पढ़ो(ndev, ECSR);
-	ravb_ग_लिखो(ndev, ecsr, ECSR);	/* clear पूर्णांकerrupt */
+	ecsr = ravb_read(ndev, ECSR);
+	ravb_write(ndev, ecsr, ECSR);	/* clear interrupt */
 
-	अगर (ecsr & ECSR_MPD)
+	if (ecsr & ECSR_MPD)
 		pm_wakeup_event(&priv->pdev->dev, 0);
-	अगर (ecsr & ECSR_ICD)
+	if (ecsr & ECSR_ICD)
 		ndev->stats.tx_carrier_errors++;
-	अगर (ecsr & ECSR_LCHNG) अणु
+	if (ecsr & ECSR_LCHNG) {
 		/* Link changed */
-		अगर (priv->no_avb_link)
-			वापस;
-		psr = ravb_पढ़ो(ndev, PSR);
-		अगर (priv->avb_link_active_low)
+		if (priv->no_avb_link)
+			return;
+		psr = ravb_read(ndev, PSR);
+		if (priv->avb_link_active_low)
 			psr ^= PSR_LMON;
-		अगर (!(psr & PSR_LMON)) अणु
+		if (!(psr & PSR_LMON)) {
 			/* DIsable RX and TX */
 			ravb_rcv_snd_disable(ndev);
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Enable RX and TX */
 			ravb_rcv_snd_enable(ndev);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल irqवापस_t ravb_emac_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा net_device *ndev = dev_id;
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
+static irqreturn_t ravb_emac_interrupt(int irq, void *dev_id)
+{
+	struct net_device *ndev = dev_id;
+	struct ravb_private *priv = netdev_priv(ndev);
 
 	spin_lock(&priv->lock);
-	ravb_emac_पूर्णांकerrupt_unlocked(ndev);
+	ravb_emac_interrupt_unlocked(ndev);
 	spin_unlock(&priv->lock);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-/* Error पूर्णांकerrupt handler */
-अटल व्योम ravb_error_पूर्णांकerrupt(काष्ठा net_device *ndev)
-अणु
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
+/* Error interrupt handler */
+static void ravb_error_interrupt(struct net_device *ndev)
+{
+	struct ravb_private *priv = netdev_priv(ndev);
 	u32 eis, ris2;
 
-	eis = ravb_पढ़ो(ndev, EIS);
-	ravb_ग_लिखो(ndev, ~(EIS_QFS | EIS_RESERVED), EIS);
-	अगर (eis & EIS_QFS) अणु
-		ris2 = ravb_पढ़ो(ndev, RIS2);
-		ravb_ग_लिखो(ndev, ~(RIS2_QFF0 | RIS2_RFFF | RIS2_RESERVED),
+	eis = ravb_read(ndev, EIS);
+	ravb_write(ndev, ~(EIS_QFS | EIS_RESERVED), EIS);
+	if (eis & EIS_QFS) {
+		ris2 = ravb_read(ndev, RIS2);
+		ravb_write(ndev, ~(RIS2_QFF0 | RIS2_RFFF | RIS2_RESERVED),
 			   RIS2);
 
-		/* Receive Descriptor Empty पूर्णांक */
-		अगर (ris2 & RIS2_QFF0)
+		/* Receive Descriptor Empty int */
+		if (ris2 & RIS2_QFF0)
 			priv->stats[RAVB_BE].rx_over_errors++;
 
-		    /* Receive Descriptor Empty पूर्णांक */
-		अगर (ris2 & RIS2_QFF1)
+		    /* Receive Descriptor Empty int */
+		if (ris2 & RIS2_QFF1)
 			priv->stats[RAVB_NC].rx_over_errors++;
 
-		/* Receive FIFO Overflow पूर्णांक */
-		अगर (ris2 & RIS2_RFFF)
-			priv->rx_fअगरo_errors++;
-	पूर्ण
-पूर्ण
+		/* Receive FIFO Overflow int */
+		if (ris2 & RIS2_RFFF)
+			priv->rx_fifo_errors++;
+	}
+}
 
-अटल bool ravb_queue_पूर्णांकerrupt(काष्ठा net_device *ndev, पूर्णांक q)
-अणु
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
-	u32 ris0 = ravb_पढ़ो(ndev, RIS0);
-	u32 ric0 = ravb_पढ़ो(ndev, RIC0);
-	u32 tis  = ravb_पढ़ो(ndev, TIS);
-	u32 tic  = ravb_पढ़ो(ndev, TIC);
+static bool ravb_queue_interrupt(struct net_device *ndev, int q)
+{
+	struct ravb_private *priv = netdev_priv(ndev);
+	u32 ris0 = ravb_read(ndev, RIS0);
+	u32 ric0 = ravb_read(ndev, RIC0);
+	u32 tis  = ravb_read(ndev, TIS);
+	u32 tic  = ravb_read(ndev, TIC);
 
-	अगर (((ris0 & ric0) & BIT(q)) || ((tis  & tic)  & BIT(q))) अणु
-		अगर (napi_schedule_prep(&priv->napi[q])) अणु
-			/* Mask RX and TX पूर्णांकerrupts */
-			अगर (priv->chip_id == RCAR_GEN2) अणु
-				ravb_ग_लिखो(ndev, ric0 & ~BIT(q), RIC0);
-				ravb_ग_लिखो(ndev, tic & ~BIT(q), TIC);
-			पूर्ण अन्यथा अणु
-				ravb_ग_लिखो(ndev, BIT(q), RID0);
-				ravb_ग_लिखो(ndev, BIT(q), TID);
-			पूर्ण
+	if (((ris0 & ric0) & BIT(q)) || ((tis  & tic)  & BIT(q))) {
+		if (napi_schedule_prep(&priv->napi[q])) {
+			/* Mask RX and TX interrupts */
+			if (priv->chip_id == RCAR_GEN2) {
+				ravb_write(ndev, ric0 & ~BIT(q), RIC0);
+				ravb_write(ndev, tic & ~BIT(q), TIC);
+			} else {
+				ravb_write(ndev, BIT(q), RID0);
+				ravb_write(ndev, BIT(q), TID);
+			}
 			__napi_schedule(&priv->napi[q]);
-		पूर्ण अन्यथा अणु
+		} else {
 			netdev_warn(ndev,
 				    "ignoring interrupt, rx status 0x%08x, rx mask 0x%08x,\n",
 				    ris0, ric0);
 			netdev_warn(ndev,
 				    "                    tx status 0x%08x, tx mask 0x%08x.\n",
 				    tis, tic);
-		पूर्ण
-		वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+		}
+		return true;
+	}
+	return false;
+}
 
-अटल bool ravb_बारtamp_पूर्णांकerrupt(काष्ठा net_device *ndev)
-अणु
-	u32 tis = ravb_पढ़ो(ndev, TIS);
+static bool ravb_timestamp_interrupt(struct net_device *ndev)
+{
+	u32 tis = ravb_read(ndev, TIS);
 
-	अगर (tis & TIS_TFUF) अणु
-		ravb_ग_लिखो(ndev, ~(TIS_TFUF | TIS_RESERVED), TIS);
+	if (tis & TIS_TFUF) {
+		ravb_write(ndev, ~(TIS_TFUF | TIS_RESERVED), TIS);
 		ravb_get_tx_tstamp(ndev);
-		वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+		return true;
+	}
+	return false;
+}
 
-अटल irqवापस_t ravb_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा net_device *ndev = dev_id;
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
-	irqवापस_t result = IRQ_NONE;
+static irqreturn_t ravb_interrupt(int irq, void *dev_id)
+{
+	struct net_device *ndev = dev_id;
+	struct ravb_private *priv = netdev_priv(ndev);
+	irqreturn_t result = IRQ_NONE;
 	u32 iss;
 
 	spin_lock(&priv->lock);
-	/* Get पूर्णांकerrupt status */
-	iss = ravb_पढ़ो(ndev, ISS);
+	/* Get interrupt status */
+	iss = ravb_read(ndev, ISS);
 
-	/* Received and transmitted पूर्णांकerrupts */
-	अगर (iss & (ISS_FRS | ISS_FTS | ISS_TFUS)) अणु
-		पूर्णांक q;
+	/* Received and transmitted interrupts */
+	if (iss & (ISS_FRS | ISS_FTS | ISS_TFUS)) {
+		int q;
 
 		/* Timestamp updated */
-		अगर (ravb_बारtamp_पूर्णांकerrupt(ndev))
+		if (ravb_timestamp_interrupt(ndev))
 			result = IRQ_HANDLED;
 
-		/* Network control and best efक्रमt queue RX/TX */
-		क्रम (q = RAVB_NC; q >= RAVB_BE; q--) अणु
-			अगर (ravb_queue_पूर्णांकerrupt(ndev, q))
+		/* Network control and best effort queue RX/TX */
+		for (q = RAVB_NC; q >= RAVB_BE; q--) {
+			if (ravb_queue_interrupt(ndev, q))
 				result = IRQ_HANDLED;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* E-MAC status summary */
-	अगर (iss & ISS_MS) अणु
-		ravb_emac_पूर्णांकerrupt_unlocked(ndev);
+	if (iss & ISS_MS) {
+		ravb_emac_interrupt_unlocked(ndev);
 		result = IRQ_HANDLED;
-	पूर्ण
+	}
 
 	/* Error status summary */
-	अगर (iss & ISS_ES) अणु
-		ravb_error_पूर्णांकerrupt(ndev);
+	if (iss & ISS_ES) {
+		ravb_error_interrupt(ndev);
 		result = IRQ_HANDLED;
-	पूर्ण
+	}
 
-	/* gPTP पूर्णांकerrupt status summary */
-	अगर (iss & ISS_CGIS) अणु
-		ravb_ptp_पूर्णांकerrupt(ndev);
+	/* gPTP interrupt status summary */
+	if (iss & ISS_CGIS) {
+		ravb_ptp_interrupt(ndev);
 		result = IRQ_HANDLED;
-	पूर्ण
+	}
 
 	spin_unlock(&priv->lock);
-	वापस result;
-पूर्ण
+	return result;
+}
 
-/* Timestamp/Error/gPTP पूर्णांकerrupt handler */
-अटल irqवापस_t ravb_multi_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा net_device *ndev = dev_id;
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
-	irqवापस_t result = IRQ_NONE;
+/* Timestamp/Error/gPTP interrupt handler */
+static irqreturn_t ravb_multi_interrupt(int irq, void *dev_id)
+{
+	struct net_device *ndev = dev_id;
+	struct ravb_private *priv = netdev_priv(ndev);
+	irqreturn_t result = IRQ_NONE;
 	u32 iss;
 
 	spin_lock(&priv->lock);
-	/* Get पूर्णांकerrupt status */
-	iss = ravb_पढ़ो(ndev, ISS);
+	/* Get interrupt status */
+	iss = ravb_read(ndev, ISS);
 
 	/* Timestamp updated */
-	अगर ((iss & ISS_TFUS) && ravb_बारtamp_पूर्णांकerrupt(ndev))
+	if ((iss & ISS_TFUS) && ravb_timestamp_interrupt(ndev))
 		result = IRQ_HANDLED;
 
 	/* Error status summary */
-	अगर (iss & ISS_ES) अणु
-		ravb_error_पूर्णांकerrupt(ndev);
+	if (iss & ISS_ES) {
+		ravb_error_interrupt(ndev);
 		result = IRQ_HANDLED;
-	पूर्ण
+	}
 
-	/* gPTP पूर्णांकerrupt status summary */
-	अगर (iss & ISS_CGIS) अणु
-		ravb_ptp_पूर्णांकerrupt(ndev);
+	/* gPTP interrupt status summary */
+	if (iss & ISS_CGIS) {
+		ravb_ptp_interrupt(ndev);
 		result = IRQ_HANDLED;
-	पूर्ण
+	}
 
 	spin_unlock(&priv->lock);
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल irqवापस_t ravb_dma_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id, पूर्णांक q)
-अणु
-	काष्ठा net_device *ndev = dev_id;
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
-	irqवापस_t result = IRQ_NONE;
+static irqreturn_t ravb_dma_interrupt(int irq, void *dev_id, int q)
+{
+	struct net_device *ndev = dev_id;
+	struct ravb_private *priv = netdev_priv(ndev);
+	irqreturn_t result = IRQ_NONE;
 
 	spin_lock(&priv->lock);
 
-	/* Network control/Best efक्रमt queue RX/TX */
-	अगर (ravb_queue_पूर्णांकerrupt(ndev, q))
+	/* Network control/Best effort queue RX/TX */
+	if (ravb_queue_interrupt(ndev, q))
 		result = IRQ_HANDLED;
 
 	spin_unlock(&priv->lock);
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल irqवापस_t ravb_be_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	वापस ravb_dma_पूर्णांकerrupt(irq, dev_id, RAVB_BE);
-पूर्ण
+static irqreturn_t ravb_be_interrupt(int irq, void *dev_id)
+{
+	return ravb_dma_interrupt(irq, dev_id, RAVB_BE);
+}
 
-अटल irqवापस_t ravb_nc_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	वापस ravb_dma_पूर्णांकerrupt(irq, dev_id, RAVB_NC);
-पूर्ण
+static irqreturn_t ravb_nc_interrupt(int irq, void *dev_id)
+{
+	return ravb_dma_interrupt(irq, dev_id, RAVB_NC);
+}
 
-अटल पूर्णांक ravb_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
-अणु
-	काष्ठा net_device *ndev = napi->dev;
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक q = napi - priv->napi;
-	पूर्णांक mask = BIT(q);
-	पूर्णांक quota = budget;
+static int ravb_poll(struct napi_struct *napi, int budget)
+{
+	struct net_device *ndev = napi->dev;
+	struct ravb_private *priv = netdev_priv(ndev);
+	unsigned long flags;
+	int q = napi - priv->napi;
+	int mask = BIT(q);
+	int quota = budget;
 
 	/* Processing RX Descriptor Ring */
-	/* Clear RX पूर्णांकerrupt */
-	ravb_ग_लिखो(ndev, ~(mask | RIS0_RESERVED), RIS0);
-	अगर (ravb_rx(ndev, &quota, q))
-		जाओ out;
+	/* Clear RX interrupt */
+	ravb_write(ndev, ~(mask | RIS0_RESERVED), RIS0);
+	if (ravb_rx(ndev, &quota, q))
+		goto out;
 
 	/* Processing RX Descriptor Ring */
 	spin_lock_irqsave(&priv->lock, flags);
-	/* Clear TX पूर्णांकerrupt */
-	ravb_ग_लिखो(ndev, ~(mask | TIS_RESERVED), TIS);
-	ravb_tx_मुक्त(ndev, q, true);
-	netअगर_wake_subqueue(ndev, q);
+	/* Clear TX interrupt */
+	ravb_write(ndev, ~(mask | TIS_RESERVED), TIS);
+	ravb_tx_free(ndev, q, true);
+	netif_wake_subqueue(ndev, q);
 	spin_unlock_irqrestore(&priv->lock, flags);
 
 	napi_complete(napi);
 
-	/* Re-enable RX/TX पूर्णांकerrupts */
+	/* Re-enable RX/TX interrupts */
 	spin_lock_irqsave(&priv->lock, flags);
-	अगर (priv->chip_id == RCAR_GEN2) अणु
-		ravb_modअगरy(ndev, RIC0, mask, mask);
-		ravb_modअगरy(ndev, TIC,  mask, mask);
-	पूर्ण अन्यथा अणु
-		ravb_ग_लिखो(ndev, mask, RIE0);
-		ravb_ग_लिखो(ndev, mask, TIE);
-	पूर्ण
+	if (priv->chip_id == RCAR_GEN2) {
+		ravb_modify(ndev, RIC0, mask, mask);
+		ravb_modify(ndev, TIC,  mask, mask);
+	} else {
+		ravb_write(ndev, mask, RIE0);
+		ravb_write(ndev, mask, TIE);
+	}
 	spin_unlock_irqrestore(&priv->lock, flags);
 
 	/* Receive error message handling */
 	priv->rx_over_errors =  priv->stats[RAVB_BE].rx_over_errors;
 	priv->rx_over_errors += priv->stats[RAVB_NC].rx_over_errors;
-	अगर (priv->rx_over_errors != ndev->stats.rx_over_errors)
+	if (priv->rx_over_errors != ndev->stats.rx_over_errors)
 		ndev->stats.rx_over_errors = priv->rx_over_errors;
-	अगर (priv->rx_fअगरo_errors != ndev->stats.rx_fअगरo_errors)
-		ndev->stats.rx_fअगरo_errors = priv->rx_fअगरo_errors;
+	if (priv->rx_fifo_errors != ndev->stats.rx_fifo_errors)
+		ndev->stats.rx_fifo_errors = priv->rx_fifo_errors;
 out:
-	वापस budget - quota;
-पूर्ण
+	return budget - quota;
+}
 
 /* PHY state control function */
-अटल व्योम ravb_adjust_link(काष्ठा net_device *ndev)
-अणु
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
-	काष्ठा phy_device *phydev = ndev->phydev;
+static void ravb_adjust_link(struct net_device *ndev)
+{
+	struct ravb_private *priv = netdev_priv(ndev);
+	struct phy_device *phydev = ndev->phydev;
 	bool new_state = false;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	spin_lock_irqsave(&priv->lock, flags);
 
-	/* Disable TX and RX right over here, अगर E-MAC change is ignored */
-	अगर (priv->no_avb_link)
+	/* Disable TX and RX right over here, if E-MAC change is ignored */
+	if (priv->no_avb_link)
 		ravb_rcv_snd_disable(ndev);
 
-	अगर (phydev->link) अणु
-		अगर (phydev->speed != priv->speed) अणु
+	if (phydev->link) {
+		if (phydev->speed != priv->speed) {
 			new_state = true;
 			priv->speed = phydev->speed;
 			ravb_set_rate(ndev);
-		पूर्ण
-		अगर (!priv->link) अणु
-			ravb_modअगरy(ndev, ECMR, ECMR_TXF, 0);
+		}
+		if (!priv->link) {
+			ravb_modify(ndev, ECMR, ECMR_TXF, 0);
 			new_state = true;
 			priv->link = phydev->link;
-		पूर्ण
-	पूर्ण अन्यथा अगर (priv->link) अणु
+		}
+	} else if (priv->link) {
 		new_state = true;
 		priv->link = 0;
 		priv->speed = 0;
-	पूर्ण
+	}
 
-	/* Enable TX and RX right over here, अगर E-MAC change is ignored */
-	अगर (priv->no_avb_link && phydev->link)
+	/* Enable TX and RX right over here, if E-MAC change is ignored */
+	if (priv->no_avb_link && phydev->link)
 		ravb_rcv_snd_enable(ndev);
 
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	अगर (new_state && netअगर_msg_link(priv))
-		phy_prपूर्णांक_status(phydev);
-पूर्ण
+	if (new_state && netif_msg_link(priv))
+		phy_print_status(phydev);
+}
 
-अटल स्थिर काष्ठा soc_device_attribute r8a7795es10[] = अणु
-	अणु .soc_id = "r8a7795", .revision = "ES1.0", पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct soc_device_attribute r8a7795es10[] = {
+	{ .soc_id = "r8a7795", .revision = "ES1.0", },
+	{ /* sentinel */ }
+};
 
 /* PHY init function */
-अटल पूर्णांक ravb_phy_init(काष्ठा net_device *ndev)
-अणु
-	काष्ठा device_node *np = ndev->dev.parent->of_node;
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
-	काष्ठा phy_device *phydev;
-	काष्ठा device_node *pn;
-	phy_पूर्णांकerface_t अगरace;
-	पूर्णांक err;
+static int ravb_phy_init(struct net_device *ndev)
+{
+	struct device_node *np = ndev->dev.parent->of_node;
+	struct ravb_private *priv = netdev_priv(ndev);
+	struct phy_device *phydev;
+	struct device_node *pn;
+	phy_interface_t iface;
+	int err;
 
 	priv->link = 0;
 	priv->speed = 0;
 
 	/* Try connecting to PHY */
 	pn = of_parse_phandle(np, "phy-handle", 0);
-	अगर (!pn) अणु
-		/* In the हाल of a fixed PHY, the DT node associated
+	if (!pn) {
+		/* In the case of a fixed PHY, the DT node associated
 		 * to the PHY is the Ethernet MAC DT node.
 		 */
-		अगर (of_phy_is_fixed_link(np)) अणु
-			err = of_phy_रेजिस्टर_fixed_link(np);
-			अगर (err)
-				वापस err;
-		पूर्ण
+		if (of_phy_is_fixed_link(np)) {
+			err = of_phy_register_fixed_link(np);
+			if (err)
+				return err;
+		}
 		pn = of_node_get(np);
-	पूर्ण
+	}
 
-	अगरace = priv->rgmii_override ? PHY_INTERFACE_MODE_RGMII
-				     : priv->phy_पूर्णांकerface;
-	phydev = of_phy_connect(ndev, pn, ravb_adjust_link, 0, अगरace);
+	iface = priv->rgmii_override ? PHY_INTERFACE_MODE_RGMII
+				     : priv->phy_interface;
+	phydev = of_phy_connect(ndev, pn, ravb_adjust_link, 0, iface);
 	of_node_put(pn);
-	अगर (!phydev) अणु
+	if (!phydev) {
 		netdev_err(ndev, "failed to connect PHY\n");
 		err = -ENOENT;
-		जाओ err_deरेजिस्टर_fixed_link;
-	पूर्ण
+		goto err_deregister_fixed_link;
+	}
 
 	/* This driver only support 10/100Mbit speeds on R-Car H3 ES1.0
-	 * at this समय.
+	 * at this time.
 	 */
-	अगर (soc_device_match(r8a7795es10)) अणु
+	if (soc_device_match(r8a7795es10)) {
 		err = phy_set_max_speed(phydev, SPEED_100);
-		अगर (err) अणु
+		if (err) {
 			netdev_err(ndev, "failed to limit PHY to 100Mbit/s\n");
-			जाओ err_phy_disconnect;
-		पूर्ण
+			goto err_phy_disconnect;
+		}
 
 		netdev_info(ndev, "limited PHY to 100Mbit/s\n");
-	पूर्ण
+	}
 
 	/* 10BASE, Pause and Asym Pause is not supported */
-	phy_हटाओ_link_mode(phydev, ETHTOOL_LINK_MODE_10baseT_Half_BIT);
-	phy_हटाओ_link_mode(phydev, ETHTOOL_LINK_MODE_10baseT_Full_BIT);
-	phy_हटाओ_link_mode(phydev, ETHTOOL_LINK_MODE_Pause_BIT);
-	phy_हटाओ_link_mode(phydev, ETHTOOL_LINK_MODE_Asym_Pause_BIT);
+	phy_remove_link_mode(phydev, ETHTOOL_LINK_MODE_10baseT_Half_BIT);
+	phy_remove_link_mode(phydev, ETHTOOL_LINK_MODE_10baseT_Full_BIT);
+	phy_remove_link_mode(phydev, ETHTOOL_LINK_MODE_Pause_BIT);
+	phy_remove_link_mode(phydev, ETHTOOL_LINK_MODE_Asym_Pause_BIT);
 
 	/* Half Duplex is not supported */
-	phy_हटाओ_link_mode(phydev, ETHTOOL_LINK_MODE_1000baseT_Half_BIT);
-	phy_हटाओ_link_mode(phydev, ETHTOOL_LINK_MODE_100baseT_Half_BIT);
+	phy_remove_link_mode(phydev, ETHTOOL_LINK_MODE_1000baseT_Half_BIT);
+	phy_remove_link_mode(phydev, ETHTOOL_LINK_MODE_100baseT_Half_BIT);
 
 	phy_attached_info(phydev);
 
-	वापस 0;
+	return 0;
 
 err_phy_disconnect:
 	phy_disconnect(phydev);
-err_deरेजिस्टर_fixed_link:
-	अगर (of_phy_is_fixed_link(np))
-		of_phy_deरेजिस्टर_fixed_link(np);
+err_deregister_fixed_link:
+	if (of_phy_is_fixed_link(np))
+		of_phy_deregister_fixed_link(np);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /* PHY control start function */
-अटल पूर्णांक ravb_phy_start(काष्ठा net_device *ndev)
-अणु
-	पूर्णांक error;
+static int ravb_phy_start(struct net_device *ndev)
+{
+	int error;
 
 	error = ravb_phy_init(ndev);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	phy_start(ndev->phydev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u32 ravb_get_msglevel(काष्ठा net_device *ndev)
-अणु
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
+static u32 ravb_get_msglevel(struct net_device *ndev)
+{
+	struct ravb_private *priv = netdev_priv(ndev);
 
-	वापस priv->msg_enable;
-पूर्ण
+	return priv->msg_enable;
+}
 
-अटल व्योम ravb_set_msglevel(काष्ठा net_device *ndev, u32 value)
-अणु
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
+static void ravb_set_msglevel(struct net_device *ndev, u32 value)
+{
+	struct ravb_private *priv = netdev_priv(ndev);
 
 	priv->msg_enable = value;
-पूर्ण
+}
 
-अटल स्थिर अक्षर ravb_gstrings_stats[][ETH_GSTRING_LEN] = अणु
+static const char ravb_gstrings_stats[][ETH_GSTRING_LEN] = {
 	"rx_queue_0_current",
 	"tx_queue_0_current",
 	"rx_queue_0_dirty",
@@ -1132,30 +1131,30 @@ err_deरेजिस्टर_fixed_link:
 	"rx_queue_1_length_errors",
 	"rx_queue_1_missed_errors",
 	"rx_queue_1_over_errors",
-पूर्ण;
+};
 
-#घोषणा RAVB_STATS_LEN	ARRAY_SIZE(ravb_gstrings_stats)
+#define RAVB_STATS_LEN	ARRAY_SIZE(ravb_gstrings_stats)
 
-अटल पूर्णांक ravb_get_sset_count(काष्ठा net_device *netdev, पूर्णांक sset)
-अणु
-	चयन (sset) अणु
-	हाल ETH_SS_STATS:
-		वापस RAVB_STATS_LEN;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+static int ravb_get_sset_count(struct net_device *netdev, int sset)
+{
+	switch (sset) {
+	case ETH_SS_STATS:
+		return RAVB_STATS_LEN;
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल व्योम ravb_get_ethtool_stats(काष्ठा net_device *ndev,
-				   काष्ठा ethtool_stats *estats, u64 *data)
-अणु
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
-	पूर्णांक i = 0;
-	पूर्णांक q;
+static void ravb_get_ethtool_stats(struct net_device *ndev,
+				   struct ethtool_stats *estats, u64 *data)
+{
+	struct ravb_private *priv = netdev_priv(ndev);
+	int i = 0;
+	int q;
 
-	/* Device-specअगरic stats */
-	क्रम (q = RAVB_BE; q < NUM_RX_QUEUE; q++) अणु
-		काष्ठा net_device_stats *stats = &priv->stats[q];
+	/* Device-specific stats */
+	for (q = RAVB_BE; q < NUM_RX_QUEUE; q++) {
+		struct net_device_stats *stats = &priv->stats[q];
 
 		data[i++] = priv->cur_rx[q];
 		data[i++] = priv->cur_tx[q];
@@ -1172,93 +1171,93 @@ err_deरेजिस्टर_fixed_link:
 		data[i++] = stats->rx_length_errors;
 		data[i++] = stats->rx_missed_errors;
 		data[i++] = stats->rx_over_errors;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम ravb_get_strings(काष्ठा net_device *ndev, u32 stringset, u8 *data)
-अणु
-	चयन (stringset) अणु
-	हाल ETH_SS_STATS:
-		स_नकल(data, ravb_gstrings_stats, माप(ravb_gstrings_stats));
-		अवरोध;
-	पूर्ण
-पूर्ण
+static void ravb_get_strings(struct net_device *ndev, u32 stringset, u8 *data)
+{
+	switch (stringset) {
+	case ETH_SS_STATS:
+		memcpy(data, ravb_gstrings_stats, sizeof(ravb_gstrings_stats));
+		break;
+	}
+}
 
-अटल व्योम ravb_get_ringparam(काष्ठा net_device *ndev,
-			       काष्ठा ethtool_ringparam *ring)
-अणु
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
+static void ravb_get_ringparam(struct net_device *ndev,
+			       struct ethtool_ringparam *ring)
+{
+	struct ravb_private *priv = netdev_priv(ndev);
 
 	ring->rx_max_pending = BE_RX_RING_MAX;
 	ring->tx_max_pending = BE_TX_RING_MAX;
 	ring->rx_pending = priv->num_rx_ring[RAVB_BE];
 	ring->tx_pending = priv->num_tx_ring[RAVB_BE];
-पूर्ण
+}
 
-अटल पूर्णांक ravb_set_ringparam(काष्ठा net_device *ndev,
-			      काष्ठा ethtool_ringparam *ring)
-अणु
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
-	पूर्णांक error;
+static int ravb_set_ringparam(struct net_device *ndev,
+			      struct ethtool_ringparam *ring)
+{
+	struct ravb_private *priv = netdev_priv(ndev);
+	int error;
 
-	अगर (ring->tx_pending > BE_TX_RING_MAX ||
+	if (ring->tx_pending > BE_TX_RING_MAX ||
 	    ring->rx_pending > BE_RX_RING_MAX ||
 	    ring->tx_pending < BE_TX_RING_MIN ||
 	    ring->rx_pending < BE_RX_RING_MIN)
-		वापस -EINVAL;
-	अगर (ring->rx_mini_pending || ring->rx_jumbo_pending)
-		वापस -EINVAL;
+		return -EINVAL;
+	if (ring->rx_mini_pending || ring->rx_jumbo_pending)
+		return -EINVAL;
 
-	अगर (netअगर_running(ndev)) अणु
-		netअगर_device_detach(ndev);
+	if (netif_running(ndev)) {
+		netif_device_detach(ndev);
 		/* Stop PTP Clock driver */
-		अगर (priv->chip_id == RCAR_GEN2)
+		if (priv->chip_id == RCAR_GEN2)
 			ravb_ptp_stop(ndev);
-		/* Wait क्रम DMA stopping */
+		/* Wait for DMA stopping */
 		error = ravb_stop_dma(ndev);
-		अगर (error) अणु
+		if (error) {
 			netdev_err(ndev,
 				   "cannot set ringparam! Any AVB processes are still running?\n");
-			वापस error;
-		पूर्ण
+			return error;
+		}
 		synchronize_irq(ndev->irq);
 
 		/* Free all the skb's in the RX queue and the DMA buffers. */
-		ravb_ring_मुक्त(ndev, RAVB_BE);
-		ravb_ring_मुक्त(ndev, RAVB_NC);
-	पूर्ण
+		ravb_ring_free(ndev, RAVB_BE);
+		ravb_ring_free(ndev, RAVB_NC);
+	}
 
 	/* Set new parameters */
 	priv->num_rx_ring[RAVB_BE] = ring->rx_pending;
 	priv->num_tx_ring[RAVB_BE] = ring->tx_pending;
 
-	अगर (netअगर_running(ndev)) अणु
+	if (netif_running(ndev)) {
 		error = ravb_dmac_init(ndev);
-		अगर (error) अणु
+		if (error) {
 			netdev_err(ndev,
 				   "%s: ravb_dmac_init() failed, error %d\n",
 				   __func__, error);
-			वापस error;
-		पूर्ण
+			return error;
+		}
 
 		ravb_emac_init(ndev);
 
 		/* Initialise PTP Clock driver */
-		अगर (priv->chip_id == RCAR_GEN2)
+		if (priv->chip_id == RCAR_GEN2)
 			ravb_ptp_init(ndev, priv->pdev);
 
-		netअगर_device_attach(ndev);
-	पूर्ण
+		netif_device_attach(ndev);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ravb_get_ts_info(काष्ठा net_device *ndev,
-			    काष्ठा ethtool_ts_info *info)
-अणु
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
+static int ravb_get_ts_info(struct net_device *ndev,
+			    struct ethtool_ts_info *info)
+{
+	struct ravb_private *priv = netdev_priv(ndev);
 
-	info->so_बारtamping =
+	info->so_timestamping =
 		SOF_TIMESTAMPING_TX_SOFTWARE |
 		SOF_TIMESTAMPING_RX_SOFTWARE |
 		SOF_TIMESTAMPING_SOFTWARE |
@@ -1270,34 +1269,34 @@ err_deरेजिस्टर_fixed_link:
 		(1 << HWTSTAMP_FILTER_NONE) |
 		(1 << HWTSTAMP_FILTER_PTP_V2_L2_EVENT) |
 		(1 << HWTSTAMP_FILTER_ALL);
-	info->phc_index = ptp_घड़ी_index(priv->ptp.घड़ी);
+	info->phc_index = ptp_clock_index(priv->ptp.clock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ravb_get_wol(काष्ठा net_device *ndev, काष्ठा ethtool_wolinfo *wol)
-अणु
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
+static void ravb_get_wol(struct net_device *ndev, struct ethtool_wolinfo *wol)
+{
+	struct ravb_private *priv = netdev_priv(ndev);
 
 	wol->supported = WAKE_MAGIC;
 	wol->wolopts = priv->wol_enabled ? WAKE_MAGIC : 0;
-पूर्ण
+}
 
-अटल पूर्णांक ravb_set_wol(काष्ठा net_device *ndev, काष्ठा ethtool_wolinfo *wol)
-अणु
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
+static int ravb_set_wol(struct net_device *ndev, struct ethtool_wolinfo *wol)
+{
+	struct ravb_private *priv = netdev_priv(ndev);
 
-	अगर (wol->wolopts & ~WAKE_MAGIC)
-		वापस -EOPNOTSUPP;
+	if (wol->wolopts & ~WAKE_MAGIC)
+		return -EOPNOTSUPP;
 
 	priv->wol_enabled = !!(wol->wolopts & WAKE_MAGIC);
 
 	device_set_wakeup_enable(&priv->pdev->dev, priv->wol_enabled);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा ethtool_ops ravb_ethtool_ops = अणु
+static const struct ethtool_ops ravb_ethtool_ops = {
 	.nway_reset		= phy_ethtool_nway_reset,
 	.get_msglevel		= ravb_get_msglevel,
 	.set_msglevel		= ravb_set_msglevel,
@@ -1312,216 +1311,216 @@ err_deरेजिस्टर_fixed_link:
 	.set_link_ksettings	= phy_ethtool_set_link_ksettings,
 	.get_wol		= ravb_get_wol,
 	.set_wol		= ravb_set_wol,
-पूर्ण;
+};
 
-अटल अंतरभूत पूर्णांक ravb_hook_irq(अचिन्हित पूर्णांक irq, irq_handler_t handler,
-				काष्ठा net_device *ndev, काष्ठा device *dev,
-				स्थिर अक्षर *ch)
-अणु
-	अक्षर *name;
-	पूर्णांक error;
+static inline int ravb_hook_irq(unsigned int irq, irq_handler_t handler,
+				struct net_device *ndev, struct device *dev,
+				const char *ch)
+{
+	char *name;
+	int error;
 
-	name = devm_kaप्र_लिखो(dev, GFP_KERNEL, "%s:%s", ndev->name, ch);
-	अगर (!name)
-		वापस -ENOMEM;
+	name = devm_kasprintf(dev, GFP_KERNEL, "%s:%s", ndev->name, ch);
+	if (!name)
+		return -ENOMEM;
 	error = request_irq(irq, handler, 0, name, ndev);
-	अगर (error)
+	if (error)
 		netdev_err(ndev, "cannot request IRQ %s\n", name);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-/* Network device खोलो function क्रम Ethernet AVB */
-अटल पूर्णांक ravb_खोलो(काष्ठा net_device *ndev)
-अणु
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
-	काष्ठा platक्रमm_device *pdev = priv->pdev;
-	काष्ठा device *dev = &pdev->dev;
-	पूर्णांक error;
+/* Network device open function for Ethernet AVB */
+static int ravb_open(struct net_device *ndev)
+{
+	struct ravb_private *priv = netdev_priv(ndev);
+	struct platform_device *pdev = priv->pdev;
+	struct device *dev = &pdev->dev;
+	int error;
 
 	napi_enable(&priv->napi[RAVB_BE]);
 	napi_enable(&priv->napi[RAVB_NC]);
 
-	अगर (priv->chip_id == RCAR_GEN2) अणु
-		error = request_irq(ndev->irq, ravb_पूर्णांकerrupt, IRQF_SHARED,
+	if (priv->chip_id == RCAR_GEN2) {
+		error = request_irq(ndev->irq, ravb_interrupt, IRQF_SHARED,
 				    ndev->name, ndev);
-		अगर (error) अणु
+		if (error) {
 			netdev_err(ndev, "cannot request IRQ\n");
-			जाओ out_napi_off;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		error = ravb_hook_irq(ndev->irq, ravb_multi_पूर्णांकerrupt, ndev,
+			goto out_napi_off;
+		}
+	} else {
+		error = ravb_hook_irq(ndev->irq, ravb_multi_interrupt, ndev,
 				      dev, "ch22:multi");
-		अगर (error)
-			जाओ out_napi_off;
-		error = ravb_hook_irq(priv->emac_irq, ravb_emac_पूर्णांकerrupt, ndev,
+		if (error)
+			goto out_napi_off;
+		error = ravb_hook_irq(priv->emac_irq, ravb_emac_interrupt, ndev,
 				      dev, "ch24:emac");
-		अगर (error)
-			जाओ out_मुक्त_irq;
-		error = ravb_hook_irq(priv->rx_irqs[RAVB_BE], ravb_be_पूर्णांकerrupt,
+		if (error)
+			goto out_free_irq;
+		error = ravb_hook_irq(priv->rx_irqs[RAVB_BE], ravb_be_interrupt,
 				      ndev, dev, "ch0:rx_be");
-		अगर (error)
-			जाओ out_मुक्त_irq_emac;
-		error = ravb_hook_irq(priv->tx_irqs[RAVB_BE], ravb_be_पूर्णांकerrupt,
+		if (error)
+			goto out_free_irq_emac;
+		error = ravb_hook_irq(priv->tx_irqs[RAVB_BE], ravb_be_interrupt,
 				      ndev, dev, "ch18:tx_be");
-		अगर (error)
-			जाओ out_मुक्त_irq_be_rx;
-		error = ravb_hook_irq(priv->rx_irqs[RAVB_NC], ravb_nc_पूर्णांकerrupt,
+		if (error)
+			goto out_free_irq_be_rx;
+		error = ravb_hook_irq(priv->rx_irqs[RAVB_NC], ravb_nc_interrupt,
 				      ndev, dev, "ch1:rx_nc");
-		अगर (error)
-			जाओ out_मुक्त_irq_be_tx;
-		error = ravb_hook_irq(priv->tx_irqs[RAVB_NC], ravb_nc_पूर्णांकerrupt,
+		if (error)
+			goto out_free_irq_be_tx;
+		error = ravb_hook_irq(priv->tx_irqs[RAVB_NC], ravb_nc_interrupt,
 				      ndev, dev, "ch19:tx_nc");
-		अगर (error)
-			जाओ out_मुक्त_irq_nc_rx;
-	पूर्ण
+		if (error)
+			goto out_free_irq_nc_rx;
+	}
 
 	/* Device init */
 	error = ravb_dmac_init(ndev);
-	अगर (error)
-		जाओ out_मुक्त_irq_nc_tx;
+	if (error)
+		goto out_free_irq_nc_tx;
 	ravb_emac_init(ndev);
 
 	/* Initialise PTP Clock driver */
-	अगर (priv->chip_id == RCAR_GEN2)
+	if (priv->chip_id == RCAR_GEN2)
 		ravb_ptp_init(ndev, priv->pdev);
 
-	netअगर_tx_start_all_queues(ndev);
+	netif_tx_start_all_queues(ndev);
 
 	/* PHY control start */
 	error = ravb_phy_start(ndev);
-	अगर (error)
-		जाओ out_ptp_stop;
+	if (error)
+		goto out_ptp_stop;
 
-	वापस 0;
+	return 0;
 
 out_ptp_stop:
 	/* Stop PTP Clock driver */
-	अगर (priv->chip_id == RCAR_GEN2)
+	if (priv->chip_id == RCAR_GEN2)
 		ravb_ptp_stop(ndev);
-out_मुक्त_irq_nc_tx:
-	अगर (priv->chip_id == RCAR_GEN2)
-		जाओ out_मुक्त_irq;
-	मुक्त_irq(priv->tx_irqs[RAVB_NC], ndev);
-out_मुक्त_irq_nc_rx:
-	मुक्त_irq(priv->rx_irqs[RAVB_NC], ndev);
-out_मुक्त_irq_be_tx:
-	मुक्त_irq(priv->tx_irqs[RAVB_BE], ndev);
-out_मुक्त_irq_be_rx:
-	मुक्त_irq(priv->rx_irqs[RAVB_BE], ndev);
-out_मुक्त_irq_emac:
-	मुक्त_irq(priv->emac_irq, ndev);
-out_मुक्त_irq:
-	मुक्त_irq(ndev->irq, ndev);
+out_free_irq_nc_tx:
+	if (priv->chip_id == RCAR_GEN2)
+		goto out_free_irq;
+	free_irq(priv->tx_irqs[RAVB_NC], ndev);
+out_free_irq_nc_rx:
+	free_irq(priv->rx_irqs[RAVB_NC], ndev);
+out_free_irq_be_tx:
+	free_irq(priv->tx_irqs[RAVB_BE], ndev);
+out_free_irq_be_rx:
+	free_irq(priv->rx_irqs[RAVB_BE], ndev);
+out_free_irq_emac:
+	free_irq(priv->emac_irq, ndev);
+out_free_irq:
+	free_irq(ndev->irq, ndev);
 out_napi_off:
 	napi_disable(&priv->napi[RAVB_NC]);
 	napi_disable(&priv->napi[RAVB_BE]);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-/* Timeout function क्रम Ethernet AVB */
-अटल व्योम ravb_tx_समयout(काष्ठा net_device *ndev, अचिन्हित पूर्णांक txqueue)
-अणु
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
+/* Timeout function for Ethernet AVB */
+static void ravb_tx_timeout(struct net_device *ndev, unsigned int txqueue)
+{
+	struct ravb_private *priv = netdev_priv(ndev);
 
-	netअगर_err(priv, tx_err, ndev,
+	netif_err(priv, tx_err, ndev,
 		  "transmit timed out, status %08x, resetting...\n",
-		  ravb_पढ़ो(ndev, ISS));
+		  ravb_read(ndev, ISS));
 
 	/* tx_errors count up */
 	ndev->stats.tx_errors++;
 
 	schedule_work(&priv->work);
-पूर्ण
+}
 
-अटल व्योम ravb_tx_समयout_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ravb_निजी *priv = container_of(work, काष्ठा ravb_निजी,
+static void ravb_tx_timeout_work(struct work_struct *work)
+{
+	struct ravb_private *priv = container_of(work, struct ravb_private,
 						 work);
-	काष्ठा net_device *ndev = priv->ndev;
-	पूर्णांक error;
+	struct net_device *ndev = priv->ndev;
+	int error;
 
-	netअगर_tx_stop_all_queues(ndev);
+	netif_tx_stop_all_queues(ndev);
 
 	/* Stop PTP Clock driver */
-	अगर (priv->chip_id == RCAR_GEN2)
+	if (priv->chip_id == RCAR_GEN2)
 		ravb_ptp_stop(ndev);
 
-	/* Wait क्रम DMA stopping */
-	अगर (ravb_stop_dma(ndev)) अणु
+	/* Wait for DMA stopping */
+	if (ravb_stop_dma(ndev)) {
 		/* If ravb_stop_dma() fails, the hardware is still operating
-		 * क्रम TX and/or RX. So, this should not call the following
+		 * for TX and/or RX. So, this should not call the following
 		 * functions because ravb_dmac_init() is possible to fail too.
 		 * Also, this should not retry ravb_stop_dma() again and again
-		 * here because it's possible to रुको क्रमever. So, this just
+		 * here because it's possible to wait forever. So, this just
 		 * re-enables the TX and RX and skip the following
 		 * re-initialization procedure.
 		 */
 		ravb_rcv_snd_enable(ndev);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ravb_ring_मुक्त(ndev, RAVB_BE);
-	ravb_ring_मुक्त(ndev, RAVB_NC);
+	ravb_ring_free(ndev, RAVB_BE);
+	ravb_ring_free(ndev, RAVB_NC);
 
 	/* Device init */
 	error = ravb_dmac_init(ndev);
-	अगर (error) अणु
-		/* If ravb_dmac_init() fails, descriptors are मुक्तd. So, this
-		 * should वापस here to aव्योम re-enabling the TX and RX in
+	if (error) {
+		/* If ravb_dmac_init() fails, descriptors are freed. So, this
+		 * should return here to avoid re-enabling the TX and RX in
 		 * ravb_emac_init().
 		 */
 		netdev_err(ndev, "%s: ravb_dmac_init() failed, error %d\n",
 			   __func__, error);
-		वापस;
-	पूर्ण
+		return;
+	}
 	ravb_emac_init(ndev);
 
 out:
 	/* Initialise PTP Clock driver */
-	अगर (priv->chip_id == RCAR_GEN2)
+	if (priv->chip_id == RCAR_GEN2)
 		ravb_ptp_init(ndev, priv->pdev);
 
-	netअगर_tx_start_all_queues(ndev);
-पूर्ण
+	netif_tx_start_all_queues(ndev);
+}
 
-/* Packet transmit function क्रम Ethernet AVB */
-अटल netdev_tx_t ravb_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *ndev)
-अणु
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
-	पूर्णांक num_tx_desc = priv->num_tx_desc;
+/* Packet transmit function for Ethernet AVB */
+static netdev_tx_t ravb_start_xmit(struct sk_buff *skb, struct net_device *ndev)
+{
+	struct ravb_private *priv = netdev_priv(ndev);
+	int num_tx_desc = priv->num_tx_desc;
 	u16 q = skb_get_queue_mapping(skb);
-	काष्ठा ravb_tstamp_skb *ts_skb;
-	काष्ठा ravb_tx_desc *desc;
-	अचिन्हित दीर्घ flags;
+	struct ravb_tstamp_skb *ts_skb;
+	struct ravb_tx_desc *desc;
+	unsigned long flags;
 	u32 dma_addr;
-	व्योम *buffer;
+	void *buffer;
 	u32 entry;
 	u32 len;
 
 	spin_lock_irqsave(&priv->lock, flags);
-	अगर (priv->cur_tx[q] - priv->dirty_tx[q] > (priv->num_tx_ring[q] - 1) *
-	    num_tx_desc) अणु
-		netअगर_err(priv, tx_queued, ndev,
+	if (priv->cur_tx[q] - priv->dirty_tx[q] > (priv->num_tx_ring[q] - 1) *
+	    num_tx_desc) {
+		netif_err(priv, tx_queued, ndev,
 			  "still transmitting with the full ring!\n");
-		netअगर_stop_subqueue(ndev, q);
+		netif_stop_subqueue(ndev, q);
 		spin_unlock_irqrestore(&priv->lock, flags);
-		वापस NETDEV_TX_BUSY;
-	पूर्ण
+		return NETDEV_TX_BUSY;
+	}
 
-	अगर (skb_put_padto(skb, ETH_ZLEN))
-		जाओ निकास;
+	if (skb_put_padto(skb, ETH_ZLEN))
+		goto exit;
 
 	entry = priv->cur_tx[q] % (priv->num_tx_ring[q] * num_tx_desc);
 	priv->tx_skb[q][entry / num_tx_desc] = skb;
 
-	अगर (num_tx_desc > 1) अणु
+	if (num_tx_desc > 1) {
 		buffer = PTR_ALIGN(priv->tx_align[q], DPTR_ALIGN) +
 			 entry / num_tx_desc * DPTR_ALIGN;
 		len = PTR_ALIGN(skb->data, DPTR_ALIGN) - skb->data;
 
 		/* Zero length DMA descriptors are problematic as they seem
-		 * to terminate DMA transfers. Aव्योम them by simply using a
+		 * to terminate DMA transfers. Avoid them by simply using a
 		 * length of DPTR_ALIGN (4) when skb data is aligned to
 		 * DPTR_ALIGN.
 		 *
@@ -1532,14 +1531,14 @@ out:
 		 * length of the second DMA descriptor (skb->len - len)
 		 * being negative.
 		 */
-		अगर (len == 0)
+		if (len == 0)
 			len = DPTR_ALIGN;
 
-		स_नकल(buffer, skb->data, len);
+		memcpy(buffer, skb->data, len);
 		dma_addr = dma_map_single(ndev->dev.parent, buffer, len,
 					  DMA_TO_DEVICE);
-		अगर (dma_mapping_error(ndev->dev.parent, dma_addr))
-			जाओ drop;
+		if (dma_mapping_error(ndev->dev.parent, dma_addr))
+			goto drop;
 
 		desc = &priv->tx_ring[q][entry];
 		desc->ds_tagl = cpu_to_le16(len);
@@ -1549,96 +1548,96 @@ out:
 		len = skb->len - len;
 		dma_addr = dma_map_single(ndev->dev.parent, buffer, len,
 					  DMA_TO_DEVICE);
-		अगर (dma_mapping_error(ndev->dev.parent, dma_addr))
-			जाओ unmap;
+		if (dma_mapping_error(ndev->dev.parent, dma_addr))
+			goto unmap;
 
 		desc++;
-	पूर्ण अन्यथा अणु
+	} else {
 		desc = &priv->tx_ring[q][entry];
 		len = skb->len;
 		dma_addr = dma_map_single(ndev->dev.parent, skb->data, skb->len,
 					  DMA_TO_DEVICE);
-		अगर (dma_mapping_error(ndev->dev.parent, dma_addr))
-			जाओ drop;
-	पूर्ण
+		if (dma_mapping_error(ndev->dev.parent, dma_addr))
+			goto drop;
+	}
 	desc->ds_tagl = cpu_to_le16(len);
 	desc->dptr = cpu_to_le32(dma_addr);
 
-	/* TX बारtamp required */
-	अगर (q == RAVB_NC) अणु
-		ts_skb = kदो_स्मृति(माप(*ts_skb), GFP_ATOMIC);
-		अगर (!ts_skb) अणु
-			अगर (num_tx_desc > 1) अणु
+	/* TX timestamp required */
+	if (q == RAVB_NC) {
+		ts_skb = kmalloc(sizeof(*ts_skb), GFP_ATOMIC);
+		if (!ts_skb) {
+			if (num_tx_desc > 1) {
 				desc--;
 				dma_unmap_single(ndev->dev.parent, dma_addr,
 						 len, DMA_TO_DEVICE);
-			पूर्ण
-			जाओ unmap;
-		पूर्ण
+			}
+			goto unmap;
+		}
 		ts_skb->skb = skb_get(skb);
 		ts_skb->tag = priv->ts_skb_tag++;
 		priv->ts_skb_tag &= 0x3ff;
 		list_add_tail(&ts_skb->list, &priv->ts_skb_list);
 
-		/* TAG and बारtamp required flag */
+		/* TAG and timestamp required flag */
 		skb_shinfo(skb)->tx_flags |= SKBTX_IN_PROGRESS;
 		desc->tagh_tsr = (ts_skb->tag >> 4) | TX_TSR;
 		desc->ds_tagl |= cpu_to_le16(ts_skb->tag << 12);
-	पूर्ण
+	}
 
-	skb_tx_बारtamp(skb);
-	/* Descriptor type must be set after all the above ग_लिखोs */
+	skb_tx_timestamp(skb);
+	/* Descriptor type must be set after all the above writes */
 	dma_wmb();
-	अगर (num_tx_desc > 1) अणु
+	if (num_tx_desc > 1) {
 		desc->die_dt = DT_FEND;
 		desc--;
 		desc->die_dt = DT_FSTART;
-	पूर्ण अन्यथा अणु
+	} else {
 		desc->die_dt = DT_FSINGLE;
-	पूर्ण
-	ravb_modअगरy(ndev, TCCR, TCCR_TSRQ0 << q, TCCR_TSRQ0 << q);
+	}
+	ravb_modify(ndev, TCCR, TCCR_TSRQ0 << q, TCCR_TSRQ0 << q);
 
 	priv->cur_tx[q] += num_tx_desc;
-	अगर (priv->cur_tx[q] - priv->dirty_tx[q] >
+	if (priv->cur_tx[q] - priv->dirty_tx[q] >
 	    (priv->num_tx_ring[q] - 1) * num_tx_desc &&
-	    !ravb_tx_मुक्त(ndev, q, true))
-		netअगर_stop_subqueue(ndev, q);
+	    !ravb_tx_free(ndev, q, true))
+		netif_stop_subqueue(ndev, q);
 
-निकास:
+exit:
 	spin_unlock_irqrestore(&priv->lock, flags);
-	वापस NETDEV_TX_OK;
+	return NETDEV_TX_OK;
 
 unmap:
 	dma_unmap_single(ndev->dev.parent, le32_to_cpu(desc->dptr),
 			 le16_to_cpu(desc->ds_tagl), DMA_TO_DEVICE);
 drop:
-	dev_kमुक्त_skb_any(skb);
-	priv->tx_skb[q][entry / num_tx_desc] = शून्य;
-	जाओ निकास;
-पूर्ण
+	dev_kfree_skb_any(skb);
+	priv->tx_skb[q][entry / num_tx_desc] = NULL;
+	goto exit;
+}
 
-अटल u16 ravb_select_queue(काष्ठा net_device *ndev, काष्ठा sk_buff *skb,
-			     काष्ठा net_device *sb_dev)
-अणु
-	/* If skb needs TX बारtamp, it is handled in network control queue */
-	वापस (skb_shinfo(skb)->tx_flags & SKBTX_HW_TSTAMP) ? RAVB_NC :
+static u16 ravb_select_queue(struct net_device *ndev, struct sk_buff *skb,
+			     struct net_device *sb_dev)
+{
+	/* If skb needs TX timestamp, it is handled in network control queue */
+	return (skb_shinfo(skb)->tx_flags & SKBTX_HW_TSTAMP) ? RAVB_NC :
 							       RAVB_BE;
 
-पूर्ण
+}
 
-अटल काष्ठा net_device_stats *ravb_get_stats(काष्ठा net_device *ndev)
-अणु
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
-	काष्ठा net_device_stats *nstats, *stats0, *stats1;
+static struct net_device_stats *ravb_get_stats(struct net_device *ndev)
+{
+	struct ravb_private *priv = netdev_priv(ndev);
+	struct net_device_stats *nstats, *stats0, *stats1;
 
 	nstats = &ndev->stats;
 	stats0 = &priv->stats[RAVB_BE];
 	stats1 = &priv->stats[RAVB_NC];
 
-	अगर (priv->chip_id == RCAR_GEN3) अणु
-		nstats->tx_dropped += ravb_पढ़ो(ndev, TROCR);
-		ravb_ग_लिखो(ndev, 0, TROCR);	/* (ग_लिखो clear) */
-	पूर्ण
+	if (priv->chip_id == RCAR_GEN3) {
+		nstats->tx_dropped += ravb_read(ndev, TROCR);
+		ravb_write(ndev, 0, TROCR);	/* (write clear) */
+	}
 
 	nstats->rx_packets = stats0->rx_packets + stats1->rx_packets;
 	nstats->tx_packets = stats0->tx_packets + stats1->tx_packets;
@@ -1656,429 +1655,429 @@ drop:
 	nstats->rx_over_errors =
 		stats0->rx_over_errors + stats1->rx_over_errors;
 
-	वापस nstats;
-पूर्ण
+	return nstats;
+}
 
 /* Update promiscuous bit */
-अटल व्योम ravb_set_rx_mode(काष्ठा net_device *ndev)
-अणु
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
-	अचिन्हित दीर्घ flags;
+static void ravb_set_rx_mode(struct net_device *ndev)
+{
+	struct ravb_private *priv = netdev_priv(ndev);
+	unsigned long flags;
 
 	spin_lock_irqsave(&priv->lock, flags);
-	ravb_modअगरy(ndev, ECMR, ECMR_PRM,
+	ravb_modify(ndev, ECMR, ECMR_PRM,
 		    ndev->flags & IFF_PROMISC ? ECMR_PRM : 0);
 	spin_unlock_irqrestore(&priv->lock, flags);
-पूर्ण
+}
 
-/* Device बंद function क्रम Ethernet AVB */
-अटल पूर्णांक ravb_बंद(काष्ठा net_device *ndev)
-अणु
-	काष्ठा device_node *np = ndev->dev.parent->of_node;
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
-	काष्ठा ravb_tstamp_skb *ts_skb, *ts_skb2;
+/* Device close function for Ethernet AVB */
+static int ravb_close(struct net_device *ndev)
+{
+	struct device_node *np = ndev->dev.parent->of_node;
+	struct ravb_private *priv = netdev_priv(ndev);
+	struct ravb_tstamp_skb *ts_skb, *ts_skb2;
 
-	netअगर_tx_stop_all_queues(ndev);
+	netif_tx_stop_all_queues(ndev);
 
-	/* Disable पूर्णांकerrupts by clearing the पूर्णांकerrupt masks. */
-	ravb_ग_लिखो(ndev, 0, RIC0);
-	ravb_ग_लिखो(ndev, 0, RIC2);
-	ravb_ग_लिखो(ndev, 0, TIC);
+	/* Disable interrupts by clearing the interrupt masks. */
+	ravb_write(ndev, 0, RIC0);
+	ravb_write(ndev, 0, RIC2);
+	ravb_write(ndev, 0, TIC);
 
 	/* Stop PTP Clock driver */
-	अगर (priv->chip_id == RCAR_GEN2)
+	if (priv->chip_id == RCAR_GEN2)
 		ravb_ptp_stop(ndev);
 
 	/* Set the config mode to stop the AVB-DMAC's processes */
-	अगर (ravb_stop_dma(ndev) < 0)
+	if (ravb_stop_dma(ndev) < 0)
 		netdev_err(ndev,
 			   "device will be stopped after h/w processes are done.\n");
 
-	/* Clear the बारtamp list */
-	list_क्रम_each_entry_safe(ts_skb, ts_skb2, &priv->ts_skb_list, list) अणु
+	/* Clear the timestamp list */
+	list_for_each_entry_safe(ts_skb, ts_skb2, &priv->ts_skb_list, list) {
 		list_del(&ts_skb->list);
-		kमुक्त_skb(ts_skb->skb);
-		kमुक्त(ts_skb);
-	पूर्ण
+		kfree_skb(ts_skb->skb);
+		kfree(ts_skb);
+	}
 
 	/* PHY disconnect */
-	अगर (ndev->phydev) अणु
+	if (ndev->phydev) {
 		phy_stop(ndev->phydev);
 		phy_disconnect(ndev->phydev);
-		अगर (of_phy_is_fixed_link(np))
-			of_phy_deरेजिस्टर_fixed_link(np);
-	पूर्ण
+		if (of_phy_is_fixed_link(np))
+			of_phy_deregister_fixed_link(np);
+	}
 
-	अगर (priv->chip_id != RCAR_GEN2) अणु
-		मुक्त_irq(priv->tx_irqs[RAVB_NC], ndev);
-		मुक्त_irq(priv->rx_irqs[RAVB_NC], ndev);
-		मुक्त_irq(priv->tx_irqs[RAVB_BE], ndev);
-		मुक्त_irq(priv->rx_irqs[RAVB_BE], ndev);
-		मुक्त_irq(priv->emac_irq, ndev);
-	पूर्ण
-	मुक्त_irq(ndev->irq, ndev);
+	if (priv->chip_id != RCAR_GEN2) {
+		free_irq(priv->tx_irqs[RAVB_NC], ndev);
+		free_irq(priv->rx_irqs[RAVB_NC], ndev);
+		free_irq(priv->tx_irqs[RAVB_BE], ndev);
+		free_irq(priv->rx_irqs[RAVB_BE], ndev);
+		free_irq(priv->emac_irq, ndev);
+	}
+	free_irq(ndev->irq, ndev);
 
 	napi_disable(&priv->napi[RAVB_NC]);
 	napi_disable(&priv->napi[RAVB_BE]);
 
 	/* Free all the skb's in the RX queue and the DMA buffers. */
-	ravb_ring_मुक्त(ndev, RAVB_BE);
-	ravb_ring_मुक्त(ndev, RAVB_NC);
+	ravb_ring_free(ndev, RAVB_BE);
+	ravb_ring_free(ndev, RAVB_NC);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ravb_hwtstamp_get(काष्ठा net_device *ndev, काष्ठा अगरreq *req)
-अणु
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
-	काष्ठा hwtstamp_config config;
+static int ravb_hwtstamp_get(struct net_device *ndev, struct ifreq *req)
+{
+	struct ravb_private *priv = netdev_priv(ndev);
+	struct hwtstamp_config config;
 
 	config.flags = 0;
 	config.tx_type = priv->tstamp_tx_ctrl ? HWTSTAMP_TX_ON :
 						HWTSTAMP_TX_OFF;
-	चयन (priv->tstamp_rx_ctrl & RAVB_RXTSTAMP_TYPE) अणु
-	हाल RAVB_RXTSTAMP_TYPE_V2_L2_EVENT:
+	switch (priv->tstamp_rx_ctrl & RAVB_RXTSTAMP_TYPE) {
+	case RAVB_RXTSTAMP_TYPE_V2_L2_EVENT:
 		config.rx_filter = HWTSTAMP_FILTER_PTP_V2_L2_EVENT;
-		अवरोध;
-	हाल RAVB_RXTSTAMP_TYPE_ALL:
+		break;
+	case RAVB_RXTSTAMP_TYPE_ALL:
 		config.rx_filter = HWTSTAMP_FILTER_ALL;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		config.rx_filter = HWTSTAMP_FILTER_NONE;
-	पूर्ण
+	}
 
-	वापस copy_to_user(req->अगरr_data, &config, माप(config)) ?
+	return copy_to_user(req->ifr_data, &config, sizeof(config)) ?
 		-EFAULT : 0;
-पूर्ण
+}
 
-/* Control hardware समय stamping */
-अटल पूर्णांक ravb_hwtstamp_set(काष्ठा net_device *ndev, काष्ठा अगरreq *req)
-अणु
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
-	काष्ठा hwtstamp_config config;
+/* Control hardware time stamping */
+static int ravb_hwtstamp_set(struct net_device *ndev, struct ifreq *req)
+{
+	struct ravb_private *priv = netdev_priv(ndev);
+	struct hwtstamp_config config;
 	u32 tstamp_rx_ctrl = RAVB_RXTSTAMP_ENABLED;
 	u32 tstamp_tx_ctrl;
 
-	अगर (copy_from_user(&config, req->अगरr_data, माप(config)))
-		वापस -EFAULT;
+	if (copy_from_user(&config, req->ifr_data, sizeof(config)))
+		return -EFAULT;
 
-	/* Reserved क्रम future extensions */
-	अगर (config.flags)
-		वापस -EINVAL;
+	/* Reserved for future extensions */
+	if (config.flags)
+		return -EINVAL;
 
-	चयन (config.tx_type) अणु
-	हाल HWTSTAMP_TX_OFF:
+	switch (config.tx_type) {
+	case HWTSTAMP_TX_OFF:
 		tstamp_tx_ctrl = 0;
-		अवरोध;
-	हाल HWTSTAMP_TX_ON:
+		break;
+	case HWTSTAMP_TX_ON:
 		tstamp_tx_ctrl = RAVB_TXTSTAMP_ENABLED;
-		अवरोध;
-	शेष:
-		वापस -दुस्फल;
-	पूर्ण
+		break;
+	default:
+		return -ERANGE;
+	}
 
-	चयन (config.rx_filter) अणु
-	हाल HWTSTAMP_FILTER_NONE:
+	switch (config.rx_filter) {
+	case HWTSTAMP_FILTER_NONE:
 		tstamp_rx_ctrl = 0;
-		अवरोध;
-	हाल HWTSTAMP_FILTER_PTP_V2_L2_EVENT:
+		break;
+	case HWTSTAMP_FILTER_PTP_V2_L2_EVENT:
 		tstamp_rx_ctrl |= RAVB_RXTSTAMP_TYPE_V2_L2_EVENT;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		config.rx_filter = HWTSTAMP_FILTER_ALL;
 		tstamp_rx_ctrl |= RAVB_RXTSTAMP_TYPE_ALL;
-	पूर्ण
+	}
 
 	priv->tstamp_tx_ctrl = tstamp_tx_ctrl;
 	priv->tstamp_rx_ctrl = tstamp_rx_ctrl;
 
-	वापस copy_to_user(req->अगरr_data, &config, माप(config)) ?
+	return copy_to_user(req->ifr_data, &config, sizeof(config)) ?
 		-EFAULT : 0;
-पूर्ण
+}
 
 /* ioctl to device function */
-अटल पूर्णांक ravb_करो_ioctl(काष्ठा net_device *ndev, काष्ठा अगरreq *req, पूर्णांक cmd)
-अणु
-	काष्ठा phy_device *phydev = ndev->phydev;
+static int ravb_do_ioctl(struct net_device *ndev, struct ifreq *req, int cmd)
+{
+	struct phy_device *phydev = ndev->phydev;
 
-	अगर (!netअगर_running(ndev))
-		वापस -EINVAL;
+	if (!netif_running(ndev))
+		return -EINVAL;
 
-	अगर (!phydev)
-		वापस -ENODEV;
+	if (!phydev)
+		return -ENODEV;
 
-	चयन (cmd) अणु
-	हाल SIOCGHWTSTAMP:
-		वापस ravb_hwtstamp_get(ndev, req);
-	हाल SIOCSHWTSTAMP:
-		वापस ravb_hwtstamp_set(ndev, req);
-	पूर्ण
+	switch (cmd) {
+	case SIOCGHWTSTAMP:
+		return ravb_hwtstamp_get(ndev, req);
+	case SIOCSHWTSTAMP:
+		return ravb_hwtstamp_set(ndev, req);
+	}
 
-	वापस phy_mii_ioctl(phydev, req, cmd);
-पूर्ण
+	return phy_mii_ioctl(phydev, req, cmd);
+}
 
-अटल पूर्णांक ravb_change_mtu(काष्ठा net_device *ndev, पूर्णांक new_mtu)
-अणु
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
+static int ravb_change_mtu(struct net_device *ndev, int new_mtu)
+{
+	struct ravb_private *priv = netdev_priv(ndev);
 
 	ndev->mtu = new_mtu;
 
-	अगर (netअगर_running(ndev)) अणु
+	if (netif_running(ndev)) {
 		synchronize_irq(priv->emac_irq);
 		ravb_emac_init(ndev);
-	पूर्ण
+	}
 
 	netdev_update_features(ndev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ravb_set_rx_csum(काष्ठा net_device *ndev, bool enable)
-अणु
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
-	अचिन्हित दीर्घ flags;
+static void ravb_set_rx_csum(struct net_device *ndev, bool enable)
+{
+	struct ravb_private *priv = netdev_priv(ndev);
+	unsigned long flags;
 
 	spin_lock_irqsave(&priv->lock, flags);
 
 	/* Disable TX and RX */
 	ravb_rcv_snd_disable(ndev);
 
-	/* Modअगरy RX Checksum setting */
-	ravb_modअगरy(ndev, ECMR, ECMR_RCSC, enable ? ECMR_RCSC : 0);
+	/* Modify RX Checksum setting */
+	ravb_modify(ndev, ECMR, ECMR_RCSC, enable ? ECMR_RCSC : 0);
 
 	/* Enable TX and RX */
 	ravb_rcv_snd_enable(ndev);
 
 	spin_unlock_irqrestore(&priv->lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक ravb_set_features(काष्ठा net_device *ndev,
+static int ravb_set_features(struct net_device *ndev,
 			     netdev_features_t features)
-अणु
+{
 	netdev_features_t changed = ndev->features ^ features;
 
-	अगर (changed & NETIF_F_RXCSUM)
+	if (changed & NETIF_F_RXCSUM)
 		ravb_set_rx_csum(ndev, features & NETIF_F_RXCSUM);
 
 	ndev->features = features;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा net_device_ops ravb_netdev_ops = अणु
-	.nकरो_खोलो		= ravb_खोलो,
-	.nकरो_stop		= ravb_बंद,
-	.nकरो_start_xmit		= ravb_start_xmit,
-	.nकरो_select_queue	= ravb_select_queue,
-	.nकरो_get_stats		= ravb_get_stats,
-	.nकरो_set_rx_mode	= ravb_set_rx_mode,
-	.nकरो_tx_समयout		= ravb_tx_समयout,
-	.nकरो_करो_ioctl		= ravb_करो_ioctl,
-	.nकरो_change_mtu		= ravb_change_mtu,
-	.nकरो_validate_addr	= eth_validate_addr,
-	.nकरो_set_mac_address	= eth_mac_addr,
-	.nकरो_set_features	= ravb_set_features,
-पूर्ण;
+static const struct net_device_ops ravb_netdev_ops = {
+	.ndo_open		= ravb_open,
+	.ndo_stop		= ravb_close,
+	.ndo_start_xmit		= ravb_start_xmit,
+	.ndo_select_queue	= ravb_select_queue,
+	.ndo_get_stats		= ravb_get_stats,
+	.ndo_set_rx_mode	= ravb_set_rx_mode,
+	.ndo_tx_timeout		= ravb_tx_timeout,
+	.ndo_do_ioctl		= ravb_do_ioctl,
+	.ndo_change_mtu		= ravb_change_mtu,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_set_mac_address	= eth_mac_addr,
+	.ndo_set_features	= ravb_set_features,
+};
 
 /* MDIO bus init function */
-अटल पूर्णांक ravb_mdio_init(काष्ठा ravb_निजी *priv)
-अणु
-	काष्ठा platक्रमm_device *pdev = priv->pdev;
-	काष्ठा device *dev = &pdev->dev;
-	पूर्णांक error;
+static int ravb_mdio_init(struct ravb_private *priv)
+{
+	struct platform_device *pdev = priv->pdev;
+	struct device *dev = &pdev->dev;
+	int error;
 
 	/* Bitbang init */
 	priv->mdiobb.ops = &bb_ops;
 
 	/* MII controller setting */
 	priv->mii_bus = alloc_mdio_bitbang(&priv->mdiobb);
-	अगर (!priv->mii_bus)
-		वापस -ENOMEM;
+	if (!priv->mii_bus)
+		return -ENOMEM;
 
-	/* Hook up MII support क्रम ethtool */
+	/* Hook up MII support for ethtool */
 	priv->mii_bus->name = "ravb_mii";
 	priv->mii_bus->parent = dev;
-	snम_लिखो(priv->mii_bus->id, MII_BUS_ID_SIZE, "%s-%x",
+	snprintf(priv->mii_bus->id, MII_BUS_ID_SIZE, "%s-%x",
 		 pdev->name, pdev->id);
 
 	/* Register MDIO bus */
-	error = of_mdiobus_रेजिस्टर(priv->mii_bus, dev->of_node);
-	अगर (error)
-		जाओ out_मुक्त_bus;
+	error = of_mdiobus_register(priv->mii_bus, dev->of_node);
+	if (error)
+		goto out_free_bus;
 
-	वापस 0;
+	return 0;
 
-out_मुक्त_bus:
-	मुक्त_mdio_bitbang(priv->mii_bus);
-	वापस error;
-पूर्ण
+out_free_bus:
+	free_mdio_bitbang(priv->mii_bus);
+	return error;
+}
 
 /* MDIO bus release function */
-अटल पूर्णांक ravb_mdio_release(काष्ठा ravb_निजी *priv)
-अणु
-	/* Unरेजिस्टर mdio bus */
-	mdiobus_unरेजिस्टर(priv->mii_bus);
+static int ravb_mdio_release(struct ravb_private *priv)
+{
+	/* Unregister mdio bus */
+	mdiobus_unregister(priv->mii_bus);
 
 	/* Free bitbang info */
-	मुक्त_mdio_bitbang(priv->mii_bus);
+	free_mdio_bitbang(priv->mii_bus);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id ravb_match_table[] = अणु
-	अणु .compatible = "renesas,etheravb-r8a7790", .data = (व्योम *)RCAR_GEN2 पूर्ण,
-	अणु .compatible = "renesas,etheravb-r8a7794", .data = (व्योम *)RCAR_GEN2 पूर्ण,
-	अणु .compatible = "renesas,etheravb-rcar-gen2", .data = (व्योम *)RCAR_GEN2 पूर्ण,
-	अणु .compatible = "renesas,etheravb-r8a7795", .data = (व्योम *)RCAR_GEN3 पूर्ण,
-	अणु .compatible = "renesas,etheravb-rcar-gen3", .data = (व्योम *)RCAR_GEN3 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id ravb_match_table[] = {
+	{ .compatible = "renesas,etheravb-r8a7790", .data = (void *)RCAR_GEN2 },
+	{ .compatible = "renesas,etheravb-r8a7794", .data = (void *)RCAR_GEN2 },
+	{ .compatible = "renesas,etheravb-rcar-gen2", .data = (void *)RCAR_GEN2 },
+	{ .compatible = "renesas,etheravb-r8a7795", .data = (void *)RCAR_GEN3 },
+	{ .compatible = "renesas,etheravb-rcar-gen3", .data = (void *)RCAR_GEN3 },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, ravb_match_table);
 
-अटल पूर्णांक ravb_set_gti(काष्ठा net_device *ndev)
-अणु
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
-	काष्ठा device *dev = ndev->dev.parent;
-	अचिन्हित दीर्घ rate;
-	uपूर्णांक64_t inc;
+static int ravb_set_gti(struct net_device *ndev)
+{
+	struct ravb_private *priv = netdev_priv(ndev);
+	struct device *dev = ndev->dev.parent;
+	unsigned long rate;
+	uint64_t inc;
 
 	rate = clk_get_rate(priv->clk);
-	अगर (!rate)
-		वापस -EINVAL;
+	if (!rate)
+		return -EINVAL;
 
 	inc = 1000000000ULL << 20;
-	करो_भाग(inc, rate);
+	do_div(inc, rate);
 
-	अगर (inc < GTI_TIV_MIN || inc > GTI_TIV_MAX) अणु
+	if (inc < GTI_TIV_MIN || inc > GTI_TIV_MAX) {
 		dev_err(dev, "gti.tiv increment 0x%llx is outside the range 0x%x - 0x%x\n",
 			inc, GTI_TIV_MIN, GTI_TIV_MAX);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ravb_ग_लिखो(ndev, inc, GTI);
+	ravb_write(ndev, inc, GTI);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ravb_set_config_mode(काष्ठा net_device *ndev)
-अणु
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
+static void ravb_set_config_mode(struct net_device *ndev)
+{
+	struct ravb_private *priv = netdev_priv(ndev);
 
-	अगर (priv->chip_id == RCAR_GEN2) अणु
-		ravb_modअगरy(ndev, CCC, CCC_OPC, CCC_OPC_CONFIG);
+	if (priv->chip_id == RCAR_GEN2) {
+		ravb_modify(ndev, CCC, CCC_OPC, CCC_OPC_CONFIG);
 		/* Set CSEL value */
-		ravb_modअगरy(ndev, CCC, CCC_CSEL, CCC_CSEL_HPB);
-	पूर्ण अन्यथा अणु
-		ravb_modअगरy(ndev, CCC, CCC_OPC, CCC_OPC_CONFIG |
+		ravb_modify(ndev, CCC, CCC_CSEL, CCC_CSEL_HPB);
+	} else {
+		ravb_modify(ndev, CCC, CCC_OPC, CCC_OPC_CONFIG |
 			    CCC_GAC | CCC_CSEL_HPB);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल स्थिर काष्ठा soc_device_attribute ravb_delay_mode_quirk_match[] = अणु
-	अणु .soc_id = "r8a774c0" पूर्ण,
-	अणु .soc_id = "r8a77990" पूर्ण,
-	अणु .soc_id = "r8a77995" पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct soc_device_attribute ravb_delay_mode_quirk_match[] = {
+	{ .soc_id = "r8a774c0" },
+	{ .soc_id = "r8a77990" },
+	{ .soc_id = "r8a77995" },
+	{ /* sentinel */ }
+};
 
-/* Set tx and rx घड़ी पूर्णांकernal delay modes */
-अटल व्योम ravb_parse_delay_mode(काष्ठा device_node *np, काष्ठा net_device *ndev)
-अणु
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
+/* Set tx and rx clock internal delay modes */
+static void ravb_parse_delay_mode(struct device_node *np, struct net_device *ndev)
+{
+	struct ravb_private *priv = netdev_priv(ndev);
 	bool explicit_delay = false;
 	u32 delay;
 
-	अगर (!of_property_पढ़ो_u32(np, "rx-internal-delay-ps", &delay)) अणु
+	if (!of_property_read_u32(np, "rx-internal-delay-ps", &delay)) {
 		/* Valid values are 0 and 1800, according to DT bindings */
 		priv->rxcidm = !!delay;
 		explicit_delay = true;
-	पूर्ण
-	अगर (!of_property_पढ़ो_u32(np, "tx-internal-delay-ps", &delay)) अणु
+	}
+	if (!of_property_read_u32(np, "tx-internal-delay-ps", &delay)) {
 		/* Valid values are 0 and 2000, according to DT bindings */
 		priv->txcidm = !!delay;
 		explicit_delay = true;
-	पूर्ण
+	}
 
-	अगर (explicit_delay)
-		वापस;
+	if (explicit_delay)
+		return;
 
 	/* Fall back to legacy rgmii-*id behavior */
-	अगर (priv->phy_पूर्णांकerface == PHY_INTERFACE_MODE_RGMII_ID ||
-	    priv->phy_पूर्णांकerface == PHY_INTERFACE_MODE_RGMII_RXID) अणु
+	if (priv->phy_interface == PHY_INTERFACE_MODE_RGMII_ID ||
+	    priv->phy_interface == PHY_INTERFACE_MODE_RGMII_RXID) {
 		priv->rxcidm = 1;
 		priv->rgmii_override = 1;
-	पूर्ण
+	}
 
-	अगर (priv->phy_पूर्णांकerface == PHY_INTERFACE_MODE_RGMII_ID ||
-	    priv->phy_पूर्णांकerface == PHY_INTERFACE_MODE_RGMII_TXID) अणु
-		अगर (!WARN(soc_device_match(ravb_delay_mode_quirk_match),
+	if (priv->phy_interface == PHY_INTERFACE_MODE_RGMII_ID ||
+	    priv->phy_interface == PHY_INTERFACE_MODE_RGMII_TXID) {
+		if (!WARN(soc_device_match(ravb_delay_mode_quirk_match),
 			  "phy-mode %s requires TX clock internal delay mode which is not supported by this hardware revision. Please update device tree",
-			  phy_modes(priv->phy_पूर्णांकerface))) अणु
+			  phy_modes(priv->phy_interface))) {
 			priv->txcidm = 1;
 			priv->rgmii_override = 1;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम ravb_set_delay_mode(काष्ठा net_device *ndev)
-अणु
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
+static void ravb_set_delay_mode(struct net_device *ndev)
+{
+	struct ravb_private *priv = netdev_priv(ndev);
 	u32 set = 0;
 
-	अगर (priv->rxcidm)
+	if (priv->rxcidm)
 		set |= APSR_RDM;
-	अगर (priv->txcidm)
+	if (priv->txcidm)
 		set |= APSR_TDM;
-	ravb_modअगरy(ndev, APSR, APSR_RDM | APSR_TDM, set);
-पूर्ण
+	ravb_modify(ndev, APSR, APSR_RDM | APSR_TDM, set);
+}
 
-अटल पूर्णांक ravb_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *np = pdev->dev.of_node;
-	काष्ठा ravb_निजी *priv;
-	क्रमागत ravb_chip_id chip_id;
-	काष्ठा net_device *ndev;
-	पूर्णांक error, irq, q;
-	काष्ठा resource *res;
-	पूर्णांक i;
+static int ravb_probe(struct platform_device *pdev)
+{
+	struct device_node *np = pdev->dev.of_node;
+	struct ravb_private *priv;
+	enum ravb_chip_id chip_id;
+	struct net_device *ndev;
+	int error, irq, q;
+	struct resource *res;
+	int i;
 
-	अगर (!np) अणु
+	if (!np) {
 		dev_err(&pdev->dev,
 			"this driver is required to be instantiated from device tree\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Get base address */
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!res) अणु
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!res) {
 		dev_err(&pdev->dev, "invalid resource\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ndev = alloc_etherdev_mqs(माप(काष्ठा ravb_निजी),
+	ndev = alloc_etherdev_mqs(sizeof(struct ravb_private),
 				  NUM_TX_QUEUE, NUM_RX_QUEUE);
-	अगर (!ndev)
-		वापस -ENOMEM;
+	if (!ndev)
+		return -ENOMEM;
 
 	ndev->features = NETIF_F_RXCSUM;
 	ndev->hw_features = NETIF_F_RXCSUM;
 
-	pm_runसमय_enable(&pdev->dev);
-	pm_runसमय_get_sync(&pdev->dev);
+	pm_runtime_enable(&pdev->dev);
+	pm_runtime_get_sync(&pdev->dev);
 
-	/* The Ether-specअगरic entries in the device काष्ठाure. */
+	/* The Ether-specific entries in the device structure. */
 	ndev->base_addr = res->start;
 
-	chip_id = (क्रमागत ravb_chip_id)of_device_get_match_data(&pdev->dev);
+	chip_id = (enum ravb_chip_id)of_device_get_match_data(&pdev->dev);
 
-	अगर (chip_id == RCAR_GEN3)
-		irq = platक्रमm_get_irq_byname(pdev, "ch22");
-	अन्यथा
-		irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0) अणु
+	if (chip_id == RCAR_GEN3)
+		irq = platform_get_irq_byname(pdev, "ch22");
+	else
+		irq = platform_get_irq(pdev, 0);
+	if (irq < 0) {
 		error = irq;
-		जाओ out_release;
-	पूर्ण
+		goto out_release;
+	}
 	ndev->irq = irq;
 
 	SET_NETDEV_DEV(ndev, &pdev->dev);
@@ -2091,60 +2090,60 @@ MODULE_DEVICE_TABLE(of, ravb_match_table);
 	priv->num_tx_ring[RAVB_NC] = NC_TX_RING_SIZE;
 	priv->num_rx_ring[RAVB_NC] = NC_RX_RING_SIZE;
 	priv->addr = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(priv->addr)) अणु
+	if (IS_ERR(priv->addr)) {
 		error = PTR_ERR(priv->addr);
-		जाओ out_release;
-	पूर्ण
+		goto out_release;
+	}
 
 	spin_lock_init(&priv->lock);
-	INIT_WORK(&priv->work, ravb_tx_समयout_work);
+	INIT_WORK(&priv->work, ravb_tx_timeout_work);
 
-	error = of_get_phy_mode(np, &priv->phy_पूर्णांकerface);
-	अगर (error && error != -ENODEV)
-		जाओ out_release;
+	error = of_get_phy_mode(np, &priv->phy_interface);
+	if (error && error != -ENODEV)
+		goto out_release;
 
-	priv->no_avb_link = of_property_पढ़ो_bool(np, "renesas,no-ether-link");
+	priv->no_avb_link = of_property_read_bool(np, "renesas,no-ether-link");
 	priv->avb_link_active_low =
-		of_property_पढ़ो_bool(np, "renesas,ether-link-active-low");
+		of_property_read_bool(np, "renesas,ether-link-active-low");
 
-	अगर (chip_id == RCAR_GEN3) अणु
-		irq = platक्रमm_get_irq_byname(pdev, "ch24");
-		अगर (irq < 0) अणु
+	if (chip_id == RCAR_GEN3) {
+		irq = platform_get_irq_byname(pdev, "ch24");
+		if (irq < 0) {
 			error = irq;
-			जाओ out_release;
-		पूर्ण
+			goto out_release;
+		}
 		priv->emac_irq = irq;
-		क्रम (i = 0; i < NUM_RX_QUEUE; i++) अणु
-			irq = platक्रमm_get_irq_byname(pdev, ravb_rx_irqs[i]);
-			अगर (irq < 0) अणु
+		for (i = 0; i < NUM_RX_QUEUE; i++) {
+			irq = platform_get_irq_byname(pdev, ravb_rx_irqs[i]);
+			if (irq < 0) {
 				error = irq;
-				जाओ out_release;
-			पूर्ण
+				goto out_release;
+			}
 			priv->rx_irqs[i] = irq;
-		पूर्ण
-		क्रम (i = 0; i < NUM_TX_QUEUE; i++) अणु
-			irq = platक्रमm_get_irq_byname(pdev, ravb_tx_irqs[i]);
-			अगर (irq < 0) अणु
+		}
+		for (i = 0; i < NUM_TX_QUEUE; i++) {
+			irq = platform_get_irq_byname(pdev, ravb_tx_irqs[i]);
+			if (irq < 0) {
 				error = irq;
-				जाओ out_release;
-			पूर्ण
+				goto out_release;
+			}
 			priv->tx_irqs[i] = irq;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	priv->chip_id = chip_id;
 
-	priv->clk = devm_clk_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(priv->clk)) अणु
+	priv->clk = devm_clk_get(&pdev->dev, NULL);
+	if (IS_ERR(priv->clk)) {
 		error = PTR_ERR(priv->clk);
-		जाओ out_release;
-	पूर्ण
+		goto out_release;
+	}
 
 	priv->refclk = devm_clk_get_optional(&pdev->dev, "refclk");
-	अगर (IS_ERR(priv->refclk)) अणु
+	if (IS_ERR(priv->refclk)) {
 		error = PTR_ERR(priv->refclk);
-		जाओ out_release;
-	पूर्ण
+		goto out_release;
+	}
 	clk_prepare_enable(priv->refclk);
 
 	ndev->max_mtu = 2048 - (ETH_HLEN + VLAN_HLEN + ETH_FCS_LEN);
@@ -2162,194 +2161,194 @@ MODULE_DEVICE_TABLE(of, ravb_match_table);
 
 	/* Set GTI value */
 	error = ravb_set_gti(ndev);
-	अगर (error)
-		जाओ out_disable_refclk;
+	if (error)
+		goto out_disable_refclk;
 
 	/* Request GTI loading */
-	ravb_modअगरy(ndev, GCCR, GCCR_LTI, GCCR_LTI);
+	ravb_modify(ndev, GCCR, GCCR_LTI, GCCR_LTI);
 
-	अगर (priv->chip_id != RCAR_GEN2) अणु
+	if (priv->chip_id != RCAR_GEN2) {
 		ravb_parse_delay_mode(np, ndev);
 		ravb_set_delay_mode(ndev);
-	पूर्ण
+	}
 
 	/* Allocate descriptor base address table */
-	priv->desc_bat_size = माप(काष्ठा ravb_desc) * DBAT_ENTRY_NUM;
+	priv->desc_bat_size = sizeof(struct ravb_desc) * DBAT_ENTRY_NUM;
 	priv->desc_bat = dma_alloc_coherent(ndev->dev.parent, priv->desc_bat_size,
 					    &priv->desc_bat_dma, GFP_KERNEL);
-	अगर (!priv->desc_bat) अणु
+	if (!priv->desc_bat) {
 		dev_err(&pdev->dev,
 			"Cannot allocate desc base address table (size %d bytes)\n",
 			priv->desc_bat_size);
 		error = -ENOMEM;
-		जाओ out_disable_refclk;
-	पूर्ण
-	क्रम (q = RAVB_BE; q < DBAT_ENTRY_NUM; q++)
+		goto out_disable_refclk;
+	}
+	for (q = RAVB_BE; q < DBAT_ENTRY_NUM; q++)
 		priv->desc_bat[q].die_dt = DT_EOS;
-	ravb_ग_लिखो(ndev, priv->desc_bat_dma, DBAT);
+	ravb_write(ndev, priv->desc_bat_dma, DBAT);
 
-	/* Initialise HW बारtamp list */
+	/* Initialise HW timestamp list */
 	INIT_LIST_HEAD(&priv->ts_skb_list);
 
 	/* Initialise PTP Clock driver */
-	अगर (chip_id != RCAR_GEN2)
+	if (chip_id != RCAR_GEN2)
 		ravb_ptp_init(ndev, pdev);
 
 	/* Debug message level */
 	priv->msg_enable = RAVB_DEF_MSG_ENABLE;
 
 	/* Read and set MAC address */
-	ravb_पढ़ो_mac_address(np, ndev);
-	अगर (!is_valid_ether_addr(ndev->dev_addr)) अणु
+	ravb_read_mac_address(np, ndev);
+	if (!is_valid_ether_addr(ndev->dev_addr)) {
 		dev_warn(&pdev->dev,
 			 "no valid MAC address supplied, using a random one\n");
-		eth_hw_addr_अक्रमom(ndev);
-	पूर्ण
+		eth_hw_addr_random(ndev);
+	}
 
 	/* MDIO bus init */
 	error = ravb_mdio_init(priv);
-	अगर (error) अणु
+	if (error) {
 		dev_err(&pdev->dev, "failed to initialize MDIO\n");
-		जाओ out_dma_मुक्त;
-	पूर्ण
+		goto out_dma_free;
+	}
 
-	netअगर_napi_add(ndev, &priv->napi[RAVB_BE], ravb_poll, 64);
-	netअगर_napi_add(ndev, &priv->napi[RAVB_NC], ravb_poll, 64);
+	netif_napi_add(ndev, &priv->napi[RAVB_BE], ravb_poll, 64);
+	netif_napi_add(ndev, &priv->napi[RAVB_NC], ravb_poll, 64);
 
-	/* Network device रेजिस्टर */
-	error = रेजिस्टर_netdev(ndev);
-	अगर (error)
-		जाओ out_napi_del;
+	/* Network device register */
+	error = register_netdev(ndev);
+	if (error)
+		goto out_napi_del;
 
 	device_set_wakeup_capable(&pdev->dev, 1);
 
-	/* Prपूर्णांक device inक्रमmation */
+	/* Print device information */
 	netdev_info(ndev, "Base address at %#x, %pM, IRQ %d.\n",
 		    (u32)ndev->base_addr, ndev->dev_addr, ndev->irq);
 
-	platक्रमm_set_drvdata(pdev, ndev);
+	platform_set_drvdata(pdev, ndev);
 
-	वापस 0;
+	return 0;
 
 out_napi_del:
-	netअगर_napi_del(&priv->napi[RAVB_NC]);
-	netअगर_napi_del(&priv->napi[RAVB_BE]);
+	netif_napi_del(&priv->napi[RAVB_NC]);
+	netif_napi_del(&priv->napi[RAVB_BE]);
 	ravb_mdio_release(priv);
-out_dma_मुक्त:
-	dma_मुक्त_coherent(ndev->dev.parent, priv->desc_bat_size, priv->desc_bat,
+out_dma_free:
+	dma_free_coherent(ndev->dev.parent, priv->desc_bat_size, priv->desc_bat,
 			  priv->desc_bat_dma);
 
 	/* Stop PTP Clock driver */
-	अगर (chip_id != RCAR_GEN2)
+	if (chip_id != RCAR_GEN2)
 		ravb_ptp_stop(ndev);
 out_disable_refclk:
 	clk_disable_unprepare(priv->refclk);
 out_release:
-	मुक्त_netdev(ndev);
+	free_netdev(ndev);
 
-	pm_runसमय_put(&pdev->dev);
-	pm_runसमय_disable(&pdev->dev);
-	वापस error;
-पूर्ण
+	pm_runtime_put(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
+	return error;
+}
 
-अटल पूर्णांक ravb_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा net_device *ndev = platक्रमm_get_drvdata(pdev);
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
+static int ravb_remove(struct platform_device *pdev)
+{
+	struct net_device *ndev = platform_get_drvdata(pdev);
+	struct ravb_private *priv = netdev_priv(ndev);
 
 	/* Stop PTP Clock driver */
-	अगर (priv->chip_id != RCAR_GEN2)
+	if (priv->chip_id != RCAR_GEN2)
 		ravb_ptp_stop(ndev);
 
 	clk_disable_unprepare(priv->refclk);
 
-	dma_मुक्त_coherent(ndev->dev.parent, priv->desc_bat_size, priv->desc_bat,
+	dma_free_coherent(ndev->dev.parent, priv->desc_bat_size, priv->desc_bat,
 			  priv->desc_bat_dma);
 	/* Set reset mode */
-	ravb_ग_लिखो(ndev, CCC_OPC_RESET, CCC);
-	pm_runसमय_put_sync(&pdev->dev);
-	unरेजिस्टर_netdev(ndev);
-	netअगर_napi_del(&priv->napi[RAVB_NC]);
-	netअगर_napi_del(&priv->napi[RAVB_BE]);
+	ravb_write(ndev, CCC_OPC_RESET, CCC);
+	pm_runtime_put_sync(&pdev->dev);
+	unregister_netdev(ndev);
+	netif_napi_del(&priv->napi[RAVB_NC]);
+	netif_napi_del(&priv->napi[RAVB_BE]);
 	ravb_mdio_release(priv);
-	pm_runसमय_disable(&pdev->dev);
-	मुक्त_netdev(ndev);
-	platक्रमm_set_drvdata(pdev, शून्य);
+	pm_runtime_disable(&pdev->dev);
+	free_netdev(ndev);
+	platform_set_drvdata(pdev, NULL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ravb_wol_setup(काष्ठा net_device *ndev)
-अणु
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
+static int ravb_wol_setup(struct net_device *ndev)
+{
+	struct ravb_private *priv = netdev_priv(ndev);
 
-	/* Disable पूर्णांकerrupts by clearing the पूर्णांकerrupt masks. */
-	ravb_ग_लिखो(ndev, 0, RIC0);
-	ravb_ग_लिखो(ndev, 0, RIC2);
-	ravb_ग_लिखो(ndev, 0, TIC);
+	/* Disable interrupts by clearing the interrupt masks. */
+	ravb_write(ndev, 0, RIC0);
+	ravb_write(ndev, 0, RIC2);
+	ravb_write(ndev, 0, TIC);
 
-	/* Only allow ECI पूर्णांकerrupts */
+	/* Only allow ECI interrupts */
 	synchronize_irq(priv->emac_irq);
 	napi_disable(&priv->napi[RAVB_NC]);
 	napi_disable(&priv->napi[RAVB_BE]);
-	ravb_ग_लिखो(ndev, ECSIPR_MPDIP, ECSIPR);
+	ravb_write(ndev, ECSIPR_MPDIP, ECSIPR);
 
 	/* Enable MagicPacket */
-	ravb_modअगरy(ndev, ECMR, ECMR_MPDE, ECMR_MPDE);
+	ravb_modify(ndev, ECMR, ECMR_MPDE, ECMR_MPDE);
 
-	वापस enable_irq_wake(priv->emac_irq);
-पूर्ण
+	return enable_irq_wake(priv->emac_irq);
+}
 
-अटल पूर्णांक ravb_wol_restore(काष्ठा net_device *ndev)
-अणु
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
-	पूर्णांक ret;
+static int ravb_wol_restore(struct net_device *ndev)
+{
+	struct ravb_private *priv = netdev_priv(ndev);
+	int ret;
 
 	napi_enable(&priv->napi[RAVB_NC]);
 	napi_enable(&priv->napi[RAVB_BE]);
 
 	/* Disable MagicPacket */
-	ravb_modअगरy(ndev, ECMR, ECMR_MPDE, 0);
+	ravb_modify(ndev, ECMR, ECMR_MPDE, 0);
 
-	ret = ravb_बंद(ndev);
-	अगर (ret < 0)
-		वापस ret;
+	ret = ravb_close(ndev);
+	if (ret < 0)
+		return ret;
 
-	वापस disable_irq_wake(priv->emac_irq);
-पूर्ण
+	return disable_irq_wake(priv->emac_irq);
+}
 
-अटल पूर्णांक __maybe_unused ravb_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा net_device *ndev = dev_get_drvdata(dev);
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
-	पूर्णांक ret;
+static int __maybe_unused ravb_suspend(struct device *dev)
+{
+	struct net_device *ndev = dev_get_drvdata(dev);
+	struct ravb_private *priv = netdev_priv(ndev);
+	int ret;
 
-	अगर (!netअगर_running(ndev))
-		वापस 0;
+	if (!netif_running(ndev))
+		return 0;
 
-	netअगर_device_detach(ndev);
+	netif_device_detach(ndev);
 
-	अगर (priv->wol_enabled)
+	if (priv->wol_enabled)
 		ret = ravb_wol_setup(ndev);
-	अन्यथा
-		ret = ravb_बंद(ndev);
+	else
+		ret = ravb_close(ndev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __maybe_unused ravb_resume(काष्ठा device *dev)
-अणु
-	काष्ठा net_device *ndev = dev_get_drvdata(dev);
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
-	पूर्णांक ret = 0;
+static int __maybe_unused ravb_resume(struct device *dev)
+{
+	struct net_device *ndev = dev_get_drvdata(dev);
+	struct ravb_private *priv = netdev_priv(ndev);
+	int ret = 0;
 
 	/* If WoL is enabled set reset mode to rearm the WoL logic */
-	अगर (priv->wol_enabled)
-		ravb_ग_लिखो(ndev, CCC_OPC_RESET, CCC);
+	if (priv->wol_enabled)
+		ravb_write(ndev, CCC_OPC_RESET, CCC);
 
-	/* All रेजिस्टर have been reset to शेष values.
-	 * Restore all रेजिस्टरs which where setup at probe समय and
-	 * reखोलो device अगर it was running beक्रमe प्रणाली suspended.
+	/* All register have been reset to default values.
+	 * Restore all registers which where setup at probe time and
+	 * reopen device if it was running before system suspended.
 	 */
 
 	/* Set AVB config mode */
@@ -2357,61 +2356,61 @@ out_release:
 
 	/* Set GTI value */
 	ret = ravb_set_gti(ndev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* Request GTI loading */
-	ravb_modअगरy(ndev, GCCR, GCCR_LTI, GCCR_LTI);
+	ravb_modify(ndev, GCCR, GCCR_LTI, GCCR_LTI);
 
-	अगर (priv->chip_id != RCAR_GEN2)
+	if (priv->chip_id != RCAR_GEN2)
 		ravb_set_delay_mode(ndev);
 
 	/* Restore descriptor base address table */
-	ravb_ग_लिखो(ndev, priv->desc_bat_dma, DBAT);
+	ravb_write(ndev, priv->desc_bat_dma, DBAT);
 
-	अगर (netअगर_running(ndev)) अणु
-		अगर (priv->wol_enabled) अणु
+	if (netif_running(ndev)) {
+		if (priv->wol_enabled) {
 			ret = ravb_wol_restore(ndev);
-			अगर (ret)
-				वापस ret;
-		पूर्ण
-		ret = ravb_खोलो(ndev);
-		अगर (ret < 0)
-			वापस ret;
-		netअगर_device_attach(ndev);
-	पूर्ण
+			if (ret)
+				return ret;
+		}
+		ret = ravb_open(ndev);
+		if (ret < 0)
+			return ret;
+		netif_device_attach(ndev);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __maybe_unused ravb_runसमय_nop(काष्ठा device *dev)
-अणु
-	/* Runसमय PM callback shared between ->runसमय_suspend()
-	 * and ->runसमय_resume(). Simply वापसs success.
+static int __maybe_unused ravb_runtime_nop(struct device *dev)
+{
+	/* Runtime PM callback shared between ->runtime_suspend()
+	 * and ->runtime_resume(). Simply returns success.
 	 *
-	 * This driver re-initializes all रेजिस्टरs after
-	 * pm_runसमय_get_sync() anyway so there is no need
-	 * to save and restore रेजिस्टरs here.
+	 * This driver re-initializes all registers after
+	 * pm_runtime_get_sync() anyway so there is no need
+	 * to save and restore registers here.
 	 */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops ravb_dev_pm_ops = अणु
+static const struct dev_pm_ops ravb_dev_pm_ops = {
 	SET_SYSTEM_SLEEP_PM_OPS(ravb_suspend, ravb_resume)
-	SET_RUNTIME_PM_OPS(ravb_runसमय_nop, ravb_runसमय_nop, शून्य)
-पूर्ण;
+	SET_RUNTIME_PM_OPS(ravb_runtime_nop, ravb_runtime_nop, NULL)
+};
 
-अटल काष्ठा platक्रमm_driver ravb_driver = अणु
+static struct platform_driver ravb_driver = {
 	.probe		= ravb_probe,
-	.हटाओ		= ravb_हटाओ,
-	.driver = अणु
+	.remove		= ravb_remove,
+	.driver = {
 		.name	= "ravb",
 		.pm	= &ravb_dev_pm_ops,
 		.of_match_table = ravb_match_table,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(ravb_driver);
+module_platform_driver(ravb_driver);
 
 MODULE_AUTHOR("Mitsuhiro Kimura, Masaru Nagai");
 MODULE_DESCRIPTION("Renesas Ethernet AVB driver");

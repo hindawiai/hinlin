@@ -1,88 +1,87 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Renesas R-Mobile Reset Driver
  *
  * Copyright (C) 2014 Glider bvba
  */
 
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/prपूर्णांकk.h>
-#समावेश <linux/reboot.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/notifier.h>
+#include <linux/of_address.h>
+#include <linux/platform_device.h>
+#include <linux/printk.h>
+#include <linux/reboot.h>
 
 /* SYSC Register Bank 2 */
-#घोषणा RESCNT2		0x20		/* Reset Control Register 2 */
+#define RESCNT2		0x20		/* Reset Control Register 2 */
 
 /* Reset Control Register 2 */
-#घोषणा RESCNT2_PRES	0x80000000	/* Soft घातer-on reset */
+#define RESCNT2_PRES	0x80000000	/* Soft power-on reset */
 
-अटल व्योम __iomem *sysc_base2;
+static void __iomem *sysc_base2;
 
-अटल पूर्णांक rmobile_reset_handler(काष्ठा notअगरier_block *this,
-				 अचिन्हित दीर्घ mode, व्योम *cmd)
-अणु
+static int rmobile_reset_handler(struct notifier_block *this,
+				 unsigned long mode, void *cmd)
+{
 	pr_debug("%s %lu\n", __func__, mode);
 
 	/* Let's assume we have acquired the HPB semaphore */
-	ग_लिखोl(RESCNT2_PRES, sysc_base2 + RESCNT2);
+	writel(RESCNT2_PRES, sysc_base2 + RESCNT2);
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल काष्ठा notअगरier_block rmobile_reset_nb = अणु
-	.notअगरier_call = rmobile_reset_handler,
+static struct notifier_block rmobile_reset_nb = {
+	.notifier_call = rmobile_reset_handler,
 	.priority = 192,
-पूर्ण;
+};
 
-अटल पूर्णांक rmobile_reset_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक error;
+static int rmobile_reset_probe(struct platform_device *pdev)
+{
+	int error;
 
 	sysc_base2 = of_iomap(pdev->dev.of_node, 1);
-	अगर (!sysc_base2)
-		वापस -ENODEV;
+	if (!sysc_base2)
+		return -ENODEV;
 
-	error = रेजिस्टर_restart_handler(&rmobile_reset_nb);
-	अगर (error) अणु
+	error = register_restart_handler(&rmobile_reset_nb);
+	if (error) {
 		dev_err(&pdev->dev,
 			"cannot register restart handler (err=%d)\n", error);
-		जाओ fail_unmap;
-	पूर्ण
+		goto fail_unmap;
+	}
 
-	वापस 0;
+	return 0;
 
 fail_unmap:
 	iounmap(sysc_base2);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक rmobile_reset_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	unरेजिस्टर_restart_handler(&rmobile_reset_nb);
+static int rmobile_reset_remove(struct platform_device *pdev)
+{
+	unregister_restart_handler(&rmobile_reset_nb);
 	iounmap(sysc_base2);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id rmobile_reset_of_match[] = अणु
-	अणु .compatible = "renesas,sysc-rmobile", पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id rmobile_reset_of_match[] = {
+	{ .compatible = "renesas,sysc-rmobile", },
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, rmobile_reset_of_match);
 
-अटल काष्ठा platक्रमm_driver rmobile_reset_driver = अणु
+static struct platform_driver rmobile_reset_driver = {
 	.probe = rmobile_reset_probe,
-	.हटाओ = rmobile_reset_हटाओ,
-	.driver = अणु
+	.remove = rmobile_reset_remove,
+	.driver = {
 		.name = "rmobile_reset",
 		.of_match_table = rmobile_reset_of_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(rmobile_reset_driver);
+module_platform_driver(rmobile_reset_driver);
 
 MODULE_DESCRIPTION("Renesas R-Mobile Reset Driver");
 MODULE_AUTHOR("Geert Uytterhoeven <geert+renesas@glider.be>");

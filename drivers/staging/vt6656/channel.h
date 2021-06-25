@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (c) 1996, 2003 VIA Networking Technologies, Inc.
  * All rights reserved.
@@ -14,11 +13,11 @@
  *
  */
 
-#अगर_अघोषित _CHANNEL_H_
-#घोषणा _CHANNEL_H_
+#ifndef _CHANNEL_H_
+#define _CHANNEL_H_
 
-#समावेश "device.h"
+#include "device.h"
 
-व्योम vnt_init_bands(काष्ठा vnt_निजी *priv);
+void vnt_init_bands(struct vnt_private *priv);
 
-#पूर्ण_अगर  /* _CHANNEL_H_ */
+#endif  /* _CHANNEL_H_ */

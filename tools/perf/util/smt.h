@@ -1,7 +1,6 @@
-<शैली गुरु>
-#अगर_अघोषित SMT_H
-#घोषणा SMT_H 1
+#ifndef SMT_H
+#define SMT_H 1
 
-पूर्णांक smt_on(व्योम);
+int smt_on(void);
 
-#पूर्ण_अगर
+#endif

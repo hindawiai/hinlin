@@ -1,153 +1,152 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * core.c - contains all core device and protocol registration functions
  *
  * Copyright 2002 Adam Belay <ambx1@neo.rr.com>
  */
 
-#समावेश <linux/pnp.h>
-#समावेश <linux/types.h>
-#समावेश <linux/list.h>
-#समावेश <linux/device.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/init.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/dma-mapping.h>
+#include <linux/pnp.h>
+#include <linux/types.h>
+#include <linux/list.h>
+#include <linux/device.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/init.h>
+#include <linux/string.h>
+#include <linux/slab.h>
+#include <linux/errno.h>
+#include <linux/dma-mapping.h>
 
-#समावेश "base.h"
+#include "base.h"
 
-अटल LIST_HEAD(pnp_protocols);
+static LIST_HEAD(pnp_protocols);
 LIST_HEAD(pnp_global);
 DEFINE_MUTEX(pnp_lock);
 
 /*
- * ACPI or PNPBIOS should tell us about all platक्रमm devices, so we can
- * skip some blind probes.  ISAPNP typically क्रमागतerates only plug-in ISA
+ * ACPI or PNPBIOS should tell us about all platform devices, so we can
+ * skip some blind probes.  ISAPNP typically enumerates only plug-in ISA
  * devices, not built-in things like COM ports.
  */
-पूर्णांक pnp_platक्रमm_devices;
-EXPORT_SYMBOL(pnp_platक्रमm_devices);
+int pnp_platform_devices;
+EXPORT_SYMBOL(pnp_platform_devices);
 
-व्योम *pnp_alloc(दीर्घ size)
-अणु
-	व्योम *result;
+void *pnp_alloc(long size)
+{
+	void *result;
 
 	result = kzalloc(size, GFP_KERNEL);
-	अगर (!result) अणु
-		prपूर्णांकk(KERN_ERR "pnp: Out of Memory\n");
-		वापस शून्य;
-	पूर्ण
-	वापस result;
-पूर्ण
+	if (!result) {
+		printk(KERN_ERR "pnp: Out of Memory\n");
+		return NULL;
+	}
+	return result;
+}
 
-अटल व्योम pnp_हटाओ_protocol(काष्ठा pnp_protocol *protocol)
-अणु
+static void pnp_remove_protocol(struct pnp_protocol *protocol)
+{
 	mutex_lock(&pnp_lock);
 	list_del(&protocol->protocol_list);
 	mutex_unlock(&pnp_lock);
-पूर्ण
+}
 
 /**
- * pnp_रेजिस्टर_protocol - adds a pnp protocol to the pnp layer
- * @protocol: poपूर्णांकer to the corresponding pnp_protocol काष्ठाure
+ * pnp_register_protocol - adds a pnp protocol to the pnp layer
+ * @protocol: pointer to the corresponding pnp_protocol structure
  *
  *  Ex protocols: ISAPNP, PNPBIOS, etc
  */
-पूर्णांक pnp_रेजिस्टर_protocol(काष्ठा pnp_protocol *protocol)
-अणु
-	काष्ठा list_head *pos;
-	पूर्णांक nodक्रमागत, ret;
+int pnp_register_protocol(struct pnp_protocol *protocol)
+{
+	struct list_head *pos;
+	int nodenum, ret;
 
 	INIT_LIST_HEAD(&protocol->devices);
 	INIT_LIST_HEAD(&protocol->cards);
-	nodक्रमागत = 0;
+	nodenum = 0;
 
 	mutex_lock(&pnp_lock);
 
 	/* assign the lowest unused number */
-	list_क्रम_each(pos, &pnp_protocols) अणु
-		काष्ठा pnp_protocol *cur = to_pnp_protocol(pos);
-		अगर (cur->number == nodक्रमागत) अणु
+	list_for_each(pos, &pnp_protocols) {
+		struct pnp_protocol *cur = to_pnp_protocol(pos);
+		if (cur->number == nodenum) {
 			pos = &pnp_protocols;
-			nodक्रमागत++;
-		पूर्ण
-	पूर्ण
+			nodenum++;
+		}
+	}
 
-	protocol->number = nodक्रमागत;
-	dev_set_name(&protocol->dev, "pnp%d", nodक्रमागत);
+	protocol->number = nodenum;
+	dev_set_name(&protocol->dev, "pnp%d", nodenum);
 
 	list_add_tail(&protocol->protocol_list, &pnp_protocols);
 
 	mutex_unlock(&pnp_lock);
 
-	ret = device_रेजिस्टर(&protocol->dev);
-	अगर (ret)
-		pnp_हटाओ_protocol(protocol);
+	ret = device_register(&protocol->dev);
+	if (ret)
+		pnp_remove_protocol(protocol);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * pnp_unरेजिस्टर_protocol - हटाओs a pnp protocol from the pnp layer
- * @protocol: poपूर्णांकer to the corresponding pnp_protocol काष्ठाure
+ * pnp_unregister_protocol - removes a pnp protocol from the pnp layer
+ * @protocol: pointer to the corresponding pnp_protocol structure
  */
-व्योम pnp_unरेजिस्टर_protocol(काष्ठा pnp_protocol *protocol)
-अणु
-	pnp_हटाओ_protocol(protocol);
-	device_unरेजिस्टर(&protocol->dev);
-पूर्ण
+void pnp_unregister_protocol(struct pnp_protocol *protocol)
+{
+	pnp_remove_protocol(protocol);
+	device_unregister(&protocol->dev);
+}
 
-अटल व्योम pnp_मुक्त_ids(काष्ठा pnp_dev *dev)
-अणु
-	काष्ठा pnp_id *id;
-	काष्ठा pnp_id *next;
+static void pnp_free_ids(struct pnp_dev *dev)
+{
+	struct pnp_id *id;
+	struct pnp_id *next;
 
 	id = dev->id;
-	जबतक (id) अणु
+	while (id) {
 		next = id->next;
-		kमुक्त(id);
+		kfree(id);
 		id = next;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम pnp_मुक्त_resource(काष्ठा pnp_resource *pnp_res)
-अणु
+void pnp_free_resource(struct pnp_resource *pnp_res)
+{
 	list_del(&pnp_res->list);
-	kमुक्त(pnp_res);
-पूर्ण
+	kfree(pnp_res);
+}
 
-व्योम pnp_मुक्त_resources(काष्ठा pnp_dev *dev)
-अणु
-	काष्ठा pnp_resource *pnp_res, *पंचांगp;
+void pnp_free_resources(struct pnp_dev *dev)
+{
+	struct pnp_resource *pnp_res, *tmp;
 
-	list_क्रम_each_entry_safe(pnp_res, पंचांगp, &dev->resources, list) अणु
-		pnp_मुक्त_resource(pnp_res);
-	पूर्ण
-पूर्ण
+	list_for_each_entry_safe(pnp_res, tmp, &dev->resources, list) {
+		pnp_free_resource(pnp_res);
+	}
+}
 
-अटल व्योम pnp_release_device(काष्ठा device *dmdev)
-अणु
-	काष्ठा pnp_dev *dev = to_pnp_dev(dmdev);
+static void pnp_release_device(struct device *dmdev)
+{
+	struct pnp_dev *dev = to_pnp_dev(dmdev);
 
-	pnp_मुक्त_ids(dev);
-	pnp_मुक्त_resources(dev);
-	pnp_मुक्त_options(dev);
-	kमुक्त(dev);
-पूर्ण
+	pnp_free_ids(dev);
+	pnp_free_resources(dev);
+	pnp_free_options(dev);
+	kfree(dev);
+}
 
-काष्ठा pnp_dev *pnp_alloc_dev(काष्ठा pnp_protocol *protocol, पूर्णांक id,
-			      स्थिर अक्षर *pnpid)
-अणु
-	काष्ठा pnp_dev *dev;
-	काष्ठा pnp_id *dev_id;
+struct pnp_dev *pnp_alloc_dev(struct pnp_protocol *protocol, int id,
+			      const char *pnpid)
+{
+	struct pnp_dev *dev;
+	struct pnp_id *dev_id;
 
-	dev = kzalloc(माप(काष्ठा pnp_dev), GFP_KERNEL);
-	अगर (!dev)
-		वापस शून्य;
+	dev = kzalloc(sizeof(struct pnp_dev), GFP_KERNEL);
+	if (!dev)
+		return NULL;
 
 	INIT_LIST_HEAD(&dev->resources);
 	INIT_LIST_HEAD(&dev->options);
@@ -164,25 +163,25 @@ EXPORT_SYMBOL(pnp_platक्रमm_devices);
 	dev_set_name(&dev->dev, "%02x:%02x", dev->protocol->number, dev->number);
 
 	dev_id = pnp_add_id(dev, pnpid);
-	अगर (!dev_id) अणु
-		kमुक्त(dev);
-		वापस शून्य;
-	पूर्ण
+	if (!dev_id) {
+		kfree(dev);
+		return NULL;
+	}
 
-	वापस dev;
-पूर्ण
+	return dev;
+}
 
-अटल व्योम pnp_delist_device(काष्ठा pnp_dev *dev)
-अणु
+static void pnp_delist_device(struct pnp_dev *dev)
+{
 	mutex_lock(&pnp_lock);
 	list_del(&dev->global_list);
 	list_del(&dev->protocol_list);
 	mutex_unlock(&pnp_lock);
-पूर्ण
+}
 
-पूर्णांक __pnp_add_device(काष्ठा pnp_dev *dev)
-अणु
-	पूर्णांक ret;
+int __pnp_add_device(struct pnp_dev *dev)
+{
+	int ret;
 
 	pnp_fixup_device(dev);
 	dev->status = PNP_READY;
@@ -194,61 +193,61 @@ EXPORT_SYMBOL(pnp_platक्रमm_devices);
 
 	mutex_unlock(&pnp_lock);
 
-	ret = device_रेजिस्टर(&dev->dev);
-	अगर (ret)
+	ret = device_register(&dev->dev);
+	if (ret)
 		pnp_delist_device(dev);
-	अन्यथा अगर (dev->protocol->can_wakeup)
+	else if (dev->protocol->can_wakeup)
 		device_set_wakeup_capable(&dev->dev,
 				dev->protocol->can_wakeup(dev));
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * pnp_add_device - adds a pnp device to the pnp layer
- * @dev: poपूर्णांकer to dev to add
+ * @dev: pointer to dev to add
  *
- *  adds to driver model, name database, fixups, पूर्णांकerface, etc.
+ *  adds to driver model, name database, fixups, interface, etc.
  */
-पूर्णांक pnp_add_device(काष्ठा pnp_dev *dev)
-अणु
-	पूर्णांक ret;
-	अक्षर buf[128];
-	पूर्णांक len = 0;
-	काष्ठा pnp_id *id;
+int pnp_add_device(struct pnp_dev *dev)
+{
+	int ret;
+	char buf[128];
+	int len = 0;
+	struct pnp_id *id;
 
-	अगर (dev->card)
-		वापस -EINVAL;
+	if (dev->card)
+		return -EINVAL;
 
 	ret = __pnp_add_device(dev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	buf[0] = '\0';
-	क्रम (id = dev->id; id; id = id->next)
-		len += scnम_लिखो(buf + len, माप(buf) - len, " %s", id->id);
+	for (id = dev->id; id; id = id->next)
+		len += scnprintf(buf + len, sizeof(buf) - len, " %s", id->id);
 
-	dev_prपूर्णांकk(KERN_DEBUG, &dev->dev, "%s device, IDs%s (%s)\n",
+	dev_printk(KERN_DEBUG, &dev->dev, "%s device, IDs%s (%s)\n",
 		   dev->protocol->name, buf,
 		   dev->active ? "active" : "disabled");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम __pnp_हटाओ_device(काष्ठा pnp_dev *dev)
-अणु
+void __pnp_remove_device(struct pnp_dev *dev)
+{
 	pnp_delist_device(dev);
-	device_unरेजिस्टर(&dev->dev);
-पूर्ण
+	device_unregister(&dev->dev);
+}
 
-अटल पूर्णांक __init pnp_init(व्योम)
-अणु
-	वापस bus_रेजिस्टर(&pnp_bus_type);
-पूर्ण
+static int __init pnp_init(void)
+{
+	return bus_register(&pnp_bus_type);
+}
 
 subsys_initcall(pnp_init);
 
-पूर्णांक pnp_debug;
+int pnp_debug;
 
-#अगर defined(CONFIG_PNP_DEBUG_MESSAGES)
-module_param_named(debug, pnp_debug, पूर्णांक, 0644);
-#पूर्ण_अगर
+#if defined(CONFIG_PNP_DEBUG_MESSAGES)
+module_param_named(debug, pnp_debug, int, 0644);
+#endif

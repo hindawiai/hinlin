@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 //
 // Copyright (c) 2006-2008 Simtec Electronics
 //	http://armlinux.simtec.co.uk/
@@ -7,93 +6,93 @@
 //
 // S3C2412/S3C2443 (PL093 based) IO timing support
 
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/cpufreq.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/device.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/err.h>
-#समावेश <linux/slab.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/interrupt.h>
+#include <linux/ioport.h>
+#include <linux/cpufreq.h>
+#include <linux/seq_file.h>
+#include <linux/device.h>
+#include <linux/delay.h>
+#include <linux/clk.h>
+#include <linux/err.h>
+#include <linux/slab.h>
 
-#समावेश <linux/amba/pl093.h>
+#include <linux/amba/pl093.h>
 
-#समावेश <यंत्र/mach/arch.h>
-#समावेश <यंत्र/mach/map.h>
+#include <asm/mach/arch.h>
+#include <asm/mach/map.h>
 
-#समावेश "cpu.h"
-#समावेश <linux/soc/samsung/s3c-cpufreq-core.h>
+#include "cpu.h"
+#include <linux/soc/samsung/s3c-cpufreq-core.h>
 
-#समावेश "s3c2412.h"
+#include "s3c2412.h"
 
-#घोषणा prपूर्णांक_ns(x) ((x) / 10), ((x) % 10)
+#define print_ns(x) ((x) / 10), ((x) % 10)
 
 /**
- * s3c2412_prपूर्णांक_timing - prपूर्णांक timing inक्रमmation via prपूर्णांकk.
- * @pfx: The prefix to prपूर्णांक each line with.
- * @iot: The IO timing inक्रमmation
+ * s3c2412_print_timing - print timing information via printk.
+ * @pfx: The prefix to print each line with.
+ * @iot: The IO timing information
  */
-अटल व्योम s3c2412_prपूर्णांक_timing(स्थिर अक्षर *pfx, काष्ठा s3c_iotimings *iot)
-अणु
-	काष्ठा s3c2412_iobank_timing *bt;
-	अचिन्हित पूर्णांक bank;
+static void s3c2412_print_timing(const char *pfx, struct s3c_iotimings *iot)
+{
+	struct s3c2412_iobank_timing *bt;
+	unsigned int bank;
 
-	क्रम (bank = 0; bank < MAX_BANKS; bank++) अणु
+	for (bank = 0; bank < MAX_BANKS; bank++) {
 		bt = iot->bank[bank].io_2412;
-		अगर (!bt)
-			जारी;
+		if (!bt)
+			continue;
 
-		prपूर्णांकk(KERN_DEBUG "%s: %d: idcy=%d.%d wstrd=%d.%d wstwr=%d,%d"
+		printk(KERN_DEBUG "%s: %d: idcy=%d.%d wstrd=%d.%d wstwr=%d,%d"
 		       "wstoen=%d.%d wstwen=%d.%d wstbrd=%d.%d\n", pfx, bank,
-		       prपूर्णांक_ns(bt->idcy),
-		       prपूर्णांक_ns(bt->wstrd),
-		       prपूर्णांक_ns(bt->wstwr),
-		       prपूर्णांक_ns(bt->wstoen),
-		       prपूर्णांक_ns(bt->wstwen),
-		       prपूर्णांक_ns(bt->wstbrd));
-	पूर्ण
-पूर्ण
+		       print_ns(bt->idcy),
+		       print_ns(bt->wstrd),
+		       print_ns(bt->wstwr),
+		       print_ns(bt->wstoen),
+		       print_ns(bt->wstwen),
+		       print_ns(bt->wstbrd));
+	}
+}
 
 /**
- * to_भाग - turn a cycle length पूर्णांकo a भागisor setting.
- * @cyc_tns: The cycle समय in 10ths of nanoseconds.
- * @clk_tns: The घड़ी period in 10ths of nanoseconds.
+ * to_div - turn a cycle length into a divisor setting.
+ * @cyc_tns: The cycle time in 10ths of nanoseconds.
+ * @clk_tns: The clock period in 10ths of nanoseconds.
  */
-अटल अंतरभूत अचिन्हित पूर्णांक to_भाग(अचिन्हित पूर्णांक cyc_tns, अचिन्हित पूर्णांक clk_tns)
-अणु
-	वापस cyc_tns ? DIV_ROUND_UP(cyc_tns, clk_tns) : 0;
-पूर्ण
+static inline unsigned int to_div(unsigned int cyc_tns, unsigned int clk_tns)
+{
+	return cyc_tns ? DIV_ROUND_UP(cyc_tns, clk_tns) : 0;
+}
 
 /**
- * calc_timing - calculate timing भागisor value and check in range.
- * @hwपंचांग: The hardware timing in 10ths of nanoseconds.
- * @clk_tns: The घड़ी period in 10ths of nanoseconds.
- * @err: Poपूर्णांकer to err variable to update in event of failure.
+ * calc_timing - calculate timing divisor value and check in range.
+ * @hwtm: The hardware timing in 10ths of nanoseconds.
+ * @clk_tns: The clock period in 10ths of nanoseconds.
+ * @err: Pointer to err variable to update in event of failure.
  */
-अटल अचिन्हित पूर्णांक calc_timing(अचिन्हित पूर्णांक hwपंचांग, अचिन्हित पूर्णांक clk_tns,
-				अचिन्हित पूर्णांक *err)
-अणु
-	अचिन्हित पूर्णांक ret = to_भाग(hwपंचांग, clk_tns);
+static unsigned int calc_timing(unsigned int hwtm, unsigned int clk_tns,
+				unsigned int *err)
+{
+	unsigned int ret = to_div(hwtm, clk_tns);
 
-	अगर (ret > 0xf)
+	if (ret > 0xf)
 		*err = -EINVAL;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * s3c2412_calc_bank - calculate the bank भागisor settings.
+ * s3c2412_calc_bank - calculate the bank divisor settings.
  * @cfg: The current frequency configuration.
  * @bt: The bank timing.
  */
-अटल पूर्णांक s3c2412_calc_bank(काष्ठा s3c_cpufreq_config *cfg,
-			     काष्ठा s3c2412_iobank_timing *bt)
-अणु
-	अचिन्हित पूर्णांक hclk = cfg->freq.hclk_tns;
-	पूर्णांक err = 0;
+static int s3c2412_calc_bank(struct s3c_cpufreq_config *cfg,
+			     struct s3c2412_iobank_timing *bt)
+{
+	unsigned int hclk = cfg->freq.hclk_tns;
+	int err = 0;
 
 	bt->smbidcyr = calc_timing(bt->idcy, hclk, &err);
 	bt->smbwstrd = calc_timing(bt->wstrd, hclk, &err);
@@ -102,170 +101,170 @@
 	bt->smbwstwen = calc_timing(bt->wstwen, hclk, &err);
 	bt->smbwstbrd = calc_timing(bt->wstbrd, hclk, &err);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /**
- * s3c2412_iotiming_debugfs - debugfs show io bank timing inक्रमmation
- * @seq: The seq_file to ग_लिखो output to using seq_म_लिखो().
+ * s3c2412_iotiming_debugfs - debugfs show io bank timing information
+ * @seq: The seq_file to write output to using seq_printf().
  * @cfg: The current configuration.
- * @iob: The IO bank inक्रमmation to decode.
+ * @iob: The IO bank information to decode.
 */
-व्योम s3c2412_iotiming_debugfs(काष्ठा seq_file *seq,
-			      काष्ठा s3c_cpufreq_config *cfg,
-			      जोड़ s3c_iobank *iob)
-अणु
-	काष्ठा s3c2412_iobank_timing *bt = iob->io_2412;
+void s3c2412_iotiming_debugfs(struct seq_file *seq,
+			      struct s3c_cpufreq_config *cfg,
+			      union s3c_iobank *iob)
+{
+	struct s3c2412_iobank_timing *bt = iob->io_2412;
 
-	seq_म_लिखो(seq,
+	seq_printf(seq,
 		   "\tRead: idcy=%d.%d wstrd=%d.%d wstwr=%d,%d"
 		   "wstoen=%d.%d wstwen=%d.%d wstbrd=%d.%d\n",
-		   prपूर्णांक_ns(bt->idcy),
-		   prपूर्णांक_ns(bt->wstrd),
-		   prपूर्णांक_ns(bt->wstwr),
-		   prपूर्णांक_ns(bt->wstoen),
-		   prपूर्णांक_ns(bt->wstwen),
-		   prपूर्णांक_ns(bt->wstbrd));
-पूर्ण
+		   print_ns(bt->idcy),
+		   print_ns(bt->wstrd),
+		   print_ns(bt->wstwr),
+		   print_ns(bt->wstoen),
+		   print_ns(bt->wstwen),
+		   print_ns(bt->wstbrd));
+}
 
 /**
- * s3c2412_iotiming_calc - calculate all the bank भागisor settings.
+ * s3c2412_iotiming_calc - calculate all the bank divisor settings.
  * @cfg: The current frequency configuration.
- * @iot: The bank timing inक्रमmation.
+ * @iot: The bank timing information.
  *
- * Calculate the timing inक्रमmation क्रम all the banks that are
+ * Calculate the timing information for all the banks that are
  * configured as IO, using s3c2412_calc_bank().
  */
-पूर्णांक s3c2412_iotiming_calc(काष्ठा s3c_cpufreq_config *cfg,
-			  काष्ठा s3c_iotimings *iot)
-अणु
-	काष्ठा s3c2412_iobank_timing *bt;
-	पूर्णांक bank;
-	पूर्णांक ret;
+int s3c2412_iotiming_calc(struct s3c_cpufreq_config *cfg,
+			  struct s3c_iotimings *iot)
+{
+	struct s3c2412_iobank_timing *bt;
+	int bank;
+	int ret;
 
-	क्रम (bank = 0; bank < MAX_BANKS; bank++) अणु
+	for (bank = 0; bank < MAX_BANKS; bank++) {
 		bt = iot->bank[bank].io_2412;
-		अगर (!bt)
-			जारी;
+		if (!bt)
+			continue;
 
 		ret = s3c2412_calc_bank(cfg, bt);
-		अगर (ret) अणु
-			prपूर्णांकk(KERN_ERR "%s: cannot calculate bank %d io\n",
+		if (ret) {
+			printk(KERN_ERR "%s: cannot calculate bank %d io\n",
 			       __func__, bank);
-			जाओ err;
-		पूर्ण
-	पूर्ण
+			goto err;
+		}
+	}
 
-	वापस 0;
+	return 0;
  err:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * s3c2412_iotiming_set - set the timing inक्रमmation
+ * s3c2412_iotiming_set - set the timing information
  * @cfg: The current frequency configuration.
- * @iot: The bank timing inक्रमmation.
+ * @iot: The bank timing information.
  *
- * Set the IO bank inक्रमmation from the details calculated earlier from
+ * Set the IO bank information from the details calculated earlier from
  * calling s3c2412_iotiming_calc().
  */
-व्योम s3c2412_iotiming_set(काष्ठा s3c_cpufreq_config *cfg,
-			  काष्ठा s3c_iotimings *iot)
-अणु
-	काष्ठा s3c2412_iobank_timing *bt;
-	व्योम __iomem *regs;
-	पूर्णांक bank;
+void s3c2412_iotiming_set(struct s3c_cpufreq_config *cfg,
+			  struct s3c_iotimings *iot)
+{
+	struct s3c2412_iobank_timing *bt;
+	void __iomem *regs;
+	int bank;
 
-	/* set the io timings from the specअगरier */
+	/* set the io timings from the specifier */
 
-	क्रम (bank = 0; bank < MAX_BANKS; bank++) अणु
+	for (bank = 0; bank < MAX_BANKS; bank++) {
 		bt = iot->bank[bank].io_2412;
-		अगर (!bt)
-			जारी;
+		if (!bt)
+			continue;
 
 		regs = S3C2412_SSMC_BANK(bank);
 
-		__raw_ग_लिखोl(bt->smbidcyr, regs + SMBIDCYR);
-		__raw_ग_लिखोl(bt->smbwstrd, regs + SMBWSTRDR);
-		__raw_ग_लिखोl(bt->smbwstwr, regs + SMBWSTWRR);
-		__raw_ग_लिखोl(bt->smbwstoen, regs + SMBWSTOENR);
-		__raw_ग_लिखोl(bt->smbwstwen, regs + SMBWSTWENR);
-		__raw_ग_लिखोl(bt->smbwstbrd, regs + SMBWSTBRDR);
-	पूर्ण
-पूर्ण
+		__raw_writel(bt->smbidcyr, regs + SMBIDCYR);
+		__raw_writel(bt->smbwstrd, regs + SMBWSTRDR);
+		__raw_writel(bt->smbwstwr, regs + SMBWSTWRR);
+		__raw_writel(bt->smbwstoen, regs + SMBWSTOENR);
+		__raw_writel(bt->smbwstwen, regs + SMBWSTWENR);
+		__raw_writel(bt->smbwstbrd, regs + SMBWSTBRDR);
+	}
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक s3c2412_decode_timing(अचिन्हित पूर्णांक घड़ी, u32 reg)
-अणु
-	वापस (reg & 0xf) * घड़ी;
-पूर्ण
+static inline unsigned int s3c2412_decode_timing(unsigned int clock, u32 reg)
+{
+	return (reg & 0xf) * clock;
+}
 
-अटल व्योम s3c2412_iotiming_getbank(काष्ठा s3c_cpufreq_config *cfg,
-				     काष्ठा s3c2412_iobank_timing *bt,
-				     अचिन्हित पूर्णांक bank)
-अणु
-	अचिन्हित दीर्घ clk = cfg->freq.hclk_tns;  /* ssmc घड़ी??? */
-	व्योम __iomem *regs = S3C2412_SSMC_BANK(bank);
+static void s3c2412_iotiming_getbank(struct s3c_cpufreq_config *cfg,
+				     struct s3c2412_iobank_timing *bt,
+				     unsigned int bank)
+{
+	unsigned long clk = cfg->freq.hclk_tns;  /* ssmc clock??? */
+	void __iomem *regs = S3C2412_SSMC_BANK(bank);
 
-	bt->idcy = s3c2412_decode_timing(clk, __raw_पढ़ोl(regs + SMBIDCYR));
-	bt->wstrd = s3c2412_decode_timing(clk, __raw_पढ़ोl(regs + SMBWSTRDR));
-	bt->wstoen = s3c2412_decode_timing(clk, __raw_पढ़ोl(regs + SMBWSTOENR));
-	bt->wstwen = s3c2412_decode_timing(clk, __raw_पढ़ोl(regs + SMBWSTWENR));
-	bt->wstbrd = s3c2412_decode_timing(clk, __raw_पढ़ोl(regs + SMBWSTBRDR));
-पूर्ण
+	bt->idcy = s3c2412_decode_timing(clk, __raw_readl(regs + SMBIDCYR));
+	bt->wstrd = s3c2412_decode_timing(clk, __raw_readl(regs + SMBWSTRDR));
+	bt->wstoen = s3c2412_decode_timing(clk, __raw_readl(regs + SMBWSTOENR));
+	bt->wstwen = s3c2412_decode_timing(clk, __raw_readl(regs + SMBWSTWENR));
+	bt->wstbrd = s3c2412_decode_timing(clk, __raw_readl(regs + SMBWSTBRDR));
+}
 
 /**
- * bank_is_io - वापस true अगर bank is (possibly) IO.
+ * bank_is_io - return true if bank is (possibly) IO.
  * @bank: The bank number.
  * @bankcfg: The value of S3C2412_EBI_BANKCFG.
  */
-अटल अंतरभूत bool bank_is_io(अचिन्हित पूर्णांक bank, u32 bankcfg)
-अणु
-	अगर (bank < 2)
-		वापस true;
+static inline bool bank_is_io(unsigned int bank, u32 bankcfg)
+{
+	if (bank < 2)
+		return true;
 
-	वापस !(bankcfg & (1 << bank));
-पूर्ण
+	return !(bankcfg & (1 << bank));
+}
 
-पूर्णांक s3c2412_iotiming_get(काष्ठा s3c_cpufreq_config *cfg,
-			 काष्ठा s3c_iotimings *timings)
-अणु
-	काष्ठा s3c2412_iobank_timing *bt;
-	u32 bankcfg = __raw_पढ़ोl(S3C2412_EBI_BANKCFG);
-	अचिन्हित पूर्णांक bank;
+int s3c2412_iotiming_get(struct s3c_cpufreq_config *cfg,
+			 struct s3c_iotimings *timings)
+{
+	struct s3c2412_iobank_timing *bt;
+	u32 bankcfg = __raw_readl(S3C2412_EBI_BANKCFG);
+	unsigned int bank;
 
 	/* look through all banks to see what is currently set. */
 
-	क्रम (bank = 0; bank < MAX_BANKS; bank++) अणु
-		अगर (!bank_is_io(bank, bankcfg))
-			जारी;
+	for (bank = 0; bank < MAX_BANKS; bank++) {
+		if (!bank_is_io(bank, bankcfg))
+			continue;
 
-		bt = kzalloc(माप(*bt), GFP_KERNEL);
-		अगर (!bt)
-			वापस -ENOMEM;
+		bt = kzalloc(sizeof(*bt), GFP_KERNEL);
+		if (!bt)
+			return -ENOMEM;
 
 		timings->bank[bank].io_2412 = bt;
 		s3c2412_iotiming_getbank(cfg, bt, bank);
-	पूर्ण
+	}
 
-	s3c2412_prपूर्णांक_timing("get", timings);
-	वापस 0;
-पूर्ण
+	s3c2412_print_timing("get", timings);
+	return 0;
+}
 
-/* this is in here as it is so small, it करोesn't currently warrant a file
+/* this is in here as it is so small, it doesn't currently warrant a file
  * to itself. We expect that any s3c24xx needing this is going to also
  * need the iotiming support.
  */
-व्योम s3c2412_cpufreq_setrefresh(काष्ठा s3c_cpufreq_config *cfg)
-अणु
-	काष्ठा s3c_cpufreq_board *board = cfg->board;
+void s3c2412_cpufreq_setrefresh(struct s3c_cpufreq_config *cfg)
+{
+	struct s3c_cpufreq_board *board = cfg->board;
 	u32 refresh;
 
-	WARN_ON(board == शून्य);
+	WARN_ON(board == NULL);
 
-	/* Reduce both the refresh समय (in ns) and the frequency (in MHz)
-	 * करोwn to ensure that we करो not overflow 32 bit numbers.
+	/* Reduce both the refresh time (in ns) and the frequency (in MHz)
+	 * down to ensure that we do not overflow 32 bit numbers.
 	 *
-	 * This should work क्रम HCLK up to 133MHz and refresh period up
+	 * This should work for HCLK up to 133MHz and refresh period up
 	 * to 30usec.
 	 */
 
@@ -273,7 +272,7 @@
 	refresh = DIV_ROUND_UP(refresh, (1000 * 1000)); /* apply scale  */
 	refresh &= ((1 << 16) - 1);
 
-	s3c_freq_dbg("%s: refresh value %u\n", __func__, (अचिन्हित पूर्णांक)refresh);
+	s3c_freq_dbg("%s: refresh value %u\n", __func__, (unsigned int)refresh);
 
-	__raw_ग_लिखोl(refresh, S3C2412_REFRESH);
-पूर्ण
+	__raw_writel(refresh, S3C2412_REFRESH);
+}

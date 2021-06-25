@@ -1,33 +1,32 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
-#अगर_अघोषित __ASM_CSKY_CACHE_H
-#घोषणा __ASM_CSKY_CACHE_H
+#ifndef __ASM_CSKY_CACHE_H
+#define __ASM_CSKY_CACHE_H
 
 /* bytes per L1 cache line */
-#घोषणा L1_CACHE_SHIFT	CONFIG_L1_CACHE_SHIFT
+#define L1_CACHE_SHIFT	CONFIG_L1_CACHE_SHIFT
 
-#घोषणा L1_CACHE_BYTES	(1 << L1_CACHE_SHIFT)
+#define L1_CACHE_BYTES	(1 << L1_CACHE_SHIFT)
 
-#घोषणा ARCH_DMA_MINALIGN	L1_CACHE_BYTES
+#define ARCH_DMA_MINALIGN	L1_CACHE_BYTES
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-व्योम dcache_wb_line(अचिन्हित दीर्घ start);
+void dcache_wb_line(unsigned long start);
 
-व्योम icache_inv_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end);
-व्योम icache_inv_all(व्योम);
-व्योम local_icache_inv_all(व्योम *priv);
+void icache_inv_range(unsigned long start, unsigned long end);
+void icache_inv_all(void);
+void local_icache_inv_all(void *priv);
 
-व्योम dcache_wb_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end);
-व्योम dcache_wbinv_all(व्योम);
+void dcache_wb_range(unsigned long start, unsigned long end);
+void dcache_wbinv_all(void);
 
-व्योम cache_wbinv_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end);
-व्योम cache_wbinv_all(व्योम);
+void cache_wbinv_range(unsigned long start, unsigned long end);
+void cache_wbinv_all(void);
 
-व्योम dma_wbinv_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end);
-व्योम dma_inv_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end);
-व्योम dma_wb_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end);
+void dma_wbinv_range(unsigned long start, unsigned long end);
+void dma_inv_range(unsigned long start, unsigned long end);
+void dma_wb_range(unsigned long start, unsigned long end);
 
-#पूर्ण_अगर
-#पूर्ण_अगर  /* __ASM_CSKY_CACHE_H */
+#endif
+#endif  /* __ASM_CSKY_CACHE_H */

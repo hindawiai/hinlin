@@ -1,64 +1,63 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _FS_CEPH_STRING_TABLE_H
-#घोषणा _FS_CEPH_STRING_TABLE_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _FS_CEPH_STRING_TABLE_H
+#define _FS_CEPH_STRING_TABLE_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/kref.h>
-#समावेश <linux/rbtree.h>
-#समावेश <linux/rcupdate.h>
+#include <linux/types.h>
+#include <linux/kref.h>
+#include <linux/rbtree.h>
+#include <linux/rcupdate.h>
 
-काष्ठा ceph_string अणु
-	काष्ठा kref kref;
-	जोड़ अणु
-		काष्ठा rb_node node;
-		काष्ठा rcu_head rcu;
-	पूर्ण;
-	माप_प्रकार len;
-	अक्षर str[];
-पूर्ण;
+struct ceph_string {
+	struct kref kref;
+	union {
+		struct rb_node node;
+		struct rcu_head rcu;
+	};
+	size_t len;
+	char str[];
+};
 
-बाह्य व्योम ceph_release_string(काष्ठा kref *ref);
-बाह्य काष्ठा ceph_string *ceph_find_or_create_string(स्थिर अक्षर *str,
-						      माप_प्रकार len);
-बाह्य bool ceph_strings_empty(व्योम);
+extern void ceph_release_string(struct kref *ref);
+extern struct ceph_string *ceph_find_or_create_string(const char *str,
+						      size_t len);
+extern bool ceph_strings_empty(void);
 
-अटल अंतरभूत काष्ठा ceph_string *ceph_get_string(काष्ठा ceph_string *str)
-अणु
+static inline struct ceph_string *ceph_get_string(struct ceph_string *str)
+{
 	kref_get(&str->kref);
-	वापस str;
-पूर्ण
+	return str;
+}
 
-अटल अंतरभूत व्योम ceph_put_string(काष्ठा ceph_string *str)
-अणु
-	अगर (!str)
-		वापस;
+static inline void ceph_put_string(struct ceph_string *str)
+{
+	if (!str)
+		return;
 	kref_put(&str->kref, ceph_release_string);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक ceph_compare_string(काष्ठा ceph_string *cs,
-				      स्थिर अक्षर* str, माप_प्रकार len)
-अणु
-	माप_प्रकार cs_len = cs ? cs->len : 0;
-	अगर (cs_len != len)
-		वापस cs_len - len;
-	अगर (len == 0)
-		वापस 0;
-	वापस म_भेदन(cs->str, str, len);
-पूर्ण
+static inline int ceph_compare_string(struct ceph_string *cs,
+				      const char* str, size_t len)
+{
+	size_t cs_len = cs ? cs->len : 0;
+	if (cs_len != len)
+		return cs_len - len;
+	if (len == 0)
+		return 0;
+	return strncmp(cs->str, str, len);
+}
 
-#घोषणा ceph_try_get_string(x)					\
-(अणु								\
-	काष्ठा ceph_string *___str;				\
-	rcu_पढ़ो_lock();					\
-	क्रम (;;) अणु						\
+#define ceph_try_get_string(x)					\
+({								\
+	struct ceph_string *___str;				\
+	rcu_read_lock();					\
+	for (;;) {						\
 		___str = rcu_dereference(x);			\
-		अगर (!___str ||					\
+		if (!___str ||					\
 		    kref_get_unless_zero(&___str->kref))	\
-			अवरोध;					\
-	पूर्ण							\
-	rcu_पढ़ो_unlock();					\
+			break;					\
+	}							\
+	rcu_read_unlock();					\
 	(___str);						\
-पूर्ण)
+})
 
-#पूर्ण_अगर
+#endif

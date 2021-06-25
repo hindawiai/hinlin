@@ -1,54 +1,53 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright 2017 Thomas Gleixner <tglx@linutronix.de>
 
-#समावेश <linux/irqकरोमुख्य.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/uaccess.h>
+#include <linux/irqdomain.h>
+#include <linux/irq.h>
+#include <linux/uaccess.h>
 
-#समावेश "internals.h"
+#include "internals.h"
 
-अटल काष्ठा dentry *irq_dir;
+static struct dentry *irq_dir;
 
-काष्ठा irq_bit_descr अणु
-	अचिन्हित पूर्णांक	mask;
-	अक्षर		*name;
-पूर्ण;
-#घोषणा BIT_MASK_DESCR(m)	अणु .mask = m, .name = #m पूर्ण
+struct irq_bit_descr {
+	unsigned int	mask;
+	char		*name;
+};
+#define BIT_MASK_DESCR(m)	{ .mask = m, .name = #m }
 
-अटल व्योम irq_debug_show_bits(काष्ठा seq_file *m, पूर्णांक ind, अचिन्हित पूर्णांक state,
-				स्थिर काष्ठा irq_bit_descr *sd, पूर्णांक size)
-अणु
-	पूर्णांक i;
+static void irq_debug_show_bits(struct seq_file *m, int ind, unsigned int state,
+				const struct irq_bit_descr *sd, int size)
+{
+	int i;
 
-	क्रम (i = 0; i < size; i++, sd++) अणु
-		अगर (state & sd->mask)
-			seq_म_लिखो(m, "%*s%s\n", ind + 12, "", sd->name);
-	पूर्ण
-पूर्ण
+	for (i = 0; i < size; i++, sd++) {
+		if (state & sd->mask)
+			seq_printf(m, "%*s%s\n", ind + 12, "", sd->name);
+	}
+}
 
-#अगर_घोषित CONFIG_SMP
-अटल व्योम irq_debug_show_masks(काष्ठा seq_file *m, काष्ठा irq_desc *desc)
-अणु
-	काष्ठा irq_data *data = irq_desc_get_irq_data(desc);
-	काष्ठा cpumask *msk;
+#ifdef CONFIG_SMP
+static void irq_debug_show_masks(struct seq_file *m, struct irq_desc *desc)
+{
+	struct irq_data *data = irq_desc_get_irq_data(desc);
+	struct cpumask *msk;
 
 	msk = irq_data_get_affinity_mask(data);
-	seq_म_लिखो(m, "affinity: %*pbl\n", cpumask_pr_args(msk));
-#अगर_घोषित CONFIG_GENERIC_IRQ_EFFECTIVE_AFF_MASK
+	seq_printf(m, "affinity: %*pbl\n", cpumask_pr_args(msk));
+#ifdef CONFIG_GENERIC_IRQ_EFFECTIVE_AFF_MASK
 	msk = irq_data_get_effective_affinity_mask(data);
-	seq_म_लिखो(m, "effectiv: %*pbl\n", cpumask_pr_args(msk));
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_GENERIC_PENDING_IRQ
+	seq_printf(m, "effectiv: %*pbl\n", cpumask_pr_args(msk));
+#endif
+#ifdef CONFIG_GENERIC_PENDING_IRQ
 	msk = desc->pending_mask;
-	seq_म_लिखो(m, "pending:  %*pbl\n", cpumask_pr_args(msk));
-#पूर्ण_अगर
-पूर्ण
-#अन्यथा
-अटल व्योम irq_debug_show_masks(काष्ठा seq_file *m, काष्ठा irq_desc *desc) अणु पूर्ण
-#पूर्ण_अगर
+	seq_printf(m, "pending:  %*pbl\n", cpumask_pr_args(msk));
+#endif
+}
+#else
+static void irq_debug_show_masks(struct seq_file *m, struct irq_desc *desc) { }
+#endif
 
-अटल स्थिर काष्ठा irq_bit_descr irqchip_flags[] = अणु
+static const struct irq_bit_descr irqchip_flags[] = {
 	BIT_MASK_DESCR(IRQCHIP_SET_TYPE_MASKED),
 	BIT_MASK_DESCR(IRQCHIP_EOI_IF_HANDLED),
 	BIT_MASK_DESCR(IRQCHIP_MASK_ON_SUSPEND),
@@ -59,41 +58,41 @@
 	BIT_MASK_DESCR(IRQCHIP_SUPPORTS_LEVEL_MSI),
 	BIT_MASK_DESCR(IRQCHIP_SUPPORTS_NMI),
 	BIT_MASK_DESCR(IRQCHIP_ENABLE_WAKEUP_ON_SUSPEND),
-पूर्ण;
+};
 
-अटल व्योम
-irq_debug_show_chip(काष्ठा seq_file *m, काष्ठा irq_data *data, पूर्णांक ind)
-अणु
-	काष्ठा irq_chip *chip = data->chip;
+static void
+irq_debug_show_chip(struct seq_file *m, struct irq_data *data, int ind)
+{
+	struct irq_chip *chip = data->chip;
 
-	अगर (!chip) अणु
-		seq_म_लिखो(m, "chip: None\n");
-		वापस;
-	पूर्ण
-	seq_म_लिखो(m, "%*schip:    %s\n", ind, "", chip->name);
-	seq_म_लिखो(m, "%*sflags:   0x%lx\n", ind + 1, "", chip->flags);
+	if (!chip) {
+		seq_printf(m, "chip: None\n");
+		return;
+	}
+	seq_printf(m, "%*schip:    %s\n", ind, "", chip->name);
+	seq_printf(m, "%*sflags:   0x%lx\n", ind + 1, "", chip->flags);
 	irq_debug_show_bits(m, ind, chip->flags, irqchip_flags,
 			    ARRAY_SIZE(irqchip_flags));
-पूर्ण
+}
 
-अटल व्योम
-irq_debug_show_data(काष्ठा seq_file *m, काष्ठा irq_data *data, पूर्णांक ind)
-अणु
-	seq_म_लिखो(m, "%*sdomain:  %s\n", ind, "",
-		   data->करोमुख्य ? data->करोमुख्य->name : "");
-	seq_म_लिखो(m, "%*shwirq:   0x%lx\n", ind + 1, "", data->hwirq);
+static void
+irq_debug_show_data(struct seq_file *m, struct irq_data *data, int ind)
+{
+	seq_printf(m, "%*sdomain:  %s\n", ind, "",
+		   data->domain ? data->domain->name : "");
+	seq_printf(m, "%*shwirq:   0x%lx\n", ind + 1, "", data->hwirq);
 	irq_debug_show_chip(m, data, ind + 1);
-	अगर (data->करोमुख्य && data->करोमुख्य->ops && data->करोमुख्य->ops->debug_show)
-		data->करोमुख्य->ops->debug_show(m, शून्य, data, ind + 1);
-#अगर_घोषित	CONFIG_IRQ_DOMAIN_HIERARCHY
-	अगर (!data->parent_data)
-		वापस;
-	seq_म_लिखो(m, "%*sparent:\n", ind + 1, "");
+	if (data->domain && data->domain->ops && data->domain->ops->debug_show)
+		data->domain->ops->debug_show(m, NULL, data, ind + 1);
+#ifdef	CONFIG_IRQ_DOMAIN_HIERARCHY
+	if (!data->parent_data)
+		return;
+	seq_printf(m, "%*sparent:\n", ind + 1, "");
 	irq_debug_show_data(m, data->parent_data, ind + 4);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल स्थिर काष्ठा irq_bit_descr irqdata_states[] = अणु
+static const struct irq_bit_descr irqdata_states[] = {
 	BIT_MASK_DESCR(IRQ_TYPE_EDGE_RISING),
 	BIT_MASK_DESCR(IRQ_TYPE_EDGE_FALLING),
 	BIT_MASK_DESCR(IRQ_TYPE_LEVEL_HIGH),
@@ -129,9 +128,9 @@ irq_debug_show_data(काष्ठा seq_file *m, काष्ठा irq_data 
 	BIT_MASK_DESCR(IRQD_HANDLE_ENFORCE_IRQCTX),
 
 	BIT_MASK_DESCR(IRQD_IRQ_ENABLED_ON_SUSPEND),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा irq_bit_descr irqdesc_states[] = अणु
+static const struct irq_bit_descr irqdesc_states[] = {
 	BIT_MASK_DESCR(_IRQ_NOPROBE),
 	BIT_MASK_DESCR(_IRQ_NOREQUEST),
 	BIT_MASK_DESCR(_IRQ_NOTHREAD),
@@ -141,9 +140,9 @@ irq_debug_show_data(काष्ठा seq_file *m, काष्ठा irq_data 
 	BIT_MASK_DESCR(_IRQ_IS_POLLED),
 	BIT_MASK_DESCR(_IRQ_DISABLE_UNLAZY),
 	BIT_MASK_DESCR(_IRQ_HIDDEN),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा irq_bit_descr irqdesc_istates[] = अणु
+static const struct irq_bit_descr irqdesc_istates[] = {
 	BIT_MASK_DESCR(IRQS_AUTODETECT),
 	BIT_MASK_DESCR(IRQS_SPURIOUS_DISABLED),
 	BIT_MASK_DESCR(IRQS_POLL_INPROGRESS),
@@ -153,106 +152,106 @@ irq_debug_show_data(काष्ठा seq_file *m, काष्ठा irq_data 
 	BIT_MASK_DESCR(IRQS_PENDING),
 	BIT_MASK_DESCR(IRQS_SUSPENDED),
 	BIT_MASK_DESCR(IRQS_NMI),
-पूर्ण;
+};
 
 
-अटल पूर्णांक irq_debug_show(काष्ठा seq_file *m, व्योम *p)
-अणु
-	काष्ठा irq_desc *desc = m->निजी;
-	काष्ठा irq_data *data;
+static int irq_debug_show(struct seq_file *m, void *p)
+{
+	struct irq_desc *desc = m->private;
+	struct irq_data *data;
 
 	raw_spin_lock_irq(&desc->lock);
 	data = irq_desc_get_irq_data(desc);
-	seq_म_लिखो(m, "handler:  %ps\n", desc->handle_irq);
-	seq_म_लिखो(m, "device:   %s\n", desc->dev_name);
-	seq_म_लिखो(m, "status:   0x%08x\n", desc->status_use_accessors);
+	seq_printf(m, "handler:  %ps\n", desc->handle_irq);
+	seq_printf(m, "device:   %s\n", desc->dev_name);
+	seq_printf(m, "status:   0x%08x\n", desc->status_use_accessors);
 	irq_debug_show_bits(m, 0, desc->status_use_accessors, irqdesc_states,
 			    ARRAY_SIZE(irqdesc_states));
-	seq_म_लिखो(m, "istate:   0x%08x\n", desc->istate);
+	seq_printf(m, "istate:   0x%08x\n", desc->istate);
 	irq_debug_show_bits(m, 0, desc->istate, irqdesc_istates,
 			    ARRAY_SIZE(irqdesc_istates));
-	seq_म_लिखो(m, "ddepth:   %u\n", desc->depth);
-	seq_म_लिखो(m, "wdepth:   %u\n", desc->wake_depth);
-	seq_म_लिखो(m, "dstate:   0x%08x\n", irqd_get(data));
+	seq_printf(m, "ddepth:   %u\n", desc->depth);
+	seq_printf(m, "wdepth:   %u\n", desc->wake_depth);
+	seq_printf(m, "dstate:   0x%08x\n", irqd_get(data));
 	irq_debug_show_bits(m, 0, irqd_get(data), irqdata_states,
 			    ARRAY_SIZE(irqdata_states));
-	seq_म_लिखो(m, "node:     %d\n", irq_data_get_node(data));
+	seq_printf(m, "node:     %d\n", irq_data_get_node(data));
 	irq_debug_show_masks(m, desc);
 	irq_debug_show_data(m, data, 0);
 	raw_spin_unlock_irq(&desc->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक irq_debug_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस single_खोलो(file, irq_debug_show, inode->i_निजी);
-पूर्ण
+static int irq_debug_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, irq_debug_show, inode->i_private);
+}
 
-अटल sमाप_प्रकार irq_debug_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *user_buf,
-			       माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा irq_desc *desc = file_inode(file)->i_निजी;
-	अक्षर buf[8] = अणु 0, पूर्ण;
-	माप_प्रकार size;
+static ssize_t irq_debug_write(struct file *file, const char __user *user_buf,
+			       size_t count, loff_t *ppos)
+{
+	struct irq_desc *desc = file_inode(file)->i_private;
+	char buf[8] = { 0, };
+	size_t size;
 
-	size = min(माप(buf) - 1, count);
-	अगर (copy_from_user(buf, user_buf, size))
-		वापस -EFAULT;
+	size = min(sizeof(buf) - 1, count);
+	if (copy_from_user(buf, user_buf, size))
+		return -EFAULT;
 
-	अगर (!म_भेदन(buf, "trigger", size)) अणु
-		पूर्णांक err = irq_inject_पूर्णांकerrupt(irq_desc_get_irq(desc));
+	if (!strncmp(buf, "trigger", size)) {
+		int err = irq_inject_interrupt(irq_desc_get_irq(desc));
 
-		वापस err ? err : count;
-	पूर्ण
+		return err ? err : count;
+	}
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा file_operations dfs_irq_ops = अणु
-	.खोलो		= irq_debug_खोलो,
-	.ग_लिखो		= irq_debug_ग_लिखो,
-	.पढ़ो		= seq_पढ़ो,
+static const struct file_operations dfs_irq_ops = {
+	.open		= irq_debug_open,
+	.write		= irq_debug_write,
+	.read		= seq_read,
 	.llseek		= seq_lseek,
 	.release	= single_release,
-पूर्ण;
+};
 
-व्योम irq_debugfs_copy_devname(पूर्णांक irq, काष्ठा device *dev)
-अणु
-	काष्ठा irq_desc *desc = irq_to_desc(irq);
-	स्थिर अक्षर *name = dev_name(dev);
+void irq_debugfs_copy_devname(int irq, struct device *dev)
+{
+	struct irq_desc *desc = irq_to_desc(irq);
+	const char *name = dev_name(dev);
 
-	अगर (name)
+	if (name)
 		desc->dev_name = kstrdup(name, GFP_KERNEL);
-पूर्ण
+}
 
-व्योम irq_add_debugfs_entry(अचिन्हित पूर्णांक irq, काष्ठा irq_desc *desc)
-अणु
-	अक्षर name [10];
+void irq_add_debugfs_entry(unsigned int irq, struct irq_desc *desc)
+{
+	char name [10];
 
-	अगर (!irq_dir || !desc || desc->debugfs_file)
-		वापस;
+	if (!irq_dir || !desc || desc->debugfs_file)
+		return;
 
-	प्र_लिखो(name, "%d", irq);
+	sprintf(name, "%d", irq);
 	desc->debugfs_file = debugfs_create_file(name, 0644, irq_dir, desc,
 						 &dfs_irq_ops);
-पूर्ण
+}
 
-अटल पूर्णांक __init irq_debugfs_init(व्योम)
-अणु
-	काष्ठा dentry *root_dir;
-	पूर्णांक irq;
+static int __init irq_debugfs_init(void)
+{
+	struct dentry *root_dir;
+	int irq;
 
-	root_dir = debugfs_create_dir("irq", शून्य);
+	root_dir = debugfs_create_dir("irq", NULL);
 
-	irq_करोमुख्य_debugfs_init(root_dir);
+	irq_domain_debugfs_init(root_dir);
 
 	irq_dir = debugfs_create_dir("irqs", root_dir);
 
 	irq_lock_sparse();
-	क्रम_each_active_irq(irq)
+	for_each_active_irq(irq)
 		irq_add_debugfs_entry(irq, irq_to_desc(irq));
 	irq_unlock_sparse();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 __initcall(irq_debugfs_init);

@@ -1,21 +1,20 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Definitions क्रम IDT RC323434 CPU.
+ * Definitions for IDT RC323434 CPU.
  */
 
-#अगर_अघोषित _ASM_RC32434_RC32434_H_
-#घोषणा _ASM_RC32434_RC32434_H_
+#ifndef _ASM_RC32434_RC32434_H_
+#define _ASM_RC32434_RC32434_H_
 
-#समावेश <linux/delay.h>
-#समावेश <linux/पन.स>
+#include <linux/delay.h>
+#include <linux/io.h>
 
-#घोषणा IDT_CLOCK_MULT		2
+#define IDT_CLOCK_MULT		2
 
 /* cpu pipeline flush */
-अटल अंतरभूत व्योम rc32434_sync(व्योम)
-अणु
-	__यंत्र__ अस्थिर ("sync");
-पूर्ण
+static inline void rc32434_sync(void)
+{
+	__asm__ volatile ("sync");
+}
 
-#पूर्ण_अगर	/* _ASM_RC32434_RC32434_H_ */
+#endif	/* _ASM_RC32434_RC32434_H_ */

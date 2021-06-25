@@ -1,33 +1,32 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2013 Samsung Electronics Co., Ltd.
  */
-#अगर_अघोषित __CLOCKSOURCE_SAMSUNG_PWM_H
-#घोषणा __CLOCKSOURCE_SAMSUNG_PWM_H
+#ifndef __CLOCKSOURCE_SAMSUNG_PWM_H
+#define __CLOCKSOURCE_SAMSUNG_PWM_H
 
-#समावेश <linux/spinlock.h>
+#include <linux/spinlock.h>
 
-#घोषणा SAMSUNG_PWM_NUM		5
+#define SAMSUNG_PWM_NUM		5
 
 /*
- * Following declaration must be in an अगरdef due to this symbol being अटल
- * in pwm-samsung driver अगर the घड़ीsource driver is not compiled in and the
+ * Following declaration must be in an ifdef due to this symbol being static
+ * in pwm-samsung driver if the clocksource driver is not compiled in and the
  * spinlock is not shared between both drivers.
  */
-#अगर_घोषित CONFIG_CLKSRC_SAMSUNG_PWM
-बाह्य spinlock_t samsung_pwm_lock;
-#पूर्ण_अगर
+#ifdef CONFIG_CLKSRC_SAMSUNG_PWM
+extern spinlock_t samsung_pwm_lock;
+#endif
 
-काष्ठा samsung_pwm_variant अणु
+struct samsung_pwm_variant {
 	u8 bits;
-	u8 भाग_base;
+	u8 div_base;
 	u8 tclk_mask;
 	u8 output_mask;
-	bool has_tपूर्णांक_cstat;
-पूर्ण;
+	bool has_tint_cstat;
+};
 
-व्योम samsung_pwm_घड़ीsource_init(व्योम __iomem *base,
-		अचिन्हित पूर्णांक *irqs, काष्ठा samsung_pwm_variant *variant);
+void samsung_pwm_clocksource_init(void __iomem *base,
+		unsigned int *irqs, struct samsung_pwm_variant *variant);
 
-#पूर्ण_अगर /* __CLOCKSOURCE_SAMSUNG_PWM_H */
+#endif /* __CLOCKSOURCE_SAMSUNG_PWM_H */

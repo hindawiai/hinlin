@@ -1,8 +1,7 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 1994 - 1999, 2000 by Ralf Baechle and others.
  * Copyright (C) 2005, 2006 by Ralf Baechle (ralf@linux-mips.org)
@@ -10,89 +9,89 @@
  * Copyright (C) 2004 Thiemo Seufer
  * Copyright (C) 2013  Imagination Technologies Ltd.
  */
-#समावेश <linux/cpu.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/init.h>
-#समावेश <linux/kallsyms.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/nmi.h>
-#समावेश <linux/personality.h>
-#समावेश <linux/prctl.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/debug.h>
-#समावेश <linux/sched/task_stack.h>
+#include <linux/cpu.h>
+#include <linux/errno.h>
+#include <linux/init.h>
+#include <linux/kallsyms.h>
+#include <linux/kernel.h>
+#include <linux/nmi.h>
+#include <linux/personality.h>
+#include <linux/prctl.h>
+#include <linux/random.h>
+#include <linux/sched.h>
+#include <linux/sched/debug.h>
+#include <linux/sched/task_stack.h>
 
-#समावेश <यंत्र/abi.h>
-#समावेश <यंत्र/यंत्र.h>
-#समावेश <यंत्र/dsemul.h>
-#समावेश <यंत्र/dsp.h>
-#समावेश <यंत्र/exec.h>
-#समावेश <यंत्र/fpu.h>
-#समावेश <यंत्र/inst.h>
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/irq_regs.h>
-#समावेश <यंत्र/isadep.h>
-#समावेश <यंत्र/msa.h>
-#समावेश <यंत्र/mips-cps.h>
-#समावेश <यंत्र/mipsregs.h>
-#समावेश <यंत्र/processor.h>
-#समावेश <यंत्र/reg.h>
-#समावेश <यंत्र/stacktrace.h>
+#include <asm/abi.h>
+#include <asm/asm.h>
+#include <asm/dsemul.h>
+#include <asm/dsp.h>
+#include <asm/exec.h>
+#include <asm/fpu.h>
+#include <asm/inst.h>
+#include <asm/irq.h>
+#include <asm/irq_regs.h>
+#include <asm/isadep.h>
+#include <asm/msa.h>
+#include <asm/mips-cps.h>
+#include <asm/mipsregs.h>
+#include <asm/processor.h>
+#include <asm/reg.h>
+#include <asm/stacktrace.h>
 
-#अगर_घोषित CONFIG_HOTPLUG_CPU
-व्योम arch_cpu_idle_dead(व्योम)
-अणु
+#ifdef CONFIG_HOTPLUG_CPU
+void arch_cpu_idle_dead(void)
+{
 	play_dead();
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-यंत्रlinkage व्योम ret_from_विभाजन(व्योम);
-यंत्रlinkage व्योम ret_from_kernel_thपढ़ो(व्योम);
+asmlinkage void ret_from_fork(void);
+asmlinkage void ret_from_kernel_thread(void);
 
-व्योम start_thपढ़ो(काष्ठा pt_regs * regs, अचिन्हित दीर्घ pc, अचिन्हित दीर्घ sp)
-अणु
-	अचिन्हित दीर्घ status;
+void start_thread(struct pt_regs * regs, unsigned long pc, unsigned long sp)
+{
+	unsigned long status;
 
-	/* New thपढ़ो loses kernel privileges. */
+	/* New thread loses kernel privileges. */
 	status = regs->cp0_status & ~(ST0_CU0|ST0_CU1|ST0_CU2|ST0_FR|KU_MASK);
 	status |= KU_USER;
 	regs->cp0_status = status;
 	lose_fpu(0);
-	clear_thपढ़ो_flag(TIF_MSA_CTX_LIVE);
+	clear_thread_flag(TIF_MSA_CTX_LIVE);
 	clear_used_math();
-#अगर_घोषित CONFIG_MIPS_FP_SUPPORT
-	atomic_set(&current->thपढ़ो.bd_emu_frame, BD_EMUFRAME_NONE);
-#पूर्ण_अगर
+#ifdef CONFIG_MIPS_FP_SUPPORT
+	atomic_set(&current->thread.bd_emu_frame, BD_EMUFRAME_NONE);
+#endif
 	init_dsp();
 	regs->cp0_epc = pc;
 	regs->regs[29] = sp;
-पूर्ण
+}
 
-व्योम निकास_thपढ़ो(काष्ठा task_काष्ठा *tsk)
-अणु
+void exit_thread(struct task_struct *tsk)
+{
 	/*
-	 * User thपढ़ोs may have allocated a delay slot emulation frame.
+	 * User threads may have allocated a delay slot emulation frame.
 	 * If so, clean up that allocation.
 	 */
-	अगर (!(current->flags & PF_KTHREAD))
-		dsemul_thपढ़ो_cleanup(tsk);
-पूर्ण
+	if (!(current->flags & PF_KTHREAD))
+		dsemul_thread_cleanup(tsk);
+}
 
-पूर्णांक arch_dup_task_काष्ठा(काष्ठा task_काष्ठा *dst, काष्ठा task_काष्ठा *src)
-अणु
+int arch_dup_task_struct(struct task_struct *dst, struct task_struct *src)
+{
 	/*
-	 * Save any process state which is live in hardware रेजिस्टरs to the
+	 * Save any process state which is live in hardware registers to the
 	 * parent context prior to duplication. This prevents the new child
-	 * state becoming stale अगर the parent is preempted beक्रमe copy_thपढ़ो()
-	 * माला_लो a chance to save the parent's live hardware रेजिस्टरs to the
+	 * state becoming stale if the parent is preempted before copy_thread()
+	 * gets a chance to save the parent's live hardware registers to the
 	 * child context.
 	 */
 	preempt_disable();
 
-	अगर (is_msa_enabled())
+	if (is_msa_enabled())
 		save_msa(current);
-	अन्यथा अगर (is_fpu_owner())
+	else if (is_fpu_owner())
 		_save_fp(current);
 
 	save_dsp(current);
@@ -100,128 +99,128 @@
 	preempt_enable();
 
 	*dst = *src;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Copy architecture-specअगरic thपढ़ो state
+ * Copy architecture-specific thread state
  */
-पूर्णांक copy_thपढ़ो(अचिन्हित दीर्घ clone_flags, अचिन्हित दीर्घ usp,
-		अचिन्हित दीर्घ kthपढ़ो_arg, काष्ठा task_काष्ठा *p,
-		अचिन्हित दीर्घ tls)
-अणु
-	काष्ठा thपढ़ो_info *ti = task_thपढ़ो_info(p);
-	काष्ठा pt_regs *childregs, *regs = current_pt_regs();
-	अचिन्हित दीर्घ childksp;
+int copy_thread(unsigned long clone_flags, unsigned long usp,
+		unsigned long kthread_arg, struct task_struct *p,
+		unsigned long tls)
+{
+	struct thread_info *ti = task_thread_info(p);
+	struct pt_regs *childregs, *regs = current_pt_regs();
+	unsigned long childksp;
 
-	childksp = (अचिन्हित दीर्घ)task_stack_page(p) + THREAD_SIZE - 32;
+	childksp = (unsigned long)task_stack_page(p) + THREAD_SIZE - 32;
 
 	/* set up new TSS. */
-	childregs = (काष्ठा pt_regs *) childksp - 1;
-	/*  Put the stack after the काष्ठा pt_regs.  */
-	childksp = (अचिन्हित दीर्घ) childregs;
-	p->thपढ़ो.cp0_status = (पढ़ो_c0_status() & ~(ST0_CU2|ST0_CU1)) | ST0_KERNEL_CUMASK;
-	अगर (unlikely(p->flags & (PF_KTHREAD | PF_IO_WORKER))) अणु
-		/* kernel thपढ़ो */
-		अचिन्हित दीर्घ status = p->thपढ़ो.cp0_status;
-		स_रखो(childregs, 0, माप(काष्ठा pt_regs));
-		p->thपढ़ो.reg16 = usp; /* fn */
-		p->thपढ़ो.reg17 = kthपढ़ो_arg;
-		p->thपढ़ो.reg29 = childksp;
-		p->thपढ़ो.reg31 = (अचिन्हित दीर्घ) ret_from_kernel_thपढ़ो;
-#अगर defined(CONFIG_CPU_R3000) || defined(CONFIG_CPU_TX39XX)
+	childregs = (struct pt_regs *) childksp - 1;
+	/*  Put the stack after the struct pt_regs.  */
+	childksp = (unsigned long) childregs;
+	p->thread.cp0_status = (read_c0_status() & ~(ST0_CU2|ST0_CU1)) | ST0_KERNEL_CUMASK;
+	if (unlikely(p->flags & (PF_KTHREAD | PF_IO_WORKER))) {
+		/* kernel thread */
+		unsigned long status = p->thread.cp0_status;
+		memset(childregs, 0, sizeof(struct pt_regs));
+		p->thread.reg16 = usp; /* fn */
+		p->thread.reg17 = kthread_arg;
+		p->thread.reg29 = childksp;
+		p->thread.reg31 = (unsigned long) ret_from_kernel_thread;
+#if defined(CONFIG_CPU_R3000) || defined(CONFIG_CPU_TX39XX)
 		status = (status & ~(ST0_KUP | ST0_IEP | ST0_IEC)) |
 			 ((status & (ST0_KUC | ST0_IEC)) << 2);
-#अन्यथा
+#else
 		status |= ST0_EXL;
-#पूर्ण_अगर
+#endif
 		childregs->cp0_status = status;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* user thपढ़ो */
+	/* user thread */
 	*childregs = *regs;
 	childregs->regs[7] = 0; /* Clear error flag */
-	childregs->regs[2] = 0; /* Child माला_लो zero as वापस value */
-	अगर (usp)
+	childregs->regs[2] = 0; /* Child gets zero as return value */
+	if (usp)
 		childregs->regs[29] = usp;
 
-	p->thपढ़ो.reg29 = (अचिन्हित दीर्घ) childregs;
-	p->thपढ़ो.reg31 = (अचिन्हित दीर्घ) ret_from_विभाजन;
+	p->thread.reg29 = (unsigned long) childregs;
+	p->thread.reg31 = (unsigned long) ret_from_fork;
 
 	/*
 	 * New tasks lose permission to use the fpu. This accelerates context
-	 * चयनing क्रम most programs since they करोn't use the fpu.
+	 * switching for most programs since they don't use the fpu.
 	 */
 	childregs->cp0_status &= ~(ST0_CU2|ST0_CU1);
 
-	clear_tsk_thपढ़ो_flag(p, TIF_USEDFPU);
-	clear_tsk_thपढ़ो_flag(p, TIF_USEDMSA);
-	clear_tsk_thपढ़ो_flag(p, TIF_MSA_CTX_LIVE);
+	clear_tsk_thread_flag(p, TIF_USEDFPU);
+	clear_tsk_thread_flag(p, TIF_USEDMSA);
+	clear_tsk_thread_flag(p, TIF_MSA_CTX_LIVE);
 
-#अगर_घोषित CONFIG_MIPS_MT_FPAFF
-	clear_tsk_thपढ़ो_flag(p, TIF_FPUBOUND);
-#पूर्ण_अगर /* CONFIG_MIPS_MT_FPAFF */
+#ifdef CONFIG_MIPS_MT_FPAFF
+	clear_tsk_thread_flag(p, TIF_FPUBOUND);
+#endif /* CONFIG_MIPS_MT_FPAFF */
 
-#अगर_घोषित CONFIG_MIPS_FP_SUPPORT
-	atomic_set(&p->thपढ़ो.bd_emu_frame, BD_EMUFRAME_NONE);
-#पूर्ण_अगर
+#ifdef CONFIG_MIPS_FP_SUPPORT
+	atomic_set(&p->thread.bd_emu_frame, BD_EMUFRAME_NONE);
+#endif
 
-	अगर (clone_flags & CLONE_SETTLS)
+	if (clone_flags & CLONE_SETTLS)
 		ti->tp_value = tls;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_STACKPROTECTOR
-#समावेश <linux/stackprotector.h>
-अचिन्हित दीर्घ __stack_chk_guard __पढ़ो_mostly;
+#ifdef CONFIG_STACKPROTECTOR
+#include <linux/stackprotector.h>
+unsigned long __stack_chk_guard __read_mostly;
 EXPORT_SYMBOL(__stack_chk_guard);
-#पूर्ण_अगर
+#endif
 
-काष्ठा mips_frame_info अणु
-	व्योम		*func;
-	अचिन्हित दीर्घ	func_size;
-	पूर्णांक		frame_size;
-	पूर्णांक		pc_offset;
-पूर्ण;
+struct mips_frame_info {
+	void		*func;
+	unsigned long	func_size;
+	int		frame_size;
+	int		pc_offset;
+};
 
-#घोषणा J_TARGET(pc,target)	\
-		(((अचिन्हित दीर्घ)(pc) & 0xf0000000) | ((target) << 2))
+#define J_TARGET(pc,target)	\
+		(((unsigned long)(pc) & 0xf0000000) | ((target) << 2))
 
-अटल अंतरभूत पूर्णांक is_jr_ra_ins(जोड़ mips_inकाष्ठाion *ip)
-अणु
-#अगर_घोषित CONFIG_CPU_MICROMIPS
+static inline int is_jr_ra_ins(union mips_instruction *ip)
+{
+#ifdef CONFIG_CPU_MICROMIPS
 	/*
 	 * jr16 ra
 	 * jr ra
 	 */
-	अगर (mm_insn_16bit(ip->word >> 16)) अणु
-		अगर (ip->mm16_r5_क्रमmat.opcode == mm_pool16c_op &&
-		    ip->mm16_r5_क्रमmat.rt == mm_jr16_op &&
-		    ip->mm16_r5_क्रमmat.imm == 31)
-			वापस 1;
-		वापस 0;
-	पूर्ण
+	if (mm_insn_16bit(ip->word >> 16)) {
+		if (ip->mm16_r5_format.opcode == mm_pool16c_op &&
+		    ip->mm16_r5_format.rt == mm_jr16_op &&
+		    ip->mm16_r5_format.imm == 31)
+			return 1;
+		return 0;
+	}
 
-	अगर (ip->r_क्रमmat.opcode == mm_pool32a_op &&
-	    ip->r_क्रमmat.func == mm_pool32axf_op &&
-	    ((ip->u_क्रमmat.uimmediate >> 6) & GENMASK(9, 0)) == mm_jalr_op &&
-	    ip->r_क्रमmat.rt == 31)
-		वापस 1;
-	वापस 0;
-#अन्यथा
-	अगर (ip->r_क्रमmat.opcode == spec_op &&
-	    ip->r_क्रमmat.func == jr_op &&
-	    ip->r_क्रमmat.rs == 31)
-		वापस 1;
-	वापस 0;
-#पूर्ण_अगर
-पूर्ण
+	if (ip->r_format.opcode == mm_pool32a_op &&
+	    ip->r_format.func == mm_pool32axf_op &&
+	    ((ip->u_format.uimmediate >> 6) & GENMASK(9, 0)) == mm_jalr_op &&
+	    ip->r_format.rt == 31)
+		return 1;
+	return 0;
+#else
+	if (ip->r_format.opcode == spec_op &&
+	    ip->r_format.func == jr_op &&
+	    ip->r_format.rs == 31)
+		return 1;
+	return 0;
+#endif
+}
 
-अटल अंतरभूत पूर्णांक is_ra_save_ins(जोड़ mips_inकाष्ठाion *ip, पूर्णांक *poff)
-अणु
-#अगर_घोषित CONFIG_CPU_MICROMIPS
+static inline int is_ra_save_ins(union mips_instruction *ip, int *poff)
+{
+#ifdef CONFIG_CPU_MICROMIPS
 	/*
 	 * swsp ra,offset
 	 * swm16 reglist,offset(sp)
@@ -231,91 +230,91 @@ EXPORT_SYMBOL(__stack_chk_guard);
 	 *
 	 * microMIPS is way more fun...
 	 */
-	अगर (mm_insn_16bit(ip->word >> 16)) अणु
-		चयन (ip->mm16_r5_क्रमmat.opcode) अणु
-		हाल mm_swsp16_op:
-			अगर (ip->mm16_r5_क्रमmat.rt != 31)
-				वापस 0;
+	if (mm_insn_16bit(ip->word >> 16)) {
+		switch (ip->mm16_r5_format.opcode) {
+		case mm_swsp16_op:
+			if (ip->mm16_r5_format.rt != 31)
+				return 0;
 
-			*poff = ip->mm16_r5_क्रमmat.imm;
-			*poff = (*poff << 2) / माप(uदीर्घ);
-			वापस 1;
+			*poff = ip->mm16_r5_format.imm;
+			*poff = (*poff << 2) / sizeof(ulong);
+			return 1;
 
-		हाल mm_pool16c_op:
-			चयन (ip->mm16_m_क्रमmat.func) अणु
-			हाल mm_swm16_op:
-				*poff = ip->mm16_m_क्रमmat.imm;
-				*poff += 1 + ip->mm16_m_क्रमmat.rlist;
-				*poff = (*poff << 2) / माप(uदीर्घ);
-				वापस 1;
+		case mm_pool16c_op:
+			switch (ip->mm16_m_format.func) {
+			case mm_swm16_op:
+				*poff = ip->mm16_m_format.imm;
+				*poff += 1 + ip->mm16_m_format.rlist;
+				*poff = (*poff << 2) / sizeof(ulong);
+				return 1;
 
-			शेष:
-				वापस 0;
-			पूर्ण
+			default:
+				return 0;
+			}
 
-		शेष:
-			वापस 0;
-		पूर्ण
-	पूर्ण
+		default:
+			return 0;
+		}
+	}
 
-	चयन (ip->i_क्रमmat.opcode) अणु
-	हाल mm_sw32_op:
-		अगर (ip->i_क्रमmat.rs != 29)
-			वापस 0;
-		अगर (ip->i_क्रमmat.rt != 31)
-			वापस 0;
+	switch (ip->i_format.opcode) {
+	case mm_sw32_op:
+		if (ip->i_format.rs != 29)
+			return 0;
+		if (ip->i_format.rt != 31)
+			return 0;
 
-		*poff = ip->i_क्रमmat.simmediate / माप(uदीर्घ);
-		वापस 1;
+		*poff = ip->i_format.simmediate / sizeof(ulong);
+		return 1;
 
-	हाल mm_pool32b_op:
-		चयन (ip->mm_m_क्रमmat.func) अणु
-		हाल mm_swm32_func:
-			अगर (ip->mm_m_क्रमmat.rd < 0x10)
-				वापस 0;
-			अगर (ip->mm_m_क्रमmat.base != 29)
-				वापस 0;
+	case mm_pool32b_op:
+		switch (ip->mm_m_format.func) {
+		case mm_swm32_func:
+			if (ip->mm_m_format.rd < 0x10)
+				return 0;
+			if (ip->mm_m_format.base != 29)
+				return 0;
 
-			*poff = ip->mm_m_क्रमmat.simmediate;
-			*poff += (ip->mm_m_क्रमmat.rd & 0xf) * माप(u32);
-			*poff /= माप(uदीर्घ);
-			वापस 1;
-		शेष:
-			वापस 0;
-		पूर्ण
+			*poff = ip->mm_m_format.simmediate;
+			*poff += (ip->mm_m_format.rd & 0xf) * sizeof(u32);
+			*poff /= sizeof(ulong);
+			return 1;
+		default:
+			return 0;
+		}
 
-	शेष:
-		वापस 0;
-	पूर्ण
-#अन्यथा
+	default:
+		return 0;
+	}
+#else
 	/* sw / sd $ra, offset($sp) */
-	अगर ((ip->i_क्रमmat.opcode == sw_op || ip->i_क्रमmat.opcode == sd_op) &&
-		ip->i_क्रमmat.rs == 29 && ip->i_क्रमmat.rt == 31) अणु
-		*poff = ip->i_क्रमmat.simmediate / माप(uदीर्घ);
-		वापस 1;
-	पूर्ण
-#अगर_घोषित CONFIG_CPU_LOONGSON64
-	अगर ((ip->loongson3_lswc2_क्रमmat.opcode == swc2_op) &&
-		      (ip->loongson3_lswc2_क्रमmat.ls == 1) &&
-		      (ip->loongson3_lswc2_क्रमmat.fr == 0) &&
-		      (ip->loongson3_lswc2_क्रमmat.base == 29)) अणु
-		अगर (ip->loongson3_lswc2_क्रमmat.rt == 31) अणु
-			*poff = ip->loongson3_lswc2_क्रमmat.offset << 1;
-			वापस 1;
-		पूर्ण
-		अगर (ip->loongson3_lswc2_क्रमmat.rq == 31) अणु
-			*poff = (ip->loongson3_lswc2_क्रमmat.offset << 1) + 1;
-			वापस 1;
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
-	वापस 0;
-#पूर्ण_अगर
-पूर्ण
+	if ((ip->i_format.opcode == sw_op || ip->i_format.opcode == sd_op) &&
+		ip->i_format.rs == 29 && ip->i_format.rt == 31) {
+		*poff = ip->i_format.simmediate / sizeof(ulong);
+		return 1;
+	}
+#ifdef CONFIG_CPU_LOONGSON64
+	if ((ip->loongson3_lswc2_format.opcode == swc2_op) &&
+		      (ip->loongson3_lswc2_format.ls == 1) &&
+		      (ip->loongson3_lswc2_format.fr == 0) &&
+		      (ip->loongson3_lswc2_format.base == 29)) {
+		if (ip->loongson3_lswc2_format.rt == 31) {
+			*poff = ip->loongson3_lswc2_format.offset << 1;
+			return 1;
+		}
+		if (ip->loongson3_lswc2_format.rq == 31) {
+			*poff = (ip->loongson3_lswc2_format.offset << 1) + 1;
+			return 1;
+		}
+	}
+#endif
+	return 0;
+#endif
+}
 
-अटल अंतरभूत पूर्णांक is_jump_ins(जोड़ mips_inकाष्ठाion *ip)
-अणु
-#अगर_घोषित CONFIG_CPU_MICROMIPS
+static inline int is_jump_ins(union mips_instruction *ip)
+{
+#ifdef CONFIG_CPU_MICROMIPS
 	/*
 	 * jr16,jrc,jalr16,jalr16
 	 * jal
@@ -324,36 +323,36 @@ EXPORT_SYMBOL(__stack_chk_guard);
 	 *
 	 * microMIPS is kind of more fun...
 	 */
-	अगर (mm_insn_16bit(ip->word >> 16)) अणु
-		अगर ((ip->mm16_r5_क्रमmat.opcode == mm_pool16c_op &&
-		    (ip->mm16_r5_क्रमmat.rt & mm_jr16_op) == mm_jr16_op))
-			वापस 1;
-		वापस 0;
-	पूर्ण
+	if (mm_insn_16bit(ip->word >> 16)) {
+		if ((ip->mm16_r5_format.opcode == mm_pool16c_op &&
+		    (ip->mm16_r5_format.rt & mm_jr16_op) == mm_jr16_op))
+			return 1;
+		return 0;
+	}
 
-	अगर (ip->j_क्रमmat.opcode == mm_j32_op)
-		वापस 1;
-	अगर (ip->j_क्रमmat.opcode == mm_jal32_op)
-		वापस 1;
-	अगर (ip->r_क्रमmat.opcode != mm_pool32a_op ||
-			ip->r_क्रमmat.func != mm_pool32axf_op)
-		वापस 0;
-	वापस ((ip->u_क्रमmat.uimmediate >> 6) & mm_jalr_op) == mm_jalr_op;
-#अन्यथा
-	अगर (ip->j_क्रमmat.opcode == j_op)
-		वापस 1;
-	अगर (ip->j_क्रमmat.opcode == jal_op)
-		वापस 1;
-	अगर (ip->r_क्रमmat.opcode != spec_op)
-		वापस 0;
-	वापस ip->r_क्रमmat.func == jalr_op || ip->r_क्रमmat.func == jr_op;
-#पूर्ण_अगर
-पूर्ण
+	if (ip->j_format.opcode == mm_j32_op)
+		return 1;
+	if (ip->j_format.opcode == mm_jal32_op)
+		return 1;
+	if (ip->r_format.opcode != mm_pool32a_op ||
+			ip->r_format.func != mm_pool32axf_op)
+		return 0;
+	return ((ip->u_format.uimmediate >> 6) & mm_jalr_op) == mm_jalr_op;
+#else
+	if (ip->j_format.opcode == j_op)
+		return 1;
+	if (ip->j_format.opcode == jal_op)
+		return 1;
+	if (ip->r_format.opcode != spec_op)
+		return 0;
+	return ip->r_format.func == jalr_op || ip->r_format.func == jr_op;
+#endif
+}
 
-अटल अंतरभूत पूर्णांक is_sp_move_ins(जोड़ mips_inकाष्ठाion *ip, पूर्णांक *frame_size)
-अणु
-#अगर_घोषित CONFIG_CPU_MICROMIPS
-	अचिन्हित लघु पंचांगp;
+static inline int is_sp_move_ins(union mips_instruction *ip, int *frame_size)
+{
+#ifdef CONFIG_CPU_MICROMIPS
+	unsigned short tmp;
 
 	/*
 	 * addiusp -imm
@@ -363,523 +362,523 @@ EXPORT_SYMBOL(__stack_chk_guard);
 	 *
 	 * microMIPS is not more fun...
 	 */
-	अगर (mm_insn_16bit(ip->word >> 16)) अणु
-		अगर (ip->mm16_r3_क्रमmat.opcode == mm_pool16d_op &&
-		    ip->mm16_r3_क्रमmat.simmediate & mm_addiusp_func) अणु
-			पंचांगp = ip->mm_b0_क्रमmat.simmediate >> 1;
-			पंचांगp = ((पंचांगp & 0x1ff) ^ 0x100) - 0x100;
-			अगर ((पंचांगp + 2) < 4) /* 0x0,0x1,0x1fe,0x1ff are special */
-				पंचांगp ^= 0x100;
-			*frame_size = -(चिन्हित लघु)(पंचांगp << 2);
-			वापस 1;
-		पूर्ण
-		अगर (ip->mm16_r5_क्रमmat.opcode == mm_pool16d_op &&
-		    ip->mm16_r5_क्रमmat.rt == 29) अणु
-			पंचांगp = ip->mm16_r5_क्रमmat.imm >> 1;
-			*frame_size = -(चिन्हित लघु)(पंचांगp & 0xf);
-			वापस 1;
-		पूर्ण
-		वापस 0;
-	पूर्ण
+	if (mm_insn_16bit(ip->word >> 16)) {
+		if (ip->mm16_r3_format.opcode == mm_pool16d_op &&
+		    ip->mm16_r3_format.simmediate & mm_addiusp_func) {
+			tmp = ip->mm_b0_format.simmediate >> 1;
+			tmp = ((tmp & 0x1ff) ^ 0x100) - 0x100;
+			if ((tmp + 2) < 4) /* 0x0,0x1,0x1fe,0x1ff are special */
+				tmp ^= 0x100;
+			*frame_size = -(signed short)(tmp << 2);
+			return 1;
+		}
+		if (ip->mm16_r5_format.opcode == mm_pool16d_op &&
+		    ip->mm16_r5_format.rt == 29) {
+			tmp = ip->mm16_r5_format.imm >> 1;
+			*frame_size = -(signed short)(tmp & 0xf);
+			return 1;
+		}
+		return 0;
+	}
 
-	अगर (ip->mm_i_क्रमmat.opcode == mm_addiu32_op &&
-	    ip->mm_i_क्रमmat.rt == 29 && ip->mm_i_क्रमmat.rs == 29) अणु
-		*frame_size = -ip->i_क्रमmat.simmediate;
-		वापस 1;
-	पूर्ण
-#अन्यथा
+	if (ip->mm_i_format.opcode == mm_addiu32_op &&
+	    ip->mm_i_format.rt == 29 && ip->mm_i_format.rs == 29) {
+		*frame_size = -ip->i_format.simmediate;
+		return 1;
+	}
+#else
 	/* addiu/daddiu sp,sp,-imm */
-	अगर (ip->i_क्रमmat.rs != 29 || ip->i_क्रमmat.rt != 29)
-		वापस 0;
+	if (ip->i_format.rs != 29 || ip->i_format.rt != 29)
+		return 0;
 
-	अगर (ip->i_क्रमmat.opcode == addiu_op ||
-	    ip->i_क्रमmat.opcode == daddiu_op) अणु
-		*frame_size = -ip->i_क्रमmat.simmediate;
-		वापस 1;
-	पूर्ण
-#पूर्ण_अगर
-	वापस 0;
-पूर्ण
+	if (ip->i_format.opcode == addiu_op ||
+	    ip->i_format.opcode == daddiu_op) {
+		*frame_size = -ip->i_format.simmediate;
+		return 1;
+	}
+#endif
+	return 0;
+}
 
-अटल पूर्णांक get_frame_info(काष्ठा mips_frame_info *info)
-अणु
+static int get_frame_info(struct mips_frame_info *info)
+{
 	bool is_mmips = IS_ENABLED(CONFIG_CPU_MICROMIPS);
-	जोड़ mips_inकाष्ठाion insn, *ip, *ip_end;
-	अचिन्हित पूर्णांक last_insn_size = 0;
+	union mips_instruction insn, *ip, *ip_end;
+	unsigned int last_insn_size = 0;
 	bool saw_jump = false;
 
 	info->pc_offset = -1;
 	info->frame_size = 0;
 
-	ip = (व्योम *)msk_isa16_mode((uदीर्घ)info->func);
-	अगर (!ip)
-		जाओ err;
+	ip = (void *)msk_isa16_mode((ulong)info->func);
+	if (!ip)
+		goto err;
 
-	ip_end = (व्योम *)ip + (info->func_size ? info->func_size : 512);
+	ip_end = (void *)ip + (info->func_size ? info->func_size : 512);
 
-	जबतक (ip < ip_end) अणु
-		ip = (व्योम *)ip + last_insn_size;
+	while (ip < ip_end) {
+		ip = (void *)ip + last_insn_size;
 
-		अगर (is_mmips && mm_insn_16bit(ip->halfword[0])) अणु
+		if (is_mmips && mm_insn_16bit(ip->halfword[0])) {
 			insn.word = ip->halfword[0] << 16;
 			last_insn_size = 2;
-		पूर्ण अन्यथा अगर (is_mmips) अणु
+		} else if (is_mmips) {
 			insn.word = ip->halfword[0] << 16 | ip->halfword[1];
 			last_insn_size = 4;
-		पूर्ण अन्यथा अणु
+		} else {
 			insn.word = ip->word;
 			last_insn_size = 4;
-		पूर्ण
+		}
 
-		अगर (is_jr_ra_ins(ip)) अणु
-			अवरोध;
-		पूर्ण अन्यथा अगर (!info->frame_size) अणु
+		if (is_jr_ra_ins(ip)) {
+			break;
+		} else if (!info->frame_size) {
 			is_sp_move_ins(&insn, &info->frame_size);
-			जारी;
-		पूर्ण अन्यथा अगर (!saw_jump && is_jump_ins(ip)) अणु
+			continue;
+		} else if (!saw_jump && is_jump_ins(ip)) {
 			/*
-			 * If we see a jump inकाष्ठाion, we are finished
+			 * If we see a jump instruction, we are finished
 			 * with the frame save.
 			 *
-			 * Some functions can have a लघुcut वापस at
-			 * the beginning of the function, so करोn't start
-			 * looking क्रम jump inकाष्ठाion until we see the
+			 * Some functions can have a shortcut return at
+			 * the beginning of the function, so don't start
+			 * looking for jump instruction until we see the
 			 * frame setup.
 			 *
-			 * The RA save inकाष्ठाion can get put पूर्णांकo the
-			 * delay slot of the jump inकाष्ठाion, so look
-			 * at the next inकाष्ठाion, too.
+			 * The RA save instruction can get put into the
+			 * delay slot of the jump instruction, so look
+			 * at the next instruction, too.
 			 */
 			saw_jump = true;
-			जारी;
-		पूर्ण
-		अगर (info->pc_offset == -1 &&
+			continue;
+		}
+		if (info->pc_offset == -1 &&
 		    is_ra_save_ins(&insn, &info->pc_offset))
-			अवरोध;
-		अगर (saw_jump)
-			अवरोध;
-	पूर्ण
-	अगर (info->frame_size && info->pc_offset >= 0) /* nested */
-		वापस 0;
-	अगर (info->pc_offset < 0) /* leaf */
-		वापस 1;
+			break;
+		if (saw_jump)
+			break;
+	}
+	if (info->frame_size && info->pc_offset >= 0) /* nested */
+		return 0;
+	if (info->pc_offset < 0) /* leaf */
+		return 1;
 	/* prologue seems bogus... */
 err:
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल काष्ठा mips_frame_info schedule_mfi __पढ़ो_mostly;
+static struct mips_frame_info schedule_mfi __read_mostly;
 
-#अगर_घोषित CONFIG_KALLSYMS
-अटल अचिन्हित दीर्घ get___schedule_addr(व्योम)
-अणु
-	वापस kallsyms_lookup_name("__schedule");
-पूर्ण
-#अन्यथा
-अटल अचिन्हित दीर्घ get___schedule_addr(व्योम)
-अणु
-	जोड़ mips_inकाष्ठाion *ip = (व्योम *)schedule;
-	पूर्णांक max_insns = 8;
-	पूर्णांक i;
+#ifdef CONFIG_KALLSYMS
+static unsigned long get___schedule_addr(void)
+{
+	return kallsyms_lookup_name("__schedule");
+}
+#else
+static unsigned long get___schedule_addr(void)
+{
+	union mips_instruction *ip = (void *)schedule;
+	int max_insns = 8;
+	int i;
 
-	क्रम (i = 0; i < max_insns; i++, ip++) अणु
-		अगर (ip->j_क्रमmat.opcode == j_op)
-			वापस J_TARGET(ip, ip->j_क्रमmat.target);
-	पूर्ण
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	for (i = 0; i < max_insns; i++, ip++) {
+		if (ip->j_format.opcode == j_op)
+			return J_TARGET(ip, ip->j_format.target);
+	}
+	return 0;
+}
+#endif
 
-अटल पूर्णांक __init frame_info_init(व्योम)
-अणु
-	अचिन्हित दीर्घ size = 0;
-#अगर_घोषित CONFIG_KALLSYMS
-	अचिन्हित दीर्घ ofs;
-#पूर्ण_अगर
-	अचिन्हित दीर्घ addr;
+static int __init frame_info_init(void)
+{
+	unsigned long size = 0;
+#ifdef CONFIG_KALLSYMS
+	unsigned long ofs;
+#endif
+	unsigned long addr;
 
 	addr = get___schedule_addr();
-	अगर (!addr)
-		addr = (अचिन्हित दीर्घ)schedule;
+	if (!addr)
+		addr = (unsigned long)schedule;
 
-#अगर_घोषित CONFIG_KALLSYMS
+#ifdef CONFIG_KALLSYMS
 	kallsyms_lookup_size_offset(addr, &size, &ofs);
-#पूर्ण_अगर
-	schedule_mfi.func = (व्योम *)addr;
+#endif
+	schedule_mfi.func = (void *)addr;
 	schedule_mfi.func_size = size;
 
 	get_frame_info(&schedule_mfi);
 
 	/*
 	 * Without schedule() frame info, result given by
-	 * thपढ़ो_saved_pc() and get_wchan() are not reliable.
+	 * thread_saved_pc() and get_wchan() are not reliable.
 	 */
-	अगर (schedule_mfi.pc_offset < 0)
-		prपूर्णांकk("Can't analyze schedule() prologue at %p\n", schedule);
+	if (schedule_mfi.pc_offset < 0)
+		printk("Can't analyze schedule() prologue at %p\n", schedule);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 arch_initcall(frame_info_init);
 
 /*
- * Return saved PC of a blocked thपढ़ो.
+ * Return saved PC of a blocked thread.
  */
-अटल अचिन्हित दीर्घ thपढ़ो_saved_pc(काष्ठा task_काष्ठा *tsk)
-अणु
-	काष्ठा thपढ़ो_काष्ठा *t = &tsk->thपढ़ो;
+static unsigned long thread_saved_pc(struct task_struct *tsk)
+{
+	struct thread_struct *t = &tsk->thread;
 
-	/* New born processes are a special हाल */
-	अगर (t->reg31 == (अचिन्हित दीर्घ) ret_from_विभाजन)
-		वापस t->reg31;
-	अगर (schedule_mfi.pc_offset < 0)
-		वापस 0;
-	वापस ((अचिन्हित दीर्घ *)t->reg29)[schedule_mfi.pc_offset];
-पूर्ण
+	/* New born processes are a special case */
+	if (t->reg31 == (unsigned long) ret_from_fork)
+		return t->reg31;
+	if (schedule_mfi.pc_offset < 0)
+		return 0;
+	return ((unsigned long *)t->reg29)[schedule_mfi.pc_offset];
+}
 
 
-#अगर_घोषित CONFIG_KALLSYMS
+#ifdef CONFIG_KALLSYMS
 /* generic stack unwinding function */
-अचिन्हित दीर्घ notrace unwind_stack_by_address(अचिन्हित दीर्घ stack_page,
-					      अचिन्हित दीर्घ *sp,
-					      अचिन्हित दीर्घ pc,
-					      अचिन्हित दीर्घ *ra)
-अणु
-	अचिन्हित दीर्घ low, high, irq_stack_high;
-	काष्ठा mips_frame_info info;
-	अचिन्हित दीर्घ size, ofs;
-	काष्ठा pt_regs *regs;
-	पूर्णांक leaf;
+unsigned long notrace unwind_stack_by_address(unsigned long stack_page,
+					      unsigned long *sp,
+					      unsigned long pc,
+					      unsigned long *ra)
+{
+	unsigned long low, high, irq_stack_high;
+	struct mips_frame_info info;
+	unsigned long size, ofs;
+	struct pt_regs *regs;
+	int leaf;
 
-	अगर (!stack_page)
-		वापस 0;
+	if (!stack_page)
+		return 0;
 
 	/*
 	 * IRQ stacks start at IRQ_STACK_START
 	 * task stacks at THREAD_SIZE - 32
 	 */
 	low = stack_page;
-	अगर (!preemptible() && on_irq_stack(raw_smp_processor_id(), *sp)) अणु
+	if (!preemptible() && on_irq_stack(raw_smp_processor_id(), *sp)) {
 		high = stack_page + IRQ_STACK_START;
 		irq_stack_high = high;
-	पूर्ण अन्यथा अणु
+	} else {
 		high = stack_page + THREAD_SIZE - 32;
 		irq_stack_high = 0;
-	पूर्ण
+	}
 
 	/*
-	 * If we reached the top of the पूर्णांकerrupt stack, start unwinding
-	 * the पूर्णांकerrupted task stack.
+	 * If we reached the top of the interrupt stack, start unwinding
+	 * the interrupted task stack.
 	 */
-	अगर (unlikely(*sp == irq_stack_high)) अणु
-		अचिन्हित दीर्घ task_sp = *(अचिन्हित दीर्घ *)*sp;
+	if (unlikely(*sp == irq_stack_high)) {
+		unsigned long task_sp = *(unsigned long *)*sp;
 
 		/*
-		 * Check that the poपूर्णांकer saved in the IRQ stack head poपूर्णांकs to
+		 * Check that the pointer saved in the IRQ stack head points to
 		 * something within the stack of the current task
 		 */
-		अगर (!object_is_on_stack((व्योम *)task_sp))
-			वापस 0;
+		if (!object_is_on_stack((void *)task_sp))
+			return 0;
 
 		/*
-		 * Follow poपूर्णांकer to tasks kernel stack frame where पूर्णांकerrupted
+		 * Follow pointer to tasks kernel stack frame where interrupted
 		 * state was saved.
 		 */
-		regs = (काष्ठा pt_regs *)task_sp;
+		regs = (struct pt_regs *)task_sp;
 		pc = regs->cp0_epc;
-		अगर (!user_mode(regs) && __kernel_text_address(pc)) अणु
+		if (!user_mode(regs) && __kernel_text_address(pc)) {
 			*sp = regs->regs[29];
 			*ra = regs->regs[31];
-			वापस pc;
-		पूर्ण
-		वापस 0;
-	पूर्ण
-	अगर (!kallsyms_lookup_size_offset(pc, &size, &ofs))
-		वापस 0;
+			return pc;
+		}
+		return 0;
+	}
+	if (!kallsyms_lookup_size_offset(pc, &size, &ofs))
+		return 0;
 	/*
-	 * Return ra अगर an exception occurred at the first inकाष्ठाion
+	 * Return ra if an exception occurred at the first instruction
 	 */
-	अगर (unlikely(ofs == 0)) अणु
+	if (unlikely(ofs == 0)) {
 		pc = *ra;
 		*ra = 0;
-		वापस pc;
-	पूर्ण
+		return pc;
+	}
 
-	info.func = (व्योम *)(pc - ofs);
+	info.func = (void *)(pc - ofs);
 	info.func_size = ofs;	/* analyze from start to ofs */
 	leaf = get_frame_info(&info);
-	अगर (leaf < 0)
-		वापस 0;
+	if (leaf < 0)
+		return 0;
 
-	अगर (*sp < low || *sp + info.frame_size > high)
-		वापस 0;
+	if (*sp < low || *sp + info.frame_size > high)
+		return 0;
 
-	अगर (leaf)
+	if (leaf)
 		/*
-		 * For some extreme हालs, get_frame_info() can
+		 * For some extreme cases, get_frame_info() can
 		 * consider wrongly a nested function as a leaf
-		 * one. In that हालs aव्योम to वापस always the
+		 * one. In that cases avoid to return always the
 		 * same value.
 		 */
 		pc = pc != *ra ? *ra : 0;
-	अन्यथा
-		pc = ((अचिन्हित दीर्घ *)(*sp))[info.pc_offset];
+	else
+		pc = ((unsigned long *)(*sp))[info.pc_offset];
 
 	*sp += info.frame_size;
 	*ra = 0;
-	वापस __kernel_text_address(pc) ? pc : 0;
-पूर्ण
+	return __kernel_text_address(pc) ? pc : 0;
+}
 EXPORT_SYMBOL(unwind_stack_by_address);
 
 /* used by show_backtrace() */
-अचिन्हित दीर्घ unwind_stack(काष्ठा task_काष्ठा *task, अचिन्हित दीर्घ *sp,
-			   अचिन्हित दीर्घ pc, अचिन्हित दीर्घ *ra)
-अणु
-	अचिन्हित दीर्घ stack_page = 0;
-	पूर्णांक cpu;
+unsigned long unwind_stack(struct task_struct *task, unsigned long *sp,
+			   unsigned long pc, unsigned long *ra)
+{
+	unsigned long stack_page = 0;
+	int cpu;
 
-	क्रम_each_possible_cpu(cpu) अणु
-		अगर (on_irq_stack(cpu, *sp)) अणु
-			stack_page = (अचिन्हित दीर्घ)irq_stack[cpu];
-			अवरोध;
-		पूर्ण
-	पूर्ण
+	for_each_possible_cpu(cpu) {
+		if (on_irq_stack(cpu, *sp)) {
+			stack_page = (unsigned long)irq_stack[cpu];
+			break;
+		}
+	}
 
-	अगर (!stack_page)
-		stack_page = (अचिन्हित दीर्घ)task_stack_page(task);
+	if (!stack_page)
+		stack_page = (unsigned long)task_stack_page(task);
 
-	वापस unwind_stack_by_address(stack_page, sp, pc, ra);
-पूर्ण
-#पूर्ण_अगर
+	return unwind_stack_by_address(stack_page, sp, pc, ra);
+}
+#endif
 
 /*
- * get_wchan - a मुख्यtenance nighपंचांगare^W^Wpain in the ass ...
+ * get_wchan - a maintenance nightmare^W^Wpain in the ass ...
  */
-अचिन्हित दीर्घ get_wchan(काष्ठा task_काष्ठा *task)
-अणु
-	अचिन्हित दीर्घ pc = 0;
-#अगर_घोषित CONFIG_KALLSYMS
-	अचिन्हित दीर्घ sp;
-	अचिन्हित दीर्घ ra = 0;
-#पूर्ण_अगर
+unsigned long get_wchan(struct task_struct *task)
+{
+	unsigned long pc = 0;
+#ifdef CONFIG_KALLSYMS
+	unsigned long sp;
+	unsigned long ra = 0;
+#endif
 
-	अगर (!task || task == current || task->state == TASK_RUNNING)
-		जाओ out;
-	अगर (!task_stack_page(task))
-		जाओ out;
+	if (!task || task == current || task->state == TASK_RUNNING)
+		goto out;
+	if (!task_stack_page(task))
+		goto out;
 
-	pc = thपढ़ो_saved_pc(task);
+	pc = thread_saved_pc(task);
 
-#अगर_घोषित CONFIG_KALLSYMS
-	sp = task->thपढ़ो.reg29 + schedule_mfi.frame_size;
+#ifdef CONFIG_KALLSYMS
+	sp = task->thread.reg29 + schedule_mfi.frame_size;
 
-	जबतक (in_sched_functions(pc))
+	while (in_sched_functions(pc))
 		pc = unwind_stack(task, &sp, pc, &ra);
-#पूर्ण_अगर
+#endif
 
 out:
-	वापस pc;
-पूर्ण
+	return pc;
+}
 
-अचिन्हित दीर्घ mips_stack_top(व्योम)
-अणु
-	अचिन्हित दीर्घ top = TASK_SIZE & PAGE_MASK;
+unsigned long mips_stack_top(void)
+{
+	unsigned long top = TASK_SIZE & PAGE_MASK;
 
-	अगर (IS_ENABLED(CONFIG_MIPS_FP_SUPPORT)) अणु
-		/* One page क्रम branch delay slot "emulation" */
+	if (IS_ENABLED(CONFIG_MIPS_FP_SUPPORT)) {
+		/* One page for branch delay slot "emulation" */
 		top -= PAGE_SIZE;
-	पूर्ण
+	}
 
-	/* Space क्रम the VDSO, data page & GIC user page */
-	top -= PAGE_ALIGN(current->thपढ़ो.abi->vdso->size);
+	/* Space for the VDSO, data page & GIC user page */
+	top -= PAGE_ALIGN(current->thread.abi->vdso->size);
 	top -= PAGE_SIZE;
 	top -= mips_gic_present() ? PAGE_SIZE : 0;
 
-	/* Space क्रम cache colour alignment */
-	अगर (cpu_has_dc_aliases)
+	/* Space for cache colour alignment */
+	if (cpu_has_dc_aliases)
 		top -= shm_align_mask + 1;
 
-	/* Space to अक्रमomize the VDSO base */
-	अगर (current->flags & PF_RANDOMIZE)
+	/* Space to randomize the VDSO base */
+	if (current->flags & PF_RANDOMIZE)
 		top -= VDSO_RANDOMIZE_SIZE;
 
-	वापस top;
-पूर्ण
+	return top;
+}
 
 /*
- * Don't क्रमget that the stack poपूर्णांकer must be aligned on a 8 bytes
- * boundary क्रम 32-bits ABI and 16 bytes क्रम 64-bits ABI.
+ * Don't forget that the stack pointer must be aligned on a 8 bytes
+ * boundary for 32-bits ABI and 16 bytes for 64-bits ABI.
  */
-अचिन्हित दीर्घ arch_align_stack(अचिन्हित दीर्घ sp)
-अणु
-	अगर (!(current->personality & ADDR_NO_RANDOMIZE) && अक्रमomize_va_space)
-		sp -= get_अक्रमom_पूर्णांक() & ~PAGE_MASK;
+unsigned long arch_align_stack(unsigned long sp)
+{
+	if (!(current->personality & ADDR_NO_RANDOMIZE) && randomize_va_space)
+		sp -= get_random_int() & ~PAGE_MASK;
 
-	वापस sp & ALMASK;
-पूर्ण
+	return sp & ALMASK;
+}
 
-अटल काष्ठा cpumask backtrace_csd_busy;
+static struct cpumask backtrace_csd_busy;
 
-अटल व्योम handle_backtrace(व्योम *info)
-अणु
+static void handle_backtrace(void *info)
+{
 	nmi_cpu_backtrace(get_irq_regs());
 	cpumask_clear_cpu(smp_processor_id(), &backtrace_csd_busy);
-पूर्ण
+}
 
-अटल DEFINE_PER_CPU(call_single_data_t, backtrace_csd) =
-	CSD_INIT(handle_backtrace, शून्य);
+static DEFINE_PER_CPU(call_single_data_t, backtrace_csd) =
+	CSD_INIT(handle_backtrace, NULL);
 
-अटल व्योम उठाओ_backtrace(cpumask_t *mask)
-अणु
+static void raise_backtrace(cpumask_t *mask)
+{
 	call_single_data_t *csd;
-	पूर्णांक cpu;
+	int cpu;
 
-	क्रम_each_cpu(cpu, mask) अणु
+	for_each_cpu(cpu, mask) {
 		/*
 		 * If we previously sent an IPI to the target CPU & it hasn't
 		 * cleared its bit in the busy cpumask then it didn't handle
-		 * our previous IPI & it's not safe क्रम us to reuse the
+		 * our previous IPI & it's not safe for us to reuse the
 		 * call_single_data_t.
 		 */
-		अगर (cpumask_test_and_set_cpu(cpu, &backtrace_csd_busy)) अणु
+		if (cpumask_test_and_set_cpu(cpu, &backtrace_csd_busy)) {
 			pr_warn("Unable to send backtrace IPI to CPU%u - perhaps it hung?\n",
 				cpu);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		csd = &per_cpu(backtrace_csd, cpu);
 		smp_call_function_single_async(cpu, csd);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम arch_trigger_cpumask_backtrace(स्थिर cpumask_t *mask, bool exclude_self)
-अणु
-	nmi_trigger_cpumask_backtrace(mask, exclude_self, उठाओ_backtrace);
-पूर्ण
+void arch_trigger_cpumask_backtrace(const cpumask_t *mask, bool exclude_self)
+{
+	nmi_trigger_cpumask_backtrace(mask, exclude_self, raise_backtrace);
+}
 
-पूर्णांक mips_get_process_fp_mode(काष्ठा task_काष्ठा *task)
-अणु
-	पूर्णांक value = 0;
+int mips_get_process_fp_mode(struct task_struct *task)
+{
+	int value = 0;
 
-	अगर (!test_tsk_thपढ़ो_flag(task, TIF_32BIT_FPREGS))
+	if (!test_tsk_thread_flag(task, TIF_32BIT_FPREGS))
 		value |= PR_FP_MODE_FR;
-	अगर (test_tsk_thपढ़ो_flag(task, TIF_HYBRID_FPREGS))
+	if (test_tsk_thread_flag(task, TIF_HYBRID_FPREGS))
 		value |= PR_FP_MODE_FRE;
 
-	वापस value;
-पूर्ण
+	return value;
+}
 
-अटल दीर्घ prepare_क्रम_fp_mode_चयन(व्योम *unused)
-अणु
+static long prepare_for_fp_mode_switch(void *unused)
+{
 	/*
 	 * This is icky, but we use this to simply ensure that all CPUs have
-	 * context चयनed, regardless of whether they were previously running
-	 * kernel or user code. This ensures that no CPU that a mode-चयनing
+	 * context switched, regardless of whether they were previously running
+	 * kernel or user code. This ensures that no CPU that a mode-switching
 	 * program may execute on keeps its FPU enabled (& in the old mode)
-	 * throughout the mode चयन.
+	 * throughout the mode switch.
 	 */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mips_set_process_fp_mode(काष्ठा task_काष्ठा *task, अचिन्हित पूर्णांक value)
-अणु
-	स्थिर अचिन्हित पूर्णांक known_bits = PR_FP_MODE_FR | PR_FP_MODE_FRE;
-	काष्ठा task_काष्ठा *t;
-	काष्ठा cpumask process_cpus;
-	पूर्णांक cpu;
+int mips_set_process_fp_mode(struct task_struct *task, unsigned int value)
+{
+	const unsigned int known_bits = PR_FP_MODE_FR | PR_FP_MODE_FRE;
+	struct task_struct *t;
+	struct cpumask process_cpus;
+	int cpu;
 
-	/* If nothing to change, वापस right away, successfully.  */
-	अगर (value == mips_get_process_fp_mode(task))
-		वापस 0;
+	/* If nothing to change, return right away, successfully.  */
+	if (value == mips_get_process_fp_mode(task))
+		return 0;
 
-	/* Only accept a mode change अगर 64-bit FP enabled क्रम o32.  */
-	अगर (!IS_ENABLED(CONFIG_MIPS_O32_FP64_SUPPORT))
-		वापस -EOPNOTSUPP;
+	/* Only accept a mode change if 64-bit FP enabled for o32.  */
+	if (!IS_ENABLED(CONFIG_MIPS_O32_FP64_SUPPORT))
+		return -EOPNOTSUPP;
 
-	/* And only क्रम o32 tasks.  */
-	अगर (IS_ENABLED(CONFIG_64BIT) && !test_thपढ़ो_flag(TIF_32BIT_REGS))
-		वापस -EOPNOTSUPP;
+	/* And only for o32 tasks.  */
+	if (IS_ENABLED(CONFIG_64BIT) && !test_thread_flag(TIF_32BIT_REGS))
+		return -EOPNOTSUPP;
 
 	/* Check the value is valid */
-	अगर (value & ~known_bits)
-		वापस -EOPNOTSUPP;
+	if (value & ~known_bits)
+		return -EOPNOTSUPP;
 
 	/* Setting FRE without FR is not supported.  */
-	अगर ((value & (PR_FP_MODE_FR | PR_FP_MODE_FRE)) == PR_FP_MODE_FRE)
-		वापस -EOPNOTSUPP;
+	if ((value & (PR_FP_MODE_FR | PR_FP_MODE_FRE)) == PR_FP_MODE_FRE)
+		return -EOPNOTSUPP;
 
-	/* Aव्योम inadvertently triggering emulation */
-	अगर ((value & PR_FP_MODE_FR) && raw_cpu_has_fpu &&
+	/* Avoid inadvertently triggering emulation */
+	if ((value & PR_FP_MODE_FR) && raw_cpu_has_fpu &&
 	    !(raw_current_cpu_data.fpu_id & MIPS_FPIR_F64))
-		वापस -EOPNOTSUPP;
-	अगर ((value & PR_FP_MODE_FRE) && raw_cpu_has_fpu && !cpu_has_fre)
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
+	if ((value & PR_FP_MODE_FRE) && raw_cpu_has_fpu && !cpu_has_fre)
+		return -EOPNOTSUPP;
 
 	/* FR = 0 not supported in MIPS R6 */
-	अगर (!(value & PR_FP_MODE_FR) && raw_cpu_has_fpu && cpu_has_mips_r6)
-		वापस -EOPNOTSUPP;
+	if (!(value & PR_FP_MODE_FR) && raw_cpu_has_fpu && cpu_has_mips_r6)
+		return -EOPNOTSUPP;
 
-	/* Indicate the new FP mode in each thपढ़ो */
-	क्रम_each_thपढ़ो(task, t) अणु
-		/* Update desired FP रेजिस्टर width */
-		अगर (value & PR_FP_MODE_FR) अणु
-			clear_tsk_thपढ़ो_flag(t, TIF_32BIT_FPREGS);
-		पूर्ण अन्यथा अणु
-			set_tsk_thपढ़ो_flag(t, TIF_32BIT_FPREGS);
-			clear_tsk_thपढ़ो_flag(t, TIF_MSA_CTX_LIVE);
-		पूर्ण
+	/* Indicate the new FP mode in each thread */
+	for_each_thread(task, t) {
+		/* Update desired FP register width */
+		if (value & PR_FP_MODE_FR) {
+			clear_tsk_thread_flag(t, TIF_32BIT_FPREGS);
+		} else {
+			set_tsk_thread_flag(t, TIF_32BIT_FPREGS);
+			clear_tsk_thread_flag(t, TIF_MSA_CTX_LIVE);
+		}
 
 		/* Update desired FP single layout */
-		अगर (value & PR_FP_MODE_FRE)
-			set_tsk_thपढ़ो_flag(t, TIF_HYBRID_FPREGS);
-		अन्यथा
-			clear_tsk_thपढ़ो_flag(t, TIF_HYBRID_FPREGS);
-	पूर्ण
+		if (value & PR_FP_MODE_FRE)
+			set_tsk_thread_flag(t, TIF_HYBRID_FPREGS);
+		else
+			clear_tsk_thread_flag(t, TIF_HYBRID_FPREGS);
+	}
 
 	/*
-	 * We need to ensure that all thपढ़ोs in the process have चयनed mode
-	 * beक्रमe वापसing, in order to allow userland to not worry about
-	 * races. We can करो this by क्रमcing all CPUs that any thपढ़ो in the
-	 * process may be running on to schedule something अन्यथा - in this हाल
-	 * prepare_क्रम_fp_mode_चयन().
+	 * We need to ensure that all threads in the process have switched mode
+	 * before returning, in order to allow userland to not worry about
+	 * races. We can do this by forcing all CPUs that any thread in the
+	 * process may be running on to schedule something else - in this case
+	 * prepare_for_fp_mode_switch().
 	 *
-	 * We begin by generating a mask of all CPUs that any thपढ़ो in the
+	 * We begin by generating a mask of all CPUs that any thread in the
 	 * process may be running on.
 	 */
 	cpumask_clear(&process_cpus);
-	क्रम_each_thपढ़ो(task, t)
+	for_each_thread(task, t)
 		cpumask_set_cpu(task_cpu(t), &process_cpus);
 
 	/*
-	 * Now we schedule prepare_क्रम_fp_mode_चयन() on each of those CPUs.
+	 * Now we schedule prepare_for_fp_mode_switch() on each of those CPUs.
 	 *
-	 * The CPUs may have rescheduled alपढ़ोy since we चयनed mode or
-	 * generated the cpumask, but that करोesn't matter. If the task in this
+	 * The CPUs may have rescheduled already since we switched mode or
+	 * generated the cpumask, but that doesn't matter. If the task in this
 	 * process is scheduled out then our scheduling
-	 * prepare_क्रम_fp_mode_चयन() will simply be redundant. If it's
-	 * scheduled in then it will alपढ़ोy have picked up the new FP mode
-	 * whilst करोing so.
+	 * prepare_for_fp_mode_switch() will simply be redundant. If it's
+	 * scheduled in then it will already have picked up the new FP mode
+	 * whilst doing so.
 	 */
 	get_online_cpus();
-	क्रम_each_cpu_and(cpu, &process_cpus, cpu_online_mask)
-		work_on_cpu(cpu, prepare_क्रम_fp_mode_चयन, शून्य);
+	for_each_cpu_and(cpu, &process_cpus, cpu_online_mask)
+		work_on_cpu(cpu, prepare_for_fp_mode_switch, NULL);
 	put_online_cpus();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर defined(CONFIG_32BIT) || defined(CONFIG_MIPS32_O32)
-व्योम mips_dump_regs32(u32 *uregs, स्थिर काष्ठा pt_regs *regs)
-अणु
-	अचिन्हित पूर्णांक i;
+#if defined(CONFIG_32BIT) || defined(CONFIG_MIPS32_O32)
+void mips_dump_regs32(u32 *uregs, const struct pt_regs *regs)
+{
+	unsigned int i;
 
-	क्रम (i = MIPS32_EF_R1; i <= MIPS32_EF_R31; i++) अणु
+	for (i = MIPS32_EF_R1; i <= MIPS32_EF_R31; i++) {
 		/* k0/k1 are copied as zero. */
-		अगर (i == MIPS32_EF_R26 || i == MIPS32_EF_R27)
+		if (i == MIPS32_EF_R26 || i == MIPS32_EF_R27)
 			uregs[i] = 0;
-		अन्यथा
+		else
 			uregs[i] = regs->regs[i - MIPS32_EF_R0];
-	पूर्ण
+	}
 
 	uregs[MIPS32_EF_LO] = regs->lo;
 	uregs[MIPS32_EF_HI] = regs->hi;
@@ -887,21 +886,21 @@ out:
 	uregs[MIPS32_EF_CP0_BADVADDR] = regs->cp0_badvaddr;
 	uregs[MIPS32_EF_CP0_STATUS] = regs->cp0_status;
 	uregs[MIPS32_EF_CP0_CAUSE] = regs->cp0_cause;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_32BIT || CONFIG_MIPS32_O32 */
+}
+#endif /* CONFIG_32BIT || CONFIG_MIPS32_O32 */
 
-#अगर_घोषित CONFIG_64BIT
-व्योम mips_dump_regs64(u64 *uregs, स्थिर काष्ठा pt_regs *regs)
-अणु
-	अचिन्हित पूर्णांक i;
+#ifdef CONFIG_64BIT
+void mips_dump_regs64(u64 *uregs, const struct pt_regs *regs)
+{
+	unsigned int i;
 
-	क्रम (i = MIPS64_EF_R1; i <= MIPS64_EF_R31; i++) अणु
+	for (i = MIPS64_EF_R1; i <= MIPS64_EF_R31; i++) {
 		/* k0/k1 are copied as zero. */
-		अगर (i == MIPS64_EF_R26 || i == MIPS64_EF_R27)
+		if (i == MIPS64_EF_R26 || i == MIPS64_EF_R27)
 			uregs[i] = 0;
-		अन्यथा
+		else
 			uregs[i] = regs->regs[i - MIPS64_EF_R0];
-	पूर्ण
+	}
 
 	uregs[MIPS64_EF_LO] = regs->lo;
 	uregs[MIPS64_EF_HI] = regs->hi;
@@ -909,5 +908,5 @@ out:
 	uregs[MIPS64_EF_CP0_BADVADDR] = regs->cp0_badvaddr;
 	uregs[MIPS64_EF_CP0_STATUS] = regs->cp0_status;
 	uregs[MIPS64_EF_CP0_CAUSE] = regs->cp0_cause;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_64BIT */
+}
+#endif /* CONFIG_64BIT */

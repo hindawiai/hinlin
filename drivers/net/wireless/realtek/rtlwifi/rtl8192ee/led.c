@@ -1,124 +1,123 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2009-2014  Realtek Corporation.*/
 
-#समावेश "../wifi.h"
-#समावेश "../pci.h"
-#समावेश "reg.h"
-#समावेश "led.h"
+#include "../wifi.h"
+#include "../pci.h"
+#include "reg.h"
+#include "led.h"
 
-अटल व्योम _rtl92ee_init_led(काष्ठा ieee80211_hw *hw,
-			      काष्ठा rtl_led *pled, क्रमागत rtl_led_pin ledpin)
-अणु
+static void _rtl92ee_init_led(struct ieee80211_hw *hw,
+			      struct rtl_led *pled, enum rtl_led_pin ledpin)
+{
 	pled->hw = hw;
 	pled->ledpin = ledpin;
-	pled->leकरोn = false;
-पूर्ण
+	pled->ledon = false;
+}
 
-व्योम rtl92ee_sw_led_on(काष्ठा ieee80211_hw *hw, काष्ठा rtl_led *pled)
-अणु
+void rtl92ee_sw_led_on(struct ieee80211_hw *hw, struct rtl_led *pled)
+{
 	u32 ledcfg;
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
 
 	rtl_dbg(rtlpriv, COMP_LED, DBG_LOUD,
 		"LedAddr:%X ledpin=%d\n", REG_LEDCFG2, pled->ledpin);
 
-	चयन (pled->ledpin) अणु
-	हाल LED_PIN_GPIO0:
-		अवरोध;
-	हाल LED_PIN_LED0:
-		ledcfg = rtl_पढ़ो_dword(rtlpriv , REG_GPIO_PIN_CTRL);
+	switch (pled->ledpin) {
+	case LED_PIN_GPIO0:
+		break;
+	case LED_PIN_LED0:
+		ledcfg = rtl_read_dword(rtlpriv , REG_GPIO_PIN_CTRL);
 		ledcfg &= ~BIT(13);
 		ledcfg |= BIT(21);
 		ledcfg &= ~BIT(29);
 
-		rtl_ग_लिखो_dword(rtlpriv, REG_GPIO_PIN_CTRL, ledcfg);
+		rtl_write_dword(rtlpriv, REG_GPIO_PIN_CTRL, ledcfg);
 
-		अवरोध;
-	हाल LED_PIN_LED1:
+		break;
+	case LED_PIN_LED1:
 
-		अवरोध;
-	शेष:
+		break;
+	default:
 		rtl_dbg(rtlpriv, COMP_ERR, DBG_LOUD,
 			"switch case %#x not processed\n", pled->ledpin);
-		अवरोध;
-	पूर्ण
-	pled->leकरोn = true;
-पूर्ण
+		break;
+	}
+	pled->ledon = true;
+}
 
-व्योम rtl92ee_sw_led_off(काष्ठा ieee80211_hw *hw, काष्ठा rtl_led *pled)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+void rtl92ee_sw_led_off(struct ieee80211_hw *hw, struct rtl_led *pled)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
 	u32 ledcfg;
 
 	rtl_dbg(rtlpriv, COMP_LED, DBG_LOUD,
 		"LedAddr:%X ledpin=%d\n", REG_LEDCFG2, pled->ledpin);
 
-	चयन (pled->ledpin) अणु
-	हाल LED_PIN_GPIO0:
-		अवरोध;
-	हाल LED_PIN_LED0:
+	switch (pled->ledpin) {
+	case LED_PIN_GPIO0:
+		break;
+	case LED_PIN_LED0:
 
-		ledcfg = rtl_पढ़ो_dword(rtlpriv , REG_GPIO_PIN_CTRL);
+		ledcfg = rtl_read_dword(rtlpriv , REG_GPIO_PIN_CTRL);
 		ledcfg |= ~BIT(21);
 		ledcfg &= ~BIT(29);
-		rtl_ग_लिखो_dword(rtlpriv, REG_GPIO_PIN_CTRL, ledcfg);
+		rtl_write_dword(rtlpriv, REG_GPIO_PIN_CTRL, ledcfg);
 
-		अवरोध;
-	हाल LED_PIN_LED1:
+		break;
+	case LED_PIN_LED1:
 
-		अवरोध;
-	शेष:
+		break;
+	default:
 		rtl_dbg(rtlpriv, COMP_ERR, DBG_LOUD,
 			"switch case %#x not processed\n", pled->ledpin);
-		अवरोध;
-	पूर्ण
-	pled->leकरोn = false;
-पूर्ण
+		break;
+	}
+	pled->ledon = false;
+}
 
-व्योम rtl92ee_init_sw_leds(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+void rtl92ee_init_sw_leds(struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
 
 	_rtl92ee_init_led(hw, &rtlpriv->ledctl.sw_led0, LED_PIN_LED0);
 	_rtl92ee_init_led(hw, &rtlpriv->ledctl.sw_led1, LED_PIN_LED1);
-पूर्ण
+}
 
-अटल व्योम _rtl92ee_sw_led_control(काष्ठा ieee80211_hw *hw,
-				    क्रमागत led_ctl_mode ledaction)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_led *pled0 = &rtlpriv->ledctl.sw_led0;
+static void _rtl92ee_sw_led_control(struct ieee80211_hw *hw,
+				    enum led_ctl_mode ledaction)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_led *pled0 = &rtlpriv->ledctl.sw_led0;
 
-	चयन (ledaction) अणु
-	हाल LED_CTL_POWER_ON:
-	हाल LED_CTL_LINK:
-	हाल LED_CTL_NO_LINK:
+	switch (ledaction) {
+	case LED_CTL_POWER_ON:
+	case LED_CTL_LINK:
+	case LED_CTL_NO_LINK:
 		rtl92ee_sw_led_on(hw, pled0);
-		अवरोध;
-	हाल LED_CTL_POWER_OFF:
+		break;
+	case LED_CTL_POWER_OFF:
 		rtl92ee_sw_led_off(hw, pled0);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-व्योम rtl92ee_led_control(काष्ठा ieee80211_hw *hw, क्रमागत led_ctl_mode ledaction)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
+void rtl92ee_led_control(struct ieee80211_hw *hw, enum led_ctl_mode ledaction)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
 
-	अगर ((ppsc->rfoff_reason > RF_CHANGE_BY_PS) &&
+	if ((ppsc->rfoff_reason > RF_CHANGE_BY_PS) &&
 	    (ledaction == LED_CTL_TX ||
 	     ledaction == LED_CTL_RX ||
 	     ledaction == LED_CTL_SITE_SURVEY ||
 	     ledaction == LED_CTL_LINK ||
 	     ledaction == LED_CTL_NO_LINK ||
 	     ledaction == LED_CTL_START_TO_LINK ||
-	     ledaction == LED_CTL_POWER_ON)) अणु
-		वापस;
-	पूर्ण
+	     ledaction == LED_CTL_POWER_ON)) {
+		return;
+	}
 	rtl_dbg(rtlpriv, COMP_LED, DBG_TRACE, "ledaction %d,\n", ledaction);
 	_rtl92ee_sw_led_control(hw, ledaction);
-पूर्ण
+}

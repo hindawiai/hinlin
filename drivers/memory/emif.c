@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * EMIF driver
  *
@@ -8,338 +7,338 @@
  * Aneesh V <aneesh@ti.com>
  * Santosh Shilimkar <santosh.shilimkar@ti.com>
  */
-#समावेश <linux/err.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/reboot.h>
-#समावेश <linux/platक्रमm_data/emअगर_plat.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/of.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/module.h>
-#समावेश <linux/list.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/pm.h>
+#include <linux/err.h>
+#include <linux/kernel.h>
+#include <linux/reboot.h>
+#include <linux/platform_data/emif_plat.h>
+#include <linux/io.h>
+#include <linux/device.h>
+#include <linux/platform_device.h>
+#include <linux/interrupt.h>
+#include <linux/slab.h>
+#include <linux/of.h>
+#include <linux/debugfs.h>
+#include <linux/seq_file.h>
+#include <linux/module.h>
+#include <linux/list.h>
+#include <linux/spinlock.h>
+#include <linux/pm.h>
 
-#समावेश "emif.h"
-#समावेश "jedec_ddr.h"
-#समावेश "of_memory.h"
+#include "emif.h"
+#include "jedec_ddr.h"
+#include "of_memory.h"
 
 /**
- * काष्ठा emअगर_data - Per device अटल data क्रम driver's use
+ * struct emif_data - Per device static data for driver's use
  * @duplicate:			Whether the DDR devices attached to this EMIF
  *				instance are exactly same as that on EMIF1. In
- *				this हाल we can save some memory and processing
+ *				this case we can save some memory and processing
  * @temperature_level:		Maximum temperature of LPDDR2 devices attached
- *				to this EMIF - पढ़ो from MR4 रेजिस्टर. If there
+ *				to this EMIF - read from MR4 register. If there
  *				are two devices attached to this EMIF, this
  *				value is the maximum of the two temperature
  *				levels.
  * @node:			node in the device list
- * @base:			base address of memory-mapped IO रेजिस्टरs.
- * @dev:			device poपूर्णांकer.
- * @addressing			table with addressing inक्रमmation from the spec
+ * @base:			base address of memory-mapped IO registers.
+ * @dev:			device pointer.
+ * @addressing			table with addressing information from the spec
  * @regs_cache:			An array of 'struct emif_regs' that stores
- *				calculated रेजिस्टर values क्रम dअगरferent
- *				frequencies, to aव्योम re-calculating them on
+ *				calculated register values for different
+ *				frequencies, to avoid re-calculating them on
  *				each DVFS transition.
- * @curr_regs:			The set of रेजिस्टर values used in the last
+ * @curr_regs:			The set of register values used in the last
  *				frequency change (i.e. corresponding to the
  *				frequency in effect at the moment)
- * @plat_data:			Poपूर्णांकer to saved platक्रमm data.
- * @debugfs_root:		dentry to the root folder क्रम EMIF in debugfs
- * @np_ddr:			Poपूर्णांकer to ddr device tree node
+ * @plat_data:			Pointer to saved platform data.
+ * @debugfs_root:		dentry to the root folder for EMIF in debugfs
+ * @np_ddr:			Pointer to ddr device tree node
  */
-काष्ठा emअगर_data अणु
+struct emif_data {
 	u8				duplicate;
 	u8				temperature_level;
 	u8				lpmode;
-	काष्ठा list_head		node;
-	अचिन्हित दीर्घ			irq_state;
-	व्योम __iomem			*base;
-	काष्ठा device			*dev;
-	स्थिर काष्ठा lpddr2_addressing	*addressing;
-	काष्ठा emअगर_regs		*regs_cache[EMIF_MAX_NUM_FREQUENCIES];
-	काष्ठा emअगर_regs		*curr_regs;
-	काष्ठा emअगर_platक्रमm_data	*plat_data;
-	काष्ठा dentry			*debugfs_root;
-	काष्ठा device_node		*np_ddr;
-पूर्ण;
+	struct list_head		node;
+	unsigned long			irq_state;
+	void __iomem			*base;
+	struct device			*dev;
+	const struct lpddr2_addressing	*addressing;
+	struct emif_regs		*regs_cache[EMIF_MAX_NUM_FREQUENCIES];
+	struct emif_regs		*curr_regs;
+	struct emif_platform_data	*plat_data;
+	struct dentry			*debugfs_root;
+	struct device_node		*np_ddr;
+};
 
-अटल काष्ठा emअगर_data *emअगर1;
-अटल DEFINE_SPINLOCK(emअगर_lock);
-अटल अचिन्हित दीर्घ	irq_state;
-अटल u32		t_ck; /* DDR घड़ी period in ps */
-अटल LIST_HEAD(device_list);
+static struct emif_data *emif1;
+static DEFINE_SPINLOCK(emif_lock);
+static unsigned long	irq_state;
+static u32		t_ck; /* DDR clock period in ps */
+static LIST_HEAD(device_list);
 
-#अगर_घोषित CONFIG_DEBUG_FS
-अटल व्योम करो_emअगर_regdump_show(काष्ठा seq_file *s, काष्ठा emअगर_data *emअगर,
-	काष्ठा emअगर_regs *regs)
-अणु
-	u32 type = emअगर->plat_data->device_info->type;
-	u32 ip_rev = emअगर->plat_data->ip_rev;
+#ifdef CONFIG_DEBUG_FS
+static void do_emif_regdump_show(struct seq_file *s, struct emif_data *emif,
+	struct emif_regs *regs)
+{
+	u32 type = emif->plat_data->device_info->type;
+	u32 ip_rev = emif->plat_data->ip_rev;
 
-	seq_म_लिखो(s, "EMIF register cache dump for %dMHz\n",
+	seq_printf(s, "EMIF register cache dump for %dMHz\n",
 		regs->freq/1000000);
 
-	seq_म_लिखो(s, "ref_ctrl_shdw\t: 0x%08x\n", regs->ref_ctrl_shdw);
-	seq_म_लिखो(s, "sdram_tim1_shdw\t: 0x%08x\n", regs->sdram_tim1_shdw);
-	seq_म_लिखो(s, "sdram_tim2_shdw\t: 0x%08x\n", regs->sdram_tim2_shdw);
-	seq_म_लिखो(s, "sdram_tim3_shdw\t: 0x%08x\n", regs->sdram_tim3_shdw);
+	seq_printf(s, "ref_ctrl_shdw\t: 0x%08x\n", regs->ref_ctrl_shdw);
+	seq_printf(s, "sdram_tim1_shdw\t: 0x%08x\n", regs->sdram_tim1_shdw);
+	seq_printf(s, "sdram_tim2_shdw\t: 0x%08x\n", regs->sdram_tim2_shdw);
+	seq_printf(s, "sdram_tim3_shdw\t: 0x%08x\n", regs->sdram_tim3_shdw);
 
-	अगर (ip_rev == EMIF_4D) अणु
-		seq_म_लिखो(s, "read_idle_ctrl_shdw_normal\t: 0x%08x\n",
-			regs->पढ़ो_idle_ctrl_shdw_normal);
-		seq_म_लिखो(s, "read_idle_ctrl_shdw_volt_ramp\t: 0x%08x\n",
-			regs->पढ़ो_idle_ctrl_shdw_volt_ramp);
-	पूर्ण अन्यथा अगर (ip_rev == EMIF_4D5) अणु
-		seq_म_लिखो(s, "dll_calib_ctrl_shdw_normal\t: 0x%08x\n",
+	if (ip_rev == EMIF_4D) {
+		seq_printf(s, "read_idle_ctrl_shdw_normal\t: 0x%08x\n",
+			regs->read_idle_ctrl_shdw_normal);
+		seq_printf(s, "read_idle_ctrl_shdw_volt_ramp\t: 0x%08x\n",
+			regs->read_idle_ctrl_shdw_volt_ramp);
+	} else if (ip_rev == EMIF_4D5) {
+		seq_printf(s, "dll_calib_ctrl_shdw_normal\t: 0x%08x\n",
 			regs->dll_calib_ctrl_shdw_normal);
-		seq_म_लिखो(s, "dll_calib_ctrl_shdw_volt_ramp\t: 0x%08x\n",
+		seq_printf(s, "dll_calib_ctrl_shdw_volt_ramp\t: 0x%08x\n",
 			regs->dll_calib_ctrl_shdw_volt_ramp);
-	पूर्ण
+	}
 
-	अगर (type == DDR_TYPE_LPDDR2_S2 || type == DDR_TYPE_LPDDR2_S4) अणु
-		seq_म_लिखो(s, "ref_ctrl_shdw_derated\t: 0x%08x\n",
+	if (type == DDR_TYPE_LPDDR2_S2 || type == DDR_TYPE_LPDDR2_S4) {
+		seq_printf(s, "ref_ctrl_shdw_derated\t: 0x%08x\n",
 			regs->ref_ctrl_shdw_derated);
-		seq_म_लिखो(s, "sdram_tim1_shdw_derated\t: 0x%08x\n",
+		seq_printf(s, "sdram_tim1_shdw_derated\t: 0x%08x\n",
 			regs->sdram_tim1_shdw_derated);
-		seq_म_लिखो(s, "sdram_tim3_shdw_derated\t: 0x%08x\n",
+		seq_printf(s, "sdram_tim3_shdw_derated\t: 0x%08x\n",
 			regs->sdram_tim3_shdw_derated);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक emअगर_regdump_show(काष्ठा seq_file *s, व्योम *unused)
-अणु
-	काष्ठा emअगर_data	*emअगर	= s->निजी;
-	काष्ठा emअगर_regs	**regs_cache;
-	पूर्णांक			i;
+static int emif_regdump_show(struct seq_file *s, void *unused)
+{
+	struct emif_data	*emif	= s->private;
+	struct emif_regs	**regs_cache;
+	int			i;
 
-	अगर (emअगर->duplicate)
-		regs_cache = emअगर1->regs_cache;
-	अन्यथा
-		regs_cache = emअगर->regs_cache;
+	if (emif->duplicate)
+		regs_cache = emif1->regs_cache;
+	else
+		regs_cache = emif->regs_cache;
 
-	क्रम (i = 0; i < EMIF_MAX_NUM_FREQUENCIES && regs_cache[i]; i++) अणु
-		करो_emअगर_regdump_show(s, emअगर, regs_cache[i]);
-		seq_अ_दो(s, '\n');
-	पूर्ण
+	for (i = 0; i < EMIF_MAX_NUM_FREQUENCIES && regs_cache[i]; i++) {
+		do_emif_regdump_show(s, emif, regs_cache[i]);
+		seq_putc(s, '\n');
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-DEFINE_SHOW_ATTRIBUTE(emअगर_regdump);
+DEFINE_SHOW_ATTRIBUTE(emif_regdump);
 
-अटल पूर्णांक emअगर_mr4_show(काष्ठा seq_file *s, व्योम *unused)
-अणु
-	काष्ठा emअगर_data *emअगर = s->निजी;
+static int emif_mr4_show(struct seq_file *s, void *unused)
+{
+	struct emif_data *emif = s->private;
 
-	seq_म_लिखो(s, "MR4=%d\n", emअगर->temperature_level);
-	वापस 0;
-पूर्ण
+	seq_printf(s, "MR4=%d\n", emif->temperature_level);
+	return 0;
+}
 
-DEFINE_SHOW_ATTRIBUTE(emअगर_mr4);
+DEFINE_SHOW_ATTRIBUTE(emif_mr4);
 
-अटल पूर्णांक __init_or_module emअगर_debugfs_init(काष्ठा emअगर_data *emअगर)
-अणु
-	emअगर->debugfs_root = debugfs_create_dir(dev_name(emअगर->dev), शून्य);
-	debugfs_create_file("regcache_dump", S_IRUGO, emअगर->debugfs_root, emअगर,
-			    &emअगर_regdump_fops);
-	debugfs_create_file("mr4", S_IRUGO, emअगर->debugfs_root, emअगर,
-			    &emअगर_mr4_fops);
-	वापस 0;
-पूर्ण
+static int __init_or_module emif_debugfs_init(struct emif_data *emif)
+{
+	emif->debugfs_root = debugfs_create_dir(dev_name(emif->dev), NULL);
+	debugfs_create_file("regcache_dump", S_IRUGO, emif->debugfs_root, emif,
+			    &emif_regdump_fops);
+	debugfs_create_file("mr4", S_IRUGO, emif->debugfs_root, emif,
+			    &emif_mr4_fops);
+	return 0;
+}
 
-अटल व्योम __निकास emअगर_debugfs_निकास(काष्ठा emअगर_data *emअगर)
-अणु
-	debugfs_हटाओ_recursive(emअगर->debugfs_root);
-	emअगर->debugfs_root = शून्य;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत पूर्णांक __init_or_module emअगर_debugfs_init(काष्ठा emअगर_data *emअगर)
-अणु
-	वापस 0;
-पूर्ण
+static void __exit emif_debugfs_exit(struct emif_data *emif)
+{
+	debugfs_remove_recursive(emif->debugfs_root);
+	emif->debugfs_root = NULL;
+}
+#else
+static inline int __init_or_module emif_debugfs_init(struct emif_data *emif)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम __निकास emअगर_debugfs_निकास(काष्ठा emअगर_data *emअगर)
-अणु
-पूर्ण
-#पूर्ण_अगर
+static inline void __exit emif_debugfs_exit(struct emif_data *emif)
+{
+}
+#endif
 
 /*
- * Calculate the period of DDR घड़ी from frequency value
+ * Calculate the period of DDR clock from frequency value
  */
-अटल व्योम set_ddr_clk_period(u32 freq)
-अणु
+static void set_ddr_clk_period(u32 freq)
+{
 	/* Divide 10^12 by frequency to get period in ps */
 	t_ck = (u32)DIV_ROUND_UP_ULL(1000000000000ull, freq);
-पूर्ण
+}
 
 /*
- * Get bus width used by EMIF. Note that this may be dअगरferent from the
+ * Get bus width used by EMIF. Note that this may be different from the
  * bus width of the DDR devices used. For instance two 16-bit DDR devices
- * may be connected to a given CS of EMIF. In this हाल bus width as far
+ * may be connected to a given CS of EMIF. In this case bus width as far
  * as EMIF is concerned is 32, where as the DDR bus width is 16 bits.
  */
-अटल u32 get_emअगर_bus_width(काष्ठा emअगर_data *emअगर)
-अणु
+static u32 get_emif_bus_width(struct emif_data *emif)
+{
 	u32		width;
-	व्योम __iomem	*base = emअगर->base;
+	void __iomem	*base = emif->base;
 
-	width = (पढ़ोl(base + EMIF_SDRAM_CONFIG) & NARROW_MODE_MASK)
+	width = (readl(base + EMIF_SDRAM_CONFIG) & NARROW_MODE_MASK)
 			>> NARROW_MODE_SHIFT;
 	width = width == 0 ? 32 : 16;
 
-	वापस width;
-पूर्ण
+	return width;
+}
 
 /*
- * Get the CL from SDRAM_CONFIG रेजिस्टर
+ * Get the CL from SDRAM_CONFIG register
  */
-अटल u32 get_cl(काष्ठा emअगर_data *emअगर)
-अणु
+static u32 get_cl(struct emif_data *emif)
+{
 	u32		cl;
-	व्योम __iomem	*base = emअगर->base;
+	void __iomem	*base = emif->base;
 
-	cl = (पढ़ोl(base + EMIF_SDRAM_CONFIG) & CL_MASK) >> CL_SHIFT;
+	cl = (readl(base + EMIF_SDRAM_CONFIG) & CL_MASK) >> CL_SHIFT;
 
-	वापस cl;
-पूर्ण
+	return cl;
+}
 
-अटल व्योम set_lpmode(काष्ठा emअगर_data *emअगर, u8 lpmode)
-अणु
+static void set_lpmode(struct emif_data *emif, u8 lpmode)
+{
 	u32 temp;
-	व्योम __iomem *base = emअगर->base;
+	void __iomem *base = emif->base;
 
 	/*
-	 * Workaround क्रम errata i743 - LPDDR2 Power-Down State is Not
+	 * Workaround for errata i743 - LPDDR2 Power-Down State is Not
 	 * Efficient
 	 *
 	 * i743 DESCRIPTION:
-	 * The EMIF supports घातer-करोwn state क्रम low घातer. The EMIF
-	 * स्वतःmatically माला_दो the SDRAM पूर्णांकo घातer-करोwn after the memory is
-	 * not accessed क्रम a defined number of cycles and the
+	 * The EMIF supports power-down state for low power. The EMIF
+	 * automatically puts the SDRAM into power-down after the memory is
+	 * not accessed for a defined number of cycles and the
 	 * EMIF_PWR_MGMT_CTRL[10:8] REG_LP_MODE bit field is set to 0x4.
-	 * As the EMIF supports स्वतःmatic output impedance calibration, a ZQ
-	 * calibration दीर्घ command is issued every समय it निकासs active
-	 * घातer-करोwn and preअक्षरge घातer-करोwn modes. The EMIF रुकोs and
+	 * As the EMIF supports automatic output impedance calibration, a ZQ
+	 * calibration long command is issued every time it exits active
+	 * power-down and precharge power-down modes. The EMIF waits and
 	 * blocks any other command during this calibration.
-	 * The EMIF करोes not allow selective disabling of ZQ calibration upon
-	 * निकास of घातer-करोwn mode. Due to very लघु periods of घातer-करोwn
+	 * The EMIF does not allow selective disabling of ZQ calibration upon
+	 * exit of power-down mode. Due to very short periods of power-down
 	 * cycles, ZQ calibration overhead creates bandwidth issues and
-	 * increases overall प्रणाली घातer consumption. On the other hand,
-	 * issuing ZQ calibration दीर्घ commands when निकासing self-refresh is
+	 * increases overall system power consumption. On the other hand,
+	 * issuing ZQ calibration long commands when exiting self-refresh is
 	 * still required.
 	 *
 	 * WORKAROUND
-	 * Because there is no घातer consumption benefit of the घातer-करोwn due
-	 * to the calibration and there is a perक्रमmance risk, the guideline
-	 * is to not allow घातer-करोwn state and, thereक्रमe, to not have set
+	 * Because there is no power consumption benefit of the power-down due
+	 * to the calibration and there is a performance risk, the guideline
+	 * is to not allow power-down state and, therefore, to not have set
 	 * the EMIF_PWR_MGMT_CTRL[10:8] REG_LP_MODE bit field to 0x4.
 	 */
-	अगर ((emअगर->plat_data->ip_rev == EMIF_4D) &&
-	    (lpmode == EMIF_LP_MODE_PWR_DN)) अणु
+	if ((emif->plat_data->ip_rev == EMIF_4D) &&
+	    (lpmode == EMIF_LP_MODE_PWR_DN)) {
 		WARN_ONCE(1,
 			  "REG_LP_MODE = LP_MODE_PWR_DN(4) is prohibited by erratum i743 switch to LP_MODE_SELF_REFRESH(2)\n");
 		/* rollback LP_MODE to Self-refresh mode */
 		lpmode = EMIF_LP_MODE_SELF_REFRESH;
-	पूर्ण
+	}
 
-	temp = पढ़ोl(base + EMIF_POWER_MANAGEMENT_CONTROL);
+	temp = readl(base + EMIF_POWER_MANAGEMENT_CONTROL);
 	temp &= ~LP_MODE_MASK;
 	temp |= (lpmode << LP_MODE_SHIFT);
-	ग_लिखोl(temp, base + EMIF_POWER_MANAGEMENT_CONTROL);
-पूर्ण
+	writel(temp, base + EMIF_POWER_MANAGEMENT_CONTROL);
+}
 
-अटल व्योम करो_freq_update(व्योम)
-अणु
-	काष्ठा emअगर_data *emअगर;
+static void do_freq_update(void)
+{
+	struct emif_data *emif;
 
 	/*
-	 * Workaround क्रम errata i728: Disable LPMODE during FREQ_UPDATE
+	 * Workaround for errata i728: Disable LPMODE during FREQ_UPDATE
 	 *
 	 * i728 DESCRIPTION:
-	 * The EMIF स्वतःmatically माला_दो the SDRAM पूर्णांकo self-refresh mode
-	 * after the EMIF has not perक्रमmed accesses during
-	 * EMIF_PWR_MGMT_CTRL[7:4] REG_SR_TIM number of DDR घड़ी cycles
+	 * The EMIF automatically puts the SDRAM into self-refresh mode
+	 * after the EMIF has not performed accesses during
+	 * EMIF_PWR_MGMT_CTRL[7:4] REG_SR_TIM number of DDR clock cycles
 	 * and the EMIF_PWR_MGMT_CTRL[10:8] REG_LP_MODE bit field is set
-	 * to 0x2. If during a small winकरोw the following three events
+	 * to 0x2. If during a small window the following three events
 	 * occur:
 	 * - The SR_TIMING counter expires
 	 * - And frequency change is requested
 	 * - And OCP access is requested
-	 * Then it causes instable घड़ी on the DDR पूर्णांकerface.
+	 * Then it causes instable clock on the DDR interface.
 	 *
 	 * WORKAROUND
-	 * To aव्योम the occurrence of the three events, the workaround
+	 * To avoid the occurrence of the three events, the workaround
 	 * is to disable the self-refresh when requesting a frequency
-	 * change. Beक्रमe requesting a frequency change the software must
+	 * change. Before requesting a frequency change the software must
 	 * program EMIF_PWR_MGMT_CTRL[10:8] REG_LP_MODE to 0x0. When the
-	 * frequency change has been करोne, the software can reprogram
+	 * frequency change has been done, the software can reprogram
 	 * EMIF_PWR_MGMT_CTRL[10:8] REG_LP_MODE to 0x2
 	 */
-	list_क्रम_each_entry(emअगर, &device_list, node) अणु
-		अगर (emअगर->lpmode == EMIF_LP_MODE_SELF_REFRESH)
-			set_lpmode(emअगर, EMIF_LP_MODE_DISABLE);
-	पूर्ण
+	list_for_each_entry(emif, &device_list, node) {
+		if (emif->lpmode == EMIF_LP_MODE_SELF_REFRESH)
+			set_lpmode(emif, EMIF_LP_MODE_DISABLE);
+	}
 
 	/*
 	 * TODO: Do FREQ_UPDATE here when an API
-	 * is available क्रम this as part of the new
-	 * घड़ी framework
+	 * is available for this as part of the new
+	 * clock framework
 	 */
 
-	list_क्रम_each_entry(emअगर, &device_list, node) अणु
-		अगर (emअगर->lpmode == EMIF_LP_MODE_SELF_REFRESH)
-			set_lpmode(emअगर, EMIF_LP_MODE_SELF_REFRESH);
-	पूर्ण
-पूर्ण
+	list_for_each_entry(emif, &device_list, node) {
+		if (emif->lpmode == EMIF_LP_MODE_SELF_REFRESH)
+			set_lpmode(emif, EMIF_LP_MODE_SELF_REFRESH);
+	}
+}
 
 /* Find addressing table entry based on the device's type and density */
-अटल स्थिर काष्ठा lpddr2_addressing *get_addressing_table(
-	स्थिर काष्ठा ddr_device_info *device_info)
-अणु
+static const struct lpddr2_addressing *get_addressing_table(
+	const struct ddr_device_info *device_info)
+{
 	u32		index, type, density;
 
 	type = device_info->type;
 	density = device_info->density;
 
-	चयन (type) अणु
-	हाल DDR_TYPE_LPDDR2_S4:
+	switch (type) {
+	case DDR_TYPE_LPDDR2_S4:
 		index = density - 1;
-		अवरोध;
-	हाल DDR_TYPE_LPDDR2_S2:
-		चयन (density) अणु
-		हाल DDR_DENSITY_1Gb:
-		हाल DDR_DENSITY_2Gb:
+		break;
+	case DDR_TYPE_LPDDR2_S2:
+		switch (density) {
+		case DDR_DENSITY_1Gb:
+		case DDR_DENSITY_2Gb:
 			index = density + 3;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			index = density - 1;
-		पूर्ण
-		अवरोध;
-	शेष:
-		वापस शून्य;
-	पूर्ण
+		}
+		break;
+	default:
+		return NULL;
+	}
 
-	वापस &lpddr2_jedec_addressing_table[index];
-पूर्ण
+	return &lpddr2_jedec_addressing_table[index];
+}
 
 /*
  * Find the the right timing table from the array of timing
- * tables of the device using DDR घड़ी frequency
+ * tables of the device using DDR clock frequency
  */
-अटल स्थिर काष्ठा lpddr2_timings *get_timings_table(काष्ठा emअगर_data *emअगर,
+static const struct lpddr2_timings *get_timings_table(struct emif_data *emif,
 		u32 freq)
-अणु
+{
 	u32				i, min, max, freq_nearest;
-	स्थिर काष्ठा lpddr2_timings	*timings = शून्य;
-	स्थिर काष्ठा lpddr2_timings	*timings_arr = emअगर->plat_data->timings;
-	काष्ठा				device *dev = emअगर->dev;
+	const struct lpddr2_timings	*timings = NULL;
+	const struct lpddr2_timings	*timings_arr = emif->plat_data->timings;
+	struct				device *dev = emif->dev;
 
 	/* Start with a very high frequency - 1GHz */
 	freq_nearest = 1000000000;
@@ -347,58 +346,58 @@ DEFINE_SHOW_ATTRIBUTE(emअगर_mr4);
 	/*
 	 * Find the timings table such that:
 	 *  1. the frequency range covers the required frequency(safe) AND
-	 *  2. the max_freq is बंदst to the required frequency(optimal)
+	 *  2. the max_freq is closest to the required frequency(optimal)
 	 */
-	क्रम (i = 0; i < emअगर->plat_data->timings_arr_size; i++) अणु
+	for (i = 0; i < emif->plat_data->timings_arr_size; i++) {
 		max = timings_arr[i].max_freq;
 		min = timings_arr[i].min_freq;
-		अगर ((freq >= min) && (freq <= max) && (max < freq_nearest)) अणु
+		if ((freq >= min) && (freq <= max) && (max < freq_nearest)) {
 			freq_nearest = max;
 			timings = &timings_arr[i];
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!timings)
+	if (!timings)
 		dev_err(dev, "%s: couldn't find timings for - %dHz\n",
 			__func__, freq);
 
 	dev_dbg(dev, "%s: timings table: freq %d, speed bin freq %d\n",
 		__func__, freq, freq_nearest);
 
-	वापस timings;
-पूर्ण
+	return timings;
+}
 
-अटल u32 get_sdram_ref_ctrl_shdw(u32 freq,
-		स्थिर काष्ठा lpddr2_addressing *addressing)
-अणु
+static u32 get_sdram_ref_ctrl_shdw(u32 freq,
+		const struct lpddr2_addressing *addressing)
+{
 	u32 ref_ctrl_shdw = 0, val = 0, freq_khz, t_refi;
 
-	/* Scale करोwn frequency and t_refi to aव्योम overflow */
+	/* Scale down frequency and t_refi to avoid overflow */
 	freq_khz = freq / 1000;
 	t_refi = addressing->tREFI_ns / 100;
 
 	/*
 	 * refresh rate to be set is 'tREFI(in us) * freq in MHz
-	 * भागision by 10000 to account क्रम change in units
+	 * division by 10000 to account for change in units
 	 */
 	val = t_refi * freq_khz / 10000;
 	ref_ctrl_shdw |= val << REFRESH_RATE_SHIFT;
 
-	वापस ref_ctrl_shdw;
-पूर्ण
+	return ref_ctrl_shdw;
+}
 
-अटल u32 get_sdram_tim_1_shdw(स्थिर काष्ठा lpddr2_timings *timings,
-		स्थिर काष्ठा lpddr2_min_tck *min_tck,
-		स्थिर काष्ठा lpddr2_addressing *addressing)
-अणु
+static u32 get_sdram_tim_1_shdw(const struct lpddr2_timings *timings,
+		const struct lpddr2_min_tck *min_tck,
+		const struct lpddr2_addressing *addressing)
+{
 	u32 tim1 = 0, val = 0;
 
 	val = max(min_tck->tWTR, DIV_ROUND_UP(timings->tWTR, t_ck)) - 1;
 	tim1 |= val << T_WTR_SHIFT;
 
-	अगर (addressing->num_banks == B8)
+	if (addressing->num_banks == B8)
 		val = DIV_ROUND_UP(timings->tFAW, t_ck*4);
-	अन्यथा
+	else
 		val = max(min_tck->tRRD, DIV_ROUND_UP(timings->tRRD, t_ck));
 	tim1 |= (val - 1) << T_RRD_SHIFT;
 
@@ -417,28 +416,28 @@ DEFINE_SHOW_ATTRIBUTE(emअगर_mr4);
 	val = max(min_tck->tRPab, DIV_ROUND_UP(timings->tRPab, t_ck)) - 1;
 	tim1 |= val << T_RP_SHIFT;
 
-	वापस tim1;
-पूर्ण
+	return tim1;
+}
 
-अटल u32 get_sdram_tim_1_shdw_derated(स्थिर काष्ठा lpddr2_timings *timings,
-		स्थिर काष्ठा lpddr2_min_tck *min_tck,
-		स्थिर काष्ठा lpddr2_addressing *addressing)
-अणु
+static u32 get_sdram_tim_1_shdw_derated(const struct lpddr2_timings *timings,
+		const struct lpddr2_min_tck *min_tck,
+		const struct lpddr2_addressing *addressing)
+{
 	u32 tim1 = 0, val = 0;
 
 	val = max(min_tck->tWTR, DIV_ROUND_UP(timings->tWTR, t_ck)) - 1;
 	tim1 = val << T_WTR_SHIFT;
 
 	/*
-	 * tFAW is approximately 4 बार tRRD. So add 1875*4 = 7500ps
-	 * to tFAW क्रम de-rating
+	 * tFAW is approximately 4 times tRRD. So add 1875*4 = 7500ps
+	 * to tFAW for de-rating
 	 */
-	अगर (addressing->num_banks == B8) अणु
+	if (addressing->num_banks == B8) {
 		val = DIV_ROUND_UP(timings->tFAW + 7500, 4 * t_ck) - 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		val = DIV_ROUND_UP(timings->tRRD + 1875, t_ck);
 		val = max(min_tck->tRRD, val) - 1;
-	पूर्ण
+	}
 	tim1 |= val << T_RRD_SHIFT;
 
 	val = DIV_ROUND_UP(timings->tRAS_min + timings->tRPab + 1875, t_ck);
@@ -457,14 +456,14 @@ DEFINE_SHOW_ATTRIBUTE(emअगर_mr4);
 	val = max(min_tck->tRPab, DIV_ROUND_UP(timings->tRPab + 1875, t_ck));
 	tim1 |= (val - 1) << T_RP_SHIFT;
 
-	वापस tim1;
-पूर्ण
+	return tim1;
+}
 
-अटल u32 get_sdram_tim_2_shdw(स्थिर काष्ठा lpddr2_timings *timings,
-		स्थिर काष्ठा lpddr2_min_tck *min_tck,
-		स्थिर काष्ठा lpddr2_addressing *addressing,
+static u32 get_sdram_tim_2_shdw(const struct lpddr2_timings *timings,
+		const struct lpddr2_min_tck *min_tck,
+		const struct lpddr2_addressing *addressing,
 		u32 type)
-अणु
+{
 	u32 tim2 = 0, val = 0;
 
 	val = min_tck->tCKE - 1;
@@ -473,24 +472,24 @@ DEFINE_SHOW_ATTRIBUTE(emअगर_mr4);
 	val = max(min_tck->tRTP, DIV_ROUND_UP(timings->tRTP, t_ck)) - 1;
 	tim2 |= val << T_RTP_SHIFT;
 
-	/* tXSNR = tRFCab_ps + 10 ns(tRFCab_ps क्रम LPDDR2). */
+	/* tXSNR = tRFCab_ps + 10 ns(tRFCab_ps for LPDDR2). */
 	val = DIV_ROUND_UP(addressing->tRFCab_ps + 10000, t_ck) - 1;
 	tim2 |= val << T_XSNR_SHIFT;
 
-	/* XSRD same as XSNR क्रम LPDDR2 */
+	/* XSRD same as XSNR for LPDDR2 */
 	tim2 |= val << T_XSRD_SHIFT;
 
 	val = max(min_tck->tXP, DIV_ROUND_UP(timings->tXP, t_ck)) - 1;
 	tim2 |= val << T_XP_SHIFT;
 
-	वापस tim2;
-पूर्ण
+	return tim2;
+}
 
-अटल u32 get_sdram_tim_3_shdw(स्थिर काष्ठा lpddr2_timings *timings,
-		स्थिर काष्ठा lpddr2_min_tck *min_tck,
-		स्थिर काष्ठा lpddr2_addressing *addressing,
+static u32 get_sdram_tim_3_shdw(const struct lpddr2_timings *timings,
+		const struct lpddr2_min_tck *min_tck,
+		const struct lpddr2_addressing *addressing,
 		u32 type, u32 ip_rev, u32 derated)
-अणु
+{
 	u32 tim3 = 0, val = 0, t_dqsck;
 
 	val = timings->tRAS_max_ns / addressing->tREFI_ns - 1;
@@ -502,9 +501,9 @@ DEFINE_SHOW_ATTRIBUTE(emअगर_mr4);
 
 	t_dqsck = (derated == EMIF_DERATED_TIMINGS) ?
 		timings->tDQSCK_max_derated : timings->tDQSCK_max;
-	अगर (ip_rev == EMIF_4D5)
+	if (ip_rev == EMIF_4D5)
 		val = DIV_ROUND_UP(t_dqsck + 1000, t_ck) - 1;
-	अन्यथा
+	else
 		val = DIV_ROUND_UP(t_dqsck, t_ck) - 1;
 
 	tim3 |= val << T_TDQSCKMAX_SHIFT;
@@ -516,19 +515,19 @@ DEFINE_SHOW_ATTRIBUTE(emअगर_mr4);
 	val = max(min_tck->tCKESR, val) - 1;
 	tim3 |= val << T_CKESR_SHIFT;
 
-	अगर (ip_rev == EMIF_4D5) अणु
+	if (ip_rev == EMIF_4D5) {
 		tim3 |= (EMIF_T_CSTA - 1) << T_CSTA_SHIFT;
 
 		val = DIV_ROUND_UP(EMIF_T_PDLL_UL, 128) - 1;
 		tim3 |= val << T_PDLL_UL_SHIFT;
-	पूर्ण
+	}
 
-	वापस tim3;
-पूर्ण
+	return tim3;
+}
 
-अटल u32 get_zq_config_reg(स्थिर काष्ठा lpddr2_addressing *addressing,
+static u32 get_zq_config_reg(const struct lpddr2_addressing *addressing,
 		bool cs1_used, bool cal_resistors_per_cs)
-अणु
+{
 	u32 zq = 0, val = 0;
 
 	val = EMIF_ZQCS_INTERVAL_US * 1000 / addressing->tREFI_ns;
@@ -542,632 +541,632 @@ DEFINE_SHOW_ATTRIBUTE(emअगर_mr4);
 
 	zq |= ZQ_SFEXITEN_ENABLE << ZQ_SFEXITEN_SHIFT;
 
-	अगर (cal_resistors_per_cs)
+	if (cal_resistors_per_cs)
 		zq |= ZQ_DUALCALEN_ENABLE << ZQ_DUALCALEN_SHIFT;
-	अन्यथा
+	else
 		zq |= ZQ_DUALCALEN_DISABLE << ZQ_DUALCALEN_SHIFT;
 
-	zq |= ZQ_CS0EN_MASK; /* CS0 is used क्रम sure */
+	zq |= ZQ_CS0EN_MASK; /* CS0 is used for sure */
 
 	val = cs1_used ? 1 : 0;
 	zq |= val << ZQ_CS1EN_SHIFT;
 
-	वापस zq;
-पूर्ण
+	return zq;
+}
 
-अटल u32 get_temp_alert_config(स्थिर काष्ठा lpddr2_addressing *addressing,
-		स्थिर काष्ठा emअगर_custom_configs *custom_configs, bool cs1_used,
-		u32 sdram_io_width, u32 emअगर_bus_width)
-अणु
-	u32 alert = 0, पूर्णांकerval, devcnt;
+static u32 get_temp_alert_config(const struct lpddr2_addressing *addressing,
+		const struct emif_custom_configs *custom_configs, bool cs1_used,
+		u32 sdram_io_width, u32 emif_bus_width)
+{
+	u32 alert = 0, interval, devcnt;
 
-	अगर (custom_configs && (custom_configs->mask &
+	if (custom_configs && (custom_configs->mask &
 				EMIF_CUSTOM_CONFIG_TEMP_ALERT_POLL_INTERVAL))
-		पूर्णांकerval = custom_configs->temp_alert_poll_पूर्णांकerval_ms;
-	अन्यथा
-		पूर्णांकerval = TEMP_ALERT_POLL_INTERVAL_DEFAULT_MS;
+		interval = custom_configs->temp_alert_poll_interval_ms;
+	else
+		interval = TEMP_ALERT_POLL_INTERVAL_DEFAULT_MS;
 
-	पूर्णांकerval *= 1000000;			/* Convert to ns */
-	पूर्णांकerval /= addressing->tREFI_ns;	/* Convert to refresh cycles */
-	alert |= (पूर्णांकerval << TA_REFINTERVAL_SHIFT);
+	interval *= 1000000;			/* Convert to ns */
+	interval /= addressing->tREFI_ns;	/* Convert to refresh cycles */
+	alert |= (interval << TA_REFINTERVAL_SHIFT);
 
 	/*
-	 * sdram_io_width is in 'log2(x) - 1' क्रमm. Convert emअगर_bus_width
-	 * also to this क्रमm and subtract to get TA_DEVCNT, which is
-	 * in log2(x) क्रमm.
+	 * sdram_io_width is in 'log2(x) - 1' form. Convert emif_bus_width
+	 * also to this form and subtract to get TA_DEVCNT, which is
+	 * in log2(x) form.
 	 */
-	emअगर_bus_width = __fls(emअगर_bus_width) - 1;
-	devcnt = emअगर_bus_width - sdram_io_width;
+	emif_bus_width = __fls(emif_bus_width) - 1;
+	devcnt = emif_bus_width - sdram_io_width;
 	alert |= devcnt << TA_DEVCNT_SHIFT;
 
-	/* DEVWDT is in 'log2(x) - 3' क्रमm */
+	/* DEVWDT is in 'log2(x) - 3' form */
 	alert |= (sdram_io_width - 2) << TA_DEVWDT_SHIFT;
 
 	alert |= 1 << TA_SFEXITEN_SHIFT;
 	alert |= 1 << TA_CS0EN_SHIFT;
 	alert |= (cs1_used ? 1 : 0) << TA_CS1EN_SHIFT;
 
-	वापस alert;
-पूर्ण
+	return alert;
+}
 
-अटल u32 get_पढ़ो_idle_ctrl_shdw(u8 volt_ramp)
-अणु
+static u32 get_read_idle_ctrl_shdw(u8 volt_ramp)
+{
 	u32 idle = 0, val = 0;
 
 	/*
 	 * Maximum value in normal conditions and increased frequency
 	 * when voltage is ramping
 	 */
-	अगर (volt_ramp)
+	if (volt_ramp)
 		val = READ_IDLE_INTERVAL_DVFS / t_ck / 64 - 1;
-	अन्यथा
+	else
 		val = 0x1FF;
 
 	/*
-	 * READ_IDLE_CTRL रेजिस्टर in EMIF4D has same offset and fields
-	 * as DLL_CALIB_CTRL in EMIF4D5, so use the same shअगरts
+	 * READ_IDLE_CTRL register in EMIF4D has same offset and fields
+	 * as DLL_CALIB_CTRL in EMIF4D5, so use the same shifts
 	 */
 	idle |= val << DLL_CALIB_INTERVAL_SHIFT;
 	idle |= EMIF_READ_IDLE_LEN_VAL << ACK_WAIT_SHIFT;
 
-	वापस idle;
-पूर्ण
+	return idle;
+}
 
-अटल u32 get_dll_calib_ctrl_shdw(u8 volt_ramp)
-अणु
+static u32 get_dll_calib_ctrl_shdw(u8 volt_ramp)
+{
 	u32 calib = 0, val = 0;
 
-	अगर (volt_ramp == DDR_VOLTAGE_RAMPING)
+	if (volt_ramp == DDR_VOLTAGE_RAMPING)
 		val = DLL_CALIB_INTERVAL_DVFS / t_ck / 16 - 1;
-	अन्यथा
+	else
 		val = 0; /* Disabled when voltage is stable */
 
 	calib |= val << DLL_CALIB_INTERVAL_SHIFT;
 	calib |= DLL_CALIB_ACK_WAIT_VAL << ACK_WAIT_SHIFT;
 
-	वापस calib;
-पूर्ण
+	return calib;
+}
 
-अटल u32 get_ddr_phy_ctrl_1_attilaphy_4d(स्थिर काष्ठा lpddr2_timings *timings,
+static u32 get_ddr_phy_ctrl_1_attilaphy_4d(const struct lpddr2_timings *timings,
 	u32 freq, u8 RL)
-अणु
+{
 	u32 phy = EMIF_DDR_PHY_CTRL_1_BASE_VAL_ATTILAPHY, val = 0;
 
 	val = RL + DIV_ROUND_UP(timings->tDQSCK_max, t_ck) - 1;
 	phy |= val << READ_LATENCY_SHIFT_4D;
 
-	अगर (freq <= 100000000)
+	if (freq <= 100000000)
 		val = EMIF_DLL_SLAVE_DLY_CTRL_100_MHZ_AND_LESS_ATTILAPHY;
-	अन्यथा अगर (freq <= 200000000)
+	else if (freq <= 200000000)
 		val = EMIF_DLL_SLAVE_DLY_CTRL_200_MHZ_ATTILAPHY;
-	अन्यथा
+	else
 		val = EMIF_DLL_SLAVE_DLY_CTRL_400_MHZ_ATTILAPHY;
 
 	phy |= val << DLL_SLAVE_DLY_CTRL_SHIFT_4D;
 
-	वापस phy;
-पूर्ण
+	return phy;
+}
 
-अटल u32 get_phy_ctrl_1_पूर्णांकelliphy_4d5(u32 freq, u8 cl)
-अणु
+static u32 get_phy_ctrl_1_intelliphy_4d5(u32 freq, u8 cl)
+{
 	u32 phy = EMIF_DDR_PHY_CTRL_1_BASE_VAL_INTELLIPHY, half_delay;
 
 	/*
 	 * DLL operates at 266 MHz. If DDR frequency is near 266 MHz,
-	 * half-delay is not needed अन्यथा set half-delay
+	 * half-delay is not needed else set half-delay
 	 */
-	अगर (freq >= 265000000 && freq < 267000000)
+	if (freq >= 265000000 && freq < 267000000)
 		half_delay = 0;
-	अन्यथा
+	else
 		half_delay = 1;
 
 	phy |= half_delay << DLL_HALF_DELAY_SHIFT_4D5;
 	phy |= ((cl + DIV_ROUND_UP(EMIF_PHY_TOTAL_READ_LATENCY_INTELLIPHY_PS,
 			t_ck) - 1) << READ_LATENCY_SHIFT_4D5);
 
-	वापस phy;
-पूर्ण
+	return phy;
+}
 
-अटल u32 get_ext_phy_ctrl_2_पूर्णांकelliphy_4d5(व्योम)
-अणु
-	u32 fअगरo_we_slave_ratio;
+static u32 get_ext_phy_ctrl_2_intelliphy_4d5(void)
+{
+	u32 fifo_we_slave_ratio;
 
-	fअगरo_we_slave_ratio =  DIV_ROUND_CLOSEST(
+	fifo_we_slave_ratio =  DIV_ROUND_CLOSEST(
 		EMIF_INTELLI_PHY_DQS_GATE_OPENING_DELAY_PS * 256, t_ck);
 
-	वापस fअगरo_we_slave_ratio | fअगरo_we_slave_ratio << 11 |
-		fअगरo_we_slave_ratio << 22;
-पूर्ण
+	return fifo_we_slave_ratio | fifo_we_slave_ratio << 11 |
+		fifo_we_slave_ratio << 22;
+}
 
-अटल u32 get_ext_phy_ctrl_3_पूर्णांकelliphy_4d5(व्योम)
-अणु
-	u32 fअगरo_we_slave_ratio;
+static u32 get_ext_phy_ctrl_3_intelliphy_4d5(void)
+{
+	u32 fifo_we_slave_ratio;
 
-	fअगरo_we_slave_ratio =  DIV_ROUND_CLOSEST(
+	fifo_we_slave_ratio =  DIV_ROUND_CLOSEST(
 		EMIF_INTELLI_PHY_DQS_GATE_OPENING_DELAY_PS * 256, t_ck);
 
-	वापस fअगरo_we_slave_ratio >> 10 | fअगरo_we_slave_ratio << 1 |
-		fअगरo_we_slave_ratio << 12 | fअगरo_we_slave_ratio << 23;
-पूर्ण
+	return fifo_we_slave_ratio >> 10 | fifo_we_slave_ratio << 1 |
+		fifo_we_slave_ratio << 12 | fifo_we_slave_ratio << 23;
+}
 
-अटल u32 get_ext_phy_ctrl_4_पूर्णांकelliphy_4d5(व्योम)
-अणु
-	u32 fअगरo_we_slave_ratio;
+static u32 get_ext_phy_ctrl_4_intelliphy_4d5(void)
+{
+	u32 fifo_we_slave_ratio;
 
-	fअगरo_we_slave_ratio =  DIV_ROUND_CLOSEST(
+	fifo_we_slave_ratio =  DIV_ROUND_CLOSEST(
 		EMIF_INTELLI_PHY_DQS_GATE_OPENING_DELAY_PS * 256, t_ck);
 
-	वापस fअगरo_we_slave_ratio >> 9 | fअगरo_we_slave_ratio << 2 |
-		fअगरo_we_slave_ratio << 13;
-पूर्ण
+	return fifo_we_slave_ratio >> 9 | fifo_we_slave_ratio << 2 |
+		fifo_we_slave_ratio << 13;
+}
 
-अटल u32 get_pwr_mgmt_ctrl(u32 freq, काष्ठा emअगर_data *emअगर, u32 ip_rev)
-अणु
-	u32 pwr_mgmt_ctrl	= 0, समयout;
+static u32 get_pwr_mgmt_ctrl(u32 freq, struct emif_data *emif, u32 ip_rev)
+{
+	u32 pwr_mgmt_ctrl	= 0, timeout;
 	u32 lpmode		= EMIF_LP_MODE_SELF_REFRESH;
-	u32 समयout_perf	= EMIF_LP_MODE_TIMEOUT_PERFORMANCE;
-	u32 समयout_pwr		= EMIF_LP_MODE_TIMEOUT_POWER;
+	u32 timeout_perf	= EMIF_LP_MODE_TIMEOUT_PERFORMANCE;
+	u32 timeout_pwr		= EMIF_LP_MODE_TIMEOUT_POWER;
 	u32 freq_threshold	= EMIF_LP_MODE_FREQ_THRESHOLD;
 	u32 mask;
-	u8 shअगरt;
+	u8 shift;
 
-	काष्ठा emअगर_custom_configs *cust_cfgs = emअगर->plat_data->custom_configs;
+	struct emif_custom_configs *cust_cfgs = emif->plat_data->custom_configs;
 
-	अगर (cust_cfgs && (cust_cfgs->mask & EMIF_CUSTOM_CONFIG_LPMODE)) अणु
+	if (cust_cfgs && (cust_cfgs->mask & EMIF_CUSTOM_CONFIG_LPMODE)) {
 		lpmode		= cust_cfgs->lpmode;
-		समयout_perf	= cust_cfgs->lpmode_समयout_perक्रमmance;
-		समयout_pwr	= cust_cfgs->lpmode_समयout_घातer;
+		timeout_perf	= cust_cfgs->lpmode_timeout_performance;
+		timeout_pwr	= cust_cfgs->lpmode_timeout_power;
 		freq_threshold  = cust_cfgs->lpmode_freq_threshold;
-	पूर्ण
+	}
 
 	/* Timeout based on DDR frequency */
-	समयout = freq >= freq_threshold ? समयout_perf : समयout_pwr;
+	timeout = freq >= freq_threshold ? timeout_perf : timeout_pwr;
 
 	/*
-	 * The value to be set in रेजिस्टर is "log2(timeout) - 3"
-	 * अगर समयout < 16 load 0 in रेजिस्टर
-	 * अगर समयout is not a घातer of 2, round to next highest घातer of 2
+	 * The value to be set in register is "log2(timeout) - 3"
+	 * if timeout < 16 load 0 in register
+	 * if timeout is not a power of 2, round to next highest power of 2
 	 */
-	अगर (समयout < 16) अणु
-		समयout = 0;
-	पूर्ण अन्यथा अणु
-		अगर (समयout & (समयout - 1))
-			समयout <<= 1;
-		समयout = __fls(समयout) - 3;
-	पूर्ण
+	if (timeout < 16) {
+		timeout = 0;
+	} else {
+		if (timeout & (timeout - 1))
+			timeout <<= 1;
+		timeout = __fls(timeout) - 3;
+	}
 
-	चयन (lpmode) अणु
-	हाल EMIF_LP_MODE_CLOCK_STOP:
-		shअगरt = CS_TIM_SHIFT;
+	switch (lpmode) {
+	case EMIF_LP_MODE_CLOCK_STOP:
+		shift = CS_TIM_SHIFT;
 		mask = CS_TIM_MASK;
-		अवरोध;
-	हाल EMIF_LP_MODE_SELF_REFRESH:
-		/* Workaround क्रम errata i735 */
-		अगर (समयout < 6)
-			समयout = 6;
+		break;
+	case EMIF_LP_MODE_SELF_REFRESH:
+		/* Workaround for errata i735 */
+		if (timeout < 6)
+			timeout = 6;
 
-		shअगरt = SR_TIM_SHIFT;
+		shift = SR_TIM_SHIFT;
 		mask = SR_TIM_MASK;
-		अवरोध;
-	हाल EMIF_LP_MODE_PWR_DN:
-		shअगरt = PD_TIM_SHIFT;
+		break;
+	case EMIF_LP_MODE_PWR_DN:
+		shift = PD_TIM_SHIFT;
 		mask = PD_TIM_MASK;
-		अवरोध;
-	हाल EMIF_LP_MODE_DISABLE:
-	शेष:
+		break;
+	case EMIF_LP_MODE_DISABLE:
+	default:
 		mask = 0;
-		shअगरt = 0;
-		अवरोध;
-	पूर्ण
-	/* Round to maximum in हाल of overflow, BUT warn! */
-	अगर (lpmode != EMIF_LP_MODE_DISABLE && समयout > mask >> shअगरt) अणु
+		shift = 0;
+		break;
+	}
+	/* Round to maximum in case of overflow, BUT warn! */
+	if (lpmode != EMIF_LP_MODE_DISABLE && timeout > mask >> shift) {
 		pr_err("TIMEOUT Overflow - lpmode=%d perf=%d pwr=%d freq=%d\n",
 		       lpmode,
-		       समयout_perf,
-		       समयout_pwr,
+		       timeout_perf,
+		       timeout_pwr,
 		       freq_threshold);
 		WARN(1, "timeout=0x%02x greater than 0x%02x. Using max\n",
-		     समयout, mask >> shअगरt);
-		समयout = mask >> shअगरt;
-	पूर्ण
+		     timeout, mask >> shift);
+		timeout = mask >> shift;
+	}
 
 	/* Setup required timing */
-	pwr_mgmt_ctrl = (समयout << shअगरt) & mask;
-	/* setup a शेष mask क्रम rest of the modes */
+	pwr_mgmt_ctrl = (timeout << shift) & mask;
+	/* setup a default mask for rest of the modes */
 	pwr_mgmt_ctrl |= (SR_TIM_MASK | CS_TIM_MASK | PD_TIM_MASK) &
 			  ~mask;
 
 	/* No CS_TIM in EMIF_4D5 */
-	अगर (ip_rev == EMIF_4D5)
+	if (ip_rev == EMIF_4D5)
 		pwr_mgmt_ctrl &= ~CS_TIM_MASK;
 
 	pwr_mgmt_ctrl |= lpmode << LP_MODE_SHIFT;
 
-	वापस pwr_mgmt_ctrl;
-पूर्ण
+	return pwr_mgmt_ctrl;
+}
 
 /*
  * Get the temperature level of the EMIF instance:
- * Reads the MR4 रेजिस्टर of attached SDRAM parts to find out the temperature
+ * Reads the MR4 register of attached SDRAM parts to find out the temperature
  * level. If there are two parts attached(one on each CS), then the temperature
- * level क्रम the EMIF instance is the higher of the two temperatures.
+ * level for the EMIF instance is the higher of the two temperatures.
  */
-अटल व्योम get_temperature_level(काष्ठा emअगर_data *emअगर)
-अणु
+static void get_temperature_level(struct emif_data *emif)
+{
 	u32		temp, temperature_level;
-	व्योम __iomem	*base;
+	void __iomem	*base;
 
-	base = emअगर->base;
+	base = emif->base;
 
-	/* Read mode रेजिस्टर 4 */
-	ग_लिखोl(DDR_MR4, base + EMIF_LPDDR2_MODE_REG_CONFIG);
-	temperature_level = पढ़ोl(base + EMIF_LPDDR2_MODE_REG_DATA);
+	/* Read mode register 4 */
+	writel(DDR_MR4, base + EMIF_LPDDR2_MODE_REG_CONFIG);
+	temperature_level = readl(base + EMIF_LPDDR2_MODE_REG_DATA);
 	temperature_level = (temperature_level & MR4_SDRAM_REF_RATE_MASK) >>
 				MR4_SDRAM_REF_RATE_SHIFT;
 
-	अगर (emअगर->plat_data->device_info->cs1_used) अणु
-		ग_लिखोl(DDR_MR4 | CS_MASK, base + EMIF_LPDDR2_MODE_REG_CONFIG);
-		temp = पढ़ोl(base + EMIF_LPDDR2_MODE_REG_DATA);
+	if (emif->plat_data->device_info->cs1_used) {
+		writel(DDR_MR4 | CS_MASK, base + EMIF_LPDDR2_MODE_REG_CONFIG);
+		temp = readl(base + EMIF_LPDDR2_MODE_REG_DATA);
 		temp = (temp & MR4_SDRAM_REF_RATE_MASK)
 				>> MR4_SDRAM_REF_RATE_SHIFT;
 		temperature_level = max(temp, temperature_level);
-	पूर्ण
+	}
 
 	/* treat everything less than nominal(3) in MR4 as nominal */
-	अगर (unlikely(temperature_level < SDRAM_TEMP_NOMINAL))
+	if (unlikely(temperature_level < SDRAM_TEMP_NOMINAL))
 		temperature_level = SDRAM_TEMP_NOMINAL;
 
-	/* अगर we get reserved value in MR4 persist with the existing value */
-	अगर (likely(temperature_level != SDRAM_TEMP_RESERVED_4))
-		emअगर->temperature_level = temperature_level;
-पूर्ण
+	/* if we get reserved value in MR4 persist with the existing value */
+	if (likely(temperature_level != SDRAM_TEMP_RESERVED_4))
+		emif->temperature_level = temperature_level;
+}
 
 /*
- * Program EMIF shaकरोw रेजिस्टरs that are not dependent on temperature
+ * Program EMIF shadow registers that are not dependent on temperature
  * or voltage
  */
-अटल व्योम setup_रेजिस्टरs(काष्ठा emअगर_data *emअगर, काष्ठा emअगर_regs *regs)
-अणु
-	व्योम __iomem	*base = emअगर->base;
+static void setup_registers(struct emif_data *emif, struct emif_regs *regs)
+{
+	void __iomem	*base = emif->base;
 
-	ग_लिखोl(regs->sdram_tim2_shdw, base + EMIF_SDRAM_TIMING_2_SHDW);
-	ग_लिखोl(regs->phy_ctrl_1_shdw, base + EMIF_DDR_PHY_CTRL_1_SHDW);
-	ग_लिखोl(regs->pwr_mgmt_ctrl_shdw,
+	writel(regs->sdram_tim2_shdw, base + EMIF_SDRAM_TIMING_2_SHDW);
+	writel(regs->phy_ctrl_1_shdw, base + EMIF_DDR_PHY_CTRL_1_SHDW);
+	writel(regs->pwr_mgmt_ctrl_shdw,
 	       base + EMIF_POWER_MANAGEMENT_CTRL_SHDW);
 
-	/* Settings specअगरic क्रम EMIF4D5 */
-	अगर (emअगर->plat_data->ip_rev != EMIF_4D5)
-		वापस;
-	ग_लिखोl(regs->ext_phy_ctrl_2_shdw, base + EMIF_EXT_PHY_CTRL_2_SHDW);
-	ग_लिखोl(regs->ext_phy_ctrl_3_shdw, base + EMIF_EXT_PHY_CTRL_3_SHDW);
-	ग_लिखोl(regs->ext_phy_ctrl_4_shdw, base + EMIF_EXT_PHY_CTRL_4_SHDW);
-पूर्ण
+	/* Settings specific for EMIF4D5 */
+	if (emif->plat_data->ip_rev != EMIF_4D5)
+		return;
+	writel(regs->ext_phy_ctrl_2_shdw, base + EMIF_EXT_PHY_CTRL_2_SHDW);
+	writel(regs->ext_phy_ctrl_3_shdw, base + EMIF_EXT_PHY_CTRL_3_SHDW);
+	writel(regs->ext_phy_ctrl_4_shdw, base + EMIF_EXT_PHY_CTRL_4_SHDW);
+}
 
 /*
- * When voltage ramps dll calibration and क्रमced पढ़ो idle should
+ * When voltage ramps dll calibration and forced read idle should
  * happen more often
  */
-अटल व्योम setup_volt_sensitive_regs(काष्ठा emअगर_data *emअगर,
-		काष्ठा emअगर_regs *regs, u32 volt_state)
-अणु
+static void setup_volt_sensitive_regs(struct emif_data *emif,
+		struct emif_regs *regs, u32 volt_state)
+{
 	u32		calib_ctrl;
-	व्योम __iomem	*base = emअगर->base;
+	void __iomem	*base = emif->base;
 
 	/*
-	 * EMIF_READ_IDLE_CTRL in EMIF4D refers to the same रेजिस्टर as
-	 * EMIF_DLL_CALIB_CTRL in EMIF4D5 and dll_calib_ctrl_shaकरोw_*
-	 * is an alias of the respective पढ़ो_idle_ctrl_shdw_* (members of
-	 * a जोड़). So, the below code takes care of both हालs
+	 * EMIF_READ_IDLE_CTRL in EMIF4D refers to the same register as
+	 * EMIF_DLL_CALIB_CTRL in EMIF4D5 and dll_calib_ctrl_shadow_*
+	 * is an alias of the respective read_idle_ctrl_shdw_* (members of
+	 * a union). So, the below code takes care of both cases
 	 */
-	अगर (volt_state == DDR_VOLTAGE_RAMPING)
+	if (volt_state == DDR_VOLTAGE_RAMPING)
 		calib_ctrl = regs->dll_calib_ctrl_shdw_volt_ramp;
-	अन्यथा
+	else
 		calib_ctrl = regs->dll_calib_ctrl_shdw_normal;
 
-	ग_लिखोl(calib_ctrl, base + EMIF_DLL_CALIB_CTRL_SHDW);
-पूर्ण
+	writel(calib_ctrl, base + EMIF_DLL_CALIB_CTRL_SHDW);
+}
 
 /*
- * setup_temperature_sensitive_regs() - set the timings क्रम temperature
- * sensitive रेजिस्टरs. This happens once at initialisation समय based
- * on the temperature at boot समय and subsequently based on the temperature
- * alert पूर्णांकerrupt. Temperature alert can happen when the temperature
+ * setup_temperature_sensitive_regs() - set the timings for temperature
+ * sensitive registers. This happens once at initialisation time based
+ * on the temperature at boot time and subsequently based on the temperature
+ * alert interrupt. Temperature alert can happen when the temperature
  * increases or drops. So this function can have the effect of either
  * derating the timings or going back to nominal values.
  */
-अटल व्योम setup_temperature_sensitive_regs(काष्ठा emअगर_data *emअगर,
-		काष्ठा emअगर_regs *regs)
-अणु
+static void setup_temperature_sensitive_regs(struct emif_data *emif,
+		struct emif_regs *regs)
+{
 	u32		tim1, tim3, ref_ctrl, type;
-	व्योम __iomem	*base = emअगर->base;
+	void __iomem	*base = emif->base;
 	u32		temperature;
 
-	type = emअगर->plat_data->device_info->type;
+	type = emif->plat_data->device_info->type;
 
 	tim1 = regs->sdram_tim1_shdw;
 	tim3 = regs->sdram_tim3_shdw;
 	ref_ctrl = regs->ref_ctrl_shdw;
 
-	/* No de-rating क्रम non-lpddr2 devices */
-	अगर (type != DDR_TYPE_LPDDR2_S2 && type != DDR_TYPE_LPDDR2_S4)
-		जाओ out;
+	/* No de-rating for non-lpddr2 devices */
+	if (type != DDR_TYPE_LPDDR2_S2 && type != DDR_TYPE_LPDDR2_S4)
+		goto out;
 
-	temperature = emअगर->temperature_level;
-	अगर (temperature == SDRAM_TEMP_HIGH_DERATE_REFRESH) अणु
+	temperature = emif->temperature_level;
+	if (temperature == SDRAM_TEMP_HIGH_DERATE_REFRESH) {
 		ref_ctrl = regs->ref_ctrl_shdw_derated;
-	पूर्ण अन्यथा अगर (temperature == SDRAM_TEMP_HIGH_DERATE_REFRESH_AND_TIMINGS) अणु
+	} else if (temperature == SDRAM_TEMP_HIGH_DERATE_REFRESH_AND_TIMINGS) {
 		tim1 = regs->sdram_tim1_shdw_derated;
 		tim3 = regs->sdram_tim3_shdw_derated;
 		ref_ctrl = regs->ref_ctrl_shdw_derated;
-	पूर्ण
+	}
 
 out:
-	ग_लिखोl(tim1, base + EMIF_SDRAM_TIMING_1_SHDW);
-	ग_लिखोl(tim3, base + EMIF_SDRAM_TIMING_3_SHDW);
-	ग_लिखोl(ref_ctrl, base + EMIF_SDRAM_REFRESH_CTRL_SHDW);
-पूर्ण
+	writel(tim1, base + EMIF_SDRAM_TIMING_1_SHDW);
+	writel(tim3, base + EMIF_SDRAM_TIMING_3_SHDW);
+	writel(ref_ctrl, base + EMIF_SDRAM_REFRESH_CTRL_SHDW);
+}
 
-अटल irqवापस_t handle_temp_alert(व्योम __iomem *base, काष्ठा emअगर_data *emअगर)
-अणु
+static irqreturn_t handle_temp_alert(void __iomem *base, struct emif_data *emif)
+{
 	u32		old_temp_level;
-	irqवापस_t	ret = IRQ_HANDLED;
-	काष्ठा emअगर_custom_configs *custom_configs;
+	irqreturn_t	ret = IRQ_HANDLED;
+	struct emif_custom_configs *custom_configs;
 
-	spin_lock_irqsave(&emअगर_lock, irq_state);
-	old_temp_level = emअगर->temperature_level;
-	get_temperature_level(emअगर);
+	spin_lock_irqsave(&emif_lock, irq_state);
+	old_temp_level = emif->temperature_level;
+	get_temperature_level(emif);
 
-	अगर (unlikely(emअगर->temperature_level == old_temp_level)) अणु
-		जाओ out;
-	पूर्ण अन्यथा अगर (!emअगर->curr_regs) अणु
-		dev_err(emअगर->dev, "temperature alert before registers are calculated, not de-rating timings\n");
-		जाओ out;
-	पूर्ण
+	if (unlikely(emif->temperature_level == old_temp_level)) {
+		goto out;
+	} else if (!emif->curr_regs) {
+		dev_err(emif->dev, "temperature alert before registers are calculated, not de-rating timings\n");
+		goto out;
+	}
 
-	custom_configs = emअगर->plat_data->custom_configs;
+	custom_configs = emif->plat_data->custom_configs;
 
 	/*
 	 * IF we detect higher than "nominal rating" from DDR sensor
-	 * on an unsupported DDR part, shutकरोwn प्रणाली
+	 * on an unsupported DDR part, shutdown system
 	 */
-	अगर (custom_configs && !(custom_configs->mask &
-				EMIF_CUSTOM_CONFIG_EXTENDED_TEMP_PART)) अणु
-		अगर (emअगर->temperature_level >= SDRAM_TEMP_HIGH_DERATE_REFRESH) अणु
-			dev_err(emअगर->dev,
+	if (custom_configs && !(custom_configs->mask &
+				EMIF_CUSTOM_CONFIG_EXTENDED_TEMP_PART)) {
+		if (emif->temperature_level >= SDRAM_TEMP_HIGH_DERATE_REFRESH) {
+			dev_err(emif->dev,
 				"%s:NOT Extended temperature capable memory. Converting MR4=0x%02x as shutdown event\n",
-				__func__, emअगर->temperature_level);
+				__func__, emif->temperature_level);
 			/*
-			 * Temperature far too high - करो kernel_घातer_off()
-			 * from thपढ़ो context
+			 * Temperature far too high - do kernel_power_off()
+			 * from thread context
 			 */
-			emअगर->temperature_level = SDRAM_TEMP_VERY_HIGH_SHUTDOWN;
+			emif->temperature_level = SDRAM_TEMP_VERY_HIGH_SHUTDOWN;
 			ret = IRQ_WAKE_THREAD;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	अगर (emअगर->temperature_level < old_temp_level ||
-		emअगर->temperature_level == SDRAM_TEMP_VERY_HIGH_SHUTDOWN) अणु
+	if (emif->temperature_level < old_temp_level ||
+		emif->temperature_level == SDRAM_TEMP_VERY_HIGH_SHUTDOWN) {
 		/*
-		 * Temperature coming करोwn - defer handling to thपढ़ो OR
-		 * Temperature far too high - करो kernel_घातer_off() from
-		 * thपढ़ो context
+		 * Temperature coming down - defer handling to thread OR
+		 * Temperature far too high - do kernel_power_off() from
+		 * thread context
 		 */
 		ret = IRQ_WAKE_THREAD;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Temperature is going up - handle immediately */
-		setup_temperature_sensitive_regs(emअगर, emअगर->curr_regs);
-		करो_freq_update();
-	पूर्ण
+		setup_temperature_sensitive_regs(emif, emif->curr_regs);
+		do_freq_update();
+	}
 
 out:
-	spin_unlock_irqrestore(&emअगर_lock, irq_state);
-	वापस ret;
-पूर्ण
+	spin_unlock_irqrestore(&emif_lock, irq_state);
+	return ret;
+}
 
-अटल irqवापस_t emअगर_पूर्णांकerrupt_handler(पूर्णांक irq, व्योम *dev_id)
-अणु
-	u32			पूर्णांकerrupts;
-	काष्ठा emअगर_data	*emअगर = dev_id;
-	व्योम __iomem		*base = emअगर->base;
-	काष्ठा device		*dev = emअगर->dev;
-	irqवापस_t		ret = IRQ_HANDLED;
+static irqreturn_t emif_interrupt_handler(int irq, void *dev_id)
+{
+	u32			interrupts;
+	struct emif_data	*emif = dev_id;
+	void __iomem		*base = emif->base;
+	struct device		*dev = emif->dev;
+	irqreturn_t		ret = IRQ_HANDLED;
 
 	/* Save the status and clear it */
-	पूर्णांकerrupts = पढ़ोl(base + EMIF_SYSTEM_OCP_INTERRUPT_STATUS);
-	ग_लिखोl(पूर्णांकerrupts, base + EMIF_SYSTEM_OCP_INTERRUPT_STATUS);
+	interrupts = readl(base + EMIF_SYSTEM_OCP_INTERRUPT_STATUS);
+	writel(interrupts, base + EMIF_SYSTEM_OCP_INTERRUPT_STATUS);
 
 	/*
 	 * Handle temperature alert
-	 * Temperature alert should be same क्रम all ports
-	 * So, it's enough to process it only क्रम one of the ports
+	 * Temperature alert should be same for all ports
+	 * So, it's enough to process it only for one of the ports
 	 */
-	अगर (पूर्णांकerrupts & TA_SYS_MASK)
-		ret = handle_temp_alert(base, emअगर);
+	if (interrupts & TA_SYS_MASK)
+		ret = handle_temp_alert(base, emif);
 
-	अगर (पूर्णांकerrupts & ERR_SYS_MASK)
-		dev_err(dev, "Access error from SYS port - %x\n", पूर्णांकerrupts);
+	if (interrupts & ERR_SYS_MASK)
+		dev_err(dev, "Access error from SYS port - %x\n", interrupts);
 
-	अगर (emअगर->plat_data->hw_caps & EMIF_HW_CAPS_LL_INTERFACE) अणु
+	if (emif->plat_data->hw_caps & EMIF_HW_CAPS_LL_INTERFACE) {
 		/* Save the status and clear it */
-		पूर्णांकerrupts = पढ़ोl(base + EMIF_LL_OCP_INTERRUPT_STATUS);
-		ग_लिखोl(पूर्णांकerrupts, base + EMIF_LL_OCP_INTERRUPT_STATUS);
+		interrupts = readl(base + EMIF_LL_OCP_INTERRUPT_STATUS);
+		writel(interrupts, base + EMIF_LL_OCP_INTERRUPT_STATUS);
 
-		अगर (पूर्णांकerrupts & ERR_LL_MASK)
+		if (interrupts & ERR_LL_MASK)
 			dev_err(dev, "Access error from LL port - %x\n",
-				पूर्णांकerrupts);
-	पूर्ण
+				interrupts);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल irqवापस_t emअगर_thपढ़ोed_isr(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा emअगर_data	*emअगर = dev_id;
+static irqreturn_t emif_threaded_isr(int irq, void *dev_id)
+{
+	struct emif_data	*emif = dev_id;
 
-	अगर (emअगर->temperature_level == SDRAM_TEMP_VERY_HIGH_SHUTDOWN) अणु
-		dev_emerg(emअगर->dev, "SDRAM temperature exceeds operating limit.. Needs shut down!!!\n");
+	if (emif->temperature_level == SDRAM_TEMP_VERY_HIGH_SHUTDOWN) {
+		dev_emerg(emif->dev, "SDRAM temperature exceeds operating limit.. Needs shut down!!!\n");
 
-		/* If we have Power OFF ability, use it, अन्यथा try restarting */
-		अगर (pm_घातer_off) अणु
-			kernel_घातer_off();
-		पूर्ण अन्यथा अणु
+		/* If we have Power OFF ability, use it, else try restarting */
+		if (pm_power_off) {
+			kernel_power_off();
+		} else {
 			WARN(1, "FIXME: NO pm_power_off!!! trying restart\n");
 			kernel_restart("SDRAM Over-temp Emergency restart");
-		पूर्ण
-		वापस IRQ_HANDLED;
-	पूर्ण
+		}
+		return IRQ_HANDLED;
+	}
 
-	spin_lock_irqsave(&emअगर_lock, irq_state);
+	spin_lock_irqsave(&emif_lock, irq_state);
 
-	अगर (emअगर->curr_regs) अणु
-		setup_temperature_sensitive_regs(emअगर, emअगर->curr_regs);
-		करो_freq_update();
-	पूर्ण अन्यथा अणु
-		dev_err(emअगर->dev, "temperature alert before registers are calculated, not de-rating timings\n");
-	पूर्ण
+	if (emif->curr_regs) {
+		setup_temperature_sensitive_regs(emif, emif->curr_regs);
+		do_freq_update();
+	} else {
+		dev_err(emif->dev, "temperature alert before registers are calculated, not de-rating timings\n");
+	}
 
-	spin_unlock_irqrestore(&emअगर_lock, irq_state);
+	spin_unlock_irqrestore(&emif_lock, irq_state);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम clear_all_पूर्णांकerrupts(काष्ठा emअगर_data *emअगर)
-अणु
-	व्योम __iomem	*base = emअगर->base;
+static void clear_all_interrupts(struct emif_data *emif)
+{
+	void __iomem	*base = emif->base;
 
-	ग_लिखोl(पढ़ोl(base + EMIF_SYSTEM_OCP_INTERRUPT_STATUS),
+	writel(readl(base + EMIF_SYSTEM_OCP_INTERRUPT_STATUS),
 		base + EMIF_SYSTEM_OCP_INTERRUPT_STATUS);
-	अगर (emअगर->plat_data->hw_caps & EMIF_HW_CAPS_LL_INTERFACE)
-		ग_लिखोl(पढ़ोl(base + EMIF_LL_OCP_INTERRUPT_STATUS),
+	if (emif->plat_data->hw_caps & EMIF_HW_CAPS_LL_INTERFACE)
+		writel(readl(base + EMIF_LL_OCP_INTERRUPT_STATUS),
 			base + EMIF_LL_OCP_INTERRUPT_STATUS);
-पूर्ण
+}
 
-अटल व्योम disable_and_clear_all_पूर्णांकerrupts(काष्ठा emअगर_data *emअगर)
-अणु
-	व्योम __iomem		*base = emअगर->base;
+static void disable_and_clear_all_interrupts(struct emif_data *emif)
+{
+	void __iomem		*base = emif->base;
 
-	/* Disable all पूर्णांकerrupts */
-	ग_लिखोl(पढ़ोl(base + EMIF_SYSTEM_OCP_INTERRUPT_ENABLE_SET),
+	/* Disable all interrupts */
+	writel(readl(base + EMIF_SYSTEM_OCP_INTERRUPT_ENABLE_SET),
 		base + EMIF_SYSTEM_OCP_INTERRUPT_ENABLE_CLEAR);
-	अगर (emअगर->plat_data->hw_caps & EMIF_HW_CAPS_LL_INTERFACE)
-		ग_लिखोl(पढ़ोl(base + EMIF_LL_OCP_INTERRUPT_ENABLE_SET),
+	if (emif->plat_data->hw_caps & EMIF_HW_CAPS_LL_INTERFACE)
+		writel(readl(base + EMIF_LL_OCP_INTERRUPT_ENABLE_SET),
 			base + EMIF_LL_OCP_INTERRUPT_ENABLE_CLEAR);
 
-	/* Clear all पूर्णांकerrupts */
-	clear_all_पूर्णांकerrupts(emअगर);
-पूर्ण
+	/* Clear all interrupts */
+	clear_all_interrupts(emif);
+}
 
-अटल पूर्णांक __init_or_module setup_पूर्णांकerrupts(काष्ठा emअगर_data *emअगर, u32 irq)
-अणु
-	u32		पूर्णांकerrupts, type;
-	व्योम __iomem	*base = emअगर->base;
+static int __init_or_module setup_interrupts(struct emif_data *emif, u32 irq)
+{
+	u32		interrupts, type;
+	void __iomem	*base = emif->base;
 
-	type = emअगर->plat_data->device_info->type;
+	type = emif->plat_data->device_info->type;
 
-	clear_all_पूर्णांकerrupts(emअगर);
+	clear_all_interrupts(emif);
 
-	/* Enable पूर्णांकerrupts क्रम SYS पूर्णांकerface */
-	पूर्णांकerrupts = EN_ERR_SYS_MASK;
-	अगर (type == DDR_TYPE_LPDDR2_S2 || type == DDR_TYPE_LPDDR2_S4)
-		पूर्णांकerrupts |= EN_TA_SYS_MASK;
-	ग_लिखोl(पूर्णांकerrupts, base + EMIF_SYSTEM_OCP_INTERRUPT_ENABLE_SET);
+	/* Enable interrupts for SYS interface */
+	interrupts = EN_ERR_SYS_MASK;
+	if (type == DDR_TYPE_LPDDR2_S2 || type == DDR_TYPE_LPDDR2_S4)
+		interrupts |= EN_TA_SYS_MASK;
+	writel(interrupts, base + EMIF_SYSTEM_OCP_INTERRUPT_ENABLE_SET);
 
-	/* Enable पूर्णांकerrupts क्रम LL पूर्णांकerface */
-	अगर (emअगर->plat_data->hw_caps & EMIF_HW_CAPS_LL_INTERFACE) अणु
-		/* TA need not be enabled क्रम LL */
-		पूर्णांकerrupts = EN_ERR_LL_MASK;
-		ग_लिखोl(पूर्णांकerrupts, base + EMIF_LL_OCP_INTERRUPT_ENABLE_SET);
-	पूर्ण
+	/* Enable interrupts for LL interface */
+	if (emif->plat_data->hw_caps & EMIF_HW_CAPS_LL_INTERFACE) {
+		/* TA need not be enabled for LL */
+		interrupts = EN_ERR_LL_MASK;
+		writel(interrupts, base + EMIF_LL_OCP_INTERRUPT_ENABLE_SET);
+	}
 
 	/* setup IRQ handlers */
-	वापस devm_request_thपढ़ोed_irq(emअगर->dev, irq,
-				    emअगर_पूर्णांकerrupt_handler,
-				    emअगर_thपढ़ोed_isr,
-				    0, dev_name(emअगर->dev),
-				    emअगर);
+	return devm_request_threaded_irq(emif->dev, irq,
+				    emif_interrupt_handler,
+				    emif_threaded_isr,
+				    0, dev_name(emif->dev),
+				    emif);
 
-पूर्ण
+}
 
-अटल व्योम __init_or_module emअगर_oneसमय_settings(काष्ठा emअगर_data *emअगर)
-अणु
+static void __init_or_module emif_onetime_settings(struct emif_data *emif)
+{
 	u32				pwr_mgmt_ctrl, zq, temp_alert_cfg;
-	व्योम __iomem			*base = emअगर->base;
-	स्थिर काष्ठा lpddr2_addressing	*addressing;
-	स्थिर काष्ठा ddr_device_info	*device_info;
+	void __iomem			*base = emif->base;
+	const struct lpddr2_addressing	*addressing;
+	const struct ddr_device_info	*device_info;
 
-	device_info = emअगर->plat_data->device_info;
+	device_info = emif->plat_data->device_info;
 	addressing = get_addressing_table(device_info);
 
 	/*
-	 * Init घातer management settings
-	 * We करोn't know the frequency yet. Use a high frequency
-	 * value क्रम a conservative समयout setting
+	 * Init power management settings
+	 * We don't know the frequency yet. Use a high frequency
+	 * value for a conservative timeout setting
 	 */
-	pwr_mgmt_ctrl = get_pwr_mgmt_ctrl(1000000000, emअगर,
-			emअगर->plat_data->ip_rev);
-	emअगर->lpmode = (pwr_mgmt_ctrl & LP_MODE_MASK) >> LP_MODE_SHIFT;
-	ग_लिखोl(pwr_mgmt_ctrl, base + EMIF_POWER_MANAGEMENT_CONTROL);
+	pwr_mgmt_ctrl = get_pwr_mgmt_ctrl(1000000000, emif,
+			emif->plat_data->ip_rev);
+	emif->lpmode = (pwr_mgmt_ctrl & LP_MODE_MASK) >> LP_MODE_SHIFT;
+	writel(pwr_mgmt_ctrl, base + EMIF_POWER_MANAGEMENT_CONTROL);
 
 	/* Init ZQ calibration settings */
 	zq = get_zq_config_reg(addressing, device_info->cs1_used,
 		device_info->cal_resistors_per_cs);
-	ग_लिखोl(zq, base + EMIF_SDRAM_OUTPUT_IMPEDANCE_CALIBRATION_CONFIG);
+	writel(zq, base + EMIF_SDRAM_OUTPUT_IMPEDANCE_CALIBRATION_CONFIG);
 
 	/* Check temperature level temperature level*/
-	get_temperature_level(emअगर);
-	अगर (emअगर->temperature_level == SDRAM_TEMP_VERY_HIGH_SHUTDOWN)
-		dev_emerg(emअगर->dev, "SDRAM temperature exceeds operating limit.. Needs shut down!!!\n");
+	get_temperature_level(emif);
+	if (emif->temperature_level == SDRAM_TEMP_VERY_HIGH_SHUTDOWN)
+		dev_emerg(emif->dev, "SDRAM temperature exceeds operating limit.. Needs shut down!!!\n");
 
 	/* Init temperature polling */
 	temp_alert_cfg = get_temp_alert_config(addressing,
-		emअगर->plat_data->custom_configs, device_info->cs1_used,
-		device_info->io_width, get_emअगर_bus_width(emअगर));
-	ग_लिखोl(temp_alert_cfg, base + EMIF_TEMPERATURE_ALERT_CONFIG);
+		emif->plat_data->custom_configs, device_info->cs1_used,
+		device_info->io_width, get_emif_bus_width(emif));
+	writel(temp_alert_cfg, base + EMIF_TEMPERATURE_ALERT_CONFIG);
 
 	/*
-	 * Program बाह्यal PHY control रेजिस्टरs that are not frequency
+	 * Program external PHY control registers that are not frequency
 	 * dependent
 	 */
-	अगर (emअगर->plat_data->phy_type != EMIF_PHY_TYPE_INTELLIPHY)
-		वापस;
-	ग_लिखोl(EMIF_EXT_PHY_CTRL_1_VAL, base + EMIF_EXT_PHY_CTRL_1_SHDW);
-	ग_लिखोl(EMIF_EXT_PHY_CTRL_5_VAL, base + EMIF_EXT_PHY_CTRL_5_SHDW);
-	ग_लिखोl(EMIF_EXT_PHY_CTRL_6_VAL, base + EMIF_EXT_PHY_CTRL_6_SHDW);
-	ग_लिखोl(EMIF_EXT_PHY_CTRL_7_VAL, base + EMIF_EXT_PHY_CTRL_7_SHDW);
-	ग_लिखोl(EMIF_EXT_PHY_CTRL_8_VAL, base + EMIF_EXT_PHY_CTRL_8_SHDW);
-	ग_लिखोl(EMIF_EXT_PHY_CTRL_9_VAL, base + EMIF_EXT_PHY_CTRL_9_SHDW);
-	ग_लिखोl(EMIF_EXT_PHY_CTRL_10_VAL, base + EMIF_EXT_PHY_CTRL_10_SHDW);
-	ग_लिखोl(EMIF_EXT_PHY_CTRL_11_VAL, base + EMIF_EXT_PHY_CTRL_11_SHDW);
-	ग_लिखोl(EMIF_EXT_PHY_CTRL_12_VAL, base + EMIF_EXT_PHY_CTRL_12_SHDW);
-	ग_लिखोl(EMIF_EXT_PHY_CTRL_13_VAL, base + EMIF_EXT_PHY_CTRL_13_SHDW);
-	ग_लिखोl(EMIF_EXT_PHY_CTRL_14_VAL, base + EMIF_EXT_PHY_CTRL_14_SHDW);
-	ग_लिखोl(EMIF_EXT_PHY_CTRL_15_VAL, base + EMIF_EXT_PHY_CTRL_15_SHDW);
-	ग_लिखोl(EMIF_EXT_PHY_CTRL_16_VAL, base + EMIF_EXT_PHY_CTRL_16_SHDW);
-	ग_लिखोl(EMIF_EXT_PHY_CTRL_17_VAL, base + EMIF_EXT_PHY_CTRL_17_SHDW);
-	ग_लिखोl(EMIF_EXT_PHY_CTRL_18_VAL, base + EMIF_EXT_PHY_CTRL_18_SHDW);
-	ग_लिखोl(EMIF_EXT_PHY_CTRL_19_VAL, base + EMIF_EXT_PHY_CTRL_19_SHDW);
-	ग_लिखोl(EMIF_EXT_PHY_CTRL_20_VAL, base + EMIF_EXT_PHY_CTRL_20_SHDW);
-	ग_लिखोl(EMIF_EXT_PHY_CTRL_21_VAL, base + EMIF_EXT_PHY_CTRL_21_SHDW);
-	ग_लिखोl(EMIF_EXT_PHY_CTRL_22_VAL, base + EMIF_EXT_PHY_CTRL_22_SHDW);
-	ग_लिखोl(EMIF_EXT_PHY_CTRL_23_VAL, base + EMIF_EXT_PHY_CTRL_23_SHDW);
-	ग_लिखोl(EMIF_EXT_PHY_CTRL_24_VAL, base + EMIF_EXT_PHY_CTRL_24_SHDW);
-पूर्ण
+	if (emif->plat_data->phy_type != EMIF_PHY_TYPE_INTELLIPHY)
+		return;
+	writel(EMIF_EXT_PHY_CTRL_1_VAL, base + EMIF_EXT_PHY_CTRL_1_SHDW);
+	writel(EMIF_EXT_PHY_CTRL_5_VAL, base + EMIF_EXT_PHY_CTRL_5_SHDW);
+	writel(EMIF_EXT_PHY_CTRL_6_VAL, base + EMIF_EXT_PHY_CTRL_6_SHDW);
+	writel(EMIF_EXT_PHY_CTRL_7_VAL, base + EMIF_EXT_PHY_CTRL_7_SHDW);
+	writel(EMIF_EXT_PHY_CTRL_8_VAL, base + EMIF_EXT_PHY_CTRL_8_SHDW);
+	writel(EMIF_EXT_PHY_CTRL_9_VAL, base + EMIF_EXT_PHY_CTRL_9_SHDW);
+	writel(EMIF_EXT_PHY_CTRL_10_VAL, base + EMIF_EXT_PHY_CTRL_10_SHDW);
+	writel(EMIF_EXT_PHY_CTRL_11_VAL, base + EMIF_EXT_PHY_CTRL_11_SHDW);
+	writel(EMIF_EXT_PHY_CTRL_12_VAL, base + EMIF_EXT_PHY_CTRL_12_SHDW);
+	writel(EMIF_EXT_PHY_CTRL_13_VAL, base + EMIF_EXT_PHY_CTRL_13_SHDW);
+	writel(EMIF_EXT_PHY_CTRL_14_VAL, base + EMIF_EXT_PHY_CTRL_14_SHDW);
+	writel(EMIF_EXT_PHY_CTRL_15_VAL, base + EMIF_EXT_PHY_CTRL_15_SHDW);
+	writel(EMIF_EXT_PHY_CTRL_16_VAL, base + EMIF_EXT_PHY_CTRL_16_SHDW);
+	writel(EMIF_EXT_PHY_CTRL_17_VAL, base + EMIF_EXT_PHY_CTRL_17_SHDW);
+	writel(EMIF_EXT_PHY_CTRL_18_VAL, base + EMIF_EXT_PHY_CTRL_18_SHDW);
+	writel(EMIF_EXT_PHY_CTRL_19_VAL, base + EMIF_EXT_PHY_CTRL_19_SHDW);
+	writel(EMIF_EXT_PHY_CTRL_20_VAL, base + EMIF_EXT_PHY_CTRL_20_SHDW);
+	writel(EMIF_EXT_PHY_CTRL_21_VAL, base + EMIF_EXT_PHY_CTRL_21_SHDW);
+	writel(EMIF_EXT_PHY_CTRL_22_VAL, base + EMIF_EXT_PHY_CTRL_22_SHDW);
+	writel(EMIF_EXT_PHY_CTRL_23_VAL, base + EMIF_EXT_PHY_CTRL_23_SHDW);
+	writel(EMIF_EXT_PHY_CTRL_24_VAL, base + EMIF_EXT_PHY_CTRL_24_SHDW);
+}
 
-अटल व्योम get_शेष_timings(काष्ठा emअगर_data *emअगर)
-अणु
-	काष्ठा emअगर_platक्रमm_data *pd = emअगर->plat_data;
+static void get_default_timings(struct emif_data *emif)
+{
+	struct emif_platform_data *pd = emif->plat_data;
 
 	pd->timings		= lpddr2_jedec_timings;
 	pd->timings_arr_size	= ARRAY_SIZE(lpddr2_jedec_timings);
 
-	dev_warn(emअगर->dev, "%s: using default timings\n", __func__);
-पूर्ण
+	dev_warn(emif->dev, "%s: using default timings\n", __func__);
+}
 
-अटल पूर्णांक is_dev_data_valid(u32 type, u32 density, u32 io_width, u32 phy_type,
-		u32 ip_rev, काष्ठा device *dev)
-अणु
-	पूर्णांक valid;
+static int is_dev_data_valid(u32 type, u32 density, u32 io_width, u32 phy_type,
+		u32 ip_rev, struct device *dev)
+{
+	int valid;
 
 	valid = (type == DDR_TYPE_LPDDR2_S4 ||
 			type == DDR_TYPE_LPDDR2_S2)
@@ -1177,425 +1176,425 @@ out:
 			&& io_width <= DDR_IO_WIDTH_32);
 
 	/* Combinations of EMIF and PHY revisions that we support today */
-	चयन (ip_rev) अणु
-	हाल EMIF_4D:
+	switch (ip_rev) {
+	case EMIF_4D:
 		valid = valid && (phy_type == EMIF_PHY_TYPE_ATTILAPHY);
-		अवरोध;
-	हाल EMIF_4D5:
+		break;
+	case EMIF_4D5:
 		valid = valid && (phy_type == EMIF_PHY_TYPE_INTELLIPHY);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		valid = 0;
-	पूर्ण
+	}
 
-	अगर (!valid)
+	if (!valid)
 		dev_err(dev, "%s: invalid DDR details\n", __func__);
-	वापस valid;
-पूर्ण
+	return valid;
+}
 
-अटल पूर्णांक is_custom_config_valid(काष्ठा emअगर_custom_configs *cust_cfgs,
-		काष्ठा device *dev)
-अणु
-	पूर्णांक valid = 1;
+static int is_custom_config_valid(struct emif_custom_configs *cust_cfgs,
+		struct device *dev)
+{
+	int valid = 1;
 
-	अगर ((cust_cfgs->mask & EMIF_CUSTOM_CONFIG_LPMODE) &&
+	if ((cust_cfgs->mask & EMIF_CUSTOM_CONFIG_LPMODE) &&
 		(cust_cfgs->lpmode != EMIF_LP_MODE_DISABLE))
 		valid = cust_cfgs->lpmode_freq_threshold &&
-			cust_cfgs->lpmode_समयout_perक्रमmance &&
-			cust_cfgs->lpmode_समयout_घातer;
+			cust_cfgs->lpmode_timeout_performance &&
+			cust_cfgs->lpmode_timeout_power;
 
-	अगर (cust_cfgs->mask & EMIF_CUSTOM_CONFIG_TEMP_ALERT_POLL_INTERVAL)
-		valid = valid && cust_cfgs->temp_alert_poll_पूर्णांकerval_ms;
+	if (cust_cfgs->mask & EMIF_CUSTOM_CONFIG_TEMP_ALERT_POLL_INTERVAL)
+		valid = valid && cust_cfgs->temp_alert_poll_interval_ms;
 
-	अगर (!valid)
+	if (!valid)
 		dev_warn(dev, "%s: invalid custom configs\n", __func__);
 
-	वापस valid;
-पूर्ण
+	return valid;
+}
 
-#अगर defined(CONFIG_OF)
-अटल व्योम __init_or_module of_get_custom_configs(काष्ठा device_node *np_emअगर,
-		काष्ठा emअगर_data *emअगर)
-अणु
-	काष्ठा emअगर_custom_configs	*cust_cfgs = शून्य;
-	पूर्णांक				len;
-	स्थिर __be32			*lpmode, *poll_पूर्णांकvl;
+#if defined(CONFIG_OF)
+static void __init_or_module of_get_custom_configs(struct device_node *np_emif,
+		struct emif_data *emif)
+{
+	struct emif_custom_configs	*cust_cfgs = NULL;
+	int				len;
+	const __be32			*lpmode, *poll_intvl;
 
-	lpmode = of_get_property(np_emअगर, "low-power-mode", &len);
-	poll_पूर्णांकvl = of_get_property(np_emअगर, "temp-alert-poll-interval", &len);
+	lpmode = of_get_property(np_emif, "low-power-mode", &len);
+	poll_intvl = of_get_property(np_emif, "temp-alert-poll-interval", &len);
 
-	अगर (lpmode || poll_पूर्णांकvl)
-		cust_cfgs = devm_kzalloc(emअगर->dev, माप(*cust_cfgs),
+	if (lpmode || poll_intvl)
+		cust_cfgs = devm_kzalloc(emif->dev, sizeof(*cust_cfgs),
 			GFP_KERNEL);
 
-	अगर (!cust_cfgs)
-		वापस;
+	if (!cust_cfgs)
+		return;
 
-	अगर (lpmode) अणु
+	if (lpmode) {
 		cust_cfgs->mask |= EMIF_CUSTOM_CONFIG_LPMODE;
 		cust_cfgs->lpmode = be32_to_cpup(lpmode);
-		of_property_पढ़ो_u32(np_emअगर,
+		of_property_read_u32(np_emif,
 				"low-power-mode-timeout-performance",
-				&cust_cfgs->lpmode_समयout_perक्रमmance);
-		of_property_पढ़ो_u32(np_emअगर,
+				&cust_cfgs->lpmode_timeout_performance);
+		of_property_read_u32(np_emif,
 				"low-power-mode-timeout-power",
-				&cust_cfgs->lpmode_समयout_घातer);
-		of_property_पढ़ो_u32(np_emअगर,
+				&cust_cfgs->lpmode_timeout_power);
+		of_property_read_u32(np_emif,
 				"low-power-mode-freq-threshold",
 				&cust_cfgs->lpmode_freq_threshold);
-	पूर्ण
+	}
 
-	अगर (poll_पूर्णांकvl) अणु
+	if (poll_intvl) {
 		cust_cfgs->mask |=
 				EMIF_CUSTOM_CONFIG_TEMP_ALERT_POLL_INTERVAL;
-		cust_cfgs->temp_alert_poll_पूर्णांकerval_ms =
-						be32_to_cpup(poll_पूर्णांकvl);
-	पूर्ण
+		cust_cfgs->temp_alert_poll_interval_ms =
+						be32_to_cpup(poll_intvl);
+	}
 
-	अगर (of_find_property(np_emअगर, "extended-temp-part", &len))
+	if (of_find_property(np_emif, "extended-temp-part", &len))
 		cust_cfgs->mask |= EMIF_CUSTOM_CONFIG_EXTENDED_TEMP_PART;
 
-	अगर (!is_custom_config_valid(cust_cfgs, emअगर->dev)) अणु
-		devm_kमुक्त(emअगर->dev, cust_cfgs);
-		वापस;
-	पूर्ण
+	if (!is_custom_config_valid(cust_cfgs, emif->dev)) {
+		devm_kfree(emif->dev, cust_cfgs);
+		return;
+	}
 
-	emअगर->plat_data->custom_configs = cust_cfgs;
-पूर्ण
+	emif->plat_data->custom_configs = cust_cfgs;
+}
 
-अटल व्योम __init_or_module of_get_ddr_info(काष्ठा device_node *np_emअगर,
-		काष्ठा device_node *np_ddr,
-		काष्ठा ddr_device_info *dev_info)
-अणु
+static void __init_or_module of_get_ddr_info(struct device_node *np_emif,
+		struct device_node *np_ddr,
+		struct ddr_device_info *dev_info)
+{
 	u32 density = 0, io_width = 0;
-	पूर्णांक len;
+	int len;
 
-	अगर (of_find_property(np_emअगर, "cs1-used", &len))
+	if (of_find_property(np_emif, "cs1-used", &len))
 		dev_info->cs1_used = true;
 
-	अगर (of_find_property(np_emअगर, "cal-resistor-per-cs", &len))
+	if (of_find_property(np_emif, "cal-resistor-per-cs", &len))
 		dev_info->cal_resistors_per_cs = true;
 
-	अगर (of_device_is_compatible(np_ddr, "jedec,lpddr2-s4"))
+	if (of_device_is_compatible(np_ddr, "jedec,lpddr2-s4"))
 		dev_info->type = DDR_TYPE_LPDDR2_S4;
-	अन्यथा अगर (of_device_is_compatible(np_ddr, "jedec,lpddr2-s2"))
+	else if (of_device_is_compatible(np_ddr, "jedec,lpddr2-s2"))
 		dev_info->type = DDR_TYPE_LPDDR2_S2;
 
-	of_property_पढ़ो_u32(np_ddr, "density", &density);
-	of_property_पढ़ो_u32(np_ddr, "io-width", &io_width);
+	of_property_read_u32(np_ddr, "density", &density);
+	of_property_read_u32(np_ddr, "io-width", &io_width);
 
 	/* Convert from density in Mb to the density encoding in jedc_ddr.h */
-	अगर (density & (density - 1))
+	if (density & (density - 1))
 		dev_info->density = 0;
-	अन्यथा
+	else
 		dev_info->density = __fls(density) - 5;
 
 	/* Convert from io_width in bits to io_width encoding in jedc_ddr.h */
-	अगर (io_width & (io_width - 1))
+	if (io_width & (io_width - 1))
 		dev_info->io_width = 0;
-	अन्यथा
+	else
 		dev_info->io_width = __fls(io_width) - 1;
-पूर्ण
+}
 
-अटल काष्ठा emअगर_data * __init_or_module of_get_memory_device_details(
-		काष्ठा device_node *np_emअगर, काष्ठा device *dev)
-अणु
-	काष्ठा emअगर_data		*emअगर = शून्य;
-	काष्ठा ddr_device_info		*dev_info = शून्य;
-	काष्ठा emअगर_platक्रमm_data	*pd = शून्य;
-	काष्ठा device_node		*np_ddr;
-	पूर्णांक				len;
+static struct emif_data * __init_or_module of_get_memory_device_details(
+		struct device_node *np_emif, struct device *dev)
+{
+	struct emif_data		*emif = NULL;
+	struct ddr_device_info		*dev_info = NULL;
+	struct emif_platform_data	*pd = NULL;
+	struct device_node		*np_ddr;
+	int				len;
 
-	np_ddr = of_parse_phandle(np_emअगर, "device-handle", 0);
-	अगर (!np_ddr)
-		जाओ error;
-	emअगर	= devm_kzalloc(dev, माप(काष्ठा emअगर_data), GFP_KERNEL);
-	pd	= devm_kzalloc(dev, माप(*pd), GFP_KERNEL);
-	dev_info = devm_kzalloc(dev, माप(*dev_info), GFP_KERNEL);
+	np_ddr = of_parse_phandle(np_emif, "device-handle", 0);
+	if (!np_ddr)
+		goto error;
+	emif	= devm_kzalloc(dev, sizeof(struct emif_data), GFP_KERNEL);
+	pd	= devm_kzalloc(dev, sizeof(*pd), GFP_KERNEL);
+	dev_info = devm_kzalloc(dev, sizeof(*dev_info), GFP_KERNEL);
 
-	अगर (!emअगर || !pd || !dev_info) अणु
+	if (!emif || !pd || !dev_info) {
 		dev_err(dev, "%s: Out of memory!!\n",
 			__func__);
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	emअगर->plat_data		= pd;
+	emif->plat_data		= pd;
 	pd->device_info		= dev_info;
-	emअगर->dev		= dev;
-	emअगर->np_ddr		= np_ddr;
-	emअगर->temperature_level	= SDRAM_TEMP_NOMINAL;
+	emif->dev		= dev;
+	emif->np_ddr		= np_ddr;
+	emif->temperature_level	= SDRAM_TEMP_NOMINAL;
 
-	अगर (of_device_is_compatible(np_emअगर, "ti,emif-4d"))
-		emअगर->plat_data->ip_rev = EMIF_4D;
-	अन्यथा अगर (of_device_is_compatible(np_emअगर, "ti,emif-4d5"))
-		emअगर->plat_data->ip_rev = EMIF_4D5;
+	if (of_device_is_compatible(np_emif, "ti,emif-4d"))
+		emif->plat_data->ip_rev = EMIF_4D;
+	else if (of_device_is_compatible(np_emif, "ti,emif-4d5"))
+		emif->plat_data->ip_rev = EMIF_4D5;
 
-	of_property_पढ़ो_u32(np_emअगर, "phy-type", &pd->phy_type);
+	of_property_read_u32(np_emif, "phy-type", &pd->phy_type);
 
-	अगर (of_find_property(np_emअगर, "hw-caps-ll-interface", &len))
+	if (of_find_property(np_emif, "hw-caps-ll-interface", &len))
 		pd->hw_caps |= EMIF_HW_CAPS_LL_INTERFACE;
 
-	of_get_ddr_info(np_emअगर, np_ddr, dev_info);
-	अगर (!is_dev_data_valid(pd->device_info->type, pd->device_info->density,
+	of_get_ddr_info(np_emif, np_ddr, dev_info);
+	if (!is_dev_data_valid(pd->device_info->type, pd->device_info->density,
 			pd->device_info->io_width, pd->phy_type, pd->ip_rev,
-			emअगर->dev)) अणु
+			emif->dev)) {
 		dev_err(dev, "%s: invalid device data!!\n", __func__);
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 	/*
-	 * For EMIF instances other than EMIF1 see अगर the devices connected
-	 * are exactly same as on EMIF1(which is typically the हाल). If so,
+	 * For EMIF instances other than EMIF1 see if the devices connected
+	 * are exactly same as on EMIF1(which is typically the case). If so,
 	 * mark it as a duplicate of EMIF1. This will save some memory and
 	 * computation.
 	 */
-	अगर (emअगर1 && emअगर1->np_ddr == np_ddr) अणु
-		emअगर->duplicate = true;
-		जाओ out;
-	पूर्ण अन्यथा अगर (emअगर1) अणु
-		dev_warn(emअगर->dev, "%s: Non-symmetric DDR geometry\n",
+	if (emif1 && emif1->np_ddr == np_ddr) {
+		emif->duplicate = true;
+		goto out;
+	} else if (emif1) {
+		dev_warn(emif->dev, "%s: Non-symmetric DDR geometry\n",
 			__func__);
-	पूर्ण
+	}
 
-	of_get_custom_configs(np_emअगर, emअगर);
-	emअगर->plat_data->timings = of_get_ddr_timings(np_ddr, emअगर->dev,
-					emअगर->plat_data->device_info->type,
-					&emअगर->plat_data->timings_arr_size);
+	of_get_custom_configs(np_emif, emif);
+	emif->plat_data->timings = of_get_ddr_timings(np_ddr, emif->dev,
+					emif->plat_data->device_info->type,
+					&emif->plat_data->timings_arr_size);
 
-	emअगर->plat_data->min_tck = of_get_min_tck(np_ddr, emअगर->dev);
-	जाओ out;
+	emif->plat_data->min_tck = of_get_min_tck(np_ddr, emif->dev);
+	goto out;
 
 error:
-	वापस शून्य;
+	return NULL;
 out:
-	वापस emअगर;
-पूर्ण
+	return emif;
+}
 
-#अन्यथा
+#else
 
-अटल काष्ठा emअगर_data * __init_or_module of_get_memory_device_details(
-		काष्ठा device_node *np_emअगर, काष्ठा device *dev)
-अणु
-	वापस शून्य;
-पूर्ण
-#पूर्ण_अगर
+static struct emif_data * __init_or_module of_get_memory_device_details(
+		struct device_node *np_emif, struct device *dev)
+{
+	return NULL;
+}
+#endif
 
-अटल काष्ठा emअगर_data *__init_or_module get_device_details(
-		काष्ठा platक्रमm_device *pdev)
-अणु
+static struct emif_data *__init_or_module get_device_details(
+		struct platform_device *pdev)
+{
 	u32				size;
-	काष्ठा emअगर_data		*emअगर = शून्य;
-	काष्ठा ddr_device_info		*dev_info;
-	काष्ठा emअगर_custom_configs	*cust_cfgs;
-	काष्ठा emअगर_platक्रमm_data	*pd;
-	काष्ठा device			*dev;
-	व्योम				*temp;
+	struct emif_data		*emif = NULL;
+	struct ddr_device_info		*dev_info;
+	struct emif_custom_configs	*cust_cfgs;
+	struct emif_platform_data	*pd;
+	struct device			*dev;
+	void				*temp;
 
-	pd = pdev->dev.platक्रमm_data;
+	pd = pdev->dev.platform_data;
 	dev = &pdev->dev;
 
-	अगर (!(pd && pd->device_info && is_dev_data_valid(pd->device_info->type,
+	if (!(pd && pd->device_info && is_dev_data_valid(pd->device_info->type,
 			pd->device_info->density, pd->device_info->io_width,
-			pd->phy_type, pd->ip_rev, dev))) अणु
+			pd->phy_type, pd->ip_rev, dev))) {
 		dev_err(dev, "%s: invalid device data\n", __func__);
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	emअगर	= devm_kzalloc(dev, माप(*emअगर), GFP_KERNEL);
-	temp	= devm_kzalloc(dev, माप(*pd), GFP_KERNEL);
-	dev_info = devm_kzalloc(dev, माप(*dev_info), GFP_KERNEL);
+	emif	= devm_kzalloc(dev, sizeof(*emif), GFP_KERNEL);
+	temp	= devm_kzalloc(dev, sizeof(*pd), GFP_KERNEL);
+	dev_info = devm_kzalloc(dev, sizeof(*dev_info), GFP_KERNEL);
 
-	अगर (!emअगर || !pd || !dev_info) अणु
+	if (!emif || !pd || !dev_info) {
 		dev_err(dev, "%s:%d: allocation error\n", __func__, __LINE__);
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	स_नकल(temp, pd, माप(*pd));
+	memcpy(temp, pd, sizeof(*pd));
 	pd = temp;
-	स_नकल(dev_info, pd->device_info, माप(*dev_info));
+	memcpy(dev_info, pd->device_info, sizeof(*dev_info));
 
 	pd->device_info		= dev_info;
-	emअगर->plat_data		= pd;
-	emअगर->dev		= dev;
-	emअगर->temperature_level	= SDRAM_TEMP_NOMINAL;
+	emif->plat_data		= pd;
+	emif->dev		= dev;
+	emif->temperature_level	= SDRAM_TEMP_NOMINAL;
 
 	/*
-	 * For EMIF instances other than EMIF1 see अगर the devices connected
-	 * are exactly same as on EMIF1(which is typically the हाल). If so,
+	 * For EMIF instances other than EMIF1 see if the devices connected
+	 * are exactly same as on EMIF1(which is typically the case). If so,
 	 * mark it as a duplicate of EMIF1 and skip copying timings data.
 	 * This will save some memory and some computation later.
 	 */
-	emअगर->duplicate = emअगर1 && (स_भेद(dev_info,
-		emअगर1->plat_data->device_info,
-		माप(काष्ठा ddr_device_info)) == 0);
+	emif->duplicate = emif1 && (memcmp(dev_info,
+		emif1->plat_data->device_info,
+		sizeof(struct ddr_device_info)) == 0);
 
-	अगर (emअगर->duplicate) अणु
-		pd->timings = शून्य;
-		pd->min_tck = शून्य;
-		जाओ out;
-	पूर्ण अन्यथा अगर (emअगर1) अणु
-		dev_warn(emअगर->dev, "%s: Non-symmetric DDR geometry\n",
+	if (emif->duplicate) {
+		pd->timings = NULL;
+		pd->min_tck = NULL;
+		goto out;
+	} else if (emif1) {
+		dev_warn(emif->dev, "%s: Non-symmetric DDR geometry\n",
 			__func__);
-	पूर्ण
+	}
 
 	/*
-	 * Copy custom configs - ignore allocation error, अगर any, as
+	 * Copy custom configs - ignore allocation error, if any, as
 	 * custom_configs is not very critical
 	 */
 	cust_cfgs = pd->custom_configs;
-	अगर (cust_cfgs && is_custom_config_valid(cust_cfgs, dev)) अणु
-		temp = devm_kzalloc(dev, माप(*cust_cfgs), GFP_KERNEL);
-		अगर (temp)
-			स_नकल(temp, cust_cfgs, माप(*cust_cfgs));
-		अन्यथा
+	if (cust_cfgs && is_custom_config_valid(cust_cfgs, dev)) {
+		temp = devm_kzalloc(dev, sizeof(*cust_cfgs), GFP_KERNEL);
+		if (temp)
+			memcpy(temp, cust_cfgs, sizeof(*cust_cfgs));
+		else
 			dev_warn(dev, "%s:%d: allocation error\n", __func__,
 				__LINE__);
 		pd->custom_configs = temp;
-	पूर्ण
+	}
 
 	/*
-	 * Copy timings and min-tck values from platक्रमm data. If it is not
-	 * available or अगर memory allocation fails, use JEDEC शेषs
+	 * Copy timings and min-tck values from platform data. If it is not
+	 * available or if memory allocation fails, use JEDEC defaults
 	 */
-	size = माप(काष्ठा lpddr2_timings) * pd->timings_arr_size;
-	अगर (pd->timings) अणु
+	size = sizeof(struct lpddr2_timings) * pd->timings_arr_size;
+	if (pd->timings) {
 		temp = devm_kzalloc(dev, size, GFP_KERNEL);
-		अगर (temp) अणु
-			स_नकल(temp, pd->timings, size);
+		if (temp) {
+			memcpy(temp, pd->timings, size);
 			pd->timings = temp;
-		पूर्ण अन्यथा अणु
+		} else {
 			dev_warn(dev, "%s:%d: allocation error\n", __func__,
 				__LINE__);
-			get_शेष_timings(emअगर);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		get_शेष_timings(emअगर);
-	पूर्ण
+			get_default_timings(emif);
+		}
+	} else {
+		get_default_timings(emif);
+	}
 
-	अगर (pd->min_tck) अणु
-		temp = devm_kzalloc(dev, माप(*pd->min_tck), GFP_KERNEL);
-		अगर (temp) अणु
-			स_नकल(temp, pd->min_tck, माप(*pd->min_tck));
+	if (pd->min_tck) {
+		temp = devm_kzalloc(dev, sizeof(*pd->min_tck), GFP_KERNEL);
+		if (temp) {
+			memcpy(temp, pd->min_tck, sizeof(*pd->min_tck));
 			pd->min_tck = temp;
-		पूर्ण अन्यथा अणु
+		} else {
 			dev_warn(dev, "%s:%d: allocation error\n", __func__,
 				__LINE__);
 			pd->min_tck = &lpddr2_jedec_min_tck;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		pd->min_tck = &lpddr2_jedec_min_tck;
-	पूर्ण
+	}
 
 out:
-	वापस emअगर;
+	return emif;
 
 error:
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक __init_or_module emअगर_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा emअगर_data	*emअगर;
-	काष्ठा resource		*res;
-	पूर्णांक			irq;
+static int __init_or_module emif_probe(struct platform_device *pdev)
+{
+	struct emif_data	*emif;
+	struct resource		*res;
+	int			irq;
 
-	अगर (pdev->dev.of_node)
-		emअगर = of_get_memory_device_details(pdev->dev.of_node, &pdev->dev);
-	अन्यथा
-		emअगर = get_device_details(pdev);
+	if (pdev->dev.of_node)
+		emif = of_get_memory_device_details(pdev->dev.of_node, &pdev->dev);
+	else
+		emif = get_device_details(pdev);
 
-	अगर (!emअगर) अणु
+	if (!emif) {
 		pr_err("%s: error getting device data\n", __func__);
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	list_add(&emअगर->node, &device_list);
-	emअगर->addressing = get_addressing_table(emअगर->plat_data->device_info);
+	list_add(&emif->node, &device_list);
+	emif->addressing = get_addressing_table(emif->plat_data->device_info);
 
-	/* Save poपूर्णांकers to each other in emअगर and device काष्ठाures */
-	emअगर->dev = &pdev->dev;
-	platक्रमm_set_drvdata(pdev, emअगर);
+	/* Save pointers to each other in emif and device structures */
+	emif->dev = &pdev->dev;
+	platform_set_drvdata(pdev, emif);
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	emअगर->base = devm_ioremap_resource(emअगर->dev, res);
-	अगर (IS_ERR(emअगर->base))
-		जाओ error;
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	emif->base = devm_ioremap_resource(emif->dev, res);
+	if (IS_ERR(emif->base))
+		goto error;
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0)
-		जाओ error;
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0)
+		goto error;
 
-	emअगर_oneसमय_settings(emअगर);
-	emअगर_debugfs_init(emअगर);
-	disable_and_clear_all_पूर्णांकerrupts(emअगर);
-	setup_पूर्णांकerrupts(emअगर, irq);
+	emif_onetime_settings(emif);
+	emif_debugfs_init(emif);
+	disable_and_clear_all_interrupts(emif);
+	setup_interrupts(emif, irq);
 
-	/* One-समय actions taken on probing the first device */
-	अगर (!emअगर1) अणु
-		emअगर1 = emअगर;
+	/* One-time actions taken on probing the first device */
+	if (!emif1) {
+		emif1 = emif;
 
 		/*
-		 * TODO: रेजिस्टर notअगरiers क्रम frequency and voltage
+		 * TODO: register notifiers for frequency and voltage
 		 * change here once the respective frameworks are
 		 * available
 		 */
-	पूर्ण
+	}
 
 	dev_info(&pdev->dev, "%s: device configured with addr = %p and IRQ%d\n",
-		__func__, emअगर->base, irq);
+		__func__, emif->base, irq);
 
-	वापस 0;
+	return 0;
 error:
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}
 
-अटल पूर्णांक __निकास emअगर_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा emअगर_data *emअगर = platक्रमm_get_drvdata(pdev);
+static int __exit emif_remove(struct platform_device *pdev)
+{
+	struct emif_data *emif = platform_get_drvdata(pdev);
 
-	emअगर_debugfs_निकास(emअगर);
+	emif_debugfs_exit(emif);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम emअगर_shutकरोwn(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा emअगर_data	*emअगर = platक्रमm_get_drvdata(pdev);
+static void emif_shutdown(struct platform_device *pdev)
+{
+	struct emif_data	*emif = platform_get_drvdata(pdev);
 
-	disable_and_clear_all_पूर्णांकerrupts(emअगर);
-पूर्ण
+	disable_and_clear_all_interrupts(emif);
+}
 
-अटल पूर्णांक get_emअगर_reg_values(काष्ठा emअगर_data *emअगर, u32 freq,
-		काष्ठा emअगर_regs *regs)
-अणु
+static int get_emif_reg_values(struct emif_data *emif, u32 freq,
+		struct emif_regs *regs)
+{
 	u32				ip_rev, phy_type;
 	u32				cl, type;
-	स्थिर काष्ठा lpddr2_timings	*timings;
-	स्थिर काष्ठा lpddr2_min_tck	*min_tck;
-	स्थिर काष्ठा ddr_device_info	*device_info;
-	स्थिर काष्ठा lpddr2_addressing	*addressing;
-	काष्ठा emअगर_data		*emअगर_क्रम_calc;
-	काष्ठा device			*dev;
+	const struct lpddr2_timings	*timings;
+	const struct lpddr2_min_tck	*min_tck;
+	const struct ddr_device_info	*device_info;
+	const struct lpddr2_addressing	*addressing;
+	struct emif_data		*emif_for_calc;
+	struct device			*dev;
 
-	dev = emअगर->dev;
+	dev = emif->dev;
 	/*
 	 * If the devices on this EMIF instance is duplicate of EMIF1,
-	 * use EMIF1 details क्रम the calculation
+	 * use EMIF1 details for the calculation
 	 */
-	emअगर_क्रम_calc	= emअगर->duplicate ? emअगर1 : emअगर;
-	timings		= get_timings_table(emअगर_क्रम_calc, freq);
-	addressing	= emअगर_क्रम_calc->addressing;
-	अगर (!timings || !addressing) अणु
+	emif_for_calc	= emif->duplicate ? emif1 : emif;
+	timings		= get_timings_table(emif_for_calc, freq);
+	addressing	= emif_for_calc->addressing;
+	if (!timings || !addressing) {
 		dev_err(dev, "%s: not enough data available for %dHz",
 			__func__, freq);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	device_info	= emअगर_क्रम_calc->plat_data->device_info;
+	device_info	= emif_for_calc->plat_data->device_info;
 	type		= device_info->type;
-	ip_rev		= emअगर_क्रम_calc->plat_data->ip_rev;
-	phy_type	= emअगर_क्रम_calc->plat_data->phy_type;
+	ip_rev		= emif_for_calc->plat_data->ip_rev;
+	phy_type	= emif_for_calc->plat_data->phy_type;
 
-	min_tck		= emअगर_क्रम_calc->plat_data->min_tck;
+	min_tck		= emif_for_calc->plat_data->min_tck;
 
 	set_ddr_clk_period(freq);
 
@@ -1607,40 +1606,40 @@ error:
 	regs->sdram_tim3_shdw = get_sdram_tim_3_shdw(timings, min_tck,
 		addressing, type, ip_rev, EMIF_NORMAL_TIMINGS);
 
-	cl = get_cl(emअगर);
+	cl = get_cl(emif);
 
-	अगर (phy_type == EMIF_PHY_TYPE_ATTILAPHY && ip_rev == EMIF_4D) अणु
+	if (phy_type == EMIF_PHY_TYPE_ATTILAPHY && ip_rev == EMIF_4D) {
 		regs->phy_ctrl_1_shdw = get_ddr_phy_ctrl_1_attilaphy_4d(
 			timings, freq, cl);
-	पूर्ण अन्यथा अगर (phy_type == EMIF_PHY_TYPE_INTELLIPHY && ip_rev == EMIF_4D5) अणु
-		regs->phy_ctrl_1_shdw = get_phy_ctrl_1_पूर्णांकelliphy_4d5(freq, cl);
-		regs->ext_phy_ctrl_2_shdw = get_ext_phy_ctrl_2_पूर्णांकelliphy_4d5();
-		regs->ext_phy_ctrl_3_shdw = get_ext_phy_ctrl_3_पूर्णांकelliphy_4d5();
-		regs->ext_phy_ctrl_4_shdw = get_ext_phy_ctrl_4_पूर्णांकelliphy_4d5();
-	पूर्ण अन्यथा अणु
-		वापस -1;
-	पूर्ण
+	} else if (phy_type == EMIF_PHY_TYPE_INTELLIPHY && ip_rev == EMIF_4D5) {
+		regs->phy_ctrl_1_shdw = get_phy_ctrl_1_intelliphy_4d5(freq, cl);
+		regs->ext_phy_ctrl_2_shdw = get_ext_phy_ctrl_2_intelliphy_4d5();
+		regs->ext_phy_ctrl_3_shdw = get_ext_phy_ctrl_3_intelliphy_4d5();
+		regs->ext_phy_ctrl_4_shdw = get_ext_phy_ctrl_4_intelliphy_4d5();
+	} else {
+		return -1;
+	}
 
-	/* Only समयout values in pwr_mgmt_ctrl_shdw रेजिस्टर */
+	/* Only timeout values in pwr_mgmt_ctrl_shdw register */
 	regs->pwr_mgmt_ctrl_shdw =
-		get_pwr_mgmt_ctrl(freq, emअगर_क्रम_calc, ip_rev) &
+		get_pwr_mgmt_ctrl(freq, emif_for_calc, ip_rev) &
 		(CS_TIM_MASK | SR_TIM_MASK | PD_TIM_MASK);
 
-	अगर (ip_rev & EMIF_4D) अणु
-		regs->पढ़ो_idle_ctrl_shdw_normal =
-			get_पढ़ो_idle_ctrl_shdw(DDR_VOLTAGE_STABLE);
+	if (ip_rev & EMIF_4D) {
+		regs->read_idle_ctrl_shdw_normal =
+			get_read_idle_ctrl_shdw(DDR_VOLTAGE_STABLE);
 
-		regs->पढ़ो_idle_ctrl_shdw_volt_ramp =
-			get_पढ़ो_idle_ctrl_shdw(DDR_VOLTAGE_RAMPING);
-	पूर्ण अन्यथा अगर (ip_rev & EMIF_4D5) अणु
+		regs->read_idle_ctrl_shdw_volt_ramp =
+			get_read_idle_ctrl_shdw(DDR_VOLTAGE_RAMPING);
+	} else if (ip_rev & EMIF_4D5) {
 		regs->dll_calib_ctrl_shdw_normal =
 			get_dll_calib_ctrl_shdw(DDR_VOLTAGE_STABLE);
 
 		regs->dll_calib_ctrl_shdw_volt_ramp =
 			get_dll_calib_ctrl_shdw(DDR_VOLTAGE_RAMPING);
-	पूर्ण
+	}
 
-	अगर (type == DDR_TYPE_LPDDR2_S2 || type == DDR_TYPE_LPDDR2_S4) अणु
+	if (type == DDR_TYPE_LPDDR2_S2 || type == DDR_TYPE_LPDDR2_S4) {
 		regs->ref_ctrl_shdw_derated = get_sdram_ref_ctrl_shdw(freq / 4,
 			addressing);
 
@@ -1651,237 +1650,237 @@ error:
 		regs->sdram_tim3_shdw_derated = get_sdram_tim_3_shdw(timings,
 			min_tck, addressing, type, ip_rev,
 			EMIF_DERATED_TIMINGS);
-	पूर्ण
+	}
 
 	regs->freq = freq;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * get_regs() - माला_लो the cached emअगर_regs काष्ठाure क्रम a given EMIF instance
+ * get_regs() - gets the cached emif_regs structure for a given EMIF instance
  * given frequency(freq):
  *
  * As an optimisation, every EMIF instance other than EMIF1 shares the
- * रेजिस्टर cache with EMIF1 अगर the devices connected on this instance
+ * register cache with EMIF1 if the devices connected on this instance
  * are same as that on EMIF1(indicated by the duplicate flag)
  *
- * If we करो not have an entry corresponding to the frequency given, we
+ * If we do not have an entry corresponding to the frequency given, we
  * allocate a new entry and calculate the values
  *
  * Upon finding the right reg dump, save it in curr_regs. It can be
- * directly used क्रम thermal de-rating and voltage ramping changes.
+ * directly used for thermal de-rating and voltage ramping changes.
  */
-अटल काष्ठा emअगर_regs *get_regs(काष्ठा emअगर_data *emअगर, u32 freq)
-अणु
-	पूर्णांक			i;
-	काष्ठा emअगर_regs	**regs_cache;
-	काष्ठा emअगर_regs	*regs = शून्य;
-	काष्ठा device		*dev;
+static struct emif_regs *get_regs(struct emif_data *emif, u32 freq)
+{
+	int			i;
+	struct emif_regs	**regs_cache;
+	struct emif_regs	*regs = NULL;
+	struct device		*dev;
 
-	dev = emअगर->dev;
-	अगर (emअगर->curr_regs && emअगर->curr_regs->freq == freq) अणु
+	dev = emif->dev;
+	if (emif->curr_regs && emif->curr_regs->freq == freq) {
 		dev_dbg(dev, "%s: using curr_regs - %u Hz", __func__, freq);
-		वापस emअगर->curr_regs;
-	पूर्ण
+		return emif->curr_regs;
+	}
 
-	अगर (emअगर->duplicate)
-		regs_cache = emअगर1->regs_cache;
-	अन्यथा
-		regs_cache = emअगर->regs_cache;
+	if (emif->duplicate)
+		regs_cache = emif1->regs_cache;
+	else
+		regs_cache = emif->regs_cache;
 
-	क्रम (i = 0; i < EMIF_MAX_NUM_FREQUENCIES && regs_cache[i]; i++) अणु
-		अगर (regs_cache[i]->freq == freq) अणु
+	for (i = 0; i < EMIF_MAX_NUM_FREQUENCIES && regs_cache[i]; i++) {
+		if (regs_cache[i]->freq == freq) {
 			regs = regs_cache[i];
 			dev_dbg(dev,
 				"%s: reg dump found in reg cache for %u Hz\n",
 				__func__, freq);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	/*
-	 * If we करोn't have an entry क्रम this frequency in the cache create one
+	 * If we don't have an entry for this frequency in the cache create one
 	 * and calculate the values
 	 */
-	अगर (!regs) अणु
-		regs = devm_kzalloc(emअगर->dev, माप(*regs), GFP_ATOMIC);
-		अगर (!regs)
-			वापस शून्य;
+	if (!regs) {
+		regs = devm_kzalloc(emif->dev, sizeof(*regs), GFP_ATOMIC);
+		if (!regs)
+			return NULL;
 
-		अगर (get_emअगर_reg_values(emअगर, freq, regs)) अणु
-			devm_kमुक्त(emअगर->dev, regs);
-			वापस शून्य;
-		पूर्ण
+		if (get_emif_reg_values(emif, freq, regs)) {
+			devm_kfree(emif->dev, regs);
+			return NULL;
+		}
 
 		/*
-		 * Now look क्रम an un-used entry in the cache and save the
-		 * newly created काष्ठा. If there are no मुक्त entries
-		 * over-ग_लिखो the last entry
+		 * Now look for an un-used entry in the cache and save the
+		 * newly created struct. If there are no free entries
+		 * over-write the last entry
 		 */
-		क्रम (i = 0; i < EMIF_MAX_NUM_FREQUENCIES && regs_cache[i]; i++)
+		for (i = 0; i < EMIF_MAX_NUM_FREQUENCIES && regs_cache[i]; i++)
 			;
 
-		अगर (i >= EMIF_MAX_NUM_FREQUENCIES) अणु
+		if (i >= EMIF_MAX_NUM_FREQUENCIES) {
 			dev_warn(dev, "%s: regs_cache full - reusing a slot!!\n",
 				__func__);
 			i = EMIF_MAX_NUM_FREQUENCIES - 1;
-			devm_kमुक्त(emअगर->dev, regs_cache[i]);
-		पूर्ण
+			devm_kfree(emif->dev, regs_cache[i]);
+		}
 		regs_cache[i] = regs;
-	पूर्ण
+	}
 
-	वापस regs;
-पूर्ण
+	return regs;
+}
 
-अटल व्योम करो_volt_notअगरy_handling(काष्ठा emअगर_data *emअगर, u32 volt_state)
-अणु
-	dev_dbg(emअगर->dev, "%s: voltage notification : %d", __func__,
+static void do_volt_notify_handling(struct emif_data *emif, u32 volt_state)
+{
+	dev_dbg(emif->dev, "%s: voltage notification : %d", __func__,
 		volt_state);
 
-	अगर (!emअगर->curr_regs) अणु
-		dev_err(emअगर->dev,
+	if (!emif->curr_regs) {
+		dev_err(emif->dev,
 			"%s: volt-notify before registers are ready: %d\n",
 			__func__, volt_state);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	setup_volt_sensitive_regs(emअगर, emअगर->curr_regs, volt_state);
-पूर्ण
+	setup_volt_sensitive_regs(emif, emif->curr_regs, volt_state);
+}
 
 /*
- * TODO: voltage notअगरy handling should be hooked up to
+ * TODO: voltage notify handling should be hooked up to
  * regulator framework as soon as the necessary support
- * is available in मुख्यline kernel. This function is un-used
+ * is available in mainline kernel. This function is un-used
  * right now.
  */
-अटल व्योम __attribute__((unused)) volt_notअगरy_handling(u32 volt_state)
-अणु
-	काष्ठा emअगर_data *emअगर;
+static void __attribute__((unused)) volt_notify_handling(u32 volt_state)
+{
+	struct emif_data *emif;
 
-	spin_lock_irqsave(&emअगर_lock, irq_state);
+	spin_lock_irqsave(&emif_lock, irq_state);
 
-	list_क्रम_each_entry(emअगर, &device_list, node)
-		करो_volt_notअगरy_handling(emअगर, volt_state);
-	करो_freq_update();
+	list_for_each_entry(emif, &device_list, node)
+		do_volt_notify_handling(emif, volt_state);
+	do_freq_update();
 
-	spin_unlock_irqrestore(&emअगर_lock, irq_state);
-पूर्ण
+	spin_unlock_irqrestore(&emif_lock, irq_state);
+}
 
-अटल व्योम करो_freq_pre_notअगरy_handling(काष्ठा emअगर_data *emअगर, u32 new_freq)
-अणु
-	काष्ठा emअगर_regs *regs;
+static void do_freq_pre_notify_handling(struct emif_data *emif, u32 new_freq)
+{
+	struct emif_regs *regs;
 
-	regs = get_regs(emअगर, new_freq);
-	अगर (!regs)
-		वापस;
+	regs = get_regs(emif, new_freq);
+	if (!regs)
+		return;
 
-	emअगर->curr_regs = regs;
+	emif->curr_regs = regs;
 
 	/*
-	 * Update the shaकरोw रेजिस्टरs:
+	 * Update the shadow registers:
 	 * Temperature and voltage-ramp sensitive settings are also configured
 	 * in terms of DDR cycles. So, we need to update them too when there
 	 * is a freq change
 	 */
-	dev_dbg(emअगर->dev, "%s: setting up shadow registers for %uHz",
+	dev_dbg(emif->dev, "%s: setting up shadow registers for %uHz",
 		__func__, new_freq);
-	setup_रेजिस्टरs(emअगर, regs);
-	setup_temperature_sensitive_regs(emअगर, regs);
-	setup_volt_sensitive_regs(emअगर, regs, DDR_VOLTAGE_STABLE);
+	setup_registers(emif, regs);
+	setup_temperature_sensitive_regs(emif, regs);
+	setup_volt_sensitive_regs(emif, regs, DDR_VOLTAGE_STABLE);
 
 	/*
-	 * Part of workaround क्रम errata i728. See करो_freq_update()
-	 * क्रम more details
+	 * Part of workaround for errata i728. See do_freq_update()
+	 * for more details
 	 */
-	अगर (emअगर->lpmode == EMIF_LP_MODE_SELF_REFRESH)
-		set_lpmode(emअगर, EMIF_LP_MODE_DISABLE);
-पूर्ण
+	if (emif->lpmode == EMIF_LP_MODE_SELF_REFRESH)
+		set_lpmode(emif, EMIF_LP_MODE_DISABLE);
+}
 
 /*
- * TODO: frequency notअगरy handling should be hooked up to
- * घड़ी framework as soon as the necessary support is
- * available in मुख्यline kernel. This function is un-used
+ * TODO: frequency notify handling should be hooked up to
+ * clock framework as soon as the necessary support is
+ * available in mainline kernel. This function is un-used
  * right now.
  */
-अटल व्योम __attribute__((unused)) freq_pre_notअगरy_handling(u32 new_freq)
-अणु
-	काष्ठा emअगर_data *emअगर;
+static void __attribute__((unused)) freq_pre_notify_handling(u32 new_freq)
+{
+	struct emif_data *emif;
 
 	/*
 	 * NOTE: we are taking the spin-lock here and releases it
-	 * only in post-notअगरier. This करोesn't look good and
+	 * only in post-notifier. This doesn't look good and
 	 * Sparse complains about it, but this seems to be
-	 * un-aव्योमable. We need to lock a sequence of events
-	 * that is split between EMIF and घड़ी framework.
+	 * un-avoidable. We need to lock a sequence of events
+	 * that is split between EMIF and clock framework.
 	 *
-	 * 1. EMIF driver updates EMIF timings in shaकरोw रेजिस्टरs in the
-	 *    frequency pre-notअगरy callback from घड़ी framework
-	 * 2. घड़ी framework sets up the रेजिस्टरs क्रम the new frequency
-	 * 3. घड़ी framework initiates a hw-sequence that updates
+	 * 1. EMIF driver updates EMIF timings in shadow registers in the
+	 *    frequency pre-notify callback from clock framework
+	 * 2. clock framework sets up the registers for the new frequency
+	 * 3. clock framework initiates a hw-sequence that updates
 	 *    the frequency EMIF timings synchronously.
 	 *
-	 * All these 3 steps should be perक्रमmed as an atomic operation
-	 * vis-a-vis similar sequence in the EMIF पूर्णांकerrupt handler
-	 * क्रम temperature events. Otherwise, there could be race
-	 * conditions that could result in incorrect EMIF timings क्रम
+	 * All these 3 steps should be performed as an atomic operation
+	 * vis-a-vis similar sequence in the EMIF interrupt handler
+	 * for temperature events. Otherwise, there could be race
+	 * conditions that could result in incorrect EMIF timings for
 	 * a given frequency
 	 */
-	spin_lock_irqsave(&emअगर_lock, irq_state);
+	spin_lock_irqsave(&emif_lock, irq_state);
 
-	list_क्रम_each_entry(emअगर, &device_list, node)
-		करो_freq_pre_notअगरy_handling(emअगर, new_freq);
-पूर्ण
+	list_for_each_entry(emif, &device_list, node)
+		do_freq_pre_notify_handling(emif, new_freq);
+}
 
-अटल व्योम करो_freq_post_notअगरy_handling(काष्ठा emअगर_data *emअगर)
-अणु
+static void do_freq_post_notify_handling(struct emif_data *emif)
+{
 	/*
-	 * Part of workaround क्रम errata i728. See करो_freq_update()
-	 * क्रम more details
+	 * Part of workaround for errata i728. See do_freq_update()
+	 * for more details
 	 */
-	अगर (emअगर->lpmode == EMIF_LP_MODE_SELF_REFRESH)
-		set_lpmode(emअगर, EMIF_LP_MODE_SELF_REFRESH);
-पूर्ण
+	if (emif->lpmode == EMIF_LP_MODE_SELF_REFRESH)
+		set_lpmode(emif, EMIF_LP_MODE_SELF_REFRESH);
+}
 
 /*
- * TODO: frequency notअगरy handling should be hooked up to
- * घड़ी framework as soon as the necessary support is
- * available in मुख्यline kernel. This function is un-used
+ * TODO: frequency notify handling should be hooked up to
+ * clock framework as soon as the necessary support is
+ * available in mainline kernel. This function is un-used
  * right now.
  */
-अटल व्योम __attribute__((unused)) freq_post_notअगरy_handling(व्योम)
-अणु
-	काष्ठा emअगर_data *emअगर;
+static void __attribute__((unused)) freq_post_notify_handling(void)
+{
+	struct emif_data *emif;
 
-	list_क्रम_each_entry(emअगर, &device_list, node)
-		करो_freq_post_notअगरy_handling(emअगर);
+	list_for_each_entry(emif, &device_list, node)
+		do_freq_post_notify_handling(emif);
 
 	/*
-	 * Lock is करोne in pre-notअगरy handler. See freq_pre_notअगरy_handling()
-	 * क्रम more details
+	 * Lock is done in pre-notify handler. See freq_pre_notify_handling()
+	 * for more details
 	 */
-	spin_unlock_irqrestore(&emअगर_lock, irq_state);
-पूर्ण
+	spin_unlock_irqrestore(&emif_lock, irq_state);
+}
 
-#अगर defined(CONFIG_OF)
-अटल स्थिर काष्ठा of_device_id emअगर_of_match[] = अणु
-		अणु .compatible = "ti,emif-4d" पूर्ण,
-		अणु .compatible = "ti,emif-4d5" पूर्ण,
-		अणुपूर्ण,
-पूर्ण;
-MODULE_DEVICE_TABLE(of, emअगर_of_match);
-#पूर्ण_अगर
+#if defined(CONFIG_OF)
+static const struct of_device_id emif_of_match[] = {
+		{ .compatible = "ti,emif-4d" },
+		{ .compatible = "ti,emif-4d5" },
+		{},
+};
+MODULE_DEVICE_TABLE(of, emif_of_match);
+#endif
 
-अटल काष्ठा platक्रमm_driver emअगर_driver = अणु
-	.हटाओ		= __निकास_p(emअगर_हटाओ),
-	.shutकरोwn	= emअगर_shutकरोwn,
-	.driver = अणु
+static struct platform_driver emif_driver = {
+	.remove		= __exit_p(emif_remove),
+	.shutdown	= emif_shutdown,
+	.driver = {
 		.name = "emif",
-		.of_match_table = of_match_ptr(emअगर_of_match),
-	पूर्ण,
-पूर्ण;
+		.of_match_table = of_match_ptr(emif_of_match),
+	},
+};
 
-module_platक्रमm_driver_probe(emअगर_driver, emअगर_probe);
+module_platform_driver_probe(emif_driver, emif_probe);
 
 MODULE_DESCRIPTION("TI EMIF SDRAM Controller Driver");
 MODULE_LICENSE("GPL");

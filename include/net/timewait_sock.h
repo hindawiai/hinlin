@@ -1,37 +1,36 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * NET		Generic infraकाष्ठाure क्रम Network protocols.
+ * NET		Generic infrastructure for Network protocols.
  *
- * Authors:	Arnalकरो Carvalho de Melo <acme@conectiva.com.br>
+ * Authors:	Arnaldo Carvalho de Melo <acme@conectiva.com.br>
  */
-#अगर_अघोषित _TIMEWAIT_SOCK_H
-#घोषणा _TIMEWAIT_SOCK_H
+#ifndef _TIMEWAIT_SOCK_H
+#define _TIMEWAIT_SOCK_H
 
-#समावेश <linux/slab.h>
-#समावेश <linux/bug.h>
-#समावेश <net/sock.h>
+#include <linux/slab.h>
+#include <linux/bug.h>
+#include <net/sock.h>
 
-काष्ठा समयरुको_sock_ops अणु
-	काष्ठा kmem_cache	*twsk_slab;
-	अक्षर		*twsk_slab_name;
-	अचिन्हित पूर्णांक	twsk_obj_size;
-	पूर्णांक		(*twsk_unique)(काष्ठा sock *sk,
-				       काष्ठा sock *sktw, व्योम *twp);
-	व्योम		(*twsk_deकाष्ठाor)(काष्ठा sock *sk);
-पूर्ण;
+struct timewait_sock_ops {
+	struct kmem_cache	*twsk_slab;
+	char		*twsk_slab_name;
+	unsigned int	twsk_obj_size;
+	int		(*twsk_unique)(struct sock *sk,
+				       struct sock *sktw, void *twp);
+	void		(*twsk_destructor)(struct sock *sk);
+};
 
-अटल अंतरभूत पूर्णांक twsk_unique(काष्ठा sock *sk, काष्ठा sock *sktw, व्योम *twp)
-अणु
-	अगर (sk->sk_prot->twsk_prot->twsk_unique != शून्य)
-		वापस sk->sk_prot->twsk_prot->twsk_unique(sk, sktw, twp);
-	वापस 0;
-पूर्ण
+static inline int twsk_unique(struct sock *sk, struct sock *sktw, void *twp)
+{
+	if (sk->sk_prot->twsk_prot->twsk_unique != NULL)
+		return sk->sk_prot->twsk_prot->twsk_unique(sk, sktw, twp);
+	return 0;
+}
 
-अटल अंतरभूत व्योम twsk_deकाष्ठाor(काष्ठा sock *sk)
-अणु
-	अगर (sk->sk_prot->twsk_prot->twsk_deकाष्ठाor != शून्य)
-		sk->sk_prot->twsk_prot->twsk_deकाष्ठाor(sk);
-पूर्ण
+static inline void twsk_destructor(struct sock *sk)
+{
+	if (sk->sk_prot->twsk_prot->twsk_destructor != NULL)
+		sk->sk_prot->twsk_prot->twsk_destructor(sk);
+}
 
-#पूर्ण_अगर /* _TIMEWAIT_SOCK_H */
+#endif /* _TIMEWAIT_SOCK_H */

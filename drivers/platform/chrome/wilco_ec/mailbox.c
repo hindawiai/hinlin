@@ -1,69 +1,68 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Mailbox पूर्णांकerface क्रम Wilco Embedded Controller
+ * Mailbox interface for Wilco Embedded Controller
  *
  * Copyright 2018 Google LLC
  *
  * The Wilco EC is similar to a typical ChromeOS embedded controller.
  * It uses the same MEC based low-level communication and a similar
- * protocol, but with some important dअगरferences.  The EC firmware करोes
- * not support the same mailbox commands so it is not रेजिस्टरed as a
+ * protocol, but with some important differences.  The EC firmware does
+ * not support the same mailbox commands so it is not registered as a
  * cros_ec device type.
  *
- * Most messages follow a standard क्रमmat, but there are some exceptions
- * and an पूर्णांकerface is provided to करो direct/raw transactions that करो not
+ * Most messages follow a standard format, but there are some exceptions
+ * and an interface is provided to do direct/raw transactions that do not
  * make assumptions about byte placement.
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/platक्रमm_data/wilco-ec.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/io.h>
+#include <linux/platform_data/wilco-ec.h>
+#include <linux/platform_device.h>
 
-#समावेश "../cros_ec_lpc_mec.h"
+#include "../cros_ec_lpc_mec.h"
 
-/* Version of mailbox पूर्णांकerface */
-#घोषणा EC_MAILBOX_VERSION		0
+/* Version of mailbox interface */
+#define EC_MAILBOX_VERSION		0
 
 /* Command to start mailbox transaction */
-#घोषणा EC_MAILBOX_START_COMMAND	0xda
+#define EC_MAILBOX_START_COMMAND	0xda
 
 /* Version of EC protocol */
-#घोषणा EC_MAILBOX_PROTO_VERSION	3
+#define EC_MAILBOX_PROTO_VERSION	3
 
 /* Number of header bytes to be counted as data bytes */
-#घोषणा EC_MAILBOX_DATA_EXTRA		2
+#define EC_MAILBOX_DATA_EXTRA		2
 
-/* Maximum समयout */
-#घोषणा EC_MAILBOX_TIMEOUT		HZ
+/* Maximum timeout */
+#define EC_MAILBOX_TIMEOUT		HZ
 
 /* EC response flags */
-#घोषणा EC_CMDR_DATA		BIT(0)	/* Data पढ़ोy क्रम host to पढ़ो */
-#घोषणा EC_CMDR_PENDING		BIT(1)	/* Write pending to EC */
-#घोषणा EC_CMDR_BUSY		BIT(2)	/* EC is busy processing a command */
-#घोषणा EC_CMDR_CMD		BIT(3)	/* Last host ग_लिखो was a command */
+#define EC_CMDR_DATA		BIT(0)	/* Data ready for host to read */
+#define EC_CMDR_PENDING		BIT(1)	/* Write pending to EC */
+#define EC_CMDR_BUSY		BIT(2)	/* EC is busy processing a command */
+#define EC_CMDR_CMD		BIT(3)	/* Last host write was a command */
 
 /**
- * wilco_ec_response_समयd_out() - Wait क्रम EC response.
+ * wilco_ec_response_timed_out() - Wait for EC response.
  * @ec: EC device.
  *
- * Return: true अगर EC समयd out, false अगर EC did not समय out.
+ * Return: true if EC timed out, false if EC did not time out.
  */
-अटल bool wilco_ec_response_समयd_out(काष्ठा wilco_ec_device *ec)
-अणु
-	अचिन्हित दीर्घ समयout = jअगरfies + EC_MAILBOX_TIMEOUT;
+static bool wilco_ec_response_timed_out(struct wilco_ec_device *ec)
+{
+	unsigned long timeout = jiffies + EC_MAILBOX_TIMEOUT;
 
-	करो अणु
-		अगर (!(inb(ec->io_command->start) &
+	do {
+		if (!(inb(ec->io_command->start) &
 		      (EC_CMDR_PENDING | EC_CMDR_BUSY)))
-			वापस false;
+			return false;
 		usleep_range(100, 200);
-	पूर्ण जबतक (समय_beक्रमe(jअगरfies, समयout));
+	} while (time_before(jiffies, timeout));
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /**
  * wilco_ec_checksum() - Compute 8-bit checksum over data range.
@@ -72,132 +71,132 @@
  *
  * Return: 8-bit checksum of provided data.
  */
-अटल u8 wilco_ec_checksum(स्थिर व्योम *data, माप_प्रकार size)
-अणु
+static u8 wilco_ec_checksum(const void *data, size_t size)
+{
 	u8 *data_bytes = (u8 *)data;
 	u8 checksum = 0;
-	माप_प्रकार i;
+	size_t i;
 
-	क्रम (i = 0; i < size; i++)
+	for (i = 0; i < size; i++)
 		checksum += data_bytes[i];
 
-	वापस checksum;
-पूर्ण
+	return checksum;
+}
 
 /**
- * wilco_ec_prepare() - Prepare the request काष्ठाure क्रम the EC.
- * @msg: EC message with request inक्रमmation.
- * @rq: EC request काष्ठाure to fill.
+ * wilco_ec_prepare() - Prepare the request structure for the EC.
+ * @msg: EC message with request information.
+ * @rq: EC request structure to fill.
  */
-अटल व्योम wilco_ec_prepare(काष्ठा wilco_ec_message *msg,
-			     काष्ठा wilco_ec_request *rq)
-अणु
-	स_रखो(rq, 0, माप(*rq));
-	rq->काष्ठा_version = EC_MAILBOX_PROTO_VERSION;
+static void wilco_ec_prepare(struct wilco_ec_message *msg,
+			     struct wilco_ec_request *rq)
+{
+	memset(rq, 0, sizeof(*rq));
+	rq->struct_version = EC_MAILBOX_PROTO_VERSION;
 	rq->mailbox_id = msg->type;
 	rq->mailbox_version = EC_MAILBOX_VERSION;
 	rq->data_size = msg->request_size;
 
 	/* Checksum header and data */
-	rq->checksum = wilco_ec_checksum(rq, माप(*rq));
+	rq->checksum = wilco_ec_checksum(rq, sizeof(*rq));
 	rq->checksum += wilco_ec_checksum(msg->request_data, msg->request_size);
 	rq->checksum = -rq->checksum;
-पूर्ण
+}
 
 /**
- * wilco_ec_transfer() - Perक्रमm actual data transfer.
+ * wilco_ec_transfer() - Perform actual data transfer.
  * @ec: EC device.
- * @msg: EC message data क्रम request and response.
- * @rq: Filled in request काष्ठाure
+ * @msg: EC message data for request and response.
+ * @rq: Filled in request structure
  *
- * Context: ec->mailbox_lock should be held जबतक using this function.
+ * Context: ec->mailbox_lock should be held while using this function.
  * Return: number of bytes received or negative error code on failure.
  */
-अटल पूर्णांक wilco_ec_transfer(काष्ठा wilco_ec_device *ec,
-			     काष्ठा wilco_ec_message *msg,
-			     काष्ठा wilco_ec_request *rq)
-अणु
-	काष्ठा wilco_ec_response *rs;
+static int wilco_ec_transfer(struct wilco_ec_device *ec,
+			     struct wilco_ec_message *msg,
+			     struct wilco_ec_request *rq)
+{
+	struct wilco_ec_response *rs;
 	u8 checksum;
 	u8 flag;
 
 	/* Write request header, then data */
-	cros_ec_lpc_io_bytes_mec(MEC_IO_WRITE, 0, माप(*rq), (u8 *)rq);
-	cros_ec_lpc_io_bytes_mec(MEC_IO_WRITE, माप(*rq), msg->request_size,
+	cros_ec_lpc_io_bytes_mec(MEC_IO_WRITE, 0, sizeof(*rq), (u8 *)rq);
+	cros_ec_lpc_io_bytes_mec(MEC_IO_WRITE, sizeof(*rq), msg->request_size,
 				 msg->request_data);
 
 	/* Start the command */
 	outb(EC_MAILBOX_START_COMMAND, ec->io_command->start);
 
-	/* For some commands (eg shutकरोwn) the EC will not respond, that's OK */
-	अगर (msg->flags & WILCO_EC_FLAG_NO_RESPONSE) अणु
+	/* For some commands (eg shutdown) the EC will not respond, that's OK */
+	if (msg->flags & WILCO_EC_FLAG_NO_RESPONSE) {
 		dev_dbg(ec->dev, "EC does not respond to this command\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* Wait क्रम it to complete */
-	अगर (wilco_ec_response_समयd_out(ec)) अणु
+	/* Wait for it to complete */
+	if (wilco_ec_response_timed_out(ec)) {
 		dev_dbg(ec->dev, "response timed out\n");
-		वापस -ETIMEDOUT;
-	पूर्ण
+		return -ETIMEDOUT;
+	}
 
 	/* Check result */
 	flag = inb(ec->io_data->start);
-	अगर (flag) अणु
+	if (flag) {
 		dev_dbg(ec->dev, "bad response: 0x%02x\n", flag);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	/* Read back response */
 	rs = ec->data_buffer;
 	checksum = cros_ec_lpc_io_bytes_mec(MEC_IO_READ, 0,
-					    माप(*rs) + EC_MAILBOX_DATA_SIZE,
+					    sizeof(*rs) + EC_MAILBOX_DATA_SIZE,
 					    (u8 *)rs);
-	अगर (checksum) अणु
+	if (checksum) {
 		dev_dbg(ec->dev, "bad packet checksum 0x%02x\n", rs->checksum);
-		वापस -EBADMSG;
-	पूर्ण
+		return -EBADMSG;
+	}
 
-	अगर (rs->result) अणु
+	if (rs->result) {
 		dev_dbg(ec->dev, "EC reported failure: 0x%02x\n", rs->result);
-		वापस -EBADMSG;
-	पूर्ण
+		return -EBADMSG;
+	}
 
-	अगर (rs->data_size != EC_MAILBOX_DATA_SIZE) अणु
+	if (rs->data_size != EC_MAILBOX_DATA_SIZE) {
 		dev_dbg(ec->dev, "unexpected packet size (%u != %u)\n",
 			rs->data_size, EC_MAILBOX_DATA_SIZE);
-		वापस -EMSGSIZE;
-	पूर्ण
+		return -EMSGSIZE;
+	}
 
-	अगर (rs->data_size < msg->response_size) अणु
+	if (rs->data_size < msg->response_size) {
 		dev_dbg(ec->dev, "EC didn't return enough data (%u < %zu)\n",
 			rs->data_size, msg->response_size);
-		वापस -EMSGSIZE;
-	पूर्ण
+		return -EMSGSIZE;
+	}
 
-	स_नकल(msg->response_data, rs->data, msg->response_size);
+	memcpy(msg->response_data, rs->data, msg->response_size);
 
-	वापस rs->data_size;
-पूर्ण
+	return rs->data_size;
+}
 
 /**
  * wilco_ec_mailbox() - Send EC request and receive EC response.
  * @ec: EC device.
- * @msg: EC message data क्रम request and response.
+ * @msg: EC message data for request and response.
  *
  * On entry msg->type, msg->request_size, and msg->request_data should all be
  * filled in. If desired, msg->flags can be set.
  *
  * If a response is expected, msg->response_size should be set, and
- * msg->response_data should poपूर्णांक to a buffer with enough space. On निकास
+ * msg->response_data should point to a buffer with enough space. On exit
  * msg->response_data will be filled.
  *
  * Return: number of bytes received or negative error code on failure.
  */
-पूर्णांक wilco_ec_mailbox(काष्ठा wilco_ec_device *ec, काष्ठा wilco_ec_message *msg)
-अणु
-	काष्ठा wilco_ec_request *rq;
-	पूर्णांक ret;
+int wilco_ec_mailbox(struct wilco_ec_device *ec, struct wilco_ec_message *msg)
+{
+	struct wilco_ec_request *rq;
+	int ret;
 
 	dev_dbg(ec->dev, "type=%04x flags=%02x rslen=%zu rqlen=%zu\n",
 		msg->type, msg->flags, msg->response_size, msg->request_size);
@@ -210,7 +209,7 @@
 	ret = wilco_ec_transfer(ec, msg, rq);
 	mutex_unlock(&ec->mailbox_lock);
 
-	वापस ret;
+	return ret;
 
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(wilco_ec_mailbox);

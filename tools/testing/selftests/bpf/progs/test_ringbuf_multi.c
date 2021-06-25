@@ -1,82 +1,81 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2020 Facebook
 
-#समावेश <linux/bpf.h>
-#समावेश <bpf/bpf_helpers.h>
+#include <linux/bpf.h>
+#include <bpf/bpf_helpers.h>
 
-अक्षर _license[] SEC("license") = "GPL";
+char _license[] SEC("license") = "GPL";
 
-काष्ठा sample अणु
-	पूर्णांक pid;
-	पूर्णांक seq;
-	दीर्घ value;
-	अक्षर comm[16];
-पूर्ण;
+struct sample {
+	int pid;
+	int seq;
+	long value;
+	char comm[16];
+};
 
-काष्ठा ringbuf_map अणु
-	__uपूर्णांक(type, BPF_MAP_TYPE_RINGBUF);
-पूर्ण ringbuf1 SEC(".maps"),
+struct ringbuf_map {
+	__uint(type, BPF_MAP_TYPE_RINGBUF);
+} ringbuf1 SEC(".maps"),
   ringbuf2 SEC(".maps");
 
-काष्ठा अणु
-	__uपूर्णांक(type, BPF_MAP_TYPE_ARRAY_OF_MAPS);
-	__uपूर्णांक(max_entries, 4);
-	__type(key, पूर्णांक);
-	__array(values, काष्ठा ringbuf_map);
-पूर्ण ringbuf_arr SEC(".maps") = अणु
-	.values = अणु
+struct {
+	__uint(type, BPF_MAP_TYPE_ARRAY_OF_MAPS);
+	__uint(max_entries, 4);
+	__type(key, int);
+	__array(values, struct ringbuf_map);
+} ringbuf_arr SEC(".maps") = {
+	.values = {
 		[0] = &ringbuf1,
 		[2] = &ringbuf2,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा अणु
-	__uपूर्णांक(type, BPF_MAP_TYPE_HASH_OF_MAPS);
-	__uपूर्णांक(max_entries, 1);
-	__type(key, पूर्णांक);
-	__array(values, काष्ठा ringbuf_map);
-पूर्ण ringbuf_hash SEC(".maps") = अणु
-	.values = अणु
+struct {
+	__uint(type, BPF_MAP_TYPE_HASH_OF_MAPS);
+	__uint(max_entries, 1);
+	__type(key, int);
+	__array(values, struct ringbuf_map);
+} ringbuf_hash SEC(".maps") = {
+	.values = {
 		[0] = &ringbuf1,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-/* inमाला_दो */
-पूर्णांक pid = 0;
-पूर्णांक target_ring = 0;
-दीर्घ value = 0;
+/* inputs */
+int pid = 0;
+int target_ring = 0;
+long value = 0;
 
-/* outमाला_दो */
-दीर्घ total = 0;
-दीर्घ dropped = 0;
-दीर्घ skipped = 0;
+/* outputs */
+long total = 0;
+long dropped = 0;
+long skipped = 0;
 
 SEC("tp/syscalls/sys_enter_getpgid")
-पूर्णांक test_ringbuf(व्योम *ctx)
-अणु
-	पूर्णांक cur_pid = bpf_get_current_pid_tgid() >> 32;
-	काष्ठा sample *sample;
-	व्योम *rb;
-	पूर्णांक zero = 0;
+int test_ringbuf(void *ctx)
+{
+	int cur_pid = bpf_get_current_pid_tgid() >> 32;
+	struct sample *sample;
+	void *rb;
+	int zero = 0;
 
-	अगर (cur_pid != pid)
-		वापस 0;
+	if (cur_pid != pid)
+		return 0;
 
 	rb = bpf_map_lookup_elem(&ringbuf_arr, &target_ring);
-	अगर (!rb) अणु
+	if (!rb) {
 		skipped += 1;
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	sample = bpf_ringbuf_reserve(rb, माप(*sample), 0);
-	अगर (!sample) अणु
+	sample = bpf_ringbuf_reserve(rb, sizeof(*sample), 0);
+	if (!sample) {
 		dropped += 1;
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
 	sample->pid = pid;
-	bpf_get_current_comm(sample->comm, माप(sample->comm));
+	bpf_get_current_comm(sample->comm, sizeof(sample->comm));
 	sample->value = value;
 
 	sample->seq = total;
@@ -84,5 +83,5 @@ SEC("tp/syscalls/sys_enter_getpgid")
 
 	bpf_ringbuf_submit(sample, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

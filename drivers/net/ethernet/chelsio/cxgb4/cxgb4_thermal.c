@@ -1,21 +1,20 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  Copyright (C) 2017 Chelsio Communications.  All rights reserved.
  *
  *  Written by: Ganesh Goudar (ganeshgr@chelsio.com)
  */
 
-#समावेश "cxgb4.h"
+#include "cxgb4.h"
 
-#घोषणा CXGB4_NUM_TRIPS 1
+#define CXGB4_NUM_TRIPS 1
 
-अटल पूर्णांक cxgb4_thermal_get_temp(काष्ठा thermal_zone_device *tzdev,
-				  पूर्णांक *temp)
-अणु
-	काष्ठा adapter *adap = tzdev->devdata;
+static int cxgb4_thermal_get_temp(struct thermal_zone_device *tzdev,
+				  int *temp)
+{
+	struct adapter *adap = tzdev->devdata;
 	u32 param, val;
-	पूर्णांक ret;
+	int ret;
 
 	param = (FW_PARAMS_MNEM_V(FW_PARAMS_MNEM_DEV) |
 		 FW_PARAMS_PARAM_X_V(FW_PARAMS_PARAM_DEV_DIAG) |
@@ -23,50 +22,50 @@
 
 	ret = t4_query_params(adap, adap->mbox, adap->pf, 0, 1,
 			      &param, &val);
-	अगर (ret < 0 || val == 0)
-		वापस -1;
+	if (ret < 0 || val == 0)
+		return -1;
 
 	*temp = val * 1000;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cxgb4_thermal_get_trip_type(काष्ठा thermal_zone_device *tzdev,
-				       पूर्णांक trip, क्रमागत thermal_trip_type *type)
-अणु
-	काष्ठा adapter *adap = tzdev->devdata;
+static int cxgb4_thermal_get_trip_type(struct thermal_zone_device *tzdev,
+				       int trip, enum thermal_trip_type *type)
+{
+	struct adapter *adap = tzdev->devdata;
 
-	अगर (!adap->ch_thermal.trip_temp)
-		वापस -EINVAL;
+	if (!adap->ch_thermal.trip_temp)
+		return -EINVAL;
 
 	*type = adap->ch_thermal.trip_type;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cxgb4_thermal_get_trip_temp(काष्ठा thermal_zone_device *tzdev,
-				       पूर्णांक trip, पूर्णांक *temp)
-अणु
-	काष्ठा adapter *adap = tzdev->devdata;
+static int cxgb4_thermal_get_trip_temp(struct thermal_zone_device *tzdev,
+				       int trip, int *temp)
+{
+	struct adapter *adap = tzdev->devdata;
 
-	अगर (!adap->ch_thermal.trip_temp)
-		वापस -EINVAL;
+	if (!adap->ch_thermal.trip_temp)
+		return -EINVAL;
 
 	*temp = adap->ch_thermal.trip_temp;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा thermal_zone_device_ops cxgb4_thermal_ops = अणु
+static struct thermal_zone_device_ops cxgb4_thermal_ops = {
 	.get_temp = cxgb4_thermal_get_temp,
 	.get_trip_type = cxgb4_thermal_get_trip_type,
 	.get_trip_temp = cxgb4_thermal_get_trip_temp,
-पूर्ण;
+};
 
-पूर्णांक cxgb4_thermal_init(काष्ठा adapter *adap)
-अणु
-	काष्ठा ch_thermal *ch_thermal = &adap->ch_thermal;
-	अक्षर ch_tz_name[THERMAL_NAME_LENGTH];
-	पूर्णांक num_trip = CXGB4_NUM_TRIPS;
+int cxgb4_thermal_init(struct adapter *adap)
+{
+	struct ch_thermal *ch_thermal = &adap->ch_thermal;
+	char ch_tz_name[THERMAL_NAME_LENGTH];
+	int num_trip = CXGB4_NUM_TRIPS;
 	u32 param, val;
-	पूर्णांक ret;
+	int ret;
 
 	/* on older firmwares we may not get the trip temperature,
 	 * set the num of trips to 0.
@@ -77,40 +76,40 @@
 
 	ret = t4_query_params(adap, adap->mbox, adap->pf, 0, 1,
 			      &param, &val);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		num_trip = 0; /* could not get trip temperature */
-	पूर्ण अन्यथा अणु
+	} else {
 		ch_thermal->trip_temp = val * 1000;
 		ch_thermal->trip_type = THERMAL_TRIP_CRITICAL;
-	पूर्ण
+	}
 
-	snम_लिखो(ch_tz_name, माप(ch_tz_name), "cxgb4_%s", adap->name);
-	ch_thermal->tzdev = thermal_zone_device_रेजिस्टर(ch_tz_name, num_trip,
+	snprintf(ch_tz_name, sizeof(ch_tz_name), "cxgb4_%s", adap->name);
+	ch_thermal->tzdev = thermal_zone_device_register(ch_tz_name, num_trip,
 							 0, adap,
 							 &cxgb4_thermal_ops,
-							 शून्य, 0, 0);
-	अगर (IS_ERR(ch_thermal->tzdev)) अणु
+							 NULL, 0, 0);
+	if (IS_ERR(ch_thermal->tzdev)) {
 		ret = PTR_ERR(ch_thermal->tzdev);
 		dev_err(adap->pdev_dev, "Failed to register thermal zone\n");
-		ch_thermal->tzdev = शून्य;
-		वापस ret;
-	पूर्ण
+		ch_thermal->tzdev = NULL;
+		return ret;
+	}
 
 	ret = thermal_zone_device_enable(ch_thermal->tzdev);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(adap->pdev_dev, "Failed to enable thermal zone\n");
-		thermal_zone_device_unरेजिस्टर(adap->ch_thermal.tzdev);
-		वापस ret;
-	पूर्ण
+		thermal_zone_device_unregister(adap->ch_thermal.tzdev);
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक cxgb4_thermal_हटाओ(काष्ठा adapter *adap)
-अणु
-	अगर (adap->ch_thermal.tzdev) अणु
-		thermal_zone_device_unरेजिस्टर(adap->ch_thermal.tzdev);
-		adap->ch_thermal.tzdev = शून्य;
-	पूर्ण
-	वापस 0;
-पूर्ण
+int cxgb4_thermal_remove(struct adapter *adap)
+{
+	if (adap->ch_thermal.tzdev) {
+		thermal_zone_device_unregister(adap->ch_thermal.tzdev);
+		adap->ch_thermal.tzdev = NULL;
+	}
+	return 0;
+}

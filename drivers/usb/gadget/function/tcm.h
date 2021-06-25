@@ -1,136 +1,135 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __TARGET_USB_GADGET_H__
-#घोषणा __TARGET_USB_GADGET_H__
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __TARGET_USB_GADGET_H__
+#define __TARGET_USB_GADGET_H__
 
-#समावेश <linux/kref.h>
-/* #समावेश <linux/usb/uas.h> */
-#समावेश <linux/usb/composite.h>
-#समावेश <linux/usb/uas.h>
-#समावेश <linux/usb/storage.h>
-#समावेश <target/target_core_base.h>
-#समावेश <target/target_core_fabric.h>
+#include <linux/kref.h>
+/* #include <linux/usb/uas.h> */
+#include <linux/usb/composite.h>
+#include <linux/usb/uas.h>
+#include <linux/usb/storage.h>
+#include <target/target_core_base.h>
+#include <target/target_core_fabric.h>
 
-#घोषणा USBG_NAMELEN 32
+#define USBG_NAMELEN 32
 
-#घोषणा fuas_to_gadget(f)	(f->function.config->cdev->gadget)
-#घोषणा UASP_SS_EP_COMP_LOG_STREAMS 4
-#घोषणा UASP_SS_EP_COMP_NUM_STREAMS (1 << UASP_SS_EP_COMP_LOG_STREAMS)
+#define fuas_to_gadget(f)	(f->function.config->cdev->gadget)
+#define UASP_SS_EP_COMP_LOG_STREAMS 4
+#define UASP_SS_EP_COMP_NUM_STREAMS (1 << UASP_SS_EP_COMP_LOG_STREAMS)
 
-क्रमागत अणु
+enum {
 	USB_G_STR_INT_UAS = 0,
 	USB_G_STR_INT_BBB,
-पूर्ण;
+};
 
-#घोषणा USB_G_ALT_INT_BBB       0
-#घोषणा USB_G_ALT_INT_UAS       1
+#define USB_G_ALT_INT_BBB       0
+#define USB_G_ALT_INT_UAS       1
 
-#घोषणा USB_G_DEFAULT_SESSION_TAGS	128
+#define USB_G_DEFAULT_SESSION_TAGS	128
 
-काष्ठा tcm_usbg_nexus अणु
-	काष्ठा se_session *tvn_se_sess;
-पूर्ण;
+struct tcm_usbg_nexus {
+	struct se_session *tvn_se_sess;
+};
 
-काष्ठा usbg_tpg अणु
-	काष्ठा mutex tpg_mutex;
-	/* SAS port target portal group tag क्रम TCM */
+struct usbg_tpg {
+	struct mutex tpg_mutex;
+	/* SAS port target portal group tag for TCM */
 	u16 tport_tpgt;
-	/* Poपूर्णांकer back to usbg_tport */
-	काष्ठा usbg_tport *tport;
-	काष्ठा workqueue_काष्ठा *workqueue;
+	/* Pointer back to usbg_tport */
+	struct usbg_tport *tport;
+	struct workqueue_struct *workqueue;
 	/* Returned by usbg_make_tpg() */
-	काष्ठा se_portal_group se_tpg;
+	struct se_portal_group se_tpg;
 	u32 gadget_connect;
-	काष्ठा tcm_usbg_nexus *tpg_nexus;
+	struct tcm_usbg_nexus *tpg_nexus;
 	atomic_t tpg_port_count;
 
-	काष्ठा usb_function_instance *fi;
-पूर्ण;
+	struct usb_function_instance *fi;
+};
 
-काष्ठा usbg_tport अणु
-	/* Binary World Wide unique Port Name क्रम SAS Target port */
+struct usbg_tport {
+	/* Binary World Wide unique Port Name for SAS Target port */
 	u64 tport_wwpn;
-	/* ASCII क्रमmatted WWPN क्रम SAS Target port */
-	अक्षर tport_name[USBG_NAMELEN];
+	/* ASCII formatted WWPN for SAS Target port */
+	char tport_name[USBG_NAMELEN];
 	/* Returned by usbg_make_tport() */
-	काष्ठा se_wwn tport_wwn;
-पूर्ण;
+	struct se_wwn tport_wwn;
+};
 
-क्रमागत uas_state अणु
+enum uas_state {
 	UASP_SEND_DATA,
 	UASP_RECEIVE_DATA,
 	UASP_SEND_STATUS,
 	UASP_QUEUE_COMMAND,
-पूर्ण;
+};
 
-#घोषणा USBG_MAX_CMD    64
-काष्ठा usbg_cmd अणु
+#define USBG_MAX_CMD    64
+struct usbg_cmd {
 	/* common */
 	u8 cmd_buf[USBG_MAX_CMD];
 	u32 data_len;
-	काष्ठा work_काष्ठा work;
-	पूर्णांक unpacked_lun;
-	काष्ठा se_cmd se_cmd;
-	व्योम *data_buf; /* used अगर no sg support available */
-	काष्ठा f_uas *fu;
-	काष्ठा completion ग_लिखो_complete;
-	काष्ठा kref ref;
+	struct work_struct work;
+	int unpacked_lun;
+	struct se_cmd se_cmd;
+	void *data_buf; /* used if no sg support available */
+	struct f_uas *fu;
+	struct completion write_complete;
+	struct kref ref;
 
 	/* UAS only */
 	u16 tag;
 	u16 prio_attr;
-	काष्ठा sense_iu sense_iu;
-	क्रमागत uas_state state;
-	काष्ठा uas_stream *stream;
+	struct sense_iu sense_iu;
+	enum uas_state state;
+	struct uas_stream *stream;
 
 	/* BOT only */
 	__le32 bot_tag;
-	अचिन्हित पूर्णांक csw_code;
-	अचिन्हित is_पढ़ो:1;
+	unsigned int csw_code;
+	unsigned is_read:1;
 
-पूर्ण;
+};
 
-काष्ठा uas_stream अणु
-	काष्ठा usb_request	*req_in;
-	काष्ठा usb_request	*req_out;
-	काष्ठा usb_request	*req_status;
-पूर्ण;
+struct uas_stream {
+	struct usb_request	*req_in;
+	struct usb_request	*req_out;
+	struct usb_request	*req_status;
+};
 
-काष्ठा usbg_cdb अणु
-	काष्ठा usb_request	*req;
-	व्योम			*buf;
-पूर्ण;
+struct usbg_cdb {
+	struct usb_request	*req;
+	void			*buf;
+};
 
-काष्ठा bot_status अणु
-	काष्ठा usb_request	*req;
-	काष्ठा bulk_cs_wrap	csw;
-पूर्ण;
+struct bot_status {
+	struct usb_request	*req;
+	struct bulk_cs_wrap	csw;
+};
 
-काष्ठा f_uas अणु
-	काष्ठा usbg_tpg		*tpg;
-	काष्ठा usb_function	function;
-	u16			अगरace;
+struct f_uas {
+	struct usbg_tpg		*tpg;
+	struct usb_function	function;
+	u16			iface;
 
 	u32			flags;
-#घोषणा USBG_ENABLED		(1 << 0)
-#घोषणा USBG_IS_UAS		(1 << 1)
-#घोषणा USBG_USE_STREAMS	(1 << 2)
-#घोषणा USBG_IS_BOT		(1 << 3)
-#घोषणा USBG_BOT_CMD_PEND	(1 << 4)
+#define USBG_ENABLED		(1 << 0)
+#define USBG_IS_UAS		(1 << 1)
+#define USBG_USE_STREAMS	(1 << 2)
+#define USBG_IS_BOT		(1 << 3)
+#define USBG_BOT_CMD_PEND	(1 << 4)
 
-	काष्ठा usbg_cdb		cmd;
-	काष्ठा usb_ep		*ep_in;
-	काष्ठा usb_ep		*ep_out;
+	struct usbg_cdb		cmd;
+	struct usb_ep		*ep_in;
+	struct usb_ep		*ep_out;
 
 	/* UAS */
-	काष्ठा usb_ep		*ep_status;
-	काष्ठा usb_ep		*ep_cmd;
-	काष्ठा uas_stream	stream[UASP_SS_EP_COMP_NUM_STREAMS];
+	struct usb_ep		*ep_status;
+	struct usb_ep		*ep_cmd;
+	struct uas_stream	stream[UASP_SS_EP_COMP_NUM_STREAMS];
 
 	/* BOT */
-	काष्ठा bot_status	bot_status;
-	काष्ठा usb_request	*bot_req_in;
-	काष्ठा usb_request	*bot_req_out;
-पूर्ण;
+	struct bot_status	bot_status;
+	struct usb_request	*bot_req_in;
+	struct usb_request	*bot_req_out;
+};
 
-#पूर्ण_अगर /* __TARGET_USB_GADGET_H__ */
+#endif /* __TARGET_USB_GADGET_H__ */

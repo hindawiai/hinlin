@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,34 +23,34 @@
  *
  */
 
-#समावेश "dm_services.h"
-#समावेश "include/logger_interface.h"
+#include "dm_services.h"
+#include "include/logger_interface.h"
 
-#समावेश "bios_parser_interface.h"
-#समावेश "bios_parser.h"
+#include "bios_parser_interface.h"
+#include "bios_parser.h"
 
-#समावेश "bios_parser2.h"
+#include "bios_parser2.h"
 
 
-काष्ठा dc_bios *dal_bios_parser_create(
-	काष्ठा bp_init_data *init,
-	क्रमागत dce_version dce_version)
-अणु
-	काष्ठा dc_bios *bios = शून्य;
+struct dc_bios *dal_bios_parser_create(
+	struct bp_init_data *init,
+	enum dce_version dce_version)
+{
+	struct dc_bios *bios = NULL;
 
 	bios = firmware_parser_create(init, dce_version);
 
-	/* Fall back to old bios parser क्रम older asics */
-	अगर (bios == शून्य)
+	/* Fall back to old bios parser for older asics */
+	if (bios == NULL)
 		bios = bios_parser_create(init, dce_version);
 
-	वापस bios;
-पूर्ण
+	return bios;
+}
 
-व्योम dal_bios_parser_destroy(काष्ठा dc_bios **dcb)
-अणु
-	काष्ठा dc_bios *bios = *dcb;
+void dal_bios_parser_destroy(struct dc_bios **dcb)
+{
+	struct dc_bios *bios = *dcb;
 
 	bios->funcs->bios_parser_destroy(dcb);
-पूर्ण
+}
 

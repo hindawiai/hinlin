@@ -1,50 +1,49 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * dlmdebug.h
  *
  * Copyright (C) 2008 Oracle.  All rights reserved.
  */
 
-#अगर_अघोषित DLMDEBUG_H
-#घोषणा DLMDEBUG_H
+#ifndef DLMDEBUG_H
+#define DLMDEBUG_H
 
-व्योम dlm_prपूर्णांक_one_mle(काष्ठा dlm_master_list_entry *mle);
+void dlm_print_one_mle(struct dlm_master_list_entry *mle);
 
-#अगर_घोषित CONFIG_DEBUG_FS
+#ifdef CONFIG_DEBUG_FS
 
-काष्ठा debug_lockres अणु
-	पूर्णांक dl_len;
-	अक्षर *dl_buf;
-	काष्ठा dlm_ctxt *dl_ctxt;
-	काष्ठा dlm_lock_resource *dl_res;
-पूर्ण;
+struct debug_lockres {
+	int dl_len;
+	char *dl_buf;
+	struct dlm_ctxt *dl_ctxt;
+	struct dlm_lock_resource *dl_res;
+};
 
-व्योम dlm_debug_init(काष्ठा dlm_ctxt *dlm);
+void dlm_debug_init(struct dlm_ctxt *dlm);
 
-व्योम dlm_create_debugfs_subroot(काष्ठा dlm_ctxt *dlm);
-व्योम dlm_destroy_debugfs_subroot(काष्ठा dlm_ctxt *dlm);
+void dlm_create_debugfs_subroot(struct dlm_ctxt *dlm);
+void dlm_destroy_debugfs_subroot(struct dlm_ctxt *dlm);
 
-व्योम dlm_create_debugfs_root(व्योम);
-व्योम dlm_destroy_debugfs_root(व्योम);
+void dlm_create_debugfs_root(void);
+void dlm_destroy_debugfs_root(void);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत व्योम dlm_debug_init(काष्ठा dlm_ctxt *dlm)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम dlm_create_debugfs_subroot(काष्ठा dlm_ctxt *dlm)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम dlm_destroy_debugfs_subroot(काष्ठा dlm_ctxt *dlm)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम dlm_create_debugfs_root(व्योम)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम dlm_destroy_debugfs_root(व्योम)
-अणु
-पूर्ण
+static inline void dlm_debug_init(struct dlm_ctxt *dlm)
+{
+}
+static inline void dlm_create_debugfs_subroot(struct dlm_ctxt *dlm)
+{
+}
+static inline void dlm_destroy_debugfs_subroot(struct dlm_ctxt *dlm)
+{
+}
+static inline void dlm_create_debugfs_root(void)
+{
+}
+static inline void dlm_destroy_debugfs_root(void)
+{
+}
 
-#पूर्ण_अगर	/* CONFIG_DEBUG_FS */
-#पूर्ण_अगर	/* DLMDEBUG_H */
+#endif	/* CONFIG_DEBUG_FS */
+#endif	/* DLMDEBUG_H */

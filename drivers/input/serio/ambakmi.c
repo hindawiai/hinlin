@@ -1,208 +1,207 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  linux/drivers/input/serio/ambakmi.c
  *
  *  Copyright (C) 2000-2003 Deep Blue Solutions Ltd.
  *  Copyright (C) 2002 Russell King.
  */
-#समावेश <linux/module.h>
-#समावेश <linux/serपन.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/device.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/err.h>
-#समावेश <linux/amba/bus.h>
-#समावेश <linux/amba/kmi.h>
-#समावेश <linux/clk.h>
+#include <linux/module.h>
+#include <linux/serio.h>
+#include <linux/errno.h>
+#include <linux/interrupt.h>
+#include <linux/ioport.h>
+#include <linux/device.h>
+#include <linux/delay.h>
+#include <linux/slab.h>
+#include <linux/err.h>
+#include <linux/amba/bus.h>
+#include <linux/amba/kmi.h>
+#include <linux/clk.h>
 
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/irq.h>
+#include <asm/io.h>
+#include <asm/irq.h>
 
-#घोषणा KMI_BASE	(kmi->base)
+#define KMI_BASE	(kmi->base)
 
-काष्ठा amba_kmi_port अणु
-	काष्ठा serio		*io;
-	काष्ठा clk		*clk;
-	व्योम __iomem		*base;
-	अचिन्हित पूर्णांक		irq;
-	अचिन्हित पूर्णांक		भागisor;
-	अचिन्हित पूर्णांक		खोलो;
-पूर्ण;
+struct amba_kmi_port {
+	struct serio		*io;
+	struct clk		*clk;
+	void __iomem		*base;
+	unsigned int		irq;
+	unsigned int		divisor;
+	unsigned int		open;
+};
 
-अटल irqवापस_t amba_kmi_पूर्णांक(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा amba_kmi_port *kmi = dev_id;
-	अचिन्हित पूर्णांक status = पढ़ोb(KMIIR);
-	पूर्णांक handled = IRQ_NONE;
+static irqreturn_t amba_kmi_int(int irq, void *dev_id)
+{
+	struct amba_kmi_port *kmi = dev_id;
+	unsigned int status = readb(KMIIR);
+	int handled = IRQ_NONE;
 
-	जबतक (status & KMIIR_RXINTR) अणु
-		serio_पूर्णांकerrupt(kmi->io, पढ़ोb(KMIDATA), 0);
-		status = पढ़ोb(KMIIR);
+	while (status & KMIIR_RXINTR) {
+		serio_interrupt(kmi->io, readb(KMIDATA), 0);
+		status = readb(KMIIR);
 		handled = IRQ_HANDLED;
-	पूर्ण
+	}
 
-	वापस handled;
-पूर्ण
+	return handled;
+}
 
-अटल पूर्णांक amba_kmi_ग_लिखो(काष्ठा serio *io, अचिन्हित अक्षर val)
-अणु
-	काष्ठा amba_kmi_port *kmi = io->port_data;
-	अचिन्हित पूर्णांक समयleft = 10000; /* समयout in 100ms */
+static int amba_kmi_write(struct serio *io, unsigned char val)
+{
+	struct amba_kmi_port *kmi = io->port_data;
+	unsigned int timeleft = 10000; /* timeout in 100ms */
 
-	जबतक ((पढ़ोb(KMISTAT) & KMISTAT_TXEMPTY) == 0 && --समयleft)
+	while ((readb(KMISTAT) & KMISTAT_TXEMPTY) == 0 && --timeleft)
 		udelay(10);
 
-	अगर (समयleft)
-		ग_लिखोb(val, KMIDATA);
+	if (timeleft)
+		writeb(val, KMIDATA);
 
-	वापस समयleft ? 0 : SERIO_TIMEOUT;
-पूर्ण
+	return timeleft ? 0 : SERIO_TIMEOUT;
+}
 
-अटल पूर्णांक amba_kmi_खोलो(काष्ठा serio *io)
-अणु
-	काष्ठा amba_kmi_port *kmi = io->port_data;
-	अचिन्हित पूर्णांक भागisor;
-	पूर्णांक ret;
+static int amba_kmi_open(struct serio *io)
+{
+	struct amba_kmi_port *kmi = io->port_data;
+	unsigned int divisor;
+	int ret;
 
 	ret = clk_prepare_enable(kmi->clk);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	भागisor = clk_get_rate(kmi->clk) / 8000000 - 1;
-	ग_लिखोb(भागisor, KMICLKDIV);
-	ग_लिखोb(KMICR_EN, KMICR);
+	divisor = clk_get_rate(kmi->clk) / 8000000 - 1;
+	writeb(divisor, KMICLKDIV);
+	writeb(KMICR_EN, KMICR);
 
-	ret = request_irq(kmi->irq, amba_kmi_पूर्णांक, IRQF_SHARED, "kmi-pl050",
+	ret = request_irq(kmi->irq, amba_kmi_int, IRQF_SHARED, "kmi-pl050",
 			  kmi);
-	अगर (ret) अणु
-		prपूर्णांकk(KERN_ERR "kmi: failed to claim IRQ%d\n", kmi->irq);
-		ग_लिखोb(0, KMICR);
-		जाओ clk_disable;
-	पूर्ण
+	if (ret) {
+		printk(KERN_ERR "kmi: failed to claim IRQ%d\n", kmi->irq);
+		writeb(0, KMICR);
+		goto clk_disable;
+	}
 
-	ग_लिखोb(KMICR_EN | KMICR_RXINTREN, KMICR);
+	writeb(KMICR_EN | KMICR_RXINTREN, KMICR);
 
-	वापस 0;
+	return 0;
 
  clk_disable:
 	clk_disable_unprepare(kmi->clk);
  out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम amba_kmi_बंद(काष्ठा serio *io)
-अणु
-	काष्ठा amba_kmi_port *kmi = io->port_data;
+static void amba_kmi_close(struct serio *io)
+{
+	struct amba_kmi_port *kmi = io->port_data;
 
-	ग_लिखोb(0, KMICR);
+	writeb(0, KMICR);
 
-	मुक्त_irq(kmi->irq, kmi);
+	free_irq(kmi->irq, kmi);
 	clk_disable_unprepare(kmi->clk);
-पूर्ण
+}
 
-अटल पूर्णांक amba_kmi_probe(काष्ठा amba_device *dev,
-	स्थिर काष्ठा amba_id *id)
-अणु
-	काष्ठा amba_kmi_port *kmi;
-	काष्ठा serio *io;
-	पूर्णांक ret;
+static int amba_kmi_probe(struct amba_device *dev,
+	const struct amba_id *id)
+{
+	struct amba_kmi_port *kmi;
+	struct serio *io;
+	int ret;
 
-	ret = amba_request_regions(dev, शून्य);
-	अगर (ret)
-		वापस ret;
+	ret = amba_request_regions(dev, NULL);
+	if (ret)
+		return ret;
 
-	kmi = kzalloc(माप(काष्ठा amba_kmi_port), GFP_KERNEL);
-	io = kzalloc(माप(काष्ठा serio), GFP_KERNEL);
-	अगर (!kmi || !io) अणु
+	kmi = kzalloc(sizeof(struct amba_kmi_port), GFP_KERNEL);
+	io = kzalloc(sizeof(struct serio), GFP_KERNEL);
+	if (!kmi || !io) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 
 	io->id.type	= SERIO_8042;
-	io->ग_लिखो	= amba_kmi_ग_लिखो;
-	io->खोलो	= amba_kmi_खोलो;
-	io->बंद	= amba_kmi_बंद;
-	strlcpy(io->name, dev_name(&dev->dev), माप(io->name));
-	strlcpy(io->phys, dev_name(&dev->dev), माप(io->phys));
+	io->write	= amba_kmi_write;
+	io->open	= amba_kmi_open;
+	io->close	= amba_kmi_close;
+	strlcpy(io->name, dev_name(&dev->dev), sizeof(io->name));
+	strlcpy(io->phys, dev_name(&dev->dev), sizeof(io->phys));
 	io->port_data	= kmi;
 	io->dev.parent	= &dev->dev;
 
 	kmi->io		= io;
 	kmi->base	= ioremap(dev->res.start, resource_size(&dev->res));
-	अगर (!kmi->base) अणु
+	if (!kmi->base) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	kmi->clk = clk_get(&dev->dev, "KMIREFCLK");
-	अगर (IS_ERR(kmi->clk)) अणु
+	if (IS_ERR(kmi->clk)) {
 		ret = PTR_ERR(kmi->clk);
-		जाओ unmap;
-	पूर्ण
+		goto unmap;
+	}
 
 	kmi->irq = dev->irq[0];
 	amba_set_drvdata(dev, kmi);
 
-	serio_रेजिस्टर_port(kmi->io);
-	वापस 0;
+	serio_register_port(kmi->io);
+	return 0;
 
  unmap:
 	iounmap(kmi->base);
  out:
-	kमुक्त(kmi);
-	kमुक्त(io);
+	kfree(kmi);
+	kfree(io);
 	amba_release_regions(dev);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम amba_kmi_हटाओ(काष्ठा amba_device *dev)
-अणु
-	काष्ठा amba_kmi_port *kmi = amba_get_drvdata(dev);
+static void amba_kmi_remove(struct amba_device *dev)
+{
+	struct amba_kmi_port *kmi = amba_get_drvdata(dev);
 
-	serio_unरेजिस्टर_port(kmi->io);
+	serio_unregister_port(kmi->io);
 	clk_put(kmi->clk);
 	iounmap(kmi->base);
-	kमुक्त(kmi);
+	kfree(kmi);
 	amba_release_regions(dev);
-पूर्ण
+}
 
-अटल पूर्णांक __maybe_unused amba_kmi_resume(काष्ठा device *dev)
-अणु
-	काष्ठा amba_kmi_port *kmi = dev_get_drvdata(dev);
+static int __maybe_unused amba_kmi_resume(struct device *dev)
+{
+	struct amba_kmi_port *kmi = dev_get_drvdata(dev);
 
 	/* kick the serio layer to rescan this port */
 	serio_reconnect(kmi->io);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल SIMPLE_DEV_PM_OPS(amba_kmi_dev_pm_ops, शून्य, amba_kmi_resume);
+static SIMPLE_DEV_PM_OPS(amba_kmi_dev_pm_ops, NULL, amba_kmi_resume);
 
-अटल स्थिर काष्ठा amba_id amba_kmi_idtable[] = अणु
-	अणु
+static const struct amba_id amba_kmi_idtable[] = {
+	{
 		.id	= 0x00041050,
 		.mask	= 0x000fffff,
-	पूर्ण,
-	अणु 0, 0 पूर्ण
-पूर्ण;
+	},
+	{ 0, 0 }
+};
 
 MODULE_DEVICE_TABLE(amba, amba_kmi_idtable);
 
-अटल काष्ठा amba_driver ambakmi_driver = अणु
-	.drv		= अणु
+static struct amba_driver ambakmi_driver = {
+	.drv		= {
 		.name	= "kmi-pl050",
 		.owner	= THIS_MODULE,
 		.pm	= &amba_kmi_dev_pm_ops,
-	पूर्ण,
+	},
 	.id_table	= amba_kmi_idtable,
 	.probe		= amba_kmi_probe,
-	.हटाओ		= amba_kmi_हटाओ,
-पूर्ण;
+	.remove		= amba_kmi_remove,
+};
 
 module_amba_driver(ambakmi_driver);
 

@@ -1,225 +1,224 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * dwc3-keystone.c - Keystone Specअगरic Glue layer
+ * dwc3-keystone.c - Keystone Specific Glue layer
  *
  * Copyright (C) 2010-2013 Texas Instruments Incorporated - https://www.ti.com
  *
  * Author: WingMan Kwok <w-kwok2@ti.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/phy/phy.h>
-#समावेश <linux/pm_runसमय.स>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/interrupt.h>
+#include <linux/platform_device.h>
+#include <linux/dma-mapping.h>
+#include <linux/io.h>
+#include <linux/of_platform.h>
+#include <linux/phy/phy.h>
+#include <linux/pm_runtime.h>
 
-/* USBSS रेजिस्टर offsets */
-#घोषणा USBSS_REVISION		0x0000
-#घोषणा USBSS_SYSCONFIG		0x0010
-#घोषणा USBSS_IRQ_EOI		0x0018
-#घोषणा USBSS_IRQSTATUS_RAW_0	0x0020
-#घोषणा USBSS_IRQSTATUS_0	0x0024
-#घोषणा USBSS_IRQENABLE_SET_0	0x0028
-#घोषणा USBSS_IRQENABLE_CLR_0	0x002c
+/* USBSS register offsets */
+#define USBSS_REVISION		0x0000
+#define USBSS_SYSCONFIG		0x0010
+#define USBSS_IRQ_EOI		0x0018
+#define USBSS_IRQSTATUS_RAW_0	0x0020
+#define USBSS_IRQSTATUS_0	0x0024
+#define USBSS_IRQENABLE_SET_0	0x0028
+#define USBSS_IRQENABLE_CLR_0	0x002c
 
-/* IRQ रेजिस्टर bits */
-#घोषणा USBSS_IRQ_EOI_LINE(n)	BIT(n)
-#घोषणा USBSS_IRQ_EVENT_ST	BIT(0)
-#घोषणा USBSS_IRQ_COREIRQ_EN	BIT(0)
-#घोषणा USBSS_IRQ_COREIRQ_CLR	BIT(0)
+/* IRQ register bits */
+#define USBSS_IRQ_EOI_LINE(n)	BIT(n)
+#define USBSS_IRQ_EVENT_ST	BIT(0)
+#define USBSS_IRQ_COREIRQ_EN	BIT(0)
+#define USBSS_IRQ_COREIRQ_CLR	BIT(0)
 
-काष्ठा dwc3_keystone अणु
-	काष्ठा device			*dev;
-	व्योम __iomem			*usbss;
-	काष्ठा phy			*usb3_phy;
-पूर्ण;
+struct dwc3_keystone {
+	struct device			*dev;
+	void __iomem			*usbss;
+	struct phy			*usb3_phy;
+};
 
-अटल अंतरभूत u32 kdwc3_पढ़ोl(व्योम __iomem *base, u32 offset)
-अणु
-	वापस पढ़ोl(base + offset);
-पूर्ण
+static inline u32 kdwc3_readl(void __iomem *base, u32 offset)
+{
+	return readl(base + offset);
+}
 
-अटल अंतरभूत व्योम kdwc3_ग_लिखोl(व्योम __iomem *base, u32 offset, u32 value)
-अणु
-	ग_लिखोl(value, base + offset);
-पूर्ण
+static inline void kdwc3_writel(void __iomem *base, u32 offset, u32 value)
+{
+	writel(value, base + offset);
+}
 
-अटल व्योम kdwc3_enable_irqs(काष्ठा dwc3_keystone *kdwc)
-अणु
+static void kdwc3_enable_irqs(struct dwc3_keystone *kdwc)
+{
 	u32 val;
 
-	val = kdwc3_पढ़ोl(kdwc->usbss, USBSS_IRQENABLE_SET_0);
+	val = kdwc3_readl(kdwc->usbss, USBSS_IRQENABLE_SET_0);
 	val |= USBSS_IRQ_COREIRQ_EN;
-	kdwc3_ग_लिखोl(kdwc->usbss, USBSS_IRQENABLE_SET_0, val);
-पूर्ण
+	kdwc3_writel(kdwc->usbss, USBSS_IRQENABLE_SET_0, val);
+}
 
-अटल व्योम kdwc3_disable_irqs(काष्ठा dwc3_keystone *kdwc)
-अणु
+static void kdwc3_disable_irqs(struct dwc3_keystone *kdwc)
+{
 	u32 val;
 
-	val = kdwc3_पढ़ोl(kdwc->usbss, USBSS_IRQENABLE_SET_0);
+	val = kdwc3_readl(kdwc->usbss, USBSS_IRQENABLE_SET_0);
 	val &= ~USBSS_IRQ_COREIRQ_EN;
-	kdwc3_ग_लिखोl(kdwc->usbss, USBSS_IRQENABLE_SET_0, val);
-पूर्ण
+	kdwc3_writel(kdwc->usbss, USBSS_IRQENABLE_SET_0, val);
+}
 
-अटल irqवापस_t dwc3_keystone_पूर्णांकerrupt(पूर्णांक irq, व्योम *_kdwc)
-अणु
-	काष्ठा dwc3_keystone	*kdwc = _kdwc;
+static irqreturn_t dwc3_keystone_interrupt(int irq, void *_kdwc)
+{
+	struct dwc3_keystone	*kdwc = _kdwc;
 
-	kdwc3_ग_लिखोl(kdwc->usbss, USBSS_IRQENABLE_CLR_0, USBSS_IRQ_COREIRQ_CLR);
-	kdwc3_ग_लिखोl(kdwc->usbss, USBSS_IRQSTATUS_0, USBSS_IRQ_EVENT_ST);
-	kdwc3_ग_लिखोl(kdwc->usbss, USBSS_IRQENABLE_SET_0, USBSS_IRQ_COREIRQ_EN);
-	kdwc3_ग_लिखोl(kdwc->usbss, USBSS_IRQ_EOI, USBSS_IRQ_EOI_LINE(0));
+	kdwc3_writel(kdwc->usbss, USBSS_IRQENABLE_CLR_0, USBSS_IRQ_COREIRQ_CLR);
+	kdwc3_writel(kdwc->usbss, USBSS_IRQSTATUS_0, USBSS_IRQ_EVENT_ST);
+	kdwc3_writel(kdwc->usbss, USBSS_IRQENABLE_SET_0, USBSS_IRQ_COREIRQ_EN);
+	kdwc3_writel(kdwc->usbss, USBSS_IRQ_EOI, USBSS_IRQ_EOI_LINE(0));
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक kdwc3_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device		*dev = &pdev->dev;
-	काष्ठा device_node	*node = pdev->dev.of_node;
-	काष्ठा dwc3_keystone	*kdwc;
-	पूर्णांक			error, irq;
+static int kdwc3_probe(struct platform_device *pdev)
+{
+	struct device		*dev = &pdev->dev;
+	struct device_node	*node = pdev->dev.of_node;
+	struct dwc3_keystone	*kdwc;
+	int			error, irq;
 
-	kdwc = devm_kzalloc(dev, माप(*kdwc), GFP_KERNEL);
-	अगर (!kdwc)
-		वापस -ENOMEM;
+	kdwc = devm_kzalloc(dev, sizeof(*kdwc), GFP_KERNEL);
+	if (!kdwc)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, kdwc);
+	platform_set_drvdata(pdev, kdwc);
 
 	kdwc->dev = dev;
 
-	kdwc->usbss = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(kdwc->usbss))
-		वापस PTR_ERR(kdwc->usbss);
+	kdwc->usbss = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(kdwc->usbss))
+		return PTR_ERR(kdwc->usbss);
 
-	/* PSC dependency on AM65 needs SERDES0 to be घातered beक्रमe USB0 */
+	/* PSC dependency on AM65 needs SERDES0 to be powered before USB0 */
 	kdwc->usb3_phy = devm_phy_optional_get(dev, "usb3-phy");
-	अगर (IS_ERR(kdwc->usb3_phy))
-		वापस dev_err_probe(dev, PTR_ERR(kdwc->usb3_phy), "couldn't get usb3 phy\n");
+	if (IS_ERR(kdwc->usb3_phy))
+		return dev_err_probe(dev, PTR_ERR(kdwc->usb3_phy), "couldn't get usb3 phy\n");
 
-	phy_pm_runसमय_get_sync(kdwc->usb3_phy);
+	phy_pm_runtime_get_sync(kdwc->usb3_phy);
 
 	error = phy_reset(kdwc->usb3_phy);
-	अगर (error < 0) अणु
+	if (error < 0) {
 		dev_err(dev, "usb3 phy reset failed: %d\n", error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	error = phy_init(kdwc->usb3_phy);
-	अगर (error < 0) अणु
+	if (error < 0) {
 		dev_err(dev, "usb3 phy init failed: %d\n", error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	error = phy_घातer_on(kdwc->usb3_phy);
-	अगर (error < 0) अणु
+	error = phy_power_on(kdwc->usb3_phy);
+	if (error < 0) {
 		dev_err(dev, "usb3 phy power on failed: %d\n", error);
-		phy_निकास(kdwc->usb3_phy);
-		वापस error;
-	पूर्ण
+		phy_exit(kdwc->usb3_phy);
+		return error;
+	}
 
-	pm_runसमय_enable(kdwc->dev);
-	error = pm_runसमय_get_sync(kdwc->dev);
-	अगर (error < 0) अणु
+	pm_runtime_enable(kdwc->dev);
+	error = pm_runtime_get_sync(kdwc->dev);
+	if (error < 0) {
 		dev_err(kdwc->dev, "pm_runtime_get_sync failed, error %d\n",
 			error);
-		जाओ err_irq;
-	पूर्ण
+		goto err_irq;
+	}
 
-	/* IRQ processing not required currently क्रम AM65 */
-	अगर (of_device_is_compatible(node, "ti,am654-dwc3"))
-		जाओ skip_irq;
+	/* IRQ processing not required currently for AM65 */
+	if (of_device_is_compatible(node, "ti,am654-dwc3"))
+		goto skip_irq;
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0) अणु
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0) {
 		error = irq;
-		जाओ err_irq;
-	पूर्ण
+		goto err_irq;
+	}
 
-	error = devm_request_irq(dev, irq, dwc3_keystone_पूर्णांकerrupt, IRQF_SHARED,
+	error = devm_request_irq(dev, irq, dwc3_keystone_interrupt, IRQF_SHARED,
 			dev_name(dev), kdwc);
-	अगर (error) अणु
+	if (error) {
 		dev_err(dev, "failed to request IRQ #%d --> %d\n",
 				irq, error);
-		जाओ err_irq;
-	पूर्ण
+		goto err_irq;
+	}
 
 	kdwc3_enable_irqs(kdwc);
 
 skip_irq:
-	error = of_platक्रमm_populate(node, शून्य, शून्य, dev);
-	अगर (error) अणु
+	error = of_platform_populate(node, NULL, NULL, dev);
+	if (error) {
 		dev_err(&pdev->dev, "failed to create dwc3 core\n");
-		जाओ err_core;
-	पूर्ण
+		goto err_core;
+	}
 
-	वापस 0;
+	return 0;
 
 err_core:
 	kdwc3_disable_irqs(kdwc);
 err_irq:
-	pm_runसमय_put_sync(kdwc->dev);
-	pm_runसमय_disable(kdwc->dev);
-	phy_घातer_off(kdwc->usb3_phy);
-	phy_निकास(kdwc->usb3_phy);
-	phy_pm_runसमय_put_sync(kdwc->usb3_phy);
+	pm_runtime_put_sync(kdwc->dev);
+	pm_runtime_disable(kdwc->dev);
+	phy_power_off(kdwc->usb3_phy);
+	phy_exit(kdwc->usb3_phy);
+	phy_pm_runtime_put_sync(kdwc->usb3_phy);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक kdwc3_हटाओ_core(काष्ठा device *dev, व्योम *c)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
+static int kdwc3_remove_core(struct device *dev, void *c)
+{
+	struct platform_device *pdev = to_platform_device(dev);
 
-	platक्रमm_device_unरेजिस्टर(pdev);
+	platform_device_unregister(pdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक kdwc3_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा dwc3_keystone *kdwc = platक्रमm_get_drvdata(pdev);
-	काष्ठा device_node *node = pdev->dev.of_node;
+static int kdwc3_remove(struct platform_device *pdev)
+{
+	struct dwc3_keystone *kdwc = platform_get_drvdata(pdev);
+	struct device_node *node = pdev->dev.of_node;
 
-	अगर (!of_device_is_compatible(node, "ti,am654-dwc3"))
+	if (!of_device_is_compatible(node, "ti,am654-dwc3"))
 		kdwc3_disable_irqs(kdwc);
 
-	device_क्रम_each_child(&pdev->dev, शून्य, kdwc3_हटाओ_core);
-	pm_runसमय_put_sync(kdwc->dev);
-	pm_runसमय_disable(kdwc->dev);
+	device_for_each_child(&pdev->dev, NULL, kdwc3_remove_core);
+	pm_runtime_put_sync(kdwc->dev);
+	pm_runtime_disable(kdwc->dev);
 
-	phy_घातer_off(kdwc->usb3_phy);
-	phy_निकास(kdwc->usb3_phy);
-	phy_pm_runसमय_put_sync(kdwc->usb3_phy);
+	phy_power_off(kdwc->usb3_phy);
+	phy_exit(kdwc->usb3_phy);
+	phy_pm_runtime_put_sync(kdwc->usb3_phy);
 
-	platक्रमm_set_drvdata(pdev, शून्य);
+	platform_set_drvdata(pdev, NULL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id kdwc3_of_match[] = अणु
-	अणु .compatible = "ti,keystone-dwc3", पूर्ण,
-	अणु .compatible = "ti,am654-dwc3" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id kdwc3_of_match[] = {
+	{ .compatible = "ti,keystone-dwc3", },
+	{ .compatible = "ti,am654-dwc3" },
+	{},
+};
 MODULE_DEVICE_TABLE(of, kdwc3_of_match);
 
-अटल काष्ठा platक्रमm_driver kdwc3_driver = अणु
+static struct platform_driver kdwc3_driver = {
 	.probe		= kdwc3_probe,
-	.हटाओ		= kdwc3_हटाओ,
-	.driver		= अणु
+	.remove		= kdwc3_remove,
+	.driver		= {
 		.name	= "keystone-dwc3",
 		.of_match_table	= kdwc3_of_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(kdwc3_driver);
+module_platform_driver(kdwc3_driver);
 
 MODULE_ALIAS("platform:keystone-dwc3");
 MODULE_AUTHOR("WingMan Kwok <w-kwok2@ti.com>");

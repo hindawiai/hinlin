@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2016 NextThing Co
  * Copyright (C) 2016-2019 Bootlin
@@ -7,276 +6,276 @@
  * Author: Maxime Ripard <maxime.ripard@bootlin.com>
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/list.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/spinlock.h>
-#समावेश <media/videobuf2-dma-contig.h>
-#समावेश <media/videobuf2-v4l2.h>
+#include <linux/device.h>
+#include <linux/interrupt.h>
+#include <linux/list.h>
+#include <linux/mutex.h>
+#include <linux/spinlock.h>
+#include <media/videobuf2-dma-contig.h>
+#include <media/videobuf2-v4l2.h>
 
-#समावेश "sun4i_csi.h"
+#include "sun4i_csi.h"
 
-काष्ठा sun4i_csi_buffer अणु
-	काष्ठा vb2_v4l2_buffer	vb;
-	काष्ठा list_head	list;
-पूर्ण;
+struct sun4i_csi_buffer {
+	struct vb2_v4l2_buffer	vb;
+	struct list_head	list;
+};
 
-अटल अंतरभूत काष्ठा sun4i_csi_buffer *
-vb2_v4l2_to_csi_buffer(स्थिर काष्ठा vb2_v4l2_buffer *p)
-अणु
-	वापस container_of(p, काष्ठा sun4i_csi_buffer, vb);
-पूर्ण
+static inline struct sun4i_csi_buffer *
+vb2_v4l2_to_csi_buffer(const struct vb2_v4l2_buffer *p)
+{
+	return container_of(p, struct sun4i_csi_buffer, vb);
+}
 
-अटल अंतरभूत काष्ठा sun4i_csi_buffer *
-vb2_to_csi_buffer(स्थिर काष्ठा vb2_buffer *p)
-अणु
-	वापस vb2_v4l2_to_csi_buffer(to_vb2_v4l2_buffer(p));
-पूर्ण
+static inline struct sun4i_csi_buffer *
+vb2_to_csi_buffer(const struct vb2_buffer *p)
+{
+	return vb2_v4l2_to_csi_buffer(to_vb2_v4l2_buffer(p));
+}
 
-अटल व्योम sun4i_csi_capture_start(काष्ठा sun4i_csi *csi)
-अणु
-	ग_लिखोl(CSI_CPT_CTRL_VIDEO_START, csi->regs + CSI_CPT_CTRL_REG);
-पूर्ण
+static void sun4i_csi_capture_start(struct sun4i_csi *csi)
+{
+	writel(CSI_CPT_CTRL_VIDEO_START, csi->regs + CSI_CPT_CTRL_REG);
+}
 
-अटल व्योम sun4i_csi_capture_stop(काष्ठा sun4i_csi *csi)
-अणु
-	ग_लिखोl(0, csi->regs + CSI_CPT_CTRL_REG);
-पूर्ण
+static void sun4i_csi_capture_stop(struct sun4i_csi *csi)
+{
+	writel(0, csi->regs + CSI_CPT_CTRL_REG);
+}
 
-अटल पूर्णांक sun4i_csi_queue_setup(काष्ठा vb2_queue *vq,
-				 अचिन्हित पूर्णांक *nbuffers,
-				 अचिन्हित पूर्णांक *nplanes,
-				 अचिन्हित पूर्णांक sizes[],
-				 काष्ठा device *alloc_devs[])
-अणु
-	काष्ठा sun4i_csi *csi = vb2_get_drv_priv(vq);
-	अचिन्हित पूर्णांक num_planes = csi->fmt.num_planes;
-	अचिन्हित पूर्णांक i;
+static int sun4i_csi_queue_setup(struct vb2_queue *vq,
+				 unsigned int *nbuffers,
+				 unsigned int *nplanes,
+				 unsigned int sizes[],
+				 struct device *alloc_devs[])
+{
+	struct sun4i_csi *csi = vb2_get_drv_priv(vq);
+	unsigned int num_planes = csi->fmt.num_planes;
+	unsigned int i;
 
-	अगर (*nplanes) अणु
-		अगर (*nplanes != num_planes)
-			वापस -EINVAL;
+	if (*nplanes) {
+		if (*nplanes != num_planes)
+			return -EINVAL;
 
-		क्रम (i = 0; i < num_planes; i++)
-			अगर (sizes[i] < csi->fmt.plane_fmt[i].sizeimage)
-				वापस -EINVAL;
-		वापस 0;
-	पूर्ण
+		for (i = 0; i < num_planes; i++)
+			if (sizes[i] < csi->fmt.plane_fmt[i].sizeimage)
+				return -EINVAL;
+		return 0;
+	}
 
 	*nplanes = num_planes;
-	क्रम (i = 0; i < num_planes; i++)
+	for (i = 0; i < num_planes; i++)
 		sizes[i] = csi->fmt.plane_fmt[i].sizeimage;
 
-	वापस 0;
-पूर्ण;
+	return 0;
+};
 
-अटल पूर्णांक sun4i_csi_buffer_prepare(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा sun4i_csi *csi = vb2_get_drv_priv(vb->vb2_queue);
-	अचिन्हित पूर्णांक i;
+static int sun4i_csi_buffer_prepare(struct vb2_buffer *vb)
+{
+	struct sun4i_csi *csi = vb2_get_drv_priv(vb->vb2_queue);
+	unsigned int i;
 
-	क्रम (i = 0; i < csi->fmt.num_planes; i++) अणु
-		अचिन्हित दीर्घ size = csi->fmt.plane_fmt[i].sizeimage;
+	for (i = 0; i < csi->fmt.num_planes; i++) {
+		unsigned long size = csi->fmt.plane_fmt[i].sizeimage;
 
-		अगर (vb2_plane_size(vb, i) < size) अणु
+		if (vb2_plane_size(vb, i) < size) {
 			dev_err(csi->dev, "buffer too small (%lu < %lu)\n",
 				vb2_plane_size(vb, i), size);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		vb2_set_plane_payload(vb, i, size);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sun4i_csi_setup_scratch_buffer(काष्ठा sun4i_csi *csi,
-					  अचिन्हित पूर्णांक slot)
-अणु
+static int sun4i_csi_setup_scratch_buffer(struct sun4i_csi *csi,
+					  unsigned int slot)
+{
 	dma_addr_t addr = csi->scratch.paddr;
-	अचिन्हित पूर्णांक plane;
+	unsigned int plane;
 
 	dev_dbg(csi->dev,
 		"No more available buffer, using the scratch buffer\n");
 
-	क्रम (plane = 0; plane < csi->fmt.num_planes; plane++) अणु
-		ग_लिखोl(addr, csi->regs + CSI_BUF_ADDR_REG(plane, slot));
+	for (plane = 0; plane < csi->fmt.num_planes; plane++) {
+		writel(addr, csi->regs + CSI_BUF_ADDR_REG(plane, slot));
 		addr += csi->fmt.plane_fmt[plane].sizeimage;
-	पूर्ण
+	}
 
-	csi->current_buf[slot] = शून्य;
-	वापस 0;
-पूर्ण
+	csi->current_buf[slot] = NULL;
+	return 0;
+}
 
-अटल पूर्णांक sun4i_csi_buffer_fill_slot(काष्ठा sun4i_csi *csi, अचिन्हित पूर्णांक slot)
-अणु
-	काष्ठा sun4i_csi_buffer *c_buf;
-	काष्ठा vb2_v4l2_buffer *v_buf;
-	अचिन्हित पूर्णांक plane;
+static int sun4i_csi_buffer_fill_slot(struct sun4i_csi *csi, unsigned int slot)
+{
+	struct sun4i_csi_buffer *c_buf;
+	struct vb2_v4l2_buffer *v_buf;
+	unsigned int plane;
 
 	/*
-	 * We should never end up in a situation where we overग_लिखो an
-	 * alपढ़ोy filled slot.
+	 * We should never end up in a situation where we overwrite an
+	 * already filled slot.
 	 */
-	अगर (WARN_ON(csi->current_buf[slot]))
-		वापस -EINVAL;
+	if (WARN_ON(csi->current_buf[slot]))
+		return -EINVAL;
 
-	अगर (list_empty(&csi->buf_list))
-		वापस sun4i_csi_setup_scratch_buffer(csi, slot);
+	if (list_empty(&csi->buf_list))
+		return sun4i_csi_setup_scratch_buffer(csi, slot);
 
-	c_buf = list_first_entry(&csi->buf_list, काष्ठा sun4i_csi_buffer, list);
+	c_buf = list_first_entry(&csi->buf_list, struct sun4i_csi_buffer, list);
 	list_del_init(&c_buf->list);
 
 	v_buf = &c_buf->vb;
 	csi->current_buf[slot] = v_buf;
 
-	क्रम (plane = 0; plane < csi->fmt.num_planes; plane++) अणु
+	for (plane = 0; plane < csi->fmt.num_planes; plane++) {
 		dma_addr_t buf_addr;
 
 		buf_addr = vb2_dma_contig_plane_dma_addr(&v_buf->vb2_buf,
 							 plane);
-		ग_लिखोl(buf_addr, csi->regs + CSI_BUF_ADDR_REG(plane, slot));
-	पूर्ण
+		writel(buf_addr, csi->regs + CSI_BUF_ADDR_REG(plane, slot));
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sun4i_csi_buffer_fill_all(काष्ठा sun4i_csi *csi)
-अणु
-	अचिन्हित पूर्णांक slot;
-	पूर्णांक ret;
+static int sun4i_csi_buffer_fill_all(struct sun4i_csi *csi)
+{
+	unsigned int slot;
+	int ret;
 
-	क्रम (slot = 0; slot < CSI_MAX_BUFFER; slot++) अणु
+	for (slot = 0; slot < CSI_MAX_BUFFER; slot++) {
 		ret = sun4i_csi_buffer_fill_slot(csi, slot);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sun4i_csi_buffer_mark_करोne(काष्ठा sun4i_csi *csi,
-				       अचिन्हित पूर्णांक slot,
-				       अचिन्हित पूर्णांक sequence)
-अणु
-	काष्ठा vb2_v4l2_buffer *v_buf;
+static void sun4i_csi_buffer_mark_done(struct sun4i_csi *csi,
+				       unsigned int slot,
+				       unsigned int sequence)
+{
+	struct vb2_v4l2_buffer *v_buf;
 
-	अगर (!csi->current_buf[slot]) अणु
+	if (!csi->current_buf[slot]) {
 		dev_dbg(csi->dev, "Scratch buffer was used, ignoring..\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	v_buf = csi->current_buf[slot];
 	v_buf->field = csi->fmt.field;
 	v_buf->sequence = sequence;
-	v_buf->vb2_buf.बारtamp = kसमय_get_ns();
-	vb2_buffer_करोne(&v_buf->vb2_buf, VB2_BUF_STATE_DONE);
+	v_buf->vb2_buf.timestamp = ktime_get_ns();
+	vb2_buffer_done(&v_buf->vb2_buf, VB2_BUF_STATE_DONE);
 
-	csi->current_buf[slot] = शून्य;
-पूर्ण
+	csi->current_buf[slot] = NULL;
+}
 
-अटल पूर्णांक sun4i_csi_buffer_flip(काष्ठा sun4i_csi *csi, अचिन्हित पूर्णांक sequence)
-अणु
-	u32 reg = पढ़ोl(csi->regs + CSI_BUF_CTRL_REG);
-	अचिन्हित पूर्णांक next;
+static int sun4i_csi_buffer_flip(struct sun4i_csi *csi, unsigned int sequence)
+{
+	u32 reg = readl(csi->regs + CSI_BUF_CTRL_REG);
+	unsigned int next;
 
 	/* Our next buffer is not the current buffer */
 	next = !(reg & CSI_BUF_CTRL_DBS);
 
-	/* Report the previous buffer as करोne */
-	sun4i_csi_buffer_mark_करोne(csi, next, sequence);
+	/* Report the previous buffer as done */
+	sun4i_csi_buffer_mark_done(csi, next, sequence);
 
 	/* Put a new buffer in there */
-	वापस sun4i_csi_buffer_fill_slot(csi, next);
-पूर्ण
+	return sun4i_csi_buffer_fill_slot(csi, next);
+}
 
-अटल व्योम sun4i_csi_buffer_queue(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा sun4i_csi *csi = vb2_get_drv_priv(vb->vb2_queue);
-	काष्ठा sun4i_csi_buffer *buf = vb2_to_csi_buffer(vb);
-	अचिन्हित दीर्घ flags;
+static void sun4i_csi_buffer_queue(struct vb2_buffer *vb)
+{
+	struct sun4i_csi *csi = vb2_get_drv_priv(vb->vb2_queue);
+	struct sun4i_csi_buffer *buf = vb2_to_csi_buffer(vb);
+	unsigned long flags;
 
 	spin_lock_irqsave(&csi->qlock, flags);
 	list_add_tail(&buf->list, &csi->buf_list);
 	spin_unlock_irqrestore(&csi->qlock, flags);
-पूर्ण
+}
 
-अटल व्योम वापस_all_buffers(काष्ठा sun4i_csi *csi,
-			       क्रमागत vb2_buffer_state state)
-अणु
-	काष्ठा sun4i_csi_buffer *buf, *node;
-	अचिन्हित पूर्णांक slot;
+static void return_all_buffers(struct sun4i_csi *csi,
+			       enum vb2_buffer_state state)
+{
+	struct sun4i_csi_buffer *buf, *node;
+	unsigned int slot;
 
-	list_क्रम_each_entry_safe(buf, node, &csi->buf_list, list) अणु
-		vb2_buffer_करोne(&buf->vb.vb2_buf, state);
+	list_for_each_entry_safe(buf, node, &csi->buf_list, list) {
+		vb2_buffer_done(&buf->vb.vb2_buf, state);
 		list_del(&buf->list);
-	पूर्ण
+	}
 
-	क्रम (slot = 0; slot < CSI_MAX_BUFFER; slot++) अणु
-		काष्ठा vb2_v4l2_buffer *v_buf = csi->current_buf[slot];
+	for (slot = 0; slot < CSI_MAX_BUFFER; slot++) {
+		struct vb2_v4l2_buffer *v_buf = csi->current_buf[slot];
 
-		अगर (!v_buf)
-			जारी;
+		if (!v_buf)
+			continue;
 
-		vb2_buffer_करोne(&v_buf->vb2_buf, state);
-		csi->current_buf[slot] = शून्य;
-	पूर्ण
-पूर्ण
+		vb2_buffer_done(&v_buf->vb2_buf, state);
+		csi->current_buf[slot] = NULL;
+	}
+}
 
-अटल पूर्णांक sun4i_csi_start_streaming(काष्ठा vb2_queue *vq, अचिन्हित पूर्णांक count)
-अणु
-	काष्ठा sun4i_csi *csi = vb2_get_drv_priv(vq);
-	काष्ठा v4l2_fwnode_bus_parallel *bus = &csi->bus;
-	स्थिर काष्ठा sun4i_csi_क्रमmat *csi_fmt;
-	अचिन्हित दीर्घ href_pol, pclk_pol, vref_pol;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक ret;
+static int sun4i_csi_start_streaming(struct vb2_queue *vq, unsigned int count)
+{
+	struct sun4i_csi *csi = vb2_get_drv_priv(vq);
+	struct v4l2_fwnode_bus_parallel *bus = &csi->bus;
+	const struct sun4i_csi_format *csi_fmt;
+	unsigned long href_pol, pclk_pol, vref_pol;
+	unsigned long flags;
+	unsigned int i;
+	int ret;
 
-	csi_fmt = sun4i_csi_find_क्रमmat(&csi->fmt.pixelक्रमmat, शून्य);
-	अगर (!csi_fmt)
-		वापस -EINVAL;
+	csi_fmt = sun4i_csi_find_format(&csi->fmt.pixelformat, NULL);
+	if (!csi_fmt)
+		return -EINVAL;
 
 	dev_dbg(csi->dev, "Starting capture\n");
 
 	csi->sequence = 0;
 
 	/*
-	 * We need a scratch buffer in हाल where we'll not have any
-	 * more buffer queued so that we करोn't error out. One of those
-	 * हालs is when you end up at the last frame to capture, you
-	 * करोn't havea any buffer queued any more, and yet it doesn't
+	 * We need a scratch buffer in case where we'll not have any
+	 * more buffer queued so that we don't error out. One of those
+	 * cases is when you end up at the last frame to capture, you
+	 * don't havea any buffer queued any more, and yet it doesn't
 	 * really matter since you'll never reach the next buffer.
 	 *
 	 * Since we support the multi-planar API, we need to have a
-	 * buffer क्रम each plane. Allocating a single one large enough
-	 * to hold all the buffers is simpler, so let's go क्रम that.
+	 * buffer for each plane. Allocating a single one large enough
+	 * to hold all the buffers is simpler, so let's go for that.
 	 */
 	csi->scratch.size = 0;
-	क्रम (i = 0; i < csi->fmt.num_planes; i++)
+	for (i = 0; i < csi->fmt.num_planes; i++)
 		csi->scratch.size += csi->fmt.plane_fmt[i].sizeimage;
 
 	csi->scratch.vaddr = dma_alloc_coherent(csi->dev,
 						csi->scratch.size,
 						&csi->scratch.paddr,
 						GFP_KERNEL);
-	अगर (!csi->scratch.vaddr) अणु
+	if (!csi->scratch.vaddr) {
 		dev_err(csi->dev, "Failed to allocate scratch buffer\n");
 		ret = -ENOMEM;
-		जाओ err_clear_dma_queue;
-	पूर्ण
+		goto err_clear_dma_queue;
+	}
 
 	ret = media_pipeline_start(&csi->vdev.entity, &csi->vdev.pipe);
-	अगर (ret < 0)
-		जाओ err_मुक्त_scratch_buffer;
+	if (ret < 0)
+		goto err_free_scratch_buffer;
 
 	spin_lock_irqsave(&csi->qlock, flags);
 
 	/* Setup timings */
-	ग_लिखोl(CSI_WIN_CTRL_W_ACTIVE(csi->fmt.width * 2),
+	writel(CSI_WIN_CTRL_W_ACTIVE(csi->fmt.width * 2),
 	       csi->regs + CSI_WIN_CTRL_W_REG);
-	ग_लिखोl(CSI_WIN_CTRL_H_ACTIVE(csi->fmt.height),
+	writel(CSI_WIN_CTRL_H_ACTIVE(csi->fmt.height),
 	       csi->regs + CSI_WIN_CTRL_H_REG);
 
 	/*
@@ -290,7 +289,7 @@ vb2_to_csi_buffer(स्थिर काष्ठा vb2_buffer *p)
 	href_pol = !!(bus->flags & V4L2_MBUS_HSYNC_ACTIVE_LOW);
 	vref_pol = !!(bus->flags & V4L2_MBUS_VSYNC_ACTIVE_LOW);
 	pclk_pol = !!(bus->flags & V4L2_MBUS_PCLK_SAMPLE_RISING);
-	ग_लिखोl(CSI_CFG_INPUT_FMT(csi_fmt->input) |
+	writel(CSI_CFG_INPUT_FMT(csi_fmt->input) |
 	       CSI_CFG_OUTPUT_FMT(csi_fmt->output) |
 	       CSI_CFG_VREF_POL(vref_pol) |
 	       CSI_CFG_HREF_POL(href_pol) |
@@ -298,34 +297,34 @@ vb2_to_csi_buffer(स्थिर काष्ठा vb2_buffer *p)
 	       csi->regs + CSI_CFG_REG);
 
 	/* Setup buffer length */
-	ग_लिखोl(csi->fmt.plane_fmt[0].bytesperline,
+	writel(csi->fmt.plane_fmt[0].bytesperline,
 	       csi->regs + CSI_BUF_LEN_REG);
 
 	/* Prepare our buffers in hardware */
 	ret = sun4i_csi_buffer_fill_all(csi);
-	अगर (ret) अणु
+	if (ret) {
 		spin_unlock_irqrestore(&csi->qlock, flags);
-		जाओ err_disable_pipeline;
-	पूर्ण
+		goto err_disable_pipeline;
+	}
 
-	/* Enable द्विगुन buffering */
-	ग_लिखोl(CSI_BUF_CTRL_DBE, csi->regs + CSI_BUF_CTRL_REG);
+	/* Enable double buffering */
+	writel(CSI_BUF_CTRL_DBE, csi->regs + CSI_BUF_CTRL_REG);
 
-	/* Clear the pending पूर्णांकerrupts */
-	ग_लिखोl(CSI_INT_FRM_DONE, csi->regs + 0x34);
+	/* Clear the pending interrupts */
+	writel(CSI_INT_FRM_DONE, csi->regs + 0x34);
 
-	/* Enable frame करोne पूर्णांकerrupt */
-	ग_लिखोl(CSI_INT_FRM_DONE, csi->regs + CSI_INT_EN_REG);
+	/* Enable frame done interrupt */
+	writel(CSI_INT_FRM_DONE, csi->regs + CSI_INT_EN_REG);
 
 	sun4i_csi_capture_start(csi);
 
 	spin_unlock_irqrestore(&csi->qlock, flags);
 
 	ret = v4l2_subdev_call(csi->src_subdev, video, s_stream, 1);
-	अगर (ret < 0 && ret != -ENOIOCTLCMD)
-		जाओ err_disable_device;
+	if (ret < 0 && ret != -ENOIOCTLCMD)
+		goto err_disable_device;
 
-	वापस 0;
+	return 0;
 
 err_disable_device:
 	sun4i_csi_capture_stop(csi);
@@ -333,22 +332,22 @@ err_disable_device:
 err_disable_pipeline:
 	media_pipeline_stop(&csi->vdev.entity);
 
-err_मुक्त_scratch_buffer:
-	dma_मुक्त_coherent(csi->dev, csi->scratch.size, csi->scratch.vaddr,
+err_free_scratch_buffer:
+	dma_free_coherent(csi->dev, csi->scratch.size, csi->scratch.vaddr,
 			  csi->scratch.paddr);
 
 err_clear_dma_queue:
 	spin_lock_irqsave(&csi->qlock, flags);
-	वापस_all_buffers(csi, VB2_BUF_STATE_QUEUED);
+	return_all_buffers(csi, VB2_BUF_STATE_QUEUED);
 	spin_unlock_irqrestore(&csi->qlock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम sun4i_csi_stop_streaming(काष्ठा vb2_queue *vq)
-अणु
-	काष्ठा sun4i_csi *csi = vb2_get_drv_priv(vq);
-	अचिन्हित दीर्घ flags;
+static void sun4i_csi_stop_streaming(struct vb2_queue *vq)
+{
+	struct sun4i_csi *csi = vb2_get_drv_priv(vq);
+	unsigned long flags;
 
 	dev_dbg(csi->dev, "Stopping capture\n");
 
@@ -357,103 +356,103 @@ err_clear_dma_queue:
 
 	/* Release all active buffers */
 	spin_lock_irqsave(&csi->qlock, flags);
-	वापस_all_buffers(csi, VB2_BUF_STATE_ERROR);
+	return_all_buffers(csi, VB2_BUF_STATE_ERROR);
 	spin_unlock_irqrestore(&csi->qlock, flags);
 
 	media_pipeline_stop(&csi->vdev.entity);
 
-	dma_मुक्त_coherent(csi->dev, csi->scratch.size, csi->scratch.vaddr,
+	dma_free_coherent(csi->dev, csi->scratch.size, csi->scratch.vaddr,
 			  csi->scratch.paddr);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा vb2_ops sun4i_csi_qops = अणु
+static const struct vb2_ops sun4i_csi_qops = {
 	.queue_setup		= sun4i_csi_queue_setup,
 	.buf_prepare		= sun4i_csi_buffer_prepare,
 	.buf_queue		= sun4i_csi_buffer_queue,
 	.start_streaming	= sun4i_csi_start_streaming,
 	.stop_streaming		= sun4i_csi_stop_streaming,
-	.रुको_prepare		= vb2_ops_रुको_prepare,
-	.रुको_finish		= vb2_ops_रुको_finish,
-पूर्ण;
+	.wait_prepare		= vb2_ops_wait_prepare,
+	.wait_finish		= vb2_ops_wait_finish,
+};
 
-अटल irqवापस_t sun4i_csi_irq(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा sun4i_csi *csi = data;
+static irqreturn_t sun4i_csi_irq(int irq, void *data)
+{
+	struct sun4i_csi *csi = data;
 	u32 reg;
 
-	reg = पढ़ोl(csi->regs + CSI_INT_STA_REG);
+	reg = readl(csi->regs + CSI_INT_STA_REG);
 
-	/* Acknowledge the पूर्णांकerrupts */
-	ग_लिखोl(reg, csi->regs + CSI_INT_STA_REG);
+	/* Acknowledge the interrupts */
+	writel(reg, csi->regs + CSI_INT_STA_REG);
 
-	अगर (!(reg & CSI_INT_FRM_DONE))
-		वापस IRQ_HANDLED;
+	if (!(reg & CSI_INT_FRM_DONE))
+		return IRQ_HANDLED;
 
 	spin_lock(&csi->qlock);
-	अगर (sun4i_csi_buffer_flip(csi, csi->sequence++)) अणु
+	if (sun4i_csi_buffer_flip(csi, csi->sequence++)) {
 		dev_warn(csi->dev, "%s: Flip failed\n", __func__);
 		sun4i_csi_capture_stop(csi);
-	पूर्ण
+	}
 	spin_unlock(&csi->qlock);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-पूर्णांक sun4i_csi_dma_रेजिस्टर(काष्ठा sun4i_csi *csi, पूर्णांक irq)
-अणु
-	काष्ठा vb2_queue *q = &csi->queue;
-	पूर्णांक ret;
-	पूर्णांक i;
+int sun4i_csi_dma_register(struct sun4i_csi *csi, int irq)
+{
+	struct vb2_queue *q = &csi->queue;
+	int ret;
+	int i;
 
 	spin_lock_init(&csi->qlock);
 	mutex_init(&csi->lock);
 
 	INIT_LIST_HEAD(&csi->buf_list);
-	क्रम (i = 0; i < CSI_MAX_BUFFER; i++)
-		csi->current_buf[i] = शून्य;
+	for (i = 0; i < CSI_MAX_BUFFER; i++)
+		csi->current_buf[i] = NULL;
 
 	q->min_buffers_needed = 3;
 	q->type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
 	q->io_modes = VB2_MMAP | VB2_DMABUF;
 	q->lock = &csi->lock;
 	q->drv_priv = csi;
-	q->buf_काष्ठा_size = माप(काष्ठा sun4i_csi_buffer);
+	q->buf_struct_size = sizeof(struct sun4i_csi_buffer);
 	q->ops = &sun4i_csi_qops;
 	q->mem_ops = &vb2_dma_contig_memops;
-	q->बारtamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
+	q->timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
 	q->dev = csi->dev;
 
 	ret = vb2_queue_init(q);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(csi->dev, "failed to initialize VB2 queue\n");
-		जाओ err_मुक्त_mutex;
-	पूर्ण
+		goto err_free_mutex;
+	}
 
-	ret = v4l2_device_रेजिस्टर(csi->dev, &csi->v4l);
-	अगर (ret) अणु
+	ret = v4l2_device_register(csi->dev, &csi->v4l);
+	if (ret) {
 		dev_err(csi->dev, "Couldn't register the v4l2 device\n");
-		जाओ err_मुक्त_mutex;
-	पूर्ण
+		goto err_free_mutex;
+	}
 
 	ret = devm_request_irq(csi->dev, irq, sun4i_csi_irq, 0,
 			       dev_name(csi->dev), csi);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(csi->dev, "Couldn't register our interrupt\n");
-		जाओ err_unरेजिस्टर_device;
-	पूर्ण
+		goto err_unregister_device;
+	}
 
-	वापस 0;
+	return 0;
 
-err_unरेजिस्टर_device:
-	v4l2_device_unरेजिस्टर(&csi->v4l);
+err_unregister_device:
+	v4l2_device_unregister(&csi->v4l);
 
-err_मुक्त_mutex:
+err_free_mutex:
 	mutex_destroy(&csi->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम sun4i_csi_dma_unरेजिस्टर(काष्ठा sun4i_csi *csi)
-अणु
-	v4l2_device_unरेजिस्टर(&csi->v4l);
+void sun4i_csi_dma_unregister(struct sun4i_csi *csi)
+{
+	v4l2_device_unregister(&csi->v4l);
 	mutex_destroy(&csi->lock);
-पूर्ण
+}

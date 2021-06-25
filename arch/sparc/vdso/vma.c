@@ -1,400 +1,399 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Set up the VMAs to tell the VM about the vDSO.
- * Copyright 2007 Andi Kleen, SUSE Lअसल.
+ * Copyright 2007 Andi Kleen, SUSE Labs.
  */
 
 /*
  * Copyright (c) 2017 Oracle and/or its affiliates. All rights reserved.
  */
 
-#समावेश <linux/mm.h>
-#समावेश <linux/err.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/init.h>
-#समावेश <linux/linkage.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/elf.h>
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <यंत्र/spitfire.h>
-#समावेश <यंत्र/vdso.h>
-#समावेश <यंत्र/vvar.h>
-#समावेश <यंत्र/page.h>
+#include <linux/mm.h>
+#include <linux/err.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/init.h>
+#include <linux/linkage.h>
+#include <linux/random.h>
+#include <linux/elf.h>
+#include <asm/cacheflush.h>
+#include <asm/spitfire.h>
+#include <asm/vdso.h>
+#include <asm/vvar.h>
+#include <asm/page.h>
 
-अचिन्हित पूर्णांक __पढ़ो_mostly vdso_enabled = 1;
+unsigned int __read_mostly vdso_enabled = 1;
 
-अटल काष्ठा vm_special_mapping vvar_mapping = अणु
+static struct vm_special_mapping vvar_mapping = {
 	.name = "[vvar]"
-पूर्ण;
+};
 
-#अगर_घोषित	CONFIG_SPARC64
-अटल काष्ठा vm_special_mapping vdso_mapping64 = अणु
+#ifdef	CONFIG_SPARC64
+static struct vm_special_mapping vdso_mapping64 = {
 	.name = "[vdso]"
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-#अगर_घोषित CONFIG_COMPAT
-अटल काष्ठा vm_special_mapping vdso_mapping32 = अणु
+#ifdef CONFIG_COMPAT
+static struct vm_special_mapping vdso_mapping32 = {
 	.name = "[vdso]"
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-काष्ठा vvar_data *vvar_data;
+struct vvar_data *vvar_data;
 
-काष्ठा vdso_elfinfo32 अणु
+struct vdso_elfinfo32 {
 	Elf32_Ehdr	*hdr;
 	Elf32_Sym	*dynsym;
-	अचिन्हित दीर्घ	dynsymsize;
-	स्थिर अक्षर	*dynstr;
-	अचिन्हित दीर्घ	text;
-पूर्ण;
+	unsigned long	dynsymsize;
+	const char	*dynstr;
+	unsigned long	text;
+};
 
-काष्ठा vdso_elfinfo64 अणु
+struct vdso_elfinfo64 {
 	Elf64_Ehdr	*hdr;
 	Elf64_Sym	*dynsym;
-	अचिन्हित दीर्घ	dynsymsize;
-	स्थिर अक्षर	*dynstr;
-	अचिन्हित दीर्घ	text;
-पूर्ण;
+	unsigned long	dynsymsize;
+	const char	*dynstr;
+	unsigned long	text;
+};
 
-काष्ठा vdso_elfinfo अणु
-	जोड़ अणु
-		काष्ठा vdso_elfinfo32 elf32;
-		काष्ठा vdso_elfinfo64 elf64;
-	पूर्ण u;
-पूर्ण;
+struct vdso_elfinfo {
+	union {
+		struct vdso_elfinfo32 elf32;
+		struct vdso_elfinfo64 elf64;
+	} u;
+};
 
-अटल व्योम *one_section64(काष्ठा vdso_elfinfo64 *e, स्थिर अक्षर *name,
-			   अचिन्हित दीर्घ *size)
-अणु
-	स्थिर अक्षर *snames;
+static void *one_section64(struct vdso_elfinfo64 *e, const char *name,
+			   unsigned long *size)
+{
+	const char *snames;
 	Elf64_Shdr *shdrs;
-	अचिन्हित पूर्णांक i;
+	unsigned int i;
 
-	shdrs = (व्योम *)e->hdr + e->hdr->e_shoff;
-	snames = (व्योम *)e->hdr + shdrs[e->hdr->e_shstrndx].sh_offset;
-	क्रम (i = 1; i < e->hdr->e_shnum; i++) अणु
-		अगर (!म_भेद(snames+shdrs[i].sh_name, name)) अणु
-			अगर (size)
+	shdrs = (void *)e->hdr + e->hdr->e_shoff;
+	snames = (void *)e->hdr + shdrs[e->hdr->e_shstrndx].sh_offset;
+	for (i = 1; i < e->hdr->e_shnum; i++) {
+		if (!strcmp(snames+shdrs[i].sh_name, name)) {
+			if (size)
 				*size = shdrs[i].sh_size;
-			वापस (व्योम *)e->hdr + shdrs[i].sh_offset;
-		पूर्ण
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+			return (void *)e->hdr + shdrs[i].sh_offset;
+		}
+	}
+	return NULL;
+}
 
-अटल पूर्णांक find_sections64(स्थिर काष्ठा vdso_image *image, काष्ठा vdso_elfinfo *_e)
-अणु
-	काष्ठा vdso_elfinfo64 *e = &_e->u.elf64;
+static int find_sections64(const struct vdso_image *image, struct vdso_elfinfo *_e)
+{
+	struct vdso_elfinfo64 *e = &_e->u.elf64;
 
 	e->hdr = image->data;
 	e->dynsym = one_section64(e, ".dynsym", &e->dynsymsize);
-	e->dynstr = one_section64(e, ".dynstr", शून्य);
+	e->dynstr = one_section64(e, ".dynstr", NULL);
 
-	अगर (!e->dynsym || !e->dynstr) अणु
+	if (!e->dynsym || !e->dynstr) {
 		pr_err("VDSO64: Missing symbol sections.\n");
-		वापस -ENODEV;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -ENODEV;
+	}
+	return 0;
+}
 
-अटल Elf64_Sym *find_sym64(स्थिर काष्ठा vdso_elfinfo64 *e, स्थिर अक्षर *name)
-अणु
-	अचिन्हित पूर्णांक i;
+static Elf64_Sym *find_sym64(const struct vdso_elfinfo64 *e, const char *name)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < (e->dynsymsize / माप(Elf64_Sym)); i++) अणु
+	for (i = 0; i < (e->dynsymsize / sizeof(Elf64_Sym)); i++) {
 		Elf64_Sym *s = &e->dynsym[i];
-		अगर (s->st_name == 0)
-			जारी;
-		अगर (!म_भेद(e->dynstr + s->st_name, name))
-			वापस s;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		if (s->st_name == 0)
+			continue;
+		if (!strcmp(e->dynstr + s->st_name, name))
+			return s;
+	}
+	return NULL;
+}
 
-अटल पूर्णांक patchsym64(काष्ठा vdso_elfinfo *_e, स्थिर अक्षर *orig,
-		      स्थिर अक्षर *new)
-अणु
-	काष्ठा vdso_elfinfo64 *e = &_e->u.elf64;
+static int patchsym64(struct vdso_elfinfo *_e, const char *orig,
+		      const char *new)
+{
+	struct vdso_elfinfo64 *e = &_e->u.elf64;
 	Elf64_Sym *osym = find_sym64(e, orig);
 	Elf64_Sym *nsym = find_sym64(e, new);
 
-	अगर (!nsym || !osym) अणु
+	if (!nsym || !osym) {
 		pr_err("VDSO64: Missing symbols.\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	osym->st_value = nsym->st_value;
 	osym->st_size = nsym->st_size;
 	osym->st_info = nsym->st_info;
 	osym->st_other = nsym->st_other;
 	osym->st_shndx = nsym->st_shndx;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम *one_section32(काष्ठा vdso_elfinfo32 *e, स्थिर अक्षर *name,
-			   अचिन्हित दीर्घ *size)
-अणु
-	स्थिर अक्षर *snames;
+static void *one_section32(struct vdso_elfinfo32 *e, const char *name,
+			   unsigned long *size)
+{
+	const char *snames;
 	Elf32_Shdr *shdrs;
-	अचिन्हित पूर्णांक i;
+	unsigned int i;
 
-	shdrs = (व्योम *)e->hdr + e->hdr->e_shoff;
-	snames = (व्योम *)e->hdr + shdrs[e->hdr->e_shstrndx].sh_offset;
-	क्रम (i = 1; i < e->hdr->e_shnum; i++) अणु
-		अगर (!म_भेद(snames+shdrs[i].sh_name, name)) अणु
-			अगर (size)
+	shdrs = (void *)e->hdr + e->hdr->e_shoff;
+	snames = (void *)e->hdr + shdrs[e->hdr->e_shstrndx].sh_offset;
+	for (i = 1; i < e->hdr->e_shnum; i++) {
+		if (!strcmp(snames+shdrs[i].sh_name, name)) {
+			if (size)
 				*size = shdrs[i].sh_size;
-			वापस (व्योम *)e->hdr + shdrs[i].sh_offset;
-		पूर्ण
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+			return (void *)e->hdr + shdrs[i].sh_offset;
+		}
+	}
+	return NULL;
+}
 
-अटल पूर्णांक find_sections32(स्थिर काष्ठा vdso_image *image, काष्ठा vdso_elfinfo *_e)
-अणु
-	काष्ठा vdso_elfinfo32 *e = &_e->u.elf32;
+static int find_sections32(const struct vdso_image *image, struct vdso_elfinfo *_e)
+{
+	struct vdso_elfinfo32 *e = &_e->u.elf32;
 
 	e->hdr = image->data;
 	e->dynsym = one_section32(e, ".dynsym", &e->dynsymsize);
-	e->dynstr = one_section32(e, ".dynstr", शून्य);
+	e->dynstr = one_section32(e, ".dynstr", NULL);
 
-	अगर (!e->dynsym || !e->dynstr) अणु
+	if (!e->dynsym || !e->dynstr) {
 		pr_err("VDSO32: Missing symbol sections.\n");
-		वापस -ENODEV;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -ENODEV;
+	}
+	return 0;
+}
 
-अटल Elf32_Sym *find_sym32(स्थिर काष्ठा vdso_elfinfo32 *e, स्थिर अक्षर *name)
-अणु
-	अचिन्हित पूर्णांक i;
+static Elf32_Sym *find_sym32(const struct vdso_elfinfo32 *e, const char *name)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < (e->dynsymsize / माप(Elf32_Sym)); i++) अणु
+	for (i = 0; i < (e->dynsymsize / sizeof(Elf32_Sym)); i++) {
 		Elf32_Sym *s = &e->dynsym[i];
-		अगर (s->st_name == 0)
-			जारी;
-		अगर (!म_भेद(e->dynstr + s->st_name, name))
-			वापस s;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		if (s->st_name == 0)
+			continue;
+		if (!strcmp(e->dynstr + s->st_name, name))
+			return s;
+	}
+	return NULL;
+}
 
-अटल पूर्णांक patchsym32(काष्ठा vdso_elfinfo *_e, स्थिर अक्षर *orig,
-		      स्थिर अक्षर *new)
-अणु
-	काष्ठा vdso_elfinfo32 *e = &_e->u.elf32;
+static int patchsym32(struct vdso_elfinfo *_e, const char *orig,
+		      const char *new)
+{
+	struct vdso_elfinfo32 *e = &_e->u.elf32;
 	Elf32_Sym *osym = find_sym32(e, orig);
 	Elf32_Sym *nsym = find_sym32(e, new);
 
-	अगर (!nsym || !osym) अणु
+	if (!nsym || !osym) {
 		pr_err("VDSO32: Missing symbols.\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	osym->st_value = nsym->st_value;
 	osym->st_size = nsym->st_size;
 	osym->st_info = nsym->st_info;
 	osym->st_other = nsym->st_other;
 	osym->st_shndx = nsym->st_shndx;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक find_sections(स्थिर काष्ठा vdso_image *image, काष्ठा vdso_elfinfo *e,
+static int find_sections(const struct vdso_image *image, struct vdso_elfinfo *e,
 			 bool elf64)
-अणु
-	अगर (elf64)
-		वापस find_sections64(image, e);
-	अन्यथा
-		वापस find_sections32(image, e);
-पूर्ण
+{
+	if (elf64)
+		return find_sections64(image, e);
+	else
+		return find_sections32(image, e);
+}
 
-अटल पूर्णांक patch_one_symbol(काष्ठा vdso_elfinfo *e, स्थिर अक्षर *orig,
-			    स्थिर अक्षर *new_target, bool elf64)
-अणु
-	अगर (elf64)
-		वापस patchsym64(e, orig, new_target);
-	अन्यथा
-		वापस patchsym32(e, orig, new_target);
-पूर्ण
+static int patch_one_symbol(struct vdso_elfinfo *e, const char *orig,
+			    const char *new_target, bool elf64)
+{
+	if (elf64)
+		return patchsym64(e, orig, new_target);
+	else
+		return patchsym32(e, orig, new_target);
+}
 
-अटल पूर्णांक stick_patch(स्थिर काष्ठा vdso_image *image, काष्ठा vdso_elfinfo *e, bool elf64)
-अणु
-	पूर्णांक err;
+static int stick_patch(const struct vdso_image *image, struct vdso_elfinfo *e, bool elf64)
+{
+	int err;
 
 	err = find_sections(image, e, elf64);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = patch_one_symbol(e,
 			       "__vdso_gettimeofday",
 			       "__vdso_gettimeofday_stick", elf64);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस patch_one_symbol(e,
+	return patch_one_symbol(e,
 				"__vdso_clock_gettime",
 				"__vdso_clock_gettime_stick", elf64);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Allocate pages क्रम the vdso and vvar, and copy in the vdso text from the
+ * Allocate pages for the vdso and vvar, and copy in the vdso text from the
  * kernel image.
  */
-पूर्णांक __init init_vdso_image(स्थिर काष्ठा vdso_image *image,
-			   काष्ठा vm_special_mapping *vdso_mapping, bool elf64)
-अणु
-	पूर्णांक cnpages = (image->size) / PAGE_SIZE;
-	काष्ठा page *dp, **dpp = शून्य;
-	काष्ठा page *cp, **cpp = शून्य;
-	काष्ठा vdso_elfinfo ei;
-	पूर्णांक i, dnpages = 0;
+int __init init_vdso_image(const struct vdso_image *image,
+			   struct vm_special_mapping *vdso_mapping, bool elf64)
+{
+	int cnpages = (image->size) / PAGE_SIZE;
+	struct page *dp, **dpp = NULL;
+	struct page *cp, **cpp = NULL;
+	struct vdso_elfinfo ei;
+	int i, dnpages = 0;
 
-	अगर (tlb_type != spitfire) अणु
-		पूर्णांक err = stick_patch(image, &ei, elf64);
-		अगर (err)
-			वापस err;
-	पूर्ण
+	if (tlb_type != spitfire) {
+		int err = stick_patch(image, &ei, elf64);
+		if (err)
+			return err;
+	}
 
 	/*
-	 * First, the vdso text.  This is initialied data, an पूर्णांकegral number of
-	 * pages दीर्घ.
+	 * First, the vdso text.  This is initialied data, an integral number of
+	 * pages long.
 	 */
-	अगर (WARN_ON(image->size % PAGE_SIZE != 0))
-		जाओ oom;
+	if (WARN_ON(image->size % PAGE_SIZE != 0))
+		goto oom;
 
-	cpp = kसुस्मृति(cnpages, माप(काष्ठा page *), GFP_KERNEL);
+	cpp = kcalloc(cnpages, sizeof(struct page *), GFP_KERNEL);
 	vdso_mapping->pages = cpp;
 
-	अगर (!cpp)
-		जाओ oom;
+	if (!cpp)
+		goto oom;
 
-	क्रम (i = 0; i < cnpages; i++) अणु
+	for (i = 0; i < cnpages; i++) {
 		cp = alloc_page(GFP_KERNEL);
-		अगर (!cp)
-			जाओ oom;
+		if (!cp)
+			goto oom;
 		cpp[i] = cp;
 		copy_page(page_address(cp), image->data + i * PAGE_SIZE);
-	पूर्ण
+	}
 
 	/*
 	 * Now the vvar page.  This is uninitialized data.
 	 */
 
-	अगर (vvar_data == शून्य) अणु
-		dnpages = (माप(काष्ठा vvar_data) / PAGE_SIZE) + 1;
-		अगर (WARN_ON(dnpages != 1))
-			जाओ oom;
-		dpp = kसुस्मृति(dnpages, माप(काष्ठा page *), GFP_KERNEL);
+	if (vvar_data == NULL) {
+		dnpages = (sizeof(struct vvar_data) / PAGE_SIZE) + 1;
+		if (WARN_ON(dnpages != 1))
+			goto oom;
+		dpp = kcalloc(dnpages, sizeof(struct page *), GFP_KERNEL);
 		vvar_mapping.pages = dpp;
 
-		अगर (!dpp)
-			जाओ oom;
+		if (!dpp)
+			goto oom;
 
 		dp = alloc_page(GFP_KERNEL);
-		अगर (!dp)
-			जाओ oom;
+		if (!dp)
+			goto oom;
 
 		dpp[0] = dp;
 		vvar_data = page_address(dp);
-		स_रखो(vvar_data, 0, PAGE_SIZE);
+		memset(vvar_data, 0, PAGE_SIZE);
 
 		vvar_data->seq = 0;
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
  oom:
-	अगर (cpp != शून्य) अणु
-		क्रम (i = 0; i < cnpages; i++) अणु
-			अगर (cpp[i] != शून्य)
-				__मुक्त_page(cpp[i]);
-		पूर्ण
-		kमुक्त(cpp);
-		vdso_mapping->pages = शून्य;
-	पूर्ण
+	if (cpp != NULL) {
+		for (i = 0; i < cnpages; i++) {
+			if (cpp[i] != NULL)
+				__free_page(cpp[i]);
+		}
+		kfree(cpp);
+		vdso_mapping->pages = NULL;
+	}
 
-	अगर (dpp != शून्य) अणु
-		क्रम (i = 0; i < dnpages; i++) अणु
-			अगर (dpp[i] != शून्य)
-				__मुक्त_page(dpp[i]);
-		पूर्ण
-		kमुक्त(dpp);
-		vvar_mapping.pages = शून्य;
-	पूर्ण
+	if (dpp != NULL) {
+		for (i = 0; i < dnpages; i++) {
+			if (dpp[i] != NULL)
+				__free_page(dpp[i]);
+		}
+		kfree(dpp);
+		vvar_mapping.pages = NULL;
+	}
 
 	pr_warn("Cannot allocate vdso\n");
 	vdso_enabled = 0;
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल पूर्णांक __init init_vdso(व्योम)
-अणु
-	पूर्णांक err = 0;
-#अगर_घोषित CONFIG_SPARC64
+static int __init init_vdso(void)
+{
+	int err = 0;
+#ifdef CONFIG_SPARC64
 	err = init_vdso_image(&vdso_image_64_builtin, &vdso_mapping64, true);
-	अगर (err)
-		वापस err;
-#पूर्ण_अगर
+	if (err)
+		return err;
+#endif
 
-#अगर_घोषित CONFIG_COMPAT
+#ifdef CONFIG_COMPAT
 	err = init_vdso_image(&vdso_image_32_builtin, &vdso_mapping32, false);
-#पूर्ण_अगर
-	वापस err;
+#endif
+	return err;
 
-पूर्ण
+}
 subsys_initcall(init_vdso);
 
-काष्ठा linux_binprm;
+struct linux_binprm;
 
-/* Shuffle the vdso up a bit, अक्रमomly. */
-अटल अचिन्हित दीर्घ vdso_addr(अचिन्हित दीर्घ start, अचिन्हित पूर्णांक len)
-अणु
-	अचिन्हित पूर्णांक offset;
+/* Shuffle the vdso up a bit, randomly. */
+static unsigned long vdso_addr(unsigned long start, unsigned int len)
+{
+	unsigned int offset;
 
 	/* This loses some more bits than a modulo, but is cheaper */
-	offset = get_अक्रमom_पूर्णांक() & (PTRS_PER_PTE - 1);
-	वापस start + (offset << PAGE_SHIFT);
-पूर्ण
+	offset = get_random_int() & (PTRS_PER_PTE - 1);
+	return start + (offset << PAGE_SHIFT);
+}
 
-अटल पूर्णांक map_vdso(स्थिर काष्ठा vdso_image *image,
-		काष्ठा vm_special_mapping *vdso_mapping)
-अणु
-	काष्ठा mm_काष्ठा *mm = current->mm;
-	काष्ठा vm_area_काष्ठा *vma;
-	अचिन्हित दीर्घ text_start, addr = 0;
-	पूर्णांक ret = 0;
+static int map_vdso(const struct vdso_image *image,
+		struct vm_special_mapping *vdso_mapping)
+{
+	struct mm_struct *mm = current->mm;
+	struct vm_area_struct *vma;
+	unsigned long text_start, addr = 0;
+	int ret = 0;
 
-	mmap_ग_लिखो_lock(mm);
+	mmap_write_lock(mm);
 
 	/*
-	 * First, get an unmapped region: then अक्रमomize it, and make sure that
-	 * region is मुक्त.
+	 * First, get an unmapped region: then randomize it, and make sure that
+	 * region is free.
 	 */
-	अगर (current->flags & PF_RANDOMIZE) अणु
-		addr = get_unmapped_area(शून्य, 0,
+	if (current->flags & PF_RANDOMIZE) {
+		addr = get_unmapped_area(NULL, 0,
 					 image->size - image->sym_vvar_start,
 					 0, 0);
-		अगर (IS_ERR_VALUE(addr)) अणु
+		if (IS_ERR_VALUE(addr)) {
 			ret = addr;
-			जाओ up_fail;
-		पूर्ण
+			goto up_fail;
+		}
 		addr = vdso_addr(addr, image->size - image->sym_vvar_start);
-	पूर्ण
-	addr = get_unmapped_area(शून्य, addr,
+	}
+	addr = get_unmapped_area(NULL, addr,
 				 image->size - image->sym_vvar_start, 0, 0);
-	अगर (IS_ERR_VALUE(addr)) अणु
+	if (IS_ERR_VALUE(addr)) {
 		ret = addr;
-		जाओ up_fail;
-	पूर्ण
+		goto up_fail;
+	}
 
 	text_start = addr - image->sym_vvar_start;
-	current->mm->context.vdso = (व्योम __user *)text_start;
+	current->mm->context.vdso = (void __user *)text_start;
 
 	/*
-	 * MAYWRITE to allow gdb to COW and set अवरोधpoपूर्णांकs
+	 * MAYWRITE to allow gdb to COW and set breakpoints
 	 */
 	vma = _install_special_mapping(mm,
 				       text_start,
@@ -403,10 +402,10 @@ subsys_initcall(init_vdso);
 				       VM_MAYREAD|VM_MAYWRITE|VM_MAYEXEC,
 				       vdso_mapping);
 
-	अगर (IS_ERR(vma)) अणु
+	if (IS_ERR(vma)) {
 		ret = PTR_ERR(vma);
-		जाओ up_fail;
-	पूर्ण
+		goto up_fail;
+	}
 
 	vma = _install_special_mapping(mm,
 				       addr,
@@ -414,45 +413,45 @@ subsys_initcall(init_vdso);
 				       VM_READ|VM_MAYREAD,
 				       &vvar_mapping);
 
-	अगर (IS_ERR(vma)) अणु
+	if (IS_ERR(vma)) {
 		ret = PTR_ERR(vma);
-		करो_munmap(mm, text_start, image->size, शून्य);
-	पूर्ण
+		do_munmap(mm, text_start, image->size, NULL);
+	}
 
 up_fail:
-	अगर (ret)
-		current->mm->context.vdso = शून्य;
+	if (ret)
+		current->mm->context.vdso = NULL;
 
-	mmap_ग_लिखो_unlock(mm);
-	वापस ret;
-पूर्ण
+	mmap_write_unlock(mm);
+	return ret;
+}
 
-पूर्णांक arch_setup_additional_pages(काष्ठा linux_binprm *bprm, पूर्णांक uses_पूर्णांकerp)
-अणु
+int arch_setup_additional_pages(struct linux_binprm *bprm, int uses_interp)
+{
 
-	अगर (!vdso_enabled)
-		वापस 0;
+	if (!vdso_enabled)
+		return 0;
 
-#अगर defined CONFIG_COMPAT
-	अगर (!(is_32bit_task()))
-		वापस map_vdso(&vdso_image_64_builtin, &vdso_mapping64);
-	अन्यथा
-		वापस map_vdso(&vdso_image_32_builtin, &vdso_mapping32);
-#अन्यथा
-	वापस map_vdso(&vdso_image_64_builtin, &vdso_mapping64);
-#पूर्ण_अगर
+#if defined CONFIG_COMPAT
+	if (!(is_32bit_task()))
+		return map_vdso(&vdso_image_64_builtin, &vdso_mapping64);
+	else
+		return map_vdso(&vdso_image_32_builtin, &vdso_mapping32);
+#else
+	return map_vdso(&vdso_image_64_builtin, &vdso_mapping64);
+#endif
 
-पूर्ण
+}
 
-अटल __init पूर्णांक vdso_setup(अक्षर *s)
-अणु
-	पूर्णांक err;
-	अचिन्हित दीर्घ val;
+static __init int vdso_setup(char *s)
+{
+	int err;
+	unsigned long val;
 
-	err = kम_से_अदीर्घ(s, 10, &val);
-	अगर (err)
-		वापस err;
+	err = kstrtoul(s, 10, &val);
+	if (err)
+		return err;
 	vdso_enabled = val;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 __setup("vdso=", vdso_setup);

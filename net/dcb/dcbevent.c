@@ -1,31 +1,30 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2010, Intel Corporation.
  *
- * Author: John Fastabend <john.r.fastabend@पूर्णांकel.com>
+ * Author: John Fastabend <john.r.fastabend@intel.com>
  */
 
-#समावेश <linux/rtnetlink.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/export.h>
-#समावेश <net/dcbevent.h>
+#include <linux/rtnetlink.h>
+#include <linux/notifier.h>
+#include <linux/export.h>
+#include <net/dcbevent.h>
 
-अटल ATOMIC_NOTIFIER_HEAD(dcbevent_notअगर_chain);
+static ATOMIC_NOTIFIER_HEAD(dcbevent_notif_chain);
 
-पूर्णांक रेजिस्टर_dcbevent_notअगरier(काष्ठा notअगरier_block *nb)
-अणु
-	वापस atomic_notअगरier_chain_रेजिस्टर(&dcbevent_notअगर_chain, nb);
-पूर्ण
-EXPORT_SYMBOL(रेजिस्टर_dcbevent_notअगरier);
+int register_dcbevent_notifier(struct notifier_block *nb)
+{
+	return atomic_notifier_chain_register(&dcbevent_notif_chain, nb);
+}
+EXPORT_SYMBOL(register_dcbevent_notifier);
 
-पूर्णांक unरेजिस्टर_dcbevent_notअगरier(काष्ठा notअगरier_block *nb)
-अणु
-	वापस atomic_notअगरier_chain_unरेजिस्टर(&dcbevent_notअगर_chain, nb);
-पूर्ण
-EXPORT_SYMBOL(unरेजिस्टर_dcbevent_notअगरier);
+int unregister_dcbevent_notifier(struct notifier_block *nb)
+{
+	return atomic_notifier_chain_unregister(&dcbevent_notif_chain, nb);
+}
+EXPORT_SYMBOL(unregister_dcbevent_notifier);
 
-पूर्णांक call_dcbevent_notअगरiers(अचिन्हित दीर्घ val, व्योम *v)
-अणु
-	वापस atomic_notअगरier_call_chain(&dcbevent_notअगर_chain, val, v);
-पूर्ण
+int call_dcbevent_notifiers(unsigned long val, void *v)
+{
+	return atomic_notifier_call_chain(&dcbevent_notif_chain, val, v);
+}

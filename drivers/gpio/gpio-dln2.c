@@ -1,56 +1,55 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Driver क्रम the Diolan DLN-2 USB-GPIO adapter
+ * Driver for the Diolan DLN-2 USB-GPIO adapter
  *
  * Copyright (c) 2014 Intel Corporation
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/types.h>
-#समावेश <linux/irqकरोमुख्य.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/irqchip/chained_irq.h>
-#समावेश <linux/gpio/driver.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/mfd/dln2.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/types.h>
+#include <linux/irqdomain.h>
+#include <linux/irq.h>
+#include <linux/irqchip/chained_irq.h>
+#include <linux/gpio/driver.h>
+#include <linux/platform_device.h>
+#include <linux/mfd/dln2.h>
 
-#घोषणा DLN2_GPIO_ID			0x01
+#define DLN2_GPIO_ID			0x01
 
-#घोषणा DLN2_GPIO_GET_PIN_COUNT		DLN2_CMD(0x01, DLN2_GPIO_ID)
-#घोषणा DLN2_GPIO_SET_DEBOUNCE		DLN2_CMD(0x04, DLN2_GPIO_ID)
-#घोषणा DLN2_GPIO_GET_DEBOUNCE		DLN2_CMD(0x05, DLN2_GPIO_ID)
-#घोषणा DLN2_GPIO_PORT_GET_VAL		DLN2_CMD(0x06, DLN2_GPIO_ID)
-#घोषणा DLN2_GPIO_PIN_GET_VAL		DLN2_CMD(0x0B, DLN2_GPIO_ID)
-#घोषणा DLN2_GPIO_PIN_SET_OUT_VAL	DLN2_CMD(0x0C, DLN2_GPIO_ID)
-#घोषणा DLN2_GPIO_PIN_GET_OUT_VAL	DLN2_CMD(0x0D, DLN2_GPIO_ID)
-#घोषणा DLN2_GPIO_CONDITION_MET_EV	DLN2_CMD(0x0F, DLN2_GPIO_ID)
-#घोषणा DLN2_GPIO_PIN_ENABLE		DLN2_CMD(0x10, DLN2_GPIO_ID)
-#घोषणा DLN2_GPIO_PIN_DISABLE		DLN2_CMD(0x11, DLN2_GPIO_ID)
-#घोषणा DLN2_GPIO_PIN_SET_सूचीECTION	DLN2_CMD(0x13, DLN2_GPIO_ID)
-#घोषणा DLN2_GPIO_PIN_GET_सूचीECTION	DLN2_CMD(0x14, DLN2_GPIO_ID)
-#घोषणा DLN2_GPIO_PIN_SET_EVENT_CFG	DLN2_CMD(0x1E, DLN2_GPIO_ID)
-#घोषणा DLN2_GPIO_PIN_GET_EVENT_CFG	DLN2_CMD(0x1F, DLN2_GPIO_ID)
+#define DLN2_GPIO_GET_PIN_COUNT		DLN2_CMD(0x01, DLN2_GPIO_ID)
+#define DLN2_GPIO_SET_DEBOUNCE		DLN2_CMD(0x04, DLN2_GPIO_ID)
+#define DLN2_GPIO_GET_DEBOUNCE		DLN2_CMD(0x05, DLN2_GPIO_ID)
+#define DLN2_GPIO_PORT_GET_VAL		DLN2_CMD(0x06, DLN2_GPIO_ID)
+#define DLN2_GPIO_PIN_GET_VAL		DLN2_CMD(0x0B, DLN2_GPIO_ID)
+#define DLN2_GPIO_PIN_SET_OUT_VAL	DLN2_CMD(0x0C, DLN2_GPIO_ID)
+#define DLN2_GPIO_PIN_GET_OUT_VAL	DLN2_CMD(0x0D, DLN2_GPIO_ID)
+#define DLN2_GPIO_CONDITION_MET_EV	DLN2_CMD(0x0F, DLN2_GPIO_ID)
+#define DLN2_GPIO_PIN_ENABLE		DLN2_CMD(0x10, DLN2_GPIO_ID)
+#define DLN2_GPIO_PIN_DISABLE		DLN2_CMD(0x11, DLN2_GPIO_ID)
+#define DLN2_GPIO_PIN_SET_DIRECTION	DLN2_CMD(0x13, DLN2_GPIO_ID)
+#define DLN2_GPIO_PIN_GET_DIRECTION	DLN2_CMD(0x14, DLN2_GPIO_ID)
+#define DLN2_GPIO_PIN_SET_EVENT_CFG	DLN2_CMD(0x1E, DLN2_GPIO_ID)
+#define DLN2_GPIO_PIN_GET_EVENT_CFG	DLN2_CMD(0x1F, DLN2_GPIO_ID)
 
-#घोषणा DLN2_GPIO_EVENT_NONE		0
-#घोषणा DLN2_GPIO_EVENT_CHANGE		1
-#घोषणा DLN2_GPIO_EVENT_LVL_HIGH	2
-#घोषणा DLN2_GPIO_EVENT_LVL_LOW		3
-#घोषणा DLN2_GPIO_EVENT_CHANGE_RISING	0x11
-#घोषणा DLN2_GPIO_EVENT_CHANGE_FALLING  0x21
-#घोषणा DLN2_GPIO_EVENT_MASK		0x0F
+#define DLN2_GPIO_EVENT_NONE		0
+#define DLN2_GPIO_EVENT_CHANGE		1
+#define DLN2_GPIO_EVENT_LVL_HIGH	2
+#define DLN2_GPIO_EVENT_LVL_LOW		3
+#define DLN2_GPIO_EVENT_CHANGE_RISING	0x11
+#define DLN2_GPIO_EVENT_CHANGE_FALLING  0x21
+#define DLN2_GPIO_EVENT_MASK		0x0F
 
-#घोषणा DLN2_GPIO_MAX_PINS 32
+#define DLN2_GPIO_MAX_PINS 32
 
-काष्ठा dln2_gpio अणु
-	काष्ठा platक्रमm_device *pdev;
-	काष्ठा gpio_chip gpio;
+struct dln2_gpio {
+	struct platform_device *pdev;
+	struct gpio_chip gpio;
 
 	/*
 	 * Cache pin direction to save us one transfer, since the hardware has
-	 * separate commands to पढ़ो the in and out values.
+	 * separate commands to read the in and out values.
 	 */
 	DECLARE_BITMAP(output_enabled, DLN2_GPIO_MAX_PINS);
 
@@ -58,406 +57,406 @@
 	DECLARE_BITMAP(unmasked_irqs, DLN2_GPIO_MAX_PINS);
 	/* active IRQS - synced to hardware */
 	DECLARE_BITMAP(enabled_irqs, DLN2_GPIO_MAX_PINS);
-	पूर्णांक irq_type[DLN2_GPIO_MAX_PINS];
-	काष्ठा mutex irq_lock;
-पूर्ण;
+	int irq_type[DLN2_GPIO_MAX_PINS];
+	struct mutex irq_lock;
+};
 
-काष्ठा dln2_gpio_pin अणु
+struct dln2_gpio_pin {
 	__le16 pin;
-पूर्ण;
+};
 
-काष्ठा dln2_gpio_pin_val अणु
+struct dln2_gpio_pin_val {
 	__le16 pin __packed;
 	u8 value;
-पूर्ण;
+};
 
-अटल पूर्णांक dln2_gpio_get_pin_count(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक ret;
+static int dln2_gpio_get_pin_count(struct platform_device *pdev)
+{
+	int ret;
 	__le16 count;
-	पूर्णांक len = माप(count);
+	int len = sizeof(count);
 
 	ret = dln2_transfer_rx(pdev, DLN2_GPIO_GET_PIN_COUNT, &count, &len);
-	अगर (ret < 0)
-		वापस ret;
-	अगर (len < माप(count))
-		वापस -EPROTO;
+	if (ret < 0)
+		return ret;
+	if (len < sizeof(count))
+		return -EPROTO;
 
-	वापस le16_to_cpu(count);
-पूर्ण
+	return le16_to_cpu(count);
+}
 
-अटल पूर्णांक dln2_gpio_pin_cmd(काष्ठा dln2_gpio *dln2, पूर्णांक cmd, अचिन्हित pin)
-अणु
-	काष्ठा dln2_gpio_pin req = अणु
+static int dln2_gpio_pin_cmd(struct dln2_gpio *dln2, int cmd, unsigned pin)
+{
+	struct dln2_gpio_pin req = {
 		.pin = cpu_to_le16(pin),
-	पूर्ण;
+	};
 
-	वापस dln2_transfer_tx(dln2->pdev, cmd, &req, माप(req));
-पूर्ण
+	return dln2_transfer_tx(dln2->pdev, cmd, &req, sizeof(req));
+}
 
-अटल पूर्णांक dln2_gpio_pin_val(काष्ठा dln2_gpio *dln2, पूर्णांक cmd, अचिन्हित पूर्णांक pin)
-अणु
-	पूर्णांक ret;
-	काष्ठा dln2_gpio_pin req = अणु
+static int dln2_gpio_pin_val(struct dln2_gpio *dln2, int cmd, unsigned int pin)
+{
+	int ret;
+	struct dln2_gpio_pin req = {
 		.pin = cpu_to_le16(pin),
-	पूर्ण;
-	काष्ठा dln2_gpio_pin_val rsp;
-	पूर्णांक len = माप(rsp);
+	};
+	struct dln2_gpio_pin_val rsp;
+	int len = sizeof(rsp);
 
-	ret = dln2_transfer(dln2->pdev, cmd, &req, माप(req), &rsp, &len);
-	अगर (ret < 0)
-		वापस ret;
-	अगर (len < माप(rsp) || req.pin != rsp.pin)
-		वापस -EPROTO;
+	ret = dln2_transfer(dln2->pdev, cmd, &req, sizeof(req), &rsp, &len);
+	if (ret < 0)
+		return ret;
+	if (len < sizeof(rsp) || req.pin != rsp.pin)
+		return -EPROTO;
 
-	वापस rsp.value;
-पूर्ण
+	return rsp.value;
+}
 
-अटल पूर्णांक dln2_gpio_pin_get_in_val(काष्ठा dln2_gpio *dln2, अचिन्हित पूर्णांक pin)
-अणु
-	पूर्णांक ret;
+static int dln2_gpio_pin_get_in_val(struct dln2_gpio *dln2, unsigned int pin)
+{
+	int ret;
 
 	ret = dln2_gpio_pin_val(dln2, DLN2_GPIO_PIN_GET_VAL, pin);
-	अगर (ret < 0)
-		वापस ret;
-	वापस !!ret;
-पूर्ण
+	if (ret < 0)
+		return ret;
+	return !!ret;
+}
 
-अटल पूर्णांक dln2_gpio_pin_get_out_val(काष्ठा dln2_gpio *dln2, अचिन्हित पूर्णांक pin)
-अणु
-	पूर्णांक ret;
+static int dln2_gpio_pin_get_out_val(struct dln2_gpio *dln2, unsigned int pin)
+{
+	int ret;
 
 	ret = dln2_gpio_pin_val(dln2, DLN2_GPIO_PIN_GET_OUT_VAL, pin);
-	अगर (ret < 0)
-		वापस ret;
-	वापस !!ret;
-पूर्ण
+	if (ret < 0)
+		return ret;
+	return !!ret;
+}
 
-अटल पूर्णांक dln2_gpio_pin_set_out_val(काष्ठा dln2_gpio *dln2,
-				     अचिन्हित पूर्णांक pin, पूर्णांक value)
-अणु
-	काष्ठा dln2_gpio_pin_val req = अणु
+static int dln2_gpio_pin_set_out_val(struct dln2_gpio *dln2,
+				     unsigned int pin, int value)
+{
+	struct dln2_gpio_pin_val req = {
 		.pin = cpu_to_le16(pin),
 		.value = value,
-	पूर्ण;
+	};
 
-	वापस dln2_transfer_tx(dln2->pdev, DLN2_GPIO_PIN_SET_OUT_VAL, &req,
-				माप(req));
-पूर्ण
+	return dln2_transfer_tx(dln2->pdev, DLN2_GPIO_PIN_SET_OUT_VAL, &req,
+				sizeof(req));
+}
 
-#घोषणा DLN2_GPIO_सूचीECTION_IN		0
-#घोषणा DLN2_GPIO_सूचीECTION_OUT		1
+#define DLN2_GPIO_DIRECTION_IN		0
+#define DLN2_GPIO_DIRECTION_OUT		1
 
-अटल पूर्णांक dln2_gpio_request(काष्ठा gpio_chip *chip, अचिन्हित offset)
-अणु
-	काष्ठा dln2_gpio *dln2 = gpiochip_get_data(chip);
-	काष्ठा dln2_gpio_pin req = अणु
+static int dln2_gpio_request(struct gpio_chip *chip, unsigned offset)
+{
+	struct dln2_gpio *dln2 = gpiochip_get_data(chip);
+	struct dln2_gpio_pin req = {
 		.pin = cpu_to_le16(offset),
-	पूर्ण;
-	काष्ठा dln2_gpio_pin_val rsp;
-	पूर्णांक len = माप(rsp);
-	पूर्णांक ret;
+	};
+	struct dln2_gpio_pin_val rsp;
+	int len = sizeof(rsp);
+	int ret;
 
 	ret = dln2_gpio_pin_cmd(dln2, DLN2_GPIO_PIN_ENABLE, offset);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	/* cache the pin direction */
-	ret = dln2_transfer(dln2->pdev, DLN2_GPIO_PIN_GET_सूचीECTION,
-			    &req, माप(req), &rsp, &len);
-	अगर (ret < 0)
-		वापस ret;
-	अगर (len < माप(rsp) || req.pin != rsp.pin) अणु
+	ret = dln2_transfer(dln2->pdev, DLN2_GPIO_PIN_GET_DIRECTION,
+			    &req, sizeof(req), &rsp, &len);
+	if (ret < 0)
+		return ret;
+	if (len < sizeof(rsp) || req.pin != rsp.pin) {
 		ret = -EPROTO;
-		जाओ out_disable;
-	पूर्ण
+		goto out_disable;
+	}
 
-	चयन (rsp.value) अणु
-	हाल DLN2_GPIO_सूचीECTION_IN:
+	switch (rsp.value) {
+	case DLN2_GPIO_DIRECTION_IN:
 		clear_bit(offset, dln2->output_enabled);
-		वापस 0;
-	हाल DLN2_GPIO_सूचीECTION_OUT:
+		return 0;
+	case DLN2_GPIO_DIRECTION_OUT:
 		set_bit(offset, dln2->output_enabled);
-		वापस 0;
-	शेष:
+		return 0;
+	default:
 		ret = -EPROTO;
-		जाओ out_disable;
-	पूर्ण
+		goto out_disable;
+	}
 
 out_disable:
 	dln2_gpio_pin_cmd(dln2, DLN2_GPIO_PIN_DISABLE, offset);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम dln2_gpio_मुक्त(काष्ठा gpio_chip *chip, अचिन्हित offset)
-अणु
-	काष्ठा dln2_gpio *dln2 = gpiochip_get_data(chip);
+static void dln2_gpio_free(struct gpio_chip *chip, unsigned offset)
+{
+	struct dln2_gpio *dln2 = gpiochip_get_data(chip);
 
 	dln2_gpio_pin_cmd(dln2, DLN2_GPIO_PIN_DISABLE, offset);
-पूर्ण
+}
 
-अटल पूर्णांक dln2_gpio_get_direction(काष्ठा gpio_chip *chip, अचिन्हित offset)
-अणु
-	काष्ठा dln2_gpio *dln2 = gpiochip_get_data(chip);
+static int dln2_gpio_get_direction(struct gpio_chip *chip, unsigned offset)
+{
+	struct dln2_gpio *dln2 = gpiochip_get_data(chip);
 
-	अगर (test_bit(offset, dln2->output_enabled))
-		वापस GPIO_LINE_सूचीECTION_OUT;
+	if (test_bit(offset, dln2->output_enabled))
+		return GPIO_LINE_DIRECTION_OUT;
 
-	वापस GPIO_LINE_सूचीECTION_IN;
-पूर्ण
+	return GPIO_LINE_DIRECTION_IN;
+}
 
-अटल पूर्णांक dln2_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
-अणु
-	काष्ठा dln2_gpio *dln2 = gpiochip_get_data(chip);
-	पूर्णांक dir;
+static int dln2_gpio_get(struct gpio_chip *chip, unsigned int offset)
+{
+	struct dln2_gpio *dln2 = gpiochip_get_data(chip);
+	int dir;
 
 	dir = dln2_gpio_get_direction(chip, offset);
-	अगर (dir < 0)
-		वापस dir;
+	if (dir < 0)
+		return dir;
 
-	अगर (dir == GPIO_LINE_सूचीECTION_IN)
-		वापस dln2_gpio_pin_get_in_val(dln2, offset);
+	if (dir == GPIO_LINE_DIRECTION_IN)
+		return dln2_gpio_pin_get_in_val(dln2, offset);
 
-	वापस dln2_gpio_pin_get_out_val(dln2, offset);
-पूर्ण
+	return dln2_gpio_pin_get_out_val(dln2, offset);
+}
 
-अटल व्योम dln2_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित offset, पूर्णांक value)
-अणु
-	काष्ठा dln2_gpio *dln2 = gpiochip_get_data(chip);
+static void dln2_gpio_set(struct gpio_chip *chip, unsigned offset, int value)
+{
+	struct dln2_gpio *dln2 = gpiochip_get_data(chip);
 
 	dln2_gpio_pin_set_out_val(dln2, offset, value);
-पूर्ण
+}
 
-अटल पूर्णांक dln2_gpio_set_direction(काष्ठा gpio_chip *chip, अचिन्हित offset,
-				   अचिन्हित dir)
-अणु
-	काष्ठा dln2_gpio *dln2 = gpiochip_get_data(chip);
-	काष्ठा dln2_gpio_pin_val req = अणु
+static int dln2_gpio_set_direction(struct gpio_chip *chip, unsigned offset,
+				   unsigned dir)
+{
+	struct dln2_gpio *dln2 = gpiochip_get_data(chip);
+	struct dln2_gpio_pin_val req = {
 		.pin = cpu_to_le16(offset),
 		.value = dir,
-	पूर्ण;
-	पूर्णांक ret;
+	};
+	int ret;
 
-	ret = dln2_transfer_tx(dln2->pdev, DLN2_GPIO_PIN_SET_सूचीECTION,
-			       &req, माप(req));
-	अगर (ret < 0)
-		वापस ret;
+	ret = dln2_transfer_tx(dln2->pdev, DLN2_GPIO_PIN_SET_DIRECTION,
+			       &req, sizeof(req));
+	if (ret < 0)
+		return ret;
 
-	अगर (dir == DLN2_GPIO_सूचीECTION_OUT)
+	if (dir == DLN2_GPIO_DIRECTION_OUT)
 		set_bit(offset, dln2->output_enabled);
-	अन्यथा
+	else
 		clear_bit(offset, dln2->output_enabled);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक dln2_gpio_direction_input(काष्ठा gpio_chip *chip, अचिन्हित offset)
-अणु
-	वापस dln2_gpio_set_direction(chip, offset, DLN2_GPIO_सूचीECTION_IN);
-पूर्ण
+static int dln2_gpio_direction_input(struct gpio_chip *chip, unsigned offset)
+{
+	return dln2_gpio_set_direction(chip, offset, DLN2_GPIO_DIRECTION_IN);
+}
 
-अटल पूर्णांक dln2_gpio_direction_output(काष्ठा gpio_chip *chip, अचिन्हित offset,
-				      पूर्णांक value)
-अणु
-	काष्ठा dln2_gpio *dln2 = gpiochip_get_data(chip);
-	पूर्णांक ret;
+static int dln2_gpio_direction_output(struct gpio_chip *chip, unsigned offset,
+				      int value)
+{
+	struct dln2_gpio *dln2 = gpiochip_get_data(chip);
+	int ret;
 
 	ret = dln2_gpio_pin_set_out_val(dln2, offset, value);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस dln2_gpio_set_direction(chip, offset, DLN2_GPIO_सूचीECTION_OUT);
-पूर्ण
+	return dln2_gpio_set_direction(chip, offset, DLN2_GPIO_DIRECTION_OUT);
+}
 
-अटल पूर्णांक dln2_gpio_set_config(काष्ठा gpio_chip *chip, अचिन्हित offset,
-				अचिन्हित दीर्घ config)
-अणु
-	काष्ठा dln2_gpio *dln2 = gpiochip_get_data(chip);
+static int dln2_gpio_set_config(struct gpio_chip *chip, unsigned offset,
+				unsigned long config)
+{
+	struct dln2_gpio *dln2 = gpiochip_get_data(chip);
 	__le32 duration;
 
-	अगर (pinconf_to_config_param(config) != PIN_CONFIG_INPUT_DEBOUNCE)
-		वापस -ENOTSUPP;
+	if (pinconf_to_config_param(config) != PIN_CONFIG_INPUT_DEBOUNCE)
+		return -ENOTSUPP;
 
 	duration = cpu_to_le32(pinconf_to_config_argument(config));
-	वापस dln2_transfer_tx(dln2->pdev, DLN2_GPIO_SET_DEBOUNCE,
-				&duration, माप(duration));
-पूर्ण
+	return dln2_transfer_tx(dln2->pdev, DLN2_GPIO_SET_DEBOUNCE,
+				&duration, sizeof(duration));
+}
 
-अटल पूर्णांक dln2_gpio_set_event_cfg(काष्ठा dln2_gpio *dln2, अचिन्हित pin,
-				   अचिन्हित type, अचिन्हित period)
-अणु
-	काष्ठा अणु
+static int dln2_gpio_set_event_cfg(struct dln2_gpio *dln2, unsigned pin,
+				   unsigned type, unsigned period)
+{
+	struct {
 		__le16 pin;
 		u8 type;
 		__le16 period;
-	पूर्ण __packed req = अणु
+	} __packed req = {
 		.pin = cpu_to_le16(pin),
 		.type = type,
 		.period = cpu_to_le16(period),
-	पूर्ण;
+	};
 
-	वापस dln2_transfer_tx(dln2->pdev, DLN2_GPIO_PIN_SET_EVENT_CFG,
-				&req, माप(req));
-पूर्ण
+	return dln2_transfer_tx(dln2->pdev, DLN2_GPIO_PIN_SET_EVENT_CFG,
+				&req, sizeof(req));
+}
 
-अटल व्योम dln2_irq_unmask(काष्ठा irq_data *irqd)
-अणु
-	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(irqd);
-	काष्ठा dln2_gpio *dln2 = gpiochip_get_data(gc);
-	पूर्णांक pin = irqd_to_hwirq(irqd);
+static void dln2_irq_unmask(struct irq_data *irqd)
+{
+	struct gpio_chip *gc = irq_data_get_irq_chip_data(irqd);
+	struct dln2_gpio *dln2 = gpiochip_get_data(gc);
+	int pin = irqd_to_hwirq(irqd);
 
 	set_bit(pin, dln2->unmasked_irqs);
-पूर्ण
+}
 
-अटल व्योम dln2_irq_mask(काष्ठा irq_data *irqd)
-अणु
-	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(irqd);
-	काष्ठा dln2_gpio *dln2 = gpiochip_get_data(gc);
-	पूर्णांक pin = irqd_to_hwirq(irqd);
+static void dln2_irq_mask(struct irq_data *irqd)
+{
+	struct gpio_chip *gc = irq_data_get_irq_chip_data(irqd);
+	struct dln2_gpio *dln2 = gpiochip_get_data(gc);
+	int pin = irqd_to_hwirq(irqd);
 
 	clear_bit(pin, dln2->unmasked_irqs);
-पूर्ण
+}
 
-अटल पूर्णांक dln2_irq_set_type(काष्ठा irq_data *irqd, अचिन्हित type)
-अणु
-	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(irqd);
-	काष्ठा dln2_gpio *dln2 = gpiochip_get_data(gc);
-	पूर्णांक pin = irqd_to_hwirq(irqd);
+static int dln2_irq_set_type(struct irq_data *irqd, unsigned type)
+{
+	struct gpio_chip *gc = irq_data_get_irq_chip_data(irqd);
+	struct dln2_gpio *dln2 = gpiochip_get_data(gc);
+	int pin = irqd_to_hwirq(irqd);
 
-	चयन (type) अणु
-	हाल IRQ_TYPE_LEVEL_HIGH:
+	switch (type) {
+	case IRQ_TYPE_LEVEL_HIGH:
 		dln2->irq_type[pin] = DLN2_GPIO_EVENT_LVL_HIGH;
-		अवरोध;
-	हाल IRQ_TYPE_LEVEL_LOW:
+		break;
+	case IRQ_TYPE_LEVEL_LOW:
 		dln2->irq_type[pin] = DLN2_GPIO_EVENT_LVL_LOW;
-		अवरोध;
-	हाल IRQ_TYPE_EDGE_BOTH:
+		break;
+	case IRQ_TYPE_EDGE_BOTH:
 		dln2->irq_type[pin] = DLN2_GPIO_EVENT_CHANGE;
-		अवरोध;
-	हाल IRQ_TYPE_EDGE_RISING:
+		break;
+	case IRQ_TYPE_EDGE_RISING:
 		dln2->irq_type[pin] = DLN2_GPIO_EVENT_CHANGE_RISING;
-		अवरोध;
-	हाल IRQ_TYPE_EDGE_FALLING:
+		break;
+	case IRQ_TYPE_EDGE_FALLING:
 		dln2->irq_type[pin] = DLN2_GPIO_EVENT_CHANGE_FALLING;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम dln2_irq_bus_lock(काष्ठा irq_data *irqd)
-अणु
-	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(irqd);
-	काष्ठा dln2_gpio *dln2 = gpiochip_get_data(gc);
+static void dln2_irq_bus_lock(struct irq_data *irqd)
+{
+	struct gpio_chip *gc = irq_data_get_irq_chip_data(irqd);
+	struct dln2_gpio *dln2 = gpiochip_get_data(gc);
 
 	mutex_lock(&dln2->irq_lock);
-पूर्ण
+}
 
-अटल व्योम dln2_irq_bus_unlock(काष्ठा irq_data *irqd)
-अणु
-	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(irqd);
-	काष्ठा dln2_gpio *dln2 = gpiochip_get_data(gc);
-	पूर्णांक pin = irqd_to_hwirq(irqd);
-	पूर्णांक enabled, unmasked;
-	अचिन्हित type;
-	पूर्णांक ret;
+static void dln2_irq_bus_unlock(struct irq_data *irqd)
+{
+	struct gpio_chip *gc = irq_data_get_irq_chip_data(irqd);
+	struct dln2_gpio *dln2 = gpiochip_get_data(gc);
+	int pin = irqd_to_hwirq(irqd);
+	int enabled, unmasked;
+	unsigned type;
+	int ret;
 
 	enabled = test_bit(pin, dln2->enabled_irqs);
 	unmasked = test_bit(pin, dln2->unmasked_irqs);
 
-	अगर (enabled != unmasked) अणु
-		अगर (unmasked) अणु
+	if (enabled != unmasked) {
+		if (unmasked) {
 			type = dln2->irq_type[pin] & DLN2_GPIO_EVENT_MASK;
 			set_bit(pin, dln2->enabled_irqs);
-		पूर्ण अन्यथा अणु
+		} else {
 			type = DLN2_GPIO_EVENT_NONE;
 			clear_bit(pin, dln2->enabled_irqs);
-		पूर्ण
+		}
 
 		ret = dln2_gpio_set_event_cfg(dln2, pin, type, 0);
-		अगर (ret)
+		if (ret)
 			dev_err(dln2->gpio.parent, "failed to set event\n");
-	पूर्ण
+	}
 
 	mutex_unlock(&dln2->irq_lock);
-पूर्ण
+}
 
-अटल काष्ठा irq_chip dln2_gpio_irqchip = अणु
+static struct irq_chip dln2_gpio_irqchip = {
 	.name = "dln2-irq",
 	.irq_mask = dln2_irq_mask,
 	.irq_unmask = dln2_irq_unmask,
 	.irq_set_type = dln2_irq_set_type,
 	.irq_bus_lock = dln2_irq_bus_lock,
 	.irq_bus_sync_unlock = dln2_irq_bus_unlock,
-पूर्ण;
+};
 
-अटल व्योम dln2_gpio_event(काष्ठा platक्रमm_device *pdev, u16 echo,
-			    स्थिर व्योम *data, पूर्णांक len)
-अणु
-	पूर्णांक pin, irq;
+static void dln2_gpio_event(struct platform_device *pdev, u16 echo,
+			    const void *data, int len)
+{
+	int pin, irq;
 
-	स्थिर काष्ठा अणु
+	const struct {
 		__le16 count;
 		__u8 type;
 		__le16 pin;
 		__u8 value;
-	पूर्ण __packed *event = data;
-	काष्ठा dln2_gpio *dln2 = platक्रमm_get_drvdata(pdev);
+	} __packed *event = data;
+	struct dln2_gpio *dln2 = platform_get_drvdata(pdev);
 
-	अगर (len < माप(*event)) अणु
+	if (len < sizeof(*event)) {
 		dev_err(dln2->gpio.parent, "short event message\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	pin = le16_to_cpu(event->pin);
-	अगर (pin >= dln2->gpio.ngpio) अणु
+	if (pin >= dln2->gpio.ngpio) {
 		dev_err(dln2->gpio.parent, "out of bounds pin %d\n", pin);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	irq = irq_find_mapping(dln2->gpio.irq.करोमुख्य, pin);
-	अगर (!irq) अणु
+	irq = irq_find_mapping(dln2->gpio.irq.domain, pin);
+	if (!irq) {
 		dev_err(dln2->gpio.parent, "pin %d not mapped to IRQ\n", pin);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	चयन (dln2->irq_type[pin]) अणु
-	हाल DLN2_GPIO_EVENT_CHANGE_RISING:
-		अगर (event->value)
+	switch (dln2->irq_type[pin]) {
+	case DLN2_GPIO_EVENT_CHANGE_RISING:
+		if (event->value)
 			generic_handle_irq(irq);
-		अवरोध;
-	हाल DLN2_GPIO_EVENT_CHANGE_FALLING:
-		अगर (!event->value)
+		break;
+	case DLN2_GPIO_EVENT_CHANGE_FALLING:
+		if (!event->value)
 			generic_handle_irq(irq);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		generic_handle_irq(irq);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक dln2_gpio_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा dln2_gpio *dln2;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा gpio_irq_chip *girq;
-	पूर्णांक pins;
-	पूर्णांक ret;
+static int dln2_gpio_probe(struct platform_device *pdev)
+{
+	struct dln2_gpio *dln2;
+	struct device *dev = &pdev->dev;
+	struct gpio_irq_chip *girq;
+	int pins;
+	int ret;
 
 	pins = dln2_gpio_get_pin_count(pdev);
-	अगर (pins < 0) अणु
+	if (pins < 0) {
 		dev_err(dev, "failed to get pin count: %d\n", pins);
-		वापस pins;
-	पूर्ण
-	अगर (pins > DLN2_GPIO_MAX_PINS) अणु
+		return pins;
+	}
+	if (pins > DLN2_GPIO_MAX_PINS) {
 		pins = DLN2_GPIO_MAX_PINS;
 		dev_warn(dev, "clamping pins to %d\n", DLN2_GPIO_MAX_PINS);
-	पूर्ण
+	}
 
-	dln2 = devm_kzalloc(&pdev->dev, माप(*dln2), GFP_KERNEL);
-	अगर (!dln2)
-		वापस -ENOMEM;
+	dln2 = devm_kzalloc(&pdev->dev, sizeof(*dln2), GFP_KERNEL);
+	if (!dln2)
+		return -ENOMEM;
 
 	mutex_init(&dln2->irq_lock);
 
@@ -472,7 +471,7 @@ out_disable:
 	dln2->gpio.set = dln2_gpio_set;
 	dln2->gpio.get = dln2_gpio_get;
 	dln2->gpio.request = dln2_gpio_request;
-	dln2->gpio.मुक्त = dln2_gpio_मुक्त;
+	dln2->gpio.free = dln2_gpio_free;
 	dln2->gpio.get_direction = dln2_gpio_get_direction;
 	dln2->gpio.direction_input = dln2_gpio_direction_input;
 	dln2->gpio.direction_output = dln2_gpio_direction_output;
@@ -481,44 +480,44 @@ out_disable:
 	girq = &dln2->gpio.irq;
 	girq->chip = &dln2_gpio_irqchip;
 	/* The event comes from the outside so no parent handler */
-	girq->parent_handler = शून्य;
+	girq->parent_handler = NULL;
 	girq->num_parents = 0;
-	girq->parents = शून्य;
-	girq->शेष_type = IRQ_TYPE_NONE;
+	girq->parents = NULL;
+	girq->default_type = IRQ_TYPE_NONE;
 	girq->handler = handle_simple_irq;
 
-	platक्रमm_set_drvdata(pdev, dln2);
+	platform_set_drvdata(pdev, dln2);
 
 	ret = devm_gpiochip_add_data(dev, &dln2->gpio, dln2);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "failed to add gpio chip: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = dln2_रेजिस्टर_event_cb(pdev, DLN2_GPIO_CONDITION_MET_EV,
+	ret = dln2_register_event_cb(pdev, DLN2_GPIO_CONDITION_MET_EV,
 				     dln2_gpio_event);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to register event cb: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dln2_gpio_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	dln2_unरेजिस्टर_event_cb(pdev, DLN2_GPIO_CONDITION_MET_EV);
+static int dln2_gpio_remove(struct platform_device *pdev)
+{
+	dln2_unregister_event_cb(pdev, DLN2_GPIO_CONDITION_MET_EV);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver dln2_gpio_driver = अणु
+static struct platform_driver dln2_gpio_driver = {
 	.driver.name	= "dln2-gpio",
 	.probe		= dln2_gpio_probe,
-	.हटाओ		= dln2_gpio_हटाओ,
-पूर्ण;
+	.remove		= dln2_gpio_remove,
+};
 
-module_platक्रमm_driver(dln2_gpio_driver);
+module_platform_driver(dln2_gpio_driver);
 
 MODULE_AUTHOR("Daniel Baluta <daniel.baluta@intel.com");
 MODULE_DESCRIPTION("Driver for the Diolan DLN2 GPIO interface");

@@ -1,68 +1,67 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/compiler.h>
-#समावेश <linux/types.h>
-#समावेश <linux/zभाग.स>
-#समावेश <पूर्णांकtypes.h>
-#समावेश <सीमा.स>
-#समावेश <unistd.h>
-#समावेश "tests.h"
-#समावेश "debug.h"
-#समावेश "machine.h"
-#समावेश "event.h"
-#समावेश "../util/unwind.h"
-#समावेश "perf_regs.h"
-#समावेश "map.h"
-#समावेश "symbol.h"
-#समावेश "thread.h"
-#समावेश "callchain.h"
-#समावेश "util/synthetic-events.h"
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/compiler.h>
+#include <linux/types.h>
+#include <linux/zalloc.h>
+#include <inttypes.h>
+#include <limits.h>
+#include <unistd.h>
+#include "tests.h"
+#include "debug.h"
+#include "machine.h"
+#include "event.h"
+#include "../util/unwind.h"
+#include "perf_regs.h"
+#include "map.h"
+#include "symbol.h"
+#include "thread.h"
+#include "callchain.h"
+#include "util/synthetic-events.h"
 
-#अगर defined (__x86_64__) || defined (__i386__) || defined (__घातerpc__)
-#समावेश "arch-tests.h"
-#पूर्ण_अगर
+#if defined (__x86_64__) || defined (__i386__) || defined (__powerpc__)
+#include "arch-tests.h"
+#endif
 
-/* For द्वा_खोज. We try to unwind functions in shared object. */
-#समावेश <मानककोष.स>
+/* For bsearch. We try to unwind functions in shared object. */
+#include <stdlib.h>
 
-अटल पूर्णांक mmap_handler(काष्ठा perf_tool *tool __maybe_unused,
-			जोड़ perf_event *event,
-			काष्ठा perf_sample *sample,
-			काष्ठा machine *machine)
-अणु
-	वापस machine__process_mmap2_event(machine, event, sample);
-पूर्ण
+static int mmap_handler(struct perf_tool *tool __maybe_unused,
+			union perf_event *event,
+			struct perf_sample *sample,
+			struct machine *machine)
+{
+	return machine__process_mmap2_event(machine, event, sample);
+}
 
-अटल पूर्णांक init_live_machine(काष्ठा machine *machine)
-अणु
-	जोड़ perf_event event;
+static int init_live_machine(struct machine *machine)
+{
+	union perf_event event;
 	pid_t pid = getpid();
 
-	स_रखो(&event, 0, माप(event));
-	वापस perf_event__synthesize_mmap_events(शून्य, &event, pid, pid,
+	memset(&event, 0, sizeof(event));
+	return perf_event__synthesize_mmap_events(NULL, &event, pid, pid,
 						  mmap_handler, machine, true);
-पूर्ण
+}
 
 /*
  * We need to keep these functions global, despite the
  * fact that they are used only locally in this object,
- * in order to keep them around even अगर the binary is
- * stripped. If they are gone, the unwind check क्रम
+ * in order to keep them around even if the binary is
+ * stripped. If they are gone, the unwind check for
  * symbol fails.
  */
-पूर्णांक test_dwarf_unwind__thपढ़ो(काष्ठा thपढ़ो *thपढ़ो);
-पूर्णांक test_dwarf_unwind__compare(व्योम *p1, व्योम *p2);
-पूर्णांक test_dwarf_unwind__krava_3(काष्ठा thपढ़ो *thपढ़ो);
-पूर्णांक test_dwarf_unwind__krava_2(काष्ठा thपढ़ो *thपढ़ो);
-पूर्णांक test_dwarf_unwind__krava_1(काष्ठा thपढ़ो *thपढ़ो);
+int test_dwarf_unwind__thread(struct thread *thread);
+int test_dwarf_unwind__compare(void *p1, void *p2);
+int test_dwarf_unwind__krava_3(struct thread *thread);
+int test_dwarf_unwind__krava_2(struct thread *thread);
+int test_dwarf_unwind__krava_1(struct thread *thread);
 
-#घोषणा MAX_STACK 8
+#define MAX_STACK 8
 
-अटल पूर्णांक unwind_entry(काष्ठा unwind_entry *entry, व्योम *arg)
-अणु
-	अचिन्हित दीर्घ *cnt = (अचिन्हित दीर्घ *) arg;
-	अक्षर *symbol = entry->ms.sym ? entry->ms.sym->name : शून्य;
-	अटल स्थिर अक्षर *funcs[MAX_STACK] = अणु
+static int unwind_entry(struct unwind_entry *entry, void *arg)
+{
+	unsigned long *cnt = (unsigned long *) arg;
+	char *symbol = entry->ms.sym ? entry->ms.sym->name : NULL;
+	static const char *funcs[MAX_STACK] = {
 		"test__arch_unwind_sample",
 		"test_dwarf_unwind__thread",
 		"test_dwarf_unwind__compare",
@@ -71,149 +70,149 @@
 		"test_dwarf_unwind__krava_2",
 		"test_dwarf_unwind__krava_1",
 		"test__dwarf_unwind"
-	पूर्ण;
+	};
 	/*
 	 * The funcs[MAX_STACK] array index, based on the
 	 * callchain order setup.
 	 */
-	पूर्णांक idx = callchain_param.order == ORDER_CALLER ?
+	int idx = callchain_param.order == ORDER_CALLER ?
 		  MAX_STACK - *cnt - 1 : *cnt;
 
-	अगर (*cnt >= MAX_STACK) अणु
+	if (*cnt >= MAX_STACK) {
 		pr_debug("failed: crossed the max stack value %d\n", MAX_STACK);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	अगर (!symbol) अणु
+	if (!symbol) {
 		pr_debug("failed: got unresolved address 0x%" PRIx64 "\n",
 			 entry->ip);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	(*cnt)++;
 	pr_debug("got: %s 0x%" PRIx64 ", expecting %s\n",
 		 symbol, entry->ip, funcs[idx]);
-	वापस म_भेद((स्थिर अक्षर *) symbol, funcs[idx]);
-पूर्ण
+	return strcmp((const char *) symbol, funcs[idx]);
+}
 
-noअंतरभूत पूर्णांक test_dwarf_unwind__thपढ़ो(काष्ठा thपढ़ो *thपढ़ो)
-अणु
-	काष्ठा perf_sample sample;
-	अचिन्हित दीर्घ cnt = 0;
-	पूर्णांक err = -1;
+noinline int test_dwarf_unwind__thread(struct thread *thread)
+{
+	struct perf_sample sample;
+	unsigned long cnt = 0;
+	int err = -1;
 
-	स_रखो(&sample, 0, माप(sample));
+	memset(&sample, 0, sizeof(sample));
 
-	अगर (test__arch_unwind_sample(&sample, thपढ़ो)) अणु
+	if (test__arch_unwind_sample(&sample, thread)) {
 		pr_debug("failed to get unwind sample\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	err = unwind__get_entries(unwind_entry, &cnt, thपढ़ो,
+	err = unwind__get_entries(unwind_entry, &cnt, thread,
 				  &sample, MAX_STACK);
-	अगर (err)
+	if (err)
 		pr_debug("unwind failed\n");
-	अन्यथा अगर (cnt != MAX_STACK) अणु
+	else if (cnt != MAX_STACK) {
 		pr_debug("got wrong number of stack entries %lu != %d\n",
 			 cnt, MAX_STACK);
 		err = -1;
-	पूर्ण
+	}
 
  out:
-	zमुक्त(&sample.user_stack.data);
-	zमुक्त(&sample.user_regs.regs);
-	वापस err;
-पूर्ण
+	zfree(&sample.user_stack.data);
+	zfree(&sample.user_regs.regs);
+	return err;
+}
 
-अटल पूर्णांक global_unwind_retval = -पूर्णांक_उच्च;
+static int global_unwind_retval = -INT_MAX;
 
-noअंतरभूत पूर्णांक test_dwarf_unwind__compare(व्योम *p1, व्योम *p2)
-अणु
+noinline int test_dwarf_unwind__compare(void *p1, void *p2)
+{
 	/* Any possible value should be 'thread' */
-	काष्ठा thपढ़ो *thपढ़ो = *(काष्ठा thपढ़ो **)p1;
+	struct thread *thread = *(struct thread **)p1;
 
-	अगर (global_unwind_retval == -पूर्णांक_उच्च) अणु
-		/* Call unwinder twice क्रम both callchain orders. */
+	if (global_unwind_retval == -INT_MAX) {
+		/* Call unwinder twice for both callchain orders. */
 		callchain_param.order = ORDER_CALLER;
 
-		global_unwind_retval = test_dwarf_unwind__thपढ़ो(thपढ़ो);
-		अगर (!global_unwind_retval) अणु
+		global_unwind_retval = test_dwarf_unwind__thread(thread);
+		if (!global_unwind_retval) {
 			callchain_param.order = ORDER_CALLEE;
-			global_unwind_retval = test_dwarf_unwind__thपढ़ो(thपढ़ो);
-		पूर्ण
-	पूर्ण
+			global_unwind_retval = test_dwarf_unwind__thread(thread);
+		}
+	}
 
-	वापस p1 - p2;
-पूर्ण
+	return p1 - p2;
+}
 
-noअंतरभूत पूर्णांक test_dwarf_unwind__krava_3(काष्ठा thपढ़ो *thपढ़ो)
-अणु
-	काष्ठा thपढ़ो *array[2] = अणुthपढ़ो, thपढ़ोपूर्ण;
-	व्योम *fp = &द्वा_खोज;
+noinline int test_dwarf_unwind__krava_3(struct thread *thread)
+{
+	struct thread *array[2] = {thread, thread};
+	void *fp = &bsearch;
 	/*
-	 * make _द्वा_खोज a अस्थिर function poपूर्णांकer to
+	 * make _bsearch a volatile function pointer to
 	 * prevent potential optimization, which may expand
-	 * द्वा_खोज and call compare directly from this function,
+	 * bsearch and call compare directly from this function,
 	 * instead of libc shared object.
 	 */
-	व्योम *(*अस्थिर _द्वा_खोज)(व्योम *, व्योम *, माप_प्रकार,
-			माप_प्रकार, पूर्णांक (*)(व्योम *, व्योम *));
+	void *(*volatile _bsearch)(void *, void *, size_t,
+			size_t, int (*)(void *, void *));
 
-	_द्वा_खोज = fp;
-	_द्वा_खोज(array, &thपढ़ो, 2, माप(काष्ठा thपढ़ो **),
+	_bsearch = fp;
+	_bsearch(array, &thread, 2, sizeof(struct thread **),
 		 test_dwarf_unwind__compare);
-	वापस global_unwind_retval;
-पूर्ण
+	return global_unwind_retval;
+}
 
-noअंतरभूत पूर्णांक test_dwarf_unwind__krava_2(काष्ठा thपढ़ो *thपढ़ो)
-अणु
-	वापस test_dwarf_unwind__krava_3(thपढ़ो);
-पूर्ण
+noinline int test_dwarf_unwind__krava_2(struct thread *thread)
+{
+	return test_dwarf_unwind__krava_3(thread);
+}
 
-noअंतरभूत पूर्णांक test_dwarf_unwind__krava_1(काष्ठा thपढ़ो *thपढ़ो)
-अणु
-	वापस test_dwarf_unwind__krava_2(thपढ़ो);
-पूर्ण
+noinline int test_dwarf_unwind__krava_1(struct thread *thread)
+{
+	return test_dwarf_unwind__krava_2(thread);
+}
 
-पूर्णांक test__dwarf_unwind(काष्ठा test *test __maybe_unused, पूर्णांक subtest __maybe_unused)
-अणु
-	काष्ठा machine *machine;
-	काष्ठा thपढ़ो *thपढ़ो;
-	पूर्णांक err = -1;
+int test__dwarf_unwind(struct test *test __maybe_unused, int subtest __maybe_unused)
+{
+	struct machine *machine;
+	struct thread *thread;
+	int err = -1;
 
 	machine = machine__new_host();
-	अगर (!machine) अणु
+	if (!machine) {
 		pr_err("Could not get machine\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	अगर (machine__create_kernel_maps(machine)) अणु
+	if (machine__create_kernel_maps(machine)) {
 		pr_err("Failed to create kernel maps\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	callchain_param.record_mode = CALLCHAIN_DWARF;
 	dwarf_callchain_users = true;
 
-	अगर (init_live_machine(machine)) अणु
+	if (init_live_machine(machine)) {
 		pr_err("Could not init machine\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (verbose > 1)
-		machine__ख_लिखो(machine, मानक_त्रुटि);
+	if (verbose > 1)
+		machine__fprintf(machine, stderr);
 
-	thपढ़ो = machine__find_thपढ़ो(machine, getpid(), getpid());
-	अगर (!thपढ़ो) अणु
+	thread = machine__find_thread(machine, getpid(), getpid());
+	if (!thread) {
 		pr_err("Could not get thread\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	err = test_dwarf_unwind__krava_1(thपढ़ो);
-	thपढ़ो__put(thपढ़ो);
+	err = test_dwarf_unwind__krava_1(thread);
+	thread__put(thread);
 
  out:
-	machine__delete_thपढ़ोs(machine);
+	machine__delete_threads(machine);
 	machine__delete(machine);
-	वापस err;
-पूर्ण
+	return err;
+}

@@ -1,193 +1,192 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * soundbus
  *
  * Copyright 2006 Johannes Berg <johannes@sipsolutions.net>
  */
 
-#समावेश <linux/module.h>
-#समावेश "soundbus.h"
+#include <linux/module.h>
+#include "soundbus.h"
 
 MODULE_AUTHOR("Johannes Berg <johannes@sipsolutions.net>");
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Apple Soundbus");
 
-काष्ठा soundbus_dev *soundbus_dev_get(काष्ठा soundbus_dev *dev)
-अणु
-	काष्ठा device *पंचांगp;
+struct soundbus_dev *soundbus_dev_get(struct soundbus_dev *dev)
+{
+	struct device *tmp;
 
-	अगर (!dev)
-		वापस शून्य;
-	पंचांगp = get_device(&dev->ofdev.dev);
-	अगर (पंचांगp)
-		वापस to_soundbus_device(पंचांगp);
-	अन्यथा
-		वापस शून्य;
-पूर्ण
+	if (!dev)
+		return NULL;
+	tmp = get_device(&dev->ofdev.dev);
+	if (tmp)
+		return to_soundbus_device(tmp);
+	else
+		return NULL;
+}
 EXPORT_SYMBOL_GPL(soundbus_dev_get);
 
-व्योम soundbus_dev_put(काष्ठा soundbus_dev *dev)
-अणु
-	अगर (dev)
+void soundbus_dev_put(struct soundbus_dev *dev)
+{
+	if (dev)
 		put_device(&dev->ofdev.dev);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(soundbus_dev_put);
 
-अटल पूर्णांक soundbus_probe(काष्ठा device *dev)
-अणु
-	पूर्णांक error = -ENODEV;
-	काष्ठा soundbus_driver *drv;
-	काष्ठा soundbus_dev *soundbus_dev;
+static int soundbus_probe(struct device *dev)
+{
+	int error = -ENODEV;
+	struct soundbus_driver *drv;
+	struct soundbus_dev *soundbus_dev;
 
 	drv = to_soundbus_driver(dev->driver);
 	soundbus_dev = to_soundbus_device(dev);
 
-	अगर (!drv->probe)
-		वापस error;
+	if (!drv->probe)
+		return error;
 
 	soundbus_dev_get(soundbus_dev);
 
 	error = drv->probe(soundbus_dev);
-	अगर (error)
+	if (error)
 		soundbus_dev_put(soundbus_dev);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
 
-अटल पूर्णांक soundbus_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
-अणु
-	काष्ठा soundbus_dev * soundbus_dev;
-	काष्ठा platक्रमm_device * of;
-	स्थिर अक्षर *compat;
-	पूर्णांक retval = 0;
-	पूर्णांक cplen, seen = 0;
+static int soundbus_uevent(struct device *dev, struct kobj_uevent_env *env)
+{
+	struct soundbus_dev * soundbus_dev;
+	struct platform_device * of;
+	const char *compat;
+	int retval = 0;
+	int cplen, seen = 0;
 
-	अगर (!dev)
-		वापस -ENODEV;
+	if (!dev)
+		return -ENODEV;
 
 	soundbus_dev = to_soundbus_device(dev);
-	अगर (!soundbus_dev)
-		वापस -ENODEV;
+	if (!soundbus_dev)
+		return -ENODEV;
 
 	of = &soundbus_dev->ofdev;
 
 	/* stuff we want to pass to /sbin/hotplug */
 	retval = add_uevent_var(env, "OF_NAME=%pOFn", of->dev.of_node);
-	अगर (retval)
-		वापस retval;
+	if (retval)
+		return retval;
 
 	retval = add_uevent_var(env, "OF_TYPE=%s", of_node_get_device_type(of->dev.of_node));
-	अगर (retval)
-		वापस retval;
+	if (retval)
+		return retval;
 
 	/* Since the compatible field can contain pretty much anything
 	 * it's not really legal to split it out with commas. We split it
 	 * up using a number of environment variables instead. */
 
 	compat = of_get_property(of->dev.of_node, "compatible", &cplen);
-	जबतक (compat && cplen > 0) अणु
-		पूर्णांक पंचांगp = env->buflen;
+	while (compat && cplen > 0) {
+		int tmp = env->buflen;
 		retval = add_uevent_var(env, "OF_COMPATIBLE_%d=%s", seen, compat);
-		अगर (retval)
-			वापस retval;
-		compat += env->buflen - पंचांगp;
-		cplen -= env->buflen - पंचांगp;
+		if (retval)
+			return retval;
+		compat += env->buflen - tmp;
+		cplen -= env->buflen - tmp;
 		seen += 1;
-	पूर्ण
+	}
 
 	retval = add_uevent_var(env, "OF_COMPATIBLE_N=%d", seen);
-	अगर (retval)
-		वापस retval;
+	if (retval)
+		return retval;
 	retval = add_uevent_var(env, "MODALIAS=%s", soundbus_dev->modalias);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक soundbus_device_हटाओ(काष्ठा device *dev)
-अणु
-	काष्ठा soundbus_dev * soundbus_dev = to_soundbus_device(dev);
-	काष्ठा soundbus_driver * drv = to_soundbus_driver(dev->driver);
+static int soundbus_device_remove(struct device *dev)
+{
+	struct soundbus_dev * soundbus_dev = to_soundbus_device(dev);
+	struct soundbus_driver * drv = to_soundbus_driver(dev->driver);
 
-	अगर (dev->driver && drv->हटाओ)
-		drv->हटाओ(soundbus_dev);
+	if (dev->driver && drv->remove)
+		drv->remove(soundbus_dev);
 	soundbus_dev_put(soundbus_dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम soundbus_device_shutकरोwn(काष्ठा device *dev)
-अणु
-	काष्ठा soundbus_dev * soundbus_dev = to_soundbus_device(dev);
-	काष्ठा soundbus_driver * drv = to_soundbus_driver(dev->driver);
+static void soundbus_device_shutdown(struct device *dev)
+{
+	struct soundbus_dev * soundbus_dev = to_soundbus_device(dev);
+	struct soundbus_driver * drv = to_soundbus_driver(dev->driver);
 
-	अगर (dev->driver && drv->shutकरोwn)
-		drv->shutकरोwn(soundbus_dev);
-पूर्ण
+	if (dev->driver && drv->shutdown)
+		drv->shutdown(soundbus_dev);
+}
 
 /* soundbus_dev_attrs is declared in sysfs.c */
 ATTRIBUTE_GROUPS(soundbus_dev);
-अटल काष्ठा bus_type soundbus_bus_type = अणु
+static struct bus_type soundbus_bus_type = {
 	.name		= "aoa-soundbus",
 	.probe		= soundbus_probe,
 	.uevent		= soundbus_uevent,
-	.हटाओ		= soundbus_device_हटाओ,
-	.shutकरोwn	= soundbus_device_shutकरोwn,
+	.remove		= soundbus_device_remove,
+	.shutdown	= soundbus_device_shutdown,
 	.dev_groups	= soundbus_dev_groups,
-पूर्ण;
+};
 
-पूर्णांक soundbus_add_one(काष्ठा soundbus_dev *dev)
-अणु
-	अटल पूर्णांक devcount;
+int soundbus_add_one(struct soundbus_dev *dev)
+{
+	static int devcount;
 
 	/* sanity checks */
-	अगर (!dev->attach_codec ||
+	if (!dev->attach_codec ||
 	    !dev->ofdev.dev.of_node ||
 	    dev->pcmname ||
-	    dev->pcmid != -1) अणु
-		prपूर्णांकk(KERN_ERR "soundbus: adding device failed sanity check!\n");
-		वापस -EINVAL;
-	पूर्ण
+	    dev->pcmid != -1) {
+		printk(KERN_ERR "soundbus: adding device failed sanity check!\n");
+		return -EINVAL;
+	}
 
 	dev_set_name(&dev->ofdev.dev, "soundbus:%x", ++devcount);
 	dev->ofdev.dev.bus = &soundbus_bus_type;
-	वापस of_device_रेजिस्टर(&dev->ofdev);
-पूर्ण
+	return of_device_register(&dev->ofdev);
+}
 EXPORT_SYMBOL_GPL(soundbus_add_one);
 
-व्योम soundbus_हटाओ_one(काष्ठा soundbus_dev *dev)
-अणु
-	of_device_unरेजिस्टर(&dev->ofdev);
-पूर्ण
-EXPORT_SYMBOL_GPL(soundbus_हटाओ_one);
+void soundbus_remove_one(struct soundbus_dev *dev)
+{
+	of_device_unregister(&dev->ofdev);
+}
+EXPORT_SYMBOL_GPL(soundbus_remove_one);
 
-पूर्णांक soundbus_रेजिस्टर_driver(काष्ठा soundbus_driver *drv)
-अणु
+int soundbus_register_driver(struct soundbus_driver *drv)
+{
 	/* initialize common driver fields */
 	drv->driver.name = drv->name;
 	drv->driver.bus = &soundbus_bus_type;
 
-	/* रेजिस्टर with core */
-	वापस driver_रेजिस्टर(&drv->driver);
-पूर्ण
-EXPORT_SYMBOL_GPL(soundbus_रेजिस्टर_driver);
+	/* register with core */
+	return driver_register(&drv->driver);
+}
+EXPORT_SYMBOL_GPL(soundbus_register_driver);
 
-व्योम soundbus_unरेजिस्टर_driver(काष्ठा soundbus_driver *drv)
-अणु
-	driver_unरेजिस्टर(&drv->driver);
-पूर्ण
-EXPORT_SYMBOL_GPL(soundbus_unरेजिस्टर_driver);
+void soundbus_unregister_driver(struct soundbus_driver *drv)
+{
+	driver_unregister(&drv->driver);
+}
+EXPORT_SYMBOL_GPL(soundbus_unregister_driver);
 
-अटल पूर्णांक __init soundbus_init(व्योम)
-अणु
-	वापस bus_रेजिस्टर(&soundbus_bus_type);
-पूर्ण
+static int __init soundbus_init(void)
+{
+	return bus_register(&soundbus_bus_type);
+}
 
-अटल व्योम __निकास soundbus_निकास(व्योम)
-अणु
-	bus_unरेजिस्टर(&soundbus_bus_type);
-पूर्ण
+static void __exit soundbus_exit(void)
+{
+	bus_unregister(&soundbus_bus_type);
+}
 
 subsys_initcall(soundbus_init);
-module_निकास(soundbus_निकास);
+module_exit(soundbus_exit);

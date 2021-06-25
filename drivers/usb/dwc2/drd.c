@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * drd.c - DesignWare USB2 DRD Controller Dual-role support
  *
@@ -8,174 +7,174 @@
  * Author(s): Amelie Delaunay <amelie.delaunay@st.com>
  */
 
-#समावेश <linux/iopoll.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/usb/role.h>
-#समावेश "core.h"
+#include <linux/iopoll.h>
+#include <linux/platform_device.h>
+#include <linux/usb/role.h>
+#include "core.h"
 
-अटल व्योम dwc2_ovr_init(काष्ठा dwc2_hsotg *hsotg)
-अणु
-	अचिन्हित दीर्घ flags;
+static void dwc2_ovr_init(struct dwc2_hsotg *hsotg)
+{
+	unsigned long flags;
 	u32 gotgctl;
 
 	spin_lock_irqsave(&hsotg->lock, flags);
 
-	gotgctl = dwc2_पढ़ोl(hsotg, GOTGCTL);
+	gotgctl = dwc2_readl(hsotg, GOTGCTL);
 	gotgctl |= GOTGCTL_BVALOEN | GOTGCTL_AVALOEN | GOTGCTL_VBVALOEN;
 	gotgctl |= GOTGCTL_DBNCE_FLTR_BYPASS;
 	gotgctl &= ~(GOTGCTL_BVALOVAL | GOTGCTL_AVALOVAL | GOTGCTL_VBVALOVAL);
-	dwc2_ग_लिखोl(hsotg, gotgctl, GOTGCTL);
+	dwc2_writel(hsotg, gotgctl, GOTGCTL);
 
-	dwc2_क्रमce_mode(hsotg, false);
+	dwc2_force_mode(hsotg, false);
 
 	spin_unlock_irqrestore(&hsotg->lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक dwc2_ovr_avalid(काष्ठा dwc2_hsotg *hsotg, bool valid)
-अणु
-	u32 gotgctl = dwc2_पढ़ोl(hsotg, GOTGCTL);
+static int dwc2_ovr_avalid(struct dwc2_hsotg *hsotg, bool valid)
+{
+	u32 gotgctl = dwc2_readl(hsotg, GOTGCTL);
 
-	/* Check अगर A-Session is alपढ़ोy in the right state */
-	अगर ((valid && (gotgctl & GOTGCTL_ASESVLD)) ||
+	/* Check if A-Session is already in the right state */
+	if ((valid && (gotgctl & GOTGCTL_ASESVLD)) ||
 	    (!valid && !(gotgctl & GOTGCTL_ASESVLD)))
-		वापस -EALREADY;
+		return -EALREADY;
 
-	अगर (valid)
+	if (valid)
 		gotgctl |= GOTGCTL_AVALOVAL | GOTGCTL_VBVALOVAL;
-	अन्यथा
+	else
 		gotgctl &= ~(GOTGCTL_AVALOVAL | GOTGCTL_VBVALOVAL);
-	dwc2_ग_लिखोl(hsotg, gotgctl, GOTGCTL);
+	dwc2_writel(hsotg, gotgctl, GOTGCTL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dwc2_ovr_bvalid(काष्ठा dwc2_hsotg *hsotg, bool valid)
-अणु
-	u32 gotgctl = dwc2_पढ़ोl(hsotg, GOTGCTL);
+static int dwc2_ovr_bvalid(struct dwc2_hsotg *hsotg, bool valid)
+{
+	u32 gotgctl = dwc2_readl(hsotg, GOTGCTL);
 
-	/* Check अगर B-Session is alपढ़ोy in the right state */
-	अगर ((valid && (gotgctl & GOTGCTL_BSESVLD)) ||
+	/* Check if B-Session is already in the right state */
+	if ((valid && (gotgctl & GOTGCTL_BSESVLD)) ||
 	    (!valid && !(gotgctl & GOTGCTL_BSESVLD)))
-		वापस -EALREADY;
+		return -EALREADY;
 
-	अगर (valid)
+	if (valid)
 		gotgctl |= GOTGCTL_BVALOVAL | GOTGCTL_VBVALOVAL;
-	अन्यथा
+	else
 		gotgctl &= ~(GOTGCTL_BVALOVAL | GOTGCTL_VBVALOVAL);
-	dwc2_ग_लिखोl(hsotg, gotgctl, GOTGCTL);
+	dwc2_writel(hsotg, gotgctl, GOTGCTL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dwc2_drd_role_sw_set(काष्ठा usb_role_चयन *sw, क्रमागत usb_role role)
-अणु
-	काष्ठा dwc2_hsotg *hsotg = usb_role_चयन_get_drvdata(sw);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक alपढ़ोy = 0;
+static int dwc2_drd_role_sw_set(struct usb_role_switch *sw, enum usb_role role)
+{
+	struct dwc2_hsotg *hsotg = usb_role_switch_get_drvdata(sw);
+	unsigned long flags;
+	int already = 0;
 
 	/* Skip session not in line with dr_mode */
-	अगर ((role == USB_ROLE_DEVICE && hsotg->dr_mode == USB_DR_MODE_HOST) ||
+	if ((role == USB_ROLE_DEVICE && hsotg->dr_mode == USB_DR_MODE_HOST) ||
 	    (role == USB_ROLE_HOST && hsotg->dr_mode == USB_DR_MODE_PERIPHERAL))
-		वापस -EINVAL;
+		return -EINVAL;
 
-#अगर IS_ENABLED(CONFIG_USB_DWC2_PERIPHERAL) || \
+#if IS_ENABLED(CONFIG_USB_DWC2_PERIPHERAL) || \
 	IS_ENABLED(CONFIG_USB_DWC2_DUAL_ROLE)
-	/* Skip session अगर core is in test mode */
-	अगर (role == USB_ROLE_NONE && hsotg->test_mode) अणु
+	/* Skip session if core is in test mode */
+	if (role == USB_ROLE_NONE && hsotg->test_mode) {
 		dev_dbg(hsotg->dev, "Core is in test mode\n");
-		वापस -EBUSY;
-	पूर्ण
-#पूर्ण_अगर
+		return -EBUSY;
+	}
+#endif
 
 	spin_lock_irqsave(&hsotg->lock, flags);
 
-	अगर (role == USB_ROLE_HOST) अणु
-		alपढ़ोy = dwc2_ovr_avalid(hsotg, true);
-	पूर्ण अन्यथा अगर (role == USB_ROLE_DEVICE) अणु
-		alपढ़ोy = dwc2_ovr_bvalid(hsotg, true);
+	if (role == USB_ROLE_HOST) {
+		already = dwc2_ovr_avalid(hsotg, true);
+	} else if (role == USB_ROLE_DEVICE) {
+		already = dwc2_ovr_bvalid(hsotg, true);
 		/* This clear DCTL.SFTDISCON bit */
 		dwc2_hsotg_core_connect(hsotg);
-	पूर्ण अन्यथा अणु
-		अगर (dwc2_is_device_mode(hsotg)) अणु
-			अगर (!dwc2_ovr_bvalid(hsotg, false))
+	} else {
+		if (dwc2_is_device_mode(hsotg)) {
+			if (!dwc2_ovr_bvalid(hsotg, false))
 				/* This set DCTL.SFTDISCON bit */
 				dwc2_hsotg_core_disconnect(hsotg);
-		पूर्ण अन्यथा अणु
+		} else {
 			dwc2_ovr_avalid(hsotg, false);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	spin_unlock_irqrestore(&hsotg->lock, flags);
 
-	अगर (!alपढ़ोy && hsotg->dr_mode == USB_DR_MODE_OTG)
-		/* This will उठाओ a Connector ID Status Change Interrupt */
-		dwc2_क्रमce_mode(hsotg, role == USB_ROLE_HOST);
+	if (!already && hsotg->dr_mode == USB_DR_MODE_OTG)
+		/* This will raise a Connector ID Status Change Interrupt */
+		dwc2_force_mode(hsotg, role == USB_ROLE_HOST);
 
 	dev_dbg(hsotg->dev, "%s-session valid\n",
 		role == USB_ROLE_NONE ? "No" :
 		role == USB_ROLE_HOST ? "A" : "B");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक dwc2_drd_init(काष्ठा dwc2_hsotg *hsotg)
-अणु
-	काष्ठा usb_role_चयन_desc role_sw_desc = अणु0पूर्ण;
-	काष्ठा usb_role_चयन *role_sw;
-	पूर्णांक ret;
+int dwc2_drd_init(struct dwc2_hsotg *hsotg)
+{
+	struct usb_role_switch_desc role_sw_desc = {0};
+	struct usb_role_switch *role_sw;
+	int ret;
 
-	अगर (!device_property_पढ़ो_bool(hsotg->dev, "usb-role-switch"))
-		वापस 0;
+	if (!device_property_read_bool(hsotg->dev, "usb-role-switch"))
+		return 0;
 
 	role_sw_desc.driver_data = hsotg;
 	role_sw_desc.fwnode = dev_fwnode(hsotg->dev);
 	role_sw_desc.set = dwc2_drd_role_sw_set;
 	role_sw_desc.allow_userspace_control = true;
 
-	role_sw = usb_role_चयन_रेजिस्टर(hsotg->dev, &role_sw_desc);
-	अगर (IS_ERR(role_sw)) अणु
+	role_sw = usb_role_switch_register(hsotg->dev, &role_sw_desc);
+	if (IS_ERR(role_sw)) {
 		ret = PTR_ERR(role_sw);
 		dev_err(hsotg->dev,
 			"failed to register role switch: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	hsotg->role_sw = role_sw;
 
 	/* Enable override and initialize values */
 	dwc2_ovr_init(hsotg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम dwc2_drd_suspend(काष्ठा dwc2_hsotg *hsotg)
-अणु
-	u32 gपूर्णांकsts, gपूर्णांकmsk;
+void dwc2_drd_suspend(struct dwc2_hsotg *hsotg)
+{
+	u32 gintsts, gintmsk;
 
-	अगर (hsotg->role_sw && !hsotg->params.बाह्यal_id_pin_ctl) अणु
-		gपूर्णांकmsk = dwc2_पढ़ोl(hsotg, GINTMSK);
-		gपूर्णांकmsk &= ~GINTSTS_CONIDSTSCHNG;
-		dwc2_ग_लिखोl(hsotg, gपूर्णांकmsk, GINTMSK);
-		gपूर्णांकsts = dwc2_पढ़ोl(hsotg, GINTSTS);
-		dwc2_ग_लिखोl(hsotg, gपूर्णांकsts | GINTSTS_CONIDSTSCHNG, GINTSTS);
-	पूर्ण
-पूर्ण
+	if (hsotg->role_sw && !hsotg->params.external_id_pin_ctl) {
+		gintmsk = dwc2_readl(hsotg, GINTMSK);
+		gintmsk &= ~GINTSTS_CONIDSTSCHNG;
+		dwc2_writel(hsotg, gintmsk, GINTMSK);
+		gintsts = dwc2_readl(hsotg, GINTSTS);
+		dwc2_writel(hsotg, gintsts | GINTSTS_CONIDSTSCHNG, GINTSTS);
+	}
+}
 
-व्योम dwc2_drd_resume(काष्ठा dwc2_hsotg *hsotg)
-अणु
-	u32 gपूर्णांकsts, gपूर्णांकmsk;
+void dwc2_drd_resume(struct dwc2_hsotg *hsotg)
+{
+	u32 gintsts, gintmsk;
 
-	अगर (hsotg->role_sw && !hsotg->params.बाह्यal_id_pin_ctl) अणु
-		gपूर्णांकsts = dwc2_पढ़ोl(hsotg, GINTSTS);
-		dwc2_ग_लिखोl(hsotg, gपूर्णांकsts | GINTSTS_CONIDSTSCHNG, GINTSTS);
-		gपूर्णांकmsk = dwc2_पढ़ोl(hsotg, GINTMSK);
-		gपूर्णांकmsk |= GINTSTS_CONIDSTSCHNG;
-		dwc2_ग_लिखोl(hsotg, gपूर्णांकmsk, GINTMSK);
-	पूर्ण
-पूर्ण
+	if (hsotg->role_sw && !hsotg->params.external_id_pin_ctl) {
+		gintsts = dwc2_readl(hsotg, GINTSTS);
+		dwc2_writel(hsotg, gintsts | GINTSTS_CONIDSTSCHNG, GINTSTS);
+		gintmsk = dwc2_readl(hsotg, GINTMSK);
+		gintmsk |= GINTSTS_CONIDSTSCHNG;
+		dwc2_writel(hsotg, gintmsk, GINTMSK);
+	}
+}
 
-व्योम dwc2_drd_निकास(काष्ठा dwc2_hsotg *hsotg)
-अणु
-	अगर (hsotg->role_sw)
-		usb_role_चयन_unरेजिस्टर(hsotg->role_sw);
-पूर्ण
+void dwc2_drd_exit(struct dwc2_hsotg *hsotg)
+{
+	if (hsotg->role_sw)
+		usb_role_switch_unregister(hsotg->role_sw);
+}

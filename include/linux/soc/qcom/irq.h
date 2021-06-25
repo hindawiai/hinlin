@@ -1,35 +1,34 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 
-#अगर_अघोषित __QCOM_IRQ_H
-#घोषणा __QCOM_IRQ_H
+#ifndef __QCOM_IRQ_H
+#define __QCOM_IRQ_H
 
-#समावेश <linux/irqकरोमुख्य.h>
+#include <linux/irqdomain.h>
 
-#घोषणा GPIO_NO_WAKE_IRQ	~0U
+#define GPIO_NO_WAKE_IRQ	~0U
 
 /*
- * QCOM specअगरic IRQ करोमुख्य flags that distinguishes the handling of wakeup
- * capable पूर्णांकerrupts by dअगरferent पूर्णांकerrupt controllers.
+ * QCOM specific IRQ domain flags that distinguishes the handling of wakeup
+ * capable interrupts by different interrupt controllers.
  *
  * IRQ_DOMAIN_FLAG_QCOM_PDC_WAKEUP: Line must be masked at TLMM and the
- *                                  पूर्णांकerrupt configuration is करोne at PDC
+ *                                  interrupt configuration is done at PDC
  * IRQ_DOMAIN_FLAG_QCOM_MPM_WAKEUP: Interrupt configuration is handled at TLMM
  */
-#घोषणा IRQ_DOMAIN_FLAG_QCOM_PDC_WAKEUP		(IRQ_DOMAIN_FLAG_NONCORE << 0)
-#घोषणा IRQ_DOMAIN_FLAG_QCOM_MPM_WAKEUP		(IRQ_DOMAIN_FLAG_NONCORE << 1)
+#define IRQ_DOMAIN_FLAG_QCOM_PDC_WAKEUP		(IRQ_DOMAIN_FLAG_NONCORE << 0)
+#define IRQ_DOMAIN_FLAG_QCOM_MPM_WAKEUP		(IRQ_DOMAIN_FLAG_NONCORE << 1)
 
 /**
- * irq_करोमुख्य_qcom_handle_wakeup: Return अगर the करोमुख्य handles पूर्णांकerrupt
+ * irq_domain_qcom_handle_wakeup: Return if the domain handles interrupt
  *                                configuration
- * @d: irq करोमुख्य
+ * @d: irq domain
  *
- * This QCOM specअगरic irq करोमुख्य call वापसs अगर the पूर्णांकerrupt controller
- * requires the पूर्णांकerrupt be masked at the child पूर्णांकerrupt controller.
+ * This QCOM specific irq domain call returns if the interrupt controller
+ * requires the interrupt be masked at the child interrupt controller.
  */
-अटल अंतरभूत bool irq_करोमुख्य_qcom_handle_wakeup(स्थिर काष्ठा irq_करोमुख्य *d)
-अणु
-	वापस (d->flags & IRQ_DOMAIN_FLAG_QCOM_PDC_WAKEUP);
-पूर्ण
+static inline bool irq_domain_qcom_handle_wakeup(const struct irq_domain *d)
+{
+	return (d->flags & IRQ_DOMAIN_FLAG_QCOM_PDC_WAKEUP);
+}
 
-#पूर्ण_अगर
+#endif

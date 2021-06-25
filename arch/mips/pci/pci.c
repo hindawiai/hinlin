@@ -1,32 +1,31 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *
  * Copyright (C) 2003, 04, 11 Ralf Baechle (ralf@linux-mips.org)
  * Copyright (C) 2011 Wind River Systems,
  *   written by Ralf Baechle (ralf@linux-mips.org)
  */
-#समावेश <linux/bug.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/memblock.h>
-#समावेश <linux/export.h>
-#समावेश <linux/init.h>
-#समावेश <linux/types.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/of_address.h>
+#include <linux/bug.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/memblock.h>
+#include <linux/export.h>
+#include <linux/init.h>
+#include <linux/types.h>
+#include <linux/pci.h>
+#include <linux/of_address.h>
 
-#समावेश <यंत्र/cpu-info.h>
+#include <asm/cpu-info.h>
 
-अचिन्हित दीर्घ PCIBIOS_MIN_IO;
+unsigned long PCIBIOS_MIN_IO;
 EXPORT_SYMBOL(PCIBIOS_MIN_IO);
 
-अचिन्हित दीर्घ PCIBIOS_MIN_MEM;
+unsigned long PCIBIOS_MIN_MEM;
 EXPORT_SYMBOL(PCIBIOS_MIN_MEM);
 
-अटल पूर्णांक __init pcibios_set_cache_line_size(व्योम)
-अणु
-	अचिन्हित पूर्णांक lsize;
+static int __init pcibios_set_cache_line_size(void)
+{
+	unsigned int lsize;
 
 	/*
 	 * Set PCI cacheline size to that of the highest level in the
@@ -41,16 +40,16 @@ EXPORT_SYMBOL(PCIBIOS_MIN_MEM);
 	pci_dfl_cache_line_size = lsize >> 2;
 
 	pr_debug("PCI: pci_cache_line_size set to %d bytes\n", lsize);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 arch_initcall(pcibios_set_cache_line_size);
 
-व्योम pci_resource_to_user(स्थिर काष्ठा pci_dev *dev, पूर्णांक bar,
-			  स्थिर काष्ठा resource *rsrc, resource_माप_प्रकार *start,
-			  resource_माप_प्रकार *end)
-अणु
+void pci_resource_to_user(const struct pci_dev *dev, int bar,
+			  const struct resource *rsrc, resource_size_t *start,
+			  resource_size_t *end)
+{
 	phys_addr_t size = resource_size(rsrc);
 
 	*start = fixup_bigphys_addr(rsrc->start, size);
 	*end = rsrc->start + size - 1;
-पूर्ण
+}

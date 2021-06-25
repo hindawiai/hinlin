@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0 OR MIT)
+// SPDX-License-Identifier: (GPL-2.0 OR MIT)
 /*
- * net/dsa/tag_hellcreek.c - Hirschmann Hellcreek चयन tag क्रमmat handling
+ * net/dsa/tag_hellcreek.c - Hirschmann Hellcreek switch tag format handling
  *
  * Copyright (C) 2019,2020 Linutronix GmbH
  * Author Kurt Kanzenbach <kurt@linutronix.de>
@@ -9,55 +8,55 @@
  * Based on tag_ksz.c.
  */
 
-#समावेश <linux/skbuff.h>
-#समावेश <net/dsa.h>
+#include <linux/skbuff.h>
+#include <net/dsa.h>
 
-#समावेश "dsa_priv.h"
+#include "dsa_priv.h"
 
-#घोषणा HELLCREEK_TAG_LEN	1
+#define HELLCREEK_TAG_LEN	1
 
-अटल काष्ठा sk_buff *hellcreek_xmit(काष्ठा sk_buff *skb,
-				      काष्ठा net_device *dev)
-अणु
-	काष्ठा dsa_port *dp = dsa_slave_to_port(dev);
+static struct sk_buff *hellcreek_xmit(struct sk_buff *skb,
+				      struct net_device *dev)
+{
+	struct dsa_port *dp = dsa_slave_to_port(dev);
 	u8 *tag;
 
 	/* Tag encoding */
 	tag  = skb_put(skb, HELLCREEK_TAG_LEN);
 	*tag = BIT(dp->index);
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल काष्ठा sk_buff *hellcreek_rcv(काष्ठा sk_buff *skb,
-				     काष्ठा net_device *dev,
-				     काष्ठा packet_type *pt)
-अणु
+static struct sk_buff *hellcreek_rcv(struct sk_buff *skb,
+				     struct net_device *dev,
+				     struct packet_type *pt)
+{
 	/* Tag decoding */
-	u8 *tag = skb_tail_poपूर्णांकer(skb) - HELLCREEK_TAG_LEN;
-	अचिन्हित पूर्णांक port = tag[0] & 0x03;
+	u8 *tag = skb_tail_pointer(skb) - HELLCREEK_TAG_LEN;
+	unsigned int port = tag[0] & 0x03;
 
 	skb->dev = dsa_master_find_slave(dev, 0, port);
-	अगर (!skb->dev) अणु
+	if (!skb->dev) {
 		netdev_warn(dev, "Failed to get source port: %d\n", port);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	pskb_trim_rcsum(skb, skb->len - HELLCREEK_TAG_LEN);
 
 	skb->offload_fwd_mark = true;
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल स्थिर काष्ठा dsa_device_ops hellcreek_netdev_ops = अणु
+static const struct dsa_device_ops hellcreek_netdev_ops = {
 	.name	  = "hellcreek",
 	.proto	  = DSA_TAG_PROTO_HELLCREEK,
 	.xmit	  = hellcreek_xmit,
 	.rcv	  = hellcreek_rcv,
 	.overhead = HELLCREEK_TAG_LEN,
 	.tail_tag = true,
-पूर्ण;
+};
 
 MODULE_LICENSE("Dual MIT/GPL");
 MODULE_ALIAS_DSA_TAG_DRIVER(DSA_TAG_PROTO_HELLCREEK);

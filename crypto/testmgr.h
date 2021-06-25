@@ -1,94 +1,93 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Algorithm testing framework and tests.
  *
- * Copyright (c) 2002 James Morris <jmorris@पूर्णांकercode.com.au>
+ * Copyright (c) 2002 James Morris <jmorris@intercode.com.au>
  * Copyright (c) 2002 Jean-Francois Dive <jef@linuxbe.org>
  * Copyright (c) 2007 Nokia Siemens Networks
- * Copyright (c) 2008 Herbert Xu <herbert@gonकरोr.apana.org.au>
+ * Copyright (c) 2008 Herbert Xu <herbert@gondor.apana.org.au>
  * Copyright (c) 2019 Google LLC
  *
  * Updated RFC4106 AES-GCM testing. Some test vectors were taken from
- * http://csrc.nist.gov/groups/ST/toolkit/BCM/करोcuments/proposedmodes/
+ * http://csrc.nist.gov/groups/ST/toolkit/BCM/documents/proposedmodes/
  * gcm/gcm-test-vectors.tar.gz
- *     Authors: Aidan O'Mahony (aidan.o.mahony@पूर्णांकel.com)
- *              Adrian Hoban <adrian.hoban@पूर्णांकel.com>
- *              Gabriele Paoloni <gabriele.paoloni@पूर्णांकel.com>
- *              Tadeusz Struk (tadeusz.struk@पूर्णांकel.com)
+ *     Authors: Aidan O'Mahony (aidan.o.mahony@intel.com)
+ *              Adrian Hoban <adrian.hoban@intel.com>
+ *              Gabriele Paoloni <gabriele.paoloni@intel.com>
+ *              Tadeusz Struk (tadeusz.struk@intel.com)
  *     Copyright (c) 2010, Intel Corporation.
  */
-#अगर_अघोषित _CRYPTO_TESTMGR_H
-#घोषणा _CRYPTO_TESTMGR_H
+#ifndef _CRYPTO_TESTMGR_H
+#define _CRYPTO_TESTMGR_H
 
-#समावेश <linux/oid_registry.h>
+#include <linux/oid_registry.h>
 
-#घोषणा MAX_IVLEN		32
+#define MAX_IVLEN		32
 
 /*
- * hash_testvec:	काष्ठाure to describe a hash (message digest) test
- * @key:	Poपूर्णांकer to key (शून्य अगर none)
- * @plaपूर्णांकext:	Poपूर्णांकer to source data
- * @digest:	Poपूर्णांकer to expected digest
+ * hash_testvec:	structure to describe a hash (message digest) test
+ * @key:	Pointer to key (NULL if none)
+ * @plaintext:	Pointer to source data
+ * @digest:	Pointer to expected digest
  * @psize:	Length of source data in bytes
- * @ksize:	Length of @key in bytes (0 अगर no key)
+ * @ksize:	Length of @key in bytes (0 if no key)
  * @setkey_error: Expected error from setkey()
  * @digest_error: Expected error from digest()
  */
-काष्ठा hash_testvec अणु
-	स्थिर अक्षर *key;
-	स्थिर अक्षर *plaपूर्णांकext;
-	स्थिर अक्षर *digest;
-	अचिन्हित पूर्णांक psize;
-	अचिन्हित लघु ksize;
-	पूर्णांक setkey_error;
-	पूर्णांक digest_error;
-पूर्ण;
+struct hash_testvec {
+	const char *key;
+	const char *plaintext;
+	const char *digest;
+	unsigned int psize;
+	unsigned short ksize;
+	int setkey_error;
+	int digest_error;
+};
 
 /*
- * cipher_testvec:	काष्ठाure to describe a symmetric cipher test
- * @key:	Poपूर्णांकer to key
+ * cipher_testvec:	structure to describe a symmetric cipher test
+ * @key:	Pointer to key
  * @klen:	Length of @key in bytes
- * @iv:		Poपूर्णांकer to IV.  If शून्य, an all-zeroes IV is used.
- * @iv_out:	Poपूर्णांकer to output IV, अगर applicable क्रम the cipher.
- * @ptext:	Poपूर्णांकer to plaपूर्णांकext
- * @ctext:	Poपूर्णांकer to ciphertext
+ * @iv:		Pointer to IV.  If NULL, an all-zeroes IV is used.
+ * @iv_out:	Pointer to output IV, if applicable for the cipher.
+ * @ptext:	Pointer to plaintext
+ * @ctext:	Pointer to ciphertext
  * @len:	Length of @ptext and @ctext in bytes
  * @wk:		Does the test need CRYPTO_TFM_REQ_FORBID_WEAK_KEYS?
  * 		( e.g. test needs to fail due to a weak key )
  * @fips_skip:	Skip the test vector in FIPS mode
  * @generates_iv: Encryption should ignore the given IV, and output @iv_out.
- *		  Decryption takes @iv_out.  Needed क्रम AES Keywrap ("kw(aes)").
+ *		  Decryption takes @iv_out.  Needed for AES Keywrap ("kw(aes)").
  * @setkey_error: Expected error from setkey()
  * @crypt_error: Expected error from encrypt() and decrypt()
  */
-काष्ठा cipher_testvec अणु
-	स्थिर अक्षर *key;
-	स्थिर अक्षर *iv;
-	स्थिर अक्षर *iv_out;
-	स्थिर अक्षर *ptext;
-	स्थिर अक्षर *ctext;
-	अचिन्हित अक्षर wk; /* weak key flag */
-	अचिन्हित लघु klen;
-	अचिन्हित पूर्णांक len;
+struct cipher_testvec {
+	const char *key;
+	const char *iv;
+	const char *iv_out;
+	const char *ptext;
+	const char *ctext;
+	unsigned char wk; /* weak key flag */
+	unsigned short klen;
+	unsigned int len;
 	bool fips_skip;
 	bool generates_iv;
-	पूर्णांक setkey_error;
-	पूर्णांक crypt_error;
-पूर्ण;
+	int setkey_error;
+	int crypt_error;
+};
 
 /*
- * aead_testvec:	काष्ठाure to describe an AEAD test
- * @key:	Poपूर्णांकer to key
- * @iv:		Poपूर्णांकer to IV.  If शून्य, an all-zeroes IV is used.
- * @ptext:	Poपूर्णांकer to plaपूर्णांकext
- * @assoc:	Poपूर्णांकer to associated data
- * @ctext:	Poपूर्णांकer to the full authenticated ciphertext.  For AEADs that
+ * aead_testvec:	structure to describe an AEAD test
+ * @key:	Pointer to key
+ * @iv:		Pointer to IV.  If NULL, an all-zeroes IV is used.
+ * @ptext:	Pointer to plaintext
+ * @assoc:	Pointer to associated data
+ * @ctext:	Pointer to the full authenticated ciphertext.  For AEADs that
  *		produce a separate "ciphertext" and "authentication tag", these
  *		two parts are concatenated: ciphertext || tag.
  * @novrfy:	If set, this is an inauthentic input test: only decryption is
  *		tested, and it is expected to fail with either -EBADMSG or
- *		@crypt_error अगर it is nonzero.
+ *		@crypt_error if it is nonzero.
  * @wk:		Does the test need CRYPTO_TFM_REQ_FORBID_WEAK_KEYS?
  *		(e.g. setkey() needs to fail due to a weak key)
  * @klen:	Length of @key in bytes
@@ -101,108 +100,108 @@
  *		       encryption nor decryption is tested.
  * @crypt_error: When @novrfy=0, the expected error from encrypt().  When
  *		 @novrfy=1, an optional alternate error code that is acceptable
- *		 क्रम decrypt() to वापस besides -EBADMSG.
+ *		 for decrypt() to return besides -EBADMSG.
  */
-काष्ठा aead_testvec अणु
-	स्थिर अक्षर *key;
-	स्थिर अक्षर *iv;
-	स्थिर अक्षर *ptext;
-	स्थिर अक्षर *assoc;
-	स्थिर अक्षर *ctext;
-	अचिन्हित अक्षर novrfy;
-	अचिन्हित अक्षर wk;
-	अचिन्हित अक्षर klen;
-	अचिन्हित पूर्णांक plen;
-	अचिन्हित पूर्णांक clen;
-	अचिन्हित पूर्णांक alen;
-	पूर्णांक setkey_error;
-	पूर्णांक setauthsize_error;
-	पूर्णांक crypt_error;
-पूर्ण;
+struct aead_testvec {
+	const char *key;
+	const char *iv;
+	const char *ptext;
+	const char *assoc;
+	const char *ctext;
+	unsigned char novrfy;
+	unsigned char wk;
+	unsigned char klen;
+	unsigned int plen;
+	unsigned int clen;
+	unsigned int alen;
+	int setkey_error;
+	int setauthsize_error;
+	int crypt_error;
+};
 
-काष्ठा cprng_testvec अणु
-	स्थिर अक्षर *key;
-	स्थिर अक्षर *dt;
-	स्थिर अक्षर *v;
-	स्थिर अक्षर *result;
-	अचिन्हित अक्षर klen;
-	अचिन्हित लघु dtlen;
-	अचिन्हित लघु vlen;
-	अचिन्हित लघु rlen;
-	अचिन्हित लघु loops;
-पूर्ण;
+struct cprng_testvec {
+	const char *key;
+	const char *dt;
+	const char *v;
+	const char *result;
+	unsigned char klen;
+	unsigned short dtlen;
+	unsigned short vlen;
+	unsigned short rlen;
+	unsigned short loops;
+};
 
-काष्ठा drbg_testvec अणु
-	स्थिर अचिन्हित अक्षर *entropy;
-	माप_प्रकार entropylen;
-	स्थिर अचिन्हित अक्षर *entpra;
-	स्थिर अचिन्हित अक्षर *entprb;
-	माप_प्रकार entprlen;
-	स्थिर अचिन्हित अक्षर *addtla;
-	स्थिर अचिन्हित अक्षर *addtlb;
-	माप_प्रकार addtllen;
-	स्थिर अचिन्हित अक्षर *pers;
-	माप_प्रकार perslen;
-	स्थिर अचिन्हित अक्षर *expected;
-	माप_प्रकार expectedlen;
-पूर्ण;
+struct drbg_testvec {
+	const unsigned char *entropy;
+	size_t entropylen;
+	const unsigned char *entpra;
+	const unsigned char *entprb;
+	size_t entprlen;
+	const unsigned char *addtla;
+	const unsigned char *addtlb;
+	size_t addtllen;
+	const unsigned char *pers;
+	size_t perslen;
+	const unsigned char *expected;
+	size_t expectedlen;
+};
 
-काष्ठा akcipher_testvec अणु
-	स्थिर अचिन्हित अक्षर *key;
-	स्थिर अचिन्हित अक्षर *params;
-	स्थिर अचिन्हित अक्षर *m;
-	स्थिर अचिन्हित अक्षर *c;
-	अचिन्हित पूर्णांक key_len;
-	अचिन्हित पूर्णांक param_len;
-	अचिन्हित पूर्णांक m_size;
-	अचिन्हित पूर्णांक c_size;
-	bool खुला_key_vec;
+struct akcipher_testvec {
+	const unsigned char *key;
+	const unsigned char *params;
+	const unsigned char *m;
+	const unsigned char *c;
+	unsigned int key_len;
+	unsigned int param_len;
+	unsigned int m_size;
+	unsigned int c_size;
+	bool public_key_vec;
 	bool siggen_sigver_test;
-	क्रमागत OID algo;
-पूर्ण;
+	enum OID algo;
+};
 
-काष्ठा kpp_testvec अणु
-	स्थिर अचिन्हित अक्षर *secret;
-	स्थिर अचिन्हित अक्षर *b_secret;
-	स्थिर अचिन्हित अक्षर *b_खुला;
-	स्थिर अचिन्हित अक्षर *expected_a_खुला;
-	स्थिर अचिन्हित अक्षर *expected_ss;
-	अचिन्हित लघु secret_size;
-	अचिन्हित लघु b_secret_size;
-	अचिन्हित लघु b_खुला_size;
-	अचिन्हित लघु expected_a_खुला_size;
-	अचिन्हित लघु expected_ss_size;
+struct kpp_testvec {
+	const unsigned char *secret;
+	const unsigned char *b_secret;
+	const unsigned char *b_public;
+	const unsigned char *expected_a_public;
+	const unsigned char *expected_ss;
+	unsigned short secret_size;
+	unsigned short b_secret_size;
+	unsigned short b_public_size;
+	unsigned short expected_a_public_size;
+	unsigned short expected_ss_size;
 	bool genkey;
-पूर्ण;
+};
 
-अटल स्थिर अक्षर zeroed_string[48];
+static const char zeroed_string[48];
 
 /*
- * RSA test vectors. Borrowed from खोलोSSL.
+ * RSA test vectors. Borrowed from openSSL.
  */
-अटल स्थिर काष्ठा akcipher_testvec rsa_tv_ढाँचा[] = अणु
-	अणु
-#अगर_अघोषित CONFIG_CRYPTO_FIPS
+static const struct akcipher_testvec rsa_tv_template[] = {
+	{
+#ifndef CONFIG_CRYPTO_FIPS
 	.key =
 	"\x30\x81\x9A" /* sequence of 154 bytes */
-	"\x02\x01\x01" /* version - पूर्णांकeger of 1 byte */
-	"\x02\x41" /* modulus - पूर्णांकeger of 65 bytes */
+	"\x02\x01\x01" /* version - integer of 1 byte */
+	"\x02\x41" /* modulus - integer of 65 bytes */
 	"\x00\xAA\x36\xAB\xCE\x88\xAC\xFD\xFF\x55\x52\x3C\x7F\xC4\x52\x3F"
 	"\x90\xEF\xA0\x0D\xF3\x77\x4A\x25\x9F\x2E\x62\xB4\xC5\xD9\x9C\xB5"
 	"\xAD\xB3\x00\xA0\x28\x5E\x53\x01\x93\x0E\x0C\x70\xFB\x68\x76\x93"
 	"\x9C\xE6\x16\xCE\x62\x4A\x11\xE0\x08\x6D\x34\x1E\xBC\xAC\xA0\xA1"
 	"\xF5"
-	"\x02\x01\x11" /* खुला key - पूर्णांकeger of 1 byte */
-	"\x02\x40" /* निजी key - पूर्णांकeger of 64 bytes */
+	"\x02\x01\x11" /* public key - integer of 1 byte */
+	"\x02\x40" /* private key - integer of 64 bytes */
 	"\x0A\x03\x37\x48\x62\x64\x87\x69\x5F\x5F\x30\xBC\x38\xB9\x8B\x44"
 	"\xC2\xCD\x2D\xFF\x43\x40\x98\xCD\x20\xD8\xA1\x38\xD0\x90\xBF\x64"
 	"\x79\x7C\x3F\xA7\xA2\xCD\xCB\x3C\xD1\xE0\xBD\xBA\x26\x54\xB4\xF9"
 	"\xDF\x8E\x8A\xE5\x9D\x73\x3D\x9F\x33\xB3\x01\x62\x4A\xFD\x1D\x51"
-	"\x02\x01\x00" /* prime1 - पूर्णांकeger of 1 byte */
-	"\x02\x01\x00" /* prime2 - पूर्णांकeger of 1 byte */
-	"\x02\x01\x00" /* exponent1 - पूर्णांकeger of 1 byte */
-	"\x02\x01\x00" /* exponent2 - पूर्णांकeger of 1 byte */
-	"\x02\x01\x00", /* coefficient - पूर्णांकeger of 1 byte */
+	"\x02\x01\x00" /* prime1 - integer of 1 byte */
+	"\x02\x01\x00" /* prime2 - integer of 1 byte */
+	"\x02\x01\x00" /* exponent1 - integer of 1 byte */
+	"\x02\x01\x00" /* exponent2 - integer of 1 byte */
+	"\x02\x01\x00", /* coefficient - integer of 1 byte */
 	.m = "\x54\x85\x9b\x34\x2c\x49\xea\x2a",
 	.c =
 	"\x63\x1c\xcd\x7b\xe1\x7e\xe4\xde\xc9\xa8\x89\xa1\x74\xcb\x3c\x63"
@@ -212,11 +211,11 @@
 	.key_len = 157,
 	.m_size = 8,
 	.c_size = 64,
-	पूर्ण, अणु
+	}, {
 	.key =
 	"\x30\x82\x01\x1D" /* sequence of 285 bytes */
-	"\x02\x01\x01" /* version - पूर्णांकeger of 1 byte */
-	"\x02\x81\x81" /* modulus - पूर्णांकeger of 129 bytes */
+	"\x02\x01\x01" /* version - integer of 1 byte */
+	"\x02\x81\x81" /* modulus - integer of 129 bytes */
 	"\x00\xBB\xF8\x2F\x09\x06\x82\xCE\x9C\x23\x38\xAC\x2B\x9D\xA8\x71"
 	"\xF7\x36\x8D\x07\xEE\xD4\x10\x43\xA4\x40\xD6\xB6\xF0\x74\x54\xF5"
 	"\x1F\xB8\xDF\xBA\xAF\x03\x5C\x02\xAB\x61\xEA\x48\xCE\xEB\x6F\xCD"
@@ -226,8 +225,8 @@
 	"\x4E\xE0\xAA\xB1\x2D\x7B\x61\xA5\x1F\x52\x7A\x9A\x41\xF6\xC1\x68"
 	"\x7F\xE2\x53\x72\x98\xCA\x2A\x8F\x59\x46\xF8\xE5\xFD\x09\x1D\xBD"
 	"\xCB"
-	"\x02\x01\x11" /* खुला key - पूर्णांकeger of 1 byte */
-	"\x02\x81\x81"  /* निजी key - पूर्णांकeger of 129 bytes */
+	"\x02\x01\x11" /* public key - integer of 1 byte */
+	"\x02\x81\x81"  /* private key - integer of 129 bytes */
 	"\x00\xA5\xDA\xFC\x53\x41\xFA\xF2\x89\xC4\xB9\x88\xDB\x30\xC1\xCD"
 	"\xF8\x3F\x31\x25\x1E\x06\x68\xB4\x27\x84\x81\x38\x01\x57\x96\x41"
 	"\xB2\x94\x10\xB3\xC7\x99\x8D\x6B\xC4\x65\x74\x5E\x5C\x39\x26\x69"
@@ -237,11 +236,11 @@
 	"\x93\x99\x26\xED\x4F\x74\xA1\x3E\xDD\xFB\xE1\xA1\xCE\xCC\x48\x94"
 	"\xAF\x94\x28\xC2\xB7\xB8\x88\x3F\xE4\x46\x3A\x4B\xC8\x5B\x1C\xB3"
 	"\xC1"
-	"\x02\x01\x00" /* prime1 - पूर्णांकeger of 1 byte */
-	"\x02\x01\x00" /* prime2 - पूर्णांकeger of 1 byte */
-	"\x02\x01\x00" /* exponent1 - पूर्णांकeger of 1 byte */
-	"\x02\x01\x00" /* exponent2 - पूर्णांकeger of 1 byte */
-	"\x02\x01\x00", /* coefficient - पूर्णांकeger of 1 byte */
+	"\x02\x01\x00" /* prime1 - integer of 1 byte */
+	"\x02\x01\x00" /* prime2 - integer of 1 byte */
+	"\x02\x01\x00" /* exponent1 - integer of 1 byte */
+	"\x02\x01\x00" /* exponent2 - integer of 1 byte */
+	"\x02\x01\x00", /* coefficient - integer of 1 byte */
 	.key_len = 289,
 	.m = "\x54\x85\x9b\x34\x2c\x49\xea\x2a",
 	.c =
@@ -255,12 +254,12 @@
 	"\x13\xb4\xc1\xa1\x11\xfc\x40\x2f\x4c\x9d\xdf\x16\x76\x11\x20\x6b",
 	.m_size = 8,
 	.c_size = 128,
-	पूर्ण, अणु
-#पूर्ण_अगर
+	}, {
+#endif
 	.key =
 	"\x30\x82\x02\x1F" /* sequence of 543 bytes */
-	"\x02\x01\x01" /* version - पूर्णांकeger of 1 byte */
-	"\x02\x82\x01\x00" /* modulus - पूर्णांकeger of 256 bytes */
+	"\x02\x01\x01" /* version - integer of 1 byte */
+	"\x02\x82\x01\x00" /* modulus - integer of 256 bytes */
 	"\xDB\x10\x1A\xC2\xA3\xF1\xDC\xFF\x13\x6B\xED\x44\xDF\xF0\x02\x6D"
 	"\x13\xC7\x88\xDA\x70\x6B\x54\xF1\xE8\x27\xDC\xC3\x0F\x99\x6A\xFA"
 	"\xC6\x67\xFF\x1D\x1E\x3C\x1D\xC1\xB5\x5F\x6C\xC0\xB2\x07\x3A\x6D"
@@ -277,8 +276,8 @@
 	"\x55\xE6\x29\x69\xD1\xC2\xE8\xB9\x78\x59\xF6\x79\x10\xC6\x4E\xEB"
 	"\x6A\x5E\xB9\x9A\xC7\xC4\x5B\x63\xDA\xA3\x3F\x5E\x92\x7A\x81\x5E"
 	"\xD6\xB0\xE2\x62\x8F\x74\x26\xC2\x0C\xD3\x9A\x17\x47\xE6\x8E\xAB"
-	"\x02\x03\x01\x00\x01" /* खुला key - पूर्णांकeger of 3 bytes */
-	"\x02\x82\x01\x00" /* निजी key - पूर्णांकeger of 256 bytes */
+	"\x02\x03\x01\x00\x01" /* public key - integer of 3 bytes */
+	"\x02\x82\x01\x00" /* private key - integer of 256 bytes */
 	"\x52\x41\xF4\xDA\x7B\xB7\x59\x55\xCA\xD4\x2F\x0F\x3A\xCB\xA4\x0D"
 	"\x93\x6C\xCC\x9D\xC1\xB2\xFB\xFD\xAE\x40\x31\xAC\x69\x52\x21\x92"
 	"\xB3\x27\xDF\xEA\xEE\x2C\x82\xBB\xF7\x40\x32\xD5\x14\xC4\x94\x12"
@@ -295,11 +294,11 @@
 	"\x62\xFF\xE9\x46\xB8\xD8\x44\xDB\xA5\xCC\x31\x54\x34\xCE\x3E\x82"
 	"\xD6\xBF\x7A\x0B\x64\x21\x6D\x88\x7E\x5B\x45\x12\x1E\x63\x8D\x49"
 	"\xA7\x1D\xD9\x1E\x06\xCD\xE8\xBA\x2C\x8C\x69\x32\xEA\xBE\x60\x71"
-	"\x02\x01\x00" /* prime1 - पूर्णांकeger of 1 byte */
-	"\x02\x01\x00" /* prime2 - पूर्णांकeger of 1 byte */
-	"\x02\x01\x00" /* exponent1 - पूर्णांकeger of 1 byte */
-	"\x02\x01\x00" /* exponent2 - पूर्णांकeger of 1 byte */
-	"\x02\x01\x00", /* coefficient - पूर्णांकeger of 1 byte */
+	"\x02\x01\x00" /* prime1 - integer of 1 byte */
+	"\x02\x01\x00" /* prime2 - integer of 1 byte */
+	"\x02\x01\x00" /* exponent1 - integer of 1 byte */
+	"\x02\x01\x00" /* exponent2 - integer of 1 byte */
+	"\x02\x01\x00", /* coefficient - integer of 1 byte */
 	.key_len = 547,
 	.m = "\x54\x85\x9b\x34\x2c\x49\xea\x2a",
 	.c =
@@ -321,10 +320,10 @@
 	"\x5d\x59\xc3\x62\xd5\xa6\xda\x38\x26\x22\x5e\x34\x1c\x94\xaf\x98",
 	.m_size = 8,
 	.c_size = 256,
-	पूर्ण, अणु
+	}, {
 	.key =
 	"\x30\x82\x01\x09" /* sequence of 265 bytes */
-	"\x02\x82\x01\x00" /* modulus - पूर्णांकeger of 256 bytes */
+	"\x02\x82\x01\x00" /* modulus - integer of 256 bytes */
 	"\xDB\x10\x1A\xC2\xA3\xF1\xDC\xFF\x13\x6B\xED\x44\xDF\xF0\x02\x6D"
 	"\x13\xC7\x88\xDA\x70\x6B\x54\xF1\xE8\x27\xDC\xC3\x0F\x99\x6A\xFA"
 	"\xC6\x67\xFF\x1D\x1E\x3C\x1D\xC1\xB5\x5F\x6C\xC0\xB2\x07\x3A\x6D"
@@ -341,7 +340,7 @@
 	"\x55\xE6\x29\x69\xD1\xC2\xE8\xB9\x78\x59\xF6\x79\x10\xC6\x4E\xEB"
 	"\x6A\x5E\xB9\x9A\xC7\xC4\x5B\x63\xDA\xA3\x3F\x5E\x92\x7A\x81\x5E"
 	"\xD6\xB0\xE2\x62\x8F\x74\x26\xC2\x0C\xD3\x9A\x17\x47\xE6\x8E\xAB"
-	"\x02\x03\x01\x00\x01", /* खुला key - पूर्णांकeger of 3 bytes */
+	"\x02\x03\x01\x00\x01", /* public key - integer of 3 bytes */
 	.key_len = 269,
 	.m = "\x54\x85\x9b\x34\x2c\x49\xea\x2a",
 	.c =
@@ -363,13 +362,13 @@
 	"\x5d\x59\xc3\x62\xd5\xa6\xda\x38\x26\x22\x5e\x34\x1c\x94\xaf\x98",
 	.m_size = 8,
 	.c_size = 256,
-	.खुला_key_vec = true,
-#अगर_अघोषित CONFIG_CRYPTO_FIPS
-	पूर्ण, अणु
+	.public_key_vec = true,
+#ifndef CONFIG_CRYPTO_FIPS
+	}, {
 	.key =
 	"\x30\x82\x09\x29" /* sequence of 2345 bytes */
-	"\x02\x01\x00" /* version पूर्णांकeger of 1 byte */
-	"\x02\x82\x02\x01" /* modulus - पूर्णांकeger of 513 bytes */
+	"\x02\x01\x00" /* version integer of 1 byte */
+	"\x02\x82\x02\x01" /* modulus - integer of 513 bytes */
 	"\x00\xC3\x8B\x55\x7B\x73\x4D\xFF\xE9\x9B\xC6\xDC\x67\x3C\xB4\x8E"
 	"\xA0\x86\xED\xF2\xB9\x50\x5C\x54\x5C\xBA\xE4\xA1\xB2\xA7\xAE\x2F"
 	"\x1B\x7D\xF1\xFB\xAC\x79\xC5\xDF\x1A\x00\xC9\xB2\xC1\x61\x25\x33"
@@ -403,8 +402,8 @@
 	"\xFE\x87\x06\x98\xBC\x7B\xD3\x21\x36\x60\x25\x54\xA7\x3D\xFA\x91"
 	"\xCC\xA8\x0B\x92\x8E\xB4\xF7\x06\xFF\x1E\x95\xCB\x07\x76\x97\x3B"
 	"\x9D"
-	"\x02\x03\x01\x00\x01" /* खुला key पूर्णांकeger of 3 bytes */
-	"\x02\x82\x02\x00" /* निजी key पूर्णांकeger of 512 bytes */
+	"\x02\x03\x01\x00\x01" /* public key integer of 3 bytes */
+	"\x02\x82\x02\x00" /* private key integer of 512 bytes */
 	"\x74\xA9\xE0\x6A\x32\xB4\xCA\x85\xD9\x86\x9F\x60\x88\x7B\x40\xCC"
 	"\xCD\x33\x91\xA8\xB6\x25\x1F\xBF\xE3\x51\x1C\x97\xB6\x2A\xD9\xB8"
 	"\x11\x40\x19\xE3\x21\x13\xC8\xB3\x7E\xDC\xD7\x65\x40\x4C\x2D\xD6"
@@ -437,7 +436,7 @@
 	"\x9E\x02\x2C\x44\x07\x6D\x1F\x3C\x66\x89\x09\xB6\x1F\x06\x30\xCC"
 	"\xAD\xCE\x7D\x9A\xDE\x3E\xFB\x6C\xE4\x58\x43\xD2\x4F\xA5\x9E\x5E"
 	"\xA7\x7B\xAE\x3A\xF6\x7E\xD9\xDB\xD3\xF5\xC5\x41\xAF\xE6\x9C\x91"
-	"\x02\x82\x01\x01" /* prime1 - पूर्णांकeger of 257 bytes */
+	"\x02\x82\x01\x01" /* prime1 - integer of 257 bytes */
 	"\x00\xE0\xA6\x6C\xF0\xA2\xF8\x81\x85\x36\x43\xD0\x13\x0B\x33\x8B"
 	"\x8F\x78\x3D\xAC\xC7\x5E\x46\x6A\x7F\x05\xAE\x3E\x26\x0A\xA6\xD0"
 	"\x51\xF3\xC8\x61\xF5\x77\x22\x48\x10\x87\x4C\xD5\xA4\xD5\xAE\x2D"
@@ -455,7 +454,7 @@
 	"\x42\xB1\x02\xDA\x9E\xE3\x84\x90\xB4\x2D\xC3\xCE\x13\xC9\x12\x7D"
 	"\x3E\xCD\x39\x39\xC9\xAD\xA1\x1A\xE6\xD5\xAD\x5A\x09\x4D\x1B\x0C"
 	"\xAB"
-	"\x02\x82\x01\x01" /* prime 2 - पूर्णांकeger of 257 bytes */
+	"\x02\x82\x01\x01" /* prime 2 - integer of 257 bytes */
 	"\x00\xDE\xD5\x1B\xF6\xCD\x83\xB1\xC6\x47\x7E\xB9\xC0\x6B\xA9\xB8"
 	"\x02\xF3\xAE\x40\x5D\xFC\xD3\xE5\x4E\xF1\xE3\x39\x04\x52\x84\x89"
 	"\x40\x37\xBB\xC2\xCD\x7F\x71\x77\x17\xDF\x6A\x4C\x31\x24\x7F\xB9"
@@ -473,7 +472,7 @@
 	"\x68\x90\x33\x12\x0B\x14\x82\xAB\x90\x1A\xD4\x49\x32\x9C\xBD\xAA"
 	"\xAB\x4E\x38\xF1\xEE\xED\x3D\x3F\xE8\xBD\x48\x56\xA6\x64\xEE\xC8"
 	"\xD7"
-	"\x02\x82\x01\x01" /* exponent 1 - पूर्णांकeger of 257 bytes */
+	"\x02\x82\x01\x01" /* exponent 1 - integer of 257 bytes */
 	"\x00\x96\x5E\x6F\x8F\x06\xD6\xE6\x03\x1F\x96\x76\x81\x38\xBF\x30"
 	"\xCC\x40\x84\xAF\xD0\xE7\x06\xA5\x24\x0E\xCE\x59\xA5\x26\xFE\x0F"
 	"\x74\xBB\x83\xC6\x26\x02\xAF\x3C\xA3\x6B\x9C\xFF\x68\x0C\xEB\x40"
@@ -491,7 +490,7 @@
 	"\x22\x02\xCF\xD1\x3C\x07\x38\x65\x8F\x65\x0E\xAA\x32\xCE\x25\x05"
 	"\x16\x73\x51\xB9\x9F\x88\x0B\xCD\x30\xF3\x97\xCC\x2B\x6B\xA4\x0E"
 	"\x6F"
-	"\x02\x82\x01\x00" /* exponent 2 - पूर्णांकeger of 256 bytes */
+	"\x02\x82\x01\x00" /* exponent 2 - integer of 256 bytes */
 	"\x2A\x5F\x3F\xB8\x08\x90\x58\x47\xA9\xE4\xB1\x11\xA3\xE7\x5B\xF4"
 	"\x43\xBE\x08\xC3\x56\x86\x3C\x7E\x6C\x84\x96\x9C\xF9\xCB\xF6\x05"
 	"\x5E\x13\xB8\x11\x37\x80\xAD\xF2\xBE\x2B\x0A\x5D\xF5\xE0\xCB\xB7"
@@ -508,7 +507,7 @@
 	"\xF4\x9B\x19\x7D\x2C\x57\xF0\xC2\x2A\x51\xAE\x95\x0D\x8C\x38\x54"
 	"\xF5\xC6\xA0\x51\xB7\x0E\xB9\xEC\xE7\x0D\x22\xF6\x1A\xD3\xFE\x16"
 	"\x21\x03\xB7\x0D\x85\xD3\x35\xC9\xDD\xE4\x59\x85\xBE\x7F\xA1\x75"
-	"\x02\x82\x01\x01" /* coefficient - पूर्णांकeger of 257 bytes */
+	"\x02\x82\x01\x01" /* coefficient - integer of 257 bytes */
 	"\x00\xB9\x48\xD2\x54\x2F\x19\x54\x64\xAE\x62\x80\x61\x89\x80\xB4"
 	"\x48\x0B\x8D\x7E\x1B\x0F\x50\x08\x82\x3F\xED\x75\x84\xB7\x13\xE4"
 	"\xF8\x8D\xA8\xBB\x54\x21\x4C\x5A\x54\x07\x16\x4B\xB4\xA4\x9E\x30"
@@ -563,15 +562,15 @@
 	.key_len = 2349,
 	.m_size = 8,
 	.c_size = 512,
-#पूर्ण_अगर
-	पूर्ण
-पूर्ण;
+#endif
+	}
+};
 
 /*
  * ECDSA test vectors.
  */
-अटल स्थिर काष्ठा akcipher_testvec ecdsa_nist_p192_tv_ढाँचा[] = अणु
-	अणु
+static const struct akcipher_testvec ecdsa_nist_p192_tv_template[] = {
+	{
 	.key =
 	"\x04\xf7\x46\xf8\x2f\x15\xf6\x22\x8e\xd7\x57\x4f\xcc\xe7\xbb\xc1"
 	"\xd4\x09\x73\xcf\xea\xd0\x15\x07\x3d\xa5\x8a\x8a\x95\x43\xe4\x68"
@@ -593,9 +592,9 @@
 	"\x68\x01\x9d\xba\xce\x83\x08\xef\x95\x52\x7b\xa0\x0f\xe4\x18\x86"
 	"\x80\x6f\xa5\x79\x77\xda\xd0",
 	.c_size = 55,
-	.खुला_key_vec = true,
+	.public_key_vec = true,
 	.siggen_sigver_test = true,
-	पूर्ण, अणु
+	}, {
 	.key =
 	"\x04\xb6\x4b\xb1\xd1\xac\xba\x24\x8f\x65\xb2\x60\x00\x90\xbf\xbd"
 	"\x78\x05\x73\xe9\x79\x1d\x6f\x7c\x0b\xd2\xc3\x93\xa7\x28\xe1\x75"
@@ -617,9 +616,9 @@
 	"\x4f\x53\x75\xc8\x02\x48\xeb\xc3\x92\x0f\x1e\x72\xee\xc4\xa3\xe3"
 	"\x5c\x99\xdb\x92\x5b\x36",
 	.c_size = 54,
-	.खुला_key_vec = true,
+	.public_key_vec = true,
 	.siggen_sigver_test = true,
-	पूर्ण, अणु
+	}, {
 	.key =
 	"\x04\xe2\x51\x24\x9b\xf7\xb6\x32\x82\x39\x66\x3d\x5b\xec\x3b\xae"
 	"\x0c\xd5\xf2\x67\xd1\xc7\xe1\x02\xe4\xbf\x90\x62\xb8\x55\x75\x56"
@@ -641,9 +640,9 @@
 	"\x69\x43\xfd\x48\x19\x86\xcf\x32\xdd\x41\x74\x6a\x51\xc7\xd9\x7d"
 	"\x3a\x97\xd9\xcd\x1a\x6a\x49",
 	.c_size = 55,
-	.खुला_key_vec = true,
+	.public_key_vec = true,
 	.siggen_sigver_test = true,
-	पूर्ण, अणु
+	}, {
 	.key =
 	"\x04\x5a\x13\xfe\x68\x86\x4d\xf4\x17\xc7\xa4\xe5\x8c\x65\x57\xb7"
 	"\x03\x73\x26\x57\xfb\xe5\x58\x40\xd8\xfd\x49\x05\xab\xf1\x66\x1f"
@@ -666,9 +665,9 @@
 	"\xbc\x5a\x1f\x82\x96\x61\xd7\xd1\x01\x77\x44\x5d\x53\xa4\x7c\x93"
 	"\x12\x3b\x3b\x28\xfb\x6d\xe1",
 	.c_size = 55,
-	.खुला_key_vec = true,
+	.public_key_vec = true,
 	.siggen_sigver_test = true,
-	पूर्ण, अणु
+	}, {
 	.key =
 	"\x04\xd5\xf2\x6e\xc3\x94\x5c\x52\xbc\xdf\x86\x6c\x14\xd1\xca\xea"
 	"\xcc\x72\x3a\x8a\xf6\x7a\x3a\x56\x36\x3b\xca\xc6\x94\x0e\x17\x1d"
@@ -692,13 +691,13 @@
 	"\xb4\x22\x9a\x98\x73\x3c\x83\xa9\x14\x2a\x5e\xf5\xe5\xfb\x72\x28"
 	"\x6a\xdf\x97\xfd\x82\x76\x24",
 	.c_size = 55,
-	.खुला_key_vec = true,
+	.public_key_vec = true,
 	.siggen_sigver_test = true,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा akcipher_testvec ecdsa_nist_p256_tv_ढाँचा[] = अणु
-	अणु
+static const struct akcipher_testvec ecdsa_nist_p256_tv_template[] = {
+	{
 	.key =
 	"\x04\xb9\x7b\xbb\xd7\x17\x64\xd2\x7e\xfc\x81\x5d\x87\x06\x83\x41"
 	"\x22\xd6\x9a\xaa\x87\x17\xec\x4f\x63\x55\x2f\x94\xba\xdd\x83\xe9"
@@ -722,9 +721,9 @@
 	"\x8a\xfa\x54\x93\x29\xa7\x70\x86\xf1\x03\x03\xf3\x3b\xe2\x73\xf7"
 	"\xfb\x9d\x8b\xde\xd4\x8d\x6f\xad",
 	.c_size = 72,
-	.खुला_key_vec = true,
+	.public_key_vec = true,
 	.siggen_sigver_test = true,
-	पूर्ण, अणु
+	}, {
 	.key =
 	"\x04\x8b\x6d\xc0\x33\x8e\x2d\x8b\x67\xf5\xeb\xc4\x7f\xa0\xf5\xd9"
 	"\x7b\x03\xa5\x78\x9a\xb5\xea\x14\xe4\x23\xd0\xaf\xd7\x0e\x2e\xa0"
@@ -748,9 +747,9 @@
 	"\x4a\x77\x22\xec\xc8\x66\xbf\x50\x05\x58\x39\x0e\x26\x92\xce\xd5"
 	"\x2e\x8b\xde\x5a\x04\x0e",
 	.c_size = 70,
-	.खुला_key_vec = true,
+	.public_key_vec = true,
 	.siggen_sigver_test = true,
-	पूर्ण, अणु
+	}, {
 	.key =
 	"\x04\xf1\xea\xc4\x53\xf3\xb9\x0e\x9f\x7e\xad\xe3\xea\xd7\x0e\x0f"
 	"\xd6\x98\x9a\xca\x92\x4d\x0a\x80\xdb\x2d\x45\xc7\xec\x4b\x97\x00"
@@ -774,9 +773,9 @@
 	"\xa9\x81\xac\x4a\x50\xd0\x91\x0a\x6e\x1b\xc4\xaf\xe1\x83\xc3\x4f"
 	"\x2a\x65\x35\x23\xe3\x1d\xfa",
 	.c_size = 71,
-	.खुला_key_vec = true,
+	.public_key_vec = true,
 	.siggen_sigver_test = true,
-	पूर्ण, अणु
+	}, {
 	.key =
 	"\x04\xc5\xc6\xea\x60\xc9\xce\xad\x02\x8d\xf5\x3e\x24\xe3\x52\x1d"
 	"\x28\x47\x3b\xc3\x6b\xa4\x99\x35\x99\x11\x88\x88\xc8\xf4\xee\x7e"
@@ -801,9 +800,9 @@
 	"\x19\xfb\x5f\x92\xf4\xc9\x23\x37\x69\xf4\x3b\x4f\x47\xcf\x9b\x16"
 	"\xc0\x60\x11\x92\xdc\x17\x89\x12",
 	.c_size = 72,
-	.खुला_key_vec = true,
+	.public_key_vec = true,
 	.siggen_sigver_test = true,
-	पूर्ण, अणु
+	}, {
 	.key =
 	"\x04\xd7\x27\x46\x49\xf6\x26\x85\x12\x40\x76\x8e\xe2\xe6\x2a\x7a"
 	"\x83\xb1\x4e\x7a\xeb\x3b\x5c\x67\x4a\xb5\xa4\x92\x8c\x69\xff\x38"
@@ -829,13 +828,13 @@
 	"\x00\xdd\xab\xd4\xc0\x2b\xe6\x5c\xad\xc3\x78\x1c\xc2\xc1\x19\x76"
 	"\x31\x79\x4a\xe9\x81\x6a\xee",
 	.c_size = 71,
-	.खुला_key_vec = true,
+	.public_key_vec = true,
 	.siggen_sigver_test = true,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा akcipher_testvec ecdsa_nist_p384_tv_ढाँचा[] = अणु
-	अणु
+static const struct akcipher_testvec ecdsa_nist_p384_tv_template[] = {
+	{
 	.key = /* secp384r1(sha1) */
 	"\x04\x89\x25\xf3\x97\x88\xcb\xb0\x78\xc5\x72\x9a\x14\x6e\x7a\xb1"
 	"\x5a\xa5\x24\xf1\x95\x06\x9e\x28\xfb\xc4\xb9\xbe\x5a\x0d\xd9\x9f"
@@ -863,9 +862,9 @@
 	"\x74\xa0\x0f\xbf\xaf\xc3\x36\x76\x4a\xa1\x59\xf1\x1c\xa4\x58\x26"
 	"\x79\x12\x2a\xb7\xc5\x15\x92\xc5",
 	.c_size = 104,
-	.खुला_key_vec = true,
+	.public_key_vec = true,
 	.siggen_sigver_test = true,
-	पूर्ण, अणु
+	}, {
 	.key = /* secp384r1(sha224) */
 	"\x04\x69\x6c\xcf\x62\xee\xd0\x0d\xe5\xb5\x2f\x70\x54\xcf\x26\xa0"
 	"\xd9\x98\x8d\x92\x2a\xab\x9b\x11\xcb\x48\x18\xa1\xa9\x0d\xd5\x18"
@@ -893,9 +892,9 @@
 	"\x4d\xd0\xc6\x6e\xb0\xe9\xfc\x14\x9f\x19\xd0\x42\x8b\x93\xc2\x11"
 	"\x88\x2b\x82\x26\x5e\x1c\xda\xfb",
 	.c_size = 104,
-	.खुला_key_vec = true,
+	.public_key_vec = true,
 	.siggen_sigver_test = true,
-	पूर्ण, अणु
+	}, {
 	.key = /* secp384r1(sha256) */
 	"\x04\xee\xd6\xda\x3e\x94\x90\x00\x27\xed\xf8\x64\x55\xd6\x51\x9a"
 	"\x1f\x52\x00\x63\x78\xf1\xa9\xfd\x75\x4c\x9e\xb2\x20\x1a\x91\x5a"
@@ -923,9 +922,9 @@
 	"\xc0\x75\x3e\x23\x5e\x36\x4f\x8d\xde\x1e\x93\x8d\x95\xbb\x10\x0e"
 	"\xf4\x1f\x39\xca\x4d\x43",
 	.c_size = 102,
-	.खुला_key_vec = true,
+	.public_key_vec = true,
 	.siggen_sigver_test = true,
-	पूर्ण, अणु
+	}, {
 	.key = /* secp384r1(sha384) */
 	"\x04\x3a\x2f\x62\xe7\x1a\xcf\x24\xd0\x0b\x7c\xe0\xed\x46\x0a\x4f"
 	"\x74\x16\x43\xe9\x1a\x25\x7c\x55\xff\xf0\x29\x68\x66\x20\x91\xf9"
@@ -954,9 +953,9 @@
 	"\x44\x92\x8c\x86\x99\x65\xb3\x97\x96\x17\x04\xc9\x05\x77\xf1\x8e"
 	"\xab\x8d\x4e\xde\xe6\x6d\x9b\x66",
 	.c_size = 104,
-	.खुला_key_vec = true,
+	.public_key_vec = true,
 	.siggen_sigver_test = true,
-	पूर्ण, अणु
+	}, {
 	.key = /* secp384r1(sha512) */
 	"\x04\xb4\xe7\xc1\xeb\x64\x25\x22\x46\xc3\x86\x61\x80\xbe\x1e\x46"
 	"\xcb\xf6\x05\xc2\xee\x73\x83\xbc\xea\x30\x61\x4d\x40\x05\x41\xf4"
@@ -986,16 +985,16 @@
 	"\x5f\x8d\x7a\xf9\xfb\x34\xe4\x8b\x80\xa5\xb6\xda\x2c\x4e\x45\xcf"
 	"\x3c\x93\xff\x50\x5d",
 	.c_size = 101,
-	.खुला_key_vec = true,
+	.public_key_vec = true,
 	.siggen_sigver_test = true,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
  * EC-RDSA test vectors are generated by gost-engine.
  */
-अटल स्थिर काष्ठा akcipher_testvec ecrdsa_tv_ढाँचा[] = अणु
-	अणु
+static const struct akcipher_testvec ecrdsa_tv_template[] = {
+	{
 	.key =
 	"\x04\x40\xd5\xa7\x77\xf9\x26\x2f\x8c\xbd\xcc\xe3\x1f\x01\x94\x05"
 	"\x3d\x2f\xec\xb5\x00\x34\xf5\x51\x6d\x3b\x90\x4b\x23\x28\x6f\x1d"
@@ -1018,10 +1017,10 @@
 	"\x75\x1b\x9b\x40\x25\xb9\x96\xd2\x9b\x00\x41\xb3\x58\xbf\x23\x14"
 	"\x79\xd2\x76\x64\xa3\xbd\x66\x10\x79\x05\x5a\x06\x42\xec\xb9\xc9",
 	.m_size = 32,
-	.खुला_key_vec = true,
+	.public_key_vec = true,
 	.siggen_sigver_test = true,
-	पूर्ण,
-	अणु
+	},
+	{
 	.key =
 	"\x04\x40\x66\x6f\xd6\xb7\x06\xd0\xf5\xa5\x6f\x69\x5c\xa5\x13\x45"
 	"\x14\xdd\xcb\x12\x9c\x1b\xf5\x28\x64\x7a\x49\x48\x29\x14\x66\x42"
@@ -1044,10 +1043,10 @@
 	"\xd0\x54\x00\x27\x6a\xeb\xce\x6c\xf5\xf6\xfb\x57\x18\x18\x21\x13"
 	"\x11\x23\x4a\x70\x43\x52\x7a\x68\x11\x65\x45\x37\xbb\x25\xb7\x40",
 	.m_size = 32,
-	.खुला_key_vec = true,
+	.public_key_vec = true,
 	.siggen_sigver_test = true,
-	पूर्ण,
-	अणु
+	},
+	{
 	.key =
 	"\x04\x40\x05\x91\xa9\x7d\xcb\x87\xdc\x98\xa1\xbf\xff\xdd\x20\x61"
 	"\xaa\x58\x3b\x2d\x8e\x9c\x41\x9d\x4f\xc6\x23\x17\xf9\xca\x60\x65"
@@ -1070,10 +1069,10 @@
 	"\x52\x33\xf4\x3f\x7b\x5d\xcf\x20\xee\xe4\x5c\xab\x0b\x3f\x14\xd6"
 	"\x9f\x16\xc6\x1c\xb1\x3f\x84\x41\x69\xec\x34\xfd\xf1\xf9\xa3\x39",
 	.m_size = 32,
-	.खुला_key_vec = true,
+	.public_key_vec = true,
 	.siggen_sigver_test = true,
-	पूर्ण,
-	अणु
+	},
+	{
 	.key =
 	"\x04\x81\x80\x85\x46\x8f\x16\xf8\x7a\x7e\x4a\xc3\x81\x9e\xf1\x6e"
 	"\x94\x1e\x5d\x02\x87\xea\xfa\xa0\x0a\x17\x70\x49\x64\xad\x95\x68"
@@ -1105,10 +1104,10 @@
 	"\x6e\x8e\x24\x2a\x84\xf1\xba\x67\xe8\xbf\xff\xc1\xd3\xde\xfb\xc6"
 	"\xa8\xf6\x80\x01\xb9\x27\xac\xd8\x45\x96\x66\xa1\xee\x48\x08\x3f",
 	.m_size = 64,
-	.खुला_key_vec = true,
+	.public_key_vec = true,
 	.siggen_sigver_test = true,
-	पूर्ण,
-	अणु
+	},
+	{
 	.key =
 	"\x04\x81\x80\x28\xf3\x2b\x92\x04\x32\xea\x66\x20\xde\xa0\x2f\x74"
 	"\xbf\x2d\xf7\xb5\x30\x76\xb1\xc8\xee\x38\x9f\xea\xe5\xad\xc6\xa3"
@@ -1140,16 +1139,16 @@
 	"\xe0\x39\xd3\xd6\xe5\x17\xf8\xc3\x4b\xc6\x1c\x33\x1a\xca\xa6\x66"
 	"\x6d\xf4\xd2\x45\xc2\x83\xa0\x42\x95\x05\x9d\x89\x8e\x0a\xca\xcc",
 	.m_size = 64,
-	.खुला_key_vec = true,
+	.public_key_vec = true,
 	.siggen_sigver_test = true,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
  * PKCS#1 RSA test vectors. Obtained from CAVS testing.
  */
-अटल स्थिर काष्ठा akcipher_testvec pkcs1pad_rsa_tv_ढाँचा[] = अणु
-	अणु
+static const struct akcipher_testvec pkcs1pad_rsa_tv_template[] = {
+	{
 	.key =
 	"\x30\x82\x03\x1f\x02\x01\x00\x02\x82\x01\x01\x00\xd7\x1e\x77\x82"
 	"\x8c\x92\x31\xe7\x69\x02\xa2\xd5\x5c\x78\xde\xa2\x0c\x8f\xfe\x28"
@@ -1237,27 +1236,27 @@
 	"\xe6\xf9\xa9\x16\x31\x1f\xaf\x25\x6d\xc2\x4a\x23\x6e\x63\x02\xa2",
 	.c_size = 256,
 	.siggen_sigver_test = true,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल स्थिर काष्ठा kpp_testvec dh_tv_ढाँचा[] = अणु
-	अणु
+static const struct kpp_testvec dh_tv_template[] = {
+	{
 	.secret =
-#अगर_घोषित __LITTLE_ENDIAN
+#ifdef __LITTLE_ENDIAN
 	"\x01\x00" /* type */
 	"\x15\x02" /* len */
 	"\x00\x01\x00\x00" /* key_size */
 	"\x00\x01\x00\x00" /* p_size */
 	"\x00\x00\x00\x00" /* q_size */
 	"\x01\x00\x00\x00" /* g_size */
-#अन्यथा
+#else
 	"\x00\x01" /* type */
 	"\x02\x15" /* len */
 	"\x00\x00\x01\x00" /* key_size */
 	"\x00\x00\x01\x00" /* p_size */
 	"\x00\x00\x00\x00" /* q_size */
 	"\x00\x00\x00\x01" /* g_size */
-#पूर्ण_अगर
+#endif
 	/* xa */
 	"\x44\xc1\x48\x36\xa7\x2b\x6f\x4e\x43\x03\x68\xad\x31\x00\xda\xf3"
 	"\x2a\x01\xa8\x32\x63\x5f\x89\x32\x1f\xdf\x4c\xa1\x6a\xbc\x10\x15"
@@ -1294,7 +1293,7 @@
 	"\x74\x3d\x95\xe0\xb7\xc4\x30\x8a\x24\x87\x12\x47\x27\x70\x0d\x73"
 	/* g */
 	"\x02",
-	.b_खुला =
+	.b_public =
 	"\x2a\x67\x5c\xfd\x63\x5d\xc0\x97\x0a\x8b\xa2\x1f\xf8\x8a\xcb\x54"
 	"\xca\x2f\xd3\x49\x3f\x01\x8e\x87\xfe\xcc\x94\xa0\x3e\xd4\x26\x79"
 	"\x9a\x94\x3c\x11\x81\x58\x5c\x60\x3d\xf5\x98\x90\x89\x64\x62\x1f"
@@ -1311,7 +1310,7 @@
 	"\xd6\x22\xd6\x35\x9b\xf9\x1f\x85\xae\xab\x4b\xd7\xe0\xc7\x86\x67"
 	"\x3f\x05\x7f\xa6\x0d\x2f\x0d\xbf\x53\x5f\x4d\x2c\x6d\x5e\x57\x40"
 	"\x30\x3a\x23\x98\xf9\xb4\x32\xf5\x32\x83\xdd\x0b\xae\x33\x97\x2f",
-	.expected_a_खुला =
+	.expected_a_public =
 	"\x5c\x24\xdf\xeb\x5b\x4b\xf8\xc5\xef\x39\x48\x82\xe0\x1e\x62\xee"
 	"\x8a\xae\xdf\x93\x6c\x2b\x16\x95\x92\x16\x3f\x16\x7b\x75\x03\x85"
 	"\xd9\xf1\x69\xc2\x14\x87\x45\xfc\xa4\x19\xf6\xf0\xa4\xf3\xec\xd4"
@@ -1346,27 +1345,27 @@
 	"\x56\x89\x42\x74\x11\xf5\xf6\x5e\x6f\x16\x54\x6a\xb1\x76\x4d\x50"
 	"\x8a\x68\xc1\x5b\x82\xb9\x0d\x00\x32\x50\xed\x88\x87\x48\x92\x17",
 	.secret_size = 533,
-	.b_खुला_size = 256,
-	.expected_a_खुला_size = 256,
+	.b_public_size = 256,
+	.expected_a_public_size = 256,
 	.expected_ss_size = 256,
-	पूर्ण,
-	अणु
+	},
+	{
 	.secret =
-#अगर_घोषित __LITTLE_ENDIAN
+#ifdef __LITTLE_ENDIAN
 	"\x01\x00" /* type */
 	"\x15\x02" /* len */
 	"\x00\x01\x00\x00" /* key_size */
 	"\x00\x01\x00\x00" /* p_size */
 	"\x00\x00\x00\x00" /* q_size */
 	"\x01\x00\x00\x00" /* g_size */
-#अन्यथा
+#else
 	"\x00\x01" /* type */
 	"\x02\x15" /* len */
 	"\x00\x00\x01\x00" /* key_size */
 	"\x00\x00\x01\x00" /* p_size */
 	"\x00\x00\x00\x00" /* q_size */
 	"\x00\x00\x00\x01" /* g_size */
-#पूर्ण_अगर
+#endif
 	/* xa */
 	"\x4d\x75\xa8\x6e\xba\x23\x3a\x0c\x63\x56\xc8\xc9\x5a\xa7\xd6\x0e"
 	"\xed\xae\x40\x78\x87\x47\x5f\xe0\xa7\x7b\xba\x84\x88\x67\x4e\xe5"
@@ -1403,7 +1402,7 @@
 	"\x74\x3d\x95\xe0\xb7\xc4\x30\x8a\x24\x87\x12\x47\x27\x70\x0d\x73"
 	/* g */
 	"\x02",
-	.b_खुला =
+	.b_public =
 	"\x99\x4d\xd9\x01\x84\x8e\x4a\x5b\xb8\xa5\x64\x8c\x6c\x00\x5c\x0e"
 	"\x1e\x1b\xee\x5d\x9f\x53\xe3\x16\x70\x01\xed\xbf\x4f\x14\x36\x6e"
 	"\xe4\x43\x45\x43\x49\xcc\xb1\xb0\x2a\xc0\x6f\x22\x55\x42\x17\x94"
@@ -1420,7 +1419,7 @@
 	"\x19\x94\x49\x8c\x05\xd4\x75\xed\xd2\xb3\x64\x57\xe0\x52\x99\xc0"
 	"\x83\xe3\xbb\x5e\x2b\xf1\xd2\xc0\xb1\x37\x36\x0b\x7c\xb5\x63\x96"
 	"\x8e\xde\x04\x23\x11\x95\x62\x11\x9a\xce\x6f\x63\xc8\xd5\xd1\x8f",
-	.expected_a_खुला =
+	.expected_a_public =
 	"\x90\x89\xe4\x82\xd6\x0a\xcf\x1a\xae\xce\x1b\x66\xa7\x19\x71\x18"
 	"\x8f\x95\x4b\x5b\x80\x45\x4a\x5a\x43\x99\x4d\x37\xcf\xa3\xa7\x28"
 	"\x9c\xc7\x73\xf1\xb2\x17\xf6\x99\xe3\x6b\x56\xcb\x3e\x35\x60\x7d"
@@ -1455,1261 +1454,1261 @@
 	"\xfe\x75\xc0\x27\x69\xe3\xb3\x7b\x21\xa7\xb1\x16\xa4\x85\x23\xee"
 	"\xb0\x1b\x04\x6e\xbd\xab\x16\xde\xfd\x86\x6b\xa9\x95\xd7\x0b\xfd",
 	.secret_size = 533,
-	.b_खुला_size = 256,
-	.expected_a_खुला_size = 256,
+	.b_public_size = 256,
+	.expected_a_public_size = 256,
 	.expected_ss_size = 256,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल स्थिर काष्ठा kpp_testvec curve25519_tv_ढाँचा[] = अणु
-अणु
-	.secret = (u8[32])अणु 0x77, 0x07, 0x6d, 0x0a, 0x73, 0x18, 0xa5, 0x7d,
+static const struct kpp_testvec curve25519_tv_template[] = {
+{
+	.secret = (u8[32]){ 0x77, 0x07, 0x6d, 0x0a, 0x73, 0x18, 0xa5, 0x7d,
 		     0x3c, 0x16, 0xc1, 0x72, 0x51, 0xb2, 0x66, 0x45,
 		     0xdf, 0x4c, 0x2f, 0x87, 0xeb, 0xc0, 0x99, 0x2a,
-		     0xb1, 0x77, 0xfb, 0xa5, 0x1d, 0xb9, 0x2c, 0x2a पूर्ण,
-	.b_खुला = (u8[32])अणु 0xde, 0x9e, 0xdb, 0x7d, 0x7b, 0x7d, 0xc1, 0xb4,
+		     0xb1, 0x77, 0xfb, 0xa5, 0x1d, 0xb9, 0x2c, 0x2a },
+	.b_public = (u8[32]){ 0xde, 0x9e, 0xdb, 0x7d, 0x7b, 0x7d, 0xc1, 0xb4,
 		    0xd3, 0x5b, 0x61, 0xc2, 0xec, 0xe4, 0x35, 0x37,
 		    0x3f, 0x83, 0x43, 0xc8, 0x5b, 0x78, 0x67, 0x4d,
-		    0xad, 0xfc, 0x7e, 0x14, 0x6f, 0x88, 0x2b, 0x4f पूर्ण,
-	.expected_ss = (u8[32])अणु 0x4a, 0x5d, 0x9d, 0x5b, 0xa4, 0xce, 0x2d, 0xe1,
+		    0xad, 0xfc, 0x7e, 0x14, 0x6f, 0x88, 0x2b, 0x4f },
+	.expected_ss = (u8[32]){ 0x4a, 0x5d, 0x9d, 0x5b, 0xa4, 0xce, 0x2d, 0xe1,
 		    0x72, 0x8e, 0x3b, 0xf4, 0x80, 0x35, 0x0f, 0x25,
 		    0xe0, 0x7e, 0x21, 0xc9, 0x47, 0xd1, 0x9e, 0x33,
-		    0x76, 0xf0, 0x9b, 0x3c, 0x1e, 0x16, 0x17, 0x42 पूर्ण,
+		    0x76, 0xf0, 0x9b, 0x3c, 0x1e, 0x16, 0x17, 0x42 },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-अणु
-	.secret = (u8[32])अणु 0x5d, 0xab, 0x08, 0x7e, 0x62, 0x4a, 0x8a, 0x4b,
+},
+{
+	.secret = (u8[32]){ 0x5d, 0xab, 0x08, 0x7e, 0x62, 0x4a, 0x8a, 0x4b,
 		     0x79, 0xe1, 0x7f, 0x8b, 0x83, 0x80, 0x0e, 0xe6,
 		     0x6f, 0x3b, 0xb1, 0x29, 0x26, 0x18, 0xb6, 0xfd,
-		     0x1c, 0x2f, 0x8b, 0x27, 0xff, 0x88, 0xe0, 0xeb पूर्ण,
-	.b_खुला = (u8[32])अणु 0x85, 0x20, 0xf0, 0x09, 0x89, 0x30, 0xa7, 0x54,
+		     0x1c, 0x2f, 0x8b, 0x27, 0xff, 0x88, 0xe0, 0xeb },
+	.b_public = (u8[32]){ 0x85, 0x20, 0xf0, 0x09, 0x89, 0x30, 0xa7, 0x54,
 		    0x74, 0x8b, 0x7d, 0xdc, 0xb4, 0x3e, 0xf7, 0x5a,
 		    0x0d, 0xbf, 0x3a, 0x0d, 0x26, 0x38, 0x1a, 0xf4,
-		    0xeb, 0xa4, 0xa9, 0x8e, 0xaa, 0x9b, 0x4e, 0x6a पूर्ण,
-	.expected_ss = (u8[32])अणु 0x4a, 0x5d, 0x9d, 0x5b, 0xa4, 0xce, 0x2d, 0xe1,
+		    0xeb, 0xa4, 0xa9, 0x8e, 0xaa, 0x9b, 0x4e, 0x6a },
+	.expected_ss = (u8[32]){ 0x4a, 0x5d, 0x9d, 0x5b, 0xa4, 0xce, 0x2d, 0xe1,
 		    0x72, 0x8e, 0x3b, 0xf4, 0x80, 0x35, 0x0f, 0x25,
 		    0xe0, 0x7e, 0x21, 0xc9, 0x47, 0xd1, 0x9e, 0x33,
-		    0x76, 0xf0, 0x9b, 0x3c, 0x1e, 0x16, 0x17, 0x42 पूर्ण,
+		    0x76, 0xf0, 0x9b, 0x3c, 0x1e, 0x16, 0x17, 0x42 },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-अणु
-	.secret = (u8[32])अणु 1 पूर्ण,
-	.b_खुला = (u8[32])अणु 0x25, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+},
+{
+	.secret = (u8[32]){ 1 },
+	.b_public = (u8[32]){ 0x25, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 पूर्ण,
-	.expected_ss = (u8[32])अणु 0x3c, 0x77, 0x77, 0xca, 0xf9, 0x97, 0xb2, 0x64,
+		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
+	.expected_ss = (u8[32]){ 0x3c, 0x77, 0x77, 0xca, 0xf9, 0x97, 0xb2, 0x64,
 		    0x41, 0x60, 0x77, 0x66, 0x5b, 0x4e, 0x22, 0x9d,
 		    0x0b, 0x95, 0x48, 0xdc, 0x0c, 0xd8, 0x19, 0x98,
-		    0xdd, 0xcd, 0xc5, 0xc8, 0x53, 0x3c, 0x79, 0x7f पूर्ण,
+		    0xdd, 0xcd, 0xc5, 0xc8, 0x53, 0x3c, 0x79, 0x7f },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-अणु
-	.secret = (u8[32])अणु 1 पूर्ण,
-	.b_खुला = (u8[32])अणु 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+},
+{
+	.secret = (u8[32]){ 1 },
+	.b_public = (u8[32]){ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff पूर्ण,
-	.expected_ss = (u8[32])अणु 0xb3, 0x2d, 0x13, 0x62, 0xc2, 0x48, 0xd6, 0x2f,
+		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff },
+	.expected_ss = (u8[32]){ 0xb3, 0x2d, 0x13, 0x62, 0xc2, 0x48, 0xd6, 0x2f,
 		    0xe6, 0x26, 0x19, 0xcf, 0xf0, 0x4d, 0xd4, 0x3d,
 		    0xb7, 0x3f, 0xfc, 0x1b, 0x63, 0x08, 0xed, 0xe3,
-		    0x0b, 0x78, 0xd8, 0x73, 0x80, 0xf1, 0xe8, 0x34 पूर्ण,
+		    0x0b, 0x78, 0xd8, 0x73, 0x80, 0xf1, 0xe8, 0x34 },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-अणु
-	.secret = (u8[32])अणु 0xa5, 0x46, 0xe3, 0x6b, 0xf0, 0x52, 0x7c, 0x9d,
+},
+{
+	.secret = (u8[32]){ 0xa5, 0x46, 0xe3, 0x6b, 0xf0, 0x52, 0x7c, 0x9d,
 		     0x3b, 0x16, 0x15, 0x4b, 0x82, 0x46, 0x5e, 0xdd,
 		     0x62, 0x14, 0x4c, 0x0a, 0xc1, 0xfc, 0x5a, 0x18,
-		     0x50, 0x6a, 0x22, 0x44, 0xba, 0x44, 0x9a, 0xc4 पूर्ण,
-	.b_खुला = (u8[32])अणु 0xe6, 0xdb, 0x68, 0x67, 0x58, 0x30, 0x30, 0xdb,
+		     0x50, 0x6a, 0x22, 0x44, 0xba, 0x44, 0x9a, 0xc4 },
+	.b_public = (u8[32]){ 0xe6, 0xdb, 0x68, 0x67, 0x58, 0x30, 0x30, 0xdb,
 		    0x35, 0x94, 0xc1, 0xa4, 0x24, 0xb1, 0x5f, 0x7c,
 		    0x72, 0x66, 0x24, 0xec, 0x26, 0xb3, 0x35, 0x3b,
-		    0x10, 0xa9, 0x03, 0xa6, 0xd0, 0xab, 0x1c, 0x4c पूर्ण,
-	.expected_ss = (u8[32])अणु 0xc3, 0xda, 0x55, 0x37, 0x9d, 0xe9, 0xc6, 0x90,
+		    0x10, 0xa9, 0x03, 0xa6, 0xd0, 0xab, 0x1c, 0x4c },
+	.expected_ss = (u8[32]){ 0xc3, 0xda, 0x55, 0x37, 0x9d, 0xe9, 0xc6, 0x90,
 		    0x8e, 0x94, 0xea, 0x4d, 0xf2, 0x8d, 0x08, 0x4f,
 		    0x32, 0xec, 0xcf, 0x03, 0x49, 0x1c, 0x71, 0xf7,
-		    0x54, 0xb4, 0x07, 0x55, 0x77, 0xa2, 0x85, 0x52 पूर्ण,
+		    0x54, 0xb4, 0x07, 0x55, 0x77, 0xa2, 0x85, 0x52 },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-अणु
-	.secret = (u8[32])अणु 0xff, 0xff, 0xff, 0xff, 0x0a, 0xff, 0xff, 0xff,
+},
+{
+	.secret = (u8[32]){ 0xff, 0xff, 0xff, 0xff, 0x0a, 0xff, 0xff, 0xff,
 		     0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		     0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		     0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff पूर्ण,
-	.b_खुला = (u8[32])अणु 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		     0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff },
+	.b_public = (u8[32]){ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		    0xff, 0xff, 0xff, 0xff, 0x0a, 0x00, 0xfb, 0x9f पूर्ण,
-	.expected_ss = (u8[32])अणु 0x77, 0x52, 0xb6, 0x18, 0xc1, 0x2d, 0x48, 0xd2,
+		    0xff, 0xff, 0xff, 0xff, 0x0a, 0x00, 0xfb, 0x9f },
+	.expected_ss = (u8[32]){ 0x77, 0x52, 0xb6, 0x18, 0xc1, 0x2d, 0x48, 0xd2,
 		    0xc6, 0x93, 0x46, 0x83, 0x81, 0x7c, 0xc6, 0x57,
 		    0xf3, 0x31, 0x03, 0x19, 0x49, 0x48, 0x20, 0x05,
-		    0x42, 0x2b, 0x4e, 0xae, 0x8d, 0x1d, 0x43, 0x23 पूर्ण,
+		    0x42, 0x2b, 0x4e, 0xae, 0x8d, 0x1d, 0x43, 0x23 },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-अणु
-	.secret = (u8[32])अणु 0x8e, 0x0a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+},
+{
+	.secret = (u8[32]){ 0x8e, 0x0a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 पूर्ण,
-	.b_खुला = (u8[32])अणु 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
+	.b_public = (u8[32]){ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x8e, 0x06 पूर्ण,
-	.expected_ss = (u8[32])अणु 0x5a, 0xdf, 0xaa, 0x25, 0x86, 0x8e, 0x32, 0x3d,
+		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x8e, 0x06 },
+	.expected_ss = (u8[32]){ 0x5a, 0xdf, 0xaa, 0x25, 0x86, 0x8e, 0x32, 0x3d,
 		    0xae, 0x49, 0x62, 0xc1, 0x01, 0x5c, 0xb3, 0x12,
 		    0xe1, 0xc5, 0xc7, 0x9e, 0x95, 0x3f, 0x03, 0x99,
-		    0xb0, 0xba, 0x16, 0x22, 0xf3, 0xb6, 0xf7, 0x0c पूर्ण,
+		    0xb0, 0xba, 0x16, 0x22, 0xf3, 0xb6, 0xf7, 0x0c },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - normal हाल */
-अणु
-	.secret = (u8[32])अणु 0x48, 0x52, 0x83, 0x4d, 0x9d, 0x6b, 0x77, 0xda,
+},
+/* wycheproof - normal case */
+{
+	.secret = (u8[32]){ 0x48, 0x52, 0x83, 0x4d, 0x9d, 0x6b, 0x77, 0xda,
 		     0xde, 0xab, 0xaa, 0xf2, 0xe1, 0x1d, 0xca, 0x66,
 		     0xd1, 0x9f, 0xe7, 0x49, 0x93, 0xa7, 0xbe, 0xc3,
-		     0x6c, 0x6e, 0x16, 0xa0, 0x98, 0x3f, 0xea, 0xba पूर्ण,
-	.b_खुला = (u8[32])अणु 0x9c, 0x64, 0x7d, 0x9a, 0xe5, 0x89, 0xb9, 0xf5,
+		     0x6c, 0x6e, 0x16, 0xa0, 0x98, 0x3f, 0xea, 0xba },
+	.b_public = (u8[32]){ 0x9c, 0x64, 0x7d, 0x9a, 0xe5, 0x89, 0xb9, 0xf5,
 		    0x8f, 0xdc, 0x3c, 0xa4, 0x94, 0x7e, 0xfb, 0xc9,
 		    0x15, 0xc4, 0xb2, 0xe0, 0x8e, 0x74, 0x4a, 0x0e,
-		    0xdf, 0x46, 0x9d, 0xac, 0x59, 0xc8, 0xf8, 0x5a पूर्ण,
-	.expected_ss = (u8[32])अणु 0x87, 0xb7, 0xf2, 0x12, 0xb6, 0x27, 0xf7, 0xa5,
+		    0xdf, 0x46, 0x9d, 0xac, 0x59, 0xc8, 0xf8, 0x5a },
+	.expected_ss = (u8[32]){ 0x87, 0xb7, 0xf2, 0x12, 0xb6, 0x27, 0xf7, 0xa5,
 		    0x4c, 0xa5, 0xe0, 0xbc, 0xda, 0xdd, 0xd5, 0x38,
 		    0x9d, 0x9d, 0xe6, 0x15, 0x6c, 0xdb, 0xcf, 0x8e,
-		    0xbe, 0x14, 0xff, 0xbc, 0xfb, 0x43, 0x65, 0x51 पूर्ण,
+		    0xbe, 0x14, 0xff, 0xbc, 0xfb, 0x43, 0x65, 0x51 },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - खुला key on twist */
-अणु
-	.secret = (u8[32])अणु 0x58, 0x8c, 0x06, 0x1a, 0x50, 0x80, 0x4a, 0xc4,
+},
+/* wycheproof - public key on twist */
+{
+	.secret = (u8[32]){ 0x58, 0x8c, 0x06, 0x1a, 0x50, 0x80, 0x4a, 0xc4,
 		     0x88, 0xad, 0x77, 0x4a, 0xc7, 0x16, 0xc3, 0xf5,
 		     0xba, 0x71, 0x4b, 0x27, 0x12, 0xe0, 0x48, 0x49,
-		     0x13, 0x79, 0xa5, 0x00, 0x21, 0x19, 0x98, 0xa8 पूर्ण,
-	.b_खुला = (u8[32])अणु 0x63, 0xaa, 0x40, 0xc6, 0xe3, 0x83, 0x46, 0xc5,
+		     0x13, 0x79, 0xa5, 0x00, 0x21, 0x19, 0x98, 0xa8 },
+	.b_public = (u8[32]){ 0x63, 0xaa, 0x40, 0xc6, 0xe3, 0x83, 0x46, 0xc5,
 		    0xca, 0xf2, 0x3a, 0x6d, 0xf0, 0xa5, 0xe6, 0xc8,
 		    0x08, 0x89, 0xa0, 0x86, 0x47, 0xe5, 0x51, 0xb3,
-		    0x56, 0x34, 0x49, 0xbe, 0xfc, 0xfc, 0x97, 0x33 पूर्ण,
-	.expected_ss = (u8[32])अणु 0xb1, 0xa7, 0x07, 0x51, 0x94, 0x95, 0xff, 0xff,
+		    0x56, 0x34, 0x49, 0xbe, 0xfc, 0xfc, 0x97, 0x33 },
+	.expected_ss = (u8[32]){ 0xb1, 0xa7, 0x07, 0x51, 0x94, 0x95, 0xff, 0xff,
 		    0xb2, 0x98, 0xff, 0x94, 0x17, 0x16, 0xb0, 0x6d,
 		    0xfa, 0xb8, 0x7c, 0xf8, 0xd9, 0x11, 0x23, 0xfe,
-		    0x2b, 0xe9, 0xa2, 0x33, 0xdd, 0xa2, 0x22, 0x12 पूर्ण,
+		    0x2b, 0xe9, 0xa2, 0x33, 0xdd, 0xa2, 0x22, 0x12 },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - खुला key on twist */
-अणु
-	.secret = (u8[32])अणु 0xb0, 0x5b, 0xfd, 0x32, 0xe5, 0x53, 0x25, 0xd9,
+},
+/* wycheproof - public key on twist */
+{
+	.secret = (u8[32]){ 0xb0, 0x5b, 0xfd, 0x32, 0xe5, 0x53, 0x25, 0xd9,
 		     0xfd, 0x64, 0x8c, 0xb3, 0x02, 0x84, 0x80, 0x39,
 		     0x00, 0x0b, 0x39, 0x0e, 0x44, 0xd5, 0x21, 0xe5,
-		     0x8a, 0xab, 0x3b, 0x29, 0xa6, 0x96, 0x0b, 0xa8 पूर्ण,
-	.b_खुला = (u8[32])अणु 0x0f, 0x83, 0xc3, 0x6f, 0xde, 0xd9, 0xd3, 0x2f,
+		     0x8a, 0xab, 0x3b, 0x29, 0xa6, 0x96, 0x0b, 0xa8 },
+	.b_public = (u8[32]){ 0x0f, 0x83, 0xc3, 0x6f, 0xde, 0xd9, 0xd3, 0x2f,
 		    0xad, 0xf4, 0xef, 0xa3, 0xae, 0x93, 0xa9, 0x0b,
 		    0xb5, 0xcf, 0xa6, 0x68, 0x93, 0xbc, 0x41, 0x2c,
-		    0x43, 0xfa, 0x72, 0x87, 0xdb, 0xb9, 0x97, 0x79 पूर्ण,
-	.expected_ss = (u8[32])अणु 0x67, 0xdd, 0x4a, 0x6e, 0x16, 0x55, 0x33, 0x53,
+		    0x43, 0xfa, 0x72, 0x87, 0xdb, 0xb9, 0x97, 0x79 },
+	.expected_ss = (u8[32]){ 0x67, 0xdd, 0x4a, 0x6e, 0x16, 0x55, 0x33, 0x53,
 		    0x4c, 0x0e, 0x3f, 0x17, 0x2e, 0x4a, 0xb8, 0x57,
 		    0x6b, 0xca, 0x92, 0x3a, 0x5f, 0x07, 0xb2, 0xc0,
-		    0x69, 0xb4, 0xc3, 0x10, 0xff, 0x2e, 0x93, 0x5b पूर्ण,
+		    0x69, 0xb4, 0xc3, 0x10, 0xff, 0x2e, 0x93, 0x5b },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - खुला key on twist */
-अणु
-	.secret = (u8[32])अणु 0x70, 0xe3, 0x4b, 0xcb, 0xe1, 0xf4, 0x7f, 0xbc,
+},
+/* wycheproof - public key on twist */
+{
+	.secret = (u8[32]){ 0x70, 0xe3, 0x4b, 0xcb, 0xe1, 0xf4, 0x7f, 0xbc,
 		     0x0f, 0xdd, 0xfd, 0x7c, 0x1e, 0x1a, 0xa5, 0x3d,
 		     0x57, 0xbf, 0xe0, 0xf6, 0x6d, 0x24, 0x30, 0x67,
-		     0xb4, 0x24, 0xbb, 0x62, 0x10, 0xbe, 0xd1, 0x9c पूर्ण,
-	.b_खुला = (u8[32])अणु 0x0b, 0x82, 0x11, 0xa2, 0xb6, 0x04, 0x90, 0x97,
+		     0xb4, 0x24, 0xbb, 0x62, 0x10, 0xbe, 0xd1, 0x9c },
+	.b_public = (u8[32]){ 0x0b, 0x82, 0x11, 0xa2, 0xb6, 0x04, 0x90, 0x97,
 		    0xf6, 0x87, 0x1c, 0x6c, 0x05, 0x2d, 0x3c, 0x5f,
 		    0xc1, 0xba, 0x17, 0xda, 0x9e, 0x32, 0xae, 0x45,
-		    0x84, 0x03, 0xb0, 0x5b, 0xb2, 0x83, 0x09, 0x2a पूर्ण,
-	.expected_ss = (u8[32])अणु 0x4a, 0x06, 0x38, 0xcf, 0xaa, 0x9e, 0xf1, 0x93,
+		    0x84, 0x03, 0xb0, 0x5b, 0xb2, 0x83, 0x09, 0x2a },
+	.expected_ss = (u8[32]){ 0x4a, 0x06, 0x38, 0xcf, 0xaa, 0x9e, 0xf1, 0x93,
 		    0x3b, 0x47, 0xf8, 0x93, 0x92, 0x96, 0xa6, 0xb2,
 		    0x5b, 0xe5, 0x41, 0xef, 0x7f, 0x70, 0xe8, 0x44,
-		    0xc0, 0xbc, 0xc0, 0x0b, 0x13, 0x4d, 0xe6, 0x4a पूर्ण,
+		    0xc0, 0xbc, 0xc0, 0x0b, 0x13, 0x4d, 0xe6, 0x4a },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - खुला key on twist */
-अणु
-	.secret = (u8[32])अणु 0x68, 0xc1, 0xf3, 0xa6, 0x53, 0xa4, 0xcd, 0xb1,
+},
+/* wycheproof - public key on twist */
+{
+	.secret = (u8[32]){ 0x68, 0xc1, 0xf3, 0xa6, 0x53, 0xa4, 0xcd, 0xb1,
 		     0xd3, 0x7b, 0xba, 0x94, 0x73, 0x8f, 0x8b, 0x95,
 		     0x7a, 0x57, 0xbe, 0xb2, 0x4d, 0x64, 0x6e, 0x99,
-		     0x4d, 0xc2, 0x9a, 0x27, 0x6a, 0xad, 0x45, 0x8d पूर्ण,
-	.b_खुला = (u8[32])अणु 0x34, 0x3a, 0xc2, 0x0a, 0x3b, 0x9c, 0x6a, 0x27,
+		     0x4d, 0xc2, 0x9a, 0x27, 0x6a, 0xad, 0x45, 0x8d },
+	.b_public = (u8[32]){ 0x34, 0x3a, 0xc2, 0x0a, 0x3b, 0x9c, 0x6a, 0x27,
 		    0xb1, 0x00, 0x81, 0x76, 0x50, 0x9a, 0xd3, 0x07,
 		    0x35, 0x85, 0x6e, 0xc1, 0xc8, 0xd8, 0xfc, 0xae,
-		    0x13, 0x91, 0x2d, 0x08, 0xd1, 0x52, 0xf4, 0x6c पूर्ण,
-	.expected_ss = (u8[32])अणु 0x39, 0x94, 0x91, 0xfc, 0xe8, 0xdf, 0xab, 0x73,
+		    0x13, 0x91, 0x2d, 0x08, 0xd1, 0x52, 0xf4, 0x6c },
+	.expected_ss = (u8[32]){ 0x39, 0x94, 0x91, 0xfc, 0xe8, 0xdf, 0xab, 0x73,
 		    0xb4, 0xf9, 0xf6, 0x11, 0xde, 0x8e, 0xa0, 0xb2,
 		    0x7b, 0x28, 0xf8, 0x59, 0x94, 0x25, 0x0b, 0x0f,
-		    0x47, 0x5d, 0x58, 0x5d, 0x04, 0x2a, 0xc2, 0x07 पूर्ण,
+		    0x47, 0x5d, 0x58, 0x5d, 0x04, 0x2a, 0xc2, 0x07 },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - खुला key on twist */
-अणु
-	.secret = (u8[32])अणु 0xd8, 0x77, 0xb2, 0x6d, 0x06, 0xdf, 0xf9, 0xd9,
+},
+/* wycheproof - public key on twist */
+{
+	.secret = (u8[32]){ 0xd8, 0x77, 0xb2, 0x6d, 0x06, 0xdf, 0xf9, 0xd9,
 		     0xf7, 0xfd, 0x4c, 0x5b, 0x37, 0x69, 0xf8, 0xcd,
 		     0xd5, 0xb3, 0x05, 0x16, 0xa5, 0xab, 0x80, 0x6b,
-		     0xe3, 0x24, 0xff, 0x3e, 0xb6, 0x9e, 0xa0, 0xb2 पूर्ण,
-	.b_खुला = (u8[32])अणु 0xfa, 0x69, 0x5f, 0xc7, 0xbe, 0x8d, 0x1b, 0xe5,
+		     0xe3, 0x24, 0xff, 0x3e, 0xb6, 0x9e, 0xa0, 0xb2 },
+	.b_public = (u8[32]){ 0xfa, 0x69, 0x5f, 0xc7, 0xbe, 0x8d, 0x1b, 0xe5,
 		    0xbf, 0x70, 0x48, 0x98, 0xf3, 0x88, 0xc4, 0x52,
 		    0xba, 0xfd, 0xd3, 0xb8, 0xea, 0xe8, 0x05, 0xf8,
-		    0x68, 0x1a, 0x8d, 0x15, 0xc2, 0xd4, 0xe1, 0x42 पूर्ण,
-	.expected_ss = (u8[32])अणु 0x2c, 0x4f, 0xe1, 0x1d, 0x49, 0x0a, 0x53, 0x86,
+		    0x68, 0x1a, 0x8d, 0x15, 0xc2, 0xd4, 0xe1, 0x42 },
+	.expected_ss = (u8[32]){ 0x2c, 0x4f, 0xe1, 0x1d, 0x49, 0x0a, 0x53, 0x86,
 		    0x17, 0x76, 0xb1, 0x3b, 0x43, 0x54, 0xab, 0xd4,
 		    0xcf, 0x5a, 0x97, 0x69, 0x9d, 0xb6, 0xe6, 0xc6,
-		    0x8c, 0x16, 0x26, 0xd0, 0x76, 0x62, 0xf7, 0x58 पूर्ण,
+		    0x8c, 0x16, 0x26, 0xd0, 0x76, 0x62, 0xf7, 0x58 },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - edge हाल on twist */
-अणु
-	.secret = (u8[32])अणु 0x38, 0xdd, 0xe9, 0xf3, 0xe7, 0xb7, 0x99, 0x04,
+},
+/* wycheproof - edge case on twist */
+{
+	.secret = (u8[32]){ 0x38, 0xdd, 0xe9, 0xf3, 0xe7, 0xb7, 0x99, 0x04,
 		     0x5f, 0x9a, 0xc3, 0x79, 0x3d, 0x4a, 0x92, 0x77,
 		     0xda, 0xde, 0xad, 0xc4, 0x1b, 0xec, 0x02, 0x90,
-		     0xf8, 0x1f, 0x74, 0x4f, 0x73, 0x77, 0x5f, 0x84 पूर्ण,
-	.b_खुला = (u8[32])अणु 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		     0xf8, 0x1f, 0x74, 0x4f, 0x73, 0x77, 0x5f, 0x84 },
+	.b_public = (u8[32]){ 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 पूर्ण,
-	.expected_ss = (u8[32])अणु 0x9a, 0x2c, 0xfe, 0x84, 0xff, 0x9c, 0x4a, 0x97,
+		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
+	.expected_ss = (u8[32]){ 0x9a, 0x2c, 0xfe, 0x84, 0xff, 0x9c, 0x4a, 0x97,
 		    0x39, 0x62, 0x5c, 0xae, 0x4a, 0x3b, 0x82, 0xa9,
 		    0x06, 0x87, 0x7a, 0x44, 0x19, 0x46, 0xf8, 0xd7,
-		    0xb3, 0xd7, 0x95, 0xfe, 0x8f, 0x5d, 0x16, 0x39 पूर्ण,
+		    0xb3, 0xd7, 0x95, 0xfe, 0x8f, 0x5d, 0x16, 0x39 },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - edge हाल on twist */
-अणु
-	.secret = (u8[32])अणु 0x98, 0x57, 0xa9, 0x14, 0xe3, 0xc2, 0x90, 0x36,
+},
+/* wycheproof - edge case on twist */
+{
+	.secret = (u8[32]){ 0x98, 0x57, 0xa9, 0x14, 0xe3, 0xc2, 0x90, 0x36,
 		     0xfd, 0x9a, 0x44, 0x2b, 0xa5, 0x26, 0xb5, 0xcd,
 		     0xcd, 0xf2, 0x82, 0x16, 0x15, 0x3e, 0x63, 0x6c,
-		     0x10, 0x67, 0x7a, 0xca, 0xb6, 0xbd, 0x6a, 0xa5 पूर्ण,
-	.b_खुला = (u8[32])अणु 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		     0x10, 0x67, 0x7a, 0xca, 0xb6, 0xbd, 0x6a, 0xa5 },
+	.b_public = (u8[32]){ 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 पूर्ण,
-	.expected_ss = (u8[32])अणु 0x4d, 0xa4, 0xe0, 0xaa, 0x07, 0x2c, 0x23, 0x2e,
+		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
+	.expected_ss = (u8[32]){ 0x4d, 0xa4, 0xe0, 0xaa, 0x07, 0x2c, 0x23, 0x2e,
 		    0xe2, 0xf0, 0xfa, 0x4e, 0x51, 0x9a, 0xe5, 0x0b,
 		    0x52, 0xc1, 0xed, 0xd0, 0x8a, 0x53, 0x4d, 0x4e,
-		    0xf3, 0x46, 0xc2, 0xe1, 0x06, 0xd2, 0x1d, 0x60 पूर्ण,
+		    0xf3, 0x46, 0xc2, 0xe1, 0x06, 0xd2, 0x1d, 0x60 },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - edge हाल on twist */
-अणु
-	.secret = (u8[32])अणु 0x48, 0xe2, 0x13, 0x0d, 0x72, 0x33, 0x05, 0xed,
+},
+/* wycheproof - edge case on twist */
+{
+	.secret = (u8[32]){ 0x48, 0xe2, 0x13, 0x0d, 0x72, 0x33, 0x05, 0xed,
 		     0x05, 0xe6, 0xe5, 0x89, 0x4d, 0x39, 0x8a, 0x5e,
 		     0x33, 0x36, 0x7a, 0x8c, 0x6a, 0xac, 0x8f, 0xcd,
-		     0xf0, 0xa8, 0x8e, 0x4b, 0x42, 0x82, 0x0d, 0xb7 पूर्ण,
-	.b_खुला = (u8[32])अणु 0xff, 0xff, 0xff, 0x03, 0x00, 0x00, 0xf8, 0xff,
+		     0xf0, 0xa8, 0x8e, 0x4b, 0x42, 0x82, 0x0d, 0xb7 },
+	.b_public = (u8[32]){ 0xff, 0xff, 0xff, 0x03, 0x00, 0x00, 0xf8, 0xff,
 		    0xff, 0x1f, 0x00, 0x00, 0xc0, 0xff, 0xff, 0xff,
 		    0x00, 0x00, 0x00, 0xfe, 0xff, 0xff, 0x07, 0x00,
-		    0x00, 0xf0, 0xff, 0xff, 0x3f, 0x00, 0x00, 0x00 पूर्ण,
-	.expected_ss = (u8[32])अणु 0x9e, 0xd1, 0x0c, 0x53, 0x74, 0x7f, 0x64, 0x7f,
+		    0x00, 0xf0, 0xff, 0xff, 0x3f, 0x00, 0x00, 0x00 },
+	.expected_ss = (u8[32]){ 0x9e, 0xd1, 0x0c, 0x53, 0x74, 0x7f, 0x64, 0x7f,
 		    0x82, 0xf4, 0x51, 0x25, 0xd3, 0xde, 0x15, 0xa1,
 		    0xe6, 0xb8, 0x24, 0x49, 0x6a, 0xb4, 0x04, 0x10,
-		    0xff, 0xcc, 0x3c, 0xfe, 0x95, 0x76, 0x0f, 0x3b पूर्ण,
+		    0xff, 0xcc, 0x3c, 0xfe, 0x95, 0x76, 0x0f, 0x3b },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - edge हाल on twist */
-अणु
-	.secret = (u8[32])अणु 0x28, 0xf4, 0x10, 0x11, 0x69, 0x18, 0x51, 0xb3,
+},
+/* wycheproof - edge case on twist */
+{
+	.secret = (u8[32]){ 0x28, 0xf4, 0x10, 0x11, 0x69, 0x18, 0x51, 0xb3,
 		     0xa6, 0x2b, 0x64, 0x15, 0x53, 0xb3, 0x0d, 0x0d,
 		     0xfd, 0xdc, 0xb8, 0xff, 0xfc, 0xf5, 0x37, 0x00,
-		     0xa7, 0xbe, 0x2f, 0x6a, 0x87, 0x2e, 0x9f, 0xb0 पूर्ण,
-	.b_खुला = (u8[32])अणु 0x00, 0x00, 0x00, 0xfc, 0xff, 0xff, 0x07, 0x00,
+		     0xa7, 0xbe, 0x2f, 0x6a, 0x87, 0x2e, 0x9f, 0xb0 },
+	.b_public = (u8[32]){ 0x00, 0x00, 0x00, 0xfc, 0xff, 0xff, 0x07, 0x00,
 		    0x00, 0xe0, 0xff, 0xff, 0x3f, 0x00, 0x00, 0x00,
 		    0xff, 0xff, 0xff, 0x01, 0x00, 0x00, 0xf8, 0xff,
-		    0xff, 0x0f, 0x00, 0x00, 0xc0, 0xff, 0xff, 0x7f पूर्ण,
-	.expected_ss = (u8[32])अणु 0xcf, 0x72, 0xb4, 0xaa, 0x6a, 0xa1, 0xc9, 0xf8,
+		    0xff, 0x0f, 0x00, 0x00, 0xc0, 0xff, 0xff, 0x7f },
+	.expected_ss = (u8[32]){ 0xcf, 0x72, 0xb4, 0xaa, 0x6a, 0xa1, 0xc9, 0xf8,
 		    0x94, 0xf4, 0x16, 0x5b, 0x86, 0x10, 0x9a, 0xa4,
 		    0x68, 0x51, 0x76, 0x48, 0xe1, 0xf0, 0xcc, 0x70,
-		    0xe1, 0xab, 0x08, 0x46, 0x01, 0x76, 0x50, 0x6b पूर्ण,
+		    0xe1, 0xab, 0x08, 0x46, 0x01, 0x76, 0x50, 0x6b },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - edge हाल on twist */
-अणु
-	.secret = (u8[32])अणु 0x18, 0xa9, 0x3b, 0x64, 0x99, 0xb9, 0xf6, 0xb3,
+},
+/* wycheproof - edge case on twist */
+{
+	.secret = (u8[32]){ 0x18, 0xa9, 0x3b, 0x64, 0x99, 0xb9, 0xf6, 0xb3,
 		     0x22, 0x5c, 0xa0, 0x2f, 0xef, 0x41, 0x0e, 0x0a,
 		     0xde, 0xc2, 0x35, 0x32, 0x32, 0x1d, 0x2d, 0x8e,
-		     0xf1, 0xa6, 0xd6, 0x02, 0xa8, 0xc6, 0x5b, 0x83 पूर्ण,
-	.b_खुला = (u8[32])अणु 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff,
+		     0xf1, 0xa6, 0xd6, 0x02, 0xa8, 0xc6, 0x5b, 0x83 },
+	.b_public = (u8[32]){ 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff,
 		    0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff,
 		    0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff,
-		    0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0x7f पूर्ण,
-	.expected_ss = (u8[32])अणु 0x5d, 0x50, 0xb6, 0x28, 0x36, 0xbb, 0x69, 0x57,
+		    0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0x7f },
+	.expected_ss = (u8[32]){ 0x5d, 0x50, 0xb6, 0x28, 0x36, 0xbb, 0x69, 0x57,
 		    0x94, 0x10, 0x38, 0x6c, 0xf7, 0xbb, 0x81, 0x1c,
 		    0x14, 0xbf, 0x85, 0xb1, 0xc7, 0xb1, 0x7e, 0x59,
-		    0x24, 0xc7, 0xff, 0xea, 0x91, 0xef, 0x9e, 0x12 पूर्ण,
+		    0x24, 0xc7, 0xff, 0xea, 0x91, 0xef, 0x9e, 0x12 },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - edge हाल on twist */
-अणु
-	.secret = (u8[32])अणु 0xc0, 0x1d, 0x13, 0x05, 0xa1, 0x33, 0x8a, 0x1f,
+},
+/* wycheproof - edge case on twist */
+{
+	.secret = (u8[32]){ 0xc0, 0x1d, 0x13, 0x05, 0xa1, 0x33, 0x8a, 0x1f,
 		     0xca, 0xc2, 0xba, 0x7e, 0x2e, 0x03, 0x2b, 0x42,
 		     0x7e, 0x0b, 0x04, 0x90, 0x31, 0x65, 0xac, 0xa9,
-		     0x57, 0xd8, 0xd0, 0x55, 0x3d, 0x87, 0x17, 0xb0 पूर्ण,
-	.b_खुला = (u8[32])अणु 0xea, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		     0x57, 0xd8, 0xd0, 0x55, 0x3d, 0x87, 0x17, 0xb0 },
+	.b_public = (u8[32]){ 0xea, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f पूर्ण,
-	.expected_ss = (u8[32])अणु 0x19, 0x23, 0x0e, 0xb1, 0x48, 0xd5, 0xd6, 0x7c,
+		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f },
+	.expected_ss = (u8[32]){ 0x19, 0x23, 0x0e, 0xb1, 0x48, 0xd5, 0xd6, 0x7c,
 		    0x3c, 0x22, 0xab, 0x1d, 0xae, 0xff, 0x80, 0xa5,
 		    0x7e, 0xae, 0x42, 0x65, 0xce, 0x28, 0x72, 0x65,
-		    0x7b, 0x2c, 0x80, 0x99, 0xfc, 0x69, 0x8e, 0x50 पूर्ण,
+		    0x7b, 0x2c, 0x80, 0x99, 0xfc, 0x69, 0x8e, 0x50 },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - edge हाल क्रम खुला key */
-अणु
-	.secret = (u8[32])अणु 0x38, 0x6f, 0x7f, 0x16, 0xc5, 0x07, 0x31, 0xd6,
+},
+/* wycheproof - edge case for public key */
+{
+	.secret = (u8[32]){ 0x38, 0x6f, 0x7f, 0x16, 0xc5, 0x07, 0x31, 0xd6,
 		     0x4f, 0x82, 0xe6, 0xa1, 0x70, 0xb1, 0x42, 0xa4,
 		     0xe3, 0x4f, 0x31, 0xfd, 0x77, 0x68, 0xfc, 0xb8,
-		     0x90, 0x29, 0x25, 0xe7, 0xd1, 0xe2, 0x1a, 0xbe पूर्ण,
-	.b_खुला = (u8[32])अणु 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		     0x90, 0x29, 0x25, 0xe7, 0xd1, 0xe2, 0x1a, 0xbe },
+	.b_public = (u8[32]){ 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 पूर्ण,
-	.expected_ss = (u8[32])अणु 0x0f, 0xca, 0xb5, 0xd8, 0x42, 0xa0, 0x78, 0xd7,
+		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
+	.expected_ss = (u8[32]){ 0x0f, 0xca, 0xb5, 0xd8, 0x42, 0xa0, 0x78, 0xd7,
 		    0xa7, 0x1f, 0xc5, 0x9b, 0x57, 0xbf, 0xb4, 0xca,
 		    0x0b, 0xe6, 0x87, 0x3b, 0x49, 0xdc, 0xdb, 0x9f,
-		    0x44, 0xe1, 0x4a, 0xe8, 0xfb, 0xdf, 0xa5, 0x42 पूर्ण,
+		    0x44, 0xe1, 0x4a, 0xe8, 0xfb, 0xdf, 0xa5, 0x42 },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - edge हाल क्रम खुला key */
-अणु
-	.secret = (u8[32])अणु 0xe0, 0x23, 0xa2, 0x89, 0xbd, 0x5e, 0x90, 0xfa,
+},
+/* wycheproof - edge case for public key */
+{
+	.secret = (u8[32]){ 0xe0, 0x23, 0xa2, 0x89, 0xbd, 0x5e, 0x90, 0xfa,
 		     0x28, 0x04, 0xdd, 0xc0, 0x19, 0xa0, 0x5e, 0xf3,
 		     0xe7, 0x9d, 0x43, 0x4b, 0xb6, 0xea, 0x2f, 0x52,
-		     0x2e, 0xcb, 0x64, 0x3a, 0x75, 0x29, 0x6e, 0x95 पूर्ण,
-	.b_खुला = (u8[32])अणु 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00,
+		     0x2e, 0xcb, 0x64, 0x3a, 0x75, 0x29, 0x6e, 0x95 },
+	.b_public = (u8[32]){ 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00,
 		    0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00,
 		    0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00,
-		    0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00 पूर्ण,
-	.expected_ss = (u8[32])अणु 0x54, 0xce, 0x8f, 0x22, 0x75, 0xc0, 0x77, 0xe3,
+		    0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00 },
+	.expected_ss = (u8[32]){ 0x54, 0xce, 0x8f, 0x22, 0x75, 0xc0, 0x77, 0xe3,
 		    0xb1, 0x30, 0x6a, 0x39, 0x39, 0xc5, 0xe0, 0x3e,
 		    0xef, 0x6b, 0xbb, 0x88, 0x06, 0x05, 0x44, 0x75,
-		    0x8d, 0x9f, 0xef, 0x59, 0xb0, 0xbc, 0x3e, 0x4f पूर्ण,
+		    0x8d, 0x9f, 0xef, 0x59, 0xb0, 0xbc, 0x3e, 0x4f },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - edge हाल क्रम खुला key */
-अणु
-	.secret = (u8[32])अणु 0x68, 0xf0, 0x10, 0xd6, 0x2e, 0xe8, 0xd9, 0x26,
+},
+/* wycheproof - edge case for public key */
+{
+	.secret = (u8[32]){ 0x68, 0xf0, 0x10, 0xd6, 0x2e, 0xe8, 0xd9, 0x26,
 		     0x05, 0x3a, 0x36, 0x1c, 0x3a, 0x75, 0xc6, 0xea,
 		     0x4e, 0xbd, 0xc8, 0x60, 0x6a, 0xb2, 0x85, 0x00,
-		     0x3a, 0x6f, 0x8f, 0x40, 0x76, 0xb0, 0x1e, 0x83 पूर्ण,
-	.b_खुला = (u8[32])अणु 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		     0x3a, 0x6f, 0x8f, 0x40, 0x76, 0xb0, 0x1e, 0x83 },
+	.b_public = (u8[32]){ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x03 पूर्ण,
-	.expected_ss = (u8[32])अणु 0xf1, 0x36, 0x77, 0x5c, 0x5b, 0xeb, 0x0a, 0xf8,
+		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x03 },
+	.expected_ss = (u8[32]){ 0xf1, 0x36, 0x77, 0x5c, 0x5b, 0xeb, 0x0a, 0xf8,
 		    0x11, 0x0a, 0xf1, 0x0b, 0x20, 0x37, 0x23, 0x32,
 		    0x04, 0x3c, 0xab, 0x75, 0x24, 0x19, 0x67, 0x87,
-		    0x75, 0xa2, 0x23, 0xdf, 0x57, 0xc9, 0xd3, 0x0d पूर्ण,
+		    0x75, 0xa2, 0x23, 0xdf, 0x57, 0xc9, 0xd3, 0x0d },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - edge हाल क्रम खुला key */
-अणु
-	.secret = (u8[32])अणु 0x58, 0xeb, 0xcb, 0x35, 0xb0, 0xf8, 0x84, 0x5c,
+},
+/* wycheproof - edge case for public key */
+{
+	.secret = (u8[32]){ 0x58, 0xeb, 0xcb, 0x35, 0xb0, 0xf8, 0x84, 0x5c,
 		     0xaf, 0x1e, 0xc6, 0x30, 0xf9, 0x65, 0x76, 0xb6,
 		     0x2c, 0x4b, 0x7b, 0x6c, 0x36, 0xb2, 0x9d, 0xeb,
-		     0x2c, 0xb0, 0x08, 0x46, 0x51, 0x75, 0x5c, 0x96 पूर्ण,
-	.b_खुला = (u8[32])अणु 0xff, 0xff, 0xff, 0xfb, 0xff, 0xff, 0xfb, 0xff,
+		     0x2c, 0xb0, 0x08, 0x46, 0x51, 0x75, 0x5c, 0x96 },
+	.b_public = (u8[32]){ 0xff, 0xff, 0xff, 0xfb, 0xff, 0xff, 0xfb, 0xff,
 		    0xff, 0xdf, 0xff, 0xff, 0xdf, 0xff, 0xff, 0xff,
 		    0xfe, 0xff, 0xff, 0xfe, 0xff, 0xff, 0xf7, 0xff,
-		    0xff, 0xf7, 0xff, 0xff, 0xbf, 0xff, 0xff, 0x3f पूर्ण,
-	.expected_ss = (u8[32])अणु 0xbf, 0x9a, 0xff, 0xd0, 0x6b, 0x84, 0x40, 0x85,
+		    0xff, 0xf7, 0xff, 0xff, 0xbf, 0xff, 0xff, 0x3f },
+	.expected_ss = (u8[32]){ 0xbf, 0x9a, 0xff, 0xd0, 0x6b, 0x84, 0x40, 0x85,
 		    0x58, 0x64, 0x60, 0x96, 0x2e, 0xf2, 0x14, 0x6f,
 		    0xf3, 0xd4, 0x53, 0x3d, 0x94, 0x44, 0xaa, 0xb0,
-		    0x06, 0xeb, 0x88, 0xcc, 0x30, 0x54, 0x40, 0x7d पूर्ण,
+		    0x06, 0xeb, 0x88, 0xcc, 0x30, 0x54, 0x40, 0x7d },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - edge हाल क्रम खुला key */
-अणु
-	.secret = (u8[32])अणु 0x18, 0x8c, 0x4b, 0xc5, 0xb9, 0xc4, 0x4b, 0x38,
+},
+/* wycheproof - edge case for public key */
+{
+	.secret = (u8[32]){ 0x18, 0x8c, 0x4b, 0xc5, 0xb9, 0xc4, 0x4b, 0x38,
 		     0xbb, 0x65, 0x8b, 0x9b, 0x2a, 0xe8, 0x2d, 0x5b,
 		     0x01, 0x01, 0x5e, 0x09, 0x31, 0x84, 0xb1, 0x7c,
-		     0xb7, 0x86, 0x35, 0x03, 0xa7, 0x83, 0xe1, 0xbb पूर्ण,
-	.b_खुला = (u8[32])अणु 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		     0xb7, 0x86, 0x35, 0x03, 0xa7, 0x83, 0xe1, 0xbb },
+	.b_public = (u8[32]){ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x3f पूर्ण,
-	.expected_ss = (u8[32])अणु 0xd4, 0x80, 0xde, 0x04, 0xf6, 0x99, 0xcb, 0x3b,
+		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x3f },
+	.expected_ss = (u8[32]){ 0xd4, 0x80, 0xde, 0x04, 0xf6, 0x99, 0xcb, 0x3b,
 		    0xe0, 0x68, 0x4a, 0x9c, 0xc2, 0xe3, 0x12, 0x81,
 		    0xea, 0x0b, 0xc5, 0xa9, 0xdc, 0xc1, 0x57, 0xd3,
-		    0xd2, 0x01, 0x58, 0xd4, 0x6c, 0xa5, 0x24, 0x6d पूर्ण,
+		    0xd2, 0x01, 0x58, 0xd4, 0x6c, 0xa5, 0x24, 0x6d },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - edge हाल क्रम खुला key */
-अणु
-	.secret = (u8[32])अणु 0xe0, 0x6c, 0x11, 0xbb, 0x2e, 0x13, 0xce, 0x3d,
+},
+/* wycheproof - edge case for public key */
+{
+	.secret = (u8[32]){ 0xe0, 0x6c, 0x11, 0xbb, 0x2e, 0x13, 0xce, 0x3d,
 		     0xc7, 0x67, 0x3f, 0x67, 0xf5, 0x48, 0x22, 0x42,
 		     0x90, 0x94, 0x23, 0xa9, 0xae, 0x95, 0xee, 0x98,
-		     0x6a, 0x98, 0x8d, 0x98, 0xfa, 0xee, 0x23, 0xa2 पूर्ण,
-	.b_खुला = (u8[32])अणु 0xff, 0xff, 0xff, 0xff, 0xfe, 0xff, 0xff, 0x7f,
+		     0x6a, 0x98, 0x8d, 0x98, 0xfa, 0xee, 0x23, 0xa2 },
+	.b_public = (u8[32]){ 0xff, 0xff, 0xff, 0xff, 0xfe, 0xff, 0xff, 0x7f,
 		    0xff, 0xff, 0xff, 0xff, 0xfe, 0xff, 0xff, 0x7f,
 		    0xff, 0xff, 0xff, 0xff, 0xfe, 0xff, 0xff, 0x7f,
-		    0xff, 0xff, 0xff, 0xff, 0xfe, 0xff, 0xff, 0x7f पूर्ण,
-	.expected_ss = (u8[32])अणु 0x4c, 0x44, 0x01, 0xcc, 0xe6, 0xb5, 0x1e, 0x4c,
+		    0xff, 0xff, 0xff, 0xff, 0xfe, 0xff, 0xff, 0x7f },
+	.expected_ss = (u8[32]){ 0x4c, 0x44, 0x01, 0xcc, 0xe6, 0xb5, 0x1e, 0x4c,
 		    0xb1, 0x8f, 0x27, 0x90, 0x24, 0x6c, 0x9b, 0xf9,
 		    0x14, 0xdb, 0x66, 0x77, 0x50, 0xa1, 0xcb, 0x89,
-		    0x06, 0x90, 0x92, 0xaf, 0x07, 0x29, 0x22, 0x76 पूर्ण,
+		    0x06, 0x90, 0x92, 0xaf, 0x07, 0x29, 0x22, 0x76 },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - edge हाल क्रम खुला key */
-अणु
-	.secret = (u8[32])अणु 0xc0, 0x65, 0x8c, 0x46, 0xdd, 0xe1, 0x81, 0x29,
+},
+/* wycheproof - edge case for public key */
+{
+	.secret = (u8[32]){ 0xc0, 0x65, 0x8c, 0x46, 0xdd, 0xe1, 0x81, 0x29,
 		     0x29, 0x38, 0x77, 0x53, 0x5b, 0x11, 0x62, 0xb6,
 		     0xf9, 0xf5, 0x41, 0x4a, 0x23, 0xcf, 0x4d, 0x2c,
-		     0xbc, 0x14, 0x0a, 0x4d, 0x99, 0xda, 0x2b, 0x8f पूर्ण,
-	.b_खुला = (u8[32])अणु 0xeb, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		     0xbc, 0x14, 0x0a, 0x4d, 0x99, 0xda, 0x2b, 0x8f },
+	.b_public = (u8[32]){ 0xeb, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f पूर्ण,
-	.expected_ss = (u8[32])अणु 0x57, 0x8b, 0xa8, 0xcc, 0x2d, 0xbd, 0xc5, 0x75,
+		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f },
+	.expected_ss = (u8[32]){ 0x57, 0x8b, 0xa8, 0xcc, 0x2d, 0xbd, 0xc5, 0x75,
 		    0xaf, 0xcf, 0x9d, 0xf2, 0xb3, 0xee, 0x61, 0x89,
 		    0xf5, 0x33, 0x7d, 0x68, 0x54, 0xc7, 0x9b, 0x4c,
-		    0xe1, 0x65, 0xea, 0x12, 0x29, 0x3b, 0x3a, 0x0f पूर्ण,
+		    0xe1, 0x65, 0xea, 0x12, 0x29, 0x3b, 0x3a, 0x0f },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - खुला key >= p */
-अणु
-	.secret = (u8[32])अणु 0xf0, 0x1e, 0x48, 0xda, 0xfa, 0xc9, 0xd7, 0xbc,
+},
+/* wycheproof - public key >= p */
+{
+	.secret = (u8[32]){ 0xf0, 0x1e, 0x48, 0xda, 0xfa, 0xc9, 0xd7, 0xbc,
 		     0xf5, 0x89, 0xcb, 0xc3, 0x82, 0xc8, 0x78, 0xd1,
 		     0x8b, 0xda, 0x35, 0x50, 0x58, 0x9f, 0xfb, 0x5d,
-		     0x50, 0xb5, 0x23, 0xbe, 0xbe, 0x32, 0x9d, 0xae पूर्ण,
-	.b_खुला = (u8[32])अणु 0xef, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		     0x50, 0xb5, 0x23, 0xbe, 0xbe, 0x32, 0x9d, 0xae },
+	.b_public = (u8[32]){ 0xef, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f पूर्ण,
-	.expected_ss = (u8[32])अणु 0xbd, 0x36, 0xa0, 0x79, 0x0e, 0xb8, 0x83, 0x09,
+		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f },
+	.expected_ss = (u8[32]){ 0xbd, 0x36, 0xa0, 0x79, 0x0e, 0xb8, 0x83, 0x09,
 		    0x8c, 0x98, 0x8b, 0x21, 0x78, 0x67, 0x73, 0xde,
 		    0x0b, 0x3a, 0x4d, 0xf1, 0x62, 0x28, 0x2c, 0xf1,
-		    0x10, 0xde, 0x18, 0xdd, 0x48, 0x4c, 0xe7, 0x4b पूर्ण,
+		    0x10, 0xde, 0x18, 0xdd, 0x48, 0x4c, 0xe7, 0x4b },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - खुला key >= p */
-अणु
-	.secret = (u8[32])अणु 0x28, 0x87, 0x96, 0xbc, 0x5a, 0xff, 0x4b, 0x81,
+},
+/* wycheproof - public key >= p */
+{
+	.secret = (u8[32]){ 0x28, 0x87, 0x96, 0xbc, 0x5a, 0xff, 0x4b, 0x81,
 		     0xa3, 0x75, 0x01, 0x75, 0x7b, 0xc0, 0x75, 0x3a,
 		     0x3c, 0x21, 0x96, 0x47, 0x90, 0xd3, 0x86, 0x99,
-		     0x30, 0x8d, 0xeb, 0xc1, 0x7a, 0x6e, 0xaf, 0x8d पूर्ण,
-	.b_खुला = (u8[32])अणु 0xf0, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		     0x30, 0x8d, 0xeb, 0xc1, 0x7a, 0x6e, 0xaf, 0x8d },
+	.b_public = (u8[32]){ 0xf0, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f पूर्ण,
-	.expected_ss = (u8[32])अणु 0xb4, 0xe0, 0xdd, 0x76, 0xda, 0x7b, 0x07, 0x17,
+		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f },
+	.expected_ss = (u8[32]){ 0xb4, 0xe0, 0xdd, 0x76, 0xda, 0x7b, 0x07, 0x17,
 		    0x28, 0xb6, 0x1f, 0x85, 0x67, 0x71, 0xaa, 0x35,
 		    0x6e, 0x57, 0xed, 0xa7, 0x8a, 0x5b, 0x16, 0x55,
-		    0xcc, 0x38, 0x20, 0xfb, 0x5f, 0x85, 0x4c, 0x5c पूर्ण,
+		    0xcc, 0x38, 0x20, 0xfb, 0x5f, 0x85, 0x4c, 0x5c },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - खुला key >= p */
-अणु
-	.secret = (u8[32])अणु 0x98, 0xdf, 0x84, 0x5f, 0x66, 0x51, 0xbf, 0x11,
+},
+/* wycheproof - public key >= p */
+{
+	.secret = (u8[32]){ 0x98, 0xdf, 0x84, 0x5f, 0x66, 0x51, 0xbf, 0x11,
 		     0x38, 0x22, 0x1f, 0x11, 0x90, 0x41, 0xf7, 0x2b,
 		     0x6d, 0xbc, 0x3c, 0x4a, 0xce, 0x71, 0x43, 0xd9,
-		     0x9f, 0xd5, 0x5a, 0xd8, 0x67, 0x48, 0x0d, 0xa8 पूर्ण,
-	.b_खुला = (u8[32])अणु 0xf1, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		     0x9f, 0xd5, 0x5a, 0xd8, 0x67, 0x48, 0x0d, 0xa8 },
+	.b_public = (u8[32]){ 0xf1, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f पूर्ण,
-	.expected_ss = (u8[32])अणु 0x6f, 0xdf, 0x6c, 0x37, 0x61, 0x1d, 0xbd, 0x53,
+		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f },
+	.expected_ss = (u8[32]){ 0x6f, 0xdf, 0x6c, 0x37, 0x61, 0x1d, 0xbd, 0x53,
 		    0x04, 0xdc, 0x0f, 0x2e, 0xb7, 0xc9, 0x51, 0x7e,
 		    0xb3, 0xc5, 0x0e, 0x12, 0xfd, 0x05, 0x0a, 0xc6,
-		    0xde, 0xc2, 0x70, 0x71, 0xd4, 0xbf, 0xc0, 0x34 पूर्ण,
+		    0xde, 0xc2, 0x70, 0x71, 0xd4, 0xbf, 0xc0, 0x34 },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - खुला key >= p */
-अणु
-	.secret = (u8[32])अणु 0xf0, 0x94, 0x98, 0xe4, 0x6f, 0x02, 0xf8, 0x78,
+},
+/* wycheproof - public key >= p */
+{
+	.secret = (u8[32]){ 0xf0, 0x94, 0x98, 0xe4, 0x6f, 0x02, 0xf8, 0x78,
 		     0x82, 0x9e, 0x78, 0xb8, 0x03, 0xd3, 0x16, 0xa2,
 		     0xed, 0x69, 0x5d, 0x04, 0x98, 0xa0, 0x8a, 0xbd,
-		     0xf8, 0x27, 0x69, 0x30, 0xe2, 0x4e, 0xdc, 0xb0 पूर्ण,
-	.b_खुला = (u8[32])अणु 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		     0xf8, 0x27, 0x69, 0x30, 0xe2, 0x4e, 0xdc, 0xb0 },
+	.b_public = (u8[32]){ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f पूर्ण,
-	.expected_ss = (u8[32])अणु 0x4c, 0x8f, 0xc4, 0xb1, 0xc6, 0xab, 0x88, 0xfb,
+		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f },
+	.expected_ss = (u8[32]){ 0x4c, 0x8f, 0xc4, 0xb1, 0xc6, 0xab, 0x88, 0xfb,
 		    0x21, 0xf1, 0x8f, 0x6d, 0x4c, 0x81, 0x02, 0x40,
 		    0xd4, 0xe9, 0x46, 0x51, 0xba, 0x44, 0xf7, 0xa2,
-		    0xc8, 0x63, 0xce, 0xc7, 0xdc, 0x56, 0x60, 0x2d पूर्ण,
+		    0xc8, 0x63, 0xce, 0xc7, 0xdc, 0x56, 0x60, 0x2d },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - खुला key >= p */
-अणु
-	.secret = (u8[32])अणु 0x18, 0x13, 0xc1, 0x0a, 0x5c, 0x7f, 0x21, 0xf9,
+},
+/* wycheproof - public key >= p */
+{
+	.secret = (u8[32]){ 0x18, 0x13, 0xc1, 0x0a, 0x5c, 0x7f, 0x21, 0xf9,
 		     0x6e, 0x17, 0xf2, 0x88, 0xc0, 0xcc, 0x37, 0x60,
 		     0x7c, 0x04, 0xc5, 0xf5, 0xae, 0xa2, 0xdb, 0x13,
-		     0x4f, 0x9e, 0x2f, 0xfc, 0x66, 0xbd, 0x9d, 0xb8 पूर्ण,
-	.b_खुला = (u8[32])अणु 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		     0x4f, 0x9e, 0x2f, 0xfc, 0x66, 0xbd, 0x9d, 0xb8 },
+	.b_public = (u8[32]){ 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80 पूर्ण,
-	.expected_ss = (u8[32])अणु 0x1c, 0xd0, 0xb2, 0x82, 0x67, 0xdc, 0x54, 0x1c,
+		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80 },
+	.expected_ss = (u8[32]){ 0x1c, 0xd0, 0xb2, 0x82, 0x67, 0xdc, 0x54, 0x1c,
 		    0x64, 0x2d, 0x6d, 0x7d, 0xca, 0x44, 0xa8, 0xb3,
 		    0x8a, 0x63, 0x73, 0x6e, 0xef, 0x5c, 0x4e, 0x65,
-		    0x01, 0xff, 0xbb, 0xb1, 0x78, 0x0c, 0x03, 0x3c पूर्ण,
+		    0x01, 0xff, 0xbb, 0xb1, 0x78, 0x0c, 0x03, 0x3c },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - खुला key >= p */
-अणु
-	.secret = (u8[32])अणु 0x78, 0x57, 0xfb, 0x80, 0x86, 0x53, 0x64, 0x5a,
+},
+/* wycheproof - public key >= p */
+{
+	.secret = (u8[32]){ 0x78, 0x57, 0xfb, 0x80, 0x86, 0x53, 0x64, 0x5a,
 		     0x0b, 0xeb, 0x13, 0x8a, 0x64, 0xf5, 0xf4, 0xd7,
 		     0x33, 0xa4, 0x5e, 0xa8, 0x4c, 0x3c, 0xda, 0x11,
-		     0xa9, 0xc0, 0x6f, 0x7e, 0x71, 0x39, 0x14, 0x9e पूर्ण,
-	.b_खुला = (u8[32])अणु 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		     0xa9, 0xc0, 0x6f, 0x7e, 0x71, 0x39, 0x14, 0x9e },
+	.b_public = (u8[32]){ 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80 पूर्ण,
-	.expected_ss = (u8[32])अणु 0x87, 0x55, 0xbe, 0x01, 0xc6, 0x0a, 0x7e, 0x82,
+		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80 },
+	.expected_ss = (u8[32]){ 0x87, 0x55, 0xbe, 0x01, 0xc6, 0x0a, 0x7e, 0x82,
 		    0x5c, 0xff, 0x3e, 0x0e, 0x78, 0xcb, 0x3a, 0xa4,
 		    0x33, 0x38, 0x61, 0x51, 0x6a, 0xa5, 0x9b, 0x1c,
-		    0x51, 0xa8, 0xb2, 0xa5, 0x43, 0xdf, 0xa8, 0x22 पूर्ण,
+		    0x51, 0xa8, 0xb2, 0xa5, 0x43, 0xdf, 0xa8, 0x22 },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - खुला key >= p */
-अणु
-	.secret = (u8[32])अणु 0xe0, 0x3a, 0xa8, 0x42, 0xe2, 0xab, 0xc5, 0x6e,
+},
+/* wycheproof - public key >= p */
+{
+	.secret = (u8[32]){ 0xe0, 0x3a, 0xa8, 0x42, 0xe2, 0xab, 0xc5, 0x6e,
 		     0x81, 0xe8, 0x7b, 0x8b, 0x9f, 0x41, 0x7b, 0x2a,
 		     0x1e, 0x59, 0x13, 0xc7, 0x23, 0xee, 0xd2, 0x8d,
-		     0x75, 0x2f, 0x8d, 0x47, 0xa5, 0x9f, 0x49, 0x8f पूर्ण,
-	.b_खुला = (u8[32])अणु 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		     0x75, 0x2f, 0x8d, 0x47, 0xa5, 0x9f, 0x49, 0x8f },
+	.b_public = (u8[32]){ 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80 पूर्ण,
-	.expected_ss = (u8[32])अणु 0x54, 0xc9, 0xa1, 0xed, 0x95, 0xe5, 0x46, 0xd2,
+		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80 },
+	.expected_ss = (u8[32]){ 0x54, 0xc9, 0xa1, 0xed, 0x95, 0xe5, 0x46, 0xd2,
 		    0x78, 0x22, 0xa3, 0x60, 0x93, 0x1d, 0xda, 0x60,
 		    0xa1, 0xdf, 0x04, 0x9d, 0xa6, 0xf9, 0x04, 0x25,
-		    0x3c, 0x06, 0x12, 0xbb, 0xdc, 0x08, 0x74, 0x76 पूर्ण,
+		    0x3c, 0x06, 0x12, 0xbb, 0xdc, 0x08, 0x74, 0x76 },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - खुला key >= p */
-अणु
-	.secret = (u8[32])अणु 0xf8, 0xf7, 0x07, 0xb7, 0x99, 0x9b, 0x18, 0xcb,
+},
+/* wycheproof - public key >= p */
+{
+	.secret = (u8[32]){ 0xf8, 0xf7, 0x07, 0xb7, 0x99, 0x9b, 0x18, 0xcb,
 		     0x0d, 0x6b, 0x96, 0x12, 0x4f, 0x20, 0x45, 0x97,
 		     0x2c, 0xa2, 0x74, 0xbf, 0xc1, 0x54, 0xad, 0x0c,
-		     0x87, 0x03, 0x8c, 0x24, 0xc6, 0xd0, 0xd4, 0xb2 पूर्ण,
-	.b_खुला = (u8[32])अणु 0xda, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		     0x87, 0x03, 0x8c, 0x24, 0xc6, 0xd0, 0xd4, 0xb2 },
+	.b_public = (u8[32]){ 0xda, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff पूर्ण,
-	.expected_ss = (u8[32])अणु 0xcc, 0x1f, 0x40, 0xd7, 0x43, 0xcd, 0xc2, 0x23,
+		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff },
+	.expected_ss = (u8[32]){ 0xcc, 0x1f, 0x40, 0xd7, 0x43, 0xcd, 0xc2, 0x23,
 		    0x0e, 0x10, 0x43, 0xda, 0xba, 0x8b, 0x75, 0xe8,
 		    0x10, 0xf1, 0xfb, 0xab, 0x7f, 0x25, 0x52, 0x69,
-		    0xbd, 0x9e, 0xbb, 0x29, 0xe6, 0xbf, 0x49, 0x4f पूर्ण,
+		    0xbd, 0x9e, 0xbb, 0x29, 0xe6, 0xbf, 0x49, 0x4f },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - खुला key >= p */
-अणु
-	.secret = (u8[32])अणु 0xa0, 0x34, 0xf6, 0x84, 0xfa, 0x63, 0x1e, 0x1a,
+},
+/* wycheproof - public key >= p */
+{
+	.secret = (u8[32]){ 0xa0, 0x34, 0xf6, 0x84, 0xfa, 0x63, 0x1e, 0x1a,
 		     0x34, 0x81, 0x18, 0xc1, 0xce, 0x4c, 0x98, 0x23,
 		     0x1f, 0x2d, 0x9e, 0xec, 0x9b, 0xa5, 0x36, 0x5b,
-		     0x4a, 0x05, 0xd6, 0x9a, 0x78, 0x5b, 0x07, 0x96 पूर्ण,
-	.b_खुला = (u8[32])अणु 0xdb, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		     0x4a, 0x05, 0xd6, 0x9a, 0x78, 0x5b, 0x07, 0x96 },
+	.b_public = (u8[32]){ 0xdb, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff पूर्ण,
-	.expected_ss = (u8[32])अणु 0x54, 0x99, 0x8e, 0xe4, 0x3a, 0x5b, 0x00, 0x7b,
+		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff },
+	.expected_ss = (u8[32]){ 0x54, 0x99, 0x8e, 0xe4, 0x3a, 0x5b, 0x00, 0x7b,
 		    0xf4, 0x99, 0xf0, 0x78, 0xe7, 0x36, 0x52, 0x44,
 		    0x00, 0xa8, 0xb5, 0xc7, 0xe9, 0xb9, 0xb4, 0x37,
-		    0x71, 0x74, 0x8c, 0x7c, 0xdf, 0x88, 0x04, 0x12 पूर्ण,
+		    0x71, 0x74, 0x8c, 0x7c, 0xdf, 0x88, 0x04, 0x12 },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - खुला key >= p */
-अणु
-	.secret = (u8[32])अणु 0x30, 0xb6, 0xc6, 0xa0, 0xf2, 0xff, 0xa6, 0x80,
+},
+/* wycheproof - public key >= p */
+{
+	.secret = (u8[32]){ 0x30, 0xb6, 0xc6, 0xa0, 0xf2, 0xff, 0xa6, 0x80,
 		     0x76, 0x8f, 0x99, 0x2b, 0xa8, 0x9e, 0x15, 0x2d,
 		     0x5b, 0xc9, 0x89, 0x3d, 0x38, 0xc9, 0x11, 0x9b,
-		     0xe4, 0xf7, 0x67, 0xbf, 0xab, 0x6e, 0x0c, 0xa5 पूर्ण,
-	.b_खुला = (u8[32])अणु 0xdc, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		     0xe4, 0xf7, 0x67, 0xbf, 0xab, 0x6e, 0x0c, 0xa5 },
+	.b_public = (u8[32]){ 0xdc, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff पूर्ण,
-	.expected_ss = (u8[32])अणु 0xea, 0xd9, 0xb3, 0x8e, 0xfd, 0xd7, 0x23, 0x63,
+		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff },
+	.expected_ss = (u8[32]){ 0xea, 0xd9, 0xb3, 0x8e, 0xfd, 0xd7, 0x23, 0x63,
 		    0x79, 0x34, 0xe5, 0x5a, 0xb7, 0x17, 0xa7, 0xae,
 		    0x09, 0xeb, 0x86, 0xa2, 0x1d, 0xc3, 0x6a, 0x3f,
-		    0xee, 0xb8, 0x8b, 0x75, 0x9e, 0x39, 0x1e, 0x09 पूर्ण,
+		    0xee, 0xb8, 0x8b, 0x75, 0x9e, 0x39, 0x1e, 0x09 },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - खुला key >= p */
-अणु
-	.secret = (u8[32])अणु 0x90, 0x1b, 0x9d, 0xcf, 0x88, 0x1e, 0x01, 0xe0,
+},
+/* wycheproof - public key >= p */
+{
+	.secret = (u8[32]){ 0x90, 0x1b, 0x9d, 0xcf, 0x88, 0x1e, 0x01, 0xe0,
 		     0x27, 0x57, 0x50, 0x35, 0xd4, 0x0b, 0x43, 0xbd,
 		     0xc1, 0xc5, 0x24, 0x2e, 0x03, 0x08, 0x47, 0x49,
-		     0x5b, 0x0c, 0x72, 0x86, 0x46, 0x9b, 0x65, 0x91 पूर्ण,
-	.b_खुला = (u8[32])अणु 0xea, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		     0x5b, 0x0c, 0x72, 0x86, 0x46, 0x9b, 0x65, 0x91 },
+	.b_public = (u8[32]){ 0xea, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff पूर्ण,
-	.expected_ss = (u8[32])अणु 0x60, 0x2f, 0xf4, 0x07, 0x89, 0xb5, 0x4b, 0x41,
+		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff },
+	.expected_ss = (u8[32]){ 0x60, 0x2f, 0xf4, 0x07, 0x89, 0xb5, 0x4b, 0x41,
 		    0x80, 0x59, 0x15, 0xfe, 0x2a, 0x62, 0x21, 0xf0,
 		    0x7a, 0x50, 0xff, 0xc2, 0xc3, 0xfc, 0x94, 0xcf,
-		    0x61, 0xf1, 0x3d, 0x79, 0x04, 0xe8, 0x8e, 0x0e पूर्ण,
+		    0x61, 0xf1, 0x3d, 0x79, 0x04, 0xe8, 0x8e, 0x0e },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - खुला key >= p */
-अणु
-	.secret = (u8[32])अणु 0x80, 0x46, 0x67, 0x7c, 0x28, 0xfd, 0x82, 0xc9,
+},
+/* wycheproof - public key >= p */
+{
+	.secret = (u8[32]){ 0x80, 0x46, 0x67, 0x7c, 0x28, 0xfd, 0x82, 0xc9,
 		     0xa1, 0xbd, 0xb7, 0x1a, 0x1a, 0x1a, 0x34, 0xfa,
 		     0xba, 0x12, 0x25, 0xe2, 0x50, 0x7f, 0xe3, 0xf5,
-		     0x4d, 0x10, 0xbd, 0x5b, 0x0d, 0x86, 0x5f, 0x8e पूर्ण,
-	.b_खुला = (u8[32])अणु 0xeb, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		     0x4d, 0x10, 0xbd, 0x5b, 0x0d, 0x86, 0x5f, 0x8e },
+	.b_public = (u8[32]){ 0xeb, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff पूर्ण,
-	.expected_ss = (u8[32])अणु 0xe0, 0x0a, 0xe8, 0xb1, 0x43, 0x47, 0x12, 0x47,
+		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff },
+	.expected_ss = (u8[32]){ 0xe0, 0x0a, 0xe8, 0xb1, 0x43, 0x47, 0x12, 0x47,
 		    0xba, 0x24, 0xf1, 0x2c, 0x88, 0x55, 0x36, 0xc3,
 		    0xcb, 0x98, 0x1b, 0x58, 0xe1, 0xe5, 0x6b, 0x2b,
-		    0xaf, 0x35, 0xc1, 0x2a, 0xe1, 0xf7, 0x9c, 0x26 पूर्ण,
+		    0xaf, 0x35, 0xc1, 0x2a, 0xe1, 0xf7, 0x9c, 0x26 },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - खुला key >= p */
-अणु
-	.secret = (u8[32])अणु 0x60, 0x2f, 0x7e, 0x2f, 0x68, 0xa8, 0x46, 0xb8,
+},
+/* wycheproof - public key >= p */
+{
+	.secret = (u8[32]){ 0x60, 0x2f, 0x7e, 0x2f, 0x68, 0xa8, 0x46, 0xb8,
 		     0x2c, 0xc2, 0x69, 0xb1, 0xd4, 0x8e, 0x93, 0x98,
 		     0x86, 0xae, 0x54, 0xfd, 0x63, 0x6c, 0x1f, 0xe0,
-		     0x74, 0xd7, 0x10, 0x12, 0x7d, 0x47, 0x24, 0x91 पूर्ण,
-	.b_खुला = (u8[32])अणु 0xef, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		     0x74, 0xd7, 0x10, 0x12, 0x7d, 0x47, 0x24, 0x91 },
+	.b_public = (u8[32]){ 0xef, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff पूर्ण,
-	.expected_ss = (u8[32])अणु 0x98, 0xcb, 0x9b, 0x50, 0xdd, 0x3f, 0xc2, 0xb0,
+		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff },
+	.expected_ss = (u8[32]){ 0x98, 0xcb, 0x9b, 0x50, 0xdd, 0x3f, 0xc2, 0xb0,
 		    0xd4, 0xf2, 0xd2, 0xbf, 0x7c, 0x5c, 0xfd, 0xd1,
 		    0x0c, 0x8f, 0xcd, 0x31, 0xfc, 0x40, 0xaf, 0x1a,
-		    0xd4, 0x4f, 0x47, 0xc1, 0x31, 0x37, 0x63, 0x62 पूर्ण,
+		    0xd4, 0x4f, 0x47, 0xc1, 0x31, 0x37, 0x63, 0x62 },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - खुला key >= p */
-अणु
-	.secret = (u8[32])अणु 0x60, 0x88, 0x7b, 0x3d, 0xc7, 0x24, 0x43, 0x02,
+},
+/* wycheproof - public key >= p */
+{
+	.secret = (u8[32]){ 0x60, 0x88, 0x7b, 0x3d, 0xc7, 0x24, 0x43, 0x02,
 		     0x6e, 0xbe, 0xdb, 0xbb, 0xb7, 0x06, 0x65, 0xf4,
 		     0x2b, 0x87, 0xad, 0xd1, 0x44, 0x0e, 0x77, 0x68,
-		     0xfb, 0xd7, 0xe8, 0xe2, 0xce, 0x5f, 0x63, 0x9d पूर्ण,
-	.b_खुला = (u8[32])अणु 0xf0, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		     0xfb, 0xd7, 0xe8, 0xe2, 0xce, 0x5f, 0x63, 0x9d },
+	.b_public = (u8[32]){ 0xf0, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff पूर्ण,
-	.expected_ss = (u8[32])अणु 0x38, 0xd6, 0x30, 0x4c, 0x4a, 0x7e, 0x6d, 0x9f,
+		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff },
+	.expected_ss = (u8[32]){ 0x38, 0xd6, 0x30, 0x4c, 0x4a, 0x7e, 0x6d, 0x9f,
 		    0x79, 0x59, 0x33, 0x4f, 0xb5, 0x24, 0x5b, 0xd2,
 		    0xc7, 0x54, 0x52, 0x5d, 0x4c, 0x91, 0xdb, 0x95,
-		    0x02, 0x06, 0x92, 0x62, 0x34, 0xc1, 0xf6, 0x33 पूर्ण,
+		    0x02, 0x06, 0x92, 0x62, 0x34, 0xc1, 0xf6, 0x33 },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - खुला key >= p */
-अणु
-	.secret = (u8[32])अणु 0x78, 0xd3, 0x1d, 0xfa, 0x85, 0x44, 0x97, 0xd7,
+},
+/* wycheproof - public key >= p */
+{
+	.secret = (u8[32]){ 0x78, 0xd3, 0x1d, 0xfa, 0x85, 0x44, 0x97, 0xd7,
 		     0x2d, 0x8d, 0xef, 0x8a, 0x1b, 0x7f, 0xb0, 0x06,
 		     0xce, 0xc2, 0xd8, 0xc4, 0x92, 0x46, 0x47, 0xc9,
-		     0x38, 0x14, 0xae, 0x56, 0xfa, 0xed, 0xa4, 0x95 पूर्ण,
-	.b_खुला = (u8[32])अणु 0xf1, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		     0x38, 0x14, 0xae, 0x56, 0xfa, 0xed, 0xa4, 0x95 },
+	.b_public = (u8[32]){ 0xf1, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff पूर्ण,
-	.expected_ss = (u8[32])अणु 0x78, 0x6c, 0xd5, 0x49, 0x96, 0xf0, 0x14, 0xa5,
+		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff },
+	.expected_ss = (u8[32]){ 0x78, 0x6c, 0xd5, 0x49, 0x96, 0xf0, 0x14, 0xa5,
 		    0xa0, 0x31, 0xec, 0x14, 0xdb, 0x81, 0x2e, 0xd0,
 		    0x83, 0x55, 0x06, 0x1f, 0xdb, 0x5d, 0xe6, 0x80,
-		    0xa8, 0x00, 0xac, 0x52, 0x1f, 0x31, 0x8e, 0x23 पूर्ण,
+		    0xa8, 0x00, 0xac, 0x52, 0x1f, 0x31, 0x8e, 0x23 },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - खुला key >= p */
-अणु
-	.secret = (u8[32])अणु 0xc0, 0x4c, 0x5b, 0xae, 0xfa, 0x83, 0x02, 0xdd,
+},
+/* wycheproof - public key >= p */
+{
+	.secret = (u8[32]){ 0xc0, 0x4c, 0x5b, 0xae, 0xfa, 0x83, 0x02, 0xdd,
 		     0xde, 0xd6, 0xa4, 0xbb, 0x95, 0x77, 0x61, 0xb4,
 		     0xeb, 0x97, 0xae, 0xfa, 0x4f, 0xc3, 0xb8, 0x04,
-		     0x30, 0x85, 0xf9, 0x6a, 0x56, 0x59, 0xb3, 0xa5 पूर्ण,
-	.b_खुला = (u8[32])अणु 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		     0x30, 0x85, 0xf9, 0x6a, 0x56, 0x59, 0xb3, 0xa5 },
+	.b_public = (u8[32]){ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff पूर्ण,
-	.expected_ss = (u8[32])अणु 0x29, 0xae, 0x8b, 0xc7, 0x3e, 0x9b, 0x10, 0xa0,
+		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff },
+	.expected_ss = (u8[32]){ 0x29, 0xae, 0x8b, 0xc7, 0x3e, 0x9b, 0x10, 0xa0,
 		    0x8b, 0x4f, 0x68, 0x1c, 0x43, 0xc3, 0xe0, 0xac,
 		    0x1a, 0x17, 0x1d, 0x31, 0xb3, 0x8f, 0x1a, 0x48,
-		    0xef, 0xba, 0x29, 0xae, 0x63, 0x9e, 0xa1, 0x34 पूर्ण,
+		    0xef, 0xba, 0x29, 0xae, 0x63, 0x9e, 0xa1, 0x34 },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
+},
 /* wycheproof - RFC 7748 */
-अणु
-	.secret = (u8[32])अणु 0xa0, 0x46, 0xe3, 0x6b, 0xf0, 0x52, 0x7c, 0x9d,
+{
+	.secret = (u8[32]){ 0xa0, 0x46, 0xe3, 0x6b, 0xf0, 0x52, 0x7c, 0x9d,
 		     0x3b, 0x16, 0x15, 0x4b, 0x82, 0x46, 0x5e, 0xdd,
 		     0x62, 0x14, 0x4c, 0x0a, 0xc1, 0xfc, 0x5a, 0x18,
-		     0x50, 0x6a, 0x22, 0x44, 0xba, 0x44, 0x9a, 0x44 पूर्ण,
-	.b_खुला = (u8[32])अणु 0xe6, 0xdb, 0x68, 0x67, 0x58, 0x30, 0x30, 0xdb,
+		     0x50, 0x6a, 0x22, 0x44, 0xba, 0x44, 0x9a, 0x44 },
+	.b_public = (u8[32]){ 0xe6, 0xdb, 0x68, 0x67, 0x58, 0x30, 0x30, 0xdb,
 		    0x35, 0x94, 0xc1, 0xa4, 0x24, 0xb1, 0x5f, 0x7c,
 		    0x72, 0x66, 0x24, 0xec, 0x26, 0xb3, 0x35, 0x3b,
-		    0x10, 0xa9, 0x03, 0xa6, 0xd0, 0xab, 0x1c, 0x4c पूर्ण,
-	.expected_ss = (u8[32])अणु 0xc3, 0xda, 0x55, 0x37, 0x9d, 0xe9, 0xc6, 0x90,
+		    0x10, 0xa9, 0x03, 0xa6, 0xd0, 0xab, 0x1c, 0x4c },
+	.expected_ss = (u8[32]){ 0xc3, 0xda, 0x55, 0x37, 0x9d, 0xe9, 0xc6, 0x90,
 		    0x8e, 0x94, 0xea, 0x4d, 0xf2, 0x8d, 0x08, 0x4f,
 		    0x32, 0xec, 0xcf, 0x03, 0x49, 0x1c, 0x71, 0xf7,
-		    0x54, 0xb4, 0x07, 0x55, 0x77, 0xa2, 0x85, 0x52 पूर्ण,
+		    0x54, 0xb4, 0x07, 0x55, 0x77, 0xa2, 0x85, 0x52 },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
+},
 /* wycheproof - RFC 7748 */
-अणु
-	.secret = (u8[32])अणु 0x48, 0x66, 0xe9, 0xd4, 0xd1, 0xb4, 0x67, 0x3c,
+{
+	.secret = (u8[32]){ 0x48, 0x66, 0xe9, 0xd4, 0xd1, 0xb4, 0x67, 0x3c,
 		     0x5a, 0xd2, 0x26, 0x91, 0x95, 0x7d, 0x6a, 0xf5,
 		     0xc1, 0x1b, 0x64, 0x21, 0xe0, 0xea, 0x01, 0xd4,
-		     0x2c, 0xa4, 0x16, 0x9e, 0x79, 0x18, 0xba, 0x4d पूर्ण,
-	.b_खुला = (u8[32])अणु 0xe5, 0x21, 0x0f, 0x12, 0x78, 0x68, 0x11, 0xd3,
+		     0x2c, 0xa4, 0x16, 0x9e, 0x79, 0x18, 0xba, 0x4d },
+	.b_public = (u8[32]){ 0xe5, 0x21, 0x0f, 0x12, 0x78, 0x68, 0x11, 0xd3,
 		    0xf4, 0xb7, 0x95, 0x9d, 0x05, 0x38, 0xae, 0x2c,
 		    0x31, 0xdb, 0xe7, 0x10, 0x6f, 0xc0, 0x3c, 0x3e,
-		    0xfc, 0x4c, 0xd5, 0x49, 0xc7, 0x15, 0xa4, 0x13 पूर्ण,
-	.expected_ss = (u8[32])अणु 0x95, 0xcb, 0xde, 0x94, 0x76, 0xe8, 0x90, 0x7d,
+		    0xfc, 0x4c, 0xd5, 0x49, 0xc7, 0x15, 0xa4, 0x13 },
+	.expected_ss = (u8[32]){ 0x95, 0xcb, 0xde, 0x94, 0x76, 0xe8, 0x90, 0x7d,
 		    0x7a, 0xad, 0xe4, 0x5c, 0xb4, 0xb8, 0x73, 0xf8,
 		    0x8b, 0x59, 0x5a, 0x68, 0x79, 0x9f, 0xa1, 0x52,
-		    0xe6, 0xf8, 0xf7, 0x64, 0x7a, 0xac, 0x79, 0x57 पूर्ण,
+		    0xe6, 0xf8, 0xf7, 0x64, 0x7a, 0xac, 0x79, 0x57 },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - edge हाल क्रम shared secret */
-अणु
-	.secret = (u8[32])अणु 0xa0, 0xa4, 0xf1, 0x30, 0xb9, 0x8a, 0x5b, 0xe4,
+},
+/* wycheproof - edge case for shared secret */
+{
+	.secret = (u8[32]){ 0xa0, 0xa4, 0xf1, 0x30, 0xb9, 0x8a, 0x5b, 0xe4,
 		     0xb1, 0xce, 0xdb, 0x7c, 0xb8, 0x55, 0x84, 0xa3,
 		     0x52, 0x0e, 0x14, 0x2d, 0x47, 0x4d, 0xc9, 0xcc,
-		     0xb9, 0x09, 0xa0, 0x73, 0xa9, 0x76, 0xbf, 0x63 पूर्ण,
-	.b_खुला = (u8[32])अणु 0x0a, 0xb4, 0xe7, 0x63, 0x80, 0xd8, 0x4d, 0xde,
+		     0xb9, 0x09, 0xa0, 0x73, 0xa9, 0x76, 0xbf, 0x63 },
+	.b_public = (u8[32]){ 0x0a, 0xb4, 0xe7, 0x63, 0x80, 0xd8, 0x4d, 0xde,
 		    0x4f, 0x68, 0x33, 0xc5, 0x8f, 0x2a, 0x9f, 0xb8,
 		    0xf8, 0x3b, 0xb0, 0x16, 0x9b, 0x17, 0x2b, 0xe4,
-		    0xb6, 0xe0, 0x59, 0x28, 0x87, 0x74, 0x1a, 0x36 पूर्ण,
-	.expected_ss = (u8[32])अणु 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		    0xb6, 0xe0, 0x59, 0x28, 0x87, 0x74, 0x1a, 0x36 },
+	.expected_ss = (u8[32]){ 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 पूर्ण,
+		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - edge हाल क्रम shared secret */
-अणु
-	.secret = (u8[32])अणु 0xa0, 0xa4, 0xf1, 0x30, 0xb9, 0x8a, 0x5b, 0xe4,
+},
+/* wycheproof - edge case for shared secret */
+{
+	.secret = (u8[32]){ 0xa0, 0xa4, 0xf1, 0x30, 0xb9, 0x8a, 0x5b, 0xe4,
 		     0xb1, 0xce, 0xdb, 0x7c, 0xb8, 0x55, 0x84, 0xa3,
 		     0x52, 0x0e, 0x14, 0x2d, 0x47, 0x4d, 0xc9, 0xcc,
-		     0xb9, 0x09, 0xa0, 0x73, 0xa9, 0x76, 0xbf, 0x63 पूर्ण,
-	.b_खुला = (u8[32])अणु 0x89, 0xe1, 0x0d, 0x57, 0x01, 0xb4, 0x33, 0x7d,
+		     0xb9, 0x09, 0xa0, 0x73, 0xa9, 0x76, 0xbf, 0x63 },
+	.b_public = (u8[32]){ 0x89, 0xe1, 0x0d, 0x57, 0x01, 0xb4, 0x33, 0x7d,
 		    0x2d, 0x03, 0x21, 0x81, 0x53, 0x8b, 0x10, 0x64,
 		    0xbd, 0x40, 0x84, 0x40, 0x1c, 0xec, 0xa1, 0xfd,
-		    0x12, 0x66, 0x3a, 0x19, 0x59, 0x38, 0x80, 0x00 पूर्ण,
-	.expected_ss = (u8[32])अणु 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		    0x12, 0x66, 0x3a, 0x19, 0x59, 0x38, 0x80, 0x00 },
+	.expected_ss = (u8[32]){ 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 पूर्ण,
+		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - edge हाल क्रम shared secret */
-अणु
-	.secret = (u8[32])अणु 0xa0, 0xa4, 0xf1, 0x30, 0xb9, 0x8a, 0x5b, 0xe4,
+},
+/* wycheproof - edge case for shared secret */
+{
+	.secret = (u8[32]){ 0xa0, 0xa4, 0xf1, 0x30, 0xb9, 0x8a, 0x5b, 0xe4,
 		     0xb1, 0xce, 0xdb, 0x7c, 0xb8, 0x55, 0x84, 0xa3,
 		     0x52, 0x0e, 0x14, 0x2d, 0x47, 0x4d, 0xc9, 0xcc,
-		     0xb9, 0x09, 0xa0, 0x73, 0xa9, 0x76, 0xbf, 0x63 पूर्ण,
-	.b_खुला = (u8[32])अणु 0x2b, 0x55, 0xd3, 0xaa, 0x4a, 0x8f, 0x80, 0xc8,
+		     0xb9, 0x09, 0xa0, 0x73, 0xa9, 0x76, 0xbf, 0x63 },
+	.b_public = (u8[32]){ 0x2b, 0x55, 0xd3, 0xaa, 0x4a, 0x8f, 0x80, 0xc8,
 		    0xc0, 0xb2, 0xae, 0x5f, 0x93, 0x3e, 0x85, 0xaf,
 		    0x49, 0xbe, 0xac, 0x36, 0xc2, 0xfa, 0x73, 0x94,
-		    0xba, 0xb7, 0x6c, 0x89, 0x33, 0xf8, 0xf8, 0x1d पूर्ण,
-	.expected_ss = (u8[32])अणु 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		    0xba, 0xb7, 0x6c, 0x89, 0x33, 0xf8, 0xf8, 0x1d },
+	.expected_ss = (u8[32]){ 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 पूर्ण,
+		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - edge हाल क्रम shared secret */
-अणु
-	.secret = (u8[32])अणु 0xa0, 0xa4, 0xf1, 0x30, 0xb9, 0x8a, 0x5b, 0xe4,
+},
+/* wycheproof - edge case for shared secret */
+{
+	.secret = (u8[32]){ 0xa0, 0xa4, 0xf1, 0x30, 0xb9, 0x8a, 0x5b, 0xe4,
 		     0xb1, 0xce, 0xdb, 0x7c, 0xb8, 0x55, 0x84, 0xa3,
 		     0x52, 0x0e, 0x14, 0x2d, 0x47, 0x4d, 0xc9, 0xcc,
-		     0xb9, 0x09, 0xa0, 0x73, 0xa9, 0x76, 0xbf, 0x63 पूर्ण,
-	.b_खुला = (u8[32])अणु 0x63, 0xe5, 0xb1, 0xfe, 0x96, 0x01, 0xfe, 0x84,
+		     0xb9, 0x09, 0xa0, 0x73, 0xa9, 0x76, 0xbf, 0x63 },
+	.b_public = (u8[32]){ 0x63, 0xe5, 0xb1, 0xfe, 0x96, 0x01, 0xfe, 0x84,
 		    0x38, 0x5d, 0x88, 0x66, 0xb0, 0x42, 0x12, 0x62,
 		    0xf7, 0x8f, 0xbf, 0xa5, 0xaf, 0xf9, 0x58, 0x5e,
-		    0x62, 0x66, 0x79, 0xb1, 0x85, 0x47, 0xd9, 0x59 पूर्ण,
-	.expected_ss = (u8[32])अणु 0xfe, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		    0x62, 0x66, 0x79, 0xb1, 0x85, 0x47, 0xd9, 0x59 },
+	.expected_ss = (u8[32]){ 0xfe, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x3f पूर्ण,
+		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x3f },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - edge हाल क्रम shared secret */
-अणु
-	.secret = (u8[32])अणु 0xa0, 0xa4, 0xf1, 0x30, 0xb9, 0x8a, 0x5b, 0xe4,
+},
+/* wycheproof - edge case for shared secret */
+{
+	.secret = (u8[32]){ 0xa0, 0xa4, 0xf1, 0x30, 0xb9, 0x8a, 0x5b, 0xe4,
 		     0xb1, 0xce, 0xdb, 0x7c, 0xb8, 0x55, 0x84, 0xa3,
 		     0x52, 0x0e, 0x14, 0x2d, 0x47, 0x4d, 0xc9, 0xcc,
-		     0xb9, 0x09, 0xa0, 0x73, 0xa9, 0x76, 0xbf, 0x63 पूर्ण,
-	.b_खुला = (u8[32])अणु 0xe4, 0x28, 0xf3, 0xda, 0xc1, 0x78, 0x09, 0xf8,
+		     0xb9, 0x09, 0xa0, 0x73, 0xa9, 0x76, 0xbf, 0x63 },
+	.b_public = (u8[32]){ 0xe4, 0x28, 0xf3, 0xda, 0xc1, 0x78, 0x09, 0xf8,
 		    0x27, 0xa5, 0x22, 0xce, 0x32, 0x35, 0x50, 0x58,
 		    0xd0, 0x73, 0x69, 0x36, 0x4a, 0xa7, 0x89, 0x02,
-		    0xee, 0x10, 0x13, 0x9b, 0x9f, 0x9d, 0xd6, 0x53 पूर्ण,
-	.expected_ss = (u8[32])अणु 0xfc, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		    0xee, 0x10, 0x13, 0x9b, 0x9f, 0x9d, 0xd6, 0x53 },
+	.expected_ss = (u8[32]){ 0xfc, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x3f पूर्ण,
+		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x3f },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - edge हाल क्रम shared secret */
-अणु
-	.secret = (u8[32])अणु 0xa0, 0xa4, 0xf1, 0x30, 0xb9, 0x8a, 0x5b, 0xe4,
+},
+/* wycheproof - edge case for shared secret */
+{
+	.secret = (u8[32]){ 0xa0, 0xa4, 0xf1, 0x30, 0xb9, 0x8a, 0x5b, 0xe4,
 		     0xb1, 0xce, 0xdb, 0x7c, 0xb8, 0x55, 0x84, 0xa3,
 		     0x52, 0x0e, 0x14, 0x2d, 0x47, 0x4d, 0xc9, 0xcc,
-		     0xb9, 0x09, 0xa0, 0x73, 0xa9, 0x76, 0xbf, 0x63 पूर्ण,
-	.b_खुला = (u8[32])अणु 0xb3, 0xb5, 0x0e, 0x3e, 0xd3, 0xa4, 0x07, 0xb9,
+		     0xb9, 0x09, 0xa0, 0x73, 0xa9, 0x76, 0xbf, 0x63 },
+	.b_public = (u8[32]){ 0xb3, 0xb5, 0x0e, 0x3e, 0xd3, 0xa4, 0x07, 0xb9,
 		    0x5d, 0xe9, 0x42, 0xef, 0x74, 0x57, 0x5b, 0x5a,
 		    0xb8, 0xa1, 0x0c, 0x09, 0xee, 0x10, 0x35, 0x44,
-		    0xd6, 0x0b, 0xdf, 0xed, 0x81, 0x38, 0xab, 0x2b पूर्ण,
-	.expected_ss = (u8[32])अणु 0xf9, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		    0xd6, 0x0b, 0xdf, 0xed, 0x81, 0x38, 0xab, 0x2b },
+	.expected_ss = (u8[32]){ 0xf9, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x3f पूर्ण,
+		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x3f },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - edge हाल क्रम shared secret */
-अणु
-	.secret = (u8[32])अणु 0xa0, 0xa4, 0xf1, 0x30, 0xb9, 0x8a, 0x5b, 0xe4,
+},
+/* wycheproof - edge case for shared secret */
+{
+	.secret = (u8[32]){ 0xa0, 0xa4, 0xf1, 0x30, 0xb9, 0x8a, 0x5b, 0xe4,
 		     0xb1, 0xce, 0xdb, 0x7c, 0xb8, 0x55, 0x84, 0xa3,
 		     0x52, 0x0e, 0x14, 0x2d, 0x47, 0x4d, 0xc9, 0xcc,
-		     0xb9, 0x09, 0xa0, 0x73, 0xa9, 0x76, 0xbf, 0x63 पूर्ण,
-	.b_खुला = (u8[32])अणु 0x21, 0x3f, 0xff, 0xe9, 0x3d, 0x5e, 0xa8, 0xcd,
+		     0xb9, 0x09, 0xa0, 0x73, 0xa9, 0x76, 0xbf, 0x63 },
+	.b_public = (u8[32]){ 0x21, 0x3f, 0xff, 0xe9, 0x3d, 0x5e, 0xa8, 0xcd,
 		    0x24, 0x2e, 0x46, 0x28, 0x44, 0x02, 0x99, 0x22,
 		    0xc4, 0x3c, 0x77, 0xc9, 0xe3, 0xe4, 0x2f, 0x56,
-		    0x2f, 0x48, 0x5d, 0x24, 0xc5, 0x01, 0xa2, 0x0b पूर्ण,
-	.expected_ss = (u8[32])अणु 0xf3, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		    0x2f, 0x48, 0x5d, 0x24, 0xc5, 0x01, 0xa2, 0x0b },
+	.expected_ss = (u8[32]){ 0xf3, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x3f पूर्ण,
+		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x3f },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - edge हाल क्रम shared secret */
-अणु
-	.secret = (u8[32])अणु 0xa0, 0xa4, 0xf1, 0x30, 0xb9, 0x8a, 0x5b, 0xe4,
+},
+/* wycheproof - edge case for shared secret */
+{
+	.secret = (u8[32]){ 0xa0, 0xa4, 0xf1, 0x30, 0xb9, 0x8a, 0x5b, 0xe4,
 		     0xb1, 0xce, 0xdb, 0x7c, 0xb8, 0x55, 0x84, 0xa3,
 		     0x52, 0x0e, 0x14, 0x2d, 0x47, 0x4d, 0xc9, 0xcc,
-		     0xb9, 0x09, 0xa0, 0x73, 0xa9, 0x76, 0xbf, 0x63 पूर्ण,
-	.b_खुला = (u8[32])अणु 0x91, 0xb2, 0x32, 0xa1, 0x78, 0xb3, 0xcd, 0x53,
+		     0xb9, 0x09, 0xa0, 0x73, 0xa9, 0x76, 0xbf, 0x63 },
+	.b_public = (u8[32]){ 0x91, 0xb2, 0x32, 0xa1, 0x78, 0xb3, 0xcd, 0x53,
 		    0x09, 0x32, 0x44, 0x1e, 0x61, 0x39, 0x41, 0x8f,
 		    0x72, 0x17, 0x22, 0x92, 0xf1, 0xda, 0x4c, 0x18,
-		    0x34, 0xfc, 0x5e, 0xbf, 0xef, 0xb5, 0x1e, 0x3f पूर्ण,
-	.expected_ss = (u8[32])अणु 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		    0x34, 0xfc, 0x5e, 0xbf, 0xef, 0xb5, 0x1e, 0x3f },
+	.expected_ss = (u8[32]){ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x03 पूर्ण,
+		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x03 },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - edge हाल क्रम shared secret */
-अणु
-	.secret = (u8[32])अणु 0xa0, 0xa4, 0xf1, 0x30, 0xb9, 0x8a, 0x5b, 0xe4,
+},
+/* wycheproof - edge case for shared secret */
+{
+	.secret = (u8[32]){ 0xa0, 0xa4, 0xf1, 0x30, 0xb9, 0x8a, 0x5b, 0xe4,
 		     0xb1, 0xce, 0xdb, 0x7c, 0xb8, 0x55, 0x84, 0xa3,
 		     0x52, 0x0e, 0x14, 0x2d, 0x47, 0x4d, 0xc9, 0xcc,
-		     0xb9, 0x09, 0xa0, 0x73, 0xa9, 0x76, 0xbf, 0x63 पूर्ण,
-	.b_खुला = (u8[32])अणु 0x04, 0x5c, 0x6e, 0x11, 0xc5, 0xd3, 0x32, 0x55,
+		     0xb9, 0x09, 0xa0, 0x73, 0xa9, 0x76, 0xbf, 0x63 },
+	.b_public = (u8[32]){ 0x04, 0x5c, 0x6e, 0x11, 0xc5, 0xd3, 0x32, 0x55,
 		    0x6c, 0x78, 0x22, 0xfe, 0x94, 0xeb, 0xf8, 0x9b,
 		    0x56, 0xa3, 0x87, 0x8d, 0xc2, 0x7c, 0xa0, 0x79,
-		    0x10, 0x30, 0x58, 0x84, 0x9f, 0xab, 0xcb, 0x4f पूर्ण,
-	.expected_ss = (u8[32])अणु 0xe5, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		    0x10, 0x30, 0x58, 0x84, 0x9f, 0xab, 0xcb, 0x4f },
+	.expected_ss = (u8[32]){ 0xe5, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f पूर्ण,
+		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - edge हाल क्रम shared secret */
-अणु
-	.secret = (u8[32])अणु 0xa0, 0xa4, 0xf1, 0x30, 0xb9, 0x8a, 0x5b, 0xe4,
+},
+/* wycheproof - edge case for shared secret */
+{
+	.secret = (u8[32]){ 0xa0, 0xa4, 0xf1, 0x30, 0xb9, 0x8a, 0x5b, 0xe4,
 		     0xb1, 0xce, 0xdb, 0x7c, 0xb8, 0x55, 0x84, 0xa3,
 		     0x52, 0x0e, 0x14, 0x2d, 0x47, 0x4d, 0xc9, 0xcc,
-		     0xb9, 0x09, 0xa0, 0x73, 0xa9, 0x76, 0xbf, 0x63 पूर्ण,
-	.b_खुला = (u8[32])अणु 0x1c, 0xa2, 0x19, 0x0b, 0x71, 0x16, 0x35, 0x39,
+		     0xb9, 0x09, 0xa0, 0x73, 0xa9, 0x76, 0xbf, 0x63 },
+	.b_public = (u8[32]){ 0x1c, 0xa2, 0x19, 0x0b, 0x71, 0x16, 0x35, 0x39,
 		    0x06, 0x3c, 0x35, 0x77, 0x3b, 0xda, 0x0c, 0x9c,
 		    0x92, 0x8e, 0x91, 0x36, 0xf0, 0x62, 0x0a, 0xeb,
-		    0x09, 0x3f, 0x09, 0x91, 0x97, 0xb7, 0xf7, 0x4e पूर्ण,
-	.expected_ss = (u8[32])अणु 0xe3, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		    0x09, 0x3f, 0x09, 0x91, 0x97, 0xb7, 0xf7, 0x4e },
+	.expected_ss = (u8[32]){ 0xe3, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f पूर्ण,
+		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - edge हाल क्रम shared secret */
-अणु
-	.secret = (u8[32])अणु 0xa0, 0xa4, 0xf1, 0x30, 0xb9, 0x8a, 0x5b, 0xe4,
+},
+/* wycheproof - edge case for shared secret */
+{
+	.secret = (u8[32]){ 0xa0, 0xa4, 0xf1, 0x30, 0xb9, 0x8a, 0x5b, 0xe4,
 		     0xb1, 0xce, 0xdb, 0x7c, 0xb8, 0x55, 0x84, 0xa3,
 		     0x52, 0x0e, 0x14, 0x2d, 0x47, 0x4d, 0xc9, 0xcc,
-		     0xb9, 0x09, 0xa0, 0x73, 0xa9, 0x76, 0xbf, 0x63 पूर्ण,
-	.b_खुला = (u8[32])अणु 0xf7, 0x6e, 0x90, 0x10, 0xac, 0x33, 0xc5, 0x04,
+		     0xb9, 0x09, 0xa0, 0x73, 0xa9, 0x76, 0xbf, 0x63 },
+	.b_public = (u8[32]){ 0xf7, 0x6e, 0x90, 0x10, 0xac, 0x33, 0xc5, 0x04,
 		    0x3b, 0x2d, 0x3b, 0x76, 0xa8, 0x42, 0x17, 0x10,
 		    0x00, 0xc4, 0x91, 0x62, 0x22, 0xe9, 0xe8, 0x58,
-		    0x97, 0xa0, 0xae, 0xc7, 0xf6, 0x35, 0x0b, 0x3c पूर्ण,
-	.expected_ss = (u8[32])अणु 0xdd, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		    0x97, 0xa0, 0xae, 0xc7, 0xf6, 0x35, 0x0b, 0x3c },
+	.expected_ss = (u8[32]){ 0xdd, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f पूर्ण,
+		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - edge हाल क्रम shared secret */
-अणु
-	.secret = (u8[32])अणु 0xa0, 0xa4, 0xf1, 0x30, 0xb9, 0x8a, 0x5b, 0xe4,
+},
+/* wycheproof - edge case for shared secret */
+{
+	.secret = (u8[32]){ 0xa0, 0xa4, 0xf1, 0x30, 0xb9, 0x8a, 0x5b, 0xe4,
 		     0xb1, 0xce, 0xdb, 0x7c, 0xb8, 0x55, 0x84, 0xa3,
 		     0x52, 0x0e, 0x14, 0x2d, 0x47, 0x4d, 0xc9, 0xcc,
-		     0xb9, 0x09, 0xa0, 0x73, 0xa9, 0x76, 0xbf, 0x63 पूर्ण,
-	.b_खुला = (u8[32])अणु 0xbb, 0x72, 0x68, 0x8d, 0x8f, 0x8a, 0xa7, 0xa3,
+		     0xb9, 0x09, 0xa0, 0x73, 0xa9, 0x76, 0xbf, 0x63 },
+	.b_public = (u8[32]){ 0xbb, 0x72, 0x68, 0x8d, 0x8f, 0x8a, 0xa7, 0xa3,
 		    0x9c, 0xd6, 0x06, 0x0c, 0xd5, 0xc8, 0x09, 0x3c,
 		    0xde, 0xc6, 0xfe, 0x34, 0x19, 0x37, 0xc3, 0x88,
-		    0x6a, 0x99, 0x34, 0x6c, 0xd0, 0x7f, 0xaa, 0x55 पूर्ण,
-	.expected_ss = (u8[32])अणु 0xdb, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		    0x6a, 0x99, 0x34, 0x6c, 0xd0, 0x7f, 0xaa, 0x55 },
+	.expected_ss = (u8[32]){ 0xdb, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f पूर्ण,
+		    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - edge हाल क्रम shared secret */
-अणु
-	.secret = (u8[32])अणु 0xa0, 0xa4, 0xf1, 0x30, 0xb9, 0x8a, 0x5b, 0xe4,
+},
+/* wycheproof - edge case for shared secret */
+{
+	.secret = (u8[32]){ 0xa0, 0xa4, 0xf1, 0x30, 0xb9, 0x8a, 0x5b, 0xe4,
 		     0xb1, 0xce, 0xdb, 0x7c, 0xb8, 0x55, 0x84, 0xa3,
 		     0x52, 0x0e, 0x14, 0x2d, 0x47, 0x4d, 0xc9, 0xcc,
-		     0xb9, 0x09, 0xa0, 0x73, 0xa9, 0x76, 0xbf, 0x63 पूर्ण,
-	.b_खुला = (u8[32])अणु 0x88, 0xfd, 0xde, 0xa1, 0x93, 0x39, 0x1c, 0x6a,
+		     0xb9, 0x09, 0xa0, 0x73, 0xa9, 0x76, 0xbf, 0x63 },
+	.b_public = (u8[32]){ 0x88, 0xfd, 0xde, 0xa1, 0x93, 0x39, 0x1c, 0x6a,
 		    0x59, 0x33, 0xef, 0x9b, 0x71, 0x90, 0x15, 0x49,
 		    0x44, 0x72, 0x05, 0xaa, 0xe9, 0xda, 0x92, 0x8a,
-		    0x6b, 0x91, 0xa3, 0x52, 0xba, 0x10, 0xf4, 0x1f पूर्ण,
-	.expected_ss = (u8[32])अणु 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		    0x6b, 0x91, 0xa3, 0x52, 0xba, 0x10, 0xf4, 0x1f },
+	.expected_ss = (u8[32]){ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02 पूर्ण,
+		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02 },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - edge हाल क्रम shared secret */
-अणु
-	.secret = (u8[32])अणु 0xa0, 0xa4, 0xf1, 0x30, 0xb9, 0x8a, 0x5b, 0xe4,
+},
+/* wycheproof - edge case for shared secret */
+{
+	.secret = (u8[32]){ 0xa0, 0xa4, 0xf1, 0x30, 0xb9, 0x8a, 0x5b, 0xe4,
 		     0xb1, 0xce, 0xdb, 0x7c, 0xb8, 0x55, 0x84, 0xa3,
 		     0x52, 0x0e, 0x14, 0x2d, 0x47, 0x4d, 0xc9, 0xcc,
-		     0xb9, 0x09, 0xa0, 0x73, 0xa9, 0x76, 0xbf, 0x63 पूर्ण,
-	.b_खुला = (u8[32])अणु 0x30, 0x3b, 0x39, 0x2f, 0x15, 0x31, 0x16, 0xca,
+		     0xb9, 0x09, 0xa0, 0x73, 0xa9, 0x76, 0xbf, 0x63 },
+	.b_public = (u8[32]){ 0x30, 0x3b, 0x39, 0x2f, 0x15, 0x31, 0x16, 0xca,
 		    0xd9, 0xcc, 0x68, 0x2a, 0x00, 0xcc, 0xc4, 0x4c,
 		    0x95, 0xff, 0x0d, 0x3b, 0xbe, 0x56, 0x8b, 0xeb,
-		    0x6c, 0x4e, 0x73, 0x9b, 0xaf, 0xdc, 0x2c, 0x68 पूर्ण,
-	.expected_ss = (u8[32])अणु 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		    0x6c, 0x4e, 0x73, 0x9b, 0xaf, 0xdc, 0x2c, 0x68 },
+	.expected_ss = (u8[32]){ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00 पूर्ण,
+		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00 },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - checking क्रम overflow */
-अणु
-	.secret = (u8[32])अणु 0xc8, 0x17, 0x24, 0x70, 0x40, 0x00, 0xb2, 0x6d,
+},
+/* wycheproof - checking for overflow */
+{
+	.secret = (u8[32]){ 0xc8, 0x17, 0x24, 0x70, 0x40, 0x00, 0xb2, 0x6d,
 		     0x31, 0x70, 0x3c, 0xc9, 0x7e, 0x3a, 0x37, 0x8d,
 		     0x56, 0xfa, 0xd8, 0x21, 0x93, 0x61, 0xc8, 0x8c,
-		     0xca, 0x8b, 0xd7, 0xc5, 0x71, 0x9b, 0x12, 0xb2 पूर्ण,
-	.b_खुला = (u8[32])अणु 0xfd, 0x30, 0x0a, 0xeb, 0x40, 0xe1, 0xfa, 0x58,
+		     0xca, 0x8b, 0xd7, 0xc5, 0x71, 0x9b, 0x12, 0xb2 },
+	.b_public = (u8[32]){ 0xfd, 0x30, 0x0a, 0xeb, 0x40, 0xe1, 0xfa, 0x58,
 		    0x25, 0x18, 0x41, 0x2b, 0x49, 0xb2, 0x08, 0xa7,
 		    0x84, 0x2b, 0x1e, 0x1f, 0x05, 0x6a, 0x04, 0x01,
-		    0x78, 0xea, 0x41, 0x41, 0x53, 0x4f, 0x65, 0x2d पूर्ण,
-	.expected_ss = (u8[32])अणु 0xb7, 0x34, 0x10, 0x5d, 0xc2, 0x57, 0x58, 0x5d,
+		    0x78, 0xea, 0x41, 0x41, 0x53, 0x4f, 0x65, 0x2d },
+	.expected_ss = (u8[32]){ 0xb7, 0x34, 0x10, 0x5d, 0xc2, 0x57, 0x58, 0x5d,
 		    0x73, 0xb5, 0x66, 0xcc, 0xb7, 0x6f, 0x06, 0x27,
 		    0x95, 0xcc, 0xbe, 0xc8, 0x91, 0x28, 0xe5, 0x2b,
-		    0x02, 0xf3, 0xe5, 0x96, 0x39, 0xf1, 0x3c, 0x46 पूर्ण,
+		    0x02, 0xf3, 0xe5, 0x96, 0x39, 0xf1, 0x3c, 0x46 },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - checking क्रम overflow */
-अणु
-	.secret = (u8[32])अणु 0xc8, 0x17, 0x24, 0x70, 0x40, 0x00, 0xb2, 0x6d,
+},
+/* wycheproof - checking for overflow */
+{
+	.secret = (u8[32]){ 0xc8, 0x17, 0x24, 0x70, 0x40, 0x00, 0xb2, 0x6d,
 		     0x31, 0x70, 0x3c, 0xc9, 0x7e, 0x3a, 0x37, 0x8d,
 		     0x56, 0xfa, 0xd8, 0x21, 0x93, 0x61, 0xc8, 0x8c,
-		     0xca, 0x8b, 0xd7, 0xc5, 0x71, 0x9b, 0x12, 0xb2 पूर्ण,
-	.b_खुला = (u8[32])अणु 0xc8, 0xef, 0x79, 0xb5, 0x14, 0xd7, 0x68, 0x26,
+		     0xca, 0x8b, 0xd7, 0xc5, 0x71, 0x9b, 0x12, 0xb2 },
+	.b_public = (u8[32]){ 0xc8, 0xef, 0x79, 0xb5, 0x14, 0xd7, 0x68, 0x26,
 		    0x77, 0xbc, 0x79, 0x31, 0xe0, 0x6e, 0xe5, 0xc2,
 		    0x7c, 0x9b, 0x39, 0x2b, 0x4a, 0xe9, 0x48, 0x44,
-		    0x73, 0xf5, 0x54, 0xe6, 0x67, 0x8e, 0xcc, 0x2e पूर्ण,
-	.expected_ss = (u8[32])अणु 0x64, 0x7a, 0x46, 0xb6, 0xfc, 0x3f, 0x40, 0xd6,
+		    0x73, 0xf5, 0x54, 0xe6, 0x67, 0x8e, 0xcc, 0x2e },
+	.expected_ss = (u8[32]){ 0x64, 0x7a, 0x46, 0xb6, 0xfc, 0x3f, 0x40, 0xd6,
 		    0x21, 0x41, 0xee, 0x3c, 0xee, 0x70, 0x6b, 0x4d,
 		    0x7a, 0x92, 0x71, 0x59, 0x3a, 0x7b, 0x14, 0x3e,
-		    0x8e, 0x2e, 0x22, 0x79, 0x88, 0x3e, 0x45, 0x50 पूर्ण,
+		    0x8e, 0x2e, 0x22, 0x79, 0x88, 0x3e, 0x45, 0x50 },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - checking क्रम overflow */
-अणु
-	.secret = (u8[32])अणु 0xc8, 0x17, 0x24, 0x70, 0x40, 0x00, 0xb2, 0x6d,
+},
+/* wycheproof - checking for overflow */
+{
+	.secret = (u8[32]){ 0xc8, 0x17, 0x24, 0x70, 0x40, 0x00, 0xb2, 0x6d,
 		     0x31, 0x70, 0x3c, 0xc9, 0x7e, 0x3a, 0x37, 0x8d,
 		     0x56, 0xfa, 0xd8, 0x21, 0x93, 0x61, 0xc8, 0x8c,
-		     0xca, 0x8b, 0xd7, 0xc5, 0x71, 0x9b, 0x12, 0xb2 पूर्ण,
-	.b_खुला = (u8[32])अणु 0x64, 0xae, 0xac, 0x25, 0x04, 0x14, 0x48, 0x61,
+		     0xca, 0x8b, 0xd7, 0xc5, 0x71, 0x9b, 0x12, 0xb2 },
+	.b_public = (u8[32]){ 0x64, 0xae, 0xac, 0x25, 0x04, 0x14, 0x48, 0x61,
 		    0x53, 0x2b, 0x7b, 0xbc, 0xb6, 0xc8, 0x7d, 0x67,
 		    0xdd, 0x4c, 0x1f, 0x07, 0xeb, 0xc2, 0xe0, 0x6e,
-		    0xff, 0xb9, 0x5a, 0xec, 0xc6, 0x17, 0x0b, 0x2c पूर्ण,
-	.expected_ss = (u8[32])अणु 0x4f, 0xf0, 0x3d, 0x5f, 0xb4, 0x3c, 0xd8, 0x65,
+		    0xff, 0xb9, 0x5a, 0xec, 0xc6, 0x17, 0x0b, 0x2c },
+	.expected_ss = (u8[32]){ 0x4f, 0xf0, 0x3d, 0x5f, 0xb4, 0x3c, 0xd8, 0x65,
 		    0x7a, 0x3c, 0xf3, 0x7c, 0x13, 0x8c, 0xad, 0xce,
 		    0xcc, 0xe5, 0x09, 0xe4, 0xeb, 0xa0, 0x89, 0xd0,
-		    0xef, 0x40, 0xb4, 0xe4, 0xfb, 0x94, 0x61, 0x55 पूर्ण,
+		    0xef, 0x40, 0xb4, 0xe4, 0xfb, 0x94, 0x61, 0x55 },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - checking क्रम overflow */
-अणु
-	.secret = (u8[32])अणु 0xc8, 0x17, 0x24, 0x70, 0x40, 0x00, 0xb2, 0x6d,
+},
+/* wycheproof - checking for overflow */
+{
+	.secret = (u8[32]){ 0xc8, 0x17, 0x24, 0x70, 0x40, 0x00, 0xb2, 0x6d,
 		     0x31, 0x70, 0x3c, 0xc9, 0x7e, 0x3a, 0x37, 0x8d,
 		     0x56, 0xfa, 0xd8, 0x21, 0x93, 0x61, 0xc8, 0x8c,
-		     0xca, 0x8b, 0xd7, 0xc5, 0x71, 0x9b, 0x12, 0xb2 पूर्ण,
-	.b_खुला = (u8[32])अणु 0xbf, 0x68, 0xe3, 0x5e, 0x9b, 0xdb, 0x7e, 0xee,
+		     0xca, 0x8b, 0xd7, 0xc5, 0x71, 0x9b, 0x12, 0xb2 },
+	.b_public = (u8[32]){ 0xbf, 0x68, 0xe3, 0x5e, 0x9b, 0xdb, 0x7e, 0xee,
 		    0x1b, 0x50, 0x57, 0x02, 0x21, 0x86, 0x0f, 0x5d,
 		    0xcd, 0xad, 0x8a, 0xcb, 0xab, 0x03, 0x1b, 0x14,
-		    0x97, 0x4c, 0xc4, 0x90, 0x13, 0xc4, 0x98, 0x31 पूर्ण,
-	.expected_ss = (u8[32])अणु 0x21, 0xce, 0xe5, 0x2e, 0xfd, 0xbc, 0x81, 0x2e,
+		    0x97, 0x4c, 0xc4, 0x90, 0x13, 0xc4, 0x98, 0x31 },
+	.expected_ss = (u8[32]){ 0x21, 0xce, 0xe5, 0x2e, 0xfd, 0xbc, 0x81, 0x2e,
 		    0x1d, 0x02, 0x1a, 0x4a, 0xf1, 0xe1, 0xd8, 0xbc,
 		    0x4d, 0xb3, 0xc4, 0x00, 0xe4, 0xd2, 0xa2, 0xc5,
-		    0x6a, 0x39, 0x26, 0xdb, 0x4d, 0x99, 0xc6, 0x5b पूर्ण,
+		    0x6a, 0x39, 0x26, 0xdb, 0x4d, 0x99, 0xc6, 0x5b },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - checking क्रम overflow */
-अणु
-	.secret = (u8[32])अणु 0xc8, 0x17, 0x24, 0x70, 0x40, 0x00, 0xb2, 0x6d,
+},
+/* wycheproof - checking for overflow */
+{
+	.secret = (u8[32]){ 0xc8, 0x17, 0x24, 0x70, 0x40, 0x00, 0xb2, 0x6d,
 		     0x31, 0x70, 0x3c, 0xc9, 0x7e, 0x3a, 0x37, 0x8d,
 		     0x56, 0xfa, 0xd8, 0x21, 0x93, 0x61, 0xc8, 0x8c,
-		     0xca, 0x8b, 0xd7, 0xc5, 0x71, 0x9b, 0x12, 0xb2 पूर्ण,
-	.b_खुला = (u8[32])अणु 0x53, 0x47, 0xc4, 0x91, 0x33, 0x1a, 0x64, 0xb4,
+		     0xca, 0x8b, 0xd7, 0xc5, 0x71, 0x9b, 0x12, 0xb2 },
+	.b_public = (u8[32]){ 0x53, 0x47, 0xc4, 0x91, 0x33, 0x1a, 0x64, 0xb4,
 		    0x3d, 0xdc, 0x68, 0x30, 0x34, 0xe6, 0x77, 0xf5,
 		    0x3d, 0xc3, 0x2b, 0x52, 0xa5, 0x2a, 0x57, 0x7c,
-		    0x15, 0xa8, 0x3b, 0xf2, 0x98, 0xe9, 0x9f, 0x19 पूर्ण,
-	.expected_ss = (u8[32])अणु 0x18, 0xcb, 0x89, 0xe4, 0xe2, 0x0c, 0x0c, 0x2b,
+		    0x15, 0xa8, 0x3b, 0xf2, 0x98, 0xe9, 0x9f, 0x19 },
+	.expected_ss = (u8[32]){ 0x18, 0xcb, 0x89, 0xe4, 0xe2, 0x0c, 0x0c, 0x2b,
 		    0xd3, 0x24, 0x30, 0x52, 0x45, 0x26, 0x6c, 0x93,
 		    0x27, 0x69, 0x0b, 0xbe, 0x79, 0xac, 0xb8, 0x8f,
-		    0x5b, 0x8f, 0xb3, 0xf7, 0x4e, 0xca, 0x3e, 0x52 पूर्ण,
+		    0x5b, 0x8f, 0xb3, 0xf7, 0x4e, 0xca, 0x3e, 0x52 },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - निजी key == -1 (mod order) */
-अणु
-	.secret = (u8[32])अणु 0xa0, 0x23, 0xcd, 0xd0, 0x83, 0xef, 0x5b, 0xb8,
+},
+/* wycheproof - private key == -1 (mod order) */
+{
+	.secret = (u8[32]){ 0xa0, 0x23, 0xcd, 0xd0, 0x83, 0xef, 0x5b, 0xb8,
 		     0x2f, 0x10, 0xd6, 0x2e, 0x59, 0xe1, 0x5a, 0x68,
 		     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x50 पूर्ण,
-	.b_खुला = (u8[32])अणु 0x25, 0x8e, 0x04, 0x52, 0x3b, 0x8d, 0x25, 0x3e,
+		     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x50 },
+	.b_public = (u8[32]){ 0x25, 0x8e, 0x04, 0x52, 0x3b, 0x8d, 0x25, 0x3e,
 		    0xe6, 0x57, 0x19, 0xfc, 0x69, 0x06, 0xc6, 0x57,
 		    0x19, 0x2d, 0x80, 0x71, 0x7e, 0xdc, 0x82, 0x8f,
-		    0xa0, 0xaf, 0x21, 0x68, 0x6e, 0x2f, 0xaa, 0x75 पूर्ण,
-	.expected_ss = (u8[32])अणु 0x25, 0x8e, 0x04, 0x52, 0x3b, 0x8d, 0x25, 0x3e,
+		    0xa0, 0xaf, 0x21, 0x68, 0x6e, 0x2f, 0xaa, 0x75 },
+	.expected_ss = (u8[32]){ 0x25, 0x8e, 0x04, 0x52, 0x3b, 0x8d, 0x25, 0x3e,
 		    0xe6, 0x57, 0x19, 0xfc, 0x69, 0x06, 0xc6, 0x57,
 		    0x19, 0x2d, 0x80, 0x71, 0x7e, 0xdc, 0x82, 0x8f,
-		    0xa0, 0xaf, 0x21, 0x68, 0x6e, 0x2f, 0xaa, 0x75 पूर्ण,
+		    0xa0, 0xaf, 0x21, 0x68, 0x6e, 0x2f, 0xaa, 0x75 },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण,
-/* wycheproof - निजी key == 1 (mod order) on twist */
-अणु
-	.secret = (u8[32])अणु 0x58, 0x08, 0x3d, 0xd2, 0x61, 0xad, 0x91, 0xef,
+},
+/* wycheproof - private key == 1 (mod order) on twist */
+{
+	.secret = (u8[32]){ 0x58, 0x08, 0x3d, 0xd2, 0x61, 0xad, 0x91, 0xef,
 		     0xf9, 0x52, 0x32, 0x2e, 0xc8, 0x24, 0xc6, 0x82,
 		     0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		     0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x5f पूर्ण,
-	.b_खुला = (u8[32])अणु 0x2e, 0xae, 0x5e, 0xc3, 0xdd, 0x49, 0x4e, 0x9f,
+		     0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x5f },
+	.b_public = (u8[32]){ 0x2e, 0xae, 0x5e, 0xc3, 0xdd, 0x49, 0x4e, 0x9f,
 		    0x2d, 0x37, 0xd2, 0x58, 0xf8, 0x73, 0xa8, 0xe6,
 		    0xe9, 0xd0, 0xdb, 0xd1, 0xe3, 0x83, 0xef, 0x64,
-		    0xd9, 0x8b, 0xb9, 0x1b, 0x3e, 0x0b, 0xe0, 0x35 पूर्ण,
-	.expected_ss = (u8[32])अणु 0x2e, 0xae, 0x5e, 0xc3, 0xdd, 0x49, 0x4e, 0x9f,
+		    0xd9, 0x8b, 0xb9, 0x1b, 0x3e, 0x0b, 0xe0, 0x35 },
+	.expected_ss = (u8[32]){ 0x2e, 0xae, 0x5e, 0xc3, 0xdd, 0x49, 0x4e, 0x9f,
 		    0x2d, 0x37, 0xd2, 0x58, 0xf8, 0x73, 0xa8, 0xe6,
 		    0xe9, 0xd0, 0xdb, 0xd1, 0xe3, 0x83, 0xef, 0x64,
-		    0xd9, 0x8b, 0xb9, 0x1b, 0x3e, 0x0b, 0xe0, 0x35 पूर्ण,
+		    0xd9, 0x8b, 0xb9, 0x1b, 0x3e, 0x0b, 0xe0, 0x35 },
 	.secret_size = 32,
-	.b_खुला_size = 32,
+	.b_public_size = 32,
 	.expected_ss_size = 32,
 
-पूर्ण
-पूर्ण;
+}
+};
 
-#अगर_अघोषित CONFIG_CRYPTO_FIPS
-अटल स्थिर काष्ठा kpp_testvec ecdh_p192_tv_ढाँचा[] = अणु
-	अणु
+#ifndef CONFIG_CRYPTO_FIPS
+static const struct kpp_testvec ecdh_p192_tv_template[] = {
+	{
 	.secret =
-#अगर_घोषित __LITTLE_ENDIAN
+#ifdef __LITTLE_ENDIAN
 	"\x02\x00" /* type */
 	"\x1e\x00" /* len */
 	"\x18\x00" /* key_size */
-#अन्यथा
+#else
 	"\x00\x02" /* type */
 	"\x00\x1e" /* len */
 	"\x00\x18" /* key_size */
-#पूर्ण_अगर
+#endif
 	"\xb5\x05\xb1\x71\x1e\xbf\x8c\xda"
 	"\x4e\x19\x1e\x62\x1f\x23\x23\x31"
 	"\x36\x1e\xd3\x84\x2f\xcc\x21\x72",
-	.b_खुला =
+	.b_public =
 	"\xc3\xba\x67\x4b\x71\xec\xd0\x76"
 	"\x7a\x99\x75\x64\x36\x13\x9a\x94"
 	"\x5d\x8b\xdc\x60\x90\x91\xfd\x3f"
 	"\xb0\x1f\x8a\x0a\x68\xc6\x88\x6e"
 	"\x83\x87\xdd\x67\x09\xf8\x8d\x96"
 	"\x07\xd6\xbd\x1c\xe6\x8d\x9d\x67",
-	.expected_a_खुला =
+	.expected_a_public =
 	"\x1a\x04\xdb\xa5\xe1\xdd\x4e\x79"
 	"\xa3\xe6\xef\x0e\x5c\x80\x49\x85"
 	"\xfa\x78\xb4\xef\x49\xbd\x4c\x7c"
@@ -2721,30 +2720,30 @@
 	"\xe3\x40\x60\xc8\x06\x93\xc6\x2e"
 	"\x99\x80\x81\x28\xaf\xc5\x51\x74",
 	.secret_size = 32,
-	.b_खुला_size = 48,
-	.expected_a_खुला_size = 48,
+	.b_public_size = 48,
+	.expected_a_public_size = 48,
 	.expected_ss_size = 24
-	पूर्ण
-पूर्ण;
-#पूर्ण_अगर
+	}
+};
+#endif
 
-अटल स्थिर काष्ठा kpp_testvec ecdh_p256_tv_ढाँचा[] = अणु
-	अणु
+static const struct kpp_testvec ecdh_p256_tv_template[] = {
+	{
 	.secret =
-#अगर_घोषित __LITTLE_ENDIAN
+#ifdef __LITTLE_ENDIAN
 	"\x02\x00" /* type */
 	"\x26\x00" /* len */
 	"\x20\x00" /* key_size */
-#अन्यथा
+#else
 	"\x00\x02" /* type */
 	"\x00\x26" /* len */
 	"\x00\x20" /* key_size */
-#पूर्ण_अगर
+#endif
 	"\x24\xd1\x21\xeb\xe5\xcf\x2d\x83"
 	"\xf6\x62\x1b\x6e\x43\x84\x3a\xa3"
 	"\x8b\xe0\x86\xc3\x20\x19\xda\x92"
 	"\x50\x53\x03\xe1\xc0\xea\xb8\x82",
-	.expected_a_खुला =
+	.expected_a_public =
 	"\x1a\x7f\xeb\x52\x00\xbd\x3c\x31"
 	"\x7d\xb6\x70\xc1\x86\xa6\xc7\xc4"
 	"\x3b\xc5\x5f\x6c\x6f\x58\x3c\xf5"
@@ -2758,7 +2757,7 @@
 	"\x8b\xfb\x41\xeb\xba\xc8\x6d\xa5"
 	"\xa8\x72\xd1\xff\xc9\x47\x3d\xaa"
 	"\x58\x43\x9f\x34\x0f\x8c\xf3\xc9",
-	.b_खुला =
+	.b_public =
 	"\xcc\xb4\xda\x74\xb1\x47\x3f\xea"
 	"\x6c\x70\x9e\x38\x2d\xc7\xaa\xb7"
 	"\x29\xb2\x47\x03\x19\xab\xdd\x34"
@@ -2768,35 +2767,35 @@
 	"\xb1\x32\xbb\xaf\x22\x61\xda\xcb"
 	"\x6f\xdb\xa9\xaa\xfc\x77\x81\xf3",
 	.secret_size = 40,
-	.b_खुला_size = 64,
-	.expected_a_खुला_size = 64,
+	.b_public_size = 64,
+	.expected_a_public_size = 64,
 	.expected_ss_size = 32
-	पूर्ण, अणु
+	}, {
 	.secret =
-#अगर_घोषित __LITTLE_ENDIAN
+#ifdef __LITTLE_ENDIAN
 	"\x02\x00" /* type */
 	"\x06\x00" /* len */
 	"\x00\x00", /* key_size */
-#अन्यथा
+#else
 	"\x00\x02" /* type */
 	"\x00\x06" /* len */
 	"\x00\x00", /* key_size */
-#पूर्ण_अगर
+#endif
 	.b_secret =
-#अगर_घोषित __LITTLE_ENDIAN
+#ifdef __LITTLE_ENDIAN
 	"\x02\x00" /* type */
 	"\x26\x00" /* len */
 	"\x20\x00" /* key_size */
-#अन्यथा
+#else
 	"\x00\x02" /* type */
 	"\x00\x26" /* len */
 	"\x00\x20" /* key_size */
-#पूर्ण_अगर
+#endif
 	"\x24\xd1\x21\xeb\xe5\xcf\x2d\x83"
 	"\xf6\x62\x1b\x6e\x43\x84\x3a\xa3"
 	"\x8b\xe0\x86\xc3\x20\x19\xda\x92"
 	"\x50\x53\x03\xe1\xc0\xea\xb8\x82",
-	.b_खुला =
+	.b_public =
 	"\x1a\x7f\xeb\x52\x00\xbd\x3c\x31"
 	"\x7d\xb6\x70\xc1\x86\xa6\xc7\xc4"
 	"\x3b\xc5\x5f\x6c\x6f\x58\x3c\xf5"
@@ -2807,79 +2806,79 @@
 	"\xfa\xa9\x44\x43\x2d\xef\x09\xdf",
 	.secret_size = 8,
 	.b_secret_size = 40,
-	.b_खुला_size = 64,
-	.expected_a_खुला_size = 64,
+	.b_public_size = 64,
+	.expected_a_public_size = 64,
 	.expected_ss_size = 32,
 	.genkey = true,
-	पूर्ण
-पूर्ण;
+	}
+};
 
 /*
  * MD4 test vectors from RFC1320
  */
-अटल स्थिर काष्ठा hash_testvec md4_tv_ढाँचा[] = अणु
-	अणु
-		.plaपूर्णांकext = "",
+static const struct hash_testvec md4_tv_template[] = {
+	{
+		.plaintext = "",
 		.digest	= "\x31\xd6\xcf\xe0\xd1\x6a\xe9\x31"
 			  "\xb7\x3c\x59\xd7\xe0\xc0\x89\xc0",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "a",
+	}, {
+		.plaintext = "a",
 		.psize	= 1,
 		.digest	= "\xbd\xe5\x2c\xb3\x1d\xe3\x3e\x46"
 			  "\x24\x5e\x05\xfb\xdb\xd6\xfb\x24",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "abc",
+	}, {
+		.plaintext = "abc",
 		.psize	= 3,
 		.digest	= "\xa4\x48\x01\x7a\xaf\x21\xd8\x52"
 			  "\x5f\xc1\x0a\xe8\x7a\xa6\x72\x9d",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "message digest",
+	}, {
+		.plaintext = "message digest",
 		.psize	= 14,
 		.digest	= "\xd9\x13\x0a\x81\x64\x54\x9f\xe8"
 			"\x18\x87\x48\x06\xe1\xc7\x01\x4b",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "abcdefghijklmnopqrstuvwxyz",
+	}, {
+		.plaintext = "abcdefghijklmnopqrstuvwxyz",
 		.psize	= 26,
 		.digest	= "\xd7\x9e\x1c\x30\x8a\xa5\xbb\xcd"
 			  "\xee\xa8\xed\x63\xdf\x41\x2d\xa9",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
+	}, {
+		.plaintext = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
 		.psize	= 62,
 		.digest	= "\x04\x3f\x85\x82\xf2\x41\xdb\x35"
 			  "\x1c\xe6\x27\xe1\x53\xe7\xf0\xe4",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "123456789012345678901234567890123456789012345678901234567890123"
+	}, {
+		.plaintext = "123456789012345678901234567890123456789012345678901234567890123"
 			   "45678901234567890",
 		.psize	= 80,
 		.digest	= "\xe3\x3b\x4d\xdc\x9c\x38\xf2\x19"
 			  "\x9c\x3e\x7b\x16\x4f\xcc\x05\x36",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा hash_testvec sha3_224_tv_ढाँचा[] = अणु
-	अणु
-		.plaपूर्णांकext = "",
+static const struct hash_testvec sha3_224_tv_template[] = {
+	{
+		.plaintext = "",
 		.digest	= "\x6b\x4e\x03\x42\x36\x67\xdb\xb7"
 				"\x3b\x6e\x15\x45\x4f\x0e\xb1\xab"
 				"\xd4\x59\x7f\x9a\x1b\x07\x8e\x3f"
 				"\x5b\x5a\x6b\xc7",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "a",
+	}, {
+		.plaintext = "a",
 		.psize	= 1,
 		.digest	= "\x9e\x86\xff\x69\x55\x7c\xa9\x5f"
 				"\x40\x5f\x08\x12\x69\x68\x5b\x38"
 				"\xe3\xa8\x19\xb3\x09\xee\x94\x2f"
 				"\x48\x2b\x6a\x8b",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "abcdbcdecdefdefgefghfghighijhijkijkl"
+	}, {
+		.plaintext = "abcdbcdecdefdefgefghfghighijhijkijkl"
 				"jklmklmnlmnomnopnopq",
 		.psize	= 56,
 		.digest	= "\x8a\x24\x10\x8b\x15\x4a\xda\x21"
 				"\xc9\xfd\x55\x74\x49\x44\x79\xba"
 				"\x5c\x7e\x7a\xb7\x6e\xf2\x64\xea"
 				"\xd0\xfc\xce\x33",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "\x08\x9f\x13\xaa\x41\xd8\x4c\xe3"
+	}, {
+		.plaintext = "\x08\x9f\x13\xaa\x41\xd8\x4c\xe3"
 			     "\x7a\x11\x85\x1c\xb3\x27\xbe\x55"
 			     "\xec\x60\xf7\x8e\x02\x99\x30\xc7"
 			     "\x3b\xd2\x69\x00\x74\x0b\xa2\x16"
@@ -3012,33 +3011,33 @@
 			     "\xc3\x88\x20\x71\x15\x06\xe8\x2d"
 			     "\xa3\x92\x44\xab\x3e\xe7\xff\x86"
 			     "\xb6\x79\x10\x72",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा hash_testvec sha3_256_tv_ढाँचा[] = अणु
-	अणु
-		.plaपूर्णांकext = "",
+static const struct hash_testvec sha3_256_tv_template[] = {
+	{
+		.plaintext = "",
 		.digest	= "\xa7\xff\xc6\xf8\xbf\x1e\xd7\x66"
 				"\x51\xc1\x47\x56\xa0\x61\xd6\x62"
 				"\xf5\x80\xff\x4d\xe4\x3b\x49\xfa"
 				"\x82\xd8\x0a\x4b\x80\xf8\x43\x4a",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "a",
+	}, {
+		.plaintext = "a",
 		.psize	= 1,
 		.digest	= "\x80\x08\x4b\xf2\xfb\xa0\x24\x75"
 				"\x72\x6f\xeb\x2c\xab\x2d\x82\x15"
 				"\xea\xb1\x4b\xc6\xbd\xd8\xbf\xb2"
 				"\xc8\x15\x12\x57\x03\x2e\xcd\x8b",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "abcdbcdecdefdefgefghfghighijhijkijkl"
+	}, {
+		.plaintext = "abcdbcdecdefdefgefghfghighijhijkijkl"
 			     "jklmklmnlmnomnopnopq",
 		.psize	= 56,
 		.digest	= "\x41\xc0\xdb\xa2\xa9\xd6\x24\x08"
 				"\x49\x10\x03\x76\xa8\x23\x5e\x2c"
 				"\x82\xe1\xb9\x99\x8a\x99\x9e\x21"
 				"\xdb\x32\xdd\x97\x49\x6d\x33\x76",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "\x08\x9f\x13\xaa\x41\xd8\x4c\xe3"
+	}, {
+		.plaintext = "\x08\x9f\x13\xaa\x41\xd8\x4c\xe3"
 			     "\x7a\x11\x85\x1c\xb3\x27\xbe\x55"
 			     "\xec\x60\xf7\x8e\x02\x99\x30\xc7"
 			     "\x3b\xd2\x69\x00\x74\x0b\xa2\x16"
@@ -3171,21 +3170,21 @@
 			     "\xf7\xfa\x80\xf5\xea\x11\x03\xb1"
 			     "\x3b\x6a\xbc\x5f\xb9\x66\x26\xf7"
 			     "\x8a\x97\xbb\xf2\x07\x08\x38\x30",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 
-अटल स्थिर काष्ठा hash_testvec sha3_384_tv_ढाँचा[] = अणु
-	अणु
-		.plaपूर्णांकext = "",
+static const struct hash_testvec sha3_384_tv_template[] = {
+	{
+		.plaintext = "",
 		.digest	= "\x0c\x63\xa7\x5b\x84\x5e\x4f\x7d"
 				"\x01\x10\x7d\x85\x2e\x4c\x24\x85"
 				"\xc5\x1a\x50\xaa\xaa\x94\xfc\x61"
 				"\x99\x5e\x71\xbb\xee\x98\x3a\x2a"
 				"\xc3\x71\x38\x31\x26\x4a\xdb\x47"
 				"\xfb\x6b\xd1\xe0\x58\xd5\xf0\x04",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "a",
+	}, {
+		.plaintext = "a",
 		.psize	= 1,
 		.digest	= "\x18\x15\xf7\x74\xf3\x20\x49\x1b"
 				"\x48\x56\x9e\xfe\xc7\x94\xd2\x49"
@@ -3193,8 +3192,8 @@
 				"\x7d\xaf\xe2\x5c\x5e\xdc\x28\xd7"
 				"\xea\x44\xf9\x3e\xe1\x23\x4a\xa8"
 				"\x8f\x61\xc9\x19\x12\xa4\xcc\xd9",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "abcdbcdecdefdefgefghfghighijhijkijkl"
+	}, {
+		.plaintext = "abcdbcdecdefdefgefghfghighijhijkijkl"
 			     "jklmklmnlmnomnopnopq",
 		.psize	= 56,
 		.digest	= "\x99\x1c\x66\x57\x55\xeb\x3a\x4b"
@@ -3203,8 +3202,8 @@
 				"\x9b\xfd\xbc\x32\xb9\xd4\xad\x5a"
 				"\xa0\x4a\x1f\x07\x6e\x62\xfe\xa1"
 				"\x9e\xef\x51\xac\xd0\x65\x7c\x22",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "\x08\x9f\x13\xaa\x41\xd8\x4c\xe3"
+	}, {
+		.plaintext = "\x08\x9f\x13\xaa\x41\xd8\x4c\xe3"
 			     "\x7a\x11\x85\x1c\xb3\x27\xbe\x55"
 			     "\xec\x60\xf7\x8e\x02\x99\x30\xc7"
 			     "\x3b\xd2\x69\x00\x74\x0b\xa2\x16"
@@ -3339,13 +3338,13 @@
 			     "\x1a\xa2\xdc\x2e\x41\xfd\x52\x51"
 			     "\xd2\x21\xae\x2d\xc7\xae\x8c\x40"
 			     "\xb9\xe6\x56\x48\x03\xcd\x88\x6b",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 
-अटल स्थिर काष्ठा hash_testvec sha3_512_tv_ढाँचा[] = अणु
-	अणु
-		.plaपूर्णांकext = "",
+static const struct hash_testvec sha3_512_tv_template[] = {
+	{
+		.plaintext = "",
 		.digest	= "\xa6\x9f\x73\xcc\xa2\x3a\x9a\xc5"
 				"\xc8\xb5\x67\xdc\x18\x5a\x75\x6e"
 				"\x97\xc9\x82\x16\x4f\xe2\x58\x59"
@@ -3354,8 +3353,8 @@
 				"\x11\xe3\xe9\x40\x2c\x3a\xc5\x58"
 				"\xf5\x00\x19\x9d\x95\xb6\xd3\xe3"
 				"\x01\x75\x85\x86\x28\x1d\xcd\x26",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "a",
+	}, {
+		.plaintext = "a",
 		.psize	= 1,
 		.digest	= "\x69\x7f\x2d\x85\x61\x72\xcb\x83"
 				"\x09\xd6\xb8\xb9\x7d\xac\x4d\xe3"
@@ -3365,8 +3364,8 @@
 				"\xe2\x8b\x5b\x95\x7a\xc3\xd1\xd3"
 				"\x69\x42\x0c\xe5\x33\x32\x71\x2f"
 				"\x99\x7b\xd3\x36\xd0\x9a\xb0\x2a",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "abcdbcdecdefdefgefghfghighijhijkijkl"
+	}, {
+		.plaintext = "abcdbcdecdefdefgefghfghighijhijkijkl"
 			     "jklmklmnlmnomnopnopq",
 		.psize	= 56,
 		.digest	= "\x04\xa3\x71\xe8\x4e\xcf\xb5\xb8"
@@ -3377,8 +3376,8 @@
 				"\xba\x1b\x0d\x8d\xc7\x8c\x08\x63"
 				"\x46\xb5\x33\xb4\x9c\x03\x0d\x99"
 				"\xa2\x7d\xaf\x11\x39\xd6\xe7\x5e",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "\x08\x9f\x13\xaa\x41\xd8\x4c\xe3"
+	}, {
+		.plaintext = "\x08\x9f\x13\xaa\x41\xd8\x4c\xe3"
 			     "\x7a\x11\x85\x1c\xb3\x27\xbe\x55"
 			     "\xec\x60\xf7\x8e\x02\x99\x30\xc7"
 			     "\x3b\xd2\x69\x00\x74\x0b\xa2\x16"
@@ -3515,129 +3514,129 @@
 			     "\xb3\xae\x02\x2b\xb8\xaf\xc3\x3b"
 			     "\xd6\xb0\x8f\xcb\x76\x8b\xa7\x41"
 			     "\x32\xc2\x8e\x50\x91\x86\x90\xfb",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 
 /*
  * MD5 test vectors from RFC1321
  */
-अटल स्थिर काष्ठा hash_testvec md5_tv_ढाँचा[] = अणु
-	अणु
+static const struct hash_testvec md5_tv_template[] = {
+	{
 		.digest	= "\xd4\x1d\x8c\xd9\x8f\x00\xb2\x04"
 			  "\xe9\x80\x09\x98\xec\xf8\x42\x7e",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "a",
+	}, {
+		.plaintext = "a",
 		.psize	= 1,
 		.digest	= "\x0c\xc1\x75\xb9\xc0\xf1\xb6\xa8"
 			  "\x31\xc3\x99\xe2\x69\x77\x26\x61",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "abc",
+	}, {
+		.plaintext = "abc",
 		.psize	= 3,
 		.digest	= "\x90\x01\x50\x98\x3c\xd2\x4f\xb0"
 			  "\xd6\x96\x3f\x7d\x28\xe1\x7f\x72",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "message digest",
+	}, {
+		.plaintext = "message digest",
 		.psize	= 14,
 		.digest	= "\xf9\x6b\x69\x7d\x7c\xb7\x93\x8d"
 			  "\x52\x5a\x2f\x31\xaa\xf1\x61\xd0",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "abcdefghijklmnopqrstuvwxyz",
+	}, {
+		.plaintext = "abcdefghijklmnopqrstuvwxyz",
 		.psize	= 26,
 		.digest	= "\xc3\xfc\xd3\xd7\x61\x92\xe4\x00"
 			  "\x7d\xfb\x49\x6c\xca\x67\xe1\x3b",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
+	}, {
+		.plaintext = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
 		.psize	= 62,
 		.digest	= "\xd1\x74\xab\x98\xd2\x77\xd9\xf5"
 			  "\xa5\x61\x1c\x2c\x9f\x41\x9d\x9f",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "12345678901234567890123456789012345678901234567890123456789012"
+	}, {
+		.plaintext = "12345678901234567890123456789012345678901234567890123456789012"
 			   "345678901234567890",
 		.psize	= 80,
 		.digest	= "\x57\xed\xf4\xa2\x2b\xe3\xc9\x55"
 			  "\xac\x49\xda\x2e\x21\x07\xb6\x7a",
-	पूर्ण
+	}
 
-पूर्ण;
+};
 
 /*
  * RIPEMD-160 test vectors from ISO/IEC 10118-3:2004(E)
  */
-अटल स्थिर काष्ठा hash_testvec rmd160_tv_ढाँचा[] = अणु
-	अणु
+static const struct hash_testvec rmd160_tv_template[] = {
+	{
 		.digest	= "\x9c\x11\x85\xa5\xc5\xe9\xfc\x54\x61\x28"
 			  "\x08\x97\x7e\xe8\xf5\x48\xb2\x25\x8d\x31",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "a",
+	}, {
+		.plaintext = "a",
 		.psize	= 1,
 		.digest	= "\x0b\xdc\x9d\x2d\x25\x6b\x3e\xe9\xda\xae"
 			  "\x34\x7b\xe6\xf4\xdc\x83\x5a\x46\x7f\xfe",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "abc",
+	}, {
+		.plaintext = "abc",
 		.psize	= 3,
 		.digest	= "\x8e\xb2\x08\xf7\xe0\x5d\x98\x7a\x9b\x04"
 			  "\x4a\x8e\x98\xc6\xb0\x87\xf1\x5a\x0b\xfc",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "message digest",
+	}, {
+		.plaintext = "message digest",
 		.psize	= 14,
 		.digest	= "\x5d\x06\x89\xef\x49\xd2\xfa\xe5\x72\xb8"
 			  "\x81\xb1\x23\xa8\x5f\xfa\x21\x59\x5f\x36",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "abcdefghijklmnopqrstuvwxyz",
+	}, {
+		.plaintext = "abcdefghijklmnopqrstuvwxyz",
 		.psize	= 26,
 		.digest	= "\xf7\x1c\x27\x10\x9c\x69\x2c\x1b\x56\xbb"
 			  "\xdc\xeb\x5b\x9d\x28\x65\xb3\x70\x8d\xbc",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcde"
+	}, {
+		.plaintext = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcde"
 			     "fghijklmnopqrstuvwxyz0123456789",
 		.psize	= 62,
 		.digest	= "\xb0\xe2\x0b\x6e\x31\x16\x64\x02\x86\xed"
 			  "\x3a\x87\xa5\x71\x30\x79\xb2\x1f\x51\x89",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "1234567890123456789012345678901234567890"
+	}, {
+		.plaintext = "1234567890123456789012345678901234567890"
 			     "1234567890123456789012345678901234567890",
 		.psize	= 80,
 		.digest	= "\x9b\x75\x2e\x45\x57\x3d\x4b\x39\xf4\xdb"
 			  "\xd3\x32\x3c\xab\x82\xbf\x63\x32\x6b\xfb",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "abcdbcdecdefdefgefghfghighij"
+	}, {
+		.plaintext = "abcdbcdecdefdefgefghfghighij"
 			     "hijkijkljklmklmnlmnomnopnopq",
 		.psize	= 56,
 		.digest	= "\x12\xa0\x53\x38\x4a\x9c\x0c\x88\xe4\x05"
 			  "\xa0\x6c\x27\xdc\xf4\x9a\xda\x62\xeb\x2b",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "abcdefghbcdefghicdefghijdefghijkefghijklfghi"
+	}, {
+		.plaintext = "abcdefghbcdefghicdefghijdefghijkefghijklfghi"
 			     "jklmghijklmnhijklmnoijklmnopjklmnopqklmnopqr"
 			     "lmnopqrsmnopqrstnopqrstu",
 		.psize	= 112,
 		.digest	= "\x6f\x3f\xa3\x9b\x6b\x50\x3c\x38\x4f\x91"
 			  "\x9a\x49\xa7\xaa\x5c\x2c\x08\xbd\xfb\x45",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "abcdbcdecdefdefgefghfghighijhijk",
+	}, {
+		.plaintext = "abcdbcdecdefdefgefghfghighijhijk",
 		.psize	= 32,
 		.digest	= "\x94\xc2\x64\x11\x54\x04\xe6\x33\x79\x0d"
 			  "\xfc\xc8\x7b\x58\x7d\x36\x77\x06\x7d\x9f",
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल स्थिर काष्ठा hash_testvec crct10dअगर_tv_ढाँचा[] = अणु
-	अणु
-		.plaपूर्णांकext	= "abc",
+static const struct hash_testvec crct10dif_tv_template[] = {
+	{
+		.plaintext	= "abc",
 		.psize		= 3,
-		.digest		= (u8 *)(u16 [])अणु 0x443b पूर्ण,
-	पूर्ण, अणु
-		.plaपूर्णांकext 	= "1234567890123456789012345678901234567890"
+		.digest		= (u8 *)(u16 []){ 0x443b },
+	}, {
+		.plaintext 	= "1234567890123456789012345678901234567890"
 				  "123456789012345678901234567890123456789",
 		.psize		= 79,
-		.digest 	= (u8 *)(u16 [])अणु 0x4b70 पूर्ण,
-	पूर्ण, अणु
-		.plaपूर्णांकext	= "abcdddddddddddddddddddddddddddddddddddddddd"
+		.digest 	= (u8 *)(u16 []){ 0x4b70 },
+	}, {
+		.plaintext	= "abcdddddddddddddddddddddddddddddddddddddddd"
 				  "ddddddddddddd",
 		.psize		= 56,
-		.digest		= (u8 *)(u16 [])अणु 0x9ce3 पूर्ण,
-	पूर्ण, अणु
-		.plaपूर्णांकext 	= "1234567890123456789012345678901234567890"
+		.digest		= (u8 *)(u16 []){ 0x9ce3 },
+	}, {
+		.plaintext 	= "1234567890123456789012345678901234567890"
 				  "1234567890123456789012345678901234567890"
 				  "1234567890123456789012345678901234567890"
 				  "1234567890123456789012345678901234567890"
@@ -3646,9 +3645,9 @@
 				  "1234567890123456789012345678901234567890"
 				  "123456789012345678901234567890123456789",
 		.psize		= 319,
-		.digest		= (u8 *)(u16 [])अणु 0x44c6 पूर्ण,
-	पूर्ण, अणु
-		.plaपूर्णांकext =	"\x6e\x05\x79\x10\xa7\x1b\xb2\x49"
+		.digest		= (u8 *)(u16 []){ 0x44c6 },
+	}, {
+		.plaintext =	"\x6e\x05\x79\x10\xa7\x1b\xb2\x49"
 				"\xe0\x54\xeb\x82\x19\x8d\x24\xbb"
 				"\x2f\xc6\x5d\xf4\x68\xff\x96\x0a"
 				"\xa1\x38\xcf\x43\xda\x71\x08\x7c"
@@ -3905,25 +3904,25 @@
 				"\x4b\xe2\x56\xed\x84\x1b\x8f\x26"
 				"\xbd\x31\xc8\x5f\xf6\x6a\x01\x98",
 		.psize = 2048,
-		.digest		= (u8 *)(u16 [])अणु 0x23ca पूर्ण,
-	पूर्ण
-पूर्ण;
+		.digest		= (u8 *)(u16 []){ 0x23ca },
+	}
+};
 
 /*
  * Streebog test vectors from RFC 6986 and GOST R 34.11-2012
  */
-अटल स्थिर काष्ठा hash_testvec streebog256_tv_ढाँचा[] = अणु
-	अणु /* M1 */
-		.plaपूर्णांकext = "012345678901234567890123456789012345678901234567890123456789012",
+static const struct hash_testvec streebog256_tv_template[] = {
+	{ /* M1 */
+		.plaintext = "012345678901234567890123456789012345678901234567890123456789012",
 		.psize = 63,
 		.digest =
 			"\x9d\x15\x1e\xef\xd8\x59\x0b\x89"
 			"\xda\xa6\xba\x6c\xb7\x4a\xf9\x27"
 			"\x5d\xd0\x51\x02\x6b\xb1\x49\xa4"
 			"\x52\xfd\x84\xe5\xe5\x7b\x55\x00",
-	पूर्ण,
-	अणु /* M2 */
-		.plaपूर्णांकext =
+	},
+	{ /* M2 */
+		.plaintext =
 			"\xd1\xe5\x20\xe2\xe5\xf2\xf0\xe8"
 			"\x2c\x20\xd1\xf2\xf0\xe8\xe1\xee"
 			"\xe6\xe8\x20\xe2\xed\xf3\xf6\xe8"
@@ -3939,12 +3938,12 @@
 			"\xa8\x7f\x53\x97\x6d\x74\x05\xb0"
 			"\xc0\xca\xc6\x28\xfc\x66\x9a\x74"
 			"\x1d\x50\x06\x3c\x55\x7e\x8f\x50",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा hash_testvec streebog512_tv_ढाँचा[] = अणु
-	अणु /* M1 */
-		.plaपूर्णांकext = "012345678901234567890123456789012345678901234567890123456789012",
+static const struct hash_testvec streebog512_tv_template[] = {
+	{ /* M1 */
+		.plaintext = "012345678901234567890123456789012345678901234567890123456789012",
 		.psize = 63,
 		.digest =
 			"\x1b\x54\xd0\x1a\x4a\xf5\xb9\xd5"
@@ -3955,9 +3954,9 @@
 			"\x38\x4c\x65\x74\xf0\x24\xc3\x11"
 			"\xe2\xa4\x81\x33\x2b\x08\xef\x7f"
 			"\x41\x79\x78\x91\xc1\x64\x6f\x48",
-	पूर्ण,
-	अणु /* M2 */
-		.plaपूर्णांकext =
+	},
+	{ /* M2 */
+		.plaintext =
 			"\xd1\xe5\x20\xe2\xe5\xf2\xf0\xe8"
 			"\x2c\x20\xd1\xf2\xf0\xe8\xe1\xee"
 			"\xe6\xe8\x20\xe2\xed\xf3\xf6\xe8"
@@ -3977,20 +3976,20 @@
 			"\x62\x0f\xcd\x7c\x49\x6c\xe5\xb3"
 			"\x3f\x0c\xb9\xdd\xdc\x2b\x64\x60"
 			"\x14\x3b\x03\xda\xba\xc9\xfb\x28",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
  * Two HMAC-Streebog test vectors from RFC 7836 and R 50.1.113-2016 A
  */
-अटल स्थिर काष्ठा hash_testvec hmac_streebog256_tv_ढाँचा[] = अणु
-	अणु
+static const struct hash_testvec hmac_streebog256_tv_template[] = {
+	{
 		.key =  "\x00\x01\x02\x03\x04\x05\x06\x07"
 			"\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f"
 			"\x10\x11\x12\x13\x14\x15\x16\x17"
 			"\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f",
 		.ksize  = 32,
-		.plaपूर्णांकext =
+		.plaintext =
 			"\x01\x26\xbd\xb8\x78\x00\xaf\x21"
 			"\x43\x41\x45\x65\x63\x78\x01\x00",
 		.psize  = 16,
@@ -3999,17 +3998,17 @@
 			"\xd3\x23\xf2\x99\x1c\x8d\x45\x34"
 			"\x01\x31\x37\x01\x0a\x83\x75\x4f"
 			"\xd0\xaf\x6d\x7c\xd4\x92\x2e\xd9",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा hash_testvec hmac_streebog512_tv_ढाँचा[] = अणु
-	अणु
+static const struct hash_testvec hmac_streebog512_tv_template[] = {
+	{
 		.key =  "\x00\x01\x02\x03\x04\x05\x06\x07"
 			"\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f"
 			"\x10\x11\x12\x13\x14\x15\x16\x17"
 			"\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f",
 		.ksize  = 32,
-		.plaपूर्णांकext =
+		.plaintext =
 			"\x01\x26\xbd\xb8\x78\x00\xaf\x21"
 			"\x43\x41\x45\x65\x63\x78\x01\x00",
 		.psize  = 16,
@@ -4022,14 +4021,14 @@
 			"\x4c\xb2\xee\xdc\x29\xe9\xad\x2f"
 			"\x3a\xfe\x93\xb2\x81\x4f\x79\xf5"
 			"\x00\x0f\xfc\x03\x66\xc2\x51\xe6",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
  * SM2 test vectors.
  */
-अटल स्थिर काष्ठा akcipher_testvec sm2_tv_ढाँचा[] = अणु
-	अणु /* Generated from खोलोssl */
+static const struct akcipher_testvec sm2_tv_template[] = {
+	{ /* Generated from openssl */
 	.key =
 	"\x04"
 	"\x8e\xa0\x33\x69\x91\x7e\x3d\xec\xad\x8e\xf0\x45\x5e\x13\x3e\x68"
@@ -4053,10 +4052,10 @@
 	"\x47\xa7\xbf\xd3\xda\xc4\x79\xee\xda\x8b\x4f\xe8\x40\x94\xd4\x32"
 	"\x8f\xf1\xcd\x68\x4d\xbd\x9b\x1d\xe0\xd8\x9a\x5d\xad\x85\x47\x5c",
 	.m_size = 32,
-	.खुला_key_vec = true,
+	.public_key_vec = true,
 	.siggen_sigver_test = true,
-	पूर्ण,
-	अणु /* From libgcrypt */
+	},
+	{ /* From libgcrypt */
 	.key =
 	"\x04"
 	"\x87\x59\x38\x9a\x34\xaa\xad\x07\xec\xf4\xe0\xc8\xc2\x65\x0a\x44"
@@ -4079,10 +4078,10 @@
 	"\x11\x22\x33\x44\x55\x66\x77\x88\x99\xaa\xbb\xcc\xdd\xee\xff\x00"
 	"\x12\x34\x56\x78\x9a\xbc\xde\xf0\x12\x34\x56\x78\x9a\xbc\xde\xf0",
 	.m_size = 32,
-	.खुला_key_vec = true,
+	.public_key_vec = true,
 	.siggen_sigver_test = true,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /* Example vectors below taken from
  * http://www.oscca.gov.cn/UpFile/20101222141857786.pdf
@@ -4090,52 +4089,52 @@
  * The rest taken from
  * https://github.com/adamws/oscca-sm3
  */
-अटल स्थिर काष्ठा hash_testvec sm3_tv_ढाँचा[] = अणु
-	अणु
-		.plaपूर्णांकext = "",
+static const struct hash_testvec sm3_tv_template[] = {
+	{
+		.plaintext = "",
 		.psize = 0,
-		.digest = (u8 *)(u8 []) अणु
+		.digest = (u8 *)(u8 []) {
 			0x1A, 0xB2, 0x1D, 0x83, 0x55, 0xCF, 0xA1, 0x7F,
 			0x8e, 0x61, 0x19, 0x48, 0x31, 0xE8, 0x1A, 0x8F,
 			0x22, 0xBE, 0xC8, 0xC7, 0x28, 0xFE, 0xFB, 0x74,
-			0x7E, 0xD0, 0x35, 0xEB, 0x50, 0x82, 0xAA, 0x2B पूर्ण
-	पूर्ण, अणु
-		.plaपूर्णांकext = "a",
+			0x7E, 0xD0, 0x35, 0xEB, 0x50, 0x82, 0xAA, 0x2B }
+	}, {
+		.plaintext = "a",
 		.psize = 1,
-		.digest = (u8 *)(u8 []) अणु
+		.digest = (u8 *)(u8 []) {
 			0x62, 0x34, 0x76, 0xAC, 0x18, 0xF6, 0x5A, 0x29,
 			0x09, 0xE4, 0x3C, 0x7F, 0xEC, 0x61, 0xB4, 0x9C,
 			0x7E, 0x76, 0x4A, 0x91, 0xA1, 0x8C, 0xCB, 0x82,
-			0xF1, 0x91, 0x7A, 0x29, 0xC8, 0x6C, 0x5E, 0x88 पूर्ण
-	पूर्ण, अणु
+			0xF1, 0x91, 0x7A, 0x29, 0xC8, 0x6C, 0x5E, 0x88 }
+	}, {
 		/* A.1. Example 1 */
-		.plaपूर्णांकext = "abc",
+		.plaintext = "abc",
 		.psize = 3,
-		.digest = (u8 *)(u8 []) अणु
+		.digest = (u8 *)(u8 []) {
 			0x66, 0xC7, 0xF0, 0xF4, 0x62, 0xEE, 0xED, 0xD9,
 			0xD1, 0xF2, 0xD4, 0x6B, 0xDC, 0x10, 0xE4, 0xE2,
 			0x41, 0x67, 0xC4, 0x87, 0x5C, 0xF2, 0xF7, 0xA2,
-			0x29, 0x7D, 0xA0, 0x2B, 0x8F, 0x4B, 0xA8, 0xE0 पूर्ण
-	पूर्ण, अणु
-		.plaपूर्णांकext = "abcdefghijklmnopqrstuvwxyz",
+			0x29, 0x7D, 0xA0, 0x2B, 0x8F, 0x4B, 0xA8, 0xE0 }
+	}, {
+		.plaintext = "abcdefghijklmnopqrstuvwxyz",
 		.psize = 26,
-		.digest = (u8 *)(u8 []) अणु
+		.digest = (u8 *)(u8 []) {
 			0xB8, 0x0F, 0xE9, 0x7A, 0x4D, 0xA2, 0x4A, 0xFC,
 			0x27, 0x75, 0x64, 0xF6, 0x6A, 0x35, 0x9E, 0xF4,
 			0x40, 0x46, 0x2A, 0xD2, 0x8D, 0xCC, 0x6D, 0x63,
-			0xAD, 0xB2, 0x4D, 0x5C, 0x20, 0xA6, 0x15, 0x95 पूर्ण
-	पूर्ण, अणु
+			0xAD, 0xB2, 0x4D, 0x5C, 0x20, 0xA6, 0x15, 0x95 }
+	}, {
 		/* A.1. Example 2 */
-		.plaपूर्णांकext = "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdab"
+		.plaintext = "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdab"
 			     "cdabcdabcdabcdabcd",
 		.psize = 64,
-		.digest = (u8 *)(u8 []) अणु
+		.digest = (u8 *)(u8 []) {
 			0xDE, 0xBE, 0x9F, 0xF9, 0x22, 0x75, 0xB8, 0xA1,
 			0x38, 0x60, 0x48, 0x89, 0xC1, 0x8E, 0x5A, 0x4D,
 			0x6F, 0xDB, 0x70, 0xE5, 0x38, 0x7E, 0x57, 0x65,
-			0x29, 0x3D, 0xCB, 0xA3, 0x9C, 0x0C, 0x57, 0x32 पूर्ण
-	पूर्ण, अणु
-		.plaपूर्णांकext = "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
+			0x29, 0x3D, 0xCB, 0xA3, 0x9C, 0x0C, 0x57, 0x32 }
+	}, {
+		.plaintext = "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
 			     "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
 			     "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
 			     "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
@@ -4143,39 +4142,39 @@
 			     "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
 			     "abcdabcdabcdabcdabcdabcdabcdabcd",
 		.psize = 256,
-		.digest = (u8 *)(u8 []) अणु
+		.digest = (u8 *)(u8 []) {
 			0xB9, 0x65, 0x76, 0x4C, 0x8B, 0xEB, 0xB0, 0x91,
 			0xC7, 0x60, 0x2B, 0x74, 0xAF, 0xD3, 0x4E, 0xEF,
 			0xB5, 0x31, 0xDC, 0xCB, 0x4E, 0x00, 0x76, 0xD9,
-			0xB7, 0xCD, 0x81, 0x31, 0x99, 0xB4, 0x59, 0x71 पूर्ण
-	पूर्ण
-पूर्ण;
+			0xB7, 0xCD, 0x81, 0x31, 0x99, 0xB4, 0x59, 0x71 }
+	}
+};
 
 /* Example vectors below taken from
  * GM/T 0042-2015 Appendix D.3
  */
-अटल स्थिर काष्ठा hash_testvec hmac_sm3_tv_ढाँचा[] = अणु
-	अणु
+static const struct hash_testvec hmac_sm3_tv_template[] = {
+	{
 		.key	= "\x01\x02\x03\x04\x05\x06\x07\x08"
 			  "\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10"
 			  "\x11\x12\x13\x14\x15\x16\x17\x18"
 			  "\x19\x1a\x1b\x1c\x1d\x1e\x1f\x20",
 		.ksize	= 32,
-		.plaपूर्णांकext = "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq"
+		.plaintext = "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq"
 			     "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq",
 		.psize	= 112,
 		.digest	= "\xca\x05\xe1\x44\xed\x05\xd1\x85"
 			  "\x78\x40\xd1\xf3\x18\xa4\xa8\x66"
 			  "\x9e\x55\x9f\xc8\x39\x1f\x41\x44"
 			  "\x85\xbf\xdf\x7b\xb4\x08\x96\x3a",
-	पूर्ण, अणु
+	}, {
 		.key	= "\x01\x02\x03\x04\x05\x06\x07\x08"
 			  "\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10"
 			  "\x11\x12\x13\x14\x15\x16\x17\x18"
 			  "\x19\x1a\x1b\x1c\x1d\x1e\x1f\x20"
 			  "\x21\x22\x23\x24\x25",
 		.ksize	= 37,
-		.plaपूर्णांकext = "\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd"
+		.plaintext = "\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd"
 			"\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd"
 			"\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd"
 			"\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd",
@@ -4184,51 +4183,51 @@
 			  "\x3f\x01\x59\xf6\x6c\x99\x87\x78"
 			  "\x22\xa3\xec\xf6\x10\xd1\x55\x21"
 			  "\x54\xb4\x1d\x44\xb9\x4d\xb3\xae",
-	पूर्ण, अणु
+	}, {
 		.key	= "\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b"
 			  "\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b"
 			 "\x0b\x0b\x0b\x0b\x0b\x0b",
 		.ksize	= 32,
-		.plaपूर्णांकext = "Hi There",
+		.plaintext = "Hi There",
 		.psize	= 8,
 		.digest	= "\xc0\xba\x18\xc6\x8b\x90\xc8\x8b"
 			  "\xc0\x7d\xe7\x94\xbf\xc7\xd2\xc8"
 			  "\xd1\x9e\xc3\x1e\xd8\x77\x3b\xc2"
 			  "\xb3\x90\xc9\x60\x4e\x0b\xe1\x1e",
-	पूर्ण, अणु
+	}, {
 		.key	= "Jefe",
 		.ksize	= 4,
-		.plaपूर्णांकext = "what do ya want for nothing?",
+		.plaintext = "what do ya want for nothing?",
 		.psize	= 28,
 		.digest	= "\x2e\x87\xf1\xd1\x68\x62\xe6\xd9"
 			  "\x64\xb5\x0a\x52\x00\xbf\x2b\x10"
 			  "\xb7\x64\xfa\xa9\x68\x0a\x29\x6a"
 			  "\x24\x05\xf2\x4b\xec\x39\xf8\x82",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
  * SHA1 test vectors from FIPS PUB 180-1
  * Long vector from CAVS 5.0
  */
-अटल स्थिर काष्ठा hash_testvec sha1_tv_ढाँचा[] = अणु
-	अणु
-		.plaपूर्णांकext = "",
+static const struct hash_testvec sha1_tv_template[] = {
+	{
+		.plaintext = "",
 		.psize	= 0,
 		.digest	= "\xda\x39\xa3\xee\x5e\x6b\x4b\x0d\x32\x55"
 			  "\xbf\xef\x95\x60\x18\x90\xaf\xd8\x07\x09",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "abc",
+	}, {
+		.plaintext = "abc",
 		.psize	= 3,
 		.digest	= "\xa9\x99\x3e\x36\x47\x06\x81\x6a\xba\x3e"
 			  "\x25\x71\x78\x50\xc2\x6c\x9c\xd0\xd8\x9d",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq",
+	}, {
+		.plaintext = "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq",
 		.psize	= 56,
 		.digest	= "\x84\x98\x3e\x44\x1c\x3b\xd2\x6e\xba\xae"
 			  "\x4a\xa1\xf9\x51\x29\xe5\xe5\x46\x70\xf1",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "\xec\x29\x56\x12\x44\xed\xe7\x06"
+	}, {
+		.plaintext = "\xec\x29\x56\x12\x44\xed\xe7\x06"
 			     "\xb6\xeb\x30\xa1\xc3\x71\xd7\x44"
 			     "\x50\xa1\x05\xc3\xf9\x73\x5f\x7f"
 			     "\xa9\xfe\x38\xcf\x67\xf3\x04\xa5"
@@ -4252,13 +4251,13 @@
 		.psize	= 163,
 		.digest	= "\x97\x01\x11\xc4\xe7\x7b\xcc\x88\xcc\x20"
 			  "\x45\x9c\x02\xb6\x9b\x4a\xa8\xf5\x82\x17",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-",
+	}, {
+		.plaintext = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-",
 		.psize	= 64,
 		.digest = "\xc8\x71\xf6\x9a\x63\xcc\xa9\x84\x84\x82"
 			  "\x64\xe7\x79\x95\x5d\xd7\x19\x41\x7c\x91",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "\x08\x9f\x13\xaa\x41\xd8\x4c\xe3"
+	}, {
+		.plaintext = "\x08\x9f\x13\xaa\x41\xd8\x4c\xe3"
 			     "\x7a\x11\x85\x1c\xb3\x27\xbe\x55"
 			     "\xec\x60\xf7\x8e\x02\x99\x30\xc7"
 			     "\x3b\xd2\x69\x00\x74\x0b\xa2\x16"
@@ -4390,45 +4389,45 @@
 		.digest    = "\xb8\xe3\x54\xed\xc5\xfc\xef\xa4"
 			     "\x55\x73\x4a\x81\x99\xe4\x47\x2a"
 			     "\x30\xd6\xc9\x85",
-	पूर्ण
-पूर्ण;
+	}
+};
 
 
 /*
  * SHA224 test vectors from FIPS PUB 180-2
  */
-अटल स्थिर काष्ठा hash_testvec sha224_tv_ढाँचा[] = अणु
-	अणु
-		.plaपूर्णांकext = "",
+static const struct hash_testvec sha224_tv_template[] = {
+	{
+		.plaintext = "",
 		.psize	= 0,
 		.digest	= "\xd1\x4a\x02\x8c\x2a\x3a\x2b\xc9"
 			  "\x47\x61\x02\xbb\x28\x82\x34\xc4"
 			  "\x15\xa2\xb0\x1f\x82\x8e\xa6\x2a"
 			  "\xc5\xb3\xe4\x2f",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "abc",
+	}, {
+		.plaintext = "abc",
 		.psize  = 3,
 		.digest = "\x23\x09\x7D\x22\x34\x05\xD8\x22"
 			  "\x86\x42\xA4\x77\xBD\xA2\x55\xB3"
 			  "\x2A\xAD\xBC\xE4\xBD\xA0\xB3\xF7"
 			  "\xE3\x6C\x9D\xA7",
-	पूर्ण, अणु
-		.plaपूर्णांकext =
+	}, {
+		.plaintext =
 		"abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq",
 		.psize  = 56,
 		.digest = "\x75\x38\x8B\x16\x51\x27\x76\xCC"
 			  "\x5D\xBA\x5D\xA1\xFD\x89\x01\x50"
 			  "\xB0\xC6\x45\x5C\xB4\xF5\x8B\x19"
 			  "\x52\x52\x25\x25",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-",
+	}, {
+		.plaintext = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-",
 		.psize	= 64,
 		.digest = "\xc4\xdb\x2b\x3a\x58\xc3\x99\x01"
 			  "\x42\xfd\x10\x92\xaa\x4e\x04\x08"
 			  "\x58\xbb\xbb\xe8\xf8\x14\xa7\x0c"
 			  "\xef\x3b\xcb\x0e",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "\x08\x9f\x13\xaa\x41\xd8\x4c\xe3"
+	}, {
+		.plaintext = "\x08\x9f\x13\xaa\x41\xd8\x4c\xe3"
 			     "\x7a\x11\x85\x1c\xb3\x27\xbe\x55"
 			     "\xec\x60\xf7\x8e\x02\x99\x30\xc7"
 			     "\x3b\xd2\x69\x00\x74\x0b\xa2\x16"
@@ -4561,43 +4560,43 @@
 			     "\x78\xb1\x8b\xfd\x04\xf5\x2d\x91"
 			     "\x20\x48\xa4\x28\xff\x55\xb1\xd3"
 			     "\xe6\xf9\x4f\xcc",
-	पूर्ण
-पूर्ण;
+	}
+};
 
 /*
  * SHA256 test vectors from NIST
  */
-अटल स्थिर काष्ठा hash_testvec sha256_tv_ढाँचा[] = अणु
-	अणु
-		.plaपूर्णांकext = "",
+static const struct hash_testvec sha256_tv_template[] = {
+	{
+		.plaintext = "",
 		.psize	= 0,
 		.digest	= "\xe3\xb0\xc4\x42\x98\xfc\x1c\x14"
 			  "\x9a\xfb\xf4\xc8\x99\x6f\xb9\x24"
 			  "\x27\xae\x41\xe4\x64\x9b\x93\x4c"
 			  "\xa4\x95\x99\x1b\x78\x52\xb8\x55",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "abc",
+	}, {
+		.plaintext = "abc",
 		.psize	= 3,
 		.digest	= "\xba\x78\x16\xbf\x8f\x01\xcf\xea"
 			  "\x41\x41\x40\xde\x5d\xae\x22\x23"
 			  "\xb0\x03\x61\xa3\x96\x17\x7a\x9c"
 			  "\xb4\x10\xff\x61\xf2\x00\x15\xad",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq",
+	}, {
+		.plaintext = "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq",
 		.psize	= 56,
 		.digest	= "\x24\x8d\x6a\x61\xd2\x06\x38\xb8"
 			  "\xe5\xc0\x26\x93\x0c\x3e\x60\x39"
 			  "\xa3\x3c\xe4\x59\x64\xff\x21\x67"
 			  "\xf6\xec\xed\xd4\x19\xdb\x06\xc1",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-",
+	}, {
+		.plaintext = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-",
 		.psize	= 64,
 		.digest = "\xb5\xfe\xad\x56\x7d\xff\xcb\xa4"
 			  "\x2c\x32\x29\x32\x19\xbb\xfb\xfa"
 			  "\xd6\xff\x94\xa3\x72\x91\x85\x66"
 			  "\x3b\xa7\x87\x77\x58\xa3\x40\x3a",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "\x08\x9f\x13\xaa\x41\xd8\x4c\xe3"
+	}, {
+		.plaintext = "\x08\x9f\x13\xaa\x41\xd8\x4c\xe3"
 			     "\x7a\x11\x85\x1c\xb3\x27\xbe\x55"
 			     "\xec\x60\xf7\x8e\x02\x99\x30\xc7"
 			     "\x3b\xd2\x69\x00\x74\x0b\xa2\x16"
@@ -4730,15 +4729,15 @@
 			     "\x32\x32\x17\xcc\xd4\x6a\x71\xa9"
 			     "\xf3\xed\x50\x10\x64\x8e\x06\xbe"
 			     "\x9b\x4a\xa6\xbb\x05\x89\x59\x51",
-	पूर्ण
-पूर्ण;
+	}
+};
 
 /*
  * SHA384 test vectors from NIST and kerneli
  */
-अटल स्थिर काष्ठा hash_testvec sha384_tv_ढाँचा[] = अणु
-	अणु
-		.plaपूर्णांकext = "",
+static const struct hash_testvec sha384_tv_template[] = {
+	{
+		.plaintext = "",
 		.psize	= 0,
 		.digest	= "\x38\xb0\x60\xa7\x51\xac\x96\x38"
 			  "\x4c\xd9\x32\x7e\xb1\xb1\xe3\x6a"
@@ -4746,8 +4745,8 @@
 			  "\x4c\x0c\xc7\xbf\x63\xf6\xe1\xda"
 			  "\x27\x4e\xde\xbf\xe7\x6f\x65\xfb"
 			  "\xd5\x1a\xd2\xf1\x48\x98\xb9\x5b",
-	पूर्ण, अणु
-		.plaपूर्णांकext= "abc",
+	}, {
+		.plaintext= "abc",
 		.psize	= 3,
 		.digest	= "\xcb\x00\x75\x3f\x45\xa3\x5e\x8b"
 			  "\xb5\xa0\x3d\x69\x9a\xc6\x50\x07"
@@ -4755,8 +4754,8 @@
 			  "\x1a\x8b\x60\x5a\x43\xff\x5b\xed"
 			  "\x80\x86\x07\x2b\xa1\xe7\xcc\x23"
 			  "\x58\xba\xec\xa1\x34\xc8\x25\xa7",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq",
+	}, {
+		.plaintext = "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq",
 		.psize	= 56,
 		.digest	= "\x33\x91\xfd\xdd\xfc\x8d\xc7\x39"
 			  "\x37\x07\xa6\x5b\x1b\x47\x09\x39"
@@ -4764,8 +4763,8 @@
 			  "\xfe\x8f\x45\x0d\xe5\xf3\x6b\xc6"
 			  "\xb0\x45\x5a\x85\x20\xbc\x4e\x6f"
 			  "\x5f\xe9\x5b\x1f\xe3\xc8\x45\x2b",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmn"
+	}, {
+		.plaintext = "abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmn"
 			   "hijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu",
 		.psize	= 112,
 		.digest	= "\x09\x33\x0c\x33\xf7\x11\x47\xe8"
@@ -4774,8 +4773,8 @@
 			  "\x2f\xa0\x80\x86\xe3\xb0\xf7\x12"
 			  "\xfc\xc7\xc7\x1a\x55\x7e\x2d\xb9"
 			  "\x66\xc3\xe9\xfa\x91\x74\x60\x39",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcd"
+	}, {
+		.plaintext = "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcd"
 			   "efghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz",
 		.psize	= 104,
 		.digest	= "\x3d\x20\x89\x73\xab\x35\x08\xdb"
@@ -4784,8 +4783,8 @@
 			  "\x4d\x8f\xd0\x14\xe5\x82\x82\x3a"
 			  "\x89\xe1\x6f\x9b\x2a\x7b\xbc\x1a"
 			  "\xc9\x38\xe2\xd1\x99\xe8\xbe\xa4",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "\x08\x9f\x13\xaa\x41\xd8\x4c\xe3"
+	}, {
+		.plaintext = "\x08\x9f\x13\xaa\x41\xd8\x4c\xe3"
 			     "\x7a\x11\x85\x1c\xb3\x27\xbe\x55"
 			     "\xec\x60\xf7\x8e\x02\x99\x30\xc7"
 			     "\x3b\xd2\x69\x00\x74\x0b\xa2\x16"
@@ -4920,15 +4919,15 @@
 			     "\x03\x4a\xba\x8a\x87\x49\xfe\xdc"
 			     "\x75\x29\x62\x83\xae\x3f\x17\xab"
 			     "\xfd\x10\x4d\x8e\x17\x1c\x1f\xca",
-	पूर्ण
-पूर्ण;
+	}
+};
 
 /*
  * SHA512 test vectors from NIST and kerneli
  */
-अटल स्थिर काष्ठा hash_testvec sha512_tv_ढाँचा[] = अणु
-	अणु
-		.plaपूर्णांकext = "",
+static const struct hash_testvec sha512_tv_template[] = {
+	{
+		.plaintext = "",
 		.psize	= 0,
 		.digest	= "\xcf\x83\xe1\x35\x7e\xef\xb8\xbd"
 			  "\xf1\x54\x28\x50\xd6\x6d\x80\x07"
@@ -4938,8 +4937,8 @@
 			  "\xff\x83\x18\xd2\x87\x7e\xec\x2f"
 			  "\x63\xb9\x31\xbd\x47\x41\x7a\x81"
 			  "\xa5\x38\x32\x7a\xf9\x27\xda\x3e",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "abc",
+	}, {
+		.plaintext = "abc",
 		.psize	= 3,
 		.digest	= "\xdd\xaf\x35\xa1\x93\x61\x7a\xba"
 			  "\xcc\x41\x73\x49\xae\x20\x41\x31"
@@ -4949,8 +4948,8 @@
 			  "\x36\xba\x3c\x23\xa3\xfe\xeb\xbd"
 			  "\x45\x4d\x44\x23\x64\x3c\xe8\x0e"
 			  "\x2a\x9a\xc9\x4f\xa5\x4c\xa4\x9f",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq",
+	}, {
+		.plaintext = "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq",
 		.psize	= 56,
 		.digest	= "\x20\x4a\x8f\xc6\xdd\xa8\x2f\x0a"
 			  "\x0c\xed\x7b\xeb\x8e\x08\xa4\x16"
@@ -4960,8 +4959,8 @@
 			  "\xaa\x1d\x3b\xea\x57\x78\x9c\xa0"
 			  "\x31\xad\x85\xc7\xa7\x1d\xd7\x03"
 			  "\x54\xec\x63\x12\x38\xca\x34\x45",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmn"
+	}, {
+		.plaintext = "abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmn"
 			   "hijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu",
 		.psize	= 112,
 		.digest	= "\x8e\x95\x9b\x75\xda\xe3\x13\xda"
@@ -4972,8 +4971,8 @@
 			  "\x33\x1b\x99\xde\xc4\xb5\x43\x3a"
 			  "\xc7\xd3\x29\xee\xb6\xdd\x26\x54"
 			  "\x5e\x96\xe5\x5b\x87\x4b\xe9\x09",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcd"
+	}, {
+		.plaintext = "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcd"
 			   "efghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz",
 		.psize	= 104,
 		.digest	= "\x93\x0d\x0c\xef\xcb\x30\xff\x11"
@@ -4984,8 +4983,8 @@
 			  "\xb2\x78\xe6\x6d\xff\x8b\x84\xfe"
 			  "\x2b\x28\x70\xf7\x42\xa5\x80\xd8"
 			  "\xed\xb4\x19\x87\x23\x28\x50\xc9",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "\x08\x9f\x13\xaa\x41\xd8\x4c\xe3"
+	}, {
+		.plaintext = "\x08\x9f\x13\xaa\x41\xd8\x4c\xe3"
 			     "\x7a\x11\x85\x1c\xb3\x27\xbe\x55"
 			     "\xec\x60\xf7\x8e\x02\x99\x30\xc7"
 			     "\x3b\xd2\x69\x00\x74\x0b\xa2\x16"
@@ -5122,8 +5121,8 @@
 			     "\x5f\x35\x9c\x61\x2f\x10\xf9\xec"
 			     "\x59\xca\x9d\xcc\x25\x0c\x43\xba"
 			     "\x85\xa8\xf8\xfe\xb5\x24\xb2\xee",
-	पूर्ण
-पूर्ण;
+	}
+};
 
 
 /*
@@ -5131,9 +5130,9 @@
  * by Vincent Rijmen and Paulo S. L. M. Barreto as part of the NESSIE
  * submission
  */
-अटल स्थिर काष्ठा hash_testvec wp512_tv_ढाँचा[] = अणु
-	अणु
-		.plaपूर्णांकext = "",
+static const struct hash_testvec wp512_tv_template[] = {
+	{
+		.plaintext = "",
 		.psize	= 0,
 		.digest	= "\x19\xFA\x61\xD7\x55\x22\xA4\x66"
 			  "\x9B\x44\xE3\x9C\x1D\x2E\x17\x26"
@@ -5145,8 +5144,8 @@
 			  "\x08\xB1\x38\xCC\x42\xA6\x6E\xB3",
 
 
-	पूर्ण, अणु
-		.plaपूर्णांकext = "a",
+	}, {
+		.plaintext = "a",
 		.psize	= 1,
 		.digest	= "\x8A\xCA\x26\x02\x79\x2A\xEC\x6F"
 			  "\x11\xA6\x72\x06\x53\x1F\xB7\xD7"
@@ -5156,8 +5155,8 @@
 			  "\x3A\x42\x39\x1A\x39\x14\x5A\x59"
 			  "\x1A\x92\x20\x0D\x56\x01\x95\xE5"
 			  "\x3B\x47\x85\x84\xFD\xAE\x23\x1A",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "abc",
+	}, {
+		.plaintext = "abc",
 		.psize	= 3,
 		.digest	= "\x4E\x24\x48\xA4\xC6\xF4\x86\xBB"
 			  "\x16\xB6\x56\x2C\x73\xB4\x02\x0B"
@@ -5167,8 +5166,8 @@
 			  "\x7D\x0E\x34\x95\x71\x14\xCB\xD6"
 			  "\xC7\x97\xFC\x9D\x95\xD8\xB5\x82"
 			  "\xD2\x25\x29\x20\x76\xD4\xEE\xF5",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "message digest",
+	}, {
+		.plaintext = "message digest",
 		.psize	= 14,
 		.digest	= "\x37\x8C\x84\xA4\x12\x6E\x2D\xC6"
 			  "\xE5\x6D\xCC\x74\x58\x37\x7A\xAC"
@@ -5178,8 +5177,8 @@
 			  "\x06\xB4\xB5\x2A\xC5\xA4\xAA\xA6"
 			  "\x92\xED\x92\x00\x52\x83\x8F\x33"
 			  "\x62\xE8\x6D\xBD\x37\xA8\x90\x3E",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "abcdefghijklmnopqrstuvwxyz",
+	}, {
+		.plaintext = "abcdefghijklmnopqrstuvwxyz",
 		.psize	= 26,
 		.digest	= "\xF1\xD7\x54\x66\x26\x36\xFF\xE9"
 			  "\x2C\x82\xEB\xB9\x21\x2A\x48\x4A"
@@ -5189,8 +5188,8 @@
 			  "\x0B\x8A\xAE\x86\x17\x7A\xB4\xA6"
 			  "\xF6\x8F\x67\x3E\x72\x07\x86\x5D"
 			  "\x5D\x98\x19\xA3\xDB\xA4\xEB\x3B",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	}, {
+		.plaintext = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 			   "abcdefghijklmnopqrstuvwxyz0123456789",
 		.psize	= 62,
 		.digest	= "\xDC\x37\xE0\x08\xCF\x9E\xE6\x9B"
@@ -5201,8 +5200,8 @@
 			  "\xB7\xCB\x57\x21\x1B\x92\x81\xA6"
 			  "\x55\x17\xCC\x87\x9D\x7B\x96\x21"
 			  "\x42\xC6\x5F\x5A\x7A\xF0\x14\x67",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "1234567890123456789012345678901234567890"
+	}, {
+		.plaintext = "1234567890123456789012345678901234567890"
 			   "1234567890123456789012345678901234567890",
 		.psize	= 80,
 		.digest	= "\x46\x6E\xF1\x8B\xAB\xB0\x15\x4D"
@@ -5213,8 +5212,8 @@
 			  "\x38\xCD\x04\x7B\x26\x81\xA5\x1A"
 			  "\x2C\x60\x48\x1E\x88\xC5\xA2\x0B"
 			  "\x2C\x2A\x80\xCF\x3A\x9A\x08\x3B",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "abcdbcdecdefdefgefghfghighijhijk",
+	}, {
+		.plaintext = "abcdbcdecdefdefgefghfghighijhijk",
 		.psize	= 32,
 		.digest	= "\x2A\x98\x7E\xA4\x0F\x91\x70\x61"
 			  "\xF5\xD6\xF0\xA0\xE4\x64\x4F\x48"
@@ -5224,12 +5223,12 @@
 			  "\x7B\x94\x76\x39\xFE\x05\x0B\x56"
 			  "\x93\x9B\xAA\xA0\xAD\xFF\x9A\xE6"
 			  "\x74\x5B\x7B\x18\x1C\x3B\xE3\xFD",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा hash_testvec wp384_tv_ढाँचा[] = अणु
-	अणु
-		.plaपूर्णांकext = "",
+static const struct hash_testvec wp384_tv_template[] = {
+	{
+		.plaintext = "",
 		.psize	= 0,
 		.digest	= "\x19\xFA\x61\xD7\x55\x22\xA4\x66"
 			  "\x9B\x44\xE3\x9C\x1D\x2E\x17\x26"
@@ -5239,8 +5238,8 @@
 			  "\xCF\x88\xE3\xE0\x3C\x4F\x07\x57",
 
 
-	पूर्ण, अणु
-		.plaपूर्णांकext = "a",
+	}, {
+		.plaintext = "a",
 		.psize	= 1,
 		.digest	= "\x8A\xCA\x26\x02\x79\x2A\xEC\x6F"
 			  "\x11\xA6\x72\x06\x53\x1F\xB7\xD7"
@@ -5248,8 +5247,8 @@
 			  "\x73\xC4\x50\x01\xD0\x08\x7B\x42"
 			  "\xD1\x1B\xC6\x45\x41\x3A\xEF\xF6"
 			  "\x3A\x42\x39\x1A\x39\x14\x5A\x59",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "abc",
+	}, {
+		.plaintext = "abc",
 		.psize	= 3,
 		.digest	= "\x4E\x24\x48\xA4\xC6\xF4\x86\xBB"
 			  "\x16\xB6\x56\x2C\x73\xB4\x02\x0B"
@@ -5257,8 +5256,8 @@
 			  "\x1A\xE1\xB3\x03\xD9\x7E\x6D\x4C"
 			  "\x71\x81\xEE\xBD\xB6\xC5\x7E\x27"
 			  "\x7D\x0E\x34\x95\x71\x14\xCB\xD6",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "message digest",
+	}, {
+		.plaintext = "message digest",
 		.psize	= 14,
 		.digest	= "\x37\x8C\x84\xA4\x12\x6E\x2D\xC6"
 			  "\xE5\x6D\xCC\x74\x58\x37\x7A\xAC"
@@ -5266,8 +5265,8 @@
 			  "\xE1\xF5\x70\x0C\x0F\xFB\x4D\x3B"
 			  "\x84\x21\x55\x76\x59\xEF\x55\xC1"
 			  "\x06\xB4\xB5\x2A\xC5\xA4\xAA\xA6",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "abcdefghijklmnopqrstuvwxyz",
+	}, {
+		.plaintext = "abcdefghijklmnopqrstuvwxyz",
 		.psize	= 26,
 		.digest	= "\xF1\xD7\x54\x66\x26\x36\xFF\xE9"
 			  "\x2C\x82\xEB\xB9\x21\x2A\x48\x4A"
@@ -5275,8 +5274,8 @@
 			  "\x44\x2E\xE1\x3B\x80\x54\xE4\x1B"
 			  "\x08\xBF\x2A\x92\x51\xC3\x0B\x6A"
 			  "\x0B\x8A\xAE\x86\x17\x7A\xB4\xA6",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	}, {
+		.plaintext = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 			   "abcdefghijklmnopqrstuvwxyz0123456789",
 		.psize	= 62,
 		.digest	= "\xDC\x37\xE0\x08\xCF\x9E\xE6\x9B"
@@ -5285,8 +5284,8 @@
 			  "\x6A\xF4\x2E\x40\xF8\x2F\x3A\x1E"
 			  "\x08\xEB\xA2\x66\x29\x12\x9D\x8F"
 			  "\xB7\xCB\x57\x21\x1B\x92\x81\xA6",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "1234567890123456789012345678901234567890"
+	}, {
+		.plaintext = "1234567890123456789012345678901234567890"
 			   "1234567890123456789012345678901234567890",
 		.psize	= 80,
 		.digest	= "\x46\x6E\xF1\x8B\xAB\xB0\x15\x4D"
@@ -5295,8 +5294,8 @@
 			  "\x54\x9C\x4A\xFA\xDB\x60\x14\x29"
 			  "\x4D\x5B\xD8\xDF\x2A\x6C\x44\xE5"
 			  "\x38\xCD\x04\x7B\x26\x81\xA5\x1A",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "abcdbcdecdefdefgefghfghighijhijk",
+	}, {
+		.plaintext = "abcdbcdecdefdefgefghfghighijhijk",
 		.psize	= 32,
 		.digest	= "\x2A\x98\x7E\xA4\x0F\x91\x70\x61"
 			  "\xF5\xD6\xF0\xA0\xE4\x64\x4F\x48"
@@ -5304,12 +5303,12 @@
 			  "\x07\xC5\x62\xF9\x88\xE9\x5C\x69"
 			  "\x16\xBD\xC8\x03\x1B\xC5\xBE\x1B"
 			  "\x7B\x94\x76\x39\xFE\x05\x0B\x56",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा hash_testvec wp256_tv_ढाँचा[] = अणु
-	अणु
-		.plaपूर्णांकext = "",
+static const struct hash_testvec wp256_tv_template[] = {
+	{
+		.plaintext = "",
 		.psize	= 0,
 		.digest	= "\x19\xFA\x61\xD7\x55\x22\xA4\x66"
 			  "\x9B\x44\xE3\x9C\x1D\x2E\x17\x26"
@@ -5317,114 +5316,114 @@
 			  "\x9A\xFE\xE0\x96\x49\x97\xF7\xA7",
 
 
-	पूर्ण, अणु
-		.plaपूर्णांकext = "a",
+	}, {
+		.plaintext = "a",
 		.psize	= 1,
 		.digest	= "\x8A\xCA\x26\x02\x79\x2A\xEC\x6F"
 			  "\x11\xA6\x72\x06\x53\x1F\xB7\xD7"
 			  "\xF0\xDF\xF5\x94\x13\x14\x5E\x69"
 			  "\x73\xC4\x50\x01\xD0\x08\x7B\x42",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "abc",
+	}, {
+		.plaintext = "abc",
 		.psize	= 3,
 		.digest	= "\x4E\x24\x48\xA4\xC6\xF4\x86\xBB"
 			  "\x16\xB6\x56\x2C\x73\xB4\x02\x0B"
 			  "\xF3\x04\x3E\x3A\x73\x1B\xCE\x72"
 			  "\x1A\xE1\xB3\x03\xD9\x7E\x6D\x4C",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "message digest",
+	}, {
+		.plaintext = "message digest",
 		.psize	= 14,
 		.digest	= "\x37\x8C\x84\xA4\x12\x6E\x2D\xC6"
 			  "\xE5\x6D\xCC\x74\x58\x37\x7A\xAC"
 			  "\x83\x8D\x00\x03\x22\x30\xF5\x3C"
 			  "\xE1\xF5\x70\x0C\x0F\xFB\x4D\x3B",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "abcdefghijklmnopqrstuvwxyz",
+	}, {
+		.plaintext = "abcdefghijklmnopqrstuvwxyz",
 		.psize	= 26,
 		.digest	= "\xF1\xD7\x54\x66\x26\x36\xFF\xE9"
 			  "\x2C\x82\xEB\xB9\x21\x2A\x48\x4A"
 			  "\x8D\x38\x63\x1E\xAD\x42\x38\xF5"
 			  "\x44\x2E\xE1\x3B\x80\x54\xE4\x1B",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	}, {
+		.plaintext = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 			   "abcdefghijklmnopqrstuvwxyz0123456789",
 		.psize	= 62,
 		.digest	= "\xDC\x37\xE0\x08\xCF\x9E\xE6\x9B"
 			  "\xF1\x1F\x00\xED\x9A\xBA\x26\x90"
 			  "\x1D\xD7\xC2\x8C\xDE\xC0\x66\xCC"
 			  "\x6A\xF4\x2E\x40\xF8\x2F\x3A\x1E",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "1234567890123456789012345678901234567890"
+	}, {
+		.plaintext = "1234567890123456789012345678901234567890"
 			   "1234567890123456789012345678901234567890",
 		.psize	= 80,
 		.digest	= "\x46\x6E\xF1\x8B\xAB\xB0\x15\x4D"
 			  "\x25\xB9\xD3\x8A\x64\x14\xF5\xC0"
 			  "\x87\x84\x37\x2B\xCC\xB2\x04\xD6"
 			  "\x54\x9C\x4A\xFA\xDB\x60\x14\x29",
-	पूर्ण, अणु
-		.plaपूर्णांकext = "abcdbcdecdefdefgefghfghighijhijk",
+	}, {
+		.plaintext = "abcdbcdecdefdefgefghfghighijhijk",
 		.psize	= 32,
 		.digest	= "\x2A\x98\x7E\xA4\x0F\x91\x70\x61"
 			  "\xF5\xD6\xF0\xA0\xE4\x64\x4F\x48"
 			  "\x8A\x7A\x5A\x52\xDE\xEE\x65\x62"
 			  "\x07\xC5\x62\xF9\x88\xE9\x5C\x69",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा hash_testvec ghash_tv_ढाँचा[] =
-अणु
-	अणु
+static const struct hash_testvec ghash_tv_template[] =
+{
+	{
 		.key	= "\xdf\xa6\xbf\x4d\xed\x81\xdb\x03"
 			  "\xff\xca\xff\x95\xf8\x30\xf0\x61",
 		.ksize	= 16,
-		.plaपूर्णांकext = "\x95\x2b\x2a\x56\xa5\x60\x04a\xc0"
+		.plaintext = "\x95\x2b\x2a\x56\xa5\x60\x04a\xc0"
 			     "\xb3\x2b\x66\x56\xa0\x5b\x40\xb6",
 		.psize	= 16,
 		.digest	= "\xda\x53\xeb\x0a\xd2\xc5\x5b\xb6"
 			  "\x4f\xc4\x80\x2c\xc3\xfe\xda\x60",
-	पूर्ण, अणु
+	}, {
 		.key	= "\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b"
 			  "\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b",
 		.ksize	= 16,
-		.plaपूर्णांकext = "what do ya want for nothing?",
+		.plaintext = "what do ya want for nothing?",
 		.psize	= 28,
 		.digest	= "\x3e\x1f\x5c\x4d\x65\xf0\xef\xce"
 			  "\x0d\x61\x06\x27\x66\x51\xd5\xe2",
-	पूर्ण, अणु
+	}, {
 		.key	= "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			  "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa",
 		.ksize	= 16,
-		.plaपूर्णांकext = "\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd"
+		.plaintext = "\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd"
 			"\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd"
 			"\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd"
 			"\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd",
 		.psize	= 50,
 		.digest	= "\xfb\x49\x8a\x36\xe1\x96\xe1\x96"
 			  "\xe1\x96\xe1\x96\xe1\x96\xe1\x96",
-	पूर्ण, अणु
+	}, {
 		.key	= "\xda\x53\xeb\x0a\xd2\xc5\x5b\xb6"
 			  "\x4f\xc4\x80\x2c\xc3\xfe\xda\x60",
 		.ksize	= 16,
-		.plaपूर्णांकext = "\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd"
+		.plaintext = "\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd"
 			"\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd"
 			"\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd"
 			"\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd",
 		.psize	= 50,
 		.digest	= "\x2b\x5c\x0c\x7f\x52\xd1\x60\xc2"
 			  "\x49\xed\x6e\x32\x7a\xa9\xbe\x08",
-	पूर्ण, अणु
+	}, {
 		.key	= "\x95\x2b\x2a\x56\xa5\x60\x04a\xc0"
 			  "\xb3\x2b\x66\x56\xa0\x5b\x40\xb6",
 		.ksize	= 16,
-		.plaपूर्णांकext = "Test With Truncation",
+		.plaintext = "Test With Truncation",
 		.psize	= 20,
 		.digest	= "\xf8\x94\x87\x2a\x4b\x63\x99\x28"
 			  "\x23\xf7\x93\xf7\x19\xf5\x96\xd9",
-	पूर्ण, अणु
+	}, {
 		.key	= "\x0a\x1b\x2c\x3d\x4e\x5f\x64\x71"
 			"\x82\x93\xa4\xb5\xc6\xd7\xe8\xf9",
 		.ksize	= 16,
-		.plaपूर्णांकext = "\x56\x6f\x72\x20\x6c\x61\x75\x74"
+		.plaintext = "\x56\x6f\x72\x20\x6c\x61\x75\x74"
 			"\x65\x72\x20\x4c\x61\x75\x73\x63"
 			"\x68\x65\x6e\x20\x75\x6e\x64\x20"
 			"\x53\x74\x61\x75\x6e\x65\x6e\x20"
@@ -5477,59 +5476,59 @@
 		.psize	= 400,
 		.digest = "\xad\xb1\xc1\xe9\x56\x70\x31\x1d"
 			"\xbb\x5b\xdf\x5e\x70\x72\x1a\x57",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
  * HMAC-MD5 test vectors from RFC2202
- * (These need to be fixed to not use म_माप).
+ * (These need to be fixed to not use strlen).
  */
-अटल स्थिर काष्ठा hash_testvec hmac_md5_tv_ढाँचा[] =
-अणु
-	अणु
+static const struct hash_testvec hmac_md5_tv_template[] =
+{
+	{
 		.key	= "\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b",
 		.ksize	= 16,
-		.plaपूर्णांकext = "Hi There",
+		.plaintext = "Hi There",
 		.psize	= 8,
 		.digest	= "\x92\x94\x72\x7a\x36\x38\xbb\x1c"
 			  "\x13\xf4\x8e\xf8\x15\x8b\xfc\x9d",
-	पूर्ण, अणु
+	}, {
 		.key	= "Jefe",
 		.ksize	= 4,
-		.plaपूर्णांकext = "what do ya want for nothing?",
+		.plaintext = "what do ya want for nothing?",
 		.psize	= 28,
 		.digest	= "\x75\x0c\x78\x3e\x6a\xb0\xb5\x03"
 			  "\xea\xa8\x6e\x31\x0a\x5d\xb7\x38",
-	पूर्ण, अणु
+	}, {
 		.key	= "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa",
 		.ksize	= 16,
-		.plaपूर्णांकext = "\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd"
+		.plaintext = "\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd"
 			"\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd"
 			"\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd"
 			"\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd",
 		.psize	= 50,
 		.digest	= "\x56\xbe\x34\x52\x1d\x14\x4c\x88"
 			  "\xdb\xb8\xc7\x33\xf0\xe8\xb3\xf6",
-	पूर्ण, अणु
+	}, {
 		.key	= "\x01\x02\x03\x04\x05\x06\x07\x08"
 			  "\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10"
 			  "\x11\x12\x13\x14\x15\x16\x17\x18\x19",
 		.ksize	= 25,
-		.plaपूर्णांकext = "\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd"
+		.plaintext = "\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd"
 			"\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd"
 			"\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd"
 			"\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd",
 		.psize	= 50,
 		.digest	= "\x69\x7e\xaf\x0a\xca\x3a\x3a\xea"
 			  "\x3a\x75\x16\x47\x46\xff\xaa\x79",
-	पूर्ण, अणु
+	}, {
 		.key	= "\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c",
 		.ksize	= 16,
-		.plaपूर्णांकext = "Test With Truncation",
+		.plaintext = "Test With Truncation",
 		.psize	= 20,
 		.digest	= "\x56\x46\x1e\xf2\x34\x2e\xdc\x00"
 			  "\xf9\xba\xb9\x95\x69\x0e\xfd\x4c",
-	पूर्ण, अणु
+	}, {
 		.key	= "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			"\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			"\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
@@ -5538,11 +5537,11 @@
 			"\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			"\xaa\xaa",
 		.ksize	= 80,
-		.plaपूर्णांकext = "Test Using Larger Than Block-Size Key - Hash Key First",
+		.plaintext = "Test Using Larger Than Block-Size Key - Hash Key First",
 		.psize	= 54,
 		.digest	= "\x6b\x1a\xb7\xfe\x4b\xd7\xbf\x8f"
 			  "\x0b\x62\xe6\xce\x61\xb9\xd0\xcd",
-	पूर्ण, अणु
+	}, {
 		.key	= "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			"\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			"\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
@@ -5551,62 +5550,62 @@
 			"\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			"\xaa\xaa",
 		.ksize	= 80,
-		.plaपूर्णांकext = "Test Using Larger Than Block-Size Key and Larger Than One "
+		.plaintext = "Test Using Larger Than Block-Size Key and Larger Than One "
 			   "Block-Size Data",
 		.psize	= 73,
 		.digest	= "\x6f\x63\x0f\xad\x67\xcd\xa0\xee"
 			  "\x1f\xb1\xf5\x62\xdb\x3a\xa5\x3e",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
  * HMAC-RIPEMD160 test vectors from RFC2286
  */
-अटल स्थिर काष्ठा hash_testvec hmac_rmd160_tv_ढाँचा[] = अणु
-	अणु
+static const struct hash_testvec hmac_rmd160_tv_template[] = {
+	{
 		.key	= "\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b",
 		.ksize	= 20,
-		.plaपूर्णांकext = "Hi There",
+		.plaintext = "Hi There",
 		.psize	= 8,
 		.digest	= "\x24\xcb\x4b\xd6\x7d\x20\xfc\x1a\x5d\x2e"
 			  "\xd7\x73\x2d\xcc\x39\x37\x7f\x0a\x56\x68",
-	पूर्ण, अणु
+	}, {
 		.key	= "Jefe",
 		.ksize	= 4,
-		.plaपूर्णांकext = "what do ya want for nothing?",
+		.plaintext = "what do ya want for nothing?",
 		.psize	= 28,
 		.digest	= "\xdd\xa6\xc0\x21\x3a\x48\x5a\x9e\x24\xf4"
 			  "\x74\x20\x64\xa7\xf0\x33\xb4\x3c\x40\x69",
-	पूर्ण, अणु
+	}, {
 		.key	= "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa",
 		.ksize	= 20,
-		.plaपूर्णांकext = "\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd"
+		.plaintext = "\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd"
 			"\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd"
 			"\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd"
 			"\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd",
 		.psize	= 50,
 		.digest	= "\xb0\xb1\x05\x36\x0d\xe7\x59\x96\x0a\xb4"
 			  "\xf3\x52\x98\xe1\x16\xe2\x95\xd8\xe7\xc1",
-	पूर्ण, अणु
+	}, {
 		.key	= "\x01\x02\x03\x04\x05\x06\x07\x08"
 			  "\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10"
 			  "\x11\x12\x13\x14\x15\x16\x17\x18\x19",
 		.ksize	= 25,
-		.plaपूर्णांकext = "\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd"
+		.plaintext = "\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd"
 			"\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd"
 			"\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd"
 			"\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd",
 		.psize	= 50,
 		.digest	= "\xd5\xca\x86\x2f\x4d\x21\xd5\xe6\x10\xe1"
 			  "\x8b\x4c\xf1\xbe\xb9\x7a\x43\x65\xec\xf4",
-	पूर्ण, अणु
+	}, {
 		.key	= "\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c",
 		.ksize	= 20,
-		.plaपूर्णांकext = "Test With Truncation",
+		.plaintext = "Test With Truncation",
 		.psize	= 20,
 		.digest	= "\x76\x19\x69\x39\x78\xf9\x1d\x90\x53\x9a"
 			  "\xe7\x86\x50\x0f\xf3\xd8\xe0\x51\x8e\x39",
-	पूर्ण, अणु
+	}, {
 		.key	= "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			"\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			"\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
@@ -5615,11 +5614,11 @@
 			"\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			"\xaa\xaa",
 		.ksize	= 80,
-		.plaपूर्णांकext = "Test Using Larger Than Block-Size Key - Hash Key First",
+		.plaintext = "Test Using Larger Than Block-Size Key - Hash Key First",
 		.psize	= 54,
 		.digest	= "\x64\x66\xca\x07\xac\x5e\xac\x29\xe1\xbd"
 			  "\x52\x3e\x5a\xda\x76\x05\xb7\x91\xfd\x8b",
-	पूर्ण, अणु
+	}, {
 		.key	= "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			"\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			"\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
@@ -5628,63 +5627,63 @@
 			"\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			"\xaa\xaa",
 		.ksize	= 80,
-		.plaपूर्णांकext = "Test Using Larger Than Block-Size Key and Larger Than One "
+		.plaintext = "Test Using Larger Than Block-Size Key and Larger Than One "
 			   "Block-Size Data",
 		.psize	= 73,
 		.digest	= "\x69\xea\x60\x79\x8d\x71\x61\x6c\xce\x5f"
 			  "\xd0\x87\x1e\x23\x75\x4c\xd7\x5d\x5a\x0a",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
  * HMAC-SHA1 test vectors from RFC2202
  */
-अटल स्थिर काष्ठा hash_testvec hmac_sha1_tv_ढाँचा[] = अणु
-	अणु
+static const struct hash_testvec hmac_sha1_tv_template[] = {
+	{
 		.key	= "\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b",
 		.ksize	= 20,
-		.plaपूर्णांकext = "Hi There",
+		.plaintext = "Hi There",
 		.psize	= 8,
 		.digest	= "\xb6\x17\x31\x86\x55\x05\x72\x64"
 			  "\xe2\x8b\xc0\xb6\xfb\x37\x8c\x8e\xf1"
 			  "\x46\xbe",
-	पूर्ण, अणु
+	}, {
 		.key	= "Jefe",
 		.ksize	= 4,
-		.plaपूर्णांकext = "what do ya want for nothing?",
+		.plaintext = "what do ya want for nothing?",
 		.psize	= 28,
 		.digest	= "\xef\xfc\xdf\x6a\xe5\xeb\x2f\xa2\xd2\x74"
 			  "\x16\xd5\xf1\x84\xdf\x9c\x25\x9a\x7c\x79",
-	पूर्ण, अणु
+	}, {
 		.key	= "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa",
 		.ksize	= 20,
-		.plaपूर्णांकext = "\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd"
+		.plaintext = "\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd"
 			"\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd"
 			"\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd"
 			"\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd",
 		.psize	= 50,
 		.digest	= "\x12\x5d\x73\x42\xb9\xac\x11\xcd\x91\xa3"
 			  "\x9a\xf4\x8a\xa1\x7b\x4f\x63\xf1\x75\xd3",
-	पूर्ण, अणु
+	}, {
 		.key	= "\x01\x02\x03\x04\x05\x06\x07\x08"
 			  "\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10"
 			  "\x11\x12\x13\x14\x15\x16\x17\x18\x19",
 		.ksize	= 25,
-		.plaपूर्णांकext = "\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd"
+		.plaintext = "\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd"
 			"\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd"
 			"\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd"
 			"\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd",
 		.psize	= 50,
 		.digest	= "\x4c\x90\x07\xf4\x02\x62\x50\xc6\xbc\x84"
 			  "\x14\xf9\xbf\x50\xc8\x6c\x2d\x72\x35\xda",
-	पूर्ण, अणु
+	}, {
 		.key	= "\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c",
 		.ksize	= 20,
-		.plaपूर्णांकext = "Test With Truncation",
+		.plaintext = "Test With Truncation",
 		.psize	= 20,
 		.digest	= "\x4c\x1a\x03\x42\x4b\x55\xe0\x7f\xe7\xf2"
 			  "\x7b\xe1\xd5\x8b\xb9\x32\x4a\x9a\x5a\x04",
-	पूर्ण, अणु
+	}, {
 		.key	= "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			"\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			"\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
@@ -5693,11 +5692,11 @@
 			"\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			"\xaa\xaa",
 		.ksize	= 80,
-		.plaपूर्णांकext = "Test Using Larger Than Block-Size Key - Hash Key First",
+		.plaintext = "Test Using Larger Than Block-Size Key - Hash Key First",
 		.psize	= 54,
 		.digest	= "\xaa\x4a\xe5\xe1\x52\x72\xd0\x0e\x95\x70"
 			  "\x56\x37\xce\x8a\x3b\x55\xed\x40\x21\x12",
-	पूर्ण, अणु
+	}, {
 		.key	= "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			"\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			"\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
@@ -5706,36 +5705,36 @@
 			"\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			"\xaa\xaa",
 		.ksize	= 80,
-		.plaपूर्णांकext = "Test Using Larger Than Block-Size Key and Larger Than One "
+		.plaintext = "Test Using Larger Than Block-Size Key and Larger Than One "
 			   "Block-Size Data",
 		.psize	= 73,
 		.digest	= "\xe8\xe9\x9d\x0f\x45\x23\x7d\x78\x6d\x6b"
 			  "\xba\xa7\x96\x5c\x78\x08\xbb\xff\x1a\x91",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 
 /*
  * SHA224 HMAC test vectors from RFC4231
  */
-अटल स्थिर काष्ठा hash_testvec hmac_sha224_tv_ढाँचा[] = अणु
-	अणु
+static const struct hash_testvec hmac_sha224_tv_template[] = {
+	{
 		.key    = "\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b"
 			"\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b"
 			"\x0b\x0b\x0b\x0b",
 		.ksize  = 20,
 		/*  ("Hi There") */
-		.plaपूर्णांकext = "\x48\x69\x20\x54\x68\x65\x72\x65",
+		.plaintext = "\x48\x69\x20\x54\x68\x65\x72\x65",
 		.psize  = 8,
 		.digest = "\x89\x6f\xb1\x12\x8a\xbb\xdf\x19"
 			"\x68\x32\x10\x7c\xd4\x9d\xf3\x3f"
 			"\x47\xb4\xb1\x16\x99\x12\xba\x4f"
 			"\x53\x68\x4b\x22",
-	पूर्ण, अणु
+	}, {
 		.key    = "Jefe",
 		.ksize  = 4,
 		/* ("what do ya want for nothing?") */
-		.plaपूर्णांकext = "\x77\x68\x61\x74\x20\x64\x6f\x20"
+		.plaintext = "\x77\x68\x61\x74\x20\x64\x6f\x20"
 			"\x79\x61\x20\x77\x61\x6e\x74\x20"
 			"\x66\x6f\x72\x20\x6e\x6f\x74\x68"
 			"\x69\x6e\x67\x3f",
@@ -5744,7 +5743,7 @@
 			"\x45\x69\x0f\x3a\x7e\x9e\x6d\x0f"
 			"\x8b\xbe\xa2\xa3\x9e\x61\x48\x00"
 			"\x8f\xd0\x5e\x44",
-	पूर्ण, अणु
+	}, {
 		.key    = "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			"\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			"\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
@@ -5764,7 +5763,7 @@
 			"\xaa\xaa\xaa",
 		.ksize  = 131,
 		/* ("Test Using Larger Than Block-Size Key - Hash Key First") */
-		.plaपूर्णांकext = "\x54\x65\x73\x74\x20\x55\x73\x69"
+		.plaintext = "\x54\x65\x73\x74\x20\x55\x73\x69"
 			"\x6e\x67\x20\x4c\x61\x72\x67\x65"
 			"\x72\x20\x54\x68\x61\x6e\x20\x42"
 			"\x6c\x6f\x63\x6b\x2d\x53\x69\x7a"
@@ -5776,7 +5775,7 @@
 			"\xae\xbe\x9b\x2d\x6f\x0d\xbc\xe2"
 			"\xd4\x99\xf1\x12\xf2\xd2\xb7\x27"
 			"\x3f\xa6\x87\x0e",
-	पूर्ण, अणु
+	}, {
 		.key    = "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			"\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			"\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
@@ -5798,7 +5797,7 @@
 		/* ("This is a test using a larger than block-size key and a")
 		(" larger than block-size data. The key needs to be")
 			(" hashed before being used by the HMAC algorithm.") */
-		.plaपूर्णांकext = "\x54\x68\x69\x73\x20\x69\x73\x20"
+		.plaintext = "\x54\x68\x69\x73\x20\x69\x73\x20"
 			"\x61\x20\x74\x65\x73\x74\x20\x75"
 			"\x73\x69\x6e\x67\x20\x61\x20\x6c"
 			"\x61\x72\x67\x65\x72\x20\x74\x68"
@@ -5822,77 +5821,77 @@
 			"\x3f\x54\xd5\x17\xd0\xb3\x9d\xbd"
 			"\x94\x67\x70\xdb\x9c\x2b\x95\xc9"
 			"\xf6\xf5\x65\xd1",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
  * HMAC-SHA256 test vectors from
  * draft-ietf-ipsec-ciph-sha-256-01.txt
  */
-अटल स्थिर काष्ठा hash_testvec hmac_sha256_tv_ढाँचा[] = अणु
-	अणु
+static const struct hash_testvec hmac_sha256_tv_template[] = {
+	{
 		.key	= "\x01\x02\x03\x04\x05\x06\x07\x08"
 			  "\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10"
 			  "\x11\x12\x13\x14\x15\x16\x17\x18"
 			  "\x19\x1a\x1b\x1c\x1d\x1e\x1f\x20",
 		.ksize	= 32,
-		.plaपूर्णांकext = "abc",
+		.plaintext = "abc",
 		.psize	= 3,
 		.digest	= "\xa2\x1b\x1f\x5d\x4c\xf4\xf7\x3a"
 			  "\x4d\xd9\x39\x75\x0f\x7a\x06\x6a"
 			  "\x7f\x98\xcc\x13\x1c\xb1\x6a\x66"
 			  "\x92\x75\x90\x21\xcf\xab\x81\x81",
-	पूर्ण, अणु
+	}, {
 		.key	= "\x01\x02\x03\x04\x05\x06\x07\x08"
 			  "\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10"
 			  "\x11\x12\x13\x14\x15\x16\x17\x18"
 			  "\x19\x1a\x1b\x1c\x1d\x1e\x1f\x20",
 		.ksize	= 32,
-		.plaपूर्णांकext = "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq",
+		.plaintext = "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq",
 		.psize	= 56,
 		.digest	= "\x10\x4f\xdc\x12\x57\x32\x8f\x08"
 			  "\x18\x4b\xa7\x31\x31\xc5\x3c\xae"
 			  "\xe6\x98\xe3\x61\x19\x42\x11\x49"
 			  "\xea\x8c\x71\x24\x56\x69\x7d\x30",
-	पूर्ण, अणु
+	}, {
 		.key	= "\x01\x02\x03\x04\x05\x06\x07\x08"
 			  "\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10"
 			  "\x11\x12\x13\x14\x15\x16\x17\x18"
 			  "\x19\x1a\x1b\x1c\x1d\x1e\x1f\x20",
 		.ksize	= 32,
-		.plaपूर्णांकext = "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq"
+		.plaintext = "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq"
 			   "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq",
 		.psize	= 112,
 		.digest	= "\x47\x03\x05\xfc\x7e\x40\xfe\x34"
 			  "\xd3\xee\xb3\xe7\x73\xd9\x5a\xab"
 			  "\x73\xac\xf0\xfd\x06\x04\x47\xa5"
 			  "\xeb\x45\x95\xbf\x33\xa9\xd1\xa3",
-	पूर्ण, अणु
+	}, {
 		.key	= "\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b"
 			"\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b"
 			"\x0b\x0b\x0b\x0b\x0b\x0b",
 		.ksize	= 32,
-		.plaपूर्णांकext = "Hi There",
+		.plaintext = "Hi There",
 		.psize	= 8,
 		.digest	= "\x19\x8a\x60\x7e\xb4\x4b\xfb\xc6"
 			  "\x99\x03\xa0\xf1\xcf\x2b\xbd\xc5"
 			  "\xba\x0a\xa3\xf3\xd9\xae\x3c\x1c"
 			  "\x7a\x3b\x16\x96\xa0\xb6\x8c\xf7",
-	पूर्ण, अणु
+	}, {
 		.key	= "Jefe",
 		.ksize	= 4,
-		.plaपूर्णांकext = "what do ya want for nothing?",
+		.plaintext = "what do ya want for nothing?",
 		.psize	= 28,
 		.digest	= "\x5b\xdc\xc1\x46\xbf\x60\x75\x4e"
 			  "\x6a\x04\x24\x26\x08\x95\x75\xc7"
 			  "\x5a\x00\x3f\x08\x9d\x27\x39\x83"
 			  "\x9d\xec\x58\xb9\x64\xec\x38\x43",
-	पूर्ण, अणु
+	}, {
 		.key	= "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			"\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			"\xaa\xaa\xaa\xaa\xaa\xaa\xaa",
 		.ksize	= 32,
-		.plaपूर्णांकext = "\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd"
+		.plaintext = "\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd"
 			"\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd"
 			"\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd"
 			"\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd",
@@ -5901,14 +5900,14 @@
 			  "\x91\xe5\x3a\xba\x30\x92\xf9\x62"
 			  "\xe5\x49\xfe\x6c\xe9\xed\x7f\xdc"
 			  "\x43\x19\x1f\xbd\xe4\x5c\x30\xb0",
-	पूर्ण, अणु
+	}, {
 		.key	= "\x01\x02\x03\x04\x05\x06\x07\x08"
 			  "\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10"
 			  "\x11\x12\x13\x14\x15\x16\x17\x18"
 			  "\x19\x1a\x1b\x1c\x1d\x1e\x1f\x20"
 			  "\x21\x22\x23\x24\x25",
 		.ksize	= 37,
-		.plaपूर्णांकext = "\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd"
+		.plaintext = "\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd"
 			"\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd"
 			"\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd"
 			"\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd",
@@ -5917,18 +5916,18 @@
 			  "\x4c\x66\xde\xe0\xf8\xf0\x74\x55"
 			  "\x6e\xc4\xaf\x55\xef\x07\x99\x85"
 			  "\x41\x46\x8e\xb4\x9b\xd2\xe9\x17",
-	पूर्ण, अणु
+	}, {
 		.key	= "\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c"
 			"\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c"
 			"\x0c\x0c\x0c\x0c\x0c\x0c",
 		.ksize	= 32,
-		.plaपूर्णांकext = "Test With Truncation",
+		.plaintext = "Test With Truncation",
 		.psize	= 20,
 		.digest	= "\x75\x46\xaf\x01\x84\x1f\xc0\x9b"
 			  "\x1a\xb9\xc3\x74\x9a\x5f\x1c\x17"
 			  "\xd4\xf5\x89\x66\x8a\x58\x7b\x27"
 			  "\x00\xa9\xc9\x7c\x11\x93\xcf\x42",
-	पूर्ण, अणु
+	}, {
 		.key	= "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			"\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			"\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
@@ -5937,13 +5936,13 @@
 			"\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			"\xaa\xaa",
 		.ksize	= 80,
-		.plaपूर्णांकext = "Test Using Larger Than Block-Size Key - Hash Key First",
+		.plaintext = "Test Using Larger Than Block-Size Key - Hash Key First",
 		.psize	= 54,
 		.digest	= "\x69\x53\x02\x5e\xd9\x6f\x0c\x09"
 			  "\xf8\x0a\x96\xf7\x8e\x65\x38\xdb"
 			  "\xe2\xe7\xb8\x20\xe3\xdd\x97\x0e"
 			  "\x7d\xdd\x39\x09\x1b\x32\x35\x2f",
-	पूर्ण, अणु
+	}, {
 		.key	= "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			"\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			"\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
@@ -5952,38 +5951,38 @@
 			"\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			"\xaa\xaa",
 		.ksize	= 80,
-		.plaपूर्णांकext = "Test Using Larger Than Block-Size Key and Larger Than "
+		.plaintext = "Test Using Larger Than Block-Size Key and Larger Than "
 			   "One Block-Size Data",
 		.psize	= 73,
 		.digest	= "\x63\x55\xac\x22\xe8\x90\xd0\xa3"
 			  "\xc8\x48\x1a\x5c\xa4\x82\x5b\xc8"
 			  "\x84\xd3\xe7\xa1\xff\x98\xa2\xfc"
 			  "\x2a\xc7\xd8\xe0\x64\xc3\xb2\xe6",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा hash_testvec aes_cmac128_tv_ढाँचा[] = अणु
-	अणु /* From NIST Special Publication 800-38B, AES-128 */
+static const struct hash_testvec aes_cmac128_tv_template[] = {
+	{ /* From NIST Special Publication 800-38B, AES-128 */
 		.key		= "\x2b\x7e\x15\x16\x28\xae\xd2\xa6"
 				  "\xab\xf7\x15\x88\x09\xcf\x4f\x3c",
-		.plaपूर्णांकext	= zeroed_string,
+		.plaintext	= zeroed_string,
 		.digest		= "\xbb\x1d\x69\x29\xe9\x59\x37\x28"
 				  "\x7f\xa3\x7d\x12\x9b\x75\x67\x46",
 		.psize		= 0,
 		.ksize		= 16,
-	पूर्ण, अणु
+	}, {
 		.key		= "\x2b\x7e\x15\x16\x28\xae\xd2\xa6"
 				  "\xab\xf7\x15\x88\x09\xcf\x4f\x3c",
-		.plaपूर्णांकext	= "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96"
+		.plaintext	= "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96"
 				  "\xe9\x3d\x7e\x11\x73\x93\x17\x2a",
 		.digest		= "\x07\x0a\x16\xb4\x6b\x4d\x41\x44"
 				  "\xf7\x9b\xdd\x9d\xd0\x4a\x28\x7c",
 		.psize		= 16,
 		.ksize		= 16,
-	पूर्ण, अणु
+	}, {
 		.key		= "\x2b\x7e\x15\x16\x28\xae\xd2\xa6"
 				  "\xab\xf7\x15\x88\x09\xcf\x4f\x3c",
-		.plaपूर्णांकext	= "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96"
+		.plaintext	= "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96"
 				  "\xe9\x3d\x7e\x11\x73\x93\x17\x2a"
 				  "\xae\x2d\x8a\x57\x1e\x03\xac\x9c"
 				  "\x9e\xb7\x6f\xac\x45\xaf\x8e\x51"
@@ -5992,10 +5991,10 @@
 				  "\x30\xca\x32\x61\x14\x97\xc8\x27",
 		.psize		= 40,
 		.ksize		= 16,
-	पूर्ण, अणु
+	}, {
 		.key		= "\x2b\x7e\x15\x16\x28\xae\xd2\xa6"
 				  "\xab\xf7\x15\x88\x09\xcf\x4f\x3c",
-		.plaपूर्णांकext	= "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96"
+		.plaintext	= "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96"
 				  "\xe9\x3d\x7e\x11\x73\x93\x17\x2a"
 				  "\xae\x2d\x8a\x57\x1e\x03\xac\x9c"
 				  "\x9e\xb7\x6f\xac\x45\xaf\x8e\x51"
@@ -6007,22 +6006,22 @@
 				  "\xfc\x49\x74\x17\x79\x36\x3c\xfe",
 		.psize		= 64,
 		.ksize		= 16,
-	पूर्ण, अणु /* From NIST Special Publication 800-38B, AES-256 */
+	}, { /* From NIST Special Publication 800-38B, AES-256 */
 		.key		= "\x60\x3d\xeb\x10\x15\xca\x71\xbe"
 				  "\x2b\x73\xae\xf0\x85\x7d\x77\x81"
 				  "\x1f\x35\x2c\x07\x3b\x61\x08\xd7"
 				  "\x2d\x98\x10\xa3\x09\x14\xdf\xf4",
-		.plaपूर्णांकext	= zeroed_string,
+		.plaintext	= zeroed_string,
 		.digest		= "\x02\x89\x62\xf6\x1b\x7b\xf8\x9e"
 				  "\xfc\x6b\x55\x1f\x46\x67\xd9\x83",
 		.psize		= 0,
 		.ksize		= 32,
-	पूर्ण, अणु
+	}, {
 		.key		= "\x60\x3d\xeb\x10\x15\xca\x71\xbe"
 				  "\x2b\x73\xae\xf0\x85\x7d\x77\x81"
 				  "\x1f\x35\x2c\x07\x3b\x61\x08\xd7"
 				  "\x2d\x98\x10\xa3\x09\x14\xdf\xf4",
-		.plaपूर्णांकext	= "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96"
+		.plaintext	= "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96"
 				  "\xe9\x3d\x7e\x11\x73\x93\x17\x2a"
 				  "\xae\x2d\x8a\x57\x1e\x03\xac\x9c"
 				  "\x9e\xb7\x6f\xac\x45\xaf\x8e\x51"
@@ -6034,23 +6033,23 @@
 				  "\x69\x6a\x2c\x05\x6c\x31\x54\x10",
 		.psize		= 64,
 		.ksize		= 32,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल स्थिर काष्ठा hash_testvec aes_cbcmac_tv_ढाँचा[] = अणु
-	अणु
+static const struct hash_testvec aes_cbcmac_tv_template[] = {
+	{
 		.key		= "\x2b\x7e\x15\x16\x28\xae\xd2\xa6"
 				  "\xab\xf7\x15\x88\x09\xcf\x4f\x3c",
-		.plaपूर्णांकext	= "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96"
+		.plaintext	= "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96"
 				  "\xe9\x3d\x7e\x11\x73\x93\x17\x2a",
 		.digest		= "\x3a\xd7\x7b\xb4\x0d\x7a\x36\x60"
 				  "\xa8\x9e\xca\xf3\x24\x66\xef\x97",
 		.psize		= 16,
 		.ksize		= 16,
-	पूर्ण, अणु
+	}, {
 		.key		= "\x2b\x7e\x15\x16\x28\xae\xd2\xa6"
 				  "\xab\xf7\x15\x88\x09\xcf\x4f\x3c",
-		.plaपूर्णांकext	= "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96"
+		.plaintext	= "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96"
 				  "\xe9\x3d\x7e\x11\x73\x93\x17\x2a"
 				  "\xae\x2d\x8a\x57\x1e\x03\xac\x9c"
 				  "\x9e\xb7\x6f\xac\x45\xaf\x8e\x51"
@@ -6059,10 +6058,10 @@
 				  "\xf8\xf2\x76\x03\xac\x39\xb0\x9d",
 		.psize		= 33,
 		.ksize		= 16,
-	पूर्ण, अणु
+	}, {
 		.key		= "\x2b\x7e\x15\x16\x28\xae\xd2\xa6"
 				  "\xab\xf7\x15\x88\x09\xcf\x4f\x3c",
-		.plaपूर्णांकext	= "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96"
+		.plaintext	= "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96"
 				  "\xe9\x3d\x7e\x11\x73\x93\x17\x2a"
 				  "\xae\x2d\x8a\x57\x1e\x03\xac\x9c"
 				  "\x9e\xb7\x6f\xac\x45\xaf\x8e\x51"
@@ -6074,12 +6073,12 @@
 				  "\xaf\xdc\xb2\xf8\x89\x32\xa3\x3a",
 		.psize		= 63,
 		.ksize		= 16,
-	पूर्ण, अणु
+	}, {
 		.key		= "\x60\x3d\xeb\x10\x15\xca\x71\xbe"
 				  "\x2b\x73\xae\xf0\x85\x7d\x77\x81"
 				  "\x1f\x35\x2c\x07\x3b\x61\x08\xd7"
 				  "\x2d\x98\x10\xa3\x09\x14\xdf\xf4",
-		.plaपूर्णांकext	= "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96"
+		.plaintext	= "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96"
 				  "\xe9\x3d\x7e\x11\x73\x93\x17\x2a"
 				  "\xae\x2d\x8a\x57\x1e\x03\xac\x9c"
 				  "\x9e\xb7\x6f\xac\x45\xaf\x8e\x51"
@@ -6092,95 +6091,95 @@
 				  "\xa8\x4d\x4c\x10\x3b\x72\x7d\xd6",
 		.psize		= 65,
 		.ksize		= 32,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल स्थिर काष्ठा hash_testvec des3_ede_cmac64_tv_ढाँचा[] = अणु
+static const struct hash_testvec des3_ede_cmac64_tv_template[] = {
 /*
  * From NIST Special Publication 800-38B, Three Key TDEA
  * Corrected test vectors from:
- *  http://csrc.nist.gov/खुलाations/nistpubs/800-38B/Updated_CMAC_Examples.pdf
+ *  http://csrc.nist.gov/publications/nistpubs/800-38B/Updated_CMAC_Examples.pdf
  */
-	अणु
+	{
 		.key		= "\x8a\xa8\x3b\xf8\xcb\xda\x10\x62"
 				  "\x0b\xc1\xbf\x19\xfb\xb6\xcd\x58"
 				  "\xbc\x31\x3d\x4a\x37\x1c\xa8\xb5",
-		.plaपूर्णांकext	= zeroed_string,
+		.plaintext	= zeroed_string,
 		.digest		= "\xb7\xa6\x88\xe1\x22\xff\xaf\x95",
 		.psize		= 0,
 		.ksize		= 24,
-	पूर्ण, अणु
+	}, {
 		.key		= "\x8a\xa8\x3b\xf8\xcb\xda\x10\x62"
 				  "\x0b\xc1\xbf\x19\xfb\xb6\xcd\x58"
 				  "\xbc\x31\x3d\x4a\x37\x1c\xa8\xb5",
-		.plaपूर्णांकext	= "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96",
+		.plaintext	= "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96",
 		.digest		= "\x8e\x8f\x29\x31\x36\x28\x37\x97",
 		.psize		= 8,
 		.ksize		= 24,
-	पूर्ण, अणु
+	}, {
 		.key		= "\x8a\xa8\x3b\xf8\xcb\xda\x10\x62"
 				  "\x0b\xc1\xbf\x19\xfb\xb6\xcd\x58"
 				  "\xbc\x31\x3d\x4a\x37\x1c\xa8\xb5",
-		.plaपूर्णांकext	= "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96"
+		.plaintext	= "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96"
 				  "\xe9\x3d\x7e\x11\x73\x93\x17\x2a"
 				  "\xae\x2d\x8a\x57",
 		.digest		= "\x74\x3d\xdb\xe0\xce\x2d\xc2\xed",
 		.psize		= 20,
 		.ksize		= 24,
-	पूर्ण, अणु
+	}, {
 		.key		= "\x8a\xa8\x3b\xf8\xcb\xda\x10\x62"
 				  "\x0b\xc1\xbf\x19\xfb\xb6\xcd\x58"
 				  "\xbc\x31\x3d\x4a\x37\x1c\xa8\xb5",
-		.plaपूर्णांकext	= "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96"
+		.plaintext	= "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96"
 				  "\xe9\x3d\x7e\x11\x73\x93\x17\x2a"
 				  "\xae\x2d\x8a\x57\x1e\x03\xac\x9c"
 				  "\x9e\xb7\x6f\xac\x45\xaf\x8e\x51",
 		.digest		= "\x33\xe6\xb1\x09\x24\x00\xea\xe5",
 		.psize		= 32,
 		.ksize		= 24,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल स्थिर काष्ठा hash_testvec aes_xcbc128_tv_ढाँचा[] = अणु
-	अणु
+static const struct hash_testvec aes_xcbc128_tv_template[] = {
+	{
 		.key	= "\x00\x01\x02\x03\x04\x05\x06\x07"
 			  "\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f",
-		.plaपूर्णांकext = zeroed_string,
+		.plaintext = zeroed_string,
 		.digest = "\x75\xf0\x25\x1d\x52\x8a\xc0\x1c"
 			  "\x45\x73\xdf\xd5\x84\xd7\x9f\x29",
 		.psize	= 0,
 		.ksize	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x00\x01\x02\x03\x04\x05\x06\x07"
 			  "\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f",
-		.plaपूर्णांकext = "\x00\x01\x02",
+		.plaintext = "\x00\x01\x02",
 		.digest	= "\x5b\x37\x65\x80\xae\x2f\x19\xaf"
 			  "\xe7\x21\x9c\xee\xf1\x72\x75\x6f",
 		.psize	= 3,
 		.ksize	= 16,
-	पूर्ण , अणु
+	} , {
 		.key	= "\x00\x01\x02\x03\x04\x05\x06\x07"
 			  "\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f",
-		.plaपूर्णांकext = "\x00\x01\x02\x03\x04\x05\x06\x07"
+		.plaintext = "\x00\x01\x02\x03\x04\x05\x06\x07"
 			     "\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f",
 		.digest = "\xd2\xa2\x46\xfa\x34\x9b\x68\xa7"
 			  "\x99\x98\xa4\x39\x4f\xf7\xa2\x63",
 		.psize	= 16,
 		.ksize	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x00\x01\x02\x03\x04\x05\x06\x07"
 			  "\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f",
-		.plaपूर्णांकext = "\x00\x01\x02\x03\x04\x05\x06\x07"
+		.plaintext = "\x00\x01\x02\x03\x04\x05\x06\x07"
 			     "\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f"
 			     "\x10\x11\x12\x13",
 		.digest = "\x47\xf5\x1b\x45\x64\x96\x62\x15"
 			  "\xb8\x98\x5c\x63\x05\x5e\xd3\x08",
 		.psize	= 20,
 		.ksize	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x00\x01\x02\x03\x04\x05\x06\x07"
 			  "\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f",
-		.plaपूर्णांकext = "\x00\x01\x02\x03\x04\x05\x06\x07"
+		.plaintext = "\x00\x01\x02\x03\x04\x05\x06\x07"
 			     "\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f"
 			     "\x10\x11\x12\x13\x14\x15\x16\x17"
 			     "\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f",
@@ -6188,10 +6187,10 @@
 			  "\x68\x07\x73\x4b\xd5\x28\x3f\xd4",
 		.psize	= 32,
 		.ksize	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x00\x01\x02\x03\x04\x05\x06\x07"
 			  "\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f",
-		.plaपूर्णांकext = "\x00\x01\x02\x03\x04\x05\x06\x07"
+		.plaintext = "\x00\x01\x02\x03\x04\x05\x06\x07"
 			     "\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f"
 			     "\x10\x11\x12\x13\x14\x15\x16\x17"
 			     "\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f"
@@ -6200,23 +6199,23 @@
 			  "\x06\x77\xd5\x48\x1f\xb6\xb4\xd8",
 		.psize	= 34,
 		.ksize	= 16,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल स्थिर अक्षर vmac64_string1[144] = अणु
+static const char vmac64_string1[144] = {
 	'\0',     '\0',   '\0',   '\0',   '\0',   '\0',   '\0',   '\0',
 	'\0',     '\0',   '\0',   '\0',   '\0',   '\0',   '\0',   '\0',
 	'\x01', '\x01', '\x01', '\x01', '\x02', '\x03', '\x02', '\x02',
 	'\x02', '\x04', '\x01', '\x07', '\x04', '\x01', '\x04', '\x03',
-पूर्ण;
+};
 
-अटल स्थिर अक्षर vmac64_string2[144] = अणु
+static const char vmac64_string2[144] = {
 	'\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
 	'\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
 	 'a',  'b',  'c',
-पूर्ण;
+};
 
-अटल स्थिर अक्षर vmac64_string3[144] = अणु
+static const char vmac64_string3[144] = {
 	'\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
 	'\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
 	 'a',  'b',  'c',  'a',  'b',  'c',  'a',  'b',
@@ -6225,54 +6224,54 @@
 	 'a',  'b',  'c',  'a',  'b',  'c',  'a',  'b',
 	 'c',  'a',  'b',  'c',  'a',  'b',  'c',  'a',
 	 'b',  'c',  'a',  'b',  'c',  'a',  'b',  'c',
-पूर्ण;
+};
 
-अटल स्थिर अक्षर vmac64_string4[33] = अणु
+static const char vmac64_string4[33] = {
 	'\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
 	'\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
 	'b',   'c',  'e',  'f',  'i',  'j',  'l',  'm',
 	'o',   'p',  'r',  's',  't',  'u',  'w',  'x',
 	'z',
-पूर्ण;
+};
 
-अटल स्थिर अक्षर vmac64_string5[143] = अणु
+static const char vmac64_string5[143] = {
 	'\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
 	'\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
 	 'r',  'm',  'b',  't',  'c',  'o',  'l',  'k',
 	 ']',  '%',  '9',  '2',  '7',  '!',  'A',
-पूर्ण;
+};
 
-अटल स्थिर अक्षर vmac64_string6[145] = अणु
+static const char vmac64_string6[145] = {
 	'\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
 	'\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
 	 'p',  't',  '*',  '7',  'l',  'i',  '!',  '#',
 	 'w',  '0',  'z',  '/',  '4',  'A',  'n',
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा hash_testvec vmac64_aes_tv_ढाँचा[] = अणु
-	अणु /* draft-krovetz-vmac-01 test vector 1 */
+static const struct hash_testvec vmac64_aes_tv_template[] = {
+	{ /* draft-krovetz-vmac-01 test vector 1 */
 		.key	= "abcdefghijklmnop",
 		.ksize	= 16,
-		.plaपूर्णांकext = "\0\0\0\0\0\0\0\0bcdefghi",
+		.plaintext = "\0\0\0\0\0\0\0\0bcdefghi",
 		.psize	= 16,
 		.digest	= "\x25\x76\xbe\x1c\x56\xd8\xb8\x1b",
-	पूर्ण, अणु /* draft-krovetz-vmac-01 test vector 2 */
+	}, { /* draft-krovetz-vmac-01 test vector 2 */
 		.key	= "abcdefghijklmnop",
 		.ksize	= 16,
-		.plaपूर्णांकext = "\0\0\0\0\0\0\0\0bcdefghiabc",
+		.plaintext = "\0\0\0\0\0\0\0\0bcdefghiabc",
 		.psize	= 19,
 		.digest	= "\x2d\x37\x6c\xf5\xb1\x81\x3c\xe5",
-	पूर्ण, अणु /* draft-krovetz-vmac-01 test vector 3 */
+	}, { /* draft-krovetz-vmac-01 test vector 3 */
 		.key	= "abcdefghijklmnop",
 		.ksize	= 16,
-		.plaपूर्णांकext = "\0\0\0\0\0\0\0\0bcdefghi"
+		.plaintext = "\0\0\0\0\0\0\0\0bcdefghi"
 			  "abcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabc",
 		.psize	= 64,
 		.digest	= "\xe8\x42\x1f\x61\xd5\x73\xd2\x98",
-	पूर्ण, अणु /* draft-krovetz-vmac-01 test vector 4 */
+	}, { /* draft-krovetz-vmac-01 test vector 4 */
 		.key	= "abcdefghijklmnop",
 		.ksize	= 16,
-		.plaपूर्णांकext = "\0\0\0\0\0\0\0\0bcdefghi"
+		.plaintext = "\0\0\0\0\0\0\0\0bcdefghi"
 			  "abcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabc"
 			  "abcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabc"
 			  "abcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabc"
@@ -6281,92 +6280,92 @@
 			  "abcabcabcabcabcabcabcabcabcabcabcabcabcabcabc",
 		.psize	= 316,
 		.digest	= "\x44\x92\xdf\x6c\x5c\xac\x1b\xbe",
-	पूर्ण, अणु
+	}, {
 		.key	= "\x00\x01\x02\x03\x04\x05\x06\x07"
 			  "\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f",
 		.ksize	= 16,
-		.plaपूर्णांकext = "\x00\x00\x00\x00\x00\x00\x00\x00"
+		.plaintext = "\x00\x00\x00\x00\x00\x00\x00\x00"
 			  "\x00\x00\x00\x00\x00\x00\x00\x00",
 		.psize	= 16,
 		.digest	= "\x54\x7b\xa4\x77\x35\x80\x58\x07",
-	पूर्ण, अणु
+	}, {
 		.key	= "\x00\x01\x02\x03\x04\x05\x06\x07"
 			  "\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f",
 		.ksize	= 16,
-		.plaपूर्णांकext = vmac64_string1,
-		.psize	= माप(vmac64_string1),
+		.plaintext = vmac64_string1,
+		.psize	= sizeof(vmac64_string1),
 		.digest	= "\xa1\x8c\x68\xae\xd3\x3c\xf5\xce",
-	पूर्ण, अणु
+	}, {
 		.key	= "\x00\x01\x02\x03\x04\x05\x06\x07"
 			  "\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f",
 		.ksize	= 16,
-		.plaपूर्णांकext = vmac64_string2,
-		.psize	= माप(vmac64_string2),
+		.plaintext = vmac64_string2,
+		.psize	= sizeof(vmac64_string2),
 		.digest	= "\x2d\x14\xbd\x81\x73\xb0\x27\xc9",
-	पूर्ण, अणु
+	}, {
 		.key	= "\x00\x01\x02\x03\x04\x05\x06\x07"
 			  "\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f",
 		.ksize	= 16,
-		.plaपूर्णांकext = vmac64_string3,
-		.psize	= माप(vmac64_string3),
+		.plaintext = vmac64_string3,
+		.psize	= sizeof(vmac64_string3),
 		.digest	= "\x19\x0b\x47\x98\x8c\x95\x1a\x8d",
-	पूर्ण, अणु
+	}, {
 		.key	= "abcdefghijklmnop",
 		.ksize	= 16,
-		.plaपूर्णांकext = "\x00\x00\x00\x00\x00\x00\x00\x00"
+		.plaintext = "\x00\x00\x00\x00\x00\x00\x00\x00"
 			  "\x00\x00\x00\x00\x00\x00\x00\x00",
 		.psize	= 16,
 		.digest	= "\x84\x8f\x55\x9e\x26\xa1\x89\x3b",
-	पूर्ण, अणु
+	}, {
 		.key	= "abcdefghijklmnop",
 		.ksize	= 16,
-		.plaपूर्णांकext = vmac64_string1,
-		.psize	= माप(vmac64_string1),
+		.plaintext = vmac64_string1,
+		.psize	= sizeof(vmac64_string1),
 		.digest	= "\xc2\x74\x8d\xf6\xb0\xab\x5e\xab",
-	पूर्ण, अणु
+	}, {
 		.key	= "abcdefghijklmnop",
 		.ksize	= 16,
-		.plaपूर्णांकext = vmac64_string2,
-		.psize	= माप(vmac64_string2),
+		.plaintext = vmac64_string2,
+		.psize	= sizeof(vmac64_string2),
 		.digest	= "\xdf\x09\x7b\x3d\x42\x68\x15\x11",
-	पूर्ण, अणु
+	}, {
 		.key	= "abcdefghijklmnop",
 		.ksize	= 16,
-		.plaपूर्णांकext = vmac64_string3,
-		.psize	= माप(vmac64_string3),
+		.plaintext = vmac64_string3,
+		.psize	= sizeof(vmac64_string3),
 		.digest	= "\xd4\xfa\x8f\xed\xe1\x8f\x32\x8b",
-	पूर्ण, अणु
+	}, {
 		.key	= "a09b5cd!f#07K\x00\x00\x00",
 		.ksize	= 16,
-		.plaपूर्णांकext = vmac64_string4,
-		.psize	= माप(vmac64_string4),
+		.plaintext = vmac64_string4,
+		.psize	= sizeof(vmac64_string4),
 		.digest	= "\x5f\xa1\x4e\x42\xea\x0f\xa5\xab",
-	पूर्ण, अणु
+	}, {
 		.key	= "a09b5cd!f#07K\x00\x00\x00",
 		.ksize	= 16,
-		.plaपूर्णांकext = vmac64_string5,
-		.psize	= माप(vmac64_string5),
+		.plaintext = vmac64_string5,
+		.psize	= sizeof(vmac64_string5),
 		.digest	= "\x60\x67\xe8\x1d\xbc\x98\x31\x25",
-	पूर्ण, अणु
+	}, {
 		.key	= "a09b5cd!f#07K\x00\x00\x00",
 		.ksize	= 16,
-		.plaपूर्णांकext = vmac64_string6,
-		.psize	= माप(vmac64_string6),
+		.plaintext = vmac64_string6,
+		.psize	= sizeof(vmac64_string6),
 		.digest	= "\x41\xeb\x65\x95\x47\x9b\xae\xc4",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
  * SHA384 HMAC test vectors from RFC4231
  */
 
-अटल स्थिर काष्ठा hash_testvec hmac_sha384_tv_ढाँचा[] = अणु
-	अणु
+static const struct hash_testvec hmac_sha384_tv_template[] = {
+	{
 		.key	= "\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b"
 			  "\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b"
 			  "\x0b\x0b\x0b\x0b",
 		.ksize	= 20,
-		.plaपूर्णांकext = "Hi There",
+		.plaintext = "Hi There",
 		.psize	= 8,
 		.digest	= "\xaf\xd0\x39\x44\xd8\x48\x95\x62"
 			  "\x6b\x08\x25\xf4\xab\x46\x90\x7f"
@@ -6374,10 +6373,10 @@
 			  "\x82\xaa\x03\x4c\x7c\xeb\xc5\x9c"
 			  "\xfa\xea\x9e\xa9\x07\x6e\xde\x7f"
 			  "\x4a\xf1\x52\xe8\xb2\xfa\x9c\xb6",
-	पूर्ण, अणु
+	}, {
 		.key	= "Jefe",
 		.ksize	= 4,
-		.plaपूर्णांकext = "what do ya want for nothing?",
+		.plaintext = "what do ya want for nothing?",
 		.psize	= 28,
 		.digest	= "\xaf\x45\xd2\xe3\x76\x48\x40\x31"
 			  "\x61\x7f\x78\xd2\xb5\x8a\x6b\x1b"
@@ -6385,7 +6384,7 @@
 			  "\xe4\x2e\xc3\x73\x63\x22\x44\x5e"
 			  "\x8e\x22\x40\xca\x5e\x69\xe2\xc7"
 			  "\x8b\x32\x39\xec\xfa\xb2\x16\x49",
-	पूर्ण, अणु
+	}, {
 		.key	= "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			  "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			  "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
@@ -6404,7 +6403,7 @@
 			  "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			  "\xaa\xaa\xaa",
 		.ksize	= 131,
-		.plaपूर्णांकext = "Test Using Larger Than Block-Siz"
+		.plaintext = "Test Using Larger Than Block-Siz"
 			   "e Key - Hash Key First",
 		.psize	= 54,
 		.digest	= "\x4e\xce\x08\x44\x85\x81\x3e\x90"
@@ -6413,7 +6412,7 @@
 			  "\x3c\xd1\x1f\x05\x03\x3a\xc4\xc6"
 			  "\x0c\x2e\xf6\xab\x40\x30\xfe\x82"
 			  "\x96\x24\x8d\xf1\x63\xf4\x49\x52",
-	पूर्ण, अणु
+	}, {
 		.key	= "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			  "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			  "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
@@ -6432,7 +6431,7 @@
 			  "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			  "\xaa\xaa\xaa",
 		.ksize	= 131,
-		.plaपूर्णांकext = "This is a test u"
+		.plaintext = "This is a test u"
 			   "sing a larger th"
 			   "an block-size ke"
 			   "y and a larger t"
@@ -6449,20 +6448,20 @@
 			  "\xdc\xce\xbb\x82\x46\x1e\x99\xc5"
 			  "\xa6\x78\xcc\x31\xe7\x99\x17\x6d"
 			  "\x38\x60\xe6\x11\x0c\x46\x52\x3e",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
  * SHA512 HMAC test vectors from RFC4231
  */
 
-अटल स्थिर काष्ठा hash_testvec hmac_sha512_tv_ढाँचा[] = अणु
-	अणु
+static const struct hash_testvec hmac_sha512_tv_template[] = {
+	{
 		.key	= "\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b"
 			  "\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b"
 			  "\x0b\x0b\x0b\x0b",
 		.ksize	= 20,
-		.plaपूर्णांकext = "Hi There",
+		.plaintext = "Hi There",
 		.psize	= 8,
 		.digest	= "\x87\xaa\x7c\xde\xa5\xef\x61\x9d"
 			  "\x4f\xf0\xb4\x24\x1a\x1d\x6c\xb0"
@@ -6472,10 +6471,10 @@
 			  "\x03\x8b\x27\x4e\xae\xa3\xf4\xe4"
 			  "\xbe\x9d\x91\x4e\xeb\x61\xf1\x70"
 			  "\x2e\x69\x6c\x20\x3a\x12\x68\x54",
-	पूर्ण, अणु
+	}, {
 		.key	= "Jefe",
 		.ksize	= 4,
-		.plaपूर्णांकext = "what do ya want for nothing?",
+		.plaintext = "what do ya want for nothing?",
 		.psize	= 28,
 		.digest	= "\x16\x4b\x7a\x7b\xfc\xf8\x19\xe2"
 			  "\xe3\x95\xfb\xe7\x3b\x56\xe0\xa3"
@@ -6485,7 +6484,7 @@
 			  "\x6d\x03\x4f\x65\xf8\xf0\xe6\xfd"
 			  "\xca\xea\xb1\xa3\x4d\x4a\x6b\x4b"
 			  "\x63\x6e\x07\x0a\x38\xbc\xe7\x37",
-	पूर्ण, अणु
+	}, {
 		.key	= "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			  "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			  "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
@@ -6504,7 +6503,7 @@
 			  "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			  "\xaa\xaa\xaa",
 		.ksize	= 131,
-		.plaपूर्णांकext = "Test Using Large"
+		.plaintext = "Test Using Large"
 			   "r Than Block-Siz"
 			   "e Key - Hash Key"
 			   " First",
@@ -6517,7 +6516,7 @@
 			"\xbd\x0f\xd2\x21\x5d\x6a\x1e\x52"
 			"\x95\xe6\x4f\x73\xf6\x3f\x0a\xec"
 			"\x8b\x91\x5a\x98\x5d\x78\x65\x98",
-	पूर्ण, अणु
+	}, {
 		.key	= "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			"\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			"\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
@@ -6536,7 +6535,7 @@
 			"\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			"\xaa\xaa\xaa",
 		.ksize	= 131,
-		.plaपूर्णांकext =
+		.plaintext =
 			  "This is a test u"
 			  "sing a larger th"
 			  "an block-size ke"
@@ -6556,31 +6555,31 @@
 			"\x0d\x5e\xeb\x55\xc3\xe4\xde\x15"
 			"\x13\x46\x76\xfb\x6d\xe0\x44\x60"
 			"\x65\xc9\x74\x40\xfa\x8c\x6a\x58",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा hash_testvec hmac_sha3_224_tv_ढाँचा[] = अणु
-	अणु
+static const struct hash_testvec hmac_sha3_224_tv_template[] = {
+	{
 		.key	= "\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b"
 			  "\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b"
 			  "\x0b\x0b\x0b\x0b",
 		.ksize	= 20,
-		.plaपूर्णांकext = "Hi There",
+		.plaintext = "Hi There",
 		.psize	= 8,
 		.digest	= "\x3b\x16\x54\x6b\xbc\x7b\xe2\x70"
 			  "\x6a\x03\x1d\xca\xfd\x56\x37\x3d"
 			  "\x98\x84\x36\x76\x41\xd8\xc5\x9a"
 			  "\xf3\xc8\x60\xf7",
-	पूर्ण, अणु
+	}, {
 		.key	= "Jefe",
 		.ksize	= 4,
-		.plaपूर्णांकext = "what do ya want for nothing?",
+		.plaintext = "what do ya want for nothing?",
 		.psize	= 28,
 		.digest	= "\x7f\xdb\x8d\xd8\x8b\xd2\xf6\x0d"
 			  "\x1b\x79\x86\x34\xad\x38\x68\x11"
 			  "\xc2\xcf\xc8\x5b\xfa\xf5\xd5\x2b"
 			  "\xba\xce\x5e\x66",
-	पूर्ण, अणु
+	}, {
 		.key	= "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			  "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			  "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
@@ -6599,7 +6598,7 @@
 			  "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			  "\xaa\xaa\xaa",
 		.ksize	= 131,
-		.plaपूर्णांकext = "Test Using Large"
+		.plaintext = "Test Using Large"
 			   "r Than Block-Siz"
 			   "e Key - Hash Key"
 			   " First",
@@ -6608,7 +6607,7 @@
 			  "\x7f\x60\x75\xb3\x13\xd2\x79\xb8"
 			  "\x33\xbc\x8f\x75\x12\x43\x52\xd0"
 			  "\x5f\xb9\x99\x5f",
-	पूर्ण, अणु
+	}, {
 		.key	= "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			  "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			  "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
@@ -6627,7 +6626,7 @@
 			  "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			  "\xaa\xaa\xaa",
 		.ksize	= 131,
-		.plaपूर्णांकext =
+		.plaintext =
 			  "This is a test u"
 			  "sing a larger th"
 			  "an block-size ke"
@@ -6643,31 +6642,31 @@
 			  "\x1e\xb6\x8a\xde\x28\x73\x0b\xbd"
 			  "\x3c\xba\xb6\x92\x9f\x0a\x08\x6b"
 			  "\x29\xcd\x62\xa0",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा hash_testvec hmac_sha3_256_tv_ढाँचा[] = अणु
-	अणु
+static const struct hash_testvec hmac_sha3_256_tv_template[] = {
+	{
 		.key	= "\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b"
 			  "\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b"
 			  "\x0b\x0b\x0b\x0b",
 		.ksize	= 20,
-		.plaपूर्णांकext = "Hi There",
+		.plaintext = "Hi There",
 		.psize	= 8,
 		.digest	= "\xba\x85\x19\x23\x10\xdf\xfa\x96"
 			  "\xe2\xa3\xa4\x0e\x69\x77\x43\x51"
 			  "\x14\x0b\xb7\x18\x5e\x12\x02\xcd"
 			  "\xcc\x91\x75\x89\xf9\x5e\x16\xbb",
-	पूर्ण, अणु
+	}, {
 		.key	= "Jefe",
 		.ksize	= 4,
-		.plaपूर्णांकext = "what do ya want for nothing?",
+		.plaintext = "what do ya want for nothing?",
 		.psize	= 28,
 		.digest	= "\xc7\xd4\x07\x2e\x78\x88\x77\xae"
 			  "\x35\x96\xbb\xb0\xda\x73\xb8\x87"
 			  "\xc9\x17\x1f\x93\x09\x5b\x29\x4a"
 			  "\xe8\x57\xfb\xe2\x64\x5e\x1b\xa5",
-	पूर्ण, अणु
+	}, {
 		.key	= "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			  "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			  "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
@@ -6686,7 +6685,7 @@
 			  "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			  "\xaa\xaa\xaa",
 		.ksize	= 131,
-		.plaपूर्णांकext = "Test Using Large"
+		.plaintext = "Test Using Large"
 			   "r Than Block-Siz"
 			   "e Key - Hash Key"
 			   " First",
@@ -6695,7 +6694,7 @@
 			  "\x35\xf9\x48\x03\x2f\x09\x67\x4a"
 			  "\x58\xc0\xce\x55\x5c\xfc\x1f\x22"
 			  "\x3b\x02\x35\x65\x60\x31\x2c\x3b",
-	पूर्ण, अणु
+	}, {
 		.key	= "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			  "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			  "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
@@ -6714,7 +6713,7 @@
 			  "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			  "\xaa\xaa\xaa",
 		.ksize	= 131,
-		.plaपूर्णांकext =
+		.plaintext =
 			  "This is a test u"
 			  "sing a larger th"
 			  "an block-size ke"
@@ -6730,16 +6729,16 @@
 			  "\x7a\xef\x87\x63\x26\x1e\x49\xad"
 			  "\xb6\xe2\x29\x3e\xc8\xe7\xc6\x1e"
 			  "\x8d\xe6\x17\x01\xfc\x63\xe1\x23",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा hash_testvec hmac_sha3_384_tv_ढाँचा[] = अणु
-	अणु
+static const struct hash_testvec hmac_sha3_384_tv_template[] = {
+	{
 		.key	= "\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b"
 			  "\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b"
 			  "\x0b\x0b\x0b\x0b",
 		.ksize	= 20,
-		.plaपूर्णांकext = "Hi There",
+		.plaintext = "Hi There",
 		.psize	= 8,
 		.digest	= "\x68\xd2\xdc\xf7\xfd\x4d\xdd\x0a"
 			  "\x22\x40\xc8\xa4\x37\x30\x5f\x61"
@@ -6747,10 +6746,10 @@
 			  "\x1b\xc2\x7d\xc1\x0a\x2e\x72\x3a"
 			  "\x20\xd3\x70\xb4\x77\x43\x13\x0e"
 			  "\x26\xac\x7e\x3d\x53\x28\x86\xbd",
-	पूर्ण, अणु
+	}, {
 		.key	= "Jefe",
 		.ksize	= 4,
-		.plaपूर्णांकext = "what do ya want for nothing?",
+		.plaintext = "what do ya want for nothing?",
 		.psize	= 28,
 		.digest	= "\xf1\x10\x1f\x8c\xbf\x97\x66\xfd"
 			  "\x67\x64\xd2\xed\x61\x90\x3f\x21"
@@ -6758,7 +6757,7 @@
 			  "\x3c\xa1\x35\x08\xa9\x32\x43\xce"
 			  "\x48\xc0\x45\xdc\x00\x7f\x26\xa2"
 			  "\x1b\x3f\x5e\x0e\x9d\xf4\xc2\x0a",
-	पूर्ण, अणु
+	}, {
 		.key	= "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			  "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			  "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
@@ -6777,7 +6776,7 @@
 			  "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			  "\xaa\xaa\xaa",
 		.ksize	= 131,
-		.plaपूर्णांकext = "Test Using Large"
+		.plaintext = "Test Using Large"
 			   "r Than Block-Siz"
 			   "e Key - Hash Key"
 			   " First",
@@ -6788,7 +6787,7 @@
 			  "\xd4\x19\xe4\x98\xe0\xe1\xfb\x96"
 			  "\x16\xfd\x66\x91\x38\xd3\x3a\x11"
 			  "\x05\xe0\x7c\x72\xb6\x95\x3b\xcc",
-	पूर्ण, अणु
+	}, {
 		.key	= "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			  "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			  "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
@@ -6807,7 +6806,7 @@
 			  "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			  "\xaa\xaa\xaa",
 		.ksize	= 131,
-		.plaपूर्णांकext =
+		.plaintext =
 			  "This is a test u"
 			  "sing a larger th"
 			  "an block-size ke"
@@ -6825,16 +6824,16 @@
 			  "\x53\x00\x29\xdd\xf5\xcf\x3c\xa5"
 			  "\xa9\x00\xed\xce\x01\xf5\xf6\x1e"
 			  "\x2f\x40\x8c\xdf\x2f\xd3\xe7\xe8",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा hash_testvec hmac_sha3_512_tv_ढाँचा[] = अणु
-	अणु
+static const struct hash_testvec hmac_sha3_512_tv_template[] = {
+	{
 		.key	= "\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b"
 			  "\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b"
 			  "\x0b\x0b\x0b\x0b",
 		.ksize	= 20,
-		.plaपूर्णांकext = "Hi There",
+		.plaintext = "Hi There",
 		.psize	= 8,
 		.digest	= "\xeb\x3f\xbd\x4b\x2e\xaa\xb8\xf5"
 			  "\xc5\x04\xbd\x3a\x41\x46\x5a\xac"
@@ -6844,10 +6843,10 @@
 			  "\x88\xd2\x2b\x6d\xc6\x13\x80\xf2"
 			  "\x3a\x66\x8f\xd3\x88\x8b\xb8\x05"
 			  "\x37\xc0\xa0\xb8\x64\x07\x68\x9e",
-	पूर्ण, अणु
+	}, {
 		.key	= "Jefe",
 		.ksize	= 4,
-		.plaपूर्णांकext = "what do ya want for nothing?",
+		.plaintext = "what do ya want for nothing?",
 		.psize	= 28,
 		.digest	= "\x5a\x4b\xfe\xab\x61\x66\x42\x7c"
 			  "\x7a\x36\x47\xb7\x47\x29\x2b\x83"
@@ -6857,7 +6856,7 @@
 			  "\xee\x7a\x0c\x31\xd0\x22\xa9\x5e"
 			  "\x1f\xc9\x2b\xa9\xd7\x7d\xf8\x83"
 			  "\x96\x02\x75\xbe\xb4\xe6\x20\x24",
-	पूर्ण, अणु
+	}, {
 		.key	= "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			  "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			  "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
@@ -6876,7 +6875,7 @@
 			  "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			  "\xaa\xaa\xaa",
 		.ksize	= 131,
-		.plaपूर्णांकext = "Test Using Large"
+		.plaintext = "Test Using Large"
 			   "r Than Block-Siz"
 			   "e Key - Hash Key"
 			   " First",
@@ -6889,7 +6888,7 @@
 			  "\x27\xe8\x3f\xde\x9e\x11\xf6\x34"
 			  "\x0b\x11\xd9\x91\xb1\xb9\x1b\xf2"
 			  "\xee\xe7\xfc\x87\x24\x26\xc3\xa4",
-	पूर्ण, अणु
+	}, {
 		.key	= "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			  "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			  "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
@@ -6908,7 +6907,7 @@
 			  "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
 			  "\xaa\xaa\xaa",
 		.ksize	= 131,
-		.plaपूर्णांकext =
+		.plaintext =
 			  "This is a test u"
 			  "sing a larger th"
 			  "an block-size ke"
@@ -6928,16 +6927,16 @@
 			  "\x52\xfb\x38\x11\xb5\x77\xb1\xb1"
 			  "\xd1\xb9\x78\x9f\x97\xae\x5b\x83"
 			  "\xc6\xf4\x4d\xfc\xf1\xd6\x7e\xba",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
  * Poly1305 test vectors from RFC7539 A.3.
  */
 
-अटल स्थिर काष्ठा hash_testvec poly1305_tv_ढाँचा[] = अणु
-	अणु /* Test Vector #1 */
-		.plaपूर्णांकext	= "\x00\x00\x00\x00\x00\x00\x00\x00"
+static const struct hash_testvec poly1305_tv_template[] = {
+	{ /* Test Vector #1 */
+		.plaintext	= "\x00\x00\x00\x00\x00\x00\x00\x00"
 				  "\x00\x00\x00\x00\x00\x00\x00\x00"
 				  "\x00\x00\x00\x00\x00\x00\x00\x00"
 				  "\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -6952,8 +6951,8 @@
 		.psize		= 96,
 		.digest		= "\x00\x00\x00\x00\x00\x00\x00\x00"
 				  "\x00\x00\x00\x00\x00\x00\x00\x00",
-	पूर्ण, अणु /* Test Vector #2 */
-		.plaपूर्णांकext	= "\x00\x00\x00\x00\x00\x00\x00\x00"
+	}, { /* Test Vector #2 */
+		.plaintext	= "\x00\x00\x00\x00\x00\x00\x00\x00"
 				  "\x00\x00\x00\x00\x00\x00\x00\x00"
 				  "\x36\xe5\xf6\xb5\xc5\xe0\x60\x70"
 				  "\xf0\xef\xca\x96\x22\x7a\x86\x3e"
@@ -7007,8 +7006,8 @@
 		.psize		= 407,
 		.digest		= "\x36\xe5\xf6\xb5\xc5\xe0\x60\x70"
 				  "\xf0\xef\xca\x96\x22\x7a\x86\x3e",
-	पूर्ण, अणु /* Test Vector #3 */
-		.plaपूर्णांकext	= "\x36\xe5\xf6\xb5\xc5\xe0\x60\x70"
+	}, { /* Test Vector #3 */
+		.plaintext	= "\x36\xe5\xf6\xb5\xc5\xe0\x60\x70"
 				  "\xf0\xef\xca\x96\x22\x7a\x86\x3e"
 				  "\x00\x00\x00\x00\x00\x00\x00\x00"
 				  "\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -7062,8 +7061,8 @@
 		.psize		= 407,
 		.digest		= "\xf3\x47\x7e\x7c\xd9\x54\x17\xaf"
 				  "\x89\xa6\xb8\x79\x4c\x31\x0c\xf0",
-	पूर्ण, अणु /* Test Vector #4 */
-		.plaपूर्णांकext	= "\x1c\x92\x40\xa5\xeb\x55\xd3\x8a"
+	}, { /* Test Vector #4 */
+		.plaintext	= "\x1c\x92\x40\xa5\xeb\x55\xd3\x8a"
 				  "\xf3\x33\x88\x86\x04\xf6\xb5\xf0"
 				  "\x47\x39\x17\xc1\x40\x2b\x80\x09"
 				  "\x9d\xca\x5c\xbc\x20\x70\x75\xc0"
@@ -7086,8 +7085,8 @@
 		.psize		= 159,
 		.digest		= "\x45\x41\x66\x9a\x7e\xaa\xee\x61"
 				  "\xe7\x08\xdc\x7c\xbc\xc5\xeb\x62",
-	पूर्ण, अणु /* Test Vector #5 */
-		.plaपूर्णांकext	= "\x02\x00\x00\x00\x00\x00\x00\x00"
+	}, { /* Test Vector #5 */
+		.plaintext	= "\x02\x00\x00\x00\x00\x00\x00\x00"
 				  "\x00\x00\x00\x00\x00\x00\x00\x00"
 				  "\x00\x00\x00\x00\x00\x00\x00\x00"
 				  "\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -7096,8 +7095,8 @@
 		.psize		= 48,
 		.digest		= "\x03\x00\x00\x00\x00\x00\x00\x00"
 				  "\x00\x00\x00\x00\x00\x00\x00\x00",
-	पूर्ण, अणु /* Test Vector #6 */
-		.plaपूर्णांकext	= "\x02\x00\x00\x00\x00\x00\x00\x00"
+	}, { /* Test Vector #6 */
+		.plaintext	= "\x02\x00\x00\x00\x00\x00\x00\x00"
 				  "\x00\x00\x00\x00\x00\x00\x00\x00"
 				  "\xff\xff\xff\xff\xff\xff\xff\xff"
 				  "\xff\xff\xff\xff\xff\xff\xff\xff"
@@ -7106,8 +7105,8 @@
 		.psize		= 48,
 		.digest		= "\x03\x00\x00\x00\x00\x00\x00\x00"
 				  "\x00\x00\x00\x00\x00\x00\x00\x00",
-	पूर्ण, अणु /* Test Vector #7 */
-		.plaपूर्णांकext	= "\x01\x00\x00\x00\x00\x00\x00\x00"
+	}, { /* Test Vector #7 */
+		.plaintext	= "\x01\x00\x00\x00\x00\x00\x00\x00"
 				  "\x00\x00\x00\x00\x00\x00\x00\x00"
 				  "\x00\x00\x00\x00\x00\x00\x00\x00"
 				  "\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -7120,8 +7119,8 @@
 		.psize		= 80,
 		.digest		= "\x05\x00\x00\x00\x00\x00\x00\x00"
 				  "\x00\x00\x00\x00\x00\x00\x00\x00",
-	पूर्ण, अणु /* Test Vector #8 */
-		.plaपूर्णांकext	= "\x01\x00\x00\x00\x00\x00\x00\x00"
+	}, { /* Test Vector #8 */
+		.plaintext	= "\x01\x00\x00\x00\x00\x00\x00\x00"
 				  "\x00\x00\x00\x00\x00\x00\x00\x00"
 				  "\x00\x00\x00\x00\x00\x00\x00\x00"
 				  "\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -7134,8 +7133,8 @@
 		.psize		= 80,
 		.digest		= "\x00\x00\x00\x00\x00\x00\x00\x00"
 				  "\x00\x00\x00\x00\x00\x00\x00\x00",
-	पूर्ण, अणु /* Test Vector #9 */
-		.plaपूर्णांकext	= "\x02\x00\x00\x00\x00\x00\x00\x00"
+	}, { /* Test Vector #9 */
+		.plaintext	= "\x02\x00\x00\x00\x00\x00\x00\x00"
 				  "\x00\x00\x00\x00\x00\x00\x00\x00"
 				  "\x00\x00\x00\x00\x00\x00\x00\x00"
 				  "\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -7144,8 +7143,8 @@
 		.psize		= 48,
 		.digest		= "\xfa\xff\xff\xff\xff\xff\xff\xff"
 				  "\xff\xff\xff\xff\xff\xff\xff\xff",
-	पूर्ण, अणु /* Test Vector #10 */
-		.plaपूर्णांकext	= "\x01\x00\x00\x00\x00\x00\x00\x00"
+	}, { /* Test Vector #10 */
+		.plaintext	= "\x01\x00\x00\x00\x00\x00\x00\x00"
 				  "\x04\x00\x00\x00\x00\x00\x00\x00"
 				  "\x00\x00\x00\x00\x00\x00\x00\x00"
 				  "\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -7160,8 +7159,8 @@
 		.psize		= 96,
 		.digest		= "\x14\x00\x00\x00\x00\x00\x00\x00"
 				  "\x55\x00\x00\x00\x00\x00\x00\x00",
-	पूर्ण, अणु /* Test Vector #11 */
-		.plaपूर्णांकext	= "\x01\x00\x00\x00\x00\x00\x00\x00"
+	}, { /* Test Vector #11 */
+		.plaintext	= "\x01\x00\x00\x00\x00\x00\x00\x00"
 				  "\x04\x00\x00\x00\x00\x00\x00\x00"
 				  "\x00\x00\x00\x00\x00\x00\x00\x00"
 				  "\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -7174,8 +7173,8 @@
 		.psize		= 80,
 		.digest		= "\x13\x00\x00\x00\x00\x00\x00\x00"
 				  "\x00\x00\x00\x00\x00\x00\x00\x00",
-	पूर्ण, अणु /* Regression test क्रम overflow in AVX2 implementation */
-		.plaपूर्णांकext	= "\xff\xff\xff\xff\xff\xff\xff\xff"
+	}, { /* Regression test for overflow in AVX2 implementation */
+		.plaintext	= "\xff\xff\xff\xff\xff\xff\xff\xff"
 				  "\xff\xff\xff\xff\xff\xff\xff\xff"
 				  "\xff\xff\xff\xff\xff\xff\xff\xff"
 				  "\xff\xff\xff\xff\xff\xff\xff\xff"
@@ -7216,12 +7215,12 @@
 		.psize		= 300,
 		.digest		= "\xfb\x5e\x96\xd8\x61\xd5\xc7\xc8"
 				  "\x78\xe5\x87\xcc\x2d\x5a\x22\xe1",
-	पूर्ण
-पूर्ण;
+	}
+};
 
 /* NHPoly1305 test vectors from https://github.com/google/adiantum */
-अटल स्थिर काष्ठा hash_testvec nhpoly1305_tv_ढाँचा[] = अणु
-	अणु
+static const struct hash_testvec nhpoly1305_tv_template[] = {
+	{
 		.key	= "\xd2\x5d\x4c\xdd\x8d\x2b\x7f\x7a"
 			  "\xd9\xbe\x71\xec\xd1\x83\x52\xe3"
 			  "\xe1\xad\xd7\x5c\x0a\x75\x9d\xec"
@@ -7359,11 +7358,11 @@
 			  "\x4c\x28\xd4\xcd\xac\xe2\xde\xf9"
 			  "\xeb\x5c\xeb\x61\x60\x5a\xe5\x28",
 		.ksize	= 1088,
-		.plaपूर्णांकext	= "",
+		.plaintext	= "",
 		.psize	= 0,
 		.digest	= "\x00\x00\x00\x00\x00\x00\x00\x00"
 			  "\x00\x00\x00\x00\x00\x00\x00\x00",
-	पूर्ण, अणु
+	}, {
 		.key	= "\x29\x21\x43\xcb\xcb\x13\x07\xde"
 			  "\xbf\x48\xdf\x8a\x7f\xa2\x84\xde"
 			  "\x72\x23\x9d\xf5\xf0\x07\xf2\x4c"
@@ -7501,12 +7500,12 @@
 			  "\xbd\x96\x59\xb3\x8b\x32\x7a\x92"
 			  "\x9f\xd8\x25\x2b\xdf\xc0\x4c\xda",
 		.ksize	= 1088,
-		.plaपूर्णांकext	= "\xbc\xda\x81\xa8\x78\x79\x1c\xbf"
+		.plaintext	= "\xbc\xda\x81\xa8\x78\x79\x1c\xbf"
 			  "\x77\x53\xba\x4c\x30\x5b\xb8\x33",
 		.psize	= 16,
 		.digest	= "\x04\xbf\x7f\x6a\xce\x72\xea\x6a"
 			  "\x79\xdb\xb0\xc9\x60\xf6\x12\xcc",
-	पूर्ण, अणु
+	}, {
 		.key	= "\x2e\x77\x1e\x2c\x63\x76\x34\x3f"
 			  "\x71\x08\x4f\x5a\xe3\x3d\x74\x56"
 			  "\xc7\x98\x46\x52\xe5\x8a\xba\x0d"
@@ -7644,13 +7643,13 @@
 			  "\x8c\x23\x8e\xd9\xbb\x92\xfa\x82"
 			  "\xaa\x0f\xb5\xf8\x78\x60\x11\xf0",
 		.ksize	= 1088,
-		.plaपूर्णांकext	= "\x0b\xb2\x31\x2d\xad\xfe\xce\xf9"
+		.plaintext	= "\x0b\xb2\x31\x2d\xad\xfe\xce\xf9"
 			  "\xec\x5d\x3d\x64\x5f\x3f\x75\x43"
 			  "\x05\x5b\x97",
 		.psize	= 19,
 		.digest	= "\x5f\x02\xae\x65\x6c\x13\x21\x67"
 			  "\x77\x9e\xc4\x43\x58\x68\xde\x8f",
-	पूर्ण, अणु
+	}, {
 		.key	= "\x65\x4d\xe3\xf8\xd2\x4c\xac\x28"
 			  "\x68\xf5\xb3\x81\x71\x4b\xa1\xfa"
 			  "\x04\x0e\xd3\x81\x36\xbe\x0c\x81"
@@ -7788,7 +7787,7 @@
 			  "\xb8\x23\x87\x4a\x99\x27\x20\x87"
 			  "\x62\x44\x0a\x4a\xce\x78\x47\x22",
 		.ksize	= 1088,
-		.plaपूर्णांकext	= "\x8e\xb0\x4c\xde\x9c\x4a\x04\x5a"
+		.plaintext	= "\x8e\xb0\x4c\xde\x9c\x4a\x04\x5a"
 			  "\xf6\xa9\x7f\x45\x25\xa5\x7b\x3a"
 			  "\xbc\x4d\x73\x39\x81\xb5\xbd\x3d"
 			  "\x21\x6f\xd7\x37\x50\x3c\x7b\x28"
@@ -7919,7 +7918,7 @@
 		.psize	= 1024,
 		.digest	= "\x64\x3a\xbc\xc3\x3f\x74\x40\x51"
 			  "\x6e\x56\x01\x1a\x51\xec\x36\xde",
-	पूर्ण, अणु
+	}, {
 		.key	= "\x1b\x82\x2e\x1b\x17\x23\xb9\x6d"
 			  "\xdc\x9c\xda\x99\x07\xe3\x5f\xd8"
 			  "\xd2\xf8\x43\x80\x8d\x86\x7d\x80"
@@ -8057,7 +8056,7 @@
 			  "\x55\x44\x38\x9a\xe0\x9f\xe8\x29"
 			  "\x6f\x15\xf8\x4e\xa6\xec\xa0\x60",
 		.ksize	= 1088,
-		.plaपूर्णांकext	= "\x15\x68\x9e\x2f\xad\x15\x52\xdf"
+		.plaintext	= "\x15\x68\x9e\x2f\xad\x15\x52\xdf"
 			  "\xf0\x42\x62\x24\x2a\x2d\xea\xbf"
 			  "\xc7\xf3\xb4\x1a\xf5\xed\xb2\x08"
 			  "\x15\x60\x1c\x00\x77\xbf\x0b\x0e"
@@ -8190,7 +8189,7 @@
 		.psize	= 1040,
 		.digest	= "\xb5\xb9\x08\xb3\x24\x3e\x03\xf0"
 			  "\xd6\x0b\x57\xbc\x0a\x6d\x89\x59",
-	पूर्ण, अणु
+	}, {
 		.key	= "\xf6\x34\x42\x71\x35\x52\x8b\x58"
 			  "\x02\x3a\x8e\x4a\x8d\x41\x13\xe9"
 			  "\x7f\xba\xb9\x55\x9d\x73\x4d\xf8"
@@ -8328,7 +8327,7 @@
 			  "\x1b\xfa\xb4\x34\xb8\xfc\x3e\xc8"
 			  "\x5d\x90\x71\x6d\x7a\x79\xef\x06",
 		.ksize	= 1088,
-		.plaपूर्णांकext	= "\xaa\x5d\x54\xcb\xea\x1e\x46\x0f"
+		.plaintext	= "\xaa\x5d\x54\xcb\xea\x1e\x46\x0f"
 			  "\x45\x87\x70\x51\x8a\x66\x7a\x33"
 			  "\xb4\x18\xff\xa9\x82\xf9\x45\x4b"
 			  "\x93\xae\x2e\x7f\xab\x98\xfe\xbf"
@@ -8587,33 +8586,33 @@
 		.psize	= 2048,
 		.digest	= "\x37\x90\x92\xc2\xeb\x01\x87\xd9"
 			  "\x95\xc7\x91\xc3\x17\x8b\x38\x52",
-	पूर्ण
-पूर्ण;
+	}
+};
 
 
 /*
  * DES test vectors.
  */
-अटल स्थिर काष्ठा cipher_testvec des_tv_ढाँचा[] = अणु
-	अणु /* From Applied Cryptography */
+static const struct cipher_testvec des_tv_template[] = {
+	{ /* From Applied Cryptography */
 		.key	= "\x01\x23\x45\x67\x89\xab\xcd\xef",
 		.klen	= 8,
 		.ptext	= "\x01\x23\x45\x67\x89\xab\xcd\xe7",
 		.ctext	= "\xc9\x57\x44\x25\x6a\x5e\xd3\x1d",
 		.len	= 8,
-	पूर्ण, अणु /* Same key, dअगरferent plaपूर्णांकext block */
+	}, { /* Same key, different plaintext block */
 		.key	= "\x01\x23\x45\x67\x89\xab\xcd\xef",
 		.klen	= 8,
 		.ptext	= "\x22\x33\x44\x55\x66\x77\x88\x99",
 		.ctext	= "\xf7\x9c\x89\x2a\x33\x8f\x4a\x8b",
 		.len	= 8,
-	पूर्ण, अणु /* Sbox test from NBS */
+	}, { /* Sbox test from NBS */
 		.key	= "\x7c\xa1\x10\x45\x4a\x1a\x6e\x57",
 		.klen	= 8,
 		.ptext	= "\x01\xa1\xd6\xd0\x39\x77\x67\x42",
 		.ctext	= "\x69\x0f\x5b\x0d\x9a\x26\x93\x9b",
 		.len	= 8,
-	पूर्ण, अणु /* Three blocks */
+	}, { /* Three blocks */
 		.key	= "\x01\x23\x45\x67\x89\xab\xcd\xef",
 		.klen	= 8,
 		.ptext	= "\x01\x23\x45\x67\x89\xab\xcd\xe7"
@@ -8623,7 +8622,7 @@
 			  "\xf7\x9c\x89\x2a\x33\x8f\x4a\x8b"
 			  "\xb4\x99\x26\xf7\x1f\xe1\xd4\x90",
 		.len	= 24,
-	पूर्ण, अणु /* Weak key */
+	}, { /* Weak key */
 		.setkey_error = -EINVAL,
 		.wk	= 1,
 		.key	= "\x01\x01\x01\x01\x01\x01\x01\x01",
@@ -8631,7 +8630,7 @@
 		.ptext	= "\x01\x23\x45\x67\x89\xab\xcd\xe7",
 		.ctext	= "\xc9\x57\x44\x25\x6a\x5e\xd3\x1d",
 		.len	= 8,
-	पूर्ण, अणु /* Two blocks -- क्रम testing encryption across pages */
+	}, { /* Two blocks -- for testing encryption across pages */
 		.key	= "\x01\x23\x45\x67\x89\xab\xcd\xef",
 		.klen	= 8,
 		.ptext	= "\x01\x23\x45\x67\x89\xab\xcd\xe7"
@@ -8639,7 +8638,7 @@
 		.ctext	= "\xc9\x57\x44\x25\x6a\x5e\xd3\x1d"
 			  "\xf7\x9c\x89\x2a\x33\x8f\x4a\x8b",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x01\x23\x45\x67\x89\xab\xcd\xef",
 		.klen	= 8,
 		.ptext	= "\x01\x23\x45\x67\x89\xab\xcd\xe7"
@@ -8647,7 +8646,7 @@
 		.ctext	= "\xc9\x57\x44\x25\x6a\x5e\xd3\x1d"
 			  "\x69\x0f\x5b\x0d\x9a\x26\x93\x9b",
 		.len	= 16,
-	पूर्ण, अणु /* Four blocks -- क्रम testing encryption with chunking */
+	}, { /* Four blocks -- for testing encryption with chunking */
 		.key	= "\x01\x23\x45\x67\x89\xab\xcd\xef",
 		.klen	= 8,
 		.ptext	= "\x01\x23\x45\x67\x89\xab\xcd\xe7"
@@ -8659,7 +8658,7 @@
 			  "\xb4\x99\x26\xf7\x1f\xe1\xd4\x90"
 			  "\xf7\x9c\x89\x2a\x33\x8f\x4a\x8b",
 		.len	= 32,
-	पूर्ण, अणु /* Generated with Crypto++ */
+	}, { /* Generated with Crypto++ */
 		.key	= "\xC9\x83\xA6\xC9\xEC\x0F\x32\x55",
 		.klen	= 8,
 		.ptext	= "\x50\xB9\x22\xAE\x17\x80\x0C\x75"
@@ -8725,11 +8724,11 @@
 			  "\xE1\x58\x39\x09\xB4\x8B\x40\xAC"
 			  "\x5F\x62\xC7\x72\xD9\xFC\xCB\x9A",
 		.len	= 248,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा cipher_testvec des_cbc_tv_ढाँचा[] = अणु
-	अणु /* From OpenSSL */
+static const struct cipher_testvec des_cbc_tv_template[] = {
+	{ /* From OpenSSL */
 		.key	= "\x01\x23\x45\x67\x89\xab\xcd\xef",
 		.klen	= 8,
 		.iv	= "\xfe\xdc\xba\x98\x76\x54\x32\x10",
@@ -8741,7 +8740,7 @@
 			  "\xac\xd8\xae\xfd\xdf\xd8\xa1\xeb"
 			  "\x46\x8e\x91\x15\x78\x88\xba\x68",
 		.len	= 24,
-	पूर्ण, अणु /* FIPS Pub 81 */
+	}, { /* FIPS Pub 81 */
 		.key	= "\x01\x23\x45\x67\x89\xab\xcd\xef",
 		.klen	= 8,
 		.iv	= "\x12\x34\x56\x78\x90\xab\xcd\xef",
@@ -8749,7 +8748,7 @@
 		.ptext	= "\x4e\x6f\x77\x20\x69\x73\x20\x74",
 		.ctext	= "\xe5\xc7\xcd\xde\x87\x2b\xf2\x7c",
 		.len	= 8,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x01\x23\x45\x67\x89\xab\xcd\xef",
 		.klen	= 8,
 		.iv	= "\xe5\xc7\xcd\xde\x87\x2b\xf2\x7c",
@@ -8757,7 +8756,7 @@
 		.ptext	= "\x68\x65\x20\x74\x69\x6d\x65\x20",
 		.ctext	= "\x43\xe9\x34\x00\x8c\x38\x9c\x0f",
 		.len	= 8,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x01\x23\x45\x67\x89\xab\xcd\xef",
 		.klen	= 8,
 		.iv	= "\x43\xe9\x34\x00\x8c\x38\x9c\x0f",
@@ -8765,7 +8764,7 @@
 		.ptext	= "\x66\x6f\x72\x20\x61\x6c\x6c\x20",
 		.ctext	= "\x68\x37\x88\x49\x9a\x7c\x05\xf6",
 		.len	= 8,
-	पूर्ण, अणु /* Generated with Crypto++ */
+	}, { /* Generated with Crypto++ */
 		.key	= "\xC9\x83\xA6\xC9\xEC\x0F\x32\x55",
 		.klen	= 8,
 		.iv	= "\xE7\x82\x1D\xB8\x53\x11\xAC\x47",
@@ -8833,11 +8832,11 @@
 			  "\x82\xA9\xBD\x6A\x31\x91\x39\x11"
 			  "\xC6\x4A\xF3\x55\xC7\x29\x2E\x63",
 		.len	= 248,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा cipher_testvec des_ctr_tv_ढाँचा[] = अणु
-	अणु /* Generated with Crypto++ */
+static const struct cipher_testvec des_ctr_tv_template[] = {
+	{ /* Generated with Crypto++ */
 		.key	= "\xC9\x83\xA6\xC9\xEC\x0F\x32\x55",
 		.klen	= 8,
 		.iv	= "\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFD",
@@ -8905,7 +8904,7 @@
 			  "\x19\x7F\x99\x19\x53\xCE\x1D\x14"
 			  "\x69\x74\xA1\x06\x46\x0F\x4E\x75",
 		.len	= 248,
-	पूर्ण, अणु /* Generated with Crypto++ */
+	}, { /* Generated with Crypto++ */
 		.key	= "\xC9\x83\xA6\xC9\xEC\x0F\x32\x55",
 		.klen	= 8,
 		.iv	= "\xE7\x82\x1D\xB8\x53\x11\xAC\x47",
@@ -8973,11 +8972,11 @@
 			  "\xA5\xA6\xE7\xB0\x51\x36\x52\x37"
 			  "\x91\x45\x05\x3E\x58\xBF\x32",
 		.len	= 247,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा cipher_testvec des3_ede_tv_ढाँचा[] = अणु
-	अणु /* These are from खोलोssl */
+static const struct cipher_testvec des3_ede_tv_template[] = {
+	{ /* These are from openssl */
 		.key	= "\x01\x23\x45\x67\x89\xab\xcd\xef"
 			  "\x55\x55\x55\x55\x55\x55\x55\x55"
 			  "\xfe\xdc\xba\x98\x76\x54\x32\x10",
@@ -8985,7 +8984,7 @@
 		.ptext	= "\x73\x6f\x6d\x65\x64\x61\x74\x61",
 		.ctext	= "\x18\xd7\x48\xe5\x63\x62\x05\x72",
 		.len	= 8,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x03\x52\x02\x07\x67\x20\x82\x17"
 			  "\x86\x02\x87\x66\x59\x08\x21\x98"
 			  "\x64\x05\x6a\xbd\xfe\xa9\x34\x57",
@@ -8993,7 +8992,7 @@
 		.ptext	= "\x73\x71\x75\x69\x67\x67\x6c\x65",
 		.ctext	= "\xc0\x7d\x2a\x0f\xa5\x66\xfa\x30",
 		.len	= 8,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x10\x46\x10\x34\x89\x98\x80\x20"
 			  "\x91\x07\xd0\x15\x89\x19\x01\x01"
 			  "\x19\x07\x92\x10\x98\x1a\x01\x01",
@@ -9001,7 +9000,7 @@
 		.ptext	= "\x00\x00\x00\x00\x00\x00\x00\x00",
 		.ctext	= "\xe1\xef\x62\xc3\x32\xfe\x82\x5b",
 		.len	= 8,
-	पूर्ण, अणु /* Generated with Crypto++ */
+	}, { /* Generated with Crypto++ */
 		.key	= "\xF3\x9C\xD6\xF3\x9C\xB9\x5A\x67"
 			  "\x00\x5A\x67\x00\x2D\xCE\xEB\x2D"
 			  "\xCE\xEB\xB4\x51\x72\xB4\x51\x72",
@@ -9131,11 +9130,11 @@
 			  "\x93\x03\xD7\x51\x09\xFA\xBE\x68"
 			  "\xD8\x45\xFF\x33\xBA\xBB\x2B\x63",
 		.len	= 496,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा cipher_testvec des3_ede_cbc_tv_ढाँचा[] = अणु
-	अणु /* Generated from खोलोssl */
+static const struct cipher_testvec des3_ede_cbc_tv_template[] = {
+	{ /* Generated from openssl */
 		.key	= "\xE9\xC0\xFF\x2E\x76\x0B\x64\x24"
 			  "\x44\x4D\x99\x5A\x12\xD6\x40\xC0"
 			  "\xEA\xC2\x84\xE8\x14\x95\xDB\xE8",
@@ -9175,7 +9174,7 @@
 			  "\x9d\xde\xa5\x70\xe9\x42\x45\x8a"
 			  "\x6b\xfa\xb1\x91\x13\xb0\xd9\x19",
 		.len	= 128,
-	पूर्ण, अणु /* Generated with Crypto++ */
+	}, { /* Generated with Crypto++ */
 		.key	= "\x9C\xD6\xF3\x9C\xB9\x5A\x67\x00"
 			  "\x5A\x67\x00\x2D\xCE\xEB\x2D\xCE"
 			  "\xEB\xB4\x51\x72\xB4\x51\x72\x1F",
@@ -9308,11 +9307,11 @@
 			  "\x83\x70\xFF\x86\xE6\xAA\x0F\x1F"
 			  "\x95\x63\x73\xA2\x44\xAC\xF8\xA5",
 		.len	= 496,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा cipher_testvec des3_ede_ctr_tv_ढाँचा[] = अणु
-	अणु /* Generated with Crypto++ */
+static const struct cipher_testvec des3_ede_ctr_tv_template[] = {
+	{ /* Generated with Crypto++ */
 		.key	= "\x9C\xD6\xF3\x9C\xB9\x5A\x67\x00"
 			  "\x5A\x67\x00\x2D\xCE\xEB\x2D\xCE"
 			  "\xEB\xB4\x51\x72\xB4\x51\x72\x1F",
@@ -9444,7 +9443,7 @@
 			  "\xFD\x51\xB0\xC6\x2C\x63\x13\x78"
 			  "\x5C\xEE\xFC\xCF\xC4\x70\x00\x34",
 		.len	= 496,
-	पूर्ण, अणु /* Generated with Crypto++ */
+	}, { /* Generated with Crypto++ */
 		.key	= "\x9C\xD6\xF3\x9C\xB9\x5A\x67\x00"
 			  "\x5A\x67\x00\x2D\xCE\xEB\x2D\xCE"
 			  "\xEB\xB4\x51\x72\xB4\x51\x72\x1F",
@@ -9578,39 +9577,39 @@
 			  "\x32\x0F\x05\x2F\xF2\x4C\x95\x3B"
 			  "\xF2\x79\xD9",
 		.len	= 499,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
  * Blowfish test vectors.
  */
-अटल स्थिर काष्ठा cipher_testvec bf_tv_ढाँचा[] = अणु
-	अणु /* DES test vectors from OpenSSL */
+static const struct cipher_testvec bf_tv_template[] = {
+	{ /* DES test vectors from OpenSSL */
 		.key	= "\x00\x00\x00\x00\x00\x00\x00\x00",
 		.klen	= 8,
 		.ptext	= "\x00\x00\x00\x00\x00\x00\x00\x00",
 		.ctext	= "\x4e\xf9\x97\x45\x61\x98\xdd\x78",
 		.len	= 8,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x1f\x1f\x1f\x1f\x0e\x0e\x0e\x0e",
 		.klen	= 8,
 		.ptext	= "\x01\x23\x45\x67\x89\xab\xcd\xef",
 		.ctext	= "\xa7\x90\x79\x51\x08\xea\x3c\xae",
 		.len	= 8,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xf0\xe1\xd2\xc3\xb4\xa5\x96\x87",
 		.klen	= 8,
 		.ptext	= "\xfe\xdc\xba\x98\x76\x54\x32\x10",
 		.ctext	= "\xe8\x7a\x24\x4e\x2c\xc8\x5e\x82",
 		.len	= 8,
-	पूर्ण, अणु /* Vary the keylength... */
+	}, { /* Vary the keylength... */
 		.key	= "\xf0\xe1\xd2\xc3\xb4\xa5\x96\x87"
 			  "\x78\x69\x5a\x4b\x3c\x2d\x1e\x0f",
 		.klen	= 16,
 		.ptext	= "\xfe\xdc\xba\x98\x76\x54\x32\x10",
 		.ctext	= "\x93\x14\x28\x87\xee\x3b\xe1\x5c",
 		.len	= 8,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xf0\xe1\xd2\xc3\xb4\xa5\x96\x87"
 			  "\x78\x69\x5a\x4b\x3c\x2d\x1e\x0f"
 			  "\x00\x11\x22\x33\x44",
@@ -9618,7 +9617,7 @@
 		.ptext	= "\xfe\xdc\xba\x98\x76\x54\x32\x10",
 		.ctext	= "\xe6\xf5\x1e\xd7\x9b\x9d\xb2\x1f",
 		.len	= 8,
-	पूर्ण, अणु /* Generated with bf488 */
+	}, { /* Generated with bf488 */
 		.key	= "\xf0\xe1\xd2\xc3\xb4\xa5\x96\x87"
 			  "\x78\x69\x5a\x4b\x3c\x2d\x1e\x0f"
 			  "\x00\x11\x22\x33\x44\x55\x66\x77"
@@ -9630,7 +9629,7 @@
 		.ptext	= "\xfe\xdc\xba\x98\x76\x54\x32\x10",
 		.ctext	= "\xc0\x45\x04\x01\x2e\x4e\x1f\x53",
 		.len	= 8,
-	पूर्ण, अणु /* Generated with Crypto++ */
+	}, { /* Generated with Crypto++ */
 		.key	= "\x85\x62\x3F\x1C\xF9\xD6\x1C\xF9"
 			  "\xD6\xB3\x90\x6D\x4A\x90\x6D\x4A"
 			  "\x27\x04\xE1\x27\x04\xE1\xBE\x9B"
@@ -9763,11 +9762,11 @@
 			  "\x56\xEB\x36\x77\x3D\xAA\xB8\xF5"
 			  "\xC9\x1A\xFB\x5D\xDE\xBB\x43\xF4",
 		.len	= 504,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा cipher_testvec bf_cbc_tv_ढाँचा[] = अणु
-	अणु /* From OpenSSL */
+static const struct cipher_testvec bf_cbc_tv_template[] = {
+	{ /* From OpenSSL */
 		.key	= "\x01\x23\x45\x67\x89\xab\xcd\xef"
 			  "\xf0\xe1\xd2\xc3\xb4\xa5\x96\x87",
 		.klen	= 16,
@@ -9782,7 +9781,7 @@
 			  "\x58\xde\xb9\xe7\x15\x46\x16\xd9"
 			  "\x59\xf1\x65\x2b\xd5\xff\x92\xcc",
 		.len	= 32,
-	पूर्ण, अणु /* Generated with Crypto++ */
+	}, { /* Generated with Crypto++ */
 		.key	= "\x85\x62\x3F\x1C\xF9\xD6\x1C\xF9"
 			  "\xD6\xB3\x90\x6D\x4A\x90\x6D\x4A"
 			  "\x27\x04\xE1\x27\x04\xE1\xBE\x9B"
@@ -9917,11 +9916,11 @@
 			  "\x93\x9B\xEE\xB5\x97\x41\xD2\xA0"
 			  "\xB4\x98\xD8\x6B\x74\xE7\x65\xF4",
 		.len	= 504,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा cipher_testvec bf_ctr_tv_ढाँचा[] = अणु
-	अणु /* Generated with Crypto++ */
+static const struct cipher_testvec bf_ctr_tv_template[] = {
+	{ /* Generated with Crypto++ */
 		.key	= "\x85\x62\x3F\x1C\xF9\xD6\x1C\xF9"
 			  "\xD6\xB3\x90\x6D\x4A\x90\x6D\x4A"
 			  "\x27\x04\xE1\x27\x04\xE1\xBE\x9B"
@@ -10056,7 +10055,7 @@
 			  "\x32\x44\x96\x1C\xD8\xEB\x95\xD2"
 			  "\xF3\x71\xEF\xEB\x4E\xBB\x4D\x29",
 		.len	= 504,
-	पूर्ण, अणु /* Generated with Crypto++ */
+	}, { /* Generated with Crypto++ */
 		.key	= "\x85\x62\x3F\x1C\xF9\xD6\x1C\xF9"
 			  "\xD6\xB3\x90\x6D\x4A\x90\x6D\x4A"
 			  "\x27\x04\xE1\x27\x04\xE1\xBE\x9B"
@@ -10191,7 +10190,7 @@
 			  "\x32\x44\x96\x1C\xD8\xEB\x95\xD2"
 			  "\xF3\x71\xEF\xEB\x4E\xBB\x4D",
 		.len	= 503,
-	पूर्ण, अणु /* Generated with Crypto++ */
+	}, { /* Generated with Crypto++ */
 		.key	= "\x85\x62\x3F\x1C\xF9\xD6\x1C\xF9"
 			  "\xD6\xB3\x90\x6D\x4A\x90\x6D\x4A"
 			  "\x27\x04\xE1\x27\x04\xE1\xBE\x9B"
@@ -10326,21 +10325,21 @@
 			  "\x16\x4C\x18\x6B\xF2\x69\xA0\x07"
 			  "\xEF\xBE\xEC\x69\xAC\xA8\x63\x9E",
 		.len	= 504,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
  * Twofish test vectors.
  */
-अटल स्थिर काष्ठा cipher_testvec tf_tv_ढाँचा[] = अणु
-	अणु
+static const struct cipher_testvec tf_tv_template[] = {
+	{
 		.key	= zeroed_string,
 		.klen	= 16,
 		.ptext	= zeroed_string,
 		.ctext	= "\x9f\x58\x9f\x5c\xf6\x12\x2c\x32"
 			  "\xb6\xbf\xec\x2f\x2a\xe8\xc3\x5a",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x01\x23\x45\x67\x89\xab\xcd\xef"
 			  "\xfe\xdc\xba\x98\x76\x54\x32\x10"
 			  "\x00\x11\x22\x33\x44\x55\x66\x77",
@@ -10349,7 +10348,7 @@
 		.ctext	= "\xcf\xd1\xd2\xe5\xa9\xbe\x9c\xdf"
 			  "\x50\x1f\x13\xb8\x92\xbd\x22\x48",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x01\x23\x45\x67\x89\xab\xcd\xef"
 			  "\xfe\xdc\xba\x98\x76\x54\x32\x10"
 			  "\x00\x11\x22\x33\x44\x55\x66\x77"
@@ -10359,7 +10358,7 @@
 		.ctext	= "\x37\x52\x7b\xe0\x05\x23\x34\xb8"
 			  "\x9f\x0c\xfc\xca\xe8\x7c\xfa\x20",
 		.len	= 16,
-	पूर्ण, अणु /* Generated with Crypto++ */
+	}, { /* Generated with Crypto++ */
 		.key	= "\x3F\x85\x62\x3F\x1C\xF9\xD6\x1C"
 			  "\xF9\xD6\xB3\x90\x6D\x4A\x90\x6D"
 			  "\x4A\x27\x04\xE1\x27\x04\xE1\xBE"
@@ -10490,11 +10489,11 @@
 			  "\x58\x33\x9B\x78\xC7\x58\x48\x6B"
 			  "\x2C\x75\x64\xC4\xCA\xC1\x7E\xD5",
 		.len	= 496,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा cipher_testvec tf_cbc_tv_ढाँचा[] = अणु
-	अणु /* Generated with Nettle */
+static const struct cipher_testvec tf_cbc_tv_template[] = {
+	{ /* Generated with Nettle */
 		.key	= zeroed_string,
 		.klen	= 16,
 		.iv	= zeroed_string,
@@ -10504,7 +10503,7 @@
 		.ctext	= "\x9f\x58\x9f\x5c\xf6\x12\x2c\x32"
 			  "\xb6\xbf\xec\x2f\x2a\xe8\xc3\x5a",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= zeroed_string,
 		.klen	= 16,
 		.iv	= "\x9f\x58\x9f\x5c\xf6\x12\x2c\x32"
@@ -10515,7 +10514,7 @@
 		.ctext	= "\xd4\x91\xdb\x16\xe7\xb1\xc3\x9e"
 			  "\x86\xcb\x08\x6b\x78\x9f\x54\x19",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= zeroed_string,
 		.klen	= 16,
 		.iv	= "\xd4\x91\xdb\x16\xe7\xb1\xc3\x9e"
@@ -10526,7 +10525,7 @@
 		.ctext	= "\x05\xef\x8c\x61\xa8\x11\x58\x26"
 			  "\x34\xba\x5c\xb7\x10\x6a\xa6\x41",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= zeroed_string,
 		.klen	= 16,
 		.iv	= zeroed_string,
@@ -10540,7 +10539,7 @@
 			  "\x05\xef\x8c\x61\xa8\x11\x58\x26"
 			  "\x34\xba\x5c\xb7\x10\x6a\xa6\x41",
 		.len	= 48,
-	पूर्ण, अणु /* Generated with Crypto++ */
+	}, { /* Generated with Crypto++ */
 		.key	= "\x85\x62\x3F\x1C\xF9\xD6\x1C\xF9"
 			  "\xD6\xB3\x90\x6D\x4A\x90\x6D\x4A"
 			  "\x27\x04\xE1\x27\x04\xE1\xBE\x9B"
@@ -10675,11 +10674,11 @@
 			  "\x30\x70\x56\xA4\x37\xDD\x7C\xC0"
 			  "\x0A\xA3\x30\x10\x26\x25\x41\x2C",
 		.len	= 496,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा cipher_testvec tf_ctr_tv_ढाँचा[] = अणु
-	अणु /* Generated with Crypto++ */
+static const struct cipher_testvec tf_ctr_tv_template[] = {
+	{ /* Generated with Crypto++ */
 		.key	= "\x85\x62\x3F\x1C\xF9\xD6\x1C\xF9"
 			  "\xD6\xB3\x90\x6D\x4A\x90\x6D\x4A"
 			  "\x27\x04\xE1\x27\x04\xE1\xBE\x9B"
@@ -10814,7 +10813,7 @@
 			  "\xB9\x32\xE2\xC1\x82\xAC\xFE\xCC"
 			  "\xC5\xC9\x7F\x9E\xCF\x33\x7A\xDF",
 		.len	= 496,
-	पूर्ण, अणु /* Generated with Crypto++ */
+	}, { /* Generated with Crypto++ */
 		.key	= "\x85\x62\x3F\x1C\xF9\xD6\x1C\xF9"
 			  "\xD6\xB3\x90\x6D\x4A\x90\x6D\x4A"
 			  "\x27\x04\xE1\x27\x04\xE1\xBE\x9B"
@@ -10949,7 +10948,7 @@
 			  "\x94\x63\xA8\x4E\xCF\xD2\x1B\x1B"
 			  "\x22\x18\x6A\xAF\x6E\x3E\xE1\x0D",
 		.len	= 496,
-	पूर्ण, अणु /* Generated with Crypto++ */
+	}, { /* Generated with Crypto++ */
 		.key	= "\x85\x62\x3F\x1C\xF9\xD6\x1C\xF9"
 			  "\xD6\xB3\x90\x6D\x4A\x90\x6D\x4A"
 			  "\x27\x04\xE1\x27\x04\xE1\xBE\x9B"
@@ -11086,12 +11085,12 @@
 			  "\xC5\xC9\x7F\x9E\xCF\x33\x7A\xDF"
 			  "\x6C\x82\x9D",
 		.len	= 499,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा cipher_testvec tf_lrw_tv_ढाँचा[] = अणु
+static const struct cipher_testvec tf_lrw_tv_template[] = {
 	/* Generated from AES-LRW test vectors */
-	अणु
+	{
 		.key	= "\x45\x62\xac\x25\xf8\x28\x17\x6d"
 			  "\x4c\x26\x84\x14\xb5\x68\x01\x85"
 			  "\x25\x8e\x2a\x05\xe7\x3e\x9d\x03"
@@ -11104,7 +11103,7 @@
 		.ctext	= "\xa1\x6c\x50\x69\x26\xa4\xef\x7b"
 			  "\x7c\xc6\x91\xeb\x72\xdd\x9b\xee",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x59\x70\x47\x14\xf5\x57\x47\x8c"
 			  "\xd7\x79\xe8\x0f\x54\x88\x79\x44"
 			  "\x0d\x48\xf0\xb7\xb1\x5a\x53\xea"
@@ -11117,7 +11116,7 @@
 		.ctext	= "\xab\x72\x0a\xad\x3b\x0c\xf0\xc9"
 			  "\x42\x2f\xf1\xae\xf1\x3c\xb1\xbd",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xd8\x2a\x91\x34\xb2\x6a\x56\x50"
 			  "\x30\xfe\x69\xe2\x37\x7f\x98\x47"
 			  "\xcd\xf9\x0b\x16\x0c\x64\x8f\xb6"
@@ -11130,7 +11129,7 @@
 		.ctext	= "\x85\xa7\x56\x67\x08\xfa\x42\xe1"
 			  "\x22\xe6\x82\xfc\xd9\xb4\xd7\xd4",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x0f\x6a\xef\xf8\xd3\xd2\xbb\x15"
 			  "\x25\x83\xf7\x3c\x1f\x01\x28\x74"
 			  "\xca\xc6\xbc\x35\x4d\x4a\x65\x54"
@@ -11144,7 +11143,7 @@
 		.ctext	= "\xd2\xaf\x69\x35\x24\x1d\x0e\x1c"
 			  "\x84\x8b\x05\xe4\xa2\x2f\x16\xf5",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x8a\xd4\xee\x10\x2f\xbd\x81\xff"
 			  "\xf8\x86\xce\xac\x93\xc5\xad\xc6"
 			  "\xa0\x19\x07\xc0\x9d\xf7\xbb\xdd"
@@ -11158,7 +11157,7 @@
 		.ctext	= "\x4a\x23\x56\xd7\xff\x90\xd0\x9a"
 			  "\x0d\x7c\x26\xfc\xf0\xf0\xf6\xe4",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xf8\xd4\x76\xff\xd6\x46\xee\x6c"
 			  "\x23\x84\xcb\x1c\x77\xd6\x19\x5d"
 			  "\xfe\xf1\xa9\xf3\x7b\xbc\x8d\x21"
@@ -11173,7 +11172,7 @@
 		.ctext	= "\x30\xaf\x26\x05\x9d\x5d\x0a\x58"
 			  "\xe2\xe7\xce\x8a\xb2\x56\x6d\x76",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xfb\x76\x15\xb2\x3d\x80\x89\x1d"
 			  "\xd4\x70\x98\x0b\xc7\x95\x84\xc8"
 			  "\xb2\xfb\x64\xce\x60\x97\x87\x8d"
@@ -11188,7 +11187,7 @@
 		.ctext	= "\xdf\xcf\xdc\xd2\xe1\xcf\x86\x75"
 			  "\x17\x66\x5e\x0c\x14\xa1\x3d\x40",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xf8\xd4\x76\xff\xd6\x46\xee\x6c"
 			  "\x23\x84\xcb\x1c\x77\xd6\x19\x5d"
 			  "\xfe\xf1\xa9\xf3\x7b\xbc\x8d\x21"
@@ -11327,12 +11326,12 @@
 			  "\x80\x18\xc4\x6c\x03\xd3\xb7\xba"
 			  "\x11\xd7\xb8\x6e\xea\xe1\x80\x30",
 		.len	= 512,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा cipher_testvec tf_xts_tv_ढाँचा[] = अणु
+static const struct cipher_testvec tf_xts_tv_template[] = {
 	/* Generated from AES-XTS test vectors */
-अणु
+{
 		.key	= "\x00\x00\x00\x00\x00\x00\x00\x00"
 			  "\x00\x00\x00\x00\x00\x00\x00\x00"
 			  "\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -11349,7 +11348,7 @@
 			  "\xa7\x60\xb2\x45\x2e\xf9\x00\x90"
 			  "\x9f\xaa\xfd\x89\x6e\x9d\x4a\xe0",
 		.len	= 32,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x11\x11\x11\x11\x11\x11\x11\x11"
 			  "\x11\x11\x11\x11\x11\x11\x11\x11"
 			  "\x22\x22\x22\x22\x22\x22\x22\x22"
@@ -11366,7 +11365,7 @@
 			  "\x58\x06\xf7\xf8\x00\xa8\xb6\xd5"
 			  "\xc6\x28\x92\xdb\xd8\x34\xa2\xe9",
 		.len	= 32,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xff\xfe\xfd\xfc\xfb\xfa\xf9\xf8"
 			  "\xf7\xf6\xf5\xf4\xf3\xf2\xf1\xf0"
 			  "\x22\x22\x22\x22\x22\x22\x22\x22"
@@ -11383,7 +11382,7 @@
 			  "\x38\xbb\x5b\xe9\xcd\x84\xae\xb2"
 			  "\x7b\x6a\x62\xf4\x8c\xb5\x37\xea",
 		.len	= 32,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x27\x18\x28\x18\x28\x45\x90\x45"
 			  "\x23\x53\x60\x28\x74\x71\x35\x26"
 			  "\x31\x41\x59\x26\x53\x58\x97\x93"
@@ -11520,7 +11519,7 @@
 			  "\xe5\xf4\x6d\x1e\x0e\x18\x7a\xbb"
 			  "\xa6\x8f\xfb\x49\x49\xd8\x7e\x5a",
 		.len	= 512,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x27\x18\x28\x18\x28\x45\x90\x45"
 			  "\x23\x53\x60\x28\x74\x71\x35\x26"
 			  "\x62\x49\x77\x57\x24\x70\x93\x69"
@@ -11661,21 +11660,21 @@
 			  "\xa4\x05\x0b\xb2\xb3\xa8\x30\x97"
 			  "\x37\x30\xe1\x91\x8d\xb3\x2a\xff",
 		.len	= 512,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
- * Serpent test vectors.  These are backwards because Serpent ग_लिखोs
+ * Serpent test vectors.  These are backwards because Serpent writes
  * octet sequences in right-to-left mode.
  */
-अटल स्थिर काष्ठा cipher_testvec serpent_tv_ढाँचा[] = अणु
-	अणु
+static const struct cipher_testvec serpent_tv_template[] = {
+	{
 		.ptext	= "\x00\x01\x02\x03\x04\x05\x06\x07"
 			  "\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f",
 		.ctext	= "\x12\x07\xfc\xce\x9b\xd0\xd6\x47"
 			  "\x6a\xe9\x8f\xbe\xd1\x43\xa0\xe2",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x00\x01\x02\x03\x04\x05\x06\x07"
 			  "\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f",
 		.klen	= 16,
@@ -11684,7 +11683,7 @@
 		.ctext	= "\x4c\x7d\x8a\x32\x80\x72\xa2\x2c"
 			  "\x82\x3e\x4a\x1f\x3a\xcd\xa1\x6d",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x00\x01\x02\x03\x04\x05\x06\x07"
 			  "\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f"
 			  "\x10\x11\x12\x13\x14\x15\x16\x17"
@@ -11695,14 +11694,14 @@
 		.ctext	= "\xde\x26\x9f\xf8\x33\xe4\x32\xb8"
 			  "\x5b\x2e\x88\xd2\x70\x1c\xe7\x5c",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80",
 		.klen	= 16,
 		.ptext	= zeroed_string,
 		.ctext	= "\xdd\xd2\x6b\x98\xa5\xff\xd8\x2c"
 			  "\x05\x34\x5a\x9d\xad\xbf\xaf\x49",
 		.len	= 16,
-	पूर्ण, अणु /* Generated with Crypto++ */
+	}, { /* Generated with Crypto++ */
 		.key	= "\x85\x62\x3F\x1C\xF9\xD6\x1C\xF9"
 			  "\xD6\xB3\x90\x6D\x4A\x90\x6D\x4A"
 			  "\x27\x04\xE1\x27\x04\xE1\xBE\x9B"
@@ -11833,11 +11832,11 @@
 			  "\x75\x55\x9B\xFF\x36\x73\xAB\x7C"
 			  "\xF4\x46\x2E\xEB\xAC\xF3\xD2\xB7",
 		.len	= 496,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा cipher_testvec serpent_cbc_tv_ढाँचा[] = अणु
-	अणु /* Generated with Crypto++ */
+static const struct cipher_testvec serpent_cbc_tv_template[] = {
+	{ /* Generated with Crypto++ */
 		.key	= "\x85\x62\x3F\x1C\xF9\xD6\x1C\xF9"
 			  "\xD6\xB3\x90\x6D\x4A\x90\x6D\x4A"
 			  "\x27\x04\xE1\x27\x04\xE1\xBE\x9B"
@@ -11972,11 +11971,11 @@
 			  "\xFC\x66\xAA\x37\xF2\x37\x39\x6B"
 			  "\xBC\x08\x3A\xA2\x29\xB3\xDF\xD1",
 		.len	= 496,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा cipher_testvec serpent_ctr_tv_ढाँचा[] = अणु
-	अणु /* Generated with Crypto++ */
+static const struct cipher_testvec serpent_ctr_tv_template[] = {
+	{ /* Generated with Crypto++ */
 		.key	= "\x85\x62\x3F\x1C\xF9\xD6\x1C\xF9"
 			  "\xD6\xB3\x90\x6D\x4A\x90\x6D\x4A"
 			  "\x27\x04\xE1\x27\x04\xE1\xBE\x9B"
@@ -12111,7 +12110,7 @@
 			  "\x30\xF3\x9B\x0D\xFA\x57\xE4\x50"
 			  "\x40\x53\x77\x8C\x15\xF8\x8D\x13",
 		.len	= 496,
-	पूर्ण, अणु /* Generated with Crypto++ */
+	}, { /* Generated with Crypto++ */
 		.key	= "\x85\x62\x3F\x1C\xF9\xD6\x1C\xF9"
 			  "\xD6\xB3\x90\x6D\x4A\x90\x6D\x4A"
 			  "\x27\x04\xE1\x27\x04\xE1\xBE\x9B"
@@ -12248,7 +12247,7 @@
 			  "\x40\x53\x77\x8C\x15\xF8\x8D\x13"
 			  "\x38\xE2\xE5",
 		.len	= 499,
-	पूर्ण, अणु /* Generated with Crypto++ */
+	}, { /* Generated with Crypto++ */
 		.key	= "\x85\x62\x3F\x1C\xF9\xD6\x1C\xF9"
 			  "\xD6\xB3\x90\x6D\x4A\x90\x6D\x4A"
 			  "\x27\x04\xE1\x27\x04\xE1\xBE\x9B"
@@ -12383,12 +12382,12 @@
 			  "\x2B\x89\xAC\xB0\xD7\x1E\x47\xB0"
 			  "\x61\xAF\xD4\x63\x6D\xB8\x2D\x20",
 		.len	= 496,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा cipher_testvec serpent_lrw_tv_ढाँचा[] = अणु
+static const struct cipher_testvec serpent_lrw_tv_template[] = {
 	/* Generated from AES-LRW test vectors */
-	अणु
+	{
 		.key	= "\x45\x62\xac\x25\xf8\x28\x17\x6d"
 			  "\x4c\x26\x84\x14\xb5\x68\x01\x85"
 			  "\x25\x8e\x2a\x05\xe7\x3e\x9d\x03"
@@ -12401,7 +12400,7 @@
 		.ctext	= "\x6f\xbf\xd4\xa4\x5d\x71\x16\x79"
 			  "\x63\x9c\xa6\x8e\x40\xbe\x0d\x8a",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x59\x70\x47\x14\xf5\x57\x47\x8c"
 			  "\xd7\x79\xe8\x0f\x54\x88\x79\x44"
 			  "\x0d\x48\xf0\xb7\xb1\x5a\x53\xea"
@@ -12414,7 +12413,7 @@
 		.ctext	= "\xfd\xb2\x66\x98\x80\x96\x55\xad"
 			  "\x08\x94\x54\x9c\x21\x7c\x69\xe3",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xd8\x2a\x91\x34\xb2\x6a\x56\x50"
 			  "\x30\xfe\x69\xe2\x37\x7f\x98\x47"
 			  "\xcd\xf9\x0b\x16\x0c\x64\x8f\xb6"
@@ -12427,7 +12426,7 @@
 		.ctext	= "\x14\x5e\x3d\x70\xc0\x6e\x9c\x34"
 			  "\x5b\x5e\xcf\x0f\xe4\x8c\x21\x5c",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x0f\x6a\xef\xf8\xd3\xd2\xbb\x15"
 			  "\x25\x83\xf7\x3c\x1f\x01\x28\x74"
 			  "\xca\xc6\xbc\x35\x4d\x4a\x65\x54"
@@ -12441,7 +12440,7 @@
 		.ctext	= "\x25\x39\xaa\xa5\xf0\x65\xc8\xdc"
 			  "\x5d\x45\x95\x30\x8f\xff\x2f\x1b",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x8a\xd4\xee\x10\x2f\xbd\x81\xff"
 			  "\xf8\x86\xce\xac\x93\xc5\xad\xc6"
 			  "\xa0\x19\x07\xc0\x9d\xf7\xbb\xdd"
@@ -12455,7 +12454,7 @@
 		.ctext	= "\x0c\x20\x20\x63\xd6\x8b\xfc\x8f"
 			  "\xc0\xe2\x17\xbb\xd2\x59\x6f\x26",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xf8\xd4\x76\xff\xd6\x46\xee\x6c"
 			  "\x23\x84\xcb\x1c\x77\xd6\x19\x5d"
 			  "\xfe\xf1\xa9\xf3\x7b\xbc\x8d\x21"
@@ -12470,7 +12469,7 @@
 		.ctext	= "\xc1\x35\x2e\x53\xf0\x96\x4d\x9c"
 			  "\x2e\x18\xe6\x99\xcd\xd3\x15\x68",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xfb\x76\x15\xb2\x3d\x80\x89\x1d"
 			  "\xd4\x70\x98\x0b\xc7\x95\x84\xc8"
 			  "\xb2\xfb\x64\xce\x60\x97\x87\x8d"
@@ -12485,7 +12484,7 @@
 		.ctext	= "\x86\x0a\xc6\xa9\x1a\x9f\xe7\xe6"
 			  "\x64\x3b\x33\xd6\xd5\x84\xd6\xdf",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xf8\xd4\x76\xff\xd6\x46\xee\x6c"
 			  "\x23\x84\xcb\x1c\x77\xd6\x19\x5d"
 			  "\xfe\xf1\xa9\xf3\x7b\xbc\x8d\x21"
@@ -12624,12 +12623,12 @@
 			  "\x5c\xc6\x84\xfe\x7c\xcb\x26\xfd"
 			  "\xd9\x51\x0f\xd7\x94\x2f\xc5\xa7",
 		.len	= 512,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा cipher_testvec serpent_xts_tv_ढाँचा[] = अणु
+static const struct cipher_testvec serpent_xts_tv_template[] = {
 	/* Generated from AES-XTS test vectors */
-	अणु
+	{
 		.key	= "\x00\x00\x00\x00\x00\x00\x00\x00"
 			  "\x00\x00\x00\x00\x00\x00\x00\x00"
 			  "\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -12646,7 +12645,7 @@
 			  "\x6a\x31\xc5\xf3\x00\xca\xb9\x16"
 			  "\xde\xe2\x77\x66\xf7\xfe\x62\x08",
 		.len	= 32,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x11\x11\x11\x11\x11\x11\x11\x11"
 			  "\x11\x11\x11\x11\x11\x11\x11\x11"
 			  "\x22\x22\x22\x22\x22\x22\x22\x22"
@@ -12663,7 +12662,7 @@
 			  "\xed\x81\xcd\x06\x87\x43\x1a\xbb"
 			  "\x13\x3d\xd6\x1e\x2b\xe1\x77\xbe",
 		.len	= 32,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xff\xfe\xfd\xfc\xfb\xfa\xf9\xf8"
 			  "\xf7\xf6\xf5\xf4\xf3\xf2\xf1\xf0"
 			  "\x22\x22\x22\x22\x22\x22\x22\x22"
@@ -12680,7 +12679,7 @@
 			  "\x0d\x8d\x7a\xe8\x60\x48\xcc\x86"
 			  "\xc1\x68\x45\xaa\x00\xe9\x24\xc5",
 		.len	= 32,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x27\x18\x28\x18\x28\x45\x90\x45"
 			  "\x23\x53\x60\x28\x74\x71\x35\x26"
 			  "\x31\x41\x59\x26\x53\x58\x97\x93"
@@ -12817,7 +12816,7 @@
 			  "\x88\x21\x7c\xb0\xa5\x12\x4c\x3c"
 			  "\xb0\x20\xbd\xda\xdf\xf9\x7c\xdd",
 		.len	= 512,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x27\x18\x28\x18\x28\x45\x90\x45"
 			  "\x23\x53\x60\x28\x74\x71\x35\x26"
 			  "\x62\x49\x77\x57\x24\x70\x93\x69"
@@ -12958,17 +12957,17 @@
 			  "\xaf\x43\x0b\xc5\x20\x41\x92\x20"
 			  "\xd4\xa0\x91\x98\x11\x5f\x4d\xb1",
 		.len	= 512,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
  * SM4 test vectors taken from the "The SM4 Blockcipher Algorithm And Its
  * Modes Of Operations" draft RFC
- * https://datatracker.ietf.org/करोc/draft-ribose-cfrg-sm4
+ * https://datatracker.ietf.org/doc/draft-ribose-cfrg-sm4
  */
 
-अटल स्थिर काष्ठा cipher_testvec sm4_tv_ढाँचा[] = अणु
-	अणु /* GB/T 32907-2016 Example 1. */
+static const struct cipher_testvec sm4_tv_template[] = {
+	{ /* GB/T 32907-2016 Example 1. */
 		.key	= "\x01\x23\x45\x67\x89\xAB\xCD\xEF"
 			  "\xFE\xDC\xBA\x98\x76\x54\x32\x10",
 		.klen	= 16,
@@ -12977,7 +12976,7 @@
 		.ctext	= "\x68\x1E\xDF\x34\xD2\x06\x96\x5E"
 			  "\x86\xB3\xE9\x4F\x53\x6E\x42\x46",
 		.len	= 16,
-	पूर्ण, अणु /* Last 10 iterations of GB/T 32907-2016 Example 2. */
+	}, { /* Last 10 iterations of GB/T 32907-2016 Example 2. */
 		.key    = "\x01\x23\x45\x67\x89\xAB\xCD\xEF"
 			  "\xFE\xDC\xBA\x98\x76\x54\x32\x10",
 		.klen	= 16,
@@ -13022,7 +13021,7 @@
 			  "\x59\x52\x98\xc7\xc6\xfd\x27\x1f"
 			  "\x4\x2\xf8\x4\xc3\x3d\x3f\x66",
 		.len	= 160
-	पूर्ण, अणु /* A.2.1.1 SM4-ECB Example 1 */
+	}, { /* A.2.1.1 SM4-ECB Example 1 */
 		.key	= "\x01\x23\x45\x67\x89\xAB\xCD\xEF"
 			  "\xFE\xDC\xBA\x98\x76\x54\x32\x10",
 		.klen	= 16,
@@ -13035,7 +13034,7 @@
 			  "\x2f\x1d\x30\x5a\x7f\xb1\x7d\xf9"
 			  "\x85\xf8\x1c\x84\x82\x19\x23\x04",
 		.len	= 32,
-	पूर्ण, अणु /* A.2.1.2 SM4-ECB Example 2 */
+	}, { /* A.2.1.2 SM4-ECB Example 2 */
 		.key	= "\xFE\xDC\xBA\x98\x76\x54\x32\x10"
 			  "\x01\x23\x45\x67\x89\xAB\xCD\xEF",
 		.klen	= 16,
@@ -13048,11 +13047,11 @@
 			  "\x12\xDD\x90\xBC\x2D\x20\x06\x92"
 			  "\xB5\x29\xA4\x15\x5A\xC9\xE6\x00",
 		.len	= 32,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल स्थिर काष्ठा cipher_testvec sm4_cbc_tv_ढाँचा[] = अणु
-	अणु /* A.2.2.1 SM4-CBC Example 1 */
+static const struct cipher_testvec sm4_cbc_tv_template[] = {
+	{ /* A.2.2.1 SM4-CBC Example 1 */
 		.key	= "\x01\x23\x45\x67\x89\xAB\xCD\xEF"
 			  "\xFE\xDC\xBA\x98\x76\x54\x32\x10",
 		.klen	= 16,
@@ -13069,7 +13068,7 @@
 			  "\x4C\xB7\x01\x69\x51\x90\x92\x26"
 			  "\x97\x9B\x0D\x15\xDC\x6A\x8F\x6D",
 		.len	= 32,
-	पूर्ण, अणु /* A.2.2.2 SM4-CBC Example 2 */
+	}, { /* A.2.2.2 SM4-CBC Example 2 */
 		.key	= "\xFE\xDC\xBA\x98\x76\x54\x32\x10"
 			  "\x01\x23\x45\x67\x89\xAB\xCD\xEF",
 		.klen	= 16,
@@ -13086,11 +13085,11 @@
 			  "\x91\xf2\xc1\x47\x91\x1a\x41\x44"
 			  "\x66\x5e\x1f\xa1\xd4\x0b\xae\x38",
 		.len	= 32,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल स्थिर काष्ठा cipher_testvec sm4_ctr_tv_ढाँचा[] = अणु
-	अणु /* A.2.5.1 SM4-CTR Example 1 */
+static const struct cipher_testvec sm4_ctr_tv_template[] = {
+	{ /* A.2.5.1 SM4-CTR Example 1 */
 		.key	= "\x01\x23\x45\x67\x89\xAB\xCD\xEF"
 			  "\xFE\xDC\xBA\x98\x76\x54\x32\x10",
 		.klen	= 16,
@@ -13115,7 +13114,7 @@
 			  "\x6e\x02\xfc\xd0\xfa\xa0\xba\xf3"
 			  "\x8b\x29\x33\x85\x1d\x82\x45\x14",
 		.len	= 64,
-	पूर्ण, अणु /* A.2.5.2 SM4-CTR Example 2 */
+	}, { /* A.2.5.2 SM4-CTR Example 2 */
 		.key	= "\xFE\xDC\xBA\x98\x76\x54\x32\x10"
 			  "\x01\x23\x45\x67\x89\xAB\xCD\xEF",
 		.klen	= 16,
@@ -13140,11 +13139,11 @@
 			  "\x8c\xb5\xb8\x00\x91\x7a\x24\x88"
 			  "\x28\x4b\xde\x9e\x16\xea\x29\x06",
 		.len	= 64,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल स्थिर काष्ठा cipher_testvec sm4_ctr_rfc3686_tv_ढाँचा[] = अणु
-	अणु
+static const struct cipher_testvec sm4_ctr_rfc3686_tv_template[] = {
+	{
 		.key	= "\xae\x68\x52\xf8\x12\x10\x67\xcc"
 			  "\x4b\xf7\xa5\x76\x55\x77\xf3\x9e"
 			  "\x00\x00\x00\x30",
@@ -13154,7 +13153,7 @@
 		.ctext	= "\x20\x9b\x77\x31\xd3\x65\xdb\xab"
 			  "\x9e\x48\x74\x7e\xbd\x13\x83\xeb",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x7e\x24\x06\x78\x17\xfa\xe0\xd7"
 			  "\x43\xd6\xce\x1f\x32\x53\x91\x63"
 			  "\x00\x6c\xb6\xdb",
@@ -13169,11 +13168,11 @@
 			  "\x4f\x35\x9f\x1c\x55\x1f\xe0\x27"
 			  "\xe0\xdf\xc5\x43\xbc\xb0\x23\x94",
 		.len	= 32,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल स्थिर काष्ठा cipher_testvec sm4_ofb_tv_ढाँचा[] = अणु
-	अणु /* From: draft-ribose-cfrg-sm4-02, paragraph 12.2.3 */
+static const struct cipher_testvec sm4_ofb_tv_template[] = {
+	{ /* From: draft-ribose-cfrg-sm4-02, paragraph 12.2.3 */
 		.key	= "\x01\x23\x45\x67\x89\xab\xcd\xef"
 			  "\xfe\xdc\xba\x98\x76\x54\x32\x10",
 		.klen	= 16,
@@ -13188,7 +13187,7 @@
 			  "\xf2\x07\x5d\x28\xb5\x23\x5f\x58"
 			  "\xd5\x00\x27\xe4\x17\x7d\x2b\xce",
 		.len	= 32,
-	पूर्ण, अणु /* From: draft-ribose-cfrg-sm4-09, appendix A.2.3, Example 1 */
+	}, { /* From: draft-ribose-cfrg-sm4-09, appendix A.2.3, Example 1 */
 		.key	= "\x01\x23\x45\x67\x89\xab\xcd\xef"
 			  "\xfe\xdc\xba\x98\x76\x54\x32\x10",
 		.klen	= 16,
@@ -13203,7 +13202,7 @@
 			  "\x1d\x01\xac\xa2\x48\x7c\xa5\x82"
 			  "\xcb\xf5\x46\x3e\x66\x98\x53\x9b",
 		.len	= 32,
-	पूर्ण, अणु /* From: draft-ribose-cfrg-sm4-09, appendix A.2.3, Example 2 */
+	}, { /* From: draft-ribose-cfrg-sm4-09, appendix A.2.3, Example 2 */
 		.key	= "\xfe\xdc\xba\x98\x76\x54\x32\x10"
 			  "\x01\x23\x45\x67\x89\xab\xcd\xef",
 		.klen	= 16,
@@ -13218,11 +13217,11 @@
 			  "\x33\xfa\x16\xbd\x5c\xd9\xc8\x56"
 			  "\xca\xca\xa1\xe1\x01\x89\x7a\x97",
 		.len	= 32,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल स्थिर काष्ठा cipher_testvec sm4_cfb_tv_ढाँचा[] = अणु
-	अणु /* From: draft-ribose-cfrg-sm4-02, paragraph 12.2.4 */
+static const struct cipher_testvec sm4_cfb_tv_template[] = {
+	{ /* From: draft-ribose-cfrg-sm4-02, paragraph 12.2.4 */
 		.key	= "\x01\x23\x45\x67\x89\xab\xcd\xef"
 			  "\xfe\xdc\xba\x98\x76\x54\x32\x10",
 		.klen	= 16,
@@ -13237,7 +13236,7 @@
 			  "\x9e\xd2\x58\xa8\x5a\x04\x67\xcc"
 			  "\x92\xaa\xb3\x93\xdd\x97\x89\x95",
 		.len	= 32,
-	पूर्ण, अणु /* From: draft-ribose-cfrg-sm4-09, appendix A.2.4, Example 1 */
+	}, { /* From: draft-ribose-cfrg-sm4-09, appendix A.2.4, Example 1 */
 		.key	= "\x01\x23\x45\x67\x89\xab\xcd\xef"
 			  "\xfe\xdc\xba\x98\x76\x54\x32\x10",
 		.klen	= 16,
@@ -13252,7 +13251,7 @@
 			  "\x69\xd4\xc5\x4e\xd4\x33\xb9\xa0"
 			  "\x34\x60\x09\xbe\xb3\x7b\x2b\x3f",
 		.len	= 32,
-	पूर्ण, अणु /* From: draft-ribose-cfrg-sm4-09, appendix A.2.4, Example 2 */
+	}, { /* From: draft-ribose-cfrg-sm4-09, appendix A.2.4, Example 2 */
 		.key	= "\xfe\xdc\xba\x98\x76\x54\x32\x10"
 			  "\x01\x23\x45\x67\x89\xab\xcd\xef",
 		.klen	= 16,
@@ -13267,12 +13266,12 @@
 			  "\x0d\x9b\x86\xff\x20\xc3\xbf\xe1"
 			  "\x15\xff\xa0\x2c\xa6\x19\x2c\xc5",
 		.len	= 32,
-	पूर्ण
-पूर्ण;
+	}
+};
 
 /* Cast6 test vectors from RFC 2612 */
-अटल स्थिर काष्ठा cipher_testvec cast6_tv_ढाँचा[] = अणु
-	अणु
+static const struct cipher_testvec cast6_tv_template[] = {
+	{
 		.key	= "\x23\x42\xbb\x9e\xfa\x38\x54\x2c"
 			  "\x0a\xf7\x56\x47\xf2\x9f\x61\x5d",
 		.klen	= 16,
@@ -13280,7 +13279,7 @@
 		.ctext	= "\xc8\x42\xa0\x89\x72\xb4\x3d\x20"
 			  "\x83\x6c\x91\xd1\xb7\x53\x0f\x6b",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x23\x42\xbb\x9e\xfa\x38\x54\x2c"
 			  "\xbe\xd0\xac\x83\x94\x0a\xc2\x98"
 			  "\xba\xc7\x7a\x77\x17\x94\x28\x63",
@@ -13289,7 +13288,7 @@
 		.ctext	= "\x1b\x38\x6c\x02\x10\xdc\xad\xcb"
 			  "\xdd\x0e\x41\xaa\x08\xa7\xa7\xe8",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x23\x42\xbb\x9e\xfa\x38\x54\x2c"
 			  "\xbe\xd0\xac\x83\x94\x0a\xc2\x98"
 			  "\x8d\x7c\x47\xce\x26\x49\x08\x46"
@@ -13299,7 +13298,7 @@
 		.ctext	= "\x4f\x6a\x20\x38\x28\x68\x97\xb9"
 			  "\xc9\x87\x01\x36\x55\x33\x17\xfa",
 		.len	= 16,
-	पूर्ण, अणु /* Generated from TF test vectors */
+	}, { /* Generated from TF test vectors */
 		.key	= "\x85\x62\x3F\x1C\xF9\xD6\x1C\xF9"
 			  "\xD6\xB3\x90\x6D\x4A\x90\x6D\x4A"
 			  "\x27\x04\xE1\x27\x04\xE1\xBE\x9B"
@@ -13432,11 +13431,11 @@
 			  "\x84\x52\x6D\x68\xDE\xC6\x64\xB2"
 			  "\x11\x74\x93\x57\xB4\x7E\xC6\x00",
 		.len	= 496,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा cipher_testvec cast6_cbc_tv_ढाँचा[] = अणु
-	अणु /* Generated from TF test vectors */
+static const struct cipher_testvec cast6_cbc_tv_template[] = {
+	{ /* Generated from TF test vectors */
 		.key	= "\x85\x62\x3F\x1C\xF9\xD6\x1C\xF9"
 			  "\xD6\xB3\x90\x6D\x4A\x90\x6D\x4A"
 			  "\x27\x04\xE1\x27\x04\xE1\xBE\x9B"
@@ -13571,11 +13570,11 @@
 			  "\x4D\x59\x7D\xC5\x28\x69\xFA\x92"
 			  "\x22\x46\x89\x2D\x0F\x2B\x08\x24",
 		.len	= 496,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा cipher_testvec cast6_ctr_tv_ढाँचा[] = अणु
-	अणु /* Generated from TF test vectors */
+static const struct cipher_testvec cast6_ctr_tv_template[] = {
+	{ /* Generated from TF test vectors */
 		.key	= "\x85\x62\x3F\x1C\xF9\xD6\x1C\xF9"
 			  "\xD6\xB3\x90\x6D\x4A\x90\x6D\x4A"
 			  "\x27\x04\xE1\x27\x04\xE1\xBE\x9B"
@@ -13592,7 +13591,7 @@
 			  "\x53\x9A\x5E\x1B\x2A\x1A\xC6\x0A"
 			  "\x57",
 		.len	= 17,
-	पूर्ण, अणु /* Generated from TF test vectors */
+	}, { /* Generated from TF test vectors */
 		.key	= "\x85\x62\x3F\x1C\xF9\xD6\x1C\xF9"
 			  "\xD6\xB3\x90\x6D\x4A\x90\x6D\x4A"
 			  "\x27\x04\xE1\x27\x04\xE1\xBE\x9B"
@@ -13727,11 +13726,11 @@
 			  "\x0E\x74\x33\x30\x62\xB9\x89\xDF"
 			  "\xF9\xC5\xDD\x27\xB3\x39\xCB\xCB",
 		.len	= 496,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा cipher_testvec cast6_lrw_tv_ढाँचा[] = अणु
-	अणु /* Generated from TF test vectors */
+static const struct cipher_testvec cast6_lrw_tv_template[] = {
+	{ /* Generated from TF test vectors */
 		.key	= "\xf8\xd4\x76\xff\xd6\x46\xee\x6c"
 			  "\x23\x84\xcb\x1c\x77\xd6\x19\x5d"
 			  "\xfe\xf1\xa9\xf3\x7b\xbc\x8d\x21"
@@ -13870,11 +13869,11 @@
 			  "\x8D\xD9\xCD\x3B\x22\x67\x18\xC7"
 			  "\xC4\xF5\x99\x61\xBC\xBB\x5B\x46",
 		.len	= 512,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा cipher_testvec cast6_xts_tv_ढाँचा[] = अणु
-	अणु /* Generated from TF test vectors */
+static const struct cipher_testvec cast6_xts_tv_template[] = {
+	{ /* Generated from TF test vectors */
 		.key	= "\x27\x18\x28\x18\x28\x45\x90\x45"
 			  "\x23\x53\x60\x28\x74\x71\x35\x26"
 			  "\x62\x49\x77\x57\x24\x70\x93\x69"
@@ -14015,14 +14014,14 @@
 			  "\xA1\xAC\xE8\xCF\xC6\x74\xCF\xDC"
 			  "\x22\x60\x4E\xE8\xA4\x5D\x85\xB9",
 		.len	= 512,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
  * AES test vectors.
  */
-अटल स्थिर काष्ठा cipher_testvec aes_tv_ढाँचा[] = अणु
-	अणु /* From FIPS-197 */
+static const struct cipher_testvec aes_tv_template[] = {
+	{ /* From FIPS-197 */
 		.key	= "\x00\x01\x02\x03\x04\x05\x06\x07"
 			  "\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f",
 		.klen	= 16,
@@ -14031,7 +14030,7 @@
 		.ctext	= "\x69\xc4\xe0\xd8\x6a\x7b\x04\x30"
 			  "\xd8\xcd\xb7\x80\x70\xb4\xc5\x5a",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x00\x01\x02\x03\x04\x05\x06\x07"
 			  "\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f"
 			  "\x10\x11\x12\x13\x14\x15\x16\x17",
@@ -14041,7 +14040,7 @@
 		.ctext	= "\xdd\xa9\x7c\xa4\x86\x4c\xdf\xe0"
 			  "\x6e\xaf\x70\xa0\xec\x0d\x71\x91",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x00\x01\x02\x03\x04\x05\x06\x07"
 			  "\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f"
 			  "\x10\x11\x12\x13\x14\x15\x16\x17"
@@ -14052,7 +14051,7 @@
 		.ctext	= "\x8e\xa2\xb7\xca\x51\x67\x45\xbf"
 			  "\xea\xfc\x49\x90\x4b\x49\x60\x89",
 		.len	= 16,
-	पूर्ण, अणु /* Generated with Crypto++ */
+	}, { /* Generated with Crypto++ */
 		.key	= "\xA6\xC9\x83\xA6\xC9\xEC\x0F\x32"
 			  "\x55\x0F\x32\x55\x78\x9B\xBE\x78"
 			  "\x9B\xBE\xE1\x04\x27\xE1\x04\x27"
@@ -14183,11 +14182,11 @@
 			  "\x09\x79\xA0\x43\x5C\x0D\x08\x58"
 			  "\x17\xBB\xC0\x6B\x62\x3F\x56\xE9",
 		.len	= 496,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा cipher_testvec aes_cbc_tv_ढाँचा[] = अणु
-	अणु /* From RFC 3602 */
+static const struct cipher_testvec aes_cbc_tv_template[] = {
+	{ /* From RFC 3602 */
 		.key    = "\x06\xa9\x21\x40\x36\xb8\xa1\x5b"
 			  "\x51\x2e\x03\xd5\x34\x12\x00\x06",
 		.klen   = 16,
@@ -14199,7 +14198,7 @@
 		.ctext	= "\xe3\x53\x77\x9c\x10\x79\xae\xb8"
 			  "\x27\x08\x94\x2d\xbe\x77\x18\x1a",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key    = "\xc2\x86\x69\x6d\x88\x7c\x9a\xa0"
 			  "\x61\x1b\xbb\x3e\x20\x25\xa4\x5a",
 		.klen   = 16,
@@ -14216,7 +14215,7 @@
 			  "\x75\x86\x60\x2d\x25\x3c\xff\xf9"
 			  "\x1b\x82\x66\xbe\xa6\xd6\x1a\xb1",
 		.len	= 32,
-	पूर्ण, अणु /* From NIST SP800-38A */
+	}, { /* From NIST SP800-38A */
 		.key	= "\x8e\x73\xb0\xf7\xda\x0e\x64\x52"
 			  "\xc8\x10\xf3\x2b\x80\x90\x79\xe5"
 			  "\x62\xf8\xea\xd2\x52\x2c\x6b\x7b",
@@ -14242,7 +14241,7 @@
 			  "\x08\xb0\xe2\x79\x88\x59\x88\x81"
 			  "\xd9\x20\xa9\xe6\x4f\x56\x15\xcd",
 		.len	= 64,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x60\x3d\xeb\x10\x15\xca\x71\xbe"
 			  "\x2b\x73\xae\xf0\x85\x7d\x77\x81"
 			  "\x1f\x35\x2c\x07\x3b\x61\x08\xd7"
@@ -14269,7 +14268,7 @@
 			  "\xb2\xeb\x05\xe2\xc3\x9b\xe9\xfc"
 			  "\xda\x6c\x19\x07\x8c\x6a\x9d\x1b",
 		.len	= 64,
-	पूर्ण, अणु /* Generated with Crypto++ */
+	}, { /* Generated with Crypto++ */
 		.key	= "\xC9\x83\xA6\xC9\xEC\x0F\x32\x55"
 			  "\x0F\x32\x55\x78\x9B\xBE\x78\x9B"
 			  "\xBE\xE1\x04\x27\xE1\x04\x27\x4A"
@@ -14404,11 +14403,11 @@
 			  "\xE0\x1F\x91\xF8\x82\x96\x2D\x65"
 			  "\xA3\xAA\x13\xCC\x50\xFF\x7B\x02",
 		.len	= 496,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा cipher_testvec aes_cfb_tv_ढाँचा[] = अणु
-	अणु /* From NIST SP800-38A */
+static const struct cipher_testvec aes_cfb_tv_template[] = {
+	{ /* From NIST SP800-38A */
 		.key	= "\x2b\x7e\x15\x16\x28\xae\xd2\xa6"
 			  "\xab\xf7\x15\x88\x09\xcf\x4f\x3c",
 		.klen	= 16,
@@ -14431,7 +14430,7 @@
 			  "\xc0\x4b\x05\x35\x7c\x5d\x1c\x0e"
 			  "\xea\xc4\xc6\x6f\x9f\xf7\xf2\xe6",
 		.len	= 64,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x8e\x73\xb0\xf7\xda\x0e\x64\x52"
 			  "\xc8\x10\xf3\x2b\x80\x90\x79\xe5"
 			  "\x62\xf8\xea\xd2\x52\x2c\x6b\x7b",
@@ -14455,7 +14454,7 @@
 			  "\xc0\x5f\x9f\x9c\xa9\x83\x4f\xa0"
 			  "\x42\xae\x8f\xba\x58\x4b\x09\xff",
 		.len	= 64,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x60\x3d\xeb\x10\x15\xca\x71\xbe"
 			  "\x2b\x73\xae\xf0\x85\x7d\x77\x81"
 			  "\x1f\x35\x2c\x07\x3b\x61\x08\xd7"
@@ -14480,7 +14479,7 @@
 			  "\x75\xa3\x85\x74\x1a\xb9\xce\xf8"
 			  "\x20\x31\x62\x3d\x55\xb1\xe4\x71",
 		.len	= 64,
-	पूर्ण, अणु /* > 16 bytes, not a multiple of 16 bytes */
+	}, { /* > 16 bytes, not a multiple of 16 bytes */
 		.key	= "\x2b\x7e\x15\x16\x28\xae\xd2\xa6"
 			  "\xab\xf7\x15\x88\x09\xcf\x4f\x3c",
 		.klen	= 16,
@@ -14493,7 +14492,7 @@
 			  "\x33\x34\x49\xf8\xe8\x3c\xfb\x4a"
 			  "\xc8",
 		.len	= 17,
-	पूर्ण, अणु /* < 16 bytes */
+	}, { /* < 16 bytes */
 		.key	= "\x2b\x7e\x15\x16\x28\xae\xd2\xa6"
 			  "\xab\xf7\x15\x88\x09\xcf\x4f\x3c",
 		.klen	= 16,
@@ -14502,18 +14501,18 @@
 		.ptext	= "\x6b\xc1\xbe\xe2\x2e\x40\x9f",
 		.ctext	= "\x3b\x3f\xd9\x2e\xb7\x2d\xad",
 		.len	= 7,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा aead_testvec hmac_md5_ecb_cipher_null_tv_ढाँचा[] = अणु
-	अणु /* Input data from RFC 2410 Case 1 */
-#अगर_घोषित __LITTLE_ENDIAN
+static const struct aead_testvec hmac_md5_ecb_cipher_null_tv_template[] = {
+	{ /* Input data from RFC 2410 Case 1 */
+#ifdef __LITTLE_ENDIAN
 		.key    = "\x08\x00"		/* rta length */
 			  "\x01\x00"		/* rta type */
-#अन्यथा
+#else
 		.key    = "\x00\x08"		/* rta length */
 			  "\x00\x01"		/* rta type */
-#पूर्ण_अगर
+#endif
 			  "\x00\x00\x00\x00"	/* enc key length */
 			  "\x00\x00\x00\x00\x00\x00\x00\x00"
 			  "\x00\x00\x00\x00\x00\x00\x00\x00",
@@ -14525,14 +14524,14 @@
 			  "\xaa\x42\xfe\x43\x8d\xea\xa3\x5a"
 			  "\xb9\x3d\x9f\xb1\xa3\x8e\x9b\xae",
 		.clen	= 8 + 16,
-	पूर्ण, अणु /* Input data from RFC 2410 Case 2 */
-#अगर_घोषित __LITTLE_ENDIAN
+	}, { /* Input data from RFC 2410 Case 2 */
+#ifdef __LITTLE_ENDIAN
 		.key    = "\x08\x00"		/* rta length */
 			  "\x01\x00"		/* rta type */
-#अन्यथा
+#else
 		.key    = "\x00\x08"		/* rta length */
 			  "\x00\x01"		/* rta type */
-#पूर्ण_अगर
+#endif
 			  "\x00\x00\x00\x00"	/* enc key length */
 			  "\x00\x00\x00\x00\x00\x00\x00\x00"
 			  "\x00\x00\x00\x00\x00\x00\x00\x00",
@@ -14544,18 +14543,18 @@
 			  "\x73\xa5\x3e\x1c\x08\x0e\x8a\x8a"
 			  "\x8e\xb5\x5f\x90\x8e\xfe\x13\x23",
 		.clen	= 53 + 16,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा aead_testvec hmac_sha1_aes_cbc_tv_temp[] = अणु
-	अणु /* RFC 3602 Case 1 */
-#अगर_घोषित __LITTLE_ENDIAN
+static const struct aead_testvec hmac_sha1_aes_cbc_tv_temp[] = {
+	{ /* RFC 3602 Case 1 */
+#ifdef __LITTLE_ENDIAN
 		.key    = "\x08\x00"		/* rta length */
 			  "\x01\x00"		/* rta type */
-#अन्यथा
+#else
 		.key    = "\x00\x08"		/* rta length */
 			  "\x00\x01"		/* rta type */
-#पूर्ण_अगर
+#endif
 			  "\x00\x00\x00\x10"	/* enc key length */
 			  "\x00\x00\x00\x00\x00\x00\x00\x00"
 			  "\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -14576,14 +14575,14 @@
 			  "\x13\xc5\x2e\xa3\xcc\xed\xdc\xb5"
 			  "\x03\x71\xa2\x06",
 		.clen	= 16 + 20,
-	पूर्ण, अणु /* RFC 3602 Case 2 */
-#अगर_घोषित __LITTLE_ENDIAN
+	}, { /* RFC 3602 Case 2 */
+#ifdef __LITTLE_ENDIAN
 		.key    = "\x08\x00"		/* rta length */
 			  "\x01\x00"		/* rta type */
-#अन्यथा
+#else
 		.key    = "\x00\x08"		/* rta length */
 			  "\x00\x01"		/* rta type */
-#पूर्ण_अगर
+#endif
 			  "\x00\x00\x00\x10"	/* enc key length */
 			  "\x20\x21\x22\x23\x24\x25\x26\x27"
 			  "\x28\x29\x2a\x2b\x2c\x2d\x2e\x2f"
@@ -14609,14 +14608,14 @@
 			  "\xee\x81\x4e\xd7\xdb\x74\xcf\x58"
 			  "\x65\x39\xf8\xde",
 		.clen	= 32 + 20,
-	पूर्ण, अणु /* RFC 3602 Case 3 */
-#अगर_घोषित __LITTLE_ENDIAN
+	}, { /* RFC 3602 Case 3 */
+#ifdef __LITTLE_ENDIAN
 		.key    = "\x08\x00"		/* rta length */
 			  "\x01\x00"            /* rta type */
-#अन्यथा
+#else
 		.key    = "\x00\x08"		/* rta length */
 			  "\x00\x01"		/* rta type */
-#पूर्ण_अगर
+#endif
 			  "\x00\x00\x00\x10"	/* enc key length */
 			  "\x11\x22\x33\x44\x55\x66\x77\x88"
 			  "\x99\xaa\xbb\xcc\xdd\xee\xff\x11"
@@ -14641,14 +14640,14 @@
 			  "\xff\xee\x4c\xd0\x93\xe6\x36\x7f"
 			  "\x8d\x62\xf2\x1e",
 		.clen	= 48 + 20,
-	पूर्ण, अणु /* RFC 3602 Case 4 */
-#अगर_घोषित __LITTLE_ENDIAN
+	}, { /* RFC 3602 Case 4 */
+#ifdef __LITTLE_ENDIAN
 		.key    = "\x08\x00"		/* rta length */
 			  "\x01\x00"		/* rta type */
-#अन्यथा
+#else
 		.key    = "\x00\x08"		/* rta length */
 			  "\x00\x01"            /* rta type */
-#पूर्ण_अगर
+#endif
 			  "\x00\x00\x00\x10"	/* enc key length */
 			  "\x11\x22\x33\x44\x55\x66\x77\x88"
 			  "\x99\xaa\xbb\xcc\xdd\xee\xff\x11"
@@ -14682,14 +14681,14 @@
 			  "\x18\xac\xf1\xc7\x5d\xd1\xcd\x0d"
 			  "\x1d\xbe\xc6\xe9",
 		.clen	= 64 + 20,
-	पूर्ण, अणु /* RFC 3602 Case 5 */
-#अगर_घोषित __LITTLE_ENDIAN
+	}, { /* RFC 3602 Case 5 */
+#ifdef __LITTLE_ENDIAN
 		.key    = "\x08\x00"		/* rta length */
 			  "\x01\x00"            /* rta type */
-#अन्यथा
+#else
 		.key    = "\x00\x08"		/* rta length */
 			  "\x00\x01"            /* rta type */
-#पूर्ण_अगर
+#endif
 			  "\x00\x00\x00\x10"	/* enc key length */
 			  "\x11\x22\x33\x44\x55\x66\x77\x88"
 			  "\x99\xaa\xbb\xcc\xdd\xee\xff\x11"
@@ -14728,14 +14727,14 @@
 			  "\xe1\xc5\x0b\x73\x4d\x82\x55\xa8"
 			  "\x85\xe1\x59\xf7",
 		.clen	= 80 + 20,
-       पूर्ण, अणु /* NIST SP800-38A F.2.3 CBC-AES192.Encrypt */
-#अगर_घोषित __LITTLE_ENDIAN
+       }, { /* NIST SP800-38A F.2.3 CBC-AES192.Encrypt */
+#ifdef __LITTLE_ENDIAN
 		.key    = "\x08\x00"            /* rta length */
 			  "\x01\x00"		/* rta type */
-#अन्यथा
+#else
 		.key    = "\x00\x08"		/* rta length */
 			  "\x00\x01"            /* rta type */
-#पूर्ण_अगर
+#endif
 			  "\x00\x00\x00\x18"	/* enc key length */
 			  "\x11\x22\x33\x44\x55\x66\x77\x88"
 			  "\x99\xaa\xbb\xcc\xdd\xee\xff\x11"
@@ -14770,14 +14769,14 @@
 			  "\x5a\xf1\x5b\xa8\x98\x07\xc5\x36"
 			  "\x47\x4c\xfc\x36",
 		.clen	= 64 + 20,
-	पूर्ण, अणु /* NIST SP800-38A F.2.5 CBC-AES256.Encrypt */
-#अगर_घोषित __LITTLE_ENDIAN
+	}, { /* NIST SP800-38A F.2.5 CBC-AES256.Encrypt */
+#ifdef __LITTLE_ENDIAN
 		.key    = "\x08\x00"		/* rta length */
 			  "\x01\x00"		/* rta type */
-#अन्यथा
+#else
 		.key    = "\x00\x08"		/* rta length */
 			  "\x00\x01"            /* rta type */
-#पूर्ण_अगर
+#endif
 			  "\x00\x00\x00\x20"	/* enc key length */
 			  "\x11\x22\x33\x44\x55\x66\x77\x88"
 			  "\x99\xaa\xbb\xcc\xdd\xee\xff\x11"
@@ -14813,18 +14812,18 @@
 			  "\x1b\x9f\xc6\x81\x26\x43\x4a\x87"
 			  "\x51\xee\xd6\x4e",
 		.clen	= 64 + 20,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा aead_testvec hmac_sha1_ecb_cipher_null_tv_temp[] = अणु
-	अणु /* Input data from RFC 2410 Case 1 */
-#अगर_घोषित __LITTLE_ENDIAN
+static const struct aead_testvec hmac_sha1_ecb_cipher_null_tv_temp[] = {
+	{ /* Input data from RFC 2410 Case 1 */
+#ifdef __LITTLE_ENDIAN
 		.key    = "\x08\x00"		/* rta length */
 			  "\x01\x00"		/* rta type */
-#अन्यथा
+#else
 		.key    = "\x00\x08"		/* rta length */
 			  "\x00\x01"		/* rta type */
-#पूर्ण_अगर
+#endif
 			  "\x00\x00\x00\x00"	/* enc key length */
 			  "\x00\x00\x00\x00\x00\x00\x00\x00"
 			  "\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -14838,14 +14837,14 @@
 			  "\x99\x5e\x19\x04\xd1\x72\xef\xb8"
 			  "\x8c\x5e\xe4\x08",
 		.clen	= 8 + 20,
-	पूर्ण, अणु /* Input data from RFC 2410 Case 2 */
-#अगर_घोषित __LITTLE_ENDIAN
+	}, { /* Input data from RFC 2410 Case 2 */
+#ifdef __LITTLE_ENDIAN
 		.key    = "\x08\x00"		/* rta length */
 			  "\x01\x00"		/* rta type */
-#अन्यथा
+#else
 		.key    = "\x00\x08"		/* rta length */
 			  "\x00\x01"		/* rta type */
-#पूर्ण_अगर
+#endif
 			  "\x00\x00\x00\x00"	/* enc key length */
 			  "\x00\x00\x00\x00\x00\x00\x00\x00"
 			  "\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -14859,18 +14858,18 @@
 			  "\x65\x47\xee\x8e\x1a\xef\x16\xf6"
 			  "\x91\x56\xe4\xd6",
 		.clen	= 53 + 20,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा aead_testvec hmac_sha256_aes_cbc_tv_temp[] = अणु
-	अणु /* RFC 3602 Case 1 */
-#अगर_घोषित __LITTLE_ENDIAN
+static const struct aead_testvec hmac_sha256_aes_cbc_tv_temp[] = {
+	{ /* RFC 3602 Case 1 */
+#ifdef __LITTLE_ENDIAN
 		.key    = "\x08\x00"		/* rta length */
 			  "\x01\x00"		/* rta type */
-#अन्यथा
+#else
 		.key    = "\x00\x08"		/* rta length */
 			  "\x00\x01"		/* rta type */
-#पूर्ण_अगर
+#endif
 			  "\x00\x00\x00\x10"	/* enc key length */
 			  "\x00\x00\x00\x00\x00\x00\x00\x00"
 			  "\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -14893,14 +14892,14 @@
 			  "\x5c\x34\xa6\xa3\x6e\x0b\x05\xe5"
 			  "\x6a\x6d\x44\xaa\x26\xa8\x44\xa5",
 		.clen	= 16 + 32,
-	पूर्ण, अणु /* RFC 3602 Case 2 */
-#अगर_घोषित __LITTLE_ENDIAN
+	}, { /* RFC 3602 Case 2 */
+#ifdef __LITTLE_ENDIAN
 		.key    = "\x08\x00"		/* rta length */
 			  "\x01\x00"		/* rta type */
-#अन्यथा
+#else
 		.key    = "\x00\x08"		/* rta length */
 			  "\x00\x01"		/* rta type */
-#पूर्ण_अगर
+#endif
 			  "\x00\x00\x00\x10"	/* enc key length */
 			  "\x20\x21\x22\x23\x24\x25\x26\x27"
 			  "\x28\x29\x2a\x2b\x2c\x2d\x2e\x2f"
@@ -14928,14 +14927,14 @@
 			  "\x49\x69\x0d\x5b\xd4\x36\x06\x62"
 			  "\x35\x5e\x54\x58\x53\x4d\xdf\xbf",
 		.clen	= 32 + 32,
-	पूर्ण, अणु /* RFC 3602 Case 3 */
-#अगर_घोषित __LITTLE_ENDIAN
+	}, { /* RFC 3602 Case 3 */
+#ifdef __LITTLE_ENDIAN
 		.key    = "\x08\x00"		/* rta length */
 			  "\x01\x00"            /* rta type */
-#अन्यथा
+#else
 		.key    = "\x00\x08"		/* rta length */
 			  "\x00\x01"		/* rta type */
-#पूर्ण_अगर
+#endif
 			  "\x00\x00\x00\x10"	/* enc key length */
 			  "\x11\x22\x33\x44\x55\x66\x77\x88"
 			  "\x99\xaa\xbb\xcc\xdd\xee\xff\x11"
@@ -14962,14 +14961,14 @@
 			  "\x24\x78\xfb\xbe\x02\xe0\x4f\x40"
 			  "\x10\xbd\xaa\xc6\xa7\x79\xe0\x1a",
 		.clen	= 48 + 32,
-	पूर्ण, अणु /* RFC 3602 Case 4 */
-#अगर_घोषित __LITTLE_ENDIAN
+	}, { /* RFC 3602 Case 4 */
+#ifdef __LITTLE_ENDIAN
 		.key    = "\x08\x00"		/* rta length */
 			  "\x01\x00"		/* rta type */
-#अन्यथा
+#else
 		.key    = "\x00\x08"		/* rta length */
 			  "\x00\x01"            /* rta type */
-#पूर्ण_अगर
+#endif
 			  "\x00\x00\x00\x10"	/* enc key length */
 			  "\x11\x22\x33\x44\x55\x66\x77\x88"
 			  "\x99\xaa\xbb\xcc\xdd\xee\xff\x11"
@@ -15005,14 +15004,14 @@
 			  "\x3f\x54\xe2\x49\x39\xe3\x71\x25"
 			  "\x2b\x6c\xe9\x5d\xec\xec\x2b\x64",
 		.clen	= 64 + 32,
-	पूर्ण, अणु /* RFC 3602 Case 5 */
-#अगर_घोषित __LITTLE_ENDIAN
+	}, { /* RFC 3602 Case 5 */
+#ifdef __LITTLE_ENDIAN
 		.key    = "\x08\x00"		/* rta length */
 			  "\x01\x00"            /* rta type */
-#अन्यथा
+#else
 		.key    = "\x00\x08"		/* rta length */
 			  "\x00\x01"            /* rta type */
-#पूर्ण_अगर
+#endif
 			  "\x00\x00\x00\x10"	/* enc key length */
 			  "\x11\x22\x33\x44\x55\x66\x77\x88"
 			  "\x99\xaa\xbb\xcc\xdd\xee\xff\x11"
@@ -15053,14 +15052,14 @@
 			  "\x73\xc3\x46\x20\x2c\xb1\xef\x68"
 			  "\xbb\x8a\x32\x7e\x12\x8c\x69\xcf",
 		.clen	= 80 + 32,
-       पूर्ण, अणु /* NIST SP800-38A F.2.3 CBC-AES192.Encrypt */
-#अगर_घोषित __LITTLE_ENDIAN
+       }, { /* NIST SP800-38A F.2.3 CBC-AES192.Encrypt */
+#ifdef __LITTLE_ENDIAN
 		.key    = "\x08\x00"            /* rta length */
 			  "\x01\x00"		/* rta type */
-#अन्यथा
+#else
 		.key    = "\x00\x08"		/* rta length */
 			  "\x00\x01"            /* rta type */
-#पूर्ण_अगर
+#endif
 			  "\x00\x00\x00\x18"	/* enc key length */
 			  "\x11\x22\x33\x44\x55\x66\x77\x88"
 			  "\x99\xaa\xbb\xcc\xdd\xee\xff\x11"
@@ -15097,14 +15096,14 @@
 			  "\xca\x71\x85\x93\xf7\x85\x55\x8b"
 			  "\x7a\xe4\x94\xca\x8b\xba\x19\x33",
 		.clen	= 64 + 32,
-	पूर्ण, अणु /* NIST SP800-38A F.2.5 CBC-AES256.Encrypt */
-#अगर_घोषित __LITTLE_ENDIAN
+	}, { /* NIST SP800-38A F.2.5 CBC-AES256.Encrypt */
+#ifdef __LITTLE_ENDIAN
 		.key    = "\x08\x00"		/* rta length */
 			  "\x01\x00"		/* rta type */
-#अन्यथा
+#else
 		.key    = "\x00\x08"		/* rta length */
 			  "\x00\x01"            /* rta type */
-#पूर्ण_अगर
+#endif
 			  "\x00\x00\x00\x20"	/* enc key length */
 			  "\x11\x22\x33\x44\x55\x66\x77\x88"
 			  "\x99\xaa\xbb\xcc\xdd\xee\xff\x11"
@@ -15142,18 +15141,18 @@
 			  "\xf3\x61\xde\x1c\xe9\xdb\xcd\xd0"
 			  "\xcc\xce\xe9\x85\x57\xcf\x6f\x5f",
 		.clen	= 64 + 32,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा aead_testvec hmac_sha512_aes_cbc_tv_temp[] = अणु
-	अणु /* RFC 3602 Case 1 */
-#अगर_घोषित __LITTLE_ENDIAN
+static const struct aead_testvec hmac_sha512_aes_cbc_tv_temp[] = {
+	{ /* RFC 3602 Case 1 */
+#ifdef __LITTLE_ENDIAN
 		.key    = "\x08\x00"		/* rta length */
 			  "\x01\x00"		/* rta type */
-#अन्यथा
+#else
 		.key    = "\x00\x08"		/* rta length */
 			  "\x00\x01"		/* rta type */
-#पूर्ण_अगर
+#endif
 			  "\x00\x00\x00\x10"	/* enc key length */
 			  "\x00\x00\x00\x00\x00\x00\x00\x00"
 			  "\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -15184,14 +15183,14 @@
 			  "\xfa\x20\x89\xdd\x9c\xac\x9e\x16"
 			  "\x18\x8a\xa0\x6d\x01\x6c\xa3\x3a",
 		.clen	= 16 + 64,
-	पूर्ण, अणु /* RFC 3602 Case 2 */
-#अगर_घोषित __LITTLE_ENDIAN
+	}, { /* RFC 3602 Case 2 */
+#ifdef __LITTLE_ENDIAN
 		.key    = "\x08\x00"		/* rta length */
 			  "\x01\x00"		/* rta type */
-#अन्यथा
+#else
 		.key    = "\x00\x08"		/* rta length */
 			  "\x00\x01"		/* rta type */
-#पूर्ण_अगर
+#endif
 			  "\x00\x00\x00\x10"	/* enc key length */
 			  "\x20\x21\x22\x23\x24\x25\x26\x27"
 			  "\x28\x29\x2a\x2b\x2c\x2d\x2e\x2f"
@@ -15227,14 +15226,14 @@
 			  "\x8f\x9f\xd4\x31\xd6\x22\xbd\xf8"
 			  "\xf7\x0a\x94\xe5\xa9\xc3\xf6\x9d",
 		.clen	= 32 + 64,
-	पूर्ण, अणु /* RFC 3602 Case 3 */
-#अगर_घोषित __LITTLE_ENDIAN
+	}, { /* RFC 3602 Case 3 */
+#ifdef __LITTLE_ENDIAN
 		.key    = "\x08\x00"		/* rta length */
 			  "\x01\x00"            /* rta type */
-#अन्यथा
+#else
 		.key    = "\x00\x08"		/* rta length */
 			  "\x00\x01"		/* rta type */
-#पूर्ण_अगर
+#endif
 			  "\x00\x00\x00\x10"	/* enc key length */
 			  "\x11\x22\x33\x44\x55\x66\x77\x88"
 			  "\x99\xaa\xbb\xcc\xdd\xee\xff\x11"
@@ -15269,14 +15268,14 @@
 			  "\xac\x7f\x5c\x1d\xf5\xee\x22\x66"
 			  "\x27\xa6\xb6\x13\xba\xba\xf0\xc2",
 		.clen	= 48 + 64,
-	पूर्ण, अणु /* RFC 3602 Case 4 */
-#अगर_घोषित __LITTLE_ENDIAN
+	}, { /* RFC 3602 Case 4 */
+#ifdef __LITTLE_ENDIAN
 		.key    = "\x08\x00"		/* rta length */
 			  "\x01\x00"		/* rta type */
-#अन्यथा
+#else
 		.key    = "\x00\x08"		/* rta length */
 			  "\x00\x01"            /* rta type */
-#पूर्ण_अगर
+#endif
 			  "\x00\x00\x00\x10"	/* enc key length */
 			  "\x11\x22\x33\x44\x55\x66\x77\x88"
 			  "\x99\xaa\xbb\xcc\xdd\xee\xff\x11"
@@ -15320,14 +15319,14 @@
 			  "\x62\x98\x14\xd7\x2f\x37\x8d\xdf"
 			  "\xf4\x33\x80\xeb\x8e\xb4\xa4\xda",
 		.clen	= 64 + 64,
-	पूर्ण, अणु /* RFC 3602 Case 5 */
-#अगर_घोषित __LITTLE_ENDIAN
+	}, { /* RFC 3602 Case 5 */
+#ifdef __LITTLE_ENDIAN
 		.key    = "\x08\x00"		/* rta length */
 			  "\x01\x00"            /* rta type */
-#अन्यथा
+#else
 		.key    = "\x00\x08"		/* rta length */
 			  "\x00\x01"            /* rta type */
-#पूर्ण_अगर
+#endif
 			  "\x00\x00\x00\x10"	/* enc key length */
 			  "\x11\x22\x33\x44\x55\x66\x77\x88"
 			  "\x99\xaa\xbb\xcc\xdd\xee\xff\x11"
@@ -15376,14 +15375,14 @@
 			  "\x62\x4f\x9a\x62\x25\xc3\x75\x80"
 			  "\xb7\x0a\x17\xf5\xd7\x94\xb4\x14",
 		.clen	= 80 + 64,
-       पूर्ण, अणु /* NIST SP800-38A F.2.3 CBC-AES192.Encrypt */
-#अगर_घोषित __LITTLE_ENDIAN
+       }, { /* NIST SP800-38A F.2.3 CBC-AES192.Encrypt */
+#ifdef __LITTLE_ENDIAN
 		.key    = "\x08\x00"            /* rta length */
 			  "\x01\x00"		/* rta type */
-#अन्यथा
+#else
 		.key    = "\x00\x08"		/* rta length */
 			  "\x00\x01"            /* rta type */
-#पूर्ण_अगर
+#endif
 			  "\x00\x00\x00\x18"	/* enc key length */
 			  "\x11\x22\x33\x44\x55\x66\x77\x88"
 			  "\x99\xaa\xbb\xcc\xdd\xee\xff\x11"
@@ -15428,14 +15427,14 @@
 			  "\x8d\x43\x98\xa7\x94\x16\x07\x02"
 			  "\x0f\xb6\x81\x50\x28\x95\x2e\x75",
 		.clen	= 64 + 64,
-	पूर्ण, अणु /* NIST SP800-38A F.2.5 CBC-AES256.Encrypt */
-#अगर_घोषित __LITTLE_ENDIAN
+	}, { /* NIST SP800-38A F.2.5 CBC-AES256.Encrypt */
+#ifdef __LITTLE_ENDIAN
 		.key    = "\x08\x00"		/* rta length */
 			  "\x01\x00"		/* rta type */
-#अन्यथा
+#else
 		.key    = "\x00\x08"		/* rta length */
 			  "\x00\x01"            /* rta type */
-#पूर्ण_अगर
+#endif
 			  "\x00\x00\x00\x20"	/* enc key length */
 			  "\x11\x22\x33\x44\x55\x66\x77\x88"
 			  "\x99\xaa\xbb\xcc\xdd\xee\xff\x11"
@@ -15481,18 +15480,18 @@
 			  "\xdb\xbf\xa0\xb4\x01\xa2\xa8\xa2"
 			  "\x2c\xb1\x62\x2c\x10\xca\xf1\x21",
 		.clen	= 64 + 64,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा aead_testvec hmac_sha1_des_cbc_tv_temp[] = अणु
-	अणु /*Generated with cryptopp*/
-#अगर_घोषित __LITTLE_ENDIAN
+static const struct aead_testvec hmac_sha1_des_cbc_tv_temp[] = {
+	{ /*Generated with cryptopp*/
+#ifdef __LITTLE_ENDIAN
 		.key    = "\x08\x00"		/* rta length */
 			  "\x01\x00"		/* rta type */
-#अन्यथा
+#else
 	.key    = "\x00\x08"		/* rta length */
 			  "\x00\x01"		/* rta type */
-#पूर्ण_अगर
+#endif
 			  "\x00\x00\x00\x08"	/* enc key length */
 			  "\x11\x22\x33\x44\x55\x66\x77\x88"
 		  "\x99\xaa\xbb\xcc\xdd\xee\xff\x11"
@@ -15540,18 +15539,18 @@
 			  "\x3c\xc7\xe0\x42\xc0\x14\x69\xfa"
 			  "\x5c\x44\xa9\x37",
 			  .clen	= 128 + 20,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा aead_testvec hmac_sha224_des_cbc_tv_temp[] = अणु
-	अणु /*Generated with cryptopp*/
-#अगर_घोषित __LITTLE_ENDIAN
+static const struct aead_testvec hmac_sha224_des_cbc_tv_temp[] = {
+	{ /*Generated with cryptopp*/
+#ifdef __LITTLE_ENDIAN
 		.key    = "\x08\x00"		/* rta length */
 			  "\x01\x00"		/* rta type */
-#अन्यथा
+#else
 		.key    = "\x00\x08"		/* rta length */
 			  "\x00\x01"		/* rta type */
-#पूर्ण_अगर
+#endif
 			  "\x00\x00\x00\x08"	/* enc key length */
 			  "\x11\x22\x33\x44\x55\x66\x77\x88"
 			  "\x99\xaa\xbb\xcc\xdd\xee\xff\x11"
@@ -15599,18 +15598,18 @@
 			  "\xce\xb5\x4e\x64\x53\xe7\xbf\x91"
 			  "\xab\xd4\xd9\xda\xc9\x12\xae\xf7",
 		.clen	= 128 + 24,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा aead_testvec hmac_sha256_des_cbc_tv_temp[] = अणु
-	अणु /*Generated with cryptopp*/
-#अगर_घोषित __LITTLE_ENDIAN
+static const struct aead_testvec hmac_sha256_des_cbc_tv_temp[] = {
+	{ /*Generated with cryptopp*/
+#ifdef __LITTLE_ENDIAN
 		.key    = "\x08\x00"		/* rta length */
 			  "\x01\x00"		/* rta type */
-#अन्यथा
+#else
 		.key    = "\x00\x08"		/* rta length */
 			  "\x00\x01"		/* rta type */
-#पूर्ण_अगर
+#endif
 			  "\x00\x00\x00\x08"	/* enc key length */
 			  "\x11\x22\x33\x44\x55\x66\x77\x88"
 			  "\x99\xaa\xbb\xcc\xdd\xee\xff\x11"
@@ -15660,18 +15659,18 @@
 			  "\xde\x63\xde\x76\x52\xde\x9f\xba"
 			  "\x90\xcf\x15\xf2\xbb\x6e\x84\x00",
 		.clen	= 128 + 32,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा aead_testvec hmac_sha384_des_cbc_tv_temp[] = अणु
-	अणु /*Generated with cryptopp*/
-#अगर_घोषित __LITTLE_ENDIAN
+static const struct aead_testvec hmac_sha384_des_cbc_tv_temp[] = {
+	{ /*Generated with cryptopp*/
+#ifdef __LITTLE_ENDIAN
 		.key    = "\x08\x00"		/* rta length */
 			  "\x01\x00"		/* rta type */
-#अन्यथा
+#else
 		.key    = "\x00\x08"		/* rta length */
 			  "\x00\x01"		/* rta type */
-#पूर्ण_अगर
+#endif
 			  "\x00\x00\x00\x08"	/* enc key length */
 			  "\x11\x22\x33\x44\x55\x66\x77\x88"
 			  "\x99\xaa\xbb\xcc\xdd\xee\xff\x11"
@@ -15725,18 +15724,18 @@
 			  "\x6a\x95\x26\x75\xcc\x53\x89\xf3"
 			  "\x74\xc9\x2a\x76\x20\xa2\x64\x62",
 		.clen	= 128 + 48,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा aead_testvec hmac_sha512_des_cbc_tv_temp[] = अणु
-	अणु /*Generated with cryptopp*/
-#अगर_घोषित __LITTLE_ENDIAN
+static const struct aead_testvec hmac_sha512_des_cbc_tv_temp[] = {
+	{ /*Generated with cryptopp*/
+#ifdef __LITTLE_ENDIAN
 		.key    = "\x08\x00"		/* rta length */
 		  "\x01\x00"		/* rta type */
-#अन्यथा
+#else
 		.key    = "\x00\x08"		/* rta length */
 			  "\x00\x01"		/* rta type */
-#पूर्ण_अगर
+#endif
 			  "\x00\x00\x00\x08"	/* enc key length */
 		  "\x11\x22\x33\x44\x55\x66\x77\x88"
 			  "\x99\xaa\xbb\xcc\xdd\xee\xff\x11"
@@ -15794,18 +15793,18 @@
 			  "\x8c\xf6\x07\x95\x1f\xa6\x6c\x96"
 			  "\x99\xc7\x5c\x8d\xd8\xb5\x68\x7b",
 		.clen	= 128 + 64,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा aead_testvec hmac_sha1_des3_ede_cbc_tv_temp[] = अणु
-	अणु /*Generated with cryptopp*/
-#अगर_घोषित __LITTLE_ENDIAN
+static const struct aead_testvec hmac_sha1_des3_ede_cbc_tv_temp[] = {
+	{ /*Generated with cryptopp*/
+#ifdef __LITTLE_ENDIAN
 		.key    = "\x08\x00"		/* rta length */
 			  "\x01\x00"		/* rta type */
-#अन्यथा
+#else
 		.key    = "\x00\x08"		/* rta length */
 			  "\x00\x01"		/* rta type */
-#पूर्ण_अगर
+#endif
 			  "\x00\x00\x00\x18"	/* enc key length */
 			  "\x11\x22\x33\x44\x55\x66\x77\x88"
 			  "\x99\xaa\xbb\xcc\xdd\xee\xff\x11"
@@ -15855,18 +15854,18 @@
 			  "\x75\x86\x96\x6b\xb1\xc5\xe4\xcf"
 			  "\xd1\x60\x91\xb3",
 			  .clen	= 128 + 20,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा aead_testvec hmac_sha224_des3_ede_cbc_tv_temp[] = अणु
-	अणु /*Generated with cryptopp*/
-#अगर_घोषित __LITTLE_ENDIAN
+static const struct aead_testvec hmac_sha224_des3_ede_cbc_tv_temp[] = {
+	{ /*Generated with cryptopp*/
+#ifdef __LITTLE_ENDIAN
 		.key    = "\x08\x00"		/* rta length */
 			  "\x01\x00"		/* rta type */
-#अन्यथा
+#else
 		.key    = "\x00\x08"		/* rta length */
 			  "\x00\x01"		/* rta type */
-#पूर्ण_अगर
+#endif
 			  "\x00\x00\x00\x18"	/* enc key length */
 			  "\x11\x22\x33\x44\x55\x66\x77\x88"
 			  "\x99\xaa\xbb\xcc\xdd\xee\xff\x11"
@@ -15916,18 +15915,18 @@
 			  "\x2b\x0b\x93\x99\x2f\x9d\x0c\x6c"
 			  "\x56\x1f\xe1\xa6\x41\xb2\x4c\xd0",
 			  .clen	= 128 + 24,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा aead_testvec hmac_sha256_des3_ede_cbc_tv_temp[] = अणु
-	अणु /*Generated with cryptopp*/
-#अगर_घोषित __LITTLE_ENDIAN
+static const struct aead_testvec hmac_sha256_des3_ede_cbc_tv_temp[] = {
+	{ /*Generated with cryptopp*/
+#ifdef __LITTLE_ENDIAN
 		.key    = "\x08\x00"		/* rta length */
 			  "\x01\x00"		/* rta type */
-#अन्यथा
+#else
 		.key    = "\x00\x08"		/* rta length */
 			  "\x00\x01"		/* rta type */
-#पूर्ण_अगर
+#endif
 			  "\x00\x00\x00\x18"	/* enc key length */
 			  "\x11\x22\x33\x44\x55\x66\x77\x88"
 			  "\x99\xaa\xbb\xcc\xdd\xee\xff\x11"
@@ -15979,18 +15978,18 @@
 			  "\xf7\xce\xd1\xd3\xf8\xbd\x3e\x4f"
 			  "\xca\x43\x95\xdf\x80\x61\x81\xa9",
 		.clen	= 128 + 32,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा aead_testvec hmac_sha384_des3_ede_cbc_tv_temp[] = अणु
-	अणु /*Generated with cryptopp*/
-#अगर_घोषित __LITTLE_ENDIAN
+static const struct aead_testvec hmac_sha384_des3_ede_cbc_tv_temp[] = {
+	{ /*Generated with cryptopp*/
+#ifdef __LITTLE_ENDIAN
 		.key    = "\x08\x00"		/* rta length */
 			  "\x01\x00"		/* rta type */
-#अन्यथा
+#else
 		.key    = "\x00\x08"		/* rta length */
 			  "\x00\x01"		/* rta type */
-#पूर्ण_अगर
+#endif
 			  "\x00\x00\x00\x18"	/* enc key length */
 			  "\x11\x22\x33\x44\x55\x66\x77\x88"
 			  "\x99\xaa\xbb\xcc\xdd\xee\xff\x11"
@@ -16046,18 +16045,18 @@
 			  "\x36\x5d\x13\x2f\x86\x10\x78\xd6"
 			  "\xd6\xbe\x5c\xb9\x15\x89\xf9\x1b",
 		.clen	= 128 + 48,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा aead_testvec hmac_sha512_des3_ede_cbc_tv_temp[] = अणु
-	अणु /*Generated with cryptopp*/
-#अगर_घोषित __LITTLE_ENDIAN
+static const struct aead_testvec hmac_sha512_des3_ede_cbc_tv_temp[] = {
+	{ /*Generated with cryptopp*/
+#ifdef __LITTLE_ENDIAN
 		.key    = "\x08\x00"		/* rta length */
 			  "\x01\x00"		/* rta type */
-#अन्यथा
+#else
 		.key    = "\x00\x08"		/* rta length */
 			  "\x00\x01"		/* rta type */
-#पूर्ण_अगर
+#endif
 			  "\x00\x00\x00\x18"	/* enc key length */
 			  "\x11\x22\x33\x44\x55\x66\x77\x88"
 			  "\x99\xaa\xbb\xcc\xdd\xee\xff\x11"
@@ -16117,12 +16116,12 @@
 			  "\xd5\x02\x6d\xe6\xaf\xc9\x2f\xf2"
 			  "\x57\xaa\x85\xf7\xf3\x6a\xcb\xdb",
 		.clen	= 128 + 64,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा cipher_testvec aes_lrw_tv_ढाँचा[] = अणु
+static const struct cipher_testvec aes_lrw_tv_template[] = {
 	/* from http://grouper.ieee.org/groups/1619/email/pdf00017.pdf */
-	अणु /* LRW-32-AES 1 */
+	{ /* LRW-32-AES 1 */
 		.key    = "\x45\x62\xac\x25\xf8\x28\x17\x6d"
 			  "\x4c\x26\x84\x14\xb5\x68\x01\x85"
 			  "\x25\x8e\x2a\x05\xe7\x3e\x9d\x03"
@@ -16135,7 +16134,7 @@
 		.ctext	= "\xf1\xb2\x73\xcd\x65\xa3\xdf\x5f"
 			  "\xe9\x5d\x48\x92\x54\x63\x4e\xb8",
 		.len	= 16,
-	पूर्ण, अणु /* LRW-32-AES 2 */
+	}, { /* LRW-32-AES 2 */
 		.key    = "\x59\x70\x47\x14\xf5\x57\x47\x8c"
 			  "\xd7\x79\xe8\x0f\x54\x88\x79\x44"
 			  "\x0d\x48\xf0\xb7\xb1\x5a\x53\xea"
@@ -16148,7 +16147,7 @@
 		.ctext	= "\x00\xc8\x2b\xae\x95\xbb\xcd\xe5"
 			  "\x27\x4f\x07\x69\xb2\x60\xe1\x36",
 		.len	= 16,
-	पूर्ण, अणु /* LRW-32-AES 3 */
+	}, { /* LRW-32-AES 3 */
 		.key    = "\xd8\x2a\x91\x34\xb2\x6a\x56\x50"
 			  "\x30\xfe\x69\xe2\x37\x7f\x98\x47"
 			  "\xcd\xf9\x0b\x16\x0c\x64\x8f\xb6"
@@ -16161,7 +16160,7 @@
 		.ctext	= "\x76\x32\x21\x83\xed\x8f\xf1\x82"
 			  "\xf9\x59\x62\x03\x69\x0e\x5e\x01",
 		.len	= 16,
-	पूर्ण, अणु /* LRW-32-AES 4 */
+	}, { /* LRW-32-AES 4 */
 		.key    = "\x0f\x6a\xef\xf8\xd3\xd2\xbb\x15"
 			  "\x25\x83\xf7\x3c\x1f\x01\x28\x74"
 			  "\xca\xc6\xbc\x35\x4d\x4a\x65\x54"
@@ -16175,7 +16174,7 @@
 		.ctext	= "\x9c\x0f\x15\x2f\x55\xa2\xd8\xf0"
 			  "\xd6\x7b\x8f\x9e\x28\x22\xbc\x41",
 		.len	= 16,
-	पूर्ण, अणु /* LRW-32-AES 5 */
+	}, { /* LRW-32-AES 5 */
 		.key    = "\x8a\xd4\xee\x10\x2f\xbd\x81\xff"
 			  "\xf8\x86\xce\xac\x93\xc5\xad\xc6"
 			  "\xa0\x19\x07\xc0\x9d\xf7\xbb\xdd"
@@ -16189,7 +16188,7 @@
 		.ctext	= "\xd4\x27\x6a\x7f\x14\x91\x3d\x65"
 			  "\xc8\x60\x48\x02\x87\xe3\x34\x06",
 		.len	= 16,
-	पूर्ण, अणु /* LRW-32-AES 6 */
+	}, { /* LRW-32-AES 6 */
 		.key    = "\xf8\xd4\x76\xff\xd6\x46\xee\x6c"
 			  "\x23\x84\xcb\x1c\x77\xd6\x19\x5d"
 			  "\xfe\xf1\xa9\xf3\x7b\xbc\x8d\x21"
@@ -16204,7 +16203,7 @@
 		.ctext	= "\xbd\x06\xb8\xe1\xdb\x98\x89\x9e"
 			  "\xc4\x98\xe4\x91\xcf\x1c\x70\x2b",
 		.len	= 16,
-	पूर्ण, अणु /* LRW-32-AES 7 */
+	}, { /* LRW-32-AES 7 */
 		.key    = "\xfb\x76\x15\xb2\x3d\x80\x89\x1d"
 			  "\xd4\x70\x98\x0b\xc7\x95\x84\xc8"
 			  "\xb2\xfb\x64\xce\x60\x97\x87\x8d"
@@ -16219,7 +16218,7 @@
 		.ctext	= "\x5b\x90\x8e\xc1\xab\xdd\x67\x5f"
 			  "\x3d\x69\x8a\x95\x53\xc8\x9c\xe5",
 		.len	= 16,
-	पूर्ण, अणु /* Test counter wrap-around, modअगरied from LRW-32-AES 1 */
+	}, { /* Test counter wrap-around, modified from LRW-32-AES 1 */
 		.key    = "\x45\x62\xac\x25\xf8\x28\x17\x6d"
 			  "\x4c\x26\x84\x14\xb5\x68\x01\x85"
 			  "\x25\x8e\x2a\x05\xe7\x3e\x9d\x03"
@@ -16240,8 +16239,8 @@
 			  "\xf1\xb2\x73\xcd\x65\xa3\xdf\x5f"
 			  "\xe9\x5d\x48\x92\x54\x63\x4e\xb8",
 		.len	= 48,
-	पूर्ण, अणु
-/* http://www.mail-archive.com/stds-p1619@listserv.ieee.org/msg00173.hपंचांगl */
+	}, {
+/* http://www.mail-archive.com/stds-p1619@listserv.ieee.org/msg00173.html */
 		.key    = "\xf8\xd4\x76\xff\xd6\x46\xee\x6c"
 			  "\x23\x84\xcb\x1c\x77\xd6\x19\x5d"
 			  "\xfe\xf1\xa9\xf3\x7b\xbc\x8d\x21"
@@ -16380,12 +16379,12 @@
 			  "\xcd\x7e\x2b\x5d\x43\xea\x42\xe7"
 			  "\x74\x3f\x7d\x58\x88\x75\xde\x3e",
 		.len	= 512,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल स्थिर काष्ठा cipher_testvec aes_xts_tv_ढाँचा[] = अणु
+static const struct cipher_testvec aes_xts_tv_template[] = {
 	/* http://grouper.ieee.org/groups/1619/email/pdf00086.pdf */
-	अणु /* XTS-AES 1 */
+	{ /* XTS-AES 1 */
 		.key    = "\x00\x00\x00\x00\x00\x00\x00\x00"
 			  "\x00\x00\x00\x00\x00\x00\x00\x00"
 			  "\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -16403,7 +16402,7 @@
 			  "\xcd\x43\xd2\xf5\x95\x98\xed\x85"
 			  "\x8c\x02\xc2\x65\x2f\xbf\x92\x2e",
 		.len	= 32,
-	पूर्ण, अणु /* XTS-AES 2 */
+	}, { /* XTS-AES 2 */
 		.key    = "\x11\x11\x11\x11\x11\x11\x11\x11"
 			  "\x11\x11\x11\x11\x11\x11\x11\x11"
 			  "\x22\x22\x22\x22\x22\x22\x22\x22"
@@ -16420,7 +16419,7 @@
 			  "\xfb\x18\x6f\xff\x74\x80\xad\xc4"
 			  "\x28\x93\x82\xec\xd6\xd3\x94\xf0",
 		.len	= 32,
-	पूर्ण, अणु /* XTS-AES 3 */
+	}, { /* XTS-AES 3 */
 		.key    = "\xff\xfe\xfd\xfc\xfb\xfa\xf9\xf8"
 			  "\xf7\xf6\xf5\xf4\xf3\xf2\xf1\xf0"
 			  "\x22\x22\x22\x22\x22\x22\x22\x22"
@@ -16437,7 +16436,7 @@
 			  "\x92\xdf\x4c\x04\x7e\x0b\x21\x53"
 			  "\x21\x86\xa5\x97\x1a\x22\x7a\x89",
 		.len	= 32,
-	पूर्ण, अणु /* XTS-AES 4 */
+	}, { /* XTS-AES 4 */
 		.key    = "\x27\x18\x28\x18\x28\x45\x90\x45"
 			  "\x23\x53\x60\x28\x74\x71\x35\x26"
 			  "\x31\x41\x59\x26\x53\x58\x97\x93"
@@ -16574,7 +16573,7 @@
 			  "\x0a\x28\x2d\xf9\x20\x14\x7b\xea"
 			  "\xbe\x42\x1e\xe5\x31\x9d\x05\x68",
 		.len	= 512,
-	पूर्ण, अणु /* XTS-AES 10, XTS-AES-256, data unit 512 bytes */
+	}, { /* XTS-AES 10, XTS-AES-256, data unit 512 bytes */
 		.key	= "\x27\x18\x28\x18\x28\x45\x90\x45"
 			  "\x23\x53\x60\x28\x74\x71\x35\x26"
 			  "\x62\x49\x77\x57\x24\x70\x93\x69"
@@ -16715,11 +16714,11 @@
 			  "\xc4\xf3\x6f\xfd\xa9\xfc\xea\x70"
 			  "\xb9\xc6\xe6\x93\xe1\x48\xc1\x51",
 		.len	= 512,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल स्थिर काष्ठा cipher_testvec aes_ctr_tv_ढाँचा[] = अणु
-	अणु /* From NIST Special Publication 800-38A, Appendix F.5 */
+static const struct cipher_testvec aes_ctr_tv_template[] = {
+	{ /* From NIST Special Publication 800-38A, Appendix F.5 */
 		.key	= "\x2b\x7e\x15\x16\x28\xae\xd2\xa6"
 			  "\xab\xf7\x15\x88\x09\xcf\x4f\x3c",
 		.klen	= 16,
@@ -16744,7 +16743,7 @@
 			  "\x1e\x03\x1d\xda\x2f\xbe\x03\xd1"
 			  "\x79\x21\x70\xa0\xf3\x00\x9c\xee",
 		.len	= 64,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x8e\x73\xb0\xf7\xda\x0e\x64\x52"
 			  "\xc8\x10\xf3\x2b\x80\x90\x79\xe5"
 			  "\x62\xf8\xea\xd2\x52\x2c\x6b\x7b",
@@ -16770,7 +16769,7 @@
 			  "\x4f\x78\xa7\xf6\xd2\x98\x09\x58"
 			  "\x5a\x97\xda\xec\x58\xc6\xb0\x50",
 		.len	= 64,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x60\x3d\xeb\x10\x15\xca\x71\xbe"
 			  "\x2b\x73\xae\xf0\x85\x7d\x77\x81"
 			  "\x1f\x35\x2c\x07\x3b\x61\x08\xd7"
@@ -16797,7 +16796,7 @@
 			  "\xdf\xc9\xc5\x8d\xb6\x7a\xad\xa6"
 			  "\x13\xc2\xdd\x08\x45\x79\x41\xa6",
 		.len	= 64,
-	पूर्ण, अणु /* Generated with Crypto++ */
+	}, { /* Generated with Crypto++ */
 		.key	= "\xC9\x83\xA6\xC9\xEC\x0F\x32\x55"
 			  "\x0F\x32\x55\x78\x9B\xBE\x78\x9B"
 			  "\xBE\xE1\x04\x27\xE1\x04\x27\x4A"
@@ -16932,7 +16931,7 @@
 			  "\xFA\x3A\x05\x4C\xFA\xD1\xFF\xFE"
 			  "\xF1\x4C\xE5\xB2\x91\x64\x0C\x51",
 		.len	= 496,
-	पूर्ण, अणु /* Generated with Crypto++ */
+	}, { /* Generated with Crypto++ */
 		.key	= "\xC9\x83\xA6\xC9\xEC\x0F\x32\x55"
 			  "\x0F\x32\x55\x78\x9B\xBE\x78\x9B"
 			  "\xBE\xE1\x04\x27\xE1\x04\x27\x4A"
@@ -17069,11 +17068,11 @@
 			  "\xD8\xFE\xC9\x5B\x5C\x25\xE5\x76"
 			  "\xFB\xF2\x3F",
 		.len	= 499,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा cipher_testvec aes_ctr_rfc3686_tv_ढाँचा[] = अणु
-	अणु /* From RFC 3686 */
+static const struct cipher_testvec aes_ctr_rfc3686_tv_template[] = {
+	{ /* From RFC 3686 */
 		.key	= "\xae\x68\x52\xf8\x12\x10\x67\xcc"
 			  "\x4b\xf7\xa5\x76\x55\x77\xf3\x9e"
 			  "\x00\x00\x00\x30",
@@ -17083,7 +17082,7 @@
 		.ctext	= "\xe4\x09\x5d\x4f\xb7\xa7\xb3\x79"
 			  "\x2d\x61\x75\xa3\x26\x13\x11\xb8",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x7e\x24\x06\x78\x17\xfa\xe0\xd7"
 			  "\x43\xd6\xce\x1f\x32\x53\x91\x63"
 			  "\x00\x6c\xb6\xdb",
@@ -17098,7 +17097,7 @@
 			  "\xeb\x2e\x1e\xfc\x46\xda\x57\xc8"
 			  "\xfc\xe6\x30\xdf\x91\x41\xbe\x28",
 		.len	= 32,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x16\xaf\x5b\x14\x5f\xc9\xf5\x79"
 			  "\xc1\x75\xf9\x3e\x3b\xfb\x0e\xed"
 			  "\x86\x3d\x06\xcc\xfd\xb7\x85\x15"
@@ -17109,7 +17108,7 @@
 		.ctext	= "\x4b\x55\x38\x4f\xe2\x59\xc9\xc8"
 			  "\x4e\x79\x35\xa0\x03\xcb\xe9\x28",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x7c\x5c\xb2\x40\x1b\x3d\xc3\x3c"
 			  "\x19\xe7\x34\x08\x19\xe0\xf6\x9c"
 			  "\x67\x8c\x3d\xb8\xe6\xf6\xa9\x1a"
@@ -17125,7 +17124,7 @@
 			  "\x84\x90\x70\x1c\x5a\xd4\xa7\x9c"
 			  "\xfc\x1f\xe0\xff\x42\xf4\xfb\x00",
 		.len	= 32,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x77\x6b\xef\xf2\x85\x1d\xb0\x6f"
 			  "\x4c\x8a\x05\x42\xc8\x69\x6f\x6c"
 			  "\x6a\x81\xaf\x1e\xec\x96\xb4\xd3"
@@ -17137,7 +17136,7 @@
 		.ctext	= "\x14\x5a\xd0\x1d\xbf\x82\x4e\xc7"
 			  "\x56\x08\x63\xdc\x71\xe3\xe0\xc0",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xf6\xd6\x6d\x6b\xd5\x2d\x59\xbb"
 			  "\x07\x96\x36\x58\x79\xef\xf8\x86"
 			  "\xc6\x6d\xd5\x1a\x5b\x6a\x99\x74"
@@ -17154,7 +17153,7 @@
 			  "\xb8\x30\x6b\x50\x8f\x83\x9d\x6a"
 			  "\x55\x30\x83\x1d\x93\x44\xaf\x1c",
 		.len	= 32,
-	पूर्ण, अणु
+	}, {
 	// generated using Crypto++
 		.key = "\x00\x01\x02\x03\x04\x05\x06\x07"
 			"\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f"
@@ -18192,11 +18191,11 @@
 			"\x4b\xef\x31\x18\xea\xac\xb1\x84"
 			"\x21\xed\xda\x86",
 		.len	= 4100,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा cipher_testvec aes_ofb_tv_ढाँचा[] = अणु
-	अणु /* From NIST Special Publication 800-38A, Appendix F.5 */
+static const struct cipher_testvec aes_ofb_tv_template[] = {
+	{ /* From NIST Special Publication 800-38A, Appendix F.5 */
 		.key	= "\x2b\x7e\x15\x16\x28\xae\xd2\xa6"
 			  "\xab\xf7\x15\x88\x09\xcf\x4f\x3c",
 		.klen	= 16,
@@ -18219,7 +18218,7 @@
 			  "\x30\x4c\x65\x28\xf6\x59\xc7\x78"
 			  "\x66\xa5\x10\xd9\xc1\xd6\xae\x5e",
 		.len	= 64,
-	पूर्ण, अणु /* > 16 bytes, not a multiple of 16 bytes */
+	}, { /* > 16 bytes, not a multiple of 16 bytes */
 		.key	= "\x2b\x7e\x15\x16\x28\xae\xd2\xa6"
 			  "\xab\xf7\x15\x88\x09\xcf\x4f\x3c",
 		.klen	= 16,
@@ -18232,7 +18231,7 @@
 			  "\x33\x34\x49\xf8\xe8\x3c\xfb\x4a"
 			  "\x77",
 		.len	= 17,
-	पूर्ण, अणु /* < 16 bytes */
+	}, { /* < 16 bytes */
 		.key	= "\x2b\x7e\x15\x16\x28\xae\xd2\xa6"
 			  "\xab\xf7\x15\x88\x09\xcf\x4f\x3c",
 		.klen	= 16,
@@ -18241,17 +18240,17 @@
 		.ptext	= "\x6b\xc1\xbe\xe2\x2e\x40\x9f",
 		.ctext	= "\x3b\x3f\xd9\x2e\xb7\x2d\xad",
 		.len	= 7,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल स्थिर काष्ठा aead_testvec aes_gcm_tv_ढाँचा[] = अणु
-	अणु /* From McGrew & Viega - http://citeseer.ist.psu.edu/656989.hपंचांगl */
+static const struct aead_testvec aes_gcm_tv_template[] = {
+	{ /* From McGrew & Viega - http://citeseer.ist.psu.edu/656989.html */
 		.key    = zeroed_string,
 		.klen	= 16,
 		.ctext	= "\x58\xe2\xfc\xce\xfa\x7e\x30\x61"
 			  "\x36\x7f\x1d\x57\xa4\xe7\x45\x5a",
 		.clen	= 16,
-	पूर्ण, अणु
+	}, {
 		.key    = zeroed_string,
 		.klen	= 16,
 		.ptext	= zeroed_string,
@@ -18261,7 +18260,7 @@
 			  "\xab\x6e\x47\xd4\x2c\xec\x13\xbd"
 			  "\xf5\x3a\x67\xb2\x12\x57\xbd\xdf",
 		.clen	= 32,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xfe\xff\xe9\x92\x86\x65\x73\x1c"
 			  "\x6d\x6a\x8f\x94\x67\x30\x83\x08",
 		.klen	= 16,
@@ -18287,7 +18286,7 @@
 			  "\x4d\x5c\x2a\xf3\x27\xcd\x64\xa6"
 			  "\x2c\xf3\x5a\xbd\x2b\xa6\xfa\xb4",
 		.clen	= 80,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xfe\xff\xe9\x92\x86\x65\x73\x1c"
 			  "\x6d\x6a\x8f\x94\x67\x30\x83\x08",
 		.klen	= 16,
@@ -18317,13 +18316,13 @@
 			  "\x5b\xc9\x4f\xbc\x32\x21\xa5\xdb"
 			  "\x94\xfa\xe9\x5a\xe7\x12\x1a\x47",
 		.clen	= 76,
-	पूर्ण, अणु
+	}, {
 		.key    = zeroed_string,
 		.klen	= 24,
 		.ctext	= "\xcd\x33\xb2\x8a\xc7\x73\xf7\x4b"
 			  "\xa0\x0e\xd1\xf3\x12\x57\x24\x35",
 		.clen	= 16,
-	पूर्ण, अणु
+	}, {
 		.key    = zeroed_string,
 		.klen	= 24,
 		.ptext	= zeroed_string,
@@ -18333,7 +18332,7 @@
 			  "\x2f\xf5\x8d\x80\x03\x39\x27\xab"
 			  "\x8e\xf4\xd4\x58\x75\x14\xf0\xfb",
 		.clen	= 32,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xfe\xff\xe9\x92\x86\x65\x73\x1c"
 			  "\x6d\x6a\x8f\x94\x67\x30\x83\x08"
 			  "\xfe\xff\xe9\x92\x86\x65\x73\x1c",
@@ -18360,13 +18359,13 @@
 			  "\x99\x24\xa7\xc8\x58\x73\x36\xbf"
 			  "\xb1\x18\x02\x4d\xb8\x67\x4a\x14",
 		.clen	= 80,
-	पूर्ण, अणु
+	}, {
 		.key    = zeroed_string,
 		.klen	= 32,
 		.ctext	= "\x53\x0f\x8a\xfb\xc7\x45\x36\xb9"
 			  "\xa9\x63\xb4\xf1\xc4\xcb\x73\x8b",
 		.clen	= 16,
-	पूर्ण, अणु
+	}, {
 		.key    = zeroed_string,
 		.klen	= 32,
 		.ptext	= zeroed_string,
@@ -18376,7 +18375,7 @@
 			  "\xd0\xd1\xc8\xa7\x99\x99\x6b\xf0"
 			  "\x26\x5b\x98\xb5\xd4\x8a\xb9\x19",
 		.clen	= 32,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xfe\xff\xe9\x92\x86\x65\x73\x1c"
 			  "\x6d\x6a\x8f\x94\x67\x30\x83\x08"
 			  "\xfe\xff\xe9\x92\x86\x65\x73\x1c"
@@ -18404,7 +18403,7 @@
 			  "\xb0\x94\xda\xc5\xd9\x34\x71\xbd"
 			  "\xec\x1a\x50\x22\x70\xe3\xcc\x6c",
 		.clen	= 80,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xfe\xff\xe9\x92\x86\x65\x73\x1c"
 			  "\x6d\x6a\x8f\x94\x67\x30\x83\x08"
 			  "\xfe\xff\xe9\x92\x86\x65\x73\x1c"
@@ -18436,7 +18435,7 @@
 			  "\x76\xfc\x6e\xce\x0f\x4e\x17\x68"
 			  "\xcd\xdf\x88\x53\xbb\x2d\x55\x1b",
 		.clen	= 76,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xfe\xff\xe9\x92\x86\x65\x73\x1c"
 			  "\x6d\x6a\x8f\x94\x67\x30\x83\x08"
 			  "\xfe\xff\xe9\x92\x86\x65\x73\x1c",
@@ -18467,7 +18466,7 @@
 			  "\x25\x19\x49\x8e\x80\xf1\x47\x8f"
 			  "\x37\xba\x55\xbd\x6d\x27\x61\x8c",
 		.clen	= 76,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x62\x35\xf8\x95\xfc\xa5\xeb\xf6"
 			  "\x0e\x92\x12\x04\xd3\xa1\x3f\x2e"
 			  "\x8b\x32\xcf\xe7\x44\xed\x13\x59"
@@ -18659,11 +18658,11 @@
 			  "\xd1\x81\x7d\x2b\xe9\xff\x99\x3a"
 			  "\x4b\x24\x52\x58\x55\xe1\x49\x14",
 		.clen	= 735,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल स्थिर काष्ठा aead_testvec aes_gcm_rfc4106_tv_ढाँचा[] = अणु
-	अणु /* Generated using Crypto++ */
+static const struct aead_testvec aes_gcm_rfc4106_tv_template[] = {
+	{ /* Generated using Crypto++ */
 		.key    = zeroed_string,
 		.klen	= 20,
 		.iv	= zeroed_string,
@@ -18676,7 +18675,7 @@
 			  "\x97\xFE\x4C\x23\x37\x42\x01\xE0"
 			  "\x81\x9F\x8D\xC5\xD7\x41\xA0\x1B",
 		.clen	= 32,
-	पूर्ण,अणु
+	},{
 		.key    = "\xfe\xff\xe9\x92\x86\x65\x73\x1c"
 			  "\x6d\x6a\x8f\x94\x67\x30\x83\x08"
 			  "\x00\x00\x00\x00",
@@ -18693,7 +18692,7 @@
 			  "\x2F\x70\x44\x92\xF7\xF2\xE3\xEF",
 		.clen	= 32,
 
-	पूर्ण, अणु
+	}, {
 		.key    = "\xfe\xff\xe9\x92\x86\x65\x73\x1c"
 			  "\x6d\x6a\x8f\x94\x67\x30\x83\x08"
 			  "\x00\x00\x00\x00",
@@ -18709,7 +18708,7 @@
 			  "\x0B\x8F\x88\x69\x17\xE6\xB4\x3C"
 			  "\xB1\x68\xFD\x14\x52\x64\x61\xB2",
 		.clen	= 32,
-	पूर्ण, अणु
+	}, {
 		.key    = "\xfe\xff\xe9\x92\x86\x65\x73\x1c"
 			  "\x6d\x6a\x8f\x94\x67\x30\x83\x08"
 			  "\x00\x00\x00\x00",
@@ -18726,7 +18725,7 @@
 			  "\x90\x92\xB7\xE3\x5F\xA3\x9A\x63"
 			  "\x7E\xD7\x1F\xD8\xD3\x7C\x4B\xF5",
 		.clen	= 32,
-	पूर्ण, अणु
+	}, {
 		.key    = "\xfe\xff\xe9\x92\x86\x65\x73\x1c"
 			  "\x6d\x6a\x8f\x94\x67\x30\x83\x08"
 			  "\x00\x00\x00\x00",
@@ -18743,7 +18742,7 @@
 			  "\x64\x50\xF9\x32\x13\xFB\x74\x61"
 			  "\xF4\xED\x52\xD3\xC5\x10\x55\x3C",
 		.clen	= 32,
-	पूर्ण, अणु
+	}, {
 		.key    = "\xfe\xff\xe9\x92\x86\x65\x73\x1c"
 			  "\x6d\x6a\x8f\x94\x67\x30\x83\x08"
 			  "\x00\x00\x00\x00",
@@ -18772,7 +18771,7 @@
 			  "\xD2\xB6\xC2\x4A\x76\xC2\x92\x85"
 			  "\xBD\xCF\x62\x98\x58\x14\xE5\xBD",
 		.clen	= 80,
-	पूर्ण, अणु
+	}, {
 		.key    = "\x00\x01\x02\x03\x04\x05\x06\x07"
 			  "\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f"
 			  "\x00\x00\x00\x00",
@@ -18834,7 +18833,7 @@
 			  "\x37\x08\x1C\xCF\xBA\x5D\x71\x46"
 			  "\x80\x72\xB0\x4C\x82\x0D\x60\x3C",
 		.clen	= 208,
-	पूर्ण, अणु /* From draft-mcgrew-gcm-test-01 */
+	}, { /* From draft-mcgrew-gcm-test-01 */
 		.key	= "\x4C\x80\xCD\xEF\xBB\x5D\x10\xDA"
 			  "\x90\x6A\xC7\x3C\x36\x13\xA6\x34"
 			  "\x2E\x44\x3B\x68",
@@ -18866,7 +18865,7 @@
 			  "\x45\x90\x18\x14\x8F\x6C\xBE\x72"
 			  "\x2F\xD0\x47\x96\x56\x2D\xFD\xB4",
 		.clen	= 88,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xFE\xFF\xE9\x92\x86\x65\x73\x1C"
 			  "\x6D\x6A\x8F\x94\x67\x30\x83\x08"
 			  "\xCA\xFE\xBA\xBE",
@@ -18895,7 +18894,7 @@
 			  "\x83\xB7\x0D\x3A\xA8\xBC\x6E\xE4"
 			  "\xC3\x09\xE9\xD8\x5A\x41\xAD\x4A",
 		.clen	= 80,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xAB\xBC\xCD\xDE\xF0\x01\x12\x23"
 			  "\x34\x45\x56\x67\x78\x89\x9A\xAB"
 			  "\xAB\xBC\xCD\xDE\xF0\x01\x12\x23"
@@ -18924,7 +18923,7 @@
 			  "\xCF\xDB\xF8\x31\x82\x4B\x4C\x49"
 			  "\x15\x95\x6C\x96",
 		.clen	= 68,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x00\x00\x00\x00\x00\x00\x00\x00"
 			  "\x00\x00\x00\x00\x00\x00\x00\x00"
 			  "\x00\x00\x00\x00",
@@ -18953,7 +18952,7 @@
 			  "\xF8\x21\xD4\x96\xEE\xB0\x96\xE9"
 			  "\x8A\xD2\xB6\x9E\x47\x99\xC7\x1D",
 		.clen	= 80,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x3D\xE0\x98\x74\xB3\x88\xE6\x49"
 			  "\x19\x88\xD0\xC3\x60\x7E\xAE\x1F"
 			  "\x57\x69\x0E\x43",
@@ -18983,7 +18982,7 @@
 			  "\xE0\xD7\x31\xCC\x97\x8E\xCA\xFA"
 			  "\xEA\xE8\x8F\x00\xE8\x0D\x6E\x48",
 		.clen	= 80,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x3D\xE0\x98\x74\xB3\x88\xE6\x49"
 			  "\x19\x88\xD0\xC3\x60\x7E\xAE\x1F"
 			  "\x57\x69\x0E\x43",
@@ -19005,7 +19004,7 @@
 			  "\x35\xE0\x34\xBE\x95\xF1\x12\xE4"
 			  "\xE7\xD0\x5D\x35",
 		.clen	= 44,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xFE\xFF\xE9\x92\x86\x65\x73\x1C"
 			  "\x6D\x6A\x8F\x94\x67\x30\x83\x08"
 			  "\xFE\xFF\xE9\x92\x86\x65\x73\x1C"
@@ -19029,7 +19028,7 @@
 			  "\x95\x45\x7B\x96\x52\x03\x7F\x53"
 			  "\x18\x02\x7B\x5B\x4C\xD7\xA6\x36",
 		.clen	= 56,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xAB\xBC\xCD\xDE\xF0\x01\x12\x23"
 			  "\x34\x45\x56\x67\x78\x89\x9A\xAB"
 			  "\xDE\xCA\xF8\x88",
@@ -19063,7 +19062,7 @@
 			  "\x5F\x35\x4F\x75\xFF\x17\x01\x57"
 			  "\x69\x62\x34\x36",
 		.clen	= 92,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xAB\xBC\xCD\xDE\xF0\x01\x12\x23"
 			  "\x34\x45\x56\x67\x78\x89\x9A\xAB"
 			  "\xAB\xBC\xCD\xDE\xF0\x01\x12\x23"
@@ -19089,7 +19088,7 @@
 			  "\x45\x16\x26\xC2\x41\x57\x71\xE3"
 			  "\xB7\xEE\xBC\xA6\x14\xC8\x9B\x35",
 		.clen	= 56,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x3D\xE0\x98\x74\xB3\x88\xE6\x49"
 			  "\x19\x88\xD0\xC3\x60\x7E\xAE\x1F"
 			  "\x57\x69\x0E\x43",
@@ -19123,7 +19122,7 @@
 			  "\x76\x91\x89\x60\x97\x63\xB8\xE1"
 			  "\x8C\xAA\x81\xE2",
 		.clen	= 92,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xAB\xBC\xCD\xDE\xF0\x01\x12\x23"
 			  "\x34\x45\x56\x67\x78\x89\x9A\xAB"
 			  "\xAB\xBC\xCD\xDE\xF0\x01\x12\x23"
@@ -19157,7 +19156,7 @@
 			  "\xC0\xCA\xC5\x87\xF2\x49\xE5\x6B"
 			  "\x11\xE2\x4F\x30\xE4\x4C\xCC\x76",
 		.clen	= 88,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x7D\x77\x3D\x00\xC1\x44\xC5\x25"
 			  "\xAC\x61\x9D\x18\xC8\x4A\x3F\x47"
 			  "\xD9\x66\x42\x67",
@@ -19172,7 +19171,7 @@
 			  "\xE9\xB0\x82\x2B\xAC\x96\x1C\x45"
 			  "\x04\xBE\xF2\x70",
 		.clen	= 20,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xAB\xBC\xCD\xDE\xF0\x01\x12\x23"
 			  "\x34\x45\x56\x67\x78\x89\x9A\xAB"
 			  "\xDE\xCA\xF8\x88",
@@ -19192,7 +19191,7 @@
 			  "\x43\x03\xED\x3C\x6C\x5F\x28\x38"
 			  "\x43\xAF\x8C\x3E",
 		.clen	= 36,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x6C\x65\x67\x61\x6C\x69\x7A\x65"
 			  "\x6D\x61\x72\x69\x6A\x75\x61\x6E"
 			  "\x61\x61\x6E\x64\x64\x6F\x69\x74"
@@ -19222,7 +19221,7 @@
 			  "\x94\x5F\x66\x93\x68\x66\x1A\x32"
 			  "\x9F\xB4\xC0\x53",
 		.clen	= 68,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x3D\xE0\x98\x74\xB3\x88\xE6\x49"
 			  "\x19\x88\xD0\xC3\x60\x7E\xAE\x1F"
 			  "\x57\x69\x0E\x43",
@@ -19250,7 +19249,7 @@
 			  "\x56\x91\x25\x46\xE7\xA9\x5C\x97"
 			  "\x40\xD7\xCB\x05",
 		.clen	= 68,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x4C\x80\xCD\xEF\xBB\x5D\x10\xDA"
 			  "\x90\x6A\xC7\x3C\x36\x13\xA6\x34"
 			  "\x22\x43\x3C\x64",
@@ -19272,11 +19271,11 @@
 			  "\xEF\x9C\xBC\x28\xFE\x1B\x56\xA7"
 			  "\xC4\xE0\xD5\x8C\x86\xCD\x2B\xC0",
 		.clen	= 48,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल स्थिर काष्ठा aead_testvec aes_gcm_rfc4543_tv_ढाँचा[] = अणु
-	अणु /* From draft-mcgrew-gcm-test-01 */
+static const struct aead_testvec aes_gcm_rfc4543_tv_template[] = {
+	{ /* From draft-mcgrew-gcm-test-01 */
 		.key	= "\x4c\x80\xcd\xef\xbb\x5d\x10\xda"
 			  "\x90\x6a\xc7\x3c\x36\x13\xa6\x34"
 			  "\x22\x43\x3c\x64",
@@ -19303,7 +19302,7 @@
 			  "\xe1\x55\x10\x6a\xa8\xdc\xd6\x18"
 			  "\xe4\x09\x9a\xaa",
 		.clen	= 68,
-	पूर्ण, अणु /* nearly same as previous, but should fail */
+	}, { /* nearly same as previous, but should fail */
 		.key	= "\x4c\x80\xcd\xef\xbb\x5d\x10\xda"
 			  "\x90\x6a\xc7\x3c\x36\x13\xa6\x34"
 			  "\x22\x43\x3c\x64",
@@ -19331,11 +19330,11 @@
 			  "\xe1\x55\x10\x6a\xa8\xdc\xd6\x18"
 			  "\x00\x00\x00\x00",
 		.clen	= 68,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा aead_testvec aes_ccm_tv_ढाँचा[] = अणु
-	अणु /* From RFC 3610 */
+static const struct aead_testvec aes_ccm_tv_template[] = {
+	{ /* From RFC 3610 */
 		.key	= "\xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7"
 			  "\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf",
 		.klen	= 16,
@@ -19352,7 +19351,7 @@
 			  "\x6d\x5f\x6b\x61\xda\xc3\x84\x17"
 			  "\xe8\xd1\x2c\xfd\xf9\x26\xe0",
 		.clen	= 31,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7"
 			  "\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf",
 		.klen	= 16,
@@ -19370,7 +19369,7 @@
 			  "\x6e\xbd\xca\x3e\x51\xe8\x3f\x07"
 			  "\x7d\x9c\x2d\x93",
 		.clen	= 28,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7"
 			  "\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf",
 		.klen	= 16,
@@ -19389,7 +19388,7 @@
 			  "\x97\xea\x9c\x07\xe5\x6b\x5e\xb1"
 			  "\x7e\x5f\x4e",
 		.clen	= 35,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7"
 			  "\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf",
 		.klen	= 16,
@@ -19407,7 +19406,7 @@
 			  "\x1b\x94\x7b\x56\x6a\xa9\x40\x6b"
 			  "\x4d\x99\x99\x88\xdd",
 		.clen	= 29,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xd7\x82\x8d\x13\xb2\xb0\xbd\xc3"
 			  "\x25\xa7\x62\x36\xdf\x93\xcc\x6b",
 		.klen	= 16,
@@ -19424,7 +19423,7 @@
 			  "\x98\xc8\x5c\x92\x81\x4a\xbc\x33"
 			  "\xc5\x2e\xe8\x1d\x7d\x77\xc0\x8a",
 		.clen	= 32,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xd7\x82\x8d\x13\xb2\xb0\xbd\xc3"
 			  "\x25\xa7\x62\x36\xdf\x93\xcc\x6b",
 		.klen	= 16,
@@ -19442,7 +19441,7 @@
 			  "\x22\x67\x5e\x04\xc8\x47\x09\x9e"
 			  "\x5a\xe0\x70\x45\x51",
 		.clen	= 29,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xd7\x82\x8d\x13\xb2\xb0\xbd\xc3"
 			  "\x25\xa7\x62\x36\xdf\x93\xcc\x6b",
 		.klen	= 16,
@@ -19460,7 +19459,7 @@
 			  "\x7c\xf9\xbe\xc2\x40\x88\x97\xc6"
 			  "\xba",
 		.clen	= 33,
-	पूर्ण, अणु
+	}, {
 		/* This is taken from FIPS CAVS. */
 		.key	= "\x83\xac\x54\x66\xc2\xeb\xe5\x05"
 			  "\x2e\x01\xd1\xfc\x5d\x82\x66\x2e",
@@ -19479,7 +19478,7 @@
 			  "\xda\x24\xea\xd9\xa1\x39\x98\xfd"
 			  "\xa4\xbe\xd9\xf2\x1a\x6d\x22\xa8",
 		.clen	= 48,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x1e\x2c\x7e\x01\x41\x9a\xef\xc0"
 			  "\x0d\x58\x96\x6e\x5c\xa2\x4b\xd3",
 		.klen	= 16,
@@ -19502,7 +19501,7 @@
 			  "\xa9\x86\x15\x6c\x13\xfe\xda\x0a"
 			  "\x22\xb8\x29\x3d\xd8\x39\x9a\x23",
 		.clen	= 48,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xf4\x6b\xc2\x75\x62\xfe\xb4\xe1"
 			  "\xa3\xf0\xff\xdd\x4e\x4b\x12\x75"
 			  "\x53\x14\x73\x66\x8d\x88\xf6\x80",
@@ -19517,7 +19516,7 @@
 		.ctext	= "\x36\xea\x7a\x70\x08\xdc\x6a\xbc"
 			  "\xad\x0c\x7a\x63\xf6\x61\xfd\x9b",
 		.clen	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x56\xdf\x5c\x8f\x26\x3f\x0e\x42"
 			  "\xef\x7a\xd3\xce\xfc\x84\x60\x62"
 			  "\xca\xb4\x40\xaf\x5f\xc9\xc9\x01",
@@ -19541,7 +19540,7 @@
 			  "\xc7\x79\x11\x58\xe5\x6b\x20\x40"
 			  "\x7a\xea\x46\x42\x8b\xe4\x6f\xe1",
 		.clen	= 48,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xe0\x8d\x99\x71\x60\xd7\x97\x1a"
 			  "\xbd\x01\x99\xd5\x8a\xdf\x71\x3a"
 			  "\xd3\xdf\x24\x4b\x5e\x3d\x4b\x4e"
@@ -19565,7 +19564,7 @@
 			  "\xf0\x62\x17\x34\xf2\x1e\x8d\x75"
 			  "\x4e\x13\xcc\xc0\xc3\x2a\x54\x2d",
 		.clen	= 40,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x7c\xc8\x18\x3b\x8d\x99\xe0\x7c"
 			  "\x45\x41\xb8\xbd\x5c\xa7\xc2\x32"
 			  "\x8a\xb8\x02\x59\xa4\xfe\xa9\x2c"
@@ -19590,7 +19589,7 @@
 			  "\x39\xaf\x39\xac\xd8\x4a\x80\x39"
 			  "\x7b\x72\x8a\xf7",
 		.clen	= 44,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xab\xd0\xe9\x33\x07\x26\xe5\x83"
 			  "\x8c\x76\x95\xd4\xb6\xdc\xf3\x46"
 			  "\xf9\x8f\xad\xe3\x02\x13\x83\x77"
@@ -19615,7 +19614,7 @@
 			  "\x5c\xda\xb2\x33\xe5\x13\xe2\x0d"
 			  "\x74\xd1\xef\xb5\x0f\x3a\xb5\xf8",
 		.clen	= 48,
-	पूर्ण, अणु
+	}, {
 		/* This is taken from FIPS CAVS. */
 		.key	= "\xab\x2f\x8a\x74\xb7\x1c\xd2\xb1"
 			  "\xff\x80\x2e\x48\x7d\x82\xf8\xb9",
@@ -19628,7 +19627,7 @@
 		.ctext	= "\xd5\xe8\x93\x9f\xc7\x89\x2e\x2b",
 		.clen	= 8,
 		.novrfy	= 1,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xab\x2f\x8a\x74\xb7\x1c\xd2\xb1"
 			  "\xff\x80\x2e\x48\x7d\x82\xf8\xb9",
 		.klen	= 16,
@@ -19639,7 +19638,7 @@
 		.plen	= 0,
 		.ctext	= "\x41\x3c\xb8\x87\x73\xcb\xf3\xf3",
 		.clen	= 8,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x61\x0e\x8c\xae\xe3\x23\xb6\x38"
 			  "\x76\x1c\xf6\x3a\x67\xa3\x9c\xd8",
 		.klen	= 16,
@@ -19663,7 +19662,7 @@
 			  "\x8b\x84\x83\x2a\xc1\x05\xb8\xc5",
 		.clen	= 48,
 		.novrfy	= 1,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x61\x0e\x8c\xae\xe3\x23\xb6\x38"
 			  "\x76\x1c\xf6\x3a\x67\xa3\x9c\xd8",
 		.klen	= 16,
@@ -19686,7 +19685,7 @@
 			  "\xb7\x14\x30\x00\x32\x9e\xa0\xa6"
 			  "\x9e\x5a\x18\xa1\xb8\xfe\xdb\xd3",
 		.clen	= 48,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x39\xbb\xa7\xbe\x59\x97\x9e\x73"
 			  "\xa2\xbc\x6b\x98\xd7\x75\x7f\xe3"
 			  "\xa4\x48\x93\x39\x26\x71\x4a\xc6",
@@ -19702,7 +19701,7 @@
 		.plen	= 0,
 		.ctext	= "\x71\x99\xfa\xf4\x44\x12\x68\x9b",
 		.clen	= 8,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x58\x5d\xa0\x96\x65\x1a\x04\xd7"
 			  "\x96\xe5\xc5\x68\xaa\x95\x35\xe0"
 			  "\x29\xa0\xba\x9e\x48\x78\xd1\xba",
@@ -19725,7 +19724,7 @@
 			  "\x1c\x16\x45\x52\xba\x04\x9c\x9f"
 			  "\xb1\xd2\x40\xbc\x52\x7c\x6f\xb1",
 		.clen	= 40,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x58\x5d\xa0\x96\x65\x1a\x04\xd7"
 			  "\x96\xe5\xc5\x68\xaa\x95\x35\xe0"
 			  "\x29\xa0\xba\x9e\x48\x78\xd1\xba",
@@ -19750,7 +19749,7 @@
 			  "\xa9\xb4\x2d\x68\x03\xa3\x44\xef",
 		.clen	= 48,
 		.novrfy	= 1,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xa4\x4b\x54\x29\x0a\xb8\x6d\x01"
 			  "\x5b\x80\x2a\xcf\x25\xc4\xb7\x5c"
 			  "\x20\x2c\xad\x30\xc2\x2b\x41\xfb"
@@ -19763,7 +19762,7 @@
 		.plen	= 0,
 		.ctext	= "\x1f\xb8\x8f\xa3\xdd\x54\x00\xf2",
 		.clen	= 8,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x39\xbb\xa7\xbe\x59\x97\x9e\x73"
 			  "\xa2\xbc\x6b\x98\xd7\x75\x7f\xe3"
 			  "\xa4\x48\x93\x39\x26\x71\x4a\xc6"
@@ -19785,7 +19784,7 @@
 			  "\xbc\xa8\xa3\xbd\x83\x7c\x1d\x2a",
 		.clen	= 48,
 		.novrfy	= 1,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x58\x5d\xa0\x96\x65\x1a\x04\xd7"
 			  "\x96\xe5\xc5\x68\xaa\x95\x35\xe0"
 			  "\x29\xa0\xba\x9e\x48\x78\xd1\xba"
@@ -19810,19 +19809,19 @@
 			  "\x7f\x44\x0a\x0c\x01\x18\x07\x92"
 			  "\xe1\xd3\x51\xce\x32\x6d\x0c\x5b",
 		.clen	= 48,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
- * rfc4309 refers to section 8 of rfc3610 क्रम test vectors, but they all
+ * rfc4309 refers to section 8 of rfc3610 for test vectors, but they all
  * use a 13-byte nonce, we only support an 11-byte nonce.  Worse,
  * they use AD lengths which are not valid ESP header lengths.
  *
- * These vectors are copied/generated from the ones क्रम rfc4106 with
+ * These vectors are copied/generated from the ones for rfc4106 with
  * the key truncated by one byte..
  */
-अटल स्थिर काष्ठा aead_testvec aes_ccm_rfc4309_tv_ढाँचा[] = अणु
-	अणु /* Generated using Crypto++ */
+static const struct aead_testvec aes_ccm_rfc4309_tv_template[] = {
+	{ /* Generated using Crypto++ */
 		.key	= zeroed_string,
 		.klen	= 19,
 		.iv	= zeroed_string,
@@ -19835,7 +19834,7 @@
 			  "\x1A\x22\xBA\x75\xEE\xD4\xD5\xB5"
 			  "\x27\x50\x01\xAC\x03\x33\x39\xFB",
 		.clen	= 32,
-	पूर्ण,अणु
+	},{
 		.key	= "\xfe\xff\xe9\x92\x86\x65\x73\x1c"
 			  "\x6d\x6a\x8f\x94\x67\x30\x83\x08"
 			  "\x00\x00\x00",
@@ -19852,7 +19851,7 @@
 			  "\x08\x09\x4E\xC4\x1E\xAD\xC6\xB0",
 		.clen	= 32,
 
-	पूर्ण, अणु
+	}, {
 		.key	= "\xfe\xff\xe9\x92\x86\x65\x73\x1c"
 			  "\x6d\x6a\x8f\x94\x67\x30\x83\x08"
 			  "\x00\x00\x00",
@@ -19868,7 +19867,7 @@
 			  "\xA1\xE2\xC2\x42\x2B\x81\x70\x40"
 			  "\xFD\x7F\x76\xD1\x03\x07\xBB\x0C",
 		.clen	= 32,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xfe\xff\xe9\x92\x86\x65\x73\x1c"
 			  "\x6d\x6a\x8f\x94\x67\x30\x83\x08"
 			  "\x00\x00\x00",
@@ -19885,7 +19884,7 @@
 			  "\x5B\xC0\x73\xE0\x2B\x73\x68\xC9"
 			  "\x2D\x8C\x58\xC2\x90\x3D\xB0\x3E",
 		.clen	= 32,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xfe\xff\xe9\x92\x86\x65\x73\x1c"
 			  "\x6d\x6a\x8f\x94\x67\x30\x83\x08"
 			  "\x00\x00\x00",
@@ -19902,7 +19901,7 @@
 			  "\x43\x8E\x76\x57\x3B\xB4\x05\xE8"
 			  "\xA9\x9B\xBF\x25\xE0\x4F\xC0\xED",
 		.clen	= 32,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xfe\xff\xe9\x92\x86\x65\x73\x1c"
 			  "\x6d\x6a\x8f\x94\x67\x30\x83\x08"
 			  "\x00\x00\x00",
@@ -19931,7 +19930,7 @@
 			  "\x02\x73\xDD\xE7\x30\x4A\x30\x54"
 			  "\x1A\x9D\x09\xCA\xC8\x1C\x32\x5F",
 		.clen	= 80,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x00\x01\x02\x03\x04\x05\x06\x07"
 			  "\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f"
 			  "\x00\x00\x00",
@@ -19993,7 +19992,7 @@
 			  "\x2D\xC2\xDD\x5D\xDD\x22\x9A\xCC"
 			  "\x39\xAB\x63\xA5\x3D\x9C\x51\x8A",
 		.clen	= 208,
-	पूर्ण, अणु /* From draft-mcgrew-gcm-test-01 */
+	}, { /* From draft-mcgrew-gcm-test-01 */
 		.key	= "\x4C\x80\xCD\xEF\xBB\x5D\x10\xDA"
 			  "\x90\x6A\xC7\x3C\x36\x13\xA6\x34"
 			  "\x2E\x44\x3B",
@@ -20025,7 +20024,7 @@
 			  "\x61\x06\x8A\xDF\x86\x3F\xB4\xAC"
 			  "\x97\xDC\xBD\xFD\x92\x10\xC5\xFF",
 		.clen	= 88,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xFE\xFF\xE9\x92\x86\x65\x73\x1C"
 			  "\x6D\x6A\x8F\x94\x67\x30\x83\x08"
 			  "\xCA\xFE\xBA",
@@ -20054,7 +20053,7 @@
 			  "\x10\x72\x7E\x53\x13\x3B\x68\xE4"
 			  "\x30\x99\x91\x79\x09\xEA\xFF\x6A",
 		.clen	= 80,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xAB\xBC\xCD\xDE\xF0\x01\x12\x23"
 			  "\x34\x45\x56\x67\x78\x89\x9A\xAB"
 			  "\xAB\xBC\xCD\xDE\xF0\x01\x12\x23"
@@ -20083,7 +20082,7 @@
 			  "\x23\xA6\x10\xB0\x26\xD6\xD9\x26"
 			  "\x5A\x48\x6A\x3E",
 		.clen	= 68,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x00\x00\x00\x00\x00\x00\x00\x00"
 			  "\x00\x00\x00\x00\x00\x00\x00\x00"
 			  "\x00\x00\x00",
@@ -20112,7 +20111,7 @@
 			  "\x36\x25\xC1\x10\x12\x1C\xCA\x82"
 			  "\xEA\xE6\x63\x5A\x57\x28\xA9\x9A",
 		.clen	= 80,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x3D\xE0\x98\x74\xB3\x88\xE6\x49"
 			  "\x19\x88\xD0\xC3\x60\x7E\xAE\x1F"
 			  "\x57\x69\x0E",
@@ -20142,7 +20141,7 @@
 			  "\x97\x57\xCA\xC1\x20\xD0\x86\xB9"
 			  "\x66\x9D\xB4\x2B\x96\x22\xAC\x67",
 		.clen	= 80,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x3D\xE0\x98\x74\xB3\x88\xE6\x49"
 			  "\x19\x88\xD0\xC3\x60\x7E\xAE\x1F"
 			  "\x57\x69\x0E",
@@ -20164,7 +20163,7 @@
 			  "\xB5\xD6\x09\x0A\x23\x73\x33\xF9"
 			  "\x08\xB4\x22\xE4",
 		.clen	= 44,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xFE\xFF\xE9\x92\x86\x65\x73\x1C"
 			  "\x6D\x6A\x8F\x94\x67\x30\x83\x08"
 			  "\xFE\xFF\xE9\x92\x86\x65\x73\x1C"
@@ -20188,7 +20187,7 @@
 			  "\x34\xA5\x9F\x6C\x48\x30\x1E\x22"
 			  "\xFE\xB1\x22\x17\x17\x8A\xB9\x5B",
 		.clen	= 56,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xAB\xBC\xCD\xDE\xF0\x01\x12\x23"
 			  "\x34\x45\x56\x67\x78\x89\x9A\xAB"
 			  "\xDE\xCA\xF8",
@@ -20222,7 +20221,7 @@
 			  "\x76\xD6\x55\xC6\xB4\xC2\x34\xC7"
 			  "\x12\x25\x0B\xF9",
 		.clen	= 92,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xAB\xBC\xCD\xDE\xF0\x01\x12\x23"
 			  "\x34\x45\x56\x67\x78\x89\x9A\xAB"
 			  "\xAB\xBC\xCD\xDE\xF0\x01\x12\x23"
@@ -20248,7 +20247,7 @@
 			  "\x62\xF4\x14\x61\x5C\x9D\xB5\xA7"
 			  "\xEE\xD7\xB9\x7E\x87\x99\x9B\x7D",
 		.clen	= 56,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x3D\xE0\x98\x74\xB3\x88\xE6\x49"
 			  "\x19\x88\xD0\xC3\x60\x7E\xAE\x1F"
 			  "\x57\x69\x0E",
@@ -20282,7 +20281,7 @@
 			  "\xDB\xD7\x67\xED\xA4\x93\xF3\x47"
 			  "\xCC\xF7\x46\x6F",
 		.clen	= 92,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xAB\xBC\xCD\xDE\xF0\x01\x12\x23"
 			  "\x34\x45\x56\x67\x78\x89\x9A\xAB"
 			  "\xAB\xBC\xCD\xDE\xF0\x01\x12\x23"
@@ -20316,7 +20315,7 @@
 			  "\x4A\x8F\x06\x37\x48\xF9\xF9\x05"
 			  "\x55\x13\x40\xC3\xD5\x55\x3A\x3D",
 		.clen	= 88,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x7D\x77\x3D\x00\xC1\x44\xC5\x25"
 			  "\xAC\x61\x9D\x18\xC8\x4A\x3F\x47"
 			  "\xD9\x66\x42",
@@ -20331,7 +20330,7 @@
 			  "\xD0\xD8\x60\x9D\x8B\xEF\x85\x90"
 			  "\xF7\x61\x24\x62",
 		.clen	= 20,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xAB\xBC\xCD\xDE\xF0\x01\x12\x23"
 			  "\x34\x45\x56\x67\x78\x89\x9A\xAB"
 			  "\xDE\xCA\xF8",
@@ -20351,7 +20350,7 @@
 			  "\xF0\x6B\x21\xAF\x98\xC0\x34\xDC"
 			  "\x17\x17\x65\xAD",
 		.clen	= 36,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x6C\x65\x67\x61\x6C\x69\x7A\x65"
 			  "\x6D\x61\x72\x69\x6A\x75\x61\x6E"
 			  "\x61\x61\x6E\x64\x64\x6F\x69\x74"
@@ -20381,7 +20380,7 @@
 			  "\xE0\x63\x4B\x21\x44\xA2\x2B\x2B"
 			  "\x39\xDB\xC8\xDC",
 		.clen	= 68,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x3D\xE0\x98\x74\xB3\x88\xE6\x49"
 			  "\x19\x88\xD0\xC3\x60\x7E\xAE\x1F"
 			  "\x57\x69\x0E",
@@ -20409,7 +20408,7 @@
 			  "\x20\x17\x0C\x1B\x55\xDE\x7E\x68"
 			  "\xF4\x95\x5D\x4F",
 		.clen	= 68,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x4C\x80\xCD\xEF\xBB\x5D\x10\xDA"
 			  "\x90\x6A\xC7\x3C\x36\x13\xA6\x34"
 			  "\x22\x43\x3C",
@@ -20431,14 +20430,14 @@
 			  "\xCE\xE8\x79\x85\x3C\xB0\x3A\x8F"
 			  "\x16\xB0\xA1\x26\xC9\xBC\xBC\xA6",
 		.clen	= 48,
-	पूर्ण
-पूर्ण;
+	}
+};
 
 /*
  * ChaCha20-Poly1305 AEAD test vectors from RFC7539 2.8.2./A.5.
  */
-अटल स्थिर काष्ठा aead_testvec rfc7539_tv_ढाँचा[] = अणु
-	अणु
+static const struct aead_testvec rfc7539_tv_template[] = {
+	{
 		.key	= "\x80\x81\x82\x83\x84\x85\x86\x87"
 			  "\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f"
 			  "\x90\x91\x92\x93\x94\x95\x96\x97"
@@ -20483,7 +20482,7 @@
 			  "\xe2\x6a\x7e\x90\x2e\xcb\xd0\x60"
 			  "\x06\x91",
 		.clen	= 130,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x1c\x92\x40\xa5\xeb\x55\xd3\x8a"
 			  "\xf3\x33\x88\x86\x04\xf6\xb5\xf0"
 			  "\x47\x39\x17\xc1\x40\x2b\x80\x09"
@@ -20566,14 +20565,14 @@
 			  "\x22\x39\x23\x36\xfe\xa1\x85\x1f"
 			  "\x38",
 		.clen	= 281,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
  * draft-irtf-cfrg-chacha20-poly1305
  */
-अटल स्थिर काष्ठा aead_testvec rfc7539esp_tv_ढाँचा[] = अणु
-	अणु
+static const struct aead_testvec rfc7539esp_tv_template[] = {
+	{
 		.key	= "\x1c\x92\x40\xa5\xeb\x55\xd3\x8a"
 			  "\xf3\x33\x88\x86\x04\xf6\xb5\xf0"
 			  "\x47\x39\x17\xc1\x40\x2b\x80\x09"
@@ -20657,18 +20656,18 @@
 			  "\x22\x39\x23\x36\xfe\xa1\x85\x1f"
 			  "\x38",
 		.clen	= 281,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
  * AEGIS-128 test vectors - generated via reference implementation from
- * SUPERCOP (https://bench.cr.yp.to/supercop.hपंचांगl):
+ * SUPERCOP (https://bench.cr.yp.to/supercop.html):
  *
  *   https://bench.cr.yp.to/supercop/supercop-20170228.tar.xz
  *   (see crypto_aead/aegis128/)
  */
-अटल स्थिर काष्ठा aead_testvec aegis128_tv_ढाँचा[] = अणु
-	अणु
+static const struct aead_testvec aegis128_tv_template[] = {
+	{
 		.key	= "\x0f\xc9\x8e\x67\x44\x9e\xaa\x86"
 			  "\x20\x36\x2c\x24\xfe\xc9\x30\x81",
 		.klen	= 16,
@@ -20681,7 +20680,7 @@
 		.ctext	= "\x07\xa5\x11\xf2\x9d\x40\xb8\x6d"
 			  "\xda\xb8\x12\x34\x4c\x53\xd9\x72",
 		.clen	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x4b\xed\xc8\x07\x54\x1a\x52\xa2"
 			  "\xa1\x10\xde\xb5\xf8\xed\xf3\x87",
 		.klen	= 16,
@@ -20695,7 +20694,7 @@
 			  "\x9a\xd7\x5d\xd7\xaa\x9a\xe9\x5a"
 			  "\xcc",
 		.clen	= 17,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x88\x12\x01\xa6\x64\x96\xfb\xbe"
 			  "\x22\xea\x90\x47\xf2\x11\xb5\x8e",
 		.klen	= 16,
@@ -20711,7 +20710,7 @@
 			  "\x2b\xc2\x3e\x0b\x1b\x39\x37\x2b"
 			  "\x7a\x21\x16\xb3\xe6\x67\x66",
 		.clen	= 31,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xc4\x37\x3b\x45\x74\x11\xa4\xda"
 			  "\xa2\xc5\x42\xd8\xec\x36\x78\x94",
 		.klen	= 16,
@@ -20727,7 +20726,7 @@
 			  "\x1e\xa8\x30\x9c\x16\xa4\xdb\x65"
 			  "\x51\x10\x16\x27\x70\x9b\x64\x29",
 		.clen	= 32,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x01\x5c\x75\xe5\x84\x8d\x4d\xf6"
 			  "\x23\x9f\xf4\x6a\xe6\x5a\x3b\x9a",
 		.klen	= 16,
@@ -20745,7 +20744,7 @@
 			  "\x03\xdf\x64\x3c\xbe\x93\x9e\xc9"
 			  "\x3b",
 		.clen	= 33,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x3d\x80\xae\x84\x94\x09\xf6\x12"
 			  "\xa4\x79\xa6\xfb\xe0\x7f\xfd\xa0",
 		.klen	= 16,
@@ -20765,7 +20764,7 @@
 			  "\x4b\x56\x5b\x94\xce\xcd\x74\xcd"
 			  "\x75\xc4\x53\x01\x89\x45\x59",
 		.clen	= 47,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x7a\xa5\xe8\x23\xa4\x84\x9e\x2d"
 			  "\x25\x53\x58\x8c\xda\xa3\xc0\xa6",
 		.klen	= 16,
@@ -20785,7 +20784,7 @@
 			  "\xa5\x3c\x1a\x18\x5c\xce\xb9\xdf"
 			  "\x51\x52\x77\xf2\x5e\x85\x80\x41",
 		.clen	= 48,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xb6\xca\x22\xc3\xb4\x00\x47\x49"
 			  "\xa6\x2d\x0a\x1e\xd4\xc7\x83\xad",
 		.klen	= 16,
@@ -20798,7 +20797,7 @@
 		.ctext	= "\xfb\xd4\x83\x71\x9e\x63\xad\x60"
 			  "\xb9\xf9\xeb\x34\x52\x49\xcf\xb7",
 		.clen	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xf3\xee\x5c\x62\xc4\x7c\xf0\x65"
 			  "\x27\x08\xbd\xaf\xce\xec\x45\xb3",
 		.klen	= 16,
@@ -20812,7 +20811,7 @@
 		.ctext	= "\x0c\xaf\x2e\x96\xf6\x97\x08\x71"
 			  "\x7d\x3a\x84\xc4\x44\x57\x77\x7e",
 		.clen	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x2f\x13\x95\x01\xd5\xf7\x99\x81"
 			  "\xa8\xe2\x6f\x41\xc8\x10\x08\xb9",
 		.klen	= 16,
@@ -20826,7 +20825,7 @@
 		.ctext	= "\xc7\x87\x09\x3b\xc7\x19\x74\x22"
 			  "\x22\xa5\x67\x10\xb2\x36\xb3\x45",
 		.clen	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x6c\x38\xcf\xa1\xe5\x73\x41\x9d"
 			  "\x29\xbc\x21\xd2\xc2\x35\xcb\xbf",
 		.klen	= 16,
@@ -20841,7 +20840,7 @@
 		.ctext	= "\x02\xc6\x3b\x46\x65\xb2\xef\x91"
 			  "\x31\xf0\x45\x48\x8a\x2a\xed\xe4",
 		.clen	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xa8\x5c\x09\x40\xf5\xef\xea\xb8"
 			  "\xaa\x96\xd3\x64\xbc\x59\x8d\xc6",
 		.klen	= 16,
@@ -20857,7 +20856,7 @@
 		.ctext	= "\x20\x85\xa8\xd0\x91\x48\x85\xf3"
 			  "\x5a\x16\xc0\x57\x68\x47\xdd\xcb",
 		.clen	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xe5\x81\x42\xdf\x05\x6a\x93\xd4"
 			  "\x2b\x70\x85\xf5\xb6\x7d\x50\xcc",
 		.klen	= 16,
@@ -20873,7 +20872,7 @@
 		.ctext	= "\x6a\xf8\x8d\x9c\x42\x75\x35\x79"
 			  "\xc1\x96\xbd\x31\x6e\x69\x1b\x50",
 		.clen	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x22\xa6\x7c\x7f\x15\xe6\x3c\xf0"
 			  "\xac\x4b\x37\x86\xb0\xa2\x13\xd2",
 		.klen	= 16,
@@ -20887,7 +20886,7 @@
 			  "\x70\x45\xe3\x2a\x9d\x5c\x63\x98"
 			  "\x39",
 		.clen	= 17,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x5e\xcb\xb6\x1e\x25\x62\xe4\x0c"
 			  "\x2d\x25\xe9\x18\xaa\xc6\xd5\xd8",
 		.klen	= 16,
@@ -20904,7 +20903,7 @@
 			  "\x3d\x36\xdb\xf7\xcc\x31\x94\x9c"
 			  "\x98\xbd\x71\x7a\xef\xa4\xfa",
 		.clen	= 31,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x9b\xef\xf0\xbd\x35\xdd\x8d\x28"
 			  "\xad\xff\x9b\xa9\xa4\xeb\x98\xdf",
 		.klen	= 16,
@@ -20921,7 +20920,7 @@
 			  "\xa9\x6c\xca\xac\x40\x73\xb2\x4c"
 			  "\x9c\xb9\x0e\x79\x4c\x40\x65\xc6",
 		.clen	= 32,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xd7\x14\x29\x5d\x45\x59\x36\x44"
 			  "\x2e\xd9\x4d\x3b\x9e\x0f\x5b\xe5",
 		.klen	= 16,
@@ -20941,7 +20940,7 @@
 			  "\x4b\x07\x2c\xac\x53\xc5\xd5\xfe"
 			  "\x93",
 		.clen	= 33,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x14\x39\x63\xfc\x56\xd5\xdf\x5f"
 			  "\xaf\xb3\xff\xcc\x98\x33\x1d\xeb",
 		.klen	= 16,
@@ -20964,7 +20963,7 @@
 			  "\xdc\xa6\xea\x2c\xc2\x7f\xf5\x04"
 			  "\xcb\xe5\x47\xbb\xa7\xd1\x9d",
 		.clen	= 47,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x50\x5d\x9d\x9b\x66\x50\x88\x7b"
 			  "\x30\x8e\xb1\x5e\x92\x58\xe0\xf1",
 		.klen	= 16,
@@ -20987,7 +20986,7 @@
 			  "\x87\x68\x47\x08\x5d\xdd\x83\xb0"
 			  "\x60\xf4\x93\x20\xdf\x34\x8f\xea",
 		.clen	= 48,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x8d\x82\xd6\x3b\x76\xcc\x30\x97"
 			  "\xb1\x68\x63\xef\x8c\x7c\xa3\xf7",
 		.klen	= 16,
@@ -21021,7 +21020,7 @@
 			  "\x96\x28\x3b\xee\x6b\xc6\x16\x31"
 			  "\x3f",
 		.clen	= 81,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xc9\xa7\x10\xda\x86\x48\xd9\xb3"
 			  "\x32\x42\x15\x80\x85\xa1\x65\xfe",
 		.klen	= 16,
@@ -21051,7 +21050,7 @@
 			  "\xb4\x98\x5a\x9b\xe4\x4d\xbf\x4e"
 			  "\x39",
 		.clen	= 49,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x06\xcc\x4a\x79\x96\xc3\x82\xcf"
 			  "\xb3\x1c\xc7\x12\x7f\xc5\x28\x04",
 		.klen	= 16,
@@ -21068,7 +21067,7 @@
 			  "\x46\xb5\x8d\xac\xb6\x34\xd8\x8b"
 			  "\xde\x20\x59\x77\xc1\x74\x90",
 		.clen	= 31,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x42\xf0\x84\x19\xa6\x3f\x2b\xea"
 			  "\x34\xf6\x79\xa3\x79\xe9\xeb\x0a",
 		.klen	= 16,
@@ -21085,7 +21084,7 @@
 			  "\x1d\x04\xdd\x6a\xef\x46\x8f\x68"
 			  "\xe9\xe0\x17\x45\x70\x12",
 		.clen	= 30,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x7f\x15\xbd\xb8\xb6\xba\xd3\x06"
 			  "\xb5\xd1\x2b\x35\x73\x0e\xad\x10",
 		.klen	= 16,
@@ -21101,19 +21100,19 @@
 			  "\xf5\x57\x0f\x2f\x49\x0e\x11\x3b"
 			  "\x78\x93\xec\xfc\xf4\xff\xe1\x2d",
 		.clen	= 24,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
  * All key wrapping test vectors taken from
- * http://csrc.nist.gov/groups/STM/cavp/करोcuments/mac/kwtestvectors.zip
+ * http://csrc.nist.gov/groups/STM/cavp/documents/mac/kwtestvectors.zip
  *
- * Note: as करोcumented in keywrap.c, the ivout क्रम encryption is the first
+ * Note: as documented in keywrap.c, the ivout for encryption is the first
  * semiblock of the ciphertext from the test vector. For decryption, iv is
  * the first semiblock of the ciphertext.
  */
-अटल स्थिर काष्ठा cipher_testvec aes_kw_tv_ढाँचा[] = अणु
-	अणु
+static const struct cipher_testvec aes_kw_tv_template[] = {
+	{
 		.key	= "\x75\x75\xda\x3a\x93\x60\x7c\xc2"
 			  "\xbf\xd8\xce\xc7\xaa\xdf\xd9\xa6",
 		.klen	= 16,
@@ -21124,7 +21123,7 @@
 		.len	= 16,
 		.iv_out	= "\x03\x1f\x6b\xd7\xe6\x1e\x64\x3d",
 		.generates_iv = true,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x80\xaa\x99\x73\x27\xa4\x80\x6b"
 			  "\x6a\x7a\x41\xa5\x2b\x86\xc3\x71"
 			  "\x03\x86\xf9\x32\x78\x6e\xf7\x96"
@@ -21137,17 +21136,17 @@
 		.len	= 16,
 		.iv_out	= "\x42\x3c\x96\x0d\x8a\x2a\xc4\xc1",
 		.generates_iv = true,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
- * ANSI X9.31 Continuous Pseuकरो-Ranकरोm Number Generator (AES mode)
+ * ANSI X9.31 Continuous Pseudo-Random Number Generator (AES mode)
  * test vectors, taken from Appendix B.2.9 and B.2.10:
- *     http://csrc.nist.gov/groups/STM/cavp/करोcuments/rng/RNGVS.pdf
- * Only AES-128 is supported at this समय.
+ *     http://csrc.nist.gov/groups/STM/cavp/documents/rng/RNGVS.pdf
+ * Only AES-128 is supported at this time.
  */
-अटल स्थिर काष्ठा cprng_testvec ansi_cprng_aes_tv_ढाँचा[] = अणु
-	अणु
+static const struct cprng_testvec ansi_cprng_aes_tv_template[] = {
+	{
 		.key	= "\xf3\xb1\x66\x6d\x13\x60\x72\x42"
 			  "\xed\x06\x1c\xab\xb8\xd4\x62\x02",
 		.klen	= 16,
@@ -21161,7 +21160,7 @@
 			  "\x84\x79\x66\x85\xc1\x2f\x76\x41",
 		.rlen	= 16,
 		.loops	= 1,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xf3\xb1\x66\x6d\x13\x60\x72\x42"
 			  "\xed\x06\x1c\xab\xb8\xd4\x62\x02",
 		.klen	= 16,
@@ -21175,7 +21174,7 @@
 			  "\x1c\x9c\xb6\x41\xa9\xf3\x22\x0d",
 		.rlen	= 16,
 		.loops	= 1,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xf3\xb1\x66\x6d\x13\x60\x72\x42"
 			  "\xed\x06\x1c\xab\xb8\xd4\x62\x02",
 		.klen	= 16,
@@ -21189,7 +21188,7 @@
 			  "\x29\x14\x28\x81\xa9\x4d\x4e\xc7",
 		.rlen	= 16,
 		.loops	= 1,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xf3\xb1\x66\x6d\x13\x60\x72\x42"
 			  "\xed\x06\x1c\xab\xb8\xd4\x62\x02",
 		.klen	= 16,
@@ -21203,7 +21202,7 @@
 			  "\xf6\x9d\xa5\x7e\x7b\x95\xc7\x3a",
 		.rlen	= 16,
 		.loops	= 1,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xf3\xb1\x66\x6d\x13\x60\x72\x42"
 			  "\xed\x06\x1c\xab\xb8\xd4\x62\x02",
 		.klen	= 16,
@@ -21217,7 +21216,7 @@
 			  "\x78\xc4\x0b\x14\x0a\x5a\x9a\xc8",
 		.rlen	= 16,
 		.loops	= 1,
-	पूर्ण, अणु	/* Monte Carlo Test */
+	}, {	/* Monte Carlo Test */
 		.key	= "\x9f\x5b\x51\x20\x0b\xf3\x34\xb5"
 			  "\xd8\x2b\xe8\xc3\x72\x55\xc8\x48",
 		.klen	= 16,
@@ -21231,35 +21230,35 @@
 			  "\xe4\x57\x90\xd5\xc3\xfc\x9b\x73",
 		.rlen	= 16,
 		.loops	= 10000,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
  * SP800-90A DRBG Test vectors from
- * http://csrc.nist.gov/groups/STM/cavp/करोcuments/drbg/drbgtestvectors.zip
+ * http://csrc.nist.gov/groups/STM/cavp/documents/drbg/drbgtestvectors.zip
  *
- * Test vectors क्रम DRBG with prediction resistance. All types of DRBGs
- * (Hash, HMAC, CTR) are tested with all permutations of use हालs (w/ and
+ * Test vectors for DRBG with prediction resistance. All types of DRBGs
+ * (Hash, HMAC, CTR) are tested with all permutations of use cases (w/ and
  * w/o personalization string, w/ and w/o additional input string).
  */
-अटल स्थिर काष्ठा drbg_testvec drbg_pr_sha256_tv_ढाँचा[] = अणु
-	अणु
-		.entropy = (अचिन्हित अक्षर *)
+static const struct drbg_testvec drbg_pr_sha256_tv_template[] = {
+	{
+		.entropy = (unsigned char *)
 			"\x72\x88\x4c\xcd\x6c\x85\x57\x70\xf7\x0b\x8b\x86"
 			"\xc1\xeb\xd2\x4e\x36\x14\xab\x18\xc4\x9c\xc9\xcf"
 			"\x1a\xe8\xf7\x7b\x02\x49\x73\xd7\xf1\x42\x7d\xc6"
 			"\x3f\x29\x2d\xec\xd3\x66\x51\x3f\x1d\x8d\x5b\x4e",
 		.entropylen = 48,
-		.entpra = (अचिन्हित अक्षर *)
+		.entpra = (unsigned char *)
 			"\x38\x9c\x91\xfa\xc2\xa3\x46\x89\x56\x08\x3f\x62"
 			"\x73\xd5\x22\xa9\x29\x63\x3a\x1d\xe5\x5d\x5e\x4f"
 			"\x67\xb0\x67\x7a\x5e\x9e\x0c\x62",
-		.entprb = (अचिन्हित अक्षर *)
+		.entprb = (unsigned char *)
 			"\xb2\x8f\x36\xb2\xf6\x8d\x39\x13\xfa\x6c\x66\xcf"
 			"\x62\x8a\x7e\x8c\x12\x33\x71\x9c\x69\xe4\xa5\xf0"
 			"\x8c\xee\xeb\x9c\xf5\x31\x98\x31",
 		.entprlen = 32,
-		.expected = (अचिन्हित अक्षर *)
+		.expected = (unsigned char *)
 			"\x52\x7b\xa3\xad\x71\x77\xa4\x49\x42\x04\x61\xc7"
 			"\xf0\xaf\xa5\xfd\xd3\xb3\x0d\x6a\x61\xba\x35\x49"
 			"\xbb\xaa\xaf\xe4\x25\x7d\xb5\x48\xaf\x5c\x18\x3d"
@@ -21272,28 +21271,28 @@
 			"\x94\xc6\x97\x36\xab\xf0\xe5\x31\x28\x6a\xbb\xce"
 			"\x30\x81\xa6\x8f\x27\x14\xf8\x1c",
 		.expectedlen = 128,
-		.addtla = शून्य,
-		.addtlb = शून्य,
+		.addtla = NULL,
+		.addtlb = NULL,
 		.addtllen = 0,
-		.pers = शून्य,
+		.pers = NULL,
 		.perslen = 0,
-	पूर्ण, अणु
-		.entropy = (अचिन्हित अक्षर *)
+	}, {
+		.entropy = (unsigned char *)
 			"\x5d\xf2\x14\xbc\xf6\xb5\x4e\x0b\xf0\x0d\x6f\x2d"
 			"\xe2\x01\x66\x7b\xd0\xa4\x73\xa4\x21\xdd\xb0\xc0"
 			"\x51\x79\x09\xf4\xea\xa9\x08\xfa\xa6\x67\xe0\xe1"
 			"\xd1\x88\xa8\xad\xee\x69\x74\xb3\x55\x06\x9b\xf6",
 		.entropylen = 48,
-		.entpra = (अचिन्हित अक्षर *)
+		.entpra = (unsigned char *)
 			"\xef\x48\x06\xa2\xc2\x45\xf1\x44\xfa\x34\x2c\xeb"
 			"\x8d\x78\x3c\x09\x8f\x34\x72\x20\xf2\xe7\xfd\x13"
 			"\x76\x0a\xf6\xdc\x3c\xf5\xc0\x15",
-		.entprb = (अचिन्हित अक्षर *)
+		.entprb = (unsigned char *)
 			"\x4b\xbe\xe5\x24\xed\x6a\x2d\x0c\xdb\x73\x5e\x09"
 			"\xf9\xad\x67\x7c\x51\x47\x8b\x6b\x30\x2a\xc6\xde"
 			"\x76\xaa\x55\x04\x8b\x0a\x72\x95",
 		.entprlen = 32,
-		.expected = (अचिन्हित अक्षर *)
+		.expected = (unsigned char *)
 			"\x3b\x14\x71\x99\xa1\xda\xa0\x42\xe6\xc8\x85\x32"
 			"\x70\x20\x32\x53\x9a\xbe\xd1\x1e\x15\xef\xfb\x4c"
 			"\x25\x6e\x19\x3a\xf0\xb9\xcb\xde\xf0\x3b\xc6\x18"
@@ -21306,34 +21305,34 @@
 			"\x9a\x5b\xd6\x87\x52\xa1\x89\x2b\x4b\x9c\x64\x60"
 			"\x50\x47\xa3\x63\x81\x16\xaf\x19",
 		.expectedlen = 128,
-		.addtla = (अचिन्हित अक्षर *)
+		.addtla = (unsigned char *)
 			"\xbe\x13\xdb\x2a\xe9\xa8\xfe\x09\x97\xe1\xce\x5d"
 			"\xe8\xbb\xc0\x7c\x4f\xcb\x62\x19\x3f\x0f\xd2\xad"
 			"\xa9\xd0\x1d\x59\x02\xc4\xff\x70",
-		.addtlb = (अचिन्हित अक्षर *)
+		.addtlb = (unsigned char *)
 			"\x6f\x96\x13\xe2\xa7\xf5\x6c\xfe\xdf\x66\xe3\x31"
 			"\x63\x76\xbf\x20\x27\x06\x49\xf1\xf3\x01\x77\x41"
 			"\x9f\xeb\xe4\x38\xfe\x67\x00\xcd",
 		.addtllen = 32,
-		.pers = शून्य,
+		.pers = NULL,
 		.perslen = 0,
-	पूर्ण, अणु
-		.entropy = (अचिन्हित अक्षर *)
+	}, {
+		.entropy = (unsigned char *)
 			"\xc6\x1c\xaf\x83\xa2\x56\x38\xf9\xb0\xbc\xd9\x85"
 			"\xf5\x2e\xc4\x46\x9c\xe1\xb9\x40\x98\x70\x10\x72"
 			"\xd7\x7d\x15\x85\xa1\x83\x5a\x97\xdf\xc8\xa8\xe8"
 			"\x03\x4c\xcb\x70\x35\x8b\x90\x94\x46\x8a\x6e\xa1",
 		.entropylen = 48,
-		.entpra = (अचिन्हित अक्षर *)
+		.entpra = (unsigned char *)
 			"\xc9\x05\xa4\xcf\x28\x80\x4b\x93\x0f\x8b\xc6\xf9"
 			"\x09\x41\x58\x74\xe9\xec\x28\xc7\x53\x0a\x73\x60"
 			"\xba\x0a\xde\x57\x5b\x4b\x9f\x29",
-		.entprb = (अचिन्हित अक्षर *)
+		.entprb = (unsigned char *)
 			"\x4f\x31\xd2\xeb\xac\xfa\xa8\xe2\x01\x7d\xf3\xbd"
 			"\x42\xbd\x20\xa0\x30\x65\x74\xd5\x5d\xd2\xad\xa4"
 			"\xa9\xeb\x1f\x4d\xf6\xfd\xb8\x26",
 		.entprlen = 32,
-		.expected = (अचिन्हित अक्षर *)
+		.expected = (unsigned char *)
 			"\xf6\x13\x05\xcb\x83\x60\x16\x42\x49\x1d\xc6\x25"
 			"\x3b\x8c\x31\xa3\xbe\x8b\xbd\x1c\xe2\xec\x1d\xde"
 			"\xbb\xbf\xa1\xac\xa8\x9f\x50\xce\x69\xce\xef\xd5"
@@ -21346,31 +21345,31 @@
 			"\x6c\x83\x12\x30\xb8\x78\x7f\x8e\x54\x82\xd4\xfe"
 			"\x90\x35\x0d\x4c\x4d\x85\xe7\x13",
 		.expectedlen = 128,
-		.addtla = शून्य,
-		.addtlb = शून्य,
+		.addtla = NULL,
+		.addtlb = NULL,
 		.addtllen = 0,
-		.pers = (अचिन्हित अक्षर *)
+		.pers = (unsigned char *)
 			"\xa5\xbf\xac\x4f\x71\xa1\xbb\x67\x94\xc6\x50\xc7"
 			"\x2a\x45\x9e\x10\xa8\xed\xf7\x52\x4f\xfe\x21\x90"
 			"\xa4\x1b\xe1\xe2\x53\xcc\x61\x47",
 		.perslen = 32,
-	पूर्ण, अणु
-		.entropy = (अचिन्हित अक्षर *)
+	}, {
+		.entropy = (unsigned char *)
 			"\xb6\xc1\x8d\xdf\x99\x54\xbe\x95\x10\x48\xd9\xf6"
 			"\xd7\x48\xa8\x73\x2d\x74\xde\x1e\xde\x57\x7e\xf4"
 			"\x7b\x7b\x64\xef\x88\x7a\xa8\x10\x4b\xe1\xc1\x87"
 			"\xbb\x0b\xe1\x39\x39\x50\xaf\x68\x9c\xa2\xbf\x5e",
 		.entropylen = 48,
-		.entpra = (अचिन्हित अक्षर *)
+		.entpra = (unsigned char *)
 			"\xdc\x81\x0a\x01\x58\xa7\x2e\xce\xee\x48\x8c\x7c"
 			"\x77\x9e\x3c\xf1\x17\x24\x7a\xbb\xab\x9f\xca\x12"
 			"\x19\xaf\x97\x2d\x5f\xf9\xff\xfc",
-		.entprb = (अचिन्हित अक्षर *)
+		.entprb = (unsigned char *)
 			"\xaf\xfc\x4f\x98\x8b\x93\x95\xc1\xb5\x8b\x7f\x73"
 			"\x6d\xa6\xbe\x6d\x33\xeb\x2c\x82\xb1\xaf\xc1\xb6"
 			"\xb6\x05\xe2\x44\xaa\xfd\xe7\xdb",
 		.entprlen = 32,
-		.expected = (अचिन्हित अक्षर *)
+		.expected = (unsigned char *)
 			"\x51\x79\xde\x1c\x0f\x58\xf3\xf4\xc9\x57\x2e\x31"
 			"\xa7\x09\xa1\x53\x64\x63\xa2\xc5\x1d\x84\x88\x65"
 			"\x01\x1b\xc6\x16\x3c\x49\x5b\x42\x8e\x53\xf5\x18"
@@ -21383,41 +21382,41 @@
 			"\x3c\x59\xd6\x33\x6c\x02\xe8\x05\x71\x46\x68\x44"
 			"\x63\x4a\x68\x72\xe9\xf5\x55\xfe",
 		.expectedlen = 128,
-		.addtla = (अचिन्हित अक्षर *)
+		.addtla = (unsigned char *)
 			"\x15\x20\x2f\xf6\x98\x28\x63\xa2\xc4\x4e\xbb\x6c"
 			"\xb2\x25\x92\x61\x79\xc9\x22\xc4\x61\x54\x96\xff"
 			"\x4a\x85\xca\x80\xfe\x0d\x1c\xd0",
-		.addtlb = (अचिन्हित अक्षर *)
+		.addtlb = (unsigned char *)
 			"\xde\x29\x8e\x03\x42\x61\xa3\x28\x5e\xc8\x80\xc2"
 			"\x6d\xbf\xad\x13\xe1\x8d\x2a\xc7\xe8\xc7\x18\x89"
 			"\x42\x58\x9e\xd6\xcc\xad\x7b\x1e",
 		.addtllen = 32,
-		.pers = (अचिन्हित अक्षर *)
+		.pers = (unsigned char *)
 			"\x84\xc3\x73\x9e\xce\xb3\xbc\x89\xf7\x62\xb3\xe1"
 			"\xd7\x48\x45\x8a\xa9\xcc\xe9\xed\xd5\x81\x84\x52"
 			"\x82\x4c\xdc\x19\xb8\xf8\x92\x5c",
 		.perslen = 32,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा drbg_testvec drbg_pr_hmac_sha256_tv_ढाँचा[] = अणु
-	अणु
-		.entropy = (अचिन्हित अक्षर *)
+static const struct drbg_testvec drbg_pr_hmac_sha256_tv_template[] = {
+	{
+		.entropy = (unsigned char *)
 			"\x99\x69\xe5\x4b\x47\x03\xff\x31\x78\x5b\x87\x9a"
 			"\x7e\x5c\x0e\xae\x0d\x3e\x30\x95\x59\xe9\xfe\x96"
 			"\xb0\x67\x6d\x49\xd5\x91\xea\x4d\x07\xd2\x0d\x46"
 			"\xd0\x64\x75\x7d\x30\x23\xca\xc2\x37\x61\x27\xab",
 		.entropylen = 48,
-		.entpra = (अचिन्हित अक्षर *)
+		.entpra = (unsigned char *)
 			"\xc6\x0f\x29\x99\x10\x0f\x73\x8c\x10\xf7\x47\x92"
 			"\x67\x6a\x3f\xc4\xa2\x62\xd1\x37\x21\x79\x80\x46"
 			"\xe2\x9a\x29\x51\x81\x56\x9f\x54",
-		.entprb = (अचिन्हित अक्षर *)
+		.entprb = (unsigned char *)
 			"\xc1\x1d\x45\x24\xc9\x07\x1b\xd3\x09\x60\x15\xfc"
 			"\xf7\xbc\x24\xa6\x07\xf2\x2f\xa0\x65\xc9\x37\x65"
 			"\x8a\x2a\x77\xa8\x69\x90\x89\xf4",
 		.entprlen = 32,
-		.expected = (अचिन्हित अक्षर *)
+		.expected = (unsigned char *)
 			"\xab\xc0\x15\x85\x60\x94\x80\x3a\x93\x8d\xff\xd2"
 			"\x0d\xa9\x48\x43\x87\x0e\xf9\x35\xb8\x2c\xfe\xc1"
 			"\x77\x06\xb8\xf5\x51\xb8\x38\x50\x44\x23\x5d\xd4"
@@ -21430,28 +21429,28 @@
 			"\xd4\x37\x2d\x6d\x75\x4a\xba\xbb\x4b\xf8\x96\xfc"
 			"\xb1\xcd\x09\xd6\x92\xd0\x28\x3f",
 		.expectedlen = 128,
-		.addtla = शून्य,
-		.addtlb = शून्य,
+		.addtla = NULL,
+		.addtlb = NULL,
 		.addtllen = 0,
-		.pers = शून्य,
+		.pers = NULL,
 		.perslen = 0,
-	पूर्ण, अणु
-		.entropy = (अचिन्हित अक्षर *)
+	}, {
+		.entropy = (unsigned char *)
 			"\xb9\x1f\xe9\xef\xdd\x9b\x7d\x20\xb6\xec\xe0\x2f"
 			"\xdb\x76\x24\xce\x41\xc8\x3a\x4a\x12\x7f\x3e\x2f"
 			"\xae\x05\x99\xea\xb5\x06\x71\x0d\x0c\x4c\xb4\x05"
 			"\x26\xc6\xbd\xf5\x7f\x2a\x3d\xf2\xb5\x49\x7b\xda",
 		.entropylen = 48,
-		.entpra = (अचिन्हित अक्षर *)
+		.entpra = (unsigned char *)
 			"\xef\x67\x50\x9c\xa7\x7d\xdf\xb7\x2d\x81\x01\xa4"
 			"\x62\x81\x6a\x69\x5b\xb3\x37\x45\xa7\x34\x8e\x26"
 			"\x46\xd9\x26\xa2\x19\xd4\x94\x43",
-		.entprb = (अचिन्हित अक्षर *)
+		.entprb = (unsigned char *)
 			"\x97\x75\x53\x53\xba\xb4\xa6\xb2\x91\x60\x71\x79"
 			"\xd1\x6b\x4a\x24\x9a\x34\x66\xcc\x33\xab\x07\x98"
 			"\x51\x78\x72\xb2\x79\xfd\x2c\xff",
 		.entprlen = 32,
-		.expected = (अचिन्हित अक्षर *)
+		.expected = (unsigned char *)
 			"\x9c\xdc\x63\x8a\x19\x23\x22\x66\x0c\xc5\xb9\xd7"
 			"\xfb\x2a\xb0\x31\xe3\x8a\x36\xa8\x5a\xa8\x14\xda"
 			"\x1e\xa9\xcc\xfe\xb8\x26\x44\x83\x9f\xf6\xff\xaa"
@@ -21464,34 +21463,34 @@
 			"\xe8\xd6\xfe\x2a\xaf\xd3\xd3\xfe\xbd\x18\xfb\xcd"
 			"\xcd\x66\xb5\x01\x69\x66\xa0\x3c",
 		.expectedlen = 128,
-		.addtla = (अचिन्हित अक्षर *)
+		.addtla = (unsigned char *)
 			"\x17\xc1\x56\xcb\xcc\x50\xd6\x03\x7d\x45\x76\xa3"
 			"\x75\x76\xc1\x4a\x66\x1b\x2e\xdf\xb0\x2e\x7d\x56"
 			"\x6d\x99\x3b\xc6\x58\xda\x03\xf6",
-		.addtlb = (अचिन्हित अक्षर *)
+		.addtlb = (unsigned char *)
 			"\x7c\x7b\x4a\x4b\x32\x5e\x6f\x67\x34\xf5\x21\x4c"
 			"\xf9\x96\xf9\xbf\x1c\x8c\x81\xd3\x9b\x60\x6a\x44"
 			"\xc6\x03\xa2\xfb\x13\x20\x19\xb7",
 		.addtllen = 32,
-		.pers = शून्य,
+		.pers = NULL,
 		.perslen = 0,
-	पूर्ण, अणु
-		.entropy = (अचिन्हित अक्षर *)
+	}, {
+		.entropy = (unsigned char *)
 			"\x13\x54\x96\xfc\x1b\x7d\x28\xf3\x18\xc9\xa7\x89"
 			"\xb6\xb3\xc8\x72\xac\x00\xd4\x59\x36\x25\x05\xaf"
 			"\xa5\xdb\x96\xcb\x3c\x58\x46\x87\xa5\xaa\xbf\x20"
 			"\x3b\xfe\x23\x0e\xd1\xc7\x41\x0f\x3f\xc9\xb3\x67",
 		.entropylen = 48,
-		.entpra = (अचिन्हित अक्षर *)
+		.entpra = (unsigned char *)
 			"\xe2\xbd\xb7\x48\x08\x06\xf3\xe1\x93\x3c\xac\x79"
 			"\xa7\x2b\x11\xda\xe3\x2e\xe1\x91\xa5\x02\x19\x57"
 			"\x20\x28\xad\xf2\x60\xd7\xcd\x45",
-		.entprb = (अचिन्हित अक्षर *)
+		.entprb = (unsigned char *)
 			"\x8b\xd4\x69\xfc\xff\x59\x95\x95\xc6\x51\xde\x71"
 			"\x68\x5f\xfc\xf9\x4a\xab\xec\x5a\xcb\xbe\xd3\x66"
 			"\x1f\xfa\x74\xd3\xac\xa6\x74\x60",
 		.entprlen = 32,
-		.expected = (अचिन्हित अक्षर *)
+		.expected = (unsigned char *)
 			"\x1f\x9e\xaf\xe4\xd2\x46\xb7\x47\x41\x4c\x65\x99"
 			"\x01\xe9\x3b\xbb\x83\x0c\x0a\xb0\xc1\x3a\xe2\xb3"
 			"\x31\x4e\xeb\x93\x73\xee\x0b\x26\xc2\x63\xa5\x75"
@@ -21504,31 +21503,31 @@
 			"\xfe\x80\xb6\xc0\x13\x0c\x5b\x9b\x2e\x8f\x3d\xfc"
 			"\xc2\xa3\x0c\x11\x1b\x80\x5f\xf3",
 		.expectedlen = 128,
-		.addtla = शून्य,
-		.addtlb = शून्य,
+		.addtla = NULL,
+		.addtlb = NULL,
 		.addtllen = 0,
-		.pers = (अचिन्हित अक्षर *)
+		.pers = (unsigned char *)
 			"\x64\xb6\xfc\x60\xbc\x61\x76\x23\x6d\x3f\x4a\x0f"
 			"\xe1\xb4\xd5\x20\x9e\x70\xdd\x03\x53\x6d\xbf\xce"
 			"\xcd\x56\x80\xbc\xb8\x15\xc8\xaa",
 		.perslen = 32,
-	पूर्ण, अणु
-		.entropy = (अचिन्हित अक्षर *)
+	}, {
+		.entropy = (unsigned char *)
 			"\xc7\xcc\xbc\x67\x7e\x21\x66\x1e\x27\x2b\x63\xdd"
 			"\x3a\x78\xdc\xdf\x66\x6d\x3f\x24\xae\xcf\x37\x01"
 			"\xa9\x0d\x89\x8a\xa7\xdc\x81\x58\xae\xb2\x10\x15"
 			"\x7e\x18\x44\x6d\x13\xea\xdf\x37\x85\xfe\x81\xfb",
 		.entropylen = 48,
-		.entpra = (अचिन्हित अक्षर *)
+		.entpra = (unsigned char *)
 			"\x7b\xa1\x91\x5b\x3c\x04\xc4\x1b\x1d\x19\x2f\x1a"
 			"\x18\x81\x60\x3c\x6c\x62\x91\xb7\xe9\xf5\xcb\x96"
 			"\xbb\x81\x6a\xcc\xb5\xae\x55\xb6",
-		.entprb = (अचिन्हित अक्षर *)
+		.entprb = (unsigned char *)
 			"\x99\x2c\xc7\x78\x7e\x3b\x88\x12\xef\xbe\xd3\xd2"
 			"\x7d\x2a\xa5\x86\xda\x8d\x58\x73\x4a\x0a\xb2\x2e"
 			"\xbb\x4c\x7e\xe3\x9a\xb6\x81\xc1",
 		.entprlen = 32,
-		.expected = (अचिन्हित अक्षर *)
+		.expected = (unsigned char *)
 			"\x95\x6f\x95\xfc\x3b\xb7\xfe\x3e\xd0\x4e\x1a\x14"
 			"\x6c\x34\x7f\x7b\x1d\x0d\x63\x5e\x48\x9c\x69\xe6"
 			"\x46\x07\xd2\x87\xf3\x86\x52\x3d\x98\x27\x5e\xd7"
@@ -21541,37 +21540,37 @@
 			"\x59\x91\x30\x89\x2a\xc8\x5a\x43\x23\x7c\x73\x72"
 			"\xda\x3f\xad\x2b\xba\x00\x6b\xd1",
 		.expectedlen = 128,
-		.addtla = (अचिन्हित अक्षर *)
+		.addtla = (unsigned char *)
 			"\x18\xe8\x17\xff\xef\x39\xc7\x41\x5c\x73\x03\x03"
 			"\xf6\x3d\xe8\x5f\xc8\xab\xe4\xab\x0f\xad\xe8\xd6"
 			"\x86\x88\x55\x28\xc1\x69\xdd\x76",
-		.addtlb = (अचिन्हित अक्षर *)
+		.addtlb = (unsigned char *)
 			"\xac\x07\xfc\xbe\x87\x0e\xd3\xea\x1f\x7e\xb8\xe7"
 			"\x9d\xec\xe8\xe7\xbc\xf3\x18\x25\x77\x35\x4a\xaa"
 			"\x00\x99\x2a\xdd\x0a\x00\x50\x82",
 		.addtllen = 32,
-		.pers = (अचिन्हित अक्षर *)
+		.pers = (unsigned char *)
 			"\xbc\x55\xab\x3c\xf6\x52\xb0\x11\x3d\x7b\x90\xb8"
 			"\x24\xc9\x26\x4e\x5a\x1e\x77\x0d\x3d\x58\x4a\xda"
 			"\xd1\x81\xe9\xf8\xeb\x30\x8f\x6f",
 		.perslen = 32,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा drbg_testvec drbg_pr_ctr_aes128_tv_ढाँचा[] = अणु
-	अणु
-		.entropy = (अचिन्हित अक्षर *)
+static const struct drbg_testvec drbg_pr_ctr_aes128_tv_template[] = {
+	{
+		.entropy = (unsigned char *)
 			"\xd1\x44\xc6\x61\x81\x6d\xca\x9d\x15\x28\x8a\x42"
 			"\x94\xd7\x28\x9c\x43\x77\x19\x29\x1a\x6d\xc3\xa2",
 		.entropylen = 24,
-		.entpra = (अचिन्हित अक्षर *)
+		.entpra = (unsigned char *)
 			"\x96\xd8\x9e\x45\x32\xc9\xd2\x08\x7a\x6d\x97\x15"
 			"\xb4\xec\x80\xb1",
-		.entprb = (अचिन्हित अक्षर *)
+		.entprb = (unsigned char *)
 			"\x8b\xb6\x72\xb5\x24\x0b\x98\x65\x95\x95\xe9\xc9"
 			"\x28\x07\xeb\xc2",
 		.entprlen = 16,
-		.expected = (अचिन्हित अक्षर *)
+		.expected = (unsigned char *)
 			"\x70\x19\xd0\x4c\x45\x78\xd6\x68\xa9\x9a\xaa\xfe"
 			"\xc1\xdf\x27\x9a\x1c\x0d\x0d\xf7\x24\x75\x46\xcc"
 			"\x77\x6b\xdf\x89\xc6\x94\xdc\x74\x50\x10\x70\x18"
@@ -21579,24 +21578,24 @@
 			"\xd2\xf3\xd5\xe4\x51\x67\x74\x11\x5a\xcc\x8b\x3b"
 			"\x8a\xf1\x23\xa8",
 		.expectedlen = 64,
-		.addtla = शून्य,
-		.addtlb = शून्य,
+		.addtla = NULL,
+		.addtlb = NULL,
 		.addtllen = 0,
-		.pers = शून्य,
+		.pers = NULL,
 		.perslen = 0,
-	पूर्ण, अणु
-		.entropy = (अचिन्हित अक्षर *)
+	}, {
+		.entropy = (unsigned char *)
 			"\x8e\x83\xe0\xeb\x37\xea\x3e\x53\x5e\x17\x6e\x77"
 			"\xbd\xb1\x53\x90\xfc\xdc\xc1\x3c\x9a\x88\x22\x94",
 		.entropylen = 24,
-		.entpra = (अचिन्हित अक्षर *)
+		.entpra = (unsigned char *)
 			"\x6a\x85\xe7\x37\xc8\xf1\x04\x31\x98\x4f\xc8\x73"
 			"\x67\xd1\x08\xf8",
-		.entprb = (अचिन्हित अक्षर *)
+		.entprb = (unsigned char *)
 			"\xd7\xa4\x68\xe2\x12\x74\xc3\xd9\xf1\xb7\x05\xbc"
 			"\xd4\xba\x04\x58",
 		.entprlen = 16,
-		.expected = (अचिन्हित अक्षर *)
+		.expected = (unsigned char *)
 			"\x78\xd6\xa6\x70\xff\xd1\x82\xf5\xa2\x88\x7f\x6d"
 			"\x3d\x8c\x39\xb1\xa8\xcb\x2c\x91\xab\x14\x7e\xbc"
 			"\x95\x45\x9f\x24\xb8\x20\xac\x21\x23\xdb\x72\xd7"
@@ -21604,28 +21603,28 @@
 			"\x8b\xac\x40\x29\x73\x00\x03\x45\x5e\x12\xff\x0c"
 			"\xc1\x02\x41\x82",
 		.expectedlen = 64,
-		.addtla = (अचिन्हित अक्षर *)
+		.addtla = (unsigned char *)
 			"\xa2\xd9\x38\xcf\x8b\x29\x67\x5b\x65\x62\x6f\xe8"
 			"\xeb\xb3\x01\x76",
-		.addtlb = (अचिन्हित अक्षर *)
+		.addtlb = (unsigned char *)
 			"\x59\x63\x1e\x81\x8a\x14\xa8\xbb\xa1\xb8\x41\x25"
 			"\xd0\x7f\xcc\x43",
 		.addtllen = 16,
-		.pers = शून्य,
+		.pers = NULL,
 		.perslen = 0,
-	पूर्ण, अणु
-		.entropy = (अचिन्हित अक्षर *)
+	}, {
+		.entropy = (unsigned char *)
 			"\x04\xd9\x49\xa6\xdc\xe8\x6e\xbb\xf1\x08\x77\x2b"
 			"\x9e\x08\xca\x92\x65\x16\xda\x99\xa2\x59\xf3\xe8",
 		.entropylen = 24,
-		.entpra = (अचिन्हित अक्षर *)
+		.entpra = (unsigned char *)
 			"\x38\x7e\x3f\x6b\x51\x70\x7b\x20\xec\x53\xd0\x66"
 			"\xc3\x0f\xe3\xb0",
-		.entprb = (अचिन्हित अक्षर *)
+		.entprb = (unsigned char *)
 			"\xe0\x86\xa6\xaa\x5f\x72\x2f\xad\xf7\xef\x06\xb8"
 			"\xd6\x9c\x9d\xe8",
 		.entprlen = 16,
-		.expected = (अचिन्हित अक्षर *)
+		.expected = (unsigned char *)
 			"\xc9\x0a\xaf\x85\x89\x71\x44\x66\x4f\x25\x0b\x2b"
 			"\xde\xd8\xfa\xff\x52\x5a\x1b\x32\x5e\x41\x7a\x10"
 			"\x1f\xef\x1e\x62\x23\xe9\x20\x30\xc9\x0d\xad\x69"
@@ -21633,26 +21632,26 @@
 			"\xd9\xfd\x0b\x93\x4a\xe3\xd4\x06\x37\x36\x0f\x3f"
 			"\x72\x82\x0c\xcf",
 		.expectedlen = 64,
-		.addtla = शून्य,
-		.addtlb = शून्य,
+		.addtla = NULL,
+		.addtlb = NULL,
 		.addtllen = 0,
-		.pers = (अचिन्हित अक्षर *)
+		.pers = (unsigned char *)
 			"\xbf\xa4\x9a\x8f\x7b\xd8\xb1\x7a\x9d\xfa\x45\xed"
 			"\x21\x52\xb3\xad",
 		.perslen = 16,
-	पूर्ण, अणु
-		.entropy = (अचिन्हित अक्षर *)
+	}, {
+		.entropy = (unsigned char *)
 			"\x92\x89\x8f\x31\xfa\x1c\xff\x6d\x18\x2f\x26\x06"
 			"\x43\xdf\xf8\x18\xc2\xa4\xd9\x72\xc3\xb9\xb6\x97",
 		.entropylen = 24,
-		.entpra = (अचिन्हित अक्षर *)
+		.entpra = (unsigned char *)
 			"\x20\x72\x8a\x06\xf8\x6f\x8d\xd4\x41\xe2\x72\xb7"
 			"\xc4\x2c\xe8\x10",
-		.entprb = (अचिन्हित अक्षर *)
+		.entprb = (unsigned char *)
 			"\x3d\xb0\xf0\x94\xf3\x05\x50\x33\x17\x86\x3e\x22"
 			"\x08\xf7\xa5\x01",
 		.entprlen = 16,
-		.expected = (अचिन्हित अक्षर *)
+		.expected = (unsigned char *)
 			"\x5a\x35\x39\x87\x0f\x4d\x22\xa4\x09\x24\xee\x71"
 			"\xc9\x6f\xac\x72\x0a\xd6\xf0\x88\x82\xd0\x83\x28"
 			"\x73\xec\x3f\x93\xd8\xab\x45\x23\xf0\x7e\xac\x45"
@@ -21660,37 +21659,37 @@
 			"\x88\xf6\xda\x89\x08\x77\x42\xfe\x1a\xf4\x3f\xc4"
 			"\x23\xc5\x1f\x68",
 		.expectedlen = 64,
-		.addtla = (अचिन्हित अक्षर *)
+		.addtla = (unsigned char *)
 			"\x1a\x40\xfa\xe3\xcc\x6c\x7c\xa0\xf8\xda\xba\x59"
 			"\x23\x6d\xad\x1d",
-		.addtlb = (अचिन्हित अक्षर *)
+		.addtlb = (unsigned char *)
 			"\x9f\x72\x76\x6c\xc7\x46\xe5\xed\x2e\x53\x20\x12"
 			"\xbc\x59\x31\x8c",
 		.addtllen = 16,
-		.pers = (अचिन्हित अक्षर *)
+		.pers = (unsigned char *)
 			"\xea\x65\xee\x60\x26\x4e\x7e\xb6\x0e\x82\x68\xc4"
 			"\x37\x3c\x5c\x0b",
 		.perslen = 16,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
  * SP800-90A DRBG Test vectors from
- * http://csrc.nist.gov/groups/STM/cavp/करोcuments/drbg/drbgtestvectors.zip
+ * http://csrc.nist.gov/groups/STM/cavp/documents/drbg/drbgtestvectors.zip
  *
- * Test vectors क्रम DRBG without prediction resistance. All types of DRBGs
- * (Hash, HMAC, CTR) are tested with all permutations of use हालs (w/ and
+ * Test vectors for DRBG without prediction resistance. All types of DRBGs
+ * (Hash, HMAC, CTR) are tested with all permutations of use cases (w/ and
  * w/o personalization string, w/ and w/o additional input string).
  */
-अटल स्थिर काष्ठा drbg_testvec drbg_nopr_sha256_tv_ढाँचा[] = अणु
-	अणु
-		.entropy = (अचिन्हित अक्षर *)
+static const struct drbg_testvec drbg_nopr_sha256_tv_template[] = {
+	{
+		.entropy = (unsigned char *)
 			"\xa6\x5a\xd0\xf3\x45\xdb\x4e\x0e\xff\xe8\x75\xc3"
 			"\xa2\xe7\x1f\x42\xc7\x12\x9d\x62\x0f\xf5\xc1\x19"
 			"\xa9\xef\x55\xf0\x51\x85\xe0\xfb\x85\x81\xf9\x31"
 			"\x75\x17\x27\x6e\x06\xe9\x60\x7d\xdb\xcb\xcc\x2e",
 		.entropylen = 48,
-		.expected = (अचिन्हित अक्षर *)
+		.expected = (unsigned char *)
 			"\xd3\xe1\x60\xc3\x5b\x99\xf3\x40\xb2\x62\x82\x64"
 			"\xd1\x75\x10\x60\xe0\x04\x5d\xa3\x83\xff\x57\xa5"
 			"\x7d\x73\xa6\x73\xd2\xb8\xd8\x0d\xaa\xf6\xa6\xc3"
@@ -21703,19 +21702,19 @@
 			"\x12\x04\x15\x52\x8b\x22\x95\x91\x02\x81\xb0\x2d"
 			"\xd4\x31\xf4\xc9\xf7\x04\x27\xdf",
 		.expectedlen = 128,
-		.addtla = शून्य,
-		.addtlb = शून्य,
+		.addtla = NULL,
+		.addtlb = NULL,
 		.addtllen = 0,
-		.pers = शून्य,
+		.pers = NULL,
 		.perslen = 0,
-	पूर्ण, अणु
-		.entropy = (अचिन्हित अक्षर *)
+	}, {
+		.entropy = (unsigned char *)
 			"\x73\xd3\xfb\xa3\x94\x5f\x2b\x5f\xb9\x8f\xf6\x9c"
 			"\x8a\x93\x17\xae\x19\xc3\x4c\xc3\xd6\xca\xa3\x2d"
 			"\x16\xfc\x42\xd2\x2d\xd5\x6f\x56\xcc\x1d\x30\xff"
 			"\x9e\x06\x3e\x09\xce\x58\xe6\x9a\x35\xb3\xa6\x56",
 		.entropylen = 48,
-		.expected = (अचिन्हित अक्षर *)
+		.expected = (unsigned char *)
 			"\x71\x7b\x93\x46\x1a\x40\xaa\x35\xa4\xaa\xc5\xe7"
 			"\x6d\x5b\x5b\x8a\xa0\xdf\x39\x7d\xae\x71\x58\x5b"
 			"\x3c\x7c\xb4\xf0\x89\xfa\x4a\x8c\xa9\x5c\x54\xc0"
@@ -21728,25 +21727,25 @@
 			"\x6c\xc7\x6a\x07\xa5\x03\x83\x9f\xe2\x8b\xd1\x1c"
 			"\x70\xa8\x07\x59\x97\xeb\xf6\xbe",
 		.expectedlen = 128,
-		.addtla = (अचिन्हित अक्षर *)
+		.addtla = (unsigned char *)
 			"\xf4\xd5\x98\x3d\xa8\xfc\xfa\x37\xb7\x54\x67\x73"
 			"\xc7\xc3\xdd\x47\x34\x71\x02\x5d\xc1\xa0\xd3\x10"
 			"\xc1\x8b\xbd\xf5\x66\x34\x6f\xdd",
-		.addtlb = (अचिन्हित अक्षर *)
+		.addtlb = (unsigned char *)
 			"\xf7\x9e\x6a\x56\x0e\x73\xe9\xd9\x7a\xd1\x69\xe0"
 			"\x6f\x8c\x55\x1c\x44\xd1\xce\x6f\x28\xcc\xa4\x4d"
 			"\xa8\xc0\x85\xd1\x5a\x0c\x59\x40",
 		.addtllen = 32,
-		.pers = शून्य,
+		.pers = NULL,
 		.perslen = 0,
-	पूर्ण, अणु
-		.entropy = (अचिन्हित अक्षर *)
+	}, {
+		.entropy = (unsigned char *)
 			"\x2a\x85\xa9\x8b\xd0\xda\x83\xd6\xad\xab\x9f\xbb"
 			"\x54\x31\x15\x95\x1c\x4d\x49\x9f\x6a\x15\xf6\xe4"
 			"\x15\x50\x88\x06\x29\x0d\xed\x8d\xb9\x6f\x96\xe1"
 			"\x83\x9f\xf7\x88\xda\x84\xbf\x44\x28\xd9\x1d\xaa",
 		.entropylen = 48,
-		.expected = (अचिन्हित अक्षर *)
+		.expected = (unsigned char *)
 			"\x2d\x55\xde\xc9\xed\x05\x47\x07\x3d\x04\xfc\x28"
 			"\x0f\x92\xf0\x4d\xd8\x00\x32\x47\x0a\x1b\x1c\x4b"
 			"\xef\xd9\x97\xa1\x17\x67\xda\x26\x6c\xfe\x76\x46"
@@ -21759,22 +21758,22 @@
 			"\xac\xab\x55\xb8\x9b\xef\x98\x68\xaf\x51\xd8\x16"
 			"\xa5\x5e\xae\xf9\x1e\xd2\xdb\xe6",
 		.expectedlen = 128,
-		.addtla = शून्य,
-		.addtlb = शून्य,
+		.addtla = NULL,
+		.addtlb = NULL,
 		.addtllen = 0,
-		.pers = (अचिन्हित अक्षर *)
+		.pers = (unsigned char *)
 			"\xa8\x80\xec\x98\x30\x98\x15\xd2\xc6\xc4\x68\xf1"
 			"\x3a\x1c\xbf\xce\x6a\x40\x14\xeb\x36\x99\x53\xda"
 			"\x57\x6b\xce\xa4\x1c\x66\x3d\xbc",
 		.perslen = 32,
-	पूर्ण, अणु
-		.entropy = (अचिन्हित अक्षर *)
+	}, {
+		.entropy = (unsigned char *)
 			"\x69\xed\x82\xa9\xc5\x7b\xbf\xe5\x1d\x2f\xcb\x7a"
 			"\xd3\x50\x7d\x96\xb4\xb9\x2b\x50\x77\x51\x27\x74"
 			"\x33\x74\xba\xf1\x30\xdf\x8e\xdf\x87\x1d\x87\xbc"
 			"\x96\xb2\xc3\xa7\xed\x60\x5e\x61\x4e\x51\x29\x1a",
 		.entropylen = 48,
-		.expected = (अचिन्हित अक्षर *)
+		.expected = (unsigned char *)
 			"\xa5\x71\x24\x31\x11\xfe\x13\xe1\xa8\x24\x12\xfb"
 			"\x37\xa1\x27\xa5\xab\x77\xa1\x9f\xae\x8f\xaf\x13"
 			"\x93\xf7\x53\x85\x91\xb6\x1b\xab\xd4\x6b\xea\xb6"
@@ -21787,32 +21786,32 @@
 			"\x7c\x6c\x6c\x26\x11\x13\xc8\xce\xa9\x47\xa6\x06"
 			"\x57\xa2\x66\xbb\x2d\x7f\xf3\xc1",
 		.expectedlen = 128,
-		.addtla = (अचिन्हित अक्षर *)
+		.addtla = (unsigned char *)
 			"\x74\xd3\x6d\xda\xe8\xd6\x86\x5f\x63\x01\xfd\xf2"
 			"\x7d\x06\x29\x6d\x94\xd1\x66\xf0\xd2\x72\x67\x4e"
 			"\x77\xc5\x3d\x9e\x03\xe3\xa5\x78",
-		.addtlb = (अचिन्हित अक्षर *)
+		.addtlb = (unsigned char *)
 			"\xf6\xb6\x3d\xf0\x7c\x26\x04\xc5\x8b\xcd\x3e\x6a"
 			"\x9f\x9c\x3a\x2e\xdb\x47\x87\xe5\x8e\x00\x5e\x2b"
 			"\x74\x7f\xa6\xf6\x80\xcd\x9b\x21",
 		.addtllen = 32,
-		.pers = (अचिन्हित अक्षर *)
+		.pers = (unsigned char *)
 			"\x74\xa6\xe0\x08\xf9\x27\xee\x1d\x6e\x3c\x28\x20"
 			"\x87\xdd\xd7\x54\x31\x47\x78\x4b\xe5\x6d\xa3\x73"
 			"\xa9\x65\xb1\x10\xc1\xdc\x77\x7c",
 		.perslen = 32,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा drbg_testvec drbg_nopr_hmac_sha256_tv_ढाँचा[] = अणु
-	अणु
-		.entropy = (अचिन्हित अक्षर *)
+static const struct drbg_testvec drbg_nopr_hmac_sha256_tv_template[] = {
+	{
+		.entropy = (unsigned char *)
 			"\xca\x85\x19\x11\x34\x93\x84\xbf\xfe\x89\xde\x1c"
 			"\xbd\xc4\x6e\x68\x31\xe4\x4d\x34\xa4\xfb\x93\x5e"
 			"\xe2\x85\xdd\x14\xb7\x1a\x74\x88\x65\x9b\xa9\x6c"
 			"\x60\x1d\xc6\x9f\xc9\x02\x94\x08\x05\xec\x0c\xa8",
 		.entropylen = 48,
-		.expected = (अचिन्हित अक्षर *)
+		.expected = (unsigned char *)
 			"\xe5\x28\xe9\xab\xf2\xde\xce\x54\xd4\x7c\x7e\x75"
 			"\xe5\xfe\x30\x21\x49\xf8\x17\xea\x9f\xb4\xbe\xe6"
 			"\xf4\x19\x96\x97\xd0\x4d\x5b\x89\xd5\x4f\xbb\x97"
@@ -21825,19 +21824,19 @@
 			"\xbb\x8d\x50\xcf\x1f\x50\xd4\x76\xaa\x04\x58\xbd"
 			"\xab\xa8\x06\xf4\x8b\xe9\xdc\xb8",
 		.expectedlen = 128,
-		.addtla = शून्य,
-		.addtlb = शून्य,
+		.addtla = NULL,
+		.addtlb = NULL,
 		.addtllen = 0,
-		.pers = शून्य,
+		.pers = NULL,
 		.perslen = 0,
-	पूर्ण, अणु
-		.entropy = (अचिन्हित अक्षर *)
+	}, {
+		.entropy = (unsigned char *)
 			"\xf9\x7a\x3c\xfd\x91\xfa\xa0\x46\xb9\xe6\x1b\x94"
 			"\x93\xd4\x36\xc4\x93\x1f\x60\x4b\x22\xf1\x08\x15"
 			"\x21\xb3\x41\x91\x51\xe8\xff\x06\x11\xf3\xa7\xd4"
 			"\x35\x95\x35\x7d\x58\x12\x0b\xd1\xe2\xdd\x8a\xed",
 		.entropylen = 48,
-		.expected = (अचिन्हित अक्षर *)
+		.expected = (unsigned char *)
 			"\xc6\x87\x1c\xff\x08\x24\xfe\x55\xea\x76\x89\xa5"
 			"\x22\x29\x88\x67\x30\x45\x0e\x5d\x36\x2d\xa5\xbf"
 			"\x59\x0d\xcf\x9a\xcd\x67\xfe\xd4\xcb\x32\x10\x7d"
@@ -21850,25 +21849,25 @@
 			"\xf8\x2c\xa7\xb0\xa5\x0e\x86\x7e\xf6\x72\x8a\x4f"
 			"\x50\x9a\x8c\x85\x90\x87\x03\x9c",
 		.expectedlen = 128,
-		.addtla = (अचिन्हित अक्षर *)
+		.addtla = (unsigned char *)
 			"\x51\x72\x89\xaf\xe4\x44\xa0\xfe\x5e\xd1\xa4\x1d"
 			"\xbb\xb5\xeb\x17\x15\x00\x79\xbd\xd3\x1e\x29\xcf"
 			"\x2f\xf3\x00\x34\xd8\x26\x8e\x3b",
-		.addtlb = (अचिन्हित अक्षर *)
+		.addtlb = (unsigned char *)
 			"\x88\x02\x8d\x29\xef\x80\xb4\xe6\xf0\xfe\x12\xf9"
 			"\x1d\x74\x49\xfe\x75\x06\x26\x82\xe8\x9c\x57\x14"
 			"\x40\xc0\xc9\xb5\x2c\x42\xa6\xe0",
 		.addtllen = 32,
-		.pers = शून्य,
+		.pers = NULL,
 		.perslen = 0,
-	पूर्ण, अणु
-		.entropy = (अचिन्हित अक्षर *)
+	}, {
+		.entropy = (unsigned char *)
 			"\x8d\xf0\x13\xb4\xd1\x03\x52\x30\x73\x91\x7d\xdf"
 			"\x6a\x86\x97\x93\x05\x9e\x99\x43\xfc\x86\x54\x54"
 			"\x9e\x7a\xb2\x2f\x7c\x29\xf1\x22\xda\x26\x25\xaf"
 			"\x2d\xdd\x4a\xbc\xce\x3c\xf4\xfa\x46\x59\xd8\x4e",
 		.entropylen = 48,
-		.expected = (अचिन्हित अक्षर *)
+		.expected = (unsigned char *)
 			"\xb9\x1c\xba\x4c\xc8\x4f\xa2\x5d\xf8\x61\x0b\x81"
 			"\xb6\x41\x40\x27\x68\xa2\x09\x72\x34\x93\x2e\x37"
 			"\xd5\x90\xb1\x15\x4c\xbd\x23\xf9\x74\x52\xe3\x10"
@@ -21881,22 +21880,22 @@
 			"\x70\x0e\x6f\x53\x5c\xdb\x51\xf7\x5c\x32\x17\x29"
 			"\x10\x37\x41\x03\x0c\xcc\x3a\x56",
 		.expectedlen = 128,
-		.addtla = शून्य,
-		.addtlb = शून्य,
+		.addtla = NULL,
+		.addtlb = NULL,
 		.addtllen = 0,
-		.pers = (अचिन्हित अक्षर *)
+		.pers = (unsigned char *)
 			"\xb5\x71\xe6\x6d\x7c\x33\x8b\xc0\x7b\x76\xad\x37"
 			"\x57\xbb\x2f\x94\x52\xbf\x7e\x07\x43\x7a\xe8\x58"
 			"\x1c\xe7\xbc\x7c\x3a\xc6\x51\xa9",
 		.perslen = 32,
-	पूर्ण, अणु
-		.entropy = (अचिन्हित अक्षर *)
+	}, {
+		.entropy = (unsigned char *)
 			"\xc2\xa5\x66\xa9\xa1\x81\x7b\x15\xc5\xc3\xb7\x78"
 			"\x17\x7a\xc8\x7c\x24\xe7\x97\xbe\x0a\x84\x5f\x11"
 			"\xc2\xfe\x39\x9d\xd3\x77\x32\xf2\xcb\x18\x94\xeb"
 			"\x2b\x97\xb3\xc5\x6e\x62\x83\x29\x51\x6f\x86\xec",
 		.entropylen = 48,
-		.expected = (अचिन्हित अक्षर *)
+		.expected = (unsigned char *)
 			"\xb3\xa3\x69\x8d\x77\x76\x99\xa0\xdd\x9f\xa3\xf0"
 			"\xa9\xfa\x57\x83\x2d\x3c\xef\xac\x5d\xf2\x44\x37"
 			"\xc6\xd7\x3a\x0f\xe4\x10\x40\xf1\x72\x90\x38\xae"
@@ -21909,32 +21908,32 @@
 			"\x43\xa2\xe3\x96\xbb\xb7\xdd\x2f\x4e\x07\x95\x30"
 			"\x35\x24\xcc\x9c\xc5\xea\x54\xa1",
 		.expectedlen = 128,
-		.addtla = (अचिन्हित अक्षर *)
+		.addtla = (unsigned char *)
 			"\x41\x3d\xd8\x3f\xe5\x68\x35\xab\xd4\x78\xcb\x96"
 			"\x93\xd6\x76\x35\x90\x1c\x40\x23\x9a\x26\x64\x62"
 			"\xd3\x13\x3b\x83\xe4\x9c\x82\x0b",
-		.addtlb = (अचिन्हित अक्षर *)
+		.addtlb = (unsigned char *)
 			"\xd5\xc4\xa7\x1f\x9d\x6d\x95\xa1\xbe\xdf\x0b\xd2"
 			"\x24\x7c\x27\x7d\x1f\x84\xa4\xe5\x7a\x4a\x88\x25"
 			"\xb8\x2a\x2d\x09\x7d\xe6\x3e\xf1",
 		.addtllen = 32,
-		.pers = (अचिन्हित अक्षर *)
+		.pers = (unsigned char *)
 			"\x13\xce\x4d\x8d\xd2\xdb\x97\x96\xf9\x41\x56\xc8"
 			"\xe8\xf0\x76\x9b\x0a\xa1\xc8\x2c\x13\x23\xb6\x15"
 			"\x36\x60\x3b\xca\x37\xc9\xee\x29",
 		.perslen = 32,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा drbg_testvec drbg_nopr_ctr_aes192_tv_ढाँचा[] = अणु
-	अणु
-		.entropy = (अचिन्हित अक्षर *)
+static const struct drbg_testvec drbg_nopr_ctr_aes192_tv_template[] = {
+	{
+		.entropy = (unsigned char *)
 			"\xc3\x5c\x2f\xa2\xa8\x9d\x52\xa1\x1f\xa3\x2a\xa9"
 			"\x6c\x95\xb8\xf1\xc9\xa8\xf9\xcb\x24\x5a\x8b\x40"
 			"\xf3\xa6\xe5\xa7\xfb\xd9\xd3\xc6\x8e\x27\x7b\xa9"
 			"\xac\x9b\xbb\x00",
 		.entropylen = 40,
-		.expected = (अचिन्हित अक्षर *)
+		.expected = (unsigned char *)
 			"\x8c\x2e\x72\xab\xfd\x9b\xb8\x28\x4d\xb7\x9e\x17"
 			"\xa4\x3a\x31\x46\xcd\x76\x94\xe3\x52\x49\xfc\x33"
 			"\x83\x91\x4a\x71\x17\xf4\x13\x68\xe6\xd4\xf1\x48"
@@ -21942,23 +21941,23 @@
 			"\x45\x66\x2e\x3d\x35\x03\x84\x3f\x4a\xa5\xa3\xdf"
 			"\x9a\x9d\xf1\x0d",
 		.expectedlen = 64,
-		.addtla = शून्य,
-		.addtlb = शून्य,
+		.addtla = NULL,
+		.addtlb = NULL,
 		.addtllen = 0,
-		.pers = शून्य,
+		.pers = NULL,
 		.perslen = 0,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा drbg_testvec drbg_nopr_ctr_aes256_tv_ढाँचा[] = अणु
-	अणु
-		.entropy = (अचिन्हित अक्षर *)
+static const struct drbg_testvec drbg_nopr_ctr_aes256_tv_template[] = {
+	{
+		.entropy = (unsigned char *)
 			"\x36\x40\x19\x40\xfa\x8b\x1f\xba\x91\xa1\x66\x1f"
 			"\x21\x1d\x78\xa0\xb9\x38\x9a\x74\xe5\xbc\xcf\xec"
 			"\xe8\xd7\x66\xaf\x1a\x6d\x3b\x14\x49\x6f\x25\xb0"
 			"\xf1\x30\x1b\x4f\x50\x1b\xe3\x03\x80\xa1\x37\xeb",
 		.entropylen = 48,
-		.expected = (अचिन्हित अक्षर *)
+		.expected = (unsigned char *)
 			"\x58\x62\xeb\x38\xbd\x55\x8d\xd9\x78\xa6\x96\xe6"
 			"\xdf\x16\x47\x82\xdd\xd8\x87\xe7\xe9\xa6\xc9\xf3"
 			"\xf1\xfb\xaf\xb7\x89\x41\xb5\x35\xa6\x49\x12\xdf"
@@ -21966,21 +21965,21 @@
 			"\x5e\x16\x26\x0c\x2f\xaf\x1c\xc7\x73\x5c\xb7\x5f"
 			"\xb4\xf0\x7e\x1d",
 		.expectedlen = 64,
-		.addtla = शून्य,
-		.addtlb = शून्य,
+		.addtla = NULL,
+		.addtlb = NULL,
 		.addtllen = 0,
-		.pers = शून्य,
+		.pers = NULL,
 		.perslen = 0,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा drbg_testvec drbg_nopr_ctr_aes128_tv_ढाँचा[] = अणु
-	अणु
-		.entropy = (अचिन्हित अक्षर *)
+static const struct drbg_testvec drbg_nopr_ctr_aes128_tv_template[] = {
+	{
+		.entropy = (unsigned char *)
 			"\x87\xe1\xc5\x32\x99\x7f\x57\xa3\x5c\x28\x6d\xe8"
 			"\x64\xbf\xf2\x64\xa3\x9e\x98\xdb\x6c\x10\x78\x7f",
 		.entropylen = 24,
-		.expected = (अचिन्हित अक्षर *)
+		.expected = (unsigned char *)
 			"\x2c\x14\x7e\x24\x11\x9a\xd8\xd4\xb2\xed\x61\xc1"
 			"\x53\xd0\x50\xc9\x24\xff\x59\x75\x15\xf1\x17\x3a"
 			"\x3d\xf4\x4b\x2c\x84\x28\xef\x89\x0e\xb9\xde\xf3"
@@ -21988,17 +21987,17 @@
 			"\x10\xc8\x67\x0a\xf9\xdf\x2d\x6c\x96\xfb\xb2\xb8"
 			"\xcb\x2d\xd6\xb0",
 		.expectedlen = 64,
-		.addtla = शून्य,
-		.addtlb = शून्य,
+		.addtla = NULL,
+		.addtlb = NULL,
 		.addtllen = 0,
-		.pers = शून्य,
+		.pers = NULL,
 		.perslen = 0,
-	पूर्ण, अणु
-		.entropy = (अचिन्हित अक्षर *)
+	}, {
+		.entropy = (unsigned char *)
 			"\x71\xbd\xce\x35\x42\x7d\x20\xbf\x58\xcf\x17\x74"
 			"\xce\x72\xd8\x33\x34\x50\x2d\x8f\x5b\x14\xc4\xdd",
 		.entropylen = 24,
-		.expected = (अचिन्हित अक्षर *)
+		.expected = (unsigned char *)
 			"\x97\x33\xe8\x20\x12\xe2\x7b\xa1\x46\x8f\xf2\x34"
 			"\xb3\xc9\xb6\x6b\x20\xb2\x4f\xee\x27\xd8\x0b\x21"
 			"\x8c\xff\x63\x73\x69\x29\xfb\xf3\x85\xcd\x88\x8e"
@@ -22006,21 +22005,21 @@
 			"\x2a\xa3\xe9\x2c\x25\x89\xc7\x14\x52\x99\x56\xcc"
 			"\xc3\xdf\xb3\x81",
 		.expectedlen = 64,
-		.addtla = (अचिन्हित अक्षर *)
+		.addtla = (unsigned char *)
 			"\x66\xef\x42\xd6\x9a\x8c\x3d\x6d\x4a\x9e\x95\xa6"
 			"\x91\x4d\x81\x56",
-		.addtlb = (अचिन्हित अक्षर *)
+		.addtlb = (unsigned char *)
 			"\xe3\x18\x83\xd9\x4b\x5e\xc4\xcc\xaa\x61\x2f\xbb"
 			"\x4a\x55\xd1\xc6",
 		.addtllen = 16,
-		.pers = शून्य,
+		.pers = NULL,
 		.perslen = 0,
-	पूर्ण, अणु
-		.entropy = (अचिन्हित अक्षर *)
+	}, {
+		.entropy = (unsigned char *)
 			"\xca\x4b\x1e\xfa\x75\xbd\x69\x36\x38\x73\xb8\xf9"
 			"\xdb\x4d\x35\x0e\x47\xbf\x6c\x37\x72\xfd\xf7\xa9",
 		.entropylen = 24,
-		.expected = (अचिन्हित अक्षर *)
+		.expected = (unsigned char *)
 			"\x59\xc3\x19\x79\x1b\xb1\xf3\x0e\xe9\x34\xae\x6e"
 			"\x8b\x1f\xad\x1f\x74\xca\x25\x45\x68\xb8\x7f\x75"
 			"\x12\xf8\xf2\xab\x4c\x23\x01\x03\x05\xe1\x70\xee"
@@ -22028,19 +22027,19 @@
 			"\x6f\x7a\xac\x3c\x44\xb7\x87\x4b\x65\x56\x74\x45"
 			"\x34\x30\x0c\x3d",
 		.expectedlen = 64,
-		.addtla = शून्य,
-		.addtlb = शून्य,
+		.addtla = NULL,
+		.addtlb = NULL,
 		.addtllen = 0,
-		.pers = (अचिन्हित अक्षर *)
+		.pers = (unsigned char *)
 			"\xeb\xaa\x60\x2c\x4d\xbe\x33\xff\x1b\xef\xbf\x0a"
 			"\x0b\xc6\x97\x54",
 		.perslen = 16,
-	पूर्ण, अणु
-		.entropy = (अचिन्हित अक्षर *)
+	}, {
+		.entropy = (unsigned char *)
 			"\xc0\x70\x1f\x92\x50\x75\x8f\xcd\xf2\xbe\x73\x98"
 			"\x80\xdb\x66\xeb\x14\x68\xb4\xa5\x87\x9c\x2d\xa6",
 		.entropylen = 24,
-		.expected = (अचिन्हित अक्षर *)
+		.expected = (unsigned char *)
 			"\x97\xc0\xc0\xe5\xa0\xcc\xf2\x4f\x33\x63\x48\x8a"
 			"\xdb\x13\x0a\x35\x89\xbf\x80\x65\x62\xee\x13\x95"
 			"\x7c\x33\xd3\x7d\xf4\x07\x77\x7a\x2b\x65\x0b\x5f"
@@ -22048,43 +22047,43 @@
 			"\x38\xf8\xcd\x1b\xbb\xd5\x57\xd1\x4a\x4c\x2e\x8a"
 			"\x2b\x49\x1e\x5c",
 		.expectedlen = 64,
-		.addtla = (अचिन्हित अक्षर *)
+		.addtla = (unsigned char *)
 			"\xf9\x01\xf8\x16\x7a\x1d\xff\xde\x8e\x3c\x83\xe2"
 			"\x44\x85\xe7\xfe",
-		.addtlb = (अचिन्हित अक्षर *)
+		.addtlb = (unsigned char *)
 			"\x17\x1c\x09\x38\xc2\x38\x9f\x97\x87\x60\x55\xb4"
 			"\x82\x16\x62\x7f",
 		.addtllen = 16,
-		.pers = (अचिन्हित अक्षर *)
+		.pers = (unsigned char *)
 			"\x80\x08\xae\xe8\xe9\x69\x40\xc5\x08\x73\xc7\x9f"
 			"\x8e\xcf\xe0\x02",
 		.perslen = 16,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /* Cast5 test vectors from RFC 2144 */
-अटल स्थिर काष्ठा cipher_testvec cast5_tv_ढाँचा[] = अणु
-	अणु
+static const struct cipher_testvec cast5_tv_template[] = {
+	{
 		.key	= "\x01\x23\x45\x67\x12\x34\x56\x78"
 			  "\x23\x45\x67\x89\x34\x56\x78\x9a",
 		.klen	= 16,
 		.ptext	= "\x01\x23\x45\x67\x89\xab\xcd\xef",
 		.ctext	= "\x23\x8b\x4f\xe5\x84\x7e\x44\xb2",
 		.len	= 8,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x01\x23\x45\x67\x12\x34\x56\x78"
 			  "\x23\x45",
 		.klen	= 10,
 		.ptext	= "\x01\x23\x45\x67\x89\xab\xcd\xef",
 		.ctext	= "\xeb\x6a\x71\x1a\x2c\x02\x27\x1b",
 		.len	= 8,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x01\x23\x45\x67\x12",
 		.klen	= 5,
 		.ptext	= "\x01\x23\x45\x67\x89\xab\xcd\xef",
 		.ctext	= "\x7a\xc8\x16\xd1\x6e\x9b\x30\x2e",
 		.len	= 8,
-	पूर्ण, अणु /* Generated from TF test vectors */
+	}, { /* Generated from TF test vectors */
 		.key	= "\x85\x62\x3F\x1C\xF9\xD6\x1C\xF9"
 			  "\xD6\xB3\x90\x6D\x4A\x90\x6D\x4A",
 		.klen	= 16,
@@ -22214,11 +22213,11 @@
 			  "\x4F\xFE\x24\x9C\x9A\x02\xE5\x57"
 			  "\xF5\xBC\x25\xD6\x02\x56\x57\x1C",
 		.len	= 496,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा cipher_testvec cast5_cbc_tv_ढाँचा[] = अणु
-	अणु /* Generated from TF test vectors */
+static const struct cipher_testvec cast5_cbc_tv_template[] = {
+	{ /* Generated from TF test vectors */
 		.key	= "\x85\x62\x3F\x1C\xF9\xD6\x1C\xF9"
 			  "\xD6\xB3\x90\x6D\x4A\x90\x6D\x4A",
 		.klen	= 16,
@@ -22349,11 +22348,11 @@
 			  "\x15\x5F\xDB\xE9\xB1\x83\xD2\xE6"
 			  "\x1D\x18\x66\x44\x5B\x8F\x14\xEB",
 		.len	= 496,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा cipher_testvec cast5_ctr_tv_ढाँचा[] = अणु
-	अणु /* Generated from TF test vectors */
+static const struct cipher_testvec cast5_ctr_tv_template[] = {
+	{ /* Generated from TF test vectors */
 		.key	= "\x85\x62\x3F\x1C\xF9\xD6\x1C\xF9"
 			  "\xD6\xB3\x90\x6D\x4A\x90\x6D\x4A",
 		.klen	= 16,
@@ -22366,7 +22365,7 @@
 			  "\x7C\x52\xC4\xD3\xBB\x62\xC6\xA8"
 			  "\x0C",
 		.len	= 17,
-	पूर्ण, अणु /* Generated from TF test vectors */
+	}, { /* Generated from TF test vectors */
 		.key	= "\x85\x62\x3F\x1C\xF9\xD6\x1C\xF9"
 			  "\xD6\xB3\x90\x6D\x4A\x90\x6D\x4A",
 		.klen	= 16,
@@ -22497,32 +22496,32 @@
 			  "\x8C\x98\xDB\xDE\xFC\x72\x94\xAA"
 			  "\xC0\x0D\x96\xAA\x23\xF8\xFE\x13",
 		.len	= 496,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
  * ARC4 test vectors from OpenSSL
  */
-अटल स्थिर काष्ठा cipher_testvec arc4_tv_ढाँचा[] = अणु
-	अणु
+static const struct cipher_testvec arc4_tv_template[] = {
+	{
 		.key	= "\x01\x23\x45\x67\x89\xab\xcd\xef",
 		.klen	= 8,
 		.ptext	= "\x01\x23\x45\x67\x89\xab\xcd\xef",
 		.ctext	= "\x75\xb7\x87\x80\x99\xe0\xc5\x96",
 		.len	= 8,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x01\x23\x45\x67\x89\xab\xcd\xef",
 		.klen	= 8,
 		.ptext	= "\x00\x00\x00\x00\x00\x00\x00\x00",
 		.ctext	= "\x74\x94\xc2\xe7\x10\x4b\x08\x79",
 		.len	= 8,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x00\x00\x00\x00\x00\x00\x00\x00",
 		.klen	= 8,
 		.ptext	= "\x00\x00\x00\x00\x00\x00\x00\x00",
 		.ctext	= "\xde\x18\x89\x41\xa3\x37\x5d\x3a",
 		.len	= 8,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xef\x01\x23\x45",
 		.klen	= 4,
 		.ptext	= "\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -22532,7 +22531,7 @@
 			  "\xbd\x61\x5a\x11\x62\xe1\xc7\xba"
 			  "\x36\xb6\x78\x58",
 		.len	= 20,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x01\x23\x45\x67\x89\xab\xcd\xef",
 		.klen	= 8,
 		.ptext	= "\x12\x34\x56\x78\x9A\xBC\xDE\xF0"
@@ -22544,7 +22543,7 @@
 			  "\x89\x2e\xbe\x30\x14\x3c\xe2\x87"
 			  "\x40\x01\x1e\xcf",
 		.len	= 28,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xef\x01\x23\x45",
 		.klen	= 4,
 		.ptext	= "\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -22552,34 +22551,34 @@
 		.ctext	= "\xd6\xa1\x41\xa7\xec\x3c\x38\xdf"
 			  "\xbd\x61",
 		.len	= 10,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x01\x23\x45\x67\x89\xAB\xCD\xEF"
 			"\x00\x00\x00\x00\x00\x00\x00\x00",
 		.klen	= 16,
 		.ptext	= "\x01\x23\x45\x67\x89\xAB\xCD\xEF",
 		.ctext	= "\x69\x72\x36\x59\x1B\x52\x42\xB1",
 		.len	= 8,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
  * TEA test vectors
  */
-अटल स्थिर काष्ठा cipher_testvec tea_tv_ढाँचा[] = अणु
-	अणु
+static const struct cipher_testvec tea_tv_template[] = {
+	{
 		.key    = zeroed_string,
 		.klen	= 16,
 		.ptext	= zeroed_string,
 		.ctext	= "\x0a\x3a\xea\x41\x40\xa9\xba\x94",
 		.len	= 8,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x2b\x02\x05\x68\x06\x14\x49\x76"
 			  "\x77\x5d\x0e\x26\x6c\x28\x78\x43",
 		.klen	= 16,
 		.ptext	= "\x74\x65\x73\x74\x20\x6d\x65\x2e",
 		.ctext	= "\x77\x5d\x2a\x6a\xf6\xce\x92\x09",
 		.len	= 8,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x09\x65\x43\x11\x66\x44\x39\x25"
 			  "\x51\x3a\x16\x10\x0a\x08\x12\x6e",
 		.klen	= 16,
@@ -22588,7 +22587,7 @@
 		.ctext	= "\xbe\x7a\xbb\x81\x95\x2d\x1f\x1e"
 			  "\xdd\x89\xa1\x25\x04\x21\xdf\x95",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x4d\x76\x32\x17\x05\x3f\x75\x2c"
 			  "\x5d\x04\x16\x36\x15\x72\x63\x2f",
 		.klen	= 16,
@@ -22601,27 +22600,27 @@
 			  "\x44\xd1\x2d\xc2\x99\xb8\x08\x2a"
 			  "\x07\x89\x73\xc2\x45\x92\xc6\x90",
 		.len	= 32,
-	पूर्ण
-पूर्ण;
+	}
+};
 
 /*
  * XTEA test vectors
  */
-अटल स्थिर काष्ठा cipher_testvec xtea_tv_ढाँचा[] = अणु
-	अणु
+static const struct cipher_testvec xtea_tv_template[] = {
+	{
 		.key    = zeroed_string,
 		.klen	= 16,
 		.ptext	= zeroed_string,
 		.ctext	= "\xd8\xd4\xe9\xde\xd9\x1e\x13\xf7",
 		.len	= 8,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x2b\x02\x05\x68\x06\x14\x49\x76"
 			  "\x77\x5d\x0e\x26\x6c\x28\x78\x43",
 		.klen	= 16,
 		.ptext	= "\x74\x65\x73\x74\x20\x6d\x65\x2e",
 		.ctext	= "\x94\xeb\xc8\x96\x84\x6a\x49\xa8",
 		.len	= 8,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x09\x65\x43\x11\x66\x44\x39\x25"
 			  "\x51\x3a\x16\x10\x0a\x08\x12\x6e",
 		.klen	= 16,
@@ -22630,7 +22629,7 @@
 		.ctext	= "\x3e\xce\xae\x22\x60\x56\xa8\x9d"
 			  "\x77\x4d\xd4\xb4\x87\x24\xe3\x9a",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x4d\x76\x32\x17\x05\x3f\x75\x2c"
 			  "\x5d\x04\x16\x36\x15\x72\x63\x2f",
 		.klen	= 16,
@@ -22643,42 +22642,42 @@
 			  "\x4d\xb8\xcf\xf3\x99\x50\xb3\xd4"
 			  "\x73\xa2\xfa\xc9\x16\x59\x5d\x81",
 		.len	= 32,
-	पूर्ण
-पूर्ण;
+	}
+};
 
 /*
  * KHAZAD test vectors.
  */
-अटल स्थिर काष्ठा cipher_testvec khazad_tv_ढाँचा[] = अणु
-	अणु
+static const struct cipher_testvec khazad_tv_template[] = {
+	{
 		.key	= "\x80\x00\x00\x00\x00\x00\x00\x00"
 			  "\x00\x00\x00\x00\x00\x00\x00\x00",
 		.klen	= 16,
 		.ptext	= "\x00\x00\x00\x00\x00\x00\x00\x00",
 		.ctext	= "\x49\xa4\xce\x32\xac\x19\x0e\x3f",
 		.len	= 8,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x38\x38\x38\x38\x38\x38\x38\x38"
 			  "\x38\x38\x38\x38\x38\x38\x38\x38",
 		.klen	= 16,
 		.ptext	= "\x38\x38\x38\x38\x38\x38\x38\x38",
 		.ctext	= "\x7e\x82\x12\xa1\xd9\x5b\xe4\xf9",
 		.len	= 8,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xa2\xa2\xa2\xa2\xa2\xa2\xa2\xa2"
 			"\xa2\xa2\xa2\xa2\xa2\xa2\xa2\xa2",
 		.klen	= 16,
 		.ptext	= "\xa2\xa2\xa2\xa2\xa2\xa2\xa2\xa2",
 		.ctext	= "\xaa\xbe\xc1\x95\xc5\x94\x1a\x9c",
 		.len	= 8,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x2f\x2f\x2f\x2f\x2f\x2f\x2f\x2f"
 			"\x2f\x2f\x2f\x2f\x2f\x2f\x2f\x2f",
 		.klen	= 16,
 		.ptext	= "\x2f\x2f\x2f\x2f\x2f\x2f\x2f\x2f",
 		.ctext	= "\x04\x74\xf5\x70\x50\x16\xd3\xb8",
 		.len	= 8,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x2f\x2f\x2f\x2f\x2f\x2f\x2f\x2f"
 			"\x2f\x2f\x2f\x2f\x2f\x2f\x2f\x2f",
 		.klen	= 16,
@@ -22687,15 +22686,15 @@
 		.ctext	= "\x04\x74\xf5\x70\x50\x16\xd3\xb8"
 			"\x04\x74\xf5\x70\x50\x16\xd3\xb8",
 		.len	= 16,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
  * Anubis test vectors.
  */
 
-अटल स्थिर काष्ठा cipher_testvec anubis_tv_ढाँचा[] = अणु
-	अणु
+static const struct cipher_testvec anubis_tv_template[] = {
+	{
 		.key	= "\xfe\xfe\xfe\xfe\xfe\xfe\xfe\xfe"
 			  "\xfe\xfe\xfe\xfe\xfe\xfe\xfe\xfe",
 		.klen	= 16,
@@ -22704,7 +22703,7 @@
 		.ctext	= "\x6d\xc5\xda\xa2\x26\x7d\x62\x6f"
 			  "\x08\xb7\x52\x8e\x6e\x6e\x86\x90",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 
 		.key	= "\x03\x03\x03\x03\x03\x03\x03\x03"
 			  "\x03\x03\x03\x03\x03\x03\x03\x03"
@@ -22715,7 +22714,7 @@
 		.ctext	= "\xdb\xf1\x42\xf4\xd1\x8a\xc7\x49"
 			  "\x87\x41\x6f\x82\x0a\x98\x64\xae",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x24\x24\x24\x24\x24\x24\x24\x24"
 			  "\x24\x24\x24\x24\x24\x24\x24\x24"
 			  "\x24\x24\x24\x24\x24\x24\x24\x24"
@@ -22726,7 +22725,7 @@
 		.ctext	= "\xfd\x1b\x4a\xe3\xbf\xf0\xad\x3d"
 			  "\x06\xd3\x61\x27\xfd\x13\x9e\xde",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x25\x25\x25\x25\x25\x25\x25\x25"
 			  "\x25\x25\x25\x25\x25\x25\x25\x25"
 			  "\x25\x25\x25\x25\x25\x25\x25\x25"
@@ -22737,7 +22736,7 @@
 		.ctext	= "\x1a\x91\xfb\x2b\xb7\x78\x6b\xc4"
 			"\x17\xd9\xff\x40\x3b\x0e\xe5\xfe",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x35\x35\x35\x35\x35\x35\x35\x35"
 			  "\x35\x35\x35\x35\x35\x35\x35\x35"
 			  "\x35\x35\x35\x35\x35\x35\x35\x35"
@@ -22749,11 +22748,11 @@
 		.ctext	= "\xa5\x2c\x85\x6f\x9c\xba\xa0\x97"
 			  "\x9e\xc6\x84\x0f\x17\x21\x07\xee",
 		.len	= 16,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा cipher_testvec anubis_cbc_tv_ढाँचा[] = अणु
-	अणु
+static const struct cipher_testvec anubis_cbc_tv_template[] = {
+	{
 		.key	= "\xfe\xfe\xfe\xfe\xfe\xfe\xfe\xfe"
 			  "\xfe\xfe\xfe\xfe\xfe\xfe\xfe\xfe",
 		.klen	= 16,
@@ -22768,7 +22767,7 @@
 			  "\x86\xd8\xb5\x6f\x98\x5e\x8a\x66"
 			  "\x4f\x1f\x78\xa1\xbb\x37\xf1\xbe",
 		.len	= 32,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x35\x35\x35\x35\x35\x35\x35\x35"
 			  "\x35\x35\x35\x35\x35\x35\x35\x35"
 			  "\x35\x35\x35\x35\x35\x35\x35\x35"
@@ -22786,27 +22785,27 @@
 			  "\xa2\xbc\x06\x98\xc6\x4b\xda\x75"
 			  "\x2e\xaa\xbe\x58\xce\x01\x5b\xc7",
 		.len	= 32,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
  * XETA test vectors
  */
-अटल स्थिर काष्ठा cipher_testvec xeta_tv_ढाँचा[] = अणु
-	अणु
+static const struct cipher_testvec xeta_tv_template[] = {
+	{
 		.key    = zeroed_string,
 		.klen	= 16,
 		.ptext	= zeroed_string,
 		.ctext	= "\xaa\x22\x96\xe5\x6c\x61\xf3\x45",
 		.len	= 8,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x2b\x02\x05\x68\x06\x14\x49\x76"
 			  "\x77\x5d\x0e\x26\x6c\x28\x78\x43",
 		.klen	= 16,
 		.ptext	= "\x74\x65\x73\x74\x20\x6d\x65\x2e",
 		.ctext	= "\x82\x3e\xeb\x35\xdc\xdd\xd9\xc3",
 		.len	= 8,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x09\x65\x43\x11\x66\x44\x39\x25"
 			  "\x51\x3a\x16\x10\x0a\x08\x12\x6e",
 		.klen	= 16,
@@ -22815,7 +22814,7 @@
 		.ctext	= "\xe2\x04\xdb\xf2\x89\x85\x9e\xea"
 			  "\x61\x35\xaa\xed\xb5\xcb\x71\x2c",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x4d\x76\x32\x17\x05\x3f\x75\x2c"
 			  "\x5d\x04\x16\x36\x15\x72\x63\x2f",
 		.klen	= 16,
@@ -22828,28 +22827,28 @@
 			  "\xa9\xda\x1e\x9e\xb1\x3e\x2a\x8f"
 			  "\xea\xa5\x6a\x85\xd1\xf4\xa8\xa5",
 		.len	= 32,
-	पूर्ण
-पूर्ण;
+	}
+};
 
 /*
  * FCrypt test vectors
  */
-अटल स्थिर काष्ठा cipher_testvec fcrypt_pcbc_tv_ढाँचा[] = अणु
-	अणु /* http://www.खोलोafs.org/pipermail/खोलोafs-devel/2000-December/005320.hपंचांगl */
+static const struct cipher_testvec fcrypt_pcbc_tv_template[] = {
+	{ /* http://www.openafs.org/pipermail/openafs-devel/2000-December/005320.html */
 		.key	= "\x00\x00\x00\x00\x00\x00\x00\x00",
 		.klen	= 8,
 		.iv	= "\x00\x00\x00\x00\x00\x00\x00\x00",
 		.ptext	= "\x00\x00\x00\x00\x00\x00\x00\x00",
 		.ctext	= "\x0E\x09\x00\xC7\x3E\xF7\xED\x41",
 		.len	= 8,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x11\x44\x77\xAA\xDD\x00\x33\x66",
 		.klen	= 8,
 		.iv	= "\x00\x00\x00\x00\x00\x00\x00\x00",
 		.ptext	= "\x12\x34\x56\x78\x9A\xBC\xDE\xF0",
 		.ctext	= "\xD8\xED\x78\x74\x77\xEC\x06\x80",
 		.len	= 8,
-	पूर्ण, अणु /* From Arla */
+	}, { /* From Arla */
 		.key	= "\xf0\xe1\xd2\xc3\xb4\xa5\x96\x87",
 		.klen	= 8,
 		.iv	= "\xfe\xdc\xba\x98\x76\x54\x32\x10",
@@ -22861,7 +22860,7 @@
 			  "\x23\xb5\x62\xd7\x0c\xf5\x27\xd1"
 			  "\xf8\x91\x3c\xac\x44\x22\x92\xef",
 		.len	= 48,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xfe\xdc\xba\x98\x76\x54\x32\x10",
 		.klen	= 8,
 		.iv	= "\xf0\xe1\xd2\xc3\xb4\xa5\x96\x87",
@@ -22873,14 +22872,14 @@
 			  "\x19\x89\x09\x1c\x2a\x8e\x8c\x94"
 			  "\xfc\xc7\x68\xe4\x88\xaa\xde\x0f",
 		.len	= 48,
-	पूर्ण
-पूर्ण;
+	}
+};
 
 /*
  * CAMELLIA test vectors.
  */
-अटल स्थिर काष्ठा cipher_testvec camellia_tv_ढाँचा[] = अणु
-	अणु
+static const struct cipher_testvec camellia_tv_template[] = {
+	{
 		.key	= "\x01\x23\x45\x67\x89\xab\xcd\xef"
 			  "\xfe\xdc\xba\x98\x76\x54\x32\x10",
 		.klen	= 16,
@@ -22889,7 +22888,7 @@
 		.ctext	= "\x67\x67\x31\x38\x54\x96\x69\x73"
 			  "\x08\x57\x06\x56\x48\xea\xbe\x43",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x01\x23\x45\x67\x89\xab\xcd\xef"
 			  "\xfe\xdc\xba\x98\x76\x54\x32\x10"
 			  "\x00\x11\x22\x33\x44\x55\x66\x77",
@@ -22899,7 +22898,7 @@
 		.ctext	= "\xb4\x99\x34\x01\xb3\xe9\x96\xf8"
 			  "\x4e\xe5\xce\xe7\xd7\x9b\x09\xb9",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x01\x23\x45\x67\x89\xab\xcd\xef"
 			  "\xfe\xdc\xba\x98\x76\x54\x32\x10"
 			  "\x00\x11\x22\x33\x44\x55\x66\x77"
@@ -22910,7 +22909,7 @@
 		.ctext	= "\x9a\xcc\x23\x7d\xff\x16\xd7\x6c"
 			  "\x20\xef\x7c\x91\x9e\x3a\x75\x09",
 		.len	= 16,
-	पूर्ण, अणु /* Generated with Crypto++ */
+	}, { /* Generated with Crypto++ */
 		.key	= "\x3F\x85\x62\x3F\x1C\xF9\xD6\x1C"
 			  "\xF9\xD6\xB3\x90\x6D\x4A\x90\x6D"
 			  "\x4A\x27\x04\xE1\x27\x04\xE1\xBE"
@@ -23169,11 +23168,11 @@
 			  "\xF8\xB2\xAA\x7A\xD6\xFF\xFA\x55"
 			  "\x33\x1A\xBB\xD3\xA2\x7E\x97\x66",
 		.len	= 1008,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा cipher_testvec camellia_cbc_tv_ढाँचा[] = अणु
-	अणु
+static const struct cipher_testvec camellia_cbc_tv_template[] = {
+	{
 		.key    = "\x06\xa9\x21\x40\x36\xb8\xa1\x5b"
 			  "\x51\x2e\x03\xd5\x34\x12\x00\x06",
 		.klen   = 16,
@@ -23185,7 +23184,7 @@
 		.ctext	= "\xea\x32\x12\x76\x3b\x50\x10\xe7"
 			  "\x18\xf6\xfd\x5d\xf6\x8f\x13\x51",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key    = "\xc2\x86\x69\x6d\x88\x7c\x9a\xa0"
 			  "\x61\x1b\xbb\x3e\x20\x25\xa4\x5a",
 		.klen   = 16,
@@ -23202,7 +23201,7 @@
 			  "\x19\xb4\x3e\x57\x1c\x02\x5e\xa0"
 			  "\x15\x78\xe0\x5e\xf2\xcb\x87\x16",
 		.len	= 32,
-	पूर्ण, अणु /* Generated with Crypto++ */
+	}, { /* Generated with Crypto++ */
 		.key	= "\x85\x62\x3F\x1C\xF9\xD6\x1C\xF9"
 			  "\xD6\xB3\x90\x6D\x4A\x90\x6D\x4A"
 			  "\x27\x04\xE1\x27\x04\xE1\xBE\x9B"
@@ -23465,11 +23464,11 @@
 			  "\x55\x01\xD4\x58\xB2\xF2\x85\x49"
 			  "\x70\xC5\xB9\x0B\x3B\x7A\x6E\x6C",
 		.len	= 1008,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा cipher_testvec camellia_ctr_tv_ढाँचा[] = अणु
-	अणु /* Generated with Crypto++ */
+static const struct cipher_testvec camellia_ctr_tv_template[] = {
+	{ /* Generated with Crypto++ */
 		.key	= "\x85\x62\x3F\x1C\xF9\xD6\x1C\xF9"
 			  "\xD6\xB3\x90\x6D\x4A\x90\x6D\x4A"
 			  "\x27\x04\xE1\x27\x04\xE1\xBE\x9B"
@@ -23604,7 +23603,7 @@
 			  "\xE6\xA6\x50\x80\x78\x9E\xF1\xB0"
 			  "\x4D\xB2\x0D\x3D\xFC\x40\x25\x4D",
 		.len	= 496,
-	पूर्ण, अणु /* Generated with Crypto++ */
+	}, { /* Generated with Crypto++ */
 		.key	= "\x85\x62\x3F\x1C\xF9\xD6\x1C\xF9"
 			  "\xD6\xB3\x90\x6D\x4A\x90\x6D\x4A"
 			  "\x27\x04\xE1\x27\x04\xE1\xBE\x9B"
@@ -23869,7 +23868,7 @@
 			  "\xE7\x2C\x49\x08\x8B\x72\xFA\x5C"
 			  "\xF1\x6B\xD9",
 		.len	= 1011,
-	पूर्ण, अणु /* Generated with Crypto++ */
+	}, { /* Generated with Crypto++ */
 		.key	= "\x85\x62\x3F\x1C\xF9\xD6\x1C\xF9"
 			  "\xD6\xB3\x90\x6D\x4A\x90\x6D\x4A"
 			  "\x27\x04\xE1\x27\x04\xE1\xBE\x9B"
@@ -24132,12 +24131,12 @@
 			  "\x67\xA1\xEA\xD6\x3A\x5B\xBF\x71"
 			  "\x1D\x48\x64\x6C\xFB\xC0\x9E\x36",
 		.len	= 1008,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा cipher_testvec camellia_lrw_tv_ढाँचा[] = अणु
+static const struct cipher_testvec camellia_lrw_tv_template[] = {
 	/* Generated from AES-LRW test vectors */
-	अणु
+	{
 		.key	= "\x45\x62\xac\x25\xf8\x28\x17\x6d"
 			  "\x4c\x26\x84\x14\xb5\x68\x01\x85"
 			  "\x25\x8e\x2a\x05\xe7\x3e\x9d\x03"
@@ -24150,7 +24149,7 @@
 		.ctext	= "\x92\x68\x19\xd7\xb7\x5b\x0a\x31"
 			  "\x97\xcc\x72\xbe\x99\x17\xeb\x3e",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x59\x70\x47\x14\xf5\x57\x47\x8c"
 			  "\xd7\x79\xe8\x0f\x54\x88\x79\x44"
 			  "\x0d\x48\xf0\xb7\xb1\x5a\x53\xea"
@@ -24163,7 +24162,7 @@
 		.ctext	= "\x73\x09\xb7\x50\xb6\x77\x30\x50"
 			  "\x5c\x8a\x9c\x26\x77\x9d\xfc\x4a",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xd8\x2a\x91\x34\xb2\x6a\x56\x50"
 			  "\x30\xfe\x69\xe2\x37\x7f\x98\x47"
 			  "\xcd\xf9\x0b\x16\x0c\x64\x8f\xb6"
@@ -24176,7 +24175,7 @@
 		.ctext	= "\x90\xae\x83\xe0\x22\xb9\x60\x91"
 			  "\xfa\xa9\xb7\x98\xe3\xed\x87\x01",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x0f\x6a\xef\xf8\xd3\xd2\xbb\x15"
 			  "\x25\x83\xf7\x3c\x1f\x01\x28\x74"
 			  "\xca\xc6\xbc\x35\x4d\x4a\x65\x54"
@@ -24190,7 +24189,7 @@
 		.ctext	= "\x99\xe9\x6e\xd4\xc9\x21\xa5\xf0"
 			  "\xd8\x83\xef\xd9\x07\x16\x5f\x35",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x8a\xd4\xee\x10\x2f\xbd\x81\xff"
 			  "\xf8\x86\xce\xac\x93\xc5\xad\xc6"
 			  "\xa0\x19\x07\xc0\x9d\xf7\xbb\xdd"
@@ -24204,7 +24203,7 @@
 		.ctext	= "\x42\x88\xf4\xcb\x21\x11\x6d\x8e"
 			  "\xde\x1a\xf2\x29\xf1\x4a\xe0\x15",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xf8\xd4\x76\xff\xd6\x46\xee\x6c"
 			  "\x23\x84\xcb\x1c\x77\xd6\x19\x5d"
 			  "\xfe\xf1\xa9\xf3\x7b\xbc\x8d\x21"
@@ -24219,7 +24218,7 @@
 		.ctext	= "\x40\xaa\x34\x86\x4a\x8f\x78\xb9"
 			  "\xdb\xdb\x0f\x3d\x48\x70\xbe\x8d",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xfb\x76\x15\xb2\x3d\x80\x89\x1d"
 			  "\xd4\x70\x98\x0b\xc7\x95\x84\xc8"
 			  "\xb2\xfb\x64\xce\x60\x97\x87\x8d"
@@ -24234,7 +24233,7 @@
 		.ctext	= "\x04\xab\x28\x37\x31\x7a\x26\xab"
 			  "\xa1\x70\x1b\x9c\xe7\xdd\x83\xff",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xf8\xd4\x76\xff\xd6\x46\xee\x6c"
 			  "\x23\x84\xcb\x1c\x77\xd6\x19\x5d"
 			  "\xfe\xf1\xa9\xf3\x7b\xbc\x8d\x21"
@@ -24373,12 +24372,12 @@
 			  "\xb2\x1a\xd8\x4c\xbd\x1d\x10\xe9"
 			  "\x5a\xa8\x92\x7f\xba\xe6\x0c\x95",
 		.len	= 512,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा cipher_testvec camellia_xts_tv_ढाँचा[] = अणु
+static const struct cipher_testvec camellia_xts_tv_template[] = {
 	/* Generated from AES-XTS test vectors */
-	अणु
+	{
 		.key	= "\x00\x00\x00\x00\x00\x00\x00\x00"
 			  "\x00\x00\x00\x00\x00\x00\x00\x00"
 			  "\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -24395,7 +24394,7 @@
 			  "\x78\xba\xa4\xf8\x67\x4d\x7e\xad"
 			  "\x20\x18\xf5\x0c\x41\x16\x2a\x61",
 		.len	= 32,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x11\x11\x11\x11\x11\x11\x11\x11"
 			  "\x11\x11\x11\x11\x11\x11\x11\x11"
 			  "\x22\x22\x22\x22\x22\x22\x22\x22"
@@ -24412,7 +24411,7 @@
 			  "\xb5\x37\x06\xff\xbd\xd4\x91\x70"
 			  "\x80\x1f\xb2\x39\x10\x89\x44\xf5",
 		.len	= 32,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xff\xfe\xfd\xfc\xfb\xfa\xf9\xf8"
 			  "\xf7\xf6\xf5\xf4\xf3\xf2\xf1\xf0"
 			  "\x22\x22\x22\x22\x22\x22\x22\x22"
@@ -24429,7 +24428,7 @@
 			  "\xb4\x3b\xce\xe7\x17\xaa\x89\x6a"
 			  "\x35\x3c\x6b\xb5\x61\x1c\x79\x38",
 		.len	= 32,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x27\x18\x28\x18\x28\x45\x90\x45"
 			  "\x23\x53\x60\x28\x74\x71\x35\x26"
 			  "\x31\x41\x59\x26\x53\x58\x97\x93"
@@ -24566,7 +24565,7 @@
 			  "\x52\x84\x4f\xee\x27\xe8\x02\xd4"
 			  "\x34\x3c\x69\xc2\xbd\x20\xe6\x7a",
 		.len	= 512,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x27\x18\x28\x18\x28\x45\x90\x45"
 			  "\x23\x53\x60\x28\x74\x71\x35\x26"
 			  "\x62\x49\x77\x57\x24\x70\x93\x69"
@@ -24707,14 +24706,14 @@
 			  "\xb7\x16\xd8\x12\x5c\xcd\x7d\x4e"
 			  "\xd5\xc6\x99\xcc\x4e\x6c\x94\x95",
 		.len	= 512,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
  * SEED test vectors
  */
-अटल स्थिर काष्ठा cipher_testvec seed_tv_ढाँचा[] = अणु
-	अणु
+static const struct cipher_testvec seed_tv_template[] = {
+	{
 		.key    = zeroed_string,
 		.klen	= 16,
 		.ptext	= "\x00\x01\x02\x03\x04\x05\x06\x07"
@@ -24722,7 +24721,7 @@
 		.ctext	= "\x5e\xba\xc6\xe0\x05\x4e\x16\x68"
 			  "\x19\xaf\xf1\xcc\x6d\x34\x6c\xdb",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x00\x01\x02\x03\x04\x05\x06\x07"
 			  "\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f",
 		.klen	= 16,
@@ -24730,7 +24729,7 @@
 		.ctext	= "\xc1\x1f\x22\xf2\x01\x40\x50\x50"
 			  "\x84\x48\x35\x97\xe4\x37\x0f\x43",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x47\x06\x48\x08\x51\xe6\x1b\xe8"
 			  "\x5d\x74\xbf\xb3\xfd\x95\x61\x85",
 		.klen	= 16,
@@ -24739,7 +24738,7 @@
 		.ctext	= "\xee\x54\xd1\x3e\xbc\xae\x70\x6d"
 			  "\x22\x6b\xc3\x14\x2c\xd4\x0d\x4a",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x28\xdb\xc3\xbc\x49\xff\xd8\x7d"
 			  "\xcf\xa5\x09\xb1\x1d\x42\x2b\xe7",
 		.klen	= 16,
@@ -24748,11 +24747,11 @@
 		.ctext	= "\x9b\x9b\x7b\xfc\xd1\x81\x3c\xb9"
 			  "\x5d\x0b\x36\x18\xf4\x0f\x51\x22",
 		.len	= 16,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल स्थिर काष्ठा cipher_testvec chacha20_tv_ढाँचा[] = अणु
-	अणु /* RFC7539 A.2. Test Vector #1 */
+static const struct cipher_testvec chacha20_tv_template[] = {
+	{ /* RFC7539 A.2. Test Vector #1 */
 		.key	= "\x00\x00\x00\x00\x00\x00\x00\x00"
 			  "\x00\x00\x00\x00\x00\x00\x00\x00"
 			  "\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -24777,7 +24776,7 @@
 			  "\x6a\x43\xb8\xf4\x15\x18\xa1\x1c"
 			  "\xc3\x87\xb6\x69\xb2\xee\x65\x86",
 		.len	= 64,
-	पूर्ण, अणु /* RFC7539 A.2. Test Vector #2 */
+	}, { /* RFC7539 A.2. Test Vector #2 */
 		.key	= "\x00\x00\x00\x00\x00\x00\x00\x00"
 			  "\x00\x00\x00\x00\x00\x00\x00\x00"
 			  "\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -24881,7 +24880,7 @@
 			  "\xc4\xfd\x80\x6c\x22\xf2\x21",
 		.len	= 375,
 
-	पूर्ण, अणु /* RFC7539 A.2. Test Vector #3 */
+	}, { /* RFC7539 A.2. Test Vector #3 */
 		.key	= "\x1c\x92\x40\xa5\xeb\x55\xd3\x8a"
 			  "\xf3\x33\x88\x86\x04\xf6\xb5\xf0"
 			  "\x47\x39\x17\xc1\x40\x2b\x80\x09"
@@ -24922,7 +24921,7 @@
 			  "\x87\xb5\x8d\xfd\x72\x8a\xfa\x36"
 			  "\x75\x7a\x79\x7a\xc1\x88\xd1",
 		.len	= 127,
-	पूर्ण, अणु /* Self-made test vector क्रम दीर्घ data */
+	}, { /* Self-made test vector for long data */
 		.key	= "\x1c\x92\x40\xa5\xeb\x55\xd3\x8a"
 			  "\xf3\x33\x88\x86\x04\xf6\xb5\xf0"
 			  "\x47\x39\x17\xc1\x40\x2b\x80\x09"
@@ -25253,11 +25252,11 @@
 			  "\xa1\xed\xad\xd5\x76\xfa\x24\x8f"
 			  "\x98",
 		.len	= 1281,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा cipher_testvec xchacha20_tv_ढाँचा[] = अणु
-	अणु /* from libsodium test/शेष/xchacha20.c */
+static const struct cipher_testvec xchacha20_tv_template[] = {
+	{ /* from libsodium test/default/xchacha20.c */
 		.key	= "\x79\xc9\x97\x98\xac\x67\x30\x0b"
 			  "\xbb\x27\x04\xc9\x5c\x34\x1e\x32"
 			  "\x45\xf3\xdc\xb2\x17\x61\xb9\x8e"
@@ -25276,7 +25275,7 @@
 			  "\xd7\x79\x75\x90\x74\x4e\x0c\xf0"
 			  "\x60\xf0\x13\x73\x9c",
 		.len	= 29,
-	पूर्ण, अणु /* from libsodium test/शेष/xchacha20.c */
+	}, { /* from libsodium test/default/xchacha20.c */
 		.key	= "\x9d\x23\xbd\x41\x49\xcb\x97\x9c"
 			  "\xcf\x3c\x5c\x94\xdd\x21\x7e\x98"
 			  "\x08\xcb\x0e\x50\xcd\x0f\x67\x81"
@@ -25311,7 +25310,7 @@
 			  "\x57\x78\x8e\x6f\xae\x90\xfc\x31"
 			  "\x09\x7c\xfc",
 		.len	= 91,
-	पूर्ण, अणु /* Taken from the ChaCha20 test vectors, appended 12 अक्रमom bytes
+	}, { /* Taken from the ChaCha20 test vectors, appended 12 random bytes
 		to the nonce, zero-padded the stream position from 4 to 8 bytes,
 		and recomputed the ciphertext using libsodium's XChaCha20 */
 		.key	= "\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -25340,7 +25339,7 @@
 			  "\x03\xdc\xf8\x2b\xc1\xe1\x75\x67"
 			  "\x23\x7b\xe6\xfc\xd4\x03\x86\x54",
 		.len	= 64,
-	पूर्ण, अणु /* Derived from a ChaCha20 test vector, via the process above */
+	}, { /* Derived from a ChaCha20 test vector, via the process above */
 		.key	= "\x00\x00\x00\x00\x00\x00\x00\x00"
 			  "\x00\x00\x00\x00\x00\x00\x00\x00"
 			  "\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -25446,7 +25445,7 @@
 			  "\x12\x8d\x7b\x61\xe5\x1f\x98",
 		.len	= 375,
 
-	पूर्ण, अणु /* Derived from a ChaCha20 test vector, via the process above */
+	}, { /* Derived from a ChaCha20 test vector, via the process above */
 		.key	= "\x1c\x92\x40\xa5\xeb\x55\xd3\x8a"
 			  "\xf3\x33\x88\x86\x04\xf6\xb5\xf0"
 			  "\x47\x39\x17\xc1\x40\x2b\x80\x09"
@@ -25489,7 +25488,7 @@
 			  "\x65\x03\xfa\x45\xf7\x9e\x53\x7a"
 			  "\x99\xf1\x82\x25\x4f\x8d\x07",
 		.len	= 127,
-	पूर्ण, अणु /* Derived from a ChaCha20 test vector, via the process above */
+	}, { /* Derived from a ChaCha20 test vector, via the process above */
 		.key	= "\x1c\x92\x40\xa5\xeb\x55\xd3\x8a"
 			  "\xf3\x33\x88\x86\x04\xf6\xb5\xf0"
 			  "\x47\x39\x17\xc1\x40\x2b\x80\x09"
@@ -25822,7 +25821,7 @@
 			  "\xba\xd0\x34\xc9\x2d\x91\xc5\x17"
 			  "\x11",
 		.len	= 1281,
-	पूर्ण, अणु /* test vector from https://tools.ietf.org/hपंचांगl/draft-arciszewski-xchacha-02#appendix-A.3.2 */
+	}, { /* test vector from https://tools.ietf.org/html/draft-arciszewski-xchacha-02#appendix-A.3.2 */
 		.key	= "\x80\x81\x82\x83\x84\x85\x86\x87"
 			  "\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f"
 			  "\x90\x91\x92\x93\x94\x95\x96\x97"
@@ -25909,15 +25908,15 @@
 			  "\x93\xb9\x31\x11\xc1\xa5\x5d\xd7"
 			  "\x42\x1a\x10\x18\x49\x74\xc7\xc5",
 		.len	= 304,
-	पूर्ण
-पूर्ण;
+	}
+};
 
 /*
  * Same as XChaCha20 test vectors above, but recomputed the ciphertext with
- * XChaCha12, using a modअगरied libsodium.
+ * XChaCha12, using a modified libsodium.
  */
-अटल स्थिर काष्ठा cipher_testvec xchacha12_tv_ढाँचा[] = अणु
-	अणु
+static const struct cipher_testvec xchacha12_tv_template[] = {
+	{
 		.key	= "\x79\xc9\x97\x98\xac\x67\x30\x0b"
 			  "\xbb\x27\x04\xc9\x5c\x34\x1e\x32"
 			  "\x45\xf3\xdc\xb2\x17\x61\xb9\x8e"
@@ -25936,7 +25935,7 @@
 			  "\x43\xce\xeb\xaf\x36\xf0\x29\x9d"
 			  "\x3a\xfb\x18\xae\x1b",
 		.len	= 29,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x9d\x23\xbd\x41\x49\xcb\x97\x9c"
 			  "\xcf\x3c\x5c\x94\xdd\x21\x7e\x98"
 			  "\x08\xcb\x0e\x50\xcd\x0f\x67\x81"
@@ -25971,7 +25970,7 @@
 			  "\x87\x67\xd6\x50\xd9\x8d\xd9\x92"
 			  "\x54\x5b\x0e",
 		.len	= 91,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x00\x00\x00\x00\x00\x00\x00\x00"
 			  "\x00\x00\x00\x00\x00\x00\x00\x00"
 			  "\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -25998,7 +25997,7 @@
 			  "\x67\x8f\xef\x50\xb1\x5f\xa5\x77"
 			  "\x4c\x25\xe7\x86\x26\x42\xca\x44",
 		.len	= 64,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x00\x00\x00\x00\x00\x00\x00\x00"
 			  "\x00\x00\x00\x00\x00\x00\x00\x00"
 			  "\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -26105,7 +26104,7 @@
 
 		.len	= 375,
 
-	पूर्ण, अणु
+	}, {
 		.key	= "\x1c\x92\x40\xa5\xeb\x55\xd3\x8a"
 			  "\xf3\x33\x88\x86\x04\xf6\xb5\xf0"
 			  "\x47\x39\x17\xc1\x40\x2b\x80\x09"
@@ -26148,7 +26147,7 @@
 			  "\x44\x2e\x20\x33\xdd\xa0\x82\xa9"
 			  "\x25\x76\x37\xe6\x3c\x67\x5b",
 		.len	= 127,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x1c\x92\x40\xa5\xeb\x55\xd3\x8a"
 			  "\xf3\x33\x88\x86\x04\xf6\xb5\xf0"
 			  "\x47\x39\x17\xc1\x40\x2b\x80\x09"
@@ -26481,7 +26480,7 @@
 			  "\xf0\xfc\x5e\x1c\xf1\xf5\xf9\xf3"
 			  "\x5b",
 		.len	= 1281,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x80\x81\x82\x83\x84\x85\x86\x87"
 			  "\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f"
 			  "\x90\x91\x92\x93\x94\x95\x96\x97"
@@ -26568,12 +26567,12 @@
 			  "\x54\x14\x90\xa0\x4d\x65\x1c\x37"
 			  "\x50\x70\x44\x29\x6d\x6e\x62\x68",
 		.len	= 304,
-	पूर्ण
-पूर्ण;
+	}
+};
 
 /* Adiantum test vectors from https://github.com/google/adiantum */
-अटल स्थिर काष्ठा cipher_testvec adiantum_xchacha12_aes_tv_ढाँचा[] = अणु
-	अणु
+static const struct cipher_testvec adiantum_xchacha12_aes_tv_template[] = {
+	{
 		.key	= "\x9e\xeb\xb2\x49\x3c\x1c\xf5\xf4"
 			  "\x6a\x99\xc2\xc4\xdf\xb1\xf4\xdd"
 			  "\x75\x20\x57\xea\x2c\x4f\xcd\xb2"
@@ -26588,7 +26587,7 @@
 		.ctext	= "\x6d\x32\x86\x18\x67\x86\x0f\x3f"
 			  "\x96\x7c\x9d\x28\x0d\x53\xec\x9f",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x36\x2b\x57\x97\xf8\x5d\xcd\x99"
 			  "\x5f\x1a\x5a\x44\x1d\x92\x0f\x27"
 			  "\xcc\x16\xd7\x2b\x85\x63\x99\xd3"
@@ -26607,7 +26606,7 @@
 			  "\x46\x63\xe7\x0c\x7d\x87\xe8\x4e"
 			  "\xc9\x18\x7b\xbe\x18\x60\x50",
 		.len	= 31,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xa5\x28\x24\x34\x1a\x3c\xd8\xf7"
 			  "\x05\x91\x8f\xee\x85\x1f\x35\x7f"
 			  "\x80\x3d\xfc\x9b\x94\xf6\xfc\x9e"
@@ -26650,7 +26649,7 @@
 			  "\x74\xa6\xaa\xa3\xac\xdc\xc2\xf5"
 			  "\x8d\xde\x34\x86\x78\x60\x75\x8d",
 		.len	= 128,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xd3\x81\x72\x18\x23\xff\x6f\x4a"
 			  "\x25\x74\x29\x0d\x51\x8a\x0e\x13"
 			  "\xc1\x53\x5d\x30\x8d\xee\x75\x0d"
@@ -26789,7 +26788,7 @@
 			  "\x21\xb0\x21\x52\xba\xa7\x37\xaa"
 			  "\xcc\xbf\x95\xa8\xf4\xd0\x91\xf6",
 		.len	= 512,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xeb\xe5\x11\x3a\x72\xeb\x10\xbe"
 			  "\x70\xcf\xe3\xea\xc2\x74\xa4\x48"
 			  "\x29\x0f\x8f\x3f\xcf\x4c\x28\x2a"
@@ -27184,7 +27183,7 @@
 			  "\x8a\x33\xdd\x8a\x06\x23\x06\x0b"
 			  "\x7f\x70\xbe\x7e\xa1\x80\xbc\x7a",
 		.len	= 1536,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x60\xd5\x36\xb0\x8e\x5d\x0e\x5f"
 			  "\x70\x47\x8c\xea\x87\x30\x1d\x58"
 			  "\x2a\xb2\xe8\xc6\xcb\x60\xe7\x6f"
@@ -28219,13 +28218,13 @@
 			  "\x60\x1f\x88\xae\xbf\x14\x2d\x05"
 			  "\x4c\x60\x85\x8a\x45\xac\x0f\xc2",
 		.len	= 4096,
-	पूर्ण
-पूर्ण;
+	}
+};
 
 /* Adiantum with XChaCha20 instead of XChaCha12 */
 /* Test vectors from https://github.com/google/adiantum */
-अटल स्थिर काष्ठा cipher_testvec adiantum_xchacha20_aes_tv_ढाँचा[] = अणु
-	अणु
+static const struct cipher_testvec adiantum_xchacha20_aes_tv_template[] = {
+	{
 		.key	= "\x9e\xeb\xb2\x49\x3c\x1c\xf5\xf4"
 			  "\x6a\x99\xc2\xc4\xdf\xb1\xf4\xdd"
 			  "\x75\x20\x57\xea\x2c\x4f\xcd\xb2"
@@ -28240,7 +28239,7 @@
 		.ctext	= "\xf6\x78\x97\xd6\xaa\x94\x01\x27"
 			  "\x2e\x4d\x83\xe0\x6e\x64\x9a\xdf",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x36\x2b\x57\x97\xf8\x5d\xcd\x99"
 			  "\x5f\x1a\x5a\x44\x1d\x92\x0f\x27"
 			  "\xcc\x16\xd7\x2b\x85\x63\x99\xd3"
@@ -28259,7 +28258,7 @@
 			  "\x57\x72\xb5\xfd\xb5\x5d\xb8\x28"
 			  "\x0c\x04\x91\x14\x91\xe9\x37",
 		.len	= 31,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xa5\x28\x24\x34\x1a\x3c\xd8\xf7"
 			  "\x05\x91\x8f\xee\x85\x1f\x35\x7f"
 			  "\x80\x3d\xfc\x9b\x94\xf6\xfc\x9e"
@@ -28302,7 +28301,7 @@
 			  "\x29\x62\x0d\xb2\xf6\x3c\x58\x57"
 			  "\xc1\xd5\x5a\xbb\xd6\xa6\x2a\xe5",
 		.len	= 128,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xd3\x81\x72\x18\x23\xff\x6f\x4a"
 			  "\x25\x74\x29\x0d\x51\x8a\x0e\x13"
 			  "\xc1\x53\x5d\x30\x8d\xee\x75\x0d"
@@ -28441,7 +28440,7 @@
 			  "\xb8\x78\xd2\xa3\xc6\xf3\x79\x9c"
 			  "\xc7\x27\xe1\x6a\x29\xad\xa4\x03",
 		.len	= 512,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xeb\xe5\x11\x3a\x72\xeb\x10\xbe"
 			  "\x70\xcf\xe3\xea\xc2\x74\xa4\x48"
 			  "\x29\x0f\x8f\x3f\xcf\x4c\x28\x2a"
@@ -28836,7 +28835,7 @@
 			  "\xd6\x10\x91\xbe\x5e\x58\x73\xbe"
 			  "\x77\xb8\xb7\x98\xc7\x7e\x78\x9a",
 		.len	= 1536,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x60\xd5\x36\xb0\x8e\x5d\x0e\x5f"
 			  "\x70\x47\x8c\xea\x87\x30\x1d\x58"
 			  "\x2a\xb2\xe8\xc6\xcb\x60\xe7\x6f"
@@ -29871,14 +29870,14 @@
 			  "\xe9\xe1\xa0\xfe\xb2\xc3\x80\x77"
 			  "\x20\x05\xe4\x9b\x47\x3b\xb2\xbd",
 		.len	= 4096,
-	पूर्ण
-पूर्ण;
+	}
+};
 
 /*
  * CTS (Cipher Text Stealing) mode tests
  */
-अटल स्थिर काष्ठा cipher_testvec cts_mode_tv_ढाँचा[] = अणु
-	अणु /* from rfc3962 */
+static const struct cipher_testvec cts_mode_tv_template[] = {
+	{ /* from rfc3962 */
 		.klen	= 16,
 		.key    = "\x63\x68\x69\x63\x6b\x65\x6e\x20"
 			  "\x74\x65\x72\x69\x79\x61\x6b\x69",
@@ -29889,7 +29888,7 @@
 		.ctext	= "\xc6\x35\x35\x68\xf2\xbf\x8c\xb4"
 			  "\xd8\xa5\x80\x36\x2d\xa7\xff\x7f"
 			  "\x97",
-	पूर्ण, अणु
+	}, {
 		.klen	= 16,
 		.key    = "\x63\x68\x69\x63\x6b\x65\x6e\x20"
 			  "\x74\x65\x72\x69\x79\x61\x6b\x69",
@@ -29902,7 +29901,7 @@
 			  "\xd4\x45\xd4\xc8\xef\xf7\xed\x22"
 			  "\x97\x68\x72\x68\xd6\xec\xcc\xc0"
 			  "\xc0\x7b\x25\xe2\x5e\xcf\xe5",
-	पूर्ण, अणु
+	}, {
 		.klen	= 16,
 		.key    = "\x63\x68\x69\x63\x6b\x65\x6e\x20"
 			  "\x74\x65\x72\x69\x79\x61\x6b\x69",
@@ -29915,7 +29914,7 @@
 			  "\xbe\x7f\xcb\xcc\x98\xeb\xf5\xa8"
 			  "\x97\x68\x72\x68\xd6\xec\xcc\xc0"
 			  "\xc0\x7b\x25\xe2\x5e\xcf\xe5\x84",
-	पूर्ण, अणु
+	}, {
 		.klen	= 16,
 		.key    = "\x63\x68\x69\x63\x6b\x65\x6e\x20"
 			  "\x74\x65\x72\x69\x79\x61\x6b\x69",
@@ -29932,7 +29931,7 @@
 			  "\x1b\x55\x49\xd2\xf8\x38\x02\x9e"
 			  "\x39\x31\x25\x23\xa7\x86\x62\xd5"
 			  "\xbe\x7f\xcb\xcc\x98\xeb\xf5",
-	पूर्ण, अणु
+	}, {
 		.klen	= 16,
 		.key    = "\x63\x68\x69\x63\x6b\x65\x6e\x20"
 			  "\x74\x65\x72\x69\x79\x61\x6b\x69",
@@ -29949,7 +29948,7 @@
 			  "\x3b\xc1\x03\xe1\xa1\x94\xbb\xd8"
 			  "\x39\x31\x25\x23\xa7\x86\x62\xd5"
 			  "\xbe\x7f\xcb\xcc\x98\xeb\xf5\xa8",
-	पूर्ण, अणु
+	}, {
 		.klen	= 16,
 		.key    = "\x63\x68\x69\x63\x6b\x65\x6e\x20"
 			  "\x74\x65\x72\x69\x79\x61\x6b\x69",
@@ -29970,27 +29969,27 @@
 			  "\x26\x73\x0d\xbc\x2f\x7b\xc8\x40"
 			  "\x9d\xad\x8b\xbb\x96\xc4\xcd\xc0"
 			  "\x3b\xc1\x03\xe1\xa1\x94\xbb\xd8",
-	पूर्ण
-पूर्ण;
+	}
+};
 
 /*
  * Compression stuff.
  */
-#घोषणा COMP_BUF_SIZE           512
+#define COMP_BUF_SIZE           512
 
-काष्ठा comp_testvec अणु
-	पूर्णांक inlen, outlen;
-	अक्षर input[COMP_BUF_SIZE];
-	अक्षर output[COMP_BUF_SIZE];
-पूर्ण;
+struct comp_testvec {
+	int inlen, outlen;
+	char input[COMP_BUF_SIZE];
+	char output[COMP_BUF_SIZE];
+};
 
 /*
  * Deflate test vectors (null-terminated strings).
  * Params: winbits=-11, Z_DEFAULT_COMPRESSION, MAX_MEM_LEVEL.
  */
 
-अटल स्थिर काष्ठा comp_testvec deflate_comp_tv_ढाँचा[] = अणु
-	अणु
+static const struct comp_testvec deflate_comp_tv_template[] = {
+	{
 		.inlen	= 70,
 		.outlen	= 38,
 		.input	= "Join us now and share the software "
@@ -30000,7 +29999,7 @@
 			  "\x28\xce\x48\x2c\x4a\x55\x28\xc9"
 			  "\x48\x55\x28\xce\x4f\x2b\x29\x07"
 			  "\x71\xbc\x08\x2b\x01\x00",
-	पूर्ण, अणु
+	}, {
 		.inlen	= 191,
 		.outlen	= 122,
 		.input	= "This document describes a compression method based on the DEFLATE"
@@ -30022,11 +30021,11 @@
 			  "\xfe\x8a\x87\x83\xa3\x4f\x56\x8a"
 			  "\xb8\x9e\x8e\x5c\x57\xd3\xa0\x79"
 			  "\xfa\x02",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा comp_testvec deflate_decomp_tv_ढाँचा[] = अणु
-	अणु
+static const struct comp_testvec deflate_decomp_tv_template[] = {
+	{
 		.inlen	= 122,
 		.outlen	= 191,
 		.input	= "\x5d\x8d\x31\x0e\xc2\x30\x10\x04"
@@ -30048,7 +30047,7 @@
 		.output	= "This document describes a compression method based on the DEFLATE"
 			"compression algorithm.  This document defines the application of "
 			"the DEFLATE algorithm to the IP Payload Compression Protocol.",
-	पूर्ण, अणु
+	}, {
 		.inlen	= 38,
 		.outlen	= 70,
 		.input	= "\xf3\xca\xcf\xcc\x53\x28\x2d\x56"
@@ -30058,11 +30057,11 @@
 			  "\x71\xbc\x08\x2b\x01\x00",
 		.output	= "Join us now and share the software "
 			"Join us now and share the software ",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा comp_testvec zlib_deflate_comp_tv_ढाँचा[] = अणु
-	अणु
+static const struct comp_testvec zlib_deflate_comp_tv_template[] = {
+	{
 		.inlen	= 70,
 		.outlen	= 44,
 		.input	= "Join us now and share the software "
@@ -30073,7 +30072,7 @@
 			  "\x28\xc9\x48\x55\x28\xce\x4f\x2b"
 			  "\x29\x07\x71\xbc\x08\x2b\x01\x00"
 			  "\x7c\x65\x19\x3d",
-	पूर्ण, अणु
+	}, {
 		.inlen	= 191,
 		.outlen	= 129,
 		.input	= "This document describes a compression method based on the DEFLATE"
@@ -30096,11 +30095,11 @@
 			  "\x7d\xb2\x52\xc4\xf5\xf4\x8f\xeb"
 			  "\x6a\x1a\x34\x4f\x5f\x2e\x32\x45"
 			  "\x4e",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा comp_testvec zlib_deflate_decomp_tv_ढाँचा[] = अणु
-	अणु
+static const struct comp_testvec zlib_deflate_decomp_tv_template[] = {
+	{
 		.inlen	= 128,
 		.outlen	= 191,
 		.input	= "\x78\x9c\x5d\x8d\x31\x0e\xc2\x30"
@@ -30122,7 +30121,7 @@
 		.output	= "This document describes a compression method based on the DEFLATE"
 			"compression algorithm.  This document defines the application of "
 			"the DEFLATE algorithm to the IP Payload Compression Protocol.",
-	पूर्ण, अणु
+	}, {
 		.inlen	= 44,
 		.outlen	= 70,
 		.input	= "\x78\x9c\xf3\xca\xcf\xcc\x53\x28"
@@ -30133,14 +30132,14 @@
 			  "\x7c\x65\x19\x3d",
 		.output	= "Join us now and share the software "
 			"Join us now and share the software ",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
  * LZO test vectors (null-terminated strings).
  */
-अटल स्थिर काष्ठा comp_testvec lzo_comp_tv_ढाँचा[] = अणु
-	अणु
+static const struct comp_testvec lzo_comp_tv_template[] = {
+	{
 		.inlen	= 70,
 		.outlen	= 57,
 		.input	= "Join us now and share the software "
@@ -30153,7 +30152,7 @@
 			  "\x20\x74\x68\x65\x20\x73\x6f\x66"
 			  "\x74\x77\x61\x72\x65\x20\x11\x00"
 			  "\x00",
-	पूर्ण, अणु
+	}, {
 		.inlen	= 159,
 		.outlen	= 131,
 		.input	= "This document describes a compression method based on the LZO "
@@ -30176,11 +30175,11 @@
 			  "\x0c\x20\x75\x73\x65\x64\x20\x69"
 			  "\x6e\x20\x55\x42\x49\x46\x53\x2e"
 			  "\x11\x00\x00",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा comp_testvec lzo_decomp_tv_ढाँचा[] = अणु
-	अणु
+static const struct comp_testvec lzo_decomp_tv_template[] = {
+	{
 		.inlen	= 133,
 		.outlen	= 159,
 		.input	= "\x00\x2b\x54\x68\x69\x73\x20\x64"
@@ -30203,7 +30202,7 @@
 		.output	= "This document describes a compression method based on the LZO "
 			"compression algorithm.  This document defines the application of "
 			"the LZO algorithm used in UBIFS.",
-	पूर्ण, अणु
+	}, {
 		.inlen	= 46,
 		.outlen	= 70,
 		.input	= "\x00\x0d\x4a\x6f\x69\x6e\x20\x75"
@@ -30214,11 +30213,11 @@
 			  "\x3d\x88\x00\x11\x00\x00",
 		.output	= "Join us now and share the software "
 			"Join us now and share the software ",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा comp_testvec lzorle_comp_tv_ढाँचा[] = अणु
-	अणु
+static const struct comp_testvec lzorle_comp_tv_template[] = {
+	{
 		.inlen	= 70,
 		.outlen	= 59,
 		.input	= "Join us now and share the software "
@@ -30231,7 +30230,7 @@
 			  "\x0c\x65\x20\x74\x68\x65\x20\x73"
 			  "\x6f\x66\x74\x77\x61\x72\x65\x20"
 			  "\x11\x00\x00",
-	पूर्ण, अणु
+	}, {
 		.inlen	= 159,
 		.outlen	= 133,
 		.input	= "This document describes a compression method based on the LZO "
@@ -30254,11 +30253,11 @@
 			  "\xf0\x00\x0c\x20\x75\x73\x65\x64"
 			  "\x20\x69\x6e\x20\x55\x42\x49\x46"
 			  "\x53\x2e\x11\x00\x00",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा comp_testvec lzorle_decomp_tv_ढाँचा[] = अणु
-	अणु
+static const struct comp_testvec lzorle_decomp_tv_template[] = {
+	{
 		.inlen	= 133,
 		.outlen	= 159,
 		.input	= "\x00\x2b\x54\x68\x69\x73\x20\x64"
@@ -30281,7 +30280,7 @@
 		.output	= "This document describes a compression method based on the LZO "
 			"compression algorithm.  This document defines the application of "
 			"the LZO algorithm used in UBIFS.",
-	पूर्ण, अणु
+	}, {
 		.inlen	= 59,
 		.outlen	= 70,
 		.input	= "\x11\x01\x00\x0d\x4a\x6f\x69\x6e"
@@ -30294,203 +30293,203 @@
 			  "\x11\x00\x00",
 		.output	= "Join us now and share the software "
 			"Join us now and share the software ",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
  * Michael MIC test vectors from IEEE 802.11i
  */
-#घोषणा MICHAEL_MIC_TEST_VECTORS 6
+#define MICHAEL_MIC_TEST_VECTORS 6
 
-अटल स्थिर काष्ठा hash_testvec michael_mic_tv_ढाँचा[] = अणु
-	अणु
+static const struct hash_testvec michael_mic_tv_template[] = {
+	{
 		.key = "\x00\x00\x00\x00\x00\x00\x00\x00",
 		.ksize = 8,
-		.plaपूर्णांकext = zeroed_string,
+		.plaintext = zeroed_string,
 		.psize = 0,
 		.digest = "\x82\x92\x5c\x1c\xa1\xd1\x30\xb8",
-	पूर्ण,
-	अणु
+	},
+	{
 		.key = "\x82\x92\x5c\x1c\xa1\xd1\x30\xb8",
 		.ksize = 8,
-		.plaपूर्णांकext = "M",
+		.plaintext = "M",
 		.psize = 1,
 		.digest = "\x43\x47\x21\xca\x40\x63\x9b\x3f",
-	पूर्ण,
-	अणु
+	},
+	{
 		.key = "\x43\x47\x21\xca\x40\x63\x9b\x3f",
 		.ksize = 8,
-		.plaपूर्णांकext = "Mi",
+		.plaintext = "Mi",
 		.psize = 2,
 		.digest = "\xe8\xf9\xbe\xca\xe9\x7e\x5d\x29",
-	पूर्ण,
-	अणु
+	},
+	{
 		.key = "\xe8\xf9\xbe\xca\xe9\x7e\x5d\x29",
 		.ksize = 8,
-		.plaपूर्णांकext = "Mic",
+		.plaintext = "Mic",
 		.psize = 3,
 		.digest = "\x90\x03\x8f\xc6\xcf\x13\xc1\xdb",
-	पूर्ण,
-	अणु
+	},
+	{
 		.key = "\x90\x03\x8f\xc6\xcf\x13\xc1\xdb",
 		.ksize = 8,
-		.plaपूर्णांकext = "Mich",
+		.plaintext = "Mich",
 		.psize = 4,
 		.digest = "\xd5\x5e\x10\x05\x10\x12\x89\x86",
-	पूर्ण,
-	अणु
+	},
+	{
 		.key = "\xd5\x5e\x10\x05\x10\x12\x89\x86",
 		.ksize = 8,
-		.plaपूर्णांकext = "Michael",
+		.plaintext = "Michael",
 		.psize = 7,
 		.digest = "\x0a\x94\x2b\x12\x4e\xca\xa5\x46",
-	पूर्ण
-पूर्ण;
+	}
+};
 
 /*
  * CRC32 test vectors
  */
-अटल स्थिर काष्ठा hash_testvec crc32_tv_ढाँचा[] = अणु
-	अणु
+static const struct hash_testvec crc32_tv_template[] = {
+	{
 		.psize = 0,
 		.digest = "\x00\x00\x00\x00",
-	पूर्ण,
-	अणु
-		.plaपूर्णांकext = "abcdefg",
+	},
+	{
+		.plaintext = "abcdefg",
 		.psize = 7,
 		.digest = "\xd8\xb5\x46\xac",
-	पूर्ण,
-	अणु
+	},
+	{
 		.key = "\x87\xa9\xcb\xed",
 		.ksize = 4,
 		.psize = 0,
 		.digest = "\x87\xa9\xcb\xed",
-	पूर्ण,
-	अणु
+	},
+	{
 		.key = "\xff\xff\xff\xff",
 		.ksize = 4,
-		.plaपूर्णांकext = "\x01\x02\x03\x04\x05\x06\x07\x08"
+		.plaintext = "\x01\x02\x03\x04\x05\x06\x07\x08"
 			     "\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10"
 			     "\x11\x12\x13\x14\x15\x16\x17\x18"
 			     "\x19\x1a\x1b\x1c\x1d\x1e\x1f\x20"
 			     "\x21\x22\x23\x24\x25\x26\x27\x28",
 		.psize = 40,
 		.digest = "\x3a\xdf\x4b\xb0",
-	पूर्ण,
-	अणु
+	},
+	{
 		.key = "\xff\xff\xff\xff",
 		.ksize = 4,
-		.plaपूर्णांकext = "\x29\x2a\x2b\x2c\x2d\x2e\x2f\x30"
+		.plaintext = "\x29\x2a\x2b\x2c\x2d\x2e\x2f\x30"
 			     "\x31\x32\x33\x34\x35\x36\x37\x38"
 			     "\x39\x3a\x3b\x3c\x3d\x3e\x3f\x40"
 			     "\x41\x42\x43\x44\x45\x46\x47\x48"
 			     "\x49\x4a\x4b\x4c\x4d\x4e\x4f\x50",
 		.psize = 40,
 		.digest = "\xa9\x7a\x7f\x7b",
-	पूर्ण,
-	अणु
+	},
+	{
 		.key = "\xff\xff\xff\xff",
 		.ksize = 4,
-		.plaपूर्णांकext = "\x51\x52\x53\x54\x55\x56\x57\x58"
+		.plaintext = "\x51\x52\x53\x54\x55\x56\x57\x58"
 			     "\x59\x5a\x5b\x5c\x5d\x5e\x5f\x60"
 			     "\x61\x62\x63\x64\x65\x66\x67\x68"
 			     "\x69\x6a\x6b\x6c\x6d\x6e\x6f\x70"
 			     "\x71\x72\x73\x74\x75\x76\x77\x78",
 		.psize = 40,
 		.digest = "\xba\xd3\xf8\x1c",
-	पूर्ण,
-	अणु
+	},
+	{
 		.key = "\xff\xff\xff\xff",
 		.ksize = 4,
-		.plaपूर्णांकext = "\x79\x7a\x7b\x7c\x7d\x7e\x7f\x80"
+		.plaintext = "\x79\x7a\x7b\x7c\x7d\x7e\x7f\x80"
 			     "\x81\x82\x83\x84\x85\x86\x87\x88"
 			     "\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90"
 			     "\x91\x92\x93\x94\x95\x96\x97\x98"
 			     "\x99\x9a\x9b\x9c\x9d\x9e\x9f\xa0",
 		.psize = 40,
 		.digest = "\xa8\xa9\xc2\x02",
-	पूर्ण,
-	अणु
+	},
+	{
 		.key = "\xff\xff\xff\xff",
 		.ksize = 4,
-		.plaपूर्णांकext = "\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8"
+		.plaintext = "\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8"
 			     "\xa9\xaa\xab\xac\xad\xae\xaf\xb0"
 			     "\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8"
 			     "\xb9\xba\xbb\xbc\xbd\xbe\xbf\xc0"
 			     "\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8",
 		.psize = 40,
 		.digest = "\x27\xf0\x57\xe2",
-	पूर्ण,
-	अणु
+	},
+	{
 		.key = "\xff\xff\xff\xff",
 		.ksize = 4,
-		.plaपूर्णांकext = "\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0"
+		.plaintext = "\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0"
 			     "\xd1\xd2\xd3\xd4\xd5\xd6\xd7\xd8"
 			     "\xd9\xda\xdb\xdc\xdd\xde\xdf\xe0"
 			     "\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8"
 			     "\xe9\xea\xeb\xec\xed\xee\xef\xf0",
 		.psize = 40,
 		.digest = "\x49\x78\x10\x08",
-	पूर्ण,
-	अणु
+	},
+	{
 		.key = "\x80\xea\xd3\xf1",
 		.ksize = 4,
-		.plaपूर्णांकext = "\x29\x2a\x2b\x2c\x2d\x2e\x2f\x30"
+		.plaintext = "\x29\x2a\x2b\x2c\x2d\x2e\x2f\x30"
 			     "\x31\x32\x33\x34\x35\x36\x37\x38"
 			     "\x39\x3a\x3b\x3c\x3d\x3e\x3f\x40"
 			     "\x41\x42\x43\x44\x45\x46\x47\x48"
 			     "\x49\x4a\x4b\x4c\x4d\x4e\x4f\x50",
 		.psize = 40,
 		.digest = "\x9a\xb1\xdc\xf0",
-	पूर्ण,
-	अणु
+	},
+	{
 		.key = "\xf3\x4a\x1d\x5d",
 		.ksize = 4,
-		.plaपूर्णांकext = "\x51\x52\x53\x54\x55\x56\x57\x58"
+		.plaintext = "\x51\x52\x53\x54\x55\x56\x57\x58"
 			     "\x59\x5a\x5b\x5c\x5d\x5e\x5f\x60"
 			     "\x61\x62\x63\x64\x65\x66\x67\x68"
 			     "\x69\x6a\x6b\x6c\x6d\x6e\x6f\x70"
 			     "\x71\x72\x73\x74\x75\x76\x77\x78",
 		.psize = 40,
 		.digest = "\xb4\x97\xcc\xd4",
-	पूर्ण,
-	अणु
+	},
+	{
 		.key = "\x2e\x80\x04\x59",
 		.ksize = 4,
-		.plaपूर्णांकext = "\x79\x7a\x7b\x7c\x7d\x7e\x7f\x80"
+		.plaintext = "\x79\x7a\x7b\x7c\x7d\x7e\x7f\x80"
 			     "\x81\x82\x83\x84\x85\x86\x87\x88"
 			     "\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90"
 			     "\x91\x92\x93\x94\x95\x96\x97\x98"
 			     "\x99\x9a\x9b\x9c\x9d\x9e\x9f\xa0",
 		.psize = 40,
 		.digest = "\x67\x9b\xfa\x79",
-	पूर्ण,
-	अणु
+	},
+	{
 		.key = "\xa6\xcc\x19\x85",
 		.ksize = 4,
-		.plaपूर्णांकext = "\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8"
+		.plaintext = "\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8"
 			     "\xa9\xaa\xab\xac\xad\xae\xaf\xb0"
 			     "\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8"
 			     "\xb9\xba\xbb\xbc\xbd\xbe\xbf\xc0"
 			     "\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8",
 		.psize = 40,
 		.digest = "\x24\xb5\x16\xef",
-	पूर्ण,
-	अणु
+	},
+	{
 		.key = "\x41\xfc\xfe\x2d",
 		.ksize = 4,
-		.plaपूर्णांकext = "\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0"
+		.plaintext = "\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0"
 			     "\xd1\xd2\xd3\xd4\xd5\xd6\xd7\xd8"
 			     "\xd9\xda\xdb\xdc\xdd\xde\xdf\xe0"
 			     "\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8"
 			     "\xe9\xea\xeb\xec\xed\xee\xef\xf0",
 		.psize = 40,
 		.digest = "\x15\x94\x80\x39",
-	पूर्ण,
-	अणु
+	},
+	{
 		.key = "\xff\xff\xff\xff",
 		.ksize = 4,
-		.plaपूर्णांकext = "\x01\x02\x03\x04\x05\x06\x07\x08"
+		.plaintext = "\x01\x02\x03\x04\x05\x06\x07\x08"
 			     "\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10"
 			     "\x11\x12\x13\x14\x15\x16\x17\x18"
 			     "\x19\x1a\x1b\x1c\x1d\x1e\x1f\x20"
@@ -30522,10 +30521,10 @@
 			     "\xe9\xea\xeb\xec\xed\xee\xef\xf0",
 		.psize = 240,
 		.digest = "\x6c\xc6\x56\xde",
-	पूर्ण, अणु
+	}, {
 		.key = "\xff\xff\xff\xff",
 		.ksize = 4,
-		.plaपूर्णांकext =	"\x6e\x05\x79\x10\xa7\x1b\xb2\x49"
+		.plaintext =	"\x6e\x05\x79\x10\xa7\x1b\xb2\x49"
 				"\xe0\x54\xeb\x82\x19\x8d\x24\xbb"
 				"\x2f\xc6\x5d\xf4\x68\xff\x96\x0a"
 				"\xa1\x38\xcf\x43\xda\x71\x08\x7c"
@@ -30783,153 +30782,153 @@
 				"\xbd\x31\xc8\x5f\xf6\x6a\x01\x98",
 		.psize = 2048,
 		.digest = "\xfb\x3a\x7a\xda",
-	पूर्ण
-पूर्ण;
+	}
+};
 
 /*
  * CRC32C test vectors
  */
-अटल स्थिर काष्ठा hash_testvec crc32c_tv_ढाँचा[] = अणु
-	अणु
+static const struct hash_testvec crc32c_tv_template[] = {
+	{
 		.psize = 0,
 		.digest = "\x00\x00\x00\x00",
-	पूर्ण,
-	अणु
-		.plaपूर्णांकext = "abcdefg",
+	},
+	{
+		.plaintext = "abcdefg",
 		.psize = 7,
 		.digest = "\x41\xf4\x27\xe6",
-	पूर्ण,
-	अणु
+	},
+	{
 		.key = "\x87\xa9\xcb\xed",
 		.ksize = 4,
 		.psize = 0,
 		.digest = "\x78\x56\x34\x12",
-	पूर्ण,
-	अणु
+	},
+	{
 		.key = "\xff\xff\xff\xff",
 		.ksize = 4,
-		.plaपूर्णांकext = "\x01\x02\x03\x04\x05\x06\x07\x08"
+		.plaintext = "\x01\x02\x03\x04\x05\x06\x07\x08"
 			     "\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10"
 			     "\x11\x12\x13\x14\x15\x16\x17\x18"
 			     "\x19\x1a\x1b\x1c\x1d\x1e\x1f\x20"
 			     "\x21\x22\x23\x24\x25\x26\x27\x28",
 		.psize = 40,
 		.digest = "\x7f\x15\x2c\x0e",
-	पूर्ण,
-	अणु
+	},
+	{
 		.key = "\xff\xff\xff\xff",
 		.ksize = 4,
-		.plaपूर्णांकext = "\x29\x2a\x2b\x2c\x2d\x2e\x2f\x30"
+		.plaintext = "\x29\x2a\x2b\x2c\x2d\x2e\x2f\x30"
 			     "\x31\x32\x33\x34\x35\x36\x37\x38"
 			     "\x39\x3a\x3b\x3c\x3d\x3e\x3f\x40"
 			     "\x41\x42\x43\x44\x45\x46\x47\x48"
 			     "\x49\x4a\x4b\x4c\x4d\x4e\x4f\x50",
 		.psize = 40,
 		.digest = "\xf6\xeb\x80\xe9",
-	पूर्ण,
-	अणु
+	},
+	{
 		.key = "\xff\xff\xff\xff",
 		.ksize = 4,
-		.plaपूर्णांकext = "\x51\x52\x53\x54\x55\x56\x57\x58"
+		.plaintext = "\x51\x52\x53\x54\x55\x56\x57\x58"
 			     "\x59\x5a\x5b\x5c\x5d\x5e\x5f\x60"
 			     "\x61\x62\x63\x64\x65\x66\x67\x68"
 			     "\x69\x6a\x6b\x6c\x6d\x6e\x6f\x70"
 			     "\x71\x72\x73\x74\x75\x76\x77\x78",
 		.psize = 40,
 		.digest = "\xed\xbd\x74\xde",
-	पूर्ण,
-	अणु
+	},
+	{
 		.key = "\xff\xff\xff\xff",
 		.ksize = 4,
-		.plaपूर्णांकext = "\x79\x7a\x7b\x7c\x7d\x7e\x7f\x80"
+		.plaintext = "\x79\x7a\x7b\x7c\x7d\x7e\x7f\x80"
 			     "\x81\x82\x83\x84\x85\x86\x87\x88"
 			     "\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90"
 			     "\x91\x92\x93\x94\x95\x96\x97\x98"
 			     "\x99\x9a\x9b\x9c\x9d\x9e\x9f\xa0",
 		.psize = 40,
 		.digest = "\x62\xc8\x79\xd5",
-	पूर्ण,
-	अणु
+	},
+	{
 		.key = "\xff\xff\xff\xff",
 		.ksize = 4,
-		.plaपूर्णांकext = "\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8"
+		.plaintext = "\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8"
 			     "\xa9\xaa\xab\xac\xad\xae\xaf\xb0"
 			     "\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8"
 			     "\xb9\xba\xbb\xbc\xbd\xbe\xbf\xc0"
 			     "\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8",
 		.psize = 40,
 		.digest = "\xd0\x9a\x97\xba",
-	पूर्ण,
-	अणु
+	},
+	{
 		.key = "\xff\xff\xff\xff",
 		.ksize = 4,
-		.plaपूर्णांकext = "\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0"
+		.plaintext = "\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0"
 			     "\xd1\xd2\xd3\xd4\xd5\xd6\xd7\xd8"
 			     "\xd9\xda\xdb\xdc\xdd\xde\xdf\xe0"
 			     "\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8"
 			     "\xe9\xea\xeb\xec\xed\xee\xef\xf0",
 		.psize = 40,
 		.digest = "\x13\xd9\x29\x2b",
-	पूर्ण,
-	अणु
+	},
+	{
 		.key = "\x80\xea\xd3\xf1",
 		.ksize = 4,
-		.plaपूर्णांकext = "\x29\x2a\x2b\x2c\x2d\x2e\x2f\x30"
+		.plaintext = "\x29\x2a\x2b\x2c\x2d\x2e\x2f\x30"
 			     "\x31\x32\x33\x34\x35\x36\x37\x38"
 			     "\x39\x3a\x3b\x3c\x3d\x3e\x3f\x40"
 			     "\x41\x42\x43\x44\x45\x46\x47\x48"
 			     "\x49\x4a\x4b\x4c\x4d\x4e\x4f\x50",
 		.psize = 40,
 		.digest = "\x0c\xb5\xe2\xa2",
-	पूर्ण,
-	अणु
+	},
+	{
 		.key = "\xf3\x4a\x1d\x5d",
 		.ksize = 4,
-		.plaपूर्णांकext = "\x51\x52\x53\x54\x55\x56\x57\x58"
+		.plaintext = "\x51\x52\x53\x54\x55\x56\x57\x58"
 			     "\x59\x5a\x5b\x5c\x5d\x5e\x5f\x60"
 			     "\x61\x62\x63\x64\x65\x66\x67\x68"
 			     "\x69\x6a\x6b\x6c\x6d\x6e\x6f\x70"
 			     "\x71\x72\x73\x74\x75\x76\x77\x78",
 		.psize = 40,
 		.digest = "\xd1\x7f\xfb\xa6",
-	पूर्ण,
-	अणु
+	},
+	{
 		.key = "\x2e\x80\x04\x59",
 		.ksize = 4,
-		.plaपूर्णांकext = "\x79\x7a\x7b\x7c\x7d\x7e\x7f\x80"
+		.plaintext = "\x79\x7a\x7b\x7c\x7d\x7e\x7f\x80"
 			     "\x81\x82\x83\x84\x85\x86\x87\x88"
 			     "\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90"
 			     "\x91\x92\x93\x94\x95\x96\x97\x98"
 			     "\x99\x9a\x9b\x9c\x9d\x9e\x9f\xa0",
 		.psize = 40,
 		.digest = "\x59\x33\xe6\x7a",
-	पूर्ण,
-	अणु
+	},
+	{
 		.key = "\xa6\xcc\x19\x85",
 		.ksize = 4,
-		.plaपूर्णांकext = "\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8"
+		.plaintext = "\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8"
 			     "\xa9\xaa\xab\xac\xad\xae\xaf\xb0"
 			     "\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8"
 			     "\xb9\xba\xbb\xbc\xbd\xbe\xbf\xc0"
 			     "\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8",
 		.psize = 40,
 		.digest = "\xbe\x03\x01\xd2",
-	पूर्ण,
-	अणु
+	},
+	{
 		.key = "\x41\xfc\xfe\x2d",
 		.ksize = 4,
-		.plaपूर्णांकext = "\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0"
+		.plaintext = "\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0"
 			     "\xd1\xd2\xd3\xd4\xd5\xd6\xd7\xd8"
 			     "\xd9\xda\xdb\xdc\xdd\xde\xdf\xe0"
 			     "\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8"
 			     "\xe9\xea\xeb\xec\xed\xee\xef\xf0",
 		.psize = 40,
 		.digest = "\x75\xd3\xc5\x24",
-	पूर्ण,
-	अणु
+	},
+	{
 		.key = "\xff\xff\xff\xff",
 		.ksize = 4,
-		.plaपूर्णांकext = "\x01\x02\x03\x04\x05\x06\x07\x08"
+		.plaintext = "\x01\x02\x03\x04\x05\x06\x07\x08"
 			     "\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10"
 			     "\x11\x12\x13\x14\x15\x16\x17\x18"
 			     "\x19\x1a\x1b\x1c\x1d\x1e\x1f\x20"
@@ -30961,10 +30960,10 @@
 			     "\xe9\xea\xeb\xec\xed\xee\xef\xf0",
 		.psize = 240,
 		.digest = "\x75\xd3\xc5\x24",
-	पूर्ण, अणु
+	}, {
 		.key = "\xff\xff\xff\xff",
 		.ksize = 4,
-		.plaपूर्णांकext =	"\x6e\x05\x79\x10\xa7\x1b\xb2\x49"
+		.plaintext =	"\x6e\x05\x79\x10\xa7\x1b\xb2\x49"
 				"\xe0\x54\xeb\x82\x19\x8d\x24\xbb"
 				"\x2f\xc6\x5d\xf4\x68\xff\x96\x0a"
 				"\xa1\x38\xcf\x43\xda\x71\x08\x7c"
@@ -31222,27 +31221,27 @@
 				"\xbd\x31\xc8\x5f\xf6\x6a\x01\x98",
 		.psize = 2048,
 		.digest = "\xec\x26\x4d\x95",
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल स्थिर काष्ठा hash_testvec xxhash64_tv_ढाँचा[] = अणु
-	अणु
+static const struct hash_testvec xxhash64_tv_template[] = {
+	{
 		.psize = 0,
 		.digest = "\x99\xe9\xd8\x51\x37\xdb\x46\xef",
-	पूर्ण,
-	अणु
-		.plaपूर्णांकext = "\x40",
+	},
+	{
+		.plaintext = "\x40",
 		.psize = 1,
 		.digest = "\x20\x5c\x91\xaa\x88\xeb\x59\xd0",
-	पूर्ण,
-	अणु
-		.plaपूर्णांकext = "\x40\x8b\xb8\x41\xe4\x42\x15\x2d"
+	},
+	{
+		.plaintext = "\x40\x8b\xb8\x41\xe4\x42\x15\x2d"
 			     "\x88\xc7\x9a\x09\x1a\x9b",
 		.psize = 14,
 		.digest = "\xa8\xe8\x2b\xa9\x92\xa1\x37\x4a",
-	पूर्ण,
-	अणु
-		.plaपूर्णांकext = "\x40\x8b\xb8\x41\xe4\x42\x15\x2d"
+	},
+	{
+		.plaintext = "\x40\x8b\xb8\x41\xe4\x42\x15\x2d"
 		             "\x88\xc7\x9a\x09\x1a\x9b\x42\xe0"
 			     "\xd4\x38\xa5\x2a\x26\xa5\x19\x4b"
 			     "\x57\x65\x7f\xad\xc3\x7d\xca\x40"
@@ -31272,31 +31271,31 @@
 			     "\xed\xfd\x08\xf7\xe8\x04",
 		.psize = 222,
 		.digest = "\x41\xfc\xd4\x29\xfe\xe7\x85\x17",
-	पूर्ण,
-	अणु
+	},
+	{
 		.psize = 0,
 		.key = "\xb1\x79\x37\x9e\x00\x00\x00\x00",
 		.ksize = 8,
 		.digest = "\xef\x17\x9b\x92\xa2\xfd\x75\xac",
-	पूर्ण,
+	},
 
-	अणु
-		.plaपूर्णांकext = "\x40",
+	{
+		.plaintext = "\x40",
 		.psize = 1,
 		.key = "\xb1\x79\x37\x9e\x00\x00\x00\x00",
 		.ksize = 8,
 		.digest = "\xd1\x70\x4f\x14\x02\xc4\x9e\x71",
-	पूर्ण,
-	अणु
-		.plaपूर्णांकext = "\x40\x8b\xb8\x41\xe4\x42\x15\x2d"
+	},
+	{
+		.plaintext = "\x40\x8b\xb8\x41\xe4\x42\x15\x2d"
 			     "\x88\xc7\x9a\x09\x1a\x9b",
 		.psize = 14,
 		.key = "\xb1\x79\x37\x9e\x00\x00\x00\x00",
 		.ksize = 8,
 		.digest = "\xa4\xcd\xfe\x8e\x37\xe2\x1c\x64"
-	पूर्ण,
-	अणु
-		.plaपूर्णांकext = "\x40\x8b\xb8\x41\xe4\x42\x15\x2d"
+	},
+	{
+		.plaintext = "\x40\x8b\xb8\x41\xe4\x42\x15\x2d"
 		             "\x88\xc7\x9a\x09\x1a\x9b\x42\xe0"
 			     "\xd4\x38\xa5\x2a\x26\xa5\x19\x4b"
 			     "\x57\x65\x7f\xad\xc3\x7d\xca\x40"
@@ -31328,11 +31327,11 @@
 		.key = "\xb1\x79\x37\x9e\x00\x00\x00\x00",
 		.ksize = 8,
 		.digest = "\x58\xbc\x55\xf2\x42\x81\x5c\xf0"
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा comp_testvec lz4_comp_tv_ढाँचा[] = अणु
-	अणु
+static const struct comp_testvec lz4_comp_tv_template[] = {
+	{
 		.inlen	= 255,
 		.outlen	= 218,
 		.input	= "LZ4 is lossless compression algorithm, providing"
@@ -31359,11 +31358,11 @@
 			  "\x6c\x69\x6d\x69\x74\x73\x20\x6f\x3f\x00\x01\x85\x00"
 			  "\x90\x20\x73\x79\x73\x74\x65\x6d\x73\x2e",
 
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा comp_testvec lz4_decomp_tv_ढाँचा[] = अणु
-	अणु
+static const struct comp_testvec lz4_decomp_tv_template[] = {
+	{
 		.inlen	= 218,
 		.outlen	= 255,
 		.input	= "\xf9\x21\x4c\x5a\x34\x20\x69\x73\x20\x6c\x6f\x73\x73"
@@ -31389,11 +31388,11 @@
 			 "decoder, with speed in multiple GB/s per core, "
 			 "typically reaching RAM speed limits on multi-core "
 			 "systems.",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा comp_testvec lz4hc_comp_tv_ढाँचा[] = अणु
-	अणु
+static const struct comp_testvec lz4hc_comp_tv_template[] = {
+	{
 		.inlen	= 255,
 		.outlen	= 216,
 		.input	= "LZ4 is lossless compression algorithm, providing"
@@ -31420,11 +31419,11 @@
 			  "\x6c\x69\x6d\x69\x74\x73\x20\x6f\x6e\x85\x00\x90\x20"
 			  "\x73\x79\x73\x74\x65\x6d\x73\x2e",
 
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा comp_testvec lz4hc_decomp_tv_ढाँचा[] = अणु
-	अणु
+static const struct comp_testvec lz4hc_decomp_tv_template[] = {
+	{
 		.inlen	= 216,
 		.outlen	= 255,
 		.input	= "\xf9\x21\x4c\x5a\x34\x20\x69\x73\x20\x6c\x6f\x73\x73"
@@ -31450,11 +31449,11 @@
 			 "decoder, with speed in multiple GB/s per core, "
 			 "typically reaching RAM speed limits on multi-core "
 			 "systems.",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा comp_testvec zstd_comp_tv_ढाँचा[] = अणु
-	अणु
+static const struct comp_testvec zstd_comp_tv_template[] = {
+	{
 		.inlen	= 68,
 		.outlen	= 39,
 		.input	= "The algorithm is zstd. "
@@ -31464,8 +31463,8 @@
 			  "\x20\x61\x6c\x67\x6f\x72\x69\x74\x68\x6d\x20\x69\x73"
 			  "\x20\x7a\x73\x74\x64\x2e\x20\x01\x00\x55\x73\x36\x01"
 			  ,
-	पूर्ण,
-	अणु
+	},
+	{
 		.inlen	= 244,
 		.outlen	= 151,
 		.input	= "zstd, short for Zstandard, is a fast lossless "
@@ -31486,11 +31485,11 @@
 			  "\xf9\x67\xa1\x94\x0a\x69\x0f\x60\xcd\xc3\xab\x99\xdc"
 			  "\x42\xed\x97\x05\x00\x33\xc3\x15\x95\x3a\x06\xa0\x0e"
 			  "\x20\xa9\x0e\x82\xb9\x43\x45\x01",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा comp_testvec zstd_decomp_tv_ढाँचा[] = अणु
-	अणु
+static const struct comp_testvec zstd_decomp_tv_template[] = {
+	{
 		.inlen	= 43,
 		.outlen	= 68,
 		.input	= "\x28\xb5\x2f\xfd\x04\x50\xf5\x00\x00\xb8\x54\x68\x65"
@@ -31500,8 +31499,8 @@
 		.output	= "The algorithm is zstd. "
 			  "The algorithm is zstd. "
 			  "The algorithm is zstd.",
-	पूर्ण,
-	अणु
+	},
+	{
 		.inlen	= 155,
 		.outlen	= 244,
 		.input	= "\x28\xb5\x2f\xfd\x04\x50\x75\x04\x00\x42\x4b\x1e\x17"
@@ -31522,12 +31521,12 @@
 			  "compression ratios. The zstd compression library "
 			  "provides in-memory compression and decompression "
 			  "functions.",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-/* based on aes_cbc_tv_ढाँचा */
-अटल स्थिर काष्ठा cipher_testvec essiv_aes_cbc_tv_ढाँचा[] = अणु
-	अणु
+/* based on aes_cbc_tv_template */
+static const struct cipher_testvec essiv_aes_cbc_tv_template[] = {
+	{
 		.key    = "\x06\xa9\x21\x40\x36\xb8\xa1\x5b"
 			  "\x51\x2e\x03\xd5\x34\x12\x00\x06",
 		.klen   = 16,
@@ -31537,7 +31536,7 @@
 		.ctext	= "\xfa\x59\xe7\x5f\x41\x56\x65\xc3"
 			  "\x36\xca\x6b\x72\x10\x9f\x8c\xd4",
 		.len	= 16,
-	पूर्ण, अणु
+	}, {
 		.key    = "\xc2\x86\x69\x6d\x88\x7c\x9a\xa0"
 			  "\x61\x1b\xbb\x3e\x20\x25\xa4\x5a",
 		.klen   = 16,
@@ -31552,7 +31551,7 @@
 			  "\x0b\x9c\x80\xd2\x15\xa1\xb8\x6d"
 			  "\xc6\xab\x7b\x65\xd9\xfd\x88\xeb",
 		.len	= 32,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x8e\x73\xb0\xf7\xda\x0e\x64\x52"
 			  "\xc8\x10\xf3\x2b\x80\x90\x79\xe5"
 			  "\x62\xf8\xea\xd2\x52\x2c\x6b\x7b",
@@ -31576,7 +31575,7 @@
 			  "\x6a\xef\x6b\x6a\x8f\x43\xc0\xcb"
 			  "\xf0\xf3\x6e\x74\x54\x44\x92\x44",
 		.len	= 64,
-	पूर्ण, अणु
+	}, {
 		.key	= "\x60\x3d\xeb\x10\x15\xca\x71\xbe"
 			  "\x2b\x73\xae\xf0\x85\x7d\x77\x81"
 			  "\x1f\x35\x2c\x07\x3b\x61\x08\xd7"
@@ -31601,7 +31600,7 @@
 			  "\x32\x0b\x26\x1c\xe9\x8b\x02\xc0"
 			  "\xb2\x6f\x37\xa7\x5b\xa8\xa9\x42",
 		.len	= 64,
-	पूर्ण, अणु
+	}, {
 		.key	= "\xC9\x83\xA6\xC9\xEC\x0F\x32\x55"
 			  "\x0F\x32\x55\x78\x9B\xBE\x78\x9B"
 			  "\xBE\xE1\x04\x27\xE1\x04\x27\x4A"
@@ -31734,19 +31733,19 @@
 			  "\xa6\xd4\x1b\xd9\x27\xd8\x16\x12"
 			  "\x61\x2b\x31\x2a\x44\x87\x96\x58",
 		.len	= 496,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /* based on hmac_sha256_aes_cbc_tv_temp */
-अटल स्थिर काष्ठा aead_testvec essiv_hmac_sha256_aes_cbc_tv_temp[] = अणु
-	अणु
-#अगर_घोषित __LITTLE_ENDIAN
+static const struct aead_testvec essiv_hmac_sha256_aes_cbc_tv_temp[] = {
+	{
+#ifdef __LITTLE_ENDIAN
 		.key    = "\x08\x00"		/* rta length */
 			  "\x01\x00"		/* rta type */
-#अन्यथा
+#else
 		.key    = "\x00\x08"		/* rta length */
 			  "\x00\x01"		/* rta type */
-#पूर्ण_अगर
+#endif
 			  "\x00\x00\x00\x10"	/* enc key length */
 			  "\x00\x00\x00\x00\x00\x00\x00\x00"
 			  "\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -31769,14 +31768,14 @@
 			  "\x5c\x34\xa6\xa3\x6e\x0b\x05\xe5"
 			  "\x6a\x6d\x44\xaa\x26\xa8\x44\xa5",
 		.clen	= 16 + 32,
-	पूर्ण, अणु
-#अगर_घोषित __LITTLE_ENDIAN
+	}, {
+#ifdef __LITTLE_ENDIAN
 		.key    = "\x08\x00"		/* rta length */
 			  "\x01\x00"		/* rta type */
-#अन्यथा
+#else
 		.key    = "\x00\x08"		/* rta length */
 			  "\x00\x01"		/* rta type */
-#पूर्ण_अगर
+#endif
 			  "\x00\x00\x00\x10"	/* enc key length */
 			  "\x20\x21\x22\x23\x24\x25\x26\x27"
 			  "\x28\x29\x2a\x2b\x2c\x2d\x2e\x2f"
@@ -31804,14 +31803,14 @@
 			  "\x49\x69\x0d\x5b\xd4\x36\x06\x62"
 			  "\x35\x5e\x54\x58\x53\x4d\xdf\xbf",
 		.clen	= 32 + 32,
-	पूर्ण, अणु
-#अगर_घोषित __LITTLE_ENDIAN
+	}, {
+#ifdef __LITTLE_ENDIAN
 		.key    = "\x08\x00"		/* rta length */
 			  "\x01\x00"            /* rta type */
-#अन्यथा
+#else
 		.key    = "\x00\x08"		/* rta length */
 			  "\x00\x01"		/* rta type */
-#पूर्ण_अगर
+#endif
 			  "\x00\x00\x00\x10"	/* enc key length */
 			  "\x11\x22\x33\x44\x55\x66\x77\x88"
 			  "\x99\xaa\xbb\xcc\xdd\xee\xff\x11"
@@ -31838,14 +31837,14 @@
 			  "\x24\x78\xfb\xbe\x02\xe0\x4f\x40"
 			  "\x10\xbd\xaa\xc6\xa7\x79\xe0\x1a",
 		.clen	= 48 + 32,
-	पूर्ण, अणु
-#अगर_घोषित __LITTLE_ENDIAN
+	}, {
+#ifdef __LITTLE_ENDIAN
 		.key    = "\x08\x00"		/* rta length */
 			  "\x01\x00"		/* rta type */
-#अन्यथा
+#else
 		.key    = "\x00\x08"		/* rta length */
 			  "\x00\x01"            /* rta type */
-#पूर्ण_अगर
+#endif
 			  "\x00\x00\x00\x10"	/* enc key length */
 			  "\x11\x22\x33\x44\x55\x66\x77\x88"
 			  "\x99\xaa\xbb\xcc\xdd\xee\xff\x11"
@@ -31881,14 +31880,14 @@
 			  "\x3f\x54\xe2\x49\x39\xe3\x71\x25"
 			  "\x2b\x6c\xe9\x5d\xec\xec\x2b\x64",
 		.clen	= 64 + 32,
-	पूर्ण, अणु
-#अगर_घोषित __LITTLE_ENDIAN
+	}, {
+#ifdef __LITTLE_ENDIAN
 		.key    = "\x08\x00"		/* rta length */
 			  "\x01\x00"            /* rta type */
-#अन्यथा
+#else
 		.key    = "\x00\x08"		/* rta length */
 			  "\x00\x01"            /* rta type */
-#पूर्ण_अगर
+#endif
 			  "\x00\x00\x00\x10"	/* enc key length */
 			  "\x11\x22\x33\x44\x55\x66\x77\x88"
 			  "\x99\xaa\xbb\xcc\xdd\xee\xff\x11"
@@ -31929,14 +31928,14 @@
 			  "\x73\xc3\x46\x20\x2c\xb1\xef\x68"
 			  "\xbb\x8a\x32\x7e\x12\x8c\x69\xcf",
 		.clen	= 80 + 32,
-       पूर्ण, अणु
-#अगर_घोषित __LITTLE_ENDIAN
+       }, {
+#ifdef __LITTLE_ENDIAN
 		.key    = "\x08\x00"            /* rta length */
 			  "\x01\x00"		/* rta type */
-#अन्यथा
+#else
 		.key    = "\x00\x08"		/* rta length */
 			  "\x00\x01"            /* rta type */
-#पूर्ण_अगर
+#endif
 			  "\x00\x00\x00\x18"	/* enc key length */
 			  "\x11\x22\x33\x44\x55\x66\x77\x88"
 			  "\x99\xaa\xbb\xcc\xdd\xee\xff\x11"
@@ -31973,14 +31972,14 @@
 			  "\xca\x71\x85\x93\xf7\x85\x55\x8b"
 			  "\x7a\xe4\x94\xca\x8b\xba\x19\x33",
 		.clen	= 64 + 32,
-	पूर्ण, अणु
-#अगर_घोषित __LITTLE_ENDIAN
+	}, {
+#ifdef __LITTLE_ENDIAN
 		.key    = "\x08\x00"		/* rta length */
 			  "\x01\x00"		/* rta type */
-#अन्यथा
+#else
 		.key    = "\x00\x08"		/* rta length */
 			  "\x00\x01"            /* rta type */
-#पूर्ण_अगर
+#endif
 			  "\x00\x00\x00\x20"	/* enc key length */
 			  "\x11\x22\x33\x44\x55\x66\x77\x88"
 			  "\x99\xaa\xbb\xcc\xdd\xee\xff\x11"
@@ -32018,10 +32017,10 @@
 			  "\xf3\x61\xde\x1c\xe9\xdb\xcd\xd0"
 			  "\xcc\xce\xe9\x85\x57\xcf\x6f\x5f",
 		.clen	= 64 + 32,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर अक्षर blake2_ordered_sequence[] =
+static const char blake2_ordered_sequence[] =
 	"\x00\x01\x02\x03\x04\x05\x06\x07"
 	"\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f"
 	"\x10\x11\x12\x13\x14\x15\x16\x17"
@@ -32055,494 +32054,494 @@
 	"\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7"
 	"\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff";
 
-अटल स्थिर काष्ठा hash_testvec blake2b_160_tv_ढाँचा[] = अणुअणु
-	.digest = (u8[])अणु 0x33, 0x45, 0x52, 0x4a, 0xbf, 0x6b, 0xbe, 0x18,
+static const struct hash_testvec blake2b_160_tv_template[] = {{
+	.digest = (u8[]){ 0x33, 0x45, 0x52, 0x4a, 0xbf, 0x6b, 0xbe, 0x18,
 			  0x09, 0x44, 0x92, 0x24, 0xb5, 0x97, 0x2c, 0x41,
-			  0x79, 0x0b, 0x6c, 0xf2, पूर्ण,
-पूर्ण, अणु
-	.plaपूर्णांकext = blake2_ordered_sequence,
+			  0x79, 0x0b, 0x6c, 0xf2, },
+}, {
+	.plaintext = blake2_ordered_sequence,
 	.psize = 64,
-	.digest = (u8[])अणु 0x11, 0xcc, 0x66, 0x61, 0xe9, 0x22, 0xb0, 0xe4,
+	.digest = (u8[]){ 0x11, 0xcc, 0x66, 0x61, 0xe9, 0x22, 0xb0, 0xe4,
 			  0x07, 0xe0, 0xa5, 0x72, 0x49, 0xc3, 0x8d, 0x4f,
-			  0xf7, 0x6d, 0x8e, 0xc8, पूर्ण,
-पूर्ण, अणु
+			  0xf7, 0x6d, 0x8e, 0xc8, },
+}, {
 	.ksize = 32,
 	.key = blake2_ordered_sequence,
-	.plaपूर्णांकext = blake2_ordered_sequence,
+	.plaintext = blake2_ordered_sequence,
 	.psize = 1,
-	.digest = (u8[])अणु 0x31, 0xe3, 0xd9, 0xd5, 0x4e, 0x72, 0xd8, 0x0b,
+	.digest = (u8[]){ 0x31, 0xe3, 0xd9, 0xd5, 0x4e, 0x72, 0xd8, 0x0b,
 			  0x2b, 0x3b, 0xd7, 0x6b, 0x82, 0x7a, 0x1d, 0xfb,
-			  0x56, 0x2f, 0x79, 0x4c, पूर्ण,
-पूर्ण, अणु
+			  0x56, 0x2f, 0x79, 0x4c, },
+}, {
 	.ksize = 64,
 	.key = blake2_ordered_sequence,
-	.plaपूर्णांकext = blake2_ordered_sequence,
+	.plaintext = blake2_ordered_sequence,
 	.psize = 7,
-	.digest = (u8[])अणु 0x28, 0x20, 0xd1, 0xbe, 0x7f, 0xcc, 0xc1, 0x62,
+	.digest = (u8[]){ 0x28, 0x20, 0xd1, 0xbe, 0x7f, 0xcc, 0xc1, 0x62,
 			  0xd9, 0x0d, 0x9a, 0x4b, 0x47, 0xd1, 0x5e, 0x04,
-			  0x74, 0x2a, 0x53, 0x17, पूर्ण,
-पूर्ण, अणु
+			  0x74, 0x2a, 0x53, 0x17, },
+}, {
 	.ksize = 1,
 	.key = "B",
-	.plaपूर्णांकext = blake2_ordered_sequence,
+	.plaintext = blake2_ordered_sequence,
 	.psize = 15,
-	.digest = (u8[])अणु 0x45, 0xe9, 0x95, 0xb6, 0xc4, 0xe8, 0x22, 0xea,
+	.digest = (u8[]){ 0x45, 0xe9, 0x95, 0xb6, 0xc4, 0xe8, 0x22, 0xea,
 			  0xfe, 0xd2, 0x37, 0xdb, 0x46, 0xbf, 0xf1, 0x25,
-			  0xd5, 0x03, 0x1d, 0x81, पूर्ण,
-पूर्ण, अणु
+			  0xd5, 0x03, 0x1d, 0x81, },
+}, {
 	.ksize = 32,
 	.key = blake2_ordered_sequence,
-	.plaपूर्णांकext = blake2_ordered_sequence,
+	.plaintext = blake2_ordered_sequence,
 	.psize = 247,
-	.digest = (u8[])अणु 0x7e, 0xb9, 0xf2, 0x9b, 0x2f, 0xc2, 0x01, 0xd4,
+	.digest = (u8[]){ 0x7e, 0xb9, 0xf2, 0x9b, 0x2f, 0xc2, 0x01, 0xd4,
 			  0xb0, 0x4f, 0x08, 0x2b, 0x8e, 0xbd, 0x06, 0xef,
-			  0x1c, 0xc4, 0x25, 0x95, पूर्ण,
-पूर्ण, अणु
+			  0x1c, 0xc4, 0x25, 0x95, },
+}, {
 	.ksize = 64,
 	.key = blake2_ordered_sequence,
-	.plaपूर्णांकext = blake2_ordered_sequence,
+	.plaintext = blake2_ordered_sequence,
 	.psize = 256,
-	.digest = (u8[])अणु 0x6e, 0x35, 0x01, 0x70, 0xbf, 0xb6, 0xc4, 0xba,
+	.digest = (u8[]){ 0x6e, 0x35, 0x01, 0x70, 0xbf, 0xb6, 0xc4, 0xba,
 			  0x33, 0x1b, 0xa6, 0xd3, 0xc2, 0x5d, 0xb4, 0x03,
-			  0x95, 0xaf, 0x29, 0x16, पूर्ण,
-पूर्णपूर्ण;
+			  0x95, 0xaf, 0x29, 0x16, },
+}};
 
-अटल स्थिर काष्ठा hash_testvec blake2b_256_tv_ढाँचा[] = अणुअणु
-	.plaपूर्णांकext = blake2_ordered_sequence,
+static const struct hash_testvec blake2b_256_tv_template[] = {{
+	.plaintext = blake2_ordered_sequence,
 	.psize = 7,
-	.digest = (u8[])अणु 0x9d, 0xf1, 0x4b, 0x72, 0x48, 0x76, 0x4a, 0x86,
+	.digest = (u8[]){ 0x9d, 0xf1, 0x4b, 0x72, 0x48, 0x76, 0x4a, 0x86,
 			  0x91, 0x97, 0xc3, 0x5e, 0x39, 0x2d, 0x2a, 0x6d,
 			  0x6f, 0xdc, 0x5b, 0x79, 0xd5, 0x97, 0x29, 0x79,
-			  0x20, 0xfd, 0x3f, 0x14, 0x91, 0xb4, 0x42, 0xd2, पूर्ण,
-पूर्ण, अणु
-	.plaपूर्णांकext = blake2_ordered_sequence,
+			  0x20, 0xfd, 0x3f, 0x14, 0x91, 0xb4, 0x42, 0xd2, },
+}, {
+	.plaintext = blake2_ordered_sequence,
 	.psize = 256,
-	.digest = (u8[])अणु 0x39, 0xa7, 0xeb, 0x9f, 0xed, 0xc1, 0x9a, 0xab,
+	.digest = (u8[]){ 0x39, 0xa7, 0xeb, 0x9f, 0xed, 0xc1, 0x9a, 0xab,
 			  0xc8, 0x34, 0x25, 0xc6, 0x75, 0x5d, 0xd9, 0x0e,
 			  0x6f, 0x9d, 0x0c, 0x80, 0x49, 0x64, 0xa1, 0xf4,
-			  0xaa, 0xee, 0xa3, 0xb9, 0xfb, 0x59, 0x98, 0x35, पूर्ण,
-पूर्ण, अणु
+			  0xaa, 0xee, 0xa3, 0xb9, 0xfb, 0x59, 0x98, 0x35, },
+}, {
 	.ksize = 1,
 	.key = "B",
-	.digest = (u8[])अणु 0xc3, 0x08, 0xb1, 0xbf, 0xe4, 0xf9, 0xbc, 0xb4,
+	.digest = (u8[]){ 0xc3, 0x08, 0xb1, 0xbf, 0xe4, 0xf9, 0xbc, 0xb4,
 			  0x75, 0xaf, 0x3f, 0x59, 0x6e, 0xae, 0xde, 0x6a,
 			  0xa3, 0x8e, 0xb5, 0x94, 0xad, 0x30, 0xf0, 0x17,
-			  0x1c, 0xfb, 0xd8, 0x3e, 0x8a, 0xbe, 0xed, 0x9c, पूर्ण,
-पूर्ण, अणु
+			  0x1c, 0xfb, 0xd8, 0x3e, 0x8a, 0xbe, 0xed, 0x9c, },
+}, {
 	.ksize = 64,
 	.key = blake2_ordered_sequence,
-	.plaपूर्णांकext = blake2_ordered_sequence,
+	.plaintext = blake2_ordered_sequence,
 	.psize = 1,
-	.digest = (u8[])अणु 0x34, 0x75, 0x8b, 0x64, 0x71, 0x35, 0x62, 0x82,
+	.digest = (u8[]){ 0x34, 0x75, 0x8b, 0x64, 0x71, 0x35, 0x62, 0x82,
 			  0x97, 0xfb, 0x09, 0xc7, 0x93, 0x0c, 0xd0, 0x4e,
 			  0x95, 0x28, 0xe5, 0x66, 0x91, 0x12, 0xf5, 0xb1,
-			  0x31, 0x84, 0x93, 0xe1, 0x4d, 0xe7, 0x7e, 0x55, पूर्ण,
-पूर्ण, अणु
+			  0x31, 0x84, 0x93, 0xe1, 0x4d, 0xe7, 0x7e, 0x55, },
+}, {
 	.ksize = 32,
 	.key = blake2_ordered_sequence,
-	.plaपूर्णांकext = blake2_ordered_sequence,
+	.plaintext = blake2_ordered_sequence,
 	.psize = 15,
-	.digest = (u8[])अणु 0xce, 0x74, 0xa9, 0x2e, 0xe9, 0x40, 0x3d, 0xa2,
+	.digest = (u8[]){ 0xce, 0x74, 0xa9, 0x2e, 0xe9, 0x40, 0x3d, 0xa2,
 			  0x11, 0x4a, 0x99, 0x25, 0x7a, 0x34, 0x5d, 0x35,
 			  0xdf, 0x6a, 0x48, 0x79, 0x2a, 0x93, 0x93, 0xff,
-			  0x1f, 0x3c, 0x39, 0xd0, 0x71, 0x1f, 0x20, 0x7b, पूर्ण,
-पूर्ण, अणु
+			  0x1f, 0x3c, 0x39, 0xd0, 0x71, 0x1f, 0x20, 0x7b, },
+}, {
 	.ksize = 1,
 	.key = "B",
-	.plaपूर्णांकext = blake2_ordered_sequence,
+	.plaintext = blake2_ordered_sequence,
 	.psize = 64,
-	.digest = (u8[])अणु 0x2e, 0x84, 0xdb, 0xa2, 0x5f, 0x0e, 0xe9, 0x52,
+	.digest = (u8[]){ 0x2e, 0x84, 0xdb, 0xa2, 0x5f, 0x0e, 0xe9, 0x52,
 			  0x79, 0x50, 0x69, 0x9f, 0xf1, 0xfd, 0xfc, 0x9d,
 			  0x89, 0x83, 0xa9, 0xb6, 0xa4, 0xd5, 0xfa, 0xb5,
-			  0xbe, 0x35, 0x1a, 0x17, 0x8a, 0x2c, 0x7f, 0x7d, पूर्ण,
-पूर्ण, अणु
+			  0xbe, 0x35, 0x1a, 0x17, 0x8a, 0x2c, 0x7f, 0x7d, },
+}, {
 	.ksize = 64,
 	.key = blake2_ordered_sequence,
-	.plaपूर्णांकext = blake2_ordered_sequence,
+	.plaintext = blake2_ordered_sequence,
 	.psize = 247,
-	.digest = (u8[])अणु 0x2e, 0x26, 0xf0, 0x09, 0x02, 0x65, 0x90, 0x09,
+	.digest = (u8[]){ 0x2e, 0x26, 0xf0, 0x09, 0x02, 0x65, 0x90, 0x09,
 			  0xcc, 0xf5, 0x4c, 0x44, 0x74, 0x0e, 0xa0, 0xa8,
 			  0x25, 0x4a, 0xda, 0x61, 0x56, 0x95, 0x7d, 0x3f,
-			  0x6d, 0xc0, 0x43, 0x17, 0x95, 0x89, 0xcd, 0x9d, पूर्ण,
-पूर्णपूर्ण;
+			  0x6d, 0xc0, 0x43, 0x17, 0x95, 0x89, 0xcd, 0x9d, },
+}};
 
-अटल स्थिर काष्ठा hash_testvec blake2b_384_tv_ढाँचा[] = अणुअणु
-	.plaपूर्णांकext = blake2_ordered_sequence,
+static const struct hash_testvec blake2b_384_tv_template[] = {{
+	.plaintext = blake2_ordered_sequence,
 	.psize = 1,
-	.digest = (u8[])अणु 0xcc, 0x01, 0x08, 0x85, 0x36, 0xf7, 0x84, 0xf0,
+	.digest = (u8[]){ 0xcc, 0x01, 0x08, 0x85, 0x36, 0xf7, 0x84, 0xf0,
 			  0xbb, 0x76, 0x9e, 0x41, 0xc4, 0x95, 0x7b, 0x6d,
 			  0x0c, 0xde, 0x1f, 0xcc, 0x8c, 0xf1, 0xd9, 0x1f,
 			  0xc4, 0x77, 0xd4, 0xdd, 0x6e, 0x3f, 0xbf, 0xcd,
 			  0x43, 0xd1, 0x69, 0x8d, 0x14, 0x6f, 0x34, 0x8b,
-			  0x2c, 0x36, 0xa3, 0x39, 0x68, 0x2b, 0xec, 0x3f, पूर्ण,
-पूर्ण, अणु
-	.plaपूर्णांकext = blake2_ordered_sequence,
+			  0x2c, 0x36, 0xa3, 0x39, 0x68, 0x2b, 0xec, 0x3f, },
+}, {
+	.plaintext = blake2_ordered_sequence,
 	.psize = 247,
-	.digest = (u8[])अणु 0xc8, 0xf8, 0xf0, 0xa2, 0x69, 0xfa, 0xcc, 0x4d,
+	.digest = (u8[]){ 0xc8, 0xf8, 0xf0, 0xa2, 0x69, 0xfa, 0xcc, 0x4d,
 			  0x32, 0x5f, 0x13, 0x88, 0xca, 0x71, 0x99, 0x8f,
 			  0xf7, 0x30, 0x41, 0x5d, 0x6e, 0x34, 0xb7, 0x6e,
 			  0x3e, 0xd0, 0x46, 0xb6, 0xca, 0x30, 0x66, 0xb2,
 			  0x6f, 0x0c, 0x35, 0x54, 0x17, 0xcd, 0x26, 0x1b,
-			  0xef, 0x48, 0x98, 0xe0, 0x56, 0x7c, 0x05, 0xd2, पूर्ण,
-पूर्ण, अणु
+			  0xef, 0x48, 0x98, 0xe0, 0x56, 0x7c, 0x05, 0xd2, },
+}, {
 	.ksize = 32,
 	.key = blake2_ordered_sequence,
-	.digest = (u8[])अणु 0x15, 0x09, 0x7a, 0x90, 0x13, 0x23, 0xab, 0x0c,
+	.digest = (u8[]){ 0x15, 0x09, 0x7a, 0x90, 0x13, 0x23, 0xab, 0x0c,
 			  0x0b, 0x43, 0x21, 0x9a, 0xb5, 0xc6, 0x0c, 0x2e,
 			  0x7c, 0x57, 0xfc, 0xcc, 0x4b, 0x0f, 0xf0, 0x57,
 			  0xb7, 0x9c, 0xe7, 0x0f, 0xe1, 0x57, 0xac, 0x37,
 			  0x77, 0xd4, 0xf4, 0x2f, 0x03, 0x3b, 0x64, 0x09,
-			  0x84, 0xa0, 0xb3, 0x24, 0xb7, 0xae, 0x47, 0x5e, पूर्ण,
-पूर्ण, अणु
+			  0x84, 0xa0, 0xb3, 0x24, 0xb7, 0xae, 0x47, 0x5e, },
+}, {
 	.ksize = 1,
 	.key = "B",
-	.plaपूर्णांकext = blake2_ordered_sequence,
+	.plaintext = blake2_ordered_sequence,
 	.psize = 7,
-	.digest = (u8[])अणु 0x0b, 0x82, 0x88, 0xca, 0x05, 0x2f, 0x1b, 0x15,
+	.digest = (u8[]){ 0x0b, 0x82, 0x88, 0xca, 0x05, 0x2f, 0x1b, 0x15,
 			  0xdc, 0xbb, 0x22, 0x27, 0x11, 0x6b, 0xf4, 0xd1,
 			  0xe9, 0x8f, 0x1b, 0x0b, 0x58, 0x3f, 0x5e, 0x86,
 			  0x80, 0x82, 0x6f, 0x8e, 0x54, 0xc1, 0x9f, 0x12,
 			  0xcf, 0xe9, 0x56, 0xc1, 0xfc, 0x1a, 0x08, 0xb9,
-			  0x4a, 0x57, 0x0a, 0x76, 0x3c, 0x15, 0x33, 0x18, पूर्ण,
-पूर्ण, अणु
+			  0x4a, 0x57, 0x0a, 0x76, 0x3c, 0x15, 0x33, 0x18, },
+}, {
 	.ksize = 64,
 	.key = blake2_ordered_sequence,
-	.plaपूर्णांकext = blake2_ordered_sequence,
+	.plaintext = blake2_ordered_sequence,
 	.psize = 15,
-	.digest = (u8[])अणु 0x4a, 0x81, 0x55, 0xb9, 0x79, 0x42, 0x8c, 0xc6,
+	.digest = (u8[]){ 0x4a, 0x81, 0x55, 0xb9, 0x79, 0x42, 0x8c, 0xc6,
 			  0x4f, 0xfe, 0xca, 0x82, 0x3b, 0xb2, 0xf7, 0xbc,
 			  0x5e, 0xfc, 0xab, 0x09, 0x1c, 0xd6, 0x3b, 0xe1,
 			  0x50, 0x82, 0x3b, 0xde, 0xc7, 0x06, 0xee, 0x3b,
 			  0x29, 0xce, 0xe5, 0x68, 0xe0, 0xff, 0xfa, 0xe1,
-			  0x7a, 0xf1, 0xc0, 0xfe, 0x57, 0xf4, 0x60, 0x49, पूर्ण,
-पूर्ण, अणु
+			  0x7a, 0xf1, 0xc0, 0xfe, 0x57, 0xf4, 0x60, 0x49, },
+}, {
 	.ksize = 32,
 	.key = blake2_ordered_sequence,
-	.plaपूर्णांकext = blake2_ordered_sequence,
+	.plaintext = blake2_ordered_sequence,
 	.psize = 64,
-	.digest = (u8[])अणु 0x34, 0xbd, 0xe1, 0x99, 0x43, 0x9f, 0x82, 0x72,
+	.digest = (u8[]){ 0x34, 0xbd, 0xe1, 0x99, 0x43, 0x9f, 0x82, 0x72,
 			  0xe7, 0xed, 0x94, 0x9e, 0xe1, 0x84, 0xee, 0x82,
 			  0xfd, 0x26, 0x23, 0xc4, 0x17, 0x8d, 0xf5, 0x04,
 			  0xeb, 0xb7, 0xbc, 0xb8, 0xf3, 0x68, 0xb7, 0xad,
 			  0x94, 0x8e, 0x05, 0x3f, 0x8a, 0x5d, 0x8d, 0x81,
-			  0x3e, 0x88, 0xa7, 0x8c, 0xa2, 0xd5, 0xdc, 0x76, पूर्ण,
-पूर्ण, अणु
+			  0x3e, 0x88, 0xa7, 0x8c, 0xa2, 0xd5, 0xdc, 0x76, },
+}, {
 	.ksize = 1,
 	.key = "B",
-	.plaपूर्णांकext = blake2_ordered_sequence,
+	.plaintext = blake2_ordered_sequence,
 	.psize = 256,
-	.digest = (u8[])अणु 0x22, 0x14, 0xf4, 0xb0, 0x4c, 0xa8, 0xb5, 0x7d,
+	.digest = (u8[]){ 0x22, 0x14, 0xf4, 0xb0, 0x4c, 0xa8, 0xb5, 0x7d,
 			  0xa7, 0x5c, 0x04, 0xeb, 0xd8, 0x8d, 0x04, 0x71,
 			  0xc7, 0x3c, 0xc7, 0x6e, 0x8b, 0x20, 0x36, 0x40,
 			  0x9d, 0xd0, 0x60, 0xc6, 0xe3, 0x0b, 0x6e, 0x50,
 			  0xf5, 0xaf, 0xf5, 0xc6, 0x3b, 0xe3, 0x84, 0x6a,
-			  0x93, 0x1b, 0x12, 0xd6, 0x18, 0x27, 0xba, 0x36, पूर्ण,
-पूर्णपूर्ण;
+			  0x93, 0x1b, 0x12, 0xd6, 0x18, 0x27, 0xba, 0x36, },
+}};
 
-अटल स्थिर काष्ठा hash_testvec blake2b_512_tv_ढाँचा[] = अणुअणु
-	.plaपूर्णांकext = blake2_ordered_sequence,
+static const struct hash_testvec blake2b_512_tv_template[] = {{
+	.plaintext = blake2_ordered_sequence,
 	.psize = 15,
-	.digest = (u8[])अणु 0x44, 0x4b, 0x24, 0x0f, 0xe3, 0xed, 0x86, 0xd0,
+	.digest = (u8[]){ 0x44, 0x4b, 0x24, 0x0f, 0xe3, 0xed, 0x86, 0xd0,
 			  0xe2, 0xef, 0x4c, 0xe7, 0xd8, 0x51, 0xed, 0xde,
 			  0x22, 0x15, 0x55, 0x82, 0xaa, 0x09, 0x14, 0x79,
 			  0x7b, 0x72, 0x6c, 0xd0, 0x58, 0xb6, 0xf4, 0x59,
 			  0x32, 0xe0, 0xe1, 0x29, 0x51, 0x68, 0x76, 0x52,
 			  0x7b, 0x1d, 0xd8, 0x8f, 0xc6, 0x6d, 0x71, 0x19,
 			  0xf4, 0xab, 0x3b, 0xed, 0x93, 0xa6, 0x1a, 0x0e,
-			  0x2d, 0x2d, 0x2a, 0xea, 0xc3, 0x36, 0xd9, 0x58, पूर्ण,
-पूर्ण, अणु
+			  0x2d, 0x2d, 0x2a, 0xea, 0xc3, 0x36, 0xd9, 0x58, },
+}, {
 	.ksize = 64,
 	.key = blake2_ordered_sequence,
-	.digest = (u8[])अणु 0x10, 0xeb, 0xb6, 0x77, 0x00, 0xb1, 0x86, 0x8e,
+	.digest = (u8[]){ 0x10, 0xeb, 0xb6, 0x77, 0x00, 0xb1, 0x86, 0x8e,
 			  0xfb, 0x44, 0x17, 0x98, 0x7a, 0xcf, 0x46, 0x90,
 			  0xae, 0x9d, 0x97, 0x2f, 0xb7, 0xa5, 0x90, 0xc2,
 			  0xf0, 0x28, 0x71, 0x79, 0x9a, 0xaa, 0x47, 0x86,
 			  0xb5, 0xe9, 0x96, 0xe8, 0xf0, 0xf4, 0xeb, 0x98,
 			  0x1f, 0xc2, 0x14, 0xb0, 0x05, 0xf4, 0x2d, 0x2f,
 			  0xf4, 0x23, 0x34, 0x99, 0x39, 0x16, 0x53, 0xdf,
-			  0x7a, 0xef, 0xcb, 0xc1, 0x3f, 0xc5, 0x15, 0x68, पूर्ण,
-पूर्ण, अणु
+			  0x7a, 0xef, 0xcb, 0xc1, 0x3f, 0xc5, 0x15, 0x68, },
+}, {
 	.ksize = 1,
 	.key = "B",
-	.plaपूर्णांकext = blake2_ordered_sequence,
+	.plaintext = blake2_ordered_sequence,
 	.psize = 1,
-	.digest = (u8[])अणु 0xd2, 0x11, 0x31, 0x29, 0x3f, 0xea, 0xca, 0x72,
+	.digest = (u8[]){ 0xd2, 0x11, 0x31, 0x29, 0x3f, 0xea, 0xca, 0x72,
 			  0x21, 0xe4, 0x06, 0x65, 0x05, 0x2a, 0xd1, 0x02,
 			  0xc0, 0x8d, 0x7b, 0xf1, 0x09, 0x3c, 0xef, 0x88,
 			  0xe1, 0x68, 0x0c, 0xf1, 0x3b, 0xa4, 0xe3, 0x03,
 			  0xed, 0xa0, 0xe3, 0x60, 0x58, 0xa0, 0xdb, 0x52,
 			  0x8a, 0x66, 0x43, 0x09, 0x60, 0x1a, 0xbb, 0x67,
 			  0xc5, 0x84, 0x31, 0x40, 0xfa, 0xde, 0xc1, 0xd0,
-			  0xff, 0x3f, 0x4a, 0x69, 0xd9, 0x92, 0x26, 0x86, पूर्ण,
-पूर्ण, अणु
+			  0xff, 0x3f, 0x4a, 0x69, 0xd9, 0x92, 0x26, 0x86, },
+}, {
 	.ksize = 32,
 	.key = blake2_ordered_sequence,
-	.plaपूर्णांकext = blake2_ordered_sequence,
+	.plaintext = blake2_ordered_sequence,
 	.psize = 7,
-	.digest = (u8[])अणु 0xa3, 0x3e, 0x50, 0xbc, 0xfb, 0xd9, 0xf0, 0x82,
+	.digest = (u8[]){ 0xa3, 0x3e, 0x50, 0xbc, 0xfb, 0xd9, 0xf0, 0x82,
 			  0xa6, 0xd1, 0xdf, 0xaf, 0x82, 0xd0, 0xcf, 0x84,
 			  0x9a, 0x25, 0x3c, 0xae, 0x6d, 0xb5, 0xaf, 0x01,
 			  0xd7, 0xaf, 0xed, 0x50, 0xdc, 0xe2, 0xba, 0xcc,
 			  0x8c, 0x38, 0xf5, 0x16, 0x89, 0x38, 0x86, 0xce,
 			  0x68, 0x10, 0x63, 0x64, 0xa5, 0x79, 0x53, 0xb5,
 			  0x2e, 0x8e, 0xbc, 0x0a, 0xce, 0x95, 0xc0, 0x1e,
-			  0x69, 0x59, 0x1d, 0x3b, 0xd8, 0x19, 0x90, 0xd7, पूर्ण,
-पूर्ण, अणु
+			  0x69, 0x59, 0x1d, 0x3b, 0xd8, 0x19, 0x90, 0xd7, },
+}, {
 	.ksize = 64,
 	.key = blake2_ordered_sequence,
-	.plaपूर्णांकext = blake2_ordered_sequence,
+	.plaintext = blake2_ordered_sequence,
 	.psize = 64,
-	.digest = (u8[])अणु 0x65, 0x67, 0x6d, 0x80, 0x06, 0x17, 0x97, 0x2f,
+	.digest = (u8[]){ 0x65, 0x67, 0x6d, 0x80, 0x06, 0x17, 0x97, 0x2f,
 			  0xbd, 0x87, 0xe4, 0xb9, 0x51, 0x4e, 0x1c, 0x67,
 			  0x40, 0x2b, 0x7a, 0x33, 0x10, 0x96, 0xd3, 0xbf,
 			  0xac, 0x22, 0xf1, 0xab, 0xb9, 0x53, 0x74, 0xab,
 			  0xc9, 0x42, 0xf1, 0x6e, 0x9a, 0xb0, 0xea, 0xd3,
 			  0x3b, 0x87, 0xc9, 0x19, 0x68, 0xa6, 0xe5, 0x09,
 			  0xe1, 0x19, 0xff, 0x07, 0x78, 0x7b, 0x3e, 0xf4,
-			  0x83, 0xe1, 0xdc, 0xdc, 0xcf, 0x6e, 0x30, 0x22, पूर्ण,
-पूर्ण, अणु
+			  0x83, 0xe1, 0xdc, 0xdc, 0xcf, 0x6e, 0x30, 0x22, },
+}, {
 	.ksize = 1,
 	.key = "B",
-	.plaपूर्णांकext = blake2_ordered_sequence,
+	.plaintext = blake2_ordered_sequence,
 	.psize = 247,
-	.digest = (u8[])अणु 0xc2, 0x96, 0x2c, 0x6b, 0x84, 0xff, 0xee, 0xea,
+	.digest = (u8[]){ 0xc2, 0x96, 0x2c, 0x6b, 0x84, 0xff, 0xee, 0xea,
 			  0x9b, 0xb8, 0x55, 0x2d, 0x6b, 0xa5, 0xd5, 0xe5,
 			  0xbd, 0xb1, 0x54, 0xb6, 0x1e, 0xfb, 0x63, 0x16,
 			  0x6e, 0x22, 0x04, 0xf0, 0x82, 0x7a, 0xc6, 0x99,
 			  0xf7, 0x4c, 0xff, 0x93, 0x71, 0x57, 0x64, 0xd0,
 			  0x08, 0x60, 0x39, 0x98, 0xb8, 0xd2, 0x2b, 0x4e,
 			  0x81, 0x8d, 0xe4, 0x8f, 0xb2, 0x1e, 0x8f, 0x99,
-			  0x98, 0xf1, 0x02, 0x9b, 0x4c, 0x7c, 0x97, 0x1a, पूर्ण,
-पूर्ण, अणु
+			  0x98, 0xf1, 0x02, 0x9b, 0x4c, 0x7c, 0x97, 0x1a, },
+}, {
 	.ksize = 32,
 	.key = blake2_ordered_sequence,
-	.plaपूर्णांकext = blake2_ordered_sequence,
+	.plaintext = blake2_ordered_sequence,
 	.psize = 256,
-	.digest = (u8[])अणु 0x0f, 0x32, 0x05, 0x09, 0xad, 0x9f, 0x25, 0xf7,
+	.digest = (u8[]){ 0x0f, 0x32, 0x05, 0x09, 0xad, 0x9f, 0x25, 0xf7,
 			  0xf2, 0x00, 0x71, 0xc9, 0x9f, 0x08, 0x58, 0xd1,
 			  0x67, 0xc3, 0xa6, 0x2c, 0x0d, 0xe5, 0x7c, 0x15,
 			  0x35, 0x18, 0x5a, 0x68, 0xc1, 0xca, 0x1c, 0x6e,
 			  0x0f, 0xc4, 0xf6, 0x0c, 0x43, 0xe1, 0xb4, 0x3d,
 			  0x28, 0xe4, 0xc7, 0xa1, 0xcf, 0x6b, 0x17, 0x4e,
 			  0xf1, 0x5b, 0xb5, 0x53, 0xd4, 0xa7, 0xd0, 0x5b,
-			  0xae, 0x15, 0x81, 0x15, 0xd0, 0x88, 0xa0, 0x3c, पूर्ण,
-पूर्णपूर्ण;
+			  0xae, 0x15, 0x81, 0x15, 0xd0, 0x88, 0xa0, 0x3c, },
+}};
 
-अटल स्थिर काष्ठा hash_testvec blakes2s_128_tv_ढाँचा[] = अणुअणु
-	.digest = (u8[])अणु 0x64, 0x55, 0x0d, 0x6f, 0xfe, 0x2c, 0x0a, 0x01,
-			  0xa1, 0x4a, 0xba, 0x1e, 0xad, 0xe0, 0x20, 0x0c, पूर्ण,
-पूर्ण, अणु
-	.plaपूर्णांकext = blake2_ordered_sequence,
+static const struct hash_testvec blakes2s_128_tv_template[] = {{
+	.digest = (u8[]){ 0x64, 0x55, 0x0d, 0x6f, 0xfe, 0x2c, 0x0a, 0x01,
+			  0xa1, 0x4a, 0xba, 0x1e, 0xad, 0xe0, 0x20, 0x0c, },
+}, {
+	.plaintext = blake2_ordered_sequence,
 	.psize = 64,
-	.digest = (u8[])अणु 0xdc, 0x66, 0xca, 0x8f, 0x03, 0x86, 0x58, 0x01,
-			  0xb0, 0xff, 0xe0, 0x6e, 0xd8, 0xa1, 0xa9, 0x0e, पूर्ण,
-पूर्ण, अणु
+	.digest = (u8[]){ 0xdc, 0x66, 0xca, 0x8f, 0x03, 0x86, 0x58, 0x01,
+			  0xb0, 0xff, 0xe0, 0x6e, 0xd8, 0xa1, 0xa9, 0x0e, },
+}, {
 	.ksize = 16,
 	.key = blake2_ordered_sequence,
-	.plaपूर्णांकext = blake2_ordered_sequence,
+	.plaintext = blake2_ordered_sequence,
 	.psize = 1,
-	.digest = (u8[])अणु 0x88, 0x1e, 0x42, 0xe7, 0xbb, 0x35, 0x80, 0x82,
-			  0x63, 0x7c, 0x0a, 0x0f, 0xd7, 0xec, 0x6c, 0x2f, पूर्ण,
-पूर्ण, अणु
+	.digest = (u8[]){ 0x88, 0x1e, 0x42, 0xe7, 0xbb, 0x35, 0x80, 0x82,
+			  0x63, 0x7c, 0x0a, 0x0f, 0xd7, 0xec, 0x6c, 0x2f, },
+}, {
 	.ksize = 32,
 	.key = blake2_ordered_sequence,
-	.plaपूर्णांकext = blake2_ordered_sequence,
+	.plaintext = blake2_ordered_sequence,
 	.psize = 7,
-	.digest = (u8[])अणु 0xcf, 0x9e, 0x07, 0x2a, 0xd5, 0x22, 0xf2, 0xcd,
-			  0xa2, 0xd8, 0x25, 0x21, 0x80, 0x86, 0x73, 0x1c, पूर्ण,
-पूर्ण, अणु
+	.digest = (u8[]){ 0xcf, 0x9e, 0x07, 0x2a, 0xd5, 0x22, 0xf2, 0xcd,
+			  0xa2, 0xd8, 0x25, 0x21, 0x80, 0x86, 0x73, 0x1c, },
+}, {
 	.ksize = 1,
 	.key = "B",
-	.plaपूर्णांकext = blake2_ordered_sequence,
+	.plaintext = blake2_ordered_sequence,
 	.psize = 15,
-	.digest = (u8[])अणु 0xf6, 0x33, 0x5a, 0x2c, 0x22, 0xa0, 0x64, 0xb2,
-			  0xb6, 0x3f, 0xeb, 0xbc, 0xd1, 0xc3, 0xe5, 0xb2, पूर्ण,
-पूर्ण, अणु
+	.digest = (u8[]){ 0xf6, 0x33, 0x5a, 0x2c, 0x22, 0xa0, 0x64, 0xb2,
+			  0xb6, 0x3f, 0xeb, 0xbc, 0xd1, 0xc3, 0xe5, 0xb2, },
+}, {
 	.ksize = 16,
 	.key = blake2_ordered_sequence,
-	.plaपूर्णांकext = blake2_ordered_sequence,
+	.plaintext = blake2_ordered_sequence,
 	.psize = 247,
-	.digest = (u8[])अणु 0x72, 0x66, 0x49, 0x60, 0xf9, 0x4a, 0xea, 0xbe,
-			  0x1f, 0xf4, 0x60, 0xce, 0xb7, 0x81, 0xcb, 0x09, पूर्ण,
-पूर्ण, अणु
+	.digest = (u8[]){ 0x72, 0x66, 0x49, 0x60, 0xf9, 0x4a, 0xea, 0xbe,
+			  0x1f, 0xf4, 0x60, 0xce, 0xb7, 0x81, 0xcb, 0x09, },
+}, {
 	.ksize = 32,
 	.key = blake2_ordered_sequence,
-	.plaपूर्णांकext = blake2_ordered_sequence,
+	.plaintext = blake2_ordered_sequence,
 	.psize = 256,
-	.digest = (u8[])अणु 0xd5, 0xa4, 0x0e, 0xc3, 0x16, 0xc7, 0x51, 0xa6,
-			  0x3c, 0xd0, 0xd9, 0x11, 0x57, 0xfa, 0x1e, 0xbb, पूर्ण,
-पूर्णपूर्ण;
+	.digest = (u8[]){ 0xd5, 0xa4, 0x0e, 0xc3, 0x16, 0xc7, 0x51, 0xa6,
+			  0x3c, 0xd0, 0xd9, 0x11, 0x57, 0xfa, 0x1e, 0xbb, },
+}};
 
-अटल स्थिर काष्ठा hash_testvec blakes2s_160_tv_ढाँचा[] = अणुअणु
-	.plaपूर्णांकext = blake2_ordered_sequence,
+static const struct hash_testvec blakes2s_160_tv_template[] = {{
+	.plaintext = blake2_ordered_sequence,
 	.psize = 7,
-	.digest = (u8[])अणु 0xb4, 0xf2, 0x03, 0x49, 0x37, 0xed, 0xb1, 0x3e,
+	.digest = (u8[]){ 0xb4, 0xf2, 0x03, 0x49, 0x37, 0xed, 0xb1, 0x3e,
 			  0x5b, 0x2a, 0xca, 0x64, 0x82, 0x74, 0xf6, 0x62,
-			  0xe3, 0xf2, 0x84, 0xff, पूर्ण,
-पूर्ण, अणु
-	.plaपूर्णांकext = blake2_ordered_sequence,
+			  0xe3, 0xf2, 0x84, 0xff, },
+}, {
+	.plaintext = blake2_ordered_sequence,
 	.psize = 256,
-	.digest = (u8[])अणु 0xaa, 0x56, 0x9b, 0xdc, 0x98, 0x17, 0x75, 0xf2,
+	.digest = (u8[]){ 0xaa, 0x56, 0x9b, 0xdc, 0x98, 0x17, 0x75, 0xf2,
 			  0xb3, 0x68, 0x83, 0xb7, 0x9b, 0x8d, 0x48, 0xb1,
-			  0x9b, 0x2d, 0x35, 0x05, पूर्ण,
-पूर्ण, अणु
+			  0x9b, 0x2d, 0x35, 0x05, },
+}, {
 	.ksize = 1,
 	.key = "B",
-	.digest = (u8[])अणु 0x50, 0x16, 0xe7, 0x0c, 0x01, 0xd0, 0xd3, 0xc3,
+	.digest = (u8[]){ 0x50, 0x16, 0xe7, 0x0c, 0x01, 0xd0, 0xd3, 0xc3,
 			  0xf4, 0x3e, 0xb1, 0x6e, 0x97, 0xa9, 0x4e, 0xd1,
-			  0x79, 0x65, 0x32, 0x93, पूर्ण,
-पूर्ण, अणु
+			  0x79, 0x65, 0x32, 0x93, },
+}, {
 	.ksize = 32,
 	.key = blake2_ordered_sequence,
-	.plaपूर्णांकext = blake2_ordered_sequence,
+	.plaintext = blake2_ordered_sequence,
 	.psize = 1,
-	.digest = (u8[])अणु 0x1c, 0x2b, 0xcd, 0x9a, 0x68, 0xca, 0x8c, 0x71,
+	.digest = (u8[]){ 0x1c, 0x2b, 0xcd, 0x9a, 0x68, 0xca, 0x8c, 0x71,
 			  0x90, 0x29, 0x6c, 0x54, 0xfa, 0x56, 0x4a, 0xef,
-			  0xa2, 0x3a, 0x56, 0x9c, पूर्ण,
-पूर्ण, अणु
+			  0xa2, 0x3a, 0x56, 0x9c, },
+}, {
 	.ksize = 16,
 	.key = blake2_ordered_sequence,
-	.plaपूर्णांकext = blake2_ordered_sequence,
+	.plaintext = blake2_ordered_sequence,
 	.psize = 15,
-	.digest = (u8[])अणु 0x36, 0xc3, 0x5f, 0x9a, 0xdc, 0x7e, 0xbf, 0x19,
+	.digest = (u8[]){ 0x36, 0xc3, 0x5f, 0x9a, 0xdc, 0x7e, 0xbf, 0x19,
 			  0x68, 0xaa, 0xca, 0xd8, 0x81, 0xbf, 0x09, 0x34,
-			  0x83, 0x39, 0x0f, 0x30, पूर्ण,
-पूर्ण, अणु
+			  0x83, 0x39, 0x0f, 0x30, },
+}, {
 	.ksize = 1,
 	.key = "B",
-	.plaपूर्णांकext = blake2_ordered_sequence,
+	.plaintext = blake2_ordered_sequence,
 	.psize = 64,
-	.digest = (u8[])अणु 0x86, 0x80, 0x78, 0xa4, 0x14, 0xec, 0x03, 0xe5,
+	.digest = (u8[]){ 0x86, 0x80, 0x78, 0xa4, 0x14, 0xec, 0x03, 0xe5,
 			  0xb6, 0x9a, 0x52, 0x0e, 0x42, 0xee, 0x39, 0x9d,
-			  0xac, 0xa6, 0x81, 0x63, पूर्ण,
-पूर्ण, अणु
+			  0xac, 0xa6, 0x81, 0x63, },
+}, {
 	.ksize = 32,
 	.key = blake2_ordered_sequence,
-	.plaपूर्णांकext = blake2_ordered_sequence,
+	.plaintext = blake2_ordered_sequence,
 	.psize = 247,
-	.digest = (u8[])अणु 0x2d, 0xd8, 0xd2, 0x53, 0x66, 0xfa, 0xa9, 0x01,
+	.digest = (u8[]){ 0x2d, 0xd8, 0xd2, 0x53, 0x66, 0xfa, 0xa9, 0x01,
 			  0x1c, 0x9c, 0xaf, 0xa3, 0xe2, 0x9d, 0x9b, 0x10,
-			  0x0a, 0xf6, 0x73, 0xe8, पूर्ण,
-पूर्णपूर्ण;
+			  0x0a, 0xf6, 0x73, 0xe8, },
+}};
 
-अटल स्थिर काष्ठा hash_testvec blakes2s_224_tv_ढाँचा[] = अणुअणु
-	.plaपूर्णांकext = blake2_ordered_sequence,
+static const struct hash_testvec blakes2s_224_tv_template[] = {{
+	.plaintext = blake2_ordered_sequence,
 	.psize = 1,
-	.digest = (u8[])अणु 0x61, 0xb9, 0x4e, 0xc9, 0x46, 0x22, 0xa3, 0x91,
+	.digest = (u8[]){ 0x61, 0xb9, 0x4e, 0xc9, 0x46, 0x22, 0xa3, 0x91,
 			  0xd2, 0xae, 0x42, 0xe6, 0x45, 0x6c, 0x90, 0x12,
 			  0xd5, 0x80, 0x07, 0x97, 0xb8, 0x86, 0x5a, 0xfc,
-			  0x48, 0x21, 0x97, 0xbb, पूर्ण,
-पूर्ण, अणु
-	.plaपूर्णांकext = blake2_ordered_sequence,
+			  0x48, 0x21, 0x97, 0xbb, },
+}, {
+	.plaintext = blake2_ordered_sequence,
 	.psize = 247,
-	.digest = (u8[])अणु 0x9e, 0xda, 0xc7, 0x20, 0x2c, 0xd8, 0x48, 0x2e,
+	.digest = (u8[]){ 0x9e, 0xda, 0xc7, 0x20, 0x2c, 0xd8, 0x48, 0x2e,
 			  0x31, 0x94, 0xab, 0x46, 0x6d, 0x94, 0xd8, 0xb4,
 			  0x69, 0xcd, 0xae, 0x19, 0x6d, 0x9e, 0x41, 0xcc,
-			  0x2b, 0xa4, 0xd5, 0xf6, पूर्ण,
-पूर्ण, अणु
+			  0x2b, 0xa4, 0xd5, 0xf6, },
+}, {
 	.ksize = 16,
 	.key = blake2_ordered_sequence,
-	.digest = (u8[])अणु 0x32, 0xc0, 0xac, 0xf4, 0x3b, 0xd3, 0x07, 0x9f,
+	.digest = (u8[]){ 0x32, 0xc0, 0xac, 0xf4, 0x3b, 0xd3, 0x07, 0x9f,
 			  0xbe, 0xfb, 0xfa, 0x4d, 0x6b, 0x4e, 0x56, 0xb3,
 			  0xaa, 0xd3, 0x27, 0xf6, 0x14, 0xbf, 0xb9, 0x32,
-			  0xa7, 0x19, 0xfc, 0xb8, पूर्ण,
-पूर्ण, अणु
+			  0xa7, 0x19, 0xfc, 0xb8, },
+}, {
 	.ksize = 1,
 	.key = "B",
-	.plaपूर्णांकext = blake2_ordered_sequence,
+	.plaintext = blake2_ordered_sequence,
 	.psize = 7,
-	.digest = (u8[])अणु 0x73, 0xad, 0x5e, 0x6d, 0xb9, 0x02, 0x8e, 0x76,
+	.digest = (u8[]){ 0x73, 0xad, 0x5e, 0x6d, 0xb9, 0x02, 0x8e, 0x76,
 			  0xf2, 0x66, 0x42, 0x4b, 0x4c, 0xfa, 0x1f, 0xe6,
 			  0x2e, 0x56, 0x40, 0xe5, 0xa2, 0xb0, 0x3c, 0xe8,
-			  0x7b, 0x45, 0xfe, 0x05, पूर्ण,
-पूर्ण, अणु
+			  0x7b, 0x45, 0xfe, 0x05, },
+}, {
 	.ksize = 32,
 	.key = blake2_ordered_sequence,
-	.plaपूर्णांकext = blake2_ordered_sequence,
+	.plaintext = blake2_ordered_sequence,
 	.psize = 15,
-	.digest = (u8[])अणु 0x16, 0x60, 0xfb, 0x92, 0x54, 0xb3, 0x6e, 0x36,
+	.digest = (u8[]){ 0x16, 0x60, 0xfb, 0x92, 0x54, 0xb3, 0x6e, 0x36,
 			  0x81, 0xf4, 0x16, 0x41, 0xc3, 0x3d, 0xd3, 0x43,
 			  0x84, 0xed, 0x10, 0x6f, 0x65, 0x80, 0x7a, 0x3e,
-			  0x25, 0xab, 0xc5, 0x02, पूर्ण,
-पूर्ण, अणु
+			  0x25, 0xab, 0xc5, 0x02, },
+}, {
 	.ksize = 16,
 	.key = blake2_ordered_sequence,
-	.plaपूर्णांकext = blake2_ordered_sequence,
+	.plaintext = blake2_ordered_sequence,
 	.psize = 64,
-	.digest = (u8[])अणु 0xca, 0xaa, 0x39, 0x67, 0x9c, 0xf7, 0x6b, 0xc7,
+	.digest = (u8[]){ 0xca, 0xaa, 0x39, 0x67, 0x9c, 0xf7, 0x6b, 0xc7,
 			  0xb6, 0x82, 0xca, 0x0e, 0x65, 0x36, 0x5b, 0x7c,
 			  0x24, 0x00, 0xfa, 0x5f, 0xda, 0x06, 0x91, 0x93,
-			  0x6a, 0x31, 0x83, 0xb5, पूर्ण,
-पूर्ण, अणु
+			  0x6a, 0x31, 0x83, 0xb5, },
+}, {
 	.ksize = 1,
 	.key = "B",
-	.plaपूर्णांकext = blake2_ordered_sequence,
+	.plaintext = blake2_ordered_sequence,
 	.psize = 256,
-	.digest = (u8[])अणु 0x90, 0x02, 0x26, 0xb5, 0x06, 0x9c, 0x36, 0x86,
+	.digest = (u8[]){ 0x90, 0x02, 0x26, 0xb5, 0x06, 0x9c, 0x36, 0x86,
 			  0x94, 0x91, 0x90, 0x1e, 0x7d, 0x2a, 0x71, 0xb2,
 			  0x48, 0xb5, 0xe8, 0x16, 0xfd, 0x64, 0x33, 0x45,
-			  0xb3, 0xd7, 0xec, 0xcc, पूर्ण,
-पूर्णपूर्ण;
+			  0xb3, 0xd7, 0xec, 0xcc, },
+}};
 
-अटल स्थिर काष्ठा hash_testvec blakes2s_256_tv_ढाँचा[] = अणुअणु
-	.plaपूर्णांकext = blake2_ordered_sequence,
+static const struct hash_testvec blakes2s_256_tv_template[] = {{
+	.plaintext = blake2_ordered_sequence,
 	.psize = 15,
-	.digest = (u8[])अणु 0xd9, 0x7c, 0x82, 0x8d, 0x81, 0x82, 0xa7, 0x21,
+	.digest = (u8[]){ 0xd9, 0x7c, 0x82, 0x8d, 0x81, 0x82, 0xa7, 0x21,
 			  0x80, 0xa0, 0x6a, 0x78, 0x26, 0x83, 0x30, 0x67,
 			  0x3f, 0x7c, 0x4e, 0x06, 0x35, 0x94, 0x7c, 0x04,
-			  0xc0, 0x23, 0x23, 0xfd, 0x45, 0xc0, 0xa5, 0x2d, पूर्ण,
-पूर्ण, अणु
+			  0xc0, 0x23, 0x23, 0xfd, 0x45, 0xc0, 0xa5, 0x2d, },
+}, {
 	.ksize = 32,
 	.key = blake2_ordered_sequence,
-	.digest = (u8[])अणु 0x48, 0xa8, 0x99, 0x7d, 0xa4, 0x07, 0x87, 0x6b,
+	.digest = (u8[]){ 0x48, 0xa8, 0x99, 0x7d, 0xa4, 0x07, 0x87, 0x6b,
 			  0x3d, 0x79, 0xc0, 0xd9, 0x23, 0x25, 0xad, 0x3b,
 			  0x89, 0xcb, 0xb7, 0x54, 0xd8, 0x6a, 0xb7, 0x1a,
-			  0xee, 0x04, 0x7a, 0xd3, 0x45, 0xfd, 0x2c, 0x49, पूर्ण,
-पूर्ण, अणु
+			  0xee, 0x04, 0x7a, 0xd3, 0x45, 0xfd, 0x2c, 0x49, },
+}, {
 	.ksize = 1,
 	.key = "B",
-	.plaपूर्णांकext = blake2_ordered_sequence,
+	.plaintext = blake2_ordered_sequence,
 	.psize = 1,
-	.digest = (u8[])अणु 0x22, 0x27, 0xae, 0xaa, 0x6e, 0x81, 0x56, 0x03,
+	.digest = (u8[]){ 0x22, 0x27, 0xae, 0xaa, 0x6e, 0x81, 0x56, 0x03,
 			  0xa7, 0xe3, 0xa1, 0x18, 0xa5, 0x9a, 0x2c, 0x18,
 			  0xf4, 0x63, 0xbc, 0x16, 0x70, 0xf1, 0xe7, 0x4b,
-			  0x00, 0x6d, 0x66, 0x16, 0xae, 0x9e, 0x74, 0x4e, पूर्ण,
-पूर्ण, अणु
+			  0x00, 0x6d, 0x66, 0x16, 0xae, 0x9e, 0x74, 0x4e, },
+}, {
 	.ksize = 16,
 	.key = blake2_ordered_sequence,
-	.plaपूर्णांकext = blake2_ordered_sequence,
+	.plaintext = blake2_ordered_sequence,
 	.psize = 7,
-	.digest = (u8[])अणु 0x58, 0x5d, 0xa8, 0x60, 0x1c, 0xa4, 0xd8, 0x03,
+	.digest = (u8[]){ 0x58, 0x5d, 0xa8, 0x60, 0x1c, 0xa4, 0xd8, 0x03,
 			  0x86, 0x86, 0x84, 0x64, 0xd7, 0xa0, 0x8e, 0x15,
 			  0x2f, 0x05, 0xa2, 0x1b, 0xbc, 0xef, 0x7a, 0x34,
-			  0xb3, 0xc5, 0xbc, 0x4b, 0xf0, 0x32, 0xeb, 0x12, पूर्ण,
-पूर्ण, अणु
+			  0xb3, 0xc5, 0xbc, 0x4b, 0xf0, 0x32, 0xeb, 0x12, },
+}, {
 	.ksize = 32,
 	.key = blake2_ordered_sequence,
-	.plaपूर्णांकext = blake2_ordered_sequence,
+	.plaintext = blake2_ordered_sequence,
 	.psize = 64,
-	.digest = (u8[])अणु 0x89, 0x75, 0xb0, 0x57, 0x7f, 0xd3, 0x55, 0x66,
+	.digest = (u8[]){ 0x89, 0x75, 0xb0, 0x57, 0x7f, 0xd3, 0x55, 0x66,
 			  0xd7, 0x50, 0xb3, 0x62, 0xb0, 0x89, 0x7a, 0x26,
 			  0xc3, 0x99, 0x13, 0x6d, 0xf0, 0x7b, 0xab, 0xab,
-			  0xbd, 0xe6, 0x20, 0x3f, 0xf2, 0x95, 0x4e, 0xd4, पूर्ण,
-पूर्ण, अणु
+			  0xbd, 0xe6, 0x20, 0x3f, 0xf2, 0x95, 0x4e, 0xd4, },
+}, {
 	.ksize = 1,
 	.key = "B",
-	.plaपूर्णांकext = blake2_ordered_sequence,
+	.plaintext = blake2_ordered_sequence,
 	.psize = 247,
-	.digest = (u8[])अणु 0x2e, 0x74, 0x1c, 0x1d, 0x03, 0xf4, 0x9d, 0x84,
+	.digest = (u8[]){ 0x2e, 0x74, 0x1c, 0x1d, 0x03, 0xf4, 0x9d, 0x84,
 			  0x6f, 0xfc, 0x86, 0x32, 0x92, 0x49, 0x7e, 0x66,
 			  0xd7, 0xc3, 0x10, 0x88, 0xfe, 0x28, 0xb3, 0xe0,
-			  0xbf, 0x50, 0x75, 0xad, 0x8e, 0xa4, 0xe6, 0xb2, पूर्ण,
-पूर्ण, अणु
+			  0xbf, 0x50, 0x75, 0xad, 0x8e, 0xa4, 0xe6, 0xb2, },
+}, {
 	.ksize = 16,
 	.key = blake2_ordered_sequence,
-	.plaपूर्णांकext = blake2_ordered_sequence,
+	.plaintext = blake2_ordered_sequence,
 	.psize = 256,
-	.digest = (u8[])अणु 0xb9, 0xd2, 0x81, 0x0e, 0x3a, 0xb1, 0x62, 0x9b,
+	.digest = (u8[]){ 0xb9, 0xd2, 0x81, 0x0e, 0x3a, 0xb1, 0x62, 0x9b,
 			  0xad, 0x44, 0x05, 0xf4, 0x92, 0x2e, 0x99, 0xc1,
 			  0x4a, 0x47, 0xbb, 0x5b, 0x6f, 0xb2, 0x96, 0xed,
-			  0xd5, 0x06, 0xb5, 0x3a, 0x7c, 0x7a, 0x65, 0x1d, पूर्ण,
-पूर्णपूर्ण;
+			  0xd5, 0x06, 0xb5, 0x3a, 0x7c, 0x7a, 0x65, 0x1d, },
+}};
 
-#पूर्ण_अगर	/* _CRYPTO_TESTMGR_H */
+#endif	/* _CRYPTO_TESTMGR_H */

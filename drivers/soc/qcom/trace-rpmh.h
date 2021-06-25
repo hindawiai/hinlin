@@ -1,30 +1,29 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (c) 2016-2018, The Linux Foundation. All rights reserved.
  */
 
-#अगर !defined(_TRACE_RPMH_H) || defined(TRACE_HEADER_MULTI_READ)
-#घोषणा _TRACE_RPMH_H
+#if !defined(_TRACE_RPMH_H) || defined(TRACE_HEADER_MULTI_READ)
+#define _TRACE_RPMH_H
 
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_SYSTEM rpmh
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM rpmh
 
-#समावेश <linux/tracepoपूर्णांक.h>
-#समावेश "rpmh-internal.h"
+#include <linux/tracepoint.h>
+#include "rpmh-internal.h"
 
-TRACE_EVENT(rpmh_tx_करोne,
+TRACE_EVENT(rpmh_tx_done,
 
-	TP_PROTO(काष्ठा rsc_drv *d, पूर्णांक m, स्थिर काष्ठा tcs_request *r, पूर्णांक e),
+	TP_PROTO(struct rsc_drv *d, int m, const struct tcs_request *r, int e),
 
 	TP_ARGS(d, m, r, e),
 
 	TP_STRUCT__entry(
 			 __string(name, d->name)
-			 __field(पूर्णांक, m)
+			 __field(int, m)
 			 __field(u32, addr)
 			 __field(u32, data)
-			 __field(पूर्णांक, err)
+			 __field(int, err)
 	),
 
 	TP_fast_assign(
@@ -35,26 +34,26 @@ TRACE_EVENT(rpmh_tx_करोne,
 		       __entry->err = e;
 	),
 
-	TP_prपूर्णांकk("%s: ack: tcs-m: %d addr: %#x data: %#x errno: %d",
+	TP_printk("%s: ack: tcs-m: %d addr: %#x data: %#x errno: %d",
 		  __get_str(name), __entry->m, __entry->addr, __entry->data,
 		  __entry->err)
 );
 
 TRACE_EVENT(rpmh_send_msg,
 
-	TP_PROTO(काष्ठा rsc_drv *d, पूर्णांक m, पूर्णांक n, u32 h,
-		 स्थिर काष्ठा tcs_cmd *c),
+	TP_PROTO(struct rsc_drv *d, int m, int n, u32 h,
+		 const struct tcs_cmd *c),
 
 	TP_ARGS(d, m, n, h, c),
 
 	TP_STRUCT__entry(
 			 __string(name, d->name)
-			 __field(पूर्णांक, m)
-			 __field(पूर्णांक, n)
+			 __field(int, m)
+			 __field(int, n)
 			 __field(u32, hdr)
 			 __field(u32, addr)
 			 __field(u32, data)
-			 __field(bool, रुको)
+			 __field(bool, wait)
 	),
 
 	TP_fast_assign(
@@ -64,20 +63,20 @@ TRACE_EVENT(rpmh_send_msg,
 		       __entry->hdr = h;
 		       __entry->addr = c->addr;
 		       __entry->data = c->data;
-		       __entry->रुको = c->रुको;
+		       __entry->wait = c->wait;
 	),
 
-	TP_prपूर्णांकk("%s: send-msg: tcs(m): %d cmd(n): %d msgid: %#x addr: %#x data: %#x complete: %d",
+	TP_printk("%s: send-msg: tcs(m): %d cmd(n): %d msgid: %#x addr: %#x data: %#x complete: %d",
 		  __get_str(name), __entry->m, __entry->n, __entry->hdr,
-		  __entry->addr, __entry->data, __entry->रुको)
+		  __entry->addr, __entry->data, __entry->wait)
 );
 
-#पूर्ण_अगर /* _TRACE_RPMH_H */
+#endif /* _TRACE_RPMH_H */
 
-#अघोषित TRACE_INCLUDE_PATH
-#घोषणा TRACE_INCLUDE_PATH .
+#undef TRACE_INCLUDE_PATH
+#define TRACE_INCLUDE_PATH .
 
-#अघोषित TRACE_INCLUDE_खाता
-#घोषणा TRACE_INCLUDE_खाता trace-rpmh
+#undef TRACE_INCLUDE_FILE
+#define TRACE_INCLUDE_FILE trace-rpmh
 
-#समावेश <trace/define_trace.h>
+#include <trace/define_trace.h>

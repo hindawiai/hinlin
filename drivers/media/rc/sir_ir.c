@@ -1,294 +1,293 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * IR SIR driver, (C) 2000 Milan Pikula <www@क्रमnax.sk>
+ * IR SIR driver, (C) 2000 Milan Pikula <www@fornax.sk>
  *
- * sir_ir - Device driver क्रम use with SIR (serial infra red)
+ * sir_ir - Device driver for use with SIR (serial infra red)
  * mode of IrDA on many notebooks.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/serial_reg.h>
-#समावेश <linux/kसमय.स>
-#समावेश <linux/delay.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/module.h>
+#include <linux/interrupt.h>
+#include <linux/kernel.h>
+#include <linux/serial_reg.h>
+#include <linux/ktime.h>
+#include <linux/delay.h>
+#include <linux/platform_device.h>
 
-#समावेश <media/rc-core.h>
+#include <media/rc-core.h>
 
 /* SECTION: Definitions */
-#घोषणा PULSE '['
+#define PULSE '['
 
 /* 9bit * 1s/115200bit in milli seconds = 78.125ms*/
-#घोषणा TIME_CONST (9000000ul / 115200ul)
+#define TIME_CONST (9000000ul / 115200ul)
 
-/* समयout क्रम sequences in jअगरfies (=5/100s), must be दीर्घer than TIME_CONST */
-#घोषणा SIR_TIMEOUT	(HZ * 5 / 100)
+/* timeout for sequences in jiffies (=5/100s), must be longer than TIME_CONST */
+#define SIR_TIMEOUT	(HZ * 5 / 100)
 
 /* onboard sir ports are typically com3 */
-अटल पूर्णांक io = 0x3e8;
-अटल पूर्णांक irq = 4;
-अटल पूर्णांक threshold = 3;
+static int io = 0x3e8;
+static int irq = 4;
+static int threshold = 3;
 
-अटल DEFINE_SPINLOCK(समयr_lock);
-अटल काष्ठा समयr_list समयrlist;
-/* समय of last संकेत change detected */
-अटल kसमय_प्रकार last;
-/* समय of last UART data पढ़ोy पूर्णांकerrupt */
-अटल kसमय_प्रकार last_पूर्णांकr_समय;
-अटल पूर्णांक last_value;
-अटल काष्ठा rc_dev *rcdev;
+static DEFINE_SPINLOCK(timer_lock);
+static struct timer_list timerlist;
+/* time of last signal change detected */
+static ktime_t last;
+/* time of last UART data ready interrupt */
+static ktime_t last_intr_time;
+static int last_value;
+static struct rc_dev *rcdev;
 
-अटल काष्ठा platक्रमm_device *sir_ir_dev;
+static struct platform_device *sir_ir_dev;
 
-अटल DEFINE_SPINLOCK(hardware_lock);
+static DEFINE_SPINLOCK(hardware_lock);
 
 /* SECTION: Prototypes */
 
 /* Communication with user-space */
-अटल व्योम add_पढ़ो_queue(पूर्णांक flag, अचिन्हित दीर्घ val);
+static void add_read_queue(int flag, unsigned long val);
 /* Hardware */
-अटल irqवापस_t sir_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id);
-अटल व्योम send_space(अचिन्हित दीर्घ len);
-अटल व्योम send_pulse(अचिन्हित दीर्घ len);
-अटल पूर्णांक init_hardware(व्योम);
-अटल व्योम drop_hardware(व्योम);
+static irqreturn_t sir_interrupt(int irq, void *dev_id);
+static void send_space(unsigned long len);
+static void send_pulse(unsigned long len);
+static int init_hardware(void);
+static void drop_hardware(void);
 /* Initialisation */
 
-अटल अंतरभूत अचिन्हित पूर्णांक sinp(पूर्णांक offset)
-अणु
-	वापस inb(io + offset);
-पूर्ण
+static inline unsigned int sinp(int offset)
+{
+	return inb(io + offset);
+}
 
-अटल अंतरभूत व्योम soutp(पूर्णांक offset, पूर्णांक value)
-अणु
+static inline void soutp(int offset, int value)
+{
 	outb(value, io + offset);
-पूर्ण
+}
 
 /* SECTION: Communication with user-space */
-अटल पूर्णांक sir_tx_ir(काष्ठा rc_dev *dev, अचिन्हित पूर्णांक *tx_buf,
-		     अचिन्हित पूर्णांक count)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक i;
+static int sir_tx_ir(struct rc_dev *dev, unsigned int *tx_buf,
+		     unsigned int count)
+{
+	unsigned long flags;
+	int i;
 
 	local_irq_save(flags);
-	क्रम (i = 0; i < count;) अणु
-		अगर (tx_buf[i])
+	for (i = 0; i < count;) {
+		if (tx_buf[i])
 			send_pulse(tx_buf[i]);
 		i++;
-		अगर (i >= count)
-			अवरोध;
-		अगर (tx_buf[i])
+		if (i >= count)
+			break;
+		if (tx_buf[i])
 			send_space(tx_buf[i]);
 		i++;
-	पूर्ण
+	}
 	local_irq_restore(flags);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल व्योम add_पढ़ो_queue(पूर्णांक flag, अचिन्हित दीर्घ val)
-अणु
-	काष्ठा ir_raw_event ev = अणुपूर्ण;
+static void add_read_queue(int flag, unsigned long val)
+{
+	struct ir_raw_event ev = {};
 
 	pr_debug("add flag %d with val %lu\n", flag, val);
 
 	/*
-	 * statistically, pulses are ~TIME_CONST/2 too दीर्घ. we could
+	 * statistically, pulses are ~TIME_CONST/2 too long. we could
 	 * maybe make this more exact, but this is good enough
 	 */
-	अगर (flag) अणु
+	if (flag) {
 		/* pulse */
-		अगर (val > TIME_CONST / 2)
+		if (val > TIME_CONST / 2)
 			val -= TIME_CONST / 2;
-		अन्यथा /* should not ever happen */
+		else /* should not ever happen */
 			val = 1;
 		ev.pulse = true;
-	पूर्ण अन्यथा अणु
+	} else {
 		val += TIME_CONST / 2;
-	पूर्ण
+	}
 	ev.duration = val;
 
 	ir_raw_event_store_with_filter(rcdev, &ev);
-पूर्ण
+}
 
 /* SECTION: Hardware */
-अटल व्योम sir_समयout(काष्ठा समयr_list *unused)
-अणु
+static void sir_timeout(struct timer_list *unused)
+{
 	/*
-	 * अगर last received संकेत was a pulse, but receiving stopped
+	 * if last received signal was a pulse, but receiving stopped
 	 * within the 9 bit frame, we need to finish this pulse and
-	 * simulate a संकेत change to from pulse to space. Otherwise
-	 * upper layers will receive two sequences next समय.
+	 * simulate a signal change to from pulse to space. Otherwise
+	 * upper layers will receive two sequences next time.
 	 */
 
-	अचिन्हित दीर्घ flags;
-	अचिन्हित दीर्घ pulse_end;
+	unsigned long flags;
+	unsigned long pulse_end;
 
-	/* aव्योम पूर्णांकerference with पूर्णांकerrupt */
-	spin_lock_irqsave(&समयr_lock, flags);
-	अगर (last_value) अणु
-		/* clear unपढ़ो bits in UART and restart */
+	/* avoid interference with interrupt */
+	spin_lock_irqsave(&timer_lock, flags);
+	if (last_value) {
+		/* clear unread bits in UART and restart */
 		outb(UART_FCR_CLEAR_RCVR, io + UART_FCR);
 		/* determine 'virtual' pulse end: */
-		pulse_end = min_t(अचिन्हित दीर्घ,
-				  kसमय_us_delta(last, last_पूर्णांकr_समय),
+		pulse_end = min_t(unsigned long,
+				  ktime_us_delta(last, last_intr_time),
 				  IR_MAX_DURATION);
 		dev_dbg(&sir_ir_dev->dev, "timeout add %d for %lu usec\n",
 			last_value, pulse_end);
-		add_पढ़ो_queue(last_value, pulse_end);
+		add_read_queue(last_value, pulse_end);
 		last_value = 0;
-		last = last_पूर्णांकr_समय;
-	पूर्ण
-	spin_unlock_irqrestore(&समयr_lock, flags);
+		last = last_intr_time;
+	}
+	spin_unlock_irqrestore(&timer_lock, flags);
 	ir_raw_event_handle(rcdev);
-पूर्ण
+}
 
-अटल irqवापस_t sir_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	अचिन्हित अक्षर data;
-	kसमय_प्रकार curr_समय;
-	अचिन्हित दीर्घ delt;
-	अचिन्हित दीर्घ deltपूर्णांकr;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक counter = 0;
-	पूर्णांक iir, lsr;
+static irqreturn_t sir_interrupt(int irq, void *dev_id)
+{
+	unsigned char data;
+	ktime_t curr_time;
+	unsigned long delt;
+	unsigned long deltintr;
+	unsigned long flags;
+	int counter = 0;
+	int iir, lsr;
 
-	जबतक ((iir = inb(io + UART_IIR) & UART_IIR_ID)) अणु
-		अगर (++counter > 256) अणु
+	while ((iir = inb(io + UART_IIR) & UART_IIR_ID)) {
+		if (++counter > 256) {
 			dev_err(&sir_ir_dev->dev, "Trapped in interrupt");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		चयन (iir & UART_IIR_ID) अणु /* FIXME toto treba preriedit */
-		हाल UART_IIR_MSI:
-			(व्योम)inb(io + UART_MSR);
-			अवरोध;
-		हाल UART_IIR_RLSI:
-		हाल UART_IIR_THRI:
-			(व्योम)inb(io + UART_LSR);
-			अवरोध;
-		हाल UART_IIR_RDI:
-			/* aव्योम पूर्णांकerference with समयr */
-			spin_lock_irqsave(&समयr_lock, flags);
-			करो अणु
-				del_समयr(&समयrlist);
+		switch (iir & UART_IIR_ID) { /* FIXME toto treba preriedit */
+		case UART_IIR_MSI:
+			(void)inb(io + UART_MSR);
+			break;
+		case UART_IIR_RLSI:
+		case UART_IIR_THRI:
+			(void)inb(io + UART_LSR);
+			break;
+		case UART_IIR_RDI:
+			/* avoid interference with timer */
+			spin_lock_irqsave(&timer_lock, flags);
+			do {
+				del_timer(&timerlist);
 				data = inb(io + UART_RX);
-				curr_समय = kसमय_get();
-				delt = min_t(अचिन्हित दीर्घ,
-					     kसमय_us_delta(last, curr_समय),
+				curr_time = ktime_get();
+				delt = min_t(unsigned long,
+					     ktime_us_delta(last, curr_time),
 					     IR_MAX_DURATION);
-				deltपूर्णांकr = min_t(अचिन्हित दीर्घ,
-						 kसमय_us_delta(last_पूर्णांकr_समय,
-								curr_समय),
+				deltintr = min_t(unsigned long,
+						 ktime_us_delta(last_intr_time,
+								curr_time),
 						 IR_MAX_DURATION);
 				dev_dbg(&sir_ir_dev->dev, "t %lu, d %d\n",
-					deltपूर्णांकr, (पूर्णांक)data);
+					deltintr, (int)data);
 				/*
-				 * अगर nothing came in last X cycles,
+				 * if nothing came in last X cycles,
 				 * it was gap
 				 */
-				अगर (deltपूर्णांकr > TIME_CONST * threshold) अणु
-					अगर (last_value) अणु
+				if (deltintr > TIME_CONST * threshold) {
+					if (last_value) {
 						dev_dbg(&sir_ir_dev->dev, "GAP\n");
-						/* simulate संकेत change */
-						add_पढ़ो_queue(last_value,
+						/* simulate signal change */
+						add_read_queue(last_value,
 							       delt -
-							       deltपूर्णांकr);
+							       deltintr);
 						last_value = 0;
-						last = last_पूर्णांकr_समय;
-						delt = deltपूर्णांकr;
-					पूर्ण
-				पूर्ण
+						last = last_intr_time;
+						delt = deltintr;
+					}
+				}
 				data = 1;
-				अगर (data ^ last_value) अणु
+				if (data ^ last_value) {
 					/*
-					 * deltपूर्णांकr > 2*TIME_CONST, remember?
-					 * the other हाल is समयout
+					 * deltintr > 2*TIME_CONST, remember?
+					 * the other case is timeout
 					 */
-					add_पढ़ो_queue(last_value,
+					add_read_queue(last_value,
 						       delt - TIME_CONST);
 					last_value = data;
-					last = curr_समय;
-					last = kसमय_sub_us(last,
+					last = curr_time;
+					last = ktime_sub_us(last,
 							    TIME_CONST);
-				पूर्ण
-				last_पूर्णांकr_समय = curr_समय;
-				अगर (data) अणु
+				}
+				last_intr_time = curr_time;
+				if (data) {
 					/*
-					 * start समयr क्रम end of
+					 * start timer for end of
 					 * sequence detection
 					 */
-					समयrlist.expires = jअगरfies +
+					timerlist.expires = jiffies +
 								SIR_TIMEOUT;
-					add_समयr(&समयrlist);
-				पूर्ण
+					add_timer(&timerlist);
+				}
 
 				lsr = inb(io + UART_LSR);
-			पूर्ण जबतक (lsr & UART_LSR_DR); /* data पढ़ोy */
-			spin_unlock_irqrestore(&समयr_lock, flags);
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			} while (lsr & UART_LSR_DR); /* data ready */
+			spin_unlock_irqrestore(&timer_lock, flags);
+			break;
+		default:
+			break;
+		}
+	}
 	ir_raw_event_handle(rcdev);
-	वापस IRQ_RETVAL(IRQ_HANDLED);
-पूर्ण
+	return IRQ_RETVAL(IRQ_HANDLED);
+}
 
-अटल व्योम send_space(अचिन्हित दीर्घ len)
-अणु
+static void send_space(unsigned long len)
+{
 	usleep_range(len, len + 25);
-पूर्ण
+}
 
-अटल व्योम send_pulse(अचिन्हित दीर्घ len)
-अणु
-	दीर्घ bytes_out = len / TIME_CONST;
+static void send_pulse(unsigned long len)
+{
+	long bytes_out = len / TIME_CONST;
 
-	अगर (bytes_out == 0)
+	if (bytes_out == 0)
 		bytes_out++;
 
-	जबतक (bytes_out--) अणु
+	while (bytes_out--) {
 		outb(PULSE, io + UART_TX);
-		/* FIXME treba seriozne cakanie z अक्षर/serial.c */
-		जबतक (!(inb(io + UART_LSR) & UART_LSR_THRE))
+		/* FIXME treba seriozne cakanie z char/serial.c */
+		while (!(inb(io + UART_LSR) & UART_LSR_THRE))
 			;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक init_hardware(व्योम)
-अणु
+static int init_hardware(void)
+{
 	u8 scratch, scratch2, scratch3;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	spin_lock_irqsave(&hardware_lock, flags);
 
 	/*
-	 * This is a simple port existence test, borrowed from the स्वतःconfig
+	 * This is a simple port existence test, borrowed from the autoconfig
 	 * function in drivers/tty/serial/8250/8250_port.c
 	 */
 	scratch = sinp(UART_IER);
 	soutp(UART_IER, 0);
-#अगर_घोषित __i386__
+#ifdef __i386__
 	outb(0xff, 0x080);
-#पूर्ण_अगर
+#endif
 	scratch2 = sinp(UART_IER) & 0x0f;
 	soutp(UART_IER, 0x0f);
-#अगर_घोषित __i386__
+#ifdef __i386__
 	outb(0x00, 0x080);
-#पूर्ण_अगर
+#endif
 	scratch3 = sinp(UART_IER) & 0x0f;
 	soutp(UART_IER, scratch);
-	अगर (scratch2 != 0 || scratch3 != 0x0f) अणु
+	if (scratch2 != 0 || scratch3 != 0x0f) {
 		/* we fail, there's nothing here */
 		spin_unlock_irqrestore(&hardware_lock, flags);
 		pr_err("port existence test failed, cannot continue\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	/* reset UART */
 	outb(0, io + UART_MCR);
@@ -301,139 +300,139 @@
 	outb(UART_LCR_WLEN7, io + UART_LCR);
 	/* FIFO operation */
 	outb(UART_FCR_ENABLE_FIFO, io + UART_FCR);
-	/* पूर्णांकerrupts */
+	/* interrupts */
 	/* outb(UART_IER_RLSI|UART_IER_RDI|UART_IER_THRI, io + UART_IER); */
 	outb(UART_IER_RDI, io + UART_IER);
 	/* turn on UART */
 	outb(UART_MCR_DTR | UART_MCR_RTS | UART_MCR_OUT2, io + UART_MCR);
 	spin_unlock_irqrestore(&hardware_lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम drop_hardware(व्योम)
-अणु
-	अचिन्हित दीर्घ flags;
+static void drop_hardware(void)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&hardware_lock, flags);
 
-	/* turn off पूर्णांकerrupts */
+	/* turn off interrupts */
 	outb(0, io + UART_IER);
 
 	spin_unlock_irqrestore(&hardware_lock, flags);
-पूर्ण
+}
 
 /* SECTION: Initialisation */
-अटल पूर्णांक sir_ir_probe(काष्ठा platक्रमm_device *dev)
-अणु
-	पूर्णांक retval;
+static int sir_ir_probe(struct platform_device *dev)
+{
+	int retval;
 
 	rcdev = devm_rc_allocate_device(&sir_ir_dev->dev, RC_DRIVER_IR_RAW);
-	अगर (!rcdev)
-		वापस -ENOMEM;
+	if (!rcdev)
+		return -ENOMEM;
 
 	rcdev->device_name = "SIR IrDA port";
 	rcdev->input_phys = KBUILD_MODNAME "/input0";
 	rcdev->input_id.bustype = BUS_HOST;
-	rcdev->input_id.venकरोr = 0x0001;
+	rcdev->input_id.vendor = 0x0001;
 	rcdev->input_id.product = 0x0001;
 	rcdev->input_id.version = 0x0100;
 	rcdev->tx_ir = sir_tx_ir;
 	rcdev->allowed_protocols = RC_PROTO_BIT_ALL_IR_DECODER;
 	rcdev->driver_name = KBUILD_MODNAME;
 	rcdev->map_name = RC_MAP_RC6_MCE;
-	rcdev->समयout = IR_DEFAULT_TIMEOUT;
+	rcdev->timeout = IR_DEFAULT_TIMEOUT;
 	rcdev->dev.parent = &sir_ir_dev->dev;
 
-	समयr_setup(&समयrlist, sir_समयout, 0);
+	timer_setup(&timerlist, sir_timeout, 0);
 
 	/* get I/O port access and IRQ line */
-	अगर (!devm_request_region(&sir_ir_dev->dev, io, 8, KBUILD_MODNAME)) अणु
+	if (!devm_request_region(&sir_ir_dev->dev, io, 8, KBUILD_MODNAME)) {
 		pr_err("i/o port 0x%.4x already in use.\n", io);
-		वापस -EBUSY;
-	पूर्ण
-	retval = devm_request_irq(&sir_ir_dev->dev, irq, sir_पूर्णांकerrupt, 0,
-				  KBUILD_MODNAME, शून्य);
-	अगर (retval < 0) अणु
+		return -EBUSY;
+	}
+	retval = devm_request_irq(&sir_ir_dev->dev, irq, sir_interrupt, 0,
+				  KBUILD_MODNAME, NULL);
+	if (retval < 0) {
 		pr_err("IRQ %d already in use.\n", irq);
-		वापस retval;
-	पूर्ण
+		return retval;
+	}
 
 	retval = init_hardware();
-	अगर (retval) अणु
-		del_समयr_sync(&समयrlist);
-		वापस retval;
-	पूर्ण
+	if (retval) {
+		del_timer_sync(&timerlist);
+		return retval;
+	}
 
 	pr_info("I/O port 0x%.4x, IRQ %d.\n", io, irq);
 
-	retval = devm_rc_रेजिस्टर_device(&sir_ir_dev->dev, rcdev);
-	अगर (retval < 0)
-		वापस retval;
+	retval = devm_rc_register_device(&sir_ir_dev->dev, rcdev);
+	if (retval < 0)
+		return retval;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sir_ir_हटाओ(काष्ठा platक्रमm_device *dev)
-अणु
+static int sir_ir_remove(struct platform_device *dev)
+{
 	drop_hardware();
-	del_समयr_sync(&समयrlist);
-	वापस 0;
-पूर्ण
+	del_timer_sync(&timerlist);
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver sir_ir_driver = अणु
+static struct platform_driver sir_ir_driver = {
 	.probe		= sir_ir_probe,
-	.हटाओ		= sir_ir_हटाओ,
-	.driver		= अणु
+	.remove		= sir_ir_remove,
+	.driver		= {
 		.name	= "sir_ir",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init sir_ir_init(व्योम)
-अणु
-	पूर्णांक retval;
+static int __init sir_ir_init(void)
+{
+	int retval;
 
-	retval = platक्रमm_driver_रेजिस्टर(&sir_ir_driver);
-	अगर (retval)
-		वापस retval;
+	retval = platform_driver_register(&sir_ir_driver);
+	if (retval)
+		return retval;
 
-	sir_ir_dev = platक्रमm_device_alloc("sir_ir", 0);
-	अगर (!sir_ir_dev) अणु
+	sir_ir_dev = platform_device_alloc("sir_ir", 0);
+	if (!sir_ir_dev) {
 		retval = -ENOMEM;
-		जाओ pdev_alloc_fail;
-	पूर्ण
+		goto pdev_alloc_fail;
+	}
 
-	retval = platक्रमm_device_add(sir_ir_dev);
-	अगर (retval)
-		जाओ pdev_add_fail;
+	retval = platform_device_add(sir_ir_dev);
+	if (retval)
+		goto pdev_add_fail;
 
-	वापस 0;
+	return 0;
 
 pdev_add_fail:
-	platक्रमm_device_put(sir_ir_dev);
+	platform_device_put(sir_ir_dev);
 pdev_alloc_fail:
-	platक्रमm_driver_unरेजिस्टर(&sir_ir_driver);
-	वापस retval;
-पूर्ण
+	platform_driver_unregister(&sir_ir_driver);
+	return retval;
+}
 
-अटल व्योम __निकास sir_ir_निकास(व्योम)
-अणु
-	platक्रमm_device_unरेजिस्टर(sir_ir_dev);
-	platक्रमm_driver_unरेजिस्टर(&sir_ir_driver);
-पूर्ण
+static void __exit sir_ir_exit(void)
+{
+	platform_device_unregister(sir_ir_dev);
+	platform_driver_unregister(&sir_ir_driver);
+}
 
 module_init(sir_ir_init);
-module_निकास(sir_ir_निकास);
+module_exit(sir_ir_exit);
 
 MODULE_DESCRIPTION("Infrared receiver driver for SIR type serial ports");
 MODULE_AUTHOR("Milan Pikula");
 MODULE_LICENSE("GPL");
 
-module_param_hw(io, पूर्णांक, ioport, 0444);
+module_param_hw(io, int, ioport, 0444);
 MODULE_PARM_DESC(io, "I/O address base (0x3f8 or 0x2f8)");
 
-module_param_hw(irq, पूर्णांक, irq, 0444);
+module_param_hw(irq, int, irq, 0444);
 MODULE_PARM_DESC(irq, "Interrupt (4 or 3)");
 
-module_param(threshold, पूर्णांक, 0444);
+module_param(threshold, int, 0444);
 MODULE_PARM_DESC(threshold, "space detection threshold (3)");

@@ -1,356 +1,355 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  acpi_ac.c - ACPI AC Adapter Driver (Revision: 27)
  *
- *  Copyright (C) 2001, 2002 Andy Grover <andrew.grover@पूर्णांकel.com>
- *  Copyright (C) 2001, 2002 Paul Diefenbaugh <paul.s.diefenbaugh@पूर्णांकel.com>
+ *  Copyright (C) 2001, 2002 Andy Grover <andrew.grover@intel.com>
+ *  Copyright (C) 2001, 2002 Paul Diefenbaugh <paul.s.diefenbaugh@intel.com>
  */
 
-#घोषणा pr_fmt(fmt) "ACPI: AC: " fmt
+#define pr_fmt(fmt) "ACPI: AC: " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/init.h>
-#समावेश <linux/types.h>
-#समावेश <linux/dmi.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/घातer_supply.h>
-#समावेश <linux/acpi.h>
-#समावेश <acpi/battery.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/init.h>
+#include <linux/types.h>
+#include <linux/dmi.h>
+#include <linux/delay.h>
+#include <linux/platform_device.h>
+#include <linux/power_supply.h>
+#include <linux/acpi.h>
+#include <acpi/battery.h>
 
-#घोषणा ACPI_AC_CLASS			"ac_adapter"
-#घोषणा ACPI_AC_DEVICE_NAME		"AC Adapter"
-#घोषणा ACPI_AC_खाता_STATE		"state"
-#घोषणा ACPI_AC_NOTIFY_STATUS		0x80
-#घोषणा ACPI_AC_STATUS_OFFLINE		0x00
-#घोषणा ACPI_AC_STATUS_ONLINE		0x01
-#घोषणा ACPI_AC_STATUS_UNKNOWN		0xFF
+#define ACPI_AC_CLASS			"ac_adapter"
+#define ACPI_AC_DEVICE_NAME		"AC Adapter"
+#define ACPI_AC_FILE_STATE		"state"
+#define ACPI_AC_NOTIFY_STATUS		0x80
+#define ACPI_AC_STATUS_OFFLINE		0x00
+#define ACPI_AC_STATUS_ONLINE		0x01
+#define ACPI_AC_STATUS_UNKNOWN		0xFF
 
 MODULE_AUTHOR("Paul Diefenbaugh");
 MODULE_DESCRIPTION("ACPI AC Adapter Driver");
 MODULE_LICENSE("GPL");
 
 
-अटल पूर्णांक acpi_ac_add(काष्ठा acpi_device *device);
-अटल पूर्णांक acpi_ac_हटाओ(काष्ठा acpi_device *device);
-अटल व्योम acpi_ac_notअगरy(काष्ठा acpi_device *device, u32 event);
+static int acpi_ac_add(struct acpi_device *device);
+static int acpi_ac_remove(struct acpi_device *device);
+static void acpi_ac_notify(struct acpi_device *device, u32 event);
 
-काष्ठा acpi_ac_bl अणु
-	स्थिर अक्षर *hid;
-	पूर्णांक hrv;
-पूर्ण;
+struct acpi_ac_bl {
+	const char *hid;
+	int hrv;
+};
 
-अटल स्थिर काष्ठा acpi_device_id ac_device_ids[] = अणु
-	अणु"ACPI0003", 0पूर्ण,
-	अणु"", 0पूर्ण,
-पूर्ण;
+static const struct acpi_device_id ac_device_ids[] = {
+	{"ACPI0003", 0},
+	{"", 0},
+};
 MODULE_DEVICE_TABLE(acpi, ac_device_ids);
 
-/* Lists of PMIC ACPI HIDs with an (often better) native अक्षरger driver */
-अटल स्थिर काष्ठा acpi_ac_bl acpi_ac_blacklist[] = अणु
-	अणु "INT33F4", -1 पूर्ण, /* X-Powers AXP288 PMIC */
-	अणु "INT34D3",  3 पूर्ण, /* Intel Cherrytrail Whiskey Cove PMIC */
-पूर्ण;
+/* Lists of PMIC ACPI HIDs with an (often better) native charger driver */
+static const struct acpi_ac_bl acpi_ac_blacklist[] = {
+	{ "INT33F4", -1 }, /* X-Powers AXP288 PMIC */
+	{ "INT34D3",  3 }, /* Intel Cherrytrail Whiskey Cove PMIC */
+};
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक acpi_ac_resume(काष्ठा device *dev);
-#पूर्ण_अगर
-अटल SIMPLE_DEV_PM_OPS(acpi_ac_pm, शून्य, acpi_ac_resume);
+#ifdef CONFIG_PM_SLEEP
+static int acpi_ac_resume(struct device *dev);
+#endif
+static SIMPLE_DEV_PM_OPS(acpi_ac_pm, NULL, acpi_ac_resume);
 
-अटल पूर्णांक ac_sleep_beक्रमe_get_state_ms;
-अटल पूर्णांक ac_check_pmic = 1;
+static int ac_sleep_before_get_state_ms;
+static int ac_check_pmic = 1;
 
-अटल काष्ठा acpi_driver acpi_ac_driver = अणु
+static struct acpi_driver acpi_ac_driver = {
 	.name = "ac",
 	.class = ACPI_AC_CLASS,
 	.ids = ac_device_ids,
 	.flags = ACPI_DRIVER_ALL_NOTIFY_EVENTS,
-	.ops = अणु
+	.ops = {
 		.add = acpi_ac_add,
-		.हटाओ = acpi_ac_हटाओ,
-		.notअगरy = acpi_ac_notअगरy,
-		पूर्ण,
+		.remove = acpi_ac_remove,
+		.notify = acpi_ac_notify,
+		},
 	.drv.pm = &acpi_ac_pm,
-पूर्ण;
+};
 
-काष्ठा acpi_ac अणु
-	काष्ठा घातer_supply *अक्षरger;
-	काष्ठा घातer_supply_desc अक्षरger_desc;
-	काष्ठा acpi_device *device;
-	अचिन्हित दीर्घ दीर्घ state;
-	काष्ठा notअगरier_block battery_nb;
-पूर्ण;
+struct acpi_ac {
+	struct power_supply *charger;
+	struct power_supply_desc charger_desc;
+	struct acpi_device *device;
+	unsigned long long state;
+	struct notifier_block battery_nb;
+};
 
-#घोषणा to_acpi_ac(x) घातer_supply_get_drvdata(x)
+#define to_acpi_ac(x) power_supply_get_drvdata(x)
 
 /* AC Adapter Management */
-अटल पूर्णांक acpi_ac_get_state(काष्ठा acpi_ac *ac)
-अणु
+static int acpi_ac_get_state(struct acpi_ac *ac)
+{
 	acpi_status status = AE_OK;
 
-	अगर (!ac)
-		वापस -EINVAL;
+	if (!ac)
+		return -EINVAL;
 
-	status = acpi_evaluate_पूर्णांकeger(ac->device->handle, "_PSR", शून्य,
+	status = acpi_evaluate_integer(ac->device->handle, "_PSR", NULL,
 				       &ac->state);
-	अगर (ACPI_FAILURE(status)) अणु
+	if (ACPI_FAILURE(status)) {
 		acpi_handle_info(ac->device->handle,
 				"Error reading AC Adapter state: %s\n",
-				acpi_क्रमmat_exception(status));
+				acpi_format_exception(status));
 		ac->state = ACPI_AC_STATUS_UNKNOWN;
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* sysfs I/F */
-अटल पूर्णांक get_ac_property(काष्ठा घातer_supply *psy,
-			   क्रमागत घातer_supply_property psp,
-			   जोड़ घातer_supply_propval *val)
-अणु
-	काष्ठा acpi_ac *ac = to_acpi_ac(psy);
+static int get_ac_property(struct power_supply *psy,
+			   enum power_supply_property psp,
+			   union power_supply_propval *val)
+{
+	struct acpi_ac *ac = to_acpi_ac(psy);
 
-	अगर (!ac)
-		वापस -ENODEV;
+	if (!ac)
+		return -ENODEV;
 
-	अगर (acpi_ac_get_state(ac))
-		वापस -ENODEV;
+	if (acpi_ac_get_state(ac))
+		return -ENODEV;
 
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_ONLINE:
-		val->पूर्णांकval = ac->state;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	switch (psp) {
+	case POWER_SUPPLY_PROP_ONLINE:
+		val->intval = ac->state;
+		break;
+	default:
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल क्रमागत घातer_supply_property ac_props[] = अणु
+static enum power_supply_property ac_props[] = {
 	POWER_SUPPLY_PROP_ONLINE,
-पूर्ण;
+};
 
 /* Driver Model */
-अटल व्योम acpi_ac_notअगरy(काष्ठा acpi_device *device, u32 event)
-अणु
-	काष्ठा acpi_ac *ac = acpi_driver_data(device);
+static void acpi_ac_notify(struct acpi_device *device, u32 event)
+{
+	struct acpi_ac *ac = acpi_driver_data(device);
 
-	अगर (!ac)
-		वापस;
+	if (!ac)
+		return;
 
-	चयन (event) अणु
-	शेष:
+	switch (event) {
+	default:
 		acpi_handle_debug(device->handle, "Unsupported event [0x%x]\n",
 				  event);
 		fallthrough;
-	हाल ACPI_AC_NOTIFY_STATUS:
-	हाल ACPI_NOTIFY_BUS_CHECK:
-	हाल ACPI_NOTIFY_DEVICE_CHECK:
+	case ACPI_AC_NOTIFY_STATUS:
+	case ACPI_NOTIFY_BUS_CHECK:
+	case ACPI_NOTIFY_DEVICE_CHECK:
 		/*
-		 * A buggy BIOS may notअगरy AC first and then sleep क्रम
-		 * a specअगरic समय beक्रमe करोing actual operations in the
+		 * A buggy BIOS may notify AC first and then sleep for
+		 * a specific time before doing actual operations in the
 		 * EC event handler (_Qxx). This will cause the AC state
-		 * reported by the ACPI event to be incorrect, so रुको क्रम a
-		 * specअगरic समय क्रम the EC event handler to make progress.
+		 * reported by the ACPI event to be incorrect, so wait for a
+		 * specific time for the EC event handler to make progress.
 		 */
-		अगर (ac_sleep_beक्रमe_get_state_ms > 0)
-			msleep(ac_sleep_beक्रमe_get_state_ms);
+		if (ac_sleep_before_get_state_ms > 0)
+			msleep(ac_sleep_before_get_state_ms);
 
 		acpi_ac_get_state(ac);
 		acpi_bus_generate_netlink_event(device->pnp.device_class,
 						  dev_name(&device->dev), event,
 						  (u32) ac->state);
-		acpi_notअगरier_call_chain(device, event, (u32) ac->state);
-		kobject_uevent(&ac->अक्षरger->dev.kobj, KOBJ_CHANGE);
-	पूर्ण
-पूर्ण
+		acpi_notifier_call_chain(device, event, (u32) ac->state);
+		kobject_uevent(&ac->charger->dev.kobj, KOBJ_CHANGE);
+	}
+}
 
-अटल पूर्णांक acpi_ac_battery_notअगरy(काष्ठा notअगरier_block *nb,
-				  अचिन्हित दीर्घ action, व्योम *data)
-अणु
-	काष्ठा acpi_ac *ac = container_of(nb, काष्ठा acpi_ac, battery_nb);
-	काष्ठा acpi_bus_event *event = (काष्ठा acpi_bus_event *)data;
+static int acpi_ac_battery_notify(struct notifier_block *nb,
+				  unsigned long action, void *data)
+{
+	struct acpi_ac *ac = container_of(nb, struct acpi_ac, battery_nb);
+	struct acpi_bus_event *event = (struct acpi_bus_event *)data;
 
 	/*
-	 * On HP Pavilion dv6-6179er AC status notअगरications aren't triggered
+	 * On HP Pavilion dv6-6179er AC status notifications aren't triggered
 	 * when adapter is plugged/unplugged. However, battery status
-	 * notअगरications are triggered when battery starts अक्षरging or
-	 * disअक्षरging. Re-पढ़ोing AC status triggers lost AC notअगरications,
-	 * अगर AC status has changed.
+	 * notifications are triggered when battery starts charging or
+	 * discharging. Re-reading AC status triggers lost AC notifications,
+	 * if AC status has changed.
 	 */
-	अगर (म_भेद(event->device_class, ACPI_BATTERY_CLASS) == 0 &&
+	if (strcmp(event->device_class, ACPI_BATTERY_CLASS) == 0 &&
 	    event->type == ACPI_BATTERY_NOTIFY_STATUS)
 		acpi_ac_get_state(ac);
 
-	वापस NOTIFY_OK;
-पूर्ण
+	return NOTIFY_OK;
+}
 
-अटल पूर्णांक __init thinkpad_e530_quirk(स्थिर काष्ठा dmi_प्रणाली_id *d)
-अणु
-	ac_sleep_beक्रमe_get_state_ms = 1000;
-	वापस 0;
-पूर्ण
+static int __init thinkpad_e530_quirk(const struct dmi_system_id *d)
+{
+	ac_sleep_before_get_state_ms = 1000;
+	return 0;
+}
 
-अटल पूर्णांक __init ac_करो_not_check_pmic_quirk(स्थिर काष्ठा dmi_प्रणाली_id *d)
-अणु
+static int __init ac_do_not_check_pmic_quirk(const struct dmi_system_id *d)
+{
 	ac_check_pmic = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Please keep this list alphabetically sorted */
-अटल स्थिर काष्ठा dmi_प्रणाली_id ac_dmi_table[]  __initस्थिर = अणु
-	अणु
+static const struct dmi_system_id ac_dmi_table[]  __initconst = {
+	{
 		/* ECS EF20EA, AXP288 PMIC but uses separate fuel-gauge */
-		.callback = ac_करो_not_check_pmic_quirk,
-		.matches = अणु
+		.callback = ac_do_not_check_pmic_quirk,
+		.matches = {
 			DMI_MATCH(DMI_PRODUCT_NAME, "EF20EA"),
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		/* Lenovo Ideapad Miix 320, AXP288 PMIC, separate fuel-gauge */
-		.callback = ac_करो_not_check_pmic_quirk,
-		.matches = अणु
+		.callback = ac_do_not_check_pmic_quirk,
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "LENOVO"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "80XF"),
 			DMI_MATCH(DMI_PRODUCT_VERSION, "Lenovo MIIX 320-10ICR"),
-		पूर्ण,
-	पूर्ण,
-	अणु
-		/* Lenovo Thinkpad e530, see comment in acpi_ac_notअगरy() */
+		},
+	},
+	{
+		/* Lenovo Thinkpad e530, see comment in acpi_ac_notify() */
 		.callback = thinkpad_e530_quirk,
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "LENOVO"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "32597CG"),
-		पूर्ण,
-	पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+		},
+	},
+	{},
+};
 
-अटल पूर्णांक acpi_ac_add(काष्ठा acpi_device *device)
-अणु
-	काष्ठा घातer_supply_config psy_cfg = अणुपूर्ण;
-	पूर्णांक result = 0;
-	काष्ठा acpi_ac *ac = शून्य;
+static int acpi_ac_add(struct acpi_device *device)
+{
+	struct power_supply_config psy_cfg = {};
+	int result = 0;
+	struct acpi_ac *ac = NULL;
 
 
-	अगर (!device)
-		वापस -EINVAL;
+	if (!device)
+		return -EINVAL;
 
-	ac = kzalloc(माप(काष्ठा acpi_ac), GFP_KERNEL);
-	अगर (!ac)
-		वापस -ENOMEM;
+	ac = kzalloc(sizeof(struct acpi_ac), GFP_KERNEL);
+	if (!ac)
+		return -ENOMEM;
 
 	ac->device = device;
-	म_नकल(acpi_device_name(device), ACPI_AC_DEVICE_NAME);
-	म_नकल(acpi_device_class(device), ACPI_AC_CLASS);
+	strcpy(acpi_device_name(device), ACPI_AC_DEVICE_NAME);
+	strcpy(acpi_device_class(device), ACPI_AC_CLASS);
 	device->driver_data = ac;
 
 	result = acpi_ac_get_state(ac);
-	अगर (result)
-		जाओ end;
+	if (result)
+		goto end;
 
 	psy_cfg.drv_data = ac;
 
-	ac->अक्षरger_desc.name = acpi_device_bid(device);
-	ac->अक्षरger_desc.type = POWER_SUPPLY_TYPE_MAINS;
-	ac->अक्षरger_desc.properties = ac_props;
-	ac->अक्षरger_desc.num_properties = ARRAY_SIZE(ac_props);
-	ac->अक्षरger_desc.get_property = get_ac_property;
-	ac->अक्षरger = घातer_supply_रेजिस्टर(&ac->device->dev,
-					    &ac->अक्षरger_desc, &psy_cfg);
-	अगर (IS_ERR(ac->अक्षरger)) अणु
-		result = PTR_ERR(ac->अक्षरger);
-		जाओ end;
-	पूर्ण
+	ac->charger_desc.name = acpi_device_bid(device);
+	ac->charger_desc.type = POWER_SUPPLY_TYPE_MAINS;
+	ac->charger_desc.properties = ac_props;
+	ac->charger_desc.num_properties = ARRAY_SIZE(ac_props);
+	ac->charger_desc.get_property = get_ac_property;
+	ac->charger = power_supply_register(&ac->device->dev,
+					    &ac->charger_desc, &psy_cfg);
+	if (IS_ERR(ac->charger)) {
+		result = PTR_ERR(ac->charger);
+		goto end;
+	}
 
 	pr_info("%s [%s] (%s)\n", acpi_device_name(device),
 		acpi_device_bid(device), ac->state ? "on-line" : "off-line");
 
-	ac->battery_nb.notअगरier_call = acpi_ac_battery_notअगरy;
-	रेजिस्टर_acpi_notअगरier(&ac->battery_nb);
+	ac->battery_nb.notifier_call = acpi_ac_battery_notify;
+	register_acpi_notifier(&ac->battery_nb);
 end:
-	अगर (result)
-		kमुक्त(ac);
+	if (result)
+		kfree(ac);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक acpi_ac_resume(काष्ठा device *dev)
-अणु
-	काष्ठा acpi_ac *ac;
-	अचिन्हित पूर्णांक old_state;
+#ifdef CONFIG_PM_SLEEP
+static int acpi_ac_resume(struct device *dev)
+{
+	struct acpi_ac *ac;
+	unsigned int old_state;
 
-	अगर (!dev)
-		वापस -EINVAL;
+	if (!dev)
+		return -EINVAL;
 
 	ac = acpi_driver_data(to_acpi_device(dev));
-	अगर (!ac)
-		वापस -EINVAL;
+	if (!ac)
+		return -EINVAL;
 
 	old_state = ac->state;
-	अगर (acpi_ac_get_state(ac))
-		वापस 0;
-	अगर (old_state != ac->state)
-		kobject_uevent(&ac->अक्षरger->dev.kobj, KOBJ_CHANGE);
-	वापस 0;
-पूर्ण
-#अन्यथा
-#घोषणा acpi_ac_resume शून्य
-#पूर्ण_अगर
+	if (acpi_ac_get_state(ac))
+		return 0;
+	if (old_state != ac->state)
+		kobject_uevent(&ac->charger->dev.kobj, KOBJ_CHANGE);
+	return 0;
+}
+#else
+#define acpi_ac_resume NULL
+#endif
 
-अटल पूर्णांक acpi_ac_हटाओ(काष्ठा acpi_device *device)
-अणु
-	काष्ठा acpi_ac *ac = शून्य;
+static int acpi_ac_remove(struct acpi_device *device)
+{
+	struct acpi_ac *ac = NULL;
 
 
-	अगर (!device || !acpi_driver_data(device))
-		वापस -EINVAL;
+	if (!device || !acpi_driver_data(device))
+		return -EINVAL;
 
 	ac = acpi_driver_data(device);
 
-	घातer_supply_unरेजिस्टर(ac->अक्षरger);
-	unरेजिस्टर_acpi_notअगरier(&ac->battery_nb);
+	power_supply_unregister(ac->charger);
+	unregister_acpi_notifier(&ac->battery_nb);
 
-	kमुक्त(ac);
+	kfree(ac);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init acpi_ac_init(व्योम)
-अणु
-	अचिन्हित पूर्णांक i;
-	पूर्णांक result;
+static int __init acpi_ac_init(void)
+{
+	unsigned int i;
+	int result;
 
-	अगर (acpi_disabled)
-		वापस -ENODEV;
+	if (acpi_disabled)
+		return -ENODEV;
 
-	dmi_check_प्रणाली(ac_dmi_table);
+	dmi_check_system(ac_dmi_table);
 
-	अगर (ac_check_pmic) अणु
-		क्रम (i = 0; i < ARRAY_SIZE(acpi_ac_blacklist); i++)
-			अगर (acpi_dev_present(acpi_ac_blacklist[i].hid, "1",
-					     acpi_ac_blacklist[i].hrv)) अणु
+	if (ac_check_pmic) {
+		for (i = 0; i < ARRAY_SIZE(acpi_ac_blacklist); i++)
+			if (acpi_dev_present(acpi_ac_blacklist[i].hid, "1",
+					     acpi_ac_blacklist[i].hrv)) {
 				pr_info("found native %s PMIC, not loading\n",
 					acpi_ac_blacklist[i].hid);
-				वापस -ENODEV;
-			पूर्ण
-	पूर्ण
+				return -ENODEV;
+			}
+	}
 
-	result = acpi_bus_रेजिस्टर_driver(&acpi_ac_driver);
-	अगर (result < 0)
-		वापस -ENODEV;
+	result = acpi_bus_register_driver(&acpi_ac_driver);
+	if (result < 0)
+		return -ENODEV;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास acpi_ac_निकास(व्योम)
-अणु
-	acpi_bus_unरेजिस्टर_driver(&acpi_ac_driver);
-पूर्ण
+static void __exit acpi_ac_exit(void)
+{
+	acpi_bus_unregister_driver(&acpi_ac_driver);
+}
 module_init(acpi_ac_init);
-module_निकास(acpi_ac_निकास);
+module_exit(acpi_ac_exit);

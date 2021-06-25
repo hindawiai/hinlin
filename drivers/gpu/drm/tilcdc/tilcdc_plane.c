@@ -1,122 +1,121 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2015 Texas Instruments
  * Author: Jyri Sarha <jsarha@ti.com>
  */
 
-#समावेश <drm/drm_atomic.h>
-#समावेश <drm/drm_plane_helper.h>
-#समावेश <drm/drm_atomic_helper.h>
-#समावेश <drm/drm_fourcc.h>
+#include <drm/drm_atomic.h>
+#include <drm/drm_plane_helper.h>
+#include <drm/drm_atomic_helper.h>
+#include <drm/drm_fourcc.h>
 
-#समावेश "tilcdc_drv.h"
+#include "tilcdc_drv.h"
 
-अटल स्थिर काष्ठा drm_plane_funcs tilcdc_plane_funcs = अणु
+static const struct drm_plane_funcs tilcdc_plane_funcs = {
 	.update_plane	= drm_atomic_helper_update_plane,
 	.disable_plane	= drm_atomic_helper_disable_plane,
 	.destroy	= drm_plane_cleanup,
 	.reset		= drm_atomic_helper_plane_reset,
 	.atomic_duplicate_state = drm_atomic_helper_plane_duplicate_state,
 	.atomic_destroy_state = drm_atomic_helper_plane_destroy_state,
-पूर्ण;
+};
 
-अटल पूर्णांक tilcdc_plane_atomic_check(काष्ठा drm_plane *plane,
-				     काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा drm_plane_state *new_state = drm_atomic_get_new_plane_state(state,
+static int tilcdc_plane_atomic_check(struct drm_plane *plane,
+				     struct drm_atomic_state *state)
+{
+	struct drm_plane_state *new_state = drm_atomic_get_new_plane_state(state,
 									   plane);
-	काष्ठा drm_crtc_state *crtc_state;
-	काष्ठा drm_plane_state *old_state = drm_atomic_get_old_plane_state(state,
+	struct drm_crtc_state *crtc_state;
+	struct drm_plane_state *old_state = drm_atomic_get_old_plane_state(state,
 									   plane);
-	अचिन्हित पूर्णांक pitch;
+	unsigned int pitch;
 
-	अगर (!new_state->crtc)
-		वापस 0;
+	if (!new_state->crtc)
+		return 0;
 
-	अगर (WARN_ON(!new_state->fb))
-		वापस -EINVAL;
+	if (WARN_ON(!new_state->fb))
+		return -EINVAL;
 
-	अगर (new_state->crtc_x || new_state->crtc_y) अणु
+	if (new_state->crtc_x || new_state->crtc_y) {
 		dev_err(plane->dev->dev, "%s: crtc position must be zero.",
 			__func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	crtc_state = drm_atomic_get_existing_crtc_state(state,
 							new_state->crtc);
-	/* we should have a crtc state अगर the plane is attached to a crtc */
-	अगर (WARN_ON(!crtc_state))
-		वापस 0;
+	/* we should have a crtc state if the plane is attached to a crtc */
+	if (WARN_ON(!crtc_state))
+		return 0;
 
-	अगर (crtc_state->mode.hdisplay != new_state->crtc_w ||
-	    crtc_state->mode.vdisplay != new_state->crtc_h) अणु
+	if (crtc_state->mode.hdisplay != new_state->crtc_w ||
+	    crtc_state->mode.vdisplay != new_state->crtc_h) {
 		dev_err(plane->dev->dev,
 			"%s: Size must match mode (%dx%d == %dx%d)", __func__,
 			crtc_state->mode.hdisplay, crtc_state->mode.vdisplay,
 			new_state->crtc_w, new_state->crtc_h);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	pitch = crtc_state->mode.hdisplay *
-		new_state->fb->क्रमmat->cpp[0];
-	अगर (new_state->fb->pitches[0] != pitch) अणु
+		new_state->fb->format->cpp[0];
+	if (new_state->fb->pitches[0] != pitch) {
 		dev_err(plane->dev->dev,
 			"Invalid pitch: fb and crtc widths must be the same");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (old_state->fb && new_state->fb->क्रमmat != old_state->fb->क्रमmat) अणु
+	if (old_state->fb && new_state->fb->format != old_state->fb->format) {
 		dev_dbg(plane->dev->dev,
 			"%s(): pixel format change requires mode_change\n",
 			__func__);
 		crtc_state->mode_changed = true;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tilcdc_plane_atomic_update(काष्ठा drm_plane *plane,
-				       काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा drm_plane_state *new_state = drm_atomic_get_new_plane_state(state,
+static void tilcdc_plane_atomic_update(struct drm_plane *plane,
+				       struct drm_atomic_state *state)
+{
+	struct drm_plane_state *new_state = drm_atomic_get_new_plane_state(state,
 									   plane);
 
-	अगर (!new_state->crtc)
-		वापस;
+	if (!new_state->crtc)
+		return;
 
-	अगर (WARN_ON(!new_state->fb || !new_state->crtc->state))
-		वापस;
+	if (WARN_ON(!new_state->fb || !new_state->crtc->state))
+		return;
 
-	अगर (tilcdc_crtc_update_fb(new_state->crtc,
+	if (tilcdc_crtc_update_fb(new_state->crtc,
 				  new_state->fb,
-				  new_state->crtc->state->event) == 0) अणु
-		new_state->crtc->state->event = शून्य;
-	पूर्ण
-पूर्ण
+				  new_state->crtc->state->event) == 0) {
+		new_state->crtc->state->event = NULL;
+	}
+}
 
-अटल स्थिर काष्ठा drm_plane_helper_funcs plane_helper_funcs = अणु
+static const struct drm_plane_helper_funcs plane_helper_funcs = {
 	.atomic_check = tilcdc_plane_atomic_check,
 	.atomic_update = tilcdc_plane_atomic_update,
-पूर्ण;
+};
 
-पूर्णांक tilcdc_plane_init(काष्ठा drm_device *dev,
-		      काष्ठा drm_plane *plane)
-अणु
-	काष्ठा tilcdc_drm_निजी *priv = dev->dev_निजी;
-	पूर्णांक ret;
+int tilcdc_plane_init(struct drm_device *dev,
+		      struct drm_plane *plane)
+{
+	struct tilcdc_drm_private *priv = dev->dev_private;
+	int ret;
 
 	ret = drm_plane_init(dev, plane, 1,
 			     &tilcdc_plane_funcs,
-			     priv->pixelक्रमmats,
-			     priv->num_pixelक्रमmats,
+			     priv->pixelformats,
+			     priv->num_pixelformats,
 			     true);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev->dev, "Failed to initialize plane: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	drm_plane_helper_add(plane, &plane_helper_funcs);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

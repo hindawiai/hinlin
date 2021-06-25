@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * IPWireless 3G PCMCIA Network Driver
  *
@@ -10,347 +9,347 @@
  * Copyrighted as follows:
  *   Copyright (C) 2004 by Symmetric Systems Ltd (NZ)
  *
- * Various driver changes and reग_लिखोs, port to new kernels
+ * Various driver changes and rewrites, port to new kernels
  *   Copyright (C) 2006-2007 Jiri Kosina
  *
  * Misc code cleanups and updates
  *   Copyright (C) 2007 David Sterba
  */
 
-#समावेश "hardware.h"
-#समावेश "network.h"
-#समावेश "main.h"
-#समावेश "tty.h"
+#include "hardware.h"
+#include "network.h"
+#include "main.h"
+#include "tty.h"
 
-#समावेश <linux/delay.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
+#include <linux/delay.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
 
-#समावेश <pcmcia/cisreg.h>
-#समावेश <pcmcia/device_id.h>
-#समावेश <pcmcia/ss.h>
-#समावेश <pcmcia/ds.h>
+#include <pcmcia/cisreg.h>
+#include <pcmcia/device_id.h>
+#include <pcmcia/ss.h>
+#include <pcmcia/ds.h>
 
-अटल स्थिर काष्ठा pcmcia_device_id ipw_ids[] = अणु
+static const struct pcmcia_device_id ipw_ids[] = {
 	PCMCIA_DEVICE_MANF_CARD(0x02f2, 0x0100),
 	PCMCIA_DEVICE_MANF_CARD(0x02f2, 0x0200),
-	PCMCIA_DEVICE_शून्य
-पूर्ण;
+	PCMCIA_DEVICE_NULL
+};
 MODULE_DEVICE_TABLE(pcmcia, ipw_ids);
 
-अटल व्योम ipwireless_detach(काष्ठा pcmcia_device *link);
+static void ipwireless_detach(struct pcmcia_device *link);
 
 /*
  * Module params
  */
-/* Debug mode: more verbose, prपूर्णांक sent/recv bytes */
-पूर्णांक ipwireless_debug;
-पूर्णांक ipwireless_loopback;
-पूर्णांक ipwireless_out_queue = 10;
+/* Debug mode: more verbose, print sent/recv bytes */
+int ipwireless_debug;
+int ipwireless_loopback;
+int ipwireless_out_queue = 10;
 
-module_param_named(debug, ipwireless_debug, पूर्णांक, 0);
-module_param_named(loopback, ipwireless_loopback, पूर्णांक, 0);
-module_param_named(out_queue, ipwireless_out_queue, पूर्णांक, 0);
+module_param_named(debug, ipwireless_debug, int, 0);
+module_param_named(loopback, ipwireless_loopback, int, 0);
+module_param_named(out_queue, ipwireless_out_queue, int, 0);
 MODULE_PARM_DESC(debug, "switch on debug messages [0]");
 MODULE_PARM_DESC(loopback,
 		"debug: enable ras_raw channel [0]");
 MODULE_PARM_DESC(out_queue, "debug: set size of outgoing PPP queue [10]");
 
 /* Executes in process context. */
-अटल व्योम संकेतled_reboot_work(काष्ठा work_काष्ठा *work_reboot)
-अणु
-	काष्ठा ipw_dev *ipw = container_of(work_reboot, काष्ठा ipw_dev,
+static void signalled_reboot_work(struct work_struct *work_reboot)
+{
+	struct ipw_dev *ipw = container_of(work_reboot, struct ipw_dev,
 			work_reboot);
-	काष्ठा pcmcia_device *link = ipw->link;
+	struct pcmcia_device *link = ipw->link;
 	pcmcia_reset_card(link->socket);
-पूर्ण
+}
 
-अटल व्योम संकेतled_reboot_callback(व्योम *callback_data)
-अणु
-	काष्ठा ipw_dev *ipw = (काष्ठा ipw_dev *) callback_data;
+static void signalled_reboot_callback(void *callback_data)
+{
+	struct ipw_dev *ipw = (struct ipw_dev *) callback_data;
 
 	/* Delegate to process context. */
 	schedule_work(&ipw->work_reboot);
-पूर्ण
+}
 
-अटल पूर्णांक ipwireless_probe(काष्ठा pcmcia_device *p_dev, व्योम *priv_data)
-अणु
-	काष्ठा ipw_dev *ipw = priv_data;
-	पूर्णांक ret;
+static int ipwireless_probe(struct pcmcia_device *p_dev, void *priv_data)
+{
+	struct ipw_dev *ipw = priv_data;
+	int ret;
 
 	p_dev->resource[0]->flags &= ~IO_DATA_PATH_WIDTH;
 	p_dev->resource[0]->flags |= IO_DATA_PATH_WIDTH_AUTO;
 
-	/* 0x40 causes it to generate level mode पूर्णांकerrupts. */
+	/* 0x40 causes it to generate level mode interrupts. */
 	/* 0x04 enables IREQ pin. */
 	p_dev->config_index |= 0x44;
 	p_dev->io_lines = 16;
 	ret = pcmcia_request_io(p_dev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (!request_region(p_dev->resource[0]->start,
+	if (!request_region(p_dev->resource[0]->start,
 			    resource_size(p_dev->resource[0]),
-			    IPWIRELESS_PCCARD_NAME)) अणु
+			    IPWIRELESS_PCCARD_NAME)) {
 		ret = -EBUSY;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	p_dev->resource[2]->flags |=
 		WIN_DATA_WIDTH_16 | WIN_MEMORY_TYPE_CM | WIN_ENABLE;
 
-	ret = pcmcia_request_winकरोw(p_dev, p_dev->resource[2], 0);
-	अगर (ret != 0)
-		जाओ निकास1;
+	ret = pcmcia_request_window(p_dev, p_dev->resource[2], 0);
+	if (ret != 0)
+		goto exit1;
 
 	ret = pcmcia_map_mem_page(p_dev, p_dev->resource[2], p_dev->card_addr);
-	अगर (ret != 0)
-		जाओ निकास1;
+	if (ret != 0)
+		goto exit1;
 
 	ipw->is_v2_card = resource_size(p_dev->resource[2]) == 0x100;
 
 	ipw->common_memory = ioremap(p_dev->resource[2]->start,
 				resource_size(p_dev->resource[2]));
-	अगर (!ipw->common_memory) अणु
+	if (!ipw->common_memory) {
 		ret = -ENOMEM;
-		जाओ निकास1;
-	पूर्ण
-	अगर (!request_mem_region(p_dev->resource[2]->start,
+		goto exit1;
+	}
+	if (!request_mem_region(p_dev->resource[2]->start,
 				resource_size(p_dev->resource[2]),
-				IPWIRELESS_PCCARD_NAME)) अणु
+				IPWIRELESS_PCCARD_NAME)) {
 		ret = -EBUSY;
-		जाओ निकास2;
-	पूर्ण
+		goto exit2;
+	}
 
 	p_dev->resource[3]->flags |= WIN_DATA_WIDTH_16 | WIN_MEMORY_TYPE_AM |
 					WIN_ENABLE;
 	p_dev->resource[3]->end = 0; /* this used to be 0x1000 */
-	ret = pcmcia_request_winकरोw(p_dev, p_dev->resource[3], 0);
-	अगर (ret != 0)
-		जाओ निकास3;
+	ret = pcmcia_request_window(p_dev, p_dev->resource[3], 0);
+	if (ret != 0)
+		goto exit3;
 
 	ret = pcmcia_map_mem_page(p_dev, p_dev->resource[3], 0);
-	अगर (ret != 0)
-		जाओ निकास3;
+	if (ret != 0)
+		goto exit3;
 
 	ipw->attr_memory = ioremap(p_dev->resource[3]->start,
 				resource_size(p_dev->resource[3]));
-	अगर (!ipw->attr_memory) अणु
+	if (!ipw->attr_memory) {
 		ret = -ENOMEM;
-		जाओ निकास3;
-	पूर्ण
-	अगर (!request_mem_region(p_dev->resource[3]->start,
+		goto exit3;
+	}
+	if (!request_mem_region(p_dev->resource[3]->start,
 				resource_size(p_dev->resource[3]),
-				IPWIRELESS_PCCARD_NAME)) अणु
+				IPWIRELESS_PCCARD_NAME)) {
 		ret = -EBUSY;
-		जाओ निकास4;
-	पूर्ण
+		goto exit4;
+	}
 
-	वापस 0;
+	return 0;
 
-निकास4:
+exit4:
 	iounmap(ipw->attr_memory);
-निकास3:
+exit3:
 	release_mem_region(p_dev->resource[2]->start,
 			resource_size(p_dev->resource[2]));
-निकास2:
+exit2:
 	iounmap(ipw->common_memory);
-निकास1:
+exit1:
 	release_region(p_dev->resource[0]->start,
 		       resource_size(p_dev->resource[0]));
-निकास:
+exit:
 	pcmcia_disable_device(p_dev);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक config_ipwireless(काष्ठा ipw_dev *ipw)
-अणु
-	काष्ठा pcmcia_device *link = ipw->link;
-	पूर्णांक ret = 0;
+static int config_ipwireless(struct ipw_dev *ipw)
+{
+	struct pcmcia_device *link = ipw->link;
+	int ret = 0;
 
 	ipw->is_v2_card = 0;
 	link->config_flags |= CONF_AUTO_SET_IO | CONF_AUTO_SET_IOMEM |
 		CONF_ENABLE_IRQ;
 
 	ret = pcmcia_loop_config(link, ipwireless_probe, ipw);
-	अगर (ret != 0)
-		वापस ret;
+	if (ret != 0)
+		return ret;
 
-	INIT_WORK(&ipw->work_reboot, संकेतled_reboot_work);
+	INIT_WORK(&ipw->work_reboot, signalled_reboot_work);
 
 	ipwireless_init_hardware_v1(ipw->hardware, link->resource[0]->start,
 				    ipw->attr_memory, ipw->common_memory,
-				    ipw->is_v2_card, संकेतled_reboot_callback,
+				    ipw->is_v2_card, signalled_reboot_callback,
 				    ipw);
 
-	ret = pcmcia_request_irq(link, ipwireless_पूर्णांकerrupt);
-	अगर (ret != 0)
-		जाओ निकास;
+	ret = pcmcia_request_irq(link, ipwireless_interrupt);
+	if (ret != 0)
+		goto exit;
 
-	prपूर्णांकk(KERN_INFO IPWIRELESS_PCCARD_NAME ": Card type %s\n",
+	printk(KERN_INFO IPWIRELESS_PCCARD_NAME ": Card type %s\n",
 			ipw->is_v2_card ? "V2/V3" : "V1");
-	prपूर्णांकk(KERN_INFO IPWIRELESS_PCCARD_NAME
+	printk(KERN_INFO IPWIRELESS_PCCARD_NAME
 		": I/O ports %pR, irq %d\n", link->resource[0],
-			(अचिन्हित पूर्णांक) link->irq);
-	अगर (ipw->attr_memory && ipw->common_memory)
-		prपूर्णांकk(KERN_INFO IPWIRELESS_PCCARD_NAME
+			(unsigned int) link->irq);
+	if (ipw->attr_memory && ipw->common_memory)
+		printk(KERN_INFO IPWIRELESS_PCCARD_NAME
 			": attr memory %pR, common memory %pR\n",
 			link->resource[3],
 			link->resource[2]);
 
 	ipw->network = ipwireless_network_create(ipw->hardware);
-	अगर (!ipw->network)
-		जाओ निकास;
+	if (!ipw->network)
+		goto exit;
 
 	ipw->tty = ipwireless_tty_create(ipw->hardware, ipw->network);
-	अगर (!ipw->tty)
-		जाओ निकास;
+	if (!ipw->tty)
+		goto exit;
 
 	ipwireless_init_hardware_v2_v3(ipw->hardware);
 
 	/*
-	 * Do the RequestConfiguration last, because it enables पूर्णांकerrupts.
-	 * Then we करोn't get any interrupts before we're पढ़ोy क्रम them.
+	 * Do the RequestConfiguration last, because it enables interrupts.
+	 * Then we don't get any interrupts before we're ready for them.
 	 */
 	ret = pcmcia_enable_device(link);
-	अगर (ret != 0)
-		जाओ निकास;
+	if (ret != 0)
+		goto exit;
 
-	वापस 0;
+	return 0;
 
-निकास:
-	अगर (ipw->common_memory) अणु
+exit:
+	if (ipw->common_memory) {
 		release_mem_region(link->resource[2]->start,
 				resource_size(link->resource[2]));
 		iounmap(ipw->common_memory);
-	पूर्ण
-	अगर (ipw->attr_memory) अणु
+	}
+	if (ipw->attr_memory) {
 		release_mem_region(link->resource[3]->start,
 				resource_size(link->resource[3]));
 		iounmap(ipw->attr_memory);
-	पूर्ण
+	}
 	pcmcia_disable_device(link);
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल व्योम release_ipwireless(काष्ठा ipw_dev *ipw)
-अणु
+static void release_ipwireless(struct ipw_dev *ipw)
+{
 	release_region(ipw->link->resource[0]->start,
 		       resource_size(ipw->link->resource[0]));
-	अगर (ipw->common_memory) अणु
+	if (ipw->common_memory) {
 		release_mem_region(ipw->link->resource[2]->start,
 				resource_size(ipw->link->resource[2]));
 		iounmap(ipw->common_memory);
-	पूर्ण
-	अगर (ipw->attr_memory) अणु
+	}
+	if (ipw->attr_memory) {
 		release_mem_region(ipw->link->resource[3]->start,
 				resource_size(ipw->link->resource[3]));
 		iounmap(ipw->attr_memory);
-	पूर्ण
+	}
 	pcmcia_disable_device(ipw->link);
-पूर्ण
+}
 
 /*
  * ipwireless_attach() creates an "instance" of the driver, allocating
- * local data काष्ठाures क्रम one device (one पूर्णांकerface).  The device
- * is रेजिस्टरed with Card Services.
+ * local data structures for one device (one interface).  The device
+ * is registered with Card Services.
  *
- * The pcmcia_device काष्ठाure is initialized, but we करोn't actually
- * configure the card at this poपूर्णांक -- we रुको until we receive a
+ * The pcmcia_device structure is initialized, but we don't actually
+ * configure the card at this point -- we wait until we receive a
  * card insertion event.
  */
-अटल पूर्णांक ipwireless_attach(काष्ठा pcmcia_device *link)
-अणु
-	काष्ठा ipw_dev *ipw;
-	पूर्णांक ret;
+static int ipwireless_attach(struct pcmcia_device *link)
+{
+	struct ipw_dev *ipw;
+	int ret;
 
-	ipw = kzalloc(माप(काष्ठा ipw_dev), GFP_KERNEL);
-	अगर (!ipw)
-		वापस -ENOMEM;
+	ipw = kzalloc(sizeof(struct ipw_dev), GFP_KERNEL);
+	if (!ipw)
+		return -ENOMEM;
 
 	ipw->link = link;
 	link->priv = ipw;
 
 	ipw->hardware = ipwireless_hardware_create();
-	अगर (!ipw->hardware) अणु
-		kमुक्त(ipw);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!ipw->hardware) {
+		kfree(ipw);
+		return -ENOMEM;
+	}
 	/* RegisterClient will call config_ipwireless */
 
 	ret = config_ipwireless(ipw);
 
-	अगर (ret != 0) अणु
+	if (ret != 0) {
 		ipwireless_detach(link);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * This deletes a driver "instance".  The device is de-रेजिस्टरed with
- * Card Services.  If it has been released, all local data काष्ठाures
- * are मुक्तd.  Otherwise, the काष्ठाures will be मुक्तd when the device
+ * This deletes a driver "instance".  The device is de-registered with
+ * Card Services.  If it has been released, all local data structures
+ * are freed.  Otherwise, the structures will be freed when the device
  * is released.
  */
-अटल व्योम ipwireless_detach(काष्ठा pcmcia_device *link)
-अणु
-	काष्ठा ipw_dev *ipw = link->priv;
+static void ipwireless_detach(struct pcmcia_device *link)
+{
+	struct ipw_dev *ipw = link->priv;
 
 	release_ipwireless(ipw);
 
-	अगर (ipw->tty != शून्य)
-		ipwireless_tty_मुक्त(ipw->tty);
-	अगर (ipw->network != शून्य)
-		ipwireless_network_मुक्त(ipw->network);
-	अगर (ipw->hardware != शून्य)
-		ipwireless_hardware_मुक्त(ipw->hardware);
-	kमुक्त(ipw);
-पूर्ण
+	if (ipw->tty != NULL)
+		ipwireless_tty_free(ipw->tty);
+	if (ipw->network != NULL)
+		ipwireless_network_free(ipw->network);
+	if (ipw->hardware != NULL)
+		ipwireless_hardware_free(ipw->hardware);
+	kfree(ipw);
+}
 
-अटल काष्ठा pcmcia_driver me = अणु
+static struct pcmcia_driver me = {
 	.owner		= THIS_MODULE,
 	.probe          = ipwireless_attach,
-	.हटाओ         = ipwireless_detach,
+	.remove         = ipwireless_detach,
 	.name		= IPWIRELESS_PCCARD_NAME,
 	.id_table       = ipw_ids
-पूर्ण;
+};
 
 /*
  * Module insertion : initialisation of the module.
  * Register the card with cardmgr...
  */
-अटल पूर्णांक __init init_ipwireless(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init init_ipwireless(void)
+{
+	int ret;
 
 	ret = ipwireless_tty_init();
-	अगर (ret != 0)
-		वापस ret;
+	if (ret != 0)
+		return ret;
 
-	ret = pcmcia_रेजिस्टर_driver(&me);
-	अगर (ret != 0)
+	ret = pcmcia_register_driver(&me);
+	if (ret != 0)
 		ipwireless_tty_release();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Module removal
  */
-अटल व्योम __निकास निकास_ipwireless(व्योम)
-अणु
-	pcmcia_unरेजिस्टर_driver(&me);
+static void __exit exit_ipwireless(void)
+{
+	pcmcia_unregister_driver(&me);
 	ipwireless_tty_release();
-पूर्ण
+}
 
 module_init(init_ipwireless);
-module_निकास(निकास_ipwireless);
+module_exit(exit_ipwireless);
 
 MODULE_AUTHOR(IPWIRELESS_PCMCIA_AUTHOR);
 MODULE_DESCRIPTION(IPWIRELESS_PCCARD_NAME " " IPWIRELESS_PCMCIA_VERSION);

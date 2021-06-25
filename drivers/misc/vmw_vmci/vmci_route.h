@@ -1,23 +1,22 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * VMware VMCI Driver
  *
  * Copyright (C) 2012 VMware, Inc. All rights reserved.
  */
 
-#अगर_अघोषित _VMCI_ROUTE_H_
-#घोषणा _VMCI_ROUTE_H_
+#ifndef _VMCI_ROUTE_H_
+#define _VMCI_ROUTE_H_
 
-#समावेश <linux/vmw_vmci_defs.h>
+#include <linux/vmw_vmci_defs.h>
 
-क्रमागत vmci_route अणु
+enum vmci_route {
 	VMCI_ROUTE_NONE,
 	VMCI_ROUTE_AS_HOST,
 	VMCI_ROUTE_AS_GUEST,
-पूर्ण;
+};
 
-पूर्णांक vmci_route(काष्ठा vmci_handle *src, स्थिर काष्ठा vmci_handle *dst,
-	       bool from_guest, क्रमागत vmci_route *route);
+int vmci_route(struct vmci_handle *src, const struct vmci_handle *dst,
+	       bool from_guest, enum vmci_route *route);
 
-#पूर्ण_अगर /* _VMCI_ROUTE_H_ */
+#endif /* _VMCI_ROUTE_H_ */

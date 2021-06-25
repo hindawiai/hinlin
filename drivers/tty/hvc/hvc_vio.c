@@ -1,14 +1,13 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * vio driver पूर्णांकerface to hvc_console.c
+ * vio driver interface to hvc_console.c
  *
- * This code was moved here to allow the reमुख्यing code to be reused as a
+ * This code was moved here to allow the remaining code to be reused as a
  * generic polling mode with semi-reliable transport driver core to the
- * console and tty subप्रणालीs.
+ * console and tty subsystems.
  *
  *
- * Copyright (C) 2001 Anton Blanअक्षरd <anton@au.ibm.com>, IBM
+ * Copyright (C) 2001 Anton Blanchard <anton@au.ibm.com>, IBM
  * Copyright (C) 2001 Paul Mackerras <paulus@au.ibm.com>, IBM
  * Copyright (C) 2004 Benjamin Herrenschmidt <benh@kernel.crashing.org>, IBM Corp.
  * Copyright (C) 2004 IBM Corporation
@@ -22,453 +21,453 @@
  *   - retry nego on subsequent sends ?
  */
 
-#अघोषित DEBUG
+#undef DEBUG
 
-#समावेश <linux/types.h>
-#समावेश <linux/init.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/console.h>
+#include <linux/types.h>
+#include <linux/init.h>
+#include <linux/delay.h>
+#include <linux/slab.h>
+#include <linux/console.h>
 
-#समावेश <यंत्र/hvconsole.h>
-#समावेश <यंत्र/vपन.स>
-#समावेश <यंत्र/prom.h>
-#समावेश <यंत्र/hvsi.h>
-#समावेश <यंत्र/udbg.h>
-#समावेश <यंत्र/machdep.h>
+#include <asm/hvconsole.h>
+#include <asm/vio.h>
+#include <asm/prom.h>
+#include <asm/hvsi.h>
+#include <asm/udbg.h>
+#include <asm/machdep.h>
 
-#समावेश "hvc_console.h"
+#include "hvc_console.h"
 
-अटल स्थिर अक्षर hvc_driver_name[] = "hvc_console";
+static const char hvc_driver_name[] = "hvc_console";
 
-अटल स्थिर काष्ठा vio_device_id hvc_driver_table[] = अणु
-	अणु"serial", "hvterm1"पूर्ण,
-#अगर_अघोषित HVC_OLD_HVSI
-	अणु"serial", "hvterm-protocol"पूर्ण,
-#पूर्ण_अगर
-	अणु "", "" पूर्ण
-पूर्ण;
+static const struct vio_device_id hvc_driver_table[] = {
+	{"serial", "hvterm1"},
+#ifndef HVC_OLD_HVSI
+	{"serial", "hvterm-protocol"},
+#endif
+	{ "", "" }
+};
 
-प्रकार क्रमागत hv_protocol अणु
+typedef enum hv_protocol {
 	HV_PROTOCOL_RAW,
 	HV_PROTOCOL_HVSI
-पूर्ण hv_protocol_t;
+} hv_protocol_t;
 
-काष्ठा hvterm_priv अणु
+struct hvterm_priv {
 	u32			termno;	/* HV term number */
 	hv_protocol_t		proto;	/* Raw data or HVSI packets */
-	काष्ठा hvsi_priv	hvsi;	/* HVSI specअगरic data */
+	struct hvsi_priv	hvsi;	/* HVSI specific data */
 	spinlock_t		buf_lock;
-	अक्षर			buf[SIZE_VIO_GET_CHARS];
-	पूर्णांक			left;
-	पूर्णांक			offset;
-पूर्ण;
-अटल काष्ठा hvterm_priv *hvterm_privs[MAX_NR_HVC_CONSOLES];
+	char			buf[SIZE_VIO_GET_CHARS];
+	int			left;
+	int			offset;
+};
+static struct hvterm_priv *hvterm_privs[MAX_NR_HVC_CONSOLES];
 /* For early boot console */
-अटल काष्ठा hvterm_priv hvterm_priv0;
+static struct hvterm_priv hvterm_priv0;
 
-अटल पूर्णांक hvterm_raw_get_अक्षरs(uपूर्णांक32_t vtermno, अक्षर *buf, पूर्णांक count)
-अणु
-	काष्ठा hvterm_priv *pv = hvterm_privs[vtermno];
-	अचिन्हित दीर्घ i;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक got;
+static int hvterm_raw_get_chars(uint32_t vtermno, char *buf, int count)
+{
+	struct hvterm_priv *pv = hvterm_privs[vtermno];
+	unsigned long i;
+	unsigned long flags;
+	int got;
 
-	अगर (WARN_ON(!pv))
-		वापस 0;
+	if (WARN_ON(!pv))
+		return 0;
 
 	spin_lock_irqsave(&pv->buf_lock, flags);
 
-	अगर (pv->left == 0) अणु
+	if (pv->left == 0) {
 		pv->offset = 0;
-		pv->left = hvc_get_अक्षरs(pv->termno, pv->buf, count);
+		pv->left = hvc_get_chars(pv->termno, pv->buf, count);
 
 		/*
 		 * Work around a HV bug where it gives us a null
-		 * after every \ल.  -- paulus
+		 * after every \r.  -- paulus
 		 */
-		क्रम (i = 1; i < pv->left; ++i) अणु
-			अगर (pv->buf[i] == 0 && pv->buf[i-1] == '\r') अणु
+		for (i = 1; i < pv->left; ++i) {
+			if (pv->buf[i] == 0 && pv->buf[i-1] == '\r') {
 				--pv->left;
-				अगर (i < pv->left) अणु
-					स_हटाओ(&pv->buf[i], &pv->buf[i+1],
+				if (i < pv->left) {
+					memmove(&pv->buf[i], &pv->buf[i+1],
 						pv->left - i);
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				}
+			}
+		}
+	}
 
 	got = min(count, pv->left);
-	स_नकल(buf, &pv->buf[pv->offset], got);
+	memcpy(buf, &pv->buf[pv->offset], got);
 	pv->offset += got;
 	pv->left -= got;
 
 	spin_unlock_irqrestore(&pv->buf_lock, flags);
 
-	वापस got;
-पूर्ण
+	return got;
+}
 
 /**
- * hvterm_raw_put_अक्षरs: send अक्षरacters to firmware क्रम given vterm adapter
- * @vtermno: The भव terminal number.
- * @buf: The अक्षरacters to send. Because of the underlying hypercall in
- *       hvc_put_अक्षरs(), this buffer must be at least 16 bytes दीर्घ, even अगर
- *       you are sending fewer अक्षरs.
- * @count: number of अक्षरs to send.
+ * hvterm_raw_put_chars: send characters to firmware for given vterm adapter
+ * @vtermno: The virtual terminal number.
+ * @buf: The characters to send. Because of the underlying hypercall in
+ *       hvc_put_chars(), this buffer must be at least 16 bytes long, even if
+ *       you are sending fewer chars.
+ * @count: number of chars to send.
  */
-अटल पूर्णांक hvterm_raw_put_अक्षरs(uपूर्णांक32_t vtermno, स्थिर अक्षर *buf, पूर्णांक count)
-अणु
-	काष्ठा hvterm_priv *pv = hvterm_privs[vtermno];
+static int hvterm_raw_put_chars(uint32_t vtermno, const char *buf, int count)
+{
+	struct hvterm_priv *pv = hvterm_privs[vtermno];
 
-	अगर (WARN_ON(!pv))
-		वापस 0;
+	if (WARN_ON(!pv))
+		return 0;
 
-	वापस hvc_put_अक्षरs(pv->termno, buf, count);
-पूर्ण
+	return hvc_put_chars(pv->termno, buf, count);
+}
 
-अटल स्थिर काष्ठा hv_ops hvterm_raw_ops = अणु
-	.get_अक्षरs = hvterm_raw_get_अक्षरs,
-	.put_अक्षरs = hvterm_raw_put_अक्षरs,
-	.notअगरier_add = notअगरier_add_irq,
-	.notअगरier_del = notअगरier_del_irq,
-	.notअगरier_hangup = notअगरier_hangup_irq,
-पूर्ण;
+static const struct hv_ops hvterm_raw_ops = {
+	.get_chars = hvterm_raw_get_chars,
+	.put_chars = hvterm_raw_put_chars,
+	.notifier_add = notifier_add_irq,
+	.notifier_del = notifier_del_irq,
+	.notifier_hangup = notifier_hangup_irq,
+};
 
-अटल पूर्णांक hvterm_hvsi_get_अक्षरs(uपूर्णांक32_t vtermno, अक्षर *buf, पूर्णांक count)
-अणु
-	काष्ठा hvterm_priv *pv = hvterm_privs[vtermno];
+static int hvterm_hvsi_get_chars(uint32_t vtermno, char *buf, int count)
+{
+	struct hvterm_priv *pv = hvterm_privs[vtermno];
 
-	अगर (WARN_ON(!pv))
-		वापस 0;
+	if (WARN_ON(!pv))
+		return 0;
 
-	वापस hvsilib_get_अक्षरs(&pv->hvsi, buf, count);
-पूर्ण
+	return hvsilib_get_chars(&pv->hvsi, buf, count);
+}
 
-अटल पूर्णांक hvterm_hvsi_put_अक्षरs(uपूर्णांक32_t vtermno, स्थिर अक्षर *buf, पूर्णांक count)
-अणु
-	काष्ठा hvterm_priv *pv = hvterm_privs[vtermno];
+static int hvterm_hvsi_put_chars(uint32_t vtermno, const char *buf, int count)
+{
+	struct hvterm_priv *pv = hvterm_privs[vtermno];
 
-	अगर (WARN_ON(!pv))
-		वापस 0;
+	if (WARN_ON(!pv))
+		return 0;
 
-	वापस hvsilib_put_अक्षरs(&pv->hvsi, buf, count);
-पूर्ण
+	return hvsilib_put_chars(&pv->hvsi, buf, count);
+}
 
-अटल पूर्णांक hvterm_hvsi_खोलो(काष्ठा hvc_काष्ठा *hp, पूर्णांक data)
-अणु
-	काष्ठा hvterm_priv *pv = hvterm_privs[hp->vtermno];
-	पूर्णांक rc;
+static int hvterm_hvsi_open(struct hvc_struct *hp, int data)
+{
+	struct hvterm_priv *pv = hvterm_privs[hp->vtermno];
+	int rc;
 
 	pr_devel("HVSI@%x: open !\n", pv->termno);
 
-	rc = notअगरier_add_irq(hp, data);
-	अगर (rc)
-		वापस rc;
+	rc = notifier_add_irq(hp, data);
+	if (rc)
+		return rc;
 
-	वापस hvsilib_खोलो(&pv->hvsi, hp);
-पूर्ण
+	return hvsilib_open(&pv->hvsi, hp);
+}
 
-अटल व्योम hvterm_hvsi_बंद(काष्ठा hvc_काष्ठा *hp, पूर्णांक data)
-अणु
-	काष्ठा hvterm_priv *pv = hvterm_privs[hp->vtermno];
+static void hvterm_hvsi_close(struct hvc_struct *hp, int data)
+{
+	struct hvterm_priv *pv = hvterm_privs[hp->vtermno];
 
 	pr_devel("HVSI@%x: do close !\n", pv->termno);
 
-	hvsilib_बंद(&pv->hvsi, hp);
+	hvsilib_close(&pv->hvsi, hp);
 
-	notअगरier_del_irq(hp, data);
-पूर्ण
+	notifier_del_irq(hp, data);
+}
 
-अटल व्योम hvterm_hvsi_hangup(काष्ठा hvc_काष्ठा *hp, पूर्णांक data)
-अणु
-	काष्ठा hvterm_priv *pv = hvterm_privs[hp->vtermno];
+static void hvterm_hvsi_hangup(struct hvc_struct *hp, int data)
+{
+	struct hvterm_priv *pv = hvterm_privs[hp->vtermno];
 
 	pr_devel("HVSI@%x: do hangup !\n", pv->termno);
 
-	hvsilib_बंद(&pv->hvsi, hp);
+	hvsilib_close(&pv->hvsi, hp);
 
-	notअगरier_hangup_irq(hp, data);
-पूर्ण
+	notifier_hangup_irq(hp, data);
+}
 
-अटल पूर्णांक hvterm_hvsi_tiocmget(काष्ठा hvc_काष्ठा *hp)
-अणु
-	काष्ठा hvterm_priv *pv = hvterm_privs[hp->vtermno];
+static int hvterm_hvsi_tiocmget(struct hvc_struct *hp)
+{
+	struct hvterm_priv *pv = hvterm_privs[hp->vtermno];
 
-	अगर (!pv)
-		वापस -EINVAL;
-	वापस pv->hvsi.mctrl;
-पूर्ण
+	if (!pv)
+		return -EINVAL;
+	return pv->hvsi.mctrl;
+}
 
-अटल पूर्णांक hvterm_hvsi_tiocmset(काष्ठा hvc_काष्ठा *hp, अचिन्हित पूर्णांक set,
-				अचिन्हित पूर्णांक clear)
-अणु
-	काष्ठा hvterm_priv *pv = hvterm_privs[hp->vtermno];
+static int hvterm_hvsi_tiocmset(struct hvc_struct *hp, unsigned int set,
+				unsigned int clear)
+{
+	struct hvterm_priv *pv = hvterm_privs[hp->vtermno];
 
 	pr_devel("HVSI@%x: Set modem control, set=%x,clr=%x\n",
 		 pv->termno, set, clear);
 
-	अगर (set & TIOCM_DTR)
-		hvsilib_ग_लिखो_mctrl(&pv->hvsi, 1);
-	अन्यथा अगर (clear & TIOCM_DTR)
-		hvsilib_ग_लिखो_mctrl(&pv->hvsi, 0);
+	if (set & TIOCM_DTR)
+		hvsilib_write_mctrl(&pv->hvsi, 1);
+	else if (clear & TIOCM_DTR)
+		hvsilib_write_mctrl(&pv->hvsi, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा hv_ops hvterm_hvsi_ops = अणु
-	.get_अक्षरs = hvterm_hvsi_get_अक्षरs,
-	.put_अक्षरs = hvterm_hvsi_put_अक्षरs,
-	.notअगरier_add = hvterm_hvsi_खोलो,
-	.notअगरier_del = hvterm_hvsi_बंद,
-	.notअगरier_hangup = hvterm_hvsi_hangup,
+static const struct hv_ops hvterm_hvsi_ops = {
+	.get_chars = hvterm_hvsi_get_chars,
+	.put_chars = hvterm_hvsi_put_chars,
+	.notifier_add = hvterm_hvsi_open,
+	.notifier_del = hvterm_hvsi_close,
+	.notifier_hangup = hvterm_hvsi_hangup,
 	.tiocmget = hvterm_hvsi_tiocmget,
 	.tiocmset = hvterm_hvsi_tiocmset,
-पूर्ण;
+};
 
-अटल व्योम udbg_hvc_अ_दो(अक्षर c)
-अणु
-	पूर्णांक count = -1;
-	अचिन्हित अक्षर bounce_buffer[16];
+static void udbg_hvc_putc(char c)
+{
+	int count = -1;
+	unsigned char bounce_buffer[16];
 
-	अगर (!hvterm_privs[0])
-		वापस;
+	if (!hvterm_privs[0])
+		return;
 
-	अगर (c == '\n')
-		udbg_hvc_अ_दो('\r');
+	if (c == '\n')
+		udbg_hvc_putc('\r');
 
-	करो अणु
-		चयन(hvterm_privs[0]->proto) अणु
-		हाल HV_PROTOCOL_RAW:
+	do {
+		switch(hvterm_privs[0]->proto) {
+		case HV_PROTOCOL_RAW:
 			/*
-			 * hvterm_raw_put_अक्षरs requires at least a 16-byte
+			 * hvterm_raw_put_chars requires at least a 16-byte
 			 * buffer, so go via the bounce buffer
 			 */
 			bounce_buffer[0] = c;
-			count = hvterm_raw_put_अक्षरs(0, bounce_buffer, 1);
-			अवरोध;
-		हाल HV_PROTOCOL_HVSI:
-			count = hvterm_hvsi_put_अक्षरs(0, &c, 1);
-			अवरोध;
-		पूर्ण
-	पूर्ण जबतक(count == 0);
-पूर्ण
+			count = hvterm_raw_put_chars(0, bounce_buffer, 1);
+			break;
+		case HV_PROTOCOL_HVSI:
+			count = hvterm_hvsi_put_chars(0, &c, 1);
+			break;
+		}
+	} while(count == 0);
+}
 
-अटल पूर्णांक udbg_hvc_अ_लो_poll(व्योम)
-अणु
-	पूर्णांक rc = 0;
-	अक्षर c;
+static int udbg_hvc_getc_poll(void)
+{
+	int rc = 0;
+	char c;
 
-	अगर (!hvterm_privs[0])
-		वापस -1;
+	if (!hvterm_privs[0])
+		return -1;
 
-	चयन(hvterm_privs[0]->proto) अणु
-	हाल HV_PROTOCOL_RAW:
-		rc = hvterm_raw_get_अक्षरs(0, &c, 1);
-		अवरोध;
-	हाल HV_PROTOCOL_HVSI:
-		rc = hvterm_hvsi_get_अक्षरs(0, &c, 1);
-		अवरोध;
-	पूर्ण
-	अगर (!rc)
-		वापस -1;
-	वापस c;
-पूर्ण
+	switch(hvterm_privs[0]->proto) {
+	case HV_PROTOCOL_RAW:
+		rc = hvterm_raw_get_chars(0, &c, 1);
+		break;
+	case HV_PROTOCOL_HVSI:
+		rc = hvterm_hvsi_get_chars(0, &c, 1);
+		break;
+	}
+	if (!rc)
+		return -1;
+	return c;
+}
 
-अटल पूर्णांक udbg_hvc_अ_लो(व्योम)
-अणु
-	पूर्णांक ch;
+static int udbg_hvc_getc(void)
+{
+	int ch;
 
-	अगर (!hvterm_privs[0])
-		वापस -1;
+	if (!hvterm_privs[0])
+		return -1;
 
-	क्रम (;;) अणु
-		ch = udbg_hvc_अ_लो_poll();
-		अगर (ch == -1) अणु
+	for (;;) {
+		ch = udbg_hvc_getc_poll();
+		if (ch == -1) {
 			/* This shouldn't be needed...but... */
-			अस्थिर अचिन्हित दीर्घ delay;
-			क्रम (delay=0; delay < 2000000; delay++)
+			volatile unsigned long delay;
+			for (delay=0; delay < 2000000; delay++)
 				;
-		पूर्ण अन्यथा अणु
-			वापस ch;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		} else {
+			return ch;
+		}
+	}
+}
 
-अटल पूर्णांक hvc_vio_probe(काष्ठा vio_dev *vdev,
-				   स्थिर काष्ठा vio_device_id *id)
-अणु
-	स्थिर काष्ठा hv_ops *ops;
-	काष्ठा hvc_काष्ठा *hp;
-	काष्ठा hvterm_priv *pv;
+static int hvc_vio_probe(struct vio_dev *vdev,
+				   const struct vio_device_id *id)
+{
+	const struct hv_ops *ops;
+	struct hvc_struct *hp;
+	struct hvterm_priv *pv;
 	hv_protocol_t proto;
-	पूर्णांक i, termno = -1;
+	int i, termno = -1;
 
 	/* probed with invalid parameters. */
-	अगर (!vdev || !id)
-		वापस -EPERM;
+	if (!vdev || !id)
+		return -EPERM;
 
-	अगर (of_device_is_compatible(vdev->dev.of_node, "hvterm1")) अणु
+	if (of_device_is_compatible(vdev->dev.of_node, "hvterm1")) {
 		proto = HV_PROTOCOL_RAW;
 		ops = &hvterm_raw_ops;
-	पूर्ण अन्यथा अगर (of_device_is_compatible(vdev->dev.of_node, "hvterm-protocol")) अणु
+	} else if (of_device_is_compatible(vdev->dev.of_node, "hvterm-protocol")) {
 		proto = HV_PROTOCOL_HVSI;
 		ops = &hvterm_hvsi_ops;
-	पूर्ण अन्यथा अणु
+	} else {
 		pr_err("hvc_vio: Unknown protocol for %pOF\n", vdev->dev.of_node);
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
 	pr_devel("hvc_vio_probe() device %pOF, using %s protocol\n",
 		 vdev->dev.of_node,
 		 proto == HV_PROTOCOL_RAW ? "raw" : "hvsi");
 
 	/* Is it our boot one ? */
-	अगर (hvterm_privs[0] == &hvterm_priv0 &&
-	    vdev->unit_address == hvterm_priv0.termno) अणु
+	if (hvterm_privs[0] == &hvterm_priv0 &&
+	    vdev->unit_address == hvterm_priv0.termno) {
 		pv = hvterm_privs[0];
 		termno = 0;
 		pr_devel("->boot console, using termno 0\n");
-	पूर्ण
+	}
 	/* nope, allocate a new one */
-	अन्यथा अणु
-		क्रम (i = 0; i < MAX_NR_HVC_CONSOLES && termno < 0; i++)
-			अगर (!hvterm_privs[i])
+	else {
+		for (i = 0; i < MAX_NR_HVC_CONSOLES && termno < 0; i++)
+			if (!hvterm_privs[i])
 				termno = i;
 		pr_devel("->non-boot console, using termno %d\n", termno);
-		अगर (termno < 0)
-			वापस -ENODEV;
-		pv = kzalloc(माप(काष्ठा hvterm_priv), GFP_KERNEL);
-		अगर (!pv)
-			वापस -ENOMEM;
+		if (termno < 0)
+			return -ENODEV;
+		pv = kzalloc(sizeof(struct hvterm_priv), GFP_KERNEL);
+		if (!pv)
+			return -ENOMEM;
 		pv->termno = vdev->unit_address;
 		pv->proto = proto;
 		spin_lock_init(&pv->buf_lock);
 		hvterm_privs[termno] = pv;
-		hvsilib_init(&pv->hvsi, hvc_get_अक्षरs, hvc_put_अक्षरs,
+		hvsilib_init(&pv->hvsi, hvc_get_chars, hvc_put_chars,
 			     pv->termno, 0);
-	पूर्ण
+	}
 
 	hp = hvc_alloc(termno, vdev->irq, ops, MAX_VIO_PUT_CHARS);
-	अगर (IS_ERR(hp))
-		वापस PTR_ERR(hp);
+	if (IS_ERR(hp))
+		return PTR_ERR(hp);
 	dev_set_drvdata(&vdev->dev, hp);
 
-	/* रेजिस्टर udbg अगर it's not there alपढ़ोy क्रम console 0 */
-	अगर (hp->index == 0 && !udbg_अ_दो) अणु
-		udbg_अ_दो = udbg_hvc_अ_दो;
-		udbg_अ_लो = udbg_hvc_अ_लो;
-		udbg_अ_लो_poll = udbg_hvc_अ_लो_poll;
-	पूर्ण
+	/* register udbg if it's not there already for console 0 */
+	if (hp->index == 0 && !udbg_putc) {
+		udbg_putc = udbg_hvc_putc;
+		udbg_getc = udbg_hvc_getc;
+		udbg_getc_poll = udbg_hvc_getc_poll;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा vio_driver hvc_vio_driver = अणु
+static struct vio_driver hvc_vio_driver = {
 	.id_table	= hvc_driver_table,
 	.probe		= hvc_vio_probe,
 	.name		= hvc_driver_name,
-	.driver = अणु
+	.driver = {
 		.suppress_bind_attrs	= true,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init hvc_vio_init(व्योम)
-अणु
-	पूर्णांक rc;
+static int __init hvc_vio_init(void)
+{
+	int rc;
 
 	/* Register as a vio device to receive callbacks */
-	rc = vio_रेजिस्टर_driver(&hvc_vio_driver);
+	rc = vio_register_driver(&hvc_vio_driver);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 device_initcall(hvc_vio_init); /* after drivers/tty/hvc/hvc_console.c */
 
-व्योम __init hvc_vio_init_early(व्योम)
-अणु
-	स्थिर __be32 *termno;
-	स्थिर काष्ठा hv_ops *ops;
+void __init hvc_vio_init_early(void)
+{
+	const __be32 *termno;
+	const struct hv_ops *ops;
 
-	/* find the boot console from /chosen/मानक_निकास */
-	/* Check अगर it's a भव terminal */
-	अगर (!of_node_name_prefix(of_मानक_निकास, "vty"))
-		वापस;
-	termno = of_get_property(of_मानक_निकास, "reg", शून्य);
-	अगर (termno == शून्य)
-		वापस;
-	hvterm_priv0.termno = of_पढ़ो_number(termno, 1);
+	/* find the boot console from /chosen/stdout */
+	/* Check if it's a virtual terminal */
+	if (!of_node_name_prefix(of_stdout, "vty"))
+		return;
+	termno = of_get_property(of_stdout, "reg", NULL);
+	if (termno == NULL)
+		return;
+	hvterm_priv0.termno = of_read_number(termno, 1);
 	spin_lock_init(&hvterm_priv0.buf_lock);
 	hvterm_privs[0] = &hvterm_priv0;
 
 	/* Check the protocol */
-	अगर (of_device_is_compatible(of_मानक_निकास, "hvterm1")) अणु
+	if (of_device_is_compatible(of_stdout, "hvterm1")) {
 		hvterm_priv0.proto = HV_PROTOCOL_RAW;
 		ops = &hvterm_raw_ops;
-	पूर्ण
-	अन्यथा अगर (of_device_is_compatible(of_मानक_निकास, "hvterm-protocol")) अणु
+	}
+	else if (of_device_is_compatible(of_stdout, "hvterm-protocol")) {
 		hvterm_priv0.proto = HV_PROTOCOL_HVSI;
 		ops = &hvterm_hvsi_ops;
-		hvsilib_init(&hvterm_priv0.hvsi, hvc_get_अक्षरs, hvc_put_अक्षरs,
+		hvsilib_init(&hvterm_priv0.hvsi, hvc_get_chars, hvc_put_chars,
 			     hvterm_priv0.termno, 1);
-		/* HVSI, perक्रमm the handshake now */
+		/* HVSI, perform the handshake now */
 		hvsilib_establish(&hvterm_priv0.hvsi);
-	पूर्ण अन्यथा
-		वापस;
-	udbg_अ_दो = udbg_hvc_अ_दो;
-	udbg_अ_लो = udbg_hvc_अ_लो;
-	udbg_अ_लो_poll = udbg_hvc_अ_लो_poll;
-#अगर_घोषित HVC_OLD_HVSI
-	/* When using the old HVSI driver करोn't रेजिस्टर the HVC
-	 * backend क्रम HVSI, only करो udbg
+	} else
+		return;
+	udbg_putc = udbg_hvc_putc;
+	udbg_getc = udbg_hvc_getc;
+	udbg_getc_poll = udbg_hvc_getc_poll;
+#ifdef HVC_OLD_HVSI
+	/* When using the old HVSI driver don't register the HVC
+	 * backend for HVSI, only do udbg
 	 */
-	अगर (hvterm_priv0.proto == HV_PROTOCOL_HVSI)
-		वापस;
-#पूर्ण_अगर
-	/* Check whether the user has requested a dअगरferent console. */
-	अगर (!म_माला(boot_command_line, "console="))
-		add_preferred_console("hvc", 0, शून्य);
+	if (hvterm_priv0.proto == HV_PROTOCOL_HVSI)
+		return;
+#endif
+	/* Check whether the user has requested a different console. */
+	if (!strstr(boot_command_line, "console="))
+		add_preferred_console("hvc", 0, NULL);
 	hvc_instantiate(0, 0, ops);
-पूर्ण
+}
 
-/* call this from early_init() क्रम a working debug console on
+/* call this from early_init() for a working debug console on
  * vterm capable LPAR machines
  */
-#अगर_घोषित CONFIG_PPC_EARLY_DEBUG_LPAR
-व्योम __init udbg_init_debug_lpar(व्योम)
-अणु
+#ifdef CONFIG_PPC_EARLY_DEBUG_LPAR
+void __init udbg_init_debug_lpar(void)
+{
 	/*
 	 * If we're running as a hypervisor then we definitely can't call the
-	 * hypervisor to prपूर्णांक debug output (we *are* the hypervisor), so करोn't
-	 * रेजिस्टर अगर we detect that MSR_HV=1.
+	 * hypervisor to print debug output (we *are* the hypervisor), so don't
+	 * register if we detect that MSR_HV=1.
 	 */
-	अगर (mfmsr() & MSR_HV)
-		वापस;
+	if (mfmsr() & MSR_HV)
+		return;
 
 	hvterm_privs[0] = &hvterm_priv0;
 	hvterm_priv0.termno = 0;
 	hvterm_priv0.proto = HV_PROTOCOL_RAW;
 	spin_lock_init(&hvterm_priv0.buf_lock);
-	udbg_अ_दो = udbg_hvc_अ_दो;
-	udbg_अ_लो = udbg_hvc_अ_लो;
-	udbg_अ_लो_poll = udbg_hvc_अ_लो_poll;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PPC_EARLY_DEBUG_LPAR */
+	udbg_putc = udbg_hvc_putc;
+	udbg_getc = udbg_hvc_getc;
+	udbg_getc_poll = udbg_hvc_getc_poll;
+}
+#endif /* CONFIG_PPC_EARLY_DEBUG_LPAR */
 
-#अगर_घोषित CONFIG_PPC_EARLY_DEBUG_LPAR_HVSI
-व्योम __init udbg_init_debug_lpar_hvsi(व्योम)
-अणु
+#ifdef CONFIG_PPC_EARLY_DEBUG_LPAR_HVSI
+void __init udbg_init_debug_lpar_hvsi(void)
+{
 	/* See comment above in udbg_init_debug_lpar() */
-	अगर (mfmsr() & MSR_HV)
-		वापस;
+	if (mfmsr() & MSR_HV)
+		return;
 
 	hvterm_privs[0] = &hvterm_priv0;
 	hvterm_priv0.termno = CONFIG_PPC_EARLY_DEBUG_HVSI_VTERMNO;
 	hvterm_priv0.proto = HV_PROTOCOL_HVSI;
 	spin_lock_init(&hvterm_priv0.buf_lock);
-	udbg_अ_दो = udbg_hvc_अ_दो;
-	udbg_अ_लो = udbg_hvc_अ_लो;
-	udbg_अ_लो_poll = udbg_hvc_अ_लो_poll;
-	hvsilib_init(&hvterm_priv0.hvsi, hvc_get_अक्षरs, hvc_put_अक्षरs,
+	udbg_putc = udbg_hvc_putc;
+	udbg_getc = udbg_hvc_getc;
+	udbg_getc_poll = udbg_hvc_getc_poll;
+	hvsilib_init(&hvterm_priv0.hvsi, hvc_get_chars, hvc_put_chars,
 		     hvterm_priv0.termno, 1);
 	hvsilib_establish(&hvterm_priv0.hvsi);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PPC_EARLY_DEBUG_LPAR_HVSI */
+}
+#endif /* CONFIG_PPC_EARLY_DEBUG_LPAR_HVSI */

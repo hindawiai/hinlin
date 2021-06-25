@@ -1,23 +1,22 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Derived from IRIX <sys/SN/gda.h>.
  *
  * Copyright (C) 1992 - 1997, 2000 Silicon Graphics, Inc.
  *
- * gda.h -- Contains the data काष्ठाure क्रम the global data area,
- *	The GDA contains inक्रमmation communicated between the
+ * gda.h -- Contains the data structure for the global data area,
+ *	The GDA contains information communicated between the
  *	PROM, SYMMON, and the kernel.
  */
-#अगर_अघोषित _ASM_SN_GDA_H
-#घोषणा _ASM_SN_GDA_H
+#ifndef _ASM_SN_GDA_H
+#define _ASM_SN_GDA_H
 
-#समावेश <यंत्र/sn/addrs.h>
+#include <asm/sn/addrs.h>
 
-#घोषणा GDA_MAGIC	0x58464552
+#define GDA_MAGIC	0x58464552
 
 /*
  * GDA Version History
@@ -29,78 +28,78 @@
  *		| a valid partition #.
  */
 
-#घोषणा GDA_VERSION	2	/* Current GDA version # */
+#define GDA_VERSION	2	/* Current GDA version # */
 
-#घोषणा G_MAGICOFF	0
-#घोषणा G_VERSIONOFF	4
-#घोषणा G_PROMOPOFF	6
-#घोषणा G_MASTEROFF	8
-#घोषणा G_VDSOFF	12
-#घोषणा G_HKDNORMOFF	16
-#घोषणा G_HKDUTLBOFF	24
-#घोषणा G_HKDXUTLBOFF	32
-#घोषणा G_PARTIDOFF	40
-#घोषणा G_TABLखातापूर्णF	128
+#define G_MAGICOFF	0
+#define G_VERSIONOFF	4
+#define G_PROMOPOFF	6
+#define G_MASTEROFF	8
+#define G_VDSOFF	12
+#define G_HKDNORMOFF	16
+#define G_HKDUTLBOFF	24
+#define G_HKDXUTLBOFF	32
+#define G_PARTIDOFF	40
+#define G_TABLEOFF	128
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-प्रकार काष्ठा gda अणु
+typedef struct gda {
 	u32	g_magic;	/* GDA magic number */
-	u16	g_version;	/* Version of this काष्ठाure */
+	u16	g_version;	/* Version of this structure */
 	u16	g_masterid;	/* The NASID:CPUNUM of the master cpu */
 	u32	g_promop;	/* Passes requests from the kernel to prom */
-	u32	g_vds;		/* Store the भव dipचयनes here */
-	व्योम	**g_hooked_norm;/* ptr to pda loc क्रम norm hndlr */
-	व्योम	**g_hooked_utlb;/* ptr to pda loc क्रम utlb hndlr */
-	व्योम	**g_hooked_xtlb;/* ptr to pda loc क्रम xtlb hndlr */
-	पूर्णांक	g_partid;	/* partition id */
-	पूर्णांक	g_symmax;	/* Max symbols in name table. */
-	व्योम	*g_dbstab;	/* Address of idbg symbol table */
-	अक्षर	*g_nametab;	/* Address of idbg name table */
-	व्योम	*g_ktext_repmask;
-				/* Poपूर्णांकer to a mask of nodes with copies
+	u32	g_vds;		/* Store the virtual dipswitches here */
+	void	**g_hooked_norm;/* ptr to pda loc for norm hndlr */
+	void	**g_hooked_utlb;/* ptr to pda loc for utlb hndlr */
+	void	**g_hooked_xtlb;/* ptr to pda loc for xtlb hndlr */
+	int	g_partid;	/* partition id */
+	int	g_symmax;	/* Max symbols in name table. */
+	void	*g_dbstab;	/* Address of idbg symbol table */
+	char	*g_nametab;	/* Address of idbg name table */
+	void	*g_ktext_repmask;
+				/* Pointer to a mask of nodes with copies
 				 * of the kernel. */
-	अक्षर	g_padding[56];	/* pad out to 128 bytes */
+	char	g_padding[56];	/* pad out to 128 bytes */
 	nasid_t g_nasidtable[MAX_NUMNODES]; /* NASID of each node */
-पूर्ण gda_t;
+} gda_t;
 
-#घोषणा GDA ((gda_t*) GDA_ADDR(get_nasid()))
+#define GDA ((gda_t*) GDA_ADDR(get_nasid()))
 
-#पूर्ण_अगर /* !__ASSEMBLY__ */
+#endif /* !__ASSEMBLY__ */
 /*
  * Define:	PART_GDA_VERSION
  * Purpose:	Define the minimum version of the GDA required, lower
- *		revisions assume GDA is NOT set up, and पढ़ो partition
- *		inक्रमmation from the board info.
+ *		revisions assume GDA is NOT set up, and read partition
+ *		information from the board info.
  */
-#घोषणा PART_GDA_VERSION	2
+#define PART_GDA_VERSION	2
 
 /*
  * The following requests can be sent to the PROM during startup.
  */
 
-#घोषणा PROMOP_MAGIC		0x0ead0000
-#घोषणा PROMOP_MAGIC_MASK	0x0fff0000
+#define PROMOP_MAGIC		0x0ead0000
+#define PROMOP_MAGIC_MASK	0x0fff0000
 
-#घोषणा PROMOP_BIST_SHIFT	11
-#घोषणा PROMOP_BIST_MASK	(0x3 << 11)
+#define PROMOP_BIST_SHIFT	11
+#define PROMOP_BIST_MASK	(0x3 << 11)
 
-#घोषणा PROMOP_REG		PI_ERR_STACK_ADDR_A
+#define PROMOP_REG		PI_ERR_STACK_ADDR_A
 
-#घोषणा PROMOP_INVALID		(PROMOP_MAGIC | 0x00)
-#घोषणा PROMOP_HALT		(PROMOP_MAGIC | 0x10)
-#घोषणा PROMOP_POWERDOWN	(PROMOP_MAGIC | 0x20)
-#घोषणा PROMOP_RESTART		(PROMOP_MAGIC | 0x30)
-#घोषणा PROMOP_REBOOT		(PROMOP_MAGIC | 0x40)
-#घोषणा PROMOP_IMODE		(PROMOP_MAGIC | 0x50)
+#define PROMOP_INVALID		(PROMOP_MAGIC | 0x00)
+#define PROMOP_HALT		(PROMOP_MAGIC | 0x10)
+#define PROMOP_POWERDOWN	(PROMOP_MAGIC | 0x20)
+#define PROMOP_RESTART		(PROMOP_MAGIC | 0x30)
+#define PROMOP_REBOOT		(PROMOP_MAGIC | 0x40)
+#define PROMOP_IMODE		(PROMOP_MAGIC | 0x50)
 
-#घोषणा PROMOP_CMD_MASK		0x00f0
-#घोषणा PROMOP_OPTIONS_MASK	0xfff0
+#define PROMOP_CMD_MASK		0x00f0
+#define PROMOP_OPTIONS_MASK	0xfff0
 
-#घोषणा PROMOP_SKIP_DIAGS	0x0100		/* करोn't bother running diags */
-#घोषणा PROMOP_SKIP_MEMINIT	0x0200		/* करोn't bother initing memory */
-#घोषणा PROMOP_SKIP_DEVINIT	0x0400		/* करोn't bother initing devices */
-#घोषणा PROMOP_BIST1		0x0800		/* keep track of which BIST ran */
-#घोषणा PROMOP_BIST2		0x1000		/* keep track of which BIST ran */
+#define PROMOP_SKIP_DIAGS	0x0100		/* don't bother running diags */
+#define PROMOP_SKIP_MEMINIT	0x0200		/* don't bother initing memory */
+#define PROMOP_SKIP_DEVINIT	0x0400		/* don't bother initing devices */
+#define PROMOP_BIST1		0x0800		/* keep track of which BIST ran */
+#define PROMOP_BIST2		0x1000		/* keep track of which BIST ran */
 
-#पूर्ण_अगर /* _ASM_SN_GDA_H */
+#endif /* _ASM_SN_GDA_H */

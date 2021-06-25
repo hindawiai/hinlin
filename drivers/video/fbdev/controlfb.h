@@ -1,13 +1,12 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * controlfb_hw.h: Constants of all sorts क्रम controlfb
+ * controlfb_hw.h: Constants of all sorts for controlfb
  *
  * Copyright (C) 1998 Daniel Jacobowitz <dan@debian.org>
  *
  * Based on an awful lot of code, including:
  *
- * control.c: Console support क्रम PowerMac "control" display adaptor.
+ * control.c: Console support for PowerMac "control" display adaptor.
  * Copyright (C) 1996 Paul Mackerras.
  *
  * The so far unpublished platinumfb.c
@@ -15,130 +14,130 @@
  */
 
 /*
- * Structure of the रेजिस्टरs क्रम the RADACAL colormap device.
+ * Structure of the registers for the RADACAL colormap device.
  */
-काष्ठा cmap_regs अणु
-	अचिन्हित अक्षर addr;	/* index क्रम both cmap and misc रेजिस्टरs */
-	अक्षर pad1[15];
-	अचिन्हित अक्षर crsr;	/* cursor palette */
-	अक्षर pad2[15];
-	अचिन्हित अक्षर dat;	/* RADACAL misc रेजिस्टर data */
-	अक्षर pad3[15];
-	अचिन्हित अक्षर lut;	/* cmap data */
-	अक्षर pad4[15];
-पूर्ण;
+struct cmap_regs {
+	unsigned char addr;	/* index for both cmap and misc registers */
+	char pad1[15];
+	unsigned char crsr;	/* cursor palette */
+	char pad2[15];
+	unsigned char dat;	/* RADACAL misc register data */
+	char pad3[15];
+	unsigned char lut;	/* cmap data */
+	char pad4[15];
+};
 
 /*
- * Structure of the रेजिस्टरs क्रम the "control" display adaptor.
+ * Structure of the registers for the "control" display adaptor.
  */
-#घोषणा PAD(x)	अक्षर x[12]
+#define PAD(x)	char x[12]
 
-काष्ठा preg अणु			/* padded रेजिस्टर */
-	अचिन्हित r;
-	अक्षर pad[12];
-पूर्ण;
+struct preg {			/* padded register */
+	unsigned r;
+	char pad[12];
+};
 
-काष्ठा control_regs अणु
-	काष्ठा preg vcount;	/* vertical counter */
+struct control_regs {
+	struct preg vcount;	/* vertical counter */
 	/* Vertical parameters are in units of 1/2 scan line */
-	काष्ठा preg vswin;	/* between vsblank and vssync */
-	काष्ठा preg vsblank;	/* vert start blank */
-	काष्ठा preg veblank;	/* vert end blank (display start) */
-	काष्ठा preg vewin;	/* between vesync and veblank */
-	काष्ठा preg vesync;	/* vert end sync */
-	काष्ठा preg vssync;	/* vert start sync */
-	काष्ठा preg vperiod;	/* vert period */
-	काष्ठा preg piped;	/* pipe delay hardware cursor */
+	struct preg vswin;	/* between vsblank and vssync */
+	struct preg vsblank;	/* vert start blank */
+	struct preg veblank;	/* vert end blank (display start) */
+	struct preg vewin;	/* between vesync and veblank */
+	struct preg vesync;	/* vert end sync */
+	struct preg vssync;	/* vert start sync */
+	struct preg vperiod;	/* vert period */
+	struct preg piped;	/* pipe delay hardware cursor */
 	/* Horizontal params are in units of 2 pixels */
-	काष्ठा preg hperiod;	/* horiz period - 2 */
-	काष्ठा preg hsblank;	/* horiz start blank */
-	काष्ठा preg heblank;	/* horiz end blank */
-	काष्ठा preg hesync;	/* horiz end sync */
-	काष्ठा preg hssync;	/* horiz start sync */
-	काष्ठा preg heq;	/* half horiz sync len */
-	काष्ठा preg hlfln;	/* half horiz period */
-	काष्ठा preg hserr;	/* horiz period - horiz sync len */
-	काष्ठा preg cnttst;
-	काष्ठा preg ctrl;	/* display control */
-	काष्ठा preg start_addr;	/* start address: 5 lsbs zero */
-	काष्ठा preg pitch;	/* addrs dअगरf between scan lines */
-	काष्ठा preg mon_sense;	/* monitor sense bits */
-	काष्ठा preg vram_attr;	/* enable vram banks */
-	काष्ठा preg mode;
-	काष्ठा preg rfrcnt;	/* refresh count */
-	काष्ठा preg पूर्णांकr_ena;	/* पूर्णांकerrupt enable */
-	काष्ठा preg पूर्णांकr_stat;	/* पूर्णांकerrupt status */
-	काष्ठा preg res[5];
-पूर्ण;
+	struct preg hperiod;	/* horiz period - 2 */
+	struct preg hsblank;	/* horiz start blank */
+	struct preg heblank;	/* horiz end blank */
+	struct preg hesync;	/* horiz end sync */
+	struct preg hssync;	/* horiz start sync */
+	struct preg heq;	/* half horiz sync len */
+	struct preg hlfln;	/* half horiz period */
+	struct preg hserr;	/* horiz period - horiz sync len */
+	struct preg cnttst;
+	struct preg ctrl;	/* display control */
+	struct preg start_addr;	/* start address: 5 lsbs zero */
+	struct preg pitch;	/* addrs diff between scan lines */
+	struct preg mon_sense;	/* monitor sense bits */
+	struct preg vram_attr;	/* enable vram banks */
+	struct preg mode;
+	struct preg rfrcnt;	/* refresh count */
+	struct preg intr_ena;	/* interrupt enable */
+	struct preg intr_stat;	/* interrupt status */
+	struct preg res[5];
+};
 
-काष्ठा control_regपूर्णांकs अणु
+struct control_regints {
 	/* Vertical parameters are in units of 1/2 scan line */
-	अचिन्हित vswin;	/* between vsblank and vssync */
-	अचिन्हित vsblank;	/* vert start blank */
-	अचिन्हित veblank;	/* vert end blank (display start) */
-	अचिन्हित vewin;	/* between vesync and veblank */
-	अचिन्हित vesync;	/* vert end sync */
-	अचिन्हित vssync;	/* vert start sync */
-	अचिन्हित vperiod;	/* vert period */
-	अचिन्हित piped;		/* pipe delay hardware cursor */
+	unsigned vswin;	/* between vsblank and vssync */
+	unsigned vsblank;	/* vert start blank */
+	unsigned veblank;	/* vert end blank (display start) */
+	unsigned vewin;	/* between vesync and veblank */
+	unsigned vesync;	/* vert end sync */
+	unsigned vssync;	/* vert start sync */
+	unsigned vperiod;	/* vert period */
+	unsigned piped;		/* pipe delay hardware cursor */
 	/* Horizontal params are in units of 2 pixels */
-	/* Except, apparently, क्रम hres > 1024 (or == 1280?) */
-	अचिन्हित hperiod;	/* horiz period - 2 */
-	अचिन्हित hsblank;	/* horiz start blank */
-	अचिन्हित heblank;	/* horiz end blank */
-	अचिन्हित hesync;	/* horiz end sync */
-	अचिन्हित hssync;	/* horiz start sync */
-	अचिन्हित heq;		/* half horiz sync len */
-	अचिन्हित hlfln;		/* half horiz period */
-	अचिन्हित hserr;		/* horiz period - horiz sync len */
-पूर्ण;
+	/* Except, apparently, for hres > 1024 (or == 1280?) */
+	unsigned hperiod;	/* horiz period - 2 */
+	unsigned hsblank;	/* horiz start blank */
+	unsigned heblank;	/* horiz end blank */
+	unsigned hesync;	/* horiz end sync */
+	unsigned hssync;	/* horiz start sync */
+	unsigned heq;		/* half horiz sync len */
+	unsigned hlfln;		/* half horiz period */
+	unsigned hserr;		/* horiz period - horiz sync len */
+};
 	
 /*
- * Dot घड़ी rate is
- * 3.9064MHz * 2**घड़ी_params[2] * घड़ी_params[1] / घड़ी_params[0].
+ * Dot clock rate is
+ * 3.9064MHz * 2**clock_params[2] * clock_params[1] / clock_params[0].
  */
-काष्ठा control_regvals अणु
-	अचिन्हित regs[16];		/* क्रम vswin .. hserr */
-	अचिन्हित अक्षर mode;
-	अचिन्हित अक्षर radacal_ctrl;
-	अचिन्हित अक्षर घड़ी_params[3];
-पूर्ण;
+struct control_regvals {
+	unsigned regs[16];		/* for vswin .. hserr */
+	unsigned char mode;
+	unsigned char radacal_ctrl;
+	unsigned char clock_params[3];
+};
 
-#घोषणा CTRLFB_OFF 16	/* position of pixel 0 in frame buffer */
+#define CTRLFB_OFF 16	/* position of pixel 0 in frame buffer */
 
 
 /*
  * Best cmode supported by control
  */
-काष्ठा max_cmodes अणु
-	पूर्णांक m[2];	/* 0: 2MB vram, 1: 4MB vram */
-पूर्ण;
+struct max_cmodes {
+	int m[2];	/* 0: 2MB vram, 1: 4MB vram */
+};
 
 /*
  * Video modes supported by macmodes.c
  */
-अटल काष्ठा max_cmodes control_mac_modes[] = अणु
-	अणुअणु-1,-1पूर्णपूर्ण,	/* 512x384, 60Hz पूर्णांकerlaced (NTSC) */
-	अणुअणु-1,-1पूर्णपूर्ण,	/* 512x384, 60Hz */
-	अणुअणु-1,-1पूर्णपूर्ण,	/* 640x480, 50Hz पूर्णांकerlaced (PAL) */
-	अणुअणु-1,-1पूर्णपूर्ण,	/* 640x480, 60Hz पूर्णांकerlaced (NTSC) */
-	अणुअणु 2, 2पूर्णपूर्ण,	/* 640x480, 60Hz (VGA) */
-	अणुअणु 2, 2पूर्णपूर्ण,	/* 640x480, 67Hz */
-	अणुअणु-1,-1पूर्णपूर्ण,	/* 640x870, 75Hz (portrait) */
-	अणुअणु-1,-1पूर्णपूर्ण,	/* 768x576, 50Hz (PAL full frame) */
-	अणुअणु 2, 2पूर्णपूर्ण,	/* 800x600, 56Hz */
-	अणुअणु 2, 2पूर्णपूर्ण,	/* 800x600, 60Hz */
-	अणुअणु 2, 2पूर्णपूर्ण,	/* 800x600, 72Hz */
-	अणुअणु 2, 2पूर्णपूर्ण,	/* 800x600, 75Hz */
-	अणुअणु 1, 2पूर्णपूर्ण,	/* 832x624, 75Hz */
-	अणुअणु 1, 2पूर्णपूर्ण,	/* 1024x768, 60Hz */
-	अणुअणु 1, 2पूर्णपूर्ण,	/* 1024x768, 70Hz (or 72Hz?) */
-	अणुअणु 1, 2पूर्णपूर्ण,	/* 1024x768, 75Hz (VESA) */
-	अणुअणु 1, 2पूर्णपूर्ण,	/* 1024x768, 75Hz */
-	अणुअणु 1, 2पूर्णपूर्ण,	/* 1152x870, 75Hz */
-	अणुअणु 0, 1पूर्णपूर्ण,	/* 1280x960, 75Hz */
-	अणुअणु 0, 1पूर्णपूर्ण,	/* 1280x1024, 75Hz */
-	अणुअणु 1, 2पूर्णपूर्ण,	/* 1152x768, 60Hz */
-	अणुअणु 0, 1पूर्णपूर्ण,	/* 1600x1024, 60Hz */
-पूर्ण;
+static struct max_cmodes control_mac_modes[] = {
+	{{-1,-1}},	/* 512x384, 60Hz interlaced (NTSC) */
+	{{-1,-1}},	/* 512x384, 60Hz */
+	{{-1,-1}},	/* 640x480, 50Hz interlaced (PAL) */
+	{{-1,-1}},	/* 640x480, 60Hz interlaced (NTSC) */
+	{{ 2, 2}},	/* 640x480, 60Hz (VGA) */
+	{{ 2, 2}},	/* 640x480, 67Hz */
+	{{-1,-1}},	/* 640x870, 75Hz (portrait) */
+	{{-1,-1}},	/* 768x576, 50Hz (PAL full frame) */
+	{{ 2, 2}},	/* 800x600, 56Hz */
+	{{ 2, 2}},	/* 800x600, 60Hz */
+	{{ 2, 2}},	/* 800x600, 72Hz */
+	{{ 2, 2}},	/* 800x600, 75Hz */
+	{{ 1, 2}},	/* 832x624, 75Hz */
+	{{ 1, 2}},	/* 1024x768, 60Hz */
+	{{ 1, 2}},	/* 1024x768, 70Hz (or 72Hz?) */
+	{{ 1, 2}},	/* 1024x768, 75Hz (VESA) */
+	{{ 1, 2}},	/* 1024x768, 75Hz */
+	{{ 1, 2}},	/* 1152x870, 75Hz */
+	{{ 0, 1}},	/* 1280x960, 75Hz */
+	{{ 0, 1}},	/* 1280x1024, 75Hz */
+	{{ 1, 2}},	/* 1152x768, 60Hz */
+	{{ 0, 1}},	/* 1600x1024, 60Hz */
+};
 

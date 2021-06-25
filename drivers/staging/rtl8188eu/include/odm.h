@@ -1,18 +1,17 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
 
-#अगर_अघोषित	__HALDMOUTSRC_H__
-#घोषणा __HALDMOUTSRC_H__
+#ifndef	__HALDMOUTSRC_H__
+#define __HALDMOUTSRC_H__
 
 /*  Definition */
 /*  Define all team support ability. */
 
-/*  Define क्रम all teams. Please Define the स्थिरant in your precomp header. */
+/*  Define for all teams. Please Define the constant in your precomp header. */
 
 /* define		DM_ODM_SUPPORT_AP			0 */
 /* define		DM_ODM_SUPPORT_ADSL			0 */
@@ -24,60 +23,60 @@
 /*  Antenna Switch Relative Definition. */
 
 /*  Add new function SwAntDivCheck8192C(). */
-/*  This is the मुख्य function of Antenna भागersity function beक्रमe link. */
+/*  This is the main function of Antenna diversity function before link. */
 /*  Mainly, it just retains last scan result and scan again. */
-/*  After that, it compares the scan result to see which one माला_लो better
- *  RSSI. It selects antenna with better receiving घातer and वापसs better
+/*  After that, it compares the scan result to see which one gets better
+ *  RSSI. It selects antenna with better receiving power and returns better
  *  scan result.
  */
 
-#घोषणा	TP_MODE			0
-#घोषणा	RSSI_MODE		1
-#घोषणा	TRAFFIC_LOW		0
-#घोषणा	TRAFFIC_HIGH		1
+#define	TP_MODE			0
+#define	RSSI_MODE		1
+#define	TRAFFIC_LOW		0
+#define	TRAFFIC_HIGH		1
 
 /* 3 Tx Power Tracking */
 /* 3============================================================ */
-#घोषणा		DPK_DELTA_MAPPING_NUM	13
-#घोषणा		index_mapping_HP_NUM	15
+#define		DPK_DELTA_MAPPING_NUM	13
+#define		index_mapping_HP_NUM	15
 
 /*  */
 /* 3 PSD Handler */
 /* 3============================================================ */
 
-#घोषणा	AFH_PSD		1	/* 0:normal PSD scan, 1: only करो 20 pts PSD */
-#घोषणा	MODE_40M	0	/* 0:20M, 1:40M */
-#घोषणा	PSD_TH2		3
-#घोषणा	PSD_CHM		20   /*  Minimum channel number क्रम BT AFH */
-#घोषणा	SIR_STEP_SIZE	3
-#घोषणा Smooth_Size_1	5
-#घोषणा	Smooth_TH_1	3
-#घोषणा Smooth_Size_2	10
-#घोषणा	Smooth_TH_2	4
-#घोषणा Smooth_Size_3	20
-#घोषणा	Smooth_TH_3	4
-#घोषणा Smooth_Step_Size 5
-#घोषणा	Adaptive_SIR	1
-#घोषणा	PSD_RESCAN	4
-#घोषणा	PSD_SCAN_INTERVAL	700 /* ms */
+#define	AFH_PSD		1	/* 0:normal PSD scan, 1: only do 20 pts PSD */
+#define	MODE_40M	0	/* 0:20M, 1:40M */
+#define	PSD_TH2		3
+#define	PSD_CHM		20   /*  Minimum channel number for BT AFH */
+#define	SIR_STEP_SIZE	3
+#define Smooth_Size_1	5
+#define	Smooth_TH_1	3
+#define Smooth_Size_2	10
+#define	Smooth_TH_2	4
+#define Smooth_Size_3	20
+#define	Smooth_TH_3	4
+#define Smooth_Step_Size 5
+#define	Adaptive_SIR	1
+#define	PSD_RESCAN	4
+#define	PSD_SCAN_INTERVAL	700 /* ms */
 
 /* 8723A High Power IGI Setting */
-#घोषणा DM_DIG_HIGH_PWR_IGI_LOWER_BOUND	0x22
-#घोषणा DM_DIG_Gmode_HIGH_PWR_IGI_LOWER_BOUND 0x28
-#घोषणा DM_DIG_HIGH_PWR_THRESHOLD	0x3a
+#define DM_DIG_HIGH_PWR_IGI_LOWER_BOUND	0x22
+#define DM_DIG_Gmode_HIGH_PWR_IGI_LOWER_BOUND 0x28
+#define DM_DIG_HIGH_PWR_THRESHOLD	0x3a
 
 /*  LPS define */
-#घोषणा DM_DIG_FA_TH0_LPS		4 /*  4 in lps */
-#घोषणा DM_DIG_FA_TH1_LPS		15 /*  15 lps */
-#घोषणा DM_DIG_FA_TH2_LPS		30 /*  30 lps */
-#घोषणा RSSI_OFFSET_DIG			0x05;
+#define DM_DIG_FA_TH0_LPS		4 /*  4 in lps */
+#define DM_DIG_FA_TH1_LPS		15 /*  15 lps */
+#define DM_DIG_FA_TH2_LPS		30 /*  30 lps */
+#define RSSI_OFFSET_DIG			0x05;
 
-काष्ठा rtw_dig अणु
+struct rtw_dig {
 	u8		Dig_Enable_Flag;
 	u8		Dig_Ext_Port_Stage;
 
-	पूर्णांक		RssiLowThresh;
-	पूर्णांक		RssiHighThresh;
+	int		RssiLowThresh;
+	int		RssiHighThresh;
 
 	u32		FALowThresh;
 	u32		FAHighThresh;
@@ -113,23 +112,23 @@
 
 	u32		AntDiv_RSSI_max;
 	u32		RSSI_max;
-पूर्ण;
+};
 
-काष्ठा rtl_ps अणु
+struct rtl_ps {
 	u8		PreCCAState;
 	u8		CurCCAState;
 
 	u8		PreRFState;
 	u8		CurRFState;
 
-	पूर्णांक		    Rssi_val_min;
+	int		    Rssi_val_min;
 
 	u8		initialize;
 	u32		Reg874, RegC70, Reg85C, RegA74;
 
-पूर्ण;
+};
 
-काष्ठा false_alarm_stats अणु
+struct false_alarm_stats {
 	u32	Cnt_Parity_Fail;
 	u32	Cnt_Rate_Illegal;
 	u32	Cnt_Crc8_fail;
@@ -144,43 +143,43 @@
 	u32	Cnt_CCA_all;
 	u32	Cnt_BW_USC;	/* Gary */
 	u32	Cnt_BW_LSC;	/* Gary */
-पूर्ण;
+};
 
-काष्ठा rx_hpc अणु
+struct rx_hpc {
 	u8		RXHP_flag;
 	u8		PSD_func_trigger;
-	u8		PSD_biपंचांगap_RXHP[80];
+	u8		PSD_bitmap_RXHP[80];
 	u8		Pre_IGI;
 	u8		Cur_IGI;
 	u8		Pre_pw_th;
 	u8		Cur_pw_th;
-	bool		First_समय_enter;
+	bool		First_time_enter;
 	bool		RXHP_enable;
 	u8		TP_Mode;
-	काष्ठा समयr_list PSDTimer;
-पूर्ण;
+	struct timer_list PSDTimer;
+};
 
-#घोषणा ASSOCIATE_ENTRY_NUM	32 /*  Max size of AsocEntry[]. */
-#घोषणा	ODM_ASSOCIATE_ENTRY_NUM	ASSOCIATE_ENTRY_NUM
+#define ASSOCIATE_ENTRY_NUM	32 /*  Max size of AsocEntry[]. */
+#define	ODM_ASSOCIATE_ENTRY_NUM	ASSOCIATE_ENTRY_NUM
 
-/*  This indicates two dअगरferent steps. */
-/*  In SWAW_STEP_PEAK, driver needs to चयन antenna and listen to
- *  the संकेत on the air.
+/*  This indicates two different steps. */
+/*  In SWAW_STEP_PEAK, driver needs to switch antenna and listen to
+ *  the signal on the air.
  */
-/*  In SWAW_STEP_DETERMINE, driver just compares the संकेत captured in
- *  SWAW_STEP_PEAK with original RSSI to determine अगर it is necessary to
- *  चयन antenna.
+/*  In SWAW_STEP_DETERMINE, driver just compares the signal captured in
+ *  SWAW_STEP_PEAK with original RSSI to determine if it is necessary to
+ *  switch antenna.
  */
 
-#घोषणा SWAW_STEP_PEAK		0
-#घोषणा SWAW_STEP_DETERMINE	1
+#define SWAW_STEP_PEAK		0
+#define SWAW_STEP_DETERMINE	1
 
-#घोषणा	TP_MODE			0
-#घोषणा	RSSI_MODE		1
-#घोषणा	TRAFFIC_LOW		0
-#घोषणा	TRAFFIC_HIGH		1
+#define	TP_MODE			0
+#define	RSSI_MODE		1
+#define	TRAFFIC_LOW		0
+#define	TRAFFIC_HIGH		1
 
-काष्ठा sw_ant_चयन अणु
+struct sw_ant_switch {
 	u8	try_flag;
 	s32	PreRSSI;
 	u8	CurAntenna;
@@ -191,7 +190,7 @@
 	u8	SelectAntennaMap;
 	u8	RSSI_target;
 
-	/*  Beक्रमe link Antenna Switch check */
+	/*  Before link Antenna Switch check */
 	u8	SWAS_NoLink_State;
 	u32	SWAS_NoLink_BK_Reg860;
 	bool	ANTA_ON;	/* To indicate Ant A is or not */
@@ -208,7 +207,7 @@
 	u64	RXByteCnt_A;
 	u64	RXByteCnt_B;
 	u8	TrafficLoad;
-	काष्ठा समयr_list SwAntennaSwitchTimer;
+	struct timer_list SwAntennaSwitchTimer;
 	/* Hybrid Antenna Diversity */
 	u32	CCK_Ant1_Cnt[ASSOCIATE_ENTRY_NUM];
 	u32	CCK_Ant2_Cnt[ASSOCIATE_ENTRY_NUM];
@@ -220,53 +219,53 @@
 	u8	TargetSTA;
 	u8	antsel;
 	u8	RxIdleAnt;
-पूर्ण;
+};
 
-काष्ठा edca_turbo अणु
+struct edca_turbo {
 	bool bCurrentTurboEDCA;
 	bool bIsCurRDLState;
 	u32	prv_traffic_idx; /*  edca turbo */
-पूर्ण;
+};
 
-काष्ठा odm_rate_adapt अणु
+struct odm_rate_adapt {
 	u8	Type;		/*  DM_Type_ByFW/DM_Type_ByDriver */
-	u8	HighRSSIThresh;	/*  अगर RSSI > HighRSSIThresh	=> RATRState is DM_RATR_STA_HIGH */
-	u8	LowRSSIThresh;	/*  अगर RSSI <= LowRSSIThresh	=> RATRState is DM_RATR_STA_LOW */
+	u8	HighRSSIThresh;	/*  if RSSI > HighRSSIThresh	=> RATRState is DM_RATR_STA_HIGH */
+	u8	LowRSSIThresh;	/*  if RSSI <= LowRSSIThresh	=> RATRState is DM_RATR_STA_LOW */
 	u8	RATRState;	/*  Current RSSI level, DM_RATR_STA_HIGH/DM_RATR_STA_MIDDLE/DM_RATR_STA_LOW */
 	u32	LastRATR;	/*  RATR Register Content */
-पूर्ण;
+};
 
-#घोषणा IQK_MAC_REG_NUM		4
-#घोषणा IQK_ADDA_REG_NUM	16
-#घोषणा IQK_BB_REG_NUM		9
-#घोषणा HP_THERMAL_NUM		8
+#define IQK_MAC_REG_NUM		4
+#define IQK_ADDA_REG_NUM	16
+#define IQK_BB_REG_NUM		9
+#define HP_THERMAL_NUM		8
 
-#घोषणा AVG_THERMAL_NUM		8
-#घोषणा IQK_Matrix_REG_NUM	8
-#घोषणा IQK_Matrix_Settings_NUM	(1 + 24 + 21)
+#define AVG_THERMAL_NUM		8
+#define IQK_Matrix_REG_NUM	8
+#define IQK_Matrix_Settings_NUM	(1 + 24 + 21)
 
-#घोषणा	DM_Type_ByFWi		0
-#घोषणा	DM_Type_ByDriver	1
+#define	DM_Type_ByFWi		0
+#define	DM_Type_ByDriver	1
 
-/*  Declare क्रम common info */
+/*  Declare for common info */
 
-काष्ठा odm_phy_status_info अणु
+struct odm_phy_status_info {
 	u8	RxPWDBAll;
 	u8	SignalQuality;	 /*  in 0-100 index. */
 	u8	RxMIMOSignalQuality[MAX_PATH_NUM_92CS]; /* EVM */
 	u8	RxMIMOSignalStrength[MAX_PATH_NUM_92CS];/*  in 0~100 index */
 	s8	RxPower; /*  in dBm Translate from PWdB */
-	s8	RecvSignalPower;/*  Real घातer in dBm क्रम this packet, no
-				 * beautअगरication and aggregation. Keep this raw
-				 * info to be used क्रम the other procedures.
+	s8	RecvSignalPower;/*  Real power in dBm for this packet, no
+				 * beautification and aggregation. Keep this raw
+				 * info to be used for the other procedures.
 				 */
 	u8	BTRxRSSIPercentage;
 	u8	SignalStrength; /*  in 0-100 index. */
 	u8	RxPwr[MAX_PATH_NUM_92CS];/* per-path's pwdb */
 	u8	RxSNR[MAX_PATH_NUM_92CS];/* per-path's SNR */
-पूर्ण;
+};
 
-काष्ठा odm_phy_dbg_info अणु
+struct odm_phy_dbg_info {
 	/* ODM Write,debug info */
 	s8	RxSNRdB[MAX_PATH_NUM_92CS];
 	u64	NumQryPhyStatus;
@@ -274,21 +273,21 @@
 	u64	NumQryPhyStatusOFDM;
 	/* Others */
 	s32	RxEVM[MAX_PATH_NUM_92CS];
-पूर्ण;
+};
 
-काष्ठा odm_per_pkt_info अणु
+struct odm_per_pkt_info {
 	s8	Rate;
 	u8	StationID;
 	bool	bPacketMatchBSSID;
 	bool	bPacketToSelf;
 	bool	bPacketBeacon;
-पूर्ण;
+};
 
-काष्ठा odm_mac_status_info अणु
+struct odm_mac_status_info {
 	u8	test;
-पूर्ण;
+};
 
-क्रमागत odm_ability अणु
+enum odm_ability {
 	/*  BB Team */
 	ODM_DIG			= 0x00000001,
 	ODM_HIGH_POWER		= 0x00000002,
@@ -302,11 +301,11 @@
 	ODM_2TPATHDIV		= 0x00000200,
 	ODM_1TPATHDIV		= 0x00000400,
 	ODM_PSD2AFH		= 0x00000800
-पूर्ण;
+};
 
-/*  2011/10/20 MH Define Common info क्रमागत क्रम all team. */
+/*  2011/10/20 MH Define Common info enum for all team. */
 
-क्रमागत odm_common_info_def अणु
+enum odm_common_info_def {
 	/*  Fixed value: */
 
 	/* HOOK BEFORE REG INIT----------- */
@@ -354,7 +353,7 @@
 /*  POINTER REFERENCE----------- */
 
 /* CALL BY VALUE------------- */
-	ODM_CMNINFO_WIFI_सूचीECT,
+	ODM_CMNINFO_WIFI_DIRECT,
 	ODM_CMNINFO_WIFI_DISPLAY,
 	ODM_CMNINFO_LINK,
 	ODM_CMNINFO_RSSI_MIN,
@@ -370,16 +369,16 @@
 	ODM_CMNINFO_BT_DISABLE_EDCA,
 /* CALL BY VALUE-------------*/
 
-	/*  Dynamic ptr array hook iपंचांगs. */
+	/*  Dynamic ptr array hook itms. */
 	ODM_CMNINFO_STA_STATUS,
 	ODM_CMNINFO_PHY_STATUS,
 	ODM_CMNINFO_MAC_STATUS,
 	ODM_CMNINFO_MAX,
-पूर्ण;
+};
 
 /*  2011/10/20 MH Define ODM support ability.  ODM_CMNINFO_ABILITY */
 
-क्रमागत odm_ability_def अणु
+enum odm_ability_def {
 	/*  BB ODM section BIT 0-15 */
 	ODM_BB_DIG			= BIT(0),
 	ODM_BB_RA_MASK			= BIT(1),
@@ -403,12 +402,12 @@
 	ODM_RF_TX_PWR_TRACK		= BIT(24),
 	ODM_RF_RX_GAIN_TRACK		= BIT(25),
 	ODM_RF_CALIBRATION		= BIT(26),
-पूर्ण;
+};
 
-#घोषणा ODM_RTL8188E		BIT(4)
+#define ODM_RTL8188E		BIT(4)
 
 /* ODM_CMNINFO_CUT_VER */
-क्रमागत odm_cut_version अणु
+enum odm_cut_version {
 	ODM_CUT_A	=	1,
 	ODM_CUT_B	=	2,
 	ODM_CUT_C	=	3,
@@ -416,11 +415,11 @@
 	ODM_CUT_E	=	5,
 	ODM_CUT_F	=	6,
 	ODM_CUT_TEST	=	7,
-पूर्ण;
+};
 
 /*  ODM_CMNINFO_RF_TYPE */
 /*  For example 1T2R (A+AB = BIT0|BIT4|BIT5) */
-क्रमागत odm_rf_path अणु
+enum odm_rf_path {
 	ODM_RF_TX_A	=	BIT(0),
 	ODM_RF_TX_B	=	BIT(1),
 	ODM_RF_TX_C	=	BIT(2),
@@ -429,9 +428,9 @@
 	ODM_RF_RX_B	=	BIT(5),
 	ODM_RF_RX_C	=	BIT(6),
 	ODM_RF_RX_D	=	BIT(7),
-पूर्ण;
+};
 
-क्रमागत odm_rf_type अणु
+enum odm_rf_type {
 	ODM_1T1R	=	0,
 	ODM_1T2R	=	1,
 	ODM_2T2R	=	2,
@@ -440,25 +439,25 @@
 	ODM_3T3R	=	5,
 	ODM_3T4R	=	6,
 	ODM_4T4R	=	7,
-पूर्ण;
+};
 
 /*  ODM Dynamic common info value definition */
 
-क्रमागत odm_mac_phy_mode अणु
+enum odm_mac_phy_mode {
 	ODM_SMSP	= 0,
 	ODM_DMSP	= 1,
 	ODM_DMDP	= 2,
-पूर्ण;
+};
 
-क्रमागत odm_bt_coexist अणु
+enum odm_bt_coexist {
 	ODM_BT_BUSY		= 1,
 	ODM_BT_ON		= 2,
 	ODM_BT_OFF		= 3,
 	ODM_BT_NONE		= 4,
-पूर्ण;
+};
 
 /*  ODM_CMNINFO_OP_MODE */
-क्रमागत odm_operation_mode अणु
+enum odm_operation_mode {
 	ODM_NO_LINK		= BIT(0),
 	ODM_LINK		= BIT(1),
 	ODM_SCAN		= BIT(2),
@@ -466,12 +465,12 @@
 	ODM_AP_MODE		= BIT(4),
 	ODM_CLIENT_MODE		= BIT(5),
 	ODM_AD_HOC		= BIT(6),
-	ODM_WIFI_सूचीECT		= BIT(7),
+	ODM_WIFI_DIRECT		= BIT(7),
 	ODM_WIFI_DISPLAY	= BIT(8),
-पूर्ण;
+};
 
 /*  ODM_CMNINFO_WM_MODE */
-क्रमागत odm_wireless_mode अणु
+enum odm_wireless_mode {
 	ODM_WM_UNKNOWN	= 0x0,
 	ODM_WM_B	= BIT(0),
 	ODM_WM_G	= BIT(1),
@@ -480,23 +479,23 @@
 	ODM_WM_N5G	= BIT(4),
 	ODM_WM_AUTO	= BIT(5),
 	ODM_WM_AC	= BIT(6),
-पूर्ण;
+};
 
 /*  ODM_CMNINFO_BAND */
-क्रमागत odm_band_type अणु
+enum odm_band_type {
 	ODM_BAND_2_4G	= BIT(0),
 	ODM_BAND_5G	= BIT(1),
-पूर्ण;
+};
 
 /*  ODM_CMNINFO_SEC_CHNL_OFFSET */
-क्रमागत odm_sec_chnl_offset अणु
+enum odm_sec_chnl_offset {
 	ODM_DONT_CARE	= 0,
 	ODM_BELOW	= 1,
 	ODM_ABOVE	= 2
-पूर्ण;
+};
 
 /*  ODM_CMNINFO_SEC_MODE */
-क्रमागत odm_security अणु
+enum odm_security {
 	ODM_SEC_OPEN		= 0,
 	ODM_SEC_WEP40		= 1,
 	ODM_SEC_TKIP		= 2,
@@ -505,34 +504,34 @@
 	ODM_SEC_WEP104		= 5,
 	ODM_WEP_WPA_MIXED	= 6, /*  WEP + WPA */
 	ODM_SEC_SMS4		= 7,
-पूर्ण;
+};
 
 /*  ODM_CMNINFO_BW */
-क्रमागत odm_bw अणु
+enum odm_bw {
 	ODM_BW20M		= 0,
 	ODM_BW40M		= 1,
 	ODM_BW80M		= 2,
 	ODM_BW160M		= 3,
 	ODM_BW10M		= 4,
-पूर्ण;
+};
 
 /*  ODM_CMNINFO_BOARD_TYPE */
-क्रमागत odm_board_type अणु
+enum odm_board_type {
 	ODM_BOARD_NORMAL	= 0,
 	ODM_BOARD_HIGHPWR	= 1,
 	ODM_BOARD_MINICARD	= 2,
 	ODM_BOARD_SLIM		= 3,
 	ODM_BOARD_COMBO		= 4,
-पूर्ण;
+};
 
 /*  ODM_CMNINFO_ONE_PATH_CCA */
-क्रमागत odm_cca_path अणु
+enum odm_cca_path {
 	ODM_CCA_2R		= 0,
 	ODM_CCA_1R_A		= 1,
 	ODM_CCA_1R_B		= 2,
-पूर्ण;
+};
 
-काष्ठा odm_ra_info अणु
+struct odm_ra_info {
 	u8 RateID;
 	u32 RateMask;
 	u32 RAUseRate;
@@ -554,26 +553,26 @@
 	u8 RAWaitingCounter;
 	u8 RAPendingCounter;
 	u8 PTActive;	/*  on or off */
-	u8 PTTryState;	/*  0 trying state, 1 क्रम decision state */
+	u8 PTTryState;	/*  0 trying state, 1 for decision state */
 	u8 PTStage;	/*  0~6 */
 	u8 PTStopCount;	/* Stop PT counter */
-	u8 PTPreRate;	/*  अगर rate change करो PT */
-	u8 PTPreRssi;	/*  अगर RSSI change 5% करो PT */
-	u8 PTModeSS;	/*  decide whitch rate should करो PT */
-	u8 RAstage;	/*  StageRA, decide how many बार RA will be करोne
+	u8 PTPreRate;	/*  if rate change do PT */
+	u8 PTPreRssi;	/*  if RSSI change 5% do PT */
+	u8 PTModeSS;	/*  decide whitch rate should do PT */
+	u8 RAstage;	/*  StageRA, decide how many times RA will be done
 			 * between PT
 			 */
 	u8 PTSmoothFactor;
-पूर्ण;
+};
 
-काष्ठा ijk_matrix_regs_set अणु
+struct ijk_matrix_regs_set {
 	bool	bIQKDone;
 	s32	Value[1][IQK_Matrix_REG_NUM];
-पूर्ण;
+};
 
-काष्ठा odm_rf_cal अणु
-	/* क्रम tx घातer tracking */
-	u32	RegA24; /*  क्रम TempCCK */
+struct odm_rf_cal {
+	/* for tx power tracking */
+	u32	RegA24; /*  for TempCCK */
 	s32	RegE94;
 	s32	RegE9C;
 	s32	RegEB4;
@@ -581,14 +580,14 @@
 
 	u8	TXPowercount;
 	bool	bTXPowerTracking;
-	u8	TxPowerTrackControl; /* क्रम mp mode, turn off txpwrtracking
-				      * as शेष
+	u8	TxPowerTrackControl; /* for mp mode, turn off txpwrtracking
+				      * as default
 				      */
 	u8	TM_Trigger;
 	u8	InternalPA5G[2];	/* pathA / pathB */
 
-	u8	ThermalMeter[2];    /* ThermalMeter, index 0 क्रम RFIC0,
-				     * and 1 क्रम RFIC1
+	u8	ThermalMeter[2];    /* ThermalMeter, index 0 for RFIC0,
+				     * and 1 for RFIC1
 				     */
 	u8	ThermalValue;
 	u8	ThermalValue_LCK;
@@ -603,23 +602,23 @@
 	bool	TxPowerTrackingInProgress;
 	bool	bDPKenable;
 
-	bool	bReloadtxघातerindex;
+	bool	bReloadtxpowerindex;
 	u8	bRfPiEnable;
-	u32	TXPowerTrackingCallbackCnt; /* cosa add क्रम debug */
+	u32	TXPowerTrackingCallbackCnt; /* cosa add for debug */
 
 	u8	bCCKinCH14;
 	u8	CCK_index;
 	u8	OFDM_index[2];
-	bool bDoneTxघातer;
+	bool bDoneTxpower;
 
 	u8	ThermalValue_HP[HP_THERMAL_NUM];
 	u8	ThermalValue_HP_index;
-	काष्ठा ijk_matrix_regs_set IQKMatrixRegSetting[IQK_Matrix_Settings_NUM];
+	struct ijk_matrix_regs_set IQKMatrixRegSetting[IQK_Matrix_Settings_NUM];
 
 	u8	Delta_IQK;
 	u8	Delta_LCK;
 
-	/* क्रम IQK */
+	/* for IQK */
 	u32	RegC04;
 	u32	Reg874;
 	u32	RegC08;
@@ -637,18 +636,18 @@
 	u32	IQK_BB_backup_recover[9];
 	u32	IQK_BB_backup[IQK_BB_REG_NUM];
 
-	/* क्रम APK */
+	/* for APK */
 	u32	APKoutput[2][2]; /* path A/B; output1_1a/output1_2a */
-	u8	bAPKकरोne;
+	u8	bAPKdone;
 	u8	bAPKThermalMeterIgnore;
-	u8	bDPकरोne;
+	u8	bDPdone;
 	u8	bDPPathAOK;
 	u8	bDPPathBOK;
-पूर्ण;
+};
 
 /*  ODM Dynamic common info value definition */
 
-काष्ठा fast_ant_train अणु
+struct fast_ant_train {
 	u8	Bssid[6];
 	u8	antsel_rx_keep_0;
 	u8	antsel_rx_keep_1;
@@ -667,31 +666,31 @@
 	u32	AuxAnt_Cnt[ODM_ASSOCIATE_ENTRY_NUM];
 	u8	RxIdleAnt;
 	bool	bBecomeLinked;
-पूर्ण;
+};
 
-क्रमागत fat_state अणु
+enum fat_state {
 	FAT_NORMAL_STATE		= 0,
 	FAT_TRAINING_STATE		= 1,
-पूर्ण;
+};
 
-क्रमागत ant_भाग_प्रकारype अणु
+enum ant_div_type {
 	NO_ANTDIV			= 0xFF,
 	CG_TRX_HW_ANTDIV		= 0x01,
 	CGCS_RX_HW_ANTDIV		= 0x02,
 	FIXED_HW_ANTDIV			= 0x03,
 	CG_TRX_SMART_ANTDIV		= 0x04,
 	CGCS_RX_SW_ANTDIV		= 0x05,
-पूर्ण;
+};
 
-/* Copy from SD4 defined काष्ठाure. We use to support PHY DM पूर्णांकegration. */
-काष्ठा odm_dm_काष्ठा अणु
-	/*	Add क्रम dअगरferent team use temporarily */
-	काष्ठा adapter *Adapter;	/*  For CE/NIC team */
-	काष्ठा rtl8192cd_priv *priv;	/*  For AP/ADSL team */
-	/*  WHen you use above poपूर्णांकers, they must be initialized. */
-	bool	odm_पढ़ोy;
+/* Copy from SD4 defined structure. We use to support PHY DM integration. */
+struct odm_dm_struct {
+	/*	Add for different team use temporarily */
+	struct adapter *Adapter;	/*  For CE/NIC team */
+	struct rtl8192cd_priv *priv;	/*  For AP/ADSL team */
+	/*  WHen you use above pointers, they must be initialized. */
+	bool	odm_ready;
 
-	काष्ठा rtl8192cd_priv *fake_priv;
+	struct rtl8192cd_priv *fake_priv;
 	u64	DebugComponents;
 	u32	DebugLevel;
 
@@ -704,8 +703,8 @@
 /* 1  COMMON INFORMATION */
 	/*  Init Value */
 /* HOOK BEFORE REG INIT----------- */
-	/*  ODM Platक्रमm info AP/ADSL/CE/MP = 1/2/3/4 */
-	u8	SupportPlatक्रमm;
+	/*  ODM Platform info AP/ADSL/CE/MP = 1/2/3/4 */
+	u8	SupportPlatform;
 	/*  ODM Support Ability DIG/RATR/TX_PWR_TRACK/... = 1/2/3/... */
 	u32	SupportAbility;
 	/*  ODM PCIE/USB/SDIO/GSPI = 0/1/2/3 */
@@ -718,11 +717,11 @@
 	u8	CutVersion;
 	/*  Board Type Normal/HighPower/MiniCard/SLIM/Combo/. = 0/1/2/3/4/. */
 	u8	BoardType;
-	/*  with बाह्यal LNA  NO/Yes = 0/1 */
+	/*  with external LNA  NO/Yes = 0/1 */
 	u8	ExtLNA;
-	/*  with बाह्यal PA  NO/Yes = 0/1 */
+	/*  with external PA  NO/Yes = 0/1 */
 	u8	ExtPA;
-	/*  with बाह्यal TRSW  NO/Yes = 0/1 */
+	/*  with external TRSW  NO/Yes = 0/1 */
 	u8	ExtTRSW;
 	u8	PatchID; /* Customer ID */
 	bool	bInHctTest;
@@ -738,7 +737,7 @@
 
 	u8	u8_temp;
 	bool	bool_temp;
-	काष्ठा adapter *adapter_temp;
+	struct adapter *adapter_temp;
 
 	/*  MAC PHY Mode SMSP/DMSP/DMDP = 0/1/2 */
 	u8	*pMacPhyMode;
@@ -750,7 +749,7 @@
 	u8	*pWirelessMode; /* ODM_WIRELESS_MODE_E */
 	/*  Frequence band 2.4G/5G = 0/1 */
 	u8	*pBandType;
-	/*  Secondary channel offset करोn't_care/below/above = 0/1/2 */
+	/*  Secondary channel offset don't_care/below/above = 0/1/2 */
 	u8	*pSecChOffset;
 	/*  Security mode Open/WEP/AES/TKIP = 0/1/2/3 */
 	u8	*pSecurity;
@@ -758,19 +757,19 @@
 	u8	*pBandWidth;
 	/*  Central channel location Ch1/Ch2/.... */
 	u8	*pChannel;	/* central channel number */
-	/*  Common info क्रम 92D DMSP */
+	/*  Common info for 92D DMSP */
 
 	bool	*pbGetValueFromOtherMac;
-	काष्ठा adapter **pBuddyAdapter;
+	struct adapter **pBuddyAdapter;
 	bool	*pbMasterOfDMSP; /* MAC0: master, MAC1: slave */
-	/*  Common info क्रम Status */
+	/*  Common info for Status */
 	bool	*pbScanInProcess;
 	bool	*pbPowerSaving;
 	/*  CCA Path 2-path/path-A/path-B = 0/1/2; using ODM_CCA_PATH_E. */
 	u8	*pOnePathCCA;
 	/* pMgntInfo->AntennaTest */
 	u8	*pAntennaTest;
-	bool	*pbNet_बंदd;
+	bool	*pbNet_closed;
 /*  POINTER REFERENCE----------- */
 	/*  */
 /* CALL BY VALUE------------- */
@@ -778,14 +777,14 @@
 	bool	bWIFI_Display;
 	bool	bLinked;
 	u8	RSSI_Min;
-	u8	InterfaceIndex; /*  Add क्रम 92D  dual MAC: 0--Mac0 1--Mac1 */
+	u8	InterfaceIndex; /*  Add for 92D  dual MAC: 0--Mac0 1--Mac1 */
 	bool	bIsMPChip;
 	bool	bOneEntryOnly;
-	/*  Common info क्रम BTDM */
+	/*  Common info for BTDM */
 	bool	bBtDisabled;	/*  BT is disabled */
 	bool	bBtHsOperation;	/*  BT HS mode is under progress */
 	u8	btHsDigVal;	/*  use BT rssi to decide the DIG value */
-	bool	bBtDisableEdcaTurbo;/* Under some condition, करोn't enable the
+	bool	bBtDisableEdcaTurbo;/* Under some condition, don't enable the
 				     * EDCA Turbo
 				     */
 	bool	bBtBusy;			/*  BT is busy. */
@@ -793,13 +792,13 @@
 
 	/* 2 Define STA info. */
 	/*  _ODM_STA_INFO */
-	/*  For MP, we need to reduce one array poपूर्णांकer क्रम शेष port.??*/
-	काष्ठा sta_info *pODM_StaInfo[ODM_ASSOCIATE_ENTRY_NUM];
+	/*  For MP, we need to reduce one array pointer for default port.??*/
+	struct sta_info *pODM_StaInfo[ODM_ASSOCIATE_ENTRY_NUM];
 
 	u16	CurrminRptTime;
-	काष्ठा odm_ra_info RAInfo[ODM_ASSOCIATE_ENTRY_NUM]; /* Use MacID as
+	struct odm_ra_info RAInfo[ODM_ASSOCIATE_ENTRY_NUM]; /* Use MacID as
 							     * array index. STA MacID=0,
-							     * VWiFi Client MacID=अणु1, ODM_ASSOCIATE_ENTRY_NUM-1पूर्ण
+							     * VWiFi Client MacID={1, ODM_ASSOCIATE_ENTRY_NUM-1}
 							     */
 	/*  */
 	/*  2012/02/14 MH Add to share 88E ra with other SW team. */
@@ -809,27 +808,27 @@
 
 	/*  Define ........... */
 
-	/*  Latest packet phy info (ODM ग_लिखो) */
-	काष्ठा odm_phy_dbg_info PhyDbgInfo;
+	/*  Latest packet phy info (ODM write) */
+	struct odm_phy_dbg_info PhyDbgInfo;
 
-	/*  Latest packet phy info (ODM ग_लिखो) */
-	काष्ठा odm_mac_status_info *pMacInfo;
+	/*  Latest packet phy info (ODM write) */
+	struct odm_mac_status_info *pMacInfo;
 
-	/*  Dअगरferent Team independt काष्ठाure?? */
+	/*  Different Team independt structure?? */
 
 	/* ODM Structure */
-	काष्ठा fast_ant_train DM_FatTable;
-	काष्ठा rtw_dig	DM_DigTable;
-	काष्ठा rtl_ps	DM_PSTable;
-	काष्ठा rx_hpc	DM_RXHP_Table;
-	काष्ठा false_alarm_stats FalseAlmCnt;
-	काष्ठा false_alarm_stats FlaseAlmCntBuddyAdapter;
-	काष्ठा sw_ant_चयन DM_SWAT_Table;
+	struct fast_ant_train DM_FatTable;
+	struct rtw_dig	DM_DigTable;
+	struct rtl_ps	DM_PSTable;
+	struct rx_hpc	DM_RXHP_Table;
+	struct false_alarm_stats FalseAlmCnt;
+	struct false_alarm_stats FlaseAlmCntBuddyAdapter;
+	struct sw_ant_switch DM_SWAT_Table;
 	bool		RSSI_test;
 
-	काष्ठा edca_turbo DM_EDCA_Table;
+	struct edca_turbo DM_EDCA_Table;
 	u32		WMMEDCA_BE;
-	/*  Copy from SD4 काष्ठाure */
+	/*  Copy from SD4 structure */
 	/*  */
 	/*  ================================================== */
 	/*  */
@@ -840,19 +839,19 @@
 
 	/* PSD */
 	bool	bUserAssignLevel;
-	काष्ठा समयr_list PSDTimer;
+	struct timer_list PSDTimer;
 	u8	RSSI_BT;			/* come from BT */
 	bool	bPSDinProcess;
 	bool	bDMInitialGainEnable;
 
-	/* क्रम rate adaptive, in fact,  88c/92c fw will handle this */
+	/* for rate adaptive, in fact,  88c/92c fw will handle this */
 	u8	bUseRAMask;
 
-	काष्ठा odm_rate_adapt RateAdaptive;
+	struct odm_rate_adapt RateAdaptive;
 
-	काष्ठा odm_rf_cal RFCalibrateInfo;
+	struct odm_rf_cal RFCalibrateInfo;
 
-	/*  TX घातer tracking */
+	/*  TX power tracking */
 	u8	BbSwingIdxOfdm;
 	u8	BbSwingIdxOfdmCurrent;
 	u8	BbSwingIdxOfdmBase;
@@ -862,26 +861,26 @@
 	u8	BbSwingIdxCckBase;
 	bool	BbSwingFlagCck;
 	u8	*mp_mode;
-	/*  ODM प्रणाली resource. */
+	/*  ODM system resource. */
 
-	/*  ODM relative समय. */
-	काष्ठा समयr_list PathDivSwitchTimer;
-	/* 2011.09.27 add क्रम Path Diversity */
-	काष्ठा समयr_list CCKPathDiversityTimer;
-	काष्ठा समयr_list FastAntTrainingTimer;
-पूर्ण;		/*  DM_Dynamic_Mechanism_Structure */
+	/*  ODM relative time. */
+	struct timer_list PathDivSwitchTimer;
+	/* 2011.09.27 add for Path Diversity */
+	struct timer_list CCKPathDiversityTimer;
+	struct timer_list FastAntTrainingTimer;
+};		/*  DM_Dynamic_Mechanism_Structure */
 
-#घोषणा ODM_RF_PATH_MAX 3
+#define ODM_RF_PATH_MAX 3
 
-क्रमागत ODM_RF_CONTENT अणु
+enum ODM_RF_CONTENT {
 	odm_radioa_txt = 0x1000,
 	odm_radiob_txt = 0x1001,
 	odm_radioc_txt = 0x1002,
 	odm_radiod_txt = 0x1003
-पूर्ण;
+};
 
 /*  Status code */
-क्रमागत rt_status अणु
+enum rt_status {
 	RT_STATUS_SUCCESS,
 	RT_STATUS_FAILURE,
 	RT_STATUS_PENDING,
@@ -890,13 +889,13 @@
 	RT_STATUS_INVALID_PARAMETER,
 	RT_STATUS_NOT_SUPPORT,
 	RT_STATUS_OS_API_FAILED,
-पूर्ण;
+};
 
 /* 3=========================================================== */
 /* 3 DIG */
 /* 3=========================================================== */
 
-क्रमागत dm_dig_op अणु
+enum dm_dig_op {
 	RT_TYPE_THRESH_HIGH	= 0,
 	RT_TYPE_THRESH_LOW	= 1,
 	RT_TYPE_BACKOFF		= 2,
@@ -905,54 +904,54 @@
 	RT_TYPE_ENABLE		= 5,
 	RT_TYPE_DISABLE		= 6,
 	DIG_OP_TYPE_MAX
-पूर्ण;
+};
 
-#घोषणा		DM_DIG_THRESH_HIGH	40
-#घोषणा		DM_DIG_THRESH_LOW	35
+#define		DM_DIG_THRESH_HIGH	40
+#define		DM_DIG_THRESH_LOW	35
 
-#घोषणा		DM_SCAN_RSSI_TH		0x14 /* scan वापस issue क्रम LC */
+#define		DM_SCAN_RSSI_TH		0x14 /* scan return issue for LC */
 
-#घोषणा		DM_false_ALARM_THRESH_LOW	400
-#घोषणा		DM_false_ALARM_THRESH_HIGH	1000
+#define		DM_false_ALARM_THRESH_LOW	400
+#define		DM_false_ALARM_THRESH_HIGH	1000
 
-#घोषणा		DM_DIG_MAX_NIC			0x4e
-#घोषणा		DM_DIG_MIN_NIC			0x1e /* 0x22/0x1c */
+#define		DM_DIG_MAX_NIC			0x4e
+#define		DM_DIG_MIN_NIC			0x1e /* 0x22/0x1c */
 
-#घोषणा		DM_DIG_MAX_AP			0x32
-#घोषणा		DM_DIG_MIN_AP			0x20
+#define		DM_DIG_MAX_AP			0x32
+#define		DM_DIG_MIN_AP			0x20
 
-#घोषणा		DM_DIG_MAX_NIC_HP		0x46
-#घोषणा		DM_DIG_MIN_NIC_HP		0x2e
+#define		DM_DIG_MAX_NIC_HP		0x46
+#define		DM_DIG_MIN_NIC_HP		0x2e
 
-#घोषणा		DM_DIG_MAX_AP_HP		0x42
-#घोषणा		DM_DIG_MIN_AP_HP		0x30
+#define		DM_DIG_MAX_AP_HP		0x42
+#define		DM_DIG_MIN_AP_HP		0x30
 
-/* vivi 92c&92d has dअगरferent definition, 20110504 */
-/* this is क्रम 92c */
-#घोषणा		DM_DIG_FA_TH0			0x200/* 0x20 */
-#घोषणा		DM_DIG_FA_TH1			0x300/* 0x100 */
-#घोषणा		DM_DIG_FA_TH2			0x400/* 0x200 */
-/* this is क्रम 92d */
-#घोषणा		DM_DIG_FA_TH0_92D		0x100
-#घोषणा		DM_DIG_FA_TH1_92D		0x400
-#घोषणा		DM_DIG_FA_TH2_92D		0x600
+/* vivi 92c&92d has different definition, 20110504 */
+/* this is for 92c */
+#define		DM_DIG_FA_TH0			0x200/* 0x20 */
+#define		DM_DIG_FA_TH1			0x300/* 0x100 */
+#define		DM_DIG_FA_TH2			0x400/* 0x200 */
+/* this is for 92d */
+#define		DM_DIG_FA_TH0_92D		0x100
+#define		DM_DIG_FA_TH1_92D		0x400
+#define		DM_DIG_FA_TH2_92D		0x600
 
-#घोषणा		DM_DIG_BACKOFF_MAX		12
-#घोषणा		DM_DIG_BACKOFF_MIN		-4
-#घोषणा		DM_DIG_BACKOFF_DEFAULT		10
+#define		DM_DIG_BACKOFF_MAX		12
+#define		DM_DIG_BACKOFF_MIN		-4
+#define		DM_DIG_BACKOFF_DEFAULT		10
 
 /* 3=========================================================== */
 /* 3 AGC RX High Power Mode */
 /* 3=========================================================== */
-#घोषणा	  LNA_Low_Gain_1		0x64
-#घोषणा	  LNA_Low_Gain_2		0x5A
-#घोषणा	  LNA_Low_Gain_3		0x58
+#define	  LNA_Low_Gain_1		0x64
+#define	  LNA_Low_Gain_2		0x5A
+#define	  LNA_Low_Gain_3		0x58
 
-#घोषणा	  FA_RXHP_TH1			5000
-#घोषणा	  FA_RXHP_TH2			1500
-#घोषणा	  FA_RXHP_TH3			800
-#घोषणा	  FA_RXHP_TH4			600
-#घोषणा	  FA_RXHP_TH5			500
+#define	  FA_RXHP_TH1			5000
+#define	  FA_RXHP_TH2			1500
+#define	  FA_RXHP_TH3			800
+#define	  FA_RXHP_TH4			600
+#define	  FA_RXHP_TH5			500
 
 /* 3=========================================================== */
 /* 3 EDCA */
@@ -962,101 +961,101 @@
 /* 3 Dynamic Tx Power */
 /* 3=========================================================== */
 /* Dynamic Tx Power Control Threshold */
-#घोषणा		TX_POWER_NEAR_FIELD_THRESH_LVL2	74
-#घोषणा		TX_POWER_NEAR_FIELD_THRESH_LVL1	67
-#घोषणा		TX_POWER_NEAR_FIELD_THRESH_AP		0x3F
+#define		TX_POWER_NEAR_FIELD_THRESH_LVL2	74
+#define		TX_POWER_NEAR_FIELD_THRESH_LVL1	67
+#define		TX_POWER_NEAR_FIELD_THRESH_AP		0x3F
 
-#घोषणा		TxHighPwrLevel_Normal		0
-#घोषणा		TxHighPwrLevel_Level1		1
-#घोषणा		TxHighPwrLevel_Level2		2
-#घोषणा		TxHighPwrLevel_BT1		3
-#घोषणा		TxHighPwrLevel_BT2		4
-#घोषणा		TxHighPwrLevel_15		5
-#घोषणा		TxHighPwrLevel_35		6
-#घोषणा		TxHighPwrLevel_50		7
-#घोषणा		TxHighPwrLevel_70		8
-#घोषणा		TxHighPwrLevel_100		9
+#define		TxHighPwrLevel_Normal		0
+#define		TxHighPwrLevel_Level1		1
+#define		TxHighPwrLevel_Level2		2
+#define		TxHighPwrLevel_BT1		3
+#define		TxHighPwrLevel_BT2		4
+#define		TxHighPwrLevel_15		5
+#define		TxHighPwrLevel_35		6
+#define		TxHighPwrLevel_50		7
+#define		TxHighPwrLevel_70		8
+#define		TxHighPwrLevel_100		9
 
 /* 3=========================================================== */
 /* 3 Rate Adaptive */
 /* 3=========================================================== */
-#घोषणा		DM_RATR_STA_INIT		0
-#घोषणा		DM_RATR_STA_HIGH		1
-#घोषणा		DM_RATR_STA_MIDDLE		2
-#घोषणा		DM_RATR_STA_LOW			3
+#define		DM_RATR_STA_INIT		0
+#define		DM_RATR_STA_HIGH		1
+#define		DM_RATR_STA_MIDDLE		2
+#define		DM_RATR_STA_LOW			3
 
 /* 3=========================================================== */
 /* 3 BB Power Save */
 /* 3=========================================================== */
 
-क्रमागत dm_1r_cca अणु
+enum dm_1r_cca {
 	CCA_1R = 0,
 	CCA_2R = 1,
 	CCA_MAX = 2,
-पूर्ण;
+};
 
-क्रमागत dm_rf अणु
+enum dm_rf {
 	RF_Save = 0,
 	RF_Normal = 1,
 	RF_MAX = 2,
-पूर्ण;
+};
 
 /* 3=========================================================== */
 /* 3 Antenna Diversity */
 /* 3=========================================================== */
-क्रमागत dm_swas अणु
+enum dm_swas {
 	Antenna_A = 1,
 	Antenna_B = 2,
 	Antenna_MAX = 3,
-पूर्ण;
+};
 
-/*  Maximal number of antenna detection mechanism needs to perक्रमm. */
-#घोषणा	MAX_ANTENNA_DETECTION_CNT	10
+/*  Maximal number of antenna detection mechanism needs to perform. */
+#define	MAX_ANTENNA_DETECTION_CNT	10
 
 /*  Extern Global Variables. */
-#घोषणा	OFDM_TABLE_SIZE_92C	37
-#घोषणा	OFDM_TABLE_SIZE_92D	43
-#घोषणा	CCK_TABLE_SIZE		33
+#define	OFDM_TABLE_SIZE_92C	37
+#define	OFDM_TABLE_SIZE_92D	43
+#define	CCK_TABLE_SIZE		33
 
-बाह्य	u32 OFDMSwingTable[OFDM_TABLE_SIZE_92D];
-बाह्य	u8 CCKSwingTable_Ch1_Ch13[CCK_TABLE_SIZE][8];
-बाह्य	u8 CCKSwingTable_Ch14[CCK_TABLE_SIZE][8];
+extern	u32 OFDMSwingTable[OFDM_TABLE_SIZE_92D];
+extern	u8 CCKSwingTable_Ch1_Ch13[CCK_TABLE_SIZE][8];
+extern	u8 CCKSwingTable_Ch14[CCK_TABLE_SIZE][8];
 
-/*  check Sta poपूर्णांकer valid or not */
-#घोषणा IS_STA_VALID(pSta)		(pSta)
-/*  20100514 Joseph: Add definition क्रम antenna चयनing test after link. */
-/*  This indicates two dअगरferent the steps. */
-/*  In SWAW_STEP_PEAK, driver needs to चयन antenna and listen to the
- *  संकेत on the air.
+/*  check Sta pointer valid or not */
+#define IS_STA_VALID(pSta)		(pSta)
+/*  20100514 Joseph: Add definition for antenna switching test after link. */
+/*  This indicates two different the steps. */
+/*  In SWAW_STEP_PEAK, driver needs to switch antenna and listen to the
+ *  signal on the air.
  */
-/*  In SWAW_STEP_DETERMINE, driver just compares the संकेत captured in
+/*  In SWAW_STEP_DETERMINE, driver just compares the signal captured in
  *  SWAW_STEP_PEAK
  */
-/*  with original RSSI to determine अगर it is necessary to चयन antenna. */
-#घोषणा SWAW_STEP_PEAK		0
-#घोषणा SWAW_STEP_DETERMINE	1
+/*  with original RSSI to determine if it is necessary to switch antenna. */
+#define SWAW_STEP_PEAK		0
+#define SWAW_STEP_DETERMINE	1
 
-#घोषणा dm_CheckTXPowerTracking ODM_TXPowerTrackingCheck
-#घोषणा dm_RF_Saving	ODM_RF_Saving
+#define dm_CheckTXPowerTracking ODM_TXPowerTrackingCheck
+#define dm_RF_Saving	ODM_RF_Saving
 
-व्योम ODM_RF_Saving(काष्ठा odm_dm_काष्ठा *pDM_Odm, u8 bForceInNormal);
-व्योम ODM_TXPowerTrackingCheck(काष्ठा odm_dm_काष्ठा *pDM_Odm);
-व्योम ODM_Write_CCK_CCA_Thres(काष्ठा odm_dm_काष्ठा *pDM_Odm, u8 CurCCK_CCAThres);
-bool ODM_RAStateCheck(काष्ठा odm_dm_काष्ठा *pDM_Odm, s32 RSSI,
+void ODM_RF_Saving(struct odm_dm_struct *pDM_Odm, u8 bForceInNormal);
+void ODM_TXPowerTrackingCheck(struct odm_dm_struct *pDM_Odm);
+void ODM_Write_CCK_CCA_Thres(struct odm_dm_struct *pDM_Odm, u8 CurCCK_CCAThres);
+bool ODM_RAStateCheck(struct odm_dm_struct *pDM_Odm, s32 RSSI,
 		      bool bForceUpdate, u8 *pRATRState);
 u32 ConvertTo_dB(u32 Value);
-u32 ODM_Get_Rate_Biपंचांगap(काष्ठा odm_dm_काष्ठा *pDM_Odm, u32 macid,
+u32 ODM_Get_Rate_Bitmap(struct odm_dm_struct *pDM_Odm, u32 macid,
 			u32 ra_mask, u8 rssi_level);
-व्योम ODM_CmnInfoInit(काष्ठा odm_dm_काष्ठा *pDM_Odm,
-		     क्रमागत odm_common_info_def CmnInfo, u32 Value);
-व्योम ODM_CmnInfoUpdate(काष्ठा odm_dm_काष्ठा *pDM_Odm, u32 CmnInfo, u64 Value);
-व्योम ODM_CmnInfoHook(काष्ठा odm_dm_काष्ठा *pDM_Odm,
-		     क्रमागत odm_common_info_def CmnInfo, व्योम *pValue);
-व्योम ODM_CmnInfoPtrArrayHook(काष्ठा odm_dm_काष्ठा *pDM_Odm,
-			     क्रमागत odm_common_info_def CmnInfo,
-			     u16 Index, व्योम *pValue);
-व्योम ODM_DMInit(काष्ठा odm_dm_काष्ठा *pDM_Odm);
-व्योम ODM_DMWatchकरोg(काष्ठा odm_dm_काष्ठा *pDM_Odm);
-व्योम ODM_Write_DIG(काष्ठा odm_dm_काष्ठा *pDM_Odm, u8 CurrentIGI);
+void ODM_CmnInfoInit(struct odm_dm_struct *pDM_Odm,
+		     enum odm_common_info_def CmnInfo, u32 Value);
+void ODM_CmnInfoUpdate(struct odm_dm_struct *pDM_Odm, u32 CmnInfo, u64 Value);
+void ODM_CmnInfoHook(struct odm_dm_struct *pDM_Odm,
+		     enum odm_common_info_def CmnInfo, void *pValue);
+void ODM_CmnInfoPtrArrayHook(struct odm_dm_struct *pDM_Odm,
+			     enum odm_common_info_def CmnInfo,
+			     u16 Index, void *pValue);
+void ODM_DMInit(struct odm_dm_struct *pDM_Odm);
+void ODM_DMWatchdog(struct odm_dm_struct *pDM_Odm);
+void ODM_Write_DIG(struct odm_dm_struct *pDM_Odm, u8 CurrentIGI);
 
-#पूर्ण_अगर
+#endif

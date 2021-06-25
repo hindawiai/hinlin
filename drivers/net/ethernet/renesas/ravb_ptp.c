@@ -1,249 +1,248 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
-/* PTP 1588 घड़ी using the Renesas Ethernet AVB
+// SPDX-License-Identifier: GPL-2.0+
+/* PTP 1588 clock using the Renesas Ethernet AVB
  *
  * Copyright (C) 2013-2015 Renesas Electronics Corporation
  * Copyright (C) 2015 Renesas Solutions Corp.
  * Copyright (C) 2015-2016 Cogent Embedded, Inc. <source@cogentembedded.com>
  */
 
-#समावेश "ravb.h"
+#include "ravb.h"
 
-अटल पूर्णांक ravb_ptp_tcr_request(काष्ठा ravb_निजी *priv, u32 request)
-अणु
-	काष्ठा net_device *ndev = priv->ndev;
-	पूर्णांक error;
+static int ravb_ptp_tcr_request(struct ravb_private *priv, u32 request)
+{
+	struct net_device *ndev = priv->ndev;
+	int error;
 
-	error = ravb_रुको(ndev, GCCR, GCCR_TCR, GCCR_TCR_NOREQ);
-	अगर (error)
-		वापस error;
+	error = ravb_wait(ndev, GCCR, GCCR_TCR, GCCR_TCR_NOREQ);
+	if (error)
+		return error;
 
-	ravb_modअगरy(ndev, GCCR, request, request);
-	वापस ravb_रुको(ndev, GCCR, GCCR_TCR, GCCR_TCR_NOREQ);
-पूर्ण
+	ravb_modify(ndev, GCCR, request, request);
+	return ravb_wait(ndev, GCCR, GCCR_TCR, GCCR_TCR_NOREQ);
+}
 
 /* Caller must hold the lock */
-अटल पूर्णांक ravb_ptp_समय_पढ़ो(काष्ठा ravb_निजी *priv, काष्ठा बारpec64 *ts)
-अणु
-	काष्ठा net_device *ndev = priv->ndev;
-	पूर्णांक error;
+static int ravb_ptp_time_read(struct ravb_private *priv, struct timespec64 *ts)
+{
+	struct net_device *ndev = priv->ndev;
+	int error;
 
 	error = ravb_ptp_tcr_request(priv, GCCR_TCR_CAPTURE);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	ts->tv_nsec = ravb_पढ़ो(ndev, GCT0);
-	ts->tv_sec  = ravb_पढ़ो(ndev, GCT1) |
-		((s64)ravb_पढ़ो(ndev, GCT2) << 32);
+	ts->tv_nsec = ravb_read(ndev, GCT0);
+	ts->tv_sec  = ravb_read(ndev, GCT1) |
+		((s64)ravb_read(ndev, GCT2) << 32);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Caller must hold the lock */
-अटल पूर्णांक ravb_ptp_समय_ग_लिखो(काष्ठा ravb_निजी *priv,
-				स्थिर काष्ठा बारpec64 *ts)
-अणु
-	काष्ठा net_device *ndev = priv->ndev;
-	पूर्णांक error;
+static int ravb_ptp_time_write(struct ravb_private *priv,
+				const struct timespec64 *ts)
+{
+	struct net_device *ndev = priv->ndev;
+	int error;
 	u32 gccr;
 
 	error = ravb_ptp_tcr_request(priv, GCCR_TCR_RESET);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	gccr = ravb_पढ़ो(ndev, GCCR);
-	अगर (gccr & GCCR_LTO)
-		वापस -EBUSY;
-	ravb_ग_लिखो(ndev, ts->tv_nsec, GTO0);
-	ravb_ग_लिखो(ndev, ts->tv_sec,  GTO1);
-	ravb_ग_लिखो(ndev, (ts->tv_sec >> 32) & 0xffff, GTO2);
-	ravb_ग_लिखो(ndev, gccr | GCCR_LTO, GCCR);
+	gccr = ravb_read(ndev, GCCR);
+	if (gccr & GCCR_LTO)
+		return -EBUSY;
+	ravb_write(ndev, ts->tv_nsec, GTO0);
+	ravb_write(ndev, ts->tv_sec,  GTO1);
+	ravb_write(ndev, (ts->tv_sec >> 32) & 0xffff, GTO2);
+	ravb_write(ndev, gccr | GCCR_LTO, GCCR);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Caller must hold the lock */
-अटल पूर्णांक ravb_ptp_update_compare(काष्ठा ravb_निजी *priv, u32 ns)
-अणु
-	काष्ठा net_device *ndev = priv->ndev;
+static int ravb_ptp_update_compare(struct ravb_private *priv, u32 ns)
+{
+	struct net_device *ndev = priv->ndev;
 	/* When the comparison value (GPTC.PTCV) is in range of
 	 * [x-1 to x+1] (x is the configured increment value in
 	 * GTI.TIV), it may happen that a comparison match is
-	 * not detected when the समयr wraps around.
+	 * not detected when the timer wraps around.
 	 */
 	u32 gti_ns_plus_1 = (priv->ptp.current_addend >> 20) + 1;
 	u32 gccr;
 
-	अगर (ns < gti_ns_plus_1)
+	if (ns < gti_ns_plus_1)
 		ns = gti_ns_plus_1;
-	अन्यथा अगर (ns > 0 - gti_ns_plus_1)
+	else if (ns > 0 - gti_ns_plus_1)
 		ns = 0 - gti_ns_plus_1;
 
-	gccr = ravb_पढ़ो(ndev, GCCR);
-	अगर (gccr & GCCR_LPTC)
-		वापस -EBUSY;
-	ravb_ग_लिखो(ndev, ns, GPTC);
-	ravb_ग_लिखो(ndev, gccr | GCCR_LPTC, GCCR);
+	gccr = ravb_read(ndev, GCCR);
+	if (gccr & GCCR_LPTC)
+		return -EBUSY;
+	ravb_write(ndev, ns, GPTC);
+	ravb_write(ndev, gccr | GCCR_LPTC, GCCR);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* PTP घड़ी operations */
-अटल पूर्णांक ravb_ptp_adjfreq(काष्ठा ptp_घड़ी_info *ptp, s32 ppb)
-अणु
-	काष्ठा ravb_निजी *priv = container_of(ptp, काष्ठा ravb_निजी,
+/* PTP clock operations */
+static int ravb_ptp_adjfreq(struct ptp_clock_info *ptp, s32 ppb)
+{
+	struct ravb_private *priv = container_of(ptp, struct ravb_private,
 						 ptp.info);
-	काष्ठा net_device *ndev = priv->ndev;
-	अचिन्हित दीर्घ flags;
-	u32 dअगरf, addend;
+	struct net_device *ndev = priv->ndev;
+	unsigned long flags;
+	u32 diff, addend;
 	bool neg_adj = false;
 	u32 gccr;
 
-	अगर (ppb < 0) अणु
+	if (ppb < 0) {
 		neg_adj = true;
 		ppb = -ppb;
-	पूर्ण
-	addend = priv->ptp.शेष_addend;
-	dअगरf = भाग_u64((u64)addend * ppb, NSEC_PER_SEC);
+	}
+	addend = priv->ptp.default_addend;
+	diff = div_u64((u64)addend * ppb, NSEC_PER_SEC);
 
-	addend = neg_adj ? addend - dअगरf : addend + dअगरf;
+	addend = neg_adj ? addend - diff : addend + diff;
 
 	spin_lock_irqsave(&priv->lock, flags);
 
 	priv->ptp.current_addend = addend;
 
-	gccr = ravb_पढ़ो(ndev, GCCR);
-	अगर (gccr & GCCR_LTI) अणु
+	gccr = ravb_read(ndev, GCCR);
+	if (gccr & GCCR_LTI) {
 		spin_unlock_irqrestore(&priv->lock, flags);
-		वापस -EBUSY;
-	पूर्ण
-	ravb_ग_लिखो(ndev, addend & GTI_TIV, GTI);
-	ravb_ग_लिखो(ndev, gccr | GCCR_LTI, GCCR);
+		return -EBUSY;
+	}
+	ravb_write(ndev, addend & GTI_TIV, GTI);
+	ravb_write(ndev, gccr | GCCR_LTI, GCCR);
 
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ravb_ptp_adjसमय(काष्ठा ptp_घड़ी_info *ptp, s64 delta)
-अणु
-	काष्ठा ravb_निजी *priv = container_of(ptp, काष्ठा ravb_निजी,
+static int ravb_ptp_adjtime(struct ptp_clock_info *ptp, s64 delta)
+{
+	struct ravb_private *priv = container_of(ptp, struct ravb_private,
 						 ptp.info);
-	काष्ठा बारpec64 ts;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक error;
+	struct timespec64 ts;
+	unsigned long flags;
+	int error;
 
 	spin_lock_irqsave(&priv->lock, flags);
-	error = ravb_ptp_समय_पढ़ो(priv, &ts);
-	अगर (!error) अणु
-		u64 now = kसमय_प्रकारo_ns(बारpec64_to_kसमय(ts));
+	error = ravb_ptp_time_read(priv, &ts);
+	if (!error) {
+		u64 now = ktime_to_ns(timespec64_to_ktime(ts));
 
-		ts = ns_to_बारpec64(now + delta);
-		error = ravb_ptp_समय_ग_लिखो(priv, &ts);
-	पूर्ण
+		ts = ns_to_timespec64(now + delta);
+		error = ravb_ptp_time_write(priv, &ts);
+	}
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक ravb_ptp_समय_लो64(काष्ठा ptp_घड़ी_info *ptp, काष्ठा बारpec64 *ts)
-अणु
-	काष्ठा ravb_निजी *priv = container_of(ptp, काष्ठा ravb_निजी,
+static int ravb_ptp_gettime64(struct ptp_clock_info *ptp, struct timespec64 *ts)
+{
+	struct ravb_private *priv = container_of(ptp, struct ravb_private,
 						 ptp.info);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक error;
+	unsigned long flags;
+	int error;
 
 	spin_lock_irqsave(&priv->lock, flags);
-	error = ravb_ptp_समय_पढ़ो(priv, ts);
+	error = ravb_ptp_time_read(priv, ts);
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक ravb_ptp_समय_रखो64(काष्ठा ptp_घड़ी_info *ptp,
-			      स्थिर काष्ठा बारpec64 *ts)
-अणु
-	काष्ठा ravb_निजी *priv = container_of(ptp, काष्ठा ravb_निजी,
+static int ravb_ptp_settime64(struct ptp_clock_info *ptp,
+			      const struct timespec64 *ts)
+{
+	struct ravb_private *priv = container_of(ptp, struct ravb_private,
 						 ptp.info);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक error;
+	unsigned long flags;
+	int error;
 
 	spin_lock_irqsave(&priv->lock, flags);
-	error = ravb_ptp_समय_ग_लिखो(priv, ts);
+	error = ravb_ptp_time_write(priv, ts);
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक ravb_ptp_extts(काष्ठा ptp_घड़ी_info *ptp,
-			  काष्ठा ptp_extts_request *req, पूर्णांक on)
-अणु
-	काष्ठा ravb_निजी *priv = container_of(ptp, काष्ठा ravb_निजी,
+static int ravb_ptp_extts(struct ptp_clock_info *ptp,
+			  struct ptp_extts_request *req, int on)
+{
+	struct ravb_private *priv = container_of(ptp, struct ravb_private,
 						 ptp.info);
-	काष्ठा net_device *ndev = priv->ndev;
-	अचिन्हित दीर्घ flags;
+	struct net_device *ndev = priv->ndev;
+	unsigned long flags;
 
 	/* Reject requests with unsupported flags */
-	अगर (req->flags & ~(PTP_ENABLE_FEATURE |
+	if (req->flags & ~(PTP_ENABLE_FEATURE |
 			   PTP_RISING_EDGE |
 			   PTP_FALLING_EDGE |
 			   PTP_STRICT_FLAGS))
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
 
-	अगर (req->index)
-		वापस -EINVAL;
+	if (req->index)
+		return -EINVAL;
 
-	अगर (priv->ptp.extts[req->index] == on)
-		वापस 0;
+	if (priv->ptp.extts[req->index] == on)
+		return 0;
 	priv->ptp.extts[req->index] = on;
 
 	spin_lock_irqsave(&priv->lock, flags);
-	अगर (priv->chip_id == RCAR_GEN2)
-		ravb_modअगरy(ndev, GIC, GIC_PTCE, on ? GIC_PTCE : 0);
-	अन्यथा अगर (on)
-		ravb_ग_लिखो(ndev, GIE_PTCS, GIE);
-	अन्यथा
-		ravb_ग_लिखो(ndev, GID_PTCD, GID);
+	if (priv->chip_id == RCAR_GEN2)
+		ravb_modify(ndev, GIC, GIC_PTCE, on ? GIC_PTCE : 0);
+	else if (on)
+		ravb_write(ndev, GIE_PTCS, GIE);
+	else
+		ravb_write(ndev, GID_PTCD, GID);
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ravb_ptp_perout(काष्ठा ptp_घड़ी_info *ptp,
-			   काष्ठा ptp_perout_request *req, पूर्णांक on)
-अणु
-	काष्ठा ravb_निजी *priv = container_of(ptp, काष्ठा ravb_निजी,
+static int ravb_ptp_perout(struct ptp_clock_info *ptp,
+			   struct ptp_perout_request *req, int on)
+{
+	struct ravb_private *priv = container_of(ptp, struct ravb_private,
 						 ptp.info);
-	काष्ठा net_device *ndev = priv->ndev;
-	काष्ठा ravb_ptp_perout *perout;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक error = 0;
+	struct net_device *ndev = priv->ndev;
+	struct ravb_ptp_perout *perout;
+	unsigned long flags;
+	int error = 0;
 
 	/* Reject requests with unsupported flags */
-	अगर (req->flags)
-		वापस -EOPNOTSUPP;
+	if (req->flags)
+		return -EOPNOTSUPP;
 
-	अगर (req->index)
-		वापस -EINVAL;
+	if (req->index)
+		return -EINVAL;
 
-	अगर (on) अणु
+	if (on) {
 		u64 start_ns;
 		u64 period_ns;
 
 		start_ns = req->start.sec * NSEC_PER_SEC + req->start.nsec;
 		period_ns = req->period.sec * NSEC_PER_SEC + req->period.nsec;
 
-		अगर (start_ns > U32_MAX) अणु
+		if (start_ns > U32_MAX) {
 			netdev_warn(ndev,
 				    "ptp: start value (nsec) is over limit. Maximum size of start is only 32 bits\n");
-			वापस -दुस्फल;
-		पूर्ण
+			return -ERANGE;
+		}
 
-		अगर (period_ns > U32_MAX) अणु
+		if (period_ns > U32_MAX) {
 			netdev_warn(ndev,
 				    "ptp: period value (nsec) is over limit. Maximum size of period is only 32 bits\n");
-			वापस -दुस्फल;
-		पूर्ण
+			return -ERANGE;
+		}
 
 		spin_lock_irqsave(&priv->lock, flags);
 
@@ -251,107 +250,107 @@
 		perout->target = (u32)start_ns;
 		perout->period = (u32)period_ns;
 		error = ravb_ptp_update_compare(priv, (u32)start_ns);
-		अगर (!error) अणु
-			/* Unmask पूर्णांकerrupt */
-			अगर (priv->chip_id == RCAR_GEN2)
-				ravb_modअगरy(ndev, GIC, GIC_PTME, GIC_PTME);
-			अन्यथा
-				ravb_ग_लिखो(ndev, GIE_PTMS0, GIE);
-		पूर्ण
-	पूर्ण अन्यथा	अणु
+		if (!error) {
+			/* Unmask interrupt */
+			if (priv->chip_id == RCAR_GEN2)
+				ravb_modify(ndev, GIC, GIC_PTME, GIC_PTME);
+			else
+				ravb_write(ndev, GIE_PTMS0, GIE);
+		}
+	} else	{
 		spin_lock_irqsave(&priv->lock, flags);
 
 		perout = &priv->ptp.perout[req->index];
 		perout->period = 0;
 
-		/* Mask पूर्णांकerrupt */
-		अगर (priv->chip_id == RCAR_GEN2)
-			ravb_modअगरy(ndev, GIC, GIC_PTME, 0);
-		अन्यथा
-			ravb_ग_लिखो(ndev, GID_PTMD0, GID);
-	पूर्ण
+		/* Mask interrupt */
+		if (priv->chip_id == RCAR_GEN2)
+			ravb_modify(ndev, GIC, GIC_PTME, 0);
+		else
+			ravb_write(ndev, GID_PTMD0, GID);
+	}
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक ravb_ptp_enable(काष्ठा ptp_घड़ी_info *ptp,
-			   काष्ठा ptp_घड़ी_request *req, पूर्णांक on)
-अणु
-	चयन (req->type) अणु
-	हाल PTP_CLK_REQ_EXTTS:
-		वापस ravb_ptp_extts(ptp, &req->extts, on);
-	हाल PTP_CLK_REQ_PEROUT:
-		वापस ravb_ptp_perout(ptp, &req->perout, on);
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+static int ravb_ptp_enable(struct ptp_clock_info *ptp,
+			   struct ptp_clock_request *req, int on)
+{
+	switch (req->type) {
+	case PTP_CLK_REQ_EXTTS:
+		return ravb_ptp_extts(ptp, &req->extts, on);
+	case PTP_CLK_REQ_PEROUT:
+		return ravb_ptp_perout(ptp, &req->perout, on);
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल स्थिर काष्ठा ptp_घड़ी_info ravb_ptp_info = अणु
+static const struct ptp_clock_info ravb_ptp_info = {
 	.owner		= THIS_MODULE,
 	.name		= "ravb clock",
 	.max_adj	= 50000000,
 	.n_ext_ts	= N_EXT_TS,
 	.n_per_out	= N_PER_OUT,
 	.adjfreq	= ravb_ptp_adjfreq,
-	.adjसमय	= ravb_ptp_adjसमय,
-	.समय_लो64	= ravb_ptp_समय_लो64,
-	.समय_रखो64	= ravb_ptp_समय_रखो64,
+	.adjtime	= ravb_ptp_adjtime,
+	.gettime64	= ravb_ptp_gettime64,
+	.settime64	= ravb_ptp_settime64,
 	.enable		= ravb_ptp_enable,
-पूर्ण;
+};
 
 /* Caller must hold the lock */
-व्योम ravb_ptp_पूर्णांकerrupt(काष्ठा net_device *ndev)
-अणु
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
-	u32 gis = ravb_पढ़ो(ndev, GIS);
+void ravb_ptp_interrupt(struct net_device *ndev)
+{
+	struct ravb_private *priv = netdev_priv(ndev);
+	u32 gis = ravb_read(ndev, GIS);
 
-	gis &= ravb_पढ़ो(ndev, GIC);
-	अगर (gis & GIS_PTCF) अणु
-		काष्ठा ptp_घड़ी_event event;
+	gis &= ravb_read(ndev, GIC);
+	if (gis & GIS_PTCF) {
+		struct ptp_clock_event event;
 
 		event.type = PTP_CLOCK_EXTTS;
 		event.index = 0;
-		event.बारtamp = ravb_पढ़ो(ndev, GCPT);
-		ptp_घड़ी_event(priv->ptp.घड़ी, &event);
-	पूर्ण
-	अगर (gis & GIS_PTMF) अणु
-		काष्ठा ravb_ptp_perout *perout = priv->ptp.perout;
+		event.timestamp = ravb_read(ndev, GCPT);
+		ptp_clock_event(priv->ptp.clock, &event);
+	}
+	if (gis & GIS_PTMF) {
+		struct ravb_ptp_perout *perout = priv->ptp.perout;
 
-		अगर (perout->period) अणु
+		if (perout->period) {
 			perout->target += perout->period;
 			ravb_ptp_update_compare(priv, perout->target);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	ravb_ग_लिखो(ndev, ~(gis | GIS_RESERVED), GIS);
-पूर्ण
+	ravb_write(ndev, ~(gis | GIS_RESERVED), GIS);
+}
 
-व्योम ravb_ptp_init(काष्ठा net_device *ndev, काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
-	अचिन्हित दीर्घ flags;
+void ravb_ptp_init(struct net_device *ndev, struct platform_device *pdev)
+{
+	struct ravb_private *priv = netdev_priv(ndev);
+	unsigned long flags;
 
 	priv->ptp.info = ravb_ptp_info;
 
-	priv->ptp.शेष_addend = ravb_पढ़ो(ndev, GTI);
-	priv->ptp.current_addend = priv->ptp.शेष_addend;
+	priv->ptp.default_addend = ravb_read(ndev, GTI);
+	priv->ptp.current_addend = priv->ptp.default_addend;
 
 	spin_lock_irqsave(&priv->lock, flags);
-	ravb_रुको(ndev, GCCR, GCCR_TCR, GCCR_TCR_NOREQ);
-	ravb_modअगरy(ndev, GCCR, GCCR_TCSS, GCCR_TCSS_ADJGPTP);
+	ravb_wait(ndev, GCCR, GCCR_TCR, GCCR_TCR_NOREQ);
+	ravb_modify(ndev, GCCR, GCCR_TCSS, GCCR_TCSS_ADJGPTP);
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	priv->ptp.घड़ी = ptp_घड़ी_रेजिस्टर(&priv->ptp.info, &pdev->dev);
-पूर्ण
+	priv->ptp.clock = ptp_clock_register(&priv->ptp.info, &pdev->dev);
+}
 
-व्योम ravb_ptp_stop(काष्ठा net_device *ndev)
-अणु
-	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
+void ravb_ptp_stop(struct net_device *ndev)
+{
+	struct ravb_private *priv = netdev_priv(ndev);
 
-	ravb_ग_लिखो(ndev, 0, GIC);
-	ravb_ग_लिखो(ndev, 0, GIS);
+	ravb_write(ndev, 0, GIC);
+	ravb_write(ndev, 0, GIS);
 
-	ptp_घड़ी_unरेजिस्टर(priv->ptp.घड़ी);
-पूर्ण
+	ptp_clock_unregister(priv->ptp.clock);
+}

@@ -1,106 +1,105 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Driver क्रम AK8813 / AK8814 TV-ecoders from Asahi Kasei Microप्रणालीs Co., Ltd. (AKM)
+ * Driver for AK8813 / AK8814 TV-ecoders from Asahi Kasei Microsystems Co., Ltd. (AKM)
  *
  * Copyright (C) 2010, Guennadi Liakhovetski <g.liakhovetski@gmx.de>
  */
 
-#समावेश <linux/i2c.h>
-#समावेश <linux/init.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/videodev2.h>
-#समावेश <linux/module.h>
+#include <linux/i2c.h>
+#include <linux/init.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
+#include <linux/videodev2.h>
+#include <linux/module.h>
 
-#समावेश <media/i2c/ak881x.h>
-#समावेश <media/v4l2-common.h>
-#समावेश <media/v4l2-device.h>
+#include <media/i2c/ak881x.h>
+#include <media/v4l2-common.h>
+#include <media/v4l2-device.h>
 
-#घोषणा AK881X_INTERFACE_MODE	0
-#घोषणा AK881X_VIDEO_PROCESS1	1
-#घोषणा AK881X_VIDEO_PROCESS2	2
-#घोषणा AK881X_VIDEO_PROCESS3	3
-#घोषणा AK881X_DAC_MODE		5
-#घोषणा AK881X_STATUS		0x24
-#घोषणा AK881X_DEVICE_ID	0x25
-#घोषणा AK881X_DEVICE_REVISION	0x26
+#define AK881X_INTERFACE_MODE	0
+#define AK881X_VIDEO_PROCESS1	1
+#define AK881X_VIDEO_PROCESS2	2
+#define AK881X_VIDEO_PROCESS3	3
+#define AK881X_DAC_MODE		5
+#define AK881X_STATUS		0x24
+#define AK881X_DEVICE_ID	0x25
+#define AK881X_DEVICE_REVISION	0x26
 
-काष्ठा ak881x अणु
-	काष्ठा v4l2_subdev subdev;
-	काष्ठा ak881x_pdata *pdata;
-	अचिन्हित पूर्णांक lines;
-	अक्षर revision;	/* DEVICE_REVISION content */
-पूर्ण;
+struct ak881x {
+	struct v4l2_subdev subdev;
+	struct ak881x_pdata *pdata;
+	unsigned int lines;
+	char revision;	/* DEVICE_REVISION content */
+};
 
-अटल पूर्णांक reg_पढ़ो(काष्ठा i2c_client *client, स्थिर u8 reg)
-अणु
-	वापस i2c_smbus_पढ़ो_byte_data(client, reg);
-पूर्ण
+static int reg_read(struct i2c_client *client, const u8 reg)
+{
+	return i2c_smbus_read_byte_data(client, reg);
+}
 
-अटल पूर्णांक reg_ग_लिखो(काष्ठा i2c_client *client, स्थिर u8 reg,
-		     स्थिर u8 data)
-अणु
-	वापस i2c_smbus_ग_लिखो_byte_data(client, reg, data);
-पूर्ण
+static int reg_write(struct i2c_client *client, const u8 reg,
+		     const u8 data)
+{
+	return i2c_smbus_write_byte_data(client, reg, data);
+}
 
-अटल पूर्णांक reg_set(काष्ठा i2c_client *client, स्थिर u8 reg,
-		   स्थिर u8 data, u8 mask)
-अणु
-	पूर्णांक ret = reg_पढ़ो(client, reg);
-	अगर (ret < 0)
-		वापस ret;
-	वापस reg_ग_लिखो(client, reg, (ret & ~mask) | (data & mask));
-पूर्ण
+static int reg_set(struct i2c_client *client, const u8 reg,
+		   const u8 data, u8 mask)
+{
+	int ret = reg_read(client, reg);
+	if (ret < 0)
+		return ret;
+	return reg_write(client, reg, (ret & ~mask) | (data & mask));
+}
 
-अटल काष्ठा ak881x *to_ak881x(स्थिर काष्ठा i2c_client *client)
-अणु
-	वापस container_of(i2c_get_clientdata(client), काष्ठा ak881x, subdev);
-पूर्ण
+static struct ak881x *to_ak881x(const struct i2c_client *client)
+{
+	return container_of(i2c_get_clientdata(client), struct ak881x, subdev);
+}
 
-#अगर_घोषित CONFIG_VIDEO_ADV_DEBUG
-अटल पूर्णांक ak881x_g_रेजिस्टर(काष्ठा v4l2_subdev *sd,
-			     काष्ठा v4l2_dbg_रेजिस्टर *reg)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
+#ifdef CONFIG_VIDEO_ADV_DEBUG
+static int ak881x_g_register(struct v4l2_subdev *sd,
+			     struct v4l2_dbg_register *reg)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
 
-	अगर (reg->reg > 0x26)
-		वापस -EINVAL;
+	if (reg->reg > 0x26)
+		return -EINVAL;
 
 	reg->size = 1;
-	reg->val = reg_पढ़ो(client, reg->reg);
+	reg->val = reg_read(client, reg->reg);
 
-	अगर (reg->val > 0xffff)
-		वापस -EIO;
+	if (reg->val > 0xffff)
+		return -EIO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ak881x_s_रेजिस्टर(काष्ठा v4l2_subdev *sd,
-			     स्थिर काष्ठा v4l2_dbg_रेजिस्टर *reg)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
+static int ak881x_s_register(struct v4l2_subdev *sd,
+			     const struct v4l2_dbg_register *reg)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
 
-	अगर (reg->reg > 0x26)
-		वापस -EINVAL;
+	if (reg->reg > 0x26)
+		return -EINVAL;
 
-	अगर (reg_ग_लिखो(client, reg->reg, reg->val) < 0)
-		वापस -EIO;
+	if (reg_write(client, reg->reg, reg->val) < 0)
+		return -EIO;
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल पूर्णांक ak881x_fill_fmt(काष्ठा v4l2_subdev *sd,
-		काष्ठा v4l2_subdev_pad_config *cfg,
-		काष्ठा v4l2_subdev_क्रमmat *क्रमmat)
-अणु
-	काष्ठा v4l2_mbus_framefmt *mf = &क्रमmat->क्रमmat;
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
-	काष्ठा ak881x *ak881x = to_ak881x(client);
+static int ak881x_fill_fmt(struct v4l2_subdev *sd,
+		struct v4l2_subdev_pad_config *cfg,
+		struct v4l2_subdev_format *format)
+{
+	struct v4l2_mbus_framefmt *mf = &format->format;
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+	struct ak881x *ak881x = to_ak881x(client);
 
-	अगर (क्रमmat->pad)
-		वापस -EINVAL;
+	if (format->pad)
+		return -EINVAL;
 
 	v4l_bound_align_image(&mf->width, 0, 720, 2,
 			      &mf->height, 0, ak881x->lines, 1, 0);
@@ -108,220 +107,220 @@
 	mf->code	= MEDIA_BUS_FMT_YUYV8_2X8;
 	mf->colorspace	= V4L2_COLORSPACE_SMPTE170M;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ak881x_क्रमागत_mbus_code(काष्ठा v4l2_subdev *sd,
-		काष्ठा v4l2_subdev_pad_config *cfg,
-		काष्ठा v4l2_subdev_mbus_code_क्रमागत *code)
-अणु
-	अगर (code->pad || code->index)
-		वापस -EINVAL;
+static int ak881x_enum_mbus_code(struct v4l2_subdev *sd,
+		struct v4l2_subdev_pad_config *cfg,
+		struct v4l2_subdev_mbus_code_enum *code)
+{
+	if (code->pad || code->index)
+		return -EINVAL;
 
 	code->code = MEDIA_BUS_FMT_YUYV8_2X8;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ak881x_get_selection(काष्ठा v4l2_subdev *sd,
-				काष्ठा v4l2_subdev_pad_config *cfg,
-				काष्ठा v4l2_subdev_selection *sel)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
-	काष्ठा ak881x *ak881x = to_ak881x(client);
+static int ak881x_get_selection(struct v4l2_subdev *sd,
+				struct v4l2_subdev_pad_config *cfg,
+				struct v4l2_subdev_selection *sel)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+	struct ak881x *ak881x = to_ak881x(client);
 
-	अगर (sel->which != V4L2_SUBDEV_FORMAT_ACTIVE)
-		वापस -EINVAL;
+	if (sel->which != V4L2_SUBDEV_FORMAT_ACTIVE)
+		return -EINVAL;
 
-	चयन (sel->target) अणु
-	हाल V4L2_SEL_TGT_CROP_BOUNDS:
+	switch (sel->target) {
+	case V4L2_SEL_TGT_CROP_BOUNDS:
 		sel->r.left = 0;
 		sel->r.top = 0;
 		sel->r.width = 720;
 		sel->r.height = ak881x->lines;
-		वापस 0;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		return 0;
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल पूर्णांक ak881x_s_std_output(काष्ठा v4l2_subdev *sd, v4l2_std_id std)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
-	काष्ठा ak881x *ak881x = to_ak881x(client);
+static int ak881x_s_std_output(struct v4l2_subdev *sd, v4l2_std_id std)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+	struct ak881x *ak881x = to_ak881x(client);
 	u8 vp1;
 
-	अगर (std == V4L2_STD_NTSC_443) अणु
+	if (std == V4L2_STD_NTSC_443) {
 		vp1 = 3;
 		ak881x->lines = 480;
-	पूर्ण अन्यथा अगर (std == V4L2_STD_PAL_M) अणु
+	} else if (std == V4L2_STD_PAL_M) {
 		vp1 = 5;
 		ak881x->lines = 480;
-	पूर्ण अन्यथा अगर (std == V4L2_STD_PAL_60) अणु
+	} else if (std == V4L2_STD_PAL_60) {
 		vp1 = 7;
 		ak881x->lines = 480;
-	पूर्ण अन्यथा अगर (std & V4L2_STD_NTSC) अणु
+	} else if (std & V4L2_STD_NTSC) {
 		vp1 = 0;
 		ak881x->lines = 480;
-	पूर्ण अन्यथा अगर (std & V4L2_STD_PAL) अणु
+	} else if (std & V4L2_STD_PAL) {
 		vp1 = 0xf;
 		ak881x->lines = 576;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* No SECAM or PAL_N/Nc supported */
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	reg_set(client, AK881X_VIDEO_PROCESS1, vp1, 0xf);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ak881x_s_stream(काष्ठा v4l2_subdev *sd, पूर्णांक enable)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
-	काष्ठा ak881x *ak881x = to_ak881x(client);
+static int ak881x_s_stream(struct v4l2_subdev *sd, int enable)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+	struct ak881x *ak881x = to_ak881x(client);
 
-	अगर (enable) अणु
+	if (enable) {
 		u8 dac;
 		/* For colour-bar testing set bit 6 of AK881X_VIDEO_PROCESS1 */
 		/* Default: composite output */
-		अगर (ak881x->pdata->flags & AK881X_COMPONENT)
+		if (ak881x->pdata->flags & AK881X_COMPONENT)
 			dac = 3;
-		अन्यथा
+		else
 			dac = 4;
 		/* Turn on the DAC(s) */
-		reg_ग_लिखो(client, AK881X_DAC_MODE, dac);
+		reg_write(client, AK881X_DAC_MODE, dac);
 		dev_dbg(&client->dev, "chip status 0x%x\n",
-			reg_पढ़ो(client, AK881X_STATUS));
-	पूर्ण अन्यथा अणु
+			reg_read(client, AK881X_STATUS));
+	} else {
 		/* ...and clear bit 6 of AK881X_VIDEO_PROCESS1 here */
-		reg_ग_लिखो(client, AK881X_DAC_MODE, 0);
+		reg_write(client, AK881X_DAC_MODE, 0);
 		dev_dbg(&client->dev, "chip status 0x%x\n",
-			reg_पढ़ो(client, AK881X_STATUS));
-	पूर्ण
+			reg_read(client, AK881X_STATUS));
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा v4l2_subdev_core_ops ak881x_subdev_core_ops = अणु
-#अगर_घोषित CONFIG_VIDEO_ADV_DEBUG
-	.g_रेजिस्टर	= ak881x_g_रेजिस्टर,
-	.s_रेजिस्टर	= ak881x_s_रेजिस्टर,
-#पूर्ण_अगर
-पूर्ण;
+static const struct v4l2_subdev_core_ops ak881x_subdev_core_ops = {
+#ifdef CONFIG_VIDEO_ADV_DEBUG
+	.g_register	= ak881x_g_register,
+	.s_register	= ak881x_s_register,
+#endif
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_video_ops ak881x_subdev_video_ops = अणु
+static const struct v4l2_subdev_video_ops ak881x_subdev_video_ops = {
 	.s_std_output	= ak881x_s_std_output,
 	.s_stream	= ak881x_s_stream,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_pad_ops ak881x_subdev_pad_ops = अणु
-	.क्रमागत_mbus_code = ak881x_क्रमागत_mbus_code,
+static const struct v4l2_subdev_pad_ops ak881x_subdev_pad_ops = {
+	.enum_mbus_code = ak881x_enum_mbus_code,
 	.get_selection	= ak881x_get_selection,
 	.set_fmt	= ak881x_fill_fmt,
 	.get_fmt	= ak881x_fill_fmt,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_ops ak881x_subdev_ops = अणु
+static const struct v4l2_subdev_ops ak881x_subdev_ops = {
 	.core	= &ak881x_subdev_core_ops,
 	.video	= &ak881x_subdev_video_ops,
 	.pad	= &ak881x_subdev_pad_ops,
-पूर्ण;
+};
 
-अटल पूर्णांक ak881x_probe(काष्ठा i2c_client *client,
-			स्थिर काष्ठा i2c_device_id *did)
-अणु
-	काष्ठा i2c_adapter *adapter = client->adapter;
-	काष्ठा ak881x *ak881x;
-	u8 अगरmode, data;
+static int ak881x_probe(struct i2c_client *client,
+			const struct i2c_device_id *did)
+{
+	struct i2c_adapter *adapter = client->adapter;
+	struct ak881x *ak881x;
+	u8 ifmode, data;
 
-	अगर (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA)) अणु
+	if (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA)) {
 		dev_warn(&adapter->dev,
 			 "I2C-Adapter doesn't support I2C_FUNC_SMBUS_WORD\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	ak881x = devm_kzalloc(&client->dev, माप(*ak881x), GFP_KERNEL);
-	अगर (!ak881x)
-		वापस -ENOMEM;
+	ak881x = devm_kzalloc(&client->dev, sizeof(*ak881x), GFP_KERNEL);
+	if (!ak881x)
+		return -ENOMEM;
 
 	v4l2_i2c_subdev_init(&ak881x->subdev, client, &ak881x_subdev_ops);
 
-	data = reg_पढ़ो(client, AK881X_DEVICE_ID);
+	data = reg_read(client, AK881X_DEVICE_ID);
 
-	चयन (data) अणु
-	हाल 0x13:
-	हाल 0x14:
-		अवरोध;
-	शेष:
+	switch (data) {
+	case 0x13:
+	case 0x14:
+		break;
+	default:
 		dev_err(&client->dev,
 			"No ak881x chip detected, register read %x\n", data);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	ak881x->revision = reg_पढ़ो(client, AK881X_DEVICE_REVISION);
-	ak881x->pdata = client->dev.platक्रमm_data;
+	ak881x->revision = reg_read(client, AK881X_DEVICE_REVISION);
+	ak881x->pdata = client->dev.platform_data;
 
-	अगर (ak881x->pdata) अणु
-		अगर (ak881x->pdata->flags & AK881X_FIELD)
-			अगरmode = 4;
-		अन्यथा
-			अगरmode = 0;
+	if (ak881x->pdata) {
+		if (ak881x->pdata->flags & AK881X_FIELD)
+			ifmode = 4;
+		else
+			ifmode = 0;
 
-		चयन (ak881x->pdata->flags & AK881X_IF_MODE_MASK) अणु
-		हाल AK881X_IF_MODE_BT656:
-			अगरmode |= 1;
-			अवरोध;
-		हाल AK881X_IF_MODE_MASTER:
-			अगरmode |= 2;
-			अवरोध;
-		हाल AK881X_IF_MODE_SLAVE:
-		शेष:
-			अवरोध;
-		पूर्ण
+		switch (ak881x->pdata->flags & AK881X_IF_MODE_MASK) {
+		case AK881X_IF_MODE_BT656:
+			ifmode |= 1;
+			break;
+		case AK881X_IF_MODE_MASTER:
+			ifmode |= 2;
+			break;
+		case AK881X_IF_MODE_SLAVE:
+		default:
+			break;
+		}
 
-		dev_dbg(&client->dev, "IF mode %x\n", अगरmode);
+		dev_dbg(&client->dev, "IF mode %x\n", ifmode);
 
 		/*
 		 * "Line Blanking No." seems to be the same as the number of
-		 * "black" lines on, e.g., SuperH VOU, whose शेष value of 20
-		 * "incidentally" matches ak881x' शेष
+		 * "black" lines on, e.g., SuperH VOU, whose default value of 20
+		 * "incidentally" matches ak881x' default
 		 */
-		reg_ग_लिखो(client, AK881X_INTERFACE_MODE, अगरmode | (20 << 3));
-	पूर्ण
+		reg_write(client, AK881X_INTERFACE_MODE, ifmode | (20 << 3));
+	}
 
-	/* Hardware शेष: NTSC-M */
+	/* Hardware default: NTSC-M */
 	ak881x->lines = 480;
 
 	dev_info(&client->dev, "Detected an ak881x chip ID %x, revision %x\n",
 		 data, ak881x->revision);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ak881x_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा ak881x *ak881x = to_ak881x(client);
+static int ak881x_remove(struct i2c_client *client)
+{
+	struct ak881x *ak881x = to_ak881x(client);
 
-	v4l2_device_unरेजिस्टर_subdev(&ak881x->subdev);
+	v4l2_device_unregister_subdev(&ak881x->subdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id ak881x_id[] = अणु
-	अणु "ak8813", 0 पूर्ण,
-	अणु "ak8814", 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id ak881x_id[] = {
+	{ "ak8813", 0 },
+	{ "ak8814", 0 },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, ak881x_id);
 
-अटल काष्ठा i2c_driver ak881x_i2c_driver = अणु
-	.driver = अणु
+static struct i2c_driver ak881x_i2c_driver = {
+	.driver = {
 		.name = "ak881x",
-	पूर्ण,
+	},
 	.probe		= ak881x_probe,
-	.हटाओ		= ak881x_हटाओ,
+	.remove		= ak881x_remove,
 	.id_table	= ak881x_id,
-पूर्ण;
+};
 
 module_i2c_driver(ak881x_i2c_driver);
 

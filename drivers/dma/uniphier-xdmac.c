@@ -1,141 +1,140 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * External DMA controller driver क्रम UniPhier SoCs
+ * External DMA controller driver for UniPhier SoCs
  * Copyright 2019 Socionext Inc.
  * Author: Kunihiko Hayashi <hayashi.kunihiko@socionext.com>
  */
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/bitfield.h>
-#समावेश <linux/iopoll.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_dma.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
+#include <linux/bitops.h>
+#include <linux/bitfield.h>
+#include <linux/iopoll.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_dma.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
 
-#समावेश "dmaengine.h"
-#समावेश "virt-dma.h"
+#include "dmaengine.h"
+#include "virt-dma.h"
 
-#घोषणा XDMAC_CH_WIDTH		0x100
+#define XDMAC_CH_WIDTH		0x100
 
-#घोषणा XDMAC_TFA		0x08
-#घोषणा XDMAC_TFA_MCNT_MASK	GENMASK(23, 16)
-#घोषणा XDMAC_TFA_MASK		GENMASK(5, 0)
-#घोषणा XDMAC_SADM		0x10
-#घोषणा XDMAC_SADM_STW_MASK	GENMASK(25, 24)
-#घोषणा XDMAC_SADM_SAM		BIT(4)
-#घोषणा XDMAC_SADM_SAM_FIXED	XDMAC_SADM_SAM
-#घोषणा XDMAC_SADM_SAM_INC	0
-#घोषणा XDMAC_DADM		0x14
-#घोषणा XDMAC_DADM_DTW_MASK	XDMAC_SADM_STW_MASK
-#घोषणा XDMAC_DADM_DAM		XDMAC_SADM_SAM
-#घोषणा XDMAC_DADM_DAM_FIXED	XDMAC_SADM_SAM_FIXED
-#घोषणा XDMAC_DADM_DAM_INC	XDMAC_SADM_SAM_INC
-#घोषणा XDMAC_EXSAD		0x18
-#घोषणा XDMAC_EXDAD		0x1c
-#घोषणा XDMAC_SAD		0x20
-#घोषणा XDMAC_DAD		0x24
-#घोषणा XDMAC_ITS		0x28
-#घोषणा XDMAC_ITS_MASK		GENMASK(25, 0)
-#घोषणा XDMAC_TNUM		0x2c
-#घोषणा XDMAC_TNUM_MASK		GENMASK(15, 0)
-#घोषणा XDMAC_TSS		0x30
-#घोषणा XDMAC_TSS_REQ		BIT(0)
-#घोषणा XDMAC_IEN		0x34
-#घोषणा XDMAC_IEN_ERRIEN	BIT(1)
-#घोषणा XDMAC_IEN_ENDIEN	BIT(0)
-#घोषणा XDMAC_STAT		0x40
-#घोषणा XDMAC_STAT_TENF		BIT(0)
-#घोषणा XDMAC_IR		0x44
-#घोषणा XDMAC_IR_ERRF		BIT(1)
-#घोषणा XDMAC_IR_ENDF		BIT(0)
-#घोषणा XDMAC_ID		0x48
-#घोषणा XDMAC_ID_ERRIDF		BIT(1)
-#घोषणा XDMAC_ID_ENDIDF		BIT(0)
+#define XDMAC_TFA		0x08
+#define XDMAC_TFA_MCNT_MASK	GENMASK(23, 16)
+#define XDMAC_TFA_MASK		GENMASK(5, 0)
+#define XDMAC_SADM		0x10
+#define XDMAC_SADM_STW_MASK	GENMASK(25, 24)
+#define XDMAC_SADM_SAM		BIT(4)
+#define XDMAC_SADM_SAM_FIXED	XDMAC_SADM_SAM
+#define XDMAC_SADM_SAM_INC	0
+#define XDMAC_DADM		0x14
+#define XDMAC_DADM_DTW_MASK	XDMAC_SADM_STW_MASK
+#define XDMAC_DADM_DAM		XDMAC_SADM_SAM
+#define XDMAC_DADM_DAM_FIXED	XDMAC_SADM_SAM_FIXED
+#define XDMAC_DADM_DAM_INC	XDMAC_SADM_SAM_INC
+#define XDMAC_EXSAD		0x18
+#define XDMAC_EXDAD		0x1c
+#define XDMAC_SAD		0x20
+#define XDMAC_DAD		0x24
+#define XDMAC_ITS		0x28
+#define XDMAC_ITS_MASK		GENMASK(25, 0)
+#define XDMAC_TNUM		0x2c
+#define XDMAC_TNUM_MASK		GENMASK(15, 0)
+#define XDMAC_TSS		0x30
+#define XDMAC_TSS_REQ		BIT(0)
+#define XDMAC_IEN		0x34
+#define XDMAC_IEN_ERRIEN	BIT(1)
+#define XDMAC_IEN_ENDIEN	BIT(0)
+#define XDMAC_STAT		0x40
+#define XDMAC_STAT_TENF		BIT(0)
+#define XDMAC_IR		0x44
+#define XDMAC_IR_ERRF		BIT(1)
+#define XDMAC_IR_ENDF		BIT(0)
+#define XDMAC_ID		0x48
+#define XDMAC_ID_ERRIDF		BIT(1)
+#define XDMAC_ID_ENDIDF		BIT(0)
 
-#घोषणा XDMAC_MAX_CHANS		16
-#घोषणा XDMAC_INTERVAL_CLKS	20
-#घोषणा XDMAC_MAX_WORDS		XDMAC_TNUM_MASK
+#define XDMAC_MAX_CHANS		16
+#define XDMAC_INTERVAL_CLKS	20
+#define XDMAC_MAX_WORDS		XDMAC_TNUM_MASK
 
-/* cut lower bit क्रम मुख्यtain alignment of maximum transfer size */
-#घोषणा XDMAC_MAX_WORD_SIZE	(XDMAC_ITS_MASK & ~GENMASK(3, 0))
+/* cut lower bit for maintain alignment of maximum transfer size */
+#define XDMAC_MAX_WORD_SIZE	(XDMAC_ITS_MASK & ~GENMASK(3, 0))
 
-#घोषणा UNIPHIER_XDMAC_BUSWIDTHS \
+#define UNIPHIER_XDMAC_BUSWIDTHS \
 	(BIT(DMA_SLAVE_BUSWIDTH_1_BYTE) | \
 	 BIT(DMA_SLAVE_BUSWIDTH_2_BYTES) | \
 	 BIT(DMA_SLAVE_BUSWIDTH_4_BYTES) | \
 	 BIT(DMA_SLAVE_BUSWIDTH_8_BYTES))
 
-काष्ठा uniphier_xdmac_desc_node अणु
+struct uniphier_xdmac_desc_node {
 	dma_addr_t src;
 	dma_addr_t dst;
 	u32 burst_size;
 	u32 nr_burst;
-पूर्ण;
+};
 
-काष्ठा uniphier_xdmac_desc अणु
-	काष्ठा virt_dma_desc vd;
+struct uniphier_xdmac_desc {
+	struct virt_dma_desc vd;
 
-	अचिन्हित पूर्णांक nr_node;
-	अचिन्हित पूर्णांक cur_node;
-	क्रमागत dma_transfer_direction dir;
-	काष्ठा uniphier_xdmac_desc_node nodes[];
-पूर्ण;
+	unsigned int nr_node;
+	unsigned int cur_node;
+	enum dma_transfer_direction dir;
+	struct uniphier_xdmac_desc_node nodes[];
+};
 
-काष्ठा uniphier_xdmac_chan अणु
-	काष्ठा virt_dma_chan vc;
-	काष्ठा uniphier_xdmac_device *xdev;
-	काष्ठा uniphier_xdmac_desc *xd;
-	व्योम __iomem *reg_ch_base;
-	काष्ठा dma_slave_config	sconfig;
-	पूर्णांक id;
-	अचिन्हित पूर्णांक req_factor;
-पूर्ण;
+struct uniphier_xdmac_chan {
+	struct virt_dma_chan vc;
+	struct uniphier_xdmac_device *xdev;
+	struct uniphier_xdmac_desc *xd;
+	void __iomem *reg_ch_base;
+	struct dma_slave_config	sconfig;
+	int id;
+	unsigned int req_factor;
+};
 
-काष्ठा uniphier_xdmac_device अणु
-	काष्ठा dma_device ddev;
-	व्योम __iomem *reg_base;
-	पूर्णांक nr_chans;
-	काष्ठा uniphier_xdmac_chan channels[];
-पूर्ण;
+struct uniphier_xdmac_device {
+	struct dma_device ddev;
+	void __iomem *reg_base;
+	int nr_chans;
+	struct uniphier_xdmac_chan channels[];
+};
 
-अटल काष्ठा uniphier_xdmac_chan *
-to_uniphier_xdmac_chan(काष्ठा virt_dma_chan *vc)
-अणु
-	वापस container_of(vc, काष्ठा uniphier_xdmac_chan, vc);
-पूर्ण
+static struct uniphier_xdmac_chan *
+to_uniphier_xdmac_chan(struct virt_dma_chan *vc)
+{
+	return container_of(vc, struct uniphier_xdmac_chan, vc);
+}
 
-अटल काष्ठा uniphier_xdmac_desc *
-to_uniphier_xdmac_desc(काष्ठा virt_dma_desc *vd)
-अणु
-	वापस container_of(vd, काष्ठा uniphier_xdmac_desc, vd);
-पूर्ण
+static struct uniphier_xdmac_desc *
+to_uniphier_xdmac_desc(struct virt_dma_desc *vd)
+{
+	return container_of(vd, struct uniphier_xdmac_desc, vd);
+}
 
 /* xc->vc.lock must be held by caller */
-अटल काष्ठा uniphier_xdmac_desc *
-uniphier_xdmac_next_desc(काष्ठा uniphier_xdmac_chan *xc)
-अणु
-	काष्ठा virt_dma_desc *vd;
+static struct uniphier_xdmac_desc *
+uniphier_xdmac_next_desc(struct uniphier_xdmac_chan *xc)
+{
+	struct virt_dma_desc *vd;
 
 	vd = vchan_next_desc(&xc->vc);
-	अगर (!vd)
-		वापस शून्य;
+	if (!vd)
+		return NULL;
 
 	list_del(&vd->node);
 
-	वापस to_uniphier_xdmac_desc(vd);
-पूर्ण
+	return to_uniphier_xdmac_desc(vd);
+}
 
 /* xc->vc.lock must be held by caller */
-अटल व्योम uniphier_xdmac_chan_start(काष्ठा uniphier_xdmac_chan *xc,
-				      काष्ठा uniphier_xdmac_desc *xd)
-अणु
+static void uniphier_xdmac_chan_start(struct uniphier_xdmac_chan *xc,
+				      struct uniphier_xdmac_desc *xd)
+{
 	u32 src_mode, src_addr, src_width;
 	u32 dst_mode, dst_addr, dst_width;
 	u32 val, its, tnum;
-	क्रमागत dma_slave_buswidth buswidth;
+	enum dma_slave_buswidth buswidth;
 
 	src_addr = xd->nodes[xd->cur_node].src;
 	dst_addr = xd->nodes[xd->cur_node].dst;
@@ -143,216 +142,216 @@ uniphier_xdmac_next_desc(काष्ठा uniphier_xdmac_chan *xc)
 	tnum     = xd->nodes[xd->cur_node].nr_burst;
 
 	/*
-	 * The width of MEM side must be 4 or 8 bytes, that करोes not
+	 * The width of MEM side must be 4 or 8 bytes, that does not
 	 * affect that of DEV side and transfer size.
 	 */
-	अगर (xd->dir == DMA_DEV_TO_MEM) अणु
+	if (xd->dir == DMA_DEV_TO_MEM) {
 		src_mode = XDMAC_SADM_SAM_FIXED;
 		buswidth = xc->sconfig.src_addr_width;
-	पूर्ण अन्यथा अणु
+	} else {
 		src_mode = XDMAC_SADM_SAM_INC;
 		buswidth = DMA_SLAVE_BUSWIDTH_8_BYTES;
-	पूर्ण
+	}
 	src_width = FIELD_PREP(XDMAC_SADM_STW_MASK, __ffs(buswidth));
 
-	अगर (xd->dir == DMA_MEM_TO_DEV) अणु
+	if (xd->dir == DMA_MEM_TO_DEV) {
 		dst_mode = XDMAC_DADM_DAM_FIXED;
 		buswidth = xc->sconfig.dst_addr_width;
-	पूर्ण अन्यथा अणु
+	} else {
 		dst_mode = XDMAC_DADM_DAM_INC;
 		buswidth = DMA_SLAVE_BUSWIDTH_8_BYTES;
-	पूर्ण
+	}
 	dst_width = FIELD_PREP(XDMAC_DADM_DTW_MASK, __ffs(buswidth));
 
 	/* setup transfer factor */
 	val = FIELD_PREP(XDMAC_TFA_MCNT_MASK, XDMAC_INTERVAL_CLKS);
 	val |= FIELD_PREP(XDMAC_TFA_MASK, xc->req_factor);
-	ग_लिखोl(val, xc->reg_ch_base + XDMAC_TFA);
+	writel(val, xc->reg_ch_base + XDMAC_TFA);
 
 	/* setup the channel */
-	ग_लिखोl(lower_32_bits(src_addr), xc->reg_ch_base + XDMAC_SAD);
-	ग_लिखोl(upper_32_bits(src_addr), xc->reg_ch_base + XDMAC_EXSAD);
+	writel(lower_32_bits(src_addr), xc->reg_ch_base + XDMAC_SAD);
+	writel(upper_32_bits(src_addr), xc->reg_ch_base + XDMAC_EXSAD);
 
-	ग_लिखोl(lower_32_bits(dst_addr), xc->reg_ch_base + XDMAC_DAD);
-	ग_लिखोl(upper_32_bits(dst_addr), xc->reg_ch_base + XDMAC_EXDAD);
+	writel(lower_32_bits(dst_addr), xc->reg_ch_base + XDMAC_DAD);
+	writel(upper_32_bits(dst_addr), xc->reg_ch_base + XDMAC_EXDAD);
 
 	src_mode |= src_width;
 	dst_mode |= dst_width;
-	ग_लिखोl(src_mode, xc->reg_ch_base + XDMAC_SADM);
-	ग_लिखोl(dst_mode, xc->reg_ch_base + XDMAC_DADM);
+	writel(src_mode, xc->reg_ch_base + XDMAC_SADM);
+	writel(dst_mode, xc->reg_ch_base + XDMAC_DADM);
 
-	ग_लिखोl(its, xc->reg_ch_base + XDMAC_ITS);
-	ग_लिखोl(tnum, xc->reg_ch_base + XDMAC_TNUM);
+	writel(its, xc->reg_ch_base + XDMAC_ITS);
+	writel(tnum, xc->reg_ch_base + XDMAC_TNUM);
 
-	/* enable पूर्णांकerrupt */
-	ग_लिखोl(XDMAC_IEN_ENDIEN | XDMAC_IEN_ERRIEN,
+	/* enable interrupt */
+	writel(XDMAC_IEN_ENDIEN | XDMAC_IEN_ERRIEN,
 	       xc->reg_ch_base + XDMAC_IEN);
 
 	/* start XDMAC */
-	val = पढ़ोl(xc->reg_ch_base + XDMAC_TSS);
+	val = readl(xc->reg_ch_base + XDMAC_TSS);
 	val |= XDMAC_TSS_REQ;
-	ग_लिखोl(val, xc->reg_ch_base + XDMAC_TSS);
-पूर्ण
+	writel(val, xc->reg_ch_base + XDMAC_TSS);
+}
 
 /* xc->vc.lock must be held by caller */
-अटल पूर्णांक uniphier_xdmac_chan_stop(काष्ठा uniphier_xdmac_chan *xc)
-अणु
+static int uniphier_xdmac_chan_stop(struct uniphier_xdmac_chan *xc)
+{
 	u32 val;
 
-	/* disable पूर्णांकerrupt */
-	val = पढ़ोl(xc->reg_ch_base + XDMAC_IEN);
+	/* disable interrupt */
+	val = readl(xc->reg_ch_base + XDMAC_IEN);
 	val &= ~(XDMAC_IEN_ENDIEN | XDMAC_IEN_ERRIEN);
-	ग_लिखोl(val, xc->reg_ch_base + XDMAC_IEN);
+	writel(val, xc->reg_ch_base + XDMAC_IEN);
 
 	/* stop XDMAC */
-	val = पढ़ोl(xc->reg_ch_base + XDMAC_TSS);
+	val = readl(xc->reg_ch_base + XDMAC_TSS);
 	val &= ~XDMAC_TSS_REQ;
-	ग_लिखोl(0, xc->reg_ch_base + XDMAC_TSS);
+	writel(0, xc->reg_ch_base + XDMAC_TSS);
 
-	/* रुको until transfer is stopped */
-	वापस पढ़ोl_poll_समयout(xc->reg_ch_base + XDMAC_STAT, val,
+	/* wait until transfer is stopped */
+	return readl_poll_timeout(xc->reg_ch_base + XDMAC_STAT, val,
 				  !(val & XDMAC_STAT_TENF), 100, 1000);
-पूर्ण
+}
 
 /* xc->vc.lock must be held by caller */
-अटल व्योम uniphier_xdmac_start(काष्ठा uniphier_xdmac_chan *xc)
-अणु
-	काष्ठा uniphier_xdmac_desc *xd;
+static void uniphier_xdmac_start(struct uniphier_xdmac_chan *xc)
+{
+	struct uniphier_xdmac_desc *xd;
 
 	xd = uniphier_xdmac_next_desc(xc);
-	अगर (xd)
+	if (xd)
 		uniphier_xdmac_chan_start(xc, xd);
 
 	/* set desc to chan regardless of xd is null */
 	xc->xd = xd;
-पूर्ण
+}
 
-अटल व्योम uniphier_xdmac_chan_irq(काष्ठा uniphier_xdmac_chan *xc)
-अणु
+static void uniphier_xdmac_chan_irq(struct uniphier_xdmac_chan *xc)
+{
 	u32 stat;
-	पूर्णांक ret;
+	int ret;
 
 	spin_lock(&xc->vc.lock);
 
-	stat = पढ़ोl(xc->reg_ch_base + XDMAC_ID);
+	stat = readl(xc->reg_ch_base + XDMAC_ID);
 
-	अगर (stat & XDMAC_ID_ERRIDF) अणु
+	if (stat & XDMAC_ID_ERRIDF) {
 		ret = uniphier_xdmac_chan_stop(xc);
-		अगर (ret)
+		if (ret)
 			dev_err(xc->xdev->ddev.dev,
 				"DMA transfer error with aborting issue\n");
-		अन्यथा
+		else
 			dev_err(xc->xdev->ddev.dev,
 				"DMA transfer error\n");
 
-	पूर्ण अन्यथा अगर ((stat & XDMAC_ID_ENDIDF) && xc->xd) अणु
+	} else if ((stat & XDMAC_ID_ENDIDF) && xc->xd) {
 		xc->xd->cur_node++;
-		अगर (xc->xd->cur_node >= xc->xd->nr_node) अणु
+		if (xc->xd->cur_node >= xc->xd->nr_node) {
 			vchan_cookie_complete(&xc->xd->vd);
 			uniphier_xdmac_start(xc);
-		पूर्ण अन्यथा अणु
+		} else {
 			uniphier_xdmac_chan_start(xc, xc->xd);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* ग_लिखो bits to clear */
-	ग_लिखोl(stat, xc->reg_ch_base + XDMAC_IR);
+	/* write bits to clear */
+	writel(stat, xc->reg_ch_base + XDMAC_IR);
 
 	spin_unlock(&xc->vc.lock);
-पूर्ण
+}
 
-अटल irqवापस_t uniphier_xdmac_irq_handler(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा uniphier_xdmac_device *xdev = dev_id;
-	पूर्णांक i;
+static irqreturn_t uniphier_xdmac_irq_handler(int irq, void *dev_id)
+{
+	struct uniphier_xdmac_device *xdev = dev_id;
+	int i;
 
-	क्रम (i = 0; i < xdev->nr_chans; i++)
+	for (i = 0; i < xdev->nr_chans; i++)
 		uniphier_xdmac_chan_irq(&xdev->channels[i]);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम uniphier_xdmac_मुक्त_chan_resources(काष्ठा dma_chan *chan)
-अणु
-	vchan_मुक्त_chan_resources(to_virt_chan(chan));
-पूर्ण
+static void uniphier_xdmac_free_chan_resources(struct dma_chan *chan)
+{
+	vchan_free_chan_resources(to_virt_chan(chan));
+}
 
-अटल काष्ठा dma_async_tx_descriptor *
-uniphier_xdmac_prep_dma_स_नकल(काष्ठा dma_chan *chan, dma_addr_t dst,
-			       dma_addr_t src, माप_प्रकार len, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा virt_dma_chan *vc = to_virt_chan(chan);
-	काष्ठा uniphier_xdmac_desc *xd;
-	अचिन्हित पूर्णांक nr;
-	माप_प्रकार burst_size, tlen;
-	पूर्णांक i;
+static struct dma_async_tx_descriptor *
+uniphier_xdmac_prep_dma_memcpy(struct dma_chan *chan, dma_addr_t dst,
+			       dma_addr_t src, size_t len, unsigned long flags)
+{
+	struct virt_dma_chan *vc = to_virt_chan(chan);
+	struct uniphier_xdmac_desc *xd;
+	unsigned int nr;
+	size_t burst_size, tlen;
+	int i;
 
-	अगर (len > XDMAC_MAX_WORD_SIZE * XDMAC_MAX_WORDS)
-		वापस शून्य;
+	if (len > XDMAC_MAX_WORD_SIZE * XDMAC_MAX_WORDS)
+		return NULL;
 
 	nr = 1 + len / XDMAC_MAX_WORD_SIZE;
 
-	xd = kzalloc(काष्ठा_size(xd, nodes, nr), GFP_NOWAIT);
-	अगर (!xd)
-		वापस शून्य;
+	xd = kzalloc(struct_size(xd, nodes, nr), GFP_NOWAIT);
+	if (!xd)
+		return NULL;
 
-	क्रम (i = 0; i < nr; i++) अणु
-		burst_size = min_t(माप_प्रकार, len, XDMAC_MAX_WORD_SIZE);
+	for (i = 0; i < nr; i++) {
+		burst_size = min_t(size_t, len, XDMAC_MAX_WORD_SIZE);
 		xd->nodes[i].src = src;
 		xd->nodes[i].dst = dst;
 		xd->nodes[i].burst_size = burst_size;
 		xd->nodes[i].nr_burst = len / burst_size;
-		tlen = roundकरोwn(len, burst_size);
+		tlen = rounddown(len, burst_size);
 		src += tlen;
 		dst += tlen;
 		len -= tlen;
-	पूर्ण
+	}
 
 	xd->dir = DMA_MEM_TO_MEM;
 	xd->nr_node = nr;
 	xd->cur_node = 0;
 
-	वापस vchan_tx_prep(vc, &xd->vd, flags);
-पूर्ण
+	return vchan_tx_prep(vc, &xd->vd, flags);
+}
 
-अटल काष्ठा dma_async_tx_descriptor *
-uniphier_xdmac_prep_slave_sg(काष्ठा dma_chan *chan, काष्ठा scatterlist *sgl,
-			     अचिन्हित पूर्णांक sg_len,
-			     क्रमागत dma_transfer_direction direction,
-			     अचिन्हित दीर्घ flags, व्योम *context)
-अणु
-	काष्ठा virt_dma_chan *vc = to_virt_chan(chan);
-	काष्ठा uniphier_xdmac_chan *xc = to_uniphier_xdmac_chan(vc);
-	काष्ठा uniphier_xdmac_desc *xd;
-	काष्ठा scatterlist *sg;
-	क्रमागत dma_slave_buswidth buswidth;
+static struct dma_async_tx_descriptor *
+uniphier_xdmac_prep_slave_sg(struct dma_chan *chan, struct scatterlist *sgl,
+			     unsigned int sg_len,
+			     enum dma_transfer_direction direction,
+			     unsigned long flags, void *context)
+{
+	struct virt_dma_chan *vc = to_virt_chan(chan);
+	struct uniphier_xdmac_chan *xc = to_uniphier_xdmac_chan(vc);
+	struct uniphier_xdmac_desc *xd;
+	struct scatterlist *sg;
+	enum dma_slave_buswidth buswidth;
 	u32 maxburst;
-	पूर्णांक i;
+	int i;
 
-	अगर (!is_slave_direction(direction))
-		वापस शून्य;
+	if (!is_slave_direction(direction))
+		return NULL;
 
-	अगर (direction == DMA_DEV_TO_MEM) अणु
+	if (direction == DMA_DEV_TO_MEM) {
 		buswidth = xc->sconfig.src_addr_width;
 		maxburst = xc->sconfig.src_maxburst;
-	पूर्ण अन्यथा अणु
+	} else {
 		buswidth = xc->sconfig.dst_addr_width;
 		maxburst = xc->sconfig.dst_maxburst;
-	पूर्ण
+	}
 
-	अगर (!maxburst)
+	if (!maxburst)
 		maxburst = 1;
-	अगर (maxburst > xc->xdev->ddev.max_burst) अणु
+	if (maxburst > xc->xdev->ddev.max_burst) {
 		dev_err(xc->xdev->ddev.dev,
 			"Exceed maximum number of burst words\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	xd = kzalloc(काष्ठा_size(xd, nodes, sg_len), GFP_NOWAIT);
-	अगर (!xd)
-		वापस शून्य;
+	xd = kzalloc(struct_size(xd, nodes, sg_len), GFP_NOWAIT);
+	if (!xd)
+		return NULL;
 
-	क्रम_each_sg(sgl, sg, sg_len, i) अणु
+	for_each_sg(sgl, sg, sg_len, i) {
 		xd->nodes[i].src = (direction == DMA_DEV_TO_MEM)
 			? xc->sconfig.src_addr : sg_dma_address(sg);
 		xd->nodes[i].dst = (direction == DMA_MEM_TO_DEV)
@@ -362,145 +361,145 @@ uniphier_xdmac_prep_slave_sg(काष्ठा dma_chan *chan, काष्ठ�
 			sg_dma_len(sg) / xd->nodes[i].burst_size;
 
 		/*
-		 * Currently transfer that size करोesn't align the unit size
+		 * Currently transfer that size doesn't align the unit size
 		 * (the number of burst words * bus-width) is not allowed,
-		 * because the driver करोes not support the way to transfer
+		 * because the driver does not support the way to transfer
 		 * residue size. As a matter of fact, in order to transfer
 		 * arbitrary size, 'src_maxburst' or 'dst_maxburst' of
 		 * dma_slave_config must be 1.
 		 */
-		अगर (sg_dma_len(sg) % xd->nodes[i].burst_size) अणु
+		if (sg_dma_len(sg) % xd->nodes[i].burst_size) {
 			dev_err(xc->xdev->ddev.dev,
 				"Unaligned transfer size: %d", sg_dma_len(sg));
-			kमुक्त(xd);
-			वापस शून्य;
-		पूर्ण
+			kfree(xd);
+			return NULL;
+		}
 
-		अगर (xd->nodes[i].nr_burst > XDMAC_MAX_WORDS) अणु
+		if (xd->nodes[i].nr_burst > XDMAC_MAX_WORDS) {
 			dev_err(xc->xdev->ddev.dev,
 				"Exceed maximum transfer size");
-			kमुक्त(xd);
-			वापस शून्य;
-		पूर्ण
-	पूर्ण
+			kfree(xd);
+			return NULL;
+		}
+	}
 
 	xd->dir = direction;
 	xd->nr_node = sg_len;
 	xd->cur_node = 0;
 
-	वापस vchan_tx_prep(vc, &xd->vd, flags);
-पूर्ण
+	return vchan_tx_prep(vc, &xd->vd, flags);
+}
 
-अटल पूर्णांक uniphier_xdmac_slave_config(काष्ठा dma_chan *chan,
-				       काष्ठा dma_slave_config *config)
-अणु
-	काष्ठा virt_dma_chan *vc = to_virt_chan(chan);
-	काष्ठा uniphier_xdmac_chan *xc = to_uniphier_xdmac_chan(vc);
+static int uniphier_xdmac_slave_config(struct dma_chan *chan,
+				       struct dma_slave_config *config)
+{
+	struct virt_dma_chan *vc = to_virt_chan(chan);
+	struct uniphier_xdmac_chan *xc = to_uniphier_xdmac_chan(vc);
 
-	स_नकल(&xc->sconfig, config, माप(*config));
+	memcpy(&xc->sconfig, config, sizeof(*config));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक uniphier_xdmac_terminate_all(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा virt_dma_chan *vc = to_virt_chan(chan);
-	काष्ठा uniphier_xdmac_chan *xc = to_uniphier_xdmac_chan(vc);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = 0;
+static int uniphier_xdmac_terminate_all(struct dma_chan *chan)
+{
+	struct virt_dma_chan *vc = to_virt_chan(chan);
+	struct uniphier_xdmac_chan *xc = to_uniphier_xdmac_chan(vc);
+	unsigned long flags;
+	int ret = 0;
 	LIST_HEAD(head);
 
 	spin_lock_irqsave(&vc->lock, flags);
 
-	अगर (xc->xd) अणु
+	if (xc->xd) {
 		vchan_terminate_vdesc(&xc->xd->vd);
-		xc->xd = शून्य;
+		xc->xd = NULL;
 		ret = uniphier_xdmac_chan_stop(xc);
-	पूर्ण
+	}
 
 	vchan_get_all_descriptors(vc, &head);
 
 	spin_unlock_irqrestore(&vc->lock, flags);
 
-	vchan_dma_desc_मुक्त_list(vc, &head);
+	vchan_dma_desc_free_list(vc, &head);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम uniphier_xdmac_synchronize(काष्ठा dma_chan *chan)
-अणु
+static void uniphier_xdmac_synchronize(struct dma_chan *chan)
+{
 	vchan_synchronize(to_virt_chan(chan));
-पूर्ण
+}
 
-अटल व्योम uniphier_xdmac_issue_pending(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा virt_dma_chan *vc = to_virt_chan(chan);
-	काष्ठा uniphier_xdmac_chan *xc = to_uniphier_xdmac_chan(vc);
-	अचिन्हित दीर्घ flags;
+static void uniphier_xdmac_issue_pending(struct dma_chan *chan)
+{
+	struct virt_dma_chan *vc = to_virt_chan(chan);
+	struct uniphier_xdmac_chan *xc = to_uniphier_xdmac_chan(vc);
+	unsigned long flags;
 
 	spin_lock_irqsave(&vc->lock, flags);
 
-	अगर (vchan_issue_pending(vc) && !xc->xd)
+	if (vchan_issue_pending(vc) && !xc->xd)
 		uniphier_xdmac_start(xc);
 
 	spin_unlock_irqrestore(&vc->lock, flags);
-पूर्ण
+}
 
-अटल व्योम uniphier_xdmac_desc_मुक्त(काष्ठा virt_dma_desc *vd)
-अणु
-	kमुक्त(to_uniphier_xdmac_desc(vd));
-पूर्ण
+static void uniphier_xdmac_desc_free(struct virt_dma_desc *vd)
+{
+	kfree(to_uniphier_xdmac_desc(vd));
+}
 
-अटल व्योम uniphier_xdmac_chan_init(काष्ठा uniphier_xdmac_device *xdev,
-				     पूर्णांक ch)
-अणु
-	काष्ठा uniphier_xdmac_chan *xc = &xdev->channels[ch];
+static void uniphier_xdmac_chan_init(struct uniphier_xdmac_device *xdev,
+				     int ch)
+{
+	struct uniphier_xdmac_chan *xc = &xdev->channels[ch];
 
 	xc->xdev = xdev;
 	xc->reg_ch_base = xdev->reg_base + XDMAC_CH_WIDTH * ch;
-	xc->vc.desc_मुक्त = uniphier_xdmac_desc_मुक्त;
+	xc->vc.desc_free = uniphier_xdmac_desc_free;
 
 	vchan_init(&xc->vc, &xdev->ddev);
-पूर्ण
+}
 
-अटल काष्ठा dma_chan *of_dma_uniphier_xlate(काष्ठा of_phandle_args *dma_spec,
-					      काष्ठा of_dma *ofdma)
-अणु
-	काष्ठा uniphier_xdmac_device *xdev = ofdma->of_dma_data;
-	पूर्णांक chan_id = dma_spec->args[0];
+static struct dma_chan *of_dma_uniphier_xlate(struct of_phandle_args *dma_spec,
+					      struct of_dma *ofdma)
+{
+	struct uniphier_xdmac_device *xdev = ofdma->of_dma_data;
+	int chan_id = dma_spec->args[0];
 
-	अगर (chan_id >= xdev->nr_chans)
-		वापस शून्य;
+	if (chan_id >= xdev->nr_chans)
+		return NULL;
 
 	xdev->channels[chan_id].id = chan_id;
 	xdev->channels[chan_id].req_factor = dma_spec->args[1];
 
-	वापस dma_get_slave_channel(&xdev->channels[chan_id].vc.chan);
-पूर्ण
+	return dma_get_slave_channel(&xdev->channels[chan_id].vc.chan);
+}
 
-अटल पूर्णांक uniphier_xdmac_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा uniphier_xdmac_device *xdev;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा dma_device *ddev;
-	पूर्णांक irq;
-	पूर्णांक nr_chans;
-	पूर्णांक i, ret;
+static int uniphier_xdmac_probe(struct platform_device *pdev)
+{
+	struct uniphier_xdmac_device *xdev;
+	struct device *dev = &pdev->dev;
+	struct dma_device *ddev;
+	int irq;
+	int nr_chans;
+	int i, ret;
 
-	अगर (of_property_पढ़ो_u32(dev->of_node, "dma-channels", &nr_chans))
-		वापस -EINVAL;
-	अगर (nr_chans > XDMAC_MAX_CHANS)
+	if (of_property_read_u32(dev->of_node, "dma-channels", &nr_chans))
+		return -EINVAL;
+	if (nr_chans > XDMAC_MAX_CHANS)
 		nr_chans = XDMAC_MAX_CHANS;
 
-	xdev = devm_kzalloc(dev, काष्ठा_size(xdev, channels, nr_chans),
+	xdev = devm_kzalloc(dev, struct_size(xdev, channels, nr_chans),
 			    GFP_KERNEL);
-	अगर (!xdev)
-		वापस -ENOMEM;
+	if (!xdev)
+		return -ENOMEM;
 
 	xdev->nr_chans = nr_chans;
-	xdev->reg_base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(xdev->reg_base))
-		वापस PTR_ERR(xdev->reg_base);
+	xdev->reg_base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(xdev->reg_base))
+		return PTR_ERR(xdev->reg_base);
 
 	ddev = &xdev->ddev;
 	ddev->dev = dev;
@@ -513,8 +512,8 @@ uniphier_xdmac_prep_slave_sg(काष्ठा dma_chan *chan, काष्ठ�
 			   BIT(DMA_MEM_TO_MEM);
 	ddev->residue_granularity = DMA_RESIDUE_GRANULARITY_BURST;
 	ddev->max_burst = XDMAC_MAX_WORDS;
-	ddev->device_मुक्त_chan_resources = uniphier_xdmac_मुक्त_chan_resources;
-	ddev->device_prep_dma_स_नकल = uniphier_xdmac_prep_dma_स_नकल;
+	ddev->device_free_chan_resources = uniphier_xdmac_free_chan_resources;
+	ddev->device_prep_dma_memcpy = uniphier_xdmac_prep_dma_memcpy;
 	ddev->device_prep_slave_sg = uniphier_xdmac_prep_slave_sg;
 	ddev->device_config = uniphier_xdmac_slave_config;
 	ddev->device_terminate_all = uniphier_xdmac_terminate_all;
@@ -523,88 +522,88 @@ uniphier_xdmac_prep_slave_sg(काष्ठा dma_chan *chan, काष्ठ�
 	ddev->device_issue_pending = uniphier_xdmac_issue_pending;
 	INIT_LIST_HEAD(&ddev->channels);
 
-	क्रम (i = 0; i < nr_chans; i++)
+	for (i = 0; i < nr_chans; i++)
 		uniphier_xdmac_chan_init(xdev, i);
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0)
-		वापस irq;
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0)
+		return irq;
 
 	ret = devm_request_irq(dev, irq, uniphier_xdmac_irq_handler,
 			       IRQF_SHARED, "xdmac", xdev);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to request IRQ\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = dma_async_device_रेजिस्टर(ddev);
-	अगर (ret) अणु
+	ret = dma_async_device_register(ddev);
+	if (ret) {
 		dev_err(dev, "Failed to register XDMA device\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = of_dma_controller_रेजिस्टर(dev->of_node,
+	ret = of_dma_controller_register(dev->of_node,
 					 of_dma_uniphier_xlate, xdev);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to register XDMA controller\n");
-		जाओ out_unरेजिस्टर_dmac;
-	पूर्ण
+		goto out_unregister_dmac;
+	}
 
-	platक्रमm_set_drvdata(pdev, xdev);
+	platform_set_drvdata(pdev, xdev);
 
 	dev_info(&pdev->dev, "UniPhier XDMAC driver (%d channels)\n",
 		 nr_chans);
 
-	वापस 0;
+	return 0;
 
-out_unरेजिस्टर_dmac:
-	dma_async_device_unरेजिस्टर(ddev);
+out_unregister_dmac:
+	dma_async_device_unregister(ddev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक uniphier_xdmac_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा uniphier_xdmac_device *xdev = platक्रमm_get_drvdata(pdev);
-	काष्ठा dma_device *ddev = &xdev->ddev;
-	काष्ठा dma_chan *chan;
-	पूर्णांक ret;
+static int uniphier_xdmac_remove(struct platform_device *pdev)
+{
+	struct uniphier_xdmac_device *xdev = platform_get_drvdata(pdev);
+	struct dma_device *ddev = &xdev->ddev;
+	struct dma_chan *chan;
+	int ret;
 
 	/*
-	 * Beक्रमe reaching here, almost all descriptors have been मुक्तd by the
-	 * ->device_मुक्त_chan_resources() hook. However, each channel might
+	 * Before reaching here, almost all descriptors have been freed by the
+	 * ->device_free_chan_resources() hook. However, each channel might
 	 * be still holding one descriptor that was on-flight at that moment.
-	 * Terminate it to make sure this hardware is no दीर्घer running. Then,
-	 * मुक्त the channel resources once again to aव्योम memory leak.
+	 * Terminate it to make sure this hardware is no longer running. Then,
+	 * free the channel resources once again to avoid memory leak.
 	 */
-	list_क्रम_each_entry(chan, &ddev->channels, device_node) अणु
+	list_for_each_entry(chan, &ddev->channels, device_node) {
 		ret = dmaengine_terminate_sync(chan);
-		अगर (ret)
-			वापस ret;
-		uniphier_xdmac_मुक्त_chan_resources(chan);
-	पूर्ण
+		if (ret)
+			return ret;
+		uniphier_xdmac_free_chan_resources(chan);
+	}
 
-	of_dma_controller_मुक्त(pdev->dev.of_node);
-	dma_async_device_unरेजिस्टर(ddev);
+	of_dma_controller_free(pdev->dev.of_node);
+	dma_async_device_unregister(ddev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id uniphier_xdmac_match[] = अणु
-	अणु .compatible = "socionext,uniphier-xdmac" पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id uniphier_xdmac_match[] = {
+	{ .compatible = "socionext,uniphier-xdmac" },
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, uniphier_xdmac_match);
 
-अटल काष्ठा platक्रमm_driver uniphier_xdmac_driver = अणु
+static struct platform_driver uniphier_xdmac_driver = {
 	.probe = uniphier_xdmac_probe,
-	.हटाओ = uniphier_xdmac_हटाओ,
-	.driver = अणु
+	.remove = uniphier_xdmac_remove,
+	.driver = {
 		.name = "uniphier-xdmac",
 		.of_match_table = uniphier_xdmac_match,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(uniphier_xdmac_driver);
+	},
+};
+module_platform_driver(uniphier_xdmac_driver);
 
 MODULE_AUTHOR("Kunihiko Hayashi <hayashi.kunihiko@socionext.com>");
 MODULE_DESCRIPTION("UniPhier external DMA controller driver");

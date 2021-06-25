@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * configfs_पूर्णांकernal.h - Internal stuff क्रम configfs
+ * configfs_internal.h - Internal stuff for configfs
  *
  * Based on sysfs:
  * 	sysfs is Copyright (C) 2001, 2002, 2003 Patrick Mochel
@@ -9,152 +8,152 @@
  * configfs Copyright (C) 2005 Oracle.  All rights reserved.
  */
 
-#अगर_घोषित pr_fmt
-#अघोषित pr_fmt
-#पूर्ण_अगर
+#ifdef pr_fmt
+#undef pr_fmt
+#endif
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/slab.h>
-#समावेश <linux/list.h>
-#समावेश <linux/spinlock.h>
+#include <linux/slab.h>
+#include <linux/list.h>
+#include <linux/spinlock.h>
 
-काष्ठा configfs_fragment अणु
+struct configfs_fragment {
 	atomic_t frag_count;
-	काष्ठा rw_semaphore frag_sem;
+	struct rw_semaphore frag_sem;
 	bool frag_dead;
-पूर्ण;
+};
 
-व्योम put_fragment(काष्ठा configfs_fragment *);
-काष्ठा configfs_fragment *get_fragment(काष्ठा configfs_fragment *);
+void put_fragment(struct configfs_fragment *);
+struct configfs_fragment *get_fragment(struct configfs_fragment *);
 
-काष्ठा configfs_dirent अणु
+struct configfs_dirent {
 	atomic_t		s_count;
-	पूर्णांक			s_dependent_count;
-	काष्ठा list_head	s_sibling;
-	काष्ठा list_head	s_children;
-	पूर्णांक			s_links;
-	व्योम			* s_element;
-	पूर्णांक			s_type;
+	int			s_dependent_count;
+	struct list_head	s_sibling;
+	struct list_head	s_children;
+	int			s_links;
+	void			* s_element;
+	int			s_type;
 	umode_t			s_mode;
-	काष्ठा dentry		* s_dentry;
-	काष्ठा iattr		* s_iattr;
-#अगर_घोषित CONFIG_LOCKDEP
-	पूर्णांक			s_depth;
-#पूर्ण_अगर
-	काष्ठा configfs_fragment *s_frag;
-पूर्ण;
+	struct dentry		* s_dentry;
+	struct iattr		* s_iattr;
+#ifdef CONFIG_LOCKDEP
+	int			s_depth;
+#endif
+	struct configfs_fragment *s_frag;
+};
 
-#घोषणा CONFIGFS_ROOT		0x0001
-#घोषणा CONFIGFS_सूची		0x0002
-#घोषणा CONFIGFS_ITEM_ATTR	0x0004
-#घोषणा CONFIGFS_ITEM_BIN_ATTR	0x0008
-#घोषणा CONFIGFS_ITEM_LINK	0x0020
-#घोषणा CONFIGFS_USET_सूची	0x0040
-#घोषणा CONFIGFS_USET_DEFAULT	0x0080
-#घोषणा CONFIGFS_USET_DROPPING	0x0100
-#घोषणा CONFIGFS_USET_IN_MKसूची	0x0200
-#घोषणा CONFIGFS_USET_CREATING	0x0400
-#घोषणा CONFIGFS_NOT_PINNED	(CONFIGFS_ITEM_ATTR | CONFIGFS_ITEM_BIN_ATTR)
+#define CONFIGFS_ROOT		0x0001
+#define CONFIGFS_DIR		0x0002
+#define CONFIGFS_ITEM_ATTR	0x0004
+#define CONFIGFS_ITEM_BIN_ATTR	0x0008
+#define CONFIGFS_ITEM_LINK	0x0020
+#define CONFIGFS_USET_DIR	0x0040
+#define CONFIGFS_USET_DEFAULT	0x0080
+#define CONFIGFS_USET_DROPPING	0x0100
+#define CONFIGFS_USET_IN_MKDIR	0x0200
+#define CONFIGFS_USET_CREATING	0x0400
+#define CONFIGFS_NOT_PINNED	(CONFIGFS_ITEM_ATTR | CONFIGFS_ITEM_BIN_ATTR)
 
-बाह्य काष्ठा mutex configfs_symlink_mutex;
-बाह्य spinlock_t configfs_dirent_lock;
+extern struct mutex configfs_symlink_mutex;
+extern spinlock_t configfs_dirent_lock;
 
-बाह्य काष्ठा kmem_cache *configfs_dir_cachep;
+extern struct kmem_cache *configfs_dir_cachep;
 
-बाह्य पूर्णांक configfs_is_root(काष्ठा config_item *item);
+extern int configfs_is_root(struct config_item *item);
 
-बाह्य काष्ठा inode * configfs_new_inode(umode_t mode, काष्ठा configfs_dirent *, काष्ठा super_block *);
-बाह्य काष्ठा inode *configfs_create(काष्ठा dentry *, umode_t mode);
+extern struct inode * configfs_new_inode(umode_t mode, struct configfs_dirent *, struct super_block *);
+extern struct inode *configfs_create(struct dentry *, umode_t mode);
 
-बाह्य पूर्णांक configfs_create_file(काष्ठा config_item *, स्थिर काष्ठा configfs_attribute *);
-बाह्य पूर्णांक configfs_create_bin_file(काष्ठा config_item *,
-				    स्थिर काष्ठा configfs_bin_attribute *);
-बाह्य पूर्णांक configfs_make_dirent(काष्ठा configfs_dirent *, काष्ठा dentry *,
-				व्योम *, umode_t, पूर्णांक, काष्ठा configfs_fragment *);
-बाह्य पूर्णांक configfs_dirent_is_पढ़ोy(काष्ठा configfs_dirent *);
+extern int configfs_create_file(struct config_item *, const struct configfs_attribute *);
+extern int configfs_create_bin_file(struct config_item *,
+				    const struct configfs_bin_attribute *);
+extern int configfs_make_dirent(struct configfs_dirent *, struct dentry *,
+				void *, umode_t, int, struct configfs_fragment *);
+extern int configfs_dirent_is_ready(struct configfs_dirent *);
 
-बाह्य व्योम configfs_hash_and_हटाओ(काष्ठा dentry * dir, स्थिर अक्षर * name);
+extern void configfs_hash_and_remove(struct dentry * dir, const char * name);
 
-बाह्य स्थिर अचिन्हित अक्षर * configfs_get_name(काष्ठा configfs_dirent *sd);
-बाह्य व्योम configfs_drop_dentry(काष्ठा configfs_dirent *sd, काष्ठा dentry *parent);
-बाह्य पूर्णांक configfs_setattr(काष्ठा user_namespace *mnt_userns,
-			    काष्ठा dentry *dentry, काष्ठा iattr *iattr);
+extern const unsigned char * configfs_get_name(struct configfs_dirent *sd);
+extern void configfs_drop_dentry(struct configfs_dirent *sd, struct dentry *parent);
+extern int configfs_setattr(struct user_namespace *mnt_userns,
+			    struct dentry *dentry, struct iattr *iattr);
 
-बाह्य काष्ठा dentry *configfs_pin_fs(व्योम);
-बाह्य व्योम configfs_release_fs(व्योम);
+extern struct dentry *configfs_pin_fs(void);
+extern void configfs_release_fs(void);
 
-बाह्य स्थिर काष्ठा file_operations configfs_dir_operations;
-बाह्य स्थिर काष्ठा file_operations configfs_file_operations;
-बाह्य स्थिर काष्ठा file_operations configfs_bin_file_operations;
-बाह्य स्थिर काष्ठा inode_operations configfs_dir_inode_operations;
-बाह्य स्थिर काष्ठा inode_operations configfs_root_inode_operations;
-बाह्य स्थिर काष्ठा inode_operations configfs_symlink_inode_operations;
-बाह्य स्थिर काष्ठा dentry_operations configfs_dentry_ops;
+extern const struct file_operations configfs_dir_operations;
+extern const struct file_operations configfs_file_operations;
+extern const struct file_operations configfs_bin_file_operations;
+extern const struct inode_operations configfs_dir_inode_operations;
+extern const struct inode_operations configfs_root_inode_operations;
+extern const struct inode_operations configfs_symlink_inode_operations;
+extern const struct dentry_operations configfs_dentry_ops;
 
-बाह्य पूर्णांक configfs_symlink(काष्ठा user_namespace *mnt_userns,
-			    काष्ठा inode *dir, काष्ठा dentry *dentry,
-			    स्थिर अक्षर *symname);
-बाह्य पूर्णांक configfs_unlink(काष्ठा inode *dir, काष्ठा dentry *dentry);
+extern int configfs_symlink(struct user_namespace *mnt_userns,
+			    struct inode *dir, struct dentry *dentry,
+			    const char *symname);
+extern int configfs_unlink(struct inode *dir, struct dentry *dentry);
 
-पूर्णांक configfs_create_link(काष्ठा configfs_dirent *target, काष्ठा dentry *parent,
-		काष्ठा dentry *dentry, अक्षर *body);
+int configfs_create_link(struct configfs_dirent *target, struct dentry *parent,
+		struct dentry *dentry, char *body);
 
-अटल अंतरभूत काष्ठा config_item * to_item(काष्ठा dentry * dentry)
-अणु
-	काष्ठा configfs_dirent * sd = dentry->d_fsdata;
-	वापस ((काष्ठा config_item *) sd->s_element);
-पूर्ण
+static inline struct config_item * to_item(struct dentry * dentry)
+{
+	struct configfs_dirent * sd = dentry->d_fsdata;
+	return ((struct config_item *) sd->s_element);
+}
 
-अटल अंतरभूत काष्ठा configfs_attribute * to_attr(काष्ठा dentry * dentry)
-अणु
-	काष्ठा configfs_dirent * sd = dentry->d_fsdata;
-	वापस ((काष्ठा configfs_attribute *) sd->s_element);
-पूर्ण
+static inline struct configfs_attribute * to_attr(struct dentry * dentry)
+{
+	struct configfs_dirent * sd = dentry->d_fsdata;
+	return ((struct configfs_attribute *) sd->s_element);
+}
 
-अटल अंतरभूत काष्ठा configfs_bin_attribute *to_bin_attr(काष्ठा dentry *dentry)
-अणु
-	काष्ठा configfs_attribute *attr = to_attr(dentry);
+static inline struct configfs_bin_attribute *to_bin_attr(struct dentry *dentry)
+{
+	struct configfs_attribute *attr = to_attr(dentry);
 
-	वापस container_of(attr, काष्ठा configfs_bin_attribute, cb_attr);
-पूर्ण
+	return container_of(attr, struct configfs_bin_attribute, cb_attr);
+}
 
-अटल अंतरभूत काष्ठा config_item *configfs_get_config_item(काष्ठा dentry *dentry)
-अणु
-	काष्ठा config_item * item = शून्य;
+static inline struct config_item *configfs_get_config_item(struct dentry *dentry)
+{
+	struct config_item * item = NULL;
 
 	spin_lock(&dentry->d_lock);
-	अगर (!d_unhashed(dentry)) अणु
-		काष्ठा configfs_dirent * sd = dentry->d_fsdata;
+	if (!d_unhashed(dentry)) {
+		struct configfs_dirent * sd = dentry->d_fsdata;
 		item = config_item_get(sd->s_element);
-	पूर्ण
+	}
 	spin_unlock(&dentry->d_lock);
 
-	वापस item;
-पूर्ण
+	return item;
+}
 
-अटल अंतरभूत व्योम release_configfs_dirent(काष्ठा configfs_dirent * sd)
-अणु
-	अगर (!(sd->s_type & CONFIGFS_ROOT)) अणु
-		kमुक्त(sd->s_iattr);
+static inline void release_configfs_dirent(struct configfs_dirent * sd)
+{
+	if (!(sd->s_type & CONFIGFS_ROOT)) {
+		kfree(sd->s_iattr);
 		put_fragment(sd->s_frag);
-		kmem_cache_मुक्त(configfs_dir_cachep, sd);
-	पूर्ण
-पूर्ण
+		kmem_cache_free(configfs_dir_cachep, sd);
+	}
+}
 
-अटल अंतरभूत काष्ठा configfs_dirent * configfs_get(काष्ठा configfs_dirent * sd)
-अणु
-	अगर (sd) अणु
-		WARN_ON(!atomic_पढ़ो(&sd->s_count));
+static inline struct configfs_dirent * configfs_get(struct configfs_dirent * sd)
+{
+	if (sd) {
+		WARN_ON(!atomic_read(&sd->s_count));
 		atomic_inc(&sd->s_count);
-	पूर्ण
-	वापस sd;
-पूर्ण
+	}
+	return sd;
+}
 
-अटल अंतरभूत व्योम configfs_put(काष्ठा configfs_dirent * sd)
-अणु
-	WARN_ON(!atomic_पढ़ो(&sd->s_count));
-	अगर (atomic_dec_and_test(&sd->s_count))
+static inline void configfs_put(struct configfs_dirent * sd)
+{
+	WARN_ON(!atomic_read(&sd->s_count));
+	if (atomic_dec_and_test(&sd->s_count))
 		release_configfs_dirent(sd);
-पूर्ण
+}
 

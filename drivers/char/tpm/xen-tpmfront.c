@@ -1,211 +1,210 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Implementation of the Xen vTPM device frontend
  *
  * Author:  Daniel De Graaf <dgdegra@tycho.nsa.gov>
  */
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/err.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/मुक्तzer.h>
-#समावेश <xen/xen.h>
-#समावेश <xen/events.h>
-#समावेश <xen/पूर्णांकerface/io/tpmअगर.h>
-#समावेश <xen/grant_table.h>
-#समावेश <xen/xenbus.h>
-#समावेश <xen/page.h>
-#समावेश "tpm.h"
-#समावेश <xen/platक्रमm_pci.h>
+#include <linux/errno.h>
+#include <linux/err.h>
+#include <linux/interrupt.h>
+#include <linux/freezer.h>
+#include <xen/xen.h>
+#include <xen/events.h>
+#include <xen/interface/io/tpmif.h>
+#include <xen/grant_table.h>
+#include <xen/xenbus.h>
+#include <xen/page.h>
+#include "tpm.h"
+#include <xen/platform_pci.h>
 
-काष्ठा tpm_निजी अणु
-	काष्ठा tpm_chip *chip;
-	काष्ठा xenbus_device *dev;
+struct tpm_private {
+	struct tpm_chip *chip;
+	struct xenbus_device *dev;
 
-	काष्ठा vtpm_shared_page *shr;
+	struct vtpm_shared_page *shr;
 
-	अचिन्हित पूर्णांक evtchn;
-	पूर्णांक ring_ref;
-	करोmid_t backend_id;
-	पूर्णांक irq;
-	रुको_queue_head_t पढ़ो_queue;
-पूर्ण;
+	unsigned int evtchn;
+	int ring_ref;
+	domid_t backend_id;
+	int irq;
+	wait_queue_head_t read_queue;
+};
 
-क्रमागत status_bits अणु
+enum status_bits {
 	VTPM_STATUS_RUNNING  = 0x1,
 	VTPM_STATUS_IDLE     = 0x2,
 	VTPM_STATUS_RESULT   = 0x4,
 	VTPM_STATUS_CANCELED = 0x8,
-पूर्ण;
+};
 
-अटल bool रुको_क्रम_tpm_stat_cond(काष्ठा tpm_chip *chip, u8 mask,
+static bool wait_for_tpm_stat_cond(struct tpm_chip *chip, u8 mask,
 					bool check_cancel, bool *canceled)
-अणु
+{
 	u8 status = chip->ops->status(chip);
 
 	*canceled = false;
-	अगर ((status & mask) == mask)
-		वापस true;
-	अगर (check_cancel && chip->ops->req_canceled(chip, status)) अणु
+	if ((status & mask) == mask)
+		return true;
+	if (check_cancel && chip->ops->req_canceled(chip, status)) {
 		*canceled = true;
-		वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+		return true;
+	}
+	return false;
+}
 
-अटल पूर्णांक रुको_क्रम_tpm_stat(काष्ठा tpm_chip *chip, u8 mask,
-		अचिन्हित दीर्घ समयout, रुको_queue_head_t *queue,
+static int wait_for_tpm_stat(struct tpm_chip *chip, u8 mask,
+		unsigned long timeout, wait_queue_head_t *queue,
 		bool check_cancel)
-अणु
-	अचिन्हित दीर्घ stop;
-	दीर्घ rc;
+{
+	unsigned long stop;
+	long rc;
 	u8 status;
 	bool canceled = false;
 
 	/* check current status */
 	status = chip->ops->status(chip);
-	अगर ((status & mask) == mask)
-		वापस 0;
+	if ((status & mask) == mask)
+		return 0;
 
-	stop = jअगरfies + समयout;
+	stop = jiffies + timeout;
 
-	अगर (chip->flags & TPM_CHIP_FLAG_IRQ) अणु
+	if (chip->flags & TPM_CHIP_FLAG_IRQ) {
 again:
-		समयout = stop - jअगरfies;
-		अगर ((दीर्घ)समयout <= 0)
-			वापस -ETIME;
-		rc = रुको_event_पूर्णांकerruptible_समयout(*queue,
-			रुको_क्रम_tpm_stat_cond(chip, mask, check_cancel,
+		timeout = stop - jiffies;
+		if ((long)timeout <= 0)
+			return -ETIME;
+		rc = wait_event_interruptible_timeout(*queue,
+			wait_for_tpm_stat_cond(chip, mask, check_cancel,
 					       &canceled),
-			समयout);
-		अगर (rc > 0) अणु
-			अगर (canceled)
-				वापस -ECANCELED;
-			वापस 0;
-		पूर्ण
-		अगर (rc == -ERESTARTSYS && मुक्तzing(current)) अणु
-			clear_thपढ़ो_flag(TIF_SIGPENDING);
-			जाओ again;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		करो अणु
+			timeout);
+		if (rc > 0) {
+			if (canceled)
+				return -ECANCELED;
+			return 0;
+		}
+		if (rc == -ERESTARTSYS && freezing(current)) {
+			clear_thread_flag(TIF_SIGPENDING);
+			goto again;
+		}
+	} else {
+		do {
 			tpm_msleep(TPM_TIMEOUT);
 			status = chip->ops->status(chip);
-			अगर ((status & mask) == mask)
-				वापस 0;
-		पूर्ण जबतक (समय_beक्रमe(jअगरfies, stop));
-	पूर्ण
-	वापस -ETIME;
-पूर्ण
+			if ((status & mask) == mask)
+				return 0;
+		} while (time_before(jiffies, stop));
+	}
+	return -ETIME;
+}
 
-अटल u8 vtpm_status(काष्ठा tpm_chip *chip)
-अणु
-	काष्ठा tpm_निजी *priv = dev_get_drvdata(&chip->dev);
-	चयन (priv->shr->state) अणु
-	हाल VTPM_STATE_IDLE:
-		वापस VTPM_STATUS_IDLE | VTPM_STATUS_CANCELED;
-	हाल VTPM_STATE_FINISH:
-		वापस VTPM_STATUS_IDLE | VTPM_STATUS_RESULT;
-	हाल VTPM_STATE_SUBMIT:
-	हाल VTPM_STATE_CANCEL: /* cancel requested, not yet canceled */
-		वापस VTPM_STATUS_RUNNING;
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+static u8 vtpm_status(struct tpm_chip *chip)
+{
+	struct tpm_private *priv = dev_get_drvdata(&chip->dev);
+	switch (priv->shr->state) {
+	case VTPM_STATE_IDLE:
+		return VTPM_STATUS_IDLE | VTPM_STATUS_CANCELED;
+	case VTPM_STATE_FINISH:
+		return VTPM_STATUS_IDLE | VTPM_STATUS_RESULT;
+	case VTPM_STATE_SUBMIT:
+	case VTPM_STATE_CANCEL: /* cancel requested, not yet canceled */
+		return VTPM_STATUS_RUNNING;
+	default:
+		return 0;
+	}
+}
 
-अटल bool vtpm_req_canceled(काष्ठा tpm_chip *chip, u8 status)
-अणु
-	वापस status & VTPM_STATUS_CANCELED;
-पूर्ण
+static bool vtpm_req_canceled(struct tpm_chip *chip, u8 status)
+{
+	return status & VTPM_STATUS_CANCELED;
+}
 
-अटल व्योम vtpm_cancel(काष्ठा tpm_chip *chip)
-अणु
-	काष्ठा tpm_निजी *priv = dev_get_drvdata(&chip->dev);
+static void vtpm_cancel(struct tpm_chip *chip)
+{
+	struct tpm_private *priv = dev_get_drvdata(&chip->dev);
 	priv->shr->state = VTPM_STATE_CANCEL;
 	wmb();
-	notअगरy_remote_via_evtchn(priv->evtchn);
-पूर्ण
+	notify_remote_via_evtchn(priv->evtchn);
+}
 
-अटल अचिन्हित पूर्णांक shr_data_offset(काष्ठा vtpm_shared_page *shr)
-अणु
-	वापस माप(*shr) + माप(u32) * shr->nr_extra_pages;
-पूर्ण
+static unsigned int shr_data_offset(struct vtpm_shared_page *shr)
+{
+	return sizeof(*shr) + sizeof(u32) * shr->nr_extra_pages;
+}
 
-अटल पूर्णांक vtpm_send(काष्ठा tpm_chip *chip, u8 *buf, माप_प्रकार count)
-अणु
-	काष्ठा tpm_निजी *priv = dev_get_drvdata(&chip->dev);
-	काष्ठा vtpm_shared_page *shr = priv->shr;
-	अचिन्हित पूर्णांक offset = shr_data_offset(shr);
+static int vtpm_send(struct tpm_chip *chip, u8 *buf, size_t count)
+{
+	struct tpm_private *priv = dev_get_drvdata(&chip->dev);
+	struct vtpm_shared_page *shr = priv->shr;
+	unsigned int offset = shr_data_offset(shr);
 
 	u32 ordinal;
-	अचिन्हित दीर्घ duration;
+	unsigned long duration;
 
-	अगर (offset > PAGE_SIZE)
-		वापस -EINVAL;
+	if (offset > PAGE_SIZE)
+		return -EINVAL;
 
-	अगर (offset + count > PAGE_SIZE)
-		वापस -EINVAL;
+	if (offset + count > PAGE_SIZE)
+		return -EINVAL;
 
-	/* Wait क्रम completion of any existing command or cancellation */
-	अगर (रुको_क्रम_tpm_stat(chip, VTPM_STATUS_IDLE, chip->समयout_c,
-			&priv->पढ़ो_queue, true) < 0) अणु
+	/* Wait for completion of any existing command or cancellation */
+	if (wait_for_tpm_stat(chip, VTPM_STATUS_IDLE, chip->timeout_c,
+			&priv->read_queue, true) < 0) {
 		vtpm_cancel(chip);
-		वापस -ETIME;
-	पूर्ण
+		return -ETIME;
+	}
 
-	स_नकल(offset + (u8 *)shr, buf, count);
+	memcpy(offset + (u8 *)shr, buf, count);
 	shr->length = count;
 	barrier();
 	shr->state = VTPM_STATE_SUBMIT;
 	wmb();
-	notअगरy_remote_via_evtchn(priv->evtchn);
+	notify_remote_via_evtchn(priv->evtchn);
 
-	ordinal = be32_to_cpu(((काष्ठा tpm_header *)buf)->ordinal);
+	ordinal = be32_to_cpu(((struct tpm_header *)buf)->ordinal);
 	duration = tpm_calc_ordinal_duration(chip, ordinal);
 
-	अगर (रुको_क्रम_tpm_stat(chip, VTPM_STATUS_IDLE, duration,
-			&priv->पढ़ो_queue, true) < 0) अणु
-		/* got a संकेत or समयout, try to cancel */
+	if (wait_for_tpm_stat(chip, VTPM_STATUS_IDLE, duration,
+			&priv->read_queue, true) < 0) {
+		/* got a signal or timeout, try to cancel */
 		vtpm_cancel(chip);
-		वापस -ETIME;
-	पूर्ण
+		return -ETIME;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vtpm_recv(काष्ठा tpm_chip *chip, u8 *buf, माप_प्रकार count)
-अणु
-	काष्ठा tpm_निजी *priv = dev_get_drvdata(&chip->dev);
-	काष्ठा vtpm_shared_page *shr = priv->shr;
-	अचिन्हित पूर्णांक offset = shr_data_offset(shr);
-	माप_प्रकार length = shr->length;
+static int vtpm_recv(struct tpm_chip *chip, u8 *buf, size_t count)
+{
+	struct tpm_private *priv = dev_get_drvdata(&chip->dev);
+	struct vtpm_shared_page *shr = priv->shr;
+	unsigned int offset = shr_data_offset(shr);
+	size_t length = shr->length;
 
-	अगर (shr->state == VTPM_STATE_IDLE)
-		वापस -ECANCELED;
+	if (shr->state == VTPM_STATE_IDLE)
+		return -ECANCELED;
 
-	/* In theory the रुको at the end of _send makes this one unnecessary */
-	अगर (रुको_क्रम_tpm_stat(chip, VTPM_STATUS_RESULT, chip->समयout_c,
-			&priv->पढ़ो_queue, true) < 0) अणु
+	/* In theory the wait at the end of _send makes this one unnecessary */
+	if (wait_for_tpm_stat(chip, VTPM_STATUS_RESULT, chip->timeout_c,
+			&priv->read_queue, true) < 0) {
 		vtpm_cancel(chip);
-		वापस -ETIME;
-	पूर्ण
+		return -ETIME;
+	}
 
-	अगर (offset > PAGE_SIZE)
-		वापस -EIO;
+	if (offset > PAGE_SIZE)
+		return -EIO;
 
-	अगर (offset + length > PAGE_SIZE)
+	if (offset + length > PAGE_SIZE)
 		length = PAGE_SIZE - offset;
 
-	अगर (length > count)
+	if (length > count)
 		length = count;
 
-	स_नकल(buf, offset + (u8 *)shr, length);
+	memcpy(buf, offset + (u8 *)shr, length);
 
-	वापस length;
-पूर्ण
+	return length;
+}
 
-अटल स्थिर काष्ठा tpm_class_ops tpm_vtpm = अणु
+static const struct tpm_class_ops tpm_vtpm = {
 	.status = vtpm_status,
 	.recv = vtpm_recv,
 	.send = vtpm_send,
@@ -213,242 +212,242 @@ again:
 	.req_complete_mask = VTPM_STATUS_IDLE | VTPM_STATUS_RESULT,
 	.req_complete_val  = VTPM_STATUS_IDLE | VTPM_STATUS_RESULT,
 	.req_canceled      = vtpm_req_canceled,
-पूर्ण;
+};
 
-अटल irqवापस_t tpmअगर_पूर्णांकerrupt(पूर्णांक dummy, व्योम *dev_id)
-अणु
-	काष्ठा tpm_निजी *priv = dev_id;
+static irqreturn_t tpmif_interrupt(int dummy, void *dev_id)
+{
+	struct tpm_private *priv = dev_id;
 
-	चयन (priv->shr->state) अणु
-	हाल VTPM_STATE_IDLE:
-	हाल VTPM_STATE_FINISH:
-		wake_up_पूर्णांकerruptible(&priv->पढ़ो_queue);
-		अवरोध;
-	हाल VTPM_STATE_SUBMIT:
-	हाल VTPM_STATE_CANCEL:
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस IRQ_HANDLED;
-पूर्ण
+	switch (priv->shr->state) {
+	case VTPM_STATE_IDLE:
+	case VTPM_STATE_FINISH:
+		wake_up_interruptible(&priv->read_queue);
+		break;
+	case VTPM_STATE_SUBMIT:
+	case VTPM_STATE_CANCEL:
+	default:
+		break;
+	}
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक setup_chip(काष्ठा device *dev, काष्ठा tpm_निजी *priv)
-अणु
-	काष्ठा tpm_chip *chip;
+static int setup_chip(struct device *dev, struct tpm_private *priv)
+{
+	struct tpm_chip *chip;
 
 	chip = tpmm_chip_alloc(dev, &tpm_vtpm);
-	अगर (IS_ERR(chip))
-		वापस PTR_ERR(chip);
+	if (IS_ERR(chip))
+		return PTR_ERR(chip);
 
-	init_रुकोqueue_head(&priv->पढ़ो_queue);
+	init_waitqueue_head(&priv->read_queue);
 
 	priv->chip = chip;
 	dev_set_drvdata(&chip->dev, priv);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* caller must clean up in हाल of errors */
-अटल पूर्णांक setup_ring(काष्ठा xenbus_device *dev, काष्ठा tpm_निजी *priv)
-अणु
-	काष्ठा xenbus_transaction xbt;
-	स्थिर अक्षर *message = शून्य;
-	पूर्णांक rv;
+/* caller must clean up in case of errors */
+static int setup_ring(struct xenbus_device *dev, struct tpm_private *priv)
+{
+	struct xenbus_transaction xbt;
+	const char *message = NULL;
+	int rv;
 	grant_ref_t gref;
 
-	priv->shr = (व्योम *)__get_मुक्त_page(GFP_KERNEL|__GFP_ZERO);
-	अगर (!priv->shr) अणु
+	priv->shr = (void *)__get_free_page(GFP_KERNEL|__GFP_ZERO);
+	if (!priv->shr) {
 		xenbus_dev_fatal(dev, -ENOMEM, "allocating shared ring");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	rv = xenbus_grant_ring(dev, priv->shr, 1, &gref);
-	अगर (rv < 0)
-		वापस rv;
+	if (rv < 0)
+		return rv;
 
 	priv->ring_ref = gref;
 
 	rv = xenbus_alloc_evtchn(dev, &priv->evtchn);
-	अगर (rv)
-		वापस rv;
+	if (rv)
+		return rv;
 
-	rv = bind_evtchn_to_irqhandler(priv->evtchn, tpmअगर_पूर्णांकerrupt, 0,
+	rv = bind_evtchn_to_irqhandler(priv->evtchn, tpmif_interrupt, 0,
 				       "tpmif", priv);
-	अगर (rv <= 0) अणु
+	if (rv <= 0) {
 		xenbus_dev_fatal(dev, rv, "allocating TPM irq");
-		वापस rv;
-	पूर्ण
+		return rv;
+	}
 	priv->irq = rv;
 
  again:
 	rv = xenbus_transaction_start(&xbt);
-	अगर (rv) अणु
+	if (rv) {
 		xenbus_dev_fatal(dev, rv, "starting transaction");
-		वापस rv;
-	पूर्ण
+		return rv;
+	}
 
-	rv = xenbus_म_लिखो(xbt, dev->nodename,
+	rv = xenbus_printf(xbt, dev->nodename,
 			"ring-ref", "%u", priv->ring_ref);
-	अगर (rv) अणु
+	if (rv) {
 		message = "writing ring-ref";
-		जाओ पात_transaction;
-	पूर्ण
+		goto abort_transaction;
+	}
 
-	rv = xenbus_म_लिखो(xbt, dev->nodename, "event-channel", "%u",
+	rv = xenbus_printf(xbt, dev->nodename, "event-channel", "%u",
 			priv->evtchn);
-	अगर (rv) अणु
+	if (rv) {
 		message = "writing event-channel";
-		जाओ पात_transaction;
-	पूर्ण
+		goto abort_transaction;
+	}
 
-	rv = xenbus_म_लिखो(xbt, dev->nodename, "feature-protocol-v2", "1");
-	अगर (rv) अणु
+	rv = xenbus_printf(xbt, dev->nodename, "feature-protocol-v2", "1");
+	if (rv) {
 		message = "writing feature-protocol-v2";
-		जाओ पात_transaction;
-	पूर्ण
+		goto abort_transaction;
+	}
 
 	rv = xenbus_transaction_end(xbt, 0);
-	अगर (rv == -EAGAIN)
-		जाओ again;
-	अगर (rv) अणु
+	if (rv == -EAGAIN)
+		goto again;
+	if (rv) {
 		xenbus_dev_fatal(dev, rv, "completing transaction");
-		वापस rv;
-	पूर्ण
+		return rv;
+	}
 
-	xenbus_चयन_state(dev, XenbusStateInitialised);
+	xenbus_switch_state(dev, XenbusStateInitialised);
 
-	वापस 0;
+	return 0;
 
- पात_transaction:
+ abort_transaction:
 	xenbus_transaction_end(xbt, 1);
-	अगर (message)
+	if (message)
 		xenbus_dev_error(dev, rv, "%s", message);
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-अटल व्योम ring_मुक्त(काष्ठा tpm_निजी *priv)
-अणु
-	अगर (!priv)
-		वापस;
+static void ring_free(struct tpm_private *priv)
+{
+	if (!priv)
+		return;
 
-	अगर (priv->ring_ref)
-		gnttab_end_क्रमeign_access(priv->ring_ref, 0,
-				(अचिन्हित दीर्घ)priv->shr);
-	अन्यथा
-		मुक्त_page((अचिन्हित दीर्घ)priv->shr);
+	if (priv->ring_ref)
+		gnttab_end_foreign_access(priv->ring_ref, 0,
+				(unsigned long)priv->shr);
+	else
+		free_page((unsigned long)priv->shr);
 
-	अगर (priv->irq)
+	if (priv->irq)
 		unbind_from_irqhandler(priv->irq, priv);
 
-	kमुक्त(priv);
-पूर्ण
+	kfree(priv);
+}
 
-अटल पूर्णांक tpmfront_probe(काष्ठा xenbus_device *dev,
-		स्थिर काष्ठा xenbus_device_id *id)
-अणु
-	काष्ठा tpm_निजी *priv;
-	पूर्णांक rv;
+static int tpmfront_probe(struct xenbus_device *dev,
+		const struct xenbus_device_id *id)
+{
+	struct tpm_private *priv;
+	int rv;
 
-	priv = kzalloc(माप(*priv), GFP_KERNEL);
-	अगर (!priv) अणु
+	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
+	if (!priv) {
 		xenbus_dev_fatal(dev, -ENOMEM, "allocating priv structure");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	rv = setup_chip(&dev->dev, priv);
-	अगर (rv) अणु
-		kमुक्त(priv);
-		वापस rv;
-	पूर्ण
+	if (rv) {
+		kfree(priv);
+		return rv;
+	}
 
 	rv = setup_ring(dev, priv);
-	अगर (rv) अणु
-		ring_मुक्त(priv);
-		वापस rv;
-	पूर्ण
+	if (rv) {
+		ring_free(priv);
+		return rv;
+	}
 
-	tpm_get_समयouts(priv->chip);
+	tpm_get_timeouts(priv->chip);
 
-	वापस tpm_chip_रेजिस्टर(priv->chip);
-पूर्ण
+	return tpm_chip_register(priv->chip);
+}
 
-अटल पूर्णांक tpmfront_हटाओ(काष्ठा xenbus_device *dev)
-अणु
-	काष्ठा tpm_chip *chip = dev_get_drvdata(&dev->dev);
-	काष्ठा tpm_निजी *priv = dev_get_drvdata(&chip->dev);
-	tpm_chip_unरेजिस्टर(chip);
-	ring_मुक्त(priv);
-	dev_set_drvdata(&chip->dev, शून्य);
-	वापस 0;
-पूर्ण
+static int tpmfront_remove(struct xenbus_device *dev)
+{
+	struct tpm_chip *chip = dev_get_drvdata(&dev->dev);
+	struct tpm_private *priv = dev_get_drvdata(&chip->dev);
+	tpm_chip_unregister(chip);
+	ring_free(priv);
+	dev_set_drvdata(&chip->dev, NULL);
+	return 0;
+}
 
-अटल पूर्णांक tpmfront_resume(काष्ठा xenbus_device *dev)
-अणु
-	/* A suspend/resume/migrate will पूर्णांकerrupt a vTPM anyway */
-	tpmfront_हटाओ(dev);
-	वापस tpmfront_probe(dev, शून्य);
-पूर्ण
+static int tpmfront_resume(struct xenbus_device *dev)
+{
+	/* A suspend/resume/migrate will interrupt a vTPM anyway */
+	tpmfront_remove(dev);
+	return tpmfront_probe(dev, NULL);
+}
 
-अटल व्योम backend_changed(काष्ठा xenbus_device *dev,
-		क्रमागत xenbus_state backend_state)
-अणु
-	चयन (backend_state) अणु
-	हाल XenbusStateInitialised:
-	हाल XenbusStateConnected:
-		अगर (dev->state == XenbusStateConnected)
-			अवरोध;
+static void backend_changed(struct xenbus_device *dev,
+		enum xenbus_state backend_state)
+{
+	switch (backend_state) {
+	case XenbusStateInitialised:
+	case XenbusStateConnected:
+		if (dev->state == XenbusStateConnected)
+			break;
 
-		अगर (!xenbus_पढ़ो_अचिन्हित(dev->otherend, "feature-protocol-v2",
-					  0)) अणु
+		if (!xenbus_read_unsigned(dev->otherend, "feature-protocol-v2",
+					  0)) {
 			xenbus_dev_fatal(dev, -EINVAL,
 					"vTPM protocol 2 required");
-			वापस;
-		पूर्ण
-		xenbus_चयन_state(dev, XenbusStateConnected);
-		अवरोध;
+			return;
+		}
+		xenbus_switch_state(dev, XenbusStateConnected);
+		break;
 
-	हाल XenbusStateClosing:
-	हाल XenbusStateClosed:
-		device_unरेजिस्टर(&dev->dev);
-		xenbus_frontend_बंदd(dev);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+	case XenbusStateClosing:
+	case XenbusStateClosed:
+		device_unregister(&dev->dev);
+		xenbus_frontend_closed(dev);
+		break;
+	default:
+		break;
+	}
+}
 
-अटल स्थिर काष्ठा xenbus_device_id tpmfront_ids[] = अणु
-	अणु "vtpm" पूर्ण,
-	अणु "" पूर्ण
-पूर्ण;
+static const struct xenbus_device_id tpmfront_ids[] = {
+	{ "vtpm" },
+	{ "" }
+};
 MODULE_ALIAS("xen:vtpm");
 
-अटल काष्ठा xenbus_driver tpmfront_driver = अणु
+static struct xenbus_driver tpmfront_driver = {
 	.ids = tpmfront_ids,
 	.probe = tpmfront_probe,
-	.हटाओ = tpmfront_हटाओ,
+	.remove = tpmfront_remove,
 	.resume = tpmfront_resume,
 	.otherend_changed = backend_changed,
-पूर्ण;
+};
 
-अटल पूर्णांक __init xen_tpmfront_init(व्योम)
-अणु
-	अगर (!xen_करोमुख्य())
-		वापस -ENODEV;
+static int __init xen_tpmfront_init(void)
+{
+	if (!xen_domain())
+		return -ENODEV;
 
-	अगर (!xen_has_pv_devices())
-		वापस -ENODEV;
+	if (!xen_has_pv_devices())
+		return -ENODEV;
 
-	वापस xenbus_रेजिस्टर_frontend(&tpmfront_driver);
-पूर्ण
+	return xenbus_register_frontend(&tpmfront_driver);
+}
 module_init(xen_tpmfront_init);
 
-अटल व्योम __निकास xen_tpmfront_निकास(व्योम)
-अणु
-	xenbus_unरेजिस्टर_driver(&tpmfront_driver);
-पूर्ण
-module_निकास(xen_tpmfront_निकास);
+static void __exit xen_tpmfront_exit(void)
+{
+	xenbus_unregister_driver(&tpmfront_driver);
+}
+module_exit(xen_tpmfront_exit);
 
 MODULE_AUTHOR("Daniel De Graaf <dgdegra@tycho.nsa.gov>");
 MODULE_DESCRIPTION("Xen vTPM Driver");

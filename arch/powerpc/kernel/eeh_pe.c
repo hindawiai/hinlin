@@ -1,27 +1,26 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * The file पूर्णांकends to implement PE based on the inक्रमmation from
- * platक्रमms. Basically, there have 3 types of PEs: PHB/Bus/Device.
+ * The file intends to implement PE based on the information from
+ * platforms. Basically, there have 3 types of PEs: PHB/Bus/Device.
  * All the PEs should be organized as hierarchy tree. The first level
  * of the tree will be associated to existing PHBs since the particular
- * PE is only meaningful in one PHB करोमुख्य.
+ * PE is only meaningful in one PHB domain.
  *
  * Copyright Benjamin Herrenschmidt & Gavin Shan, IBM Corporation 2012.
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/export.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/माला.स>
+#include <linux/delay.h>
+#include <linux/export.h>
+#include <linux/gfp.h>
+#include <linux/kernel.h>
+#include <linux/pci.h>
+#include <linux/string.h>
 
-#समावेश <यंत्र/pci-bridge.h>
-#समावेश <यंत्र/ppc-pci.h>
+#include <asm/pci-bridge.h>
+#include <asm/ppc-pci.h>
 
-अटल पूर्णांक eeh_pe_aux_size = 0;
-अटल LIST_HEAD(eeh_phb_pe);
+static int eeh_pe_aux_size = 0;
+static LIST_HEAD(eeh_phb_pe);
 
 /**
  * eeh_set_pe_aux_size - Set PE auxillary data size
@@ -29,13 +28,13 @@
  *
  * Set PE auxillary data size
  */
-व्योम eeh_set_pe_aux_size(पूर्णांक size)
-अणु
-	अगर (size < 0)
-		वापस;
+void eeh_set_pe_aux_size(int size)
+{
+	if (size < 0)
+		return;
 
 	eeh_pe_aux_size = size;
-पूर्ण
+}
 
 /**
  * eeh_pe_alloc - Allocate PE
@@ -44,20 +43,20 @@
  *
  * Allocate PE instance dynamically.
  */
-अटल काष्ठा eeh_pe *eeh_pe_alloc(काष्ठा pci_controller *phb, पूर्णांक type)
-अणु
-	काष्ठा eeh_pe *pe;
-	माप_प्रकार alloc_size;
+static struct eeh_pe *eeh_pe_alloc(struct pci_controller *phb, int type)
+{
+	struct eeh_pe *pe;
+	size_t alloc_size;
 
-	alloc_size = माप(काष्ठा eeh_pe);
-	अगर (eeh_pe_aux_size) अणु
+	alloc_size = sizeof(struct eeh_pe);
+	if (eeh_pe_aux_size) {
 		alloc_size = ALIGN(alloc_size, cache_line_size());
 		alloc_size += eeh_pe_aux_size;
-	पूर्ण
+	}
 
 	/* Allocate PHB PE */
 	pe = kzalloc(alloc_size, GFP_KERNEL);
-	अगर (!pe) वापस शून्य;
+	if (!pe) return NULL;
 
 	/* Initialize PHB PE */
 	pe->type = type;
@@ -65,112 +64,112 @@
 	INIT_LIST_HEAD(&pe->child_list);
 	INIT_LIST_HEAD(&pe->edevs);
 
-	pe->data = (व्योम *)pe + ALIGN(माप(काष्ठा eeh_pe),
+	pe->data = (void *)pe + ALIGN(sizeof(struct eeh_pe),
 				      cache_line_size());
-	वापस pe;
-पूर्ण
+	return pe;
+}
 
 /**
  * eeh_phb_pe_create - Create PHB PE
  * @phb: PCI controller
  *
- * The function should be called जबतक the PHB is detected during
- * प्रणाली boot or PCI hotplug in order to create PHB PE.
+ * The function should be called while the PHB is detected during
+ * system boot or PCI hotplug in order to create PHB PE.
  */
-पूर्णांक eeh_phb_pe_create(काष्ठा pci_controller *phb)
-अणु
-	काष्ठा eeh_pe *pe;
+int eeh_phb_pe_create(struct pci_controller *phb)
+{
+	struct eeh_pe *pe;
 
 	/* Allocate PHB PE */
 	pe = eeh_pe_alloc(phb, EEH_PE_PHB);
-	अगर (!pe) अणु
+	if (!pe) {
 		pr_err("%s: out of memory!\n", __func__);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	/* Put it पूर्णांकo the list */
+	/* Put it into the list */
 	list_add_tail(&pe->child, &eeh_phb_pe);
 
 	pr_debug("EEH: Add PE for PHB#%x\n", phb->global_number);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * eeh_रुको_state - Wait क्रम PE state
+ * eeh_wait_state - Wait for PE state
  * @pe: EEH PE
- * @max_रुको: maximal period in millisecond
+ * @max_wait: maximal period in millisecond
  *
- * Wait क्रम the state of associated PE. It might take some समय
+ * Wait for the state of associated PE. It might take some time
  * to retrieve the PE's state.
  */
-पूर्णांक eeh_रुको_state(काष्ठा eeh_pe *pe, पूर्णांक max_रुको)
-अणु
-	पूर्णांक ret;
-	पूर्णांक mरुको;
+int eeh_wait_state(struct eeh_pe *pe, int max_wait)
+{
+	int ret;
+	int mwait;
 
 	/*
 	 * According to PAPR, the state of PE might be temporarily
-	 * unavailable. Under the circumstance, we have to रुको
-	 * क्रम indicated समय determined by firmware. The maximal
-	 * रुको समय is 5 minutes, which is acquired from the original
+	 * unavailable. Under the circumstance, we have to wait
+	 * for indicated time determined by firmware. The maximal
+	 * wait time is 5 minutes, which is acquired from the original
 	 * EEH implementation. Also, the original implementation
-	 * also defined the minimal रुको समय as 1 second.
+	 * also defined the minimal wait time as 1 second.
 	 */
-#घोषणा EEH_STATE_MIN_WAIT_TIME	(1000)
-#घोषणा EEH_STATE_MAX_WAIT_TIME	(300 * 1000)
+#define EEH_STATE_MIN_WAIT_TIME	(1000)
+#define EEH_STATE_MAX_WAIT_TIME	(300 * 1000)
 
-	जबतक (1) अणु
-		ret = eeh_ops->get_state(pe, &mरुको);
+	while (1) {
+		ret = eeh_ops->get_state(pe, &mwait);
 
-		अगर (ret != EEH_STATE_UNAVAILABLE)
-			वापस ret;
+		if (ret != EEH_STATE_UNAVAILABLE)
+			return ret;
 
-		अगर (max_रुको <= 0) अणु
+		if (max_wait <= 0) {
 			pr_warn("%s: Timeout when getting PE's state (%d)\n",
-				__func__, max_रुको);
-			वापस EEH_STATE_NOT_SUPPORT;
-		पूर्ण
+				__func__, max_wait);
+			return EEH_STATE_NOT_SUPPORT;
+		}
 
-		अगर (mरुको < EEH_STATE_MIN_WAIT_TIME) अणु
+		if (mwait < EEH_STATE_MIN_WAIT_TIME) {
 			pr_warn("%s: Firmware returned bad wait value %d\n",
-				__func__, mरुको);
-			mरुको = EEH_STATE_MIN_WAIT_TIME;
-		पूर्ण अन्यथा अगर (mरुको > EEH_STATE_MAX_WAIT_TIME) अणु
+				__func__, mwait);
+			mwait = EEH_STATE_MIN_WAIT_TIME;
+		} else if (mwait > EEH_STATE_MAX_WAIT_TIME) {
 			pr_warn("%s: Firmware returned too long wait value %d\n",
-				__func__, mरुको);
-			mरुको = EEH_STATE_MAX_WAIT_TIME;
-		पूर्ण
+				__func__, mwait);
+			mwait = EEH_STATE_MAX_WAIT_TIME;
+		}
 
-		msleep(min(mरुको, max_रुको));
-		max_रुको -= mरुको;
-	पूर्ण
-पूर्ण
+		msleep(min(mwait, max_wait));
+		max_wait -= mwait;
+	}
+}
 
 /**
  * eeh_phb_pe_get - Retrieve PHB PE based on the given PHB
  * @phb: PCI controller
  *
- * The overall PEs क्रमm hierarchy tree. The first layer of the
+ * The overall PEs form hierarchy tree. The first layer of the
  * hierarchy tree is composed of PHB PEs. The function is used
  * to retrieve the corresponding PHB PE according to the given PHB.
  */
-काष्ठा eeh_pe *eeh_phb_pe_get(काष्ठा pci_controller *phb)
-अणु
-	काष्ठा eeh_pe *pe;
+struct eeh_pe *eeh_phb_pe_get(struct pci_controller *phb)
+{
+	struct eeh_pe *pe;
 
-	list_क्रम_each_entry(pe, &eeh_phb_pe, child) अणु
+	list_for_each_entry(pe, &eeh_phb_pe, child) {
 		/*
 		 * Actually, we needn't check the type since
-		 * the PE क्रम PHB has been determined when that
+		 * the PE for PHB has been determined when that
 		 * was created.
 		 */
-		अगर ((pe->type & EEH_PE_PHB) && pe->phb == phb)
-			वापस pe;
-	पूर्ण
+		if ((pe->type & EEH_PE_PHB) && pe->phb == phb)
+			return pe;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /**
  * eeh_pe_next - Retrieve the next PE in the tree
@@ -180,48 +179,48 @@
  * The function is used to retrieve the next PE in the
  * hierarchy PE tree.
  */
-काष्ठा eeh_pe *eeh_pe_next(काष्ठा eeh_pe *pe, काष्ठा eeh_pe *root)
-अणु
-	काष्ठा list_head *next = pe->child_list.next;
+struct eeh_pe *eeh_pe_next(struct eeh_pe *pe, struct eeh_pe *root)
+{
+	struct list_head *next = pe->child_list.next;
 
-	अगर (next == &pe->child_list) अणु
-		जबतक (1) अणु
-			अगर (pe == root)
-				वापस शून्य;
+	if (next == &pe->child_list) {
+		while (1) {
+			if (pe == root)
+				return NULL;
 			next = pe->child.next;
-			अगर (next != &pe->parent->child_list)
-				अवरोध;
+			if (next != &pe->parent->child_list)
+				break;
 			pe = pe->parent;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस list_entry(next, काष्ठा eeh_pe, child);
-पूर्ण
+	return list_entry(next, struct eeh_pe, child);
+}
 
 /**
- * eeh_pe_traverse - Traverse PEs in the specअगरied PHB
+ * eeh_pe_traverse - Traverse PEs in the specified PHB
  * @root: root PE
  * @fn: callback
  * @flag: extra parameter to callback
  *
- * The function is used to traverse the specअगरied PE and its
+ * The function is used to traverse the specified PE and its
  * child PEs. The traversing is to be terminated once the
- * callback वापसs something other than शून्य, or no more PEs
+ * callback returns something other than NULL, or no more PEs
  * to be traversed.
  */
-व्योम *eeh_pe_traverse(काष्ठा eeh_pe *root,
-		      eeh_pe_traverse_func fn, व्योम *flag)
-अणु
-	काष्ठा eeh_pe *pe;
-	व्योम *ret;
+void *eeh_pe_traverse(struct eeh_pe *root,
+		      eeh_pe_traverse_func fn, void *flag)
+{
+	struct eeh_pe *pe;
+	void *ret;
 
-	eeh_क्रम_each_pe(root, pe) अणु
+	eeh_for_each_pe(root, pe) {
 		ret = fn(pe, flag);
-		अगर (ret) वापस ret;
-	पूर्ण
+		if (ret) return ret;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /**
  * eeh_pe_dev_traverse - Traverse the devices from the PE
@@ -229,85 +228,85 @@
  * @fn: function callback
  * @flag: extra parameter to callback
  *
- * The function is used to traverse the devices of the specअगरied
+ * The function is used to traverse the devices of the specified
  * PE and its child PEs.
  */
-व्योम eeh_pe_dev_traverse(काष्ठा eeh_pe *root,
-			  eeh_edev_traverse_func fn, व्योम *flag)
-अणु
-	काष्ठा eeh_pe *pe;
-	काष्ठा eeh_dev *edev, *पंचांगp;
+void eeh_pe_dev_traverse(struct eeh_pe *root,
+			  eeh_edev_traverse_func fn, void *flag)
+{
+	struct eeh_pe *pe;
+	struct eeh_dev *edev, *tmp;
 
-	अगर (!root) अणु
+	if (!root) {
 		pr_warn("%s: Invalid PE %p\n",
 			__func__, root);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Traverse root PE */
-	eeh_क्रम_each_pe(root, pe)
-		eeh_pe_क्रम_each_dev(pe, edev, पंचांगp)
+	eeh_for_each_pe(root, pe)
+		eeh_pe_for_each_dev(pe, edev, tmp)
 			fn(edev, flag);
-पूर्ण
+}
 
 /**
  * __eeh_pe_get - Check the PE address
  *
- * For one particular PE, it can be identअगरied by PE address
- * or tअक्रमitional BDF address. BDF address is composed of
+ * For one particular PE, it can be identified by PE address
+ * or tranditional BDF address. BDF address is composed of
  * Bus/Device/Function number. The extra data referred by flag
  * indicates which type of address should be used.
  */
-अटल व्योम *__eeh_pe_get(काष्ठा eeh_pe *pe, व्योम *flag)
-अणु
-	पूर्णांक *target_pe = flag;
+static void *__eeh_pe_get(struct eeh_pe *pe, void *flag)
+{
+	int *target_pe = flag;
 
 	/* PHB PEs are special and should be ignored */
-	अगर (pe->type & EEH_PE_PHB)
-		वापस शून्य;
+	if (pe->type & EEH_PE_PHB)
+		return NULL;
 
-	अगर (*target_pe == pe->addr)
-		वापस pe;
+	if (*target_pe == pe->addr)
+		return pe;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /**
  * eeh_pe_get - Search PE based on the given address
  * @phb: PCI controller
  * @pe_no: PE number
  *
- * Search the corresponding PE based on the specअगरied address which
- * is included in the eeh device. The function is used to check अगर
+ * Search the corresponding PE based on the specified address which
+ * is included in the eeh device. The function is used to check if
  * the associated PE has been created against the PE address. It's
- * notable that the PE address has 2 क्रमmat: traditional PE address
- * which is composed of PCI bus/device/function number, or unअगरied
+ * notable that the PE address has 2 format: traditional PE address
+ * which is composed of PCI bus/device/function number, or unified
  * PE address.
  */
-काष्ठा eeh_pe *eeh_pe_get(काष्ठा pci_controller *phb, पूर्णांक pe_no)
-अणु
-	काष्ठा eeh_pe *root = eeh_phb_pe_get(phb);
+struct eeh_pe *eeh_pe_get(struct pci_controller *phb, int pe_no)
+{
+	struct eeh_pe *root = eeh_phb_pe_get(phb);
 
-	वापस eeh_pe_traverse(root, __eeh_pe_get, &pe_no);
-पूर्ण
+	return eeh_pe_traverse(root, __eeh_pe_get, &pe_no);
+}
 
 /**
  * eeh_pe_tree_insert - Add EEH device to parent PE
  * @edev: EEH device
  * @new_pe_parent: PE to create additional PEs under
  *
- * Add EEH device to the PE in edev->pe_config_addr. If a PE alपढ़ोy
+ * Add EEH device to the PE in edev->pe_config_addr. If a PE already
  * exists with that address then @edev is added to that PE. Otherwise
- * a new PE is created and inserted पूर्णांकo the PE tree as a child of
+ * a new PE is created and inserted into the PE tree as a child of
  * @new_pe_parent.
  *
- * If @new_pe_parent is शून्य then the new PE will be inserted under
+ * If @new_pe_parent is NULL then the new PE will be inserted under
  * directly under the the PHB.
  */
-पूर्णांक eeh_pe_tree_insert(काष्ठा eeh_dev *edev, काष्ठा eeh_pe *new_pe_parent)
-अणु
-	काष्ठा pci_controller *hose = edev->controller;
-	काष्ठा eeh_pe *pe, *parent;
+int eeh_pe_tree_insert(struct eeh_dev *edev, struct eeh_pe *new_pe_parent)
+{
+	struct pci_controller *hose = edev->controller;
+	struct eeh_pe *pe, *parent;
 
 	/*
 	 * Search the PE has been existing or not according
@@ -316,8 +315,8 @@
 	 * components.
 	 */
 	pe = eeh_pe_get(hose, edev->pe_config_addr);
-	अगर (pe) अणु
-		अगर (pe->type & EEH_PE_INVALID) अणु
+	if (pe) {
+		if (pe->type & EEH_PE_INVALID) {
 			list_add_tail(&edev->entry, &pe->edevs);
 			edev->pe = pe;
 			/*
@@ -325,16 +324,16 @@
 			 * EEH recovery. We need clear EEH_PE_INVALID until the top.
 			 */
 			parent = pe;
-			जबतक (parent) अणु
-				अगर (!(parent->type & EEH_PE_INVALID))
-					अवरोध;
+			while (parent) {
+				if (!(parent->type & EEH_PE_INVALID))
+					break;
 				parent->type &= ~EEH_PE_INVALID;
 				parent = parent->parent;
-			पूर्ण
+			}
 
 			eeh_edev_dbg(edev, "Added to existing PE (parent: PE#%x)\n",
 				     pe->parent->addr);
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Mark the PE as type of PCI bus */
 			pe->type = EEH_PE_BUS;
 			edev->pe = pe;
@@ -342,45 +341,45 @@
 			/* Put the edev to PE */
 			list_add_tail(&edev->entry, &pe->edevs);
 			eeh_edev_dbg(edev, "Added to bus PE\n");
-		पूर्ण
-		वापस 0;
-	पूर्ण
+		}
+		return 0;
+	}
 
 	/* Create a new EEH PE */
-	अगर (edev->physfn)
+	if (edev->physfn)
 		pe = eeh_pe_alloc(hose, EEH_PE_VF);
-	अन्यथा
+	else
 		pe = eeh_pe_alloc(hose, EEH_PE_DEVICE);
-	अगर (!pe) अणु
+	if (!pe) {
 		pr_err("%s: out of memory!\n", __func__);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	pe->addr = edev->pe_config_addr;
 
 	/*
-	 * Put the new EEH PE पूर्णांकo hierarchy tree. If the parent
+	 * Put the new EEH PE into hierarchy tree. If the parent
 	 * can't be found, the newly created PE will be attached
 	 * to PHB directly. Otherwise, we have to associate the
 	 * PE with its parent.
 	 */
-	अगर (!new_pe_parent) अणु
+	if (!new_pe_parent) {
 		new_pe_parent = eeh_phb_pe_get(hose);
-		अगर (!new_pe_parent) अणु
+		if (!new_pe_parent) {
 			pr_err("%s: No PHB PE is found (PHB Domain=%d)\n",
 				__func__, hose->global_number);
-			edev->pe = शून्य;
-			kमुक्त(pe);
-			वापस -EEXIST;
-		पूर्ण
-	पूर्ण
+			edev->pe = NULL;
+			kfree(pe);
+			return -EEXIST;
+		}
+	}
 
-	/* link new PE पूर्णांकo the tree */
+	/* link new PE into the tree */
 	pe->parent = new_pe_parent;
 	list_add_tail(&pe->child, &new_pe_parent->child_list);
 
 	/*
-	 * Put the newly created PE पूर्णांकo the child list and
+	 * Put the newly created PE into the child list and
 	 * link the EEH device accordingly.
 	 */
 	list_add_tail(&edev->entry, &pe->edevs);
@@ -388,49 +387,49 @@
 	eeh_edev_dbg(edev, "Added to new (parent: PE#%x)\n",
 		     new_pe_parent->addr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * eeh_pe_tree_हटाओ - Remove one EEH device from the associated PE
+ * eeh_pe_tree_remove - Remove one EEH device from the associated PE
  * @edev: EEH device
  *
- * The PE hierarchy tree might be changed when करोing PCI hotplug.
- * Also, the PCI devices or buses could be हटाओd from the प्रणाली
- * during EEH recovery. So we have to call the function हटाओ the
- * corresponding PE accordingly अगर necessary.
+ * The PE hierarchy tree might be changed when doing PCI hotplug.
+ * Also, the PCI devices or buses could be removed from the system
+ * during EEH recovery. So we have to call the function remove the
+ * corresponding PE accordingly if necessary.
  */
-पूर्णांक eeh_pe_tree_हटाओ(काष्ठा eeh_dev *edev)
-अणु
-	काष्ठा eeh_pe *pe, *parent, *child;
+int eeh_pe_tree_remove(struct eeh_dev *edev)
+{
+	struct eeh_pe *pe, *parent, *child;
 	bool keep, recover;
-	पूर्णांक cnt;
+	int cnt;
 
 	pe = eeh_dev_to_pe(edev);
-	अगर (!pe) अणु
+	if (!pe) {
 		eeh_edev_dbg(edev, "No PE found for device.\n");
-		वापस -EEXIST;
-	पूर्ण
+		return -EEXIST;
+	}
 
 	/* Remove the EEH device */
-	edev->pe = शून्य;
+	edev->pe = NULL;
 	list_del(&edev->entry);
 
 	/*
-	 * Check अगर the parent PE includes any EEH devices.
+	 * Check if the parent PE includes any EEH devices.
 	 * If not, we should delete that. Also, we should
-	 * delete the parent PE अगर it करोesn't have associated
+	 * delete the parent PE if it doesn't have associated
 	 * child PEs and EEH devices.
 	 */
-	जबतक (1) अणु
+	while (1) {
 		parent = pe->parent;
 
-		/* PHB PEs should never be हटाओd */
-		अगर (pe->type & EEH_PE_PHB)
-			अवरोध;
+		/* PHB PEs should never be removed */
+		if (pe->type & EEH_PE_PHB)
+			break;
 
 		/*
-		 * XXX: KEEP is set जबतक resetting a PE. I करोn't think it's
+		 * XXX: KEEP is set while resetting a PE. I don't think it's
 		 * ever set without RECOVERING also being set. I could
 		 * be wrong though so catch that with a WARN.
 		 */
@@ -438,89 +437,89 @@
 		recover = !!(pe->state & EEH_PE_RECOVERING);
 		WARN_ON(keep && !recover);
 
-		अगर (!keep && !recover) अणु
-			अगर (list_empty(&pe->edevs) &&
-			    list_empty(&pe->child_list)) अणु
+		if (!keep && !recover) {
+			if (list_empty(&pe->edevs) &&
+			    list_empty(&pe->child_list)) {
 				list_del(&pe->child);
-				kमुक्त(pe);
-			पूर्ण अन्यथा अणु
-				अवरोध;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				kfree(pe);
+			} else {
+				break;
+			}
+		} else {
 			/*
 			 * Mark the PE as invalid. At the end of the recovery
 			 * process any invalid PEs will be garbage collected.
 			 *
-			 * We need to delay the मुक्त()ing of them since we can
-			 * हटाओ edev's जबतक traversing the PE tree which
+			 * We need to delay the free()ing of them since we can
+			 * remove edev's while traversing the PE tree which
 			 * might trigger the removal of a PE and we can't
 			 * deal with that (yet).
 			 */
-			अगर (list_empty(&pe->edevs)) अणु
+			if (list_empty(&pe->edevs)) {
 				cnt = 0;
-				list_क्रम_each_entry(child, &pe->child_list, child) अणु
-					अगर (!(child->type & EEH_PE_INVALID)) अणु
+				list_for_each_entry(child, &pe->child_list, child) {
+					if (!(child->type & EEH_PE_INVALID)) {
 						cnt++;
-						अवरोध;
-					पूर्ण
-				पूर्ण
+						break;
+					}
+				}
 
-				अगर (!cnt)
+				if (!cnt)
 					pe->type |= EEH_PE_INVALID;
-				अन्यथा
-					अवरोध;
-			पूर्ण
-		पूर्ण
+				else
+					break;
+			}
+		}
 
 		pe = parent;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * eeh_pe_update_समय_stamp - Update PE's frozen समय stamp
+ * eeh_pe_update_time_stamp - Update PE's frozen time stamp
  * @pe: EEH PE
  *
- * We have समय stamp क्रम each PE to trace its समय of getting
+ * We have time stamp for each PE to trace its time of getting
  * frozen in last hour. The function should be called to update
- * the समय stamp on first error of the specअगरic PE. On the other
- * handle, we needn't account क्रम errors happened in last hour.
+ * the time stamp on first error of the specific PE. On the other
+ * handle, we needn't account for errors happened in last hour.
  */
-व्योम eeh_pe_update_समय_stamp(काष्ठा eeh_pe *pe)
-अणु
-	समय64_t tstamp;
+void eeh_pe_update_time_stamp(struct eeh_pe *pe)
+{
+	time64_t tstamp;
 
-	अगर (!pe) वापस;
+	if (!pe) return;
 
-	अगर (pe->मुक्तze_count <= 0) अणु
-		pe->मुक्तze_count = 0;
-		pe->tstamp = kसमय_get_seconds();
-	पूर्ण अन्यथा अणु
-		tstamp = kसमय_get_seconds();
-		अगर (tstamp - pe->tstamp > 3600) अणु
+	if (pe->freeze_count <= 0) {
+		pe->freeze_count = 0;
+		pe->tstamp = ktime_get_seconds();
+	} else {
+		tstamp = ktime_get_seconds();
+		if (tstamp - pe->tstamp > 3600) {
 			pe->tstamp = tstamp;
-			pe->मुक्तze_count = 0;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			pe->freeze_count = 0;
+		}
+	}
+}
 
 /**
- * eeh_pe_state_mark - Mark specअगरied state क्रम PE and its associated device
+ * eeh_pe_state_mark - Mark specified state for PE and its associated device
  * @pe: EEH PE
  *
  * EEH error affects the current PE and its child PEs. The function
- * is used to mark appropriate state क्रम the affected PEs and the
+ * is used to mark appropriate state for the affected PEs and the
  * associated devices.
  */
-व्योम eeh_pe_state_mark(काष्ठा eeh_pe *root, पूर्णांक state)
-अणु
-	काष्ठा eeh_pe *pe;
+void eeh_pe_state_mark(struct eeh_pe *root, int state)
+{
+	struct eeh_pe *pe;
 
-	eeh_क्रम_each_pe(root, pe)
-		अगर (!(pe->state & EEH_PE_REMOVED))
+	eeh_for_each_pe(root, pe)
+		if (!(pe->state & EEH_PE_REMOVED))
 			pe->state |= state;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(eeh_pe_state_mark);
 
 /**
@@ -528,49 +527,49 @@ EXPORT_SYMBOL_GPL(eeh_pe_state_mark);
  * @pe: EEH PE
  *
  * Record that a PE has been isolated by marking the PE and it's children as
- * EEH_PE_ISOLATED (and EEH_PE_CFG_BLOCKED, अगर required) and their PCI devices
+ * EEH_PE_ISOLATED (and EEH_PE_CFG_BLOCKED, if required) and their PCI devices
  * as pci_channel_io_frozen.
  */
-व्योम eeh_pe_mark_isolated(काष्ठा eeh_pe *root)
-अणु
-	काष्ठा eeh_pe *pe;
-	काष्ठा eeh_dev *edev;
-	काष्ठा pci_dev *pdev;
+void eeh_pe_mark_isolated(struct eeh_pe *root)
+{
+	struct eeh_pe *pe;
+	struct eeh_dev *edev;
+	struct pci_dev *pdev;
 
 	eeh_pe_state_mark(root, EEH_PE_ISOLATED);
-	eeh_क्रम_each_pe(root, pe) अणु
-		list_क्रम_each_entry(edev, &pe->edevs, entry) अणु
+	eeh_for_each_pe(root, pe) {
+		list_for_each_entry(edev, &pe->edevs, entry) {
 			pdev = eeh_dev_to_pci_dev(edev);
-			अगर (pdev)
+			if (pdev)
 				pdev->error_state = pci_channel_io_frozen;
-		पूर्ण
-		/* Block PCI config access अगर required */
-		अगर (pe->state & EEH_PE_CFG_RESTRICTED)
+		}
+		/* Block PCI config access if required */
+		if (pe->state & EEH_PE_CFG_RESTRICTED)
 			pe->state |= EEH_PE_CFG_BLOCKED;
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(eeh_pe_mark_isolated);
 
-अटल व्योम __eeh_pe_dev_mode_mark(काष्ठा eeh_dev *edev, व्योम *flag)
-अणु
-	पूर्णांक mode = *((पूर्णांक *)flag);
+static void __eeh_pe_dev_mode_mark(struct eeh_dev *edev, void *flag)
+{
+	int mode = *((int *)flag);
 
 	edev->mode |= mode;
-पूर्ण
+}
 
 /**
- * eeh_pe_dev_state_mark - Mark state क्रम all device under the PE
+ * eeh_pe_dev_state_mark - Mark state for all device under the PE
  * @pe: EEH PE
  *
- * Mark specअगरic state क्रम all child devices of the PE.
+ * Mark specific state for all child devices of the PE.
  */
-व्योम eeh_pe_dev_mode_mark(काष्ठा eeh_pe *pe, पूर्णांक mode)
-अणु
+void eeh_pe_dev_mode_mark(struct eeh_pe *pe, int mode)
+{
 	eeh_pe_dev_traverse(pe, __eeh_pe_dev_mode_mark, &mode);
-पूर्ण
+}
 
 /**
- * eeh_pe_state_clear - Clear state क्रम the PE
+ * eeh_pe_state_clear - Clear state for the PE
  * @data: EEH PE
  * @state: state
  * @include_passed: include passed-through devices?
@@ -579,225 +578,225 @@ EXPORT_SYMBOL_GPL(eeh_pe_mark_isolated);
  * given PE. Besides, we also clear the check count of the PE
  * as well.
  */
-व्योम eeh_pe_state_clear(काष्ठा eeh_pe *root, पूर्णांक state, bool include_passed)
-अणु
-	काष्ठा eeh_pe *pe;
-	काष्ठा eeh_dev *edev, *पंचांगp;
-	काष्ठा pci_dev *pdev;
+void eeh_pe_state_clear(struct eeh_pe *root, int state, bool include_passed)
+{
+	struct eeh_pe *pe;
+	struct eeh_dev *edev, *tmp;
+	struct pci_dev *pdev;
 
-	eeh_क्रम_each_pe(root, pe) अणु
-		/* Keep the state of permanently हटाओd PE पूर्णांकact */
-		अगर (pe->state & EEH_PE_REMOVED)
-			जारी;
+	eeh_for_each_pe(root, pe) {
+		/* Keep the state of permanently removed PE intact */
+		if (pe->state & EEH_PE_REMOVED)
+			continue;
 
-		अगर (!include_passed && eeh_pe_passed(pe))
-			जारी;
+		if (!include_passed && eeh_pe_passed(pe))
+			continue;
 
 		pe->state &= ~state;
 
 		/*
-		 * Special treaपंचांगent on clearing isolated state. Clear
+		 * Special treatment on clearing isolated state. Clear
 		 * check count since last isolation and put all affected
 		 * devices to normal state.
 		 */
-		अगर (!(state & EEH_PE_ISOLATED))
-			जारी;
+		if (!(state & EEH_PE_ISOLATED))
+			continue;
 
 		pe->check_count = 0;
-		eeh_pe_क्रम_each_dev(pe, edev, पंचांगp) अणु
+		eeh_pe_for_each_dev(pe, edev, tmp) {
 			pdev = eeh_dev_to_pci_dev(edev);
-			अगर (!pdev)
-				जारी;
+			if (!pdev)
+				continue;
 
 			pdev->error_state = pci_channel_io_normal;
-		पूर्ण
+		}
 
-		/* Unblock PCI config access अगर required */
-		अगर (pe->state & EEH_PE_CFG_RESTRICTED)
+		/* Unblock PCI config access if required */
+		if (pe->state & EEH_PE_CFG_RESTRICTED)
 			pe->state &= ~EEH_PE_CFG_BLOCKED;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Some PCI bridges (e.g. PLX bridges) have primary/secondary
- * buses asचिन्हित explicitly by firmware, and we probably have
+ * buses assigned explicitly by firmware, and we probably have
  * lost that after reset. So we have to delay the check until
- * the PCI-CFG रेजिस्टरs have been restored क्रम the parent
+ * the PCI-CFG registers have been restored for the parent
  * bridge.
  *
  * Don't use normal PCI-CFG accessors, which probably has been
  * blocked on normal path during the stage. So we need utilize
  * eeh operations, which is always permitted.
  */
-अटल व्योम eeh_bridge_check_link(काष्ठा eeh_dev *edev)
-अणु
-	पूर्णांक cap;
-	uपूर्णांक32_t val;
-	पूर्णांक समयout = 0;
+static void eeh_bridge_check_link(struct eeh_dev *edev)
+{
+	int cap;
+	uint32_t val;
+	int timeout = 0;
 
 	/*
-	 * We only check root port and करोwnstream ports of
-	 * PCIe चयनes
+	 * We only check root port and downstream ports of
+	 * PCIe switches
 	 */
-	अगर (!(edev->mode & (EEH_DEV_ROOT_PORT | EEH_DEV_DS_PORT)))
-		वापस;
+	if (!(edev->mode & (EEH_DEV_ROOT_PORT | EEH_DEV_DS_PORT)))
+		return;
 
 	eeh_edev_dbg(edev, "Checking PCIe link...\n");
 
 	/* Check slot status */
 	cap = edev->pcie_cap;
-	eeh_ops->पढ़ो_config(edev, cap + PCI_EXP_SLTSTA, 2, &val);
-	अगर (!(val & PCI_EXP_SLTSTA_PDS)) अणु
+	eeh_ops->read_config(edev, cap + PCI_EXP_SLTSTA, 2, &val);
+	if (!(val & PCI_EXP_SLTSTA_PDS)) {
 		eeh_edev_dbg(edev, "No card in the slot (0x%04x) !\n", val);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* Check घातer status अगर we have the capability */
-	eeh_ops->पढ़ो_config(edev, cap + PCI_EXP_SLTCAP, 2, &val);
-	अगर (val & PCI_EXP_SLTCAP_PCP) अणु
-		eeh_ops->पढ़ो_config(edev, cap + PCI_EXP_SLTCTL, 2, &val);
-		अगर (val & PCI_EXP_SLTCTL_PCC) अणु
+	/* Check power status if we have the capability */
+	eeh_ops->read_config(edev, cap + PCI_EXP_SLTCAP, 2, &val);
+	if (val & PCI_EXP_SLTCAP_PCP) {
+		eeh_ops->read_config(edev, cap + PCI_EXP_SLTCTL, 2, &val);
+		if (val & PCI_EXP_SLTCTL_PCC) {
 			eeh_edev_dbg(edev, "In power-off state, power it on ...\n");
 			val &= ~(PCI_EXP_SLTCTL_PCC | PCI_EXP_SLTCTL_PIC);
 			val |= (0x0100 & PCI_EXP_SLTCTL_PIC);
-			eeh_ops->ग_लिखो_config(edev, cap + PCI_EXP_SLTCTL, 2, val);
+			eeh_ops->write_config(edev, cap + PCI_EXP_SLTCTL, 2, val);
 			msleep(2 * 1000);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Enable link */
-	eeh_ops->पढ़ो_config(edev, cap + PCI_EXP_LNKCTL, 2, &val);
+	eeh_ops->read_config(edev, cap + PCI_EXP_LNKCTL, 2, &val);
 	val &= ~PCI_EXP_LNKCTL_LD;
-	eeh_ops->ग_लिखो_config(edev, cap + PCI_EXP_LNKCTL, 2, val);
+	eeh_ops->write_config(edev, cap + PCI_EXP_LNKCTL, 2, val);
 
 	/* Check link */
-	eeh_ops->पढ़ो_config(edev, cap + PCI_EXP_LNKCAP, 4, &val);
-	अगर (!(val & PCI_EXP_LNKCAP_DLLLARC)) अणु
+	eeh_ops->read_config(edev, cap + PCI_EXP_LNKCAP, 4, &val);
+	if (!(val & PCI_EXP_LNKCAP_DLLLARC)) {
 		eeh_edev_dbg(edev, "No link reporting capability (0x%08x) \n", val);
 		msleep(1000);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* Wait the link is up until समयout (5s) */
-	समयout = 0;
-	जबतक (समयout < 5000) अणु
+	/* Wait the link is up until timeout (5s) */
+	timeout = 0;
+	while (timeout < 5000) {
 		msleep(20);
-		समयout += 20;
+		timeout += 20;
 
-		eeh_ops->पढ़ो_config(edev, cap + PCI_EXP_LNKSTA, 2, &val);
-		अगर (val & PCI_EXP_LNKSTA_DLLLA)
-			अवरोध;
-	पूर्ण
+		eeh_ops->read_config(edev, cap + PCI_EXP_LNKSTA, 2, &val);
+		if (val & PCI_EXP_LNKSTA_DLLLA)
+			break;
+	}
 
-	अगर (val & PCI_EXP_LNKSTA_DLLLA)
+	if (val & PCI_EXP_LNKSTA_DLLLA)
 		eeh_edev_dbg(edev, "Link up (%s)\n",
 			 (val & PCI_EXP_LNKSTA_CLS_2_5GB) ? "2.5GB" : "5GB");
-	अन्यथा
+	else
 		eeh_edev_dbg(edev, "Link not ready (0x%04x)\n", val);
-पूर्ण
+}
 
-#घोषणा BYTE_SWAP(OFF)	(8*((OFF)/4)+3-(OFF))
-#घोषणा SAVED_BYTE(OFF)	(((u8 *)(edev->config_space))[BYTE_SWAP(OFF)])
+#define BYTE_SWAP(OFF)	(8*((OFF)/4)+3-(OFF))
+#define SAVED_BYTE(OFF)	(((u8 *)(edev->config_space))[BYTE_SWAP(OFF)])
 
-अटल व्योम eeh_restore_bridge_bars(काष्ठा eeh_dev *edev)
-अणु
-	पूर्णांक i;
+static void eeh_restore_bridge_bars(struct eeh_dev *edev)
+{
+	int i;
 
 	/*
 	 * Device BARs: 0x10 - 0x18
-	 * Bus numbers and winकरोws: 0x18 - 0x30
+	 * Bus numbers and windows: 0x18 - 0x30
 	 */
-	क्रम (i = 4; i < 13; i++)
-		eeh_ops->ग_लिखो_config(edev, i*4, 4, edev->config_space[i]);
+	for (i = 4; i < 13; i++)
+		eeh_ops->write_config(edev, i*4, 4, edev->config_space[i]);
 	/* Rom: 0x38 */
-	eeh_ops->ग_लिखो_config(edev, 14*4, 4, edev->config_space[14]);
+	eeh_ops->write_config(edev, 14*4, 4, edev->config_space[14]);
 
-	/* Cache line & Latency समयr: 0xC 0xD */
-	eeh_ops->ग_लिखो_config(edev, PCI_CACHE_LINE_SIZE, 1,
+	/* Cache line & Latency timer: 0xC 0xD */
+	eeh_ops->write_config(edev, PCI_CACHE_LINE_SIZE, 1,
                 SAVED_BYTE(PCI_CACHE_LINE_SIZE));
-	eeh_ops->ग_लिखो_config(edev, PCI_LATENCY_TIMER, 1,
+	eeh_ops->write_config(edev, PCI_LATENCY_TIMER, 1,
 		SAVED_BYTE(PCI_LATENCY_TIMER));
-	/* Max latency, min grant, पूर्णांकerrupt ping and line: 0x3C */
-	eeh_ops->ग_लिखो_config(edev, 15*4, 4, edev->config_space[15]);
+	/* Max latency, min grant, interrupt ping and line: 0x3C */
+	eeh_ops->write_config(edev, 15*4, 4, edev->config_space[15]);
 
 	/* PCI Command: 0x4 */
-	eeh_ops->ग_लिखो_config(edev, PCI_COMMAND, 4, edev->config_space[1] |
+	eeh_ops->write_config(edev, PCI_COMMAND, 4, edev->config_space[1] |
 			      PCI_COMMAND_MEMORY | PCI_COMMAND_MASTER);
 
-	/* Check the PCIe link is पढ़ोy */
+	/* Check the PCIe link is ready */
 	eeh_bridge_check_link(edev);
-पूर्ण
+}
 
-अटल व्योम eeh_restore_device_bars(काष्ठा eeh_dev *edev)
-अणु
-	पूर्णांक i;
+static void eeh_restore_device_bars(struct eeh_dev *edev)
+{
+	int i;
 	u32 cmd;
 
-	क्रम (i = 4; i < 10; i++)
-		eeh_ops->ग_लिखो_config(edev, i*4, 4, edev->config_space[i]);
+	for (i = 4; i < 10; i++)
+		eeh_ops->write_config(edev, i*4, 4, edev->config_space[i]);
 	/* 12 == Expansion ROM Address */
-	eeh_ops->ग_लिखो_config(edev, 12*4, 4, edev->config_space[12]);
+	eeh_ops->write_config(edev, 12*4, 4, edev->config_space[12]);
 
-	eeh_ops->ग_लिखो_config(edev, PCI_CACHE_LINE_SIZE, 1,
+	eeh_ops->write_config(edev, PCI_CACHE_LINE_SIZE, 1,
 		SAVED_BYTE(PCI_CACHE_LINE_SIZE));
-	eeh_ops->ग_लिखो_config(edev, PCI_LATENCY_TIMER, 1,
+	eeh_ops->write_config(edev, PCI_LATENCY_TIMER, 1,
 		SAVED_BYTE(PCI_LATENCY_TIMER));
 
-	/* max latency, min grant, पूर्णांकerrupt pin and line */
-	eeh_ops->ग_लिखो_config(edev, 15*4, 4, edev->config_space[15]);
+	/* max latency, min grant, interrupt pin and line */
+	eeh_ops->write_config(edev, 15*4, 4, edev->config_space[15]);
 
 	/*
 	 * Restore PERR & SERR bits, some devices require it,
-	 * करोn't touch the other command bits
+	 * don't touch the other command bits
 	 */
-	eeh_ops->पढ़ो_config(edev, PCI_COMMAND, 4, &cmd);
-	अगर (edev->config_space[1] & PCI_COMMAND_PARITY)
+	eeh_ops->read_config(edev, PCI_COMMAND, 4, &cmd);
+	if (edev->config_space[1] & PCI_COMMAND_PARITY)
 		cmd |= PCI_COMMAND_PARITY;
-	अन्यथा
+	else
 		cmd &= ~PCI_COMMAND_PARITY;
-	अगर (edev->config_space[1] & PCI_COMMAND_SERR)
+	if (edev->config_space[1] & PCI_COMMAND_SERR)
 		cmd |= PCI_COMMAND_SERR;
-	अन्यथा
+	else
 		cmd &= ~PCI_COMMAND_SERR;
-	eeh_ops->ग_लिखो_config(edev, PCI_COMMAND, 4, cmd);
-पूर्ण
+	eeh_ops->write_config(edev, PCI_COMMAND, 4, cmd);
+}
 
 /**
- * eeh_restore_one_device_bars - Restore the Base Address Registers क्रम one device
+ * eeh_restore_one_device_bars - Restore the Base Address Registers for one device
  * @data: EEH device
  * @flag: Unused
  *
- * Loads the PCI configuration space base address रेजिस्टरs,
- * the expansion ROM base address, the latency समयr, and etc.
+ * Loads the PCI configuration space base address registers,
+ * the expansion ROM base address, the latency timer, and etc.
  * from the saved values in the device node.
  */
-अटल व्योम eeh_restore_one_device_bars(काष्ठा eeh_dev *edev, व्योम *flag)
-अणु
-	/* Do special restore क्रम bridges */
-	अगर (edev->mode & EEH_DEV_BRIDGE)
+static void eeh_restore_one_device_bars(struct eeh_dev *edev, void *flag)
+{
+	/* Do special restore for bridges */
+	if (edev->mode & EEH_DEV_BRIDGE)
 		eeh_restore_bridge_bars(edev);
-	अन्यथा
+	else
 		eeh_restore_device_bars(edev);
 
-	अगर (eeh_ops->restore_config)
+	if (eeh_ops->restore_config)
 		eeh_ops->restore_config(edev);
-पूर्ण
+}
 
 /**
  * eeh_pe_restore_bars - Restore the PCI config space info
  * @pe: EEH PE
  *
- * This routine perक्रमms a recursive walk to the children
+ * This routine performs a recursive walk to the children
  * of this device as well.
  */
-व्योम eeh_pe_restore_bars(काष्ठा eeh_pe *pe)
-अणु
+void eeh_pe_restore_bars(struct eeh_pe *pe)
+{
 	/*
 	 * We needn't take the EEH lock since eeh_pe_dev_traverse()
 	 * will take that.
 	 */
-	eeh_pe_dev_traverse(pe, eeh_restore_one_device_bars, शून्य);
-पूर्ण
+	eeh_pe_dev_traverse(pe, eeh_restore_one_device_bars, NULL);
+}
 
 /**
  * eeh_pe_loc_get - Retrieve location code binding to the given PE
@@ -806,35 +805,35 @@ EXPORT_SYMBOL_GPL(eeh_pe_mark_isolated);
  * Retrieve the location code of the given PE. If the primary PE bus
  * is root bus, we will grab location code from PHB device tree node
  * or root port. Otherwise, the upstream bridge's device tree node
- * of the primary PE bus will be checked क्रम the location code.
+ * of the primary PE bus will be checked for the location code.
  */
-स्थिर अक्षर *eeh_pe_loc_get(काष्ठा eeh_pe *pe)
-अणु
-	काष्ठा pci_bus *bus = eeh_pe_bus_get(pe);
-	काष्ठा device_node *dn;
-	स्थिर अक्षर *loc = शून्य;
+const char *eeh_pe_loc_get(struct eeh_pe *pe)
+{
+	struct pci_bus *bus = eeh_pe_bus_get(pe);
+	struct device_node *dn;
+	const char *loc = NULL;
 
-	जबतक (bus) अणु
+	while (bus) {
 		dn = pci_bus_to_OF_node(bus);
-		अगर (!dn) अणु
+		if (!dn) {
 			bus = bus->parent;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (pci_is_root_bus(bus))
-			loc = of_get_property(dn, "ibm,io-base-loc-code", शून्य);
-		अन्यथा
+		if (pci_is_root_bus(bus))
+			loc = of_get_property(dn, "ibm,io-base-loc-code", NULL);
+		else
 			loc = of_get_property(dn, "ibm,slot-location-code",
-					      शून्य);
+					      NULL);
 
-		अगर (loc)
-			वापस loc;
+		if (loc)
+			return loc;
 
 		bus = bus->parent;
-	पूर्ण
+	}
 
-	वापस "N/A";
-पूर्ण
+	return "N/A";
+}
 
 /**
  * eeh_pe_bus_get - Retrieve PCI bus according to the given PE
@@ -843,26 +842,26 @@ EXPORT_SYMBOL_GPL(eeh_pe_mark_isolated);
  * Retrieve the PCI bus according to the given PE. Basically,
  * there're 3 types of PEs: PHB/Bus/Device. For PHB PE, the
  * primary PCI bus will be retrieved. The parent bus will be
- * वापसed क्रम BUS PE. However, we करोn't have associated PCI
- * bus क्रम DEVICE PE.
+ * returned for BUS PE. However, we don't have associated PCI
+ * bus for DEVICE PE.
  */
-काष्ठा pci_bus *eeh_pe_bus_get(काष्ठा eeh_pe *pe)
-अणु
-	काष्ठा eeh_dev *edev;
-	काष्ठा pci_dev *pdev;
+struct pci_bus *eeh_pe_bus_get(struct eeh_pe *pe)
+{
+	struct eeh_dev *edev;
+	struct pci_dev *pdev;
 
-	अगर (pe->type & EEH_PE_PHB)
-		वापस pe->phb->bus;
+	if (pe->type & EEH_PE_PHB)
+		return pe->phb->bus;
 
-	/* The primary bus might be cached during probe समय */
-	अगर (pe->state & EEH_PE_PRI_BUS)
-		वापस pe->bus;
+	/* The primary bus might be cached during probe time */
+	if (pe->state & EEH_PE_PRI_BUS)
+		return pe->bus;
 
 	/* Retrieve the parent PCI bus of first (top) PCI device */
-	edev = list_first_entry_or_null(&pe->edevs, काष्ठा eeh_dev, entry);
+	edev = list_first_entry_or_null(&pe->edevs, struct eeh_dev, entry);
 	pdev = eeh_dev_to_pci_dev(edev);
-	अगर (pdev)
-		वापस pdev->bus;
+	if (pdev)
+		return pdev->bus;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}

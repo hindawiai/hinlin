@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * CXL Flash Device Driver
  *
@@ -9,147 +8,147 @@
  * Copyright (C) 2018 IBM Corporation
  */
 
-#समावेश <misc/cxl.h>
+#include <misc/cxl.h>
 
-#समावेश "backend.h"
+#include "backend.h"
 
 /*
  * The following routines map the cxlflash backend operations to existing CXL
- * kernel API function and are largely simple shims that provide an असलtraction
- * क्रम converting generic context and AFU cookies पूर्णांकo cxl_context or cxl_afu
- * poपूर्णांकers.
+ * kernel API function and are largely simple shims that provide an abstraction
+ * for converting generic context and AFU cookies into cxl_context or cxl_afu
+ * pointers.
  */
 
-अटल व्योम __iomem *cxlflash_psa_map(व्योम *ctx_cookie)
-अणु
-	वापस cxl_psa_map(ctx_cookie);
-पूर्ण
+static void __iomem *cxlflash_psa_map(void *ctx_cookie)
+{
+	return cxl_psa_map(ctx_cookie);
+}
 
-अटल व्योम cxlflash_psa_unmap(व्योम __iomem *addr)
-अणु
+static void cxlflash_psa_unmap(void __iomem *addr)
+{
 	cxl_psa_unmap(addr);
-पूर्ण
+}
 
-अटल पूर्णांक cxlflash_process_element(व्योम *ctx_cookie)
-अणु
-	वापस cxl_process_element(ctx_cookie);
-पूर्ण
+static int cxlflash_process_element(void *ctx_cookie)
+{
+	return cxl_process_element(ctx_cookie);
+}
 
-अटल पूर्णांक cxlflash_map_afu_irq(व्योम *ctx_cookie, पूर्णांक num,
-				irq_handler_t handler, व्योम *cookie, अक्षर *name)
-अणु
-	वापस cxl_map_afu_irq(ctx_cookie, num, handler, cookie, name);
-पूर्ण
+static int cxlflash_map_afu_irq(void *ctx_cookie, int num,
+				irq_handler_t handler, void *cookie, char *name)
+{
+	return cxl_map_afu_irq(ctx_cookie, num, handler, cookie, name);
+}
 
-अटल व्योम cxlflash_unmap_afu_irq(व्योम *ctx_cookie, पूर्णांक num, व्योम *cookie)
-अणु
+static void cxlflash_unmap_afu_irq(void *ctx_cookie, int num, void *cookie)
+{
 	cxl_unmap_afu_irq(ctx_cookie, num, cookie);
-पूर्ण
+}
 
-अटल u64 cxlflash_get_irq_objhndl(व्योम *ctx_cookie, पूर्णांक irq)
-अणु
-	/* Dummy fop क्रम cxl */
-	वापस 0;
-पूर्ण
+static u64 cxlflash_get_irq_objhndl(void *ctx_cookie, int irq)
+{
+	/* Dummy fop for cxl */
+	return 0;
+}
 
-अटल पूर्णांक cxlflash_start_context(व्योम *ctx_cookie)
-अणु
-	वापस cxl_start_context(ctx_cookie, 0, शून्य);
-पूर्ण
+static int cxlflash_start_context(void *ctx_cookie)
+{
+	return cxl_start_context(ctx_cookie, 0, NULL);
+}
 
-अटल पूर्णांक cxlflash_stop_context(व्योम *ctx_cookie)
-अणु
-	वापस cxl_stop_context(ctx_cookie);
-पूर्ण
+static int cxlflash_stop_context(void *ctx_cookie)
+{
+	return cxl_stop_context(ctx_cookie);
+}
 
-अटल पूर्णांक cxlflash_afu_reset(व्योम *ctx_cookie)
-अणु
-	वापस cxl_afu_reset(ctx_cookie);
-पूर्ण
+static int cxlflash_afu_reset(void *ctx_cookie)
+{
+	return cxl_afu_reset(ctx_cookie);
+}
 
-अटल व्योम cxlflash_set_master(व्योम *ctx_cookie)
-अणु
+static void cxlflash_set_master(void *ctx_cookie)
+{
 	cxl_set_master(ctx_cookie);
-पूर्ण
+}
 
-अटल व्योम *cxlflash_get_context(काष्ठा pci_dev *dev, व्योम *afu_cookie)
-अणु
-	वापस cxl_get_context(dev);
-पूर्ण
+static void *cxlflash_get_context(struct pci_dev *dev, void *afu_cookie)
+{
+	return cxl_get_context(dev);
+}
 
-अटल व्योम *cxlflash_dev_context_init(काष्ठा pci_dev *dev, व्योम *afu_cookie)
-अणु
-	वापस cxl_dev_context_init(dev);
-पूर्ण
+static void *cxlflash_dev_context_init(struct pci_dev *dev, void *afu_cookie)
+{
+	return cxl_dev_context_init(dev);
+}
 
-अटल पूर्णांक cxlflash_release_context(व्योम *ctx_cookie)
-अणु
-	वापस cxl_release_context(ctx_cookie);
-पूर्ण
+static int cxlflash_release_context(void *ctx_cookie)
+{
+	return cxl_release_context(ctx_cookie);
+}
 
-अटल व्योम cxlflash_perst_reloads_same_image(व्योम *afu_cookie, bool image)
-अणु
+static void cxlflash_perst_reloads_same_image(void *afu_cookie, bool image)
+{
 	cxl_perst_reloads_same_image(afu_cookie, image);
-पूर्ण
+}
 
-अटल sमाप_प्रकार cxlflash_पढ़ो_adapter_vpd(काष्ठा pci_dev *dev,
-					 व्योम *buf, माप_प्रकार count)
-अणु
-	वापस cxl_पढ़ो_adapter_vpd(dev, buf, count);
-पूर्ण
+static ssize_t cxlflash_read_adapter_vpd(struct pci_dev *dev,
+					 void *buf, size_t count)
+{
+	return cxl_read_adapter_vpd(dev, buf, count);
+}
 
-अटल पूर्णांक cxlflash_allocate_afu_irqs(व्योम *ctx_cookie, पूर्णांक num)
-अणु
-	वापस cxl_allocate_afu_irqs(ctx_cookie, num);
-पूर्ण
+static int cxlflash_allocate_afu_irqs(void *ctx_cookie, int num)
+{
+	return cxl_allocate_afu_irqs(ctx_cookie, num);
+}
 
-अटल व्योम cxlflash_मुक्त_afu_irqs(व्योम *ctx_cookie)
-अणु
-	cxl_मुक्त_afu_irqs(ctx_cookie);
-पूर्ण
+static void cxlflash_free_afu_irqs(void *ctx_cookie)
+{
+	cxl_free_afu_irqs(ctx_cookie);
+}
 
-अटल व्योम *cxlflash_create_afu(काष्ठा pci_dev *dev)
-अणु
-	वापस cxl_pci_to_afu(dev);
-पूर्ण
+static void *cxlflash_create_afu(struct pci_dev *dev)
+{
+	return cxl_pci_to_afu(dev);
+}
 
-अटल व्योम cxlflash_destroy_afu(व्योम *afu)
-अणु
-	/* Dummy fop क्रम cxl */
-पूर्ण
+static void cxlflash_destroy_afu(void *afu)
+{
+	/* Dummy fop for cxl */
+}
 
-अटल काष्ठा file *cxlflash_get_fd(व्योम *ctx_cookie,
-				    काष्ठा file_operations *fops, पूर्णांक *fd)
-अणु
-	वापस cxl_get_fd(ctx_cookie, fops, fd);
-पूर्ण
+static struct file *cxlflash_get_fd(void *ctx_cookie,
+				    struct file_operations *fops, int *fd)
+{
+	return cxl_get_fd(ctx_cookie, fops, fd);
+}
 
-अटल व्योम *cxlflash_fops_get_context(काष्ठा file *file)
-अणु
-	वापस cxl_fops_get_context(file);
-पूर्ण
+static void *cxlflash_fops_get_context(struct file *file)
+{
+	return cxl_fops_get_context(file);
+}
 
-अटल पूर्णांक cxlflash_start_work(व्योम *ctx_cookie, u64 irqs)
-अणु
-	काष्ठा cxl_ioctl_start_work work = अणु 0 पूर्ण;
+static int cxlflash_start_work(void *ctx_cookie, u64 irqs)
+{
+	struct cxl_ioctl_start_work work = { 0 };
 
-	work.num_पूर्णांकerrupts = irqs;
+	work.num_interrupts = irqs;
 	work.flags = CXL_START_WORK_NUM_IRQS;
 
-	वापस cxl_start_work(ctx_cookie, &work);
-पूर्ण
+	return cxl_start_work(ctx_cookie, &work);
+}
 
-अटल पूर्णांक cxlflash_fd_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vm)
-अणु
-	वापस cxl_fd_mmap(file, vm);
-पूर्ण
+static int cxlflash_fd_mmap(struct file *file, struct vm_area_struct *vm)
+{
+	return cxl_fd_mmap(file, vm);
+}
 
-अटल पूर्णांक cxlflash_fd_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस cxl_fd_release(inode, file);
-पूर्ण
+static int cxlflash_fd_release(struct inode *inode, struct file *file)
+{
+	return cxl_fd_release(inode, file);
+}
 
-स्थिर काष्ठा cxlflash_backend_ops cxlflash_cxl_ops = अणु
+const struct cxlflash_backend_ops cxlflash_cxl_ops = {
 	.module			= THIS_MODULE,
 	.psa_map		= cxlflash_psa_map,
 	.psa_unmap		= cxlflash_psa_unmap,
@@ -165,9 +164,9 @@
 	.dev_context_init	= cxlflash_dev_context_init,
 	.release_context	= cxlflash_release_context,
 	.perst_reloads_same_image = cxlflash_perst_reloads_same_image,
-	.पढ़ो_adapter_vpd	= cxlflash_पढ़ो_adapter_vpd,
+	.read_adapter_vpd	= cxlflash_read_adapter_vpd,
 	.allocate_afu_irqs	= cxlflash_allocate_afu_irqs,
-	.मुक्त_afu_irqs		= cxlflash_मुक्त_afu_irqs,
+	.free_afu_irqs		= cxlflash_free_afu_irqs,
 	.create_afu		= cxlflash_create_afu,
 	.destroy_afu		= cxlflash_destroy_afu,
 	.get_fd			= cxlflash_get_fd,
@@ -175,4 +174,4 @@
 	.start_work		= cxlflash_start_work,
 	.fd_mmap		= cxlflash_fd_mmap,
 	.fd_release		= cxlflash_fd_release,
-पूर्ण;
+};

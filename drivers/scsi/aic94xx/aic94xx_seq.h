@@ -1,23 +1,22 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Aic94xx SAS/SATA driver sequencer पूर्णांकerface header file.
+ * Aic94xx SAS/SATA driver sequencer interface header file.
  *
  * Copyright (C) 2005 Adaptec, Inc.  All rights reserved.
  * Copyright (C) 2005 Luben Tuikov <luben_tuikov@adaptec.com>
  */
 
-#अगर_अघोषित _AIC94XX_SEQ_H_
-#घोषणा _AIC94XX_SEQ_H_
+#ifndef _AIC94XX_SEQ_H_
+#define _AIC94XX_SEQ_H_
 
-#घोषणा CSEQ_NUM_VECS	3
-#घोषणा LSEQ_NUM_VECS	11
+#define CSEQ_NUM_VECS	3
+#define LSEQ_NUM_VECS	11
 
-#घोषणा SAS_RAZOR_SEQUENCER_FW_खाता "aic94xx-seq.fw"
-#घोषणा SAS_RAZOR_SEQUENCER_FW_MAJOR	1
+#define SAS_RAZOR_SEQUENCER_FW_FILE "aic94xx-seq.fw"
+#define SAS_RAZOR_SEQUENCER_FW_MAJOR	1
 
 /* Note:  All quantites in the sequencer file are little endian */
-काष्ठा sequencer_file_header अणु
+struct sequencer_file_header {
 	/* Checksum of the entire contents of the sequencer excluding
 	 * these four bytes */
 	u32	csum;
@@ -25,8 +24,8 @@
 	u32	major;
 	/* numeric minor version */
 	u32	minor;
-	/* version string prपूर्णांकed by driver */
-	अक्षर	version[16];
+	/* version string printed by driver */
+	char	version[16];
 	u32	cseq_table_offset;
 	u32	cseq_table_size;
 	u32	lseq_table_offset;
@@ -38,14 +37,14 @@
 	u16	mode2_task;
 	u16	cseq_idle_loop;
 	u16	lseq_idle_loop;
-पूर्ण __attribute__((packed));
+} __attribute__((packed));
 
-#अगर_घोषित __KERNEL__
-पूर्णांक asd_init_seqs(काष्ठा asd_ha_काष्ठा *asd_ha);
-पूर्णांक asd_start_seqs(काष्ठा asd_ha_काष्ठा *asd_ha);
-पूर्णांक asd_release_firmware(व्योम);
+#ifdef __KERNEL__
+int asd_init_seqs(struct asd_ha_struct *asd_ha);
+int asd_start_seqs(struct asd_ha_struct *asd_ha);
+int asd_release_firmware(void);
 
-व्योम asd_update_port_links(काष्ठा asd_ha_काष्ठा *asd_ha, काष्ठा asd_phy *phy);
-#पूर्ण_अगर
+void asd_update_port_links(struct asd_ha_struct *asd_ha, struct asd_phy *phy);
+#endif
 
-#पूर्ण_अगर
+#endif

@@ -1,35 +1,34 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * HID driver क्रम the Creative SB0540 receiver
+ * HID driver for the Creative SB0540 receiver
  *
  * Copyright (C) 2019 Red Hat Inc. All Rights Reserved
  *
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/hid.h>
-#समावेश <linux/module.h>
-#समावेश "hid-ids.h"
+#include <linux/device.h>
+#include <linux/hid.h>
+#include <linux/module.h>
+#include "hid-ids.h"
 
 MODULE_AUTHOR("Bastien Nocera <hadess@hadess.net>");
 MODULE_DESCRIPTION("HID Creative SB0540 receiver");
 MODULE_LICENSE("GPL");
 
-अटल स्थिर अचिन्हित लघु creative_sb0540_key_table[] = अणु
+static const unsigned short creative_sb0540_key_table[] = {
 	KEY_POWER,
 	KEY_RESERVED,		/* text: 24bit */
 	KEY_RESERVED,		/* 24bit wheel up */
-	KEY_RESERVED,		/* 24bit wheel करोwn */
+	KEY_RESERVED,		/* 24bit wheel down */
 	KEY_RESERVED,		/* text: CMSS */
 	KEY_RESERVED,		/* CMSS wheel Up */
 	KEY_RESERVED,		/* CMSS wheel Down */
 	KEY_RESERVED,		/* text: EAX */
 	KEY_RESERVED,		/* EAX wheel up */
-	KEY_RESERVED,		/* EAX wheel करोwn */
+	KEY_RESERVED,		/* EAX wheel down */
 	KEY_RESERVED,		/* text: 3D Midi */
 	KEY_RESERVED,		/* 3D Midi wheel up */
-	KEY_RESERVED,		/* 3D Midi wheel करोwn */
+	KEY_RESERVED,		/* 3D Midi wheel down */
 	KEY_MUTE,
 	KEY_VOLUMEUP,
 	KEY_VOLUMEDOWN,
@@ -61,14 +60,14 @@ MODULE_LICENSE("GPL");
 	KEY_NUMERIC_8,
 	KEY_NUMERIC_9,
 	KEY_NUMERIC_0
-पूर्ण;
+};
 
 /*
  * Codes and keys from lirc's
  * remotes/creative/lircd.conf.alsa_usb
  * order and size must match creative_sb0540_key_table[] above
  */
-अटल स्थिर अचिन्हित लघु creative_sb0540_codes[] = अणु
+static const unsigned short creative_sb0540_codes[] = {
 	0x619E,
 	0x916E,
 	0x926D,
@@ -113,157 +112,157 @@ MODULE_LICENSE("GPL");
 	0x837C,
 	0x7788,
 	0x807F
-पूर्ण;
+};
 
-काष्ठा creative_sb0540 अणु
-	काष्ठा input_dev *input_dev;
-	काष्ठा hid_device *hid;
-	अचिन्हित लघु keymap[ARRAY_SIZE(creative_sb0540_key_table)];
-पूर्ण;
+struct creative_sb0540 {
+	struct input_dev *input_dev;
+	struct hid_device *hid;
+	unsigned short keymap[ARRAY_SIZE(creative_sb0540_key_table)];
+};
 
-अटल अंतरभूत u64 reverse(u64 data, पूर्णांक bits)
-अणु
-	पूर्णांक i;
+static inline u64 reverse(u64 data, int bits)
+{
+	int i;
 	u64 c;
 
 	c = 0;
-	क्रम (i = 0; i < bits; i++) अणु
+	for (i = 0; i < bits; i++) {
 		c |= (u64) (((data & (((u64) 1) << i)) ? 1 : 0))
 			<< (bits - 1 - i);
-	पूर्ण
-	वापस (c);
-पूर्ण
+	}
+	return (c);
+}
 
-अटल पूर्णांक get_key(काष्ठा creative_sb0540 *creative_sb0540, u64 keycode)
-अणु
-	पूर्णांक i;
+static int get_key(struct creative_sb0540 *creative_sb0540, u64 keycode)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(creative_sb0540_codes); i++) अणु
-		अगर (creative_sb0540_codes[i] == keycode)
-			वापस creative_sb0540->keymap[i];
-	पूर्ण
+	for (i = 0; i < ARRAY_SIZE(creative_sb0540_codes); i++) {
+		if (creative_sb0540_codes[i] == keycode)
+			return creative_sb0540->keymap[i];
+	}
 
-	वापस 0;
+	return 0;
 
-पूर्ण
+}
 
-अटल पूर्णांक creative_sb0540_raw_event(काष्ठा hid_device *hid,
-	काष्ठा hid_report *report, u8 *data, पूर्णांक len)
-अणु
-	काष्ठा creative_sb0540 *creative_sb0540 = hid_get_drvdata(hid);
-	u64 code, मुख्य_code;
-	पूर्णांक key;
+static int creative_sb0540_raw_event(struct hid_device *hid,
+	struct hid_report *report, u8 *data, int len)
+{
+	struct creative_sb0540 *creative_sb0540 = hid_get_drvdata(hid);
+	u64 code, main_code;
+	int key;
 
-	अगर (len != 6)
-		वापस 0;
+	if (len != 6)
+		return 0;
 
 	/* From daemons/hw_hiddev.c sb0540_rec() in lirc */
 	code = reverse(data[5], 8);
-	मुख्य_code = (code << 8) + ((~code) & 0xff);
+	main_code = (code << 8) + ((~code) & 0xff);
 
 	/*
-	 * Flip to get values in the same क्रमmat as
+	 * Flip to get values in the same format as
 	 * remotes/creative/lircd.conf.alsa_usb in lirc
 	 */
-	मुख्य_code = ((मुख्य_code & 0xff) << 8) +
-		((मुख्य_code & 0xff00) >> 8);
+	main_code = ((main_code & 0xff) << 8) +
+		((main_code & 0xff00) >> 8);
 
-	key = get_key(creative_sb0540, मुख्य_code);
-	अगर (key == 0 || key == KEY_RESERVED) अणु
+	key = get_key(creative_sb0540, main_code);
+	if (key == 0 || key == KEY_RESERVED) {
 		hid_err(hid, "Could not get a key for main_code %llX\n",
-			मुख्य_code);
-		वापस 0;
-	पूर्ण
+			main_code);
+		return 0;
+	}
 
 	input_report_key(creative_sb0540->input_dev, key, 1);
 	input_report_key(creative_sb0540->input_dev, key, 0);
 	input_sync(creative_sb0540->input_dev);
 
 	/* let hidraw and hiddev handle the report */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक creative_sb0540_input_configured(काष्ठा hid_device *hid,
-		काष्ठा hid_input *hidinput)
-अणु
-	काष्ठा input_dev *input_dev = hidinput->input;
-	काष्ठा creative_sb0540 *creative_sb0540 = hid_get_drvdata(hid);
-	पूर्णांक i;
+static int creative_sb0540_input_configured(struct hid_device *hid,
+		struct hid_input *hidinput)
+{
+	struct input_dev *input_dev = hidinput->input;
+	struct creative_sb0540 *creative_sb0540 = hid_get_drvdata(hid);
+	int i;
 
 	creative_sb0540->input_dev = input_dev;
 
 	input_dev->keycode = creative_sb0540->keymap;
-	input_dev->keycodesize = माप(अचिन्हित लघु);
+	input_dev->keycodesize = sizeof(unsigned short);
 	input_dev->keycodemax = ARRAY_SIZE(creative_sb0540->keymap);
 
 	input_dev->evbit[0] = BIT(EV_KEY) | BIT(EV_REP);
 
-	स_नकल(creative_sb0540->keymap, creative_sb0540_key_table,
-		माप(creative_sb0540->keymap));
-	क्रम (i = 0; i < ARRAY_SIZE(creative_sb0540_key_table); i++)
+	memcpy(creative_sb0540->keymap, creative_sb0540_key_table,
+		sizeof(creative_sb0540->keymap));
+	for (i = 0; i < ARRAY_SIZE(creative_sb0540_key_table); i++)
 		set_bit(creative_sb0540->keymap[i], input_dev->keybit);
 	clear_bit(KEY_RESERVED, input_dev->keybit);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक creative_sb0540_input_mapping(काष्ठा hid_device *hid,
-		काष्ठा hid_input *hi, काष्ठा hid_field *field,
-		काष्ठा hid_usage *usage, अचिन्हित दीर्घ **bit, पूर्णांक *max)
-अणु
+static int creative_sb0540_input_mapping(struct hid_device *hid,
+		struct hid_input *hi, struct hid_field *field,
+		struct hid_usage *usage, unsigned long **bit, int *max)
+{
 	/*
 	 * We are remapping the keys ourselves, so ignore the hid-input
 	 * keymap processing.
 	 */
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल पूर्णांक creative_sb0540_probe(काष्ठा hid_device *hid,
-		स्थिर काष्ठा hid_device_id *id)
-अणु
-	पूर्णांक ret;
-	काष्ठा creative_sb0540 *creative_sb0540;
+static int creative_sb0540_probe(struct hid_device *hid,
+		const struct hid_device_id *id)
+{
+	int ret;
+	struct creative_sb0540 *creative_sb0540;
 
 	creative_sb0540 = devm_kzalloc(&hid->dev,
-		माप(काष्ठा creative_sb0540), GFP_KERNEL);
+		sizeof(struct creative_sb0540), GFP_KERNEL);
 
-	अगर (!creative_sb0540)
-		वापस -ENOMEM;
+	if (!creative_sb0540)
+		return -ENOMEM;
 
 	creative_sb0540->hid = hid;
 
-	/* क्रमce input as some remotes bypass the input registration */
+	/* force input as some remotes bypass the input registration */
 	hid->quirks |= HID_QUIRK_HIDINPUT_FORCE;
 
 	hid_set_drvdata(hid, creative_sb0540);
 
 	ret = hid_parse(hid);
-	अगर (ret) अणु
+	if (ret) {
 		hid_err(hid, "parse failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = hid_hw_start(hid, HID_CONNECT_DEFAULT);
-	अगर (ret) अणु
+	if (ret) {
 		hid_err(hid, "hw start failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा hid_device_id creative_sb0540_devices[] = अणु
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_CREATIVELABS, USB_DEVICE_ID_CREATIVE_SB0540) पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct hid_device_id creative_sb0540_devices[] = {
+	{ HID_USB_DEVICE(USB_VENDOR_ID_CREATIVELABS, USB_DEVICE_ID_CREATIVE_SB0540) },
+	{ }
+};
 MODULE_DEVICE_TABLE(hid, creative_sb0540_devices);
 
-अटल काष्ठा hid_driver creative_sb0540_driver = अणु
+static struct hid_driver creative_sb0540_driver = {
 	.name = "creative-sb0540",
 	.id_table = creative_sb0540_devices,
 	.raw_event = creative_sb0540_raw_event,
 	.input_configured = creative_sb0540_input_configured,
 	.probe = creative_sb0540_probe,
 	.input_mapping = creative_sb0540_input_mapping,
-पूर्ण;
+};
 module_hid_driver(creative_sb0540_driver);

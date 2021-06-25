@@ -1,26 +1,25 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* Copyright (C) 2018 - Arm Ltd */
 
-#अगर_अघोषित __ARM64_KVM_RAS_H__
-#घोषणा __ARM64_KVM_RAS_H__
+#ifndef __ARM64_KVM_RAS_H__
+#define __ARM64_KVM_RAS_H__
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/types.h>
+#include <linux/acpi.h>
+#include <linux/errno.h>
+#include <linux/types.h>
 
-#समावेश <यंत्र/acpi.h>
+#include <asm/acpi.h>
 
 /*
- * Was this synchronous बाह्यal पात a RAS notअगरication?
- * Returns '0' क्रम errors handled by some RAS subप्रणाली, or -ENOENT.
+ * Was this synchronous external abort a RAS notification?
+ * Returns '0' for errors handled by some RAS subsystem, or -ENOENT.
  */
-अटल अंतरभूत पूर्णांक kvm_handle_guest_sea(phys_addr_t addr, अचिन्हित पूर्णांक esr)
-अणु
-	/* apei_claim_sea(शून्य) expects to mask पूर्णांकerrupts itself */
-	lockdep_निश्चित_irqs_enabled();
+static inline int kvm_handle_guest_sea(phys_addr_t addr, unsigned int esr)
+{
+	/* apei_claim_sea(NULL) expects to mask interrupts itself */
+	lockdep_assert_irqs_enabled();
 
-	वापस apei_claim_sea(शून्य);
-पूर्ण
+	return apei_claim_sea(NULL);
+}
 
-#पूर्ण_अगर /* __ARM64_KVM_RAS_H__ */
+#endif /* __ARM64_KVM_RAS_H__ */

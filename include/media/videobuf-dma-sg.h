@@ -1,11 +1,10 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * helper functions क्रम SG DMA video4linux capture buffers
+ * helper functions for SG DMA video4linux capture buffers
  *
  * The functions expect the hardware being able to scatter gather
  * (i.e. the buffers are not linear in physical memory, but fragmented
- * पूर्णांकo PAGE_SIZE chunks).  They also assume the driver करोes not need
+ * into PAGE_SIZE chunks).  They also assume the driver does not need
  * to touch the video data.
  *
  * (c) 2007 Mauro Carvalho Chehab, <mchehab@kernel.org>
@@ -15,89 +14,89 @@
  * (c) 2006 Mauro Carvalho Chehab, <mchehab@kernel.org>
  * (c) 2006 Ted Walther and John Sokol
  */
-#अगर_अघोषित _VIDEOBUF_DMA_SG_H
-#घोषणा _VIDEOBUF_DMA_SG_H
+#ifndef _VIDEOBUF_DMA_SG_H
+#define _VIDEOBUF_DMA_SG_H
 
-#समावेश <media/videobuf-core.h>
+#include <media/videobuf-core.h>
 
 /* --------------------------------------------------------------------- */
 
 /*
  * A small set of helper functions to manage buffers (both userland
- * and kernel) क्रम DMA.
+ * and kernel) for DMA.
  *
  * videobuf_dma_init_*()
  *	creates a buffer.  The userland version takes a userspace
- *	poपूर्णांकer + length.  The kernel version just wants the size and
- *	करोes memory allocation too using vदो_स्मृति_32().
+ *	pointer + length.  The kernel version just wants the size and
+ *	does memory allocation too using vmalloc_32().
  *
  * videobuf_dma_*()
  *	see Documentation/core-api/dma-api-howto.rst, these functions to
- *	basically the same.  The map function करोes also build a
- *	scatterlist क्रम the buffer (and unmap मुक्तs it ...)
+ *	basically the same.  The map function does also build a
+ *	scatterlist for the buffer (and unmap frees it ...)
  *
- * videobuf_dma_मुक्त()
+ * videobuf_dma_free()
  *	no comment ...
  *
  */
 
-काष्ठा videobuf_dmabuf अणु
+struct videobuf_dmabuf {
 	u32                 magic;
 
-	/* क्रम userland buffer */
-	पूर्णांक                 offset;
-	माप_प्रकार		    size;
-	काष्ठा page         **pages;
+	/* for userland buffer */
+	int                 offset;
+	size_t		    size;
+	struct page         **pages;
 
-	/* क्रम kernel buffers */
-	व्योम                *vaddr;
-	काष्ठा page         **vaddr_pages;
+	/* for kernel buffers */
+	void                *vaddr;
+	struct page         **vaddr_pages;
 	dma_addr_t          *dma_addr;
-	काष्ठा device       *dev;
+	struct device       *dev;
 
-	/* क्रम overlay buffers (pci-pci dma) */
+	/* for overlay buffers (pci-pci dma) */
 	dma_addr_t          bus_addr;
 
 	/* common */
-	काष्ठा scatterlist  *sglist;
-	पूर्णांक                 sglen;
-	अचिन्हित दीर्घ       nr_pages;
-	पूर्णांक                 direction;
-पूर्ण;
+	struct scatterlist  *sglist;
+	int                 sglen;
+	unsigned long       nr_pages;
+	int                 direction;
+};
 
-काष्ठा videobuf_dma_sg_memory अणु
+struct videobuf_dma_sg_memory {
 	u32                 magic;
 
-	/* क्रम mmap'ed buffers */
-	काष्ठा videobuf_dmabuf  dma;
-पूर्ण;
+	/* for mmap'ed buffers */
+	struct videobuf_dmabuf  dma;
+};
 
 /*
  * Scatter-gather DMA buffer API.
  *
  * These functions provide a simple way to create a page list and a
  * scatter-gather list from a kernel, userspace of physical address and map the
- * memory क्रम DMA operation.
+ * memory for DMA operation.
  *
  * Despite the name, this is totally unrelated to videobuf, except that
- * videobuf-dma-sg uses the same API पूर्णांकernally.
+ * videobuf-dma-sg uses the same API internally.
  */
-पूर्णांक videobuf_dma_मुक्त(काष्ठा videobuf_dmabuf *dma);
+int videobuf_dma_free(struct videobuf_dmabuf *dma);
 
-पूर्णांक videobuf_dma_unmap(काष्ठा device *dev, काष्ठा videobuf_dmabuf *dma);
-काष्ठा videobuf_dmabuf *videobuf_to_dma(काष्ठा videobuf_buffer *buf);
+int videobuf_dma_unmap(struct device *dev, struct videobuf_dmabuf *dma);
+struct videobuf_dmabuf *videobuf_to_dma(struct videobuf_buffer *buf);
 
-व्योम *videobuf_sg_alloc(माप_प्रकार size);
+void *videobuf_sg_alloc(size_t size);
 
-व्योम videobuf_queue_sg_init(काष्ठा videobuf_queue *q,
-			 स्थिर काष्ठा videobuf_queue_ops *ops,
-			 काष्ठा device *dev,
+void videobuf_queue_sg_init(struct videobuf_queue *q,
+			 const struct videobuf_queue_ops *ops,
+			 struct device *dev,
 			 spinlock_t *irqlock,
-			 क्रमागत v4l2_buf_type type,
-			 क्रमागत v4l2_field field,
-			 अचिन्हित पूर्णांक msize,
-			 व्योम *priv,
-			 काष्ठा mutex *ext_lock);
+			 enum v4l2_buf_type type,
+			 enum v4l2_field field,
+			 unsigned int msize,
+			 void *priv,
+			 struct mutex *ext_lock);
 
-#पूर्ण_अगर /* _VIDEOBUF_DMA_SG_H */
+#endif /* _VIDEOBUF_DMA_SG_H */
 

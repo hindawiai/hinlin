@@ -1,102 +1,101 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Host AP crypt: host-based CCMP encryption implementation क्रम Host AP driver
+ * Host AP crypt: host-based CCMP encryption implementation for Host AP driver
  *
  * Copyright (c) 2003-2004, Jouni Malinen <jkmaline@cc.hut.fi>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/अगर_ether.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/wireless.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/random.h>
+#include <linux/skbuff.h>
+#include <linux/netdevice.h>
+#include <linux/if_ether.h>
+#include <linux/if_arp.h>
+#include <linux/string.h>
+#include <linux/wireless.h>
 
-#समावेश "ieee80211.h"
+#include "ieee80211.h"
 
-#समावेश <linux/crypto.h>
-#समावेश <crypto/aead.h>
-    #समावेश <linux/scatterlist.h>
+#include <linux/crypto.h>
+#include <crypto/aead.h>
+    #include <linux/scatterlist.h>
 
 MODULE_AUTHOR("Jouni Malinen");
 MODULE_DESCRIPTION("Host AP crypt: CCMP");
 MODULE_LICENSE("GPL");
 
-#घोषणा AES_BLOCK_LEN 16
-#घोषणा CCMP_HDR_LEN 8
-#घोषणा CCMP_MIC_LEN 8
-#घोषणा CCMP_TK_LEN 16
-#घोषणा CCMP_PN_LEN 6
+#define AES_BLOCK_LEN 16
+#define CCMP_HDR_LEN 8
+#define CCMP_MIC_LEN 8
+#define CCMP_TK_LEN 16
+#define CCMP_PN_LEN 6
 
-काष्ठा ieee80211_ccmp_data अणु
+struct ieee80211_ccmp_data {
 	u8 key[CCMP_TK_LEN];
-	पूर्णांक key_set;
+	int key_set;
 
 	u8 tx_pn[CCMP_PN_LEN];
 	u8 rx_pn[CCMP_PN_LEN];
 
-	u32 करोt11RSNAStatsCCMPFormatErrors;
-	u32 करोt11RSNAStatsCCMPReplays;
-	u32 करोt11RSNAStatsCCMPDecryptErrors;
+	u32 dot11RSNAStatsCCMPFormatErrors;
+	u32 dot11RSNAStatsCCMPReplays;
+	u32 dot11RSNAStatsCCMPDecryptErrors;
 
-	पूर्णांक key_idx;
+	int key_idx;
 
-	काष्ठा crypto_aead *tfm;
+	struct crypto_aead *tfm;
 
-	/* scratch buffers क्रम virt_to_page() (crypto API) */
+	/* scratch buffers for virt_to_page() (crypto API) */
 	u8 tx_aad[2 * AES_BLOCK_LEN];
 	u8 rx_aad[2 * AES_BLOCK_LEN];
-पूर्ण;
+};
 
-अटल व्योम *ieee80211_ccmp_init(पूर्णांक key_idx)
-अणु
-	काष्ठा ieee80211_ccmp_data *priv;
+static void *ieee80211_ccmp_init(int key_idx)
+{
+	struct ieee80211_ccmp_data *priv;
 
-	priv = kzalloc(माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		जाओ fail;
+	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		goto fail;
 	priv->key_idx = key_idx;
 
 	priv->tfm = crypto_alloc_aead("ccm(aes)", 0, CRYPTO_ALG_ASYNC);
-	अगर (IS_ERR(priv->tfm)) अणु
+	if (IS_ERR(priv->tfm)) {
 		pr_debug("ieee80211_crypt_ccmp: could not allocate crypto API aes\n");
-		priv->tfm = शून्य;
-		जाओ fail;
-	पूर्ण
+		priv->tfm = NULL;
+		goto fail;
+	}
 
-	वापस priv;
+	return priv;
 
 fail:
-	अगर (priv) अणु
-		अगर (priv->tfm)
-			crypto_मुक्त_aead(priv->tfm);
-		kमुक्त(priv);
-	पूर्ण
+	if (priv) {
+		if (priv->tfm)
+			crypto_free_aead(priv->tfm);
+		kfree(priv);
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम ieee80211_ccmp_deinit(व्योम *priv)
-अणु
-	काष्ठा ieee80211_ccmp_data *_priv = priv;
+static void ieee80211_ccmp_deinit(void *priv)
+{
+	struct ieee80211_ccmp_data *_priv = priv;
 
-	अगर (_priv && _priv->tfm)
-		crypto_मुक्त_aead(_priv->tfm);
-	kमुक्त(priv);
-पूर्ण
+	if (_priv && _priv->tfm)
+		crypto_free_aead(_priv->tfm);
+	kfree(priv);
+}
 
-अटल पूर्णांक ccmp_init_iv_and_aad(काष्ठा rtl_80211_hdr_4addr *hdr,
+static int ccmp_init_iv_and_aad(struct rtl_80211_hdr_4addr *hdr,
 			     u8 *pn, u8 *iv, u8 *aad)
-अणु
+{
 	u8 *pos, qc = 0;
-	माप_प्रकार aad_len;
+	size_t aad_len;
 	u16 fc;
-	पूर्णांक a4_included, qc_included;
+	int a4_included, qc_included;
 
 	fc = le16_to_cpu(hdr->frame_ctl);
 	a4_included = ((fc & (IEEE80211_FCTL_TODS | IEEE80211_FCTL_FROMDS)) ==
@@ -108,17 +107,17 @@ fail:
 	qc_included = (WLAN_FC_GET_TYPE(fc) == IEEE80211_FTYPE_DATA) &&
 		       (WLAN_FC_GET_STYPE(fc) & 0x80);
 	aad_len = 22;
-	अगर (a4_included)
+	if (a4_included)
 		aad_len += 6;
-	अगर (qc_included) अणु
+	if (qc_included) {
 		pos = (u8 *)&hdr->addr4;
-		अगर (a4_included)
+		if (a4_included)
 			pos += 6;
 		qc = *pos & 0x0f;
 		aad_len += 2;
-	पूर्ण
+	}
 
-	/* In CCM, the initial vectors (IV) used क्रम CTR mode encryption and CBC
+	/* In CCM, the initial vectors (IV) used for CTR mode encryption and CBC
 	 * mode authentication are not allowed to collide, yet both are derived
 	 * from the same vector. We only set L := 1 here to indicate that the
 	 * data size can be represented in (L+1) bytes. The CCM layer will take
@@ -129,59 +128,59 @@ fail:
 
 	/* Nonce: QC | A2 | PN */
 	iv[1] = qc;
-	स_नकल(iv + 2, hdr->addr2, ETH_ALEN);
-	स_नकल(iv + 8, pn, CCMP_PN_LEN);
+	memcpy(iv + 2, hdr->addr2, ETH_ALEN);
+	memcpy(iv + 8, pn, CCMP_PN_LEN);
 
 	/* AAD:
 	 * FC with bits 4..6 and 11..13 masked to zero; 14 is always one
 	 * A1 | A2 | A3
 	 * SC with bits 4..15 (seq#) masked to zero
-	 * A4 (अगर present)
-	 * QC (अगर present)
+	 * A4 (if present)
+	 * QC (if present)
 	 */
 	pos = (u8 *)hdr;
 	aad[0] = pos[0] & 0x8f;
 	aad[1] = pos[1] & 0xc7;
-	स_नकल(aad + 2, hdr->addr1, 3 * ETH_ALEN);
+	memcpy(aad + 2, hdr->addr1, 3 * ETH_ALEN);
 	pos = (u8 *)&hdr->seq_ctl;
 	aad[20] = pos[0] & 0x0f;
 	aad[21] = 0; /* all bits masked */
-	स_रखो(aad + 22, 0, 8);
-	अगर (a4_included)
-		स_नकल(aad + 22, hdr->addr4, ETH_ALEN);
-	अगर (qc_included) अणु
+	memset(aad + 22, 0, 8);
+	if (a4_included)
+		memcpy(aad + 22, hdr->addr4, ETH_ALEN);
+	if (qc_included) {
 		aad[a4_included ? 28 : 22] = qc;
 		/* rest of QC masked */
-	पूर्ण
+	}
 
-	वापस aad_len;
-पूर्ण
+	return aad_len;
+}
 
-अटल पूर्णांक ieee80211_ccmp_encrypt(काष्ठा sk_buff *skb, पूर्णांक hdr_len, व्योम *priv)
-अणु
-	काष्ठा ieee80211_ccmp_data *key = priv;
-	पूर्णांक i;
+static int ieee80211_ccmp_encrypt(struct sk_buff *skb, int hdr_len, void *priv)
+{
+	struct ieee80211_ccmp_data *key = priv;
+	int i;
 	u8 *pos;
-	काष्ठा rtl_80211_hdr_4addr *hdr;
-	काष्ठा cb_desc *tcb_desc = (काष्ठा cb_desc *)(skb->cb + MAX_DEV_ADDR_SIZE);
+	struct rtl_80211_hdr_4addr *hdr;
+	struct cb_desc *tcb_desc = (struct cb_desc *)(skb->cb + MAX_DEV_ADDR_SIZE);
 
-	अगर (skb_headroom(skb) < CCMP_HDR_LEN ||
+	if (skb_headroom(skb) < CCMP_HDR_LEN ||
 	    skb_tailroom(skb) < CCMP_MIC_LEN ||
 	    skb->len < hdr_len)
-		वापस -1;
+		return -1;
 
 	pos = skb_push(skb, CCMP_HDR_LEN);
-	स_हटाओ(pos, pos + CCMP_HDR_LEN, hdr_len);
+	memmove(pos, pos + CCMP_HDR_LEN, hdr_len);
 	pos += hdr_len;
 	/* mic = skb_put(skb, CCMP_MIC_LEN); */
 
 	i = CCMP_PN_LEN - 1;
-	जबतक (i >= 0) अणु
+	while (i >= 0) {
 		key->tx_pn[i]++;
-		अगर (key->tx_pn[i] != 0)
-			अवरोध;
+		if (key->tx_pn[i] != 0)
+			break;
 		i--;
-	पूर्ण
+	}
 
 	*pos++ = key->tx_pn[5];
 	*pos++ = key->tx_pn[4];
@@ -192,18 +191,18 @@ fail:
 	*pos++ = key->tx_pn[1];
 	*pos++ = key->tx_pn[0];
 
-	hdr = (काष्ठा rtl_80211_hdr_4addr *)skb->data;
-	अगर (!tcb_desc->bHwSec) अणु
-		काष्ठा aead_request *req;
-		काष्ठा scatterlist sg[2];
+	hdr = (struct rtl_80211_hdr_4addr *)skb->data;
+	if (!tcb_desc->bHwSec) {
+		struct aead_request *req;
+		struct scatterlist sg[2];
 		u8 *aad = key->tx_aad;
 		u8 iv[AES_BLOCK_LEN];
-		पूर्णांक aad_len, ret;
-		माप_प्रकार data_len = skb->len - hdr_len - CCMP_HDR_LEN;
+		int aad_len, ret;
+		size_t data_len = skb->len - hdr_len - CCMP_HDR_LEN;
 
 		req = aead_request_alloc(key->tfm, GFP_ATOMIC);
-		अगर (!req)
-			वापस -ENOMEM;
+		if (!req)
+			return -ENOMEM;
 
 		aad_len = ccmp_init_iv_and_aad(hdr, key->tx_pn, iv, aad);
 
@@ -214,55 +213,55 @@ fail:
 		sg_set_buf(&sg[1], skb->data + hdr_len + CCMP_HDR_LEN,
 			   data_len + CCMP_MIC_LEN);
 
-		aead_request_set_callback(req, 0, शून्य, शून्य);
+		aead_request_set_callback(req, 0, NULL, NULL);
 		aead_request_set_ad(req, aad_len);
 		aead_request_set_crypt(req, sg, sg, data_len, iv);
 
 		ret = crypto_aead_encrypt(req);
-		aead_request_मुक्त(req);
+		aead_request_free(req);
 
-		वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return ret;
+	}
+	return 0;
+}
 
-अटल पूर्णांक ieee80211_ccmp_decrypt(काष्ठा sk_buff *skb, पूर्णांक hdr_len, व्योम *priv)
-अणु
-	काष्ठा ieee80211_ccmp_data *key = priv;
+static int ieee80211_ccmp_decrypt(struct sk_buff *skb, int hdr_len, void *priv)
+{
+	struct ieee80211_ccmp_data *key = priv;
 	u8 keyidx, *pos;
-	काष्ठा rtl_80211_hdr_4addr *hdr;
-	काष्ठा cb_desc *tcb_desc = (काष्ठा cb_desc *)(skb->cb + MAX_DEV_ADDR_SIZE);
+	struct rtl_80211_hdr_4addr *hdr;
+	struct cb_desc *tcb_desc = (struct cb_desc *)(skb->cb + MAX_DEV_ADDR_SIZE);
 	u8 pn[6];
 
-	अगर (skb->len < hdr_len + CCMP_HDR_LEN + CCMP_MIC_LEN) अणु
-		key->करोt11RSNAStatsCCMPFormatErrors++;
-		वापस -1;
-	पूर्ण
+	if (skb->len < hdr_len + CCMP_HDR_LEN + CCMP_MIC_LEN) {
+		key->dot11RSNAStatsCCMPFormatErrors++;
+		return -1;
+	}
 
-	hdr = (काष्ठा rtl_80211_hdr_4addr *)skb->data;
+	hdr = (struct rtl_80211_hdr_4addr *)skb->data;
 	pos = skb->data + hdr_len;
 	keyidx = pos[3];
-	अगर (!(keyidx & BIT(5))) अणु
-		अगर (net_ratelimit()) अणु
+	if (!(keyidx & BIT(5))) {
+		if (net_ratelimit()) {
 			netdev_dbg(skb->dev, "CCMP: received packet without ExtIV flag from %pM\n",
 				   hdr->addr2);
-		पूर्ण
-		key->करोt11RSNAStatsCCMPFormatErrors++;
-		वापस -2;
-	पूर्ण
+		}
+		key->dot11RSNAStatsCCMPFormatErrors++;
+		return -2;
+	}
 	keyidx >>= 6;
-	अगर (key->key_idx != keyidx) अणु
+	if (key->key_idx != keyidx) {
 		netdev_dbg(skb->dev, "CCMP: RX tkey->key_idx=%d frame keyidx=%d priv=%p\n",
 			   key->key_idx, keyidx, priv);
-		वापस -6;
-	पूर्ण
-	अगर (!key->key_set) अणु
-		अगर (net_ratelimit()) अणु
+		return -6;
+	}
+	if (!key->key_set) {
+		if (net_ratelimit()) {
 			netdev_dbg(skb->dev, "CCMP: received packet from %pM with keyid=%d that does not have a configured key\n",
 				   hdr->addr2, keyidx);
-		पूर्ण
-		वापस -3;
-	पूर्ण
+		}
+		return -3;
+	}
 
 	pn[0] = pos[7];
 	pn[1] = pos[6];
@@ -272,25 +271,25 @@ fail:
 	pn[5] = pos[0];
 	pos += 8;
 
-	अगर (स_भेद(pn, key->rx_pn, CCMP_PN_LEN) <= 0) अणु
-		अगर (net_ratelimit()) अणु
+	if (memcmp(pn, key->rx_pn, CCMP_PN_LEN) <= 0) {
+		if (net_ratelimit()) {
 			netdev_dbg(skb->dev, "CCMP: replay detected: STA=%pM previous PN %pm received PN %pm\n",
 				   hdr->addr2, key->rx_pn, pn);
-		पूर्ण
-		key->करोt11RSNAStatsCCMPReplays++;
-		वापस -4;
-	पूर्ण
-	अगर (!tcb_desc->bHwSec) अणु
-		काष्ठा aead_request *req;
-		काष्ठा scatterlist sg[2];
+		}
+		key->dot11RSNAStatsCCMPReplays++;
+		return -4;
+	}
+	if (!tcb_desc->bHwSec) {
+		struct aead_request *req;
+		struct scatterlist sg[2];
 		u8 *aad = key->rx_aad;
 		u8 iv[AES_BLOCK_LEN];
-		पूर्णांक aad_len, ret;
-		माप_प्रकार data_len = skb->len - hdr_len - CCMP_HDR_LEN;
+		int aad_len, ret;
+		size_t data_len = skb->len - hdr_len - CCMP_HDR_LEN;
 
 		req = aead_request_alloc(key->tfm, GFP_ATOMIC);
-		अगर (!req)
-			वापस -ENOMEM;
+		if (!req)
+			return -ENOMEM;
 
 		aad_len = ccmp_init_iv_and_aad(hdr, pn, iv, aad);
 
@@ -298,123 +297,123 @@ fail:
 		sg_set_buf(&sg[0], aad, aad_len);
 		sg_set_buf(&sg[1], pos, data_len);
 
-		aead_request_set_callback(req, 0, शून्य, शून्य);
+		aead_request_set_callback(req, 0, NULL, NULL);
 		aead_request_set_ad(req, aad_len);
 		aead_request_set_crypt(req, sg, sg, data_len, iv);
 
 		ret = crypto_aead_decrypt(req);
-		aead_request_मुक्त(req);
+		aead_request_free(req);
 
-		अगर (ret) अणु
-			अगर (net_ratelimit()) अणु
+		if (ret) {
+			if (net_ratelimit()) {
 				netdev_dbg(skb->dev, "CCMP: decrypt failed: STA=%pM\n",
 					   hdr->addr2);
-			पूर्ण
-			key->करोt11RSNAStatsCCMPDecryptErrors++;
-			वापस -5;
-		पूर्ण
+			}
+			key->dot11RSNAStatsCCMPDecryptErrors++;
+			return -5;
+		}
 
-		स_नकल(key->rx_pn, pn, CCMP_PN_LEN);
-	पूर्ण
+		memcpy(key->rx_pn, pn, CCMP_PN_LEN);
+	}
 	/* Remove hdr and MIC */
-	स_हटाओ(skb->data + CCMP_HDR_LEN, skb->data, hdr_len);
+	memmove(skb->data + CCMP_HDR_LEN, skb->data, hdr_len);
 	skb_pull(skb, CCMP_HDR_LEN);
 	skb_trim(skb, skb->len - CCMP_MIC_LEN);
 
-	वापस keyidx;
-पूर्ण
+	return keyidx;
+}
 
-अटल पूर्णांक ieee80211_ccmp_set_key(व्योम *key, पूर्णांक len, u8 *seq, व्योम *priv)
-अणु
-	काष्ठा ieee80211_ccmp_data *data = priv;
-	पूर्णांक keyidx;
-	काष्ठा crypto_aead *tfm = data->tfm;
+static int ieee80211_ccmp_set_key(void *key, int len, u8 *seq, void *priv)
+{
+	struct ieee80211_ccmp_data *data = priv;
+	int keyidx;
+	struct crypto_aead *tfm = data->tfm;
 
 	keyidx = data->key_idx;
-	स_रखो(data, 0, माप(*data));
+	memset(data, 0, sizeof(*data));
 	data->key_idx = keyidx;
-	अगर (len == CCMP_TK_LEN) अणु
-		स_नकल(data->key, key, CCMP_TK_LEN);
+	if (len == CCMP_TK_LEN) {
+		memcpy(data->key, key, CCMP_TK_LEN);
 		data->key_set = 1;
-		अगर (seq) अणु
+		if (seq) {
 			data->rx_pn[0] = seq[5];
 			data->rx_pn[1] = seq[4];
 			data->rx_pn[2] = seq[3];
 			data->rx_pn[3] = seq[2];
 			data->rx_pn[4] = seq[1];
 			data->rx_pn[5] = seq[0];
-		पूर्ण
-		अगर (crypto_aead_setauthsize(tfm, CCMP_MIC_LEN) ||
+		}
+		if (crypto_aead_setauthsize(tfm, CCMP_MIC_LEN) ||
 		    crypto_aead_setkey(tfm, data->key, CCMP_TK_LEN))
-			वापस -1;
-	पूर्ण अन्यथा अगर (len == 0) अणु
+			return -1;
+	} else if (len == 0) {
 		data->key_set = 0;
-	पूर्ण अन्यथा अणु
-		वापस -1;
-	पूर्ण
+	} else {
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ieee80211_ccmp_get_key(व्योम *key, पूर्णांक len, u8 *seq, व्योम *priv)
-अणु
-	काष्ठा ieee80211_ccmp_data *data = priv;
+static int ieee80211_ccmp_get_key(void *key, int len, u8 *seq, void *priv)
+{
+	struct ieee80211_ccmp_data *data = priv;
 
-	अगर (len < CCMP_TK_LEN)
-		वापस -1;
+	if (len < CCMP_TK_LEN)
+		return -1;
 
-	अगर (!data->key_set)
-		वापस 0;
-	स_नकल(key, data->key, CCMP_TK_LEN);
+	if (!data->key_set)
+		return 0;
+	memcpy(key, data->key, CCMP_TK_LEN);
 
-	अगर (seq) अणु
+	if (seq) {
 		seq[0] = data->tx_pn[5];
 		seq[1] = data->tx_pn[4];
 		seq[2] = data->tx_pn[3];
 		seq[3] = data->tx_pn[2];
 		seq[4] = data->tx_pn[1];
 		seq[5] = data->tx_pn[0];
-	पूर्ण
+	}
 
-	वापस CCMP_TK_LEN;
-पूर्ण
+	return CCMP_TK_LEN;
+}
 
-अटल अक्षर *ieee80211_ccmp_prपूर्णांक_stats(अक्षर *p, व्योम *priv)
-अणु
-	काष्ठा ieee80211_ccmp_data *ccmp = priv;
+static char *ieee80211_ccmp_print_stats(char *p, void *priv)
+{
+	struct ieee80211_ccmp_data *ccmp = priv;
 
-	p += प्र_लिखो(p, "key[%d] alg=CCMP key_set=%d tx_pn=%pm rx_pn=%pm format_errors=%d replays=%d decrypt_errors=%d\n",
+	p += sprintf(p, "key[%d] alg=CCMP key_set=%d tx_pn=%pm rx_pn=%pm format_errors=%d replays=%d decrypt_errors=%d\n",
 		     ccmp->key_idx, ccmp->key_set,
 		     ccmp->tx_pn, ccmp->rx_pn,
-		     ccmp->करोt11RSNAStatsCCMPFormatErrors,
-		     ccmp->करोt11RSNAStatsCCMPReplays,
-		     ccmp->करोt11RSNAStatsCCMPDecryptErrors);
+		     ccmp->dot11RSNAStatsCCMPFormatErrors,
+		     ccmp->dot11RSNAStatsCCMPReplays,
+		     ccmp->dot11RSNAStatsCCMPDecryptErrors);
 
-	वापस p;
-पूर्ण
+	return p;
+}
 
-अटल काष्ठा ieee80211_crypto_ops ieee80211_crypt_ccmp = अणु
+static struct ieee80211_crypto_ops ieee80211_crypt_ccmp = {
 	.name			= "CCMP",
 	.init			= ieee80211_ccmp_init,
 	.deinit			= ieee80211_ccmp_deinit,
 	.encrypt_mpdu		= ieee80211_ccmp_encrypt,
 	.decrypt_mpdu		= ieee80211_ccmp_decrypt,
-	.encrypt_msdu		= शून्य,
-	.decrypt_msdu		= शून्य,
+	.encrypt_msdu		= NULL,
+	.decrypt_msdu		= NULL,
 	.set_key		= ieee80211_ccmp_set_key,
 	.get_key		= ieee80211_ccmp_get_key,
-	.prपूर्णांक_stats		= ieee80211_ccmp_prपूर्णांक_stats,
+	.print_stats		= ieee80211_ccmp_print_stats,
 	.extra_prefix_len	= CCMP_HDR_LEN,
 	.extra_postfix_len	= CCMP_MIC_LEN,
 	.owner			= THIS_MODULE,
-पूर्ण;
+};
 
-पूर्णांक __init ieee80211_crypto_ccmp_init(व्योम)
-अणु
-	वापस ieee80211_रेजिस्टर_crypto_ops(&ieee80211_crypt_ccmp);
-पूर्ण
+int __init ieee80211_crypto_ccmp_init(void)
+{
+	return ieee80211_register_crypto_ops(&ieee80211_crypt_ccmp);
+}
 
-व्योम __निकास ieee80211_crypto_ccmp_निकास(व्योम)
-अणु
-	ieee80211_unरेजिस्टर_crypto_ops(&ieee80211_crypt_ccmp);
-पूर्ण
+void __exit ieee80211_crypto_ccmp_exit(void)
+{
+	ieee80211_unregister_crypto_ops(&ieee80211_crypt_ccmp);
+}

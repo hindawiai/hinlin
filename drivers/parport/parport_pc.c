@@ -1,6 +1,5 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-/* Low-level parallel-port routines क्रम 8255-based PC-style hardware.
+// SPDX-License-Identifier: GPL-2.0-only
+/* Low-level parallel-port routines for 8255-based PC-style hardware.
  *
  * Authors: Phil Blundell <philb@gnu.org>
  *          Tim Waugh <tim@cyberelk.demon.co.uk>
@@ -19,15 +18,15 @@
  */
 
 /* This driver should work with any hardware that is broadly compatible
- * with that in the IBM PC.  This applies to the majority of पूर्णांकegrated
- * I/O chipsets that are commonly available.  The expected रेजिस्टर
+ * with that in the IBM PC.  This applies to the majority of integrated
+ * I/O chipsets that are commonly available.  The expected register
  * layout is:
  *
  *	base+0		data
  *	base+1		status
  *	base+2		control
  *
- * In addition, there are some optional रेजिस्टरs:
+ * In addition, there are some optional registers:
  *
  *	base+3		EPP address
  *	base+4		EPP data
@@ -35,580 +34,580 @@
  *	base+0x401	ECP config B
  *	base+0x402	ECP control
  *
- * All रेजिस्टरs are 8 bits wide and पढ़ो/ग_लिखो.  If your hardware dअगरfers
- * only in रेजिस्टर addresses (eg because your रेजिस्टरs are on 32-bit
- * word boundaries) then you can alter the स्थिरants in parport_pc.h to
+ * All registers are 8 bits wide and read/write.  If your hardware differs
+ * only in register addresses (eg because your registers are on 32-bit
+ * word boundaries) then you can alter the constants in parport_pc.h to
  * accommodate this.
  *
- * Note that the ECP रेजिस्टरs may not start at offset 0x400 क्रम PCI cards,
+ * Note that the ECP registers may not start at offset 0x400 for PCI cards,
  * but rather will start at port->base_hi.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/delay.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/pnp.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/sysctl.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/uaccess.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/sched/signal.h>
+#include <linux/delay.h>
+#include <linux/errno.h>
+#include <linux/interrupt.h>
+#include <linux/ioport.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/dma-mapping.h>
+#include <linux/pci.h>
+#include <linux/pnp.h>
+#include <linux/platform_device.h>
+#include <linux/sysctl.h>
+#include <linux/io.h>
+#include <linux/uaccess.h>
 
-#समावेश <यंत्र/dma.h>
+#include <asm/dma.h>
 
-#समावेश <linux/parport.h>
-#समावेश <linux/parport_pc.h>
-#समावेश <linux/via.h>
-#समावेश <यंत्र/parport.h>
+#include <linux/parport.h>
+#include <linux/parport_pc.h>
+#include <linux/via.h>
+#include <asm/parport.h>
 
-#घोषणा PARPORT_PC_MAX_PORTS PARPORT_MAX
+#define PARPORT_PC_MAX_PORTS PARPORT_MAX
 
-#अगर_घोषित CONFIG_ISA_DMA_API
-#घोषणा HAS_DMA
-#पूर्ण_अगर
+#ifdef CONFIG_ISA_DMA_API
+#define HAS_DMA
+#endif
 
 /* ECR modes */
-#घोषणा ECR_SPP 00
-#घोषणा ECR_PS2 01
-#घोषणा ECR_PPF 02
-#घोषणा ECR_ECP 03
-#घोषणा ECR_EPP 04
-#घोषणा ECR_VND 05
-#घोषणा ECR_TST 06
-#घोषणा ECR_CNF 07
-#घोषणा ECR_MODE_MASK 0xe0
-#घोषणा ECR_WRITE(p, v) frob_econtrol((p), 0xff, (v))
+#define ECR_SPP 00
+#define ECR_PS2 01
+#define ECR_PPF 02
+#define ECR_ECP 03
+#define ECR_EPP 04
+#define ECR_VND 05
+#define ECR_TST 06
+#define ECR_CNF 07
+#define ECR_MODE_MASK 0xe0
+#define ECR_WRITE(p, v) frob_econtrol((p), 0xff, (v))
 
-#अघोषित DEBUG
+#undef DEBUG
 
-#घोषणा NR_SUPERIOS 3
-अटल काष्ठा superio_काष्ठा अणु	/* For Super-IO chips स्वतःdetection */
-	पूर्णांक io;
-	पूर्णांक irq;
-	पूर्णांक dma;
-पूर्ण superios[NR_SUPERIOS] = अणु अणु0,पूर्ण,पूर्ण;
+#define NR_SUPERIOS 3
+static struct superio_struct {	/* For Super-IO chips autodetection */
+	int io;
+	int irq;
+	int dma;
+} superios[NR_SUPERIOS] = { {0,},};
 
-अटल पूर्णांक user_specअगरied;
-#अगर defined(CONFIG_PARPORT_PC_SUPERIO) || \
+static int user_specified;
+#if defined(CONFIG_PARPORT_PC_SUPERIO) || \
        (defined(CONFIG_PARPORT_1284) && defined(CONFIG_PARPORT_PC_FIFO))
-अटल पूर्णांक verbose_probing;
-#पूर्ण_अगर
-अटल पूर्णांक pci_रेजिस्टरed_parport;
-अटल पूर्णांक pnp_रेजिस्टरed_parport;
+static int verbose_probing;
+#endif
+static int pci_registered_parport;
+static int pnp_registered_parport;
 
-/* frob_control, but क्रम ECR */
-अटल व्योम frob_econtrol(काष्ठा parport *pb, अचिन्हित अक्षर m,
-			   अचिन्हित अक्षर v)
-अणु
-	अचिन्हित अक्षर ectr = 0;
+/* frob_control, but for ECR */
+static void frob_econtrol(struct parport *pb, unsigned char m,
+			   unsigned char v)
+{
+	unsigned char ectr = 0;
 
-	अगर (m != 0xff)
+	if (m != 0xff)
 		ectr = inb(ECONTROL(pb));
 
 	pr_debug("frob_econtrol(%02x,%02x): %02x -> %02x\n",
 		 m, v, ectr, (ectr & ~m) ^ v);
 
 	outb((ectr & ~m) ^ v, ECONTROL(pb));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम frob_set_mode(काष्ठा parport *p, पूर्णांक mode)
-अणु
+static inline void frob_set_mode(struct parport *p, int mode)
+{
 	frob_econtrol(p, ECR_MODE_MASK, mode << 5);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_PARPORT_PC_FIFO
+#ifdef CONFIG_PARPORT_PC_FIFO
 /* Safely change the mode bits in the ECR
    Returns:
 	    0    : Success
-	   -EBUSY: Could not drain FIFO in some finite amount of समय,
+	   -EBUSY: Could not drain FIFO in some finite amount of time,
 		   mode not changed!
  */
-अटल पूर्णांक change_mode(काष्ठा parport *p, पूर्णांक m)
-अणु
-	स्थिर काष्ठा parport_pc_निजी *priv = p->physport->निजी_data;
-	अचिन्हित अक्षर oecr;
-	पूर्णांक mode;
+static int change_mode(struct parport *p, int m)
+{
+	const struct parport_pc_private *priv = p->physport->private_data;
+	unsigned char oecr;
+	int mode;
 
 	pr_debug("parport change_mode ECP-ISA to mode 0x%02x\n", m);
 
-	अगर (!priv->ecr) अणु
-		prपूर्णांकk(KERN_DEBUG "change_mode: but there's no ECR!\n");
-		वापस 0;
-	पूर्ण
+	if (!priv->ecr) {
+		printk(KERN_DEBUG "change_mode: but there's no ECR!\n");
+		return 0;
+	}
 
 	/* Bits <7:5> contain the mode. */
 	oecr = inb(ECONTROL(p));
 	mode = (oecr >> 5) & 0x7;
-	अगर (mode == m)
-		वापस 0;
+	if (mode == m)
+		return 0;
 
-	अगर (mode >= 2 && !(priv->ctr & 0x20)) अणु
+	if (mode >= 2 && !(priv->ctr & 0x20)) {
 		/* This mode resets the FIFO, so we may
-		 * have to रुको क्रम it to drain first. */
-		अचिन्हित दीर्घ expire = jअगरfies + p->physport->cad->समयout;
-		पूर्णांक counter;
-		चयन (mode) अणु
-		हाल ECR_PPF: /* Parallel Port FIFO mode */
-		हाल ECR_ECP: /* ECP Parallel Port mode */
-			/* Busy रुको क्रम 200us */
-			क्रम (counter = 0; counter < 40; counter++) अणु
-				अगर (inb(ECONTROL(p)) & 0x01)
-					अवरोध;
-				अगर (संकेत_pending(current))
-					अवरोध;
+		 * have to wait for it to drain first. */
+		unsigned long expire = jiffies + p->physport->cad->timeout;
+		int counter;
+		switch (mode) {
+		case ECR_PPF: /* Parallel Port FIFO mode */
+		case ECR_ECP: /* ECP Parallel Port mode */
+			/* Busy wait for 200us */
+			for (counter = 0; counter < 40; counter++) {
+				if (inb(ECONTROL(p)) & 0x01)
+					break;
+				if (signal_pending(current))
+					break;
 				udelay(5);
-			पूर्ण
+			}
 
 			/* Poll slowly. */
-			जबतक (!(inb(ECONTROL(p)) & 0x01)) अणु
-				अगर (समय_after_eq(jअगरfies, expire))
+			while (!(inb(ECONTROL(p)) & 0x01)) {
+				if (time_after_eq(jiffies, expire))
 					/* The FIFO is stuck. */
-					वापस -EBUSY;
-				schedule_समयout_पूर्णांकerruptible(
-							msecs_to_jअगरfies(10));
-				अगर (संकेत_pending(current))
-					अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+					return -EBUSY;
+				schedule_timeout_interruptible(
+							msecs_to_jiffies(10));
+				if (signal_pending(current))
+					break;
+			}
+		}
+	}
 
-	अगर (mode >= 2 && m >= 2) अणु
+	if (mode >= 2 && m >= 2) {
 		/* We have to go through mode 001 */
 		oecr &= ~(7 << 5);
 		oecr |= ECR_PS2 << 5;
 		ECR_WRITE(p, oecr);
-	पूर्ण
+	}
 
 	/* Set the mode. */
 	oecr &= ~(7 << 5);
 	oecr |= m << 5;
 	ECR_WRITE(p, oecr);
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* FIFO support */
+	return 0;
+}
+#endif /* FIFO support */
 
 /*
  * Clear TIMEOUT BIT in EPP MODE
  *
  * This is also used in SPP detection.
  */
-अटल पूर्णांक clear_epp_समयout(काष्ठा parport *pb)
-अणु
-	अचिन्हित अक्षर r;
+static int clear_epp_timeout(struct parport *pb)
+{
+	unsigned char r;
 
-	अगर (!(parport_pc_पढ़ो_status(pb) & 0x01))
-		वापस 1;
+	if (!(parport_pc_read_status(pb) & 0x01))
+		return 1;
 
-	/* To clear समयout some chips require द्विगुन पढ़ो */
-	parport_pc_पढ़ो_status(pb);
-	r = parport_pc_पढ़ो_status(pb);
+	/* To clear timeout some chips require double read */
+	parport_pc_read_status(pb);
+	r = parport_pc_read_status(pb);
 	outb(r | 0x01, STATUS(pb)); /* Some reset by writing 1 */
 	outb(r & 0xfe, STATUS(pb)); /* Others by writing 0 */
-	r = parport_pc_पढ़ो_status(pb);
+	r = parport_pc_read_status(pb);
 
-	वापस !(r & 0x01);
-पूर्ण
+	return !(r & 0x01);
+}
 
 /*
  * Access functions.
  *
- * Most of these aren't अटल because they may be used by the
- * parport_xxx_yyy macros.  बाह्य __अंतरभूत__ versions of several
+ * Most of these aren't static because they may be used by the
+ * parport_xxx_yyy macros.  extern __inline__ versions of several
  * of these are in parport_pc.h.
  */
 
-अटल व्योम parport_pc_init_state(काष्ठा pardevice *dev,
-						काष्ठा parport_state *s)
-अणु
+static void parport_pc_init_state(struct pardevice *dev,
+						struct parport_state *s)
+{
 	s->u.pc.ctr = 0xc;
-	अगर (dev->irq_func &&
+	if (dev->irq_func &&
 	    dev->port->irq != PARPORT_IRQ_NONE)
 		/* Set ackIntEn */
 		s->u.pc.ctr |= 0x10;
 
 	s->u.pc.ecr = 0x34; /* NetMos chip can cause problems 0x24;
 			     * D.Gruszka VScom */
-पूर्ण
+}
 
-अटल व्योम parport_pc_save_state(काष्ठा parport *p, काष्ठा parport_state *s)
-अणु
-	स्थिर काष्ठा parport_pc_निजी *priv = p->physport->निजी_data;
+static void parport_pc_save_state(struct parport *p, struct parport_state *s)
+{
+	const struct parport_pc_private *priv = p->physport->private_data;
 	s->u.pc.ctr = priv->ctr;
-	अगर (priv->ecr)
+	if (priv->ecr)
 		s->u.pc.ecr = inb(ECONTROL(p));
-पूर्ण
+}
 
-अटल व्योम parport_pc_restore_state(काष्ठा parport *p,
-						काष्ठा parport_state *s)
-अणु
-	काष्ठा parport_pc_निजी *priv = p->physport->निजी_data;
-	रेजिस्टर अचिन्हित अक्षर c = s->u.pc.ctr & priv->ctr_writable;
+static void parport_pc_restore_state(struct parport *p,
+						struct parport_state *s)
+{
+	struct parport_pc_private *priv = p->physport->private_data;
+	register unsigned char c = s->u.pc.ctr & priv->ctr_writable;
 	outb(c, CONTROL(p));
 	priv->ctr = c;
-	अगर (priv->ecr)
+	if (priv->ecr)
 		ECR_WRITE(p, s->u.pc.ecr);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_PARPORT_1284
-अटल माप_प्रकार parport_pc_epp_पढ़ो_data(काष्ठा parport *port, व्योम *buf,
-				       माप_प्रकार length, पूर्णांक flags)
-अणु
-	माप_प्रकार got = 0;
+#ifdef CONFIG_PARPORT_1284
+static size_t parport_pc_epp_read_data(struct parport *port, void *buf,
+				       size_t length, int flags)
+{
+	size_t got = 0;
 
-	अगर (flags & PARPORT_W91284PIC) अणु
-		अचिन्हित अक्षर status;
-		माप_प्रकार left = length;
+	if (flags & PARPORT_W91284PIC) {
+		unsigned char status;
+		size_t left = length;
 
 		/* use knowledge about data lines..:
-		 *  nFault is 0 अगर there is at least 1 byte in the Warp's FIFO
-		 *  pError is 1 अगर there are 16 bytes in the Warp's FIFO
+		 *  nFault is 0 if there is at least 1 byte in the Warp's FIFO
+		 *  pError is 1 if there are 16 bytes in the Warp's FIFO
 		 */
 		status = inb(STATUS(port));
 
-		जबतक (!(status & 0x08) && got < length) अणु
-			अगर (left >= 16 && (status & 0x20) && !(status & 0x08)) अणु
-				/* can grab 16 bytes from warp fअगरo */
-				अगर (!((दीर्घ)buf & 0x03))
+		while (!(status & 0x08) && got < length) {
+			if (left >= 16 && (status & 0x20) && !(status & 0x08)) {
+				/* can grab 16 bytes from warp fifo */
+				if (!((long)buf & 0x03))
 					insl(EPPDATA(port), buf, 4);
-				अन्यथा
+				else
 					insb(EPPDATA(port), buf, 16);
 				buf += 16;
 				got += 16;
 				left -= 16;
-			पूर्ण अन्यथा अणु
-				/* grab single byte from the warp fअगरo */
-				*((अक्षर *)buf) = inb(EPPDATA(port));
+			} else {
+				/* grab single byte from the warp fifo */
+				*((char *)buf) = inb(EPPDATA(port));
 				buf++;
 				got++;
 				left--;
-			पूर्ण
+			}
 			status = inb(STATUS(port));
-			अगर (status & 0x01) अणु
-				/* EPP समयout should never occur... */
-				prपूर्णांकk(KERN_DEBUG "%s: EPP timeout occurred while talking to w91284pic (should not have done)\n",
+			if (status & 0x01) {
+				/* EPP timeout should never occur... */
+				printk(KERN_DEBUG "%s: EPP timeout occurred while talking to w91284pic (should not have done)\n",
 				       port->name);
-				clear_epp_समयout(port);
-			पूर्ण
-		पूर्ण
-		वापस got;
-	पूर्ण
-	अगर ((flags & PARPORT_EPP_FAST) && (length > 1)) अणु
-		अगर (!(((दीर्घ)buf | length) & 0x03))
+				clear_epp_timeout(port);
+			}
+		}
+		return got;
+	}
+	if ((flags & PARPORT_EPP_FAST) && (length > 1)) {
+		if (!(((long)buf | length) & 0x03))
 			insl(EPPDATA(port), buf, (length >> 2));
-		अन्यथा
+		else
 			insb(EPPDATA(port), buf, length);
-		अगर (inb(STATUS(port)) & 0x01) अणु
-			clear_epp_समयout(port);
-			वापस -EIO;
-		पूर्ण
-		वापस length;
-	पूर्ण
-	क्रम (; got < length; got++) अणु
-		*((अक्षर *)buf) = inb(EPPDATA(port));
+		if (inb(STATUS(port)) & 0x01) {
+			clear_epp_timeout(port);
+			return -EIO;
+		}
+		return length;
+	}
+	for (; got < length; got++) {
+		*((char *)buf) = inb(EPPDATA(port));
 		buf++;
-		अगर (inb(STATUS(port)) & 0x01) अणु
-			/* EPP समयout */
-			clear_epp_समयout(port);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+		if (inb(STATUS(port)) & 0x01) {
+			/* EPP timeout */
+			clear_epp_timeout(port);
+			break;
+		}
+	}
 
-	वापस got;
-पूर्ण
+	return got;
+}
 
-अटल माप_प्रकार parport_pc_epp_ग_लिखो_data(काष्ठा parport *port, स्थिर व्योम *buf,
-					माप_प्रकार length, पूर्णांक flags)
-अणु
-	माप_प्रकार written = 0;
+static size_t parport_pc_epp_write_data(struct parport *port, const void *buf,
+					size_t length, int flags)
+{
+	size_t written = 0;
 
-	अगर ((flags & PARPORT_EPP_FAST) && (length > 1)) अणु
-		अगर (!(((दीर्घ)buf | length) & 0x03))
+	if ((flags & PARPORT_EPP_FAST) && (length > 1)) {
+		if (!(((long)buf | length) & 0x03))
 			outsl(EPPDATA(port), buf, (length >> 2));
-		अन्यथा
+		else
 			outsb(EPPDATA(port), buf, length);
-		अगर (inb(STATUS(port)) & 0x01) अणु
-			clear_epp_समयout(port);
-			वापस -EIO;
-		पूर्ण
-		वापस length;
-	पूर्ण
-	क्रम (; written < length; written++) अणु
-		outb(*((अक्षर *)buf), EPPDATA(port));
+		if (inb(STATUS(port)) & 0x01) {
+			clear_epp_timeout(port);
+			return -EIO;
+		}
+		return length;
+	}
+	for (; written < length; written++) {
+		outb(*((char *)buf), EPPDATA(port));
 		buf++;
-		अगर (inb(STATUS(port)) & 0x01) अणु
-			clear_epp_समयout(port);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+		if (inb(STATUS(port)) & 0x01) {
+			clear_epp_timeout(port);
+			break;
+		}
+	}
 
-	वापस written;
-पूर्ण
+	return written;
+}
 
-अटल माप_प्रकार parport_pc_epp_पढ़ो_addr(काष्ठा parport *port, व्योम *buf,
-					माप_प्रकार length, पूर्णांक flags)
-अणु
-	माप_प्रकार got = 0;
+static size_t parport_pc_epp_read_addr(struct parport *port, void *buf,
+					size_t length, int flags)
+{
+	size_t got = 0;
 
-	अगर ((flags & PARPORT_EPP_FAST) && (length > 1)) अणु
+	if ((flags & PARPORT_EPP_FAST) && (length > 1)) {
 		insb(EPPADDR(port), buf, length);
-		अगर (inb(STATUS(port)) & 0x01) अणु
-			clear_epp_समयout(port);
-			वापस -EIO;
-		पूर्ण
-		वापस length;
-	पूर्ण
-	क्रम (; got < length; got++) अणु
-		*((अक्षर *)buf) = inb(EPPADDR(port));
+		if (inb(STATUS(port)) & 0x01) {
+			clear_epp_timeout(port);
+			return -EIO;
+		}
+		return length;
+	}
+	for (; got < length; got++) {
+		*((char *)buf) = inb(EPPADDR(port));
 		buf++;
-		अगर (inb(STATUS(port)) & 0x01) अणु
-			clear_epp_समयout(port);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+		if (inb(STATUS(port)) & 0x01) {
+			clear_epp_timeout(port);
+			break;
+		}
+	}
 
-	वापस got;
-पूर्ण
+	return got;
+}
 
-अटल माप_प्रकार parport_pc_epp_ग_लिखो_addr(काष्ठा parport *port,
-					 स्थिर व्योम *buf, माप_प्रकार length,
-					 पूर्णांक flags)
-अणु
-	माप_प्रकार written = 0;
+static size_t parport_pc_epp_write_addr(struct parport *port,
+					 const void *buf, size_t length,
+					 int flags)
+{
+	size_t written = 0;
 
-	अगर ((flags & PARPORT_EPP_FAST) && (length > 1)) अणु
+	if ((flags & PARPORT_EPP_FAST) && (length > 1)) {
 		outsb(EPPADDR(port), buf, length);
-		अगर (inb(STATUS(port)) & 0x01) अणु
-			clear_epp_समयout(port);
-			वापस -EIO;
-		पूर्ण
-		वापस length;
-	पूर्ण
-	क्रम (; written < length; written++) अणु
-		outb(*((अक्षर *)buf), EPPADDR(port));
+		if (inb(STATUS(port)) & 0x01) {
+			clear_epp_timeout(port);
+			return -EIO;
+		}
+		return length;
+	}
+	for (; written < length; written++) {
+		outb(*((char *)buf), EPPADDR(port));
 		buf++;
-		अगर (inb(STATUS(port)) & 0x01) अणु
-			clear_epp_समयout(port);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+		if (inb(STATUS(port)) & 0x01) {
+			clear_epp_timeout(port);
+			break;
+		}
+	}
 
-	वापस written;
-पूर्ण
+	return written;
+}
 
-अटल माप_प्रकार parport_pc_ecpepp_पढ़ो_data(काष्ठा parport *port, व्योम *buf,
-					  माप_प्रकार length, पूर्णांक flags)
-अणु
-	माप_प्रकार got;
-
-	frob_set_mode(port, ECR_EPP);
-	parport_pc_data_reverse(port);
-	parport_pc_ग_लिखो_control(port, 0x4);
-	got = parport_pc_epp_पढ़ो_data(port, buf, length, flags);
-	frob_set_mode(port, ECR_PS2);
-
-	वापस got;
-पूर्ण
-
-अटल माप_प्रकार parport_pc_ecpepp_ग_लिखो_data(काष्ठा parport *port,
-					   स्थिर व्योम *buf, माप_प्रकार length,
-					   पूर्णांक flags)
-अणु
-	माप_प्रकार written;
-
-	frob_set_mode(port, ECR_EPP);
-	parport_pc_ग_लिखो_control(port, 0x4);
-	parport_pc_data_क्रमward(port);
-	written = parport_pc_epp_ग_लिखो_data(port, buf, length, flags);
-	frob_set_mode(port, ECR_PS2);
-
-	वापस written;
-पूर्ण
-
-अटल माप_प्रकार parport_pc_ecpepp_पढ़ो_addr(काष्ठा parport *port, व्योम *buf,
-					  माप_प्रकार length, पूर्णांक flags)
-अणु
-	माप_प्रकार got;
+static size_t parport_pc_ecpepp_read_data(struct parport *port, void *buf,
+					  size_t length, int flags)
+{
+	size_t got;
 
 	frob_set_mode(port, ECR_EPP);
 	parport_pc_data_reverse(port);
-	parport_pc_ग_लिखो_control(port, 0x4);
-	got = parport_pc_epp_पढ़ो_addr(port, buf, length, flags);
+	parport_pc_write_control(port, 0x4);
+	got = parport_pc_epp_read_data(port, buf, length, flags);
 	frob_set_mode(port, ECR_PS2);
 
-	वापस got;
-पूर्ण
+	return got;
+}
 
-अटल माप_प्रकार parport_pc_ecpepp_ग_लिखो_addr(काष्ठा parport *port,
-					    स्थिर व्योम *buf, माप_प्रकार length,
-					    पूर्णांक flags)
-अणु
-	माप_प्रकार written;
+static size_t parport_pc_ecpepp_write_data(struct parport *port,
+					   const void *buf, size_t length,
+					   int flags)
+{
+	size_t written;
 
 	frob_set_mode(port, ECR_EPP);
-	parport_pc_ग_लिखो_control(port, 0x4);
-	parport_pc_data_क्रमward(port);
-	written = parport_pc_epp_ग_लिखो_addr(port, buf, length, flags);
+	parport_pc_write_control(port, 0x4);
+	parport_pc_data_forward(port);
+	written = parport_pc_epp_write_data(port, buf, length, flags);
 	frob_set_mode(port, ECR_PS2);
 
-	वापस written;
-पूर्ण
-#पूर्ण_अगर /* IEEE 1284 support */
+	return written;
+}
 
-#अगर_घोषित CONFIG_PARPORT_PC_FIFO
-अटल माप_प्रकार parport_pc_fअगरo_ग_लिखो_block_pio(काष्ठा parport *port,
-					       स्थिर व्योम *buf, माप_प्रकार length)
-अणु
-	पूर्णांक ret = 0;
-	स्थिर अचिन्हित अक्षर *bufp = buf;
-	माप_प्रकार left = length;
-	अचिन्हित दीर्घ expire = jअगरfies + port->physport->cad->समयout;
-	स्थिर पूर्णांक fअगरo = FIFO(port);
-	पूर्णांक poll_क्रम = 8; /* 80 usecs */
-	स्थिर काष्ठा parport_pc_निजी *priv = port->physport->निजी_data;
-	स्थिर पूर्णांक fअगरo_depth = priv->fअगरo_depth;
+static size_t parport_pc_ecpepp_read_addr(struct parport *port, void *buf,
+					  size_t length, int flags)
+{
+	size_t got;
+
+	frob_set_mode(port, ECR_EPP);
+	parport_pc_data_reverse(port);
+	parport_pc_write_control(port, 0x4);
+	got = parport_pc_epp_read_addr(port, buf, length, flags);
+	frob_set_mode(port, ECR_PS2);
+
+	return got;
+}
+
+static size_t parport_pc_ecpepp_write_addr(struct parport *port,
+					    const void *buf, size_t length,
+					    int flags)
+{
+	size_t written;
+
+	frob_set_mode(port, ECR_EPP);
+	parport_pc_write_control(port, 0x4);
+	parport_pc_data_forward(port);
+	written = parport_pc_epp_write_addr(port, buf, length, flags);
+	frob_set_mode(port, ECR_PS2);
+
+	return written;
+}
+#endif /* IEEE 1284 support */
+
+#ifdef CONFIG_PARPORT_PC_FIFO
+static size_t parport_pc_fifo_write_block_pio(struct parport *port,
+					       const void *buf, size_t length)
+{
+	int ret = 0;
+	const unsigned char *bufp = buf;
+	size_t left = length;
+	unsigned long expire = jiffies + port->physport->cad->timeout;
+	const int fifo = FIFO(port);
+	int poll_for = 8; /* 80 usecs */
+	const struct parport_pc_private *priv = port->physport->private_data;
+	const int fifo_depth = priv->fifo_depth;
 
 	port = port->physport;
 
-	/* We करोn't want to be पूर्णांकerrupted every अक्षरacter. */
+	/* We don't want to be interrupted every character. */
 	parport_pc_disable_irq(port);
 	/* set nErrIntrEn and serviceIntr */
 	frob_econtrol(port, (1<<4) | (1<<2), (1<<4) | (1<<2));
 
 	/* Forward mode. */
-	parport_pc_data_क्रमward(port); /* Must be in PS2 mode */
+	parport_pc_data_forward(port); /* Must be in PS2 mode */
 
-	जबतक (left) अणु
-		अचिन्हित अक्षर byte;
-		अचिन्हित अक्षर ecrval = inb(ECONTROL(port));
-		पूर्णांक i = 0;
+	while (left) {
+		unsigned char byte;
+		unsigned char ecrval = inb(ECONTROL(port));
+		int i = 0;
 
-		अगर (need_resched() && समय_beक्रमe(jअगरfies, expire))
+		if (need_resched() && time_before(jiffies, expire))
 			/* Can't yield the port. */
 			schedule();
 
-		/* Anyone अन्यथा रुकोing क्रम the port? */
-		अगर (port->रुकोhead) अणु
-			prपूर्णांकk(KERN_DEBUG "Somebody wants the port\n");
-			अवरोध;
-		पूर्ण
+		/* Anyone else waiting for the port? */
+		if (port->waithead) {
+			printk(KERN_DEBUG "Somebody wants the port\n");
+			break;
+		}
 
-		अगर (ecrval & 0x02) अणु
-			/* FIFO is full. Wait क्रम पूर्णांकerrupt. */
+		if (ecrval & 0x02) {
+			/* FIFO is full. Wait for interrupt. */
 
 			/* Clear serviceIntr */
 			ECR_WRITE(port, ecrval & ~(1<<2));
 false_alarm:
-			ret = parport_रुको_event(port, HZ);
-			अगर (ret < 0)
-				अवरोध;
+			ret = parport_wait_event(port, HZ);
+			if (ret < 0)
+				break;
 			ret = 0;
-			अगर (!समय_beक्रमe(jअगरfies, expire)) अणु
+			if (!time_before(jiffies, expire)) {
 				/* Timed out. */
-				prपूर्णांकk(KERN_DEBUG "FIFO write timed out\n");
-				अवरोध;
-			पूर्ण
+				printk(KERN_DEBUG "FIFO write timed out\n");
+				break;
+			}
 			ecrval = inb(ECONTROL(port));
-			अगर (!(ecrval & (1<<2))) अणु
-				अगर (need_resched() &&
-				    समय_beक्रमe(jअगरfies, expire))
+			if (!(ecrval & (1<<2))) {
+				if (need_resched() &&
+				    time_before(jiffies, expire))
 					schedule();
 
-				जाओ false_alarm;
-			पूर्ण
+				goto false_alarm;
+			}
 
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/* Can't fail now. */
-		expire = jअगरfies + port->cad->समयout;
+		expire = jiffies + port->cad->timeout;
 
 poll:
-		अगर (संकेत_pending(current))
-			अवरोध;
+		if (signal_pending(current))
+			break;
 
-		अगर (ecrval & 0x01) अणु
+		if (ecrval & 0x01) {
 			/* FIFO is empty. Blast it full. */
-			स्थिर पूर्णांक n = left < fअगरo_depth ? left : fअगरo_depth;
-			outsb(fअगरo, bufp, n);
+			const int n = left < fifo_depth ? left : fifo_depth;
+			outsb(fifo, bufp, n);
 			bufp += n;
 			left -= n;
 
-			/* Adjust the poll समय. */
-			अगर (i < (poll_क्रम - 2))
-				poll_क्रम--;
-			जारी;
-		पूर्ण अन्यथा अगर (i++ < poll_क्रम) अणु
+			/* Adjust the poll time. */
+			if (i < (poll_for - 2))
+				poll_for--;
+			continue;
+		} else if (i++ < poll_for) {
 			udelay(10);
 			ecrval = inb(ECONTROL(port));
-			जाओ poll;
-		पूर्ण
+			goto poll;
+		}
 
 		/* Half-full(call me an optimist) */
 		byte = *bufp++;
-		outb(byte, fअगरo);
+		outb(byte, fifo);
 		left--;
-	पूर्ण
+	}
 	dump_parport_state("leave fifo_write_block_pio", port);
-	वापस length - left;
-पूर्ण
+	return length - left;
+}
 
-#अगर_घोषित HAS_DMA
-अटल माप_प्रकार parport_pc_fअगरo_ग_लिखो_block_dma(काष्ठा parport *port,
-					       स्थिर व्योम *buf, माप_प्रकार length)
-अणु
-	पूर्णांक ret = 0;
-	अचिन्हित दीर्घ dmaflag;
-	माप_प्रकार left = length;
-	स्थिर काष्ठा parport_pc_निजी *priv = port->physport->निजी_data;
-	काष्ठा device *dev = port->physport->dev;
+#ifdef HAS_DMA
+static size_t parport_pc_fifo_write_block_dma(struct parport *port,
+					       const void *buf, size_t length)
+{
+	int ret = 0;
+	unsigned long dmaflag;
+	size_t left = length;
+	const struct parport_pc_private *priv = port->physport->private_data;
+	struct device *dev = port->physport->dev;
 	dma_addr_t dma_addr, dma_handle;
-	माप_प्रकार maxlen = 0x10000; /* max 64k per DMA transfer */
-	अचिन्हित दीर्घ start = (अचिन्हित दीर्घ) buf;
-	अचिन्हित दीर्घ end = (अचिन्हित दीर्घ) buf + length - 1;
+	size_t maxlen = 0x10000; /* max 64k per DMA transfer */
+	unsigned long start = (unsigned long) buf;
+	unsigned long end = (unsigned long) buf + length - 1;
 
 	dump_parport_state("enter fifo_write_block_dma", port);
-	अगर (end < MAX_DMA_ADDRESS) अणु
+	if (end < MAX_DMA_ADDRESS) {
 		/* If it would cross a 64k boundary, cap it at the end. */
-		अगर ((start ^ end) & ~0xffffUL)
+		if ((start ^ end) & ~0xffffUL)
 			maxlen = 0x10000 - (start & 0xffff);
 
-		dma_addr = dma_handle = dma_map_single(dev, (व्योम *)buf, length,
+		dma_addr = dma_handle = dma_map_single(dev, (void *)buf, length,
 						       DMA_TO_DEVICE);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* above 16 MB we use a bounce buffer as ISA-DMA
 		   is not possible */
-		maxlen   = PAGE_SIZE;          /* माप(priv->dma_buf) */
+		maxlen   = PAGE_SIZE;          /* sizeof(priv->dma_buf) */
 		dma_addr = priv->dma_handle;
 		dma_handle = 0;
-	पूर्ण
+	}
 
 	port = port->physport;
 
-	/* We करोn't want to be पूर्णांकerrupted every अक्षरacter. */
+	/* We don't want to be interrupted every character. */
 	parport_pc_disable_irq(port);
 	/* set nErrIntrEn and serviceIntr */
 	frob_econtrol(port, (1<<4) | (1<<2), (1<<4) | (1<<2));
 
 	/* Forward mode. */
-	parport_pc_data_क्रमward(port); /* Must be in PS2 mode */
+	parport_pc_data_forward(port); /* Must be in PS2 mode */
 
-	जबतक (left) अणु
-		अचिन्हित दीर्घ expire = jअगरfies + port->physport->cad->समयout;
+	while (left) {
+		unsigned long expire = jiffies + port->physport->cad->timeout;
 
-		माप_प्रकार count = left;
+		size_t count = left;
 
-		अगर (count > maxlen)
+		if (count > maxlen)
 			count = maxlen;
 
-		अगर (!dma_handle)   /* bounce buffer ! */
-			स_नकल(priv->dma_buf, buf, count);
+		if (!dma_handle)   /* bounce buffer ! */
+			memcpy(priv->dma_buf, buf, count);
 
 		dmaflag = claim_dma_lock();
 		disable_dma(port->dma);
@@ -629,26 +628,26 @@ poll:
 		/* assume DMA will be successful */
 		left -= count;
 		buf  += count;
-		अगर (dma_handle)
+		if (dma_handle)
 			dma_addr += count;
 
-		/* Wait क्रम पूर्णांकerrupt. */
+		/* Wait for interrupt. */
 false_alarm:
-		ret = parport_रुको_event(port, HZ);
-		अगर (ret < 0)
-			अवरोध;
+		ret = parport_wait_event(port, HZ);
+		if (ret < 0)
+			break;
 		ret = 0;
-		अगर (!समय_beक्रमe(jअगरfies, expire)) अणु
+		if (!time_before(jiffies, expire)) {
 			/* Timed out. */
-			prपूर्णांकk(KERN_DEBUG "DMA write timed out\n");
-			अवरोध;
-		पूर्ण
+			printk(KERN_DEBUG "DMA write timed out\n");
+			break;
+		}
 		/* Is serviceIntr set? */
-		अगर (!(inb(ECONTROL(port)) & (1<<2))) अणु
+		if (!(inb(ECONTROL(port)) & (1<<2))) {
 			cond_resched();
 
-			जाओ false_alarm;
-		पूर्ण
+			goto false_alarm;
+		}
 
 		dmaflag = claim_dma_lock();
 		disable_dma(port->dma);
@@ -658,20 +657,20 @@ false_alarm:
 
 		cond_resched(); /* Can't yield the port. */
 
-		/* Anyone अन्यथा रुकोing क्रम the port? */
-		अगर (port->रुकोhead) अणु
-			prपूर्णांकk(KERN_DEBUG "Somebody wants the port\n");
-			अवरोध;
-		पूर्ण
+		/* Anyone else waiting for the port? */
+		if (port->waithead) {
+			printk(KERN_DEBUG "Somebody wants the port\n");
+			break;
+		}
 
-		/* update क्रम possible DMA residue ! */
+		/* update for possible DMA residue ! */
 		buf  -= count;
 		left += count;
-		अगर (dma_handle)
+		if (dma_handle)
 			dma_addr -= count;
-	पूर्ण
+	}
 
-	/* Maybe got here through अवरोध, so adjust क्रम DMA residue! */
+	/* Maybe got here through break, so adjust for DMA residue! */
 	dmaflag = claim_dma_lock();
 	disable_dma(port->dma);
 	clear_dma_ff(port->dma);
@@ -681,116 +680,116 @@ false_alarm:
 	/* Turn off DMA mode */
 	frob_econtrol(port, 1<<3, 0);
 
-	अगर (dma_handle)
+	if (dma_handle)
 		dma_unmap_single(dev, dma_handle, length, DMA_TO_DEVICE);
 
 	dump_parport_state("leave fifo_write_block_dma", port);
-	वापस length - left;
-पूर्ण
-#पूर्ण_अगर
+	return length - left;
+}
+#endif
 
-अटल अंतरभूत माप_प्रकार parport_pc_fअगरo_ग_लिखो_block(काष्ठा parport *port,
-					       स्थिर व्योम *buf, माप_प्रकार length)
-अणु
-#अगर_घोषित HAS_DMA
-	अगर (port->dma != PARPORT_DMA_NONE)
-		वापस parport_pc_fअगरo_ग_लिखो_block_dma(port, buf, length);
-#पूर्ण_अगर
-	वापस parport_pc_fअगरo_ग_लिखो_block_pio(port, buf, length);
-पूर्ण
+static inline size_t parport_pc_fifo_write_block(struct parport *port,
+					       const void *buf, size_t length)
+{
+#ifdef HAS_DMA
+	if (port->dma != PARPORT_DMA_NONE)
+		return parport_pc_fifo_write_block_dma(port, buf, length);
+#endif
+	return parport_pc_fifo_write_block_pio(port, buf, length);
+}
 
 /* Parallel Port FIFO mode (ECP chipsets) */
-अटल माप_प्रकार parport_pc_compat_ग_लिखो_block_pio(काष्ठा parport *port,
-						 स्थिर व्योम *buf, माप_प्रकार length,
-						 पूर्णांक flags)
-अणु
-	माप_प्रकार written;
-	पूर्णांक r;
-	अचिन्हित दीर्घ expire;
-	स्थिर काष्ठा parport_pc_निजी *priv = port->physport->निजी_data;
+static size_t parport_pc_compat_write_block_pio(struct parport *port,
+						 const void *buf, size_t length,
+						 int flags)
+{
+	size_t written;
+	int r;
+	unsigned long expire;
+	const struct parport_pc_private *priv = port->physport->private_data;
 
-	/* Special हाल: a समयout of zero means we cannot call schedule().
-	 * Also अगर O_NONBLOCK is set then use the शेष implementation. */
-	अगर (port->physport->cad->समयout <= PARPORT_INACTIVITY_O_NONBLOCK)
-		वापस parport_ieee1284_ग_लिखो_compat(port, buf,
+	/* Special case: a timeout of zero means we cannot call schedule().
+	 * Also if O_NONBLOCK is set then use the default implementation. */
+	if (port->physport->cad->timeout <= PARPORT_INACTIVITY_O_NONBLOCK)
+		return parport_ieee1284_write_compat(port, buf,
 						      length, flags);
 
 	/* Set up parallel port FIFO mode.*/
-	parport_pc_data_क्रमward(port); /* Must be in PS2 mode */
+	parport_pc_data_forward(port); /* Must be in PS2 mode */
 	parport_pc_frob_control(port, PARPORT_CONTROL_STROBE, 0);
 	r = change_mode(port, ECR_PPF); /* Parallel port FIFO */
-	अगर (r)
-		prपूर्णांकk(KERN_DEBUG "%s: Warning change_mode ECR_PPF failed\n",
+	if (r)
+		printk(KERN_DEBUG "%s: Warning change_mode ECR_PPF failed\n",
 		       port->name);
 
 	port->physport->ieee1284.phase = IEEE1284_PH_FWD_DATA;
 
 	/* Write the data to the FIFO. */
-	written = parport_pc_fअगरo_ग_लिखो_block(port, buf, length);
+	written = parport_pc_fifo_write_block(port, buf, length);
 
 	/* Finish up. */
-	/* For some hardware we करोn't want to touch the mode until
-	 * the FIFO is empty, so allow 4 seconds क्रम each position
-	 * in the fअगरo.
+	/* For some hardware we don't want to touch the mode until
+	 * the FIFO is empty, so allow 4 seconds for each position
+	 * in the fifo.
 	 */
-	expire = jअगरfies + (priv->fअगरo_depth * HZ * 4);
-	करो अणु
-		/* Wait क्रम the FIFO to empty */
+	expire = jiffies + (priv->fifo_depth * HZ * 4);
+	do {
+		/* Wait for the FIFO to empty */
 		r = change_mode(port, ECR_PS2);
-		अगर (r != -EBUSY)
-			अवरोध;
-	पूर्ण जबतक (समय_beक्रमe(jअगरfies, expire));
-	अगर (r == -EBUSY) अणु
+		if (r != -EBUSY)
+			break;
+	} while (time_before(jiffies, expire));
+	if (r == -EBUSY) {
 
-		prपूर्णांकk(KERN_DEBUG "%s: FIFO is stuck\n", port->name);
+		printk(KERN_DEBUG "%s: FIFO is stuck\n", port->name);
 
 		/* Prevent further data transfer. */
 		frob_set_mode(port, ECR_TST);
 
-		/* Adjust क्रम the contents of the FIFO. */
-		क्रम (written -= priv->fअगरo_depth; ; written++) अणु
-			अगर (inb(ECONTROL(port)) & 0x2) अणु
+		/* Adjust for the contents of the FIFO. */
+		for (written -= priv->fifo_depth; ; written++) {
+			if (inb(ECONTROL(port)) & 0x2) {
 				/* Full up. */
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			outb(0, FIFO(port));
-		पूर्ण
+		}
 
-		/* Reset the FIFO and वापस to PS2 mode. */
+		/* Reset the FIFO and return to PS2 mode. */
 		frob_set_mode(port, ECR_PS2);
-	पूर्ण
+	}
 
-	r = parport_रुको_peripheral(port,
+	r = parport_wait_peripheral(port,
 				     PARPORT_STATUS_BUSY,
 				     PARPORT_STATUS_BUSY);
-	अगर (r)
-		prपूर्णांकk(KERN_DEBUG "%s: BUSY timeout (%d) in compat_write_block_pio\n",
+	if (r)
+		printk(KERN_DEBUG "%s: BUSY timeout (%d) in compat_write_block_pio\n",
 		       port->name, r);
 
 	port->physport->ieee1284.phase = IEEE1284_PH_FWD_IDLE;
 
-	वापस written;
-पूर्ण
+	return written;
+}
 
 /* ECP */
-#अगर_घोषित CONFIG_PARPORT_1284
-अटल माप_प्रकार parport_pc_ecp_ग_लिखो_block_pio(काष्ठा parport *port,
-					      स्थिर व्योम *buf, माप_प्रकार length,
-					      पूर्णांक flags)
-अणु
-	माप_प्रकार written;
-	पूर्णांक r;
-	अचिन्हित दीर्घ expire;
-	स्थिर काष्ठा parport_pc_निजी *priv = port->physport->निजी_data;
+#ifdef CONFIG_PARPORT_1284
+static size_t parport_pc_ecp_write_block_pio(struct parport *port,
+					      const void *buf, size_t length,
+					      int flags)
+{
+	size_t written;
+	int r;
+	unsigned long expire;
+	const struct parport_pc_private *priv = port->physport->private_data;
 
-	/* Special हाल: a समयout of zero means we cannot call schedule().
-	 * Also अगर O_NONBLOCK is set then use the शेष implementation. */
-	अगर (port->physport->cad->समयout <= PARPORT_INACTIVITY_O_NONBLOCK)
-		वापस parport_ieee1284_ecp_ग_लिखो_data(port, buf,
+	/* Special case: a timeout of zero means we cannot call schedule().
+	 * Also if O_NONBLOCK is set then use the default implementation. */
+	if (port->physport->cad->timeout <= PARPORT_INACTIVITY_O_NONBLOCK)
+		return parport_ieee1284_ecp_write_data(port, buf,
 							length, flags);
 
-	/* Switch to क्रमward mode अगर necessary. */
-	अगर (port->physport->ieee1284.phase != IEEE1284_PH_FWD_IDLE) अणु
+	/* Switch to forward mode if necessary. */
+	if (port->physport->ieee1284.phase != IEEE1284_PH_FWD_IDLE) {
 		/* Event 47: Set nInit high. */
 		parport_frob_control(port,
 				      PARPORT_CONTROL_INIT
@@ -799,94 +798,94 @@ false_alarm:
 				      | PARPORT_CONTROL_AUTOFD);
 
 		/* Event 49: PError goes high. */
-		r = parport_रुको_peripheral(port,
+		r = parport_wait_peripheral(port,
 					     PARPORT_STATUS_PAPEROUT,
 					     PARPORT_STATUS_PAPEROUT);
-		अगर (r) अणु
-			prपूर्णांकk(KERN_DEBUG "%s: PError timeout (%d) in ecp_write_block_pio\n",
+		if (r) {
+			printk(KERN_DEBUG "%s: PError timeout (%d) in ecp_write_block_pio\n",
 			       port->name, r);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Set up ECP parallel port mode.*/
-	parport_pc_data_क्रमward(port); /* Must be in PS2 mode */
+	parport_pc_data_forward(port); /* Must be in PS2 mode */
 	parport_pc_frob_control(port,
 				 PARPORT_CONTROL_STROBE |
 				 PARPORT_CONTROL_AUTOFD,
 				 0);
 	r = change_mode(port, ECR_ECP); /* ECP FIFO */
-	अगर (r)
-		prपूर्णांकk(KERN_DEBUG "%s: Warning change_mode ECR_ECP failed\n",
+	if (r)
+		printk(KERN_DEBUG "%s: Warning change_mode ECR_ECP failed\n",
 		       port->name);
 	port->physport->ieee1284.phase = IEEE1284_PH_FWD_DATA;
 
 	/* Write the data to the FIFO. */
-	written = parport_pc_fअगरo_ग_लिखो_block(port, buf, length);
+	written = parport_pc_fifo_write_block(port, buf, length);
 
 	/* Finish up. */
-	/* For some hardware we करोn't want to touch the mode until
-	 * the FIFO is empty, so allow 4 seconds क्रम each position
-	 * in the fअगरo.
+	/* For some hardware we don't want to touch the mode until
+	 * the FIFO is empty, so allow 4 seconds for each position
+	 * in the fifo.
 	 */
-	expire = jअगरfies + (priv->fअगरo_depth * (HZ * 4));
-	करो अणु
-		/* Wait क्रम the FIFO to empty */
+	expire = jiffies + (priv->fifo_depth * (HZ * 4));
+	do {
+		/* Wait for the FIFO to empty */
 		r = change_mode(port, ECR_PS2);
-		अगर (r != -EBUSY)
-			अवरोध;
-	पूर्ण जबतक (समय_beक्रमe(jअगरfies, expire));
-	अगर (r == -EBUSY) अणु
+		if (r != -EBUSY)
+			break;
+	} while (time_before(jiffies, expire));
+	if (r == -EBUSY) {
 
-		prपूर्णांकk(KERN_DEBUG "%s: FIFO is stuck\n", port->name);
+		printk(KERN_DEBUG "%s: FIFO is stuck\n", port->name);
 
 		/* Prevent further data transfer. */
 		frob_set_mode(port, ECR_TST);
 
-		/* Adjust क्रम the contents of the FIFO. */
-		क्रम (written -= priv->fअगरo_depth; ; written++) अणु
-			अगर (inb(ECONTROL(port)) & 0x2) अणु
+		/* Adjust for the contents of the FIFO. */
+		for (written -= priv->fifo_depth; ; written++) {
+			if (inb(ECONTROL(port)) & 0x2) {
 				/* Full up. */
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			outb(0, FIFO(port));
-		पूर्ण
+		}
 
-		/* Reset the FIFO and वापस to PS2 mode. */
+		/* Reset the FIFO and return to PS2 mode. */
 		frob_set_mode(port, ECR_PS2);
 
 		/* Host transfer recovery. */
 		parport_pc_data_reverse(port); /* Must be in PS2 mode */
 		udelay(5);
 		parport_frob_control(port, PARPORT_CONTROL_INIT, 0);
-		r = parport_रुको_peripheral(port, PARPORT_STATUS_PAPEROUT, 0);
-		अगर (r)
-			prपूर्णांकk(KERN_DEBUG "%s: PE,1 timeout (%d) in ecp_write_block_pio\n",
+		r = parport_wait_peripheral(port, PARPORT_STATUS_PAPEROUT, 0);
+		if (r)
+			printk(KERN_DEBUG "%s: PE,1 timeout (%d) in ecp_write_block_pio\n",
 			       port->name, r);
 
 		parport_frob_control(port,
 				      PARPORT_CONTROL_INIT,
 				      PARPORT_CONTROL_INIT);
-		r = parport_रुको_peripheral(port,
+		r = parport_wait_peripheral(port,
 					     PARPORT_STATUS_PAPEROUT,
 					     PARPORT_STATUS_PAPEROUT);
-		अगर (r)
-			prपूर्णांकk(KERN_DEBUG "%s: PE,2 timeout (%d) in ecp_write_block_pio\n",
+		if (r)
+			printk(KERN_DEBUG "%s: PE,2 timeout (%d) in ecp_write_block_pio\n",
 			       port->name, r);
-	पूर्ण
+	}
 
-	r = parport_रुको_peripheral(port,
+	r = parport_wait_peripheral(port,
 				     PARPORT_STATUS_BUSY,
 				     PARPORT_STATUS_BUSY);
-	अगर (r)
-		prपूर्णांकk(KERN_DEBUG "%s: BUSY timeout (%d) in ecp_write_block_pio\n",
+	if (r)
+		printk(KERN_DEBUG "%s: BUSY timeout (%d) in ecp_write_block_pio\n",
 		       port->name, r);
 
 	port->physport->ieee1284.phase = IEEE1284_PH_FWD_IDLE;
 
-	वापस written;
-पूर्ण
-#पूर्ण_अगर /* IEEE 1284 support */
-#पूर्ण_अगर /* Allowed to use FIFO/DMA */
+	return written;
+}
+#endif /* IEEE 1284 support */
+#endif /* Allowed to use FIFO/DMA */
 
 
 /*
@@ -895,67 +894,67 @@ false_alarm:
  *	******************************************
  */
 
-/* GCC is not inlining बाह्य अंतरभूत function later overwritten to non-अंतरभूत,
+/* GCC is not inlining extern inline function later overwritten to non-inline,
    so we use outlined_ variants here.  */
-अटल स्थिर काष्ठा parport_operations parport_pc_ops = अणु
-	.ग_लिखो_data	= parport_pc_ग_लिखो_data,
-	.पढ़ो_data	= parport_pc_पढ़ो_data,
+static const struct parport_operations parport_pc_ops = {
+	.write_data	= parport_pc_write_data,
+	.read_data	= parport_pc_read_data,
 
-	.ग_लिखो_control	= parport_pc_ग_लिखो_control,
-	.पढ़ो_control	= parport_pc_पढ़ो_control,
+	.write_control	= parport_pc_write_control,
+	.read_control	= parport_pc_read_control,
 	.frob_control	= parport_pc_frob_control,
 
-	.पढ़ो_status	= parport_pc_पढ़ो_status,
+	.read_status	= parport_pc_read_status,
 
 	.enable_irq	= parport_pc_enable_irq,
 	.disable_irq	= parport_pc_disable_irq,
 
-	.data_क्रमward	= parport_pc_data_क्रमward,
+	.data_forward	= parport_pc_data_forward,
 	.data_reverse	= parport_pc_data_reverse,
 
 	.init_state	= parport_pc_init_state,
 	.save_state	= parport_pc_save_state,
 	.restore_state	= parport_pc_restore_state,
 
-	.epp_ग_लिखो_data	= parport_ieee1284_epp_ग_लिखो_data,
-	.epp_पढ़ो_data	= parport_ieee1284_epp_पढ़ो_data,
-	.epp_ग_लिखो_addr	= parport_ieee1284_epp_ग_लिखो_addr,
-	.epp_पढ़ो_addr	= parport_ieee1284_epp_पढ़ो_addr,
+	.epp_write_data	= parport_ieee1284_epp_write_data,
+	.epp_read_data	= parport_ieee1284_epp_read_data,
+	.epp_write_addr	= parport_ieee1284_epp_write_addr,
+	.epp_read_addr	= parport_ieee1284_epp_read_addr,
 
-	.ecp_ग_लिखो_data	= parport_ieee1284_ecp_ग_लिखो_data,
-	.ecp_पढ़ो_data	= parport_ieee1284_ecp_पढ़ो_data,
-	.ecp_ग_लिखो_addr	= parport_ieee1284_ecp_ग_लिखो_addr,
+	.ecp_write_data	= parport_ieee1284_ecp_write_data,
+	.ecp_read_data	= parport_ieee1284_ecp_read_data,
+	.ecp_write_addr	= parport_ieee1284_ecp_write_addr,
 
-	.compat_ग_लिखो_data	= parport_ieee1284_ग_लिखो_compat,
-	.nibble_पढ़ो_data	= parport_ieee1284_पढ़ो_nibble,
-	.byte_पढ़ो_data		= parport_ieee1284_पढ़ो_byte,
+	.compat_write_data	= parport_ieee1284_write_compat,
+	.nibble_read_data	= parport_ieee1284_read_nibble,
+	.byte_read_data		= parport_ieee1284_read_byte,
 
 	.owner		= THIS_MODULE,
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_PARPORT_PC_SUPERIO
+#ifdef CONFIG_PARPORT_PC_SUPERIO
 
-अटल काष्ठा superio_काष्ठा *find_मुक्त_superio(व्योम)
-अणु
-	पूर्णांक i;
-	क्रम (i = 0; i < NR_SUPERIOS; i++)
-		अगर (superios[i].io == 0)
-			वापस &superios[i];
-	वापस शून्य;
-पूर्ण
+static struct superio_struct *find_free_superio(void)
+{
+	int i;
+	for (i = 0; i < NR_SUPERIOS; i++)
+		if (superios[i].io == 0)
+			return &superios[i];
+	return NULL;
+}
 
 
 /* Super-IO chipset detection, Winbond, SMSC */
-अटल व्योम show_parconfig_smsc37c669(पूर्णांक io, पूर्णांक key)
-अणु
-	पूर्णांक cr1, cr4, cra, cr23, cr26, cr27;
-	काष्ठा superio_काष्ठा *s;
+static void show_parconfig_smsc37c669(int io, int key)
+{
+	int cr1, cr4, cra, cr23, cr26, cr27;
+	struct superio_struct *s;
 
-	अटल स्थिर अक्षर *स्थिर modes[] = अणु
+	static const char *const modes[] = {
 		"SPP and Bidirectional (PS/2)",
 		"EPP and SPP",
 		"ECP",
-		"ECP and EPP" पूर्ण;
+		"ECP and EPP" };
 
 	outb(key, io);
 	outb(key, io);
@@ -973,13 +972,13 @@ false_alarm:
 	cr27 = inb(io + 1);
 	outb(0xaa, io);
 
-	अगर (verbose_probing) अणु
+	if (verbose_probing) {
 		pr_info("SMSC 37c669 LPT Config: cr_1=0x%02x, 4=0x%02x, A=0x%2x, 23=0x%02x, 26=0x%02x, 27=0x%02x\n",
 			cr1, cr4, cra, cr23, cr26, cr27);
 
-		/* The करोcumentation calls DMA and IRQ-Lines by letters, so
+		/* The documentation calls DMA and IRQ-Lines by letters, so
 		   the board maker can/will wire them
-		   appropriately/अक्रमomly...  G=reserved H=IDE-irq, */
+		   appropriately/randomly...  G=reserved H=IDE-irq, */
 		pr_info("SMSC LPT Config: io=0x%04x, irq=%c, dma=%c, fifo threshold=%d\n",
 			cr23 * 4,
 			(cr27 & 0x0f) ? 'A' - 1 + (cr27 & 0x0f) : '-',
@@ -992,46 +991,46 @@ false_alarm:
 			(cr1 & 0x08) ? "Standard mode only (SPP)"
 			: modes[cr4 & 0x03],
 			(cr4 & 0x40) ? "1.7" : "1.9");
-	पूर्ण
+	}
 
-	/* Heuristics !  BIOS setup क्रम this मुख्यboard device limits
+	/* Heuristics !  BIOS setup for this mainboard device limits
 	   the choices to standard settings, i.e. io-address and IRQ
 	   are related, however DMA can be 1 or 3, assume DMA_A=DMA1,
-	   DMA_C=DMA3 (this is true e.g. क्रम TYAN 1564D Tomcat IV) */
-	अगर (cr23 * 4 >= 0x100) अणु /* अगर active */
-		s = find_मुक्त_superio();
-		अगर (s == शून्य)
+	   DMA_C=DMA3 (this is true e.g. for TYAN 1564D Tomcat IV) */
+	if (cr23 * 4 >= 0x100) { /* if active */
+		s = find_free_superio();
+		if (s == NULL)
 			pr_info("Super-IO: too many chips!\n");
-		अन्यथा अणु
-			पूर्णांक d;
-			चयन (cr23 * 4) अणु
-			हाल 0x3bc:
+		else {
+			int d;
+			switch (cr23 * 4) {
+			case 0x3bc:
 				s->io = 0x3bc;
 				s->irq = 7;
-				अवरोध;
-			हाल 0x378:
+				break;
+			case 0x378:
 				s->io = 0x378;
 				s->irq = 7;
-				अवरोध;
-			हाल 0x278:
+				break;
+			case 0x278:
 				s->io = 0x278;
 				s->irq = 5;
-			पूर्ण
+			}
 			d = (cr26 & 0x0f);
-			अगर (d == 1 || d == 3)
+			if (d == 1 || d == 3)
 				s->dma = d;
-			अन्यथा
+			else
 				s->dma = PARPORT_DMA_NONE;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 
-अटल व्योम show_parconfig_winbond(पूर्णांक io, पूर्णांक key)
-अणु
-	पूर्णांक cr30, cr60, cr61, cr70, cr74, crf0;
-	काष्ठा superio_काष्ठा *s;
-	अटल स्थिर अक्षर *स्थिर modes[] = अणु
+static void show_parconfig_winbond(int io, int key)
+{
+	int cr30, cr60, cr61, cr70, cr74, crf0;
+	struct superio_struct *s;
+	static const char *const modes[] = {
 		"Standard (SPP) and Bidirectional(PS/2)", /* 0 */
 		"EPP-1.9 and SPP",
 		"ECP",
@@ -1039,13 +1038,13 @@ false_alarm:
 		"Standard (SPP)",
 		"EPP-1.7 and SPP",		/* 5 */
 		"undefined!",
-		"ECP and EPP-1.7" पूर्ण;
-	अटल अक्षर *स्थिर irqtypes[] = अणु
+		"ECP and EPP-1.7" };
+	static char *const irqtypes[] = {
 		"pulsed low, high-Z",
-		"follows nACK" पूर्ण;
+		"follows nACK" };
 
-	/* The रेजिस्टरs are called compatible-PnP because the
-	   रेजिस्टर layout is modelled after ISA-PnP, the access
+	/* The registers are called compatible-PnP because the
+	   register layout is modelled after ISA-PnP, the access
 	   method is just another ... */
 	outb(key, io);
 	outb(key, io);
@@ -1065,124 +1064,124 @@ false_alarm:
 	crf0 = inb(io + 1);
 	outb(0xaa, io);
 
-	अगर (verbose_probing) अणु
+	if (verbose_probing) {
 		pr_info("Winbond LPT Config: cr_30=%02x 60,61=%02x%02x 70=%02x 74=%02x, f0=%02x\n",
 			cr30, cr60, cr61, cr70, cr74, crf0);
 		pr_info("Winbond LPT Config: active=%s, io=0x%02x%02x irq=%d, ",
 			(cr30 & 0x01) ? "yes" : "no", cr60, cr61, cr70 & 0x0f);
-		अगर ((cr74 & 0x07) > 3)
+		if ((cr74 & 0x07) > 3)
 			pr_cont("dma=none\n");
-		अन्यथा
+		else
 			pr_cont("dma=%d\n", cr74 & 0x07);
 		pr_info("Winbond LPT Config: irqtype=%s, ECP fifo threshold=%d\n",
 			irqtypes[crf0 >> 7], (crf0 >> 3) & 0x0f);
 		pr_info("Winbond LPT Config: Port mode=%s\n",
 			modes[crf0 & 0x07]);
-	पूर्ण
+	}
 
-	अगर (cr30 & 0x01) अणु /* the settings can be पूर्णांकerrogated later ... */
-		s = find_मुक्त_superio();
-		अगर (s == शून्य)
+	if (cr30 & 0x01) { /* the settings can be interrogated later ... */
+		s = find_free_superio();
+		if (s == NULL)
 			pr_info("Super-IO: too many chips!\n");
-		अन्यथा अणु
+		else {
 			s->io = (cr60 << 8) | cr61;
 			s->irq = cr70 & 0x0f;
 			s->dma = (((cr74 & 0x07) > 3) ?
 					   PARPORT_DMA_NONE : (cr74 & 0x07));
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम decode_winbond(पूर्णांक efer, पूर्णांक key, पूर्णांक devid, पूर्णांक devrev, पूर्णांक oldid)
-अणु
-	स्थिर अक्षर *type = "unknown";
-	पूर्णांक id, progअगर = 2;
+static void decode_winbond(int efer, int key, int devid, int devrev, int oldid)
+{
+	const char *type = "unknown";
+	int id, progif = 2;
 
-	अगर (devid == devrev)
-		/* simple heuristics, we happened to पढ़ो some
-		   non-winbond रेजिस्टर */
-		वापस;
+	if (devid == devrev)
+		/* simple heuristics, we happened to read some
+		   non-winbond register */
+		return;
 
 	id = (devid << 8) | devrev;
 
-	/* Values are from खुला data sheets pdf files, I can just
+	/* Values are from public data sheets pdf files, I can just
 	   confirm 83977TF is correct :-) */
-	अगर (id == 0x9771)
+	if (id == 0x9771)
 		type = "83977F/AF";
-	अन्यथा अगर (id == 0x9773)
+	else if (id == 0x9773)
 		type = "83977TF / SMSC 97w33x/97w34x";
-	अन्यथा अगर (id == 0x9774)
+	else if (id == 0x9774)
 		type = "83977ATF";
-	अन्यथा अगर ((id & ~0x0f) == 0x5270)
+	else if ((id & ~0x0f) == 0x5270)
 		type = "83977CTF / SMSC 97w36x";
-	अन्यथा अगर ((id & ~0x0f) == 0x52f0)
+	else if ((id & ~0x0f) == 0x52f0)
 		type = "83977EF / SMSC 97w35x";
-	अन्यथा अगर ((id & ~0x0f) == 0x5210)
+	else if ((id & ~0x0f) == 0x5210)
 		type = "83627";
-	अन्यथा अगर ((id & ~0x0f) == 0x6010)
+	else if ((id & ~0x0f) == 0x6010)
 		type = "83697HF";
-	अन्यथा अगर ((oldid & 0x0f) == 0x0a) अणु
+	else if ((oldid & 0x0f) == 0x0a) {
 		type = "83877F";
-		progअगर = 1;
-	पूर्ण अन्यथा अगर ((oldid & 0x0f) == 0x0b) अणु
+		progif = 1;
+	} else if ((oldid & 0x0f) == 0x0b) {
 		type = "83877AF";
-		progअगर = 1;
-	पूर्ण अन्यथा अगर ((oldid & 0x0f) == 0x0c) अणु
+		progif = 1;
+	} else if ((oldid & 0x0f) == 0x0c) {
 		type = "83877TF";
-		progअगर = 1;
-	पूर्ण अन्यथा अगर ((oldid & 0x0f) == 0x0d) अणु
+		progif = 1;
+	} else if ((oldid & 0x0f) == 0x0d) {
 		type = "83877ATF";
-		progअगर = 1;
-	पूर्ण अन्यथा
-		progअगर = 0;
+		progif = 1;
+	} else
+		progif = 0;
 
-	अगर (verbose_probing)
+	if (verbose_probing)
 		pr_info("Winbond chip at EFER=0x%x key=0x%02x devid=%02x devrev=%02x oldid=%02x type=%s\n",
 			efer, key, devid, devrev, oldid, type);
 
-	अगर (progअगर == 2)
+	if (progif == 2)
 		show_parconfig_winbond(efer, key);
-पूर्ण
+}
 
-अटल व्योम decode_smsc(पूर्णांक efer, पूर्णांक key, पूर्णांक devid, पूर्णांक devrev)
-अणु
-	स्थिर अक्षर *type = "unknown";
-	व्योम (*func)(पूर्णांक io, पूर्णांक key);
-	पूर्णांक id;
+static void decode_smsc(int efer, int key, int devid, int devrev)
+{
+	const char *type = "unknown";
+	void (*func)(int io, int key);
+	int id;
 
-	अगर (devid == devrev)
-		/* simple heuristics, we happened to पढ़ो some
-		   non-smsc रेजिस्टर */
-		वापस;
+	if (devid == devrev)
+		/* simple heuristics, we happened to read some
+		   non-smsc register */
+		return;
 
-	func = शून्य;
+	func = NULL;
 	id = (devid << 8) | devrev;
 
-	अगर (id == 0x0302) अणु
+	if (id == 0x0302) {
 		type = "37c669";
 		func = show_parconfig_smsc37c669;
-	पूर्ण अन्यथा अगर (id == 0x6582)
+	} else if (id == 0x6582)
 		type = "37c665IR";
-	अन्यथा अगर	(devid == 0x65)
+	else if	(devid == 0x65)
 		type = "37c665GT";
-	अन्यथा अगर	(devid == 0x66)
+	else if	(devid == 0x66)
 		type = "37c666GT";
 
-	अगर (verbose_probing)
+	if (verbose_probing)
 		pr_info("SMSC chip at EFER=0x%x key=0x%02x devid=%02x devrev=%02x type=%s\n",
 			efer, key, devid, devrev, type);
 
-	अगर (func)
+	if (func)
 		func(efer, key);
-पूर्ण
+}
 
 
-अटल व्योम winbond_check(पूर्णांक io, पूर्णांक key)
-अणु
-	पूर्णांक origval, devid, devrev, oldid, x_devid, x_devrev, x_oldid;
+static void winbond_check(int io, int key)
+{
+	int origval, devid, devrev, oldid, x_devid, x_devrev, x_oldid;
 
-	अगर (!request_region(io, 3, __func__))
-		वापस;
+	if (!request_region(io, 3, __func__))
+		return;
 
 	origval = inb(io); /* Save original value */
 
@@ -1196,31 +1195,31 @@ false_alarm:
 
 	outb(key, io);
 	outb(key, io);     /* Write Magic Sequence to EFER, extended
-			      function enable रेजिस्टर */
-	outb(0x20, io);    /* Write EFIR, extended function index रेजिस्टर */
-	devid = inb(io + 1);  /* Read EFDR, extended function data रेजिस्टर */
+			      function enable register */
+	outb(0x20, io);    /* Write EFIR, extended function index register */
+	devid = inb(io + 1);  /* Read EFDR, extended function data register */
 	outb(0x21, io);
 	devrev = inb(io + 1);
 	outb(0x09, io);
 	oldid = inb(io + 1);
 	outb(0xaa, io);    /* Magic Seal */
 
-	outb(origval, io); /* in हाल we poked some entirely dअगरferent hardware */
+	outb(origval, io); /* in case we poked some entirely different hardware */
 
-	अगर ((x_devid == devid) && (x_devrev == devrev) && (x_oldid == oldid))
-		जाओ out; /* protection against false positives */
+	if ((x_devid == devid) && (x_devrev == devrev) && (x_oldid == oldid))
+		goto out; /* protection against false positives */
 
 	decode_winbond(io, key, devid, devrev, oldid);
 out:
 	release_region(io, 3);
-पूर्ण
+}
 
-अटल व्योम winbond_check2(पूर्णांक io, पूर्णांक key)
-अणु
-	पूर्णांक origval[3], devid, devrev, oldid, x_devid, x_devrev, x_oldid;
+static void winbond_check2(int io, int key)
+{
+	int origval[3], devid, devrev, oldid, x_devid, x_devrev, x_oldid;
 
-	अगर (!request_region(io, 3, __func__))
-		वापस;
+	if (!request_region(io, 3, __func__))
+		return;
 
 	origval[0] = inb(io); /* Save original values */
 	origval[1] = inb(io + 1);
@@ -1235,33 +1234,33 @@ out:
 	x_oldid = inb(io + 2);
 
 	outb(key, io);     /* Write Magic Byte to EFER, extended
-			      function enable रेजिस्टर */
-	outb(0x20, io + 2);  /* Write EFIR, extended function index रेजिस्टर */
-	devid = inb(io + 2);  /* Read EFDR, extended function data रेजिस्टर */
+			      function enable register */
+	outb(0x20, io + 2);  /* Write EFIR, extended function index register */
+	devid = inb(io + 2);  /* Read EFDR, extended function data register */
 	outb(0x21, io + 1);
 	devrev = inb(io + 2);
 	outb(0x09, io + 1);
 	oldid = inb(io + 2);
 	outb(0xaa, io);    /* Magic Seal */
 
-	outb(origval[0], io); /* in हाल we poked some entirely dअगरferent hardware */
+	outb(origval[0], io); /* in case we poked some entirely different hardware */
 	outb(origval[1], io + 1);
 	outb(origval[2], io + 2);
 
-	अगर (x_devid == devid && x_devrev == devrev && x_oldid == oldid)
-		जाओ out; /* protection against false positives */
+	if (x_devid == devid && x_devrev == devrev && x_oldid == oldid)
+		goto out; /* protection against false positives */
 
 	decode_winbond(io, key, devid, devrev, oldid);
 out:
 	release_region(io, 3);
-पूर्ण
+}
 
-अटल व्योम smsc_check(पूर्णांक io, पूर्णांक key)
-अणु
-	पूर्णांक origval, id, rev, oldid, oldrev, x_id, x_rev, x_oldid, x_oldrev;
+static void smsc_check(int io, int key)
+{
+	int origval, id, rev, oldid, oldrev, x_id, x_rev, x_oldid, x_oldrev;
 
-	अगर (!request_region(io, 3, __func__))
-		वापस;
+	if (!request_region(io, 3, __func__))
+		return;
 
 	origval = inb(io); /* Save original value */
 
@@ -1277,9 +1276,9 @@ out:
 
 	outb(key, io);
 	outb(key, io);     /* Write Magic Sequence to EFER, extended
-			      function enable रेजिस्टर */
-	outb(0x0d, io);    /* Write EFIR, extended function index रेजिस्टर */
-	oldid = inb(io + 1);  /* Read EFDR, extended function data रेजिस्टर */
+			      function enable register */
+	outb(0x0d, io);    /* Write EFIR, extended function index register */
+	oldid = inb(io + 1);  /* Read EFDR, extended function data register */
 	outb(0x0e, io);
 	oldrev = inb(io + 1);
 	outb(0x20, io);
@@ -1288,22 +1287,22 @@ out:
 	rev = inb(io + 1);
 	outb(0xaa, io);    /* Magic Seal */
 
-	outb(origval, io); /* in हाल we poked some entirely dअगरferent hardware */
+	outb(origval, io); /* in case we poked some entirely different hardware */
 
-	अगर (x_id == id && x_oldrev == oldrev &&
+	if (x_id == id && x_oldrev == oldrev &&
 	    x_oldid == oldid && x_rev == rev)
-		जाओ out; /* protection against false positives */
+		goto out; /* protection against false positives */
 
 	decode_smsc(io, key, oldid, oldrev);
 out:
 	release_region(io, 3);
-पूर्ण
+}
 
 
-अटल व्योम detect_and_report_winbond(व्योम)
-अणु
-	अगर (verbose_probing)
-		prपूर्णांकk(KERN_DEBUG "Winbond Super-IO detection, now testing ports 3F0,370,250,4E,2E ...\n");
+static void detect_and_report_winbond(void)
+{
+	if (verbose_probing)
+		printk(KERN_DEBUG "Winbond Super-IO detection, now testing ports 3F0,370,250,4E,2E ...\n");
 	winbond_check(0x3f0, 0x87);
 	winbond_check(0x370, 0x87);
 	winbond_check(0x2e , 0x87);
@@ -1311,26 +1310,26 @@ out:
 	winbond_check(0x3f0, 0x86);
 	winbond_check2(0x250, 0x88);
 	winbond_check2(0x250, 0x89);
-पूर्ण
+}
 
-अटल व्योम detect_and_report_smsc(व्योम)
-अणु
-	अगर (verbose_probing)
-		prपूर्णांकk(KERN_DEBUG "SMSC Super-IO detection, now testing Ports 2F0, 370 ...\n");
+static void detect_and_report_smsc(void)
+{
+	if (verbose_probing)
+		printk(KERN_DEBUG "SMSC Super-IO detection, now testing Ports 2F0, 370 ...\n");
 	smsc_check(0x3f0, 0x55);
 	smsc_check(0x370, 0x55);
 	smsc_check(0x3f0, 0x44);
 	smsc_check(0x370, 0x44);
-पूर्ण
+}
 
-अटल व्योम detect_and_report_it87(व्योम)
-अणु
+static void detect_and_report_it87(void)
+{
 	u16 dev;
 	u8 origval, r;
-	अगर (verbose_probing)
-		prपूर्णांकk(KERN_DEBUG "IT8705 Super-IO detection, now testing port 2E ...\n");
-	अगर (!request_muxed_region(0x2e, 2, __func__))
-		वापस;
+	if (verbose_probing)
+		printk(KERN_DEBUG "IT8705 Super-IO detection, now testing port 2E ...\n");
+	if (!request_muxed_region(0x2e, 2, __func__))
+		return;
 	origval = inb(0x2e);		/* Save original value */
 	outb(0x87, 0x2e);
 	outb(0x01, 0x2e);
@@ -1340,8 +1339,8 @@ out:
 	dev = inb(0x2f) << 8;
 	outb(0x21, 0x2e);
 	dev |= inb(0x2f);
-	अगर (dev == 0x8712 || dev == 0x8705 || dev == 0x8715 ||
-	    dev == 0x8716 || dev == 0x8718 || dev == 0x8726) अणु
+	if (dev == 0x8712 || dev == 0x8705 || dev == 0x8715 ||
+	    dev == 0x8716 || dev == 0x8718 || dev == 0x8726) {
 		pr_info("IT%04X SuperIO detected\n", dev);
 		outb(0x07, 0x2E);	/* Parallel Port */
 		outb(0x03, 0x2F);
@@ -1351,150 +1350,150 @@ out:
 		outb(r | 8, 0x2F);
 		outb(0x02, 0x2E);	/* Lock */
 		outb(0x02, 0x2F);
-	पूर्ण अन्यथा अणु
+	} else {
 		outb(origval, 0x2e);	/* Oops, sorry to disturb */
-	पूर्ण
+	}
 	release_region(0x2e, 2);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PARPORT_PC_SUPERIO */
+}
+#endif /* CONFIG_PARPORT_PC_SUPERIO */
 
-अटल काष्ठा superio_काष्ठा *find_superio(काष्ठा parport *p)
-अणु
-	पूर्णांक i;
-	क्रम (i = 0; i < NR_SUPERIOS; i++)
-		अगर (superios[i].io == p->base)
-			वापस &superios[i];
-	वापस शून्य;
-पूर्ण
+static struct superio_struct *find_superio(struct parport *p)
+{
+	int i;
+	for (i = 0; i < NR_SUPERIOS; i++)
+		if (superios[i].io == p->base)
+			return &superios[i];
+	return NULL;
+}
 
-अटल पूर्णांक get_superio_dma(काष्ठा parport *p)
-अणु
-	काष्ठा superio_काष्ठा *s = find_superio(p);
-	अगर (s)
-		वापस s->dma;
-	वापस PARPORT_DMA_NONE;
-पूर्ण
+static int get_superio_dma(struct parport *p)
+{
+	struct superio_struct *s = find_superio(p);
+	if (s)
+		return s->dma;
+	return PARPORT_DMA_NONE;
+}
 
-अटल पूर्णांक get_superio_irq(काष्ठा parport *p)
-अणु
-	काष्ठा superio_काष्ठा *s = find_superio(p);
-	अगर (s)
-		वापस s->irq;
-	वापस PARPORT_IRQ_NONE;
-पूर्ण
+static int get_superio_irq(struct parport *p)
+{
+	struct superio_struct *s = find_superio(p);
+	if (s)
+		return s->irq;
+	return PARPORT_IRQ_NONE;
+}
 
 
 /* --- Mode detection ------------------------------------- */
 
 /*
- * Checks क्रम port existence, all ports support SPP MODE
+ * Checks for port existence, all ports support SPP MODE
  * Returns:
  *         0           :  No parallel port at this address
  *  PARPORT_MODE_PCSPP :  SPP port detected
- *                        (अगर the user specअगरied an ioport himself,
- *                         this shall always be the हाल!)
+ *                        (if the user specified an ioport himself,
+ *                         this shall always be the case!)
  *
  */
-अटल पूर्णांक parport_SPP_supported(काष्ठा parport *pb)
-अणु
-	अचिन्हित अक्षर r, w;
+static int parport_SPP_supported(struct parport *pb)
+{
+	unsigned char r, w;
 
 	/*
-	 * first clear an eventually pending EPP समयout
-	 * I (sailer@अगरe.ee.ethz.ch) have an SMSC chipset
-	 * that करोes not even respond to SPP cycles अगर an EPP
-	 * समयout is pending
+	 * first clear an eventually pending EPP timeout
+	 * I (sailer@ife.ee.ethz.ch) have an SMSC chipset
+	 * that does not even respond to SPP cycles if an EPP
+	 * timeout is pending
 	 */
-	clear_epp_समयout(pb);
+	clear_epp_timeout(pb);
 
-	/* Do a simple पढ़ो-ग_लिखो test to make sure the port exists. */
+	/* Do a simple read-write test to make sure the port exists. */
 	w = 0xc;
 	outb(w, CONTROL(pb));
 
-	/* Is there a control रेजिस्टर that we can पढ़ो from?  Some
-	 * ports करोn't allow पढ़ोs, so पढ़ो_control just वापसs a
-	 * software copy. Some ports _करो_ allow पढ़ोs, so bypass the
+	/* Is there a control register that we can read from?  Some
+	 * ports don't allow reads, so read_control just returns a
+	 * software copy. Some ports _do_ allow reads, so bypass the
 	 * software copy here.  In addition, some bits aren't
 	 * writable. */
 	r = inb(CONTROL(pb));
-	अगर ((r & 0xf) == w) अणु
+	if ((r & 0xf) == w) {
 		w = 0xe;
 		outb(w, CONTROL(pb));
 		r = inb(CONTROL(pb));
 		outb(0xc, CONTROL(pb));
-		अगर ((r & 0xf) == w)
-			वापस PARPORT_MODE_PCSPP;
-	पूर्ण
+		if ((r & 0xf) == w)
+			return PARPORT_MODE_PCSPP;
+	}
 
-	अगर (user_specअगरied)
+	if (user_specified)
 		/* That didn't work, but the user thinks there's a
 		 * port here. */
 		pr_info("parport 0x%lx (WARNING): CTR: wrote 0x%02x, read 0x%02x\n",
 			pb->base, w, r);
 
-	/* Try the data रेजिस्टर.  The data lines aren't tri-stated at
+	/* Try the data register.  The data lines aren't tri-stated at
 	 * this stage, so we expect back what we wrote. */
 	w = 0xaa;
-	parport_pc_ग_लिखो_data(pb, w);
-	r = parport_pc_पढ़ो_data(pb);
-	अगर (r == w) अणु
+	parport_pc_write_data(pb, w);
+	r = parport_pc_read_data(pb);
+	if (r == w) {
 		w = 0x55;
-		parport_pc_ग_लिखो_data(pb, w);
-		r = parport_pc_पढ़ो_data(pb);
-		अगर (r == w)
-			वापस PARPORT_MODE_PCSPP;
-	पूर्ण
+		parport_pc_write_data(pb, w);
+		r = parport_pc_read_data(pb);
+		if (r == w)
+			return PARPORT_MODE_PCSPP;
+	}
 
-	अगर (user_specअगरied) अणु
+	if (user_specified) {
 		/* Didn't work, but the user is convinced this is the
 		 * place. */
 		pr_info("parport 0x%lx (WARNING): DATA: wrote 0x%02x, read 0x%02x\n",
 			pb->base, w, r);
 		pr_info("parport 0x%lx: You gave this address, but there is probably no parallel port there!\n",
 			pb->base);
-	पूर्ण
+	}
 
-	/* It's possible that we can't पढ़ो the control रेजिस्टर or
-	 * the data रेजिस्टर.  In that हाल just believe the user. */
-	अगर (user_specअगरied)
-		वापस PARPORT_MODE_PCSPP;
+	/* It's possible that we can't read the control register or
+	 * the data register.  In that case just believe the user. */
+	if (user_specified)
+		return PARPORT_MODE_PCSPP;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Check क्रम ECR
+/* Check for ECR
  *
  * Old style XT ports alias io ports every 0x400, hence accessing ECR
  * on these cards actually accesses the CTR.
  *
- * Modern cards करोn't करो this but पढ़ोing from ECR will वापस 0xff
- * regardless of what is written here अगर the card करोes NOT support
+ * Modern cards don't do this but reading from ECR will return 0xff
+ * regardless of what is written here if the card does NOT support
  * ECP.
  *
- * We first check to see अगर ECR is the same as CTR.  If not, the low
+ * We first check to see if ECR is the same as CTR.  If not, the low
  * two bits of ECR aren't writable, so we check by writing ECR and
- * पढ़ोing it back to see अगर it's what we expect.
+ * reading it back to see if it's what we expect.
  */
-अटल पूर्णांक parport_ECR_present(काष्ठा parport *pb)
-अणु
-	काष्ठा parport_pc_निजी *priv = pb->निजी_data;
-	अचिन्हित अक्षर r = 0xc;
+static int parport_ECR_present(struct parport *pb)
+{
+	struct parport_pc_private *priv = pb->private_data;
+	unsigned char r = 0xc;
 
 	outb(r, CONTROL(pb));
-	अगर ((inb(ECONTROL(pb)) & 0x3) == (r & 0x3)) अणु
+	if ((inb(ECONTROL(pb)) & 0x3) == (r & 0x3)) {
 		outb(r ^ 0x2, CONTROL(pb)); /* Toggle bit 1 */
 
 		r = inb(CONTROL(pb));
-		अगर ((inb(ECONTROL(pb)) & 0x2) == (r & 0x2))
-			जाओ no_reg; /* Sure that no ECR रेजिस्टर exists */
-	पूर्ण
+		if ((inb(ECONTROL(pb)) & 0x2) == (r & 0x2))
+			goto no_reg; /* Sure that no ECR register exists */
+	}
 
-	अगर ((inb(ECONTROL(pb)) & 0x3) != 0x1)
-		जाओ no_reg;
+	if ((inb(ECONTROL(pb)) & 0x3) != 0x1)
+		goto no_reg;
 
 	ECR_WRITE(pb, 0x34);
-	अगर (inb(ECONTROL(pb)) != 0x35)
-		जाओ no_reg;
+	if (inb(ECONTROL(pb)) != 0x35)
+		goto no_reg;
 
 	priv->ecr = 1;
 	outb(0xc, CONTROL(pb));
@@ -1502,358 +1501,358 @@ out:
 	/* Go to mode 000 */
 	frob_set_mode(pb, ECR_SPP);
 
-	वापस 1;
+	return 1;
 
  no_reg:
 	outb(0xc, CONTROL(pb));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PARPORT_1284
+#ifdef CONFIG_PARPORT_1284
 /* Detect PS/2 support.
  *
  * Bit 5 (0x20) sets the PS/2 data direction; setting this high
- * allows us to पढ़ो data from the data lines.  In theory we would get back
+ * allows us to read data from the data lines.  In theory we would get back
  * 0xff but any peripheral attached to the port may drag some or all of the
- * lines करोwn to zero.  So अगर we get back anything that isn't the contents
- * of the data रेजिस्टर we deem PS/2 support to be present.
+ * lines down to zero.  So if we get back anything that isn't the contents
+ * of the data register we deem PS/2 support to be present.
  *
  * Some SPP ports have "half PS/2" ability - you can't turn off the line
- * drivers, but an बाह्यal peripheral with sufficiently beefy drivers of
- * its own can overघातer them and निश्चित its own levels onto the bus, from
- * where they can then be पढ़ो back as normal.  Ports with this property
+ * drivers, but an external peripheral with sufficiently beefy drivers of
+ * its own can overpower them and assert its own levels onto the bus, from
+ * where they can then be read back as normal.  Ports with this property
  * and the right type of device attached are likely to fail the SPP test,
  * (as they will appear to have stuck bits) and so the fact that they might
  * be misdetected here is rather academic.
  */
 
-अटल पूर्णांक parport_PS2_supported(काष्ठा parport *pb)
-अणु
-	पूर्णांक ok = 0;
+static int parport_PS2_supported(struct parport *pb)
+{
+	int ok = 0;
 
-	clear_epp_समयout(pb);
+	clear_epp_timeout(pb);
 
 	/* try to tri-state the buffer */
 	parport_pc_data_reverse(pb);
 
-	parport_pc_ग_लिखो_data(pb, 0x55);
-	अगर (parport_pc_पढ़ो_data(pb) != 0x55)
+	parport_pc_write_data(pb, 0x55);
+	if (parport_pc_read_data(pb) != 0x55)
 		ok++;
 
-	parport_pc_ग_लिखो_data(pb, 0xaa);
-	अगर (parport_pc_पढ़ो_data(pb) != 0xaa)
+	parport_pc_write_data(pb, 0xaa);
+	if (parport_pc_read_data(pb) != 0xaa)
 		ok++;
 
 	/* cancel input mode */
-	parport_pc_data_क्रमward(pb);
+	parport_pc_data_forward(pb);
 
-	अगर (ok) अणु
+	if (ok) {
 		pb->modes |= PARPORT_MODE_TRISTATE;
-	पूर्ण अन्यथा अणु
-		काष्ठा parport_pc_निजी *priv = pb->निजी_data;
+	} else {
+		struct parport_pc_private *priv = pb->private_data;
 		priv->ctr_writable &= ~0x20;
-	पूर्ण
+	}
 
-	वापस ok;
-पूर्ण
+	return ok;
+}
 
-#अगर_घोषित CONFIG_PARPORT_PC_FIFO
-अटल पूर्णांक parport_ECP_supported(काष्ठा parport *pb)
-अणु
-	पूर्णांक i;
-	पूर्णांक config, configb;
-	पूर्णांक pword;
-	काष्ठा parport_pc_निजी *priv = pb->निजी_data;
-	/* Translate ECP पूर्णांकrLine to ISA irq value */
-	अटल स्थिर पूर्णांक पूर्णांकrline[] = अणु 0, 7, 9, 10, 11, 14, 15, 5 पूर्ण;
+#ifdef CONFIG_PARPORT_PC_FIFO
+static int parport_ECP_supported(struct parport *pb)
+{
+	int i;
+	int config, configb;
+	int pword;
+	struct parport_pc_private *priv = pb->private_data;
+	/* Translate ECP intrLine to ISA irq value */
+	static const int intrline[] = { 0, 7, 9, 10, 11, 14, 15, 5 };
 
 	/* If there is no ECR, we have no hope of supporting ECP. */
-	अगर (!priv->ecr)
-		वापस 0;
+	if (!priv->ecr)
+		return 0;
 
 	/* Find out FIFO depth */
 	ECR_WRITE(pb, ECR_SPP << 5); /* Reset FIFO */
 	ECR_WRITE(pb, ECR_TST << 5); /* TEST FIFO */
-	क्रम (i = 0; i < 1024 && !(inb(ECONTROL(pb)) & 0x02); i++)
+	for (i = 0; i < 1024 && !(inb(ECONTROL(pb)) & 0x02); i++)
 		outb(0xaa, FIFO(pb));
 
 	/*
-	 * Using LGS chipset it uses ECR रेजिस्टर, but
-	 * it करोesn't support ECP or FIFO MODE
+	 * Using LGS chipset it uses ECR register, but
+	 * it doesn't support ECP or FIFO MODE
 	 */
-	अगर (i == 1024) अणु
+	if (i == 1024) {
 		ECR_WRITE(pb, ECR_SPP << 5);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	priv->fअगरo_depth = i;
-	अगर (verbose_probing)
-		prपूर्णांकk(KERN_DEBUG "0x%lx: FIFO is %d bytes\n", pb->base, i);
+	priv->fifo_depth = i;
+	if (verbose_probing)
+		printk(KERN_DEBUG "0x%lx: FIFO is %d bytes\n", pb->base, i);
 
-	/* Find out ग_लिखोIntrThreshold */
+	/* Find out writeIntrThreshold */
 	frob_econtrol(pb, 1<<2, 1<<2);
 	frob_econtrol(pb, 1<<2, 0);
-	क्रम (i = 1; i <= priv->fअगरo_depth; i++) अणु
+	for (i = 1; i <= priv->fifo_depth; i++) {
 		inb(FIFO(pb));
 		udelay(50);
-		अगर (inb(ECONTROL(pb)) & (1<<2))
-			अवरोध;
-	पूर्ण
+		if (inb(ECONTROL(pb)) & (1<<2))
+			break;
+	}
 
-	अगर (i <= priv->fअगरo_depth) अणु
-		अगर (verbose_probing)
-			prपूर्णांकk(KERN_DEBUG "0x%lx: writeIntrThreshold is %d\n",
+	if (i <= priv->fifo_depth) {
+		if (verbose_probing)
+			printk(KERN_DEBUG "0x%lx: writeIntrThreshold is %d\n",
 			       pb->base, i);
-	पूर्ण अन्यथा
-		/* Number of bytes we know we can ग_लिखो अगर we get an
-		   पूर्णांकerrupt. */
+	} else
+		/* Number of bytes we know we can write if we get an
+		   interrupt. */
 		i = 0;
 
-	priv->ग_लिखोIntrThreshold = i;
+	priv->writeIntrThreshold = i;
 
-	/* Find out पढ़ोIntrThreshold */
+	/* Find out readIntrThreshold */
 	frob_set_mode(pb, ECR_PS2); /* Reset FIFO and enable PS2 */
 	parport_pc_data_reverse(pb); /* Must be in PS2 mode */
 	frob_set_mode(pb, ECR_TST); /* Test FIFO */
 	frob_econtrol(pb, 1<<2, 1<<2);
 	frob_econtrol(pb, 1<<2, 0);
-	क्रम (i = 1; i <= priv->fअगरo_depth; i++) अणु
+	for (i = 1; i <= priv->fifo_depth; i++) {
 		outb(0xaa, FIFO(pb));
-		अगर (inb(ECONTROL(pb)) & (1<<2))
-			अवरोध;
-	पूर्ण
+		if (inb(ECONTROL(pb)) & (1<<2))
+			break;
+	}
 
-	अगर (i <= priv->fअगरo_depth) अणु
-		अगर (verbose_probing)
+	if (i <= priv->fifo_depth) {
+		if (verbose_probing)
 			pr_info("0x%lx: readIntrThreshold is %d\n",
 				pb->base, i);
-	पूर्ण अन्यथा
-		/* Number of bytes we can पढ़ो अगर we get an पूर्णांकerrupt. */
+	} else
+		/* Number of bytes we can read if we get an interrupt. */
 		i = 0;
 
-	priv->पढ़ोIntrThreshold = i;
+	priv->readIntrThreshold = i;
 
 	ECR_WRITE(pb, ECR_SPP << 5); /* Reset FIFO */
 	ECR_WRITE(pb, 0xf4); /* Configuration mode */
 	config = inb(CONFIGA(pb));
 	pword = (config >> 4) & 0x7;
-	चयन (pword) अणु
-	हाल 0:
+	switch (pword) {
+	case 0:
 		pword = 2;
 		pr_warn("0x%lx: Unsupported pword size!\n", pb->base);
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		pword = 4;
 		pr_warn("0x%lx: Unsupported pword size!\n", pb->base);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		pr_warn("0x%lx: Unknown implementation ID\n", pb->base);
 		fallthrough;	/* Assume 1 */
-	हाल 1:
+	case 1:
 		pword = 1;
-	पूर्ण
+	}
 	priv->pword = pword;
 
-	अगर (verbose_probing) अणु
-		prपूर्णांकk(KERN_DEBUG "0x%lx: PWord is %d bits\n",
+	if (verbose_probing) {
+		printk(KERN_DEBUG "0x%lx: PWord is %d bits\n",
 		       pb->base, 8 * pword);
 
-		prपूर्णांकk(KERN_DEBUG "0x%lx: Interrupts are ISA-%s\n",
+		printk(KERN_DEBUG "0x%lx: Interrupts are ISA-%s\n",
 		       pb->base, config & 0x80 ? "Level" : "Pulses");
 
 		configb = inb(CONFIGB(pb));
-		prपूर्णांकk(KERN_DEBUG "0x%lx: ECP port cfgA=0x%02x cfgB=0x%02x\n",
+		printk(KERN_DEBUG "0x%lx: ECP port cfgA=0x%02x cfgB=0x%02x\n",
 		       pb->base, config, configb);
-		prपूर्णांकk(KERN_DEBUG "0x%lx: ECP settings irq=", pb->base);
-		अगर ((configb >> 3) & 0x07)
-			pr_cont("%d", पूर्णांकrline[(configb >> 3) & 0x07]);
-		अन्यथा
+		printk(KERN_DEBUG "0x%lx: ECP settings irq=", pb->base);
+		if ((configb >> 3) & 0x07)
+			pr_cont("%d", intrline[(configb >> 3) & 0x07]);
+		else
 			pr_cont("<none or set by other means>");
 		pr_cont(" dma=");
-		अगर ((configb & 0x03) == 0x00)
+		if ((configb & 0x03) == 0x00)
 			pr_cont("<none or set by other means>\n");
-		अन्यथा
+		else
 			pr_cont("%d\n", configb & 0x07);
-	पूर्ण
+	}
 
 	/* Go back to mode 000 */
 	frob_set_mode(pb, ECR_SPP);
 
-	वापस 1;
-पूर्ण
-#पूर्ण_अगर
+	return 1;
+}
+#endif
 
-#अगर_घोषित CONFIG_X86_32
-अटल पूर्णांक पूर्णांकel_bug_present_check_epp(काष्ठा parport *pb)
-अणु
-	स्थिर काष्ठा parport_pc_निजी *priv = pb->निजी_data;
-	पूर्णांक bug_present = 0;
+#ifdef CONFIG_X86_32
+static int intel_bug_present_check_epp(struct parport *pb)
+{
+	const struct parport_pc_private *priv = pb->private_data;
+	int bug_present = 0;
 
-	अगर (priv->ecr) अणु
+	if (priv->ecr) {
 		/* store value of ECR */
-		अचिन्हित अक्षर ecr = inb(ECONTROL(pb));
-		अचिन्हित अक्षर i;
-		क्रम (i = 0x00; i < 0x80; i += 0x20) अणु
+		unsigned char ecr = inb(ECONTROL(pb));
+		unsigned char i;
+		for (i = 0x00; i < 0x80; i += 0x20) {
 			ECR_WRITE(pb, i);
-			अगर (clear_epp_समयout(pb)) अणु
+			if (clear_epp_timeout(pb)) {
 				/* Phony EPP in ECP. */
 				bug_present = 1;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		/* वापस ECR पूर्णांकo the inital state */
+				break;
+			}
+		}
+		/* return ECR into the inital state */
 		ECR_WRITE(pb, ecr);
-	पूर्ण
+	}
 
-	वापस bug_present;
-पूर्ण
-अटल पूर्णांक पूर्णांकel_bug_present(काष्ठा parport *pb)
-अणु
+	return bug_present;
+}
+static int intel_bug_present(struct parport *pb)
+{
 /* Check whether the device is legacy, not PCI or PCMCIA. Only legacy is known to be affected. */
-	अगर (pb->dev != शून्य) अणु
-		वापस 0;
-	पूर्ण
+	if (pb->dev != NULL) {
+		return 0;
+	}
 
-	वापस पूर्णांकel_bug_present_check_epp(pb);
-पूर्ण
-#अन्यथा
-अटल पूर्णांक पूर्णांकel_bug_present(काष्ठा parport *pb)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_X86_32 */
+	return intel_bug_present_check_epp(pb);
+}
+#else
+static int intel_bug_present(struct parport *pb)
+{
+	return 0;
+}
+#endif /* CONFIG_X86_32 */
 
-अटल पूर्णांक parport_ECPPS2_supported(काष्ठा parport *pb)
-अणु
-	स्थिर काष्ठा parport_pc_निजी *priv = pb->निजी_data;
-	पूर्णांक result;
-	अचिन्हित अक्षर oecr;
+static int parport_ECPPS2_supported(struct parport *pb)
+{
+	const struct parport_pc_private *priv = pb->private_data;
+	int result;
+	unsigned char oecr;
 
-	अगर (!priv->ecr)
-		वापस 0;
+	if (!priv->ecr)
+		return 0;
 
 	oecr = inb(ECONTROL(pb));
 	ECR_WRITE(pb, ECR_PS2 << 5);
 	result = parport_PS2_supported(pb);
 	ECR_WRITE(pb, oecr);
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /* EPP mode detection  */
 
-अटल पूर्णांक parport_EPP_supported(काष्ठा parport *pb)
-अणु
+static int parport_EPP_supported(struct parport *pb)
+{
 	/*
 	 * Theory:
-	 *	Bit 0 of STR is the EPP समयout bit, this bit is 0
-	 *	when EPP is possible and is set high when an EPP समयout
-	 *	occurs (EPP uses the HALT line to stop the CPU जबतक it करोes
-	 *	the byte transfer, an EPP समयout occurs अगर the attached
+	 *	Bit 0 of STR is the EPP timeout bit, this bit is 0
+	 *	when EPP is possible and is set high when an EPP timeout
+	 *	occurs (EPP uses the HALT line to stop the CPU while it does
+	 *	the byte transfer, an EPP timeout occurs if the attached
 	 *	device fails to respond after 10 micro seconds).
 	 *
-	 *	This bit is cleared by either पढ़ोing it (National Semi)
+	 *	This bit is cleared by either reading it (National Semi)
 	 *	or writing a 1 to the bit (SMC, UMC, WinBond), others ???
 	 *	This bit is always high in non EPP modes.
 	 */
 
-	/* If EPP समयout bit clear then EPP available */
-	अगर (!clear_epp_समयout(pb))
-		वापस 0;  /* No way to clear समयout */
+	/* If EPP timeout bit clear then EPP available */
+	if (!clear_epp_timeout(pb))
+		return 0;  /* No way to clear timeout */
 
-	/* Check क्रम Intel bug. */
-	अगर (पूर्णांकel_bug_present(pb))
-		वापस 0;
+	/* Check for Intel bug. */
+	if (intel_bug_present(pb))
+		return 0;
 
 	pb->modes |= PARPORT_MODE_EPP;
 
 	/* Set up access functions to use EPP hardware. */
-	pb->ops->epp_पढ़ो_data = parport_pc_epp_पढ़ो_data;
-	pb->ops->epp_ग_लिखो_data = parport_pc_epp_ग_लिखो_data;
-	pb->ops->epp_पढ़ो_addr = parport_pc_epp_पढ़ो_addr;
-	pb->ops->epp_ग_लिखो_addr = parport_pc_epp_ग_लिखो_addr;
+	pb->ops->epp_read_data = parport_pc_epp_read_data;
+	pb->ops->epp_write_data = parport_pc_epp_write_data;
+	pb->ops->epp_read_addr = parport_pc_epp_read_addr;
+	pb->ops->epp_write_addr = parport_pc_epp_write_addr;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक parport_ECPEPP_supported(काष्ठा parport *pb)
-अणु
-	काष्ठा parport_pc_निजी *priv = pb->निजी_data;
-	पूर्णांक result;
-	अचिन्हित अक्षर oecr;
+static int parport_ECPEPP_supported(struct parport *pb)
+{
+	struct parport_pc_private *priv = pb->private_data;
+	int result;
+	unsigned char oecr;
 
-	अगर (!priv->ecr)
-		वापस 0;
+	if (!priv->ecr)
+		return 0;
 
 	oecr = inb(ECONTROL(pb));
-	/* Search क्रम SMC style EPP+ECP mode */
+	/* Search for SMC style EPP+ECP mode */
 	ECR_WRITE(pb, 0x80);
 	outb(0x04, CONTROL(pb));
 	result = parport_EPP_supported(pb);
 
 	ECR_WRITE(pb, oecr);
 
-	अगर (result) अणु
+	if (result) {
 		/* Set up access functions to use ECP+EPP hardware. */
-		pb->ops->epp_पढ़ो_data = parport_pc_ecpepp_पढ़ो_data;
-		pb->ops->epp_ग_लिखो_data = parport_pc_ecpepp_ग_लिखो_data;
-		pb->ops->epp_पढ़ो_addr = parport_pc_ecpepp_पढ़ो_addr;
-		pb->ops->epp_ग_लिखो_addr = parport_pc_ecpepp_ग_लिखो_addr;
-	पूर्ण
+		pb->ops->epp_read_data = parport_pc_ecpepp_read_data;
+		pb->ops->epp_write_data = parport_pc_ecpepp_write_data;
+		pb->ops->epp_read_addr = parport_pc_ecpepp_read_addr;
+		pb->ops->epp_write_addr = parport_pc_ecpepp_write_addr;
+	}
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-#अन्यथा /* No IEEE 1284 support */
+#else /* No IEEE 1284 support */
 
 /* Don't bother probing for modes we know we won't use. */
-अटल पूर्णांक parport_PS2_supported(काष्ठा parport *pb) अणु वापस 0; पूर्ण
-#अगर_घोषित CONFIG_PARPORT_PC_FIFO
-अटल पूर्णांक parport_ECP_supported(काष्ठा parport *pb)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
-अटल पूर्णांक parport_EPP_supported(काष्ठा parport *pb)
-अणु
-	वापस 0;
-पूर्ण
+static int parport_PS2_supported(struct parport *pb) { return 0; }
+#ifdef CONFIG_PARPORT_PC_FIFO
+static int parport_ECP_supported(struct parport *pb)
+{
+	return 0;
+}
+#endif
+static int parport_EPP_supported(struct parport *pb)
+{
+	return 0;
+}
 
-अटल पूर्णांक parport_ECPEPP_supported(काष्ठा parport *pb)
-अणु
-	वापस 0;
-पूर्ण
+static int parport_ECPEPP_supported(struct parport *pb)
+{
+	return 0;
+}
 
-अटल पूर्णांक parport_ECPPS2_supported(काष्ठा parport *pb)
-अणु
-	वापस 0;
-पूर्ण
+static int parport_ECPPS2_supported(struct parport *pb)
+{
+	return 0;
+}
 
-#पूर्ण_अगर /* No IEEE 1284 support */
+#endif /* No IEEE 1284 support */
 
 /* --- IRQ detection -------------------------------------- */
 
-/* Only अगर supports ECP mode */
-अटल पूर्णांक programmable_irq_support(काष्ठा parport *pb)
-अणु
-	पूर्णांक irq, पूर्णांकrLine;
-	अचिन्हित अक्षर oecr = inb(ECONTROL(pb));
-	अटल स्थिर पूर्णांक lookup[8] = अणु
+/* Only if supports ECP mode */
+static int programmable_irq_support(struct parport *pb)
+{
+	int irq, intrLine;
+	unsigned char oecr = inb(ECONTROL(pb));
+	static const int lookup[8] = {
 		PARPORT_IRQ_NONE, 7, 9, 10, 11, 14, 15, 5
-	पूर्ण;
+	};
 
 	ECR_WRITE(pb, ECR_CNF << 5); /* Configuration MODE */
 
-	पूर्णांकrLine = (inb(CONFIGB(pb)) >> 3) & 0x07;
-	irq = lookup[पूर्णांकrLine];
+	intrLine = (inb(CONFIGB(pb)) >> 3) & 0x07;
+	irq = lookup[intrLine];
 
 	ECR_WRITE(pb, oecr);
-	वापस irq;
-पूर्ण
+	return irq;
+}
 
-अटल पूर्णांक irq_probe_ECP(काष्ठा parport *pb)
-अणु
-	पूर्णांक i;
-	अचिन्हित दीर्घ irqs;
+static int irq_probe_ECP(struct parport *pb)
+{
+	int i;
+	unsigned long irqs;
 
 	irqs = probe_irq_on();
 
@@ -1861,201 +1860,201 @@ out:
 	ECR_WRITE(pb, (ECR_TST << 5) | 0x04);
 	ECR_WRITE(pb, ECR_TST << 5);
 
-	/* If Full FIFO sure that ग_लिखोIntrThreshold is generated */
-	क्रम (i = 0; i < 1024 && !(inb(ECONTROL(pb)) & 0x02) ; i++)
+	/* If Full FIFO sure that writeIntrThreshold is generated */
+	for (i = 0; i < 1024 && !(inb(ECONTROL(pb)) & 0x02) ; i++)
 		outb(0xaa, FIFO(pb));
 
 	pb->irq = probe_irq_off(irqs);
 	ECR_WRITE(pb, ECR_SPP << 5);
 
-	अगर (pb->irq <= 0)
+	if (pb->irq <= 0)
 		pb->irq = PARPORT_IRQ_NONE;
 
-	वापस pb->irq;
-पूर्ण
+	return pb->irq;
+}
 
 /*
  * This detection seems that only works in National Semiconductors
- * This करोesn't work in SMC, LGS, and Winbond
+ * This doesn't work in SMC, LGS, and Winbond
  */
-अटल पूर्णांक irq_probe_EPP(काष्ठा parport *pb)
-अणु
-#अगर_अघोषित ADVANCED_DETECT
-	वापस PARPORT_IRQ_NONE;
-#अन्यथा
-	पूर्णांक irqs;
-	अचिन्हित अक्षर oecr;
+static int irq_probe_EPP(struct parport *pb)
+{
+#ifndef ADVANCED_DETECT
+	return PARPORT_IRQ_NONE;
+#else
+	int irqs;
+	unsigned char oecr;
 
-	अगर (pb->modes & PARPORT_MODE_PCECR)
+	if (pb->modes & PARPORT_MODE_PCECR)
 		oecr = inb(ECONTROL(pb));
 
 	irqs = probe_irq_on();
 
-	अगर (pb->modes & PARPORT_MODE_PCECR)
+	if (pb->modes & PARPORT_MODE_PCECR)
 		frob_econtrol(pb, 0x10, 0x10);
 
-	clear_epp_समयout(pb);
+	clear_epp_timeout(pb);
 	parport_pc_frob_control(pb, 0x20, 0x20);
 	parport_pc_frob_control(pb, 0x10, 0x10);
-	clear_epp_समयout(pb);
+	clear_epp_timeout(pb);
 
-	/* Device isn't expecting an EPP पढ़ो
+	/* Device isn't expecting an EPP read
 	 * and generates an IRQ.
 	 */
-	parport_pc_पढ़ो_epp(pb);
+	parport_pc_read_epp(pb);
 	udelay(20);
 
 	pb->irq = probe_irq_off(irqs);
-	अगर (pb->modes & PARPORT_MODE_PCECR)
+	if (pb->modes & PARPORT_MODE_PCECR)
 		ECR_WRITE(pb, oecr);
-	parport_pc_ग_लिखो_control(pb, 0xc);
+	parport_pc_write_control(pb, 0xc);
 
-	अगर (pb->irq <= 0)
+	if (pb->irq <= 0)
 		pb->irq = PARPORT_IRQ_NONE;
 
-	वापस pb->irq;
-#पूर्ण_अगर /* Advanced detection */
-पूर्ण
+	return pb->irq;
+#endif /* Advanced detection */
+}
 
-अटल पूर्णांक irq_probe_SPP(काष्ठा parport *pb)
-अणु
-	/* Don't even try to करो this. */
-	वापस PARPORT_IRQ_NONE;
-पूर्ण
+static int irq_probe_SPP(struct parport *pb)
+{
+	/* Don't even try to do this. */
+	return PARPORT_IRQ_NONE;
+}
 
-/* We will attempt to share पूर्णांकerrupt requests since other devices
+/* We will attempt to share interrupt requests since other devices
  * such as sound cards and network cards seem to like using the
- * prपूर्णांकer IRQs.
+ * printer IRQs.
  *
- * When ECP is available we can स्वतःprobe क्रम IRQs.
- * NOTE: If we can स्वतःprobe it, we can रेजिस्टर the IRQ.
+ * When ECP is available we can autoprobe for IRQs.
+ * NOTE: If we can autoprobe it, we can register the IRQ.
  */
-अटल पूर्णांक parport_irq_probe(काष्ठा parport *pb)
-अणु
-	काष्ठा parport_pc_निजी *priv = pb->निजी_data;
+static int parport_irq_probe(struct parport *pb)
+{
+	struct parport_pc_private *priv = pb->private_data;
 
-	अगर (priv->ecr) अणु
+	if (priv->ecr) {
 		pb->irq = programmable_irq_support(pb);
 
-		अगर (pb->irq == PARPORT_IRQ_NONE)
+		if (pb->irq == PARPORT_IRQ_NONE)
 			pb->irq = irq_probe_ECP(pb);
-	पूर्ण
+	}
 
-	अगर ((pb->irq == PARPORT_IRQ_NONE) && priv->ecr &&
+	if ((pb->irq == PARPORT_IRQ_NONE) && priv->ecr &&
 	    (pb->modes & PARPORT_MODE_EPP))
 		pb->irq = irq_probe_EPP(pb);
 
-	clear_epp_समयout(pb);
+	clear_epp_timeout(pb);
 
-	अगर (pb->irq == PARPORT_IRQ_NONE && (pb->modes & PARPORT_MODE_EPP))
+	if (pb->irq == PARPORT_IRQ_NONE && (pb->modes & PARPORT_MODE_EPP))
 		pb->irq = irq_probe_EPP(pb);
 
-	clear_epp_समयout(pb);
+	clear_epp_timeout(pb);
 
-	अगर (pb->irq == PARPORT_IRQ_NONE)
+	if (pb->irq == PARPORT_IRQ_NONE)
 		pb->irq = irq_probe_SPP(pb);
 
-	अगर (pb->irq == PARPORT_IRQ_NONE)
+	if (pb->irq == PARPORT_IRQ_NONE)
 		pb->irq = get_superio_irq(pb);
 
-	वापस pb->irq;
-पूर्ण
+	return pb->irq;
+}
 
 /* --- DMA detection -------------------------------------- */
 
-/* Only अगर chipset conक्रमms to ECP ISA Interface Standard */
-अटल पूर्णांक programmable_dma_support(काष्ठा parport *p)
-अणु
-	अचिन्हित अक्षर oecr = inb(ECONTROL(p));
-	पूर्णांक dma;
+/* Only if chipset conforms to ECP ISA Interface Standard */
+static int programmable_dma_support(struct parport *p)
+{
+	unsigned char oecr = inb(ECONTROL(p));
+	int dma;
 
 	frob_set_mode(p, ECR_CNF);
 
 	dma = inb(CONFIGB(p)) & 0x07;
-	/* 000: Indicates jumpered 8-bit DMA अगर पढ़ो-only.
-	   100: Indicates jumpered 16-bit DMA अगर पढ़ो-only. */
-	अगर ((dma & 0x03) == 0)
+	/* 000: Indicates jumpered 8-bit DMA if read-only.
+	   100: Indicates jumpered 16-bit DMA if read-only. */
+	if ((dma & 0x03) == 0)
 		dma = PARPORT_DMA_NONE;
 
 	ECR_WRITE(p, oecr);
-	वापस dma;
-पूर्ण
+	return dma;
+}
 
-अटल पूर्णांक parport_dma_probe(काष्ठा parport *p)
-अणु
-	स्थिर काष्ठा parport_pc_निजी *priv = p->निजी_data;
-	अगर (priv->ecr)		/* ask ECP chipset first */
+static int parport_dma_probe(struct parport *p)
+{
+	const struct parport_pc_private *priv = p->private_data;
+	if (priv->ecr)		/* ask ECP chipset first */
 		p->dma = programmable_dma_support(p);
-	अगर (p->dma == PARPORT_DMA_NONE) अणु
+	if (p->dma == PARPORT_DMA_NONE) {
 		/* ask known Super-IO chips proper, although these
-		   claim ECP compatible, some करोn't report their DMA
-		   conक्रमming to ECP standards */
+		   claim ECP compatible, some don't report their DMA
+		   conforming to ECP standards */
 		p->dma = get_superio_dma(p);
-	पूर्ण
+	}
 
-	वापस p->dma;
-पूर्ण
+	return p->dma;
+}
 
 /* --- Initialisation code -------------------------------- */
 
-अटल LIST_HEAD(ports_list);
-अटल DEFINE_SPINLOCK(ports_lock);
+static LIST_HEAD(ports_list);
+static DEFINE_SPINLOCK(ports_lock);
 
-काष्ठा parport *parport_pc_probe_port(अचिन्हित दीर्घ पूर्णांक base,
-				      अचिन्हित दीर्घ पूर्णांक base_hi,
-				      पूर्णांक irq, पूर्णांक dma,
-				      काष्ठा device *dev,
-				      पूर्णांक irqflags)
-अणु
-	काष्ठा parport_pc_निजी *priv;
-	काष्ठा parport_operations *ops;
-	काष्ठा parport *p;
-	पूर्णांक probedirq = PARPORT_IRQ_NONE;
-	काष्ठा resource *base_res;
-	काष्ठा resource	*ECR_res = शून्य;
-	काष्ठा resource	*EPP_res = शून्य;
-	काष्ठा platक्रमm_device *pdev = शून्य;
-	पूर्णांक ret;
+struct parport *parport_pc_probe_port(unsigned long int base,
+				      unsigned long int base_hi,
+				      int irq, int dma,
+				      struct device *dev,
+				      int irqflags)
+{
+	struct parport_pc_private *priv;
+	struct parport_operations *ops;
+	struct parport *p;
+	int probedirq = PARPORT_IRQ_NONE;
+	struct resource *base_res;
+	struct resource	*ECR_res = NULL;
+	struct resource	*EPP_res = NULL;
+	struct platform_device *pdev = NULL;
+	int ret;
 
-	अगर (!dev) अणु
+	if (!dev) {
 		/* We need a physical device to attach to, but none was
 		 * provided. Create our own. */
-		pdev = platक्रमm_device_रेजिस्टर_simple("parport_pc",
-						       base, शून्य, 0);
-		अगर (IS_ERR(pdev))
-			वापस शून्य;
+		pdev = platform_device_register_simple("parport_pc",
+						       base, NULL, 0);
+		if (IS_ERR(pdev))
+			return NULL;
 		dev = &pdev->dev;
 
 		ret = dma_coerce_mask_and_coherent(dev, DMA_BIT_MASK(24));
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "Unable to set coherent dma mask: disabling DMA\n");
 			dma = PARPORT_DMA_NONE;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	ops = kदो_स्मृति(माप(काष्ठा parport_operations), GFP_KERNEL);
-	अगर (!ops)
-		जाओ out1;
+	ops = kmalloc(sizeof(struct parport_operations), GFP_KERNEL);
+	if (!ops)
+		goto out1;
 
-	priv = kदो_स्मृति(माप(काष्ठा parport_pc_निजी), GFP_KERNEL);
-	अगर (!priv)
-		जाओ out2;
+	priv = kmalloc(sizeof(struct parport_pc_private), GFP_KERNEL);
+	if (!priv)
+		goto out2;
 
 	/* a misnomer, actually - it's allocate and reserve parport number */
-	p = parport_रेजिस्टर_port(base, irq, dma, ops);
-	अगर (!p)
-		जाओ out3;
+	p = parport_register_port(base, irq, dma, ops);
+	if (!p)
+		goto out3;
 
 	base_res = request_region(base, 3, p->name);
-	अगर (!base_res)
-		जाओ out4;
+	if (!base_res)
+		goto out4;
 
-	स_नकल(ops, &parport_pc_ops, माप(काष्ठा parport_operations));
+	memcpy(ops, &parport_pc_ops, sizeof(struct parport_operations));
 	priv->ctr = 0xc;
 	priv->ctr_writable = ~0x10;
 	priv->ecr = 0;
-	priv->fअगरo_depth = 0;
-	priv->dma_buf = शून्य;
+	priv->fifo_depth = 0;
+	priv->dma_buf = NULL;
 	priv->dma_handle = 0;
 	INIT_LIST_HEAD(&priv->list);
 	priv->port = p;
@@ -2063,327 +2062,327 @@ out:
 	p->dev = dev;
 	p->base_hi = base_hi;
 	p->modes = PARPORT_MODE_PCSPP | PARPORT_MODE_SAFEININT;
-	p->निजी_data = priv;
+	p->private_data = priv;
 
-	अगर (base_hi) अणु
+	if (base_hi) {
 		ECR_res = request_region(base_hi, 3, p->name);
-		अगर (ECR_res)
+		if (ECR_res)
 			parport_ECR_present(p);
-	पूर्ण
+	}
 
-	अगर (base != 0x3bc) अणु
+	if (base != 0x3bc) {
 		EPP_res = request_region(base+0x3, 5, p->name);
-		अगर (EPP_res)
-			अगर (!parport_EPP_supported(p))
+		if (EPP_res)
+			if (!parport_EPP_supported(p))
 				parport_ECPEPP_supported(p);
-	पूर्ण
-	अगर (!parport_SPP_supported(p))
+	}
+	if (!parport_SPP_supported(p))
 		/* No port. */
-		जाओ out5;
-	अगर (priv->ecr)
+		goto out5;
+	if (priv->ecr)
 		parport_ECPPS2_supported(p);
-	अन्यथा
+	else
 		parport_PS2_supported(p);
 
 	p->size = (p->modes & PARPORT_MODE_EPP) ? 8 : 3;
 
 	pr_info("%s: PC-style at 0x%lx", p->name, p->base);
-	अगर (p->base_hi && priv->ecr)
+	if (p->base_hi && priv->ecr)
 		pr_cont(" (0x%lx)", p->base_hi);
-	अगर (p->irq == PARPORT_IRQ_AUTO) अणु
+	if (p->irq == PARPORT_IRQ_AUTO) {
 		p->irq = PARPORT_IRQ_NONE;
 		parport_irq_probe(p);
-	पूर्ण अन्यथा अगर (p->irq == PARPORT_IRQ_PROBEONLY) अणु
+	} else if (p->irq == PARPORT_IRQ_PROBEONLY) {
 		p->irq = PARPORT_IRQ_NONE;
 		parport_irq_probe(p);
 		probedirq = p->irq;
 		p->irq = PARPORT_IRQ_NONE;
-	पूर्ण
-	अगर (p->irq != PARPORT_IRQ_NONE) अणु
+	}
+	if (p->irq != PARPORT_IRQ_NONE) {
 		pr_cont(", irq %d", p->irq);
 		priv->ctr_writable |= 0x10;
 
-		अगर (p->dma == PARPORT_DMA_AUTO) अणु
+		if (p->dma == PARPORT_DMA_AUTO) {
 			p->dma = PARPORT_DMA_NONE;
 			parport_dma_probe(p);
-		पूर्ण
-	पूर्ण
-	अगर (p->dma == PARPORT_DMA_AUTO) /* To use DMA, giving the irq
+		}
+	}
+	if (p->dma == PARPORT_DMA_AUTO) /* To use DMA, giving the irq
 					   is mandatory (see above) */
 		p->dma = PARPORT_DMA_NONE;
 
-#अगर_घोषित CONFIG_PARPORT_PC_FIFO
-	अगर (parport_ECP_supported(p) &&
+#ifdef CONFIG_PARPORT_PC_FIFO
+	if (parport_ECP_supported(p) &&
 	    p->dma != PARPORT_DMA_NOFIFO &&
-	    priv->fअगरo_depth > 0 && p->irq != PARPORT_IRQ_NONE) अणु
+	    priv->fifo_depth > 0 && p->irq != PARPORT_IRQ_NONE) {
 		p->modes |= PARPORT_MODE_ECP | PARPORT_MODE_COMPAT;
-		p->ops->compat_ग_लिखो_data = parport_pc_compat_ग_लिखो_block_pio;
-#अगर_घोषित CONFIG_PARPORT_1284
-		p->ops->ecp_ग_लिखो_data = parport_pc_ecp_ग_लिखो_block_pio;
+		p->ops->compat_write_data = parport_pc_compat_write_block_pio;
+#ifdef CONFIG_PARPORT_1284
+		p->ops->ecp_write_data = parport_pc_ecp_write_block_pio;
 		/* currently broken, but working on it.. (FB) */
-		/* p->ops->ecp_पढ़ो_data = parport_pc_ecp_पढ़ो_block_pio; */
-#पूर्ण_अगर /* IEEE 1284 support */
-		अगर (p->dma != PARPORT_DMA_NONE) अणु
+		/* p->ops->ecp_read_data = parport_pc_ecp_read_block_pio; */
+#endif /* IEEE 1284 support */
+		if (p->dma != PARPORT_DMA_NONE) {
 			pr_cont(", dma %d", p->dma);
 			p->modes |= PARPORT_MODE_DMA;
-		पूर्ण अन्यथा
+		} else
 			pr_cont(", using FIFO");
-	पूर्ण अन्यथा
+	} else
 		/* We can't use the DMA channel after all. */
 		p->dma = PARPORT_DMA_NONE;
-#पूर्ण_अगर /* Allowed to use FIFO/DMA */
+#endif /* Allowed to use FIFO/DMA */
 
 	pr_cont(" [");
 
-#घोषणा prपूर्णांकmode(x)							\
-करो अणु									\
-	अगर (p->modes & PARPORT_MODE_##x)				\
+#define printmode(x)							\
+do {									\
+	if (p->modes & PARPORT_MODE_##x)				\
 		pr_cont("%s%s", f++ ? "," : "", #x);			\
-पूर्ण जबतक (0)
+} while (0)
 
-	अणु
-		पूर्णांक f = 0;
-		prपूर्णांकmode(PCSPP);
-		prपूर्णांकmode(TRISTATE);
-		prपूर्णांकmode(COMPAT);
-		prपूर्णांकmode(EPP);
-		prपूर्णांकmode(ECP);
-		prपूर्णांकmode(DMA);
-	पूर्ण
-#अघोषित prपूर्णांकmode
-#अगर_अघोषित CONFIG_PARPORT_1284
+	{
+		int f = 0;
+		printmode(PCSPP);
+		printmode(TRISTATE);
+		printmode(COMPAT);
+		printmode(EPP);
+		printmode(ECP);
+		printmode(DMA);
+	}
+#undef printmode
+#ifndef CONFIG_PARPORT_1284
 	pr_cont("(,...)");
-#पूर्ण_अगर /* CONFIG_PARPORT_1284 */
+#endif /* CONFIG_PARPORT_1284 */
 	pr_cont("]\n");
-	अगर (probedirq != PARPORT_IRQ_NONE)
+	if (probedirq != PARPORT_IRQ_NONE)
 		pr_info("%s: irq %d detected\n", p->name, probedirq);
 
 	/* If No ECP release the ports grabbed above. */
-	अगर (ECR_res && (p->modes & PARPORT_MODE_ECP) == 0) अणु
+	if (ECR_res && (p->modes & PARPORT_MODE_ECP) == 0) {
 		release_region(base_hi, 3);
-		ECR_res = शून्य;
-	पूर्ण
-	/* Likewise क्रम EEP ports */
-	अगर (EPP_res && (p->modes & PARPORT_MODE_EPP) == 0) अणु
+		ECR_res = NULL;
+	}
+	/* Likewise for EEP ports */
+	if (EPP_res && (p->modes & PARPORT_MODE_EPP) == 0) {
 		release_region(base+3, 5);
-		EPP_res = शून्य;
-	पूर्ण
-	अगर (p->irq != PARPORT_IRQ_NONE) अणु
-		अगर (request_irq(p->irq, parport_irq_handler,
-				 irqflags, p->name, p)) अणु
+		EPP_res = NULL;
+	}
+	if (p->irq != PARPORT_IRQ_NONE) {
+		if (request_irq(p->irq, parport_irq_handler,
+				 irqflags, p->name, p)) {
 			pr_warn("%s: irq %d in use, resorting to polled operation\n",
 				p->name, p->irq);
 			p->irq = PARPORT_IRQ_NONE;
 			p->dma = PARPORT_DMA_NONE;
-		पूर्ण
+		}
 
-#अगर_घोषित CONFIG_PARPORT_PC_FIFO
-#अगर_घोषित HAS_DMA
-		अगर (p->dma != PARPORT_DMA_NONE) अणु
-			अगर (request_dma(p->dma, p->name)) अणु
+#ifdef CONFIG_PARPORT_PC_FIFO
+#ifdef HAS_DMA
+		if (p->dma != PARPORT_DMA_NONE) {
+			if (request_dma(p->dma, p->name)) {
 				pr_warn("%s: dma %d in use, resorting to PIO operation\n",
 					p->name, p->dma);
 				p->dma = PARPORT_DMA_NONE;
-			पूर्ण अन्यथा अणु
+			} else {
 				priv->dma_buf =
 				  dma_alloc_coherent(dev,
 						       PAGE_SIZE,
 						       &priv->dma_handle,
 						       GFP_KERNEL);
-				अगर (!priv->dma_buf) अणु
+				if (!priv->dma_buf) {
 					pr_warn("%s: cannot get buffer for DMA, resorting to PIO operation\n",
 						p->name);
-					मुक्त_dma(p->dma);
+					free_dma(p->dma);
 					p->dma = PARPORT_DMA_NONE;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-#पूर्ण_अगर
-#पूर्ण_अगर
-	पूर्ण
+				}
+			}
+		}
+#endif
+#endif
+	}
 
-	/* Done probing.  Now put the port पूर्णांकo a sensible start-up state. */
-	अगर (priv->ecr)
+	/* Done probing.  Now put the port into a sensible start-up state. */
+	if (priv->ecr)
 		/*
 		 * Put the ECP detected port in PS2 mode.
-		 * Do this also क्रम ports that have ECR but करोn't करो ECP.
+		 * Do this also for ports that have ECR but don't do ECP.
 		 */
 		ECR_WRITE(p, 0x34);
 
-	parport_pc_ग_लिखो_data(p, 0);
-	parport_pc_data_क्रमward(p);
+	parport_pc_write_data(p, 0);
+	parport_pc_data_forward(p);
 
 	/* Now that we've told the sharing engine about the port, and
-	   found out its अक्षरacteristics, let the high-level drivers
+	   found out its characteristics, let the high-level drivers
 	   know about it. */
 	spin_lock(&ports_lock);
 	list_add(&priv->list, &ports_list);
 	spin_unlock(&ports_lock);
 	parport_announce_port(p);
 
-	वापस p;
+	return p;
 
 out5:
-	अगर (ECR_res)
+	if (ECR_res)
 		release_region(base_hi, 3);
-	अगर (EPP_res)
+	if (EPP_res)
 		release_region(base+0x3, 5);
 	release_region(base, 3);
 out4:
 	parport_del_port(p);
 out3:
-	kमुक्त(priv);
+	kfree(priv);
 out2:
-	kमुक्त(ops);
+	kfree(ops);
 out1:
-	अगर (pdev)
-		platक्रमm_device_unरेजिस्टर(pdev);
-	वापस शून्य;
-पूर्ण
+	if (pdev)
+		platform_device_unregister(pdev);
+	return NULL;
+}
 EXPORT_SYMBOL(parport_pc_probe_port);
 
-व्योम parport_pc_unरेजिस्टर_port(काष्ठा parport *p)
-अणु
-	काष्ठा parport_pc_निजी *priv = p->निजी_data;
-	काष्ठा parport_operations *ops = p->ops;
+void parport_pc_unregister_port(struct parport *p)
+{
+	struct parport_pc_private *priv = p->private_data;
+	struct parport_operations *ops = p->ops;
 
-	parport_हटाओ_port(p);
+	parport_remove_port(p);
 	spin_lock(&ports_lock);
 	list_del_init(&priv->list);
 	spin_unlock(&ports_lock);
-#अगर defined(CONFIG_PARPORT_PC_FIFO) && defined(HAS_DMA)
-	अगर (p->dma != PARPORT_DMA_NONE)
-		मुक्त_dma(p->dma);
-#पूर्ण_अगर
-	अगर (p->irq != PARPORT_IRQ_NONE)
-		मुक्त_irq(p->irq, p);
+#if defined(CONFIG_PARPORT_PC_FIFO) && defined(HAS_DMA)
+	if (p->dma != PARPORT_DMA_NONE)
+		free_dma(p->dma);
+#endif
+	if (p->irq != PARPORT_IRQ_NONE)
+		free_irq(p->irq, p);
 	release_region(p->base, 3);
-	अगर (p->size > 3)
+	if (p->size > 3)
 		release_region(p->base + 3, p->size - 3);
-	अगर (p->modes & PARPORT_MODE_ECP)
+	if (p->modes & PARPORT_MODE_ECP)
 		release_region(p->base_hi, 3);
-#अगर defined(CONFIG_PARPORT_PC_FIFO) && defined(HAS_DMA)
-	अगर (priv->dma_buf)
-		dma_मुक्त_coherent(p->physport->dev, PAGE_SIZE,
+#if defined(CONFIG_PARPORT_PC_FIFO) && defined(HAS_DMA)
+	if (priv->dma_buf)
+		dma_free_coherent(p->physport->dev, PAGE_SIZE,
 				    priv->dma_buf,
 				    priv->dma_handle);
-#पूर्ण_अगर
-	kमुक्त(p->निजी_data);
+#endif
+	kfree(p->private_data);
 	parport_del_port(p);
-	kमुक्त(ops); /* hope no-one cached it */
-पूर्ण
-EXPORT_SYMBOL(parport_pc_unरेजिस्टर_port);
+	kfree(ops); /* hope no-one cached it */
+}
+EXPORT_SYMBOL(parport_pc_unregister_port);
 
-#अगर_घोषित CONFIG_PCI
+#ifdef CONFIG_PCI
 
-/* ITE support मुख्यtained by Rich Liu <richliu@poorman.org> */
-अटल पूर्णांक sio_ite_8872_probe(काष्ठा pci_dev *pdev, पूर्णांक स्वतःirq, पूर्णांक स्वतःdma,
-			      स्थिर काष्ठा parport_pc_via_data *via)
-अणु
-	लघु पूर्णांकa_addr[6] = अणु 0x2A0, 0x2C0, 0x220, 0x240, 0x1E0 पूर्ण;
+/* ITE support maintained by Rich Liu <richliu@poorman.org> */
+static int sio_ite_8872_probe(struct pci_dev *pdev, int autoirq, int autodma,
+			      const struct parport_pc_via_data *via)
+{
+	short inta_addr[6] = { 0x2A0, 0x2C0, 0x220, 0x240, 0x1E0 };
 	u32 ite8872set;
 	u32 ite8872_lpt, ite8872_lpthi;
 	u8 ite8872_irq, type;
-	पूर्णांक irq;
-	पूर्णांक i;
+	int irq;
+	int i;
 
 	pr_debug("sio_ite_8872_probe()\n");
 
 	/* make sure which one chip */
-	क्रम (i = 0; i < 5; i++) अणु
-		अगर (request_region(पूर्णांकa_addr[i], 32, "it887x")) अणु
-			पूर्णांक test;
-			pci_ग_लिखो_config_dword(pdev, 0x60,
-						0xe5000000 | पूर्णांकa_addr[i]);
-			pci_ग_लिखो_config_dword(pdev, 0x78,
-						0x00000000 | पूर्णांकa_addr[i]);
-			test = inb(पूर्णांकa_addr[i]);
-			अगर (test != 0xff)
-				अवरोध;
-			release_region(पूर्णांकa_addr[i], 32);
-		पूर्ण
-	पूर्ण
-	अगर (i >= 5) अणु
+	for (i = 0; i < 5; i++) {
+		if (request_region(inta_addr[i], 32, "it887x")) {
+			int test;
+			pci_write_config_dword(pdev, 0x60,
+						0xe5000000 | inta_addr[i]);
+			pci_write_config_dword(pdev, 0x78,
+						0x00000000 | inta_addr[i]);
+			test = inb(inta_addr[i]);
+			if (test != 0xff)
+				break;
+			release_region(inta_addr[i], 32);
+		}
+	}
+	if (i >= 5) {
 		pr_info("parport_pc: cannot find ITE8872 INTA\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	type = inb(पूर्णांकa_addr[i] + 0x18);
+	type = inb(inta_addr[i] + 0x18);
 	type &= 0x0f;
 
-	चयन (type) अणु
-	हाल 0x2:
+	switch (type) {
+	case 0x2:
 		pr_info("parport_pc: ITE8871 found (1P)\n");
 		ite8872set = 0x64200000;
-		अवरोध;
-	हाल 0xa:
+		break;
+	case 0xa:
 		pr_info("parport_pc: ITE8875 found (1P)\n");
 		ite8872set = 0x64200000;
-		अवरोध;
-	हाल 0xe:
+		break;
+	case 0xe:
 		pr_info("parport_pc: ITE8872 found (2S1P)\n");
 		ite8872set = 0x64e00000;
-		अवरोध;
-	हाल 0x6:
+		break;
+	case 0x6:
 		pr_info("parport_pc: ITE8873 found (1S)\n");
-		release_region(पूर्णांकa_addr[i], 32);
-		वापस 0;
-	हाल 0x8:
+		release_region(inta_addr[i], 32);
+		return 0;
+	case 0x8:
 		pr_info("parport_pc: ITE8874 found (2S)\n");
-		release_region(पूर्णांकa_addr[i], 32);
-		वापस 0;
-	शेष:
+		release_region(inta_addr[i], 32);
+		return 0;
+	default:
 		pr_info("parport_pc: unknown ITE887x\n");
 		pr_info("parport_pc: please mail 'lspci -nvv' output to Rich.Liu@ite.com.tw\n");
-		release_region(पूर्णांकa_addr[i], 32);
-		वापस 0;
-	पूर्ण
+		release_region(inta_addr[i], 32);
+		return 0;
+	}
 
-	pci_पढ़ो_config_byte(pdev, 0x3c, &ite8872_irq);
-	pci_पढ़ो_config_dword(pdev, 0x1c, &ite8872_lpt);
+	pci_read_config_byte(pdev, 0x3c, &ite8872_irq);
+	pci_read_config_dword(pdev, 0x1c, &ite8872_lpt);
 	ite8872_lpt &= 0x0000ff00;
-	pci_पढ़ो_config_dword(pdev, 0x20, &ite8872_lpthi);
+	pci_read_config_dword(pdev, 0x20, &ite8872_lpthi);
 	ite8872_lpthi &= 0x0000ff00;
-	pci_ग_लिखो_config_dword(pdev, 0x6c, 0xe3000000 | ite8872_lpt);
-	pci_ग_लिखो_config_dword(pdev, 0x70, 0xe3000000 | ite8872_lpthi);
-	pci_ग_लिखो_config_dword(pdev, 0x80, (ite8872_lpthi<<16) | ite8872_lpt);
+	pci_write_config_dword(pdev, 0x6c, 0xe3000000 | ite8872_lpt);
+	pci_write_config_dword(pdev, 0x70, 0xe3000000 | ite8872_lpthi);
+	pci_write_config_dword(pdev, 0x80, (ite8872_lpthi<<16) | ite8872_lpt);
 	/* SET SPP&EPP , Parallel Port NO DMA , Enable All Function */
 	/* SET Parallel IRQ */
-	pci_ग_लिखो_config_dword(pdev, 0x9c,
+	pci_write_config_dword(pdev, 0x9c,
 				ite8872set | (ite8872_irq * 0x11111));
 
 	pr_debug("ITE887x: The IRQ is %d\n", ite8872_irq);
 	pr_debug("ITE887x: The PARALLEL I/O port is 0x%x\n", ite8872_lpt);
 	pr_debug("ITE887x: The PARALLEL I/O porthi is 0x%x\n", ite8872_lpthi);
 
-	/* Let the user (or शेषs) steer us away from पूर्णांकerrupts */
+	/* Let the user (or defaults) steer us away from interrupts */
 	irq = ite8872_irq;
-	अगर (स्वतःirq != PARPORT_IRQ_AUTO)
+	if (autoirq != PARPORT_IRQ_AUTO)
 		irq = PARPORT_IRQ_NONE;
 
 	/*
 	 * Release the resource so that parport_pc_probe_port can get it.
 	 */
-	release_region(पूर्णांकa_addr[i], 32);
-	अगर (parport_pc_probe_port(ite8872_lpt, ite8872_lpthi,
-				   irq, PARPORT_DMA_NONE, &pdev->dev, 0)) अणु
+	release_region(inta_addr[i], 32);
+	if (parport_pc_probe_port(ite8872_lpt, ite8872_lpthi,
+				   irq, PARPORT_DMA_NONE, &pdev->dev, 0)) {
 		pr_info("parport_pc: ITE 8872 parallel port: io=0x%X",
 			ite8872_lpt);
-		अगर (irq != PARPORT_IRQ_NONE)
+		if (irq != PARPORT_IRQ_NONE)
 			pr_cont(", irq=%d", irq);
 		pr_cont("\n");
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* VIA 8231 support by Pavel Fedin <sonic_amiga@rambler.ru>
    based on VIA 686a support code by Jeff Garzik <jgarzik@pobox.com> */
-अटल पूर्णांक parport_init_mode;
+static int parport_init_mode;
 
-/* Data क्रम two known VIA chips */
-अटल काष्ठा parport_pc_via_data via_686a_data = अणु
+/* Data for two known VIA chips */
+static struct parport_pc_via_data via_686a_data = {
 	0x51,
 	0x50,
 	0x85,
@@ -2391,8 +2390,8 @@ EXPORT_SYMBOL(parport_pc_unरेजिस्टर_port);
 	0xE2,
 	0xF0,
 	0xE6
-पूर्ण;
-अटल काष्ठा parport_pc_via_data via_8231_data = अणु
+};
+static struct parport_pc_via_data via_8231_data = {
 	0x45,
 	0x44,
 	0x50,
@@ -2400,186 +2399,186 @@ EXPORT_SYMBOL(parport_pc_unरेजिस्टर_port);
 	0xF2,
 	0xFA,
 	0xF6
-पूर्ण;
+};
 
-अटल पूर्णांक sio_via_probe(काष्ठा pci_dev *pdev, पूर्णांक स्वतःirq, पूर्णांक स्वतःdma,
-			 स्थिर काष्ठा parport_pc_via_data *via)
-अणु
-	u8 पंचांगp, पंचांगp2, siofunc;
+static int sio_via_probe(struct pci_dev *pdev, int autoirq, int autodma,
+			 const struct parport_pc_via_data *via)
+{
+	u8 tmp, tmp2, siofunc;
 	u8 ppcontrol = 0;
-	पूर्णांक dma, irq;
-	अचिन्हित port1, port2;
-	अचिन्हित have_epp = 0;
+	int dma, irq;
+	unsigned port1, port2;
+	unsigned have_epp = 0;
 
-	prपूर्णांकk(KERN_DEBUG "parport_pc: VIA 686A/8231 detected\n");
+	printk(KERN_DEBUG "parport_pc: VIA 686A/8231 detected\n");
 
-	चयन (parport_init_mode) अणु
-	हाल 1:
-		prपूर्णांकk(KERN_DEBUG "parport_pc: setting SPP mode\n");
+	switch (parport_init_mode) {
+	case 1:
+		printk(KERN_DEBUG "parport_pc: setting SPP mode\n");
 		siofunc = VIA_FUNCTION_PARPORT_SPP;
-		अवरोध;
-	हाल 2:
-		prपूर्णांकk(KERN_DEBUG "parport_pc: setting PS/2 mode\n");
+		break;
+	case 2:
+		printk(KERN_DEBUG "parport_pc: setting PS/2 mode\n");
 		siofunc = VIA_FUNCTION_PARPORT_SPP;
-		ppcontrol = VIA_PARPORT_BIसूची;
-		अवरोध;
-	हाल 3:
-		prपूर्णांकk(KERN_DEBUG "parport_pc: setting EPP mode\n");
+		ppcontrol = VIA_PARPORT_BIDIR;
+		break;
+	case 3:
+		printk(KERN_DEBUG "parport_pc: setting EPP mode\n");
 		siofunc = VIA_FUNCTION_PARPORT_EPP;
-		ppcontrol = VIA_PARPORT_BIसूची;
+		ppcontrol = VIA_PARPORT_BIDIR;
 		have_epp = 1;
-		अवरोध;
-	हाल 4:
-		prपूर्णांकk(KERN_DEBUG "parport_pc: setting ECP mode\n");
+		break;
+	case 4:
+		printk(KERN_DEBUG "parport_pc: setting ECP mode\n");
 		siofunc = VIA_FUNCTION_PARPORT_ECP;
-		ppcontrol = VIA_PARPORT_BIसूची;
-		अवरोध;
-	हाल 5:
-		prपूर्णांकk(KERN_DEBUG "parport_pc: setting EPP+ECP mode\n");
+		ppcontrol = VIA_PARPORT_BIDIR;
+		break;
+	case 5:
+		printk(KERN_DEBUG "parport_pc: setting EPP+ECP mode\n");
 		siofunc = VIA_FUNCTION_PARPORT_ECP;
-		ppcontrol = VIA_PARPORT_BIसूची|VIA_PARPORT_ECPEPP;
+		ppcontrol = VIA_PARPORT_BIDIR|VIA_PARPORT_ECPEPP;
 		have_epp = 1;
-		अवरोध;
-	शेष:
-		prपूर्णांकk(KERN_DEBUG "parport_pc: probing current configuration\n");
+		break;
+	default:
+		printk(KERN_DEBUG "parport_pc: probing current configuration\n");
 		siofunc = VIA_FUNCTION_PROBE;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	/*
 	 * unlock super i/o configuration
 	 */
-	pci_पढ़ो_config_byte(pdev, via->via_pci_superio_config_reg, &पंचांगp);
-	पंचांगp |= via->via_pci_superio_config_data;
-	pci_ग_लिखो_config_byte(pdev, via->via_pci_superio_config_reg, पंचांगp);
+	pci_read_config_byte(pdev, via->via_pci_superio_config_reg, &tmp);
+	tmp |= via->via_pci_superio_config_data;
+	pci_write_config_byte(pdev, via->via_pci_superio_config_reg, tmp);
 
 	/* Bits 1-0: Parallel Port Mode / Enable */
 	outb(via->viacfg_function, VIA_CONFIG_INDEX);
-	पंचांगp = inb(VIA_CONFIG_DATA);
+	tmp = inb(VIA_CONFIG_DATA);
 	/* Bit 5: EPP+ECP enable; bit 7: PS/2 bidirectional port enable */
 	outb(via->viacfg_parport_control, VIA_CONFIG_INDEX);
-	पंचांगp2 = inb(VIA_CONFIG_DATA);
-	अगर (siofunc == VIA_FUNCTION_PROBE) अणु
-		siofunc = पंचांगp & VIA_FUNCTION_PARPORT_DISABLE;
-		ppcontrol = पंचांगp2;
-	पूर्ण अन्यथा अणु
-		पंचांगp &= ~VIA_FUNCTION_PARPORT_DISABLE;
-		पंचांगp |= siofunc;
+	tmp2 = inb(VIA_CONFIG_DATA);
+	if (siofunc == VIA_FUNCTION_PROBE) {
+		siofunc = tmp & VIA_FUNCTION_PARPORT_DISABLE;
+		ppcontrol = tmp2;
+	} else {
+		tmp &= ~VIA_FUNCTION_PARPORT_DISABLE;
+		tmp |= siofunc;
 		outb(via->viacfg_function, VIA_CONFIG_INDEX);
-		outb(पंचांगp, VIA_CONFIG_DATA);
-		पंचांगp2 &= ~(VIA_PARPORT_BIसूची|VIA_PARPORT_ECPEPP);
-		पंचांगp2 |= ppcontrol;
+		outb(tmp, VIA_CONFIG_DATA);
+		tmp2 &= ~(VIA_PARPORT_BIDIR|VIA_PARPORT_ECPEPP);
+		tmp2 |= ppcontrol;
 		outb(via->viacfg_parport_control, VIA_CONFIG_INDEX);
-		outb(पंचांगp2, VIA_CONFIG_DATA);
-	पूर्ण
+		outb(tmp2, VIA_CONFIG_DATA);
+	}
 
 	/* Parallel Port I/O Base Address, bits 9-2 */
 	outb(via->viacfg_parport_base, VIA_CONFIG_INDEX);
 	port1 = inb(VIA_CONFIG_DATA) << 2;
 
-	prपूर्णांकk(KERN_DEBUG "parport_pc: Current parallel port base: 0x%X\n",
+	printk(KERN_DEBUG "parport_pc: Current parallel port base: 0x%X\n",
 	       port1);
-	अगर (port1 == 0x3BC && have_epp) अणु
+	if (port1 == 0x3BC && have_epp) {
 		outb(via->viacfg_parport_base, VIA_CONFIG_INDEX);
 		outb((0x378 >> 2), VIA_CONFIG_DATA);
-		prपूर्णांकk(KERN_DEBUG "parport_pc: Parallel port base changed to 0x378\n");
+		printk(KERN_DEBUG "parport_pc: Parallel port base changed to 0x378\n");
 		port1 = 0x378;
-	पूर्ण
+	}
 
 	/*
 	 * lock super i/o configuration
 	 */
-	pci_पढ़ो_config_byte(pdev, via->via_pci_superio_config_reg, &पंचांगp);
-	पंचांगp &= ~via->via_pci_superio_config_data;
-	pci_ग_लिखो_config_byte(pdev, via->via_pci_superio_config_reg, पंचांगp);
+	pci_read_config_byte(pdev, via->via_pci_superio_config_reg, &tmp);
+	tmp &= ~via->via_pci_superio_config_data;
+	pci_write_config_byte(pdev, via->via_pci_superio_config_reg, tmp);
 
-	अगर (siofunc == VIA_FUNCTION_PARPORT_DISABLE) अणु
+	if (siofunc == VIA_FUNCTION_PARPORT_DISABLE) {
 		pr_info("parport_pc: VIA parallel port disabled in BIOS\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* Bits 7-4: PnP Routing क्रम Parallel Port IRQ */
-	pci_पढ़ो_config_byte(pdev, via->via_pci_parport_irq_reg, &पंचांगp);
-	irq = ((पंचांगp & VIA_IRQCONTROL_PARALLEL) >> 4);
+	/* Bits 7-4: PnP Routing for Parallel Port IRQ */
+	pci_read_config_byte(pdev, via->via_pci_parport_irq_reg, &tmp);
+	irq = ((tmp & VIA_IRQCONTROL_PARALLEL) >> 4);
 
-	अगर (siofunc == VIA_FUNCTION_PARPORT_ECP) अणु
-		/* Bits 3-2: PnP Routing क्रम Parallel Port DMA */
-		pci_पढ़ो_config_byte(pdev, via->via_pci_parport_dma_reg, &पंचांगp);
-		dma = ((पंचांगp & VIA_DMACONTROL_PARALLEL) >> 2);
-	पूर्ण अन्यथा
-		/* अगर ECP not enabled, DMA is not enabled, assumed
+	if (siofunc == VIA_FUNCTION_PARPORT_ECP) {
+		/* Bits 3-2: PnP Routing for Parallel Port DMA */
+		pci_read_config_byte(pdev, via->via_pci_parport_dma_reg, &tmp);
+		dma = ((tmp & VIA_DMACONTROL_PARALLEL) >> 2);
+	} else
+		/* if ECP not enabled, DMA is not enabled, assumed
 		   bogus 'dma' value */
 		dma = PARPORT_DMA_NONE;
 
-	/* Let the user (or शेषs) steer us away from पूर्णांकerrupts and DMA */
-	अगर (स्वतःirq == PARPORT_IRQ_NONE) अणु
+	/* Let the user (or defaults) steer us away from interrupts and DMA */
+	if (autoirq == PARPORT_IRQ_NONE) {
 		irq = PARPORT_IRQ_NONE;
 		dma = PARPORT_DMA_NONE;
-	पूर्ण
-	अगर (स्वतःdma == PARPORT_DMA_NONE)
+	}
+	if (autodma == PARPORT_DMA_NONE)
 		dma = PARPORT_DMA_NONE;
 
-	चयन (port1) अणु
-	हाल 0x3bc:
-		port2 = 0x7bc; अवरोध;
-	हाल 0x378:
-		port2 = 0x778; अवरोध;
-	हाल 0x278:
-		port2 = 0x678; अवरोध;
-	शेष:
+	switch (port1) {
+	case 0x3bc:
+		port2 = 0x7bc; break;
+	case 0x378:
+		port2 = 0x778; break;
+	case 0x278:
+		port2 = 0x678; break;
+	default:
 		pr_info("parport_pc: Weird VIA parport base 0x%X, ignoring\n",
 			port1);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* filter bogus IRQs */
-	चयन (irq) अणु
-	हाल 0:
-	हाल 2:
-	हाल 8:
-	हाल 13:
+	switch (irq) {
+	case 0:
+	case 2:
+	case 8:
+	case 13:
 		irq = PARPORT_IRQ_NONE;
-		अवरोध;
+		break;
 
-	शेष: /* करो nothing */
-		अवरोध;
-	पूर्ण
+	default: /* do nothing */
+		break;
+	}
 
-	/* finally, करो the probe with values obtained */
-	अगर (parport_pc_probe_port(port1, port2, irq, dma, &pdev->dev, 0)) अणु
+	/* finally, do the probe with values obtained */
+	if (parport_pc_probe_port(port1, port2, irq, dma, &pdev->dev, 0)) {
 		pr_info("parport_pc: VIA parallel port: io=0x%X", port1);
-		अगर (irq != PARPORT_IRQ_NONE)
+		if (irq != PARPORT_IRQ_NONE)
 			pr_cont(", irq=%d", irq);
-		अगर (dma != PARPORT_DMA_NONE)
+		if (dma != PARPORT_DMA_NONE)
 			pr_cont(", dma=%d", dma);
 		pr_cont("\n");
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
 	pr_warn("parport_pc: Strange, can't probe VIA parallel port: io=0x%X, irq=%d, dma=%d\n",
 		port1, irq, dma);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-क्रमागत parport_pc_sio_types अणु
+enum parport_pc_sio_types {
 	sio_via_686a = 0,   /* Via VT82C686A motherboard Super I/O */
-	sio_via_8231,	    /* Via VT8231 south bridge पूर्णांकegrated Super IO */
+	sio_via_8231,	    /* Via VT8231 south bridge integrated Super IO */
 	sio_ite_8872,
 	last_sio
-पूर्ण;
+};
 
-/* each element directly indexed from क्रमागत list, above */
-अटल काष्ठा parport_pc_superio अणु
-	पूर्णांक (*probe) (काष्ठा pci_dev *pdev, पूर्णांक स्वतःirq, पूर्णांक स्वतःdma,
-		      स्थिर काष्ठा parport_pc_via_data *via);
-	स्थिर काष्ठा parport_pc_via_data *via;
-पूर्ण parport_pc_superio_info[] = अणु
-	अणु sio_via_probe, &via_686a_data, पूर्ण,
-	अणु sio_via_probe, &via_8231_data, पूर्ण,
-	अणु sio_ite_8872_probe, शून्य, पूर्ण,
-पूर्ण;
+/* each element directly indexed from enum list, above */
+static struct parport_pc_superio {
+	int (*probe) (struct pci_dev *pdev, int autoirq, int autodma,
+		      const struct parport_pc_via_data *via);
+	const struct parport_pc_via_data *via;
+} parport_pc_superio_info[] = {
+	{ sio_via_probe, &via_686a_data, },
+	{ sio_via_probe, &via_8231_data, },
+	{ sio_ite_8872_probe, NULL, },
+};
 
-क्रमागत parport_pc_pci_cards अणु
+enum parport_pc_pci_cards {
 	siig_1p_10x = last_sio,
 	siig_2p_10x,
 	siig_1p_20x,
@@ -2589,11 +2588,11 @@ EXPORT_SYMBOL(parport_pc_unरेजिस्टर_port);
 	lava_parallel_dual_b,
 	boca_ioppar,
 	plx_9050,
-	समयdia_4006a,
-	समयdia_4014,
-	समयdia_4008a,
-	समयdia_4018,
-	समयdia_9018a,
+	timedia_4006a,
+	timedia_4014,
+	timedia_4008a,
+	timedia_4018,
+	timedia_9018a,
 	syba_2p_epp,
 	syba_1p_ecp,
 	titan_010l,
@@ -2605,648 +2604,648 @@ EXPORT_SYMBOL(parport_pc_unरेजिस्टर_port);
 	oxsemi_pcie_pport,
 	aks_0100,
 	mobility_pp,
-	neपंचांगos_9705,
-	neपंचांगos_9715,
-	neपंचांगos_9755,
-	neपंचांगos_9805,
-	neपंचांगos_9815,
-	neपंचांगos_9901,
-	neपंचांगos_9865,
+	netmos_9705,
+	netmos_9715,
+	netmos_9755,
+	netmos_9805,
+	netmos_9815,
+	netmos_9901,
+	netmos_9865,
 	quatech_sppxp100,
 	wch_ch382l,
-पूर्ण;
+};
 
 
-/* each element directly indexed from क्रमागत list, above
+/* each element directly indexed from enum list, above
  * (but offset by last_sio) */
-अटल काष्ठा parport_pc_pci अणु
-	पूर्णांक numports;
-	काष्ठा अणु /* BAR (base address रेजिस्टरs) numbers in the config
+static struct parport_pc_pci {
+	int numports;
+	struct { /* BAR (base address registers) numbers in the config
 		    space header */
-		पूर्णांक lo;
-		पूर्णांक hi;
-		/* -1 अगर not there, >6 क्रम offset-method (max BAR is 6) */
-	पूर्ण addr[4];
+		int lo;
+		int hi;
+		/* -1 if not there, >6 for offset-method (max BAR is 6) */
+	} addr[4];
 
 	/* If set, this is called immediately after pci_enable_device.
-	 * If it वापसs non-zero, no probing will take place and the
+	 * If it returns non-zero, no probing will take place and the
 	 * ports will not be used. */
-	पूर्णांक (*preinit_hook) (काष्ठा pci_dev *pdev, पूर्णांक स्वतःirq, पूर्णांक स्वतःdma);
+	int (*preinit_hook) (struct pci_dev *pdev, int autoirq, int autodma);
 
-	/* If set, this is called after probing क्रम ports.  If 'failed'
+	/* If set, this is called after probing for ports.  If 'failed'
 	 * is non-zero we couldn't use any of the ports. */
-	व्योम (*postinit_hook) (काष्ठा pci_dev *pdev, पूर्णांक failed);
-पूर्ण cards[] = अणु
-	/* siig_1p_10x */		अणु 1, अणु अणु 2, 3 पूर्ण, पूर्ण पूर्ण,
-	/* siig_2p_10x */		अणु 2, अणु अणु 2, 3 पूर्ण, अणु 4, 5 पूर्ण, पूर्ण पूर्ण,
-	/* siig_1p_20x */		अणु 1, अणु अणु 0, 1 पूर्ण, पूर्ण पूर्ण,
-	/* siig_2p_20x */		अणु 2, अणु अणु 0, 1 पूर्ण, अणु 2, 3 पूर्ण, पूर्ण पूर्ण,
-	/* lava_parallel */		अणु 1, अणु अणु 0, -1 पूर्ण, पूर्ण पूर्ण,
-	/* lava_parallel_dual_a */	अणु 1, अणु अणु 0, -1 पूर्ण, पूर्ण पूर्ण,
-	/* lava_parallel_dual_b */	अणु 1, अणु अणु 0, -1 पूर्ण, पूर्ण पूर्ण,
-	/* boca_ioppar */		अणु 1, अणु अणु 0, -1 पूर्ण, पूर्ण पूर्ण,
-	/* plx_9050 */			अणु 2, अणु अणु 4, -1 पूर्ण, अणु 5, -1 पूर्ण, पूर्ण पूर्ण,
-	/* समयdia_4006a */             अणु 1, अणु अणु 0, -1 पूर्ण, पूर्ण पूर्ण,
-	/* समयdia_4014  */             अणु 2, अणु अणु 0, -1 पूर्ण, अणु 2, -1 पूर्ण, पूर्ण पूर्ण,
-	/* समयdia_4008a */             अणु 1, अणु अणु 0, 1 पूर्ण, पूर्ण पूर्ण,
-	/* समयdia_4018  */             अणु 2, अणु अणु 0, 1 पूर्ण, अणु 2, 3 पूर्ण, पूर्ण पूर्ण,
-	/* समयdia_9018a */             अणु 2, अणु अणु 0, 1 पूर्ण, अणु 2, 3 पूर्ण, पूर्ण पूर्ण,
+	void (*postinit_hook) (struct pci_dev *pdev, int failed);
+} cards[] = {
+	/* siig_1p_10x */		{ 1, { { 2, 3 }, } },
+	/* siig_2p_10x */		{ 2, { { 2, 3 }, { 4, 5 }, } },
+	/* siig_1p_20x */		{ 1, { { 0, 1 }, } },
+	/* siig_2p_20x */		{ 2, { { 0, 1 }, { 2, 3 }, } },
+	/* lava_parallel */		{ 1, { { 0, -1 }, } },
+	/* lava_parallel_dual_a */	{ 1, { { 0, -1 }, } },
+	/* lava_parallel_dual_b */	{ 1, { { 0, -1 }, } },
+	/* boca_ioppar */		{ 1, { { 0, -1 }, } },
+	/* plx_9050 */			{ 2, { { 4, -1 }, { 5, -1 }, } },
+	/* timedia_4006a */             { 1, { { 0, -1 }, } },
+	/* timedia_4014  */             { 2, { { 0, -1 }, { 2, -1 }, } },
+	/* timedia_4008a */             { 1, { { 0, 1 }, } },
+	/* timedia_4018  */             { 2, { { 0, 1 }, { 2, 3 }, } },
+	/* timedia_9018a */             { 2, { { 0, 1 }, { 2, 3 }, } },
 					/* SYBA uses fixed offsets in
-					   a 1K io winकरोw */
-	/* syba_2p_epp AP138B */	अणु 2, अणु अणु 0, 0x078 पूर्ण, अणु 0, 0x178 पूर्ण, पूर्ण पूर्ण,
-	/* syba_1p_ecp W83787 */	अणु 1, अणु अणु 0, 0x078 पूर्ण, पूर्ण पूर्ण,
-	/* titan_010l */		अणु 1, अणु अणु 3, -1 पूर्ण, पूर्ण पूर्ण,
-	/* avlab_1p		*/	अणु 1, अणु अणु 0, 1पूर्ण, पूर्ण पूर्ण,
-	/* avlab_2p		*/	अणु 2, अणु अणु 0, 1पूर्ण, अणु 2, 3 पूर्ण,पूर्ण पूर्ण,
-	/* The Oxक्रमd Semi cards are unusual: 954 करोesn't support ECP,
-	 * and 840 locks up अगर you ग_लिखो 1 to bit 2! */
-	/* oxsemi_952 */		अणु 1, अणु अणु 0, 1 पूर्ण, पूर्ण पूर्ण,
-	/* oxsemi_954 */		अणु 1, अणु अणु 0, -1 पूर्ण, पूर्ण पूर्ण,
-	/* oxsemi_840 */		अणु 1, अणु अणु 0, 1 पूर्ण, पूर्ण पूर्ण,
-	/* oxsemi_pcie_pport */		अणु 1, अणु अणु 0, 1 पूर्ण, पूर्ण पूर्ण,
-	/* aks_0100 */                  अणु 1, अणु अणु 0, -1 पूर्ण, पूर्ण पूर्ण,
-	/* mobility_pp */		अणु 1, अणु अणु 0, 1 पूर्ण, पूर्ण पूर्ण,
+					   a 1K io window */
+	/* syba_2p_epp AP138B */	{ 2, { { 0, 0x078 }, { 0, 0x178 }, } },
+	/* syba_1p_ecp W83787 */	{ 1, { { 0, 0x078 }, } },
+	/* titan_010l */		{ 1, { { 3, -1 }, } },
+	/* avlab_1p		*/	{ 1, { { 0, 1}, } },
+	/* avlab_2p		*/	{ 2, { { 0, 1}, { 2, 3 },} },
+	/* The Oxford Semi cards are unusual: 954 doesn't support ECP,
+	 * and 840 locks up if you write 1 to bit 2! */
+	/* oxsemi_952 */		{ 1, { { 0, 1 }, } },
+	/* oxsemi_954 */		{ 1, { { 0, -1 }, } },
+	/* oxsemi_840 */		{ 1, { { 0, 1 }, } },
+	/* oxsemi_pcie_pport */		{ 1, { { 0, 1 }, } },
+	/* aks_0100 */                  { 1, { { 0, -1 }, } },
+	/* mobility_pp */		{ 1, { { 0, 1 }, } },
 
-	/* The neपंचांगos entries below are untested */
-	/* neपंचांगos_9705 */               अणु 1, अणु अणु 0, -1 पूर्ण, पूर्ण पूर्ण,
-	/* neपंचांगos_9715 */               अणु 2, अणु अणु 0, 1 पूर्ण, अणु 2, 3 पूर्ण,पूर्ण पूर्ण,
-	/* neपंचांगos_9755 */               अणु 2, अणु अणु 0, 1 पूर्ण, अणु 2, 3 पूर्ण,पूर्ण पूर्ण,
-	/* neपंचांगos_9805 */		अणु 1, अणु अणु 0, 1 पूर्ण, पूर्ण पूर्ण,
-	/* neपंचांगos_9815 */		अणु 2, अणु अणु 0, 1 पूर्ण, अणु 2, 3 पूर्ण, पूर्ण पूर्ण,
-	/* neपंचांगos_9901 */               अणु 1, अणु अणु 0, -1 पूर्ण, पूर्ण पूर्ण,
-	/* neपंचांगos_9865 */               अणु 1, अणु अणु 0, -1 पूर्ण, पूर्ण पूर्ण,
-	/* quatech_sppxp100 */		अणु 1, अणु अणु 0, 1 पूर्ण, पूर्ण पूर्ण,
-	/* wch_ch382l */		अणु 1, अणु अणु 2, -1 पूर्ण, पूर्ण पूर्ण,
-पूर्ण;
+	/* The netmos entries below are untested */
+	/* netmos_9705 */               { 1, { { 0, -1 }, } },
+	/* netmos_9715 */               { 2, { { 0, 1 }, { 2, 3 },} },
+	/* netmos_9755 */               { 2, { { 0, 1 }, { 2, 3 },} },
+	/* netmos_9805 */		{ 1, { { 0, 1 }, } },
+	/* netmos_9815 */		{ 2, { { 0, 1 }, { 2, 3 }, } },
+	/* netmos_9901 */               { 1, { { 0, -1 }, } },
+	/* netmos_9865 */               { 1, { { 0, -1 }, } },
+	/* quatech_sppxp100 */		{ 1, { { 0, 1 }, } },
+	/* wch_ch382l */		{ 1, { { 2, -1 }, } },
+};
 
-अटल स्थिर काष्ठा pci_device_id parport_pc_pci_tbl[] = अणु
+static const struct pci_device_id parport_pc_pci_tbl[] = {
 	/* Super-IO onboard chips */
-	अणु 0x1106, 0x0686, PCI_ANY_ID, PCI_ANY_ID, 0, 0, sio_via_686a पूर्ण,
-	अणु 0x1106, 0x8231, PCI_ANY_ID, PCI_ANY_ID, 0, 0, sio_via_8231 पूर्ण,
-	अणु PCI_VENDOR_ID_ITE, PCI_DEVICE_ID_ITE_8872,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, sio_ite_8872 पूर्ण,
+	{ 0x1106, 0x0686, PCI_ANY_ID, PCI_ANY_ID, 0, 0, sio_via_686a },
+	{ 0x1106, 0x8231, PCI_ANY_ID, PCI_ANY_ID, 0, 0, sio_via_8231 },
+	{ PCI_VENDOR_ID_ITE, PCI_DEVICE_ID_ITE_8872,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, sio_ite_8872 },
 
 	/* PCI cards */
-	अणु PCI_VENDOR_ID_SIIG, PCI_DEVICE_ID_SIIG_1P_10x,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, siig_1p_10x पूर्ण,
-	अणु PCI_VENDOR_ID_SIIG, PCI_DEVICE_ID_SIIG_2P_10x,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, siig_2p_10x पूर्ण,
-	अणु PCI_VENDOR_ID_SIIG, PCI_DEVICE_ID_SIIG_1P_20x,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, siig_1p_20x पूर्ण,
-	अणु PCI_VENDOR_ID_SIIG, PCI_DEVICE_ID_SIIG_2P_20x,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, siig_2p_20x पूर्ण,
-	अणु PCI_VENDOR_ID_LAVA, PCI_DEVICE_ID_LAVA_PARALLEL,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, lava_parallel पूर्ण,
-	अणु PCI_VENDOR_ID_LAVA, PCI_DEVICE_ID_LAVA_DUAL_PAR_A,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, lava_parallel_dual_a पूर्ण,
-	अणु PCI_VENDOR_ID_LAVA, PCI_DEVICE_ID_LAVA_DUAL_PAR_B,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, lava_parallel_dual_b पूर्ण,
-	अणु PCI_VENDOR_ID_LAVA, PCI_DEVICE_ID_LAVA_BOCA_IOPPAR,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, boca_ioppar पूर्ण,
-	अणु PCI_VENDOR_ID_PLX, PCI_DEVICE_ID_PLX_9050,
-	  PCI_SUBVENDOR_ID_EXSYS, PCI_SUBDEVICE_ID_EXSYS_4014, 0, 0, plx_9050 पूर्ण,
-	/* PCI_VENDOR_ID_TIMEDIA/SUNIX has many dअगरfering cards ...*/
-	अणु 0x1409, 0x7268, 0x1409, 0x0101, 0, 0, समयdia_4006a पूर्ण,
-	अणु 0x1409, 0x7268, 0x1409, 0x0102, 0, 0, समयdia_4014 पूर्ण,
-	अणु 0x1409, 0x7268, 0x1409, 0x0103, 0, 0, समयdia_4008a पूर्ण,
-	अणु 0x1409, 0x7268, 0x1409, 0x0104, 0, 0, समयdia_4018 पूर्ण,
-	अणु 0x1409, 0x7268, 0x1409, 0x9018, 0, 0, समयdia_9018a पूर्ण,
-	अणु PCI_VENDOR_ID_SYBA, PCI_DEVICE_ID_SYBA_2P_EPP,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, syba_2p_epp पूर्ण,
-	अणु PCI_VENDOR_ID_SYBA, PCI_DEVICE_ID_SYBA_1P_ECP,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, syba_1p_ecp पूर्ण,
-	अणु PCI_VENDOR_ID_TITAN, PCI_DEVICE_ID_TITAN_010L,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, titan_010l पूर्ण,
+	{ PCI_VENDOR_ID_SIIG, PCI_DEVICE_ID_SIIG_1P_10x,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, siig_1p_10x },
+	{ PCI_VENDOR_ID_SIIG, PCI_DEVICE_ID_SIIG_2P_10x,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, siig_2p_10x },
+	{ PCI_VENDOR_ID_SIIG, PCI_DEVICE_ID_SIIG_1P_20x,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, siig_1p_20x },
+	{ PCI_VENDOR_ID_SIIG, PCI_DEVICE_ID_SIIG_2P_20x,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, siig_2p_20x },
+	{ PCI_VENDOR_ID_LAVA, PCI_DEVICE_ID_LAVA_PARALLEL,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, lava_parallel },
+	{ PCI_VENDOR_ID_LAVA, PCI_DEVICE_ID_LAVA_DUAL_PAR_A,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, lava_parallel_dual_a },
+	{ PCI_VENDOR_ID_LAVA, PCI_DEVICE_ID_LAVA_DUAL_PAR_B,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, lava_parallel_dual_b },
+	{ PCI_VENDOR_ID_LAVA, PCI_DEVICE_ID_LAVA_BOCA_IOPPAR,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, boca_ioppar },
+	{ PCI_VENDOR_ID_PLX, PCI_DEVICE_ID_PLX_9050,
+	  PCI_SUBVENDOR_ID_EXSYS, PCI_SUBDEVICE_ID_EXSYS_4014, 0, 0, plx_9050 },
+	/* PCI_VENDOR_ID_TIMEDIA/SUNIX has many differing cards ...*/
+	{ 0x1409, 0x7268, 0x1409, 0x0101, 0, 0, timedia_4006a },
+	{ 0x1409, 0x7268, 0x1409, 0x0102, 0, 0, timedia_4014 },
+	{ 0x1409, 0x7268, 0x1409, 0x0103, 0, 0, timedia_4008a },
+	{ 0x1409, 0x7268, 0x1409, 0x0104, 0, 0, timedia_4018 },
+	{ 0x1409, 0x7268, 0x1409, 0x9018, 0, 0, timedia_9018a },
+	{ PCI_VENDOR_ID_SYBA, PCI_DEVICE_ID_SYBA_2P_EPP,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, syba_2p_epp },
+	{ PCI_VENDOR_ID_SYBA, PCI_DEVICE_ID_SYBA_1P_ECP,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, syba_1p_ecp },
+	{ PCI_VENDOR_ID_TITAN, PCI_DEVICE_ID_TITAN_010L,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, titan_010l },
 	/* PCI_VENDOR_ID_AVLAB/Intek21 has another bunch of cards ...*/
 	/* AFAVLAB_TK9902 */
-	अणु 0x14db, 0x2120, PCI_ANY_ID, PCI_ANY_ID, 0, 0, avlab_1pपूर्ण,
-	अणु 0x14db, 0x2121, PCI_ANY_ID, PCI_ANY_ID, 0, 0, avlab_2pपूर्ण,
-	अणु PCI_VENDOR_ID_OXSEMI, PCI_DEVICE_ID_OXSEMI_16PCI952PP,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, oxsemi_952 पूर्ण,
-	अणु PCI_VENDOR_ID_OXSEMI, PCI_DEVICE_ID_OXSEMI_16PCI954PP,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, oxsemi_954 पूर्ण,
-	अणु PCI_VENDOR_ID_OXSEMI, PCI_DEVICE_ID_OXSEMI_12PCI840,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, oxsemi_840 पूर्ण,
-	अणु PCI_VENDOR_ID_OXSEMI, PCI_DEVICE_ID_OXSEMI_PCIe840,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, oxsemi_pcie_pport पूर्ण,
-	अणु PCI_VENDOR_ID_OXSEMI, PCI_DEVICE_ID_OXSEMI_PCIe840_G,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, oxsemi_pcie_pport पूर्ण,
-	अणु PCI_VENDOR_ID_OXSEMI, PCI_DEVICE_ID_OXSEMI_PCIe952_0,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, oxsemi_pcie_pport पूर्ण,
-	अणु PCI_VENDOR_ID_OXSEMI, PCI_DEVICE_ID_OXSEMI_PCIe952_0_G,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, oxsemi_pcie_pport पूर्ण,
-	अणु PCI_VENDOR_ID_OXSEMI, PCI_DEVICE_ID_OXSEMI_PCIe952_1,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, oxsemi_pcie_pport पूर्ण,
-	अणु PCI_VENDOR_ID_OXSEMI, PCI_DEVICE_ID_OXSEMI_PCIe952_1_G,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, oxsemi_pcie_pport पूर्ण,
-	अणु PCI_VENDOR_ID_OXSEMI, PCI_DEVICE_ID_OXSEMI_PCIe952_1_U,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, oxsemi_pcie_pport पूर्ण,
-	अणु PCI_VENDOR_ID_OXSEMI, PCI_DEVICE_ID_OXSEMI_PCIe952_1_GU,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, oxsemi_pcie_pport पूर्ण,
-	अणु PCI_VENDOR_ID_AKS, PCI_DEVICE_ID_AKS_ALADDINCARD,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, aks_0100 पूर्ण,
-	अणु 0x14f2, 0x0121, PCI_ANY_ID, PCI_ANY_ID, 0, 0, mobility_pp पूर्ण,
+	{ 0x14db, 0x2120, PCI_ANY_ID, PCI_ANY_ID, 0, 0, avlab_1p},
+	{ 0x14db, 0x2121, PCI_ANY_ID, PCI_ANY_ID, 0, 0, avlab_2p},
+	{ PCI_VENDOR_ID_OXSEMI, PCI_DEVICE_ID_OXSEMI_16PCI952PP,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, oxsemi_952 },
+	{ PCI_VENDOR_ID_OXSEMI, PCI_DEVICE_ID_OXSEMI_16PCI954PP,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, oxsemi_954 },
+	{ PCI_VENDOR_ID_OXSEMI, PCI_DEVICE_ID_OXSEMI_12PCI840,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, oxsemi_840 },
+	{ PCI_VENDOR_ID_OXSEMI, PCI_DEVICE_ID_OXSEMI_PCIe840,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, oxsemi_pcie_pport },
+	{ PCI_VENDOR_ID_OXSEMI, PCI_DEVICE_ID_OXSEMI_PCIe840_G,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, oxsemi_pcie_pport },
+	{ PCI_VENDOR_ID_OXSEMI, PCI_DEVICE_ID_OXSEMI_PCIe952_0,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, oxsemi_pcie_pport },
+	{ PCI_VENDOR_ID_OXSEMI, PCI_DEVICE_ID_OXSEMI_PCIe952_0_G,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, oxsemi_pcie_pport },
+	{ PCI_VENDOR_ID_OXSEMI, PCI_DEVICE_ID_OXSEMI_PCIe952_1,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, oxsemi_pcie_pport },
+	{ PCI_VENDOR_ID_OXSEMI, PCI_DEVICE_ID_OXSEMI_PCIe952_1_G,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, oxsemi_pcie_pport },
+	{ PCI_VENDOR_ID_OXSEMI, PCI_DEVICE_ID_OXSEMI_PCIe952_1_U,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, oxsemi_pcie_pport },
+	{ PCI_VENDOR_ID_OXSEMI, PCI_DEVICE_ID_OXSEMI_PCIe952_1_GU,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, oxsemi_pcie_pport },
+	{ PCI_VENDOR_ID_AKS, PCI_DEVICE_ID_AKS_ALADDINCARD,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, aks_0100 },
+	{ 0x14f2, 0x0121, PCI_ANY_ID, PCI_ANY_ID, 0, 0, mobility_pp },
 	/* NetMos communication controllers */
-	अणु PCI_VENDOR_ID_NETMOS, PCI_DEVICE_ID_NETMOS_9705,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, neपंचांगos_9705 पूर्ण,
-	अणु PCI_VENDOR_ID_NETMOS, PCI_DEVICE_ID_NETMOS_9715,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, neपंचांगos_9715 पूर्ण,
-	अणु PCI_VENDOR_ID_NETMOS, PCI_DEVICE_ID_NETMOS_9755,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, neपंचांगos_9755 पूर्ण,
-	अणु PCI_VENDOR_ID_NETMOS, PCI_DEVICE_ID_NETMOS_9805,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, neपंचांगos_9805 पूर्ण,
-	अणु PCI_VENDOR_ID_NETMOS, PCI_DEVICE_ID_NETMOS_9815,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, neपंचांगos_9815 पूर्ण,
-	अणु PCI_VENDOR_ID_NETMOS, PCI_DEVICE_ID_NETMOS_9901,
-	  0xA000, 0x2000, 0, 0, neपंचांगos_9901 पूर्ण,
-	अणु PCI_VENDOR_ID_NETMOS, PCI_DEVICE_ID_NETMOS_9865,
-	  0xA000, 0x1000, 0, 0, neपंचांगos_9865 पूर्ण,
-	अणु PCI_VENDOR_ID_NETMOS, PCI_DEVICE_ID_NETMOS_9865,
-	  0xA000, 0x2000, 0, 0, neपंचांगos_9865 पूर्ण,
+	{ PCI_VENDOR_ID_NETMOS, PCI_DEVICE_ID_NETMOS_9705,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, netmos_9705 },
+	{ PCI_VENDOR_ID_NETMOS, PCI_DEVICE_ID_NETMOS_9715,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, netmos_9715 },
+	{ PCI_VENDOR_ID_NETMOS, PCI_DEVICE_ID_NETMOS_9755,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, netmos_9755 },
+	{ PCI_VENDOR_ID_NETMOS, PCI_DEVICE_ID_NETMOS_9805,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, netmos_9805 },
+	{ PCI_VENDOR_ID_NETMOS, PCI_DEVICE_ID_NETMOS_9815,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, netmos_9815 },
+	{ PCI_VENDOR_ID_NETMOS, PCI_DEVICE_ID_NETMOS_9901,
+	  0xA000, 0x2000, 0, 0, netmos_9901 },
+	{ PCI_VENDOR_ID_NETMOS, PCI_DEVICE_ID_NETMOS_9865,
+	  0xA000, 0x1000, 0, 0, netmos_9865 },
+	{ PCI_VENDOR_ID_NETMOS, PCI_DEVICE_ID_NETMOS_9865,
+	  0xA000, 0x2000, 0, 0, netmos_9865 },
 	/* Quatech SPPXP-100 Parallel port PCI ExpressCard */
-	अणु PCI_VENDOR_ID_QUATECH, PCI_DEVICE_ID_QUATECH_SPPXP_100,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, quatech_sppxp100 पूर्ण,
+	{ PCI_VENDOR_ID_QUATECH, PCI_DEVICE_ID_QUATECH_SPPXP_100,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, quatech_sppxp100 },
 	/* WCH CH382L PCI-E single parallel port card */
-	अणु 0x1c00, 0x3050, 0x1c00, 0x3050, 0, 0, wch_ch382l पूर्ण,
-	अणु 0, पूर्ण /* terminate list */
-पूर्ण;
+	{ 0x1c00, 0x3050, 0x1c00, 0x3050, 0, 0, wch_ch382l },
+	{ 0, } /* terminate list */
+};
 MODULE_DEVICE_TABLE(pci, parport_pc_pci_tbl);
 
-काष्ठा pci_parport_data अणु
-	पूर्णांक num;
-	काष्ठा parport *ports[2];
-पूर्ण;
+struct pci_parport_data {
+	int num;
+	struct parport *ports[2];
+};
 
-अटल पूर्णांक parport_pc_pci_probe(काष्ठा pci_dev *dev,
-					   स्थिर काष्ठा pci_device_id *id)
-अणु
-	पूर्णांक err, count, n, i = id->driver_data;
-	काष्ठा pci_parport_data *data;
+static int parport_pc_pci_probe(struct pci_dev *dev,
+					   const struct pci_device_id *id)
+{
+	int err, count, n, i = id->driver_data;
+	struct pci_parport_data *data;
 
-	अगर (i < last_sio)
-		/* This is an onboard Super-IO and has alपढ़ोy been probed */
-		वापस 0;
+	if (i < last_sio)
+		/* This is an onboard Super-IO and has already been probed */
+		return 0;
 
 	/* This is a PCI card */
 	i -= last_sio;
 	count = 0;
 	err = pci_enable_device(dev);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	data = kदो_स्मृति(माप(काष्ठा pci_parport_data), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = kmalloc(sizeof(struct pci_parport_data), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
-	अगर (cards[i].preinit_hook &&
-	    cards[i].preinit_hook(dev, PARPORT_IRQ_NONE, PARPORT_DMA_NONE)) अणु
-		kमुक्त(data);
-		वापस -ENODEV;
-	पूर्ण
+	if (cards[i].preinit_hook &&
+	    cards[i].preinit_hook(dev, PARPORT_IRQ_NONE, PARPORT_DMA_NONE)) {
+		kfree(data);
+		return -ENODEV;
+	}
 
-	क्रम (n = 0; n < cards[i].numports; n++) अणु
-		पूर्णांक lo = cards[i].addr[n].lo;
-		पूर्णांक hi = cards[i].addr[n].hi;
-		पूर्णांक irq;
-		अचिन्हित दीर्घ io_lo, io_hi;
+	for (n = 0; n < cards[i].numports; n++) {
+		int lo = cards[i].addr[n].lo;
+		int hi = cards[i].addr[n].hi;
+		int irq;
+		unsigned long io_lo, io_hi;
 		io_lo = pci_resource_start(dev, lo);
 		io_hi = 0;
-		अगर ((hi >= 0) && (hi <= 6))
+		if ((hi >= 0) && (hi <= 6))
 			io_hi = pci_resource_start(dev, hi);
-		अन्यथा अगर (hi > 6)
-			io_lo += hi; /* Reपूर्णांकerpret the meaning of
+		else if (hi > 6)
+			io_lo += hi; /* Reinterpret the meaning of
 					"hi" as an offset (see SYBA
 					def.) */
-		/* TODO: test अगर sharing पूर्णांकerrupts works */
+		/* TODO: test if sharing interrupts works */
 		irq = dev->irq;
-		अगर (irq == IRQ_NONE) अणु
-			prपूर्णांकk(KERN_DEBUG "PCI parallel port detected: %04x:%04x, I/O at %#lx(%#lx)\n",
-			       id->venकरोr, id->device, io_lo, io_hi);
+		if (irq == IRQ_NONE) {
+			printk(KERN_DEBUG "PCI parallel port detected: %04x:%04x, I/O at %#lx(%#lx)\n",
+			       id->vendor, id->device, io_lo, io_hi);
 			irq = PARPORT_IRQ_NONE;
-		पूर्ण अन्यथा अणु
-			prपूर्णांकk(KERN_DEBUG "PCI parallel port detected: %04x:%04x, I/O at %#lx(%#lx), IRQ %d\n",
-			       id->venकरोr, id->device, io_lo, io_hi, irq);
-		पूर्ण
+		} else {
+			printk(KERN_DEBUG "PCI parallel port detected: %04x:%04x, I/O at %#lx(%#lx), IRQ %d\n",
+			       id->vendor, id->device, io_lo, io_hi, irq);
+		}
 		data->ports[count] =
 			parport_pc_probe_port(io_lo, io_hi, irq,
 					       PARPORT_DMA_NONE, &dev->dev,
 					       IRQF_SHARED);
-		अगर (data->ports[count])
+		if (data->ports[count])
 			count++;
-	पूर्ण
+	}
 
 	data->num = count;
 
-	अगर (cards[i].postinit_hook)
+	if (cards[i].postinit_hook)
 		cards[i].postinit_hook(dev, count == 0);
 
-	अगर (count) अणु
+	if (count) {
 		pci_set_drvdata(dev, data);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	kमुक्त(data);
+	kfree(data);
 
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}
 
-अटल व्योम parport_pc_pci_हटाओ(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा pci_parport_data *data = pci_get_drvdata(dev);
-	पूर्णांक i;
+static void parport_pc_pci_remove(struct pci_dev *dev)
+{
+	struct pci_parport_data *data = pci_get_drvdata(dev);
+	int i;
 
-	अगर (data) अणु
-		क्रम (i = data->num - 1; i >= 0; i--)
-			parport_pc_unरेजिस्टर_port(data->ports[i]);
+	if (data) {
+		for (i = data->num - 1; i >= 0; i--)
+			parport_pc_unregister_port(data->ports[i]);
 
-		kमुक्त(data);
-	पूर्ण
-पूर्ण
+		kfree(data);
+	}
+}
 
-अटल काष्ठा pci_driver parport_pc_pci_driver = अणु
+static struct pci_driver parport_pc_pci_driver = {
 	.name		= "parport_pc",
 	.id_table	= parport_pc_pci_tbl,
 	.probe		= parport_pc_pci_probe,
-	.हटाओ		= parport_pc_pci_हटाओ,
-पूर्ण;
+	.remove		= parport_pc_pci_remove,
+};
 
-अटल पूर्णांक __init parport_pc_init_superio(पूर्णांक स्वतःirq, पूर्णांक स्वतःdma)
-अणु
-	स्थिर काष्ठा pci_device_id *id;
-	काष्ठा pci_dev *pdev = शून्य;
-	पूर्णांक ret = 0;
+static int __init parport_pc_init_superio(int autoirq, int autodma)
+{
+	const struct pci_device_id *id;
+	struct pci_dev *pdev = NULL;
+	int ret = 0;
 
-	क्रम_each_pci_dev(pdev) अणु
+	for_each_pci_dev(pdev) {
 		id = pci_match_id(parport_pc_pci_tbl, pdev);
-		अगर (id == शून्य || id->driver_data >= last_sio)
-			जारी;
+		if (id == NULL || id->driver_data >= last_sio)
+			continue;
 
-		अगर (parport_pc_superio_info[id->driver_data].probe(
-			pdev, स्वतःirq, स्वतःdma,
-			parport_pc_superio_info[id->driver_data].via)) अणु
+		if (parport_pc_superio_info[id->driver_data].probe(
+			pdev, autoirq, autodma,
+			parport_pc_superio_info[id->driver_data].via)) {
 			ret++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस ret; /* number of devices found */
-पूर्ण
-#अन्यथा
-अटल काष्ठा pci_driver parport_pc_pci_driver;
-अटल पूर्णांक __init parport_pc_init_superio(पूर्णांक स्वतःirq, पूर्णांक स्वतःdma)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PCI */
+	return ret; /* number of devices found */
+}
+#else
+static struct pci_driver parport_pc_pci_driver;
+static int __init parport_pc_init_superio(int autoirq, int autodma)
+{
+	return 0;
+}
+#endif /* CONFIG_PCI */
 
-#अगर_घोषित CONFIG_PNP
+#ifdef CONFIG_PNP
 
-अटल स्थिर काष्ठा pnp_device_id parport_pc_pnp_tbl[] = अणु
-	/* Standard LPT Prपूर्णांकer Port */
-	अणु.id = "PNP0400", .driver_data = 0पूर्ण,
-	/* ECP Prपूर्णांकer Port */
-	अणु.id = "PNP0401", .driver_data = 0पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct pnp_device_id parport_pc_pnp_tbl[] = {
+	/* Standard LPT Printer Port */
+	{.id = "PNP0400", .driver_data = 0},
+	/* ECP Printer Port */
+	{.id = "PNP0401", .driver_data = 0},
+	{ }
+};
 
 MODULE_DEVICE_TABLE(pnp, parport_pc_pnp_tbl);
 
-अटल पूर्णांक parport_pc_pnp_probe(काष्ठा pnp_dev *dev,
-						स्थिर काष्ठा pnp_device_id *id)
-अणु
-	काष्ठा parport *pdata;
-	अचिन्हित दीर्घ io_lo, io_hi;
-	पूर्णांक dma, irq;
+static int parport_pc_pnp_probe(struct pnp_dev *dev,
+						const struct pnp_device_id *id)
+{
+	struct parport *pdata;
+	unsigned long io_lo, io_hi;
+	int dma, irq;
 
-	अगर (pnp_port_valid(dev, 0) &&
-		!(pnp_port_flags(dev, 0) & IORESOURCE_DISABLED)) अणु
+	if (pnp_port_valid(dev, 0) &&
+		!(pnp_port_flags(dev, 0) & IORESOURCE_DISABLED)) {
 		io_lo = pnp_port_start(dev, 0);
-	पूर्ण अन्यथा
-		वापस -EINVAL;
+	} else
+		return -EINVAL;
 
-	अगर (pnp_port_valid(dev, 1) &&
-		!(pnp_port_flags(dev, 1) & IORESOURCE_DISABLED)) अणु
+	if (pnp_port_valid(dev, 1) &&
+		!(pnp_port_flags(dev, 1) & IORESOURCE_DISABLED)) {
 		io_hi = pnp_port_start(dev, 1);
-	पूर्ण अन्यथा
+	} else
 		io_hi = 0;
 
-	अगर (pnp_irq_valid(dev, 0) &&
-		!(pnp_irq_flags(dev, 0) & IORESOURCE_DISABLED)) अणु
+	if (pnp_irq_valid(dev, 0) &&
+		!(pnp_irq_flags(dev, 0) & IORESOURCE_DISABLED)) {
 		irq = pnp_irq(dev, 0);
-	पूर्ण अन्यथा
+	} else
 		irq = PARPORT_IRQ_NONE;
 
-	अगर (pnp_dma_valid(dev, 0) &&
-		!(pnp_dma_flags(dev, 0) & IORESOURCE_DISABLED)) अणु
+	if (pnp_dma_valid(dev, 0) &&
+		!(pnp_dma_flags(dev, 0) & IORESOURCE_DISABLED)) {
 		dma = pnp_dma(dev, 0);
-	पूर्ण अन्यथा
+	} else
 		dma = PARPORT_DMA_NONE;
 
 	dev_info(&dev->dev, "reported by %s\n", dev->protocol->name);
 	pdata = parport_pc_probe_port(io_lo, io_hi, irq, dma, &dev->dev, 0);
-	अगर (pdata == शून्य)
-		वापस -ENODEV;
+	if (pdata == NULL)
+		return -ENODEV;
 
 	pnp_set_drvdata(dev, pdata);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम parport_pc_pnp_हटाओ(काष्ठा pnp_dev *dev)
-अणु
-	काष्ठा parport *pdata = (काष्ठा parport *)pnp_get_drvdata(dev);
-	अगर (!pdata)
-		वापस;
+static void parport_pc_pnp_remove(struct pnp_dev *dev)
+{
+	struct parport *pdata = (struct parport *)pnp_get_drvdata(dev);
+	if (!pdata)
+		return;
 
-	parport_pc_unरेजिस्टर_port(pdata);
-पूर्ण
+	parport_pc_unregister_port(pdata);
+}
 
-/* we only need the pnp layer to activate the device, at least क्रम now */
-अटल काष्ठा pnp_driver parport_pc_pnp_driver = अणु
+/* we only need the pnp layer to activate the device, at least for now */
+static struct pnp_driver parport_pc_pnp_driver = {
 	.name		= "parport_pc",
 	.id_table	= parport_pc_pnp_tbl,
 	.probe		= parport_pc_pnp_probe,
-	.हटाओ		= parport_pc_pnp_हटाओ,
-पूर्ण;
+	.remove		= parport_pc_pnp_remove,
+};
 
-#अन्यथा
-अटल काष्ठा pnp_driver parport_pc_pnp_driver;
-#पूर्ण_अगर /* CONFIG_PNP */
+#else
+static struct pnp_driver parport_pc_pnp_driver;
+#endif /* CONFIG_PNP */
 
-अटल पूर्णांक parport_pc_platक्रमm_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	/* Always succeed, the actual probing is करोne in
+static int parport_pc_platform_probe(struct platform_device *pdev)
+{
+	/* Always succeed, the actual probing is done in
 	 * parport_pc_probe_port(). */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver parport_pc_platक्रमm_driver = अणु
-	.driver = अणु
+static struct platform_driver parport_pc_platform_driver = {
+	.driver = {
 		.name	= "parport_pc",
-	पूर्ण,
-	.probe		= parport_pc_platक्रमm_probe,
-पूर्ण;
+	},
+	.probe		= parport_pc_platform_probe,
+};
 
-/* This is called by parport_pc_find_nonpci_ports (in यंत्र/parport.h) */
-अटल पूर्णांक __attribute__((unused))
-parport_pc_find_isa_ports(पूर्णांक स्वतःirq, पूर्णांक स्वतःdma)
-अणु
-	पूर्णांक count = 0;
+/* This is called by parport_pc_find_nonpci_ports (in asm/parport.h) */
+static int __attribute__((unused))
+parport_pc_find_isa_ports(int autoirq, int autodma)
+{
+	int count = 0;
 
-	अगर (parport_pc_probe_port(0x3bc, 0x7bc, स्वतःirq, स्वतःdma, शून्य, 0))
+	if (parport_pc_probe_port(0x3bc, 0x7bc, autoirq, autodma, NULL, 0))
 		count++;
-	अगर (parport_pc_probe_port(0x378, 0x778, स्वतःirq, स्वतःdma, शून्य, 0))
+	if (parport_pc_probe_port(0x378, 0x778, autoirq, autodma, NULL, 0))
 		count++;
-	अगर (parport_pc_probe_port(0x278, 0x678, स्वतःirq, स्वतःdma, शून्य, 0))
+	if (parport_pc_probe_port(0x278, 0x678, autoirq, autodma, NULL, 0))
 		count++;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-/* This function is called by parport_pc_init अगर the user didn't
- * specअगरy any ports to probe.  Its job is to find some ports.  Order
- * is important here -- we want ISA ports to be रेजिस्टरed first,
- * followed by PCI cards (क्रम least surprise), but beक्रमe that we want
- * to करो chipset-specअगरic tests क्रम some onboard ports that we know
+/* This function is called by parport_pc_init if the user didn't
+ * specify any ports to probe.  Its job is to find some ports.  Order
+ * is important here -- we want ISA ports to be registered first,
+ * followed by PCI cards (for least surprise), but before that we want
+ * to do chipset-specific tests for some onboard ports that we know
  * about.
  *
- * स्वतःirq is PARPORT_IRQ_NONE, PARPORT_IRQ_AUTO, or PARPORT_IRQ_PROBEONLY
- * स्वतःdma is PARPORT_DMA_NONE or PARPORT_DMA_AUTO
+ * autoirq is PARPORT_IRQ_NONE, PARPORT_IRQ_AUTO, or PARPORT_IRQ_PROBEONLY
+ * autodma is PARPORT_DMA_NONE or PARPORT_DMA_AUTO
  */
-अटल व्योम __init parport_pc_find_ports(पूर्णांक स्वतःirq, पूर्णांक स्वतःdma)
-अणु
-	पूर्णांक count = 0, err;
+static void __init parport_pc_find_ports(int autoirq, int autodma)
+{
+	int count = 0, err;
 
-#अगर_घोषित CONFIG_PARPORT_PC_SUPERIO
+#ifdef CONFIG_PARPORT_PC_SUPERIO
 	detect_and_report_it87();
 	detect_and_report_winbond();
 	detect_and_report_smsc();
-#पूर्ण_अगर
+#endif
 
 	/* Onboard SuperIO chipsets that show themselves on the PCI bus. */
-	count += parport_pc_init_superio(स्वतःirq, स्वतःdma);
+	count += parport_pc_init_superio(autoirq, autodma);
 
-	/* PnP ports, skip detection अगर SuperIO alपढ़ोy found them */
-	अगर (!count) अणु
-		err = pnp_रेजिस्टर_driver(&parport_pc_pnp_driver);
-		अगर (!err)
-			pnp_रेजिस्टरed_parport = 1;
-	पूर्ण
+	/* PnP ports, skip detection if SuperIO already found them */
+	if (!count) {
+		err = pnp_register_driver(&parport_pc_pnp_driver);
+		if (!err)
+			pnp_registered_parport = 1;
+	}
 
-	/* ISA ports and whatever (see यंत्र/parport.h). */
-	parport_pc_find_nonpci_ports(स्वतःirq, स्वतःdma);
+	/* ISA ports and whatever (see asm/parport.h). */
+	parport_pc_find_nonpci_ports(autoirq, autodma);
 
-	err = pci_रेजिस्टर_driver(&parport_pc_pci_driver);
-	अगर (!err)
-		pci_रेजिस्टरed_parport = 1;
-पूर्ण
+	err = pci_register_driver(&parport_pc_pci_driver);
+	if (!err)
+		pci_registered_parport = 1;
+}
 
 /*
- *	Piles of crap below pretend to be a parser क्रम module and kernel
+ *	Piles of crap below pretend to be a parser for module and kernel
  *	parameters.  Say "thank you" to whoever had come up with that
  *	syntax and keep in mind that code below is a cleaned up version.
  */
 
-अटल पूर्णांक __initdata io[PARPORT_PC_MAX_PORTS+1] = अणु
+static int __initdata io[PARPORT_PC_MAX_PORTS+1] = {
 	[0 ... PARPORT_PC_MAX_PORTS] = 0
-पूर्ण;
-अटल पूर्णांक __initdata io_hi[PARPORT_PC_MAX_PORTS+1] = अणु
+};
+static int __initdata io_hi[PARPORT_PC_MAX_PORTS+1] = {
 	[0 ... PARPORT_PC_MAX_PORTS] = PARPORT_IOHI_AUTO
-पूर्ण;
-अटल पूर्णांक __initdata dmaval[PARPORT_PC_MAX_PORTS] = अणु
+};
+static int __initdata dmaval[PARPORT_PC_MAX_PORTS] = {
 	[0 ... PARPORT_PC_MAX_PORTS-1] = PARPORT_DMA_NONE
-पूर्ण;
-अटल पूर्णांक __initdata irqval[PARPORT_PC_MAX_PORTS] = अणु
+};
+static int __initdata irqval[PARPORT_PC_MAX_PORTS] = {
 	[0 ... PARPORT_PC_MAX_PORTS-1] = PARPORT_IRQ_PROBEONLY
-पूर्ण;
+};
 
-अटल पूर्णांक __init parport_parse_param(स्थिर अक्षर *s, पूर्णांक *val,
-				पूर्णांक स्वतःmatic, पूर्णांक none, पूर्णांक nofअगरo)
-अणु
-	अगर (!s)
-		वापस 0;
-	अगर (!म_भेदन(s, "auto", 4))
-		*val = स्वतःmatic;
-	अन्यथा अगर (!म_भेदन(s, "none", 4))
+static int __init parport_parse_param(const char *s, int *val,
+				int automatic, int none, int nofifo)
+{
+	if (!s)
+		return 0;
+	if (!strncmp(s, "auto", 4))
+		*val = automatic;
+	else if (!strncmp(s, "none", 4))
 		*val = none;
-	अन्यथा अगर (nofअगरo && !म_भेदन(s, "nofifo", 6))
-		*val = nofअगरo;
-	अन्यथा अणु
-		अक्षर *ep;
-		अचिन्हित दीर्घ r = simple_म_से_अदीर्घ(s, &ep, 0);
-		अगर (ep != s)
+	else if (nofifo && !strncmp(s, "nofifo", 6))
+		*val = nofifo;
+	else {
+		char *ep;
+		unsigned long r = simple_strtoul(s, &ep, 0);
+		if (ep != s)
 			*val = r;
-		अन्यथा अणु
+		else {
 			pr_err("parport: bad specifier `%s'\n", s);
-			वापस -1;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return -1;
+		}
+	}
+	return 0;
+}
 
-अटल पूर्णांक __init parport_parse_irq(स्थिर अक्षर *irqstr, पूर्णांक *val)
-अणु
-	वापस parport_parse_param(irqstr, val, PARPORT_IRQ_AUTO,
+static int __init parport_parse_irq(const char *irqstr, int *val)
+{
+	return parport_parse_param(irqstr, val, PARPORT_IRQ_AUTO,
 				     PARPORT_IRQ_NONE, 0);
-पूर्ण
+}
 
-अटल पूर्णांक __init parport_parse_dma(स्थिर अक्षर *dmastr, पूर्णांक *val)
-अणु
-	वापस parport_parse_param(dmastr, val, PARPORT_DMA_AUTO,
+static int __init parport_parse_dma(const char *dmastr, int *val)
+{
+	return parport_parse_param(dmastr, val, PARPORT_DMA_AUTO,
 				     PARPORT_DMA_NONE, PARPORT_DMA_NOFIFO);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_PCI
-अटल पूर्णांक __init parport_init_mode_setup(अक्षर *str)
-अणु
-	prपूर्णांकk(KERN_DEBUG "parport_pc.c: Specified parameter parport_init_mode=%s\n",
+#ifdef CONFIG_PCI
+static int __init parport_init_mode_setup(char *str)
+{
+	printk(KERN_DEBUG "parport_pc.c: Specified parameter parport_init_mode=%s\n",
 	       str);
 
-	अगर (!म_भेद(str, "spp"))
+	if (!strcmp(str, "spp"))
 		parport_init_mode = 1;
-	अगर (!म_भेद(str, "ps2"))
+	if (!strcmp(str, "ps2"))
 		parport_init_mode = 2;
-	अगर (!म_भेद(str, "epp"))
+	if (!strcmp(str, "epp"))
 		parport_init_mode = 3;
-	अगर (!म_भेद(str, "ecp"))
+	if (!strcmp(str, "ecp"))
 		parport_init_mode = 4;
-	अगर (!म_भेद(str, "ecpepp"))
+	if (!strcmp(str, "ecpepp"))
 		parport_init_mode = 5;
-	वापस 1;
-पूर्ण
-#पूर्ण_अगर
+	return 1;
+}
+#endif
 
-#अगर_घोषित MODULE
-अटल अक्षर *irq[PARPORT_PC_MAX_PORTS];
-अटल अक्षर *dma[PARPORT_PC_MAX_PORTS];
+#ifdef MODULE
+static char *irq[PARPORT_PC_MAX_PORTS];
+static char *dma[PARPORT_PC_MAX_PORTS];
 
 MODULE_PARM_DESC(io, "Base I/O address (SPP regs)");
-module_param_hw_array(io, पूर्णांक, ioport, शून्य, 0);
+module_param_hw_array(io, int, ioport, NULL, 0);
 MODULE_PARM_DESC(io_hi, "Base I/O address (ECR)");
-module_param_hw_array(io_hi, पूर्णांक, ioport, शून्य, 0);
+module_param_hw_array(io_hi, int, ioport, NULL, 0);
 MODULE_PARM_DESC(irq, "IRQ line");
-module_param_hw_array(irq, अक्षरp, irq, शून्य, 0);
+module_param_hw_array(irq, charp, irq, NULL, 0);
 MODULE_PARM_DESC(dma, "DMA channel");
-module_param_hw_array(dma, अक्षरp, dma, शून्य, 0);
-#अगर defined(CONFIG_PARPORT_PC_SUPERIO) || \
+module_param_hw_array(dma, charp, dma, NULL, 0);
+#if defined(CONFIG_PARPORT_PC_SUPERIO) || \
        (defined(CONFIG_PARPORT_1284) && defined(CONFIG_PARPORT_PC_FIFO))
 MODULE_PARM_DESC(verbose_probing, "Log chit-chat during initialisation");
-module_param(verbose_probing, पूर्णांक, 0644);
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PCI
-अटल अक्षर *init_mode;
+module_param(verbose_probing, int, 0644);
+#endif
+#ifdef CONFIG_PCI
+static char *init_mode;
 MODULE_PARM_DESC(init_mode,
 	"Initialise mode for VIA VT8231 port (spp, ps2, epp, ecp or ecpepp)");
-module_param(init_mode, अक्षरp, 0);
-#पूर्ण_अगर
+module_param(init_mode, charp, 0);
+#endif
 
-अटल पूर्णांक __init parse_parport_params(व्योम)
-अणु
-	अचिन्हित पूर्णांक i;
-	पूर्णांक val;
+static int __init parse_parport_params(void)
+{
+	unsigned int i;
+	int val;
 
-#अगर_घोषित CONFIG_PCI
-	अगर (init_mode)
+#ifdef CONFIG_PCI
+	if (init_mode)
 		parport_init_mode_setup(init_mode);
-#पूर्ण_अगर
+#endif
 
-	क्रम (i = 0; i < PARPORT_PC_MAX_PORTS && io[i]; i++) अणु
-		अगर (parport_parse_irq(irq[i], &val))
-			वापस 1;
+	for (i = 0; i < PARPORT_PC_MAX_PORTS && io[i]; i++) {
+		if (parport_parse_irq(irq[i], &val))
+			return 1;
 		irqval[i] = val;
-		अगर (parport_parse_dma(dma[i], &val))
-			वापस 1;
+		if (parport_parse_dma(dma[i], &val))
+			return 1;
 		dmaval[i] = val;
-	पूर्ण
-	अगर (!io[0]) अणु
+	}
+	if (!io[0]) {
 		/* The user can make us use any IRQs or DMAs we find. */
-		अगर (irq[0] && !parport_parse_irq(irq[0], &val))
-			चयन (val) अणु
-			हाल PARPORT_IRQ_NONE:
-			हाल PARPORT_IRQ_AUTO:
+		if (irq[0] && !parport_parse_irq(irq[0], &val))
+			switch (val) {
+			case PARPORT_IRQ_NONE:
+			case PARPORT_IRQ_AUTO:
 				irqval[0] = val;
-				अवरोध;
-			शेष:
+				break;
+			default:
 				pr_warn("parport_pc: irq specified without base address.  Use 'io=' to specify one\n");
-			पूर्ण
+			}
 
-		अगर (dma[0] && !parport_parse_dma(dma[0], &val))
-			चयन (val) अणु
-			हाल PARPORT_DMA_NONE:
-			हाल PARPORT_DMA_AUTO:
+		if (dma[0] && !parport_parse_dma(dma[0], &val))
+			switch (val) {
+			case PARPORT_DMA_NONE:
+			case PARPORT_DMA_AUTO:
 				dmaval[0] = val;
-				अवरोध;
-			शेष:
+				break;
+			default:
 				pr_warn("parport_pc: dma specified without base address.  Use 'io=' to specify one\n");
-			पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			}
+	}
+	return 0;
+}
 
-#अन्यथा
+#else
 
-अटल पूर्णांक parport_setup_ptr __initdata;
+static int parport_setup_ptr __initdata;
 
 /*
  * Acceptable parameters:
  *
  * parport=0
- * parport=स्वतः
+ * parport=auto
  * parport=0xBASE[,IRQ[,DMA]]
  *
  * IRQ/DMA may be numeric or 'auto' or 'none'
  */
-अटल पूर्णांक __init parport_setup(अक्षर *str)
-अणु
-	अक्षर *endptr;
-	अक्षर *sep;
-	पूर्णांक val;
+static int __init parport_setup(char *str)
+{
+	char *endptr;
+	char *sep;
+	int val;
 
-	अगर (!str || !*str || (*str == '0' && !*(str+1))) अणु
-		/* Disable parport अगर "parport=0" in cmdline */
+	if (!str || !*str || (*str == '0' && !*(str+1))) {
+		/* Disable parport if "parport=0" in cmdline */
 		io[0] = PARPORT_DISABLE;
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	अगर (!म_भेदन(str, "auto", 4)) अणु
+	if (!strncmp(str, "auto", 4)) {
 		irqval[0] = PARPORT_IRQ_AUTO;
 		dmaval[0] = PARPORT_DMA_AUTO;
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	val = simple_म_से_अदीर्घ(str, &endptr, 0);
-	अगर (endptr == str) अणु
+	val = simple_strtoul(str, &endptr, 0);
+	if (endptr == str) {
 		pr_warn("parport=%s not understood\n", str);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	अगर (parport_setup_ptr == PARPORT_PC_MAX_PORTS) अणु
+	if (parport_setup_ptr == PARPORT_PC_MAX_PORTS) {
 		pr_err("parport=%s ignored, too many ports\n", str);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
 	io[parport_setup_ptr] = val;
 	irqval[parport_setup_ptr] = PARPORT_IRQ_NONE;
 	dmaval[parport_setup_ptr] = PARPORT_DMA_NONE;
 
-	sep = म_अक्षर(str, ',');
-	अगर (sep++) अणु
-		अगर (parport_parse_irq(sep, &val))
-			वापस 1;
+	sep = strchr(str, ',');
+	if (sep++) {
+		if (parport_parse_irq(sep, &val))
+			return 1;
 		irqval[parport_setup_ptr] = val;
-		sep = म_अक्षर(sep, ',');
-		अगर (sep++) अणु
-			अगर (parport_parse_dma(sep, &val))
-				वापस 1;
+		sep = strchr(sep, ',');
+		if (sep++) {
+			if (parport_parse_dma(sep, &val))
+				return 1;
 			dmaval[parport_setup_ptr] = val;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	parport_setup_ptr++;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक __init parse_parport_params(व्योम)
-अणु
-	वापस io[0] == PARPORT_DISABLE;
-पूर्ण
+static int __init parse_parport_params(void)
+{
+	return io[0] == PARPORT_DISABLE;
+}
 
 __setup("parport=", parport_setup);
 
@@ -3255,66 +3254,66 @@ __setup("parport=", parport_setup);
  *
  * parport_init_mode=[spp|ps2|epp|ecp|ecpepp]
  */
-#अगर_घोषित CONFIG_PCI
+#ifdef CONFIG_PCI
 __setup("parport_init_mode=", parport_init_mode_setup);
-#पूर्ण_अगर
-#पूर्ण_अगर
+#endif
+#endif
 
 /* "Parser" ends here */
 
-अटल पूर्णांक __init parport_pc_init(व्योम)
-अणु
-	पूर्णांक err;
+static int __init parport_pc_init(void)
+{
+	int err;
 
-	अगर (parse_parport_params())
-		वापस -EINVAL;
+	if (parse_parport_params())
+		return -EINVAL;
 
-	err = platक्रमm_driver_रेजिस्टर(&parport_pc_platक्रमm_driver);
-	अगर (err)
-		वापस err;
+	err = platform_driver_register(&parport_pc_platform_driver);
+	if (err)
+		return err;
 
-	अगर (io[0]) अणु
-		पूर्णांक i;
+	if (io[0]) {
+		int i;
 		/* Only probe the ports we were given. */
-		user_specअगरied = 1;
-		क्रम (i = 0; i < PARPORT_PC_MAX_PORTS; i++) अणु
-			अगर (!io[i])
-				अवरोध;
-			अगर (io_hi[i] == PARPORT_IOHI_AUTO)
+		user_specified = 1;
+		for (i = 0; i < PARPORT_PC_MAX_PORTS; i++) {
+			if (!io[i])
+				break;
+			if (io_hi[i] == PARPORT_IOHI_AUTO)
 				io_hi[i] = 0x400 + io[i];
 			parport_pc_probe_port(io[i], io_hi[i],
-					irqval[i], dmaval[i], शून्य, 0);
-		पूर्ण
-	पूर्ण अन्यथा
+					irqval[i], dmaval[i], NULL, 0);
+		}
+	} else
 		parport_pc_find_ports(irqval[0], dmaval[0]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास parport_pc_निकास(व्योम)
-अणु
-	अगर (pci_रेजिस्टरed_parport)
-		pci_unरेजिस्टर_driver(&parport_pc_pci_driver);
-	अगर (pnp_रेजिस्टरed_parport)
-		pnp_unरेजिस्टर_driver(&parport_pc_pnp_driver);
-	platक्रमm_driver_unरेजिस्टर(&parport_pc_platक्रमm_driver);
+static void __exit parport_pc_exit(void)
+{
+	if (pci_registered_parport)
+		pci_unregister_driver(&parport_pc_pci_driver);
+	if (pnp_registered_parport)
+		pnp_unregister_driver(&parport_pc_pnp_driver);
+	platform_driver_unregister(&parport_pc_platform_driver);
 
-	जबतक (!list_empty(&ports_list)) अणु
-		काष्ठा parport_pc_निजी *priv;
-		काष्ठा parport *port;
-		काष्ठा device *dev;
+	while (!list_empty(&ports_list)) {
+		struct parport_pc_private *priv;
+		struct parport *port;
+		struct device *dev;
 		priv = list_entry(ports_list.next,
-				  काष्ठा parport_pc_निजी, list);
+				  struct parport_pc_private, list);
 		port = priv->port;
 		dev = port->dev;
-		parport_pc_unरेजिस्टर_port(port);
-		अगर (dev && dev->bus == &platक्रमm_bus_type)
-			platक्रमm_device_unरेजिस्टर(to_platक्रमm_device(dev));
-	पूर्ण
-पूर्ण
+		parport_pc_unregister_port(port);
+		if (dev && dev->bus == &platform_bus_type)
+			platform_device_unregister(to_platform_device(dev));
+	}
+}
 
 MODULE_AUTHOR("Phil Blundell, Tim Waugh, others");
 MODULE_DESCRIPTION("PC-style parallel port driver");
 MODULE_LICENSE("GPL");
 module_init(parport_pc_init)
-module_निकास(parport_pc_निकास)
+module_exit(parport_pc_exit)

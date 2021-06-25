@@ -1,44 +1,43 @@
-<शैली गुरु>
-#अगर_अघोषित _CHIP_H
-#घोषणा _CHIP_H
+#ifndef _CHIP_H
+#define _CHIP_H
 /*
  * Copyright(c) 2015 - 2020 Intel Corporation.
  *
  * This file is provided under a dual BSD/GPLv2 license.  When using or
- * redistributing this file, you may करो so under either license.
+ * redistributing this file, you may do so under either license.
  *
  * GPL LICENSE SUMMARY
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of version 2 of the GNU General Public License as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License क्रम more details.
+ * General Public License for more details.
  *
  * BSD LICENSE
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
  * are met:
  *
  *  - Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- *  - Redistributions in binary क्रमm must reproduce the above copyright
+ *  - Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
- *    the करोcumentation and/or other materials provided with the
+ *    the documentation and/or other materials provided with the
  *    distribution.
  *  - Neither the name of Intel Corporation nor the names of its
- *    contributors may be used to enकरोrse or promote products derived
- *    from this software without specअगरic prior written permission.
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -49,238 +48,238 @@
  */
 
 /*
- * This file contains all of the defines that is specअगरic to the HFI chip
+ * This file contains all of the defines that is specific to the HFI chip
  */
 
 /* sizes */
-#घोषणा BITS_PER_REGISTER (BITS_PER_BYTE * माप(u64))
-#घोषणा NUM_INTERRUPT_SOURCES 768
-#घोषणा RXE_NUM_CONTEXTS 160
-#घोषणा RXE_PER_CONTEXT_SIZE 0x1000	/* 4k */
-#घोषणा RXE_NUM_TID_FLOWS 32
-#घोषणा RXE_NUM_DATA_VL 8
-#घोषणा TXE_NUM_CONTEXTS 160
-#घोषणा TXE_NUM_SDMA_ENGINES 16
-#घोषणा NUM_CONTEXTS_PER_SET 8
-#घोषणा VL_ARB_HIGH_PRIO_TABLE_SIZE 16
-#घोषणा VL_ARB_LOW_PRIO_TABLE_SIZE 16
-#घोषणा VL_ARB_TABLE_SIZE 16
-#घोषणा TXE_NUM_32_BIT_COUNTER 7
-#घोषणा TXE_NUM_64_BIT_COUNTER 30
-#घोषणा TXE_NUM_DATA_VL 8
-#घोषणा TXE_PIO_SIZE (32 * 0x100000)	/* 32 MB */
-#घोषणा PIO_BLOCK_SIZE 64			/* bytes */
-#घोषणा SDMA_BLOCK_SIZE 64			/* bytes */
-#घोषणा RCV_BUF_BLOCK_SIZE 64               /* bytes */
-#घोषणा PIO_CMASK 0x7ff	/* counter mask क्रम मुक्त and fill counters */
-#घोषणा MAX_EAGER_ENTRIES    2048	/* max receive eager entries */
-#घोषणा MAX_TID_PAIR_ENTRIES 1024	/* max receive expected pairs */
+#define BITS_PER_REGISTER (BITS_PER_BYTE * sizeof(u64))
+#define NUM_INTERRUPT_SOURCES 768
+#define RXE_NUM_CONTEXTS 160
+#define RXE_PER_CONTEXT_SIZE 0x1000	/* 4k */
+#define RXE_NUM_TID_FLOWS 32
+#define RXE_NUM_DATA_VL 8
+#define TXE_NUM_CONTEXTS 160
+#define TXE_NUM_SDMA_ENGINES 16
+#define NUM_CONTEXTS_PER_SET 8
+#define VL_ARB_HIGH_PRIO_TABLE_SIZE 16
+#define VL_ARB_LOW_PRIO_TABLE_SIZE 16
+#define VL_ARB_TABLE_SIZE 16
+#define TXE_NUM_32_BIT_COUNTER 7
+#define TXE_NUM_64_BIT_COUNTER 30
+#define TXE_NUM_DATA_VL 8
+#define TXE_PIO_SIZE (32 * 0x100000)	/* 32 MB */
+#define PIO_BLOCK_SIZE 64			/* bytes */
+#define SDMA_BLOCK_SIZE 64			/* bytes */
+#define RCV_BUF_BLOCK_SIZE 64               /* bytes */
+#define PIO_CMASK 0x7ff	/* counter mask for free and fill counters */
+#define MAX_EAGER_ENTRIES    2048	/* max receive eager entries */
+#define MAX_TID_PAIR_ENTRIES 1024	/* max receive expected pairs */
 /*
  * Virtual? Allocation Unit, defined as AU = 8*2^vAU, 64 bytes, AU is fixed
- * at 64 bytes क्रम all generation one devices
+ * at 64 bytes for all generation one devices
  */
-#घोषणा CM_VAU 3
+#define CM_VAU 3
 /* HFI link credit count, AKA receive buffer depth (RBUF_DEPTH) */
-#घोषणा CM_GLOBAL_CREDITS 0x880
+#define CM_GLOBAL_CREDITS 0x880
 /* Number of PKey entries in the HW */
-#घोषणा MAX_PKEY_VALUES 16
+#define MAX_PKEY_VALUES 16
 
-#समावेश "chip_registers.h"
+#include "chip_registers.h"
 
-#घोषणा RXE_PER_CONTEXT_USER   (RXE + RXE_PER_CONTEXT_OFFSET)
-#घोषणा TXE_PIO_SEND (TXE + TXE_PIO_SEND_OFFSET)
+#define RXE_PER_CONTEXT_USER   (RXE + RXE_PER_CONTEXT_OFFSET)
+#define TXE_PIO_SEND (TXE + TXE_PIO_SEND_OFFSET)
 
 /* PBC flags */
-#घोषणा PBC_INTR		BIT_ULL(31)
-#घोषणा PBC_DC_INFO_SHIFT	(30)
-#घोषणा PBC_DC_INFO		BIT_ULL(PBC_DC_INFO_SHIFT)
-#घोषणा PBC_TEST_EBP		BIT_ULL(29)
-#घोषणा PBC_PACKET_BYPASS	BIT_ULL(28)
-#घोषणा PBC_CREDIT_RETURN	BIT_ULL(25)
-#घोषणा PBC_INSERT_BYPASS_ICRC	BIT_ULL(24)
-#घोषणा PBC_TEST_BAD_ICRC	BIT_ULL(23)
-#घोषणा PBC_FECN		BIT_ULL(22)
+#define PBC_INTR		BIT_ULL(31)
+#define PBC_DC_INFO_SHIFT	(30)
+#define PBC_DC_INFO		BIT_ULL(PBC_DC_INFO_SHIFT)
+#define PBC_TEST_EBP		BIT_ULL(29)
+#define PBC_PACKET_BYPASS	BIT_ULL(28)
+#define PBC_CREDIT_RETURN	BIT_ULL(25)
+#define PBC_INSERT_BYPASS_ICRC	BIT_ULL(24)
+#define PBC_TEST_BAD_ICRC	BIT_ULL(23)
+#define PBC_FECN		BIT_ULL(22)
 
 /* PbcInsertHcrc field settings */
-#घोषणा PBC_IHCRC_LKDETH 0x0	/* insert @ local KDETH offset */
-#घोषणा PBC_IHCRC_GKDETH 0x1	/* insert @ global KDETH offset */
-#घोषणा PBC_IHCRC_NONE   0x2	/* no HCRC inserted */
+#define PBC_IHCRC_LKDETH 0x0	/* insert @ local KDETH offset */
+#define PBC_IHCRC_GKDETH 0x1	/* insert @ global KDETH offset */
+#define PBC_IHCRC_NONE   0x2	/* no HCRC inserted */
 
 /* PBC fields */
-#घोषणा PBC_STATIC_RATE_CONTROL_COUNT_SHIFT 32
-#घोषणा PBC_STATIC_RATE_CONTROL_COUNT_MASK 0xffffull
-#घोषणा PBC_STATIC_RATE_CONTROL_COUNT_SMASK \
+#define PBC_STATIC_RATE_CONTROL_COUNT_SHIFT 32
+#define PBC_STATIC_RATE_CONTROL_COUNT_MASK 0xffffull
+#define PBC_STATIC_RATE_CONTROL_COUNT_SMASK \
 	(PBC_STATIC_RATE_CONTROL_COUNT_MASK << \
 	PBC_STATIC_RATE_CONTROL_COUNT_SHIFT)
 
-#घोषणा PBC_INSERT_HCRC_SHIFT 26
-#घोषणा PBC_INSERT_HCRC_MASK 0x3ull
-#घोषणा PBC_INSERT_HCRC_SMASK \
+#define PBC_INSERT_HCRC_SHIFT 26
+#define PBC_INSERT_HCRC_MASK 0x3ull
+#define PBC_INSERT_HCRC_SMASK \
 	(PBC_INSERT_HCRC_MASK << PBC_INSERT_HCRC_SHIFT)
 
-#घोषणा PBC_VL_SHIFT 12
-#घोषणा PBC_VL_MASK 0xfull
-#घोषणा PBC_VL_SMASK (PBC_VL_MASK << PBC_VL_SHIFT)
+#define PBC_VL_SHIFT 12
+#define PBC_VL_MASK 0xfull
+#define PBC_VL_SMASK (PBC_VL_MASK << PBC_VL_SHIFT)
 
-#घोषणा PBC_LENGTH_DWS_SHIFT 0
-#घोषणा PBC_LENGTH_DWS_MASK 0xfffull
-#घोषणा PBC_LENGTH_DWS_SMASK \
+#define PBC_LENGTH_DWS_SHIFT 0
+#define PBC_LENGTH_DWS_MASK 0xfffull
+#define PBC_LENGTH_DWS_SMASK \
 	(PBC_LENGTH_DWS_MASK << PBC_LENGTH_DWS_SHIFT)
 
 /* Credit Return Fields */
-#घोषणा CR_COUNTER_SHIFT 0
-#घोषणा CR_COUNTER_MASK 0x7ffull
-#घोषणा CR_COUNTER_SMASK (CR_COUNTER_MASK << CR_COUNTER_SHIFT)
+#define CR_COUNTER_SHIFT 0
+#define CR_COUNTER_MASK 0x7ffull
+#define CR_COUNTER_SMASK (CR_COUNTER_MASK << CR_COUNTER_SHIFT)
 
-#घोषणा CR_STATUS_SHIFT 11
-#घोषणा CR_STATUS_MASK 0x1ull
-#घोषणा CR_STATUS_SMASK (CR_STATUS_MASK << CR_STATUS_SHIFT)
+#define CR_STATUS_SHIFT 11
+#define CR_STATUS_MASK 0x1ull
+#define CR_STATUS_SMASK (CR_STATUS_MASK << CR_STATUS_SHIFT)
 
-#घोषणा CR_CREDIT_RETURN_DUE_TO_PBC_SHIFT 12
-#घोषणा CR_CREDIT_RETURN_DUE_TO_PBC_MASK 0x1ull
-#घोषणा CR_CREDIT_RETURN_DUE_TO_PBC_SMASK \
+#define CR_CREDIT_RETURN_DUE_TO_PBC_SHIFT 12
+#define CR_CREDIT_RETURN_DUE_TO_PBC_MASK 0x1ull
+#define CR_CREDIT_RETURN_DUE_TO_PBC_SMASK \
 	(CR_CREDIT_RETURN_DUE_TO_PBC_MASK << \
 	CR_CREDIT_RETURN_DUE_TO_PBC_SHIFT)
 
-#घोषणा CR_CREDIT_RETURN_DUE_TO_THRESHOLD_SHIFT 13
-#घोषणा CR_CREDIT_RETURN_DUE_TO_THRESHOLD_MASK 0x1ull
-#घोषणा CR_CREDIT_RETURN_DUE_TO_THRESHOLD_SMASK \
+#define CR_CREDIT_RETURN_DUE_TO_THRESHOLD_SHIFT 13
+#define CR_CREDIT_RETURN_DUE_TO_THRESHOLD_MASK 0x1ull
+#define CR_CREDIT_RETURN_DUE_TO_THRESHOLD_SMASK \
 	(CR_CREDIT_RETURN_DUE_TO_THRESHOLD_MASK << \
 	CR_CREDIT_RETURN_DUE_TO_THRESHOLD_SHIFT)
 
-#घोषणा CR_CREDIT_RETURN_DUE_TO_ERR_SHIFT 14
-#घोषणा CR_CREDIT_RETURN_DUE_TO_ERR_MASK 0x1ull
-#घोषणा CR_CREDIT_RETURN_DUE_TO_ERR_SMASK \
+#define CR_CREDIT_RETURN_DUE_TO_ERR_SHIFT 14
+#define CR_CREDIT_RETURN_DUE_TO_ERR_MASK 0x1ull
+#define CR_CREDIT_RETURN_DUE_TO_ERR_SMASK \
 	(CR_CREDIT_RETURN_DUE_TO_ERR_MASK << \
 	CR_CREDIT_RETURN_DUE_TO_ERR_SHIFT)
 
-#घोषणा CR_CREDIT_RETURN_DUE_TO_FORCE_SHIFT 15
-#घोषणा CR_CREDIT_RETURN_DUE_TO_FORCE_MASK 0x1ull
-#घोषणा CR_CREDIT_RETURN_DUE_TO_FORCE_SMASK \
+#define CR_CREDIT_RETURN_DUE_TO_FORCE_SHIFT 15
+#define CR_CREDIT_RETURN_DUE_TO_FORCE_MASK 0x1ull
+#define CR_CREDIT_RETURN_DUE_TO_FORCE_SMASK \
 	(CR_CREDIT_RETURN_DUE_TO_FORCE_MASK << \
 	CR_CREDIT_RETURN_DUE_TO_FORCE_SHIFT)
 
-/* Specअगरic IRQ sources */
-#घोषणा CCE_ERR_INT		  0
-#घोषणा RXE_ERR_INT		  1
-#घोषणा MISC_ERR_INT		  2
-#घोषणा PIO_ERR_INT		  4
-#घोषणा SDMA_ERR_INT		  5
-#घोषणा EGRESS_ERR_INT		  6
-#घोषणा TXE_ERR_INT		  7
-#घोषणा PBC_INT			240
-#घोषणा GPIO_ASSERT_INT		241
-#घोषणा QSFP1_INT		242
-#घोषणा QSFP2_INT		243
-#घोषणा TCRIT_INT		244
+/* Specific IRQ sources */
+#define CCE_ERR_INT		  0
+#define RXE_ERR_INT		  1
+#define MISC_ERR_INT		  2
+#define PIO_ERR_INT		  4
+#define SDMA_ERR_INT		  5
+#define EGRESS_ERR_INT		  6
+#define TXE_ERR_INT		  7
+#define PBC_INT			240
+#define GPIO_ASSERT_INT		241
+#define QSFP1_INT		242
+#define QSFP2_INT		243
+#define TCRIT_INT		244
 
-/* पूर्णांकerrupt source ranges */
-#घोषणा IS_FIRST_SOURCE		CCE_ERR_INT
-#घोषणा IS_GENERAL_ERR_START		  0
-#घोषणा IS_SDMAENG_ERR_START		 16
-#घोषणा IS_SENDCTXT_ERR_START		 32
-#घोषणा IS_SDMA_START			192
-#घोषणा IS_SDMA_PROGRESS_START		208
-#घोषणा IS_SDMA_IDLE_START		224
-#घोषणा IS_VARIOUS_START		240
-#घोषणा IS_DC_START			248
-#घोषणा IS_RCVAVAIL_START		256
-#घोषणा IS_RCVURGENT_START		416
-#घोषणा IS_SENDCREDIT_START		576
-#घोषणा IS_RESERVED_START		736
-#घोषणा IS_LAST_SOURCE			767
+/* interrupt source ranges */
+#define IS_FIRST_SOURCE		CCE_ERR_INT
+#define IS_GENERAL_ERR_START		  0
+#define IS_SDMAENG_ERR_START		 16
+#define IS_SENDCTXT_ERR_START		 32
+#define IS_SDMA_START			192
+#define IS_SDMA_PROGRESS_START		208
+#define IS_SDMA_IDLE_START		224
+#define IS_VARIOUS_START		240
+#define IS_DC_START			248
+#define IS_RCVAVAIL_START		256
+#define IS_RCVURGENT_START		416
+#define IS_SENDCREDIT_START		576
+#define IS_RESERVED_START		736
+#define IS_LAST_SOURCE			767
 
-/* derived पूर्णांकerrupt source values */
-#घोषणा IS_GENERAL_ERR_END		7
-#घोषणा IS_SDMAENG_ERR_END		31
-#घोषणा IS_SENDCTXT_ERR_END		191
-#घोषणा IS_SDMA_END                     207
-#घोषणा IS_SDMA_PROGRESS_END            223
-#घोषणा IS_SDMA_IDLE_END		239
-#घोषणा IS_VARIOUS_END			244
-#घोषणा IS_DC_END			255
-#घोषणा IS_RCVAVAIL_END			415
-#घोषणा IS_RCVURGENT_END		575
-#घोषणा IS_SENDCREDIT_END		735
-#घोषणा IS_RESERVED_END			IS_LAST_SOURCE
+/* derived interrupt source values */
+#define IS_GENERAL_ERR_END		7
+#define IS_SDMAENG_ERR_END		31
+#define IS_SENDCTXT_ERR_END		191
+#define IS_SDMA_END                     207
+#define IS_SDMA_PROGRESS_END            223
+#define IS_SDMA_IDLE_END		239
+#define IS_VARIOUS_END			244
+#define IS_DC_END			255
+#define IS_RCVAVAIL_END			415
+#define IS_RCVURGENT_END		575
+#define IS_SENDCREDIT_END		735
+#define IS_RESERVED_END			IS_LAST_SOURCE
 
 /* DCC_CFG_PORT_CONFIG logical link states */
-#घोषणा LSTATE_DOWN    0x1
-#घोषणा LSTATE_INIT    0x2
-#घोषणा LSTATE_ARMED   0x3
-#घोषणा LSTATE_ACTIVE  0x4
+#define LSTATE_DOWN    0x1
+#define LSTATE_INIT    0x2
+#define LSTATE_ARMED   0x3
+#define LSTATE_ACTIVE  0x4
 
 /* DCC_CFG_RESET reset states */
-#घोषणा LCB_RX_FPE_TX_FPE_INTO_RESET   (DCC_CFG_RESET_RESET_LCB    | \
+#define LCB_RX_FPE_TX_FPE_INTO_RESET   (DCC_CFG_RESET_RESET_LCB    | \
 					DCC_CFG_RESET_RESET_TX_FPE | \
 					DCC_CFG_RESET_RESET_RX_FPE | \
 					DCC_CFG_RESET_ENABLE_CCLK_BCC)
 					/* 0x17 */
 
-#घोषणा LCB_RX_FPE_TX_FPE_OUT_OF_RESET  DCC_CFG_RESET_ENABLE_CCLK_BCC /* 0x10 */
+#define LCB_RX_FPE_TX_FPE_OUT_OF_RESET  DCC_CFG_RESET_ENABLE_CCLK_BCC /* 0x10 */
 
 /* DC8051_STS_CUR_STATE port values (physical link states) */
-#घोषणा PLS_DISABLED			   0x30
-#घोषणा PLS_OFFLINE				   0x90
-#घोषणा PLS_OFFLINE_QUIET			   0x90
-#घोषणा PLS_OFFLINE_PLANNED_DOWN_INFORM	   0x91
-#घोषणा PLS_OFFLINE_READY_TO_QUIET_LT	   0x92
-#घोषणा PLS_OFFLINE_REPORT_FAILURE		   0x93
-#घोषणा PLS_OFFLINE_READY_TO_QUIET_BCC	   0x94
-#घोषणा PLS_OFFLINE_QUIET_DURATION	   0x95
-#घोषणा PLS_POLLING				   0x20
-#घोषणा PLS_POLLING_QUIET			   0x20
-#घोषणा PLS_POLLING_ACTIVE			   0x21
-#घोषणा PLS_CONFIGPHY			   0x40
-#घोषणा PLS_CONFIGPHY_DEBOUCE		   0x40
-#घोषणा PLS_CONFIGPHY_ESTCOMM		   0x41
-#घोषणा PLS_CONFIGPHY_ESTCOMM_TXRX_HUNT	   0x42
-#घोषणा PLS_CONFIGPHY_ESTCOMM_LOCAL_COMPLETE   0x43
-#घोषणा PLS_CONFIGPHY_OPTEQ			   0x44
-#घोषणा PLS_CONFIGPHY_OPTEQ_OPTIMIZING	   0x44
-#घोषणा PLS_CONFIGPHY_OPTEQ_LOCAL_COMPLETE	   0x45
-#घोषणा PLS_CONFIGPHY_VERIFYCAP		   0x46
-#घोषणा PLS_CONFIGPHY_VERIFYCAP_EXCHANGE	   0x46
-#घोषणा PLS_CONFIGPHY_VERIFYCAP_LOCAL_COMPLETE 0x47
-#घोषणा PLS_CONFIGLT			   0x48
-#घोषणा PLS_CONFIGLT_CONFIGURE		   0x48
-#घोषणा PLS_CONFIGLT_LINK_TRANSFER_ACTIVE	   0x49
-#घोषणा PLS_LINKUP				   0x50
-#घोषणा PLS_PHYTEST				   0xB0
-#घोषणा PLS_INTERNAL_SERDES_LOOPBACK	   0xe1
-#घोषणा PLS_QUICK_LINKUP			   0xe2
+#define PLS_DISABLED			   0x30
+#define PLS_OFFLINE				   0x90
+#define PLS_OFFLINE_QUIET			   0x90
+#define PLS_OFFLINE_PLANNED_DOWN_INFORM	   0x91
+#define PLS_OFFLINE_READY_TO_QUIET_LT	   0x92
+#define PLS_OFFLINE_REPORT_FAILURE		   0x93
+#define PLS_OFFLINE_READY_TO_QUIET_BCC	   0x94
+#define PLS_OFFLINE_QUIET_DURATION	   0x95
+#define PLS_POLLING				   0x20
+#define PLS_POLLING_QUIET			   0x20
+#define PLS_POLLING_ACTIVE			   0x21
+#define PLS_CONFIGPHY			   0x40
+#define PLS_CONFIGPHY_DEBOUCE		   0x40
+#define PLS_CONFIGPHY_ESTCOMM		   0x41
+#define PLS_CONFIGPHY_ESTCOMM_TXRX_HUNT	   0x42
+#define PLS_CONFIGPHY_ESTCOMM_LOCAL_COMPLETE   0x43
+#define PLS_CONFIGPHY_OPTEQ			   0x44
+#define PLS_CONFIGPHY_OPTEQ_OPTIMIZING	   0x44
+#define PLS_CONFIGPHY_OPTEQ_LOCAL_COMPLETE	   0x45
+#define PLS_CONFIGPHY_VERIFYCAP		   0x46
+#define PLS_CONFIGPHY_VERIFYCAP_EXCHANGE	   0x46
+#define PLS_CONFIGPHY_VERIFYCAP_LOCAL_COMPLETE 0x47
+#define PLS_CONFIGLT			   0x48
+#define PLS_CONFIGLT_CONFIGURE		   0x48
+#define PLS_CONFIGLT_LINK_TRANSFER_ACTIVE	   0x49
+#define PLS_LINKUP				   0x50
+#define PLS_PHYTEST				   0xB0
+#define PLS_INTERNAL_SERDES_LOOPBACK	   0xe1
+#define PLS_QUICK_LINKUP			   0xe2
 
 /* DC_DC8051_CFG_HOST_CMD_0.REQ_TYPE - 8051 host commands */
-#घोषणा HCMD_LOAD_CONFIG_DATA  0x01
-#घोषणा HCMD_READ_CONFIG_DATA  0x02
-#घोषणा HCMD_CHANGE_PHY_STATE  0x03
-#घोषणा HCMD_SEND_LCB_IDLE_MSG 0x04
-#घोषणा HCMD_MISC		   0x05
-#घोषणा HCMD_READ_LCB_IDLE_MSG 0x06
-#घोषणा HCMD_READ_LCB_CSR      0x07
-#घोषणा HCMD_WRITE_LCB_CSR     0x08
-#घोषणा HCMD_INTERFACE_TEST	   0xff
+#define HCMD_LOAD_CONFIG_DATA  0x01
+#define HCMD_READ_CONFIG_DATA  0x02
+#define HCMD_CHANGE_PHY_STATE  0x03
+#define HCMD_SEND_LCB_IDLE_MSG 0x04
+#define HCMD_MISC		   0x05
+#define HCMD_READ_LCB_IDLE_MSG 0x06
+#define HCMD_READ_LCB_CSR      0x07
+#define HCMD_WRITE_LCB_CSR     0x08
+#define HCMD_INTERFACE_TEST	   0xff
 
-/* DC_DC8051_CFG_HOST_CMD_1.RETURN_CODE - 8051 host command वापस */
-#घोषणा HCMD_SUCCESS 2
+/* DC_DC8051_CFG_HOST_CMD_1.RETURN_CODE - 8051 host command return */
+#define HCMD_SUCCESS 2
 
 /* DC_DC8051_DBG_ERR_INFO_SET_BY_8051.ERROR - error flags */
-#घोषणा SPICO_ROM_FAILED		BIT(0)
-#घोषणा UNKNOWN_FRAME			BIT(1)
-#घोषणा TARGET_BER_NOT_MET		BIT(2)
-#घोषणा FAILED_SERDES_INTERNAL_LOOPBACK	BIT(3)
-#घोषणा FAILED_SERDES_INIT		BIT(4)
-#घोषणा FAILED_LNI_POLLING		BIT(5)
-#घोषणा FAILED_LNI_DEBOUNCE		BIT(6)
-#घोषणा FAILED_LNI_ESTBCOMM		BIT(7)
-#घोषणा FAILED_LNI_OPTEQ		BIT(8)
-#घोषणा FAILED_LNI_VERIFY_CAP1		BIT(9)
-#घोषणा FAILED_LNI_VERIFY_CAP2		BIT(10)
-#घोषणा FAILED_LNI_CONFIGLT		BIT(11)
-#घोषणा HOST_HANDSHAKE_TIMEOUT		BIT(12)
-#घोषणा EXTERNAL_DEVICE_REQ_TIMEOUT	BIT(13)
+#define SPICO_ROM_FAILED		BIT(0)
+#define UNKNOWN_FRAME			BIT(1)
+#define TARGET_BER_NOT_MET		BIT(2)
+#define FAILED_SERDES_INTERNAL_LOOPBACK	BIT(3)
+#define FAILED_SERDES_INIT		BIT(4)
+#define FAILED_LNI_POLLING		BIT(5)
+#define FAILED_LNI_DEBOUNCE		BIT(6)
+#define FAILED_LNI_ESTBCOMM		BIT(7)
+#define FAILED_LNI_OPTEQ		BIT(8)
+#define FAILED_LNI_VERIFY_CAP1		BIT(9)
+#define FAILED_LNI_VERIFY_CAP2		BIT(10)
+#define FAILED_LNI_CONFIGLT		BIT(11)
+#define HOST_HANDSHAKE_TIMEOUT		BIT(12)
+#define EXTERNAL_DEVICE_REQ_TIMEOUT	BIT(13)
 
-#घोषणा FAILED_LNI (FAILED_LNI_POLLING | FAILED_LNI_DEBOUNCE \
+#define FAILED_LNI (FAILED_LNI_POLLING | FAILED_LNI_DEBOUNCE \
 			| FAILED_LNI_ESTBCOMM | FAILED_LNI_OPTEQ \
 			| FAILED_LNI_VERIFY_CAP1 \
 			| FAILED_LNI_VERIFY_CAP2 \
@@ -288,293 +287,293 @@
 			| EXTERNAL_DEVICE_REQ_TIMEOUT)
 
 /* DC_DC8051_DBG_ERR_INFO_SET_BY_8051.HOST_MSG - host message flags */
-#घोषणा HOST_REQ_DONE		BIT(0)
-#घोषणा BC_PWR_MGM_MSG		BIT(1)
-#घोषणा BC_SMA_MSG		BIT(2)
-#घोषणा BC_BCC_UNKNOWN_MSG	BIT(3)
-#घोषणा BC_IDLE_UNKNOWN_MSG	BIT(4)
-#घोषणा EXT_DEVICE_CFG_REQ	BIT(5)
-#घोषणा VERIFY_CAP_FRAME	BIT(6)
-#घोषणा LINKUP_ACHIEVED		BIT(7)
-#घोषणा LINK_GOING_DOWN		BIT(8)
-#घोषणा LINK_WIDTH_DOWNGRADED	BIT(9)
+#define HOST_REQ_DONE		BIT(0)
+#define BC_PWR_MGM_MSG		BIT(1)
+#define BC_SMA_MSG		BIT(2)
+#define BC_BCC_UNKNOWN_MSG	BIT(3)
+#define BC_IDLE_UNKNOWN_MSG	BIT(4)
+#define EXT_DEVICE_CFG_REQ	BIT(5)
+#define VERIFY_CAP_FRAME	BIT(6)
+#define LINKUP_ACHIEVED		BIT(7)
+#define LINK_GOING_DOWN		BIT(8)
+#define LINK_WIDTH_DOWNGRADED	BIT(9)
 
 /* DC_DC8051_CFG_EXT_DEV_1.REQ_TYPE - 8051 host requests */
-#घोषणा HREQ_LOAD_CONFIG	0x01
-#घोषणा HREQ_SAVE_CONFIG	0x02
-#घोषणा HREQ_READ_CONFIG	0x03
-#घोषणा HREQ_SET_TX_EQ_ABS	0x04
-#घोषणा HREQ_SET_TX_EQ_REL	0x05
-#घोषणा HREQ_ENABLE		0x06
-#घोषणा HREQ_LCB_RESET		0x07
-#घोषणा HREQ_CONFIG_DONE	0xfe
-#घोषणा HREQ_INTERFACE_TEST	0xff
+#define HREQ_LOAD_CONFIG	0x01
+#define HREQ_SAVE_CONFIG	0x02
+#define HREQ_READ_CONFIG	0x03
+#define HREQ_SET_TX_EQ_ABS	0x04
+#define HREQ_SET_TX_EQ_REL	0x05
+#define HREQ_ENABLE		0x06
+#define HREQ_LCB_RESET		0x07
+#define HREQ_CONFIG_DONE	0xfe
+#define HREQ_INTERFACE_TEST	0xff
 
-/* DC_DC8051_CFG_EXT_DEV_0.RETURN_CODE - 8051 host request वापस codes */
-#घोषणा HREQ_INVALID		0x01
-#घोषणा HREQ_SUCCESS		0x02
-#घोषणा HREQ_NOT_SUPPORTED		0x03
-#घोषणा HREQ_FEATURE_NOT_SUPPORTED	0x04 /* request specअगरic feature */
-#घोषणा HREQ_REQUEST_REJECTED	0xfe
-#घोषणा HREQ_EXECUTION_ONGOING	0xff
+/* DC_DC8051_CFG_EXT_DEV_0.RETURN_CODE - 8051 host request return codes */
+#define HREQ_INVALID		0x01
+#define HREQ_SUCCESS		0x02
+#define HREQ_NOT_SUPPORTED		0x03
+#define HREQ_FEATURE_NOT_SUPPORTED	0x04 /* request specific feature */
+#define HREQ_REQUEST_REJECTED	0xfe
+#define HREQ_EXECUTION_ONGOING	0xff
 
 /* MISC host command functions */
-#घोषणा HCMD_MISC_REQUEST_LCB_ACCESS 0x1
-#घोषणा HCMD_MISC_GRANT_LCB_ACCESS   0x2
+#define HCMD_MISC_REQUEST_LCB_ACCESS 0x1
+#define HCMD_MISC_GRANT_LCB_ACCESS   0x2
 
 /* idle flit message types */
-#घोषणा IDLE_PHYSICAL_LINK_MGMT 0x1
-#घोषणा IDLE_CRU		    0x2
-#घोषणा IDLE_SMA		    0x3
-#घोषणा IDLE_POWER_MGMT	    0x4
+#define IDLE_PHYSICAL_LINK_MGMT 0x1
+#define IDLE_CRU		    0x2
+#define IDLE_SMA		    0x3
+#define IDLE_POWER_MGMT	    0x4
 
-/* idle flit message send fields (both send and पढ़ो) */
-#घोषणा IDLE_PAYLOAD_MASK 0xffffffffffull /* 40 bits */
-#घोषणा IDLE_PAYLOAD_SHIFT 8
-#घोषणा IDLE_MSG_TYPE_MASK 0xf
-#घोषणा IDLE_MSG_TYPE_SHIFT 0
+/* idle flit message send fields (both send and read) */
+#define IDLE_PAYLOAD_MASK 0xffffffffffull /* 40 bits */
+#define IDLE_PAYLOAD_SHIFT 8
+#define IDLE_MSG_TYPE_MASK 0xf
+#define IDLE_MSG_TYPE_SHIFT 0
 
-/* idle flit message पढ़ो fields */
-#घोषणा READ_IDLE_MSG_TYPE_MASK 0xf
-#घोषणा READ_IDLE_MSG_TYPE_SHIFT 0
+/* idle flit message read fields */
+#define READ_IDLE_MSG_TYPE_MASK 0xf
+#define READ_IDLE_MSG_TYPE_SHIFT 0
 
 /* SMA idle flit payload commands */
-#घोषणा SMA_IDLE_ARM	1
-#घोषणा SMA_IDLE_ACTIVE 2
+#define SMA_IDLE_ARM	1
+#define SMA_IDLE_ACTIVE 2
 
 /* DC_DC8051_CFG_MODE.GENERAL bits */
-#घोषणा DISABLE_SELF_GUID_CHECK 0x2
+#define DISABLE_SELF_GUID_CHECK 0x2
 
 /* Bad L2 frame error code */
-#घोषणा BAD_L2_ERR      0x6
+#define BAD_L2_ERR      0x6
 
 /*
  * Eager buffer minimum and maximum sizes supported by the hardware.
- * All घातer-of-two sizes in between are supported as well.
+ * All power-of-two sizes in between are supported as well.
  * MAX_EAGER_BUFFER_TOTAL is the maximum size of memory
- * allocatable क्रम Eager buffer to a single context. All others
- * are limits क्रम the RcvArray entries.
+ * allocatable for Eager buffer to a single context. All others
+ * are limits for the RcvArray entries.
  */
-#घोषणा MIN_EAGER_BUFFER       (4 * 1024)
-#घोषणा MAX_EAGER_BUFFER       (256 * 1024)
-#घोषणा MAX_EAGER_BUFFER_TOTAL (64 * (1 << 20)) /* max per ctxt 64MB */
-#घोषणा MAX_EXPECTED_BUFFER    (2048 * 1024)
-#घोषणा HFI1_MIN_HDRQ_EGRBUF_CNT 32
-#घोषणा HFI1_MAX_HDRQ_EGRBUF_CNT 16352
+#define MIN_EAGER_BUFFER       (4 * 1024)
+#define MAX_EAGER_BUFFER       (256 * 1024)
+#define MAX_EAGER_BUFFER_TOTAL (64 * (1 << 20)) /* max per ctxt 64MB */
+#define MAX_EXPECTED_BUFFER    (2048 * 1024)
+#define HFI1_MIN_HDRQ_EGRBUF_CNT 32
+#define HFI1_MAX_HDRQ_EGRBUF_CNT 16352
 
 /*
  * Receive expected base and count and eager base and count increment -
  * the CSR fields hold multiples of this value.
  */
-#घोषणा RCV_SHIFT 3
-#घोषणा RCV_INCREMENT BIT(RCV_SHIFT)
+#define RCV_SHIFT 3
+#define RCV_INCREMENT BIT(RCV_SHIFT)
 
 /*
  * Receive header queue entry increment - the CSR holds multiples of
  * this value.
  */
-#घोषणा HDRQ_SIZE_SHIFT 5
-#घोषणा HDRQ_INCREMENT BIT(HDRQ_SIZE_SHIFT)
+#define HDRQ_SIZE_SHIFT 5
+#define HDRQ_INCREMENT BIT(HDRQ_SIZE_SHIFT)
 
 /*
  * Freeze handling flags
  */
-#घोषणा FREEZE_ABORT     0x01	/* करो not करो recovery */
-#घोषणा FREEZE_SELF	     0x02	/* initiate the मुक्तze */
-#घोषणा FREEZE_LINK_DOWN 0x04	/* link is करोwn */
+#define FREEZE_ABORT     0x01	/* do not do recovery */
+#define FREEZE_SELF	     0x02	/* initiate the freeze */
+#define FREEZE_LINK_DOWN 0x04	/* link is down */
 
 /*
  * Chip implementation codes.
  */
-#घोषणा ICODE_RTL_SILICON		0x00
-#घोषणा ICODE_RTL_VCS_SIMULATION	0x01
-#घोषणा ICODE_FPGA_EMULATION	0x02
-#घोषणा ICODE_FUNCTIONAL_SIMULATOR	0x03
+#define ICODE_RTL_SILICON		0x00
+#define ICODE_RTL_VCS_SIMULATION	0x01
+#define ICODE_FPGA_EMULATION	0x02
+#define ICODE_FUNCTIONAL_SIMULATOR	0x03
 
 /*
  * 8051 data memory size.
  */
-#घोषणा DC8051_DATA_MEM_SIZE 0x1000
+#define DC8051_DATA_MEM_SIZE 0x1000
 
 /*
- * 8051 firmware रेजिस्टरs
+ * 8051 firmware registers
  */
-#घोषणा NUM_GENERAL_FIELDS 0x17
-#घोषणा NUM_LANE_FIELDS    0x8
+#define NUM_GENERAL_FIELDS 0x17
+#define NUM_LANE_FIELDS    0x8
 
-/* 8051 general रेजिस्टर Field IDs */
-#घोषणा LINK_OPTIMIZATION_SETTINGS   0x00
-#घोषणा LINK_TUNING_PARAMETERS	     0x02
-#घोषणा DC_HOST_COMM_SETTINGS	     0x03
-#घोषणा TX_SETTINGS		     0x06
-#घोषणा VERIFY_CAP_LOCAL_PHY	     0x07
-#घोषणा VERIFY_CAP_LOCAL_FABRIC	     0x08
-#घोषणा VERIFY_CAP_LOCAL_LINK_MODE   0x09
-#घोषणा LOCAL_DEVICE_ID		     0x0a
-#घोषणा RESERVED_REGISTERS	     0x0b
-#घोषणा LOCAL_LNI_INFO		     0x0c
-#घोषणा REMOTE_LNI_INFO              0x0d
-#घोषणा MISC_STATUS		     0x0e
-#घोषणा VERIFY_CAP_REMOTE_PHY	     0x0f
-#घोषणा VERIFY_CAP_REMOTE_FABRIC     0x10
-#घोषणा VERIFY_CAP_REMOTE_LINK_WIDTH 0x11
-#घोषणा LAST_LOCAL_STATE_COMPLETE    0x12
-#घोषणा LAST_REMOTE_STATE_COMPLETE   0x13
-#घोषणा LINK_QUALITY_INFO            0x14
-#घोषणा REMOTE_DEVICE_ID	     0x15
-#घोषणा LINK_DOWN_REASON	     0x16 /* first byte of offset 0x16 */
-#घोषणा VERSION_PATCH		     0x16 /* last byte of offset 0x16 */
+/* 8051 general register Field IDs */
+#define LINK_OPTIMIZATION_SETTINGS   0x00
+#define LINK_TUNING_PARAMETERS	     0x02
+#define DC_HOST_COMM_SETTINGS	     0x03
+#define TX_SETTINGS		     0x06
+#define VERIFY_CAP_LOCAL_PHY	     0x07
+#define VERIFY_CAP_LOCAL_FABRIC	     0x08
+#define VERIFY_CAP_LOCAL_LINK_MODE   0x09
+#define LOCAL_DEVICE_ID		     0x0a
+#define RESERVED_REGISTERS	     0x0b
+#define LOCAL_LNI_INFO		     0x0c
+#define REMOTE_LNI_INFO              0x0d
+#define MISC_STATUS		     0x0e
+#define VERIFY_CAP_REMOTE_PHY	     0x0f
+#define VERIFY_CAP_REMOTE_FABRIC     0x10
+#define VERIFY_CAP_REMOTE_LINK_WIDTH 0x11
+#define LAST_LOCAL_STATE_COMPLETE    0x12
+#define LAST_REMOTE_STATE_COMPLETE   0x13
+#define LINK_QUALITY_INFO            0x14
+#define REMOTE_DEVICE_ID	     0x15
+#define LINK_DOWN_REASON	     0x16 /* first byte of offset 0x16 */
+#define VERSION_PATCH		     0x16 /* last byte of offset 0x16 */
 
-/* 8051 lane specअगरic रेजिस्टर field IDs */
-#घोषणा TX_EQ_SETTINGS		0x00
-#घोषणा CHANNEL_LOSS_SETTINGS	0x05
+/* 8051 lane specific register field IDs */
+#define TX_EQ_SETTINGS		0x00
+#define CHANNEL_LOSS_SETTINGS	0x05
 
-/* Lane ID क्रम general configuration रेजिस्टरs */
-#घोषणा GENERAL_CONFIG 4
+/* Lane ID for general configuration registers */
+#define GENERAL_CONFIG 4
 
 /* LINK_TUNING_PARAMETERS fields */
-#घोषणा TUNING_METHOD_SHIFT 24
+#define TUNING_METHOD_SHIFT 24
 
 /* LINK_OPTIMIZATION_SETTINGS fields */
-#घोषणा ENABLE_EXT_DEV_CONFIG_SHIFT 24
+#define ENABLE_EXT_DEV_CONFIG_SHIFT 24
 
-/* LOAD_DATA 8051 command shअगरts and fields */
-#घोषणा LOAD_DATA_FIELD_ID_SHIFT 40
-#घोषणा LOAD_DATA_FIELD_ID_MASK 0xfull
-#घोषणा LOAD_DATA_LANE_ID_SHIFT 32
-#घोषणा LOAD_DATA_LANE_ID_MASK 0xfull
-#घोषणा LOAD_DATA_DATA_SHIFT   0x0
-#घोषणा LOAD_DATA_DATA_MASK   0xffffffffull
+/* LOAD_DATA 8051 command shifts and fields */
+#define LOAD_DATA_FIELD_ID_SHIFT 40
+#define LOAD_DATA_FIELD_ID_MASK 0xfull
+#define LOAD_DATA_LANE_ID_SHIFT 32
+#define LOAD_DATA_LANE_ID_MASK 0xfull
+#define LOAD_DATA_DATA_SHIFT   0x0
+#define LOAD_DATA_DATA_MASK   0xffffffffull
 
-/* READ_DATA 8051 command shअगरts and fields */
-#घोषणा READ_DATA_FIELD_ID_SHIFT 40
-#घोषणा READ_DATA_FIELD_ID_MASK 0xffull
-#घोषणा READ_DATA_LANE_ID_SHIFT 32
-#घोषणा READ_DATA_LANE_ID_MASK 0xffull
-#घोषणा READ_DATA_DATA_SHIFT   0x0
-#घोषणा READ_DATA_DATA_MASK   0xffffffffull
+/* READ_DATA 8051 command shifts and fields */
+#define READ_DATA_FIELD_ID_SHIFT 40
+#define READ_DATA_FIELD_ID_MASK 0xffull
+#define READ_DATA_LANE_ID_SHIFT 32
+#define READ_DATA_LANE_ID_MASK 0xffull
+#define READ_DATA_DATA_SHIFT   0x0
+#define READ_DATA_DATA_MASK   0xffffffffull
 
 /* TX settings fields */
-#घोषणा ENABLE_LANE_TX_SHIFT		0
-#घोषणा ENABLE_LANE_TX_MASK		0xff
-#घोषणा TX_POLARITY_INVERSION_SHIFT	8
-#घोषणा TX_POLARITY_INVERSION_MASK	0xff
-#घोषणा RX_POLARITY_INVERSION_SHIFT	16
-#घोषणा RX_POLARITY_INVERSION_MASK	0xff
-#घोषणा MAX_RATE_SHIFT			24
-#घोषणा MAX_RATE_MASK			0xff
+#define ENABLE_LANE_TX_SHIFT		0
+#define ENABLE_LANE_TX_MASK		0xff
+#define TX_POLARITY_INVERSION_SHIFT	8
+#define TX_POLARITY_INVERSION_MASK	0xff
+#define RX_POLARITY_INVERSION_SHIFT	16
+#define RX_POLARITY_INVERSION_MASK	0xff
+#define MAX_RATE_SHIFT			24
+#define MAX_RATE_MASK			0xff
 
-/* verअगरy capability PHY fields */
-#घोषणा CONTINIOUS_REMOTE_UPDATE_SUPPORT_SHIFT	0x4
-#घोषणा CONTINIOUS_REMOTE_UPDATE_SUPPORT_MASK	0x1
-#घोषणा POWER_MANAGEMENT_SHIFT			0x0
-#घोषणा POWER_MANAGEMENT_MASK			0xf
+/* verify capability PHY fields */
+#define CONTINIOUS_REMOTE_UPDATE_SUPPORT_SHIFT	0x4
+#define CONTINIOUS_REMOTE_UPDATE_SUPPORT_MASK	0x1
+#define POWER_MANAGEMENT_SHIFT			0x0
+#define POWER_MANAGEMENT_MASK			0xf
 
-/* 8051 lane रेजिस्टर Field IDs */
-#घोषणा SPICO_FW_VERSION 0x7	/* SPICO firmware version */
+/* 8051 lane register Field IDs */
+#define SPICO_FW_VERSION 0x7	/* SPICO firmware version */
 
 /* SPICO firmware version fields */
-#घोषणा SPICO_ROM_VERSION_SHIFT 0
-#घोषणा SPICO_ROM_VERSION_MASK 0xffff
-#घोषणा SPICO_ROM_PROD_ID_SHIFT 16
-#घोषणा SPICO_ROM_PROD_ID_MASK 0xffff
+#define SPICO_ROM_VERSION_SHIFT 0
+#define SPICO_ROM_VERSION_MASK 0xffff
+#define SPICO_ROM_PROD_ID_SHIFT 16
+#define SPICO_ROM_PROD_ID_MASK 0xffff
 
-/* verअगरy capability fabric fields */
-#घोषणा VAU_SHIFT	0
-#घोषणा VAU_MASK	0x0007
-#घोषणा Z_SHIFT		3
-#घोषणा Z_MASK		0x0001
-#घोषणा VCU_SHIFT	4
-#घोषणा VCU_MASK	0x0007
-#घोषणा VL15BUF_SHIFT	8
-#घोषणा VL15BUF_MASK	0x0fff
-#घोषणा CRC_SIZES_SHIFT 20
-#घोषणा CRC_SIZES_MASK	0x7
+/* verify capability fabric fields */
+#define VAU_SHIFT	0
+#define VAU_MASK	0x0007
+#define Z_SHIFT		3
+#define Z_MASK		0x0001
+#define VCU_SHIFT	4
+#define VCU_MASK	0x0007
+#define VL15BUF_SHIFT	8
+#define VL15BUF_MASK	0x0fff
+#define CRC_SIZES_SHIFT 20
+#define CRC_SIZES_MASK	0x7
 
-/* verअगरy capability local link width fields */
-#घोषणा LINK_WIDTH_SHIFT 0		/* also क्रम remote link width */
-#घोषणा LINK_WIDTH_MASK 0xffff		/* also क्रम remote link width */
-#घोषणा LOCAL_FLAG_BITS_SHIFT 16
-#घोषणा LOCAL_FLAG_BITS_MASK 0xff
-#घोषणा MISC_CONFIG_BITS_SHIFT 24
-#घोषणा MISC_CONFIG_BITS_MASK 0xff
+/* verify capability local link width fields */
+#define LINK_WIDTH_SHIFT 0		/* also for remote link width */
+#define LINK_WIDTH_MASK 0xffff		/* also for remote link width */
+#define LOCAL_FLAG_BITS_SHIFT 16
+#define LOCAL_FLAG_BITS_MASK 0xff
+#define MISC_CONFIG_BITS_SHIFT 24
+#define MISC_CONFIG_BITS_MASK 0xff
 
-/* verअगरy capability remote link width fields */
-#घोषणा REMOTE_TX_RATE_SHIFT 16
-#घोषणा REMOTE_TX_RATE_MASK 0xff
+/* verify capability remote link width fields */
+#define REMOTE_TX_RATE_SHIFT 16
+#define REMOTE_TX_RATE_MASK 0xff
 
 /* LOCAL_DEVICE_ID fields */
-#घोषणा LOCAL_DEVICE_REV_SHIFT 0
-#घोषणा LOCAL_DEVICE_REV_MASK 0xff
-#घोषणा LOCAL_DEVICE_ID_SHIFT 8
-#घोषणा LOCAL_DEVICE_ID_MASK 0xffff
+#define LOCAL_DEVICE_REV_SHIFT 0
+#define LOCAL_DEVICE_REV_MASK 0xff
+#define LOCAL_DEVICE_ID_SHIFT 8
+#define LOCAL_DEVICE_ID_MASK 0xffff
 
 /* REMOTE_DEVICE_ID fields */
-#घोषणा REMOTE_DEVICE_REV_SHIFT 0
-#घोषणा REMOTE_DEVICE_REV_MASK 0xff
-#घोषणा REMOTE_DEVICE_ID_SHIFT 8
-#घोषणा REMOTE_DEVICE_ID_MASK 0xffff
+#define REMOTE_DEVICE_REV_SHIFT 0
+#define REMOTE_DEVICE_REV_MASK 0xff
+#define REMOTE_DEVICE_ID_SHIFT 8
+#define REMOTE_DEVICE_ID_MASK 0xffff
 
 /* local LNI link width fields */
-#घोषणा ENABLE_LANE_RX_SHIFT 16
-#घोषणा ENABLE_LANE_RX_MASK  0xff
+#define ENABLE_LANE_RX_SHIFT 16
+#define ENABLE_LANE_RX_MASK  0xff
 
-/* mask, shअगरt क्रम पढ़ोing 'mgmt_enabled' value from REMOTE_LNI_INFO field */
-#घोषणा MGMT_ALLOWED_SHIFT 23
-#घोषणा MGMT_ALLOWED_MASK 0x1
+/* mask, shift for reading 'mgmt_enabled' value from REMOTE_LNI_INFO field */
+#define MGMT_ALLOWED_SHIFT 23
+#define MGMT_ALLOWED_MASK 0x1
 
-/* mask, shअगरt क्रम 'link_quality' within LINK_QUALITY_INFO field */
-#घोषणा LINK_QUALITY_SHIFT 24
-#घोषणा LINK_QUALITY_MASK  0x7
+/* mask, shift for 'link_quality' within LINK_QUALITY_INFO field */
+#define LINK_QUALITY_SHIFT 24
+#define LINK_QUALITY_MASK  0x7
 
 /*
- * mask, shअगरt क्रम पढ़ोing 'planned_down_remote_reason_code'
+ * mask, shift for reading 'planned_down_remote_reason_code'
  * from LINK_QUALITY_INFO field
  */
-#घोषणा DOWN_REMOTE_REASON_SHIFT 16
-#घोषणा DOWN_REMOTE_REASON_MASK  0xff
+#define DOWN_REMOTE_REASON_SHIFT 16
+#define DOWN_REMOTE_REASON_MASK  0xff
 
-#घोषणा HOST_INTERFACE_VERSION 1
-#घोषणा HOST_INTERFACE_VERSION_SHIFT 16
-#घोषणा HOST_INTERFACE_VERSION_MASK  0xff
+#define HOST_INTERFACE_VERSION 1
+#define HOST_INTERFACE_VERSION_SHIFT 16
+#define HOST_INTERFACE_VERSION_MASK  0xff
 
-/* verअगरy capability PHY घातer management bits */
-#घोषणा PWRM_BER_CONTROL	0x1
-#घोषणा PWRM_BANDWIDTH_CONTROL	0x2
+/* verify capability PHY power management bits */
+#define PWRM_BER_CONTROL	0x1
+#define PWRM_BANDWIDTH_CONTROL	0x2
 
-/* 8051 link करोwn reasons */
-#घोषणा LDR_LINK_TRANSFER_ACTIVE_LOW   0xa
-#घोषणा LDR_RECEIVED_LINKDOWN_IDLE_MSG 0xb
-#घोषणा LDR_RECEIVED_HOST_OFFLINE_REQ  0xc
+/* 8051 link down reasons */
+#define LDR_LINK_TRANSFER_ACTIVE_LOW   0xa
+#define LDR_RECEIVED_LINKDOWN_IDLE_MSG 0xb
+#define LDR_RECEIVED_HOST_OFFLINE_REQ  0xc
 
-/* verअगरy capability fabric CRC size bits */
-क्रमागत अणु
+/* verify capability fabric CRC size bits */
+enum {
 	CAP_CRC_14B = (1 << 0), /* 14b CRC */
 	CAP_CRC_48B = (1 << 1), /* 48b CRC */
 	CAP_CRC_12B_16B_PER_LANE = (1 << 2) /* 12b-16b per lane CRC */
-पूर्ण;
+};
 
-#घोषणा SUPPORTED_CRCS (CAP_CRC_14B | CAP_CRC_48B)
+#define SUPPORTED_CRCS (CAP_CRC_14B | CAP_CRC_48B)
 
 /* misc status version fields */
-#घोषणा STS_FM_VERSION_MINOR_SHIFT 16
-#घोषणा STS_FM_VERSION_MINOR_MASK  0xff
-#घोषणा STS_FM_VERSION_MAJOR_SHIFT 24
-#घोषणा STS_FM_VERSION_MAJOR_MASK  0xff
-#घोषणा STS_FM_VERSION_PATCH_SHIFT 24
-#घोषणा STS_FM_VERSION_PATCH_MASK  0xff
+#define STS_FM_VERSION_MINOR_SHIFT 16
+#define STS_FM_VERSION_MINOR_MASK  0xff
+#define STS_FM_VERSION_MAJOR_SHIFT 24
+#define STS_FM_VERSION_MAJOR_MASK  0xff
+#define STS_FM_VERSION_PATCH_SHIFT 24
+#define STS_FM_VERSION_PATCH_MASK  0xff
 
 /* LCB_CFG_CRC_MODE TX_VAL and RX_VAL CRC mode values */
-#घोषणा LCB_CRC_16B			0x0	/* 16b CRC */
-#घोषणा LCB_CRC_14B			0x1	/* 14b CRC */
-#घोषणा LCB_CRC_48B			0x2	/* 48b CRC */
-#घोषणा LCB_CRC_12B_16B_PER_LANE	0x3	/* 12b-16b per lane CRC */
+#define LCB_CRC_16B			0x0	/* 16b CRC */
+#define LCB_CRC_14B			0x1	/* 14b CRC */
+#define LCB_CRC_48B			0x2	/* 48b CRC */
+#define LCB_CRC_12B_16B_PER_LANE	0x3	/* 12b-16b per lane CRC */
 
 /*
- * the following क्रमागत is (almost) a copy/paste of the definition
+ * the following enum is (almost) a copy/paste of the definition
  * in the OPA spec, section 20.2.2.6.8 (PortInfo)
  */
-क्रमागत अणु
+enum {
 	PORT_LTP_CRC_MODE_NONE = 0,
 	PORT_LTP_CRC_MODE_14 = 1, /* 14-bit LTP CRC mode (optional) */
 	PORT_LTP_CRC_MODE_16 = 2, /* 16-bit LTP CRC mode */
@@ -582,259 +581,259 @@
 		/* 48-bit overlapping LTP CRC mode (optional) */
 	PORT_LTP_CRC_MODE_PER_LANE = 8
 		/* 12 to 16 bit per lane LTP CRC mode (optional) */
-पूर्ण;
+};
 
-/* समयouts */
-#घोषणा LINK_RESTART_DELAY 1000		/* link restart delay, in ms */
-#घोषणा TIMEOUT_8051_START 5000         /* 8051 start समयout, in ms */
-#घोषणा DC8051_COMMAND_TIMEOUT 1000	/* DC8051 command समयout, in ms */
-#घोषणा FREEZE_STATUS_TIMEOUT 20	/* रुको क्रम मुक्तze indicators, in ms */
-#घोषणा VL_STATUS_CLEAR_TIMEOUT 5000	/* per-VL status clear, in ms */
-#घोषणा CCE_STATUS_TIMEOUT 10		/* समय to clear CCE Status, in ms */
+/* timeouts */
+#define LINK_RESTART_DELAY 1000		/* link restart delay, in ms */
+#define TIMEOUT_8051_START 5000         /* 8051 start timeout, in ms */
+#define DC8051_COMMAND_TIMEOUT 1000	/* DC8051 command timeout, in ms */
+#define FREEZE_STATUS_TIMEOUT 20	/* wait for freeze indicators, in ms */
+#define VL_STATUS_CLEAR_TIMEOUT 5000	/* per-VL status clear, in ms */
+#define CCE_STATUS_TIMEOUT 10		/* time to clear CCE Status, in ms */
 
-/* cघड़ी tick समय, in picoseconds per tick: 1/speed * 10^12  */
-#घोषणा ASIC_CCLOCK_PS  1242	/* 805 MHz */
-#घोषणा FPGA_CCLOCK_PS 30300	/*  33 MHz */
+/* cclock tick time, in picoseconds per tick: 1/speed * 10^12  */
+#define ASIC_CCLOCK_PS  1242	/* 805 MHz */
+#define FPGA_CCLOCK_PS 30300	/*  33 MHz */
 
 /*
  * Mask of enabled MISC errors.  Do not enable the two RSA engine errors -
- * see firmware.c:run_rsa() क्रम details.
+ * see firmware.c:run_rsa() for details.
  */
-#घोषणा DRIVER_MISC_MASK \
+#define DRIVER_MISC_MASK \
 	(~(MISC_ERR_STATUS_MISC_FW_AUTH_FAILED_ERR_SMASK \
 		| MISC_ERR_STATUS_MISC_KEY_MISMATCH_ERR_SMASK))
 
-/* valid values क्रम the loopback module parameter */
-#घोषणा LOOPBACK_NONE	0	/* no loopback - शेष */
-#घोषणा LOOPBACK_SERDES 1
-#घोषणा LOOPBACK_LCB	2
-#घोषणा LOOPBACK_CABLE	3	/* बाह्यal cable */
+/* valid values for the loopback module parameter */
+#define LOOPBACK_NONE	0	/* no loopback - default */
+#define LOOPBACK_SERDES 1
+#define LOOPBACK_LCB	2
+#define LOOPBACK_CABLE	3	/* external cable */
 
 /* set up bits in MISC_CONFIG_BITS */
-#घोषणा LOOPBACK_SERDES_CONFIG_BIT_MASK_SHIFT 0
-#घोषणा EXT_CFG_LCB_RESET_SUPPORTED_SHIFT     3
+#define LOOPBACK_SERDES_CONFIG_BIT_MASK_SHIFT 0
+#define EXT_CFG_LCB_RESET_SUPPORTED_SHIFT     3
 
-/* पढ़ो and ग_लिखो hardware रेजिस्टरs */
-u64 पढ़ो_csr(स्थिर काष्ठा hfi1_devdata *dd, u32 offset);
-व्योम ग_लिखो_csr(स्थिर काष्ठा hfi1_devdata *dd, u32 offset, u64 value);
+/* read and write hardware registers */
+u64 read_csr(const struct hfi1_devdata *dd, u32 offset);
+void write_csr(const struct hfi1_devdata *dd, u32 offset, u64 value);
 
 /*
- * The *_kctxt_* flavor of the CSR पढ़ो/ग_लिखो functions are क्रम
+ * The *_kctxt_* flavor of the CSR read/write functions are for
  * per-context or per-SDMA CSRs that are not mappable to user-space.
  * Their spacing is not a PAGE_SIZE multiple.
  */
-अटल अंतरभूत u64 पढ़ो_kctxt_csr(स्थिर काष्ठा hfi1_devdata *dd, पूर्णांक ctxt,
+static inline u64 read_kctxt_csr(const struct hfi1_devdata *dd, int ctxt,
 				 u32 offset0)
-अणु
+{
 	/* kernel per-context CSRs are separated by 0x100 */
-	वापस पढ़ो_csr(dd, offset0 + (0x100 * ctxt));
-पूर्ण
+	return read_csr(dd, offset0 + (0x100 * ctxt));
+}
 
-अटल अंतरभूत व्योम ग_लिखो_kctxt_csr(काष्ठा hfi1_devdata *dd, पूर्णांक ctxt,
+static inline void write_kctxt_csr(struct hfi1_devdata *dd, int ctxt,
 				   u32 offset0, u64 value)
-अणु
+{
 	/* kernel per-context CSRs are separated by 0x100 */
-	ग_लिखो_csr(dd, offset0 + (0x100 * ctxt), value);
-पूर्ण
+	write_csr(dd, offset0 + (0x100 * ctxt), value);
+}
 
-पूर्णांक पढ़ो_lcb_csr(काष्ठा hfi1_devdata *dd, u32 offset, u64 *data);
-पूर्णांक ग_लिखो_lcb_csr(काष्ठा hfi1_devdata *dd, u32 offset, u64 data);
+int read_lcb_csr(struct hfi1_devdata *dd, u32 offset, u64 *data);
+int write_lcb_csr(struct hfi1_devdata *dd, u32 offset, u64 data);
 
-व्योम __iomem *get_csr_addr(
-	स्थिर काष्ठा hfi1_devdata *dd,
+void __iomem *get_csr_addr(
+	const struct hfi1_devdata *dd,
 	u32 offset);
 
-अटल अंतरभूत व्योम __iomem *get_kctxt_csr_addr(
-	स्थिर काष्ठा hfi1_devdata *dd,
-	पूर्णांक ctxt,
+static inline void __iomem *get_kctxt_csr_addr(
+	const struct hfi1_devdata *dd,
+	int ctxt,
 	u32 offset0)
-अणु
-	वापस get_csr_addr(dd, offset0 + (0x100 * ctxt));
-पूर्ण
+{
+	return get_csr_addr(dd, offset0 + (0x100 * ctxt));
+}
 
 /*
- * The *_uctxt_* flavor of the CSR पढ़ो/ग_लिखो functions are क्रम
+ * The *_uctxt_* flavor of the CSR read/write functions are for
  * per-context CSRs that are mappable to user space. All these CSRs
  * are spaced by a PAGE_SIZE multiple in order to be mappable to
- * dअगरferent processes without exposing other contexts' CSRs
+ * different processes without exposing other contexts' CSRs
  */
-अटल अंतरभूत u64 पढ़ो_uctxt_csr(स्थिर काष्ठा hfi1_devdata *dd, पूर्णांक ctxt,
+static inline u64 read_uctxt_csr(const struct hfi1_devdata *dd, int ctxt,
 				 u32 offset0)
-अणु
+{
 	/* user per-context CSRs are separated by 0x1000 */
-	वापस पढ़ो_csr(dd, offset0 + (0x1000 * ctxt));
-पूर्ण
+	return read_csr(dd, offset0 + (0x1000 * ctxt));
+}
 
-अटल अंतरभूत व्योम ग_लिखो_uctxt_csr(काष्ठा hfi1_devdata *dd, पूर्णांक ctxt,
+static inline void write_uctxt_csr(struct hfi1_devdata *dd, int ctxt,
 				   u32 offset0, u64 value)
-अणु
+{
 	/* user per-context CSRs are separated by 0x1000 */
-	ग_लिखो_csr(dd, offset0 + (0x1000 * ctxt), value);
-पूर्ण
+	write_csr(dd, offset0 + (0x1000 * ctxt), value);
+}
 
-अटल अंतरभूत u32 chip_rcv_contexts(काष्ठा hfi1_devdata *dd)
-अणु
-	वापस पढ़ो_csr(dd, RCV_CONTEXTS);
-पूर्ण
+static inline u32 chip_rcv_contexts(struct hfi1_devdata *dd)
+{
+	return read_csr(dd, RCV_CONTEXTS);
+}
 
-अटल अंतरभूत u32 chip_send_contexts(काष्ठा hfi1_devdata *dd)
-अणु
-	वापस पढ़ो_csr(dd, SEND_CONTEXTS);
-पूर्ण
+static inline u32 chip_send_contexts(struct hfi1_devdata *dd)
+{
+	return read_csr(dd, SEND_CONTEXTS);
+}
 
-अटल अंतरभूत u32 chip_sdma_engines(काष्ठा hfi1_devdata *dd)
-अणु
-	वापस पढ़ो_csr(dd, SEND_DMA_ENGINES);
-पूर्ण
+static inline u32 chip_sdma_engines(struct hfi1_devdata *dd)
+{
+	return read_csr(dd, SEND_DMA_ENGINES);
+}
 
-अटल अंतरभूत u32 chip_pio_mem_size(काष्ठा hfi1_devdata *dd)
-अणु
-	वापस पढ़ो_csr(dd, SEND_PIO_MEM_SIZE);
-पूर्ण
+static inline u32 chip_pio_mem_size(struct hfi1_devdata *dd)
+{
+	return read_csr(dd, SEND_PIO_MEM_SIZE);
+}
 
-अटल अंतरभूत u32 chip_sdma_mem_size(काष्ठा hfi1_devdata *dd)
-अणु
-	वापस पढ़ो_csr(dd, SEND_DMA_MEM_SIZE);
-पूर्ण
+static inline u32 chip_sdma_mem_size(struct hfi1_devdata *dd)
+{
+	return read_csr(dd, SEND_DMA_MEM_SIZE);
+}
 
-अटल अंतरभूत u32 chip_rcv_array_count(काष्ठा hfi1_devdata *dd)
-अणु
-	वापस पढ़ो_csr(dd, RCV_ARRAY_CNT);
-पूर्ण
+static inline u32 chip_rcv_array_count(struct hfi1_devdata *dd)
+{
+	return read_csr(dd, RCV_ARRAY_CNT);
+}
 
 u8 encode_rcv_header_entry_size(u8 size);
-पूर्णांक hfi1_validate_rcvhdrcnt(काष्ठा hfi1_devdata *dd, uपूर्णांक thecnt);
-व्योम set_hdrq_regs(काष्ठा hfi1_devdata *dd, u8 ctxt, u8 entsize, u16 hdrcnt);
+int hfi1_validate_rcvhdrcnt(struct hfi1_devdata *dd, uint thecnt);
+void set_hdrq_regs(struct hfi1_devdata *dd, u8 ctxt, u8 entsize, u16 hdrcnt);
 
-u64 create_pbc(काष्ठा hfi1_pportdata *ppd, u64 flags, पूर्णांक srate_mbs, u32 vl,
+u64 create_pbc(struct hfi1_pportdata *ppd, u64 flags, int srate_mbs, u32 vl,
 	       u32 dw_len);
 
 /* firmware.c */
-#घोषणा SBUS_MASTER_BROADCAST 0xfd
-#घोषणा NUM_PCIE_SERDES 16	/* number of PCIe serdes on the SBus */
-बाह्य स्थिर u8 pcie_serdes_broadcast[];
-बाह्य स्थिर u8 pcie_pcs_addrs[2][NUM_PCIE_SERDES];
+#define SBUS_MASTER_BROADCAST 0xfd
+#define NUM_PCIE_SERDES 16	/* number of PCIe serdes on the SBus */
+extern const u8 pcie_serdes_broadcast[];
+extern const u8 pcie_pcs_addrs[2][NUM_PCIE_SERDES];
 
 /* SBus commands */
-#घोषणा RESET_SBUS_RECEIVER 0x20
-#घोषणा WRITE_SBUS_RECEIVER 0x21
-#घोषणा READ_SBUS_RECEIVER  0x22
-व्योम sbus_request(काष्ठा hfi1_devdata *dd,
+#define RESET_SBUS_RECEIVER 0x20
+#define WRITE_SBUS_RECEIVER 0x21
+#define READ_SBUS_RECEIVER  0x22
+void sbus_request(struct hfi1_devdata *dd,
 		  u8 receiver_addr, u8 data_addr, u8 command, u32 data_in);
-पूर्णांक sbus_request_slow(काष्ठा hfi1_devdata *dd,
+int sbus_request_slow(struct hfi1_devdata *dd,
 		      u8 receiver_addr, u8 data_addr, u8 command, u32 data_in);
-व्योम set_sbus_fast_mode(काष्ठा hfi1_devdata *dd);
-व्योम clear_sbus_fast_mode(काष्ठा hfi1_devdata *dd);
-पूर्णांक hfi1_firmware_init(काष्ठा hfi1_devdata *dd);
-पूर्णांक load_pcie_firmware(काष्ठा hfi1_devdata *dd);
-पूर्णांक load_firmware(काष्ठा hfi1_devdata *dd);
-व्योम dispose_firmware(व्योम);
-पूर्णांक acquire_hw_mutex(काष्ठा hfi1_devdata *dd);
-व्योम release_hw_mutex(काष्ठा hfi1_devdata *dd);
+void set_sbus_fast_mode(struct hfi1_devdata *dd);
+void clear_sbus_fast_mode(struct hfi1_devdata *dd);
+int hfi1_firmware_init(struct hfi1_devdata *dd);
+int load_pcie_firmware(struct hfi1_devdata *dd);
+int load_firmware(struct hfi1_devdata *dd);
+void dispose_firmware(void);
+int acquire_hw_mutex(struct hfi1_devdata *dd);
+void release_hw_mutex(struct hfi1_devdata *dd);
 
 /*
- * Biपंचांगask of dynamic access क्रम ASIC block chip resources.  Each HFI has its
- * own range of bits क्रम the resource so it can clear its own bits on
- * starting and निकासing.  If either HFI has the resource bit set, the
+ * Bitmask of dynamic access for ASIC block chip resources.  Each HFI has its
+ * own range of bits for the resource so it can clear its own bits on
+ * starting and exiting.  If either HFI has the resource bit set, the
  * resource is in use.  The separate bit ranges are:
  *	HFI0 bits  7:0
  *	HFI1 bits 15:8
  */
-#घोषणा CR_SBUS  0x01	/* SBUS, THERM, and PCIE रेजिस्टरs */
-#घोषणा CR_EPROM 0x02	/* EEP, GPIO रेजिस्टरs */
-#घोषणा CR_I2C1  0x04	/* QSFP1_OE रेजिस्टर */
-#घोषणा CR_I2C2  0x08	/* QSFP2_OE रेजिस्टर */
-#घोषणा CR_DYN_SHIFT 8	/* dynamic flag shअगरt */
-#घोषणा CR_DYN_MASK  ((1ull << CR_DYN_SHIFT) - 1)
+#define CR_SBUS  0x01	/* SBUS, THERM, and PCIE registers */
+#define CR_EPROM 0x02	/* EEP, GPIO registers */
+#define CR_I2C1  0x04	/* QSFP1_OE register */
+#define CR_I2C2  0x08	/* QSFP2_OE register */
+#define CR_DYN_SHIFT 8	/* dynamic flag shift */
+#define CR_DYN_MASK  ((1ull << CR_DYN_SHIFT) - 1)
 
 /*
- * Biपंचांगask of अटल ASIC states these are outside of the dynamic ASIC
+ * Bitmask of static ASIC states these are outside of the dynamic ASIC
  * block chip resources above.  These are to be set once and never cleared.
  * Must be holding the SBus dynamic flag when setting.
  */
-#घोषणा CR_THERM_INIT	0x010000
+#define CR_THERM_INIT	0x010000
 
-पूर्णांक acquire_chip_resource(काष्ठा hfi1_devdata *dd, u32 resource, u32 msरुको);
-व्योम release_chip_resource(काष्ठा hfi1_devdata *dd, u32 resource);
-bool check_chip_resource(काष्ठा hfi1_devdata *dd, u32 resource,
-			 स्थिर अक्षर *func);
-व्योम init_chip_resources(काष्ठा hfi1_devdata *dd);
-व्योम finish_chip_resources(काष्ठा hfi1_devdata *dd);
+int acquire_chip_resource(struct hfi1_devdata *dd, u32 resource, u32 mswait);
+void release_chip_resource(struct hfi1_devdata *dd, u32 resource);
+bool check_chip_resource(struct hfi1_devdata *dd, u32 resource,
+			 const char *func);
+void init_chip_resources(struct hfi1_devdata *dd);
+void finish_chip_resources(struct hfi1_devdata *dd);
 
-/* ms रुको समय क्रम access to an SBus resoure */
-#घोषणा SBUS_TIMEOUT 4000 /* दीर्घ enough क्रम a FW करोwnload and SBR */
+/* ms wait time for access to an SBus resoure */
+#define SBUS_TIMEOUT 4000 /* long enough for a FW download and SBR */
 
-/* ms रुको समय क्रम a qsfp (i2c) chain to become available */
-#घोषणा QSFP_WAIT 20000 /* दीर्घ enough क्रम FW update to the F4 uc */
+/* ms wait time for a qsfp (i2c) chain to become available */
+#define QSFP_WAIT 20000 /* long enough for FW update to the F4 uc */
 
-व्योम fabric_serdes_reset(काष्ठा hfi1_devdata *dd);
-पूर्णांक पढ़ो_8051_data(काष्ठा hfi1_devdata *dd, u32 addr, u32 len, u64 *result);
+void fabric_serdes_reset(struct hfi1_devdata *dd);
+int read_8051_data(struct hfi1_devdata *dd, u32 addr, u32 len, u64 *result);
 
 /* chip.c */
-व्योम पढ़ो_misc_status(काष्ठा hfi1_devdata *dd, u8 *ver_major, u8 *ver_minor,
+void read_misc_status(struct hfi1_devdata *dd, u8 *ver_major, u8 *ver_minor,
 		      u8 *ver_patch);
-पूर्णांक ग_लिखो_host_पूर्णांकerface_version(काष्ठा hfi1_devdata *dd, u8 version);
-व्योम पढ़ो_guid(काष्ठा hfi1_devdata *dd);
-पूर्णांक रुको_fm_पढ़ोy(काष्ठा hfi1_devdata *dd, u32 msसमयout);
-व्योम set_link_करोwn_reason(काष्ठा hfi1_pportdata *ppd, u8 lcl_reason,
+int write_host_interface_version(struct hfi1_devdata *dd, u8 version);
+void read_guid(struct hfi1_devdata *dd);
+int wait_fm_ready(struct hfi1_devdata *dd, u32 mstimeout);
+void set_link_down_reason(struct hfi1_pportdata *ppd, u8 lcl_reason,
 			  u8 neigh_reason, u8 rem_reason);
-पूर्णांक set_link_state(काष्ठा hfi1_pportdata *, u32 state);
-पूर्णांक port_ltp_to_cap(पूर्णांक port_ltp);
-व्योम handle_verअगरy_cap(काष्ठा work_काष्ठा *work);
-व्योम handle_मुक्तze(काष्ठा work_काष्ठा *work);
-व्योम handle_link_up(काष्ठा work_काष्ठा *work);
-व्योम handle_link_करोwn(काष्ठा work_काष्ठा *work);
-व्योम handle_link_करोwngrade(काष्ठा work_काष्ठा *work);
-व्योम handle_link_bounce(काष्ठा work_काष्ठा *work);
-व्योम handle_start_link(काष्ठा work_काष्ठा *work);
-व्योम handle_sma_message(काष्ठा work_काष्ठा *work);
-पूर्णांक reset_qsfp(काष्ठा hfi1_pportdata *ppd);
-व्योम qsfp_event(काष्ठा work_काष्ठा *work);
-व्योम start_मुक्तze_handling(काष्ठा hfi1_pportdata *ppd, पूर्णांक flags);
-पूर्णांक send_idle_sma(काष्ठा hfi1_devdata *dd, u64 message);
-पूर्णांक load_8051_config(काष्ठा hfi1_devdata *, u8, u8, u32);
-पूर्णांक पढ़ो_8051_config(काष्ठा hfi1_devdata *, u8, u8, u32 *);
-पूर्णांक start_link(काष्ठा hfi1_pportdata *ppd);
-पूर्णांक bringup_serdes(काष्ठा hfi1_pportdata *ppd);
-व्योम set_पूर्णांकr_state(काष्ठा hfi1_devdata *dd, u32 enable);
-bool apply_link_करोwngrade_policy(काष्ठा hfi1_pportdata *ppd,
+int set_link_state(struct hfi1_pportdata *, u32 state);
+int port_ltp_to_cap(int port_ltp);
+void handle_verify_cap(struct work_struct *work);
+void handle_freeze(struct work_struct *work);
+void handle_link_up(struct work_struct *work);
+void handle_link_down(struct work_struct *work);
+void handle_link_downgrade(struct work_struct *work);
+void handle_link_bounce(struct work_struct *work);
+void handle_start_link(struct work_struct *work);
+void handle_sma_message(struct work_struct *work);
+int reset_qsfp(struct hfi1_pportdata *ppd);
+void qsfp_event(struct work_struct *work);
+void start_freeze_handling(struct hfi1_pportdata *ppd, int flags);
+int send_idle_sma(struct hfi1_devdata *dd, u64 message);
+int load_8051_config(struct hfi1_devdata *, u8, u8, u32);
+int read_8051_config(struct hfi1_devdata *, u8, u8, u32 *);
+int start_link(struct hfi1_pportdata *ppd);
+int bringup_serdes(struct hfi1_pportdata *ppd);
+void set_intr_state(struct hfi1_devdata *dd, u32 enable);
+bool apply_link_downgrade_policy(struct hfi1_pportdata *ppd,
 				 bool refresh_widths);
-व्योम update_usrhead(काष्ठा hfi1_ctxtdata *rcd, u32 hd, u32 updegr, u32 egrhd,
-		    u32 पूर्णांकr_adjust, u32 npkts);
-पूर्णांक stop_drain_data_vls(काष्ठा hfi1_devdata *dd);
-पूर्णांक खोलो_fill_data_vls(काष्ठा hfi1_devdata *dd);
-u32 ns_to_cघड़ी(काष्ठा hfi1_devdata *dd, u32 ns);
-u32 cघड़ी_प्रकारo_ns(काष्ठा hfi1_devdata *dd, u32 cघड़ी);
-व्योम get_linkup_link_widths(काष्ठा hfi1_pportdata *ppd);
-व्योम पढ़ो_ltp_rtt(काष्ठा hfi1_devdata *dd);
-व्योम clear_linkup_counters(काष्ठा hfi1_devdata *dd);
-u32 hdrqempty(काष्ठा hfi1_ctxtdata *rcd);
-पूर्णांक is_ax(काष्ठा hfi1_devdata *dd);
-पूर्णांक is_bx(काष्ठा hfi1_devdata *dd);
-bool is_urg_masked(काष्ठा hfi1_ctxtdata *rcd);
-u32 पढ़ो_physical_state(काष्ठा hfi1_devdata *dd);
-u32 chip_to_opa_pstate(काष्ठा hfi1_devdata *dd, u32 chip_pstate);
-स्थिर अक्षर *opa_lstate_name(u32 lstate);
-स्थिर अक्षर *opa_pstate_name(u32 pstate);
-u32 driver_pstate(काष्ठा hfi1_pportdata *ppd);
-u32 driver_lstate(काष्ठा hfi1_pportdata *ppd);
+void update_usrhead(struct hfi1_ctxtdata *rcd, u32 hd, u32 updegr, u32 egrhd,
+		    u32 intr_adjust, u32 npkts);
+int stop_drain_data_vls(struct hfi1_devdata *dd);
+int open_fill_data_vls(struct hfi1_devdata *dd);
+u32 ns_to_cclock(struct hfi1_devdata *dd, u32 ns);
+u32 cclock_to_ns(struct hfi1_devdata *dd, u32 cclock);
+void get_linkup_link_widths(struct hfi1_pportdata *ppd);
+void read_ltp_rtt(struct hfi1_devdata *dd);
+void clear_linkup_counters(struct hfi1_devdata *dd);
+u32 hdrqempty(struct hfi1_ctxtdata *rcd);
+int is_ax(struct hfi1_devdata *dd);
+int is_bx(struct hfi1_devdata *dd);
+bool is_urg_masked(struct hfi1_ctxtdata *rcd);
+u32 read_physical_state(struct hfi1_devdata *dd);
+u32 chip_to_opa_pstate(struct hfi1_devdata *dd, u32 chip_pstate);
+const char *opa_lstate_name(u32 lstate);
+const char *opa_pstate_name(u32 pstate);
+u32 driver_pstate(struct hfi1_pportdata *ppd);
+u32 driver_lstate(struct hfi1_pportdata *ppd);
 
-पूर्णांक acquire_lcb_access(काष्ठा hfi1_devdata *dd, पूर्णांक sleep_ok);
-पूर्णांक release_lcb_access(काष्ठा hfi1_devdata *dd, पूर्णांक sleep_ok);
-#घोषणा LCB_START DC_LCB_CSRS
-#घोषणा LCB_END   DC_8051_CSRS /* next block is 8051 */
-बाह्य uपूर्णांक num_vls;
+int acquire_lcb_access(struct hfi1_devdata *dd, int sleep_ok);
+int release_lcb_access(struct hfi1_devdata *dd, int sleep_ok);
+#define LCB_START DC_LCB_CSRS
+#define LCB_END   DC_8051_CSRS /* next block is 8051 */
+extern uint num_vls;
 
-बाह्य uपूर्णांक disable_पूर्णांकegrity;
-u64 पढ़ो_dev_cntr(काष्ठा hfi1_devdata *dd, पूर्णांक index, पूर्णांक vl);
-u64 ग_लिखो_dev_cntr(काष्ठा hfi1_devdata *dd, पूर्णांक index, पूर्णांक vl, u64 data);
-u64 पढ़ो_port_cntr(काष्ठा hfi1_pportdata *ppd, पूर्णांक index, पूर्णांक vl);
-u64 ग_लिखो_port_cntr(काष्ठा hfi1_pportdata *ppd, पूर्णांक index, पूर्णांक vl, u64 data);
-u32 पढ़ो_logical_state(काष्ठा hfi1_devdata *dd);
-व्योम क्रमce_recv_पूर्णांकr(काष्ठा hfi1_ctxtdata *rcd);
+extern uint disable_integrity;
+u64 read_dev_cntr(struct hfi1_devdata *dd, int index, int vl);
+u64 write_dev_cntr(struct hfi1_devdata *dd, int index, int vl, u64 data);
+u64 read_port_cntr(struct hfi1_pportdata *ppd, int index, int vl);
+u64 write_port_cntr(struct hfi1_pportdata *ppd, int index, int vl, u64 data);
+u32 read_logical_state(struct hfi1_devdata *dd);
+void force_recv_intr(struct hfi1_ctxtdata *rcd);
 
 /* Per VL indexes */
-क्रमागत अणु
+enum {
 	C_VL_0 = 0,
 	C_VL_1,
 	C_VL_2,
@@ -845,20 +844,20 @@ u32 पढ़ो_logical_state(काष्ठा hfi1_devdata *dd);
 	C_VL_7,
 	C_VL_15,
 	C_VL_COUNT
-पूर्ण;
+};
 
-अटल अंतरभूत पूर्णांक vl_from_idx(पूर्णांक idx)
-अणु
-	वापस (idx == C_VL_15 ? 15 : idx);
-पूर्ण
+static inline int vl_from_idx(int idx)
+{
+	return (idx == C_VL_15 ? 15 : idx);
+}
 
-अटल अंतरभूत पूर्णांक idx_from_vl(पूर्णांक vl)
-अणु
-	वापस (vl == 15 ? C_VL_15 : vl);
-पूर्ण
+static inline int idx_from_vl(int vl)
+{
+	return (vl == 15 ? C_VL_15 : vl);
+}
 
 /* Per device counter indexes */
-क्रमागत अणु
+enum {
 	C_RCV_OVF = 0,
 	C_RX_LEN_ERR,
 	C_RX_SHORT_ERR,
@@ -958,8 +957,8 @@ u32 पढ़ो_logical_state(काष्ठा hfi1_devdata *dd);
 /* CceErrStatus */
 	/*
 	* A special counter that is the aggregate count
-	* of all the cce_err_status errors.  The reमुख्यder
-	* are actual bits in the CceErrStatus रेजिस्टर.
+	* of all the cce_err_status errors.  The remainder
+	* are actual bits in the CceErrStatus register.
 	*/
 	C_CCE_ERR_STATUS_AGGREGATED_CNT,
 	C_CCE_MSIX_CSR_PARITY_ERR,
@@ -1211,10 +1210,10 @@ u32 पढ़ो_logical_state(काष्ठा hfi1_devdata *dd);
 	C_SDMA_GEN_MISMATCH_ERR,
 	C_SDMA_WRONG_DW_ERR,
 	DEV_CNTR_LAST  /* Must be kept last */
-पूर्ण;
+};
 
 /* Per port counter indexes */
-क्रमागत अणु
+enum {
 	C_TX_UNSUP_VL = 0,
 	C_TX_INVAL_LEN,
 	C_TX_MM_LEN_ERR,
@@ -1414,60 +1413,60 @@ u32 पढ़ो_logical_state(काष्ठा hfi1_devdata *dd);
 	C_RCV_HDR_OVF_158,
 	C_RCV_HDR_OVF_159,
 	PORT_CNTR_LAST /* Must be kept last */
-पूर्ण;
+};
 
 u64 get_all_cpu_total(u64 __percpu *cntr);
-व्योम hfi1_start_cleanup(काष्ठा hfi1_devdata *dd);
-व्योम hfi1_clear_tids(काष्ठा hfi1_ctxtdata *rcd);
-व्योम hfi1_init_ctxt(काष्ठा send_context *sc);
-व्योम hfi1_put_tid(काष्ठा hfi1_devdata *dd, u32 index,
-		  u32 type, अचिन्हित दीर्घ pa, u16 order);
-व्योम hfi1_quiet_serdes(काष्ठा hfi1_pportdata *ppd);
-व्योम hfi1_rcvctrl(काष्ठा hfi1_devdata *dd, अचिन्हित पूर्णांक op,
-		  काष्ठा hfi1_ctxtdata *rcd);
-u32 hfi1_पढ़ो_cntrs(काष्ठा hfi1_devdata *dd, अक्षर **namep, u64 **cntrp);
-u32 hfi1_पढ़ो_portcntrs(काष्ठा hfi1_pportdata *ppd, अक्षर **namep, u64 **cntrp);
-पूर्णांक hfi1_get_ib_cfg(काष्ठा hfi1_pportdata *ppd, पूर्णांक which);
-पूर्णांक hfi1_set_ib_cfg(काष्ठा hfi1_pportdata *ppd, पूर्णांक which, u32 val);
-पूर्णांक hfi1_set_ctxt_jkey(काष्ठा hfi1_devdata *dd, काष्ठा hfi1_ctxtdata *rcd,
+void hfi1_start_cleanup(struct hfi1_devdata *dd);
+void hfi1_clear_tids(struct hfi1_ctxtdata *rcd);
+void hfi1_init_ctxt(struct send_context *sc);
+void hfi1_put_tid(struct hfi1_devdata *dd, u32 index,
+		  u32 type, unsigned long pa, u16 order);
+void hfi1_quiet_serdes(struct hfi1_pportdata *ppd);
+void hfi1_rcvctrl(struct hfi1_devdata *dd, unsigned int op,
+		  struct hfi1_ctxtdata *rcd);
+u32 hfi1_read_cntrs(struct hfi1_devdata *dd, char **namep, u64 **cntrp);
+u32 hfi1_read_portcntrs(struct hfi1_pportdata *ppd, char **namep, u64 **cntrp);
+int hfi1_get_ib_cfg(struct hfi1_pportdata *ppd, int which);
+int hfi1_set_ib_cfg(struct hfi1_pportdata *ppd, int which, u32 val);
+int hfi1_set_ctxt_jkey(struct hfi1_devdata *dd, struct hfi1_ctxtdata *rcd,
 		       u16 jkey);
-पूर्णांक hfi1_clear_ctxt_jkey(काष्ठा hfi1_devdata *dd, काष्ठा hfi1_ctxtdata *ctxt);
-पूर्णांक hfi1_set_ctxt_pkey(काष्ठा hfi1_devdata *dd, काष्ठा hfi1_ctxtdata *ctxt,
+int hfi1_clear_ctxt_jkey(struct hfi1_devdata *dd, struct hfi1_ctxtdata *ctxt);
+int hfi1_set_ctxt_pkey(struct hfi1_devdata *dd, struct hfi1_ctxtdata *ctxt,
 		       u16 pkey);
-पूर्णांक hfi1_clear_ctxt_pkey(काष्ठा hfi1_devdata *dd, काष्ठा hfi1_ctxtdata *ctxt);
-व्योम hfi1_पढ़ो_link_quality(काष्ठा hfi1_devdata *dd, u8 *link_quality);
-व्योम hfi1_init_vnic_rsm(काष्ठा hfi1_devdata *dd);
-व्योम hfi1_deinit_vnic_rsm(काष्ठा hfi1_devdata *dd);
+int hfi1_clear_ctxt_pkey(struct hfi1_devdata *dd, struct hfi1_ctxtdata *ctxt);
+void hfi1_read_link_quality(struct hfi1_devdata *dd, u8 *link_quality);
+void hfi1_init_vnic_rsm(struct hfi1_devdata *dd);
+void hfi1_deinit_vnic_rsm(struct hfi1_devdata *dd);
 
-irqवापस_t general_पूर्णांकerrupt(पूर्णांक irq, व्योम *data);
-irqवापस_t sdma_पूर्णांकerrupt(पूर्णांक irq, व्योम *data);
-irqवापस_t receive_context_पूर्णांकerrupt(पूर्णांक irq, व्योम *data);
-irqवापस_t receive_context_thपढ़ो(पूर्णांक irq, व्योम *data);
-irqवापस_t receive_context_पूर्णांकerrupt_napi(पूर्णांक irq, व्योम *data);
+irqreturn_t general_interrupt(int irq, void *data);
+irqreturn_t sdma_interrupt(int irq, void *data);
+irqreturn_t receive_context_interrupt(int irq, void *data);
+irqreturn_t receive_context_thread(int irq, void *data);
+irqreturn_t receive_context_interrupt_napi(int irq, void *data);
 
-पूर्णांक set_पूर्णांकr_bits(काष्ठा hfi1_devdata *dd, u16 first, u16 last, bool set);
-व्योम init_qsfp_पूर्णांक(काष्ठा hfi1_devdata *dd);
-व्योम clear_all_पूर्णांकerrupts(काष्ठा hfi1_devdata *dd);
-व्योम remap_पूर्णांकr(काष्ठा hfi1_devdata *dd, पूर्णांक isrc, पूर्णांक msix_पूर्णांकr);
-व्योम remap_sdma_पूर्णांकerrupts(काष्ठा hfi1_devdata *dd, पूर्णांक engine, पूर्णांक msix_पूर्णांकr);
-व्योम reset_पूर्णांकerrupts(काष्ठा hfi1_devdata *dd);
-u8 hfi1_get_qp_map(काष्ठा hfi1_devdata *dd, u8 idx);
-व्योम hfi1_init_aip_rsm(काष्ठा hfi1_devdata *dd);
-व्योम hfi1_deinit_aip_rsm(काष्ठा hfi1_devdata *dd);
+int set_intr_bits(struct hfi1_devdata *dd, u16 first, u16 last, bool set);
+void init_qsfp_int(struct hfi1_devdata *dd);
+void clear_all_interrupts(struct hfi1_devdata *dd);
+void remap_intr(struct hfi1_devdata *dd, int isrc, int msix_intr);
+void remap_sdma_interrupts(struct hfi1_devdata *dd, int engine, int msix_intr);
+void reset_interrupts(struct hfi1_devdata *dd);
+u8 hfi1_get_qp_map(struct hfi1_devdata *dd, u8 idx);
+void hfi1_init_aip_rsm(struct hfi1_devdata *dd);
+void hfi1_deinit_aip_rsm(struct hfi1_devdata *dd);
 
 /*
  * Interrupt source table.
  *
- * Each entry is an पूर्णांकerrupt source "type".  It is ordered by increasing
+ * Each entry is an interrupt source "type".  It is ordered by increasing
  * number.
  */
-काष्ठा is_table अणु
-	पूर्णांक start;	 /* पूर्णांकerrupt source type start */
-	पूर्णांक end;	 /* पूर्णांकerrupt source type end */
-	/* routine that वापसs the name of the पूर्णांकerrupt source */
-	अक्षर *(*is_name)(अक्षर *name, माप_प्रकार size, अचिन्हित पूर्णांक source);
-	/* routine to call when receiving an पूर्णांकerrupt */
-	व्योम (*is_पूर्णांक)(काष्ठा hfi1_devdata *dd, अचिन्हित पूर्णांक source);
-पूर्ण;
+struct is_table {
+	int start;	 /* interrupt source type start */
+	int end;	 /* interrupt source type end */
+	/* routine that returns the name of the interrupt source */
+	char *(*is_name)(char *name, size_t size, unsigned int source);
+	/* routine to call when receiving an interrupt */
+	void (*is_int)(struct hfi1_devdata *dd, unsigned int source);
+};
 
-#पूर्ण_अगर /* _CHIP_H */
+#endif /* _CHIP_H */

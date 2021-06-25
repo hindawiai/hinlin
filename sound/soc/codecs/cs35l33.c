@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * cs35l33.c -- CS35L33 ALSA SoC audio driver
  *
@@ -7,619 +6,619 @@
  *
  * Author: Paul Handrigan <paul.handrigan@cirrus.com>
  */
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <sound/core.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/pcm_params.h>
-#समावेश <sound/soc.h>
-#समावेश <sound/soc-dapm.h>
-#समावेश <sound/initval.h>
-#समावेश <sound/tlv.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <sound/cs35l33.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/regulator/machine.h>
-#समावेश <linux/of_gpपन.स>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_irq.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/delay.h>
+#include <linux/i2c.h>
+#include <linux/slab.h>
+#include <linux/workqueue.h>
+#include <linux/platform_device.h>
+#include <sound/core.h>
+#include <sound/pcm.h>
+#include <sound/pcm_params.h>
+#include <sound/soc.h>
+#include <sound/soc-dapm.h>
+#include <sound/initval.h>
+#include <sound/tlv.h>
+#include <linux/gpio.h>
+#include <linux/gpio/consumer.h>
+#include <sound/cs35l33.h>
+#include <linux/pm_runtime.h>
+#include <linux/regulator/consumer.h>
+#include <linux/regulator/machine.h>
+#include <linux/of_gpio.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/of_irq.h>
 
-#समावेश "cs35l33.h"
+#include "cs35l33.h"
 
-#घोषणा CS35L33_BOOT_DELAY	50
+#define CS35L33_BOOT_DELAY	50
 
-काष्ठा cs35l33_निजी अणु
-	काष्ठा snd_soc_component *component;
-	काष्ठा cs35l33_pdata pdata;
-	काष्ठा regmap *regmap;
-	काष्ठा gpio_desc *reset_gpio;
+struct cs35l33_private {
+	struct snd_soc_component *component;
+	struct cs35l33_pdata pdata;
+	struct regmap *regmap;
+	struct gpio_desc *reset_gpio;
 	bool amp_cal;
-	पूर्णांक mclk_पूर्णांक;
-	काष्ठा regulator_bulk_data core_supplies[2];
-	पूर्णांक num_core_supplies;
+	int mclk_int;
+	struct regulator_bulk_data core_supplies[2];
+	int num_core_supplies;
 	bool is_tdm_mode;
 	bool enable_soft_ramp;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा reg_शेष cs35l33_reg[] = अणु
-	अणुCS35L33_PWRCTL1, 0x85पूर्ण,
-	अणुCS35L33_PWRCTL2, 0xFEपूर्ण,
-	अणुCS35L33_CLK_CTL, 0x0Cपूर्ण,
-	अणुCS35L33_BST_PEAK_CTL, 0x90पूर्ण,
-	अणुCS35L33_PROTECT_CTL, 0x55पूर्ण,
-	अणुCS35L33_BST_CTL1, 0x00पूर्ण,
-	अणुCS35L33_BST_CTL2, 0x01पूर्ण,
-	अणुCS35L33_ADSP_CTL, 0x00पूर्ण,
-	अणुCS35L33_ADC_CTL, 0xC8पूर्ण,
-	अणुCS35L33_DAC_CTL, 0x14पूर्ण,
-	अणुCS35L33_DIG_VOL_CTL, 0x00पूर्ण,
-	अणुCS35L33_CLASSD_CTL, 0x04पूर्ण,
-	अणुCS35L33_AMP_CTL, 0x90पूर्ण,
-	अणुCS35L33_INT_MASK_1, 0xFFपूर्ण,
-	अणुCS35L33_INT_MASK_2, 0xFFपूर्ण,
-	अणुCS35L33_DIAG_LOCK, 0x00पूर्ण,
-	अणुCS35L33_DIAG_CTRL_1, 0x40पूर्ण,
-	अणुCS35L33_DIAG_CTRL_2, 0x00पूर्ण,
-	अणुCS35L33_HG_MEMLDO_CTL, 0x62पूर्ण,
-	अणुCS35L33_HG_REL_RATE, 0x03पूर्ण,
-	अणुCS35L33_LDO_DEL, 0x12पूर्ण,
-	अणुCS35L33_HG_HEAD, 0x0Aपूर्ण,
-	अणुCS35L33_HG_EN, 0x05पूर्ण,
-	अणुCS35L33_TX_VMON, 0x00पूर्ण,
-	अणुCS35L33_TX_IMON, 0x03पूर्ण,
-	अणुCS35L33_TX_VPMON, 0x02पूर्ण,
-	अणुCS35L33_TX_VBSTMON, 0x05पूर्ण,
-	अणुCS35L33_TX_FLAG, 0x06पूर्ण,
-	अणुCS35L33_TX_EN1, 0x00पूर्ण,
-	अणुCS35L33_TX_EN2, 0x00पूर्ण,
-	अणुCS35L33_TX_EN3, 0x00पूर्ण,
-	अणुCS35L33_TX_EN4, 0x00पूर्ण,
-	अणुCS35L33_RX_AUD, 0x40पूर्ण,
-	अणुCS35L33_RX_SPLY, 0x03पूर्ण,
-	अणुCS35L33_RX_ALIVE, 0x04पूर्ण,
-	अणुCS35L33_BST_CTL4, 0x63पूर्ण,
-पूर्ण;
+static const struct reg_default cs35l33_reg[] = {
+	{CS35L33_PWRCTL1, 0x85},
+	{CS35L33_PWRCTL2, 0xFE},
+	{CS35L33_CLK_CTL, 0x0C},
+	{CS35L33_BST_PEAK_CTL, 0x90},
+	{CS35L33_PROTECT_CTL, 0x55},
+	{CS35L33_BST_CTL1, 0x00},
+	{CS35L33_BST_CTL2, 0x01},
+	{CS35L33_ADSP_CTL, 0x00},
+	{CS35L33_ADC_CTL, 0xC8},
+	{CS35L33_DAC_CTL, 0x14},
+	{CS35L33_DIG_VOL_CTL, 0x00},
+	{CS35L33_CLASSD_CTL, 0x04},
+	{CS35L33_AMP_CTL, 0x90},
+	{CS35L33_INT_MASK_1, 0xFF},
+	{CS35L33_INT_MASK_2, 0xFF},
+	{CS35L33_DIAG_LOCK, 0x00},
+	{CS35L33_DIAG_CTRL_1, 0x40},
+	{CS35L33_DIAG_CTRL_2, 0x00},
+	{CS35L33_HG_MEMLDO_CTL, 0x62},
+	{CS35L33_HG_REL_RATE, 0x03},
+	{CS35L33_LDO_DEL, 0x12},
+	{CS35L33_HG_HEAD, 0x0A},
+	{CS35L33_HG_EN, 0x05},
+	{CS35L33_TX_VMON, 0x00},
+	{CS35L33_TX_IMON, 0x03},
+	{CS35L33_TX_VPMON, 0x02},
+	{CS35L33_TX_VBSTMON, 0x05},
+	{CS35L33_TX_FLAG, 0x06},
+	{CS35L33_TX_EN1, 0x00},
+	{CS35L33_TX_EN2, 0x00},
+	{CS35L33_TX_EN3, 0x00},
+	{CS35L33_TX_EN4, 0x00},
+	{CS35L33_RX_AUD, 0x40},
+	{CS35L33_RX_SPLY, 0x03},
+	{CS35L33_RX_ALIVE, 0x04},
+	{CS35L33_BST_CTL4, 0x63},
+};
 
-अटल स्थिर काष्ठा reg_sequence cs35l33_patch[] = अणु
-	अणु 0x00,  0x99, 0 पूर्ण,
-	अणु 0x59,  0x02, 0 पूर्ण,
-	अणु 0x52,  0x30, 0 पूर्ण,
-	अणु 0x39,  0x45, 0 पूर्ण,
-	अणु 0x57,  0x30, 0 पूर्ण,
-	अणु 0x2C,  0x68, 0 पूर्ण,
-	अणु 0x00,  0x00, 0 पूर्ण,
-पूर्ण;
+static const struct reg_sequence cs35l33_patch[] = {
+	{ 0x00,  0x99, 0 },
+	{ 0x59,  0x02, 0 },
+	{ 0x52,  0x30, 0 },
+	{ 0x39,  0x45, 0 },
+	{ 0x57,  0x30, 0 },
+	{ 0x2C,  0x68, 0 },
+	{ 0x00,  0x00, 0 },
+};
 
-अटल bool cs35l33_अस्थिर_रेजिस्टर(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल CS35L33_DEVID_AB:
-	हाल CS35L33_DEVID_CD:
-	हाल CS35L33_DEVID_E:
-	हाल CS35L33_REV_ID:
-	हाल CS35L33_INT_STATUS_1:
-	हाल CS35L33_INT_STATUS_2:
-	हाल CS35L33_HG_STATUS:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool cs35l33_volatile_register(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case CS35L33_DEVID_AB:
+	case CS35L33_DEVID_CD:
+	case CS35L33_DEVID_E:
+	case CS35L33_REV_ID:
+	case CS35L33_INT_STATUS_1:
+	case CS35L33_INT_STATUS_2:
+	case CS35L33_HG_STATUS:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल bool cs35l33_ग_लिखोable_रेजिस्टर(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	/* these are पढ़ो only रेजिस्टरs */
-	हाल CS35L33_DEVID_AB:
-	हाल CS35L33_DEVID_CD:
-	हाल CS35L33_DEVID_E:
-	हाल CS35L33_REV_ID:
-	हाल CS35L33_INT_STATUS_1:
-	हाल CS35L33_INT_STATUS_2:
-	हाल CS35L33_HG_STATUS:
-		वापस false;
-	शेष:
-		वापस true;
-	पूर्ण
-पूर्ण
+static bool cs35l33_writeable_register(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	/* these are read only registers */
+	case CS35L33_DEVID_AB:
+	case CS35L33_DEVID_CD:
+	case CS35L33_DEVID_E:
+	case CS35L33_REV_ID:
+	case CS35L33_INT_STATUS_1:
+	case CS35L33_INT_STATUS_2:
+	case CS35L33_HG_STATUS:
+		return false;
+	default:
+		return true;
+	}
+}
 
-अटल bool cs35l33_पढ़ोable_रेजिस्टर(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल CS35L33_DEVID_AB:
-	हाल CS35L33_DEVID_CD:
-	हाल CS35L33_DEVID_E:
-	हाल CS35L33_REV_ID:
-	हाल CS35L33_PWRCTL1:
-	हाल CS35L33_PWRCTL2:
-	हाल CS35L33_CLK_CTL:
-	हाल CS35L33_BST_PEAK_CTL:
-	हाल CS35L33_PROTECT_CTL:
-	हाल CS35L33_BST_CTL1:
-	हाल CS35L33_BST_CTL2:
-	हाल CS35L33_ADSP_CTL:
-	हाल CS35L33_ADC_CTL:
-	हाल CS35L33_DAC_CTL:
-	हाल CS35L33_DIG_VOL_CTL:
-	हाल CS35L33_CLASSD_CTL:
-	हाल CS35L33_AMP_CTL:
-	हाल CS35L33_INT_MASK_1:
-	हाल CS35L33_INT_MASK_2:
-	हाल CS35L33_INT_STATUS_1:
-	हाल CS35L33_INT_STATUS_2:
-	हाल CS35L33_DIAG_LOCK:
-	हाल CS35L33_DIAG_CTRL_1:
-	हाल CS35L33_DIAG_CTRL_2:
-	हाल CS35L33_HG_MEMLDO_CTL:
-	हाल CS35L33_HG_REL_RATE:
-	हाल CS35L33_LDO_DEL:
-	हाल CS35L33_HG_HEAD:
-	हाल CS35L33_HG_EN:
-	हाल CS35L33_TX_VMON:
-	हाल CS35L33_TX_IMON:
-	हाल CS35L33_TX_VPMON:
-	हाल CS35L33_TX_VBSTMON:
-	हाल CS35L33_TX_FLAG:
-	हाल CS35L33_TX_EN1:
-	हाल CS35L33_TX_EN2:
-	हाल CS35L33_TX_EN3:
-	हाल CS35L33_TX_EN4:
-	हाल CS35L33_RX_AUD:
-	हाल CS35L33_RX_SPLY:
-	हाल CS35L33_RX_ALIVE:
-	हाल CS35L33_BST_CTL4:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool cs35l33_readable_register(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case CS35L33_DEVID_AB:
+	case CS35L33_DEVID_CD:
+	case CS35L33_DEVID_E:
+	case CS35L33_REV_ID:
+	case CS35L33_PWRCTL1:
+	case CS35L33_PWRCTL2:
+	case CS35L33_CLK_CTL:
+	case CS35L33_BST_PEAK_CTL:
+	case CS35L33_PROTECT_CTL:
+	case CS35L33_BST_CTL1:
+	case CS35L33_BST_CTL2:
+	case CS35L33_ADSP_CTL:
+	case CS35L33_ADC_CTL:
+	case CS35L33_DAC_CTL:
+	case CS35L33_DIG_VOL_CTL:
+	case CS35L33_CLASSD_CTL:
+	case CS35L33_AMP_CTL:
+	case CS35L33_INT_MASK_1:
+	case CS35L33_INT_MASK_2:
+	case CS35L33_INT_STATUS_1:
+	case CS35L33_INT_STATUS_2:
+	case CS35L33_DIAG_LOCK:
+	case CS35L33_DIAG_CTRL_1:
+	case CS35L33_DIAG_CTRL_2:
+	case CS35L33_HG_MEMLDO_CTL:
+	case CS35L33_HG_REL_RATE:
+	case CS35L33_LDO_DEL:
+	case CS35L33_HG_HEAD:
+	case CS35L33_HG_EN:
+	case CS35L33_TX_VMON:
+	case CS35L33_TX_IMON:
+	case CS35L33_TX_VPMON:
+	case CS35L33_TX_VBSTMON:
+	case CS35L33_TX_FLAG:
+	case CS35L33_TX_EN1:
+	case CS35L33_TX_EN2:
+	case CS35L33_TX_EN3:
+	case CS35L33_TX_EN4:
+	case CS35L33_RX_AUD:
+	case CS35L33_RX_SPLY:
+	case CS35L33_RX_ALIVE:
+	case CS35L33_BST_CTL4:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल DECLARE_TLV_DB_SCALE(classd_ctl_tlv, 900, 100, 0);
-अटल DECLARE_TLV_DB_SCALE(dac_tlv, -10200, 50, 0);
+static DECLARE_TLV_DB_SCALE(classd_ctl_tlv, 900, 100, 0);
+static DECLARE_TLV_DB_SCALE(dac_tlv, -10200, 50, 0);
 
-अटल स्थिर काष्ठा snd_kcontrol_new cs35l33_snd_controls[] = अणु
+static const struct snd_kcontrol_new cs35l33_snd_controls[] = {
 
 	SOC_SINGLE_TLV("SPK Amp Volume", CS35L33_AMP_CTL,
 		       4, 0x09, 0, classd_ctl_tlv),
 	SOC_SINGLE_SX_TLV("DAC Volume", CS35L33_DIG_VOL_CTL,
 			0, 0x34, 0xE4, dac_tlv),
-पूर्ण;
+};
 
-अटल पूर्णांक cs35l33_spkrdrv_event(काष्ठा snd_soc_dapm_widget *w,
-	काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
-	काष्ठा cs35l33_निजी *priv = snd_soc_component_get_drvdata(component);
+static int cs35l33_spkrdrv_event(struct snd_soc_dapm_widget *w,
+	struct snd_kcontrol *kcontrol, int event)
+{
+	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+	struct cs35l33_private *priv = snd_soc_component_get_drvdata(component);
 
-	चयन (event) अणु
-	हाल SND_SOC_DAPM_POST_PMU:
-		अगर (!priv->amp_cal) अणु
+	switch (event) {
+	case SND_SOC_DAPM_POST_PMU:
+		if (!priv->amp_cal) {
 			usleep_range(8000, 9000);
 			priv->amp_cal = true;
 			regmap_update_bits(priv->regmap, CS35L33_CLASSD_CTL,
 				    CS35L33_AMP_CAL, 0);
 			dev_dbg(component->dev, "Amp calibration done\n");
-		पूर्ण
+		}
 		dev_dbg(component->dev, "Amp turned on\n");
-		अवरोध;
-	हाल SND_SOC_DAPM_POST_PMD:
+		break;
+	case SND_SOC_DAPM_POST_PMD:
 		dev_dbg(component->dev, "Amp turned off\n");
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(component->dev, "Invalid event = 0x%x\n", event);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cs35l33_sdin_event(काष्ठा snd_soc_dapm_widget *w,
-	काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
-	काष्ठा cs35l33_निजी *priv = snd_soc_component_get_drvdata(component);
-	अचिन्हित पूर्णांक val;
+static int cs35l33_sdin_event(struct snd_soc_dapm_widget *w,
+	struct snd_kcontrol *kcontrol, int event)
+{
+	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+	struct cs35l33_private *priv = snd_soc_component_get_drvdata(component);
+	unsigned int val;
 
-	चयन (event) अणु
-	हाल SND_SOC_DAPM_PRE_PMU:
+	switch (event) {
+	case SND_SOC_DAPM_PRE_PMU:
 		regmap_update_bits(priv->regmap, CS35L33_PWRCTL1,
 				    CS35L33_PDN_BST, 0);
 		val = priv->is_tdm_mode ? 0 : CS35L33_PDN_TDM;
 		regmap_update_bits(priv->regmap, CS35L33_PWRCTL2,
 				    CS35L33_PDN_TDM, val);
 		dev_dbg(component->dev, "BST turned on\n");
-		अवरोध;
-	हाल SND_SOC_DAPM_POST_PMU:
+		break;
+	case SND_SOC_DAPM_POST_PMU:
 		dev_dbg(component->dev, "SDIN turned on\n");
-		अगर (!priv->amp_cal) अणु
+		if (!priv->amp_cal) {
 			regmap_update_bits(priv->regmap, CS35L33_CLASSD_CTL,
 				    CS35L33_AMP_CAL, CS35L33_AMP_CAL);
 			dev_dbg(component->dev, "Amp calibration started\n");
 			usleep_range(10000, 11000);
-		पूर्ण
-		अवरोध;
-	हाल SND_SOC_DAPM_POST_PMD:
+		}
+		break;
+	case SND_SOC_DAPM_POST_PMD:
 		regmap_update_bits(priv->regmap, CS35L33_PWRCTL2,
 				    CS35L33_PDN_TDM, CS35L33_PDN_TDM);
 		usleep_range(4000, 4100);
 		regmap_update_bits(priv->regmap, CS35L33_PWRCTL1,
 				    CS35L33_PDN_BST, CS35L33_PDN_BST);
 		dev_dbg(component->dev, "BST and SDIN turned off\n");
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(component->dev, "Invalid event = 0x%x\n", event);
 
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cs35l33_sकरोut_event(काष्ठा snd_soc_dapm_widget *w,
-	काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
-	काष्ठा cs35l33_निजी *priv = snd_soc_component_get_drvdata(component);
-	अचिन्हित पूर्णांक mask = CS35L33_SDOUT_3ST_I2S | CS35L33_PDN_TDM;
-	अचिन्हित पूर्णांक mask2 = CS35L33_SDOUT_3ST_TDM;
-	अचिन्हित पूर्णांक val, val2;
+static int cs35l33_sdout_event(struct snd_soc_dapm_widget *w,
+	struct snd_kcontrol *kcontrol, int event)
+{
+	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+	struct cs35l33_private *priv = snd_soc_component_get_drvdata(component);
+	unsigned int mask = CS35L33_SDOUT_3ST_I2S | CS35L33_PDN_TDM;
+	unsigned int mask2 = CS35L33_SDOUT_3ST_TDM;
+	unsigned int val, val2;
 
-	चयन (event) अणु
-	हाल SND_SOC_DAPM_PRE_PMU:
-		अगर (priv->is_tdm_mode) अणु
-			/* set sकरोut_3st_i2s and reset pdn_tdm */
+	switch (event) {
+	case SND_SOC_DAPM_PRE_PMU:
+		if (priv->is_tdm_mode) {
+			/* set sdout_3st_i2s and reset pdn_tdm */
 			val = CS35L33_SDOUT_3ST_I2S;
-			/* reset sकरोut_3st_tdm */
+			/* reset sdout_3st_tdm */
 			val2 = 0;
-		पूर्ण अन्यथा अणु
-			/* reset sकरोut_3st_i2s and set pdn_tdm */
+		} else {
+			/* reset sdout_3st_i2s and set pdn_tdm */
 			val = CS35L33_PDN_TDM;
-			/* set sकरोut_3st_tdm */
+			/* set sdout_3st_tdm */
 			val2 = CS35L33_SDOUT_3ST_TDM;
-		पूर्ण
+		}
 		dev_dbg(component->dev, "SDOUT turned on\n");
-		अवरोध;
-	हाल SND_SOC_DAPM_PRE_PMD:
+		break;
+	case SND_SOC_DAPM_PRE_PMD:
 		val = CS35L33_SDOUT_3ST_I2S | CS35L33_PDN_TDM;
 		val2 = CS35L33_SDOUT_3ST_TDM;
 		dev_dbg(component->dev, "SDOUT turned off\n");
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(component->dev, "Invalid event = 0x%x\n", event);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	regmap_update_bits(priv->regmap, CS35L33_PWRCTL2,
 		mask, val);
 	regmap_update_bits(priv->regmap, CS35L33_CLK_CTL,
 		mask2, val2);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_soc_dapm_widget cs35l33_dapm_widमाला_लो[] = अणु
+static const struct snd_soc_dapm_widget cs35l33_dapm_widgets[] = {
 
 	SND_SOC_DAPM_OUTPUT("SPK"),
-	SND_SOC_DAPM_OUT_DRV_E("SPKDRV", CS35L33_PWRCTL1, 7, 1, शून्य, 0,
+	SND_SOC_DAPM_OUT_DRV_E("SPKDRV", CS35L33_PWRCTL1, 7, 1, NULL, 0,
 		cs35l33_spkrdrv_event,
 		SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_POST_PMD),
-	SND_SOC_DAPM_AIF_IN_E("SDIN", शून्य, 0, CS35L33_PWRCTL2,
+	SND_SOC_DAPM_AIF_IN_E("SDIN", NULL, 0, CS35L33_PWRCTL2,
 		2, 1, cs35l33_sdin_event, SND_SOC_DAPM_PRE_PMU |
 		SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_POST_PMD),
 
 	SND_SOC_DAPM_INPUT("MON"),
 
-	SND_SOC_DAPM_ADC("VMON", शून्य,
+	SND_SOC_DAPM_ADC("VMON", NULL,
 		CS35L33_PWRCTL2, CS35L33_PDN_VMON_SHIFT, 1),
-	SND_SOC_DAPM_ADC("IMON", शून्य,
+	SND_SOC_DAPM_ADC("IMON", NULL,
 		CS35L33_PWRCTL2, CS35L33_PDN_IMON_SHIFT, 1),
-	SND_SOC_DAPM_ADC("VPMON", शून्य,
+	SND_SOC_DAPM_ADC("VPMON", NULL,
 		CS35L33_PWRCTL2, CS35L33_PDN_VPMON_SHIFT, 1),
-	SND_SOC_DAPM_ADC("VBSTMON", शून्य,
+	SND_SOC_DAPM_ADC("VBSTMON", NULL,
 		CS35L33_PWRCTL2, CS35L33_PDN_VBSTMON_SHIFT, 1),
 
-	SND_SOC_DAPM_AIF_OUT_E("SDOUT", शून्य, 0, SND_SOC_NOPM, 0, 0,
-		cs35l33_sकरोut_event, SND_SOC_DAPM_PRE_PMU |
+	SND_SOC_DAPM_AIF_OUT_E("SDOUT", NULL, 0, SND_SOC_NOPM, 0, 0,
+		cs35l33_sdout_event, SND_SOC_DAPM_PRE_PMU |
 		SND_SOC_DAPM_PRE_PMD),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_route cs35l33_audio_map[] = अणु
-	अणु"SDIN", शून्य, "CS35L33 Playback"पूर्ण,
-	अणु"SPKDRV", शून्य, "SDIN"पूर्ण,
-	अणु"SPK", शून्य, "SPKDRV"पूर्ण,
+static const struct snd_soc_dapm_route cs35l33_audio_map[] = {
+	{"SDIN", NULL, "CS35L33 Playback"},
+	{"SPKDRV", NULL, "SDIN"},
+	{"SPK", NULL, "SPKDRV"},
 
-	अणु"VMON", शून्य, "MON"पूर्ण,
-	अणु"IMON", शून्य, "MON"पूर्ण,
+	{"VMON", NULL, "MON"},
+	{"IMON", NULL, "MON"},
 
-	अणु"SDOUT", शून्य, "VMON"पूर्ण,
-	अणु"SDOUT", शून्य, "IMON"पूर्ण,
-	अणु"CS35L33 Capture", शून्य, "SDOUT"पूर्ण,
-पूर्ण;
+	{"SDOUT", NULL, "VMON"},
+	{"SDOUT", NULL, "IMON"},
+	{"CS35L33 Capture", NULL, "SDOUT"},
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_route cs35l33_vphg_स्वतः_route[] = अणु
-	अणु"SPKDRV", शून्य, "VPMON"पूर्ण,
-	अणु"VPMON", शून्य, "CS35L33 Playback"पूर्ण,
-पूर्ण;
+static const struct snd_soc_dapm_route cs35l33_vphg_auto_route[] = {
+	{"SPKDRV", NULL, "VPMON"},
+	{"VPMON", NULL, "CS35L33 Playback"},
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_route cs35l33_vp_vbst_mon_route[] = अणु
-	अणु"SDOUT", शून्य, "VPMON"पूर्ण,
-	अणु"VPMON", शून्य, "MON"पूर्ण,
-	अणु"SDOUT", शून्य, "VBSTMON"पूर्ण,
-	अणु"VBSTMON", शून्य, "MON"पूर्ण,
-पूर्ण;
+static const struct snd_soc_dapm_route cs35l33_vp_vbst_mon_route[] = {
+	{"SDOUT", NULL, "VPMON"},
+	{"VPMON", NULL, "MON"},
+	{"SDOUT", NULL, "VBSTMON"},
+	{"VBSTMON", NULL, "MON"},
+};
 
-अटल पूर्णांक cs35l33_set_bias_level(काष्ठा snd_soc_component *component,
-				  क्रमागत snd_soc_bias_level level)
-अणु
-	अचिन्हित पूर्णांक val;
-	काष्ठा cs35l33_निजी *priv = snd_soc_component_get_drvdata(component);
+static int cs35l33_set_bias_level(struct snd_soc_component *component,
+				  enum snd_soc_bias_level level)
+{
+	unsigned int val;
+	struct cs35l33_private *priv = snd_soc_component_get_drvdata(component);
 
-	चयन (level) अणु
-	हाल SND_SOC_BIAS_ON:
-		अवरोध;
-	हाल SND_SOC_BIAS_PREPARE:
+	switch (level) {
+	case SND_SOC_BIAS_ON:
+		break;
+	case SND_SOC_BIAS_PREPARE:
 		regmap_update_bits(priv->regmap, CS35L33_PWRCTL1,
 				    CS35L33_PDN_ALL, 0);
 		regmap_update_bits(priv->regmap, CS35L33_CLK_CTL,
 				    CS35L33_MCLKDIS, 0);
-		अवरोध;
-	हाल SND_SOC_BIAS_STANDBY:
+		break;
+	case SND_SOC_BIAS_STANDBY:
 		regmap_update_bits(priv->regmap, CS35L33_PWRCTL1,
 				    CS35L33_PDN_ALL, CS35L33_PDN_ALL);
-		regmap_पढ़ो(priv->regmap, CS35L33_INT_STATUS_2, &val);
+		regmap_read(priv->regmap, CS35L33_INT_STATUS_2, &val);
 		usleep_range(1000, 1100);
-		अगर (val & CS35L33_PDN_DONE)
+		if (val & CS35L33_PDN_DONE)
 			regmap_update_bits(priv->regmap, CS35L33_CLK_CTL,
 					    CS35L33_MCLKDIS, CS35L33_MCLKDIS);
-		अवरोध;
-	हाल SND_SOC_BIAS_OFF:
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	case SND_SOC_BIAS_OFF:
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा cs35l33_mclk_भाग अणु
-	पूर्णांक mclk;
-	पूर्णांक srate;
+struct cs35l33_mclk_div {
+	int mclk;
+	int srate;
 	u8 adsp_rate;
-	u8 पूर्णांक_fs_ratio;
-पूर्ण;
+	u8 int_fs_ratio;
+};
 
-अटल स्थिर काष्ठा cs35l33_mclk_भाग cs35l33_mclk_coeffs[] = अणु
-	/* MCLK, Sample Rate, adsp_rate, पूर्णांक_fs_ratio */
-	अणु5644800, 11025, 0x4, CS35L33_INT_FS_RATEपूर्ण,
-	अणु5644800, 22050, 0x8, CS35L33_INT_FS_RATEपूर्ण,
-	अणु5644800, 44100, 0xC, CS35L33_INT_FS_RATEपूर्ण,
+static const struct cs35l33_mclk_div cs35l33_mclk_coeffs[] = {
+	/* MCLK, Sample Rate, adsp_rate, int_fs_ratio */
+	{5644800, 11025, 0x4, CS35L33_INT_FS_RATE},
+	{5644800, 22050, 0x8, CS35L33_INT_FS_RATE},
+	{5644800, 44100, 0xC, CS35L33_INT_FS_RATE},
 
-	अणु6000000,  8000, 0x1, 0पूर्ण,
-	अणु6000000, 11025, 0x2, 0पूर्ण,
-	अणु6000000, 11029, 0x3, 0पूर्ण,
-	अणु6000000, 12000, 0x4, 0पूर्ण,
-	अणु6000000, 16000, 0x5, 0पूर्ण,
-	अणु6000000, 22050, 0x6, 0पूर्ण,
-	अणु6000000, 22059, 0x7, 0पूर्ण,
-	अणु6000000, 24000, 0x8, 0पूर्ण,
-	अणु6000000, 32000, 0x9, 0पूर्ण,
-	अणु6000000, 44100, 0xA, 0पूर्ण,
-	अणु6000000, 44118, 0xB, 0पूर्ण,
-	अणु6000000, 48000, 0xC, 0पूर्ण,
+	{6000000,  8000, 0x1, 0},
+	{6000000, 11025, 0x2, 0},
+	{6000000, 11029, 0x3, 0},
+	{6000000, 12000, 0x4, 0},
+	{6000000, 16000, 0x5, 0},
+	{6000000, 22050, 0x6, 0},
+	{6000000, 22059, 0x7, 0},
+	{6000000, 24000, 0x8, 0},
+	{6000000, 32000, 0x9, 0},
+	{6000000, 44100, 0xA, 0},
+	{6000000, 44118, 0xB, 0},
+	{6000000, 48000, 0xC, 0},
 
-	अणु6144000,  8000, 0x1, CS35L33_INT_FS_RATEपूर्ण,
-	अणु6144000, 12000, 0x4, CS35L33_INT_FS_RATEपूर्ण,
-	अणु6144000, 16000, 0x5, CS35L33_INT_FS_RATEपूर्ण,
-	अणु6144000, 24000, 0x8, CS35L33_INT_FS_RATEपूर्ण,
-	अणु6144000, 32000, 0x9, CS35L33_INT_FS_RATEपूर्ण,
-	अणु6144000, 48000, 0xC, CS35L33_INT_FS_RATEपूर्ण,
-पूर्ण;
+	{6144000,  8000, 0x1, CS35L33_INT_FS_RATE},
+	{6144000, 12000, 0x4, CS35L33_INT_FS_RATE},
+	{6144000, 16000, 0x5, CS35L33_INT_FS_RATE},
+	{6144000, 24000, 0x8, CS35L33_INT_FS_RATE},
+	{6144000, 32000, 0x9, CS35L33_INT_FS_RATE},
+	{6144000, 48000, 0xC, CS35L33_INT_FS_RATE},
+};
 
-अटल पूर्णांक cs35l33_get_mclk_coeff(पूर्णांक mclk, पूर्णांक srate)
-अणु
-	पूर्णांक i;
+static int cs35l33_get_mclk_coeff(int mclk, int srate)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(cs35l33_mclk_coeffs); i++) अणु
-		अगर (cs35l33_mclk_coeffs[i].mclk == mclk &&
+	for (i = 0; i < ARRAY_SIZE(cs35l33_mclk_coeffs); i++) {
+		if (cs35l33_mclk_coeffs[i].mclk == mclk &&
 			cs35l33_mclk_coeffs[i].srate == srate)
-			वापस i;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+			return i;
+	}
+	return -EINVAL;
+}
 
-अटल पूर्णांक cs35l33_set_dai_fmt(काष्ठा snd_soc_dai *codec_dai, अचिन्हित पूर्णांक fmt)
-अणु
-	काष्ठा snd_soc_component *component = codec_dai->component;
-	काष्ठा cs35l33_निजी *priv = snd_soc_component_get_drvdata(component);
+static int cs35l33_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
+{
+	struct snd_soc_component *component = codec_dai->component;
+	struct cs35l33_private *priv = snd_soc_component_get_drvdata(component);
 
-	चयन (fmt & SND_SOC_DAIFMT_MASTER_MASK) अणु
-	हाल SND_SOC_DAIFMT_CBM_CFM:
+	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
+	case SND_SOC_DAIFMT_CBM_CFM:
 		regmap_update_bits(priv->regmap, CS35L33_ADSP_CTL,
 			CS35L33_MS_MASK, CS35L33_MS_MASK);
 		dev_dbg(component->dev, "Audio port in master mode\n");
-		अवरोध;
-	हाल SND_SOC_DAIFMT_CBS_CFS:
+		break;
+	case SND_SOC_DAIFMT_CBS_CFS:
 		regmap_update_bits(priv->regmap, CS35L33_ADSP_CTL,
 			CS35L33_MS_MASK, 0);
 		dev_dbg(component->dev, "Audio port in slave mode\n");
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	चयन (fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
-	हाल SND_SOC_DAIFMT_DSP_A:
+	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
+	case SND_SOC_DAIFMT_DSP_A:
 		/*
 		 * tdm mode in cs35l33 resembles dsp-a mode very
-		 * बंदly, it is dsp-a with fsync shअगरted left by half bclk
+		 * closely, it is dsp-a with fsync shifted left by half bclk
 		 */
 		priv->is_tdm_mode = true;
 		dev_dbg(component->dev, "Audio port in TDM mode\n");
-		अवरोध;
-	हाल SND_SOC_DAIFMT_I2S:
+		break;
+	case SND_SOC_DAIFMT_I2S:
 		priv->is_tdm_mode = false;
 		dev_dbg(component->dev, "Audio port in I2S mode\n");
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cs35l33_pcm_hw_params(काष्ठा snd_pcm_substream *substream,
-				 काष्ठा snd_pcm_hw_params *params,
-				 काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा snd_soc_component *component = dai->component;
-	काष्ठा cs35l33_निजी *priv = snd_soc_component_get_drvdata(component);
-	पूर्णांक sample_size = params_width(params);
-	पूर्णांक coeff = cs35l33_get_mclk_coeff(priv->mclk_पूर्णांक, params_rate(params));
+static int cs35l33_pcm_hw_params(struct snd_pcm_substream *substream,
+				 struct snd_pcm_hw_params *params,
+				 struct snd_soc_dai *dai)
+{
+	struct snd_soc_component *component = dai->component;
+	struct cs35l33_private *priv = snd_soc_component_get_drvdata(component);
+	int sample_size = params_width(params);
+	int coeff = cs35l33_get_mclk_coeff(priv->mclk_int, params_rate(params));
 
-	अगर (coeff < 0)
-		वापस coeff;
+	if (coeff < 0)
+		return coeff;
 
 	regmap_update_bits(priv->regmap, CS35L33_CLK_CTL,
 		CS35L33_ADSP_FS | CS35L33_INT_FS_RATE,
-		cs35l33_mclk_coeffs[coeff].पूर्णांक_fs_ratio
+		cs35l33_mclk_coeffs[coeff].int_fs_ratio
 		| cs35l33_mclk_coeffs[coeff].adsp_rate);
 
-	अगर (priv->is_tdm_mode) अणु
+	if (priv->is_tdm_mode) {
 		sample_size = (sample_size / 8) - 1;
-		अगर (sample_size > 2)
+		if (sample_size > 2)
 			sample_size = 2;
 		regmap_update_bits(priv->regmap, CS35L33_RX_AUD,
 			CS35L33_AUDIN_RX_DEPTH,
 			sample_size << CS35L33_AUDIN_RX_DEPTH_SHIFT);
-	पूर्ण
+	}
 
 	dev_dbg(component->dev, "sample rate=%d, bits per sample=%d\n",
 		params_rate(params), params_width(params));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर अचिन्हित पूर्णांक cs35l33_src_rates[] = अणु
+static const unsigned int cs35l33_src_rates[] = {
 	8000, 11025, 11029, 12000, 16000, 22050,
 	22059, 24000, 32000, 44100, 44118, 48000
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_pcm_hw_स्थिरraपूर्णांक_list cs35l33_स्थिरraपूर्णांकs = अणु
+static const struct snd_pcm_hw_constraint_list cs35l33_constraints = {
 	.count  = ARRAY_SIZE(cs35l33_src_rates),
 	.list   = cs35l33_src_rates,
-पूर्ण;
+};
 
-अटल पूर्णांक cs35l33_pcm_startup(काष्ठा snd_pcm_substream *substream,
-			       काष्ठा snd_soc_dai *dai)
-अणु
-	snd_pcm_hw_स्थिरraपूर्णांक_list(substream->runसमय, 0,
+static int cs35l33_pcm_startup(struct snd_pcm_substream *substream,
+			       struct snd_soc_dai *dai)
+{
+	snd_pcm_hw_constraint_list(substream->runtime, 0,
 					SNDRV_PCM_HW_PARAM_RATE,
-					&cs35l33_स्थिरraपूर्णांकs);
-	वापस 0;
-पूर्ण
+					&cs35l33_constraints);
+	return 0;
+}
 
-अटल पूर्णांक cs35l33_set_tristate(काष्ठा snd_soc_dai *dai, पूर्णांक tristate)
-अणु
-	काष्ठा snd_soc_component *component = dai->component;
-	काष्ठा cs35l33_निजी *priv = snd_soc_component_get_drvdata(component);
+static int cs35l33_set_tristate(struct snd_soc_dai *dai, int tristate)
+{
+	struct snd_soc_component *component = dai->component;
+	struct cs35l33_private *priv = snd_soc_component_get_drvdata(component);
 
-	अगर (tristate) अणु
+	if (tristate) {
 		regmap_update_bits(priv->regmap, CS35L33_PWRCTL2,
 			CS35L33_SDOUT_3ST_I2S, CS35L33_SDOUT_3ST_I2S);
 		regmap_update_bits(priv->regmap, CS35L33_CLK_CTL,
 			CS35L33_SDOUT_3ST_TDM, CS35L33_SDOUT_3ST_TDM);
-	पूर्ण अन्यथा अणु
+	} else {
 		regmap_update_bits(priv->regmap, CS35L33_PWRCTL2,
 			CS35L33_SDOUT_3ST_I2S, 0);
 		regmap_update_bits(priv->regmap, CS35L33_CLK_CTL,
 			CS35L33_SDOUT_3ST_TDM, 0);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cs35l33_set_tdm_slot(काष्ठा snd_soc_dai *dai, अचिन्हित पूर्णांक tx_mask,
-				अचिन्हित पूर्णांक rx_mask, पूर्णांक slots, पूर्णांक slot_width)
-अणु
-	काष्ठा snd_soc_component *component = dai->component;
-	काष्ठा snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
-	काष्ठा cs35l33_निजी *priv = snd_soc_component_get_drvdata(component);
-	अचिन्हित पूर्णांक reg, bit_pos, i;
-	पूर्णांक slot, slot_num;
+static int cs35l33_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
+				unsigned int rx_mask, int slots, int slot_width)
+{
+	struct snd_soc_component *component = dai->component;
+	struct snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
+	struct cs35l33_private *priv = snd_soc_component_get_drvdata(component);
+	unsigned int reg, bit_pos, i;
+	int slot, slot_num;
 
-	अगर (slot_width != 8)
-		वापस -EINVAL;
+	if (slot_width != 8)
+		return -EINVAL;
 
-	/* scan rx_mask क्रम aud slot */
+	/* scan rx_mask for aud slot */
 	slot = ffs(rx_mask) - 1;
-	अगर (slot >= 0) अणु
+	if (slot >= 0) {
 		regmap_update_bits(priv->regmap, CS35L33_RX_AUD,
 			CS35L33_X_LOC, slot);
 		dev_dbg(component->dev, "Audio starts from slots %d", slot);
-	पूर्ण
+	}
 
 	/*
 	 * scan tx_mask: vmon(2 slots); imon (2 slots);
-	 * vpmon (1 slot) vbsपंचांगon (1 slot)
+	 * vpmon (1 slot) vbstmon (1 slot)
 	 */
 	slot = ffs(tx_mask) - 1;
 	slot_num = 0;
 
-	क्रम (i = 0; i < 2 ; i++) अणु
-		/* disable vpmon/vbsपंचांगon: enable later अगर set in tx_mask */
+	for (i = 0; i < 2 ; i++) {
+		/* disable vpmon/vbstmon: enable later if set in tx_mask */
 		regmap_update_bits(priv->regmap, CS35L33_TX_VPMON + i,
 			CS35L33_X_STATE | CS35L33_X_LOC, CS35L33_X_STATE
 			| CS35L33_X_LOC);
-	पूर्ण
+	}
 
-	/* disconnect अणुvp,vbstपूर्ण_mon routes: eanble later अगर set in tx_mask*/
+	/* disconnect {vp,vbst}_mon routes: eanble later if set in tx_mask*/
 	snd_soc_dapm_del_routes(dapm, cs35l33_vp_vbst_mon_route,
 		ARRAY_SIZE(cs35l33_vp_vbst_mon_route));
 
-	जबतक (slot >= 0) अणु
+	while (slot >= 0) {
 		/* configure VMON_TX_LOC */
-		अगर (slot_num == 0) अणु
+		if (slot_num == 0) {
 			regmap_update_bits(priv->regmap, CS35L33_TX_VMON,
 				CS35L33_X_STATE | CS35L33_X_LOC, slot);
 			dev_dbg(component->dev, "VMON enabled in slots %d-%d",
 				slot, slot + 1);
-		पूर्ण
+		}
 
 		/* configure IMON_TX_LOC */
-		अगर (slot_num == 3) अणु
+		if (slot_num == 3) {
 			regmap_update_bits(priv->regmap, CS35L33_TX_IMON,
 				CS35L33_X_STATE | CS35L33_X_LOC, slot);
 			dev_dbg(component->dev, "IMON enabled in slots %d-%d",
 				slot, slot + 1);
-		पूर्ण
+		}
 
 		/* configure VPMON_TX_LOC */
-		अगर (slot_num == 4) अणु
+		if (slot_num == 4) {
 			regmap_update_bits(priv->regmap, CS35L33_TX_VPMON,
 				CS35L33_X_STATE | CS35L33_X_LOC, slot);
 			snd_soc_dapm_add_routes(dapm,
 				&cs35l33_vp_vbst_mon_route[0], 2);
 			dev_dbg(component->dev, "VPMON enabled in slots %d", slot);
-		पूर्ण
+		}
 
 		/* configure VBSTMON_TX_LOC */
-		अगर (slot_num == 5) अणु
+		if (slot_num == 5) {
 			regmap_update_bits(priv->regmap, CS35L33_TX_VBSTMON,
 				CS35L33_X_STATE | CS35L33_X_LOC, slot);
 			snd_soc_dapm_add_routes(dapm,
 				&cs35l33_vp_vbst_mon_route[2], 2);
 			dev_dbg(component->dev,
 				"VBSTMON enabled in slots %d", slot);
-		पूर्ण
+		}
 
 		/* Enable the relevant tx slot */
 		reg = CS35L33_TX_EN4 - (slot/8);
@@ -630,105 +629,105 @@
 		tx_mask &= ~(1 << slot);
 		slot = ffs(tx_mask) - 1;
 		slot_num++;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cs35l33_component_set_sysclk(काष्ठा snd_soc_component *component,
-		पूर्णांक clk_id, पूर्णांक source, अचिन्हित पूर्णांक freq, पूर्णांक dir)
-अणु
-	काष्ठा cs35l33_निजी *cs35l33 = snd_soc_component_get_drvdata(component);
+static int cs35l33_component_set_sysclk(struct snd_soc_component *component,
+		int clk_id, int source, unsigned int freq, int dir)
+{
+	struct cs35l33_private *cs35l33 = snd_soc_component_get_drvdata(component);
 
-	चयन (freq) अणु
-	हाल CS35L33_MCLK_5644:
-	हाल CS35L33_MCLK_6:
-	हाल CS35L33_MCLK_6144:
+	switch (freq) {
+	case CS35L33_MCLK_5644:
+	case CS35L33_MCLK_6:
+	case CS35L33_MCLK_6144:
 		regmap_update_bits(cs35l33->regmap, CS35L33_CLK_CTL,
 			CS35L33_MCLKDIV2, 0);
-		cs35l33->mclk_पूर्णांक = freq;
-		अवरोध;
-	हाल CS35L33_MCLK_11289:
-	हाल CS35L33_MCLK_12:
-	हाल CS35L33_MCLK_12288:
+		cs35l33->mclk_int = freq;
+		break;
+	case CS35L33_MCLK_11289:
+	case CS35L33_MCLK_12:
+	case CS35L33_MCLK_12288:
 		regmap_update_bits(cs35l33->regmap, CS35L33_CLK_CTL,
 			CS35L33_MCLKDIV2, CS35L33_MCLKDIV2);
-		cs35l33->mclk_पूर्णांक = freq/2;
-		अवरोध;
-	शेष:
-		cs35l33->mclk_पूर्णांक = 0;
-		वापस -EINVAL;
-	पूर्ण
+		cs35l33->mclk_int = freq/2;
+		break;
+	default:
+		cs35l33->mclk_int = 0;
+		return -EINVAL;
+	}
 
 	dev_dbg(component->dev, "external mclk freq=%d, internal mclk freq=%d\n",
-		freq, cs35l33->mclk_पूर्णांक);
+		freq, cs35l33->mclk_int);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_soc_dai_ops cs35l33_ops = अणु
+static const struct snd_soc_dai_ops cs35l33_ops = {
 	.startup = cs35l33_pcm_startup,
 	.set_tristate = cs35l33_set_tristate,
 	.set_fmt = cs35l33_set_dai_fmt,
 	.hw_params = cs35l33_pcm_hw_params,
 	.set_tdm_slot = cs35l33_set_tdm_slot,
-पूर्ण;
+};
 
-अटल काष्ठा snd_soc_dai_driver cs35l33_dai = अणु
+static struct snd_soc_dai_driver cs35l33_dai = {
 		.name = "cs35l33-dai",
 		.id = 0,
-		.playback = अणु
+		.playback = {
 			.stream_name = "CS35L33 Playback",
 			.channels_min = 1,
 			.channels_max = 1,
 			.rates = CS35L33_RATES,
-			.क्रमmats = CS35L33_FORMATS,
-		पूर्ण,
-		.capture = अणु
+			.formats = CS35L33_FORMATS,
+		},
+		.capture = {
 			.stream_name = "CS35L33 Capture",
 			.channels_min = 2,
 			.channels_max = 2,
 			.rates = CS35L33_RATES,
-			.क्रमmats = CS35L33_FORMATS,
-		पूर्ण,
+			.formats = CS35L33_FORMATS,
+		},
 		.ops = &cs35l33_ops,
 		.symmetric_rate = 1,
-पूर्ण;
+};
 
-अटल पूर्णांक cs35l33_set_hg_data(काष्ठा snd_soc_component *component,
-			       काष्ठा cs35l33_pdata *pdata)
-अणु
-	काष्ठा cs35l33_hg *hg_config = &pdata->hg_config;
-	काष्ठा snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
-	काष्ठा cs35l33_निजी *priv = snd_soc_component_get_drvdata(component);
+static int cs35l33_set_hg_data(struct snd_soc_component *component,
+			       struct cs35l33_pdata *pdata)
+{
+	struct cs35l33_hg *hg_config = &pdata->hg_config;
+	struct snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
+	struct cs35l33_private *priv = snd_soc_component_get_drvdata(component);
 
-	अगर (hg_config->enable_hg_algo) अणु
+	if (hg_config->enable_hg_algo) {
 		regmap_update_bits(priv->regmap, CS35L33_HG_MEMLDO_CTL,
 			CS35L33_MEM_DEPTH_MASK,
 			hg_config->mem_depth << CS35L33_MEM_DEPTH_SHIFT);
-		regmap_ग_लिखो(priv->regmap, CS35L33_HG_REL_RATE,
+		regmap_write(priv->regmap, CS35L33_HG_REL_RATE,
 			hg_config->release_rate);
 		regmap_update_bits(priv->regmap, CS35L33_HG_HEAD,
 			CS35L33_HD_RM_MASK,
 			hg_config->hd_rm << CS35L33_HD_RM_SHIFT);
 		regmap_update_bits(priv->regmap, CS35L33_HG_MEMLDO_CTL,
 			CS35L33_LDO_THLD_MASK,
-			hg_config->lकरो_thld << CS35L33_LDO_THLD_SHIFT);
+			hg_config->ldo_thld << CS35L33_LDO_THLD_SHIFT);
 		regmap_update_bits(priv->regmap, CS35L33_HG_MEMLDO_CTL,
 			CS35L33_LDO_DISABLE_MASK,
-			hg_config->lकरो_path_disable <<
+			hg_config->ldo_path_disable <<
 				CS35L33_LDO_DISABLE_SHIFT);
 		regmap_update_bits(priv->regmap, CS35L33_LDO_DEL,
 			CS35L33_LDO_ENTRY_DELAY_MASK,
-			hg_config->lकरो_entry_delay <<
+			hg_config->ldo_entry_delay <<
 				CS35L33_LDO_ENTRY_DELAY_SHIFT);
-		अगर (hg_config->vp_hg_स्वतः) अणु
+		if (hg_config->vp_hg_auto) {
 			regmap_update_bits(priv->regmap, CS35L33_HG_EN,
 				CS35L33_VP_HG_AUTO_MASK,
 				CS35L33_VP_HG_AUTO_MASK);
-			snd_soc_dapm_add_routes(dapm, cs35l33_vphg_स्वतः_route,
-				ARRAY_SIZE(cs35l33_vphg_स्वतः_route));
-		पूर्ण
+			snd_soc_dapm_add_routes(dapm, cs35l33_vphg_auto_route,
+				ARRAY_SIZE(cs35l33_vphg_auto_route));
+		}
 		regmap_update_bits(priv->regmap, CS35L33_HG_EN,
 			CS35L33_VP_HG_MASK,
 			hg_config->vp_hg << CS35L33_VP_HG_SHIFT);
@@ -740,47 +739,47 @@
 			hg_config->vp_hg_va << CS35L33_VP_HG_VA_SHIFT);
 		regmap_update_bits(priv->regmap, CS35L33_HG_EN,
 			CS35L33_CLASS_HG_EN_MASK, CS35L33_CLASS_HG_EN_MASK);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक cs35l33_set_bst_ipk(काष्ठा snd_soc_component *component, अचिन्हित पूर्णांक bst)
-अणु
-	काष्ठा cs35l33_निजी *cs35l33 = snd_soc_component_get_drvdata(component);
-	पूर्णांक ret = 0, steps = 0;
+static int cs35l33_set_bst_ipk(struct snd_soc_component *component, unsigned int bst)
+{
+	struct cs35l33_private *cs35l33 = snd_soc_component_get_drvdata(component);
+	int ret = 0, steps = 0;
 
 	/* Boost current in uA */
-	अगर (bst > 3600000 || bst < 1850000) अणु
+	if (bst > 3600000 || bst < 1850000) {
 		dev_err(component->dev, "Invalid boost current %d\n", bst);
 		ret = -EINVAL;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	अगर (bst % 15625) अणु
+	if (bst % 15625) {
 		dev_err(component->dev, "Current not a multiple of 15625uA (%d)\n",
 			bst);
 		ret = -EINVAL;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	जबतक (bst > 1850000) अणु
+	while (bst > 1850000) {
 		bst -= 15625;
 		steps++;
-	पूर्ण
+	}
 
-	regmap_ग_लिखो(cs35l33->regmap, CS35L33_BST_PEAK_CTL,
+	regmap_write(cs35l33->regmap, CS35L33_BST_PEAK_CTL,
 		steps+0x70);
 
 err:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cs35l33_probe(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा cs35l33_निजी *cs35l33 = snd_soc_component_get_drvdata(component);
+static int cs35l33_probe(struct snd_soc_component *component)
+{
+	struct cs35l33_private *cs35l33 = snd_soc_component_get_drvdata(component);
 
 	cs35l33->component = component;
-	pm_runसमय_get_sync(component->dev);
+	pm_runtime_get_sync(component->dev);
 
 	regmap_update_bits(cs35l33->regmap, CS35L33_PROTECT_CTL,
 		CS35L33_ALIVE_WD_DIS, 0x8);
@@ -788,80 +787,80 @@ err:
 				CS35L33_ALIVE_WD_DIS2,
 				CS35L33_ALIVE_WD_DIS2);
 
-	/* Set Platक्रमm Data */
+	/* Set Platform Data */
 	regmap_update_bits(cs35l33->regmap, CS35L33_BST_CTL1,
 		CS35L33_BST_CTL_MASK, cs35l33->pdata.boost_ctl);
 	regmap_update_bits(cs35l33->regmap, CS35L33_CLASSD_CTL,
 		CS35L33_AMP_DRV_SEL_MASK,
 		cs35l33->pdata.amp_drv_sel << CS35L33_AMP_DRV_SEL_SHIFT);
 
-	अगर (cs35l33->pdata.boost_ipk)
+	if (cs35l33->pdata.boost_ipk)
 		cs35l33_set_bst_ipk(component, cs35l33->pdata.boost_ipk);
 
-	अगर (cs35l33->enable_soft_ramp) अणु
+	if (cs35l33->enable_soft_ramp) {
 		snd_soc_component_update_bits(component, CS35L33_DAC_CTL,
 			CS35L33_DIGSFT, CS35L33_DIGSFT);
 		snd_soc_component_update_bits(component, CS35L33_DAC_CTL,
 			CS35L33_DSR_RATE, cs35l33->pdata.ramp_rate);
-	पूर्ण अन्यथा अणु
+	} else {
 		snd_soc_component_update_bits(component, CS35L33_DAC_CTL,
 			CS35L33_DIGSFT, 0);
-	पूर्ण
+	}
 
-	/* update IMON scaling rate अगर dअगरferent from शेष of 0x8 */
-	अगर (cs35l33->pdata.imon_adc_scale != 0x8)
+	/* update IMON scaling rate if different from default of 0x8 */
+	if (cs35l33->pdata.imon_adc_scale != 0x8)
 		snd_soc_component_update_bits(component, CS35L33_ADC_CTL,
 			CS35L33_IMON_SCALE, cs35l33->pdata.imon_adc_scale);
 
 	cs35l33_set_hg_data(component, &(cs35l33->pdata));
 
 	/*
-	 * unmask important पूर्णांकerrupts that causes the chip to enter
+	 * unmask important interrupts that causes the chip to enter
 	 * speaker safe mode and hence deserves user attention
 	 */
 	regmap_update_bits(cs35l33->regmap, CS35L33_INT_MASK_1,
 		CS35L33_M_OTE | CS35L33_M_OTW | CS35L33_M_AMP_SHORT |
 		CS35L33_M_CAL_ERR, 0);
 
-	pm_runसमय_put_sync(component->dev);
+	pm_runtime_put_sync(component->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_soc_component_driver soc_component_dev_cs35l33 = अणु
+static const struct snd_soc_component_driver soc_component_dev_cs35l33 = {
 	.probe			= cs35l33_probe,
 	.set_bias_level		= cs35l33_set_bias_level,
 	.set_sysclk		= cs35l33_component_set_sysclk,
 	.controls		= cs35l33_snd_controls,
 	.num_controls		= ARRAY_SIZE(cs35l33_snd_controls),
-	.dapm_widमाला_लो		= cs35l33_dapm_widमाला_लो,
-	.num_dapm_widमाला_लो	= ARRAY_SIZE(cs35l33_dapm_widमाला_लो),
+	.dapm_widgets		= cs35l33_dapm_widgets,
+	.num_dapm_widgets	= ARRAY_SIZE(cs35l33_dapm_widgets),
 	.dapm_routes		= cs35l33_audio_map,
 	.num_dapm_routes	= ARRAY_SIZE(cs35l33_audio_map),
-	.use_pmकरोwn_समय	= 1,
+	.use_pmdown_time	= 1,
 	.endianness		= 1,
 	.non_legacy_dai_naming	= 1,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regmap_config cs35l33_regmap = अणु
+static const struct regmap_config cs35l33_regmap = {
 	.reg_bits = 8,
 	.val_bits = 8,
 
-	.max_रेजिस्टर = CS35L33_MAX_REGISTER,
-	.reg_शेषs = cs35l33_reg,
-	.num_reg_शेषs = ARRAY_SIZE(cs35l33_reg),
-	.अस्थिर_reg = cs35l33_अस्थिर_रेजिस्टर,
-	.पढ़ोable_reg = cs35l33_पढ़ोable_रेजिस्टर,
-	.ग_लिखोable_reg = cs35l33_ग_लिखोable_रेजिस्टर,
+	.max_register = CS35L33_MAX_REGISTER,
+	.reg_defaults = cs35l33_reg,
+	.num_reg_defaults = ARRAY_SIZE(cs35l33_reg),
+	.volatile_reg = cs35l33_volatile_register,
+	.readable_reg = cs35l33_readable_register,
+	.writeable_reg = cs35l33_writeable_register,
 	.cache_type = REGCACHE_RBTREE,
-	.use_single_पढ़ो = true,
-	.use_single_ग_लिखो = true,
-पूर्ण;
+	.use_single_read = true,
+	.use_single_write = true,
+};
 
-अटल पूर्णांक __maybe_unused cs35l33_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा cs35l33_निजी *cs35l33 = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static int __maybe_unused cs35l33_runtime_resume(struct device *dev)
+{
+	struct cs35l33_private *cs35l33 = dev_get_drvdata(dev);
+	int ret;
 
 	dev_dbg(dev, "%s\n", __func__);
 
@@ -869,10 +868,10 @@ err:
 
 	ret = regulator_bulk_enable(cs35l33->num_core_supplies,
 		cs35l33->core_supplies);
-	अगर (ret != 0) अणु
+	if (ret != 0) {
 		dev_err(dev, "Failed to enable core supplies: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	regcache_cache_only(cs35l33->regmap, false);
 
@@ -881,28 +880,28 @@ err:
 	msleep(CS35L33_BOOT_DELAY);
 
 	ret = regcache_sync(cs35l33->regmap);
-	अगर (ret != 0) अणु
+	if (ret != 0) {
 		dev_err(dev, "Failed to restore register cache\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	वापस 0;
+	return 0;
 
 err:
 	regcache_cache_only(cs35l33->regmap, true);
 	regulator_bulk_disable(cs35l33->num_core_supplies,
 		cs35l33->core_supplies);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __maybe_unused cs35l33_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा cs35l33_निजी *cs35l33 = dev_get_drvdata(dev);
+static int __maybe_unused cs35l33_runtime_suspend(struct device *dev)
+{
+	struct cs35l33_private *cs35l33 = dev_get_drvdata(dev);
 
 	dev_dbg(dev, "%s\n", __func__);
 
-	/* reकरो the calibration in next घातer up */
+	/* redo the calibration in next power up */
 	cs35l33->amp_cal = false;
 
 	regcache_cache_only(cs35l33->regmap, true);
@@ -910,83 +909,83 @@ err:
 	regulator_bulk_disable(cs35l33->num_core_supplies,
 		cs35l33->core_supplies);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops cs35l33_pm_ops = अणु
-	SET_RUNTIME_PM_OPS(cs35l33_runसमय_suspend,
-			   cs35l33_runसमय_resume,
-			   शून्य)
-पूर्ण;
+static const struct dev_pm_ops cs35l33_pm_ops = {
+	SET_RUNTIME_PM_OPS(cs35l33_runtime_suspend,
+			   cs35l33_runtime_resume,
+			   NULL)
+};
 
-अटल पूर्णांक cs35l33_get_hg_data(स्थिर काष्ठा device_node *np,
-			       काष्ठा cs35l33_pdata *pdata)
-अणु
-	काष्ठा device_node *hg;
-	काष्ठा cs35l33_hg *hg_config = &pdata->hg_config;
+static int cs35l33_get_hg_data(const struct device_node *np,
+			       struct cs35l33_pdata *pdata)
+{
+	struct device_node *hg;
+	struct cs35l33_hg *hg_config = &pdata->hg_config;
 	u32 val32;
 
 	hg = of_get_child_by_name(np, "cirrus,hg-algo");
 	hg_config->enable_hg_algo = hg ? true : false;
 
-	अगर (hg_config->enable_hg_algo) अणु
-		अगर (of_property_पढ़ो_u32(hg, "cirrus,mem-depth", &val32) >= 0)
+	if (hg_config->enable_hg_algo) {
+		if (of_property_read_u32(hg, "cirrus,mem-depth", &val32) >= 0)
 			hg_config->mem_depth = val32;
-		अगर (of_property_पढ़ो_u32(hg, "cirrus,release-rate",
+		if (of_property_read_u32(hg, "cirrus,release-rate",
 				&val32) >= 0)
 			hg_config->release_rate = val32;
-		अगर (of_property_पढ़ो_u32(hg, "cirrus,ldo-thld", &val32) >= 0)
-			hg_config->lकरो_thld = val32;
-		अगर (of_property_पढ़ो_u32(hg, "cirrus,ldo-path-disable",
+		if (of_property_read_u32(hg, "cirrus,ldo-thld", &val32) >= 0)
+			hg_config->ldo_thld = val32;
+		if (of_property_read_u32(hg, "cirrus,ldo-path-disable",
 				&val32) >= 0)
-			hg_config->lकरो_path_disable = val32;
-		अगर (of_property_पढ़ो_u32(hg, "cirrus,ldo-entry-delay",
+			hg_config->ldo_path_disable = val32;
+		if (of_property_read_u32(hg, "cirrus,ldo-entry-delay",
 				&val32) >= 0)
-			hg_config->lकरो_entry_delay = val32;
+			hg_config->ldo_entry_delay = val32;
 
-		hg_config->vp_hg_स्वतः = of_property_पढ़ो_bool(hg,
+		hg_config->vp_hg_auto = of_property_read_bool(hg,
 			"cirrus,vp-hg-auto");
 
-		अगर (of_property_पढ़ो_u32(hg, "cirrus,vp-hg", &val32) >= 0)
+		if (of_property_read_u32(hg, "cirrus,vp-hg", &val32) >= 0)
 			hg_config->vp_hg = val32;
-		अगर (of_property_पढ़ो_u32(hg, "cirrus,vp-hg-rate", &val32) >= 0)
+		if (of_property_read_u32(hg, "cirrus,vp-hg-rate", &val32) >= 0)
 			hg_config->vp_hg_rate = val32;
-		अगर (of_property_पढ़ो_u32(hg, "cirrus,vp-hg-va", &val32) >= 0)
+		if (of_property_read_u32(hg, "cirrus,vp-hg-va", &val32) >= 0)
 			hg_config->vp_hg_va = val32;
-	पूर्ण
+	}
 
 	of_node_put(hg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल irqवापस_t cs35l33_irq_thपढ़ो(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा cs35l33_निजी *cs35l33 = data;
-	काष्ठा snd_soc_component *component = cs35l33->component;
-	अचिन्हित पूर्णांक sticky_val1, sticky_val2, current_val, mask1, mask2;
+static irqreturn_t cs35l33_irq_thread(int irq, void *data)
+{
+	struct cs35l33_private *cs35l33 = data;
+	struct snd_soc_component *component = cs35l33->component;
+	unsigned int sticky_val1, sticky_val2, current_val, mask1, mask2;
 
-	regmap_पढ़ो(cs35l33->regmap, CS35L33_INT_STATUS_2,
+	regmap_read(cs35l33->regmap, CS35L33_INT_STATUS_2,
 		&sticky_val2);
-	regmap_पढ़ो(cs35l33->regmap, CS35L33_INT_STATUS_1,
+	regmap_read(cs35l33->regmap, CS35L33_INT_STATUS_1,
 		&sticky_val1);
-	regmap_पढ़ो(cs35l33->regmap, CS35L33_INT_MASK_2, &mask2);
-	regmap_पढ़ो(cs35l33->regmap, CS35L33_INT_MASK_1, &mask1);
+	regmap_read(cs35l33->regmap, CS35L33_INT_MASK_2, &mask2);
+	regmap_read(cs35l33->regmap, CS35L33_INT_MASK_1, &mask1);
 
-	/* Check to see अगर the unmasked bits are active,
-	 *  अगर not then निकास.
+	/* Check to see if the unmasked bits are active,
+	 *  if not then exit.
 	 */
-	अगर (!(sticky_val1 & ~mask1) && !(sticky_val2 & ~mask2))
-		वापस IRQ_NONE;
+	if (!(sticky_val1 & ~mask1) && !(sticky_val2 & ~mask2))
+		return IRQ_NONE;
 
-	regmap_पढ़ो(cs35l33->regmap, CS35L33_INT_STATUS_1,
+	regmap_read(cs35l33->regmap, CS35L33_INT_STATUS_1,
 		&current_val);
 
-	/* handle the पूर्णांकerrupts */
+	/* handle the interrupts */
 
-	अगर (sticky_val1 & CS35L33_AMP_SHORT) अणु
+	if (sticky_val1 & CS35L33_AMP_SHORT) {
 		dev_crit(component->dev, "Amp short error\n");
-		अगर (!(current_val & CS35L33_AMP_SHORT)) अणु
+		if (!(current_val & CS35L33_AMP_SHORT)) {
 			dev_dbg(component->dev,
 				"Amp short error release\n");
 			regmap_update_bits(cs35l33->regmap,
@@ -999,16 +998,16 @@ err:
 			regmap_update_bits(cs35l33->regmap,
 				CS35L33_AMP_CTL, CS35L33_AMP_SHORT_RLS,
 				0);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (sticky_val1 & CS35L33_CAL_ERR) अणु
+	if (sticky_val1 & CS35L33_CAL_ERR) {
 		dev_err(component->dev, "Cal error\n");
 
-		/* reकरो the calibration in next घातer up */
+		/* redo the calibration in next power up */
 		cs35l33->amp_cal = false;
 
-		अगर (!(current_val & CS35L33_CAL_ERR)) अणु
+		if (!(current_val & CS35L33_CAL_ERR)) {
 			dev_dbg(component->dev, "Cal error release\n");
 			regmap_update_bits(cs35l33->regmap,
 				CS35L33_AMP_CTL, CS35L33_CAL_ERR_RLS,
@@ -1019,12 +1018,12 @@ err:
 			regmap_update_bits(cs35l33->regmap,
 				CS35L33_AMP_CTL, CS35L33_CAL_ERR_RLS,
 				0);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (sticky_val1 & CS35L33_OTE) अणु
+	if (sticky_val1 & CS35L33_OTE) {
 		dev_crit(component->dev, "Over temperature error\n");
-		अगर (!(current_val & CS35L33_OTE)) अणु
+		if (!(current_val & CS35L33_OTE)) {
 			dev_dbg(component->dev,
 				"Over temperature error release\n");
 			regmap_update_bits(cs35l33->regmap,
@@ -1034,12 +1033,12 @@ err:
 				CS35L33_OTE_RLS);
 			regmap_update_bits(cs35l33->regmap,
 				CS35L33_AMP_CTL, CS35L33_OTE_RLS, 0);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (sticky_val1 & CS35L33_OTW) अणु
+	if (sticky_val1 & CS35L33_OTW) {
 		dev_err(component->dev, "Over temperature warning\n");
-		अगर (!(current_val & CS35L33_OTW)) अणु
+		if (!(current_val & CS35L33_OTW)) {
 			dev_dbg(component->dev,
 				"Over temperature warning release\n");
 			regmap_update_bits(cs35l33->regmap,
@@ -1049,97 +1048,97 @@ err:
 				CS35L33_OTW_RLS);
 			regmap_update_bits(cs35l33->regmap,
 				CS35L33_AMP_CTL, CS35L33_OTW_RLS, 0);
-		पूर्ण
-	पूर्ण
-	अगर (CS35L33_ALIVE_ERR & sticky_val1)
+		}
+	}
+	if (CS35L33_ALIVE_ERR & sticky_val1)
 		dev_err(component->dev, "ERROR: ADSPCLK Interrupt\n");
 
-	अगर (CS35L33_MCLK_ERR & sticky_val1)
+	if (CS35L33_MCLK_ERR & sticky_val1)
 		dev_err(component->dev, "ERROR: MCLK Interrupt\n");
 
-	अगर (CS35L33_VMON_OVFL & sticky_val2)
+	if (CS35L33_VMON_OVFL & sticky_val2)
 		dev_err(component->dev,
 			"ERROR: VMON Overflow Interrupt\n");
 
-	अगर (CS35L33_IMON_OVFL & sticky_val2)
+	if (CS35L33_IMON_OVFL & sticky_val2)
 		dev_err(component->dev,
 			"ERROR: IMON Overflow Interrupt\n");
 
-	अगर (CS35L33_VPMON_OVFL & sticky_val2)
+	if (CS35L33_VPMON_OVFL & sticky_val2)
 		dev_err(component->dev,
 			"ERROR: VPMON Overflow Interrupt\n");
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल स्थिर अक्षर * स्थिर cs35l33_core_supplies[] = अणु
+static const char * const cs35l33_core_supplies[] = {
 	"VA",
 	"VP",
-पूर्ण;
+};
 
-अटल पूर्णांक cs35l33_of_get_pdata(काष्ठा device *dev,
-				काष्ठा cs35l33_निजी *cs35l33)
-अणु
-	काष्ठा device_node *np = dev->of_node;
-	काष्ठा cs35l33_pdata *pdata = &cs35l33->pdata;
+static int cs35l33_of_get_pdata(struct device *dev,
+				struct cs35l33_private *cs35l33)
+{
+	struct device_node *np = dev->of_node;
+	struct cs35l33_pdata *pdata = &cs35l33->pdata;
 	u32 val32;
 
-	अगर (!np)
-		वापस 0;
+	if (!np)
+		return 0;
 
-	अगर (of_property_पढ़ो_u32(np, "cirrus,boost-ctl", &val32) >= 0) अणु
+	if (of_property_read_u32(np, "cirrus,boost-ctl", &val32) >= 0) {
 		pdata->boost_ctl = val32;
 		pdata->amp_drv_sel = 1;
-	पूर्ण
+	}
 
-	अगर (of_property_पढ़ो_u32(np, "cirrus,ramp-rate", &val32) >= 0) अणु
+	if (of_property_read_u32(np, "cirrus,ramp-rate", &val32) >= 0) {
 		pdata->ramp_rate = val32;
 		cs35l33->enable_soft_ramp = true;
-	पूर्ण
+	}
 
-	अगर (of_property_पढ़ो_u32(np, "cirrus,boost-ipk", &val32) >= 0)
+	if (of_property_read_u32(np, "cirrus,boost-ipk", &val32) >= 0)
 		pdata->boost_ipk = val32;
 
-	अगर (of_property_पढ़ो_u32(np, "cirrus,imon-adc-scale", &val32) >= 0) अणु
-		अगर ((val32 == 0x0) || (val32 == 0x7) || (val32 == 0x6))
+	if (of_property_read_u32(np, "cirrus,imon-adc-scale", &val32) >= 0) {
+		if ((val32 == 0x0) || (val32 == 0x7) || (val32 == 0x6))
 			pdata->imon_adc_scale = val32;
-		अन्यथा
-			/* use शेष value */
+		else
+			/* use default value */
 			pdata->imon_adc_scale = 0x8;
-	पूर्ण अन्यथा अणु
-		/* use शेष value */
+	} else {
+		/* use default value */
 		pdata->imon_adc_scale = 0x8;
-	पूर्ण
+	}
 
 	cs35l33_get_hg_data(np, pdata);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cs35l33_i2c_probe(काष्ठा i2c_client *i2c_client,
-				       स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा cs35l33_निजी *cs35l33;
-	काष्ठा cs35l33_pdata *pdata = dev_get_platdata(&i2c_client->dev);
-	पूर्णांक ret, devid, i;
-	अचिन्हित पूर्णांक reg;
+static int cs35l33_i2c_probe(struct i2c_client *i2c_client,
+				       const struct i2c_device_id *id)
+{
+	struct cs35l33_private *cs35l33;
+	struct cs35l33_pdata *pdata = dev_get_platdata(&i2c_client->dev);
+	int ret, devid, i;
+	unsigned int reg;
 
-	cs35l33 = devm_kzalloc(&i2c_client->dev, माप(काष्ठा cs35l33_निजी),
+	cs35l33 = devm_kzalloc(&i2c_client->dev, sizeof(struct cs35l33_private),
 			       GFP_KERNEL);
-	अगर (!cs35l33)
-		वापस -ENOMEM;
+	if (!cs35l33)
+		return -ENOMEM;
 
 	i2c_set_clientdata(i2c_client, cs35l33);
 	cs35l33->regmap = devm_regmap_init_i2c(i2c_client, &cs35l33_regmap);
-	अगर (IS_ERR(cs35l33->regmap)) अणु
+	if (IS_ERR(cs35l33->regmap)) {
 		ret = PTR_ERR(cs35l33->regmap);
 		dev_err(&i2c_client->dev, "regmap_init() failed: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	regcache_cache_only(cs35l33->regmap, true);
 
-	क्रम (i = 0; i < ARRAY_SIZE(cs35l33_core_supplies); i++)
+	for (i = 0; i < ARRAY_SIZE(cs35l33_core_supplies); i++)
 		cs35l33->core_supplies[i].supply
 			= cs35l33_core_supplies[i];
 	cs35l33->num_core_supplies = ARRAY_SIZE(cs35l33_core_supplies);
@@ -1147,43 +1146,43 @@ err:
 	ret = devm_regulator_bulk_get(&i2c_client->dev,
 			cs35l33->num_core_supplies,
 			cs35l33->core_supplies);
-	अगर (ret != 0) अणु
+	if (ret != 0) {
 		dev_err(&i2c_client->dev,
 			"Failed to request core supplies: %d\n",
 			ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (pdata) अणु
+	if (pdata) {
 		cs35l33->pdata = *pdata;
-	पूर्ण अन्यथा अणु
+	} else {
 		cs35l33_of_get_pdata(&i2c_client->dev, cs35l33);
 		pdata = &cs35l33->pdata;
-	पूर्ण
+	}
 
-	ret = devm_request_thपढ़ोed_irq(&i2c_client->dev, i2c_client->irq, शून्य,
-			cs35l33_irq_thपढ़ो, IRQF_ONESHOT | IRQF_TRIGGER_LOW,
+	ret = devm_request_threaded_irq(&i2c_client->dev, i2c_client->irq, NULL,
+			cs35l33_irq_thread, IRQF_ONESHOT | IRQF_TRIGGER_LOW,
 			"cs35l33", cs35l33);
-	अगर (ret != 0)
+	if (ret != 0)
 		dev_warn(&i2c_client->dev, "Failed to request IRQ: %d\n", ret);
 
 	/* We could issue !RST or skip it based on AMP topology */
 	cs35l33->reset_gpio = devm_gpiod_get_optional(&i2c_client->dev,
 			"reset-gpios", GPIOD_OUT_HIGH);
-	अगर (IS_ERR(cs35l33->reset_gpio)) अणु
+	if (IS_ERR(cs35l33->reset_gpio)) {
 		dev_err(&i2c_client->dev, "%s ERROR: Can't get reset GPIO\n",
 			__func__);
-		वापस PTR_ERR(cs35l33->reset_gpio);
-	पूर्ण
+		return PTR_ERR(cs35l33->reset_gpio);
+	}
 
 	ret = regulator_bulk_enable(cs35l33->num_core_supplies,
 					cs35l33->core_supplies);
-	अगर (ret != 0) अणु
+	if (ret != 0) {
 		dev_err(&i2c_client->dev,
 			"Failed to enable core supplies: %d\n",
 			ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	gpiod_set_value_cansleep(cs35l33->reset_gpio, 1);
 
@@ -1191,103 +1190,103 @@ err:
 	regcache_cache_only(cs35l33->regmap, false);
 
 	/* initialize codec */
-	ret = regmap_पढ़ो(cs35l33->regmap, CS35L33_DEVID_AB, &reg);
+	ret = regmap_read(cs35l33->regmap, CS35L33_DEVID_AB, &reg);
 	devid = (reg & 0xFF) << 12;
-	ret = regmap_पढ़ो(cs35l33->regmap, CS35L33_DEVID_CD, &reg);
+	ret = regmap_read(cs35l33->regmap, CS35L33_DEVID_CD, &reg);
 	devid |= (reg & 0xFF) << 4;
-	ret = regmap_पढ़ो(cs35l33->regmap, CS35L33_DEVID_E, &reg);
+	ret = regmap_read(cs35l33->regmap, CS35L33_DEVID_E, &reg);
 	devid |= (reg & 0xF0) >> 4;
 
-	अगर (devid != CS35L33_CHIP_ID) अणु
+	if (devid != CS35L33_CHIP_ID) {
 		dev_err(&i2c_client->dev,
 			"CS35L33 Device ID (%X). Expected ID %X\n",
 			devid, CS35L33_CHIP_ID);
 		ret = -EINVAL;
-		जाओ err_enable;
-	पूर्ण
+		goto err_enable;
+	}
 
-	ret = regmap_पढ़ो(cs35l33->regmap, CS35L33_REV_ID, &reg);
-	अगर (ret < 0) अणु
+	ret = regmap_read(cs35l33->regmap, CS35L33_REV_ID, &reg);
+	if (ret < 0) {
 		dev_err(&i2c_client->dev, "Get Revision ID failed\n");
-		जाओ err_enable;
-	पूर्ण
+		goto err_enable;
+	}
 
 	dev_info(&i2c_client->dev,
 		 "Cirrus Logic CS35L33, Revision: %02X\n", reg & 0xFF);
 
-	ret = regmap_रेजिस्टर_patch(cs35l33->regmap,
+	ret = regmap_register_patch(cs35l33->regmap,
 			cs35l33_patch, ARRAY_SIZE(cs35l33_patch));
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&i2c_client->dev,
 			"Error in applying regmap patch: %d\n", ret);
-		जाओ err_enable;
-	पूर्ण
+		goto err_enable;
+	}
 
 	/* disable mclk and tdm */
 	regmap_update_bits(cs35l33->regmap, CS35L33_CLK_CTL,
 		CS35L33_MCLKDIS | CS35L33_SDOUT_3ST_TDM,
 		CS35L33_MCLKDIS | CS35L33_SDOUT_3ST_TDM);
 
-	pm_runसमय_set_स्वतःsuspend_delay(&i2c_client->dev, 100);
-	pm_runसमय_use_स्वतःsuspend(&i2c_client->dev);
-	pm_runसमय_set_active(&i2c_client->dev);
-	pm_runसमय_enable(&i2c_client->dev);
+	pm_runtime_set_autosuspend_delay(&i2c_client->dev, 100);
+	pm_runtime_use_autosuspend(&i2c_client->dev);
+	pm_runtime_set_active(&i2c_client->dev);
+	pm_runtime_enable(&i2c_client->dev);
 
-	ret = devm_snd_soc_रेजिस्टर_component(&i2c_client->dev,
+	ret = devm_snd_soc_register_component(&i2c_client->dev,
 			&soc_component_dev_cs35l33, &cs35l33_dai, 1);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&i2c_client->dev, "%s: Register component failed\n",
 			__func__);
-		जाओ err_enable;
-	पूर्ण
+		goto err_enable;
+	}
 
-	वापस 0;
+	return 0;
 
 err_enable:
 	regulator_bulk_disable(cs35l33->num_core_supplies,
 			       cs35l33->core_supplies);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cs35l33_i2c_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा cs35l33_निजी *cs35l33 = i2c_get_clientdata(client);
+static int cs35l33_i2c_remove(struct i2c_client *client)
+{
+	struct cs35l33_private *cs35l33 = i2c_get_clientdata(client);
 
 	gpiod_set_value_cansleep(cs35l33->reset_gpio, 0);
 
-	pm_runसमय_disable(&client->dev);
+	pm_runtime_disable(&client->dev);
 	regulator_bulk_disable(cs35l33->num_core_supplies,
 		cs35l33->core_supplies);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id cs35l33_of_match[] = अणु
-	अणु .compatible = "cirrus,cs35l33", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id cs35l33_of_match[] = {
+	{ .compatible = "cirrus,cs35l33", },
+	{},
+};
 MODULE_DEVICE_TABLE(of, cs35l33_of_match);
 
-अटल स्थिर काष्ठा i2c_device_id cs35l33_id[] = अणु
-	अणु"cs35l33", 0पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct i2c_device_id cs35l33_id[] = {
+	{"cs35l33", 0},
+	{}
+};
 
 MODULE_DEVICE_TABLE(i2c, cs35l33_id);
 
-अटल काष्ठा i2c_driver cs35l33_i2c_driver = अणु
-	.driver = अणु
+static struct i2c_driver cs35l33_i2c_driver = {
+	.driver = {
 		.name = "cs35l33",
 		.pm = &cs35l33_pm_ops,
 		.of_match_table = cs35l33_of_match,
 
-		पूर्ण,
+		},
 	.id_table = cs35l33_id,
 	.probe = cs35l33_i2c_probe,
-	.हटाओ = cs35l33_i2c_हटाओ,
+	.remove = cs35l33_i2c_remove,
 
-पूर्ण;
+};
 module_i2c_driver(cs35l33_i2c_driver);
 
 MODULE_DESCRIPTION("ASoC CS35L33 driver");

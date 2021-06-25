@@ -1,8 +1,7 @@
-<शैली गुरु>
 /*
  * Copyright 2014 Cisco Systems, Inc.  All rights reserved.
  *
- * This program is मुक्त software; you may redistribute it and/or modअगरy
+ * This program is free software; you may redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; version 2 of the License.
  *
@@ -16,53 +15,53 @@
  * SOFTWARE.
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/pci.h>
-#समावेश <linux/slab.h>
+#include <linux/errno.h>
+#include <linux/pci.h>
+#include <linux/slab.h>
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/mempool.h>
-#समावेश <scsi/scsi_tcq.h>
+#include <linux/interrupt.h>
+#include <linux/workqueue.h>
+#include <linux/spinlock.h>
+#include <linux/mempool.h>
+#include <scsi/scsi_tcq.h>
 
-#समावेश "snic_io.h"
-#समावेश "snic.h"
-#समावेश "cq_enet_desc.h"
-#समावेश "snic_fwint.h"
+#include "snic_io.h"
+#include "snic.h"
+#include "cq_enet_desc.h"
+#include "snic_fwint.h"
 
-अटल व्योम
-snic_wq_cmpl_frame_send(काष्ठा vnic_wq *wq,
-			    काष्ठा cq_desc *cq_desc,
-			    काष्ठा vnic_wq_buf *buf,
-			    व्योम *opaque)
-अणु
-	काष्ठा snic *snic = svnic_dev_priv(wq->vdev);
+static void
+snic_wq_cmpl_frame_send(struct vnic_wq *wq,
+			    struct cq_desc *cq_desc,
+			    struct vnic_wq_buf *buf,
+			    void *opaque)
+{
+	struct snic *snic = svnic_dev_priv(wq->vdev);
 
-	SNIC_BUG_ON(buf->os_buf == शून्य);
+	SNIC_BUG_ON(buf->os_buf == NULL);
 
-	अगर (snic_log_level & SNIC_DESC_LOGGING)
+	if (snic_log_level & SNIC_DESC_LOGGING)
 		SNIC_HOST_INFO(snic->shost,
 			       "Ack received for snic_host_req %p.\n",
 			       buf->os_buf);
 
 	SNIC_TRC(snic->shost->host_no, 0, 0,
-		 ((uदीर्घ)(buf->os_buf) - माप(काष्ठा snic_req_info)), 0, 0,
+		 ((ulong)(buf->os_buf) - sizeof(struct snic_req_info)), 0, 0,
 		 0);
 
-	buf->os_buf = शून्य;
-पूर्ण
+	buf->os_buf = NULL;
+}
 
-अटल पूर्णांक
-snic_wq_cmpl_handler_cont(काष्ठा vnic_dev *vdev,
-			  काष्ठा cq_desc *cq_desc,
+static int
+snic_wq_cmpl_handler_cont(struct vnic_dev *vdev,
+			  struct cq_desc *cq_desc,
 			  u8 type,
 			  u16 q_num,
 			  u16 cmpl_idx,
-			  व्योम *opaque)
-अणु
-	काष्ठा snic *snic = svnic_dev_priv(vdev);
-	अचिन्हित दीर्घ flags;
+			  void *opaque)
+{
+	struct snic *snic = svnic_dev_priv(vdev);
+	unsigned long flags;
 
 	SNIC_BUG_ON(q_num != 0);
 
@@ -71,318 +70,318 @@ snic_wq_cmpl_handler_cont(काष्ठा vnic_dev *vdev,
 			 cq_desc,
 			 cmpl_idx,
 			 snic_wq_cmpl_frame_send,
-			 शून्य);
+			 NULL);
 	spin_unlock_irqrestore(&snic->wq_lock[q_num], flags);
 
-	वापस 0;
-पूर्ण /* end of snic_cmpl_handler_cont */
+	return 0;
+} /* end of snic_cmpl_handler_cont */
 
-पूर्णांक
-snic_wq_cmpl_handler(काष्ठा snic *snic, पूर्णांक work_to_करो)
-अणु
-	अचिन्हित पूर्णांक work_करोne = 0;
-	अचिन्हित पूर्णांक i;
+int
+snic_wq_cmpl_handler(struct snic *snic, int work_to_do)
+{
+	unsigned int work_done = 0;
+	unsigned int i;
 
-	snic->s_stats.misc.last_ack_समय = jअगरfies;
-	क्रम (i = 0; i < snic->wq_count; i++) अणु
-		work_करोne += svnic_cq_service(&snic->cq[i],
-					      work_to_करो,
+	snic->s_stats.misc.last_ack_time = jiffies;
+	for (i = 0; i < snic->wq_count; i++) {
+		work_done += svnic_cq_service(&snic->cq[i],
+					      work_to_do,
 					      snic_wq_cmpl_handler_cont,
-					      शून्य);
-	पूर्ण
+					      NULL);
+	}
 
-	वापस work_करोne;
-पूर्ण /* end of snic_wq_cmpl_handler */
+	return work_done;
+} /* end of snic_wq_cmpl_handler */
 
-व्योम
-snic_मुक्त_wq_buf(काष्ठा vnic_wq *wq, काष्ठा vnic_wq_buf *buf)
-अणु
+void
+snic_free_wq_buf(struct vnic_wq *wq, struct vnic_wq_buf *buf)
+{
 
-	काष्ठा snic_host_req *req = buf->os_buf;
-	काष्ठा snic *snic = svnic_dev_priv(wq->vdev);
-	काष्ठा snic_req_info *rqi = शून्य;
-	अचिन्हित दीर्घ flags;
+	struct snic_host_req *req = buf->os_buf;
+	struct snic *snic = svnic_dev_priv(wq->vdev);
+	struct snic_req_info *rqi = NULL;
+	unsigned long flags;
 
 	dma_unmap_single(&snic->pdev->dev, buf->dma_addr, buf->len,
 			 DMA_TO_DEVICE);
 
 	rqi = req_to_rqi(req);
 	spin_lock_irqsave(&snic->spl_cmd_lock, flags);
-	अगर (list_empty(&rqi->list)) अणु
+	if (list_empty(&rqi->list)) {
 		spin_unlock_irqrestore(&snic->spl_cmd_lock, flags);
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
-	SNIC_BUG_ON(rqi->list.next == शून्य); /* अगर not added to spl_cmd_list */
+	SNIC_BUG_ON(rqi->list.next == NULL); /* if not added to spl_cmd_list */
 	list_del_init(&rqi->list);
 	spin_unlock_irqrestore(&snic->spl_cmd_lock, flags);
 
-	अगर (rqi->sge_va) अणु
+	if (rqi->sge_va) {
 		snic_pci_unmap_rsp_buf(snic, rqi);
-		kमुक्त((व्योम *)rqi->sge_va);
+		kfree((void *)rqi->sge_va);
 		rqi->sge_va = 0;
-	पूर्ण
-	snic_req_मुक्त(snic, rqi);
+	}
+	snic_req_free(snic, rqi);
 	SNIC_HOST_INFO(snic->shost, "snic_free_wq_buf .. freed.\n");
 
 end:
-	वापस;
-पूर्ण
+	return;
+}
 
 /* Criteria to select work queue in multi queue mode */
-अटल पूर्णांक
-snic_select_wq(काष्ठा snic *snic)
-अणु
-	/* No multi queue support क्रम now */
+static int
+snic_select_wq(struct snic *snic)
+{
+	/* No multi queue support for now */
 	BUILD_BUG_ON(SNIC_WQ_MAX > 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-snic_wqdesc_avail(काष्ठा snic *snic, पूर्णांक q_num, पूर्णांक req_type)
-अणु
-	पूर्णांक nr_wqdesc = snic->config.wq_enet_desc_count;
+static int
+snic_wqdesc_avail(struct snic *snic, int q_num, int req_type)
+{
+	int nr_wqdesc = snic->config.wq_enet_desc_count;
 
-	अगर (q_num > 0) अणु
+	if (q_num > 0) {
 		/*
-		 * Multi Queue हाल, additional care is required.
-		 * Per WQ active requests need to be मुख्यtained.
+		 * Multi Queue case, additional care is required.
+		 * Per WQ active requests need to be maintained.
 		 */
 		SNIC_HOST_INFO(snic->shost, "desc_avail: Multi Queue case.\n");
 		SNIC_BUG_ON(q_num > 0);
 
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	nr_wqdesc -= atomic64_पढ़ो(&snic->s_stats.fw.actv_reqs);
+	nr_wqdesc -= atomic64_read(&snic->s_stats.fw.actv_reqs);
 
-	वापस ((req_type == SNIC_REQ_HBA_RESET) ? nr_wqdesc : nr_wqdesc - 1);
-पूर्ण
+	return ((req_type == SNIC_REQ_HBA_RESET) ? nr_wqdesc : nr_wqdesc - 1);
+}
 
-पूर्णांक
-snic_queue_wq_desc(काष्ठा snic *snic, व्योम *os_buf, u16 len)
-अणु
+int
+snic_queue_wq_desc(struct snic *snic, void *os_buf, u16 len)
+{
 	dma_addr_t pa = 0;
-	अचिन्हित दीर्घ flags;
-	काष्ठा snic_fw_stats *fwstats = &snic->s_stats.fw;
-	काष्ठा snic_host_req *req = (काष्ठा snic_host_req *) os_buf;
-	दीर्घ act_reqs;
-	दीर्घ desc_avail = 0;
-	पूर्णांक q_num = 0;
+	unsigned long flags;
+	struct snic_fw_stats *fwstats = &snic->s_stats.fw;
+	struct snic_host_req *req = (struct snic_host_req *) os_buf;
+	long act_reqs;
+	long desc_avail = 0;
+	int q_num = 0;
 
-	snic_prपूर्णांक_desc(__func__, os_buf, len);
+	snic_print_desc(__func__, os_buf, len);
 
 	/* Map request buffer */
 	pa = dma_map_single(&snic->pdev->dev, os_buf, len, DMA_TO_DEVICE);
-	अगर (dma_mapping_error(&snic->pdev->dev, pa)) अणु
+	if (dma_mapping_error(&snic->pdev->dev, pa)) {
 		SNIC_HOST_ERR(snic->shost, "qdesc: PCI DMA Mapping Fail.\n");
 
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	req->req_pa = (uदीर्घ)pa;
+	req->req_pa = (ulong)pa;
 
 	q_num = snic_select_wq(snic);
 
 	spin_lock_irqsave(&snic->wq_lock[q_num], flags);
 	desc_avail = snic_wqdesc_avail(snic, q_num, req->hdr.type);
-	अगर (desc_avail <= 0) अणु
+	if (desc_avail <= 0) {
 		dma_unmap_single(&snic->pdev->dev, pa, len, DMA_TO_DEVICE);
 		req->req_pa = 0;
 		spin_unlock_irqrestore(&snic->wq_lock[q_num], flags);
 		atomic64_inc(&snic->s_stats.misc.wq_alloc_fail);
 		SNIC_DBG("host = %d, WQ is Full\n", snic->shost->host_no);
 
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	snic_queue_wq_eth_desc(&snic->wq[q_num], os_buf, pa, len, 0, 0, 1);
 	/*
 	 * Update stats
 	 * note: when multi queue enabled, fw actv_reqs should be per queue.
 	 */
-	act_reqs = atomic64_inc_वापस(&fwstats->actv_reqs);
+	act_reqs = atomic64_inc_return(&fwstats->actv_reqs);
 	spin_unlock_irqrestore(&snic->wq_lock[q_num], flags);
 
-	अगर (act_reqs > atomic64_पढ़ो(&fwstats->max_actv_reqs))
+	if (act_reqs > atomic64_read(&fwstats->max_actv_reqs))
 		atomic64_set(&fwstats->max_actv_reqs, act_reqs);
 
-	वापस 0;
-पूर्ण /* end of snic_queue_wq_desc() */
+	return 0;
+} /* end of snic_queue_wq_desc() */
 
 /*
- * snic_handle_untagged_req: Adds snic specअगरic requests to spl_cmd_list.
+ * snic_handle_untagged_req: Adds snic specific requests to spl_cmd_list.
  * Purpose : Used during driver unload to clean up the requests.
  */
-व्योम
-snic_handle_untagged_req(काष्ठा snic *snic, काष्ठा snic_req_info *rqi)
-अणु
-	अचिन्हित दीर्घ flags;
+void
+snic_handle_untagged_req(struct snic *snic, struct snic_req_info *rqi)
+{
+	unsigned long flags;
 
 	INIT_LIST_HEAD(&rqi->list);
 
 	spin_lock_irqsave(&snic->spl_cmd_lock, flags);
 	list_add_tail(&rqi->list, &snic->spl_cmd_list);
 	spin_unlock_irqrestore(&snic->spl_cmd_lock, flags);
-पूर्ण
+}
 
 /*
  * snic_req_init:
  * Allocates snic_req_info + snic_host_req + sgl data, and initializes.
  */
-काष्ठा snic_req_info *
-snic_req_init(काष्ठा snic *snic, पूर्णांक sg_cnt)
-अणु
+struct snic_req_info *
+snic_req_init(struct snic *snic, int sg_cnt)
+{
 	u8 typ;
-	काष्ठा snic_req_info *rqi = शून्य;
+	struct snic_req_info *rqi = NULL;
 
 	typ = (sg_cnt <= SNIC_REQ_CACHE_DFLT_SGL) ?
 		SNIC_REQ_CACHE_DFLT_SGL : SNIC_REQ_CACHE_MAX_SGL;
 
 	rqi = mempool_alloc(snic->req_pool[typ], GFP_ATOMIC);
-	अगर (!rqi) अणु
+	if (!rqi) {
 		atomic64_inc(&snic->s_stats.io.alloc_fail);
 		SNIC_HOST_ERR(snic->shost,
 			      "Failed to allocate memory from snic req pool id = %d\n",
 			      typ);
-		वापस rqi;
-	पूर्ण
+		return rqi;
+	}
 
-	स_रखो(rqi, 0, माप(*rqi));
+	memset(rqi, 0, sizeof(*rqi));
 	rqi->rq_pool_type = typ;
-	rqi->start_समय = jअगरfies;
-	rqi->req = (काष्ठा snic_host_req *) (rqi + 1);
-	rqi->req_len = माप(काष्ठा snic_host_req);
+	rqi->start_time = jiffies;
+	rqi->req = (struct snic_host_req *) (rqi + 1);
+	rqi->req_len = sizeof(struct snic_host_req);
 	rqi->snic = snic;
 
-	rqi->req = (काष्ठा snic_host_req *)(rqi + 1);
+	rqi->req = (struct snic_host_req *)(rqi + 1);
 
-	अगर (sg_cnt == 0)
-		जाओ end;
+	if (sg_cnt == 0)
+		goto end;
 
-	rqi->req_len += (sg_cnt * माप(काष्ठा snic_sg_desc));
+	rqi->req_len += (sg_cnt * sizeof(struct snic_sg_desc));
 
-	अगर (sg_cnt > atomic64_पढ़ो(&snic->s_stats.io.max_sgl))
+	if (sg_cnt > atomic64_read(&snic->s_stats.io.max_sgl))
 		atomic64_set(&snic->s_stats.io.max_sgl, sg_cnt);
 
 	SNIC_BUG_ON(sg_cnt > SNIC_MAX_SG_DESC_CNT);
 	atomic64_inc(&snic->s_stats.io.sgl_cnt[sg_cnt - 1]);
 
 end:
-	स_रखो(rqi->req, 0, rqi->req_len);
+	memset(rqi->req, 0, rqi->req_len);
 
 	/* pre initialization of init_ctx to support req_to_rqi */
-	rqi->req->hdr.init_ctx = (uदीर्घ) rqi;
+	rqi->req->hdr.init_ctx = (ulong) rqi;
 
 	SNIC_SCSI_DBG(snic->shost, "Req_alloc:rqi = %p allocatd.\n", rqi);
 
-	वापस rqi;
-पूर्ण /* end of snic_req_init */
+	return rqi;
+} /* end of snic_req_init */
 
 /*
- * snic_पात_req_init : Inits पात request.
+ * snic_abort_req_init : Inits abort request.
  */
-काष्ठा snic_host_req *
-snic_पात_req_init(काष्ठा snic *snic, काष्ठा snic_req_info *rqi)
-अणु
-	काष्ठा snic_host_req *req = शून्य;
+struct snic_host_req *
+snic_abort_req_init(struct snic *snic, struct snic_req_info *rqi)
+{
+	struct snic_host_req *req = NULL;
 
 	SNIC_BUG_ON(!rqi);
 
-	/* If पात to be issued second समय, then reuse */
-	अगर (rqi->पात_req)
-		वापस rqi->पात_req;
+	/* If abort to be issued second time, then reuse */
+	if (rqi->abort_req)
+		return rqi->abort_req;
 
 
 	req = mempool_alloc(snic->req_pool[SNIC_REQ_TM_CACHE], GFP_ATOMIC);
-	अगर (!req) अणु
+	if (!req) {
 		SNIC_HOST_ERR(snic->shost, "abts:Failed to alloc tm req.\n");
 		WARN_ON_ONCE(1);
 
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	rqi->पात_req = req;
-	स_रखो(req, 0, माप(काष्ठा snic_host_req));
+	rqi->abort_req = req;
+	memset(req, 0, sizeof(struct snic_host_req));
 	/* pre initialization of init_ctx to support req_to_rqi */
-	req->hdr.init_ctx = (uदीर्घ) rqi;
+	req->hdr.init_ctx = (ulong) rqi;
 
-	वापस req;
-पूर्ण /* end of snic_पात_req_init */
+	return req;
+} /* end of snic_abort_req_init */
 
 /*
  * snic_dr_req_init : Inits device reset req
  */
-काष्ठा snic_host_req *
-snic_dr_req_init(काष्ठा snic *snic, काष्ठा snic_req_info *rqi)
-अणु
-	काष्ठा snic_host_req *req = शून्य;
+struct snic_host_req *
+snic_dr_req_init(struct snic *snic, struct snic_req_info *rqi)
+{
+	struct snic_host_req *req = NULL;
 
 	SNIC_BUG_ON(!rqi);
 
 	req = mempool_alloc(snic->req_pool[SNIC_REQ_TM_CACHE], GFP_ATOMIC);
-	अगर (!req) अणु
+	if (!req) {
 		SNIC_HOST_ERR(snic->shost, "dr:Failed to alloc tm req.\n");
 		WARN_ON_ONCE(1);
 
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	SNIC_BUG_ON(rqi->dr_req != शून्य);
+	SNIC_BUG_ON(rqi->dr_req != NULL);
 	rqi->dr_req = req;
-	स_रखो(req, 0, माप(काष्ठा snic_host_req));
+	memset(req, 0, sizeof(struct snic_host_req));
 	/* pre initialization of init_ctx to support req_to_rqi */
-	req->hdr.init_ctx = (uदीर्घ) rqi;
+	req->hdr.init_ctx = (ulong) rqi;
 
-	वापस req;
-पूर्ण /* end of snic_dr_req_init */
+	return req;
+} /* end of snic_dr_req_init */
 
-/* मुक्तs snic_req_info and snic_host_req */
-व्योम
-snic_req_मुक्त(काष्ठा snic *snic, काष्ठा snic_req_info *rqi)
-अणु
-	SNIC_BUG_ON(rqi->req == rqi->पात_req);
+/* frees snic_req_info and snic_host_req */
+void
+snic_req_free(struct snic *snic, struct snic_req_info *rqi)
+{
+	SNIC_BUG_ON(rqi->req == rqi->abort_req);
 	SNIC_BUG_ON(rqi->req == rqi->dr_req);
 	SNIC_BUG_ON(rqi->sge_va != 0);
 
 	SNIC_SCSI_DBG(snic->shost,
 		      "Req_free:rqi %p:ioreq %p:abt %p:dr %p\n",
-		      rqi, rqi->req, rqi->पात_req, rqi->dr_req);
+		      rqi, rqi->req, rqi->abort_req, rqi->dr_req);
 
-	अगर (rqi->पात_req) अणु
-		अगर (rqi->पात_req->req_pa)
+	if (rqi->abort_req) {
+		if (rqi->abort_req->req_pa)
 			dma_unmap_single(&snic->pdev->dev,
-					 rqi->पात_req->req_pa,
-					 माप(काष्ठा snic_host_req),
+					 rqi->abort_req->req_pa,
+					 sizeof(struct snic_host_req),
 					 DMA_TO_DEVICE);
 
-		mempool_मुक्त(rqi->पात_req, snic->req_pool[SNIC_REQ_TM_CACHE]);
-	पूर्ण
+		mempool_free(rqi->abort_req, snic->req_pool[SNIC_REQ_TM_CACHE]);
+	}
 
-	अगर (rqi->dr_req) अणु
-		अगर (rqi->dr_req->req_pa)
+	if (rqi->dr_req) {
+		if (rqi->dr_req->req_pa)
 			dma_unmap_single(&snic->pdev->dev,
 					 rqi->dr_req->req_pa,
-					 माप(काष्ठा snic_host_req),
+					 sizeof(struct snic_host_req),
 					 DMA_TO_DEVICE);
 
-		mempool_मुक्त(rqi->dr_req, snic->req_pool[SNIC_REQ_TM_CACHE]);
-	पूर्ण
+		mempool_free(rqi->dr_req, snic->req_pool[SNIC_REQ_TM_CACHE]);
+	}
 
-	अगर (rqi->req->req_pa)
+	if (rqi->req->req_pa)
 		dma_unmap_single(&snic->pdev->dev,
 				 rqi->req->req_pa,
 				 rqi->req_len,
 				 DMA_TO_DEVICE);
 
-	mempool_मुक्त(rqi, snic->req_pool[rqi->rq_pool_type]);
-पूर्ण
+	mempool_free(rqi, snic->req_pool[rqi->rq_pool_type]);
+}
 
-व्योम
-snic_pci_unmap_rsp_buf(काष्ठा snic *snic, काष्ठा snic_req_info *rqi)
-अणु
-	काष्ठा snic_sg_desc *sgd;
+void
+snic_pci_unmap_rsp_buf(struct snic *snic, struct snic_req_info *rqi)
+{
+	struct snic_sg_desc *sgd;
 
 	sgd = req_to_sgl(rqi_to_req(rqi));
 	SNIC_BUG_ON(sgd[0].addr == 0);
@@ -390,181 +389,181 @@ snic_pci_unmap_rsp_buf(काष्ठा snic *snic, काष्ठा snic_re
 			 le64_to_cpu(sgd[0].addr),
 			 le32_to_cpu(sgd[0].len),
 			 DMA_FROM_DEVICE);
-पूर्ण
+}
 
 /*
- * snic_मुक्त_all_untagged_reqs: Walks through untagged reqs and मुक्तs them.
+ * snic_free_all_untagged_reqs: Walks through untagged reqs and frees them.
  */
-व्योम
-snic_मुक्त_all_untagged_reqs(काष्ठा snic *snic)
-अणु
-	काष्ठा snic_req_info *rqi;
-	काष्ठा list_head *cur, *nxt;
-	अचिन्हित दीर्घ flags;
+void
+snic_free_all_untagged_reqs(struct snic *snic)
+{
+	struct snic_req_info *rqi;
+	struct list_head *cur, *nxt;
+	unsigned long flags;
 
 	spin_lock_irqsave(&snic->spl_cmd_lock, flags);
-	list_क्रम_each_safe(cur, nxt, &snic->spl_cmd_list) अणु
-		rqi = list_entry(cur, काष्ठा snic_req_info, list);
+	list_for_each_safe(cur, nxt, &snic->spl_cmd_list) {
+		rqi = list_entry(cur, struct snic_req_info, list);
 		list_del_init(&rqi->list);
-		अगर (rqi->sge_va) अणु
+		if (rqi->sge_va) {
 			snic_pci_unmap_rsp_buf(snic, rqi);
-			kमुक्त((व्योम *)rqi->sge_va);
+			kfree((void *)rqi->sge_va);
 			rqi->sge_va = 0;
-		पूर्ण
+		}
 
-		snic_req_मुक्त(snic, rqi);
-	पूर्ण
+		snic_req_free(snic, rqi);
+	}
 	spin_unlock_irqrestore(&snic->spl_cmd_lock, flags);
-पूर्ण
+}
 
 /*
- * snic_release_untagged_req : Unlinks the untagged req and मुक्तs it.
+ * snic_release_untagged_req : Unlinks the untagged req and frees it.
  */
-व्योम
-snic_release_untagged_req(काष्ठा snic *snic, काष्ठा snic_req_info *rqi)
-अणु
-	अचिन्हित दीर्घ flags;
+void
+snic_release_untagged_req(struct snic *snic, struct snic_req_info *rqi)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&snic->snic_lock, flags);
-	अगर (snic->in_हटाओ) अणु
+	if (snic->in_remove) {
 		spin_unlock_irqrestore(&snic->snic_lock, flags);
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 	spin_unlock_irqrestore(&snic->snic_lock, flags);
 
 	spin_lock_irqsave(&snic->spl_cmd_lock, flags);
-	अगर (list_empty(&rqi->list)) अणु
+	if (list_empty(&rqi->list)) {
 		spin_unlock_irqrestore(&snic->spl_cmd_lock, flags);
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 	list_del_init(&rqi->list);
 	spin_unlock_irqrestore(&snic->spl_cmd_lock, flags);
-	snic_req_मुक्त(snic, rqi);
+	snic_req_free(snic, rqi);
 
 end:
-	वापस;
-पूर्ण
+	return;
+}
 
 /* dump buf in hex fmt */
-व्योम
-snic_hex_dump(अक्षर *pfx, अक्षर *data, पूर्णांक len)
-अणु
+void
+snic_hex_dump(char *pfx, char *data, int len)
+{
 	SNIC_INFO("%s Dumping Data of Len = %d\n", pfx, len);
-	prपूर्णांक_hex_dump_bytes(pfx, DUMP_PREFIX_NONE, data, len);
-पूर्ण
+	print_hex_dump_bytes(pfx, DUMP_PREFIX_NONE, data, len);
+}
 
-#घोषणा	LINE_BUFSZ	128	/* क्रम snic_prपूर्णांक_desc fn */
-अटल व्योम
-snic_dump_desc(स्थिर अक्षर *fn, अक्षर *os_buf, पूर्णांक len)
-अणु
-	काष्ठा snic_host_req *req = (काष्ठा snic_host_req *) os_buf;
-	काष्ठा snic_fw_req *fwreq = (काष्ठा snic_fw_req *) os_buf;
-	काष्ठा snic_req_info *rqi = शून्य;
-	अक्षर line[LINE_BUFSZ] = अणु '\0' पूर्ण;
-	अक्षर *cmd_str = शून्य;
+#define	LINE_BUFSZ	128	/* for snic_print_desc fn */
+static void
+snic_dump_desc(const char *fn, char *os_buf, int len)
+{
+	struct snic_host_req *req = (struct snic_host_req *) os_buf;
+	struct snic_fw_req *fwreq = (struct snic_fw_req *) os_buf;
+	struct snic_req_info *rqi = NULL;
+	char line[LINE_BUFSZ] = { '\0' };
+	char *cmd_str = NULL;
 
-	अगर (req->hdr.type >= SNIC_RSP_REPORT_TGTS_CMPL)
-		rqi = (काष्ठा snic_req_info *) fwreq->hdr.init_ctx;
-	अन्यथा
-		rqi = (काष्ठा snic_req_info *) req->hdr.init_ctx;
+	if (req->hdr.type >= SNIC_RSP_REPORT_TGTS_CMPL)
+		rqi = (struct snic_req_info *) fwreq->hdr.init_ctx;
+	else
+		rqi = (struct snic_req_info *) req->hdr.init_ctx;
 
-	SNIC_BUG_ON(rqi == शून्य || rqi->req == शून्य);
-	चयन (req->hdr.type) अणु
-	हाल SNIC_REQ_REPORT_TGTS:
+	SNIC_BUG_ON(rqi == NULL || rqi->req == NULL);
+	switch (req->hdr.type) {
+	case SNIC_REQ_REPORT_TGTS:
 		cmd_str = "report-tgt : ";
-		snम_लिखो(line, LINE_BUFSZ, "SNIC_REQ_REPORT_TGTS :");
-		अवरोध;
+		snprintf(line, LINE_BUFSZ, "SNIC_REQ_REPORT_TGTS :");
+		break;
 
-	हाल SNIC_REQ_ICMND:
+	case SNIC_REQ_ICMND:
 		cmd_str = "icmnd : ";
-		snम_लिखो(line, LINE_BUFSZ, "SNIC_REQ_ICMND : 0x%x :",
+		snprintf(line, LINE_BUFSZ, "SNIC_REQ_ICMND : 0x%x :",
 			 req->u.icmnd.cdb[0]);
-		अवरोध;
+		break;
 
-	हाल SNIC_REQ_ITMF:
+	case SNIC_REQ_ITMF:
 		cmd_str = "itmf : ";
-		snम_लिखो(line, LINE_BUFSZ, "SNIC_REQ_ITMF :");
-		अवरोध;
+		snprintf(line, LINE_BUFSZ, "SNIC_REQ_ITMF :");
+		break;
 
-	हाल SNIC_REQ_HBA_RESET:
+	case SNIC_REQ_HBA_RESET:
 		cmd_str = "hba reset :";
-		snम_लिखो(line, LINE_BUFSZ, "SNIC_REQ_HBA_RESET :");
-		अवरोध;
+		snprintf(line, LINE_BUFSZ, "SNIC_REQ_HBA_RESET :");
+		break;
 
-	हाल SNIC_REQ_EXCH_VER:
+	case SNIC_REQ_EXCH_VER:
 		cmd_str = "exch ver : ";
-		snम_लिखो(line, LINE_BUFSZ, "SNIC_REQ_EXCH_VER :");
-		अवरोध;
+		snprintf(line, LINE_BUFSZ, "SNIC_REQ_EXCH_VER :");
+		break;
 
-	हाल SNIC_REQ_TGT_INFO:
+	case SNIC_REQ_TGT_INFO:
 		cmd_str = "tgt info : ";
-		अवरोध;
+		break;
 
-	हाल SNIC_RSP_REPORT_TGTS_CMPL:
+	case SNIC_RSP_REPORT_TGTS_CMPL:
 		cmd_str = "report tgt cmpl : ";
-		snम_लिखो(line, LINE_BUFSZ, "SNIC_RSP_REPORT_TGTS_CMPL :");
-		अवरोध;
+		snprintf(line, LINE_BUFSZ, "SNIC_RSP_REPORT_TGTS_CMPL :");
+		break;
 
-	हाल SNIC_RSP_ICMND_CMPL:
+	case SNIC_RSP_ICMND_CMPL:
 		cmd_str = "icmnd_cmpl : ";
-		snम_लिखो(line, LINE_BUFSZ, "SNIC_RSP_ICMND_CMPL : 0x%x :",
+		snprintf(line, LINE_BUFSZ, "SNIC_RSP_ICMND_CMPL : 0x%x :",
 			 rqi->req->u.icmnd.cdb[0]);
-		अवरोध;
+		break;
 
-	हाल SNIC_RSP_ITMF_CMPL:
+	case SNIC_RSP_ITMF_CMPL:
 		cmd_str = "itmf_cmpl : ";
-		snम_लिखो(line, LINE_BUFSZ, "SNIC_RSP_ITMF_CMPL :");
-		अवरोध;
+		snprintf(line, LINE_BUFSZ, "SNIC_RSP_ITMF_CMPL :");
+		break;
 
-	हाल SNIC_RSP_HBA_RESET_CMPL:
+	case SNIC_RSP_HBA_RESET_CMPL:
 		cmd_str = "hba_reset_cmpl : ";
-		snम_लिखो(line, LINE_BUFSZ, "SNIC_RSP_HBA_RESET_CMPL :");
-		अवरोध;
+		snprintf(line, LINE_BUFSZ, "SNIC_RSP_HBA_RESET_CMPL :");
+		break;
 
-	हाल SNIC_RSP_EXCH_VER_CMPL:
+	case SNIC_RSP_EXCH_VER_CMPL:
 		cmd_str = "exch_ver_cmpl : ";
-		snम_लिखो(line, LINE_BUFSZ, "SNIC_RSP_EXCH_VER_CMPL :");
-		अवरोध;
+		snprintf(line, LINE_BUFSZ, "SNIC_RSP_EXCH_VER_CMPL :");
+		break;
 
-	हाल SNIC_MSG_ACK:
+	case SNIC_MSG_ACK:
 		cmd_str = "msg ack : ";
-		snम_लिखो(line, LINE_BUFSZ, "SNIC_MSG_ACK :");
-		अवरोध;
+		snprintf(line, LINE_BUFSZ, "SNIC_MSG_ACK :");
+		break;
 
-	हाल SNIC_MSG_ASYNC_EVNOTIFY:
+	case SNIC_MSG_ASYNC_EVNOTIFY:
 		cmd_str = "async notify : ";
-		snम_लिखो(line, LINE_BUFSZ, "SNIC_MSG_ASYNC_EVNOTIFY :");
-		अवरोध;
+		snprintf(line, LINE_BUFSZ, "SNIC_MSG_ASYNC_EVNOTIFY :");
+		break;
 
-	शेष:
+	default:
 		cmd_str = "unknown : ";
 		SNIC_BUG_ON(1);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	SNIC_INFO("%s:%s >>cmndid=%x:sg_cnt = %x:status = %x:ctx = %lx.\n",
 		  fn, line, req->hdr.cmnd_id, req->hdr.sg_cnt, req->hdr.status,
 		  req->hdr.init_ctx);
 
 	/* Enable it, to dump byte stream */
-	अगर (snic_log_level & 0x20)
+	if (snic_log_level & 0x20)
 		snic_hex_dump(cmd_str, os_buf, len);
-पूर्ण /* end of __snic_prपूर्णांक_desc */
+} /* end of __snic_print_desc */
 
-व्योम
-snic_prपूर्णांक_desc(स्थिर अक्षर *fn, अक्षर *os_buf, पूर्णांक len)
-अणु
-	अगर (snic_log_level & SNIC_DESC_LOGGING)
+void
+snic_print_desc(const char *fn, char *os_buf, int len)
+{
+	if (snic_log_level & SNIC_DESC_LOGGING)
 		snic_dump_desc(fn, os_buf, len);
-पूर्ण
+}
 
-व्योम
-snic_calc_io_process_समय(काष्ठा snic *snic, काष्ठा snic_req_info *rqi)
-अणु
+void
+snic_calc_io_process_time(struct snic *snic, struct snic_req_info *rqi)
+{
 	u64 duration;
 
-	duration = jअगरfies - rqi->start_समय;
+	duration = jiffies - rqi->start_time;
 
-	अगर (duration > atomic64_पढ़ो(&snic->s_stats.io.max_समय))
-		atomic64_set(&snic->s_stats.io.max_समय, duration);
-पूर्ण
+	if (duration > atomic64_read(&snic->s_stats.io.max_time))
+		atomic64_set(&snic->s_stats.io.max_time, duration);
+}

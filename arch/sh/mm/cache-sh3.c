@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * arch/sh/mm/cache-sh3.c
  *
@@ -7,18 +6,18 @@
  * Copyright (C) 2002 Paul Mundt
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/mman.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/thपढ़ोs.h>
-#समावेश <यंत्र/addrspace.h>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/processor.h>
-#समावेश <यंत्र/cache.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/mmu_context.h>
-#समावेश <यंत्र/cacheflush.h>
+#include <linux/init.h>
+#include <linux/mman.h>
+#include <linux/mm.h>
+#include <linux/threads.h>
+#include <asm/addrspace.h>
+#include <asm/page.h>
+#include <asm/processor.h>
+#include <asm/cache.h>
+#include <asm/io.h>
+#include <linux/uaccess.h>
+#include <asm/mmu_context.h>
+#include <asm/cacheflush.h>
 
 /*
  * Write back the dirty D-caches, but not invalidate them.
@@ -30,38 +29,38 @@
  * SIZE: Size of the region.
  */
 
-अटल व्योम sh3__flush_wback_region(व्योम *start, पूर्णांक size)
-अणु
-	अचिन्हित दीर्घ v, j;
-	अचिन्हित दीर्घ begin, end;
-	अचिन्हित दीर्घ flags;
+static void sh3__flush_wback_region(void *start, int size)
+{
+	unsigned long v, j;
+	unsigned long begin, end;
+	unsigned long flags;
 
-	begin = (अचिन्हित दीर्घ)start & ~(L1_CACHE_BYTES-1);
-	end = ((अचिन्हित दीर्घ)start + size + L1_CACHE_BYTES-1)
+	begin = (unsigned long)start & ~(L1_CACHE_BYTES-1);
+	end = ((unsigned long)start + size + L1_CACHE_BYTES-1)
 		& ~(L1_CACHE_BYTES-1);
 
-	क्रम (v = begin; v < end; v+=L1_CACHE_BYTES) अणु
-		अचिन्हित दीर्घ addrstart = CACHE_OC_ADDRESS_ARRAY;
-		क्रम (j = 0; j < current_cpu_data.dcache.ways; j++) अणु
-			अचिन्हित दीर्घ data, addr, p;
+	for (v = begin; v < end; v+=L1_CACHE_BYTES) {
+		unsigned long addrstart = CACHE_OC_ADDRESS_ARRAY;
+		for (j = 0; j < current_cpu_data.dcache.ways; j++) {
+			unsigned long data, addr, p;
 
 			p = __pa(v);
 			addr = addrstart | (v & current_cpu_data.dcache.entry_mask);
 			local_irq_save(flags);
-			data = __raw_पढ़ोl(addr);
+			data = __raw_readl(addr);
 
-			अगर ((data & CACHE_PHYSADDR_MASK) ==
-			    (p & CACHE_PHYSADDR_MASK)) अणु
+			if ((data & CACHE_PHYSADDR_MASK) ==
+			    (p & CACHE_PHYSADDR_MASK)) {
 				data &= ~SH_CACHE_UPDATED;
-				__raw_ग_लिखोl(data, addr);
+				__raw_writel(data, addr);
 				local_irq_restore(flags);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			local_irq_restore(flags);
 			addrstart += current_cpu_data.dcache.way_incr;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*
  * Write back the dirty D-caches and invalidate them.
@@ -69,35 +68,35 @@
  * START: Virtual Address (U0, P1, or P3)
  * SIZE: Size of the region.
  */
-अटल व्योम sh3__flush_purge_region(व्योम *start, पूर्णांक size)
-अणु
-	अचिन्हित दीर्घ v;
-	अचिन्हित दीर्घ begin, end;
+static void sh3__flush_purge_region(void *start, int size)
+{
+	unsigned long v;
+	unsigned long begin, end;
 
-	begin = (अचिन्हित दीर्घ)start & ~(L1_CACHE_BYTES-1);
-	end = ((अचिन्हित दीर्घ)start + size + L1_CACHE_BYTES-1)
+	begin = (unsigned long)start & ~(L1_CACHE_BYTES-1);
+	end = ((unsigned long)start + size + L1_CACHE_BYTES-1)
 		& ~(L1_CACHE_BYTES-1);
 
-	क्रम (v = begin; v < end; v+=L1_CACHE_BYTES) अणु
-		अचिन्हित दीर्घ data, addr;
+	for (v = begin; v < end; v+=L1_CACHE_BYTES) {
+		unsigned long data, addr;
 
 		data = (v & 0xfffffc00); /* _Virtual_ address, ~U, ~V */
 		addr = CACHE_OC_ADDRESS_ARRAY |
 			(v & current_cpu_data.dcache.entry_mask) | SH_CACHE_ASSOC;
-		__raw_ग_लिखोl(data, addr);
-	पूर्ण
-पूर्ण
+		__raw_writel(data, addr);
+	}
+}
 
-व्योम __init sh3_cache_init(व्योम)
-अणु
+void __init sh3_cache_init(void)
+{
 	__flush_wback_region = sh3__flush_wback_region;
 	__flush_purge_region = sh3__flush_purge_region;
 
 	/*
-	 * No ग_लिखो back please
+	 * No write back please
 	 *
-	 * Except I करोn't think there's any way to aव्योम the ग_लिखोback.
+	 * Except I don't think there's any way to avoid the writeback.
 	 * So we just alias it to sh3__flush_purge_region(). dwmw2.
 	 */
 	__flush_invalidate_region = sh3__flush_purge_region;
-पूर्ण
+}

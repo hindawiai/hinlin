@@ -1,46 +1,45 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Ptrace test TM SPR रेजिस्टरs
+ * Ptrace test TM SPR registers
  *
  * Copyright (C) 2015 Anshuman Khandual, IBM Corporation.
  */
-#समावेश "ptrace.h"
-#समावेश "tm.h"
+#include "ptrace.h"
+#include "tm.h"
 
 /* Tracee and tracer shared data */
-काष्ठा shared अणु
-	पूर्णांक flag;
-	काष्ठा पंचांग_spr_regs regs;
-पूर्ण;
-अचिन्हित दीर्घ tfhar;
+struct shared {
+	int flag;
+	struct tm_spr_regs regs;
+};
+unsigned long tfhar;
 
-पूर्णांक shm_id;
-काष्ठा shared *cptr, *pptr;
+int shm_id;
+struct shared *cptr, *pptr;
 
-पूर्णांक shm_id1;
-पूर्णांक *cptr1, *pptr1;
+int shm_id1;
+int *cptr1, *pptr1;
 
-#घोषणा TM_KVM_SCHED   0xe0000001ac000001
-पूर्णांक validate_पंचांग_spr(काष्ठा पंचांग_spr_regs *regs)
-अणु
-	FAIL_IF(regs->पंचांग_tfhar != tfhar);
-	FAIL_IF((regs->पंचांग_texasr == TM_KVM_SCHED) && (regs->पंचांग_tfiar != 0));
+#define TM_KVM_SCHED   0xe0000001ac000001
+int validate_tm_spr(struct tm_spr_regs *regs)
+{
+	FAIL_IF(regs->tm_tfhar != tfhar);
+	FAIL_IF((regs->tm_texasr == TM_KVM_SCHED) && (regs->tm_tfiar != 0));
 
-	वापस TEST_PASS;
-पूर्ण
+	return TEST_PASS;
+}
 
-व्योम पंचांग_spr(व्योम)
-अणु
-	अचिन्हित दीर्घ result, texasr;
-	पूर्णांक ret;
+void tm_spr(void)
+{
+	unsigned long result, texasr;
+	int ret;
 
-	cptr = (काष्ठा shared *)shmat(shm_id, शून्य, 0);
-	cptr1 = (पूर्णांक *)shmat(shm_id1, शून्य, 0);
+	cptr = (struct shared *)shmat(shm_id, NULL, 0);
+	cptr1 = (int *)shmat(shm_id1, NULL, 0);
 
 trans:
 	cptr1[0] = 0;
-	यंत्र __अस्थिर__(
+	asm __volatile__(
 		"1: ;"
 		/* TM failover handler should follow "tbegin.;" */
 		"mflr 31;"
@@ -76,89 +75,89 @@ trans:
 		: "memory", "r0", "r8", "r31"
 		);
 
-	/* There are 2 32bit inकाष्ठाions beक्रमe tbegin. */
+	/* There are 2 32bit instructions before tbegin. */
 	tfhar += 12;
 
-	अगर (result) अणु
-		अगर (!cptr->flag)
-			जाओ trans;
+	if (result) {
+		if (!cptr->flag)
+			goto trans;
 
-		ret = validate_पंचांग_spr((काष्ठा पंचांग_spr_regs *)&cptr->regs);
-		shmdt((व्योम *)cptr);
-		shmdt((व्योम *)cptr1);
-		अगर (ret)
-			निकास(1);
-		निकास(0);
-	पूर्ण
-	shmdt((व्योम *)cptr);
-	shmdt((व्योम *)cptr1);
-	निकास(1);
-पूर्ण
+		ret = validate_tm_spr((struct tm_spr_regs *)&cptr->regs);
+		shmdt((void *)cptr);
+		shmdt((void *)cptr1);
+		if (ret)
+			exit(1);
+		exit(0);
+	}
+	shmdt((void *)cptr);
+	shmdt((void *)cptr1);
+	exit(1);
+}
 
-पूर्णांक trace_पंचांग_spr(pid_t child)
-अणु
+int trace_tm_spr(pid_t child)
+{
 	FAIL_IF(start_trace(child));
-	FAIL_IF(show_पंचांग_spr(child, (काष्ठा पंचांग_spr_regs *)&pptr->regs));
+	FAIL_IF(show_tm_spr(child, (struct tm_spr_regs *)&pptr->regs));
 
-	म_लिखो("TFHAR: %lx TEXASR: %lx TFIAR: %lx\n", pptr->regs.पंचांग_tfhar,
-				pptr->regs.पंचांग_texasr, pptr->regs.पंचांग_tfiar);
+	printf("TFHAR: %lx TEXASR: %lx TFIAR: %lx\n", pptr->regs.tm_tfhar,
+				pptr->regs.tm_texasr, pptr->regs.tm_tfiar);
 
 	pptr->flag = 1;
 	FAIL_IF(stop_trace(child));
 
-	वापस TEST_PASS;
-पूर्ण
+	return TEST_PASS;
+}
 
-पूर्णांक ptrace_पंचांग_spr(व्योम)
-अणु
+int ptrace_tm_spr(void)
+{
 	pid_t pid;
-	पूर्णांक ret, status;
+	int ret, status;
 
-	SKIP_IF(!have_hपंचांग());
-	shm_id = shmget(IPC_PRIVATE, माप(काष्ठा shared), 0777|IPC_CREAT);
-	shm_id1 = shmget(IPC_PRIVATE, माप(पूर्णांक), 0777|IPC_CREAT);
-	pid = विभाजन();
-	अगर (pid < 0) अणु
-		लिखो_त्रुटि("fork() failed");
-		वापस TEST_FAIL;
-	पूर्ण
+	SKIP_IF(!have_htm());
+	shm_id = shmget(IPC_PRIVATE, sizeof(struct shared), 0777|IPC_CREAT);
+	shm_id1 = shmget(IPC_PRIVATE, sizeof(int), 0777|IPC_CREAT);
+	pid = fork();
+	if (pid < 0) {
+		perror("fork() failed");
+		return TEST_FAIL;
+	}
 
-	अगर (pid == 0)
-		पंचांग_spr();
+	if (pid == 0)
+		tm_spr();
 
-	अगर (pid) अणु
-		pptr = (काष्ठा shared *)shmat(shm_id, शून्य, 0);
-		pptr1 = (पूर्णांक *)shmat(shm_id1, शून्य, 0);
+	if (pid) {
+		pptr = (struct shared *)shmat(shm_id, NULL, 0);
+		pptr1 = (int *)shmat(shm_id1, NULL, 0);
 
-		जबतक (!pptr1[0])
-			यंत्र अस्थिर("" : : : "memory");
-		ret = trace_पंचांग_spr(pid);
-		अगर (ret) अणु
-			समाप्त(pid, SIGKILL);
-			shmdt((व्योम *)pptr);
-			shmdt((व्योम *)pptr1);
-			shmctl(shm_id, IPC_RMID, शून्य);
-			shmctl(shm_id1, IPC_RMID, शून्य);
-			वापस TEST_FAIL;
-		पूर्ण
+		while (!pptr1[0])
+			asm volatile("" : : : "memory");
+		ret = trace_tm_spr(pid);
+		if (ret) {
+			kill(pid, SIGKILL);
+			shmdt((void *)pptr);
+			shmdt((void *)pptr1);
+			shmctl(shm_id, IPC_RMID, NULL);
+			shmctl(shm_id1, IPC_RMID, NULL);
+			return TEST_FAIL;
+		}
 
-		shmdt((व्योम *)pptr);
-		shmdt((व्योम *)pptr1);
-		ret = रुको(&status);
-		shmctl(shm_id, IPC_RMID, शून्य);
-		shmctl(shm_id1, IPC_RMID, शून्य);
-		अगर (ret != pid) अणु
-			म_लिखो("Child's exit status not captured\n");
-			वापस TEST_FAIL;
-		पूर्ण
+		shmdt((void *)pptr);
+		shmdt((void *)pptr1);
+		ret = wait(&status);
+		shmctl(shm_id, IPC_RMID, NULL);
+		shmctl(shm_id1, IPC_RMID, NULL);
+		if (ret != pid) {
+			printf("Child's exit status not captured\n");
+			return TEST_FAIL;
+		}
 
-		वापस (WIFEXITED(status) && WEXITSTATUS(status)) ? TEST_FAIL :
+		return (WIFEXITED(status) && WEXITSTATUS(status)) ? TEST_FAIL :
 			TEST_PASS;
-	पूर्ण
-	वापस TEST_PASS;
-पूर्ण
+	}
+	return TEST_PASS;
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
-	वापस test_harness(ptrace_पंचांग_spr, "ptrace_tm_spr");
-पूर्ण
+int main(int argc, char *argv[])
+{
+	return test_harness(ptrace_tm_spr, "ptrace_tm_spr");
+}

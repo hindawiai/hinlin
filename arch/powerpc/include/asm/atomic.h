@@ -1,144 +1,143 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_POWERPC_ATOMIC_H_
-#घोषणा _ASM_POWERPC_ATOMIC_H_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_POWERPC_ATOMIC_H_
+#define _ASM_POWERPC_ATOMIC_H_
 
 /*
  * PowerPC atomic operations
  */
 
-#अगर_घोषित __KERNEL__
-#समावेश <linux/types.h>
-#समावेश <यंत्र/cmpxchg.h>
-#समावेश <यंत्र/barrier.h>
-#समावेश <यंत्र/यंत्र-स्थिर.h>
+#ifdef __KERNEL__
+#include <linux/types.h>
+#include <asm/cmpxchg.h>
+#include <asm/barrier.h>
+#include <asm/asm-const.h>
 
 /*
- * Since *_वापस_relaxed and अणुcmpपूर्णxchg_relaxed are implemented with
- * a "bne-" inकाष्ठाion at the end, so an isync is enough as a acquire barrier
- * on the platक्रमm without lwsync.
+ * Since *_return_relaxed and {cmp}xchg_relaxed are implemented with
+ * a "bne-" instruction at the end, so an isync is enough as a acquire barrier
+ * on the platform without lwsync.
  */
-#घोषणा __atomic_acquire_fence()					\
-	__यंत्र__ __अस्थिर__(PPC_ACQUIRE_BARRIER "" : : : "memory")
+#define __atomic_acquire_fence()					\
+	__asm__ __volatile__(PPC_ACQUIRE_BARRIER "" : : : "memory")
 
-#घोषणा __atomic_release_fence()					\
-	__यंत्र__ __अस्थिर__(PPC_RELEASE_BARRIER "" : : : "memory")
+#define __atomic_release_fence()					\
+	__asm__ __volatile__(PPC_RELEASE_BARRIER "" : : : "memory")
 
-अटल __अंतरभूत__ पूर्णांक atomic_पढ़ो(स्थिर atomic_t *v)
-अणु
-	पूर्णांक t;
+static __inline__ int atomic_read(const atomic_t *v)
+{
+	int t;
 
-	__यंत्र__ __अस्थिर__("lwz%U1%X1 %0,%1" : "=r"(t) : "m"UPD_CONSTR(v->counter));
+	__asm__ __volatile__("lwz%U1%X1 %0,%1" : "=r"(t) : "m"UPD_CONSTR(v->counter));
 
-	वापस t;
-पूर्ण
+	return t;
+}
 
-अटल __अंतरभूत__ व्योम atomic_set(atomic_t *v, पूर्णांक i)
-अणु
-	__यंत्र__ __अस्थिर__("stw%U0%X0 %1,%0" : "=m"UPD_CONSTR(v->counter) : "r"(i));
-पूर्ण
+static __inline__ void atomic_set(atomic_t *v, int i)
+{
+	__asm__ __volatile__("stw%U0%X0 %1,%0" : "=m"UPD_CONSTR(v->counter) : "r"(i));
+}
 
-#घोषणा ATOMIC_OP(op, यंत्र_op)						\
-अटल __अंतरभूत__ व्योम atomic_##op(पूर्णांक a, atomic_t *v)			\
-अणु									\
-	पूर्णांक t;								\
+#define ATOMIC_OP(op, asm_op)						\
+static __inline__ void atomic_##op(int a, atomic_t *v)			\
+{									\
+	int t;								\
 									\
-	__यंत्र__ __अस्थिर__(						\
+	__asm__ __volatile__(						\
 "1:	lwarx	%0,0,%3		# atomic_" #op "\n"			\
-	#यंत्र_op " %0,%2,%0\n"						\
+	#asm_op " %0,%2,%0\n"						\
 "	stwcx.	%0,0,%3 \n"						\
 "	bne-	1b\n"							\
 	: "=&r" (t), "+m" (v->counter)					\
 	: "r" (a), "r" (&v->counter)					\
 	: "cc");							\
-पूर्ण									\
+}									\
 
-#घोषणा ATOMIC_OP_RETURN_RELAXED(op, यंत्र_op)				\
-अटल अंतरभूत पूर्णांक atomic_##op##_वापस_relaxed(पूर्णांक a, atomic_t *v)	\
-अणु									\
-	पूर्णांक t;								\
+#define ATOMIC_OP_RETURN_RELAXED(op, asm_op)				\
+static inline int atomic_##op##_return_relaxed(int a, atomic_t *v)	\
+{									\
+	int t;								\
 									\
-	__यंत्र__ __अस्थिर__(						\
+	__asm__ __volatile__(						\
 "1:	lwarx	%0,0,%3		# atomic_" #op "_return_relaxed\n"	\
-	#यंत्र_op " %0,%2,%0\n"						\
+	#asm_op " %0,%2,%0\n"						\
 "	stwcx.	%0,0,%3\n"						\
 "	bne-	1b\n"							\
 	: "=&r" (t), "+m" (v->counter)					\
 	: "r" (a), "r" (&v->counter)					\
 	: "cc");							\
 									\
-	वापस t;							\
-पूर्ण
+	return t;							\
+}
 
-#घोषणा ATOMIC_FETCH_OP_RELAXED(op, यंत्र_op)				\
-अटल अंतरभूत पूर्णांक atomic_fetch_##op##_relaxed(पूर्णांक a, atomic_t *v)	\
-अणु									\
-	पूर्णांक res, t;							\
+#define ATOMIC_FETCH_OP_RELAXED(op, asm_op)				\
+static inline int atomic_fetch_##op##_relaxed(int a, atomic_t *v)	\
+{									\
+	int res, t;							\
 									\
-	__यंत्र__ __अस्थिर__(						\
+	__asm__ __volatile__(						\
 "1:	lwarx	%0,0,%4		# atomic_fetch_" #op "_relaxed\n"	\
-	#यंत्र_op " %1,%3,%0\n"						\
+	#asm_op " %1,%3,%0\n"						\
 "	stwcx.	%1,0,%4\n"						\
 "	bne-	1b\n"							\
 	: "=&r" (res), "=&r" (t), "+m" (v->counter)			\
 	: "r" (a), "r" (&v->counter)					\
 	: "cc");							\
 									\
-	वापस res;							\
-पूर्ण
+	return res;							\
+}
 
-#घोषणा ATOMIC_OPS(op, यंत्र_op)						\
-	ATOMIC_OP(op, यंत्र_op)						\
-	ATOMIC_OP_RETURN_RELAXED(op, यंत्र_op)				\
-	ATOMIC_FETCH_OP_RELAXED(op, यंत्र_op)
+#define ATOMIC_OPS(op, asm_op)						\
+	ATOMIC_OP(op, asm_op)						\
+	ATOMIC_OP_RETURN_RELAXED(op, asm_op)				\
+	ATOMIC_FETCH_OP_RELAXED(op, asm_op)
 
 ATOMIC_OPS(add, add)
 ATOMIC_OPS(sub, subf)
 
-#घोषणा atomic_add_वापस_relaxed atomic_add_वापस_relaxed
-#घोषणा atomic_sub_वापस_relaxed atomic_sub_वापस_relaxed
+#define atomic_add_return_relaxed atomic_add_return_relaxed
+#define atomic_sub_return_relaxed atomic_sub_return_relaxed
 
-#घोषणा atomic_fetch_add_relaxed atomic_fetch_add_relaxed
-#घोषणा atomic_fetch_sub_relaxed atomic_fetch_sub_relaxed
+#define atomic_fetch_add_relaxed atomic_fetch_add_relaxed
+#define atomic_fetch_sub_relaxed atomic_fetch_sub_relaxed
 
-#अघोषित ATOMIC_OPS
-#घोषणा ATOMIC_OPS(op, यंत्र_op)						\
-	ATOMIC_OP(op, यंत्र_op)						\
-	ATOMIC_FETCH_OP_RELAXED(op, यंत्र_op)
+#undef ATOMIC_OPS
+#define ATOMIC_OPS(op, asm_op)						\
+	ATOMIC_OP(op, asm_op)						\
+	ATOMIC_FETCH_OP_RELAXED(op, asm_op)
 
 ATOMIC_OPS(and, and)
 ATOMIC_OPS(or, or)
 ATOMIC_OPS(xor, xor)
 
-#घोषणा atomic_fetch_and_relaxed atomic_fetch_and_relaxed
-#घोषणा atomic_fetch_or_relaxed  atomic_fetch_or_relaxed
-#घोषणा atomic_fetch_xor_relaxed atomic_fetch_xor_relaxed
+#define atomic_fetch_and_relaxed atomic_fetch_and_relaxed
+#define atomic_fetch_or_relaxed  atomic_fetch_or_relaxed
+#define atomic_fetch_xor_relaxed atomic_fetch_xor_relaxed
 
-#अघोषित ATOMIC_OPS
-#अघोषित ATOMIC_FETCH_OP_RELAXED
-#अघोषित ATOMIC_OP_RETURN_RELAXED
-#अघोषित ATOMIC_OP
+#undef ATOMIC_OPS
+#undef ATOMIC_FETCH_OP_RELAXED
+#undef ATOMIC_OP_RETURN_RELAXED
+#undef ATOMIC_OP
 
-अटल __अंतरभूत__ व्योम atomic_inc(atomic_t *v)
-अणु
-	पूर्णांक t;
+static __inline__ void atomic_inc(atomic_t *v)
+{
+	int t;
 
-	__यंत्र__ __अस्थिर__(
-"1:	lwarx	%0,0,%2		# atomic_inc\न\
-	addic	%0,%0,1\न"
-"	stwcx.	%0,0,%2 \न\
+	__asm__ __volatile__(
+"1:	lwarx	%0,0,%2		# atomic_inc\n\
+	addic	%0,%0,1\n"
+"	stwcx.	%0,0,%2 \n\
 	bne-	1b"
 	: "=&r" (t), "+m" (v->counter)
 	: "r" (&v->counter)
 	: "cc", "xer");
-पूर्ण
-#घोषणा atomic_inc atomic_inc
+}
+#define atomic_inc atomic_inc
 
-अटल __अंतरभूत__ पूर्णांक atomic_inc_वापस_relaxed(atomic_t *v)
-अणु
-	पूर्णांक t;
+static __inline__ int atomic_inc_return_relaxed(atomic_t *v)
+{
+	int t;
 
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 "1:	lwarx	%0,0,%2		# atomic_inc_return_relaxed\n"
 "	addic	%0,%0,1\n"
 "	stwcx.	%0,0,%2\n"
@@ -147,29 +146,29 @@ ATOMIC_OPS(xor, xor)
 	: "r" (&v->counter)
 	: "cc", "xer");
 
-	वापस t;
-पूर्ण
+	return t;
+}
 
-अटल __अंतरभूत__ व्योम atomic_dec(atomic_t *v)
-अणु
-	पूर्णांक t;
+static __inline__ void atomic_dec(atomic_t *v)
+{
+	int t;
 
-	__यंत्र__ __अस्थिर__(
-"1:	lwarx	%0,0,%2		# atomic_dec\न\
-	addic	%0,%0,-1\न"
-"	stwcx.	%0,0,%2\न\
+	__asm__ __volatile__(
+"1:	lwarx	%0,0,%2		# atomic_dec\n\
+	addic	%0,%0,-1\n"
+"	stwcx.	%0,0,%2\n\
 	bne-	1b"
 	: "=&r" (t), "+m" (v->counter)
 	: "r" (&v->counter)
 	: "cc", "xer");
-पूर्ण
-#घोषणा atomic_dec atomic_dec
+}
+#define atomic_dec atomic_dec
 
-अटल __अंतरभूत__ पूर्णांक atomic_dec_वापस_relaxed(atomic_t *v)
-अणु
-	पूर्णांक t;
+static __inline__ int atomic_dec_return_relaxed(atomic_t *v)
+{
+	int t;
 
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 "1:	lwarx	%0,0,%2		# atomic_dec_return_relaxed\n"
 "	addic	%0,%0,-1\n"
 "	stwcx.	%0,0,%2\n"
@@ -178,33 +177,33 @@ ATOMIC_OPS(xor, xor)
 	: "r" (&v->counter)
 	: "cc", "xer");
 
-	वापस t;
-पूर्ण
+	return t;
+}
 
-#घोषणा atomic_inc_वापस_relaxed atomic_inc_वापस_relaxed
-#घोषणा atomic_dec_वापस_relaxed atomic_dec_वापस_relaxed
+#define atomic_inc_return_relaxed atomic_inc_return_relaxed
+#define atomic_dec_return_relaxed atomic_dec_return_relaxed
 
-#घोषणा atomic_cmpxchg(v, o, n) (cmpxchg(&((v)->counter), (o), (n)))
-#घोषणा atomic_cmpxchg_relaxed(v, o, n) \
+#define atomic_cmpxchg(v, o, n) (cmpxchg(&((v)->counter), (o), (n)))
+#define atomic_cmpxchg_relaxed(v, o, n) \
 	cmpxchg_relaxed(&((v)->counter), (o), (n))
-#घोषणा atomic_cmpxchg_acquire(v, o, n) \
+#define atomic_cmpxchg_acquire(v, o, n) \
 	cmpxchg_acquire(&((v)->counter), (o), (n))
 
-#घोषणा atomic_xchg(v, new) (xchg(&((v)->counter), new))
-#घोषणा atomic_xchg_relaxed(v, new) xchg_relaxed(&((v)->counter), (new))
+#define atomic_xchg(v, new) (xchg(&((v)->counter), new))
+#define atomic_xchg_relaxed(v, new) xchg_relaxed(&((v)->counter), (new))
 
 /*
  * Don't want to override the generic atomic_try_cmpxchg_acquire, because
- * we add a lock hपूर्णांक to the lwarx, which may not be wanted क्रम the
- * _acquire हाल (and is not used by the other _acquire variants so it
+ * we add a lock hint to the lwarx, which may not be wanted for the
+ * _acquire case (and is not used by the other _acquire variants so it
  * would be a surprise).
  */
-अटल __always_अंतरभूत bool
-atomic_try_cmpxchg_lock(atomic_t *v, पूर्णांक *old, पूर्णांक new)
-अणु
-	पूर्णांक r, o = *old;
+static __always_inline bool
+atomic_try_cmpxchg_lock(atomic_t *v, int *old, int new)
+{
+	int r, o = *old;
 
-	__यंत्र__ __अस्थिर__ (
+	__asm__ __volatile__ (
 "1:\t"	PPC_LWARX(%0,0,%2,1) "	# atomic_try_cmpxchg_acquire	\n"
 "	cmpw	0,%0,%3							\n"
 "	bne-	2f							\n"
@@ -216,221 +215,221 @@ atomic_try_cmpxchg_lock(atomic_t *v, पूर्णांक *old, पूर्
 	: "r" (&v->counter), "r" (o), "r" (new)
 	: "cr0", "memory");
 
-	अगर (unlikely(r != o))
+	if (unlikely(r != o))
 		*old = r;
-	वापस likely(r == o);
-पूर्ण
+	return likely(r == o);
+}
 
 /**
  * atomic_fetch_add_unless - add unless the number is a given value
- * @v: poपूर्णांकer of type atomic_t
+ * @v: pointer of type atomic_t
  * @a: the amount to add to v...
  * @u: ...unless v is equal to u.
  *
- * Atomically adds @a to @v, so दीर्घ as it was not @u.
+ * Atomically adds @a to @v, so long as it was not @u.
  * Returns the old value of @v.
  */
-अटल __अंतरभूत__ पूर्णांक atomic_fetch_add_unless(atomic_t *v, पूर्णांक a, पूर्णांक u)
-अणु
-	पूर्णांक t;
+static __inline__ int atomic_fetch_add_unless(atomic_t *v, int a, int u)
+{
+	int t;
 
-	__यंत्र__ __अस्थिर__ (
+	__asm__ __volatile__ (
 	PPC_ATOMIC_ENTRY_BARRIER
-"1:	lwarx	%0,0,%1		# atomic_fetch_add_unless\न\
-	cmpw	0,%0,%3 \न\
-	beq	2f \न\
-	add	%0,%2,%0 \न"
-"	stwcx.	%0,0,%1 \न\
-	bne-	1b \न"
+"1:	lwarx	%0,0,%1		# atomic_fetch_add_unless\n\
+	cmpw	0,%0,%3 \n\
+	beq	2f \n\
+	add	%0,%2,%0 \n"
+"	stwcx.	%0,0,%1 \n\
+	bne-	1b \n"
 	PPC_ATOMIC_EXIT_BARRIER
-"	subf	%0,%2,%0 \न\
+"	subf	%0,%2,%0 \n\
 2:"
 	: "=&r" (t)
 	: "r" (&v->counter), "r" (a), "r" (u)
 	: "cc", "memory");
 
-	वापस t;
-पूर्ण
-#घोषणा atomic_fetch_add_unless atomic_fetch_add_unless
+	return t;
+}
+#define atomic_fetch_add_unless atomic_fetch_add_unless
 
 /**
  * atomic_inc_not_zero - increment unless the number is zero
- * @v: poपूर्णांकer of type atomic_t
+ * @v: pointer of type atomic_t
  *
- * Atomically increments @v by 1, so दीर्घ as @v is non-zero.
- * Returns non-zero अगर @v was non-zero, and zero otherwise.
+ * Atomically increments @v by 1, so long as @v is non-zero.
+ * Returns non-zero if @v was non-zero, and zero otherwise.
  */
-अटल __अंतरभूत__ पूर्णांक atomic_inc_not_zero(atomic_t *v)
-अणु
-	पूर्णांक t1, t2;
+static __inline__ int atomic_inc_not_zero(atomic_t *v)
+{
+	int t1, t2;
 
-	__यंत्र__ __अस्थिर__ (
+	__asm__ __volatile__ (
 	PPC_ATOMIC_ENTRY_BARRIER
-"1:	lwarx	%0,0,%2		# atomic_inc_not_zero\न\
-	cmpwi	0,%0,0\न\
-	beq-	2f\न\
-	addic	%1,%0,1\न"
-"	stwcx.	%1,0,%2\न\
-	bne-	1b\न"
+"1:	lwarx	%0,0,%2		# atomic_inc_not_zero\n\
+	cmpwi	0,%0,0\n\
+	beq-	2f\n\
+	addic	%1,%0,1\n"
+"	stwcx.	%1,0,%2\n\
+	bne-	1b\n"
 	PPC_ATOMIC_EXIT_BARRIER
-	"\न\
+	"\n\
 2:"
 	: "=&r" (t1), "=&r" (t2)
 	: "r" (&v->counter)
 	: "cc", "xer", "memory");
 
-	वापस t1;
-पूर्ण
-#घोषणा atomic_inc_not_zero(v) atomic_inc_not_zero((v))
+	return t1;
+}
+#define atomic_inc_not_zero(v) atomic_inc_not_zero((v))
 
 /*
- * Atomically test *v and decrement अगर it is greater than 0.
- * The function वापसs the old value of *v minus 1, even अगर
+ * Atomically test *v and decrement if it is greater than 0.
+ * The function returns the old value of *v minus 1, even if
  * the atomic variable, v, was not decremented.
  */
-अटल __अंतरभूत__ पूर्णांक atomic_dec_अगर_positive(atomic_t *v)
-अणु
-	पूर्णांक t;
+static __inline__ int atomic_dec_if_positive(atomic_t *v)
+{
+	int t;
 
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 	PPC_ATOMIC_ENTRY_BARRIER
-"1:	lwarx	%0,0,%1		# atomic_dec_अगर_positive\न\
-	cmpwi	%0,1\न\
-	addi	%0,%0,-1\न\
-	blt-	2f\न"
-"	stwcx.	%0,0,%1\न\
+"1:	lwarx	%0,0,%1		# atomic_dec_if_positive\n\
+	cmpwi	%0,1\n\
+	addi	%0,%0,-1\n\
+	blt-	2f\n"
+"	stwcx.	%0,0,%1\n\
 	bne-	1b"
 	PPC_ATOMIC_EXIT_BARRIER
-	"\न\
+	"\n\
 2:"	: "=&b" (t)
 	: "r" (&v->counter)
 	: "cc", "memory");
 
-	वापस t;
-पूर्ण
-#घोषणा atomic_dec_अगर_positive atomic_dec_अगर_positive
+	return t;
+}
+#define atomic_dec_if_positive atomic_dec_if_positive
 
-#अगर_घोषित __घातerpc64__
+#ifdef __powerpc64__
 
-#घोषणा ATOMIC64_INIT(i)	अणु (i) पूर्ण
+#define ATOMIC64_INIT(i)	{ (i) }
 
-अटल __अंतरभूत__ s64 atomic64_पढ़ो(स्थिर atomic64_t *v)
-अणु
+static __inline__ s64 atomic64_read(const atomic64_t *v)
+{
 	s64 t;
 
-	__यंत्र__ __अस्थिर__("ld%U1%X1 %0,%1" : "=r"(t) : "m"UPD_CONSTR(v->counter));
+	__asm__ __volatile__("ld%U1%X1 %0,%1" : "=r"(t) : "m"UPD_CONSTR(v->counter));
 
-	वापस t;
-पूर्ण
+	return t;
+}
 
-अटल __अंतरभूत__ व्योम atomic64_set(atomic64_t *v, s64 i)
-अणु
-	__यंत्र__ __अस्थिर__("std%U0%X0 %1,%0" : "=m"UPD_CONSTR(v->counter) : "r"(i));
-पूर्ण
+static __inline__ void atomic64_set(atomic64_t *v, s64 i)
+{
+	__asm__ __volatile__("std%U0%X0 %1,%0" : "=m"UPD_CONSTR(v->counter) : "r"(i));
+}
 
-#घोषणा ATOMIC64_OP(op, यंत्र_op)						\
-अटल __अंतरभूत__ व्योम atomic64_##op(s64 a, atomic64_t *v)		\
-अणु									\
+#define ATOMIC64_OP(op, asm_op)						\
+static __inline__ void atomic64_##op(s64 a, atomic64_t *v)		\
+{									\
 	s64 t;								\
 									\
-	__यंत्र__ __अस्थिर__(						\
+	__asm__ __volatile__(						\
 "1:	ldarx	%0,0,%3		# atomic64_" #op "\n"			\
-	#यंत्र_op " %0,%2,%0\n"						\
+	#asm_op " %0,%2,%0\n"						\
 "	stdcx.	%0,0,%3 \n"						\
 "	bne-	1b\n"							\
 	: "=&r" (t), "+m" (v->counter)					\
 	: "r" (a), "r" (&v->counter)					\
 	: "cc");							\
-पूर्ण
+}
 
-#घोषणा ATOMIC64_OP_RETURN_RELAXED(op, यंत्र_op)				\
-अटल अंतरभूत s64							\
-atomic64_##op##_वापस_relaxed(s64 a, atomic64_t *v)			\
-अणु									\
+#define ATOMIC64_OP_RETURN_RELAXED(op, asm_op)				\
+static inline s64							\
+atomic64_##op##_return_relaxed(s64 a, atomic64_t *v)			\
+{									\
 	s64 t;								\
 									\
-	__यंत्र__ __अस्थिर__(						\
+	__asm__ __volatile__(						\
 "1:	ldarx	%0,0,%3		# atomic64_" #op "_return_relaxed\n"	\
-	#यंत्र_op " %0,%2,%0\n"						\
+	#asm_op " %0,%2,%0\n"						\
 "	stdcx.	%0,0,%3\n"						\
 "	bne-	1b\n"							\
 	: "=&r" (t), "+m" (v->counter)					\
 	: "r" (a), "r" (&v->counter)					\
 	: "cc");							\
 									\
-	वापस t;							\
-पूर्ण
+	return t;							\
+}
 
-#घोषणा ATOMIC64_FETCH_OP_RELAXED(op, यंत्र_op)				\
-अटल अंतरभूत s64							\
+#define ATOMIC64_FETCH_OP_RELAXED(op, asm_op)				\
+static inline s64							\
 atomic64_fetch_##op##_relaxed(s64 a, atomic64_t *v)			\
-अणु									\
+{									\
 	s64 res, t;							\
 									\
-	__यंत्र__ __अस्थिर__(						\
+	__asm__ __volatile__(						\
 "1:	ldarx	%0,0,%4		# atomic64_fetch_" #op "_relaxed\n"	\
-	#यंत्र_op " %1,%3,%0\n"						\
+	#asm_op " %1,%3,%0\n"						\
 "	stdcx.	%1,0,%4\n"						\
 "	bne-	1b\n"							\
 	: "=&r" (res), "=&r" (t), "+m" (v->counter)			\
 	: "r" (a), "r" (&v->counter)					\
 	: "cc");							\
 									\
-	वापस res;							\
-पूर्ण
+	return res;							\
+}
 
-#घोषणा ATOMIC64_OPS(op, यंत्र_op)					\
-	ATOMIC64_OP(op, यंत्र_op)						\
-	ATOMIC64_OP_RETURN_RELAXED(op, यंत्र_op)				\
-	ATOMIC64_FETCH_OP_RELAXED(op, यंत्र_op)
+#define ATOMIC64_OPS(op, asm_op)					\
+	ATOMIC64_OP(op, asm_op)						\
+	ATOMIC64_OP_RETURN_RELAXED(op, asm_op)				\
+	ATOMIC64_FETCH_OP_RELAXED(op, asm_op)
 
 ATOMIC64_OPS(add, add)
 ATOMIC64_OPS(sub, subf)
 
-#घोषणा atomic64_add_वापस_relaxed atomic64_add_वापस_relaxed
-#घोषणा atomic64_sub_वापस_relaxed atomic64_sub_वापस_relaxed
+#define atomic64_add_return_relaxed atomic64_add_return_relaxed
+#define atomic64_sub_return_relaxed atomic64_sub_return_relaxed
 
-#घोषणा atomic64_fetch_add_relaxed atomic64_fetch_add_relaxed
-#घोषणा atomic64_fetch_sub_relaxed atomic64_fetch_sub_relaxed
+#define atomic64_fetch_add_relaxed atomic64_fetch_add_relaxed
+#define atomic64_fetch_sub_relaxed atomic64_fetch_sub_relaxed
 
-#अघोषित ATOMIC64_OPS
-#घोषणा ATOMIC64_OPS(op, यंत्र_op)					\
-	ATOMIC64_OP(op, यंत्र_op)						\
-	ATOMIC64_FETCH_OP_RELAXED(op, यंत्र_op)
+#undef ATOMIC64_OPS
+#define ATOMIC64_OPS(op, asm_op)					\
+	ATOMIC64_OP(op, asm_op)						\
+	ATOMIC64_FETCH_OP_RELAXED(op, asm_op)
 
 ATOMIC64_OPS(and, and)
 ATOMIC64_OPS(or, or)
 ATOMIC64_OPS(xor, xor)
 
-#घोषणा atomic64_fetch_and_relaxed atomic64_fetch_and_relaxed
-#घोषणा atomic64_fetch_or_relaxed  atomic64_fetch_or_relaxed
-#घोषणा atomic64_fetch_xor_relaxed atomic64_fetch_xor_relaxed
+#define atomic64_fetch_and_relaxed atomic64_fetch_and_relaxed
+#define atomic64_fetch_or_relaxed  atomic64_fetch_or_relaxed
+#define atomic64_fetch_xor_relaxed atomic64_fetch_xor_relaxed
 
-#अघोषित ATOPIC64_OPS
-#अघोषित ATOMIC64_FETCH_OP_RELAXED
-#अघोषित ATOMIC64_OP_RETURN_RELAXED
-#अघोषित ATOMIC64_OP
+#undef ATOPIC64_OPS
+#undef ATOMIC64_FETCH_OP_RELAXED
+#undef ATOMIC64_OP_RETURN_RELAXED
+#undef ATOMIC64_OP
 
-अटल __अंतरभूत__ व्योम atomic64_inc(atomic64_t *v)
-अणु
+static __inline__ void atomic64_inc(atomic64_t *v)
+{
 	s64 t;
 
-	__यंत्र__ __अस्थिर__(
-"1:	ldarx	%0,0,%2		# atomic64_inc\न\
-	addic	%0,%0,1\न\
-	stdcx.	%0,0,%2 \न\
+	__asm__ __volatile__(
+"1:	ldarx	%0,0,%2		# atomic64_inc\n\
+	addic	%0,%0,1\n\
+	stdcx.	%0,0,%2 \n\
 	bne-	1b"
 	: "=&r" (t), "+m" (v->counter)
 	: "r" (&v->counter)
 	: "cc", "xer");
-पूर्ण
-#घोषणा atomic64_inc atomic64_inc
+}
+#define atomic64_inc atomic64_inc
 
-अटल __अंतरभूत__ s64 atomic64_inc_वापस_relaxed(atomic64_t *v)
-अणु
+static __inline__ s64 atomic64_inc_return_relaxed(atomic64_t *v)
+{
 	s64 t;
 
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 "1:	ldarx	%0,0,%2		# atomic64_inc_return_relaxed\n"
 "	addic	%0,%0,1\n"
 "	stdcx.	%0,0,%2\n"
@@ -439,29 +438,29 @@ ATOMIC64_OPS(xor, xor)
 	: "r" (&v->counter)
 	: "cc", "xer");
 
-	वापस t;
-पूर्ण
+	return t;
+}
 
-अटल __अंतरभूत__ व्योम atomic64_dec(atomic64_t *v)
-अणु
+static __inline__ void atomic64_dec(atomic64_t *v)
+{
 	s64 t;
 
-	__यंत्र__ __अस्थिर__(
-"1:	ldarx	%0,0,%2		# atomic64_dec\न\
-	addic	%0,%0,-1\न\
-	stdcx.	%0,0,%2\न\
+	__asm__ __volatile__(
+"1:	ldarx	%0,0,%2		# atomic64_dec\n\
+	addic	%0,%0,-1\n\
+	stdcx.	%0,0,%2\n\
 	bne-	1b"
 	: "=&r" (t), "+m" (v->counter)
 	: "r" (&v->counter)
 	: "cc", "xer");
-पूर्ण
-#घोषणा atomic64_dec atomic64_dec
+}
+#define atomic64_dec atomic64_dec
 
-अटल __अंतरभूत__ s64 atomic64_dec_वापस_relaxed(atomic64_t *v)
-अणु
+static __inline__ s64 atomic64_dec_return_relaxed(atomic64_t *v)
+{
 	s64 t;
 
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 "1:	ldarx	%0,0,%2		# atomic64_dec_return_relaxed\n"
 "	addic	%0,%0,-1\n"
 "	stdcx.	%0,0,%2\n"
@@ -470,109 +469,109 @@ ATOMIC64_OPS(xor, xor)
 	: "r" (&v->counter)
 	: "cc", "xer");
 
-	वापस t;
-पूर्ण
+	return t;
+}
 
-#घोषणा atomic64_inc_वापस_relaxed atomic64_inc_वापस_relaxed
-#घोषणा atomic64_dec_वापस_relaxed atomic64_dec_वापस_relaxed
+#define atomic64_inc_return_relaxed atomic64_inc_return_relaxed
+#define atomic64_dec_return_relaxed atomic64_dec_return_relaxed
 
 /*
- * Atomically test *v and decrement अगर it is greater than 0.
- * The function वापसs the old value of *v minus 1.
+ * Atomically test *v and decrement if it is greater than 0.
+ * The function returns the old value of *v minus 1.
  */
-अटल __अंतरभूत__ s64 atomic64_dec_अगर_positive(atomic64_t *v)
-अणु
+static __inline__ s64 atomic64_dec_if_positive(atomic64_t *v)
+{
 	s64 t;
 
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 	PPC_ATOMIC_ENTRY_BARRIER
-"1:	ldarx	%0,0,%1		# atomic64_dec_अगर_positive\न\
-	addic.	%0,%0,-1\न\
-	blt-	2f\न\
-	stdcx.	%0,0,%1\न\
+"1:	ldarx	%0,0,%1		# atomic64_dec_if_positive\n\
+	addic.	%0,%0,-1\n\
+	blt-	2f\n\
+	stdcx.	%0,0,%1\n\
 	bne-	1b"
 	PPC_ATOMIC_EXIT_BARRIER
-	"\न\
+	"\n\
 2:"	: "=&r" (t)
 	: "r" (&v->counter)
 	: "cc", "xer", "memory");
 
-	वापस t;
-पूर्ण
-#घोषणा atomic64_dec_अगर_positive atomic64_dec_अगर_positive
+	return t;
+}
+#define atomic64_dec_if_positive atomic64_dec_if_positive
 
-#घोषणा atomic64_cmpxchg(v, o, n) (cmpxchg(&((v)->counter), (o), (n)))
-#घोषणा atomic64_cmpxchg_relaxed(v, o, n) \
+#define atomic64_cmpxchg(v, o, n) (cmpxchg(&((v)->counter), (o), (n)))
+#define atomic64_cmpxchg_relaxed(v, o, n) \
 	cmpxchg_relaxed(&((v)->counter), (o), (n))
-#घोषणा atomic64_cmpxchg_acquire(v, o, n) \
+#define atomic64_cmpxchg_acquire(v, o, n) \
 	cmpxchg_acquire(&((v)->counter), (o), (n))
 
-#घोषणा atomic64_xchg(v, new) (xchg(&((v)->counter), new))
-#घोषणा atomic64_xchg_relaxed(v, new) xchg_relaxed(&((v)->counter), (new))
+#define atomic64_xchg(v, new) (xchg(&((v)->counter), new))
+#define atomic64_xchg_relaxed(v, new) xchg_relaxed(&((v)->counter), (new))
 
 /**
  * atomic64_fetch_add_unless - add unless the number is a given value
- * @v: poपूर्णांकer of type atomic64_t
+ * @v: pointer of type atomic64_t
  * @a: the amount to add to v...
  * @u: ...unless v is equal to u.
  *
- * Atomically adds @a to @v, so दीर्घ as it was not @u.
+ * Atomically adds @a to @v, so long as it was not @u.
  * Returns the old value of @v.
  */
-अटल __अंतरभूत__ s64 atomic64_fetch_add_unless(atomic64_t *v, s64 a, s64 u)
-अणु
+static __inline__ s64 atomic64_fetch_add_unless(atomic64_t *v, s64 a, s64 u)
+{
 	s64 t;
 
-	__यंत्र__ __अस्थिर__ (
+	__asm__ __volatile__ (
 	PPC_ATOMIC_ENTRY_BARRIER
-"1:	ldarx	%0,0,%1		# atomic64_fetch_add_unless\न\
-	cmpd	0,%0,%3 \न\
-	beq	2f \न\
-	add	%0,%2,%0 \न"
-"	stdcx.	%0,0,%1 \न\
-	bne-	1b \न"
+"1:	ldarx	%0,0,%1		# atomic64_fetch_add_unless\n\
+	cmpd	0,%0,%3 \n\
+	beq	2f \n\
+	add	%0,%2,%0 \n"
+"	stdcx.	%0,0,%1 \n\
+	bne-	1b \n"
 	PPC_ATOMIC_EXIT_BARRIER
-"	subf	%0,%2,%0 \न\
+"	subf	%0,%2,%0 \n\
 2:"
 	: "=&r" (t)
 	: "r" (&v->counter), "r" (a), "r" (u)
 	: "cc", "memory");
 
-	वापस t;
-पूर्ण
-#घोषणा atomic64_fetch_add_unless atomic64_fetch_add_unless
+	return t;
+}
+#define atomic64_fetch_add_unless atomic64_fetch_add_unless
 
 /**
  * atomic_inc64_not_zero - increment unless the number is zero
- * @v: poपूर्णांकer of type atomic64_t
+ * @v: pointer of type atomic64_t
  *
- * Atomically increments @v by 1, so दीर्घ as @v is non-zero.
- * Returns non-zero अगर @v was non-zero, and zero otherwise.
+ * Atomically increments @v by 1, so long as @v is non-zero.
+ * Returns non-zero if @v was non-zero, and zero otherwise.
  */
-अटल __अंतरभूत__ पूर्णांक atomic64_inc_not_zero(atomic64_t *v)
-अणु
+static __inline__ int atomic64_inc_not_zero(atomic64_t *v)
+{
 	s64 t1, t2;
 
-	__यंत्र__ __अस्थिर__ (
+	__asm__ __volatile__ (
 	PPC_ATOMIC_ENTRY_BARRIER
-"1:	ldarx	%0,0,%2		# atomic64_inc_not_zero\न\
-	cmpdi	0,%0,0\न\
-	beq-	2f\न\
-	addic	%1,%0,1\न\
-	stdcx.	%1,0,%2\न\
-	bne-	1b\न"
+"1:	ldarx	%0,0,%2		# atomic64_inc_not_zero\n\
+	cmpdi	0,%0,0\n\
+	beq-	2f\n\
+	addic	%1,%0,1\n\
+	stdcx.	%1,0,%2\n\
+	bne-	1b\n"
 	PPC_ATOMIC_EXIT_BARRIER
-	"\न\
+	"\n\
 2:"
 	: "=&r" (t1), "=&r" (t2)
 	: "r" (&v->counter)
 	: "cc", "xer", "memory");
 
-	वापस t1 != 0;
-पूर्ण
-#घोषणा atomic64_inc_not_zero(v) atomic64_inc_not_zero((v))
+	return t1 != 0;
+}
+#define atomic64_inc_not_zero(v) atomic64_inc_not_zero((v))
 
-#पूर्ण_अगर /* __घातerpc64__ */
+#endif /* __powerpc64__ */
 
-#पूर्ण_अगर /* __KERNEL__ */
-#पूर्ण_अगर /* _ASM_POWERPC_ATOMIC_H_ */
+#endif /* __KERNEL__ */
+#endif /* _ASM_POWERPC_ATOMIC_H_ */

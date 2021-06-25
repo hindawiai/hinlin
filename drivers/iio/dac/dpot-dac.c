@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * IIO DAC emulation driver using a digital potentiometer
  *
@@ -9,9 +8,9 @@
  */
 
 /*
- * It is assumed that the dpot is used as a voltage भागider between the
+ * It is assumed that the dpot is used as a voltage divider between the
  * current dpot wiper setting and the maximum resistance of the dpot. The
- * भागided voltage is provided by a vref regulator.
+ * divided voltage is provided by a vref regulator.
  *
  *                   .------.
  *    .-----------.  |      |
@@ -27,232 +26,232 @@
  *                   '------+------------+
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/iio/consumer.h>
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regulator/consumer.h>
+#include <linux/err.h>
+#include <linux/iio/consumer.h>
+#include <linux/iio/iio.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/regulator/consumer.h>
 
-काष्ठा dpot_dac अणु
-	काष्ठा regulator *vref;
-	काष्ठा iio_channel *dpot;
+struct dpot_dac {
+	struct regulator *vref;
+	struct iio_channel *dpot;
 	u32 max_ohms;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा iio_chan_spec dpot_dac_iio_channel = अणु
+static const struct iio_chan_spec dpot_dac_iio_channel = {
 	.type = IIO_VOLTAGE,
 	.info_mask_separate = BIT(IIO_CHAN_INFO_RAW)
 			    | BIT(IIO_CHAN_INFO_SCALE),
 	.info_mask_separate_available = BIT(IIO_CHAN_INFO_RAW),
 	.output = 1,
 	.indexed = 1,
-पूर्ण;
+};
 
-अटल पूर्णांक dpot_dac_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
-			     काष्ठा iio_chan_spec स्थिर *chan,
-			     पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
-अणु
-	काष्ठा dpot_dac *dac = iio_priv(indio_dev);
-	पूर्णांक ret;
-	अचिन्हित दीर्घ दीर्घ पंचांगp;
+static int dpot_dac_read_raw(struct iio_dev *indio_dev,
+			     struct iio_chan_spec const *chan,
+			     int *val, int *val2, long mask)
+{
+	struct dpot_dac *dac = iio_priv(indio_dev);
+	int ret;
+	unsigned long long tmp;
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_RAW:
-		वापस iio_पढ़ो_channel_raw(dac->dpot, val);
+	switch (mask) {
+	case IIO_CHAN_INFO_RAW:
+		return iio_read_channel_raw(dac->dpot, val);
 
-	हाल IIO_CHAN_INFO_SCALE:
-		ret = iio_पढ़ो_channel_scale(dac->dpot, val, val2);
-		चयन (ret) अणु
-		हाल IIO_VAL_FRACTIONAL_LOG2:
-			पंचांगp = *val * 1000000000LL;
-			करो_भाग(पंचांगp, dac->max_ohms);
-			पंचांगp *= regulator_get_voltage(dac->vref) / 1000;
-			करो_भाग(पंचांगp, 1000000000LL);
-			*val = पंचांगp;
-			वापस ret;
-		हाल IIO_VAL_INT:
+	case IIO_CHAN_INFO_SCALE:
+		ret = iio_read_channel_scale(dac->dpot, val, val2);
+		switch (ret) {
+		case IIO_VAL_FRACTIONAL_LOG2:
+			tmp = *val * 1000000000LL;
+			do_div(tmp, dac->max_ohms);
+			tmp *= regulator_get_voltage(dac->vref) / 1000;
+			do_div(tmp, 1000000000LL);
+			*val = tmp;
+			return ret;
+		case IIO_VAL_INT:
 			/*
-			 * Convert पूर्णांकeger scale to fractional scale by
+			 * Convert integer scale to fractional scale by
 			 * setting the denominator (val2) to one...
 			 */
 			*val2 = 1;
 			ret = IIO_VAL_FRACTIONAL;
-			/* ...and fall through. Say it again क्रम GCC. */
+			/* ...and fall through. Say it again for GCC. */
 			fallthrough;
-		हाल IIO_VAL_FRACTIONAL:
+		case IIO_VAL_FRACTIONAL:
 			*val *= regulator_get_voltage(dac->vref) / 1000;
 			*val2 *= dac->max_ohms;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक dpot_dac_पढ़ो_avail(काष्ठा iio_dev *indio_dev,
-			       काष्ठा iio_chan_spec स्थिर *chan,
-			       स्थिर पूर्णांक **vals, पूर्णांक *type, पूर्णांक *length,
-			       दीर्घ mask)
-अणु
-	काष्ठा dpot_dac *dac = iio_priv(indio_dev);
+static int dpot_dac_read_avail(struct iio_dev *indio_dev,
+			       struct iio_chan_spec const *chan,
+			       const int **vals, int *type, int *length,
+			       long mask)
+{
+	struct dpot_dac *dac = iio_priv(indio_dev);
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_RAW:
+	switch (mask) {
+	case IIO_CHAN_INFO_RAW:
 		*type = IIO_VAL_INT;
-		वापस iio_पढ़ो_avail_channel_raw(dac->dpot, vals, length);
-	पूर्ण
+		return iio_read_avail_channel_raw(dac->dpot, vals, length);
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक dpot_dac_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
-			      काष्ठा iio_chan_spec स्थिर *chan,
-			      पूर्णांक val, पूर्णांक val2, दीर्घ mask)
-अणु
-	काष्ठा dpot_dac *dac = iio_priv(indio_dev);
+static int dpot_dac_write_raw(struct iio_dev *indio_dev,
+			      struct iio_chan_spec const *chan,
+			      int val, int val2, long mask)
+{
+	struct dpot_dac *dac = iio_priv(indio_dev);
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_RAW:
-		वापस iio_ग_लिखो_channel_raw(dac->dpot, val);
-	पूर्ण
+	switch (mask) {
+	case IIO_CHAN_INFO_RAW:
+		return iio_write_channel_raw(dac->dpot, val);
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल स्थिर काष्ठा iio_info dpot_dac_info = अणु
-	.पढ़ो_raw = dpot_dac_पढ़ो_raw,
-	.पढ़ो_avail = dpot_dac_पढ़ो_avail,
-	.ग_लिखो_raw = dpot_dac_ग_लिखो_raw,
-पूर्ण;
+static const struct iio_info dpot_dac_info = {
+	.read_raw = dpot_dac_read_raw,
+	.read_avail = dpot_dac_read_avail,
+	.write_raw = dpot_dac_write_raw,
+};
 
-अटल पूर्णांक dpot_dac_channel_max_ohms(काष्ठा iio_dev *indio_dev)
-अणु
-	काष्ठा device *dev = &indio_dev->dev;
-	काष्ठा dpot_dac *dac = iio_priv(indio_dev);
-	अचिन्हित दीर्घ दीर्घ पंचांगp;
-	पूर्णांक ret;
-	पूर्णांक val;
-	पूर्णांक val2;
-	पूर्णांक max;
+static int dpot_dac_channel_max_ohms(struct iio_dev *indio_dev)
+{
+	struct device *dev = &indio_dev->dev;
+	struct dpot_dac *dac = iio_priv(indio_dev);
+	unsigned long long tmp;
+	int ret;
+	int val;
+	int val2;
+	int max;
 
-	ret = iio_पढ़ो_max_channel_raw(dac->dpot, &max);
-	अगर (ret < 0) अणु
+	ret = iio_read_max_channel_raw(dac->dpot, &max);
+	if (ret < 0) {
 		dev_err(dev, "dpot does not indicate its raw maximum value\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	चयन (iio_पढ़ो_channel_scale(dac->dpot, &val, &val2)) अणु
-	हाल IIO_VAL_INT:
-		वापस max * val;
-	हाल IIO_VAL_FRACTIONAL:
-		पंचांगp = (अचिन्हित दीर्घ दीर्घ)max * val;
-		करो_भाग(पंचांगp, val2);
-		वापस पंचांगp;
-	हाल IIO_VAL_FRACTIONAL_LOG2:
-		पंचांगp = val * 1000000000LL * max >> val2;
-		करो_भाग(पंचांगp, 1000000000LL);
-		वापस पंचांगp;
-	शेष:
+	switch (iio_read_channel_scale(dac->dpot, &val, &val2)) {
+	case IIO_VAL_INT:
+		return max * val;
+	case IIO_VAL_FRACTIONAL:
+		tmp = (unsigned long long)max * val;
+		do_div(tmp, val2);
+		return tmp;
+	case IIO_VAL_FRACTIONAL_LOG2:
+		tmp = val * 1000000000LL * max >> val2;
+		do_div(tmp, 1000000000LL);
+		return tmp;
+	default:
 		dev_err(dev, "dpot has a scale that is too weird\n");
-	पूर्ण
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक dpot_dac_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा iio_dev *indio_dev;
-	काष्ठा dpot_dac *dac;
-	क्रमागत iio_chan_type type;
-	पूर्णांक ret;
+static int dpot_dac_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct iio_dev *indio_dev;
+	struct dpot_dac *dac;
+	enum iio_chan_type type;
+	int ret;
 
-	indio_dev = devm_iio_device_alloc(dev, माप(*dac));
-	अगर (!indio_dev)
-		वापस -ENOMEM;
+	indio_dev = devm_iio_device_alloc(dev, sizeof(*dac));
+	if (!indio_dev)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, indio_dev);
+	platform_set_drvdata(pdev, indio_dev);
 	dac = iio_priv(indio_dev);
 
 	indio_dev->name = dev_name(dev);
 	indio_dev->info = &dpot_dac_info;
-	indio_dev->modes = INDIO_सूचीECT_MODE;
+	indio_dev->modes = INDIO_DIRECT_MODE;
 	indio_dev->channels = &dpot_dac_iio_channel;
 	indio_dev->num_channels = 1;
 
 	dac->vref = devm_regulator_get(dev, "vref");
-	अगर (IS_ERR(dac->vref))
-		वापस dev_err_probe(&pdev->dev, PTR_ERR(dac->vref),
+	if (IS_ERR(dac->vref))
+		return dev_err_probe(&pdev->dev, PTR_ERR(dac->vref),
 				     "failed to get vref regulator\n");
 
 	dac->dpot = devm_iio_channel_get(dev, "dpot");
-	अगर (IS_ERR(dac->dpot))
-		वापस dev_err_probe(&pdev->dev, PTR_ERR(dac->dpot),
+	if (IS_ERR(dac->dpot))
+		return dev_err_probe(&pdev->dev, PTR_ERR(dac->dpot),
 				     "failed to get dpot input channel\n");
 
 	ret = iio_get_channel_type(dac->dpot, &type);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (type != IIO_RESISTANCE) अणु
+	if (type != IIO_RESISTANCE) {
 		dev_err(dev, "dpot is of the wrong type\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ret = dpot_dac_channel_max_ohms(indio_dev);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 	dac->max_ohms = ret;
 
 	ret = regulator_enable(dac->vref);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to enable the vref regulator\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = iio_device_रेजिस्टर(indio_dev);
-	अगर (ret) अणु
+	ret = iio_device_register(indio_dev);
+	if (ret) {
 		dev_err(dev, "failed to register iio device\n");
-		जाओ disable_reg;
-	पूर्ण
+		goto disable_reg;
+	}
 
-	वापस 0;
+	return 0;
 
 disable_reg:
 	regulator_disable(dac->vref);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक dpot_dac_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा iio_dev *indio_dev = platक्रमm_get_drvdata(pdev);
-	काष्ठा dpot_dac *dac = iio_priv(indio_dev);
+static int dpot_dac_remove(struct platform_device *pdev)
+{
+	struct iio_dev *indio_dev = platform_get_drvdata(pdev);
+	struct dpot_dac *dac = iio_priv(indio_dev);
 
-	iio_device_unरेजिस्टर(indio_dev);
+	iio_device_unregister(indio_dev);
 	regulator_disable(dac->vref);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id dpot_dac_match[] = अणु
-	अणु .compatible = "dpot-dac" पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id dpot_dac_match[] = {
+	{ .compatible = "dpot-dac" },
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, dpot_dac_match);
 
-अटल काष्ठा platक्रमm_driver dpot_dac_driver = अणु
+static struct platform_driver dpot_dac_driver = {
 	.probe = dpot_dac_probe,
-	.हटाओ = dpot_dac_हटाओ,
-	.driver = अणु
+	.remove = dpot_dac_remove,
+	.driver = {
 		.name = "iio-dpot-dac",
 		.of_match_table = dpot_dac_match,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(dpot_dac_driver);
+	},
+};
+module_platform_driver(dpot_dac_driver);
 
 MODULE_DESCRIPTION("DAC emulation driver using a digital potentiometer");
 MODULE_AUTHOR("Peter Rosin <peda@axentia.se>");

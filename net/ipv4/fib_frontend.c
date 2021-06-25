@@ -1,384 +1,383 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * INET		An implementation of the TCP/IP protocol suite क्रम the LINUX
- *		operating प्रणाली.  INET is implemented using the  BSD Socket
- *		पूर्णांकerface as the means of communication with the user level.
+ * INET		An implementation of the TCP/IP protocol suite for the LINUX
+ *		operating system.  INET is implemented using the  BSD Socket
+ *		interface as the means of communication with the user level.
  *
- *		IPv4 Forwarding Inक्रमmation Base: FIB frontend.
+ *		IPv4 Forwarding Information Base: FIB frontend.
  *
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/capability.h>
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/socket.h>
-#समावेश <linux/sockios.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/in.h>
-#समावेश <linux/inet.h>
-#समावेश <linux/inetdevice.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/अगर_addr.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/cache.h>
-#समावेश <linux/init.h>
-#समावेश <linux/list.h>
-#समावेश <linux/slab.h>
+#include <linux/module.h>
+#include <linux/uaccess.h>
+#include <linux/bitops.h>
+#include <linux/capability.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/string.h>
+#include <linux/socket.h>
+#include <linux/sockios.h>
+#include <linux/errno.h>
+#include <linux/in.h>
+#include <linux/inet.h>
+#include <linux/inetdevice.h>
+#include <linux/netdevice.h>
+#include <linux/if_addr.h>
+#include <linux/if_arp.h>
+#include <linux/skbuff.h>
+#include <linux/cache.h>
+#include <linux/init.h>
+#include <linux/list.h>
+#include <linux/slab.h>
 
-#समावेश <net/ip.h>
-#समावेश <net/protocol.h>
-#समावेश <net/route.h>
-#समावेश <net/tcp.h>
-#समावेश <net/sock.h>
-#समावेश <net/arp.h>
-#समावेश <net/ip_fib.h>
-#समावेश <net/nexthop.h>
-#समावेश <net/rtnetlink.h>
-#समावेश <net/xfrm.h>
-#समावेश <net/l3mdev.h>
-#समावेश <net/lwtunnel.h>
-#समावेश <trace/events/fib.h>
+#include <net/ip.h>
+#include <net/protocol.h>
+#include <net/route.h>
+#include <net/tcp.h>
+#include <net/sock.h>
+#include <net/arp.h>
+#include <net/ip_fib.h>
+#include <net/nexthop.h>
+#include <net/rtnetlink.h>
+#include <net/xfrm.h>
+#include <net/l3mdev.h>
+#include <net/lwtunnel.h>
+#include <trace/events/fib.h>
 
-#अगर_अघोषित CONFIG_IP_MULTIPLE_TABLES
+#ifndef CONFIG_IP_MULTIPLE_TABLES
 
-अटल पूर्णांक __net_init fib4_rules_init(काष्ठा net *net)
-अणु
-	काष्ठा fib_table *local_table, *मुख्य_table;
+static int __net_init fib4_rules_init(struct net *net)
+{
+	struct fib_table *local_table, *main_table;
 
-	मुख्य_table  = fib_trie_table(RT_TABLE_MAIN, शून्य);
-	अगर (!मुख्य_table)
-		वापस -ENOMEM;
+	main_table  = fib_trie_table(RT_TABLE_MAIN, NULL);
+	if (!main_table)
+		return -ENOMEM;
 
-	local_table = fib_trie_table(RT_TABLE_LOCAL, मुख्य_table);
-	अगर (!local_table)
-		जाओ fail;
+	local_table = fib_trie_table(RT_TABLE_LOCAL, main_table);
+	if (!local_table)
+		goto fail;
 
 	hlist_add_head_rcu(&local_table->tb_hlist,
 				&net->ipv4.fib_table_hash[TABLE_LOCAL_INDEX]);
-	hlist_add_head_rcu(&मुख्य_table->tb_hlist,
+	hlist_add_head_rcu(&main_table->tb_hlist,
 				&net->ipv4.fib_table_hash[TABLE_MAIN_INDEX]);
-	वापस 0;
+	return 0;
 
 fail:
-	fib_मुक्त_table(मुख्य_table);
-	वापस -ENOMEM;
-पूर्ण
-#अन्यथा
+	fib_free_table(main_table);
+	return -ENOMEM;
+}
+#else
 
-काष्ठा fib_table *fib_new_table(काष्ठा net *net, u32 id)
-अणु
-	काष्ठा fib_table *tb, *alias = शून्य;
-	अचिन्हित पूर्णांक h;
+struct fib_table *fib_new_table(struct net *net, u32 id)
+{
+	struct fib_table *tb, *alias = NULL;
+	unsigned int h;
 
-	अगर (id == 0)
+	if (id == 0)
 		id = RT_TABLE_MAIN;
 	tb = fib_get_table(net, id);
-	अगर (tb)
-		वापस tb;
+	if (tb)
+		return tb;
 
-	अगर (id == RT_TABLE_LOCAL && !net->ipv4.fib_has_custom_rules)
+	if (id == RT_TABLE_LOCAL && !net->ipv4.fib_has_custom_rules)
 		alias = fib_new_table(net, RT_TABLE_MAIN);
 
 	tb = fib_trie_table(id, alias);
-	अगर (!tb)
-		वापस शून्य;
+	if (!tb)
+		return NULL;
 
-	चयन (id) अणु
-	हाल RT_TABLE_MAIN:
-		rcu_assign_poपूर्णांकer(net->ipv4.fib_मुख्य, tb);
-		अवरोध;
-	हाल RT_TABLE_DEFAULT:
-		rcu_assign_poपूर्णांकer(net->ipv4.fib_शेष, tb);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+	switch (id) {
+	case RT_TABLE_MAIN:
+		rcu_assign_pointer(net->ipv4.fib_main, tb);
+		break;
+	case RT_TABLE_DEFAULT:
+		rcu_assign_pointer(net->ipv4.fib_default, tb);
+		break;
+	default:
+		break;
+	}
 
 	h = id & (FIB_TABLE_HASHSZ - 1);
 	hlist_add_head_rcu(&tb->tb_hlist, &net->ipv4.fib_table_hash[h]);
-	वापस tb;
-पूर्ण
+	return tb;
+}
 EXPORT_SYMBOL_GPL(fib_new_table);
 
-/* caller must hold either rtnl or rcu पढ़ो lock */
-काष्ठा fib_table *fib_get_table(काष्ठा net *net, u32 id)
-अणु
-	काष्ठा fib_table *tb;
-	काष्ठा hlist_head *head;
-	अचिन्हित पूर्णांक h;
+/* caller must hold either rtnl or rcu read lock */
+struct fib_table *fib_get_table(struct net *net, u32 id)
+{
+	struct fib_table *tb;
+	struct hlist_head *head;
+	unsigned int h;
 
-	अगर (id == 0)
+	if (id == 0)
 		id = RT_TABLE_MAIN;
 	h = id & (FIB_TABLE_HASHSZ - 1);
 
 	head = &net->ipv4.fib_table_hash[h];
-	hlist_क्रम_each_entry_rcu(tb, head, tb_hlist,
-				 lockdep_rtnl_is_held()) अणु
-		अगर (tb->tb_id == id)
-			वापस tb;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_IP_MULTIPLE_TABLES */
+	hlist_for_each_entry_rcu(tb, head, tb_hlist,
+				 lockdep_rtnl_is_held()) {
+		if (tb->tb_id == id)
+			return tb;
+	}
+	return NULL;
+}
+#endif /* CONFIG_IP_MULTIPLE_TABLES */
 
-अटल व्योम fib_replace_table(काष्ठा net *net, काष्ठा fib_table *old,
-			      काष्ठा fib_table *new)
-अणु
-#अगर_घोषित CONFIG_IP_MULTIPLE_TABLES
-	चयन (new->tb_id) अणु
-	हाल RT_TABLE_MAIN:
-		rcu_assign_poपूर्णांकer(net->ipv4.fib_मुख्य, new);
-		अवरोध;
-	हाल RT_TABLE_DEFAULT:
-		rcu_assign_poपूर्णांकer(net->ipv4.fib_शेष, new);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+static void fib_replace_table(struct net *net, struct fib_table *old,
+			      struct fib_table *new)
+{
+#ifdef CONFIG_IP_MULTIPLE_TABLES
+	switch (new->tb_id) {
+	case RT_TABLE_MAIN:
+		rcu_assign_pointer(net->ipv4.fib_main, new);
+		break;
+	case RT_TABLE_DEFAULT:
+		rcu_assign_pointer(net->ipv4.fib_default, new);
+		break;
+	default:
+		break;
+	}
 
-#पूर्ण_अगर
+#endif
 	/* replace the old table in the hlist */
 	hlist_replace_rcu(&old->tb_hlist, &new->tb_hlist);
-पूर्ण
+}
 
-पूर्णांक fib_unmerge(काष्ठा net *net)
-अणु
-	काष्ठा fib_table *old, *new, *मुख्य_table;
+int fib_unmerge(struct net *net)
+{
+	struct fib_table *old, *new, *main_table;
 
-	/* attempt to fetch local table अगर it has been allocated */
+	/* attempt to fetch local table if it has been allocated */
 	old = fib_get_table(net, RT_TABLE_LOCAL);
-	अगर (!old)
-		वापस 0;
+	if (!old)
+		return 0;
 
 	new = fib_trie_unmerge(old);
-	अगर (!new)
-		वापस -ENOMEM;
+	if (!new)
+		return -ENOMEM;
 
-	/* table is alपढ़ोy unmerged */
-	अगर (new == old)
-		वापस 0;
+	/* table is already unmerged */
+	if (new == old)
+		return 0;
 
 	/* replace merged table with clean table */
 	fib_replace_table(net, old, new);
-	fib_मुक्त_table(old);
+	fib_free_table(old);
 
-	/* attempt to fetch मुख्य table अगर it has been allocated */
-	मुख्य_table = fib_get_table(net, RT_TABLE_MAIN);
-	अगर (!मुख्य_table)
-		वापस 0;
+	/* attempt to fetch main table if it has been allocated */
+	main_table = fib_get_table(net, RT_TABLE_MAIN);
+	if (!main_table)
+		return 0;
 
-	/* flush local entries from मुख्य table */
-	fib_table_flush_बाह्यal(मुख्य_table);
+	/* flush local entries from main table */
+	fib_table_flush_external(main_table);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम fib_flush(काष्ठा net *net)
-अणु
-	पूर्णांक flushed = 0;
-	अचिन्हित पूर्णांक h;
+void fib_flush(struct net *net)
+{
+	int flushed = 0;
+	unsigned int h;
 
-	क्रम (h = 0; h < FIB_TABLE_HASHSZ; h++) अणु
-		काष्ठा hlist_head *head = &net->ipv4.fib_table_hash[h];
-		काष्ठा hlist_node *पंचांगp;
-		काष्ठा fib_table *tb;
+	for (h = 0; h < FIB_TABLE_HASHSZ; h++) {
+		struct hlist_head *head = &net->ipv4.fib_table_hash[h];
+		struct hlist_node *tmp;
+		struct fib_table *tb;
 
-		hlist_क्रम_each_entry_safe(tb, पंचांगp, head, tb_hlist)
+		hlist_for_each_entry_safe(tb, tmp, head, tb_hlist)
 			flushed += fib_table_flush(net, tb, false);
-	पूर्ण
+	}
 
-	अगर (flushed)
+	if (flushed)
 		rt_cache_flush(net);
-पूर्ण
+}
 
 /*
- * Find address type as अगर only "dev" was present in the प्रणाली. If
- * on_dev is शून्य then all पूर्णांकerfaces are taken पूर्णांकo consideration.
+ * Find address type as if only "dev" was present in the system. If
+ * on_dev is NULL then all interfaces are taken into consideration.
  */
-अटल अंतरभूत अचिन्हित पूर्णांक __inet_dev_addr_type(काष्ठा net *net,
-						स्थिर काष्ठा net_device *dev,
+static inline unsigned int __inet_dev_addr_type(struct net *net,
+						const struct net_device *dev,
 						__be32 addr, u32 tb_id)
-अणु
-	काष्ठा flowi4		fl4 = अणु .daddr = addr पूर्ण;
-	काष्ठा fib_result	res;
-	अचिन्हित पूर्णांक ret = RTN_BROADCAST;
-	काष्ठा fib_table *table;
+{
+	struct flowi4		fl4 = { .daddr = addr };
+	struct fib_result	res;
+	unsigned int ret = RTN_BROADCAST;
+	struct fib_table *table;
 
-	अगर (ipv4_is_zeronet(addr) || ipv4_is_lbcast(addr))
-		वापस RTN_BROADCAST;
-	अगर (ipv4_is_multicast(addr))
-		वापस RTN_MULTICAST;
+	if (ipv4_is_zeronet(addr) || ipv4_is_lbcast(addr))
+		return RTN_BROADCAST;
+	if (ipv4_is_multicast(addr))
+		return RTN_MULTICAST;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
 	table = fib_get_table(net, tb_id);
-	अगर (table) अणु
+	if (table) {
 		ret = RTN_UNICAST;
-		अगर (!fib_table_lookup(table, &fl4, &res, FIB_LOOKUP_NOREF)) अणु
-			काष्ठा fib_nh_common *nhc = fib_info_nhc(res.fi, 0);
+		if (!fib_table_lookup(table, &fl4, &res, FIB_LOOKUP_NOREF)) {
+			struct fib_nh_common *nhc = fib_info_nhc(res.fi, 0);
 
-			अगर (!dev || dev == nhc->nhc_dev)
+			if (!dev || dev == nhc->nhc_dev)
 				ret = res.type;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	rcu_पढ़ो_unlock();
-	वापस ret;
-पूर्ण
+	rcu_read_unlock();
+	return ret;
+}
 
-अचिन्हित पूर्णांक inet_addr_type_table(काष्ठा net *net, __be32 addr, u32 tb_id)
-अणु
-	वापस __inet_dev_addr_type(net, शून्य, addr, tb_id);
-पूर्ण
+unsigned int inet_addr_type_table(struct net *net, __be32 addr, u32 tb_id)
+{
+	return __inet_dev_addr_type(net, NULL, addr, tb_id);
+}
 EXPORT_SYMBOL(inet_addr_type_table);
 
-अचिन्हित पूर्णांक inet_addr_type(काष्ठा net *net, __be32 addr)
-अणु
-	वापस __inet_dev_addr_type(net, शून्य, addr, RT_TABLE_LOCAL);
-पूर्ण
+unsigned int inet_addr_type(struct net *net, __be32 addr)
+{
+	return __inet_dev_addr_type(net, NULL, addr, RT_TABLE_LOCAL);
+}
 EXPORT_SYMBOL(inet_addr_type);
 
-अचिन्हित पूर्णांक inet_dev_addr_type(काष्ठा net *net, स्थिर काष्ठा net_device *dev,
+unsigned int inet_dev_addr_type(struct net *net, const struct net_device *dev,
 				__be32 addr)
-अणु
+{
 	u32 rt_table = l3mdev_fib_table(dev) ? : RT_TABLE_LOCAL;
 
-	वापस __inet_dev_addr_type(net, dev, addr, rt_table);
-पूर्ण
+	return __inet_dev_addr_type(net, dev, addr, rt_table);
+}
 EXPORT_SYMBOL(inet_dev_addr_type);
 
-/* inet_addr_type with dev == शून्य but using the table from a dev
- * अगर one is associated
+/* inet_addr_type with dev == NULL but using the table from a dev
+ * if one is associated
  */
-अचिन्हित पूर्णांक inet_addr_type_dev_table(काष्ठा net *net,
-				      स्थिर काष्ठा net_device *dev,
+unsigned int inet_addr_type_dev_table(struct net *net,
+				      const struct net_device *dev,
 				      __be32 addr)
-अणु
+{
 	u32 rt_table = l3mdev_fib_table(dev) ? : RT_TABLE_LOCAL;
 
-	वापस __inet_dev_addr_type(net, शून्य, addr, rt_table);
-पूर्ण
+	return __inet_dev_addr_type(net, NULL, addr, rt_table);
+}
 EXPORT_SYMBOL(inet_addr_type_dev_table);
 
-__be32 fib_compute_spec_dst(काष्ठा sk_buff *skb)
-अणु
-	काष्ठा net_device *dev = skb->dev;
-	काष्ठा in_device *in_dev;
-	काष्ठा fib_result res;
-	काष्ठा rtable *rt;
-	काष्ठा net *net;
-	पूर्णांक scope;
+__be32 fib_compute_spec_dst(struct sk_buff *skb)
+{
+	struct net_device *dev = skb->dev;
+	struct in_device *in_dev;
+	struct fib_result res;
+	struct rtable *rt;
+	struct net *net;
+	int scope;
 
 	rt = skb_rtable(skb);
-	अगर ((rt->rt_flags & (RTCF_BROADCAST | RTCF_MULTICAST | RTCF_LOCAL)) ==
+	if ((rt->rt_flags & (RTCF_BROADCAST | RTCF_MULTICAST | RTCF_LOCAL)) ==
 	    RTCF_LOCAL)
-		वापस ip_hdr(skb)->daddr;
+		return ip_hdr(skb)->daddr;
 
 	in_dev = __in_dev_get_rcu(dev);
 
 	net = dev_net(dev);
 
 	scope = RT_SCOPE_UNIVERSE;
-	अगर (!ipv4_is_zeronet(ip_hdr(skb)->saddr)) अणु
+	if (!ipv4_is_zeronet(ip_hdr(skb)->saddr)) {
 		bool vmark = in_dev && IN_DEV_SRC_VMARK(in_dev);
-		काष्ठा flowi4 fl4 = अणु
-			.flowi4_iअगर = LOOPBACK_IFINDEX,
-			.flowi4_oअगर = l3mdev_master_अगरindex_rcu(dev),
+		struct flowi4 fl4 = {
+			.flowi4_iif = LOOPBACK_IFINDEX,
+			.flowi4_oif = l3mdev_master_ifindex_rcu(dev),
 			.daddr = ip_hdr(skb)->saddr,
 			.flowi4_tos = ip_hdr(skb)->tos & IPTOS_RT_MASK,
 			.flowi4_scope = scope,
 			.flowi4_mark = vmark ? skb->mark : 0,
-		पूर्ण;
-		अगर (!fib_lookup(net, &fl4, &res, 0))
-			वापस fib_result_prefsrc(net, &res);
-	पूर्ण अन्यथा अणु
+		};
+		if (!fib_lookup(net, &fl4, &res, 0))
+			return fib_result_prefsrc(net, &res);
+	} else {
 		scope = RT_SCOPE_LINK;
-	पूर्ण
+	}
 
-	वापस inet_select_addr(dev, ip_hdr(skb)->saddr, scope);
-पूर्ण
+	return inet_select_addr(dev, ip_hdr(skb)->saddr, scope);
+}
 
-bool fib_info_nh_uses_dev(काष्ठा fib_info *fi, स्थिर काष्ठा net_device *dev)
-अणु
+bool fib_info_nh_uses_dev(struct fib_info *fi, const struct net_device *dev)
+{
 	bool dev_match = false;
-#अगर_घोषित CONFIG_IP_ROUTE_MULTIPATH
-	अगर (unlikely(fi->nh)) अणु
+#ifdef CONFIG_IP_ROUTE_MULTIPATH
+	if (unlikely(fi->nh)) {
 		dev_match = nexthop_uses_dev(fi->nh, dev);
-	पूर्ण अन्यथा अणु
-		पूर्णांक ret;
+	} else {
+		int ret;
 
-		क्रम (ret = 0; ret < fib_info_num_path(fi); ret++) अणु
-			स्थिर काष्ठा fib_nh_common *nhc = fib_info_nhc(fi, ret);
+		for (ret = 0; ret < fib_info_num_path(fi); ret++) {
+			const struct fib_nh_common *nhc = fib_info_nhc(fi, ret);
 
-			अगर (nhc_l3mdev_matches_dev(nhc, dev)) अणु
+			if (nhc_l3mdev_matches_dev(nhc, dev)) {
 				dev_match = true;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-#अन्यथा
-	अगर (fib_info_nhc(fi, 0)->nhc_dev == dev)
+				break;
+			}
+		}
+	}
+#else
+	if (fib_info_nhc(fi, 0)->nhc_dev == dev)
 		dev_match = true;
-#पूर्ण_अगर
+#endif
 
-	वापस dev_match;
-पूर्ण
+	return dev_match;
+}
 EXPORT_SYMBOL_GPL(fib_info_nh_uses_dev);
 
-/* Given (packet source, input पूर्णांकerface) and optional (dst, oअगर, tos):
- * - (मुख्य) check, that source is valid i.e. not broadcast or our local
+/* Given (packet source, input interface) and optional (dst, oif, tos):
+ * - (main) check, that source is valid i.e. not broadcast or our local
  *   address.
- * - figure out what "logical" पूर्णांकerface this packet arrived
+ * - figure out what "logical" interface this packet arrived
  *   and calculate "specific destination" address.
- * - check, that packet arrived from expected physical पूर्णांकerface.
- * called with rcu_पढ़ो_lock()
+ * - check, that packet arrived from expected physical interface.
+ * called with rcu_read_lock()
  */
-अटल पूर्णांक __fib_validate_source(काष्ठा sk_buff *skb, __be32 src, __be32 dst,
-				 u8 tos, पूर्णांक oअगर, काष्ठा net_device *dev,
-				 पूर्णांक rpf, काष्ठा in_device *idev, u32 *itag)
-अणु
-	काष्ठा net *net = dev_net(dev);
-	काष्ठा flow_keys flkeys;
-	पूर्णांक ret, no_addr;
-	काष्ठा fib_result res;
-	काष्ठा flowi4 fl4;
+static int __fib_validate_source(struct sk_buff *skb, __be32 src, __be32 dst,
+				 u8 tos, int oif, struct net_device *dev,
+				 int rpf, struct in_device *idev, u32 *itag)
+{
+	struct net *net = dev_net(dev);
+	struct flow_keys flkeys;
+	int ret, no_addr;
+	struct fib_result res;
+	struct flowi4 fl4;
 	bool dev_match;
 
-	fl4.flowi4_oअगर = 0;
-	fl4.flowi4_iअगर = l3mdev_master_अगरindex_rcu(dev);
-	अगर (!fl4.flowi4_iअगर)
-		fl4.flowi4_iअगर = oअगर ? : LOOPBACK_IFINDEX;
+	fl4.flowi4_oif = 0;
+	fl4.flowi4_iif = l3mdev_master_ifindex_rcu(dev);
+	if (!fl4.flowi4_iif)
+		fl4.flowi4_iif = oif ? : LOOPBACK_IFINDEX;
 	fl4.daddr = src;
 	fl4.saddr = dst;
 	fl4.flowi4_tos = tos;
 	fl4.flowi4_scope = RT_SCOPE_UNIVERSE;
 	fl4.flowi4_tun_key.tun_id = 0;
 	fl4.flowi4_flags = 0;
-	fl4.flowi4_uid = sock_net_uid(net, शून्य);
+	fl4.flowi4_uid = sock_net_uid(net, NULL);
 	fl4.flowi4_multipath_hash = 0;
 
-	no_addr = idev->अगरa_list == शून्य;
+	no_addr = idev->ifa_list == NULL;
 
 	fl4.flowi4_mark = IN_DEV_SRC_VMARK(idev) ? skb->mark : 0;
-	अगर (!fib4_rules_early_flow_dissect(net, skb, &fl4, &flkeys)) अणु
+	if (!fib4_rules_early_flow_dissect(net, skb, &fl4, &flkeys)) {
 		fl4.flowi4_proto = 0;
 		fl4.fl4_sport = 0;
 		fl4.fl4_dport = 0;
-	पूर्ण
+	}
 
-	अगर (fib_lookup(net, &fl4, &res, 0))
-		जाओ last_resort;
-	अगर (res.type != RTN_UNICAST &&
+	if (fib_lookup(net, &fl4, &res, 0))
+		goto last_resort;
+	if (res.type != RTN_UNICAST &&
 	    (res.type != RTN_LOCAL || !IN_DEV_ACCEPT_LOCAL(idev)))
-		जाओ e_inval;
+		goto e_inval;
 	fib_combine_itag(itag, &res);
 
 	dev_match = fib_info_nh_uses_dev(res.fi, dev);
@@ -387,1239 +386,1239 @@ EXPORT_SYMBOL_GPL(fib_info_nh_uses_dev);
 	 */
 	dev_match = dev_match || (res.type == RTN_LOCAL &&
 				  dev == net->loopback_dev);
-	अगर (dev_match) अणु
+	if (dev_match) {
 		ret = FIB_RES_NHC(res)->nhc_scope >= RT_SCOPE_HOST;
-		वापस ret;
-	पूर्ण
-	अगर (no_addr)
-		जाओ last_resort;
-	अगर (rpf == 1)
-		जाओ e_rpf;
-	fl4.flowi4_oअगर = dev->अगरindex;
+		return ret;
+	}
+	if (no_addr)
+		goto last_resort;
+	if (rpf == 1)
+		goto e_rpf;
+	fl4.flowi4_oif = dev->ifindex;
 
 	ret = 0;
-	अगर (fib_lookup(net, &fl4, &res, FIB_LOOKUP_IGNORE_LINKSTATE) == 0) अणु
-		अगर (res.type == RTN_UNICAST)
+	if (fib_lookup(net, &fl4, &res, FIB_LOOKUP_IGNORE_LINKSTATE) == 0) {
+		if (res.type == RTN_UNICAST)
 			ret = FIB_RES_NHC(res)->nhc_scope >= RT_SCOPE_HOST;
-	पूर्ण
-	वापस ret;
+	}
+	return ret;
 
 last_resort:
-	अगर (rpf)
-		जाओ e_rpf;
+	if (rpf)
+		goto e_rpf;
 	*itag = 0;
-	वापस 0;
+	return 0;
 
 e_inval:
-	वापस -EINVAL;
+	return -EINVAL;
 e_rpf:
-	वापस -EXDEV;
-पूर्ण
+	return -EXDEV;
+}
 
-/* Ignore rp_filter क्रम packets रक्षित by IPsec. */
-पूर्णांक fib_validate_source(काष्ठा sk_buff *skb, __be32 src, __be32 dst,
-			u8 tos, पूर्णांक oअगर, काष्ठा net_device *dev,
-			काष्ठा in_device *idev, u32 *itag)
-अणु
-	पूर्णांक r = secpath_exists(skb) ? 0 : IN_DEV_RPFILTER(idev);
-	काष्ठा net *net = dev_net(dev);
+/* Ignore rp_filter for packets protected by IPsec. */
+int fib_validate_source(struct sk_buff *skb, __be32 src, __be32 dst,
+			u8 tos, int oif, struct net_device *dev,
+			struct in_device *idev, u32 *itag)
+{
+	int r = secpath_exists(skb) ? 0 : IN_DEV_RPFILTER(idev);
+	struct net *net = dev_net(dev);
 
-	अगर (!r && !fib_num_tclassid_users(net) &&
-	    (dev->अगरindex != oअगर || !IN_DEV_TX_REसूचीECTS(idev))) अणु
-		अगर (IN_DEV_ACCEPT_LOCAL(idev))
-			जाओ ok;
+	if (!r && !fib_num_tclassid_users(net) &&
+	    (dev->ifindex != oif || !IN_DEV_TX_REDIRECTS(idev))) {
+		if (IN_DEV_ACCEPT_LOCAL(idev))
+			goto ok;
 		/* with custom local routes in place, checking local addresses
 		 * only will be too optimistic, with custom rules, checking
 		 * local addresses only can be too strict, e.g. due to vrf
 		 */
-		अगर (net->ipv4.fib_has_custom_local_routes ||
+		if (net->ipv4.fib_has_custom_local_routes ||
 		    fib4_has_custom_rules(net))
-			जाओ full_check;
-		अगर (inet_lookup_अगरaddr_rcu(net, src))
-			वापस -EINVAL;
+			goto full_check;
+		if (inet_lookup_ifaddr_rcu(net, src))
+			return -EINVAL;
 
 ok:
 		*itag = 0;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 full_check:
-	वापस __fib_validate_source(skb, src, dst, tos, oअगर, dev, r, idev, itag);
-पूर्ण
+	return __fib_validate_source(skb, src, dst, tos, oif, dev, r, idev, itag);
+}
 
-अटल अंतरभूत __be32 sk_extract_addr(काष्ठा sockaddr *addr)
-अणु
-	वापस ((काष्ठा sockaddr_in *) addr)->sin_addr.s_addr;
-पूर्ण
+static inline __be32 sk_extract_addr(struct sockaddr *addr)
+{
+	return ((struct sockaddr_in *) addr)->sin_addr.s_addr;
+}
 
-अटल पूर्णांक put_rtax(काष्ठा nlattr *mx, पूर्णांक len, पूर्णांक type, u32 value)
-अणु
-	काष्ठा nlattr *nla;
+static int put_rtax(struct nlattr *mx, int len, int type, u32 value)
+{
+	struct nlattr *nla;
 
-	nla = (काष्ठा nlattr *) ((अक्षर *) mx + len);
+	nla = (struct nlattr *) ((char *) mx + len);
 	nla->nla_type = type;
 	nla->nla_len = nla_attr_size(4);
 	*(u32 *) nla_data(nla) = value;
 
-	वापस len + nla_total_size(4);
-पूर्ण
+	return len + nla_total_size(4);
+}
 
-अटल पूर्णांक rtentry_to_fib_config(काष्ठा net *net, पूर्णांक cmd, काष्ठा rtentry *rt,
-				 काष्ठा fib_config *cfg)
-अणु
+static int rtentry_to_fib_config(struct net *net, int cmd, struct rtentry *rt,
+				 struct fib_config *cfg)
+{
 	__be32 addr;
-	पूर्णांक plen;
+	int plen;
 
-	स_रखो(cfg, 0, माप(*cfg));
+	memset(cfg, 0, sizeof(*cfg));
 	cfg->fc_nlinfo.nl_net = net;
 
-	अगर (rt->rt_dst.sa_family != AF_INET)
-		वापस -EAFNOSUPPORT;
+	if (rt->rt_dst.sa_family != AF_INET)
+		return -EAFNOSUPPORT;
 
 	/*
-	 * Check mask क्रम validity:
+	 * Check mask for validity:
 	 * a) it must be contiguous.
 	 * b) destination must have all host bits clear.
-	 * c) अगर application क्रमgot to set correct family (AF_INET),
-	 *    reject request unless it is असलolutely clear i.e.
+	 * c) if application forgot to set correct family (AF_INET),
+	 *    reject request unless it is absolutely clear i.e.
 	 *    both family and mask are zero.
 	 */
 	plen = 32;
 	addr = sk_extract_addr(&rt->rt_dst);
-	अगर (!(rt->rt_flags & RTF_HOST)) अणु
+	if (!(rt->rt_flags & RTF_HOST)) {
 		__be32 mask = sk_extract_addr(&rt->rt_genmask);
 
-		अगर (rt->rt_genmask.sa_family != AF_INET) अणु
-			अगर (mask || rt->rt_genmask.sa_family)
-				वापस -EAFNOSUPPORT;
-		पूर्ण
+		if (rt->rt_genmask.sa_family != AF_INET) {
+			if (mask || rt->rt_genmask.sa_family)
+				return -EAFNOSUPPORT;
+		}
 
-		अगर (bad_mask(mask, addr))
-			वापस -EINVAL;
+		if (bad_mask(mask, addr))
+			return -EINVAL;
 
 		plen = inet_mask_len(mask);
-	पूर्ण
+	}
 
 	cfg->fc_dst_len = plen;
 	cfg->fc_dst = addr;
 
-	अगर (cmd != SIOCDELRT) अणु
+	if (cmd != SIOCDELRT) {
 		cfg->fc_nlflags = NLM_F_CREATE;
 		cfg->fc_protocol = RTPROT_BOOT;
-	पूर्ण
+	}
 
-	अगर (rt->rt_metric)
+	if (rt->rt_metric)
 		cfg->fc_priority = rt->rt_metric - 1;
 
-	अगर (rt->rt_flags & RTF_REJECT) अणु
+	if (rt->rt_flags & RTF_REJECT) {
 		cfg->fc_scope = RT_SCOPE_HOST;
 		cfg->fc_type = RTN_UNREACHABLE;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	cfg->fc_scope = RT_SCOPE_NOWHERE;
 	cfg->fc_type = RTN_UNICAST;
 
-	अगर (rt->rt_dev) अणु
-		अक्षर *colon;
-		काष्ठा net_device *dev;
-		अक्षर devname[IFNAMSIZ];
+	if (rt->rt_dev) {
+		char *colon;
+		struct net_device *dev;
+		char devname[IFNAMSIZ];
 
-		अगर (copy_from_user(devname, rt->rt_dev, IFNAMSIZ-1))
-			वापस -EFAULT;
+		if (copy_from_user(devname, rt->rt_dev, IFNAMSIZ-1))
+			return -EFAULT;
 
 		devname[IFNAMSIZ-1] = 0;
-		colon = म_अक्षर(devname, ':');
-		अगर (colon)
+		colon = strchr(devname, ':');
+		if (colon)
 			*colon = 0;
 		dev = __dev_get_by_name(net, devname);
-		अगर (!dev)
-			वापस -ENODEV;
-		cfg->fc_oअगर = dev->अगरindex;
+		if (!dev)
+			return -ENODEV;
+		cfg->fc_oif = dev->ifindex;
 		cfg->fc_table = l3mdev_fib_table(dev);
-		अगर (colon) अणु
-			स्थिर काष्ठा in_अगरaddr *अगरa;
-			काष्ठा in_device *in_dev;
+		if (colon) {
+			const struct in_ifaddr *ifa;
+			struct in_device *in_dev;
 
 			in_dev = __in_dev_get_rtnl(dev);
-			अगर (!in_dev)
-				वापस -ENODEV;
+			if (!in_dev)
+				return -ENODEV;
 
 			*colon = ':';
 
-			rcu_पढ़ो_lock();
-			in_dev_क्रम_each_अगरa_rcu(अगरa, in_dev) अणु
-				अगर (म_भेद(अगरa->अगरa_label, devname) == 0)
-					अवरोध;
-			पूर्ण
-			rcu_पढ़ो_unlock();
+			rcu_read_lock();
+			in_dev_for_each_ifa_rcu(ifa, in_dev) {
+				if (strcmp(ifa->ifa_label, devname) == 0)
+					break;
+			}
+			rcu_read_unlock();
 
-			अगर (!अगरa)
-				वापस -ENODEV;
-			cfg->fc_prefsrc = अगरa->अगरa_local;
-		पूर्ण
-	पूर्ण
+			if (!ifa)
+				return -ENODEV;
+			cfg->fc_prefsrc = ifa->ifa_local;
+		}
+	}
 
 	addr = sk_extract_addr(&rt->rt_gateway);
-	अगर (rt->rt_gateway.sa_family == AF_INET && addr) अणु
-		अचिन्हित पूर्णांक addr_type;
+	if (rt->rt_gateway.sa_family == AF_INET && addr) {
+		unsigned int addr_type;
 
 		cfg->fc_gw4 = addr;
 		cfg->fc_gw_family = AF_INET;
 		addr_type = inet_addr_type_table(net, addr, cfg->fc_table);
-		अगर (rt->rt_flags & RTF_GATEWAY &&
+		if (rt->rt_flags & RTF_GATEWAY &&
 		    addr_type == RTN_UNICAST)
 			cfg->fc_scope = RT_SCOPE_UNIVERSE;
-	पूर्ण
+	}
 
-	अगर (cmd == SIOCDELRT)
-		वापस 0;
+	if (cmd == SIOCDELRT)
+		return 0;
 
-	अगर (rt->rt_flags & RTF_GATEWAY && !cfg->fc_gw_family)
-		वापस -EINVAL;
+	if (rt->rt_flags & RTF_GATEWAY && !cfg->fc_gw_family)
+		return -EINVAL;
 
-	अगर (cfg->fc_scope == RT_SCOPE_NOWHERE)
+	if (cfg->fc_scope == RT_SCOPE_NOWHERE)
 		cfg->fc_scope = RT_SCOPE_LINK;
 
-	अगर (rt->rt_flags & (RTF_MTU | RTF_WINDOW | RTF_IRTT)) अणु
-		काष्ठा nlattr *mx;
-		पूर्णांक len = 0;
+	if (rt->rt_flags & (RTF_MTU | RTF_WINDOW | RTF_IRTT)) {
+		struct nlattr *mx;
+		int len = 0;
 
-		mx = kसुस्मृति(3, nla_total_size(4), GFP_KERNEL);
-		अगर (!mx)
-			वापस -ENOMEM;
+		mx = kcalloc(3, nla_total_size(4), GFP_KERNEL);
+		if (!mx)
+			return -ENOMEM;
 
-		अगर (rt->rt_flags & RTF_MTU)
+		if (rt->rt_flags & RTF_MTU)
 			len = put_rtax(mx, len, RTAX_ADVMSS, rt->rt_mtu - 40);
 
-		अगर (rt->rt_flags & RTF_WINDOW)
-			len = put_rtax(mx, len, RTAX_WINDOW, rt->rt_winकरोw);
+		if (rt->rt_flags & RTF_WINDOW)
+			len = put_rtax(mx, len, RTAX_WINDOW, rt->rt_window);
 
-		अगर (rt->rt_flags & RTF_IRTT)
+		if (rt->rt_flags & RTF_IRTT)
 			len = put_rtax(mx, len, RTAX_RTT, rt->rt_irtt << 3);
 
 		cfg->fc_mx = mx;
 		cfg->fc_mx_len = len;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Handle IP routing ioctl calls.
  * These are used to manipulate the routing tables
  */
-पूर्णांक ip_rt_ioctl(काष्ठा net *net, अचिन्हित पूर्णांक cmd, काष्ठा rtentry *rt)
-अणु
-	काष्ठा fib_config cfg;
-	पूर्णांक err;
+int ip_rt_ioctl(struct net *net, unsigned int cmd, struct rtentry *rt)
+{
+	struct fib_config cfg;
+	int err;
 
-	चयन (cmd) अणु
-	हाल SIOCADDRT:		/* Add a route */
-	हाल SIOCDELRT:		/* Delete a route */
-		अगर (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-			वापस -EPERM;
+	switch (cmd) {
+	case SIOCADDRT:		/* Add a route */
+	case SIOCDELRT:		/* Delete a route */
+		if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
+			return -EPERM;
 
 		rtnl_lock();
 		err = rtentry_to_fib_config(net, cmd, rt, &cfg);
-		अगर (err == 0) अणु
-			काष्ठा fib_table *tb;
+		if (err == 0) {
+			struct fib_table *tb;
 
-			अगर (cmd == SIOCDELRT) अणु
+			if (cmd == SIOCDELRT) {
 				tb = fib_get_table(net, cfg.fc_table);
-				अगर (tb)
+				if (tb)
 					err = fib_table_delete(net, tb, &cfg,
-							       शून्य);
-				अन्यथा
+							       NULL);
+				else
 					err = -ESRCH;
-			पूर्ण अन्यथा अणु
+			} else {
 				tb = fib_new_table(net, cfg.fc_table);
-				अगर (tb)
+				if (tb)
 					err = fib_table_insert(net, tb,
-							       &cfg, शून्य);
-				अन्यथा
+							       &cfg, NULL);
+				else
 					err = -ENOBUFS;
-			पूर्ण
+			}
 
 			/* allocated by rtentry_to_fib_config() */
-			kमुक्त(cfg.fc_mx);
-		पूर्ण
+			kfree(cfg.fc_mx);
+		}
 		rtnl_unlock();
-		वापस err;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+		return err;
+	}
+	return -EINVAL;
+}
 
-स्थिर काष्ठा nla_policy rपंचांग_ipv4_policy[RTA_MAX + 1] = अणु
-	[RTA_UNSPEC]		= अणु .strict_start_type = RTA_DPORT + 1 पूर्ण,
-	[RTA_DST]		= अणु .type = NLA_U32 पूर्ण,
-	[RTA_SRC]		= अणु .type = NLA_U32 पूर्ण,
-	[RTA_IIF]		= अणु .type = NLA_U32 पूर्ण,
-	[RTA_OIF]		= अणु .type = NLA_U32 पूर्ण,
-	[RTA_GATEWAY]		= अणु .type = NLA_U32 पूर्ण,
-	[RTA_PRIORITY]		= अणु .type = NLA_U32 पूर्ण,
-	[RTA_PREFSRC]		= अणु .type = NLA_U32 पूर्ण,
-	[RTA_METRICS]		= अणु .type = NLA_NESTED पूर्ण,
-	[RTA_MULTIPATH]		= अणु .len = माप(काष्ठा rtnexthop) पूर्ण,
-	[RTA_FLOW]		= अणु .type = NLA_U32 पूर्ण,
-	[RTA_ENCAP_TYPE]	= अणु .type = NLA_U16 पूर्ण,
-	[RTA_ENCAP]		= अणु .type = NLA_NESTED पूर्ण,
-	[RTA_UID]		= अणु .type = NLA_U32 पूर्ण,
-	[RTA_MARK]		= अणु .type = NLA_U32 पूर्ण,
-	[RTA_TABLE]		= अणु .type = NLA_U32 पूर्ण,
-	[RTA_IP_PROTO]		= अणु .type = NLA_U8 पूर्ण,
-	[RTA_SPORT]		= अणु .type = NLA_U16 पूर्ण,
-	[RTA_DPORT]		= अणु .type = NLA_U16 पूर्ण,
-	[RTA_NH_ID]		= अणु .type = NLA_U32 पूर्ण,
-पूर्ण;
+const struct nla_policy rtm_ipv4_policy[RTA_MAX + 1] = {
+	[RTA_UNSPEC]		= { .strict_start_type = RTA_DPORT + 1 },
+	[RTA_DST]		= { .type = NLA_U32 },
+	[RTA_SRC]		= { .type = NLA_U32 },
+	[RTA_IIF]		= { .type = NLA_U32 },
+	[RTA_OIF]		= { .type = NLA_U32 },
+	[RTA_GATEWAY]		= { .type = NLA_U32 },
+	[RTA_PRIORITY]		= { .type = NLA_U32 },
+	[RTA_PREFSRC]		= { .type = NLA_U32 },
+	[RTA_METRICS]		= { .type = NLA_NESTED },
+	[RTA_MULTIPATH]		= { .len = sizeof(struct rtnexthop) },
+	[RTA_FLOW]		= { .type = NLA_U32 },
+	[RTA_ENCAP_TYPE]	= { .type = NLA_U16 },
+	[RTA_ENCAP]		= { .type = NLA_NESTED },
+	[RTA_UID]		= { .type = NLA_U32 },
+	[RTA_MARK]		= { .type = NLA_U32 },
+	[RTA_TABLE]		= { .type = NLA_U32 },
+	[RTA_IP_PROTO]		= { .type = NLA_U8 },
+	[RTA_SPORT]		= { .type = NLA_U16 },
+	[RTA_DPORT]		= { .type = NLA_U16 },
+	[RTA_NH_ID]		= { .type = NLA_U32 },
+};
 
-पूर्णांक fib_gw_from_via(काष्ठा fib_config *cfg, काष्ठा nlattr *nla,
-		    काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा rtvia *via;
-	पूर्णांक alen;
+int fib_gw_from_via(struct fib_config *cfg, struct nlattr *nla,
+		    struct netlink_ext_ack *extack)
+{
+	struct rtvia *via;
+	int alen;
 
-	अगर (nla_len(nla) < दुरत्व(काष्ठा rtvia, rtvia_addr)) अणु
+	if (nla_len(nla) < offsetof(struct rtvia, rtvia_addr)) {
 		NL_SET_ERR_MSG(extack, "Invalid attribute length for RTA_VIA");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	via = nla_data(nla);
-	alen = nla_len(nla) - दुरत्व(काष्ठा rtvia, rtvia_addr);
+	alen = nla_len(nla) - offsetof(struct rtvia, rtvia_addr);
 
-	चयन (via->rtvia_family) अणु
-	हाल AF_INET:
-		अगर (alen != माप(__be32)) अणु
+	switch (via->rtvia_family) {
+	case AF_INET:
+		if (alen != sizeof(__be32)) {
 			NL_SET_ERR_MSG(extack, "Invalid IPv4 address in RTA_VIA");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		cfg->fc_gw_family = AF_INET;
 		cfg->fc_gw4 = *((__be32 *)via->rtvia_addr);
-		अवरोध;
-	हाल AF_INET6:
-#अगर IS_ENABLED(CONFIG_IPV6)
-		अगर (alen != माप(काष्ठा in6_addr)) अणु
+		break;
+	case AF_INET6:
+#if IS_ENABLED(CONFIG_IPV6)
+		if (alen != sizeof(struct in6_addr)) {
 			NL_SET_ERR_MSG(extack, "Invalid IPv6 address in RTA_VIA");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		cfg->fc_gw_family = AF_INET6;
-		cfg->fc_gw6 = *((काष्ठा in6_addr *)via->rtvia_addr);
-#अन्यथा
+		cfg->fc_gw6 = *((struct in6_addr *)via->rtvia_addr);
+#else
 		NL_SET_ERR_MSG(extack, "IPv6 support not enabled in kernel");
-		वापस -EINVAL;
-#पूर्ण_अगर
-		अवरोध;
-	शेष:
+		return -EINVAL;
+#endif
+		break;
+	default:
 		NL_SET_ERR_MSG(extack, "Unsupported address family in RTA_VIA");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rपंचांग_to_fib_config(काष्ठा net *net, काष्ठा sk_buff *skb,
-			     काष्ठा nlmsghdr *nlh, काष्ठा fib_config *cfg,
-			     काष्ठा netlink_ext_ack *extack)
-अणु
+static int rtm_to_fib_config(struct net *net, struct sk_buff *skb,
+			     struct nlmsghdr *nlh, struct fib_config *cfg,
+			     struct netlink_ext_ack *extack)
+{
 	bool has_gw = false, has_via = false;
-	काष्ठा nlattr *attr;
-	पूर्णांक err, reमुख्यing;
-	काष्ठा rपंचांगsg *rपंचांग;
+	struct nlattr *attr;
+	int err, remaining;
+	struct rtmsg *rtm;
 
-	err = nlmsg_validate_deprecated(nlh, माप(*rपंचांग), RTA_MAX,
-					rपंचांग_ipv4_policy, extack);
-	अगर (err < 0)
-		जाओ errout;
+	err = nlmsg_validate_deprecated(nlh, sizeof(*rtm), RTA_MAX,
+					rtm_ipv4_policy, extack);
+	if (err < 0)
+		goto errout;
 
-	स_रखो(cfg, 0, माप(*cfg));
+	memset(cfg, 0, sizeof(*cfg));
 
-	rपंचांग = nlmsg_data(nlh);
-	cfg->fc_dst_len = rपंचांग->rपंचांग_dst_len;
-	cfg->fc_tos = rपंचांग->rपंचांग_tos;
-	cfg->fc_table = rपंचांग->rपंचांग_table;
-	cfg->fc_protocol = rपंचांग->rपंचांग_protocol;
-	cfg->fc_scope = rपंचांग->rपंचांग_scope;
-	cfg->fc_type = rपंचांग->rपंचांग_type;
-	cfg->fc_flags = rपंचांग->rपंचांग_flags;
+	rtm = nlmsg_data(nlh);
+	cfg->fc_dst_len = rtm->rtm_dst_len;
+	cfg->fc_tos = rtm->rtm_tos;
+	cfg->fc_table = rtm->rtm_table;
+	cfg->fc_protocol = rtm->rtm_protocol;
+	cfg->fc_scope = rtm->rtm_scope;
+	cfg->fc_type = rtm->rtm_type;
+	cfg->fc_flags = rtm->rtm_flags;
 	cfg->fc_nlflags = nlh->nlmsg_flags;
 
 	cfg->fc_nlinfo.portid = NETLINK_CB(skb).portid;
 	cfg->fc_nlinfo.nlh = nlh;
 	cfg->fc_nlinfo.nl_net = net;
 
-	अगर (cfg->fc_type > RTN_MAX) अणु
+	if (cfg->fc_type > RTN_MAX) {
 		NL_SET_ERR_MSG(extack, "Invalid route type");
 		err = -EINVAL;
-		जाओ errout;
-	पूर्ण
+		goto errout;
+	}
 
-	nlmsg_क्रम_each_attr(attr, nlh, माप(काष्ठा rपंचांगsg), reमुख्यing) अणु
-		चयन (nla_type(attr)) अणु
-		हाल RTA_DST:
+	nlmsg_for_each_attr(attr, nlh, sizeof(struct rtmsg), remaining) {
+		switch (nla_type(attr)) {
+		case RTA_DST:
 			cfg->fc_dst = nla_get_be32(attr);
-			अवरोध;
-		हाल RTA_OIF:
-			cfg->fc_oअगर = nla_get_u32(attr);
-			अवरोध;
-		हाल RTA_GATEWAY:
+			break;
+		case RTA_OIF:
+			cfg->fc_oif = nla_get_u32(attr);
+			break;
+		case RTA_GATEWAY:
 			has_gw = true;
 			cfg->fc_gw4 = nla_get_be32(attr);
-			अगर (cfg->fc_gw4)
+			if (cfg->fc_gw4)
 				cfg->fc_gw_family = AF_INET;
-			अवरोध;
-		हाल RTA_VIA:
+			break;
+		case RTA_VIA:
 			has_via = true;
 			err = fib_gw_from_via(cfg, attr, extack);
-			अगर (err)
-				जाओ errout;
-			अवरोध;
-		हाल RTA_PRIORITY:
+			if (err)
+				goto errout;
+			break;
+		case RTA_PRIORITY:
 			cfg->fc_priority = nla_get_u32(attr);
-			अवरोध;
-		हाल RTA_PREFSRC:
+			break;
+		case RTA_PREFSRC:
 			cfg->fc_prefsrc = nla_get_be32(attr);
-			अवरोध;
-		हाल RTA_METRICS:
+			break;
+		case RTA_METRICS:
 			cfg->fc_mx = nla_data(attr);
 			cfg->fc_mx_len = nla_len(attr);
-			अवरोध;
-		हाल RTA_MULTIPATH:
+			break;
+		case RTA_MULTIPATH:
 			err = lwtunnel_valid_encap_type_attr(nla_data(attr),
 							     nla_len(attr),
 							     extack);
-			अगर (err < 0)
-				जाओ errout;
+			if (err < 0)
+				goto errout;
 			cfg->fc_mp = nla_data(attr);
 			cfg->fc_mp_len = nla_len(attr);
-			अवरोध;
-		हाल RTA_FLOW:
+			break;
+		case RTA_FLOW:
 			cfg->fc_flow = nla_get_u32(attr);
-			अवरोध;
-		हाल RTA_TABLE:
+			break;
+		case RTA_TABLE:
 			cfg->fc_table = nla_get_u32(attr);
-			अवरोध;
-		हाल RTA_ENCAP:
+			break;
+		case RTA_ENCAP:
 			cfg->fc_encap = attr;
-			अवरोध;
-		हाल RTA_ENCAP_TYPE:
+			break;
+		case RTA_ENCAP_TYPE:
 			cfg->fc_encap_type = nla_get_u16(attr);
 			err = lwtunnel_valid_encap_type(cfg->fc_encap_type,
 							extack);
-			अगर (err < 0)
-				जाओ errout;
-			अवरोध;
-		हाल RTA_NH_ID:
+			if (err < 0)
+				goto errout;
+			break;
+		case RTA_NH_ID:
 			cfg->fc_nh_id = nla_get_u32(attr);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (cfg->fc_nh_id) अणु
-		अगर (cfg->fc_oअगर || cfg->fc_gw_family ||
-		    cfg->fc_encap || cfg->fc_mp) अणु
+	if (cfg->fc_nh_id) {
+		if (cfg->fc_oif || cfg->fc_gw_family ||
+		    cfg->fc_encap || cfg->fc_mp) {
 			NL_SET_ERR_MSG(extack,
 				       "Nexthop specification and nexthop id are mutually exclusive");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	अगर (has_gw && has_via) अणु
+	if (has_gw && has_via) {
 		NL_SET_ERR_MSG(extack,
 			       "Nexthop configuration can not contain both GATEWAY and VIA");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
+	return 0;
 errout:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक inet_rपंचांग_delroute(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
-			     काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा net *net = sock_net(skb->sk);
-	काष्ठा fib_config cfg;
-	काष्ठा fib_table *tb;
-	पूर्णांक err;
+static int inet_rtm_delroute(struct sk_buff *skb, struct nlmsghdr *nlh,
+			     struct netlink_ext_ack *extack)
+{
+	struct net *net = sock_net(skb->sk);
+	struct fib_config cfg;
+	struct fib_table *tb;
+	int err;
 
-	err = rपंचांग_to_fib_config(net, skb, nlh, &cfg, extack);
-	अगर (err < 0)
-		जाओ errout;
+	err = rtm_to_fib_config(net, skb, nlh, &cfg, extack);
+	if (err < 0)
+		goto errout;
 
-	अगर (cfg.fc_nh_id && !nexthop_find_by_id(net, cfg.fc_nh_id)) अणु
+	if (cfg.fc_nh_id && !nexthop_find_by_id(net, cfg.fc_nh_id)) {
 		NL_SET_ERR_MSG(extack, "Nexthop id does not exist");
 		err = -EINVAL;
-		जाओ errout;
-	पूर्ण
+		goto errout;
+	}
 
 	tb = fib_get_table(net, cfg.fc_table);
-	अगर (!tb) अणु
+	if (!tb) {
 		NL_SET_ERR_MSG(extack, "FIB table does not exist");
 		err = -ESRCH;
-		जाओ errout;
-	पूर्ण
+		goto errout;
+	}
 
 	err = fib_table_delete(net, tb, &cfg, extack);
 errout:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक inet_rपंचांग_newroute(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
-			     काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा net *net = sock_net(skb->sk);
-	काष्ठा fib_config cfg;
-	काष्ठा fib_table *tb;
-	पूर्णांक err;
+static int inet_rtm_newroute(struct sk_buff *skb, struct nlmsghdr *nlh,
+			     struct netlink_ext_ack *extack)
+{
+	struct net *net = sock_net(skb->sk);
+	struct fib_config cfg;
+	struct fib_table *tb;
+	int err;
 
-	err = rपंचांग_to_fib_config(net, skb, nlh, &cfg, extack);
-	अगर (err < 0)
-		जाओ errout;
+	err = rtm_to_fib_config(net, skb, nlh, &cfg, extack);
+	if (err < 0)
+		goto errout;
 
 	tb = fib_new_table(net, cfg.fc_table);
-	अगर (!tb) अणु
+	if (!tb) {
 		err = -ENOBUFS;
-		जाओ errout;
-	पूर्ण
+		goto errout;
+	}
 
 	err = fib_table_insert(net, tb, &cfg, extack);
-	अगर (!err && cfg.fc_type == RTN_LOCAL)
+	if (!err && cfg.fc_type == RTN_LOCAL)
 		net->ipv4.fib_has_custom_local_routes = true;
 errout:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक ip_valid_fib_dump_req(काष्ठा net *net, स्थिर काष्ठा nlmsghdr *nlh,
-			  काष्ठा fib_dump_filter *filter,
-			  काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा netlink_ext_ack *extack = cb->extack;
-	काष्ठा nlattr *tb[RTA_MAX + 1];
-	काष्ठा rपंचांगsg *rपंचांग;
-	पूर्णांक err, i;
+int ip_valid_fib_dump_req(struct net *net, const struct nlmsghdr *nlh,
+			  struct fib_dump_filter *filter,
+			  struct netlink_callback *cb)
+{
+	struct netlink_ext_ack *extack = cb->extack;
+	struct nlattr *tb[RTA_MAX + 1];
+	struct rtmsg *rtm;
+	int err, i;
 
 	ASSERT_RTNL();
 
-	अगर (nlh->nlmsg_len < nlmsg_msg_size(माप(*rपंचांग))) अणु
+	if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*rtm))) {
 		NL_SET_ERR_MSG(extack, "Invalid header for FIB dump request");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	rपंचांग = nlmsg_data(nlh);
-	अगर (rपंचांग->rपंचांग_dst_len || rपंचांग->rपंचांग_src_len  || rपंचांग->rपंचांग_tos   ||
-	    rपंचांग->rपंचांग_scope) अणु
+	rtm = nlmsg_data(nlh);
+	if (rtm->rtm_dst_len || rtm->rtm_src_len  || rtm->rtm_tos   ||
+	    rtm->rtm_scope) {
 		NL_SET_ERR_MSG(extack, "Invalid values in header for FIB dump request");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (rपंचांग->rपंचांग_flags & ~(RTM_F_CLONED | RTM_F_PREFIX)) अणु
+	if (rtm->rtm_flags & ~(RTM_F_CLONED | RTM_F_PREFIX)) {
 		NL_SET_ERR_MSG(extack, "Invalid flags for FIB dump request");
-		वापस -EINVAL;
-	पूर्ण
-	अगर (rपंचांग->rपंचांग_flags & RTM_F_CLONED)
+		return -EINVAL;
+	}
+	if (rtm->rtm_flags & RTM_F_CLONED)
 		filter->dump_routes = false;
-	अन्यथा
+	else
 		filter->dump_exceptions = false;
 
-	filter->flags    = rपंचांग->rपंचांग_flags;
-	filter->protocol = rपंचांग->rपंचांग_protocol;
-	filter->rt_type  = rपंचांग->rपंचांग_type;
-	filter->table_id = rपंचांग->rपंचांग_table;
+	filter->flags    = rtm->rtm_flags;
+	filter->protocol = rtm->rtm_protocol;
+	filter->rt_type  = rtm->rtm_type;
+	filter->table_id = rtm->rtm_table;
 
-	err = nlmsg_parse_deprecated_strict(nlh, माप(*rपंचांग), tb, RTA_MAX,
-					    rपंचांग_ipv4_policy, extack);
-	अगर (err < 0)
-		वापस err;
+	err = nlmsg_parse_deprecated_strict(nlh, sizeof(*rtm), tb, RTA_MAX,
+					    rtm_ipv4_policy, extack);
+	if (err < 0)
+		return err;
 
-	क्रम (i = 0; i <= RTA_MAX; ++i) अणु
-		पूर्णांक अगरindex;
+	for (i = 0; i <= RTA_MAX; ++i) {
+		int ifindex;
 
-		अगर (!tb[i])
-			जारी;
+		if (!tb[i])
+			continue;
 
-		चयन (i) अणु
-		हाल RTA_TABLE:
+		switch (i) {
+		case RTA_TABLE:
 			filter->table_id = nla_get_u32(tb[i]);
-			अवरोध;
-		हाल RTA_OIF:
-			अगरindex = nla_get_u32(tb[i]);
-			filter->dev = __dev_get_by_index(net, अगरindex);
-			अगर (!filter->dev)
-				वापस -ENODEV;
-			अवरोध;
-		शेष:
+			break;
+		case RTA_OIF:
+			ifindex = nla_get_u32(tb[i]);
+			filter->dev = __dev_get_by_index(net, ifindex);
+			if (!filter->dev)
+				return -ENODEV;
+			break;
+		default:
 			NL_SET_ERR_MSG(extack, "Unsupported attribute in dump request");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	अगर (filter->flags || filter->protocol || filter->rt_type ||
-	    filter->table_id || filter->dev) अणु
+	if (filter->flags || filter->protocol || filter->rt_type ||
+	    filter->table_id || filter->dev) {
 		filter->filter_set = 1;
 		cb->answer_flags = NLM_F_DUMP_FILTERED;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(ip_valid_fib_dump_req);
 
-अटल पूर्णांक inet_dump_fib(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा fib_dump_filter filter = अणु .dump_routes = true,
-					  .dump_exceptions = true पूर्ण;
-	स्थिर काष्ठा nlmsghdr *nlh = cb->nlh;
-	काष्ठा net *net = sock_net(skb->sk);
-	अचिन्हित पूर्णांक h, s_h;
-	अचिन्हित पूर्णांक e = 0, s_e;
-	काष्ठा fib_table *tb;
-	काष्ठा hlist_head *head;
-	पूर्णांक dumped = 0, err;
+static int inet_dump_fib(struct sk_buff *skb, struct netlink_callback *cb)
+{
+	struct fib_dump_filter filter = { .dump_routes = true,
+					  .dump_exceptions = true };
+	const struct nlmsghdr *nlh = cb->nlh;
+	struct net *net = sock_net(skb->sk);
+	unsigned int h, s_h;
+	unsigned int e = 0, s_e;
+	struct fib_table *tb;
+	struct hlist_head *head;
+	int dumped = 0, err;
 
-	अगर (cb->strict_check) अणु
+	if (cb->strict_check) {
 		err = ip_valid_fib_dump_req(net, nlh, &filter, cb);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण अन्यथा अगर (nlmsg_len(nlh) >= माप(काष्ठा rपंचांगsg)) अणु
-		काष्ठा rपंचांगsg *rपंचांग = nlmsg_data(nlh);
+		if (err < 0)
+			return err;
+	} else if (nlmsg_len(nlh) >= sizeof(struct rtmsg)) {
+		struct rtmsg *rtm = nlmsg_data(nlh);
 
-		filter.flags = rपंचांग->rपंचांग_flags & (RTM_F_PREFIX | RTM_F_CLONED);
-	पूर्ण
+		filter.flags = rtm->rtm_flags & (RTM_F_PREFIX | RTM_F_CLONED);
+	}
 
-	/* ipv4 करोes not use prefix flag */
-	अगर (filter.flags & RTM_F_PREFIX)
-		वापस skb->len;
+	/* ipv4 does not use prefix flag */
+	if (filter.flags & RTM_F_PREFIX)
+		return skb->len;
 
-	अगर (filter.table_id) अणु
+	if (filter.table_id) {
 		tb = fib_get_table(net, filter.table_id);
-		अगर (!tb) अणु
-			अगर (rtnl_msg_family(cb->nlh) != PF_INET)
-				वापस skb->len;
+		if (!tb) {
+			if (rtnl_msg_family(cb->nlh) != PF_INET)
+				return skb->len;
 
 			NL_SET_ERR_MSG(cb->extack, "ipv4: FIB table does not exist");
-			वापस -ENOENT;
-		पूर्ण
+			return -ENOENT;
+		}
 
-		rcu_पढ़ो_lock();
+		rcu_read_lock();
 		err = fib_table_dump(tb, skb, cb, &filter);
-		rcu_पढ़ो_unlock();
-		वापस skb->len ? : err;
-	पूर्ण
+		rcu_read_unlock();
+		return skb->len ? : err;
+	}
 
 	s_h = cb->args[0];
 	s_e = cb->args[1];
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
-	क्रम (h = s_h; h < FIB_TABLE_HASHSZ; h++, s_e = 0) अणु
+	for (h = s_h; h < FIB_TABLE_HASHSZ; h++, s_e = 0) {
 		e = 0;
 		head = &net->ipv4.fib_table_hash[h];
-		hlist_क्रम_each_entry_rcu(tb, head, tb_hlist) अणु
-			अगर (e < s_e)
-				जाओ next;
-			अगर (dumped)
-				स_रखो(&cb->args[2], 0, माप(cb->args) -
-						 2 * माप(cb->args[0]));
+		hlist_for_each_entry_rcu(tb, head, tb_hlist) {
+			if (e < s_e)
+				goto next;
+			if (dumped)
+				memset(&cb->args[2], 0, sizeof(cb->args) -
+						 2 * sizeof(cb->args[0]));
 			err = fib_table_dump(tb, skb, cb, &filter);
-			अगर (err < 0) अणु
-				अगर (likely(skb->len))
-					जाओ out;
+			if (err < 0) {
+				if (likely(skb->len))
+					goto out;
 
-				जाओ out_err;
-			पूर्ण
+				goto out_err;
+			}
 			dumped = 1;
 next:
 			e++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 out:
 	err = skb->len;
 out_err:
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
 	cb->args[1] = e;
 	cb->args[0] = h;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-/* Prepare and feed पूर्णांकra-kernel routing request.
+/* Prepare and feed intra-kernel routing request.
  * Really, it should be netlink message, but :-( netlink
  * can be not configured, so that we feed it directly
  * to fib engine. It is legal, because all events occur
- * only when netlink is alपढ़ोy locked.
+ * only when netlink is already locked.
  */
-अटल व्योम fib_magic(पूर्णांक cmd, पूर्णांक type, __be32 dst, पूर्णांक dst_len,
-		      काष्ठा in_अगरaddr *अगरa, u32 rt_priority)
-अणु
-	काष्ठा net *net = dev_net(अगरa->अगरa_dev->dev);
-	u32 tb_id = l3mdev_fib_table(अगरa->अगरa_dev->dev);
-	काष्ठा fib_table *tb;
-	काष्ठा fib_config cfg = अणु
+static void fib_magic(int cmd, int type, __be32 dst, int dst_len,
+		      struct in_ifaddr *ifa, u32 rt_priority)
+{
+	struct net *net = dev_net(ifa->ifa_dev->dev);
+	u32 tb_id = l3mdev_fib_table(ifa->ifa_dev->dev);
+	struct fib_table *tb;
+	struct fib_config cfg = {
 		.fc_protocol = RTPROT_KERNEL,
 		.fc_type = type,
 		.fc_dst = dst,
 		.fc_dst_len = dst_len,
 		.fc_priority = rt_priority,
-		.fc_prefsrc = अगरa->अगरa_local,
-		.fc_oअगर = अगरa->अगरa_dev->dev->अगरindex,
+		.fc_prefsrc = ifa->ifa_local,
+		.fc_oif = ifa->ifa_dev->dev->ifindex,
 		.fc_nlflags = NLM_F_CREATE | NLM_F_APPEND,
-		.fc_nlinfo = अणु
+		.fc_nlinfo = {
 			.nl_net = net,
-		पूर्ण,
-	पूर्ण;
+		},
+	};
 
-	अगर (!tb_id)
+	if (!tb_id)
 		tb_id = (type == RTN_UNICAST) ? RT_TABLE_MAIN : RT_TABLE_LOCAL;
 
 	tb = fib_new_table(net, tb_id);
-	अगर (!tb)
-		वापस;
+	if (!tb)
+		return;
 
 	cfg.fc_table = tb->tb_id;
 
-	अगर (type != RTN_LOCAL)
+	if (type != RTN_LOCAL)
 		cfg.fc_scope = RT_SCOPE_LINK;
-	अन्यथा
+	else
 		cfg.fc_scope = RT_SCOPE_HOST;
 
-	अगर (cmd == RTM_NEWROUTE)
-		fib_table_insert(net, tb, &cfg, शून्य);
-	अन्यथा
-		fib_table_delete(net, tb, &cfg, शून्य);
-पूर्ण
+	if (cmd == RTM_NEWROUTE)
+		fib_table_insert(net, tb, &cfg, NULL);
+	else
+		fib_table_delete(net, tb, &cfg, NULL);
+}
 
-व्योम fib_add_अगरaddr(काष्ठा in_अगरaddr *अगरa)
-अणु
-	काष्ठा in_device *in_dev = अगरa->अगरa_dev;
-	काष्ठा net_device *dev = in_dev->dev;
-	काष्ठा in_अगरaddr *prim = अगरa;
-	__be32 mask = अगरa->अगरa_mask;
-	__be32 addr = अगरa->अगरa_local;
-	__be32 prefix = अगरa->अगरa_address & mask;
+void fib_add_ifaddr(struct in_ifaddr *ifa)
+{
+	struct in_device *in_dev = ifa->ifa_dev;
+	struct net_device *dev = in_dev->dev;
+	struct in_ifaddr *prim = ifa;
+	__be32 mask = ifa->ifa_mask;
+	__be32 addr = ifa->ifa_local;
+	__be32 prefix = ifa->ifa_address & mask;
 
-	अगर (अगरa->अगरa_flags & IFA_F_SECONDARY) अणु
-		prim = inet_अगरa_byprefix(in_dev, prefix, mask);
-		अगर (!prim) अणु
+	if (ifa->ifa_flags & IFA_F_SECONDARY) {
+		prim = inet_ifa_byprefix(in_dev, prefix, mask);
+		if (!prim) {
 			pr_warn("%s: bug: prim == NULL\n", __func__);
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 
 	fib_magic(RTM_NEWROUTE, RTN_LOCAL, addr, 32, prim, 0);
 
-	अगर (!(dev->flags & IFF_UP))
-		वापस;
+	if (!(dev->flags & IFF_UP))
+		return;
 
-	/* Add broadcast address, अगर it is explicitly asचिन्हित. */
-	अगर (अगरa->अगरa_broadcast && अगरa->अगरa_broadcast != htonl(0xFFFFFFFF))
-		fib_magic(RTM_NEWROUTE, RTN_BROADCAST, अगरa->अगरa_broadcast, 32,
+	/* Add broadcast address, if it is explicitly assigned. */
+	if (ifa->ifa_broadcast && ifa->ifa_broadcast != htonl(0xFFFFFFFF))
+		fib_magic(RTM_NEWROUTE, RTN_BROADCAST, ifa->ifa_broadcast, 32,
 			  prim, 0);
 
-	अगर (!ipv4_is_zeronet(prefix) && !(अगरa->अगरa_flags & IFA_F_SECONDARY) &&
-	    (prefix != addr || अगरa->अगरa_prefixlen < 32)) अणु
-		अगर (!(अगरa->अगरa_flags & IFA_F_NOPREFIXROUTE))
+	if (!ipv4_is_zeronet(prefix) && !(ifa->ifa_flags & IFA_F_SECONDARY) &&
+	    (prefix != addr || ifa->ifa_prefixlen < 32)) {
+		if (!(ifa->ifa_flags & IFA_F_NOPREFIXROUTE))
 			fib_magic(RTM_NEWROUTE,
 				  dev->flags & IFF_LOOPBACK ? RTN_LOCAL : RTN_UNICAST,
-				  prefix, अगरa->अगरa_prefixlen, prim,
-				  अगरa->अगरa_rt_priority);
+				  prefix, ifa->ifa_prefixlen, prim,
+				  ifa->ifa_rt_priority);
 
-		/* Add network specअगरic broadcasts, when it takes a sense */
-		अगर (अगरa->अगरa_prefixlen < 31) अणु
+		/* Add network specific broadcasts, when it takes a sense */
+		if (ifa->ifa_prefixlen < 31) {
 			fib_magic(RTM_NEWROUTE, RTN_BROADCAST, prefix, 32,
 				  prim, 0);
 			fib_magic(RTM_NEWROUTE, RTN_BROADCAST, prefix | ~mask,
 				  32, prim, 0);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-व्योम fib_modअगरy_prefix_metric(काष्ठा in_अगरaddr *अगरa, u32 new_metric)
-अणु
-	__be32 prefix = अगरa->अगरa_address & अगरa->अगरa_mask;
-	काष्ठा in_device *in_dev = अगरa->अगरa_dev;
-	काष्ठा net_device *dev = in_dev->dev;
+void fib_modify_prefix_metric(struct in_ifaddr *ifa, u32 new_metric)
+{
+	__be32 prefix = ifa->ifa_address & ifa->ifa_mask;
+	struct in_device *in_dev = ifa->ifa_dev;
+	struct net_device *dev = in_dev->dev;
 
-	अगर (!(dev->flags & IFF_UP) ||
-	    अगरa->अगरa_flags & (IFA_F_SECONDARY | IFA_F_NOPREFIXROUTE) ||
+	if (!(dev->flags & IFF_UP) ||
+	    ifa->ifa_flags & (IFA_F_SECONDARY | IFA_F_NOPREFIXROUTE) ||
 	    ipv4_is_zeronet(prefix) ||
-	    (prefix == अगरa->अगरa_local && अगरa->अगरa_prefixlen == 32))
-		वापस;
+	    (prefix == ifa->ifa_local && ifa->ifa_prefixlen == 32))
+		return;
 
 	/* add the new */
 	fib_magic(RTM_NEWROUTE,
 		  dev->flags & IFF_LOOPBACK ? RTN_LOCAL : RTN_UNICAST,
-		  prefix, अगरa->अगरa_prefixlen, अगरa, new_metric);
+		  prefix, ifa->ifa_prefixlen, ifa, new_metric);
 
 	/* delete the old */
 	fib_magic(RTM_DELROUTE,
 		  dev->flags & IFF_LOOPBACK ? RTN_LOCAL : RTN_UNICAST,
-		  prefix, अगरa->अगरa_prefixlen, अगरa, अगरa->अगरa_rt_priority);
-पूर्ण
+		  prefix, ifa->ifa_prefixlen, ifa, ifa->ifa_rt_priority);
+}
 
 /* Delete primary or secondary address.
  * Optionally, on secondary address promotion consider the addresses
- * from subnet iprim as deleted, even अगर they are in device list.
- * In this हाल the secondary अगरa can be in device list.
+ * from subnet iprim as deleted, even if they are in device list.
+ * In this case the secondary ifa can be in device list.
  */
-व्योम fib_del_अगरaddr(काष्ठा in_अगरaddr *अगरa, काष्ठा in_अगरaddr *iprim)
-अणु
-	काष्ठा in_device *in_dev = अगरa->अगरa_dev;
-	काष्ठा net_device *dev = in_dev->dev;
-	काष्ठा in_अगरaddr *अगरa1;
-	काष्ठा in_अगरaddr *prim = अगरa, *prim1 = शून्य;
-	__be32 brd = अगरa->अगरa_address | ~अगरa->अगरa_mask;
-	__be32 any = अगरa->अगरa_address & अगरa->अगरa_mask;
-#घोषणा LOCAL_OK	1
-#घोषणा BRD_OK		2
-#घोषणा BRD0_OK		4
-#घोषणा BRD1_OK		8
-	अचिन्हित पूर्णांक ok = 0;
-	पूर्णांक subnet = 0;		/* Primary network */
-	पूर्णांक gone = 1;		/* Address is missing */
-	पूर्णांक same_prefsrc = 0;	/* Another primary with same IP */
+void fib_del_ifaddr(struct in_ifaddr *ifa, struct in_ifaddr *iprim)
+{
+	struct in_device *in_dev = ifa->ifa_dev;
+	struct net_device *dev = in_dev->dev;
+	struct in_ifaddr *ifa1;
+	struct in_ifaddr *prim = ifa, *prim1 = NULL;
+	__be32 brd = ifa->ifa_address | ~ifa->ifa_mask;
+	__be32 any = ifa->ifa_address & ifa->ifa_mask;
+#define LOCAL_OK	1
+#define BRD_OK		2
+#define BRD0_OK		4
+#define BRD1_OK		8
+	unsigned int ok = 0;
+	int subnet = 0;		/* Primary network */
+	int gone = 1;		/* Address is missing */
+	int same_prefsrc = 0;	/* Another primary with same IP */
 
-	अगर (अगरa->अगरa_flags & IFA_F_SECONDARY) अणु
-		prim = inet_अगरa_byprefix(in_dev, any, अगरa->अगरa_mask);
-		अगर (!prim) अणु
-			/* अगर the device has been deleted, we करोn't perक्रमm
+	if (ifa->ifa_flags & IFA_F_SECONDARY) {
+		prim = inet_ifa_byprefix(in_dev, any, ifa->ifa_mask);
+		if (!prim) {
+			/* if the device has been deleted, we don't perform
 			 * address promotion
 			 */
-			अगर (!in_dev->dead)
+			if (!in_dev->dead)
 				pr_warn("%s: bug: prim == NULL\n", __func__);
-			वापस;
-		पूर्ण
-		अगर (iprim && iprim != prim) अणु
+			return;
+		}
+		if (iprim && iprim != prim) {
 			pr_warn("%s: bug: iprim != prim\n", __func__);
-			वापस;
-		पूर्ण
-	पूर्ण अन्यथा अगर (!ipv4_is_zeronet(any) &&
-		   (any != अगरa->अगरa_local || अगरa->अगरa_prefixlen < 32)) अणु
-		अगर (!(अगरa->अगरa_flags & IFA_F_NOPREFIXROUTE))
+			return;
+		}
+	} else if (!ipv4_is_zeronet(any) &&
+		   (any != ifa->ifa_local || ifa->ifa_prefixlen < 32)) {
+		if (!(ifa->ifa_flags & IFA_F_NOPREFIXROUTE))
 			fib_magic(RTM_DELROUTE,
 				  dev->flags & IFF_LOOPBACK ? RTN_LOCAL : RTN_UNICAST,
-				  any, अगरa->अगरa_prefixlen, prim, 0);
+				  any, ifa->ifa_prefixlen, prim, 0);
 		subnet = 1;
-	पूर्ण
+	}
 
-	अगर (in_dev->dead)
-		जाओ no_promotions;
+	if (in_dev->dead)
+		goto no_promotions;
 
 	/* Deletion is more complicated than add.
 	 * We should take care of not to delete too much :-)
 	 *
 	 * Scan address list to be sure that addresses are really gone.
 	 */
-	rcu_पढ़ो_lock();
-	in_dev_क्रम_each_अगरa_rcu(अगरa1, in_dev) अणु
-		अगर (अगरa1 == अगरa) अणु
+	rcu_read_lock();
+	in_dev_for_each_ifa_rcu(ifa1, in_dev) {
+		if (ifa1 == ifa) {
 			/* promotion, keep the IP */
 			gone = 0;
-			जारी;
-		पूर्ण
+			continue;
+		}
 		/* Ignore IFAs from our subnet */
-		अगर (iprim && अगरa1->अगरa_mask == iprim->अगरa_mask &&
-		    inet_अगरa_match(अगरa1->अगरa_address, iprim))
-			जारी;
+		if (iprim && ifa1->ifa_mask == iprim->ifa_mask &&
+		    inet_ifa_match(ifa1->ifa_address, iprim))
+			continue;
 
-		/* Ignore अगरa1 अगर it uses dअगरferent primary IP (prefsrc) */
-		अगर (अगरa1->अगरa_flags & IFA_F_SECONDARY) अणु
+		/* Ignore ifa1 if it uses different primary IP (prefsrc) */
+		if (ifa1->ifa_flags & IFA_F_SECONDARY) {
 			/* Another address from our subnet? */
-			अगर (अगरa1->अगरa_mask == prim->अगरa_mask &&
-			    inet_अगरa_match(अगरa1->अगरa_address, prim))
+			if (ifa1->ifa_mask == prim->ifa_mask &&
+			    inet_ifa_match(ifa1->ifa_address, prim))
 				prim1 = prim;
-			अन्यथा अणु
+			else {
 				/* We reached the secondaries, so
 				 * same_prefsrc should be determined.
 				 */
-				अगर (!same_prefsrc)
-					जारी;
-				/* Search new prim1 अगर अगरa1 is not
+				if (!same_prefsrc)
+					continue;
+				/* Search new prim1 if ifa1 is not
 				 * using the current prim1
 				 */
-				अगर (!prim1 ||
-				    अगरa1->अगरa_mask != prim1->अगरa_mask ||
-				    !inet_अगरa_match(अगरa1->अगरa_address, prim1))
-					prim1 = inet_अगरa_byprefix(in_dev,
-							अगरa1->अगरa_address,
-							अगरa1->अगरa_mask);
-				अगर (!prim1)
-					जारी;
-				अगर (prim1->अगरa_local != prim->अगरa_local)
-					जारी;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (prim->अगरa_local != अगरa1->अगरa_local)
-				जारी;
-			prim1 = अगरa1;
-			अगर (prim != prim1)
+				if (!prim1 ||
+				    ifa1->ifa_mask != prim1->ifa_mask ||
+				    !inet_ifa_match(ifa1->ifa_address, prim1))
+					prim1 = inet_ifa_byprefix(in_dev,
+							ifa1->ifa_address,
+							ifa1->ifa_mask);
+				if (!prim1)
+					continue;
+				if (prim1->ifa_local != prim->ifa_local)
+					continue;
+			}
+		} else {
+			if (prim->ifa_local != ifa1->ifa_local)
+				continue;
+			prim1 = ifa1;
+			if (prim != prim1)
 				same_prefsrc = 1;
-		पूर्ण
-		अगर (अगरa->अगरa_local == अगरa1->अगरa_local)
+		}
+		if (ifa->ifa_local == ifa1->ifa_local)
 			ok |= LOCAL_OK;
-		अगर (अगरa->अगरa_broadcast == अगरa1->अगरa_broadcast)
+		if (ifa->ifa_broadcast == ifa1->ifa_broadcast)
 			ok |= BRD_OK;
-		अगर (brd == अगरa1->अगरa_broadcast)
+		if (brd == ifa1->ifa_broadcast)
 			ok |= BRD1_OK;
-		अगर (any == अगरa1->अगरa_broadcast)
+		if (any == ifa1->ifa_broadcast)
 			ok |= BRD0_OK;
-		/* primary has network specअगरic broadcasts */
-		अगर (prim1 == अगरa1 && अगरa1->अगरa_prefixlen < 31) अणु
-			__be32 brd1 = अगरa1->अगरa_address | ~अगरa1->अगरa_mask;
-			__be32 any1 = अगरa1->अगरa_address & अगरa1->अगरa_mask;
+		/* primary has network specific broadcasts */
+		if (prim1 == ifa1 && ifa1->ifa_prefixlen < 31) {
+			__be32 brd1 = ifa1->ifa_address | ~ifa1->ifa_mask;
+			__be32 any1 = ifa1->ifa_address & ifa1->ifa_mask;
 
-			अगर (!ipv4_is_zeronet(any1)) अणु
-				अगर (अगरa->अगरa_broadcast == brd1 ||
-				    अगरa->अगरa_broadcast == any1)
+			if (!ipv4_is_zeronet(any1)) {
+				if (ifa->ifa_broadcast == brd1 ||
+				    ifa->ifa_broadcast == any1)
 					ok |= BRD_OK;
-				अगर (brd == brd1 || brd == any1)
+				if (brd == brd1 || brd == any1)
 					ok |= BRD1_OK;
-				अगर (any == brd1 || any == any1)
+				if (any == brd1 || any == any1)
 					ok |= BRD0_OK;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	rcu_पढ़ो_unlock();
+			}
+		}
+	}
+	rcu_read_unlock();
 
 no_promotions:
-	अगर (!(ok & BRD_OK))
-		fib_magic(RTM_DELROUTE, RTN_BROADCAST, अगरa->अगरa_broadcast, 32,
+	if (!(ok & BRD_OK))
+		fib_magic(RTM_DELROUTE, RTN_BROADCAST, ifa->ifa_broadcast, 32,
 			  prim, 0);
-	अगर (subnet && अगरa->अगरa_prefixlen < 31) अणु
-		अगर (!(ok & BRD1_OK))
+	if (subnet && ifa->ifa_prefixlen < 31) {
+		if (!(ok & BRD1_OK))
 			fib_magic(RTM_DELROUTE, RTN_BROADCAST, brd, 32,
 				  prim, 0);
-		अगर (!(ok & BRD0_OK))
+		if (!(ok & BRD0_OK))
 			fib_magic(RTM_DELROUTE, RTN_BROADCAST, any, 32,
 				  prim, 0);
-	पूर्ण
-	अगर (!(ok & LOCAL_OK)) अणु
-		अचिन्हित पूर्णांक addr_type;
+	}
+	if (!(ok & LOCAL_OK)) {
+		unsigned int addr_type;
 
-		fib_magic(RTM_DELROUTE, RTN_LOCAL, अगरa->अगरa_local, 32, prim, 0);
+		fib_magic(RTM_DELROUTE, RTN_LOCAL, ifa->ifa_local, 32, prim, 0);
 
 		/* Check, that this local address finally disappeared. */
 		addr_type = inet_addr_type_dev_table(dev_net(dev), dev,
-						     अगरa->अगरa_local);
-		अगर (gone && addr_type != RTN_LOCAL) अणु
+						     ifa->ifa_local);
+		if (gone && addr_type != RTN_LOCAL) {
 			/* And the last, but not the least thing.
 			 * We must flush stray FIB entries.
 			 *
 			 * First of all, we scan fib_info list searching
-			 * क्रम stray nexthop entries, then ignite fib_flush.
+			 * for stray nexthop entries, then ignite fib_flush.
 			 */
-			अगर (fib_sync_करोwn_addr(dev, अगरa->अगरa_local))
+			if (fib_sync_down_addr(dev, ifa->ifa_local))
 				fib_flush(dev_net(dev));
-		पूर्ण
-	पूर्ण
-#अघोषित LOCAL_OK
-#अघोषित BRD_OK
-#अघोषित BRD0_OK
-#अघोषित BRD1_OK
-पूर्ण
+		}
+	}
+#undef LOCAL_OK
+#undef BRD_OK
+#undef BRD0_OK
+#undef BRD1_OK
+}
 
-अटल व्योम nl_fib_lookup(काष्ठा net *net, काष्ठा fib_result_nl *frn)
-अणु
+static void nl_fib_lookup(struct net *net, struct fib_result_nl *frn)
+{
 
-	काष्ठा fib_result       res;
-	काष्ठा flowi4           fl4 = अणु
+	struct fib_result       res;
+	struct flowi4           fl4 = {
 		.flowi4_mark = frn->fl_mark,
 		.daddr = frn->fl_addr,
 		.flowi4_tos = frn->fl_tos,
 		.flowi4_scope = frn->fl_scope,
-	पूर्ण;
-	काष्ठा fib_table *tb;
+	};
+	struct fib_table *tb;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
 	tb = fib_get_table(net, frn->tb_id_in);
 
 	frn->err = -ENOENT;
-	अगर (tb) अणु
+	if (tb) {
 		local_bh_disable();
 
 		frn->tb_id = tb->tb_id;
 		frn->err = fib_table_lookup(tb, &fl4, &res, FIB_LOOKUP_NOREF);
 
-		अगर (!frn->err) अणु
+		if (!frn->err) {
 			frn->prefixlen = res.prefixlen;
 			frn->nh_sel = res.nh_sel;
 			frn->type = res.type;
 			frn->scope = res.scope;
-		पूर्ण
+		}
 		local_bh_enable();
-	पूर्ण
+	}
 
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_unlock();
+}
 
-अटल व्योम nl_fib_input(काष्ठा sk_buff *skb)
-अणु
-	काष्ठा net *net;
-	काष्ठा fib_result_nl *frn;
-	काष्ठा nlmsghdr *nlh;
+static void nl_fib_input(struct sk_buff *skb)
+{
+	struct net *net;
+	struct fib_result_nl *frn;
+	struct nlmsghdr *nlh;
 	u32 portid;
 
 	net = sock_net(skb->sk);
 	nlh = nlmsg_hdr(skb);
-	अगर (skb->len < nlmsg_total_size(माप(*frn)) ||
+	if (skb->len < nlmsg_total_size(sizeof(*frn)) ||
 	    skb->len < nlh->nlmsg_len ||
-	    nlmsg_len(nlh) < माप(*frn))
-		वापस;
+	    nlmsg_len(nlh) < sizeof(*frn))
+		return;
 
 	skb = netlink_skb_clone(skb, GFP_KERNEL);
-	अगर (!skb)
-		वापस;
+	if (!skb)
+		return;
 	nlh = nlmsg_hdr(skb);
 
-	frn = (काष्ठा fib_result_nl *) nlmsg_data(nlh);
+	frn = (struct fib_result_nl *) nlmsg_data(nlh);
 	nl_fib_lookup(net, frn);
 
 	portid = NETLINK_CB(skb).portid;      /* netlink portid */
 	NETLINK_CB(skb).portid = 0;        /* from kernel */
 	NETLINK_CB(skb).dst_group = 0;  /* unicast */
 	netlink_unicast(net->ipv4.fibnl, skb, portid, MSG_DONTWAIT);
-पूर्ण
+}
 
-अटल पूर्णांक __net_init nl_fib_lookup_init(काष्ठा net *net)
-अणु
-	काष्ठा sock *sk;
-	काष्ठा netlink_kernel_cfg cfg = अणु
+static int __net_init nl_fib_lookup_init(struct net *net)
+{
+	struct sock *sk;
+	struct netlink_kernel_cfg cfg = {
 		.input	= nl_fib_input,
-	पूर्ण;
+	};
 
 	sk = netlink_kernel_create(net, NETLINK_FIB_LOOKUP, &cfg);
-	अगर (!sk)
-		वापस -EAFNOSUPPORT;
+	if (!sk)
+		return -EAFNOSUPPORT;
 	net->ipv4.fibnl = sk;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम nl_fib_lookup_निकास(काष्ठा net *net)
-अणु
+static void nl_fib_lookup_exit(struct net *net)
+{
 	netlink_kernel_release(net->ipv4.fibnl);
-	net->ipv4.fibnl = शून्य;
-पूर्ण
+	net->ipv4.fibnl = NULL;
+}
 
-अटल व्योम fib_disable_ip(काष्ठा net_device *dev, अचिन्हित दीर्घ event,
-			   bool क्रमce)
-अणु
-	अगर (fib_sync_करोwn_dev(dev, event, क्रमce))
+static void fib_disable_ip(struct net_device *dev, unsigned long event,
+			   bool force)
+{
+	if (fib_sync_down_dev(dev, event, force))
 		fib_flush(dev_net(dev));
-	अन्यथा
+	else
 		rt_cache_flush(dev_net(dev));
-	arp_अगरकरोwn(dev);
-पूर्ण
+	arp_ifdown(dev);
+}
 
-अटल पूर्णांक fib_inetaddr_event(काष्ठा notअगरier_block *this, अचिन्हित दीर्घ event, व्योम *ptr)
-अणु
-	काष्ठा in_अगरaddr *अगरa = (काष्ठा in_अगरaddr *)ptr;
-	काष्ठा net_device *dev = अगरa->अगरa_dev->dev;
-	काष्ठा net *net = dev_net(dev);
+static int fib_inetaddr_event(struct notifier_block *this, unsigned long event, void *ptr)
+{
+	struct in_ifaddr *ifa = (struct in_ifaddr *)ptr;
+	struct net_device *dev = ifa->ifa_dev->dev;
+	struct net *net = dev_net(dev);
 
-	चयन (event) अणु
-	हाल NETDEV_UP:
-		fib_add_अगरaddr(अगरa);
-#अगर_घोषित CONFIG_IP_ROUTE_MULTIPATH
+	switch (event) {
+	case NETDEV_UP:
+		fib_add_ifaddr(ifa);
+#ifdef CONFIG_IP_ROUTE_MULTIPATH
 		fib_sync_up(dev, RTNH_F_DEAD);
-#पूर्ण_अगर
+#endif
 		atomic_inc(&net->ipv4.dev_addr_genid);
 		rt_cache_flush(dev_net(dev));
-		अवरोध;
-	हाल NETDEV_DOWN:
-		fib_del_अगरaddr(अगरa, शून्य);
+		break;
+	case NETDEV_DOWN:
+		fib_del_ifaddr(ifa, NULL);
 		atomic_inc(&net->ipv4.dev_addr_genid);
-		अगर (!अगरa->अगरa_dev->अगरa_list) अणु
-			/* Last address was deleted from this पूर्णांकerface.
+		if (!ifa->ifa_dev->ifa_list) {
+			/* Last address was deleted from this interface.
 			 * Disable IP.
 			 */
 			fib_disable_ip(dev, event, true);
-		पूर्ण अन्यथा अणु
+		} else {
 			rt_cache_flush(dev_net(dev));
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	वापस NOTIFY_DONE;
-पूर्ण
+		}
+		break;
+	}
+	return NOTIFY_DONE;
+}
 
-अटल पूर्णांक fib_netdev_event(काष्ठा notअगरier_block *this, अचिन्हित दीर्घ event, व्योम *ptr)
-अणु
-	काष्ठा net_device *dev = netdev_notअगरier_info_to_dev(ptr);
-	काष्ठा netdev_notअगरier_changeupper_info *upper_info = ptr;
-	काष्ठा netdev_notअगरier_info_ext *info_ext = ptr;
-	काष्ठा in_device *in_dev;
-	काष्ठा net *net = dev_net(dev);
-	काष्ठा in_अगरaddr *अगरa;
-	अचिन्हित पूर्णांक flags;
+static int fib_netdev_event(struct notifier_block *this, unsigned long event, void *ptr)
+{
+	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
+	struct netdev_notifier_changeupper_info *upper_info = ptr;
+	struct netdev_notifier_info_ext *info_ext = ptr;
+	struct in_device *in_dev;
+	struct net *net = dev_net(dev);
+	struct in_ifaddr *ifa;
+	unsigned int flags;
 
-	अगर (event == NETDEV_UNREGISTER) अणु
+	if (event == NETDEV_UNREGISTER) {
 		fib_disable_ip(dev, event, true);
 		rt_flush_dev(dev);
-		वापस NOTIFY_DONE;
-	पूर्ण
+		return NOTIFY_DONE;
+	}
 
 	in_dev = __in_dev_get_rtnl(dev);
-	अगर (!in_dev)
-		वापस NOTIFY_DONE;
+	if (!in_dev)
+		return NOTIFY_DONE;
 
-	चयन (event) अणु
-	हाल NETDEV_UP:
-		in_dev_क्रम_each_अगरa_rtnl(अगरa, in_dev) अणु
-			fib_add_अगरaddr(अगरa);
-		पूर्ण
-#अगर_घोषित CONFIG_IP_ROUTE_MULTIPATH
+	switch (event) {
+	case NETDEV_UP:
+		in_dev_for_each_ifa_rtnl(ifa, in_dev) {
+			fib_add_ifaddr(ifa);
+		}
+#ifdef CONFIG_IP_ROUTE_MULTIPATH
 		fib_sync_up(dev, RTNH_F_DEAD);
-#पूर्ण_अगर
+#endif
 		atomic_inc(&net->ipv4.dev_addr_genid);
 		rt_cache_flush(net);
-		अवरोध;
-	हाल NETDEV_DOWN:
+		break;
+	case NETDEV_DOWN:
 		fib_disable_ip(dev, event, false);
-		अवरोध;
-	हाल NETDEV_CHANGE:
+		break;
+	case NETDEV_CHANGE:
 		flags = dev_get_flags(dev);
-		अगर (flags & (IFF_RUNNING | IFF_LOWER_UP))
+		if (flags & (IFF_RUNNING | IFF_LOWER_UP))
 			fib_sync_up(dev, RTNH_F_LINKDOWN);
-		अन्यथा
-			fib_sync_करोwn_dev(dev, event, false);
+		else
+			fib_sync_down_dev(dev, event, false);
 		rt_cache_flush(net);
-		अवरोध;
-	हाल NETDEV_CHANGEMTU:
+		break;
+	case NETDEV_CHANGEMTU:
 		fib_sync_mtu(dev, info_ext->ext.mtu);
 		rt_cache_flush(net);
-		अवरोध;
-	हाल NETDEV_CHANGEUPPER:
+		break;
+	case NETDEV_CHANGEUPPER:
 		upper_info = ptr;
-		/* flush all routes अगर dev is linked to or unlinked from
+		/* flush all routes if dev is linked to or unlinked from
 		 * an L3 master device (e.g., VRF)
 		 */
-		अगर (upper_info->upper_dev &&
-		    netअगर_is_l3_master(upper_info->upper_dev))
+		if (upper_info->upper_dev &&
+		    netif_is_l3_master(upper_info->upper_dev))
 			fib_disable_ip(dev, NETDEV_DOWN, true);
-		अवरोध;
-	पूर्ण
-	वापस NOTIFY_DONE;
-पूर्ण
+		break;
+	}
+	return NOTIFY_DONE;
+}
 
-अटल काष्ठा notअगरier_block fib_inetaddr_notअगरier = अणु
-	.notअगरier_call = fib_inetaddr_event,
-पूर्ण;
+static struct notifier_block fib_inetaddr_notifier = {
+	.notifier_call = fib_inetaddr_event,
+};
 
-अटल काष्ठा notअगरier_block fib_netdev_notअगरier = अणु
-	.notअगरier_call = fib_netdev_event,
-पूर्ण;
+static struct notifier_block fib_netdev_notifier = {
+	.notifier_call = fib_netdev_event,
+};
 
-अटल पूर्णांक __net_init ip_fib_net_init(काष्ठा net *net)
-अणु
-	पूर्णांक err;
-	माप_प्रकार size = माप(काष्ठा hlist_head) * FIB_TABLE_HASHSZ;
+static int __net_init ip_fib_net_init(struct net *net)
+{
+	int err;
+	size_t size = sizeof(struct hlist_head) * FIB_TABLE_HASHSZ;
 
-	err = fib4_notअगरier_init(net);
-	अगर (err)
-		वापस err;
+	err = fib4_notifier_init(net);
+	if (err)
+		return err;
 
-	/* Aव्योम false sharing : Use at least a full cache line */
-	size = max_t(माप_प्रकार, size, L1_CACHE_BYTES);
+	/* Avoid false sharing : Use at least a full cache line */
+	size = max_t(size_t, size, L1_CACHE_BYTES);
 
 	net->ipv4.fib_table_hash = kzalloc(size, GFP_KERNEL);
-	अगर (!net->ipv4.fib_table_hash) अणु
+	if (!net->ipv4.fib_table_hash) {
 		err = -ENOMEM;
-		जाओ err_table_hash_alloc;
-	पूर्ण
+		goto err_table_hash_alloc;
+	}
 
 	err = fib4_rules_init(net);
-	अगर (err < 0)
-		जाओ err_rules_init;
-	वापस 0;
+	if (err < 0)
+		goto err_rules_init;
+	return 0;
 
 err_rules_init:
-	kमुक्त(net->ipv4.fib_table_hash);
+	kfree(net->ipv4.fib_table_hash);
 err_table_hash_alloc:
-	fib4_notअगरier_निकास(net);
-	वापस err;
-पूर्ण
+	fib4_notifier_exit(net);
+	return err;
+}
 
-अटल व्योम ip_fib_net_निकास(काष्ठा net *net)
-अणु
-	पूर्णांक i;
+static void ip_fib_net_exit(struct net *net)
+{
+	int i;
 
 	rtnl_lock();
-#अगर_घोषित CONFIG_IP_MULTIPLE_TABLES
-	RCU_INIT_POINTER(net->ipv4.fib_मुख्य, शून्य);
-	RCU_INIT_POINTER(net->ipv4.fib_शेष, शून्य);
-#पूर्ण_अगर
+#ifdef CONFIG_IP_MULTIPLE_TABLES
+	RCU_INIT_POINTER(net->ipv4.fib_main, NULL);
+	RCU_INIT_POINTER(net->ipv4.fib_default, NULL);
+#endif
 	/* Destroy the tables in reverse order to guarantee that the
-	 * local table, ID 255, is destroyed beक्रमe the मुख्य table, ID
+	 * local table, ID 255, is destroyed before the main table, ID
 	 * 254. This is necessary as the local table may contain
-	 * references to data contained in the मुख्य table.
+	 * references to data contained in the main table.
 	 */
-	क्रम (i = FIB_TABLE_HASHSZ - 1; i >= 0; i--) अणु
-		काष्ठा hlist_head *head = &net->ipv4.fib_table_hash[i];
-		काष्ठा hlist_node *पंचांगp;
-		काष्ठा fib_table *tb;
+	for (i = FIB_TABLE_HASHSZ - 1; i >= 0; i--) {
+		struct hlist_head *head = &net->ipv4.fib_table_hash[i];
+		struct hlist_node *tmp;
+		struct fib_table *tb;
 
-		hlist_क्रम_each_entry_safe(tb, पंचांगp, head, tb_hlist) अणु
+		hlist_for_each_entry_safe(tb, tmp, head, tb_hlist) {
 			hlist_del(&tb->tb_hlist);
 			fib_table_flush(net, tb, true);
-			fib_मुक्त_table(tb);
-		पूर्ण
-	पूर्ण
+			fib_free_table(tb);
+		}
+	}
 
-#अगर_घोषित CONFIG_IP_MULTIPLE_TABLES
-	fib4_rules_निकास(net);
-#पूर्ण_अगर
+#ifdef CONFIG_IP_MULTIPLE_TABLES
+	fib4_rules_exit(net);
+#endif
 	rtnl_unlock();
-	kमुक्त(net->ipv4.fib_table_hash);
-	fib4_notअगरier_निकास(net);
-पूर्ण
+	kfree(net->ipv4.fib_table_hash);
+	fib4_notifier_exit(net);
+}
 
-अटल पूर्णांक __net_init fib_net_init(काष्ठा net *net)
-अणु
-	पूर्णांक error;
+static int __net_init fib_net_init(struct net *net)
+{
+	int error;
 
-#अगर_घोषित CONFIG_IP_ROUTE_CLASSID
+#ifdef CONFIG_IP_ROUTE_CLASSID
 	net->ipv4.fib_num_tclassid_users = 0;
-#पूर्ण_अगर
+#endif
 	error = ip_fib_net_init(net);
-	अगर (error < 0)
-		जाओ out;
+	if (error < 0)
+		goto out;
 	error = nl_fib_lookup_init(net);
-	अगर (error < 0)
-		जाओ out_nlfl;
+	if (error < 0)
+		goto out_nlfl;
 	error = fib_proc_init(net);
-	अगर (error < 0)
-		जाओ out_proc;
+	if (error < 0)
+		goto out_proc;
 out:
-	वापस error;
+	return error;
 
 out_proc:
-	nl_fib_lookup_निकास(net);
+	nl_fib_lookup_exit(net);
 out_nlfl:
-	ip_fib_net_निकास(net);
-	जाओ out;
-पूर्ण
+	ip_fib_net_exit(net);
+	goto out;
+}
 
-अटल व्योम __net_निकास fib_net_निकास(काष्ठा net *net)
-अणु
-	fib_proc_निकास(net);
-	nl_fib_lookup_निकास(net);
-	ip_fib_net_निकास(net);
-पूर्ण
+static void __net_exit fib_net_exit(struct net *net)
+{
+	fib_proc_exit(net);
+	nl_fib_lookup_exit(net);
+	ip_fib_net_exit(net);
+}
 
-अटल काष्ठा pernet_operations fib_net_ops = अणु
+static struct pernet_operations fib_net_ops = {
 	.init = fib_net_init,
-	.निकास = fib_net_निकास,
-पूर्ण;
+	.exit = fib_net_exit,
+};
 
-व्योम __init ip_fib_init(व्योम)
-अणु
+void __init ip_fib_init(void)
+{
 	fib_trie_init();
 
-	रेजिस्टर_pernet_subsys(&fib_net_ops);
+	register_pernet_subsys(&fib_net_ops);
 
-	रेजिस्टर_netdevice_notअगरier(&fib_netdev_notअगरier);
-	रेजिस्टर_inetaddr_notअगरier(&fib_inetaddr_notअगरier);
+	register_netdevice_notifier(&fib_netdev_notifier);
+	register_inetaddr_notifier(&fib_inetaddr_notifier);
 
-	rtnl_रेजिस्टर(PF_INET, RTM_NEWROUTE, inet_rपंचांग_newroute, शून्य, 0);
-	rtnl_रेजिस्टर(PF_INET, RTM_DELROUTE, inet_rपंचांग_delroute, शून्य, 0);
-	rtnl_रेजिस्टर(PF_INET, RTM_GETROUTE, शून्य, inet_dump_fib, 0);
-पूर्ण
+	rtnl_register(PF_INET, RTM_NEWROUTE, inet_rtm_newroute, NULL, 0);
+	rtnl_register(PF_INET, RTM_DELROUTE, inet_rtm_delroute, NULL, 0);
+	rtnl_register(PF_INET, RTM_GETROUTE, NULL, inet_dump_fib, 0);
+}

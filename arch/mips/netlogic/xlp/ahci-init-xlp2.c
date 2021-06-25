@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2003-2014 Broadcom Corporation
  * All Rights Reserved
@@ -6,25 +5,25 @@
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the Broadcom
+ * COPYING in the main directory of this source tree, or the Broadcom
  * license below:
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary क्रमm must reproduce the above copyright
+ * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
- *    the करोcumentation and/or other materials provided with the
+ *    the documentation and/or other materials provided with the
  *    distribution.
  *
  * THIS SOFTWARE IS PROVIDED BY BROADCOM ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED. IN NO EVENT SHALL BROADCOM OR CONTRIBUTORS BE LIABLE
- * FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
  * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
@@ -33,128 +32,128 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/init.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/pci_ids.h>
-#समावेश <linux/nodemask.h>
+#include <linux/dma-mapping.h>
+#include <linux/kernel.h>
+#include <linux/delay.h>
+#include <linux/init.h>
+#include <linux/pci.h>
+#include <linux/irq.h>
+#include <linux/bitops.h>
+#include <linux/pci_ids.h>
+#include <linux/nodemask.h>
 
-#समावेश <यंत्र/cpu.h>
-#समावेश <यंत्र/mipsregs.h>
+#include <asm/cpu.h>
+#include <asm/mipsregs.h>
 
-#समावेश <यंत्र/netlogic/common.h>
-#समावेश <यंत्र/netlogic/haldefs.h>
-#समावेश <यंत्र/netlogic/mips-extns.h>
-#समावेश <यंत्र/netlogic/xlp-hal/xlp.h>
-#समावेश <यंत्र/netlogic/xlp-hal/iomap.h>
+#include <asm/netlogic/common.h>
+#include <asm/netlogic/haldefs.h>
+#include <asm/netlogic/mips-extns.h>
+#include <asm/netlogic/xlp-hal/xlp.h>
+#include <asm/netlogic/xlp-hal/iomap.h>
 
-#घोषणा SATA_CTL		0x0
-#घोषणा SATA_STATUS		0x1 /* Status Reg */
-#घोषणा SATA_INT		0x2 /* Interrupt Reg */
-#घोषणा SATA_INT_MASK		0x3 /* Interrupt Mask Reg */
-#घोषणा SATA_BIU_TIMEOUT	0x4
-#घोषणा AXIWRSPERRLOG		0x5
-#घोषणा AXIRDSPERRLOG		0x6
-#घोषणा BiuTimeoutLow		0x7
-#घोषणा BiuTimeoutHi		0x8
-#घोषणा BiuSlvErLow		0x9
-#घोषणा BiuSlvErHi		0xa
-#घोषणा IO_CONFIG_SWAP_DIS	0xb
-#घोषणा CR_REG_TIMER		0xc
-#घोषणा CORE_ID			0xd
-#घोषणा AXI_SLAVE_OPT1		0xe
-#घोषणा PHY_MEM_ACCESS		0xf
-#घोषणा PHY0_CNTRL		0x10
-#घोषणा PHY0_STAT		0x11
-#घोषणा PHY0_RX_ALIGN		0x12
-#घोषणा PHY0_RX_EQ_LO		0x13
-#घोषणा PHY0_RX_EQ_HI		0x14
-#घोषणा PHY0_BIST_LOOP		0x15
-#घोषणा PHY1_CNTRL		0x16
-#घोषणा PHY1_STAT		0x17
-#घोषणा PHY1_RX_ALIGN		0x18
-#घोषणा PHY1_RX_EQ_LO		0x19
-#घोषणा PHY1_RX_EQ_HI		0x1a
-#घोषणा PHY1_BIST_LOOP		0x1b
-#घोषणा RdExBase		0x1c
-#घोषणा RdExLimit		0x1d
-#घोषणा CacheAllocBase		0x1e
-#घोषणा CacheAllocLimit		0x1f
-#घोषणा BiuSlaveCmdGstNum	0x20
+#define SATA_CTL		0x0
+#define SATA_STATUS		0x1 /* Status Reg */
+#define SATA_INT		0x2 /* Interrupt Reg */
+#define SATA_INT_MASK		0x3 /* Interrupt Mask Reg */
+#define SATA_BIU_TIMEOUT	0x4
+#define AXIWRSPERRLOG		0x5
+#define AXIRDSPERRLOG		0x6
+#define BiuTimeoutLow		0x7
+#define BiuTimeoutHi		0x8
+#define BiuSlvErLow		0x9
+#define BiuSlvErHi		0xa
+#define IO_CONFIG_SWAP_DIS	0xb
+#define CR_REG_TIMER		0xc
+#define CORE_ID			0xd
+#define AXI_SLAVE_OPT1		0xe
+#define PHY_MEM_ACCESS		0xf
+#define PHY0_CNTRL		0x10
+#define PHY0_STAT		0x11
+#define PHY0_RX_ALIGN		0x12
+#define PHY0_RX_EQ_LO		0x13
+#define PHY0_RX_EQ_HI		0x14
+#define PHY0_BIST_LOOP		0x15
+#define PHY1_CNTRL		0x16
+#define PHY1_STAT		0x17
+#define PHY1_RX_ALIGN		0x18
+#define PHY1_RX_EQ_LO		0x19
+#define PHY1_RX_EQ_HI		0x1a
+#define PHY1_BIST_LOOP		0x1b
+#define RdExBase		0x1c
+#define RdExLimit		0x1d
+#define CacheAllocBase		0x1e
+#define CacheAllocLimit		0x1f
+#define BiuSlaveCmdGstNum	0x20
 
 /*SATA_CTL Bits */
-#घोषणा SATA_RST_N		BIT(0)  /* Active low reset sata_core phy */
-#घोषणा SataCtlReserve0		BIT(1)
-#घोषणा M_CSYSREQ		BIT(2)  /* AXI master low घातer, not used */
-#घोषणा S_CSYSREQ		BIT(3)  /* AXI slave low घातer, not used */
-#घोषणा P0_CP_DET		BIT(8)  /* Reserved, bring in from pad */
-#घोषणा P0_MP_SW		BIT(9)  /* Mech Switch */
-#घोषणा P0_DISABLE		BIT(10) /* disable p0 */
-#घोषणा P0_ACT_LED_EN		BIT(11) /* Active LED enable */
-#घोषणा P0_IRST_HARD_SYNTH	BIT(12) /* PHY hard synth reset */
-#घोषणा P0_IRST_HARD_TXRX	BIT(13) /* PHY lane hard reset */
-#घोषणा P0_IRST_POR		BIT(14) /* PHY घातer on reset*/
-#घोषणा P0_IPDTXL		BIT(15) /* PHY Tx lane dis/घातer करोwn */
-#घोषणा P0_IPDRXL		BIT(16) /* PHY Rx lane dis/घातer करोwn */
-#घोषणा P0_IPDIPDMSYNTH		BIT(17) /* PHY synthesizer dis/porwer करोwn */
-#घोषणा P0_CP_POD_EN		BIT(18) /* CP_POD enable */
-#घोषणा P0_AT_BYPASS		BIT(19) /* P0 address translation by pass */
-#घोषणा P1_CP_DET		BIT(20) /* Reserved,Cold Detect */
-#घोषणा P1_MP_SW		BIT(21) /* Mech Switch */
-#घोषणा P1_DISABLE		BIT(22) /* disable p1 */
-#घोषणा P1_ACT_LED_EN		BIT(23) /* Active LED enable */
-#घोषणा P1_IRST_HARD_SYNTH	BIT(24) /* PHY hard synth reset */
-#घोषणा P1_IRST_HARD_TXRX	BIT(25) /* PHY lane hard reset */
-#घोषणा P1_IRST_POR		BIT(26) /* PHY घातer on reset*/
-#घोषणा P1_IPDTXL		BIT(27) /* PHY Tx lane dis/porwer करोwn */
-#घोषणा P1_IPDRXL		BIT(28) /* PHY Rx lane dis/porwer करोwn */
-#घोषणा P1_IPDIPDMSYNTH		BIT(29) /* PHY synthesizer dis/porwer करोwn */
-#घोषणा P1_CP_POD_EN		BIT(30)
-#घोषणा P1_AT_BYPASS		BIT(31) /* P1 address translation by pass */
+#define SATA_RST_N		BIT(0)  /* Active low reset sata_core phy */
+#define SataCtlReserve0		BIT(1)
+#define M_CSYSREQ		BIT(2)  /* AXI master low power, not used */
+#define S_CSYSREQ		BIT(3)  /* AXI slave low power, not used */
+#define P0_CP_DET		BIT(8)  /* Reserved, bring in from pad */
+#define P0_MP_SW		BIT(9)  /* Mech Switch */
+#define P0_DISABLE		BIT(10) /* disable p0 */
+#define P0_ACT_LED_EN		BIT(11) /* Active LED enable */
+#define P0_IRST_HARD_SYNTH	BIT(12) /* PHY hard synth reset */
+#define P0_IRST_HARD_TXRX	BIT(13) /* PHY lane hard reset */
+#define P0_IRST_POR		BIT(14) /* PHY power on reset*/
+#define P0_IPDTXL		BIT(15) /* PHY Tx lane dis/power down */
+#define P0_IPDRXL		BIT(16) /* PHY Rx lane dis/power down */
+#define P0_IPDIPDMSYNTH		BIT(17) /* PHY synthesizer dis/porwer down */
+#define P0_CP_POD_EN		BIT(18) /* CP_POD enable */
+#define P0_AT_BYPASS		BIT(19) /* P0 address translation by pass */
+#define P1_CP_DET		BIT(20) /* Reserved,Cold Detect */
+#define P1_MP_SW		BIT(21) /* Mech Switch */
+#define P1_DISABLE		BIT(22) /* disable p1 */
+#define P1_ACT_LED_EN		BIT(23) /* Active LED enable */
+#define P1_IRST_HARD_SYNTH	BIT(24) /* PHY hard synth reset */
+#define P1_IRST_HARD_TXRX	BIT(25) /* PHY lane hard reset */
+#define P1_IRST_POR		BIT(26) /* PHY power on reset*/
+#define P1_IPDTXL		BIT(27) /* PHY Tx lane dis/porwer down */
+#define P1_IPDRXL		BIT(28) /* PHY Rx lane dis/porwer down */
+#define P1_IPDIPDMSYNTH		BIT(29) /* PHY synthesizer dis/porwer down */
+#define P1_CP_POD_EN		BIT(30)
+#define P1_AT_BYPASS		BIT(31) /* P1 address translation by pass */
 
-/* Status रेजिस्टर */
-#घोषणा M_CACTIVE		BIT(0)  /* m_cactive, not used */
-#घोषणा S_CACTIVE		BIT(1)  /* s_cactive, not used */
-#घोषणा P0_PHY_READY		BIT(8)  /* phy is पढ़ोy */
-#घोषणा P0_CP_POD		BIT(9)  /* Cold PowerOn */
-#घोषणा P0_SLUMBER		BIT(10) /* घातer mode slumber */
-#घोषणा P0_PATIAL		BIT(11) /* घातer mode patial */
-#घोषणा P0_PHY_SIG_DET		BIT(12) /* phy dignal detect */
-#घोषणा P0_PHY_CALI		BIT(13) /* phy calibration करोne */
-#घोषणा P1_PHY_READY		BIT(16) /* phy is पढ़ोy */
-#घोषणा P1_CP_POD		BIT(17) /* Cold PowerOn */
-#घोषणा P1_SLUMBER		BIT(18) /* घातer mode slumber */
-#घोषणा P1_PATIAL		BIT(19) /* घातer mode patial */
-#घोषणा P1_PHY_SIG_DET		BIT(20) /* phy dignal detect */
-#घोषणा P1_PHY_CALI		BIT(21) /* phy calibration करोne */
+/* Status register */
+#define M_CACTIVE		BIT(0)  /* m_cactive, not used */
+#define S_CACTIVE		BIT(1)  /* s_cactive, not used */
+#define P0_PHY_READY		BIT(8)  /* phy is ready */
+#define P0_CP_POD		BIT(9)  /* Cold PowerOn */
+#define P0_SLUMBER		BIT(10) /* power mode slumber */
+#define P0_PATIAL		BIT(11) /* power mode patial */
+#define P0_PHY_SIG_DET		BIT(12) /* phy dignal detect */
+#define P0_PHY_CALI		BIT(13) /* phy calibration done */
+#define P1_PHY_READY		BIT(16) /* phy is ready */
+#define P1_CP_POD		BIT(17) /* Cold PowerOn */
+#define P1_SLUMBER		BIT(18) /* power mode slumber */
+#define P1_PATIAL		BIT(19) /* power mode patial */
+#define P1_PHY_SIG_DET		BIT(20) /* phy dignal detect */
+#define P1_PHY_CALI		BIT(21) /* phy calibration done */
 
 /* SATA CR_REG_TIMER bits */
-#घोषणा CR_TIME_SCALE		(0x1000 << 0)
+#define CR_TIME_SCALE		(0x1000 << 0)
 
-/* SATA PHY specअगरic रेजिस्टरs start and end address */
-#घोषणा RXCDRCALFOSC0		0x0065
-#घोषणा CALDUTY			0x006e
-#घोषणा RXDPIF			0x8065
-#घोषणा PPMDRIFTMAX_HI		0x80A4
+/* SATA PHY specific registers start and end address */
+#define RXCDRCALFOSC0		0x0065
+#define CALDUTY			0x006e
+#define RXDPIF			0x8065
+#define PPMDRIFTMAX_HI		0x80A4
 
-#घोषणा nlm_पढ़ो_sata_reg(b, r)		nlm_पढ़ो_reg(b, r)
-#घोषणा nlm_ग_लिखो_sata_reg(b, r, v)	nlm_ग_लिखो_reg(b, r, v)
-#घोषणा nlm_get_sata_pcibase(node)	\
+#define nlm_read_sata_reg(b, r)		nlm_read_reg(b, r)
+#define nlm_write_sata_reg(b, r, v)	nlm_write_reg(b, r, v)
+#define nlm_get_sata_pcibase(node)	\
 		nlm_pcicfg_base(XLP9XX_IO_SATA_OFFSET(node))
-#घोषणा nlm_get_sata_regbase(node)	\
+#define nlm_get_sata_regbase(node)	\
 		(nlm_get_sata_pcibase(node) + 0x100)
 
-/* SATA PHY config क्रम रेजिस्टर block 1 0x0065 .. 0x006e */
-अटल स्थिर u8 sata_phy_config1[]  = अणु
+/* SATA PHY config for register block 1 0x0065 .. 0x006e */
+static const u8 sata_phy_config1[]  = {
 	0xC9, 0xC9, 0x07, 0x07, 0x18, 0x18, 0x01, 0x01, 0x22, 0x00
-पूर्ण;
+};
 
-/* SATA PHY config क्रम रेजिस्टर block 2 0x8065 .. 0x80A4 */
-अटल स्थिर u8 sata_phy_config2[]  = अणु
+/* SATA PHY config for register block 2 0x8065 .. 0x80A4 */
+static const u8 sata_phy_config2[]  = {
 	0xAA, 0x00, 0x4C, 0xC9, 0xC9, 0x07, 0x07, 0x18,
 	0x18, 0x05, 0x0C, 0x10, 0x00, 0x10, 0x00, 0xFF,
 	0xCF, 0xF7, 0xE1, 0xF5, 0xFD, 0xFD, 0xFF, 0xFF,
@@ -163,99 +162,99 @@
 	0xFD, 0xFD, 0xF5, 0xF5, 0xFF, 0xFF, 0xFF, 0xF5,
 	0x3F, 0x00, 0x32, 0x00, 0x03, 0x01, 0x05, 0x05,
 	0x04, 0x00, 0x00, 0x08, 0x04, 0x00, 0x00, 0x04,
-पूर्ण;
+};
 
-स्थिर पूर्णांक sata_phy_debug = 0;	/* set to verअगरy PHY ग_लिखोs */
+const int sata_phy_debug = 0;	/* set to verify PHY writes */
 
-अटल व्योम sata_clear_glue_reg(u64 regbase, u32 off, u32 bit)
-अणु
+static void sata_clear_glue_reg(u64 regbase, u32 off, u32 bit)
+{
 	u32 reg_val;
 
-	reg_val = nlm_पढ़ो_sata_reg(regbase, off);
-	nlm_ग_लिखो_sata_reg(regbase, off, (reg_val & ~bit));
-पूर्ण
+	reg_val = nlm_read_sata_reg(regbase, off);
+	nlm_write_sata_reg(regbase, off, (reg_val & ~bit));
+}
 
-अटल व्योम sata_set_glue_reg(u64 regbase, u32 off, u32 bit)
-अणु
+static void sata_set_glue_reg(u64 regbase, u32 off, u32 bit)
+{
 	u32 reg_val;
 
-	reg_val = nlm_पढ़ो_sata_reg(regbase, off);
-	nlm_ग_लिखो_sata_reg(regbase, off, (reg_val | bit));
-पूर्ण
+	reg_val = nlm_read_sata_reg(regbase, off);
+	nlm_write_sata_reg(regbase, off, (reg_val | bit));
+}
 
-अटल व्योम ग_लिखो_phy_reg(u64 regbase, u32 addr, u32 physel, u8 data)
-अणु
-	nlm_ग_लिखो_sata_reg(regbase, PHY_MEM_ACCESS,
+static void write_phy_reg(u64 regbase, u32 addr, u32 physel, u8 data)
+{
+	nlm_write_sata_reg(regbase, PHY_MEM_ACCESS,
 		(1u << 31) | (physel << 24) | (data << 16) | addr);
 	udelay(850);
-पूर्ण
+}
 
-अटल u8 पढ़ो_phy_reg(u64 regbase, u32 addr, u32 physel)
-अणु
+static u8 read_phy_reg(u64 regbase, u32 addr, u32 physel)
+{
 	u32 val;
 
-	nlm_ग_लिखो_sata_reg(regbase, PHY_MEM_ACCESS,
+	nlm_write_sata_reg(regbase, PHY_MEM_ACCESS,
 		(0 << 31) | (physel << 24) | (0 << 16) | addr);
 	udelay(850);
-	val = nlm_पढ़ो_sata_reg(regbase, PHY_MEM_ACCESS);
-	वापस (val >> 16) & 0xff;
-पूर्ण
+	val = nlm_read_sata_reg(regbase, PHY_MEM_ACCESS);
+	return (val >> 16) & 0xff;
+}
 
-अटल व्योम config_sata_phy(u64 regbase)
-अणु
+static void config_sata_phy(u64 regbase)
+{
 	u32 port, i, reg;
 	u8 val;
 
-	क्रम (port = 0; port < 2; port++) अणु
-		क्रम (i = 0, reg = RXCDRCALFOSC0; reg <= CALDUTY; reg++, i++)
-			ग_लिखो_phy_reg(regbase, reg, port, sata_phy_config1[i]);
+	for (port = 0; port < 2; port++) {
+		for (i = 0, reg = RXCDRCALFOSC0; reg <= CALDUTY; reg++, i++)
+			write_phy_reg(regbase, reg, port, sata_phy_config1[i]);
 
-		क्रम (i = 0, reg = RXDPIF; reg <= PPMDRIFTMAX_HI; reg++, i++)
-			ग_लिखो_phy_reg(regbase, reg, port, sata_phy_config2[i]);
+		for (i = 0, reg = RXDPIF; reg <= PPMDRIFTMAX_HI; reg++, i++)
+			write_phy_reg(regbase, reg, port, sata_phy_config2[i]);
 
-		/* Fix क्रम PHY link up failures at lower temperatures */
-		ग_लिखो_phy_reg(regbase, 0x800F, port, 0x1f);
+		/* Fix for PHY link up failures at lower temperatures */
+		write_phy_reg(regbase, 0x800F, port, 0x1f);
 
-		val = पढ़ो_phy_reg(regbase, 0x0029, port);
-		ग_लिखो_phy_reg(regbase, 0x0029, port, val | (0x7 << 1));
+		val = read_phy_reg(regbase, 0x0029, port);
+		write_phy_reg(regbase, 0x0029, port, val | (0x7 << 1));
 
-		val = पढ़ो_phy_reg(regbase, 0x0056, port);
-		ग_लिखो_phy_reg(regbase, 0x0056, port, val & ~(1 << 3));
+		val = read_phy_reg(regbase, 0x0056, port);
+		write_phy_reg(regbase, 0x0056, port, val & ~(1 << 3));
 
-		val = पढ़ो_phy_reg(regbase, 0x0018, port);
-		ग_लिखो_phy_reg(regbase, 0x0018, port, val & ~(0x7 << 0));
-	पूर्ण
-पूर्ण
+		val = read_phy_reg(regbase, 0x0018, port);
+		write_phy_reg(regbase, 0x0018, port, val & ~(0x7 << 0));
+	}
+}
 
-अटल व्योम check_phy_रेजिस्टर(u64 regbase, u32 addr, u32 physel, u8 xdata)
-अणु
+static void check_phy_register(u64 regbase, u32 addr, u32 physel, u8 xdata)
+{
 	u8 data;
 
-	data = पढ़ो_phy_reg(regbase, addr, physel);
+	data = read_phy_reg(regbase, addr, physel);
 	pr_info("PHY read addr = 0x%x physel = %d data = 0x%x %s\n",
 		addr, physel, data, data == xdata ? "TRUE" : "FALSE");
-पूर्ण
+}
 
-अटल व्योम verअगरy_sata_phy_config(u64 regbase)
-अणु
+static void verify_sata_phy_config(u64 regbase)
+{
 	u32 port, i, reg;
 
-	क्रम (port = 0; port < 2; port++) अणु
-		क्रम (i = 0, reg = RXCDRCALFOSC0; reg <= CALDUTY; reg++, i++)
-			check_phy_रेजिस्टर(regbase, reg, port,
+	for (port = 0; port < 2; port++) {
+		for (i = 0, reg = RXCDRCALFOSC0; reg <= CALDUTY; reg++, i++)
+			check_phy_register(regbase, reg, port,
 						sata_phy_config1[i]);
 
-		क्रम (i = 0, reg = RXDPIF; reg <= PPMDRIFTMAX_HI; reg++, i++)
-			check_phy_रेजिस्टर(regbase, reg, port,
+		for (i = 0, reg = RXDPIF; reg <= PPMDRIFTMAX_HI; reg++, i++)
+			check_phy_register(regbase, reg, port,
 						sata_phy_config2[i]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम nlm_sata_firmware_init(पूर्णांक node)
-अणु
+static void nlm_sata_firmware_init(int node)
+{
 	u32 reg_val;
 	u64 regbase;
-	पूर्णांक n;
+	int n;
 
 	pr_info("Initializing XLP9XX On-chip AHCI...\n");
 	regbase = nlm_get_sata_regbase(node);
@@ -293,8 +292,8 @@
 
 	/* setup PHY */
 	config_sata_phy(regbase);
-	अगर (sata_phy_debug)
-		verअगरy_sata_phy_config(regbase);
+	if (sata_phy_debug)
+		verify_sata_phy_config(regbase);
 
 	udelay(1000);
 	sata_set_glue_reg(regbase, SATA_CTL, P0_IRST_HARD_TXRX);
@@ -312,75 +311,75 @@
 
 	pr_debug("Waiting for PHYs to come up.\n");
 	n = 10000;
-	करो अणु
-		reg_val = nlm_पढ़ो_sata_reg(regbase, SATA_STATUS);
-		अगर ((reg_val & P1_PHY_READY) && (reg_val & P0_PHY_READY))
-			अवरोध;
+	do {
+		reg_val = nlm_read_sata_reg(regbase, SATA_STATUS);
+		if ((reg_val & P1_PHY_READY) && (reg_val & P0_PHY_READY))
+			break;
 		udelay(10);
-	पूर्ण जबतक (--n > 0);
+	} while (--n > 0);
 
-	अगर (reg_val  & P0_PHY_READY)
+	if (reg_val  & P0_PHY_READY)
 		pr_info("PHY0 is up.\n");
-	अन्यथा
+	else
 		pr_info("PHY0 is down.\n");
-	अगर (reg_val  & P1_PHY_READY)
+	if (reg_val  & P1_PHY_READY)
 		pr_info("PHY1 is up.\n");
-	अन्यथा
+	else
 		pr_info("PHY1 is down.\n");
 
 	pr_info("XLP AHCI Init Done.\n");
-पूर्ण
+}
 
-अटल पूर्णांक __init nlm_ahci_init(व्योम)
-अणु
-	पूर्णांक node;
+static int __init nlm_ahci_init(void)
+{
+	int node;
 
-	अगर (!cpu_is_xlp9xx())
-		वापस 0;
-	क्रम (node = 0; node < NLM_NR_NODES; node++)
-		अगर (nlm_node_present(node))
+	if (!cpu_is_xlp9xx())
+		return 0;
+	for (node = 0; node < NLM_NR_NODES; node++)
+		if (nlm_node_present(node))
 			nlm_sata_firmware_init(node);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम nlm_sata_पूर्णांकr_ack(काष्ठा irq_data *data)
-अणु
+static void nlm_sata_intr_ack(struct irq_data *data)
+{
 	u64 regbase;
 	u32 val;
-	पूर्णांक node;
+	int node;
 
 	node = data->irq / NLM_IRQS_PER_NODE;
 	regbase = nlm_get_sata_regbase(node);
-	val = nlm_पढ़ो_sata_reg(regbase, SATA_INT);
+	val = nlm_read_sata_reg(regbase, SATA_INT);
 	sata_set_glue_reg(regbase, SATA_INT, val);
-पूर्ण
+}
 
-अटल व्योम nlm_sata_fixup_bar(काष्ठा pci_dev *dev)
-अणु
+static void nlm_sata_fixup_bar(struct pci_dev *dev)
+{
 	dev->resource[5] = dev->resource[0];
-	स_रखो(&dev->resource[0], 0, माप(dev->resource[0]));
-पूर्ण
+	memset(&dev->resource[0], 0, sizeof(dev->resource[0]));
+}
 
-अटल व्योम nlm_sata_fixup_final(काष्ठा pci_dev *dev)
-अणु
+static void nlm_sata_fixup_final(struct pci_dev *dev)
+{
 	u32 val;
 	u64 regbase;
-	पूर्णांक node;
+	int node;
 
 	/* Find end bridge function to find node */
 	node = xlp_socdev_to_node(dev);
 	regbase = nlm_get_sata_regbase(node);
 
-	/* clear pending पूर्णांकerrupts and then enable them */
-	val = nlm_पढ़ो_sata_reg(regbase, SATA_INT);
+	/* clear pending interrupts and then enable them */
+	val = nlm_read_sata_reg(regbase, SATA_INT);
 	sata_set_glue_reg(regbase, SATA_INT, val);
 
-	/* Enable only the core पूर्णांकerrupt */
+	/* Enable only the core interrupt */
 	sata_set_glue_reg(regbase, SATA_INT_MASK, 0x1);
 
 	dev->irq = nlm_irq_to_xirq(node, PIC_SATA_IRQ);
-	nlm_set_pic_extra_ack(node, PIC_SATA_IRQ, nlm_sata_पूर्णांकr_ack);
-पूर्ण
+	nlm_set_pic_extra_ack(node, PIC_SATA_IRQ, nlm_sata_intr_ack);
+}
 
 arch_initcall(nlm_ahci_init);
 

@@ -1,149 +1,148 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Generate .byte code क्रम some inकाष्ठाions not supported by old
+ * Generate .byte code for some instructions not supported by old
  * binutils.
  */
-#अगर_अघोषित X86_ASM_INST_H
-#घोषणा X86_ASM_INST_H
+#ifndef X86_ASM_INST_H
+#define X86_ASM_INST_H
 
-#अगर_घोषित __ASSEMBLY__
+#ifdef __ASSEMBLY__
 
-#घोषणा REG_NUM_INVALID		100
+#define REG_NUM_INVALID		100
 
-#घोषणा REG_TYPE_R32		0
-#घोषणा REG_TYPE_R64		1
-#घोषणा REG_TYPE_INVALID	100
+#define REG_TYPE_R32		0
+#define REG_TYPE_R64		1
+#define REG_TYPE_INVALID	100
 
 	.macro R32_NUM opd r32
 	\opd = REG_NUM_INVALID
-	.अगरc \ल32,%eax
+	.ifc \r32,%eax
 	\opd = 0
-	.endअगर
-	.अगरc \ल32,%ecx
+	.endif
+	.ifc \r32,%ecx
 	\opd = 1
-	.endअगर
-	.अगरc \ल32,%edx
+	.endif
+	.ifc \r32,%edx
 	\opd = 2
-	.endअगर
-	.अगरc \ल32,%ebx
+	.endif
+	.ifc \r32,%ebx
 	\opd = 3
-	.endअगर
-	.अगरc \ल32,%esp
+	.endif
+	.ifc \r32,%esp
 	\opd = 4
-	.endअगर
-	.अगरc \ल32,%ebp
+	.endif
+	.ifc \r32,%ebp
 	\opd = 5
-	.endअगर
-	.अगरc \ल32,%esi
+	.endif
+	.ifc \r32,%esi
 	\opd = 6
-	.endअगर
-	.अगरc \ल32,%edi
+	.endif
+	.ifc \r32,%edi
 	\opd = 7
-	.endअगर
-#अगर_घोषित CONFIG_X86_64
-	.अगरc \ल32,%r8d
+	.endif
+#ifdef CONFIG_X86_64
+	.ifc \r32,%r8d
 	\opd = 8
-	.endअगर
-	.अगरc \ल32,%r9d
+	.endif
+	.ifc \r32,%r9d
 	\opd = 9
-	.endअगर
-	.अगरc \ल32,%r10d
+	.endif
+	.ifc \r32,%r10d
 	\opd = 10
-	.endअगर
-	.अगरc \ल32,%r11d
+	.endif
+	.ifc \r32,%r11d
 	\opd = 11
-	.endअगर
-	.अगरc \ल32,%r12d
+	.endif
+	.ifc \r32,%r12d
 	\opd = 12
-	.endअगर
-	.अगरc \ल32,%r13d
+	.endif
+	.ifc \r32,%r13d
 	\opd = 13
-	.endअगर
-	.अगरc \ल32,%r14d
+	.endif
+	.ifc \r32,%r14d
 	\opd = 14
-	.endअगर
-	.अगरc \ल32,%r15d
+	.endif
+	.ifc \r32,%r15d
 	\opd = 15
-	.endअगर
-#पूर्ण_अगर
+	.endif
+#endif
 	.endm
 
 	.macro R64_NUM opd r64
 	\opd = REG_NUM_INVALID
-#अगर_घोषित CONFIG_X86_64
-	.अगरc \ल64,%rax
+#ifdef CONFIG_X86_64
+	.ifc \r64,%rax
 	\opd = 0
-	.endअगर
-	.अगरc \ल64,%rcx
+	.endif
+	.ifc \r64,%rcx
 	\opd = 1
-	.endअगर
-	.अगरc \ल64,%rdx
+	.endif
+	.ifc \r64,%rdx
 	\opd = 2
-	.endअगर
-	.अगरc \ल64,%rbx
+	.endif
+	.ifc \r64,%rbx
 	\opd = 3
-	.endअगर
-	.अगरc \ल64,%rsp
+	.endif
+	.ifc \r64,%rsp
 	\opd = 4
-	.endअगर
-	.अगरc \ल64,%rbp
+	.endif
+	.ifc \r64,%rbp
 	\opd = 5
-	.endअगर
-	.अगरc \ल64,%rsi
+	.endif
+	.ifc \r64,%rsi
 	\opd = 6
-	.endअगर
-	.अगरc \ल64,%rdi
+	.endif
+	.ifc \r64,%rdi
 	\opd = 7
-	.endअगर
-	.अगरc \ल64,%r8
+	.endif
+	.ifc \r64,%r8
 	\opd = 8
-	.endअगर
-	.अगरc \ल64,%r9
+	.endif
+	.ifc \r64,%r9
 	\opd = 9
-	.endअगर
-	.अगरc \ल64,%r10
+	.endif
+	.ifc \r64,%r10
 	\opd = 10
-	.endअगर
-	.अगरc \ल64,%r11
+	.endif
+	.ifc \r64,%r11
 	\opd = 11
-	.endअगर
-	.अगरc \ल64,%r12
+	.endif
+	.ifc \r64,%r12
 	\opd = 12
-	.endअगर
-	.अगरc \ल64,%r13
+	.endif
+	.ifc \r64,%r13
 	\opd = 13
-	.endअगर
-	.अगरc \ल64,%r14
+	.endif
+	.ifc \r64,%r14
 	\opd = 14
-	.endअगर
-	.अगरc \ल64,%r15
+	.endif
+	.ifc \r64,%r15
 	\opd = 15
-	.endअगर
-#पूर्ण_अगर
+	.endif
+#endif
 	.endm
 
 	.macro REG_TYPE type reg
-	R32_NUM reg_type_r32 \लeg
-	R64_NUM reg_type_r64 \लeg
-	.अगर reg_type_r64 <> REG_NUM_INVALID
-	\टype = REG_TYPE_R64
-	.अन्यथाअगर reg_type_r32 <> REG_NUM_INVALID
-	\टype = REG_TYPE_R32
-	.अन्यथा
-	\टype = REG_TYPE_INVALID
-	.endअगर
+	R32_NUM reg_type_r32 \reg
+	R64_NUM reg_type_r64 \reg
+	.if reg_type_r64 <> REG_NUM_INVALID
+	\type = REG_TYPE_R64
+	.elseif reg_type_r32 <> REG_NUM_INVALID
+	\type = REG_TYPE_R32
+	.else
+	\type = REG_TYPE_INVALID
+	.endif
 	.endm
 
 	.macro PFX_REX opd1 opd2 W=0
-	.अगर ((\opd1 | \opd2) & 8) || \W
+	.if ((\opd1 | \opd2) & 8) || \W
 	.byte 0x40 | ((\opd1 & 8) >> 3) | ((\opd2 & 8) >> 1) | (\W << 3)
-	.endअगर
+	.endif
 	.endm
 
 	.macro MODRM mod opd1 opd2
 	.byte \mod | (\opd1 & 7) | ((\opd2 & 7) << 3)
 	.endm
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर
+#endif

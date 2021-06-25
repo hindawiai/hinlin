@@ -1,217 +1,216 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  linux/fs/ioctl.c
  *
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
-#समावेश <linux/syscalls.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/capability.h>
-#समावेश <linux/compat.h>
-#समावेश <linux/file.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/security.h>
-#समावेश <linux/export.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/ग_लिखोback.h>
-#समावेश <linux/buffer_head.h>
-#समावेश <linux/fभाग.स>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/fiemap.h>
-#समावेश <linux/mount.h>
-#समावेश <linux/fscrypt.h>
-#समावेश <linux/fileattr.h>
+#include <linux/syscalls.h>
+#include <linux/mm.h>
+#include <linux/capability.h>
+#include <linux/compat.h>
+#include <linux/file.h>
+#include <linux/fs.h>
+#include <linux/security.h>
+#include <linux/export.h>
+#include <linux/uaccess.h>
+#include <linux/writeback.h>
+#include <linux/buffer_head.h>
+#include <linux/falloc.h>
+#include <linux/sched/signal.h>
+#include <linux/fiemap.h>
+#include <linux/mount.h>
+#include <linux/fscrypt.h>
+#include <linux/fileattr.h>
 
-#समावेश "internal.h"
+#include "internal.h"
 
-#समावेश <यंत्र/ioctls.h>
+#include <asm/ioctls.h>
 
 /* So that the fiemap access checks can't overflow on 32 bit machines. */
-#घोषणा FIEMAP_MAX_EXTENTS	(अच_पूर्णांक_उच्च / माप(काष्ठा fiemap_extent))
+#define FIEMAP_MAX_EXTENTS	(UINT_MAX / sizeof(struct fiemap_extent))
 
 /**
- * vfs_ioctl - call fileप्रणाली specअगरic ioctl methods
- * @filp:	खोलो file to invoke ioctl method on
+ * vfs_ioctl - call filesystem specific ioctl methods
+ * @filp:	open file to invoke ioctl method on
  * @cmd:	ioctl command to execute
- * @arg:	command-specअगरic argument क्रम ioctl
+ * @arg:	command-specific argument for ioctl
  *
- * Invokes fileप्रणाली specअगरic ->unlocked_ioctl, अगर one exists; otherwise
- * वापसs -ENOTTY.
+ * Invokes filesystem specific ->unlocked_ioctl, if one exists; otherwise
+ * returns -ENOTTY.
  *
- * Returns 0 on success, -त्रुटि_सं on error.
+ * Returns 0 on success, -errno on error.
  */
-दीर्घ vfs_ioctl(काष्ठा file *filp, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	पूर्णांक error = -ENOTTY;
+long vfs_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+{
+	int error = -ENOTTY;
 
-	अगर (!filp->f_op->unlocked_ioctl)
-		जाओ out;
+	if (!filp->f_op->unlocked_ioctl)
+		goto out;
 
 	error = filp->f_op->unlocked_ioctl(filp, cmd, arg);
-	अगर (error == -ENOIOCTLCMD)
+	if (error == -ENOIOCTLCMD)
 		error = -ENOTTY;
  out:
-	वापस error;
-पूर्ण
+	return error;
+}
 EXPORT_SYMBOL(vfs_ioctl);
 
-अटल पूर्णांक ioctl_fibmap(काष्ठा file *filp, पूर्णांक __user *p)
-अणु
-	काष्ठा inode *inode = file_inode(filp);
-	काष्ठा super_block *sb = inode->i_sb;
-	पूर्णांक error, ur_block;
+static int ioctl_fibmap(struct file *filp, int __user *p)
+{
+	struct inode *inode = file_inode(filp);
+	struct super_block *sb = inode->i_sb;
+	int error, ur_block;
 	sector_t block;
 
-	अगर (!capable(CAP_SYS_RAWIO))
-		वापस -EPERM;
+	if (!capable(CAP_SYS_RAWIO))
+		return -EPERM;
 
 	error = get_user(ur_block, p);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	अगर (ur_block < 0)
-		वापस -EINVAL;
+	if (ur_block < 0)
+		return -EINVAL;
 
 	block = ur_block;
 	error = bmap(inode, &block);
 
-	अगर (block > पूर्णांक_उच्च) अणु
-		error = -दुस्फल;
+	if (block > INT_MAX) {
+		error = -ERANGE;
 		pr_warn_ratelimited("[%s/%d] FS: %s File: %pD4 would truncate fibmap result\n",
 				    current->comm, task_pid_nr(current),
 				    sb->s_id, filp);
-	पूर्ण
+	}
 
-	अगर (error)
+	if (error)
 		ur_block = 0;
-	अन्यथा
+	else
 		ur_block = block;
 
-	अगर (put_user(ur_block, p))
+	if (put_user(ur_block, p))
 		error = -EFAULT;
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /**
  * fiemap_fill_next_extent - Fiemap helper function
- * @fieinfo:	Fiemap context passed पूर्णांकo ->fiemap
+ * @fieinfo:	Fiemap context passed into ->fiemap
  * @logical:	Extent logical start offset, in bytes
  * @phys:	Extent physical start offset, in bytes
  * @len:	Extent length, in bytes
  * @flags:	FIEMAP_EXTENT flags that describe this extent
  *
- * Called from file प्रणाली ->fiemap callback. Will populate extent
+ * Called from file system ->fiemap callback. Will populate extent
  * info as passed in via arguments and copy to user memory. On
  * success, extent count on fieinfo is incremented.
  *
- * Returns 0 on success, -त्रुटि_सं on error, 1 अगर this was the last
+ * Returns 0 on success, -errno on error, 1 if this was the last
  * extent that will fit in user array.
  */
-#घोषणा SET_UNKNOWN_FLAGS	(FIEMAP_EXTENT_DELALLOC)
-#घोषणा SET_NO_UNMOUNTED_IO_FLAGS	(FIEMAP_EXTENT_DATA_ENCRYPTED)
-#घोषणा SET_NOT_ALIGNED_FLAGS	(FIEMAP_EXTENT_DATA_TAIL|FIEMAP_EXTENT_DATA_INLINE)
-पूर्णांक fiemap_fill_next_extent(काष्ठा fiemap_extent_info *fieinfo, u64 logical,
+#define SET_UNKNOWN_FLAGS	(FIEMAP_EXTENT_DELALLOC)
+#define SET_NO_UNMOUNTED_IO_FLAGS	(FIEMAP_EXTENT_DATA_ENCRYPTED)
+#define SET_NOT_ALIGNED_FLAGS	(FIEMAP_EXTENT_DATA_TAIL|FIEMAP_EXTENT_DATA_INLINE)
+int fiemap_fill_next_extent(struct fiemap_extent_info *fieinfo, u64 logical,
 			    u64 phys, u64 len, u32 flags)
-अणु
-	काष्ठा fiemap_extent extent;
-	काष्ठा fiemap_extent __user *dest = fieinfo->fi_extents_start;
+{
+	struct fiemap_extent extent;
+	struct fiemap_extent __user *dest = fieinfo->fi_extents_start;
 
 	/* only count the extents */
-	अगर (fieinfo->fi_extents_max == 0) अणु
+	if (fieinfo->fi_extents_max == 0) {
 		fieinfo->fi_extents_mapped++;
-		वापस (flags & FIEMAP_EXTENT_LAST) ? 1 : 0;
-	पूर्ण
+		return (flags & FIEMAP_EXTENT_LAST) ? 1 : 0;
+	}
 
-	अगर (fieinfo->fi_extents_mapped >= fieinfo->fi_extents_max)
-		वापस 1;
+	if (fieinfo->fi_extents_mapped >= fieinfo->fi_extents_max)
+		return 1;
 
-	अगर (flags & SET_UNKNOWN_FLAGS)
+	if (flags & SET_UNKNOWN_FLAGS)
 		flags |= FIEMAP_EXTENT_UNKNOWN;
-	अगर (flags & SET_NO_UNMOUNTED_IO_FLAGS)
+	if (flags & SET_NO_UNMOUNTED_IO_FLAGS)
 		flags |= FIEMAP_EXTENT_ENCODED;
-	अगर (flags & SET_NOT_ALIGNED_FLAGS)
+	if (flags & SET_NOT_ALIGNED_FLAGS)
 		flags |= FIEMAP_EXTENT_NOT_ALIGNED;
 
-	स_रखो(&extent, 0, माप(extent));
+	memset(&extent, 0, sizeof(extent));
 	extent.fe_logical = logical;
 	extent.fe_physical = phys;
 	extent.fe_length = len;
 	extent.fe_flags = flags;
 
 	dest += fieinfo->fi_extents_mapped;
-	अगर (copy_to_user(dest, &extent, माप(extent)))
-		वापस -EFAULT;
+	if (copy_to_user(dest, &extent, sizeof(extent)))
+		return -EFAULT;
 
 	fieinfo->fi_extents_mapped++;
-	अगर (fieinfo->fi_extents_mapped == fieinfo->fi_extents_max)
-		वापस 1;
-	वापस (flags & FIEMAP_EXTENT_LAST) ? 1 : 0;
-पूर्ण
+	if (fieinfo->fi_extents_mapped == fieinfo->fi_extents_max)
+		return 1;
+	return (flags & FIEMAP_EXTENT_LAST) ? 1 : 0;
+}
 EXPORT_SYMBOL(fiemap_fill_next_extent);
 
 /**
- * fiemap_prep - check validity of requested flags क्रम fiemap
+ * fiemap_prep - check validity of requested flags for fiemap
  * @inode:	Inode to operate on
- * @fieinfo:	Fiemap context passed पूर्णांकo ->fiemap
+ * @fieinfo:	Fiemap context passed into ->fiemap
  * @start:	Start of the mapped range
  * @len:	Length of the mapped range, can be truncated by this function.
- * @supported_flags:	Set of fiemap flags that the file प्रणाली understands
+ * @supported_flags:	Set of fiemap flags that the file system understands
  *
  * This function must be called from each ->fiemap instance to validate the
- * fiemap request against the file प्रणाली parameters.
+ * fiemap request against the file system parameters.
  *
  * Returns 0 on success, or a negative error on failure.
  */
-पूर्णांक fiemap_prep(काष्ठा inode *inode, काष्ठा fiemap_extent_info *fieinfo,
+int fiemap_prep(struct inode *inode, struct fiemap_extent_info *fieinfo,
 		u64 start, u64 *len, u32 supported_flags)
-अणु
+{
 	u64 maxbytes = inode->i_sb->s_maxbytes;
 	u32 incompat_flags;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	अगर (*len == 0)
-		वापस -EINVAL;
-	अगर (start > maxbytes)
-		वापस -EFBIG;
+	if (*len == 0)
+		return -EINVAL;
+	if (start > maxbytes)
+		return -EFBIG;
 
 	/*
 	 * Shrink request scope to what the fs can actually handle.
 	 */
-	अगर (*len > maxbytes || (maxbytes - *len) < start)
+	if (*len > maxbytes || (maxbytes - *len) < start)
 		*len = maxbytes - start;
 
 	supported_flags |= FIEMAP_FLAG_SYNC;
 	supported_flags &= FIEMAP_FLAGS_COMPAT;
 	incompat_flags = fieinfo->fi_flags & ~supported_flags;
-	अगर (incompat_flags) अणु
+	if (incompat_flags) {
 		fieinfo->fi_flags = incompat_flags;
-		वापस -EBADR;
-	पूर्ण
+		return -EBADR;
+	}
 
-	अगर (fieinfo->fi_flags & FIEMAP_FLAG_SYNC)
-		ret = filemap_ग_लिखो_and_रुको(inode->i_mapping);
-	वापस ret;
-पूर्ण
+	if (fieinfo->fi_flags & FIEMAP_FLAG_SYNC)
+		ret = filemap_write_and_wait(inode->i_mapping);
+	return ret;
+}
 EXPORT_SYMBOL(fiemap_prep);
 
-अटल पूर्णांक ioctl_fiemap(काष्ठा file *filp, काष्ठा fiemap __user *ufiemap)
-अणु
-	काष्ठा fiemap fiemap;
-	काष्ठा fiemap_extent_info fieinfo = अणु 0, पूर्ण;
-	काष्ठा inode *inode = file_inode(filp);
-	पूर्णांक error;
+static int ioctl_fiemap(struct file *filp, struct fiemap __user *ufiemap)
+{
+	struct fiemap fiemap;
+	struct fiemap_extent_info fieinfo = { 0, };
+	struct inode *inode = file_inode(filp);
+	int error;
 
-	अगर (!inode->i_op->fiemap)
-		वापस -EOPNOTSUPP;
+	if (!inode->i_op->fiemap)
+		return -EOPNOTSUPP;
 
-	अगर (copy_from_user(&fiemap, ufiemap, माप(fiemap)))
-		वापस -EFAULT;
+	if (copy_from_user(&fiemap, ufiemap, sizeof(fiemap)))
+		return -EFAULT;
 
-	अगर (fiemap.fm_extent_count > FIEMAP_MAX_EXTENTS)
-		वापस -EINVAL;
+	if (fiemap.fm_extent_count > FIEMAP_MAX_EXTENTS)
+		return -EINVAL;
 
 	fieinfo.fi_flags = fiemap.fm_flags;
 	fieinfo.fi_extents_max = fiemap.fm_extent_count;
@@ -222,194 +221,194 @@ EXPORT_SYMBOL(fiemap_prep);
 
 	fiemap.fm_flags = fieinfo.fi_flags;
 	fiemap.fm_mapped_extents = fieinfo.fi_extents_mapped;
-	अगर (copy_to_user(ufiemap, &fiemap, माप(fiemap)))
+	if (copy_to_user(ufiemap, &fiemap, sizeof(fiemap)))
 		error = -EFAULT;
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल दीर्घ ioctl_file_clone(काष्ठा file *dst_file, अचिन्हित दीर्घ srcfd,
+static long ioctl_file_clone(struct file *dst_file, unsigned long srcfd,
 			     u64 off, u64 olen, u64 destoff)
-अणु
-	काष्ठा fd src_file = fdget(srcfd);
+{
+	struct fd src_file = fdget(srcfd);
 	loff_t cloned;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!src_file.file)
-		वापस -EBADF;
+	if (!src_file.file)
+		return -EBADF;
 	ret = -EXDEV;
-	अगर (src_file.file->f_path.mnt != dst_file->f_path.mnt)
-		जाओ fdput;
+	if (src_file.file->f_path.mnt != dst_file->f_path.mnt)
+		goto fdput;
 	cloned = vfs_clone_file_range(src_file.file, off, dst_file, destoff,
 				      olen, 0);
-	अगर (cloned < 0)
+	if (cloned < 0)
 		ret = cloned;
-	अन्यथा अगर (olen && cloned != olen)
+	else if (olen && cloned != olen)
 		ret = -EINVAL;
-	अन्यथा
+	else
 		ret = 0;
 fdput:
 	fdput(src_file);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल दीर्घ ioctl_file_clone_range(काष्ठा file *file,
-				   काष्ठा file_clone_range __user *argp)
-अणु
-	काष्ठा file_clone_range args;
+static long ioctl_file_clone_range(struct file *file,
+				   struct file_clone_range __user *argp)
+{
+	struct file_clone_range args;
 
-	अगर (copy_from_user(&args, argp, माप(args)))
-		वापस -EFAULT;
-	वापस ioctl_file_clone(file, args.src_fd, args.src_offset,
+	if (copy_from_user(&args, argp, sizeof(args)))
+		return -EFAULT;
+	return ioctl_file_clone(file, args.src_fd, args.src_offset,
 				args.src_length, args.dest_offset);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_BLOCK
+#ifdef CONFIG_BLOCK
 
-अटल अंतरभूत sector_t logical_to_blk(काष्ठा inode *inode, loff_t offset)
-अणु
-	वापस (offset >> inode->i_blkbits);
-पूर्ण
+static inline sector_t logical_to_blk(struct inode *inode, loff_t offset)
+{
+	return (offset >> inode->i_blkbits);
+}
 
-अटल अंतरभूत loff_t blk_to_logical(काष्ठा inode *inode, sector_t blk)
-अणु
-	वापस (blk << inode->i_blkbits);
-पूर्ण
+static inline loff_t blk_to_logical(struct inode *inode, sector_t blk)
+{
+	return (blk << inode->i_blkbits);
+}
 
 /**
- * __generic_block_fiemap - FIEMAP क्रम block based inodes (no locking)
+ * __generic_block_fiemap - FIEMAP for block based inodes (no locking)
  * @inode: the inode to map
- * @fieinfo: the fiemap info काष्ठा that will be passed back to userspace
+ * @fieinfo: the fiemap info struct that will be passed back to userspace
  * @start: where to start mapping in the inode
  * @len: how much space to map
  * @get_block: the fs's get_block function
  *
- * This करोes FIEMAP क्रम block based inodes.  Basically it will just loop
+ * This does FIEMAP for block based inodes.  Basically it will just loop
  * through get_block until we hit the number of extents we want to map, or we
  * go past the end of the file and hit a hole.
  *
  * If it is possible to have data blocks beyond a hole past @inode->i_size, then
- * please करो not use this function, it will stop at the first unmapped block
+ * please do not use this function, it will stop at the first unmapped block
  * beyond i_size.
  *
- * If you use this function directly, you need to करो your own locking. Use
- * generic_block_fiemap अगर you want the locking करोne क्रम you.
+ * If you use this function directly, you need to do your own locking. Use
+ * generic_block_fiemap if you want the locking done for you.
  */
-अटल पूर्णांक __generic_block_fiemap(काष्ठा inode *inode,
-			   काष्ठा fiemap_extent_info *fieinfo, loff_t start,
+static int __generic_block_fiemap(struct inode *inode,
+			   struct fiemap_extent_info *fieinfo, loff_t start,
 			   loff_t len, get_block_t *get_block)
-अणु
-	काष्ठा buffer_head map_bh;
+{
+	struct buffer_head map_bh;
 	sector_t start_blk, last_blk;
-	loff_t isize = i_size_पढ़ो(inode);
+	loff_t isize = i_size_read(inode);
 	u64 logical = 0, phys = 0, size = 0;
 	u32 flags = FIEMAP_EXTENT_MERGED;
 	bool past_eof = false, whole_file = false;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	ret = fiemap_prep(inode, fieinfo, start, &len, FIEMAP_FLAG_SYNC);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/*
 	 * Either the i_mutex or other appropriate locking needs to be held
 	 * since we expect isize to not change at all through the duration of
 	 * this call.
 	 */
-	अगर (len >= isize) अणु
+	if (len >= isize) {
 		whole_file = true;
 		len = isize;
-	पूर्ण
+	}
 
 	/*
-	 * Some fileप्रणालीs can't deal with being asked to map less than
+	 * Some filesystems can't deal with being asked to map less than
 	 * blocksize, so make sure our len is at least block length.
 	 */
-	अगर (logical_to_blk(inode, len) == 0)
+	if (logical_to_blk(inode, len) == 0)
 		len = blk_to_logical(inode, 1);
 
 	start_blk = logical_to_blk(inode, start);
 	last_blk = logical_to_blk(inode, start + len - 1);
 
-	करो अणु
+	do {
 		/*
 		 * we set b_size to the total size we want so it will map as
 		 * many contiguous blocks as possible at once
 		 */
-		स_रखो(&map_bh, 0, माप(काष्ठा buffer_head));
+		memset(&map_bh, 0, sizeof(struct buffer_head));
 		map_bh.b_size = len;
 
 		ret = get_block(inode, start_blk, &map_bh, 0);
-		अगर (ret)
-			अवरोध;
+		if (ret)
+			break;
 
 		/* HOLE */
-		अगर (!buffer_mapped(&map_bh)) अणु
+		if (!buffer_mapped(&map_bh)) {
 			start_blk++;
 
 			/*
-			 * We want to handle the हाल where there is an
+			 * We want to handle the case where there is an
 			 * allocated block at the front of the file, and then
 			 * nothing but holes up to the end of the file properly,
-			 * to make sure that extent at the front माला_लो properly
+			 * to make sure that extent at the front gets properly
 			 * marked with FIEMAP_EXTENT_LAST
 			 */
-			अगर (!past_eof &&
+			if (!past_eof &&
 			    blk_to_logical(inode, start_blk) >= isize)
 				past_eof = 1;
 
 			/*
-			 * First hole after going past the खातापूर्ण, this is our
+			 * First hole after going past the EOF, this is our
 			 * last extent
 			 */
-			अगर (past_eof && size) अणु
+			if (past_eof && size) {
 				flags = FIEMAP_EXTENT_MERGED|FIEMAP_EXTENT_LAST;
 				ret = fiemap_fill_next_extent(fieinfo, logical,
 							      phys, size,
 							      flags);
-			पूर्ण अन्यथा अगर (size) अणु
+			} else if (size) {
 				ret = fiemap_fill_next_extent(fieinfo, logical,
 							      phys, size, flags);
 				size = 0;
-			पूर्ण
+			}
 
-			/* अगर we have holes up to/past खातापूर्ण then we're करोne */
-			अगर (start_blk > last_blk || past_eof || ret)
-				अवरोध;
-		पूर्ण अन्यथा अणु
+			/* if we have holes up to/past EOF then we're done */
+			if (start_blk > last_blk || past_eof || ret)
+				break;
+		} else {
 			/*
 			 * We have gone over the length of what we wanted to
 			 * map, and it wasn't the entire file, so add the extent
-			 * we got last समय and निकास.
+			 * we got last time and exit.
 			 *
-			 * This is क्रम the हाल where say we want to map all the
+			 * This is for the case where say we want to map all the
 			 * way up to the second to the last block in a file, but
 			 * the last block is a hole, making the second to last
-			 * block FIEMAP_EXTENT_LAST.  In this हाल we want to
-			 * see अगर there is a hole after the second to last block
+			 * block FIEMAP_EXTENT_LAST.  In this case we want to
+			 * see if there is a hole after the second to last block
 			 * so we can mark it properly.  If we found data after
 			 * we exceeded the length we were requesting, then we
 			 * are good to go, just add the extent to the fieinfo
-			 * and अवरोध
+			 * and break
 			 */
-			अगर (start_blk > last_blk && !whole_file) अणु
+			if (start_blk > last_blk && !whole_file) {
 				ret = fiemap_fill_next_extent(fieinfo, logical,
 							      phys, size,
 							      flags);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 			/*
-			 * अगर size != 0 then we know we alपढ़ोy have an extent
+			 * if size != 0 then we know we already have an extent
 			 * to add, so add it.
 			 */
-			अगर (size) अणु
+			if (size) {
 				ret = fiemap_fill_next_extent(fieinfo, logical,
 							      phys, size,
 							      flags);
-				अगर (ret)
-					अवरोध;
-			पूर्ण
+				if (ret)
+					break;
+			}
 
 			logical = blk_to_logical(inode, start_blk);
 			phys = blk_to_logical(inode, map_bh.b_blocknr);
@@ -419,53 +418,53 @@ fdput:
 			start_blk += logical_to_blk(inode, size);
 
 			/*
-			 * If we are past the खातापूर्ण, then we need to make sure as
+			 * If we are past the EOF, then we need to make sure as
 			 * soon as we find a hole that the last extent we found
 			 * is marked with FIEMAP_EXTENT_LAST
 			 */
-			अगर (!past_eof && logical + size >= isize)
+			if (!past_eof && logical + size >= isize)
 				past_eof = true;
-		पूर्ण
+		}
 		cond_resched();
-		अगर (fatal_संकेत_pending(current)) अणु
+		if (fatal_signal_pending(current)) {
 			ret = -EINTR;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-	पूर्ण जबतक (1);
+	} while (1);
 
 	/* If ret is 1 then we just hit the end of the extent array */
-	अगर (ret == 1)
+	if (ret == 1)
 		ret = 0;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * generic_block_fiemap - FIEMAP क्रम block based inodes
+ * generic_block_fiemap - FIEMAP for block based inodes
  * @inode: The inode to map
- * @fieinfo: The mapping inक्रमmation
+ * @fieinfo: The mapping information
  * @start: The initial block to map
  * @len: The length of the extect to attempt to map
- * @get_block: The block mapping function क्रम the fs
+ * @get_block: The block mapping function for the fs
  *
  * Calls __generic_block_fiemap to map the inode, after taking
  * the inode's mutex lock.
  */
 
-पूर्णांक generic_block_fiemap(काष्ठा inode *inode,
-			 काष्ठा fiemap_extent_info *fieinfo, u64 start,
+int generic_block_fiemap(struct inode *inode,
+			 struct fiemap_extent_info *fieinfo, u64 start,
 			 u64 len, get_block_t *get_block)
-अणु
-	पूर्णांक ret;
+{
+	int ret;
 	inode_lock(inode);
 	ret = __generic_block_fiemap(inode, fieinfo, start, len, get_block);
 	inode_unlock(inode);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(generic_block_fiemap);
 
-#पूर्ण_अगर  /*  CONFIG_BLOCK  */
+#endif  /*  CONFIG_BLOCK  */
 
 /*
  * This provides compatibility with legacy XFS pre-allocation ioctls
@@ -474,305 +473,305 @@ EXPORT_SYMBOL(generic_block_fiemap);
  * Only the l_start, l_len and l_whence fields of the 'struct space_resv'
  * are used here, rest are ignored.
  */
-अटल पूर्णांक ioctl_pपुनः_स्मृतिate(काष्ठा file *filp, पूर्णांक mode, व्योम __user *argp)
-अणु
-	काष्ठा inode *inode = file_inode(filp);
-	काष्ठा space_resv sr;
+static int ioctl_preallocate(struct file *filp, int mode, void __user *argp)
+{
+	struct inode *inode = file_inode(filp);
+	struct space_resv sr;
 
-	अगर (copy_from_user(&sr, argp, माप(sr)))
-		वापस -EFAULT;
+	if (copy_from_user(&sr, argp, sizeof(sr)))
+		return -EFAULT;
 
-	चयन (sr.l_whence) अणु
-	हाल शुरू_से:
-		अवरोध;
-	हाल प्रस्तुत_से:
+	switch (sr.l_whence) {
+	case SEEK_SET:
+		break;
+	case SEEK_CUR:
 		sr.l_start += filp->f_pos;
-		अवरोध;
-	हाल अंत_से:
-		sr.l_start += i_size_पढ़ो(inode);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	case SEEK_END:
+		sr.l_start += i_size_read(inode);
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस vfs_fallocate(filp, mode | FALLOC_FL_KEEP_SIZE, sr.l_start,
+	return vfs_fallocate(filp, mode | FALLOC_FL_KEEP_SIZE, sr.l_start,
 			sr.l_len);
-पूर्ण
+}
 
 /* on ia32 l_start is on a 32-bit boundary */
-#अगर defined CONFIG_COMPAT && defined(CONFIG_X86_64)
-/* just account क्रम dअगरferent alignment */
-अटल पूर्णांक compat_ioctl_pपुनः_स्मृतिate(काष्ठा file *file, पूर्णांक mode,
-				    काष्ठा space_resv_32 __user *argp)
-अणु
-	काष्ठा inode *inode = file_inode(file);
-	काष्ठा space_resv_32 sr;
+#if defined CONFIG_COMPAT && defined(CONFIG_X86_64)
+/* just account for different alignment */
+static int compat_ioctl_preallocate(struct file *file, int mode,
+				    struct space_resv_32 __user *argp)
+{
+	struct inode *inode = file_inode(file);
+	struct space_resv_32 sr;
 
-	अगर (copy_from_user(&sr, argp, माप(sr)))
-		वापस -EFAULT;
+	if (copy_from_user(&sr, argp, sizeof(sr)))
+		return -EFAULT;
 
-	चयन (sr.l_whence) अणु
-	हाल शुरू_से:
-		अवरोध;
-	हाल प्रस्तुत_से:
+	switch (sr.l_whence) {
+	case SEEK_SET:
+		break;
+	case SEEK_CUR:
 		sr.l_start += file->f_pos;
-		अवरोध;
-	हाल अंत_से:
-		sr.l_start += i_size_पढ़ो(inode);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	case SEEK_END:
+		sr.l_start += i_size_read(inode);
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस vfs_fallocate(file, mode | FALLOC_FL_KEEP_SIZE, sr.l_start, sr.l_len);
-पूर्ण
-#पूर्ण_अगर
+	return vfs_fallocate(file, mode | FALLOC_FL_KEEP_SIZE, sr.l_start, sr.l_len);
+}
+#endif
 
-अटल पूर्णांक file_ioctl(काष्ठा file *filp, अचिन्हित पूर्णांक cmd, पूर्णांक __user *p)
-अणु
-	चयन (cmd) अणु
-	हाल FIBMAP:
-		वापस ioctl_fibmap(filp, p);
-	हाल FS_IOC_RESVSP:
-	हाल FS_IOC_RESVSP64:
-		वापस ioctl_pपुनः_स्मृतिate(filp, 0, p);
-	हाल FS_IOC_UNRESVSP:
-	हाल FS_IOC_UNRESVSP64:
-		वापस ioctl_pपुनः_स्मृतिate(filp, FALLOC_FL_PUNCH_HOLE, p);
-	हाल FS_IOC_ZERO_RANGE:
-		वापस ioctl_pपुनः_स्मृतिate(filp, FALLOC_FL_ZERO_RANGE, p);
-	पूर्ण
+static int file_ioctl(struct file *filp, unsigned int cmd, int __user *p)
+{
+	switch (cmd) {
+	case FIBMAP:
+		return ioctl_fibmap(filp, p);
+	case FS_IOC_RESVSP:
+	case FS_IOC_RESVSP64:
+		return ioctl_preallocate(filp, 0, p);
+	case FS_IOC_UNRESVSP:
+	case FS_IOC_UNRESVSP64:
+		return ioctl_preallocate(filp, FALLOC_FL_PUNCH_HOLE, p);
+	case FS_IOC_ZERO_RANGE:
+		return ioctl_preallocate(filp, FALLOC_FL_ZERO_RANGE, p);
+	}
 
-	वापस -ENOIOCTLCMD;
-पूर्ण
+	return -ENOIOCTLCMD;
+}
 
-अटल पूर्णांक ioctl_fionbio(काष्ठा file *filp, पूर्णांक __user *argp)
-अणु
-	अचिन्हित पूर्णांक flag;
-	पूर्णांक on, error;
+static int ioctl_fionbio(struct file *filp, int __user *argp)
+{
+	unsigned int flag;
+	int on, error;
 
 	error = get_user(on, argp);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 	flag = O_NONBLOCK;
-#अगर_घोषित __sparc__
+#ifdef __sparc__
 	/* SunOS compatibility item. */
-	अगर (O_NONBLOCK != O_NDELAY)
+	if (O_NONBLOCK != O_NDELAY)
 		flag |= O_NDELAY;
-#पूर्ण_अगर
+#endif
 	spin_lock(&filp->f_lock);
-	अगर (on)
+	if (on)
 		filp->f_flags |= flag;
-	अन्यथा
+	else
 		filp->f_flags &= ~flag;
 	spin_unlock(&filp->f_lock);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक ioctl_fioasync(अचिन्हित पूर्णांक fd, काष्ठा file *filp,
-			  पूर्णांक __user *argp)
-अणु
-	अचिन्हित पूर्णांक flag;
-	पूर्णांक on, error;
+static int ioctl_fioasync(unsigned int fd, struct file *filp,
+			  int __user *argp)
+{
+	unsigned int flag;
+	int on, error;
 
 	error = get_user(on, argp);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 	flag = on ? FASYNC : 0;
 
 	/* Did FASYNC state change ? */
-	अगर ((flag ^ filp->f_flags) & FASYNC) अणु
-		अगर (filp->f_op->fasync)
+	if ((flag ^ filp->f_flags) & FASYNC) {
+		if (filp->f_op->fasync)
 			/* fasync() adjusts filp->f_flags */
 			error = filp->f_op->fasync(fd, filp, on);
-		अन्यथा
+		else
 			error = -ENOTTY;
-	पूर्ण
-	वापस error < 0 ? error : 0;
-पूर्ण
+	}
+	return error < 0 ? error : 0;
+}
 
-अटल पूर्णांक ioctl_fsमुक्तze(काष्ठा file *filp)
-अणु
-	काष्ठा super_block *sb = file_inode(filp)->i_sb;
+static int ioctl_fsfreeze(struct file *filp)
+{
+	struct super_block *sb = file_inode(filp)->i_sb;
 
-	अगर (!ns_capable(sb->s_user_ns, CAP_SYS_ADMIN))
-		वापस -EPERM;
+	if (!ns_capable(sb->s_user_ns, CAP_SYS_ADMIN))
+		return -EPERM;
 
-	/* If fileप्रणाली करोesn't support मुक्तze feature, वापस. */
-	अगर (sb->s_op->मुक्तze_fs == शून्य && sb->s_op->मुक्तze_super == शून्य)
-		वापस -EOPNOTSUPP;
+	/* If filesystem doesn't support freeze feature, return. */
+	if (sb->s_op->freeze_fs == NULL && sb->s_op->freeze_super == NULL)
+		return -EOPNOTSUPP;
 
 	/* Freeze */
-	अगर (sb->s_op->मुक्तze_super)
-		वापस sb->s_op->मुक्तze_super(sb);
-	वापस मुक्तze_super(sb);
-पूर्ण
+	if (sb->s_op->freeze_super)
+		return sb->s_op->freeze_super(sb);
+	return freeze_super(sb);
+}
 
-अटल पूर्णांक ioctl_fsthaw(काष्ठा file *filp)
-अणु
-	काष्ठा super_block *sb = file_inode(filp)->i_sb;
+static int ioctl_fsthaw(struct file *filp)
+{
+	struct super_block *sb = file_inode(filp)->i_sb;
 
-	अगर (!ns_capable(sb->s_user_ns, CAP_SYS_ADMIN))
-		वापस -EPERM;
+	if (!ns_capable(sb->s_user_ns, CAP_SYS_ADMIN))
+		return -EPERM;
 
 	/* Thaw */
-	अगर (sb->s_op->thaw_super)
-		वापस sb->s_op->thaw_super(sb);
-	वापस thaw_super(sb);
-पूर्ण
+	if (sb->s_op->thaw_super)
+		return sb->s_op->thaw_super(sb);
+	return thaw_super(sb);
+}
 
-अटल पूर्णांक ioctl_file_dedupe_range(काष्ठा file *file,
-				   काष्ठा file_dedupe_range __user *argp)
-अणु
-	काष्ठा file_dedupe_range *same = शून्य;
-	पूर्णांक ret;
-	अचिन्हित दीर्घ size;
+static int ioctl_file_dedupe_range(struct file *file,
+				   struct file_dedupe_range __user *argp)
+{
+	struct file_dedupe_range *same = NULL;
+	int ret;
+	unsigned long size;
 	u16 count;
 
-	अगर (get_user(count, &argp->dest_count)) अणु
+	if (get_user(count, &argp->dest_count)) {
 		ret = -EFAULT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	size = दुरत्व(काष्ठा file_dedupe_range __user, info[count]);
-	अगर (size > PAGE_SIZE) अणु
+	size = offsetof(struct file_dedupe_range __user, info[count]);
+	if (size > PAGE_SIZE) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	same = memdup_user(argp, size);
-	अगर (IS_ERR(same)) अणु
+	if (IS_ERR(same)) {
 		ret = PTR_ERR(same);
-		same = शून्य;
-		जाओ out;
-	पूर्ण
+		same = NULL;
+		goto out;
+	}
 
 	same->dest_count = count;
 	ret = vfs_dedupe_file_range(file, same);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	ret = copy_to_user(argp, same, size);
-	अगर (ret)
+	if (ret)
 		ret = -EFAULT;
 
 out:
-	kमुक्त(same);
-	वापस ret;
-पूर्ण
+	kfree(same);
+	return ret;
+}
 
 /**
  * fileattr_fill_xflags - initialize fileattr with xflags
- * @fa:		fileattr poपूर्णांकer
+ * @fa:		fileattr pointer
  * @xflags:	FS_XFLAG_* flags
  *
  * Set ->fsx_xflags, ->fsx_valid and ->flags (translated xflags).  All
  * other fields are zeroed.
  */
-व्योम fileattr_fill_xflags(काष्ठा fileattr *fa, u32 xflags)
-अणु
-	स_रखो(fa, 0, माप(*fa));
+void fileattr_fill_xflags(struct fileattr *fa, u32 xflags)
+{
+	memset(fa, 0, sizeof(*fa));
 	fa->fsx_valid = true;
 	fa->fsx_xflags = xflags;
-	अगर (fa->fsx_xflags & FS_XFLAG_IMMUTABLE)
+	if (fa->fsx_xflags & FS_XFLAG_IMMUTABLE)
 		fa->flags |= FS_IMMUTABLE_FL;
-	अगर (fa->fsx_xflags & FS_XFLAG_APPEND)
+	if (fa->fsx_xflags & FS_XFLAG_APPEND)
 		fa->flags |= FS_APPEND_FL;
-	अगर (fa->fsx_xflags & FS_XFLAG_SYNC)
+	if (fa->fsx_xflags & FS_XFLAG_SYNC)
 		fa->flags |= FS_SYNC_FL;
-	अगर (fa->fsx_xflags & FS_XFLAG_NOATIME)
+	if (fa->fsx_xflags & FS_XFLAG_NOATIME)
 		fa->flags |= FS_NOATIME_FL;
-	अगर (fa->fsx_xflags & FS_XFLAG_NODUMP)
+	if (fa->fsx_xflags & FS_XFLAG_NODUMP)
 		fa->flags |= FS_NODUMP_FL;
-	अगर (fa->fsx_xflags & FS_XFLAG_DAX)
+	if (fa->fsx_xflags & FS_XFLAG_DAX)
 		fa->flags |= FS_DAX_FL;
-	अगर (fa->fsx_xflags & FS_XFLAG_PROJINHERIT)
+	if (fa->fsx_xflags & FS_XFLAG_PROJINHERIT)
 		fa->flags |= FS_PROJINHERIT_FL;
-पूर्ण
+}
 EXPORT_SYMBOL(fileattr_fill_xflags);
 
 /**
  * fileattr_fill_flags - initialize fileattr with flags
- * @fa:		fileattr poपूर्णांकer
+ * @fa:		fileattr pointer
  * @flags:	FS_*_FL flags
  *
  * Set ->flags, ->flags_valid and ->fsx_xflags (translated flags).
  * All other fields are zeroed.
  */
-व्योम fileattr_fill_flags(काष्ठा fileattr *fa, u32 flags)
-अणु
-	स_रखो(fa, 0, माप(*fa));
+void fileattr_fill_flags(struct fileattr *fa, u32 flags)
+{
+	memset(fa, 0, sizeof(*fa));
 	fa->flags_valid = true;
 	fa->flags = flags;
-	अगर (fa->flags & FS_SYNC_FL)
+	if (fa->flags & FS_SYNC_FL)
 		fa->fsx_xflags |= FS_XFLAG_SYNC;
-	अगर (fa->flags & FS_IMMUTABLE_FL)
+	if (fa->flags & FS_IMMUTABLE_FL)
 		fa->fsx_xflags |= FS_XFLAG_IMMUTABLE;
-	अगर (fa->flags & FS_APPEND_FL)
+	if (fa->flags & FS_APPEND_FL)
 		fa->fsx_xflags |= FS_XFLAG_APPEND;
-	अगर (fa->flags & FS_NODUMP_FL)
+	if (fa->flags & FS_NODUMP_FL)
 		fa->fsx_xflags |= FS_XFLAG_NODUMP;
-	अगर (fa->flags & FS_NOATIME_FL)
+	if (fa->flags & FS_NOATIME_FL)
 		fa->fsx_xflags |= FS_XFLAG_NOATIME;
-	अगर (fa->flags & FS_DAX_FL)
+	if (fa->flags & FS_DAX_FL)
 		fa->fsx_xflags |= FS_XFLAG_DAX;
-	अगर (fa->flags & FS_PROJINHERIT_FL)
+	if (fa->flags & FS_PROJINHERIT_FL)
 		fa->fsx_xflags |= FS_XFLAG_PROJINHERIT;
-पूर्ण
+}
 EXPORT_SYMBOL(fileattr_fill_flags);
 
 /**
  * vfs_fileattr_get - retrieve miscellaneous file attributes
  * @dentry:	the object to retrieve from
- * @fa:		fileattr poपूर्णांकer
+ * @fa:		fileattr pointer
  *
- * Call i_op->fileattr_get() callback, अगर exists.
+ * Call i_op->fileattr_get() callback, if exists.
  *
  * Return: 0 on success, or a negative error on failure.
  */
-पूर्णांक vfs_fileattr_get(काष्ठा dentry *dentry, काष्ठा fileattr *fa)
-अणु
-	काष्ठा inode *inode = d_inode(dentry);
+int vfs_fileattr_get(struct dentry *dentry, struct fileattr *fa)
+{
+	struct inode *inode = d_inode(dentry);
 
-	अगर (!inode->i_op->fileattr_get)
-		वापस -ENOIOCTLCMD;
+	if (!inode->i_op->fileattr_get)
+		return -ENOIOCTLCMD;
 
-	वापस inode->i_op->fileattr_get(dentry, fa);
-पूर्ण
+	return inode->i_op->fileattr_get(dentry, fa);
+}
 EXPORT_SYMBOL(vfs_fileattr_get);
 
 /**
  * copy_fsxattr_to_user - copy fsxattr to userspace.
- * @fa:		fileattr poपूर्णांकer
- * @ufa:	fsxattr user poपूर्णांकer
+ * @fa:		fileattr pointer
+ * @ufa:	fsxattr user pointer
  *
  * Return: 0 on success, or -EFAULT on failure.
  */
-पूर्णांक copy_fsxattr_to_user(स्थिर काष्ठा fileattr *fa, काष्ठा fsxattr __user *ufa)
-अणु
-	काष्ठा fsxattr xfa;
+int copy_fsxattr_to_user(const struct fileattr *fa, struct fsxattr __user *ufa)
+{
+	struct fsxattr xfa;
 
-	स_रखो(&xfa, 0, माप(xfa));
+	memset(&xfa, 0, sizeof(xfa));
 	xfa.fsx_xflags = fa->fsx_xflags;
 	xfa.fsx_extsize = fa->fsx_extsize;
 	xfa.fsx_nextents = fa->fsx_nextents;
 	xfa.fsx_projid = fa->fsx_projid;
 	xfa.fsx_cowextsize = fa->fsx_cowextsize;
 
-	अगर (copy_to_user(ufa, &xfa, माप(xfa)))
-		वापस -EFAULT;
+	if (copy_to_user(ufa, &xfa, sizeof(xfa)))
+		return -EFAULT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(copy_fsxattr_to_user);
 
-अटल पूर्णांक copy_fsxattr_from_user(काष्ठा fileattr *fa,
-				  काष्ठा fsxattr __user *ufa)
-अणु
-	काष्ठा fsxattr xfa;
+static int copy_fsxattr_from_user(struct fileattr *fa,
+				  struct fsxattr __user *ufa)
+{
+	struct fsxattr xfa;
 
-	अगर (copy_from_user(&xfa, ufa, माप(xfa)))
-		वापस -EFAULT;
+	if (copy_from_user(&xfa, ufa, sizeof(xfa)))
+		return -EFAULT;
 
 	fileattr_fill_xflags(fa, xfa.fsx_xflags);
 	fa->fsx_extsize = xfa.fsx_extsize;
@@ -780,8 +779,8 @@ EXPORT_SYMBOL(copy_fsxattr_to_user);
 	fa->fsx_projid = xfa.fsx_projid;
 	fa->fsx_cowextsize = xfa.fsx_cowextsize;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Generic function to check FS_IOC_FSSETXATTR/FS_IOC_SETFLAGS values and reject
@@ -789,391 +788,391 @@ EXPORT_SYMBOL(copy_fsxattr_to_user);
  *
  * Note: must be called with inode lock held.
  */
-अटल पूर्णांक fileattr_set_prepare(काष्ठा inode *inode,
-			      स्थिर काष्ठा fileattr *old_ma,
-			      काष्ठा fileattr *fa)
-अणु
-	पूर्णांक err;
+static int fileattr_set_prepare(struct inode *inode,
+			      const struct fileattr *old_ma,
+			      struct fileattr *fa)
+{
+	int err;
 
 	/*
 	 * The IMMUTABLE and APPEND_ONLY flags can only be changed by
 	 * the relevant capability.
 	 */
-	अगर ((fa->flags ^ old_ma->flags) & (FS_APPEND_FL | FS_IMMUTABLE_FL) &&
+	if ((fa->flags ^ old_ma->flags) & (FS_APPEND_FL | FS_IMMUTABLE_FL) &&
 	    !capable(CAP_LINUX_IMMUTABLE))
-		वापस -EPERM;
+		return -EPERM;
 
 	err = fscrypt_prepare_setflags(inode, old_ma->flags, fa->flags);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/*
 	 * Project Quota ID state is only allowed to change from within the init
-	 * namespace. Enक्रमce that restriction only अगर we are trying to change
-	 * the quota ID state. Everything अन्यथा is allowed in user namespaces.
+	 * namespace. Enforce that restriction only if we are trying to change
+	 * the quota ID state. Everything else is allowed in user namespaces.
 	 */
-	अगर (current_user_ns() != &init_user_ns) अणु
-		अगर (old_ma->fsx_projid != fa->fsx_projid)
-			वापस -EINVAL;
-		अगर ((old_ma->fsx_xflags ^ fa->fsx_xflags) &
+	if (current_user_ns() != &init_user_ns) {
+		if (old_ma->fsx_projid != fa->fsx_projid)
+			return -EINVAL;
+		if ((old_ma->fsx_xflags ^ fa->fsx_xflags) &
 				FS_XFLAG_PROJINHERIT)
-			वापस -EINVAL;
-	पूर्ण
+			return -EINVAL;
+	}
 
-	/* Check extent size hपूर्णांकs. */
-	अगर ((fa->fsx_xflags & FS_XFLAG_EXTSIZE) && !S_ISREG(inode->i_mode))
-		वापस -EINVAL;
+	/* Check extent size hints. */
+	if ((fa->fsx_xflags & FS_XFLAG_EXTSIZE) && !S_ISREG(inode->i_mode))
+		return -EINVAL;
 
-	अगर ((fa->fsx_xflags & FS_XFLAG_EXTSZINHERIT) &&
-			!S_ISसूची(inode->i_mode))
-		वापस -EINVAL;
+	if ((fa->fsx_xflags & FS_XFLAG_EXTSZINHERIT) &&
+			!S_ISDIR(inode->i_mode))
+		return -EINVAL;
 
-	अगर ((fa->fsx_xflags & FS_XFLAG_COWEXTSIZE) &&
-	    !S_ISREG(inode->i_mode) && !S_ISसूची(inode->i_mode))
-		वापस -EINVAL;
+	if ((fa->fsx_xflags & FS_XFLAG_COWEXTSIZE) &&
+	    !S_ISREG(inode->i_mode) && !S_ISDIR(inode->i_mode))
+		return -EINVAL;
 
 	/*
 	 * It is only valid to set the DAX flag on regular files and
-	 * directories on fileप्रणालीs.
+	 * directories on filesystems.
 	 */
-	अगर ((fa->fsx_xflags & FS_XFLAG_DAX) &&
-	    !(S_ISREG(inode->i_mode) || S_ISसूची(inode->i_mode)))
-		वापस -EINVAL;
+	if ((fa->fsx_xflags & FS_XFLAG_DAX) &&
+	    !(S_ISREG(inode->i_mode) || S_ISDIR(inode->i_mode)))
+		return -EINVAL;
 
-	/* Extent size hपूर्णांकs of zero turn off the flags. */
-	अगर (fa->fsx_extsize == 0)
+	/* Extent size hints of zero turn off the flags. */
+	if (fa->fsx_extsize == 0)
 		fa->fsx_xflags &= ~(FS_XFLAG_EXTSIZE | FS_XFLAG_EXTSZINHERIT);
-	अगर (fa->fsx_cowextsize == 0)
+	if (fa->fsx_cowextsize == 0)
 		fa->fsx_xflags &= ~FS_XFLAG_COWEXTSIZE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * vfs_fileattr_set - change miscellaneous file attributes
  * @mnt_userns:	user namespace of the mount
  * @dentry:	the object to change
- * @fa:		fileattr poपूर्णांकer
+ * @fa:		fileattr pointer
  *
- * After verअगरying permissions, call i_op->fileattr_set() callback, अगर
+ * After verifying permissions, call i_op->fileattr_set() callback, if
  * exists.
  *
- * Verअगरying attributes involves retrieving current attributes with
+ * Verifying attributes involves retrieving current attributes with
  * i_op->fileattr_get(), this also allows initializing attributes that have
  * not been set by the caller to current values.  Inode lock is held
  * thoughout to prevent racing with another instance.
  *
  * Return: 0 on success, or a negative error on failure.
  */
-पूर्णांक vfs_fileattr_set(काष्ठा user_namespace *mnt_userns, काष्ठा dentry *dentry,
-		     काष्ठा fileattr *fa)
-अणु
-	काष्ठा inode *inode = d_inode(dentry);
-	काष्ठा fileattr old_ma = अणुपूर्ण;
-	पूर्णांक err;
+int vfs_fileattr_set(struct user_namespace *mnt_userns, struct dentry *dentry,
+		     struct fileattr *fa)
+{
+	struct inode *inode = d_inode(dentry);
+	struct fileattr old_ma = {};
+	int err;
 
-	अगर (!inode->i_op->fileattr_set)
-		वापस -ENOIOCTLCMD;
+	if (!inode->i_op->fileattr_set)
+		return -ENOIOCTLCMD;
 
-	अगर (!inode_owner_or_capable(mnt_userns, inode))
-		वापस -EPERM;
+	if (!inode_owner_or_capable(mnt_userns, inode))
+		return -EPERM;
 
 	inode_lock(inode);
 	err = vfs_fileattr_get(dentry, &old_ma);
-	अगर (!err) अणु
+	if (!err) {
 		/* initialize missing bits from old_ma */
-		अगर (fa->flags_valid) अणु
+		if (fa->flags_valid) {
 			fa->fsx_xflags |= old_ma.fsx_xflags & ~FS_XFLAG_COMMON;
 			fa->fsx_extsize = old_ma.fsx_extsize;
 			fa->fsx_nextents = old_ma.fsx_nextents;
 			fa->fsx_projid = old_ma.fsx_projid;
 			fa->fsx_cowextsize = old_ma.fsx_cowextsize;
-		पूर्ण अन्यथा अणु
+		} else {
 			fa->flags |= old_ma.flags & ~FS_COMMON_FL;
-		पूर्ण
+		}
 		err = fileattr_set_prepare(inode, &old_ma, fa);
-		अगर (!err)
+		if (!err)
 			err = inode->i_op->fileattr_set(mnt_userns, dentry, fa);
-	पूर्ण
+	}
 	inode_unlock(inode);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL(vfs_fileattr_set);
 
-अटल पूर्णांक ioctl_getflags(काष्ठा file *file, अचिन्हित पूर्णांक __user *argp)
-अणु
-	काष्ठा fileattr fa = अणु .flags_valid = true पूर्ण; /* hपूर्णांक only */
-	पूर्णांक err;
+static int ioctl_getflags(struct file *file, unsigned int __user *argp)
+{
+	struct fileattr fa = { .flags_valid = true }; /* hint only */
+	int err;
 
 	err = vfs_fileattr_get(file->f_path.dentry, &fa);
-	अगर (!err)
+	if (!err)
 		err = put_user(fa.flags, argp);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक ioctl_setflags(काष्ठा file *file, अचिन्हित पूर्णांक __user *argp)
-अणु
-	काष्ठा user_namespace *mnt_userns = file_mnt_user_ns(file);
-	काष्ठा dentry *dentry = file->f_path.dentry;
-	काष्ठा fileattr fa;
-	अचिन्हित पूर्णांक flags;
-	पूर्णांक err;
+static int ioctl_setflags(struct file *file, unsigned int __user *argp)
+{
+	struct user_namespace *mnt_userns = file_mnt_user_ns(file);
+	struct dentry *dentry = file->f_path.dentry;
+	struct fileattr fa;
+	unsigned int flags;
+	int err;
 
 	err = get_user(flags, argp);
-	अगर (!err) अणु
-		err = mnt_want_ग_लिखो_file(file);
-		अगर (!err) अणु
+	if (!err) {
+		err = mnt_want_write_file(file);
+		if (!err) {
 			fileattr_fill_flags(&fa, flags);
 			err = vfs_fileattr_set(mnt_userns, dentry, &fa);
-			mnt_drop_ग_लिखो_file(file);
-		पूर्ण
-	पूर्ण
-	वापस err;
-पूर्ण
+			mnt_drop_write_file(file);
+		}
+	}
+	return err;
+}
 
-अटल पूर्णांक ioctl_fsgetxattr(काष्ठा file *file, व्योम __user *argp)
-अणु
-	काष्ठा fileattr fa = अणु .fsx_valid = true पूर्ण; /* hपूर्णांक only */
-	पूर्णांक err;
+static int ioctl_fsgetxattr(struct file *file, void __user *argp)
+{
+	struct fileattr fa = { .fsx_valid = true }; /* hint only */
+	int err;
 
 	err = vfs_fileattr_get(file->f_path.dentry, &fa);
-	अगर (!err)
+	if (!err)
 		err = copy_fsxattr_to_user(&fa, argp);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक ioctl_fssetxattr(काष्ठा file *file, व्योम __user *argp)
-अणु
-	काष्ठा user_namespace *mnt_userns = file_mnt_user_ns(file);
-	काष्ठा dentry *dentry = file->f_path.dentry;
-	काष्ठा fileattr fa;
-	पूर्णांक err;
+static int ioctl_fssetxattr(struct file *file, void __user *argp)
+{
+	struct user_namespace *mnt_userns = file_mnt_user_ns(file);
+	struct dentry *dentry = file->f_path.dentry;
+	struct fileattr fa;
+	int err;
 
 	err = copy_fsxattr_from_user(&fa, argp);
-	अगर (!err) अणु
-		err = mnt_want_ग_लिखो_file(file);
-		अगर (!err) अणु
+	if (!err) {
+		err = mnt_want_write_file(file);
+		if (!err) {
 			err = vfs_fileattr_set(mnt_userns, dentry, &fa);
-			mnt_drop_ग_लिखो_file(file);
-		पूर्ण
-	पूर्ण
-	वापस err;
-पूर्ण
+			mnt_drop_write_file(file);
+		}
+	}
+	return err;
+}
 
 /*
- * करो_vfs_ioctl() is not क्रम drivers and not पूर्णांकended to be EXPORT_SYMBOL()'d.
- * It's just a simple helper क्रम sys_ioctl and compat_sys_ioctl.
+ * do_vfs_ioctl() is not for drivers and not intended to be EXPORT_SYMBOL()'d.
+ * It's just a simple helper for sys_ioctl and compat_sys_ioctl.
  *
- * When you add any new common ioctls to the चयनes above and below,
+ * When you add any new common ioctls to the switches above and below,
  * please ensure they have compatible arguments in compat mode.
  */
-अटल पूर्णांक करो_vfs_ioctl(काष्ठा file *filp, अचिन्हित पूर्णांक fd,
-			अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	व्योम __user *argp = (व्योम __user *)arg;
-	काष्ठा inode *inode = file_inode(filp);
+static int do_vfs_ioctl(struct file *filp, unsigned int fd,
+			unsigned int cmd, unsigned long arg)
+{
+	void __user *argp = (void __user *)arg;
+	struct inode *inode = file_inode(filp);
 
-	चयन (cmd) अणु
-	हाल FIOCLEX:
-		set_बंद_on_exec(fd, 1);
-		वापस 0;
+	switch (cmd) {
+	case FIOCLEX:
+		set_close_on_exec(fd, 1);
+		return 0;
 
-	हाल FIONCLEX:
-		set_बंद_on_exec(fd, 0);
-		वापस 0;
+	case FIONCLEX:
+		set_close_on_exec(fd, 0);
+		return 0;
 
-	हाल FIONBIO:
-		वापस ioctl_fionbio(filp, argp);
+	case FIONBIO:
+		return ioctl_fionbio(filp, argp);
 
-	हाल FIOASYNC:
-		वापस ioctl_fioasync(fd, filp, argp);
+	case FIOASYNC:
+		return ioctl_fioasync(fd, filp, argp);
 
-	हाल FIOQSIZE:
-		अगर (S_ISसूची(inode->i_mode) || S_ISREG(inode->i_mode) ||
-		    S_ISLNK(inode->i_mode)) अणु
+	case FIOQSIZE:
+		if (S_ISDIR(inode->i_mode) || S_ISREG(inode->i_mode) ||
+		    S_ISLNK(inode->i_mode)) {
 			loff_t res = inode_get_bytes(inode);
-			वापस copy_to_user(argp, &res, माप(res)) ?
+			return copy_to_user(argp, &res, sizeof(res)) ?
 					    -EFAULT : 0;
-		पूर्ण
+		}
 
-		वापस -ENOTTY;
+		return -ENOTTY;
 
-	हाल FIFREEZE:
-		वापस ioctl_fsमुक्तze(filp);
+	case FIFREEZE:
+		return ioctl_fsfreeze(filp);
 
-	हाल FITHAW:
-		वापस ioctl_fsthaw(filp);
+	case FITHAW:
+		return ioctl_fsthaw(filp);
 
-	हाल FS_IOC_FIEMAP:
-		वापस ioctl_fiemap(filp, argp);
+	case FS_IOC_FIEMAP:
+		return ioctl_fiemap(filp, argp);
 
-	हाल FIGETBSZ:
-		/* anon_bdev fileप्रणालीs may not have a block size */
-		अगर (!inode->i_sb->s_blocksize)
-			वापस -EINVAL;
+	case FIGETBSZ:
+		/* anon_bdev filesystems may not have a block size */
+		if (!inode->i_sb->s_blocksize)
+			return -EINVAL;
 
-		वापस put_user(inode->i_sb->s_blocksize, (पूर्णांक __user *)argp);
+		return put_user(inode->i_sb->s_blocksize, (int __user *)argp);
 
-	हाल FICLONE:
-		वापस ioctl_file_clone(filp, arg, 0, 0, 0);
+	case FICLONE:
+		return ioctl_file_clone(filp, arg, 0, 0, 0);
 
-	हाल FICLONदुस्फल:
-		वापस ioctl_file_clone_range(filp, argp);
+	case FICLONERANGE:
+		return ioctl_file_clone_range(filp, argp);
 
-	हाल FIDEDUPदुस्फल:
-		वापस ioctl_file_dedupe_range(filp, argp);
+	case FIDEDUPERANGE:
+		return ioctl_file_dedupe_range(filp, argp);
 
-	हाल FIONREAD:
-		अगर (!S_ISREG(inode->i_mode))
-			वापस vfs_ioctl(filp, cmd, arg);
+	case FIONREAD:
+		if (!S_ISREG(inode->i_mode))
+			return vfs_ioctl(filp, cmd, arg);
 
-		वापस put_user(i_size_पढ़ो(inode) - filp->f_pos,
-				(पूर्णांक __user *)argp);
+		return put_user(i_size_read(inode) - filp->f_pos,
+				(int __user *)argp);
 
-	हाल FS_IOC_GETFLAGS:
-		वापस ioctl_getflags(filp, argp);
+	case FS_IOC_GETFLAGS:
+		return ioctl_getflags(filp, argp);
 
-	हाल FS_IOC_SETFLAGS:
-		वापस ioctl_setflags(filp, argp);
+	case FS_IOC_SETFLAGS:
+		return ioctl_setflags(filp, argp);
 
-	हाल FS_IOC_FSGETXATTR:
-		वापस ioctl_fsgetxattr(filp, argp);
+	case FS_IOC_FSGETXATTR:
+		return ioctl_fsgetxattr(filp, argp);
 
-	हाल FS_IOC_FSSETXATTR:
-		वापस ioctl_fssetxattr(filp, argp);
+	case FS_IOC_FSSETXATTR:
+		return ioctl_fssetxattr(filp, argp);
 
-	शेष:
-		अगर (S_ISREG(inode->i_mode))
-			वापस file_ioctl(filp, cmd, argp);
-		अवरोध;
-	पूर्ण
+	default:
+		if (S_ISREG(inode->i_mode))
+			return file_ioctl(filp, cmd, argp);
+		break;
+	}
 
-	वापस -ENOIOCTLCMD;
-पूर्ण
+	return -ENOIOCTLCMD;
+}
 
-SYSCALL_DEFINE3(ioctl, अचिन्हित पूर्णांक, fd, अचिन्हित पूर्णांक, cmd, अचिन्हित दीर्घ, arg)
-अणु
-	काष्ठा fd f = fdget(fd);
-	पूर्णांक error;
+SYSCALL_DEFINE3(ioctl, unsigned int, fd, unsigned int, cmd, unsigned long, arg)
+{
+	struct fd f = fdget(fd);
+	int error;
 
-	अगर (!f.file)
-		वापस -EBADF;
+	if (!f.file)
+		return -EBADF;
 
 	error = security_file_ioctl(f.file, cmd, arg);
-	अगर (error)
-		जाओ out;
+	if (error)
+		goto out;
 
-	error = करो_vfs_ioctl(f.file, fd, cmd, arg);
-	अगर (error == -ENOIOCTLCMD)
+	error = do_vfs_ioctl(f.file, fd, cmd, arg);
+	if (error == -ENOIOCTLCMD)
 		error = vfs_ioctl(f.file, cmd, arg);
 
 out:
 	fdput(f);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-#अगर_घोषित CONFIG_COMPAT
+#ifdef CONFIG_COMPAT
 /**
  * compat_ptr_ioctl - generic implementation of .compat_ioctl file operation
  *
- * This is not normally called as a function, but instead set in काष्ठा
+ * This is not normally called as a function, but instead set in struct
  * file_operations as
  *
  *     .compat_ioctl = compat_ptr_ioctl,
  *
  * On most architectures, the compat_ptr_ioctl() just passes all arguments
  * to the corresponding ->ioctl handler. The exception is arch/s390, where
- * compat_ptr() clears the top bit of a 32-bit poपूर्णांकer value, so user space
- * poपूर्णांकers to the second 2GB alias the first 2GB, as is the हाल क्रम
+ * compat_ptr() clears the top bit of a 32-bit pointer value, so user space
+ * pointers to the second 2GB alias the first 2GB, as is the case for
  * native 32-bit s390 user space.
  *
- * The compat_ptr_ioctl() function must thereक्रमe be used only with ioctl
- * functions that either ignore the argument or pass a poपूर्णांकer to a
+ * The compat_ptr_ioctl() function must therefore be used only with ioctl
+ * functions that either ignore the argument or pass a pointer to a
  * compatible data type.
  *
  * If any ioctl command handled by fops->unlocked_ioctl passes a plain
- * पूर्णांकeger instead of a poपूर्णांकer, or any of the passed data types
+ * integer instead of a pointer, or any of the passed data types
  * is incompatible between 32-bit and 64-bit architectures, a proper
  * handler is required instead of compat_ptr_ioctl.
  */
-दीर्घ compat_ptr_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	अगर (!file->f_op->unlocked_ioctl)
-		वापस -ENOIOCTLCMD;
+long compat_ptr_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+	if (!file->f_op->unlocked_ioctl)
+		return -ENOIOCTLCMD;
 
-	वापस file->f_op->unlocked_ioctl(file, cmd, (अचिन्हित दीर्घ)compat_ptr(arg));
-पूर्ण
+	return file->f_op->unlocked_ioctl(file, cmd, (unsigned long)compat_ptr(arg));
+}
 EXPORT_SYMBOL(compat_ptr_ioctl);
 
-COMPAT_SYSCALL_DEFINE3(ioctl, अचिन्हित पूर्णांक, fd, अचिन्हित पूर्णांक, cmd,
-		       compat_uदीर्घ_t, arg)
-अणु
-	काष्ठा fd f = fdget(fd);
-	पूर्णांक error;
+COMPAT_SYSCALL_DEFINE3(ioctl, unsigned int, fd, unsigned int, cmd,
+		       compat_ulong_t, arg)
+{
+	struct fd f = fdget(fd);
+	int error;
 
-	अगर (!f.file)
-		वापस -EBADF;
+	if (!f.file)
+		return -EBADF;
 
 	/* RED-PEN how should LSM module know it's handling 32bit? */
 	error = security_file_ioctl(f.file, cmd, arg);
-	अगर (error)
-		जाओ out;
+	if (error)
+		goto out;
 
-	चयन (cmd) अणु
-	/* FICLONE takes an पूर्णांक argument, so करोn't use compat_ptr() */
-	हाल FICLONE:
+	switch (cmd) {
+	/* FICLONE takes an int argument, so don't use compat_ptr() */
+	case FICLONE:
 		error = ioctl_file_clone(f.file, arg, 0, 0, 0);
-		अवरोध;
+		break;
 
-#अगर defined(CONFIG_X86_64)
-	/* these get messy on amd64 due to alignment dअगरferences */
-	हाल FS_IOC_RESVSP_32:
-	हाल FS_IOC_RESVSP64_32:
-		error = compat_ioctl_pपुनः_स्मृतिate(f.file, 0, compat_ptr(arg));
-		अवरोध;
-	हाल FS_IOC_UNRESVSP_32:
-	हाल FS_IOC_UNRESVSP64_32:
-		error = compat_ioctl_pपुनः_स्मृतिate(f.file, FALLOC_FL_PUNCH_HOLE,
+#if defined(CONFIG_X86_64)
+	/* these get messy on amd64 due to alignment differences */
+	case FS_IOC_RESVSP_32:
+	case FS_IOC_RESVSP64_32:
+		error = compat_ioctl_preallocate(f.file, 0, compat_ptr(arg));
+		break;
+	case FS_IOC_UNRESVSP_32:
+	case FS_IOC_UNRESVSP64_32:
+		error = compat_ioctl_preallocate(f.file, FALLOC_FL_PUNCH_HOLE,
 				compat_ptr(arg));
-		अवरोध;
-	हाल FS_IOC_ZERO_RANGE_32:
-		error = compat_ioctl_pपुनः_स्मृतिate(f.file, FALLOC_FL_ZERO_RANGE,
+		break;
+	case FS_IOC_ZERO_RANGE_32:
+		error = compat_ioctl_preallocate(f.file, FALLOC_FL_ZERO_RANGE,
 				compat_ptr(arg));
-		अवरोध;
-#पूर्ण_अगर
+		break;
+#endif
 
 	/*
 	 * These access 32-bit values anyway so no further handling is
 	 * necessary.
 	 */
-	हाल FS_IOC32_GETFLAGS:
-	हाल FS_IOC32_SETFLAGS:
+	case FS_IOC32_GETFLAGS:
+	case FS_IOC32_SETFLAGS:
 		cmd = (cmd == FS_IOC32_GETFLAGS) ?
 			FS_IOC_GETFLAGS : FS_IOC_SETFLAGS;
 		fallthrough;
 	/*
-	 * everything अन्यथा in करो_vfs_ioctl() takes either a compatible
-	 * poपूर्णांकer argument or no argument -- call it with a modअगरied
+	 * everything else in do_vfs_ioctl() takes either a compatible
+	 * pointer argument or no argument -- call it with a modified
 	 * argument.
 	 */
-	शेष:
-		error = करो_vfs_ioctl(f.file, fd, cmd,
-				     (अचिन्हित दीर्घ)compat_ptr(arg));
-		अगर (error != -ENOIOCTLCMD)
-			अवरोध;
+	default:
+		error = do_vfs_ioctl(f.file, fd, cmd,
+				     (unsigned long)compat_ptr(arg));
+		if (error != -ENOIOCTLCMD)
+			break;
 
-		अगर (f.file->f_op->compat_ioctl)
+		if (f.file->f_op->compat_ioctl)
 			error = f.file->f_op->compat_ioctl(f.file, cmd, arg);
-		अगर (error == -ENOIOCTLCMD)
+		if (error == -ENOIOCTLCMD)
 			error = -ENOTTY;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
  out:
 	fdput(f);
 
-	वापस error;
-पूर्ण
-#पूर्ण_अगर
+	return error;
+}
+#endif

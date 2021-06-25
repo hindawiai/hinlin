@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * INET		An implementation of the TCP/IP protocol suite क्रम the LINUX
- *		operating प्रणाली.  INET is implemented using the  BSD Socket
- *		पूर्णांकerface as the means of communication with the user level.
+ * INET		An implementation of the TCP/IP protocol suite for the LINUX
+ *		operating system.  INET is implemented using the  BSD Socket
+ *		interface as the means of communication with the user level.
  *
- *		Definitions क्रम the TCP protocol sk_state field.
+ *		Definitions for the TCP protocol sk_state field.
  */
-#अगर_अघोषित _LINUX_TCP_STATES_H
-#घोषणा _LINUX_TCP_STATES_H
+#ifndef _LINUX_TCP_STATES_H
+#define _LINUX_TCP_STATES_H
 
-क्रमागत अणु
+enum {
 	TCP_ESTABLISHED = 1,
 	TCP_SYN_SENT,
 	TCP_SYN_RECV,
@@ -25,13 +24,13 @@
 	TCP_NEW_SYN_RECV,
 
 	TCP_MAX_STATES	/* Leave at the end! */
-पूर्ण;
+};
 
-#घोषणा TCP_STATE_MASK	0xF
+#define TCP_STATE_MASK	0xF
 
-#घोषणा TCP_ACTION_FIN	(1 << TCP_CLOSE)
+#define TCP_ACTION_FIN	(1 << TCP_CLOSE)
 
-क्रमागत अणु
+enum {
 	TCPF_ESTABLISHED = (1 << TCP_ESTABLISHED),
 	TCPF_SYN_SENT	 = (1 << TCP_SYN_SENT),
 	TCPF_SYN_RECV	 = (1 << TCP_SYN_RECV),
@@ -44,6 +43,6 @@
 	TCPF_LISTEN	 = (1 << TCP_LISTEN),
 	TCPF_CLOSING	 = (1 << TCP_CLOSING),
 	TCPF_NEW_SYN_RECV = (1 << TCP_NEW_SYN_RECV),
-पूर्ण;
+};
 
-#पूर्ण_अगर	/* _LINUX_TCP_STATES_H */
+#endif	/* _LINUX_TCP_STATES_H */

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * gpio-regulator.c
  *
@@ -9,307 +8,307 @@
  *
  * Copyright 2008 Wolfson Microelectronics PLC.
  *
- * Author: Mark Brown <broonie@खोलोsource.wolfsonmicro.com>
+ * Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
  *
  * Copyright (c) 2009 Nokia Corporation
  * Roger Quadros <ext-roger.quadros@nokia.com>
  *
- * This is useful क्रम प्रणालीs with mixed controllable and
- * non-controllable regulators, as well as क्रम allowing testing on
- * प्रणालीs with no controllable regulators.
+ * This is useful for systems with mixed controllable and
+ * non-controllable regulators, as well as for allowing testing on
+ * systems with no controllable regulators.
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regulator/driver.h>
-#समावेश <linux/regulator/machine.h>
-#समावेश <linux/regulator/of_regulator.h>
-#समावेश <linux/regulator/gpio-regulator.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/of.h>
+#include <linux/err.h>
+#include <linux/mutex.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/regulator/driver.h>
+#include <linux/regulator/machine.h>
+#include <linux/regulator/of_regulator.h>
+#include <linux/regulator/gpio-regulator.h>
+#include <linux/gpio/consumer.h>
+#include <linux/slab.h>
+#include <linux/of.h>
 
-काष्ठा gpio_regulator_data अणु
-	काष्ठा regulator_desc desc;
+struct gpio_regulator_data {
+	struct regulator_desc desc;
 
-	काष्ठा gpio_desc **gpiods;
-	पूर्णांक nr_gpios;
+	struct gpio_desc **gpiods;
+	int nr_gpios;
 
-	काष्ठा gpio_regulator_state *states;
-	पूर्णांक nr_states;
+	struct gpio_regulator_state *states;
+	int nr_states;
 
-	पूर्णांक state;
-पूर्ण;
+	int state;
+};
 
-अटल पूर्णांक gpio_regulator_get_value(काष्ठा regulator_dev *dev)
-अणु
-	काष्ठा gpio_regulator_data *data = rdev_get_drvdata(dev);
-	पूर्णांक ptr;
+static int gpio_regulator_get_value(struct regulator_dev *dev)
+{
+	struct gpio_regulator_data *data = rdev_get_drvdata(dev);
+	int ptr;
 
-	क्रम (ptr = 0; ptr < data->nr_states; ptr++)
-		अगर (data->states[ptr].gpios == data->state)
-			वापस data->states[ptr].value;
+	for (ptr = 0; ptr < data->nr_states; ptr++)
+		if (data->states[ptr].gpios == data->state)
+			return data->states[ptr].value;
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक gpio_regulator_set_voltage(काष्ठा regulator_dev *dev,
-					पूर्णांक min_uV, पूर्णांक max_uV,
-					अचिन्हित *selector)
-अणु
-	काष्ठा gpio_regulator_data *data = rdev_get_drvdata(dev);
-	पूर्णांक ptr, target = 0, state, best_val = पूर्णांक_उच्च;
+static int gpio_regulator_set_voltage(struct regulator_dev *dev,
+					int min_uV, int max_uV,
+					unsigned *selector)
+{
+	struct gpio_regulator_data *data = rdev_get_drvdata(dev);
+	int ptr, target = 0, state, best_val = INT_MAX;
 
-	क्रम (ptr = 0; ptr < data->nr_states; ptr++)
-		अगर (data->states[ptr].value < best_val &&
+	for (ptr = 0; ptr < data->nr_states; ptr++)
+		if (data->states[ptr].value < best_val &&
 		    data->states[ptr].value >= min_uV &&
-		    data->states[ptr].value <= max_uV) अणु
+		    data->states[ptr].value <= max_uV) {
 			target = data->states[ptr].gpios;
 			best_val = data->states[ptr].value;
-			अगर (selector)
+			if (selector)
 				*selector = ptr;
-		पूर्ण
+		}
 
-	अगर (best_val == पूर्णांक_उच्च)
-		वापस -EINVAL;
+	if (best_val == INT_MAX)
+		return -EINVAL;
 
-	क्रम (ptr = 0; ptr < data->nr_gpios; ptr++) अणु
+	for (ptr = 0; ptr < data->nr_gpios; ptr++) {
 		state = (target & (1 << ptr)) >> ptr;
 		gpiod_set_value_cansleep(data->gpiods[ptr], state);
-	पूर्ण
+	}
 	data->state = target;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gpio_regulator_list_voltage(काष्ठा regulator_dev *dev,
-				      अचिन्हित selector)
-अणु
-	काष्ठा gpio_regulator_data *data = rdev_get_drvdata(dev);
+static int gpio_regulator_list_voltage(struct regulator_dev *dev,
+				      unsigned selector)
+{
+	struct gpio_regulator_data *data = rdev_get_drvdata(dev);
 
-	अगर (selector >= data->nr_states)
-		वापस -EINVAL;
+	if (selector >= data->nr_states)
+		return -EINVAL;
 
-	वापस data->states[selector].value;
-पूर्ण
+	return data->states[selector].value;
+}
 
-अटल पूर्णांक gpio_regulator_set_current_limit(काष्ठा regulator_dev *dev,
-					पूर्णांक min_uA, पूर्णांक max_uA)
-अणु
-	काष्ठा gpio_regulator_data *data = rdev_get_drvdata(dev);
-	पूर्णांक ptr, target = 0, state, best_val = 0;
+static int gpio_regulator_set_current_limit(struct regulator_dev *dev,
+					int min_uA, int max_uA)
+{
+	struct gpio_regulator_data *data = rdev_get_drvdata(dev);
+	int ptr, target = 0, state, best_val = 0;
 
-	क्रम (ptr = 0; ptr < data->nr_states; ptr++)
-		अगर (data->states[ptr].value > best_val &&
+	for (ptr = 0; ptr < data->nr_states; ptr++)
+		if (data->states[ptr].value > best_val &&
 		    data->states[ptr].value >= min_uA &&
-		    data->states[ptr].value <= max_uA) अणु
+		    data->states[ptr].value <= max_uA) {
 			target = data->states[ptr].gpios;
 			best_val = data->states[ptr].value;
-		पूर्ण
+		}
 
-	अगर (best_val == 0)
-		वापस -EINVAL;
+	if (best_val == 0)
+		return -EINVAL;
 
-	क्रम (ptr = 0; ptr < data->nr_gpios; ptr++) अणु
+	for (ptr = 0; ptr < data->nr_gpios; ptr++) {
 		state = (target & (1 << ptr)) >> ptr;
 		gpiod_set_value_cansleep(data->gpiods[ptr], state);
-	पूर्ण
+	}
 	data->state = target;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा regulator_ops gpio_regulator_voltage_ops = अणु
+static const struct regulator_ops gpio_regulator_voltage_ops = {
 	.get_voltage = gpio_regulator_get_value,
 	.set_voltage = gpio_regulator_set_voltage,
 	.list_voltage = gpio_regulator_list_voltage,
-पूर्ण;
+};
 
-अटल काष्ठा gpio_regulator_config *
-of_get_gpio_regulator_config(काष्ठा device *dev, काष्ठा device_node *np,
-			     स्थिर काष्ठा regulator_desc *desc)
-अणु
-	काष्ठा gpio_regulator_config *config;
-	स्थिर अक्षर *regtype;
-	पूर्णांक proplen, i;
-	पूर्णांक ngpios;
-	पूर्णांक ret;
+static struct gpio_regulator_config *
+of_get_gpio_regulator_config(struct device *dev, struct device_node *np,
+			     const struct regulator_desc *desc)
+{
+	struct gpio_regulator_config *config;
+	const char *regtype;
+	int proplen, i;
+	int ngpios;
+	int ret;
 
 	config = devm_kzalloc(dev,
-			माप(काष्ठा gpio_regulator_config),
+			sizeof(struct gpio_regulator_config),
 			GFP_KERNEL);
-	अगर (!config)
-		वापस ERR_PTR(-ENOMEM);
+	if (!config)
+		return ERR_PTR(-ENOMEM);
 
 	config->init_data = of_get_regulator_init_data(dev, np, desc);
-	अगर (!config->init_data)
-		वापस ERR_PTR(-EINVAL);
+	if (!config->init_data)
+		return ERR_PTR(-EINVAL);
 
-	config->supply_name = config->init_data->स्थिरraपूर्णांकs.name;
+	config->supply_name = config->init_data->constraints.name;
 
-	अगर (config->init_data->स्थिरraपूर्णांकs.boot_on)
+	if (config->init_data->constraints.boot_on)
 		config->enabled_at_boot = true;
 
 	/*
-	 * Do not use: unकरोcumented device tree property.
-	 * This is kept around solely क्रम device tree ABI stability.
+	 * Do not use: undocumented device tree property.
+	 * This is kept around solely for device tree ABI stability.
 	 */
-	अगर (of_property_पढ़ो_bool(np, "enable-at-boot"))
+	if (of_property_read_bool(np, "enable-at-boot"))
 		config->enabled_at_boot = true;
 
-	of_property_पढ़ो_u32(np, "startup-delay-us", &config->startup_delay);
+	of_property_read_u32(np, "startup-delay-us", &config->startup_delay);
 
 	/* Fetch GPIO init levels */
-	ngpios = gpiod_count(dev, शून्य);
-	अगर (ngpios > 0) अणु
+	ngpios = gpiod_count(dev, NULL);
+	if (ngpios > 0) {
 		config->gflags = devm_kzalloc(dev,
-					      माप(क्रमागत gpiod_flags)
+					      sizeof(enum gpiod_flags)
 					      * ngpios,
 					      GFP_KERNEL);
-		अगर (!config->gflags)
-			वापस ERR_PTR(-ENOMEM);
+		if (!config->gflags)
+			return ERR_PTR(-ENOMEM);
 
-		क्रम (i = 0; i < ngpios; i++) अणु
+		for (i = 0; i < ngpios; i++) {
 			u32 val;
 
-			ret = of_property_पढ़ो_u32_index(np, "gpios-states", i,
+			ret = of_property_read_u32_index(np, "gpios-states", i,
 							 &val);
 
-			/* Default to high per specअगरication */
-			अगर (ret)
+			/* Default to high per specification */
+			if (ret)
 				config->gflags[i] = GPIOD_OUT_HIGH;
-			अन्यथा
+			else
 				config->gflags[i] =
 					val ? GPIOD_OUT_HIGH : GPIOD_OUT_LOW;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	config->ngpios = ngpios;
 
 	/* Fetch states. */
 	proplen = of_property_count_u32_elems(np, "states");
-	अगर (proplen < 0) अणु
+	if (proplen < 0) {
 		dev_err(dev, "No 'states' property found\n");
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	config->states = devm_kसुस्मृति(dev,
+	config->states = devm_kcalloc(dev,
 				proplen / 2,
-				माप(काष्ठा gpio_regulator_state),
+				sizeof(struct gpio_regulator_state),
 				GFP_KERNEL);
-	अगर (!config->states)
-		वापस ERR_PTR(-ENOMEM);
+	if (!config->states)
+		return ERR_PTR(-ENOMEM);
 
-	क्रम (i = 0; i < proplen / 2; i++) अणु
-		of_property_पढ़ो_u32_index(np, "states", i * 2,
+	for (i = 0; i < proplen / 2; i++) {
+		of_property_read_u32_index(np, "states", i * 2,
 					   &config->states[i].value);
-		of_property_पढ़ो_u32_index(np, "states", i * 2 + 1,
+		of_property_read_u32_index(np, "states", i * 2 + 1,
 					   &config->states[i].gpios);
-	पूर्ण
+	}
 	config->nr_states = i;
 
 	config->type = REGULATOR_VOLTAGE;
-	ret = of_property_पढ़ो_string(np, "regulator-type", &regtype);
-	अगर (ret >= 0) अणु
-		अगर (!म_भेदन("voltage", regtype, 7))
+	ret = of_property_read_string(np, "regulator-type", &regtype);
+	if (ret >= 0) {
+		if (!strncmp("voltage", regtype, 7))
 			config->type = REGULATOR_VOLTAGE;
-		अन्यथा अगर (!म_भेदन("current", regtype, 7))
+		else if (!strncmp("current", regtype, 7))
 			config->type = REGULATOR_CURRENT;
-		अन्यथा
+		else
 			dev_warn(dev, "Unknown regulator-type '%s'\n",
 				 regtype);
-	पूर्ण
+	}
 
-	वापस config;
-पूर्ण
+	return config;
+}
 
-अटल स्थिर काष्ठा regulator_ops gpio_regulator_current_ops = अणु
+static const struct regulator_ops gpio_regulator_current_ops = {
 	.get_current_limit = gpio_regulator_get_value,
 	.set_current_limit = gpio_regulator_set_current_limit,
-पूर्ण;
+};
 
-अटल पूर्णांक gpio_regulator_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा gpio_regulator_config *config = dev_get_platdata(dev);
-	काष्ठा device_node *np = dev->of_node;
-	काष्ठा gpio_regulator_data *drvdata;
-	काष्ठा regulator_config cfg = अणु पूर्ण;
-	काष्ठा regulator_dev *rdev;
-	क्रमागत gpiod_flags gflags;
-	पूर्णांक ptr, ret, state, i;
+static int gpio_regulator_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct gpio_regulator_config *config = dev_get_platdata(dev);
+	struct device_node *np = dev->of_node;
+	struct gpio_regulator_data *drvdata;
+	struct regulator_config cfg = { };
+	struct regulator_dev *rdev;
+	enum gpiod_flags gflags;
+	int ptr, ret, state, i;
 
-	drvdata = devm_kzalloc(dev, माप(काष्ठा gpio_regulator_data),
+	drvdata = devm_kzalloc(dev, sizeof(struct gpio_regulator_data),
 			       GFP_KERNEL);
-	अगर (drvdata == शून्य)
-		वापस -ENOMEM;
+	if (drvdata == NULL)
+		return -ENOMEM;
 
-	अगर (np) अणु
+	if (np) {
 		config = of_get_gpio_regulator_config(dev, np,
 						      &drvdata->desc);
-		अगर (IS_ERR(config))
-			वापस PTR_ERR(config);
-	पूर्ण
+		if (IS_ERR(config))
+			return PTR_ERR(config);
+	}
 
 	drvdata->desc.name = devm_kstrdup(dev, config->supply_name, GFP_KERNEL);
-	अगर (drvdata->desc.name == शून्य) अणु
+	if (drvdata->desc.name == NULL) {
 		dev_err(dev, "Failed to allocate supply name\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	drvdata->gpiods = devm_kzalloc(dev, माप(काष्ठा gpio_desc *),
+	drvdata->gpiods = devm_kzalloc(dev, sizeof(struct gpio_desc *),
 				       GFP_KERNEL);
-	अगर (!drvdata->gpiods)
-		वापस -ENOMEM;
-	क्रम (i = 0; i < config->ngpios; i++) अणु
+	if (!drvdata->gpiods)
+		return -ENOMEM;
+	for (i = 0; i < config->ngpios; i++) {
 		drvdata->gpiods[i] = devm_gpiod_get_index(dev,
-							  शून्य,
+							  NULL,
 							  i,
 							  config->gflags[i]);
-		अगर (IS_ERR(drvdata->gpiods[i]))
-			वापस PTR_ERR(drvdata->gpiods[i]);
+		if (IS_ERR(drvdata->gpiods[i]))
+			return PTR_ERR(drvdata->gpiods[i]);
 		/* This is good to know */
 		gpiod_set_consumer_name(drvdata->gpiods[i], drvdata->desc.name);
-	पूर्ण
+	}
 	drvdata->nr_gpios = config->ngpios;
 
 	drvdata->states = devm_kmemdup(dev,
 				       config->states,
 				       config->nr_states *
-				       माप(काष्ठा gpio_regulator_state),
+				       sizeof(struct gpio_regulator_state),
 				       GFP_KERNEL);
-	अगर (drvdata->states == शून्य) अणु
+	if (drvdata->states == NULL) {
 		dev_err(dev, "Failed to allocate state data\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	drvdata->nr_states = config->nr_states;
 
 	drvdata->desc.owner = THIS_MODULE;
-	drvdata->desc.enable_समय = config->startup_delay;
+	drvdata->desc.enable_time = config->startup_delay;
 
 	/* handle regulator type*/
-	चयन (config->type) अणु
-	हाल REGULATOR_VOLTAGE:
+	switch (config->type) {
+	case REGULATOR_VOLTAGE:
 		drvdata->desc.type = REGULATOR_VOLTAGE;
 		drvdata->desc.ops = &gpio_regulator_voltage_ops;
 		drvdata->desc.n_voltages = config->nr_states;
-		अवरोध;
-	हाल REGULATOR_CURRENT:
+		break;
+	case REGULATOR_CURRENT:
 		drvdata->desc.type = REGULATOR_CURRENT;
 		drvdata->desc.ops = &gpio_regulator_current_ops;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(dev, "No regulator type set\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* build initial state from gpio init data. */
 	state = 0;
-	क्रम (ptr = 0; ptr < drvdata->nr_gpios; ptr++) अणु
-		अगर (config->gflags[ptr] == GPIOD_OUT_HIGH)
+	for (ptr = 0; ptr < drvdata->nr_gpios; ptr++) {
+		if (config->gflags[ptr] == GPIOD_OUT_HIGH)
 			state |= (1 << ptr);
-	पूर्ण
+	}
 	drvdata->state = state;
 
 	cfg.dev = dev;
@@ -318,57 +317,57 @@ of_get_gpio_regulator_config(काष्ठा device *dev, काष्ठा 
 	cfg.of_node = np;
 
 	/*
-	 * The संकेत will be inverted by the GPIO core अगर flagged so in the
+	 * The signal will be inverted by the GPIO core if flagged so in the
 	 * descriptor.
 	 */
-	अगर (config->enabled_at_boot)
+	if (config->enabled_at_boot)
 		gflags = GPIOD_OUT_HIGH | GPIOD_FLAGS_BIT_NONEXCLUSIVE;
-	अन्यथा
+	else
 		gflags = GPIOD_OUT_LOW | GPIOD_FLAGS_BIT_NONEXCLUSIVE;
 
 	cfg.ena_gpiod = gpiod_get_optional(dev, "enable", gflags);
-	अगर (IS_ERR(cfg.ena_gpiod))
-		वापस PTR_ERR(cfg.ena_gpiod);
+	if (IS_ERR(cfg.ena_gpiod))
+		return PTR_ERR(cfg.ena_gpiod);
 
-	rdev = devm_regulator_रेजिस्टर(dev, &drvdata->desc, &cfg);
-	अगर (IS_ERR(rdev)) अणु
+	rdev = devm_regulator_register(dev, &drvdata->desc, &cfg);
+	if (IS_ERR(rdev)) {
 		ret = PTR_ERR(rdev);
 		dev_err(dev, "Failed to register regulator: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	platक्रमm_set_drvdata(pdev, drvdata);
+	platform_set_drvdata(pdev, drvdata);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर defined(CONFIG_OF)
-अटल स्थिर काष्ठा of_device_id regulator_gpio_of_match[] = अणु
-	अणु .compatible = "regulator-gpio", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+#if defined(CONFIG_OF)
+static const struct of_device_id regulator_gpio_of_match[] = {
+	{ .compatible = "regulator-gpio", },
+	{},
+};
 MODULE_DEVICE_TABLE(of, regulator_gpio_of_match);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा platक्रमm_driver gpio_regulator_driver = अणु
+static struct platform_driver gpio_regulator_driver = {
 	.probe		= gpio_regulator_probe,
-	.driver		= अणु
+	.driver		= {
 		.name		= "gpio-regulator",
 		.of_match_table = of_match_ptr(regulator_gpio_of_match),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init gpio_regulator_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&gpio_regulator_driver);
-पूर्ण
+static int __init gpio_regulator_init(void)
+{
+	return platform_driver_register(&gpio_regulator_driver);
+}
 subsys_initcall(gpio_regulator_init);
 
-अटल व्योम __निकास gpio_regulator_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&gpio_regulator_driver);
-पूर्ण
-module_निकास(gpio_regulator_निकास);
+static void __exit gpio_regulator_exit(void)
+{
+	platform_driver_unregister(&gpio_regulator_driver);
+}
+module_exit(gpio_regulator_exit);
 
 MODULE_AUTHOR("Heiko Stuebner <heiko@sntech.de>");
 MODULE_DESCRIPTION("gpio voltage regulator");

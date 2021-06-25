@@ -1,40 +1,39 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Driver क्रम NXP FXAS21002C Gyroscope - Header
+ * Driver for NXP FXAS21002C Gyroscope - Header
  *
  * Copyright (C) 2019 Linaro Ltd.
  */
 
-#अगर_अघोषित FXAS21002C_H_
-#घोषणा FXAS21002C_H_
+#ifndef FXAS21002C_H_
+#define FXAS21002C_H_
 
-#समावेश <linux/regmap.h>
+#include <linux/regmap.h>
 
-#घोषणा FXAS21002C_REG_STATUS		0x00
-#घोषणा FXAS21002C_REG_OUT_X_MSB	0x01
-#घोषणा FXAS21002C_REG_OUT_X_LSB	0x02
-#घोषणा FXAS21002C_REG_OUT_Y_MSB	0x03
-#घोषणा FXAS21002C_REG_OUT_Y_LSB	0x04
-#घोषणा FXAS21002C_REG_OUT_Z_MSB	0x05
-#घोषणा FXAS21002C_REG_OUT_Z_LSB	0x06
-#घोषणा FXAS21002C_REG_DR_STATUS	0x07
-#घोषणा FXAS21002C_REG_F_STATUS		0x08
-#घोषणा FXAS21002C_REG_F_SETUP		0x09
-#घोषणा FXAS21002C_REG_F_EVENT		0x0A
-#घोषणा FXAS21002C_REG_INT_SRC_FLAG	0x0B
-#घोषणा FXAS21002C_REG_WHO_AM_I		0x0C
-#घोषणा FXAS21002C_REG_CTRL0		0x0D
-#घोषणा FXAS21002C_REG_RT_CFG		0x0E
-#घोषणा FXAS21002C_REG_RT_SRC		0x0F
-#घोषणा FXAS21002C_REG_RT_THS		0x10
-#घोषणा FXAS21002C_REG_RT_COUNT		0x11
-#घोषणा FXAS21002C_REG_TEMP		0x12
-#घोषणा FXAS21002C_REG_CTRL1		0x13
-#घोषणा FXAS21002C_REG_CTRL2		0x14
-#घोषणा FXAS21002C_REG_CTRL3		0x15
+#define FXAS21002C_REG_STATUS		0x00
+#define FXAS21002C_REG_OUT_X_MSB	0x01
+#define FXAS21002C_REG_OUT_X_LSB	0x02
+#define FXAS21002C_REG_OUT_Y_MSB	0x03
+#define FXAS21002C_REG_OUT_Y_LSB	0x04
+#define FXAS21002C_REG_OUT_Z_MSB	0x05
+#define FXAS21002C_REG_OUT_Z_LSB	0x06
+#define FXAS21002C_REG_DR_STATUS	0x07
+#define FXAS21002C_REG_F_STATUS		0x08
+#define FXAS21002C_REG_F_SETUP		0x09
+#define FXAS21002C_REG_F_EVENT		0x0A
+#define FXAS21002C_REG_INT_SRC_FLAG	0x0B
+#define FXAS21002C_REG_WHO_AM_I		0x0C
+#define FXAS21002C_REG_CTRL0		0x0D
+#define FXAS21002C_REG_RT_CFG		0x0E
+#define FXAS21002C_REG_RT_SRC		0x0F
+#define FXAS21002C_REG_RT_THS		0x10
+#define FXAS21002C_REG_RT_COUNT		0x11
+#define FXAS21002C_REG_TEMP		0x12
+#define FXAS21002C_REG_CTRL1		0x13
+#define FXAS21002C_REG_CTRL2		0x14
+#define FXAS21002C_REG_CTRL3		0x15
 
-क्रमागत fxas21002c_fields अणु
+enum fxas21002c_fields {
 	F_DR_STATUS,
 	F_OUT_X_MSB,
 	F_OUT_X_LSB,
@@ -75,11 +74,11 @@
 	F_WRAPTOONE, F_EXTCTRLEN, F_FS_DOUBLE,
 	/* MAX FIELDS */
 	F_MAX_FIELDS,
-पूर्ण;
+};
 
-बाह्य स्थिर काष्ठा dev_pm_ops fxas21002c_pm_ops;
+extern const struct dev_pm_ops fxas21002c_pm_ops;
 
-पूर्णांक fxas21002c_core_probe(काष्ठा device *dev, काष्ठा regmap *regmap, पूर्णांक irq,
-			  स्थिर अक्षर *name);
-व्योम fxas21002c_core_हटाओ(काष्ठा device *dev);
-#पूर्ण_अगर
+int fxas21002c_core_probe(struct device *dev, struct regmap *regmap, int irq,
+			  const char *name);
+void fxas21002c_core_remove(struct device *dev);
+#endif

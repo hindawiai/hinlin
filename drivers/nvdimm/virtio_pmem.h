@@ -1,56 +1,55 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * virtio_pस्मृति.स: virtio pmem Driver
+ * virtio_pmem.h: virtio pmem Driver
  *
- * Discovers persistent memory range inक्रमmation
+ * Discovers persistent memory range information
  * from host and provides a virtio based flushing
- * पूर्णांकerface.
+ * interface.
  **/
 
-#अगर_अघोषित _LINUX_VIRTIO_PMEM_H
-#घोषणा _LINUX_VIRTIO_PMEM_H
+#ifndef _LINUX_VIRTIO_PMEM_H
+#define _LINUX_VIRTIO_PMEM_H
 
-#समावेश <linux/module.h>
-#समावेश <uapi/linux/virtio_pस्मृति.स>
-#समावेश <linux/libnvdimm.h>
-#समावेश <linux/spinlock.h>
+#include <linux/module.h>
+#include <uapi/linux/virtio_pmem.h>
+#include <linux/libnvdimm.h>
+#include <linux/spinlock.h>
 
-काष्ठा virtio_pmem_request अणु
-	काष्ठा virtio_pmem_req req;
-	काष्ठा virtio_pmem_resp resp;
+struct virtio_pmem_request {
+	struct virtio_pmem_req req;
+	struct virtio_pmem_resp resp;
 
 	/* Wait queue to process deferred work after ack from host */
-	रुको_queue_head_t host_acked;
-	bool करोne;
+	wait_queue_head_t host_acked;
+	bool done;
 
 	/* Wait queue to process deferred work after virt queue buffer avail */
-	रुको_queue_head_t wq_buf;
+	wait_queue_head_t wq_buf;
 	bool wq_buf_avail;
-	काष्ठा list_head list;
-पूर्ण;
+	struct list_head list;
+};
 
-काष्ठा virtio_pmem अणु
-	काष्ठा virtio_device *vdev;
+struct virtio_pmem {
+	struct virtio_device *vdev;
 
 	/* Virtio pmem request queue */
-	काष्ठा virtqueue *req_vq;
+	struct virtqueue *req_vq;
 
-	/* nvdimm bus रेजिस्टरs virtio pmem device */
-	काष्ठा nvdimm_bus *nvdimm_bus;
-	काष्ठा nvdimm_bus_descriptor nd_desc;
+	/* nvdimm bus registers virtio pmem device */
+	struct nvdimm_bus *nvdimm_bus;
+	struct nvdimm_bus_descriptor nd_desc;
 
-	/* List to store deferred work अगर virtqueue is full */
-	काष्ठा list_head req_list;
+	/* List to store deferred work if virtqueue is full */
+	struct list_head req_list;
 
 	/* Synchronize virtqueue data */
 	spinlock_t pmem_lock;
 
-	/* Memory region inक्रमmation */
+	/* Memory region information */
 	__u64 start;
 	__u64 size;
-पूर्ण;
+};
 
-व्योम virtio_pmem_host_ack(काष्ठा virtqueue *vq);
-पूर्णांक async_pmem_flush(काष्ठा nd_region *nd_region, काष्ठा bio *bio);
-#पूर्ण_अगर
+void virtio_pmem_host_ack(struct virtqueue *vq);
+int async_pmem_flush(struct nd_region *nd_region, struct bio *bio);
+#endif

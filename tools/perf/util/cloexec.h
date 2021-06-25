@@ -1,8 +1,7 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __PERF_CLOEXEC_H
-#घोषणा __PERF_CLOEXEC_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __PERF_CLOEXEC_H
+#define __PERF_CLOEXEC_H
 
-अचिन्हित दीर्घ perf_event_खोलो_cloexec_flag(व्योम);
+unsigned long perf_event_open_cloexec_flag(void);
 
-#पूर्ण_अगर /* __PERF_CLOEXEC_H */
+#endif /* __PERF_CLOEXEC_H */

@@ -1,141 +1,140 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Generic Syscon LEDs Driver
  *
  * Copyright (c) 2014, Linaro Limited
  * Author: Linus Walleij <linus.walleij@linaro.org>
  */
-#समावेश <linux/पन.स>
-#समावेश <linux/init.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/स्थिति.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/leds.h>
+#include <linux/io.h>
+#include <linux/init.h>
+#include <linux/of_device.h>
+#include <linux/of_address.h>
+#include <linux/platform_device.h>
+#include <linux/stat.h>
+#include <linux/slab.h>
+#include <linux/mfd/syscon.h>
+#include <linux/regmap.h>
+#include <linux/leds.h>
 
 /**
- * काष्ठा syscon_led - state container क्रम syscon based LEDs
- * @cdev: LED class device क्रम this LED
+ * struct syscon_led - state container for syscon based LEDs
+ * @cdev: LED class device for this LED
  * @map: regmap to access the syscon device backing this LED
- * @offset: the offset पूर्णांकo the syscon regmap क्रम the LED रेजिस्टर
- * @mask: the bit in the रेजिस्टर corresponding to the LED
+ * @offset: the offset into the syscon regmap for the LED register
+ * @mask: the bit in the register corresponding to the LED
  * @state: current state of the LED
  */
-काष्ठा syscon_led अणु
-	काष्ठा led_classdev cdev;
-	काष्ठा regmap *map;
+struct syscon_led {
+	struct led_classdev cdev;
+	struct regmap *map;
 	u32 offset;
 	u32 mask;
 	bool state;
-पूर्ण;
+};
 
-अटल व्योम syscon_led_set(काष्ठा led_classdev *led_cdev,
-	क्रमागत led_brightness value)
-अणु
-	काष्ठा syscon_led *sled =
-		container_of(led_cdev, काष्ठा syscon_led, cdev);
+static void syscon_led_set(struct led_classdev *led_cdev,
+	enum led_brightness value)
+{
+	struct syscon_led *sled =
+		container_of(led_cdev, struct syscon_led, cdev);
 	u32 val;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (value == LED_OFF) अणु
+	if (value == LED_OFF) {
 		val = 0;
 		sled->state = false;
-	पूर्ण अन्यथा अणु
+	} else {
 		val = sled->mask;
 		sled->state = true;
-	पूर्ण
+	}
 
 	ret = regmap_update_bits(sled->map, sled->offset, sled->mask, val);
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_err(sled->cdev.dev, "error updating LED status\n");
-पूर्ण
+}
 
-अटल पूर्णांक syscon_led_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा led_init_data init_data = अणुपूर्ण;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा device_node *np = dev_of_node(dev);
-	काष्ठा device *parent;
-	काष्ठा regmap *map;
-	काष्ठा syscon_led *sled;
-	स्थिर अक्षर *state;
-	पूर्णांक ret;
+static int syscon_led_probe(struct platform_device *pdev)
+{
+	struct led_init_data init_data = {};
+	struct device *dev = &pdev->dev;
+	struct device_node *np = dev_of_node(dev);
+	struct device *parent;
+	struct regmap *map;
+	struct syscon_led *sled;
+	const char *state;
+	int ret;
 
 	parent = dev->parent;
-	अगर (!parent) अणु
+	if (!parent) {
 		dev_err(dev, "no parent for syscon LED\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	map = syscon_node_to_regmap(dev_of_node(parent));
-	अगर (IS_ERR(map)) अणु
+	if (IS_ERR(map)) {
 		dev_err(dev, "no regmap for syscon LED parent\n");
-		वापस PTR_ERR(map);
-	पूर्ण
+		return PTR_ERR(map);
+	}
 
-	sled = devm_kzalloc(dev, माप(*sled), GFP_KERNEL);
-	अगर (!sled)
-		वापस -ENOMEM;
+	sled = devm_kzalloc(dev, sizeof(*sled), GFP_KERNEL);
+	if (!sled)
+		return -ENOMEM;
 
 	sled->map = map;
 
-	अगर (of_property_पढ़ो_u32(np, "offset", &sled->offset))
-		वापस -EINVAL;
-	अगर (of_property_पढ़ो_u32(np, "mask", &sled->mask))
-		वापस -EINVAL;
+	if (of_property_read_u32(np, "offset", &sled->offset))
+		return -EINVAL;
+	if (of_property_read_u32(np, "mask", &sled->mask))
+		return -EINVAL;
 
-	state = of_get_property(np, "default-state", शून्य);
-	अगर (state) अणु
-		अगर (!म_भेद(state, "keep")) अणु
+	state = of_get_property(np, "default-state", NULL);
+	if (state) {
+		if (!strcmp(state, "keep")) {
 			u32 val;
 
-			ret = regmap_पढ़ो(map, sled->offset, &val);
-			अगर (ret < 0)
-				वापस ret;
+			ret = regmap_read(map, sled->offset, &val);
+			if (ret < 0)
+				return ret;
 			sled->state = !!(val & sled->mask);
-		पूर्ण अन्यथा अगर (!म_भेद(state, "on")) अणु
+		} else if (!strcmp(state, "on")) {
 			sled->state = true;
 			ret = regmap_update_bits(map, sled->offset,
 						 sled->mask,
 						 sled->mask);
-			अगर (ret < 0)
-				वापस ret;
-		पूर्ण अन्यथा अणु
+			if (ret < 0)
+				return ret;
+		} else {
 			sled->state = false;
 			ret = regmap_update_bits(map, sled->offset,
 						 sled->mask, 0);
-			अगर (ret < 0)
-				वापस ret;
-		पूर्ण
-	पूर्ण
+			if (ret < 0)
+				return ret;
+		}
+	}
 	sled->cdev.brightness_set = syscon_led_set;
 
 	init_data.fwnode = of_fwnode_handle(np);
 
-	ret = devm_led_classdev_रेजिस्टर_ext(dev, &sled->cdev, &init_data);
-	अगर (ret < 0)
-		वापस ret;
+	ret = devm_led_classdev_register_ext(dev, &sled->cdev, &init_data);
+	if (ret < 0)
+		return ret;
 
-	platक्रमm_set_drvdata(pdev, sled);
+	platform_set_drvdata(pdev, sled);
 	dev_info(dev, "registered LED %s\n", sled->cdev.name);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id of_syscon_leds_match[] = अणु
-	अणु .compatible = "register-bit-led", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id of_syscon_leds_match[] = {
+	{ .compatible = "register-bit-led", },
+	{},
+};
 
-अटल काष्ठा platक्रमm_driver syscon_led_driver = अणु
+static struct platform_driver syscon_led_driver = {
 	.probe		= syscon_led_probe,
-	.driver		= अणु
+	.driver		= {
 		.name	= "leds-syscon",
 		.of_match_table = of_syscon_leds_match,
 		.suppress_bind_attrs = true,
-	पूर्ण,
-पूर्ण;
-builtin_platक्रमm_driver(syscon_led_driver);
+	},
+};
+builtin_platform_driver(syscon_led_driver);

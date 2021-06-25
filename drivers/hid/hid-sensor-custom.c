@@ -1,498 +1,497 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * hid-sensor-custom.c
  * Copyright (c) 2015, Intel Corporation.
  */
 
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/kfअगरo.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/द्वा_खोज.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/hid-sensor-hub.h>
+#include <linux/ctype.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/miscdevice.h>
+#include <linux/kfifo.h>
+#include <linux/sched.h>
+#include <linux/wait.h>
+#include <linux/poll.h>
+#include <linux/bsearch.h>
+#include <linux/platform_device.h>
+#include <linux/hid-sensor-hub.h>
 
-#घोषणा HID_CUSTOM_NAME_LENGTH		64
-#घोषणा HID_CUSTOM_MAX_CORE_ATTRS	10
-#घोषणा HID_CUSTOM_TOTAL_ATTRS		(HID_CUSTOM_MAX_CORE_ATTRS + 1)
-#घोषणा HID_CUSTOM_FIFO_SIZE		4096
-#घोषणा HID_CUSTOM_MAX_FEATURE_BYTES	64
-#घोषणा HID_SENSOR_USAGE_LENGTH (4 + 1)
+#define HID_CUSTOM_NAME_LENGTH		64
+#define HID_CUSTOM_MAX_CORE_ATTRS	10
+#define HID_CUSTOM_TOTAL_ATTRS		(HID_CUSTOM_MAX_CORE_ATTRS + 1)
+#define HID_CUSTOM_FIFO_SIZE		4096
+#define HID_CUSTOM_MAX_FEATURE_BYTES	64
+#define HID_SENSOR_USAGE_LENGTH (4 + 1)
 
-काष्ठा hid_sensor_custom_field अणु
-	पूर्णांक report_id;
-	अक्षर group_name[HID_CUSTOM_NAME_LENGTH];
-	काष्ठा hid_sensor_hub_attribute_info attribute;
-	काष्ठा device_attribute sd_attrs[HID_CUSTOM_MAX_CORE_ATTRS];
-	अक्षर attr_name[HID_CUSTOM_TOTAL_ATTRS][HID_CUSTOM_NAME_LENGTH];
-	काष्ठा attribute *attrs[HID_CUSTOM_TOTAL_ATTRS];
-	काष्ठा attribute_group hid_custom_attribute_group;
-पूर्ण;
+struct hid_sensor_custom_field {
+	int report_id;
+	char group_name[HID_CUSTOM_NAME_LENGTH];
+	struct hid_sensor_hub_attribute_info attribute;
+	struct device_attribute sd_attrs[HID_CUSTOM_MAX_CORE_ATTRS];
+	char attr_name[HID_CUSTOM_TOTAL_ATTRS][HID_CUSTOM_NAME_LENGTH];
+	struct attribute *attrs[HID_CUSTOM_TOTAL_ATTRS];
+	struct attribute_group hid_custom_attribute_group;
+};
 
-काष्ठा hid_sensor_custom अणु
-	काष्ठा mutex mutex;
-	काष्ठा platक्रमm_device *pdev;
-	काष्ठा hid_sensor_hub_device *hsdev;
-	काष्ठा hid_sensor_hub_callbacks callbacks;
-	पूर्णांक sensor_field_count;
-	काष्ठा hid_sensor_custom_field *fields;
-	पूर्णांक input_field_count;
-	पूर्णांक input_report_size;
-	पूर्णांक input_report_recd_size;
+struct hid_sensor_custom {
+	struct mutex mutex;
+	struct platform_device *pdev;
+	struct hid_sensor_hub_device *hsdev;
+	struct hid_sensor_hub_callbacks callbacks;
+	int sensor_field_count;
+	struct hid_sensor_custom_field *fields;
+	int input_field_count;
+	int input_report_size;
+	int input_report_recd_size;
 	bool input_skip_sample;
 	bool enable;
-	काष्ठा hid_sensor_custom_field *घातer_state;
-	काष्ठा hid_sensor_custom_field *report_state;
-	काष्ठा miscdevice custom_dev;
-	काष्ठा kfअगरo data_fअगरo;
-	अचिन्हित दीर्घ misc_खोलोed;
-	रुको_queue_head_t रुको;
-	काष्ठा platक्रमm_device *custom_pdev;
-पूर्ण;
+	struct hid_sensor_custom_field *power_state;
+	struct hid_sensor_custom_field *report_state;
+	struct miscdevice custom_dev;
+	struct kfifo data_fifo;
+	unsigned long misc_opened;
+	wait_queue_head_t wait;
+	struct platform_device *custom_pdev;
+};
 
-/* Header क्रम each sample to user space via dev पूर्णांकerface */
-काष्ठा hid_sensor_sample अणु
+/* Header for each sample to user space via dev interface */
+struct hid_sensor_sample {
 	u32 usage_id;
-	u64 बारtamp;
+	u64 timestamp;
 	u32 raw_len;
-पूर्ण __packed;
+} __packed;
 
-अटल काष्ठा attribute hid_custom_attrs[] = अणु
-	अणु.name = "name", .mode = S_IRUGOपूर्ण,
-	अणु.name = "units", .mode = S_IRUGOपूर्ण,
-	अणु.name = "unit-expo", .mode = S_IRUGOपूर्ण,
-	अणु.name = "minimum", .mode = S_IRUGOपूर्ण,
-	अणु.name = "maximum", .mode = S_IRUGOपूर्ण,
-	अणु.name = "size", .mode = S_IRUGOपूर्ण,
-	अणु.name = "value", .mode = S_IWUSR | S_IRUGOपूर्ण,
-	अणु.name = शून्यपूर्ण
-पूर्ण;
+static struct attribute hid_custom_attrs[] = {
+	{.name = "name", .mode = S_IRUGO},
+	{.name = "units", .mode = S_IRUGO},
+	{.name = "unit-expo", .mode = S_IRUGO},
+	{.name = "minimum", .mode = S_IRUGO},
+	{.name = "maximum", .mode = S_IRUGO},
+	{.name = "size", .mode = S_IRUGO},
+	{.name = "value", .mode = S_IWUSR | S_IRUGO},
+	{.name = NULL}
+};
 
-अटल स्थिर काष्ठा hid_custom_usage_desc अणु
-	पूर्णांक usage_id;
-	अक्षर *desc;
-पूर्ण hid_custom_usage_desc_table[] = अणु
-	अणु0x200201,	"event-sensor-state"पूर्ण,
-	अणु0x200202,	"event-sensor-event"पूर्ण,
-	अणु0x200301,	"property-friendly-name"पूर्ण,
-	अणु0x200302,	"property-persistent-unique-id"पूर्ण,
-	अणु0x200303,	"property-sensor-status"पूर्ण,
-	अणु0x200304,	"property-min-report-interval"पूर्ण,
-	अणु0x200305,	"property-sensor-manufacturer"पूर्ण,
-	अणु0x200306,	"property-sensor-model"पूर्ण,
-	अणु0x200307,	"property-sensor-serial-number"पूर्ण,
-	अणु0x200308,	"property-sensor-description"पूर्ण,
-	अणु0x200309,	"property-sensor-connection-type"पूर्ण,
-	अणु0x20030A,	"property-sensor-device-path"पूर्ण,
-	अणु0x20030B,	"property-hardware-revision"पूर्ण,
-	अणु0x20030C,	"property-firmware-version"पूर्ण,
-	अणु0x20030D,	"property-release-date"पूर्ण,
-	अणु0x20030E,	"property-report-interval"पूर्ण,
-	अणु0x20030F,	"property-change-sensitivity-absolute"पूर्ण,
-	अणु0x200310,	"property-change-sensitivity-percent-range"पूर्ण,
-	अणु0x200311,	"property-change-sensitivity-percent-relative"पूर्ण,
-	अणु0x200312,	"property-accuracy"पूर्ण,
-	अणु0x200313,	"property-resolution"पूर्ण,
-	अणु0x200314,	"property-maximum"पूर्ण,
-	अणु0x200315,	"property-minimum"पूर्ण,
-	अणु0x200316,	"property-reporting-state"पूर्ण,
-	अणु0x200317,	"property-sampling-rate"पूर्ण,
-	अणु0x200318,	"property-response-curve"पूर्ण,
-	अणु0x200319,	"property-power-state"पूर्ण,
-	अणु0x200540,	"data-field-custom"पूर्ण,
-	अणु0x200541,	"data-field-custom-usage"पूर्ण,
-	अणु0x200542,	"data-field-custom-boolean-array"पूर्ण,
-	अणु0x200543,	"data-field-custom-value"पूर्ण,
-	अणु0x200544,	"data-field-custom-value_1"पूर्ण,
-	अणु0x200545,	"data-field-custom-value_2"पूर्ण,
-	अणु0x200546,	"data-field-custom-value_3"पूर्ण,
-	अणु0x200547,	"data-field-custom-value_4"पूर्ण,
-	अणु0x200548,	"data-field-custom-value_5"पूर्ण,
-	अणु0x200549,	"data-field-custom-value_6"पूर्ण,
-	अणु0x20054A,	"data-field-custom-value_7"पूर्ण,
-	अणु0x20054B,	"data-field-custom-value_8"पूर्ण,
-	अणु0x20054C,	"data-field-custom-value_9"पूर्ण,
-	अणु0x20054D,	"data-field-custom-value_10"पूर्ण,
-	अणु0x20054E,	"data-field-custom-value_11"पूर्ण,
-	अणु0x20054F,	"data-field-custom-value_12"पूर्ण,
-	अणु0x200550,	"data-field-custom-value_13"पूर्ण,
-	अणु0x200551,	"data-field-custom-value_14"पूर्ण,
-	अणु0x200552,	"data-field-custom-value_15"पूर्ण,
-	अणु0x200553,	"data-field-custom-value_16"पूर्ण,
-	अणु0x200554,	"data-field-custom-value_17"पूर्ण,
-	अणु0x200555,	"data-field-custom-value_18"पूर्ण,
-	अणु0x200556,	"data-field-custom-value_19"पूर्ण,
-	अणु0x200557,	"data-field-custom-value_20"पूर्ण,
-	अणु0x200558,	"data-field-custom-value_21"पूर्ण,
-	अणु0x200559,	"data-field-custom-value_22"पूर्ण,
-	अणु0x20055A,	"data-field-custom-value_23"पूर्ण,
-	अणु0x20055B,	"data-field-custom-value_24"पूर्ण,
-	अणु0x20055C,	"data-field-custom-value_25"पूर्ण,
-	अणु0x20055D,	"data-field-custom-value_26"पूर्ण,
-	अणु0x20055E,	"data-field-custom-value_27"पूर्ण,
-	अणु0x20055F,	"data-field-custom-value_28"पूर्ण,
-पूर्ण;
+static const struct hid_custom_usage_desc {
+	int usage_id;
+	char *desc;
+} hid_custom_usage_desc_table[] = {
+	{0x200201,	"event-sensor-state"},
+	{0x200202,	"event-sensor-event"},
+	{0x200301,	"property-friendly-name"},
+	{0x200302,	"property-persistent-unique-id"},
+	{0x200303,	"property-sensor-status"},
+	{0x200304,	"property-min-report-interval"},
+	{0x200305,	"property-sensor-manufacturer"},
+	{0x200306,	"property-sensor-model"},
+	{0x200307,	"property-sensor-serial-number"},
+	{0x200308,	"property-sensor-description"},
+	{0x200309,	"property-sensor-connection-type"},
+	{0x20030A,	"property-sensor-device-path"},
+	{0x20030B,	"property-hardware-revision"},
+	{0x20030C,	"property-firmware-version"},
+	{0x20030D,	"property-release-date"},
+	{0x20030E,	"property-report-interval"},
+	{0x20030F,	"property-change-sensitivity-absolute"},
+	{0x200310,	"property-change-sensitivity-percent-range"},
+	{0x200311,	"property-change-sensitivity-percent-relative"},
+	{0x200312,	"property-accuracy"},
+	{0x200313,	"property-resolution"},
+	{0x200314,	"property-maximum"},
+	{0x200315,	"property-minimum"},
+	{0x200316,	"property-reporting-state"},
+	{0x200317,	"property-sampling-rate"},
+	{0x200318,	"property-response-curve"},
+	{0x200319,	"property-power-state"},
+	{0x200540,	"data-field-custom"},
+	{0x200541,	"data-field-custom-usage"},
+	{0x200542,	"data-field-custom-boolean-array"},
+	{0x200543,	"data-field-custom-value"},
+	{0x200544,	"data-field-custom-value_1"},
+	{0x200545,	"data-field-custom-value_2"},
+	{0x200546,	"data-field-custom-value_3"},
+	{0x200547,	"data-field-custom-value_4"},
+	{0x200548,	"data-field-custom-value_5"},
+	{0x200549,	"data-field-custom-value_6"},
+	{0x20054A,	"data-field-custom-value_7"},
+	{0x20054B,	"data-field-custom-value_8"},
+	{0x20054C,	"data-field-custom-value_9"},
+	{0x20054D,	"data-field-custom-value_10"},
+	{0x20054E,	"data-field-custom-value_11"},
+	{0x20054F,	"data-field-custom-value_12"},
+	{0x200550,	"data-field-custom-value_13"},
+	{0x200551,	"data-field-custom-value_14"},
+	{0x200552,	"data-field-custom-value_15"},
+	{0x200553,	"data-field-custom-value_16"},
+	{0x200554,	"data-field-custom-value_17"},
+	{0x200555,	"data-field-custom-value_18"},
+	{0x200556,	"data-field-custom-value_19"},
+	{0x200557,	"data-field-custom-value_20"},
+	{0x200558,	"data-field-custom-value_21"},
+	{0x200559,	"data-field-custom-value_22"},
+	{0x20055A,	"data-field-custom-value_23"},
+	{0x20055B,	"data-field-custom-value_24"},
+	{0x20055C,	"data-field-custom-value_25"},
+	{0x20055D,	"data-field-custom-value_26"},
+	{0x20055E,	"data-field-custom-value_27"},
+	{0x20055F,	"data-field-custom-value_28"},
+};
 
-अटल पूर्णांक usage_id_cmp(स्थिर व्योम *p1, स्थिर व्योम *p2)
-अणु
-	अगर (*(पूर्णांक *)p1 < *(पूर्णांक *)p2)
-		वापस -1;
+static int usage_id_cmp(const void *p1, const void *p2)
+{
+	if (*(int *)p1 < *(int *)p2)
+		return -1;
 
-	अगर (*(पूर्णांक *)p1 > *(पूर्णांक *)p2)
-		वापस 1;
+	if (*(int *)p1 > *(int *)p2)
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार enable_sensor_show(काष्ठा device *dev,
-				  काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा hid_sensor_custom *sensor_inst = dev_get_drvdata(dev);
+static ssize_t enable_sensor_show(struct device *dev,
+				  struct device_attribute *attr, char *buf)
+{
+	struct hid_sensor_custom *sensor_inst = dev_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%d\n", sensor_inst->enable);
-पूर्ण
+	return sprintf(buf, "%d\n", sensor_inst->enable);
+}
 
-अटल पूर्णांक set_घातer_report_state(काष्ठा hid_sensor_custom *sensor_inst,
+static int set_power_report_state(struct hid_sensor_custom *sensor_inst,
 				  bool state)
-अणु
-	पूर्णांक घातer_val = -1;
-	पूर्णांक report_val = -1;
-	u32 घातer_state_usage_id;
+{
+	int power_val = -1;
+	int report_val = -1;
+	u32 power_state_usage_id;
 	u32 report_state_usage_id;
-	पूर्णांक ret;
+	int ret;
 
 	/*
-	 * It is possible that the घातer/report state ids are not present.
-	 * In this हाल this function will वापस success. But अगर the
-	 * ids are present, then it will वापस error अगर set fails.
+	 * It is possible that the power/report state ids are not present.
+	 * In this case this function will return success. But if the
+	 * ids are present, then it will return error if set fails.
 	 */
-	अगर (state) अणु
-		घातer_state_usage_id =
+	if (state) {
+		power_state_usage_id =
 			HID_USAGE_SENSOR_PROP_POWER_STATE_D0_FULL_POWER_ENUM;
 		report_state_usage_id =
 			HID_USAGE_SENSOR_PROP_REPORTING_STATE_ALL_EVENTS_ENUM;
-	पूर्ण अन्यथा अणु
-		घातer_state_usage_id =
+	} else {
+		power_state_usage_id =
 			HID_USAGE_SENSOR_PROP_POWER_STATE_D4_POWER_OFF_ENUM;
 		report_state_usage_id =
 			HID_USAGE_SENSOR_PROP_REPORTING_STATE_NO_EVENTS_ENUM;
-	पूर्ण
+	}
 
-	अगर (sensor_inst->घातer_state)
-		घातer_val = hid_sensor_get_usage_index(sensor_inst->hsdev,
-				sensor_inst->घातer_state->attribute.report_id,
-				sensor_inst->घातer_state->attribute.index,
-				घातer_state_usage_id);
-	अगर (sensor_inst->report_state)
+	if (sensor_inst->power_state)
+		power_val = hid_sensor_get_usage_index(sensor_inst->hsdev,
+				sensor_inst->power_state->attribute.report_id,
+				sensor_inst->power_state->attribute.index,
+				power_state_usage_id);
+	if (sensor_inst->report_state)
 		report_val = hid_sensor_get_usage_index(sensor_inst->hsdev,
 				sensor_inst->report_state->attribute.report_id,
 				sensor_inst->report_state->attribute.index,
 				report_state_usage_id);
 
-	अगर (घातer_val >= 0) अणु
-		घातer_val +=
-			sensor_inst->घातer_state->attribute.logical_minimum;
+	if (power_val >= 0) {
+		power_val +=
+			sensor_inst->power_state->attribute.logical_minimum;
 		ret = sensor_hub_set_feature(sensor_inst->hsdev,
-				sensor_inst->घातer_state->attribute.report_id,
-				sensor_inst->घातer_state->attribute.index,
-				माप(घातer_val),
-				&घातer_val);
-		अगर (ret) अणु
+				sensor_inst->power_state->attribute.report_id,
+				sensor_inst->power_state->attribute.index,
+				sizeof(power_val),
+				&power_val);
+		if (ret) {
 			hid_err(sensor_inst->hsdev->hdev,
 				"Set power state failed\n");
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	अगर (report_val >= 0) अणु
+	if (report_val >= 0) {
 		report_val +=
 			sensor_inst->report_state->attribute.logical_minimum;
 		ret = sensor_hub_set_feature(sensor_inst->hsdev,
 				sensor_inst->report_state->attribute.report_id,
 				sensor_inst->report_state->attribute.index,
-				माप(report_val),
+				sizeof(report_val),
 				&report_val);
-		अगर (ret) अणु
+		if (ret) {
 			hid_err(sensor_inst->hsdev->hdev,
 				"Set report state failed\n");
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार enable_sensor_store(काष्ठा device *dev,
-				   काष्ठा device_attribute *attr,
-				   स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा hid_sensor_custom *sensor_inst = dev_get_drvdata(dev);
-	पूर्णांक value;
-	पूर्णांक ret = -EINVAL;
+static ssize_t enable_sensor_store(struct device *dev,
+				   struct device_attribute *attr,
+				   const char *buf, size_t count)
+{
+	struct hid_sensor_custom *sensor_inst = dev_get_drvdata(dev);
+	int value;
+	int ret = -EINVAL;
 
-	अगर (kstrtoपूर्णांक(buf, 0, &value) != 0)
-		वापस -EINVAL;
+	if (kstrtoint(buf, 0, &value) != 0)
+		return -EINVAL;
 
 	mutex_lock(&sensor_inst->mutex);
-	अगर (value && !sensor_inst->enable) अणु
-		ret = sensor_hub_device_खोलो(sensor_inst->hsdev);
-		अगर (ret)
-			जाओ unlock_state;
+	if (value && !sensor_inst->enable) {
+		ret = sensor_hub_device_open(sensor_inst->hsdev);
+		if (ret)
+			goto unlock_state;
 
-		ret = set_घातer_report_state(sensor_inst, true);
-		अगर (ret) अणु
-			sensor_hub_device_बंद(sensor_inst->hsdev);
-			जाओ unlock_state;
-		पूर्ण
+		ret = set_power_report_state(sensor_inst, true);
+		if (ret) {
+			sensor_hub_device_close(sensor_inst->hsdev);
+			goto unlock_state;
+		}
 		sensor_inst->enable = true;
-	पूर्ण अन्यथा अगर (!value && sensor_inst->enable) अणु
-		ret = set_घातer_report_state(sensor_inst, false);
-		sensor_hub_device_बंद(sensor_inst->hsdev);
+	} else if (!value && sensor_inst->enable) {
+		ret = set_power_report_state(sensor_inst, false);
+		sensor_hub_device_close(sensor_inst->hsdev);
 		sensor_inst->enable = false;
-	पूर्ण
+	}
 unlock_state:
 	mutex_unlock(&sensor_inst->mutex);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस count;
-पूर्ण
-अटल DEVICE_ATTR_RW(enable_sensor);
+	return count;
+}
+static DEVICE_ATTR_RW(enable_sensor);
 
-अटल काष्ठा attribute *enable_sensor_attrs[] = अणु
+static struct attribute *enable_sensor_attrs[] = {
 	&dev_attr_enable_sensor.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group enable_sensor_attr_group = अणु
+static const struct attribute_group enable_sensor_attr_group = {
 	.attrs = enable_sensor_attrs,
-पूर्ण;
+};
 
-अटल sमाप_प्रकार show_value(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			  अक्षर *buf)
-अणु
-	काष्ठा hid_sensor_custom *sensor_inst = dev_get_drvdata(dev);
-	काष्ठा hid_sensor_hub_attribute_info *attribute;
-	पूर्णांक index, usage, field_index;
-	अक्षर name[HID_CUSTOM_NAME_LENGTH];
+static ssize_t show_value(struct device *dev, struct device_attribute *attr,
+			  char *buf)
+{
+	struct hid_sensor_custom *sensor_inst = dev_get_drvdata(dev);
+	struct hid_sensor_hub_attribute_info *attribute;
+	int index, usage, field_index;
+	char name[HID_CUSTOM_NAME_LENGTH];
 	bool feature = false;
 	bool input = false;
-	पूर्णांक value = 0;
+	int value = 0;
 
-	अगर (माला_पूछो(attr->attr.name, "feature-%x-%x-%s", &index, &usage,
-		   name) == 3) अणु
+	if (sscanf(attr->attr.name, "feature-%x-%x-%s", &index, &usage,
+		   name) == 3) {
 		feature = true;
 		field_index = index + sensor_inst->input_field_count;
-	पूर्ण अन्यथा अगर (माला_पूछो(attr->attr.name, "input-%x-%x-%s", &index, &usage,
-		   name) == 3) अणु
+	} else if (sscanf(attr->attr.name, "input-%x-%x-%s", &index, &usage,
+		   name) == 3) {
 		input = true;
 		field_index = index;
-	पूर्ण अन्यथा
-		वापस -EINVAL;
+	} else
+		return -EINVAL;
 
-	अगर (!म_भेदन(name, "value", म_माप("value"))) अणु
+	if (!strncmp(name, "value", strlen("value"))) {
 		u32 report_id;
-		पूर्णांक ret;
+		int ret;
 
 		attribute = &sensor_inst->fields[field_index].attribute;
 		report_id = attribute->report_id;
-		अगर (feature) अणु
+		if (feature) {
 			u8 values[HID_CUSTOM_MAX_FEATURE_BYTES];
-			पूर्णांक len = 0;
+			int len = 0;
 			u64 value = 0;
-			पूर्णांक i = 0;
+			int i = 0;
 
 			ret = sensor_hub_get_feature(sensor_inst->hsdev,
 						     report_id,
 						     index,
-						     माप(values), values);
-			अगर (ret < 0)
-				वापस ret;
+						     sizeof(values), values);
+			if (ret < 0)
+				return ret;
 
-			जबतक (i < ret) अणु
-				अगर (i + attribute->size > ret) अणु
-					len += scnम_लिखो(&buf[len],
+			while (i < ret) {
+				if (i + attribute->size > ret) {
+					len += scnprintf(&buf[len],
 							PAGE_SIZE - len,
 							"%d ", values[i]);
-					अवरोध;
-				पूर्ण
-				चयन (attribute->size) अणु
-				हाल 2:
+					break;
+				}
+				switch (attribute->size) {
+				case 2:
 					value = (u64) *(u16 *)&values[i];
 					i += attribute->size;
-					अवरोध;
-				हाल 4:
+					break;
+				case 4:
 					value = (u64) *(u32 *)&values[i];
 					i += attribute->size;
-					अवरोध;
-				हाल 8:
+					break;
+				case 8:
 					value = *(u64 *)&values[i];
 					i += attribute->size;
-					अवरोध;
-				शेष:
+					break;
+				default:
 					value = (u64) values[i];
 					++i;
-					अवरोध;
-				पूर्ण
-				len += scnम_लिखो(&buf[len], PAGE_SIZE - len,
+					break;
+				}
+				len += scnprintf(&buf[len], PAGE_SIZE - len,
 						"%lld ", value);
-			पूर्ण
-			len += scnम_लिखो(&buf[len], PAGE_SIZE - len, "\n");
+			}
+			len += scnprintf(&buf[len], PAGE_SIZE - len, "\n");
 
-			वापस len;
-		पूर्ण अन्यथा अगर (input)
+			return len;
+		} else if (input)
 			value = sensor_hub_input_attr_get_raw_value(
 						sensor_inst->hsdev,
 						sensor_inst->hsdev->usage,
 						usage, report_id,
 						SENSOR_HUB_SYNC, false);
-	पूर्ण अन्यथा अगर (!म_भेदन(name, "units", म_माप("units")))
+	} else if (!strncmp(name, "units", strlen("units")))
 		value = sensor_inst->fields[field_index].attribute.units;
-	अन्यथा अगर (!म_भेदन(name, "unit-expo", म_माप("unit-expo")))
+	else if (!strncmp(name, "unit-expo", strlen("unit-expo")))
 		value = sensor_inst->fields[field_index].attribute.unit_expo;
-	अन्यथा अगर (!म_भेदन(name, "size", म_माप("size")))
+	else if (!strncmp(name, "size", strlen("size")))
 		value = sensor_inst->fields[field_index].attribute.size;
-	अन्यथा अगर (!म_भेदन(name, "minimum", म_माप("minimum")))
+	else if (!strncmp(name, "minimum", strlen("minimum")))
 		value = sensor_inst->fields[field_index].attribute.
 							logical_minimum;
-	अन्यथा अगर (!म_भेदन(name, "maximum", म_माप("maximum")))
+	else if (!strncmp(name, "maximum", strlen("maximum")))
 		value = sensor_inst->fields[field_index].attribute.
 							logical_maximum;
-	अन्यथा अगर (!म_भेदन(name, "name", म_माप("name"))) अणु
-		काष्ठा hid_custom_usage_desc *usage_desc;
+	else if (!strncmp(name, "name", strlen("name"))) {
+		struct hid_custom_usage_desc *usage_desc;
 
-		usage_desc = द्वा_खोज(&usage, hid_custom_usage_desc_table,
+		usage_desc = bsearch(&usage, hid_custom_usage_desc_table,
 				     ARRAY_SIZE(hid_custom_usage_desc_table),
-				     माप(काष्ठा hid_custom_usage_desc),
+				     sizeof(struct hid_custom_usage_desc),
 				     usage_id_cmp);
-		अगर (usage_desc)
-			वापस snम_लिखो(buf, PAGE_SIZE, "%s\n",
+		if (usage_desc)
+			return snprintf(buf, PAGE_SIZE, "%s\n",
 					usage_desc->desc);
-		अन्यथा
-			वापस प्र_लिखो(buf, "not-specified\n");
-	 पूर्ण अन्यथा
-		वापस -EINVAL;
+		else
+			return sprintf(buf, "not-specified\n");
+	 } else
+		return -EINVAL;
 
-	वापस प्र_लिखो(buf, "%d\n", value);
-पूर्ण
+	return sprintf(buf, "%d\n", value);
+}
 
-अटल sमाप_प्रकार store_value(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			   स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा hid_sensor_custom *sensor_inst = dev_get_drvdata(dev);
-	पूर्णांक index, field_index, usage;
-	अक्षर name[HID_CUSTOM_NAME_LENGTH];
-	पूर्णांक value, ret;
+static ssize_t store_value(struct device *dev, struct device_attribute *attr,
+			   const char *buf, size_t count)
+{
+	struct hid_sensor_custom *sensor_inst = dev_get_drvdata(dev);
+	int index, field_index, usage;
+	char name[HID_CUSTOM_NAME_LENGTH];
+	int value, ret;
 
-	अगर (माला_पूछो(attr->attr.name, "feature-%x-%x-%s", &index, &usage,
-		   name) == 3) अणु
+	if (sscanf(attr->attr.name, "feature-%x-%x-%s", &index, &usage,
+		   name) == 3) {
 		field_index = index + sensor_inst->input_field_count;
-	पूर्ण अन्यथा
-		वापस -EINVAL;
+	} else
+		return -EINVAL;
 
-	अगर (!म_भेदन(name, "value", म_माप("value"))) अणु
+	if (!strncmp(name, "value", strlen("value"))) {
 		u32 report_id;
 
-		अगर (kstrtoपूर्णांक(buf, 0, &value) != 0)
-			वापस -EINVAL;
+		if (kstrtoint(buf, 0, &value) != 0)
+			return -EINVAL;
 
 		report_id = sensor_inst->fields[field_index].attribute.
 								report_id;
 		ret = sensor_hub_set_feature(sensor_inst->hsdev, report_id,
-					     index, माप(value), &value);
-		अगर (ret)
-			वापस ret;
-	पूर्ण अन्यथा
-		वापस -EINVAL;
+					     index, sizeof(value), &value);
+		if (ret)
+			return ret;
+	} else
+		return -EINVAL;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल पूर्णांक hid_sensor_capture_sample(काष्ठा hid_sensor_hub_device *hsdev,
-				  अचिन्हित usage_id, माप_प्रकार raw_len,
-				  अक्षर *raw_data, व्योम *priv)
-अणु
-	काष्ठा hid_sensor_custom *sensor_inst = platक्रमm_get_drvdata(priv);
-	काष्ठा hid_sensor_sample header;
+static int hid_sensor_capture_sample(struct hid_sensor_hub_device *hsdev,
+				  unsigned usage_id, size_t raw_len,
+				  char *raw_data, void *priv)
+{
+	struct hid_sensor_custom *sensor_inst = platform_get_drvdata(priv);
+	struct hid_sensor_sample header;
 
 	/* If any error occurs in a sample, rest of the fields are ignored */
-	अगर (sensor_inst->input_skip_sample) अणु
+	if (sensor_inst->input_skip_sample) {
 		hid_err(sensor_inst->hsdev->hdev, "Skipped remaining data\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	hid_dbg(sensor_inst->hsdev->hdev, "%s received %d of %d\n", __func__,
-		(पूर्णांक) (sensor_inst->input_report_recd_size + raw_len),
+		(int) (sensor_inst->input_report_recd_size + raw_len),
 		sensor_inst->input_report_size);
 
-	अगर (!test_bit(0, &sensor_inst->misc_खोलोed))
-		वापस 0;
+	if (!test_bit(0, &sensor_inst->misc_opened))
+		return 0;
 
-	अगर (!sensor_inst->input_report_recd_size) अणु
-		पूर्णांक required_size = माप(काष्ठा hid_sensor_sample) +
+	if (!sensor_inst->input_report_recd_size) {
+		int required_size = sizeof(struct hid_sensor_sample) +
 						sensor_inst->input_report_size;
 		header.usage_id = hsdev->usage;
 		header.raw_len = sensor_inst->input_report_size;
-		header.बारtamp = kसमय_get_real_ns();
-		अगर (kfअगरo_avail(&sensor_inst->data_fअगरo) >= required_size) अणु
-			kfअगरo_in(&sensor_inst->data_fअगरo,
-				 (अचिन्हित अक्षर *)&header,
-				 माप(header));
-		पूर्ण अन्यथा
+		header.timestamp = ktime_get_real_ns();
+		if (kfifo_avail(&sensor_inst->data_fifo) >= required_size) {
+			kfifo_in(&sensor_inst->data_fifo,
+				 (unsigned char *)&header,
+				 sizeof(header));
+		} else
 			sensor_inst->input_skip_sample = true;
-	पूर्ण
-	अगर (kfअगरo_avail(&sensor_inst->data_fअगरo) >= raw_len)
-		kfअगरo_in(&sensor_inst->data_fअगरo, (अचिन्हित अक्षर *)raw_data,
+	}
+	if (kfifo_avail(&sensor_inst->data_fifo) >= raw_len)
+		kfifo_in(&sensor_inst->data_fifo, (unsigned char *)raw_data,
 			 raw_len);
 
 	sensor_inst->input_report_recd_size += raw_len;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hid_sensor_send_event(काष्ठा hid_sensor_hub_device *hsdev,
-				 अचिन्हित usage_id, व्योम *priv)
-अणु
-	काष्ठा hid_sensor_custom *sensor_inst = platक्रमm_get_drvdata(priv);
+static int hid_sensor_send_event(struct hid_sensor_hub_device *hsdev,
+				 unsigned usage_id, void *priv)
+{
+	struct hid_sensor_custom *sensor_inst = platform_get_drvdata(priv);
 
-	अगर (!test_bit(0, &sensor_inst->misc_खोलोed))
-		वापस 0;
+	if (!test_bit(0, &sensor_inst->misc_opened))
+		return 0;
 
 	sensor_inst->input_report_recd_size = 0;
 	sensor_inst->input_skip_sample = false;
 
-	wake_up(&sensor_inst->रुको);
+	wake_up(&sensor_inst->wait);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hid_sensor_custom_add_field(काष्ठा hid_sensor_custom *sensor_inst,
-				       पूर्णांक index, पूर्णांक report_type,
-				       काष्ठा hid_report *report,
-				       काष्ठा hid_field *field)
-अणु
-	काष्ठा hid_sensor_custom_field *sensor_field;
-	व्योम *fields;
+static int hid_sensor_custom_add_field(struct hid_sensor_custom *sensor_inst,
+				       int index, int report_type,
+				       struct hid_report *report,
+				       struct hid_field *field)
+{
+	struct hid_sensor_custom_field *sensor_field;
+	void *fields;
 
-	fields = kपुनः_स्मृति(sensor_inst->fields,
+	fields = krealloc(sensor_inst->fields,
 			  (sensor_inst->sensor_field_count + 1) *
-			   माप(काष्ठा hid_sensor_custom_field), GFP_KERNEL);
-	अगर (!fields) अणु
-		kमुक्त(sensor_inst->fields);
-		वापस -ENOMEM;
-	पूर्ण
+			   sizeof(struct hid_sensor_custom_field), GFP_KERNEL);
+	if (!fields) {
+		kfree(sensor_inst->fields);
+		return -ENOMEM;
+	}
 	sensor_inst->fields = fields;
 	sensor_field = &sensor_inst->fields[sensor_inst->sensor_field_count];
 	sensor_field->attribute.usage_id = sensor_inst->hsdev->usage;
-	अगर (field->logical)
+	if (field->logical)
 		sensor_field->attribute.attrib_id = field->logical;
-	अन्यथा
+	else
 		sensor_field->attribute.attrib_id = field->usage[0].hid;
 
 	sensor_field->attribute.index = index;
@@ -503,105 +502,105 @@ unlock_state:
 	sensor_field->attribute.logical_minimum = field->logical_minimum;
 	sensor_field->attribute.logical_maximum = field->logical_maximum;
 
-	अगर (report_type == HID_FEATURE_REPORT)
-		snम_लिखो(sensor_field->group_name,
-			 माप(sensor_field->group_name), "feature-%x-%x",
+	if (report_type == HID_FEATURE_REPORT)
+		snprintf(sensor_field->group_name,
+			 sizeof(sensor_field->group_name), "feature-%x-%x",
 			 sensor_field->attribute.index,
 			 sensor_field->attribute.attrib_id);
-	अन्यथा अगर (report_type == HID_INPUT_REPORT) अणु
-		snम_लिखो(sensor_field->group_name,
-			 माप(sensor_field->group_name),
+	else if (report_type == HID_INPUT_REPORT) {
+		snprintf(sensor_field->group_name,
+			 sizeof(sensor_field->group_name),
 			 "input-%x-%x", sensor_field->attribute.index,
 			 sensor_field->attribute.attrib_id);
 		sensor_inst->input_field_count++;
 		sensor_inst->input_report_size += (field->report_size *
 						   field->report_count) / 8;
-	पूर्ण
+	}
 
-	स_रखो(&sensor_field->hid_custom_attribute_group, 0,
-	       माप(काष्ठा attribute_group));
+	memset(&sensor_field->hid_custom_attribute_group, 0,
+	       sizeof(struct attribute_group));
 	sensor_inst->sensor_field_count++;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hid_sensor_custom_add_fields(काष्ठा hid_sensor_custom *sensor_inst,
-					काष्ठा hid_report_क्रमागत *report_क्रमागत,
-					पूर्णांक report_type)
-अणु
-	पूर्णांक i;
-	पूर्णांक ret;
-	काष्ठा hid_report *report;
-	काष्ठा hid_field *field;
-	काष्ठा hid_sensor_hub_device *hsdev = sensor_inst->hsdev;
+static int hid_sensor_custom_add_fields(struct hid_sensor_custom *sensor_inst,
+					struct hid_report_enum *report_enum,
+					int report_type)
+{
+	int i;
+	int ret;
+	struct hid_report *report;
+	struct hid_field *field;
+	struct hid_sensor_hub_device *hsdev = sensor_inst->hsdev;
 
-	list_क्रम_each_entry(report, &report_क्रमागत->report_list, list) अणु
-		क्रम (i = 0; i < report->maxfield; ++i) अणु
+	list_for_each_entry(report, &report_enum->report_list, list) {
+		for (i = 0; i < report->maxfield; ++i) {
 			field = report->field[i];
-			अगर (field->maxusage &&
+			if (field->maxusage &&
 			    ((field->usage[0].collection_index >=
 			      hsdev->start_collection_index) &&
 			      (field->usage[0].collection_index <
-			       hsdev->end_collection_index))) अणु
+			       hsdev->end_collection_index))) {
 
 				ret = hid_sensor_custom_add_field(sensor_inst,
 								  i,
 								  report_type,
 								  report,
 								  field);
-				अगर (ret)
-					वापस ret;
+				if (ret)
+					return ret;
 
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hid_sensor_custom_add_attributes(काष्ठा hid_sensor_custom
+static int hid_sensor_custom_add_attributes(struct hid_sensor_custom
 								*sensor_inst)
-अणु
-	काष्ठा hid_sensor_hub_device *hsdev = sensor_inst->hsdev;
-	काष्ठा hid_device *hdev = hsdev->hdev;
-	पूर्णांक ret = -1;
-	पूर्णांक i, j;
+{
+	struct hid_sensor_hub_device *hsdev = sensor_inst->hsdev;
+	struct hid_device *hdev = hsdev->hdev;
+	int ret = -1;
+	int i, j;
 
-	क्रम (j = 0; j < HID_REPORT_TYPES; ++j) अणु
-		अगर (j == HID_OUTPUT_REPORT)
-			जारी;
+	for (j = 0; j < HID_REPORT_TYPES; ++j) {
+		if (j == HID_OUTPUT_REPORT)
+			continue;
 
 		ret = hid_sensor_custom_add_fields(sensor_inst,
-						   &hdev->report_क्रमागत[j], j);
-		अगर (ret)
-			वापस ret;
+						   &hdev->report_enum[j], j);
+		if (ret)
+			return ret;
 
-	पूर्ण
+	}
 
 	/* Create sysfs attributes */
-	क्रम (i = 0; i < sensor_inst->sensor_field_count; ++i) अणु
+	for (i = 0; i < sensor_inst->sensor_field_count; ++i) {
 		j = 0;
-		जबतक (j < HID_CUSTOM_TOTAL_ATTRS &&
-		       hid_custom_attrs[j].name) अणु
-			काष्ठा device_attribute *device_attr;
+		while (j < HID_CUSTOM_TOTAL_ATTRS &&
+		       hid_custom_attrs[j].name) {
+			struct device_attribute *device_attr;
 
 			device_attr = &sensor_inst->fields[i].sd_attrs[j];
 
-			snम_लिखो((अक्षर *)&sensor_inst->fields[i].attr_name[j],
+			snprintf((char *)&sensor_inst->fields[i].attr_name[j],
 				 HID_CUSTOM_NAME_LENGTH, "%s-%s",
 				 sensor_inst->fields[i].group_name,
 				 hid_custom_attrs[j].name);
 			sysfs_attr_init(&device_attr->attr);
 			device_attr->attr.name =
-				(अक्षर *)&sensor_inst->fields[i].attr_name[j];
+				(char *)&sensor_inst->fields[i].attr_name[j];
 			device_attr->attr.mode = hid_custom_attrs[j].mode;
 			device_attr->show = show_value;
-			अगर (hid_custom_attrs[j].mode & S_IWUSR)
+			if (hid_custom_attrs[j].mode & S_IWUSR)
 				device_attr->store = store_value;
 			sensor_inst->fields[i].attrs[j] = &device_attr->attr;
 			++j;
-		पूर्ण
-		sensor_inst->fields[i].attrs[j] = शून्य;
+		}
+		sensor_inst->fields[i].attrs[j] = NULL;
 		sensor_inst->fields[i].hid_custom_attribute_group.attrs =
 						sensor_inst->fields[i].attrs;
 		sensor_inst->fields[i].hid_custom_attribute_group.name =
@@ -609,277 +608,277 @@ unlock_state:
 		ret = sysfs_create_group(&sensor_inst->pdev->dev.kobj,
 					 &sensor_inst->fields[i].
 					 hid_custom_attribute_group);
-		अगर (ret)
-			अवरोध;
+		if (ret)
+			break;
 
-		/* For घातer or report field store indexes */
-		अगर (sensor_inst->fields[i].attribute.attrib_id ==
+		/* For power or report field store indexes */
+		if (sensor_inst->fields[i].attribute.attrib_id ==
 					HID_USAGE_SENSOR_PROY_POWER_STATE)
-			sensor_inst->घातer_state = &sensor_inst->fields[i];
-		अन्यथा अगर (sensor_inst->fields[i].attribute.attrib_id ==
+			sensor_inst->power_state = &sensor_inst->fields[i];
+		else if (sensor_inst->fields[i].attribute.attrib_id ==
 					HID_USAGE_SENSOR_PROP_REPORT_STATE)
 			sensor_inst->report_state = &sensor_inst->fields[i];
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम hid_sensor_custom_हटाओ_attributes(काष्ठा hid_sensor_custom *
+static void hid_sensor_custom_remove_attributes(struct hid_sensor_custom *
 								sensor_inst)
-अणु
-	पूर्णांक i;
+{
+	int i;
 
-	क्रम (i = 0; i < sensor_inst->sensor_field_count; ++i)
-		sysfs_हटाओ_group(&sensor_inst->pdev->dev.kobj,
+	for (i = 0; i < sensor_inst->sensor_field_count; ++i)
+		sysfs_remove_group(&sensor_inst->pdev->dev.kobj,
 				   &sensor_inst->fields[i].
 				   hid_custom_attribute_group);
 
-	kमुक्त(sensor_inst->fields);
-पूर्ण
+	kfree(sensor_inst->fields);
+}
 
-अटल sमाप_प्रकार hid_sensor_custom_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
-				      माप_प्रकार count, loff_t *f_ps)
-अणु
-	काष्ठा hid_sensor_custom *sensor_inst;
-	अचिन्हित पूर्णांक copied;
-	पूर्णांक ret;
+static ssize_t hid_sensor_custom_read(struct file *file, char __user *buf,
+				      size_t count, loff_t *f_ps)
+{
+	struct hid_sensor_custom *sensor_inst;
+	unsigned int copied;
+	int ret;
 
-	sensor_inst = container_of(file->निजी_data,
-				   काष्ठा hid_sensor_custom, custom_dev);
+	sensor_inst = container_of(file->private_data,
+				   struct hid_sensor_custom, custom_dev);
 
-	अगर (count < माप(काष्ठा hid_sensor_sample))
-		वापस -EINVAL;
+	if (count < sizeof(struct hid_sensor_sample))
+		return -EINVAL;
 
-	करो अणु
-		अगर (kfअगरo_is_empty(&sensor_inst->data_fअगरo)) अणु
-			अगर (file->f_flags & O_NONBLOCK)
-				वापस -EAGAIN;
+	do {
+		if (kfifo_is_empty(&sensor_inst->data_fifo)) {
+			if (file->f_flags & O_NONBLOCK)
+				return -EAGAIN;
 
-			ret = रुको_event_पूर्णांकerruptible(sensor_inst->रुको,
-				!kfअगरo_is_empty(&sensor_inst->data_fअगरo));
-			अगर (ret)
-				वापस ret;
-		पूर्ण
-		ret = kfअगरo_to_user(&sensor_inst->data_fअगरo, buf, count,
+			ret = wait_event_interruptible(sensor_inst->wait,
+				!kfifo_is_empty(&sensor_inst->data_fifo));
+			if (ret)
+				return ret;
+		}
+		ret = kfifo_to_user(&sensor_inst->data_fifo, buf, count,
 				    &copied);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-	पूर्ण जबतक (copied == 0);
+	} while (copied == 0);
 
-	वापस copied;
-पूर्ण
+	return copied;
+}
 
-अटल पूर्णांक hid_sensor_custom_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा hid_sensor_custom *sensor_inst;
+static int hid_sensor_custom_release(struct inode *inode, struct file *file)
+{
+	struct hid_sensor_custom *sensor_inst;
 
-	sensor_inst = container_of(file->निजी_data,
-				   काष्ठा hid_sensor_custom, custom_dev);
+	sensor_inst = container_of(file->private_data,
+				   struct hid_sensor_custom, custom_dev);
 
-	clear_bit(0, &sensor_inst->misc_खोलोed);
+	clear_bit(0, &sensor_inst->misc_opened);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hid_sensor_custom_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा hid_sensor_custom *sensor_inst;
+static int hid_sensor_custom_open(struct inode *inode, struct file *file)
+{
+	struct hid_sensor_custom *sensor_inst;
 
-	sensor_inst = container_of(file->निजी_data,
-				   काष्ठा hid_sensor_custom, custom_dev);
-	/* We essentially have single पढ़ोer and ग_लिखोr */
-	अगर (test_and_set_bit(0, &sensor_inst->misc_खोलोed))
-		वापस -EBUSY;
+	sensor_inst = container_of(file->private_data,
+				   struct hid_sensor_custom, custom_dev);
+	/* We essentially have single reader and writer */
+	if (test_and_set_bit(0, &sensor_inst->misc_opened))
+		return -EBUSY;
 
-	वापस stream_खोलो(inode, file);
-पूर्ण
+	return stream_open(inode, file);
+}
 
-अटल __poll_t hid_sensor_custom_poll(काष्ठा file *file,
-					   काष्ठा poll_table_काष्ठा *रुको)
-अणु
-	काष्ठा hid_sensor_custom *sensor_inst;
+static __poll_t hid_sensor_custom_poll(struct file *file,
+					   struct poll_table_struct *wait)
+{
+	struct hid_sensor_custom *sensor_inst;
 	__poll_t mask = 0;
 
-	sensor_inst = container_of(file->निजी_data,
-				   काष्ठा hid_sensor_custom, custom_dev);
+	sensor_inst = container_of(file->private_data,
+				   struct hid_sensor_custom, custom_dev);
 
-	poll_रुको(file, &sensor_inst->रुको, रुको);
+	poll_wait(file, &sensor_inst->wait, wait);
 
-	अगर (!kfअगरo_is_empty(&sensor_inst->data_fअगरo))
+	if (!kfifo_is_empty(&sensor_inst->data_fifo))
 		mask = EPOLLIN | EPOLLRDNORM;
 
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
-अटल स्थिर काष्ठा file_operations hid_sensor_custom_fops = अणु
-	.खोलो =  hid_sensor_custom_खोलो,
-	.पढ़ो =  hid_sensor_custom_पढ़ो,
+static const struct file_operations hid_sensor_custom_fops = {
+	.open =  hid_sensor_custom_open,
+	.read =  hid_sensor_custom_read,
 	.release = hid_sensor_custom_release,
 	.poll = hid_sensor_custom_poll,
 	.llseek = noop_llseek,
-पूर्ण;
+};
 
-अटल पूर्णांक hid_sensor_custom_dev_अगर_add(काष्ठा hid_sensor_custom *sensor_inst)
-अणु
-	पूर्णांक ret;
+static int hid_sensor_custom_dev_if_add(struct hid_sensor_custom *sensor_inst)
+{
+	int ret;
 
-	ret = kfअगरo_alloc(&sensor_inst->data_fअगरo, HID_CUSTOM_FIFO_SIZE,
+	ret = kfifo_alloc(&sensor_inst->data_fifo, HID_CUSTOM_FIFO_SIZE,
 			  GFP_KERNEL);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	init_रुकोqueue_head(&sensor_inst->रुको);
+	init_waitqueue_head(&sensor_inst->wait);
 
 	sensor_inst->custom_dev.minor = MISC_DYNAMIC_MINOR;
 	sensor_inst->custom_dev.name = dev_name(&sensor_inst->pdev->dev);
 	sensor_inst->custom_dev.fops = &hid_sensor_custom_fops,
-	ret = misc_रेजिस्टर(&sensor_inst->custom_dev);
-	अगर (ret) अणु
-		kfअगरo_मुक्त(&sensor_inst->data_fअगरo);
-		वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	ret = misc_register(&sensor_inst->custom_dev);
+	if (ret) {
+		kfifo_free(&sensor_inst->data_fifo);
+		return ret;
+	}
+	return 0;
+}
 
-अटल व्योम hid_sensor_custom_dev_अगर_हटाओ(काष्ठा hid_sensor_custom
+static void hid_sensor_custom_dev_if_remove(struct hid_sensor_custom
 								*sensor_inst)
-अणु
-	wake_up(&sensor_inst->रुको);
-	misc_deरेजिस्टर(&sensor_inst->custom_dev);
-	kfअगरo_मुक्त(&sensor_inst->data_fअगरo);
+{
+	wake_up(&sensor_inst->wait);
+	misc_deregister(&sensor_inst->custom_dev);
+	kfifo_free(&sensor_inst->data_fifo);
 
-पूर्ण
+}
 
-/* luid defined in FW (e.g. ISH).  Maybe used to identअगरy sensor. */
-अटल स्थिर अक्षर *स्थिर known_sensor_luid[] = अणु "020B000000000000" पूर्ण;
+/* luid defined in FW (e.g. ISH).  Maybe used to identify sensor. */
+static const char *const known_sensor_luid[] = { "020B000000000000" };
 
-अटल पूर्णांक get_luid_table_index(अचिन्हित अक्षर *usage_str)
-अणु
-	पूर्णांक i;
+static int get_luid_table_index(unsigned char *usage_str)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(known_sensor_luid); i++) अणु
-		अगर (!म_भेदन(usage_str, known_sensor_luid[i],
-			     म_माप(known_sensor_luid[i])))
-			वापस i;
-	पूर्ण
+	for (i = 0; i < ARRAY_SIZE(known_sensor_luid); i++) {
+		if (!strncmp(usage_str, known_sensor_luid[i],
+			     strlen(known_sensor_luid[i])))
+			return i;
+	}
 
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}
 
-अटल पूर्णांक get_known_custom_sensor_index(काष्ठा hid_sensor_hub_device *hsdev)
-अणु
-	काष्ठा hid_sensor_hub_attribute_info sensor_manufacturer = अणु 0 पूर्ण;
-	काष्ठा hid_sensor_hub_attribute_info sensor_luid_info = अणु 0 पूर्ण;
-	पूर्णांक report_size;
-	पूर्णांक ret;
-	अटल u16 w_buf[HID_CUSTOM_MAX_FEATURE_BYTES];
-	अटल अक्षर buf[HID_CUSTOM_MAX_FEATURE_BYTES];
-	पूर्णांक i;
+static int get_known_custom_sensor_index(struct hid_sensor_hub_device *hsdev)
+{
+	struct hid_sensor_hub_attribute_info sensor_manufacturer = { 0 };
+	struct hid_sensor_hub_attribute_info sensor_luid_info = { 0 };
+	int report_size;
+	int ret;
+	static u16 w_buf[HID_CUSTOM_MAX_FEATURE_BYTES];
+	static char buf[HID_CUSTOM_MAX_FEATURE_BYTES];
+	int i;
 
-	स_रखो(w_buf, 0, माप(w_buf));
-	स_रखो(buf, 0, माप(buf));
+	memset(w_buf, 0, sizeof(w_buf));
+	memset(buf, 0, sizeof(buf));
 
 	/* get manufacturer info */
 	ret = sensor_hub_input_get_attribute_info(hsdev,
 			HID_FEATURE_REPORT, hsdev->usage,
 			HID_USAGE_SENSOR_PROP_MANUFACTURER, &sensor_manufacturer);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	report_size =
 		sensor_hub_get_feature(hsdev, sensor_manufacturer.report_id,
-				       sensor_manufacturer.index, माप(w_buf),
+				       sensor_manufacturer.index, sizeof(w_buf),
 				       w_buf);
-	अगर (report_size <= 0) अणु
+	if (report_size <= 0) {
 		hid_err(hsdev->hdev,
 			"Failed to get sensor manufacturer info %d\n",
 			report_size);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	/* convert from wide अक्षर to अक्षर */
-	क्रम (i = 0; i < ARRAY_SIZE(buf) - 1 && w_buf[i]; i++)
-		buf[i] = (अक्षर)w_buf[i];
+	/* convert from wide char to char */
+	for (i = 0; i < ARRAY_SIZE(buf) - 1 && w_buf[i]; i++)
+		buf[i] = (char)w_buf[i];
 
 	/* ensure it's ISH sensor */
-	अगर (म_भेदन(buf, "INTEL", म_माप("INTEL")))
-		वापस -ENODEV;
+	if (strncmp(buf, "INTEL", strlen("INTEL")))
+		return -ENODEV;
 
-	स_रखो(w_buf, 0, माप(w_buf));
-	स_रखो(buf, 0, माप(buf));
+	memset(w_buf, 0, sizeof(w_buf));
+	memset(buf, 0, sizeof(buf));
 
 	/* get real usage id */
 	ret = sensor_hub_input_get_attribute_info(hsdev,
 			HID_FEATURE_REPORT, hsdev->usage,
 			HID_USAGE_SENSOR_PROP_SERIAL_NUM, &sensor_luid_info);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	report_size = sensor_hub_get_feature(hsdev, sensor_luid_info.report_id,
-					     sensor_luid_info.index, माप(w_buf),
+					     sensor_luid_info.index, sizeof(w_buf),
 					     w_buf);
-	अगर (report_size <= 0) अणु
+	if (report_size <= 0) {
 		hid_err(hsdev->hdev, "Failed to get real usage info %d\n",
 			report_size);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	/* convert from wide अक्षर to अक्षर */
-	क्रम (i = 0; i < ARRAY_SIZE(buf) - 1 && w_buf[i]; i++)
-		buf[i] = (अक्षर)w_buf[i];
+	/* convert from wide char to char */
+	for (i = 0; i < ARRAY_SIZE(buf) - 1 && w_buf[i]; i++)
+		buf[i] = (char)w_buf[i];
 
-	अगर (म_माप(buf) != म_माप(known_sensor_luid[0]) + 5) अणु
+	if (strlen(buf) != strlen(known_sensor_luid[0]) + 5) {
 		hid_err(hsdev->hdev,
 			"%s luid length not match %zu != (%zu + 5)\n", __func__,
-			म_माप(buf), म_माप(known_sensor_luid[0]));
-		वापस -ENODEV;
-	पूर्ण
+			strlen(buf), strlen(known_sensor_luid[0]));
+		return -ENODEV;
+	}
 
 	/* get table index with luid (not matching 'LUID: ' in luid) */
-	वापस get_luid_table_index(&buf[5]);
-पूर्ण
+	return get_luid_table_index(&buf[5]);
+}
 
-अटल काष्ठा platक्रमm_device *
-hid_sensor_रेजिस्टर_platक्रमm_device(काष्ठा platक्रमm_device *pdev,
-				    काष्ठा hid_sensor_hub_device *hsdev,
-				    पूर्णांक index)
-अणु
-	अक्षर real_usage[HID_SENSOR_USAGE_LENGTH] = अणु 0 पूर्ण;
-	काष्ठा platक्रमm_device *custom_pdev;
-	स्थिर अक्षर *dev_name;
-	अक्षर *c;
+static struct platform_device *
+hid_sensor_register_platform_device(struct platform_device *pdev,
+				    struct hid_sensor_hub_device *hsdev,
+				    int index)
+{
+	char real_usage[HID_SENSOR_USAGE_LENGTH] = { 0 };
+	struct platform_device *custom_pdev;
+	const char *dev_name;
+	char *c;
 
 	/* copy real usage id */
-	स_नकल(real_usage, known_sensor_luid[index], 4);
+	memcpy(real_usage, known_sensor_luid[index], 4);
 
-	/* usage id are all lowहाल */
-	क्रम (c = real_usage; *c != '\0'; c++)
-		*c = छोटे(*c);
+	/* usage id are all lowcase */
+	for (c = real_usage; *c != '\0'; c++)
+		*c = tolower(*c);
 
 	/* HID-SENSOR-INT-REAL_USAGE_ID */
-	dev_name = kaप्र_लिखो(GFP_KERNEL, "HID-SENSOR-INT-%s", real_usage);
-	अगर (!dev_name)
-		वापस ERR_PTR(-ENOMEM);
+	dev_name = kasprintf(GFP_KERNEL, "HID-SENSOR-INT-%s", real_usage);
+	if (!dev_name)
+		return ERR_PTR(-ENOMEM);
 
-	custom_pdev = platक्रमm_device_रेजिस्टर_data(pdev->dev.parent, dev_name,
+	custom_pdev = platform_device_register_data(pdev->dev.parent, dev_name,
 						    PLATFORM_DEVID_NONE, hsdev,
-						    माप(*hsdev));
-	kमुक्त(dev_name);
-	वापस custom_pdev;
-पूर्ण
+						    sizeof(*hsdev));
+	kfree(dev_name);
+	return custom_pdev;
+}
 
-अटल पूर्णांक hid_sensor_custom_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा hid_sensor_custom *sensor_inst;
-	काष्ठा hid_sensor_hub_device *hsdev = pdev->dev.platक्रमm_data;
-	पूर्णांक ret;
-	पूर्णांक index;
+static int hid_sensor_custom_probe(struct platform_device *pdev)
+{
+	struct hid_sensor_custom *sensor_inst;
+	struct hid_sensor_hub_device *hsdev = pdev->dev.platform_data;
+	int ret;
+	int index;
 
-	sensor_inst = devm_kzalloc(&pdev->dev, माप(*sensor_inst),
+	sensor_inst = devm_kzalloc(&pdev->dev, sizeof(*sensor_inst),
 				   GFP_KERNEL);
-	अगर (!sensor_inst)
-		वापस -ENOMEM;
+	if (!sensor_inst)
+		return -ENOMEM;
 
 	sensor_inst->callbacks.capture_sample = hid_sensor_capture_sample;
 	sensor_inst->callbacks.send_event = hid_sensor_send_event;
@@ -887,95 +886,95 @@ hid_sensor_रेजिस्टर_platक्रमm_device(काष्ठा 
 	sensor_inst->hsdev = hsdev;
 	sensor_inst->pdev = pdev;
 	mutex_init(&sensor_inst->mutex);
-	platक्रमm_set_drvdata(pdev, sensor_inst);
+	platform_set_drvdata(pdev, sensor_inst);
 
 	index = get_known_custom_sensor_index(hsdev);
-	अगर (index >= 0 && index < ARRAY_SIZE(known_sensor_luid)) अणु
+	if (index >= 0 && index < ARRAY_SIZE(known_sensor_luid)) {
 		sensor_inst->custom_pdev =
-			hid_sensor_रेजिस्टर_platक्रमm_device(pdev, hsdev, index);
+			hid_sensor_register_platform_device(pdev, hsdev, index);
 
 		ret = PTR_ERR_OR_ZERO(sensor_inst->custom_pdev);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&pdev->dev,
 				"register_platform_device failed\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	ret = sensor_hub_रेजिस्टर_callback(hsdev, hsdev->usage,
+	ret = sensor_hub_register_callback(hsdev, hsdev->usage,
 					   &sensor_inst->callbacks);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&pdev->dev, "callback reg failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = sysfs_create_group(&sensor_inst->pdev->dev.kobj,
 				 &enable_sensor_attr_group);
-	अगर (ret)
-		जाओ err_हटाओ_callback;
+	if (ret)
+		goto err_remove_callback;
 
 	ret = hid_sensor_custom_add_attributes(sensor_inst);
-	अगर (ret)
-		जाओ err_हटाओ_group;
+	if (ret)
+		goto err_remove_group;
 
-	ret = hid_sensor_custom_dev_अगर_add(sensor_inst);
-	अगर (ret)
-		जाओ err_हटाओ_attributes;
+	ret = hid_sensor_custom_dev_if_add(sensor_inst);
+	if (ret)
+		goto err_remove_attributes;
 
-	वापस 0;
+	return 0;
 
-err_हटाओ_attributes:
-	hid_sensor_custom_हटाओ_attributes(sensor_inst);
-err_हटाओ_group:
-	sysfs_हटाओ_group(&sensor_inst->pdev->dev.kobj,
+err_remove_attributes:
+	hid_sensor_custom_remove_attributes(sensor_inst);
+err_remove_group:
+	sysfs_remove_group(&sensor_inst->pdev->dev.kobj,
 			   &enable_sensor_attr_group);
-err_हटाओ_callback:
-	sensor_hub_हटाओ_callback(hsdev, hsdev->usage);
+err_remove_callback:
+	sensor_hub_remove_callback(hsdev, hsdev->usage);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक hid_sensor_custom_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा hid_sensor_custom *sensor_inst = platक्रमm_get_drvdata(pdev);
-	काष्ठा hid_sensor_hub_device *hsdev = pdev->dev.platक्रमm_data;
+static int hid_sensor_custom_remove(struct platform_device *pdev)
+{
+	struct hid_sensor_custom *sensor_inst = platform_get_drvdata(pdev);
+	struct hid_sensor_hub_device *hsdev = pdev->dev.platform_data;
 
-	अगर (sensor_inst->custom_pdev) अणु
-		platक्रमm_device_unरेजिस्टर(sensor_inst->custom_pdev);
-		वापस 0;
-	पूर्ण
+	if (sensor_inst->custom_pdev) {
+		platform_device_unregister(sensor_inst->custom_pdev);
+		return 0;
+	}
 
-	hid_sensor_custom_dev_अगर_हटाओ(sensor_inst);
-	hid_sensor_custom_हटाओ_attributes(sensor_inst);
-	sysfs_हटाओ_group(&sensor_inst->pdev->dev.kobj,
+	hid_sensor_custom_dev_if_remove(sensor_inst);
+	hid_sensor_custom_remove_attributes(sensor_inst);
+	sysfs_remove_group(&sensor_inst->pdev->dev.kobj,
 			   &enable_sensor_attr_group);
-	sensor_hub_हटाओ_callback(hsdev, hsdev->usage);
+	sensor_hub_remove_callback(hsdev, hsdev->usage);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा platक्रमm_device_id hid_sensor_custom_ids[] = अणु
-	अणु
+static const struct platform_device_id hid_sensor_custom_ids[] = {
+	{
 		.name = "HID-SENSOR-2000e1",
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "HID-SENSOR-2000e2",
-	पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(platक्रमm, hid_sensor_custom_ids);
+	},
+	{ /* sentinel */ }
+};
+MODULE_DEVICE_TABLE(platform, hid_sensor_custom_ids);
 
-अटल काष्ठा platक्रमm_driver hid_sensor_custom_platक्रमm_driver = अणु
+static struct platform_driver hid_sensor_custom_platform_driver = {
 	.id_table = hid_sensor_custom_ids,
-	.driver = अणु
+	.driver = {
 		.name	= KBUILD_MODNAME,
-	पूर्ण,
+	},
 	.probe		= hid_sensor_custom_probe,
-	.हटाओ		= hid_sensor_custom_हटाओ,
-पूर्ण;
-module_platक्रमm_driver(hid_sensor_custom_platक्रमm_driver);
+	.remove		= hid_sensor_custom_remove,
+};
+module_platform_driver(hid_sensor_custom_platform_driver);
 
 MODULE_DESCRIPTION("HID Sensor Custom and Generic sensor Driver");
 MODULE_AUTHOR("Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>");

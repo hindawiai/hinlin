@@ -1,50 +1,49 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2014 MediaTek Inc.
  * Author: James Liao <jamesjj.liao@mediatek.com>
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/clk-provider.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
 
-#समावेश "clk-gate.h"
-#समावेश "clk-mtk.h"
+#include "clk-gate.h"
+#include "clk-mtk.h"
 
-#समावेश <dt-bindings/घड़ी/mt8173-clk.h>
+#include <dt-bindings/clock/mt8173-clk.h>
 
-अटल स्थिर काष्ठा mtk_gate_regs mm0_cg_regs = अणु
+static const struct mtk_gate_regs mm0_cg_regs = {
 	.set_ofs = 0x0104,
 	.clr_ofs = 0x0108,
 	.sta_ofs = 0x0100,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mtk_gate_regs mm1_cg_regs = अणु
+static const struct mtk_gate_regs mm1_cg_regs = {
 	.set_ofs = 0x0114,
 	.clr_ofs = 0x0118,
 	.sta_ofs = 0x0110,
-पूर्ण;
+};
 
-#घोषणा GATE_MM0(_id, _name, _parent, _shअगरt) अणु			\
+#define GATE_MM0(_id, _name, _parent, _shift) {			\
 		.id = _id,					\
 		.name = _name,					\
 		.parent_name = _parent,				\
 		.regs = &mm0_cg_regs,				\
-		.shअगरt = _shअगरt,				\
+		.shift = _shift,				\
 		.ops = &mtk_clk_gate_ops_setclr,		\
-	पूर्ण
+	}
 
-#घोषणा GATE_MM1(_id, _name, _parent, _shअगरt) अणु			\
+#define GATE_MM1(_id, _name, _parent, _shift) {			\
 		.id = _id,					\
 		.name = _name,					\
 		.parent_name = _parent,				\
 		.regs = &mm1_cg_regs,				\
-		.shअगरt = _shअगरt,				\
+		.shift = _shift,				\
 		.ops = &mtk_clk_gate_ops_setclr,		\
-	पूर्ण
+	}
 
-अटल स्थिर काष्ठा mtk_gate mt8173_mm_clks[] = अणु
+static const struct mtk_gate mt8173_mm_clks[] = {
 	/* MM0 */
 	GATE_MM0(CLK_MM_SMI_COMMON, "mm_smi_common", "mm_sel", 0),
 	GATE_MM0(CLK_MM_SMI_LARB0, "mm_smi_larb0", "mm_sel", 1),
@@ -99,49 +98,49 @@
 	GATE_MM1(CLK_MM_SMI_LARB4, "mm_smi_larb4", "mm_sel", 18),
 	GATE_MM1(CLK_MM_HDMI_HDCP, "mm_hdmi_hdcp", "hdcp_sel", 19),
 	GATE_MM1(CLK_MM_HDMI_HDCP24M, "mm_hdmi_hdcp24m", "hdcp_24m_sel", 20),
-पूर्ण;
+};
 
-काष्ठा clk_mt8173_mm_driver_data अणु
-	स्थिर काष्ठा mtk_gate *gates_clk;
-	पूर्णांक gates_num;
-पूर्ण;
+struct clk_mt8173_mm_driver_data {
+	const struct mtk_gate *gates_clk;
+	int gates_num;
+};
 
-अटल स्थिर काष्ठा clk_mt8173_mm_driver_data mt8173_mmsys_driver_data = अणु
+static const struct clk_mt8173_mm_driver_data mt8173_mmsys_driver_data = {
 	.gates_clk = mt8173_mm_clks,
 	.gates_num = ARRAY_SIZE(mt8173_mm_clks),
-पूर्ण;
+};
 
-अटल पूर्णांक clk_mt8173_mm_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा device_node *node = dev->parent->of_node;
-	स्थिर काष्ठा clk_mt8173_mm_driver_data *data;
-	काष्ठा clk_onecell_data *clk_data;
-	पूर्णांक ret;
+static int clk_mt8173_mm_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct device_node *node = dev->parent->of_node;
+	const struct clk_mt8173_mm_driver_data *data;
+	struct clk_onecell_data *clk_data;
+	int ret;
 
 	clk_data = mtk_alloc_clk_data(CLK_MM_NR_CLK);
-	अगर (!clk_data)
-		वापस -ENOMEM;
+	if (!clk_data)
+		return -ENOMEM;
 
 	data = &mt8173_mmsys_driver_data;
 
-	ret = mtk_clk_रेजिस्टर_gates(node, data->gates_clk, data->gates_num,
+	ret = mtk_clk_register_gates(node, data->gates_clk, data->gates_num,
 				     clk_data);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = of_clk_add_provider(node, of_clk_src_onecell_get, clk_data);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver clk_mt8173_mm_drv = अणु
-	.driver = अणु
+static struct platform_driver clk_mt8173_mm_drv = {
+	.driver = {
 		.name = "clk-mt8173-mm",
-	पूर्ण,
+	},
 	.probe = clk_mt8173_mm_probe,
-पूर्ण;
+};
 
-builtin_platक्रमm_driver(clk_mt8173_mm_drv);
+builtin_platform_driver(clk_mt8173_mm_drv);

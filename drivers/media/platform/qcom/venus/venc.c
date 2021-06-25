@@ -1,457 +1,456 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2012-2016, The Linux Foundation. All rights reserved.
  * Copyright (C) 2017 Linaro Ltd.
  */
-#समावेश <linux/clk.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/slab.h>
-#समावेश <media/v4l2-mem2स्मृति.स>
-#समावेश <media/videobuf2-dma-contig.h>
-#समावेश <media/v4l2-ioctl.h>
-#समावेश <media/v4l2-event.h>
-#समावेश <media/v4l2-ctrls.h>
+#include <linux/clk.h>
+#include <linux/module.h>
+#include <linux/mod_devicetable.h>
+#include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
+#include <linux/slab.h>
+#include <media/v4l2-mem2mem.h>
+#include <media/videobuf2-dma-contig.h>
+#include <media/v4l2-ioctl.h>
+#include <media/v4l2-event.h>
+#include <media/v4l2-ctrls.h>
 
-#समावेश "hfi_venus_io.h"
-#समावेश "hfi_parser.h"
-#समावेश "core.h"
-#समावेश "helpers.h"
-#समावेश "venc.h"
-#समावेश "pm_helpers.h"
+#include "hfi_venus_io.h"
+#include "hfi_parser.h"
+#include "core.h"
+#include "helpers.h"
+#include "venc.h"
+#include "pm_helpers.h"
 
-#घोषणा NUM_B_FRAMES_MAX	4
+#define NUM_B_FRAMES_MAX	4
 
 /*
- * Three resons to keep MPLANE क्रमmats (despite that the number of planes
+ * Three resons to keep MPLANE formats (despite that the number of planes
  * currently is one):
- * - the MPLANE क्रमmats allow only one plane to be used
- * - the करोwnstream driver use MPLANE क्रमmats too
- * - future firmware versions could add support क्रम >1 planes
+ * - the MPLANE formats allow only one plane to be used
+ * - the downstream driver use MPLANE formats too
+ * - future firmware versions could add support for >1 planes
  */
-अटल स्थिर काष्ठा venus_क्रमmat venc_क्रमmats[] = अणु
-	अणु
+static const struct venus_format venc_formats[] = {
+	{
 		.pixfmt = V4L2_PIX_FMT_NV12,
 		.num_planes = 1,
 		.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE,
-	पूर्ण, अणु
+	}, {
 		.pixfmt = V4L2_PIX_FMT_MPEG4,
 		.num_planes = 1,
 		.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE,
-	पूर्ण, अणु
+	}, {
 		.pixfmt = V4L2_PIX_FMT_H263,
 		.num_planes = 1,
 		.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE,
-	पूर्ण, अणु
+	}, {
 		.pixfmt = V4L2_PIX_FMT_H264,
 		.num_planes = 1,
 		.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE,
-	पूर्ण, अणु
+	}, {
 		.pixfmt = V4L2_PIX_FMT_VP8,
 		.num_planes = 1,
 		.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE,
-	पूर्ण, अणु
+	}, {
 		.pixfmt = V4L2_PIX_FMT_HEVC,
 		.num_planes = 1,
 		.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा venus_क्रमmat *
-find_क्रमmat(काष्ठा venus_inst *inst, u32 pixfmt, u32 type)
-अणु
-	स्थिर काष्ठा venus_क्रमmat *fmt = venc_क्रमmats;
-	अचिन्हित पूर्णांक size = ARRAY_SIZE(venc_क्रमmats);
-	अचिन्हित पूर्णांक i;
+static const struct venus_format *
+find_format(struct venus_inst *inst, u32 pixfmt, u32 type)
+{
+	const struct venus_format *fmt = venc_formats;
+	unsigned int size = ARRAY_SIZE(venc_formats);
+	unsigned int i;
 
-	क्रम (i = 0; i < size; i++) अणु
-		अगर (fmt[i].pixfmt == pixfmt)
-			अवरोध;
-	पूर्ण
+	for (i = 0; i < size; i++) {
+		if (fmt[i].pixfmt == pixfmt)
+			break;
+	}
 
-	अगर (i == size || fmt[i].type != type)
-		वापस शून्य;
+	if (i == size || fmt[i].type != type)
+		return NULL;
 
-	अगर (type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE &&
+	if (type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE &&
 	    !venus_helper_check_codec(inst, fmt[i].pixfmt))
-		वापस शून्य;
+		return NULL;
 
-	वापस &fmt[i];
-पूर्ण
+	return &fmt[i];
+}
 
-अटल स्थिर काष्ठा venus_क्रमmat *
-find_क्रमmat_by_index(काष्ठा venus_inst *inst, अचिन्हित पूर्णांक index, u32 type)
-अणु
-	स्थिर काष्ठा venus_क्रमmat *fmt = venc_क्रमmats;
-	अचिन्हित पूर्णांक size = ARRAY_SIZE(venc_क्रमmats);
-	अचिन्हित पूर्णांक i, k = 0;
+static const struct venus_format *
+find_format_by_index(struct venus_inst *inst, unsigned int index, u32 type)
+{
+	const struct venus_format *fmt = venc_formats;
+	unsigned int size = ARRAY_SIZE(venc_formats);
+	unsigned int i, k = 0;
 
-	अगर (index > size)
-		वापस शून्य;
+	if (index > size)
+		return NULL;
 
-	क्रम (i = 0; i < size; i++) अणु
+	for (i = 0; i < size; i++) {
 		bool valid;
 
-		अगर (fmt[i].type != type)
-			जारी;
+		if (fmt[i].type != type)
+			continue;
 		valid = type != V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE ||
 			venus_helper_check_codec(inst, fmt[i].pixfmt);
-		अगर (k == index && valid)
-			अवरोध;
-		अगर (valid)
+		if (k == index && valid)
+			break;
+		if (valid)
 			k++;
-	पूर्ण
+	}
 
-	अगर (i == size)
-		वापस शून्य;
+	if (i == size)
+		return NULL;
 
-	वापस &fmt[i];
-पूर्ण
+	return &fmt[i];
+}
 
-अटल पूर्णांक venc_v4l2_to_hfi(पूर्णांक id, पूर्णांक value)
-अणु
-	चयन (id) अणु
-	हाल V4L2_CID_MPEG_VIDEO_H264_ENTROPY_MODE:
-		चयन (value) अणु
-		हाल V4L2_MPEG_VIDEO_H264_ENTROPY_MODE_CAVLC:
-		शेष:
-			वापस HFI_H264_ENTROPY_CAVLC;
-		हाल V4L2_MPEG_VIDEO_H264_ENTROPY_MODE_CABAC:
-			वापस HFI_H264_ENTROPY_CABAC;
-		पूर्ण
-	हाल V4L2_CID_MPEG_VIDEO_H264_LOOP_FILTER_MODE:
-		चयन (value) अणु
-		हाल V4L2_MPEG_VIDEO_H264_LOOP_FILTER_MODE_ENABLED:
-		शेष:
-			वापस HFI_H264_DB_MODE_ALL_BOUNDARY;
-		हाल V4L2_MPEG_VIDEO_H264_LOOP_FILTER_MODE_DISABLED:
-			वापस HFI_H264_DB_MODE_DISABLE;
-		हाल V4L2_MPEG_VIDEO_H264_LOOP_FILTER_MODE_DISABLED_AT_SLICE_BOUNDARY:
-			वापस HFI_H264_DB_MODE_SKIP_SLICE_BOUNDARY;
-		पूर्ण
-	पूर्ण
+static int venc_v4l2_to_hfi(int id, int value)
+{
+	switch (id) {
+	case V4L2_CID_MPEG_VIDEO_H264_ENTROPY_MODE:
+		switch (value) {
+		case V4L2_MPEG_VIDEO_H264_ENTROPY_MODE_CAVLC:
+		default:
+			return HFI_H264_ENTROPY_CAVLC;
+		case V4L2_MPEG_VIDEO_H264_ENTROPY_MODE_CABAC:
+			return HFI_H264_ENTROPY_CABAC;
+		}
+	case V4L2_CID_MPEG_VIDEO_H264_LOOP_FILTER_MODE:
+		switch (value) {
+		case V4L2_MPEG_VIDEO_H264_LOOP_FILTER_MODE_ENABLED:
+		default:
+			return HFI_H264_DB_MODE_ALL_BOUNDARY;
+		case V4L2_MPEG_VIDEO_H264_LOOP_FILTER_MODE_DISABLED:
+			return HFI_H264_DB_MODE_DISABLE;
+		case V4L2_MPEG_VIDEO_H264_LOOP_FILTER_MODE_DISABLED_AT_SLICE_BOUNDARY:
+			return HFI_H264_DB_MODE_SKIP_SLICE_BOUNDARY;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-venc_querycap(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_capability *cap)
-अणु
-	strscpy(cap->driver, "qcom-venus", माप(cap->driver));
-	strscpy(cap->card, "Qualcomm Venus video encoder", माप(cap->card));
-	strscpy(cap->bus_info, "platform:qcom-venus", माप(cap->bus_info));
+static int
+venc_querycap(struct file *file, void *fh, struct v4l2_capability *cap)
+{
+	strscpy(cap->driver, "qcom-venus", sizeof(cap->driver));
+	strscpy(cap->card, "Qualcomm Venus video encoder", sizeof(cap->card));
+	strscpy(cap->bus_info, "platform:qcom-venus", sizeof(cap->bus_info));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक venc_क्रमागत_fmt(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_fmtdesc *f)
-अणु
-	काष्ठा venus_inst *inst = to_inst(file);
-	स्थिर काष्ठा venus_क्रमmat *fmt;
+static int venc_enum_fmt(struct file *file, void *fh, struct v4l2_fmtdesc *f)
+{
+	struct venus_inst *inst = to_inst(file);
+	const struct venus_format *fmt;
 
-	fmt = find_क्रमmat_by_index(inst, f->index, f->type);
+	fmt = find_format_by_index(inst, f->index, f->type);
 
-	स_रखो(f->reserved, 0, माप(f->reserved));
+	memset(f->reserved, 0, sizeof(f->reserved));
 
-	अगर (!fmt)
-		वापस -EINVAL;
+	if (!fmt)
+		return -EINVAL;
 
-	f->pixelक्रमmat = fmt->pixfmt;
+	f->pixelformat = fmt->pixfmt;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा venus_क्रमmat *
-venc_try_fmt_common(काष्ठा venus_inst *inst, काष्ठा v4l2_क्रमmat *f)
-अणु
-	काष्ठा v4l2_pix_क्रमmat_mplane *pixmp = &f->fmt.pix_mp;
-	काष्ठा v4l2_plane_pix_क्रमmat *pfmt = pixmp->plane_fmt;
-	स्थिर काष्ठा venus_क्रमmat *fmt;
+static const struct venus_format *
+venc_try_fmt_common(struct venus_inst *inst, struct v4l2_format *f)
+{
+	struct v4l2_pix_format_mplane *pixmp = &f->fmt.pix_mp;
+	struct v4l2_plane_pix_format *pfmt = pixmp->plane_fmt;
+	const struct venus_format *fmt;
 	u32 sizeimage;
 
-	स_रखो(pfmt[0].reserved, 0, माप(pfmt[0].reserved));
-	स_रखो(pixmp->reserved, 0, माप(pixmp->reserved));
+	memset(pfmt[0].reserved, 0, sizeof(pfmt[0].reserved));
+	memset(pixmp->reserved, 0, sizeof(pixmp->reserved));
 
-	fmt = find_क्रमmat(inst, pixmp->pixelक्रमmat, f->type);
-	अगर (!fmt) अणु
-		अगर (f->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE)
-			pixmp->pixelक्रमmat = V4L2_PIX_FMT_H264;
-		अन्यथा अगर (f->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE)
-			pixmp->pixelक्रमmat = V4L2_PIX_FMT_NV12;
-		अन्यथा
-			वापस शून्य;
-		fmt = find_क्रमmat(inst, pixmp->pixelक्रमmat, f->type);
-	पूर्ण
+	fmt = find_format(inst, pixmp->pixelformat, f->type);
+	if (!fmt) {
+		if (f->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE)
+			pixmp->pixelformat = V4L2_PIX_FMT_H264;
+		else if (f->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE)
+			pixmp->pixelformat = V4L2_PIX_FMT_NV12;
+		else
+			return NULL;
+		fmt = find_format(inst, pixmp->pixelformat, f->type);
+	}
 
 	pixmp->width = clamp(pixmp->width, frame_width_min(inst),
 			     frame_width_max(inst));
 	pixmp->height = clamp(pixmp->height, frame_height_min(inst),
 			      frame_height_max(inst));
 
-	अगर (f->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) अणु
+	if (f->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) {
 		pixmp->width = ALIGN(pixmp->width, 128);
 		pixmp->height = ALIGN(pixmp->height, 32);
-	पूर्ण
+	}
 
 	pixmp->width = ALIGN(pixmp->width, 2);
 	pixmp->height = ALIGN(pixmp->height, 2);
 
-	अगर (pixmp->field == V4L2_FIELD_ANY)
+	if (pixmp->field == V4L2_FIELD_ANY)
 		pixmp->field = V4L2_FIELD_NONE;
 	pixmp->num_planes = fmt->num_planes;
 	pixmp->flags = 0;
 
-	sizeimage = venus_helper_get_framesz(pixmp->pixelक्रमmat,
+	sizeimage = venus_helper_get_framesz(pixmp->pixelformat,
 					     pixmp->width,
 					     pixmp->height);
 	pfmt[0].sizeimage = max(ALIGN(pfmt[0].sizeimage, SZ_4K), sizeimage);
 
-	अगर (f->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE)
+	if (f->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE)
 		pfmt[0].bytesperline = ALIGN(pixmp->width, 128);
-	अन्यथा
+	else
 		pfmt[0].bytesperline = 0;
 
-	वापस fmt;
-पूर्ण
+	return fmt;
+}
 
-अटल पूर्णांक venc_try_fmt(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_क्रमmat *f)
-अणु
-	काष्ठा venus_inst *inst = to_inst(file);
+static int venc_try_fmt(struct file *file, void *fh, struct v4l2_format *f)
+{
+	struct venus_inst *inst = to_inst(file);
 
 	venc_try_fmt_common(inst, f);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक venc_s_fmt(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_क्रमmat *f)
-अणु
-	काष्ठा venus_inst *inst = to_inst(file);
-	काष्ठा v4l2_pix_क्रमmat_mplane *pixmp = &f->fmt.pix_mp;
-	काष्ठा v4l2_pix_क्रमmat_mplane orig_pixmp;
-	स्थिर काष्ठा venus_क्रमmat *fmt;
-	काष्ठा v4l2_क्रमmat क्रमmat;
+static int venc_s_fmt(struct file *file, void *fh, struct v4l2_format *f)
+{
+	struct venus_inst *inst = to_inst(file);
+	struct v4l2_pix_format_mplane *pixmp = &f->fmt.pix_mp;
+	struct v4l2_pix_format_mplane orig_pixmp;
+	const struct venus_format *fmt;
+	struct v4l2_format format;
 	u32 pixfmt_out = 0, pixfmt_cap = 0;
-	काष्ठा vb2_queue *q;
+	struct vb2_queue *q;
 
 	q = v4l2_m2m_get_vq(inst->m2m_ctx, f->type);
-	अगर (!q)
-		वापस -EINVAL;
+	if (!q)
+		return -EINVAL;
 
-	अगर (vb2_is_busy(q))
-		वापस -EBUSY;
+	if (vb2_is_busy(q))
+		return -EBUSY;
 
 	orig_pixmp = *pixmp;
 
 	fmt = venc_try_fmt_common(inst, f);
-	अगर (!fmt)
-		वापस -EINVAL;
+	if (!fmt)
+		return -EINVAL;
 
-	अगर (f->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) अणु
-		pixfmt_out = pixmp->pixelक्रमmat;
+	if (f->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) {
+		pixfmt_out = pixmp->pixelformat;
 		pixfmt_cap = inst->fmt_cap->pixfmt;
-	पूर्ण अन्यथा अगर (f->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE) अणु
-		pixfmt_cap = pixmp->pixelक्रमmat;
+	} else if (f->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE) {
+		pixfmt_cap = pixmp->pixelformat;
 		pixfmt_out = inst->fmt_out->pixfmt;
-	पूर्ण
+	}
 
-	स_रखो(&क्रमmat, 0, माप(क्रमmat));
+	memset(&format, 0, sizeof(format));
 
-	क्रमmat.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-	क्रमmat.fmt.pix_mp.pixelक्रमmat = pixfmt_out;
-	क्रमmat.fmt.pix_mp.width = orig_pixmp.width;
-	क्रमmat.fmt.pix_mp.height = orig_pixmp.height;
-	venc_try_fmt_common(inst, &क्रमmat);
+	format.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+	format.fmt.pix_mp.pixelformat = pixfmt_out;
+	format.fmt.pix_mp.width = orig_pixmp.width;
+	format.fmt.pix_mp.height = orig_pixmp.height;
+	venc_try_fmt_common(inst, &format);
 
-	अगर (f->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) अणु
-		inst->out_width = क्रमmat.fmt.pix_mp.width;
-		inst->out_height = क्रमmat.fmt.pix_mp.height;
+	if (f->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) {
+		inst->out_width = format.fmt.pix_mp.width;
+		inst->out_height = format.fmt.pix_mp.height;
 		inst->colorspace = pixmp->colorspace;
 		inst->ycbcr_enc = pixmp->ycbcr_enc;
 		inst->quantization = pixmp->quantization;
 		inst->xfer_func = pixmp->xfer_func;
-	पूर्ण
+	}
 
-	स_रखो(&क्रमmat, 0, माप(क्रमmat));
+	memset(&format, 0, sizeof(format));
 
-	क्रमmat.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
-	क्रमmat.fmt.pix_mp.pixelक्रमmat = pixfmt_cap;
-	क्रमmat.fmt.pix_mp.width = orig_pixmp.width;
-	क्रमmat.fmt.pix_mp.height = orig_pixmp.height;
-	venc_try_fmt_common(inst, &क्रमmat);
+	format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+	format.fmt.pix_mp.pixelformat = pixfmt_cap;
+	format.fmt.pix_mp.width = orig_pixmp.width;
+	format.fmt.pix_mp.height = orig_pixmp.height;
+	venc_try_fmt_common(inst, &format);
 
-	inst->width = क्रमmat.fmt.pix_mp.width;
-	inst->height = क्रमmat.fmt.pix_mp.height;
+	inst->width = format.fmt.pix_mp.width;
+	inst->height = format.fmt.pix_mp.height;
 
-	अगर (f->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE)
+	if (f->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE)
 		inst->fmt_out = fmt;
-	अन्यथा अगर (f->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE) अणु
+	else if (f->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE) {
 		inst->fmt_cap = fmt;
 		inst->output_buf_size = pixmp->plane_fmt[0].sizeimage;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक venc_g_fmt(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_क्रमmat *f)
-अणु
-	काष्ठा v4l2_pix_क्रमmat_mplane *pixmp = &f->fmt.pix_mp;
-	काष्ठा venus_inst *inst = to_inst(file);
-	स्थिर काष्ठा venus_क्रमmat *fmt;
+static int venc_g_fmt(struct file *file, void *fh, struct v4l2_format *f)
+{
+	struct v4l2_pix_format_mplane *pixmp = &f->fmt.pix_mp;
+	struct venus_inst *inst = to_inst(file);
+	const struct venus_format *fmt;
 
-	अगर (f->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE)
+	if (f->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE)
 		fmt = inst->fmt_cap;
-	अन्यथा अगर (f->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE)
+	else if (f->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE)
 		fmt = inst->fmt_out;
-	अन्यथा
-		वापस -EINVAL;
+	else
+		return -EINVAL;
 
-	pixmp->pixelक्रमmat = fmt->pixfmt;
+	pixmp->pixelformat = fmt->pixfmt;
 
-	अगर (f->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE) अणु
+	if (f->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE) {
 		pixmp->width = inst->width;
 		pixmp->height = inst->height;
 		pixmp->colorspace = inst->colorspace;
 		pixmp->ycbcr_enc = inst->ycbcr_enc;
 		pixmp->quantization = inst->quantization;
 		pixmp->xfer_func = inst->xfer_func;
-	पूर्ण अन्यथा अगर (f->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) अणु
+	} else if (f->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) {
 		pixmp->width = inst->out_width;
 		pixmp->height = inst->out_height;
-	पूर्ण
+	}
 
 	venc_try_fmt_common(inst, f);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-venc_g_selection(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_selection *s)
-अणु
-	काष्ठा venus_inst *inst = to_inst(file);
+static int
+venc_g_selection(struct file *file, void *fh, struct v4l2_selection *s)
+{
+	struct venus_inst *inst = to_inst(file);
 
-	अगर (s->type != V4L2_BUF_TYPE_VIDEO_OUTPUT)
-		वापस -EINVAL;
+	if (s->type != V4L2_BUF_TYPE_VIDEO_OUTPUT)
+		return -EINVAL;
 
-	चयन (s->target) अणु
-	हाल V4L2_SEL_TGT_CROP_DEFAULT:
-	हाल V4L2_SEL_TGT_CROP_BOUNDS:
+	switch (s->target) {
+	case V4L2_SEL_TGT_CROP_DEFAULT:
+	case V4L2_SEL_TGT_CROP_BOUNDS:
 		s->r.width = inst->out_width;
 		s->r.height = inst->out_height;
-		अवरोध;
-	हाल V4L2_SEL_TGT_CROP:
+		break;
+	case V4L2_SEL_TGT_CROP:
 		s->r.width = inst->width;
 		s->r.height = inst->height;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	s->r.top = 0;
 	s->r.left = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-venc_s_selection(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_selection *s)
-अणु
-	काष्ठा venus_inst *inst = to_inst(file);
+static int
+venc_s_selection(struct file *file, void *fh, struct v4l2_selection *s)
+{
+	struct venus_inst *inst = to_inst(file);
 
-	अगर (s->type != V4L2_BUF_TYPE_VIDEO_OUTPUT)
-		वापस -EINVAL;
+	if (s->type != V4L2_BUF_TYPE_VIDEO_OUTPUT)
+		return -EINVAL;
 
-	अगर (s->r.width > inst->out_width ||
+	if (s->r.width > inst->out_width ||
 	    s->r.height > inst->out_height)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	s->r.width = ALIGN(s->r.width, 2);
 	s->r.height = ALIGN(s->r.height, 2);
 
-	चयन (s->target) अणु
-	हाल V4L2_SEL_TGT_CROP:
+	switch (s->target) {
+	case V4L2_SEL_TGT_CROP:
 		s->r.top = 0;
 		s->r.left = 0;
 		inst->width = s->r.width;
 		inst->height = s->r.height;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक venc_s_parm(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_streamparm *a)
-अणु
-	काष्ठा venus_inst *inst = to_inst(file);
-	काष्ठा v4l2_outputparm *out = &a->parm.output;
-	काष्ठा v4l2_fract *समयperframe = &out->समयperframe;
+static int venc_s_parm(struct file *file, void *fh, struct v4l2_streamparm *a)
+{
+	struct venus_inst *inst = to_inst(file);
+	struct v4l2_outputparm *out = &a->parm.output;
+	struct v4l2_fract *timeperframe = &out->timeperframe;
 	u64 us_per_frame, fps;
 
-	अगर (a->type != V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE &&
+	if (a->type != V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE &&
 	    a->type != V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	स_रखो(out->reserved, 0, माप(out->reserved));
+	memset(out->reserved, 0, sizeof(out->reserved));
 
-	अगर (!समयperframe->denominator)
-		समयperframe->denominator = inst->समयperframe.denominator;
-	अगर (!समयperframe->numerator)
-		समयperframe->numerator = inst->समयperframe.numerator;
+	if (!timeperframe->denominator)
+		timeperframe->denominator = inst->timeperframe.denominator;
+	if (!timeperframe->numerator)
+		timeperframe->numerator = inst->timeperframe.numerator;
 
 	out->capability = V4L2_CAP_TIMEPERFRAME;
 
-	us_per_frame = समयperframe->numerator * (u64)USEC_PER_SEC;
-	करो_भाग(us_per_frame, समयperframe->denominator);
+	us_per_frame = timeperframe->numerator * (u64)USEC_PER_SEC;
+	do_div(us_per_frame, timeperframe->denominator);
 
-	अगर (!us_per_frame)
-		वापस -EINVAL;
+	if (!us_per_frame)
+		return -EINVAL;
 
 	fps = (u64)USEC_PER_SEC;
-	करो_भाग(fps, us_per_frame);
+	do_div(fps, us_per_frame);
 
-	inst->समयperframe = *समयperframe;
+	inst->timeperframe = *timeperframe;
 	inst->fps = fps;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक venc_g_parm(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_streamparm *a)
-अणु
-	काष्ठा venus_inst *inst = to_inst(file);
+static int venc_g_parm(struct file *file, void *fh, struct v4l2_streamparm *a)
+{
+	struct venus_inst *inst = to_inst(file);
 
-	अगर (a->type != V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE &&
+	if (a->type != V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE &&
 	    a->type != V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	a->parm.output.capability |= V4L2_CAP_TIMEPERFRAME;
-	a->parm.output.समयperframe = inst->समयperframe;
+	a->parm.output.timeperframe = inst->timeperframe;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक venc_क्रमागत_framesizes(काष्ठा file *file, व्योम *fh,
-				काष्ठा v4l2_frmsizeक्रमागत *fsize)
-अणु
-	काष्ठा venus_inst *inst = to_inst(file);
-	स्थिर काष्ठा venus_क्रमmat *fmt;
+static int venc_enum_framesizes(struct file *file, void *fh,
+				struct v4l2_frmsizeenum *fsize)
+{
+	struct venus_inst *inst = to_inst(file);
+	const struct venus_format *fmt;
 
 	fsize->type = V4L2_FRMSIZE_TYPE_STEPWISE;
 
-	fmt = find_क्रमmat(inst, fsize->pixel_क्रमmat,
+	fmt = find_format(inst, fsize->pixel_format,
 			  V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE);
-	अगर (!fmt) अणु
-		fmt = find_क्रमmat(inst, fsize->pixel_क्रमmat,
+	if (!fmt) {
+		fmt = find_format(inst, fsize->pixel_format,
 				  V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE);
-		अगर (!fmt)
-			वापस -EINVAL;
-	पूर्ण
+		if (!fmt)
+			return -EINVAL;
+	}
 
-	अगर (fsize->index)
-		वापस -EINVAL;
+	if (fsize->index)
+		return -EINVAL;
 
 	fsize->stepwise.min_width = frame_width_min(inst);
 	fsize->stepwise.max_width = frame_width_max(inst);
@@ -460,43 +459,43 @@ venc_s_selection(काष्ठा file *file, व्योम *fh, काष�
 	fsize->stepwise.max_height = frame_height_max(inst);
 	fsize->stepwise.step_height = frame_height_step(inst);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक venc_क्रमागत_frameपूर्णांकervals(काष्ठा file *file, व्योम *fh,
-				    काष्ठा v4l2_frmivalक्रमागत *fival)
-अणु
-	काष्ठा venus_inst *inst = to_inst(file);
-	स्थिर काष्ठा venus_क्रमmat *fmt;
-	अचिन्हित पूर्णांक framerate_factor = 1;
+static int venc_enum_frameintervals(struct file *file, void *fh,
+				    struct v4l2_frmivalenum *fival)
+{
+	struct venus_inst *inst = to_inst(file);
+	const struct venus_format *fmt;
+	unsigned int framerate_factor = 1;
 
 	fival->type = V4L2_FRMIVAL_TYPE_STEPWISE;
 
-	fmt = find_क्रमmat(inst, fival->pixel_क्रमmat,
+	fmt = find_format(inst, fival->pixel_format,
 			  V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE);
-	अगर (!fmt) अणु
-		fmt = find_क्रमmat(inst, fival->pixel_क्रमmat,
+	if (!fmt) {
+		fmt = find_format(inst, fival->pixel_format,
 				  V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE);
-		अगर (!fmt)
-			वापस -EINVAL;
-	पूर्ण
+		if (!fmt)
+			return -EINVAL;
+	}
 
-	अगर (fival->index)
-		वापस -EINVAL;
+	if (fival->index)
+		return -EINVAL;
 
-	अगर (!fival->width || !fival->height)
-		वापस -EINVAL;
+	if (!fival->width || !fival->height)
+		return -EINVAL;
 
-	अगर (fival->width > frame_width_max(inst) ||
+	if (fival->width > frame_width_max(inst) ||
 	    fival->width < frame_width_min(inst) ||
 	    fival->height > frame_height_max(inst) ||
 	    fival->height < frame_height_min(inst))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (IS_V1(inst->core)) अणु
+	if (IS_V1(inst->core)) {
 		/* framerate is reported in 1/65535 fps unit */
 		framerate_factor = (1 << 16);
-	पूर्ण
+	}
 
 	fival->stepwise.min.numerator = 1;
 	fival->stepwise.min.denominator = frate_max(inst) / framerate_factor;
@@ -505,13 +504,13 @@ venc_s_selection(काष्ठा file *file, व्योम *fh, काष�
 	fival->stepwise.step.numerator = 1;
 	fival->stepwise.step.denominator = frate_max(inst) / framerate_factor;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा v4l2_ioctl_ops venc_ioctl_ops = अणु
+static const struct v4l2_ioctl_ops venc_ioctl_ops = {
 	.vidioc_querycap = venc_querycap,
-	.vidioc_क्रमागत_fmt_vid_cap = venc_क्रमागत_fmt,
-	.vidioc_क्रमागत_fmt_vid_out = venc_क्रमागत_fmt,
+	.vidioc_enum_fmt_vid_cap = venc_enum_fmt,
+	.vidioc_enum_fmt_vid_out = venc_enum_fmt,
 	.vidioc_s_fmt_vid_cap_mplane = venc_s_fmt,
 	.vidioc_s_fmt_vid_out_mplane = venc_s_fmt,
 	.vidioc_g_fmt_vid_cap_mplane = venc_g_fmt,
@@ -531,52 +530,52 @@ venc_s_selection(काष्ठा file *file, व्योम *fh, काष�
 	.vidioc_streamoff = v4l2_m2m_ioctl_streamoff,
 	.vidioc_s_parm = venc_s_parm,
 	.vidioc_g_parm = venc_g_parm,
-	.vidioc_क्रमागत_framesizes = venc_क्रमागत_framesizes,
-	.vidioc_क्रमागत_frameपूर्णांकervals = venc_क्रमागत_frameपूर्णांकervals,
+	.vidioc_enum_framesizes = venc_enum_framesizes,
+	.vidioc_enum_frameintervals = venc_enum_frameintervals,
 	.vidioc_subscribe_event = v4l2_ctrl_subscribe_event,
 	.vidioc_unsubscribe_event = v4l2_event_unsubscribe,
-पूर्ण;
+};
 
-अटल पूर्णांक venc_set_properties(काष्ठा venus_inst *inst)
-अणु
-	काष्ठा venc_controls *ctr = &inst->controls.enc;
-	काष्ठा hfi_पूर्णांकra_period पूर्णांकra_period;
-	काष्ठा hfi_framerate frate;
-	काष्ठा hfi_bitrate brate;
-	काष्ठा hfi_idr_period idrp;
-	काष्ठा hfi_quantization quant;
-	काष्ठा hfi_quantization_range quant_range;
-	काष्ठा hfi_enable en;
-	काष्ठा hfi_ltr_mode ltr_mode;
+static int venc_set_properties(struct venus_inst *inst)
+{
+	struct venc_controls *ctr = &inst->controls.enc;
+	struct hfi_intra_period intra_period;
+	struct hfi_framerate frate;
+	struct hfi_bitrate brate;
+	struct hfi_idr_period idrp;
+	struct hfi_quantization quant;
+	struct hfi_quantization_range quant_range;
+	struct hfi_enable en;
+	struct hfi_ltr_mode ltr_mode;
 	u32 ptype, rate_control, bitrate;
 	u32 profile, level;
-	पूर्णांक ret;
+	int ret;
 
 	ret = venus_helper_set_work_mode(inst);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ptype = HFI_PROPERTY_CONFIG_FRAME_RATE;
 	frate.buffer_type = HFI_BUFFER_OUTPUT;
 	frate.framerate = inst->fps * (1 << 16);
 
 	ret = hfi_session_set_property(inst, ptype, &frate);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (inst->fmt_cap->pixfmt == V4L2_PIX_FMT_H264) अणु
-		काष्ठा hfi_h264_vui_timing_info info;
-		काष्ठा hfi_h264_entropy_control entropy;
-		काष्ठा hfi_h264_db_control deblock;
+	if (inst->fmt_cap->pixfmt == V4L2_PIX_FMT_H264) {
+		struct hfi_h264_vui_timing_info info;
+		struct hfi_h264_entropy_control entropy;
+		struct hfi_h264_db_control deblock;
 
 		ptype = HFI_PROPERTY_PARAM_VENC_H264_VUI_TIMING_INFO;
 		info.enable = 1;
 		info.fixed_framerate = 1;
-		info.समय_scale = NSEC_PER_SEC;
+		info.time_scale = NSEC_PER_SEC;
 
 		ret = hfi_session_set_property(inst, ptype, &info);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		ptype = HFI_PROPERTY_PARAM_VENC_H264_ENTROPY_CONTROL;
 		entropy.entropy_mode = venc_v4l2_to_hfi(
@@ -585,8 +584,8 @@ venc_s_selection(काष्ठा file *file, व्योम *fh, काष�
 		entropy.cabac_model = HFI_H264_CABAC_MODEL_0;
 
 		ret = hfi_session_set_property(inst, ptype, &entropy);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		ptype = HFI_PROPERTY_PARAM_VENC_H264_DEBLOCK_CONTROL;
 		deblock.mode = venc_v4l2_to_hfi(
@@ -596,12 +595,12 @@ venc_s_selection(काष्ठा file *file, व्योम *fh, काष�
 		deblock.slice_beta_offset = ctr->h264_loop_filter_beta;
 
 		ret = hfi_session_set_property(inst, ptype, &deblock);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	अगर (inst->fmt_cap->pixfmt == V4L2_PIX_FMT_H264 ||
-	    inst->fmt_cap->pixfmt == V4L2_PIX_FMT_HEVC) अणु
+	if (inst->fmt_cap->pixfmt == V4L2_PIX_FMT_H264 ||
+	    inst->fmt_cap->pixfmt == V4L2_PIX_FMT_HEVC) {
 		/* IDR periodicity, n:
 		 * n = 0 - only the first I-frame is IDR frame
 		 * n = 1 - all I-frames will be IDR frames
@@ -610,25 +609,25 @@ venc_s_selection(काष्ठा file *file, व्योम *fh, काष�
 		ptype = HFI_PROPERTY_CONFIG_VENC_IDR_PERIOD;
 		idrp.idr_period = 0;
 		ret = hfi_session_set_property(inst, ptype, &idrp);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	अगर (inst->fmt_cap->pixfmt == V4L2_PIX_FMT_HEVC) अणु
-		काष्ठा hfi_hdr10_pq_sei hdr10;
-		अचिन्हित पूर्णांक c;
+	if (inst->fmt_cap->pixfmt == V4L2_PIX_FMT_HEVC) {
+		struct hfi_hdr10_pq_sei hdr10;
+		unsigned int c;
 
 		ptype = HFI_PROPERTY_PARAM_VENC_HDR10_PQ_SEI;
 
-		क्रम (c = 0; c < 3; c++) अणु
+		for (c = 0; c < 3; c++) {
 			hdr10.mastering.display_primaries_x[c] =
 				ctr->mastering.display_primaries_x[c];
 			hdr10.mastering.display_primaries_y[c] =
 				ctr->mastering.display_primaries_y[c];
-		पूर्ण
+		}
 
-		hdr10.mastering.white_poपूर्णांक_x = ctr->mastering.white_poपूर्णांक_x;
-		hdr10.mastering.white_poपूर्णांक_y = ctr->mastering.white_poपूर्णांक_y;
+		hdr10.mastering.white_point_x = ctr->mastering.white_point_x;
+		hdr10.mastering.white_point_y = ctr->mastering.white_point_y;
 		hdr10.mastering.max_display_mastering_luminance =
 			ctr->mastering.max_display_mastering_luminance;
 		hdr10.mastering.min_display_mastering_luminance =
@@ -639,56 +638,56 @@ venc_s_selection(काष्ठा file *file, व्योम *fh, काष�
 			ctr->cll.max_pic_average_light_level;
 
 		ret = hfi_session_set_property(inst, ptype, &hdr10);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	अगर (ctr->num_b_frames) अणु
+	if (ctr->num_b_frames) {
 		u32 max_num_b_frames = NUM_B_FRAMES_MAX;
 
 		ptype = HFI_PROPERTY_PARAM_VENC_MAX_NUM_B_FRAMES;
 		ret = hfi_session_set_property(inst, ptype, &max_num_b_frames);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	ptype = HFI_PROPERTY_CONFIG_VENC_INTRA_PERIOD;
-	पूर्णांकra_period.pframes = ctr->num_p_frames;
-	पूर्णांकra_period.bframes = ctr->num_b_frames;
+	intra_period.pframes = ctr->num_p_frames;
+	intra_period.bframes = ctr->num_b_frames;
 
-	ret = hfi_session_set_property(inst, ptype, &पूर्णांकra_period);
-	अगर (ret)
-		वापस ret;
+	ret = hfi_session_set_property(inst, ptype, &intra_period);
+	if (ret)
+		return ret;
 
-	अगर (!ctr->rc_enable)
+	if (!ctr->rc_enable)
 		rate_control = HFI_RATE_CONTROL_OFF;
-	अन्यथा अगर (ctr->bitrate_mode == V4L2_MPEG_VIDEO_BITRATE_MODE_VBR)
+	else if (ctr->bitrate_mode == V4L2_MPEG_VIDEO_BITRATE_MODE_VBR)
 		rate_control = ctr->frame_skip_mode ? HFI_RATE_CONTROL_VBR_VFR :
 						      HFI_RATE_CONTROL_VBR_CFR;
-	अन्यथा अगर (ctr->bitrate_mode == V4L2_MPEG_VIDEO_BITRATE_MODE_CBR)
+	else if (ctr->bitrate_mode == V4L2_MPEG_VIDEO_BITRATE_MODE_CBR)
 		rate_control = ctr->frame_skip_mode ? HFI_RATE_CONTROL_CBR_VFR :
 						      HFI_RATE_CONTROL_CBR_CFR;
-	अन्यथा अगर (ctr->bitrate_mode == V4L2_MPEG_VIDEO_BITRATE_MODE_CQ)
+	else if (ctr->bitrate_mode == V4L2_MPEG_VIDEO_BITRATE_MODE_CQ)
 		rate_control = HFI_RATE_CONTROL_CQ;
 
 	ptype = HFI_PROPERTY_PARAM_VENC_RATE_CONTROL;
 	ret = hfi_session_set_property(inst, ptype, &rate_control);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (rate_control == HFI_RATE_CONTROL_CQ && ctr->स्थिर_quality) अणु
-		काष्ठा hfi_heic_frame_quality quality = अणुपूर्ण;
+	if (rate_control == HFI_RATE_CONTROL_CQ && ctr->const_quality) {
+		struct hfi_heic_frame_quality quality = {};
 
 		ptype = HFI_PROPERTY_CONFIG_HEIC_FRAME_QUALITY;
-		quality.frame_quality = ctr->स्थिर_quality;
+		quality.frame_quality = ctr->const_quality;
 		ret = hfi_session_set_property(inst, ptype, &quality);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	अगर (!ctr->bitrate)
+	if (!ctr->bitrate)
 		bitrate = 64000;
-	अन्यथा
+	else
 		bitrate = ctr->bitrate;
 
 	ptype = HFI_PROPERTY_CONFIG_VENC_TARGET_BITRATE;
@@ -696,25 +695,25 @@ venc_s_selection(काष्ठा file *file, व्योम *fh, काष�
 	brate.layer_id = 0;
 
 	ret = hfi_session_set_property(inst, ptype, &brate);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (inst->fmt_cap->pixfmt == V4L2_PIX_FMT_H264 ||
-	    inst->fmt_cap->pixfmt == V4L2_PIX_FMT_HEVC) अणु
+	if (inst->fmt_cap->pixfmt == V4L2_PIX_FMT_H264 ||
+	    inst->fmt_cap->pixfmt == V4L2_PIX_FMT_HEVC) {
 		ptype = HFI_PROPERTY_CONFIG_VENC_SYNC_FRAME_SEQUENCE_HEADER;
-		अगर (ctr->header_mode == V4L2_MPEG_VIDEO_HEADER_MODE_SEPARATE)
+		if (ctr->header_mode == V4L2_MPEG_VIDEO_HEADER_MODE_SEPARATE)
 			en.enable = 0;
-		अन्यथा
+		else
 			en.enable = 1;
 
 		ret = hfi_session_set_property(inst, ptype, &en);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	अगर (!ctr->bitrate_peak)
+	if (!ctr->bitrate_peak)
 		bitrate *= 2;
-	अन्यथा
+	else
 		bitrate = ctr->bitrate_peak;
 
 	ptype = HFI_PROPERTY_CONFIG_VENC_MAX_BITRATE;
@@ -722,190 +721,190 @@ venc_s_selection(काष्ठा file *file, व्योम *fh, काष�
 	brate.layer_id = 0;
 
 	ret = hfi_session_set_property(inst, ptype, &brate);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ptype = HFI_PROPERTY_PARAM_VENC_SESSION_QP;
-	अगर (inst->fmt_cap->pixfmt == V4L2_PIX_FMT_HEVC) अणु
+	if (inst->fmt_cap->pixfmt == V4L2_PIX_FMT_HEVC) {
 		quant.qp_i = ctr->hevc_i_qp;
 		quant.qp_p = ctr->hevc_p_qp;
 		quant.qp_b = ctr->hevc_b_qp;
-	पूर्ण अन्यथा अणु
+	} else {
 		quant.qp_i = ctr->h264_i_qp;
 		quant.qp_p = ctr->h264_p_qp;
 		quant.qp_b = ctr->h264_b_qp;
-	पूर्ण
+	}
 	quant.layer_id = 0;
 	ret = hfi_session_set_property(inst, ptype, &quant);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ptype = HFI_PROPERTY_PARAM_VENC_SESSION_QP_RANGE;
-	अगर (inst->fmt_cap->pixfmt == V4L2_PIX_FMT_HEVC) अणु
+	if (inst->fmt_cap->pixfmt == V4L2_PIX_FMT_HEVC) {
 		quant_range.min_qp = ctr->hevc_min_qp;
 		quant_range.max_qp = ctr->hevc_max_qp;
-	पूर्ण अन्यथा अणु
+	} else {
 		quant_range.min_qp = ctr->h264_min_qp;
 		quant_range.max_qp = ctr->h264_max_qp;
-	पूर्ण
+	}
 	quant_range.layer_id = 0;
 	ret = hfi_session_set_property(inst, ptype, &quant_range);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ptype = HFI_PROPERTY_PARAM_VENC_LTRMODE;
 	ltr_mode.ltr_count = ctr->ltr_count;
 	ltr_mode.ltr_mode = HFI_LTR_MODE_MANUAL;
 	ltr_mode.trust_mode = 1;
 	ret = hfi_session_set_property(inst, ptype, &ltr_mode);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	चयन (inst->hfi_codec) अणु
-	हाल HFI_VIDEO_CODEC_H264:
+	switch (inst->hfi_codec) {
+	case HFI_VIDEO_CODEC_H264:
 		profile = ctr->profile.h264;
 		level = ctr->level.h264;
-		अवरोध;
-	हाल HFI_VIDEO_CODEC_MPEG4:
+		break;
+	case HFI_VIDEO_CODEC_MPEG4:
 		profile = ctr->profile.mpeg4;
 		level = ctr->level.mpeg4;
-		अवरोध;
-	हाल HFI_VIDEO_CODEC_VP8:
+		break;
+	case HFI_VIDEO_CODEC_VP8:
 		profile = ctr->profile.vp8;
 		level = 0;
-		अवरोध;
-	हाल HFI_VIDEO_CODEC_VP9:
+		break;
+	case HFI_VIDEO_CODEC_VP9:
 		profile = ctr->profile.vp9;
 		level = ctr->level.vp9;
-		अवरोध;
-	हाल HFI_VIDEO_CODEC_HEVC:
+		break;
+	case HFI_VIDEO_CODEC_HEVC:
 		profile = ctr->profile.hevc;
 		level = ctr->level.hevc;
-		अवरोध;
-	हाल HFI_VIDEO_CODEC_MPEG2:
-	शेष:
+		break;
+	case HFI_VIDEO_CODEC_MPEG2:
+	default:
 		profile = 0;
 		level = 0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	ret = venus_helper_set_profile_level(inst, profile, level);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (inst->fmt_cap->pixfmt == V4L2_PIX_FMT_H264 ||
-	    inst->fmt_cap->pixfmt == V4L2_PIX_FMT_HEVC) अणु
-		काष्ठा hfi_enable en = अणुपूर्ण;
+	if (inst->fmt_cap->pixfmt == V4L2_PIX_FMT_H264 ||
+	    inst->fmt_cap->pixfmt == V4L2_PIX_FMT_HEVC) {
+		struct hfi_enable en = {};
 
 		ptype = HFI_PROPERTY_PARAM_VENC_H264_GENERATE_AUDNAL;
 
-		अगर (ctr->aud_enable)
+		if (ctr->aud_enable)
 			en.enable = 1;
 
 		ret = hfi_session_set_property(inst, ptype, &en);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक venc_init_session(काष्ठा venus_inst *inst)
-अणु
-	पूर्णांक ret;
+static int venc_init_session(struct venus_inst *inst)
+{
+	int ret;
 
 	ret = venus_helper_session_init(inst);
-	अगर (ret == -EALREADY)
-		वापस 0;
-	अन्यथा अगर (ret)
-		वापस ret;
+	if (ret == -EALREADY)
+		return 0;
+	else if (ret)
+		return ret;
 
 	ret = venus_helper_set_stride(inst, inst->out_width,
 				      inst->out_height);
-	अगर (ret)
-		जाओ deinit;
+	if (ret)
+		goto deinit;
 
 	ret = venus_helper_set_input_resolution(inst, inst->width,
 						inst->height);
-	अगर (ret)
-		जाओ deinit;
+	if (ret)
+		goto deinit;
 
 	ret = venus_helper_set_output_resolution(inst, inst->width,
 						 inst->height,
 						 HFI_BUFFER_OUTPUT);
-	अगर (ret)
-		जाओ deinit;
+	if (ret)
+		goto deinit;
 
-	ret = venus_helper_set_color_क्रमmat(inst, inst->fmt_out->pixfmt);
-	अगर (ret)
-		जाओ deinit;
+	ret = venus_helper_set_color_format(inst, inst->fmt_out->pixfmt);
+	if (ret)
+		goto deinit;
 
 	ret = venc_set_properties(inst);
-	अगर (ret)
-		जाओ deinit;
+	if (ret)
+		goto deinit;
 
-	वापस 0;
+	return 0;
 deinit:
 	hfi_session_deinit(inst);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक venc_out_num_buffers(काष्ठा venus_inst *inst, अचिन्हित पूर्णांक *num)
-अणु
-	काष्ठा hfi_buffer_requirements bufreq;
-	पूर्णांक ret;
+static int venc_out_num_buffers(struct venus_inst *inst, unsigned int *num)
+{
+	struct hfi_buffer_requirements bufreq;
+	int ret;
 
 	ret = venus_helper_get_bufreq(inst, HFI_BUFFER_INPUT, &bufreq);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	*num = bufreq.count_actual;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक venc_queue_setup(काष्ठा vb2_queue *q,
-			    अचिन्हित पूर्णांक *num_buffers, अचिन्हित पूर्णांक *num_planes,
-			    अचिन्हित पूर्णांक sizes[], काष्ठा device *alloc_devs[])
-अणु
-	काष्ठा venus_inst *inst = vb2_get_drv_priv(q);
-	अचिन्हित पूर्णांक num, min = 4;
-	पूर्णांक ret;
+static int venc_queue_setup(struct vb2_queue *q,
+			    unsigned int *num_buffers, unsigned int *num_planes,
+			    unsigned int sizes[], struct device *alloc_devs[])
+{
+	struct venus_inst *inst = vb2_get_drv_priv(q);
+	unsigned int num, min = 4;
+	int ret;
 
-	अगर (*num_planes) अणु
-		अगर (q->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE &&
+	if (*num_planes) {
+		if (q->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE &&
 		    *num_planes != inst->fmt_out->num_planes)
-			वापस -EINVAL;
+			return -EINVAL;
 
-		अगर (q->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE &&
+		if (q->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE &&
 		    *num_planes != inst->fmt_cap->num_planes)
-			वापस -EINVAL;
+			return -EINVAL;
 
-		अगर (q->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE &&
+		if (q->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE &&
 		    sizes[0] < inst->input_buf_size)
-			वापस -EINVAL;
+			return -EINVAL;
 
-		अगर (q->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE &&
+		if (q->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE &&
 		    sizes[0] < inst->output_buf_size)
-			वापस -EINVAL;
+			return -EINVAL;
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	mutex_lock(&inst->lock);
 	ret = venc_init_session(inst);
 	mutex_unlock(&inst->lock);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	चयन (q->type) अणु
-	हाल V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
+	switch (q->type) {
+	case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
 		*num_planes = inst->fmt_out->num_planes;
 
 		ret = venc_out_num_buffers(inst, &num);
-		अगर (ret)
-			अवरोध;
+		if (ret)
+			break;
 
 		num = max(num, min);
 		*num_buffers = max(*num_buffers, num);
@@ -915,8 +914,8 @@ deinit:
 						    inst->out_width,
 						    inst->out_height);
 		inst->input_buf_size = sizes[0];
-		अवरोध;
-	हाल V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
+		break;
+	case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
 		*num_planes = inst->fmt_cap->num_planes;
 		*num_buffers = max(*num_buffers, min);
 		inst->num_output_bufs = *num_buffers;
@@ -925,102 +924,102 @@ deinit:
 						    inst->height);
 		sizes[0] = max(sizes[0], inst->output_buf_size);
 		inst->output_buf_size = sizes[0];
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक venc_buf_init(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा venus_inst *inst = vb2_get_drv_priv(vb->vb2_queue);
+static int venc_buf_init(struct vb2_buffer *vb)
+{
+	struct venus_inst *inst = vb2_get_drv_priv(vb->vb2_queue);
 
 	inst->buf_count++;
 
-	वापस venus_helper_vb2_buf_init(vb);
-पूर्ण
+	return venus_helper_vb2_buf_init(vb);
+}
 
-अटल व्योम venc_release_session(काष्ठा venus_inst *inst)
-अणु
-	पूर्णांक ret;
+static void venc_release_session(struct venus_inst *inst)
+{
+	int ret;
 
 	mutex_lock(&inst->lock);
 
 	ret = hfi_session_deinit(inst);
-	अगर (ret || inst->session_error)
-		hfi_session_पात(inst);
+	if (ret || inst->session_error)
+		hfi_session_abort(inst);
 
 	mutex_unlock(&inst->lock);
 
 	venus_pm_load_scale(inst);
-	INIT_LIST_HEAD(&inst->रेजिस्टरedbufs);
+	INIT_LIST_HEAD(&inst->registeredbufs);
 	venus_pm_release_core(inst);
-पूर्ण
+}
 
-अटल व्योम venc_buf_cleanup(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा venus_inst *inst = vb2_get_drv_priv(vb->vb2_queue);
-	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	काष्ठा venus_buffer *buf = to_venus_buffer(vbuf);
+static void venc_buf_cleanup(struct vb2_buffer *vb)
+{
+	struct venus_inst *inst = vb2_get_drv_priv(vb->vb2_queue);
+	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	struct venus_buffer *buf = to_venus_buffer(vbuf);
 
 	mutex_lock(&inst->lock);
-	अगर (vb->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE)
-		अगर (!list_empty(&inst->रेजिस्टरedbufs))
+	if (vb->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE)
+		if (!list_empty(&inst->registeredbufs))
 			list_del_init(&buf->reg_list);
 	mutex_unlock(&inst->lock);
 
 	inst->buf_count--;
-	अगर (!inst->buf_count)
+	if (!inst->buf_count)
 		venc_release_session(inst);
-पूर्ण
+}
 
-अटल पूर्णांक venc_verअगरy_conf(काष्ठा venus_inst *inst)
-अणु
-	क्रमागत hfi_version ver = inst->core->res->hfi_version;
-	काष्ठा hfi_buffer_requirements bufreq;
-	पूर्णांक ret;
+static int venc_verify_conf(struct venus_inst *inst)
+{
+	enum hfi_version ver = inst->core->res->hfi_version;
+	struct hfi_buffer_requirements bufreq;
+	int ret;
 
-	अगर (!inst->num_input_bufs || !inst->num_output_bufs)
-		वापस -EINVAL;
+	if (!inst->num_input_bufs || !inst->num_output_bufs)
+		return -EINVAL;
 
 	ret = venus_helper_get_bufreq(inst, HFI_BUFFER_OUTPUT, &bufreq);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (inst->num_output_bufs < bufreq.count_actual ||
+	if (inst->num_output_bufs < bufreq.count_actual ||
 	    inst->num_output_bufs < HFI_BUFREQ_COUNT_MIN(&bufreq, ver))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	ret = venus_helper_get_bufreq(inst, HFI_BUFFER_INPUT, &bufreq);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (inst->num_input_bufs < bufreq.count_actual ||
+	if (inst->num_input_bufs < bufreq.count_actual ||
 	    inst->num_input_bufs < HFI_BUFREQ_COUNT_MIN(&bufreq, ver))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक venc_start_streaming(काष्ठा vb2_queue *q, अचिन्हित पूर्णांक count)
-अणु
-	काष्ठा venus_inst *inst = vb2_get_drv_priv(q);
-	पूर्णांक ret;
+static int venc_start_streaming(struct vb2_queue *q, unsigned int count)
+{
+	struct venus_inst *inst = vb2_get_drv_priv(q);
+	int ret;
 
 	mutex_lock(&inst->lock);
 
-	अगर (q->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE)
+	if (q->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE)
 		inst->streamon_out = 1;
-	अन्यथा
+	else
 		inst->streamon_cap = 1;
 
-	अगर (!(inst->streamon_out & inst->streamon_cap)) अणु
+	if (!(inst->streamon_out & inst->streamon_cap)) {
 		mutex_unlock(&inst->lock);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	venus_helper_init_instance(inst);
 
@@ -1028,50 +1027,50 @@ deinit:
 	inst->sequence_out = 0;
 
 	ret = venus_pm_acquire_core(inst);
-	अगर (ret)
-		जाओ error;
+	if (ret)
+		goto error;
 
 	ret = venc_set_properties(inst);
-	अगर (ret)
-		जाओ error;
+	if (ret)
+		goto error;
 
-	ret = venc_verअगरy_conf(inst);
-	अगर (ret)
-		जाओ error;
+	ret = venc_verify_conf(inst);
+	if (ret)
+		goto error;
 
 	ret = venus_helper_set_num_bufs(inst, inst->num_input_bufs,
 					inst->num_output_bufs, 0);
-	अगर (ret)
-		जाओ error;
+	if (ret)
+		goto error;
 
 	ret = venus_helper_vb2_start_streaming(inst);
-	अगर (ret)
-		जाओ error;
+	if (ret)
+		goto error;
 
 	mutex_unlock(&inst->lock);
 
-	वापस 0;
+	return 0;
 
 error:
-	venus_helper_buffers_करोne(inst, q->type, VB2_BUF_STATE_QUEUED);
-	अगर (q->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE)
+	venus_helper_buffers_done(inst, q->type, VB2_BUF_STATE_QUEUED);
+	if (q->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE)
 		inst->streamon_out = 0;
-	अन्यथा
+	else
 		inst->streamon_cap = 0;
 	mutex_unlock(&inst->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम venc_vb2_buf_queue(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा venus_inst *inst = vb2_get_drv_priv(vb->vb2_queue);
+static void venc_vb2_buf_queue(struct vb2_buffer *vb)
+{
+	struct venus_inst *inst = vb2_get_drv_priv(vb->vb2_queue);
 
 	mutex_lock(&inst->lock);
 	venus_helper_vb2_buf_queue(vb);
 	mutex_unlock(&inst->lock);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा vb2_ops venc_vb2_ops = अणु
+static const struct vb2_ops venc_vb2_ops = {
 	.queue_setup = venc_queue_setup,
 	.buf_init = venc_buf_init,
 	.buf_cleanup = venc_buf_cleanup,
@@ -1079,123 +1078,123 @@ error:
 	.start_streaming = venc_start_streaming,
 	.stop_streaming = venus_helper_vb2_stop_streaming,
 	.buf_queue = venc_vb2_buf_queue,
-पूर्ण;
+};
 
-अटल व्योम venc_buf_करोne(काष्ठा venus_inst *inst, अचिन्हित पूर्णांक buf_type,
+static void venc_buf_done(struct venus_inst *inst, unsigned int buf_type,
 			  u32 tag, u32 bytesused, u32 data_offset, u32 flags,
-			  u32 hfi_flags, u64 बारtamp_us)
-अणु
-	काष्ठा vb2_v4l2_buffer *vbuf;
-	काष्ठा vb2_buffer *vb;
-	अचिन्हित पूर्णांक type;
+			  u32 hfi_flags, u64 timestamp_us)
+{
+	struct vb2_v4l2_buffer *vbuf;
+	struct vb2_buffer *vb;
+	unsigned int type;
 
-	अगर (buf_type == HFI_BUFFER_INPUT)
+	if (buf_type == HFI_BUFFER_INPUT)
 		type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-	अन्यथा
+	else
 		type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
 
 	vbuf = venus_helper_find_buf(inst, type, tag);
-	अगर (!vbuf)
-		वापस;
+	if (!vbuf)
+		return;
 
 	vbuf->flags = flags;
 
-	अगर (type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE) अणु
+	if (type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE) {
 		vb = &vbuf->vb2_buf;
 		vb2_set_plane_payload(vb, 0, bytesused + data_offset);
 		vb->planes[0].data_offset = data_offset;
-		vb->बारtamp = बारtamp_us * NSEC_PER_USEC;
+		vb->timestamp = timestamp_us * NSEC_PER_USEC;
 		vbuf->sequence = inst->sequence_cap++;
-	पूर्ण अन्यथा अणु
+	} else {
 		vbuf->sequence = inst->sequence_out++;
-	पूर्ण
+	}
 
-	v4l2_m2m_buf_करोne(vbuf, VB2_BUF_STATE_DONE);
-पूर्ण
+	v4l2_m2m_buf_done(vbuf, VB2_BUF_STATE_DONE);
+}
 
-अटल व्योम venc_event_notअगरy(काष्ठा venus_inst *inst, u32 event,
-			      काष्ठा hfi_event_data *data)
-अणु
-	काष्ठा device *dev = inst->core->dev_enc;
+static void venc_event_notify(struct venus_inst *inst, u32 event,
+			      struct hfi_event_data *data)
+{
+	struct device *dev = inst->core->dev_enc;
 
-	अगर (event == EVT_SESSION_ERROR) अणु
+	if (event == EVT_SESSION_ERROR) {
 		inst->session_error = true;
 		dev_err(dev, "enc: event session error %x\n", inst->error);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल स्थिर काष्ठा hfi_inst_ops venc_hfi_ops = अणु
-	.buf_करोne = venc_buf_करोne,
-	.event_notअगरy = venc_event_notअगरy,
-पूर्ण;
+static const struct hfi_inst_ops venc_hfi_ops = {
+	.buf_done = venc_buf_done,
+	.event_notify = venc_event_notify,
+};
 
-अटल स्थिर काष्ठा v4l2_m2m_ops venc_m2m_ops = अणु
+static const struct v4l2_m2m_ops venc_m2m_ops = {
 	.device_run = venus_helper_m2m_device_run,
-	.job_पात = venus_helper_m2m_job_पात,
-पूर्ण;
+	.job_abort = venus_helper_m2m_job_abort,
+};
 
-अटल पूर्णांक m2m_queue_init(व्योम *priv, काष्ठा vb2_queue *src_vq,
-			  काष्ठा vb2_queue *dst_vq)
-अणु
-	काष्ठा venus_inst *inst = priv;
-	पूर्णांक ret;
+static int m2m_queue_init(void *priv, struct vb2_queue *src_vq,
+			  struct vb2_queue *dst_vq)
+{
+	struct venus_inst *inst = priv;
+	int ret;
 
 	src_vq->type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
 	src_vq->io_modes = VB2_MMAP | VB2_USERPTR | VB2_DMABUF;
-	src_vq->बारtamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
+	src_vq->timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
 	src_vq->ops = &venc_vb2_ops;
 	src_vq->mem_ops = &vb2_dma_contig_memops;
 	src_vq->drv_priv = inst;
-	src_vq->buf_काष्ठा_size = माप(काष्ठा venus_buffer);
+	src_vq->buf_struct_size = sizeof(struct venus_buffer);
 	src_vq->allow_zero_bytesused = 1;
 	src_vq->min_buffers_needed = 1;
 	src_vq->dev = inst->core->dev;
-	अगर (inst->core->res->hfi_version == HFI_VERSION_1XX)
+	if (inst->core->res->hfi_version == HFI_VERSION_1XX)
 		src_vq->bidirectional = 1;
 	ret = vb2_queue_init(src_vq);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	dst_vq->type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
 	dst_vq->io_modes = VB2_MMAP | VB2_USERPTR | VB2_DMABUF;
-	dst_vq->बारtamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
+	dst_vq->timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
 	dst_vq->ops = &venc_vb2_ops;
 	dst_vq->mem_ops = &vb2_dma_contig_memops;
 	dst_vq->drv_priv = inst;
-	dst_vq->buf_काष्ठा_size = माप(काष्ठा venus_buffer);
+	dst_vq->buf_struct_size = sizeof(struct venus_buffer);
 	dst_vq->allow_zero_bytesused = 1;
 	dst_vq->min_buffers_needed = 1;
 	dst_vq->dev = inst->core->dev;
-	वापस vb2_queue_init(dst_vq);
-पूर्ण
+	return vb2_queue_init(dst_vq);
+}
 
-अटल व्योम venc_inst_init(काष्ठा venus_inst *inst)
-अणु
-	inst->fmt_cap = &venc_क्रमmats[3];
-	inst->fmt_out = &venc_क्रमmats[0];
+static void venc_inst_init(struct venus_inst *inst)
+{
+	inst->fmt_cap = &venc_formats[3];
+	inst->fmt_out = &venc_formats[0];
 	inst->width = 1280;
 	inst->height = ALIGN(720, 32);
 	inst->out_width = 1280;
 	inst->out_height = 720;
 	inst->fps = 15;
-	inst->समयperframe.numerator = 1;
-	inst->समयperframe.denominator = 15;
+	inst->timeperframe.numerator = 1;
+	inst->timeperframe.denominator = 15;
 	inst->hfi_codec = HFI_VIDEO_CODEC_H264;
-पूर्ण
+}
 
-अटल पूर्णांक venc_खोलो(काष्ठा file *file)
-अणु
-	काष्ठा venus_core *core = video_drvdata(file);
-	काष्ठा venus_inst *inst;
-	पूर्णांक ret;
+static int venc_open(struct file *file)
+{
+	struct venus_core *core = video_drvdata(file);
+	struct venus_inst *inst;
+	int ret;
 
-	inst = kzalloc(माप(*inst), GFP_KERNEL);
-	अगर (!inst)
-		वापस -ENOMEM;
+	inst = kzalloc(sizeof(*inst), GFP_KERNEL);
+	if (!inst)
+		return -ENOMEM;
 
 	INIT_LIST_HEAD(&inst->dpbbufs);
-	INIT_LIST_HEAD(&inst->रेजिस्टरedbufs);
-	INIT_LIST_HEAD(&inst->पूर्णांकernalbufs);
+	INIT_LIST_HEAD(&inst->registeredbufs);
+	INIT_LIST_HEAD(&inst->internalbufs);
 	INIT_LIST_HEAD(&inst->list);
 	mutex_init(&inst->lock);
 
@@ -1206,44 +1205,44 @@ error:
 
 	venus_helper_init_instance(inst);
 
-	ret = pm_runसमय_get_sync(core->dev_enc);
-	अगर (ret < 0)
-		जाओ err_put_sync;
+	ret = pm_runtime_get_sync(core->dev_enc);
+	if (ret < 0)
+		goto err_put_sync;
 
 	ret = venc_ctrl_init(inst);
-	अगर (ret)
-		जाओ err_put_sync;
+	if (ret)
+		goto err_put_sync;
 
 	ret = hfi_session_create(inst, &venc_hfi_ops);
-	अगर (ret)
-		जाओ err_ctrl_deinit;
+	if (ret)
+		goto err_ctrl_deinit;
 
 	venc_inst_init(inst);
 
 	/*
-	 * create m2m device क्रम every instance, the m2m context scheduling
-	 * is made by firmware side so we करो not need to care about.
+	 * create m2m device for every instance, the m2m context scheduling
+	 * is made by firmware side so we do not need to care about.
 	 */
 	inst->m2m_dev = v4l2_m2m_init(&venc_m2m_ops);
-	अगर (IS_ERR(inst->m2m_dev)) अणु
+	if (IS_ERR(inst->m2m_dev)) {
 		ret = PTR_ERR(inst->m2m_dev);
-		जाओ err_session_destroy;
-	पूर्ण
+		goto err_session_destroy;
+	}
 
 	inst->m2m_ctx = v4l2_m2m_ctx_init(inst->m2m_dev, inst, m2m_queue_init);
-	अगर (IS_ERR(inst->m2m_ctx)) अणु
+	if (IS_ERR(inst->m2m_ctx)) {
 		ret = PTR_ERR(inst->m2m_ctx);
-		जाओ err_m2m_release;
-	पूर्ण
+		goto err_m2m_release;
+	}
 
 	v4l2_fh_init(&inst->fh, core->vdev_enc);
 
 	inst->fh.ctrl_handler = &inst->ctrl_handler;
 	v4l2_fh_add(&inst->fh);
 	inst->fh.m2m_ctx = inst->m2m_ctx;
-	file->निजी_data = &inst->fh;
+	file->private_data = &inst->fh;
 
-	वापस 0;
+	return 0;
 
 err_m2m_release:
 	v4l2_m2m_release(inst->m2m_dev);
@@ -1252,14 +1251,14 @@ err_session_destroy:
 err_ctrl_deinit:
 	venc_ctrl_deinit(inst);
 err_put_sync:
-	pm_runसमय_put_sync(core->dev_enc);
-	kमुक्त(inst);
-	वापस ret;
-पूर्ण
+	pm_runtime_put_sync(core->dev_enc);
+	kfree(inst);
+	return ret;
+}
 
-अटल पूर्णांक venc_बंद(काष्ठा file *file)
-अणु
-	काष्ठा venus_inst *inst = to_inst(file);
+static int venc_close(struct file *file)
+{
+	struct venus_inst *inst = to_inst(file);
 
 	v4l2_m2m_ctx_release(inst->m2m_ctx);
 	v4l2_m2m_release(inst->m2m_dev);
@@ -1267,133 +1266,133 @@ err_put_sync:
 	hfi_session_destroy(inst);
 	mutex_destroy(&inst->lock);
 	v4l2_fh_del(&inst->fh);
-	v4l2_fh_निकास(&inst->fh);
+	v4l2_fh_exit(&inst->fh);
 
-	pm_runसमय_put_sync(inst->core->dev_enc);
+	pm_runtime_put_sync(inst->core->dev_enc);
 
-	kमुक्त(inst);
-	वापस 0;
-पूर्ण
+	kfree(inst);
+	return 0;
+}
 
-अटल स्थिर काष्ठा v4l2_file_operations venc_fops = अणु
+static const struct v4l2_file_operations venc_fops = {
 	.owner = THIS_MODULE,
-	.खोलो = venc_खोलो,
-	.release = venc_बंद,
+	.open = venc_open,
+	.release = venc_close,
 	.unlocked_ioctl = video_ioctl2,
 	.poll = v4l2_m2m_fop_poll,
 	.mmap = v4l2_m2m_fop_mmap,
-पूर्ण;
+};
 
-अटल पूर्णांक venc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा video_device *vdev;
-	काष्ठा venus_core *core;
-	पूर्णांक ret;
+static int venc_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct video_device *vdev;
+	struct venus_core *core;
+	int ret;
 
-	अगर (!dev->parent)
-		वापस -EPROBE_DEFER;
+	if (!dev->parent)
+		return -EPROBE_DEFER;
 
 	core = dev_get_drvdata(dev->parent);
-	अगर (!core)
-		वापस -EPROBE_DEFER;
+	if (!core)
+		return -EPROBE_DEFER;
 
-	platक्रमm_set_drvdata(pdev, core);
+	platform_set_drvdata(pdev, core);
 
-	अगर (core->pm_ops->venc_get) अणु
+	if (core->pm_ops->venc_get) {
 		ret = core->pm_ops->venc_get(dev);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	vdev = video_device_alloc();
-	अगर (!vdev)
-		वापस -ENOMEM;
+	if (!vdev)
+		return -ENOMEM;
 
-	strscpy(vdev->name, "qcom-venus-encoder", माप(vdev->name));
+	strscpy(vdev->name, "qcom-venus-encoder", sizeof(vdev->name));
 	vdev->release = video_device_release;
 	vdev->fops = &venc_fops;
 	vdev->ioctl_ops = &venc_ioctl_ops;
-	vdev->vfl_dir = VFL_सूची_M2M;
+	vdev->vfl_dir = VFL_DIR_M2M;
 	vdev->v4l2_dev = &core->v4l2_dev;
 	vdev->device_caps = V4L2_CAP_VIDEO_M2M_MPLANE | V4L2_CAP_STREAMING;
 
-	ret = video_रेजिस्टर_device(vdev, VFL_TYPE_VIDEO, -1);
-	अगर (ret)
-		जाओ err_vdev_release;
+	ret = video_register_device(vdev, VFL_TYPE_VIDEO, -1);
+	if (ret)
+		goto err_vdev_release;
 
 	core->vdev_enc = vdev;
 	core->dev_enc = dev;
 
 	video_set_drvdata(vdev, core);
-	pm_runसमय_enable(dev);
+	pm_runtime_enable(dev);
 
-	वापस 0;
+	return 0;
 
 err_vdev_release:
 	video_device_release(vdev);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक venc_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा venus_core *core = dev_get_drvdata(pdev->dev.parent);
+static int venc_remove(struct platform_device *pdev)
+{
+	struct venus_core *core = dev_get_drvdata(pdev->dev.parent);
 
-	video_unरेजिस्टर_device(core->vdev_enc);
-	pm_runसमय_disable(core->dev_enc);
+	video_unregister_device(core->vdev_enc);
+	pm_runtime_disable(core->dev_enc);
 
-	अगर (core->pm_ops->venc_put)
+	if (core->pm_ops->venc_put)
 		core->pm_ops->venc_put(core->dev_enc);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल __maybe_unused पूर्णांक venc_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा venus_core *core = dev_get_drvdata(dev);
-	स्थिर काष्ठा venus_pm_ops *pm_ops = core->pm_ops;
-	पूर्णांक ret = 0;
+static __maybe_unused int venc_runtime_suspend(struct device *dev)
+{
+	struct venus_core *core = dev_get_drvdata(dev);
+	const struct venus_pm_ops *pm_ops = core->pm_ops;
+	int ret = 0;
 
-	अगर (pm_ops->venc_घातer)
-		ret = pm_ops->venc_घातer(dev, POWER_OFF);
+	if (pm_ops->venc_power)
+		ret = pm_ops->venc_power(dev, POWER_OFF);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल __maybe_unused पूर्णांक venc_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा venus_core *core = dev_get_drvdata(dev);
-	स्थिर काष्ठा venus_pm_ops *pm_ops = core->pm_ops;
-	पूर्णांक ret = 0;
+static __maybe_unused int venc_runtime_resume(struct device *dev)
+{
+	struct venus_core *core = dev_get_drvdata(dev);
+	const struct venus_pm_ops *pm_ops = core->pm_ops;
+	int ret = 0;
 
-	अगर (pm_ops->venc_घातer)
-		ret = pm_ops->venc_घातer(dev, POWER_ON);
+	if (pm_ops->venc_power)
+		ret = pm_ops->venc_power(dev, POWER_ON);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops venc_pm_ops = अणु
-	SET_SYSTEM_SLEEP_PM_OPS(pm_runसमय_क्रमce_suspend,
-				pm_runसमय_क्रमce_resume)
-	SET_RUNTIME_PM_OPS(venc_runसमय_suspend, venc_runसमय_resume, शून्य)
-पूर्ण;
+static const struct dev_pm_ops venc_pm_ops = {
+	SET_SYSTEM_SLEEP_PM_OPS(pm_runtime_force_suspend,
+				pm_runtime_force_resume)
+	SET_RUNTIME_PM_OPS(venc_runtime_suspend, venc_runtime_resume, NULL)
+};
 
-अटल स्थिर काष्ठा of_device_id venc_dt_match[] = अणु
-	अणु .compatible = "venus-encoder" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id venc_dt_match[] = {
+	{ .compatible = "venus-encoder" },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, venc_dt_match);
 
-अटल काष्ठा platक्रमm_driver qcom_venus_enc_driver = अणु
+static struct platform_driver qcom_venus_enc_driver = {
 	.probe = venc_probe,
-	.हटाओ = venc_हटाओ,
-	.driver = अणु
+	.remove = venc_remove,
+	.driver = {
 		.name = "qcom-venus-encoder",
 		.of_match_table = venc_dt_match,
 		.pm = &venc_pm_ops,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(qcom_venus_enc_driver);
+	},
+};
+module_platform_driver(qcom_venus_enc_driver);
 
 MODULE_ALIAS("platform:qcom-venus-encoder");
 MODULE_DESCRIPTION("Qualcomm Venus video encoder driver");

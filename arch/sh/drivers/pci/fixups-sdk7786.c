@@ -1,65 +1,64 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * SDK7786 FPGA PCIe mux handling
  *
  * Copyright (C) 2010  Paul Mundt
  */
-#घोषणा pr_fmt(fmt) "PCI: " fmt
+#define pr_fmt(fmt) "PCI: " fmt
 
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/pci.h>
-#समावेश <mach/fpga.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/pci.h>
+#include <mach/fpga.h>
 
 /*
  * The SDK7786 FPGA supports mangling of most of the slots in some way or
  * another. Slots 3/4 are special in that only one can be supported at a
- * समय, and both appear on port 3 to the PCI bus scan. Enabling slot 4
+ * time, and both appear on port 3 to the PCI bus scan. Enabling slot 4
  * (the horizontal edge connector) will disable slot 3 entirely.
  *
  * Misconfigurations can be detected through the FPGA via the slot
- * resistors to determine card presence. Hotplug reमुख्यs unsupported.
+ * resistors to determine card presence. Hotplug remains unsupported.
  */
-अटल अचिन्हित पूर्णांक slot4en __initdata;
+static unsigned int slot4en __initdata;
 
-अक्षर *__init pcibios_setup(अक्षर *str)
-अणु
-	अगर (म_भेद(str, "slot4en") == 0) अणु
+char *__init pcibios_setup(char *str)
+{
+	if (strcmp(str, "slot4en") == 0) {
 		slot4en = 1;
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	वापस str;
-पूर्ण
+	return str;
+}
 
-अटल पूर्णांक __init sdk7786_pci_init(व्योम)
-अणु
-	u16 data = fpga_पढ़ो_reg(PCIECR);
+static int __init sdk7786_pci_init(void)
+{
+	u16 data = fpga_read_reg(PCIECR);
 
 	/*
-	 * Enable slot #4 अगर it's been specअगरied on the command line.
+	 * Enable slot #4 if it's been specified on the command line.
 	 *
-	 * Optionally reroute अगर slot #4 has a card present जबतक slot #3
-	 * करोes not, regardless of command line value.
+	 * Optionally reroute if slot #4 has a card present while slot #3
+	 * does not, regardless of command line value.
 	 *
 	 * Card presence is logically inverted.
 	 */
 	slot4en ?: (!(data & PCIECR_PRST4) && (data & PCIECR_PRST3));
-	अगर (slot4en) अणु
+	if (slot4en) {
 		pr_info("Activating PCIe slot#4 (disabling slot#3)\n");
 
 		data &= ~PCIECR_PCIEMUX1;
-		fpga_ग_लिखो_reg(data, PCIECR);
+		fpga_write_reg(data, PCIECR);
 
-		/* Warn about क्रमced rerouting अगर slot#3 is occupied */
-		अगर ((data & PCIECR_PRST3) == 0) अणु
+		/* Warn about forced rerouting if slot#3 is occupied */
+		if ((data & PCIECR_PRST3) == 0) {
 			pr_warn("Unreachable card detected in slot#3\n");
-			वापस -EBUSY;
-		पूर्ण
-	पूर्ण अन्यथा
+			return -EBUSY;
+		}
+	} else
 		pr_info("PCIe slot#4 disabled\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 postcore_initcall(sdk7786_pci_init);

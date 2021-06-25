@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2018 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,26 +19,26 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#समावेश "core.h"
-#समावेश "head.h"
+#include "core.h"
+#include "head.h"
 
-#समावेश <nvअगर/pushc37b.h>
+#include <nvif/pushc37b.h>
 
-#समावेश <nvhw/class/clc57d.h>
+#include <nvhw/class/clc57d.h>
 
-अटल पूर्णांक
-corec57d_init(काष्ठा nv50_core *core)
-अणु
-	काष्ठा nvअगर_push *push = core->chan.push;
-	स्थिर u32 winकरोws = 8; /*XXX*/
-	पूर्णांक ret, i;
+static int
+corec57d_init(struct nv50_core *core)
+{
+	struct nvif_push *push = core->chan.push;
+	const u32 windows = 8; /*XXX*/
+	int ret, i;
 
-	अगर ((ret = PUSH_WAIT(push, 2 + winकरोws * 5)))
-		वापस ret;
+	if ((ret = PUSH_WAIT(push, 2 + windows * 5)))
+		return ret;
 
 	PUSH_MTHD(push, NVC57D, SET_CONTEXT_DMA_NOTIFIER, core->chan.sync.handle);
 
-	क्रम (i = 0; i < winकरोws; i++) अणु
+	for (i = 0; i < windows; i++) {
 		PUSH_MTHD(push, NVC57D, WINDOW_SET_WINDOW_FORMAT_USAGE_BOUNDS(i),
 			  NVDEF(NVC57D, WINDOW_SET_WINDOW_FORMAT_USAGE_BOUNDS, RGB_PACKED1BPP, TRUE) |
 			  NVDEF(NVC57D, WINDOW_SET_WINDOW_FORMAT_USAGE_BOUNDS, RGB_PACKED2BPP, TRUE) |
@@ -53,29 +52,29 @@ corec57d_init(काष्ठा nv50_core *core)
 			  NVDEF(NVC57D, WINDOW_SET_WINDOW_USAGE_BOUNDS, ILUT_ALLOWED, TRUE) |
 			  NVDEF(NVC57D, WINDOW_SET_WINDOW_USAGE_BOUNDS, INPUT_SCALER_TAPS, TAPS_2) |
 			  NVDEF(NVC57D, WINDOW_SET_WINDOW_USAGE_BOUNDS, UPSCALING_ALLOWED, FALSE));
-	पूर्ण
+	}
 
-	core->assign_winकरोws = true;
-	वापस PUSH_KICK(push);
-पूर्ण
+	core->assign_windows = true;
+	return PUSH_KICK(push);
+}
 
-अटल स्थिर काष्ठा nv50_core_func
-corec57d = अणु
+static const struct nv50_core_func
+corec57d = {
 	.init = corec57d_init,
 	.ntfy_init = corec37d_ntfy_init,
 	.caps_init = corec37d_caps_init,
-	.ntfy_रुको_करोne = corec37d_ntfy_रुको_करोne,
+	.ntfy_wait_done = corec37d_ntfy_wait_done,
 	.update = corec37d_update,
 	.wndw.owner = corec37d_wndw_owner,
 	.head = &headc57d,
 	.sor = &sorc37d,
-#अगर IS_ENABLED(CONFIG_DEBUG_FS)
+#if IS_ENABLED(CONFIG_DEBUG_FS)
 	.crc = &crcc37d,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-पूर्णांक
-corec57d_new(काष्ठा nouveau_drm *drm, s32 oclass, काष्ठा nv50_core **pcore)
-अणु
-	वापस core507d_new_(&corec57d, drm, oclass, pcore);
-पूर्ण
+int
+corec57d_new(struct nouveau_drm *drm, s32 oclass, struct nv50_core **pcore)
+{
+	return core507d_new_(&corec57d, drm, oclass, pcore);
+}

@@ -1,123 +1,122 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#समावेश <linux/types.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/zorro.h>
-#समावेश <linux/module.h>
+// SPDX-License-Identifier: GPL-2.0-only
+#include <linux/types.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/mm.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/zorro.h>
+#include <linux/module.h>
 
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/amigaपूर्णांकs.h>
-#समावेश <यंत्र/amigahw.h>
+#include <asm/page.h>
+#include <asm/amigaints.h>
+#include <asm/amigahw.h>
 
-#समावेश "scsi.h"
-#समावेश "wd33c93.h"
-#समावेश "gvp11.h"
+#include "scsi.h"
+#include "wd33c93.h"
+#include "gvp11.h"
 
 
-#घोषणा CHECK_WD33C93
+#define CHECK_WD33C93
 
-काष्ठा gvp11_hostdata अणु
-	काष्ठा WD33C93_hostdata wh;
-	काष्ठा gvp11_scsiregs *regs;
-पूर्ण;
+struct gvp11_hostdata {
+	struct WD33C93_hostdata wh;
+	struct gvp11_scsiregs *regs;
+};
 
-अटल irqवापस_t gvp11_पूर्णांकr(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा Scsi_Host *instance = data;
-	काष्ठा gvp11_hostdata *hdata = shost_priv(instance);
-	अचिन्हित पूर्णांक status = hdata->regs->CNTR;
-	अचिन्हित दीर्घ flags;
+static irqreturn_t gvp11_intr(int irq, void *data)
+{
+	struct Scsi_Host *instance = data;
+	struct gvp11_hostdata *hdata = shost_priv(instance);
+	unsigned int status = hdata->regs->CNTR;
+	unsigned long flags;
 
-	अगर (!(status & GVP11_DMAC_INT_PENDING))
-		वापस IRQ_NONE;
+	if (!(status & GVP11_DMAC_INT_PENDING))
+		return IRQ_NONE;
 
 	spin_lock_irqsave(instance->host_lock, flags);
-	wd33c93_पूर्णांकr(instance);
+	wd33c93_intr(instance);
 	spin_unlock_irqrestore(instance->host_lock, flags);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक gvp11_xfer_mask = 0;
+static int gvp11_xfer_mask = 0;
 
-व्योम gvp11_setup(अक्षर *str, पूर्णांक *पूर्णांकs)
-अणु
-	gvp11_xfer_mask = पूर्णांकs[1];
-पूर्ण
+void gvp11_setup(char *str, int *ints)
+{
+	gvp11_xfer_mask = ints[1];
+}
 
-अटल पूर्णांक dma_setup(काष्ठा scsi_cmnd *cmd, पूर्णांक dir_in)
-अणु
-	काष्ठा Scsi_Host *instance = cmd->device->host;
-	काष्ठा gvp11_hostdata *hdata = shost_priv(instance);
-	काष्ठा WD33C93_hostdata *wh = &hdata->wh;
-	काष्ठा gvp11_scsiregs *regs = hdata->regs;
-	अचिन्हित लघु cntr = GVP11_DMAC_INT_ENABLE;
-	अचिन्हित दीर्घ addr = virt_to_bus(cmd->SCp.ptr);
-	पूर्णांक bank_mask;
-	अटल पूर्णांक scsi_alloc_out_of_range = 0;
+static int dma_setup(struct scsi_cmnd *cmd, int dir_in)
+{
+	struct Scsi_Host *instance = cmd->device->host;
+	struct gvp11_hostdata *hdata = shost_priv(instance);
+	struct WD33C93_hostdata *wh = &hdata->wh;
+	struct gvp11_scsiregs *regs = hdata->regs;
+	unsigned short cntr = GVP11_DMAC_INT_ENABLE;
+	unsigned long addr = virt_to_bus(cmd->SCp.ptr);
+	int bank_mask;
+	static int scsi_alloc_out_of_range = 0;
 
-	/* use bounce buffer अगर the physical address is bad */
-	अगर (addr & wh->dma_xfer_mask) अणु
+	/* use bounce buffer if the physical address is bad */
+	if (addr & wh->dma_xfer_mask) {
 		wh->dma_bounce_len = (cmd->SCp.this_residual + 511) & ~0x1ff;
 
-		अगर (!scsi_alloc_out_of_range) अणु
+		if (!scsi_alloc_out_of_range) {
 			wh->dma_bounce_buffer =
-				kदो_स्मृति(wh->dma_bounce_len, GFP_KERNEL);
+				kmalloc(wh->dma_bounce_len, GFP_KERNEL);
 			wh->dma_buffer_pool = BUF_SCSI_ALLOCED;
-		पूर्ण
+		}
 
-		अगर (scsi_alloc_out_of_range ||
-		    !wh->dma_bounce_buffer) अणु
+		if (scsi_alloc_out_of_range ||
+		    !wh->dma_bounce_buffer) {
 			wh->dma_bounce_buffer =
 				amiga_chip_alloc(wh->dma_bounce_len,
 						 "GVP II SCSI Bounce Buffer");
 
-			अगर (!wh->dma_bounce_buffer) अणु
+			if (!wh->dma_bounce_buffer) {
 				wh->dma_bounce_len = 0;
-				वापस 1;
-			पूर्ण
+				return 1;
+			}
 
 			wh->dma_buffer_pool = BUF_CHIP_ALLOCED;
-		पूर्ण
+		}
 
-		/* check अगर the address of the bounce buffer is OK */
+		/* check if the address of the bounce buffer is OK */
 		addr = virt_to_bus(wh->dma_bounce_buffer);
 
-		अगर (addr & wh->dma_xfer_mask) अणु
-			/* fall back to Chip RAM अगर address out of range */
-			अगर (wh->dma_buffer_pool == BUF_SCSI_ALLOCED) अणु
-				kमुक्त(wh->dma_bounce_buffer);
+		if (addr & wh->dma_xfer_mask) {
+			/* fall back to Chip RAM if address out of range */
+			if (wh->dma_buffer_pool == BUF_SCSI_ALLOCED) {
+				kfree(wh->dma_bounce_buffer);
 				scsi_alloc_out_of_range = 1;
-			पूर्ण अन्यथा अणु
-				amiga_chip_मुक्त(wh->dma_bounce_buffer);
-			पूर्ण
+			} else {
+				amiga_chip_free(wh->dma_bounce_buffer);
+			}
 
 			wh->dma_bounce_buffer =
 				amiga_chip_alloc(wh->dma_bounce_len,
 						 "GVP II SCSI Bounce Buffer");
 
-			अगर (!wh->dma_bounce_buffer) अणु
+			if (!wh->dma_bounce_buffer) {
 				wh->dma_bounce_len = 0;
-				वापस 1;
-			पूर्ण
+				return 1;
+			}
 
 			addr = virt_to_bus(wh->dma_bounce_buffer);
 			wh->dma_buffer_pool = BUF_CHIP_ALLOCED;
-		पूर्ण
+		}
 
-		अगर (!dir_in) अणु
-			/* copy to bounce buffer क्रम a ग_लिखो */
-			स_नकल(wh->dma_bounce_buffer, cmd->SCp.ptr,
+		if (!dir_in) {
+			/* copy to bounce buffer for a write */
+			memcpy(wh->dma_bounce_buffer, cmd->SCp.ptr,
 			       cmd->SCp.this_residual);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* setup dma direction */
-	अगर (!dir_in)
-		cntr |= GVP11_DMAC_सूची_WRITE;
+	if (!dir_in)
+		cntr |= GVP11_DMAC_DIR_WRITE;
 
 	wh->dma_dir = dir_in;
 	regs->CNTR = cntr;
@@ -125,86 +124,86 @@
 	/* setup DMA *physical* address */
 	regs->ACR = addr;
 
-	अगर (dir_in) अणु
+	if (dir_in) {
 		/* invalidate any cache */
 		cache_clear(addr, cmd->SCp.this_residual);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* push any dirty cache */
 		cache_push(addr, cmd->SCp.this_residual);
-	पूर्ण
+	}
 
 	bank_mask = (~wh->dma_xfer_mask >> 18) & 0x01c0;
-	अगर (bank_mask)
+	if (bank_mask)
 		regs->BANK = bank_mask & (addr >> 18);
 
 	/* start DMA */
 	regs->ST_DMA = 1;
 
-	/* वापस success */
-	वापस 0;
-पूर्ण
+	/* return success */
+	return 0;
+}
 
-अटल व्योम dma_stop(काष्ठा Scsi_Host *instance, काष्ठा scsi_cmnd *SCpnt,
-		     पूर्णांक status)
-अणु
-	काष्ठा gvp11_hostdata *hdata = shost_priv(instance);
-	काष्ठा WD33C93_hostdata *wh = &hdata->wh;
-	काष्ठा gvp11_scsiregs *regs = hdata->regs;
+static void dma_stop(struct Scsi_Host *instance, struct scsi_cmnd *SCpnt,
+		     int status)
+{
+	struct gvp11_hostdata *hdata = shost_priv(instance);
+	struct WD33C93_hostdata *wh = &hdata->wh;
+	struct gvp11_scsiregs *regs = hdata->regs;
 
 	/* stop DMA */
 	regs->SP_DMA = 1;
-	/* हटाओ ग_लिखो bit from CONTROL bits */
+	/* remove write bit from CONTROL bits */
 	regs->CNTR = GVP11_DMAC_INT_ENABLE;
 
-	/* copy from a bounce buffer, अगर necessary */
-	अगर (status && wh->dma_bounce_buffer) अणु
-		अगर (wh->dma_dir && SCpnt)
-			स_नकल(SCpnt->SCp.ptr, wh->dma_bounce_buffer,
+	/* copy from a bounce buffer, if necessary */
+	if (status && wh->dma_bounce_buffer) {
+		if (wh->dma_dir && SCpnt)
+			memcpy(SCpnt->SCp.ptr, wh->dma_bounce_buffer,
 			       SCpnt->SCp.this_residual);
 
-		अगर (wh->dma_buffer_pool == BUF_SCSI_ALLOCED)
-			kमुक्त(wh->dma_bounce_buffer);
-		अन्यथा
-			amiga_chip_मुक्त(wh->dma_bounce_buffer);
+		if (wh->dma_buffer_pool == BUF_SCSI_ALLOCED)
+			kfree(wh->dma_bounce_buffer);
+		else
+			amiga_chip_free(wh->dma_bounce_buffer);
 
-		wh->dma_bounce_buffer = शून्य;
+		wh->dma_bounce_buffer = NULL;
 		wh->dma_bounce_len = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल काष्ठा scsi_host_ढाँचा gvp11_scsi_ढाँचा = अणु
+static struct scsi_host_template gvp11_scsi_template = {
 	.module			= THIS_MODULE,
 	.name			= "GVP Series II SCSI",
 	.show_info		= wd33c93_show_info,
-	.ग_लिखो_info		= wd33c93_ग_लिखो_info,
+	.write_info		= wd33c93_write_info,
 	.proc_name		= "GVP11",
 	.queuecommand		= wd33c93_queuecommand,
-	.eh_पात_handler	= wd33c93_पात,
+	.eh_abort_handler	= wd33c93_abort,
 	.eh_host_reset_handler	= wd33c93_host_reset,
 	.can_queue		= CAN_QUEUE,
 	.this_id		= 7,
 	.sg_tablesize		= SG_ALL,
 	.cmd_per_lun		= CMD_PER_LUN,
 	.dma_boundary		= PAGE_SIZE - 1,
-पूर्ण;
+};
 
-अटल पूर्णांक check_wd33c93(काष्ठा gvp11_scsiregs *regs)
-अणु
-#अगर_घोषित CHECK_WD33C93
-	अस्थिर अचिन्हित अक्षर *sasr_3393, *scmd_3393;
-	अचिन्हित अक्षर save_sasr;
-	अचिन्हित अक्षर q, qq;
+static int check_wd33c93(struct gvp11_scsiregs *regs)
+{
+#ifdef CHECK_WD33C93
+	volatile unsigned char *sasr_3393, *scmd_3393;
+	unsigned char save_sasr;
+	unsigned char q, qq;
 
 	/*
 	 * These darn GVP boards are a problem - it can be tough to tell
 	 * whether or not they include a SCSI controller. This is the
 	 * ultimate Yet-Another-GVP-Detection-Hack in that it actually
-	 * probes क्रम a WD33c93 chip: If we find one, it's extremely
+	 * probes for a WD33c93 chip: If we find one, it's extremely
 	 * likely that this card supports SCSI, regardless of Product_
 	 * Code, Board_Size, etc.
 	 */
 
-	/* Get poपूर्णांकers to the presumed रेजिस्टर locations and save contents */
+	/* Get pointers to the presumed register locations and save contents */
 
 	sasr_3393 = &regs->SASR;
 	scmd_3393 = &regs->SCMD;
@@ -212,24 +211,24 @@
 
 	/* First test the AuxStatus Reg */
 
-	q = *sasr_3393;	/* पढ़ो it */
-	अगर (q & 0x08)	/* bit 3 should always be clear */
-		वापस -ENODEV;
+	q = *sasr_3393;	/* read it */
+	if (q & 0x08)	/* bit 3 should always be clear */
+		return -ENODEV;
 	*sasr_3393 = WD_AUXILIARY_STATUS;	/* setup indirect address */
-	अगर (*sasr_3393 == WD_AUXILIARY_STATUS) अणु	/* shouldn't retain the ग_लिखो */
+	if (*sasr_3393 == WD_AUXILIARY_STATUS) {	/* shouldn't retain the write */
 		*sasr_3393 = save_sasr;	/* Oops - restore this byte */
-		वापस -ENODEV;
-	पूर्ण
-	अगर (*sasr_3393 != q) अणु	/* should still पढ़ो the same */
+		return -ENODEV;
+	}
+	if (*sasr_3393 != q) {	/* should still read the same */
 		*sasr_3393 = save_sasr;	/* Oops - restore this byte */
-		वापस -ENODEV;
-	पूर्ण
-	अगर (*scmd_3393 != q)	/* and so should the image at 0x1f */
-		वापस -ENODEV;
+		return -ENODEV;
+	}
+	if (*scmd_3393 != q)	/* and so should the image at 0x1f */
+		return -ENODEV;
 
 	/*
 	 * Ok, we probably have a wd33c93, but let's check a few other places
-	 * क्रम good measure. Make sure that this works क्रम both 'A and 'B
+	 * for good measure. Make sure that this works for both 'A and 'B
 	 * chip versions.
 	 */
 
@@ -241,9 +240,9 @@
 	qq = *scmd_3393;
 	*sasr_3393 = WD_SCSI_STATUS;
 	*scmd_3393 = q;
-	अगर (qq != q)	/* should be पढ़ो only */
-		वापस -ENODEV;
-	*sasr_3393 = 0x1e;	/* this रेजिस्टर is unimplemented */
+	if (qq != q)	/* should be read only */
+		return -ENODEV;
+	*sasr_3393 = 0x1e;	/* this register is unimplemented */
 	q = *scmd_3393;
 	*sasr_3393 = 0x1e;
 	*scmd_3393 = ~q;
@@ -251,8 +250,8 @@
 	qq = *scmd_3393;
 	*sasr_3393 = 0x1e;
 	*scmd_3393 = q;
-	अगर (qq != q || qq != 0xff)	/* should be पढ़ो only, all 1's */
-		वापस -ENODEV;
+	if (qq != q || qq != 0xff)	/* should be read only, all 1's */
+		return -ENODEV;
 	*sasr_3393 = WD_TIMEOUT_PERIOD;
 	q = *scmd_3393;
 	*sasr_3393 = WD_TIMEOUT_PERIOD;
@@ -261,50 +260,50 @@
 	qq = *scmd_3393;
 	*sasr_3393 = WD_TIMEOUT_PERIOD;
 	*scmd_3393 = q;
-	अगर (qq != (~q & 0xff))	/* should be पढ़ो/ग_लिखो */
-		वापस -ENODEV;
-#पूर्ण_अगर /* CHECK_WD33C93 */
+	if (qq != (~q & 0xff))	/* should be read/write */
+		return -ENODEV;
+#endif /* CHECK_WD33C93 */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gvp11_probe(काष्ठा zorro_dev *z, स्थिर काष्ठा zorro_device_id *ent)
-अणु
-	काष्ठा Scsi_Host *instance;
-	अचिन्हित दीर्घ address;
-	पूर्णांक error;
-	अचिन्हित पूर्णांक epc;
-	अचिन्हित पूर्णांक शेष_dma_xfer_mask;
-	काष्ठा gvp11_hostdata *hdata;
-	काष्ठा gvp11_scsiregs *regs;
+static int gvp11_probe(struct zorro_dev *z, const struct zorro_device_id *ent)
+{
+	struct Scsi_Host *instance;
+	unsigned long address;
+	int error;
+	unsigned int epc;
+	unsigned int default_dma_xfer_mask;
+	struct gvp11_hostdata *hdata;
+	struct gvp11_scsiregs *regs;
 	wd33c93_regs wdregs;
 
-	शेष_dma_xfer_mask = ent->driver_data;
+	default_dma_xfer_mask = ent->driver_data;
 
 	/*
 	 * Rumors state that some GVP ram boards use the same product
-	 * code as the SCSI controllers. Thereक्रमe अगर the board-size
+	 * code as the SCSI controllers. Therefore if the board-size
 	 * is not 64KB we assume it is a ram board and bail out.
 	 */
-	अगर (zorro_resource_len(z) != 0x10000)
-		वापस -ENODEV;
+	if (zorro_resource_len(z) != 0x10000)
+		return -ENODEV;
 
 	address = z->resource.start;
-	अगर (!request_mem_region(address, 256, "wd33c93"))
-		वापस -EBUSY;
+	if (!request_mem_region(address, 256, "wd33c93"))
+		return -EBUSY;
 
 	regs = ZTWO_VADDR(address);
 
 	error = check_wd33c93(regs);
-	अगर (error)
-		जाओ fail_check_or_alloc;
+	if (error)
+		goto fail_check_or_alloc;
 
-	instance = scsi_host_alloc(&gvp11_scsi_ढाँचा,
-				   माप(काष्ठा gvp11_hostdata));
-	अगर (!instance) अणु
+	instance = scsi_host_alloc(&gvp11_scsi_template,
+				   sizeof(struct gvp11_hostdata));
+	if (!instance) {
 		error = -ENOMEM;
-		जाओ fail_check_or_alloc;
-	पूर्ण
+		goto fail_check_or_alloc;
+	}
 
 	instance->irq = IRQ_AMIGA_PORTS;
 	instance->unique_id = z->slotaddr;
@@ -312,7 +311,7 @@
 	regs->secret2 = 1;
 	regs->secret1 = 0;
 	regs->secret3 = 15;
-	जबतक (regs->CNTR & GVP11_DMAC_BUSY)
+	while (regs->CNTR & GVP11_DMAC_BUSY)
 		;
 	regs->CNTR = 0;
 	regs->BANK = 0;
@@ -321,10 +320,10 @@
 	wdregs.SCMD = &regs->SCMD;
 
 	hdata = shost_priv(instance);
-	अगर (gvp11_xfer_mask)
+	if (gvp11_xfer_mask)
 		hdata->wh.dma_xfer_mask = gvp11_xfer_mask;
-	अन्यथा
-		hdata->wh.dma_xfer_mask = शेष_dma_xfer_mask;
+	else
+		hdata->wh.dma_xfer_mask = default_dma_xfer_mask;
 
 	hdata->wh.no_sync = 0xff;
 	hdata->wh.fast = 0;
@@ -332,85 +331,85 @@
 	hdata->regs = regs;
 
 	/*
-	 * Check क्रम 14MHz SCSI घड़ी
+	 * Check for 14MHz SCSI clock
 	 */
-	epc = *(अचिन्हित लघु *)(ZTWO_VADDR(address) + 0x8000);
+	epc = *(unsigned short *)(ZTWO_VADDR(address) + 0x8000);
 	wd33c93_init(instance, wdregs, dma_setup, dma_stop,
 		     (epc & GVP_SCSICLKMASK) ? WD33C93_FS_8_10
 					     : WD33C93_FS_12_15);
 
-	error = request_irq(IRQ_AMIGA_PORTS, gvp11_पूर्णांकr, IRQF_SHARED,
+	error = request_irq(IRQ_AMIGA_PORTS, gvp11_intr, IRQF_SHARED,
 			    "GVP11 SCSI", instance);
-	अगर (error)
-		जाओ fail_irq;
+	if (error)
+		goto fail_irq;
 
 	regs->CNTR = GVP11_DMAC_INT_ENABLE;
 
-	error = scsi_add_host(instance, शून्य);
-	अगर (error)
-		जाओ fail_host;
+	error = scsi_add_host(instance, NULL);
+	if (error)
+		goto fail_host;
 
 	zorro_set_drvdata(z, instance);
 	scsi_scan_host(instance);
-	वापस 0;
+	return 0;
 
 fail_host:
-	मुक्त_irq(IRQ_AMIGA_PORTS, instance);
+	free_irq(IRQ_AMIGA_PORTS, instance);
 fail_irq:
 	scsi_host_put(instance);
 fail_check_or_alloc:
 	release_mem_region(address, 256);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल व्योम gvp11_हटाओ(काष्ठा zorro_dev *z)
-अणु
-	काष्ठा Scsi_Host *instance = zorro_get_drvdata(z);
-	काष्ठा gvp11_hostdata *hdata = shost_priv(instance);
+static void gvp11_remove(struct zorro_dev *z)
+{
+	struct Scsi_Host *instance = zorro_get_drvdata(z);
+	struct gvp11_hostdata *hdata = shost_priv(instance);
 
 	hdata->regs->CNTR = 0;
-	scsi_हटाओ_host(instance);
-	मुक्त_irq(IRQ_AMIGA_PORTS, instance);
+	scsi_remove_host(instance);
+	free_irq(IRQ_AMIGA_PORTS, instance);
 	scsi_host_put(instance);
 	release_mem_region(z->resource.start, 256);
-पूर्ण
+}
 
 	/*
-	 * This should (hopefully) be the correct way to identअगरy
-	 * all the dअगरferent GVP SCSI controllers (except क्रम the
+	 * This should (hopefully) be the correct way to identify
+	 * all the different GVP SCSI controllers (except for the
 	 * SERIES I though).
 	 */
 
-अटल काष्ठा zorro_device_id gvp11_zorro_tbl[] = अणु
-	अणु ZORRO_PROD_GVP_COMBO_030_R3_SCSI,	~0x00ffffff पूर्ण,
-	अणु ZORRO_PROD_GVP_SERIES_II,		~0x00ffffff पूर्ण,
-	अणु ZORRO_PROD_GVP_GFORCE_030_SCSI,	~0x01ffffff पूर्ण,
-	अणु ZORRO_PROD_GVP_A530_SCSI,		~0x01ffffff पूर्ण,
-	अणु ZORRO_PROD_GVP_COMBO_030_R4_SCSI,	~0x01ffffff पूर्ण,
-	अणु ZORRO_PROD_GVP_A1291,			~0x07ffffff पूर्ण,
-	अणु ZORRO_PROD_GVP_GFORCE_040_SCSI_1,	~0x07ffffff पूर्ण,
-	अणु 0 पूर्ण
-पूर्ण;
+static struct zorro_device_id gvp11_zorro_tbl[] = {
+	{ ZORRO_PROD_GVP_COMBO_030_R3_SCSI,	~0x00ffffff },
+	{ ZORRO_PROD_GVP_SERIES_II,		~0x00ffffff },
+	{ ZORRO_PROD_GVP_GFORCE_030_SCSI,	~0x01ffffff },
+	{ ZORRO_PROD_GVP_A530_SCSI,		~0x01ffffff },
+	{ ZORRO_PROD_GVP_COMBO_030_R4_SCSI,	~0x01ffffff },
+	{ ZORRO_PROD_GVP_A1291,			~0x07ffffff },
+	{ ZORRO_PROD_GVP_GFORCE_040_SCSI_1,	~0x07ffffff },
+	{ 0 }
+};
 MODULE_DEVICE_TABLE(zorro, gvp11_zorro_tbl);
 
-अटल काष्ठा zorro_driver gvp11_driver = अणु
+static struct zorro_driver gvp11_driver = {
 	.name		= "gvp11",
 	.id_table	= gvp11_zorro_tbl,
 	.probe		= gvp11_probe,
-	.हटाओ		= gvp11_हटाओ,
-पूर्ण;
+	.remove		= gvp11_remove,
+};
 
-अटल पूर्णांक __init gvp11_init(व्योम)
-अणु
-	वापस zorro_रेजिस्टर_driver(&gvp11_driver);
-पूर्ण
+static int __init gvp11_init(void)
+{
+	return zorro_register_driver(&gvp11_driver);
+}
 module_init(gvp11_init);
 
-अटल व्योम __निकास gvp11_निकास(व्योम)
-अणु
-	zorro_unरेजिस्टर_driver(&gvp11_driver);
-पूर्ण
-module_निकास(gvp11_निकास);
+static void __exit gvp11_exit(void)
+{
+	zorro_unregister_driver(&gvp11_driver);
+}
+module_exit(gvp11_exit);
 
 MODULE_DESCRIPTION("GVP Series II SCSI");
 MODULE_LICENSE("GPL");

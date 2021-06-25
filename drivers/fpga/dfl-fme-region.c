@@ -1,88 +1,87 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * FPGA Region Driver क्रम FPGA Management Engine (FME)
+ * FPGA Region Driver for FPGA Management Engine (FME)
  *
  * Copyright (C) 2017-2018 Intel Corporation, Inc.
  *
  * Authors:
- *   Wu Hao <hao.wu@पूर्णांकel.com>
- *   Joseph Grecco <joe.grecco@पूर्णांकel.com>
- *   Enno Luebbers <enno.luebbers@पूर्णांकel.com>
- *   Tim Whisonant <tim.whisonant@पूर्णांकel.com>
- *   Ananda Ravuri <ananda.ravuri@पूर्णांकel.com>
- *   Henry Mitchel <henry.mitchel@पूर्णांकel.com>
+ *   Wu Hao <hao.wu@intel.com>
+ *   Joseph Grecco <joe.grecco@intel.com>
+ *   Enno Luebbers <enno.luebbers@intel.com>
+ *   Tim Whisonant <tim.whisonant@intel.com>
+ *   Ananda Ravuri <ananda.ravuri@intel.com>
+ *   Henry Mitchel <henry.mitchel@intel.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/fpga/fpga-mgr.h>
-#समावेश <linux/fpga/fpga-region.h>
+#include <linux/module.h>
+#include <linux/fpga/fpga-mgr.h>
+#include <linux/fpga/fpga-region.h>
 
-#समावेश "dfl-fme-pr.h"
+#include "dfl-fme-pr.h"
 
-अटल पूर्णांक fme_region_get_bridges(काष्ठा fpga_region *region)
-अणु
-	काष्ठा dfl_fme_region_pdata *pdata = region->priv;
-	काष्ठा device *dev = &pdata->br->dev;
+static int fme_region_get_bridges(struct fpga_region *region)
+{
+	struct dfl_fme_region_pdata *pdata = region->priv;
+	struct device *dev = &pdata->br->dev;
 
-	वापस fpga_bridge_get_to_list(dev, region->info, &region->bridge_list);
-पूर्ण
+	return fpga_bridge_get_to_list(dev, region->info, &region->bridge_list);
+}
 
-अटल पूर्णांक fme_region_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा dfl_fme_region_pdata *pdata = dev_get_platdata(&pdev->dev);
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा fpga_region *region;
-	काष्ठा fpga_manager *mgr;
-	पूर्णांक ret;
+static int fme_region_probe(struct platform_device *pdev)
+{
+	struct dfl_fme_region_pdata *pdata = dev_get_platdata(&pdev->dev);
+	struct device *dev = &pdev->dev;
+	struct fpga_region *region;
+	struct fpga_manager *mgr;
+	int ret;
 
 	mgr = fpga_mgr_get(&pdata->mgr->dev);
-	अगर (IS_ERR(mgr))
-		वापस -EPROBE_DEFER;
+	if (IS_ERR(mgr))
+		return -EPROBE_DEFER;
 
 	region = devm_fpga_region_create(dev, mgr, fme_region_get_bridges);
-	अगर (!region) अणु
+	if (!region) {
 		ret = -ENOMEM;
-		जाओ eprobe_mgr_put;
-	पूर्ण
+		goto eprobe_mgr_put;
+	}
 
 	region->priv = pdata;
 	region->compat_id = mgr->compat_id;
-	platक्रमm_set_drvdata(pdev, region);
+	platform_set_drvdata(pdev, region);
 
-	ret = fpga_region_रेजिस्टर(region);
-	अगर (ret)
-		जाओ eprobe_mgr_put;
+	ret = fpga_region_register(region);
+	if (ret)
+		goto eprobe_mgr_put;
 
 	dev_dbg(dev, "DFL FME FPGA Region probed\n");
 
-	वापस 0;
+	return 0;
 
 eprobe_mgr_put:
 	fpga_mgr_put(mgr);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक fme_region_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा fpga_region *region = platक्रमm_get_drvdata(pdev);
-	काष्ठा fpga_manager *mgr = region->mgr;
+static int fme_region_remove(struct platform_device *pdev)
+{
+	struct fpga_region *region = platform_get_drvdata(pdev);
+	struct fpga_manager *mgr = region->mgr;
 
-	fpga_region_unरेजिस्टर(region);
+	fpga_region_unregister(region);
 	fpga_mgr_put(mgr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver fme_region_driver = अणु
-	.driver	= अणु
+static struct platform_driver fme_region_driver = {
+	.driver	= {
 		.name    = DFL_FPGA_FME_REGION,
-	पूर्ण,
+	},
 	.probe   = fme_region_probe,
-	.हटाओ  = fme_region_हटाओ,
-पूर्ण;
+	.remove  = fme_region_remove,
+};
 
-module_platक्रमm_driver(fme_region_driver);
+module_platform_driver(fme_region_driver);
 
 MODULE_DESCRIPTION("FPGA Region for DFL FPGA Management Engine");
 MODULE_AUTHOR("Intel Corporation");

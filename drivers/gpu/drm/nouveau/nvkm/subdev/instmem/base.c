@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,226 +21,226 @@
  *
  * Authors: Ben Skeggs
  */
-#समावेश "priv.h"
+#include "priv.h"
 
-#समावेश <subdev/bar.h>
+#include <subdev/bar.h>
 
 /******************************************************************************
- * insपंचांगem object base implementation
+ * instmem object base implementation
  *****************************************************************************/
-अटल व्योम
-nvkm_instobj_load(काष्ठा nvkm_instobj *iobj)
-अणु
-	काष्ठा nvkm_memory *memory = &iobj->memory;
-	स्थिर u64 size = nvkm_memory_size(memory);
-	व्योम __iomem *map;
-	पूर्णांक i;
+static void
+nvkm_instobj_load(struct nvkm_instobj *iobj)
+{
+	struct nvkm_memory *memory = &iobj->memory;
+	const u64 size = nvkm_memory_size(memory);
+	void __iomem *map;
+	int i;
 
-	अगर (!(map = nvkm_kmap(memory))) अणु
-		क्रम (i = 0; i < size; i += 4)
+	if (!(map = nvkm_kmap(memory))) {
+		for (i = 0; i < size; i += 4)
 			nvkm_wo32(memory, i, iobj->suspend[i / 4]);
-	पूर्ण अन्यथा अणु
-		स_नकल_toio(map, iobj->suspend, size);
-	पूर्ण
-	nvkm_करोne(memory);
+	} else {
+		memcpy_toio(map, iobj->suspend, size);
+	}
+	nvkm_done(memory);
 
-	kvमुक्त(iobj->suspend);
-	iobj->suspend = शून्य;
-पूर्ण
+	kvfree(iobj->suspend);
+	iobj->suspend = NULL;
+}
 
-अटल पूर्णांक
-nvkm_instobj_save(काष्ठा nvkm_instobj *iobj)
-अणु
-	काष्ठा nvkm_memory *memory = &iobj->memory;
-	स्थिर u64 size = nvkm_memory_size(memory);
-	व्योम __iomem *map;
-	पूर्णांक i;
+static int
+nvkm_instobj_save(struct nvkm_instobj *iobj)
+{
+	struct nvkm_memory *memory = &iobj->memory;
+	const u64 size = nvkm_memory_size(memory);
+	void __iomem *map;
+	int i;
 
-	iobj->suspend = kvदो_स्मृति(size, GFP_KERNEL);
-	अगर (!iobj->suspend)
-		वापस -ENOMEM;
+	iobj->suspend = kvmalloc(size, GFP_KERNEL);
+	if (!iobj->suspend)
+		return -ENOMEM;
 
-	अगर (!(map = nvkm_kmap(memory))) अणु
-		क्रम (i = 0; i < size; i += 4)
+	if (!(map = nvkm_kmap(memory))) {
+		for (i = 0; i < size; i += 4)
 			iobj->suspend[i / 4] = nvkm_ro32(memory, i);
-	पूर्ण अन्यथा अणु
-		स_नकल_fromio(iobj->suspend, map, size);
-	पूर्ण
-	nvkm_करोne(memory);
-	वापस 0;
-पूर्ण
+	} else {
+		memcpy_fromio(iobj->suspend, map, size);
+	}
+	nvkm_done(memory);
+	return 0;
+}
 
-व्योम
-nvkm_instobj_dtor(काष्ठा nvkm_insपंचांगem *imem, काष्ठा nvkm_instobj *iobj)
-अणु
+void
+nvkm_instobj_dtor(struct nvkm_instmem *imem, struct nvkm_instobj *iobj)
+{
 	spin_lock(&imem->lock);
 	list_del(&iobj->head);
 	spin_unlock(&imem->lock);
-पूर्ण
+}
 
-व्योम
-nvkm_instobj_ctor(स्थिर काष्ठा nvkm_memory_func *func,
-		  काष्ठा nvkm_insपंचांगem *imem, काष्ठा nvkm_instobj *iobj)
-अणु
+void
+nvkm_instobj_ctor(const struct nvkm_memory_func *func,
+		  struct nvkm_instmem *imem, struct nvkm_instobj *iobj)
+{
 	nvkm_memory_ctor(func, &iobj->memory);
-	iobj->suspend = शून्य;
+	iobj->suspend = NULL;
 	spin_lock(&imem->lock);
 	list_add_tail(&iobj->head, &imem->list);
 	spin_unlock(&imem->lock);
-पूर्ण
+}
 
-पूर्णांक
-nvkm_instobj_new(काष्ठा nvkm_insपंचांगem *imem, u32 size, u32 align, bool zero,
-		 काष्ठा nvkm_memory **pmemory)
-अणु
-	काष्ठा nvkm_subdev *subdev = &imem->subdev;
-	काष्ठा nvkm_memory *memory = शून्य;
+int
+nvkm_instobj_new(struct nvkm_instmem *imem, u32 size, u32 align, bool zero,
+		 struct nvkm_memory **pmemory)
+{
+	struct nvkm_subdev *subdev = &imem->subdev;
+	struct nvkm_memory *memory = NULL;
 	u32 offset;
-	पूर्णांक ret;
+	int ret;
 
 	ret = imem->func->memory_new(imem, size, align, zero, &memory);
-	अगर (ret) अणु
+	if (ret) {
 		nvkm_error(subdev, "OOM: %08x %08x %d\n", size, align, ret);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	nvkm_trace(subdev, "new %08x %08x %d: %010llx %010llx\n", size, align,
 		   zero, nvkm_memory_addr(memory), nvkm_memory_size(memory));
 
-	अगर (!imem->func->zero && zero) अणु
-		व्योम __iomem *map = nvkm_kmap(memory);
-		अगर (unlikely(!map)) अणु
-			क्रम (offset = 0; offset < size; offset += 4)
+	if (!imem->func->zero && zero) {
+		void __iomem *map = nvkm_kmap(memory);
+		if (unlikely(!map)) {
+			for (offset = 0; offset < size; offset += 4)
 				nvkm_wo32(memory, offset, 0x00000000);
-		पूर्ण अन्यथा अणु
-			स_रखो_io(map, 0x00, size);
-		पूर्ण
-		nvkm_करोne(memory);
-	पूर्ण
+		} else {
+			memset_io(map, 0x00, size);
+		}
+		nvkm_done(memory);
+	}
 
-करोne:
-	अगर (ret)
+done:
+	if (ret)
 		nvkm_memory_unref(&memory);
 	*pmemory = memory;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /******************************************************************************
- * insपंचांगem subdev base implementation
+ * instmem subdev base implementation
  *****************************************************************************/
 
 u32
-nvkm_insपंचांगem_rd32(काष्ठा nvkm_insपंचांगem *imem, u32 addr)
-अणु
-	वापस imem->func->rd32(imem, addr);
-पूर्ण
+nvkm_instmem_rd32(struct nvkm_instmem *imem, u32 addr)
+{
+	return imem->func->rd32(imem, addr);
+}
 
-व्योम
-nvkm_insपंचांगem_wr32(काष्ठा nvkm_insपंचांगem *imem, u32 addr, u32 data)
-अणु
-	वापस imem->func->wr32(imem, addr, data);
-पूर्ण
+void
+nvkm_instmem_wr32(struct nvkm_instmem *imem, u32 addr, u32 data)
+{
+	return imem->func->wr32(imem, addr, data);
+}
 
-व्योम
-nvkm_insपंचांगem_boot(काष्ठा nvkm_insपंचांगem *imem)
-अणु
+void
+nvkm_instmem_boot(struct nvkm_instmem *imem)
+{
 	/* Separate bootstrapped objects from normal list, as we need
 	 * to make sure they're accessed with the slowpath on suspend
 	 * and resume.
 	 */
-	काष्ठा nvkm_instobj *iobj, *iपंचांगp;
+	struct nvkm_instobj *iobj, *itmp;
 	spin_lock(&imem->lock);
-	list_क्रम_each_entry_safe(iobj, iपंचांगp, &imem->list, head) अणु
+	list_for_each_entry_safe(iobj, itmp, &imem->list, head) {
 		list_move_tail(&iobj->head, &imem->boot);
-	पूर्ण
+	}
 	spin_unlock(&imem->lock);
-पूर्ण
+}
 
-अटल पूर्णांक
-nvkm_insपंचांगem_fini(काष्ठा nvkm_subdev *subdev, bool suspend)
-अणु
-	काष्ठा nvkm_insपंचांगem *imem = nvkm_insपंचांगem(subdev);
-	काष्ठा nvkm_instobj *iobj;
+static int
+nvkm_instmem_fini(struct nvkm_subdev *subdev, bool suspend)
+{
+	struct nvkm_instmem *imem = nvkm_instmem(subdev);
+	struct nvkm_instobj *iobj;
 
-	अगर (suspend) अणु
-		list_क्रम_each_entry(iobj, &imem->list, head) अणु
-			पूर्णांक ret = nvkm_instobj_save(iobj);
-			अगर (ret)
-				वापस ret;
-		पूर्ण
+	if (suspend) {
+		list_for_each_entry(iobj, &imem->list, head) {
+			int ret = nvkm_instobj_save(iobj);
+			if (ret)
+				return ret;
+		}
 
 		nvkm_bar_bar2_fini(subdev->device);
 
-		list_क्रम_each_entry(iobj, &imem->boot, head) अणु
-			पूर्णांक ret = nvkm_instobj_save(iobj);
-			अगर (ret)
-				वापस ret;
-		पूर्ण
-	पूर्ण
+		list_for_each_entry(iobj, &imem->boot, head) {
+			int ret = nvkm_instobj_save(iobj);
+			if (ret)
+				return ret;
+		}
+	}
 
-	अगर (imem->func->fini)
+	if (imem->func->fini)
 		imem->func->fini(imem);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-nvkm_insपंचांगem_init(काष्ठा nvkm_subdev *subdev)
-अणु
-	काष्ठा nvkm_insपंचांगem *imem = nvkm_insपंचांगem(subdev);
-	काष्ठा nvkm_instobj *iobj;
+static int
+nvkm_instmem_init(struct nvkm_subdev *subdev)
+{
+	struct nvkm_instmem *imem = nvkm_instmem(subdev);
+	struct nvkm_instobj *iobj;
 
-	list_क्रम_each_entry(iobj, &imem->boot, head) अणु
-		अगर (iobj->suspend)
+	list_for_each_entry(iobj, &imem->boot, head) {
+		if (iobj->suspend)
 			nvkm_instobj_load(iobj);
-	पूर्ण
+	}
 
 	nvkm_bar_bar2_init(subdev->device);
 
-	list_क्रम_each_entry(iobj, &imem->list, head) अणु
-		अगर (iobj->suspend)
+	list_for_each_entry(iobj, &imem->list, head) {
+		if (iobj->suspend)
 			nvkm_instobj_load(iobj);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-nvkm_insपंचांगem_oneinit(काष्ठा nvkm_subdev *subdev)
-अणु
-	काष्ठा nvkm_insपंचांगem *imem = nvkm_insपंचांगem(subdev);
-	अगर (imem->func->oneinit)
-		वापस imem->func->oneinit(imem);
-	वापस 0;
-पूर्ण
+static int
+nvkm_instmem_oneinit(struct nvkm_subdev *subdev)
+{
+	struct nvkm_instmem *imem = nvkm_instmem(subdev);
+	if (imem->func->oneinit)
+		return imem->func->oneinit(imem);
+	return 0;
+}
 
-अटल व्योम *
-nvkm_insपंचांगem_dtor(काष्ठा nvkm_subdev *subdev)
-अणु
-	काष्ठा nvkm_insपंचांगem *imem = nvkm_insपंचांगem(subdev);
-	व्योम *data = imem;
-	अगर (imem->func->dtor)
+static void *
+nvkm_instmem_dtor(struct nvkm_subdev *subdev)
+{
+	struct nvkm_instmem *imem = nvkm_instmem(subdev);
+	void *data = imem;
+	if (imem->func->dtor)
 		data = imem->func->dtor(imem);
 	mutex_destroy(&imem->mutex);
-	वापस data;
-पूर्ण
+	return data;
+}
 
-अटल स्थिर काष्ठा nvkm_subdev_func
-nvkm_insपंचांगem = अणु
-	.dtor = nvkm_insपंचांगem_dtor,
-	.oneinit = nvkm_insपंचांगem_oneinit,
-	.init = nvkm_insपंचांगem_init,
-	.fini = nvkm_insपंचांगem_fini,
-पूर्ण;
+static const struct nvkm_subdev_func
+nvkm_instmem = {
+	.dtor = nvkm_instmem_dtor,
+	.oneinit = nvkm_instmem_oneinit,
+	.init = nvkm_instmem_init,
+	.fini = nvkm_instmem_fini,
+};
 
-व्योम
-nvkm_insपंचांगem_ctor(स्थिर काष्ठा nvkm_insपंचांगem_func *func, काष्ठा nvkm_device *device,
-		  क्रमागत nvkm_subdev_type type, पूर्णांक inst, काष्ठा nvkm_insपंचांगem *imem)
-अणु
-	nvkm_subdev_ctor(&nvkm_insपंचांगem, device, type, inst, &imem->subdev);
+void
+nvkm_instmem_ctor(const struct nvkm_instmem_func *func, struct nvkm_device *device,
+		  enum nvkm_subdev_type type, int inst, struct nvkm_instmem *imem)
+{
+	nvkm_subdev_ctor(&nvkm_instmem, device, type, inst, &imem->subdev);
 	imem->func = func;
 	spin_lock_init(&imem->lock);
 	INIT_LIST_HEAD(&imem->list);
 	INIT_LIST_HEAD(&imem->boot);
 	mutex_init(&imem->mutex);
-पूर्ण
+}

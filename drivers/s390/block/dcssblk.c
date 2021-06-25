@@ -1,642 +1,641 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * dcssblk.c -- the S/390 block driver क्रम dcss memory
+ * dcssblk.c -- the S/390 block driver for dcss memory
  *
  * Authors: Carsten Otte, Stefan Weinhuber, Gerald Schaefer
  */
 
-#घोषणा KMSG_COMPONENT "dcssblk"
-#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#define KMSG_COMPONENT "dcssblk"
+#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pfn_t.h>
-#समावेश <linux/uपन.स>
-#समावेश <linux/dax.h>
-#समावेश <यंत्र/exपंचांगem.h>
-#समावेश <यंत्र/पन.स>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/ctype.h>
+#include <linux/errno.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/blkdev.h>
+#include <linux/completion.h>
+#include <linux/interrupt.h>
+#include <linux/platform_device.h>
+#include <linux/pfn_t.h>
+#include <linux/uio.h>
+#include <linux/dax.h>
+#include <asm/extmem.h>
+#include <asm/io.h>
 
-#घोषणा DCSSBLK_NAME "dcssblk"
-#घोषणा DCSSBLK_MINORS_PER_DISK 1
-#घोषणा DCSSBLK_PARM_LEN 400
-#घोषणा DCSS_BUS_ID_SIZE 20
+#define DCSSBLK_NAME "dcssblk"
+#define DCSSBLK_MINORS_PER_DISK 1
+#define DCSSBLK_PARM_LEN 400
+#define DCSS_BUS_ID_SIZE 20
 
-अटल पूर्णांक dcssblk_खोलो(काष्ठा block_device *bdev, भ_शेषe_t mode);
-अटल व्योम dcssblk_release(काष्ठा gendisk *disk, भ_शेषe_t mode);
-अटल blk_qc_t dcssblk_submit_bio(काष्ठा bio *bio);
-अटल दीर्घ dcssblk_dax_direct_access(काष्ठा dax_device *dax_dev, pgoff_t pgoff,
-		दीर्घ nr_pages, व्योम **kaddr, pfn_t *pfn);
+static int dcssblk_open(struct block_device *bdev, fmode_t mode);
+static void dcssblk_release(struct gendisk *disk, fmode_t mode);
+static blk_qc_t dcssblk_submit_bio(struct bio *bio);
+static long dcssblk_dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff,
+		long nr_pages, void **kaddr, pfn_t *pfn);
 
-अटल अक्षर dcssblk_segments[DCSSBLK_PARM_LEN] = "\0";
+static char dcssblk_segments[DCSSBLK_PARM_LEN] = "\0";
 
-अटल पूर्णांक dcssblk_major;
-अटल स्थिर काष्ठा block_device_operations dcssblk_devops = अणु
+static int dcssblk_major;
+static const struct block_device_operations dcssblk_devops = {
 	.owner   	= THIS_MODULE,
 	.submit_bio	= dcssblk_submit_bio,
-	.खोलो    	= dcssblk_खोलो,
+	.open    	= dcssblk_open,
 	.release 	= dcssblk_release,
-पूर्ण;
+};
 
-अटल माप_प्रकार dcssblk_dax_copy_from_iter(काष्ठा dax_device *dax_dev,
-		pgoff_t pgoff, व्योम *addr, माप_प्रकार bytes, काष्ठा iov_iter *i)
-अणु
-	वापस copy_from_iter(addr, bytes, i);
-पूर्ण
+static size_t dcssblk_dax_copy_from_iter(struct dax_device *dax_dev,
+		pgoff_t pgoff, void *addr, size_t bytes, struct iov_iter *i)
+{
+	return copy_from_iter(addr, bytes, i);
+}
 
-अटल माप_प्रकार dcssblk_dax_copy_to_iter(काष्ठा dax_device *dax_dev,
-		pgoff_t pgoff, व्योम *addr, माप_प्रकार bytes, काष्ठा iov_iter *i)
-अणु
-	वापस copy_to_iter(addr, bytes, i);
-पूर्ण
+static size_t dcssblk_dax_copy_to_iter(struct dax_device *dax_dev,
+		pgoff_t pgoff, void *addr, size_t bytes, struct iov_iter *i)
+{
+	return copy_to_iter(addr, bytes, i);
+}
 
-अटल पूर्णांक dcssblk_dax_zero_page_range(काष्ठा dax_device *dax_dev,
-				       pgoff_t pgoff, माप_प्रकार nr_pages)
-अणु
-	दीर्घ rc;
-	व्योम *kaddr;
+static int dcssblk_dax_zero_page_range(struct dax_device *dax_dev,
+				       pgoff_t pgoff, size_t nr_pages)
+{
+	long rc;
+	void *kaddr;
 
-	rc = dax_direct_access(dax_dev, pgoff, nr_pages, &kaddr, शून्य);
-	अगर (rc < 0)
-		वापस rc;
-	स_रखो(kaddr, 0, nr_pages << PAGE_SHIFT);
+	rc = dax_direct_access(dax_dev, pgoff, nr_pages, &kaddr, NULL);
+	if (rc < 0)
+		return rc;
+	memset(kaddr, 0, nr_pages << PAGE_SHIFT);
 	dax_flush(dax_dev, kaddr, nr_pages << PAGE_SHIFT);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dax_operations dcssblk_dax_ops = अणु
+static const struct dax_operations dcssblk_dax_ops = {
 	.direct_access = dcssblk_dax_direct_access,
 	.dax_supported = generic_fsdax_supported,
 	.copy_from_iter = dcssblk_dax_copy_from_iter,
 	.copy_to_iter = dcssblk_dax_copy_to_iter,
 	.zero_page_range = dcssblk_dax_zero_page_range,
-पूर्ण;
+};
 
-काष्ठा dcssblk_dev_info अणु
-	काष्ठा list_head lh;
-	काष्ठा device dev;
-	अक्षर segment_name[DCSS_BUS_ID_SIZE];
+struct dcssblk_dev_info {
+	struct list_head lh;
+	struct device dev;
+	char segment_name[DCSS_BUS_ID_SIZE];
 	atomic_t use_count;
-	काष्ठा gendisk *gd;
-	अचिन्हित दीर्घ start;
-	अचिन्हित दीर्घ end;
-	पूर्णांक segment_type;
-	अचिन्हित अक्षर save_pending;
-	अचिन्हित अक्षर is_shared;
-	काष्ठा request_queue *dcssblk_queue;
-	पूर्णांक num_of_segments;
-	काष्ठा list_head seg_list;
-	काष्ठा dax_device *dax_dev;
-पूर्ण;
+	struct gendisk *gd;
+	unsigned long start;
+	unsigned long end;
+	int segment_type;
+	unsigned char save_pending;
+	unsigned char is_shared;
+	struct request_queue *dcssblk_queue;
+	int num_of_segments;
+	struct list_head seg_list;
+	struct dax_device *dax_dev;
+};
 
-काष्ठा segment_info अणु
-	काष्ठा list_head lh;
-	अक्षर segment_name[DCSS_BUS_ID_SIZE];
-	अचिन्हित दीर्घ start;
-	अचिन्हित दीर्घ end;
-	पूर्णांक segment_type;
-पूर्ण;
+struct segment_info {
+	struct list_head lh;
+	char segment_name[DCSS_BUS_ID_SIZE];
+	unsigned long start;
+	unsigned long end;
+	int segment_type;
+};
 
-अटल sमाप_प्रकार dcssblk_add_store(काष्ठा device * dev, काष्ठा device_attribute *attr, स्थिर अक्षर * buf,
-				  माप_प्रकार count);
-अटल sमाप_प्रकार dcssblk_हटाओ_store(काष्ठा device * dev, काष्ठा device_attribute *attr, स्थिर अक्षर * buf,
-				  माप_प्रकार count);
+static ssize_t dcssblk_add_store(struct device * dev, struct device_attribute *attr, const char * buf,
+				  size_t count);
+static ssize_t dcssblk_remove_store(struct device * dev, struct device_attribute *attr, const char * buf,
+				  size_t count);
 
-अटल DEVICE_ATTR(add, S_IWUSR, शून्य, dcssblk_add_store);
-अटल DEVICE_ATTR(हटाओ, S_IWUSR, शून्य, dcssblk_हटाओ_store);
+static DEVICE_ATTR(add, S_IWUSR, NULL, dcssblk_add_store);
+static DEVICE_ATTR(remove, S_IWUSR, NULL, dcssblk_remove_store);
 
-अटल काष्ठा device *dcssblk_root_dev;
+static struct device *dcssblk_root_dev;
 
-अटल LIST_HEAD(dcssblk_devices);
-अटल काष्ठा rw_semaphore dcssblk_devices_sem;
+static LIST_HEAD(dcssblk_devices);
+static struct rw_semaphore dcssblk_devices_sem;
 
 /*
- * release function क्रम segment device.
+ * release function for segment device.
  */
-अटल व्योम
-dcssblk_release_segment(काष्ठा device *dev)
-अणु
-	काष्ठा dcssblk_dev_info *dev_info;
-	काष्ठा segment_info *entry, *temp;
+static void
+dcssblk_release_segment(struct device *dev)
+{
+	struct dcssblk_dev_info *dev_info;
+	struct segment_info *entry, *temp;
 
-	dev_info = container_of(dev, काष्ठा dcssblk_dev_info, dev);
-	list_क्रम_each_entry_safe(entry, temp, &dev_info->seg_list, lh) अणु
+	dev_info = container_of(dev, struct dcssblk_dev_info, dev);
+	list_for_each_entry_safe(entry, temp, &dev_info->seg_list, lh) {
 		list_del(&entry->lh);
-		kमुक्त(entry);
-	पूर्ण
-	kमुक्त(dev_info);
+		kfree(entry);
+	}
+	kfree(dev_info);
 	module_put(THIS_MODULE);
-पूर्ण
+}
 
 /*
  * get a minor number. needs to be called with
- * करोwn_ग_लिखो(&dcssblk_devices_sem) and the
- * device needs to be enqueued beक्रमe the semaphore is
- * मुक्तd.
+ * down_write(&dcssblk_devices_sem) and the
+ * device needs to be enqueued before the semaphore is
+ * freed.
  */
-अटल पूर्णांक
-dcssblk_assign_मुक्त_minor(काष्ठा dcssblk_dev_info *dev_info)
-अणु
-	पूर्णांक minor, found;
-	काष्ठा dcssblk_dev_info *entry;
+static int
+dcssblk_assign_free_minor(struct dcssblk_dev_info *dev_info)
+{
+	int minor, found;
+	struct dcssblk_dev_info *entry;
 
-	अगर (dev_info == शून्य)
-		वापस -EINVAL;
-	क्रम (minor = 0; minor < (1<<MINORBITS); minor++) अणु
+	if (dev_info == NULL)
+		return -EINVAL;
+	for (minor = 0; minor < (1<<MINORBITS); minor++) {
 		found = 0;
-		// test अगर minor available
-		list_क्रम_each_entry(entry, &dcssblk_devices, lh)
-			अगर (minor == entry->gd->first_minor)
+		// test if minor available
+		list_for_each_entry(entry, &dcssblk_devices, lh)
+			if (minor == entry->gd->first_minor)
 				found++;
-		अगर (!found) अवरोध; // got unused minor
-	पूर्ण
-	अगर (found)
-		वापस -EBUSY;
+		if (!found) break; // got unused minor
+	}
+	if (found)
+		return -EBUSY;
 	dev_info->gd->first_minor = minor;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * get the काष्ठा dcssblk_dev_info from dcssblk_devices
- * क्रम the given name.
- * करोwn_पढ़ो(&dcssblk_devices_sem) must be held.
+ * get the struct dcssblk_dev_info from dcssblk_devices
+ * for the given name.
+ * down_read(&dcssblk_devices_sem) must be held.
  */
-अटल काष्ठा dcssblk_dev_info *
-dcssblk_get_device_by_name(अक्षर *name)
-अणु
-	काष्ठा dcssblk_dev_info *entry;
+static struct dcssblk_dev_info *
+dcssblk_get_device_by_name(char *name)
+{
+	struct dcssblk_dev_info *entry;
 
-	list_क्रम_each_entry(entry, &dcssblk_devices, lh) अणु
-		अगर (!म_भेद(name, entry->segment_name)) अणु
-			वापस entry;
-		पूर्ण
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	list_for_each_entry(entry, &dcssblk_devices, lh) {
+		if (!strcmp(name, entry->segment_name)) {
+			return entry;
+		}
+	}
+	return NULL;
+}
 
 /*
- * get the काष्ठा segment_info from seg_list
- * क्रम the given name.
- * करोwn_पढ़ो(&dcssblk_devices_sem) must be held.
+ * get the struct segment_info from seg_list
+ * for the given name.
+ * down_read(&dcssblk_devices_sem) must be held.
  */
-अटल काष्ठा segment_info *
-dcssblk_get_segment_by_name(अक्षर *name)
-अणु
-	काष्ठा dcssblk_dev_info *dev_info;
-	काष्ठा segment_info *entry;
+static struct segment_info *
+dcssblk_get_segment_by_name(char *name)
+{
+	struct dcssblk_dev_info *dev_info;
+	struct segment_info *entry;
 
-	list_क्रम_each_entry(dev_info, &dcssblk_devices, lh) अणु
-		list_क्रम_each_entry(entry, &dev_info->seg_list, lh) अणु
-			अगर (!म_भेद(name, entry->segment_name))
-				वापस entry;
-		पूर्ण
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	list_for_each_entry(dev_info, &dcssblk_devices, lh) {
+		list_for_each_entry(entry, &dev_info->seg_list, lh) {
+			if (!strcmp(name, entry->segment_name))
+				return entry;
+		}
+	}
+	return NULL;
+}
 
 /*
  * get the highest address of the multi-segment block.
  */
-अटल अचिन्हित दीर्घ
-dcssblk_find_highest_addr(काष्ठा dcssblk_dev_info *dev_info)
-अणु
-	अचिन्हित दीर्घ highest_addr;
-	काष्ठा segment_info *entry;
+static unsigned long
+dcssblk_find_highest_addr(struct dcssblk_dev_info *dev_info)
+{
+	unsigned long highest_addr;
+	struct segment_info *entry;
 
 	highest_addr = 0;
-	list_क्रम_each_entry(entry, &dev_info->seg_list, lh) अणु
-		अगर (highest_addr < entry->end)
+	list_for_each_entry(entry, &dev_info->seg_list, lh) {
+		if (highest_addr < entry->end)
 			highest_addr = entry->end;
-	पूर्ण
-	वापस highest_addr;
-पूर्ण
+	}
+	return highest_addr;
+}
 
 /*
  * get the lowest address of the multi-segment block.
  */
-अटल अचिन्हित दीर्घ
-dcssblk_find_lowest_addr(काष्ठा dcssblk_dev_info *dev_info)
-अणु
-	पूर्णांक set_first;
-	अचिन्हित दीर्घ lowest_addr;
-	काष्ठा segment_info *entry;
+static unsigned long
+dcssblk_find_lowest_addr(struct dcssblk_dev_info *dev_info)
+{
+	int set_first;
+	unsigned long lowest_addr;
+	struct segment_info *entry;
 
 	set_first = 0;
 	lowest_addr = 0;
-	list_क्रम_each_entry(entry, &dev_info->seg_list, lh) अणु
-		अगर (set_first == 0) अणु
+	list_for_each_entry(entry, &dev_info->seg_list, lh) {
+		if (set_first == 0) {
 			lowest_addr = entry->start;
 			set_first = 1;
-		पूर्ण अन्यथा अणु
-			अगर (lowest_addr > entry->start)
+		} else {
+			if (lowest_addr > entry->start)
 				lowest_addr = entry->start;
-		पूर्ण
-	पूर्ण
-	वापस lowest_addr;
-पूर्ण
+		}
+	}
+	return lowest_addr;
+}
 
 /*
  * Check continuity of segments.
  */
-अटल पूर्णांक
-dcssblk_is_continuous(काष्ठा dcssblk_dev_info *dev_info)
-अणु
-	पूर्णांक i, j, rc;
-	काष्ठा segment_info *sort_list, *entry, temp;
+static int
+dcssblk_is_continuous(struct dcssblk_dev_info *dev_info)
+{
+	int i, j, rc;
+	struct segment_info *sort_list, *entry, temp;
 
-	अगर (dev_info->num_of_segments <= 1)
-		वापस 0;
+	if (dev_info->num_of_segments <= 1)
+		return 0;
 
-	sort_list = kसुस्मृति(dev_info->num_of_segments,
-			    माप(काष्ठा segment_info),
+	sort_list = kcalloc(dev_info->num_of_segments,
+			    sizeof(struct segment_info),
 			    GFP_KERNEL);
-	अगर (sort_list == शून्य)
-		वापस -ENOMEM;
+	if (sort_list == NULL)
+		return -ENOMEM;
 	i = 0;
-	list_क्रम_each_entry(entry, &dev_info->seg_list, lh) अणु
-		स_नकल(&sort_list[i], entry, माप(काष्ठा segment_info));
+	list_for_each_entry(entry, &dev_info->seg_list, lh) {
+		memcpy(&sort_list[i], entry, sizeof(struct segment_info));
 		i++;
-	पूर्ण
+	}
 
 	/* sort segments */
-	क्रम (i = 0; i < dev_info->num_of_segments; i++)
-		क्रम (j = 0; j < dev_info->num_of_segments; j++)
-			अगर (sort_list[j].start > sort_list[i].start) अणु
-				स_नकल(&temp, &sort_list[i],
-					माप(काष्ठा segment_info));
-				स_नकल(&sort_list[i], &sort_list[j],
-					माप(काष्ठा segment_info));
-				स_नकल(&sort_list[j], &temp,
-					माप(काष्ठा segment_info));
-			पूर्ण
+	for (i = 0; i < dev_info->num_of_segments; i++)
+		for (j = 0; j < dev_info->num_of_segments; j++)
+			if (sort_list[j].start > sort_list[i].start) {
+				memcpy(&temp, &sort_list[i],
+					sizeof(struct segment_info));
+				memcpy(&sort_list[i], &sort_list[j],
+					sizeof(struct segment_info));
+				memcpy(&sort_list[j], &temp,
+					sizeof(struct segment_info));
+			}
 
 	/* check continuity */
-	क्रम (i = 0; i < dev_info->num_of_segments - 1; i++) अणु
-		अगर ((sort_list[i].end + 1) != sort_list[i+1].start) अणु
+	for (i = 0; i < dev_info->num_of_segments - 1; i++) {
+		if ((sort_list[i].end + 1) != sort_list[i+1].start) {
 			pr_err("Adjacent DCSSs %s and %s are not "
 			       "contiguous\n", sort_list[i].segment_name,
 			       sort_list[i+1].segment_name);
 			rc = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		/* EN and EW are allowed in a block device */
-		अगर (sort_list[i].segment_type != sort_list[i+1].segment_type) अणु
-			अगर (!(sort_list[i].segment_type & SEGMENT_EXCLUSIVE) ||
+		if (sort_list[i].segment_type != sort_list[i+1].segment_type) {
+			if (!(sort_list[i].segment_type & SEGMENT_EXCLUSIVE) ||
 				(sort_list[i].segment_type == SEG_TYPE_ER) ||
 				!(sort_list[i+1].segment_type &
 				SEGMENT_EXCLUSIVE) ||
-				(sort_list[i+1].segment_type == SEG_TYPE_ER)) अणु
+				(sort_list[i+1].segment_type == SEG_TYPE_ER)) {
 				pr_err("DCSS %s and DCSS %s have "
 				       "incompatible types\n",
 				       sort_list[i].segment_name,
 				       sort_list[i+1].segment_name);
 				rc = -EINVAL;
-				जाओ out;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto out;
+			}
+		}
+	}
 	rc = 0;
 out:
-	kमुक्त(sort_list);
-	वापस rc;
-पूर्ण
+	kfree(sort_list);
+	return rc;
+}
 
 /*
  * Load a segment
  */
-अटल पूर्णांक
-dcssblk_load_segment(अक्षर *name, काष्ठा segment_info **seg_info)
-अणु
-	पूर्णांक rc;
+static int
+dcssblk_load_segment(char *name, struct segment_info **seg_info)
+{
+	int rc;
 
-	/* alपढ़ोy loaded? */
-	करोwn_पढ़ो(&dcssblk_devices_sem);
+	/* already loaded? */
+	down_read(&dcssblk_devices_sem);
 	*seg_info = dcssblk_get_segment_by_name(name);
-	up_पढ़ो(&dcssblk_devices_sem);
-	अगर (*seg_info != शून्य)
-		वापस -EEXIST;
+	up_read(&dcssblk_devices_sem);
+	if (*seg_info != NULL)
+		return -EEXIST;
 
-	/* get a काष्ठा segment_info */
-	*seg_info = kzalloc(माप(काष्ठा segment_info), GFP_KERNEL);
-	अगर (*seg_info == शून्य)
-		वापस -ENOMEM;
+	/* get a struct segment_info */
+	*seg_info = kzalloc(sizeof(struct segment_info), GFP_KERNEL);
+	if (*seg_info == NULL)
+		return -ENOMEM;
 
-	म_नकल((*seg_info)->segment_name, name);
+	strcpy((*seg_info)->segment_name, name);
 
 	/* load the segment */
 	rc = segment_load(name, SEGMENT_SHARED,
 			&(*seg_info)->start, &(*seg_info)->end);
-	अगर (rc < 0) अणु
+	if (rc < 0) {
 		segment_warning(rc, (*seg_info)->segment_name);
-		kमुक्त(*seg_info);
-	पूर्ण अन्यथा अणु
+		kfree(*seg_info);
+	} else {
 		INIT_LIST_HEAD(&(*seg_info)->lh);
 		(*seg_info)->segment_type = rc;
-	पूर्ण
-	वापस rc;
-पूर्ण
+	}
+	return rc;
+}
 
 /*
- * device attribute क्रम चयनing shared/nonshared (exclusive)
+ * device attribute for switching shared/nonshared (exclusive)
  * operation (show + store)
  */
-अटल sमाप_प्रकार
-dcssblk_shared_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा dcssblk_dev_info *dev_info;
+static ssize_t
+dcssblk_shared_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct dcssblk_dev_info *dev_info;
 
-	dev_info = container_of(dev, काष्ठा dcssblk_dev_info, dev);
-	वापस प्र_लिखो(buf, dev_info->is_shared ? "1\n" : "0\n");
-पूर्ण
+	dev_info = container_of(dev, struct dcssblk_dev_info, dev);
+	return sprintf(buf, dev_info->is_shared ? "1\n" : "0\n");
+}
 
-अटल sमाप_प्रकार
-dcssblk_shared_store(काष्ठा device *dev, काष्ठा device_attribute *attr, स्थिर अक्षर *inbuf, माप_प्रकार count)
-अणु
-	काष्ठा dcssblk_dev_info *dev_info;
-	काष्ठा segment_info *entry, *temp;
-	पूर्णांक rc;
+static ssize_t
+dcssblk_shared_store(struct device *dev, struct device_attribute *attr, const char *inbuf, size_t count)
+{
+	struct dcssblk_dev_info *dev_info;
+	struct segment_info *entry, *temp;
+	int rc;
 
-	अगर ((count > 1) && (inbuf[1] != '\n') && (inbuf[1] != '\0'))
-		वापस -EINVAL;
-	करोwn_ग_लिखो(&dcssblk_devices_sem);
-	dev_info = container_of(dev, काष्ठा dcssblk_dev_info, dev);
-	अगर (atomic_पढ़ो(&dev_info->use_count)) अणु
+	if ((count > 1) && (inbuf[1] != '\n') && (inbuf[1] != '\0'))
+		return -EINVAL;
+	down_write(&dcssblk_devices_sem);
+	dev_info = container_of(dev, struct dcssblk_dev_info, dev);
+	if (atomic_read(&dev_info->use_count)) {
 		rc = -EBUSY;
-		जाओ out;
-	पूर्ण
-	अगर (inbuf[0] == '1') अणु
+		goto out;
+	}
+	if (inbuf[0] == '1') {
 		/* reload segments in shared mode */
-		list_क्रम_each_entry(entry, &dev_info->seg_list, lh) अणु
-			rc = segment_modअगरy_shared(entry->segment_name,
+		list_for_each_entry(entry, &dev_info->seg_list, lh) {
+			rc = segment_modify_shared(entry->segment_name,
 						SEGMENT_SHARED);
-			अगर (rc < 0) अणु
+			if (rc < 0) {
 				BUG_ON(rc == -EINVAL);
-				अगर (rc != -EAGAIN)
-					जाओ हटाओseg;
-			पूर्ण
-		पूर्ण
+				if (rc != -EAGAIN)
+					goto removeseg;
+			}
+		}
 		dev_info->is_shared = 1;
-		चयन (dev_info->segment_type) अणु
-		हाल SEG_TYPE_SR:
-		हाल SEG_TYPE_ER:
-		हाल SEG_TYPE_SC:
+		switch (dev_info->segment_type) {
+		case SEG_TYPE_SR:
+		case SEG_TYPE_ER:
+		case SEG_TYPE_SC:
 			set_disk_ro(dev_info->gd, 1);
-		पूर्ण
-	पूर्ण अन्यथा अगर (inbuf[0] == '0') अणु
+		}
+	} else if (inbuf[0] == '0') {
 		/* reload segments in exclusive mode */
-		अगर (dev_info->segment_type == SEG_TYPE_SC) अणु
+		if (dev_info->segment_type == SEG_TYPE_SC) {
 			pr_err("DCSS %s is of type SC and cannot be "
 			       "loaded as exclusive-writable\n",
 			       dev_info->segment_name);
 			rc = -EINVAL;
-			जाओ out;
-		पूर्ण
-		list_क्रम_each_entry(entry, &dev_info->seg_list, lh) अणु
-			rc = segment_modअगरy_shared(entry->segment_name,
+			goto out;
+		}
+		list_for_each_entry(entry, &dev_info->seg_list, lh) {
+			rc = segment_modify_shared(entry->segment_name,
 						   SEGMENT_EXCLUSIVE);
-			अगर (rc < 0) अणु
+			if (rc < 0) {
 				BUG_ON(rc == -EINVAL);
-				अगर (rc != -EAGAIN)
-					जाओ हटाओseg;
-			पूर्ण
-		पूर्ण
+				if (rc != -EAGAIN)
+					goto removeseg;
+			}
+		}
 		dev_info->is_shared = 0;
 		set_disk_ro(dev_info->gd, 0);
-	पूर्ण अन्यथा अणु
+	} else {
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	rc = count;
-	जाओ out;
+	goto out;
 
-हटाओseg:
+removeseg:
 	pr_err("DCSS device %s is removed after a failed access mode "
 	       "change\n", dev_info->segment_name);
 	temp = entry;
-	list_क्रम_each_entry(entry, &dev_info->seg_list, lh) अणु
-		अगर (entry != temp)
+	list_for_each_entry(entry, &dev_info->seg_list, lh) {
+		if (entry != temp)
 			segment_unload(entry->segment_name);
-	पूर्ण
+	}
 	list_del(&dev_info->lh);
 
-	समाप्त_dax(dev_info->dax_dev);
+	kill_dax(dev_info->dax_dev);
 	put_dax(dev_info->dax_dev);
 	del_gendisk(dev_info->gd);
 	blk_cleanup_queue(dev_info->dcssblk_queue);
-	dev_info->gd->queue = शून्य;
+	dev_info->gd->queue = NULL;
 	put_disk(dev_info->gd);
-	up_ग_लिखो(&dcssblk_devices_sem);
+	up_write(&dcssblk_devices_sem);
 
-	अगर (device_हटाओ_file_self(dev, attr)) अणु
-		device_unरेजिस्टर(dev);
+	if (device_remove_file_self(dev, attr)) {
+		device_unregister(dev);
 		put_device(dev);
-	पूर्ण
-	वापस rc;
+	}
+	return rc;
 out:
-	up_ग_लिखो(&dcssblk_devices_sem);
-	वापस rc;
-पूर्ण
-अटल DEVICE_ATTR(shared, S_IWUSR | S_IRUSR, dcssblk_shared_show,
+	up_write(&dcssblk_devices_sem);
+	return rc;
+}
+static DEVICE_ATTR(shared, S_IWUSR | S_IRUSR, dcssblk_shared_show,
 		   dcssblk_shared_store);
 
 /*
- * device attribute क्रम save operation on current copy
+ * device attribute for save operation on current copy
  * of the segment. If the segment is busy, saving will
- * become pending until it माला_लो released, which can be
- * unकरोne by storing a non-true value to this entry.
+ * become pending until it gets released, which can be
+ * undone by storing a non-true value to this entry.
  * (show + store)
  */
-अटल sमाप_प्रकार
-dcssblk_save_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा dcssblk_dev_info *dev_info;
+static ssize_t
+dcssblk_save_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct dcssblk_dev_info *dev_info;
 
-	dev_info = container_of(dev, काष्ठा dcssblk_dev_info, dev);
-	वापस प्र_लिखो(buf, dev_info->save_pending ? "1\n" : "0\n");
-पूर्ण
+	dev_info = container_of(dev, struct dcssblk_dev_info, dev);
+	return sprintf(buf, dev_info->save_pending ? "1\n" : "0\n");
+}
 
-अटल sमाप_प्रकार
-dcssblk_save_store(काष्ठा device *dev, काष्ठा device_attribute *attr, स्थिर अक्षर *inbuf, माप_प्रकार count)
-अणु
-	काष्ठा dcssblk_dev_info *dev_info;
-	काष्ठा segment_info *entry;
+static ssize_t
+dcssblk_save_store(struct device *dev, struct device_attribute *attr, const char *inbuf, size_t count)
+{
+	struct dcssblk_dev_info *dev_info;
+	struct segment_info *entry;
 
-	अगर ((count > 1) && (inbuf[1] != '\n') && (inbuf[1] != '\0'))
-		वापस -EINVAL;
-	dev_info = container_of(dev, काष्ठा dcssblk_dev_info, dev);
+	if ((count > 1) && (inbuf[1] != '\n') && (inbuf[1] != '\0'))
+		return -EINVAL;
+	dev_info = container_of(dev, struct dcssblk_dev_info, dev);
 
-	करोwn_ग_लिखो(&dcssblk_devices_sem);
-	अगर (inbuf[0] == '1') अणु
-		अगर (atomic_पढ़ो(&dev_info->use_count) == 0) अणु
+	down_write(&dcssblk_devices_sem);
+	if (inbuf[0] == '1') {
+		if (atomic_read(&dev_info->use_count) == 0) {
 			// device is idle => we save immediately
 			pr_info("All DCSSs that map to device %s are "
 				"saved\n", dev_info->segment_name);
-			list_क्रम_each_entry(entry, &dev_info->seg_list, lh) अणु
-				अगर (entry->segment_type == SEG_TYPE_EN ||
+			list_for_each_entry(entry, &dev_info->seg_list, lh) {
+				if (entry->segment_type == SEG_TYPE_EN ||
 				    entry->segment_type == SEG_TYPE_SN)
 					pr_warn("DCSS %s is of type SN or EN"
 						" and cannot be saved\n",
 						entry->segment_name);
-				अन्यथा
+				else
 					segment_save(entry->segment_name);
-			पूर्ण
-		पूर्ण  अन्यथा अणु
+			}
+		}  else {
 			// device is busy => we save it when it becomes
 			// idle in dcssblk_release
 			pr_info("Device %s is in use, its DCSSs will be "
 				"saved when it becomes idle\n",
 				dev_info->segment_name);
 			dev_info->save_pending = 1;
-		पूर्ण
-	पूर्ण अन्यथा अगर (inbuf[0] == '0') अणु
-		अगर (dev_info->save_pending) अणु
-			// device is busy & the user wants to unकरो his save
+		}
+	} else if (inbuf[0] == '0') {
+		if (dev_info->save_pending) {
+			// device is busy & the user wants to undo his save
 			// request
 			dev_info->save_pending = 0;
 			pr_info("A pending save request for device %s "
 				"has been canceled\n",
 				dev_info->segment_name);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		up_ग_लिखो(&dcssblk_devices_sem);
-		वापस -EINVAL;
-	पूर्ण
-	up_ग_लिखो(&dcssblk_devices_sem);
-	वापस count;
-पूर्ण
-अटल DEVICE_ATTR(save, S_IWUSR | S_IRUSR, dcssblk_save_show,
+		}
+	} else {
+		up_write(&dcssblk_devices_sem);
+		return -EINVAL;
+	}
+	up_write(&dcssblk_devices_sem);
+	return count;
+}
+static DEVICE_ATTR(save, S_IWUSR | S_IRUSR, dcssblk_save_show,
 		   dcssblk_save_store);
 
 /*
- * device attribute क्रम showing all segments in a device
+ * device attribute for showing all segments in a device
  */
-अटल sमाप_प्रकार
-dcssblk_seglist_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		अक्षर *buf)
-अणु
-	पूर्णांक i;
+static ssize_t
+dcssblk_seglist_show(struct device *dev, struct device_attribute *attr,
+		char *buf)
+{
+	int i;
 
-	काष्ठा dcssblk_dev_info *dev_info;
-	काष्ठा segment_info *entry;
+	struct dcssblk_dev_info *dev_info;
+	struct segment_info *entry;
 
-	करोwn_पढ़ो(&dcssblk_devices_sem);
-	dev_info = container_of(dev, काष्ठा dcssblk_dev_info, dev);
+	down_read(&dcssblk_devices_sem);
+	dev_info = container_of(dev, struct dcssblk_dev_info, dev);
 	i = 0;
 	buf[0] = '\0';
-	list_क्रम_each_entry(entry, &dev_info->seg_list, lh) अणु
-		म_नकल(&buf[i], entry->segment_name);
-		i += म_माप(entry->segment_name);
+	list_for_each_entry(entry, &dev_info->seg_list, lh) {
+		strcpy(&buf[i], entry->segment_name);
+		i += strlen(entry->segment_name);
 		buf[i] = '\n';
 		i++;
-	पूर्ण
-	up_पढ़ो(&dcssblk_devices_sem);
-	वापस i;
-पूर्ण
-अटल DEVICE_ATTR(seglist, S_IRUSR, dcssblk_seglist_show, शून्य);
+	}
+	up_read(&dcssblk_devices_sem);
+	return i;
+}
+static DEVICE_ATTR(seglist, S_IRUSR, dcssblk_seglist_show, NULL);
 
-अटल काष्ठा attribute *dcssblk_dev_attrs[] = अणु
+static struct attribute *dcssblk_dev_attrs[] = {
 	&dev_attr_shared.attr,
 	&dev_attr_save.attr,
 	&dev_attr_seglist.attr,
-	शून्य,
-पूर्ण;
-अटल काष्ठा attribute_group dcssblk_dev_attr_group = अणु
+	NULL,
+};
+static struct attribute_group dcssblk_dev_attr_group = {
 	.attrs = dcssblk_dev_attrs,
-पूर्ण;
-अटल स्थिर काष्ठा attribute_group *dcssblk_dev_attr_groups[] = अणु
+};
+static const struct attribute_group *dcssblk_dev_attr_groups[] = {
 	&dcssblk_dev_attr_group,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
 /*
- * device attribute क्रम adding devices
+ * device attribute for adding devices
  */
-अटल sमाप_प्रकार
-dcssblk_add_store(काष्ठा device *dev, काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	पूर्णांक rc, i, j, num_of_segments;
-	काष्ठा dcssblk_dev_info *dev_info;
-	काष्ठा segment_info *seg_info, *temp;
-	अक्षर *local_buf;
-	अचिन्हित दीर्घ seg_byte_size;
+static ssize_t
+dcssblk_add_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
+{
+	int rc, i, j, num_of_segments;
+	struct dcssblk_dev_info *dev_info;
+	struct segment_info *seg_info, *temp;
+	char *local_buf;
+	unsigned long seg_byte_size;
 
-	dev_info = शून्य;
-	seg_info = शून्य;
-	अगर (dev != dcssblk_root_dev) अणु
+	dev_info = NULL;
+	seg_info = NULL;
+	if (dev != dcssblk_root_dev) {
 		rc = -EINVAL;
-		जाओ out_nobuf;
-	पूर्ण
-	अगर ((count < 1) || (buf[0] == '\0') || (buf[0] == '\n')) अणु
+		goto out_nobuf;
+	}
+	if ((count < 1) || (buf[0] == '\0') || (buf[0] == '\n')) {
 		rc = -ENAMETOOLONG;
-		जाओ out_nobuf;
-	पूर्ण
+		goto out_nobuf;
+	}
 
-	local_buf = kदो_स्मृति(count + 1, GFP_KERNEL);
-	अगर (local_buf == शून्य) अणु
+	local_buf = kmalloc(count + 1, GFP_KERNEL);
+	if (local_buf == NULL) {
 		rc = -ENOMEM;
-		जाओ out_nobuf;
-	पूर्ण
+		goto out_nobuf;
+	}
 
 	/*
 	 * parse input
 	 */
 	num_of_segments = 0;
-	क्रम (i = 0; (i < count && (buf[i] != '\0') && (buf[i] != '\n')); i++) अणु
-		क्रम (j = i; j < count &&
+	for (i = 0; (i < count && (buf[i] != '\0') && (buf[i] != '\n')); i++) {
+		for (j = i; j < count &&
 			(buf[j] != ':') &&
 			(buf[j] != '\0') &&
-			(buf[j] != '\n'); j++) अणु
-			local_buf[j-i] = बड़े(buf[j]);
-		पूर्ण
+			(buf[j] != '\n'); j++) {
+			local_buf[j-i] = toupper(buf[j]);
+		}
 		local_buf[j-i] = '\0';
-		अगर (((j - i) == 0) || ((j - i) > 8)) अणु
+		if (((j - i) == 0) || ((j - i) > 8)) {
 			rc = -ENAMETOOLONG;
-			जाओ seg_list_del;
-		पूर्ण
+			goto seg_list_del;
+		}
 
 		rc = dcssblk_load_segment(local_buf, &seg_info);
-		अगर (rc < 0)
-			जाओ seg_list_del;
+		if (rc < 0)
+			goto seg_list_del;
 		/*
-		 * get a काष्ठा dcssblk_dev_info
+		 * get a struct dcssblk_dev_info
 		 */
-		अगर (num_of_segments == 0) अणु
-			dev_info = kzalloc(माप(काष्ठा dcssblk_dev_info),
+		if (num_of_segments == 0) {
+			dev_info = kzalloc(sizeof(struct dcssblk_dev_info),
 					GFP_KERNEL);
-			अगर (dev_info == शून्य) अणु
+			if (dev_info == NULL) {
 				rc = -ENOMEM;
-				जाओ out;
-			पूर्ण
-			म_नकल(dev_info->segment_name, local_buf);
+				goto out;
+			}
+			strcpy(dev_info->segment_name, local_buf);
 			dev_info->segment_type = seg_info->segment_type;
 			INIT_LIST_HEAD(&dev_info->seg_list);
-		पूर्ण
+		}
 		list_add_tail(&seg_info->lh, &dev_info->seg_list);
 		num_of_segments++;
 		i = j;
 
-		अगर ((buf[j] == '\0') || (buf[j] == '\n'))
-			अवरोध;
-	पूर्ण
+		if ((buf[j] == '\0') || (buf[j] == '\n'))
+			break;
+	}
 
 	/* no trailing colon at the end of the input */
-	अगर ((i > 0) && (buf[i-1] == ':')) अणु
+	if ((i > 0) && (buf[i-1] == ':')) {
 		rc = -ENAMETOOLONG;
-		जाओ seg_list_del;
-	पूर्ण
+		goto seg_list_del;
+	}
 	strlcpy(local_buf, buf, i + 1);
 	dev_info->num_of_segments = num_of_segments;
 	rc = dcssblk_is_continuous(dev_info);
-	अगर (rc < 0)
-		जाओ seg_list_del;
+	if (rc < 0)
+		goto seg_list_del;
 
 	dev_info->start = dcssblk_find_lowest_addr(dev_info);
 	dev_info->end = dcssblk_find_highest_addr(dev_info);
@@ -646,15 +645,15 @@ dcssblk_add_store(काष्ठा device *dev, काष्ठा device_attr
 	dev_info->dev.groups = dcssblk_dev_attr_groups;
 	INIT_LIST_HEAD(&dev_info->lh);
 	dev_info->gd = alloc_disk(DCSSBLK_MINORS_PER_DISK);
-	अगर (dev_info->gd == शून्य) अणु
+	if (dev_info->gd == NULL) {
 		rc = -ENOMEM;
-		जाओ seg_list_del;
-	पूर्ण
+		goto seg_list_del;
+	}
 	dev_info->gd->major = dcssblk_major;
 	dev_info->gd->fops = &dcssblk_devops;
 	dev_info->dcssblk_queue = blk_alloc_queue(NUMA_NO_NODE);
 	dev_info->gd->queue = dev_info->dcssblk_queue;
-	dev_info->gd->निजी_data = dev_info;
+	dev_info->gd->private_data = dev_info;
 	blk_queue_logical_block_size(dev_info->dcssblk_queue, 4096);
 	blk_queue_flag_set(QUEUE_FLAG_DAX, dev_info->dcssblk_queue);
 
@@ -670,470 +669,470 @@ dcssblk_add_store(काष्ठा device *dev, काष्ठा device_attr
 	/*
 	 *get minor, add to list
 	 */
-	करोwn_ग_लिखो(&dcssblk_devices_sem);
-	अगर (dcssblk_get_segment_by_name(local_buf)) अणु
+	down_write(&dcssblk_devices_sem);
+	if (dcssblk_get_segment_by_name(local_buf)) {
 		rc = -EEXIST;
-		जाओ release_gd;
-	पूर्ण
-	rc = dcssblk_assign_मुक्त_minor(dev_info);
-	अगर (rc)
-		जाओ release_gd;
-	प्र_लिखो(dev_info->gd->disk_name, "dcssblk%d",
+		goto release_gd;
+	}
+	rc = dcssblk_assign_free_minor(dev_info);
+	if (rc)
+		goto release_gd;
+	sprintf(dev_info->gd->disk_name, "dcssblk%d",
 		dev_info->gd->first_minor);
 	list_add_tail(&dev_info->lh, &dcssblk_devices);
 
-	अगर (!try_module_get(THIS_MODULE)) अणु
+	if (!try_module_get(THIS_MODULE)) {
 		rc = -ENODEV;
-		जाओ dev_list_del;
-	पूर्ण
+		goto dev_list_del;
+	}
 	/*
-	 * रेजिस्टर the device
+	 * register the device
 	 */
-	rc = device_रेजिस्टर(&dev_info->dev);
-	अगर (rc)
-		जाओ put_dev;
+	rc = device_register(&dev_info->dev);
+	if (rc)
+		goto put_dev;
 
 	dev_info->dax_dev = alloc_dax(dev_info, dev_info->gd->disk_name,
 			&dcssblk_dax_ops, DAXDEV_F_SYNC);
-	अगर (IS_ERR(dev_info->dax_dev)) अणु
+	if (IS_ERR(dev_info->dax_dev)) {
 		rc = PTR_ERR(dev_info->dax_dev);
-		dev_info->dax_dev = शून्य;
-		जाओ put_dev;
-	पूर्ण
+		dev_info->dax_dev = NULL;
+		goto put_dev;
+	}
 
 	get_device(&dev_info->dev);
-	device_add_disk(&dev_info->dev, dev_info->gd, शून्य);
+	device_add_disk(&dev_info->dev, dev_info->gd, NULL);
 
-	चयन (dev_info->segment_type) अणु
-		हाल SEG_TYPE_SR:
-		हाल SEG_TYPE_ER:
-		हाल SEG_TYPE_SC:
+	switch (dev_info->segment_type) {
+		case SEG_TYPE_SR:
+		case SEG_TYPE_ER:
+		case SEG_TYPE_SC:
 			set_disk_ro(dev_info->gd,1);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			set_disk_ro(dev_info->gd,0);
-			अवरोध;
-	पूर्ण
-	up_ग_लिखो(&dcssblk_devices_sem);
+			break;
+	}
+	up_write(&dcssblk_devices_sem);
 	rc = count;
-	जाओ out;
+	goto out;
 
 put_dev:
 	list_del(&dev_info->lh);
 	blk_cleanup_queue(dev_info->dcssblk_queue);
-	dev_info->gd->queue = शून्य;
+	dev_info->gd->queue = NULL;
 	put_disk(dev_info->gd);
-	list_क्रम_each_entry(seg_info, &dev_info->seg_list, lh) अणु
+	list_for_each_entry(seg_info, &dev_info->seg_list, lh) {
 		segment_unload(seg_info->segment_name);
-	पूर्ण
+	}
 	put_device(&dev_info->dev);
-	up_ग_लिखो(&dcssblk_devices_sem);
-	जाओ out;
+	up_write(&dcssblk_devices_sem);
+	goto out;
 dev_list_del:
 	list_del(&dev_info->lh);
 release_gd:
 	blk_cleanup_queue(dev_info->dcssblk_queue);
-	dev_info->gd->queue = शून्य;
+	dev_info->gd->queue = NULL;
 	put_disk(dev_info->gd);
-	up_ग_लिखो(&dcssblk_devices_sem);
+	up_write(&dcssblk_devices_sem);
 seg_list_del:
-	अगर (dev_info == शून्य)
-		जाओ out;
-	list_क्रम_each_entry_safe(seg_info, temp, &dev_info->seg_list, lh) अणु
+	if (dev_info == NULL)
+		goto out;
+	list_for_each_entry_safe(seg_info, temp, &dev_info->seg_list, lh) {
 		list_del(&seg_info->lh);
 		segment_unload(seg_info->segment_name);
-		kमुक्त(seg_info);
-	पूर्ण
-	kमुक्त(dev_info);
+		kfree(seg_info);
+	}
+	kfree(dev_info);
 out:
-	kमुक्त(local_buf);
+	kfree(local_buf);
 out_nobuf:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
- * device attribute क्रम removing devices
+ * device attribute for removing devices
  */
-अटल sमाप_प्रकार
-dcssblk_हटाओ_store(काष्ठा device *dev, काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा dcssblk_dev_info *dev_info;
-	काष्ठा segment_info *entry;
-	पूर्णांक rc, i;
-	अक्षर *local_buf;
+static ssize_t
+dcssblk_remove_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct dcssblk_dev_info *dev_info;
+	struct segment_info *entry;
+	int rc, i;
+	char *local_buf;
 
-	अगर (dev != dcssblk_root_dev) अणु
-		वापस -EINVAL;
-	पूर्ण
-	local_buf = kदो_स्मृति(count + 1, GFP_KERNEL);
-	अगर (local_buf == शून्य) अणु
-		वापस -ENOMEM;
-	पूर्ण
+	if (dev != dcssblk_root_dev) {
+		return -EINVAL;
+	}
+	local_buf = kmalloc(count + 1, GFP_KERNEL);
+	if (local_buf == NULL) {
+		return -ENOMEM;
+	}
 	/*
 	 * parse input
 	 */
-	क्रम (i = 0; (i < count && (*(buf+i)!='\0') && (*(buf+i)!='\n')); i++) अणु
-		local_buf[i] = बड़े(buf[i]);
-	पूर्ण
+	for (i = 0; (i < count && (*(buf+i)!='\0') && (*(buf+i)!='\n')); i++) {
+		local_buf[i] = toupper(buf[i]);
+	}
 	local_buf[i] = '\0';
-	अगर ((i == 0) || (i > 8)) अणु
+	if ((i == 0) || (i > 8)) {
 		rc = -ENAMETOOLONG;
-		जाओ out_buf;
-	पूर्ण
+		goto out_buf;
+	}
 
-	करोwn_ग_लिखो(&dcssblk_devices_sem);
+	down_write(&dcssblk_devices_sem);
 	dev_info = dcssblk_get_device_by_name(local_buf);
-	अगर (dev_info == शून्य) अणु
-		up_ग_लिखो(&dcssblk_devices_sem);
+	if (dev_info == NULL) {
+		up_write(&dcssblk_devices_sem);
 		pr_warn("Device %s cannot be removed because it is not a known device\n",
 			local_buf);
 		rc = -ENODEV;
-		जाओ out_buf;
-	पूर्ण
-	अगर (atomic_पढ़ो(&dev_info->use_count) != 0) अणु
-		up_ग_लिखो(&dcssblk_devices_sem);
+		goto out_buf;
+	}
+	if (atomic_read(&dev_info->use_count) != 0) {
+		up_write(&dcssblk_devices_sem);
 		pr_warn("Device %s cannot be removed while it is in use\n",
 			local_buf);
 		rc = -EBUSY;
-		जाओ out_buf;
-	पूर्ण
+		goto out_buf;
+	}
 
 	list_del(&dev_info->lh);
-	समाप्त_dax(dev_info->dax_dev);
+	kill_dax(dev_info->dax_dev);
 	put_dax(dev_info->dax_dev);
 	del_gendisk(dev_info->gd);
 	blk_cleanup_queue(dev_info->dcssblk_queue);
-	dev_info->gd->queue = शून्य;
+	dev_info->gd->queue = NULL;
 	put_disk(dev_info->gd);
 
 	/* unload all related segments */
-	list_क्रम_each_entry(entry, &dev_info->seg_list, lh)
+	list_for_each_entry(entry, &dev_info->seg_list, lh)
 		segment_unload(entry->segment_name);
 
-	up_ग_लिखो(&dcssblk_devices_sem);
+	up_write(&dcssblk_devices_sem);
 
-	device_unरेजिस्टर(&dev_info->dev);
+	device_unregister(&dev_info->dev);
 	put_device(&dev_info->dev);
 
 	rc = count;
 out_buf:
-	kमुक्त(local_buf);
-	वापस rc;
-पूर्ण
+	kfree(local_buf);
+	return rc;
+}
 
-अटल पूर्णांक
-dcssblk_खोलो(काष्ठा block_device *bdev, भ_शेषe_t mode)
-अणु
-	काष्ठा dcssblk_dev_info *dev_info;
-	पूर्णांक rc;
+static int
+dcssblk_open(struct block_device *bdev, fmode_t mode)
+{
+	struct dcssblk_dev_info *dev_info;
+	int rc;
 
-	dev_info = bdev->bd_disk->निजी_data;
-	अगर (शून्य == dev_info) अणु
+	dev_info = bdev->bd_disk->private_data;
+	if (NULL == dev_info) {
 		rc = -ENODEV;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	atomic_inc(&dev_info->use_count);
 	rc = 0;
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम
-dcssblk_release(काष्ठा gendisk *disk, भ_शेषe_t mode)
-अणु
-	काष्ठा dcssblk_dev_info *dev_info = disk->निजी_data;
-	काष्ठा segment_info *entry;
+static void
+dcssblk_release(struct gendisk *disk, fmode_t mode)
+{
+	struct dcssblk_dev_info *dev_info = disk->private_data;
+	struct segment_info *entry;
 
-	अगर (!dev_info) अणु
+	if (!dev_info) {
 		WARN_ON(1);
-		वापस;
-	पूर्ण
-	करोwn_ग_लिखो(&dcssblk_devices_sem);
-	अगर (atomic_dec_and_test(&dev_info->use_count)
-	    && (dev_info->save_pending)) अणु
+		return;
+	}
+	down_write(&dcssblk_devices_sem);
+	if (atomic_dec_and_test(&dev_info->use_count)
+	    && (dev_info->save_pending)) {
 		pr_info("Device %s has become idle and is being saved "
 			"now\n", dev_info->segment_name);
-		list_क्रम_each_entry(entry, &dev_info->seg_list, lh) अणु
-			अगर (entry->segment_type == SEG_TYPE_EN ||
+		list_for_each_entry(entry, &dev_info->seg_list, lh) {
+			if (entry->segment_type == SEG_TYPE_EN ||
 			    entry->segment_type == SEG_TYPE_SN)
 				pr_warn("DCSS %s is of type SN or EN and cannot"
 					" be saved\n", entry->segment_name);
-			अन्यथा
+			else
 				segment_save(entry->segment_name);
-		पूर्ण
+		}
 		dev_info->save_pending = 0;
-	पूर्ण
-	up_ग_लिखो(&dcssblk_devices_sem);
-पूर्ण
+	}
+	up_write(&dcssblk_devices_sem);
+}
 
-अटल blk_qc_t
-dcssblk_submit_bio(काष्ठा bio *bio)
-अणु
-	काष्ठा dcssblk_dev_info *dev_info;
-	काष्ठा bio_vec bvec;
-	काष्ठा bvec_iter iter;
-	अचिन्हित दीर्घ index;
-	अचिन्हित दीर्घ page_addr;
-	अचिन्हित दीर्घ source_addr;
-	अचिन्हित दीर्घ bytes_करोne;
+static blk_qc_t
+dcssblk_submit_bio(struct bio *bio)
+{
+	struct dcssblk_dev_info *dev_info;
+	struct bio_vec bvec;
+	struct bvec_iter iter;
+	unsigned long index;
+	unsigned long page_addr;
+	unsigned long source_addr;
+	unsigned long bytes_done;
 
 	blk_queue_split(&bio);
 
-	bytes_करोne = 0;
-	dev_info = bio->bi_bdev->bd_disk->निजी_data;
-	अगर (dev_info == शून्य)
-		जाओ fail;
-	अगर ((bio->bi_iter.bi_sector & 7) != 0 ||
+	bytes_done = 0;
+	dev_info = bio->bi_bdev->bd_disk->private_data;
+	if (dev_info == NULL)
+		goto fail;
+	if ((bio->bi_iter.bi_sector & 7) != 0 ||
 	    (bio->bi_iter.bi_size & 4095) != 0)
 		/* Request is not page-aligned. */
-		जाओ fail;
-	/* verअगरy data transfer direction */
-	अगर (dev_info->is_shared) अणु
-		चयन (dev_info->segment_type) अणु
-		हाल SEG_TYPE_SR:
-		हाल SEG_TYPE_ER:
-		हाल SEG_TYPE_SC:
-			/* cannot ग_लिखो to these segments */
-			अगर (bio_data_dir(bio) == WRITE) अणु
+		goto fail;
+	/* verify data transfer direction */
+	if (dev_info->is_shared) {
+		switch (dev_info->segment_type) {
+		case SEG_TYPE_SR:
+		case SEG_TYPE_ER:
+		case SEG_TYPE_SC:
+			/* cannot write to these segments */
+			if (bio_data_dir(bio) == WRITE) {
 				pr_warn("Writing to %s failed because it is a read-only device\n",
 					dev_name(&dev_info->dev));
-				जाओ fail;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto fail;
+			}
+		}
+	}
 
 	index = (bio->bi_iter.bi_sector >> 3);
-	bio_क्रम_each_segment(bvec, bio, iter) अणु
-		page_addr = (अचिन्हित दीर्घ)
+	bio_for_each_segment(bvec, bio, iter) {
+		page_addr = (unsigned long)
 			page_address(bvec.bv_page) + bvec.bv_offset;
-		source_addr = dev_info->start + (index<<12) + bytes_करोne;
-		अगर (unlikely((page_addr & 4095) != 0) || (bvec.bv_len & 4095) != 0)
+		source_addr = dev_info->start + (index<<12) + bytes_done;
+		if (unlikely((page_addr & 4095) != 0) || (bvec.bv_len & 4095) != 0)
 			// More paranoia.
-			जाओ fail;
-		अगर (bio_data_dir(bio) == READ) अणु
-			स_नकल((व्योम*)page_addr, (व्योम*)source_addr,
+			goto fail;
+		if (bio_data_dir(bio) == READ) {
+			memcpy((void*)page_addr, (void*)source_addr,
 				bvec.bv_len);
-		पूर्ण अन्यथा अणु
-			स_नकल((व्योम*)source_addr, (व्योम*)page_addr,
+		} else {
+			memcpy((void*)source_addr, (void*)page_addr,
 				bvec.bv_len);
-		पूर्ण
-		bytes_करोne += bvec.bv_len;
-	पूर्ण
+		}
+		bytes_done += bvec.bv_len;
+	}
 	bio_endio(bio);
-	वापस BLK_QC_T_NONE;
+	return BLK_QC_T_NONE;
 fail:
 	bio_io_error(bio);
-	वापस BLK_QC_T_NONE;
-पूर्ण
+	return BLK_QC_T_NONE;
+}
 
-अटल दीर्घ
-__dcssblk_direct_access(काष्ठा dcssblk_dev_info *dev_info, pgoff_t pgoff,
-		दीर्घ nr_pages, व्योम **kaddr, pfn_t *pfn)
-अणु
-	resource_माप_प्रकार offset = pgoff * PAGE_SIZE;
-	अचिन्हित दीर्घ dev_sz;
+static long
+__dcssblk_direct_access(struct dcssblk_dev_info *dev_info, pgoff_t pgoff,
+		long nr_pages, void **kaddr, pfn_t *pfn)
+{
+	resource_size_t offset = pgoff * PAGE_SIZE;
+	unsigned long dev_sz;
 
 	dev_sz = dev_info->end - dev_info->start + 1;
-	अगर (kaddr)
-		*kaddr = (व्योम *) dev_info->start + offset;
-	अगर (pfn)
+	if (kaddr)
+		*kaddr = (void *) dev_info->start + offset;
+	if (pfn)
 		*pfn = __pfn_to_pfn_t(PFN_DOWN(dev_info->start + offset),
 				PFN_DEV|PFN_SPECIAL);
 
-	वापस (dev_sz - offset) / PAGE_SIZE;
-पूर्ण
+	return (dev_sz - offset) / PAGE_SIZE;
+}
 
-अटल दीर्घ
-dcssblk_dax_direct_access(काष्ठा dax_device *dax_dev, pgoff_t pgoff,
-		दीर्घ nr_pages, व्योम **kaddr, pfn_t *pfn)
-अणु
-	काष्ठा dcssblk_dev_info *dev_info = dax_get_निजी(dax_dev);
+static long
+dcssblk_dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff,
+		long nr_pages, void **kaddr, pfn_t *pfn)
+{
+	struct dcssblk_dev_info *dev_info = dax_get_private(dax_dev);
 
-	वापस __dcssblk_direct_access(dev_info, pgoff, nr_pages, kaddr, pfn);
-पूर्ण
+	return __dcssblk_direct_access(dev_info, pgoff, nr_pages, kaddr, pfn);
+}
 
-अटल व्योम
-dcssblk_check_params(व्योम)
-अणु
-	पूर्णांक rc, i, j, k;
-	अक्षर buf[DCSSBLK_PARM_LEN + 1];
-	काष्ठा dcssblk_dev_info *dev_info;
+static void
+dcssblk_check_params(void)
+{
+	int rc, i, j, k;
+	char buf[DCSSBLK_PARM_LEN + 1];
+	struct dcssblk_dev_info *dev_info;
 
-	क्रम (i = 0; (i < DCSSBLK_PARM_LEN) && (dcssblk_segments[i] != '\0');
-	     i++) अणु
-		क्रम (j = i; (j < DCSSBLK_PARM_LEN) &&
+	for (i = 0; (i < DCSSBLK_PARM_LEN) && (dcssblk_segments[i] != '\0');
+	     i++) {
+		for (j = i; (j < DCSSBLK_PARM_LEN) &&
 			    (dcssblk_segments[j] != ',')  &&
 			    (dcssblk_segments[j] != '\0') &&
 			    (dcssblk_segments[j] != '('); j++)
-		अणु
+		{
 			buf[j-i] = dcssblk_segments[j];
-		पूर्ण
+		}
 		buf[j-i] = '\0';
-		rc = dcssblk_add_store(dcssblk_root_dev, शून्य, buf, j-i);
-		अगर ((rc >= 0) && (dcssblk_segments[j] == '(')) अणु
-			क्रम (k = 0; (buf[k] != ':') && (buf[k] != '\0'); k++)
-				buf[k] = बड़े(buf[k]);
+		rc = dcssblk_add_store(dcssblk_root_dev, NULL, buf, j-i);
+		if ((rc >= 0) && (dcssblk_segments[j] == '(')) {
+			for (k = 0; (buf[k] != ':') && (buf[k] != '\0'); k++)
+				buf[k] = toupper(buf[k]);
 			buf[k] = '\0';
-			अगर (!म_भेदन(&dcssblk_segments[j], "(local)", 7)) अणु
-				करोwn_पढ़ो(&dcssblk_devices_sem);
+			if (!strncmp(&dcssblk_segments[j], "(local)", 7)) {
+				down_read(&dcssblk_devices_sem);
 				dev_info = dcssblk_get_device_by_name(buf);
-				up_पढ़ो(&dcssblk_devices_sem);
-				अगर (dev_info)
+				up_read(&dcssblk_devices_sem);
+				if (dev_info)
 					dcssblk_shared_store(&dev_info->dev,
-							     शून्य, "0\n", 2);
-			पूर्ण
-		पूर्ण
-		जबतक ((dcssblk_segments[j] != ',') &&
+							     NULL, "0\n", 2);
+			}
+		}
+		while ((dcssblk_segments[j] != ',') &&
 		       (dcssblk_segments[j] != '\0'))
-		अणु
+		{
 			j++;
-		पूर्ण
-		अगर (dcssblk_segments[j] == '\0')
-			अवरोध;
+		}
+		if (dcssblk_segments[j] == '\0')
+			break;
 		i = j;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Suspend / Resume
  */
-अटल पूर्णांक dcssblk_मुक्तze(काष्ठा device *dev)
-अणु
-	काष्ठा dcssblk_dev_info *dev_info;
-	पूर्णांक rc = 0;
+static int dcssblk_freeze(struct device *dev)
+{
+	struct dcssblk_dev_info *dev_info;
+	int rc = 0;
 
-	list_क्रम_each_entry(dev_info, &dcssblk_devices, lh) अणु
-		चयन (dev_info->segment_type) अणु
-			हाल SEG_TYPE_SR:
-			हाल SEG_TYPE_ER:
-			हाल SEG_TYPE_SC:
-				अगर (!dev_info->is_shared)
+	list_for_each_entry(dev_info, &dcssblk_devices, lh) {
+		switch (dev_info->segment_type) {
+			case SEG_TYPE_SR:
+			case SEG_TYPE_ER:
+			case SEG_TYPE_SC:
+				if (!dev_info->is_shared)
 					rc = -EINVAL;
-				अवरोध;
-			शेष:
+				break;
+			default:
 				rc = -EINVAL;
-				अवरोध;
-		पूर्ण
-		अगर (rc)
-			अवरोध;
-	पूर्ण
-	अगर (rc)
+				break;
+		}
+		if (rc)
+			break;
+	}
+	if (rc)
 		pr_err("Suspending the system failed because DCSS device %s "
 		       "is writable\n",
 		       dev_info->segment_name);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक dcssblk_restore(काष्ठा device *dev)
-अणु
-	काष्ठा dcssblk_dev_info *dev_info;
-	काष्ठा segment_info *entry;
-	अचिन्हित दीर्घ start, end;
-	पूर्णांक rc = 0;
+static int dcssblk_restore(struct device *dev)
+{
+	struct dcssblk_dev_info *dev_info;
+	struct segment_info *entry;
+	unsigned long start, end;
+	int rc = 0;
 
-	list_क्रम_each_entry(dev_info, &dcssblk_devices, lh) अणु
-		list_क्रम_each_entry(entry, &dev_info->seg_list, lh) अणु
+	list_for_each_entry(dev_info, &dcssblk_devices, lh) {
+		list_for_each_entry(entry, &dev_info->seg_list, lh) {
 			segment_unload(entry->segment_name);
 			rc = segment_load(entry->segment_name, SEGMENT_SHARED,
 					  &start, &end);
-			अगर (rc < 0) अणु
+			if (rc < 0) {
 // TODO in_use check ?
 				segment_warning(rc, entry->segment_name);
-				जाओ out_panic;
-			पूर्ण
-			अगर (start != entry->start || end != entry->end) अणु
+				goto out_panic;
+			}
+			if (start != entry->start || end != entry->end) {
 				pr_err("The address range of DCSS %s changed "
 				       "while the system was suspended\n",
 				       entry->segment_name);
-				जाओ out_panic;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस 0;
+				goto out_panic;
+			}
+		}
+	}
+	return 0;
 out_panic:
 	panic("fatal dcssblk resume error\n");
-पूर्ण
+}
 
-अटल पूर्णांक dcssblk_thaw(काष्ठा device *dev)
-अणु
-	वापस 0;
-पूर्ण
+static int dcssblk_thaw(struct device *dev)
+{
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops dcssblk_pm_ops = अणु
-	.मुक्तze		= dcssblk_मुक्तze,
+static const struct dev_pm_ops dcssblk_pm_ops = {
+	.freeze		= dcssblk_freeze,
 	.thaw		= dcssblk_thaw,
 	.restore	= dcssblk_restore,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_driver dcssblk_pdrv = अणु
-	.driver = अणु
+static struct platform_driver dcssblk_pdrv = {
+	.driver = {
 		.name	= "dcssblk",
 		.pm	= &dcssblk_pm_ops,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा platक्रमm_device *dcssblk_pdev;
+static struct platform_device *dcssblk_pdev;
 
 
 /*
- * The init/निकास functions.
+ * The init/exit functions.
  */
-अटल व्योम __निकास
-dcssblk_निकास(व्योम)
-अणु
-	platक्रमm_device_unरेजिस्टर(dcssblk_pdev);
-	platक्रमm_driver_unरेजिस्टर(&dcssblk_pdrv);
-	root_device_unरेजिस्टर(dcssblk_root_dev);
-	unरेजिस्टर_blkdev(dcssblk_major, DCSSBLK_NAME);
-पूर्ण
+static void __exit
+dcssblk_exit(void)
+{
+	platform_device_unregister(dcssblk_pdev);
+	platform_driver_unregister(&dcssblk_pdrv);
+	root_device_unregister(dcssblk_root_dev);
+	unregister_blkdev(dcssblk_major, DCSSBLK_NAME);
+}
 
-अटल पूर्णांक __init
-dcssblk_init(व्योम)
-अणु
-	पूर्णांक rc;
+static int __init
+dcssblk_init(void)
+{
+	int rc;
 
-	rc = platक्रमm_driver_रेजिस्टर(&dcssblk_pdrv);
-	अगर (rc)
-		वापस rc;
+	rc = platform_driver_register(&dcssblk_pdrv);
+	if (rc)
+		return rc;
 
-	dcssblk_pdev = platक्रमm_device_रेजिस्टर_simple("dcssblk", -1, शून्य,
+	dcssblk_pdev = platform_device_register_simple("dcssblk", -1, NULL,
 							0);
-	अगर (IS_ERR(dcssblk_pdev)) अणु
+	if (IS_ERR(dcssblk_pdev)) {
 		rc = PTR_ERR(dcssblk_pdev);
-		जाओ out_pdrv;
-	पूर्ण
+		goto out_pdrv;
+	}
 
-	dcssblk_root_dev = root_device_रेजिस्टर("dcssblk");
-	अगर (IS_ERR(dcssblk_root_dev)) अणु
+	dcssblk_root_dev = root_device_register("dcssblk");
+	if (IS_ERR(dcssblk_root_dev)) {
 		rc = PTR_ERR(dcssblk_root_dev);
-		जाओ out_pdev;
-	पूर्ण
+		goto out_pdev;
+	}
 	rc = device_create_file(dcssblk_root_dev, &dev_attr_add);
-	अगर (rc)
-		जाओ out_root;
-	rc = device_create_file(dcssblk_root_dev, &dev_attr_हटाओ);
-	अगर (rc)
-		जाओ out_root;
-	rc = रेजिस्टर_blkdev(0, DCSSBLK_NAME);
-	अगर (rc < 0)
-		जाओ out_root;
+	if (rc)
+		goto out_root;
+	rc = device_create_file(dcssblk_root_dev, &dev_attr_remove);
+	if (rc)
+		goto out_root;
+	rc = register_blkdev(0, DCSSBLK_NAME);
+	if (rc < 0)
+		goto out_root;
 	dcssblk_major = rc;
 	init_rwsem(&dcssblk_devices_sem);
 
 	dcssblk_check_params();
-	वापस 0;
+	return 0;
 
 out_root:
-	root_device_unरेजिस्टर(dcssblk_root_dev);
+	root_device_unregister(dcssblk_root_dev);
 out_pdev:
-	platक्रमm_device_unरेजिस्टर(dcssblk_pdev);
+	platform_device_unregister(dcssblk_pdev);
 out_pdrv:
-	platक्रमm_driver_unरेजिस्टर(&dcssblk_pdrv);
-	वापस rc;
-पूर्ण
+	platform_driver_unregister(&dcssblk_pdrv);
+	return rc;
+}
 
 module_init(dcssblk_init);
-module_निकास(dcssblk_निकास);
+module_exit(dcssblk_exit);
 
 module_param_string(segments, dcssblk_segments, DCSSBLK_PARM_LEN, 0444);
 MODULE_PARM_DESC(segments, "Name of DCSS segment(s) to be loaded, "

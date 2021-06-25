@@ -1,258 +1,257 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0
+/* SPDX-License-Identifier: GPL-2.0
  *  Copyright(c) 2017-2018 Jesper Dangaard Brouer, Red Hat Inc.
  *
- * XDP monitor tool, based on tracepoपूर्णांकs
+ * XDP monitor tool, based on tracepoints
  */
-#समावेश <uapi/linux/bpf.h>
-#समावेश <bpf/bpf_helpers.h>
+#include <uapi/linux/bpf.h>
+#include <bpf/bpf_helpers.h>
 
-काष्ठा अणु
-	__uपूर्णांक(type, BPF_MAP_TYPE_PERCPU_ARRAY);
+struct {
+	__uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
 	__type(key, u32);
 	__type(value, u64);
-	__uपूर्णांक(max_entries, 2);
-	/* TODO: have entries क्रम all possible त्रुटि_सं's */
-पूर्ण redirect_err_cnt SEC(".maps");
+	__uint(max_entries, 2);
+	/* TODO: have entries for all possible errno's */
+} redirect_err_cnt SEC(".maps");
 
-#घोषणा XDP_UNKNOWN	XDP_REसूचीECT + 1
-काष्ठा अणु
-	__uपूर्णांक(type, BPF_MAP_TYPE_PERCPU_ARRAY);
+#define XDP_UNKNOWN	XDP_REDIRECT + 1
+struct {
+	__uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
 	__type(key, u32);
 	__type(value, u64);
-	__uपूर्णांक(max_entries, XDP_UNKNOWN + 1);
-पूर्ण exception_cnt SEC(".maps");
+	__uint(max_entries, XDP_UNKNOWN + 1);
+} exception_cnt SEC(".maps");
 
-/* Tracepoपूर्णांक क्रमmat: /sys/kernel/debug/tracing/events/xdp/xdp_redirect/क्रमmat
+/* Tracepoint format: /sys/kernel/debug/tracing/events/xdp/xdp_redirect/format
  * Code in:                kernel/include/trace/events/xdp.h
  */
-काष्ठा xdp_redirect_ctx अणु
+struct xdp_redirect_ctx {
 	u64 __pad;		// First 8 bytes are not accessible by bpf code
-	पूर्णांक prog_id;		//	offset:8;  size:4; चिन्हित:1;
-	u32 act;		//	offset:12  size:4; चिन्हित:0;
-	पूर्णांक अगरindex;		//	offset:16  size:4; चिन्हित:1;
-	पूर्णांक err;		//	offset:20  size:4; चिन्हित:1;
-	पूर्णांक to_अगरindex;		//	offset:24  size:4; चिन्हित:1;
-	u32 map_id;		//	offset:28  size:4; चिन्हित:0;
-	पूर्णांक map_index;		//	offset:32  size:4; चिन्हित:1;
-पूर्ण;				//	offset:36
+	int prog_id;		//	offset:8;  size:4; signed:1;
+	u32 act;		//	offset:12  size:4; signed:0;
+	int ifindex;		//	offset:16  size:4; signed:1;
+	int err;		//	offset:20  size:4; signed:1;
+	int to_ifindex;		//	offset:24  size:4; signed:1;
+	u32 map_id;		//	offset:28  size:4; signed:0;
+	int map_index;		//	offset:32  size:4; signed:1;
+};				//	offset:36
 
-क्रमागत अणु
-	XDP_REसूचीECT_SUCCESS = 0,
-	XDP_REसूचीECT_ERROR = 1
-पूर्ण;
+enum {
+	XDP_REDIRECT_SUCCESS = 0,
+	XDP_REDIRECT_ERROR = 1
+};
 
-अटल __always_अंतरभूत
-पूर्णांक xdp_redirect_collect_stat(काष्ठा xdp_redirect_ctx *ctx)
-अणु
-	u32 key = XDP_REसूचीECT_ERROR;
-	पूर्णांक err = ctx->err;
+static __always_inline
+int xdp_redirect_collect_stat(struct xdp_redirect_ctx *ctx)
+{
+	u32 key = XDP_REDIRECT_ERROR;
+	int err = ctx->err;
 	u64 *cnt;
 
-	अगर (!err)
-		key = XDP_REसूचीECT_SUCCESS;
+	if (!err)
+		key = XDP_REDIRECT_SUCCESS;
 
 	cnt  = bpf_map_lookup_elem(&redirect_err_cnt, &key);
-	अगर (!cnt)
-		वापस 1;
+	if (!cnt)
+		return 1;
 	*cnt += 1;
 
-	वापस 0; /* Indicate event was filtered (no further processing)*/
+	return 0; /* Indicate event was filtered (no further processing)*/
 	/*
-	 * Returning 1 here would allow e.g. a perf-record tracepoपूर्णांक
-	 * to see and record these events, but it करोesn't work well
+	 * Returning 1 here would allow e.g. a perf-record tracepoint
+	 * to see and record these events, but it doesn't work well
 	 * in-practice as stopping perf-record also unload this
-	 * bpf_prog.  Plus, there is additional overhead of करोing so.
+	 * bpf_prog.  Plus, there is additional overhead of doing so.
 	 */
-पूर्ण
+}
 
 SEC("tracepoint/xdp/xdp_redirect_err")
-पूर्णांक trace_xdp_redirect_err(काष्ठा xdp_redirect_ctx *ctx)
-अणु
-	वापस xdp_redirect_collect_stat(ctx);
-पूर्ण
+int trace_xdp_redirect_err(struct xdp_redirect_ctx *ctx)
+{
+	return xdp_redirect_collect_stat(ctx);
+}
 
 
 SEC("tracepoint/xdp/xdp_redirect_map_err")
-पूर्णांक trace_xdp_redirect_map_err(काष्ठा xdp_redirect_ctx *ctx)
-अणु
-	वापस xdp_redirect_collect_stat(ctx);
-पूर्ण
+int trace_xdp_redirect_map_err(struct xdp_redirect_ctx *ctx)
+{
+	return xdp_redirect_collect_stat(ctx);
+}
 
 /* Likely unloaded when prog starts */
 SEC("tracepoint/xdp/xdp_redirect")
-पूर्णांक trace_xdp_redirect(काष्ठा xdp_redirect_ctx *ctx)
-अणु
-	वापस xdp_redirect_collect_stat(ctx);
-पूर्ण
+int trace_xdp_redirect(struct xdp_redirect_ctx *ctx)
+{
+	return xdp_redirect_collect_stat(ctx);
+}
 
 /* Likely unloaded when prog starts */
 SEC("tracepoint/xdp/xdp_redirect_map")
-पूर्णांक trace_xdp_redirect_map(काष्ठा xdp_redirect_ctx *ctx)
-अणु
-	वापस xdp_redirect_collect_stat(ctx);
-पूर्ण
+int trace_xdp_redirect_map(struct xdp_redirect_ctx *ctx)
+{
+	return xdp_redirect_collect_stat(ctx);
+}
 
-/* Tracepoपूर्णांक क्रमmat: /sys/kernel/debug/tracing/events/xdp/xdp_exception/क्रमmat
+/* Tracepoint format: /sys/kernel/debug/tracing/events/xdp/xdp_exception/format
  * Code in:                kernel/include/trace/events/xdp.h
  */
-काष्ठा xdp_exception_ctx अणु
+struct xdp_exception_ctx {
 	u64 __pad;	// First 8 bytes are not accessible by bpf code
-	पूर्णांक prog_id;	//	offset:8;  size:4; चिन्हित:1;
-	u32 act;	//	offset:12; size:4; चिन्हित:0;
-	पूर्णांक अगरindex;	//	offset:16; size:4; चिन्हित:1;
-पूर्ण;
+	int prog_id;	//	offset:8;  size:4; signed:1;
+	u32 act;	//	offset:12; size:4; signed:0;
+	int ifindex;	//	offset:16; size:4; signed:1;
+};
 
 SEC("tracepoint/xdp/xdp_exception")
-पूर्णांक trace_xdp_exception(काष्ठा xdp_exception_ctx *ctx)
-अणु
+int trace_xdp_exception(struct xdp_exception_ctx *ctx)
+{
 	u64 *cnt;
 	u32 key;
 
 	key = ctx->act;
-	अगर (key > XDP_REसूचीECT)
+	if (key > XDP_REDIRECT)
 		key = XDP_UNKNOWN;
 
 	cnt = bpf_map_lookup_elem(&exception_cnt, &key);
-	अगर (!cnt)
-		वापस 1;
+	if (!cnt)
+		return 1;
 	*cnt += 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Common stats data record shared with _user.c */
-काष्ठा datarec अणु
+struct datarec {
 	u64 processed;
 	u64 dropped;
 	u64 info;
 	u64 err;
-पूर्ण;
-#घोषणा MAX_CPUS 64
+};
+#define MAX_CPUS 64
 
-काष्ठा अणु
-	__uपूर्णांक(type, BPF_MAP_TYPE_PERCPU_ARRAY);
+struct {
+	__uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
 	__type(key, u32);
-	__type(value, काष्ठा datarec);
-	__uपूर्णांक(max_entries, MAX_CPUS);
-पूर्ण cpumap_enqueue_cnt SEC(".maps");
+	__type(value, struct datarec);
+	__uint(max_entries, MAX_CPUS);
+} cpumap_enqueue_cnt SEC(".maps");
 
-काष्ठा अणु
-	__uपूर्णांक(type, BPF_MAP_TYPE_PERCPU_ARRAY);
+struct {
+	__uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
 	__type(key, u32);
-	__type(value, काष्ठा datarec);
-	__uपूर्णांक(max_entries, 1);
-पूर्ण cpumap_kthपढ़ो_cnt SEC(".maps");
+	__type(value, struct datarec);
+	__uint(max_entries, 1);
+} cpumap_kthread_cnt SEC(".maps");
 
-/* Tracepoपूर्णांक: /sys/kernel/debug/tracing/events/xdp/xdp_cpumap_enqueue/क्रमmat
+/* Tracepoint: /sys/kernel/debug/tracing/events/xdp/xdp_cpumap_enqueue/format
  * Code in:         kernel/include/trace/events/xdp.h
  */
-काष्ठा cpumap_enqueue_ctx अणु
+struct cpumap_enqueue_ctx {
 	u64 __pad;		// First 8 bytes are not accessible by bpf code
-	पूर्णांक map_id;		//	offset:8;  size:4; चिन्हित:1;
-	u32 act;		//	offset:12; size:4; चिन्हित:0;
-	पूर्णांक cpu;		//	offset:16; size:4; चिन्हित:1;
-	अचिन्हित पूर्णांक drops;	//	offset:20; size:4; चिन्हित:0;
-	अचिन्हित पूर्णांक processed;	//	offset:24; size:4; चिन्हित:0;
-	पूर्णांक to_cpu;		//	offset:28; size:4; चिन्हित:1;
-पूर्ण;
+	int map_id;		//	offset:8;  size:4; signed:1;
+	u32 act;		//	offset:12; size:4; signed:0;
+	int cpu;		//	offset:16; size:4; signed:1;
+	unsigned int drops;	//	offset:20; size:4; signed:0;
+	unsigned int processed;	//	offset:24; size:4; signed:0;
+	int to_cpu;		//	offset:28; size:4; signed:1;
+};
 
 SEC("tracepoint/xdp/xdp_cpumap_enqueue")
-पूर्णांक trace_xdp_cpumap_enqueue(काष्ठा cpumap_enqueue_ctx *ctx)
-अणु
+int trace_xdp_cpumap_enqueue(struct cpumap_enqueue_ctx *ctx)
+{
 	u32 to_cpu = ctx->to_cpu;
-	काष्ठा datarec *rec;
+	struct datarec *rec;
 
-	अगर (to_cpu >= MAX_CPUS)
-		वापस 1;
+	if (to_cpu >= MAX_CPUS)
+		return 1;
 
 	rec = bpf_map_lookup_elem(&cpumap_enqueue_cnt, &to_cpu);
-	अगर (!rec)
-		वापस 0;
+	if (!rec)
+		return 0;
 	rec->processed += ctx->processed;
 	rec->dropped   += ctx->drops;
 
 	/* Record bulk events, then userspace can calc average bulk size */
-	अगर (ctx->processed > 0)
+	if (ctx->processed > 0)
 		rec->info += 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Tracepoपूर्णांक: /sys/kernel/debug/tracing/events/xdp/xdp_cpumap_kthपढ़ो/क्रमmat
+/* Tracepoint: /sys/kernel/debug/tracing/events/xdp/xdp_cpumap_kthread/format
  * Code in:         kernel/include/trace/events/xdp.h
  */
-काष्ठा cpumap_kthपढ़ो_ctx अणु
+struct cpumap_kthread_ctx {
 	u64 __pad;		// First 8 bytes are not accessible by bpf code
-	पूर्णांक map_id;		//	offset:8;  size:4; चिन्हित:1;
-	u32 act;		//	offset:12; size:4; चिन्हित:0;
-	पूर्णांक cpu;		//	offset:16; size:4; चिन्हित:1;
-	अचिन्हित पूर्णांक drops;	//	offset:20; size:4; चिन्हित:0;
-	अचिन्हित पूर्णांक processed;	//	offset:24; size:4; चिन्हित:0;
-	पूर्णांक sched;		//	offset:28; size:4; चिन्हित:1;
-पूर्ण;
+	int map_id;		//	offset:8;  size:4; signed:1;
+	u32 act;		//	offset:12; size:4; signed:0;
+	int cpu;		//	offset:16; size:4; signed:1;
+	unsigned int drops;	//	offset:20; size:4; signed:0;
+	unsigned int processed;	//	offset:24; size:4; signed:0;
+	int sched;		//	offset:28; size:4; signed:1;
+};
 
 SEC("tracepoint/xdp/xdp_cpumap_kthread")
-पूर्णांक trace_xdp_cpumap_kthपढ़ो(काष्ठा cpumap_kthपढ़ो_ctx *ctx)
-अणु
-	काष्ठा datarec *rec;
+int trace_xdp_cpumap_kthread(struct cpumap_kthread_ctx *ctx)
+{
+	struct datarec *rec;
 	u32 key = 0;
 
-	rec = bpf_map_lookup_elem(&cpumap_kthपढ़ो_cnt, &key);
-	अगर (!rec)
-		वापस 0;
+	rec = bpf_map_lookup_elem(&cpumap_kthread_cnt, &key);
+	if (!rec)
+		return 0;
 	rec->processed += ctx->processed;
 	rec->dropped   += ctx->drops;
 
-	/* Count बार kthपढ़ो yielded CPU via schedule call */
-	अगर (ctx->sched)
+	/* Count times kthread yielded CPU via schedule call */
+	if (ctx->sched)
 		rec->info++;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा अणु
-	__uपूर्णांक(type, BPF_MAP_TYPE_PERCPU_ARRAY);
+struct {
+	__uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
 	__type(key, u32);
-	__type(value, काष्ठा datarec);
-	__uपूर्णांक(max_entries, 1);
-पूर्ण devmap_xmit_cnt SEC(".maps");
+	__type(value, struct datarec);
+	__uint(max_entries, 1);
+} devmap_xmit_cnt SEC(".maps");
 
-/* Tracepoपूर्णांक: /sys/kernel/debug/tracing/events/xdp/xdp_devmap_xmit/क्रमmat
+/* Tracepoint: /sys/kernel/debug/tracing/events/xdp/xdp_devmap_xmit/format
  * Code in:         kernel/include/trace/events/xdp.h
  */
-काष्ठा devmap_xmit_ctx अणु
+struct devmap_xmit_ctx {
 	u64 __pad;		// First 8 bytes are not accessible by bpf code
-	पूर्णांक from_अगरindex;	//	offset:8;  size:4; चिन्हित:1;
-	u32 act;		//	offset:12; size:4; चिन्हित:0;
-	पूर्णांक to_अगरindex; 	//	offset:16; size:4; चिन्हित:1;
-	पूर्णांक drops;		//	offset:20; size:4; चिन्हित:1;
-	पूर्णांक sent;		//	offset:24; size:4; चिन्हित:1;
-	पूर्णांक err;		//	offset:28; size:4; चिन्हित:1;
-पूर्ण;
+	int from_ifindex;	//	offset:8;  size:4; signed:1;
+	u32 act;		//	offset:12; size:4; signed:0;
+	int to_ifindex; 	//	offset:16; size:4; signed:1;
+	int drops;		//	offset:20; size:4; signed:1;
+	int sent;		//	offset:24; size:4; signed:1;
+	int err;		//	offset:28; size:4; signed:1;
+};
 
 SEC("tracepoint/xdp/xdp_devmap_xmit")
-पूर्णांक trace_xdp_devmap_xmit(काष्ठा devmap_xmit_ctx *ctx)
-अणु
-	काष्ठा datarec *rec;
+int trace_xdp_devmap_xmit(struct devmap_xmit_ctx *ctx)
+{
+	struct datarec *rec;
 	u32 key = 0;
 
 	rec = bpf_map_lookup_elem(&devmap_xmit_cnt, &key);
-	अगर (!rec)
-		वापस 0;
+	if (!rec)
+		return 0;
 	rec->processed += ctx->sent;
 	rec->dropped   += ctx->drops;
 
 	/* Record bulk events, then userspace can calc average bulk size */
 	rec->info += 1;
 
-	/* Record error हालs, where no frame were sent */
-	अगर (ctx->err)
+	/* Record error cases, where no frame were sent */
+	if (ctx->err)
 		rec->err++;
 
-	/* Catch API error of drv nकरो_xdp_xmit sent more than count */
-	अगर (ctx->drops < 0)
+	/* Catch API error of drv ndo_xdp_xmit sent more than count */
+	if (ctx->drops < 0)
 		rec->err++;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}

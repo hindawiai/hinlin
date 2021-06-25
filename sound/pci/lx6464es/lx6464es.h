@@ -1,34 +1,33 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /* -*- linux-c -*- *
  *
- * ALSA driver क्रम the digigram lx6464es पूर्णांकerface
+ * ALSA driver for the digigram lx6464es interface
  *
  * Copyright (c) 2009 Tim Blechmann <tim@klingt.org>
  */
 
-#अगर_अघोषित LX6464ES_H
-#घोषणा LX6464ES_H
+#ifndef LX6464ES_H
+#define LX6464ES_H
 
-#समावेश <linux/spinlock.h>
-#समावेश <linux/atomic.h>
+#include <linux/spinlock.h>
+#include <linux/atomic.h>
 
-#समावेश <sound/core.h>
-#समावेश <sound/pcm.h>
+#include <sound/core.h>
+#include <sound/pcm.h>
 
-#समावेश "lx_core.h"
+#include "lx_core.h"
 
-#घोषणा LXP "LX6464ES: "
+#define LXP "LX6464ES: "
 
-क्रमागत अणु
-    ES_cmd_मुक्त         = 0,    /* no command executing */
-    ES_cmd_processing   = 1,	/* execution of a पढ़ो/ग_लिखो command */
-    ES_पढ़ो_pending     = 2,    /* a asynchron पढ़ो command is pending */
-    ES_पढ़ो_finishing   = 3,    /* a पढ़ो command has finished रुकोing (set by
+enum {
+    ES_cmd_free         = 0,    /* no command executing */
+    ES_cmd_processing   = 1,	/* execution of a read/write command */
+    ES_read_pending     = 2,    /* a asynchron read command is pending */
+    ES_read_finishing   = 3,    /* a read command has finished waiting (set by
 				 * Interrupt or CancelIrp) */
-पूर्ण;
+};
 
-क्रमागत lx_stream_status अणु
+enum lx_stream_status {
 	LX_STREAM_STATUS_FREE,
 /* 	LX_STREAM_STATUS_OPEN, */
 	LX_STREAM_STATUS_SCHEDULE_RUN,
@@ -37,60 +36,60 @@
 	LX_STREAM_STATUS_SCHEDULE_STOP,
 /* 	LX_STREAM_STATUS_STOPPED, */
 /* 	LX_STREAM_STATUS_PAUSED */
-पूर्ण;
+};
 
 
-काष्ठा lx_stream अणु
-	काष्ठा snd_pcm_substream  *stream;
+struct lx_stream {
+	struct snd_pcm_substream  *stream;
 	snd_pcm_uframes_t          frame_pos;
-	क्रमागत lx_stream_status      status; /* मुक्त, खोलो, running, draining
-					    * छोड़ो */
-	अचिन्हित पूर्णांक               is_capture:1;
-पूर्ण;
+	enum lx_stream_status      status; /* free, open, running, draining
+					    * pause */
+	unsigned int               is_capture:1;
+};
 
 
-काष्ठा lx6464es अणु
-	काष्ठा snd_card        *card;
-	काष्ठा pci_dev         *pci;
-	पूर्णांक			irq;
+struct lx6464es {
+	struct snd_card        *card;
+	struct pci_dev         *pci;
+	int			irq;
 
 	u8			mac_address[6];
 
-	काष्ठा mutex		lock;        /* पूर्णांकerrupt lock */
-	काष्ठा mutex            setup_mutex; /* mutex used in hw_params, खोलो
-					      * and बंद */
+	struct mutex		lock;        /* interrupt lock */
+	struct mutex            setup_mutex; /* mutex used in hw_params, open
+					      * and close */
 
 	/* ports */
-	अचिन्हित दीर्घ		port_plx;	   /* io port (size=256) */
-	व्योम __iomem           *port_plx_remapped; /* remapped plx port */
-	व्योम __iomem           *port_dsp_bar;      /* memory port (32-bit,
+	unsigned long		port_plx;	   /* io port (size=256) */
+	void __iomem           *port_plx_remapped; /* remapped plx port */
+	void __iomem           *port_dsp_bar;      /* memory port (32-bit,
 						    * non-prefetchable,
 						    * size=8K) */
 
 	/* messaging */
-	काष्ठा mutex		msg_lock;          /* message lock */
-	काष्ठा lx_rmh           rmh;
+	struct mutex		msg_lock;          /* message lock */
+	struct lx_rmh           rmh;
 	u32			irqsrc;
 
 	/* configuration */
-	uपूर्णांक			freq_ratio : 2;
-	uपूर्णांक                    playback_mute : 1;
-	uपूर्णांक                    hardware_running[2];
-	u32                     board_sample_rate; /* sample rate पढ़ो from
+	uint			freq_ratio : 2;
+	uint                    playback_mute : 1;
+	uint                    hardware_running[2];
+	u32                     board_sample_rate; /* sample rate read from
 						    * board */
 	u16                     pcm_granularity;   /* board blocksize */
 
 	/* dma */
-	काष्ठा snd_dma_buffer   capture_dma_buf;
-	काष्ठा snd_dma_buffer   playback_dma_buf;
+	struct snd_dma_buffer   capture_dma_buf;
+	struct snd_dma_buffer   playback_dma_buf;
 
 	/* pcm */
-	काष्ठा snd_pcm         *pcm;
+	struct snd_pcm         *pcm;
 
 	/* streams */
-	काष्ठा lx_stream        capture_stream;
-	काष्ठा lx_stream        playback_stream;
-पूर्ण;
+	struct lx_stream        capture_stream;
+	struct lx_stream        playback_stream;
+};
 
 
-#पूर्ण_अगर /* LX6464ES_H */
+#endif /* LX6464ES_H */

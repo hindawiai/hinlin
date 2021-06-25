@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2021 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,22 +19,22 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#समावेश "ram.h"
+#include "ram.h"
 
-#समावेश <subdev/मूलप्रण.स>
-#समावेश <subdev/bios/init.h>
-#समावेश <subdev/bios/rammap.h>
+#include <subdev/bios.h>
+#include <subdev/bios/init.h>
+#include <subdev/bios/rammap.h>
 
-अटल स्थिर काष्ठा nvkm_ram_func
-ga102_ram = अणु
-पूर्ण;
+static const struct nvkm_ram_func
+ga102_ram = {
+};
 
-पूर्णांक
-ga102_ram_new(काष्ठा nvkm_fb *fb, काष्ठा nvkm_ram **pram)
-अणु
-	काष्ठा nvkm_device *device = fb->subdev.device;
-	क्रमागत nvkm_ram_type type = nvkm_fb_bios_memtype(device->bios);
+int
+ga102_ram_new(struct nvkm_fb *fb, struct nvkm_ram **pram)
+{
+	struct nvkm_device *device = fb->subdev.device;
+	enum nvkm_ram_type type = nvkm_fb_bios_memtype(device->bios);
 	u32 size = nvkm_rd32(device, 0x1183a4);
 
-	वापस nvkm_ram_new_(&ga102_ram, fb, type, (u64)size << 20, pram);
-पूर्ण
+	return nvkm_ram_new_(&ga102_ram, fb, type, (u64)size << 20, pram);
+}

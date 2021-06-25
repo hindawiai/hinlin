@@ -1,71 +1,70 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित HEXAGON_ASM_USER_H
-#घोषणा HEXAGON_ASM_USER_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef HEXAGON_ASM_USER_H
+#define HEXAGON_ASM_USER_H
 
 /*
- * Layout क्रम रेजिस्टरs passed in elf core dumps to userspace.
+ * Layout for registers passed in elf core dumps to userspace.
  *
  * Basically a rearranged subset of "pt_regs".
  *
  * Interested parties:  libc, gdb...
  */
 
-काष्ठा user_regs_काष्ठा अणु
-	अचिन्हित दीर्घ r0;
-	अचिन्हित दीर्घ r1;
-	अचिन्हित दीर्घ r2;
-	अचिन्हित दीर्घ r3;
-	अचिन्हित दीर्घ r4;
-	अचिन्हित दीर्घ r5;
-	अचिन्हित दीर्घ r6;
-	अचिन्हित दीर्घ r7;
-	अचिन्हित दीर्घ r8;
-	अचिन्हित दीर्घ r9;
-	अचिन्हित दीर्घ r10;
-	अचिन्हित दीर्घ r11;
-	अचिन्हित दीर्घ r12;
-	अचिन्हित दीर्घ r13;
-	अचिन्हित दीर्घ r14;
-	अचिन्हित दीर्घ r15;
-	अचिन्हित दीर्घ r16;
-	अचिन्हित दीर्घ r17;
-	अचिन्हित दीर्घ r18;
-	अचिन्हित दीर्घ r19;
-	अचिन्हित दीर्घ r20;
-	अचिन्हित दीर्घ r21;
-	अचिन्हित दीर्घ r22;
-	अचिन्हित दीर्घ r23;
-	अचिन्हित दीर्घ r24;
-	अचिन्हित दीर्घ r25;
-	अचिन्हित दीर्घ r26;
-	अचिन्हित दीर्घ r27;
-	अचिन्हित दीर्घ r28;
-	अचिन्हित दीर्घ r29;
-	अचिन्हित दीर्घ r30;
-	अचिन्हित दीर्घ r31;
-	अचिन्हित दीर्घ sa0;
-	अचिन्हित दीर्घ lc0;
-	अचिन्हित दीर्घ sa1;
-	अचिन्हित दीर्घ lc1;
-	अचिन्हित दीर्घ m0;
-	अचिन्हित दीर्घ m1;
-	अचिन्हित दीर्घ usr;
-	अचिन्हित दीर्घ p3_0;
-	अचिन्हित दीर्घ gp;
-	अचिन्हित दीर्घ ugp;
-	अचिन्हित दीर्घ pc;
-	अचिन्हित दीर्घ cause;
-	अचिन्हित दीर्घ badva;
-#अगर CONFIG_HEXAGON_ARCH_VERSION < 4
-	अचिन्हित दीर्घ pad1;  /* pad out to 48 words total */
-	अचिन्हित दीर्घ pad2;  /* pad out to 48 words total */
-	अचिन्हित दीर्घ pad3;  /* pad out to 48 words total */
-#अन्यथा
-	अचिन्हित दीर्घ cs0;
-	अचिन्हित दीर्घ cs1;
-	अचिन्हित दीर्घ pad1;  /* pad out to 48 words total */
-#पूर्ण_अगर
-पूर्ण;
+struct user_regs_struct {
+	unsigned long r0;
+	unsigned long r1;
+	unsigned long r2;
+	unsigned long r3;
+	unsigned long r4;
+	unsigned long r5;
+	unsigned long r6;
+	unsigned long r7;
+	unsigned long r8;
+	unsigned long r9;
+	unsigned long r10;
+	unsigned long r11;
+	unsigned long r12;
+	unsigned long r13;
+	unsigned long r14;
+	unsigned long r15;
+	unsigned long r16;
+	unsigned long r17;
+	unsigned long r18;
+	unsigned long r19;
+	unsigned long r20;
+	unsigned long r21;
+	unsigned long r22;
+	unsigned long r23;
+	unsigned long r24;
+	unsigned long r25;
+	unsigned long r26;
+	unsigned long r27;
+	unsigned long r28;
+	unsigned long r29;
+	unsigned long r30;
+	unsigned long r31;
+	unsigned long sa0;
+	unsigned long lc0;
+	unsigned long sa1;
+	unsigned long lc1;
+	unsigned long m0;
+	unsigned long m1;
+	unsigned long usr;
+	unsigned long p3_0;
+	unsigned long gp;
+	unsigned long ugp;
+	unsigned long pc;
+	unsigned long cause;
+	unsigned long badva;
+#if CONFIG_HEXAGON_ARCH_VERSION < 4
+	unsigned long pad1;  /* pad out to 48 words total */
+	unsigned long pad2;  /* pad out to 48 words total */
+	unsigned long pad3;  /* pad out to 48 words total */
+#else
+	unsigned long cs0;
+	unsigned long cs1;
+	unsigned long pad1;  /* pad out to 48 words total */
+#endif
+};
 
-#पूर्ण_अगर
+#endif

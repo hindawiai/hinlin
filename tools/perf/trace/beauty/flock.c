@@ -1,39 +1,38 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: LGPL-2.1
+// SPDX-License-Identifier: LGPL-2.1
 
-#समावेश "trace/beauty/beauty.h"
-#समावेश <linux/kernel.h>
-#समावेश <uapi/linux/fcntl.h>
+#include "trace/beauty/beauty.h"
+#include <linux/kernel.h>
+#include <uapi/linux/fcntl.h>
 
-#अगर_अघोषित LOCK_MAND
-#घोषणा LOCK_MAND	 32
-#पूर्ण_अगर
+#ifndef LOCK_MAND
+#define LOCK_MAND	 32
+#endif
 
-#अगर_अघोषित LOCK_READ
-#घोषणा LOCK_READ	 64
-#पूर्ण_अगर
+#ifndef LOCK_READ
+#define LOCK_READ	 64
+#endif
 
-#अगर_अघोषित LOCK_WRITE
-#घोषणा LOCK_WRITE	128
-#पूर्ण_अगर
+#ifndef LOCK_WRITE
+#define LOCK_WRITE	128
+#endif
 
-#अगर_अघोषित LOCK_RW
-#घोषणा LOCK_RW		192
-#पूर्ण_अगर
+#ifndef LOCK_RW
+#define LOCK_RW		192
+#endif
 
-माप_प्रकार syscall_arg__scnम_लिखो_flock(अक्षर *bf, माप_प्रकार size, काष्ठा syscall_arg *arg)
-अणु
+size_t syscall_arg__scnprintf_flock(char *bf, size_t size, struct syscall_arg *arg)
+{
 	bool show_prefix = arg->show_string_prefix;
-	स्थिर अक्षर *prefix = "LOCK_";
-	पूर्णांक prपूर्णांकed = 0, op = arg->val;
+	const char *prefix = "LOCK_";
+	int printed = 0, op = arg->val;
 
-	अगर (op == 0)
-		वापस scnम_लिखो(bf, size, "NONE");
-#घोषणा	P_CMD(cmd) \
-	अगर ((op & LOCK_##cmd) == LOCK_##cmd) अणु \
-		prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed, "%s%s%s", prपूर्णांकed ? "|" : "", show_prefix ? prefix : "", #cmd); \
+	if (op == 0)
+		return scnprintf(bf, size, "NONE");
+#define	P_CMD(cmd) \
+	if ((op & LOCK_##cmd) == LOCK_##cmd) { \
+		printed += scnprintf(bf + printed, size - printed, "%s%s%s", printed ? "|" : "", show_prefix ? prefix : "", #cmd); \
 		op &= ~LOCK_##cmd; \
-	पूर्ण
+	}
 
 	P_CMD(SH);
 	P_CMD(EX);
@@ -43,10 +42,10 @@
 	P_CMD(RW);
 	P_CMD(READ);
 	P_CMD(WRITE);
-#अघोषित P_OP
+#undef P_OP
 
-	अगर (op)
-		prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed, "%s%#x", prपूर्णांकed ? "|" : "", op);
+	if (op)
+		printed += scnprintf(bf + printed, size - printed, "%s%#x", printed ? "|" : "", op);
 
-	वापस prपूर्णांकed;
-पूर्ण
+	return printed;
+}

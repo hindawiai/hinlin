@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* Copyright(c) 2009-2010  Realtek Corporation.*/
 
-#अगर_अघोषित __RTL8821AE_LED_H__
-#घोषणा __RTL8821AE_LED_H__
+#ifndef __RTL8821AE_LED_H__
+#define __RTL8821AE_LED_H__
 
-व्योम rtl8821ae_init_sw_leds(काष्ठा ieee80211_hw *hw);
-व्योम rtl8821ae_sw_led_on(काष्ठा ieee80211_hw *hw, काष्ठा rtl_led *pled);
-व्योम rtl8812ae_sw_led_on(काष्ठा ieee80211_hw *hw, काष्ठा rtl_led *pled);
-व्योम rtl8821ae_sw_led_off(काष्ठा ieee80211_hw *hw, काष्ठा rtl_led *pled);
-व्योम rtl8812ae_sw_led_off(काष्ठा ieee80211_hw *hw, काष्ठा rtl_led *pled);
-व्योम rtl8821ae_led_control(काष्ठा ieee80211_hw *hw,
-			   क्रमागत led_ctl_mode ledaction);
+void rtl8821ae_init_sw_leds(struct ieee80211_hw *hw);
+void rtl8821ae_sw_led_on(struct ieee80211_hw *hw, struct rtl_led *pled);
+void rtl8812ae_sw_led_on(struct ieee80211_hw *hw, struct rtl_led *pled);
+void rtl8821ae_sw_led_off(struct ieee80211_hw *hw, struct rtl_led *pled);
+void rtl8812ae_sw_led_off(struct ieee80211_hw *hw, struct rtl_led *pled);
+void rtl8821ae_led_control(struct ieee80211_hw *hw,
+			   enum led_ctl_mode ledaction);
 
-#पूर्ण_अगर
+#endif

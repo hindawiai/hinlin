@@ -1,50 +1,49 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2019 Facebook
 
-#समावेश <linux/bpf.h>
-#समावेश <मानक_निवेशt.h>
-#समावेश <bpf/bpf_helpers.h>
-#समावेश <bpf/bpf_core_पढ़ो.h>
+#include <linux/bpf.h>
+#include <stdint.h>
+#include <bpf/bpf_helpers.h>
+#include <bpf/bpf_core_read.h>
 
-अक्षर _license[] SEC("license") = "GPL";
+char _license[] SEC("license") = "GPL";
 
-काष्ठा अणु
-	अक्षर in[256];
-	अक्षर out[256];
-पूर्ण data = अणुपूर्ण;
+struct {
+	char in[256];
+	char out[256];
+} data = {};
 
-काष्ठा core_reloc_nesting_subकाष्ठा अणु
-	पूर्णांक a;
-पूर्ण;
+struct core_reloc_nesting_substruct {
+	int a;
+};
 
-जोड़ core_reloc_nesting_subजोड़ अणु
-	पूर्णांक b;
-पूर्ण;
+union core_reloc_nesting_subunion {
+	int b;
+};
 
-/* पूर्णांक a.a.a and b.b.b accesses */
-काष्ठा core_reloc_nesting अणु
-	जोड़ अणु
-		काष्ठा core_reloc_nesting_subकाष्ठा a;
-	पूर्ण a;
-	काष्ठा अणु
-		जोड़ core_reloc_nesting_subजोड़ b;
-	पूर्ण b;
-पूर्ण;
+/* int a.a.a and b.b.b accesses */
+struct core_reloc_nesting {
+	union {
+		struct core_reloc_nesting_substruct a;
+	} a;
+	struct {
+		union core_reloc_nesting_subunion b;
+	} b;
+};
 
-#घोषणा CORE_READ(dst, src) bpf_core_पढ़ो(dst, माप(*(dst)), src)
+#define CORE_READ(dst, src) bpf_core_read(dst, sizeof(*(dst)), src)
 
 SEC("raw_tracepoint/sys_enter")
-पूर्णांक test_core_nesting(व्योम *ctx)
-अणु
-	काष्ठा core_reloc_nesting *in = (व्योम *)&data.in;
-	काष्ठा core_reloc_nesting *out = (व्योम *)&data.out;
+int test_core_nesting(void *ctx)
+{
+	struct core_reloc_nesting *in = (void *)&data.in;
+	struct core_reloc_nesting *out = (void *)&data.out;
 
-	अगर (CORE_READ(&out->a.a.a, &in->a.a.a))
-		वापस 1;
-	अगर (CORE_READ(&out->b.b.b, &in->b.b.b))
-		वापस 1;
+	if (CORE_READ(&out->a.a.a, &in->a.a.a))
+		return 1;
+	if (CORE_READ(&out->b.b.b, &in->b.b.b))
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 

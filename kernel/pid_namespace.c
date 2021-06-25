@@ -1,106 +1,105 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Pid namespaces
  *
  * Authors:
- *    (C) 2007 Pavel Emelyanov <xemul@खोलोvz.org>, OpenVZ, SWsoft Inc.
+ *    (C) 2007 Pavel Emelyanov <xemul@openvz.org>, OpenVZ, SWsoft Inc.
  *    (C) 2007 Sukadev Bhattiprolu <sukadev@us.ibm.com>, IBM
- *     Many thanks to Oleg Nesterov क्रम comments and help
+ *     Many thanks to Oleg Nesterov for comments and help
  *
  */
 
-#समावेश <linux/pid.h>
-#समावेश <linux/pid_namespace.h>
-#समावेश <linux/user_namespace.h>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/cred.h>
-#समावेश <linux/err.h>
-#समावेश <linux/acct.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/proc_ns.h>
-#समावेश <linux/reboot.h>
-#समावेश <linux/export.h>
-#समावेश <linux/sched/task.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/idr.h>
+#include <linux/pid.h>
+#include <linux/pid_namespace.h>
+#include <linux/user_namespace.h>
+#include <linux/syscalls.h>
+#include <linux/cred.h>
+#include <linux/err.h>
+#include <linux/acct.h>
+#include <linux/slab.h>
+#include <linux/proc_ns.h>
+#include <linux/reboot.h>
+#include <linux/export.h>
+#include <linux/sched/task.h>
+#include <linux/sched/signal.h>
+#include <linux/idr.h>
 
-अटल DEFINE_MUTEX(pid_caches_mutex);
-अटल काष्ठा kmem_cache *pid_ns_cachep;
+static DEFINE_MUTEX(pid_caches_mutex);
+static struct kmem_cache *pid_ns_cachep;
 /* Write once array, filled from the beginning. */
-अटल काष्ठा kmem_cache *pid_cache[MAX_PID_NS_LEVEL];
+static struct kmem_cache *pid_cache[MAX_PID_NS_LEVEL];
 
 /*
  * creates the kmem cache to allocate pids from.
  * @level: pid namespace level
  */
 
-अटल काष्ठा kmem_cache *create_pid_cachep(अचिन्हित पूर्णांक level)
-अणु
+static struct kmem_cache *create_pid_cachep(unsigned int level)
+{
 	/* Level 0 is init_pid_ns.pid_cachep */
-	काष्ठा kmem_cache **pkc = &pid_cache[level - 1];
-	काष्ठा kmem_cache *kc;
-	अक्षर name[4 + 10 + 1];
-	अचिन्हित पूर्णांक len;
+	struct kmem_cache **pkc = &pid_cache[level - 1];
+	struct kmem_cache *kc;
+	char name[4 + 10 + 1];
+	unsigned int len;
 
 	kc = READ_ONCE(*pkc);
-	अगर (kc)
-		वापस kc;
+	if (kc)
+		return kc;
 
-	snम_लिखो(name, माप(name), "pid_%u", level + 1);
-	len = माप(काष्ठा pid) + level * माप(काष्ठा upid);
+	snprintf(name, sizeof(name), "pid_%u", level + 1);
+	len = sizeof(struct pid) + level * sizeof(struct upid);
 	mutex_lock(&pid_caches_mutex);
-	/* Name collision क्रमces to करो allocation under mutex. */
-	अगर (!*pkc)
+	/* Name collision forces to do allocation under mutex. */
+	if (!*pkc)
 		*pkc = kmem_cache_create(name, len, 0, SLAB_HWCACHE_ALIGN, 0);
 	mutex_unlock(&pid_caches_mutex);
-	/* current can fail, but someone अन्यथा can succeed. */
-	वापस READ_ONCE(*pkc);
-पूर्ण
+	/* current can fail, but someone else can succeed. */
+	return READ_ONCE(*pkc);
+}
 
-अटल काष्ठा ucounts *inc_pid_namespaces(काष्ठा user_namespace *ns)
-अणु
-	वापस inc_ucount(ns, current_euid(), UCOUNT_PID_NAMESPACES);
-पूर्ण
+static struct ucounts *inc_pid_namespaces(struct user_namespace *ns)
+{
+	return inc_ucount(ns, current_euid(), UCOUNT_PID_NAMESPACES);
+}
 
-अटल व्योम dec_pid_namespaces(काष्ठा ucounts *ucounts)
-अणु
+static void dec_pid_namespaces(struct ucounts *ucounts)
+{
 	dec_ucount(ucounts, UCOUNT_PID_NAMESPACES);
-पूर्ण
+}
 
-अटल काष्ठा pid_namespace *create_pid_namespace(काष्ठा user_namespace *user_ns,
-	काष्ठा pid_namespace *parent_pid_ns)
-अणु
-	काष्ठा pid_namespace *ns;
-	अचिन्हित पूर्णांक level = parent_pid_ns->level + 1;
-	काष्ठा ucounts *ucounts;
-	पूर्णांक err;
+static struct pid_namespace *create_pid_namespace(struct user_namespace *user_ns,
+	struct pid_namespace *parent_pid_ns)
+{
+	struct pid_namespace *ns;
+	unsigned int level = parent_pid_ns->level + 1;
+	struct ucounts *ucounts;
+	int err;
 
 	err = -EINVAL;
-	अगर (!in_userns(parent_pid_ns->user_ns, user_ns))
-		जाओ out;
+	if (!in_userns(parent_pid_ns->user_ns, user_ns))
+		goto out;
 
 	err = -ENOSPC;
-	अगर (level > MAX_PID_NS_LEVEL)
-		जाओ out;
+	if (level > MAX_PID_NS_LEVEL)
+		goto out;
 	ucounts = inc_pid_namespaces(user_ns);
-	अगर (!ucounts)
-		जाओ out;
+	if (!ucounts)
+		goto out;
 
 	err = -ENOMEM;
 	ns = kmem_cache_zalloc(pid_ns_cachep, GFP_KERNEL);
-	अगर (ns == शून्य)
-		जाओ out_dec;
+	if (ns == NULL)
+		goto out_dec;
 
 	idr_init(&ns->idr);
 
 	ns->pid_cachep = create_pid_cachep(level);
-	अगर (ns->pid_cachep == शून्य)
-		जाओ out_मुक्त_idr;
+	if (ns->pid_cachep == NULL)
+		goto out_free_idr;
 
 	err = ns_alloc_inum(&ns->ns);
-	अगर (err)
-		जाओ out_मुक्त_idr;
+	if (err)
+		goto out_free_idr;
 	ns->ns.ops = &pidns_operations;
 
 	refcount_set(&ns->ns.count, 1);
@@ -110,324 +109,324 @@
 	ns->ucounts = ucounts;
 	ns->pid_allocated = PIDNS_ADDING;
 
-	वापस ns;
+	return ns;
 
-out_मुक्त_idr:
+out_free_idr:
 	idr_destroy(&ns->idr);
-	kmem_cache_मुक्त(pid_ns_cachep, ns);
+	kmem_cache_free(pid_ns_cachep, ns);
 out_dec:
 	dec_pid_namespaces(ucounts);
 out:
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 
-अटल व्योम delayed_मुक्त_pidns(काष्ठा rcu_head *p)
-अणु
-	काष्ठा pid_namespace *ns = container_of(p, काष्ठा pid_namespace, rcu);
+static void delayed_free_pidns(struct rcu_head *p)
+{
+	struct pid_namespace *ns = container_of(p, struct pid_namespace, rcu);
 
 	dec_pid_namespaces(ns->ucounts);
 	put_user_ns(ns->user_ns);
 
-	kmem_cache_मुक्त(pid_ns_cachep, ns);
-पूर्ण
+	kmem_cache_free(pid_ns_cachep, ns);
+}
 
-अटल व्योम destroy_pid_namespace(काष्ठा pid_namespace *ns)
-अणु
-	ns_मुक्त_inum(&ns->ns);
+static void destroy_pid_namespace(struct pid_namespace *ns)
+{
+	ns_free_inum(&ns->ns);
 
 	idr_destroy(&ns->idr);
-	call_rcu(&ns->rcu, delayed_मुक्त_pidns);
-पूर्ण
+	call_rcu(&ns->rcu, delayed_free_pidns);
+}
 
-काष्ठा pid_namespace *copy_pid_ns(अचिन्हित दीर्घ flags,
-	काष्ठा user_namespace *user_ns, काष्ठा pid_namespace *old_ns)
-अणु
-	अगर (!(flags & CLONE_NEWPID))
-		वापस get_pid_ns(old_ns);
-	अगर (task_active_pid_ns(current) != old_ns)
-		वापस ERR_PTR(-EINVAL);
-	वापस create_pid_namespace(user_ns, old_ns);
-पूर्ण
+struct pid_namespace *copy_pid_ns(unsigned long flags,
+	struct user_namespace *user_ns, struct pid_namespace *old_ns)
+{
+	if (!(flags & CLONE_NEWPID))
+		return get_pid_ns(old_ns);
+	if (task_active_pid_ns(current) != old_ns)
+		return ERR_PTR(-EINVAL);
+	return create_pid_namespace(user_ns, old_ns);
+}
 
-व्योम put_pid_ns(काष्ठा pid_namespace *ns)
-अणु
-	काष्ठा pid_namespace *parent;
+void put_pid_ns(struct pid_namespace *ns)
+{
+	struct pid_namespace *parent;
 
-	जबतक (ns != &init_pid_ns) अणु
+	while (ns != &init_pid_ns) {
 		parent = ns->parent;
-		अगर (!refcount_dec_and_test(&ns->ns.count))
-			अवरोध;
+		if (!refcount_dec_and_test(&ns->ns.count))
+			break;
 		destroy_pid_namespace(ns);
 		ns = parent;
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(put_pid_ns);
 
-व्योम zap_pid_ns_processes(काष्ठा pid_namespace *pid_ns)
-अणु
-	पूर्णांक nr;
-	पूर्णांक rc;
-	काष्ठा task_काष्ठा *task, *me = current;
-	पूर्णांक init_pids = thपढ़ो_group_leader(me) ? 1 : 2;
-	काष्ठा pid *pid;
+void zap_pid_ns_processes(struct pid_namespace *pid_ns)
+{
+	int nr;
+	int rc;
+	struct task_struct *task, *me = current;
+	int init_pids = thread_group_leader(me) ? 1 : 2;
+	struct pid *pid;
 
-	/* Don't allow any more processes पूर्णांकo the pid namespace */
+	/* Don't allow any more processes into the pid namespace */
 	disable_pid_allocation(pid_ns);
 
 	/*
-	 * Ignore SIGCHLD causing any terminated children to स्वतःreap.
-	 * This speeds up the namespace shutकरोwn, plus see the comment
+	 * Ignore SIGCHLD causing any terminated children to autoreap.
+	 * This speeds up the namespace shutdown, plus see the comment
 	 * below.
 	 */
 	spin_lock_irq(&me->sighand->siglock);
-	me->sighand->action[SIGCHLD - 1].sa.sa_handler = संक_छोड़ो;
+	me->sighand->action[SIGCHLD - 1].sa.sa_handler = SIG_IGN;
 	spin_unlock_irq(&me->sighand->siglock);
 
 	/*
-	 * The last thपढ़ो in the cgroup-init thपढ़ो group is terminating.
-	 * Find reमुख्यing pid_ts in the namespace, संकेत and रुको क्रम them
-	 * to निकास.
+	 * The last thread in the cgroup-init thread group is terminating.
+	 * Find remaining pid_ts in the namespace, signal and wait for them
+	 * to exit.
 	 *
-	 * Note:  This संकेतs each thपढ़ोs in the namespace - even those that
-	 * 	  beदीर्घ to the same thपढ़ो group, To aव्योम this, we would have
+	 * Note:  This signals each threads in the namespace - even those that
+	 * 	  belong to the same thread group, To avoid this, we would have
 	 * 	  to walk the entire tasklist looking a processes in this
-	 * 	  namespace, but that could be unnecessarily expensive अगर the
+	 * 	  namespace, but that could be unnecessarily expensive if the
 	 * 	  pid namespace has just a few processes. Or we need to
-	 * 	  मुख्यtain a tasklist क्रम each pid namespace.
+	 * 	  maintain a tasklist for each pid namespace.
 	 *
 	 */
-	rcu_पढ़ो_lock();
-	पढ़ो_lock(&tasklist_lock);
+	rcu_read_lock();
+	read_lock(&tasklist_lock);
 	nr = 2;
-	idr_क्रम_each_entry_जारी(&pid_ns->idr, pid, nr) अणु
+	idr_for_each_entry_continue(&pid_ns->idr, pid, nr) {
 		task = pid_task(pid, PIDTYPE_PID);
-		अगर (task && !__fatal_संकेत_pending(task))
+		if (task && !__fatal_signal_pending(task))
 			group_send_sig_info(SIGKILL, SEND_SIG_PRIV, task, PIDTYPE_MAX);
-	पूर्ण
-	पढ़ो_unlock(&tasklist_lock);
-	rcu_पढ़ो_unlock();
+	}
+	read_unlock(&tasklist_lock);
+	rcu_read_unlock();
 
 	/*
-	 * Reap the EXIT_ZOMBIE children we had beक्रमe we ignored SIGCHLD.
-	 * kernel_रुको4() will also block until our children traced from the
+	 * Reap the EXIT_ZOMBIE children we had before we ignored SIGCHLD.
+	 * kernel_wait4() will also block until our children traced from the
 	 * parent namespace are detached and become EXIT_DEAD.
 	 */
-	करो अणु
-		clear_thपढ़ो_flag(TIF_SIGPENDING);
-		rc = kernel_रुको4(-1, शून्य, __WALL, शून्य);
-	पूर्ण जबतक (rc != -ECHILD);
+	do {
+		clear_thread_flag(TIF_SIGPENDING);
+		rc = kernel_wait4(-1, NULL, __WALL, NULL);
+	} while (rc != -ECHILD);
 
 	/*
-	 * kernel_रुको4() misses EXIT_DEAD children, and EXIT_ZOMBIE
+	 * kernel_wait4() misses EXIT_DEAD children, and EXIT_ZOMBIE
 	 * process whose parents processes are outside of the pid
-	 * namespace.  Such processes are created with setns()+विभाजन().
+	 * namespace.  Such processes are created with setns()+fork().
 	 *
 	 * If those EXIT_ZOMBIE processes are not reaped by their
-	 * parents beक्रमe their parents निकास, they will be reparented
+	 * parents before their parents exit, they will be reparented
 	 * to pid_ns->child_reaper.  Thus pidns->child_reaper needs to
 	 * stay valid until they all go away.
 	 *
 	 * The code relies on the pid_ns->child_reaper ignoring
 	 * SIGCHILD to cause those EXIT_ZOMBIE processes to be
-	 * स्वतःreaped अगर reparented.
+	 * autoreaped if reparented.
 	 *
-	 * Semantically it is also desirable to रुको क्रम EXIT_ZOMBIE
-	 * processes beक्रमe allowing the child_reaper to be reaped, as
+	 * Semantically it is also desirable to wait for EXIT_ZOMBIE
+	 * processes before allowing the child_reaper to be reaped, as
 	 * that gives the invariant that when the init process of a
 	 * pid namespace is reaped all of the processes in the pid
 	 * namespace are gone.
 	 *
 	 * Once all of the other tasks are gone from the pid_namespace
-	 * मुक्त_pid() will awaken this task.
+	 * free_pid() will awaken this task.
 	 */
-	क्रम (;;) अणु
+	for (;;) {
 		set_current_state(TASK_INTERRUPTIBLE);
-		अगर (pid_ns->pid_allocated == init_pids)
-			अवरोध;
+		if (pid_ns->pid_allocated == init_pids)
+			break;
 		schedule();
-	पूर्ण
+	}
 	__set_current_state(TASK_RUNNING);
 
-	अगर (pid_ns->reboot)
-		current->संकेत->group_निकास_code = pid_ns->reboot;
+	if (pid_ns->reboot)
+		current->signal->group_exit_code = pid_ns->reboot;
 
-	acct_निकास_ns(pid_ns);
-	वापस;
-पूर्ण
+	acct_exit_ns(pid_ns);
+	return;
+}
 
-#अगर_घोषित CONFIG_CHECKPOINT_RESTORE
-अटल पूर्णांक pid_ns_ctl_handler(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
-		व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
-अणु
-	काष्ठा pid_namespace *pid_ns = task_active_pid_ns(current);
-	काष्ठा ctl_table पंचांगp = *table;
-	पूर्णांक ret, next;
+#ifdef CONFIG_CHECKPOINT_RESTORE
+static int pid_ns_ctl_handler(struct ctl_table *table, int write,
+		void *buffer, size_t *lenp, loff_t *ppos)
+{
+	struct pid_namespace *pid_ns = task_active_pid_ns(current);
+	struct ctl_table tmp = *table;
+	int ret, next;
 
-	अगर (ग_लिखो && !checkpoपूर्णांक_restore_ns_capable(pid_ns->user_ns))
-		वापस -EPERM;
+	if (write && !checkpoint_restore_ns_capable(pid_ns->user_ns))
+		return -EPERM;
 
 	/*
 	 * Writing directly to ns' last_pid field is OK, since this field
-	 * is अस्थिर in a living namespace anyway and a code writing to
-	 * it should synchronize its usage with बाह्यal means.
+	 * is volatile in a living namespace anyway and a code writing to
+	 * it should synchronize its usage with external means.
 	 */
 
 	next = idr_get_cursor(&pid_ns->idr) - 1;
 
-	पंचांगp.data = &next;
-	ret = proc_करोपूर्णांकvec_minmax(&पंचांगp, ग_लिखो, buffer, lenp, ppos);
-	अगर (!ret && ग_लिखो)
+	tmp.data = &next;
+	ret = proc_dointvec_minmax(&tmp, write, buffer, lenp, ppos);
+	if (!ret && write)
 		idr_set_cursor(&pid_ns->idr, next + 1);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-बाह्य पूर्णांक pid_max;
-अटल काष्ठा ctl_table pid_ns_ctl_table[] = अणु
-	अणु
+extern int pid_max;
+static struct ctl_table pid_ns_ctl_table[] = {
+	{
 		.procname = "ns_last_pid",
-		.maxlen = माप(पूर्णांक),
+		.maxlen = sizeof(int),
 		.mode = 0666, /* permissions are checked in the handler */
 		.proc_handler = pid_ns_ctl_handler,
 		.extra1 = SYSCTL_ZERO,
 		.extra2 = &pid_max,
-	पूर्ण,
-	अणु पूर्ण
-पूर्ण;
-अटल काष्ठा ctl_path kern_path[] = अणु अणु .procname = "kernel", पूर्ण, अणु पूर्ण पूर्ण;
-#पूर्ण_अगर	/* CONFIG_CHECKPOINT_RESTORE */
+	},
+	{ }
+};
+static struct ctl_path kern_path[] = { { .procname = "kernel", }, { } };
+#endif	/* CONFIG_CHECKPOINT_RESTORE */
 
-पूर्णांक reboot_pid_ns(काष्ठा pid_namespace *pid_ns, पूर्णांक cmd)
-अणु
-	अगर (pid_ns == &init_pid_ns)
-		वापस 0;
+int reboot_pid_ns(struct pid_namespace *pid_ns, int cmd)
+{
+	if (pid_ns == &init_pid_ns)
+		return 0;
 
-	चयन (cmd) अणु
-	हाल LINUX_REBOOT_CMD_RESTART2:
-	हाल LINUX_REBOOT_CMD_RESTART:
+	switch (cmd) {
+	case LINUX_REBOOT_CMD_RESTART2:
+	case LINUX_REBOOT_CMD_RESTART:
 		pid_ns->reboot = SIGHUP;
-		अवरोध;
+		break;
 
-	हाल LINUX_REBOOT_CMD_POWER_OFF:
-	हाल LINUX_REBOOT_CMD_HALT:
-		pid_ns->reboot = संक_विघ्न;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	case LINUX_REBOOT_CMD_POWER_OFF:
+	case LINUX_REBOOT_CMD_HALT:
+		pid_ns->reboot = SIGINT;
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	पढ़ो_lock(&tasklist_lock);
+	read_lock(&tasklist_lock);
 	send_sig(SIGKILL, pid_ns->child_reaper, 1);
-	पढ़ो_unlock(&tasklist_lock);
+	read_unlock(&tasklist_lock);
 
-	करो_निकास(0);
+	do_exit(0);
 
 	/* Not reached */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत काष्ठा pid_namespace *to_pid_ns(काष्ठा ns_common *ns)
-अणु
-	वापस container_of(ns, काष्ठा pid_namespace, ns);
-पूर्ण
+static inline struct pid_namespace *to_pid_ns(struct ns_common *ns)
+{
+	return container_of(ns, struct pid_namespace, ns);
+}
 
-अटल काष्ठा ns_common *pidns_get(काष्ठा task_काष्ठा *task)
-अणु
-	काष्ठा pid_namespace *ns;
+static struct ns_common *pidns_get(struct task_struct *task)
+{
+	struct pid_namespace *ns;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	ns = task_active_pid_ns(task);
-	अगर (ns)
+	if (ns)
 		get_pid_ns(ns);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस ns ? &ns->ns : शून्य;
-पूर्ण
+	return ns ? &ns->ns : NULL;
+}
 
-अटल काष्ठा ns_common *pidns_क्रम_children_get(काष्ठा task_काष्ठा *task)
-अणु
-	काष्ठा pid_namespace *ns = शून्य;
+static struct ns_common *pidns_for_children_get(struct task_struct *task)
+{
+	struct pid_namespace *ns = NULL;
 
 	task_lock(task);
-	अगर (task->nsproxy) अणु
-		ns = task->nsproxy->pid_ns_क्रम_children;
+	if (task->nsproxy) {
+		ns = task->nsproxy->pid_ns_for_children;
 		get_pid_ns(ns);
-	पूर्ण
+	}
 	task_unlock(task);
 
-	अगर (ns) अणु
-		पढ़ो_lock(&tasklist_lock);
-		अगर (!ns->child_reaper) अणु
+	if (ns) {
+		read_lock(&tasklist_lock);
+		if (!ns->child_reaper) {
 			put_pid_ns(ns);
-			ns = शून्य;
-		पूर्ण
-		पढ़ो_unlock(&tasklist_lock);
-	पूर्ण
+			ns = NULL;
+		}
+		read_unlock(&tasklist_lock);
+	}
 
-	वापस ns ? &ns->ns : शून्य;
-पूर्ण
+	return ns ? &ns->ns : NULL;
+}
 
-अटल व्योम pidns_put(काष्ठा ns_common *ns)
-अणु
+static void pidns_put(struct ns_common *ns)
+{
 	put_pid_ns(to_pid_ns(ns));
-पूर्ण
+}
 
-अटल पूर्णांक pidns_install(काष्ठा nsset *nsset, काष्ठा ns_common *ns)
-अणु
-	काष्ठा nsproxy *nsproxy = nsset->nsproxy;
-	काष्ठा pid_namespace *active = task_active_pid_ns(current);
-	काष्ठा pid_namespace *ancestor, *new = to_pid_ns(ns);
+static int pidns_install(struct nsset *nsset, struct ns_common *ns)
+{
+	struct nsproxy *nsproxy = nsset->nsproxy;
+	struct pid_namespace *active = task_active_pid_ns(current);
+	struct pid_namespace *ancestor, *new = to_pid_ns(ns);
 
-	अगर (!ns_capable(new->user_ns, CAP_SYS_ADMIN) ||
+	if (!ns_capable(new->user_ns, CAP_SYS_ADMIN) ||
 	    !ns_capable(nsset->cred->user_ns, CAP_SYS_ADMIN))
-		वापस -EPERM;
+		return -EPERM;
 
 	/*
 	 * Only allow entering the current active pid namespace
 	 * or a child of the current active pid namespace.
 	 *
-	 * This is required क्रम विभाजन to वापस a usable pid value and
-	 * this मुख्यtains the property that processes and their
+	 * This is required for fork to return a usable pid value and
+	 * this maintains the property that processes and their
 	 * children can not escape their current pid namespace.
 	 */
-	अगर (new->level < active->level)
-		वापस -EINVAL;
+	if (new->level < active->level)
+		return -EINVAL;
 
 	ancestor = new;
-	जबतक (ancestor->level > active->level)
+	while (ancestor->level > active->level)
 		ancestor = ancestor->parent;
-	अगर (ancestor != active)
-		वापस -EINVAL;
+	if (ancestor != active)
+		return -EINVAL;
 
-	put_pid_ns(nsproxy->pid_ns_क्रम_children);
-	nsproxy->pid_ns_क्रम_children = get_pid_ns(new);
-	वापस 0;
-पूर्ण
+	put_pid_ns(nsproxy->pid_ns_for_children);
+	nsproxy->pid_ns_for_children = get_pid_ns(new);
+	return 0;
+}
 
-अटल काष्ठा ns_common *pidns_get_parent(काष्ठा ns_common *ns)
-अणु
-	काष्ठा pid_namespace *active = task_active_pid_ns(current);
-	काष्ठा pid_namespace *pid_ns, *p;
+static struct ns_common *pidns_get_parent(struct ns_common *ns)
+{
+	struct pid_namespace *active = task_active_pid_ns(current);
+	struct pid_namespace *pid_ns, *p;
 
-	/* See अगर the parent is in the current namespace */
+	/* See if the parent is in the current namespace */
 	pid_ns = p = to_pid_ns(ns)->parent;
-	क्रम (;;) अणु
-		अगर (!p)
-			वापस ERR_PTR(-EPERM);
-		अगर (p == active)
-			अवरोध;
+	for (;;) {
+		if (!p)
+			return ERR_PTR(-EPERM);
+		if (p == active)
+			break;
 		p = p->parent;
-	पूर्ण
+	}
 
-	वापस &get_pid_ns(pid_ns)->ns;
-पूर्ण
+	return &get_pid_ns(pid_ns)->ns;
+}
 
-अटल काष्ठा user_namespace *pidns_owner(काष्ठा ns_common *ns)
-अणु
-	वापस to_pid_ns(ns)->user_ns;
-पूर्ण
+static struct user_namespace *pidns_owner(struct ns_common *ns)
+{
+	return to_pid_ns(ns)->user_ns;
+}
 
-स्थिर काष्ठा proc_ns_operations pidns_operations = अणु
+const struct proc_ns_operations pidns_operations = {
 	.name		= "pid",
 	.type		= CLONE_NEWPID,
 	.get		= pidns_get,
@@ -435,27 +434,27 @@ EXPORT_SYMBOL_GPL(put_pid_ns);
 	.install	= pidns_install,
 	.owner		= pidns_owner,
 	.get_parent	= pidns_get_parent,
-पूर्ण;
+};
 
-स्थिर काष्ठा proc_ns_operations pidns_क्रम_children_operations = अणु
+const struct proc_ns_operations pidns_for_children_operations = {
 	.name		= "pid_for_children",
 	.real_ns_name	= "pid",
 	.type		= CLONE_NEWPID,
-	.get		= pidns_क्रम_children_get,
+	.get		= pidns_for_children_get,
 	.put		= pidns_put,
 	.install	= pidns_install,
 	.owner		= pidns_owner,
 	.get_parent	= pidns_get_parent,
-पूर्ण;
+};
 
-अटल __init पूर्णांक pid_namespaces_init(व्योम)
-अणु
+static __init int pid_namespaces_init(void)
+{
 	pid_ns_cachep = KMEM_CACHE(pid_namespace, SLAB_PANIC);
 
-#अगर_घोषित CONFIG_CHECKPOINT_RESTORE
-	रेजिस्टर_sysctl_paths(kern_path, pid_ns_ctl_table);
-#पूर्ण_अगर
-	वापस 0;
-पूर्ण
+#ifdef CONFIG_CHECKPOINT_RESTORE
+	register_sysctl_paths(kern_path, pid_ns_ctl_table);
+#endif
+	return 0;
+}
 
 __initcall(pid_namespaces_init);

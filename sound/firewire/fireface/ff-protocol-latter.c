@@ -1,67 +1,66 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-// ff-protocol-latter - a part of driver क्रम RME Fireface series
+// SPDX-License-Identifier: GPL-2.0
+// ff-protocol-latter - a part of driver for RME Fireface series
 //
 // Copyright (c) 2019 Takashi Sakamoto
 //
 // Licensed under the terms of the GNU General Public License, version 2.
 
-#समावेश <linux/delay.h>
+#include <linux/delay.h>
 
-#समावेश "ff.h"
+#include "ff.h"
 
-#घोषणा LATTER_STF		0xffff00000004ULL
-#घोषणा LATTER_ISOC_CHANNELS	0xffff00000008ULL
-#घोषणा LATTER_ISOC_START	0xffff0000000cULL
-#घोषणा LATTER_FETCH_MODE	0xffff00000010ULL
-#घोषणा LATTER_SYNC_STATUS	0x0000801c0000ULL
+#define LATTER_STF		0xffff00000004ULL
+#define LATTER_ISOC_CHANNELS	0xffff00000008ULL
+#define LATTER_ISOC_START	0xffff0000000cULL
+#define LATTER_FETCH_MODE	0xffff00000010ULL
+#define LATTER_SYNC_STATUS	0x0000801c0000ULL
 
-// The content of sync status रेजिस्टर dअगरfers between models.
+// The content of sync status register differs between models.
 //
 // Fireface UCX:
-//  0xf0000000: (unidentअगरied)
-//  0x0f000000: effective rate of sampling घड़ी
-//  0x00f00000: detected rate of word घड़ी on BNC पूर्णांकerface
-//  0x000f0000: detected rate of ADAT or S/PDIF on optical पूर्णांकerface
-//  0x0000f000: detected rate of S/PDIF on coaxial पूर्णांकerface
-//  0x00000e00: effective source of sampling घड़ी
+//  0xf0000000: (unidentified)
+//  0x0f000000: effective rate of sampling clock
+//  0x00f00000: detected rate of word clock on BNC interface
+//  0x000f0000: detected rate of ADAT or S/PDIF on optical interface
+//  0x0000f000: detected rate of S/PDIF on coaxial interface
+//  0x00000e00: effective source of sampling clock
 //    0x00000e00: Internal
-//    0x00000800: (unidentअगरied)
-//    0x00000600: Word घड़ी on BNC पूर्णांकerface
-//    0x00000400: ADAT on optical पूर्णांकerface
-//    0x00000200: S/PDIF on coaxial or optical पूर्णांकerface
-//  0x00000100: Optical पूर्णांकerface is used क्रम ADAT संकेत
-//  0x00000080: (unidentअगरied)
-//  0x00000040: Synchronized to word घड़ी on BNC पूर्णांकerface
-//  0x00000020: Synchronized to ADAT or S/PDIF on optical पूर्णांकerface
-//  0x00000010: Synchronized to S/PDIF on coaxial पूर्णांकerface
-//  0x00000008: (unidentअगरied)
-//  0x00000004: Lock word घड़ी on BNC पूर्णांकerface
-//  0x00000002: Lock ADAT or S/PDIF on optical पूर्णांकerface
-//  0x00000001: Lock S/PDIF on coaxial पूर्णांकerface
+//    0x00000800: (unidentified)
+//    0x00000600: Word clock on BNC interface
+//    0x00000400: ADAT on optical interface
+//    0x00000200: S/PDIF on coaxial or optical interface
+//  0x00000100: Optical interface is used for ADAT signal
+//  0x00000080: (unidentified)
+//  0x00000040: Synchronized to word clock on BNC interface
+//  0x00000020: Synchronized to ADAT or S/PDIF on optical interface
+//  0x00000010: Synchronized to S/PDIF on coaxial interface
+//  0x00000008: (unidentified)
+//  0x00000004: Lock word clock on BNC interface
+//  0x00000002: Lock ADAT or S/PDIF on optical interface
+//  0x00000001: Lock S/PDIF on coaxial interface
 //
 // Fireface 802 (and perhaps UFX):
-//   0xf0000000: effective rate of sampling घड़ी
-//   0x0f000000: detected rate of ADAT-B on 2nd optical पूर्णांकerface
-//   0x00f00000: detected rate of ADAT-A on 1st optical पूर्णांकerface
-//   0x000f0000: detected rate of AES/EBU on XLR or coaxial पूर्णांकerface
-//   0x0000f000: detected rate of word घड़ी on BNC पूर्णांकerface
-//   0x00000e00: effective source of sampling घड़ी
-//     0x00000e00: पूर्णांकernal
+//   0xf0000000: effective rate of sampling clock
+//   0x0f000000: detected rate of ADAT-B on 2nd optical interface
+//   0x00f00000: detected rate of ADAT-A on 1st optical interface
+//   0x000f0000: detected rate of AES/EBU on XLR or coaxial interface
+//   0x0000f000: detected rate of word clock on BNC interface
+//   0x00000e00: effective source of sampling clock
+//     0x00000e00: internal
 //     0x00000800: ADAT-B
 //     0x00000600: ADAT-A
 //     0x00000400: AES/EBU
-//     0x00000200: Word घड़ी
-//   0x00000080: Synchronized to ADAT-B on 2nd optical पूर्णांकerface
-//   0x00000040: Synchronized to ADAT-A on 1st optical पूर्णांकerface
-//   0x00000020: Synchronized to AES/EBU on XLR or 2nd optical पूर्णांकerface
-//   0x00000010: Synchronized to word घड़ी on BNC पूर्णांकerface
-//   0x00000008: Lock ADAT-B on 2nd optical पूर्णांकerface
-//   0x00000004: Lock ADAT-A on 1st optical पूर्णांकerface
-//   0x00000002: Lock AES/EBU on XLR or 2nd optical पूर्णांकerface
-//   0x00000001: Lock word घड़ी on BNC पूर्णांकerface
+//     0x00000200: Word clock
+//   0x00000080: Synchronized to ADAT-B on 2nd optical interface
+//   0x00000040: Synchronized to ADAT-A on 1st optical interface
+//   0x00000020: Synchronized to AES/EBU on XLR or 2nd optical interface
+//   0x00000010: Synchronized to word clock on BNC interface
+//   0x00000008: Lock ADAT-B on 2nd optical interface
+//   0x00000004: Lock ADAT-A on 1st optical interface
+//   0x00000002: Lock AES/EBU on XLR or 2nd optical interface
+//   0x00000001: Lock word clock on BNC interface
 //
-// The pattern क्रम rate bits:
+// The pattern for rate bits:
 //   0x00: 32.0 kHz
 //   0x01: 44.1 kHz
 //   0x02: 48.0 kHz
@@ -71,316 +70,316 @@
 //   0x08: 128.0 kHz
 //   0x09: 176.4 kHz
 //   0x0a: 192.0 kHz
-अटल पूर्णांक parse_घड़ी_bits(u32 data, अचिन्हित पूर्णांक *rate,
-			    क्रमागत snd_ff_घड़ी_src *src,
-			    क्रमागत snd_ff_unit_version unit_version)
-अणु
-	अटल स्थिर काष्ठा अणु
-		अचिन्हित पूर्णांक rate;
+static int parse_clock_bits(u32 data, unsigned int *rate,
+			    enum snd_ff_clock_src *src,
+			    enum snd_ff_unit_version unit_version)
+{
+	static const struct {
+		unsigned int rate;
 		u32 flag;
-	पूर्ण *rate_entry, rate_entries[] = अणु
-		अणु 32000,	0x00, पूर्ण,
-		अणु 44100,	0x01, पूर्ण,
-		अणु 48000,	0x02, पूर्ण,
-		अणु 64000,	0x04, पूर्ण,
-		अणु 88200,	0x05, पूर्ण,
-		अणु 96000,	0x06, पूर्ण,
-		अणु 128000,	0x08, पूर्ण,
-		अणु 176400,	0x09, पूर्ण,
-		अणु 192000,	0x0a, पूर्ण,
-	पूर्ण;
-	अटल स्थिर काष्ठा अणु
-		क्रमागत snd_ff_घड़ी_src src;
+	} *rate_entry, rate_entries[] = {
+		{ 32000,	0x00, },
+		{ 44100,	0x01, },
+		{ 48000,	0x02, },
+		{ 64000,	0x04, },
+		{ 88200,	0x05, },
+		{ 96000,	0x06, },
+		{ 128000,	0x08, },
+		{ 176400,	0x09, },
+		{ 192000,	0x0a, },
+	};
+	static const struct {
+		enum snd_ff_clock_src src;
 		u32 flag;
-	पूर्ण *clk_entry, *clk_entries, ucx_clk_entries[] = अणु
-		अणु SND_FF_CLOCK_SRC_SPDIF,	0x00000200, पूर्ण,
-		अणु SND_FF_CLOCK_SRC_ADAT1,	0x00000400, पूर्ण,
-		अणु SND_FF_CLOCK_SRC_WORD,	0x00000600, पूर्ण,
-		अणु SND_FF_CLOCK_SRC_INTERNAL,	0x00000e00, पूर्ण,
-	पूर्ण, ufx_ff802_clk_entries[] = अणु
-		अणु SND_FF_CLOCK_SRC_WORD,	0x00000200, पूर्ण,
-		अणु SND_FF_CLOCK_SRC_SPDIF,	0x00000400, पूर्ण,
-		अणु SND_FF_CLOCK_SRC_ADAT1,	0x00000600, पूर्ण,
-		अणु SND_FF_CLOCK_SRC_ADAT2,	0x00000800, पूर्ण,
-		अणु SND_FF_CLOCK_SRC_INTERNAL,	0x00000e00, पूर्ण,
-	पूर्ण;
+	} *clk_entry, *clk_entries, ucx_clk_entries[] = {
+		{ SND_FF_CLOCK_SRC_SPDIF,	0x00000200, },
+		{ SND_FF_CLOCK_SRC_ADAT1,	0x00000400, },
+		{ SND_FF_CLOCK_SRC_WORD,	0x00000600, },
+		{ SND_FF_CLOCK_SRC_INTERNAL,	0x00000e00, },
+	}, ufx_ff802_clk_entries[] = {
+		{ SND_FF_CLOCK_SRC_WORD,	0x00000200, },
+		{ SND_FF_CLOCK_SRC_SPDIF,	0x00000400, },
+		{ SND_FF_CLOCK_SRC_ADAT1,	0x00000600, },
+		{ SND_FF_CLOCK_SRC_ADAT2,	0x00000800, },
+		{ SND_FF_CLOCK_SRC_INTERNAL,	0x00000e00, },
+	};
 	u32 rate_bits;
-	अचिन्हित पूर्णांक clk_entry_count;
-	पूर्णांक i;
+	unsigned int clk_entry_count;
+	int i;
 
-	अगर (unit_version == SND_FF_UNIT_VERSION_UCX) अणु
+	if (unit_version == SND_FF_UNIT_VERSION_UCX) {
 		rate_bits = (data & 0x0f000000) >> 24;
 		clk_entries = ucx_clk_entries;
 		clk_entry_count = ARRAY_SIZE(ucx_clk_entries);
-	पूर्ण अन्यथा अणु
+	} else {
 		rate_bits = (data & 0xf0000000) >> 28;
 		clk_entries = ufx_ff802_clk_entries;
 		clk_entry_count = ARRAY_SIZE(ufx_ff802_clk_entries);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(rate_entries); ++i) अणु
+	for (i = 0; i < ARRAY_SIZE(rate_entries); ++i) {
 		rate_entry = rate_entries + i;
-		अगर (rate_bits == rate_entry->flag) अणु
+		if (rate_bits == rate_entry->flag) {
 			*rate = rate_entry->rate;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (i == ARRAY_SIZE(rate_entries))
-		वापस -EIO;
+			break;
+		}
+	}
+	if (i == ARRAY_SIZE(rate_entries))
+		return -EIO;
 
-	क्रम (i = 0; i < clk_entry_count; ++i) अणु
+	for (i = 0; i < clk_entry_count; ++i) {
 		clk_entry = clk_entries + i;
-		अगर ((data & 0x000e00) == clk_entry->flag) अणु
+		if ((data & 0x000e00) == clk_entry->flag) {
 			*src = clk_entry->src;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (i == clk_entry_count)
-		वापस -EIO;
+			break;
+		}
+	}
+	if (i == clk_entry_count)
+		return -EIO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक latter_get_घड़ी(काष्ठा snd_ff *ff, अचिन्हित पूर्णांक *rate,
-			   क्रमागत snd_ff_घड़ी_src *src)
-अणु
+static int latter_get_clock(struct snd_ff *ff, unsigned int *rate,
+			   enum snd_ff_clock_src *src)
+{
 	__le32 reg;
 	u32 data;
-	पूर्णांक err;
+	int err;
 
 	err = snd_fw_transaction(ff->unit, TCODE_READ_QUADLET_REQUEST,
-				 LATTER_SYNC_STATUS, &reg, माप(reg), 0);
-	अगर (err < 0)
-		वापस err;
+				 LATTER_SYNC_STATUS, &reg, sizeof(reg), 0);
+	if (err < 0)
+		return err;
 	data = le32_to_cpu(reg);
 
-	वापस parse_घड़ी_bits(data, rate, src, ff->unit_version);
-पूर्ण
+	return parse_clock_bits(data, rate, src, ff->unit_version);
+}
 
-अटल पूर्णांक latter_चयन_fetching_mode(काष्ठा snd_ff *ff, bool enable)
-अणु
+static int latter_switch_fetching_mode(struct snd_ff *ff, bool enable)
+{
 	u32 data;
 	__le32 reg;
 
-	अगर (enable)
+	if (enable)
 		data = 0x00000000;
-	अन्यथा
+	else
 		data = 0xffffffff;
 	reg = cpu_to_le32(data);
 
-	वापस snd_fw_transaction(ff->unit, TCODE_WRITE_QUADLET_REQUEST,
-				  LATTER_FETCH_MODE, &reg, माप(reg), 0);
-पूर्ण
+	return snd_fw_transaction(ff->unit, TCODE_WRITE_QUADLET_REQUEST,
+				  LATTER_FETCH_MODE, &reg, sizeof(reg), 0);
+}
 
-अटल पूर्णांक latter_allocate_resources(काष्ठा snd_ff *ff, अचिन्हित पूर्णांक rate)
-अणु
-	क्रमागत snd_ff_stream_mode mode;
-	अचिन्हित पूर्णांक code;
+static int latter_allocate_resources(struct snd_ff *ff, unsigned int rate)
+{
+	enum snd_ff_stream_mode mode;
+	unsigned int code;
 	__le32 reg;
-	अचिन्हित पूर्णांक count;
-	पूर्णांक i;
-	पूर्णांक err;
+	unsigned int count;
+	int i;
+	int err;
 
 	// Set the number of data blocks transferred in a second.
-	अगर (rate % 48000 == 0)
+	if (rate % 48000 == 0)
 		code = 0x04;
-	अन्यथा अगर (rate % 44100 == 0)
+	else if (rate % 44100 == 0)
 		code = 0x02;
-	अन्यथा अगर (rate % 32000 == 0)
+	else if (rate % 32000 == 0)
 		code = 0x00;
-	अन्यथा
-		वापस -EINVAL;
+	else
+		return -EINVAL;
 
-	अगर (rate >= 64000 && rate < 128000)
+	if (rate >= 64000 && rate < 128000)
 		code |= 0x08;
-	अन्यथा अगर (rate >= 128000)
+	else if (rate >= 128000)
 		code |= 0x10;
 
 	reg = cpu_to_le32(code);
 	err = snd_fw_transaction(ff->unit, TCODE_WRITE_QUADLET_REQUEST,
-				 LATTER_STF, &reg, माप(reg), 0);
-	अगर (err < 0)
-		वापस err;
+				 LATTER_STF, &reg, sizeof(reg), 0);
+	if (err < 0)
+		return err;
 
-	// Confirm to shअगरt transmission घड़ी.
+	// Confirm to shift transmission clock.
 	count = 0;
-	जबतक (count++ < 10) अणु
-		अचिन्हित पूर्णांक curr_rate;
-		क्रमागत snd_ff_घड़ी_src src;
+	while (count++ < 10) {
+		unsigned int curr_rate;
+		enum snd_ff_clock_src src;
 
-		err = latter_get_घड़ी(ff, &curr_rate, &src);
-		अगर (err < 0)
-			वापस err;
+		err = latter_get_clock(ff, &curr_rate, &src);
+		if (err < 0)
+			return err;
 
-		अगर (curr_rate == rate)
-			अवरोध;
-	पूर्ण
-	अगर (count > 10)
-		वापस -ETIMEDOUT;
+		if (curr_rate == rate)
+			break;
+	}
+	if (count > 10)
+		return -ETIMEDOUT;
 
-	क्रम (i = 0; i < ARRAY_SIZE(amdtp_rate_table); ++i) अणु
-		अगर (rate == amdtp_rate_table[i])
-			अवरोध;
-	पूर्ण
-	अगर (i == ARRAY_SIZE(amdtp_rate_table))
-		वापस -EINVAL;
+	for (i = 0; i < ARRAY_SIZE(amdtp_rate_table); ++i) {
+		if (rate == amdtp_rate_table[i])
+			break;
+	}
+	if (i == ARRAY_SIZE(amdtp_rate_table))
+		return -EINVAL;
 
 	err = snd_ff_stream_get_multiplier_mode(i, &mode);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	// Keep resources क्रम in-stream.
+	// Keep resources for in-stream.
 	ff->tx_resources.channels_mask = 0x00000000000000ffuLL;
 	err = fw_iso_resources_allocate(&ff->tx_resources,
 			amdtp_stream_get_max_payload(&ff->tx_stream),
 			fw_parent_device(ff->unit)->max_speed);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	// Keep resources क्रम out-stream.
+	// Keep resources for out-stream.
 	ff->rx_resources.channels_mask = 0x00000000000000ffuLL;
 	err = fw_iso_resources_allocate(&ff->rx_resources,
 			amdtp_stream_get_max_payload(&ff->rx_stream),
 			fw_parent_device(ff->unit)->max_speed);
-	अगर (err < 0)
-		fw_iso_resources_मुक्त(&ff->tx_resources);
+	if (err < 0)
+		fw_iso_resources_free(&ff->tx_resources);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक latter_begin_session(काष्ठा snd_ff *ff, अचिन्हित पूर्णांक rate)
-अणु
-	अचिन्हित पूर्णांक generation = ff->rx_resources.generation;
-	अचिन्हित पूर्णांक flag;
+static int latter_begin_session(struct snd_ff *ff, unsigned int rate)
+{
+	unsigned int generation = ff->rx_resources.generation;
+	unsigned int flag;
 	u32 data;
 	__le32 reg;
-	पूर्णांक err;
+	int err;
 
-	अगर (ff->unit_version == SND_FF_UNIT_VERSION_UCX) अणु
+	if (ff->unit_version == SND_FF_UNIT_VERSION_UCX) {
 		// For Fireface UCX. Always use the maximum number of data
 		// channels in data block of packet.
-		अगर (rate >= 32000 && rate <= 48000)
+		if (rate >= 32000 && rate <= 48000)
 			flag = 0x92;
-		अन्यथा अगर (rate >= 64000 && rate <= 96000)
+		else if (rate >= 64000 && rate <= 96000)
 			flag = 0x8e;
-		अन्यथा अगर (rate >= 128000 && rate <= 192000)
+		else if (rate >= 128000 && rate <= 192000)
 			flag = 0x8c;
-		अन्यथा
-			वापस -EINVAL;
-	पूर्ण अन्यथा अणु
+		else
+			return -EINVAL;
+	} else {
 		// For Fireface UFX and 802. Due to bandwidth limitation on
 		// IEEE 1394a (400 Mbps), Analog 1-12 and AES are available
 		// without any ADAT at quadruple speed.
-		अगर (rate >= 32000 && rate <= 48000)
+		if (rate >= 32000 && rate <= 48000)
 			flag = 0x9e;
-		अन्यथा अगर (rate >= 64000 && rate <= 96000)
+		else if (rate >= 64000 && rate <= 96000)
 			flag = 0x96;
-		अन्यथा अगर (rate >= 128000 && rate <= 192000)
+		else if (rate >= 128000 && rate <= 192000)
 			flag = 0x8e;
-		अन्यथा
-			वापस -EINVAL;
-	पूर्ण
+		else
+			return -EINVAL;
+	}
 
-	अगर (generation != fw_parent_device(ff->unit)->card->generation) अणु
+	if (generation != fw_parent_device(ff->unit)->card->generation) {
 		err = fw_iso_resources_update(&ff->tx_resources);
-		अगर (err < 0)
-			वापस err;
+		if (err < 0)
+			return err;
 
 		err = fw_iso_resources_update(&ff->rx_resources);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+		if (err < 0)
+			return err;
+	}
 
 	data = (ff->tx_resources.channel << 8) | ff->rx_resources.channel;
 	reg = cpu_to_le32(data);
 	err = snd_fw_transaction(ff->unit, TCODE_WRITE_QUADLET_REQUEST,
-				 LATTER_ISOC_CHANNELS, &reg, माप(reg), 0);
-	अगर (err < 0)
-		वापस err;
+				 LATTER_ISOC_CHANNELS, &reg, sizeof(reg), 0);
+	if (err < 0)
+		return err;
 
 	reg = cpu_to_le32(flag);
-	वापस snd_fw_transaction(ff->unit, TCODE_WRITE_QUADLET_REQUEST,
-				  LATTER_ISOC_START, &reg, माप(reg), 0);
-पूर्ण
+	return snd_fw_transaction(ff->unit, TCODE_WRITE_QUADLET_REQUEST,
+				  LATTER_ISOC_START, &reg, sizeof(reg), 0);
+}
 
-अटल व्योम latter_finish_session(काष्ठा snd_ff *ff)
-अणु
+static void latter_finish_session(struct snd_ff *ff)
+{
 	__le32 reg;
 
 	reg = cpu_to_le32(0x00000000);
 	snd_fw_transaction(ff->unit, TCODE_WRITE_QUADLET_REQUEST,
-			   LATTER_ISOC_START, &reg, माप(reg), 0);
-पूर्ण
+			   LATTER_ISOC_START, &reg, sizeof(reg), 0);
+}
 
-अटल व्योम latter_dump_status(काष्ठा snd_ff *ff, काष्ठा snd_info_buffer *buffer)
-अणु
-	अटल स्थिर काष्ठा अणु
-		अक्षर *स्थिर label;
+static void latter_dump_status(struct snd_ff *ff, struct snd_info_buffer *buffer)
+{
+	static const struct {
+		char *const label;
 		u32 locked_mask;
 		u32 synced_mask;
-	पूर्ण *clk_entry, *clk_entries, ucx_clk_entries[] = अणु
-		अणु "S/PDIF",	0x00000001, 0x00000010, पूर्ण,
-		अणु "ADAT",	0x00000002, 0x00000020, पूर्ण,
-		अणु "WDClk",	0x00000004, 0x00000040, पूर्ण,
-	पूर्ण, ufx_ff802_clk_entries[] = अणु
-		अणु "WDClk",	0x00000001, 0x00000010, पूर्ण,
-		अणु "AES/EBU",	0x00000002, 0x00000020, पूर्ण,
-		अणु "ADAT-A",	0x00000004, 0x00000040, पूर्ण,
-		अणु "ADAT-B",	0x00000008, 0x00000080, पूर्ण,
-	पूर्ण;
+	} *clk_entry, *clk_entries, ucx_clk_entries[] = {
+		{ "S/PDIF",	0x00000001, 0x00000010, },
+		{ "ADAT",	0x00000002, 0x00000020, },
+		{ "WDClk",	0x00000004, 0x00000040, },
+	}, ufx_ff802_clk_entries[] = {
+		{ "WDClk",	0x00000001, 0x00000010, },
+		{ "AES/EBU",	0x00000002, 0x00000020, },
+		{ "ADAT-A",	0x00000004, 0x00000040, },
+		{ "ADAT-B",	0x00000008, 0x00000080, },
+	};
 	__le32 reg;
 	u32 data;
-	अचिन्हित पूर्णांक rate;
-	क्रमागत snd_ff_घड़ी_src src;
-	स्थिर अक्षर *label;
-	अचिन्हित पूर्णांक clk_entry_count;
-	पूर्णांक i;
-	पूर्णांक err;
+	unsigned int rate;
+	enum snd_ff_clock_src src;
+	const char *label;
+	unsigned int clk_entry_count;
+	int i;
+	int err;
 
 	err = snd_fw_transaction(ff->unit, TCODE_READ_QUADLET_REQUEST,
-				 LATTER_SYNC_STATUS, &reg, माप(reg), 0);
-	अगर (err < 0)
-		वापस;
+				 LATTER_SYNC_STATUS, &reg, sizeof(reg), 0);
+	if (err < 0)
+		return;
 	data = le32_to_cpu(reg);
 
-	snd_iम_लिखो(buffer, "External source detection:\n");
+	snd_iprintf(buffer, "External source detection:\n");
 
-	अगर (ff->unit_version == SND_FF_UNIT_VERSION_UCX) अणु
+	if (ff->unit_version == SND_FF_UNIT_VERSION_UCX) {
 		clk_entries = ucx_clk_entries;
 		clk_entry_count = ARRAY_SIZE(ucx_clk_entries);
-	पूर्ण अन्यथा अणु
+	} else {
 		clk_entries = ufx_ff802_clk_entries;
 		clk_entry_count = ARRAY_SIZE(ufx_ff802_clk_entries);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < clk_entry_count; ++i) अणु
+	for (i = 0; i < clk_entry_count; ++i) {
 		clk_entry = clk_entries + i;
-		snd_iम_लिखो(buffer, "%s: ", clk_entry->label);
-		अगर (data & clk_entry->locked_mask) अणु
-			अगर (data & clk_entry->synced_mask)
-				snd_iम_लिखो(buffer, "sync\n");
-			अन्यथा
-				snd_iम_लिखो(buffer, "lock\n");
-		पूर्ण अन्यथा अणु
-			snd_iम_लिखो(buffer, "none\n");
-		पूर्ण
-	पूर्ण
+		snd_iprintf(buffer, "%s: ", clk_entry->label);
+		if (data & clk_entry->locked_mask) {
+			if (data & clk_entry->synced_mask)
+				snd_iprintf(buffer, "sync\n");
+			else
+				snd_iprintf(buffer, "lock\n");
+		} else {
+			snd_iprintf(buffer, "none\n");
+		}
+	}
 
-	err = parse_घड़ी_bits(data, &rate, &src, ff->unit_version);
-	अगर (err < 0)
-		वापस;
+	err = parse_clock_bits(data, &rate, &src, ff->unit_version);
+	if (err < 0)
+		return;
 	label = snd_ff_proc_get_clk_label(src);
-	अगर (!label)
-		वापस;
+	if (!label)
+		return;
 
-	snd_iम_लिखो(buffer, "Referred clock: %s %d\n", label, rate);
-पूर्ण
+	snd_iprintf(buffer, "Referred clock: %s %d\n", label, rate);
+}
 
 // NOTE: transactions are transferred within 0x00-0x7f in allocated range of
-// address. This seems to be क्रम check of discontinuity in receiver side.
+// address. This seems to be for check of discontinuity in receiver side.
 //
-// Like Fireface 400, drivers can select one of 4 options क्रम lower 4 bytes of
-// destination address by bit flags in quadlet रेजिस्टर (little endian) at
+// Like Fireface 400, drivers can select one of 4 options for lower 4 bytes of
+// destination address by bit flags in quadlet register (little endian) at
 // 0x'ffff'0000'0014:
 //
 // bit flags: offset of destination address
@@ -392,152 +391,152 @@
 // Drivers can suppress the device to transfer asynchronous transactions by
 // clear these bit flags.
 //
-// Actually, the रेजिस्टर is ग_लिखो-only and includes the other settings such as
-// input attenuation. This driver allocates क्रम the first option
+// Actually, the register is write-only and includes the other settings such as
+// input attenuation. This driver allocates for the first option
 // (0x'....'....'0000'0000) and expects userspace application to configure the
-// रेजिस्टर क्रम it.
-अटल व्योम latter_handle_midi_msg(काष्ठा snd_ff *ff, अचिन्हित पूर्णांक offset,
-				   __le32 *buf, माप_प्रकार length)
-अणु
+// register for it.
+static void latter_handle_midi_msg(struct snd_ff *ff, unsigned int offset,
+				   __le32 *buf, size_t length)
+{
 	u32 data = le32_to_cpu(*buf);
-	अचिन्हित पूर्णांक index = (data & 0x000000f0) >> 4;
+	unsigned int index = (data & 0x000000f0) >> 4;
 	u8 byte[3];
-	काष्ठा snd_rawmidi_substream *substream;
-	अचिन्हित पूर्णांक len;
+	struct snd_rawmidi_substream *substream;
+	unsigned int len;
 
-	अगर (index >= ff->spec->midi_in_ports)
-		वापस;
+	if (index >= ff->spec->midi_in_ports)
+		return;
 
-	चयन (data & 0x0000000f) अणु
-	हाल 0x00000008:
-	हाल 0x00000009:
-	हाल 0x0000000a:
-	हाल 0x0000000b:
-	हाल 0x0000000e:
+	switch (data & 0x0000000f) {
+	case 0x00000008:
+	case 0x00000009:
+	case 0x0000000a:
+	case 0x0000000b:
+	case 0x0000000e:
 		len = 3;
-		अवरोध;
-	हाल 0x0000000c:
-	हाल 0x0000000d:
+		break;
+	case 0x0000000c:
+	case 0x0000000d:
 		len = 2;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		len = data & 0x00000003;
-		अगर (len == 0)
+		if (len == 0)
 			len = 3;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	byte[0] = (data & 0x0000ff00) >> 8;
 	byte[1] = (data & 0x00ff0000) >> 16;
 	byte[2] = (data & 0xff000000) >> 24;
 
 	substream = READ_ONCE(ff->tx_midi_substreams[index]);
-	अगर (substream)
+	if (substream)
 		snd_rawmidi_receive(substream, byte, len);
-पूर्ण
+}
 
 /*
- * When वापस minus value, given argument is not MIDI status.
- * When वापस 0, given argument is a beginning of प्रणाली exclusive.
- * When वापस the others, given argument is MIDI data.
+ * When return minus value, given argument is not MIDI status.
+ * When return 0, given argument is a beginning of system exclusive.
+ * When return the others, given argument is MIDI data.
  */
-अटल अंतरभूत पूर्णांक calculate_message_bytes(u8 status)
-अणु
-	चयन (status) अणु
-	हाल 0xf6:	/* Tune request. */
-	हाल 0xf8:	/* Timing घड़ी. */
-	हाल 0xfa:	/* Start. */
-	हाल 0xfb:	/* Continue. */
-	हाल 0xfc:	/* Stop. */
-	हाल 0xfe:	/* Active sensing. */
-	हाल 0xff:	/* System reset. */
-		वापस 1;
-	हाल 0xf1:	/* MIDI समय code quarter frame. */
-	हाल 0xf3:	/* Song select. */
-		वापस 2;
-	हाल 0xf2:	/* Song position poपूर्णांकer. */
-		वापस 3;
-	हाल 0xf0:	/* Exclusive. */
-		वापस 0;
-	हाल 0xf7:	/* End of exclusive. */
-		अवरोध;
-	हाल 0xf4:	/* Undefined. */
-	हाल 0xf5:	/* Undefined. */
-	हाल 0xf9:	/* Undefined. */
-	हाल 0xfd:	/* Undefined. */
-		अवरोध;
-	शेष:
-		चयन (status & 0xf0) अणु
-		हाल 0x80:	/* Note on. */
-		हाल 0x90:	/* Note off. */
-		हाल 0xa0:	/* Polyphonic key pressure. */
-		हाल 0xb0:	/* Control change and Mode change. */
-		हाल 0xe0:	/* Pitch bend change. */
-			वापस 3;
-		हाल 0xc0:	/* Program change. */
-		हाल 0xd0:	/* Channel pressure. */
-			वापस 2;
-		शेष:
-		अवरोध;
-		पूर्ण
-	अवरोध;
-	पूर्ण
+static inline int calculate_message_bytes(u8 status)
+{
+	switch (status) {
+	case 0xf6:	/* Tune request. */
+	case 0xf8:	/* Timing clock. */
+	case 0xfa:	/* Start. */
+	case 0xfb:	/* Continue. */
+	case 0xfc:	/* Stop. */
+	case 0xfe:	/* Active sensing. */
+	case 0xff:	/* System reset. */
+		return 1;
+	case 0xf1:	/* MIDI time code quarter frame. */
+	case 0xf3:	/* Song select. */
+		return 2;
+	case 0xf2:	/* Song position pointer. */
+		return 3;
+	case 0xf0:	/* Exclusive. */
+		return 0;
+	case 0xf7:	/* End of exclusive. */
+		break;
+	case 0xf4:	/* Undefined. */
+	case 0xf5:	/* Undefined. */
+	case 0xf9:	/* Undefined. */
+	case 0xfd:	/* Undefined. */
+		break;
+	default:
+		switch (status & 0xf0) {
+		case 0x80:	/* Note on. */
+		case 0x90:	/* Note off. */
+		case 0xa0:	/* Polyphonic key pressure. */
+		case 0xb0:	/* Control change and Mode change. */
+		case 0xe0:	/* Pitch bend change. */
+			return 3;
+		case 0xc0:	/* Program change. */
+		case 0xd0:	/* Channel pressure. */
+			return 2;
+		default:
+		break;
+		}
+	break;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक latter_fill_midi_msg(काष्ठा snd_ff *ff,
-				काष्ठा snd_rawmidi_substream *substream,
-				अचिन्हित पूर्णांक port)
-अणु
-	u32 data = अणु0पूर्ण;
+static int latter_fill_midi_msg(struct snd_ff *ff,
+				struct snd_rawmidi_substream *substream,
+				unsigned int port)
+{
+	u32 data = {0};
 	u8 *buf = (u8 *)&data;
-	पूर्णांक consumed;
+	int consumed;
 
 	buf[0] = port << 4;
 	consumed = snd_rawmidi_transmit_peek(substream, buf + 1, 3);
-	अगर (consumed <= 0)
-		वापस consumed;
+	if (consumed <= 0)
+		return consumed;
 
-	अगर (!ff->on_sysex[port]) अणु
-		अगर (buf[1] != 0xf0) अणु
-			अगर (consumed < calculate_message_bytes(buf[1]))
-				वापस 0;
-		पूर्ण अन्यथा अणु
+	if (!ff->on_sysex[port]) {
+		if (buf[1] != 0xf0) {
+			if (consumed < calculate_message_bytes(buf[1]))
+				return 0;
+		} else {
 			// The beginning of exclusives.
 			ff->on_sysex[port] = true;
-		पूर्ण
+		}
 
 		buf[0] |= consumed;
-	पूर्ण अन्यथा अणु
-		अगर (buf[1] != 0xf7) अणु
-			अगर (buf[2] == 0xf7 || buf[3] == 0xf7) अणु
-				// Transfer end code at next समय.
+	} else {
+		if (buf[1] != 0xf7) {
+			if (buf[2] == 0xf7 || buf[3] == 0xf7) {
+				// Transfer end code at next time.
 				consumed -= 1;
-			पूर्ण
+			}
 
 			buf[0] |= consumed;
-		पूर्ण अन्यथा अणु
+		} else {
 			// The end of exclusives.
 			ff->on_sysex[port] = false;
 			consumed = 1;
 			buf[0] |= 0x0f;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	ff->msg_buf[port][0] = cpu_to_le32(data);
 	ff->rx_bytes[port] = consumed;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-स्थिर काष्ठा snd_ff_protocol snd_ff_protocol_latter = अणु
+const struct snd_ff_protocol snd_ff_protocol_latter = {
 	.handle_midi_msg	= latter_handle_midi_msg,
 	.fill_midi_msg		= latter_fill_midi_msg,
-	.get_घड़ी		= latter_get_घड़ी,
-	.चयन_fetching_mode	= latter_चयन_fetching_mode,
+	.get_clock		= latter_get_clock,
+	.switch_fetching_mode	= latter_switch_fetching_mode,
 	.allocate_resources	= latter_allocate_resources,
 	.begin_session		= latter_begin_session,
 	.finish_session		= latter_finish_session,
 	.dump_status		= latter_dump_status,
-पूर्ण;
+};

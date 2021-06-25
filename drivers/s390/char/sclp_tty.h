@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- *    पूर्णांकerface to the SCLP-पढ़ो/ग_लिखो driver
+ *    interface to the SCLP-read/write driver
  *
  *  S390 version
  *    Copyright IBM Corp. 1999
@@ -9,11 +8,11 @@
  *		 Martin Schwidefsky <schwidefsky@de.ibm.com>
  */
 
-#अगर_अघोषित __SCLP_TTY_H__
-#घोषणा __SCLP_TTY_H__
+#ifndef __SCLP_TTY_H__
+#define __SCLP_TTY_H__
 
-#समावेश <linux/tty_driver.h>
+#include <linux/tty_driver.h>
 
-बाह्य काष्ठा tty_driver *sclp_tty_driver;
+extern struct tty_driver *sclp_tty_driver;
 
-#पूर्ण_अगर	/* __SCLP_TTY_H__ */
+#endif	/* __SCLP_TTY_H__ */

@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright IBM Corp. 2005
  *
@@ -7,75 +6,75 @@
  *
  */
 
-#अगर_अघोषित _S390_KEXEC_H
-#घोषणा _S390_KEXEC_H
+#ifndef _S390_KEXEC_H
+#define _S390_KEXEC_H
 
-#समावेश <यंत्र/processor.h>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/setup.h>
+#include <asm/processor.h>
+#include <asm/page.h>
+#include <asm/setup.h>
 /*
- * KEXEC_SOURCE_MEMORY_LIMIT maximum page get_मुक्त_page can वापस.
- * I.e. Maximum page that is mapped directly पूर्णांकo kernel memory,
+ * KEXEC_SOURCE_MEMORY_LIMIT maximum page get_free_page can return.
+ * I.e. Maximum page that is mapped directly into kernel memory,
  * and kmap is not required.
  */
 
 /* Maximum physical address we can use pages from */
-#घोषणा KEXEC_SOURCE_MEMORY_LIMIT (-1UL)
+#define KEXEC_SOURCE_MEMORY_LIMIT (-1UL)
 
 /* Maximum address we can reach in physical address mode */
-#घोषणा KEXEC_DESTINATION_MEMORY_LIMIT (-1UL)
+#define KEXEC_DESTINATION_MEMORY_LIMIT (-1UL)
 
-/* Maximum address we can use क्रम the control pages */
+/* Maximum address we can use for the control pages */
 /* Not more than 2GB */
-#घोषणा KEXEC_CONTROL_MEMORY_LIMIT (1UL<<31)
+#define KEXEC_CONTROL_MEMORY_LIMIT (1UL<<31)
 
 /* Allocate control page with GFP_DMA */
-#घोषणा KEXEC_CONTROL_MEMORY_GFP GFP_DMA
+#define KEXEC_CONTROL_MEMORY_GFP GFP_DMA
 
-/* Maximum address we can use क्रम the crash control pages */
-#घोषणा KEXEC_CRASH_CONTROL_MEMORY_LIMIT (-1UL)
+/* Maximum address we can use for the crash control pages */
+#define KEXEC_CRASH_CONTROL_MEMORY_LIMIT (-1UL)
 
-/* Allocate one page क्रम the pdp and the second क्रम the code */
-#घोषणा KEXEC_CONTROL_PAGE_SIZE 4096
+/* Allocate one page for the pdp and the second for the code */
+#define KEXEC_CONTROL_PAGE_SIZE 4096
 
 /* Alignment of crashkernel memory */
-#घोषणा KEXEC_CRASH_MEM_ALIGN HPAGE_SIZE
+#define KEXEC_CRASH_MEM_ALIGN HPAGE_SIZE
 
 /* The native architecture */
-#घोषणा KEXEC_ARCH KEXEC_ARCH_S390
+#define KEXEC_ARCH KEXEC_ARCH_S390
 
 /* Allow kexec_file to load a segment to 0 */
-#घोषणा KEXEC_BUF_MEM_UNKNOWN -1
+#define KEXEC_BUF_MEM_UNKNOWN -1
 
-/* Provide a dummy definition to aव्योम build failures. */
-अटल अंतरभूत व्योम crash_setup_regs(काष्ठा pt_regs *newregs,
-					काष्ठा pt_regs *oldregs) अणु पूर्ण
+/* Provide a dummy definition to avoid build failures. */
+static inline void crash_setup_regs(struct pt_regs *newregs,
+					struct pt_regs *oldregs) { }
 
-काष्ठा kimage;
-काष्ठा s390_load_data अणु
-	/* Poपूर्णांकer to the kernel buffer. Used to रेजिस्टर cmdline etc.. */
-	व्योम *kernel_buf;
+struct kimage;
+struct s390_load_data {
+	/* Pointer to the kernel buffer. Used to register cmdline etc.. */
+	void *kernel_buf;
 
 	/* Load address of the kernel_buf. */
-	अचिन्हित दीर्घ kernel_mem;
+	unsigned long kernel_mem;
 
 	/* Parmarea in the kernel buffer. */
-	काष्ठा parmarea *parm;
+	struct parmarea *parm;
 
 	/* Total size of loaded segments in memory. Used as an offset. */
-	माप_प्रकार memsz;
+	size_t memsz;
 
-	काष्ठा ipl_report *report;
-पूर्ण;
+	struct ipl_report *report;
+};
 
-पूर्णांक s390_verअगरy_sig(स्थिर अक्षर *kernel, अचिन्हित दीर्घ kernel_len);
-व्योम *kexec_file_add_components(काष्ठा kimage *image,
-				पूर्णांक (*add_kernel)(काष्ठा kimage *image,
-						  काष्ठा s390_load_data *data));
-पूर्णांक arch_kexec_करो_relocs(पूर्णांक r_type, व्योम *loc, अचिन्हित दीर्घ val,
-			 अचिन्हित दीर्घ addr);
+int s390_verify_sig(const char *kernel, unsigned long kernel_len);
+void *kexec_file_add_components(struct kimage *image,
+				int (*add_kernel)(struct kimage *image,
+						  struct s390_load_data *data));
+int arch_kexec_do_relocs(int r_type, void *loc, unsigned long val,
+			 unsigned long addr);
 
-बाह्य स्थिर काष्ठा kexec_file_ops s390_kexec_image_ops;
-बाह्य स्थिर काष्ठा kexec_file_ops s390_kexec_elf_ops;
+extern const struct kexec_file_ops s390_kexec_image_ops;
+extern const struct kexec_file_ops s390_kexec_elf_ops;
 
-#पूर्ण_अगर /*_S390_KEXEC_H */
+#endif /*_S390_KEXEC_H */

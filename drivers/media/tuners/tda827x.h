@@ -1,57 +1,56 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
   /*
-     DVB Driver क्रम Philips tda827x / tda827xa Silicon tuners
+     DVB Driver for Philips tda827x / tda827xa Silicon tuners
 
-     (c) 2005 Harपंचांगut Hackmann
+     (c) 2005 Hartmut Hackmann
      (c) 2007 Michael Krufky
 
 
   */
 
-#अगर_अघोषित __DVB_TDA827X_H__
-#घोषणा __DVB_TDA827X_H__
+#ifndef __DVB_TDA827X_H__
+#define __DVB_TDA827X_H__
 
-#समावेश <linux/i2c.h>
-#समावेश <media/dvb_frontend.h>
-#समावेश "tda8290.h"
+#include <linux/i2c.h>
+#include <media/dvb_frontend.h>
+#include "tda8290.h"
 
-काष्ठा tda827x_config
-अणु
+struct tda827x_config
+{
 	/* saa7134 - provided callbacks */
-	पूर्णांक (*init) (काष्ठा dvb_frontend *fe);
-	पूर्णांक (*sleep) (काष्ठा dvb_frontend *fe);
+	int (*init) (struct dvb_frontend *fe);
+	int (*sleep) (struct dvb_frontend *fe);
 
-	/* पूर्णांकerface to tda829x driver */
-	क्रमागत tda8290_lna config;
-	पूर्णांक	     चयन_addr;
+	/* interface to tda829x driver */
+	enum tda8290_lna config;
+	int	     switch_addr;
 
-	व्योम (*agcf)(काष्ठा dvb_frontend *fe);
-पूर्ण;
+	void (*agcf)(struct dvb_frontend *fe);
+};
 
 
 /**
- * tda827x_attach() - Attach a tda827x tuner to the supplied frontend काष्ठाure
+ * tda827x_attach() - Attach a tda827x tuner to the supplied frontend structure
  *
  * @fe: Frontend to attach to.
  * @addr: i2c address of the tuner.
  * @i2c: i2c adapter to use.
- * @cfg: optional callback function poपूर्णांकers.
- * @वापस FE poपूर्णांकer on success, शून्य on failure.
+ * @cfg: optional callback function pointers.
+ * @return FE pointer on success, NULL on failure.
  */
-#अगर IS_REACHABLE(CONFIG_MEDIA_TUNER_TDA827X)
-बाह्य काष्ठा dvb_frontend* tda827x_attach(काष्ठा dvb_frontend *fe, पूर्णांक addr,
-					   काष्ठा i2c_adapter *i2c,
-					   काष्ठा tda827x_config *cfg);
-#अन्यथा
-अटल अंतरभूत काष्ठा dvb_frontend* tda827x_attach(काष्ठा dvb_frontend *fe,
-						  पूर्णांक addr,
-						  काष्ठा i2c_adapter *i2c,
-						  काष्ठा tda827x_config *cfg)
-अणु
-	prपूर्णांकk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
-	वापस शून्य;
-पूर्ण
-#पूर्ण_अगर // CONFIG_MEDIA_TUNER_TDA827X
+#if IS_REACHABLE(CONFIG_MEDIA_TUNER_TDA827X)
+extern struct dvb_frontend* tda827x_attach(struct dvb_frontend *fe, int addr,
+					   struct i2c_adapter *i2c,
+					   struct tda827x_config *cfg);
+#else
+static inline struct dvb_frontend* tda827x_attach(struct dvb_frontend *fe,
+						  int addr,
+						  struct i2c_adapter *i2c,
+						  struct tda827x_config *cfg)
+{
+	printk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
+	return NULL;
+}
+#endif // CONFIG_MEDIA_TUNER_TDA827X
 
-#पूर्ण_अगर // __DVB_TDA827X_H__
+#endif // __DVB_TDA827X_H__

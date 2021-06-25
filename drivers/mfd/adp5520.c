@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Base driver क्रम Analog Devices ADP5520/ADP5501 MFD PMICs
+ * Base driver for Analog Devices ADP5520/ADP5501 MFD PMICs
  * LCD Backlight: drivers/video/backlight/adp5520_bl
  * LEDs		: drivers/led/leds-adp5520
  * GPIO		: drivers/gpio/adp5520-gpio (ADP5520 only)
@@ -19,214 +18,214 @@
  *	Eric Miao <eric.miao@marvell.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/err.h>
-#समावेश <linux/i2c.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/err.h>
+#include <linux/i2c.h>
 
-#समावेश <linux/mfd/adp5520.h>
+#include <linux/mfd/adp5520.h>
 
-काष्ठा adp5520_chip अणु
-	काष्ठा i2c_client *client;
-	काष्ठा device *dev;
-	काष्ठा mutex lock;
-	काष्ठा blocking_notअगरier_head notअगरier_list;
-	पूर्णांक irq;
-	अचिन्हित दीर्घ id;
-	uपूर्णांक8_t mode;
-पूर्ण;
+struct adp5520_chip {
+	struct i2c_client *client;
+	struct device *dev;
+	struct mutex lock;
+	struct blocking_notifier_head notifier_list;
+	int irq;
+	unsigned long id;
+	uint8_t mode;
+};
 
-अटल पूर्णांक __adp5520_पढ़ो(काष्ठा i2c_client *client,
-				पूर्णांक reg, uपूर्णांक8_t *val)
-अणु
-	पूर्णांक ret;
+static int __adp5520_read(struct i2c_client *client,
+				int reg, uint8_t *val)
+{
+	int ret;
 
-	ret = i2c_smbus_पढ़ो_byte_data(client, reg);
-	अगर (ret < 0) अणु
+	ret = i2c_smbus_read_byte_data(client, reg);
+	if (ret < 0) {
 		dev_err(&client->dev, "failed reading at 0x%02x\n", reg);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	*val = (uपूर्णांक8_t)ret;
-	वापस 0;
-पूर्ण
+	*val = (uint8_t)ret;
+	return 0;
+}
 
-अटल पूर्णांक __adp5520_ग_लिखो(काष्ठा i2c_client *client,
-				 पूर्णांक reg, uपूर्णांक8_t val)
-अणु
-	पूर्णांक ret;
+static int __adp5520_write(struct i2c_client *client,
+				 int reg, uint8_t val)
+{
+	int ret;
 
-	ret = i2c_smbus_ग_लिखो_byte_data(client, reg, val);
-	अगर (ret < 0) अणु
+	ret = i2c_smbus_write_byte_data(client, reg, val);
+	if (ret < 0) {
 		dev_err(&client->dev, "failed writing 0x%02x to 0x%02x\n",
 				val, reg);
-		वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return ret;
+	}
+	return 0;
+}
 
-अटल पूर्णांक __adp5520_ack_bits(काष्ठा i2c_client *client, पूर्णांक reg,
-			      uपूर्णांक8_t bit_mask)
-अणु
-	काष्ठा adp5520_chip *chip = i2c_get_clientdata(client);
-	uपूर्णांक8_t reg_val;
-	पूर्णांक ret;
-
-	mutex_lock(&chip->lock);
-
-	ret = __adp5520_पढ़ो(client, reg, &reg_val);
-
-	अगर (!ret) अणु
-		reg_val |= bit_mask;
-		ret = __adp5520_ग_लिखो(client, reg, reg_val);
-	पूर्ण
-
-	mutex_unlock(&chip->lock);
-	वापस ret;
-पूर्ण
-
-पूर्णांक adp5520_ग_लिखो(काष्ठा device *dev, पूर्णांक reg, uपूर्णांक8_t val)
-अणु
-	वापस __adp5520_ग_लिखो(to_i2c_client(dev), reg, val);
-पूर्ण
-EXPORT_SYMBOL_GPL(adp5520_ग_लिखो);
-
-पूर्णांक adp5520_पढ़ो(काष्ठा device *dev, पूर्णांक reg, uपूर्णांक8_t *val)
-अणु
-	वापस __adp5520_पढ़ो(to_i2c_client(dev), reg, val);
-पूर्ण
-EXPORT_SYMBOL_GPL(adp5520_पढ़ो);
-
-पूर्णांक adp5520_set_bits(काष्ठा device *dev, पूर्णांक reg, uपूर्णांक8_t bit_mask)
-अणु
-	काष्ठा adp5520_chip *chip = dev_get_drvdata(dev);
-	uपूर्णांक8_t reg_val;
-	पूर्णांक ret;
+static int __adp5520_ack_bits(struct i2c_client *client, int reg,
+			      uint8_t bit_mask)
+{
+	struct adp5520_chip *chip = i2c_get_clientdata(client);
+	uint8_t reg_val;
+	int ret;
 
 	mutex_lock(&chip->lock);
 
-	ret = __adp5520_पढ़ो(chip->client, reg, &reg_val);
+	ret = __adp5520_read(client, reg, &reg_val);
 
-	अगर (!ret && ((reg_val & bit_mask) != bit_mask)) अणु
+	if (!ret) {
 		reg_val |= bit_mask;
-		ret = __adp5520_ग_लिखो(chip->client, reg, reg_val);
-	पूर्ण
+		ret = __adp5520_write(client, reg, reg_val);
+	}
 
 	mutex_unlock(&chip->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
+
+int adp5520_write(struct device *dev, int reg, uint8_t val)
+{
+	return __adp5520_write(to_i2c_client(dev), reg, val);
+}
+EXPORT_SYMBOL_GPL(adp5520_write);
+
+int adp5520_read(struct device *dev, int reg, uint8_t *val)
+{
+	return __adp5520_read(to_i2c_client(dev), reg, val);
+}
+EXPORT_SYMBOL_GPL(adp5520_read);
+
+int adp5520_set_bits(struct device *dev, int reg, uint8_t bit_mask)
+{
+	struct adp5520_chip *chip = dev_get_drvdata(dev);
+	uint8_t reg_val;
+	int ret;
+
+	mutex_lock(&chip->lock);
+
+	ret = __adp5520_read(chip->client, reg, &reg_val);
+
+	if (!ret && ((reg_val & bit_mask) != bit_mask)) {
+		reg_val |= bit_mask;
+		ret = __adp5520_write(chip->client, reg, reg_val);
+	}
+
+	mutex_unlock(&chip->lock);
+	return ret;
+}
 EXPORT_SYMBOL_GPL(adp5520_set_bits);
 
-पूर्णांक adp5520_clr_bits(काष्ठा device *dev, पूर्णांक reg, uपूर्णांक8_t bit_mask)
-अणु
-	काष्ठा adp5520_chip *chip = dev_get_drvdata(dev);
-	uपूर्णांक8_t reg_val;
-	पूर्णांक ret;
+int adp5520_clr_bits(struct device *dev, int reg, uint8_t bit_mask)
+{
+	struct adp5520_chip *chip = dev_get_drvdata(dev);
+	uint8_t reg_val;
+	int ret;
 
 	mutex_lock(&chip->lock);
 
-	ret = __adp5520_पढ़ो(chip->client, reg, &reg_val);
+	ret = __adp5520_read(chip->client, reg, &reg_val);
 
-	अगर (!ret && (reg_val & bit_mask)) अणु
+	if (!ret && (reg_val & bit_mask)) {
 		reg_val &= ~bit_mask;
-		ret = __adp5520_ग_लिखो(chip->client, reg, reg_val);
-	पूर्ण
+		ret = __adp5520_write(chip->client, reg, reg_val);
+	}
 
 	mutex_unlock(&chip->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(adp5520_clr_bits);
 
-पूर्णांक adp5520_रेजिस्टर_notअगरier(काष्ठा device *dev, काष्ठा notअगरier_block *nb,
-				अचिन्हित पूर्णांक events)
-अणु
-	काष्ठा adp5520_chip *chip = dev_get_drvdata(dev);
+int adp5520_register_notifier(struct device *dev, struct notifier_block *nb,
+				unsigned int events)
+{
+	struct adp5520_chip *chip = dev_get_drvdata(dev);
 
-	अगर (chip->irq) अणु
+	if (chip->irq) {
 		adp5520_set_bits(chip->dev, ADP5520_INTERRUPT_ENABLE,
 			events & (ADP5520_KP_IEN | ADP5520_KR_IEN |
 			ADP5520_OVP_IEN | ADP5520_CMPR_IEN));
 
-		वापस blocking_notअगरier_chain_रेजिस्टर(&chip->notअगरier_list,
+		return blocking_notifier_chain_register(&chip->notifier_list,
 			 nb);
-	पूर्ण
+	}
 
-	वापस -ENODEV;
-पूर्ण
-EXPORT_SYMBOL_GPL(adp5520_रेजिस्टर_notअगरier);
+	return -ENODEV;
+}
+EXPORT_SYMBOL_GPL(adp5520_register_notifier);
 
-पूर्णांक adp5520_unरेजिस्टर_notअगरier(काष्ठा device *dev, काष्ठा notअगरier_block *nb,
-				अचिन्हित पूर्णांक events)
-अणु
-	काष्ठा adp5520_chip *chip = dev_get_drvdata(dev);
+int adp5520_unregister_notifier(struct device *dev, struct notifier_block *nb,
+				unsigned int events)
+{
+	struct adp5520_chip *chip = dev_get_drvdata(dev);
 
 	adp5520_clr_bits(chip->dev, ADP5520_INTERRUPT_ENABLE,
 		events & (ADP5520_KP_IEN | ADP5520_KR_IEN |
 		ADP5520_OVP_IEN | ADP5520_CMPR_IEN));
 
-	वापस blocking_notअगरier_chain_unरेजिस्टर(&chip->notअगरier_list, nb);
-पूर्ण
-EXPORT_SYMBOL_GPL(adp5520_unरेजिस्टर_notअगरier);
+	return blocking_notifier_chain_unregister(&chip->notifier_list, nb);
+}
+EXPORT_SYMBOL_GPL(adp5520_unregister_notifier);
 
-अटल irqवापस_t adp5520_irq_thपढ़ो(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा adp5520_chip *chip = data;
-	अचिन्हित पूर्णांक events;
-	uपूर्णांक8_t reg_val;
-	पूर्णांक ret;
+static irqreturn_t adp5520_irq_thread(int irq, void *data)
+{
+	struct adp5520_chip *chip = data;
+	unsigned int events;
+	uint8_t reg_val;
+	int ret;
 
-	ret = __adp5520_पढ़ो(chip->client, ADP5520_MODE_STATUS, &reg_val);
-	अगर (ret)
-		जाओ out;
+	ret = __adp5520_read(chip->client, ADP5520_MODE_STATUS, &reg_val);
+	if (ret)
+		goto out;
 
 	events =  reg_val & (ADP5520_OVP_INT | ADP5520_CMPR_INT |
 		ADP5520_GPI_INT | ADP5520_KR_INT | ADP5520_KP_INT);
 
-	blocking_notअगरier_call_chain(&chip->notअगरier_list, events, शून्य);
+	blocking_notifier_call_chain(&chip->notifier_list, events, NULL);
 	/* ACK, Sticky bits are W1C */
 	__adp5520_ack_bits(chip->client, ADP5520_MODE_STATUS, events);
 
 out:
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक __हटाओ_subdev(काष्ठा device *dev, व्योम *unused)
-अणु
-	platक्रमm_device_unरेजिस्टर(to_platक्रमm_device(dev));
-	वापस 0;
-पूर्ण
+static int __remove_subdev(struct device *dev, void *unused)
+{
+	platform_device_unregister(to_platform_device(dev));
+	return 0;
+}
 
-अटल पूर्णांक adp5520_हटाओ_subdevs(काष्ठा adp5520_chip *chip)
-अणु
-	वापस device_क्रम_each_child(chip->dev, शून्य, __हटाओ_subdev);
-पूर्ण
+static int adp5520_remove_subdevs(struct adp5520_chip *chip)
+{
+	return device_for_each_child(chip->dev, NULL, __remove_subdev);
+}
 
-अटल पूर्णांक adp5520_probe(काष्ठा i2c_client *client,
-					स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा adp5520_platक्रमm_data *pdata = dev_get_platdata(&client->dev);
-	काष्ठा platक्रमm_device *pdev;
-	काष्ठा adp5520_chip *chip;
-	पूर्णांक ret;
+static int adp5520_probe(struct i2c_client *client,
+					const struct i2c_device_id *id)
+{
+	struct adp5520_platform_data *pdata = dev_get_platdata(&client->dev);
+	struct platform_device *pdev;
+	struct adp5520_chip *chip;
+	int ret;
 
-	अगर (!i2c_check_functionality(client->adapter,
-					I2C_FUNC_SMBUS_BYTE_DATA)) अणु
+	if (!i2c_check_functionality(client->adapter,
+					I2C_FUNC_SMBUS_BYTE_DATA)) {
 		dev_err(&client->dev, "SMBUS Word Data not Supported\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	अगर (pdata == शून्य) अणु
+	if (pdata == NULL) {
 		dev_err(&client->dev, "missing platform data\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	chip = devm_kzalloc(&client->dev, माप(*chip), GFP_KERNEL);
-	अगर (!chip)
-		वापस -ENOMEM;
+	chip = devm_kzalloc(&client->dev, sizeof(*chip), GFP_KERNEL);
+	if (!chip)
+		return -ENOMEM;
 
 	i2c_set_clientdata(client, chip);
 	chip->client = client;
@@ -236,114 +235,114 @@ out:
 	chip->id = id->driver_data;
 	mutex_init(&chip->lock);
 
-	अगर (chip->irq) अणु
-		BLOCKING_INIT_NOTIFIER_HEAD(&chip->notअगरier_list);
+	if (chip->irq) {
+		BLOCKING_INIT_NOTIFIER_HEAD(&chip->notifier_list);
 
-		ret = request_thपढ़ोed_irq(chip->irq, शून्य, adp5520_irq_thपढ़ो,
+		ret = request_threaded_irq(chip->irq, NULL, adp5520_irq_thread,
 				IRQF_TRIGGER_LOW | IRQF_ONESHOT,
 				"adp5520", chip);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&client->dev, "failed to request irq %d\n",
 					chip->irq);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	ret = adp5520_ग_लिखो(chip->dev, ADP5520_MODE_STATUS, ADP5520_nSTNBY);
-	अगर (ret) अणु
+	ret = adp5520_write(chip->dev, ADP5520_MODE_STATUS, ADP5520_nSTNBY);
+	if (ret) {
 		dev_err(&client->dev, "failed to write\n");
-		जाओ out_मुक्त_irq;
-	पूर्ण
+		goto out_free_irq;
+	}
 
-	अगर (pdata->keys) अणु
-		pdev = platक्रमm_device_रेजिस्टर_data(chip->dev, "adp5520-keys",
-				chip->id, pdata->keys, माप(*pdata->keys));
-		अगर (IS_ERR(pdev)) अणु
+	if (pdata->keys) {
+		pdev = platform_device_register_data(chip->dev, "adp5520-keys",
+				chip->id, pdata->keys, sizeof(*pdata->keys));
+		if (IS_ERR(pdev)) {
 			ret = PTR_ERR(pdev);
-			जाओ out_हटाओ_subdevs;
-		पूर्ण
-	पूर्ण
+			goto out_remove_subdevs;
+		}
+	}
 
-	अगर (pdata->gpio) अणु
-		pdev = platक्रमm_device_रेजिस्टर_data(chip->dev, "adp5520-gpio",
-				chip->id, pdata->gpio, माप(*pdata->gpio));
-		अगर (IS_ERR(pdev)) अणु
+	if (pdata->gpio) {
+		pdev = platform_device_register_data(chip->dev, "adp5520-gpio",
+				chip->id, pdata->gpio, sizeof(*pdata->gpio));
+		if (IS_ERR(pdev)) {
 			ret = PTR_ERR(pdev);
-			जाओ out_हटाओ_subdevs;
-		पूर्ण
-	पूर्ण
+			goto out_remove_subdevs;
+		}
+	}
 
-	अगर (pdata->leds) अणु
-		pdev = platक्रमm_device_रेजिस्टर_data(chip->dev, "adp5520-led",
-				chip->id, pdata->leds, माप(*pdata->leds));
-		अगर (IS_ERR(pdev)) अणु
+	if (pdata->leds) {
+		pdev = platform_device_register_data(chip->dev, "adp5520-led",
+				chip->id, pdata->leds, sizeof(*pdata->leds));
+		if (IS_ERR(pdev)) {
 			ret = PTR_ERR(pdev);
-			जाओ out_हटाओ_subdevs;
-		पूर्ण
-	पूर्ण
+			goto out_remove_subdevs;
+		}
+	}
 
-	अगर (pdata->backlight) अणु
-		pdev = platक्रमm_device_रेजिस्टर_data(chip->dev,
+	if (pdata->backlight) {
+		pdev = platform_device_register_data(chip->dev,
 						"adp5520-backlight",
 						chip->id,
 						pdata->backlight,
-						माप(*pdata->backlight));
-		अगर (IS_ERR(pdev)) अणु
+						sizeof(*pdata->backlight));
+		if (IS_ERR(pdev)) {
 			ret = PTR_ERR(pdev);
-			जाओ out_हटाओ_subdevs;
-		पूर्ण
-	पूर्ण
+			goto out_remove_subdevs;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
-out_हटाओ_subdevs:
-	adp5520_हटाओ_subdevs(chip);
+out_remove_subdevs:
+	adp5520_remove_subdevs(chip);
 
-out_मुक्त_irq:
-	अगर (chip->irq)
-		मुक्त_irq(chip->irq, chip);
+out_free_irq:
+	if (chip->irq)
+		free_irq(chip->irq, chip);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक adp5520_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
-	काष्ठा adp5520_chip *chip = dev_get_drvdata(&client->dev);
+#ifdef CONFIG_PM_SLEEP
+static int adp5520_suspend(struct device *dev)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct adp5520_chip *chip = dev_get_drvdata(&client->dev);
 
-	adp5520_पढ़ो(chip->dev, ADP5520_MODE_STATUS, &chip->mode);
+	adp5520_read(chip->dev, ADP5520_MODE_STATUS, &chip->mode);
 	/* All other bits are W1C */
 	chip->mode &= ADP5520_BL_EN | ADP5520_DIM_EN | ADP5520_nSTNBY;
-	adp5520_ग_लिखो(chip->dev, ADP5520_MODE_STATUS, 0);
-	वापस 0;
-पूर्ण
+	adp5520_write(chip->dev, ADP5520_MODE_STATUS, 0);
+	return 0;
+}
 
-अटल पूर्णांक adp5520_resume(काष्ठा device *dev)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
-	काष्ठा adp5520_chip *chip = dev_get_drvdata(&client->dev);
+static int adp5520_resume(struct device *dev)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct adp5520_chip *chip = dev_get_drvdata(&client->dev);
 
-	adp5520_ग_लिखो(chip->dev, ADP5520_MODE_STATUS, chip->mode);
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	adp5520_write(chip->dev, ADP5520_MODE_STATUS, chip->mode);
+	return 0;
+}
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(adp5520_pm, adp5520_suspend, adp5520_resume);
+static SIMPLE_DEV_PM_OPS(adp5520_pm, adp5520_suspend, adp5520_resume);
 
-अटल स्थिर काष्ठा i2c_device_id adp5520_id[] = अणु
-	अणु "pmic-adp5520", ID_ADP5520 पूर्ण,
-	अणु "pmic-adp5501", ID_ADP5501 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id adp5520_id[] = {
+	{ "pmic-adp5520", ID_ADP5520 },
+	{ "pmic-adp5501", ID_ADP5501 },
+	{ }
+};
 
-अटल काष्ठा i2c_driver adp5520_driver = अणु
-	.driver = अणु
+static struct i2c_driver adp5520_driver = {
+	.driver = {
 		.name			= "adp5520",
 		.pm			= &adp5520_pm,
 		.suppress_bind_attrs	= true,
-	पूर्ण,
+	},
 	.probe		= adp5520_probe,
 	.id_table	= adp5520_id,
-पूर्ण;
+};
 builtin_i2c_driver(adp5520_driver);

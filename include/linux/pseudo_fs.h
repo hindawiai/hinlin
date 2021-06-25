@@ -1,17 +1,16 @@
-<शैली गुरु>
-#अगर_अघोषित __LINUX_PSEUDO_FS__
-#घोषणा __LINUX_PSEUDO_FS__
+#ifndef __LINUX_PSEUDO_FS__
+#define __LINUX_PSEUDO_FS__
 
-#समावेश <linux/fs_context.h>
+#include <linux/fs_context.h>
 
-काष्ठा pseuकरो_fs_context अणु
-	स्थिर काष्ठा super_operations *ops;
-	स्थिर काष्ठा xattr_handler **xattr;
-	स्थिर काष्ठा dentry_operations *करोps;
-	अचिन्हित दीर्घ magic;
-पूर्ण;
+struct pseudo_fs_context {
+	const struct super_operations *ops;
+	const struct xattr_handler **xattr;
+	const struct dentry_operations *dops;
+	unsigned long magic;
+};
 
-काष्ठा pseuकरो_fs_context *init_pseuकरो(काष्ठा fs_context *fc,
-				      अचिन्हित दीर्घ magic);
+struct pseudo_fs_context *init_pseudo(struct fs_context *fc,
+				      unsigned long magic);
 
-#पूर्ण_अगर
+#endif

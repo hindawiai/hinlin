@@ -1,52 +1,51 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#समावेश <सीमा.स>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <unistd.h>
-#समावेश <linux/compiler.h>
+// SPDX-License-Identifier: GPL-2.0-only
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <linux/compiler.h>
 
-#समावेश "debug.h"
-#समावेश "tests.h"
+#include "debug.h"
+#include "tests.h"
 
-#अगर_घोषित HAVE_JITDUMP
-#समावेश <libelf.h>
-#समावेश "../util/genelf.h"
-#पूर्ण_अगर
+#ifdef HAVE_JITDUMP
+#include <libelf.h>
+#include "../util/genelf.h"
+#endif
 
-#घोषणा TEMPL "/tmp/perf-test-XXXXXX"
+#define TEMPL "/tmp/perf-test-XXXXXX"
 
-पूर्णांक test__jit_ग_लिखो_elf(काष्ठा test *test __maybe_unused,
-			पूर्णांक subtest __maybe_unused)
-अणु
-#अगर_घोषित HAVE_JITDUMP
-	अटल अचिन्हित अक्षर x86_code[] = अणु
+int test__jit_write_elf(struct test *test __maybe_unused,
+			int subtest __maybe_unused)
+{
+#ifdef HAVE_JITDUMP
+	static unsigned char x86_code[] = {
 		0xBB, 0x2A, 0x00, 0x00, 0x00, /* movl $42, %ebx */
 		0xB8, 0x01, 0x00, 0x00, 0x00, /* movl $1, %eax */
-		0xCD, 0x80            /* पूर्णांक $0x80 */
-	पूर्ण;
-	अक्षर path[PATH_MAX];
-	पूर्णांक fd, ret;
+		0xCD, 0x80            /* int $0x80 */
+	};
+	char path[PATH_MAX];
+	int fd, ret;
 
-	म_नकल(path, TEMPL);
+	strcpy(path, TEMPL);
 
 	fd = mkstemp(path);
-	अगर (fd < 0) अणु
-		लिखो_त्रुटि("mkstemp failed");
-		वापस TEST_FAIL;
-	पूर्ण
+	if (fd < 0) {
+		perror("mkstemp failed");
+		return TEST_FAIL;
+	}
 
 	pr_info("Writing jit code to: %s\n", path);
 
-	ret = jit_ग_लिखो_elf(fd, 0, "main", x86_code, माप(x86_code),
-			शून्य, 0, शून्य, 0, 0);
-	बंद(fd);
+	ret = jit_write_elf(fd, 0, "main", x86_code, sizeof(x86_code),
+			NULL, 0, NULL, 0, 0);
+	close(fd);
 
 	unlink(path);
 
-	वापस ret ? TEST_FAIL : 0;
-#अन्यथा
-	वापस TEST_SKIP;
-#पूर्ण_अगर
-पूर्ण
+	return ret ? TEST_FAIL : 0;
+#else
+	return TEST_SKIP;
+#endif
+}

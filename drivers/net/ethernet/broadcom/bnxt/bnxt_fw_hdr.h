@@ -1,20 +1,19 @@
-<शैली गुरु>
 /* Broadcom NetXtreme-C/E network driver.
  *
  * Copyright (c) 2014-2016 Broadcom Corporation
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation.
  */
 
-#अगर_अघोषित __BNXT_FW_HDR_H__
-#घोषणा __BNXT_FW_HDR_H__
+#ifndef __BNXT_FW_HDR_H__
+#define __BNXT_FW_HDR_H__
 
-#घोषणा BNXT_FIRMWARE_BIN_SIGNATURE     0x1a4d4342	/* "BCM"+0x1a */
-#घोषणा BNXT_UCODE_TRAILER_SIGNATURE	0x726c7254	/* "Trlr" */
+#define BNXT_FIRMWARE_BIN_SIGNATURE     0x1a4d4342	/* "BCM"+0x1a */
+#define BNXT_UCODE_TRAILER_SIGNATURE	0x726c7254	/* "Trlr" */
 
-क्रमागत SUPPORTED_FAMILY अणु
+enum SUPPORTED_FAMILY {
 	DEVICE_5702_3_4_FAMILY,		/* 0  - Denali, Vinson, K2 */
 	DEVICE_5705_FAMILY,		/* 1  - Bachelor */
 	DEVICE_SHASTA_FAMILY,		/* 2  - 5751 */
@@ -39,9 +38,9 @@
 	DEVICE_SNAGGLETOOTH_FAMILY,	/* 18 - 5720 */
 	DEVICE_CUMULUS_FAMILY,		/* 19 - Cumulus/Whitney */
 	MAX_DEVICE_FAMILY
-पूर्ण;
+};
 
-क्रमागत SUPPORTED_CODE अणु
+enum SUPPORTED_CODE {
 	CODE_ASF1,		/* 0  - ASF VERSION 1.03 <deprecated> */
 	CODE_ASF2,		/* 1  - ASF VERSION 2.00 <deprecated> */
 	CODE_PASSTHRU,		/* 2  - PassThru         <deprecated> */
@@ -75,24 +74,24 @@
 	CODE_CHIMP_PATCH,	/* 21 - ChiMP Patch firmware */
 
 	MAX_CODE_TYPE,
-पूर्ण;
+};
 
-क्रमागत SUPPORTED_MEDIA अणु
+enum SUPPORTED_MEDIA {
 	MEDIA_COPPER,		/* 0 */
 	MEDIA_FIBER,		/* 1 */
 	MEDIA_NONE,		/* 2 */
 	MEDIA_COPPER_FIBER,	/* 3 */
 	MAX_MEDIA_TYPE,
-पूर्ण;
+};
 
-काष्ठा bnxt_fw_header अणु
-	__le32 signature;	/* स्थिरains the स्थिरant value of
+struct bnxt_fw_header {
+	__le32 signature;	/* constains the constant value of
 				 * BNXT_FIRMWARE_BIN_SIGNATURE
 				 */
-	u8 flags;		/* reserved क्रम ChiMP use */
-	u8 code_type;		/* क्रमागत SUPPORTED_CODE */
-	u8 device;		/* क्रमागत SUPPORTED_FAMILY */
-	u8 media;		/* क्रमागत SUPPORTED_MEDIA */
+	u8 flags;		/* reserved for ChiMP use */
+	u8 code_type;		/* enum SUPPORTED_CODE */
+	u8 device;		/* enum SUPPORTED_FAMILY */
+	u8 media;		/* enum SUPPORTED_MEDIA */
 	u8 version[16];		/* the null terminated version string to
 				 * indicate the version of the
 				 * file, this will be copied from the binary
@@ -102,19 +101,19 @@
 	u8 revision;
 	u8 minor_ver;
 	u8 major_ver;
-पूर्ण;
+};
 
 /* Microcode and pre-boot software/firmware trailer: */
-काष्ठा bnxt_ucode_trailer अणु
+struct bnxt_ucode_trailer {
 	u8 rsa_sig[256];
 	__le16 flags;
-	u8 version_क्रमmat;
+	u8 version_format;
 	u8 version_length;
 	u8 version[16];
 	__le16 dir_type;
 	__le16 trailer_length;
 	__le32 sig;		/* BNXT_UCODE_TRAILER_SIGNATURE */
 	__le32 chksum;		/* CRC-32 */
-पूर्ण;
+};
 
-#पूर्ण_अगर
+#endif

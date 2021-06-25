@@ -1,295 +1,294 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Intel SST generic IPC Support
  *
  * Copyright (C) 2015, Intel Corporation. All rights reserved.
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/list.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/module.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <sound/asound.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/list.h>
+#include <linux/wait.h>
+#include <linux/module.h>
+#include <linux/spinlock.h>
+#include <linux/device.h>
+#include <linux/slab.h>
+#include <linux/workqueue.h>
+#include <linux/sched.h>
+#include <linux/delay.h>
+#include <linux/platform_device.h>
+#include <sound/asound.h>
 
-#समावेश "sst-dsp.h"
-#समावेश "sst-dsp-priv.h"
-#समावेश "sst-ipc.h"
+#include "sst-dsp.h"
+#include "sst-dsp-priv.h"
+#include "sst-ipc.h"
 
-/* IPC message समयout (msecs) */
-#घोषणा IPC_TIMEOUT_MSECS	300
+/* IPC message timeout (msecs) */
+#define IPC_TIMEOUT_MSECS	300
 
-#घोषणा IPC_EMPTY_LIST_SIZE	8
+#define IPC_EMPTY_LIST_SIZE	8
 
 /* locks held by caller */
-अटल काष्ठा ipc_message *msg_get_empty(काष्ठा sst_generic_ipc *ipc)
-अणु
-	काष्ठा ipc_message *msg = शून्य;
+static struct ipc_message *msg_get_empty(struct sst_generic_ipc *ipc)
+{
+	struct ipc_message *msg = NULL;
 
-	अगर (!list_empty(&ipc->empty_list)) अणु
-		msg = list_first_entry(&ipc->empty_list, काष्ठा ipc_message,
+	if (!list_empty(&ipc->empty_list)) {
+		msg = list_first_entry(&ipc->empty_list, struct ipc_message,
 			list);
 		list_del(&msg->list);
-	पूर्ण
+	}
 
-	वापस msg;
-पूर्ण
+	return msg;
+}
 
-अटल पूर्णांक tx_रुको_करोne(काष्ठा sst_generic_ipc *ipc,
-	काष्ठा ipc_message *msg, काष्ठा sst_ipc_message *reply)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+static int tx_wait_done(struct sst_generic_ipc *ipc,
+	struct ipc_message *msg, struct sst_ipc_message *reply)
+{
+	unsigned long flags;
+	int ret;
 
-	/* रुको क्रम DSP completion (in all हालs aपंचांग inc pending) */
-	ret = रुको_event_समयout(msg->रुकोq, msg->complete,
-		msecs_to_jअगरfies(IPC_TIMEOUT_MSECS));
+	/* wait for DSP completion (in all cases atm inc pending) */
+	ret = wait_event_timeout(msg->waitq, msg->complete,
+		msecs_to_jiffies(IPC_TIMEOUT_MSECS));
 
 	spin_lock_irqsave(&ipc->dsp->spinlock, flags);
-	अगर (ret == 0) अणु
-		अगर (ipc->ops.shim_dbg != शून्य)
+	if (ret == 0) {
+		if (ipc->ops.shim_dbg != NULL)
 			ipc->ops.shim_dbg(ipc, "message timeout");
 
 		list_del(&msg->list);
 		ret = -ETIMEDOUT;
-	पूर्ण अन्यथा अणु
+	} else {
 
-		/* copy the data वापसed from DSP */
-		अगर (reply) अणु
+		/* copy the data returned from DSP */
+		if (reply) {
 			reply->header = msg->rx.header;
-			अगर (reply->data)
-				स_नकल(reply->data, msg->rx.data, msg->rx.size);
-		पूर्ण
-		ret = msg->त्रुटि_सं;
-	पूर्ण
+			if (reply->data)
+				memcpy(reply->data, msg->rx.data, msg->rx.size);
+		}
+		ret = msg->errno;
+	}
 
 	list_add_tail(&msg->list, &ipc->empty_list);
 	spin_unlock_irqrestore(&ipc->dsp->spinlock, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ipc_tx_message(काष्ठा sst_generic_ipc *ipc,
-	काष्ठा sst_ipc_message request,
-	काष्ठा sst_ipc_message *reply, पूर्णांक रुको)
-अणु
-	काष्ठा ipc_message *msg;
-	अचिन्हित दीर्घ flags;
+static int ipc_tx_message(struct sst_generic_ipc *ipc,
+	struct sst_ipc_message request,
+	struct sst_ipc_message *reply, int wait)
+{
+	struct ipc_message *msg;
+	unsigned long flags;
 
 	spin_lock_irqsave(&ipc->dsp->spinlock, flags);
 
 	msg = msg_get_empty(ipc);
-	अगर (msg == शून्य) अणु
+	if (msg == NULL) {
 		spin_unlock_irqrestore(&ipc->dsp->spinlock, flags);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	msg->tx.header = request.header;
 	msg->tx.size = request.size;
 	msg->rx.header = 0;
 	msg->rx.size = reply ? reply->size : 0;
-	msg->रुको = रुको;
-	msg->त्रुटि_सं = 0;
+	msg->wait = wait;
+	msg->errno = 0;
 	msg->pending = false;
 	msg->complete = false;
 
-	अगर ((request.size) && (ipc->ops.tx_data_copy != शून्य))
+	if ((request.size) && (ipc->ops.tx_data_copy != NULL))
 		ipc->ops.tx_data_copy(msg, request.data, request.size);
 
 	list_add_tail(&msg->list, &ipc->tx_list);
 	schedule_work(&ipc->kwork);
 	spin_unlock_irqrestore(&ipc->dsp->spinlock, flags);
 
-	अगर (रुको)
-		वापस tx_रुको_करोne(ipc, msg, reply);
-	अन्यथा
-		वापस 0;
-पूर्ण
+	if (wait)
+		return tx_wait_done(ipc, msg, reply);
+	else
+		return 0;
+}
 
-अटल पूर्णांक msg_empty_list_init(काष्ठा sst_generic_ipc *ipc)
-अणु
-	पूर्णांक i;
+static int msg_empty_list_init(struct sst_generic_ipc *ipc)
+{
+	int i;
 
-	ipc->msg = kसुस्मृति(IPC_EMPTY_LIST_SIZE, माप(काष्ठा ipc_message),
+	ipc->msg = kcalloc(IPC_EMPTY_LIST_SIZE, sizeof(struct ipc_message),
 			   GFP_KERNEL);
-	अगर (ipc->msg == शून्य)
-		वापस -ENOMEM;
+	if (ipc->msg == NULL)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < IPC_EMPTY_LIST_SIZE; i++) अणु
+	for (i = 0; i < IPC_EMPTY_LIST_SIZE; i++) {
 		ipc->msg[i].tx.data = kzalloc(ipc->tx_data_max_size, GFP_KERNEL);
-		अगर (ipc->msg[i].tx.data == शून्य)
-			जाओ मुक्त_mem;
+		if (ipc->msg[i].tx.data == NULL)
+			goto free_mem;
 
 		ipc->msg[i].rx.data = kzalloc(ipc->rx_data_max_size, GFP_KERNEL);
-		अगर (ipc->msg[i].rx.data == शून्य) अणु
-			kमुक्त(ipc->msg[i].tx.data);
-			जाओ मुक्त_mem;
-		पूर्ण
+		if (ipc->msg[i].rx.data == NULL) {
+			kfree(ipc->msg[i].tx.data);
+			goto free_mem;
+		}
 
-		init_रुकोqueue_head(&ipc->msg[i].रुकोq);
+		init_waitqueue_head(&ipc->msg[i].waitq);
 		list_add(&ipc->msg[i].list, &ipc->empty_list);
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
-मुक्त_mem:
-	जबतक (i > 0) अणु
-		kमुक्त(ipc->msg[i-1].tx.data);
-		kमुक्त(ipc->msg[i-1].rx.data);
+free_mem:
+	while (i > 0) {
+		kfree(ipc->msg[i-1].tx.data);
+		kfree(ipc->msg[i-1].rx.data);
 		--i;
-	पूर्ण
-	kमुक्त(ipc->msg);
+	}
+	kfree(ipc->msg);
 
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल व्योम ipc_tx_msgs(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा sst_generic_ipc *ipc =
-		container_of(work, काष्ठा sst_generic_ipc, kwork);
-	काष्ठा ipc_message *msg;
+static void ipc_tx_msgs(struct work_struct *work)
+{
+	struct sst_generic_ipc *ipc =
+		container_of(work, struct sst_generic_ipc, kwork);
+	struct ipc_message *msg;
 
 	spin_lock_irq(&ipc->dsp->spinlock);
 
-	जबतक (!list_empty(&ipc->tx_list) && !ipc->pending) अणु
-		/* अगर the DSP is busy, we will TX messages after IRQ.
-		 * also postpone अगर we are in the middle of processing
+	while (!list_empty(&ipc->tx_list) && !ipc->pending) {
+		/* if the DSP is busy, we will TX messages after IRQ.
+		 * also postpone if we are in the middle of processing
 		 * completion irq
 		 */
-		अगर (ipc->ops.is_dsp_busy && ipc->ops.is_dsp_busy(ipc->dsp)) अणु
+		if (ipc->ops.is_dsp_busy && ipc->ops.is_dsp_busy(ipc->dsp)) {
 			dev_dbg(ipc->dev, "ipc_tx_msgs dsp busy\n");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		msg = list_first_entry(&ipc->tx_list, काष्ठा ipc_message, list);
+		msg = list_first_entry(&ipc->tx_list, struct ipc_message, list);
 		list_move(&msg->list, &ipc->rx_list);
 
-		अगर (ipc->ops.tx_msg != शून्य)
+		if (ipc->ops.tx_msg != NULL)
 			ipc->ops.tx_msg(ipc, msg);
-	पूर्ण
+	}
 
 	spin_unlock_irq(&ipc->dsp->spinlock);
-पूर्ण
+}
 
-पूर्णांक sst_ipc_tx_message_रुको(काष्ठा sst_generic_ipc *ipc,
-	काष्ठा sst_ipc_message request, काष्ठा sst_ipc_message *reply)
-अणु
-	पूर्णांक ret;
+int sst_ipc_tx_message_wait(struct sst_generic_ipc *ipc,
+	struct sst_ipc_message request, struct sst_ipc_message *reply)
+{
+	int ret;
 
 	/*
-	 * DSP maybe in lower घातer active state, so
-	 * check अगर the DSP supports DSP lp On method
-	 * अगर so invoke that beक्रमe sending IPC
+	 * DSP maybe in lower power active state, so
+	 * check if the DSP supports DSP lp On method
+	 * if so invoke that before sending IPC
 	 */
-	अगर (ipc->ops.check_dsp_lp_on)
-		अगर (ipc->ops.check_dsp_lp_on(ipc->dsp, true))
-			वापस -EIO;
+	if (ipc->ops.check_dsp_lp_on)
+		if (ipc->ops.check_dsp_lp_on(ipc->dsp, true))
+			return -EIO;
 
 	ret = ipc_tx_message(ipc, request, reply, 1);
 
-	अगर (ipc->ops.check_dsp_lp_on)
-		अगर (ipc->ops.check_dsp_lp_on(ipc->dsp, false))
-			वापस -EIO;
+	if (ipc->ops.check_dsp_lp_on)
+		if (ipc->ops.check_dsp_lp_on(ipc->dsp, false))
+			return -EIO;
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(sst_ipc_tx_message_रुको);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(sst_ipc_tx_message_wait);
 
-पूर्णांक sst_ipc_tx_message_noरुको(काष्ठा sst_generic_ipc *ipc,
-	काष्ठा sst_ipc_message request)
-अणु
-	वापस ipc_tx_message(ipc, request, शून्य, 0);
-पूर्ण
-EXPORT_SYMBOL_GPL(sst_ipc_tx_message_noरुको);
+int sst_ipc_tx_message_nowait(struct sst_generic_ipc *ipc,
+	struct sst_ipc_message request)
+{
+	return ipc_tx_message(ipc, request, NULL, 0);
+}
+EXPORT_SYMBOL_GPL(sst_ipc_tx_message_nowait);
 
-पूर्णांक sst_ipc_tx_message_nopm(काष्ठा sst_generic_ipc *ipc,
-	काष्ठा sst_ipc_message request, काष्ठा sst_ipc_message *reply)
-अणु
-	वापस ipc_tx_message(ipc, request, reply, 1);
-पूर्ण
+int sst_ipc_tx_message_nopm(struct sst_generic_ipc *ipc,
+	struct sst_ipc_message request, struct sst_ipc_message *reply)
+{
+	return ipc_tx_message(ipc, request, reply, 1);
+}
 EXPORT_SYMBOL_GPL(sst_ipc_tx_message_nopm);
 
-काष्ठा ipc_message *sst_ipc_reply_find_msg(काष्ठा sst_generic_ipc *ipc,
+struct ipc_message *sst_ipc_reply_find_msg(struct sst_generic_ipc *ipc,
 	u64 header)
-अणु
-	काष्ठा ipc_message *msg;
+{
+	struct ipc_message *msg;
 	u64 mask;
 
-	अगर (ipc->ops.reply_msg_match != शून्य)
+	if (ipc->ops.reply_msg_match != NULL)
 		header = ipc->ops.reply_msg_match(header, &mask);
-	अन्यथा
+	else
 		mask = (u64)-1;
 
-	अगर (list_empty(&ipc->rx_list)) अणु
+	if (list_empty(&ipc->rx_list)) {
 		dev_err(ipc->dev, "error: rx list empty but received 0x%llx\n",
 			header);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	list_क्रम_each_entry(msg, &ipc->rx_list, list) अणु
-		अगर ((msg->tx.header & mask) == header)
-			वापस msg;
-	पूर्ण
+	list_for_each_entry(msg, &ipc->rx_list, list) {
+		if ((msg->tx.header & mask) == header)
+			return msg;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(sst_ipc_reply_find_msg);
 
 /* locks held by caller */
-व्योम sst_ipc_tx_msg_reply_complete(काष्ठा sst_generic_ipc *ipc,
-	काष्ठा ipc_message *msg)
-अणु
+void sst_ipc_tx_msg_reply_complete(struct sst_generic_ipc *ipc,
+	struct ipc_message *msg)
+{
 	msg->complete = true;
 
-	अगर (!msg->रुको)
+	if (!msg->wait)
 		list_add_tail(&msg->list, &ipc->empty_list);
-	अन्यथा
-		wake_up(&msg->रुकोq);
-पूर्ण
+	else
+		wake_up(&msg->waitq);
+}
 EXPORT_SYMBOL_GPL(sst_ipc_tx_msg_reply_complete);
 
-पूर्णांक sst_ipc_init(काष्ठा sst_generic_ipc *ipc)
-अणु
-	पूर्णांक ret;
+int sst_ipc_init(struct sst_generic_ipc *ipc)
+{
+	int ret;
 
 	INIT_LIST_HEAD(&ipc->tx_list);
 	INIT_LIST_HEAD(&ipc->rx_list);
 	INIT_LIST_HEAD(&ipc->empty_list);
-	init_रुकोqueue_head(&ipc->रुको_txq);
+	init_waitqueue_head(&ipc->wait_txq);
 
 	ret = msg_empty_list_init(ipc);
-	अगर (ret < 0)
-		वापस -ENOMEM;
+	if (ret < 0)
+		return -ENOMEM;
 
 	INIT_WORK(&ipc->kwork, ipc_tx_msgs);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(sst_ipc_init);
 
-व्योम sst_ipc_fini(काष्ठा sst_generic_ipc *ipc)
-अणु
-	पूर्णांक i;
+void sst_ipc_fini(struct sst_generic_ipc *ipc)
+{
+	int i;
 
 	cancel_work_sync(&ipc->kwork);
 
-	अगर (ipc->msg) अणु
-		क्रम (i = 0; i < IPC_EMPTY_LIST_SIZE; i++) अणु
-			kमुक्त(ipc->msg[i].tx.data);
-			kमुक्त(ipc->msg[i].rx.data);
-		पूर्ण
-		kमुक्त(ipc->msg);
-	पूर्ण
-पूर्ण
+	if (ipc->msg) {
+		for (i = 0; i < IPC_EMPTY_LIST_SIZE; i++) {
+			kfree(ipc->msg[i].tx.data);
+			kfree(ipc->msg[i].rx.data);
+		}
+		kfree(ipc->msg);
+	}
+}
 EXPORT_SYMBOL_GPL(sst_ipc_fini);
 
-/* Module inक्रमmation */
+/* Module information */
 MODULE_AUTHOR("Jin Yao");
 MODULE_DESCRIPTION("Intel SST IPC generic");
 MODULE_LICENSE("GPL v2");

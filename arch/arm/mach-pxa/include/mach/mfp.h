@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * arch/arm/mach-pxa/include/mach/mfp.h
  *
@@ -11,9 +10,9 @@
  *            initial version
  */
 
-#अगर_अघोषित __ASM_ARCH_MFP_H
-#घोषणा __ASM_ARCH_MFP_H
+#ifndef __ASM_ARCH_MFP_H
+#define __ASM_ARCH_MFP_H
 
-#समावेश <plat/mfp.h>
+#include <plat/mfp.h>
 
-#पूर्ण_अगर /* __ASM_ARCH_MFP_H */
+#endif /* __ASM_ARCH_MFP_H */

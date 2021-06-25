@@ -1,25 +1,24 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB */
+/* SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB */
 /*
  * Copyright (c) 2017, Mellanox Technologies inc.  All rights reserved.
  */
 
-#अगर_अघोषित _UVERBS_IOCTL_
-#घोषणा _UVERBS_IOCTL_
+#ifndef _UVERBS_IOCTL_
+#define _UVERBS_IOCTL_
 
-#समावेश <rdma/uverbs_types.h>
-#समावेश <linux/uaccess.h>
-#समावेश <rdma/rdma_user_ioctl.h>
-#समावेश <rdma/ib_user_ioctl_verbs.h>
-#समावेश <rdma/ib_user_ioctl_cmds.h>
+#include <rdma/uverbs_types.h>
+#include <linux/uaccess.h>
+#include <rdma/rdma_user_ioctl.h>
+#include <rdma/ib_user_ioctl_verbs.h>
+#include <rdma/ib_user_ioctl_cmds.h>
 
 /*
  * =======================================
- *	Verbs action specअगरications
+ *	Verbs action specifications
  * =======================================
  */
 
-क्रमागत uverbs_attr_type अणु
+enum uverbs_attr_type {
 	UVERBS_ATTR_TYPE_NA,
 	UVERBS_ATTR_TYPE_PTR_IN,
 	UVERBS_ATTR_TYPE_PTR_OUT,
@@ -27,18 +26,18 @@
 	UVERBS_ATTR_TYPE_FD,
 	UVERBS_ATTR_TYPE_ENUM_IN,
 	UVERBS_ATTR_TYPE_IDRS_ARRAY,
-पूर्ण;
+};
 
-क्रमागत uverbs_obj_access अणु
+enum uverbs_obj_access {
 	UVERBS_ACCESS_READ,
 	UVERBS_ACCESS_WRITE,
 	UVERBS_ACCESS_NEW,
 	UVERBS_ACCESS_DESTROY
-पूर्ण;
+};
 
-/* Specअगरication of a single attribute inside the ioctl message */
+/* Specification of a single attribute inside the ioctl message */
 /* good size 16 */
-काष्ठा uverbs_attr_spec अणु
+struct uverbs_attr_spec {
 	u8 type;
 
 	/*
@@ -48,48 +47,48 @@
 	 */
 	u8 zero_trailing:1;
 	/*
-	 * Valid only क्रम PTR_IN. Allocate and copy the data inside
+	 * Valid only for PTR_IN. Allocate and copy the data inside
 	 * the parser
 	 */
 	u8 alloc_and_copy:1;
 	u8 mandatory:1;
-	/* True अगर this is from UVERBS_ATTR_UHW */
+	/* True if this is from UVERBS_ATTR_UHW */
 	u8 is_udata:1;
 
-	जोड़ अणु
-		काष्ठा अणु
+	union {
+		struct {
 			/* Current known size to kernel */
 			u16 len;
 			/* User isn't allowed to provide something < min_len */
 			u16 min_len;
-		पूर्ण ptr;
+		} ptr;
 
-		काष्ठा अणु
+		struct {
 			/*
 			 * higher bits mean the namespace and lower bits mean
 			 * the type id within the namespace.
 			 */
 			u16 obj_type;
 			u8 access;
-		पूर्ण obj;
+		} obj;
 
-		काष्ठा अणु
+		struct {
 			u8 num_elems;
-		पूर्ण क्रमागत_def;
-	पूर्ण u;
+		} enum_def;
+	} u;
 
-	/* This weird split lets us हटाओ some padding */
-	जोड़ अणु
-		काष्ठा अणु
+	/* This weird split lets us remove some padding */
+	union {
+		struct {
 			/*
-			 * The क्रमागत attribute can select one of the attributes
+			 * The enum attribute can select one of the attributes
 			 * contained in the ids array. Currently only PTR_IN
 			 * attributes are supported in the ids array.
 			 */
-			स्थिर काष्ठा uverbs_attr_spec *ids;
-		पूर्ण क्रमागत_def;
+			const struct uverbs_attr_spec *ids;
+		} enum_def;
 
-		काष्ठा अणु
+		struct {
 			/*
 			 * higher bits mean the namespace and lower bits mean
 			 * the type id within the namespace.
@@ -98,33 +97,33 @@
 			u16				min_len;
 			u16				max_len;
 			u8				access;
-		पूर्ण objs_arr;
-	पूर्ण u2;
-पूर्ण;
+		} objs_arr;
+	} u2;
+};
 
 /*
- * Inक्रमmation about the API is loaded पूर्णांकo a radix tree. For IOCTL we start
+ * Information about the API is loaded into a radix tree. For IOCTL we start
  * with a tuple of:
  *  object_id, attr_id, method_id
  *
  * Which is a 48 bit value, with most of the bits guaranteed to be zero. Based
- * on the current kernel support this is compressed पूर्णांकo 16 bit key क्रम the
- * radix tree. Since this compression is entirely पूर्णांकernal to the kernel the
- * below limits can be revised अगर the kernel gains additional data.
+ * on the current kernel support this is compressed into 16 bit key for the
+ * radix tree. Since this compression is entirely internal to the kernel the
+ * below limits can be revised if the kernel gains additional data.
  *
  * With 64 leafs per node this is a 3 level radix tree.
  *
- * The tree encodes multiple types, and uses a scheme where OBJ_ID,0,0 वापसs
- * the object slot, and OBJ_ID,METH_ID,0 and वापसs the method slot.
+ * The tree encodes multiple types, and uses a scheme where OBJ_ID,0,0 returns
+ * the object slot, and OBJ_ID,METH_ID,0 and returns the method slot.
  *
- * This also encodes the tables क्रम the ग_लिखो() and ग_लिखो() extended commands
+ * This also encodes the tables for the write() and write() extended commands
  * using the coding
  *   OBJ_ID,UVERBS_API_METHOD_IS_WRITE,command #
  *   OBJ_ID,UVERBS_API_METHOD_IS_WRITE_EX,command_ex #
  * ie the WRITE path is treated as a special method type in the ioctl
  * framework.
  */
-क्रमागत uapi_radix_data अणु
+enum uapi_radix_data {
 	UVERBS_API_NS_FLAG = 1U << UVERBS_ID_NS_SHIFT,
 
 	UVERBS_API_ATTR_KEY_BITS = 6,
@@ -154,137 +153,137 @@
 
 	/* This id guaranteed to not exist in the radix tree */
 	UVERBS_API_KEY_ERR = 0xFFFFFFFF,
-पूर्ण;
+};
 
-अटल अंतरभूत __attribute_स्थिर__ u32 uapi_key_obj(u32 id)
-अणु
-	अगर (id & UVERBS_API_NS_FLAG) अणु
+static inline __attribute_const__ u32 uapi_key_obj(u32 id)
+{
+	if (id & UVERBS_API_NS_FLAG) {
 		id &= ~UVERBS_API_NS_FLAG;
-		अगर (id >= UVERBS_API_OBJ_KEY_NUM_DRIVER)
-			वापस UVERBS_API_KEY_ERR;
+		if (id >= UVERBS_API_OBJ_KEY_NUM_DRIVER)
+			return UVERBS_API_KEY_ERR;
 		id = id + UVERBS_API_OBJ_KEY_NUM_CORE;
-	पूर्ण अन्यथा अणु
-		अगर (id >= UVERBS_API_OBJ_KEY_NUM_CORE)
-			वापस UVERBS_API_KEY_ERR;
-	पूर्ण
+	} else {
+		if (id >= UVERBS_API_OBJ_KEY_NUM_CORE)
+			return UVERBS_API_KEY_ERR;
+	}
 
-	वापस id << UVERBS_API_OBJ_KEY_SHIFT;
-पूर्ण
+	return id << UVERBS_API_OBJ_KEY_SHIFT;
+}
 
-अटल अंतरभूत __attribute_स्थिर__ bool uapi_key_is_object(u32 key)
-अणु
-	वापस (key & ~UVERBS_API_OBJ_KEY_MASK) == 0;
-पूर्ण
+static inline __attribute_const__ bool uapi_key_is_object(u32 key)
+{
+	return (key & ~UVERBS_API_OBJ_KEY_MASK) == 0;
+}
 
-अटल अंतरभूत __attribute_स्थिर__ u32 uapi_key_ioctl_method(u32 id)
-अणु
-	अगर (id & UVERBS_API_NS_FLAG) अणु
+static inline __attribute_const__ u32 uapi_key_ioctl_method(u32 id)
+{
+	if (id & UVERBS_API_NS_FLAG) {
 		id &= ~UVERBS_API_NS_FLAG;
-		अगर (id >= UVERBS_API_METHOD_KEY_NUM_DRIVER)
-			वापस UVERBS_API_KEY_ERR;
+		if (id >= UVERBS_API_METHOD_KEY_NUM_DRIVER)
+			return UVERBS_API_KEY_ERR;
 		id = id + UVERBS_API_METHOD_KEY_NUM_CORE;
-	पूर्ण अन्यथा अणु
+	} else {
 		id++;
-		अगर (id >= UVERBS_API_METHOD_KEY_NUM_CORE)
-			वापस UVERBS_API_KEY_ERR;
-	पूर्ण
+		if (id >= UVERBS_API_METHOD_KEY_NUM_CORE)
+			return UVERBS_API_KEY_ERR;
+	}
 
-	वापस id << UVERBS_API_METHOD_KEY_SHIFT;
-पूर्ण
+	return id << UVERBS_API_METHOD_KEY_SHIFT;
+}
 
-अटल अंतरभूत __attribute_स्थिर__ u32 uapi_key_ग_लिखो_method(u32 id)
-अणु
-	अगर (id >= UVERBS_API_WRITE_KEY_NUM)
-		वापस UVERBS_API_KEY_ERR;
-	वापस UVERBS_API_METHOD_IS_WRITE | id;
-पूर्ण
+static inline __attribute_const__ u32 uapi_key_write_method(u32 id)
+{
+	if (id >= UVERBS_API_WRITE_KEY_NUM)
+		return UVERBS_API_KEY_ERR;
+	return UVERBS_API_METHOD_IS_WRITE | id;
+}
 
-अटल अंतरभूत __attribute_स्थिर__ u32 uapi_key_ग_लिखो_ex_method(u32 id)
-अणु
-	अगर (id >= UVERBS_API_WRITE_KEY_NUM)
-		वापस UVERBS_API_KEY_ERR;
-	वापस UVERBS_API_METHOD_IS_WRITE_EX | id;
-पूर्ण
+static inline __attribute_const__ u32 uapi_key_write_ex_method(u32 id)
+{
+	if (id >= UVERBS_API_WRITE_KEY_NUM)
+		return UVERBS_API_KEY_ERR;
+	return UVERBS_API_METHOD_IS_WRITE_EX | id;
+}
 
-अटल अंतरभूत __attribute_स्थिर__ u32
+static inline __attribute_const__ u32
 uapi_key_attr_to_ioctl_method(u32 attr_key)
-अणु
-	वापस attr_key &
+{
+	return attr_key &
 	       (UVERBS_API_OBJ_KEY_MASK | UVERBS_API_METHOD_KEY_MASK);
-पूर्ण
+}
 
-अटल अंतरभूत __attribute_स्थिर__ bool uapi_key_is_ioctl_method(u32 key)
-अणु
-	अचिन्हित पूर्णांक method = key & UVERBS_API_METHOD_KEY_MASK;
+static inline __attribute_const__ bool uapi_key_is_ioctl_method(u32 key)
+{
+	unsigned int method = key & UVERBS_API_METHOD_KEY_MASK;
 
-	वापस method != 0 && method < UVERBS_API_METHOD_IS_WRITE &&
+	return method != 0 && method < UVERBS_API_METHOD_IS_WRITE &&
 	       (key & UVERBS_API_ATTR_KEY_MASK) == 0;
-पूर्ण
+}
 
-अटल अंतरभूत __attribute_स्थिर__ bool uapi_key_is_ग_लिखो_method(u32 key)
-अणु
-	वापस (key & UVERBS_API_METHOD_KEY_MASK) == UVERBS_API_METHOD_IS_WRITE;
-पूर्ण
+static inline __attribute_const__ bool uapi_key_is_write_method(u32 key)
+{
+	return (key & UVERBS_API_METHOD_KEY_MASK) == UVERBS_API_METHOD_IS_WRITE;
+}
 
-अटल अंतरभूत __attribute_स्थिर__ bool uapi_key_is_ग_लिखो_ex_method(u32 key)
-अणु
-	वापस (key & UVERBS_API_METHOD_KEY_MASK) ==
+static inline __attribute_const__ bool uapi_key_is_write_ex_method(u32 key)
+{
+	return (key & UVERBS_API_METHOD_KEY_MASK) ==
 	       UVERBS_API_METHOD_IS_WRITE_EX;
-पूर्ण
+}
 
-अटल अंतरभूत __attribute_स्थिर__ u32 uapi_key_attrs_start(u32 ioctl_method_key)
-अणु
+static inline __attribute_const__ u32 uapi_key_attrs_start(u32 ioctl_method_key)
+{
 	/* 0 is the method slot itself */
-	वापस ioctl_method_key + 1;
-पूर्ण
+	return ioctl_method_key + 1;
+}
 
-अटल अंतरभूत __attribute_स्थिर__ u32 uapi_key_attr(u32 id)
-अणु
+static inline __attribute_const__ u32 uapi_key_attr(u32 id)
+{
 	/*
-	 * The attr is deचिन्हित to fit in the typical single radix tree node
+	 * The attr is designed to fit in the typical single radix tree node
 	 * of 64 entries. Since allmost all methods have driver attributes we
-	 * organize things so that the driver and core attributes पूर्णांकerleave to
-	 * reduce the length of the attributes array in typical हालs.
+	 * organize things so that the driver and core attributes interleave to
+	 * reduce the length of the attributes array in typical cases.
 	 */
-	अगर (id & UVERBS_API_NS_FLAG) अणु
+	if (id & UVERBS_API_NS_FLAG) {
 		id &= ~UVERBS_API_NS_FLAG;
 		id++;
-		अगर (id >= 1 << (UVERBS_API_ATTR_KEY_BITS - 1))
-			वापस UVERBS_API_KEY_ERR;
+		if (id >= 1 << (UVERBS_API_ATTR_KEY_BITS - 1))
+			return UVERBS_API_KEY_ERR;
 		id = (id << 1) | 0;
-	पूर्ण अन्यथा अणु
-		अगर (id >= 1 << (UVERBS_API_ATTR_KEY_BITS - 1))
-			वापस UVERBS_API_KEY_ERR;
+	} else {
+		if (id >= 1 << (UVERBS_API_ATTR_KEY_BITS - 1))
+			return UVERBS_API_KEY_ERR;
 		id = (id << 1) | 1;
-	पूर्ण
+	}
 
-	वापस id;
-पूर्ण
+	return id;
+}
 
-/* Only true क्रम ioctl methods */
-अटल अंतरभूत __attribute_स्थिर__ bool uapi_key_is_attr(u32 key)
-अणु
-	अचिन्हित पूर्णांक method = key & UVERBS_API_METHOD_KEY_MASK;
+/* Only true for ioctl methods */
+static inline __attribute_const__ bool uapi_key_is_attr(u32 key)
+{
+	unsigned int method = key & UVERBS_API_METHOD_KEY_MASK;
 
-	वापस method != 0 && method < UVERBS_API_METHOD_IS_WRITE &&
+	return method != 0 && method < UVERBS_API_METHOD_IS_WRITE &&
 	       (key & UVERBS_API_ATTR_KEY_MASK) != 0;
-पूर्ण
+}
 
 /*
- * This वापसs a value in the range [0 to UVERBS_API_ATTR_BKEY_LEN),
- * basically it unकरोes the reservation of 0 in the ID numbering. attr_key
- * must alपढ़ोy be masked with UVERBS_API_ATTR_KEY_MASK, or be the output of
+ * This returns a value in the range [0 to UVERBS_API_ATTR_BKEY_LEN),
+ * basically it undoes the reservation of 0 in the ID numbering. attr_key
+ * must already be masked with UVERBS_API_ATTR_KEY_MASK, or be the output of
  * uapi_key_attr().
  */
-अटल अंतरभूत __attribute_स्थिर__ u32 uapi_bkey_attr(u32 attr_key)
-अणु
-	वापस attr_key - 1;
-पूर्ण
+static inline __attribute_const__ u32 uapi_bkey_attr(u32 attr_key)
+{
+	return attr_key - 1;
+}
 
-अटल अंतरभूत __attribute_स्थिर__ u32 uapi_bkey_to_key_attr(u32 attr_bkey)
-अणु
-	वापस attr_bkey + 1;
-पूर्ण
+static inline __attribute_const__ u32 uapi_bkey_to_key_attr(u32 attr_bkey)
+{
+	return attr_bkey + 1;
+}
 
 /*
  * =======================================
@@ -292,28 +291,28 @@ uapi_key_attr_to_ioctl_method(u32 attr_key)
  * =======================================
  */
 
-काष्ठा uverbs_attr_def अणु
+struct uverbs_attr_def {
 	u16                           id;
-	काष्ठा uverbs_attr_spec       attr;
-पूर्ण;
+	struct uverbs_attr_spec       attr;
+};
 
-काष्ठा uverbs_method_def अणु
+struct uverbs_method_def {
 	u16                                  id;
-	/* Combination of bits from क्रमागत UVERBS_ACTION_FLAG_XXXX */
+	/* Combination of bits from enum UVERBS_ACTION_FLAG_XXXX */
 	u32				     flags;
-	माप_प्रकार				     num_attrs;
-	स्थिर काष्ठा uverbs_attr_def * स्थिर (*attrs)[];
-	पूर्णांक (*handler)(काष्ठा uverbs_attr_bundle *attrs);
-पूर्ण;
+	size_t				     num_attrs;
+	const struct uverbs_attr_def * const (*attrs)[];
+	int (*handler)(struct uverbs_attr_bundle *attrs);
+};
 
-काष्ठा uverbs_object_def अणु
+struct uverbs_object_def {
 	u16					 id;
-	स्थिर काष्ठा uverbs_obj_type	        *type_attrs;
-	माप_प्रकार				         num_methods;
-	स्थिर काष्ठा uverbs_method_def * स्थिर (*methods)[];
-पूर्ण;
+	const struct uverbs_obj_type	        *type_attrs;
+	size_t				         num_methods;
+	const struct uverbs_method_def * const (*methods)[];
+};
 
-क्रमागत uapi_definition_kind अणु
+enum uapi_definition_kind {
 	UAPI_DEF_END = 0,
 	UAPI_DEF_OBJECT_START,
 	UAPI_DEF_WRITE,
@@ -321,259 +320,259 @@ uapi_key_attr_to_ioctl_method(u32 attr_key)
 	UAPI_DEF_CHAIN,
 	UAPI_DEF_IS_SUPPORTED_FUNC,
 	UAPI_DEF_IS_SUPPORTED_DEV_FN,
-पूर्ण;
+};
 
-क्रमागत uapi_definition_scope अणु
+enum uapi_definition_scope {
 	UAPI_SCOPE_OBJECT = 1,
 	UAPI_SCOPE_METHOD = 2,
-पूर्ण;
+};
 
-काष्ठा uapi_definition अणु
+struct uapi_definition {
 	u8 kind;
 	u8 scope;
-	जोड़ अणु
-		काष्ठा अणु
+	union {
+		struct {
 			u16 object_id;
-		पूर्ण object_start;
-		काष्ठा अणु
+		} object_start;
+		struct {
 			u16 command_num;
 			u8 is_ex:1;
 			u8 has_udata:1;
 			u8 has_resp:1;
 			u8 req_size;
 			u8 resp_size;
-		पूर्ण ग_लिखो;
-	पूर्ण;
+		} write;
+	};
 
-	जोड़ अणु
-		bool (*func_is_supported)(काष्ठा ib_device *device);
-		पूर्णांक (*func_ग_लिखो)(काष्ठा uverbs_attr_bundle *attrs);
-		स्थिर काष्ठा uapi_definition *chain;
-		स्थिर काष्ठा uverbs_object_def *chain_obj_tree;
-		माप_प्रकार needs_fn_offset;
-	पूर्ण;
-पूर्ण;
+	union {
+		bool (*func_is_supported)(struct ib_device *device);
+		int (*func_write)(struct uverbs_attr_bundle *attrs);
+		const struct uapi_definition *chain;
+		const struct uverbs_object_def *chain_obj_tree;
+		size_t needs_fn_offset;
+	};
+};
 
 /* Define things connected to object_id */
-#घोषणा DECLARE_UVERBS_OBJECT(_object_id, ...)                                 \
-	अणु                                                                      \
+#define DECLARE_UVERBS_OBJECT(_object_id, ...)                                 \
+	{                                                                      \
 		.kind = UAPI_DEF_OBJECT_START,                                 \
-		.object_start = अणु .object_id = _object_id पूर्ण,                   \
-	पूर्ण,                                                                     \
+		.object_start = { .object_id = _object_id },                   \
+	},                                                                     \
 		##__VA_ARGS__
 
 /* Use in a var_args of DECLARE_UVERBS_OBJECT */
-#घोषणा DECLARE_UVERBS_WRITE(_command_num, _func, _cmd_desc, ...)              \
-	अणु                                                                      \
+#define DECLARE_UVERBS_WRITE(_command_num, _func, _cmd_desc, ...)              \
+	{                                                                      \
 		.kind = UAPI_DEF_WRITE,                                        \
 		.scope = UAPI_SCOPE_OBJECT,                                    \
-		.ग_लिखो = अणु .is_ex = 0, .command_num = _command_num पूर्ण,          \
-		.func_ग_लिखो = _func,                                           \
+		.write = { .is_ex = 0, .command_num = _command_num },          \
+		.func_write = _func,                                           \
 		_cmd_desc,                                                     \
-	पूर्ण,                                                                     \
+	},                                                                     \
 		##__VA_ARGS__
 
 /* Use in a var_args of DECLARE_UVERBS_OBJECT */
-#घोषणा DECLARE_UVERBS_WRITE_EX(_command_num, _func, _cmd_desc, ...)           \
-	अणु                                                                      \
+#define DECLARE_UVERBS_WRITE_EX(_command_num, _func, _cmd_desc, ...)           \
+	{                                                                      \
 		.kind = UAPI_DEF_WRITE,                                        \
 		.scope = UAPI_SCOPE_OBJECT,                                    \
-		.ग_लिखो = अणु .is_ex = 1, .command_num = _command_num पूर्ण,          \
-		.func_ग_लिखो = _func,                                           \
+		.write = { .is_ex = 1, .command_num = _command_num },          \
+		.func_write = _func,                                           \
 		_cmd_desc,                                                     \
-	पूर्ण,                                                                     \
+	},                                                                     \
 		##__VA_ARGS__
 
 /*
- * Object is only supported अगर the function poपूर्णांकer named ibdev_fn in काष्ठा
- * ib_device is not शून्य.
+ * Object is only supported if the function pointer named ibdev_fn in struct
+ * ib_device is not NULL.
  */
-#घोषणा UAPI_DEF_OBJ_NEEDS_FN(ibdev_fn)                                        \
-	अणु                                                                      \
+#define UAPI_DEF_OBJ_NEEDS_FN(ibdev_fn)                                        \
+	{                                                                      \
 		.kind = UAPI_DEF_IS_SUPPORTED_DEV_FN,                          \
 		.scope = UAPI_SCOPE_OBJECT,                                    \
 		.needs_fn_offset =                                             \
-			दुरत्व(काष्ठा ib_device_ops, ibdev_fn) +             \
-			BUILD_BUG_ON_ZERO(माप_field(काष्ठा ib_device_ops,   \
+			offsetof(struct ib_device_ops, ibdev_fn) +             \
+			BUILD_BUG_ON_ZERO(sizeof_field(struct ib_device_ops,   \
 						       ibdev_fn) !=            \
-					  माप(व्योम *)),                     \
-	पूर्ण
+					  sizeof(void *)),                     \
+	}
 
 /*
- * Method is only supported अगर the function poपूर्णांकer named ibdev_fn in काष्ठा
- * ib_device is not शून्य.
+ * Method is only supported if the function pointer named ibdev_fn in struct
+ * ib_device is not NULL.
  */
-#घोषणा UAPI_DEF_METHOD_NEEDS_FN(ibdev_fn)                                     \
-	अणु                                                                      \
+#define UAPI_DEF_METHOD_NEEDS_FN(ibdev_fn)                                     \
+	{                                                                      \
 		.kind = UAPI_DEF_IS_SUPPORTED_DEV_FN,                          \
 		.scope = UAPI_SCOPE_METHOD,                                    \
 		.needs_fn_offset =                                             \
-			दुरत्व(काष्ठा ib_device_ops, ibdev_fn) +             \
-			BUILD_BUG_ON_ZERO(माप_field(काष्ठा ib_device_ops,   \
+			offsetof(struct ib_device_ops, ibdev_fn) +             \
+			BUILD_BUG_ON_ZERO(sizeof_field(struct ib_device_ops,   \
 						       ibdev_fn) !=            \
-					  माप(व्योम *)),                     \
-	पूर्ण
+					  sizeof(void *)),                     \
+	}
 
-/* Call a function to determine अगर the entire object is supported or not */
-#घोषणा UAPI_DEF_IS_OBJ_SUPPORTED(_func)                                       \
-	अणु                                                                      \
+/* Call a function to determine if the entire object is supported or not */
+#define UAPI_DEF_IS_OBJ_SUPPORTED(_func)                                       \
+	{                                                                      \
 		.kind = UAPI_DEF_IS_SUPPORTED_FUNC,                            \
 		.scope = UAPI_SCOPE_OBJECT, .func_is_supported = _func,        \
-	पूर्ण
+	}
 
-/* Include another काष्ठा uapi_definition in this one */
-#घोषणा UAPI_DEF_CHAIN(_def_var)                                               \
-	अणु                                                                      \
+/* Include another struct uapi_definition in this one */
+#define UAPI_DEF_CHAIN(_def_var)                                               \
+	{                                                                      \
 		.kind = UAPI_DEF_CHAIN, .chain = _def_var,                     \
-	पूर्ण
+	}
 
 /* Temporary until the tree base description is replaced */
-#घोषणा UAPI_DEF_CHAIN_OBJ_TREE(_object_क्रमागत, _object_ptr, ...)                \
-	अणु                                                                      \
+#define UAPI_DEF_CHAIN_OBJ_TREE(_object_enum, _object_ptr, ...)                \
+	{                                                                      \
 		.kind = UAPI_DEF_CHAIN_OBJ_TREE,                               \
-		.object_start = अणु .object_id = _object_क्रमागत पूर्ण,                 \
+		.object_start = { .object_id = _object_enum },                 \
 		.chain_obj_tree = _object_ptr,                                 \
-	पूर्ण,								       \
+	},								       \
 		##__VA_ARGS__
-#घोषणा UAPI_DEF_CHAIN_OBJ_TREE_NAMED(_object_क्रमागत, ...)                       \
-	UAPI_DEF_CHAIN_OBJ_TREE(_object_क्रमागत, &UVERBS_OBJECT(_object_क्रमागत),    \
+#define UAPI_DEF_CHAIN_OBJ_TREE_NAMED(_object_enum, ...)                       \
+	UAPI_DEF_CHAIN_OBJ_TREE(_object_enum, &UVERBS_OBJECT(_object_enum),    \
 				##__VA_ARGS__)
 
 /*
  * =======================================
- *	Attribute Specअगरications
+ *	Attribute Specifications
  * =======================================
  */
 
-#घोषणा UVERBS_ATTR_SIZE(_min_len, _len)			\
+#define UVERBS_ATTR_SIZE(_min_len, _len)			\
 	.u.ptr.min_len = _min_len, .u.ptr.len = _len
 
-#घोषणा UVERBS_ATTR_NO_DATA() UVERBS_ATTR_SIZE(0, 0)
+#define UVERBS_ATTR_NO_DATA() UVERBS_ATTR_SIZE(0, 0)
 
 /*
- * Specअगरies a uapi काष्ठाure that cannot be extended. The user must always
- * supply the whole काष्ठाure and nothing more. The काष्ठाure must be declared
+ * Specifies a uapi structure that cannot be extended. The user must always
+ * supply the whole structure and nothing more. The structure must be declared
  * in a header under include/uapi/rdma.
  */
-#घोषणा UVERBS_ATTR_TYPE(_type)					\
-	.u.ptr.min_len = माप(_type), .u.ptr.len = माप(_type)
+#define UVERBS_ATTR_TYPE(_type)					\
+	.u.ptr.min_len = sizeof(_type), .u.ptr.len = sizeof(_type)
 /*
- * Specअगरies a uapi काष्ठाure where the user must provide at least up to
- * member 'last'.  Anything after last and up until the end of the काष्ठाure
- * can be non-zero, anything दीर्घer than the end of the काष्ठाure must be
- * zero. The काष्ठाure must be declared in a header under include/uapi/rdma.
+ * Specifies a uapi structure where the user must provide at least up to
+ * member 'last'.  Anything after last and up until the end of the structure
+ * can be non-zero, anything longer than the end of the structure must be
+ * zero. The structure must be declared in a header under include/uapi/rdma.
  */
-#घोषणा UVERBS_ATTR_STRUCT(_type, _last)                                       \
+#define UVERBS_ATTR_STRUCT(_type, _last)                                       \
 	.zero_trailing = 1,                                                    \
-	UVERBS_ATTR_SIZE(दुरत्वend(_type, _last), माप(_type))
+	UVERBS_ATTR_SIZE(offsetofend(_type, _last), sizeof(_type))
 /*
- * Specअगरies at least min_len bytes must be passed in, but the amount can be
- * larger, up to the protocol maximum size. No check क्रम zeroing is करोne.
+ * Specifies at least min_len bytes must be passed in, but the amount can be
+ * larger, up to the protocol maximum size. No check for zeroing is done.
  */
-#घोषणा UVERBS_ATTR_MIN_SIZE(_min_len) UVERBS_ATTR_SIZE(_min_len, अच_लघु_उच्च)
+#define UVERBS_ATTR_MIN_SIZE(_min_len) UVERBS_ATTR_SIZE(_min_len, USHRT_MAX)
 
 /* Must be used in the '...' of any UVERBS_ATTR */
-#घोषणा UA_ALLOC_AND_COPY .alloc_and_copy = 1
-#घोषणा UA_MANDATORY .mandatory = 1
-#घोषणा UA_OPTIONAL .mandatory = 0
+#define UA_ALLOC_AND_COPY .alloc_and_copy = 1
+#define UA_MANDATORY .mandatory = 1
+#define UA_OPTIONAL .mandatory = 0
 
 /*
  * min_len must be bigger than 0 and _max_len must be smaller than 4095.  Only
  * READ\WRITE accesses are supported.
  */
-#घोषणा UVERBS_ATTR_IDRS_ARR(_attr_id, _idr_type, _access, _min_len, _max_len, \
+#define UVERBS_ATTR_IDRS_ARR(_attr_id, _idr_type, _access, _min_len, _max_len, \
 			     ...)                                              \
-	(&(स्थिर काष्ठा uverbs_attr_def)अणु                                      \
+	(&(const struct uverbs_attr_def){                                      \
 		.id = (_attr_id) +                                             \
 		      BUILD_BUG_ON_ZERO((_min_len) == 0 ||                     \
 					(_max_len) >                           \
-						PAGE_SIZE / माप(व्योम *) ||  \
+						PAGE_SIZE / sizeof(void *) ||  \
 					(_min_len) > (_max_len) ||             \
 					(_access) == UVERBS_ACCESS_NEW ||      \
 					(_access) == UVERBS_ACCESS_DESTROY),   \
-		.attr = अणु .type = UVERBS_ATTR_TYPE_IDRS_ARRAY,                 \
+		.attr = { .type = UVERBS_ATTR_TYPE_IDRS_ARRAY,                 \
 			  .u2.objs_arr.obj_type = _idr_type,                   \
 			  .u2.objs_arr.access = _access,                       \
 			  .u2.objs_arr.min_len = _min_len,                     \
 			  .u2.objs_arr.max_len = _max_len,                     \
-			  __VA_ARGS__ पूर्ण पूर्ण)
+			  __VA_ARGS__ } })
 
 /*
- * Only क्रम use with UVERBS_ATTR_IDR, allows any uobject type to be accepted,
+ * Only for use with UVERBS_ATTR_IDR, allows any uobject type to be accepted,
  * the user must validate the type of the uobject instead.
  */
-#घोषणा UVERBS_IDR_ANY_OBJECT 0xFFFF
+#define UVERBS_IDR_ANY_OBJECT 0xFFFF
 
-#घोषणा UVERBS_ATTR_IDR(_attr_id, _idr_type, _access, ...)                     \
-	(&(स्थिर काष्ठा uverbs_attr_def)अणु                                      \
+#define UVERBS_ATTR_IDR(_attr_id, _idr_type, _access, ...)                     \
+	(&(const struct uverbs_attr_def){                                      \
 		.id = _attr_id,                                                \
-		.attr = अणु .type = UVERBS_ATTR_TYPE_IDR,                        \
+		.attr = { .type = UVERBS_ATTR_TYPE_IDR,                        \
 			  .u.obj.obj_type = _idr_type,                         \
 			  .u.obj.access = _access,                             \
-			  __VA_ARGS__ पूर्ण पूर्ण)
+			  __VA_ARGS__ } })
 
-#घोषणा UVERBS_ATTR_FD(_attr_id, _fd_type, _access, ...)                       \
-	(&(स्थिर काष्ठा uverbs_attr_def)अणु                                      \
+#define UVERBS_ATTR_FD(_attr_id, _fd_type, _access, ...)                       \
+	(&(const struct uverbs_attr_def){                                      \
 		.id = (_attr_id) +                                             \
 		      BUILD_BUG_ON_ZERO((_access) != UVERBS_ACCESS_NEW &&      \
 					(_access) != UVERBS_ACCESS_READ),      \
-		.attr = अणु .type = UVERBS_ATTR_TYPE_FD,                         \
+		.attr = { .type = UVERBS_ATTR_TYPE_FD,                         \
 			  .u.obj.obj_type = _fd_type,                          \
 			  .u.obj.access = _access,                             \
-			  __VA_ARGS__ पूर्ण पूर्ण)
+			  __VA_ARGS__ } })
 
-#घोषणा UVERBS_ATTR_PTR_IN(_attr_id, _type, ...)                               \
-	(&(स्थिर काष्ठा uverbs_attr_def)अणु                                      \
+#define UVERBS_ATTR_PTR_IN(_attr_id, _type, ...)                               \
+	(&(const struct uverbs_attr_def){                                      \
 		.id = _attr_id,                                                \
-		.attr = अणु .type = UVERBS_ATTR_TYPE_PTR_IN,                     \
+		.attr = { .type = UVERBS_ATTR_TYPE_PTR_IN,                     \
 			  _type,                                               \
-			  __VA_ARGS__ पूर्ण पूर्ण)
+			  __VA_ARGS__ } })
 
-#घोषणा UVERBS_ATTR_PTR_OUT(_attr_id, _type, ...)                              \
-	(&(स्थिर काष्ठा uverbs_attr_def)अणु                                      \
+#define UVERBS_ATTR_PTR_OUT(_attr_id, _type, ...)                              \
+	(&(const struct uverbs_attr_def){                                      \
 		.id = _attr_id,                                                \
-		.attr = अणु .type = UVERBS_ATTR_TYPE_PTR_OUT,                    \
+		.attr = { .type = UVERBS_ATTR_TYPE_PTR_OUT,                    \
 			  _type,                                               \
-			  __VA_ARGS__ पूर्ण पूर्ण)
+			  __VA_ARGS__ } })
 
-/* _क्रमागत_arry should be a 'static const union uverbs_attr_spec[]' */
-#घोषणा UVERBS_ATTR_ENUM_IN(_attr_id, _क्रमागत_arr, ...)                          \
-	(&(स्थिर काष्ठा uverbs_attr_def)अणु                                      \
+/* _enum_arry should be a 'static const union uverbs_attr_spec[]' */
+#define UVERBS_ATTR_ENUM_IN(_attr_id, _enum_arr, ...)                          \
+	(&(const struct uverbs_attr_def){                                      \
 		.id = _attr_id,                                                \
-		.attr = अणु .type = UVERBS_ATTR_TYPE_ENUM_IN,                    \
-			  .u2.क्रमागत_def.ids = _क्रमागत_arr,                        \
-			  .u.क्रमागत_def.num_elems = ARRAY_SIZE(_क्रमागत_arr),       \
-			  __VA_ARGS__ पूर्ण,                                       \
-	पूर्ण)
+		.attr = { .type = UVERBS_ATTR_TYPE_ENUM_IN,                    \
+			  .u2.enum_def.ids = _enum_arr,                        \
+			  .u.enum_def.num_elems = ARRAY_SIZE(_enum_arr),       \
+			  __VA_ARGS__ },                                       \
+	})
 
-/* An input value that is a member in the क्रमागत _क्रमागत_type. */
-#घोषणा UVERBS_ATTR_CONST_IN(_attr_id, _क्रमागत_type, ...)                        \
+/* An input value that is a member in the enum _enum_type. */
+#define UVERBS_ATTR_CONST_IN(_attr_id, _enum_type, ...)                        \
 	UVERBS_ATTR_PTR_IN(                                                    \
 		_attr_id,                                                      \
 		UVERBS_ATTR_SIZE(                                              \
-			माप(u64) + BUILD_BUG_ON_ZERO(!माप(_क्रमागत_type)),  \
-			माप(u64)),                                          \
+			sizeof(u64) + BUILD_BUG_ON_ZERO(!sizeof(_enum_type)),  \
+			sizeof(u64)),                                          \
 		__VA_ARGS__)
 
 /*
- * An input value that is a bitwise combination of values of _क्रमागत_type.
+ * An input value that is a bitwise combination of values of _enum_type.
  * This permits the flag value to be passed as either a u32 or u64, it must
  * be retrieved via uverbs_get_flag().
  */
-#घोषणा UVERBS_ATTR_FLAGS_IN(_attr_id, _क्रमागत_type, ...)                        \
+#define UVERBS_ATTR_FLAGS_IN(_attr_id, _enum_type, ...)                        \
 	UVERBS_ATTR_PTR_IN(                                                    \
 		_attr_id,                                                      \
-		UVERBS_ATTR_SIZE(माप(u32) + BUILD_BUG_ON_ZERO(              \
-						       !माप(_क्रमागत_type *)), \
-				 माप(u64)),                                 \
+		UVERBS_ATTR_SIZE(sizeof(u32) + BUILD_BUG_ON_ZERO(              \
+						       !sizeof(_enum_type *)), \
+				 sizeof(u64)),                                 \
 		__VA_ARGS__)
 
 /*
- * This spec is used in order to pass inक्रमmation to the hardware driver in a
- * legacy way. Every verb that could get driver specअगरic data should get this
+ * This spec is used in order to pass information to the hardware driver in a
+ * legacy way. Every verb that could get driver specific data should get this
  * spec.
  */
-#घोषणा UVERBS_ATTR_UHW()                                                      \
+#define UVERBS_ATTR_UHW()                                                      \
 	UVERBS_ATTR_PTR_IN(UVERBS_ATTR_UHW_IN,                                 \
 			   UVERBS_ATTR_MIN_SIZE(0),			       \
 			   UA_OPTIONAL,                                        \
@@ -584,420 +583,420 @@ uapi_key_attr_to_ioctl_method(u32 attr_key)
 			    .is_udata = 1)
 
 /* =================================================
- *              Parsing infraकाष्ठाure
+ *              Parsing infrastructure
  * =================================================
  */
 
 
-काष्ठा uverbs_ptr_attr अणु
+struct uverbs_ptr_attr {
 	/*
 	 * If UVERBS_ATTR_SPEC_F_ALLOC_AND_COPY is set then the 'ptr' is
 	 * used.
 	 */
-	जोड़ अणु
-		व्योम *ptr;
+	union {
+		void *ptr;
 		u64 data;
-	पूर्ण;
+	};
 	u16		len;
 	u16		uattr_idx;
-	u8		क्रमागत_id;
-पूर्ण;
+	u8		enum_id;
+};
 
-काष्ठा uverbs_obj_attr अणु
-	काष्ठा ib_uobject		*uobject;
-	स्थिर काष्ठा uverbs_api_attr	*attr_elm;
-पूर्ण;
+struct uverbs_obj_attr {
+	struct ib_uobject		*uobject;
+	const struct uverbs_api_attr	*attr_elm;
+};
 
-काष्ठा uverbs_objs_arr_attr अणु
-	काष्ठा ib_uobject **uobjects;
+struct uverbs_objs_arr_attr {
+	struct ib_uobject **uobjects;
 	u16 len;
-पूर्ण;
+};
 
-काष्ठा uverbs_attr अणु
-	जोड़ अणु
-		काष्ठा uverbs_ptr_attr	ptr_attr;
-		काष्ठा uverbs_obj_attr	obj_attr;
-		काष्ठा uverbs_objs_arr_attr objs_arr_attr;
-	पूर्ण;
-पूर्ण;
+struct uverbs_attr {
+	union {
+		struct uverbs_ptr_attr	ptr_attr;
+		struct uverbs_obj_attr	obj_attr;
+		struct uverbs_objs_arr_attr objs_arr_attr;
+	};
+};
 
-काष्ठा uverbs_attr_bundle अणु
-	काष्ठा ib_udata driver_udata;
-	काष्ठा ib_udata ucore;
-	काष्ठा ib_uverbs_file *ufile;
-	काष्ठा ib_ucontext *context;
-	काष्ठा ib_uobject *uobject;
+struct uverbs_attr_bundle {
+	struct ib_udata driver_udata;
+	struct ib_udata ucore;
+	struct ib_uverbs_file *ufile;
+	struct ib_ucontext *context;
+	struct ib_uobject *uobject;
 	DECLARE_BITMAP(attr_present, UVERBS_API_ATTR_BKEY_LEN);
-	काष्ठा uverbs_attr attrs[];
-पूर्ण;
+	struct uverbs_attr attrs[];
+};
 
-अटल अंतरभूत bool uverbs_attr_is_valid(स्थिर काष्ठा uverbs_attr_bundle *attrs_bundle,
-					अचिन्हित पूर्णांक idx)
-अणु
-	वापस test_bit(uapi_bkey_attr(uapi_key_attr(idx)),
+static inline bool uverbs_attr_is_valid(const struct uverbs_attr_bundle *attrs_bundle,
+					unsigned int idx)
+{
+	return test_bit(uapi_bkey_attr(uapi_key_attr(idx)),
 			attrs_bundle->attr_present);
-पूर्ण
+}
 
 /**
  * rdma_udata_to_drv_context - Helper macro to get the driver's context out of
  *                             ib_udata which is embedded in uverbs_attr_bundle.
  *
- * If udata is not शून्य this cannot fail. Otherwise a शून्य udata will result
- * in a शून्य ucontext poपूर्णांकer, as a safety precaution. Callers should be using
- * 'udata' to determine अगर the driver call is in user or kernel mode, not
+ * If udata is not NULL this cannot fail. Otherwise a NULL udata will result
+ * in a NULL ucontext pointer, as a safety precaution. Callers should be using
+ * 'udata' to determine if the driver call is in user or kernel mode, not
  * 'ucontext'.
  *
  */
-अटल अंतरभूत काष्ठा uverbs_attr_bundle *
-rdma_udata_to_uverbs_attr_bundle(काष्ठा ib_udata *udata)
-अणु
-	वापस container_of(udata, काष्ठा uverbs_attr_bundle, driver_udata);
-पूर्ण
+static inline struct uverbs_attr_bundle *
+rdma_udata_to_uverbs_attr_bundle(struct ib_udata *udata)
+{
+	return container_of(udata, struct uverbs_attr_bundle, driver_udata);
+}
 
-#घोषणा rdma_udata_to_drv_context(udata, drv_dev_काष्ठा, member)                \
+#define rdma_udata_to_drv_context(udata, drv_dev_struct, member)                \
 	(udata ? container_of(rdma_udata_to_uverbs_attr_bundle(udata)->context, \
-			      drv_dev_काष्ठा, member) : (drv_dev_काष्ठा *)शून्य)
+			      drv_dev_struct, member) : (drv_dev_struct *)NULL)
 
-#घोषणा IS_UVERBS_COPY_ERR(_ret)		((_ret) && (_ret) != -ENOENT)
+#define IS_UVERBS_COPY_ERR(_ret)		((_ret) && (_ret) != -ENOENT)
 
-अटल अंतरभूत स्थिर काष्ठा uverbs_attr *uverbs_attr_get(स्थिर काष्ठा uverbs_attr_bundle *attrs_bundle,
+static inline const struct uverbs_attr *uverbs_attr_get(const struct uverbs_attr_bundle *attrs_bundle,
 							u16 idx)
-अणु
-	अगर (!uverbs_attr_is_valid(attrs_bundle, idx))
-		वापस ERR_PTR(-ENOENT);
+{
+	if (!uverbs_attr_is_valid(attrs_bundle, idx))
+		return ERR_PTR(-ENOENT);
 
-	वापस &attrs_bundle->attrs[uapi_bkey_attr(uapi_key_attr(idx))];
-पूर्ण
+	return &attrs_bundle->attrs[uapi_bkey_attr(uapi_key_attr(idx))];
+}
 
-अटल अंतरभूत पूर्णांक uverbs_attr_get_क्रमागत_id(स्थिर काष्ठा uverbs_attr_bundle *attrs_bundle,
+static inline int uverbs_attr_get_enum_id(const struct uverbs_attr_bundle *attrs_bundle,
 					  u16 idx)
-अणु
-	स्थिर काष्ठा uverbs_attr *attr = uverbs_attr_get(attrs_bundle, idx);
+{
+	const struct uverbs_attr *attr = uverbs_attr_get(attrs_bundle, idx);
 
-	अगर (IS_ERR(attr))
-		वापस PTR_ERR(attr);
+	if (IS_ERR(attr))
+		return PTR_ERR(attr);
 
-	वापस attr->ptr_attr.क्रमागत_id;
-पूर्ण
+	return attr->ptr_attr.enum_id;
+}
 
-अटल अंतरभूत व्योम *uverbs_attr_get_obj(स्थिर काष्ठा uverbs_attr_bundle *attrs_bundle,
+static inline void *uverbs_attr_get_obj(const struct uverbs_attr_bundle *attrs_bundle,
 					u16 idx)
-अणु
-	स्थिर काष्ठा uverbs_attr *attr;
+{
+	const struct uverbs_attr *attr;
 
 	attr = uverbs_attr_get(attrs_bundle, idx);
-	अगर (IS_ERR(attr))
-		वापस ERR_CAST(attr);
+	if (IS_ERR(attr))
+		return ERR_CAST(attr);
 
-	वापस attr->obj_attr.uobject->object;
-पूर्ण
+	return attr->obj_attr.uobject->object;
+}
 
-अटल अंतरभूत काष्ठा ib_uobject *uverbs_attr_get_uobject(स्थिर काष्ठा uverbs_attr_bundle *attrs_bundle,
+static inline struct ib_uobject *uverbs_attr_get_uobject(const struct uverbs_attr_bundle *attrs_bundle,
 							 u16 idx)
-अणु
-	स्थिर काष्ठा uverbs_attr *attr = uverbs_attr_get(attrs_bundle, idx);
+{
+	const struct uverbs_attr *attr = uverbs_attr_get(attrs_bundle, idx);
 
-	अगर (IS_ERR(attr))
-		वापस ERR_CAST(attr);
+	if (IS_ERR(attr))
+		return ERR_CAST(attr);
 
-	वापस attr->obj_attr.uobject;
-पूर्ण
+	return attr->obj_attr.uobject;
+}
 
-अटल अंतरभूत पूर्णांक
-uverbs_attr_get_len(स्थिर काष्ठा uverbs_attr_bundle *attrs_bundle, u16 idx)
-अणु
-	स्थिर काष्ठा uverbs_attr *attr = uverbs_attr_get(attrs_bundle, idx);
+static inline int
+uverbs_attr_get_len(const struct uverbs_attr_bundle *attrs_bundle, u16 idx)
+{
+	const struct uverbs_attr *attr = uverbs_attr_get(attrs_bundle, idx);
 
-	अगर (IS_ERR(attr))
-		वापस PTR_ERR(attr);
+	if (IS_ERR(attr))
+		return PTR_ERR(attr);
 
-	वापस attr->ptr_attr.len;
-पूर्ण
+	return attr->ptr_attr.len;
+}
 
-व्योम uverbs_finalize_uobj_create(स्थिर काष्ठा uverbs_attr_bundle *attrs_bundle,
+void uverbs_finalize_uobj_create(const struct uverbs_attr_bundle *attrs_bundle,
 				 u16 idx);
 
 /*
- * uverbs_attr_ptr_get_array_size() - Get array size poपूर्णांकer by a ptr
+ * uverbs_attr_ptr_get_array_size() - Get array size pointer by a ptr
  * attribute.
  * @attrs: The attribute bundle
  * @idx: The ID of the attribute
  * @elem_size: The size of the element in the array
  */
-अटल अंतरभूत पूर्णांक
-uverbs_attr_ptr_get_array_size(काष्ठा uverbs_attr_bundle *attrs, u16 idx,
-			       माप_प्रकार elem_size)
-अणु
-	पूर्णांक size = uverbs_attr_get_len(attrs, idx);
+static inline int
+uverbs_attr_ptr_get_array_size(struct uverbs_attr_bundle *attrs, u16 idx,
+			       size_t elem_size)
+{
+	int size = uverbs_attr_get_len(attrs, idx);
 
-	अगर (size < 0)
-		वापस size;
+	if (size < 0)
+		return size;
 
-	अगर (size % elem_size)
-		वापस -EINVAL;
+	if (size % elem_size)
+		return -EINVAL;
 
-	वापस size / elem_size;
-पूर्ण
+	return size / elem_size;
+}
 
 /**
- * uverbs_attr_get_uobjs_arr() - Provides array's properties क्रम attribute क्रम
+ * uverbs_attr_get_uobjs_arr() - Provides array's properties for attribute for
  * UVERBS_ATTR_TYPE_IDRS_ARRAY.
- * @arr: Returned poपूर्णांकer to array of poपूर्णांकers क्रम uobjects or शून्य अगर
+ * @arr: Returned pointer to array of pointers for uobjects or NULL if
  *       the attribute isn't provided.
  *
- * Return: The array length or 0 अगर no attribute was provided.
+ * Return: The array length or 0 if no attribute was provided.
  */
-अटल अंतरभूत पूर्णांक uverbs_attr_get_uobjs_arr(
-	स्थिर काष्ठा uverbs_attr_bundle *attrs_bundle, u16 attr_idx,
-	काष्ठा ib_uobject ***arr)
-अणु
-	स्थिर काष्ठा uverbs_attr *attr =
+static inline int uverbs_attr_get_uobjs_arr(
+	const struct uverbs_attr_bundle *attrs_bundle, u16 attr_idx,
+	struct ib_uobject ***arr)
+{
+	const struct uverbs_attr *attr =
 			uverbs_attr_get(attrs_bundle, attr_idx);
 
-	अगर (IS_ERR(attr)) अणु
-		*arr = शून्य;
-		वापस 0;
-	पूर्ण
+	if (IS_ERR(attr)) {
+		*arr = NULL;
+		return 0;
+	}
 
 	*arr = attr->objs_arr_attr.uobjects;
 
-	वापस attr->objs_arr_attr.len;
-पूर्ण
+	return attr->objs_arr_attr.len;
+}
 
-अटल अंतरभूत bool uverbs_attr_ptr_is_अंतरभूत(स्थिर काष्ठा uverbs_attr *attr)
-अणु
-	वापस attr->ptr_attr.len <= माप(attr->ptr_attr.data);
-पूर्ण
+static inline bool uverbs_attr_ptr_is_inline(const struct uverbs_attr *attr)
+{
+	return attr->ptr_attr.len <= sizeof(attr->ptr_attr.data);
+}
 
-अटल अंतरभूत व्योम *uverbs_attr_get_alloced_ptr(
-	स्थिर काष्ठा uverbs_attr_bundle *attrs_bundle, u16 idx)
-अणु
-	स्थिर काष्ठा uverbs_attr *attr = uverbs_attr_get(attrs_bundle, idx);
+static inline void *uverbs_attr_get_alloced_ptr(
+	const struct uverbs_attr_bundle *attrs_bundle, u16 idx)
+{
+	const struct uverbs_attr *attr = uverbs_attr_get(attrs_bundle, idx);
 
-	अगर (IS_ERR(attr))
-		वापस (व्योम *)attr;
+	if (IS_ERR(attr))
+		return (void *)attr;
 
-	वापस uverbs_attr_ptr_is_अंतरभूत(attr) ? (व्योम *)&attr->ptr_attr.data :
+	return uverbs_attr_ptr_is_inline(attr) ? (void *)&attr->ptr_attr.data :
 						 attr->ptr_attr.ptr;
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक _uverbs_copy_from(व्योम *to,
-				    स्थिर काष्ठा uverbs_attr_bundle *attrs_bundle,
-				    माप_प्रकार idx,
-				    माप_प्रकार size)
-अणु
-	स्थिर काष्ठा uverbs_attr *attr = uverbs_attr_get(attrs_bundle, idx);
+static inline int _uverbs_copy_from(void *to,
+				    const struct uverbs_attr_bundle *attrs_bundle,
+				    size_t idx,
+				    size_t size)
+{
+	const struct uverbs_attr *attr = uverbs_attr_get(attrs_bundle, idx);
 
-	अगर (IS_ERR(attr))
-		वापस PTR_ERR(attr);
+	if (IS_ERR(attr))
+		return PTR_ERR(attr);
 
 	/*
 	 * Validation ensures attr->ptr_attr.len >= size. If the caller is
 	 * using UVERBS_ATTR_SPEC_F_MIN_SZ_OR_ZERO then it must call
 	 * uverbs_copy_from_or_zero.
 	 */
-	अगर (unlikely(size < attr->ptr_attr.len))
-		वापस -EINVAL;
+	if (unlikely(size < attr->ptr_attr.len))
+		return -EINVAL;
 
-	अगर (uverbs_attr_ptr_is_अंतरभूत(attr))
-		स_नकल(to, &attr->ptr_attr.data, attr->ptr_attr.len);
-	अन्यथा अगर (copy_from_user(to, u64_to_user_ptr(attr->ptr_attr.data),
+	if (uverbs_attr_ptr_is_inline(attr))
+		memcpy(to, &attr->ptr_attr.data, attr->ptr_attr.len);
+	else if (copy_from_user(to, u64_to_user_ptr(attr->ptr_attr.data),
 				attr->ptr_attr.len))
-		वापस -EFAULT;
+		return -EFAULT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक _uverbs_copy_from_or_zero(व्योम *to,
-					    स्थिर काष्ठा uverbs_attr_bundle *attrs_bundle,
-					    माप_प्रकार idx,
-					    माप_प्रकार size)
-अणु
-	स्थिर काष्ठा uverbs_attr *attr = uverbs_attr_get(attrs_bundle, idx);
-	माप_प्रकार min_size;
+static inline int _uverbs_copy_from_or_zero(void *to,
+					    const struct uverbs_attr_bundle *attrs_bundle,
+					    size_t idx,
+					    size_t size)
+{
+	const struct uverbs_attr *attr = uverbs_attr_get(attrs_bundle, idx);
+	size_t min_size;
 
-	अगर (IS_ERR(attr))
-		वापस PTR_ERR(attr);
+	if (IS_ERR(attr))
+		return PTR_ERR(attr);
 
-	min_size = min_t(माप_प्रकार, size, attr->ptr_attr.len);
+	min_size = min_t(size_t, size, attr->ptr_attr.len);
 
-	अगर (uverbs_attr_ptr_is_अंतरभूत(attr))
-		स_नकल(to, &attr->ptr_attr.data, min_size);
-	अन्यथा अगर (copy_from_user(to, u64_to_user_ptr(attr->ptr_attr.data),
+	if (uverbs_attr_ptr_is_inline(attr))
+		memcpy(to, &attr->ptr_attr.data, min_size);
+	else if (copy_from_user(to, u64_to_user_ptr(attr->ptr_attr.data),
 				min_size))
-		वापस -EFAULT;
+		return -EFAULT;
 
-	अगर (size > min_size)
-		स_रखो(to + min_size, 0, size - min_size);
+	if (size > min_size)
+		memset(to + min_size, 0, size - min_size);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा uverbs_copy_from(to, attrs_bundle, idx)				      \
-	_uverbs_copy_from(to, attrs_bundle, idx, माप(*to))
+#define uverbs_copy_from(to, attrs_bundle, idx)				      \
+	_uverbs_copy_from(to, attrs_bundle, idx, sizeof(*to))
 
-#घोषणा uverbs_copy_from_or_zero(to, attrs_bundle, idx)			      \
-	_uverbs_copy_from_or_zero(to, attrs_bundle, idx, माप(*to))
+#define uverbs_copy_from_or_zero(to, attrs_bundle, idx)			      \
+	_uverbs_copy_from_or_zero(to, attrs_bundle, idx, sizeof(*to))
 
-अटल अंतरभूत काष्ठा ib_ucontext *
-ib_uverbs_get_ucontext(स्थिर काष्ठा uverbs_attr_bundle *attrs)
-अणु
-	वापस ib_uverbs_get_ucontext_file(attrs->ufile);
-पूर्ण
+static inline struct ib_ucontext *
+ib_uverbs_get_ucontext(const struct uverbs_attr_bundle *attrs)
+{
+	return ib_uverbs_get_ucontext_file(attrs->ufile);
+}
 
-#अगर IS_ENABLED(CONFIG_INFINIBAND_USER_ACCESS)
-पूर्णांक uverbs_get_flags64(u64 *to, स्थिर काष्ठा uverbs_attr_bundle *attrs_bundle,
-		       माप_प्रकार idx, u64 allowed_bits);
-पूर्णांक uverbs_get_flags32(u32 *to, स्थिर काष्ठा uverbs_attr_bundle *attrs_bundle,
-		       माप_प्रकार idx, u64 allowed_bits);
-पूर्णांक uverbs_copy_to(स्थिर काष्ठा uverbs_attr_bundle *attrs_bundle, माप_प्रकार idx,
-		   स्थिर व्योम *from, माप_प्रकार size);
-__दो_स्मृति व्योम *_uverbs_alloc(काष्ठा uverbs_attr_bundle *bundle, माप_प्रकार size,
+#if IS_ENABLED(CONFIG_INFINIBAND_USER_ACCESS)
+int uverbs_get_flags64(u64 *to, const struct uverbs_attr_bundle *attrs_bundle,
+		       size_t idx, u64 allowed_bits);
+int uverbs_get_flags32(u32 *to, const struct uverbs_attr_bundle *attrs_bundle,
+		       size_t idx, u64 allowed_bits);
+int uverbs_copy_to(const struct uverbs_attr_bundle *attrs_bundle, size_t idx,
+		   const void *from, size_t size);
+__malloc void *_uverbs_alloc(struct uverbs_attr_bundle *bundle, size_t size,
 			     gfp_t flags);
 
-अटल अंतरभूत __दो_स्मृति व्योम *uverbs_alloc(काष्ठा uverbs_attr_bundle *bundle,
-					  माप_प्रकार size)
-अणु
-	वापस _uverbs_alloc(bundle, size, GFP_KERNEL);
-पूर्ण
+static inline __malloc void *uverbs_alloc(struct uverbs_attr_bundle *bundle,
+					  size_t size)
+{
+	return _uverbs_alloc(bundle, size, GFP_KERNEL);
+}
 
-अटल अंतरभूत __दो_स्मृति व्योम *uverbs_zalloc(काष्ठा uverbs_attr_bundle *bundle,
-					   माप_प्रकार size)
-अणु
-	वापस _uverbs_alloc(bundle, size, GFP_KERNEL | __GFP_ZERO);
-पूर्ण
+static inline __malloc void *uverbs_zalloc(struct uverbs_attr_bundle *bundle,
+					   size_t size)
+{
+	return _uverbs_alloc(bundle, size, GFP_KERNEL | __GFP_ZERO);
+}
 
-अटल अंतरभूत __दो_स्मृति व्योम *uverbs_kसुस्मृति(काष्ठा uverbs_attr_bundle *bundle,
-					    माप_प्रकार n, माप_प्रकार size)
-अणु
-	माप_प्रकार bytes;
+static inline __malloc void *uverbs_kcalloc(struct uverbs_attr_bundle *bundle,
+					    size_t n, size_t size)
+{
+	size_t bytes;
 
-	अगर (unlikely(check_mul_overflow(n, size, &bytes)))
-		वापस ERR_PTR(-EOVERFLOW);
-	वापस uverbs_zalloc(bundle, bytes);
-पूर्ण
+	if (unlikely(check_mul_overflow(n, size, &bytes)))
+		return ERR_PTR(-EOVERFLOW);
+	return uverbs_zalloc(bundle, bytes);
+}
 
-पूर्णांक _uverbs_get_स्थिर_चिन्हित(s64 *to,
-			     स्थिर काष्ठा uverbs_attr_bundle *attrs_bundle,
-			     माप_प्रकार idx, s64 lower_bound, u64 upper_bound,
+int _uverbs_get_const_signed(s64 *to,
+			     const struct uverbs_attr_bundle *attrs_bundle,
+			     size_t idx, s64 lower_bound, u64 upper_bound,
 			     s64 *def_val);
-पूर्णांक _uverbs_get_स्थिर_अचिन्हित(u64 *to,
-			       स्थिर काष्ठा uverbs_attr_bundle *attrs_bundle,
-			       माप_प्रकार idx, u64 upper_bound, u64 *def_val);
-पूर्णांक uverbs_copy_to_काष्ठा_or_zero(स्थिर काष्ठा uverbs_attr_bundle *bundle,
-				  माप_प्रकार idx, स्थिर व्योम *from, माप_प्रकार size);
-#अन्यथा
-अटल अंतरभूत पूर्णांक
-uverbs_get_flags64(u64 *to, स्थिर काष्ठा uverbs_attr_bundle *attrs_bundle,
-		   माप_प्रकार idx, u64 allowed_bits)
-अणु
-	वापस -EINVAL;
-पूर्ण
-अटल अंतरभूत पूर्णांक
-uverbs_get_flags32(u32 *to, स्थिर काष्ठा uverbs_attr_bundle *attrs_bundle,
-		   माप_प्रकार idx, u64 allowed_bits)
-अणु
-	वापस -EINVAL;
-पूर्ण
-अटल अंतरभूत पूर्णांक uverbs_copy_to(स्थिर काष्ठा uverbs_attr_bundle *attrs_bundle,
-				 माप_प्रकार idx, स्थिर व्योम *from, माप_प्रकार size)
-अणु
-	वापस -EINVAL;
-पूर्ण
-अटल अंतरभूत __दो_स्मृति व्योम *uverbs_alloc(काष्ठा uverbs_attr_bundle *bundle,
-					  माप_प्रकार size)
-अणु
-	वापस ERR_PTR(-EINVAL);
-पूर्ण
-अटल अंतरभूत __दो_स्मृति व्योम *uverbs_zalloc(काष्ठा uverbs_attr_bundle *bundle,
-					   माप_प्रकार size)
-अणु
-	वापस ERR_PTR(-EINVAL);
-पूर्ण
-अटल अंतरभूत पूर्णांक
-_uverbs_get_स्थिर(s64 *to, स्थिर काष्ठा uverbs_attr_bundle *attrs_bundle,
-		  माप_प्रकार idx, s64 lower_bound, u64 upper_bound,
+int _uverbs_get_const_unsigned(u64 *to,
+			       const struct uverbs_attr_bundle *attrs_bundle,
+			       size_t idx, u64 upper_bound, u64 *def_val);
+int uverbs_copy_to_struct_or_zero(const struct uverbs_attr_bundle *bundle,
+				  size_t idx, const void *from, size_t size);
+#else
+static inline int
+uverbs_get_flags64(u64 *to, const struct uverbs_attr_bundle *attrs_bundle,
+		   size_t idx, u64 allowed_bits)
+{
+	return -EINVAL;
+}
+static inline int
+uverbs_get_flags32(u32 *to, const struct uverbs_attr_bundle *attrs_bundle,
+		   size_t idx, u64 allowed_bits)
+{
+	return -EINVAL;
+}
+static inline int uverbs_copy_to(const struct uverbs_attr_bundle *attrs_bundle,
+				 size_t idx, const void *from, size_t size)
+{
+	return -EINVAL;
+}
+static inline __malloc void *uverbs_alloc(struct uverbs_attr_bundle *bundle,
+					  size_t size)
+{
+	return ERR_PTR(-EINVAL);
+}
+static inline __malloc void *uverbs_zalloc(struct uverbs_attr_bundle *bundle,
+					   size_t size)
+{
+	return ERR_PTR(-EINVAL);
+}
+static inline int
+_uverbs_get_const(s64 *to, const struct uverbs_attr_bundle *attrs_bundle,
+		  size_t idx, s64 lower_bound, u64 upper_bound,
 		  s64 *def_val)
-अणु
-	वापस -EINVAL;
-पूर्ण
-अटल अंतरभूत पूर्णांक
-uverbs_copy_to_काष्ठा_or_zero(स्थिर काष्ठा uverbs_attr_bundle *bundle,
-			      माप_प्रकार idx, स्थिर व्योम *from, माप_प्रकार size)
-अणु
-	वापस -EINVAL;
-पूर्ण
-अटल अंतरभूत पूर्णांक
-_uverbs_get_स्थिर_चिन्हित(s64 *to,
-			 स्थिर काष्ठा uverbs_attr_bundle *attrs_bundle,
-			 माप_प्रकार idx, s64 lower_bound, u64 upper_bound,
+{
+	return -EINVAL;
+}
+static inline int
+uverbs_copy_to_struct_or_zero(const struct uverbs_attr_bundle *bundle,
+			      size_t idx, const void *from, size_t size)
+{
+	return -EINVAL;
+}
+static inline int
+_uverbs_get_const_signed(s64 *to,
+			 const struct uverbs_attr_bundle *attrs_bundle,
+			 size_t idx, s64 lower_bound, u64 upper_bound,
 			 s64 *def_val)
-अणु
-	वापस -EINVAL;
-पूर्ण
-अटल अंतरभूत पूर्णांक
-_uverbs_get_स्थिर_अचिन्हित(u64 *to,
-			   स्थिर काष्ठा uverbs_attr_bundle *attrs_bundle,
-			   माप_प्रकार idx, u64 upper_bound, u64 *def_val)
-अणु
-	वापस -EINVAL;
-पूर्ण
-#पूर्ण_अगर
+{
+	return -EINVAL;
+}
+static inline int
+_uverbs_get_const_unsigned(u64 *to,
+			   const struct uverbs_attr_bundle *attrs_bundle,
+			   size_t idx, u64 upper_bound, u64 *def_val)
+{
+	return -EINVAL;
+}
+#endif
 
-#घोषणा uverbs_get_स्थिर_चिन्हित(_to, _attrs_bundle, _idx)                      \
-	(अणु                                                                     \
+#define uverbs_get_const_signed(_to, _attrs_bundle, _idx)                      \
+	({                                                                     \
 		s64 _val;                                                      \
-		पूर्णांक _ret =                                                     \
-			_uverbs_get_स्थिर_चिन्हित(&_val, _attrs_bundle, _idx,   \
+		int _ret =                                                     \
+			_uverbs_get_const_signed(&_val, _attrs_bundle, _idx,   \
 					  type_min(typeof(*(_to))),            \
-					  type_max(typeof(*(_to))), शून्य);     \
+					  type_max(typeof(*(_to))), NULL);     \
 		(*(_to)) = _val;                                               \
 		_ret;                                                          \
-	पूर्ण)
+	})
 
-#घोषणा uverbs_get_स्थिर_अचिन्हित(_to, _attrs_bundle, _idx)                    \
-	(अणु                                                                     \
+#define uverbs_get_const_unsigned(_to, _attrs_bundle, _idx)                    \
+	({                                                                     \
 		u64 _val;                                                      \
-		पूर्णांक _ret =                                                     \
-			_uverbs_get_स्थिर_अचिन्हित(&_val, _attrs_bundle, _idx, \
-					  type_max(typeof(*(_to))), शून्य);     \
+		int _ret =                                                     \
+			_uverbs_get_const_unsigned(&_val, _attrs_bundle, _idx, \
+					  type_max(typeof(*(_to))), NULL);     \
 		(*(_to)) = _val;                                               \
 		_ret;                                                          \
-	पूर्ण)
+	})
 
-#घोषणा uverbs_get_स्थिर_शेष_चिन्हित(_to, _attrs_bundle, _idx, _शेष)    \
-	(अणु                                                                     \
+#define uverbs_get_const_default_signed(_to, _attrs_bundle, _idx, _default)    \
+	({                                                                     \
 		s64 _val;                                                      \
-		s64 _def_val = _शेष;                                       \
-		पूर्णांक _ret =                                                     \
-			_uverbs_get_स्थिर_चिन्हित(&_val, _attrs_bundle, _idx,   \
+		s64 _def_val = _default;                                       \
+		int _ret =                                                     \
+			_uverbs_get_const_signed(&_val, _attrs_bundle, _idx,   \
 				type_min(typeof(*(_to))),                      \
 				type_max(typeof(*(_to))), &_def_val);          \
 		(*(_to)) = _val;                                               \
 		_ret;                                                          \
-	पूर्ण)
+	})
 
-#घोषणा uverbs_get_स्थिर_शेष_अचिन्हित(_to, _attrs_bundle, _idx, _शेष)  \
-	(अणु                                                                     \
+#define uverbs_get_const_default_unsigned(_to, _attrs_bundle, _idx, _default)  \
+	({                                                                     \
 		u64 _val;                                                      \
-		u64 _def_val = _शेष;                                       \
-		पूर्णांक _ret =                                                     \
-			_uverbs_get_स्थिर_अचिन्हित(&_val, _attrs_bundle, _idx, \
+		u64 _def_val = _default;                                       \
+		int _ret =                                                     \
+			_uverbs_get_const_unsigned(&_val, _attrs_bundle, _idx, \
 				type_max(typeof(*(_to))), &_def_val);          \
 		(*(_to)) = _val;                                               \
 		_ret;                                                          \
-	पूर्ण)
+	})
 
-#घोषणा uverbs_get_स्थिर(_to, _attrs_bundle, _idx)                             \
-	(is_चिन्हित_type(typeof(*(_to))) ?                                      \
-		 uverbs_get_स्थिर_चिन्हित(_to, _attrs_bundle, _idx) :           \
-		 uverbs_get_स्थिर_अचिन्हित(_to, _attrs_bundle, _idx))          \
+#define uverbs_get_const(_to, _attrs_bundle, _idx)                             \
+	(is_signed_type(typeof(*(_to))) ?                                      \
+		 uverbs_get_const_signed(_to, _attrs_bundle, _idx) :           \
+		 uverbs_get_const_unsigned(_to, _attrs_bundle, _idx))          \
 
-#घोषणा uverbs_get_स्थिर_शेष(_to, _attrs_bundle, _idx, _शेष)           \
-	(is_चिन्हित_type(typeof(*(_to))) ?                                      \
-		 uverbs_get_स्थिर_शेष_चिन्हित(_to, _attrs_bundle, _idx,     \
-						  _शेष) :                  \
-		 uverbs_get_स्थिर_शेष_अचिन्हित(_to, _attrs_bundle, _idx,   \
-						    _शेष))
+#define uverbs_get_const_default(_to, _attrs_bundle, _idx, _default)           \
+	(is_signed_type(typeof(*(_to))) ?                                      \
+		 uverbs_get_const_default_signed(_to, _attrs_bundle, _idx,     \
+						  _default) :                  \
+		 uverbs_get_const_default_unsigned(_to, _attrs_bundle, _idx,   \
+						    _default))
 
-#पूर्ण_अगर
+#endif

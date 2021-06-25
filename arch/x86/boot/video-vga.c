@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* -*- linux-c -*- ------------------------------------------------------- *
  *
  *   Copyright (C) 1991, 1992 Linus Torvalds
@@ -12,133 +11,133 @@
  * Common all-VGA modes
  */
 
-#समावेश "boot.h"
-#समावेश "video.h"
+#include "boot.h"
+#include "video.h"
 
-अटल काष्ठा mode_info vga_modes[] = अणु
-	अणु VIDEO_80x25,  80, 25, 0 पूर्ण,
-	अणु VIDEO_8POINT, 80, 50, 0 पूर्ण,
-	अणु VIDEO_80x43,  80, 43, 0 पूर्ण,
-	अणु VIDEO_80x28,  80, 28, 0 पूर्ण,
-	अणु VIDEO_80x30,  80, 30, 0 पूर्ण,
-	अणु VIDEO_80x34,  80, 34, 0 पूर्ण,
-	अणु VIDEO_80x60,  80, 60, 0 पूर्ण,
-पूर्ण;
+static struct mode_info vga_modes[] = {
+	{ VIDEO_80x25,  80, 25, 0 },
+	{ VIDEO_8POINT, 80, 50, 0 },
+	{ VIDEO_80x43,  80, 43, 0 },
+	{ VIDEO_80x28,  80, 28, 0 },
+	{ VIDEO_80x30,  80, 30, 0 },
+	{ VIDEO_80x34,  80, 34, 0 },
+	{ VIDEO_80x60,  80, 60, 0 },
+};
 
-अटल काष्ठा mode_info ega_modes[] = अणु
-	अणु VIDEO_80x25,  80, 25, 0 पूर्ण,
-	अणु VIDEO_8POINT, 80, 43, 0 पूर्ण,
-पूर्ण;
+static struct mode_info ega_modes[] = {
+	{ VIDEO_80x25,  80, 25, 0 },
+	{ VIDEO_8POINT, 80, 43, 0 },
+};
 
-अटल काष्ठा mode_info cga_modes[] = अणु
-	अणु VIDEO_80x25,  80, 25, 0 पूर्ण,
-पूर्ण;
+static struct mode_info cga_modes[] = {
+	{ VIDEO_80x25,  80, 25, 0 },
+};
 
-अटल __videocard video_vga;
+static __videocard video_vga;
 
 /* Set basic 80x25 mode */
-अटल u8 vga_set_basic_mode(व्योम)
-अणु
-	काष्ठा biosregs ireg, oreg;
+static u8 vga_set_basic_mode(void)
+{
+	struct biosregs ireg, oreg;
 	u8 mode;
 
 	initregs(&ireg);
 
 	/* Query current mode */
 	ireg.ax = 0x0f00;
-	पूर्णांकcall(0x10, &ireg, &oreg);
+	intcall(0x10, &ireg, &oreg);
 	mode = oreg.al;
 
-	अगर (mode != 3 && mode != 7)
+	if (mode != 3 && mode != 7)
 		mode = 3;
 
 	/* Set the mode */
 	ireg.ax = mode;		/* AH=0: set mode */
-	पूर्णांकcall(0x10, &ireg, शून्य);
-	करो_restore = 1;
-	वापस mode;
-पूर्ण
+	intcall(0x10, &ireg, NULL);
+	do_restore = 1;
+	return mode;
+}
 
-अटल व्योम vga_set_8font(व्योम)
-अणु
+static void vga_set_8font(void)
+{
 	/* Set 8x8 font - 80x43 on EGA, 80x50 on VGA */
-	काष्ठा biosregs ireg;
+	struct biosregs ireg;
 
 	initregs(&ireg);
 
 	/* Set 8x8 font */
 	ireg.ax = 0x1112;
 	/* ireg.bl = 0; */
-	पूर्णांकcall(0x10, &ireg, शून्य);
+	intcall(0x10, &ireg, NULL);
 
-	/* Use alternate prपूर्णांक screen */
+	/* Use alternate print screen */
 	ireg.ax = 0x1200;
 	ireg.bl = 0x20;
-	पूर्णांकcall(0x10, &ireg, शून्य);
+	intcall(0x10, &ireg, NULL);
 
 	/* Turn off cursor emulation */
 	ireg.ax = 0x1201;
 	ireg.bl = 0x34;
-	पूर्णांकcall(0x10, &ireg, शून्य);
+	intcall(0x10, &ireg, NULL);
 
 	/* Cursor is scan lines 6-7 */
 	ireg.ax = 0x0100;
 	ireg.cx = 0x0607;
-	पूर्णांकcall(0x10, &ireg, शून्य);
-पूर्ण
+	intcall(0x10, &ireg, NULL);
+}
 
-अटल व्योम vga_set_14font(व्योम)
-अणु
+static void vga_set_14font(void)
+{
 	/* Set 9x14 font - 80x28 on VGA */
-	काष्ठा biosregs ireg;
+	struct biosregs ireg;
 
 	initregs(&ireg);
 
 	/* Set 9x14 font */
 	ireg.ax = 0x1111;
 	/* ireg.bl = 0; */
-	पूर्णांकcall(0x10, &ireg, शून्य);
+	intcall(0x10, &ireg, NULL);
 
 	/* Turn off cursor emulation */
 	ireg.ax = 0x1201;
 	ireg.bl = 0x34;
-	पूर्णांकcall(0x10, &ireg, शून्य);
+	intcall(0x10, &ireg, NULL);
 
 	/* Cursor is scan lines 11-12 */
 	ireg.ax = 0x0100;
 	ireg.cx = 0x0b0c;
-	पूर्णांकcall(0x10, &ireg, शून्य);
-पूर्ण
+	intcall(0x10, &ireg, NULL);
+}
 
-अटल व्योम vga_set_80x43(व्योम)
-अणु
+static void vga_set_80x43(void)
+{
 	/* Set 80x43 mode on VGA (not EGA) */
-	काष्ठा biosregs ireg;
+	struct biosregs ireg;
 
 	initregs(&ireg);
 
 	/* Set 350 scans */
 	ireg.ax = 0x1201;
 	ireg.bl = 0x30;
-	पूर्णांकcall(0x10, &ireg, शून्य);
+	intcall(0x10, &ireg, NULL);
 
 	/* Reset video mode */
 	ireg.ax = 0x0003;
-	पूर्णांकcall(0x10, &ireg, शून्य);
+	intcall(0x10, &ireg, NULL);
 
 	vga_set_8font();
-पूर्ण
+}
 
 /* I/O address of the VGA CRTC */
-u16 vga_crtc(व्योम)
-अणु
-	वापस (inb(0x3cc) & 1) ? 0x3d4 : 0x3b4;
-पूर्ण
+u16 vga_crtc(void)
+{
+	return (inb(0x3cc) & 1) ? 0x3d4 : 0x3b4;
+}
 
-अटल व्योम vga_set_480_scanlines(व्योम)
-अणु
+static void vga_set_480_scanlines(void)
+{
 	u16 crtc;		/* CRTC base address */
-	u8  csel;		/* CRTC miscellaneous output रेजिस्टर */
+	u8  csel;		/* CRTC miscellaneous output register */
 
 	crtc = vga_crtc();
 
@@ -153,13 +152,13 @@ u16 vga_crtc(व्योम)
 	csel &= 0x0d;
 	csel |= 0xe2;
 	outb(csel, 0x3c2);
-पूर्ण
+}
 
-अटल व्योम vga_set_vertical_end(पूर्णांक lines)
-अणु
+static void vga_set_vertical_end(int lines)
+{
 	u16 crtc;		/* CRTC base address */
-	u8  ovfw;		/* CRTC overflow रेजिस्टर */
-	पूर्णांक end = lines-1;
+	u8  ovfw;		/* CRTC overflow register */
+	int end = lines-1;
 
 	crtc = vga_crtc();
 
@@ -167,121 +166,121 @@ u16 vga_crtc(व्योम)
 
 	out_idx(ovfw, crtc, 0x07); /* Vertical overflow */
 	out_idx(end,  crtc, 0x12); /* Vertical display end */
-पूर्ण
+}
 
-अटल व्योम vga_set_80x30(व्योम)
-अणु
+static void vga_set_80x30(void)
+{
 	vga_set_480_scanlines();
 	vga_set_vertical_end(30*16);
-पूर्ण
+}
 
-अटल व्योम vga_set_80x34(व्योम)
-अणु
+static void vga_set_80x34(void)
+{
 	vga_set_480_scanlines();
 	vga_set_14font();
 	vga_set_vertical_end(34*14);
-पूर्ण
+}
 
-अटल व्योम vga_set_80x60(व्योम)
-अणु
+static void vga_set_80x60(void)
+{
 	vga_set_480_scanlines();
 	vga_set_8font();
 	vga_set_vertical_end(60*8);
-पूर्ण
+}
 
-अटल पूर्णांक vga_set_mode(काष्ठा mode_info *mode)
-अणु
+static int vga_set_mode(struct mode_info *mode)
+{
 	/* Set the basic mode */
 	vga_set_basic_mode();
 
 	/* Override a possibly broken BIOS */
-	क्रमce_x = mode->x;
-	क्रमce_y = mode->y;
+	force_x = mode->x;
+	force_y = mode->y;
 
-	चयन (mode->mode) अणु
-	हाल VIDEO_80x25:
-		अवरोध;
-	हाल VIDEO_8POINT:
+	switch (mode->mode) {
+	case VIDEO_80x25:
+		break;
+	case VIDEO_8POINT:
 		vga_set_8font();
-		अवरोध;
-	हाल VIDEO_80x43:
+		break;
+	case VIDEO_80x43:
 		vga_set_80x43();
-		अवरोध;
-	हाल VIDEO_80x28:
+		break;
+	case VIDEO_80x28:
 		vga_set_14font();
-		अवरोध;
-	हाल VIDEO_80x30:
+		break;
+	case VIDEO_80x30:
 		vga_set_80x30();
-		अवरोध;
-	हाल VIDEO_80x34:
+		break;
+	case VIDEO_80x34:
 		vga_set_80x34();
-		अवरोध;
-	हाल VIDEO_80x60:
+		break;
+	case VIDEO_80x60:
 		vga_set_80x60();
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Note: this probe includes basic inक्रमmation required by all
- * प्रणालीs.  It should be executed first, by making sure
+ * Note: this probe includes basic information required by all
+ * systems.  It should be executed first, by making sure
  * video-vga.c is listed first in the Makefile.
  */
-अटल पूर्णांक vga_probe(व्योम)
-अणु
-	अटल स्थिर अक्षर *card_name[] = अणु
+static int vga_probe(void)
+{
+	static const char *card_name[] = {
 		"CGA/MDA/HGC", "EGA", "VGA"
-	पूर्ण;
-	अटल काष्ठा mode_info *mode_lists[] = अणु
+	};
+	static struct mode_info *mode_lists[] = {
 		cga_modes,
 		ega_modes,
 		vga_modes,
-	पूर्ण;
-	अटल पूर्णांक mode_count[] = अणु
+	};
+	static int mode_count[] = {
 		ARRAY_SIZE(cga_modes),
 		ARRAY_SIZE(ega_modes),
 		ARRAY_SIZE(vga_modes),
-	पूर्ण;
+	};
 
-	काष्ठा biosregs ireg, oreg;
+	struct biosregs ireg, oreg;
 
 	initregs(&ireg);
 
 	ireg.ax = 0x1200;
 	ireg.bl = 0x10;		/* Check EGA/VGA */
-	पूर्णांकcall(0x10, &ireg, &oreg);
+	intcall(0x10, &ireg, &oreg);
 
-#अगर_अघोषित _WAKEUP
+#ifndef _WAKEUP
 	boot_params.screen_info.orig_video_ega_bx = oreg.bx;
-#पूर्ण_अगर
+#endif
 
 	/* If we have MDA/CGA/HGC then BL will be unchanged at 0x10 */
-	अगर (oreg.bl != 0x10) अणु
+	if (oreg.bl != 0x10) {
 		/* EGA/VGA */
 		ireg.ax = 0x1a00;
-		पूर्णांकcall(0x10, &ireg, &oreg);
+		intcall(0x10, &ireg, &oreg);
 
-		अगर (oreg.al == 0x1a) अणु
+		if (oreg.al == 0x1a) {
 			adapter = ADAPTER_VGA;
-#अगर_अघोषित _WAKEUP
+#ifndef _WAKEUP
 			boot_params.screen_info.orig_video_isVGA = 1;
-#पूर्ण_अगर
-		पूर्ण अन्यथा अणु
+#endif
+		} else {
 			adapter = ADAPTER_EGA;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		adapter = ADAPTER_CGA;
-	पूर्ण
+	}
 
 	video_vga.modes = mode_lists[adapter];
 	video_vga.card_name = card_name[adapter];
-	वापस mode_count[adapter];
-पूर्ण
+	return mode_count[adapter];
+}
 
-अटल __videocard video_vga = अणु
+static __videocard video_vga = {
 	.card_name	= "VGA",
 	.probe		= vga_probe,
 	.set_mode	= vga_set_mode,
-पूर्ण;
+};

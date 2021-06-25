@@ -1,31 +1,30 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
- *  Machine specअगरic IO port address definition क्रम generic.
+ *  Machine specific IO port address definition for generic.
  *  Written by Osamu Tomita <tomita@cinet.co.jp>
  */
-#अगर_अघोषित __LINUX_I8253_H
-#घोषणा __LINUX_I8253_H
+#ifndef __LINUX_I8253_H
+#define __LINUX_I8253_H
 
-#समावेश <linux/param.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/समयx.h>
+#include <linux/param.h>
+#include <linux/spinlock.h>
+#include <linux/timex.h>
 
-/* i8253A PIT रेजिस्टरs */
-#घोषणा PIT_MODE	0x43
-#घोषणा PIT_CH0		0x40
-#घोषणा PIT_CH2		0x42
+/* i8253A PIT registers */
+#define PIT_MODE	0x43
+#define PIT_CH0		0x40
+#define PIT_CH2		0x42
 
-#घोषणा PIT_LATCH	((PIT_TICK_RATE + HZ/2) / HZ)
+#define PIT_LATCH	((PIT_TICK_RATE + HZ/2) / HZ)
 
-बाह्य raw_spinlock_t i8253_lock;
-बाह्य bool i8253_clear_counter_on_shutकरोwn;
-बाह्य काष्ठा घड़ी_event_device i8253_घड़ीevent;
-बाह्य व्योम घड़ीevent_i8253_init(bool oneshot);
+extern raw_spinlock_t i8253_lock;
+extern bool i8253_clear_counter_on_shutdown;
+extern struct clock_event_device i8253_clockevent;
+extern void clockevent_i8253_init(bool oneshot);
 
-बाह्य व्योम setup_pit_समयr(व्योम);
+extern void setup_pit_timer(void);
 
-#पूर्ण_अगर /* __LINUX_I8253_H */
+#endif /* __LINUX_I8253_H */

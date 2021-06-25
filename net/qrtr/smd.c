@@ -1,109 +1,108 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2015, Sony Mobile Communications Inc.
  * Copyright (c) 2013, The Linux Foundation. All rights reserved.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/rpmsg.h>
+#include <linux/module.h>
+#include <linux/skbuff.h>
+#include <linux/rpmsg.h>
 
-#समावेश "qrtr.h"
+#include "qrtr.h"
 
-काष्ठा qrtr_smd_dev अणु
-	काष्ठा qrtr_endpoपूर्णांक ep;
-	काष्ठा rpmsg_endpoपूर्णांक *channel;
-	काष्ठा device *dev;
-पूर्ण;
+struct qrtr_smd_dev {
+	struct qrtr_endpoint ep;
+	struct rpmsg_endpoint *channel;
+	struct device *dev;
+};
 
 /* from smd to qrtr */
-अटल पूर्णांक qcom_smd_qrtr_callback(काष्ठा rpmsg_device *rpdev,
-				  व्योम *data, पूर्णांक len, व्योम *priv, u32 addr)
-अणु
-	काष्ठा qrtr_smd_dev *qdev = dev_get_drvdata(&rpdev->dev);
-	पूर्णांक rc;
+static int qcom_smd_qrtr_callback(struct rpmsg_device *rpdev,
+				  void *data, int len, void *priv, u32 addr)
+{
+	struct qrtr_smd_dev *qdev = dev_get_drvdata(&rpdev->dev);
+	int rc;
 
-	अगर (!qdev)
-		वापस -EAGAIN;
+	if (!qdev)
+		return -EAGAIN;
 
-	rc = qrtr_endpoपूर्णांक_post(&qdev->ep, data, len);
-	अगर (rc == -EINVAL) अणु
+	rc = qrtr_endpoint_post(&qdev->ep, data, len);
+	if (rc == -EINVAL) {
 		dev_err(qdev->dev, "invalid ipcrouter packet\n");
-		/* वापस 0 to let smd drop the packet */
+		/* return 0 to let smd drop the packet */
 		rc = 0;
-	पूर्ण
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /* from qrtr to smd */
-अटल पूर्णांक qcom_smd_qrtr_send(काष्ठा qrtr_endpoपूर्णांक *ep, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा qrtr_smd_dev *qdev = container_of(ep, काष्ठा qrtr_smd_dev, ep);
-	पूर्णांक rc;
+static int qcom_smd_qrtr_send(struct qrtr_endpoint *ep, struct sk_buff *skb)
+{
+	struct qrtr_smd_dev *qdev = container_of(ep, struct qrtr_smd_dev, ep);
+	int rc;
 
 	rc = skb_linearize(skb);
-	अगर (rc)
-		जाओ out;
+	if (rc)
+		goto out;
 
 	rc = rpmsg_send(qdev->channel, skb->data, skb->len);
 
 out:
-	अगर (rc)
-		kमुक्त_skb(skb);
-	अन्यथा
+	if (rc)
+		kfree_skb(skb);
+	else
 		consume_skb(skb);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक qcom_smd_qrtr_probe(काष्ठा rpmsg_device *rpdev)
-अणु
-	काष्ठा qrtr_smd_dev *qdev;
-	पूर्णांक rc;
+static int qcom_smd_qrtr_probe(struct rpmsg_device *rpdev)
+{
+	struct qrtr_smd_dev *qdev;
+	int rc;
 
-	qdev = devm_kzalloc(&rpdev->dev, माप(*qdev), GFP_KERNEL);
-	अगर (!qdev)
-		वापस -ENOMEM;
+	qdev = devm_kzalloc(&rpdev->dev, sizeof(*qdev), GFP_KERNEL);
+	if (!qdev)
+		return -ENOMEM;
 
 	qdev->channel = rpdev->ept;
 	qdev->dev = &rpdev->dev;
 	qdev->ep.xmit = qcom_smd_qrtr_send;
 
-	rc = qrtr_endpoपूर्णांक_रेजिस्टर(&qdev->ep, QRTR_EP_NID_AUTO);
-	अगर (rc)
-		वापस rc;
+	rc = qrtr_endpoint_register(&qdev->ep, QRTR_EP_NID_AUTO);
+	if (rc)
+		return rc;
 
 	dev_set_drvdata(&rpdev->dev, qdev);
 
 	dev_dbg(&rpdev->dev, "Qualcomm SMD QRTR driver probed\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम qcom_smd_qrtr_हटाओ(काष्ठा rpmsg_device *rpdev)
-अणु
-	काष्ठा qrtr_smd_dev *qdev = dev_get_drvdata(&rpdev->dev);
+static void qcom_smd_qrtr_remove(struct rpmsg_device *rpdev)
+{
+	struct qrtr_smd_dev *qdev = dev_get_drvdata(&rpdev->dev);
 
-	qrtr_endpoपूर्णांक_unरेजिस्टर(&qdev->ep);
+	qrtr_endpoint_unregister(&qdev->ep);
 
-	dev_set_drvdata(&rpdev->dev, शून्य);
-पूर्ण
+	dev_set_drvdata(&rpdev->dev, NULL);
+}
 
-अटल स्थिर काष्ठा rpmsg_device_id qcom_smd_qrtr_smd_match[] = अणु
-	अणु "IPCRTR" पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct rpmsg_device_id qcom_smd_qrtr_smd_match[] = {
+	{ "IPCRTR" },
+	{}
+};
 
-अटल काष्ठा rpmsg_driver qcom_smd_qrtr_driver = अणु
+static struct rpmsg_driver qcom_smd_qrtr_driver = {
 	.probe = qcom_smd_qrtr_probe,
-	.हटाओ = qcom_smd_qrtr_हटाओ,
+	.remove = qcom_smd_qrtr_remove,
 	.callback = qcom_smd_qrtr_callback,
 	.id_table = qcom_smd_qrtr_smd_match,
-	.drv = अणु
+	.drv = {
 		.name = "qcom_smd_qrtr",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 module_rpmsg_driver(qcom_smd_qrtr_driver);
 

@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Linux/PA-RISC Project (http://www.parisc-linux.org/)
  *
- * Floating-poपूर्णांक emulation code
+ * Floating-point emulation code
  *  Copyright (C) 2001 Hewlett-Packard (Paul Bame) <bame@debian.org>
  */
 /*
@@ -13,7 +12,7 @@
  *	@(#)	pa/spmath/fcnvfut.c		$Revision: 1.1 $
  *
  *  Purpose:
- *	Floating-poपूर्णांक to Unचिन्हित Fixed-poपूर्णांक Converts with Truncation
+ *	Floating-point to Unsigned Fixed-point Converts with Truncation
  *
  *  External Interfaces:
  *	dbl_to_dbl_fcnvfut(srcptr,nullptr,dstptr,status)
@@ -30,291 +29,291 @@
 */
 
 
-#समावेश "float.h"
-#समावेश "sgl_float.h"
-#समावेश "dbl_float.h"
-#समावेश "cnv_float.h"
+#include "float.h"
+#include "sgl_float.h"
+#include "dbl_float.h"
+#include "cnv_float.h"
 
 /************************************************************************
- *  Floating-poपूर्णांक to Unचिन्हित Fixed-poपूर्णांक Converts with Truncation	*
+ *  Floating-point to Unsigned Fixed-point Converts with Truncation	*
  ************************************************************************/
 
 /*
- *  Convert single भग्नing-poपूर्णांक to single fixed-poपूर्णांक क्रमmat
+ *  Convert single floating-point to single fixed-point format
  *  with truncated result
  */
 /*ARGSUSED*/
-पूर्णांक
-sgl_to_sgl_fcnvfut (sgl_भग्नing_poपूर्णांक * srcptr, अचिन्हित पूर्णांक *nullptr,
-		    अचिन्हित पूर्णांक *dstptr, अचिन्हित पूर्णांक *status)
-अणु
-	रेजिस्टर अचिन्हित पूर्णांक src, result;
-	रेजिस्टर पूर्णांक src_exponent;
+int
+sgl_to_sgl_fcnvfut (sgl_floating_point * srcptr, unsigned int *nullptr,
+		    unsigned int *dstptr, unsigned int *status)
+{
+	register unsigned int src, result;
+	register int src_exponent;
 
 	src = *srcptr;
 	src_exponent = Sgl_exponent(src) - SGL_BIAS;
 
 	/* 
-	 * Test क्रम overflow
+	 * Test for overflow
 	 */
-	अगर (src_exponent > SGL_FX_MAX_EXP + 1) अणु
-		अगर (Sgl_isone_sign(src)) अणु
+	if (src_exponent > SGL_FX_MAX_EXP + 1) {
+		if (Sgl_isone_sign(src)) {
 			result = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			result = 0xffffffff;
-		पूर्ण
-		अगर (Is_invalidtrap_enabled()) अणु
-			वापस(INVALIDEXCEPTION);
-		पूर्ण
+		}
+		if (Is_invalidtrap_enabled()) {
+			return(INVALIDEXCEPTION);
+		}
 		Set_invalidflag();
 		*dstptr = result;
-		वापस(NOEXCEPTION);
-	पूर्ण
+		return(NOEXCEPTION);
+	}
 	/*
 	 * Generate result
 	 */
-	अगर (src_exponent >= 0) अणु
+	if (src_exponent >= 0) {
 		/* 
 		 * Check sign.
 		 * If negative, trap unimplemented.
 		 */
-		अगर (Sgl_isone_sign(src)) अणु
+		if (Sgl_isone_sign(src)) {
 			result = 0;
-			अगर (Is_invalidtrap_enabled()) अणु
-				वापस(INVALIDEXCEPTION);
-			पूर्ण
+			if (Is_invalidtrap_enabled()) {
+				return(INVALIDEXCEPTION);
+			}
 			Set_invalidflag();
 			*dstptr = result;
-			वापस(NOEXCEPTION);
-		पूर्ण
+			return(NOEXCEPTION);
+		}
 		Sgl_clear_signexponent_set_hidden(src);
-		Suपूर्णांक_from_sgl_mantissa(src,src_exponent,result);
+		Suint_from_sgl_mantissa(src,src_exponent,result);
 		*dstptr = result;
 
-		/* check क्रम inexact */
-		अगर (Sgl_isinexact_to_अचिन्हित(src,src_exponent)) अणु
-			अगर (Is_inexacttrap_enabled()) वापस(INEXACTEXCEPTION);
-			अन्यथा Set_inexactflag();
-		पूर्ण
-	पूर्ण
-	अन्यथा अणु
+		/* check for inexact */
+		if (Sgl_isinexact_to_unsigned(src,src_exponent)) {
+			if (Is_inexacttrap_enabled()) return(INEXACTEXCEPTION);
+			else Set_inexactflag();
+		}
+	}
+	else {
 		*dstptr = 0;
 
-		/* check क्रम inexact */
-		अगर (Sgl_isnotzero_exponenपंचांगantissa(src)) अणु
-			अगर (Is_inexacttrap_enabled()) वापस(INEXACTEXCEPTION);
-			अन्यथा Set_inexactflag();
-		पूर्ण
-	पूर्ण
-	वापस(NOEXCEPTION);
-पूर्ण
+		/* check for inexact */
+		if (Sgl_isnotzero_exponentmantissa(src)) {
+			if (Is_inexacttrap_enabled()) return(INEXACTEXCEPTION);
+			else Set_inexactflag();
+		}
+	}
+	return(NOEXCEPTION);
+}
 
 /*
- *  Single Floating-poपूर्णांक to Double Unचिन्हित Fixed 
+ *  Single Floating-point to Double Unsigned Fixed 
  */
 /*ARGSUSED*/
-पूर्णांक
-sgl_to_dbl_fcnvfut (sgl_भग्नing_poपूर्णांक * srcptr, अचिन्हित पूर्णांक *nullptr,
-		    dbl_अचिन्हित * dstptr, अचिन्हित पूर्णांक *status)
-अणु
-	रेजिस्टर पूर्णांक src_exponent;
-	रेजिस्टर अचिन्हित पूर्णांक src, resultp1, resultp2;
+int
+sgl_to_dbl_fcnvfut (sgl_floating_point * srcptr, unsigned int *nullptr,
+		    dbl_unsigned * dstptr, unsigned int *status)
+{
+	register int src_exponent;
+	register unsigned int src, resultp1, resultp2;
 
 	src = *srcptr;
 	src_exponent = Sgl_exponent(src) - SGL_BIAS;
 
 	/* 
-	 * Test क्रम overflow
+	 * Test for overflow
 	 */
-	अगर (src_exponent > DBL_FX_MAX_EXP + 1) अणु
-		अगर (Sgl_isone_sign(src)) अणु
+	if (src_exponent > DBL_FX_MAX_EXP + 1) {
+		if (Sgl_isone_sign(src)) {
 			resultp1 = resultp2 = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			resultp1 = resultp2 = 0xffffffff;
-		पूर्ण
-		अगर (Is_invalidtrap_enabled()) अणु
-			वापस(INVALIDEXCEPTION);
-		पूर्ण
+		}
+		if (Is_invalidtrap_enabled()) {
+			return(INVALIDEXCEPTION);
+		}
 		Set_invalidflag();
-    		Duपूर्णांक_copytoptr(resultp1,resultp2,dstptr);
-		वापस(NOEXCEPTION);
-	पूर्ण
+    		Duint_copytoptr(resultp1,resultp2,dstptr);
+		return(NOEXCEPTION);
+	}
 	/*
 	 * Generate result
 	 */
-	अगर (src_exponent >= 0) अणु
+	if (src_exponent >= 0) {
 		/* 
 		 * Check sign.
 		 * If negative, trap unimplemented.
 		 */
-		अगर (Sgl_isone_sign(src)) अणु
+		if (Sgl_isone_sign(src)) {
 			resultp1 = resultp2 = 0;
-			अगर (Is_invalidtrap_enabled()) अणु
-				वापस(INVALIDEXCEPTION);
-			पूर्ण
+			if (Is_invalidtrap_enabled()) {
+				return(INVALIDEXCEPTION);
+			}
 			Set_invalidflag();
-    			Duपूर्णांक_copytoptr(resultp1,resultp2,dstptr);
-			वापस(NOEXCEPTION);
-		पूर्ण
+    			Duint_copytoptr(resultp1,resultp2,dstptr);
+			return(NOEXCEPTION);
+		}
 		Sgl_clear_signexponent_set_hidden(src);
-		Duपूर्णांक_from_sgl_mantissa(src,src_exponent,resultp1,resultp2);
-		Duपूर्णांक_copytoptr(resultp1,resultp2,dstptr);
+		Duint_from_sgl_mantissa(src,src_exponent,resultp1,resultp2);
+		Duint_copytoptr(resultp1,resultp2,dstptr);
 
-		/* check क्रम inexact */
-		अगर (Sgl_isinexact_to_अचिन्हित(src,src_exponent)) अणु
-			अगर (Is_inexacttrap_enabled()) वापस(INEXACTEXCEPTION);
-			अन्यथा Set_inexactflag();
-		पूर्ण
-	पूर्ण
-	अन्यथा अणु
-		Duपूर्णांक_setzero(resultp1,resultp2);
-		Duपूर्णांक_copytoptr(resultp1,resultp2,dstptr);
+		/* check for inexact */
+		if (Sgl_isinexact_to_unsigned(src,src_exponent)) {
+			if (Is_inexacttrap_enabled()) return(INEXACTEXCEPTION);
+			else Set_inexactflag();
+		}
+	}
+	else {
+		Duint_setzero(resultp1,resultp2);
+		Duint_copytoptr(resultp1,resultp2,dstptr);
 
-		/* check क्रम inexact */
-		अगर (Sgl_isnotzero_exponenपंचांगantissa(src)) अणु
-			अगर (Is_inexacttrap_enabled()) वापस(INEXACTEXCEPTION);
-			अन्यथा Set_inexactflag();
-		पूर्ण
-	पूर्ण
-	वापस(NOEXCEPTION);
-पूर्ण
+		/* check for inexact */
+		if (Sgl_isnotzero_exponentmantissa(src)) {
+			if (Is_inexacttrap_enabled()) return(INEXACTEXCEPTION);
+			else Set_inexactflag();
+		}
+	}
+	return(NOEXCEPTION);
+}
 
 /*
- *  Double Floating-poपूर्णांक to Single Unचिन्हित Fixed 
+ *  Double Floating-point to Single Unsigned Fixed 
  */
 /*ARGSUSED*/
-पूर्णांक
-dbl_to_sgl_fcnvfut (dbl_भग्नing_poपूर्णांक * srcptr, अचिन्हित पूर्णांक *nullptr,
-		    अचिन्हित पूर्णांक *dstptr, अचिन्हित पूर्णांक *status)
-अणु
-	रेजिस्टर अचिन्हित पूर्णांक srcp1, srcp2, result;
-	रेजिस्टर पूर्णांक src_exponent;
+int
+dbl_to_sgl_fcnvfut (dbl_floating_point * srcptr, unsigned int *nullptr,
+		    unsigned int *dstptr, unsigned int *status)
+{
+	register unsigned int srcp1, srcp2, result;
+	register int src_exponent;
 
 	Dbl_copyfromptr(srcptr,srcp1,srcp2);
 	src_exponent = Dbl_exponent(srcp1) - DBL_BIAS;
 
 	/* 
-	 * Test क्रम overflow
+	 * Test for overflow
 	 */
-	अगर (src_exponent > SGL_FX_MAX_EXP + 1) अणु
-		अगर (Dbl_isone_sign(srcp1)) अणु
+	if (src_exponent > SGL_FX_MAX_EXP + 1) {
+		if (Dbl_isone_sign(srcp1)) {
 			result = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			result = 0xffffffff;
-		पूर्ण
-		अगर (Is_invalidtrap_enabled()) अणु
-			वापस(INVALIDEXCEPTION);
-		पूर्ण
+		}
+		if (Is_invalidtrap_enabled()) {
+			return(INVALIDEXCEPTION);
+		}
 		Set_invalidflag();
 		*dstptr = result;
-		वापस(NOEXCEPTION);
-	पूर्ण
+		return(NOEXCEPTION);
+	}
 	/*
 	 * Generate result
 	 */
-	अगर (src_exponent >= 0) अणु
+	if (src_exponent >= 0) {
 		/* 
 		 * Check sign.
 		 * If negative, trap unimplemented.
 		 */
-		अगर (Dbl_isone_sign(srcp1)) अणु
+		if (Dbl_isone_sign(srcp1)) {
 			result = 0;
-			अगर (Is_invalidtrap_enabled()) अणु
-				वापस(INVALIDEXCEPTION);
-			पूर्ण
+			if (Is_invalidtrap_enabled()) {
+				return(INVALIDEXCEPTION);
+			}
 			Set_invalidflag();
 			*dstptr = result;
-			वापस(NOEXCEPTION);
-		पूर्ण
+			return(NOEXCEPTION);
+		}
 		Dbl_clear_signexponent_set_hidden(srcp1);
-		Suपूर्णांक_from_dbl_mantissa(srcp1,srcp2,src_exponent,result);
+		Suint_from_dbl_mantissa(srcp1,srcp2,src_exponent,result);
 		*dstptr = result;
 
-		/* check क्रम inexact */
-		अगर (Dbl_isinexact_to_अचिन्हित(srcp1,srcp2,src_exponent)) अणु
-			अगर (Is_inexacttrap_enabled()) वापस(INEXACTEXCEPTION);
-			अन्यथा Set_inexactflag();
-		पूर्ण
-	पूर्ण
-	अन्यथा अणु
+		/* check for inexact */
+		if (Dbl_isinexact_to_unsigned(srcp1,srcp2,src_exponent)) {
+			if (Is_inexacttrap_enabled()) return(INEXACTEXCEPTION);
+			else Set_inexactflag();
+		}
+	}
+	else {
 		*dstptr = 0;
 
-		/* check क्रम inexact */
-		अगर (Dbl_isnotzero_exponenपंचांगantissa(srcp1,srcp2)) अणु
-			अगर (Is_inexacttrap_enabled()) वापस(INEXACTEXCEPTION);
-			अन्यथा Set_inexactflag();
-		पूर्ण
-	पूर्ण
-	वापस(NOEXCEPTION);
-पूर्ण
+		/* check for inexact */
+		if (Dbl_isnotzero_exponentmantissa(srcp1,srcp2)) {
+			if (Is_inexacttrap_enabled()) return(INEXACTEXCEPTION);
+			else Set_inexactflag();
+		}
+	}
+	return(NOEXCEPTION);
+}
 
 /*
- *  Double Floating-poपूर्णांक to Double Unचिन्हित Fixed 
+ *  Double Floating-point to Double Unsigned Fixed 
  */
 /*ARGSUSED*/
-पूर्णांक
-dbl_to_dbl_fcnvfut (dbl_भग्नing_poपूर्णांक * srcptr, अचिन्हित पूर्णांक *nullptr,
-		    dbl_अचिन्हित * dstptr, अचिन्हित पूर्णांक *status)
-अणु
-	रेजिस्टर पूर्णांक src_exponent;
-	रेजिस्टर अचिन्हित पूर्णांक srcp1, srcp2, resultp1, resultp2;
+int
+dbl_to_dbl_fcnvfut (dbl_floating_point * srcptr, unsigned int *nullptr,
+		    dbl_unsigned * dstptr, unsigned int *status)
+{
+	register int src_exponent;
+	register unsigned int srcp1, srcp2, resultp1, resultp2;
 
 	Dbl_copyfromptr(srcptr,srcp1,srcp2);
 	src_exponent = Dbl_exponent(srcp1) - DBL_BIAS;
 
 	/* 
-	 * Test क्रम overflow
+	 * Test for overflow
 	 */
-	अगर (src_exponent > DBL_FX_MAX_EXP + 1) अणु
-		अगर (Dbl_isone_sign(srcp1)) अणु
+	if (src_exponent > DBL_FX_MAX_EXP + 1) {
+		if (Dbl_isone_sign(srcp1)) {
 			resultp1 = resultp2 = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			resultp1 = resultp2 = 0xffffffff;
-		पूर्ण
-		अगर (Is_invalidtrap_enabled()) अणु
-			वापस(INVALIDEXCEPTION);
-		पूर्ण
+		}
+		if (Is_invalidtrap_enabled()) {
+			return(INVALIDEXCEPTION);
+		}
 		Set_invalidflag();
-    		Duपूर्णांक_copytoptr(resultp1,resultp2,dstptr);
-		वापस(NOEXCEPTION);
-	पूर्ण
+    		Duint_copytoptr(resultp1,resultp2,dstptr);
+		return(NOEXCEPTION);
+	}
 	/*
 	 * Generate result
 	 */
-	अगर (src_exponent >= 0) अणु
+	if (src_exponent >= 0) {
 		/* 
 		 * Check sign.
 		 * If negative, trap unimplemented.
 		 */
-		अगर (Dbl_isone_sign(srcp1)) अणु
+		if (Dbl_isone_sign(srcp1)) {
 			resultp1 = resultp2 = 0;
-			अगर (Is_invalidtrap_enabled()) अणु
-				वापस(INVALIDEXCEPTION);
-			पूर्ण
+			if (Is_invalidtrap_enabled()) {
+				return(INVALIDEXCEPTION);
+			}
 			Set_invalidflag();
-    			Duपूर्णांक_copytoptr(resultp1,resultp2,dstptr);
-			वापस(NOEXCEPTION);
-		पूर्ण
+    			Duint_copytoptr(resultp1,resultp2,dstptr);
+			return(NOEXCEPTION);
+		}
 		Dbl_clear_signexponent_set_hidden(srcp1);
-		Duपूर्णांक_from_dbl_mantissa(srcp1,srcp2,src_exponent,
+		Duint_from_dbl_mantissa(srcp1,srcp2,src_exponent,
 		  resultp1,resultp2);
-		Duपूर्णांक_copytoptr(resultp1,resultp2,dstptr);
+		Duint_copytoptr(resultp1,resultp2,dstptr);
 
-		/* check क्रम inexact */
-		अगर (Dbl_isinexact_to_अचिन्हित(srcp1,srcp2,src_exponent)) अणु
-			अगर (Is_inexacttrap_enabled()) वापस(INEXACTEXCEPTION);
-			अन्यथा Set_inexactflag();
-		पूर्ण
-	पूर्ण
-	अन्यथा अणु
-		Duपूर्णांक_setzero(resultp1,resultp2);
-		Duपूर्णांक_copytoptr(resultp1,resultp2,dstptr);
+		/* check for inexact */
+		if (Dbl_isinexact_to_unsigned(srcp1,srcp2,src_exponent)) {
+			if (Is_inexacttrap_enabled()) return(INEXACTEXCEPTION);
+			else Set_inexactflag();
+		}
+	}
+	else {
+		Duint_setzero(resultp1,resultp2);
+		Duint_copytoptr(resultp1,resultp2,dstptr);
 
-		/* check क्रम inexact */
-		अगर (Dbl_isnotzero_exponenपंचांगantissa(srcp1,srcp2)) अणु
-			अगर (Is_inexacttrap_enabled()) वापस(INEXACTEXCEPTION);
-			अन्यथा Set_inexactflag();
-		पूर्ण
-	पूर्ण
-	वापस(NOEXCEPTION);
-पूर्ण
+		/* check for inexact */
+		if (Dbl_isnotzero_exponentmantissa(srcp1,srcp2)) {
+			if (Is_inexacttrap_enabled()) return(INEXACTEXCEPTION);
+			else Set_inexactflag();
+		}
+	}
+	return(NOEXCEPTION);
+}

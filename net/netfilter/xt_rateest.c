@@ -1,149 +1,148 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * (C) 2007 Patrick McHardy <kaber@trash.net>
  */
-#समावेश <linux/module.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/gen_stats.h>
+#include <linux/module.h>
+#include <linux/skbuff.h>
+#include <linux/gen_stats.h>
 
-#समावेश <linux/netfilter/x_tables.h>
-#समावेश <linux/netfilter/xt_rateest.h>
-#समावेश <net/netfilter/xt_rateest.h>
+#include <linux/netfilter/x_tables.h>
+#include <linux/netfilter/xt_rateest.h>
+#include <net/netfilter/xt_rateest.h>
 
 
-अटल bool
-xt_rateest_mt(स्थिर काष्ठा sk_buff *skb, काष्ठा xt_action_param *par)
-अणु
-	स्थिर काष्ठा xt_rateest_match_info *info = par->matchinfo;
-	काष्ठा gnet_stats_rate_est64 sample = अणु0पूर्ण;
-	u_पूर्णांक32_t bps1, bps2, pps1, pps2;
+static bool
+xt_rateest_mt(const struct sk_buff *skb, struct xt_action_param *par)
+{
+	const struct xt_rateest_match_info *info = par->matchinfo;
+	struct gnet_stats_rate_est64 sample = {0};
+	u_int32_t bps1, bps2, pps1, pps2;
 	bool ret = true;
 
-	gen_estimator_पढ़ो(&info->est1->rate_est, &sample);
+	gen_estimator_read(&info->est1->rate_est, &sample);
 
-	अगर (info->flags & XT_RATEEST_MATCH_DELTA) अणु
+	if (info->flags & XT_RATEEST_MATCH_DELTA) {
 		bps1 = info->bps1 >= sample.bps ? info->bps1 - sample.bps : 0;
 		pps1 = info->pps1 >= sample.pps ? info->pps1 - sample.pps : 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		bps1 = sample.bps;
 		pps1 = sample.pps;
-	पूर्ण
+	}
 
-	अगर (info->flags & XT_RATEEST_MATCH_ABS) अणु
+	if (info->flags & XT_RATEEST_MATCH_ABS) {
 		bps2 = info->bps2;
 		pps2 = info->pps2;
-	पूर्ण अन्यथा अणु
-		gen_estimator_पढ़ो(&info->est2->rate_est, &sample);
+	} else {
+		gen_estimator_read(&info->est2->rate_est, &sample);
 
-		अगर (info->flags & XT_RATEEST_MATCH_DELTA) अणु
+		if (info->flags & XT_RATEEST_MATCH_DELTA) {
 			bps2 = info->bps2 >= sample.bps ? info->bps2 - sample.bps : 0;
 			pps2 = info->pps2 >= sample.pps ? info->pps2 - sample.pps : 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			bps2 = sample.bps;
 			pps2 = sample.pps;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	चयन (info->mode) अणु
-	हाल XT_RATEEST_MATCH_LT:
-		अगर (info->flags & XT_RATEEST_MATCH_BPS)
+	switch (info->mode) {
+	case XT_RATEEST_MATCH_LT:
+		if (info->flags & XT_RATEEST_MATCH_BPS)
 			ret &= bps1 < bps2;
-		अगर (info->flags & XT_RATEEST_MATCH_PPS)
+		if (info->flags & XT_RATEEST_MATCH_PPS)
 			ret &= pps1 < pps2;
-		अवरोध;
-	हाल XT_RATEEST_MATCH_GT:
-		अगर (info->flags & XT_RATEEST_MATCH_BPS)
+		break;
+	case XT_RATEEST_MATCH_GT:
+		if (info->flags & XT_RATEEST_MATCH_BPS)
 			ret &= bps1 > bps2;
-		अगर (info->flags & XT_RATEEST_MATCH_PPS)
+		if (info->flags & XT_RATEEST_MATCH_PPS)
 			ret &= pps1 > pps2;
-		अवरोध;
-	हाल XT_RATEEST_MATCH_EQ:
-		अगर (info->flags & XT_RATEEST_MATCH_BPS)
+		break;
+	case XT_RATEEST_MATCH_EQ:
+		if (info->flags & XT_RATEEST_MATCH_BPS)
 			ret &= bps1 == bps2;
-		अगर (info->flags & XT_RATEEST_MATCH_PPS)
+		if (info->flags & XT_RATEEST_MATCH_PPS)
 			ret &= pps1 == pps2;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	ret ^= info->flags & XT_RATEEST_MATCH_INVERT ? true : false;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक xt_rateest_mt_checkentry(स्थिर काष्ठा xt_mtchk_param *par)
-अणु
-	काष्ठा xt_rateest_match_info *info = par->matchinfo;
-	काष्ठा xt_rateest *est1, *est2;
-	पूर्णांक ret = -EINVAL;
+static int xt_rateest_mt_checkentry(const struct xt_mtchk_param *par)
+{
+	struct xt_rateest_match_info *info = par->matchinfo;
+	struct xt_rateest *est1, *est2;
+	int ret = -EINVAL;
 
-	अगर (hweight32(info->flags & (XT_RATEEST_MATCH_ABS |
+	if (hweight32(info->flags & (XT_RATEEST_MATCH_ABS |
 				     XT_RATEEST_MATCH_REL)) != 1)
-		जाओ err1;
+		goto err1;
 
-	अगर (!(info->flags & (XT_RATEEST_MATCH_BPS | XT_RATEEST_MATCH_PPS)))
-		जाओ err1;
+	if (!(info->flags & (XT_RATEEST_MATCH_BPS | XT_RATEEST_MATCH_PPS)))
+		goto err1;
 
-	चयन (info->mode) अणु
-	हाल XT_RATEEST_MATCH_EQ:
-	हाल XT_RATEEST_MATCH_LT:
-	हाल XT_RATEEST_MATCH_GT:
-		अवरोध;
-	शेष:
-		जाओ err1;
-	पूर्ण
+	switch (info->mode) {
+	case XT_RATEEST_MATCH_EQ:
+	case XT_RATEEST_MATCH_LT:
+	case XT_RATEEST_MATCH_GT:
+		break;
+	default:
+		goto err1;
+	}
 
 	ret  = -ENOENT;
 	est1 = xt_rateest_lookup(par->net, info->name1);
-	अगर (!est1)
-		जाओ err1;
+	if (!est1)
+		goto err1;
 
-	est2 = शून्य;
-	अगर (info->flags & XT_RATEEST_MATCH_REL) अणु
+	est2 = NULL;
+	if (info->flags & XT_RATEEST_MATCH_REL) {
 		est2 = xt_rateest_lookup(par->net, info->name2);
-		अगर (!est2)
-			जाओ err2;
-	पूर्ण
+		if (!est2)
+			goto err2;
+	}
 
 	info->est1 = est1;
 	info->est2 = est2;
-	वापस 0;
+	return 0;
 
 err2:
 	xt_rateest_put(par->net, est1);
 err1:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम xt_rateest_mt_destroy(स्थिर काष्ठा xt_mtdtor_param *par)
-अणु
-	काष्ठा xt_rateest_match_info *info = par->matchinfo;
+static void xt_rateest_mt_destroy(const struct xt_mtdtor_param *par)
+{
+	struct xt_rateest_match_info *info = par->matchinfo;
 
 	xt_rateest_put(par->net, info->est1);
-	अगर (info->est2)
+	if (info->est2)
 		xt_rateest_put(par->net, info->est2);
-पूर्ण
+}
 
-अटल काष्ठा xt_match xt_rateest_mt_reg __पढ़ो_mostly = अणु
+static struct xt_match xt_rateest_mt_reg __read_mostly = {
 	.name       = "rateest",
 	.revision   = 0,
 	.family     = NFPROTO_UNSPEC,
 	.match      = xt_rateest_mt,
 	.checkentry = xt_rateest_mt_checkentry,
 	.destroy    = xt_rateest_mt_destroy,
-	.matchsize  = माप(काष्ठा xt_rateest_match_info),
-	.usersize   = दुरत्व(काष्ठा xt_rateest_match_info, est1),
+	.matchsize  = sizeof(struct xt_rateest_match_info),
+	.usersize   = offsetof(struct xt_rateest_match_info, est1),
 	.me         = THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक __init xt_rateest_mt_init(व्योम)
-अणु
-	वापस xt_रेजिस्टर_match(&xt_rateest_mt_reg);
-पूर्ण
+static int __init xt_rateest_mt_init(void)
+{
+	return xt_register_match(&xt_rateest_mt_reg);
+}
 
-अटल व्योम __निकास xt_rateest_mt_fini(व्योम)
-अणु
-	xt_unरेजिस्टर_match(&xt_rateest_mt_reg);
-पूर्ण
+static void __exit xt_rateest_mt_fini(void)
+{
+	xt_unregister_match(&xt_rateest_mt_reg);
+}
 
 MODULE_AUTHOR("Patrick McHardy <kaber@trash.net>");
 MODULE_LICENSE("GPL");
@@ -151,4 +150,4 @@ MODULE_DESCRIPTION("xtables rate estimator match");
 MODULE_ALIAS("ipt_rateest");
 MODULE_ALIAS("ip6t_rateest");
 module_init(xt_rateest_mt_init);
-module_निकास(xt_rateest_mt_fini);
+module_exit(xt_rateest_mt_fini);

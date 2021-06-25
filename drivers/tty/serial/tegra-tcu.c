@@ -1,234 +1,233 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
  */
 
-#समावेश <linux/console.h>
-#समावेश <linux/mailbox_client.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/serial.h>
-#समावेश <linux/serial_core.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/tty_flip.h>
+#include <linux/console.h>
+#include <linux/mailbox_client.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
+#include <linux/serial.h>
+#include <linux/serial_core.h>
+#include <linux/slab.h>
+#include <linux/tty.h>
+#include <linux/tty_flip.h>
 
-#घोषणा TCU_MBOX_BYTE(i, x)			((x) << (i * 8))
-#घोषणा TCU_MBOX_BYTE_V(x, i)			(((x) >> (i * 8)) & 0xff)
-#घोषणा TCU_MBOX_NUM_BYTES(x)			((x) << 24)
-#घोषणा TCU_MBOX_NUM_BYTES_V(x)			(((x) >> 24) & 0x3)
+#define TCU_MBOX_BYTE(i, x)			((x) << (i * 8))
+#define TCU_MBOX_BYTE_V(x, i)			(((x) >> (i * 8)) & 0xff)
+#define TCU_MBOX_NUM_BYTES(x)			((x) << 24)
+#define TCU_MBOX_NUM_BYTES_V(x)			(((x) >> 24) & 0x3)
 
-काष्ठा tegra_tcu अणु
-	काष्ठा uart_driver driver;
-#अगर IS_ENABLED(CONFIG_SERIAL_TEGRA_TCU_CONSOLE)
-	काष्ठा console console;
-#पूर्ण_अगर
-	काष्ठा uart_port port;
+struct tegra_tcu {
+	struct uart_driver driver;
+#if IS_ENABLED(CONFIG_SERIAL_TEGRA_TCU_CONSOLE)
+	struct console console;
+#endif
+	struct uart_port port;
 
-	काष्ठा mbox_client tx_client, rx_client;
-	काष्ठा mbox_chan *tx, *rx;
-पूर्ण;
+	struct mbox_client tx_client, rx_client;
+	struct mbox_chan *tx, *rx;
+};
 
-अटल अचिन्हित पूर्णांक tegra_tcu_uart_tx_empty(काष्ठा uart_port *port)
-अणु
-	वापस TIOCSER_TEMT;
-पूर्ण
+static unsigned int tegra_tcu_uart_tx_empty(struct uart_port *port)
+{
+	return TIOCSER_TEMT;
+}
 
-अटल व्योम tegra_tcu_uart_set_mctrl(काष्ठा uart_port *port, अचिन्हित पूर्णांक mctrl)
-अणु
-पूर्ण
+static void tegra_tcu_uart_set_mctrl(struct uart_port *port, unsigned int mctrl)
+{
+}
 
-अटल अचिन्हित पूर्णांक tegra_tcu_uart_get_mctrl(काष्ठा uart_port *port)
-अणु
-	वापस 0;
-पूर्ण
+static unsigned int tegra_tcu_uart_get_mctrl(struct uart_port *port)
+{
+	return 0;
+}
 
-अटल व्योम tegra_tcu_uart_stop_tx(काष्ठा uart_port *port)
-अणु
-पूर्ण
+static void tegra_tcu_uart_stop_tx(struct uart_port *port)
+{
+}
 
-अटल व्योम tegra_tcu_ग_लिखो_one(काष्ठा tegra_tcu *tcu, u32 value,
-				अचिन्हित पूर्णांक count)
-अणु
-	व्योम *msg;
+static void tegra_tcu_write_one(struct tegra_tcu *tcu, u32 value,
+				unsigned int count)
+{
+	void *msg;
 
 	value |= TCU_MBOX_NUM_BYTES(count);
-	msg = (व्योम *)(अचिन्हित दीर्घ)value;
+	msg = (void *)(unsigned long)value;
 	mbox_send_message(tcu->tx, msg);
 	mbox_flush(tcu->tx, 1000);
-पूर्ण
+}
 
-अटल व्योम tegra_tcu_ग_लिखो(काष्ठा tegra_tcu *tcu, स्थिर अक्षर *s,
-			    अचिन्हित पूर्णांक count)
-अणु
-	अचिन्हित पूर्णांक written = 0, i = 0;
+static void tegra_tcu_write(struct tegra_tcu *tcu, const char *s,
+			    unsigned int count)
+{
+	unsigned int written = 0, i = 0;
 	bool insert_nl = false;
 	u32 value = 0;
 
-	जबतक (i < count) अणु
-		अगर (insert_nl) अणु
+	while (i < count) {
+		if (insert_nl) {
 			value |= TCU_MBOX_BYTE(written++, '\n');
 			insert_nl = false;
 			i++;
-		पूर्ण अन्यथा अगर (s[i] == '\n') अणु
+		} else if (s[i] == '\n') {
 			value |= TCU_MBOX_BYTE(written++, '\r');
 			insert_nl = true;
-		पूर्ण अन्यथा अणु
+		} else {
 			value |= TCU_MBOX_BYTE(written++, s[i++]);
-		पूर्ण
+		}
 
-		अगर (written == 3) अणु
-			tegra_tcu_ग_लिखो_one(tcu, value, 3);
+		if (written == 3) {
+			tegra_tcu_write_one(tcu, value, 3);
 			value = written = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (written)
-		tegra_tcu_ग_लिखो_one(tcu, value, written);
-पूर्ण
+	if (written)
+		tegra_tcu_write_one(tcu, value, written);
+}
 
-अटल व्योम tegra_tcu_uart_start_tx(काष्ठा uart_port *port)
-अणु
-	काष्ठा tegra_tcu *tcu = port->निजी_data;
-	काष्ठा circ_buf *xmit = &port->state->xmit;
-	अचिन्हित दीर्घ count;
+static void tegra_tcu_uart_start_tx(struct uart_port *port)
+{
+	struct tegra_tcu *tcu = port->private_data;
+	struct circ_buf *xmit = &port->state->xmit;
+	unsigned long count;
 
-	क्रम (;;) अणु
+	for (;;) {
 		count = CIRC_CNT_TO_END(xmit->head, xmit->tail, UART_XMIT_SIZE);
-		अगर (!count)
-			अवरोध;
+		if (!count)
+			break;
 
-		tegra_tcu_ग_लिखो(tcu, &xmit->buf[xmit->tail], count);
+		tegra_tcu_write(tcu, &xmit->buf[xmit->tail], count);
 		xmit->tail = (xmit->tail + count) & (UART_XMIT_SIZE - 1);
-	पूर्ण
+	}
 
-	uart_ग_लिखो_wakeup(port);
-पूर्ण
+	uart_write_wakeup(port);
+}
 
-अटल व्योम tegra_tcu_uart_stop_rx(काष्ठा uart_port *port)
-अणु
-पूर्ण
+static void tegra_tcu_uart_stop_rx(struct uart_port *port)
+{
+}
 
-अटल व्योम tegra_tcu_uart_अवरोध_ctl(काष्ठा uart_port *port, पूर्णांक ctl)
-अणु
-पूर्ण
+static void tegra_tcu_uart_break_ctl(struct uart_port *port, int ctl)
+{
+}
 
-अटल पूर्णांक tegra_tcu_uart_startup(काष्ठा uart_port *port)
-अणु
-	वापस 0;
-पूर्ण
+static int tegra_tcu_uart_startup(struct uart_port *port)
+{
+	return 0;
+}
 
-अटल व्योम tegra_tcu_uart_shutकरोwn(काष्ठा uart_port *port)
-अणु
-पूर्ण
+static void tegra_tcu_uart_shutdown(struct uart_port *port)
+{
+}
 
-अटल व्योम tegra_tcu_uart_set_termios(काष्ठा uart_port *port,
-				       काष्ठा ktermios *new,
-				       काष्ठा ktermios *old)
-अणु
-पूर्ण
+static void tegra_tcu_uart_set_termios(struct uart_port *port,
+				       struct ktermios *new,
+				       struct ktermios *old)
+{
+}
 
-अटल स्थिर काष्ठा uart_ops tegra_tcu_uart_ops = अणु
+static const struct uart_ops tegra_tcu_uart_ops = {
 	.tx_empty = tegra_tcu_uart_tx_empty,
 	.set_mctrl = tegra_tcu_uart_set_mctrl,
 	.get_mctrl = tegra_tcu_uart_get_mctrl,
 	.stop_tx = tegra_tcu_uart_stop_tx,
 	.start_tx = tegra_tcu_uart_start_tx,
 	.stop_rx = tegra_tcu_uart_stop_rx,
-	.अवरोध_ctl = tegra_tcu_uart_अवरोध_ctl,
+	.break_ctl = tegra_tcu_uart_break_ctl,
 	.startup = tegra_tcu_uart_startup,
-	.shutकरोwn = tegra_tcu_uart_shutकरोwn,
+	.shutdown = tegra_tcu_uart_shutdown,
 	.set_termios = tegra_tcu_uart_set_termios,
-पूर्ण;
+};
 
-#अगर IS_ENABLED(CONFIG_SERIAL_TEGRA_TCU_CONSOLE)
-अटल व्योम tegra_tcu_console_ग_लिखो(काष्ठा console *cons, स्थिर अक्षर *s,
-				    अचिन्हित पूर्णांक count)
-अणु
-	काष्ठा tegra_tcu *tcu = container_of(cons, काष्ठा tegra_tcu, console);
+#if IS_ENABLED(CONFIG_SERIAL_TEGRA_TCU_CONSOLE)
+static void tegra_tcu_console_write(struct console *cons, const char *s,
+				    unsigned int count)
+{
+	struct tegra_tcu *tcu = container_of(cons, struct tegra_tcu, console);
 
-	tegra_tcu_ग_लिखो(tcu, s, count);
-पूर्ण
+	tegra_tcu_write(tcu, s, count);
+}
 
-अटल पूर्णांक tegra_tcu_console_setup(काष्ठा console *cons, अक्षर *options)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+static int tegra_tcu_console_setup(struct console *cons, char *options)
+{
+	return 0;
+}
+#endif
 
-अटल व्योम tegra_tcu_receive(काष्ठा mbox_client *cl, व्योम *msg)
-अणु
-	काष्ठा tegra_tcu *tcu = container_of(cl, काष्ठा tegra_tcu, rx_client);
-	काष्ठा tty_port *port = &tcu->port.state->port;
-	u32 value = (u32)(अचिन्हित दीर्घ)msg;
-	अचिन्हित पूर्णांक num_bytes, i;
+static void tegra_tcu_receive(struct mbox_client *cl, void *msg)
+{
+	struct tegra_tcu *tcu = container_of(cl, struct tegra_tcu, rx_client);
+	struct tty_port *port = &tcu->port.state->port;
+	u32 value = (u32)(unsigned long)msg;
+	unsigned int num_bytes, i;
 
 	num_bytes = TCU_MBOX_NUM_BYTES_V(value);
 
-	क्रम (i = 0; i < num_bytes; i++)
-		tty_insert_flip_अक्षर(port, TCU_MBOX_BYTE_V(value, i),
+	for (i = 0; i < num_bytes; i++)
+		tty_insert_flip_char(port, TCU_MBOX_BYTE_V(value, i),
 				     TTY_NORMAL);
 
 	tty_flip_buffer_push(port);
-पूर्ण
+}
 
-अटल पूर्णांक tegra_tcu_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा uart_port *port;
-	काष्ठा tegra_tcu *tcu;
-	पूर्णांक err;
+static int tegra_tcu_probe(struct platform_device *pdev)
+{
+	struct uart_port *port;
+	struct tegra_tcu *tcu;
+	int err;
 
-	tcu = devm_kzalloc(&pdev->dev, माप(*tcu), GFP_KERNEL);
-	अगर (!tcu)
-		वापस -ENOMEM;
+	tcu = devm_kzalloc(&pdev->dev, sizeof(*tcu), GFP_KERNEL);
+	if (!tcu)
+		return -ENOMEM;
 
 	tcu->tx_client.dev = &pdev->dev;
 	tcu->rx_client.dev = &pdev->dev;
 	tcu->rx_client.rx_callback = tegra_tcu_receive;
 
 	tcu->tx = mbox_request_channel_byname(&tcu->tx_client, "tx");
-	अगर (IS_ERR(tcu->tx)) अणु
+	if (IS_ERR(tcu->tx)) {
 		err = PTR_ERR(tcu->tx);
 		dev_err(&pdev->dev, "failed to get tx mailbox: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	tcu->rx = mbox_request_channel_byname(&tcu->rx_client, "rx");
-	अगर (IS_ERR(tcu->rx)) अणु
+	if (IS_ERR(tcu->rx)) {
 		err = PTR_ERR(tcu->rx);
 		dev_err(&pdev->dev, "failed to get rx mailbox: %d\n", err);
-		जाओ मुक्त_tx;
-	पूर्ण
+		goto free_tx;
+	}
 
-#अगर IS_ENABLED(CONFIG_SERIAL_TEGRA_TCU_CONSOLE)
+#if IS_ENABLED(CONFIG_SERIAL_TEGRA_TCU_CONSOLE)
 	/* setup the console */
-	म_नकल(tcu->console.name, "ttyTCU");
+	strcpy(tcu->console.name, "ttyTCU");
 	tcu->console.device = uart_console_device;
 	tcu->console.flags = CON_PRINTBUFFER | CON_ANYTIME;
 	tcu->console.index = -1;
-	tcu->console.ग_लिखो = tegra_tcu_console_ग_लिखो;
+	tcu->console.write = tegra_tcu_console_write;
 	tcu->console.setup = tegra_tcu_console_setup;
 	tcu->console.data = &tcu->driver;
-#पूर्ण_अगर
+#endif
 
 	/* setup the driver */
 	tcu->driver.owner = THIS_MODULE;
 	tcu->driver.driver_name = "tegra-tcu";
 	tcu->driver.dev_name = "ttyTCU";
-#अगर IS_ENABLED(CONFIG_SERIAL_TEGRA_TCU_CONSOLE)
+#if IS_ENABLED(CONFIG_SERIAL_TEGRA_TCU_CONSOLE)
 	tcu->driver.cons = &tcu->console;
-#पूर्ण_अगर
+#endif
 	tcu->driver.nr = 1;
 
-	err = uart_रेजिस्टर_driver(&tcu->driver);
-	अगर (err) अणु
+	err = uart_register_driver(&tcu->driver);
+	if (err) {
 		dev_err(&pdev->dev, "failed to register UART driver: %d\n",
 			err);
-		जाओ मुक्त_rx;
-	पूर्ण
+		goto free_rx;
+	}
 
 	/* setup the port */
 	port = &tcu->port;
@@ -236,64 +235,64 @@
 	port->dev = &pdev->dev;
 	port->type = PORT_TEGRA_TCU;
 	port->ops = &tegra_tcu_uart_ops;
-	port->fअगरosize = 1;
+	port->fifosize = 1;
 	port->iotype = UPIO_MEM;
 	port->flags = UPF_BOOT_AUTOCONF;
-	port->निजी_data = tcu;
+	port->private_data = tcu;
 
 	err = uart_add_one_port(&tcu->driver, port);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "failed to add UART port: %d\n", err);
-		जाओ unरेजिस्टर_uart;
-	पूर्ण
+		goto unregister_uart;
+	}
 
-	platक्रमm_set_drvdata(pdev, tcu);
-#अगर IS_ENABLED(CONFIG_SERIAL_TEGRA_TCU_CONSOLE)
-	रेजिस्टर_console(&tcu->console);
-#पूर्ण_अगर
+	platform_set_drvdata(pdev, tcu);
+#if IS_ENABLED(CONFIG_SERIAL_TEGRA_TCU_CONSOLE)
+	register_console(&tcu->console);
+#endif
 
-	वापस 0;
+	return 0;
 
-unरेजिस्टर_uart:
-	uart_unरेजिस्टर_driver(&tcu->driver);
-मुक्त_rx:
-	mbox_मुक्त_channel(tcu->rx);
-मुक्त_tx:
-	mbox_मुक्त_channel(tcu->tx);
+unregister_uart:
+	uart_unregister_driver(&tcu->driver);
+free_rx:
+	mbox_free_channel(tcu->rx);
+free_tx:
+	mbox_free_channel(tcu->tx);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक tegra_tcu_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा tegra_tcu *tcu = platक्रमm_get_drvdata(pdev);
+static int tegra_tcu_remove(struct platform_device *pdev)
+{
+	struct tegra_tcu *tcu = platform_get_drvdata(pdev);
 
-#अगर IS_ENABLED(CONFIG_SERIAL_TEGRA_TCU_CONSOLE)
-	unरेजिस्टर_console(&tcu->console);
-#पूर्ण_अगर
-	uart_हटाओ_one_port(&tcu->driver, &tcu->port);
-	uart_unरेजिस्टर_driver(&tcu->driver);
-	mbox_मुक्त_channel(tcu->rx);
-	mbox_मुक्त_channel(tcu->tx);
+#if IS_ENABLED(CONFIG_SERIAL_TEGRA_TCU_CONSOLE)
+	unregister_console(&tcu->console);
+#endif
+	uart_remove_one_port(&tcu->driver, &tcu->port);
+	uart_unregister_driver(&tcu->driver);
+	mbox_free_channel(tcu->rx);
+	mbox_free_channel(tcu->tx);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id tegra_tcu_match[] = अणु
-	अणु .compatible = "nvidia,tegra194-tcu" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id tegra_tcu_match[] = {
+	{ .compatible = "nvidia,tegra194-tcu" },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, tegra_tcu_match);
 
-अटल काष्ठा platक्रमm_driver tegra_tcu_driver = अणु
-	.driver = अणु
+static struct platform_driver tegra_tcu_driver = {
+	.driver = {
 		.name = "tegra-tcu",
 		.of_match_table = tegra_tcu_match,
-	पूर्ण,
+	},
 	.probe = tegra_tcu_probe,
-	.हटाओ = tegra_tcu_हटाओ,
-पूर्ण;
-module_platक्रमm_driver(tegra_tcu_driver);
+	.remove = tegra_tcu_remove,
+};
+module_platform_driver(tegra_tcu_driver);
 
 MODULE_AUTHOR("Mikko Perttunen <mperttunen@nvidia.com>");
 MODULE_LICENSE("GPL v2");

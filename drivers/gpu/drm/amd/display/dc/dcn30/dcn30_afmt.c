@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2020 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  *  and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -25,30 +24,30 @@
  */
 
 
-#समावेश "dc_bios_types.h"
-#समावेश "hw_shared.h"
-#समावेश "dcn30_afmt.h"
-#समावेश "reg_helper.h"
+#include "dc_bios_types.h"
+#include "hw_shared.h"
+#include "dcn30_afmt.h"
+#include "reg_helper.h"
 
-#घोषणा DC_LOGGER \
+#define DC_LOGGER \
 		afmt3->base.ctx->logger
 
-#घोषणा REG(reg)\
+#define REG(reg)\
 	(afmt3->regs->reg)
 
-#अघोषित FN
-#घोषणा FN(reg_name, field_name) \
-	afmt3->afmt_shअगरt->field_name, afmt3->afmt_mask->field_name
+#undef FN
+#define FN(reg_name, field_name) \
+	afmt3->afmt_shift->field_name, afmt3->afmt_mask->field_name
 
 
-#घोषणा CTX \
+#define CTX \
 	afmt3->base.ctx
 
 
-अटल व्योम afmt3_setup_hdmi_audio(
-	काष्ठा afmt *afmt)
-अणु
-	काष्ठा dcn30_afmt *afmt3 = DCN30_AFMT_FROM_AFMT(afmt);
+static void afmt3_setup_hdmi_audio(
+	struct afmt *afmt)
+{
+	struct dcn30_afmt *afmt3 = DCN30_AFMT_FROM_AFMT(afmt);
 
 	/* AFMT_AUDIO_PACKET_CONTROL */
 	REG_UPDATE(AFMT_AUDIO_PACKET_CONTROL, AFMT_60958_CS_UPDATE, 1);
@@ -78,12 +77,12 @@
 			AFMT_60958_CS_CHANNEL_NUMBER_5, 6,
 			AFMT_60958_CS_CHANNEL_NUMBER_6, 7,
 			AFMT_60958_CS_CHANNEL_NUMBER_7, 8);
-पूर्ण
+}
 
-अटल जोड़ audio_cea_channels speakers_to_channels(
-	काष्ठा audio_speaker_flags speaker_flags)
-अणु
-	जोड़ audio_cea_channels cea_channels = अणु0पूर्ण;
+static union audio_cea_channels speakers_to_channels(
+	struct audio_speaker_flags speaker_flags)
+{
+	union audio_cea_channels cea_channels = {0};
 
 	/* these are one to one */
 	cea_channels.channels.FL = speaker_flags.FL_FR;
@@ -91,43 +90,43 @@
 	cea_channels.channels.LFE = speaker_flags.LFE;
 	cea_channels.channels.FC = speaker_flags.FC;
 
-	/* अगर Rear Left and Right exist move RC speaker to channel 7
+	/* if Rear Left and Right exist move RC speaker to channel 7
 	 * otherwise to channel 5
 	 */
-	अगर (speaker_flags.RL_RR) अणु
+	if (speaker_flags.RL_RR) {
 		cea_channels.channels.RL_RC = speaker_flags.RL_RR;
 		cea_channels.channels.RR = speaker_flags.RL_RR;
 		cea_channels.channels.RC_RLC_FLC = speaker_flags.RC;
-	पूर्ण अन्यथा अणु
+	} else {
 		cea_channels.channels.RL_RC = speaker_flags.RC;
-	पूर्ण
+	}
 
 	/* FRONT Left Right Center and REAR Left Right Center are exclusive */
-	अगर (speaker_flags.FLC_FRC) अणु
+	if (speaker_flags.FLC_FRC) {
 		cea_channels.channels.RC_RLC_FLC = speaker_flags.FLC_FRC;
 		cea_channels.channels.RRC_FRC = speaker_flags.FLC_FRC;
-	पूर्ण अन्यथा अणु
+	} else {
 		cea_channels.channels.RC_RLC_FLC = speaker_flags.RLC_RRC;
 		cea_channels.channels.RRC_FRC = speaker_flags.RLC_RRC;
-	पूर्ण
+	}
 
-	वापस cea_channels;
-पूर्ण
+	return cea_channels;
+}
 
-अटल व्योम afmt3_se_audio_setup(
-	काष्ठा afmt *afmt,
-	अचिन्हित पूर्णांक az_inst,
-	काष्ठा audio_info *audio_info)
-अणु
-	काष्ठा dcn30_afmt *afmt3 = DCN30_AFMT_FROM_AFMT(afmt);
+static void afmt3_se_audio_setup(
+	struct afmt *afmt,
+	unsigned int az_inst,
+	struct audio_info *audio_info)
+{
+	struct dcn30_afmt *afmt3 = DCN30_AFMT_FROM_AFMT(afmt);
 
-	uपूर्णांक32_t speakers = 0;
-	uपूर्णांक32_t channels = 0;
+	uint32_t speakers = 0;
+	uint32_t channels = 0;
 
 	ASSERT(audio_info);
-	/* This should not happen.it करोes so we करोn't get BSOD*/
-	अगर (audio_info == शून्य)
-		वापस;
+	/* This should not happen.it does so we don't get BSOD*/
+	if (audio_info == NULL)
+		return;
 
 	speakers = audio_info->flags.info.ALLSPEAKERS;
 	channels = speakers_to_channels(audio_info->flags.speaker_flags).all;
@@ -138,33 +137,33 @@
 	/* Channel allocation */
 	REG_UPDATE(AFMT_AUDIO_PACKET_CONTROL2, AFMT_AUDIO_CHANNEL_ENABLE, channels);
 
-	/* Disable क्रमced mem घातer off */
+	/* Disable forced mem power off */
 	REG_UPDATE(AFMT_MEM_PWR, AFMT_MEM_PWR_FORCE, 0);
-पूर्ण
+}
 
-अटल व्योम afmt3_audio_mute_control(
-	काष्ठा afmt *afmt,
+static void afmt3_audio_mute_control(
+	struct afmt *afmt,
 	bool mute)
-अणु
-	काष्ठा dcn30_afmt *afmt3 = DCN30_AFMT_FROM_AFMT(afmt);
+{
+	struct dcn30_afmt *afmt3 = DCN30_AFMT_FROM_AFMT(afmt);
 
 	/* enable/disable transmission of audio packets */
 	REG_UPDATE(AFMT_AUDIO_PACKET_CONTROL, AFMT_AUDIO_SAMPLE_SEND, !mute);
-पूर्ण
+}
 
-अटल व्योम afmt3_audio_info_immediate_update(
-	काष्ठा afmt *afmt)
-अणु
-	काष्ठा dcn30_afmt *afmt3 = DCN30_AFMT_FROM_AFMT(afmt);
+static void afmt3_audio_info_immediate_update(
+	struct afmt *afmt)
+{
+	struct dcn30_afmt *afmt3 = DCN30_AFMT_FROM_AFMT(afmt);
 
-	/* update द्विगुन-buffered AUDIO_INFO रेजिस्टरs immediately */
+	/* update double-buffered AUDIO_INFO registers immediately */
 	REG_UPDATE(AFMT_INFOFRAME_CONTROL0, AFMT_AUDIO_INFO_UPDATE, 1);
-पूर्ण
+}
 
-अटल व्योम afmt3_setup_dp_audio(
-		काष्ठा afmt *afmt)
-अणु
-	काष्ठा dcn30_afmt *afmt3 = DCN30_AFMT_FROM_AFMT(afmt);
+static void afmt3_setup_dp_audio(
+		struct afmt *afmt)
+{
+	struct dcn30_afmt *afmt3 = DCN30_AFMT_FROM_AFMT(afmt);
 
 	/* AFMT_AUDIO_PACKET_CONTROL */
 	REG_UPDATE(AFMT_AUDIO_PACKET_CONTROL, AFMT_60958_CS_UPDATE, 1);
@@ -180,29 +179,29 @@
 
 	/* AFMT_60958_0__AFMT_60958_CS_CLOCK_ACCURACY_MASK */
 	REG_UPDATE(AFMT_60958_0, AFMT_60958_CS_CLOCK_ACCURACY, 0);
-पूर्ण
+}
 
-अटल काष्ठा afmt_funcs dcn30_afmt_funcs = अणु
+static struct afmt_funcs dcn30_afmt_funcs = {
 	.setup_hdmi_audio		= afmt3_setup_hdmi_audio,
 	.se_audio_setup			= afmt3_se_audio_setup,
 	.audio_mute_control		= afmt3_audio_mute_control,
 	.audio_info_immediate_update	= afmt3_audio_info_immediate_update,
 	.setup_dp_audio			= afmt3_setup_dp_audio,
-पूर्ण;
+};
 
-व्योम afmt3_स्थिरruct(काष्ठा dcn30_afmt *afmt3,
-	काष्ठा dc_context *ctx,
-	uपूर्णांक32_t inst,
-	स्थिर काष्ठा dcn30_afmt_रेजिस्टरs *afmt_regs,
-	स्थिर काष्ठा dcn30_afmt_shअगरt *afmt_shअगरt,
-	स्थिर काष्ठा dcn30_afmt_mask *afmt_mask)
-अणु
+void afmt3_construct(struct dcn30_afmt *afmt3,
+	struct dc_context *ctx,
+	uint32_t inst,
+	const struct dcn30_afmt_registers *afmt_regs,
+	const struct dcn30_afmt_shift *afmt_shift,
+	const struct dcn30_afmt_mask *afmt_mask)
+{
 	afmt3->base.ctx = ctx;
 
 	afmt3->base.inst = inst;
 	afmt3->base.funcs = &dcn30_afmt_funcs;
 
 	afmt3->regs = afmt_regs;
-	afmt3->afmt_shअगरt = afmt_shअगरt;
+	afmt3->afmt_shift = afmt_shift;
 	afmt3->afmt_mask = afmt_mask;
-पूर्ण
+}

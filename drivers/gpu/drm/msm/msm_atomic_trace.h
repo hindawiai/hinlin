@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर !defined(_MSM_GPU_TRACE_H_) || defined(TRACE_HEADER_MULTI_READ)
-#घोषणा _MSM_GPU_TRACE_H_
+/* SPDX-License-Identifier: GPL-2.0 */
+#if !defined(_MSM_GPU_TRACE_H_) || defined(TRACE_HEADER_MULTI_READ)
+#define _MSM_GPU_TRACE_H_
 
-#समावेश <linux/tracepoपूर्णांक.h>
+#include <linux/tracepoint.h>
 
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_SYSTEM drm_msm_atomic
-#घोषणा TRACE_INCLUDE_खाता msm_atomic_trace
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM drm_msm_atomic
+#define TRACE_INCLUDE_FILE msm_atomic_trace
 
 TRACE_EVENT(msm_atomic_commit_tail_start,
-	    TP_PROTO(bool async, अचिन्हित crtc_mask),
+	    TP_PROTO(bool async, unsigned crtc_mask),
 	    TP_ARGS(async, crtc_mask),
 	    TP_STRUCT__entry(
 		    __field(bool, async)
@@ -20,12 +19,12 @@ TRACE_EVENT(msm_atomic_commit_tail_start,
 		    __entry->async = async;
 		    __entry->crtc_mask = crtc_mask;
 		    ),
-	    TP_prपूर्णांकk("async=%d crtc_mask=%x",
+	    TP_printk("async=%d crtc_mask=%x",
 		    __entry->async, __entry->crtc_mask)
 );
 
 TRACE_EVENT(msm_atomic_commit_tail_finish,
-	    TP_PROTO(bool async, अचिन्हित crtc_mask),
+	    TP_PROTO(bool async, unsigned crtc_mask),
 	    TP_ARGS(async, crtc_mask),
 	    TP_STRUCT__entry(
 		    __field(bool, async)
@@ -35,12 +34,12 @@ TRACE_EVENT(msm_atomic_commit_tail_finish,
 		    __entry->async = async;
 		    __entry->crtc_mask = crtc_mask;
 		    ),
-	    TP_prपूर्णांकk("async=%d crtc_mask=%x",
+	    TP_printk("async=%d crtc_mask=%x",
 		    __entry->async, __entry->crtc_mask)
 );
 
 TRACE_EVENT(msm_atomic_async_commit_start,
-	    TP_PROTO(अचिन्हित crtc_mask),
+	    TP_PROTO(unsigned crtc_mask),
 	    TP_ARGS(crtc_mask),
 	    TP_STRUCT__entry(
 		    __field(u32, crtc_mask)
@@ -48,12 +47,12 @@ TRACE_EVENT(msm_atomic_async_commit_start,
 	    TP_fast_assign(
 		    __entry->crtc_mask = crtc_mask;
 		    ),
-	    TP_prपूर्णांकk("crtc_mask=%x",
+	    TP_printk("crtc_mask=%x",
 		    __entry->crtc_mask)
 );
 
 TRACE_EVENT(msm_atomic_async_commit_finish,
-	    TP_PROTO(अचिन्हित crtc_mask),
+	    TP_PROTO(unsigned crtc_mask),
 	    TP_ARGS(crtc_mask),
 	    TP_STRUCT__entry(
 		    __field(u32, crtc_mask)
@@ -61,12 +60,12 @@ TRACE_EVENT(msm_atomic_async_commit_finish,
 	    TP_fast_assign(
 		    __entry->crtc_mask = crtc_mask;
 		    ),
-	    TP_prपूर्णांकk("crtc_mask=%x",
+	    TP_printk("crtc_mask=%x",
 		    __entry->crtc_mask)
 );
 
-TRACE_EVENT(msm_atomic_रुको_flush_start,
-	    TP_PROTO(अचिन्हित crtc_mask),
+TRACE_EVENT(msm_atomic_wait_flush_start,
+	    TP_PROTO(unsigned crtc_mask),
 	    TP_ARGS(crtc_mask),
 	    TP_STRUCT__entry(
 		    __field(u32, crtc_mask)
@@ -74,12 +73,12 @@ TRACE_EVENT(msm_atomic_रुको_flush_start,
 	    TP_fast_assign(
 		    __entry->crtc_mask = crtc_mask;
 		    ),
-	    TP_prपूर्णांकk("crtc_mask=%x",
+	    TP_printk("crtc_mask=%x",
 		    __entry->crtc_mask)
 );
 
-TRACE_EVENT(msm_atomic_रुको_flush_finish,
-	    TP_PROTO(अचिन्हित crtc_mask),
+TRACE_EVENT(msm_atomic_wait_flush_finish,
+	    TP_PROTO(unsigned crtc_mask),
 	    TP_ARGS(crtc_mask),
 	    TP_STRUCT__entry(
 		    __field(u32, crtc_mask)
@@ -87,12 +86,12 @@ TRACE_EVENT(msm_atomic_रुको_flush_finish,
 	    TP_fast_assign(
 		    __entry->crtc_mask = crtc_mask;
 		    ),
-	    TP_prपूर्णांकk("crtc_mask=%x",
+	    TP_printk("crtc_mask=%x",
 		    __entry->crtc_mask)
 );
 
 TRACE_EVENT(msm_atomic_flush_commit,
-	    TP_PROTO(अचिन्हित crtc_mask),
+	    TP_PROTO(unsigned crtc_mask),
 	    TP_ARGS(crtc_mask),
 	    TP_STRUCT__entry(
 		    __field(u32, crtc_mask)
@@ -100,12 +99,12 @@ TRACE_EVENT(msm_atomic_flush_commit,
 	    TP_fast_assign(
 		    __entry->crtc_mask = crtc_mask;
 		    ),
-	    TP_prपूर्णांकk("crtc_mask=%x",
+	    TP_printk("crtc_mask=%x",
 		    __entry->crtc_mask)
 );
 
-#पूर्ण_अगर
+#endif
 
-#अघोषित TRACE_INCLUDE_PATH
-#घोषणा TRACE_INCLUDE_PATH ../../drivers/gpu/drm/msm
-#समावेश <trace/define_trace.h>
+#undef TRACE_INCLUDE_PATH
+#define TRACE_INCLUDE_PATH ../../drivers/gpu/drm/msm
+#include <trace/define_trace.h>

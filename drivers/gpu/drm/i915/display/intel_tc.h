@@ -1,33 +1,32 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
+/* SPDX-License-Identifier: MIT */
 /*
- * Copyright तऊ 2019 Intel Corporation
+ * Copyright © 2019 Intel Corporation
  */
 
-#अगर_अघोषित __INTEL_TC_H__
-#घोषणा __INTEL_TC_H__
+#ifndef __INTEL_TC_H__
+#define __INTEL_TC_H__
 
-#समावेश <linux/mutex.h>
-#समावेश <linux/types.h>
+#include <linux/mutex.h>
+#include <linux/types.h>
 
-काष्ठा पूर्णांकel_digital_port;
-काष्ठा पूर्णांकel_encoder;
+struct intel_digital_port;
+struct intel_encoder;
 
-bool पूर्णांकel_tc_port_connected(काष्ठा पूर्णांकel_encoder *encoder);
-u32 पूर्णांकel_tc_port_get_lane_mask(काष्ठा पूर्णांकel_digital_port *dig_port);
-u32 पूर्णांकel_tc_port_get_pin_assignment_mask(काष्ठा पूर्णांकel_digital_port *dig_port);
-पूर्णांक पूर्णांकel_tc_port_fia_max_lane_count(काष्ठा पूर्णांकel_digital_port *dig_port);
-व्योम पूर्णांकel_tc_port_set_fia_lane_count(काष्ठा पूर्णांकel_digital_port *dig_port,
-				      पूर्णांक required_lanes);
+bool intel_tc_port_connected(struct intel_encoder *encoder);
+u32 intel_tc_port_get_lane_mask(struct intel_digital_port *dig_port);
+u32 intel_tc_port_get_pin_assignment_mask(struct intel_digital_port *dig_port);
+int intel_tc_port_fia_max_lane_count(struct intel_digital_port *dig_port);
+void intel_tc_port_set_fia_lane_count(struct intel_digital_port *dig_port,
+				      int required_lanes);
 
-व्योम पूर्णांकel_tc_port_sanitize(काष्ठा पूर्णांकel_digital_port *dig_port);
-व्योम पूर्णांकel_tc_port_lock(काष्ठा पूर्णांकel_digital_port *dig_port);
-व्योम पूर्णांकel_tc_port_unlock(काष्ठा पूर्णांकel_digital_port *dig_port);
-व्योम पूर्णांकel_tc_port_get_link(काष्ठा पूर्णांकel_digital_port *dig_port,
-			    पूर्णांक required_lanes);
-व्योम पूर्णांकel_tc_port_put_link(काष्ठा पूर्णांकel_digital_port *dig_port);
-bool पूर्णांकel_tc_port_ref_held(काष्ठा पूर्णांकel_digital_port *dig_port);
+void intel_tc_port_sanitize(struct intel_digital_port *dig_port);
+void intel_tc_port_lock(struct intel_digital_port *dig_port);
+void intel_tc_port_unlock(struct intel_digital_port *dig_port);
+void intel_tc_port_get_link(struct intel_digital_port *dig_port,
+			    int required_lanes);
+void intel_tc_port_put_link(struct intel_digital_port *dig_port);
+bool intel_tc_port_ref_held(struct intel_digital_port *dig_port);
 
-व्योम पूर्णांकel_tc_port_init(काष्ठा पूर्णांकel_digital_port *dig_port, bool is_legacy);
+void intel_tc_port_init(struct intel_digital_port *dig_port, bool is_legacy);
 
-#पूर्ण_अगर /* __INTEL_TC_H__ */
+#endif /* __INTEL_TC_H__ */

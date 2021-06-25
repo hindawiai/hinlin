@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Backlight Lowlevel Control Abstraction
  *
@@ -7,31 +6,31 @@
  *
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/device.h>
-#समावेश <linux/backlight.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/err.h>
-#समावेश <linux/fb.h>
-#समावेश <linux/slab.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/device.h>
+#include <linux/backlight.h>
+#include <linux/notifier.h>
+#include <linux/ctype.h>
+#include <linux/err.h>
+#include <linux/fb.h>
+#include <linux/slab.h>
 
-#अगर_घोषित CONFIG_PMAC_BACKLIGHT
-#समावेश <यंत्र/backlight.h>
-#पूर्ण_अगर
+#ifdef CONFIG_PMAC_BACKLIGHT
+#include <asm/backlight.h>
+#endif
 
 /**
  * DOC: overview
  *
  * The backlight core supports implementing backlight drivers.
  *
- * A backlight driver रेजिस्टरs a driver using
- * devm_backlight_device_रेजिस्टर(). The properties of the backlight
- * driver such as type and max_brightness must be specअगरied.
- * When the core detect changes in क्रम example brightness or घातer state
+ * A backlight driver registers a driver using
+ * devm_backlight_device_register(). The properties of the backlight
+ * driver such as type and max_brightness must be specified.
+ * When the core detect changes in for example brightness or power state
  * the update_status() operation is called. The backlight driver shall
  * implement this operation and use it to adjust backlight.
  *
@@ -41,368 +40,368 @@
  * - actual_brightness  RO, the brightness level used by the HW
  * - max_brightness     RO, the maximum  brightness level supported
  *
- * See Documentation/ABI/stable/sysfs-class-backlight क्रम the full list.
+ * See Documentation/ABI/stable/sysfs-class-backlight for the full list.
  *
- * The backlight can be adjusted using the sysfs पूर्णांकerface, and
+ * The backlight can be adjusted using the sysfs interface, and
  * the backlight driver may also support adjusting backlight using
- * a hot-key or some other platक्रमm or firmware specअगरic way.
+ * a hot-key or some other platform or firmware specific way.
  *
- * The driver must implement the get_brightness() operation अगर
- * the HW करो not support all the levels that can be specअगरied in
+ * The driver must implement the get_brightness() operation if
+ * the HW do not support all the levels that can be specified in
  * brightness, thus providing user-space access to the actual level
  * via the actual_brightness attribute.
  *
  * When the backlight changes this is reported to user-space using
  * an uevent connected to the actual_brightness attribute.
- * When brightness is set by platक्रमm specअगरic means, क्रम example
- * a hot-key to adjust backlight, the driver must notअगरy the backlight
- * core that brightness has changed using backlight_क्रमce_update().
+ * When brightness is set by platform specific means, for example
+ * a hot-key to adjust backlight, the driver must notify the backlight
+ * core that brightness has changed using backlight_force_update().
  *
- * The backlight driver core receives notअगरications from fbdev and
- * अगर the event is FB_EVENT_BLANK and अगर the value of blank, from the
+ * The backlight driver core receives notifications from fbdev and
+ * if the event is FB_EVENT_BLANK and if the value of blank, from the
  * FBIOBLANK ioctrl, results in a change in the backlight state the
  * update_status() operation is called.
  */
 
-अटल काष्ठा list_head backlight_dev_list;
-अटल काष्ठा mutex backlight_dev_list_mutex;
-अटल काष्ठा blocking_notअगरier_head backlight_notअगरier;
+static struct list_head backlight_dev_list;
+static struct mutex backlight_dev_list_mutex;
+static struct blocking_notifier_head backlight_notifier;
 
-अटल स्थिर अक्षर *स्थिर backlight_types[] = अणु
+static const char *const backlight_types[] = {
 	[BACKLIGHT_RAW] = "raw",
 	[BACKLIGHT_PLATFORM] = "platform",
 	[BACKLIGHT_FIRMWARE] = "firmware",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *स्थिर backlight_scale_types[] = अणु
+static const char *const backlight_scale_types[] = {
 	[BACKLIGHT_SCALE_UNKNOWN]	= "unknown",
 	[BACKLIGHT_SCALE_LINEAR]	= "linear",
 	[BACKLIGHT_SCALE_NON_LINEAR]	= "non-linear",
-पूर्ण;
+};
 
-#अगर defined(CONFIG_FB) || (defined(CONFIG_FB_MODULE) && \
+#if defined(CONFIG_FB) || (defined(CONFIG_FB_MODULE) && \
 			   defined(CONFIG_BACKLIGHT_CLASS_DEVICE_MODULE))
 /*
- * fb_notअगरier_callback
+ * fb_notifier_callback
  *
- * This callback माला_लो called when something important happens inside a
+ * This callback gets called when something important happens inside a
  * framebuffer driver. The backlight core only cares about FB_BLANK_UNBLANK
  * which is reported to the driver using backlight_update_status()
  * as a state change.
  *
  * There may be several fbdev's connected to the backlight device,
- * in which हाल they are kept track of. A state change is only reported
- * अगर there is a change in backlight क्रम the specअगरied fbdev.
+ * in which case they are kept track of. A state change is only reported
+ * if there is a change in backlight for the specified fbdev.
  */
-अटल पूर्णांक fb_notअगरier_callback(काष्ठा notअगरier_block *self,
-				अचिन्हित दीर्घ event, व्योम *data)
-अणु
-	काष्ठा backlight_device *bd;
-	काष्ठा fb_event *evdata = data;
-	पूर्णांक node = evdata->info->node;
-	पूर्णांक fb_blank = 0;
+static int fb_notifier_callback(struct notifier_block *self,
+				unsigned long event, void *data)
+{
+	struct backlight_device *bd;
+	struct fb_event *evdata = data;
+	int node = evdata->info->node;
+	int fb_blank = 0;
 
-	/* If we aren't पूर्णांकerested in this event, skip it immediately ... */
-	अगर (event != FB_EVENT_BLANK)
-		वापस 0;
+	/* If we aren't interested in this event, skip it immediately ... */
+	if (event != FB_EVENT_BLANK)
+		return 0;
 
-	bd = container_of(self, काष्ठा backlight_device, fb_notअगर);
+	bd = container_of(self, struct backlight_device, fb_notif);
 	mutex_lock(&bd->ops_lock);
 
-	अगर (!bd->ops)
-		जाओ out;
-	अगर (bd->ops->check_fb && !bd->ops->check_fb(bd, evdata->info))
-		जाओ out;
+	if (!bd->ops)
+		goto out;
+	if (bd->ops->check_fb && !bd->ops->check_fb(bd, evdata->info))
+		goto out;
 
-	fb_blank = *(पूर्णांक *)evdata->data;
-	अगर (fb_blank == FB_BLANK_UNBLANK && !bd->fb_bl_on[node]) अणु
+	fb_blank = *(int *)evdata->data;
+	if (fb_blank == FB_BLANK_UNBLANK && !bd->fb_bl_on[node]) {
 		bd->fb_bl_on[node] = true;
-		अगर (!bd->use_count++) अणु
+		if (!bd->use_count++) {
 			bd->props.state &= ~BL_CORE_FBBLANK;
 			bd->props.fb_blank = FB_BLANK_UNBLANK;
 			backlight_update_status(bd);
-		पूर्ण
-	पूर्ण अन्यथा अगर (fb_blank != FB_BLANK_UNBLANK && bd->fb_bl_on[node]) अणु
+		}
+	} else if (fb_blank != FB_BLANK_UNBLANK && bd->fb_bl_on[node]) {
 		bd->fb_bl_on[node] = false;
-		अगर (!(--bd->use_count)) अणु
+		if (!(--bd->use_count)) {
 			bd->props.state |= BL_CORE_FBBLANK;
 			bd->props.fb_blank = fb_blank;
 			backlight_update_status(bd);
-		पूर्ण
-	पूर्ण
+		}
+	}
 out:
 	mutex_unlock(&bd->ops_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक backlight_रेजिस्टर_fb(काष्ठा backlight_device *bd)
-अणु
-	स_रखो(&bd->fb_notअगर, 0, माप(bd->fb_notअगर));
-	bd->fb_notअगर.notअगरier_call = fb_notअगरier_callback;
+static int backlight_register_fb(struct backlight_device *bd)
+{
+	memset(&bd->fb_notif, 0, sizeof(bd->fb_notif));
+	bd->fb_notif.notifier_call = fb_notifier_callback;
 
-	वापस fb_रेजिस्टर_client(&bd->fb_notअगर);
-पूर्ण
+	return fb_register_client(&bd->fb_notif);
+}
 
-अटल व्योम backlight_unरेजिस्टर_fb(काष्ठा backlight_device *bd)
-अणु
-	fb_unरेजिस्टर_client(&bd->fb_notअगर);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत पूर्णांक backlight_रेजिस्टर_fb(काष्ठा backlight_device *bd)
-अणु
-	वापस 0;
-पूर्ण
+static void backlight_unregister_fb(struct backlight_device *bd)
+{
+	fb_unregister_client(&bd->fb_notif);
+}
+#else
+static inline int backlight_register_fb(struct backlight_device *bd)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम backlight_unरेजिस्टर_fb(काष्ठा backlight_device *bd)
-अणु
-पूर्ण
-#पूर्ण_अगर /* CONFIG_FB */
+static inline void backlight_unregister_fb(struct backlight_device *bd)
+{
+}
+#endif /* CONFIG_FB */
 
-अटल व्योम backlight_generate_event(काष्ठा backlight_device *bd,
-				     क्रमागत backlight_update_reason reason)
-अणु
-	अक्षर *envp[2];
+static void backlight_generate_event(struct backlight_device *bd,
+				     enum backlight_update_reason reason)
+{
+	char *envp[2];
 
-	चयन (reason) अणु
-	हाल BACKLIGHT_UPDATE_SYSFS:
+	switch (reason) {
+	case BACKLIGHT_UPDATE_SYSFS:
 		envp[0] = "SOURCE=sysfs";
-		अवरोध;
-	हाल BACKLIGHT_UPDATE_HOTKEY:
+		break;
+	case BACKLIGHT_UPDATE_HOTKEY:
 		envp[0] = "SOURCE=hotkey";
-		अवरोध;
-	शेष:
+		break;
+	default:
 		envp[0] = "SOURCE=unknown";
-		अवरोध;
-	पूर्ण
-	envp[1] = शून्य;
+		break;
+	}
+	envp[1] = NULL;
 	kobject_uevent_env(&bd->dev.kobj, KOBJ_CHANGE, envp);
-	sysfs_notअगरy(&bd->dev.kobj, शून्य, "actual_brightness");
-पूर्ण
+	sysfs_notify(&bd->dev.kobj, NULL, "actual_brightness");
+}
 
-अटल sमाप_प्रकार bl_घातer_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		अक्षर *buf)
-अणु
-	काष्ठा backlight_device *bd = to_backlight_device(dev);
+static ssize_t bl_power_show(struct device *dev, struct device_attribute *attr,
+		char *buf)
+{
+	struct backlight_device *bd = to_backlight_device(dev);
 
-	वापस प्र_लिखो(buf, "%d\n", bd->props.घातer);
-पूर्ण
+	return sprintf(buf, "%d\n", bd->props.power);
+}
 
-अटल sमाप_प्रकार bl_घातer_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	पूर्णांक rc;
-	काष्ठा backlight_device *bd = to_backlight_device(dev);
-	अचिन्हित दीर्घ घातer, old_घातer;
+static ssize_t bl_power_store(struct device *dev, struct device_attribute *attr,
+		const char *buf, size_t count)
+{
+	int rc;
+	struct backlight_device *bd = to_backlight_device(dev);
+	unsigned long power, old_power;
 
-	rc = kम_से_अदीर्घ(buf, 0, &घातer);
-	अगर (rc)
-		वापस rc;
+	rc = kstrtoul(buf, 0, &power);
+	if (rc)
+		return rc;
 
 	rc = -ENXIO;
 	mutex_lock(&bd->ops_lock);
-	अगर (bd->ops) अणु
-		pr_debug("set power to %lu\n", घातer);
-		अगर (bd->props.घातer != घातer) अणु
-			old_घातer = bd->props.घातer;
-			bd->props.घातer = घातer;
+	if (bd->ops) {
+		pr_debug("set power to %lu\n", power);
+		if (bd->props.power != power) {
+			old_power = bd->props.power;
+			bd->props.power = power;
 			rc = backlight_update_status(bd);
-			अगर (rc)
-				bd->props.घातer = old_घातer;
-			अन्यथा
+			if (rc)
+				bd->props.power = old_power;
+			else
 				rc = count;
-		पूर्ण अन्यथा अणु
+		} else {
 			rc = count;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	mutex_unlock(&bd->ops_lock);
 
-	वापस rc;
-पूर्ण
-अटल DEVICE_ATTR_RW(bl_घातer);
+	return rc;
+}
+static DEVICE_ATTR_RW(bl_power);
 
-अटल sमाप_प्रकार brightness_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा backlight_device *bd = to_backlight_device(dev);
+static ssize_t brightness_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct backlight_device *bd = to_backlight_device(dev);
 
-	वापस प्र_लिखो(buf, "%d\n", bd->props.brightness);
-पूर्ण
+	return sprintf(buf, "%d\n", bd->props.brightness);
+}
 
-पूर्णांक backlight_device_set_brightness(काष्ठा backlight_device *bd,
-				    अचिन्हित दीर्घ brightness)
-अणु
-	पूर्णांक rc = -ENXIO;
+int backlight_device_set_brightness(struct backlight_device *bd,
+				    unsigned long brightness)
+{
+	int rc = -ENXIO;
 
 	mutex_lock(&bd->ops_lock);
-	अगर (bd->ops) अणु
-		अगर (brightness > bd->props.max_brightness)
+	if (bd->ops) {
+		if (brightness > bd->props.max_brightness)
 			rc = -EINVAL;
-		अन्यथा अणु
+		else {
 			pr_debug("set brightness to %lu\n", brightness);
 			bd->props.brightness = brightness;
 			rc = backlight_update_status(bd);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	mutex_unlock(&bd->ops_lock);
 
 	backlight_generate_event(bd, BACKLIGHT_UPDATE_SYSFS);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL(backlight_device_set_brightness);
 
-अटल sमाप_प्रकार brightness_store(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	पूर्णांक rc;
-	काष्ठा backlight_device *bd = to_backlight_device(dev);
-	अचिन्हित दीर्घ brightness;
+static ssize_t brightness_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	int rc;
+	struct backlight_device *bd = to_backlight_device(dev);
+	unsigned long brightness;
 
-	rc = kम_से_अदीर्घ(buf, 0, &brightness);
-	अगर (rc)
-		वापस rc;
+	rc = kstrtoul(buf, 0, &brightness);
+	if (rc)
+		return rc;
 
 	rc = backlight_device_set_brightness(bd, brightness);
 
-	वापस rc ? rc : count;
-पूर्ण
-अटल DEVICE_ATTR_RW(brightness);
+	return rc ? rc : count;
+}
+static DEVICE_ATTR_RW(brightness);
 
-अटल sमाप_प्रकार type_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		अक्षर *buf)
-अणु
-	काष्ठा backlight_device *bd = to_backlight_device(dev);
+static ssize_t type_show(struct device *dev, struct device_attribute *attr,
+		char *buf)
+{
+	struct backlight_device *bd = to_backlight_device(dev);
 
-	वापस प्र_लिखो(buf, "%s\n", backlight_types[bd->props.type]);
-पूर्ण
-अटल DEVICE_ATTR_RO(type);
+	return sprintf(buf, "%s\n", backlight_types[bd->props.type]);
+}
+static DEVICE_ATTR_RO(type);
 
-अटल sमाप_प्रकार max_brightness_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा backlight_device *bd = to_backlight_device(dev);
+static ssize_t max_brightness_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct backlight_device *bd = to_backlight_device(dev);
 
-	वापस प्र_लिखो(buf, "%d\n", bd->props.max_brightness);
-पूर्ण
-अटल DEVICE_ATTR_RO(max_brightness);
+	return sprintf(buf, "%d\n", bd->props.max_brightness);
+}
+static DEVICE_ATTR_RO(max_brightness);
 
-अटल sमाप_प्रकार actual_brightness_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	पूर्णांक rc = -ENXIO;
-	काष्ठा backlight_device *bd = to_backlight_device(dev);
+static ssize_t actual_brightness_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	int rc = -ENXIO;
+	struct backlight_device *bd = to_backlight_device(dev);
 
 	mutex_lock(&bd->ops_lock);
-	अगर (bd->ops && bd->ops->get_brightness)
-		rc = प्र_लिखो(buf, "%d\n", bd->ops->get_brightness(bd));
-	अन्यथा
-		rc = प्र_लिखो(buf, "%d\n", bd->props.brightness);
+	if (bd->ops && bd->ops->get_brightness)
+		rc = sprintf(buf, "%d\n", bd->ops->get_brightness(bd));
+	else
+		rc = sprintf(buf, "%d\n", bd->props.brightness);
 	mutex_unlock(&bd->ops_lock);
 
-	वापस rc;
-पूर्ण
-अटल DEVICE_ATTR_RO(actual_brightness);
+	return rc;
+}
+static DEVICE_ATTR_RO(actual_brightness);
 
-अटल sमाप_प्रकार scale_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा backlight_device *bd = to_backlight_device(dev);
+static ssize_t scale_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct backlight_device *bd = to_backlight_device(dev);
 
-	अगर (WARN_ON(bd->props.scale > BACKLIGHT_SCALE_NON_LINEAR))
-		वापस प्र_लिखो(buf, "unknown\n");
+	if (WARN_ON(bd->props.scale > BACKLIGHT_SCALE_NON_LINEAR))
+		return sprintf(buf, "unknown\n");
 
-	वापस प्र_लिखो(buf, "%s\n", backlight_scale_types[bd->props.scale]);
-पूर्ण
-अटल DEVICE_ATTR_RO(scale);
+	return sprintf(buf, "%s\n", backlight_scale_types[bd->props.scale]);
+}
+static DEVICE_ATTR_RO(scale);
 
-अटल काष्ठा class *backlight_class;
+static struct class *backlight_class;
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक backlight_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा backlight_device *bd = to_backlight_device(dev);
+#ifdef CONFIG_PM_SLEEP
+static int backlight_suspend(struct device *dev)
+{
+	struct backlight_device *bd = to_backlight_device(dev);
 
 	mutex_lock(&bd->ops_lock);
-	अगर (bd->ops && bd->ops->options & BL_CORE_SUSPENDRESUME) अणु
+	if (bd->ops && bd->ops->options & BL_CORE_SUSPENDRESUME) {
 		bd->props.state |= BL_CORE_SUSPENDED;
 		backlight_update_status(bd);
-	पूर्ण
+	}
 	mutex_unlock(&bd->ops_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक backlight_resume(काष्ठा device *dev)
-अणु
-	काष्ठा backlight_device *bd = to_backlight_device(dev);
+static int backlight_resume(struct device *dev)
+{
+	struct backlight_device *bd = to_backlight_device(dev);
 
 	mutex_lock(&bd->ops_lock);
-	अगर (bd->ops && bd->ops->options & BL_CORE_SUSPENDRESUME) अणु
+	if (bd->ops && bd->ops->options & BL_CORE_SUSPENDRESUME) {
 		bd->props.state &= ~BL_CORE_SUSPENDED;
 		backlight_update_status(bd);
-	पूर्ण
+	}
 	mutex_unlock(&bd->ops_lock);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(backlight_class_dev_pm_ops, backlight_suspend,
+static SIMPLE_DEV_PM_OPS(backlight_class_dev_pm_ops, backlight_suspend,
 			 backlight_resume);
 
-अटल व्योम bl_device_release(काष्ठा device *dev)
-अणु
-	काष्ठा backlight_device *bd = to_backlight_device(dev);
-	kमुक्त(bd);
-पूर्ण
+static void bl_device_release(struct device *dev)
+{
+	struct backlight_device *bd = to_backlight_device(dev);
+	kfree(bd);
+}
 
-अटल काष्ठा attribute *bl_device_attrs[] = अणु
-	&dev_attr_bl_घातer.attr,
+static struct attribute *bl_device_attrs[] = {
+	&dev_attr_bl_power.attr,
 	&dev_attr_brightness.attr,
 	&dev_attr_actual_brightness.attr,
 	&dev_attr_max_brightness.attr,
 	&dev_attr_scale.attr,
 	&dev_attr_type.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 ATTRIBUTE_GROUPS(bl_device);
 
 /**
- * backlight_क्रमce_update - tell the backlight subप्रणाली that hardware state
+ * backlight_force_update - tell the backlight subsystem that hardware state
  *   has changed
  * @bd: the backlight device to update
- * @reason: reason क्रम update
+ * @reason: reason for update
  *
- * Updates the पूर्णांकernal state of the backlight in response to a hardware event,
- * and generates an uevent to notअगरy userspace. A backlight driver shall call
- * backlight_क्रमce_update() when the backlight is changed using, क्रम example,
- * a hot-key. The updated brightness is पढ़ो using get_brightness() and the
+ * Updates the internal state of the backlight in response to a hardware event,
+ * and generates an uevent to notify userspace. A backlight driver shall call
+ * backlight_force_update() when the backlight is changed using, for example,
+ * a hot-key. The updated brightness is read using get_brightness() and the
  * brightness value is reported using an uevent.
  */
-व्योम backlight_क्रमce_update(काष्ठा backlight_device *bd,
-			    क्रमागत backlight_update_reason reason)
-अणु
+void backlight_force_update(struct backlight_device *bd,
+			    enum backlight_update_reason reason)
+{
 	mutex_lock(&bd->ops_lock);
-	अगर (bd->ops && bd->ops->get_brightness)
+	if (bd->ops && bd->ops->get_brightness)
 		bd->props.brightness = bd->ops->get_brightness(bd);
 	mutex_unlock(&bd->ops_lock);
 	backlight_generate_event(bd, reason);
-पूर्ण
-EXPORT_SYMBOL(backlight_क्रमce_update);
+}
+EXPORT_SYMBOL(backlight_force_update);
 
-/* deprecated - use devm_backlight_device_रेजिस्टर() */
-काष्ठा backlight_device *backlight_device_रेजिस्टर(स्थिर अक्षर *name,
-	काष्ठा device *parent, व्योम *devdata, स्थिर काष्ठा backlight_ops *ops,
-	स्थिर काष्ठा backlight_properties *props)
-अणु
-	काष्ठा backlight_device *new_bd;
-	पूर्णांक rc;
+/* deprecated - use devm_backlight_device_register() */
+struct backlight_device *backlight_device_register(const char *name,
+	struct device *parent, void *devdata, const struct backlight_ops *ops,
+	const struct backlight_properties *props)
+{
+	struct backlight_device *new_bd;
+	int rc;
 
 	pr_debug("backlight_device_register: name=%s\n", name);
 
-	new_bd = kzalloc(माप(काष्ठा backlight_device), GFP_KERNEL);
-	अगर (!new_bd)
-		वापस ERR_PTR(-ENOMEM);
+	new_bd = kzalloc(sizeof(struct backlight_device), GFP_KERNEL);
+	if (!new_bd)
+		return ERR_PTR(-ENOMEM);
 
 	mutex_init(&new_bd->update_lock);
 	mutex_init(&new_bd->ops_lock);
@@ -413,75 +412,75 @@ EXPORT_SYMBOL(backlight_क्रमce_update);
 	dev_set_name(&new_bd->dev, "%s", name);
 	dev_set_drvdata(&new_bd->dev, devdata);
 
-	/* Set शेष properties */
-	अगर (props) अणु
-		स_नकल(&new_bd->props, props,
-		       माप(काष्ठा backlight_properties));
-		अगर (props->type <= 0 || props->type >= BACKLIGHT_TYPE_MAX) अणु
+	/* Set default properties */
+	if (props) {
+		memcpy(&new_bd->props, props,
+		       sizeof(struct backlight_properties));
+		if (props->type <= 0 || props->type >= BACKLIGHT_TYPE_MAX) {
 			WARN(1, "%s: invalid backlight type", name);
 			new_bd->props.type = BACKLIGHT_RAW;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		new_bd->props.type = BACKLIGHT_RAW;
-	पूर्ण
+	}
 
-	rc = device_रेजिस्टर(&new_bd->dev);
-	अगर (rc) अणु
+	rc = device_register(&new_bd->dev);
+	if (rc) {
 		put_device(&new_bd->dev);
-		वापस ERR_PTR(rc);
-	पूर्ण
+		return ERR_PTR(rc);
+	}
 
-	rc = backlight_रेजिस्टर_fb(new_bd);
-	अगर (rc) अणु
-		device_unरेजिस्टर(&new_bd->dev);
-		वापस ERR_PTR(rc);
-	पूर्ण
+	rc = backlight_register_fb(new_bd);
+	if (rc) {
+		device_unregister(&new_bd->dev);
+		return ERR_PTR(rc);
+	}
 
 	new_bd->ops = ops;
 
-#अगर_घोषित CONFIG_PMAC_BACKLIGHT
+#ifdef CONFIG_PMAC_BACKLIGHT
 	mutex_lock(&pmac_backlight_mutex);
-	अगर (!pmac_backlight)
+	if (!pmac_backlight)
 		pmac_backlight = new_bd;
 	mutex_unlock(&pmac_backlight_mutex);
-#पूर्ण_अगर
+#endif
 
 	mutex_lock(&backlight_dev_list_mutex);
 	list_add(&new_bd->entry, &backlight_dev_list);
 	mutex_unlock(&backlight_dev_list_mutex);
 
-	blocking_notअगरier_call_chain(&backlight_notअगरier,
+	blocking_notifier_call_chain(&backlight_notifier,
 				     BACKLIGHT_REGISTERED, new_bd);
 
-	वापस new_bd;
-पूर्ण
-EXPORT_SYMBOL(backlight_device_रेजिस्टर);
+	return new_bd;
+}
+EXPORT_SYMBOL(backlight_device_register);
 
 /** backlight_device_get_by_type - find first backlight device of a type
  * @type: the type of backlight device
  *
- * Look up the first backlight device of the specअगरied type
+ * Look up the first backlight device of the specified type
  *
  * RETURNS:
  *
- * Poपूर्णांकer to backlight device अगर any was found. Otherwise शून्य.
+ * Pointer to backlight device if any was found. Otherwise NULL.
  */
-काष्ठा backlight_device *backlight_device_get_by_type(क्रमागत backlight_type type)
-अणु
+struct backlight_device *backlight_device_get_by_type(enum backlight_type type)
+{
 	bool found = false;
-	काष्ठा backlight_device *bd;
+	struct backlight_device *bd;
 
 	mutex_lock(&backlight_dev_list_mutex);
-	list_क्रम_each_entry(bd, &backlight_dev_list, entry) अणु
-		अगर (bd->props.type == type) अणु
+	list_for_each_entry(bd, &backlight_dev_list, entry) {
+		if (bd->props.type == type) {
 			found = true;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	mutex_unlock(&backlight_dev_list_mutex);
 
-	वापस found ? bd : शून्य;
-पूर्ण
+	return found ? bd : NULL;
+}
 EXPORT_SYMBOL(backlight_device_get_by_type);
 
 /**
@@ -493,283 +492,283 @@ EXPORT_SYMBOL(backlight_device_get_by_type);
  * reference by calling backlight_put().
  *
  * Returns:
- * A poपूर्णांकer to the backlight device अगर found, otherwise शून्य.
+ * A pointer to the backlight device if found, otherwise NULL.
  */
-काष्ठा backlight_device *backlight_device_get_by_name(स्थिर अक्षर *name)
-अणु
-	काष्ठा device *dev;
+struct backlight_device *backlight_device_get_by_name(const char *name)
+{
+	struct device *dev;
 
 	dev = class_find_device_by_name(backlight_class, name);
 
-	वापस dev ? to_backlight_device(dev) : शून्य;
-पूर्ण
+	return dev ? to_backlight_device(dev) : NULL;
+}
 EXPORT_SYMBOL(backlight_device_get_by_name);
 
-/* deprecated - use devm_backlight_device_unरेजिस्टर() */
-व्योम backlight_device_unरेजिस्टर(काष्ठा backlight_device *bd)
-अणु
-	अगर (!bd)
-		वापस;
+/* deprecated - use devm_backlight_device_unregister() */
+void backlight_device_unregister(struct backlight_device *bd)
+{
+	if (!bd)
+		return;
 
 	mutex_lock(&backlight_dev_list_mutex);
 	list_del(&bd->entry);
 	mutex_unlock(&backlight_dev_list_mutex);
 
-#अगर_घोषित CONFIG_PMAC_BACKLIGHT
+#ifdef CONFIG_PMAC_BACKLIGHT
 	mutex_lock(&pmac_backlight_mutex);
-	अगर (pmac_backlight == bd)
-		pmac_backlight = शून्य;
+	if (pmac_backlight == bd)
+		pmac_backlight = NULL;
 	mutex_unlock(&pmac_backlight_mutex);
-#पूर्ण_अगर
+#endif
 
-	blocking_notअगरier_call_chain(&backlight_notअगरier,
+	blocking_notifier_call_chain(&backlight_notifier,
 				     BACKLIGHT_UNREGISTERED, bd);
 
 	mutex_lock(&bd->ops_lock);
-	bd->ops = शून्य;
+	bd->ops = NULL;
 	mutex_unlock(&bd->ops_lock);
 
-	backlight_unरेजिस्टर_fb(bd);
-	device_unरेजिस्टर(&bd->dev);
-पूर्ण
-EXPORT_SYMBOL(backlight_device_unरेजिस्टर);
+	backlight_unregister_fb(bd);
+	device_unregister(&bd->dev);
+}
+EXPORT_SYMBOL(backlight_device_unregister);
 
-अटल व्योम devm_backlight_device_release(काष्ठा device *dev, व्योम *res)
-अणु
-	काष्ठा backlight_device *backlight = *(काष्ठा backlight_device **)res;
+static void devm_backlight_device_release(struct device *dev, void *res)
+{
+	struct backlight_device *backlight = *(struct backlight_device **)res;
 
-	backlight_device_unरेजिस्टर(backlight);
-पूर्ण
+	backlight_device_unregister(backlight);
+}
 
-अटल पूर्णांक devm_backlight_device_match(काष्ठा device *dev, व्योम *res,
-					व्योम *data)
-अणु
-	काष्ठा backlight_device **r = res;
+static int devm_backlight_device_match(struct device *dev, void *res,
+					void *data)
+{
+	struct backlight_device **r = res;
 
-	वापस *r == data;
-पूर्ण
+	return *r == data;
+}
 
 /**
- * backlight_रेजिस्टर_notअगरier - get notअगरied of backlight (un)registration
- * @nb: notअगरier block with the notअगरier to call on backlight (un)registration
+ * backlight_register_notifier - get notified of backlight (un)registration
+ * @nb: notifier block with the notifier to call on backlight (un)registration
  *
- * Register a notअगरier to get notअगरied when backlight devices get रेजिस्टरed
- * or unरेजिस्टरed.
+ * Register a notifier to get notified when backlight devices get registered
+ * or unregistered.
  *
  * RETURNS:
  *
  * 0 on success, otherwise a negative error code
  */
-पूर्णांक backlight_रेजिस्टर_notअगरier(काष्ठा notअगरier_block *nb)
-अणु
-	वापस blocking_notअगरier_chain_रेजिस्टर(&backlight_notअगरier, nb);
-पूर्ण
-EXPORT_SYMBOL(backlight_रेजिस्टर_notअगरier);
+int backlight_register_notifier(struct notifier_block *nb)
+{
+	return blocking_notifier_chain_register(&backlight_notifier, nb);
+}
+EXPORT_SYMBOL(backlight_register_notifier);
 
 /**
- * backlight_unरेजिस्टर_notअगरier - unरेजिस्टर a backlight notअगरier
- * @nb: notअगरier block to unरेजिस्टर
+ * backlight_unregister_notifier - unregister a backlight notifier
+ * @nb: notifier block to unregister
  *
- * Register a notअगरier to get notअगरied when backlight devices get रेजिस्टरed
- * or unरेजिस्टरed.
+ * Register a notifier to get notified when backlight devices get registered
+ * or unregistered.
  *
  * RETURNS:
  *
  * 0 on success, otherwise a negative error code
  */
-पूर्णांक backlight_unरेजिस्टर_notअगरier(काष्ठा notअगरier_block *nb)
-अणु
-	वापस blocking_notअगरier_chain_unरेजिस्टर(&backlight_notअगरier, nb);
-पूर्ण
-EXPORT_SYMBOL(backlight_unरेजिस्टर_notअगरier);
+int backlight_unregister_notifier(struct notifier_block *nb)
+{
+	return blocking_notifier_chain_unregister(&backlight_notifier, nb);
+}
+EXPORT_SYMBOL(backlight_unregister_notifier);
 
 /**
- * devm_backlight_device_रेजिस्टर - रेजिस्टर a new backlight device
- * @dev: the device to रेजिस्टर
+ * devm_backlight_device_register - register a new backlight device
+ * @dev: the device to register
  * @name: the name of the device
- * @parent: a poपूर्णांकer to the parent device (often the same as @dev)
- * @devdata: an optional poपूर्णांकer to be stored क्रम निजी driver use
- * @ops: the backlight operations काष्ठाure
+ * @parent: a pointer to the parent device (often the same as @dev)
+ * @devdata: an optional pointer to be stored for private driver use
+ * @ops: the backlight operations structure
  * @props: the backlight properties
  *
- * Creates and रेजिस्टरs new backlight device. When a backlight device
- * is रेजिस्टरed the configuration must be specअगरied in the @props
+ * Creates and registers new backlight device. When a backlight device
+ * is registered the configuration must be specified in the @props
  * parameter. See description of &backlight_properties.
  *
  * RETURNS:
  *
- * काष्ठा backlight on success, or an ERR_PTR on error
+ * struct backlight on success, or an ERR_PTR on error
  */
-काष्ठा backlight_device *devm_backlight_device_रेजिस्टर(काष्ठा device *dev,
-	स्थिर अक्षर *name, काष्ठा device *parent, व्योम *devdata,
-	स्थिर काष्ठा backlight_ops *ops,
-	स्थिर काष्ठा backlight_properties *props)
-अणु
-	काष्ठा backlight_device **ptr, *backlight;
+struct backlight_device *devm_backlight_device_register(struct device *dev,
+	const char *name, struct device *parent, void *devdata,
+	const struct backlight_ops *ops,
+	const struct backlight_properties *props)
+{
+	struct backlight_device **ptr, *backlight;
 
-	ptr = devres_alloc(devm_backlight_device_release, माप(*ptr),
+	ptr = devres_alloc(devm_backlight_device_release, sizeof(*ptr),
 			GFP_KERNEL);
-	अगर (!ptr)
-		वापस ERR_PTR(-ENOMEM);
+	if (!ptr)
+		return ERR_PTR(-ENOMEM);
 
-	backlight = backlight_device_रेजिस्टर(name, parent, devdata, ops,
+	backlight = backlight_device_register(name, parent, devdata, ops,
 						props);
-	अगर (!IS_ERR(backlight)) अणु
+	if (!IS_ERR(backlight)) {
 		*ptr = backlight;
 		devres_add(dev, ptr);
-	पूर्ण अन्यथा अणु
-		devres_मुक्त(ptr);
-	पूर्ण
+	} else {
+		devres_free(ptr);
+	}
 
-	वापस backlight;
-पूर्ण
-EXPORT_SYMBOL(devm_backlight_device_रेजिस्टर);
+	return backlight;
+}
+EXPORT_SYMBOL(devm_backlight_device_register);
 
 /**
- * devm_backlight_device_unरेजिस्टर - unरेजिस्टर backlight device
- * @dev: the device to unरेजिस्टर
- * @bd: the backlight device to unरेजिस्टर
+ * devm_backlight_device_unregister - unregister backlight device
+ * @dev: the device to unregister
+ * @bd: the backlight device to unregister
  *
- * Deallocates a backlight allocated with devm_backlight_device_रेजिस्टर().
+ * Deallocates a backlight allocated with devm_backlight_device_register().
  * Normally this function will not need to be called and the resource management
- * code will ensure that the resources are मुक्तd.
+ * code will ensure that the resources are freed.
  */
-व्योम devm_backlight_device_unरेजिस्टर(काष्ठा device *dev,
-				काष्ठा backlight_device *bd)
-अणु
-	पूर्णांक rc;
+void devm_backlight_device_unregister(struct device *dev,
+				struct backlight_device *bd)
+{
+	int rc;
 
 	rc = devres_release(dev, devm_backlight_device_release,
 				devm_backlight_device_match, bd);
 	WARN_ON(rc);
-पूर्ण
-EXPORT_SYMBOL(devm_backlight_device_unरेजिस्टर);
+}
+EXPORT_SYMBOL(devm_backlight_device_unregister);
 
-#अगर_घोषित CONFIG_OF
-अटल पूर्णांक of_parent_match(काष्ठा device *dev, स्थिर व्योम *data)
-अणु
-	वापस dev->parent && dev->parent->of_node == data;
-पूर्ण
+#ifdef CONFIG_OF
+static int of_parent_match(struct device *dev, const void *data)
+{
+	return dev->parent && dev->parent->of_node == data;
+}
 
 /**
  * of_find_backlight_by_node() - find backlight device by device-tree node
  * @node: device-tree node of the backlight device
  *
- * Returns a poपूर्णांकer to the backlight device corresponding to the given DT
- * node or शून्य अगर no such backlight device exists or अगर the device hasn't
+ * Returns a pointer to the backlight device corresponding to the given DT
+ * node or NULL if no such backlight device exists or if the device hasn't
  * been probed yet.
  *
  * This function obtains a reference on the backlight device and it is the
  * caller's responsibility to drop the reference by calling put_device() on
  * the backlight device's .dev field.
  */
-काष्ठा backlight_device *of_find_backlight_by_node(काष्ठा device_node *node)
-अणु
-	काष्ठा device *dev;
+struct backlight_device *of_find_backlight_by_node(struct device_node *node)
+{
+	struct device *dev;
 
-	dev = class_find_device(backlight_class, शून्य, node, of_parent_match);
+	dev = class_find_device(backlight_class, NULL, node, of_parent_match);
 
-	वापस dev ? to_backlight_device(dev) : शून्य;
-पूर्ण
+	return dev ? to_backlight_device(dev) : NULL;
+}
 EXPORT_SYMBOL(of_find_backlight_by_node);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा backlight_device *of_find_backlight(काष्ठा device *dev)
-अणु
-	काष्ठा backlight_device *bd = शून्य;
-	काष्ठा device_node *np;
+static struct backlight_device *of_find_backlight(struct device *dev)
+{
+	struct backlight_device *bd = NULL;
+	struct device_node *np;
 
-	अगर (!dev)
-		वापस शून्य;
+	if (!dev)
+		return NULL;
 
-	अगर (IS_ENABLED(CONFIG_OF) && dev->of_node) अणु
+	if (IS_ENABLED(CONFIG_OF) && dev->of_node) {
 		np = of_parse_phandle(dev->of_node, "backlight", 0);
-		अगर (np) अणु
+		if (np) {
 			bd = of_find_backlight_by_node(np);
 			of_node_put(np);
-			अगर (!bd)
-				वापस ERR_PTR(-EPROBE_DEFER);
+			if (!bd)
+				return ERR_PTR(-EPROBE_DEFER);
 			/*
 			 * Note: gpio_backlight uses brightness as
-			 * घातer state during probe
+			 * power state during probe
 			 */
-			अगर (!bd->props.brightness)
+			if (!bd->props.brightness)
 				bd->props.brightness = bd->props.max_brightness;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस bd;
-पूर्ण
+	return bd;
+}
 
-अटल व्योम devm_backlight_release(व्योम *data)
-अणु
-	काष्ठा backlight_device *bd = data;
+static void devm_backlight_release(void *data)
+{
+	struct backlight_device *bd = data;
 
-	अगर (bd)
+	if (bd)
 		put_device(&bd->dev);
-पूर्ण
+}
 
 /**
- * devm_of_find_backlight - find backlight क्रम a device
+ * devm_of_find_backlight - find backlight for a device
  * @dev: the device
  *
- * This function looks क्रम a property named 'backlight' on the DT node
+ * This function looks for a property named 'backlight' on the DT node
  * connected to @dev and looks up the backlight device. The lookup is
- * device managed so the reference to the backlight device is स्वतःmatically
+ * device managed so the reference to the backlight device is automatically
  * dropped on driver detach.
  *
  * RETURNS:
  *
- * A poपूर्णांकer to the backlight device अगर found.
- * Error poपूर्णांकer -EPROBE_DEFER अगर the DT property is set, but no backlight
- * device is found. शून्य अगर there's no backlight property.
+ * A pointer to the backlight device if found.
+ * Error pointer -EPROBE_DEFER if the DT property is set, but no backlight
+ * device is found. NULL if there's no backlight property.
  */
-काष्ठा backlight_device *devm_of_find_backlight(काष्ठा device *dev)
-अणु
-	काष्ठा backlight_device *bd;
-	पूर्णांक ret;
+struct backlight_device *devm_of_find_backlight(struct device *dev)
+{
+	struct backlight_device *bd;
+	int ret;
 
 	bd = of_find_backlight(dev);
-	अगर (IS_ERR_OR_शून्य(bd))
-		वापस bd;
+	if (IS_ERR_OR_NULL(bd))
+		return bd;
 	ret = devm_add_action(dev, devm_backlight_release, bd);
-	अगर (ret) अणु
+	if (ret) {
 		put_device(&bd->dev);
-		वापस ERR_PTR(ret);
-	पूर्ण
-	वापस bd;
-पूर्ण
+		return ERR_PTR(ret);
+	}
+	return bd;
+}
 EXPORT_SYMBOL(devm_of_find_backlight);
 
-अटल व्योम __निकास backlight_class_निकास(व्योम)
-अणु
+static void __exit backlight_class_exit(void)
+{
 	class_destroy(backlight_class);
-पूर्ण
+}
 
-अटल पूर्णांक __init backlight_class_init(व्योम)
-अणु
+static int __init backlight_class_init(void)
+{
 	backlight_class = class_create(THIS_MODULE, "backlight");
-	अगर (IS_ERR(backlight_class)) अणु
+	if (IS_ERR(backlight_class)) {
 		pr_warn("Unable to create backlight class; errno = %ld\n",
 			PTR_ERR(backlight_class));
-		वापस PTR_ERR(backlight_class);
-	पूर्ण
+		return PTR_ERR(backlight_class);
+	}
 
 	backlight_class->dev_groups = bl_device_groups;
 	backlight_class->pm = &backlight_class_dev_pm_ops;
 	INIT_LIST_HEAD(&backlight_dev_list);
 	mutex_init(&backlight_dev_list_mutex);
-	BLOCKING_INIT_NOTIFIER_HEAD(&backlight_notअगरier);
+	BLOCKING_INIT_NOTIFIER_HEAD(&backlight_notifier);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * अगर this is compiled पूर्णांकo the kernel, we need to ensure that the
- * class is रेजिस्टरed beक्रमe users of the class try to रेजिस्टर lcd's
+ * if this is compiled into the kernel, we need to ensure that the
+ * class is registered before users of the class try to register lcd's
  */
 postcore_initcall(backlight_class_init);
-module_निकास(backlight_class_निकास);
+module_exit(backlight_class_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Jamey Hicks <jamey.hicks@hp.com>, Andrew Zabolotny <zap@homelink.ru>");

@@ -1,18 +1,17 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _XT_RATEEST_TARGET_H
-#घोषणा _XT_RATEEST_TARGET_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _XT_RATEEST_TARGET_H
+#define _XT_RATEEST_TARGET_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/अगर.h>
+#include <linux/types.h>
+#include <linux/if.h>
 
-काष्ठा xt_rateest_target_info अणु
-	अक्षर			name[IFNAMSIZ];
-	__s8			पूर्णांकerval;
+struct xt_rateest_target_info {
+	char			name[IFNAMSIZ];
+	__s8			interval;
 	__u8		ewma_log;
 
-	/* Used पूर्णांकernally by the kernel */
-	काष्ठा xt_rateest	*est __attribute__((aligned(8)));
-पूर्ण;
+	/* Used internally by the kernel */
+	struct xt_rateest	*est __attribute__((aligned(8)));
+};
 
-#पूर्ण_अगर /* _XT_RATEEST_TARGET_H */
+#endif /* _XT_RATEEST_TARGET_H */

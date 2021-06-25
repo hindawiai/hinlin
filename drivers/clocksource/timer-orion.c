@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- * Marvell Orion SoC समयr handling.
+ * Marvell Orion SoC timer handling.
  *
  * Sebastian Hesselbarth <sebastian.hesselbarth@gmail.com>
  *
@@ -8,186 +7,186 @@
  * License version 2.  This program is licensed "as is" without any
  * warranty of any kind, whether express or implied.
  *
- * Timer 0 is used as मुक्त-running घड़ीsource, जबतक समयr 1 is
- * used as घड़ी_event_device.
+ * Timer 0 is used as free-running clocksource, while timer 1 is
+ * used as clock_event_device.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/घड़ीchips.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/sched_घड़ी.h>
+#include <linux/kernel.h>
+#include <linux/bitops.h>
+#include <linux/clk.h>
+#include <linux/clockchips.h>
+#include <linux/delay.h>
+#include <linux/interrupt.h>
+#include <linux/of_address.h>
+#include <linux/of_irq.h>
+#include <linux/spinlock.h>
+#include <linux/sched_clock.h>
 
-#घोषणा TIMER_CTRL		0x00
-#घोषणा  TIMER0_EN		BIT(0)
-#घोषणा  TIMER0_RELOAD_EN	BIT(1)
-#घोषणा  TIMER1_EN		BIT(2)
-#घोषणा  TIMER1_RELOAD_EN	BIT(3)
-#घोषणा TIMER0_RELOAD		0x10
-#घोषणा TIMER0_VAL		0x14
-#घोषणा TIMER1_RELOAD		0x18
-#घोषणा TIMER1_VAL		0x1c
+#define TIMER_CTRL		0x00
+#define  TIMER0_EN		BIT(0)
+#define  TIMER0_RELOAD_EN	BIT(1)
+#define  TIMER1_EN		BIT(2)
+#define  TIMER1_RELOAD_EN	BIT(3)
+#define TIMER0_RELOAD		0x10
+#define TIMER0_VAL		0x14
+#define TIMER1_RELOAD		0x18
+#define TIMER1_VAL		0x1c
 
-#घोषणा ORION_ONESHOT_MIN	1
-#घोषणा ORION_ONESHOT_MAX	0xfffffffe
+#define ORION_ONESHOT_MIN	1
+#define ORION_ONESHOT_MAX	0xfffffffe
 
-अटल व्योम __iomem *समयr_base;
+static void __iomem *timer_base;
 
-अटल अचिन्हित दीर्घ notrace orion_पढ़ो_समयr(व्योम)
-अणु
-	वापस ~पढ़ोl(समयr_base + TIMER0_VAL);
-पूर्ण
+static unsigned long notrace orion_read_timer(void)
+{
+	return ~readl(timer_base + TIMER0_VAL);
+}
 
-अटल काष्ठा delay_समयr orion_delay_समयr = अणु
-	.पढ़ो_current_समयr = orion_पढ़ो_समयr,
-पूर्ण;
+static struct delay_timer orion_delay_timer = {
+	.read_current_timer = orion_read_timer,
+};
 
-अटल व्योम orion_delay_समयr_init(अचिन्हित दीर्घ rate)
-अणु
-	orion_delay_समयr.freq = rate;
-	रेजिस्टर_current_समयr_delay(&orion_delay_समयr);
-पूर्ण
+static void orion_delay_timer_init(unsigned long rate)
+{
+	orion_delay_timer.freq = rate;
+	register_current_timer_delay(&orion_delay_timer);
+}
 
 /*
- * Free-running घड़ीsource handling.
+ * Free-running clocksource handling.
  */
-अटल u64 notrace orion_पढ़ो_sched_घड़ी(व्योम)
-अणु
-	वापस ~पढ़ोl(समयr_base + TIMER0_VAL);
-पूर्ण
+static u64 notrace orion_read_sched_clock(void)
+{
+	return ~readl(timer_base + TIMER0_VAL);
+}
 
 /*
  * Clockevent handling.
  */
-अटल u32 ticks_per_jअगरfy;
+static u32 ticks_per_jiffy;
 
-अटल पूर्णांक orion_clkevt_next_event(अचिन्हित दीर्घ delta,
-				   काष्ठा घड़ी_event_device *dev)
-अणु
-	/* setup and enable one-shot समयr */
-	ग_लिखोl(delta, समयr_base + TIMER1_VAL);
-	atomic_io_modअगरy(समयr_base + TIMER_CTRL,
+static int orion_clkevt_next_event(unsigned long delta,
+				   struct clock_event_device *dev)
+{
+	/* setup and enable one-shot timer */
+	writel(delta, timer_base + TIMER1_VAL);
+	atomic_io_modify(timer_base + TIMER_CTRL,
 		TIMER1_RELOAD_EN | TIMER1_EN, TIMER1_EN);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक orion_clkevt_shutकरोwn(काष्ठा घड़ी_event_device *dev)
-अणु
-	/* disable समयr */
-	atomic_io_modअगरy(समयr_base + TIMER_CTRL,
+static int orion_clkevt_shutdown(struct clock_event_device *dev)
+{
+	/* disable timer */
+	atomic_io_modify(timer_base + TIMER_CTRL,
 			 TIMER1_RELOAD_EN | TIMER1_EN, 0);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक orion_clkevt_set_periodic(काष्ठा घड़ी_event_device *dev)
-अणु
-	/* setup and enable periodic समयr at 1/HZ पूर्णांकervals */
-	ग_लिखोl(ticks_per_jअगरfy - 1, समयr_base + TIMER1_RELOAD);
-	ग_लिखोl(ticks_per_jअगरfy - 1, समयr_base + TIMER1_VAL);
-	atomic_io_modअगरy(समयr_base + TIMER_CTRL,
+static int orion_clkevt_set_periodic(struct clock_event_device *dev)
+{
+	/* setup and enable periodic timer at 1/HZ intervals */
+	writel(ticks_per_jiffy - 1, timer_base + TIMER1_RELOAD);
+	writel(ticks_per_jiffy - 1, timer_base + TIMER1_VAL);
+	atomic_io_modify(timer_base + TIMER_CTRL,
 			 TIMER1_RELOAD_EN | TIMER1_EN,
 			 TIMER1_RELOAD_EN | TIMER1_EN);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा घड़ी_event_device orion_clkevt = अणु
+static struct clock_event_device orion_clkevt = {
 	.name			= "orion_event",
 	.features		= CLOCK_EVT_FEAT_ONESHOT |
 				  CLOCK_EVT_FEAT_PERIODIC,
-	.shअगरt			= 32,
+	.shift			= 32,
 	.rating			= 300,
 	.set_next_event		= orion_clkevt_next_event,
-	.set_state_shutकरोwn	= orion_clkevt_shutकरोwn,
+	.set_state_shutdown	= orion_clkevt_shutdown,
 	.set_state_periodic	= orion_clkevt_set_periodic,
-	.set_state_oneshot	= orion_clkevt_shutकरोwn,
-	.tick_resume		= orion_clkevt_shutकरोwn,
-पूर्ण;
+	.set_state_oneshot	= orion_clkevt_shutdown,
+	.tick_resume		= orion_clkevt_shutdown,
+};
 
-अटल irqवापस_t orion_clkevt_irq_handler(पूर्णांक irq, व्योम *dev_id)
-अणु
+static irqreturn_t orion_clkevt_irq_handler(int irq, void *dev_id)
+{
 	orion_clkevt.event_handler(&orion_clkevt);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक __init orion_समयr_init(काष्ठा device_node *np)
-अणु
-	अचिन्हित दीर्घ rate;
-	काष्ठा clk *clk;
-	पूर्णांक irq, ret;
+static int __init orion_timer_init(struct device_node *np)
+{
+	unsigned long rate;
+	struct clk *clk;
+	int irq, ret;
 
-	/* समयr रेजिस्टरs are shared with watchकरोg समयr */
-	समयr_base = of_iomap(np, 0);
-	अगर (!समयr_base) अणु
+	/* timer registers are shared with watchdog timer */
+	timer_base = of_iomap(np, 0);
+	if (!timer_base) {
 		pr_err("%pOFn: unable to map resource\n", np);
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
 	clk = of_clk_get(np, 0);
-	अगर (IS_ERR(clk)) अणु
+	if (IS_ERR(clk)) {
 		pr_err("%pOFn: unable to get clk\n", np);
-		वापस PTR_ERR(clk);
-	पूर्ण
+		return PTR_ERR(clk);
+	}
 
 	ret = clk_prepare_enable(clk);
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("Failed to prepare clock\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* we are only पूर्णांकerested in समयr1 irq */
+	/* we are only interested in timer1 irq */
 	irq = irq_of_parse_and_map(np, 1);
-	अगर (irq <= 0) अणु
+	if (irq <= 0) {
 		pr_err("%pOFn: unable to parse timer1 irq\n", np);
 		ret = -EINVAL;
-		जाओ out_unprep_clk;
-	पूर्ण
+		goto out_unprep_clk;
+	}
 
 	rate = clk_get_rate(clk);
 
-	/* setup समयr0 as मुक्त-running घड़ीsource */
-	ग_लिखोl(~0, समयr_base + TIMER0_VAL);
-	ग_लिखोl(~0, समयr_base + TIMER0_RELOAD);
-	atomic_io_modअगरy(समयr_base + TIMER_CTRL,
+	/* setup timer0 as free-running clocksource */
+	writel(~0, timer_base + TIMER0_VAL);
+	writel(~0, timer_base + TIMER0_RELOAD);
+	atomic_io_modify(timer_base + TIMER_CTRL,
 		TIMER0_RELOAD_EN | TIMER0_EN,
 		TIMER0_RELOAD_EN | TIMER0_EN);
 
-	ret = घड़ीsource_mmio_init(समयr_base + TIMER0_VAL,
+	ret = clocksource_mmio_init(timer_base + TIMER0_VAL,
 				    "orion_clocksource", rate, 300, 32,
-				    घड़ीsource_mmio_पढ़ोl_करोwn);
-	अगर (ret) अणु
+				    clocksource_mmio_readl_down);
+	if (ret) {
 		pr_err("Failed to initialize mmio timer\n");
-		जाओ out_unprep_clk;
-	पूर्ण
+		goto out_unprep_clk;
+	}
 
-	sched_घड़ी_रेजिस्टर(orion_पढ़ो_sched_घड़ी, 32, rate);
+	sched_clock_register(orion_read_sched_clock, 32, rate);
 
-	/* setup समयr1 as घड़ीevent समयr */
+	/* setup timer1 as clockevent timer */
 	ret = request_irq(irq, orion_clkevt_irq_handler, IRQF_TIMER,
-			  "orion_event", शून्य);
-	अगर (ret) अणु
+			  "orion_event", NULL);
+	if (ret) {
 		pr_err("%pOFn: unable to setup irq\n", np);
-		जाओ out_unprep_clk;
-	पूर्ण
+		goto out_unprep_clk;
+	}
 
-	ticks_per_jअगरfy = (clk_get_rate(clk) + HZ/2) / HZ;
+	ticks_per_jiffy = (clk_get_rate(clk) + HZ/2) / HZ;
 	orion_clkevt.cpumask = cpumask_of(0);
 	orion_clkevt.irq = irq;
-	घड़ीevents_config_and_रेजिस्टर(&orion_clkevt, rate,
+	clockevents_config_and_register(&orion_clkevt, rate,
 					ORION_ONESHOT_MIN, ORION_ONESHOT_MAX);
 
 
-	orion_delay_समयr_init(rate);
+	orion_delay_timer_init(rate);
 
-	वापस 0;
+	return 0;
 
 out_unprep_clk:
 	clk_disable_unprepare(clk);
-	वापस ret;
-पूर्ण
-TIMER_OF_DECLARE(orion_समयr, "marvell,orion-timer", orion_समयr_init);
+	return ret;
+}
+TIMER_OF_DECLARE(orion_timer, "marvell,orion-timer", orion_timer_init);

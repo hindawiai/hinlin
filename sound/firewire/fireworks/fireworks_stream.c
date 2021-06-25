@@ -1,369 +1,368 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * fireworks_stream.c - a part of driver क्रम Fireworks based devices
+ * fireworks_stream.c - a part of driver for Fireworks based devices
  *
  * Copyright (c) 2013-2014 Takashi Sakamoto
  */
-#समावेश "./fireworks.h"
+#include "./fireworks.h"
 
-#घोषणा CALLBACK_TIMEOUT	100
+#define CALLBACK_TIMEOUT	100
 
-अटल पूर्णांक init_stream(काष्ठा snd_efw *efw, काष्ठा amdtp_stream *stream)
-अणु
-	काष्ठा cmp_connection *conn;
-	क्रमागत cmp_direction c_dir;
-	क्रमागत amdtp_stream_direction s_dir;
-	पूर्णांक err;
+static int init_stream(struct snd_efw *efw, struct amdtp_stream *stream)
+{
+	struct cmp_connection *conn;
+	enum cmp_direction c_dir;
+	enum amdtp_stream_direction s_dir;
+	int err;
 
-	अगर (stream == &efw->tx_stream) अणु
+	if (stream == &efw->tx_stream) {
 		conn = &efw->out_conn;
 		c_dir = CMP_OUTPUT;
 		s_dir = AMDTP_IN_STREAM;
-	पूर्ण अन्यथा अणु
+	} else {
 		conn = &efw->in_conn;
 		c_dir = CMP_INPUT;
 		s_dir = AMDTP_OUT_STREAM;
-	पूर्ण
+	}
 
 	err = cmp_connection_init(conn, efw->unit, c_dir, 0);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	err = amdtp_am824_init(stream, efw->unit, s_dir, CIP_BLOCKING);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		amdtp_stream_destroy(stream);
 		cmp_connection_destroy(conn);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (stream == &efw->tx_stream) अणु
+	if (stream == &efw->tx_stream) {
 		// Fireworks transmits NODATA packets with TAG0.
 		efw->tx_stream.flags |= CIP_EMPTY_WITH_TAG0;
-		// Fireworks has its own meaning क्रम dbc.
+		// Fireworks has its own meaning for dbc.
 		efw->tx_stream.flags |= CIP_DBC_IS_END_EVENT;
 		// Fireworks reset dbc at bus reset.
 		efw->tx_stream.flags |= CIP_SKIP_DBC_ZERO_CHECK;
 		// But Recent firmwares starts packets with non-zero dbc.
 		// Driver version 5.7.6 installs firmware version 5.7.3.
-		अगर (efw->is_fireworks3 &&
+		if (efw->is_fireworks3 &&
 		    (efw->firmware_version == 0x5070000 ||
 		     efw->firmware_version == 0x5070300 ||
 		     efw->firmware_version == 0x5080000))
 			efw->tx_stream.flags |= CIP_UNALIGHED_DBC;
 		// AudioFire9 always reports wrong dbs.
-		अगर (efw->is_af9)
+		if (efw->is_af9)
 			efw->tx_stream.flags |= CIP_WRONG_DBS;
-		// Firmware version 5.5 reports fixed पूर्णांकerval क्रम dbc.
-		अगर (efw->firmware_version == 0x5050000)
-			efw->tx_stream.ctx_data.tx.dbc_पूर्णांकerval = 8;
-	पूर्ण
+		// Firmware version 5.5 reports fixed interval for dbc.
+		if (efw->firmware_version == 0x5050000)
+			efw->tx_stream.ctx_data.tx.dbc_interval = 8;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक start_stream(काष्ठा snd_efw *efw, काष्ठा amdtp_stream *stream,
-			अचिन्हित पूर्णांक rate)
-अणु
-	काष्ठा cmp_connection *conn;
-	पूर्णांक err;
+static int start_stream(struct snd_efw *efw, struct amdtp_stream *stream,
+			unsigned int rate)
+{
+	struct cmp_connection *conn;
+	int err;
 
-	अगर (stream == &efw->tx_stream)
+	if (stream == &efw->tx_stream)
 		conn = &efw->out_conn;
-	अन्यथा
+	else
 		conn = &efw->in_conn;
 
 	// Establish connection via CMP.
 	err = cmp_connection_establish(conn);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	// Start amdtp stream.
-	err = amdtp_करोमुख्य_add_stream(&efw->करोमुख्य, stream,
+	err = amdtp_domain_add_stream(&efw->domain, stream,
 				      conn->resources.channel, conn->speed);
-	अगर (err < 0) अणु
-		cmp_connection_अवरोध(conn);
-		वापस err;
-	पूर्ण
+	if (err < 0) {
+		cmp_connection_break(conn);
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-// This function should be called beक्रमe starting the stream or after stopping
+// This function should be called before starting the stream or after stopping
 // the streams.
-अटल व्योम destroy_stream(काष्ठा snd_efw *efw, काष्ठा amdtp_stream *stream)
-अणु
+static void destroy_stream(struct snd_efw *efw, struct amdtp_stream *stream)
+{
 	amdtp_stream_destroy(stream);
 
-	अगर (stream == &efw->tx_stream)
+	if (stream == &efw->tx_stream)
 		cmp_connection_destroy(&efw->out_conn);
-	अन्यथा
+	else
 		cmp_connection_destroy(&efw->in_conn);
-पूर्ण
+}
 
-अटल पूर्णांक
-check_connection_used_by_others(काष्ठा snd_efw *efw, काष्ठा amdtp_stream *s)
-अणु
-	काष्ठा cmp_connection *conn;
+static int
+check_connection_used_by_others(struct snd_efw *efw, struct amdtp_stream *s)
+{
+	struct cmp_connection *conn;
 	bool used;
-	पूर्णांक err;
+	int err;
 
-	अगर (s == &efw->tx_stream)
+	if (s == &efw->tx_stream)
 		conn = &efw->out_conn;
-	अन्यथा
+	else
 		conn = &efw->in_conn;
 
 	err = cmp_connection_check_used(conn, &used);
-	अगर ((err >= 0) && used && !amdtp_stream_running(s)) अणु
+	if ((err >= 0) && used && !amdtp_stream_running(s)) {
 		dev_err(&efw->unit->device,
 			"Connection established by others: %cPCR[%d]\n",
 			(conn->direction == CMP_OUTPUT) ? 'o' : 'i',
 			conn->pcr_index);
 		err = -EBUSY;
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक snd_efw_stream_init_duplex(काष्ठा snd_efw *efw)
-अणु
-	पूर्णांक err;
+int snd_efw_stream_init_duplex(struct snd_efw *efw)
+{
+	int err;
 
 	err = init_stream(efw, &efw->tx_stream);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	err = init_stream(efw, &efw->rx_stream);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		destroy_stream(efw, &efw->tx_stream);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	err = amdtp_करोमुख्य_init(&efw->करोमुख्य);
-	अगर (err < 0) अणु
+	err = amdtp_domain_init(&efw->domain);
+	if (err < 0) {
 		destroy_stream(efw, &efw->tx_stream);
 		destroy_stream(efw, &efw->rx_stream);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	// set IEC61883 compliant mode (actually not fully compliant...).
 	err = snd_efw_command_set_tx_mode(efw, SND_EFW_TRANSPORT_MODE_IEC61883);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		destroy_stream(efw, &efw->tx_stream);
 		destroy_stream(efw, &efw->rx_stream);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक keep_resources(काष्ठा snd_efw *efw, काष्ठा amdtp_stream *stream,
-			  अचिन्हित पूर्णांक rate, अचिन्हित पूर्णांक mode)
-अणु
-	अचिन्हित पूर्णांक pcm_channels;
-	अचिन्हित पूर्णांक midi_ports;
-	काष्ठा cmp_connection *conn;
-	पूर्णांक err;
+static int keep_resources(struct snd_efw *efw, struct amdtp_stream *stream,
+			  unsigned int rate, unsigned int mode)
+{
+	unsigned int pcm_channels;
+	unsigned int midi_ports;
+	struct cmp_connection *conn;
+	int err;
 
-	अगर (stream == &efw->tx_stream) अणु
+	if (stream == &efw->tx_stream) {
 		pcm_channels = efw->pcm_capture_channels[mode];
 		midi_ports = efw->midi_out_ports;
 		conn = &efw->out_conn;
-	पूर्ण अन्यथा अणु
+	} else {
 		pcm_channels = efw->pcm_playback_channels[mode];
 		midi_ports = efw->midi_in_ports;
 		conn = &efw->in_conn;
-	पूर्ण
+	}
 
 	err = amdtp_am824_set_parameters(stream, rate, pcm_channels,
 					 midi_ports, false);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	वापस cmp_connection_reserve(conn, amdtp_stream_get_max_payload(stream));
-पूर्ण
+	return cmp_connection_reserve(conn, amdtp_stream_get_max_payload(stream));
+}
 
-पूर्णांक snd_efw_stream_reserve_duplex(काष्ठा snd_efw *efw, अचिन्हित पूर्णांक rate,
-				  अचिन्हित पूर्णांक frames_per_period,
-				  अचिन्हित पूर्णांक frames_per_buffer)
-अणु
-	अचिन्हित पूर्णांक curr_rate;
-	पूर्णांक err;
+int snd_efw_stream_reserve_duplex(struct snd_efw *efw, unsigned int rate,
+				  unsigned int frames_per_period,
+				  unsigned int frames_per_buffer)
+{
+	unsigned int curr_rate;
+	int err;
 
 	// Considering JACK/FFADO streaming:
-	// TODO: This can be हटाओd hwdep functionality becomes popular.
+	// TODO: This can be removed hwdep functionality becomes popular.
 	err = check_connection_used_by_others(efw, &efw->rx_stream);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	// stop streams अगर rate is dअगरferent.
+	// stop streams if rate is different.
 	err = snd_efw_command_get_sampling_rate(efw, &curr_rate);
-	अगर (err < 0)
-		वापस err;
-	अगर (rate == 0)
+	if (err < 0)
+		return err;
+	if (rate == 0)
 		rate = curr_rate;
-	अगर (rate != curr_rate) अणु
-		amdtp_करोमुख्य_stop(&efw->करोमुख्य);
+	if (rate != curr_rate) {
+		amdtp_domain_stop(&efw->domain);
 
-		cmp_connection_अवरोध(&efw->out_conn);
-		cmp_connection_अवरोध(&efw->in_conn);
+		cmp_connection_break(&efw->out_conn);
+		cmp_connection_break(&efw->in_conn);
 
 		cmp_connection_release(&efw->out_conn);
 		cmp_connection_release(&efw->in_conn);
-	पूर्ण
+	}
 
-	अगर (efw->substreams_counter == 0 || rate != curr_rate) अणु
-		अचिन्हित पूर्णांक mode;
+	if (efw->substreams_counter == 0 || rate != curr_rate) {
+		unsigned int mode;
 
 		err = snd_efw_command_set_sampling_rate(efw, rate);
-		अगर (err < 0)
-			वापस err;
+		if (err < 0)
+			return err;
 
 		err = snd_efw_get_multiplier_mode(rate, &mode);
-		अगर (err < 0)
-			वापस err;
+		if (err < 0)
+			return err;
 
 		err = keep_resources(efw, &efw->tx_stream, rate, mode);
-		अगर (err < 0)
-			वापस err;
+		if (err < 0)
+			return err;
 
 		err = keep_resources(efw, &efw->rx_stream, rate, mode);
-		अगर (err < 0) अणु
+		if (err < 0) {
 			cmp_connection_release(&efw->in_conn);
-			वापस err;
-		पूर्ण
+			return err;
+		}
 
-		err = amdtp_करोमुख्य_set_events_per_period(&efw->करोमुख्य,
+		err = amdtp_domain_set_events_per_period(&efw->domain,
 					frames_per_period, frames_per_buffer);
-		अगर (err < 0) अणु
+		if (err < 0) {
 			cmp_connection_release(&efw->in_conn);
 			cmp_connection_release(&efw->out_conn);
-			वापस err;
-		पूर्ण
-	पूर्ण
+			return err;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक snd_efw_stream_start_duplex(काष्ठा snd_efw *efw)
-अणु
-	अचिन्हित पूर्णांक rate;
-	पूर्णांक err = 0;
+int snd_efw_stream_start_duplex(struct snd_efw *efw)
+{
+	unsigned int rate;
+	int err = 0;
 
 	// Need no substreams.
-	अगर (efw->substreams_counter == 0)
-		वापस -EIO;
+	if (efw->substreams_counter == 0)
+		return -EIO;
 
-	अगर (amdtp_streaming_error(&efw->rx_stream) ||
-	    amdtp_streaming_error(&efw->tx_stream)) अणु
-		amdtp_करोमुख्य_stop(&efw->करोमुख्य);
-		cmp_connection_अवरोध(&efw->out_conn);
-		cmp_connection_अवरोध(&efw->in_conn);
-	पूर्ण
+	if (amdtp_streaming_error(&efw->rx_stream) ||
+	    amdtp_streaming_error(&efw->tx_stream)) {
+		amdtp_domain_stop(&efw->domain);
+		cmp_connection_break(&efw->out_conn);
+		cmp_connection_break(&efw->in_conn);
+	}
 
 	err = snd_efw_command_get_sampling_rate(efw, &rate);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	अगर (!amdtp_stream_running(&efw->rx_stream)) अणु
+	if (!amdtp_stream_running(&efw->rx_stream)) {
 		err = start_stream(efw, &efw->rx_stream, rate);
-		अगर (err < 0)
-			जाओ error;
+		if (err < 0)
+			goto error;
 
 		err = start_stream(efw, &efw->tx_stream, rate);
-		अगर (err < 0)
-			जाओ error;
+		if (err < 0)
+			goto error;
 
-		err = amdtp_करोमुख्य_start(&efw->करोमुख्य, 0);
-		अगर (err < 0)
-			जाओ error;
+		err = amdtp_domain_start(&efw->domain, 0);
+		if (err < 0)
+			goto error;
 
 		// Wait first callback.
-		अगर (!amdtp_stream_रुको_callback(&efw->rx_stream,
+		if (!amdtp_stream_wait_callback(&efw->rx_stream,
 						CALLBACK_TIMEOUT) ||
-		    !amdtp_stream_रुको_callback(&efw->tx_stream,
-						CALLBACK_TIMEOUT)) अणु
+		    !amdtp_stream_wait_callback(&efw->tx_stream,
+						CALLBACK_TIMEOUT)) {
 			err = -ETIMEDOUT;
-			जाओ error;
-		पूर्ण
-	पूर्ण
+			goto error;
+		}
+	}
 
-	वापस 0;
+	return 0;
 error:
-	amdtp_करोमुख्य_stop(&efw->करोमुख्य);
+	amdtp_domain_stop(&efw->domain);
 
-	cmp_connection_अवरोध(&efw->out_conn);
-	cmp_connection_अवरोध(&efw->in_conn);
+	cmp_connection_break(&efw->out_conn);
+	cmp_connection_break(&efw->in_conn);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम snd_efw_stream_stop_duplex(काष्ठा snd_efw *efw)
-अणु
-	अगर (efw->substreams_counter == 0) अणु
-		amdtp_करोमुख्य_stop(&efw->करोमुख्य);
+void snd_efw_stream_stop_duplex(struct snd_efw *efw)
+{
+	if (efw->substreams_counter == 0) {
+		amdtp_domain_stop(&efw->domain);
 
-		cmp_connection_अवरोध(&efw->out_conn);
-		cmp_connection_अवरोध(&efw->in_conn);
+		cmp_connection_break(&efw->out_conn);
+		cmp_connection_break(&efw->in_conn);
 
 		cmp_connection_release(&efw->out_conn);
 		cmp_connection_release(&efw->in_conn);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम snd_efw_stream_update_duplex(काष्ठा snd_efw *efw)
-अणु
-	amdtp_करोमुख्य_stop(&efw->करोमुख्य);
+void snd_efw_stream_update_duplex(struct snd_efw *efw)
+{
+	amdtp_domain_stop(&efw->domain);
 
-	cmp_connection_अवरोध(&efw->out_conn);
-	cmp_connection_अवरोध(&efw->in_conn);
+	cmp_connection_break(&efw->out_conn);
+	cmp_connection_break(&efw->in_conn);
 
-	amdtp_stream_pcm_पात(&efw->rx_stream);
-	amdtp_stream_pcm_पात(&efw->tx_stream);
-पूर्ण
+	amdtp_stream_pcm_abort(&efw->rx_stream);
+	amdtp_stream_pcm_abort(&efw->tx_stream);
+}
 
-व्योम snd_efw_stream_destroy_duplex(काष्ठा snd_efw *efw)
-अणु
-	amdtp_करोमुख्य_destroy(&efw->करोमुख्य);
+void snd_efw_stream_destroy_duplex(struct snd_efw *efw)
+{
+	amdtp_domain_destroy(&efw->domain);
 
 	destroy_stream(efw, &efw->rx_stream);
 	destroy_stream(efw, &efw->tx_stream);
-पूर्ण
+}
 
-व्योम snd_efw_stream_lock_changed(काष्ठा snd_efw *efw)
-अणु
+void snd_efw_stream_lock_changed(struct snd_efw *efw)
+{
 	efw->dev_lock_changed = true;
-	wake_up(&efw->hwdep_रुको);
-पूर्ण
+	wake_up(&efw->hwdep_wait);
+}
 
-पूर्णांक snd_efw_stream_lock_try(काष्ठा snd_efw *efw)
-अणु
-	पूर्णांक err;
+int snd_efw_stream_lock_try(struct snd_efw *efw)
+{
+	int err;
 
 	spin_lock_irq(&efw->lock);
 
 	/* user land lock this */
-	अगर (efw->dev_lock_count < 0) अणु
+	if (efw->dev_lock_count < 0) {
 		err = -EBUSY;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
-	/* this is the first समय */
-	अगर (efw->dev_lock_count++ == 0)
+	/* this is the first time */
+	if (efw->dev_lock_count++ == 0)
 		snd_efw_stream_lock_changed(efw);
 	err = 0;
 end:
 	spin_unlock_irq(&efw->lock);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम snd_efw_stream_lock_release(काष्ठा snd_efw *efw)
-अणु
+void snd_efw_stream_lock_release(struct snd_efw *efw)
+{
 	spin_lock_irq(&efw->lock);
 
-	अगर (WARN_ON(efw->dev_lock_count <= 0))
-		जाओ end;
-	अगर (--efw->dev_lock_count == 0)
+	if (WARN_ON(efw->dev_lock_count <= 0))
+		goto end;
+	if (--efw->dev_lock_count == 0)
 		snd_efw_stream_lock_changed(efw);
 end:
 	spin_unlock_irq(&efw->lock);
-पूर्ण
+}

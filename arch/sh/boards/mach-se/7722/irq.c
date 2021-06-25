@@ -1,81 +1,80 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Hitachi UL SolutionEngine 7722 FPGA IRQ Support.
  *
  * Copyright (C) 2007  Nobuhiro Iwamatsu
  * Copyright (C) 2012  Paul Mundt
  */
-#घोषणा DRV_NAME "SE7722-FPGA"
-#घोषणा pr_fmt(fmt) DRV_NAME ": " fmt
+#define DRV_NAME "SE7722-FPGA"
+#define pr_fmt(fmt) DRV_NAME ": " fmt
 
-#समावेश <linux/init.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irqकरोमुख्य.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/err.h>
-#समावेश <linux/sizes.h>
-#समावेश <mach-se/mach/se7722.h>
+#include <linux/init.h>
+#include <linux/irq.h>
+#include <linux/interrupt.h>
+#include <linux/irqdomain.h>
+#include <linux/io.h>
+#include <linux/err.h>
+#include <linux/sizes.h>
+#include <mach-se/mach/se7722.h>
 
-#घोषणा IRQ01_BASE_ADDR	0x11800000
-#घोषणा IRQ01_MODE_REG	0
-#घोषणा IRQ01_STS_REG	4
-#घोषणा IRQ01_MASK_REG	8
+#define IRQ01_BASE_ADDR	0x11800000
+#define IRQ01_MODE_REG	0
+#define IRQ01_STS_REG	4
+#define IRQ01_MASK_REG	8
 
-अटल व्योम __iomem *se7722_irq_regs;
-काष्ठा irq_करोमुख्य *se7722_irq_करोमुख्य;
+static void __iomem *se7722_irq_regs;
+struct irq_domain *se7722_irq_domain;
 
-अटल व्योम se7722_irq_demux(काष्ठा irq_desc *desc)
-अणु
-	काष्ठा irq_data *data = irq_desc_get_irq_data(desc);
-	काष्ठा irq_chip *chip = irq_data_get_irq_chip(data);
-	अचिन्हित दीर्घ mask;
-	पूर्णांक bit;
+static void se7722_irq_demux(struct irq_desc *desc)
+{
+	struct irq_data *data = irq_desc_get_irq_data(desc);
+	struct irq_chip *chip = irq_data_get_irq_chip(data);
+	unsigned long mask;
+	int bit;
 
 	chip->irq_mask_ack(data);
 
-	mask = ioपढ़ो16(se7722_irq_regs + IRQ01_STS_REG);
+	mask = ioread16(se7722_irq_regs + IRQ01_STS_REG);
 
-	क्रम_each_set_bit(bit, &mask, SE7722_FPGA_IRQ_NR)
-		generic_handle_irq(irq_linear_revmap(se7722_irq_करोमुख्य, bit));
+	for_each_set_bit(bit, &mask, SE7722_FPGA_IRQ_NR)
+		generic_handle_irq(irq_linear_revmap(se7722_irq_domain, bit));
 
 	chip->irq_unmask(data);
-पूर्ण
+}
 
-अटल व्योम __init se7722_करोमुख्य_init(व्योम)
-अणु
-	पूर्णांक i;
+static void __init se7722_domain_init(void)
+{
+	int i;
 
-	se7722_irq_करोमुख्य = irq_करोमुख्य_add_linear(शून्य, SE7722_FPGA_IRQ_NR,
-						  &irq_करोमुख्य_simple_ops, शून्य);
-	अगर (unlikely(!se7722_irq_करोमुख्य)) अणु
-		prपूर्णांकk("Failed to get IRQ domain\n");
-		वापस;
-	पूर्ण
+	se7722_irq_domain = irq_domain_add_linear(NULL, SE7722_FPGA_IRQ_NR,
+						  &irq_domain_simple_ops, NULL);
+	if (unlikely(!se7722_irq_domain)) {
+		printk("Failed to get IRQ domain\n");
+		return;
+	}
 
-	क्रम (i = 0; i < SE7722_FPGA_IRQ_NR; i++) अणु
-		पूर्णांक irq = irq_create_mapping(se7722_irq_करोमुख्य, i);
+	for (i = 0; i < SE7722_FPGA_IRQ_NR; i++) {
+		int irq = irq_create_mapping(se7722_irq_domain, i);
 
-		अगर (unlikely(irq == 0)) अणु
-			prपूर्णांकk("Failed to allocate IRQ %d\n", i);
-			वापस;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		if (unlikely(irq == 0)) {
+			printk("Failed to allocate IRQ %d\n", i);
+			return;
+		}
+	}
+}
 
-अटल व्योम __init se7722_gc_init(व्योम)
-अणु
-	काष्ठा irq_chip_generic *gc;
-	काष्ठा irq_chip_type *ct;
-	अचिन्हित पूर्णांक irq_base;
+static void __init se7722_gc_init(void)
+{
+	struct irq_chip_generic *gc;
+	struct irq_chip_type *ct;
+	unsigned int irq_base;
 
-	irq_base = irq_linear_revmap(se7722_irq_करोमुख्य, 0);
+	irq_base = irq_linear_revmap(se7722_irq_domain, 0);
 
 	gc = irq_alloc_generic_chip(DRV_NAME, 1, irq_base, se7722_irq_regs,
 				    handle_level_irq);
-	अगर (unlikely(!gc))
-		वापस;
+	if (unlikely(!gc))
+		return;
 
 	ct = gc->chip_types;
 	ct->chip.irq_mask = irq_gc_mask_set_bit;
@@ -92,26 +91,26 @@
 
 	irq_set_chained_handler(IRQ1_IRQ, se7722_irq_demux);
 	irq_set_irq_type(IRQ1_IRQ, IRQ_TYPE_LEVEL_LOW);
-पूर्ण
+}
 
 /*
  * Initialize FPGA IRQs
  */
-व्योम __init init_se7722_IRQ(व्योम)
-अणु
+void __init init_se7722_IRQ(void)
+{
 	se7722_irq_regs = ioremap(IRQ01_BASE_ADDR, SZ_16);
-	अगर (unlikely(!se7722_irq_regs)) अणु
-		prपूर्णांकk("Failed to remap IRQ01 regs\n");
-		वापस;
-	पूर्ण
+	if (unlikely(!se7722_irq_regs)) {
+		printk("Failed to remap IRQ01 regs\n");
+		return;
+	}
 
 	/*
-	 * All FPGA IRQs disabled by शेष
+	 * All FPGA IRQs disabled by default
 	 */
-	ioग_लिखो16(0, se7722_irq_regs + IRQ01_MASK_REG);
+	iowrite16(0, se7722_irq_regs + IRQ01_MASK_REG);
 
-	__raw_ग_लिखोw(0x2000, 0xb03fffec);  /* mrshpc irq enable */
+	__raw_writew(0x2000, 0xb03fffec);  /* mrshpc irq enable */
 
-	se7722_करोमुख्य_init();
+	se7722_domain_init();
 	se7722_gc_init();
-पूर्ण
+}

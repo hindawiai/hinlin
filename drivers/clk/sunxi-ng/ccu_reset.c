@@ -1,78 +1,77 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2016 Maxime Ripard
- * Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
+ * Maxime Ripard <maxime.ripard@free-electrons.com>
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/reset-controller.h>
+#include <linux/delay.h>
+#include <linux/io.h>
+#include <linux/reset-controller.h>
 
-#समावेश "ccu_reset.h"
+#include "ccu_reset.h"
 
-अटल पूर्णांक ccu_reset_निश्चित(काष्ठा reset_controller_dev *rcdev,
-			    अचिन्हित दीर्घ id)
-अणु
-	काष्ठा ccu_reset *ccu = rcdev_to_ccu_reset(rcdev);
-	स्थिर काष्ठा ccu_reset_map *map = &ccu->reset_map[id];
-	अचिन्हित दीर्घ flags;
+static int ccu_reset_assert(struct reset_controller_dev *rcdev,
+			    unsigned long id)
+{
+	struct ccu_reset *ccu = rcdev_to_ccu_reset(rcdev);
+	const struct ccu_reset_map *map = &ccu->reset_map[id];
+	unsigned long flags;
 	u32 reg;
 
 	spin_lock_irqsave(ccu->lock, flags);
 
-	reg = पढ़ोl(ccu->base + map->reg);
-	ग_लिखोl(reg & ~map->bit, ccu->base + map->reg);
+	reg = readl(ccu->base + map->reg);
+	writel(reg & ~map->bit, ccu->base + map->reg);
 
 	spin_unlock_irqrestore(ccu->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ccu_reset_deनिश्चित(काष्ठा reset_controller_dev *rcdev,
-			      अचिन्हित दीर्घ id)
-अणु
-	काष्ठा ccu_reset *ccu = rcdev_to_ccu_reset(rcdev);
-	स्थिर काष्ठा ccu_reset_map *map = &ccu->reset_map[id];
-	अचिन्हित दीर्घ flags;
+static int ccu_reset_deassert(struct reset_controller_dev *rcdev,
+			      unsigned long id)
+{
+	struct ccu_reset *ccu = rcdev_to_ccu_reset(rcdev);
+	const struct ccu_reset_map *map = &ccu->reset_map[id];
+	unsigned long flags;
 	u32 reg;
 
 	spin_lock_irqsave(ccu->lock, flags);
 
-	reg = पढ़ोl(ccu->base + map->reg);
-	ग_लिखोl(reg | map->bit, ccu->base + map->reg);
+	reg = readl(ccu->base + map->reg);
+	writel(reg | map->bit, ccu->base + map->reg);
 
 	spin_unlock_irqrestore(ccu->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ccu_reset_reset(काष्ठा reset_controller_dev *rcdev,
-			   अचिन्हित दीर्घ id)
-अणु
-	ccu_reset_निश्चित(rcdev, id);
+static int ccu_reset_reset(struct reset_controller_dev *rcdev,
+			   unsigned long id)
+{
+	ccu_reset_assert(rcdev, id);
 	udelay(10);
-	ccu_reset_deनिश्चित(rcdev, id);
+	ccu_reset_deassert(rcdev, id);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ccu_reset_status(काष्ठा reset_controller_dev *rcdev,
-			    अचिन्हित दीर्घ id)
-अणु
-	काष्ठा ccu_reset *ccu = rcdev_to_ccu_reset(rcdev);
-	स्थिर काष्ठा ccu_reset_map *map = &ccu->reset_map[id];
+static int ccu_reset_status(struct reset_controller_dev *rcdev,
+			    unsigned long id)
+{
+	struct ccu_reset *ccu = rcdev_to_ccu_reset(rcdev);
+	const struct ccu_reset_map *map = &ccu->reset_map[id];
 
 	/*
-	 * The reset control API expects 0 अगर reset is not निश्चितed,
+	 * The reset control API expects 0 if reset is not asserted,
 	 * which is the opposite of what our hardware uses.
 	 */
-	वापस !(map->bit & पढ़ोl(ccu->base + map->reg));
-पूर्ण
+	return !(map->bit & readl(ccu->base + map->reg));
+}
 
-स्थिर काष्ठा reset_control_ops ccu_reset_ops = अणु
-	.निश्चित		= ccu_reset_निश्चित,
-	.deनिश्चित	= ccu_reset_deनिश्चित,
+const struct reset_control_ops ccu_reset_ops = {
+	.assert		= ccu_reset_assert,
+	.deassert	= ccu_reset_deassert,
 	.reset		= ccu_reset_reset,
 	.status		= ccu_reset_status,
-पूर्ण;
+};

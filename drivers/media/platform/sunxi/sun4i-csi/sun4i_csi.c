@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2016 NextThing Co
  * Copyright (C) 2016-2019 Bootlin
@@ -7,220 +6,220 @@
  * Author: Maxime Ripard <maxime.ripard@bootlin.com>
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_graph.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/reset.h>
-#समावेश <linux/videodev2.h>
+#include <linux/clk.h>
+#include <linux/dma-mapping.h>
+#include <linux/interrupt.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/of_graph.h>
+#include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
+#include <linux/reset.h>
+#include <linux/videodev2.h>
 
-#समावेश <media/v4l2-dev.h>
-#समावेश <media/v4l2-device.h>
-#समावेश <media/v4l2-fwnode.h>
-#समावेश <media/v4l2-ioctl.h>
-#समावेश <media/v4l2-mediabus.h>
+#include <media/v4l2-dev.h>
+#include <media/v4l2-device.h>
+#include <media/v4l2-fwnode.h>
+#include <media/v4l2-ioctl.h>
+#include <media/v4l2-mediabus.h>
 
-#समावेश <media/videobuf2-core.h>
-#समावेश <media/videobuf2-dma-contig.h>
+#include <media/videobuf2-core.h>
+#include <media/videobuf2-dma-contig.h>
 
-#समावेश "sun4i_csi.h"
+#include "sun4i_csi.h"
 
-काष्ठा sun4i_csi_traits अणु
-	अचिन्हित पूर्णांक channels;
-	अचिन्हित पूर्णांक max_width;
+struct sun4i_csi_traits {
+	unsigned int channels;
+	unsigned int max_width;
 	bool has_isp;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा media_entity_operations sun4i_csi_video_entity_ops = अणु
+static const struct media_entity_operations sun4i_csi_video_entity_ops = {
 	.link_validate = v4l2_subdev_link_validate,
-पूर्ण;
+};
 
-अटल पूर्णांक sun4i_csi_notअगरy_bound(काष्ठा v4l2_async_notअगरier *notअगरier,
-				  काष्ठा v4l2_subdev *subdev,
-				  काष्ठा v4l2_async_subdev *asd)
-अणु
-	काष्ठा sun4i_csi *csi = container_of(notअगरier, काष्ठा sun4i_csi,
-					     notअगरier);
+static int sun4i_csi_notify_bound(struct v4l2_async_notifier *notifier,
+				  struct v4l2_subdev *subdev,
+				  struct v4l2_async_subdev *asd)
+{
+	struct sun4i_csi *csi = container_of(notifier, struct sun4i_csi,
+					     notifier);
 
 	csi->src_subdev = subdev;
 	csi->src_pad = media_entity_get_fwnode_pad(&subdev->entity,
 						   subdev->fwnode,
 						   MEDIA_PAD_FL_SOURCE);
-	अगर (csi->src_pad < 0) अणु
+	if (csi->src_pad < 0) {
 		dev_err(csi->dev, "Couldn't find output pad for subdev %s\n",
 			subdev->name);
-		वापस csi->src_pad;
-	पूर्ण
+		return csi->src_pad;
+	}
 
 	dev_dbg(csi->dev, "Bound %s pad: %d\n", subdev->name, csi->src_pad);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sun4i_csi_notअगरy_complete(काष्ठा v4l2_async_notअगरier *notअगरier)
-अणु
-	काष्ठा sun4i_csi *csi = container_of(notअगरier, काष्ठा sun4i_csi,
-					     notअगरier);
-	काष्ठा v4l2_subdev *subdev = &csi->subdev;
-	काष्ठा video_device *vdev = &csi->vdev;
-	पूर्णांक ret;
+static int sun4i_csi_notify_complete(struct v4l2_async_notifier *notifier)
+{
+	struct sun4i_csi *csi = container_of(notifier, struct sun4i_csi,
+					     notifier);
+	struct v4l2_subdev *subdev = &csi->subdev;
+	struct video_device *vdev = &csi->vdev;
+	int ret;
 
-	ret = v4l2_device_रेजिस्टर_subdev(&csi->v4l, subdev);
-	अगर (ret < 0)
-		वापस ret;
+	ret = v4l2_device_register_subdev(&csi->v4l, subdev);
+	if (ret < 0)
+		return ret;
 
-	ret = sun4i_csi_v4l2_रेजिस्टर(csi);
-	अगर (ret < 0)
-		वापस ret;
+	ret = sun4i_csi_v4l2_register(csi);
+	if (ret < 0)
+		return ret;
 
-	ret = media_device_रेजिस्टर(&csi->mdev);
-	अगर (ret)
-		वापस ret;
+	ret = media_device_register(&csi->mdev);
+	if (ret)
+		return ret;
 
-	/* Create link from subdev to मुख्य device */
+	/* Create link from subdev to main device */
 	ret = media_create_pad_link(&subdev->entity, CSI_SUBDEV_SOURCE,
 				    &vdev->entity, 0,
 				    MEDIA_LNK_FL_ENABLED |
 				    MEDIA_LNK_FL_IMMUTABLE);
-	अगर (ret)
-		जाओ err_clean_media;
+	if (ret)
+		goto err_clean_media;
 
 	ret = media_create_pad_link(&csi->src_subdev->entity, csi->src_pad,
 				    &subdev->entity, CSI_SUBDEV_SINK,
 				    MEDIA_LNK_FL_ENABLED |
 				    MEDIA_LNK_FL_IMMUTABLE);
-	अगर (ret)
-		जाओ err_clean_media;
+	if (ret)
+		goto err_clean_media;
 
-	ret = v4l2_device_रेजिस्टर_subdev_nodes(&csi->v4l);
-	अगर (ret < 0)
-		जाओ err_clean_media;
+	ret = v4l2_device_register_subdev_nodes(&csi->v4l);
+	if (ret < 0)
+		goto err_clean_media;
 
-	वापस 0;
+	return 0;
 
 err_clean_media:
-	media_device_unरेजिस्टर(&csi->mdev);
+	media_device_unregister(&csi->mdev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा v4l2_async_notअगरier_operations sun4i_csi_notअगरy_ops = अणु
-	.bound		= sun4i_csi_notअगरy_bound,
-	.complete	= sun4i_csi_notअगरy_complete,
-पूर्ण;
+static const struct v4l2_async_notifier_operations sun4i_csi_notify_ops = {
+	.bound		= sun4i_csi_notify_bound,
+	.complete	= sun4i_csi_notify_complete,
+};
 
-अटल पूर्णांक sun4i_csi_notअगरier_init(काष्ठा sun4i_csi *csi)
-अणु
-	काष्ठा v4l2_fwnode_endpoपूर्णांक vep = अणु
+static int sun4i_csi_notifier_init(struct sun4i_csi *csi)
+{
+	struct v4l2_fwnode_endpoint vep = {
 		.bus_type = V4L2_MBUS_PARALLEL,
-	पूर्ण;
-	काष्ठा v4l2_async_subdev *asd;
-	काष्ठा fwnode_handle *ep;
-	पूर्णांक ret;
+	};
+	struct v4l2_async_subdev *asd;
+	struct fwnode_handle *ep;
+	int ret;
 
-	v4l2_async_notअगरier_init(&csi->notअगरier);
+	v4l2_async_notifier_init(&csi->notifier);
 
-	ep = fwnode_graph_get_endpoपूर्णांक_by_id(dev_fwnode(csi->dev), 0, 0,
+	ep = fwnode_graph_get_endpoint_by_id(dev_fwnode(csi->dev), 0, 0,
 					     FWNODE_GRAPH_ENDPOINT_NEXT);
-	अगर (!ep)
-		वापस -EINVAL;
+	if (!ep)
+		return -EINVAL;
 
-	ret = v4l2_fwnode_endpoपूर्णांक_parse(ep, &vep);
-	अगर (ret)
-		जाओ out;
+	ret = v4l2_fwnode_endpoint_parse(ep, &vep);
+	if (ret)
+		goto out;
 
 	csi->bus = vep.bus.parallel;
 
-	asd = v4l2_async_notअगरier_add_fwnode_remote_subdev(&csi->notअगरier, ep,
-							   काष्ठा v4l2_async_subdev);
-	अगर (IS_ERR(asd)) अणु
+	asd = v4l2_async_notifier_add_fwnode_remote_subdev(&csi->notifier, ep,
+							   struct v4l2_async_subdev);
+	if (IS_ERR(asd)) {
 		ret = PTR_ERR(asd);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	csi->notअगरier.ops = &sun4i_csi_notअगरy_ops;
+	csi->notifier.ops = &sun4i_csi_notify_ops;
 
 out:
 	fwnode_handle_put(ep);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sun4i_csi_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा v4l2_subdev *subdev;
-	काष्ठा video_device *vdev;
-	काष्ठा sun4i_csi *csi;
-	काष्ठा resource *res;
-	पूर्णांक ret;
-	पूर्णांक irq;
+static int sun4i_csi_probe(struct platform_device *pdev)
+{
+	struct v4l2_subdev *subdev;
+	struct video_device *vdev;
+	struct sun4i_csi *csi;
+	struct resource *res;
+	int ret;
+	int irq;
 
-	csi = devm_kzalloc(&pdev->dev, माप(*csi), GFP_KERNEL);
-	अगर (!csi)
-		वापस -ENOMEM;
-	platक्रमm_set_drvdata(pdev, csi);
+	csi = devm_kzalloc(&pdev->dev, sizeof(*csi), GFP_KERNEL);
+	if (!csi)
+		return -ENOMEM;
+	platform_set_drvdata(pdev, csi);
 	csi->dev = &pdev->dev;
 	subdev = &csi->subdev;
 	vdev = &csi->vdev;
 
 	csi->traits = of_device_get_match_data(&pdev->dev);
-	अगर (!csi->traits)
-		वापस -EINVAL;
+	if (!csi->traits)
+		return -EINVAL;
 
 	csi->mdev.dev = csi->dev;
 	strscpy(csi->mdev.model, "Allwinner Video Capture Device",
-		माप(csi->mdev.model));
+		sizeof(csi->mdev.model));
 	csi->mdev.hw_revision = 0;
-	snम_लिखो(csi->mdev.bus_info, माप(csi->mdev.bus_info), "platform:%s",
+	snprintf(csi->mdev.bus_info, sizeof(csi->mdev.bus_info), "platform:%s",
 		 dev_name(csi->dev));
 	media_device_init(&csi->mdev);
 	csi->v4l.mdev = &csi->mdev;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	csi->regs = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(csi->regs))
-		वापस PTR_ERR(csi->regs);
+	if (IS_ERR(csi->regs))
+		return PTR_ERR(csi->regs);
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0)
-		वापस irq;
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0)
+		return irq;
 
 	csi->bus_clk = devm_clk_get(&pdev->dev, "bus");
-	अगर (IS_ERR(csi->bus_clk)) अणु
+	if (IS_ERR(csi->bus_clk)) {
 		dev_err(&pdev->dev, "Couldn't get our bus clock\n");
-		वापस PTR_ERR(csi->bus_clk);
-	पूर्ण
+		return PTR_ERR(csi->bus_clk);
+	}
 
-	अगर (csi->traits->has_isp) अणु
+	if (csi->traits->has_isp) {
 		csi->isp_clk = devm_clk_get(&pdev->dev, "isp");
-		अगर (IS_ERR(csi->isp_clk)) अणु
+		if (IS_ERR(csi->isp_clk)) {
 			dev_err(&pdev->dev, "Couldn't get our ISP clock\n");
-			वापस PTR_ERR(csi->isp_clk);
-		पूर्ण
-	पूर्ण
+			return PTR_ERR(csi->isp_clk);
+		}
+	}
 
 	csi->ram_clk = devm_clk_get(&pdev->dev, "ram");
-	अगर (IS_ERR(csi->ram_clk)) अणु
+	if (IS_ERR(csi->ram_clk)) {
 		dev_err(&pdev->dev, "Couldn't get our ram clock\n");
-		वापस PTR_ERR(csi->ram_clk);
-	पूर्ण
+		return PTR_ERR(csi->ram_clk);
+	}
 
-	csi->rst = devm_reset_control_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(csi->rst)) अणु
+	csi->rst = devm_reset_control_get(&pdev->dev, NULL);
+	if (IS_ERR(csi->rst)) {
 		dev_err(&pdev->dev, "Couldn't get our reset line\n");
-		वापस PTR_ERR(csi->rst);
-	पूर्ण
+		return PTR_ERR(csi->rst);
+	}
 
 	/* Initialize subdev */
 	v4l2_subdev_init(subdev, &sun4i_csi_subdev_ops);
 	subdev->flags = V4L2_SUBDEV_FL_HAS_DEVNODE | V4L2_SUBDEV_FL_HAS_EVENTS;
 	subdev->entity.function = MEDIA_ENT_F_VID_IF_BRIDGE;
 	subdev->owner = THIS_MODULE;
-	snम_लिखो(subdev->name, माप(subdev->name), "sun4i-csi-0");
+	snprintf(subdev->name, sizeof(subdev->name), "sun4i-csi-0");
 	v4l2_set_subdevdata(subdev, csi);
 
 	csi->subdev_pads[CSI_SUBDEV_SINK].flags =
@@ -228,120 +227,120 @@ out:
 	csi->subdev_pads[CSI_SUBDEV_SOURCE].flags = MEDIA_PAD_FL_SOURCE;
 	ret = media_entity_pads_init(&subdev->entity, CSI_SUBDEV_PADS,
 				     csi->subdev_pads);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	csi->vdev_pad.flags = MEDIA_PAD_FL_SINK | MEDIA_PAD_FL_MUST_CONNECT;
 	vdev->entity.ops = &sun4i_csi_video_entity_ops;
 	ret = media_entity_pads_init(&vdev->entity, 1, &csi->vdev_pad);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	ret = sun4i_csi_dma_रेजिस्टर(csi, irq);
-	अगर (ret)
-		जाओ err_clean_pad;
+	ret = sun4i_csi_dma_register(csi, irq);
+	if (ret)
+		goto err_clean_pad;
 
-	ret = sun4i_csi_notअगरier_init(csi);
-	अगर (ret)
-		जाओ err_unरेजिस्टर_media;
+	ret = sun4i_csi_notifier_init(csi);
+	if (ret)
+		goto err_unregister_media;
 
-	ret = v4l2_async_notअगरier_रेजिस्टर(&csi->v4l, &csi->notअगरier);
-	अगर (ret) अणु
+	ret = v4l2_async_notifier_register(&csi->v4l, &csi->notifier);
+	if (ret) {
 		dev_err(csi->dev, "Couldn't register our notifier.\n");
-		जाओ err_unरेजिस्टर_media;
-	पूर्ण
+		goto err_unregister_media;
+	}
 
-	pm_runसमय_enable(&pdev->dev);
+	pm_runtime_enable(&pdev->dev);
 
-	वापस 0;
+	return 0;
 
-err_unरेजिस्टर_media:
-	media_device_unरेजिस्टर(&csi->mdev);
-	sun4i_csi_dma_unरेजिस्टर(csi);
+err_unregister_media:
+	media_device_unregister(&csi->mdev);
+	sun4i_csi_dma_unregister(csi);
 
 err_clean_pad:
 	media_device_cleanup(&csi->mdev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sun4i_csi_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sun4i_csi *csi = platक्रमm_get_drvdata(pdev);
+static int sun4i_csi_remove(struct platform_device *pdev)
+{
+	struct sun4i_csi *csi = platform_get_drvdata(pdev);
 
-	v4l2_async_notअगरier_unरेजिस्टर(&csi->notअगरier);
-	v4l2_async_notअगरier_cleanup(&csi->notअगरier);
-	vb2_video_unरेजिस्टर_device(&csi->vdev);
-	media_device_unरेजिस्टर(&csi->mdev);
-	sun4i_csi_dma_unरेजिस्टर(csi);
+	v4l2_async_notifier_unregister(&csi->notifier);
+	v4l2_async_notifier_cleanup(&csi->notifier);
+	vb2_video_unregister_device(&csi->vdev);
+	media_device_unregister(&csi->mdev);
+	sun4i_csi_dma_unregister(csi);
 	media_device_cleanup(&csi->mdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा sun4i_csi_traits sun4i_a10_csi1_traits = अणु
+static const struct sun4i_csi_traits sun4i_a10_csi1_traits = {
 	.channels = 1,
 	.max_width = 24,
 	.has_isp = false,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा sun4i_csi_traits sun7i_a20_csi0_traits = अणु
+static const struct sun4i_csi_traits sun7i_a20_csi0_traits = {
 	.channels = 4,
 	.max_width = 16,
 	.has_isp = true,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id sun4i_csi_of_match[] = अणु
-	अणु .compatible = "allwinner,sun4i-a10-csi1", .data = &sun4i_a10_csi1_traits पूर्ण,
-	अणु .compatible = "allwinner,sun7i-a20-csi0", .data = &sun7i_a20_csi0_traits पूर्ण,
-	अणु /* Sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id sun4i_csi_of_match[] = {
+	{ .compatible = "allwinner,sun4i-a10-csi1", .data = &sun4i_a10_csi1_traits },
+	{ .compatible = "allwinner,sun7i-a20-csi0", .data = &sun7i_a20_csi0_traits },
+	{ /* Sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, sun4i_csi_of_match);
 
-अटल पूर्णांक __maybe_unused sun4i_csi_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा sun4i_csi *csi = dev_get_drvdata(dev);
+static int __maybe_unused sun4i_csi_runtime_resume(struct device *dev)
+{
+	struct sun4i_csi *csi = dev_get_drvdata(dev);
 
-	reset_control_deनिश्चित(csi->rst);
+	reset_control_deassert(csi->rst);
 	clk_prepare_enable(csi->bus_clk);
 	clk_prepare_enable(csi->ram_clk);
 	clk_set_rate(csi->isp_clk, 80000000);
 	clk_prepare_enable(csi->isp_clk);
 
-	ग_लिखोl(1, csi->regs + CSI_EN_REG);
+	writel(1, csi->regs + CSI_EN_REG);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused sun4i_csi_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा sun4i_csi *csi = dev_get_drvdata(dev);
+static int __maybe_unused sun4i_csi_runtime_suspend(struct device *dev)
+{
+	struct sun4i_csi *csi = dev_get_drvdata(dev);
 
 	clk_disable_unprepare(csi->isp_clk);
 	clk_disable_unprepare(csi->ram_clk);
 	clk_disable_unprepare(csi->bus_clk);
 
-	reset_control_निश्चित(csi->rst);
+	reset_control_assert(csi->rst);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops sun4i_csi_pm_ops = अणु
-	SET_RUNTIME_PM_OPS(sun4i_csi_runसमय_suspend,
-			   sun4i_csi_runसमय_resume,
-			   शून्य)
-पूर्ण;
+static const struct dev_pm_ops sun4i_csi_pm_ops = {
+	SET_RUNTIME_PM_OPS(sun4i_csi_runtime_suspend,
+			   sun4i_csi_runtime_resume,
+			   NULL)
+};
 
-अटल काष्ठा platक्रमm_driver sun4i_csi_driver = अणु
+static struct platform_driver sun4i_csi_driver = {
 	.probe	= sun4i_csi_probe,
-	.हटाओ	= sun4i_csi_हटाओ,
-	.driver	= अणु
+	.remove	= sun4i_csi_remove,
+	.driver	= {
 		.name		= "sun4i-csi",
 		.of_match_table	= sun4i_csi_of_match,
 		.pm		= &sun4i_csi_pm_ops,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(sun4i_csi_driver);
+	},
+};
+module_platform_driver(sun4i_csi_driver);
 
 MODULE_DESCRIPTION("Allwinner A10 Camera Sensor Interface driver");
 MODULE_AUTHOR("Maxime Ripard <mripard@kernel.org>");

@@ -1,66 +1,65 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#समावेश <linux/compiler.h>
-#अगर defined(__i386__) || defined(__x86_64__)
-#समावेश "../../arch/x86/include/asm/barrier.h"
-#या_अगर defined(__arm__)
-#समावेश "../../arch/arm/include/asm/barrier.h"
-#या_अगर defined(__aarch64__)
-#समावेश "../../arch/arm64/include/asm/barrier.h"
-#या_अगर defined(__घातerpc__)
-#समावेश "../../arch/powerpc/include/asm/barrier.h"
-#या_अगर defined(__s390__)
-#समावेश "../../arch/s390/include/asm/barrier.h"
-#या_अगर defined(__sh__)
-#समावेश "../../arch/sh/include/asm/barrier.h"
-#या_अगर defined(__sparc__)
-#समावेश "../../arch/sparc/include/asm/barrier.h"
-#या_अगर defined(__tile__)
-#समावेश "../../arch/tile/include/asm/barrier.h"
-#या_अगर defined(__alpha__)
-#समावेश "../../arch/alpha/include/asm/barrier.h"
-#या_अगर defined(__mips__)
-#समावेश "../../arch/mips/include/asm/barrier.h"
-#या_अगर defined(__ia64__)
-#समावेश "../../arch/ia64/include/asm/barrier.h"
-#या_अगर defined(__xtensa__)
-#समावेश "../../arch/xtensa/include/asm/barrier.h"
-#या_अगर defined(__nds32__)
-#समावेश "../../arch/nds32/include/asm/barrier.h"
-#अन्यथा
-#समावेश <यंत्र-generic/barrier.h>
-#पूर्ण_अगर
+/* SPDX-License-Identifier: GPL-2.0 */
+#include <linux/compiler.h>
+#if defined(__i386__) || defined(__x86_64__)
+#include "../../arch/x86/include/asm/barrier.h"
+#elif defined(__arm__)
+#include "../../arch/arm/include/asm/barrier.h"
+#elif defined(__aarch64__)
+#include "../../arch/arm64/include/asm/barrier.h"
+#elif defined(__powerpc__)
+#include "../../arch/powerpc/include/asm/barrier.h"
+#elif defined(__s390__)
+#include "../../arch/s390/include/asm/barrier.h"
+#elif defined(__sh__)
+#include "../../arch/sh/include/asm/barrier.h"
+#elif defined(__sparc__)
+#include "../../arch/sparc/include/asm/barrier.h"
+#elif defined(__tile__)
+#include "../../arch/tile/include/asm/barrier.h"
+#elif defined(__alpha__)
+#include "../../arch/alpha/include/asm/barrier.h"
+#elif defined(__mips__)
+#include "../../arch/mips/include/asm/barrier.h"
+#elif defined(__ia64__)
+#include "../../arch/ia64/include/asm/barrier.h"
+#elif defined(__xtensa__)
+#include "../../arch/xtensa/include/asm/barrier.h"
+#elif defined(__nds32__)
+#include "../../arch/nds32/include/asm/barrier.h"
+#else
+#include <asm-generic/barrier.h>
+#endif
 
 /*
- * Generic fallback smp_*() definitions क्रम archs that haven't
+ * Generic fallback smp_*() definitions for archs that haven't
  * been updated yet.
  */
 
-#अगर_अघोषित smp_rmb
+#ifndef smp_rmb
 # define smp_rmb()	rmb()
-#पूर्ण_अगर
+#endif
 
-#अगर_अघोषित smp_wmb
+#ifndef smp_wmb
 # define smp_wmb()	wmb()
-#पूर्ण_अगर
+#endif
 
-#अगर_अघोषित smp_mb
+#ifndef smp_mb
 # define smp_mb()	mb()
-#पूर्ण_अगर
+#endif
 
-#अगर_अघोषित smp_store_release
+#ifndef smp_store_release
 # define smp_store_release(p, v)		\
-करो अणु						\
+do {						\
 	smp_mb();				\
 	WRITE_ONCE(*p, v);			\
-पूर्ण जबतक (0)
-#पूर्ण_अगर
+} while (0)
+#endif
 
-#अगर_अघोषित smp_load_acquire
+#ifndef smp_load_acquire
 # define smp_load_acquire(p)			\
-(अणु						\
+({						\
 	typeof(*p) ___p1 = READ_ONCE(*p);	\
 	smp_mb();				\
 	___p1;					\
-पूर्ण)
-#पूर्ण_अगर
+})
+#endif

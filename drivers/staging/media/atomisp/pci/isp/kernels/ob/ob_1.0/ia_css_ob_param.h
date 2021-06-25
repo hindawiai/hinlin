@@ -1,38 +1,37 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Support क्रम Intel Camera Imaging ISP subप्रणाली.
+ * Support for Intel Camera Imaging ISP subsystem.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
 
-#अगर_अघोषित __IA_CSS_OB_PARAM_H
-#घोषणा __IA_CSS_OB_PARAM_H
+#ifndef __IA_CSS_OB_PARAM_H
+#define __IA_CSS_OB_PARAM_H
 
-#समावेश "type_support.h"
-#समावेश "vmem.h"
+#include "type_support.h"
+#include "vmem.h"
 
-#घोषणा OBAREA_MASK_SIZE 64
-#घोषणा OBAREA_LENGTHBQ_INVERSE_SHIFT     12
+#define OBAREA_MASK_SIZE 64
+#define OBAREA_LENGTHBQ_INVERSE_SHIFT     12
 
-/* AREA_LENGTH_UNIT is dependent on NWAY, requires reग_लिखो */
-#घोषणा AREA_LENGTH_UNIT BIT(12)
+/* AREA_LENGTH_UNIT is dependent on NWAY, requires rewrite */
+#define AREA_LENGTH_UNIT BIT(12)
 
 /* OB (Optical Black) */
-काष्ठा sh_css_isp_ob_stream_config अणु
-	अचिन्हित पूर्णांक isp_pipe_version;
-	अचिन्हित पूर्णांक raw_bit_depth;
-पूर्ण;
+struct sh_css_isp_ob_stream_config {
+	unsigned int isp_pipe_version;
+	unsigned int raw_bit_depth;
+};
 
-काष्ठा sh_css_isp_ob_params अणु
+struct sh_css_isp_ob_params {
 	s32 blacklevel_gr;
 	s32 blacklevel_r;
 	s32 blacklevel_b;
@@ -40,10 +39,10 @@
 	s32 area_start_bq;
 	s32 area_length_bq;
 	s32 area_length_bq_inverse;
-पूर्ण;
+};
 
-काष्ठा sh_css_isp_ob_vmem_params अणु
+struct sh_css_isp_ob_vmem_params {
 	VMEM_ARRAY(vmask, OBAREA_MASK_SIZE);
-पूर्ण;
+};
 
-#पूर्ण_अगर /* __IA_CSS_OB_PARAM_H */
+#endif /* __IA_CSS_OB_PARAM_H */

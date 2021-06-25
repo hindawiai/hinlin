@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *	IPv6 Address [स्वतः]configuration
+ *	IPv6 Address [auto]configuration
  *	Linux INET6 implementation
  *
  *	Authors:
@@ -12,192 +11,192 @@
 /*
  *	Changes:
  *
- *	Janos Farkas			:	delete समयr on अगरकरोwn
+ *	Janos Farkas			:	delete timer on ifdown
  *	<chexum@bankinf.banki.hu>
- *	Andi Kleen			:	समाप्त द्विगुन kमुक्त on module
+ *	Andi Kleen			:	kill double kfree on module
  *						unload.
  *	Maciej W. Rozycki		:	FDDI support
  *	sekiya@USAGI			:	Don't send too many RS
  *						packets.
- *	yoshfuji@USAGI			:       Fixed पूर्णांकerval between DAD
+ *	yoshfuji@USAGI			:       Fixed interval between DAD
  *						packets.
  *	YOSHIFUJI Hideaki @USAGI	:	improved accuracy of
- *						address validation समयr.
+ *						address validation timer.
  *	YOSHIFUJI Hideaki @USAGI	:	Privacy Extensions (RFC3041)
  *						support.
  *	Yuji SEKIYA @USAGI		:	Don't assign a same IPv6
- *						address on a same पूर्णांकerface.
+ *						address on a same interface.
  *	YOSHIFUJI Hideaki @USAGI	:	ARCnet support
- *	YOSHIFUJI Hideaki @USAGI	:	convert /proc/net/अगर_inet6 to
+ *	YOSHIFUJI Hideaki @USAGI	:	convert /proc/net/if_inet6 to
  *						seq_file.
  *	YOSHIFUJI Hideaki @USAGI	:	improved source address
  *						selection; consider scope,
  *						status etc.
  */
 
-#घोषणा pr_fmt(fmt) "IPv6: " fmt
+#define pr_fmt(fmt) "IPv6: " fmt
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/socket.h>
-#समावेश <linux/sockios.h>
-#समावेश <linux/net.h>
-#समावेश <linux/inet.h>
-#समावेश <linux/in6.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/अगर_addr.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/अगर_arcnet.h>
-#समावेश <linux/अगर_infiniband.h>
-#समावेश <linux/route.h>
-#समावेश <linux/inetdevice.h>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#अगर_घोषित CONFIG_SYSCTL
-#समावेश <linux/sysctl.h>
-#पूर्ण_अगर
-#समावेश <linux/capability.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/hash.h>
+#include <linux/errno.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/sched/signal.h>
+#include <linux/socket.h>
+#include <linux/sockios.h>
+#include <linux/net.h>
+#include <linux/inet.h>
+#include <linux/in6.h>
+#include <linux/netdevice.h>
+#include <linux/if_addr.h>
+#include <linux/if_arp.h>
+#include <linux/if_arcnet.h>
+#include <linux/if_infiniband.h>
+#include <linux/route.h>
+#include <linux/inetdevice.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#ifdef CONFIG_SYSCTL
+#include <linux/sysctl.h>
+#endif
+#include <linux/capability.h>
+#include <linux/delay.h>
+#include <linux/notifier.h>
+#include <linux/string.h>
+#include <linux/hash.h>
 
-#समावेश <net/net_namespace.h>
-#समावेश <net/sock.h>
-#समावेश <net/snmp.h>
+#include <net/net_namespace.h>
+#include <net/sock.h>
+#include <net/snmp.h>
 
-#समावेश <net/6lowpan.h>
-#समावेश <net/firewire.h>
-#समावेश <net/ipv6.h>
-#समावेश <net/protocol.h>
-#समावेश <net/ndisc.h>
-#समावेश <net/ip6_route.h>
-#समावेश <net/addrconf.h>
-#समावेश <net/tcp.h>
-#समावेश <net/ip.h>
-#समावेश <net/netlink.h>
-#समावेश <net/pkt_sched.h>
-#समावेश <net/l3mdev.h>
-#समावेश <linux/अगर_tunnel.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश <linux/netconf.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/unaligned.h>
+#include <net/6lowpan.h>
+#include <net/firewire.h>
+#include <net/ipv6.h>
+#include <net/protocol.h>
+#include <net/ndisc.h>
+#include <net/ip6_route.h>
+#include <net/addrconf.h>
+#include <net/tcp.h>
+#include <net/ip.h>
+#include <net/netlink.h>
+#include <net/pkt_sched.h>
+#include <net/l3mdev.h>
+#include <linux/if_tunnel.h>
+#include <linux/rtnetlink.h>
+#include <linux/netconf.h>
+#include <linux/random.h>
+#include <linux/uaccess.h>
+#include <asm/unaligned.h>
 
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/export.h>
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
+#include <linux/export.h>
 
-#घोषणा	अनन्त_LIFE_TIME	0xFFFFFFFF
+#define	INFINITY_LIFE_TIME	0xFFFFFFFF
 
-#घोषणा IPV6_MAX_STRLEN \
-	माप("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255")
+#define IPV6_MAX_STRLEN \
+	sizeof("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255")
 
-अटल अंतरभूत u32 cstamp_delta(अचिन्हित दीर्घ cstamp)
-अणु
-	वापस (cstamp - INITIAL_JIFFIES) * 100UL / HZ;
-पूर्ण
+static inline u32 cstamp_delta(unsigned long cstamp)
+{
+	return (cstamp - INITIAL_JIFFIES) * 100UL / HZ;
+}
 
-अटल अंतरभूत s32 rfc3315_s14_backoff_init(s32 irt)
-अणु
+static inline s32 rfc3315_s14_backoff_init(s32 irt)
+{
 	/* multiply 'initial retransmission time' by 0.9 .. 1.1 */
-	u64 पंचांगp = (900000 + pअक्रमom_u32() % 200001) * (u64)irt;
-	करो_भाग(पंचांगp, 1000000);
-	वापस (s32)पंचांगp;
-पूर्ण
+	u64 tmp = (900000 + prandom_u32() % 200001) * (u64)irt;
+	do_div(tmp, 1000000);
+	return (s32)tmp;
+}
 
-अटल अंतरभूत s32 rfc3315_s14_backoff_update(s32 rt, s32 mrt)
-अणु
+static inline s32 rfc3315_s14_backoff_update(s32 rt, s32 mrt)
+{
 	/* multiply 'retransmission timeout' by 1.9 .. 2.1 */
-	u64 पंचांगp = (1900000 + pअक्रमom_u32() % 200001) * (u64)rt;
-	करो_भाग(पंचांगp, 1000000);
-	अगर ((s32)पंचांगp > mrt) अणु
+	u64 tmp = (1900000 + prandom_u32() % 200001) * (u64)rt;
+	do_div(tmp, 1000000);
+	if ((s32)tmp > mrt) {
 		/* multiply 'maximum retransmission time' by 0.9 .. 1.1 */
-		पंचांगp = (900000 + pअक्रमom_u32() % 200001) * (u64)mrt;
-		करो_भाग(पंचांगp, 1000000);
-	पूर्ण
-	वापस (s32)पंचांगp;
-पूर्ण
+		tmp = (900000 + prandom_u32() % 200001) * (u64)mrt;
+		do_div(tmp, 1000000);
+	}
+	return (s32)tmp;
+}
 
-#अगर_घोषित CONFIG_SYSCTL
-अटल पूर्णांक addrconf_sysctl_रेजिस्टर(काष्ठा inet6_dev *idev);
-अटल व्योम addrconf_sysctl_unरेजिस्टर(काष्ठा inet6_dev *idev);
-#अन्यथा
-अटल अंतरभूत पूर्णांक addrconf_sysctl_रेजिस्टर(काष्ठा inet6_dev *idev)
-अणु
-	वापस 0;
-पूर्ण
+#ifdef CONFIG_SYSCTL
+static int addrconf_sysctl_register(struct inet6_dev *idev);
+static void addrconf_sysctl_unregister(struct inet6_dev *idev);
+#else
+static inline int addrconf_sysctl_register(struct inet6_dev *idev)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम addrconf_sysctl_unरेजिस्टर(काष्ठा inet6_dev *idev)
-अणु
-पूर्ण
-#पूर्ण_अगर
+static inline void addrconf_sysctl_unregister(struct inet6_dev *idev)
+{
+}
+#endif
 
-अटल व्योम ipv6_gen_rnd_iid(काष्ठा in6_addr *addr);
+static void ipv6_gen_rnd_iid(struct in6_addr *addr);
 
-अटल पूर्णांक ipv6_generate_eui64(u8 *eui, काष्ठा net_device *dev);
-अटल पूर्णांक ipv6_count_addresses(स्थिर काष्ठा inet6_dev *idev);
-अटल पूर्णांक ipv6_generate_stable_address(काष्ठा in6_addr *addr,
+static int ipv6_generate_eui64(u8 *eui, struct net_device *dev);
+static int ipv6_count_addresses(const struct inet6_dev *idev);
+static int ipv6_generate_stable_address(struct in6_addr *addr,
 					u8 dad_count,
-					स्थिर काष्ठा inet6_dev *idev);
+					const struct inet6_dev *idev);
 
-#घोषणा IN6_ADDR_HSIZE_SHIFT	8
-#घोषणा IN6_ADDR_HSIZE		(1 << IN6_ADDR_HSIZE_SHIFT)
+#define IN6_ADDR_HSIZE_SHIFT	8
+#define IN6_ADDR_HSIZE		(1 << IN6_ADDR_HSIZE_SHIFT)
 /*
  *	Configured unicast address hash table
  */
-अटल काष्ठा hlist_head inet6_addr_lst[IN6_ADDR_HSIZE];
-अटल DEFINE_SPINLOCK(addrconf_hash_lock);
+static struct hlist_head inet6_addr_lst[IN6_ADDR_HSIZE];
+static DEFINE_SPINLOCK(addrconf_hash_lock);
 
-अटल व्योम addrconf_verअगरy(व्योम);
-अटल व्योम addrconf_verअगरy_rtnl(व्योम);
-अटल व्योम addrconf_verअगरy_work(काष्ठा work_काष्ठा *);
+static void addrconf_verify(void);
+static void addrconf_verify_rtnl(void);
+static void addrconf_verify_work(struct work_struct *);
 
-अटल काष्ठा workqueue_काष्ठा *addrconf_wq;
-अटल DECLARE_DELAYED_WORK(addr_chk_work, addrconf_verअगरy_work);
+static struct workqueue_struct *addrconf_wq;
+static DECLARE_DELAYED_WORK(addr_chk_work, addrconf_verify_work);
 
-अटल व्योम addrconf_join_anycast(काष्ठा inet6_अगरaddr *अगरp);
-अटल व्योम addrconf_leave_anycast(काष्ठा inet6_अगरaddr *अगरp);
+static void addrconf_join_anycast(struct inet6_ifaddr *ifp);
+static void addrconf_leave_anycast(struct inet6_ifaddr *ifp);
 
-अटल व्योम addrconf_type_change(काष्ठा net_device *dev,
-				 अचिन्हित दीर्घ event);
-अटल पूर्णांक addrconf_अगरकरोwn(काष्ठा net_device *dev, bool unरेजिस्टर);
+static void addrconf_type_change(struct net_device *dev,
+				 unsigned long event);
+static int addrconf_ifdown(struct net_device *dev, bool unregister);
 
-अटल काष्ठा fib6_info *addrconf_get_prefix_route(स्थिर काष्ठा in6_addr *pfx,
-						  पूर्णांक plen,
-						  स्थिर काष्ठा net_device *dev,
+static struct fib6_info *addrconf_get_prefix_route(const struct in6_addr *pfx,
+						  int plen,
+						  const struct net_device *dev,
 						  u32 flags, u32 noflags,
 						  bool no_gw);
 
-अटल व्योम addrconf_dad_start(काष्ठा inet6_अगरaddr *अगरp);
-अटल व्योम addrconf_dad_work(काष्ठा work_काष्ठा *w);
-अटल व्योम addrconf_dad_completed(काष्ठा inet6_अगरaddr *अगरp, bool bump_id,
+static void addrconf_dad_start(struct inet6_ifaddr *ifp);
+static void addrconf_dad_work(struct work_struct *w);
+static void addrconf_dad_completed(struct inet6_ifaddr *ifp, bool bump_id,
 				   bool send_na);
-अटल व्योम addrconf_dad_run(काष्ठा inet6_dev *idev, bool restart);
-अटल व्योम addrconf_rs_समयr(काष्ठा समयr_list *t);
-अटल व्योम __ipv6_अगरa_notअगरy(पूर्णांक event, काष्ठा inet6_अगरaddr *अगरa);
-अटल व्योम ipv6_अगरa_notअगरy(पूर्णांक event, काष्ठा inet6_अगरaddr *अगरa);
+static void addrconf_dad_run(struct inet6_dev *idev, bool restart);
+static void addrconf_rs_timer(struct timer_list *t);
+static void __ipv6_ifa_notify(int event, struct inet6_ifaddr *ifa);
+static void ipv6_ifa_notify(int event, struct inet6_ifaddr *ifa);
 
-अटल व्योम inet6_prefix_notअगरy(पूर्णांक event, काष्ठा inet6_dev *idev,
-				काष्ठा prefix_info *pinfo);
+static void inet6_prefix_notify(int event, struct inet6_dev *idev,
+				struct prefix_info *pinfo);
 
-अटल काष्ठा ipv6_devconf ipv6_devconf __पढ़ो_mostly = अणु
-	.क्रमwarding		= 0,
+static struct ipv6_devconf ipv6_devconf __read_mostly = {
+	.forwarding		= 0,
 	.hop_limit		= IPV6_DEFAULT_HOPLIMIT,
 	.mtu6			= IPV6_MIN_MTU,
 	.accept_ra		= 1,
 	.accept_redirects	= 1,
-	.स्वतःconf		= 1,
-	.क्रमce_mld_version	= 0,
-	.mldv1_unsolicited_report_पूर्णांकerval = 10 * HZ,
-	.mldv2_unsolicited_report_पूर्णांकerval = HZ,
+	.autoconf		= 1,
+	.force_mld_version	= 0,
+	.mldv1_unsolicited_report_interval = 10 * HZ,
+	.mldv2_unsolicited_report_interval = HZ,
 	.dad_transmits		= 1,
 	.rtr_solicits		= MAX_RTR_SOLICITATIONS,
-	.rtr_solicit_पूर्णांकerval	= RTR_SOLICITATION_INTERVAL,
-	.rtr_solicit_max_पूर्णांकerval = RTR_SOLICITATION_MAX_INTERVAL,
+	.rtr_solicit_interval	= RTR_SOLICITATION_INTERVAL,
+	.rtr_solicit_max_interval = RTR_SOLICITATION_MAX_INTERVAL,
 	.rtr_solicit_delay	= MAX_RTR_SOLICITATION_DELAY,
 	.use_tempaddr		= 0,
 	.temp_valid_lft		= TEMP_VALID_LIFETIME,
@@ -210,50 +209,50 @@
 	.accept_ra_from_local	= 0,
 	.accept_ra_min_hop_limit= 1,
 	.accept_ra_pinfo	= 1,
-#अगर_घोषित CONFIG_IPV6_ROUTER_PREF
+#ifdef CONFIG_IPV6_ROUTER_PREF
 	.accept_ra_rtr_pref	= 1,
-	.rtr_probe_पूर्णांकerval	= 60 * HZ,
-#अगर_घोषित CONFIG_IPV6_ROUTE_INFO
+	.rtr_probe_interval	= 60 * HZ,
+#ifdef CONFIG_IPV6_ROUTE_INFO
 	.accept_ra_rt_info_min_plen = 0,
 	.accept_ra_rt_info_max_plen = 0,
-#पूर्ण_अगर
-#पूर्ण_अगर
+#endif
+#endif
 	.proxy_ndp		= 0,
-	.accept_source_route	= 0,	/* we करो not accept RH0 by शेष. */
+	.accept_source_route	= 0,	/* we do not accept RH0 by default. */
 	.disable_ipv6		= 0,
 	.accept_dad		= 0,
 	.suppress_frag_ndisc	= 1,
 	.accept_ra_mtu		= 1,
-	.stable_secret		= अणु
+	.stable_secret		= {
 		.initialized = false,
-	पूर्ण,
-	.use_oअगर_addrs_only	= 0,
-	.ignore_routes_with_linkकरोwn = 0,
-	.keep_addr_on_करोwn	= 0,
+	},
+	.use_oif_addrs_only	= 0,
+	.ignore_routes_with_linkdown = 0,
+	.keep_addr_on_down	= 0,
 	.seg6_enabled		= 0,
-#अगर_घोषित CONFIG_IPV6_SEG6_HMAC
+#ifdef CONFIG_IPV6_SEG6_HMAC
 	.seg6_require_hmac	= 0,
-#पूर्ण_अगर
+#endif
 	.enhanced_dad           = 1,
 	.addr_gen_mode		= IN6_ADDR_GEN_MODE_EUI64,
 	.disable_policy		= 0,
 	.rpl_seg_enabled	= 0,
-पूर्ण;
+};
 
-अटल काष्ठा ipv6_devconf ipv6_devconf_dflt __पढ़ो_mostly = अणु
-	.क्रमwarding		= 0,
+static struct ipv6_devconf ipv6_devconf_dflt __read_mostly = {
+	.forwarding		= 0,
 	.hop_limit		= IPV6_DEFAULT_HOPLIMIT,
 	.mtu6			= IPV6_MIN_MTU,
 	.accept_ra		= 1,
 	.accept_redirects	= 1,
-	.स्वतःconf		= 1,
-	.क्रमce_mld_version	= 0,
-	.mldv1_unsolicited_report_पूर्णांकerval = 10 * HZ,
-	.mldv2_unsolicited_report_पूर्णांकerval = HZ,
+	.autoconf		= 1,
+	.force_mld_version	= 0,
+	.mldv1_unsolicited_report_interval = 10 * HZ,
+	.mldv2_unsolicited_report_interval = HZ,
 	.dad_transmits		= 1,
 	.rtr_solicits		= MAX_RTR_SOLICITATIONS,
-	.rtr_solicit_पूर्णांकerval	= RTR_SOLICITATION_INTERVAL,
-	.rtr_solicit_max_पूर्णांकerval = RTR_SOLICITATION_MAX_INTERVAL,
+	.rtr_solicit_interval	= RTR_SOLICITATION_INTERVAL,
+	.rtr_solicit_max_interval = RTR_SOLICITATION_MAX_INTERVAL,
 	.rtr_solicit_delay	= MAX_RTR_SOLICITATION_DELAY,
 	.use_tempaddr		= 0,
 	.temp_valid_lft		= TEMP_VALID_LIFETIME,
@@ -266,1276 +265,1276 @@
 	.accept_ra_from_local	= 0,
 	.accept_ra_min_hop_limit= 1,
 	.accept_ra_pinfo	= 1,
-#अगर_घोषित CONFIG_IPV6_ROUTER_PREF
+#ifdef CONFIG_IPV6_ROUTER_PREF
 	.accept_ra_rtr_pref	= 1,
-	.rtr_probe_पूर्णांकerval	= 60 * HZ,
-#अगर_घोषित CONFIG_IPV6_ROUTE_INFO
+	.rtr_probe_interval	= 60 * HZ,
+#ifdef CONFIG_IPV6_ROUTE_INFO
 	.accept_ra_rt_info_min_plen = 0,
 	.accept_ra_rt_info_max_plen = 0,
-#पूर्ण_अगर
-#पूर्ण_अगर
+#endif
+#endif
 	.proxy_ndp		= 0,
-	.accept_source_route	= 0,	/* we करो not accept RH0 by शेष. */
+	.accept_source_route	= 0,	/* we do not accept RH0 by default. */
 	.disable_ipv6		= 0,
 	.accept_dad		= 1,
 	.suppress_frag_ndisc	= 1,
 	.accept_ra_mtu		= 1,
-	.stable_secret		= अणु
+	.stable_secret		= {
 		.initialized = false,
-	पूर्ण,
-	.use_oअगर_addrs_only	= 0,
-	.ignore_routes_with_linkकरोwn = 0,
-	.keep_addr_on_करोwn	= 0,
+	},
+	.use_oif_addrs_only	= 0,
+	.ignore_routes_with_linkdown = 0,
+	.keep_addr_on_down	= 0,
 	.seg6_enabled		= 0,
-#अगर_घोषित CONFIG_IPV6_SEG6_HMAC
+#ifdef CONFIG_IPV6_SEG6_HMAC
 	.seg6_require_hmac	= 0,
-#पूर्ण_अगर
+#endif
 	.enhanced_dad           = 1,
 	.addr_gen_mode		= IN6_ADDR_GEN_MODE_EUI64,
 	.disable_policy		= 0,
 	.rpl_seg_enabled	= 0,
-पूर्ण;
+};
 
-/* Check अगर link is पढ़ोy: is it up and is a valid qdisc available */
-अटल अंतरभूत bool addrconf_link_पढ़ोy(स्थिर काष्ठा net_device *dev)
-अणु
-	वापस netअगर_oper_up(dev) && !qdisc_tx_is_noop(dev);
-पूर्ण
+/* Check if link is ready: is it up and is a valid qdisc available */
+static inline bool addrconf_link_ready(const struct net_device *dev)
+{
+	return netif_oper_up(dev) && !qdisc_tx_is_noop(dev);
+}
 
-अटल व्योम addrconf_del_rs_समयr(काष्ठा inet6_dev *idev)
-अणु
-	अगर (del_समयr(&idev->rs_समयr))
+static void addrconf_del_rs_timer(struct inet6_dev *idev)
+{
+	if (del_timer(&idev->rs_timer))
 		__in6_dev_put(idev);
-पूर्ण
+}
 
-अटल व्योम addrconf_del_dad_work(काष्ठा inet6_अगरaddr *अगरp)
-अणु
-	अगर (cancel_delayed_work(&अगरp->dad_work))
-		__in6_अगरa_put(अगरp);
-पूर्ण
+static void addrconf_del_dad_work(struct inet6_ifaddr *ifp)
+{
+	if (cancel_delayed_work(&ifp->dad_work))
+		__in6_ifa_put(ifp);
+}
 
-अटल व्योम addrconf_mod_rs_समयr(काष्ठा inet6_dev *idev,
-				  अचिन्हित दीर्घ when)
-अणु
-	अगर (!समयr_pending(&idev->rs_समयr))
+static void addrconf_mod_rs_timer(struct inet6_dev *idev,
+				  unsigned long when)
+{
+	if (!timer_pending(&idev->rs_timer))
 		in6_dev_hold(idev);
-	mod_समयr(&idev->rs_समयr, jअगरfies + when);
-पूर्ण
+	mod_timer(&idev->rs_timer, jiffies + when);
+}
 
-अटल व्योम addrconf_mod_dad_work(काष्ठा inet6_अगरaddr *अगरp,
-				   अचिन्हित दीर्घ delay)
-अणु
-	in6_अगरa_hold(अगरp);
-	अगर (mod_delayed_work(addrconf_wq, &अगरp->dad_work, delay))
-		in6_अगरa_put(अगरp);
-पूर्ण
+static void addrconf_mod_dad_work(struct inet6_ifaddr *ifp,
+				   unsigned long delay)
+{
+	in6_ifa_hold(ifp);
+	if (mod_delayed_work(addrconf_wq, &ifp->dad_work, delay))
+		in6_ifa_put(ifp);
+}
 
-अटल पूर्णांक snmp6_alloc_dev(काष्ठा inet6_dev *idev)
-अणु
-	पूर्णांक i;
+static int snmp6_alloc_dev(struct inet6_dev *idev)
+{
+	int i;
 
-	idev->stats.ipv6 = alloc_percpu(काष्ठा ipstats_mib);
-	अगर (!idev->stats.ipv6)
-		जाओ err_ip;
+	idev->stats.ipv6 = alloc_percpu(struct ipstats_mib);
+	if (!idev->stats.ipv6)
+		goto err_ip;
 
-	क्रम_each_possible_cpu(i) अणु
-		काष्ठा ipstats_mib *addrconf_stats;
+	for_each_possible_cpu(i) {
+		struct ipstats_mib *addrconf_stats;
 		addrconf_stats = per_cpu_ptr(idev->stats.ipv6, i);
 		u64_stats_init(&addrconf_stats->syncp);
-	पूर्ण
+	}
 
 
-	idev->stats.icmpv6dev = kzalloc(माप(काष्ठा icmpv6_mib_device),
+	idev->stats.icmpv6dev = kzalloc(sizeof(struct icmpv6_mib_device),
 					GFP_KERNEL);
-	अगर (!idev->stats.icmpv6dev)
-		जाओ err_icmp;
-	idev->stats.icmpv6msgdev = kzalloc(माप(काष्ठा icmpv6msg_mib_device),
+	if (!idev->stats.icmpv6dev)
+		goto err_icmp;
+	idev->stats.icmpv6msgdev = kzalloc(sizeof(struct icmpv6msg_mib_device),
 					   GFP_KERNEL);
-	अगर (!idev->stats.icmpv6msgdev)
-		जाओ err_icmpmsg;
+	if (!idev->stats.icmpv6msgdev)
+		goto err_icmpmsg;
 
-	वापस 0;
+	return 0;
 
 err_icmpmsg:
-	kमुक्त(idev->stats.icmpv6dev);
+	kfree(idev->stats.icmpv6dev);
 err_icmp:
-	मुक्त_percpu(idev->stats.ipv6);
+	free_percpu(idev->stats.ipv6);
 err_ip:
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल काष्ठा inet6_dev *ipv6_add_dev(काष्ठा net_device *dev)
-अणु
-	काष्ठा inet6_dev *ndev;
-	पूर्णांक err = -ENOMEM;
+static struct inet6_dev *ipv6_add_dev(struct net_device *dev)
+{
+	struct inet6_dev *ndev;
+	int err = -ENOMEM;
 
 	ASSERT_RTNL();
 
-	अगर (dev->mtu < IPV6_MIN_MTU)
-		वापस ERR_PTR(-EINVAL);
+	if (dev->mtu < IPV6_MIN_MTU)
+		return ERR_PTR(-EINVAL);
 
-	ndev = kzalloc(माप(काष्ठा inet6_dev), GFP_KERNEL);
-	अगर (!ndev)
-		वापस ERR_PTR(err);
+	ndev = kzalloc(sizeof(struct inet6_dev), GFP_KERNEL);
+	if (!ndev)
+		return ERR_PTR(err);
 
 	rwlock_init(&ndev->lock);
 	ndev->dev = dev;
 	INIT_LIST_HEAD(&ndev->addr_list);
-	समयr_setup(&ndev->rs_समयr, addrconf_rs_समयr, 0);
-	स_नकल(&ndev->cnf, dev_net(dev)->ipv6.devconf_dflt, माप(ndev->cnf));
+	timer_setup(&ndev->rs_timer, addrconf_rs_timer, 0);
+	memcpy(&ndev->cnf, dev_net(dev)->ipv6.devconf_dflt, sizeof(ndev->cnf));
 
-	अगर (ndev->cnf.stable_secret.initialized)
+	if (ndev->cnf.stable_secret.initialized)
 		ndev->cnf.addr_gen_mode = IN6_ADDR_GEN_MODE_STABLE_PRIVACY;
 
 	ndev->cnf.mtu6 = dev->mtu;
 	ndev->nd_parms = neigh_parms_alloc(dev, &nd_tbl);
-	अगर (!ndev->nd_parms) अणु
-		kमुक्त(ndev);
-		वापस ERR_PTR(err);
-	पूर्ण
-	अगर (ndev->cnf.क्रमwarding)
+	if (!ndev->nd_parms) {
+		kfree(ndev);
+		return ERR_PTR(err);
+	}
+	if (ndev->cnf.forwarding)
 		dev_disable_lro(dev);
 	/* We refer to the device */
 	dev_hold(dev);
 
-	अगर (snmp6_alloc_dev(ndev) < 0) अणु
+	if (snmp6_alloc_dev(ndev) < 0) {
 		netdev_dbg(dev, "%s: cannot allocate memory for statistics\n",
 			   __func__);
 		neigh_parms_release(&nd_tbl, ndev->nd_parms);
 		dev_put(dev);
-		kमुक्त(ndev);
-		वापस ERR_PTR(err);
-	पूर्ण
+		kfree(ndev);
+		return ERR_PTR(err);
+	}
 
-	अगर (snmp6_रेजिस्टर_dev(ndev) < 0) अणु
+	if (snmp6_register_dev(ndev) < 0) {
 		netdev_dbg(dev, "%s: cannot create /proc/net/dev_snmp6/%s\n",
 			   __func__, dev->name);
-		जाओ err_release;
-	पूर्ण
+		goto err_release;
+	}
 
 	/* One reference from device. */
 	refcount_set(&ndev->refcnt, 1);
 
-	अगर (dev->flags & (IFF_NOARP | IFF_LOOPBACK))
+	if (dev->flags & (IFF_NOARP | IFF_LOOPBACK))
 		ndev->cnf.accept_dad = -1;
 
-#अगर IS_ENABLED(CONFIG_IPV6_SIT)
-	अगर (dev->type == ARPHRD_SIT && (dev->priv_flags & IFF_ISATAP)) अणु
+#if IS_ENABLED(CONFIG_IPV6_SIT)
+	if (dev->type == ARPHRD_SIT && (dev->priv_flags & IFF_ISATAP)) {
 		pr_info("%s: Disabled Multicast RS\n", dev->name);
 		ndev->cnf.rtr_solicits = 0;
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
 	INIT_LIST_HEAD(&ndev->tempaddr_list);
 	ndev->desync_factor = U32_MAX;
-	अगर ((dev->flags&IFF_LOOPBACK) ||
+	if ((dev->flags&IFF_LOOPBACK) ||
 	    dev->type == ARPHRD_TUNNEL ||
 	    dev->type == ARPHRD_TUNNEL6 ||
 	    dev->type == ARPHRD_SIT ||
-	    dev->type == ARPHRD_NONE) अणु
+	    dev->type == ARPHRD_NONE) {
 		ndev->cnf.use_tempaddr = -1;
-	पूर्ण
+	}
 
 	ndev->token = in6addr_any;
 
-	अगर (netअगर_running(dev) && addrconf_link_पढ़ोy(dev))
-		ndev->अगर_flags |= IF_READY;
+	if (netif_running(dev) && addrconf_link_ready(dev))
+		ndev->if_flags |= IF_READY;
 
 	ipv6_mc_init_dev(ndev);
-	ndev->tstamp = jअगरfies;
-	err = addrconf_sysctl_रेजिस्टर(ndev);
-	अगर (err) अणु
+	ndev->tstamp = jiffies;
+	err = addrconf_sysctl_register(ndev);
+	if (err) {
 		ipv6_mc_destroy_dev(ndev);
-		snmp6_unरेजिस्टर_dev(ndev);
-		जाओ err_release;
-	पूर्ण
-	/* रक्षित by rtnl_lock */
-	rcu_assign_poपूर्णांकer(dev->ip6_ptr, ndev);
+		snmp6_unregister_dev(ndev);
+		goto err_release;
+	}
+	/* protected by rtnl_lock */
+	rcu_assign_pointer(dev->ip6_ptr, ndev);
 
-	/* Join पूर्णांकerface-local all-node multicast group */
-	ipv6_dev_mc_inc(dev, &in6addr_पूर्णांकerfacelocal_allnodes);
+	/* Join interface-local all-node multicast group */
+	ipv6_dev_mc_inc(dev, &in6addr_interfacelocal_allnodes);
 
 	/* Join all-node multicast group */
 	ipv6_dev_mc_inc(dev, &in6addr_linklocal_allnodes);
 
-	/* Join all-router multicast group अगर क्रमwarding is set */
-	अगर (ndev->cnf.क्रमwarding && (dev->flags & IFF_MULTICAST))
+	/* Join all-router multicast group if forwarding is set */
+	if (ndev->cnf.forwarding && (dev->flags & IFF_MULTICAST))
 		ipv6_dev_mc_inc(dev, &in6addr_linklocal_allrouters);
 
-	वापस ndev;
+	return ndev;
 
 err_release:
 	neigh_parms_release(&nd_tbl, ndev->nd_parms);
 	ndev->dead = 1;
 	in6_dev_finish_destroy(ndev);
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 
-अटल काष्ठा inet6_dev *ipv6_find_idev(काष्ठा net_device *dev)
-अणु
-	काष्ठा inet6_dev *idev;
+static struct inet6_dev *ipv6_find_idev(struct net_device *dev)
+{
+	struct inet6_dev *idev;
 
 	ASSERT_RTNL();
 
 	idev = __in6_dev_get(dev);
-	अगर (!idev) अणु
+	if (!idev) {
 		idev = ipv6_add_dev(dev);
-		अगर (IS_ERR(idev))
-			वापस idev;
-	पूर्ण
+		if (IS_ERR(idev))
+			return idev;
+	}
 
-	अगर (dev->flags&IFF_UP)
+	if (dev->flags&IFF_UP)
 		ipv6_mc_up(idev);
-	वापस idev;
-पूर्ण
+	return idev;
+}
 
-अटल पूर्णांक inet6_netconf_msgsize_devconf(पूर्णांक type)
-अणु
-	पूर्णांक size =  NLMSG_ALIGN(माप(काष्ठा netconfmsg))
+static int inet6_netconf_msgsize_devconf(int type)
+{
+	int size =  NLMSG_ALIGN(sizeof(struct netconfmsg))
 		    + nla_total_size(4);	/* NETCONFA_IFINDEX */
 	bool all = false;
 
-	अगर (type == NETCONFA_ALL)
+	if (type == NETCONFA_ALL)
 		all = true;
 
-	अगर (all || type == NETCONFA_FORWARDING)
+	if (all || type == NETCONFA_FORWARDING)
 		size += nla_total_size(4);
-#अगर_घोषित CONFIG_IPV6_MROUTE
-	अगर (all || type == NETCONFA_MC_FORWARDING)
+#ifdef CONFIG_IPV6_MROUTE
+	if (all || type == NETCONFA_MC_FORWARDING)
 		size += nla_total_size(4);
-#पूर्ण_अगर
-	अगर (all || type == NETCONFA_PROXY_NEIGH)
-		size += nla_total_size(4);
-
-	अगर (all || type == NETCONFA_IGNORE_ROUTES_WITH_LINKDOWN)
+#endif
+	if (all || type == NETCONFA_PROXY_NEIGH)
 		size += nla_total_size(4);
 
-	वापस size;
-पूर्ण
+	if (all || type == NETCONFA_IGNORE_ROUTES_WITH_LINKDOWN)
+		size += nla_total_size(4);
 
-अटल पूर्णांक inet6_netconf_fill_devconf(काष्ठा sk_buff *skb, पूर्णांक अगरindex,
-				      काष्ठा ipv6_devconf *devconf, u32 portid,
-				      u32 seq, पूर्णांक event, अचिन्हित पूर्णांक flags,
-				      पूर्णांक type)
-अणु
-	काष्ठा nlmsghdr  *nlh;
-	काष्ठा netconfmsg *ncm;
+	return size;
+}
+
+static int inet6_netconf_fill_devconf(struct sk_buff *skb, int ifindex,
+				      struct ipv6_devconf *devconf, u32 portid,
+				      u32 seq, int event, unsigned int flags,
+				      int type)
+{
+	struct nlmsghdr  *nlh;
+	struct netconfmsg *ncm;
 	bool all = false;
 
-	nlh = nlmsg_put(skb, portid, seq, event, माप(काष्ठा netconfmsg),
+	nlh = nlmsg_put(skb, portid, seq, event, sizeof(struct netconfmsg),
 			flags);
-	अगर (!nlh)
-		वापस -EMSGSIZE;
+	if (!nlh)
+		return -EMSGSIZE;
 
-	अगर (type == NETCONFA_ALL)
+	if (type == NETCONFA_ALL)
 		all = true;
 
 	ncm = nlmsg_data(nlh);
 	ncm->ncm_family = AF_INET6;
 
-	अगर (nla_put_s32(skb, NETCONFA_IFINDEX, अगरindex) < 0)
-		जाओ nla_put_failure;
+	if (nla_put_s32(skb, NETCONFA_IFINDEX, ifindex) < 0)
+		goto nla_put_failure;
 
-	अगर (!devconf)
-		जाओ out;
+	if (!devconf)
+		goto out;
 
-	अगर ((all || type == NETCONFA_FORWARDING) &&
-	    nla_put_s32(skb, NETCONFA_FORWARDING, devconf->क्रमwarding) < 0)
-		जाओ nla_put_failure;
-#अगर_घोषित CONFIG_IPV6_MROUTE
-	अगर ((all || type == NETCONFA_MC_FORWARDING) &&
+	if ((all || type == NETCONFA_FORWARDING) &&
+	    nla_put_s32(skb, NETCONFA_FORWARDING, devconf->forwarding) < 0)
+		goto nla_put_failure;
+#ifdef CONFIG_IPV6_MROUTE
+	if ((all || type == NETCONFA_MC_FORWARDING) &&
 	    nla_put_s32(skb, NETCONFA_MC_FORWARDING,
-			devconf->mc_क्रमwarding) < 0)
-		जाओ nla_put_failure;
-#पूर्ण_अगर
-	अगर ((all || type == NETCONFA_PROXY_NEIGH) &&
+			devconf->mc_forwarding) < 0)
+		goto nla_put_failure;
+#endif
+	if ((all || type == NETCONFA_PROXY_NEIGH) &&
 	    nla_put_s32(skb, NETCONFA_PROXY_NEIGH, devconf->proxy_ndp) < 0)
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
-	अगर ((all || type == NETCONFA_IGNORE_ROUTES_WITH_LINKDOWN) &&
+	if ((all || type == NETCONFA_IGNORE_ROUTES_WITH_LINKDOWN) &&
 	    nla_put_s32(skb, NETCONFA_IGNORE_ROUTES_WITH_LINKDOWN,
-			devconf->ignore_routes_with_linkकरोwn) < 0)
-		जाओ nla_put_failure;
+			devconf->ignore_routes_with_linkdown) < 0)
+		goto nla_put_failure;
 
 out:
 	nlmsg_end(skb, nlh);
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-व्योम inet6_netconf_notअगरy_devconf(काष्ठा net *net, पूर्णांक event, पूर्णांक type,
-				  पूर्णांक अगरindex, काष्ठा ipv6_devconf *devconf)
-अणु
-	काष्ठा sk_buff *skb;
-	पूर्णांक err = -ENOBUFS;
+void inet6_netconf_notify_devconf(struct net *net, int event, int type,
+				  int ifindex, struct ipv6_devconf *devconf)
+{
+	struct sk_buff *skb;
+	int err = -ENOBUFS;
 
 	skb = nlmsg_new(inet6_netconf_msgsize_devconf(type), GFP_KERNEL);
-	अगर (!skb)
-		जाओ errout;
+	if (!skb)
+		goto errout;
 
-	err = inet6_netconf_fill_devconf(skb, अगरindex, devconf, 0, 0,
+	err = inet6_netconf_fill_devconf(skb, ifindex, devconf, 0, 0,
 					 event, 0, type);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		/* -EMSGSIZE implies BUG in inet6_netconf_msgsize_devconf() */
 		WARN_ON(err == -EMSGSIZE);
-		kमुक्त_skb(skb);
-		जाओ errout;
-	पूर्ण
-	rtnl_notअगरy(skb, net, 0, RTNLGRP_IPV6_NETCONF, शून्य, GFP_KERNEL);
-	वापस;
+		kfree_skb(skb);
+		goto errout;
+	}
+	rtnl_notify(skb, net, 0, RTNLGRP_IPV6_NETCONF, NULL, GFP_KERNEL);
+	return;
 errout:
 	rtnl_set_sk_err(net, RTNLGRP_IPV6_NETCONF, err);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा nla_policy devconf_ipv6_policy[NETCONFA_MAX+1] = अणु
-	[NETCONFA_IFINDEX]	= अणु .len = माप(पूर्णांक) पूर्ण,
-	[NETCONFA_FORWARDING]	= अणु .len = माप(पूर्णांक) पूर्ण,
-	[NETCONFA_PROXY_NEIGH]	= अणु .len = माप(पूर्णांक) पूर्ण,
-	[NETCONFA_IGNORE_ROUTES_WITH_LINKDOWN]	= अणु .len = माप(पूर्णांक) पूर्ण,
-पूर्ण;
+static const struct nla_policy devconf_ipv6_policy[NETCONFA_MAX+1] = {
+	[NETCONFA_IFINDEX]	= { .len = sizeof(int) },
+	[NETCONFA_FORWARDING]	= { .len = sizeof(int) },
+	[NETCONFA_PROXY_NEIGH]	= { .len = sizeof(int) },
+	[NETCONFA_IGNORE_ROUTES_WITH_LINKDOWN]	= { .len = sizeof(int) },
+};
 
-अटल पूर्णांक inet6_netconf_valid_get_req(काष्ठा sk_buff *skb,
-				       स्थिर काष्ठा nlmsghdr *nlh,
-				       काष्ठा nlattr **tb,
-				       काष्ठा netlink_ext_ack *extack)
-अणु
-	पूर्णांक i, err;
+static int inet6_netconf_valid_get_req(struct sk_buff *skb,
+				       const struct nlmsghdr *nlh,
+				       struct nlattr **tb,
+				       struct netlink_ext_ack *extack)
+{
+	int i, err;
 
-	अगर (nlh->nlmsg_len < nlmsg_msg_size(माप(काष्ठा netconfmsg))) अणु
+	if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(struct netconfmsg))) {
 		NL_SET_ERR_MSG_MOD(extack, "Invalid header for netconf get request");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!netlink_strict_get_check(skb))
-		वापस nlmsg_parse_deprecated(nlh, माप(काष्ठा netconfmsg),
+	if (!netlink_strict_get_check(skb))
+		return nlmsg_parse_deprecated(nlh, sizeof(struct netconfmsg),
 					      tb, NETCONFA_MAX,
 					      devconf_ipv6_policy, extack);
 
-	err = nlmsg_parse_deprecated_strict(nlh, माप(काष्ठा netconfmsg),
+	err = nlmsg_parse_deprecated_strict(nlh, sizeof(struct netconfmsg),
 					    tb, NETCONFA_MAX,
 					    devconf_ipv6_policy, extack);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	क्रम (i = 0; i <= NETCONFA_MAX; i++) अणु
-		अगर (!tb[i])
-			जारी;
+	for (i = 0; i <= NETCONFA_MAX; i++) {
+		if (!tb[i])
+			continue;
 
-		चयन (i) अणु
-		हाल NETCONFA_IFINDEX:
-			अवरोध;
-		शेष:
+		switch (i) {
+		case NETCONFA_IFINDEX:
+			break;
+		default:
 			NL_SET_ERR_MSG_MOD(extack, "Unsupported attribute in netconf get request");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक inet6_netconf_get_devconf(काष्ठा sk_buff *in_skb,
-				     काष्ठा nlmsghdr *nlh,
-				     काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा net *net = sock_net(in_skb->sk);
-	काष्ठा nlattr *tb[NETCONFA_MAX+1];
-	काष्ठा inet6_dev *in6_dev = शून्य;
-	काष्ठा net_device *dev = शून्य;
-	काष्ठा sk_buff *skb;
-	काष्ठा ipv6_devconf *devconf;
-	पूर्णांक अगरindex;
-	पूर्णांक err;
+static int inet6_netconf_get_devconf(struct sk_buff *in_skb,
+				     struct nlmsghdr *nlh,
+				     struct netlink_ext_ack *extack)
+{
+	struct net *net = sock_net(in_skb->sk);
+	struct nlattr *tb[NETCONFA_MAX+1];
+	struct inet6_dev *in6_dev = NULL;
+	struct net_device *dev = NULL;
+	struct sk_buff *skb;
+	struct ipv6_devconf *devconf;
+	int ifindex;
+	int err;
 
 	err = inet6_netconf_valid_get_req(in_skb, nlh, tb, extack);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	अगर (!tb[NETCONFA_IFINDEX])
-		वापस -EINVAL;
+	if (!tb[NETCONFA_IFINDEX])
+		return -EINVAL;
 
 	err = -EINVAL;
-	अगरindex = nla_get_s32(tb[NETCONFA_IFINDEX]);
-	चयन (अगरindex) अणु
-	हाल NETCONFA_IFINDEX_ALL:
+	ifindex = nla_get_s32(tb[NETCONFA_IFINDEX]);
+	switch (ifindex) {
+	case NETCONFA_IFINDEX_ALL:
 		devconf = net->ipv6.devconf_all;
-		अवरोध;
-	हाल NETCONFA_IFINDEX_DEFAULT:
+		break;
+	case NETCONFA_IFINDEX_DEFAULT:
 		devconf = net->ipv6.devconf_dflt;
-		अवरोध;
-	शेष:
-		dev = dev_get_by_index(net, अगरindex);
-		अगर (!dev)
-			वापस -EINVAL;
+		break;
+	default:
+		dev = dev_get_by_index(net, ifindex);
+		if (!dev)
+			return -EINVAL;
 		in6_dev = in6_dev_get(dev);
-		अगर (!in6_dev)
-			जाओ errout;
+		if (!in6_dev)
+			goto errout;
 		devconf = &in6_dev->cnf;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	err = -ENOBUFS;
 	skb = nlmsg_new(inet6_netconf_msgsize_devconf(NETCONFA_ALL), GFP_KERNEL);
-	अगर (!skb)
-		जाओ errout;
+	if (!skb)
+		goto errout;
 
-	err = inet6_netconf_fill_devconf(skb, अगरindex, devconf,
+	err = inet6_netconf_fill_devconf(skb, ifindex, devconf,
 					 NETLINK_CB(in_skb).portid,
 					 nlh->nlmsg_seq, RTM_NEWNETCONF, 0,
 					 NETCONFA_ALL);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		/* -EMSGSIZE implies BUG in inet6_netconf_msgsize_devconf() */
 		WARN_ON(err == -EMSGSIZE);
-		kमुक्त_skb(skb);
-		जाओ errout;
-	पूर्ण
+		kfree_skb(skb);
+		goto errout;
+	}
 	err = rtnl_unicast(skb, net, NETLINK_CB(in_skb).portid);
 errout:
-	अगर (in6_dev)
+	if (in6_dev)
 		in6_dev_put(in6_dev);
-	अगर (dev)
+	if (dev)
 		dev_put(dev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक inet6_netconf_dump_devconf(काष्ठा sk_buff *skb,
-				      काष्ठा netlink_callback *cb)
-अणु
-	स्थिर काष्ठा nlmsghdr *nlh = cb->nlh;
-	काष्ठा net *net = sock_net(skb->sk);
-	पूर्णांक h, s_h;
-	पूर्णांक idx, s_idx;
-	काष्ठा net_device *dev;
-	काष्ठा inet6_dev *idev;
-	काष्ठा hlist_head *head;
+static int inet6_netconf_dump_devconf(struct sk_buff *skb,
+				      struct netlink_callback *cb)
+{
+	const struct nlmsghdr *nlh = cb->nlh;
+	struct net *net = sock_net(skb->sk);
+	int h, s_h;
+	int idx, s_idx;
+	struct net_device *dev;
+	struct inet6_dev *idev;
+	struct hlist_head *head;
 
-	अगर (cb->strict_check) अणु
-		काष्ठा netlink_ext_ack *extack = cb->extack;
-		काष्ठा netconfmsg *ncm;
+	if (cb->strict_check) {
+		struct netlink_ext_ack *extack = cb->extack;
+		struct netconfmsg *ncm;
 
-		अगर (nlh->nlmsg_len < nlmsg_msg_size(माप(*ncm))) अणु
+		if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*ncm))) {
 			NL_SET_ERR_MSG_MOD(extack, "Invalid header for netconf dump request");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (nlmsg_attrlen(nlh, माप(*ncm))) अणु
+		if (nlmsg_attrlen(nlh, sizeof(*ncm))) {
 			NL_SET_ERR_MSG_MOD(extack, "Invalid data after header in netconf dump request");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
 	s_h = cb->args[0];
 	s_idx = idx = cb->args[1];
 
-	क्रम (h = s_h; h < NETDEV_HASHENTRIES; h++, s_idx = 0) अणु
+	for (h = s_h; h < NETDEV_HASHENTRIES; h++, s_idx = 0) {
 		idx = 0;
 		head = &net->dev_index_head[h];
-		rcu_पढ़ो_lock();
-		cb->seq = atomic_पढ़ो(&net->ipv6.dev_addr_genid) ^
+		rcu_read_lock();
+		cb->seq = atomic_read(&net->ipv6.dev_addr_genid) ^
 			  net->dev_base_seq;
-		hlist_क्रम_each_entry_rcu(dev, head, index_hlist) अणु
-			अगर (idx < s_idx)
-				जाओ cont;
+		hlist_for_each_entry_rcu(dev, head, index_hlist) {
+			if (idx < s_idx)
+				goto cont;
 			idev = __in6_dev_get(dev);
-			अगर (!idev)
-				जाओ cont;
+			if (!idev)
+				goto cont;
 
-			अगर (inet6_netconf_fill_devconf(skb, dev->अगरindex,
+			if (inet6_netconf_fill_devconf(skb, dev->ifindex,
 						       &idev->cnf,
 						       NETLINK_CB(cb->skb).portid,
 						       nlh->nlmsg_seq,
 						       RTM_NEWNETCONF,
 						       NLM_F_MULTI,
-						       NETCONFA_ALL) < 0) अणु
-				rcu_पढ़ो_unlock();
-				जाओ करोne;
-			पूर्ण
+						       NETCONFA_ALL) < 0) {
+				rcu_read_unlock();
+				goto done;
+			}
 			nl_dump_check_consistent(cb, nlmsg_hdr(skb));
 cont:
 			idx++;
-		पूर्ण
-		rcu_पढ़ो_unlock();
-	पूर्ण
-	अगर (h == NETDEV_HASHENTRIES) अणु
-		अगर (inet6_netconf_fill_devconf(skb, NETCONFA_IFINDEX_ALL,
+		}
+		rcu_read_unlock();
+	}
+	if (h == NETDEV_HASHENTRIES) {
+		if (inet6_netconf_fill_devconf(skb, NETCONFA_IFINDEX_ALL,
 					       net->ipv6.devconf_all,
 					       NETLINK_CB(cb->skb).portid,
 					       nlh->nlmsg_seq,
 					       RTM_NEWNETCONF, NLM_F_MULTI,
 					       NETCONFA_ALL) < 0)
-			जाओ करोne;
-		अन्यथा
+			goto done;
+		else
 			h++;
-	पूर्ण
-	अगर (h == NETDEV_HASHENTRIES + 1) अणु
-		अगर (inet6_netconf_fill_devconf(skb, NETCONFA_IFINDEX_DEFAULT,
+	}
+	if (h == NETDEV_HASHENTRIES + 1) {
+		if (inet6_netconf_fill_devconf(skb, NETCONFA_IFINDEX_DEFAULT,
 					       net->ipv6.devconf_dflt,
 					       NETLINK_CB(cb->skb).portid,
 					       nlh->nlmsg_seq,
 					       RTM_NEWNETCONF, NLM_F_MULTI,
 					       NETCONFA_ALL) < 0)
-			जाओ करोne;
-		अन्यथा
+			goto done;
+		else
 			h++;
-	पूर्ण
-करोne:
+	}
+done:
 	cb->args[0] = h;
 	cb->args[1] = idx;
 
-	वापस skb->len;
-पूर्ण
+	return skb->len;
+}
 
-#अगर_घोषित CONFIG_SYSCTL
-अटल व्योम dev_क्रमward_change(काष्ठा inet6_dev *idev)
-अणु
-	काष्ठा net_device *dev;
-	काष्ठा inet6_अगरaddr *अगरa;
+#ifdef CONFIG_SYSCTL
+static void dev_forward_change(struct inet6_dev *idev)
+{
+	struct net_device *dev;
+	struct inet6_ifaddr *ifa;
 
-	अगर (!idev)
-		वापस;
+	if (!idev)
+		return;
 	dev = idev->dev;
-	अगर (idev->cnf.क्रमwarding)
+	if (idev->cnf.forwarding)
 		dev_disable_lro(dev);
-	अगर (dev->flags & IFF_MULTICAST) अणु
-		अगर (idev->cnf.क्रमwarding) अणु
+	if (dev->flags & IFF_MULTICAST) {
+		if (idev->cnf.forwarding) {
 			ipv6_dev_mc_inc(dev, &in6addr_linklocal_allrouters);
-			ipv6_dev_mc_inc(dev, &in6addr_पूर्णांकerfacelocal_allrouters);
+			ipv6_dev_mc_inc(dev, &in6addr_interfacelocal_allrouters);
 			ipv6_dev_mc_inc(dev, &in6addr_sitelocal_allrouters);
-		पूर्ण अन्यथा अणु
+		} else {
 			ipv6_dev_mc_dec(dev, &in6addr_linklocal_allrouters);
-			ipv6_dev_mc_dec(dev, &in6addr_पूर्णांकerfacelocal_allrouters);
+			ipv6_dev_mc_dec(dev, &in6addr_interfacelocal_allrouters);
 			ipv6_dev_mc_dec(dev, &in6addr_sitelocal_allrouters);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	list_क्रम_each_entry(अगरa, &idev->addr_list, अगर_list) अणु
-		अगर (अगरa->flags&IFA_F_TENTATIVE)
-			जारी;
-		अगर (idev->cnf.क्रमwarding)
-			addrconf_join_anycast(अगरa);
-		अन्यथा
-			addrconf_leave_anycast(अगरa);
-	पूर्ण
-	inet6_netconf_notअगरy_devconf(dev_net(dev), RTM_NEWNETCONF,
+	list_for_each_entry(ifa, &idev->addr_list, if_list) {
+		if (ifa->flags&IFA_F_TENTATIVE)
+			continue;
+		if (idev->cnf.forwarding)
+			addrconf_join_anycast(ifa);
+		else
+			addrconf_leave_anycast(ifa);
+	}
+	inet6_netconf_notify_devconf(dev_net(dev), RTM_NEWNETCONF,
 				     NETCONFA_FORWARDING,
-				     dev->अगरindex, &idev->cnf);
-पूर्ण
+				     dev->ifindex, &idev->cnf);
+}
 
 
-अटल व्योम addrconf_क्रमward_change(काष्ठा net *net, __s32 newf)
-अणु
-	काष्ठा net_device *dev;
-	काष्ठा inet6_dev *idev;
+static void addrconf_forward_change(struct net *net, __s32 newf)
+{
+	struct net_device *dev;
+	struct inet6_dev *idev;
 
-	क्रम_each_netdev(net, dev) अणु
+	for_each_netdev(net, dev) {
 		idev = __in6_dev_get(dev);
-		अगर (idev) अणु
-			पूर्णांक changed = (!idev->cnf.क्रमwarding) ^ (!newf);
-			idev->cnf.क्रमwarding = newf;
-			अगर (changed)
-				dev_क्रमward_change(idev);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		if (idev) {
+			int changed = (!idev->cnf.forwarding) ^ (!newf);
+			idev->cnf.forwarding = newf;
+			if (changed)
+				dev_forward_change(idev);
+		}
+	}
+}
 
-अटल पूर्णांक addrconf_fixup_क्रमwarding(काष्ठा ctl_table *table, पूर्णांक *p, पूर्णांक newf)
-अणु
-	काष्ठा net *net;
-	पूर्णांक old;
+static int addrconf_fixup_forwarding(struct ctl_table *table, int *p, int newf)
+{
+	struct net *net;
+	int old;
 
-	अगर (!rtnl_trylock())
-		वापस restart_syscall();
+	if (!rtnl_trylock())
+		return restart_syscall();
 
-	net = (काष्ठा net *)table->extra2;
+	net = (struct net *)table->extra2;
 	old = *p;
 	*p = newf;
 
-	अगर (p == &net->ipv6.devconf_dflt->क्रमwarding) अणु
-		अगर ((!newf) ^ (!old))
-			inet6_netconf_notअगरy_devconf(net, RTM_NEWNETCONF,
+	if (p == &net->ipv6.devconf_dflt->forwarding) {
+		if ((!newf) ^ (!old))
+			inet6_netconf_notify_devconf(net, RTM_NEWNETCONF,
 						     NETCONFA_FORWARDING,
 						     NETCONFA_IFINDEX_DEFAULT,
 						     net->ipv6.devconf_dflt);
 		rtnl_unlock();
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (p == &net->ipv6.devconf_all->क्रमwarding) अणु
-		पूर्णांक old_dflt = net->ipv6.devconf_dflt->क्रमwarding;
+	if (p == &net->ipv6.devconf_all->forwarding) {
+		int old_dflt = net->ipv6.devconf_dflt->forwarding;
 
-		net->ipv6.devconf_dflt->क्रमwarding = newf;
-		अगर ((!newf) ^ (!old_dflt))
-			inet6_netconf_notअगरy_devconf(net, RTM_NEWNETCONF,
+		net->ipv6.devconf_dflt->forwarding = newf;
+		if ((!newf) ^ (!old_dflt))
+			inet6_netconf_notify_devconf(net, RTM_NEWNETCONF,
 						     NETCONFA_FORWARDING,
 						     NETCONFA_IFINDEX_DEFAULT,
 						     net->ipv6.devconf_dflt);
 
-		addrconf_क्रमward_change(net, newf);
-		अगर ((!newf) ^ (!old))
-			inet6_netconf_notअगरy_devconf(net, RTM_NEWNETCONF,
+		addrconf_forward_change(net, newf);
+		if ((!newf) ^ (!old))
+			inet6_netconf_notify_devconf(net, RTM_NEWNETCONF,
 						     NETCONFA_FORWARDING,
 						     NETCONFA_IFINDEX_ALL,
 						     net->ipv6.devconf_all);
-	पूर्ण अन्यथा अगर ((!newf) ^ (!old))
-		dev_क्रमward_change((काष्ठा inet6_dev *)table->extra1);
+	} else if ((!newf) ^ (!old))
+		dev_forward_change((struct inet6_dev *)table->extra1);
 	rtnl_unlock();
 
-	अगर (newf)
+	if (newf)
 		rt6_purge_dflt_routers(net);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल व्योम addrconf_linkकरोwn_change(काष्ठा net *net, __s32 newf)
-अणु
-	काष्ठा net_device *dev;
-	काष्ठा inet6_dev *idev;
+static void addrconf_linkdown_change(struct net *net, __s32 newf)
+{
+	struct net_device *dev;
+	struct inet6_dev *idev;
 
-	क्रम_each_netdev(net, dev) अणु
+	for_each_netdev(net, dev) {
 		idev = __in6_dev_get(dev);
-		अगर (idev) अणु
-			पूर्णांक changed = (!idev->cnf.ignore_routes_with_linkकरोwn) ^ (!newf);
+		if (idev) {
+			int changed = (!idev->cnf.ignore_routes_with_linkdown) ^ (!newf);
 
-			idev->cnf.ignore_routes_with_linkकरोwn = newf;
-			अगर (changed)
-				inet6_netconf_notअगरy_devconf(dev_net(dev),
+			idev->cnf.ignore_routes_with_linkdown = newf;
+			if (changed)
+				inet6_netconf_notify_devconf(dev_net(dev),
 							     RTM_NEWNETCONF,
 							     NETCONFA_IGNORE_ROUTES_WITH_LINKDOWN,
-							     dev->अगरindex,
+							     dev->ifindex,
 							     &idev->cnf);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक addrconf_fixup_linkकरोwn(काष्ठा ctl_table *table, पूर्णांक *p, पूर्णांक newf)
-अणु
-	काष्ठा net *net;
-	पूर्णांक old;
+static int addrconf_fixup_linkdown(struct ctl_table *table, int *p, int newf)
+{
+	struct net *net;
+	int old;
 
-	अगर (!rtnl_trylock())
-		वापस restart_syscall();
+	if (!rtnl_trylock())
+		return restart_syscall();
 
-	net = (काष्ठा net *)table->extra2;
+	net = (struct net *)table->extra2;
 	old = *p;
 	*p = newf;
 
-	अगर (p == &net->ipv6.devconf_dflt->ignore_routes_with_linkकरोwn) अणु
-		अगर ((!newf) ^ (!old))
-			inet6_netconf_notअगरy_devconf(net,
+	if (p == &net->ipv6.devconf_dflt->ignore_routes_with_linkdown) {
+		if ((!newf) ^ (!old))
+			inet6_netconf_notify_devconf(net,
 						     RTM_NEWNETCONF,
 						     NETCONFA_IGNORE_ROUTES_WITH_LINKDOWN,
 						     NETCONFA_IFINDEX_DEFAULT,
 						     net->ipv6.devconf_dflt);
 		rtnl_unlock();
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (p == &net->ipv6.devconf_all->ignore_routes_with_linkकरोwn) अणु
-		net->ipv6.devconf_dflt->ignore_routes_with_linkकरोwn = newf;
-		addrconf_linkकरोwn_change(net, newf);
-		अगर ((!newf) ^ (!old))
-			inet6_netconf_notअगरy_devconf(net,
+	if (p == &net->ipv6.devconf_all->ignore_routes_with_linkdown) {
+		net->ipv6.devconf_dflt->ignore_routes_with_linkdown = newf;
+		addrconf_linkdown_change(net, newf);
+		if ((!newf) ^ (!old))
+			inet6_netconf_notify_devconf(net,
 						     RTM_NEWNETCONF,
 						     NETCONFA_IGNORE_ROUTES_WITH_LINKDOWN,
 						     NETCONFA_IFINDEX_ALL,
 						     net->ipv6.devconf_all);
-	पूर्ण
+	}
 	rtnl_unlock();
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-#पूर्ण_अगर
+#endif
 
-/* Nobody refers to this अगरaddr, destroy it */
-व्योम inet6_अगरa_finish_destroy(काष्ठा inet6_अगरaddr *अगरp)
-अणु
-	WARN_ON(!hlist_unhashed(&अगरp->addr_lst));
+/* Nobody refers to this ifaddr, destroy it */
+void inet6_ifa_finish_destroy(struct inet6_ifaddr *ifp)
+{
+	WARN_ON(!hlist_unhashed(&ifp->addr_lst));
 
-#अगर_घोषित NET_REFCNT_DEBUG
+#ifdef NET_REFCNT_DEBUG
 	pr_debug("%s\n", __func__);
-#पूर्ण_अगर
+#endif
 
-	in6_dev_put(अगरp->idev);
+	in6_dev_put(ifp->idev);
 
-	अगर (cancel_delayed_work(&अगरp->dad_work))
+	if (cancel_delayed_work(&ifp->dad_work))
 		pr_notice("delayed DAD work was pending while freeing ifa=%p\n",
-			  अगरp);
+			  ifp);
 
-	अगर (अगरp->state != INET6_IFADDR_STATE_DEAD) अणु
-		pr_warn("Freeing alive inet6 address %p\n", अगरp);
-		वापस;
-	पूर्ण
+	if (ifp->state != INET6_IFADDR_STATE_DEAD) {
+		pr_warn("Freeing alive inet6 address %p\n", ifp);
+		return;
+	}
 
-	kमुक्त_rcu(अगरp, rcu);
-पूर्ण
+	kfree_rcu(ifp, rcu);
+}
 
-अटल व्योम
-ipv6_link_dev_addr(काष्ठा inet6_dev *idev, काष्ठा inet6_अगरaddr *अगरp)
-अणु
-	काष्ठा list_head *p;
-	पूर्णांक अगरp_scope = ipv6_addr_src_scope(&अगरp->addr);
+static void
+ipv6_link_dev_addr(struct inet6_dev *idev, struct inet6_ifaddr *ifp)
+{
+	struct list_head *p;
+	int ifp_scope = ipv6_addr_src_scope(&ifp->addr);
 
 	/*
 	 * Each device address list is sorted in order of scope -
-	 * global beक्रमe linklocal.
+	 * global before linklocal.
 	 */
-	list_क्रम_each(p, &idev->addr_list) अणु
-		काष्ठा inet6_अगरaddr *अगरa
-			= list_entry(p, काष्ठा inet6_अगरaddr, अगर_list);
-		अगर (अगरp_scope >= ipv6_addr_src_scope(&अगरa->addr))
-			अवरोध;
-	पूर्ण
+	list_for_each(p, &idev->addr_list) {
+		struct inet6_ifaddr *ifa
+			= list_entry(p, struct inet6_ifaddr, if_list);
+		if (ifp_scope >= ipv6_addr_src_scope(&ifa->addr))
+			break;
+	}
 
-	list_add_tail_rcu(&अगरp->अगर_list, p);
-पूर्ण
+	list_add_tail_rcu(&ifp->if_list, p);
+}
 
-अटल u32 inet6_addr_hash(स्थिर काष्ठा net *net, स्थिर काष्ठा in6_addr *addr)
-अणु
+static u32 inet6_addr_hash(const struct net *net, const struct in6_addr *addr)
+{
 	u32 val = ipv6_addr_hash(addr) ^ net_hash_mix(net);
 
-	वापस hash_32(val, IN6_ADDR_HSIZE_SHIFT);
-पूर्ण
+	return hash_32(val, IN6_ADDR_HSIZE_SHIFT);
+}
 
-अटल bool ipv6_chk_same_addr(काष्ठा net *net, स्थिर काष्ठा in6_addr *addr,
-			       काष्ठा net_device *dev, अचिन्हित पूर्णांक hash)
-अणु
-	काष्ठा inet6_अगरaddr *अगरp;
+static bool ipv6_chk_same_addr(struct net *net, const struct in6_addr *addr,
+			       struct net_device *dev, unsigned int hash)
+{
+	struct inet6_ifaddr *ifp;
 
-	hlist_क्रम_each_entry(अगरp, &inet6_addr_lst[hash], addr_lst) अणु
-		अगर (!net_eq(dev_net(अगरp->idev->dev), net))
-			जारी;
-		अगर (ipv6_addr_equal(&अगरp->addr, addr)) अणु
-			अगर (!dev || अगरp->idev->dev == dev)
-				वापस true;
-		पूर्ण
-	पूर्ण
-	वापस false;
-पूर्ण
+	hlist_for_each_entry(ifp, &inet6_addr_lst[hash], addr_lst) {
+		if (!net_eq(dev_net(ifp->idev->dev), net))
+			continue;
+		if (ipv6_addr_equal(&ifp->addr, addr)) {
+			if (!dev || ifp->idev->dev == dev)
+				return true;
+		}
+	}
+	return false;
+}
 
-अटल पूर्णांक ipv6_add_addr_hash(काष्ठा net_device *dev, काष्ठा inet6_अगरaddr *अगरa)
-अणु
-	अचिन्हित पूर्णांक hash = inet6_addr_hash(dev_net(dev), &अगरa->addr);
-	पूर्णांक err = 0;
+static int ipv6_add_addr_hash(struct net_device *dev, struct inet6_ifaddr *ifa)
+{
+	unsigned int hash = inet6_addr_hash(dev_net(dev), &ifa->addr);
+	int err = 0;
 
 	spin_lock(&addrconf_hash_lock);
 
-	/* Ignore adding duplicate addresses on an पूर्णांकerface */
-	अगर (ipv6_chk_same_addr(dev_net(dev), &अगरa->addr, dev, hash)) अणु
+	/* Ignore adding duplicate addresses on an interface */
+	if (ipv6_chk_same_addr(dev_net(dev), &ifa->addr, dev, hash)) {
 		netdev_dbg(dev, "ipv6_add_addr: already assigned\n");
 		err = -EEXIST;
-	पूर्ण अन्यथा अणु
-		hlist_add_head_rcu(&अगरa->addr_lst, &inet6_addr_lst[hash]);
-	पूर्ण
+	} else {
+		hlist_add_head_rcu(&ifa->addr_lst, &inet6_addr_lst[hash]);
+	}
 
 	spin_unlock(&addrconf_hash_lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-/* On success it वापसs अगरp with increased reference count */
+/* On success it returns ifp with increased reference count */
 
-अटल काष्ठा inet6_अगरaddr *
-ipv6_add_addr(काष्ठा inet6_dev *idev, काष्ठा अगरa6_config *cfg,
-	      bool can_block, काष्ठा netlink_ext_ack *extack)
-अणु
+static struct inet6_ifaddr *
+ipv6_add_addr(struct inet6_dev *idev, struct ifa6_config *cfg,
+	      bool can_block, struct netlink_ext_ack *extack)
+{
 	gfp_t gfp_flags = can_block ? GFP_KERNEL : GFP_ATOMIC;
-	पूर्णांक addr_type = ipv6_addr_type(cfg->pfx);
-	काष्ठा net *net = dev_net(idev->dev);
-	काष्ठा inet6_अगरaddr *अगरa = शून्य;
-	काष्ठा fib6_info *f6i = शून्य;
-	पूर्णांक err = 0;
+	int addr_type = ipv6_addr_type(cfg->pfx);
+	struct net *net = dev_net(idev->dev);
+	struct inet6_ifaddr *ifa = NULL;
+	struct fib6_info *f6i = NULL;
+	int err = 0;
 
-	अगर (addr_type == IPV6_ADDR_ANY ||
+	if (addr_type == IPV6_ADDR_ANY ||
 	    (addr_type & IPV6_ADDR_MULTICAST &&
-	     !(cfg->अगरa_flags & IFA_F_MCAUTOJOIN)) ||
+	     !(cfg->ifa_flags & IFA_F_MCAUTOJOIN)) ||
 	    (!(idev->dev->flags & IFF_LOOPBACK) &&
-	     !netअगर_is_l3_master(idev->dev) &&
+	     !netif_is_l3_master(idev->dev) &&
 	     addr_type & IPV6_ADDR_LOOPBACK))
-		वापस ERR_PTR(-EADDRNOTAVAIL);
+		return ERR_PTR(-EADDRNOTAVAIL);
 
-	अगर (idev->dead) अणु
+	if (idev->dead) {
 		err = -ENODEV;			/*XXX*/
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (idev->cnf.disable_ipv6) अणु
+	if (idev->cnf.disable_ipv6) {
 		err = -EACCES;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* validator notअगरier needs to be blocking;
-	 * करो not call in atomic context
+	/* validator notifier needs to be blocking;
+	 * do not call in atomic context
 	 */
-	अगर (can_block) अणु
-		काष्ठा in6_validator_info i6vi = अणु
+	if (can_block) {
+		struct in6_validator_info i6vi = {
 			.i6vi_addr = *cfg->pfx,
 			.i6vi_dev = idev,
 			.extack = extack,
-		पूर्ण;
+		};
 
-		err = inet6addr_validator_notअगरier_call_chain(NETDEV_UP, &i6vi);
-		err = notअगरier_to_त्रुटि_सं(err);
-		अगर (err < 0)
-			जाओ out;
-	पूर्ण
+		err = inet6addr_validator_notifier_call_chain(NETDEV_UP, &i6vi);
+		err = notifier_to_errno(err);
+		if (err < 0)
+			goto out;
+	}
 
-	अगरa = kzalloc(माप(*अगरa), gfp_flags);
-	अगर (!अगरa) अणु
+	ifa = kzalloc(sizeof(*ifa), gfp_flags);
+	if (!ifa) {
 		err = -ENOBUFS;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	f6i = addrconf_f6i_alloc(net, idev, cfg->pfx, false, gfp_flags);
-	अगर (IS_ERR(f6i)) अणु
+	if (IS_ERR(f6i)) {
 		err = PTR_ERR(f6i);
-		f6i = शून्य;
-		जाओ out;
-	पूर्ण
+		f6i = NULL;
+		goto out;
+	}
 
-	अगर (net->ipv6.devconf_all->disable_policy ||
+	if (net->ipv6.devconf_all->disable_policy ||
 	    idev->cnf.disable_policy)
 		f6i->dst_nopolicy = true;
 
 	neigh_parms_data_state_setall(idev->nd_parms);
 
-	अगरa->addr = *cfg->pfx;
-	अगर (cfg->peer_pfx)
-		अगरa->peer_addr = *cfg->peer_pfx;
+	ifa->addr = *cfg->pfx;
+	if (cfg->peer_pfx)
+		ifa->peer_addr = *cfg->peer_pfx;
 
-	spin_lock_init(&अगरa->lock);
-	INIT_DELAYED_WORK(&अगरa->dad_work, addrconf_dad_work);
-	INIT_HLIST_NODE(&अगरa->addr_lst);
-	अगरa->scope = cfg->scope;
-	अगरa->prefix_len = cfg->plen;
-	अगरa->rt_priority = cfg->rt_priority;
-	अगरa->flags = cfg->अगरa_flags;
-	/* No need to add the TENTATIVE flag क्रम addresses with NODAD */
-	अगर (!(cfg->अगरa_flags & IFA_F_NODAD))
-		अगरa->flags |= IFA_F_TENTATIVE;
-	अगरa->valid_lft = cfg->valid_lft;
-	अगरa->prefered_lft = cfg->preferred_lft;
-	अगरa->cstamp = अगरa->tstamp = jअगरfies;
-	अगरa->tokenized = false;
+	spin_lock_init(&ifa->lock);
+	INIT_DELAYED_WORK(&ifa->dad_work, addrconf_dad_work);
+	INIT_HLIST_NODE(&ifa->addr_lst);
+	ifa->scope = cfg->scope;
+	ifa->prefix_len = cfg->plen;
+	ifa->rt_priority = cfg->rt_priority;
+	ifa->flags = cfg->ifa_flags;
+	/* No need to add the TENTATIVE flag for addresses with NODAD */
+	if (!(cfg->ifa_flags & IFA_F_NODAD))
+		ifa->flags |= IFA_F_TENTATIVE;
+	ifa->valid_lft = cfg->valid_lft;
+	ifa->prefered_lft = cfg->preferred_lft;
+	ifa->cstamp = ifa->tstamp = jiffies;
+	ifa->tokenized = false;
 
-	अगरa->rt = f6i;
+	ifa->rt = f6i;
 
-	अगरa->idev = idev;
+	ifa->idev = idev;
 	in6_dev_hold(idev);
 
 	/* For caller */
-	refcount_set(&अगरa->refcnt, 1);
+	refcount_set(&ifa->refcnt, 1);
 
-	rcu_पढ़ो_lock_bh();
+	rcu_read_lock_bh();
 
-	err = ipv6_add_addr_hash(idev->dev, अगरa);
-	अगर (err < 0) अणु
-		rcu_पढ़ो_unlock_bh();
-		जाओ out;
-	पूर्ण
+	err = ipv6_add_addr_hash(idev->dev, ifa);
+	if (err < 0) {
+		rcu_read_unlock_bh();
+		goto out;
+	}
 
-	ग_लिखो_lock(&idev->lock);
+	write_lock(&idev->lock);
 
 	/* Add to inet6_dev unicast addr list. */
-	ipv6_link_dev_addr(idev, अगरa);
+	ipv6_link_dev_addr(idev, ifa);
 
-	अगर (अगरa->flags&IFA_F_TEMPORARY) अणु
-		list_add(&अगरa->पंचांगp_list, &idev->tempaddr_list);
-		in6_अगरa_hold(अगरa);
-	पूर्ण
+	if (ifa->flags&IFA_F_TEMPORARY) {
+		list_add(&ifa->tmp_list, &idev->tempaddr_list);
+		in6_ifa_hold(ifa);
+	}
 
-	in6_अगरa_hold(अगरa);
-	ग_लिखो_unlock(&idev->lock);
+	in6_ifa_hold(ifa);
+	write_unlock(&idev->lock);
 
-	rcu_पढ़ो_unlock_bh();
+	rcu_read_unlock_bh();
 
-	inet6addr_notअगरier_call_chain(NETDEV_UP, अगरa);
+	inet6addr_notifier_call_chain(NETDEV_UP, ifa);
 out:
-	अगर (unlikely(err < 0)) अणु
+	if (unlikely(err < 0)) {
 		fib6_info_release(f6i);
 
-		अगर (अगरa) अणु
-			अगर (अगरa->idev)
-				in6_dev_put(अगरa->idev);
-			kमुक्त(अगरa);
-		पूर्ण
-		अगरa = ERR_PTR(err);
-	पूर्ण
+		if (ifa) {
+			if (ifa->idev)
+				in6_dev_put(ifa->idev);
+			kfree(ifa);
+		}
+		ifa = ERR_PTR(err);
+	}
 
-	वापस अगरa;
-पूर्ण
+	return ifa;
+}
 
-क्रमागत cleanup_prefix_rt_t अणु
-	CLEANUP_PREFIX_RT_NOP,    /* no cleanup action क्रम prefix route */
+enum cleanup_prefix_rt_t {
+	CLEANUP_PREFIX_RT_NOP,    /* no cleanup action for prefix route */
 	CLEANUP_PREFIX_RT_DEL,    /* delete the prefix route */
-	CLEANUP_PREFIX_RT_EXPIRE, /* update the lअगरeसमय of the prefix route */
-पूर्ण;
+	CLEANUP_PREFIX_RT_EXPIRE, /* update the lifetime of the prefix route */
+};
 
 /*
- * Check, whether the prefix क्रम अगरp would still need a prefix route
- * after deleting अगरp. The function वापसs one of the CLEANUP_PREFIX_RT_*
- * स्थिरants.
+ * Check, whether the prefix for ifp would still need a prefix route
+ * after deleting ifp. The function returns one of the CLEANUP_PREFIX_RT_*
+ * constants.
  *
- * 1) we करोn't purge prefix अगर address was not permanent.
- *    prefix is managed by its own lअगरeसमय.
- * 2) we also करोn't purge, अगर the address was IFA_F_NOPREFIXROUTE.
- * 3) अगर there are no addresses, delete prefix.
- * 4) अगर there are still other permanent address(es),
+ * 1) we don't purge prefix if address was not permanent.
+ *    prefix is managed by its own lifetime.
+ * 2) we also don't purge, if the address was IFA_F_NOPREFIXROUTE.
+ * 3) if there are no addresses, delete prefix.
+ * 4) if there are still other permanent address(es),
  *    corresponding prefix is still permanent.
- * 5) अगर there are still other addresses with IFA_F_NOPREFIXROUTE,
- *    करोn't purge the prefix, assume user space is managing it.
- * 6) otherwise, update prefix lअगरeसमय to the
- *    दीर्घest valid lअगरeसमय among the corresponding
+ * 5) if there are still other addresses with IFA_F_NOPREFIXROUTE,
+ *    don't purge the prefix, assume user space is managing it.
+ * 6) otherwise, update prefix lifetime to the
+ *    longest valid lifetime among the corresponding
  *    addresses on the device.
- *    Note: subsequent RA will update lअगरeसमय.
+ *    Note: subsequent RA will update lifetime.
  **/
-अटल क्रमागत cleanup_prefix_rt_t
-check_cleanup_prefix_route(काष्ठा inet6_अगरaddr *अगरp, अचिन्हित दीर्घ *expires)
-अणु
-	काष्ठा inet6_अगरaddr *अगरa;
-	काष्ठा inet6_dev *idev = अगरp->idev;
-	अचिन्हित दीर्घ lअगरeसमय;
-	क्रमागत cleanup_prefix_rt_t action = CLEANUP_PREFIX_RT_DEL;
+static enum cleanup_prefix_rt_t
+check_cleanup_prefix_route(struct inet6_ifaddr *ifp, unsigned long *expires)
+{
+	struct inet6_ifaddr *ifa;
+	struct inet6_dev *idev = ifp->idev;
+	unsigned long lifetime;
+	enum cleanup_prefix_rt_t action = CLEANUP_PREFIX_RT_DEL;
 
-	*expires = jअगरfies;
+	*expires = jiffies;
 
-	list_क्रम_each_entry(अगरa, &idev->addr_list, अगर_list) अणु
-		अगर (अगरa == अगरp)
-			जारी;
-		अगर (अगरa->prefix_len != अगरp->prefix_len ||
-		    !ipv6_prefix_equal(&अगरa->addr, &अगरp->addr,
-				       अगरp->prefix_len))
-			जारी;
-		अगर (अगरa->flags & (IFA_F_PERMANENT | IFA_F_NOPREFIXROUTE))
-			वापस CLEANUP_PREFIX_RT_NOP;
+	list_for_each_entry(ifa, &idev->addr_list, if_list) {
+		if (ifa == ifp)
+			continue;
+		if (ifa->prefix_len != ifp->prefix_len ||
+		    !ipv6_prefix_equal(&ifa->addr, &ifp->addr,
+				       ifp->prefix_len))
+			continue;
+		if (ifa->flags & (IFA_F_PERMANENT | IFA_F_NOPREFIXROUTE))
+			return CLEANUP_PREFIX_RT_NOP;
 
 		action = CLEANUP_PREFIX_RT_EXPIRE;
 
-		spin_lock(&अगरa->lock);
+		spin_lock(&ifa->lock);
 
-		lअगरeसमय = addrconf_समयout_fixup(अगरa->valid_lft, HZ);
+		lifetime = addrconf_timeout_fixup(ifa->valid_lft, HZ);
 		/*
 		 * Note: Because this address is
-		 * not permanent, lअगरeसमय <
-		 * दीर्घ_उच्च / HZ here.
+		 * not permanent, lifetime <
+		 * LONG_MAX / HZ here.
 		 */
-		अगर (समय_beक्रमe(*expires, अगरa->tstamp + lअगरeसमय * HZ))
-			*expires = अगरa->tstamp + lअगरeसमय * HZ;
-		spin_unlock(&अगरa->lock);
-	पूर्ण
+		if (time_before(*expires, ifa->tstamp + lifetime * HZ))
+			*expires = ifa->tstamp + lifetime * HZ;
+		spin_unlock(&ifa->lock);
+	}
 
-	वापस action;
-पूर्ण
+	return action;
+}
 
-अटल व्योम
-cleanup_prefix_route(काष्ठा inet6_अगरaddr *अगरp, अचिन्हित दीर्घ expires,
+static void
+cleanup_prefix_route(struct inet6_ifaddr *ifp, unsigned long expires,
 		     bool del_rt, bool del_peer)
-अणु
-	काष्ठा fib6_info *f6i;
+{
+	struct fib6_info *f6i;
 
-	f6i = addrconf_get_prefix_route(del_peer ? &अगरp->peer_addr : &अगरp->addr,
-					अगरp->prefix_len,
-					अगरp->idev->dev, 0, RTF_DEFAULT, true);
-	अगर (f6i) अणु
-		अगर (del_rt)
-			ip6_del_rt(dev_net(अगरp->idev->dev), f6i, false);
-		अन्यथा अणु
-			अगर (!(f6i->fib6_flags & RTF_EXPIRES))
+	f6i = addrconf_get_prefix_route(del_peer ? &ifp->peer_addr : &ifp->addr,
+					ifp->prefix_len,
+					ifp->idev->dev, 0, RTF_DEFAULT, true);
+	if (f6i) {
+		if (del_rt)
+			ip6_del_rt(dev_net(ifp->idev->dev), f6i, false);
+		else {
+			if (!(f6i->fib6_flags & RTF_EXPIRES))
 				fib6_set_expires(f6i, expires);
 			fib6_info_release(f6i);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 
-/* This function wants to get referenced अगरp and releases it beक्रमe वापस */
+/* This function wants to get referenced ifp and releases it before return */
 
-अटल व्योम ipv6_del_addr(काष्ठा inet6_अगरaddr *अगरp)
-अणु
-	पूर्णांक state;
-	क्रमागत cleanup_prefix_rt_t action = CLEANUP_PREFIX_RT_NOP;
-	अचिन्हित दीर्घ expires;
+static void ipv6_del_addr(struct inet6_ifaddr *ifp)
+{
+	int state;
+	enum cleanup_prefix_rt_t action = CLEANUP_PREFIX_RT_NOP;
+	unsigned long expires;
 
 	ASSERT_RTNL();
 
-	spin_lock_bh(&अगरp->lock);
-	state = अगरp->state;
-	अगरp->state = INET6_IFADDR_STATE_DEAD;
-	spin_unlock_bh(&अगरp->lock);
+	spin_lock_bh(&ifp->lock);
+	state = ifp->state;
+	ifp->state = INET6_IFADDR_STATE_DEAD;
+	spin_unlock_bh(&ifp->lock);
 
-	अगर (state == INET6_IFADDR_STATE_DEAD)
-		जाओ out;
+	if (state == INET6_IFADDR_STATE_DEAD)
+		goto out;
 
 	spin_lock_bh(&addrconf_hash_lock);
-	hlist_del_init_rcu(&अगरp->addr_lst);
+	hlist_del_init_rcu(&ifp->addr_lst);
 	spin_unlock_bh(&addrconf_hash_lock);
 
-	ग_लिखो_lock_bh(&अगरp->idev->lock);
+	write_lock_bh(&ifp->idev->lock);
 
-	अगर (अगरp->flags&IFA_F_TEMPORARY) अणु
-		list_del(&अगरp->पंचांगp_list);
-		अगर (अगरp->अगरpub) अणु
-			in6_अगरa_put(अगरp->अगरpub);
-			अगरp->अगरpub = शून्य;
-		पूर्ण
-		__in6_अगरa_put(अगरp);
-	पूर्ण
+	if (ifp->flags&IFA_F_TEMPORARY) {
+		list_del(&ifp->tmp_list);
+		if (ifp->ifpub) {
+			in6_ifa_put(ifp->ifpub);
+			ifp->ifpub = NULL;
+		}
+		__in6_ifa_put(ifp);
+	}
 
-	अगर (अगरp->flags & IFA_F_PERMANENT && !(अगरp->flags & IFA_F_NOPREFIXROUTE))
-		action = check_cleanup_prefix_route(अगरp, &expires);
+	if (ifp->flags & IFA_F_PERMANENT && !(ifp->flags & IFA_F_NOPREFIXROUTE))
+		action = check_cleanup_prefix_route(ifp, &expires);
 
-	list_del_rcu(&अगरp->अगर_list);
-	__in6_अगरa_put(अगरp);
+	list_del_rcu(&ifp->if_list);
+	__in6_ifa_put(ifp);
 
-	ग_लिखो_unlock_bh(&अगरp->idev->lock);
+	write_unlock_bh(&ifp->idev->lock);
 
-	addrconf_del_dad_work(अगरp);
+	addrconf_del_dad_work(ifp);
 
-	ipv6_अगरa_notअगरy(RTM_DELADDR, अगरp);
+	ipv6_ifa_notify(RTM_DELADDR, ifp);
 
-	inet6addr_notअगरier_call_chain(NETDEV_DOWN, अगरp);
+	inet6addr_notifier_call_chain(NETDEV_DOWN, ifp);
 
-	अगर (action != CLEANUP_PREFIX_RT_NOP) अणु
-		cleanup_prefix_route(अगरp, expires,
+	if (action != CLEANUP_PREFIX_RT_NOP) {
+		cleanup_prefix_route(ifp, expires,
 			action == CLEANUP_PREFIX_RT_DEL, false);
-	पूर्ण
+	}
 
 	/* clean up prefsrc entries */
-	rt6_हटाओ_prefsrc(अगरp);
+	rt6_remove_prefsrc(ifp);
 out:
-	in6_अगरa_put(अगरp);
-पूर्ण
+	in6_ifa_put(ifp);
+}
 
-अटल पूर्णांक ipv6_create_tempaddr(काष्ठा inet6_अगरaddr *अगरp, bool block)
-अणु
-	काष्ठा inet6_dev *idev = अगरp->idev;
-	अचिन्हित दीर्घ पंचांगp_tstamp, age;
-	अचिन्हित दीर्घ regen_advance;
-	अचिन्हित दीर्घ now = jअगरfies;
+static int ipv6_create_tempaddr(struct inet6_ifaddr *ifp, bool block)
+{
+	struct inet6_dev *idev = ifp->idev;
+	unsigned long tmp_tstamp, age;
+	unsigned long regen_advance;
+	unsigned long now = jiffies;
 	s32 cnf_temp_preferred_lft;
-	काष्ठा inet6_अगरaddr *अगरt;
-	काष्ठा अगरa6_config cfg;
-	दीर्घ max_desync_factor;
-	काष्ठा in6_addr addr;
-	पूर्णांक ret = 0;
+	struct inet6_ifaddr *ift;
+	struct ifa6_config cfg;
+	long max_desync_factor;
+	struct in6_addr addr;
+	int ret = 0;
 
-	ग_लिखो_lock_bh(&idev->lock);
+	write_lock_bh(&idev->lock);
 
 retry:
 	in6_dev_hold(idev);
-	अगर (idev->cnf.use_tempaddr <= 0) अणु
-		ग_लिखो_unlock_bh(&idev->lock);
+	if (idev->cnf.use_tempaddr <= 0) {
+		write_unlock_bh(&idev->lock);
 		pr_info("%s: use_tempaddr is disabled\n", __func__);
 		in6_dev_put(idev);
 		ret = -1;
-		जाओ out;
-	पूर्ण
-	spin_lock_bh(&अगरp->lock);
-	अगर (अगरp->regen_count++ >= idev->cnf.regen_max_retry) अणु
+		goto out;
+	}
+	spin_lock_bh(&ifp->lock);
+	if (ifp->regen_count++ >= idev->cnf.regen_max_retry) {
 		idev->cnf.use_tempaddr = -1;	/*XXX*/
-		spin_unlock_bh(&अगरp->lock);
-		ग_लिखो_unlock_bh(&idev->lock);
+		spin_unlock_bh(&ifp->lock);
+		write_unlock_bh(&idev->lock);
 		pr_warn("%s: regeneration time exceeded - disabled temporary address support\n",
 			__func__);
 		in6_dev_put(idev);
 		ret = -1;
-		जाओ out;
-	पूर्ण
-	in6_अगरa_hold(अगरp);
-	स_नकल(addr.s6_addr, अगरp->addr.s6_addr, 8);
+		goto out;
+	}
+	in6_ifa_hold(ifp);
+	memcpy(addr.s6_addr, ifp->addr.s6_addr, 8);
 	ipv6_gen_rnd_iid(&addr);
 
-	age = (now - अगरp->tstamp) / HZ;
+	age = (now - ifp->tstamp) / HZ;
 
 	regen_advance = idev->cnf.regen_max_retry *
 			idev->cnf.dad_transmits *
 			max(NEIGH_VAR(idev->nd_parms, RETRANS_TIME), HZ/100) / HZ;
 
-	/* recalculate max_desync_factor each समय and update
-	 * idev->desync_factor अगर it's larger
+	/* recalculate max_desync_factor each time and update
+	 * idev->desync_factor if it's larger
 	 */
 	cnf_temp_preferred_lft = READ_ONCE(idev->cnf.temp_prefered_lft);
 	max_desync_factor = min_t(__u32,
 				  idev->cnf.max_desync_factor,
 				  cnf_temp_preferred_lft - regen_advance);
 
-	अगर (unlikely(idev->desync_factor > max_desync_factor)) अणु
-		अगर (max_desync_factor > 0) अणु
-			get_अक्रमom_bytes(&idev->desync_factor,
-					 माप(idev->desync_factor));
+	if (unlikely(idev->desync_factor > max_desync_factor)) {
+		if (max_desync_factor > 0) {
+			get_random_bytes(&idev->desync_factor,
+					 sizeof(idev->desync_factor));
 			idev->desync_factor %= max_desync_factor;
-		पूर्ण अन्यथा अणु
+		} else {
 			idev->desync_factor = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	स_रखो(&cfg, 0, माप(cfg));
-	cfg.valid_lft = min_t(__u32, अगरp->valid_lft,
+	memset(&cfg, 0, sizeof(cfg));
+	cfg.valid_lft = min_t(__u32, ifp->valid_lft,
 			      idev->cnf.temp_valid_lft + age);
 	cfg.preferred_lft = cnf_temp_preferred_lft + age - idev->desync_factor;
-	cfg.preferred_lft = min_t(__u32, अगरp->prefered_lft, cfg.preferred_lft);
+	cfg.preferred_lft = min_t(__u32, ifp->prefered_lft, cfg.preferred_lft);
 
-	cfg.plen = अगरp->prefix_len;
-	पंचांगp_tstamp = अगरp->tstamp;
-	spin_unlock_bh(&अगरp->lock);
+	cfg.plen = ifp->prefix_len;
+	tmp_tstamp = ifp->tstamp;
+	spin_unlock_bh(&ifp->lock);
 
-	ग_लिखो_unlock_bh(&idev->lock);
+	write_unlock_bh(&idev->lock);
 
-	/* A temporary address is created only अगर this calculated Preferred
-	 * Lअगरeसमय is greater than REGEN_ADVANCE समय units.  In particular,
+	/* A temporary address is created only if this calculated Preferred
+	 * Lifetime is greater than REGEN_ADVANCE time units.  In particular,
 	 * an implementation must not create a temporary address with a zero
-	 * Preferred Lअगरeसमय.
-	 * Use age calculation as in addrconf_verअगरy to aव्योम unnecessary
+	 * Preferred Lifetime.
+	 * Use age calculation as in addrconf_verify to avoid unnecessary
 	 * temporary addresses being generated.
 	 */
-	age = (now - पंचांगp_tstamp + ADDRCONF_TIMER_FUZZ_MINUS) / HZ;
-	अगर (cfg.preferred_lft <= regen_advance + age) अणु
-		in6_अगरa_put(अगरp);
+	age = (now - tmp_tstamp + ADDRCONF_TIMER_FUZZ_MINUS) / HZ;
+	if (cfg.preferred_lft <= regen_advance + age) {
+		in6_ifa_put(ifp);
 		in6_dev_put(idev);
 		ret = -1;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	cfg.अगरa_flags = IFA_F_TEMPORARY;
+	cfg.ifa_flags = IFA_F_TEMPORARY;
 	/* set in addrconf_prefix_rcv() */
-	अगर (अगरp->flags & IFA_F_OPTIMISTIC)
-		cfg.अगरa_flags |= IFA_F_OPTIMISTIC;
+	if (ifp->flags & IFA_F_OPTIMISTIC)
+		cfg.ifa_flags |= IFA_F_OPTIMISTIC;
 
 	cfg.pfx = &addr;
 	cfg.scope = ipv6_addr_scope(cfg.pfx);
 
-	अगरt = ipv6_add_addr(idev, &cfg, block, शून्य);
-	अगर (IS_ERR(अगरt)) अणु
-		in6_अगरa_put(अगरp);
+	ift = ipv6_add_addr(idev, &cfg, block, NULL);
+	if (IS_ERR(ift)) {
+		in6_ifa_put(ifp);
 		in6_dev_put(idev);
 		pr_info("%s: retry temporary address regeneration\n", __func__);
-		ग_लिखो_lock_bh(&idev->lock);
-		जाओ retry;
-	पूर्ण
+		write_lock_bh(&idev->lock);
+		goto retry;
+	}
 
-	spin_lock_bh(&अगरt->lock);
-	अगरt->अगरpub = अगरp;
-	अगरt->cstamp = now;
-	अगरt->tstamp = पंचांगp_tstamp;
-	spin_unlock_bh(&अगरt->lock);
+	spin_lock_bh(&ift->lock);
+	ift->ifpub = ifp;
+	ift->cstamp = now;
+	ift->tstamp = tmp_tstamp;
+	spin_unlock_bh(&ift->lock);
 
-	addrconf_dad_start(अगरt);
-	in6_अगरa_put(अगरt);
+	addrconf_dad_start(ift);
+	in6_ifa_put(ift);
 	in6_dev_put(idev);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  *	Choose an appropriate source address (RFC3484)
  */
-क्रमागत अणु
+enum {
 	IPV6_SADDR_RULE_INIT = 0,
 	IPV6_SADDR_RULE_LOCAL,
 	IPV6_SADDR_RULE_SCOPE,
 	IPV6_SADDR_RULE_PREFERRED,
-#अगर_घोषित CONFIG_IPV6_MIP6
+#ifdef CONFIG_IPV6_MIP6
 	IPV6_SADDR_RULE_HOA,
-#पूर्ण_अगर
+#endif
 	IPV6_SADDR_RULE_OIF,
 	IPV6_SADDR_RULE_LABEL,
 	IPV6_SADDR_RULE_PRIVACY,
 	IPV6_SADDR_RULE_ORCHID,
 	IPV6_SADDR_RULE_PREFIX,
-#अगर_घोषित CONFIG_IPV6_OPTIMISTIC_DAD
+#ifdef CONFIG_IPV6_OPTIMISTIC_DAD
 	IPV6_SADDR_RULE_NOT_OPTIMISTIC,
-#पूर्ण_अगर
+#endif
 	IPV6_SADDR_RULE_MAX
-पूर्ण;
+};
 
-काष्ठा ipv6_saddr_score अणु
-	पूर्णांक			rule;
-	पूर्णांक			addr_type;
-	काष्ठा inet6_अगरaddr	*अगरa;
+struct ipv6_saddr_score {
+	int			rule;
+	int			addr_type;
+	struct inet6_ifaddr	*ifa;
 	DECLARE_BITMAP(scorebits, IPV6_SADDR_RULE_MAX);
-	पूर्णांक			scopedist;
-	पूर्णांक			matchlen;
-पूर्ण;
+	int			scopedist;
+	int			matchlen;
+};
 
-काष्ठा ipv6_saddr_dst अणु
-	स्थिर काष्ठा in6_addr *addr;
-	पूर्णांक अगरindex;
-	पूर्णांक scope;
-	पूर्णांक label;
-	अचिन्हित पूर्णांक prefs;
-पूर्ण;
+struct ipv6_saddr_dst {
+	const struct in6_addr *addr;
+	int ifindex;
+	int scope;
+	int label;
+	unsigned int prefs;
+};
 
-अटल अंतरभूत पूर्णांक ipv6_saddr_preferred(पूर्णांक type)
-अणु
-	अगर (type & (IPV6_ADDR_MAPPED|IPV6_ADDR_COMPATv4|IPV6_ADDR_LOOPBACK))
-		वापस 1;
-	वापस 0;
-पूर्ण
+static inline int ipv6_saddr_preferred(int type)
+{
+	if (type & (IPV6_ADDR_MAPPED|IPV6_ADDR_COMPATv4|IPV6_ADDR_LOOPBACK))
+		return 1;
+	return 0;
+}
 
-अटल bool ipv6_use_optimistic_addr(काष्ठा net *net,
-				     काष्ठा inet6_dev *idev)
-अणु
-#अगर_घोषित CONFIG_IPV6_OPTIMISTIC_DAD
-	अगर (!idev)
-		वापस false;
-	अगर (!net->ipv6.devconf_all->optimistic_dad && !idev->cnf.optimistic_dad)
-		वापस false;
-	अगर (!net->ipv6.devconf_all->use_optimistic && !idev->cnf.use_optimistic)
-		वापस false;
+static bool ipv6_use_optimistic_addr(struct net *net,
+				     struct inet6_dev *idev)
+{
+#ifdef CONFIG_IPV6_OPTIMISTIC_DAD
+	if (!idev)
+		return false;
+	if (!net->ipv6.devconf_all->optimistic_dad && !idev->cnf.optimistic_dad)
+		return false;
+	if (!net->ipv6.devconf_all->use_optimistic && !idev->cnf.use_optimistic)
+		return false;
 
-	वापस true;
-#अन्यथा
-	वापस false;
-#पूर्ण_अगर
-पूर्ण
+	return true;
+#else
+	return false;
+#endif
+}
 
-अटल bool ipv6_allow_optimistic_dad(काष्ठा net *net,
-				      काष्ठा inet6_dev *idev)
-अणु
-#अगर_घोषित CONFIG_IPV6_OPTIMISTIC_DAD
-	अगर (!idev)
-		वापस false;
-	अगर (!net->ipv6.devconf_all->optimistic_dad && !idev->cnf.optimistic_dad)
-		वापस false;
+static bool ipv6_allow_optimistic_dad(struct net *net,
+				      struct inet6_dev *idev)
+{
+#ifdef CONFIG_IPV6_OPTIMISTIC_DAD
+	if (!idev)
+		return false;
+	if (!net->ipv6.devconf_all->optimistic_dad && !idev->cnf.optimistic_dad)
+		return false;
 
-	वापस true;
-#अन्यथा
-	वापस false;
-#पूर्ण_अगर
-पूर्ण
+	return true;
+#else
+	return false;
+#endif
+}
 
-अटल पूर्णांक ipv6_get_saddr_eval(काष्ठा net *net,
-			       काष्ठा ipv6_saddr_score *score,
-			       काष्ठा ipv6_saddr_dst *dst,
-			       पूर्णांक i)
-अणु
-	पूर्णांक ret;
+static int ipv6_get_saddr_eval(struct net *net,
+			       struct ipv6_saddr_score *score,
+			       struct ipv6_saddr_dst *dst,
+			       int i)
+{
+	int ret;
 
-	अगर (i <= score->rule) अणु
-		चयन (i) अणु
-		हाल IPV6_SADDR_RULE_SCOPE:
+	if (i <= score->rule) {
+		switch (i) {
+		case IPV6_SADDR_RULE_SCOPE:
 			ret = score->scopedist;
-			अवरोध;
-		हाल IPV6_SADDR_RULE_PREFIX:
+			break;
+		case IPV6_SADDR_RULE_PREFIX:
 			ret = score->matchlen;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			ret = !!test_bit(i, score->scorebits);
-		पूर्ण
-		जाओ out;
-	पूर्ण
+		}
+		goto out;
+	}
 
-	चयन (i) अणु
-	हाल IPV6_SADDR_RULE_INIT:
-		/* Rule 0: remember अगर hiscore is not पढ़ोy yet */
-		ret = !!score->अगरa;
-		अवरोध;
-	हाल IPV6_SADDR_RULE_LOCAL:
+	switch (i) {
+	case IPV6_SADDR_RULE_INIT:
+		/* Rule 0: remember if hiscore is not ready yet */
+		ret = !!score->ifa;
+		break;
+	case IPV6_SADDR_RULE_LOCAL:
 		/* Rule 1: Prefer same address */
-		ret = ipv6_addr_equal(&score->अगरa->addr, dst->addr);
-		अवरोध;
-	हाल IPV6_SADDR_RULE_SCOPE:
+		ret = ipv6_addr_equal(&score->ifa->addr, dst->addr);
+		break;
+	case IPV6_SADDR_RULE_SCOPE:
 		/* Rule 2: Prefer appropriate scope
 		 *
 		 *      ret
@@ -1545,110 +1544,110 @@ out:
 		 *       |
 		 *       |             d is scope of the destination.
 		 *  B-d  |  \
-		 *       |   \      <- smaller scope is better अगर
-		 *  B-15 |    \        अगर scope is enough क्रम destination.
+		 *       |   \      <- smaller scope is better if
+		 *  B-15 |    \        if scope is enough for destination.
 		 *       |             ret = B - scope (-1 <= scope >= d <= 15).
 		 * d-C-1 | /
 		 *       |/         <- greater is better
-		 *   -C  /             अगर scope is not enough क्रम destination.
+		 *   -C  /             if scope is not enough for destination.
 		 *      /|             ret = scope - C (-1 <= d < scope <= 15).
 		 *
-		 * d - C - 1 < B -15 (क्रम all -1 <= d <= 15).
+		 * d - C - 1 < B -15 (for all -1 <= d <= 15).
 		 * C > d + 14 - B >= 15 + 14 - B = 29 - B.
 		 * Assume B = 0 and we get C > 29.
 		 */
 		ret = __ipv6_addr_src_scope(score->addr_type);
-		अगर (ret >= dst->scope)
+		if (ret >= dst->scope)
 			ret = -ret;
-		अन्यथा
+		else
 			ret -= 128;	/* 30 is enough */
 		score->scopedist = ret;
-		अवरोध;
-	हाल IPV6_SADDR_RULE_PREFERRED:
-	    अणु
-		/* Rule 3: Aव्योम deprecated and optimistic addresses */
-		u8 aव्योम = IFA_F_DEPRECATED;
+		break;
+	case IPV6_SADDR_RULE_PREFERRED:
+	    {
+		/* Rule 3: Avoid deprecated and optimistic addresses */
+		u8 avoid = IFA_F_DEPRECATED;
 
-		अगर (!ipv6_use_optimistic_addr(net, score->अगरa->idev))
-			aव्योम |= IFA_F_OPTIMISTIC;
+		if (!ipv6_use_optimistic_addr(net, score->ifa->idev))
+			avoid |= IFA_F_OPTIMISTIC;
 		ret = ipv6_saddr_preferred(score->addr_type) ||
-		      !(score->अगरa->flags & aव्योम);
-		अवरोध;
-	    पूर्ण
-#अगर_घोषित CONFIG_IPV6_MIP6
-	हाल IPV6_SADDR_RULE_HOA:
-	    अणु
+		      !(score->ifa->flags & avoid);
+		break;
+	    }
+#ifdef CONFIG_IPV6_MIP6
+	case IPV6_SADDR_RULE_HOA:
+	    {
 		/* Rule 4: Prefer home address */
-		पूर्णांक prefhome = !(dst->prefs & IPV6_PREFER_SRC_COA);
-		ret = !(score->अगरa->flags & IFA_F_HOMEADDRESS) ^ prefhome;
-		अवरोध;
-	    पूर्ण
-#पूर्ण_अगर
-	हाल IPV6_SADDR_RULE_OIF:
-		/* Rule 5: Prefer outgoing पूर्णांकerface */
-		ret = (!dst->अगरindex ||
-		       dst->अगरindex == score->अगरa->idev->dev->अगरindex);
-		अवरोध;
-	हाल IPV6_SADDR_RULE_LABEL:
+		int prefhome = !(dst->prefs & IPV6_PREFER_SRC_COA);
+		ret = !(score->ifa->flags & IFA_F_HOMEADDRESS) ^ prefhome;
+		break;
+	    }
+#endif
+	case IPV6_SADDR_RULE_OIF:
+		/* Rule 5: Prefer outgoing interface */
+		ret = (!dst->ifindex ||
+		       dst->ifindex == score->ifa->idev->dev->ifindex);
+		break;
+	case IPV6_SADDR_RULE_LABEL:
 		/* Rule 6: Prefer matching label */
 		ret = ipv6_addr_label(net,
-				      &score->अगरa->addr, score->addr_type,
-				      score->अगरa->idev->dev->अगरindex) == dst->label;
-		अवरोध;
-	हाल IPV6_SADDR_RULE_PRIVACY:
-	    अणु
-		/* Rule 7: Prefer खुला address
-		 * Note: prefer temporary address अगर use_tempaddr >= 2
+				      &score->ifa->addr, score->addr_type,
+				      score->ifa->idev->dev->ifindex) == dst->label;
+		break;
+	case IPV6_SADDR_RULE_PRIVACY:
+	    {
+		/* Rule 7: Prefer public address
+		 * Note: prefer temporary address if use_tempaddr >= 2
 		 */
-		पूर्णांक prefपंचांगp = dst->prefs & (IPV6_PREFER_SRC_PUBLIC|IPV6_PREFER_SRC_TMP) ?
+		int preftmp = dst->prefs & (IPV6_PREFER_SRC_PUBLIC|IPV6_PREFER_SRC_TMP) ?
 				!!(dst->prefs & IPV6_PREFER_SRC_TMP) :
-				score->अगरa->idev->cnf.use_tempaddr >= 2;
-		ret = (!(score->अगरa->flags & IFA_F_TEMPORARY)) ^ prefपंचांगp;
-		अवरोध;
-	    पूर्ण
-	हाल IPV6_SADDR_RULE_ORCHID:
+				score->ifa->idev->cnf.use_tempaddr >= 2;
+		ret = (!(score->ifa->flags & IFA_F_TEMPORARY)) ^ preftmp;
+		break;
+	    }
+	case IPV6_SADDR_RULE_ORCHID:
 		/* Rule 8-: Prefer ORCHID vs ORCHID or
 		 *	    non-ORCHID vs non-ORCHID
 		 */
-		ret = !(ipv6_addr_orchid(&score->अगरa->addr) ^
+		ret = !(ipv6_addr_orchid(&score->ifa->addr) ^
 			ipv6_addr_orchid(dst->addr));
-		अवरोध;
-	हाल IPV6_SADDR_RULE_PREFIX:
-		/* Rule 8: Use दीर्घest matching prefix */
-		ret = ipv6_addr_dअगरf(&score->अगरa->addr, dst->addr);
-		अगर (ret > score->अगरa->prefix_len)
-			ret = score->अगरa->prefix_len;
+		break;
+	case IPV6_SADDR_RULE_PREFIX:
+		/* Rule 8: Use longest matching prefix */
+		ret = ipv6_addr_diff(&score->ifa->addr, dst->addr);
+		if (ret > score->ifa->prefix_len)
+			ret = score->ifa->prefix_len;
 		score->matchlen = ret;
-		अवरोध;
-#अगर_घोषित CONFIG_IPV6_OPTIMISTIC_DAD
-	हाल IPV6_SADDR_RULE_NOT_OPTIMISTIC:
+		break;
+#ifdef CONFIG_IPV6_OPTIMISTIC_DAD
+	case IPV6_SADDR_RULE_NOT_OPTIMISTIC:
 		/* Optimistic addresses still have lower precedence than other
 		 * preferred addresses.
 		 */
-		ret = !(score->अगरa->flags & IFA_F_OPTIMISTIC);
-		अवरोध;
-#पूर्ण_अगर
-	शेष:
+		ret = !(score->ifa->flags & IFA_F_OPTIMISTIC);
+		break;
+#endif
+	default:
 		ret = 0;
-	पूर्ण
+	}
 
-	अगर (ret)
+	if (ret)
 		__set_bit(i, score->scorebits);
 	score->rule = i;
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __ipv6_dev_get_saddr(काष्ठा net *net,
-				काष्ठा ipv6_saddr_dst *dst,
-				काष्ठा inet6_dev *idev,
-				काष्ठा ipv6_saddr_score *scores,
-				पूर्णांक hiscore_idx)
-अणु
-	काष्ठा ipv6_saddr_score *score = &scores[1 - hiscore_idx], *hiscore = &scores[hiscore_idx];
+static int __ipv6_dev_get_saddr(struct net *net,
+				struct ipv6_saddr_dst *dst,
+				struct inet6_dev *idev,
+				struct ipv6_saddr_score *scores,
+				int hiscore_idx)
+{
+	struct ipv6_saddr_score *score = &scores[1 - hiscore_idx], *hiscore = &scores[hiscore_idx];
 
-	list_क्रम_each_entry_rcu(score->अगरa, &idev->addr_list, अगर_list) अणु
-		पूर्णांक i;
+	list_for_each_entry_rcu(score->ifa, &idev->addr_list, if_list) {
+		int i;
 
 		/*
 		 * - Tentative Address (RFC2462 section 5.4)
@@ -1656,1027 +1655,1027 @@ out:
 		 *    "assigned to an interface" in the traditional
 		 *    sense, unless it is also flagged as optimistic.
 		 * - Candidate Source Address (section 4)
-		 *  - In any हाल, anycast addresses, multicast
-		 *    addresses, and the unspecअगरied address MUST
+		 *  - In any case, anycast addresses, multicast
+		 *    addresses, and the unspecified address MUST
 		 *    NOT be included in a candidate set.
 		 */
-		अगर ((score->अगरa->flags & IFA_F_TENTATIVE) &&
-		    (!(score->अगरa->flags & IFA_F_OPTIMISTIC)))
-			जारी;
+		if ((score->ifa->flags & IFA_F_TENTATIVE) &&
+		    (!(score->ifa->flags & IFA_F_OPTIMISTIC)))
+			continue;
 
-		score->addr_type = __ipv6_addr_type(&score->अगरa->addr);
+		score->addr_type = __ipv6_addr_type(&score->ifa->addr);
 
-		अगर (unlikely(score->addr_type == IPV6_ADDR_ANY ||
-			     score->addr_type & IPV6_ADDR_MULTICAST)) अणु
+		if (unlikely(score->addr_type == IPV6_ADDR_ANY ||
+			     score->addr_type & IPV6_ADDR_MULTICAST)) {
 			net_dbg_ratelimited("ADDRCONF: unspecified / multicast address assigned as unicast address on %s",
 					    idev->dev->name);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		score->rule = -1;
-		biपंचांगap_zero(score->scorebits, IPV6_SADDR_RULE_MAX);
+		bitmap_zero(score->scorebits, IPV6_SADDR_RULE_MAX);
 
-		क्रम (i = 0; i < IPV6_SADDR_RULE_MAX; i++) अणु
-			पूर्णांक minihiscore, miniscore;
+		for (i = 0; i < IPV6_SADDR_RULE_MAX; i++) {
+			int minihiscore, miniscore;
 
 			minihiscore = ipv6_get_saddr_eval(net, hiscore, dst, i);
 			miniscore = ipv6_get_saddr_eval(net, score, dst, i);
 
-			अगर (minihiscore > miniscore) अणु
-				अगर (i == IPV6_SADDR_RULE_SCOPE &&
-				    score->scopedist > 0) अणु
+			if (minihiscore > miniscore) {
+				if (i == IPV6_SADDR_RULE_SCOPE &&
+				    score->scopedist > 0) {
 					/*
-					 * special हाल:
-					 * each reमुख्यing entry
+					 * special case:
+					 * each remaining entry
 					 * has too small (not enough)
-					 * scope, because अगरa entries
+					 * scope, because ifa entries
 					 * are sorted by their scope
 					 * values.
 					 */
-					जाओ out;
-				पूर्ण
-				अवरोध;
-			पूर्ण अन्यथा अगर (minihiscore < miniscore) अणु
+					goto out;
+				}
+				break;
+			} else if (minihiscore < miniscore) {
 				swap(hiscore, score);
 				hiscore_idx = 1 - hiscore_idx;
 
 				/* restore our iterator */
-				score->अगरa = hiscore->अगरa;
+				score->ifa = hiscore->ifa;
 
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 out:
-	वापस hiscore_idx;
-पूर्ण
+	return hiscore_idx;
+}
 
-अटल पूर्णांक ipv6_get_saddr_master(काष्ठा net *net,
-				 स्थिर काष्ठा net_device *dst_dev,
-				 स्थिर काष्ठा net_device *master,
-				 काष्ठा ipv6_saddr_dst *dst,
-				 काष्ठा ipv6_saddr_score *scores,
-				 पूर्णांक hiscore_idx)
-अणु
-	काष्ठा inet6_dev *idev;
+static int ipv6_get_saddr_master(struct net *net,
+				 const struct net_device *dst_dev,
+				 const struct net_device *master,
+				 struct ipv6_saddr_dst *dst,
+				 struct ipv6_saddr_score *scores,
+				 int hiscore_idx)
+{
+	struct inet6_dev *idev;
 
 	idev = __in6_dev_get(dst_dev);
-	अगर (idev)
+	if (idev)
 		hiscore_idx = __ipv6_dev_get_saddr(net, dst, idev,
 						   scores, hiscore_idx);
 
 	idev = __in6_dev_get(master);
-	अगर (idev)
+	if (idev)
 		hiscore_idx = __ipv6_dev_get_saddr(net, dst, idev,
 						   scores, hiscore_idx);
 
-	वापस hiscore_idx;
-पूर्ण
+	return hiscore_idx;
+}
 
-पूर्णांक ipv6_dev_get_saddr(काष्ठा net *net, स्थिर काष्ठा net_device *dst_dev,
-		       स्थिर काष्ठा in6_addr *daddr, अचिन्हित पूर्णांक prefs,
-		       काष्ठा in6_addr *saddr)
-अणु
-	काष्ठा ipv6_saddr_score scores[2], *hiscore;
-	काष्ठा ipv6_saddr_dst dst;
-	काष्ठा inet6_dev *idev;
-	काष्ठा net_device *dev;
-	पूर्णांक dst_type;
-	bool use_oअगर_addr = false;
-	पूर्णांक hiscore_idx = 0;
-	पूर्णांक ret = 0;
+int ipv6_dev_get_saddr(struct net *net, const struct net_device *dst_dev,
+		       const struct in6_addr *daddr, unsigned int prefs,
+		       struct in6_addr *saddr)
+{
+	struct ipv6_saddr_score scores[2], *hiscore;
+	struct ipv6_saddr_dst dst;
+	struct inet6_dev *idev;
+	struct net_device *dev;
+	int dst_type;
+	bool use_oif_addr = false;
+	int hiscore_idx = 0;
+	int ret = 0;
 
 	dst_type = __ipv6_addr_type(daddr);
 	dst.addr = daddr;
-	dst.अगरindex = dst_dev ? dst_dev->अगरindex : 0;
+	dst.ifindex = dst_dev ? dst_dev->ifindex : 0;
 	dst.scope = __ipv6_addr_src_scope(dst_type);
-	dst.label = ipv6_addr_label(net, daddr, dst_type, dst.अगरindex);
+	dst.label = ipv6_addr_label(net, daddr, dst_type, dst.ifindex);
 	dst.prefs = prefs;
 
 	scores[hiscore_idx].rule = -1;
-	scores[hiscore_idx].अगरa = शून्य;
+	scores[hiscore_idx].ifa = NULL;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
 	/* Candidate Source Address (section 4)
 	 *  - multicast and link-local destination address,
 	 *    the set of candidate source address MUST only
-	 *    include addresses asचिन्हित to पूर्णांकerfaces
-	 *    beदीर्घing to the same link as the outgoing
-	 *    पूर्णांकerface.
+	 *    include addresses assigned to interfaces
+	 *    belonging to the same link as the outgoing
+	 *    interface.
 	 * (- For site-local destination addresses, the
 	 *    set of candidate source addresses MUST only
-	 *    include addresses asचिन्हित to पूर्णांकerfaces
-	 *    beदीर्घing to the same site as the outgoing
-	 *    पूर्णांकerface.)
+	 *    include addresses assigned to interfaces
+	 *    belonging to the same site as the outgoing
+	 *    interface.)
 	 *  - "It is RECOMMENDED that the candidate source addresses
-	 *    be the set of unicast addresses asचिन्हित to the
-	 *    पूर्णांकerface that will be used to send to the destination
-	 *    (the 'outgoing' पूर्णांकerface)." (RFC 6724)
+	 *    be the set of unicast addresses assigned to the
+	 *    interface that will be used to send to the destination
+	 *    (the 'outgoing' interface)." (RFC 6724)
 	 */
-	अगर (dst_dev) अणु
+	if (dst_dev) {
 		idev = __in6_dev_get(dst_dev);
-		अगर ((dst_type & IPV6_ADDR_MULTICAST) ||
+		if ((dst_type & IPV6_ADDR_MULTICAST) ||
 		    dst.scope <= IPV6_ADDR_SCOPE_LINKLOCAL ||
-		    (idev && idev->cnf.use_oअगर_addrs_only)) अणु
-			use_oअगर_addr = true;
-		पूर्ण
-	पूर्ण
+		    (idev && idev->cnf.use_oif_addrs_only)) {
+			use_oif_addr = true;
+		}
+	}
 
-	अगर (use_oअगर_addr) अणु
-		अगर (idev)
+	if (use_oif_addr) {
+		if (idev)
 			hiscore_idx = __ipv6_dev_get_saddr(net, &dst, idev, scores, hiscore_idx);
-	पूर्ण अन्यथा अणु
-		स्थिर काष्ठा net_device *master;
-		पूर्णांक master_idx = 0;
+	} else {
+		const struct net_device *master;
+		int master_idx = 0;
 
-		/* अगर dst_dev exists and is enslaved to an L3 device, then
+		/* if dst_dev exists and is enslaved to an L3 device, then
 		 * prefer addresses from dst_dev and then the master over
-		 * any other enslaved devices in the L3 करोमुख्य.
+		 * any other enslaved devices in the L3 domain.
 		 */
 		master = l3mdev_master_dev_rcu(dst_dev);
-		अगर (master) अणु
-			master_idx = master->अगरindex;
+		if (master) {
+			master_idx = master->ifindex;
 
 			hiscore_idx = ipv6_get_saddr_master(net, dst_dev,
 							    master, &dst,
 							    scores, hiscore_idx);
 
-			अगर (scores[hiscore_idx].अगरa)
-				जाओ out;
-		पूर्ण
+			if (scores[hiscore_idx].ifa)
+				goto out;
+		}
 
-		क्रम_each_netdev_rcu(net, dev) अणु
+		for_each_netdev_rcu(net, dev) {
 			/* only consider addresses on devices in the
-			 * same L3 करोमुख्य
+			 * same L3 domain
 			 */
-			अगर (l3mdev_master_अगरindex_rcu(dev) != master_idx)
-				जारी;
+			if (l3mdev_master_ifindex_rcu(dev) != master_idx)
+				continue;
 			idev = __in6_dev_get(dev);
-			अगर (!idev)
-				जारी;
+			if (!idev)
+				continue;
 			hiscore_idx = __ipv6_dev_get_saddr(net, &dst, idev, scores, hiscore_idx);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 out:
 	hiscore = &scores[hiscore_idx];
-	अगर (!hiscore->अगरa)
+	if (!hiscore->ifa)
 		ret = -EADDRNOTAVAIL;
-	अन्यथा
-		*saddr = hiscore->अगरa->addr;
+	else
+		*saddr = hiscore->ifa->addr;
 
-	rcu_पढ़ो_unlock();
-	वापस ret;
-पूर्ण
+	rcu_read_unlock();
+	return ret;
+}
 EXPORT_SYMBOL(ipv6_dev_get_saddr);
 
-पूर्णांक __ipv6_get_lladdr(काष्ठा inet6_dev *idev, काष्ठा in6_addr *addr,
+int __ipv6_get_lladdr(struct inet6_dev *idev, struct in6_addr *addr,
 		      u32 banned_flags)
-अणु
-	काष्ठा inet6_अगरaddr *अगरp;
-	पूर्णांक err = -EADDRNOTAVAIL;
+{
+	struct inet6_ifaddr *ifp;
+	int err = -EADDRNOTAVAIL;
 
-	list_क्रम_each_entry_reverse(अगरp, &idev->addr_list, अगर_list) अणु
-		अगर (अगरp->scope > IFA_LINK)
-			अवरोध;
-		अगर (अगरp->scope == IFA_LINK &&
-		    !(अगरp->flags & banned_flags)) अणु
-			*addr = अगरp->addr;
+	list_for_each_entry_reverse(ifp, &idev->addr_list, if_list) {
+		if (ifp->scope > IFA_LINK)
+			break;
+		if (ifp->scope == IFA_LINK &&
+		    !(ifp->flags & banned_flags)) {
+			*addr = ifp->addr;
 			err = 0;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस err;
-पूर्ण
+			break;
+		}
+	}
+	return err;
+}
 
-पूर्णांक ipv6_get_lladdr(काष्ठा net_device *dev, काष्ठा in6_addr *addr,
+int ipv6_get_lladdr(struct net_device *dev, struct in6_addr *addr,
 		    u32 banned_flags)
-अणु
-	काष्ठा inet6_dev *idev;
-	पूर्णांक err = -EADDRNOTAVAIL;
+{
+	struct inet6_dev *idev;
+	int err = -EADDRNOTAVAIL;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	idev = __in6_dev_get(dev);
-	अगर (idev) अणु
-		पढ़ो_lock_bh(&idev->lock);
+	if (idev) {
+		read_lock_bh(&idev->lock);
 		err = __ipv6_get_lladdr(idev, addr, banned_flags);
-		पढ़ो_unlock_bh(&idev->lock);
-	पूर्ण
-	rcu_पढ़ो_unlock();
-	वापस err;
-पूर्ण
+		read_unlock_bh(&idev->lock);
+	}
+	rcu_read_unlock();
+	return err;
+}
 
-अटल पूर्णांक ipv6_count_addresses(स्थिर काष्ठा inet6_dev *idev)
-अणु
-	स्थिर काष्ठा inet6_अगरaddr *अगरp;
-	पूर्णांक cnt = 0;
+static int ipv6_count_addresses(const struct inet6_dev *idev)
+{
+	const struct inet6_ifaddr *ifp;
+	int cnt = 0;
 
-	rcu_पढ़ो_lock();
-	list_क्रम_each_entry_rcu(अगरp, &idev->addr_list, अगर_list)
+	rcu_read_lock();
+	list_for_each_entry_rcu(ifp, &idev->addr_list, if_list)
 		cnt++;
-	rcu_पढ़ो_unlock();
-	वापस cnt;
-पूर्ण
+	rcu_read_unlock();
+	return cnt;
+}
 
-पूर्णांक ipv6_chk_addr(काष्ठा net *net, स्थिर काष्ठा in6_addr *addr,
-		  स्थिर काष्ठा net_device *dev, पूर्णांक strict)
-अणु
-	वापस ipv6_chk_addr_and_flags(net, addr, dev, !dev,
+int ipv6_chk_addr(struct net *net, const struct in6_addr *addr,
+		  const struct net_device *dev, int strict)
+{
+	return ipv6_chk_addr_and_flags(net, addr, dev, !dev,
 				       strict, IFA_F_TENTATIVE);
-पूर्ण
+}
 EXPORT_SYMBOL(ipv6_chk_addr);
 
-/* device argument is used to find the L3 करोमुख्य of पूर्णांकerest. If
- * skip_dev_check is set, then the अगरp device is not checked against
- * the passed in dev argument. So the 2 हालs क्रम addresses checks are:
- *   1. करोes the address exist in the L3 करोमुख्य that dev is part of
+/* device argument is used to find the L3 domain of interest. If
+ * skip_dev_check is set, then the ifp device is not checked against
+ * the passed in dev argument. So the 2 cases for addresses checks are:
+ *   1. does the address exist in the L3 domain that dev is part of
  *      (skip_dev_check = true), or
  *
- *   2. करोes the address exist on the specअगरic device
+ *   2. does the address exist on the specific device
  *      (skip_dev_check = false)
  */
-अटल काष्ठा net_device *
-__ipv6_chk_addr_and_flags(काष्ठा net *net, स्थिर काष्ठा in6_addr *addr,
-			  स्थिर काष्ठा net_device *dev, bool skip_dev_check,
-			  पूर्णांक strict, u32 banned_flags)
-अणु
-	अचिन्हित पूर्णांक hash = inet6_addr_hash(net, addr);
-	काष्ठा net_device *l3mdev, *ndev;
-	काष्ठा inet6_अगरaddr *अगरp;
-	u32 अगरp_flags;
+static struct net_device *
+__ipv6_chk_addr_and_flags(struct net *net, const struct in6_addr *addr,
+			  const struct net_device *dev, bool skip_dev_check,
+			  int strict, u32 banned_flags)
+{
+	unsigned int hash = inet6_addr_hash(net, addr);
+	struct net_device *l3mdev, *ndev;
+	struct inet6_ifaddr *ifp;
+	u32 ifp_flags;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
 	l3mdev = l3mdev_master_dev_rcu(dev);
-	अगर (skip_dev_check)
-		dev = शून्य;
+	if (skip_dev_check)
+		dev = NULL;
 
-	hlist_क्रम_each_entry_rcu(अगरp, &inet6_addr_lst[hash], addr_lst) अणु
-		ndev = अगरp->idev->dev;
-		अगर (!net_eq(dev_net(ndev), net))
-			जारी;
+	hlist_for_each_entry_rcu(ifp, &inet6_addr_lst[hash], addr_lst) {
+		ndev = ifp->idev->dev;
+		if (!net_eq(dev_net(ndev), net))
+			continue;
 
-		अगर (l3mdev_master_dev_rcu(ndev) != l3mdev)
-			जारी;
+		if (l3mdev_master_dev_rcu(ndev) != l3mdev)
+			continue;
 
-		/* Decouple optimistic from tentative क्रम evaluation here.
+		/* Decouple optimistic from tentative for evaluation here.
 		 * Ban optimistic addresses explicitly, when required.
 		 */
-		अगरp_flags = (अगरp->flags&IFA_F_OPTIMISTIC)
-			    ? (अगरp->flags&~IFA_F_TENTATIVE)
-			    : अगरp->flags;
-		अगर (ipv6_addr_equal(&अगरp->addr, addr) &&
-		    !(अगरp_flags&banned_flags) &&
+		ifp_flags = (ifp->flags&IFA_F_OPTIMISTIC)
+			    ? (ifp->flags&~IFA_F_TENTATIVE)
+			    : ifp->flags;
+		if (ipv6_addr_equal(&ifp->addr, addr) &&
+		    !(ifp_flags&banned_flags) &&
 		    (!dev || ndev == dev ||
-		     !(अगरp->scope&(IFA_LINK|IFA_HOST) || strict))) अणु
-			rcu_पढ़ो_unlock();
-			वापस ndev;
-		पूर्ण
-	पूर्ण
+		     !(ifp->scope&(IFA_LINK|IFA_HOST) || strict))) {
+			rcu_read_unlock();
+			return ndev;
+		}
+	}
 
-	rcu_पढ़ो_unlock();
-	वापस शून्य;
-पूर्ण
+	rcu_read_unlock();
+	return NULL;
+}
 
-पूर्णांक ipv6_chk_addr_and_flags(काष्ठा net *net, स्थिर काष्ठा in6_addr *addr,
-			    स्थिर काष्ठा net_device *dev, bool skip_dev_check,
-			    पूर्णांक strict, u32 banned_flags)
-अणु
-	वापस __ipv6_chk_addr_and_flags(net, addr, dev, skip_dev_check,
+int ipv6_chk_addr_and_flags(struct net *net, const struct in6_addr *addr,
+			    const struct net_device *dev, bool skip_dev_check,
+			    int strict, u32 banned_flags)
+{
+	return __ipv6_chk_addr_and_flags(net, addr, dev, skip_dev_check,
 					 strict, banned_flags) ? 1 : 0;
-पूर्ण
+}
 EXPORT_SYMBOL(ipv6_chk_addr_and_flags);
 
 
 /* Compares an address/prefix_len with addresses on device @dev.
- * If one is found it वापसs true.
+ * If one is found it returns true.
  */
-bool ipv6_chk_custom_prefix(स्थिर काष्ठा in6_addr *addr,
-	स्थिर अचिन्हित पूर्णांक prefix_len, काष्ठा net_device *dev)
-अणु
-	स्थिर काष्ठा inet6_अगरaddr *अगरa;
-	स्थिर काष्ठा inet6_dev *idev;
+bool ipv6_chk_custom_prefix(const struct in6_addr *addr,
+	const unsigned int prefix_len, struct net_device *dev)
+{
+	const struct inet6_ifaddr *ifa;
+	const struct inet6_dev *idev;
 	bool ret = false;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	idev = __in6_dev_get(dev);
-	अगर (idev) अणु
-		list_क्रम_each_entry_rcu(अगरa, &idev->addr_list, अगर_list) अणु
-			ret = ipv6_prefix_equal(addr, &अगरa->addr, prefix_len);
-			अगर (ret)
-				अवरोध;
-		पूर्ण
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	if (idev) {
+		list_for_each_entry_rcu(ifa, &idev->addr_list, if_list) {
+			ret = ipv6_prefix_equal(addr, &ifa->addr, prefix_len);
+			if (ret)
+				break;
+		}
+	}
+	rcu_read_unlock();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(ipv6_chk_custom_prefix);
 
-पूर्णांक ipv6_chk_prefix(स्थिर काष्ठा in6_addr *addr, काष्ठा net_device *dev)
-अणु
-	स्थिर काष्ठा inet6_अगरaddr *अगरa;
-	स्थिर काष्ठा inet6_dev *idev;
-	पूर्णांक	onlink;
+int ipv6_chk_prefix(const struct in6_addr *addr, struct net_device *dev)
+{
+	const struct inet6_ifaddr *ifa;
+	const struct inet6_dev *idev;
+	int	onlink;
 
 	onlink = 0;
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	idev = __in6_dev_get(dev);
-	अगर (idev) अणु
-		list_क्रम_each_entry_rcu(अगरa, &idev->addr_list, अगर_list) अणु
-			onlink = ipv6_prefix_equal(addr, &अगरa->addr,
-						   अगरa->prefix_len);
-			अगर (onlink)
-				अवरोध;
-		पूर्ण
-	पूर्ण
-	rcu_पढ़ो_unlock();
-	वापस onlink;
-पूर्ण
+	if (idev) {
+		list_for_each_entry_rcu(ifa, &idev->addr_list, if_list) {
+			onlink = ipv6_prefix_equal(addr, &ifa->addr,
+						   ifa->prefix_len);
+			if (onlink)
+				break;
+		}
+	}
+	rcu_read_unlock();
+	return onlink;
+}
 EXPORT_SYMBOL(ipv6_chk_prefix);
 
 /**
  * ipv6_dev_find - find the first device with a given source address.
  * @net: the net namespace
  * @addr: the source address
- * @dev: used to find the L3 करोमुख्य of पूर्णांकerest
+ * @dev: used to find the L3 domain of interest
  *
- * The caller should be रक्षित by RCU, or RTNL.
+ * The caller should be protected by RCU, or RTNL.
  */
-काष्ठा net_device *ipv6_dev_find(काष्ठा net *net, स्थिर काष्ठा in6_addr *addr,
-				 काष्ठा net_device *dev)
-अणु
-	वापस __ipv6_chk_addr_and_flags(net, addr, dev, !dev, 1,
+struct net_device *ipv6_dev_find(struct net *net, const struct in6_addr *addr,
+				 struct net_device *dev)
+{
+	return __ipv6_chk_addr_and_flags(net, addr, dev, !dev, 1,
 					 IFA_F_TENTATIVE);
-पूर्ण
+}
 EXPORT_SYMBOL(ipv6_dev_find);
 
-काष्ठा inet6_अगरaddr *ipv6_get_अगरaddr(काष्ठा net *net, स्थिर काष्ठा in6_addr *addr,
-				     काष्ठा net_device *dev, पूर्णांक strict)
-अणु
-	अचिन्हित पूर्णांक hash = inet6_addr_hash(net, addr);
-	काष्ठा inet6_अगरaddr *अगरp, *result = शून्य;
+struct inet6_ifaddr *ipv6_get_ifaddr(struct net *net, const struct in6_addr *addr,
+				     struct net_device *dev, int strict)
+{
+	unsigned int hash = inet6_addr_hash(net, addr);
+	struct inet6_ifaddr *ifp, *result = NULL;
 
-	rcu_पढ़ो_lock();
-	hlist_क्रम_each_entry_rcu(अगरp, &inet6_addr_lst[hash], addr_lst) अणु
-		अगर (!net_eq(dev_net(अगरp->idev->dev), net))
-			जारी;
-		अगर (ipv6_addr_equal(&अगरp->addr, addr)) अणु
-			अगर (!dev || अगरp->idev->dev == dev ||
-			    !(अगरp->scope&(IFA_LINK|IFA_HOST) || strict)) अणु
-				result = अगरp;
-				in6_अगरa_hold(अगरp);
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	rcu_read_lock();
+	hlist_for_each_entry_rcu(ifp, &inet6_addr_lst[hash], addr_lst) {
+		if (!net_eq(dev_net(ifp->idev->dev), net))
+			continue;
+		if (ipv6_addr_equal(&ifp->addr, addr)) {
+			if (!dev || ifp->idev->dev == dev ||
+			    !(ifp->scope&(IFA_LINK|IFA_HOST) || strict)) {
+				result = ifp;
+				in6_ifa_hold(ifp);
+				break;
+			}
+		}
+	}
+	rcu_read_unlock();
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-/* Gets referenced address, destroys अगरaddr */
+/* Gets referenced address, destroys ifaddr */
 
-अटल व्योम addrconf_dad_stop(काष्ठा inet6_अगरaddr *अगरp, पूर्णांक dad_failed)
-अणु
-	अगर (dad_failed)
-		अगरp->flags |= IFA_F_DADFAILED;
+static void addrconf_dad_stop(struct inet6_ifaddr *ifp, int dad_failed)
+{
+	if (dad_failed)
+		ifp->flags |= IFA_F_DADFAILED;
 
-	अगर (अगरp->flags&IFA_F_TEMPORARY) अणु
-		काष्ठा inet6_अगरaddr *अगरpub;
-		spin_lock_bh(&अगरp->lock);
-		अगरpub = अगरp->अगरpub;
-		अगर (अगरpub) अणु
-			in6_अगरa_hold(अगरpub);
-			spin_unlock_bh(&अगरp->lock);
-			ipv6_create_tempaddr(अगरpub, true);
-			in6_अगरa_put(अगरpub);
-		पूर्ण अन्यथा अणु
-			spin_unlock_bh(&अगरp->lock);
-		पूर्ण
-		ipv6_del_addr(अगरp);
-	पूर्ण अन्यथा अगर (अगरp->flags&IFA_F_PERMANENT || !dad_failed) अणु
-		spin_lock_bh(&अगरp->lock);
-		addrconf_del_dad_work(अगरp);
-		अगरp->flags |= IFA_F_TENTATIVE;
-		अगर (dad_failed)
-			अगरp->flags &= ~IFA_F_OPTIMISTIC;
-		spin_unlock_bh(&अगरp->lock);
-		अगर (dad_failed)
-			ipv6_अगरa_notअगरy(0, अगरp);
-		in6_अगरa_put(अगरp);
-	पूर्ण अन्यथा अणु
-		ipv6_del_addr(अगरp);
-	पूर्ण
-पूर्ण
+	if (ifp->flags&IFA_F_TEMPORARY) {
+		struct inet6_ifaddr *ifpub;
+		spin_lock_bh(&ifp->lock);
+		ifpub = ifp->ifpub;
+		if (ifpub) {
+			in6_ifa_hold(ifpub);
+			spin_unlock_bh(&ifp->lock);
+			ipv6_create_tempaddr(ifpub, true);
+			in6_ifa_put(ifpub);
+		} else {
+			spin_unlock_bh(&ifp->lock);
+		}
+		ipv6_del_addr(ifp);
+	} else if (ifp->flags&IFA_F_PERMANENT || !dad_failed) {
+		spin_lock_bh(&ifp->lock);
+		addrconf_del_dad_work(ifp);
+		ifp->flags |= IFA_F_TENTATIVE;
+		if (dad_failed)
+			ifp->flags &= ~IFA_F_OPTIMISTIC;
+		spin_unlock_bh(&ifp->lock);
+		if (dad_failed)
+			ipv6_ifa_notify(0, ifp);
+		in6_ifa_put(ifp);
+	} else {
+		ipv6_del_addr(ifp);
+	}
+}
 
-अटल पूर्णांक addrconf_dad_end(काष्ठा inet6_अगरaddr *अगरp)
-अणु
-	पूर्णांक err = -ENOENT;
+static int addrconf_dad_end(struct inet6_ifaddr *ifp)
+{
+	int err = -ENOENT;
 
-	spin_lock_bh(&अगरp->lock);
-	अगर (अगरp->state == INET6_IFADDR_STATE_DAD) अणु
-		अगरp->state = INET6_IFADDR_STATE_POSTDAD;
+	spin_lock_bh(&ifp->lock);
+	if (ifp->state == INET6_IFADDR_STATE_DAD) {
+		ifp->state = INET6_IFADDR_STATE_POSTDAD;
 		err = 0;
-	पूर्ण
-	spin_unlock_bh(&अगरp->lock);
+	}
+	spin_unlock_bh(&ifp->lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम addrconf_dad_failure(काष्ठा sk_buff *skb, काष्ठा inet6_अगरaddr *अगरp)
-अणु
-	काष्ठा inet6_dev *idev = अगरp->idev;
-	काष्ठा net *net = dev_net(अगरp->idev->dev);
+void addrconf_dad_failure(struct sk_buff *skb, struct inet6_ifaddr *ifp)
+{
+	struct inet6_dev *idev = ifp->idev;
+	struct net *net = dev_net(ifp->idev->dev);
 
-	अगर (addrconf_dad_end(अगरp)) अणु
-		in6_अगरa_put(अगरp);
-		वापस;
-	पूर्ण
+	if (addrconf_dad_end(ifp)) {
+		in6_ifa_put(ifp);
+		return;
+	}
 
 	net_info_ratelimited("%s: IPv6 duplicate address %pI6c used by %pM detected!\n",
-			     अगरp->idev->dev->name, &अगरp->addr, eth_hdr(skb)->h_source);
+			     ifp->idev->dev->name, &ifp->addr, eth_hdr(skb)->h_source);
 
-	spin_lock_bh(&अगरp->lock);
+	spin_lock_bh(&ifp->lock);
 
-	अगर (अगरp->flags & IFA_F_STABLE_PRIVACY) अणु
-		काष्ठा in6_addr new_addr;
-		काष्ठा inet6_अगरaddr *अगरp2;
-		पूर्णांक retries = अगरp->stable_privacy_retry + 1;
-		काष्ठा अगरa6_config cfg = अणु
+	if (ifp->flags & IFA_F_STABLE_PRIVACY) {
+		struct in6_addr new_addr;
+		struct inet6_ifaddr *ifp2;
+		int retries = ifp->stable_privacy_retry + 1;
+		struct ifa6_config cfg = {
 			.pfx = &new_addr,
-			.plen = अगरp->prefix_len,
-			.अगरa_flags = अगरp->flags,
-			.valid_lft = अगरp->valid_lft,
-			.preferred_lft = अगरp->prefered_lft,
-			.scope = अगरp->scope,
-		पूर्ण;
+			.plen = ifp->prefix_len,
+			.ifa_flags = ifp->flags,
+			.valid_lft = ifp->valid_lft,
+			.preferred_lft = ifp->prefered_lft,
+			.scope = ifp->scope,
+		};
 
-		अगर (retries > net->ipv6.sysctl.idgen_retries) अणु
+		if (retries > net->ipv6.sysctl.idgen_retries) {
 			net_info_ratelimited("%s: privacy stable address generation failed because of DAD conflicts!\n",
-					     अगरp->idev->dev->name);
-			जाओ errdad;
-		पूर्ण
+					     ifp->idev->dev->name);
+			goto errdad;
+		}
 
-		new_addr = अगरp->addr;
-		अगर (ipv6_generate_stable_address(&new_addr, retries,
+		new_addr = ifp->addr;
+		if (ipv6_generate_stable_address(&new_addr, retries,
 						 idev))
-			जाओ errdad;
+			goto errdad;
 
-		spin_unlock_bh(&अगरp->lock);
+		spin_unlock_bh(&ifp->lock);
 
-		अगर (idev->cnf.max_addresses &&
+		if (idev->cnf.max_addresses &&
 		    ipv6_count_addresses(idev) >=
 		    idev->cnf.max_addresses)
-			जाओ lock_errdad;
+			goto lock_errdad;
 
 		net_info_ratelimited("%s: generating new stable privacy address because of DAD conflict\n",
-				     अगरp->idev->dev->name);
+				     ifp->idev->dev->name);
 
-		अगरp2 = ipv6_add_addr(idev, &cfg, false, शून्य);
-		अगर (IS_ERR(अगरp2))
-			जाओ lock_errdad;
+		ifp2 = ipv6_add_addr(idev, &cfg, false, NULL);
+		if (IS_ERR(ifp2))
+			goto lock_errdad;
 
-		spin_lock_bh(&अगरp2->lock);
-		अगरp2->stable_privacy_retry = retries;
-		अगरp2->state = INET6_IFADDR_STATE_PREDAD;
-		spin_unlock_bh(&अगरp2->lock);
+		spin_lock_bh(&ifp2->lock);
+		ifp2->stable_privacy_retry = retries;
+		ifp2->state = INET6_IFADDR_STATE_PREDAD;
+		spin_unlock_bh(&ifp2->lock);
 
-		addrconf_mod_dad_work(अगरp2, net->ipv6.sysctl.idgen_delay);
-		in6_अगरa_put(अगरp2);
+		addrconf_mod_dad_work(ifp2, net->ipv6.sysctl.idgen_delay);
+		in6_ifa_put(ifp2);
 lock_errdad:
-		spin_lock_bh(&अगरp->lock);
-	पूर्ण
+		spin_lock_bh(&ifp->lock);
+	}
 
 errdad:
 	/* transition from _POSTDAD to _ERRDAD */
-	अगरp->state = INET6_IFADDR_STATE_ERRDAD;
-	spin_unlock_bh(&अगरp->lock);
+	ifp->state = INET6_IFADDR_STATE_ERRDAD;
+	spin_unlock_bh(&ifp->lock);
 
-	addrconf_mod_dad_work(अगरp, 0);
-	in6_अगरa_put(अगरp);
-पूर्ण
+	addrconf_mod_dad_work(ifp, 0);
+	in6_ifa_put(ifp);
+}
 
 /* Join to solicited addr multicast group.
  * caller must hold RTNL */
-व्योम addrconf_join_solict(काष्ठा net_device *dev, स्थिर काष्ठा in6_addr *addr)
-अणु
-	काष्ठा in6_addr maddr;
+void addrconf_join_solict(struct net_device *dev, const struct in6_addr *addr)
+{
+	struct in6_addr maddr;
 
-	अगर (dev->flags&(IFF_LOOPBACK|IFF_NOARP))
-		वापस;
+	if (dev->flags&(IFF_LOOPBACK|IFF_NOARP))
+		return;
 
 	addrconf_addr_solict_mult(addr, &maddr);
 	ipv6_dev_mc_inc(dev, &maddr);
-पूर्ण
+}
 
 /* caller must hold RTNL */
-व्योम addrconf_leave_solict(काष्ठा inet6_dev *idev, स्थिर काष्ठा in6_addr *addr)
-अणु
-	काष्ठा in6_addr maddr;
+void addrconf_leave_solict(struct inet6_dev *idev, const struct in6_addr *addr)
+{
+	struct in6_addr maddr;
 
-	अगर (idev->dev->flags&(IFF_LOOPBACK|IFF_NOARP))
-		वापस;
+	if (idev->dev->flags&(IFF_LOOPBACK|IFF_NOARP))
+		return;
 
 	addrconf_addr_solict_mult(addr, &maddr);
 	__ipv6_dev_mc_dec(idev, &maddr);
-पूर्ण
+}
 
 /* caller must hold RTNL */
-अटल व्योम addrconf_join_anycast(काष्ठा inet6_अगरaddr *अगरp)
-अणु
-	काष्ठा in6_addr addr;
+static void addrconf_join_anycast(struct inet6_ifaddr *ifp)
+{
+	struct in6_addr addr;
 
-	अगर (अगरp->prefix_len >= 127) /* RFC 6164 */
-		वापस;
-	ipv6_addr_prefix(&addr, &अगरp->addr, अगरp->prefix_len);
-	अगर (ipv6_addr_any(&addr))
-		वापस;
-	__ipv6_dev_ac_inc(अगरp->idev, &addr);
-पूर्ण
+	if (ifp->prefix_len >= 127) /* RFC 6164 */
+		return;
+	ipv6_addr_prefix(&addr, &ifp->addr, ifp->prefix_len);
+	if (ipv6_addr_any(&addr))
+		return;
+	__ipv6_dev_ac_inc(ifp->idev, &addr);
+}
 
 /* caller must hold RTNL */
-अटल व्योम addrconf_leave_anycast(काष्ठा inet6_अगरaddr *अगरp)
-अणु
-	काष्ठा in6_addr addr;
+static void addrconf_leave_anycast(struct inet6_ifaddr *ifp)
+{
+	struct in6_addr addr;
 
-	अगर (अगरp->prefix_len >= 127) /* RFC 6164 */
-		वापस;
-	ipv6_addr_prefix(&addr, &अगरp->addr, अगरp->prefix_len);
-	अगर (ipv6_addr_any(&addr))
-		वापस;
-	__ipv6_dev_ac_dec(अगरp->idev, &addr);
-पूर्ण
+	if (ifp->prefix_len >= 127) /* RFC 6164 */
+		return;
+	ipv6_addr_prefix(&addr, &ifp->addr, ifp->prefix_len);
+	if (ipv6_addr_any(&addr))
+		return;
+	__ipv6_dev_ac_dec(ifp->idev, &addr);
+}
 
-अटल पूर्णांक addrconf_अगरid_6lowpan(u8 *eui, काष्ठा net_device *dev)
-अणु
-	चयन (dev->addr_len) अणु
-	हाल ETH_ALEN:
-		स_नकल(eui, dev->dev_addr, 3);
+static int addrconf_ifid_6lowpan(u8 *eui, struct net_device *dev)
+{
+	switch (dev->addr_len) {
+	case ETH_ALEN:
+		memcpy(eui, dev->dev_addr, 3);
 		eui[3] = 0xFF;
 		eui[4] = 0xFE;
-		स_नकल(eui + 5, dev->dev_addr + 3, 3);
-		अवरोध;
-	हाल EUI64_ADDR_LEN:
-		स_नकल(eui, dev->dev_addr, EUI64_ADDR_LEN);
+		memcpy(eui + 5, dev->dev_addr + 3, 3);
+		break;
+	case EUI64_ADDR_LEN:
+		memcpy(eui, dev->dev_addr, EUI64_ADDR_LEN);
 		eui[0] ^= 2;
-		अवरोध;
-	शेष:
-		वापस -1;
-	पूर्ण
+		break;
+	default:
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक addrconf_अगरid_ieee1394(u8 *eui, काष्ठा net_device *dev)
-अणु
-	जोड़ fwnet_hwaddr *ha;
+static int addrconf_ifid_ieee1394(u8 *eui, struct net_device *dev)
+{
+	union fwnet_hwaddr *ha;
 
-	अगर (dev->addr_len != FWNET_ALEN)
-		वापस -1;
+	if (dev->addr_len != FWNET_ALEN)
+		return -1;
 
-	ha = (जोड़ fwnet_hwaddr *)dev->dev_addr;
+	ha = (union fwnet_hwaddr *)dev->dev_addr;
 
-	स_नकल(eui, &ha->uc.uniq_id, माप(ha->uc.uniq_id));
+	memcpy(eui, &ha->uc.uniq_id, sizeof(ha->uc.uniq_id));
 	eui[0] ^= 2;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक addrconf_अगरid_arcnet(u8 *eui, काष्ठा net_device *dev)
-अणु
-	/* XXX: inherit EUI-64 from other पूर्णांकerface -- yoshfuji */
-	अगर (dev->addr_len != ARCNET_ALEN)
-		वापस -1;
-	स_रखो(eui, 0, 7);
+static int addrconf_ifid_arcnet(u8 *eui, struct net_device *dev)
+{
+	/* XXX: inherit EUI-64 from other interface -- yoshfuji */
+	if (dev->addr_len != ARCNET_ALEN)
+		return -1;
+	memset(eui, 0, 7);
 	eui[7] = *(u8 *)dev->dev_addr;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक addrconf_अगरid_infiniband(u8 *eui, काष्ठा net_device *dev)
-अणु
-	अगर (dev->addr_len != INFINIBAND_ALEN)
-		वापस -1;
-	स_नकल(eui, dev->dev_addr + 12, 8);
+static int addrconf_ifid_infiniband(u8 *eui, struct net_device *dev)
+{
+	if (dev->addr_len != INFINIBAND_ALEN)
+		return -1;
+	memcpy(eui, dev->dev_addr + 12, 8);
 	eui[0] |= 2;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __ipv6_isatap_अगरid(u8 *eui, __be32 addr)
-अणु
-	अगर (addr == 0)
-		वापस -1;
-	eui[0] = (ipv4_is_zeronet(addr) || ipv4_is_निजी_10(addr) ||
+static int __ipv6_isatap_ifid(u8 *eui, __be32 addr)
+{
+	if (addr == 0)
+		return -1;
+	eui[0] = (ipv4_is_zeronet(addr) || ipv4_is_private_10(addr) ||
 		  ipv4_is_loopback(addr) || ipv4_is_linklocal_169(addr) ||
-		  ipv4_is_निजी_172(addr) || ipv4_is_test_192(addr) ||
-		  ipv4_is_anycast_6to4(addr) || ipv4_is_निजी_192(addr) ||
+		  ipv4_is_private_172(addr) || ipv4_is_test_192(addr) ||
+		  ipv4_is_anycast_6to4(addr) || ipv4_is_private_192(addr) ||
 		  ipv4_is_test_198(addr) || ipv4_is_multicast(addr) ||
 		  ipv4_is_lbcast(addr)) ? 0x00 : 0x02;
 	eui[1] = 0;
 	eui[2] = 0x5E;
 	eui[3] = 0xFE;
-	स_नकल(eui + 4, &addr, 4);
-	वापस 0;
-पूर्ण
+	memcpy(eui + 4, &addr, 4);
+	return 0;
+}
 
-अटल पूर्णांक addrconf_अगरid_sit(u8 *eui, काष्ठा net_device *dev)
-अणु
-	अगर (dev->priv_flags & IFF_ISATAP)
-		वापस __ipv6_isatap_अगरid(eui, *(__be32 *)dev->dev_addr);
-	वापस -1;
-पूर्ण
+static int addrconf_ifid_sit(u8 *eui, struct net_device *dev)
+{
+	if (dev->priv_flags & IFF_ISATAP)
+		return __ipv6_isatap_ifid(eui, *(__be32 *)dev->dev_addr);
+	return -1;
+}
 
-अटल पूर्णांक addrconf_अगरid_gre(u8 *eui, काष्ठा net_device *dev)
-अणु
-	वापस __ipv6_isatap_अगरid(eui, *(__be32 *)dev->dev_addr);
-पूर्ण
+static int addrconf_ifid_gre(u8 *eui, struct net_device *dev)
+{
+	return __ipv6_isatap_ifid(eui, *(__be32 *)dev->dev_addr);
+}
 
-अटल पूर्णांक addrconf_अगरid_ip6tnl(u8 *eui, काष्ठा net_device *dev)
-अणु
-	स_नकल(eui, dev->perm_addr, 3);
-	स_नकल(eui + 5, dev->perm_addr + 3, 3);
+static int addrconf_ifid_ip6tnl(u8 *eui, struct net_device *dev)
+{
+	memcpy(eui, dev->perm_addr, 3);
+	memcpy(eui + 5, dev->perm_addr + 3, 3);
 	eui[3] = 0xFF;
 	eui[4] = 0xFE;
 	eui[0] ^= 2;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ipv6_generate_eui64(u8 *eui, काष्ठा net_device *dev)
-अणु
-	चयन (dev->type) अणु
-	हाल ARPHRD_ETHER:
-	हाल ARPHRD_FDDI:
-		वापस addrconf_अगरid_eui48(eui, dev);
-	हाल ARPHRD_ARCNET:
-		वापस addrconf_अगरid_arcnet(eui, dev);
-	हाल ARPHRD_INFINIBAND:
-		वापस addrconf_अगरid_infiniband(eui, dev);
-	हाल ARPHRD_SIT:
-		वापस addrconf_अगरid_sit(eui, dev);
-	हाल ARPHRD_IPGRE:
-	हाल ARPHRD_TUNNEL:
-		वापस addrconf_अगरid_gre(eui, dev);
-	हाल ARPHRD_6LOWPAN:
-		वापस addrconf_अगरid_6lowpan(eui, dev);
-	हाल ARPHRD_IEEE1394:
-		वापस addrconf_अगरid_ieee1394(eui, dev);
-	हाल ARPHRD_TUNNEL6:
-	हाल ARPHRD_IP6GRE:
-	हाल ARPHRD_RAWIP:
-		वापस addrconf_अगरid_ip6tnl(eui, dev);
-	पूर्ण
-	वापस -1;
-पूर्ण
+static int ipv6_generate_eui64(u8 *eui, struct net_device *dev)
+{
+	switch (dev->type) {
+	case ARPHRD_ETHER:
+	case ARPHRD_FDDI:
+		return addrconf_ifid_eui48(eui, dev);
+	case ARPHRD_ARCNET:
+		return addrconf_ifid_arcnet(eui, dev);
+	case ARPHRD_INFINIBAND:
+		return addrconf_ifid_infiniband(eui, dev);
+	case ARPHRD_SIT:
+		return addrconf_ifid_sit(eui, dev);
+	case ARPHRD_IPGRE:
+	case ARPHRD_TUNNEL:
+		return addrconf_ifid_gre(eui, dev);
+	case ARPHRD_6LOWPAN:
+		return addrconf_ifid_6lowpan(eui, dev);
+	case ARPHRD_IEEE1394:
+		return addrconf_ifid_ieee1394(eui, dev);
+	case ARPHRD_TUNNEL6:
+	case ARPHRD_IP6GRE:
+	case ARPHRD_RAWIP:
+		return addrconf_ifid_ip6tnl(eui, dev);
+	}
+	return -1;
+}
 
-अटल पूर्णांक ipv6_inherit_eui64(u8 *eui, काष्ठा inet6_dev *idev)
-अणु
-	पूर्णांक err = -1;
-	काष्ठा inet6_अगरaddr *अगरp;
+static int ipv6_inherit_eui64(u8 *eui, struct inet6_dev *idev)
+{
+	int err = -1;
+	struct inet6_ifaddr *ifp;
 
-	पढ़ो_lock_bh(&idev->lock);
-	list_क्रम_each_entry_reverse(अगरp, &idev->addr_list, अगर_list) अणु
-		अगर (अगरp->scope > IFA_LINK)
-			अवरोध;
-		अगर (अगरp->scope == IFA_LINK && !(अगरp->flags&IFA_F_TENTATIVE)) अणु
-			स_नकल(eui, अगरp->addr.s6_addr+8, 8);
+	read_lock_bh(&idev->lock);
+	list_for_each_entry_reverse(ifp, &idev->addr_list, if_list) {
+		if (ifp->scope > IFA_LINK)
+			break;
+		if (ifp->scope == IFA_LINK && !(ifp->flags&IFA_F_TENTATIVE)) {
+			memcpy(eui, ifp->addr.s6_addr+8, 8);
 			err = 0;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	पढ़ो_unlock_bh(&idev->lock);
-	वापस err;
-पूर्ण
+			break;
+		}
+	}
+	read_unlock_bh(&idev->lock);
+	return err;
+}
 
-/* Generation of a अक्रमomized Interface Identअगरier
+/* Generation of a randomized Interface Identifier
  * draft-ietf-6man-rfc4941bis, Section 3.3.1
  */
 
-अटल व्योम ipv6_gen_rnd_iid(काष्ठा in6_addr *addr)
-अणु
+static void ipv6_gen_rnd_iid(struct in6_addr *addr)
+{
 regen:
-	get_अक्रमom_bytes(&addr->s6_addr[8], 8);
+	get_random_bytes(&addr->s6_addr[8], 8);
 
 	/* <draft-ietf-6man-rfc4941bis-08.txt>, Section 3.3.1:
-	 * check अगर generated address is not inappropriate:
+	 * check if generated address is not inappropriate:
 	 *
-	 * - Reserved IPv6 Interface Identअगरiers
-	 * - XXX: alपढ़ोy asचिन्हित to an address on the device
+	 * - Reserved IPv6 Interface Identifiers
+	 * - XXX: already assigned to an address on the device
 	 */
 
 	/* Subnet-router anycast: 0000:0000:0000:0000 */
-	अगर (!(addr->s6_addr32[2] | addr->s6_addr32[3]))
-		जाओ regen;
+	if (!(addr->s6_addr32[2] | addr->s6_addr32[3]))
+		goto regen;
 
 	/* IANA Ethernet block: 0200:5EFF:FE00:0000-0200:5EFF:FE00:5212
 	 * Proxy Mobile IPv6:   0200:5EFF:FE00:5213
 	 * IANA Ethernet block: 0200:5EFF:FE00:5214-0200:5EFF:FEFF:FFFF
 	 */
-	अगर (ntohl(addr->s6_addr32[2]) == 0x02005eff &&
+	if (ntohl(addr->s6_addr32[2]) == 0x02005eff &&
 	    (ntohl(addr->s6_addr32[3]) & 0Xff000000) == 0xfe000000)
-		जाओ regen;
+		goto regen;
 
 	/* Reserved subnet anycast addresses */
-	अगर (ntohl(addr->s6_addr32[2]) == 0xfdffffff &&
+	if (ntohl(addr->s6_addr32[2]) == 0xfdffffff &&
 	    ntohl(addr->s6_addr32[3]) >= 0Xffffff80)
-		जाओ regen;
-पूर्ण
+		goto regen;
+}
 
 /*
  *	Add prefix route.
  */
 
-अटल व्योम
-addrconf_prefix_route(काष्ठा in6_addr *pfx, पूर्णांक plen, u32 metric,
-		      काष्ठा net_device *dev, अचिन्हित दीर्घ expires,
+static void
+addrconf_prefix_route(struct in6_addr *pfx, int plen, u32 metric,
+		      struct net_device *dev, unsigned long expires,
 		      u32 flags, gfp_t gfp_flags)
-अणु
-	काष्ठा fib6_config cfg = अणु
+{
+	struct fib6_config cfg = {
 		.fc_table = l3mdev_fib_table(dev) ? : RT6_TABLE_PREFIX,
 		.fc_metric = metric ? : IP6_RT_PRIO_ADDRCONF,
-		.fc_अगरindex = dev->अगरindex,
+		.fc_ifindex = dev->ifindex,
 		.fc_expires = expires,
 		.fc_dst_len = plen,
 		.fc_flags = RTF_UP | flags,
 		.fc_nlinfo.nl_net = dev_net(dev),
 		.fc_protocol = RTPROT_KERNEL,
 		.fc_type = RTN_UNICAST,
-	पूर्ण;
+	};
 
 	cfg.fc_dst = *pfx;
 
 	/* Prevent useless cloning on PtP SIT.
-	   This thing is करोne here expecting that the whole
+	   This thing is done here expecting that the whole
 	   class of non-broadcast devices need not cloning.
 	 */
-#अगर IS_ENABLED(CONFIG_IPV6_SIT)
-	अगर (dev->type == ARPHRD_SIT && (dev->flags & IFF_POINTOPOINT))
+#if IS_ENABLED(CONFIG_IPV6_SIT)
+	if (dev->type == ARPHRD_SIT && (dev->flags & IFF_POINTOPOINT))
 		cfg.fc_flags |= RTF_NONEXTHOP;
-#पूर्ण_अगर
+#endif
 
-	ip6_route_add(&cfg, gfp_flags, शून्य);
-पूर्ण
+	ip6_route_add(&cfg, gfp_flags, NULL);
+}
 
 
-अटल काष्ठा fib6_info *addrconf_get_prefix_route(स्थिर काष्ठा in6_addr *pfx,
-						  पूर्णांक plen,
-						  स्थिर काष्ठा net_device *dev,
+static struct fib6_info *addrconf_get_prefix_route(const struct in6_addr *pfx,
+						  int plen,
+						  const struct net_device *dev,
 						  u32 flags, u32 noflags,
 						  bool no_gw)
-अणु
-	काष्ठा fib6_node *fn;
-	काष्ठा fib6_info *rt = शून्य;
-	काष्ठा fib6_table *table;
+{
+	struct fib6_node *fn;
+	struct fib6_info *rt = NULL;
+	struct fib6_table *table;
 	u32 tb_id = l3mdev_fib_table(dev) ? : RT6_TABLE_PREFIX;
 
 	table = fib6_get_table(dev_net(dev), tb_id);
-	अगर (!table)
-		वापस शून्य;
+	if (!table)
+		return NULL;
 
-	rcu_पढ़ो_lock();
-	fn = fib6_locate(&table->tb6_root, pfx, plen, शून्य, 0, true);
-	अगर (!fn)
-		जाओ out;
+	rcu_read_lock();
+	fn = fib6_locate(&table->tb6_root, pfx, plen, NULL, 0, true);
+	if (!fn)
+		goto out;
 
-	क्रम_each_fib6_node_rt_rcu(fn) अणु
+	for_each_fib6_node_rt_rcu(fn) {
 		/* prefix routes only use builtin fib6_nh */
-		अगर (rt->nh)
-			जारी;
+		if (rt->nh)
+			continue;
 
-		अगर (rt->fib6_nh->fib_nh_dev->अगरindex != dev->अगरindex)
-			जारी;
-		अगर (no_gw && rt->fib6_nh->fib_nh_gw_family)
-			जारी;
-		अगर ((rt->fib6_flags & flags) != flags)
-			जारी;
-		अगर ((rt->fib6_flags & noflags) != 0)
-			जारी;
-		अगर (!fib6_info_hold_safe(rt))
-			जारी;
-		अवरोध;
-	पूर्ण
+		if (rt->fib6_nh->fib_nh_dev->ifindex != dev->ifindex)
+			continue;
+		if (no_gw && rt->fib6_nh->fib_nh_gw_family)
+			continue;
+		if ((rt->fib6_flags & flags) != flags)
+			continue;
+		if ((rt->fib6_flags & noflags) != 0)
+			continue;
+		if (!fib6_info_hold_safe(rt))
+			continue;
+		break;
+	}
 out:
-	rcu_पढ़ो_unlock();
-	वापस rt;
-पूर्ण
+	rcu_read_unlock();
+	return rt;
+}
 
 
-/* Create "default" multicast route to the पूर्णांकerface */
+/* Create "default" multicast route to the interface */
 
-अटल व्योम addrconf_add_mroute(काष्ठा net_device *dev)
-अणु
-	काष्ठा fib6_config cfg = अणु
+static void addrconf_add_mroute(struct net_device *dev)
+{
+	struct fib6_config cfg = {
 		.fc_table = l3mdev_fib_table(dev) ? : RT6_TABLE_LOCAL,
 		.fc_metric = IP6_RT_PRIO_ADDRCONF,
-		.fc_अगरindex = dev->अगरindex,
+		.fc_ifindex = dev->ifindex,
 		.fc_dst_len = 8,
 		.fc_flags = RTF_UP,
 		.fc_type = RTN_MULTICAST,
 		.fc_nlinfo.nl_net = dev_net(dev),
 		.fc_protocol = RTPROT_KERNEL,
-	पूर्ण;
+	};
 
 	ipv6_addr_set(&cfg.fc_dst, htonl(0xFF000000), 0, 0, 0);
 
-	ip6_route_add(&cfg, GFP_KERNEL, शून्य);
-पूर्ण
+	ip6_route_add(&cfg, GFP_KERNEL, NULL);
+}
 
-अटल काष्ठा inet6_dev *addrconf_add_dev(काष्ठा net_device *dev)
-अणु
-	काष्ठा inet6_dev *idev;
+static struct inet6_dev *addrconf_add_dev(struct net_device *dev)
+{
+	struct inet6_dev *idev;
 
 	ASSERT_RTNL();
 
 	idev = ipv6_find_idev(dev);
-	अगर (IS_ERR(idev))
-		वापस idev;
+	if (IS_ERR(idev))
+		return idev;
 
-	अगर (idev->cnf.disable_ipv6)
-		वापस ERR_PTR(-EACCES);
+	if (idev->cnf.disable_ipv6)
+		return ERR_PTR(-EACCES);
 
-	/* Add शेष multicast route */
-	अगर (!(dev->flags & IFF_LOOPBACK) && !netअगर_is_l3_master(dev))
+	/* Add default multicast route */
+	if (!(dev->flags & IFF_LOOPBACK) && !netif_is_l3_master(dev))
 		addrconf_add_mroute(dev);
 
-	वापस idev;
-पूर्ण
+	return idev;
+}
 
-अटल व्योम manage_tempaddrs(काष्ठा inet6_dev *idev,
-			     काष्ठा inet6_अगरaddr *अगरp,
+static void manage_tempaddrs(struct inet6_dev *idev,
+			     struct inet6_ifaddr *ifp,
 			     __u32 valid_lft, __u32 prefered_lft,
-			     bool create, अचिन्हित दीर्घ now)
-अणु
+			     bool create, unsigned long now)
+{
 	u32 flags;
-	काष्ठा inet6_अगरaddr *अगरt;
+	struct inet6_ifaddr *ift;
 
-	पढ़ो_lock_bh(&idev->lock);
+	read_lock_bh(&idev->lock);
 	/* update all temporary addresses in the list */
-	list_क्रम_each_entry(अगरt, &idev->tempaddr_list, पंचांगp_list) अणु
-		पूर्णांक age, max_valid, max_prefered;
+	list_for_each_entry(ift, &idev->tempaddr_list, tmp_list) {
+		int age, max_valid, max_prefered;
 
-		अगर (अगरp != अगरt->अगरpub)
-			जारी;
+		if (ifp != ift->ifpub)
+			continue;
 
 		/* RFC 4941 section 3.3:
-		 * If a received option will extend the lअगरeसमय of a खुला
-		 * address, the lअगरeबार of temporary addresses should
-		 * be extended, subject to the overall स्थिरraपूर्णांक that no
-		 * temporary addresses should ever reमुख्य "valid" or "preferred"
-		 * क्रम a समय दीर्घer than (TEMP_VALID_LIFETIME) or
+		 * If a received option will extend the lifetime of a public
+		 * address, the lifetimes of temporary addresses should
+		 * be extended, subject to the overall constraint that no
+		 * temporary addresses should ever remain "valid" or "preferred"
+		 * for a time longer than (TEMP_VALID_LIFETIME) or
 		 * (TEMP_PREFERRED_LIFETIME - DESYNC_FACTOR), respectively.
 		 */
-		age = (now - अगरt->cstamp) / HZ;
+		age = (now - ift->cstamp) / HZ;
 		max_valid = idev->cnf.temp_valid_lft - age;
-		अगर (max_valid < 0)
+		if (max_valid < 0)
 			max_valid = 0;
 
 		max_prefered = idev->cnf.temp_prefered_lft -
 			       idev->desync_factor - age;
-		अगर (max_prefered < 0)
+		if (max_prefered < 0)
 			max_prefered = 0;
 
-		अगर (valid_lft > max_valid)
+		if (valid_lft > max_valid)
 			valid_lft = max_valid;
 
-		अगर (prefered_lft > max_prefered)
+		if (prefered_lft > max_prefered)
 			prefered_lft = max_prefered;
 
-		spin_lock(&अगरt->lock);
-		flags = अगरt->flags;
-		अगरt->valid_lft = valid_lft;
-		अगरt->prefered_lft = prefered_lft;
-		अगरt->tstamp = now;
-		अगर (prefered_lft > 0)
-			अगरt->flags &= ~IFA_F_DEPRECATED;
+		spin_lock(&ift->lock);
+		flags = ift->flags;
+		ift->valid_lft = valid_lft;
+		ift->prefered_lft = prefered_lft;
+		ift->tstamp = now;
+		if (prefered_lft > 0)
+			ift->flags &= ~IFA_F_DEPRECATED;
 
-		spin_unlock(&अगरt->lock);
-		अगर (!(flags&IFA_F_TENTATIVE))
-			ipv6_अगरa_notअगरy(0, अगरt);
-	पूर्ण
+		spin_unlock(&ift->lock);
+		if (!(flags&IFA_F_TENTATIVE))
+			ipv6_ifa_notify(0, ift);
+	}
 
-	अगर ((create || list_empty(&idev->tempaddr_list)) &&
-	    idev->cnf.use_tempaddr > 0) अणु
-		/* When a new खुला address is created as described
+	if ((create || list_empty(&idev->tempaddr_list)) &&
+	    idev->cnf.use_tempaddr > 0) {
+		/* When a new public address is created as described
 		 * in [ADDRCONF], also create a new temporary address.
-		 * Also create a temporary address अगर it's enabled but
+		 * Also create a temporary address if it's enabled but
 		 * no temporary address currently exists.
 		 */
-		पढ़ो_unlock_bh(&idev->lock);
-		ipv6_create_tempaddr(अगरp, false);
-	पूर्ण अन्यथा अणु
-		पढ़ो_unlock_bh(&idev->lock);
-	पूर्ण
-पूर्ण
+		read_unlock_bh(&idev->lock);
+		ipv6_create_tempaddr(ifp, false);
+	} else {
+		read_unlock_bh(&idev->lock);
+	}
+}
 
-अटल bool is_addr_mode_generate_stable(काष्ठा inet6_dev *idev)
-अणु
-	वापस idev->cnf.addr_gen_mode == IN6_ADDR_GEN_MODE_STABLE_PRIVACY ||
+static bool is_addr_mode_generate_stable(struct inet6_dev *idev)
+{
+	return idev->cnf.addr_gen_mode == IN6_ADDR_GEN_MODE_STABLE_PRIVACY ||
 	       idev->cnf.addr_gen_mode == IN6_ADDR_GEN_MODE_RANDOM;
-पूर्ण
+}
 
-पूर्णांक addrconf_prefix_rcv_add_addr(काष्ठा net *net, काष्ठा net_device *dev,
-				 स्थिर काष्ठा prefix_info *pinfo,
-				 काष्ठा inet6_dev *in6_dev,
-				 स्थिर काष्ठा in6_addr *addr, पूर्णांक addr_type,
+int addrconf_prefix_rcv_add_addr(struct net *net, struct net_device *dev,
+				 const struct prefix_info *pinfo,
+				 struct inet6_dev *in6_dev,
+				 const struct in6_addr *addr, int addr_type,
 				 u32 addr_flags, bool sllao, bool tokenized,
 				 __u32 valid_lft, u32 prefered_lft)
-अणु
-	काष्ठा inet6_अगरaddr *अगरp = ipv6_get_अगरaddr(net, addr, dev, 1);
-	पूर्णांक create = 0;
+{
+	struct inet6_ifaddr *ifp = ipv6_get_ifaddr(net, addr, dev, 1);
+	int create = 0;
 
-	अगर (!अगरp && valid_lft) अणु
-		पूर्णांक max_addresses = in6_dev->cnf.max_addresses;
-		काष्ठा अगरa6_config cfg = अणु
+	if (!ifp && valid_lft) {
+		int max_addresses = in6_dev->cnf.max_addresses;
+		struct ifa6_config cfg = {
 			.pfx = addr,
 			.plen = pinfo->prefix_len,
-			.अगरa_flags = addr_flags,
+			.ifa_flags = addr_flags,
 			.valid_lft = valid_lft,
 			.preferred_lft = prefered_lft,
 			.scope = addr_type & IPV6_ADDR_SCOPE_MASK,
-		पूर्ण;
+		};
 
-#अगर_घोषित CONFIG_IPV6_OPTIMISTIC_DAD
-		अगर ((net->ipv6.devconf_all->optimistic_dad ||
+#ifdef CONFIG_IPV6_OPTIMISTIC_DAD
+		if ((net->ipv6.devconf_all->optimistic_dad ||
 		     in6_dev->cnf.optimistic_dad) &&
-		    !net->ipv6.devconf_all->क्रमwarding && sllao)
-			cfg.अगरa_flags |= IFA_F_OPTIMISTIC;
-#पूर्ण_अगर
+		    !net->ipv6.devconf_all->forwarding && sllao)
+			cfg.ifa_flags |= IFA_F_OPTIMISTIC;
+#endif
 
-		/* Do not allow to create too much of स्वतःconfigured
+		/* Do not allow to create too much of autoconfigured
 		 * addresses; this would be too easy way to crash kernel.
 		 */
-		अगर (!max_addresses ||
+		if (!max_addresses ||
 		    ipv6_count_addresses(in6_dev) < max_addresses)
-			अगरp = ipv6_add_addr(in6_dev, &cfg, false, शून्य);
+			ifp = ipv6_add_addr(in6_dev, &cfg, false, NULL);
 
-		अगर (IS_ERR_OR_शून्य(अगरp))
-			वापस -1;
+		if (IS_ERR_OR_NULL(ifp))
+			return -1;
 
 		create = 1;
-		spin_lock_bh(&अगरp->lock);
-		अगरp->flags |= IFA_F_MANAGETEMPADDR;
-		अगरp->cstamp = jअगरfies;
-		अगरp->tokenized = tokenized;
-		spin_unlock_bh(&अगरp->lock);
-		addrconf_dad_start(अगरp);
-	पूर्ण
+		spin_lock_bh(&ifp->lock);
+		ifp->flags |= IFA_F_MANAGETEMPADDR;
+		ifp->cstamp = jiffies;
+		ifp->tokenized = tokenized;
+		spin_unlock_bh(&ifp->lock);
+		addrconf_dad_start(ifp);
+	}
 
-	अगर (अगरp) अणु
+	if (ifp) {
 		u32 flags;
-		अचिन्हित दीर्घ now;
+		unsigned long now;
 		u32 stored_lft;
 
-		/* Update lअगरeसमय (RFC4862 5.5.3 e)
-		 * We deviate from RFC4862 by honoring all Valid Lअगरeबार to
-		 * improve the reaction of SLAAC to rक्रमागतbering events
-		 * (draft-gont-6man-slaac-rक्रमागत-06, Section 4.2)
+		/* Update lifetime (RFC4862 5.5.3 e)
+		 * We deviate from RFC4862 by honoring all Valid Lifetimes to
+		 * improve the reaction of SLAAC to renumbering events
+		 * (draft-gont-6man-slaac-renum-06, Section 4.2)
 		 */
-		spin_lock_bh(&अगरp->lock);
-		now = jअगरfies;
-		अगर (अगरp->valid_lft > (now - अगरp->tstamp) / HZ)
-			stored_lft = अगरp->valid_lft - (now - अगरp->tstamp) / HZ;
-		अन्यथा
+		spin_lock_bh(&ifp->lock);
+		now = jiffies;
+		if (ifp->valid_lft > (now - ifp->tstamp) / HZ)
+			stored_lft = ifp->valid_lft - (now - ifp->tstamp) / HZ;
+		else
 			stored_lft = 0;
 
-		अगर (!create && stored_lft) अणु
-			अगरp->valid_lft = valid_lft;
-			अगरp->prefered_lft = prefered_lft;
-			अगरp->tstamp = now;
-			flags = अगरp->flags;
-			अगरp->flags &= ~IFA_F_DEPRECATED;
-			spin_unlock_bh(&अगरp->lock);
+		if (!create && stored_lft) {
+			ifp->valid_lft = valid_lft;
+			ifp->prefered_lft = prefered_lft;
+			ifp->tstamp = now;
+			flags = ifp->flags;
+			ifp->flags &= ~IFA_F_DEPRECATED;
+			spin_unlock_bh(&ifp->lock);
 
-			अगर (!(flags&IFA_F_TENTATIVE))
-				ipv6_अगरa_notअगरy(0, अगरp);
-		पूर्ण अन्यथा
-			spin_unlock_bh(&अगरp->lock);
+			if (!(flags&IFA_F_TENTATIVE))
+				ipv6_ifa_notify(0, ifp);
+		} else
+			spin_unlock_bh(&ifp->lock);
 
-		manage_tempaddrs(in6_dev, अगरp, valid_lft, prefered_lft,
+		manage_tempaddrs(in6_dev, ifp, valid_lft, prefered_lft,
 				 create, now);
 
-		in6_अगरa_put(अगरp);
-		addrconf_verअगरy();
-	पूर्ण
+		in6_ifa_put(ifp);
+		addrconf_verify();
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(addrconf_prefix_rcv_add_addr);
 
-व्योम addrconf_prefix_rcv(काष्ठा net_device *dev, u8 *opt, पूर्णांक len, bool sllao)
-अणु
-	काष्ठा prefix_info *pinfo;
+void addrconf_prefix_rcv(struct net_device *dev, u8 *opt, int len, bool sllao)
+{
+	struct prefix_info *pinfo;
 	__u32 valid_lft;
 	__u32 prefered_lft;
-	पूर्णांक addr_type, err;
+	int addr_type, err;
 	u32 addr_flags = 0;
-	काष्ठा inet6_dev *in6_dev;
-	काष्ठा net *net = dev_net(dev);
+	struct inet6_dev *in6_dev;
+	struct net *net = dev_net(dev);
 
-	pinfo = (काष्ठा prefix_info *) opt;
+	pinfo = (struct prefix_info *) opt;
 
-	अगर (len < माप(काष्ठा prefix_info)) अणु
+	if (len < sizeof(struct prefix_info)) {
 		netdev_dbg(dev, "addrconf: prefix option too short\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
 	 *	Validation checks ([ADDRCONF], page 19)
@@ -2684,46 +2683,46 @@ EXPORT_SYMBOL_GPL(addrconf_prefix_rcv_add_addr);
 
 	addr_type = ipv6_addr_type(&pinfo->prefix);
 
-	अगर (addr_type & (IPV6_ADDR_MULTICAST|IPV6_ADDR_LINKLOCAL))
-		वापस;
+	if (addr_type & (IPV6_ADDR_MULTICAST|IPV6_ADDR_LINKLOCAL))
+		return;
 
 	valid_lft = ntohl(pinfo->valid);
 	prefered_lft = ntohl(pinfo->prefered);
 
-	अगर (prefered_lft > valid_lft) अणु
+	if (prefered_lft > valid_lft) {
 		net_warn_ratelimited("addrconf: prefix option has invalid lifetime\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	in6_dev = in6_dev_get(dev);
 
-	अगर (!in6_dev) अणु
+	if (!in6_dev) {
 		net_dbg_ratelimited("addrconf: device %s not configured\n",
 				    dev->name);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
 	 *	Two things going on here:
-	 *	1) Add routes क्रम on-link prefixes
-	 *	2) Configure prefixes with the स्वतः flag set
+	 *	1) Add routes for on-link prefixes
+	 *	2) Configure prefixes with the auto flag set
 	 */
 
-	अगर (pinfo->onlink) अणु
-		काष्ठा fib6_info *rt;
-		अचिन्हित दीर्घ rt_expires;
+	if (pinfo->onlink) {
+		struct fib6_info *rt;
+		unsigned long rt_expires;
 
-		/* Aव्योम arithmetic overflow. Really, we could
+		/* Avoid arithmetic overflow. Really, we could
 		 * save rt_expires in seconds, likely valid_lft,
-		 * but it would require भागision in fib gc, that it
+		 * but it would require division in fib gc, that it
 		 * not good.
 		 */
-		अगर (HZ > USER_HZ)
-			rt_expires = addrconf_समयout_fixup(valid_lft, HZ);
-		अन्यथा
-			rt_expires = addrconf_समयout_fixup(valid_lft, USER_HZ);
+		if (HZ > USER_HZ)
+			rt_expires = addrconf_timeout_fixup(valid_lft, HZ);
+		else
+			rt_expires = addrconf_timeout_fixup(valid_lft, USER_HZ);
 
-		अगर (addrconf_finite_समयout(rt_expires))
+		if (addrconf_finite_timeout(rt_expires))
 			rt_expires *= HZ;
 
 		rt = addrconf_get_prefix_route(&pinfo->prefix,
@@ -2732,63 +2731,63 @@ EXPORT_SYMBOL_GPL(addrconf_prefix_rcv_add_addr);
 					       RTF_ADDRCONF | RTF_PREFIX_RT,
 					       RTF_DEFAULT, true);
 
-		अगर (rt) अणु
+		if (rt) {
 			/* Autoconf prefix route */
-			अगर (valid_lft == 0) अणु
+			if (valid_lft == 0) {
 				ip6_del_rt(net, rt, false);
-				rt = शून्य;
-			पूर्ण अन्यथा अगर (addrconf_finite_समयout(rt_expires)) अणु
+				rt = NULL;
+			} else if (addrconf_finite_timeout(rt_expires)) {
 				/* not infinity */
-				fib6_set_expires(rt, jअगरfies + rt_expires);
-			पूर्ण अन्यथा अणु
+				fib6_set_expires(rt, jiffies + rt_expires);
+			} else {
 				fib6_clean_expires(rt);
-			पूर्ण
-		पूर्ण अन्यथा अगर (valid_lft) अणु
-			घड़ी_प्रकार expires = 0;
-			पूर्णांक flags = RTF_ADDRCONF | RTF_PREFIX_RT;
-			अगर (addrconf_finite_समयout(rt_expires)) अणु
+			}
+		} else if (valid_lft) {
+			clock_t expires = 0;
+			int flags = RTF_ADDRCONF | RTF_PREFIX_RT;
+			if (addrconf_finite_timeout(rt_expires)) {
 				/* not infinity */
 				flags |= RTF_EXPIRES;
-				expires = jअगरfies_to_घड़ी_प्रकार(rt_expires);
-			पूर्ण
+				expires = jiffies_to_clock_t(rt_expires);
+			}
 			addrconf_prefix_route(&pinfo->prefix, pinfo->prefix_len,
 					      0, dev, expires, flags,
 					      GFP_ATOMIC);
-		पूर्ण
+		}
 		fib6_info_release(rt);
-	पूर्ण
+	}
 
-	/* Try to figure out our local address क्रम this prefix */
+	/* Try to figure out our local address for this prefix */
 
-	अगर (pinfo->स्वतःconf && in6_dev->cnf.स्वतःconf) अणु
-		काष्ठा in6_addr addr;
+	if (pinfo->autoconf && in6_dev->cnf.autoconf) {
+		struct in6_addr addr;
 		bool tokenized = false, dev_addr_generated = false;
 
-		अगर (pinfo->prefix_len == 64) अणु
-			स_नकल(&addr, &pinfo->prefix, 8);
+		if (pinfo->prefix_len == 64) {
+			memcpy(&addr, &pinfo->prefix, 8);
 
-			अगर (!ipv6_addr_any(&in6_dev->token)) अणु
-				पढ़ो_lock_bh(&in6_dev->lock);
-				स_नकल(addr.s6_addr + 8,
+			if (!ipv6_addr_any(&in6_dev->token)) {
+				read_lock_bh(&in6_dev->lock);
+				memcpy(addr.s6_addr + 8,
 				       in6_dev->token.s6_addr + 8, 8);
-				पढ़ो_unlock_bh(&in6_dev->lock);
+				read_unlock_bh(&in6_dev->lock);
 				tokenized = true;
-			पूर्ण अन्यथा अगर (is_addr_mode_generate_stable(in6_dev) &&
+			} else if (is_addr_mode_generate_stable(in6_dev) &&
 				   !ipv6_generate_stable_address(&addr, 0,
-								 in6_dev)) अणु
+								 in6_dev)) {
 				addr_flags |= IFA_F_STABLE_PRIVACY;
-				जाओ ok;
-			पूर्ण अन्यथा अगर (ipv6_generate_eui64(addr.s6_addr + 8, dev) &&
-				   ipv6_inherit_eui64(addr.s6_addr + 8, in6_dev)) अणु
-				जाओ put;
-			पूर्ण अन्यथा अणु
+				goto ok;
+			} else if (ipv6_generate_eui64(addr.s6_addr + 8, dev) &&
+				   ipv6_inherit_eui64(addr.s6_addr + 8, in6_dev)) {
+				goto put;
+			} else {
 				dev_addr_generated = true;
-			पूर्ण
-			जाओ ok;
-		पूर्ण
+			}
+			goto ok;
+		}
 		net_dbg_ratelimited("IPv6 addrconf: prefix with wrong length %d\n",
 				    pinfo->prefix_len);
-		जाओ put;
+		goto put;
 
 ok:
 		err = addrconf_prefix_rcv_add_addr(net, dev, pinfo, in6_dev,
@@ -2796,540 +2795,540 @@ ok:
 						   addr_flags, sllao,
 						   tokenized, valid_lft,
 						   prefered_lft);
-		अगर (err)
-			जाओ put;
+		if (err)
+			goto put;
 
-		/* Ignore error हाल here because previous prefix add addr was
-		 * successful which will be notअगरied.
+		/* Ignore error case here because previous prefix add addr was
+		 * successful which will be notified.
 		 */
 		ndisc_ops_prefix_rcv_add_addr(net, dev, pinfo, in6_dev, &addr,
 					      addr_type, addr_flags, sllao,
 					      tokenized, valid_lft,
 					      prefered_lft,
 					      dev_addr_generated);
-	पूर्ण
-	inet6_prefix_notअगरy(RTM_NEWPREFIX, in6_dev, pinfo);
+	}
+	inet6_prefix_notify(RTM_NEWPREFIX, in6_dev, pinfo);
 put:
 	in6_dev_put(in6_dev);
-पूर्ण
+}
 
-अटल पूर्णांक addrconf_set_sit_dstaddr(काष्ठा net *net, काष्ठा net_device *dev,
-		काष्ठा in6_अगरreq *ireq)
-अणु
-	काष्ठा ip_tunnel_parm p = अणु पूर्ण;
-	पूर्णांक err;
+static int addrconf_set_sit_dstaddr(struct net *net, struct net_device *dev,
+		struct in6_ifreq *ireq)
+{
+	struct ip_tunnel_parm p = { };
+	int err;
 
-	अगर (!(ipv6_addr_type(&ireq->अगरr6_addr) & IPV6_ADDR_COMPATv4))
-		वापस -EADDRNOTAVAIL;
+	if (!(ipv6_addr_type(&ireq->ifr6_addr) & IPV6_ADDR_COMPATv4))
+		return -EADDRNOTAVAIL;
 
-	p.iph.daddr = ireq->अगरr6_addr.s6_addr32[3];
+	p.iph.daddr = ireq->ifr6_addr.s6_addr32[3];
 	p.iph.version = 4;
 	p.iph.ihl = 5;
 	p.iph.protocol = IPPROTO_IPV6;
 	p.iph.ttl = 64;
 
-	अगर (!dev->netdev_ops->nकरो_tunnel_ctl)
-		वापस -EOPNOTSUPP;
-	err = dev->netdev_ops->nकरो_tunnel_ctl(dev, &p, SIOCADDTUNNEL);
-	अगर (err)
-		वापस err;
+	if (!dev->netdev_ops->ndo_tunnel_ctl)
+		return -EOPNOTSUPP;
+	err = dev->netdev_ops->ndo_tunnel_ctl(dev, &p, SIOCADDTUNNEL);
+	if (err)
+		return err;
 
 	dev = __dev_get_by_name(net, p.name);
-	अगर (!dev)
-		वापस -ENOBUFS;
-	वापस dev_खोलो(dev, शून्य);
-पूर्ण
+	if (!dev)
+		return -ENOBUFS;
+	return dev_open(dev, NULL);
+}
 
 /*
  *	Set destination address.
- *	Special हाल क्रम SIT पूर्णांकerfaces where we create a new "virtual"
+ *	Special case for SIT interfaces where we create a new "virtual"
  *	device.
  */
-पूर्णांक addrconf_set_dstaddr(काष्ठा net *net, व्योम __user *arg)
-अणु
-	काष्ठा net_device *dev;
-	काष्ठा in6_अगरreq ireq;
-	पूर्णांक err = -ENODEV;
+int addrconf_set_dstaddr(struct net *net, void __user *arg)
+{
+	struct net_device *dev;
+	struct in6_ifreq ireq;
+	int err = -ENODEV;
 
-	अगर (!IS_ENABLED(CONFIG_IPV6_SIT))
-		वापस -ENODEV;
-	अगर (copy_from_user(&ireq, arg, माप(काष्ठा in6_अगरreq)))
-		वापस -EFAULT;
+	if (!IS_ENABLED(CONFIG_IPV6_SIT))
+		return -ENODEV;
+	if (copy_from_user(&ireq, arg, sizeof(struct in6_ifreq)))
+		return -EFAULT;
 
 	rtnl_lock();
-	dev = __dev_get_by_index(net, ireq.अगरr6_अगरindex);
-	अगर (dev && dev->type == ARPHRD_SIT)
+	dev = __dev_get_by_index(net, ireq.ifr6_ifindex);
+	if (dev && dev->type == ARPHRD_SIT)
 		err = addrconf_set_sit_dstaddr(net, dev, &ireq);
 	rtnl_unlock();
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक ipv6_mc_config(काष्ठा sock *sk, bool join,
-			  स्थिर काष्ठा in6_addr *addr, पूर्णांक अगरindex)
-अणु
-	पूर्णांक ret;
+static int ipv6_mc_config(struct sock *sk, bool join,
+			  const struct in6_addr *addr, int ifindex)
+{
+	int ret;
 
 	ASSERT_RTNL();
 
 	lock_sock(sk);
-	अगर (join)
-		ret = ipv6_sock_mc_join(sk, अगरindex, addr);
-	अन्यथा
-		ret = ipv6_sock_mc_drop(sk, अगरindex, addr);
+	if (join)
+		ret = ipv6_sock_mc_join(sk, ifindex, addr);
+	else
+		ret = ipv6_sock_mc_drop(sk, ifindex, addr);
 	release_sock(sk);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- *	Manual configuration of address on an पूर्णांकerface
+ *	Manual configuration of address on an interface
  */
-अटल पूर्णांक inet6_addr_add(काष्ठा net *net, पूर्णांक अगरindex,
-			  काष्ठा अगरa6_config *cfg,
-			  काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा inet6_अगरaddr *अगरp;
-	काष्ठा inet6_dev *idev;
-	काष्ठा net_device *dev;
-	अचिन्हित दीर्घ समयout;
-	घड़ी_प्रकार expires;
+static int inet6_addr_add(struct net *net, int ifindex,
+			  struct ifa6_config *cfg,
+			  struct netlink_ext_ack *extack)
+{
+	struct inet6_ifaddr *ifp;
+	struct inet6_dev *idev;
+	struct net_device *dev;
+	unsigned long timeout;
+	clock_t expires;
 	u32 flags;
 
 	ASSERT_RTNL();
 
-	अगर (cfg->plen > 128)
-		वापस -EINVAL;
+	if (cfg->plen > 128)
+		return -EINVAL;
 
-	/* check the lअगरeसमय */
-	अगर (!cfg->valid_lft || cfg->preferred_lft > cfg->valid_lft)
-		वापस -EINVAL;
+	/* check the lifetime */
+	if (!cfg->valid_lft || cfg->preferred_lft > cfg->valid_lft)
+		return -EINVAL;
 
-	अगर (cfg->अगरa_flags & IFA_F_MANAGETEMPADDR && cfg->plen != 64)
-		वापस -EINVAL;
+	if (cfg->ifa_flags & IFA_F_MANAGETEMPADDR && cfg->plen != 64)
+		return -EINVAL;
 
-	dev = __dev_get_by_index(net, अगरindex);
-	अगर (!dev)
-		वापस -ENODEV;
+	dev = __dev_get_by_index(net, ifindex);
+	if (!dev)
+		return -ENODEV;
 
 	idev = addrconf_add_dev(dev);
-	अगर (IS_ERR(idev))
-		वापस PTR_ERR(idev);
+	if (IS_ERR(idev))
+		return PTR_ERR(idev);
 
-	अगर (cfg->अगरa_flags & IFA_F_MCAUTOJOIN) अणु
-		पूर्णांक ret = ipv6_mc_config(net->ipv6.mc_स्वतःjoin_sk,
-					 true, cfg->pfx, अगरindex);
+	if (cfg->ifa_flags & IFA_F_MCAUTOJOIN) {
+		int ret = ipv6_mc_config(net->ipv6.mc_autojoin_sk,
+					 true, cfg->pfx, ifindex);
 
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+		if (ret < 0)
+			return ret;
+	}
 
 	cfg->scope = ipv6_addr_scope(cfg->pfx);
 
-	समयout = addrconf_समयout_fixup(cfg->valid_lft, HZ);
-	अगर (addrconf_finite_समयout(समयout)) अणु
-		expires = jअगरfies_to_घड़ी_प्रकार(समयout * HZ);
-		cfg->valid_lft = समयout;
+	timeout = addrconf_timeout_fixup(cfg->valid_lft, HZ);
+	if (addrconf_finite_timeout(timeout)) {
+		expires = jiffies_to_clock_t(timeout * HZ);
+		cfg->valid_lft = timeout;
 		flags = RTF_EXPIRES;
-	पूर्ण अन्यथा अणु
+	} else {
 		expires = 0;
 		flags = 0;
-		cfg->अगरa_flags |= IFA_F_PERMANENT;
-	पूर्ण
+		cfg->ifa_flags |= IFA_F_PERMANENT;
+	}
 
-	समयout = addrconf_समयout_fixup(cfg->preferred_lft, HZ);
-	अगर (addrconf_finite_समयout(समयout)) अणु
-		अगर (समयout == 0)
-			cfg->अगरa_flags |= IFA_F_DEPRECATED;
-		cfg->preferred_lft = समयout;
-	पूर्ण
+	timeout = addrconf_timeout_fixup(cfg->preferred_lft, HZ);
+	if (addrconf_finite_timeout(timeout)) {
+		if (timeout == 0)
+			cfg->ifa_flags |= IFA_F_DEPRECATED;
+		cfg->preferred_lft = timeout;
+	}
 
-	अगरp = ipv6_add_addr(idev, cfg, true, extack);
-	अगर (!IS_ERR(अगरp)) अणु
-		अगर (!(cfg->अगरa_flags & IFA_F_NOPREFIXROUTE)) अणु
-			addrconf_prefix_route(&अगरp->addr, अगरp->prefix_len,
-					      अगरp->rt_priority, dev, expires,
+	ifp = ipv6_add_addr(idev, cfg, true, extack);
+	if (!IS_ERR(ifp)) {
+		if (!(cfg->ifa_flags & IFA_F_NOPREFIXROUTE)) {
+			addrconf_prefix_route(&ifp->addr, ifp->prefix_len,
+					      ifp->rt_priority, dev, expires,
 					      flags, GFP_KERNEL);
-		पूर्ण
+		}
 
-		/* Send a netlink notअगरication अगर DAD is enabled and
+		/* Send a netlink notification if DAD is enabled and
 		 * optimistic flag is not set
 		 */
-		अगर (!(अगरp->flags & (IFA_F_OPTIMISTIC | IFA_F_NODAD)))
-			ipv6_अगरa_notअगरy(0, अगरp);
+		if (!(ifp->flags & (IFA_F_OPTIMISTIC | IFA_F_NODAD)))
+			ipv6_ifa_notify(0, ifp);
 		/*
 		 * Note that section 3.1 of RFC 4429 indicates
-		 * that the Optimistic flag should not be set क्रम
+		 * that the Optimistic flag should not be set for
 		 * manually configured addresses
 		 */
-		addrconf_dad_start(अगरp);
-		अगर (cfg->अगरa_flags & IFA_F_MANAGETEMPADDR)
-			manage_tempaddrs(idev, अगरp, cfg->valid_lft,
-					 cfg->preferred_lft, true, jअगरfies);
-		in6_अगरa_put(अगरp);
-		addrconf_verअगरy_rtnl();
-		वापस 0;
-	पूर्ण अन्यथा अगर (cfg->अगरa_flags & IFA_F_MCAUTOJOIN) अणु
-		ipv6_mc_config(net->ipv6.mc_स्वतःjoin_sk, false,
-			       cfg->pfx, अगरindex);
-	पूर्ण
+		addrconf_dad_start(ifp);
+		if (cfg->ifa_flags & IFA_F_MANAGETEMPADDR)
+			manage_tempaddrs(idev, ifp, cfg->valid_lft,
+					 cfg->preferred_lft, true, jiffies);
+		in6_ifa_put(ifp);
+		addrconf_verify_rtnl();
+		return 0;
+	} else if (cfg->ifa_flags & IFA_F_MCAUTOJOIN) {
+		ipv6_mc_config(net->ipv6.mc_autojoin_sk, false,
+			       cfg->pfx, ifindex);
+	}
 
-	वापस PTR_ERR(अगरp);
-पूर्ण
+	return PTR_ERR(ifp);
+}
 
-अटल पूर्णांक inet6_addr_del(काष्ठा net *net, पूर्णांक अगरindex, u32 अगरa_flags,
-			  स्थिर काष्ठा in6_addr *pfx, अचिन्हित पूर्णांक plen)
-अणु
-	काष्ठा inet6_अगरaddr *अगरp;
-	काष्ठा inet6_dev *idev;
-	काष्ठा net_device *dev;
+static int inet6_addr_del(struct net *net, int ifindex, u32 ifa_flags,
+			  const struct in6_addr *pfx, unsigned int plen)
+{
+	struct inet6_ifaddr *ifp;
+	struct inet6_dev *idev;
+	struct net_device *dev;
 
-	अगर (plen > 128)
-		वापस -EINVAL;
+	if (plen > 128)
+		return -EINVAL;
 
-	dev = __dev_get_by_index(net, अगरindex);
-	अगर (!dev)
-		वापस -ENODEV;
+	dev = __dev_get_by_index(net, ifindex);
+	if (!dev)
+		return -ENODEV;
 
 	idev = __in6_dev_get(dev);
-	अगर (!idev)
-		वापस -ENXIO;
+	if (!idev)
+		return -ENXIO;
 
-	पढ़ो_lock_bh(&idev->lock);
-	list_क्रम_each_entry(अगरp, &idev->addr_list, अगर_list) अणु
-		अगर (अगरp->prefix_len == plen &&
-		    ipv6_addr_equal(pfx, &अगरp->addr)) अणु
-			in6_अगरa_hold(अगरp);
-			पढ़ो_unlock_bh(&idev->lock);
+	read_lock_bh(&idev->lock);
+	list_for_each_entry(ifp, &idev->addr_list, if_list) {
+		if (ifp->prefix_len == plen &&
+		    ipv6_addr_equal(pfx, &ifp->addr)) {
+			in6_ifa_hold(ifp);
+			read_unlock_bh(&idev->lock);
 
-			अगर (!(अगरp->flags & IFA_F_TEMPORARY) &&
-			    (अगरa_flags & IFA_F_MANAGETEMPADDR))
-				manage_tempaddrs(idev, अगरp, 0, 0, false,
-						 jअगरfies);
-			ipv6_del_addr(अगरp);
-			addrconf_verअगरy_rtnl();
-			अगर (ipv6_addr_is_multicast(pfx)) अणु
-				ipv6_mc_config(net->ipv6.mc_स्वतःjoin_sk,
-					       false, pfx, dev->अगरindex);
-			पूर्ण
-			वापस 0;
-		पूर्ण
-	पूर्ण
-	पढ़ो_unlock_bh(&idev->lock);
-	वापस -EADDRNOTAVAIL;
-पूर्ण
+			if (!(ifp->flags & IFA_F_TEMPORARY) &&
+			    (ifa_flags & IFA_F_MANAGETEMPADDR))
+				manage_tempaddrs(idev, ifp, 0, 0, false,
+						 jiffies);
+			ipv6_del_addr(ifp);
+			addrconf_verify_rtnl();
+			if (ipv6_addr_is_multicast(pfx)) {
+				ipv6_mc_config(net->ipv6.mc_autojoin_sk,
+					       false, pfx, dev->ifindex);
+			}
+			return 0;
+		}
+	}
+	read_unlock_bh(&idev->lock);
+	return -EADDRNOTAVAIL;
+}
 
 
-पूर्णांक addrconf_add_अगरaddr(काष्ठा net *net, व्योम __user *arg)
-अणु
-	काष्ठा अगरa6_config cfg = अणु
-		.अगरa_flags = IFA_F_PERMANENT,
-		.preferred_lft = अनन्त_LIFE_TIME,
-		.valid_lft = अनन्त_LIFE_TIME,
-	पूर्ण;
-	काष्ठा in6_अगरreq ireq;
-	पूर्णांक err;
+int addrconf_add_ifaddr(struct net *net, void __user *arg)
+{
+	struct ifa6_config cfg = {
+		.ifa_flags = IFA_F_PERMANENT,
+		.preferred_lft = INFINITY_LIFE_TIME,
+		.valid_lft = INFINITY_LIFE_TIME,
+	};
+	struct in6_ifreq ireq;
+	int err;
 
-	अगर (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-		वापस -EPERM;
+	if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
+		return -EPERM;
 
-	अगर (copy_from_user(&ireq, arg, माप(काष्ठा in6_अगरreq)))
-		वापस -EFAULT;
+	if (copy_from_user(&ireq, arg, sizeof(struct in6_ifreq)))
+		return -EFAULT;
 
-	cfg.pfx = &ireq.अगरr6_addr;
-	cfg.plen = ireq.अगरr6_prefixlen;
-
-	rtnl_lock();
-	err = inet6_addr_add(net, ireq.अगरr6_अगरindex, &cfg, शून्य);
-	rtnl_unlock();
-	वापस err;
-पूर्ण
-
-पूर्णांक addrconf_del_अगरaddr(काष्ठा net *net, व्योम __user *arg)
-अणु
-	काष्ठा in6_अगरreq ireq;
-	पूर्णांक err;
-
-	अगर (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-		वापस -EPERM;
-
-	अगर (copy_from_user(&ireq, arg, माप(काष्ठा in6_अगरreq)))
-		वापस -EFAULT;
+	cfg.pfx = &ireq.ifr6_addr;
+	cfg.plen = ireq.ifr6_prefixlen;
 
 	rtnl_lock();
-	err = inet6_addr_del(net, ireq.अगरr6_अगरindex, 0, &ireq.अगरr6_addr,
-			     ireq.अगरr6_prefixlen);
+	err = inet6_addr_add(net, ireq.ifr6_ifindex, &cfg, NULL);
 	rtnl_unlock();
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम add_addr(काष्ठा inet6_dev *idev, स्थिर काष्ठा in6_addr *addr,
-		     पूर्णांक plen, पूर्णांक scope)
-अणु
-	काष्ठा inet6_अगरaddr *अगरp;
-	काष्ठा अगरa6_config cfg = अणु
+int addrconf_del_ifaddr(struct net *net, void __user *arg)
+{
+	struct in6_ifreq ireq;
+	int err;
+
+	if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
+		return -EPERM;
+
+	if (copy_from_user(&ireq, arg, sizeof(struct in6_ifreq)))
+		return -EFAULT;
+
+	rtnl_lock();
+	err = inet6_addr_del(net, ireq.ifr6_ifindex, 0, &ireq.ifr6_addr,
+			     ireq.ifr6_prefixlen);
+	rtnl_unlock();
+	return err;
+}
+
+static void add_addr(struct inet6_dev *idev, const struct in6_addr *addr,
+		     int plen, int scope)
+{
+	struct inet6_ifaddr *ifp;
+	struct ifa6_config cfg = {
 		.pfx = addr,
 		.plen = plen,
-		.अगरa_flags = IFA_F_PERMANENT,
-		.valid_lft = अनन्त_LIFE_TIME,
-		.preferred_lft = अनन्त_LIFE_TIME,
+		.ifa_flags = IFA_F_PERMANENT,
+		.valid_lft = INFINITY_LIFE_TIME,
+		.preferred_lft = INFINITY_LIFE_TIME,
 		.scope = scope
-	पूर्ण;
+	};
 
-	अगरp = ipv6_add_addr(idev, &cfg, true, शून्य);
-	अगर (!IS_ERR(अगरp)) अणु
-		spin_lock_bh(&अगरp->lock);
-		अगरp->flags &= ~IFA_F_TENTATIVE;
-		spin_unlock_bh(&अगरp->lock);
+	ifp = ipv6_add_addr(idev, &cfg, true, NULL);
+	if (!IS_ERR(ifp)) {
+		spin_lock_bh(&ifp->lock);
+		ifp->flags &= ~IFA_F_TENTATIVE;
+		spin_unlock_bh(&ifp->lock);
 		rt_genid_bump_ipv6(dev_net(idev->dev));
-		ipv6_अगरa_notअगरy(RTM_NEWADDR, अगरp);
-		in6_अगरa_put(अगरp);
-	पूर्ण
-पूर्ण
+		ipv6_ifa_notify(RTM_NEWADDR, ifp);
+		in6_ifa_put(ifp);
+	}
+}
 
-#अगर IS_ENABLED(CONFIG_IPV6_SIT)
-अटल व्योम sit_add_v4_addrs(काष्ठा inet6_dev *idev)
-अणु
-	काष्ठा in6_addr addr;
-	काष्ठा net_device *dev;
-	काष्ठा net *net = dev_net(idev->dev);
-	पूर्णांक scope, plen;
+#if IS_ENABLED(CONFIG_IPV6_SIT)
+static void sit_add_v4_addrs(struct inet6_dev *idev)
+{
+	struct in6_addr addr;
+	struct net_device *dev;
+	struct net *net = dev_net(idev->dev);
+	int scope, plen;
 	u32 pflags = 0;
 
 	ASSERT_RTNL();
 
-	स_रखो(&addr, 0, माप(काष्ठा in6_addr));
-	स_नकल(&addr.s6_addr32[3], idev->dev->dev_addr, 4);
+	memset(&addr, 0, sizeof(struct in6_addr));
+	memcpy(&addr.s6_addr32[3], idev->dev->dev_addr, 4);
 
-	अगर (idev->dev->flags&IFF_POINTOPOINT) अणु
+	if (idev->dev->flags&IFF_POINTOPOINT) {
 		addr.s6_addr32[0] = htonl(0xfe800000);
 		scope = IFA_LINK;
 		plen = 64;
-	पूर्ण अन्यथा अणु
+	} else {
 		scope = IPV6_ADDR_COMPATv4;
 		plen = 96;
 		pflags |= RTF_NONEXTHOP;
-	पूर्ण
+	}
 
-	अगर (addr.s6_addr32[3]) अणु
+	if (addr.s6_addr32[3]) {
 		add_addr(idev, &addr, plen, scope);
 		addrconf_prefix_route(&addr, plen, 0, idev->dev, 0, pflags,
 				      GFP_KERNEL);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	क्रम_each_netdev(net, dev) अणु
-		काष्ठा in_device *in_dev = __in_dev_get_rtnl(dev);
-		अगर (in_dev && (dev->flags & IFF_UP)) अणु
-			काष्ठा in_अगरaddr *अगरa;
-			पूर्णांक flag = scope;
+	for_each_netdev(net, dev) {
+		struct in_device *in_dev = __in_dev_get_rtnl(dev);
+		if (in_dev && (dev->flags & IFF_UP)) {
+			struct in_ifaddr *ifa;
+			int flag = scope;
 
-			in_dev_क्रम_each_अगरa_rtnl(अगरa, in_dev) अणु
-				addr.s6_addr32[3] = अगरa->अगरa_local;
+			in_dev_for_each_ifa_rtnl(ifa, in_dev) {
+				addr.s6_addr32[3] = ifa->ifa_local;
 
-				अगर (अगरa->अगरa_scope == RT_SCOPE_LINK)
-					जारी;
-				अगर (अगरa->अगरa_scope >= RT_SCOPE_HOST) अणु
-					अगर (idev->dev->flags&IFF_POINTOPOINT)
-						जारी;
+				if (ifa->ifa_scope == RT_SCOPE_LINK)
+					continue;
+				if (ifa->ifa_scope >= RT_SCOPE_HOST) {
+					if (idev->dev->flags&IFF_POINTOPOINT)
+						continue;
 					flag |= IFA_HOST;
-				पूर्ण
+				}
 
 				add_addr(idev, &addr, plen, flag);
 				addrconf_prefix_route(&addr, plen, 0, idev->dev,
 						      0, pflags, GFP_KERNEL);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर
+			}
+		}
+	}
+}
+#endif
 
-अटल व्योम init_loopback(काष्ठा net_device *dev)
-अणु
-	काष्ठा inet6_dev  *idev;
+static void init_loopback(struct net_device *dev)
+{
+	struct inet6_dev  *idev;
 
 	/* ::1 */
 
 	ASSERT_RTNL();
 
 	idev = ipv6_find_idev(dev);
-	अगर (IS_ERR(idev)) अणु
+	if (IS_ERR(idev)) {
 		pr_debug("%s: add_dev failed\n", __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	add_addr(idev, &in6addr_loopback, 128, IFA_HOST);
-पूर्ण
+}
 
-व्योम addrconf_add_linklocal(काष्ठा inet6_dev *idev,
-			    स्थिर काष्ठा in6_addr *addr, u32 flags)
-अणु
-	काष्ठा अगरa6_config cfg = अणु
+void addrconf_add_linklocal(struct inet6_dev *idev,
+			    const struct in6_addr *addr, u32 flags)
+{
+	struct ifa6_config cfg = {
 		.pfx = addr,
 		.plen = 64,
-		.अगरa_flags = flags | IFA_F_PERMANENT,
-		.valid_lft = अनन्त_LIFE_TIME,
-		.preferred_lft = अनन्त_LIFE_TIME,
+		.ifa_flags = flags | IFA_F_PERMANENT,
+		.valid_lft = INFINITY_LIFE_TIME,
+		.preferred_lft = INFINITY_LIFE_TIME,
 		.scope = IFA_LINK
-	पूर्ण;
-	काष्ठा inet6_अगरaddr *अगरp;
+	};
+	struct inet6_ifaddr *ifp;
 
-#अगर_घोषित CONFIG_IPV6_OPTIMISTIC_DAD
-	अगर ((dev_net(idev->dev)->ipv6.devconf_all->optimistic_dad ||
+#ifdef CONFIG_IPV6_OPTIMISTIC_DAD
+	if ((dev_net(idev->dev)->ipv6.devconf_all->optimistic_dad ||
 	     idev->cnf.optimistic_dad) &&
-	    !dev_net(idev->dev)->ipv6.devconf_all->क्रमwarding)
-		cfg.अगरa_flags |= IFA_F_OPTIMISTIC;
-#पूर्ण_अगर
+	    !dev_net(idev->dev)->ipv6.devconf_all->forwarding)
+		cfg.ifa_flags |= IFA_F_OPTIMISTIC;
+#endif
 
-	अगरp = ipv6_add_addr(idev, &cfg, true, शून्य);
-	अगर (!IS_ERR(अगरp)) अणु
-		addrconf_prefix_route(&अगरp->addr, अगरp->prefix_len, 0, idev->dev,
+	ifp = ipv6_add_addr(idev, &cfg, true, NULL);
+	if (!IS_ERR(ifp)) {
+		addrconf_prefix_route(&ifp->addr, ifp->prefix_len, 0, idev->dev,
 				      0, 0, GFP_ATOMIC);
-		addrconf_dad_start(अगरp);
-		in6_अगरa_put(अगरp);
-	पूर्ण
-पूर्ण
+		addrconf_dad_start(ifp);
+		in6_ifa_put(ifp);
+	}
+}
 EXPORT_SYMBOL_GPL(addrconf_add_linklocal);
 
-अटल bool ipv6_reserved_पूर्णांकerfaceid(काष्ठा in6_addr address)
-अणु
-	अगर ((address.s6_addr32[2] | address.s6_addr32[3]) == 0)
-		वापस true;
+static bool ipv6_reserved_interfaceid(struct in6_addr address)
+{
+	if ((address.s6_addr32[2] | address.s6_addr32[3]) == 0)
+		return true;
 
-	अगर (address.s6_addr32[2] == htonl(0x02005eff) &&
+	if (address.s6_addr32[2] == htonl(0x02005eff) &&
 	    ((address.s6_addr32[3] & htonl(0xfe000000)) == htonl(0xfe000000)))
-		वापस true;
+		return true;
 
-	अगर (address.s6_addr32[2] == htonl(0xfdffffff) &&
+	if (address.s6_addr32[2] == htonl(0xfdffffff) &&
 	    ((address.s6_addr32[3] & htonl(0xffffff80)) == htonl(0xffffff80)))
-		वापस true;
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक ipv6_generate_stable_address(काष्ठा in6_addr *address,
+static int ipv6_generate_stable_address(struct in6_addr *address,
 					u8 dad_count,
-					स्थिर काष्ठा inet6_dev *idev)
-अणु
-	अटल DEFINE_SPINLOCK(lock);
-	अटल __u32 digest[SHA1_DIGEST_WORDS];
-	अटल __u32 workspace[SHA1_WORKSPACE_WORDS];
+					const struct inet6_dev *idev)
+{
+	static DEFINE_SPINLOCK(lock);
+	static __u32 digest[SHA1_DIGEST_WORDS];
+	static __u32 workspace[SHA1_WORKSPACE_WORDS];
 
-	अटल जोड़ अणु
-		अक्षर __data[SHA1_BLOCK_SIZE];
-		काष्ठा अणु
-			काष्ठा in6_addr secret;
+	static union {
+		char __data[SHA1_BLOCK_SIZE];
+		struct {
+			struct in6_addr secret;
 			__be32 prefix[2];
-			अचिन्हित अक्षर hwaddr[MAX_ADDR_LEN];
+			unsigned char hwaddr[MAX_ADDR_LEN];
 			u8 dad_count;
-		पूर्ण __packed;
-	पूर्ण data;
+		} __packed;
+	} data;
 
-	काष्ठा in6_addr secret;
-	काष्ठा in6_addr temp;
-	काष्ठा net *net = dev_net(idev->dev);
+	struct in6_addr secret;
+	struct in6_addr temp;
+	struct net *net = dev_net(idev->dev);
 
-	BUILD_BUG_ON(माप(data.__data) != माप(data));
+	BUILD_BUG_ON(sizeof(data.__data) != sizeof(data));
 
-	अगर (idev->cnf.stable_secret.initialized)
+	if (idev->cnf.stable_secret.initialized)
 		secret = idev->cnf.stable_secret.secret;
-	अन्यथा अगर (net->ipv6.devconf_dflt->stable_secret.initialized)
+	else if (net->ipv6.devconf_dflt->stable_secret.initialized)
 		secret = net->ipv6.devconf_dflt->stable_secret.secret;
-	अन्यथा
-		वापस -1;
+	else
+		return -1;
 
 retry:
 	spin_lock_bh(&lock);
 
 	sha1_init(digest);
-	स_रखो(&data, 0, माप(data));
-	स_रखो(workspace, 0, माप(workspace));
-	स_नकल(data.hwaddr, idev->dev->perm_addr, idev->dev->addr_len);
+	memset(&data, 0, sizeof(data));
+	memset(workspace, 0, sizeof(workspace));
+	memcpy(data.hwaddr, idev->dev->perm_addr, idev->dev->addr_len);
 	data.prefix[0] = address->s6_addr32[0];
 	data.prefix[1] = address->s6_addr32[1];
 	data.secret = secret;
 	data.dad_count = dad_count;
 
-	sha1_transक्रमm(digest, data.__data, workspace);
+	sha1_transform(digest, data.__data, workspace);
 
 	temp = *address;
-	temp.s6_addr32[2] = (__क्रमce __be32)digest[0];
-	temp.s6_addr32[3] = (__क्रमce __be32)digest[1];
+	temp.s6_addr32[2] = (__force __be32)digest[0];
+	temp.s6_addr32[3] = (__force __be32)digest[1];
 
 	spin_unlock_bh(&lock);
 
-	अगर (ipv6_reserved_पूर्णांकerfaceid(temp)) अणु
+	if (ipv6_reserved_interfaceid(temp)) {
 		dad_count++;
-		अगर (dad_count > dev_net(idev->dev)->ipv6.sysctl.idgen_retries)
-			वापस -1;
-		जाओ retry;
-	पूर्ण
+		if (dad_count > dev_net(idev->dev)->ipv6.sysctl.idgen_retries)
+			return -1;
+		goto retry;
+	}
 
 	*address = temp;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ipv6_gen_mode_अक्रमom_init(काष्ठा inet6_dev *idev)
-अणु
-	काष्ठा ipv6_stable_secret *s = &idev->cnf.stable_secret;
+static void ipv6_gen_mode_random_init(struct inet6_dev *idev)
+{
+	struct ipv6_stable_secret *s = &idev->cnf.stable_secret;
 
-	अगर (s->initialized)
-		वापस;
+	if (s->initialized)
+		return;
 	s = &idev->cnf.stable_secret;
-	get_अक्रमom_bytes(&s->secret, माप(s->secret));
+	get_random_bytes(&s->secret, sizeof(s->secret));
 	s->initialized = true;
-पूर्ण
+}
 
-अटल व्योम addrconf_addr_gen(काष्ठा inet6_dev *idev, bool prefix_route)
-अणु
-	काष्ठा in6_addr addr;
+static void addrconf_addr_gen(struct inet6_dev *idev, bool prefix_route)
+{
+	struct in6_addr addr;
 
 	/* no link local addresses on L3 master devices */
-	अगर (netअगर_is_l3_master(idev->dev))
-		वापस;
+	if (netif_is_l3_master(idev->dev))
+		return;
 
 	/* no link local addresses on devices flagged as slaves */
-	अगर (idev->dev->flags & IFF_SLAVE)
-		वापस;
+	if (idev->dev->flags & IFF_SLAVE)
+		return;
 
 	ipv6_addr_set(&addr, htonl(0xFE800000), 0, 0, 0);
 
-	चयन (idev->cnf.addr_gen_mode) अणु
-	हाल IN6_ADDR_GEN_MODE_RANDOM:
-		ipv6_gen_mode_अक्रमom_init(idev);
+	switch (idev->cnf.addr_gen_mode) {
+	case IN6_ADDR_GEN_MODE_RANDOM:
+		ipv6_gen_mode_random_init(idev);
 		fallthrough;
-	हाल IN6_ADDR_GEN_MODE_STABLE_PRIVACY:
-		अगर (!ipv6_generate_stable_address(&addr, 0, idev))
+	case IN6_ADDR_GEN_MODE_STABLE_PRIVACY:
+		if (!ipv6_generate_stable_address(&addr, 0, idev))
 			addrconf_add_linklocal(idev, &addr,
 					       IFA_F_STABLE_PRIVACY);
-		अन्यथा अगर (prefix_route)
+		else if (prefix_route)
 			addrconf_prefix_route(&addr, 64, 0, idev->dev,
 					      0, 0, GFP_KERNEL);
-		अवरोध;
-	हाल IN6_ADDR_GEN_MODE_EUI64:
+		break;
+	case IN6_ADDR_GEN_MODE_EUI64:
 		/* addrconf_add_linklocal also adds a prefix_route and we
-		 * only need to care about prefix routes अगर ipv6_generate_eui64
+		 * only need to care about prefix routes if ipv6_generate_eui64
 		 * couldn't generate one.
 		 */
-		अगर (ipv6_generate_eui64(addr.s6_addr + 8, idev->dev) == 0)
+		if (ipv6_generate_eui64(addr.s6_addr + 8, idev->dev) == 0)
 			addrconf_add_linklocal(idev, &addr, 0);
-		अन्यथा अगर (prefix_route)
+		else if (prefix_route)
 			addrconf_prefix_route(&addr, 64, 0, idev->dev,
 					      0, 0, GFP_KERNEL);
-		अवरोध;
-	हाल IN6_ADDR_GEN_MODE_NONE:
-	शेष:
+		break;
+	case IN6_ADDR_GEN_MODE_NONE:
+	default:
 		/* will not add any link local address */
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम addrconf_dev_config(काष्ठा net_device *dev)
-अणु
-	काष्ठा inet6_dev *idev;
+static void addrconf_dev_config(struct net_device *dev)
+{
+	struct inet6_dev *idev;
 
 	ASSERT_RTNL();
 
-	अगर ((dev->type != ARPHRD_ETHER) &&
+	if ((dev->type != ARPHRD_ETHER) &&
 	    (dev->type != ARPHRD_FDDI) &&
 	    (dev->type != ARPHRD_ARCNET) &&
 	    (dev->type != ARPHRD_INFINIBAND) &&
@@ -3340,31 +3339,31 @@ retry:
 	    (dev->type != ARPHRD_IPGRE) &&
 	    (dev->type != ARPHRD_TUNNEL) &&
 	    (dev->type != ARPHRD_NONE) &&
-	    (dev->type != ARPHRD_RAWIP)) अणु
-		/* Alas, we support only Ethernet स्वतःconfiguration. */
+	    (dev->type != ARPHRD_RAWIP)) {
+		/* Alas, we support only Ethernet autoconfiguration. */
 		idev = __in6_dev_get(dev);
-		अगर (!IS_ERR_OR_शून्य(idev) && dev->flags & IFF_UP &&
+		if (!IS_ERR_OR_NULL(idev) && dev->flags & IFF_UP &&
 		    dev->flags & IFF_MULTICAST)
 			ipv6_mc_up(idev);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	idev = addrconf_add_dev(dev);
-	अगर (IS_ERR(idev))
-		वापस;
+	if (IS_ERR(idev))
+		return;
 
 	/* this device type has no EUI support */
-	अगर (dev->type == ARPHRD_NONE &&
+	if (dev->type == ARPHRD_NONE &&
 	    idev->cnf.addr_gen_mode == IN6_ADDR_GEN_MODE_EUI64)
 		idev->cnf.addr_gen_mode = IN6_ADDR_GEN_MODE_RANDOM;
 
 	addrconf_addr_gen(idev, false);
-पूर्ण
+}
 
-#अगर IS_ENABLED(CONFIG_IPV6_SIT)
-अटल व्योम addrconf_sit_config(काष्ठा net_device *dev)
-अणु
-	काष्ठा inet6_dev *idev;
+#if IS_ENABLED(CONFIG_IPV6_SIT)
+static void addrconf_sit_config(struct net_device *dev)
+{
+	struct inet6_dev *idev;
 
 	ASSERT_RTNL();
 
@@ -3375,2108 +3374,2108 @@ retry:
 	 */
 
 	idev = ipv6_find_idev(dev);
-	अगर (IS_ERR(idev)) अणु
+	if (IS_ERR(idev)) {
 		pr_debug("%s: add_dev failed\n", __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (dev->priv_flags & IFF_ISATAP) अणु
+	if (dev->priv_flags & IFF_ISATAP) {
 		addrconf_addr_gen(idev, false);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	sit_add_v4_addrs(idev);
 
-	अगर (dev->flags&IFF_POINTOPOINT)
+	if (dev->flags&IFF_POINTOPOINT)
 		addrconf_add_mroute(dev);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-#अगर IS_ENABLED(CONFIG_NET_IPGRE)
-अटल व्योम addrconf_gre_config(काष्ठा net_device *dev)
-अणु
-	काष्ठा inet6_dev *idev;
+#if IS_ENABLED(CONFIG_NET_IPGRE)
+static void addrconf_gre_config(struct net_device *dev)
+{
+	struct inet6_dev *idev;
 
 	ASSERT_RTNL();
 
 	idev = ipv6_find_idev(dev);
-	अगर (IS_ERR(idev)) अणु
+	if (IS_ERR(idev)) {
 		pr_debug("%s: add_dev failed\n", __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	addrconf_addr_gen(idev, true);
-	अगर (dev->flags & IFF_POINTOPOINT)
+	if (dev->flags & IFF_POINTOPOINT)
 		addrconf_add_mroute(dev);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-अटल पूर्णांक fixup_permanent_addr(काष्ठा net *net,
-				काष्ठा inet6_dev *idev,
-				काष्ठा inet6_अगरaddr *अगरp)
-अणु
-	/* !fib6_node means the host route was हटाओd from the
-	 * FIB, क्रम example, अगर 'lo' device is taken करोwn. In that
-	 * हाल regenerate the host route.
+static int fixup_permanent_addr(struct net *net,
+				struct inet6_dev *idev,
+				struct inet6_ifaddr *ifp)
+{
+	/* !fib6_node means the host route was removed from the
+	 * FIB, for example, if 'lo' device is taken down. In that
+	 * case regenerate the host route.
 	 */
-	अगर (!अगरp->rt || !अगरp->rt->fib6_node) अणु
-		काष्ठा fib6_info *f6i, *prev;
+	if (!ifp->rt || !ifp->rt->fib6_node) {
+		struct fib6_info *f6i, *prev;
 
-		f6i = addrconf_f6i_alloc(net, idev, &अगरp->addr, false,
+		f6i = addrconf_f6i_alloc(net, idev, &ifp->addr, false,
 					 GFP_ATOMIC);
-		अगर (IS_ERR(f6i))
-			वापस PTR_ERR(f6i);
+		if (IS_ERR(f6i))
+			return PTR_ERR(f6i);
 
-		/* अगरp->rt can be accessed outside of rtnl */
-		spin_lock(&अगरp->lock);
-		prev = अगरp->rt;
-		अगरp->rt = f6i;
-		spin_unlock(&अगरp->lock);
+		/* ifp->rt can be accessed outside of rtnl */
+		spin_lock(&ifp->lock);
+		prev = ifp->rt;
+		ifp->rt = f6i;
+		spin_unlock(&ifp->lock);
 
 		fib6_info_release(prev);
-	पूर्ण
+	}
 
-	अगर (!(अगरp->flags & IFA_F_NOPREFIXROUTE)) अणु
-		addrconf_prefix_route(&अगरp->addr, अगरp->prefix_len,
-				      अगरp->rt_priority, idev->dev, 0, 0,
+	if (!(ifp->flags & IFA_F_NOPREFIXROUTE)) {
+		addrconf_prefix_route(&ifp->addr, ifp->prefix_len,
+				      ifp->rt_priority, idev->dev, 0, 0,
 				      GFP_ATOMIC);
-	पूर्ण
+	}
 
-	अगर (अगरp->state == INET6_IFADDR_STATE_PREDAD)
-		addrconf_dad_start(अगरp);
+	if (ifp->state == INET6_IFADDR_STATE_PREDAD)
+		addrconf_dad_start(ifp);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम addrconf_permanent_addr(काष्ठा net *net, काष्ठा net_device *dev)
-अणु
-	काष्ठा inet6_अगरaddr *अगरp, *पंचांगp;
-	काष्ठा inet6_dev *idev;
+static void addrconf_permanent_addr(struct net *net, struct net_device *dev)
+{
+	struct inet6_ifaddr *ifp, *tmp;
+	struct inet6_dev *idev;
 
 	idev = __in6_dev_get(dev);
-	अगर (!idev)
-		वापस;
+	if (!idev)
+		return;
 
-	ग_लिखो_lock_bh(&idev->lock);
+	write_lock_bh(&idev->lock);
 
-	list_क्रम_each_entry_safe(अगरp, पंचांगp, &idev->addr_list, अगर_list) अणु
-		अगर ((अगरp->flags & IFA_F_PERMANENT) &&
-		    fixup_permanent_addr(net, idev, अगरp) < 0) अणु
-			ग_लिखो_unlock_bh(&idev->lock);
-			in6_अगरa_hold(अगरp);
-			ipv6_del_addr(अगरp);
-			ग_लिखो_lock_bh(&idev->lock);
+	list_for_each_entry_safe(ifp, tmp, &idev->addr_list, if_list) {
+		if ((ifp->flags & IFA_F_PERMANENT) &&
+		    fixup_permanent_addr(net, idev, ifp) < 0) {
+			write_unlock_bh(&idev->lock);
+			in6_ifa_hold(ifp);
+			ipv6_del_addr(ifp);
+			write_lock_bh(&idev->lock);
 
 			net_info_ratelimited("%s: Failed to add prefix route for address %pI6c; dropping\n",
-					     idev->dev->name, &अगरp->addr);
-		पूर्ण
-	पूर्ण
+					     idev->dev->name, &ifp->addr);
+		}
+	}
 
-	ग_लिखो_unlock_bh(&idev->lock);
-पूर्ण
+	write_unlock_bh(&idev->lock);
+}
 
-अटल पूर्णांक addrconf_notअगरy(काष्ठा notअगरier_block *this, अचिन्हित दीर्घ event,
-			   व्योम *ptr)
-अणु
-	काष्ठा net_device *dev = netdev_notअगरier_info_to_dev(ptr);
-	काष्ठा netdev_notअगरier_change_info *change_info;
-	काष्ठा netdev_notअगरier_changeupper_info *info;
-	काष्ठा inet6_dev *idev = __in6_dev_get(dev);
-	काष्ठा net *net = dev_net(dev);
-	पूर्णांक run_pending = 0;
-	पूर्णांक err;
+static int addrconf_notify(struct notifier_block *this, unsigned long event,
+			   void *ptr)
+{
+	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
+	struct netdev_notifier_change_info *change_info;
+	struct netdev_notifier_changeupper_info *info;
+	struct inet6_dev *idev = __in6_dev_get(dev);
+	struct net *net = dev_net(dev);
+	int run_pending = 0;
+	int err;
 
-	चयन (event) अणु
-	हाल NETDEV_REGISTER:
-		अगर (!idev && dev->mtu >= IPV6_MIN_MTU) अणु
+	switch (event) {
+	case NETDEV_REGISTER:
+		if (!idev && dev->mtu >= IPV6_MIN_MTU) {
 			idev = ipv6_add_dev(dev);
-			अगर (IS_ERR(idev))
-				वापस notअगरier_from_त्रुटि_सं(PTR_ERR(idev));
-		पूर्ण
-		अवरोध;
+			if (IS_ERR(idev))
+				return notifier_from_errno(PTR_ERR(idev));
+		}
+		break;
 
-	हाल NETDEV_CHANGEMTU:
-		/* अगर MTU under IPV6_MIN_MTU stop IPv6 on this पूर्णांकerface. */
-		अगर (dev->mtu < IPV6_MIN_MTU) अणु
-			addrconf_अगरकरोwn(dev, dev != net->loopback_dev);
-			अवरोध;
-		पूर्ण
+	case NETDEV_CHANGEMTU:
+		/* if MTU under IPV6_MIN_MTU stop IPv6 on this interface. */
+		if (dev->mtu < IPV6_MIN_MTU) {
+			addrconf_ifdown(dev, dev != net->loopback_dev);
+			break;
+		}
 
-		अगर (idev) अणु
+		if (idev) {
 			rt6_mtu_change(dev, dev->mtu);
 			idev->cnf.mtu6 = dev->mtu;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/* allocate new idev */
 		idev = ipv6_add_dev(dev);
-		अगर (IS_ERR(idev))
-			अवरोध;
+		if (IS_ERR(idev))
+			break;
 
-		/* device is still not पढ़ोy */
-		अगर (!(idev->अगर_flags & IF_READY))
-			अवरोध;
+		/* device is still not ready */
+		if (!(idev->if_flags & IF_READY))
+			break;
 
 		run_pending = 1;
 		fallthrough;
-	हाल NETDEV_UP:
-	हाल NETDEV_CHANGE:
-		अगर (dev->flags & IFF_SLAVE)
-			अवरोध;
+	case NETDEV_UP:
+	case NETDEV_CHANGE:
+		if (dev->flags & IFF_SLAVE)
+			break;
 
-		अगर (idev && idev->cnf.disable_ipv6)
-			अवरोध;
+		if (idev && idev->cnf.disable_ipv6)
+			break;
 
-		अगर (event == NETDEV_UP) अणु
-			/* restore routes क्रम permanent addresses */
+		if (event == NETDEV_UP) {
+			/* restore routes for permanent addresses */
 			addrconf_permanent_addr(net, dev);
 
-			अगर (!addrconf_link_पढ़ोy(dev)) अणु
-				/* device is not पढ़ोy yet. */
+			if (!addrconf_link_ready(dev)) {
+				/* device is not ready yet. */
 				pr_debug("ADDRCONF(NETDEV_UP): %s: link is not ready\n",
 					 dev->name);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			अगर (!idev && dev->mtu >= IPV6_MIN_MTU)
+			if (!idev && dev->mtu >= IPV6_MIN_MTU)
 				idev = ipv6_add_dev(dev);
 
-			अगर (!IS_ERR_OR_शून्य(idev)) अणु
-				idev->अगर_flags |= IF_READY;
+			if (!IS_ERR_OR_NULL(idev)) {
+				idev->if_flags |= IF_READY;
 				run_pending = 1;
-			पूर्ण
-		पूर्ण अन्यथा अगर (event == NETDEV_CHANGE) अणु
-			अगर (!addrconf_link_पढ़ोy(dev)) अणु
-				/* device is still not पढ़ोy. */
-				rt6_sync_करोwn_dev(dev, event);
-				अवरोध;
-			पूर्ण
+			}
+		} else if (event == NETDEV_CHANGE) {
+			if (!addrconf_link_ready(dev)) {
+				/* device is still not ready. */
+				rt6_sync_down_dev(dev, event);
+				break;
+			}
 
-			अगर (!IS_ERR_OR_शून्य(idev)) अणु
-				अगर (idev->अगर_flags & IF_READY) अणु
-					/* device is alपढ़ोy configured -
+			if (!IS_ERR_OR_NULL(idev)) {
+				if (idev->if_flags & IF_READY) {
+					/* device is already configured -
 					 * but resend MLD reports, we might
 					 * have roamed and need to update
-					 * multicast snooping चयनes
+					 * multicast snooping switches
 					 */
 					ipv6_mc_up(idev);
 					change_info = ptr;
-					अगर (change_info->flags_changed & IFF_NOARP)
+					if (change_info->flags_changed & IFF_NOARP)
 						addrconf_dad_run(idev, true);
 					rt6_sync_up(dev, RTNH_F_LINKDOWN);
-					अवरोध;
-				पूर्ण
-				idev->अगर_flags |= IF_READY;
-			पूर्ण
+					break;
+				}
+				idev->if_flags |= IF_READY;
+			}
 
 			pr_info("ADDRCONF(NETDEV_CHANGE): %s: link becomes ready\n",
 				dev->name);
 
 			run_pending = 1;
-		पूर्ण
+		}
 
-		चयन (dev->type) अणु
-#अगर IS_ENABLED(CONFIG_IPV6_SIT)
-		हाल ARPHRD_SIT:
+		switch (dev->type) {
+#if IS_ENABLED(CONFIG_IPV6_SIT)
+		case ARPHRD_SIT:
 			addrconf_sit_config(dev);
-			अवरोध;
-#पूर्ण_अगर
-#अगर IS_ENABLED(CONFIG_NET_IPGRE)
-		हाल ARPHRD_IPGRE:
+			break;
+#endif
+#if IS_ENABLED(CONFIG_NET_IPGRE)
+		case ARPHRD_IPGRE:
 			addrconf_gre_config(dev);
-			अवरोध;
-#पूर्ण_अगर
-		हाल ARPHRD_LOOPBACK:
+			break;
+#endif
+		case ARPHRD_LOOPBACK:
 			init_loopback(dev);
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 			addrconf_dev_config(dev);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (!IS_ERR_OR_शून्य(idev)) अणु
-			अगर (run_pending)
+		if (!IS_ERR_OR_NULL(idev)) {
+			if (run_pending)
 				addrconf_dad_run(idev, false);
 
 			/* Device has an address by now */
 			rt6_sync_up(dev, RTNH_F_DEAD);
 
 			/*
-			 * If the MTU changed during the पूर्णांकerface करोwn,
-			 * when the पूर्णांकerface up, the changed MTU must be
+			 * If the MTU changed during the interface down,
+			 * when the interface up, the changed MTU must be
 			 * reflected in the idev as well as routers.
 			 */
-			अगर (idev->cnf.mtu6 != dev->mtu &&
-			    dev->mtu >= IPV6_MIN_MTU) अणु
+			if (idev->cnf.mtu6 != dev->mtu &&
+			    dev->mtu >= IPV6_MIN_MTU) {
 				rt6_mtu_change(dev, dev->mtu);
 				idev->cnf.mtu6 = dev->mtu;
-			पूर्ण
-			idev->tstamp = jअगरfies;
-			inet6_अगरinfo_notअगरy(RTM_NEWLINK, idev);
+			}
+			idev->tstamp = jiffies;
+			inet6_ifinfo_notify(RTM_NEWLINK, idev);
 
 			/*
-			 * If the changed mtu during करोwn is lower than
-			 * IPV6_MIN_MTU stop IPv6 on this पूर्णांकerface.
+			 * If the changed mtu during down is lower than
+			 * IPV6_MIN_MTU stop IPv6 on this interface.
 			 */
-			अगर (dev->mtu < IPV6_MIN_MTU)
-				addrconf_अगरकरोwn(dev, dev != net->loopback_dev);
-		पूर्ण
-		अवरोध;
+			if (dev->mtu < IPV6_MIN_MTU)
+				addrconf_ifdown(dev, dev != net->loopback_dev);
+		}
+		break;
 
-	हाल NETDEV_DOWN:
-	हाल NETDEV_UNREGISTER:
+	case NETDEV_DOWN:
+	case NETDEV_UNREGISTER:
 		/*
-		 *	Remove all addresses from this पूर्णांकerface.
+		 *	Remove all addresses from this interface.
 		 */
-		addrconf_अगरकरोwn(dev, event != NETDEV_DOWN);
-		अवरोध;
+		addrconf_ifdown(dev, event != NETDEV_DOWN);
+		break;
 
-	हाल NETDEV_CHANGENAME:
-		अगर (idev) अणु
-			snmp6_unरेजिस्टर_dev(idev);
-			addrconf_sysctl_unरेजिस्टर(idev);
-			err = addrconf_sysctl_रेजिस्टर(idev);
-			अगर (err)
-				वापस notअगरier_from_त्रुटि_सं(err);
-			err = snmp6_रेजिस्टर_dev(idev);
-			अगर (err) अणु
-				addrconf_sysctl_unरेजिस्टर(idev);
-				वापस notअगरier_from_त्रुटि_सं(err);
-			पूर्ण
-		पूर्ण
-		अवरोध;
+	case NETDEV_CHANGENAME:
+		if (idev) {
+			snmp6_unregister_dev(idev);
+			addrconf_sysctl_unregister(idev);
+			err = addrconf_sysctl_register(idev);
+			if (err)
+				return notifier_from_errno(err);
+			err = snmp6_register_dev(idev);
+			if (err) {
+				addrconf_sysctl_unregister(idev);
+				return notifier_from_errno(err);
+			}
+		}
+		break;
 
-	हाल NETDEV_PRE_TYPE_CHANGE:
-	हाल NETDEV_POST_TYPE_CHANGE:
-		अगर (idev)
+	case NETDEV_PRE_TYPE_CHANGE:
+	case NETDEV_POST_TYPE_CHANGE:
+		if (idev)
 			addrconf_type_change(dev, event);
-		अवरोध;
+		break;
 
-	हाल NETDEV_CHANGEUPPER:
+	case NETDEV_CHANGEUPPER:
 		info = ptr;
 
-		/* flush all routes अगर dev is linked to or unlinked from
+		/* flush all routes if dev is linked to or unlinked from
 		 * an L3 master device (e.g., VRF)
 		 */
-		अगर (info->upper_dev && netअगर_is_l3_master(info->upper_dev))
-			addrconf_अगरकरोwn(dev, false);
-	पूर्ण
+		if (info->upper_dev && netif_is_l3_master(info->upper_dev))
+			addrconf_ifdown(dev, false);
+	}
 
-	वापस NOTIFY_OK;
-पूर्ण
+	return NOTIFY_OK;
+}
 
 /*
- *	addrconf module should be notअगरied of a device going up
+ *	addrconf module should be notified of a device going up
  */
-अटल काष्ठा notअगरier_block ipv6_dev_notf = अणु
-	.notअगरier_call = addrconf_notअगरy,
+static struct notifier_block ipv6_dev_notf = {
+	.notifier_call = addrconf_notify,
 	.priority = ADDRCONF_NOTIFY_PRIORITY,
-पूर्ण;
+};
 
-अटल व्योम addrconf_type_change(काष्ठा net_device *dev, अचिन्हित दीर्घ event)
-अणु
-	काष्ठा inet6_dev *idev;
+static void addrconf_type_change(struct net_device *dev, unsigned long event)
+{
+	struct inet6_dev *idev;
 	ASSERT_RTNL();
 
 	idev = __in6_dev_get(dev);
 
-	अगर (event == NETDEV_POST_TYPE_CHANGE)
+	if (event == NETDEV_POST_TYPE_CHANGE)
 		ipv6_mc_remap(idev);
-	अन्यथा अगर (event == NETDEV_PRE_TYPE_CHANGE)
+	else if (event == NETDEV_PRE_TYPE_CHANGE)
 		ipv6_mc_unmap(idev);
-पूर्ण
+}
 
-अटल bool addr_is_local(स्थिर काष्ठा in6_addr *addr)
-अणु
-	वापस ipv6_addr_type(addr) &
+static bool addr_is_local(const struct in6_addr *addr)
+{
+	return ipv6_addr_type(addr) &
 		(IPV6_ADDR_LINKLOCAL | IPV6_ADDR_LOOPBACK);
-पूर्ण
+}
 
-अटल पूर्णांक addrconf_अगरकरोwn(काष्ठा net_device *dev, bool unरेजिस्टर)
-अणु
-	अचिन्हित दीर्घ event = unरेजिस्टर ? NETDEV_UNREGISTER : NETDEV_DOWN;
-	काष्ठा net *net = dev_net(dev);
-	काष्ठा inet6_dev *idev;
-	काष्ठा inet6_अगरaddr *अगरa, *पंचांगp;
+static int addrconf_ifdown(struct net_device *dev, bool unregister)
+{
+	unsigned long event = unregister ? NETDEV_UNREGISTER : NETDEV_DOWN;
+	struct net *net = dev_net(dev);
+	struct inet6_dev *idev;
+	struct inet6_ifaddr *ifa, *tmp;
 	bool keep_addr = false;
-	पूर्णांक state, i;
+	int state, i;
 
 	ASSERT_RTNL();
 
 	rt6_disable_ip(dev, event);
 
 	idev = __in6_dev_get(dev);
-	अगर (!idev)
-		वापस -ENODEV;
+	if (!idev)
+		return -ENODEV;
 
 	/*
-	 * Step 1: हटाओ reference to ipv6 device from parent device.
+	 * Step 1: remove reference to ipv6 device from parent device.
 	 *	   Do not dev_put!
 	 */
-	अगर (unरेजिस्टर) अणु
+	if (unregister) {
 		idev->dead = 1;
 
-		/* रक्षित by rtnl_lock */
-		RCU_INIT_POINTER(dev->ip6_ptr, शून्य);
+		/* protected by rtnl_lock */
+		RCU_INIT_POINTER(dev->ip6_ptr, NULL);
 
-		/* Step 1.5: हटाओ snmp6 entry */
-		snmp6_unरेजिस्टर_dev(idev);
+		/* Step 1.5: remove snmp6 entry */
+		snmp6_unregister_dev(idev);
 
-	पूर्ण
+	}
 
-	/* combine the user config with event to determine अगर permanent
-	 * addresses are to be हटाओd from address hash table
+	/* combine the user config with event to determine if permanent
+	 * addresses are to be removed from address hash table
 	 */
-	अगर (!unरेजिस्टर && !idev->cnf.disable_ipv6) अणु
-		/* aggregate the प्रणाली setting and पूर्णांकerface setting */
-		पूर्णांक _keep_addr = net->ipv6.devconf_all->keep_addr_on_करोwn;
+	if (!unregister && !idev->cnf.disable_ipv6) {
+		/* aggregate the system setting and interface setting */
+		int _keep_addr = net->ipv6.devconf_all->keep_addr_on_down;
 
-		अगर (!_keep_addr)
-			_keep_addr = idev->cnf.keep_addr_on_करोwn;
+		if (!_keep_addr)
+			_keep_addr = idev->cnf.keep_addr_on_down;
 
 		keep_addr = (_keep_addr > 0);
-	पूर्ण
+	}
 
 	/* Step 2: clear hash table */
-	क्रम (i = 0; i < IN6_ADDR_HSIZE; i++) अणु
-		काष्ठा hlist_head *h = &inet6_addr_lst[i];
+	for (i = 0; i < IN6_ADDR_HSIZE; i++) {
+		struct hlist_head *h = &inet6_addr_lst[i];
 
 		spin_lock_bh(&addrconf_hash_lock);
 restart:
-		hlist_क्रम_each_entry_rcu(अगरa, h, addr_lst) अणु
-			अगर (अगरa->idev == idev) अणु
-				addrconf_del_dad_work(अगरa);
-				/* combined flag + permanent flag decide अगर
-				 * address is retained on a करोwn event
+		hlist_for_each_entry_rcu(ifa, h, addr_lst) {
+			if (ifa->idev == idev) {
+				addrconf_del_dad_work(ifa);
+				/* combined flag + permanent flag decide if
+				 * address is retained on a down event
 				 */
-				अगर (!keep_addr ||
-				    !(अगरa->flags & IFA_F_PERMANENT) ||
-				    addr_is_local(&अगरa->addr)) अणु
-					hlist_del_init_rcu(&अगरa->addr_lst);
-					जाओ restart;
-				पूर्ण
-			पूर्ण
-		पूर्ण
+				if (!keep_addr ||
+				    !(ifa->flags & IFA_F_PERMANENT) ||
+				    addr_is_local(&ifa->addr)) {
+					hlist_del_init_rcu(&ifa->addr_lst);
+					goto restart;
+				}
+			}
+		}
 		spin_unlock_bh(&addrconf_hash_lock);
-	पूर्ण
+	}
 
-	ग_लिखो_lock_bh(&idev->lock);
+	write_lock_bh(&idev->lock);
 
-	addrconf_del_rs_समयr(idev);
+	addrconf_del_rs_timer(idev);
 
-	/* Step 2: clear flags क्रम stateless addrconf */
-	अगर (!unरेजिस्टर)
-		idev->अगर_flags &= ~(IF_RS_SENT|IF_RA_RCVD|IF_READY);
+	/* Step 2: clear flags for stateless addrconf */
+	if (!unregister)
+		idev->if_flags &= ~(IF_RS_SENT|IF_RA_RCVD|IF_READY);
 
 	/* Step 3: clear tempaddr list */
-	जबतक (!list_empty(&idev->tempaddr_list)) अणु
-		अगरa = list_first_entry(&idev->tempaddr_list,
-				       काष्ठा inet6_अगरaddr, पंचांगp_list);
-		list_del(&अगरa->पंचांगp_list);
-		ग_लिखो_unlock_bh(&idev->lock);
-		spin_lock_bh(&अगरa->lock);
+	while (!list_empty(&idev->tempaddr_list)) {
+		ifa = list_first_entry(&idev->tempaddr_list,
+				       struct inet6_ifaddr, tmp_list);
+		list_del(&ifa->tmp_list);
+		write_unlock_bh(&idev->lock);
+		spin_lock_bh(&ifa->lock);
 
-		अगर (अगरa->अगरpub) अणु
-			in6_अगरa_put(अगरa->अगरpub);
-			अगरa->अगरpub = शून्य;
-		पूर्ण
-		spin_unlock_bh(&अगरa->lock);
-		in6_अगरa_put(अगरa);
-		ग_लिखो_lock_bh(&idev->lock);
-	पूर्ण
+		if (ifa->ifpub) {
+			in6_ifa_put(ifa->ifpub);
+			ifa->ifpub = NULL;
+		}
+		spin_unlock_bh(&ifa->lock);
+		in6_ifa_put(ifa);
+		write_lock_bh(&idev->lock);
+	}
 
-	list_क्रम_each_entry_safe(अगरa, पंचांगp, &idev->addr_list, अगर_list) अणु
-		काष्ठा fib6_info *rt = शून्य;
+	list_for_each_entry_safe(ifa, tmp, &idev->addr_list, if_list) {
+		struct fib6_info *rt = NULL;
 		bool keep;
 
-		addrconf_del_dad_work(अगरa);
+		addrconf_del_dad_work(ifa);
 
-		keep = keep_addr && (अगरa->flags & IFA_F_PERMANENT) &&
-			!addr_is_local(&अगरa->addr);
+		keep = keep_addr && (ifa->flags & IFA_F_PERMANENT) &&
+			!addr_is_local(&ifa->addr);
 
-		ग_लिखो_unlock_bh(&idev->lock);
-		spin_lock_bh(&अगरa->lock);
+		write_unlock_bh(&idev->lock);
+		spin_lock_bh(&ifa->lock);
 
-		अगर (keep) अणु
-			/* set state to skip the notअगरier below */
+		if (keep) {
+			/* set state to skip the notifier below */
 			state = INET6_IFADDR_STATE_DEAD;
-			अगरa->state = INET6_IFADDR_STATE_PREDAD;
-			अगर (!(अगरa->flags & IFA_F_NODAD))
-				अगरa->flags |= IFA_F_TENTATIVE;
+			ifa->state = INET6_IFADDR_STATE_PREDAD;
+			if (!(ifa->flags & IFA_F_NODAD))
+				ifa->flags |= IFA_F_TENTATIVE;
 
-			rt = अगरa->rt;
-			अगरa->rt = शून्य;
-		पूर्ण अन्यथा अणु
-			state = अगरa->state;
-			अगरa->state = INET6_IFADDR_STATE_DEAD;
-		पूर्ण
+			rt = ifa->rt;
+			ifa->rt = NULL;
+		} else {
+			state = ifa->state;
+			ifa->state = INET6_IFADDR_STATE_DEAD;
+		}
 
-		spin_unlock_bh(&अगरa->lock);
+		spin_unlock_bh(&ifa->lock);
 
-		अगर (rt)
+		if (rt)
 			ip6_del_rt(net, rt, false);
 
-		अगर (state != INET6_IFADDR_STATE_DEAD) अणु
-			__ipv6_अगरa_notअगरy(RTM_DELADDR, अगरa);
-			inet6addr_notअगरier_call_chain(NETDEV_DOWN, अगरa);
-		पूर्ण अन्यथा अणु
-			अगर (idev->cnf.क्रमwarding)
-				addrconf_leave_anycast(अगरa);
-			addrconf_leave_solict(अगरa->idev, &अगरa->addr);
-		पूर्ण
+		if (state != INET6_IFADDR_STATE_DEAD) {
+			__ipv6_ifa_notify(RTM_DELADDR, ifa);
+			inet6addr_notifier_call_chain(NETDEV_DOWN, ifa);
+		} else {
+			if (idev->cnf.forwarding)
+				addrconf_leave_anycast(ifa);
+			addrconf_leave_solict(ifa->idev, &ifa->addr);
+		}
 
-		ग_लिखो_lock_bh(&idev->lock);
-		अगर (!keep) अणु
-			list_del_rcu(&अगरa->अगर_list);
-			in6_अगरa_put(अगरa);
-		पूर्ण
-	पूर्ण
+		write_lock_bh(&idev->lock);
+		if (!keep) {
+			list_del_rcu(&ifa->if_list);
+			in6_ifa_put(ifa);
+		}
+	}
 
-	ग_लिखो_unlock_bh(&idev->lock);
+	write_unlock_bh(&idev->lock);
 
 	/* Step 5: Discard anycast and multicast list */
-	अगर (unरेजिस्टर) अणु
+	if (unregister) {
 		ipv6_ac_destroy_dev(idev);
 		ipv6_mc_destroy_dev(idev);
-	पूर्ण अन्यथा अणु
-		ipv6_mc_करोwn(idev);
-	पूर्ण
+	} else {
+		ipv6_mc_down(idev);
+	}
 
-	idev->tstamp = jअगरfies;
+	idev->tstamp = jiffies;
 
-	/* Last: Shot the device (अगर unरेजिस्टरed) */
-	अगर (unरेजिस्टर) अणु
-		addrconf_sysctl_unरेजिस्टर(idev);
+	/* Last: Shot the device (if unregistered) */
+	if (unregister) {
+		addrconf_sysctl_unregister(idev);
 		neigh_parms_release(&nd_tbl, idev->nd_parms);
-		neigh_अगरकरोwn(&nd_tbl, dev);
+		neigh_ifdown(&nd_tbl, dev);
 		in6_dev_put(idev);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल व्योम addrconf_rs_समयr(काष्ठा समयr_list *t)
-अणु
-	काष्ठा inet6_dev *idev = from_समयr(idev, t, rs_समयr);
-	काष्ठा net_device *dev = idev->dev;
-	काष्ठा in6_addr lladdr;
+static void addrconf_rs_timer(struct timer_list *t)
+{
+	struct inet6_dev *idev = from_timer(idev, t, rs_timer);
+	struct net_device *dev = idev->dev;
+	struct in6_addr lladdr;
 
-	ग_लिखो_lock(&idev->lock);
-	अगर (idev->dead || !(idev->अगर_flags & IF_READY))
-		जाओ out;
+	write_lock(&idev->lock);
+	if (idev->dead || !(idev->if_flags & IF_READY))
+		goto out;
 
-	अगर (!ipv6_accept_ra(idev))
-		जाओ out;
+	if (!ipv6_accept_ra(idev))
+		goto out;
 
 	/* Announcement received after solicitation was sent */
-	अगर (idev->अगर_flags & IF_RA_RCVD)
-		जाओ out;
+	if (idev->if_flags & IF_RA_RCVD)
+		goto out;
 
-	अगर (idev->rs_probes++ < idev->cnf.rtr_solicits || idev->cnf.rtr_solicits < 0) अणु
-		ग_लिखो_unlock(&idev->lock);
-		अगर (!ipv6_get_lladdr(dev, &lladdr, IFA_F_TENTATIVE))
+	if (idev->rs_probes++ < idev->cnf.rtr_solicits || idev->cnf.rtr_solicits < 0) {
+		write_unlock(&idev->lock);
+		if (!ipv6_get_lladdr(dev, &lladdr, IFA_F_TENTATIVE))
 			ndisc_send_rs(dev, &lladdr,
 				      &in6addr_linklocal_allrouters);
-		अन्यथा
-			जाओ put;
+		else
+			goto put;
 
-		ग_लिखो_lock(&idev->lock);
-		idev->rs_पूर्णांकerval = rfc3315_s14_backoff_update(
-			idev->rs_पूर्णांकerval, idev->cnf.rtr_solicit_max_पूर्णांकerval);
-		/* The रुको after the last probe can be लघुer */
-		addrconf_mod_rs_समयr(idev, (idev->rs_probes ==
+		write_lock(&idev->lock);
+		idev->rs_interval = rfc3315_s14_backoff_update(
+			idev->rs_interval, idev->cnf.rtr_solicit_max_interval);
+		/* The wait after the last probe can be shorter */
+		addrconf_mod_rs_timer(idev, (idev->rs_probes ==
 					     idev->cnf.rtr_solicits) ?
 				      idev->cnf.rtr_solicit_delay :
-				      idev->rs_पूर्णांकerval);
-	पूर्ण अन्यथा अणु
+				      idev->rs_interval);
+	} else {
 		/*
-		 * Note: we करो not support deprecated "all on-link"
-		 * assumption any दीर्घer.
+		 * Note: we do not support deprecated "all on-link"
+		 * assumption any longer.
 		 */
 		pr_debug("%s: no IPv6 routers present\n", idev->dev->name);
-	पूर्ण
+	}
 
 out:
-	ग_लिखो_unlock(&idev->lock);
+	write_unlock(&idev->lock);
 put:
 	in6_dev_put(idev);
-पूर्ण
+}
 
 /*
  *	Duplicate Address Detection
  */
-अटल व्योम addrconf_dad_kick(काष्ठा inet6_अगरaddr *अगरp)
-अणु
-	अचिन्हित दीर्घ अक्रम_num;
-	काष्ठा inet6_dev *idev = अगरp->idev;
+static void addrconf_dad_kick(struct inet6_ifaddr *ifp)
+{
+	unsigned long rand_num;
+	struct inet6_dev *idev = ifp->idev;
 	u64 nonce;
 
-	अगर (अगरp->flags & IFA_F_OPTIMISTIC)
-		अक्रम_num = 0;
-	अन्यथा
-		अक्रम_num = pअक्रमom_u32() % (idev->cnf.rtr_solicit_delay ? : 1);
+	if (ifp->flags & IFA_F_OPTIMISTIC)
+		rand_num = 0;
+	else
+		rand_num = prandom_u32() % (idev->cnf.rtr_solicit_delay ? : 1);
 
 	nonce = 0;
-	अगर (idev->cnf.enhanced_dad ||
-	    dev_net(idev->dev)->ipv6.devconf_all->enhanced_dad) अणु
-		करो
-			get_अक्रमom_bytes(&nonce, 6);
-		जबतक (nonce == 0);
-	पूर्ण
-	अगरp->dad_nonce = nonce;
-	अगरp->dad_probes = idev->cnf.dad_transmits;
-	addrconf_mod_dad_work(अगरp, अक्रम_num);
-पूर्ण
+	if (idev->cnf.enhanced_dad ||
+	    dev_net(idev->dev)->ipv6.devconf_all->enhanced_dad) {
+		do
+			get_random_bytes(&nonce, 6);
+		while (nonce == 0);
+	}
+	ifp->dad_nonce = nonce;
+	ifp->dad_probes = idev->cnf.dad_transmits;
+	addrconf_mod_dad_work(ifp, rand_num);
+}
 
-अटल व्योम addrconf_dad_begin(काष्ठा inet6_अगरaddr *अगरp)
-अणु
-	काष्ठा inet6_dev *idev = अगरp->idev;
-	काष्ठा net_device *dev = idev->dev;
-	bool bump_id, notअगरy = false;
-	काष्ठा net *net;
+static void addrconf_dad_begin(struct inet6_ifaddr *ifp)
+{
+	struct inet6_dev *idev = ifp->idev;
+	struct net_device *dev = idev->dev;
+	bool bump_id, notify = false;
+	struct net *net;
 
-	addrconf_join_solict(dev, &अगरp->addr);
+	addrconf_join_solict(dev, &ifp->addr);
 
-	pअक्रमom_seed((__क्रमce u32) अगरp->addr.s6_addr32[3]);
+	prandom_seed((__force u32) ifp->addr.s6_addr32[3]);
 
-	पढ़ो_lock_bh(&idev->lock);
-	spin_lock(&अगरp->lock);
-	अगर (अगरp->state == INET6_IFADDR_STATE_DEAD)
-		जाओ out;
+	read_lock_bh(&idev->lock);
+	spin_lock(&ifp->lock);
+	if (ifp->state == INET6_IFADDR_STATE_DEAD)
+		goto out;
 
 	net = dev_net(dev);
-	अगर (dev->flags&(IFF_NOARP|IFF_LOOPBACK) ||
+	if (dev->flags&(IFF_NOARP|IFF_LOOPBACK) ||
 	    (net->ipv6.devconf_all->accept_dad < 1 &&
 	     idev->cnf.accept_dad < 1) ||
-	    !(अगरp->flags&IFA_F_TENTATIVE) ||
-	    अगरp->flags & IFA_F_NODAD) अणु
+	    !(ifp->flags&IFA_F_TENTATIVE) ||
+	    ifp->flags & IFA_F_NODAD) {
 		bool send_na = false;
 
-		अगर (अगरp->flags & IFA_F_TENTATIVE &&
-		    !(अगरp->flags & IFA_F_OPTIMISTIC))
+		if (ifp->flags & IFA_F_TENTATIVE &&
+		    !(ifp->flags & IFA_F_OPTIMISTIC))
 			send_na = true;
-		bump_id = अगरp->flags & IFA_F_TENTATIVE;
-		अगरp->flags &= ~(IFA_F_TENTATIVE|IFA_F_OPTIMISTIC|IFA_F_DADFAILED);
-		spin_unlock(&अगरp->lock);
-		पढ़ो_unlock_bh(&idev->lock);
+		bump_id = ifp->flags & IFA_F_TENTATIVE;
+		ifp->flags &= ~(IFA_F_TENTATIVE|IFA_F_OPTIMISTIC|IFA_F_DADFAILED);
+		spin_unlock(&ifp->lock);
+		read_unlock_bh(&idev->lock);
 
-		addrconf_dad_completed(अगरp, bump_id, send_na);
-		वापस;
-	पूर्ण
+		addrconf_dad_completed(ifp, bump_id, send_na);
+		return;
+	}
 
-	अगर (!(idev->अगर_flags & IF_READY)) अणु
-		spin_unlock(&अगरp->lock);
-		पढ़ो_unlock_bh(&idev->lock);
+	if (!(idev->if_flags & IF_READY)) {
+		spin_unlock(&ifp->lock);
+		read_unlock_bh(&idev->lock);
 		/*
-		 * If the device is not पढ़ोy:
-		 * - keep it tentative अगर it is a permanent address.
-		 * - otherwise, समाप्त it.
+		 * If the device is not ready:
+		 * - keep it tentative if it is a permanent address.
+		 * - otherwise, kill it.
 		 */
-		in6_अगरa_hold(अगरp);
-		addrconf_dad_stop(अगरp, 0);
-		वापस;
-	पूर्ण
+		in6_ifa_hold(ifp);
+		addrconf_dad_stop(ifp, 0);
+		return;
+	}
 
 	/*
 	 * Optimistic nodes can start receiving
 	 * Frames right away
 	 */
-	अगर (अगरp->flags & IFA_F_OPTIMISTIC) अणु
-		ip6_ins_rt(net, अगरp->rt);
-		अगर (ipv6_use_optimistic_addr(net, idev)) अणु
+	if (ifp->flags & IFA_F_OPTIMISTIC) {
+		ip6_ins_rt(net, ifp->rt);
+		if (ipv6_use_optimistic_addr(net, idev)) {
 			/* Because optimistic nodes can use this address,
-			 * notअगरy listeners. If DAD fails, RTM_DELADDR is sent.
+			 * notify listeners. If DAD fails, RTM_DELADDR is sent.
 			 */
-			notअगरy = true;
-		पूर्ण
-	पूर्ण
+			notify = true;
+		}
+	}
 
-	addrconf_dad_kick(अगरp);
+	addrconf_dad_kick(ifp);
 out:
-	spin_unlock(&अगरp->lock);
-	पढ़ो_unlock_bh(&idev->lock);
-	अगर (notअगरy)
-		ipv6_अगरa_notअगरy(RTM_NEWADDR, अगरp);
-पूर्ण
+	spin_unlock(&ifp->lock);
+	read_unlock_bh(&idev->lock);
+	if (notify)
+		ipv6_ifa_notify(RTM_NEWADDR, ifp);
+}
 
-अटल व्योम addrconf_dad_start(काष्ठा inet6_अगरaddr *अगरp)
-अणु
+static void addrconf_dad_start(struct inet6_ifaddr *ifp)
+{
 	bool begin_dad = false;
 
-	spin_lock_bh(&अगरp->lock);
-	अगर (अगरp->state != INET6_IFADDR_STATE_DEAD) अणु
-		अगरp->state = INET6_IFADDR_STATE_PREDAD;
+	spin_lock_bh(&ifp->lock);
+	if (ifp->state != INET6_IFADDR_STATE_DEAD) {
+		ifp->state = INET6_IFADDR_STATE_PREDAD;
 		begin_dad = true;
-	पूर्ण
-	spin_unlock_bh(&अगरp->lock);
+	}
+	spin_unlock_bh(&ifp->lock);
 
-	अगर (begin_dad)
-		addrconf_mod_dad_work(अगरp, 0);
-पूर्ण
+	if (begin_dad)
+		addrconf_mod_dad_work(ifp, 0);
+}
 
-अटल व्योम addrconf_dad_work(काष्ठा work_काष्ठा *w)
-अणु
-	काष्ठा inet6_अगरaddr *अगरp = container_of(to_delayed_work(w),
-						काष्ठा inet6_अगरaddr,
+static void addrconf_dad_work(struct work_struct *w)
+{
+	struct inet6_ifaddr *ifp = container_of(to_delayed_work(w),
+						struct inet6_ifaddr,
 						dad_work);
-	काष्ठा inet6_dev *idev = अगरp->idev;
+	struct inet6_dev *idev = ifp->idev;
 	bool bump_id, disable_ipv6 = false;
-	काष्ठा in6_addr mcaddr;
+	struct in6_addr mcaddr;
 
-	क्रमागत अणु
+	enum {
 		DAD_PROCESS,
 		DAD_BEGIN,
 		DAD_ABORT,
-	पूर्ण action = DAD_PROCESS;
+	} action = DAD_PROCESS;
 
 	rtnl_lock();
 
-	spin_lock_bh(&अगरp->lock);
-	अगर (अगरp->state == INET6_IFADDR_STATE_PREDAD) अणु
+	spin_lock_bh(&ifp->lock);
+	if (ifp->state == INET6_IFADDR_STATE_PREDAD) {
 		action = DAD_BEGIN;
-		अगरp->state = INET6_IFADDR_STATE_DAD;
-	पूर्ण अन्यथा अगर (अगरp->state == INET6_IFADDR_STATE_ERRDAD) अणु
+		ifp->state = INET6_IFADDR_STATE_DAD;
+	} else if (ifp->state == INET6_IFADDR_STATE_ERRDAD) {
 		action = DAD_ABORT;
-		अगरp->state = INET6_IFADDR_STATE_POSTDAD;
+		ifp->state = INET6_IFADDR_STATE_POSTDAD;
 
-		अगर ((dev_net(idev->dev)->ipv6.devconf_all->accept_dad > 1 ||
+		if ((dev_net(idev->dev)->ipv6.devconf_all->accept_dad > 1 ||
 		     idev->cnf.accept_dad > 1) &&
 		    !idev->cnf.disable_ipv6 &&
-		    !(अगरp->flags & IFA_F_STABLE_PRIVACY)) अणु
-			काष्ठा in6_addr addr;
+		    !(ifp->flags & IFA_F_STABLE_PRIVACY)) {
+			struct in6_addr addr;
 
 			addr.s6_addr32[0] = htonl(0xfe800000);
 			addr.s6_addr32[1] = 0;
 
-			अगर (!ipv6_generate_eui64(addr.s6_addr + 8, idev->dev) &&
-			    ipv6_addr_equal(&अगरp->addr, &addr)) अणु
-				/* DAD failed क्रम link-local based on MAC */
+			if (!ipv6_generate_eui64(addr.s6_addr + 8, idev->dev) &&
+			    ipv6_addr_equal(&ifp->addr, &addr)) {
+				/* DAD failed for link-local based on MAC */
 				idev->cnf.disable_ipv6 = 1;
 
 				pr_info("%s: IPv6 being disabled!\n",
-					अगरp->idev->dev->name);
+					ifp->idev->dev->name);
 				disable_ipv6 = true;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	spin_unlock_bh(&अगरp->lock);
+			}
+		}
+	}
+	spin_unlock_bh(&ifp->lock);
 
-	अगर (action == DAD_BEGIN) अणु
-		addrconf_dad_begin(अगरp);
-		जाओ out;
-	पूर्ण अन्यथा अगर (action == DAD_ABORT) अणु
-		in6_अगरa_hold(अगरp);
-		addrconf_dad_stop(अगरp, 1);
-		अगर (disable_ipv6)
-			addrconf_अगरकरोwn(idev->dev, false);
-		जाओ out;
-	पूर्ण
+	if (action == DAD_BEGIN) {
+		addrconf_dad_begin(ifp);
+		goto out;
+	} else if (action == DAD_ABORT) {
+		in6_ifa_hold(ifp);
+		addrconf_dad_stop(ifp, 1);
+		if (disable_ipv6)
+			addrconf_ifdown(idev->dev, false);
+		goto out;
+	}
 
-	अगर (!अगरp->dad_probes && addrconf_dad_end(अगरp))
-		जाओ out;
+	if (!ifp->dad_probes && addrconf_dad_end(ifp))
+		goto out;
 
-	ग_लिखो_lock_bh(&idev->lock);
-	अगर (idev->dead || !(idev->अगर_flags & IF_READY)) अणु
-		ग_लिखो_unlock_bh(&idev->lock);
-		जाओ out;
-	पूर्ण
+	write_lock_bh(&idev->lock);
+	if (idev->dead || !(idev->if_flags & IF_READY)) {
+		write_unlock_bh(&idev->lock);
+		goto out;
+	}
 
-	spin_lock(&अगरp->lock);
-	अगर (अगरp->state == INET6_IFADDR_STATE_DEAD) अणु
-		spin_unlock(&अगरp->lock);
-		ग_लिखो_unlock_bh(&idev->lock);
-		जाओ out;
-	पूर्ण
+	spin_lock(&ifp->lock);
+	if (ifp->state == INET6_IFADDR_STATE_DEAD) {
+		spin_unlock(&ifp->lock);
+		write_unlock_bh(&idev->lock);
+		goto out;
+	}
 
-	अगर (अगरp->dad_probes == 0) अणु
+	if (ifp->dad_probes == 0) {
 		bool send_na = false;
 
 		/*
 		 * DAD was successful
 		 */
 
-		अगर (अगरp->flags & IFA_F_TENTATIVE &&
-		    !(अगरp->flags & IFA_F_OPTIMISTIC))
+		if (ifp->flags & IFA_F_TENTATIVE &&
+		    !(ifp->flags & IFA_F_OPTIMISTIC))
 			send_na = true;
-		bump_id = अगरp->flags & IFA_F_TENTATIVE;
-		अगरp->flags &= ~(IFA_F_TENTATIVE|IFA_F_OPTIMISTIC|IFA_F_DADFAILED);
-		spin_unlock(&अगरp->lock);
-		ग_लिखो_unlock_bh(&idev->lock);
+		bump_id = ifp->flags & IFA_F_TENTATIVE;
+		ifp->flags &= ~(IFA_F_TENTATIVE|IFA_F_OPTIMISTIC|IFA_F_DADFAILED);
+		spin_unlock(&ifp->lock);
+		write_unlock_bh(&idev->lock);
 
-		addrconf_dad_completed(अगरp, bump_id, send_na);
+		addrconf_dad_completed(ifp, bump_id, send_na);
 
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगरp->dad_probes--;
-	addrconf_mod_dad_work(अगरp,
-			      max(NEIGH_VAR(अगरp->idev->nd_parms, RETRANS_TIME),
+	ifp->dad_probes--;
+	addrconf_mod_dad_work(ifp,
+			      max(NEIGH_VAR(ifp->idev->nd_parms, RETRANS_TIME),
 				  HZ/100));
-	spin_unlock(&अगरp->lock);
-	ग_लिखो_unlock_bh(&idev->lock);
+	spin_unlock(&ifp->lock);
+	write_unlock_bh(&idev->lock);
 
-	/* send a neighbour solicitation क्रम our addr */
-	addrconf_addr_solict_mult(&अगरp->addr, &mcaddr);
-	ndisc_send_ns(अगरp->idev->dev, &अगरp->addr, &mcaddr, &in6addr_any,
-		      अगरp->dad_nonce);
+	/* send a neighbour solicitation for our addr */
+	addrconf_addr_solict_mult(&ifp->addr, &mcaddr);
+	ndisc_send_ns(ifp->idev->dev, &ifp->addr, &mcaddr, &in6addr_any,
+		      ifp->dad_nonce);
 out:
-	in6_अगरa_put(अगरp);
+	in6_ifa_put(ifp);
 	rtnl_unlock();
-पूर्ण
+}
 
-/* अगरp->idev must be at least पढ़ो locked */
-अटल bool ipv6_lonely_lladdr(काष्ठा inet6_अगरaddr *अगरp)
-अणु
-	काष्ठा inet6_अगरaddr *अगरpiter;
-	काष्ठा inet6_dev *idev = अगरp->idev;
+/* ifp->idev must be at least read locked */
+static bool ipv6_lonely_lladdr(struct inet6_ifaddr *ifp)
+{
+	struct inet6_ifaddr *ifpiter;
+	struct inet6_dev *idev = ifp->idev;
 
-	list_क्रम_each_entry_reverse(अगरpiter, &idev->addr_list, अगर_list) अणु
-		अगर (अगरpiter->scope > IFA_LINK)
-			अवरोध;
-		अगर (अगरp != अगरpiter && अगरpiter->scope == IFA_LINK &&
-		    (अगरpiter->flags & (IFA_F_PERMANENT|IFA_F_TENTATIVE|
+	list_for_each_entry_reverse(ifpiter, &idev->addr_list, if_list) {
+		if (ifpiter->scope > IFA_LINK)
+			break;
+		if (ifp != ifpiter && ifpiter->scope == IFA_LINK &&
+		    (ifpiter->flags & (IFA_F_PERMANENT|IFA_F_TENTATIVE|
 				       IFA_F_OPTIMISTIC|IFA_F_DADFAILED)) ==
 		    IFA_F_PERMANENT)
-			वापस false;
-	पूर्ण
-	वापस true;
-पूर्ण
+			return false;
+	}
+	return true;
+}
 
-अटल व्योम addrconf_dad_completed(काष्ठा inet6_अगरaddr *अगरp, bool bump_id,
+static void addrconf_dad_completed(struct inet6_ifaddr *ifp, bool bump_id,
 				   bool send_na)
-अणु
-	काष्ठा net_device *dev = अगरp->idev->dev;
-	काष्ठा in6_addr lladdr;
+{
+	struct net_device *dev = ifp->idev->dev;
+	struct in6_addr lladdr;
 	bool send_rs, send_mld;
 
-	addrconf_del_dad_work(अगरp);
+	addrconf_del_dad_work(ifp);
 
 	/*
-	 *	Configure the address क्रम reception. Now it is valid.
+	 *	Configure the address for reception. Now it is valid.
 	 */
 
-	ipv6_अगरa_notअगरy(RTM_NEWADDR, अगरp);
+	ipv6_ifa_notify(RTM_NEWADDR, ifp);
 
 	/* If added prefix is link local and we are prepared to process
 	   router advertisements, start sending router solicitations.
 	 */
 
-	पढ़ो_lock_bh(&अगरp->idev->lock);
-	send_mld = अगरp->scope == IFA_LINK && ipv6_lonely_lladdr(अगरp);
+	read_lock_bh(&ifp->idev->lock);
+	send_mld = ifp->scope == IFA_LINK && ipv6_lonely_lladdr(ifp);
 	send_rs = send_mld &&
-		  ipv6_accept_ra(अगरp->idev) &&
-		  अगरp->idev->cnf.rtr_solicits != 0 &&
+		  ipv6_accept_ra(ifp->idev) &&
+		  ifp->idev->cnf.rtr_solicits != 0 &&
 		  (dev->flags&IFF_LOOPBACK) == 0;
-	पढ़ो_unlock_bh(&अगरp->idev->lock);
+	read_unlock_bh(&ifp->idev->lock);
 
 	/* While dad is in progress mld report's source address is in6_addrany.
 	 * Resend with proper ll now.
 	 */
-	अगर (send_mld)
-		ipv6_mc_dad_complete(अगरp->idev);
+	if (send_mld)
+		ipv6_mc_dad_complete(ifp->idev);
 
-	/* send unsolicited NA अगर enabled */
-	अगर (send_na &&
-	    (अगरp->idev->cnf.ndisc_notअगरy ||
-	     dev_net(dev)->ipv6.devconf_all->ndisc_notअगरy)) अणु
-		ndisc_send_na(dev, &in6addr_linklocal_allnodes, &अगरp->addr,
-			      /*router=*/ !!अगरp->idev->cnf.क्रमwarding,
+	/* send unsolicited NA if enabled */
+	if (send_na &&
+	    (ifp->idev->cnf.ndisc_notify ||
+	     dev_net(dev)->ipv6.devconf_all->ndisc_notify)) {
+		ndisc_send_na(dev, &in6addr_linklocal_allnodes, &ifp->addr,
+			      /*router=*/ !!ifp->idev->cnf.forwarding,
 			      /*solicited=*/ false, /*override=*/ true,
 			      /*inc_opt=*/ true);
-	पूर्ण
+	}
 
-	अगर (send_rs) अणु
+	if (send_rs) {
 		/*
-		 *	If a host as alपढ़ोy perक्रमmed a अक्रमom delay
+		 *	If a host as already performed a random delay
 		 *	[...] as part of DAD [...] there is no need
-		 *	to delay again beक्रमe sending the first RS
+		 *	to delay again before sending the first RS
 		 */
-		अगर (ipv6_get_lladdr(dev, &lladdr, IFA_F_TENTATIVE))
-			वापस;
+		if (ipv6_get_lladdr(dev, &lladdr, IFA_F_TENTATIVE))
+			return;
 		ndisc_send_rs(dev, &lladdr, &in6addr_linklocal_allrouters);
 
-		ग_लिखो_lock_bh(&अगरp->idev->lock);
-		spin_lock(&अगरp->lock);
-		अगरp->idev->rs_पूर्णांकerval = rfc3315_s14_backoff_init(
-			अगरp->idev->cnf.rtr_solicit_पूर्णांकerval);
-		अगरp->idev->rs_probes = 1;
-		अगरp->idev->अगर_flags |= IF_RS_SENT;
-		addrconf_mod_rs_समयr(अगरp->idev, अगरp->idev->rs_पूर्णांकerval);
-		spin_unlock(&अगरp->lock);
-		ग_लिखो_unlock_bh(&अगरp->idev->lock);
-	पूर्ण
+		write_lock_bh(&ifp->idev->lock);
+		spin_lock(&ifp->lock);
+		ifp->idev->rs_interval = rfc3315_s14_backoff_init(
+			ifp->idev->cnf.rtr_solicit_interval);
+		ifp->idev->rs_probes = 1;
+		ifp->idev->if_flags |= IF_RS_SENT;
+		addrconf_mod_rs_timer(ifp->idev, ifp->idev->rs_interval);
+		spin_unlock(&ifp->lock);
+		write_unlock_bh(&ifp->idev->lock);
+	}
 
-	अगर (bump_id)
+	if (bump_id)
 		rt_genid_bump_ipv6(dev_net(dev));
 
 	/* Make sure that a new temporary address will be created
-	 * beक्रमe this temporary address becomes deprecated.
+	 * before this temporary address becomes deprecated.
 	 */
-	अगर (अगरp->flags & IFA_F_TEMPORARY)
-		addrconf_verअगरy_rtnl();
-पूर्ण
+	if (ifp->flags & IFA_F_TEMPORARY)
+		addrconf_verify_rtnl();
+}
 
-अटल व्योम addrconf_dad_run(काष्ठा inet6_dev *idev, bool restart)
-अणु
-	काष्ठा inet6_अगरaddr *अगरp;
+static void addrconf_dad_run(struct inet6_dev *idev, bool restart)
+{
+	struct inet6_ifaddr *ifp;
 
-	पढ़ो_lock_bh(&idev->lock);
-	list_क्रम_each_entry(अगरp, &idev->addr_list, अगर_list) अणु
-		spin_lock(&अगरp->lock);
-		अगर ((अगरp->flags & IFA_F_TENTATIVE &&
-		     अगरp->state == INET6_IFADDR_STATE_DAD) || restart) अणु
-			अगर (restart)
-				अगरp->state = INET6_IFADDR_STATE_PREDAD;
-			addrconf_dad_kick(अगरp);
-		पूर्ण
-		spin_unlock(&अगरp->lock);
-	पूर्ण
-	पढ़ो_unlock_bh(&idev->lock);
-पूर्ण
+	read_lock_bh(&idev->lock);
+	list_for_each_entry(ifp, &idev->addr_list, if_list) {
+		spin_lock(&ifp->lock);
+		if ((ifp->flags & IFA_F_TENTATIVE &&
+		     ifp->state == INET6_IFADDR_STATE_DAD) || restart) {
+			if (restart)
+				ifp->state = INET6_IFADDR_STATE_PREDAD;
+			addrconf_dad_kick(ifp);
+		}
+		spin_unlock(&ifp->lock);
+	}
+	read_unlock_bh(&idev->lock);
+}
 
-#अगर_घोषित CONFIG_PROC_FS
-काष्ठा अगर6_iter_state अणु
-	काष्ठा seq_net_निजी p;
-	पूर्णांक bucket;
-	पूर्णांक offset;
-पूर्ण;
+#ifdef CONFIG_PROC_FS
+struct if6_iter_state {
+	struct seq_net_private p;
+	int bucket;
+	int offset;
+};
 
-अटल काष्ठा inet6_अगरaddr *अगर6_get_first(काष्ठा seq_file *seq, loff_t pos)
-अणु
-	काष्ठा अगर6_iter_state *state = seq->निजी;
-	काष्ठा net *net = seq_file_net(seq);
-	काष्ठा inet6_अगरaddr *अगरa = शून्य;
-	पूर्णांक p = 0;
+static struct inet6_ifaddr *if6_get_first(struct seq_file *seq, loff_t pos)
+{
+	struct if6_iter_state *state = seq->private;
+	struct net *net = seq_file_net(seq);
+	struct inet6_ifaddr *ifa = NULL;
+	int p = 0;
 
-	/* initial bucket अगर pos is 0 */
-	अगर (pos == 0) अणु
+	/* initial bucket if pos is 0 */
+	if (pos == 0) {
 		state->bucket = 0;
 		state->offset = 0;
-	पूर्ण
+	}
 
-	क्रम (; state->bucket < IN6_ADDR_HSIZE; ++state->bucket) अणु
-		hlist_क्रम_each_entry_rcu(अगरa, &inet6_addr_lst[state->bucket],
-					 addr_lst) अणु
-			अगर (!net_eq(dev_net(अगरa->idev->dev), net))
-				जारी;
+	for (; state->bucket < IN6_ADDR_HSIZE; ++state->bucket) {
+		hlist_for_each_entry_rcu(ifa, &inet6_addr_lst[state->bucket],
+					 addr_lst) {
+			if (!net_eq(dev_net(ifa->idev->dev), net))
+				continue;
 			/* sync with offset */
-			अगर (p < state->offset) अणु
+			if (p < state->offset) {
 				p++;
-				जारी;
-			पूर्ण
-			वापस अगरa;
-		पूर्ण
+				continue;
+			}
+			return ifa;
+		}
 
-		/* prepare क्रम next bucket */
+		/* prepare for next bucket */
 		state->offset = 0;
 		p = 0;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	}
+	return NULL;
+}
 
-अटल काष्ठा inet6_अगरaddr *अगर6_get_next(काष्ठा seq_file *seq,
-					 काष्ठा inet6_अगरaddr *अगरa)
-अणु
-	काष्ठा अगर6_iter_state *state = seq->निजी;
-	काष्ठा net *net = seq_file_net(seq);
+static struct inet6_ifaddr *if6_get_next(struct seq_file *seq,
+					 struct inet6_ifaddr *ifa)
+{
+	struct if6_iter_state *state = seq->private;
+	struct net *net = seq_file_net(seq);
 
-	hlist_क्रम_each_entry_जारी_rcu(अगरa, addr_lst) अणु
-		अगर (!net_eq(dev_net(अगरa->idev->dev), net))
-			जारी;
+	hlist_for_each_entry_continue_rcu(ifa, addr_lst) {
+		if (!net_eq(dev_net(ifa->idev->dev), net))
+			continue;
 		state->offset++;
-		वापस अगरa;
-	पूर्ण
+		return ifa;
+	}
 
 	state->offset = 0;
-	जबतक (++state->bucket < IN6_ADDR_HSIZE) अणु
-		hlist_क्रम_each_entry_rcu(अगरa,
-				     &inet6_addr_lst[state->bucket], addr_lst) अणु
-			अगर (!net_eq(dev_net(अगरa->idev->dev), net))
-				जारी;
-			वापस अगरa;
-		पूर्ण
-	पूर्ण
+	while (++state->bucket < IN6_ADDR_HSIZE) {
+		hlist_for_each_entry_rcu(ifa,
+				     &inet6_addr_lst[state->bucket], addr_lst) {
+			if (!net_eq(dev_net(ifa->idev->dev), net))
+				continue;
+			return ifa;
+		}
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम *अगर6_seq_start(काष्ठा seq_file *seq, loff_t *pos)
+static void *if6_seq_start(struct seq_file *seq, loff_t *pos)
 	__acquires(rcu)
-अणु
-	rcu_पढ़ो_lock();
-	वापस अगर6_get_first(seq, *pos);
-पूर्ण
+{
+	rcu_read_lock();
+	return if6_get_first(seq, *pos);
+}
 
-अटल व्योम *अगर6_seq_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
-अणु
-	काष्ठा inet6_अगरaddr *अगरa;
+static void *if6_seq_next(struct seq_file *seq, void *v, loff_t *pos)
+{
+	struct inet6_ifaddr *ifa;
 
-	अगरa = अगर6_get_next(seq, v);
+	ifa = if6_get_next(seq, v);
 	++*pos;
-	वापस अगरa;
-पूर्ण
+	return ifa;
+}
 
-अटल व्योम अगर6_seq_stop(काष्ठा seq_file *seq, व्योम *v)
+static void if6_seq_stop(struct seq_file *seq, void *v)
 	__releases(rcu)
-अणु
-	rcu_पढ़ो_unlock();
-पूर्ण
+{
+	rcu_read_unlock();
+}
 
-अटल पूर्णांक अगर6_seq_show(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	काष्ठा inet6_अगरaddr *अगरp = (काष्ठा inet6_अगरaddr *)v;
-	seq_म_लिखो(seq, "%pi6 %02x %02x %02x %02x %8s\n",
-		   &अगरp->addr,
-		   अगरp->idev->dev->अगरindex,
-		   अगरp->prefix_len,
-		   अगरp->scope,
-		   (u8) अगरp->flags,
-		   अगरp->idev->dev->name);
-	वापस 0;
-पूर्ण
+static int if6_seq_show(struct seq_file *seq, void *v)
+{
+	struct inet6_ifaddr *ifp = (struct inet6_ifaddr *)v;
+	seq_printf(seq, "%pi6 %02x %02x %02x %02x %8s\n",
+		   &ifp->addr,
+		   ifp->idev->dev->ifindex,
+		   ifp->prefix_len,
+		   ifp->scope,
+		   (u8) ifp->flags,
+		   ifp->idev->dev->name);
+	return 0;
+}
 
-अटल स्थिर काष्ठा seq_operations अगर6_seq_ops = अणु
-	.start	= अगर6_seq_start,
-	.next	= अगर6_seq_next,
-	.show	= अगर6_seq_show,
-	.stop	= अगर6_seq_stop,
-पूर्ण;
+static const struct seq_operations if6_seq_ops = {
+	.start	= if6_seq_start,
+	.next	= if6_seq_next,
+	.show	= if6_seq_show,
+	.stop	= if6_seq_stop,
+};
 
-अटल पूर्णांक __net_init अगर6_proc_net_init(काष्ठा net *net)
-अणु
-	अगर (!proc_create_net("if_inet6", 0444, net->proc_net, &अगर6_seq_ops,
-			माप(काष्ठा अगर6_iter_state)))
-		वापस -ENOMEM;
-	वापस 0;
-पूर्ण
+static int __net_init if6_proc_net_init(struct net *net)
+{
+	if (!proc_create_net("if_inet6", 0444, net->proc_net, &if6_seq_ops,
+			sizeof(struct if6_iter_state)))
+		return -ENOMEM;
+	return 0;
+}
 
-अटल व्योम __net_निकास अगर6_proc_net_निकास(काष्ठा net *net)
-अणु
-	हटाओ_proc_entry("if_inet6", net->proc_net);
-पूर्ण
+static void __net_exit if6_proc_net_exit(struct net *net)
+{
+	remove_proc_entry("if_inet6", net->proc_net);
+}
 
-अटल काष्ठा pernet_operations अगर6_proc_net_ops = अणु
-	.init = अगर6_proc_net_init,
-	.निकास = अगर6_proc_net_निकास,
-पूर्ण;
+static struct pernet_operations if6_proc_net_ops = {
+	.init = if6_proc_net_init,
+	.exit = if6_proc_net_exit,
+};
 
-पूर्णांक __init अगर6_proc_init(व्योम)
-अणु
-	वापस रेजिस्टर_pernet_subsys(&अगर6_proc_net_ops);
-पूर्ण
+int __init if6_proc_init(void)
+{
+	return register_pernet_subsys(&if6_proc_net_ops);
+}
 
-व्योम अगर6_proc_निकास(व्योम)
-अणु
-	unरेजिस्टर_pernet_subsys(&अगर6_proc_net_ops);
-पूर्ण
-#पूर्ण_अगर	/* CONFIG_PROC_FS */
+void if6_proc_exit(void)
+{
+	unregister_pernet_subsys(&if6_proc_net_ops);
+}
+#endif	/* CONFIG_PROC_FS */
 
-#अगर IS_ENABLED(CONFIG_IPV6_MIP6)
-/* Check अगर address is a home address configured on any पूर्णांकerface. */
-पूर्णांक ipv6_chk_home_addr(काष्ठा net *net, स्थिर काष्ठा in6_addr *addr)
-अणु
-	अचिन्हित पूर्णांक hash = inet6_addr_hash(net, addr);
-	काष्ठा inet6_अगरaddr *अगरp = शून्य;
-	पूर्णांक ret = 0;
+#if IS_ENABLED(CONFIG_IPV6_MIP6)
+/* Check if address is a home address configured on any interface. */
+int ipv6_chk_home_addr(struct net *net, const struct in6_addr *addr)
+{
+	unsigned int hash = inet6_addr_hash(net, addr);
+	struct inet6_ifaddr *ifp = NULL;
+	int ret = 0;
 
-	rcu_पढ़ो_lock();
-	hlist_क्रम_each_entry_rcu(अगरp, &inet6_addr_lst[hash], addr_lst) अणु
-		अगर (!net_eq(dev_net(अगरp->idev->dev), net))
-			जारी;
-		अगर (ipv6_addr_equal(&अगरp->addr, addr) &&
-		    (अगरp->flags & IFA_F_HOMEADDRESS)) अणु
+	rcu_read_lock();
+	hlist_for_each_entry_rcu(ifp, &inet6_addr_lst[hash], addr_lst) {
+		if (!net_eq(dev_net(ifp->idev->dev), net))
+			continue;
+		if (ipv6_addr_equal(&ifp->addr, addr) &&
+		    (ifp->flags & IFA_F_HOMEADDRESS)) {
 			ret = 1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	rcu_पढ़ो_unlock();
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर
+			break;
+		}
+	}
+	rcu_read_unlock();
+	return ret;
+}
+#endif
 
-/* RFC6554 has some algorithm to aव्योम loops in segment routing by
- * checking अगर the segments contains any of a local पूर्णांकerface address.
+/* RFC6554 has some algorithm to avoid loops in segment routing by
+ * checking if the segments contains any of a local interface address.
  *
  * Quote:
  *
- * To detect loops in the SRH, a router MUST determine अगर the SRH
- * includes multiple addresses asचिन्हित to any पूर्णांकerface on that router.
+ * To detect loops in the SRH, a router MUST determine if the SRH
+ * includes multiple addresses assigned to any interface on that router.
  * If such addresses appear more than once and are separated by at least
- * one address not asचिन्हित to that router.
+ * one address not assigned to that router.
  */
-पूर्णांक ipv6_chk_rpl_srh_loop(काष्ठा net *net, स्थिर काष्ठा in6_addr *segs,
-			  अचिन्हित अक्षर nsegs)
-अणु
-	स्थिर काष्ठा in6_addr *addr;
-	पूर्णांक i, ret = 0, found = 0;
-	काष्ठा inet6_अगरaddr *अगरp;
+int ipv6_chk_rpl_srh_loop(struct net *net, const struct in6_addr *segs,
+			  unsigned char nsegs)
+{
+	const struct in6_addr *addr;
+	int i, ret = 0, found = 0;
+	struct inet6_ifaddr *ifp;
 	bool separated = false;
-	अचिन्हित पूर्णांक hash;
+	unsigned int hash;
 	bool hash_found;
 
-	rcu_पढ़ो_lock();
-	क्रम (i = 0; i < nsegs; i++) अणु
+	rcu_read_lock();
+	for (i = 0; i < nsegs; i++) {
 		addr = &segs[i];
 		hash = inet6_addr_hash(net, addr);
 
 		hash_found = false;
-		hlist_क्रम_each_entry_rcu(अगरp, &inet6_addr_lst[hash], addr_lst) अणु
-			अगर (!net_eq(dev_net(अगरp->idev->dev), net))
-				जारी;
+		hlist_for_each_entry_rcu(ifp, &inet6_addr_lst[hash], addr_lst) {
+			if (!net_eq(dev_net(ifp->idev->dev), net))
+				continue;
 
-			अगर (ipv6_addr_equal(&अगरp->addr, addr)) अणु
+			if (ipv6_addr_equal(&ifp->addr, addr)) {
 				hash_found = true;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
-		अगर (hash_found) अणु
-			अगर (found > 1 && separated) अणु
+		if (hash_found) {
+			if (found > 1 && separated) {
 				ret = 1;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 			separated = false;
 			found++;
-		पूर्ण अन्यथा अणु
+		} else {
 			separated = true;
-		पूर्ण
-	पूर्ण
-	rcu_पढ़ो_unlock();
+		}
+	}
+	rcu_read_unlock();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- *	Periodic address status verअगरication
+ *	Periodic address status verification
  */
 
-अटल व्योम addrconf_verअगरy_rtnl(व्योम)
-अणु
-	अचिन्हित दीर्घ now, next, next_sec, next_sched;
-	काष्ठा inet6_अगरaddr *अगरp;
-	पूर्णांक i;
+static void addrconf_verify_rtnl(void)
+{
+	unsigned long now, next, next_sec, next_sched;
+	struct inet6_ifaddr *ifp;
+	int i;
 
 	ASSERT_RTNL();
 
-	rcu_पढ़ो_lock_bh();
-	now = jअगरfies;
-	next = round_jअगरfies_up(now + ADDR_CHECK_FREQUENCY);
+	rcu_read_lock_bh();
+	now = jiffies;
+	next = round_jiffies_up(now + ADDR_CHECK_FREQUENCY);
 
 	cancel_delayed_work(&addr_chk_work);
 
-	क्रम (i = 0; i < IN6_ADDR_HSIZE; i++) अणु
+	for (i = 0; i < IN6_ADDR_HSIZE; i++) {
 restart:
-		hlist_क्रम_each_entry_rcu_bh(अगरp, &inet6_addr_lst[i], addr_lst) अणु
-			अचिन्हित दीर्घ age;
+		hlist_for_each_entry_rcu_bh(ifp, &inet6_addr_lst[i], addr_lst) {
+			unsigned long age;
 
 			/* When setting preferred_lft to a value not zero or
-			 * infinity, जबतक valid_lft is infinity
-			 * IFA_F_PERMANENT has a non-infinity lअगरe समय.
+			 * infinity, while valid_lft is infinity
+			 * IFA_F_PERMANENT has a non-infinity life time.
 			 */
-			अगर ((अगरp->flags & IFA_F_PERMANENT) &&
-			    (अगरp->prefered_lft == अनन्त_LIFE_TIME))
-				जारी;
+			if ((ifp->flags & IFA_F_PERMANENT) &&
+			    (ifp->prefered_lft == INFINITY_LIFE_TIME))
+				continue;
 
-			spin_lock(&अगरp->lock);
+			spin_lock(&ifp->lock);
 			/* We try to batch several events at once. */
-			age = (now - अगरp->tstamp + ADDRCONF_TIMER_FUZZ_MINUS) / HZ;
+			age = (now - ifp->tstamp + ADDRCONF_TIMER_FUZZ_MINUS) / HZ;
 
-			अगर (अगरp->valid_lft != अनन्त_LIFE_TIME &&
-			    age >= अगरp->valid_lft) अणु
-				spin_unlock(&अगरp->lock);
-				in6_अगरa_hold(अगरp);
-				rcu_पढ़ो_unlock_bh();
-				ipv6_del_addr(अगरp);
-				rcu_पढ़ो_lock_bh();
-				जाओ restart;
-			पूर्ण अन्यथा अगर (अगरp->prefered_lft == अनन्त_LIFE_TIME) अणु
-				spin_unlock(&अगरp->lock);
-				जारी;
-			पूर्ण अन्यथा अगर (age >= अगरp->prefered_lft) अणु
-				/* jअगरfies - अगरp->tstamp > age >= अगरp->prefered_lft */
-				पूर्णांक deprecate = 0;
+			if (ifp->valid_lft != INFINITY_LIFE_TIME &&
+			    age >= ifp->valid_lft) {
+				spin_unlock(&ifp->lock);
+				in6_ifa_hold(ifp);
+				rcu_read_unlock_bh();
+				ipv6_del_addr(ifp);
+				rcu_read_lock_bh();
+				goto restart;
+			} else if (ifp->prefered_lft == INFINITY_LIFE_TIME) {
+				spin_unlock(&ifp->lock);
+				continue;
+			} else if (age >= ifp->prefered_lft) {
+				/* jiffies - ifp->tstamp > age >= ifp->prefered_lft */
+				int deprecate = 0;
 
-				अगर (!(अगरp->flags&IFA_F_DEPRECATED)) अणु
+				if (!(ifp->flags&IFA_F_DEPRECATED)) {
 					deprecate = 1;
-					अगरp->flags |= IFA_F_DEPRECATED;
-				पूर्ण
+					ifp->flags |= IFA_F_DEPRECATED;
+				}
 
-				अगर ((अगरp->valid_lft != अनन्त_LIFE_TIME) &&
-				    (समय_beक्रमe(अगरp->tstamp + अगरp->valid_lft * HZ, next)))
-					next = अगरp->tstamp + अगरp->valid_lft * HZ;
+				if ((ifp->valid_lft != INFINITY_LIFE_TIME) &&
+				    (time_before(ifp->tstamp + ifp->valid_lft * HZ, next)))
+					next = ifp->tstamp + ifp->valid_lft * HZ;
 
-				spin_unlock(&अगरp->lock);
+				spin_unlock(&ifp->lock);
 
-				अगर (deprecate) अणु
-					in6_अगरa_hold(अगरp);
+				if (deprecate) {
+					in6_ifa_hold(ifp);
 
-					ipv6_अगरa_notअगरy(0, अगरp);
-					in6_अगरa_put(अगरp);
-					जाओ restart;
-				पूर्ण
-			पूर्ण अन्यथा अगर ((अगरp->flags&IFA_F_TEMPORARY) &&
-				   !(अगरp->flags&IFA_F_TENTATIVE)) अणु
-				अचिन्हित दीर्घ regen_advance = अगरp->idev->cnf.regen_max_retry *
-					अगरp->idev->cnf.dad_transmits *
-					max(NEIGH_VAR(अगरp->idev->nd_parms, RETRANS_TIME), HZ/100) / HZ;
+					ipv6_ifa_notify(0, ifp);
+					in6_ifa_put(ifp);
+					goto restart;
+				}
+			} else if ((ifp->flags&IFA_F_TEMPORARY) &&
+				   !(ifp->flags&IFA_F_TENTATIVE)) {
+				unsigned long regen_advance = ifp->idev->cnf.regen_max_retry *
+					ifp->idev->cnf.dad_transmits *
+					max(NEIGH_VAR(ifp->idev->nd_parms, RETRANS_TIME), HZ/100) / HZ;
 
-				अगर (age >= अगरp->prefered_lft - regen_advance) अणु
-					काष्ठा inet6_अगरaddr *अगरpub = अगरp->अगरpub;
-					अगर (समय_beक्रमe(अगरp->tstamp + अगरp->prefered_lft * HZ, next))
-						next = अगरp->tstamp + अगरp->prefered_lft * HZ;
-					अगर (!अगरp->regen_count && अगरpub) अणु
-						अगरp->regen_count++;
-						in6_अगरa_hold(अगरp);
-						in6_अगरa_hold(अगरpub);
-						spin_unlock(&अगरp->lock);
+				if (age >= ifp->prefered_lft - regen_advance) {
+					struct inet6_ifaddr *ifpub = ifp->ifpub;
+					if (time_before(ifp->tstamp + ifp->prefered_lft * HZ, next))
+						next = ifp->tstamp + ifp->prefered_lft * HZ;
+					if (!ifp->regen_count && ifpub) {
+						ifp->regen_count++;
+						in6_ifa_hold(ifp);
+						in6_ifa_hold(ifpub);
+						spin_unlock(&ifp->lock);
 
-						spin_lock(&अगरpub->lock);
-						अगरpub->regen_count = 0;
-						spin_unlock(&अगरpub->lock);
-						rcu_पढ़ो_unlock_bh();
-						ipv6_create_tempaddr(अगरpub, true);
-						in6_अगरa_put(अगरpub);
-						in6_अगरa_put(अगरp);
-						rcu_पढ़ो_lock_bh();
-						जाओ restart;
-					पूर्ण
-				पूर्ण अन्यथा अगर (समय_beक्रमe(अगरp->tstamp + अगरp->prefered_lft * HZ - regen_advance * HZ, next))
-					next = अगरp->tstamp + अगरp->prefered_lft * HZ - regen_advance * HZ;
-				spin_unlock(&अगरp->lock);
-			पूर्ण अन्यथा अणु
-				/* अगरp->prefered_lft <= अगरp->valid_lft */
-				अगर (समय_beक्रमe(अगरp->tstamp + अगरp->prefered_lft * HZ, next))
-					next = अगरp->tstamp + अगरp->prefered_lft * HZ;
-				spin_unlock(&अगरp->lock);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+						spin_lock(&ifpub->lock);
+						ifpub->regen_count = 0;
+						spin_unlock(&ifpub->lock);
+						rcu_read_unlock_bh();
+						ipv6_create_tempaddr(ifpub, true);
+						in6_ifa_put(ifpub);
+						in6_ifa_put(ifp);
+						rcu_read_lock_bh();
+						goto restart;
+					}
+				} else if (time_before(ifp->tstamp + ifp->prefered_lft * HZ - regen_advance * HZ, next))
+					next = ifp->tstamp + ifp->prefered_lft * HZ - regen_advance * HZ;
+				spin_unlock(&ifp->lock);
+			} else {
+				/* ifp->prefered_lft <= ifp->valid_lft */
+				if (time_before(ifp->tstamp + ifp->prefered_lft * HZ, next))
+					next = ifp->tstamp + ifp->prefered_lft * HZ;
+				spin_unlock(&ifp->lock);
+			}
+		}
+	}
 
-	next_sec = round_jअगरfies_up(next);
+	next_sec = round_jiffies_up(next);
 	next_sched = next;
 
-	/* If rounded समयout is accurate enough, accept it. */
-	अगर (समय_beक्रमe(next_sec, next + ADDRCONF_TIMER_FUZZ))
+	/* If rounded timeout is accurate enough, accept it. */
+	if (time_before(next_sec, next + ADDRCONF_TIMER_FUZZ))
 		next_sched = next_sec;
 
-	/* And minimum पूर्णांकerval is ADDRCONF_TIMER_FUZZ_MAX. */
-	अगर (समय_beक्रमe(next_sched, jअगरfies + ADDRCONF_TIMER_FUZZ_MAX))
-		next_sched = jअगरfies + ADDRCONF_TIMER_FUZZ_MAX;
+	/* And minimum interval is ADDRCONF_TIMER_FUZZ_MAX. */
+	if (time_before(next_sched, jiffies + ADDRCONF_TIMER_FUZZ_MAX))
+		next_sched = jiffies + ADDRCONF_TIMER_FUZZ_MAX;
 
 	pr_debug("now = %lu, schedule = %lu, rounded schedule = %lu => %lu\n",
 		 now, next, next_sec, next_sched);
 	mod_delayed_work(addrconf_wq, &addr_chk_work, next_sched - now);
-	rcu_पढ़ो_unlock_bh();
-पूर्ण
+	rcu_read_unlock_bh();
+}
 
-अटल व्योम addrconf_verअगरy_work(काष्ठा work_काष्ठा *w)
-अणु
+static void addrconf_verify_work(struct work_struct *w)
+{
 	rtnl_lock();
-	addrconf_verअगरy_rtnl();
+	addrconf_verify_rtnl();
 	rtnl_unlock();
-पूर्ण
+}
 
-अटल व्योम addrconf_verअगरy(व्योम)
-अणु
+static void addrconf_verify(void)
+{
 	mod_delayed_work(addrconf_wq, &addr_chk_work, 0);
-पूर्ण
+}
 
-अटल काष्ठा in6_addr *extract_addr(काष्ठा nlattr *addr, काष्ठा nlattr *local,
-				     काष्ठा in6_addr **peer_pfx)
-अणु
-	काष्ठा in6_addr *pfx = शून्य;
+static struct in6_addr *extract_addr(struct nlattr *addr, struct nlattr *local,
+				     struct in6_addr **peer_pfx)
+{
+	struct in6_addr *pfx = NULL;
 
-	*peer_pfx = शून्य;
+	*peer_pfx = NULL;
 
-	अगर (addr)
+	if (addr)
 		pfx = nla_data(addr);
 
-	अगर (local) अणु
-		अगर (pfx && nla_स_भेद(local, pfx, माप(*pfx)))
+	if (local) {
+		if (pfx && nla_memcmp(local, pfx, sizeof(*pfx)))
 			*peer_pfx = pfx;
 		pfx = nla_data(local);
-	पूर्ण
+	}
 
-	वापस pfx;
-पूर्ण
+	return pfx;
+}
 
-अटल स्थिर काष्ठा nla_policy अगरa_ipv6_policy[IFA_MAX+1] = अणु
-	[IFA_ADDRESS]		= अणु .len = माप(काष्ठा in6_addr) पूर्ण,
-	[IFA_LOCAL]		= अणु .len = माप(काष्ठा in6_addr) पूर्ण,
-	[IFA_CACHEINFO]		= अणु .len = माप(काष्ठा अगरa_cacheinfo) पूर्ण,
-	[IFA_FLAGS]		= अणु .len = माप(u32) पूर्ण,
-	[IFA_RT_PRIORITY]	= अणु .len = माप(u32) पूर्ण,
-	[IFA_TARGET_NETNSID]	= अणु .type = NLA_S32 पूर्ण,
-पूर्ण;
+static const struct nla_policy ifa_ipv6_policy[IFA_MAX+1] = {
+	[IFA_ADDRESS]		= { .len = sizeof(struct in6_addr) },
+	[IFA_LOCAL]		= { .len = sizeof(struct in6_addr) },
+	[IFA_CACHEINFO]		= { .len = sizeof(struct ifa_cacheinfo) },
+	[IFA_FLAGS]		= { .len = sizeof(u32) },
+	[IFA_RT_PRIORITY]	= { .len = sizeof(u32) },
+	[IFA_TARGET_NETNSID]	= { .type = NLA_S32 },
+};
 
-अटल पूर्णांक
-inet6_rपंचांग_deladdr(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
-		  काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा net *net = sock_net(skb->sk);
-	काष्ठा अगरaddrmsg *अगरm;
-	काष्ठा nlattr *tb[IFA_MAX+1];
-	काष्ठा in6_addr *pfx, *peer_pfx;
-	u32 अगरa_flags;
-	पूर्णांक err;
+static int
+inet6_rtm_deladdr(struct sk_buff *skb, struct nlmsghdr *nlh,
+		  struct netlink_ext_ack *extack)
+{
+	struct net *net = sock_net(skb->sk);
+	struct ifaddrmsg *ifm;
+	struct nlattr *tb[IFA_MAX+1];
+	struct in6_addr *pfx, *peer_pfx;
+	u32 ifa_flags;
+	int err;
 
-	err = nlmsg_parse_deprecated(nlh, माप(*अगरm), tb, IFA_MAX,
-				     अगरa_ipv6_policy, extack);
-	अगर (err < 0)
-		वापस err;
+	err = nlmsg_parse_deprecated(nlh, sizeof(*ifm), tb, IFA_MAX,
+				     ifa_ipv6_policy, extack);
+	if (err < 0)
+		return err;
 
-	अगरm = nlmsg_data(nlh);
+	ifm = nlmsg_data(nlh);
 	pfx = extract_addr(tb[IFA_ADDRESS], tb[IFA_LOCAL], &peer_pfx);
-	अगर (!pfx)
-		वापस -EINVAL;
+	if (!pfx)
+		return -EINVAL;
 
-	अगरa_flags = tb[IFA_FLAGS] ? nla_get_u32(tb[IFA_FLAGS]) : अगरm->अगरa_flags;
+	ifa_flags = tb[IFA_FLAGS] ? nla_get_u32(tb[IFA_FLAGS]) : ifm->ifa_flags;
 
 	/* We ignore other flags so far. */
-	अगरa_flags &= IFA_F_MANAGETEMPADDR;
+	ifa_flags &= IFA_F_MANAGETEMPADDR;
 
-	वापस inet6_addr_del(net, अगरm->अगरa_index, अगरa_flags, pfx,
-			      अगरm->अगरa_prefixlen);
-पूर्ण
+	return inet6_addr_del(net, ifm->ifa_index, ifa_flags, pfx,
+			      ifm->ifa_prefixlen);
+}
 
-अटल पूर्णांक modअगरy_prefix_route(काष्ठा inet6_अगरaddr *अगरp,
-			       अचिन्हित दीर्घ expires, u32 flags,
-			       bool modअगरy_peer)
-अणु
-	काष्ठा fib6_info *f6i;
+static int modify_prefix_route(struct inet6_ifaddr *ifp,
+			       unsigned long expires, u32 flags,
+			       bool modify_peer)
+{
+	struct fib6_info *f6i;
 	u32 prio;
 
-	f6i = addrconf_get_prefix_route(modअगरy_peer ? &अगरp->peer_addr : &अगरp->addr,
-					अगरp->prefix_len,
-					अगरp->idev->dev, 0, RTF_DEFAULT, true);
-	अगर (!f6i)
-		वापस -ENOENT;
+	f6i = addrconf_get_prefix_route(modify_peer ? &ifp->peer_addr : &ifp->addr,
+					ifp->prefix_len,
+					ifp->idev->dev, 0, RTF_DEFAULT, true);
+	if (!f6i)
+		return -ENOENT;
 
-	prio = अगरp->rt_priority ? : IP6_RT_PRIO_ADDRCONF;
-	अगर (f6i->fib6_metric != prio) अणु
+	prio = ifp->rt_priority ? : IP6_RT_PRIO_ADDRCONF;
+	if (f6i->fib6_metric != prio) {
 		/* delete old one */
-		ip6_del_rt(dev_net(अगरp->idev->dev), f6i, false);
+		ip6_del_rt(dev_net(ifp->idev->dev), f6i, false);
 
 		/* add new one */
-		addrconf_prefix_route(modअगरy_peer ? &अगरp->peer_addr : &अगरp->addr,
-				      अगरp->prefix_len,
-				      अगरp->rt_priority, अगरp->idev->dev,
+		addrconf_prefix_route(modify_peer ? &ifp->peer_addr : &ifp->addr,
+				      ifp->prefix_len,
+				      ifp->rt_priority, ifp->idev->dev,
 				      expires, flags, GFP_KERNEL);
-	पूर्ण अन्यथा अणु
-		अगर (!expires)
+	} else {
+		if (!expires)
 			fib6_clean_expires(f6i);
-		अन्यथा
+		else
 			fib6_set_expires(f6i, expires);
 
 		fib6_info_release(f6i);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक inet6_addr_modअगरy(काष्ठा inet6_अगरaddr *अगरp, काष्ठा अगरa6_config *cfg)
-अणु
+static int inet6_addr_modify(struct inet6_ifaddr *ifp, struct ifa6_config *cfg)
+{
 	u32 flags;
-	घड़ी_प्रकार expires;
-	अचिन्हित दीर्घ समयout;
+	clock_t expires;
+	unsigned long timeout;
 	bool was_managetempaddr;
 	bool had_prefixroute;
 	bool new_peer = false;
 
 	ASSERT_RTNL();
 
-	अगर (!cfg->valid_lft || cfg->preferred_lft > cfg->valid_lft)
-		वापस -EINVAL;
+	if (!cfg->valid_lft || cfg->preferred_lft > cfg->valid_lft)
+		return -EINVAL;
 
-	अगर (cfg->अगरa_flags & IFA_F_MANAGETEMPADDR &&
-	    (अगरp->flags & IFA_F_TEMPORARY || अगरp->prefix_len != 64))
-		वापस -EINVAL;
+	if (cfg->ifa_flags & IFA_F_MANAGETEMPADDR &&
+	    (ifp->flags & IFA_F_TEMPORARY || ifp->prefix_len != 64))
+		return -EINVAL;
 
-	अगर (!(अगरp->flags & IFA_F_TENTATIVE) || अगरp->flags & IFA_F_DADFAILED)
-		cfg->अगरa_flags &= ~IFA_F_OPTIMISTIC;
+	if (!(ifp->flags & IFA_F_TENTATIVE) || ifp->flags & IFA_F_DADFAILED)
+		cfg->ifa_flags &= ~IFA_F_OPTIMISTIC;
 
-	समयout = addrconf_समयout_fixup(cfg->valid_lft, HZ);
-	अगर (addrconf_finite_समयout(समयout)) अणु
-		expires = jअगरfies_to_घड़ी_प्रकार(समयout * HZ);
-		cfg->valid_lft = समयout;
+	timeout = addrconf_timeout_fixup(cfg->valid_lft, HZ);
+	if (addrconf_finite_timeout(timeout)) {
+		expires = jiffies_to_clock_t(timeout * HZ);
+		cfg->valid_lft = timeout;
 		flags = RTF_EXPIRES;
-	पूर्ण अन्यथा अणु
+	} else {
 		expires = 0;
 		flags = 0;
-		cfg->अगरa_flags |= IFA_F_PERMANENT;
-	पूर्ण
+		cfg->ifa_flags |= IFA_F_PERMANENT;
+	}
 
-	समयout = addrconf_समयout_fixup(cfg->preferred_lft, HZ);
-	अगर (addrconf_finite_समयout(समयout)) अणु
-		अगर (समयout == 0)
-			cfg->अगरa_flags |= IFA_F_DEPRECATED;
-		cfg->preferred_lft = समयout;
-	पूर्ण
+	timeout = addrconf_timeout_fixup(cfg->preferred_lft, HZ);
+	if (addrconf_finite_timeout(timeout)) {
+		if (timeout == 0)
+			cfg->ifa_flags |= IFA_F_DEPRECATED;
+		cfg->preferred_lft = timeout;
+	}
 
-	अगर (cfg->peer_pfx &&
-	    स_भेद(&अगरp->peer_addr, cfg->peer_pfx, माप(काष्ठा in6_addr))) अणु
-		अगर (!ipv6_addr_any(&अगरp->peer_addr))
-			cleanup_prefix_route(अगरp, expires, true, true);
+	if (cfg->peer_pfx &&
+	    memcmp(&ifp->peer_addr, cfg->peer_pfx, sizeof(struct in6_addr))) {
+		if (!ipv6_addr_any(&ifp->peer_addr))
+			cleanup_prefix_route(ifp, expires, true, true);
 		new_peer = true;
-	पूर्ण
+	}
 
-	spin_lock_bh(&अगरp->lock);
-	was_managetempaddr = अगरp->flags & IFA_F_MANAGETEMPADDR;
-	had_prefixroute = अगरp->flags & IFA_F_PERMANENT &&
-			  !(अगरp->flags & IFA_F_NOPREFIXROUTE);
-	अगरp->flags &= ~(IFA_F_DEPRECATED | IFA_F_PERMANENT | IFA_F_NODAD |
+	spin_lock_bh(&ifp->lock);
+	was_managetempaddr = ifp->flags & IFA_F_MANAGETEMPADDR;
+	had_prefixroute = ifp->flags & IFA_F_PERMANENT &&
+			  !(ifp->flags & IFA_F_NOPREFIXROUTE);
+	ifp->flags &= ~(IFA_F_DEPRECATED | IFA_F_PERMANENT | IFA_F_NODAD |
 			IFA_F_HOMEADDRESS | IFA_F_MANAGETEMPADDR |
 			IFA_F_NOPREFIXROUTE);
-	अगरp->flags |= cfg->अगरa_flags;
-	अगरp->tstamp = jअगरfies;
-	अगरp->valid_lft = cfg->valid_lft;
-	अगरp->prefered_lft = cfg->preferred_lft;
+	ifp->flags |= cfg->ifa_flags;
+	ifp->tstamp = jiffies;
+	ifp->valid_lft = cfg->valid_lft;
+	ifp->prefered_lft = cfg->preferred_lft;
 
-	अगर (cfg->rt_priority && cfg->rt_priority != अगरp->rt_priority)
-		अगरp->rt_priority = cfg->rt_priority;
+	if (cfg->rt_priority && cfg->rt_priority != ifp->rt_priority)
+		ifp->rt_priority = cfg->rt_priority;
 
-	अगर (new_peer)
-		अगरp->peer_addr = *cfg->peer_pfx;
+	if (new_peer)
+		ifp->peer_addr = *cfg->peer_pfx;
 
-	spin_unlock_bh(&अगरp->lock);
-	अगर (!(अगरp->flags&IFA_F_TENTATIVE))
-		ipv6_अगरa_notअगरy(0, अगरp);
+	spin_unlock_bh(&ifp->lock);
+	if (!(ifp->flags&IFA_F_TENTATIVE))
+		ipv6_ifa_notify(0, ifp);
 
-	अगर (!(cfg->अगरa_flags & IFA_F_NOPREFIXROUTE)) अणु
-		पूर्णांक rc = -ENOENT;
+	if (!(cfg->ifa_flags & IFA_F_NOPREFIXROUTE)) {
+		int rc = -ENOENT;
 
-		अगर (had_prefixroute)
-			rc = modअगरy_prefix_route(अगरp, expires, flags, false);
+		if (had_prefixroute)
+			rc = modify_prefix_route(ifp, expires, flags, false);
 
-		/* prefix route could have been deleted; अगर so restore it */
-		अगर (rc == -ENOENT) अणु
-			addrconf_prefix_route(&अगरp->addr, अगरp->prefix_len,
-					      अगरp->rt_priority, अगरp->idev->dev,
+		/* prefix route could have been deleted; if so restore it */
+		if (rc == -ENOENT) {
+			addrconf_prefix_route(&ifp->addr, ifp->prefix_len,
+					      ifp->rt_priority, ifp->idev->dev,
 					      expires, flags, GFP_KERNEL);
-		पूर्ण
+		}
 
-		अगर (had_prefixroute && !ipv6_addr_any(&अगरp->peer_addr))
-			rc = modअगरy_prefix_route(अगरp, expires, flags, true);
+		if (had_prefixroute && !ipv6_addr_any(&ifp->peer_addr))
+			rc = modify_prefix_route(ifp, expires, flags, true);
 
-		अगर (rc == -ENOENT && !ipv6_addr_any(&अगरp->peer_addr)) अणु
-			addrconf_prefix_route(&अगरp->peer_addr, अगरp->prefix_len,
-					      अगरp->rt_priority, अगरp->idev->dev,
+		if (rc == -ENOENT && !ipv6_addr_any(&ifp->peer_addr)) {
+			addrconf_prefix_route(&ifp->peer_addr, ifp->prefix_len,
+					      ifp->rt_priority, ifp->idev->dev,
 					      expires, flags, GFP_KERNEL);
-		पूर्ण
-	पूर्ण अन्यथा अगर (had_prefixroute) अणु
-		क्रमागत cleanup_prefix_rt_t action;
-		अचिन्हित दीर्घ rt_expires;
+		}
+	} else if (had_prefixroute) {
+		enum cleanup_prefix_rt_t action;
+		unsigned long rt_expires;
 
-		ग_लिखो_lock_bh(&अगरp->idev->lock);
-		action = check_cleanup_prefix_route(अगरp, &rt_expires);
-		ग_लिखो_unlock_bh(&अगरp->idev->lock);
+		write_lock_bh(&ifp->idev->lock);
+		action = check_cleanup_prefix_route(ifp, &rt_expires);
+		write_unlock_bh(&ifp->idev->lock);
 
-		अगर (action != CLEANUP_PREFIX_RT_NOP) अणु
-			cleanup_prefix_route(अगरp, rt_expires,
+		if (action != CLEANUP_PREFIX_RT_NOP) {
+			cleanup_prefix_route(ifp, rt_expires,
 				action == CLEANUP_PREFIX_RT_DEL, false);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (was_managetempaddr || अगरp->flags & IFA_F_MANAGETEMPADDR) अणु
-		अगर (was_managetempaddr &&
-		    !(अगरp->flags & IFA_F_MANAGETEMPADDR)) अणु
+	if (was_managetempaddr || ifp->flags & IFA_F_MANAGETEMPADDR) {
+		if (was_managetempaddr &&
+		    !(ifp->flags & IFA_F_MANAGETEMPADDR)) {
 			cfg->valid_lft = 0;
 			cfg->preferred_lft = 0;
-		पूर्ण
-		manage_tempaddrs(अगरp->idev, अगरp, cfg->valid_lft,
+		}
+		manage_tempaddrs(ifp->idev, ifp, cfg->valid_lft,
 				 cfg->preferred_lft, !was_managetempaddr,
-				 jअगरfies);
-	पूर्ण
+				 jiffies);
+	}
 
-	addrconf_verअगरy_rtnl();
+	addrconf_verify_rtnl();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-inet6_rपंचांग_newaddr(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
-		  काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा net *net = sock_net(skb->sk);
-	काष्ठा अगरaddrmsg *अगरm;
-	काष्ठा nlattr *tb[IFA_MAX+1];
-	काष्ठा in6_addr *peer_pfx;
-	काष्ठा inet6_अगरaddr *अगरa;
-	काष्ठा net_device *dev;
-	काष्ठा inet6_dev *idev;
-	काष्ठा अगरa6_config cfg;
-	पूर्णांक err;
+static int
+inet6_rtm_newaddr(struct sk_buff *skb, struct nlmsghdr *nlh,
+		  struct netlink_ext_ack *extack)
+{
+	struct net *net = sock_net(skb->sk);
+	struct ifaddrmsg *ifm;
+	struct nlattr *tb[IFA_MAX+1];
+	struct in6_addr *peer_pfx;
+	struct inet6_ifaddr *ifa;
+	struct net_device *dev;
+	struct inet6_dev *idev;
+	struct ifa6_config cfg;
+	int err;
 
-	err = nlmsg_parse_deprecated(nlh, माप(*अगरm), tb, IFA_MAX,
-				     अगरa_ipv6_policy, extack);
-	अगर (err < 0)
-		वापस err;
+	err = nlmsg_parse_deprecated(nlh, sizeof(*ifm), tb, IFA_MAX,
+				     ifa_ipv6_policy, extack);
+	if (err < 0)
+		return err;
 
-	स_रखो(&cfg, 0, माप(cfg));
+	memset(&cfg, 0, sizeof(cfg));
 
-	अगरm = nlmsg_data(nlh);
+	ifm = nlmsg_data(nlh);
 	cfg.pfx = extract_addr(tb[IFA_ADDRESS], tb[IFA_LOCAL], &peer_pfx);
-	अगर (!cfg.pfx)
-		वापस -EINVAL;
+	if (!cfg.pfx)
+		return -EINVAL;
 
 	cfg.peer_pfx = peer_pfx;
-	cfg.plen = अगरm->अगरa_prefixlen;
-	अगर (tb[IFA_RT_PRIORITY])
+	cfg.plen = ifm->ifa_prefixlen;
+	if (tb[IFA_RT_PRIORITY])
 		cfg.rt_priority = nla_get_u32(tb[IFA_RT_PRIORITY]);
 
-	cfg.valid_lft = अनन्त_LIFE_TIME;
-	cfg.preferred_lft = अनन्त_LIFE_TIME;
+	cfg.valid_lft = INFINITY_LIFE_TIME;
+	cfg.preferred_lft = INFINITY_LIFE_TIME;
 
-	अगर (tb[IFA_CACHEINFO]) अणु
-		काष्ठा अगरa_cacheinfo *ci;
+	if (tb[IFA_CACHEINFO]) {
+		struct ifa_cacheinfo *ci;
 
 		ci = nla_data(tb[IFA_CACHEINFO]);
-		cfg.valid_lft = ci->अगरa_valid;
-		cfg.preferred_lft = ci->अगरa_prefered;
-	पूर्ण
+		cfg.valid_lft = ci->ifa_valid;
+		cfg.preferred_lft = ci->ifa_prefered;
+	}
 
-	dev =  __dev_get_by_index(net, अगरm->अगरa_index);
-	अगर (!dev)
-		वापस -ENODEV;
+	dev =  __dev_get_by_index(net, ifm->ifa_index);
+	if (!dev)
+		return -ENODEV;
 
-	अगर (tb[IFA_FLAGS])
-		cfg.अगरa_flags = nla_get_u32(tb[IFA_FLAGS]);
-	अन्यथा
-		cfg.अगरa_flags = अगरm->अगरa_flags;
+	if (tb[IFA_FLAGS])
+		cfg.ifa_flags = nla_get_u32(tb[IFA_FLAGS]);
+	else
+		cfg.ifa_flags = ifm->ifa_flags;
 
 	/* We ignore other flags so far. */
-	cfg.अगरa_flags &= IFA_F_NODAD | IFA_F_HOMEADDRESS |
+	cfg.ifa_flags &= IFA_F_NODAD | IFA_F_HOMEADDRESS |
 			 IFA_F_MANAGETEMPADDR | IFA_F_NOPREFIXROUTE |
 			 IFA_F_MCAUTOJOIN | IFA_F_OPTIMISTIC;
 
 	idev = ipv6_find_idev(dev);
-	अगर (IS_ERR(idev))
-		वापस PTR_ERR(idev);
+	if (IS_ERR(idev))
+		return PTR_ERR(idev);
 
-	अगर (!ipv6_allow_optimistic_dad(net, idev))
-		cfg.अगरa_flags &= ~IFA_F_OPTIMISTIC;
+	if (!ipv6_allow_optimistic_dad(net, idev))
+		cfg.ifa_flags &= ~IFA_F_OPTIMISTIC;
 
-	अगर (cfg.अगरa_flags & IFA_F_NODAD &&
-	    cfg.अगरa_flags & IFA_F_OPTIMISTIC) अणु
+	if (cfg.ifa_flags & IFA_F_NODAD &&
+	    cfg.ifa_flags & IFA_F_OPTIMISTIC) {
 		NL_SET_ERR_MSG(extack, "IFA_F_NODAD and IFA_F_OPTIMISTIC are mutually exclusive");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगरa = ipv6_get_अगरaddr(net, cfg.pfx, dev, 1);
-	अगर (!अगरa) अणु
+	ifa = ipv6_get_ifaddr(net, cfg.pfx, dev, 1);
+	if (!ifa) {
 		/*
-		 * It would be best to check क्रम !NLM_F_CREATE here but
-		 * userspace alपढ़ोy relies on not having to provide this.
+		 * It would be best to check for !NLM_F_CREATE here but
+		 * userspace already relies on not having to provide this.
 		 */
-		वापस inet6_addr_add(net, अगरm->अगरa_index, &cfg, extack);
-	पूर्ण
+		return inet6_addr_add(net, ifm->ifa_index, &cfg, extack);
+	}
 
-	अगर (nlh->nlmsg_flags & NLM_F_EXCL ||
+	if (nlh->nlmsg_flags & NLM_F_EXCL ||
 	    !(nlh->nlmsg_flags & NLM_F_REPLACE))
 		err = -EEXIST;
-	अन्यथा
-		err = inet6_addr_modअगरy(अगरa, &cfg);
+	else
+		err = inet6_addr_modify(ifa, &cfg);
 
-	in6_अगरa_put(अगरa);
+	in6_ifa_put(ifa);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम put_अगरaddrmsg(काष्ठा nlmsghdr *nlh, u8 prefixlen, u32 flags,
-			  u8 scope, पूर्णांक अगरindex)
-अणु
-	काष्ठा अगरaddrmsg *अगरm;
+static void put_ifaddrmsg(struct nlmsghdr *nlh, u8 prefixlen, u32 flags,
+			  u8 scope, int ifindex)
+{
+	struct ifaddrmsg *ifm;
 
-	अगरm = nlmsg_data(nlh);
-	अगरm->अगरa_family = AF_INET6;
-	अगरm->अगरa_prefixlen = prefixlen;
-	अगरm->अगरa_flags = flags;
-	अगरm->अगरa_scope = scope;
-	अगरm->अगरa_index = अगरindex;
-पूर्ण
+	ifm = nlmsg_data(nlh);
+	ifm->ifa_family = AF_INET6;
+	ifm->ifa_prefixlen = prefixlen;
+	ifm->ifa_flags = flags;
+	ifm->ifa_scope = scope;
+	ifm->ifa_index = ifindex;
+}
 
-अटल पूर्णांक put_cacheinfo(काष्ठा sk_buff *skb, अचिन्हित दीर्घ cstamp,
-			 अचिन्हित दीर्घ tstamp, u32 preferred, u32 valid)
-अणु
-	काष्ठा अगरa_cacheinfo ci;
+static int put_cacheinfo(struct sk_buff *skb, unsigned long cstamp,
+			 unsigned long tstamp, u32 preferred, u32 valid)
+{
+	struct ifa_cacheinfo ci;
 
 	ci.cstamp = cstamp_delta(cstamp);
 	ci.tstamp = cstamp_delta(tstamp);
-	ci.अगरa_prefered = preferred;
-	ci.अगरa_valid = valid;
+	ci.ifa_prefered = preferred;
+	ci.ifa_valid = valid;
 
-	वापस nla_put(skb, IFA_CACHEINFO, माप(ci), &ci);
-पूर्ण
+	return nla_put(skb, IFA_CACHEINFO, sizeof(ci), &ci);
+}
 
-अटल अंतरभूत पूर्णांक rt_scope(पूर्णांक अगरa_scope)
-अणु
-	अगर (अगरa_scope & IFA_HOST)
-		वापस RT_SCOPE_HOST;
-	अन्यथा अगर (अगरa_scope & IFA_LINK)
-		वापस RT_SCOPE_LINK;
-	अन्यथा अगर (अगरa_scope & IFA_SITE)
-		वापस RT_SCOPE_SITE;
-	अन्यथा
-		वापस RT_SCOPE_UNIVERSE;
-पूर्ण
+static inline int rt_scope(int ifa_scope)
+{
+	if (ifa_scope & IFA_HOST)
+		return RT_SCOPE_HOST;
+	else if (ifa_scope & IFA_LINK)
+		return RT_SCOPE_LINK;
+	else if (ifa_scope & IFA_SITE)
+		return RT_SCOPE_SITE;
+	else
+		return RT_SCOPE_UNIVERSE;
+}
 
-अटल अंतरभूत पूर्णांक inet6_अगरaddr_msgsize(व्योम)
-अणु
-	वापस NLMSG_ALIGN(माप(काष्ठा अगरaddrmsg))
+static inline int inet6_ifaddr_msgsize(void)
+{
+	return NLMSG_ALIGN(sizeof(struct ifaddrmsg))
 	       + nla_total_size(16) /* IFA_LOCAL */
 	       + nla_total_size(16) /* IFA_ADDRESS */
-	       + nla_total_size(माप(काष्ठा अगरa_cacheinfo))
+	       + nla_total_size(sizeof(struct ifa_cacheinfo))
 	       + nla_total_size(4)  /* IFA_FLAGS */
 	       + nla_total_size(4)  /* IFA_RT_PRIORITY */;
-पूर्ण
+}
 
-क्रमागत addr_type_t अणु
+enum addr_type_t {
 	UNICAST_ADDR,
 	MULTICAST_ADDR,
 	ANYCAST_ADDR,
-पूर्ण;
+};
 
-काष्ठा inet6_fill_args अणु
+struct inet6_fill_args {
 	u32 portid;
 	u32 seq;
-	पूर्णांक event;
-	अचिन्हित पूर्णांक flags;
-	पूर्णांक netnsid;
-	पूर्णांक अगरindex;
-	क्रमागत addr_type_t type;
-पूर्ण;
+	int event;
+	unsigned int flags;
+	int netnsid;
+	int ifindex;
+	enum addr_type_t type;
+};
 
-अटल पूर्णांक inet6_fill_अगरaddr(काष्ठा sk_buff *skb, काष्ठा inet6_अगरaddr *अगरa,
-			     काष्ठा inet6_fill_args *args)
-अणु
-	काष्ठा nlmsghdr  *nlh;
+static int inet6_fill_ifaddr(struct sk_buff *skb, struct inet6_ifaddr *ifa,
+			     struct inet6_fill_args *args)
+{
+	struct nlmsghdr  *nlh;
 	u32 preferred, valid;
 
 	nlh = nlmsg_put(skb, args->portid, args->seq, args->event,
-			माप(काष्ठा अगरaddrmsg), args->flags);
-	अगर (!nlh)
-		वापस -EMSGSIZE;
+			sizeof(struct ifaddrmsg), args->flags);
+	if (!nlh)
+		return -EMSGSIZE;
 
-	put_अगरaddrmsg(nlh, अगरa->prefix_len, अगरa->flags, rt_scope(अगरa->scope),
-		      अगरa->idev->dev->अगरindex);
+	put_ifaddrmsg(nlh, ifa->prefix_len, ifa->flags, rt_scope(ifa->scope),
+		      ifa->idev->dev->ifindex);
 
-	अगर (args->netnsid >= 0 &&
+	if (args->netnsid >= 0 &&
 	    nla_put_s32(skb, IFA_TARGET_NETNSID, args->netnsid))
-		जाओ error;
+		goto error;
 
-	अगर (!((अगरa->flags&IFA_F_PERMANENT) &&
-	      (अगरa->prefered_lft == अनन्त_LIFE_TIME))) अणु
-		preferred = अगरa->prefered_lft;
-		valid = अगरa->valid_lft;
-		अगर (preferred != अनन्त_LIFE_TIME) अणु
-			दीर्घ tval = (jअगरfies - अगरa->tstamp)/HZ;
-			अगर (preferred > tval)
+	if (!((ifa->flags&IFA_F_PERMANENT) &&
+	      (ifa->prefered_lft == INFINITY_LIFE_TIME))) {
+		preferred = ifa->prefered_lft;
+		valid = ifa->valid_lft;
+		if (preferred != INFINITY_LIFE_TIME) {
+			long tval = (jiffies - ifa->tstamp)/HZ;
+			if (preferred > tval)
 				preferred -= tval;
-			अन्यथा
+			else
 				preferred = 0;
-			अगर (valid != अनन्त_LIFE_TIME) अणु
-				अगर (valid > tval)
+			if (valid != INFINITY_LIFE_TIME) {
+				if (valid > tval)
 					valid -= tval;
-				अन्यथा
+				else
 					valid = 0;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		preferred = अनन्त_LIFE_TIME;
-		valid = अनन्त_LIFE_TIME;
-	पूर्ण
+			}
+		}
+	} else {
+		preferred = INFINITY_LIFE_TIME;
+		valid = INFINITY_LIFE_TIME;
+	}
 
-	अगर (!ipv6_addr_any(&अगरa->peer_addr)) अणु
-		अगर (nla_put_in6_addr(skb, IFA_LOCAL, &अगरa->addr) < 0 ||
-		    nla_put_in6_addr(skb, IFA_ADDRESS, &अगरa->peer_addr) < 0)
-			जाओ error;
-	पूर्ण अन्यथा
-		अगर (nla_put_in6_addr(skb, IFA_ADDRESS, &अगरa->addr) < 0)
-			जाओ error;
+	if (!ipv6_addr_any(&ifa->peer_addr)) {
+		if (nla_put_in6_addr(skb, IFA_LOCAL, &ifa->addr) < 0 ||
+		    nla_put_in6_addr(skb, IFA_ADDRESS, &ifa->peer_addr) < 0)
+			goto error;
+	} else
+		if (nla_put_in6_addr(skb, IFA_ADDRESS, &ifa->addr) < 0)
+			goto error;
 
-	अगर (अगरa->rt_priority &&
-	    nla_put_u32(skb, IFA_RT_PRIORITY, अगरa->rt_priority))
-		जाओ error;
+	if (ifa->rt_priority &&
+	    nla_put_u32(skb, IFA_RT_PRIORITY, ifa->rt_priority))
+		goto error;
 
-	अगर (put_cacheinfo(skb, अगरa->cstamp, अगरa->tstamp, preferred, valid) < 0)
-		जाओ error;
+	if (put_cacheinfo(skb, ifa->cstamp, ifa->tstamp, preferred, valid) < 0)
+		goto error;
 
-	अगर (nla_put_u32(skb, IFA_FLAGS, अगरa->flags) < 0)
-		जाओ error;
+	if (nla_put_u32(skb, IFA_FLAGS, ifa->flags) < 0)
+		goto error;
 
 	nlmsg_end(skb, nlh);
-	वापस 0;
+	return 0;
 
 error:
 	nlmsg_cancel(skb, nlh);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल पूर्णांक inet6_fill_अगरmcaddr(काष्ठा sk_buff *skb, काष्ठा अगरmcaddr6 *अगरmca,
-			       काष्ठा inet6_fill_args *args)
-अणु
-	काष्ठा nlmsghdr  *nlh;
+static int inet6_fill_ifmcaddr(struct sk_buff *skb, struct ifmcaddr6 *ifmca,
+			       struct inet6_fill_args *args)
+{
+	struct nlmsghdr  *nlh;
 	u8 scope = RT_SCOPE_UNIVERSE;
-	पूर्णांक अगरindex = अगरmca->idev->dev->अगरindex;
+	int ifindex = ifmca->idev->dev->ifindex;
 
-	अगर (ipv6_addr_scope(&अगरmca->mca_addr) & IFA_SITE)
+	if (ipv6_addr_scope(&ifmca->mca_addr) & IFA_SITE)
 		scope = RT_SCOPE_SITE;
 
 	nlh = nlmsg_put(skb, args->portid, args->seq, args->event,
-			माप(काष्ठा अगरaddrmsg), args->flags);
-	अगर (!nlh)
-		वापस -EMSGSIZE;
+			sizeof(struct ifaddrmsg), args->flags);
+	if (!nlh)
+		return -EMSGSIZE;
 
-	अगर (args->netnsid >= 0 &&
-	    nla_put_s32(skb, IFA_TARGET_NETNSID, args->netnsid)) अणु
+	if (args->netnsid >= 0 &&
+	    nla_put_s32(skb, IFA_TARGET_NETNSID, args->netnsid)) {
 		nlmsg_cancel(skb, nlh);
-		वापस -EMSGSIZE;
-	पूर्ण
+		return -EMSGSIZE;
+	}
 
-	put_अगरaddrmsg(nlh, 128, IFA_F_PERMANENT, scope, अगरindex);
-	अगर (nla_put_in6_addr(skb, IFA_MULTICAST, &अगरmca->mca_addr) < 0 ||
-	    put_cacheinfo(skb, अगरmca->mca_cstamp, अगरmca->mca_tstamp,
-			  अनन्त_LIFE_TIME, अनन्त_LIFE_TIME) < 0) अणु
+	put_ifaddrmsg(nlh, 128, IFA_F_PERMANENT, scope, ifindex);
+	if (nla_put_in6_addr(skb, IFA_MULTICAST, &ifmca->mca_addr) < 0 ||
+	    put_cacheinfo(skb, ifmca->mca_cstamp, ifmca->mca_tstamp,
+			  INFINITY_LIFE_TIME, INFINITY_LIFE_TIME) < 0) {
 		nlmsg_cancel(skb, nlh);
-		वापस -EMSGSIZE;
-	पूर्ण
+		return -EMSGSIZE;
+	}
 
 	nlmsg_end(skb, nlh);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक inet6_fill_अगरacaddr(काष्ठा sk_buff *skb, काष्ठा अगरacaddr6 *अगरaca,
-			       काष्ठा inet6_fill_args *args)
-अणु
-	काष्ठा net_device *dev = fib6_info_nh_dev(अगरaca->aca_rt);
-	पूर्णांक अगरindex = dev ? dev->अगरindex : 1;
-	काष्ठा nlmsghdr  *nlh;
+static int inet6_fill_ifacaddr(struct sk_buff *skb, struct ifacaddr6 *ifaca,
+			       struct inet6_fill_args *args)
+{
+	struct net_device *dev = fib6_info_nh_dev(ifaca->aca_rt);
+	int ifindex = dev ? dev->ifindex : 1;
+	struct nlmsghdr  *nlh;
 	u8 scope = RT_SCOPE_UNIVERSE;
 
-	अगर (ipv6_addr_scope(&अगरaca->aca_addr) & IFA_SITE)
+	if (ipv6_addr_scope(&ifaca->aca_addr) & IFA_SITE)
 		scope = RT_SCOPE_SITE;
 
 	nlh = nlmsg_put(skb, args->portid, args->seq, args->event,
-			माप(काष्ठा अगरaddrmsg), args->flags);
-	अगर (!nlh)
-		वापस -EMSGSIZE;
+			sizeof(struct ifaddrmsg), args->flags);
+	if (!nlh)
+		return -EMSGSIZE;
 
-	अगर (args->netnsid >= 0 &&
-	    nla_put_s32(skb, IFA_TARGET_NETNSID, args->netnsid)) अणु
+	if (args->netnsid >= 0 &&
+	    nla_put_s32(skb, IFA_TARGET_NETNSID, args->netnsid)) {
 		nlmsg_cancel(skb, nlh);
-		वापस -EMSGSIZE;
-	पूर्ण
+		return -EMSGSIZE;
+	}
 
-	put_अगरaddrmsg(nlh, 128, IFA_F_PERMANENT, scope, अगरindex);
-	अगर (nla_put_in6_addr(skb, IFA_ANYCAST, &अगरaca->aca_addr) < 0 ||
-	    put_cacheinfo(skb, अगरaca->aca_cstamp, अगरaca->aca_tstamp,
-			  अनन्त_LIFE_TIME, अनन्त_LIFE_TIME) < 0) अणु
+	put_ifaddrmsg(nlh, 128, IFA_F_PERMANENT, scope, ifindex);
+	if (nla_put_in6_addr(skb, IFA_ANYCAST, &ifaca->aca_addr) < 0 ||
+	    put_cacheinfo(skb, ifaca->aca_cstamp, ifaca->aca_tstamp,
+			  INFINITY_LIFE_TIME, INFINITY_LIFE_TIME) < 0) {
 		nlmsg_cancel(skb, nlh);
-		वापस -EMSGSIZE;
-	पूर्ण
+		return -EMSGSIZE;
+	}
 
 	nlmsg_end(skb, nlh);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* called with rcu_पढ़ो_lock() */
-अटल पूर्णांक in6_dump_addrs(काष्ठा inet6_dev *idev, काष्ठा sk_buff *skb,
-			  काष्ठा netlink_callback *cb, पूर्णांक s_ip_idx,
-			  काष्ठा inet6_fill_args *fillargs)
-अणु
-	काष्ठा अगरmcaddr6 *अगरmca;
-	काष्ठा अगरacaddr6 *अगरaca;
-	पूर्णांक ip_idx = 0;
-	पूर्णांक err = 1;
+/* called with rcu_read_lock() */
+static int in6_dump_addrs(struct inet6_dev *idev, struct sk_buff *skb,
+			  struct netlink_callback *cb, int s_ip_idx,
+			  struct inet6_fill_args *fillargs)
+{
+	struct ifmcaddr6 *ifmca;
+	struct ifacaddr6 *ifaca;
+	int ip_idx = 0;
+	int err = 1;
 
-	पढ़ो_lock_bh(&idev->lock);
-	चयन (fillargs->type) अणु
-	हाल UNICAST_ADDR: अणु
-		काष्ठा inet6_अगरaddr *अगरa;
+	read_lock_bh(&idev->lock);
+	switch (fillargs->type) {
+	case UNICAST_ADDR: {
+		struct inet6_ifaddr *ifa;
 		fillargs->event = RTM_NEWADDR;
 
 		/* unicast address incl. temp addr */
-		list_क्रम_each_entry(अगरa, &idev->addr_list, अगर_list) अणु
-			अगर (ip_idx < s_ip_idx)
-				जाओ next;
-			err = inet6_fill_अगरaddr(skb, अगरa, fillargs);
-			अगर (err < 0)
-				अवरोध;
+		list_for_each_entry(ifa, &idev->addr_list, if_list) {
+			if (ip_idx < s_ip_idx)
+				goto next;
+			err = inet6_fill_ifaddr(skb, ifa, fillargs);
+			if (err < 0)
+				break;
 			nl_dump_check_consistent(cb, nlmsg_hdr(skb));
 next:
 			ip_idx++;
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	हाल MULTICAST_ADDR:
-		पढ़ो_unlock_bh(&idev->lock);
+		}
+		break;
+	}
+	case MULTICAST_ADDR:
+		read_unlock_bh(&idev->lock);
 		fillargs->event = RTM_GETMULTICAST;
 
 		/* multicast address */
-		क्रम (अगरmca = rcu_dereference(idev->mc_list);
-		     अगरmca;
-		     अगरmca = rcu_dereference(अगरmca->next), ip_idx++) अणु
-			अगर (ip_idx < s_ip_idx)
-				जारी;
-			err = inet6_fill_अगरmcaddr(skb, अगरmca, fillargs);
-			अगर (err < 0)
-				अवरोध;
-		पूर्ण
-		पढ़ो_lock_bh(&idev->lock);
-		अवरोध;
-	हाल ANYCAST_ADDR:
+		for (ifmca = rcu_dereference(idev->mc_list);
+		     ifmca;
+		     ifmca = rcu_dereference(ifmca->next), ip_idx++) {
+			if (ip_idx < s_ip_idx)
+				continue;
+			err = inet6_fill_ifmcaddr(skb, ifmca, fillargs);
+			if (err < 0)
+				break;
+		}
+		read_lock_bh(&idev->lock);
+		break;
+	case ANYCAST_ADDR:
 		fillargs->event = RTM_GETANYCAST;
 		/* anycast address */
-		क्रम (अगरaca = idev->ac_list; अगरaca;
-		     अगरaca = अगरaca->aca_next, ip_idx++) अणु
-			अगर (ip_idx < s_ip_idx)
-				जारी;
-			err = inet6_fill_अगरacaddr(skb, अगरaca, fillargs);
-			अगर (err < 0)
-				अवरोध;
-		पूर्ण
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-	पढ़ो_unlock_bh(&idev->lock);
+		for (ifaca = idev->ac_list; ifaca;
+		     ifaca = ifaca->aca_next, ip_idx++) {
+			if (ip_idx < s_ip_idx)
+				continue;
+			err = inet6_fill_ifacaddr(skb, ifaca, fillargs);
+			if (err < 0)
+				break;
+		}
+		break;
+	default:
+		break;
+	}
+	read_unlock_bh(&idev->lock);
 	cb->args[2] = ip_idx;
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक inet6_valid_dump_अगरaddr_req(स्थिर काष्ठा nlmsghdr *nlh,
-				       काष्ठा inet6_fill_args *fillargs,
-				       काष्ठा net **tgt_net, काष्ठा sock *sk,
-				       काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा netlink_ext_ack *extack = cb->extack;
-	काष्ठा nlattr *tb[IFA_MAX+1];
-	काष्ठा अगरaddrmsg *अगरm;
-	पूर्णांक err, i;
+static int inet6_valid_dump_ifaddr_req(const struct nlmsghdr *nlh,
+				       struct inet6_fill_args *fillargs,
+				       struct net **tgt_net, struct sock *sk,
+				       struct netlink_callback *cb)
+{
+	struct netlink_ext_ack *extack = cb->extack;
+	struct nlattr *tb[IFA_MAX+1];
+	struct ifaddrmsg *ifm;
+	int err, i;
 
-	अगर (nlh->nlmsg_len < nlmsg_msg_size(माप(*अगरm))) अणु
+	if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*ifm))) {
 		NL_SET_ERR_MSG_MOD(extack, "Invalid header for address dump request");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगरm = nlmsg_data(nlh);
-	अगर (अगरm->अगरa_prefixlen || अगरm->अगरa_flags || अगरm->अगरa_scope) अणु
+	ifm = nlmsg_data(nlh);
+	if (ifm->ifa_prefixlen || ifm->ifa_flags || ifm->ifa_scope) {
 		NL_SET_ERR_MSG_MOD(extack, "Invalid values in header for address dump request");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	fillargs->अगरindex = अगरm->अगरa_index;
-	अगर (fillargs->अगरindex) अणु
+	fillargs->ifindex = ifm->ifa_index;
+	if (fillargs->ifindex) {
 		cb->answer_flags |= NLM_F_DUMP_FILTERED;
 		fillargs->flags |= NLM_F_DUMP_FILTERED;
-	पूर्ण
+	}
 
-	err = nlmsg_parse_deprecated_strict(nlh, माप(*अगरm), tb, IFA_MAX,
-					    अगरa_ipv6_policy, extack);
-	अगर (err < 0)
-		वापस err;
+	err = nlmsg_parse_deprecated_strict(nlh, sizeof(*ifm), tb, IFA_MAX,
+					    ifa_ipv6_policy, extack);
+	if (err < 0)
+		return err;
 
-	क्रम (i = 0; i <= IFA_MAX; ++i) अणु
-		अगर (!tb[i])
-			जारी;
+	for (i = 0; i <= IFA_MAX; ++i) {
+		if (!tb[i])
+			continue;
 
-		अगर (i == IFA_TARGET_NETNSID) अणु
-			काष्ठा net *net;
+		if (i == IFA_TARGET_NETNSID) {
+			struct net *net;
 
 			fillargs->netnsid = nla_get_s32(tb[i]);
 			net = rtnl_get_net_ns_capable(sk, fillargs->netnsid);
-			अगर (IS_ERR(net)) अणु
+			if (IS_ERR(net)) {
 				fillargs->netnsid = -1;
 				NL_SET_ERR_MSG_MOD(extack, "Invalid target network namespace id");
-				वापस PTR_ERR(net);
-			पूर्ण
+				return PTR_ERR(net);
+			}
 			*tgt_net = net;
-		पूर्ण अन्यथा अणु
+		} else {
 			NL_SET_ERR_MSG_MOD(extack, "Unsupported attribute in dump request");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक inet6_dump_addr(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb,
-			   क्रमागत addr_type_t type)
-अणु
-	स्थिर काष्ठा nlmsghdr *nlh = cb->nlh;
-	काष्ठा inet6_fill_args fillargs = अणु
+static int inet6_dump_addr(struct sk_buff *skb, struct netlink_callback *cb,
+			   enum addr_type_t type)
+{
+	const struct nlmsghdr *nlh = cb->nlh;
+	struct inet6_fill_args fillargs = {
 		.portid = NETLINK_CB(cb->skb).portid,
 		.seq = cb->nlh->nlmsg_seq,
 		.flags = NLM_F_MULTI,
 		.netnsid = -1,
 		.type = type,
-	पूर्ण;
-	काष्ठा net *net = sock_net(skb->sk);
-	काष्ठा net *tgt_net = net;
-	पूर्णांक idx, s_idx, s_ip_idx;
-	पूर्णांक h, s_h;
-	काष्ठा net_device *dev;
-	काष्ठा inet6_dev *idev;
-	काष्ठा hlist_head *head;
-	पूर्णांक err = 0;
+	};
+	struct net *net = sock_net(skb->sk);
+	struct net *tgt_net = net;
+	int idx, s_idx, s_ip_idx;
+	int h, s_h;
+	struct net_device *dev;
+	struct inet6_dev *idev;
+	struct hlist_head *head;
+	int err = 0;
 
 	s_h = cb->args[0];
 	s_idx = idx = cb->args[1];
 	s_ip_idx = cb->args[2];
 
-	अगर (cb->strict_check) अणु
-		err = inet6_valid_dump_अगरaddr_req(nlh, &fillargs, &tgt_net,
+	if (cb->strict_check) {
+		err = inet6_valid_dump_ifaddr_req(nlh, &fillargs, &tgt_net,
 						  skb->sk, cb);
-		अगर (err < 0)
-			जाओ put_tgt_net;
+		if (err < 0)
+			goto put_tgt_net;
 
 		err = 0;
-		अगर (fillargs.अगरindex) अणु
-			dev = __dev_get_by_index(tgt_net, fillargs.अगरindex);
-			अगर (!dev) अणु
+		if (fillargs.ifindex) {
+			dev = __dev_get_by_index(tgt_net, fillargs.ifindex);
+			if (!dev) {
 				err = -ENODEV;
-				जाओ put_tgt_net;
-			पूर्ण
+				goto put_tgt_net;
+			}
 			idev = __in6_dev_get(dev);
-			अगर (idev) अणु
+			if (idev) {
 				err = in6_dump_addrs(idev, skb, cb, s_ip_idx,
 						     &fillargs);
-				अगर (err > 0)
+				if (err > 0)
 					err = 0;
-			पूर्ण
-			जाओ put_tgt_net;
-		पूर्ण
-	पूर्ण
+			}
+			goto put_tgt_net;
+		}
+	}
 
-	rcu_पढ़ो_lock();
-	cb->seq = atomic_पढ़ो(&tgt_net->ipv6.dev_addr_genid) ^ tgt_net->dev_base_seq;
-	क्रम (h = s_h; h < NETDEV_HASHENTRIES; h++, s_idx = 0) अणु
+	rcu_read_lock();
+	cb->seq = atomic_read(&tgt_net->ipv6.dev_addr_genid) ^ tgt_net->dev_base_seq;
+	for (h = s_h; h < NETDEV_HASHENTRIES; h++, s_idx = 0) {
 		idx = 0;
 		head = &tgt_net->dev_index_head[h];
-		hlist_क्रम_each_entry_rcu(dev, head, index_hlist) अणु
-			अगर (idx < s_idx)
-				जाओ cont;
-			अगर (h > s_h || idx > s_idx)
+		hlist_for_each_entry_rcu(dev, head, index_hlist) {
+			if (idx < s_idx)
+				goto cont;
+			if (h > s_h || idx > s_idx)
 				s_ip_idx = 0;
 			idev = __in6_dev_get(dev);
-			अगर (!idev)
-				जाओ cont;
+			if (!idev)
+				goto cont;
 
-			अगर (in6_dump_addrs(idev, skb, cb, s_ip_idx,
+			if (in6_dump_addrs(idev, skb, cb, s_ip_idx,
 					   &fillargs) < 0)
-				जाओ करोne;
+				goto done;
 cont:
 			idx++;
-		पूर्ण
-	पूर्ण
-करोne:
-	rcu_पढ़ो_unlock();
+		}
+	}
+done:
+	rcu_read_unlock();
 	cb->args[0] = h;
 	cb->args[1] = idx;
 put_tgt_net:
-	अगर (fillargs.netnsid >= 0)
+	if (fillargs.netnsid >= 0)
 		put_net(tgt_net);
 
-	वापस skb->len ? : err;
-पूर्ण
+	return skb->len ? : err;
+}
 
-अटल पूर्णांक inet6_dump_अगरaddr(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
-अणु
-	क्रमागत addr_type_t type = UNICAST_ADDR;
+static int inet6_dump_ifaddr(struct sk_buff *skb, struct netlink_callback *cb)
+{
+	enum addr_type_t type = UNICAST_ADDR;
 
-	वापस inet6_dump_addr(skb, cb, type);
-पूर्ण
+	return inet6_dump_addr(skb, cb, type);
+}
 
-अटल पूर्णांक inet6_dump_अगरmcaddr(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
-अणु
-	क्रमागत addr_type_t type = MULTICAST_ADDR;
+static int inet6_dump_ifmcaddr(struct sk_buff *skb, struct netlink_callback *cb)
+{
+	enum addr_type_t type = MULTICAST_ADDR;
 
-	वापस inet6_dump_addr(skb, cb, type);
-पूर्ण
+	return inet6_dump_addr(skb, cb, type);
+}
 
 
-अटल पूर्णांक inet6_dump_अगरacaddr(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
-अणु
-	क्रमागत addr_type_t type = ANYCAST_ADDR;
+static int inet6_dump_ifacaddr(struct sk_buff *skb, struct netlink_callback *cb)
+{
+	enum addr_type_t type = ANYCAST_ADDR;
 
-	वापस inet6_dump_addr(skb, cb, type);
-पूर्ण
+	return inet6_dump_addr(skb, cb, type);
+}
 
-अटल पूर्णांक inet6_rपंचांग_valid_getaddr_req(काष्ठा sk_buff *skb,
-				       स्थिर काष्ठा nlmsghdr *nlh,
-				       काष्ठा nlattr **tb,
-				       काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा अगरaddrmsg *अगरm;
-	पूर्णांक i, err;
+static int inet6_rtm_valid_getaddr_req(struct sk_buff *skb,
+				       const struct nlmsghdr *nlh,
+				       struct nlattr **tb,
+				       struct netlink_ext_ack *extack)
+{
+	struct ifaddrmsg *ifm;
+	int i, err;
 
-	अगर (nlh->nlmsg_len < nlmsg_msg_size(माप(*अगरm))) अणु
+	if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*ifm))) {
 		NL_SET_ERR_MSG_MOD(extack, "Invalid header for get address request");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!netlink_strict_get_check(skb))
-		वापस nlmsg_parse_deprecated(nlh, माप(*अगरm), tb, IFA_MAX,
-					      अगरa_ipv6_policy, extack);
+	if (!netlink_strict_get_check(skb))
+		return nlmsg_parse_deprecated(nlh, sizeof(*ifm), tb, IFA_MAX,
+					      ifa_ipv6_policy, extack);
 
-	अगरm = nlmsg_data(nlh);
-	अगर (अगरm->अगरa_prefixlen || अगरm->अगरa_flags || अगरm->अगरa_scope) अणु
+	ifm = nlmsg_data(nlh);
+	if (ifm->ifa_prefixlen || ifm->ifa_flags || ifm->ifa_scope) {
 		NL_SET_ERR_MSG_MOD(extack, "Invalid values in header for get address request");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	err = nlmsg_parse_deprecated_strict(nlh, माप(*अगरm), tb, IFA_MAX,
-					    अगरa_ipv6_policy, extack);
-	अगर (err)
-		वापस err;
+	err = nlmsg_parse_deprecated_strict(nlh, sizeof(*ifm), tb, IFA_MAX,
+					    ifa_ipv6_policy, extack);
+	if (err)
+		return err;
 
-	क्रम (i = 0; i <= IFA_MAX; i++) अणु
-		अगर (!tb[i])
-			जारी;
+	for (i = 0; i <= IFA_MAX; i++) {
+		if (!tb[i])
+			continue;
 
-		चयन (i) अणु
-		हाल IFA_TARGET_NETNSID:
-		हाल IFA_ADDRESS:
-		हाल IFA_LOCAL:
-			अवरोध;
-		शेष:
+		switch (i) {
+		case IFA_TARGET_NETNSID:
+		case IFA_ADDRESS:
+		case IFA_LOCAL:
+			break;
+		default:
 			NL_SET_ERR_MSG_MOD(extack, "Unsupported attribute in get address request");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक inet6_rपंचांग_getaddr(काष्ठा sk_buff *in_skb, काष्ठा nlmsghdr *nlh,
-			     काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा net *net = sock_net(in_skb->sk);
-	काष्ठा inet6_fill_args fillargs = अणु
+static int inet6_rtm_getaddr(struct sk_buff *in_skb, struct nlmsghdr *nlh,
+			     struct netlink_ext_ack *extack)
+{
+	struct net *net = sock_net(in_skb->sk);
+	struct inet6_fill_args fillargs = {
 		.portid = NETLINK_CB(in_skb).portid,
 		.seq = nlh->nlmsg_seq,
 		.event = RTM_NEWADDR,
 		.flags = 0,
 		.netnsid = -1,
-	पूर्ण;
-	काष्ठा net *tgt_net = net;
-	काष्ठा अगरaddrmsg *अगरm;
-	काष्ठा nlattr *tb[IFA_MAX+1];
-	काष्ठा in6_addr *addr = शून्य, *peer;
-	काष्ठा net_device *dev = शून्य;
-	काष्ठा inet6_अगरaddr *अगरa;
-	काष्ठा sk_buff *skb;
-	पूर्णांक err;
+	};
+	struct net *tgt_net = net;
+	struct ifaddrmsg *ifm;
+	struct nlattr *tb[IFA_MAX+1];
+	struct in6_addr *addr = NULL, *peer;
+	struct net_device *dev = NULL;
+	struct inet6_ifaddr *ifa;
+	struct sk_buff *skb;
+	int err;
 
-	err = inet6_rपंचांग_valid_getaddr_req(in_skb, nlh, tb, extack);
-	अगर (err < 0)
-		वापस err;
+	err = inet6_rtm_valid_getaddr_req(in_skb, nlh, tb, extack);
+	if (err < 0)
+		return err;
 
-	अगर (tb[IFA_TARGET_NETNSID]) अणु
+	if (tb[IFA_TARGET_NETNSID]) {
 		fillargs.netnsid = nla_get_s32(tb[IFA_TARGET_NETNSID]);
 
 		tgt_net = rtnl_get_net_ns_capable(NETLINK_CB(in_skb).sk,
 						  fillargs.netnsid);
-		अगर (IS_ERR(tgt_net))
-			वापस PTR_ERR(tgt_net);
-	पूर्ण
+		if (IS_ERR(tgt_net))
+			return PTR_ERR(tgt_net);
+	}
 
 	addr = extract_addr(tb[IFA_ADDRESS], tb[IFA_LOCAL], &peer);
-	अगर (!addr)
-		वापस -EINVAL;
+	if (!addr)
+		return -EINVAL;
 
-	अगरm = nlmsg_data(nlh);
-	अगर (अगरm->अगरa_index)
-		dev = dev_get_by_index(tgt_net, अगरm->अगरa_index);
+	ifm = nlmsg_data(nlh);
+	if (ifm->ifa_index)
+		dev = dev_get_by_index(tgt_net, ifm->ifa_index);
 
-	अगरa = ipv6_get_अगरaddr(tgt_net, addr, dev, 1);
-	अगर (!अगरa) अणु
+	ifa = ipv6_get_ifaddr(tgt_net, addr, dev, 1);
+	if (!ifa) {
 		err = -EADDRNOTAVAIL;
-		जाओ errout;
-	पूर्ण
+		goto errout;
+	}
 
-	skb = nlmsg_new(inet6_अगरaddr_msgsize(), GFP_KERNEL);
-	अगर (!skb) अणु
+	skb = nlmsg_new(inet6_ifaddr_msgsize(), GFP_KERNEL);
+	if (!skb) {
 		err = -ENOBUFS;
-		जाओ errout_अगरa;
-	पूर्ण
+		goto errout_ifa;
+	}
 
-	err = inet6_fill_अगरaddr(skb, अगरa, &fillargs);
-	अगर (err < 0) अणु
-		/* -EMSGSIZE implies BUG in inet6_अगरaddr_msgsize() */
+	err = inet6_fill_ifaddr(skb, ifa, &fillargs);
+	if (err < 0) {
+		/* -EMSGSIZE implies BUG in inet6_ifaddr_msgsize() */
 		WARN_ON(err == -EMSGSIZE);
-		kमुक्त_skb(skb);
-		जाओ errout_अगरa;
-	पूर्ण
+		kfree_skb(skb);
+		goto errout_ifa;
+	}
 	err = rtnl_unicast(skb, tgt_net, NETLINK_CB(in_skb).portid);
-errout_अगरa:
-	in6_अगरa_put(अगरa);
+errout_ifa:
+	in6_ifa_put(ifa);
 errout:
-	अगर (dev)
+	if (dev)
 		dev_put(dev);
-	अगर (fillargs.netnsid >= 0)
+	if (fillargs.netnsid >= 0)
 		put_net(tgt_net);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम inet6_अगरa_notअगरy(पूर्णांक event, काष्ठा inet6_अगरaddr *अगरa)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा net *net = dev_net(अगरa->idev->dev);
-	काष्ठा inet6_fill_args fillargs = अणु
+static void inet6_ifa_notify(int event, struct inet6_ifaddr *ifa)
+{
+	struct sk_buff *skb;
+	struct net *net = dev_net(ifa->idev->dev);
+	struct inet6_fill_args fillargs = {
 		.portid = 0,
 		.seq = 0,
 		.event = event,
 		.flags = 0,
 		.netnsid = -1,
-	पूर्ण;
-	पूर्णांक err = -ENOBUFS;
+	};
+	int err = -ENOBUFS;
 
-	skb = nlmsg_new(inet6_अगरaddr_msgsize(), GFP_ATOMIC);
-	अगर (!skb)
-		जाओ errout;
+	skb = nlmsg_new(inet6_ifaddr_msgsize(), GFP_ATOMIC);
+	if (!skb)
+		goto errout;
 
-	err = inet6_fill_अगरaddr(skb, अगरa, &fillargs);
-	अगर (err < 0) अणु
-		/* -EMSGSIZE implies BUG in inet6_अगरaddr_msgsize() */
+	err = inet6_fill_ifaddr(skb, ifa, &fillargs);
+	if (err < 0) {
+		/* -EMSGSIZE implies BUG in inet6_ifaddr_msgsize() */
 		WARN_ON(err == -EMSGSIZE);
-		kमुक्त_skb(skb);
-		जाओ errout;
-	पूर्ण
-	rtnl_notअगरy(skb, net, 0, RTNLGRP_IPV6_IFADDR, शून्य, GFP_ATOMIC);
-	वापस;
+		kfree_skb(skb);
+		goto errout;
+	}
+	rtnl_notify(skb, net, 0, RTNLGRP_IPV6_IFADDR, NULL, GFP_ATOMIC);
+	return;
 errout:
-	अगर (err < 0)
+	if (err < 0)
 		rtnl_set_sk_err(net, RTNLGRP_IPV6_IFADDR, err);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ipv6_store_devconf(काष्ठा ipv6_devconf *cnf,
-				__s32 *array, पूर्णांक bytes)
-अणु
+static inline void ipv6_store_devconf(struct ipv6_devconf *cnf,
+				__s32 *array, int bytes)
+{
 	BUG_ON(bytes < (DEVCONF_MAX * 4));
 
-	स_रखो(array, 0, bytes);
-	array[DEVCONF_FORWARDING] = cnf->क्रमwarding;
+	memset(array, 0, bytes);
+	array[DEVCONF_FORWARDING] = cnf->forwarding;
 	array[DEVCONF_HOPLIMIT] = cnf->hop_limit;
 	array[DEVCONF_MTU6] = cnf->mtu6;
 	array[DEVCONF_ACCEPT_RA] = cnf->accept_ra;
-	array[DEVCONF_ACCEPT_REसूचीECTS] = cnf->accept_redirects;
-	array[DEVCONF_AUTOCONF] = cnf->स्वतःconf;
+	array[DEVCONF_ACCEPT_REDIRECTS] = cnf->accept_redirects;
+	array[DEVCONF_AUTOCONF] = cnf->autoconf;
 	array[DEVCONF_DAD_TRANSMITS] = cnf->dad_transmits;
 	array[DEVCONF_RTR_SOLICITS] = cnf->rtr_solicits;
 	array[DEVCONF_RTR_SOLICIT_INTERVAL] =
-		jअगरfies_to_msecs(cnf->rtr_solicit_पूर्णांकerval);
+		jiffies_to_msecs(cnf->rtr_solicit_interval);
 	array[DEVCONF_RTR_SOLICIT_MAX_INTERVAL] =
-		jअगरfies_to_msecs(cnf->rtr_solicit_max_पूर्णांकerval);
+		jiffies_to_msecs(cnf->rtr_solicit_max_interval);
 	array[DEVCONF_RTR_SOLICIT_DELAY] =
-		jअगरfies_to_msecs(cnf->rtr_solicit_delay);
-	array[DEVCONF_FORCE_MLD_VERSION] = cnf->क्रमce_mld_version;
+		jiffies_to_msecs(cnf->rtr_solicit_delay);
+	array[DEVCONF_FORCE_MLD_VERSION] = cnf->force_mld_version;
 	array[DEVCONF_MLDV1_UNSOLICITED_REPORT_INTERVAL] =
-		jअगरfies_to_msecs(cnf->mldv1_unsolicited_report_पूर्णांकerval);
+		jiffies_to_msecs(cnf->mldv1_unsolicited_report_interval);
 	array[DEVCONF_MLDV2_UNSOLICITED_REPORT_INTERVAL] =
-		jअगरfies_to_msecs(cnf->mldv2_unsolicited_report_पूर्णांकerval);
+		jiffies_to_msecs(cnf->mldv2_unsolicited_report_interval);
 	array[DEVCONF_USE_TEMPADDR] = cnf->use_tempaddr;
 	array[DEVCONF_TEMP_VALID_LFT] = cnf->temp_valid_lft;
 	array[DEVCONF_TEMP_PREFERED_LFT] = cnf->temp_prefered_lft;
@@ -5487,1586 +5486,1586 @@ errout:
 	array[DEVCONF_RA_DEFRTR_METRIC] = cnf->ra_defrtr_metric;
 	array[DEVCONF_ACCEPT_RA_MIN_HOP_LIMIT] = cnf->accept_ra_min_hop_limit;
 	array[DEVCONF_ACCEPT_RA_PINFO] = cnf->accept_ra_pinfo;
-#अगर_घोषित CONFIG_IPV6_ROUTER_PREF
+#ifdef CONFIG_IPV6_ROUTER_PREF
 	array[DEVCONF_ACCEPT_RA_RTR_PREF] = cnf->accept_ra_rtr_pref;
 	array[DEVCONF_RTR_PROBE_INTERVAL] =
-		jअगरfies_to_msecs(cnf->rtr_probe_पूर्णांकerval);
-#अगर_घोषित CONFIG_IPV6_ROUTE_INFO
+		jiffies_to_msecs(cnf->rtr_probe_interval);
+#ifdef CONFIG_IPV6_ROUTE_INFO
 	array[DEVCONF_ACCEPT_RA_RT_INFO_MIN_PLEN] = cnf->accept_ra_rt_info_min_plen;
 	array[DEVCONF_ACCEPT_RA_RT_INFO_MAX_PLEN] = cnf->accept_ra_rt_info_max_plen;
-#पूर्ण_अगर
-#पूर्ण_अगर
+#endif
+#endif
 	array[DEVCONF_PROXY_NDP] = cnf->proxy_ndp;
 	array[DEVCONF_ACCEPT_SOURCE_ROUTE] = cnf->accept_source_route;
-#अगर_घोषित CONFIG_IPV6_OPTIMISTIC_DAD
+#ifdef CONFIG_IPV6_OPTIMISTIC_DAD
 	array[DEVCONF_OPTIMISTIC_DAD] = cnf->optimistic_dad;
 	array[DEVCONF_USE_OPTIMISTIC] = cnf->use_optimistic;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_IPV6_MROUTE
-	array[DEVCONF_MC_FORWARDING] = cnf->mc_क्रमwarding;
-#पूर्ण_अगर
+#endif
+#ifdef CONFIG_IPV6_MROUTE
+	array[DEVCONF_MC_FORWARDING] = cnf->mc_forwarding;
+#endif
 	array[DEVCONF_DISABLE_IPV6] = cnf->disable_ipv6;
 	array[DEVCONF_ACCEPT_DAD] = cnf->accept_dad;
-	array[DEVCONF_FORCE_TLLAO] = cnf->क्रमce_tllao;
-	array[DEVCONF_NDISC_NOTIFY] = cnf->ndisc_notअगरy;
+	array[DEVCONF_FORCE_TLLAO] = cnf->force_tllao;
+	array[DEVCONF_NDISC_NOTIFY] = cnf->ndisc_notify;
 	array[DEVCONF_SUPPRESS_FRAG_NDISC] = cnf->suppress_frag_ndisc;
 	array[DEVCONF_ACCEPT_RA_FROM_LOCAL] = cnf->accept_ra_from_local;
 	array[DEVCONF_ACCEPT_RA_MTU] = cnf->accept_ra_mtu;
-	array[DEVCONF_IGNORE_ROUTES_WITH_LINKDOWN] = cnf->ignore_routes_with_linkकरोwn;
-	/* we omit DEVCONF_STABLE_SECRET क्रम now */
-	array[DEVCONF_USE_OIF_ADDRS_ONLY] = cnf->use_oअगर_addrs_only;
+	array[DEVCONF_IGNORE_ROUTES_WITH_LINKDOWN] = cnf->ignore_routes_with_linkdown;
+	/* we omit DEVCONF_STABLE_SECRET for now */
+	array[DEVCONF_USE_OIF_ADDRS_ONLY] = cnf->use_oif_addrs_only;
 	array[DEVCONF_DROP_UNICAST_IN_L2_MULTICAST] = cnf->drop_unicast_in_l2_multicast;
 	array[DEVCONF_DROP_UNSOLICITED_NA] = cnf->drop_unsolicited_na;
-	array[DEVCONF_KEEP_ADDR_ON_DOWN] = cnf->keep_addr_on_करोwn;
+	array[DEVCONF_KEEP_ADDR_ON_DOWN] = cnf->keep_addr_on_down;
 	array[DEVCONF_SEG6_ENABLED] = cnf->seg6_enabled;
-#अगर_घोषित CONFIG_IPV6_SEG6_HMAC
+#ifdef CONFIG_IPV6_SEG6_HMAC
 	array[DEVCONF_SEG6_REQUIRE_HMAC] = cnf->seg6_require_hmac;
-#पूर्ण_अगर
+#endif
 	array[DEVCONF_ENHANCED_DAD] = cnf->enhanced_dad;
 	array[DEVCONF_ADDR_GEN_MODE] = cnf->addr_gen_mode;
 	array[DEVCONF_DISABLE_POLICY] = cnf->disable_policy;
 	array[DEVCONF_NDISC_TCLASS] = cnf->ndisc_tclass;
 	array[DEVCONF_RPL_SEG_ENABLED] = cnf->rpl_seg_enabled;
-पूर्ण
+}
 
-अटल अंतरभूत माप_प्रकार inet6_अगरla6_size(व्योम)
-अणु
-	वापस nla_total_size(4) /* IFLA_INET6_FLAGS */
-	     + nla_total_size(माप(काष्ठा अगरla_cacheinfo))
+static inline size_t inet6_ifla6_size(void)
+{
+	return nla_total_size(4) /* IFLA_INET6_FLAGS */
+	     + nla_total_size(sizeof(struct ifla_cacheinfo))
 	     + nla_total_size(DEVCONF_MAX * 4) /* IFLA_INET6_CONF */
 	     + nla_total_size(IPSTATS_MIB_MAX * 8) /* IFLA_INET6_STATS */
 	     + nla_total_size(ICMP6_MIB_MAX * 8) /* IFLA_INET6_ICMP6STATS */
-	     + nla_total_size(माप(काष्ठा in6_addr)) /* IFLA_INET6_TOKEN */
+	     + nla_total_size(sizeof(struct in6_addr)) /* IFLA_INET6_TOKEN */
 	     + nla_total_size(1) /* IFLA_INET6_ADDR_GEN_MODE */
 	     + 0;
-पूर्ण
+}
 
-अटल अंतरभूत माप_प्रकार inet6_अगर_nlmsg_size(व्योम)
-अणु
-	वापस NLMSG_ALIGN(माप(काष्ठा अगरinfomsg))
+static inline size_t inet6_if_nlmsg_size(void)
+{
+	return NLMSG_ALIGN(sizeof(struct ifinfomsg))
 	       + nla_total_size(IFNAMSIZ) /* IFLA_IFNAME */
 	       + nla_total_size(MAX_ADDR_LEN) /* IFLA_ADDRESS */
 	       + nla_total_size(4) /* IFLA_MTU */
 	       + nla_total_size(4) /* IFLA_LINK */
 	       + nla_total_size(1) /* IFLA_OPERSTATE */
-	       + nla_total_size(inet6_अगरla6_size()); /* IFLA_PROTINFO */
-पूर्ण
+	       + nla_total_size(inet6_ifla6_size()); /* IFLA_PROTINFO */
+}
 
-अटल अंतरभूत व्योम __snmp6_fill_statsdev(u64 *stats, atomic_दीर्घ_t *mib,
-					पूर्णांक bytes)
-अणु
-	पूर्णांक i;
-	पूर्णांक pad = bytes - माप(u64) * ICMP6_MIB_MAX;
+static inline void __snmp6_fill_statsdev(u64 *stats, atomic_long_t *mib,
+					int bytes)
+{
+	int i;
+	int pad = bytes - sizeof(u64) * ICMP6_MIB_MAX;
 	BUG_ON(pad < 0);
 
-	/* Use put_unaligned() because stats may not be aligned क्रम u64. */
+	/* Use put_unaligned() because stats may not be aligned for u64. */
 	put_unaligned(ICMP6_MIB_MAX, &stats[0]);
-	क्रम (i = 1; i < ICMP6_MIB_MAX; i++)
-		put_unaligned(atomic_दीर्घ_पढ़ो(&mib[i]), &stats[i]);
+	for (i = 1; i < ICMP6_MIB_MAX; i++)
+		put_unaligned(atomic_long_read(&mib[i]), &stats[i]);
 
-	स_रखो(&stats[ICMP6_MIB_MAX], 0, pad);
-पूर्ण
+	memset(&stats[ICMP6_MIB_MAX], 0, pad);
+}
 
-अटल अंतरभूत व्योम __snmp6_fill_stats64(u64 *stats, व्योम __percpu *mib,
-					पूर्णांक bytes, माप_प्रकार syncpoff)
-अणु
-	पूर्णांक i, c;
+static inline void __snmp6_fill_stats64(u64 *stats, void __percpu *mib,
+					int bytes, size_t syncpoff)
+{
+	int i, c;
 	u64 buff[IPSTATS_MIB_MAX];
-	पूर्णांक pad = bytes - माप(u64) * IPSTATS_MIB_MAX;
+	int pad = bytes - sizeof(u64) * IPSTATS_MIB_MAX;
 
 	BUG_ON(pad < 0);
 
-	स_रखो(buff, 0, माप(buff));
+	memset(buff, 0, sizeof(buff));
 	buff[0] = IPSTATS_MIB_MAX;
 
-	क्रम_each_possible_cpu(c) अणु
-		क्रम (i = 1; i < IPSTATS_MIB_MAX; i++)
+	for_each_possible_cpu(c) {
+		for (i = 1; i < IPSTATS_MIB_MAX; i++)
 			buff[i] += snmp_get_cpu_field64(mib, c, i, syncpoff);
-	पूर्ण
+	}
 
-	स_नकल(stats, buff, IPSTATS_MIB_MAX * माप(u64));
-	स_रखो(&stats[IPSTATS_MIB_MAX], 0, pad);
-पूर्ण
+	memcpy(stats, buff, IPSTATS_MIB_MAX * sizeof(u64));
+	memset(&stats[IPSTATS_MIB_MAX], 0, pad);
+}
 
-अटल व्योम snmp6_fill_stats(u64 *stats, काष्ठा inet6_dev *idev, पूर्णांक attrtype,
-			     पूर्णांक bytes)
-अणु
-	चयन (attrtype) अणु
-	हाल IFLA_INET6_STATS:
+static void snmp6_fill_stats(u64 *stats, struct inet6_dev *idev, int attrtype,
+			     int bytes)
+{
+	switch (attrtype) {
+	case IFLA_INET6_STATS:
 		__snmp6_fill_stats64(stats, idev->stats.ipv6, bytes,
-				     दुरत्व(काष्ठा ipstats_mib, syncp));
-		अवरोध;
-	हाल IFLA_INET6_ICMP6STATS:
+				     offsetof(struct ipstats_mib, syncp));
+		break;
+	case IFLA_INET6_ICMP6STATS:
 		__snmp6_fill_statsdev(stats, idev->stats.icmpv6dev->mibs, bytes);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल पूर्णांक inet6_fill_अगरla6_attrs(काष्ठा sk_buff *skb, काष्ठा inet6_dev *idev,
+static int inet6_fill_ifla6_attrs(struct sk_buff *skb, struct inet6_dev *idev,
 				  u32 ext_filter_mask)
-अणु
-	काष्ठा nlattr *nla;
-	काष्ठा अगरla_cacheinfo ci;
+{
+	struct nlattr *nla;
+	struct ifla_cacheinfo ci;
 
-	अगर (nla_put_u32(skb, IFLA_INET6_FLAGS, idev->अगर_flags))
-		जाओ nla_put_failure;
-	ci.max_reयंत्र_len = IPV6_MAXPLEN;
+	if (nla_put_u32(skb, IFLA_INET6_FLAGS, idev->if_flags))
+		goto nla_put_failure;
+	ci.max_reasm_len = IPV6_MAXPLEN;
 	ci.tstamp = cstamp_delta(idev->tstamp);
-	ci.reachable_समय = jअगरfies_to_msecs(idev->nd_parms->reachable_समय);
-	ci.retrans_समय = jअगरfies_to_msecs(NEIGH_VAR(idev->nd_parms, RETRANS_TIME));
-	अगर (nla_put(skb, IFLA_INET6_CACHEINFO, माप(ci), &ci))
-		जाओ nla_put_failure;
-	nla = nla_reserve(skb, IFLA_INET6_CONF, DEVCONF_MAX * माप(s32));
-	अगर (!nla)
-		जाओ nla_put_failure;
+	ci.reachable_time = jiffies_to_msecs(idev->nd_parms->reachable_time);
+	ci.retrans_time = jiffies_to_msecs(NEIGH_VAR(idev->nd_parms, RETRANS_TIME));
+	if (nla_put(skb, IFLA_INET6_CACHEINFO, sizeof(ci), &ci))
+		goto nla_put_failure;
+	nla = nla_reserve(skb, IFLA_INET6_CONF, DEVCONF_MAX * sizeof(s32));
+	if (!nla)
+		goto nla_put_failure;
 	ipv6_store_devconf(&idev->cnf, nla_data(nla), nla_len(nla));
 
 	/* XXX - MC not implemented */
 
-	अगर (ext_filter_mask & RTEXT_FILTER_SKIP_STATS)
-		वापस 0;
+	if (ext_filter_mask & RTEXT_FILTER_SKIP_STATS)
+		return 0;
 
-	nla = nla_reserve(skb, IFLA_INET6_STATS, IPSTATS_MIB_MAX * माप(u64));
-	अगर (!nla)
-		जाओ nla_put_failure;
+	nla = nla_reserve(skb, IFLA_INET6_STATS, IPSTATS_MIB_MAX * sizeof(u64));
+	if (!nla)
+		goto nla_put_failure;
 	snmp6_fill_stats(nla_data(nla), idev, IFLA_INET6_STATS, nla_len(nla));
 
-	nla = nla_reserve(skb, IFLA_INET6_ICMP6STATS, ICMP6_MIB_MAX * माप(u64));
-	अगर (!nla)
-		जाओ nla_put_failure;
+	nla = nla_reserve(skb, IFLA_INET6_ICMP6STATS, ICMP6_MIB_MAX * sizeof(u64));
+	if (!nla)
+		goto nla_put_failure;
 	snmp6_fill_stats(nla_data(nla), idev, IFLA_INET6_ICMP6STATS, nla_len(nla));
 
-	nla = nla_reserve(skb, IFLA_INET6_TOKEN, माप(काष्ठा in6_addr));
-	अगर (!nla)
-		जाओ nla_put_failure;
-	पढ़ो_lock_bh(&idev->lock);
-	स_नकल(nla_data(nla), idev->token.s6_addr, nla_len(nla));
-	पढ़ो_unlock_bh(&idev->lock);
+	nla = nla_reserve(skb, IFLA_INET6_TOKEN, sizeof(struct in6_addr));
+	if (!nla)
+		goto nla_put_failure;
+	read_lock_bh(&idev->lock);
+	memcpy(nla_data(nla), idev->token.s6_addr, nla_len(nla));
+	read_unlock_bh(&idev->lock);
 
-	अगर (nla_put_u8(skb, IFLA_INET6_ADDR_GEN_MODE, idev->cnf.addr_gen_mode))
-		जाओ nla_put_failure;
+	if (nla_put_u8(skb, IFLA_INET6_ADDR_GEN_MODE, idev->cnf.addr_gen_mode))
+		goto nla_put_failure;
 
-	वापस 0;
+	return 0;
 
 nla_put_failure:
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल माप_प्रकार inet6_get_link_af_size(स्थिर काष्ठा net_device *dev,
+static size_t inet6_get_link_af_size(const struct net_device *dev,
 				     u32 ext_filter_mask)
-अणु
-	अगर (!__in6_dev_get(dev))
-		वापस 0;
+{
+	if (!__in6_dev_get(dev))
+		return 0;
 
-	वापस inet6_अगरla6_size();
-पूर्ण
+	return inet6_ifla6_size();
+}
 
-अटल पूर्णांक inet6_fill_link_af(काष्ठा sk_buff *skb, स्थिर काष्ठा net_device *dev,
+static int inet6_fill_link_af(struct sk_buff *skb, const struct net_device *dev,
 			      u32 ext_filter_mask)
-अणु
-	काष्ठा inet6_dev *idev = __in6_dev_get(dev);
+{
+	struct inet6_dev *idev = __in6_dev_get(dev);
 
-	अगर (!idev)
-		वापस -ENODATA;
+	if (!idev)
+		return -ENODATA;
 
-	अगर (inet6_fill_अगरla6_attrs(skb, idev, ext_filter_mask) < 0)
-		वापस -EMSGSIZE;
+	if (inet6_fill_ifla6_attrs(skb, idev, ext_filter_mask) < 0)
+		return -EMSGSIZE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक inet6_set_अगरtoken(काष्ठा inet6_dev *idev, काष्ठा in6_addr *token,
-			     काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा inet6_अगरaddr *अगरp;
-	काष्ठा net_device *dev = idev->dev;
+static int inet6_set_iftoken(struct inet6_dev *idev, struct in6_addr *token,
+			     struct netlink_ext_ack *extack)
+{
+	struct inet6_ifaddr *ifp;
+	struct net_device *dev = idev->dev;
 	bool clear_token, update_rs = false;
-	काष्ठा in6_addr ll_addr;
+	struct in6_addr ll_addr;
 
 	ASSERT_RTNL();
 
-	अगर (!token)
-		वापस -EINVAL;
+	if (!token)
+		return -EINVAL;
 
-	अगर (dev->flags & IFF_LOOPBACK) अणु
+	if (dev->flags & IFF_LOOPBACK) {
 		NL_SET_ERR_MSG_MOD(extack, "Device is loopback");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (dev->flags & IFF_NOARP) अणु
+	if (dev->flags & IFF_NOARP) {
 		NL_SET_ERR_MSG_MOD(extack,
 				   "Device does not do neighbour discovery");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!ipv6_accept_ra(idev)) अणु
+	if (!ipv6_accept_ra(idev)) {
 		NL_SET_ERR_MSG_MOD(extack,
 				   "Router advertisement is disabled on device");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (idev->cnf.rtr_solicits == 0) अणु
+	if (idev->cnf.rtr_solicits == 0) {
 		NL_SET_ERR_MSG(extack,
 			       "Router solicitation is disabled on device");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ग_लिखो_lock_bh(&idev->lock);
+	write_lock_bh(&idev->lock);
 
-	BUILD_BUG_ON(माप(token->s6_addr) != 16);
-	स_नकल(idev->token.s6_addr + 8, token->s6_addr + 8, 8);
+	BUILD_BUG_ON(sizeof(token->s6_addr) != 16);
+	memcpy(idev->token.s6_addr + 8, token->s6_addr + 8, 8);
 
-	ग_लिखो_unlock_bh(&idev->lock);
+	write_unlock_bh(&idev->lock);
 
 	clear_token = ipv6_addr_any(token);
-	अगर (clear_token)
-		जाओ update_lft;
+	if (clear_token)
+		goto update_lft;
 
-	अगर (!idev->dead && (idev->अगर_flags & IF_READY) &&
+	if (!idev->dead && (idev->if_flags & IF_READY) &&
 	    !ipv6_get_lladdr(dev, &ll_addr, IFA_F_TENTATIVE |
-			     IFA_F_OPTIMISTIC)) अणु
-		/* If we're not पढ़ोy, then normal अगरup will take care
+			     IFA_F_OPTIMISTIC)) {
+		/* If we're not ready, then normal ifup will take care
 		 * of this. Otherwise, we need to request our rs here.
 		 */
 		ndisc_send_rs(dev, &ll_addr, &in6addr_linklocal_allrouters);
 		update_rs = true;
-	पूर्ण
+	}
 
 update_lft:
-	ग_लिखो_lock_bh(&idev->lock);
+	write_lock_bh(&idev->lock);
 
-	अगर (update_rs) अणु
-		idev->अगर_flags |= IF_RS_SENT;
-		idev->rs_पूर्णांकerval = rfc3315_s14_backoff_init(
-			idev->cnf.rtr_solicit_पूर्णांकerval);
+	if (update_rs) {
+		idev->if_flags |= IF_RS_SENT;
+		idev->rs_interval = rfc3315_s14_backoff_init(
+			idev->cnf.rtr_solicit_interval);
 		idev->rs_probes = 1;
-		addrconf_mod_rs_समयr(idev, idev->rs_पूर्णांकerval);
-	पूर्ण
+		addrconf_mod_rs_timer(idev, idev->rs_interval);
+	}
 
 	/* Well, that's kinda nasty ... */
-	list_क्रम_each_entry(अगरp, &idev->addr_list, अगर_list) अणु
-		spin_lock(&अगरp->lock);
-		अगर (अगरp->tokenized) अणु
-			अगरp->valid_lft = 0;
-			अगरp->prefered_lft = 0;
-		पूर्ण
-		spin_unlock(&अगरp->lock);
-	पूर्ण
+	list_for_each_entry(ifp, &idev->addr_list, if_list) {
+		spin_lock(&ifp->lock);
+		if (ifp->tokenized) {
+			ifp->valid_lft = 0;
+			ifp->prefered_lft = 0;
+		}
+		spin_unlock(&ifp->lock);
+	}
 
-	ग_लिखो_unlock_bh(&idev->lock);
-	inet6_अगरinfo_notअगरy(RTM_NEWLINK, idev);
-	addrconf_verअगरy_rtnl();
-	वापस 0;
-पूर्ण
+	write_unlock_bh(&idev->lock);
+	inet6_ifinfo_notify(RTM_NEWLINK, idev);
+	addrconf_verify_rtnl();
+	return 0;
+}
 
-अटल स्थिर काष्ठा nla_policy inet6_af_policy[IFLA_INET6_MAX + 1] = अणु
-	[IFLA_INET6_ADDR_GEN_MODE]	= अणु .type = NLA_U8 पूर्ण,
-	[IFLA_INET6_TOKEN]		= अणु .len = माप(काष्ठा in6_addr) पूर्ण,
-पूर्ण;
+static const struct nla_policy inet6_af_policy[IFLA_INET6_MAX + 1] = {
+	[IFLA_INET6_ADDR_GEN_MODE]	= { .type = NLA_U8 },
+	[IFLA_INET6_TOKEN]		= { .len = sizeof(struct in6_addr) },
+};
 
-अटल पूर्णांक check_addr_gen_mode(पूर्णांक mode)
-अणु
-	अगर (mode != IN6_ADDR_GEN_MODE_EUI64 &&
+static int check_addr_gen_mode(int mode)
+{
+	if (mode != IN6_ADDR_GEN_MODE_EUI64 &&
 	    mode != IN6_ADDR_GEN_MODE_NONE &&
 	    mode != IN6_ADDR_GEN_MODE_STABLE_PRIVACY &&
 	    mode != IN6_ADDR_GEN_MODE_RANDOM)
-		वापस -EINVAL;
-	वापस 1;
-पूर्ण
+		return -EINVAL;
+	return 1;
+}
 
-अटल पूर्णांक check_stable_privacy(काष्ठा inet6_dev *idev, काष्ठा net *net,
-				पूर्णांक mode)
-अणु
-	अगर (mode == IN6_ADDR_GEN_MODE_STABLE_PRIVACY &&
+static int check_stable_privacy(struct inet6_dev *idev, struct net *net,
+				int mode)
+{
+	if (mode == IN6_ADDR_GEN_MODE_STABLE_PRIVACY &&
 	    !idev->cnf.stable_secret.initialized &&
 	    !net->ipv6.devconf_dflt->stable_secret.initialized)
-		वापस -EINVAL;
-	वापस 1;
-पूर्ण
+		return -EINVAL;
+	return 1;
+}
 
-अटल पूर्णांक inet6_validate_link_af(स्थिर काष्ठा net_device *dev,
-				  स्थिर काष्ठा nlattr *nla)
-अणु
-	काष्ठा nlattr *tb[IFLA_INET6_MAX + 1];
-	काष्ठा inet6_dev *idev = शून्य;
-	पूर्णांक err;
+static int inet6_validate_link_af(const struct net_device *dev,
+				  const struct nlattr *nla)
+{
+	struct nlattr *tb[IFLA_INET6_MAX + 1];
+	struct inet6_dev *idev = NULL;
+	int err;
 
-	अगर (dev) अणु
+	if (dev) {
 		idev = __in6_dev_get(dev);
-		अगर (!idev)
-			वापस -EAFNOSUPPORT;
-	पूर्ण
+		if (!idev)
+			return -EAFNOSUPPORT;
+	}
 
 	err = nla_parse_nested_deprecated(tb, IFLA_INET6_MAX, nla,
-					  inet6_af_policy, शून्य);
-	अगर (err)
-		वापस err;
+					  inet6_af_policy, NULL);
+	if (err)
+		return err;
 
-	अगर (!tb[IFLA_INET6_TOKEN] && !tb[IFLA_INET6_ADDR_GEN_MODE])
-		वापस -EINVAL;
+	if (!tb[IFLA_INET6_TOKEN] && !tb[IFLA_INET6_ADDR_GEN_MODE])
+		return -EINVAL;
 
-	अगर (tb[IFLA_INET6_ADDR_GEN_MODE]) अणु
+	if (tb[IFLA_INET6_ADDR_GEN_MODE]) {
 		u8 mode = nla_get_u8(tb[IFLA_INET6_ADDR_GEN_MODE]);
 
-		अगर (check_addr_gen_mode(mode) < 0)
-			वापस -EINVAL;
-		अगर (dev && check_stable_privacy(idev, dev_net(dev), mode) < 0)
-			वापस -EINVAL;
-	पूर्ण
+		if (check_addr_gen_mode(mode) < 0)
+			return -EINVAL;
+		if (dev && check_stable_privacy(idev, dev_net(dev), mode) < 0)
+			return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक inet6_set_link_af(काष्ठा net_device *dev, स्थिर काष्ठा nlattr *nla,
-			     काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा inet6_dev *idev = __in6_dev_get(dev);
-	काष्ठा nlattr *tb[IFLA_INET6_MAX + 1];
-	पूर्णांक err;
+static int inet6_set_link_af(struct net_device *dev, const struct nlattr *nla,
+			     struct netlink_ext_ack *extack)
+{
+	struct inet6_dev *idev = __in6_dev_get(dev);
+	struct nlattr *tb[IFLA_INET6_MAX + 1];
+	int err;
 
-	अगर (!idev)
-		वापस -EAFNOSUPPORT;
+	if (!idev)
+		return -EAFNOSUPPORT;
 
-	अगर (nla_parse_nested_deprecated(tb, IFLA_INET6_MAX, nla, शून्य, शून्य) < 0)
-		वापस -EINVAL;
+	if (nla_parse_nested_deprecated(tb, IFLA_INET6_MAX, nla, NULL, NULL) < 0)
+		return -EINVAL;
 
-	अगर (tb[IFLA_INET6_TOKEN]) अणु
-		err = inet6_set_अगरtoken(idev, nla_data(tb[IFLA_INET6_TOKEN]),
+	if (tb[IFLA_INET6_TOKEN]) {
+		err = inet6_set_iftoken(idev, nla_data(tb[IFLA_INET6_TOKEN]),
 					extack);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	अगर (tb[IFLA_INET6_ADDR_GEN_MODE]) अणु
+	if (tb[IFLA_INET6_ADDR_GEN_MODE]) {
 		u8 mode = nla_get_u8(tb[IFLA_INET6_ADDR_GEN_MODE]);
 
 		idev->cnf.addr_gen_mode = mode;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक inet6_fill_अगरinfo(काष्ठा sk_buff *skb, काष्ठा inet6_dev *idev,
-			     u32 portid, u32 seq, पूर्णांक event, अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा net_device *dev = idev->dev;
-	काष्ठा अगरinfomsg *hdr;
-	काष्ठा nlmsghdr *nlh;
-	व्योम *protoinfo;
+static int inet6_fill_ifinfo(struct sk_buff *skb, struct inet6_dev *idev,
+			     u32 portid, u32 seq, int event, unsigned int flags)
+{
+	struct net_device *dev = idev->dev;
+	struct ifinfomsg *hdr;
+	struct nlmsghdr *nlh;
+	void *protoinfo;
 
-	nlh = nlmsg_put(skb, portid, seq, event, माप(*hdr), flags);
-	अगर (!nlh)
-		वापस -EMSGSIZE;
+	nlh = nlmsg_put(skb, portid, seq, event, sizeof(*hdr), flags);
+	if (!nlh)
+		return -EMSGSIZE;
 
 	hdr = nlmsg_data(nlh);
-	hdr->अगरi_family = AF_INET6;
-	hdr->__अगरi_pad = 0;
-	hdr->अगरi_type = dev->type;
-	hdr->अगरi_index = dev->अगरindex;
-	hdr->अगरi_flags = dev_get_flags(dev);
-	hdr->अगरi_change = 0;
+	hdr->ifi_family = AF_INET6;
+	hdr->__ifi_pad = 0;
+	hdr->ifi_type = dev->type;
+	hdr->ifi_index = dev->ifindex;
+	hdr->ifi_flags = dev_get_flags(dev);
+	hdr->ifi_change = 0;
 
-	अगर (nla_put_string(skb, IFLA_IFNAME, dev->name) ||
+	if (nla_put_string(skb, IFLA_IFNAME, dev->name) ||
 	    (dev->addr_len &&
 	     nla_put(skb, IFLA_ADDRESS, dev->addr_len, dev->dev_addr)) ||
 	    nla_put_u32(skb, IFLA_MTU, dev->mtu) ||
-	    (dev->अगरindex != dev_get_अगरlink(dev) &&
-	     nla_put_u32(skb, IFLA_LINK, dev_get_अगरlink(dev))) ||
+	    (dev->ifindex != dev_get_iflink(dev) &&
+	     nla_put_u32(skb, IFLA_LINK, dev_get_iflink(dev))) ||
 	    nla_put_u8(skb, IFLA_OPERSTATE,
-		       netअगर_running(dev) ? dev->operstate : IF_OPER_DOWN))
-		जाओ nla_put_failure;
+		       netif_running(dev) ? dev->operstate : IF_OPER_DOWN))
+		goto nla_put_failure;
 	protoinfo = nla_nest_start_noflag(skb, IFLA_PROTINFO);
-	अगर (!protoinfo)
-		जाओ nla_put_failure;
+	if (!protoinfo)
+		goto nla_put_failure;
 
-	अगर (inet6_fill_अगरla6_attrs(skb, idev, 0) < 0)
-		जाओ nla_put_failure;
+	if (inet6_fill_ifla6_attrs(skb, idev, 0) < 0)
+		goto nla_put_failure;
 
 	nla_nest_end(skb, protoinfo);
 	nlmsg_end(skb, nlh);
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल पूर्णांक inet6_valid_dump_अगरinfo(स्थिर काष्ठा nlmsghdr *nlh,
-				   काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा अगरinfomsg *अगरm;
+static int inet6_valid_dump_ifinfo(const struct nlmsghdr *nlh,
+				   struct netlink_ext_ack *extack)
+{
+	struct ifinfomsg *ifm;
 
-	अगर (nlh->nlmsg_len < nlmsg_msg_size(माप(*अगरm))) अणु
+	if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*ifm))) {
 		NL_SET_ERR_MSG_MOD(extack, "Invalid header for link dump request");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (nlmsg_attrlen(nlh, माप(*अगरm))) अणु
+	if (nlmsg_attrlen(nlh, sizeof(*ifm))) {
 		NL_SET_ERR_MSG_MOD(extack, "Invalid data after header");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगरm = nlmsg_data(nlh);
-	अगर (अगरm->__अगरi_pad || अगरm->अगरi_type || अगरm->अगरi_flags ||
-	    अगरm->अगरi_change || अगरm->अगरi_index) अणु
+	ifm = nlmsg_data(nlh);
+	if (ifm->__ifi_pad || ifm->ifi_type || ifm->ifi_flags ||
+	    ifm->ifi_change || ifm->ifi_index) {
 		NL_SET_ERR_MSG_MOD(extack, "Invalid values in header for dump request");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक inet6_dump_अगरinfo(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा net *net = sock_net(skb->sk);
-	पूर्णांक h, s_h;
-	पूर्णांक idx = 0, s_idx;
-	काष्ठा net_device *dev;
-	काष्ठा inet6_dev *idev;
-	काष्ठा hlist_head *head;
+static int inet6_dump_ifinfo(struct sk_buff *skb, struct netlink_callback *cb)
+{
+	struct net *net = sock_net(skb->sk);
+	int h, s_h;
+	int idx = 0, s_idx;
+	struct net_device *dev;
+	struct inet6_dev *idev;
+	struct hlist_head *head;
 
 	/* only requests using strict checking can pass data to
 	 * influence the dump
 	 */
-	अगर (cb->strict_check) अणु
-		पूर्णांक err = inet6_valid_dump_अगरinfo(cb->nlh, cb->extack);
+	if (cb->strict_check) {
+		int err = inet6_valid_dump_ifinfo(cb->nlh, cb->extack);
 
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+		if (err < 0)
+			return err;
+	}
 
 	s_h = cb->args[0];
 	s_idx = cb->args[1];
 
-	rcu_पढ़ो_lock();
-	क्रम (h = s_h; h < NETDEV_HASHENTRIES; h++, s_idx = 0) अणु
+	rcu_read_lock();
+	for (h = s_h; h < NETDEV_HASHENTRIES; h++, s_idx = 0) {
 		idx = 0;
 		head = &net->dev_index_head[h];
-		hlist_क्रम_each_entry_rcu(dev, head, index_hlist) अणु
-			अगर (idx < s_idx)
-				जाओ cont;
+		hlist_for_each_entry_rcu(dev, head, index_hlist) {
+			if (idx < s_idx)
+				goto cont;
 			idev = __in6_dev_get(dev);
-			अगर (!idev)
-				जाओ cont;
-			अगर (inet6_fill_अगरinfo(skb, idev,
+			if (!idev)
+				goto cont;
+			if (inet6_fill_ifinfo(skb, idev,
 					      NETLINK_CB(cb->skb).portid,
 					      cb->nlh->nlmsg_seq,
 					      RTM_NEWLINK, NLM_F_MULTI) < 0)
-				जाओ out;
+				goto out;
 cont:
 			idx++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 out:
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 	cb->args[1] = idx;
 	cb->args[0] = h;
 
-	वापस skb->len;
-पूर्ण
+	return skb->len;
+}
 
-व्योम inet6_अगरinfo_notअगरy(पूर्णांक event, काष्ठा inet6_dev *idev)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा net *net = dev_net(idev->dev);
-	पूर्णांक err = -ENOBUFS;
+void inet6_ifinfo_notify(int event, struct inet6_dev *idev)
+{
+	struct sk_buff *skb;
+	struct net *net = dev_net(idev->dev);
+	int err = -ENOBUFS;
 
-	skb = nlmsg_new(inet6_अगर_nlmsg_size(), GFP_ATOMIC);
-	अगर (!skb)
-		जाओ errout;
+	skb = nlmsg_new(inet6_if_nlmsg_size(), GFP_ATOMIC);
+	if (!skb)
+		goto errout;
 
-	err = inet6_fill_अगरinfo(skb, idev, 0, 0, event, 0);
-	अगर (err < 0) अणु
-		/* -EMSGSIZE implies BUG in inet6_अगर_nlmsg_size() */
+	err = inet6_fill_ifinfo(skb, idev, 0, 0, event, 0);
+	if (err < 0) {
+		/* -EMSGSIZE implies BUG in inet6_if_nlmsg_size() */
 		WARN_ON(err == -EMSGSIZE);
-		kमुक्त_skb(skb);
-		जाओ errout;
-	पूर्ण
-	rtnl_notअगरy(skb, net, 0, RTNLGRP_IPV6_IFINFO, शून्य, GFP_ATOMIC);
-	वापस;
+		kfree_skb(skb);
+		goto errout;
+	}
+	rtnl_notify(skb, net, 0, RTNLGRP_IPV6_IFINFO, NULL, GFP_ATOMIC);
+	return;
 errout:
-	अगर (err < 0)
+	if (err < 0)
 		rtnl_set_sk_err(net, RTNLGRP_IPV6_IFINFO, err);
-पूर्ण
+}
 
-अटल अंतरभूत माप_प्रकार inet6_prefix_nlmsg_size(व्योम)
-अणु
-	वापस NLMSG_ALIGN(माप(काष्ठा prefixmsg))
-	       + nla_total_size(माप(काष्ठा in6_addr))
-	       + nla_total_size(माप(काष्ठा prefix_cacheinfo));
-पूर्ण
+static inline size_t inet6_prefix_nlmsg_size(void)
+{
+	return NLMSG_ALIGN(sizeof(struct prefixmsg))
+	       + nla_total_size(sizeof(struct in6_addr))
+	       + nla_total_size(sizeof(struct prefix_cacheinfo));
+}
 
-अटल पूर्णांक inet6_fill_prefix(काष्ठा sk_buff *skb, काष्ठा inet6_dev *idev,
-			     काष्ठा prefix_info *pinfo, u32 portid, u32 seq,
-			     पूर्णांक event, अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा prefixmsg *pmsg;
-	काष्ठा nlmsghdr *nlh;
-	काष्ठा prefix_cacheinfo	ci;
+static int inet6_fill_prefix(struct sk_buff *skb, struct inet6_dev *idev,
+			     struct prefix_info *pinfo, u32 portid, u32 seq,
+			     int event, unsigned int flags)
+{
+	struct prefixmsg *pmsg;
+	struct nlmsghdr *nlh;
+	struct prefix_cacheinfo	ci;
 
-	nlh = nlmsg_put(skb, portid, seq, event, माप(*pmsg), flags);
-	अगर (!nlh)
-		वापस -EMSGSIZE;
+	nlh = nlmsg_put(skb, portid, seq, event, sizeof(*pmsg), flags);
+	if (!nlh)
+		return -EMSGSIZE;
 
 	pmsg = nlmsg_data(nlh);
 	pmsg->prefix_family = AF_INET6;
 	pmsg->prefix_pad1 = 0;
 	pmsg->prefix_pad2 = 0;
-	pmsg->prefix_अगरindex = idev->dev->अगरindex;
+	pmsg->prefix_ifindex = idev->dev->ifindex;
 	pmsg->prefix_len = pinfo->prefix_len;
 	pmsg->prefix_type = pinfo->type;
 	pmsg->prefix_pad3 = 0;
 	pmsg->prefix_flags = 0;
-	अगर (pinfo->onlink)
+	if (pinfo->onlink)
 		pmsg->prefix_flags |= IF_PREFIX_ONLINK;
-	अगर (pinfo->स्वतःconf)
+	if (pinfo->autoconf)
 		pmsg->prefix_flags |= IF_PREFIX_AUTOCONF;
 
-	अगर (nla_put(skb, PREFIX_ADDRESS, माप(pinfo->prefix), &pinfo->prefix))
-		जाओ nla_put_failure;
-	ci.preferred_समय = ntohl(pinfo->prefered);
-	ci.valid_समय = ntohl(pinfo->valid);
-	अगर (nla_put(skb, PREFIX_CACHEINFO, माप(ci), &ci))
-		जाओ nla_put_failure;
+	if (nla_put(skb, PREFIX_ADDRESS, sizeof(pinfo->prefix), &pinfo->prefix))
+		goto nla_put_failure;
+	ci.preferred_time = ntohl(pinfo->prefered);
+	ci.valid_time = ntohl(pinfo->valid);
+	if (nla_put(skb, PREFIX_CACHEINFO, sizeof(ci), &ci))
+		goto nla_put_failure;
 	nlmsg_end(skb, nlh);
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल व्योम inet6_prefix_notअगरy(पूर्णांक event, काष्ठा inet6_dev *idev,
-			 काष्ठा prefix_info *pinfo)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा net *net = dev_net(idev->dev);
-	पूर्णांक err = -ENOBUFS;
+static void inet6_prefix_notify(int event, struct inet6_dev *idev,
+			 struct prefix_info *pinfo)
+{
+	struct sk_buff *skb;
+	struct net *net = dev_net(idev->dev);
+	int err = -ENOBUFS;
 
 	skb = nlmsg_new(inet6_prefix_nlmsg_size(), GFP_ATOMIC);
-	अगर (!skb)
-		जाओ errout;
+	if (!skb)
+		goto errout;
 
 	err = inet6_fill_prefix(skb, idev, pinfo, 0, 0, event, 0);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		/* -EMSGSIZE implies BUG in inet6_prefix_nlmsg_size() */
 		WARN_ON(err == -EMSGSIZE);
-		kमुक्त_skb(skb);
-		जाओ errout;
-	पूर्ण
-	rtnl_notअगरy(skb, net, 0, RTNLGRP_IPV6_PREFIX, शून्य, GFP_ATOMIC);
-	वापस;
+		kfree_skb(skb);
+		goto errout;
+	}
+	rtnl_notify(skb, net, 0, RTNLGRP_IPV6_PREFIX, NULL, GFP_ATOMIC);
+	return;
 errout:
-	अगर (err < 0)
+	if (err < 0)
 		rtnl_set_sk_err(net, RTNLGRP_IPV6_PREFIX, err);
-पूर्ण
+}
 
-अटल व्योम __ipv6_अगरa_notअगरy(पूर्णांक event, काष्ठा inet6_अगरaddr *अगरp)
-अणु
-	काष्ठा net *net = dev_net(अगरp->idev->dev);
+static void __ipv6_ifa_notify(int event, struct inet6_ifaddr *ifp)
+{
+	struct net *net = dev_net(ifp->idev->dev);
 
-	अगर (event)
+	if (event)
 		ASSERT_RTNL();
 
-	inet6_अगरa_notअगरy(event ? : RTM_NEWADDR, अगरp);
+	inet6_ifa_notify(event ? : RTM_NEWADDR, ifp);
 
-	चयन (event) अणु
-	हाल RTM_NEWADDR:
+	switch (event) {
+	case RTM_NEWADDR:
 		/*
 		 * If the address was optimistic we inserted the route at the
-		 * start of our DAD process, so we करोn't need to करो it again.
-		 * If the device was taken करोwn in the middle of the DAD
+		 * start of our DAD process, so we don't need to do it again.
+		 * If the device was taken down in the middle of the DAD
 		 * cycle there is a race where we could get here without a
 		 * host route, so nothing to insert. That will be fixed when
 		 * the device is brought up.
 		 */
-		अगर (अगरp->rt && !rcu_access_poपूर्णांकer(अगरp->rt->fib6_node)) अणु
-			ip6_ins_rt(net, अगरp->rt);
-		पूर्ण अन्यथा अगर (!अगरp->rt && (अगरp->idev->dev->flags & IFF_UP)) अणु
+		if (ifp->rt && !rcu_access_pointer(ifp->rt->fib6_node)) {
+			ip6_ins_rt(net, ifp->rt);
+		} else if (!ifp->rt && (ifp->idev->dev->flags & IFF_UP)) {
 			pr_warn("BUG: Address %pI6c on device %s is missing its host route.\n",
-				&अगरp->addr, अगरp->idev->dev->name);
-		पूर्ण
+				&ifp->addr, ifp->idev->dev->name);
+		}
 
-		अगर (अगरp->idev->cnf.क्रमwarding)
-			addrconf_join_anycast(अगरp);
-		अगर (!ipv6_addr_any(&अगरp->peer_addr))
-			addrconf_prefix_route(&अगरp->peer_addr, 128,
-					      अगरp->rt_priority, अगरp->idev->dev,
+		if (ifp->idev->cnf.forwarding)
+			addrconf_join_anycast(ifp);
+		if (!ipv6_addr_any(&ifp->peer_addr))
+			addrconf_prefix_route(&ifp->peer_addr, 128,
+					      ifp->rt_priority, ifp->idev->dev,
 					      0, 0, GFP_ATOMIC);
-		अवरोध;
-	हाल RTM_DELADDR:
-		अगर (अगरp->idev->cnf.क्रमwarding)
-			addrconf_leave_anycast(अगरp);
-		addrconf_leave_solict(अगरp->idev, &अगरp->addr);
-		अगर (!ipv6_addr_any(&अगरp->peer_addr)) अणु
-			काष्ठा fib6_info *rt;
+		break;
+	case RTM_DELADDR:
+		if (ifp->idev->cnf.forwarding)
+			addrconf_leave_anycast(ifp);
+		addrconf_leave_solict(ifp->idev, &ifp->addr);
+		if (!ipv6_addr_any(&ifp->peer_addr)) {
+			struct fib6_info *rt;
 
-			rt = addrconf_get_prefix_route(&अगरp->peer_addr, 128,
-						       अगरp->idev->dev, 0, 0,
+			rt = addrconf_get_prefix_route(&ifp->peer_addr, 128,
+						       ifp->idev->dev, 0, 0,
 						       false);
-			अगर (rt)
+			if (rt)
 				ip6_del_rt(net, rt, false);
-		पूर्ण
-		अगर (अगरp->rt) अणु
-			ip6_del_rt(net, अगरp->rt, false);
-			अगरp->rt = शून्य;
-		पूर्ण
+		}
+		if (ifp->rt) {
+			ip6_del_rt(net, ifp->rt, false);
+			ifp->rt = NULL;
+		}
 		rt_genid_bump_ipv6(net);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	atomic_inc(&net->ipv6.dev_addr_genid);
-पूर्ण
+}
 
-अटल व्योम ipv6_अगरa_notअगरy(पूर्णांक event, काष्ठा inet6_अगरaddr *अगरp)
-अणु
-	अगर (likely(अगरp->idev->dead == 0))
-		__ipv6_अगरa_notअगरy(event, अगरp);
-पूर्ण
+static void ipv6_ifa_notify(int event, struct inet6_ifaddr *ifp)
+{
+	if (likely(ifp->idev->dead == 0))
+		__ipv6_ifa_notify(event, ifp);
+}
 
-#अगर_घोषित CONFIG_SYSCTL
+#ifdef CONFIG_SYSCTL
 
-अटल पूर्णांक addrconf_sysctl_क्रमward(काष्ठा ctl_table *ctl, पूर्णांक ग_लिखो,
-		व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
-अणु
-	पूर्णांक *valp = ctl->data;
-	पूर्णांक val = *valp;
+static int addrconf_sysctl_forward(struct ctl_table *ctl, int write,
+		void *buffer, size_t *lenp, loff_t *ppos)
+{
+	int *valp = ctl->data;
+	int val = *valp;
 	loff_t pos = *ppos;
-	काष्ठा ctl_table lctl;
-	पूर्णांक ret;
+	struct ctl_table lctl;
+	int ret;
 
 	/*
-	 * ctl->data poपूर्णांकs to idev->cnf.क्रमwarding, we should
-	 * not modअगरy it until we get the rtnl lock.
+	 * ctl->data points to idev->cnf.forwarding, we should
+	 * not modify it until we get the rtnl lock.
 	 */
 	lctl = *ctl;
 	lctl.data = &val;
 
-	ret = proc_करोपूर्णांकvec(&lctl, ग_लिखो, buffer, lenp, ppos);
+	ret = proc_dointvec(&lctl, write, buffer, lenp, ppos);
 
-	अगर (ग_लिखो)
-		ret = addrconf_fixup_क्रमwarding(ctl, valp, val);
-	अगर (ret)
+	if (write)
+		ret = addrconf_fixup_forwarding(ctl, valp, val);
+	if (ret)
 		*ppos = pos;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक addrconf_sysctl_mtu(काष्ठा ctl_table *ctl, पूर्णांक ग_लिखो,
-		व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
-अणु
-	काष्ठा inet6_dev *idev = ctl->extra1;
-	पूर्णांक min_mtu = IPV6_MIN_MTU;
-	काष्ठा ctl_table lctl;
+static int addrconf_sysctl_mtu(struct ctl_table *ctl, int write,
+		void *buffer, size_t *lenp, loff_t *ppos)
+{
+	struct inet6_dev *idev = ctl->extra1;
+	int min_mtu = IPV6_MIN_MTU;
+	struct ctl_table lctl;
 
 	lctl = *ctl;
 	lctl.extra1 = &min_mtu;
-	lctl.extra2 = idev ? &idev->dev->mtu : शून्य;
+	lctl.extra2 = idev ? &idev->dev->mtu : NULL;
 
-	वापस proc_करोपूर्णांकvec_minmax(&lctl, ग_लिखो, buffer, lenp, ppos);
-पूर्ण
+	return proc_dointvec_minmax(&lctl, write, buffer, lenp, ppos);
+}
 
-अटल व्योम dev_disable_change(काष्ठा inet6_dev *idev)
-अणु
-	काष्ठा netdev_notअगरier_info info;
+static void dev_disable_change(struct inet6_dev *idev)
+{
+	struct netdev_notifier_info info;
 
-	अगर (!idev || !idev->dev)
-		वापस;
+	if (!idev || !idev->dev)
+		return;
 
-	netdev_notअगरier_info_init(&info, idev->dev);
-	अगर (idev->cnf.disable_ipv6)
-		addrconf_notअगरy(शून्य, NETDEV_DOWN, &info);
-	अन्यथा
-		addrconf_notअगरy(शून्य, NETDEV_UP, &info);
-पूर्ण
+	netdev_notifier_info_init(&info, idev->dev);
+	if (idev->cnf.disable_ipv6)
+		addrconf_notify(NULL, NETDEV_DOWN, &info);
+	else
+		addrconf_notify(NULL, NETDEV_UP, &info);
+}
 
-अटल व्योम addrconf_disable_change(काष्ठा net *net, __s32 newf)
-अणु
-	काष्ठा net_device *dev;
-	काष्ठा inet6_dev *idev;
+static void addrconf_disable_change(struct net *net, __s32 newf)
+{
+	struct net_device *dev;
+	struct inet6_dev *idev;
 
-	क्रम_each_netdev(net, dev) अणु
+	for_each_netdev(net, dev) {
 		idev = __in6_dev_get(dev);
-		अगर (idev) अणु
-			पूर्णांक changed = (!idev->cnf.disable_ipv6) ^ (!newf);
+		if (idev) {
+			int changed = (!idev->cnf.disable_ipv6) ^ (!newf);
 			idev->cnf.disable_ipv6 = newf;
-			अगर (changed)
+			if (changed)
 				dev_disable_change(idev);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक addrconf_disable_ipv6(काष्ठा ctl_table *table, पूर्णांक *p, पूर्णांक newf)
-अणु
-	काष्ठा net *net;
-	पूर्णांक old;
+static int addrconf_disable_ipv6(struct ctl_table *table, int *p, int newf)
+{
+	struct net *net;
+	int old;
 
-	अगर (!rtnl_trylock())
-		वापस restart_syscall();
+	if (!rtnl_trylock())
+		return restart_syscall();
 
-	net = (काष्ठा net *)table->extra2;
+	net = (struct net *)table->extra2;
 	old = *p;
 	*p = newf;
 
-	अगर (p == &net->ipv6.devconf_dflt->disable_ipv6) अणु
+	if (p == &net->ipv6.devconf_dflt->disable_ipv6) {
 		rtnl_unlock();
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (p == &net->ipv6.devconf_all->disable_ipv6) अणु
+	if (p == &net->ipv6.devconf_all->disable_ipv6) {
 		net->ipv6.devconf_dflt->disable_ipv6 = newf;
 		addrconf_disable_change(net, newf);
-	पूर्ण अन्यथा अगर ((!newf) ^ (!old))
-		dev_disable_change((काष्ठा inet6_dev *)table->extra1);
+	} else if ((!newf) ^ (!old))
+		dev_disable_change((struct inet6_dev *)table->extra1);
 
 	rtnl_unlock();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक addrconf_sysctl_disable(काष्ठा ctl_table *ctl, पूर्णांक ग_लिखो,
-		व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
-अणु
-	पूर्णांक *valp = ctl->data;
-	पूर्णांक val = *valp;
+static int addrconf_sysctl_disable(struct ctl_table *ctl, int write,
+		void *buffer, size_t *lenp, loff_t *ppos)
+{
+	int *valp = ctl->data;
+	int val = *valp;
 	loff_t pos = *ppos;
-	काष्ठा ctl_table lctl;
-	पूर्णांक ret;
+	struct ctl_table lctl;
+	int ret;
 
 	/*
-	 * ctl->data poपूर्णांकs to idev->cnf.disable_ipv6, we should
-	 * not modअगरy it until we get the rtnl lock.
+	 * ctl->data points to idev->cnf.disable_ipv6, we should
+	 * not modify it until we get the rtnl lock.
 	 */
 	lctl = *ctl;
 	lctl.data = &val;
 
-	ret = proc_करोपूर्णांकvec(&lctl, ग_लिखो, buffer, lenp, ppos);
+	ret = proc_dointvec(&lctl, write, buffer, lenp, ppos);
 
-	अगर (ग_लिखो)
+	if (write)
 		ret = addrconf_disable_ipv6(ctl, valp, val);
-	अगर (ret)
+	if (ret)
 		*ppos = pos;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक addrconf_sysctl_proxy_ndp(काष्ठा ctl_table *ctl, पूर्णांक ग_लिखो,
-		व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
-अणु
-	पूर्णांक *valp = ctl->data;
-	पूर्णांक ret;
-	पूर्णांक old, new;
+static int addrconf_sysctl_proxy_ndp(struct ctl_table *ctl, int write,
+		void *buffer, size_t *lenp, loff_t *ppos)
+{
+	int *valp = ctl->data;
+	int ret;
+	int old, new;
 
 	old = *valp;
-	ret = proc_करोपूर्णांकvec(ctl, ग_लिखो, buffer, lenp, ppos);
+	ret = proc_dointvec(ctl, write, buffer, lenp, ppos);
 	new = *valp;
 
-	अगर (ग_लिखो && old != new) अणु
-		काष्ठा net *net = ctl->extra2;
+	if (write && old != new) {
+		struct net *net = ctl->extra2;
 
-		अगर (!rtnl_trylock())
-			वापस restart_syscall();
+		if (!rtnl_trylock())
+			return restart_syscall();
 
-		अगर (valp == &net->ipv6.devconf_dflt->proxy_ndp)
-			inet6_netconf_notअगरy_devconf(net, RTM_NEWNETCONF,
+		if (valp == &net->ipv6.devconf_dflt->proxy_ndp)
+			inet6_netconf_notify_devconf(net, RTM_NEWNETCONF,
 						     NETCONFA_PROXY_NEIGH,
 						     NETCONFA_IFINDEX_DEFAULT,
 						     net->ipv6.devconf_dflt);
-		अन्यथा अगर (valp == &net->ipv6.devconf_all->proxy_ndp)
-			inet6_netconf_notअगरy_devconf(net, RTM_NEWNETCONF,
+		else if (valp == &net->ipv6.devconf_all->proxy_ndp)
+			inet6_netconf_notify_devconf(net, RTM_NEWNETCONF,
 						     NETCONFA_PROXY_NEIGH,
 						     NETCONFA_IFINDEX_ALL,
 						     net->ipv6.devconf_all);
-		अन्यथा अणु
-			काष्ठा inet6_dev *idev = ctl->extra1;
+		else {
+			struct inet6_dev *idev = ctl->extra1;
 
-			inet6_netconf_notअगरy_devconf(net, RTM_NEWNETCONF,
+			inet6_netconf_notify_devconf(net, RTM_NEWNETCONF,
 						     NETCONFA_PROXY_NEIGH,
-						     idev->dev->अगरindex,
+						     idev->dev->ifindex,
 						     &idev->cnf);
-		पूर्ण
+		}
 		rtnl_unlock();
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक addrconf_sysctl_addr_gen_mode(काष्ठा ctl_table *ctl, पूर्णांक ग_लिखो,
-					 व्योम *buffer, माप_प्रकार *lenp,
+static int addrconf_sysctl_addr_gen_mode(struct ctl_table *ctl, int write,
+					 void *buffer, size_t *lenp,
 					 loff_t *ppos)
-अणु
-	पूर्णांक ret = 0;
+{
+	int ret = 0;
 	u32 new_val;
-	काष्ठा inet6_dev *idev = (काष्ठा inet6_dev *)ctl->extra1;
-	काष्ठा net *net = (काष्ठा net *)ctl->extra2;
-	काष्ठा ctl_table पंचांगp = अणु
+	struct inet6_dev *idev = (struct inet6_dev *)ctl->extra1;
+	struct net *net = (struct net *)ctl->extra2;
+	struct ctl_table tmp = {
 		.data = &new_val,
-		.maxlen = माप(new_val),
+		.maxlen = sizeof(new_val),
 		.mode = ctl->mode,
-	पूर्ण;
+	};
 
-	अगर (!rtnl_trylock())
-		वापस restart_syscall();
+	if (!rtnl_trylock())
+		return restart_syscall();
 
 	new_val = *((u32 *)ctl->data);
 
-	ret = proc_करोuपूर्णांकvec(&पंचांगp, ग_लिखो, buffer, lenp, ppos);
-	अगर (ret != 0)
-		जाओ out;
+	ret = proc_douintvec(&tmp, write, buffer, lenp, ppos);
+	if (ret != 0)
+		goto out;
 
-	अगर (ग_लिखो) अणु
-		अगर (check_addr_gen_mode(new_val) < 0) अणु
+	if (write) {
+		if (check_addr_gen_mode(new_val) < 0) {
 			ret = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अगर (idev) अणु
-			अगर (check_stable_privacy(idev, net, new_val) < 0) अणु
+		if (idev) {
+			if (check_stable_privacy(idev, net, new_val) < 0) {
 				ret = -EINVAL;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
-			अगर (idev->cnf.addr_gen_mode != new_val) अणु
+			if (idev->cnf.addr_gen_mode != new_val) {
 				idev->cnf.addr_gen_mode = new_val;
 				addrconf_dev_config(idev->dev);
-			पूर्ण
-		पूर्ण अन्यथा अगर (&net->ipv6.devconf_all->addr_gen_mode == ctl->data) अणु
-			काष्ठा net_device *dev;
+			}
+		} else if (&net->ipv6.devconf_all->addr_gen_mode == ctl->data) {
+			struct net_device *dev;
 
 			net->ipv6.devconf_dflt->addr_gen_mode = new_val;
-			क्रम_each_netdev(net, dev) अणु
+			for_each_netdev(net, dev) {
 				idev = __in6_dev_get(dev);
-				अगर (idev &&
-				    idev->cnf.addr_gen_mode != new_val) अणु
+				if (idev &&
+				    idev->cnf.addr_gen_mode != new_val) {
 					idev->cnf.addr_gen_mode = new_val;
 					addrconf_dev_config(idev->dev);
-				पूर्ण
-			पूर्ण
-		पूर्ण
+				}
+			}
+		}
 
 		*((u32 *)ctl->data) = new_val;
-	पूर्ण
+	}
 
 out:
 	rtnl_unlock();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक addrconf_sysctl_stable_secret(काष्ठा ctl_table *ctl, पूर्णांक ग_लिखो,
-					 व्योम *buffer, माप_प्रकार *lenp,
+static int addrconf_sysctl_stable_secret(struct ctl_table *ctl, int write,
+					 void *buffer, size_t *lenp,
 					 loff_t *ppos)
-अणु
-	पूर्णांक err;
-	काष्ठा in6_addr addr;
-	अक्षर str[IPV6_MAX_STRLEN];
-	काष्ठा ctl_table lctl = *ctl;
-	काष्ठा net *net = ctl->extra2;
-	काष्ठा ipv6_stable_secret *secret = ctl->data;
+{
+	int err;
+	struct in6_addr addr;
+	char str[IPV6_MAX_STRLEN];
+	struct ctl_table lctl = *ctl;
+	struct net *net = ctl->extra2;
+	struct ipv6_stable_secret *secret = ctl->data;
 
-	अगर (&net->ipv6.devconf_all->stable_secret == ctl->data)
-		वापस -EIO;
+	if (&net->ipv6.devconf_all->stable_secret == ctl->data)
+		return -EIO;
 
 	lctl.maxlen = IPV6_MAX_STRLEN;
 	lctl.data = str;
 
-	अगर (!rtnl_trylock())
-		वापस restart_syscall();
+	if (!rtnl_trylock())
+		return restart_syscall();
 
-	अगर (!ग_लिखो && !secret->initialized) अणु
+	if (!write && !secret->initialized) {
 		err = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	err = snम_लिखो(str, माप(str), "%pI6", &secret->secret);
-	अगर (err >= माप(str)) अणु
+	err = snprintf(str, sizeof(str), "%pI6", &secret->secret);
+	if (err >= sizeof(str)) {
 		err = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	err = proc_करोstring(&lctl, ग_लिखो, buffer, lenp, ppos);
-	अगर (err || !ग_लिखो)
-		जाओ out;
+	err = proc_dostring(&lctl, write, buffer, lenp, ppos);
+	if (err || !write)
+		goto out;
 
-	अगर (in6_pton(str, -1, addr.in6_u.u6_addr8, -1, शून्य) != 1) अणु
+	if (in6_pton(str, -1, addr.in6_u.u6_addr8, -1, NULL) != 1) {
 		err = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	secret->initialized = true;
 	secret->secret = addr;
 
-	अगर (&net->ipv6.devconf_dflt->stable_secret == ctl->data) अणु
-		काष्ठा net_device *dev;
+	if (&net->ipv6.devconf_dflt->stable_secret == ctl->data) {
+		struct net_device *dev;
 
-		क्रम_each_netdev(net, dev) अणु
-			काष्ठा inet6_dev *idev = __in6_dev_get(dev);
+		for_each_netdev(net, dev) {
+			struct inet6_dev *idev = __in6_dev_get(dev);
 
-			अगर (idev) अणु
+			if (idev) {
 				idev->cnf.addr_gen_mode =
 					IN6_ADDR_GEN_MODE_STABLE_PRIVACY;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		काष्ठा inet6_dev *idev = ctl->extra1;
+			}
+		}
+	} else {
+		struct inet6_dev *idev = ctl->extra1;
 
 		idev->cnf.addr_gen_mode = IN6_ADDR_GEN_MODE_STABLE_PRIVACY;
-	पूर्ण
+	}
 
 out:
 	rtnl_unlock();
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल
-पूर्णांक addrconf_sysctl_ignore_routes_with_linkकरोwn(काष्ठा ctl_table *ctl,
-						पूर्णांक ग_लिखो, व्योम *buffer,
-						माप_प्रकार *lenp,
+static
+int addrconf_sysctl_ignore_routes_with_linkdown(struct ctl_table *ctl,
+						int write, void *buffer,
+						size_t *lenp,
 						loff_t *ppos)
-अणु
-	पूर्णांक *valp = ctl->data;
-	पूर्णांक val = *valp;
+{
+	int *valp = ctl->data;
+	int val = *valp;
 	loff_t pos = *ppos;
-	काष्ठा ctl_table lctl;
-	पूर्णांक ret;
+	struct ctl_table lctl;
+	int ret;
 
-	/* ctl->data poपूर्णांकs to idev->cnf.ignore_routes_when_linkकरोwn
-	 * we should not modअगरy it until we get the rtnl lock.
+	/* ctl->data points to idev->cnf.ignore_routes_when_linkdown
+	 * we should not modify it until we get the rtnl lock.
 	 */
 	lctl = *ctl;
 	lctl.data = &val;
 
-	ret = proc_करोपूर्णांकvec(&lctl, ग_लिखो, buffer, lenp, ppos);
+	ret = proc_dointvec(&lctl, write, buffer, lenp, ppos);
 
-	अगर (ग_लिखो)
-		ret = addrconf_fixup_linkकरोwn(ctl, valp, val);
-	अगर (ret)
+	if (write)
+		ret = addrconf_fixup_linkdown(ctl, valp, val);
+	if (ret)
 		*ppos = pos;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल
-व्योम addrconf_set_nopolicy(काष्ठा rt6_info *rt, पूर्णांक action)
-अणु
-	अगर (rt) अणु
-		अगर (action)
+static
+void addrconf_set_nopolicy(struct rt6_info *rt, int action)
+{
+	if (rt) {
+		if (action)
 			rt->dst.flags |= DST_NOPOLICY;
-		अन्यथा
+		else
 			rt->dst.flags &= ~DST_NOPOLICY;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल
-व्योम addrconf_disable_policy_idev(काष्ठा inet6_dev *idev, पूर्णांक val)
-अणु
-	काष्ठा inet6_अगरaddr *अगरa;
+static
+void addrconf_disable_policy_idev(struct inet6_dev *idev, int val)
+{
+	struct inet6_ifaddr *ifa;
 
-	पढ़ो_lock_bh(&idev->lock);
-	list_क्रम_each_entry(अगरa, &idev->addr_list, अगर_list) अणु
-		spin_lock(&अगरa->lock);
-		अगर (अगरa->rt) अणु
+	read_lock_bh(&idev->lock);
+	list_for_each_entry(ifa, &idev->addr_list, if_list) {
+		spin_lock(&ifa->lock);
+		if (ifa->rt) {
 			/* host routes only use builtin fib6_nh */
-			काष्ठा fib6_nh *nh = अगरa->rt->fib6_nh;
-			पूर्णांक cpu;
+			struct fib6_nh *nh = ifa->rt->fib6_nh;
+			int cpu;
 
-			rcu_पढ़ो_lock();
-			अगरa->rt->dst_nopolicy = val ? true : false;
-			अगर (nh->rt6i_pcpu) अणु
-				क्रम_each_possible_cpu(cpu) अणु
-					काष्ठा rt6_info **rtp;
+			rcu_read_lock();
+			ifa->rt->dst_nopolicy = val ? true : false;
+			if (nh->rt6i_pcpu) {
+				for_each_possible_cpu(cpu) {
+					struct rt6_info **rtp;
 
 					rtp = per_cpu_ptr(nh->rt6i_pcpu, cpu);
 					addrconf_set_nopolicy(*rtp, val);
-				पूर्ण
-			पूर्ण
-			rcu_पढ़ो_unlock();
-		पूर्ण
-		spin_unlock(&अगरa->lock);
-	पूर्ण
-	पढ़ो_unlock_bh(&idev->lock);
-पूर्ण
+				}
+			}
+			rcu_read_unlock();
+		}
+		spin_unlock(&ifa->lock);
+	}
+	read_unlock_bh(&idev->lock);
+}
 
-अटल
-पूर्णांक addrconf_disable_policy(काष्ठा ctl_table *ctl, पूर्णांक *valp, पूर्णांक val)
-अणु
-	काष्ठा inet6_dev *idev;
-	काष्ठा net *net;
+static
+int addrconf_disable_policy(struct ctl_table *ctl, int *valp, int val)
+{
+	struct inet6_dev *idev;
+	struct net *net;
 
-	अगर (!rtnl_trylock())
-		वापस restart_syscall();
+	if (!rtnl_trylock())
+		return restart_syscall();
 
 	*valp = val;
 
-	net = (काष्ठा net *)ctl->extra2;
-	अगर (valp == &net->ipv6.devconf_dflt->disable_policy) अणु
+	net = (struct net *)ctl->extra2;
+	if (valp == &net->ipv6.devconf_dflt->disable_policy) {
 		rtnl_unlock();
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (valp == &net->ipv6.devconf_all->disable_policy)  अणु
-		काष्ठा net_device *dev;
+	if (valp == &net->ipv6.devconf_all->disable_policy)  {
+		struct net_device *dev;
 
-		क्रम_each_netdev(net, dev) अणु
+		for_each_netdev(net, dev) {
 			idev = __in6_dev_get(dev);
-			अगर (idev)
+			if (idev)
 				addrconf_disable_policy_idev(idev, val);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		idev = (काष्ठा inet6_dev *)ctl->extra1;
+		}
+	} else {
+		idev = (struct inet6_dev *)ctl->extra1;
 		addrconf_disable_policy_idev(idev, val);
-	पूर्ण
+	}
 
 	rtnl_unlock();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक addrconf_sysctl_disable_policy(काष्ठा ctl_table *ctl, पूर्णांक ग_लिखो,
-				   व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
-अणु
-	पूर्णांक *valp = ctl->data;
-	पूर्णांक val = *valp;
+static int addrconf_sysctl_disable_policy(struct ctl_table *ctl, int write,
+				   void *buffer, size_t *lenp, loff_t *ppos)
+{
+	int *valp = ctl->data;
+	int val = *valp;
 	loff_t pos = *ppos;
-	काष्ठा ctl_table lctl;
-	पूर्णांक ret;
+	struct ctl_table lctl;
+	int ret;
 
 	lctl = *ctl;
 	lctl.data = &val;
-	ret = proc_करोपूर्णांकvec(&lctl, ग_लिखो, buffer, lenp, ppos);
+	ret = proc_dointvec(&lctl, write, buffer, lenp, ppos);
 
-	अगर (ग_लिखो && (*valp != val))
+	if (write && (*valp != val))
 		ret = addrconf_disable_policy(ctl, valp, val);
 
-	अगर (ret)
+	if (ret)
 		*ppos = pos;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक minus_one = -1;
-अटल स्थिर पूर्णांक two_five_five = 255;
+static int minus_one = -1;
+static const int two_five_five = 255;
 
-अटल स्थिर काष्ठा ctl_table addrconf_sysctl[] = अणु
-	अणु
+static const struct ctl_table addrconf_sysctl[] = {
+	{
 		.procname	= "forwarding",
-		.data		= &ipv6_devconf.क्रमwarding,
-		.maxlen		= माप(पूर्णांक),
+		.data		= &ipv6_devconf.forwarding,
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= addrconf_sysctl_क्रमward,
-	पूर्ण,
-	अणु
+		.proc_handler	= addrconf_sysctl_forward,
+	},
+	{
 		.procname	= "hop_limit",
 		.data		= &ipv6_devconf.hop_limit,
-		.maxlen		= माप(पूर्णांक),
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec_minmax,
-		.extra1		= (व्योम *)SYSCTL_ONE,
-		.extra2		= (व्योम *)&two_five_five,
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_dointvec_minmax,
+		.extra1		= (void *)SYSCTL_ONE,
+		.extra2		= (void *)&two_five_five,
+	},
+	{
 		.procname	= "mtu",
 		.data		= &ipv6_devconf.mtu6,
-		.maxlen		= माप(पूर्णांक),
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
 		.proc_handler	= addrconf_sysctl_mtu,
-	पूर्ण,
-	अणु
+	},
+	{
 		.procname	= "accept_ra",
 		.data		= &ipv6_devconf.accept_ra,
-		.maxlen		= माप(पूर्णांक),
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec,
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_dointvec,
+	},
+	{
 		.procname	= "accept_redirects",
 		.data		= &ipv6_devconf.accept_redirects,
-		.maxlen		= माप(पूर्णांक),
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec,
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_dointvec,
+	},
+	{
 		.procname	= "autoconf",
-		.data		= &ipv6_devconf.स्वतःconf,
-		.maxlen		= माप(पूर्णांक),
+		.data		= &ipv6_devconf.autoconf,
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec,
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_dointvec,
+	},
+	{
 		.procname	= "dad_transmits",
 		.data		= &ipv6_devconf.dad_transmits,
-		.maxlen		= माप(पूर्णांक),
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec,
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_dointvec,
+	},
+	{
 		.procname	= "router_solicitations",
 		.data		= &ipv6_devconf.rtr_solicits,
-		.maxlen		= माप(पूर्णांक),
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec_minmax,
+		.proc_handler	= proc_dointvec_minmax,
 		.extra1		= &minus_one,
-	पूर्ण,
-	अणु
+	},
+	{
 		.procname	= "router_solicitation_interval",
-		.data		= &ipv6_devconf.rtr_solicit_पूर्णांकerval,
-		.maxlen		= माप(पूर्णांक),
+		.data		= &ipv6_devconf.rtr_solicit_interval,
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec_jअगरfies,
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_dointvec_jiffies,
+	},
+	{
 		.procname	= "router_solicitation_max_interval",
-		.data		= &ipv6_devconf.rtr_solicit_max_पूर्णांकerval,
-		.maxlen		= माप(पूर्णांक),
+		.data		= &ipv6_devconf.rtr_solicit_max_interval,
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec_jअगरfies,
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_dointvec_jiffies,
+	},
+	{
 		.procname	= "router_solicitation_delay",
 		.data		= &ipv6_devconf.rtr_solicit_delay,
-		.maxlen		= माप(पूर्णांक),
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec_jअगरfies,
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_dointvec_jiffies,
+	},
+	{
 		.procname	= "force_mld_version",
-		.data		= &ipv6_devconf.क्रमce_mld_version,
-		.maxlen		= माप(पूर्णांक),
+		.data		= &ipv6_devconf.force_mld_version,
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec,
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_dointvec,
+	},
+	{
 		.procname	= "mldv1_unsolicited_report_interval",
 		.data		=
-			&ipv6_devconf.mldv1_unsolicited_report_पूर्णांकerval,
-		.maxlen		= माप(पूर्णांक),
+			&ipv6_devconf.mldv1_unsolicited_report_interval,
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec_ms_jअगरfies,
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_dointvec_ms_jiffies,
+	},
+	{
 		.procname	= "mldv2_unsolicited_report_interval",
 		.data		=
-			&ipv6_devconf.mldv2_unsolicited_report_पूर्णांकerval,
-		.maxlen		= माप(पूर्णांक),
+			&ipv6_devconf.mldv2_unsolicited_report_interval,
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec_ms_jअगरfies,
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_dointvec_ms_jiffies,
+	},
+	{
 		.procname	= "use_tempaddr",
 		.data		= &ipv6_devconf.use_tempaddr,
-		.maxlen		= माप(पूर्णांक),
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec,
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_dointvec,
+	},
+	{
 		.procname	= "temp_valid_lft",
 		.data		= &ipv6_devconf.temp_valid_lft,
-		.maxlen		= माप(पूर्णांक),
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec,
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_dointvec,
+	},
+	{
 		.procname	= "temp_prefered_lft",
 		.data		= &ipv6_devconf.temp_prefered_lft,
-		.maxlen		= माप(पूर्णांक),
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec,
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_dointvec,
+	},
+	{
 		.procname	= "regen_max_retry",
 		.data		= &ipv6_devconf.regen_max_retry,
-		.maxlen		= माप(पूर्णांक),
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec,
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_dointvec,
+	},
+	{
 		.procname	= "max_desync_factor",
 		.data		= &ipv6_devconf.max_desync_factor,
-		.maxlen		= माप(पूर्णांक),
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec,
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_dointvec,
+	},
+	{
 		.procname	= "max_addresses",
 		.data		= &ipv6_devconf.max_addresses,
-		.maxlen		= माप(पूर्णांक),
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec,
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_dointvec,
+	},
+	{
 		.procname	= "accept_ra_defrtr",
 		.data		= &ipv6_devconf.accept_ra_defrtr,
-		.maxlen		= माप(पूर्णांक),
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec,
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_dointvec,
+	},
+	{
 		.procname	= "ra_defrtr_metric",
 		.data		= &ipv6_devconf.ra_defrtr_metric,
-		.maxlen		= माप(u32),
+		.maxlen		= sizeof(u32),
 		.mode		= 0644,
-		.proc_handler	= proc_करोuपूर्णांकvec_minmax,
-		.extra1		= (व्योम *)SYSCTL_ONE,
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_douintvec_minmax,
+		.extra1		= (void *)SYSCTL_ONE,
+	},
+	{
 		.procname	= "accept_ra_min_hop_limit",
 		.data		= &ipv6_devconf.accept_ra_min_hop_limit,
-		.maxlen		= माप(पूर्णांक),
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec,
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_dointvec,
+	},
+	{
 		.procname	= "accept_ra_pinfo",
 		.data		= &ipv6_devconf.accept_ra_pinfo,
-		.maxlen		= माप(पूर्णांक),
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec,
-	पूर्ण,
-#अगर_घोषित CONFIG_IPV6_ROUTER_PREF
-	अणु
+		.proc_handler	= proc_dointvec,
+	},
+#ifdef CONFIG_IPV6_ROUTER_PREF
+	{
 		.procname	= "accept_ra_rtr_pref",
 		.data		= &ipv6_devconf.accept_ra_rtr_pref,
-		.maxlen		= माप(पूर्णांक),
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec,
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_dointvec,
+	},
+	{
 		.procname	= "router_probe_interval",
-		.data		= &ipv6_devconf.rtr_probe_पूर्णांकerval,
-		.maxlen		= माप(पूर्णांक),
+		.data		= &ipv6_devconf.rtr_probe_interval,
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec_jअगरfies,
-	पूर्ण,
-#अगर_घोषित CONFIG_IPV6_ROUTE_INFO
-	अणु
+		.proc_handler	= proc_dointvec_jiffies,
+	},
+#ifdef CONFIG_IPV6_ROUTE_INFO
+	{
 		.procname	= "accept_ra_rt_info_min_plen",
 		.data		= &ipv6_devconf.accept_ra_rt_info_min_plen,
-		.maxlen		= माप(पूर्णांक),
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec,
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_dointvec,
+	},
+	{
 		.procname	= "accept_ra_rt_info_max_plen",
 		.data		= &ipv6_devconf.accept_ra_rt_info_max_plen,
-		.maxlen		= माप(पूर्णांक),
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec,
-	पूर्ण,
-#पूर्ण_अगर
-#पूर्ण_अगर
-	अणु
+		.proc_handler	= proc_dointvec,
+	},
+#endif
+#endif
+	{
 		.procname	= "proxy_ndp",
 		.data		= &ipv6_devconf.proxy_ndp,
-		.maxlen		= माप(पूर्णांक),
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
 		.proc_handler	= addrconf_sysctl_proxy_ndp,
-	पूर्ण,
-	अणु
+	},
+	{
 		.procname	= "accept_source_route",
 		.data		= &ipv6_devconf.accept_source_route,
-		.maxlen		= माप(पूर्णांक),
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec,
-	पूर्ण,
-#अगर_घोषित CONFIG_IPV6_OPTIMISTIC_DAD
-	अणु
+		.proc_handler	= proc_dointvec,
+	},
+#ifdef CONFIG_IPV6_OPTIMISTIC_DAD
+	{
 		.procname	= "optimistic_dad",
 		.data		= &ipv6_devconf.optimistic_dad,
-		.maxlen		= माप(पूर्णांक),
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler   = proc_करोपूर्णांकvec,
-	पूर्ण,
-	अणु
+		.proc_handler   = proc_dointvec,
+	},
+	{
 		.procname	= "use_optimistic",
 		.data		= &ipv6_devconf.use_optimistic,
-		.maxlen		= माप(पूर्णांक),
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec,
-	पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_IPV6_MROUTE
-	अणु
+		.proc_handler	= proc_dointvec,
+	},
+#endif
+#ifdef CONFIG_IPV6_MROUTE
+	{
 		.procname	= "mc_forwarding",
-		.data		= &ipv6_devconf.mc_क्रमwarding,
-		.maxlen		= माप(पूर्णांक),
+		.data		= &ipv6_devconf.mc_forwarding,
+		.maxlen		= sizeof(int),
 		.mode		= 0444,
-		.proc_handler	= proc_करोपूर्णांकvec,
-	पूर्ण,
-#पूर्ण_अगर
-	अणु
+		.proc_handler	= proc_dointvec,
+	},
+#endif
+	{
 		.procname	= "disable_ipv6",
 		.data		= &ipv6_devconf.disable_ipv6,
-		.maxlen		= माप(पूर्णांक),
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
 		.proc_handler	= addrconf_sysctl_disable,
-	पूर्ण,
-	अणु
+	},
+	{
 		.procname	= "accept_dad",
 		.data		= &ipv6_devconf.accept_dad,
-		.maxlen		= माप(पूर्णांक),
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec,
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_dointvec,
+	},
+	{
 		.procname	= "force_tllao",
-		.data		= &ipv6_devconf.क्रमce_tllao,
-		.maxlen		= माप(पूर्णांक),
+		.data		= &ipv6_devconf.force_tllao,
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_dointvec
+	},
+	{
 		.procname	= "ndisc_notify",
-		.data		= &ipv6_devconf.ndisc_notअगरy,
-		.maxlen		= माप(पूर्णांक),
+		.data		= &ipv6_devconf.ndisc_notify,
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_dointvec
+	},
+	{
 		.procname	= "suppress_frag_ndisc",
 		.data		= &ipv6_devconf.suppress_frag_ndisc,
-		.maxlen		= माप(पूर्णांक),
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_dointvec
+	},
+	{
 		.procname	= "accept_ra_from_local",
 		.data		= &ipv6_devconf.accept_ra_from_local,
-		.maxlen		= माप(पूर्णांक),
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec,
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_dointvec,
+	},
+	{
 		.procname	= "accept_ra_mtu",
 		.data		= &ipv6_devconf.accept_ra_mtu,
-		.maxlen		= माप(पूर्णांक),
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec,
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_dointvec,
+	},
+	{
 		.procname	= "stable_secret",
 		.data		= &ipv6_devconf.stable_secret,
 		.maxlen		= IPV6_MAX_STRLEN,
 		.mode		= 0600,
 		.proc_handler	= addrconf_sysctl_stable_secret,
-	पूर्ण,
-	अणु
+	},
+	{
 		.procname	= "use_oif_addrs_only",
-		.data		= &ipv6_devconf.use_oअगर_addrs_only,
-		.maxlen		= माप(पूर्णांक),
+		.data		= &ipv6_devconf.use_oif_addrs_only,
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec,
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_dointvec,
+	},
+	{
 		.procname	= "ignore_routes_with_linkdown",
-		.data		= &ipv6_devconf.ignore_routes_with_linkकरोwn,
-		.maxlen		= माप(पूर्णांक),
+		.data		= &ipv6_devconf.ignore_routes_with_linkdown,
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= addrconf_sysctl_ignore_routes_with_linkकरोwn,
-	पूर्ण,
-	अणु
+		.proc_handler	= addrconf_sysctl_ignore_routes_with_linkdown,
+	},
+	{
 		.procname	= "drop_unicast_in_l2_multicast",
 		.data		= &ipv6_devconf.drop_unicast_in_l2_multicast,
-		.maxlen		= माप(पूर्णांक),
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec,
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_dointvec,
+	},
+	{
 		.procname	= "drop_unsolicited_na",
 		.data		= &ipv6_devconf.drop_unsolicited_na,
-		.maxlen		= माप(पूर्णांक),
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec,
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_dointvec,
+	},
+	{
 		.procname	= "keep_addr_on_down",
-		.data		= &ipv6_devconf.keep_addr_on_करोwn,
-		.maxlen		= माप(पूर्णांक),
+		.data		= &ipv6_devconf.keep_addr_on_down,
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec,
+		.proc_handler	= proc_dointvec,
 
-	पूर्ण,
-	अणु
+	},
+	{
 		.procname	= "seg6_enabled",
 		.data		= &ipv6_devconf.seg6_enabled,
-		.maxlen		= माप(पूर्णांक),
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec,
-	पूर्ण,
-#अगर_घोषित CONFIG_IPV6_SEG6_HMAC
-	अणु
+		.proc_handler	= proc_dointvec,
+	},
+#ifdef CONFIG_IPV6_SEG6_HMAC
+	{
 		.procname	= "seg6_require_hmac",
 		.data		= &ipv6_devconf.seg6_require_hmac,
-		.maxlen		= माप(पूर्णांक),
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec,
-	पूर्ण,
-#पूर्ण_अगर
-	अणु
+		.proc_handler	= proc_dointvec,
+	},
+#endif
+	{
 		.procname       = "enhanced_dad",
 		.data           = &ipv6_devconf.enhanced_dad,
-		.maxlen         = माप(पूर्णांक),
+		.maxlen         = sizeof(int),
 		.mode           = 0644,
-		.proc_handler   = proc_करोपूर्णांकvec,
-	पूर्ण,
-	अणु
+		.proc_handler   = proc_dointvec,
+	},
+	{
 		.procname		= "addr_gen_mode",
 		.data			= &ipv6_devconf.addr_gen_mode,
-		.maxlen			= माप(पूर्णांक),
+		.maxlen			= sizeof(int),
 		.mode			= 0644,
 		.proc_handler	= addrconf_sysctl_addr_gen_mode,
-	पूर्ण,
-	अणु
+	},
+	{
 		.procname       = "disable_policy",
 		.data           = &ipv6_devconf.disable_policy,
-		.maxlen         = माप(पूर्णांक),
+		.maxlen         = sizeof(int),
 		.mode           = 0644,
 		.proc_handler   = addrconf_sysctl_disable_policy,
-	पूर्ण,
-	अणु
+	},
+	{
 		.procname	= "ndisc_tclass",
 		.data		= &ipv6_devconf.ndisc_tclass,
-		.maxlen		= माप(पूर्णांक),
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec_minmax,
-		.extra1		= (व्योम *)SYSCTL_ZERO,
-		.extra2		= (व्योम *)&two_five_five,
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_dointvec_minmax,
+		.extra1		= (void *)SYSCTL_ZERO,
+		.extra2		= (void *)&two_five_five,
+	},
+	{
 		.procname	= "rpl_seg_enabled",
 		.data		= &ipv6_devconf.rpl_seg_enabled,
-		.maxlen		= माप(पूर्णांक),
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec,
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_dointvec,
+	},
+	{
 		/* sentinel */
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल पूर्णांक __addrconf_sysctl_रेजिस्टर(काष्ठा net *net, अक्षर *dev_name,
-		काष्ठा inet6_dev *idev, काष्ठा ipv6_devconf *p)
-अणु
-	पूर्णांक i, अगरindex;
-	काष्ठा ctl_table *table;
-	अक्षर path[माप("net/ipv6/conf/") + IFNAMSIZ];
+static int __addrconf_sysctl_register(struct net *net, char *dev_name,
+		struct inet6_dev *idev, struct ipv6_devconf *p)
+{
+	int i, ifindex;
+	struct ctl_table *table;
+	char path[sizeof("net/ipv6/conf/") + IFNAMSIZ];
 
-	table = kmemdup(addrconf_sysctl, माप(addrconf_sysctl), GFP_KERNEL);
-	अगर (!table)
-		जाओ out;
+	table = kmemdup(addrconf_sysctl, sizeof(addrconf_sysctl), GFP_KERNEL);
+	if (!table)
+		goto out;
 
-	क्रम (i = 0; table[i].data; i++) अणु
-		table[i].data += (अक्षर *)p - (अक्षर *)&ipv6_devconf;
-		/* If one of these is alपढ़ोy set, then it is not safe to
-		 * overग_लिखो either of them: this makes proc_करोपूर्णांकvec_minmax
+	for (i = 0; table[i].data; i++) {
+		table[i].data += (char *)p - (char *)&ipv6_devconf;
+		/* If one of these is already set, then it is not safe to
+		 * overwrite either of them: this makes proc_dointvec_minmax
 		 * usable.
 		 */
-		अगर (!table[i].extra1 && !table[i].extra2) अणु
+		if (!table[i].extra1 && !table[i].extra2) {
 			table[i].extra1 = idev; /* embedded; no ref */
 			table[i].extra2 = net;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	snम_लिखो(path, माप(path), "net/ipv6/conf/%s", dev_name);
+	snprintf(path, sizeof(path), "net/ipv6/conf/%s", dev_name);
 
-	p->sysctl_header = रेजिस्टर_net_sysctl(net, path, table);
-	अगर (!p->sysctl_header)
-		जाओ मुक्त;
+	p->sysctl_header = register_net_sysctl(net, path, table);
+	if (!p->sysctl_header)
+		goto free;
 
-	अगर (!म_भेद(dev_name, "all"))
-		अगरindex = NETCONFA_IFINDEX_ALL;
-	अन्यथा अगर (!म_भेद(dev_name, "default"))
-		अगरindex = NETCONFA_IFINDEX_DEFAULT;
-	अन्यथा
-		अगरindex = idev->dev->अगरindex;
-	inet6_netconf_notअगरy_devconf(net, RTM_NEWNETCONF, NETCONFA_ALL,
-				     अगरindex, p);
-	वापस 0;
+	if (!strcmp(dev_name, "all"))
+		ifindex = NETCONFA_IFINDEX_ALL;
+	else if (!strcmp(dev_name, "default"))
+		ifindex = NETCONFA_IFINDEX_DEFAULT;
+	else
+		ifindex = idev->dev->ifindex;
+	inet6_netconf_notify_devconf(net, RTM_NEWNETCONF, NETCONFA_ALL,
+				     ifindex, p);
+	return 0;
 
-मुक्त:
-	kमुक्त(table);
+free:
+	kfree(table);
 out:
-	वापस -ENOBUFS;
-पूर्ण
+	return -ENOBUFS;
+}
 
-अटल व्योम __addrconf_sysctl_unरेजिस्टर(काष्ठा net *net,
-					 काष्ठा ipv6_devconf *p, पूर्णांक अगरindex)
-अणु
-	काष्ठा ctl_table *table;
+static void __addrconf_sysctl_unregister(struct net *net,
+					 struct ipv6_devconf *p, int ifindex)
+{
+	struct ctl_table *table;
 
-	अगर (!p->sysctl_header)
-		वापस;
+	if (!p->sysctl_header)
+		return;
 
 	table = p->sysctl_header->ctl_table_arg;
-	unरेजिस्टर_net_sysctl_table(p->sysctl_header);
-	p->sysctl_header = शून्य;
-	kमुक्त(table);
+	unregister_net_sysctl_table(p->sysctl_header);
+	p->sysctl_header = NULL;
+	kfree(table);
 
-	inet6_netconf_notअगरy_devconf(net, RTM_DELNETCONF, 0, अगरindex, शून्य);
-पूर्ण
+	inet6_netconf_notify_devconf(net, RTM_DELNETCONF, 0, ifindex, NULL);
+}
 
-अटल पूर्णांक addrconf_sysctl_रेजिस्टर(काष्ठा inet6_dev *idev)
-अणु
-	पूर्णांक err;
+static int addrconf_sysctl_register(struct inet6_dev *idev)
+{
+	int err;
 
-	अगर (!sysctl_dev_name_is_allowed(idev->dev->name))
-		वापस -EINVAL;
+	if (!sysctl_dev_name_is_allowed(idev->dev->name))
+		return -EINVAL;
 
-	err = neigh_sysctl_रेजिस्टर(idev->dev, idev->nd_parms,
-				    &ndisc_अगरinfo_sysctl_change);
-	अगर (err)
-		वापस err;
-	err = __addrconf_sysctl_रेजिस्टर(dev_net(idev->dev), idev->dev->name,
+	err = neigh_sysctl_register(idev->dev, idev->nd_parms,
+				    &ndisc_ifinfo_sysctl_change);
+	if (err)
+		return err;
+	err = __addrconf_sysctl_register(dev_net(idev->dev), idev->dev->name,
 					 idev, &idev->cnf);
-	अगर (err)
-		neigh_sysctl_unरेजिस्टर(idev->nd_parms);
+	if (err)
+		neigh_sysctl_unregister(idev->nd_parms);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम addrconf_sysctl_unरेजिस्टर(काष्ठा inet6_dev *idev)
-अणु
-	__addrconf_sysctl_unरेजिस्टर(dev_net(idev->dev), &idev->cnf,
-				     idev->dev->अगरindex);
-	neigh_sysctl_unरेजिस्टर(idev->nd_parms);
-पूर्ण
+static void addrconf_sysctl_unregister(struct inet6_dev *idev)
+{
+	__addrconf_sysctl_unregister(dev_net(idev->dev), &idev->cnf,
+				     idev->dev->ifindex);
+	neigh_sysctl_unregister(idev->nd_parms);
+}
 
 
-#पूर्ण_अगर
+#endif
 
-अटल पूर्णांक __net_init addrconf_init_net(काष्ठा net *net)
-अणु
-	पूर्णांक err = -ENOMEM;
-	काष्ठा ipv6_devconf *all, *dflt;
+static int __net_init addrconf_init_net(struct net *net)
+{
+	int err = -ENOMEM;
+	struct ipv6_devconf *all, *dflt;
 
-	all = kmemdup(&ipv6_devconf, माप(ipv6_devconf), GFP_KERNEL);
-	अगर (!all)
-		जाओ err_alloc_all;
+	all = kmemdup(&ipv6_devconf, sizeof(ipv6_devconf), GFP_KERNEL);
+	if (!all)
+		goto err_alloc_all;
 
-	dflt = kmemdup(&ipv6_devconf_dflt, माप(ipv6_devconf_dflt), GFP_KERNEL);
-	अगर (!dflt)
-		जाओ err_alloc_dflt;
+	dflt = kmemdup(&ipv6_devconf_dflt, sizeof(ipv6_devconf_dflt), GFP_KERNEL);
+	if (!dflt)
+		goto err_alloc_dflt;
 
-	अगर (IS_ENABLED(CONFIG_SYSCTL) &&
-	    !net_eq(net, &init_net)) अणु
-		चयन (sysctl_devconf_inherit_init_net) अणु
-		हाल 1:  /* copy from init_net */
-			स_नकल(all, init_net.ipv6.devconf_all,
-			       माप(ipv6_devconf));
-			स_नकल(dflt, init_net.ipv6.devconf_dflt,
-			       माप(ipv6_devconf_dflt));
-			अवरोध;
-		हाल 3: /* copy from the current netns */
-			स_नकल(all, current->nsproxy->net_ns->ipv6.devconf_all,
-			       माप(ipv6_devconf));
-			स_नकल(dflt,
+	if (IS_ENABLED(CONFIG_SYSCTL) &&
+	    !net_eq(net, &init_net)) {
+		switch (sysctl_devconf_inherit_init_net) {
+		case 1:  /* copy from init_net */
+			memcpy(all, init_net.ipv6.devconf_all,
+			       sizeof(ipv6_devconf));
+			memcpy(dflt, init_net.ipv6.devconf_dflt,
+			       sizeof(ipv6_devconf_dflt));
+			break;
+		case 3: /* copy from the current netns */
+			memcpy(all, current->nsproxy->net_ns->ipv6.devconf_all,
+			       sizeof(ipv6_devconf));
+			memcpy(dflt,
 			       current->nsproxy->net_ns->ipv6.devconf_dflt,
-			       माप(ipv6_devconf_dflt));
-			अवरोध;
-		हाल 0:
-		हाल 2:
+			       sizeof(ipv6_devconf_dflt));
+			break;
+		case 0:
+		case 2:
 			/* use compiled values */
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	/* these will be inherited by all namespaces */
-	dflt->स्वतःconf = ipv6_शेषs.स्वतःconf;
-	dflt->disable_ipv6 = ipv6_शेषs.disable_ipv6;
+	dflt->autoconf = ipv6_defaults.autoconf;
+	dflt->disable_ipv6 = ipv6_defaults.disable_ipv6;
 
 	dflt->stable_secret.initialized = false;
 	all->stable_secret.initialized = false;
@@ -7074,198 +7073,198 @@ out:
 	net->ipv6.devconf_all = all;
 	net->ipv6.devconf_dflt = dflt;
 
-#अगर_घोषित CONFIG_SYSCTL
-	err = __addrconf_sysctl_रेजिस्टर(net, "all", शून्य, all);
-	अगर (err < 0)
-		जाओ err_reg_all;
+#ifdef CONFIG_SYSCTL
+	err = __addrconf_sysctl_register(net, "all", NULL, all);
+	if (err < 0)
+		goto err_reg_all;
 
-	err = __addrconf_sysctl_रेजिस्टर(net, "default", शून्य, dflt);
-	अगर (err < 0)
-		जाओ err_reg_dflt;
-#पूर्ण_अगर
-	वापस 0;
+	err = __addrconf_sysctl_register(net, "default", NULL, dflt);
+	if (err < 0)
+		goto err_reg_dflt;
+#endif
+	return 0;
 
-#अगर_घोषित CONFIG_SYSCTL
+#ifdef CONFIG_SYSCTL
 err_reg_dflt:
-	__addrconf_sysctl_unरेजिस्टर(net, all, NETCONFA_IFINDEX_ALL);
+	__addrconf_sysctl_unregister(net, all, NETCONFA_IFINDEX_ALL);
 err_reg_all:
-	kमुक्त(dflt);
-#पूर्ण_अगर
+	kfree(dflt);
+#endif
 err_alloc_dflt:
-	kमुक्त(all);
+	kfree(all);
 err_alloc_all:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम __net_निकास addrconf_निकास_net(काष्ठा net *net)
-अणु
-#अगर_घोषित CONFIG_SYSCTL
-	__addrconf_sysctl_unरेजिस्टर(net, net->ipv6.devconf_dflt,
+static void __net_exit addrconf_exit_net(struct net *net)
+{
+#ifdef CONFIG_SYSCTL
+	__addrconf_sysctl_unregister(net, net->ipv6.devconf_dflt,
 				     NETCONFA_IFINDEX_DEFAULT);
-	__addrconf_sysctl_unरेजिस्टर(net, net->ipv6.devconf_all,
+	__addrconf_sysctl_unregister(net, net->ipv6.devconf_all,
 				     NETCONFA_IFINDEX_ALL);
-#पूर्ण_अगर
-	kमुक्त(net->ipv6.devconf_dflt);
-	kमुक्त(net->ipv6.devconf_all);
-पूर्ण
+#endif
+	kfree(net->ipv6.devconf_dflt);
+	kfree(net->ipv6.devconf_all);
+}
 
-अटल काष्ठा pernet_operations addrconf_ops = अणु
+static struct pernet_operations addrconf_ops = {
 	.init = addrconf_init_net,
-	.निकास = addrconf_निकास_net,
-पूर्ण;
+	.exit = addrconf_exit_net,
+};
 
-अटल काष्ठा rtnl_af_ops inet6_ops __पढ़ो_mostly = अणु
+static struct rtnl_af_ops inet6_ops __read_mostly = {
 	.family		  = AF_INET6,
 	.fill_link_af	  = inet6_fill_link_af,
 	.get_link_af_size = inet6_get_link_af_size,
 	.validate_link_af = inet6_validate_link_af,
 	.set_link_af	  = inet6_set_link_af,
-पूर्ण;
+};
 
 /*
  *	Init / cleanup code
  */
 
-पूर्णांक __init addrconf_init(व्योम)
-अणु
-	काष्ठा inet6_dev *idev;
-	पूर्णांक i, err;
+int __init addrconf_init(void)
+{
+	struct inet6_dev *idev;
+	int i, err;
 
 	err = ipv6_addr_label_init();
-	अगर (err < 0) अणु
+	if (err < 0) {
 		pr_crit("%s: cannot initialize default policy table: %d\n",
 			__func__, err);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	err = रेजिस्टर_pernet_subsys(&addrconf_ops);
-	अगर (err < 0)
-		जाओ out_addrlabel;
+	err = register_pernet_subsys(&addrconf_ops);
+	if (err < 0)
+		goto out_addrlabel;
 
 	addrconf_wq = create_workqueue("ipv6_addrconf");
-	अगर (!addrconf_wq) अणु
+	if (!addrconf_wq) {
 		err = -ENOMEM;
-		जाओ out_nowq;
-	पूर्ण
+		goto out_nowq;
+	}
 
-	/* The addrconf netdev notअगरier requires that loopback_dev
-	 * has it's ipv6 निजी inक्रमmation allocated and setup
-	 * beक्रमe it can bring up and give link-local addresses
+	/* The addrconf netdev notifier requires that loopback_dev
+	 * has it's ipv6 private information allocated and setup
+	 * before it can bring up and give link-local addresses
 	 * to other devices which are up.
 	 *
-	 * Unक्रमtunately, loopback_dev is not necessarily the first
+	 * Unfortunately, loopback_dev is not necessarily the first
 	 * entry in the global dev_base list of net devices.  In fact,
 	 * it is likely to be the very last entry on that list.
-	 * So this causes the notअगरier registry below to try and
+	 * So this causes the notifier registry below to try and
 	 * give link-local addresses to all devices besides loopback_dev
-	 * first, then loopback_dev, which हालs all the non-loopback_dev
+	 * first, then loopback_dev, which cases all the non-loopback_dev
 	 * devices to fail to get a link-local address.
 	 *
-	 * So, as a temporary fix, allocate the ipv6 काष्ठाure क्रम
+	 * So, as a temporary fix, allocate the ipv6 structure for
 	 * loopback_dev first by hand.
 	 * Longer term, all of the dependencies ipv6 has upon the loopback
-	 * device and it being up should be हटाओd.
+	 * device and it being up should be removed.
 	 */
 	rtnl_lock();
 	idev = ipv6_add_dev(init_net.loopback_dev);
 	rtnl_unlock();
-	अगर (IS_ERR(idev)) अणु
+	if (IS_ERR(idev)) {
 		err = PTR_ERR(idev);
-		जाओ errlo;
-	पूर्ण
+		goto errlo;
+	}
 
 	ip6_route_init_special_entries();
 
-	क्रम (i = 0; i < IN6_ADDR_HSIZE; i++)
+	for (i = 0; i < IN6_ADDR_HSIZE; i++)
 		INIT_HLIST_HEAD(&inet6_addr_lst[i]);
 
-	रेजिस्टर_netdevice_notअगरier(&ipv6_dev_notf);
+	register_netdevice_notifier(&ipv6_dev_notf);
 
-	addrconf_verअगरy();
+	addrconf_verify();
 
-	rtnl_af_रेजिस्टर(&inet6_ops);
+	rtnl_af_register(&inet6_ops);
 
-	err = rtnl_रेजिस्टर_module(THIS_MODULE, PF_INET6, RTM_GETLINK,
-				   शून्य, inet6_dump_अगरinfo, 0);
-	अगर (err < 0)
-		जाओ errout;
+	err = rtnl_register_module(THIS_MODULE, PF_INET6, RTM_GETLINK,
+				   NULL, inet6_dump_ifinfo, 0);
+	if (err < 0)
+		goto errout;
 
-	err = rtnl_रेजिस्टर_module(THIS_MODULE, PF_INET6, RTM_NEWADDR,
-				   inet6_rपंचांग_newaddr, शून्य, 0);
-	अगर (err < 0)
-		जाओ errout;
-	err = rtnl_रेजिस्टर_module(THIS_MODULE, PF_INET6, RTM_DELADDR,
-				   inet6_rपंचांग_deladdr, शून्य, 0);
-	अगर (err < 0)
-		जाओ errout;
-	err = rtnl_रेजिस्टर_module(THIS_MODULE, PF_INET6, RTM_GETADDR,
-				   inet6_rपंचांग_getaddr, inet6_dump_अगरaddr,
+	err = rtnl_register_module(THIS_MODULE, PF_INET6, RTM_NEWADDR,
+				   inet6_rtm_newaddr, NULL, 0);
+	if (err < 0)
+		goto errout;
+	err = rtnl_register_module(THIS_MODULE, PF_INET6, RTM_DELADDR,
+				   inet6_rtm_deladdr, NULL, 0);
+	if (err < 0)
+		goto errout;
+	err = rtnl_register_module(THIS_MODULE, PF_INET6, RTM_GETADDR,
+				   inet6_rtm_getaddr, inet6_dump_ifaddr,
 				   RTNL_FLAG_DOIT_UNLOCKED);
-	अगर (err < 0)
-		जाओ errout;
-	err = rtnl_रेजिस्टर_module(THIS_MODULE, PF_INET6, RTM_GETMULTICAST,
-				   शून्य, inet6_dump_अगरmcaddr, 0);
-	अगर (err < 0)
-		जाओ errout;
-	err = rtnl_रेजिस्टर_module(THIS_MODULE, PF_INET6, RTM_GETANYCAST,
-				   शून्य, inet6_dump_अगरacaddr, 0);
-	अगर (err < 0)
-		जाओ errout;
-	err = rtnl_रेजिस्टर_module(THIS_MODULE, PF_INET6, RTM_GETNETCONF,
+	if (err < 0)
+		goto errout;
+	err = rtnl_register_module(THIS_MODULE, PF_INET6, RTM_GETMULTICAST,
+				   NULL, inet6_dump_ifmcaddr, 0);
+	if (err < 0)
+		goto errout;
+	err = rtnl_register_module(THIS_MODULE, PF_INET6, RTM_GETANYCAST,
+				   NULL, inet6_dump_ifacaddr, 0);
+	if (err < 0)
+		goto errout;
+	err = rtnl_register_module(THIS_MODULE, PF_INET6, RTM_GETNETCONF,
 				   inet6_netconf_get_devconf,
 				   inet6_netconf_dump_devconf,
 				   RTNL_FLAG_DOIT_UNLOCKED);
-	अगर (err < 0)
-		जाओ errout;
-	err = ipv6_addr_label_rtnl_रेजिस्टर();
-	अगर (err < 0)
-		जाओ errout;
+	if (err < 0)
+		goto errout;
+	err = ipv6_addr_label_rtnl_register();
+	if (err < 0)
+		goto errout;
 
-	वापस 0;
+	return 0;
 errout:
-	rtnl_unरेजिस्टर_all(PF_INET6);
-	rtnl_af_unरेजिस्टर(&inet6_ops);
-	unरेजिस्टर_netdevice_notअगरier(&ipv6_dev_notf);
+	rtnl_unregister_all(PF_INET6);
+	rtnl_af_unregister(&inet6_ops);
+	unregister_netdevice_notifier(&ipv6_dev_notf);
 errlo:
 	destroy_workqueue(addrconf_wq);
 out_nowq:
-	unरेजिस्टर_pernet_subsys(&addrconf_ops);
+	unregister_pernet_subsys(&addrconf_ops);
 out_addrlabel:
 	ipv6_addr_label_cleanup();
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम addrconf_cleanup(व्योम)
-अणु
-	काष्ठा net_device *dev;
-	पूर्णांक i;
+void addrconf_cleanup(void)
+{
+	struct net_device *dev;
+	int i;
 
-	unरेजिस्टर_netdevice_notअगरier(&ipv6_dev_notf);
-	unरेजिस्टर_pernet_subsys(&addrconf_ops);
+	unregister_netdevice_notifier(&ipv6_dev_notf);
+	unregister_pernet_subsys(&addrconf_ops);
 	ipv6_addr_label_cleanup();
 
-	rtnl_af_unरेजिस्टर(&inet6_ops);
+	rtnl_af_unregister(&inet6_ops);
 
 	rtnl_lock();
 
 	/* clean dev list */
-	क्रम_each_netdev(&init_net, dev) अणु
-		अगर (__in6_dev_get(dev) == शून्य)
-			जारी;
-		addrconf_अगरकरोwn(dev, true);
-	पूर्ण
-	addrconf_अगरकरोwn(init_net.loopback_dev, true);
+	for_each_netdev(&init_net, dev) {
+		if (__in6_dev_get(dev) == NULL)
+			continue;
+		addrconf_ifdown(dev, true);
+	}
+	addrconf_ifdown(init_net.loopback_dev, true);
 
 	/*
 	 *	Check hash table.
 	 */
 	spin_lock_bh(&addrconf_hash_lock);
-	क्रम (i = 0; i < IN6_ADDR_HSIZE; i++)
+	for (i = 0; i < IN6_ADDR_HSIZE; i++)
 		WARN_ON(!hlist_empty(&inet6_addr_lst[i]));
 	spin_unlock_bh(&addrconf_hash_lock);
 	cancel_delayed_work(&addr_chk_work);
 	rtnl_unlock();
 
 	destroy_workqueue(addrconf_wq);
-पूर्ण
+}

@@ -1,32 +1,31 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * Copyright (c) 2014 MunकरोReader S.L.
+ * Copyright (c) 2014 MundoReader S.L.
  * Author: Heiko Stuebner <heiko@sntech.de>
  */
 
-#अगर_अघोषित _DT_BINDINGS_CLK_ROCKCHIP_RK3066A_H
-#घोषणा _DT_BINDINGS_CLK_ROCKCHIP_RK3066A_H
+#ifndef _DT_BINDINGS_CLK_ROCKCHIP_RK3066A_H
+#define _DT_BINDINGS_CLK_ROCKCHIP_RK3066A_H
 
-#समावेश <dt-bindings/घड़ी/rk3188-cru-common.h>
+#include <dt-bindings/clock/rk3188-cru-common.h>
 
 /* soft-reset indices */
-#घोषणा SRST_SRST1		0
-#घोषणा SRST_SRST2		1
+#define SRST_SRST1		0
+#define SRST_SRST2		1
 
-#घोषणा SRST_L2MEM		18
-#घोषणा SRST_I2S0		23
-#घोषणा SRST_I2S1		24
-#घोषणा SRST_I2S2		25
-#घोषणा SRST_TIMER2		29
+#define SRST_L2MEM		18
+#define SRST_I2S0		23
+#define SRST_I2S1		24
+#define SRST_I2S2		25
+#define SRST_TIMER2		29
 
-#घोषणा SRST_GPIO4		36
-#घोषणा SRST_GPIO6		38
+#define SRST_GPIO4		36
+#define SRST_GPIO6		38
 
-#घोषणा SRST_TSADC		92
+#define SRST_TSADC		92
 
-#घोषणा SRST_HDMI		96
-#घोषणा SRST_HDMI_APB		97
-#घोषणा SRST_CIF1		111
+#define SRST_HDMI		96
+#define SRST_HDMI_APB		97
+#define SRST_CIF1		111
 
-#पूर्ण_अगर
+#endif

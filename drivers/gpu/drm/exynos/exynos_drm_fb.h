@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Copyright (c) 2011 Samsung Electronics Co., Ltd.
  * Authors:
@@ -8,19 +7,19 @@
  *	Seung-Woo Kim <sw0312.kim@samsung.com>
  */
 
-#अगर_अघोषित _EXYNOS_DRM_FB_H_
-#घोषणा _EXYNOS_DRM_FB_H_
+#ifndef _EXYNOS_DRM_FB_H_
+#define _EXYNOS_DRM_FB_H_
 
-#समावेश "exynos_drm_gem.h"
+#include "exynos_drm_gem.h"
 
-काष्ठा drm_framebuffer *
-exynos_drm_framebuffer_init(काष्ठा drm_device *dev,
-			    स्थिर काष्ठा drm_mode_fb_cmd2 *mode_cmd,
-			    काष्ठा exynos_drm_gem **exynos_gem,
-			    पूर्णांक count);
+struct drm_framebuffer *
+exynos_drm_framebuffer_init(struct drm_device *dev,
+			    const struct drm_mode_fb_cmd2 *mode_cmd,
+			    struct exynos_drm_gem **exynos_gem,
+			    int count);
 
-dma_addr_t exynos_drm_fb_dma_addr(काष्ठा drm_framebuffer *fb, पूर्णांक index);
+dma_addr_t exynos_drm_fb_dma_addr(struct drm_framebuffer *fb, int index);
 
-व्योम exynos_drm_mode_config_init(काष्ठा drm_device *dev);
+void exynos_drm_mode_config_init(struct drm_device *dev);
 
-#पूर्ण_अगर
+#endif

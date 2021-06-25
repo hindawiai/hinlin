@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * gpio_backlight.h - Simple GPIO-controlled backlight
  */
-#अगर_अघोषित __GPIO_BACKLIGHT_H__
-#घोषणा __GPIO_BACKLIGHT_H__
+#ifndef __GPIO_BACKLIGHT_H__
+#define __GPIO_BACKLIGHT_H__
 
-काष्ठा device;
+struct device;
 
-काष्ठा gpio_backlight_platक्रमm_data अणु
-	काष्ठा device *fbdev;
-पूर्ण;
+struct gpio_backlight_platform_data {
+	struct device *fbdev;
+};
 
-#पूर्ण_अगर
+#endif

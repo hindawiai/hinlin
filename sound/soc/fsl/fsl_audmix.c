@@ -1,33 +1,32 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * NXP AUDMIX ALSA SoC Digital Audio Interface (DAI) driver
  *
  * Copyright 2017 NXP
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <sound/soc.h>
-#समावेश <sound/pcm_params.h>
+#include <linux/clk.h>
+#include <linux/module.h>
+#include <linux/of_platform.h>
+#include <linux/pm_runtime.h>
+#include <sound/soc.h>
+#include <sound/pcm_params.h>
 
-#समावेश "fsl_audmix.h"
+#include "fsl_audmix.h"
 
-#घोषणा SOC_ENUM_SINGLE_S(xreg, xshअगरt, xtexts) \
-	SOC_ENUM_SINGLE(xreg, xshअगरt, ARRAY_SIZE(xtexts), xtexts)
+#define SOC_ENUM_SINGLE_S(xreg, xshift, xtexts) \
+	SOC_ENUM_SINGLE(xreg, xshift, ARRAY_SIZE(xtexts), xtexts)
 
-अटल स्थिर अक्षर
-	*tdm_sel[] = अणु "TDM1", "TDM2", पूर्ण,
-	*mode_sel[] = अणु "Disabled", "TDM1", "TDM2", "Mixed", पूर्ण,
-	*width_sel[] = अणु "16b", "18b", "20b", "24b", "32b", पूर्ण,
-	*endis_sel[] = अणु "Disabled", "Enabled", पूर्ण,
-	*updn_sel[] = अणु "Downward", "Upward", पूर्ण,
-	*mask_sel[] = अणु "Unmask", "Mask", पूर्ण;
+static const char
+	*tdm_sel[] = { "TDM1", "TDM2", },
+	*mode_sel[] = { "Disabled", "TDM1", "TDM2", "Mixed", },
+	*width_sel[] = { "16b", "18b", "20b", "24b", "32b", },
+	*endis_sel[] = { "Disabled", "Enabled", },
+	*updn_sel[] = { "Downward", "Upward", },
+	*mask_sel[] = { "Unmask", "Mask", };
 
-अटल स्थिर काष्ठा soc_क्रमागत fsl_audmix_क्रमागत[] = अणु
-/* FSL_AUDMIX_CTR क्रमागतs */
+static const struct soc_enum fsl_audmix_enum[] = {
+/* FSL_AUDMIX_CTR enums */
 SOC_ENUM_SINGLE_S(FSL_AUDMIX_CTR, FSL_AUDMIX_CTR_MIXCLK_SHIFT, tdm_sel),
 SOC_ENUM_SINGLE_S(FSL_AUDMIX_CTR, FSL_AUDMIX_CTR_OUTSRC_SHIFT, mode_sel),
 SOC_ENUM_SINGLE_S(FSL_AUDMIX_CTR, FSL_AUDMIX_CTR_OUTWIDTH_SHIFT, width_sel),
@@ -35,131 +34,131 @@ SOC_ENUM_SINGLE_S(FSL_AUDMIX_CTR, FSL_AUDMIX_CTR_MASKRTDF_SHIFT, mask_sel),
 SOC_ENUM_SINGLE_S(FSL_AUDMIX_CTR, FSL_AUDMIX_CTR_MASKCKDF_SHIFT, mask_sel),
 SOC_ENUM_SINGLE_S(FSL_AUDMIX_CTR, FSL_AUDMIX_CTR_SYNCMODE_SHIFT, endis_sel),
 SOC_ENUM_SINGLE_S(FSL_AUDMIX_CTR, FSL_AUDMIX_CTR_SYNCSRC_SHIFT, tdm_sel),
-/* FSL_AUDMIX_ATCR0 क्रमागतs */
+/* FSL_AUDMIX_ATCR0 enums */
 SOC_ENUM_SINGLE_S(FSL_AUDMIX_ATCR0, 0, endis_sel),
 SOC_ENUM_SINGLE_S(FSL_AUDMIX_ATCR0, 1, updn_sel),
-/* FSL_AUDMIX_ATCR1 क्रमागतs */
+/* FSL_AUDMIX_ATCR1 enums */
 SOC_ENUM_SINGLE_S(FSL_AUDMIX_ATCR1, 0, endis_sel),
 SOC_ENUM_SINGLE_S(FSL_AUDMIX_ATCR1, 1, updn_sel),
-पूर्ण;
+};
 
-काष्ठा fsl_audmix_state अणु
+struct fsl_audmix_state {
 	u8 tdms;
 	u8 clk;
-	अक्षर msg[64];
-पूर्ण;
+	char msg[64];
+};
 
-अटल स्थिर काष्ठा fsl_audmix_state prms[4][4] = अणुअणु
-	/* DIS->DIS, करो nothing */
-	अणु .tdms = 0, .clk = 0, .msg = "" पूर्ण,
+static const struct fsl_audmix_state prms[4][4] = {{
+	/* DIS->DIS, do nothing */
+	{ .tdms = 0, .clk = 0, .msg = "" },
 	/* DIS->TDM1*/
-	अणु .tdms = 1, .clk = 1, .msg = "DIS->TDM1: TDM1 not started!\n" पूर्ण,
+	{ .tdms = 1, .clk = 1, .msg = "DIS->TDM1: TDM1 not started!\n" },
 	/* DIS->TDM2*/
-	अणु .tdms = 2, .clk = 2, .msg = "DIS->TDM2: TDM2 not started!\n" पूर्ण,
+	{ .tdms = 2, .clk = 2, .msg = "DIS->TDM2: TDM2 not started!\n" },
 	/* DIS->MIX */
-	अणु .tdms = 3, .clk = 0, .msg = "DIS->MIX: Please start both TDMs!\n" पूर्ण
-पूर्ण, अणु	/* TDM1->DIS */
-	अणु .tdms = 1, .clk = 0, .msg = "TDM1->DIS: TDM1 not started!\n" पूर्ण,
-	/* TDM1->TDM1, करो nothing */
-	अणु .tdms = 0, .clk = 0, .msg = "" पूर्ण,
+	{ .tdms = 3, .clk = 0, .msg = "DIS->MIX: Please start both TDMs!\n" }
+}, {	/* TDM1->DIS */
+	{ .tdms = 1, .clk = 0, .msg = "TDM1->DIS: TDM1 not started!\n" },
+	/* TDM1->TDM1, do nothing */
+	{ .tdms = 0, .clk = 0, .msg = "" },
 	/* TDM1->TDM2 */
-	अणु .tdms = 3, .clk = 2, .msg = "TDM1->TDM2: Please start both TDMs!\n" पूर्ण,
+	{ .tdms = 3, .clk = 2, .msg = "TDM1->TDM2: Please start both TDMs!\n" },
 	/* TDM1->MIX */
-	अणु .tdms = 3, .clk = 0, .msg = "TDM1->MIX: Please start both TDMs!\n" पूर्ण
-पूर्ण, अणु	/* TDM2->DIS */
-	अणु .tdms = 2, .clk = 0, .msg = "TDM2->DIS: TDM2 not started!\n" पूर्ण,
+	{ .tdms = 3, .clk = 0, .msg = "TDM1->MIX: Please start both TDMs!\n" }
+}, {	/* TDM2->DIS */
+	{ .tdms = 2, .clk = 0, .msg = "TDM2->DIS: TDM2 not started!\n" },
 	/* TDM2->TDM1 */
-	अणु .tdms = 3, .clk = 1, .msg = "TDM2->TDM1: Please start both TDMs!\n" पूर्ण,
-	/* TDM2->TDM2, करो nothing */
-	अणु .tdms = 0, .clk = 0, .msg = "" पूर्ण,
+	{ .tdms = 3, .clk = 1, .msg = "TDM2->TDM1: Please start both TDMs!\n" },
+	/* TDM2->TDM2, do nothing */
+	{ .tdms = 0, .clk = 0, .msg = "" },
 	/* TDM2->MIX */
-	अणु .tdms = 3, .clk = 0, .msg = "TDM2->MIX: Please start both TDMs!\n" पूर्ण
-पूर्ण, अणु	/* MIX->DIS */
-	अणु .tdms = 3, .clk = 0, .msg = "MIX->DIS: Please start both TDMs!\n" पूर्ण,
+	{ .tdms = 3, .clk = 0, .msg = "TDM2->MIX: Please start both TDMs!\n" }
+}, {	/* MIX->DIS */
+	{ .tdms = 3, .clk = 0, .msg = "MIX->DIS: Please start both TDMs!\n" },
 	/* MIX->TDM1 */
-	अणु .tdms = 3, .clk = 1, .msg = "MIX->TDM1: Please start both TDMs!\n" पूर्ण,
+	{ .tdms = 3, .clk = 1, .msg = "MIX->TDM1: Please start both TDMs!\n" },
 	/* MIX->TDM2 */
-	अणु .tdms = 3, .clk = 2, .msg = "MIX->TDM2: Please start both TDMs!\n" पूर्ण,
-	/* MIX->MIX, करो nothing */
-	अणु .tdms = 0, .clk = 0, .msg = "" पूर्ण
-पूर्ण, पूर्ण;
+	{ .tdms = 3, .clk = 2, .msg = "MIX->TDM2: Please start both TDMs!\n" },
+	/* MIX->MIX, do nothing */
+	{ .tdms = 0, .clk = 0, .msg = "" }
+}, };
 
-अटल पूर्णांक fsl_audmix_state_trans(काष्ठा snd_soc_component *comp,
-				  अचिन्हित पूर्णांक *mask, अचिन्हित पूर्णांक *ctr,
-				  स्थिर काष्ठा fsl_audmix_state prm)
-अणु
-	काष्ठा fsl_audmix *priv = snd_soc_component_get_drvdata(comp);
-	/* Enक्रमce all required TDMs are started */
-	अगर ((priv->tdms & prm.tdms) != prm.tdms) अणु
+static int fsl_audmix_state_trans(struct snd_soc_component *comp,
+				  unsigned int *mask, unsigned int *ctr,
+				  const struct fsl_audmix_state prm)
+{
+	struct fsl_audmix *priv = snd_soc_component_get_drvdata(comp);
+	/* Enforce all required TDMs are started */
+	if ((priv->tdms & prm.tdms) != prm.tdms) {
 		dev_dbg(comp->dev, "%s", prm.msg);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	चयन (prm.clk) अणु
-	हाल 1:
-	हाल 2:
-		/* Set mix घड़ी */
+	switch (prm.clk) {
+	case 1:
+	case 2:
+		/* Set mix clock */
 		(*mask) |= FSL_AUDMIX_CTR_MIXCLK_MASK;
 		(*ctr)  |= FSL_AUDMIX_CTR_MIXCLK(prm.clk - 1);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fsl_audmix_put_mix_clk_src(काष्ठा snd_kcontrol *kcontrol,
-				      काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *comp = snd_kcontrol_chip(kcontrol);
-	काष्ठा fsl_audmix *priv = snd_soc_component_get_drvdata(comp);
-	काष्ठा soc_क्रमागत *e = (काष्ठा soc_क्रमागत *)kcontrol->निजी_value;
-	अचिन्हित पूर्णांक *item = ucontrol->value.क्रमागतerated.item;
-	अचिन्हित पूर्णांक reg_val, val, mix_clk;
+static int fsl_audmix_put_mix_clk_src(struct snd_kcontrol *kcontrol,
+				      struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *comp = snd_kcontrol_chip(kcontrol);
+	struct fsl_audmix *priv = snd_soc_component_get_drvdata(comp);
+	struct soc_enum *e = (struct soc_enum *)kcontrol->private_value;
+	unsigned int *item = ucontrol->value.enumerated.item;
+	unsigned int reg_val, val, mix_clk;
 
 	/* Get current state */
-	reg_val = snd_soc_component_पढ़ो(comp, FSL_AUDMIX_CTR);
+	reg_val = snd_soc_component_read(comp, FSL_AUDMIX_CTR);
 	mix_clk = ((reg_val & FSL_AUDMIX_CTR_MIXCLK_MASK)
 			>> FSL_AUDMIX_CTR_MIXCLK_SHIFT);
-	val = snd_soc_क्रमागत_item_to_val(e, item[0]);
+	val = snd_soc_enum_item_to_val(e, item[0]);
 
 	dev_dbg(comp->dev, "TDMs=x%08x, val=x%08x\n", priv->tdms, val);
 
 	/**
-	 * Ensure the current selected mixer घड़ी is available
-	 * क्रम configuration propagation
+	 * Ensure the current selected mixer clock is available
+	 * for configuration propagation
 	 */
-	अगर (!(priv->tdms & BIT(mix_clk))) अणु
+	if (!(priv->tdms & BIT(mix_clk))) {
 		dev_err(comp->dev,
 			"Started TDM%d needed for config propagation!\n",
 			mix_clk + 1);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!(priv->tdms & BIT(val))) अणु
+	if (!(priv->tdms & BIT(val))) {
 		dev_err(comp->dev,
 			"The selected clock source has no TDM%d enabled!\n",
 			val + 1);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस snd_soc_put_क्रमागत_द्विगुन(kcontrol, ucontrol);
-पूर्ण
+	return snd_soc_put_enum_double(kcontrol, ucontrol);
+}
 
-अटल पूर्णांक fsl_audmix_put_out_src(काष्ठा snd_kcontrol *kcontrol,
-				  काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *comp = snd_kcontrol_chip(kcontrol);
-	काष्ठा fsl_audmix *priv = snd_soc_component_get_drvdata(comp);
-	काष्ठा soc_क्रमागत *e = (काष्ठा soc_क्रमागत *)kcontrol->निजी_value;
-	अचिन्हित पूर्णांक *item = ucontrol->value.क्रमागतerated.item;
+static int fsl_audmix_put_out_src(struct snd_kcontrol *kcontrol,
+				  struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *comp = snd_kcontrol_chip(kcontrol);
+	struct fsl_audmix *priv = snd_soc_component_get_drvdata(comp);
+	struct soc_enum *e = (struct soc_enum *)kcontrol->private_value;
+	unsigned int *item = ucontrol->value.enumerated.item;
 	u32 out_src, mix_clk;
-	अचिन्हित पूर्णांक reg_val, val, mask = 0, ctr = 0;
-	पूर्णांक ret;
+	unsigned int reg_val, val, mask = 0, ctr = 0;
+	int ret;
 
 	/* Get current state */
-	reg_val = snd_soc_component_पढ़ो(comp, FSL_AUDMIX_CTR);
+	reg_val = snd_soc_component_read(comp, FSL_AUDMIX_CTR);
 
 	/* "From" state */
 	out_src = ((reg_val & FSL_AUDMIX_CTR_OUTSRC_MASK)
@@ -168,58 +167,58 @@ SOC_ENUM_SINGLE_S(FSL_AUDMIX_ATCR1, 1, updn_sel),
 			>> FSL_AUDMIX_CTR_MIXCLK_SHIFT);
 
 	/* "To" state */
-	val = snd_soc_क्रमागत_item_to_val(e, item[0]);
+	val = snd_soc_enum_item_to_val(e, item[0]);
 
 	dev_dbg(comp->dev, "TDMs=x%08x, val=x%08x\n", priv->tdms, val);
 
-	/* Check अगर state is changing ... */
-	अगर (out_src == val)
-		वापस 0;
+	/* Check if state is changing ... */
+	if (out_src == val)
+		return 0;
 	/**
-	 * Ensure the current selected mixer घड़ी is available
-	 * क्रम configuration propagation
+	 * Ensure the current selected mixer clock is available
+	 * for configuration propagation
 	 */
-	अगर (!(priv->tdms & BIT(mix_clk))) अणु
+	if (!(priv->tdms & BIT(mix_clk))) {
 		dev_err(comp->dev,
 			"Started TDM%d needed for config propagation!\n",
 			mix_clk + 1);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Check state transition स्थिरraपूर्णांकs */
+	/* Check state transition constraints */
 	ret = fsl_audmix_state_trans(comp, &mask, &ctr, prms[out_src][val]);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* Complete transition to new state */
 	mask |= FSL_AUDMIX_CTR_OUTSRC_MASK;
 	ctr  |= FSL_AUDMIX_CTR_OUTSRC(val);
 
-	वापस snd_soc_component_update_bits(comp, FSL_AUDMIX_CTR, mask, ctr);
-पूर्ण
+	return snd_soc_component_update_bits(comp, FSL_AUDMIX_CTR, mask, ctr);
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new fsl_audmix_snd_controls[] = अणु
+static const struct snd_kcontrol_new fsl_audmix_snd_controls[] = {
 	/* FSL_AUDMIX_CTR controls */
-	अणु	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+	{	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name = "Mixing Clock Source",
-		.info = snd_soc_info_क्रमागत_द्विगुन,
+		.info = snd_soc_info_enum_double,
 		.access = SNDRV_CTL_ELEM_ACCESS_WRITE,
 		.put = fsl_audmix_put_mix_clk_src,
-		.निजी_value = (अचिन्हित दीर्घ)&fsl_audmix_क्रमागत[0] पूर्ण,
-	अणु	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+		.private_value = (unsigned long)&fsl_audmix_enum[0] },
+	{	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name = "Output Source",
-		.info = snd_soc_info_क्रमागत_द्विगुन,
+		.info = snd_soc_info_enum_double,
 		.access = SNDRV_CTL_ELEM_ACCESS_WRITE,
 		.put = fsl_audmix_put_out_src,
-		.निजी_value = (अचिन्हित दीर्घ)&fsl_audmix_क्रमागत[1] पूर्ण,
-	SOC_ENUM("Output Width", fsl_audmix_क्रमागत[2]),
-	SOC_ENUM("Frame Rate Diff Error", fsl_audmix_क्रमागत[3]),
-	SOC_ENUM("Clock Freq Diff Error", fsl_audmix_क्रमागत[4]),
-	SOC_ENUM("Sync Mode Config", fsl_audmix_क्रमागत[5]),
-	SOC_ENUM("Sync Mode Clk Source", fsl_audmix_क्रमागत[6]),
+		.private_value = (unsigned long)&fsl_audmix_enum[1] },
+	SOC_ENUM("Output Width", fsl_audmix_enum[2]),
+	SOC_ENUM("Frame Rate Diff Error", fsl_audmix_enum[3]),
+	SOC_ENUM("Clock Freq Diff Error", fsl_audmix_enum[4]),
+	SOC_ENUM("Sync Mode Config", fsl_audmix_enum[5]),
+	SOC_ENUM("Sync Mode Clk Source", fsl_audmix_enum[6]),
 	/* TDM1 Attenuation controls */
-	SOC_ENUM("TDM1 Attenuation", fsl_audmix_क्रमागत[7]),
-	SOC_ENUM("TDM1 Attenuation Direction", fsl_audmix_क्रमागत[8]),
+	SOC_ENUM("TDM1 Attenuation", fsl_audmix_enum[7]),
+	SOC_ENUM("TDM1 Attenuation Direction", fsl_audmix_enum[8]),
 	SOC_SINGLE("TDM1 Attenuation Step Divider", FSL_AUDMIX_ATCR0,
 		   2, 0x00fff, 0),
 	SOC_SINGLE("TDM1 Attenuation Initial Value", FSL_AUDMIX_ATIVAL0,
@@ -231,8 +230,8 @@ SOC_ENUM_SINGLE_S(FSL_AUDMIX_ATCR1, 1, updn_sel),
 	SOC_SINGLE("TDM1 Attenuation Step Target", FSL_AUDMIX_ATSTPTGT0,
 		   0, 0x3ffff, 0),
 	/* TDM2 Attenuation controls */
-	SOC_ENUM("TDM2 Attenuation", fsl_audmix_क्रमागत[9]),
-	SOC_ENUM("TDM2 Attenuation Direction", fsl_audmix_क्रमागत[10]),
+	SOC_ENUM("TDM2 Attenuation", fsl_audmix_enum[9]),
+	SOC_ENUM("TDM2 Attenuation Direction", fsl_audmix_enum[10]),
 	SOC_SINGLE("TDM2 Attenuation Step Divider", FSL_AUDMIX_ATCR1,
 		   2, 0x00fff, 0),
 	SOC_SINGLE("TDM2 Attenuation Initial Value", FSL_AUDMIX_ATIVAL1,
@@ -243,338 +242,338 @@ SOC_ENUM_SINGLE_S(FSL_AUDMIX_ATCR1, 1, updn_sel),
 		   0, 0x3ffff, 0),
 	SOC_SINGLE("TDM2 Attenuation Step Target", FSL_AUDMIX_ATSTPTGT1,
 		   0, 0x3ffff, 0),
-पूर्ण;
+};
 
-अटल पूर्णांक fsl_audmix_dai_set_fmt(काष्ठा snd_soc_dai *dai, अचिन्हित पूर्णांक fmt)
-अणु
-	काष्ठा snd_soc_component *comp = dai->component;
+static int fsl_audmix_dai_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
+{
+	struct snd_soc_component *comp = dai->component;
 	u32 mask = 0, ctr = 0;
 
-	/* AUDMIX is working in DSP_A क्रमmat only */
-	चयन (fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
-	हाल SND_SOC_DAIFMT_DSP_A:
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	/* AUDMIX is working in DSP_A format only */
+	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
+	case SND_SOC_DAIFMT_DSP_A:
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	/* For playback the AUDMIX is slave, and क्रम record is master */
-	चयन (fmt & SND_SOC_DAIFMT_MASTER_MASK) अणु
-	हाल SND_SOC_DAIFMT_CBM_CFM:
-	हाल SND_SOC_DAIFMT_CBS_CFS:
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	/* For playback the AUDMIX is slave, and for record is master */
+	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
+	case SND_SOC_DAIFMT_CBM_CFM:
+	case SND_SOC_DAIFMT_CBS_CFS:
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	चयन (fmt & SND_SOC_DAIFMT_INV_MASK) अणु
-	हाल SND_SOC_DAIFMT_IB_NF:
-		/* Output data will be written on positive edge of the घड़ी */
+	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
+	case SND_SOC_DAIFMT_IB_NF:
+		/* Output data will be written on positive edge of the clock */
 		ctr |= FSL_AUDMIX_CTR_OUTCKPOL(0);
-		अवरोध;
-	हाल SND_SOC_DAIFMT_NB_NF:
-		/* Output data will be written on negative edge of the घड़ी */
+		break;
+	case SND_SOC_DAIFMT_NB_NF:
+		/* Output data will be written on negative edge of the clock */
 		ctr |= FSL_AUDMIX_CTR_OUTCKPOL(1);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	mask |= FSL_AUDMIX_CTR_OUTCKPOL_MASK;
 
-	वापस snd_soc_component_update_bits(comp, FSL_AUDMIX_CTR, mask, ctr);
-पूर्ण
+	return snd_soc_component_update_bits(comp, FSL_AUDMIX_CTR, mask, ctr);
+}
 
-अटल पूर्णांक fsl_audmix_dai_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd,
-				  काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा fsl_audmix *priv = snd_soc_dai_get_drvdata(dai);
-	अचिन्हित दीर्घ lock_flags;
+static int fsl_audmix_dai_trigger(struct snd_pcm_substream *substream, int cmd,
+				  struct snd_soc_dai *dai)
+{
+	struct fsl_audmix *priv = snd_soc_dai_get_drvdata(dai);
+	unsigned long lock_flags;
 
 	/* Capture stream shall not be handled */
-	अगर (substream->stream == SNDRV_PCM_STREAM_CAPTURE)
-		वापस 0;
+	if (substream->stream == SNDRV_PCM_STREAM_CAPTURE)
+		return 0;
 
-	चयन (cmd) अणु
-	हाल SNDRV_PCM_TRIGGER_START:
-	हाल SNDRV_PCM_TRIGGER_RESUME:
-	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+	switch (cmd) {
+	case SNDRV_PCM_TRIGGER_START:
+	case SNDRV_PCM_TRIGGER_RESUME:
+	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
 		spin_lock_irqsave(&priv->lock, lock_flags);
 		priv->tdms |= BIT(dai->driver->id);
 		spin_unlock_irqrestore(&priv->lock, lock_flags);
-		अवरोध;
-	हाल SNDRV_PCM_TRIGGER_STOP:
-	हाल SNDRV_PCM_TRIGGER_SUSPEND:
-	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+		break;
+	case SNDRV_PCM_TRIGGER_STOP:
+	case SNDRV_PCM_TRIGGER_SUSPEND:
+	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
 		spin_lock_irqsave(&priv->lock, lock_flags);
 		priv->tdms &= ~BIT(dai->driver->id);
 		spin_unlock_irqrestore(&priv->lock, lock_flags);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_soc_dai_ops fsl_audmix_dai_ops = अणु
+static const struct snd_soc_dai_ops fsl_audmix_dai_ops = {
 	.set_fmt      = fsl_audmix_dai_set_fmt,
 	.trigger      = fsl_audmix_dai_trigger,
-पूर्ण;
+};
 
-अटल काष्ठा snd_soc_dai_driver fsl_audmix_dai[] = अणु
-	अणु
+static struct snd_soc_dai_driver fsl_audmix_dai[] = {
+	{
 		.id   = 0,
 		.name = "audmix-0",
-		.playback = अणु
+		.playback = {
 			.stream_name = "AUDMIX-Playback-0",
 			.channels_min = 8,
 			.channels_max = 8,
 			.rate_min = 8000,
 			.rate_max = 96000,
 			.rates = SNDRV_PCM_RATE_8000_96000,
-			.क्रमmats = FSL_AUDMIX_FORMATS,
-		पूर्ण,
-		.capture = अणु
+			.formats = FSL_AUDMIX_FORMATS,
+		},
+		.capture = {
 			.stream_name = "AUDMIX-Capture-0",
 			.channels_min = 8,
 			.channels_max = 8,
 			.rate_min = 8000,
 			.rate_max = 96000,
 			.rates = SNDRV_PCM_RATE_8000_96000,
-			.क्रमmats = FSL_AUDMIX_FORMATS,
-		पूर्ण,
+			.formats = FSL_AUDMIX_FORMATS,
+		},
 		.ops = &fsl_audmix_dai_ops,
-	पूर्ण,
-	अणु
+	},
+	{
 		.id   = 1,
 		.name = "audmix-1",
-		.playback = अणु
+		.playback = {
 			.stream_name = "AUDMIX-Playback-1",
 			.channels_min = 8,
 			.channels_max = 8,
 			.rate_min = 8000,
 			.rate_max = 96000,
 			.rates = SNDRV_PCM_RATE_8000_96000,
-			.क्रमmats = FSL_AUDMIX_FORMATS,
-		पूर्ण,
-		.capture = अणु
+			.formats = FSL_AUDMIX_FORMATS,
+		},
+		.capture = {
 			.stream_name = "AUDMIX-Capture-1",
 			.channels_min = 8,
 			.channels_max = 8,
 			.rate_min = 8000,
 			.rate_max = 96000,
 			.rates = SNDRV_PCM_RATE_8000_96000,
-			.क्रमmats = FSL_AUDMIX_FORMATS,
-		पूर्ण,
+			.formats = FSL_AUDMIX_FORMATS,
+		},
 		.ops = &fsl_audmix_dai_ops,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा snd_soc_component_driver fsl_audmix_component = अणु
+static const struct snd_soc_component_driver fsl_audmix_component = {
 	.name		  = "fsl-audmix-dai",
 	.controls	  = fsl_audmix_snd_controls,
 	.num_controls	  = ARRAY_SIZE(fsl_audmix_snd_controls),
-पूर्ण;
+};
 
-अटल bool fsl_audmix_पढ़ोable_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल FSL_AUDMIX_CTR:
-	हाल FSL_AUDMIX_STR:
-	हाल FSL_AUDMIX_ATCR0:
-	हाल FSL_AUDMIX_ATIVAL0:
-	हाल FSL_AUDMIX_ATSTPUP0:
-	हाल FSL_AUDMIX_ATSTPDN0:
-	हाल FSL_AUDMIX_ATSTPTGT0:
-	हाल FSL_AUDMIX_ATTNVAL0:
-	हाल FSL_AUDMIX_ATSTP0:
-	हाल FSL_AUDMIX_ATCR1:
-	हाल FSL_AUDMIX_ATIVAL1:
-	हाल FSL_AUDMIX_ATSTPUP1:
-	हाल FSL_AUDMIX_ATSTPDN1:
-	हाल FSL_AUDMIX_ATSTPTGT1:
-	हाल FSL_AUDMIX_ATTNVAL1:
-	हाल FSL_AUDMIX_ATSTP1:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool fsl_audmix_readable_reg(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case FSL_AUDMIX_CTR:
+	case FSL_AUDMIX_STR:
+	case FSL_AUDMIX_ATCR0:
+	case FSL_AUDMIX_ATIVAL0:
+	case FSL_AUDMIX_ATSTPUP0:
+	case FSL_AUDMIX_ATSTPDN0:
+	case FSL_AUDMIX_ATSTPTGT0:
+	case FSL_AUDMIX_ATTNVAL0:
+	case FSL_AUDMIX_ATSTP0:
+	case FSL_AUDMIX_ATCR1:
+	case FSL_AUDMIX_ATIVAL1:
+	case FSL_AUDMIX_ATSTPUP1:
+	case FSL_AUDMIX_ATSTPDN1:
+	case FSL_AUDMIX_ATSTPTGT1:
+	case FSL_AUDMIX_ATTNVAL1:
+	case FSL_AUDMIX_ATSTP1:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल bool fsl_audmix_ग_लिखोable_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल FSL_AUDMIX_CTR:
-	हाल FSL_AUDMIX_ATCR0:
-	हाल FSL_AUDMIX_ATIVAL0:
-	हाल FSL_AUDMIX_ATSTPUP0:
-	हाल FSL_AUDMIX_ATSTPDN0:
-	हाल FSL_AUDMIX_ATSTPTGT0:
-	हाल FSL_AUDMIX_ATCR1:
-	हाल FSL_AUDMIX_ATIVAL1:
-	हाल FSL_AUDMIX_ATSTPUP1:
-	हाल FSL_AUDMIX_ATSTPDN1:
-	हाल FSL_AUDMIX_ATSTPTGT1:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool fsl_audmix_writeable_reg(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case FSL_AUDMIX_CTR:
+	case FSL_AUDMIX_ATCR0:
+	case FSL_AUDMIX_ATIVAL0:
+	case FSL_AUDMIX_ATSTPUP0:
+	case FSL_AUDMIX_ATSTPDN0:
+	case FSL_AUDMIX_ATSTPTGT0:
+	case FSL_AUDMIX_ATCR1:
+	case FSL_AUDMIX_ATIVAL1:
+	case FSL_AUDMIX_ATSTPUP1:
+	case FSL_AUDMIX_ATSTPDN1:
+	case FSL_AUDMIX_ATSTPTGT1:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल स्थिर काष्ठा reg_शेष fsl_audmix_reg[] = अणु
-	अणु FSL_AUDMIX_CTR,       0x00060 पूर्ण,
-	अणु FSL_AUDMIX_STR,       0x00003 पूर्ण,
-	अणु FSL_AUDMIX_ATCR0,     0x00000 पूर्ण,
-	अणु FSL_AUDMIX_ATIVAL0,   0x3FFFF पूर्ण,
-	अणु FSL_AUDMIX_ATSTPUP0,  0x2AAAA पूर्ण,
-	अणु FSL_AUDMIX_ATSTPDN0,  0x30000 पूर्ण,
-	अणु FSL_AUDMIX_ATSTPTGT0, 0x00010 पूर्ण,
-	अणु FSL_AUDMIX_ATTNVAL0,  0x00000 पूर्ण,
-	अणु FSL_AUDMIX_ATSTP0,    0x00000 पूर्ण,
-	अणु FSL_AUDMIX_ATCR1,     0x00000 पूर्ण,
-	अणु FSL_AUDMIX_ATIVAL1,   0x3FFFF पूर्ण,
-	अणु FSL_AUDMIX_ATSTPUP1,  0x2AAAA पूर्ण,
-	अणु FSL_AUDMIX_ATSTPDN1,  0x30000 पूर्ण,
-	अणु FSL_AUDMIX_ATSTPTGT1, 0x00010 पूर्ण,
-	अणु FSL_AUDMIX_ATTNVAL1,  0x00000 पूर्ण,
-	अणु FSL_AUDMIX_ATSTP1,    0x00000 पूर्ण,
-पूर्ण;
+static const struct reg_default fsl_audmix_reg[] = {
+	{ FSL_AUDMIX_CTR,       0x00060 },
+	{ FSL_AUDMIX_STR,       0x00003 },
+	{ FSL_AUDMIX_ATCR0,     0x00000 },
+	{ FSL_AUDMIX_ATIVAL0,   0x3FFFF },
+	{ FSL_AUDMIX_ATSTPUP0,  0x2AAAA },
+	{ FSL_AUDMIX_ATSTPDN0,  0x30000 },
+	{ FSL_AUDMIX_ATSTPTGT0, 0x00010 },
+	{ FSL_AUDMIX_ATTNVAL0,  0x00000 },
+	{ FSL_AUDMIX_ATSTP0,    0x00000 },
+	{ FSL_AUDMIX_ATCR1,     0x00000 },
+	{ FSL_AUDMIX_ATIVAL1,   0x3FFFF },
+	{ FSL_AUDMIX_ATSTPUP1,  0x2AAAA },
+	{ FSL_AUDMIX_ATSTPDN1,  0x30000 },
+	{ FSL_AUDMIX_ATSTPTGT1, 0x00010 },
+	{ FSL_AUDMIX_ATTNVAL1,  0x00000 },
+	{ FSL_AUDMIX_ATSTP1,    0x00000 },
+};
 
-अटल स्थिर काष्ठा regmap_config fsl_audmix_regmap_config = अणु
+static const struct regmap_config fsl_audmix_regmap_config = {
 	.reg_bits = 32,
 	.reg_stride = 4,
 	.val_bits = 32,
-	.max_रेजिस्टर = FSL_AUDMIX_ATSTP1,
-	.reg_शेषs = fsl_audmix_reg,
-	.num_reg_शेषs = ARRAY_SIZE(fsl_audmix_reg),
-	.पढ़ोable_reg = fsl_audmix_पढ़ोable_reg,
-	.ग_लिखोable_reg = fsl_audmix_ग_लिखोable_reg,
+	.max_register = FSL_AUDMIX_ATSTP1,
+	.reg_defaults = fsl_audmix_reg,
+	.num_reg_defaults = ARRAY_SIZE(fsl_audmix_reg),
+	.readable_reg = fsl_audmix_readable_reg,
+	.writeable_reg = fsl_audmix_writeable_reg,
 	.cache_type = REGCACHE_FLAT,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id fsl_audmix_ids[] = अणु
-	अणु
+static const struct of_device_id fsl_audmix_ids[] = {
+	{
 		.compatible = "fsl,imx8qm-audmix",
-	पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+	},
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, fsl_audmix_ids);
 
-अटल पूर्णांक fsl_audmix_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा fsl_audmix *priv;
-	व्योम __iomem *regs;
-	पूर्णांक ret;
+static int fsl_audmix_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct fsl_audmix *priv;
+	void __iomem *regs;
+	int ret;
 
-	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	/* Get the addresses */
-	regs = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(regs))
-		वापस PTR_ERR(regs);
+	regs = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(regs))
+		return PTR_ERR(regs);
 
 	priv->regmap = devm_regmap_init_mmio(dev, regs, &fsl_audmix_regmap_config);
-	अगर (IS_ERR(priv->regmap)) अणु
+	if (IS_ERR(priv->regmap)) {
 		dev_err(dev, "failed to init regmap\n");
-		वापस PTR_ERR(priv->regmap);
-	पूर्ण
+		return PTR_ERR(priv->regmap);
+	}
 
 	priv->ipg_clk = devm_clk_get(dev, "ipg");
-	अगर (IS_ERR(priv->ipg_clk)) अणु
+	if (IS_ERR(priv->ipg_clk)) {
 		dev_err(dev, "failed to get ipg clock\n");
-		वापस PTR_ERR(priv->ipg_clk);
-	पूर्ण
+		return PTR_ERR(priv->ipg_clk);
+	}
 
 	spin_lock_init(&priv->lock);
-	platक्रमm_set_drvdata(pdev, priv);
-	pm_runसमय_enable(dev);
+	platform_set_drvdata(pdev, priv);
+	pm_runtime_enable(dev);
 
-	ret = devm_snd_soc_रेजिस्टर_component(dev, &fsl_audmix_component,
+	ret = devm_snd_soc_register_component(dev, &fsl_audmix_component,
 					      fsl_audmix_dai,
 					      ARRAY_SIZE(fsl_audmix_dai));
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to register ASoC DAI\n");
-		जाओ err_disable_pm;
-	पूर्ण
+		goto err_disable_pm;
+	}
 
-	priv->pdev = platक्रमm_device_रेजिस्टर_data(dev, "imx-audmix", 0, शून्य, 0);
-	अगर (IS_ERR(priv->pdev)) अणु
+	priv->pdev = platform_device_register_data(dev, "imx-audmix", 0, NULL, 0);
+	if (IS_ERR(priv->pdev)) {
 		ret = PTR_ERR(priv->pdev);
 		dev_err(dev, "failed to register platform: %d\n", ret);
-		जाओ err_disable_pm;
-	पूर्ण
+		goto err_disable_pm;
+	}
 
-	वापस 0;
+	return 0;
 
 err_disable_pm:
-	pm_runसमय_disable(dev);
-	वापस ret;
-पूर्ण
+	pm_runtime_disable(dev);
+	return ret;
+}
 
-अटल पूर्णांक fsl_audmix_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा fsl_audmix *priv = dev_get_drvdata(&pdev->dev);
+static int fsl_audmix_remove(struct platform_device *pdev)
+{
+	struct fsl_audmix *priv = dev_get_drvdata(&pdev->dev);
 
-	pm_runसमय_disable(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
 
-	अगर (priv->pdev)
-		platक्रमm_device_unरेजिस्टर(priv->pdev);
+	if (priv->pdev)
+		platform_device_unregister(priv->pdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक fsl_audmix_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा fsl_audmix *priv = dev_get_drvdata(dev);
-	पूर्णांक ret;
+#ifdef CONFIG_PM
+static int fsl_audmix_runtime_resume(struct device *dev)
+{
+	struct fsl_audmix *priv = dev_get_drvdata(dev);
+	int ret;
 
 	ret = clk_prepare_enable(priv->ipg_clk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to enable IPG clock: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	regcache_cache_only(priv->regmap, false);
 	regcache_mark_dirty(priv->regmap);
 
-	वापस regcache_sync(priv->regmap);
-पूर्ण
+	return regcache_sync(priv->regmap);
+}
 
-अटल पूर्णांक fsl_audmix_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा fsl_audmix *priv = dev_get_drvdata(dev);
+static int fsl_audmix_runtime_suspend(struct device *dev)
+{
+	struct fsl_audmix *priv = dev_get_drvdata(dev);
 
 	regcache_cache_only(priv->regmap, true);
 
 	clk_disable_unprepare(priv->ipg_clk);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PM */
+	return 0;
+}
+#endif /* CONFIG_PM */
 
-अटल स्थिर काष्ठा dev_pm_ops fsl_audmix_pm = अणु
-	SET_RUNTIME_PM_OPS(fsl_audmix_runसमय_suspend,
-			   fsl_audmix_runसमय_resume,
-			   शून्य)
-	SET_SYSTEM_SLEEP_PM_OPS(pm_runसमय_क्रमce_suspend,
-				pm_runसमय_क्रमce_resume)
-पूर्ण;
+static const struct dev_pm_ops fsl_audmix_pm = {
+	SET_RUNTIME_PM_OPS(fsl_audmix_runtime_suspend,
+			   fsl_audmix_runtime_resume,
+			   NULL)
+	SET_SYSTEM_SLEEP_PM_OPS(pm_runtime_force_suspend,
+				pm_runtime_force_resume)
+};
 
-अटल काष्ठा platक्रमm_driver fsl_audmix_driver = अणु
+static struct platform_driver fsl_audmix_driver = {
 	.probe = fsl_audmix_probe,
-	.हटाओ = fsl_audmix_हटाओ,
-	.driver = अणु
+	.remove = fsl_audmix_remove,
+	.driver = {
 		.name = "fsl-audmix",
 		.of_match_table = fsl_audmix_ids,
 		.pm = &fsl_audmix_pm,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(fsl_audmix_driver);
+	},
+};
+module_platform_driver(fsl_audmix_driver);
 
 MODULE_DESCRIPTION("NXP AUDMIX ASoC DAI driver");
 MODULE_AUTHOR("Viorel Suman <viorel.suman@nxp.com>");

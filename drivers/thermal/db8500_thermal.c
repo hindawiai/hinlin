@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * db8500_thermal.c - DB8500 Thermal Management Implementation
  *
@@ -9,23 +8,23 @@
  * Authors: Hongbo Zhang, Linus Walleij
  */
 
-#समावेश <linux/cpu_cooling.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/mfd/dbx500-prcmu.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/thermal.h>
+#include <linux/cpu_cooling.h>
+#include <linux/interrupt.h>
+#include <linux/mfd/dbx500-prcmu.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
+#include <linux/thermal.h>
 
-#घोषणा PRCMU_DEFAULT_MEASURE_TIME	0xFFF
-#घोषणा PRCMU_DEFAULT_LOW_TEMP		0
+#define PRCMU_DEFAULT_MEASURE_TIME	0xFFF
+#define PRCMU_DEFAULT_LOW_TEMP		0
 
 /**
- * db8500_thermal_poपूर्णांकs - the पूर्णांकerpolation poपूर्णांकs that trigger
- * पूर्णांकerrupts
+ * db8500_thermal_points - the interpolation points that trigger
+ * interrupts
  */
-अटल स्थिर अचिन्हित दीर्घ db8500_thermal_poपूर्णांकs[] = अणु
+static const unsigned long db8500_thermal_points[] = {
 	15000,
 	20000,
 	25000,
@@ -41,91 +40,91 @@
 	75000,
 	80000,
 	/*
-	 * This is where things start to get really bad क्रम the
+	 * This is where things start to get really bad for the
 	 * SoC and the thermal zones should be set up to trigger
-	 * critical temperature at 85000 mC so we करोn't get above
-	 * this poपूर्णांक.
+	 * critical temperature at 85000 mC so we don't get above
+	 * this point.
 	 */
 	85000,
 	90000,
 	95000,
 	100000,
-पूर्ण;
+};
 
-काष्ठा db8500_thermal_zone अणु
-	काष्ठा thermal_zone_device *tz;
-	क्रमागत thermal_trend trend;
-	अचिन्हित दीर्घ पूर्णांकerpolated_temp;
-	अचिन्हित पूर्णांक cur_index;
-पूर्ण;
+struct db8500_thermal_zone {
+	struct thermal_zone_device *tz;
+	enum thermal_trend trend;
+	unsigned long interpolated_temp;
+	unsigned int cur_index;
+};
 
 /* Callback to get current temperature */
-अटल पूर्णांक db8500_thermal_get_temp(व्योम *data, पूर्णांक *temp)
-अणु
-	काष्ठा db8500_thermal_zone *th = data;
+static int db8500_thermal_get_temp(void *data, int *temp)
+{
+	struct db8500_thermal_zone *th = data;
 
 	/*
-	 * TODO: There is no PRCMU पूर्णांकerface to get temperature data currently,
-	 * so a pseuकरो temperature is वापसed , it works क्रम thermal framework
-	 * and this will be fixed when the PRCMU पूर्णांकerface is available.
+	 * TODO: There is no PRCMU interface to get temperature data currently,
+	 * so a pseudo temperature is returned , it works for thermal framework
+	 * and this will be fixed when the PRCMU interface is available.
 	 */
-	*temp = th->पूर्णांकerpolated_temp;
+	*temp = th->interpolated_temp;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Callback to get temperature changing trend */
-अटल पूर्णांक db8500_thermal_get_trend(व्योम *data, पूर्णांक trip, क्रमागत thermal_trend *trend)
-अणु
-	काष्ठा db8500_thermal_zone *th = data;
+static int db8500_thermal_get_trend(void *data, int trip, enum thermal_trend *trend)
+{
+	struct db8500_thermal_zone *th = data;
 
 	*trend = th->trend;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा thermal_zone_of_device_ops thdev_ops = अणु
+static struct thermal_zone_of_device_ops thdev_ops = {
 	.get_temp = db8500_thermal_get_temp,
 	.get_trend = db8500_thermal_get_trend,
-पूर्ण;
+};
 
-अटल व्योम db8500_thermal_update_config(काष्ठा db8500_thermal_zone *th,
-					 अचिन्हित पूर्णांक idx,
-					 क्रमागत thermal_trend trend,
-					 अचिन्हित दीर्घ next_low,
-					 अचिन्हित दीर्घ next_high)
-अणु
+static void db8500_thermal_update_config(struct db8500_thermal_zone *th,
+					 unsigned int idx,
+					 enum thermal_trend trend,
+					 unsigned long next_low,
+					 unsigned long next_high)
+{
 	prcmu_stop_temp_sense();
 
 	th->cur_index = idx;
-	th->पूर्णांकerpolated_temp = (next_low + next_high)/2;
+	th->interpolated_temp = (next_low + next_high)/2;
 	th->trend = trend;
 
 	/*
-	 * The PRCMU accept असलolute temperatures in celsius so भागide
-	 * करोwn the millicelsius with 1000
+	 * The PRCMU accept absolute temperatures in celsius so divide
+	 * down the millicelsius with 1000
 	 */
-	prcmu_config_hoपंचांगon((u8)(next_low/1000), (u8)(next_high/1000));
+	prcmu_config_hotmon((u8)(next_low/1000), (u8)(next_high/1000));
 	prcmu_start_temp_sense(PRCMU_DEFAULT_MEASURE_TIME);
-पूर्ण
+}
 
-अटल irqवापस_t prcmu_low_irq_handler(पूर्णांक irq, व्योम *irq_data)
-अणु
-	काष्ठा db8500_thermal_zone *th = irq_data;
-	अचिन्हित पूर्णांक idx = th->cur_index;
-	अचिन्हित दीर्घ next_low, next_high;
+static irqreturn_t prcmu_low_irq_handler(int irq, void *irq_data)
+{
+	struct db8500_thermal_zone *th = irq_data;
+	unsigned int idx = th->cur_index;
+	unsigned long next_low, next_high;
 
-	अगर (idx == 0)
-		/* Meaningless क्रम thermal management, ignoring it */
-		वापस IRQ_HANDLED;
+	if (idx == 0)
+		/* Meaningless for thermal management, ignoring it */
+		return IRQ_HANDLED;
 
-	अगर (idx == 1) अणु
-		next_high = db8500_thermal_poपूर्णांकs[0];
+	if (idx == 1) {
+		next_high = db8500_thermal_points[0];
 		next_low = PRCMU_DEFAULT_LOW_TEMP;
-	पूर्ण अन्यथा अणु
-		next_high = db8500_thermal_poपूर्णांकs[idx - 1];
-		next_low = db8500_thermal_poपूर्णांकs[idx - 2];
-	पूर्ण
+	} else {
+		next_high = db8500_thermal_points[idx - 1];
+		next_low = db8500_thermal_points[idx - 2];
+	}
 	idx -= 1;
 
 	db8500_thermal_update_config(th, idx, THERMAL_TREND_DROPPING,
@@ -135,19 +134,19 @@
 
 	thermal_zone_device_update(th->tz, THERMAL_EVENT_UNSPECIFIED);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t prcmu_high_irq_handler(पूर्णांक irq, व्योम *irq_data)
-अणु
-	काष्ठा db8500_thermal_zone *th = irq_data;
-	अचिन्हित पूर्णांक idx = th->cur_index;
-	अचिन्हित दीर्घ next_low, next_high;
-	पूर्णांक num_poपूर्णांकs = ARRAY_SIZE(db8500_thermal_poपूर्णांकs);
+static irqreturn_t prcmu_high_irq_handler(int irq, void *irq_data)
+{
+	struct db8500_thermal_zone *th = irq_data;
+	unsigned int idx = th->cur_index;
+	unsigned long next_low, next_high;
+	int num_points = ARRAY_SIZE(db8500_thermal_points);
 
-	अगर (idx < num_poपूर्णांकs - 1) अणु
-		next_high = db8500_thermal_poपूर्णांकs[idx+1];
-		next_low = db8500_thermal_poपूर्णांकs[idx];
+	if (idx < num_points - 1) {
+		next_high = db8500_thermal_points[idx+1];
+		next_low = db8500_thermal_points[idx];
 		idx += 1;
 
 		db8500_thermal_update_config(th, idx, THERMAL_TREND_RAISING,
@@ -155,108 +154,108 @@
 
 		dev_dbg(&th->tz->device,
 			"PRCMU set max %ld, min %ld\n", next_high, next_low);
-	पूर्ण अन्यथा अगर (idx == num_poपूर्णांकs - 1)
-		/* So we roof out 1 degree over the max poपूर्णांक */
-		th->पूर्णांकerpolated_temp = db8500_thermal_poपूर्णांकs[idx] + 1;
+	} else if (idx == num_points - 1)
+		/* So we roof out 1 degree over the max point */
+		th->interpolated_temp = db8500_thermal_points[idx] + 1;
 
 	thermal_zone_device_update(th->tz, THERMAL_EVENT_UNSPECIFIED);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक db8500_thermal_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा db8500_thermal_zone *th = शून्य;
-	काष्ठा device *dev = &pdev->dev;
-	पूर्णांक low_irq, high_irq, ret = 0;
+static int db8500_thermal_probe(struct platform_device *pdev)
+{
+	struct db8500_thermal_zone *th = NULL;
+	struct device *dev = &pdev->dev;
+	int low_irq, high_irq, ret = 0;
 
-	th = devm_kzalloc(dev, माप(*th), GFP_KERNEL);
-	अगर (!th)
-		वापस -ENOMEM;
+	th = devm_kzalloc(dev, sizeof(*th), GFP_KERNEL);
+	if (!th)
+		return -ENOMEM;
 
-	low_irq = platक्रमm_get_irq_byname(pdev, "IRQ_HOTMON_LOW");
-	अगर (low_irq < 0) अणु
+	low_irq = platform_get_irq_byname(pdev, "IRQ_HOTMON_LOW");
+	if (low_irq < 0) {
 		dev_err(dev, "Get IRQ_HOTMON_LOW failed\n");
-		वापस low_irq;
-	पूर्ण
+		return low_irq;
+	}
 
-	ret = devm_request_thपढ़ोed_irq(dev, low_irq, शून्य,
+	ret = devm_request_threaded_irq(dev, low_irq, NULL,
 		prcmu_low_irq_handler, IRQF_NO_SUSPEND | IRQF_ONESHOT,
 		"dbx500_temp_low", th);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "failed to allocate temp low irq\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	high_irq = platक्रमm_get_irq_byname(pdev, "IRQ_HOTMON_HIGH");
-	अगर (high_irq < 0) अणु
+	high_irq = platform_get_irq_byname(pdev, "IRQ_HOTMON_HIGH");
+	if (high_irq < 0) {
 		dev_err(dev, "Get IRQ_HOTMON_HIGH failed\n");
-		वापस high_irq;
-	पूर्ण
+		return high_irq;
+	}
 
-	ret = devm_request_thपढ़ोed_irq(dev, high_irq, शून्य,
+	ret = devm_request_threaded_irq(dev, high_irq, NULL,
 		prcmu_high_irq_handler, IRQF_NO_SUSPEND | IRQF_ONESHOT,
 		"dbx500_temp_high", th);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "failed to allocate temp high irq\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* रेजिस्टर of thermal sensor and get info from DT */
-	th->tz = devm_thermal_zone_of_sensor_रेजिस्टर(dev, 0, th, &thdev_ops);
-	अगर (IS_ERR(th->tz)) अणु
+	/* register of thermal sensor and get info from DT */
+	th->tz = devm_thermal_zone_of_sensor_register(dev, 0, th, &thdev_ops);
+	if (IS_ERR(th->tz)) {
 		dev_err(dev, "register thermal zone sensor failed\n");
-		वापस PTR_ERR(th->tz);
-	पूर्ण
+		return PTR_ERR(th->tz);
+	}
 	dev_info(dev, "thermal zone sensor registered\n");
 
-	/* Start measuring at the lowest poपूर्णांक */
+	/* Start measuring at the lowest point */
 	db8500_thermal_update_config(th, 0, THERMAL_TREND_STABLE,
 				     PRCMU_DEFAULT_LOW_TEMP,
-				     db8500_thermal_poपूर्णांकs[0]);
+				     db8500_thermal_points[0]);
 
-	platक्रमm_set_drvdata(pdev, th);
+	platform_set_drvdata(pdev, th);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक db8500_thermal_suspend(काष्ठा platक्रमm_device *pdev,
+static int db8500_thermal_suspend(struct platform_device *pdev,
 		pm_message_t state)
-अणु
+{
 	prcmu_stop_temp_sense();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक db8500_thermal_resume(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा db8500_thermal_zone *th = platक्रमm_get_drvdata(pdev);
+static int db8500_thermal_resume(struct platform_device *pdev)
+{
+	struct db8500_thermal_zone *th = platform_get_drvdata(pdev);
 
-	/* Resume and start measuring at the lowest poपूर्णांक */
+	/* Resume and start measuring at the lowest point */
 	db8500_thermal_update_config(th, 0, THERMAL_TREND_STABLE,
 				     PRCMU_DEFAULT_LOW_TEMP,
-				     db8500_thermal_poपूर्णांकs[0]);
+				     db8500_thermal_points[0]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id db8500_thermal_match[] = अणु
-	अणु .compatible = "stericsson,db8500-thermal" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id db8500_thermal_match[] = {
+	{ .compatible = "stericsson,db8500-thermal" },
+	{},
+};
 MODULE_DEVICE_TABLE(of, db8500_thermal_match);
 
-अटल काष्ठा platक्रमm_driver db8500_thermal_driver = अणु
-	.driver = अणु
+static struct platform_driver db8500_thermal_driver = {
+	.driver = {
 		.name = "db8500-thermal",
 		.of_match_table = of_match_ptr(db8500_thermal_match),
-	पूर्ण,
+	},
 	.probe = db8500_thermal_probe,
 	.suspend = db8500_thermal_suspend,
 	.resume = db8500_thermal_resume,
-पूर्ण;
+};
 
-module_platक्रमm_driver(db8500_thermal_driver);
+module_platform_driver(db8500_thermal_driver);
 
 MODULE_AUTHOR("Hongbo Zhang <hongbo.zhang@stericsson.com>");
 MODULE_DESCRIPTION("DB8500 thermal driver");

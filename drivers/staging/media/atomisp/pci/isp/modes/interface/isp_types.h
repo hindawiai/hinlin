@@ -1,86 +1,85 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Support क्रम Intel Camera Imaging ISP subप्रणाली.
+ * Support for Intel Camera Imaging ISP subsystem.
  * Copyright (c) 2010 - 2015, Intel Corporation.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
 
-#अगर_अघोषित _ISP_TYPES_H_
-#घोषणा _ISP_TYPES_H_
+#ifndef _ISP_TYPES_H_
+#define _ISP_TYPES_H_
 
 /*
  * Workaround: hivecc complains about "tag "sh_css_3a_output" already declared"
  * without this extra decl.
  */
-काष्ठा ia_css_3a_output;
+struct ia_css_3a_output;
 
 /*
- * Input stream क्रमmats, these correspond to the MIPI क्रमmats and the way
- * the CSS receiver sends these to the input क्रमmatter.
+ * Input stream formats, these correspond to the MIPI formats and the way
+ * the CSS receiver sends these to the input formatter.
  * The bit depth of each pixel element is stored in the global variable
  * isp_bits_per_pixel.
- * NOTE: क्रम rgb565, we set isp_bits_per_pixel to 565, क्रम all other rgb
- * क्रमmats it's the actual depth (4, क्रम 444, 8 क्रम 888 etc).
+ * NOTE: for rgb565, we set isp_bits_per_pixel to 565, for all other rgb
+ * formats it's the actual depth (4, for 444, 8 for 888 etc).
  */
-क्रमागत sh_stream_क्रमmat अणु
-	sh_stream_क्रमmat_yuv420_legacy,
-	sh_stream_क्रमmat_yuv420,
-	sh_stream_क्रमmat_yuv422,
-	sh_stream_क्रमmat_rgb,
-	sh_stream_क्रमmat_raw,
-	sh_stream_क्रमmat_binary,	/* bytestream such as jpeg */
-पूर्ण;
+enum sh_stream_format {
+	sh_stream_format_yuv420_legacy,
+	sh_stream_format_yuv420,
+	sh_stream_format_yuv422,
+	sh_stream_format_rgb,
+	sh_stream_format_raw,
+	sh_stream_format_binary,	/* bytestream such as jpeg */
+};
 
-काष्ठा s_isp_frames अणु
+struct s_isp_frames {
 	/*
 	 * Global variables that are written to by either the SP or the host,
 	 * every ISP binary needs these.
 	 */
 	/* output frame */
-	अक्षर *xmem_base_addr_y;
-	अक्षर *xmem_base_addr_uv;
-	अक्षर *xmem_base_addr_u;
-	अक्षर *xmem_base_addr_v;
+	char *xmem_base_addr_y;
+	char *xmem_base_addr_uv;
+	char *xmem_base_addr_u;
+	char *xmem_base_addr_v;
 	/* 2nd output frame */
-	अक्षर *xmem_base_addr_second_out_y;
-	अक्षर *xmem_base_addr_second_out_u;
-	अक्षर *xmem_base_addr_second_out_v;
+	char *xmem_base_addr_second_out_y;
+	char *xmem_base_addr_second_out_u;
+	char *xmem_base_addr_second_out_v;
 	/* input yuv frame */
-	अक्षर *xmem_base_addr_y_in;
-	अक्षर *xmem_base_addr_u_in;
-	अक्षर *xmem_base_addr_v_in;
+	char *xmem_base_addr_y_in;
+	char *xmem_base_addr_u_in;
+	char *xmem_base_addr_v_in;
 	/* input raw frame */
-	अक्षर *xmem_base_addr_raw;
+	char *xmem_base_addr_raw;
 	/* output raw frame */
-	अक्षर *xmem_base_addr_raw_out;
+	char *xmem_base_addr_raw_out;
 	/* viewfinder output (vf_veceven) */
-	अक्षर *xmem_base_addr_vfout_y;
-	अक्षर *xmem_base_addr_vfout_u;
-	अक्षर *xmem_base_addr_vfout_v;
-	/* overlay frame (क्रम vf_pp) */
-	अक्षर *xmem_base_addr_overlay_y;
-	अक्षर *xmem_base_addr_overlay_u;
-	अक्षर *xmem_base_addr_overlay_v;
+	char *xmem_base_addr_vfout_y;
+	char *xmem_base_addr_vfout_u;
+	char *xmem_base_addr_vfout_v;
+	/* overlay frame (for vf_pp) */
+	char *xmem_base_addr_overlay_y;
+	char *xmem_base_addr_overlay_u;
+	char *xmem_base_addr_overlay_v;
 	/* pre-gdc output frame (gdc input) */
-	अक्षर *xmem_base_addr_qplane_r;
-	अक्षर *xmem_base_addr_qplane_ratb;
-	अक्षर *xmem_base_addr_qplane_gr;
-	अक्षर *xmem_base_addr_qplane_gb;
-	अक्षर *xmem_base_addr_qplane_b;
-	अक्षर *xmem_base_addr_qplane_batr;
+	char *xmem_base_addr_qplane_r;
+	char *xmem_base_addr_qplane_ratb;
+	char *xmem_base_addr_qplane_gr;
+	char *xmem_base_addr_qplane_gb;
+	char *xmem_base_addr_qplane_b;
+	char *xmem_base_addr_qplane_batr;
 	/* YUV as input, used by postisp binary */
-	अक्षर *xmem_base_addr_yuv_16_y;
-	अक्षर *xmem_base_addr_yuv_16_u;
-	अक्षर *xmem_base_addr_yuv_16_v;
-पूर्ण;
+	char *xmem_base_addr_yuv_16_y;
+	char *xmem_base_addr_yuv_16_u;
+	char *xmem_base_addr_yuv_16_v;
+};
 
-#पूर्ण_अगर /* _ISP_TYPES_H_ */
+#endif /* _ISP_TYPES_H_ */

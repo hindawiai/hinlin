@@ -1,96 +1,95 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Raspberry Pi cpufreq driver
  *
  * Copyright (C) 2019, Nicolas Saenz Julienne <nsaenzjulienne@suse.de>
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/cpufreq.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_opp.h>
+#include <linux/clk.h>
+#include <linux/cpu.h>
+#include <linux/cpufreq.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/pm_opp.h>
 
-#घोषणा RASPBERRYPI_FREQ_INTERVAL	100000000
+#define RASPBERRYPI_FREQ_INTERVAL	100000000
 
-अटल काष्ठा platक्रमm_device *cpufreq_dt;
+static struct platform_device *cpufreq_dt;
 
-अटल पूर्णांक raspberrypi_cpufreq_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *cpu_dev;
-	अचिन्हित दीर्घ min, max;
-	अचिन्हित दीर्घ rate;
-	काष्ठा clk *clk;
-	पूर्णांक ret;
+static int raspberrypi_cpufreq_probe(struct platform_device *pdev)
+{
+	struct device *cpu_dev;
+	unsigned long min, max;
+	unsigned long rate;
+	struct clk *clk;
+	int ret;
 
 	cpu_dev = get_cpu_device(0);
-	अगर (!cpu_dev) अणु
+	if (!cpu_dev) {
 		pr_err("Cannot get CPU for cpufreq driver\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	clk = clk_get(cpu_dev, शून्य);
-	अगर (IS_ERR(clk)) अणु
+	clk = clk_get(cpu_dev, NULL);
+	if (IS_ERR(clk)) {
 		dev_err(cpu_dev, "Cannot get clock for CPU0\n");
-		वापस PTR_ERR(clk);
-	पूर्ण
+		return PTR_ERR(clk);
+	}
 
 	/*
 	 * The max and min frequencies are configurable in the Raspberry Pi
-	 * firmware, so we query them at runसमय.
+	 * firmware, so we query them at runtime.
 	 */
 	min = roundup(clk_round_rate(clk, 0), RASPBERRYPI_FREQ_INTERVAL);
-	max = roundup(clk_round_rate(clk, अच_दीर्घ_उच्च), RASPBERRYPI_FREQ_INTERVAL);
+	max = roundup(clk_round_rate(clk, ULONG_MAX), RASPBERRYPI_FREQ_INTERVAL);
 	clk_put(clk);
 
-	क्रम (rate = min; rate <= max; rate += RASPBERRYPI_FREQ_INTERVAL) अणु
+	for (rate = min; rate <= max; rate += RASPBERRYPI_FREQ_INTERVAL) {
 		ret = dev_pm_opp_add(cpu_dev, rate, 0);
-		अगर (ret)
-			जाओ हटाओ_opp;
-	पूर्ण
+		if (ret)
+			goto remove_opp;
+	}
 
-	cpufreq_dt = platक्रमm_device_रेजिस्टर_simple("cpufreq-dt", -1, शून्य, 0);
+	cpufreq_dt = platform_device_register_simple("cpufreq-dt", -1, NULL, 0);
 	ret = PTR_ERR_OR_ZERO(cpufreq_dt);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(cpu_dev, "Failed to create platform device, %d\n", ret);
-		जाओ हटाओ_opp;
-	पूर्ण
+		goto remove_opp;
+	}
 
-	वापस 0;
+	return 0;
 
-हटाओ_opp:
-	dev_pm_opp_हटाओ_all_dynamic(cpu_dev);
+remove_opp:
+	dev_pm_opp_remove_all_dynamic(cpu_dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक raspberrypi_cpufreq_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *cpu_dev;
+static int raspberrypi_cpufreq_remove(struct platform_device *pdev)
+{
+	struct device *cpu_dev;
 
 	cpu_dev = get_cpu_device(0);
-	अगर (cpu_dev)
-		dev_pm_opp_हटाओ_all_dynamic(cpu_dev);
+	if (cpu_dev)
+		dev_pm_opp_remove_all_dynamic(cpu_dev);
 
-	platक्रमm_device_unरेजिस्टर(cpufreq_dt);
+	platform_device_unregister(cpufreq_dt);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Since the driver depends on clk-raspberrypi, which may वापस EPROBE_DEFER,
- * all the activity is perक्रमmed in the probe, which may be defered as well.
+ * Since the driver depends on clk-raspberrypi, which may return EPROBE_DEFER,
+ * all the activity is performed in the probe, which may be defered as well.
  */
-अटल काष्ठा platक्रमm_driver raspberrypi_cpufreq_driver = अणु
-	.driver = अणु
+static struct platform_driver raspberrypi_cpufreq_driver = {
+	.driver = {
 		.name = "raspberrypi-cpufreq",
-	पूर्ण,
+	},
 	.probe          = raspberrypi_cpufreq_probe,
-	.हटाओ		= raspberrypi_cpufreq_हटाओ,
-पूर्ण;
-module_platक्रमm_driver(raspberrypi_cpufreq_driver);
+	.remove		= raspberrypi_cpufreq_remove,
+};
+module_platform_driver(raspberrypi_cpufreq_driver);
 
 MODULE_AUTHOR("Nicolas Saenz Julienne <nsaenzjulienne@suse.de");
 MODULE_DESCRIPTION("Raspberry Pi cpufreq driver");

@@ -1,81 +1,80 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित	_I386_HW_BREAKPOINT_H
-#घोषणा	_I386_HW_BREAKPOINT_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef	_I386_HW_BREAKPOINT_H
+#define	_I386_HW_BREAKPOINT_H
 
-#समावेश <uapi/यंत्र/hw_अवरोधpoपूर्णांक.h>
+#include <uapi/asm/hw_breakpoint.h>
 
-#घोषणा	__ARCH_HW_BREAKPOINT_H
+#define	__ARCH_HW_BREAKPOINT_H
 
 /*
  * The name should probably be something dealt in
  * a higher level. While dealing with the user
  * (display/resolving)
  */
-काष्ठा arch_hw_अवरोधpoपूर्णांक अणु
-	अचिन्हित दीर्घ	address;
-	अचिन्हित दीर्घ	mask;
+struct arch_hw_breakpoint {
+	unsigned long	address;
+	unsigned long	mask;
 	u8		len;
 	u8		type;
-पूर्ण;
+};
 
-#समावेश <linux/kdebug.h>
-#समावेश <linux/percpu.h>
-#समावेश <linux/list.h>
+#include <linux/kdebug.h>
+#include <linux/percpu.h>
+#include <linux/list.h>
 
-/* Available HW अवरोधpoपूर्णांक length encodings */
-#घोषणा X86_BREAKPOINT_LEN_X		0x40
-#घोषणा X86_BREAKPOINT_LEN_1		0x40
-#घोषणा X86_BREAKPOINT_LEN_2		0x44
-#घोषणा X86_BREAKPOINT_LEN_4		0x4c
+/* Available HW breakpoint length encodings */
+#define X86_BREAKPOINT_LEN_X		0x40
+#define X86_BREAKPOINT_LEN_1		0x40
+#define X86_BREAKPOINT_LEN_2		0x44
+#define X86_BREAKPOINT_LEN_4		0x4c
 
-#अगर_घोषित CONFIG_X86_64
-#घोषणा X86_BREAKPOINT_LEN_8		0x48
-#पूर्ण_अगर
+#ifdef CONFIG_X86_64
+#define X86_BREAKPOINT_LEN_8		0x48
+#endif
 
-/* Available HW अवरोधpoपूर्णांक type encodings */
+/* Available HW breakpoint type encodings */
 
-/* trigger on inकाष्ठाion execute */
-#घोषणा X86_BREAKPOINT_EXECUTE	0x80
-/* trigger on memory ग_लिखो */
-#घोषणा X86_BREAKPOINT_WRITE	0x81
-/* trigger on memory पढ़ो or ग_लिखो */
-#घोषणा X86_BREAKPOINT_RW	0x83
+/* trigger on instruction execute */
+#define X86_BREAKPOINT_EXECUTE	0x80
+/* trigger on memory write */
+#define X86_BREAKPOINT_WRITE	0x81
+/* trigger on memory read or write */
+#define X86_BREAKPOINT_RW	0x83
 
-/* Total number of available HW अवरोधpoपूर्णांक रेजिस्टरs */
-#घोषणा HBP_NUM 4
+/* Total number of available HW breakpoint registers */
+#define HBP_NUM 4
 
-अटल अंतरभूत पूर्णांक hw_अवरोधpoपूर्णांक_slots(पूर्णांक type)
-अणु
-	वापस HBP_NUM;
-पूर्ण
+static inline int hw_breakpoint_slots(int type)
+{
+	return HBP_NUM;
+}
 
-काष्ठा perf_event_attr;
-काष्ठा perf_event;
-काष्ठा pmu;
+struct perf_event_attr;
+struct perf_event;
+struct pmu;
 
-बाह्य पूर्णांक arch_check_bp_in_kernelspace(काष्ठा arch_hw_अवरोधpoपूर्णांक *hw);
-बाह्य पूर्णांक hw_अवरोधpoपूर्णांक_arch_parse(काष्ठा perf_event *bp,
-				    स्थिर काष्ठा perf_event_attr *attr,
-				    काष्ठा arch_hw_अवरोधpoपूर्णांक *hw);
-बाह्य पूर्णांक hw_अवरोधpoपूर्णांक_exceptions_notअगरy(काष्ठा notअगरier_block *unused,
-					   अचिन्हित दीर्घ val, व्योम *data);
+extern int arch_check_bp_in_kernelspace(struct arch_hw_breakpoint *hw);
+extern int hw_breakpoint_arch_parse(struct perf_event *bp,
+				    const struct perf_event_attr *attr,
+				    struct arch_hw_breakpoint *hw);
+extern int hw_breakpoint_exceptions_notify(struct notifier_block *unused,
+					   unsigned long val, void *data);
 
 
-पूर्णांक arch_install_hw_अवरोधpoपूर्णांक(काष्ठा perf_event *bp);
-व्योम arch_uninstall_hw_अवरोधpoपूर्णांक(काष्ठा perf_event *bp);
-व्योम hw_अवरोधpoपूर्णांक_pmu_पढ़ो(काष्ठा perf_event *bp);
-व्योम hw_अवरोधpoपूर्णांक_pmu_unthrottle(काष्ठा perf_event *bp);
+int arch_install_hw_breakpoint(struct perf_event *bp);
+void arch_uninstall_hw_breakpoint(struct perf_event *bp);
+void hw_breakpoint_pmu_read(struct perf_event *bp);
+void hw_breakpoint_pmu_unthrottle(struct perf_event *bp);
 
-बाह्य व्योम
-arch_fill_perf_अवरोधpoपूर्णांक(काष्ठा perf_event *bp);
+extern void
+arch_fill_perf_breakpoint(struct perf_event *bp);
 
-अचिन्हित दीर्घ encode_dr7(पूर्णांक drnum, अचिन्हित पूर्णांक len, अचिन्हित पूर्णांक type);
-पूर्णांक decode_dr7(अचिन्हित दीर्घ dr7, पूर्णांक bpnum, अचिन्हित *len, अचिन्हित *type);
+unsigned long encode_dr7(int drnum, unsigned int len, unsigned int type);
+int decode_dr7(unsigned long dr7, int bpnum, unsigned *len, unsigned *type);
 
-बाह्य पूर्णांक arch_bp_generic_fields(पूर्णांक x86_len, पूर्णांक x86_type,
-				  पूर्णांक *gen_len, पूर्णांक *gen_type);
+extern int arch_bp_generic_fields(int x86_len, int x86_type,
+				  int *gen_len, int *gen_type);
 
-बाह्य काष्ठा pmu perf_ops_bp;
+extern struct pmu perf_ops_bp;
 
-#पूर्ण_अगर	/* _I386_HW_BREAKPOINT_H */
+#endif	/* _I386_HW_BREAKPOINT_H */

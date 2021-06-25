@@ -1,18 +1,17 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- *  Definitions क्रम vfsv0 quota क्रमmat
+ *  Definitions for vfsv0 quota format
  */
 
-#अगर_अघोषित _LINUX_DQBLK_V2_H
-#घोषणा _LINUX_DQBLK_V2_H
+#ifndef _LINUX_DQBLK_V2_H
+#define _LINUX_DQBLK_V2_H
 
-#समावेश <linux/dqblk_qtree.h>
+#include <linux/dqblk_qtree.h>
 
-/* Numbers of blocks needed क्रम updates */
-#घोषणा V2_INIT_ALLOC QTREE_INIT_ALLOC
-#घोषणा V2_INIT_REWRITE QTREE_INIT_REWRITE
-#घोषणा V2_DEL_ALLOC QTREE_DEL_ALLOC
-#घोषणा V2_DEL_REWRITE QTREE_DEL_REWRITE
+/* Numbers of blocks needed for updates */
+#define V2_INIT_ALLOC QTREE_INIT_ALLOC
+#define V2_INIT_REWRITE QTREE_INIT_REWRITE
+#define V2_DEL_ALLOC QTREE_DEL_ALLOC
+#define V2_DEL_REWRITE QTREE_DEL_REWRITE
 
-#पूर्ण_अगर /* _LINUX_DQBLK_V2_H */
+#endif /* _LINUX_DQBLK_V2_H */

@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * MFD core driver क्रम Richtek RT5033
+ * MFD core driver for Richtek RT5033
  *
  * Copyright (C) 2014 Samsung Electronics, Co., Ltd.
  * Author: Beomho Seo <beomho.seo@samsung.com>
  */
 
-#अगर_अघोषित __RT5033_PRIVATE_H__
-#घोषणा __RT5033_PRIVATE_H__
+#ifndef __RT5033_PRIVATE_H__
+#define __RT5033_PRIVATE_H__
 
-क्रमागत rt5033_reg अणु
+enum rt5033_reg {
 	RT5033_REG_CHG_STAT		= 0x00,
 	RT5033_REG_CHG_CTRL1		= 0x01,
 	RT5033_REG_CHG_CTRL2		= 0x02,
@@ -53,166 +52,166 @@
 	RT5033_REG_OFF_EVENT		= 0x6B,
 
 	RT5033_REG_END,
-पूर्ण;
+};
 
-/* RT5033 Charger state रेजिस्टर */
-#घोषणा RT5033_CHG_STAT_MASK		0x20
-#घोषणा RT5033_CHG_STAT_DISCHARGING	0x00
-#घोषणा RT5033_CHG_STAT_FULL		0x10
-#घोषणा RT5033_CHG_STAT_CHARGING	0x20
-#घोषणा RT5033_CHG_STAT_NOT_CHARGING	0x30
-#घोषणा RT5033_CHG_STAT_TYPE_MASK	0x60
-#घोषणा RT5033_CHG_STAT_TYPE_PRE	0x20
-#घोषणा RT5033_CHG_STAT_TYPE_FAST	0x60
+/* RT5033 Charger state register */
+#define RT5033_CHG_STAT_MASK		0x20
+#define RT5033_CHG_STAT_DISCHARGING	0x00
+#define RT5033_CHG_STAT_FULL		0x10
+#define RT5033_CHG_STAT_CHARGING	0x20
+#define RT5033_CHG_STAT_NOT_CHARGING	0x30
+#define RT5033_CHG_STAT_TYPE_MASK	0x60
+#define RT5033_CHG_STAT_TYPE_PRE	0x20
+#define RT5033_CHG_STAT_TYPE_FAST	0x60
 
-/* RT5033 CHGCTRL1 रेजिस्टर */
-#घोषणा RT5033_CHGCTRL1_IAICR_MASK	0xe0
-#घोषणा RT5033_CHGCTRL1_MODE_MASK	0x01
+/* RT5033 CHGCTRL1 register */
+#define RT5033_CHGCTRL1_IAICR_MASK	0xe0
+#define RT5033_CHGCTRL1_MODE_MASK	0x01
 
-/* RT5033 CHGCTRL2 रेजिस्टर */
-#घोषणा RT5033_CHGCTRL2_CV_MASK		0xfc
+/* RT5033 CHGCTRL2 register */
+#define RT5033_CHGCTRL2_CV_MASK		0xfc
 
-/* RT5033 CHGCTRL3 रेजिस्टर */
-#घोषणा RT5033_CHGCTRL3_CFO_EN_MASK	0x40
-#घोषणा RT5033_CHGCTRL3_TIMER_MASK	0x38
-#घोषणा RT5033_CHGCTRL3_TIMER_EN_MASK	0x01
+/* RT5033 CHGCTRL3 register */
+#define RT5033_CHGCTRL3_CFO_EN_MASK	0x40
+#define RT5033_CHGCTRL3_TIMER_MASK	0x38
+#define RT5033_CHGCTRL3_TIMER_EN_MASK	0x01
 
-/* RT5033 CHGCTRL4 रेजिस्टर */
-#घोषणा RT5033_CHGCTRL4_EOC_MASK	0x07
-#घोषणा RT5033_CHGCTRL4_IPREC_MASK	0x18
+/* RT5033 CHGCTRL4 register */
+#define RT5033_CHGCTRL4_EOC_MASK	0x07
+#define RT5033_CHGCTRL4_IPREC_MASK	0x18
 
-/* RT5033 CHGCTRL5 रेजिस्टर */
-#घोषणा RT5033_CHGCTRL5_VPREC_MASK	0x0f
-#घोषणा RT5033_CHGCTRL5_ICHG_MASK	0xf0
-#घोषणा RT5033_CHGCTRL5_ICHG_SHIFT	0x04
-#घोषणा RT5033_CHG_MAX_CURRENT		0x0d
+/* RT5033 CHGCTRL5 register */
+#define RT5033_CHGCTRL5_VPREC_MASK	0x0f
+#define RT5033_CHGCTRL5_ICHG_MASK	0xf0
+#define RT5033_CHGCTRL5_ICHG_SHIFT	0x04
+#define RT5033_CHG_MAX_CURRENT		0x0d
 
-/* RT5033 RT CTRL1 रेजिस्टर */
-#घोषणा RT5033_RT_CTRL1_UUG_MASK	0x02
-#घोषणा RT5033_RT_HZ_MASK		0x01
+/* RT5033 RT CTRL1 register */
+#define RT5033_RT_CTRL1_UUG_MASK	0x02
+#define RT5033_RT_HZ_MASK		0x01
 
-/* RT5033 control रेजिस्टर */
-#घोषणा RT5033_CTRL_FCCM_BUCK_MASK		BIT(0)
-#घोषणा RT5033_CTRL_BUCKOMS_MASK		BIT(1)
-#घोषणा RT5033_CTRL_LDOOMS_MASK			BIT(2)
-#घोषणा RT5033_CTRL_SLDOOMS_MASK		BIT(3)
-#घोषणा RT5033_CTRL_EN_BUCK_MASK		BIT(4)
-#घोषणा RT5033_CTRL_EN_LDO_MASK			BIT(5)
-#घोषणा RT5033_CTRL_EN_SAFE_LDO_MASK		BIT(6)
-#घोषणा RT5033_CTRL_LDO_SLEEP_MASK		BIT(7)
+/* RT5033 control register */
+#define RT5033_CTRL_FCCM_BUCK_MASK		BIT(0)
+#define RT5033_CTRL_BUCKOMS_MASK		BIT(1)
+#define RT5033_CTRL_LDOOMS_MASK			BIT(2)
+#define RT5033_CTRL_SLDOOMS_MASK		BIT(3)
+#define RT5033_CTRL_EN_BUCK_MASK		BIT(4)
+#define RT5033_CTRL_EN_LDO_MASK			BIT(5)
+#define RT5033_CTRL_EN_SAFE_LDO_MASK		BIT(6)
+#define RT5033_CTRL_LDO_SLEEP_MASK		BIT(7)
 
-/* RT5033 BUCK control रेजिस्टर */
-#घोषणा RT5033_BUCK_CTRL_MASK			0x1f
+/* RT5033 BUCK control register */
+#define RT5033_BUCK_CTRL_MASK			0x1f
 
-/* RT5033 LDO control रेजिस्टर */
-#घोषणा RT5033_LDO_CTRL_MASK			0x1f
+/* RT5033 LDO control register */
+#define RT5033_LDO_CTRL_MASK			0x1f
 
-/* RT5033 अक्षरger property - model, manufacturer */
+/* RT5033 charger property - model, manufacturer */
 
-#घोषणा RT5033_CHARGER_MODEL	"RT5033WSC Charger"
-#घोषणा RT5033_MANUFACTURER	"Richtek Technology Corporation"
+#define RT5033_CHARGER_MODEL	"RT5033WSC Charger"
+#define RT5033_MANUFACTURER	"Richtek Technology Corporation"
 
 /*
- * RT5033 अक्षरger fast-अक्षरge current lmits (as in CHGCTRL1 रेजिस्टर),
- * AICR mode limits the input current क्रम example,
+ * RT5033 charger fast-charge current lmits (as in CHGCTRL1 register),
+ * AICR mode limits the input current for example,
  * the AIRC 100 mode limits the input current to 100 mA.
  */
-#घोषणा RT5033_AICR_100_MODE			0x20
-#घोषणा RT5033_AICR_500_MODE			0x40
-#घोषणा RT5033_AICR_700_MODE			0x60
-#घोषणा RT5033_AICR_900_MODE			0x80
-#घोषणा RT5033_AICR_1500_MODE			0xc0
-#घोषणा RT5033_AICR_2000_MODE			0xe0
-#घोषणा RT5033_AICR_MODE_MASK			0xe0
+#define RT5033_AICR_100_MODE			0x20
+#define RT5033_AICR_500_MODE			0x40
+#define RT5033_AICR_700_MODE			0x60
+#define RT5033_AICR_900_MODE			0x80
+#define RT5033_AICR_1500_MODE			0xc0
+#define RT5033_AICR_2000_MODE			0xe0
+#define RT5033_AICR_MODE_MASK			0xe0
 
-/* RT5033 use पूर्णांकernal समयr need to set समय */
-#घोषणा RT5033_FAST_CHARGE_TIMER4		0x00
-#घोषणा RT5033_FAST_CHARGE_TIMER6		0x01
-#घोषणा RT5033_FAST_CHARGE_TIMER8		0x02
-#घोषणा RT5033_FAST_CHARGE_TIMER9		0x03
-#घोषणा RT5033_FAST_CHARGE_TIMER12		0x04
-#घोषणा RT5033_FAST_CHARGE_TIMER14		0x05
-#घोषणा RT5033_FAST_CHARGE_TIMER16		0x06
+/* RT5033 use internal timer need to set time */
+#define RT5033_FAST_CHARGE_TIMER4		0x00
+#define RT5033_FAST_CHARGE_TIMER6		0x01
+#define RT5033_FAST_CHARGE_TIMER8		0x02
+#define RT5033_FAST_CHARGE_TIMER9		0x03
+#define RT5033_FAST_CHARGE_TIMER12		0x04
+#define RT5033_FAST_CHARGE_TIMER14		0x05
+#define RT5033_FAST_CHARGE_TIMER16		0x06
 
-#घोषणा RT5033_INT_TIMER_ENABLE			0x01
+#define RT5033_INT_TIMER_ENABLE			0x01
 
-/* RT5033 अक्षरger termination enable mask */
-#घोषणा RT5033_TE_ENABLE_MASK			0x08
+/* RT5033 charger termination enable mask */
+#define RT5033_TE_ENABLE_MASK			0x08
 
 /*
- * RT5033 अक्षरger opa mode. RT50300 have two opa mode अक्षरger mode
- * and boost mode क्रम OTG
+ * RT5033 charger opa mode. RT50300 have two opa mode charger mode
+ * and boost mode for OTG
  */
 
-#घोषणा RT5033_CHARGER_MODE			0x00
-#घोषणा RT5033_BOOST_MODE			0x01
+#define RT5033_CHARGER_MODE			0x00
+#define RT5033_BOOST_MODE			0x01
 
-/* RT5033 अक्षरger termination enable */
-#घोषणा RT5033_TE_ENABLE			0x08
+/* RT5033 charger termination enable */
+#define RT5033_TE_ENABLE			0x08
 
-/* RT5033 अक्षरger CFO enable */
-#घोषणा RT5033_CFO_ENABLE			0x40
+/* RT5033 charger CFO enable */
+#define RT5033_CFO_ENABLE			0x40
 
-/* RT5033 अक्षरger स्थिरant अक्षरge voltage (as in CHGCTRL2 रेजिस्टर), uV */
-#घोषणा RT5033_CHARGER_CONST_VOLTAGE_LIMIT_MIN	3650000U
-#घोषणा RT5033_CHARGER_CONST_VOLTAGE_STEP_NUM   25000U
-#घोषणा RT5033_CHARGER_CONST_VOLTAGE_LIMIT_MAX	4400000U
+/* RT5033 charger constant charge voltage (as in CHGCTRL2 register), uV */
+#define RT5033_CHARGER_CONST_VOLTAGE_LIMIT_MIN	3650000U
+#define RT5033_CHARGER_CONST_VOLTAGE_STEP_NUM   25000U
+#define RT5033_CHARGER_CONST_VOLTAGE_LIMIT_MAX	4400000U
 
-/* RT5033 अक्षरger pre-अक्षरge current limits (as in CHGCTRL4 रेजिस्टर), uA */
-#घोषणा RT5033_CHARGER_PRE_CURRENT_LIMIT_MIN	350000U
-#घोषणा RT5033_CHARGER_PRE_CURRENT_STEP_NUM	100000U
-#घोषणा RT5033_CHARGER_PRE_CURRENT_LIMIT_MAX	650000U
+/* RT5033 charger pre-charge current limits (as in CHGCTRL4 register), uA */
+#define RT5033_CHARGER_PRE_CURRENT_LIMIT_MIN	350000U
+#define RT5033_CHARGER_PRE_CURRENT_STEP_NUM	100000U
+#define RT5033_CHARGER_PRE_CURRENT_LIMIT_MAX	650000U
 
-/* RT5033 अक्षरger fast-अक्षरge current (as in CHGCTRL5 रेजिस्टर), uA */
-#घोषणा RT5033_CHARGER_FAST_CURRENT_MIN		700000U
-#घोषणा RT5033_CHARGER_FAST_CURRENT_STEP_NUM	100000U
-#घोषणा RT5033_CHARGER_FAST_CURRENT_MAX		2000000U
+/* RT5033 charger fast-charge current (as in CHGCTRL5 register), uA */
+#define RT5033_CHARGER_FAST_CURRENT_MIN		700000U
+#define RT5033_CHARGER_FAST_CURRENT_STEP_NUM	100000U
+#define RT5033_CHARGER_FAST_CURRENT_MAX		2000000U
 
 /*
- * RT5033 अक्षरger स्थिर-अक्षरge end of अक्षरger current (
- * as in CHGCTRL4 रेजिस्टर), uA
+ * RT5033 charger const-charge end of charger current (
+ * as in CHGCTRL4 register), uA
  */
-#घोषणा RT5033_CHARGER_EOC_MIN			150000U
-#घोषणा RT5033_CHARGER_EOC_REF			300000U
-#घोषणा RT5033_CHARGER_EOC_STEP_NUM1		50000U
-#घोषणा RT5033_CHARGER_EOC_STEP_NUM2		100000U
-#घोषणा RT5033_CHARGER_EOC_MAX			600000U
+#define RT5033_CHARGER_EOC_MIN			150000U
+#define RT5033_CHARGER_EOC_REF			300000U
+#define RT5033_CHARGER_EOC_STEP_NUM1		50000U
+#define RT5033_CHARGER_EOC_STEP_NUM2		100000U
+#define RT5033_CHARGER_EOC_MAX			600000U
 
 /*
- * RT5033 अक्षरger pre-अक्षरge threshold volt limits
- * (as in CHGCTRL5 रेजिस्टर), uV
+ * RT5033 charger pre-charge threshold volt limits
+ * (as in CHGCTRL5 register), uV
  */
 
-#घोषणा RT5033_CHARGER_PRE_THRESHOLD_LIMIT_MIN	2300000U
-#घोषणा RT5033_CHARGER_PRE_THRESHOLD_STEP_NUM	100000U
-#घोषणा RT5033_CHARGER_PRE_THRESHOLD_LIMIT_MAX	3800000U
+#define RT5033_CHARGER_PRE_THRESHOLD_LIMIT_MIN	2300000U
+#define RT5033_CHARGER_PRE_THRESHOLD_STEP_NUM	100000U
+#define RT5033_CHARGER_PRE_THRESHOLD_LIMIT_MAX	3800000U
 
 /*
- * RT5033 अक्षरger enable UUG, If UUG enable MOS स्वतः control by H/W अक्षरger
+ * RT5033 charger enable UUG, If UUG enable MOS auto control by H/W charger
  * circuit.
  */
-#घोषणा RT5033_CHARGER_UUG_ENABLE		0x02
+#define RT5033_CHARGER_UUG_ENABLE		0x02
 
-/* RT5033 अक्षरger High impedance mode */
-#घोषणा RT5033_CHARGER_HZ_DISABLE		0x00
-#घोषणा RT5033_CHARGER_HZ_ENABLE		0x01
+/* RT5033 charger High impedance mode */
+#define RT5033_CHARGER_HZ_DISABLE		0x00
+#define RT5033_CHARGER_HZ_ENABLE		0x01
 
 /* RT5033 regulator BUCK output voltage uV */
-#घोषणा RT5033_REGULATOR_BUCK_VOLTAGE_MIN		1000000U
-#घोषणा RT5033_REGULATOR_BUCK_VOLTAGE_MAX		3000000U
-#घोषणा RT5033_REGULATOR_BUCK_VOLTAGE_STEP		100000U
-#घोषणा RT5033_REGULATOR_BUCK_VOLTAGE_STEP_NUM		32
+#define RT5033_REGULATOR_BUCK_VOLTAGE_MIN		1000000U
+#define RT5033_REGULATOR_BUCK_VOLTAGE_MAX		3000000U
+#define RT5033_REGULATOR_BUCK_VOLTAGE_STEP		100000U
+#define RT5033_REGULATOR_BUCK_VOLTAGE_STEP_NUM		32
 
 /* RT5033 regulator LDO output voltage uV */
-#घोषणा RT5033_REGULATOR_LDO_VOLTAGE_MIN		1200000U
-#घोषणा RT5033_REGULATOR_LDO_VOLTAGE_MAX		3000000U
-#घोषणा RT5033_REGULATOR_LDO_VOLTAGE_STEP		100000U
-#घोषणा RT5033_REGULATOR_LDO_VOLTAGE_STEP_NUM		32
+#define RT5033_REGULATOR_LDO_VOLTAGE_MIN		1200000U
+#define RT5033_REGULATOR_LDO_VOLTAGE_MAX		3000000U
+#define RT5033_REGULATOR_LDO_VOLTAGE_STEP		100000U
+#define RT5033_REGULATOR_LDO_VOLTAGE_STEP_NUM		32
 
 /* RT5033 regulator SAFE LDO output voltage uV */
-#घोषणा RT5033_REGULATOR_SAFE_LDO_VOLTAGE		4900000U
+#define RT5033_REGULATOR_SAFE_LDO_VOLTAGE		4900000U
 
-क्रमागत rt5033_fuel_reg अणु
+enum rt5033_fuel_reg {
 	RT5033_FUEL_REG_OCV_H		= 0x00,
 	RT5033_FUEL_REG_OCV_L		= 0x01,
 	RT5033_FUEL_REG_VBAT_H		= 0x02,
@@ -242,17 +241,17 @@
 	RT5033_FUEL_MFA_L		= 0xFF,
 
 	RT5033_FUEL_REG_END,
-पूर्ण;
+};
 
 /* RT5033 fuel gauge battery present property */
-#घोषणा RT5033_FUEL_BAT_PRESENT		0x02
+#define RT5033_FUEL_BAT_PRESENT		0x02
 
-/* RT5033 PMIC पूर्णांकerrupts */
-#घोषणा RT5033_PMIC_IRQ_BUCKOCP		BIT(2)
-#घोषणा RT5033_PMIC_IRQ_BUCKLV		BIT(3)
-#घोषणा RT5033_PMIC_IRQ_SAFELDOLV	BIT(4)
-#घोषणा RT5033_PMIC_IRQ_LDOLV		BIT(5)
-#घोषणा RT5033_PMIC_IRQ_OT		BIT(6)
-#घोषणा RT5033_PMIC_IRQ_VDDA_UV		BIT(7)
+/* RT5033 PMIC interrupts */
+#define RT5033_PMIC_IRQ_BUCKOCP		BIT(2)
+#define RT5033_PMIC_IRQ_BUCKLV		BIT(3)
+#define RT5033_PMIC_IRQ_SAFELDOLV	BIT(4)
+#define RT5033_PMIC_IRQ_LDOLV		BIT(5)
+#define RT5033_PMIC_IRQ_OT		BIT(6)
+#define RT5033_PMIC_IRQ_VDDA_UV		BIT(7)
 
-#पूर्ण_अगर /* __RT5033_PRIVATE_H__ */
+#endif /* __RT5033_PRIVATE_H__ */

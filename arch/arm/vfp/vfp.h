@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  *  linux/arch/arm/vfp/vfp.h
  *
@@ -7,44 +6,44 @@
  *  Written by Deep Blue Solutions Limited.
  */
 
-अटल अंतरभूत u32 vfp_shअगरtright32jamming(u32 val, अचिन्हित पूर्णांक shअगरt)
-अणु
-	अगर (shअगरt) अणु
-		अगर (shअगरt < 32)
-			val = val >> shअगरt | ((val << (32 - shअगरt)) != 0);
-		अन्यथा
+static inline u32 vfp_shiftright32jamming(u32 val, unsigned int shift)
+{
+	if (shift) {
+		if (shift < 32)
+			val = val >> shift | ((val << (32 - shift)) != 0);
+		else
 			val = val != 0;
-	पूर्ण
-	वापस val;
-पूर्ण
+	}
+	return val;
+}
 
-अटल अंतरभूत u64 vfp_shअगरtright64jamming(u64 val, अचिन्हित पूर्णांक shअगरt)
-अणु
-	अगर (shअगरt) अणु
-		अगर (shअगरt < 64)
-			val = val >> shअगरt | ((val << (64 - shअगरt)) != 0);
-		अन्यथा
+static inline u64 vfp_shiftright64jamming(u64 val, unsigned int shift)
+{
+	if (shift) {
+		if (shift < 64)
+			val = val >> shift | ((val << (64 - shift)) != 0);
+		else
 			val = val != 0;
-	पूर्ण
-	वापस val;
-पूर्ण
+	}
+	return val;
+}
 
-अटल अंतरभूत u32 vfp_hi64to32jamming(u64 val)
-अणु
+static inline u32 vfp_hi64to32jamming(u64 val)
+{
 	u32 v;
 
-	यंत्र(
+	asm(
 	"cmp	%Q1, #1		@ vfp_hi64to32jamming\n\t"
 	"movcc	%0, %R1\n\t"
 	"orrcs	%0, %R1, #1"
 	: "=r" (v) : "r" (val) : "cc");
 
-	वापस v;
-पूर्ण
+	return v;
+}
 
-अटल अंतरभूत व्योम add128(u64 *resh, u64 *resl, u64 nh, u64 nl, u64 mh, u64 ml)
-अणु
-	यंत्र(	"adds	%Q0, %Q2, %Q4\n\t"
+static inline void add128(u64 *resh, u64 *resl, u64 nh, u64 nl, u64 mh, u64 ml)
+{
+	asm(	"adds	%Q0, %Q2, %Q4\n\t"
 		"adcs	%R0, %R2, %R4\n\t"
 		"adcs	%Q1, %Q3, %Q5\n\t"
 		"adc	%R1, %R3, %R5"
@@ -53,11 +52,11 @@
 	    : "cc");
 	*resh = nh;
 	*resl = nl;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम sub128(u64 *resh, u64 *resl, u64 nh, u64 nl, u64 mh, u64 ml)
-अणु
-	यंत्र(	"subs	%Q0, %Q2, %Q4\n\t"
+static inline void sub128(u64 *resh, u64 *resl, u64 nh, u64 nl, u64 mh, u64 ml)
+{
+	asm(	"subs	%Q0, %Q2, %Q4\n\t"
 		"sbcs	%R0, %R2, %R4\n\t"
 		"sbcs	%Q1, %Q3, %Q5\n\t"
 		"sbc	%R1, %R3, %R5\n\t"
@@ -66,10 +65,10 @@
 	    : "cc");
 	*resh = nh;
 	*resl = nl;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम mul64to128(u64 *resh, u64 *resl, u64 n, u64 m)
-अणु
+static inline void mul64to128(u64 *resh, u64 *resl, u64 n, u64 m)
+{
 	u32 nh, nl, mh, ml;
 	u64 rh, rma, rmb, rl;
 
@@ -93,286 +92,286 @@
 
 	*resl = rl;
 	*resh = rh;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम shअगरt64left(u64 *resh, u64 *resl, u64 n)
-अणु
+static inline void shift64left(u64 *resh, u64 *resl, u64 n)
+{
 	*resh = n >> 63;
 	*resl = n << 1;
-पूर्ण
+}
 
-अटल अंतरभूत u64 vfp_hi64multiply64(u64 n, u64 m)
-अणु
+static inline u64 vfp_hi64multiply64(u64 n, u64 m)
+{
 	u64 rh, rl;
 	mul64to128(&rh, &rl, n, m);
-	वापस rh | (rl != 0);
-पूर्ण
+	return rh | (rl != 0);
+}
 
-अटल अंतरभूत u64 vfp_estimate_भाग128to64(u64 nh, u64 nl, u64 m)
-अणु
+static inline u64 vfp_estimate_div128to64(u64 nh, u64 nl, u64 m)
+{
 	u64 mh, ml, remh, reml, termh, terml, z;
 
-	अगर (nh >= m)
-		वापस ~0ULL;
+	if (nh >= m)
+		return ~0ULL;
 	mh = m >> 32;
-	अगर (mh << 32 <= nh) अणु
+	if (mh << 32 <= nh) {
 		z = 0xffffffff00000000ULL;
-	पूर्ण अन्यथा अणु
+	} else {
 		z = nh;
-		करो_भाग(z, mh);
+		do_div(z, mh);
 		z <<= 32;
-	पूर्ण
+	}
 	mul64to128(&termh, &terml, m, z);
 	sub128(&remh, &reml, nh, nl, termh, terml);
 	ml = m << 32;
-	जबतक ((s64)remh < 0) अणु
+	while ((s64)remh < 0) {
 		z -= 0x100000000ULL;
 		add128(&remh, &reml, remh, reml, mh, ml);
-	पूर्ण
+	}
 	remh = (remh << 32) | (reml >> 32);
-	अगर (mh << 32 <= remh) अणु
+	if (mh << 32 <= remh) {
 		z |= 0xffffffff;
-	पूर्ण अन्यथा अणु
-		करो_भाग(remh, mh);
+	} else {
+		do_div(remh, mh);
 		z |= remh;
-	पूर्ण
-	वापस z;
-पूर्ण
+	}
+	return z;
+}
 
 /*
  * Operations on unpacked elements
  */
-#घोषणा vfp_sign_negate(sign)	(sign ^ 0x8000)
+#define vfp_sign_negate(sign)	(sign ^ 0x8000)
 
 /*
  * Single-precision
  */
-काष्ठा vfp_single अणु
+struct vfp_single {
 	s16	exponent;
 	u16	sign;
-	u32	signअगरicand;
-पूर्ण;
+	u32	significand;
+};
 
-यंत्रlinkage s32 vfp_get_भग्न(अचिन्हित पूर्णांक reg);
-यंत्रlinkage व्योम vfp_put_भग्न(s32 val, अचिन्हित पूर्णांक reg);
+asmlinkage s32 vfp_get_float(unsigned int reg);
+asmlinkage void vfp_put_float(s32 val, unsigned int reg);
 
 /*
  * VFP_SINGLE_MANTISSA_BITS - number of bits in the mantissa
  * VFP_SINGLE_EXPONENT_BITS - number of bits in the exponent
- * VFP_SINGLE_LOW_BITS - number of low bits in the unpacked signअगरicand
- *  which are not propagated to the भग्न upon packing.
+ * VFP_SINGLE_LOW_BITS - number of low bits in the unpacked significand
+ *  which are not propagated to the float upon packing.
  */
-#घोषणा VFP_SINGLE_MANTISSA_BITS	(23)
-#घोषणा VFP_SINGLE_EXPONENT_BITS	(8)
-#घोषणा VFP_SINGLE_LOW_BITS		(32 - VFP_SINGLE_MANTISSA_BITS - 2)
-#घोषणा VFP_SINGLE_LOW_BITS_MASK	((1 << VFP_SINGLE_LOW_BITS) - 1)
+#define VFP_SINGLE_MANTISSA_BITS	(23)
+#define VFP_SINGLE_EXPONENT_BITS	(8)
+#define VFP_SINGLE_LOW_BITS		(32 - VFP_SINGLE_MANTISSA_BITS - 2)
+#define VFP_SINGLE_LOW_BITS_MASK	((1 << VFP_SINGLE_LOW_BITS) - 1)
 
 /*
- * The bit in an unpacked भग्न which indicates that it is a quiet NaN
+ * The bit in an unpacked float which indicates that it is a quiet NaN
  */
-#घोषणा VFP_SINGLE_SIGNIFICAND_Qन_अंक	(1 << (VFP_SINGLE_MANTISSA_BITS - 1 + VFP_SINGLE_LOW_BITS))
+#define VFP_SINGLE_SIGNIFICAND_QNAN	(1 << (VFP_SINGLE_MANTISSA_BITS - 1 + VFP_SINGLE_LOW_BITS))
 
 /*
  * Operations on packed single-precision numbers
  */
-#घोषणा vfp_single_packed_sign(v)	((v) & 0x80000000)
-#घोषणा vfp_single_packed_negate(v)	((v) ^ 0x80000000)
-#घोषणा vfp_single_packed_असल(v)	((v) & ~0x80000000)
-#घोषणा vfp_single_packed_exponent(v)	(((v) >> VFP_SINGLE_MANTISSA_BITS) & ((1 << VFP_SINGLE_EXPONENT_BITS) - 1))
-#घोषणा vfp_single_packed_mantissa(v)	((v) & ((1 << VFP_SINGLE_MANTISSA_BITS) - 1))
+#define vfp_single_packed_sign(v)	((v) & 0x80000000)
+#define vfp_single_packed_negate(v)	((v) ^ 0x80000000)
+#define vfp_single_packed_abs(v)	((v) & ~0x80000000)
+#define vfp_single_packed_exponent(v)	(((v) >> VFP_SINGLE_MANTISSA_BITS) & ((1 << VFP_SINGLE_EXPONENT_BITS) - 1))
+#define vfp_single_packed_mantissa(v)	((v) & ((1 << VFP_SINGLE_MANTISSA_BITS) - 1))
 
 /*
- * Unpack a single-precision भग्न.  Note that this वापसs the magnitude
- * of the single-precision भग्न mantissa with the 1. अगर necessary,
+ * Unpack a single-precision float.  Note that this returns the magnitude
+ * of the single-precision float mantissa with the 1. if necessary,
  * aligned to bit 30.
  */
-अटल अंतरभूत व्योम vfp_single_unpack(काष्ठा vfp_single *s, s32 val)
-अणु
-	u32 signअगरicand;
+static inline void vfp_single_unpack(struct vfp_single *s, s32 val)
+{
+	u32 significand;
 
 	s->sign = vfp_single_packed_sign(val) >> 16,
 	s->exponent = vfp_single_packed_exponent(val);
 
-	signअगरicand = (u32) val;
-	signअगरicand = (signअगरicand << (32 - VFP_SINGLE_MANTISSA_BITS)) >> 2;
-	अगर (s->exponent && s->exponent != 255)
-		signअगरicand |= 0x40000000;
-	s->signअगरicand = signअगरicand;
-पूर्ण
+	significand = (u32) val;
+	significand = (significand << (32 - VFP_SINGLE_MANTISSA_BITS)) >> 2;
+	if (s->exponent && s->exponent != 255)
+		significand |= 0x40000000;
+	s->significand = significand;
+}
 
 /*
- * Re-pack a single-precision भग्न.  This assumes that the भग्न is
- * alपढ़ोy normalised such that the MSB is bit 30, _not_ bit 31.
+ * Re-pack a single-precision float.  This assumes that the float is
+ * already normalised such that the MSB is bit 30, _not_ bit 31.
  */
-अटल अंतरभूत s32 vfp_single_pack(काष्ठा vfp_single *s)
-अणु
+static inline s32 vfp_single_pack(struct vfp_single *s)
+{
 	u32 val;
 	val = (s->sign << 16) +
 	      (s->exponent << VFP_SINGLE_MANTISSA_BITS) +
-	      (s->signअगरicand >> VFP_SINGLE_LOW_BITS);
-	वापस (s32)val;
-पूर्ण
+	      (s->significand >> VFP_SINGLE_LOW_BITS);
+	return (s32)val;
+}
 
-#घोषणा VFP_NUMBER		(1<<0)
-#घोषणा VFP_ZERO		(1<<1)
-#घोषणा VFP_DENORMAL		(1<<2)
-#घोषणा VFP_अनन्त		(1<<3)
-#घोषणा VFP_न_अंक			(1<<4)
-#घोषणा VFP_न_अंक_SIGNAL		(1<<5)
+#define VFP_NUMBER		(1<<0)
+#define VFP_ZERO		(1<<1)
+#define VFP_DENORMAL		(1<<2)
+#define VFP_INFINITY		(1<<3)
+#define VFP_NAN			(1<<4)
+#define VFP_NAN_SIGNAL		(1<<5)
 
-#घोषणा VFP_Qन_अंक		(VFP_न_अंक)
-#घोषणा VFP_Sन_अंक		(VFP_न_अंक|VFP_न_अंक_SIGNAL)
+#define VFP_QNAN		(VFP_NAN)
+#define VFP_SNAN		(VFP_NAN|VFP_NAN_SIGNAL)
 
-अटल अंतरभूत पूर्णांक vfp_single_type(काष्ठा vfp_single *s)
-अणु
-	पूर्णांक type = VFP_NUMBER;
-	अगर (s->exponent == 255) अणु
-		अगर (s->signअगरicand == 0)
-			type = VFP_अनन्त;
-		अन्यथा अगर (s->signअगरicand & VFP_SINGLE_SIGNIFICAND_Qन_अंक)
-			type = VFP_Qन_अंक;
-		अन्यथा
-			type = VFP_Sन_अंक;
-	पूर्ण अन्यथा अगर (s->exponent == 0) अणु
-		अगर (s->signअगरicand == 0)
+static inline int vfp_single_type(struct vfp_single *s)
+{
+	int type = VFP_NUMBER;
+	if (s->exponent == 255) {
+		if (s->significand == 0)
+			type = VFP_INFINITY;
+		else if (s->significand & VFP_SINGLE_SIGNIFICAND_QNAN)
+			type = VFP_QNAN;
+		else
+			type = VFP_SNAN;
+	} else if (s->exponent == 0) {
+		if (s->significand == 0)
 			type |= VFP_ZERO;
-		अन्यथा
+		else
 			type |= VFP_DENORMAL;
-	पूर्ण
-	वापस type;
-पूर्ण
+	}
+	return type;
+}
 
-#अगर_अघोषित DEBUG
-#घोषणा vfp_single_normaliseround(sd,vsd,fpscr,except,func) __vfp_single_normaliseround(sd,vsd,fpscr,except)
-u32 __vfp_single_normaliseround(पूर्णांक sd, काष्ठा vfp_single *vs, u32 fpscr, u32 exceptions);
-#अन्यथा
-u32 vfp_single_normaliseround(पूर्णांक sd, काष्ठा vfp_single *vs, u32 fpscr, u32 exceptions, स्थिर अक्षर *func);
-#पूर्ण_अगर
+#ifndef DEBUG
+#define vfp_single_normaliseround(sd,vsd,fpscr,except,func) __vfp_single_normaliseround(sd,vsd,fpscr,except)
+u32 __vfp_single_normaliseround(int sd, struct vfp_single *vs, u32 fpscr, u32 exceptions);
+#else
+u32 vfp_single_normaliseround(int sd, struct vfp_single *vs, u32 fpscr, u32 exceptions, const char *func);
+#endif
 
 /*
  * Double-precision
  */
-काष्ठा vfp_द्विगुन अणु
+struct vfp_double {
 	s16	exponent;
 	u16	sign;
-	u64	signअगरicand;
-पूर्ण;
+	u64	significand;
+};
 
 /*
- * VFP_REG_ZERO is a special रेजिस्टर number क्रम vfp_get_द्विगुन
- * which वापसs (द्विगुन)0.0.  This is useful क्रम the compare with
- * zero inकाष्ठाions.
+ * VFP_REG_ZERO is a special register number for vfp_get_double
+ * which returns (double)0.0.  This is useful for the compare with
+ * zero instructions.
  */
-#अगर_घोषित CONFIG_VFPv3
-#घोषणा VFP_REG_ZERO	32
-#अन्यथा
-#घोषणा VFP_REG_ZERO	16
-#पूर्ण_अगर
-यंत्रlinkage u64 vfp_get_द्विगुन(अचिन्हित पूर्णांक reg);
-यंत्रlinkage व्योम vfp_put_द्विगुन(u64 val, अचिन्हित पूर्णांक reg);
+#ifdef CONFIG_VFPv3
+#define VFP_REG_ZERO	32
+#else
+#define VFP_REG_ZERO	16
+#endif
+asmlinkage u64 vfp_get_double(unsigned int reg);
+asmlinkage void vfp_put_double(u64 val, unsigned int reg);
 
-#घोषणा VFP_DOUBLE_MANTISSA_BITS	(52)
-#घोषणा VFP_DOUBLE_EXPONENT_BITS	(11)
-#घोषणा VFP_DOUBLE_LOW_BITS		(64 - VFP_DOUBLE_MANTISSA_BITS - 2)
-#घोषणा VFP_DOUBLE_LOW_BITS_MASK	((1 << VFP_DOUBLE_LOW_BITS) - 1)
+#define VFP_DOUBLE_MANTISSA_BITS	(52)
+#define VFP_DOUBLE_EXPONENT_BITS	(11)
+#define VFP_DOUBLE_LOW_BITS		(64 - VFP_DOUBLE_MANTISSA_BITS - 2)
+#define VFP_DOUBLE_LOW_BITS_MASK	((1 << VFP_DOUBLE_LOW_BITS) - 1)
 
 /*
- * The bit in an unpacked द्विगुन which indicates that it is a quiet NaN
+ * The bit in an unpacked double which indicates that it is a quiet NaN
  */
-#घोषणा VFP_DOUBLE_SIGNIFICAND_Qन_अंक	(1ULL << (VFP_DOUBLE_MANTISSA_BITS - 1 + VFP_DOUBLE_LOW_BITS))
+#define VFP_DOUBLE_SIGNIFICAND_QNAN	(1ULL << (VFP_DOUBLE_MANTISSA_BITS - 1 + VFP_DOUBLE_LOW_BITS))
 
 /*
  * Operations on packed single-precision numbers
  */
-#घोषणा vfp_द्विगुन_packed_sign(v)	((v) & (1ULL << 63))
-#घोषणा vfp_द्विगुन_packed_negate(v)	((v) ^ (1ULL << 63))
-#घोषणा vfp_द्विगुन_packed_असल(v)	((v) & ~(1ULL << 63))
-#घोषणा vfp_द्विगुन_packed_exponent(v)	(((v) >> VFP_DOUBLE_MANTISSA_BITS) & ((1 << VFP_DOUBLE_EXPONENT_BITS) - 1))
-#घोषणा vfp_द्विगुन_packed_mantissa(v)	((v) & ((1ULL << VFP_DOUBLE_MANTISSA_BITS) - 1))
+#define vfp_double_packed_sign(v)	((v) & (1ULL << 63))
+#define vfp_double_packed_negate(v)	((v) ^ (1ULL << 63))
+#define vfp_double_packed_abs(v)	((v) & ~(1ULL << 63))
+#define vfp_double_packed_exponent(v)	(((v) >> VFP_DOUBLE_MANTISSA_BITS) & ((1 << VFP_DOUBLE_EXPONENT_BITS) - 1))
+#define vfp_double_packed_mantissa(v)	((v) & ((1ULL << VFP_DOUBLE_MANTISSA_BITS) - 1))
 
 /*
- * Unpack a द्विगुन-precision भग्न.  Note that this वापसs the magnitude
- * of the द्विगुन-precision भग्न mantissa with the 1. अगर necessary,
+ * Unpack a double-precision float.  Note that this returns the magnitude
+ * of the double-precision float mantissa with the 1. if necessary,
  * aligned to bit 62.
  */
-अटल अंतरभूत व्योम vfp_द्विगुन_unpack(काष्ठा vfp_द्विगुन *s, s64 val)
-अणु
-	u64 signअगरicand;
+static inline void vfp_double_unpack(struct vfp_double *s, s64 val)
+{
+	u64 significand;
 
-	s->sign = vfp_द्विगुन_packed_sign(val) >> 48;
-	s->exponent = vfp_द्विगुन_packed_exponent(val);
+	s->sign = vfp_double_packed_sign(val) >> 48;
+	s->exponent = vfp_double_packed_exponent(val);
 
-	signअगरicand = (u64) val;
-	signअगरicand = (signअगरicand << (64 - VFP_DOUBLE_MANTISSA_BITS)) >> 2;
-	अगर (s->exponent && s->exponent != 2047)
-		signअगरicand |= (1ULL << 62);
-	s->signअगरicand = signअगरicand;
-पूर्ण
+	significand = (u64) val;
+	significand = (significand << (64 - VFP_DOUBLE_MANTISSA_BITS)) >> 2;
+	if (s->exponent && s->exponent != 2047)
+		significand |= (1ULL << 62);
+	s->significand = significand;
+}
 
 /*
- * Re-pack a द्विगुन-precision भग्न.  This assumes that the भग्न is
- * alपढ़ोy normalised such that the MSB is bit 30, _not_ bit 31.
+ * Re-pack a double-precision float.  This assumes that the float is
+ * already normalised such that the MSB is bit 30, _not_ bit 31.
  */
-अटल अंतरभूत s64 vfp_द्विगुन_pack(काष्ठा vfp_द्विगुन *s)
-अणु
+static inline s64 vfp_double_pack(struct vfp_double *s)
+{
 	u64 val;
 	val = ((u64)s->sign << 48) +
 	      ((u64)s->exponent << VFP_DOUBLE_MANTISSA_BITS) +
-	      (s->signअगरicand >> VFP_DOUBLE_LOW_BITS);
-	वापस (s64)val;
-पूर्ण
+	      (s->significand >> VFP_DOUBLE_LOW_BITS);
+	return (s64)val;
+}
 
-अटल अंतरभूत पूर्णांक vfp_द्विगुन_type(काष्ठा vfp_द्विगुन *s)
-अणु
-	पूर्णांक type = VFP_NUMBER;
-	अगर (s->exponent == 2047) अणु
-		अगर (s->signअगरicand == 0)
-			type = VFP_अनन्त;
-		अन्यथा अगर (s->signअगरicand & VFP_DOUBLE_SIGNIFICAND_Qन_अंक)
-			type = VFP_Qन_अंक;
-		अन्यथा
-			type = VFP_Sन_अंक;
-	पूर्ण अन्यथा अगर (s->exponent == 0) अणु
-		अगर (s->signअगरicand == 0)
+static inline int vfp_double_type(struct vfp_double *s)
+{
+	int type = VFP_NUMBER;
+	if (s->exponent == 2047) {
+		if (s->significand == 0)
+			type = VFP_INFINITY;
+		else if (s->significand & VFP_DOUBLE_SIGNIFICAND_QNAN)
+			type = VFP_QNAN;
+		else
+			type = VFP_SNAN;
+	} else if (s->exponent == 0) {
+		if (s->significand == 0)
 			type |= VFP_ZERO;
-		अन्यथा
+		else
 			type |= VFP_DENORMAL;
-	पूर्ण
-	वापस type;
-पूर्ण
+	}
+	return type;
+}
 
-u32 vfp_द्विगुन_normaliseround(पूर्णांक dd, काष्ठा vfp_द्विगुन *vd, u32 fpscr, u32 exceptions, स्थिर अक्षर *func);
+u32 vfp_double_normaliseround(int dd, struct vfp_double *vd, u32 fpscr, u32 exceptions, const char *func);
 
-u32 vfp_estimate_वर्ग_मूल_signअगरicand(u32 exponent, u32 signअगरicand);
+u32 vfp_estimate_sqrt_significand(u32 exponent, u32 significand);
 
 /*
  * A special flag to tell the normalisation code not to normalise.
  */
-#घोषणा VFP_न_अंक_FLAG	0x100
+#define VFP_NAN_FLAG	0x100
 
 /*
  * A bit pattern used to indicate the initial (unset) value of the
- * exception mask, in हाल nothing handles an inकाष्ठाion.  This
- * करोesn't include the न_अंक flag, which get masked out beक्रमe
- * we check क्रम an error.
+ * exception mask, in case nothing handles an instruction.  This
+ * doesn't include the NAN flag, which get masked out before
+ * we check for an error.
  */
-#घोषणा VFP_EXCEPTION_ERROR	((u32)-1 & ~VFP_न_अंक_FLAG)
+#define VFP_EXCEPTION_ERROR	((u32)-1 & ~VFP_NAN_FLAG)
 
 /*
- * A flag to tell vfp inकाष्ठाion type.
+ * A flag to tell vfp instruction type.
  *  OP_SCALAR - this operation always operates in scalar mode
- *  OP_SD - the inकाष्ठाion exceptionally ग_लिखोs to a single precision result.
- *  OP_DD - the inकाष्ठाion exceptionally ग_लिखोs to a द्विगुन precision result.
- *  OP_SM - the inकाष्ठाion exceptionally पढ़ोs from a single precision opeअक्रम.
+ *  OP_SD - the instruction exceptionally writes to a single precision result.
+ *  OP_DD - the instruction exceptionally writes to a double precision result.
+ *  OP_SM - the instruction exceptionally reads from a single precision operand.
  */
-#घोषणा OP_SCALAR	(1 << 0)
-#घोषणा OP_SD		(1 << 1)
-#घोषणा OP_DD		(1 << 1)
-#घोषणा OP_SM		(1 << 2)
+#define OP_SCALAR	(1 << 0)
+#define OP_SD		(1 << 1)
+#define OP_DD		(1 << 1)
+#define OP_SM		(1 << 2)
 
-काष्ठा op अणु
-	u32 (* स्थिर fn)(पूर्णांक dd, पूर्णांक dn, पूर्णांक dm, u32 fpscr);
+struct op {
+	u32 (* const fn)(int dd, int dn, int dm, u32 fpscr);
 	u32 flags;
-पूर्ण;
+};
 
-यंत्रlinkage व्योम vfp_save_state(व्योम *location, u32 fpexc);
+asmlinkage void vfp_save_state(void *location, u32 fpexc);

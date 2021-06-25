@@ -1,19 +1,18 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Panasonic MN88473 DVB-T/T2/C demodulator driver
  *
  * Copyright (C) 2014 Antti Palosaari <crope@iki.fi>
  */
 
-#अगर_अघोषित MN88473_H
-#घोषणा MN88473_H
+#ifndef MN88473_H
+#define MN88473_H
 
-#समावेश <linux/dvb/frontend.h>
+#include <linux/dvb/frontend.h>
 
-काष्ठा mn88473_config अणु
+struct mn88473_config {
 	/*
-	 * Max num of bytes given I2C adapter could ग_लिखो at once.
+	 * Max num of bytes given I2C adapter could write at once.
 	 * Default: unlimited
 	 */
 	u16 i2c_wr_max;
@@ -25,12 +24,12 @@
 	u32 xtal;
 
 
-	/* Everything after that is वापसed by the driver. */
+	/* Everything after that is returned by the driver. */
 
 	/*
 	 * DVB frontend.
 	 */
-	काष्ठा dvb_frontend **fe;
-पूर्ण;
+	struct dvb_frontend **fe;
+};
 
-#पूर्ण_अगर
+#endif

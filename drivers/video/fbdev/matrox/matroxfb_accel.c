@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *
  * Hardware accelerated Matrox Millennium I, II, Mystique, G100, G200 and G400
@@ -19,8 +18,8 @@
  *               "Tom Rini" <trini@kernel.crashing.org>
  *                     MTRR stuff, PPC cleanups, betatesting, fixes, ideas
  *
- *               "Bibek Sahu" <scorpio@करोdds.net>
- *                     Access device through पढ़ोb|w|l and ग_लिखो b|w|l
+ *               "Bibek Sahu" <scorpio@dodds.net>
+ *                     Access device through readb|w|l and write b|w|l
  *                     Extensive debugging stuff
  *
  *               "Daniel Haun" <haund@usa.net>
@@ -68,7 +67,7 @@
  * (following author is not in any relation with this code, but his code
  *  is included in this driver)
  *
- * Based on framebuffer driver क्रम VBE 2.0 compliant graphic boards
+ * Based on framebuffer driver for VBE 2.0 compliant graphic boards
  *     (c) 1998 Gerd Knorr <kraxel@cs.tu-berlin.de>
  *
  * (following author is not in any relation with this code, but his ideas
@@ -78,146 +77,146 @@
  *
  */
 
-#समावेश "matroxfb_accel.h"
-#समावेश "matroxfb_DAC1064.h"
-#समावेश "matroxfb_Ti3026.h"
-#समावेश "matroxfb_misc.h"
+#include "matroxfb_accel.h"
+#include "matroxfb_DAC1064.h"
+#include "matroxfb_Ti3026.h"
+#include "matroxfb_misc.h"
 
-#घोषणा curr_ydstorg(x)	((x)->curr.ydstorg.pixels)
+#define curr_ydstorg(x)	((x)->curr.ydstorg.pixels)
 
-#घोषणा mga_ydstlen(y,l) mga_outl(M_YDSTLEN | M_EXEC, ((y) << 16) | (l))
+#define mga_ydstlen(y,l) mga_outl(M_YDSTLEN | M_EXEC, ((y) << 16) | (l))
 
-अटल अंतरभूत व्योम matrox_cfb4_pal(u_पूर्णांक32_t* pal) अणु
-	अचिन्हित पूर्णांक i;
+static inline void matrox_cfb4_pal(u_int32_t* pal) {
+	unsigned int i;
 	
-	क्रम (i = 0; i < 16; i++) अणु
+	for (i = 0; i < 16; i++) {
 		pal[i] = i * 0x11111111U;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम matrox_cfb8_pal(u_पूर्णांक32_t* pal) अणु
-	अचिन्हित पूर्णांक i;
+static inline void matrox_cfb8_pal(u_int32_t* pal) {
+	unsigned int i;
 	
-	क्रम (i = 0; i < 16; i++) अणु
+	for (i = 0; i < 16; i++) {
 		pal[i] = i * 0x01010101U;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम matroxfb_copyarea(काष्ठा fb_info* info, स्थिर काष्ठा fb_copyarea* area);
-अटल व्योम matroxfb_fillrect(काष्ठा fb_info* info, स्थिर काष्ठा fb_fillrect* rect);
-अटल व्योम matroxfb_imageblit(काष्ठा fb_info* info, स्थिर काष्ठा fb_image* image);
-अटल व्योम matroxfb_cfb4_fillrect(काष्ठा fb_info* info, स्थिर काष्ठा fb_fillrect* rect);
-अटल व्योम matroxfb_cfb4_copyarea(काष्ठा fb_info* info, स्थिर काष्ठा fb_copyarea* area);
+static void matroxfb_copyarea(struct fb_info* info, const struct fb_copyarea* area);
+static void matroxfb_fillrect(struct fb_info* info, const struct fb_fillrect* rect);
+static void matroxfb_imageblit(struct fb_info* info, const struct fb_image* image);
+static void matroxfb_cfb4_fillrect(struct fb_info* info, const struct fb_fillrect* rect);
+static void matroxfb_cfb4_copyarea(struct fb_info* info, const struct fb_copyarea* area);
 
-व्योम matrox_cfbX_init(काष्ठा matrox_fb_info *minfo)
-अणु
-	u_पूर्णांक32_t maccess;
-	u_पूर्णांक32_t mpitch;
-	u_पूर्णांक32_t mopmode;
-	पूर्णांक accel;
+void matrox_cfbX_init(struct matrox_fb_info *minfo)
+{
+	u_int32_t maccess;
+	u_int32_t mpitch;
+	u_int32_t mopmode;
+	int accel;
 
 	DBG(__func__)
 
-	mpitch = minfo->fbcon.var.xres_भव;
+	mpitch = minfo->fbcon.var.xres_virtual;
 
 	minfo->fbops.fb_copyarea = cfb_copyarea;
 	minfo->fbops.fb_fillrect = cfb_fillrect;
 	minfo->fbops.fb_imageblit = cfb_imageblit;
-	minfo->fbops.fb_cursor = शून्य;
+	minfo->fbops.fb_cursor = NULL;
 
 	accel = (minfo->fbcon.var.accel_flags & FB_ACCELF_TEXT) == FB_ACCELF_TEXT;
 
-	चयन (minfo->fbcon.var.bits_per_pixel) अणु
-		हाल 4:		maccess = 0x00000000;	/* accelerate as 8bpp video */
+	switch (minfo->fbcon.var.bits_per_pixel) {
+		case 4:		maccess = 0x00000000;	/* accelerate as 8bpp video */
 				mpitch = (mpitch >> 1) | 0x8000; /* disable linearization */
 				mopmode = M_OPMODE_4BPP;
 				matrox_cfb4_pal(minfo->cmap);
-				अगर (accel && !(mpitch & 1)) अणु
+				if (accel && !(mpitch & 1)) {
 					minfo->fbops.fb_copyarea = matroxfb_cfb4_copyarea;
 					minfo->fbops.fb_fillrect = matroxfb_cfb4_fillrect;
-				पूर्ण
-				अवरोध;
-		हाल 8:		maccess = 0x00000000;
+				}
+				break;
+		case 8:		maccess = 0x00000000;
 				mopmode = M_OPMODE_8BPP;
 				matrox_cfb8_pal(minfo->cmap);
-				अगर (accel) अणु
+				if (accel) {
 					minfo->fbops.fb_copyarea = matroxfb_copyarea;
 					minfo->fbops.fb_fillrect = matroxfb_fillrect;
 					minfo->fbops.fb_imageblit = matroxfb_imageblit;
-				पूर्ण
-				अवरोध;
-		हाल 16:	अगर (minfo->fbcon.var.green.length == 5)
+				}
+				break;
+		case 16:	if (minfo->fbcon.var.green.length == 5)
 					maccess = 0xC0000001;
-				अन्यथा
+				else
 					maccess = 0x40000001;
 				mopmode = M_OPMODE_16BPP;
-				अगर (accel) अणु
+				if (accel) {
 					minfo->fbops.fb_copyarea = matroxfb_copyarea;
 					minfo->fbops.fb_fillrect = matroxfb_fillrect;
 					minfo->fbops.fb_imageblit = matroxfb_imageblit;
-				पूर्ण
-				अवरोध;
-		हाल 24:	maccess = 0x00000003;
+				}
+				break;
+		case 24:	maccess = 0x00000003;
 				mopmode = M_OPMODE_24BPP;
-				अगर (accel) अणु
+				if (accel) {
 					minfo->fbops.fb_copyarea = matroxfb_copyarea;
 					minfo->fbops.fb_fillrect = matroxfb_fillrect;
 					minfo->fbops.fb_imageblit = matroxfb_imageblit;
-				पूर्ण
-				अवरोध;
-		हाल 32:	maccess = 0x00000002;
+				}
+				break;
+		case 32:	maccess = 0x00000002;
 				mopmode = M_OPMODE_32BPP;
-				अगर (accel) अणु
+				if (accel) {
 					minfo->fbops.fb_copyarea = matroxfb_copyarea;
 					minfo->fbops.fb_fillrect = matroxfb_fillrect;
 					minfo->fbops.fb_imageblit = matroxfb_imageblit;
-				पूर्ण
-				अवरोध;
-		शेष:	maccess = 0x00000000;
+				}
+				break;
+		default:	maccess = 0x00000000;
 				mopmode = 0x00000000;
-				अवरोध;	/* turn off acceleration!!! */
-	पूर्ण
-	mga_fअगरo(8);
+				break;	/* turn off acceleration!!! */
+	}
+	mga_fifo(8);
 	mga_outl(M_PITCH, mpitch);
 	mga_outl(M_YDSTORG, curr_ydstorg(minfo));
-	अगर (minfo->capable.plnwt)
+	if (minfo->capable.plnwt)
 		mga_outl(M_PLNWT, -1);
-	अगर (minfo->capable.srcorg) अणु
+	if (minfo->capable.srcorg) {
 		mga_outl(M_SRCORG, 0);
 		mga_outl(M_DSTORG, 0);
-	पूर्ण
+	}
 	mga_outl(M_OPMODE, mopmode);
 	mga_outl(M_CXBNDRY, 0xFFFF0000);
 	mga_outl(M_YTOP, 0);
 	mga_outl(M_YBOT, 0x01FFFFFF);
 	mga_outl(M_MACCESS, maccess);
 	minfo->accel.m_dwg_rect = M_DWG_TRAP | M_DWG_SOLID | M_DWG_ARZERO | M_DWG_SGNZERO | M_DWG_SHIFTZERO;
-	अगर (isMilleniumII(minfo)) minfo->accel.m_dwg_rect |= M_DWG_TRANSC;
+	if (isMilleniumII(minfo)) minfo->accel.m_dwg_rect |= M_DWG_TRANSC;
 	minfo->accel.m_opmode = mopmode;
 	minfo->accel.m_access = maccess;
 	minfo->accel.m_pitch = mpitch;
-पूर्ण
+}
 
 EXPORT_SYMBOL(matrox_cfbX_init);
 
-अटल व्योम matrox_accel_restore_maccess(काष्ठा matrox_fb_info *minfo)
-अणु
+static void matrox_accel_restore_maccess(struct matrox_fb_info *minfo)
+{
 	mga_outl(M_MACCESS, minfo->accel.m_access);
 	mga_outl(M_PITCH, minfo->accel.m_pitch);
-पूर्ण
+}
 
-अटल व्योम matrox_accel_bmove(काष्ठा matrox_fb_info *minfo, पूर्णांक vxres, पूर्णांक sy,
-			       पूर्णांक sx, पूर्णांक dy, पूर्णांक dx, पूर्णांक height, पूर्णांक width)
-अणु
-	पूर्णांक start, end;
+static void matrox_accel_bmove(struct matrox_fb_info *minfo, int vxres, int sy,
+			       int sx, int dy, int dx, int height, int width)
+{
+	int start, end;
 	CRITFLAGS
 
 	DBG(__func__)
 
 	CRITBEGIN
 
-	अगर ((dy < sy) || ((dy == sy) && (dx <= sx))) अणु
-		mga_fअगरo(4);
+	if ((dy < sy) || ((dy == sy) && (dx <= sx))) {
+		mga_fifo(4);
 		matrox_accel_restore_maccess(minfo);
 		mga_outl(M_DWGCTL, M_DWG_BITBLT | M_DWG_SHIFTZERO | M_DWG_SGNZERO |
 			 M_DWG_BFCOL | M_DWG_REPLACE);
@@ -225,8 +224,8 @@ EXPORT_SYMBOL(matrox_cfbX_init);
 		width--;
 		start = sy*vxres+sx+curr_ydstorg(minfo);
 		end = start+width;
-	पूर्ण अन्यथा अणु
-		mga_fअगरo(5);
+	} else {
+		mga_fifo(5);
 		matrox_accel_restore_maccess(minfo);
 		mga_outl(M_DWGCTL, M_DWG_BITBLT | M_DWG_SHIFTZERO | M_DWG_BFCOL | M_DWG_REPLACE);
 		mga_outl(M_SGN, 5);
@@ -235,8 +234,8 @@ EXPORT_SYMBOL(matrox_cfbX_init);
 		end = (sy+height-1)*vxres+sx+curr_ydstorg(minfo);
 		start = end+width;
 		dy += height-1;
-	पूर्ण
-	mga_fअगरo(6);
+	}
+	mga_fifo(6);
 	matrox_accel_restore_maccess(minfo);
 	mga_outl(M_AR0, end);
 	mga_outl(M_AR3, start);
@@ -245,21 +244,21 @@ EXPORT_SYMBOL(matrox_cfbX_init);
 	WaitTillIdle();
 
 	CRITEND
-पूर्ण
+}
 
-अटल व्योम matrox_accel_bmove_lin(काष्ठा matrox_fb_info *minfo, पूर्णांक vxres,
-				   पूर्णांक sy, पूर्णांक sx, पूर्णांक dy, पूर्णांक dx, पूर्णांक height,
-				   पूर्णांक width)
-अणु
-	पूर्णांक start, end;
+static void matrox_accel_bmove_lin(struct matrox_fb_info *minfo, int vxres,
+				   int sy, int sx, int dy, int dx, int height,
+				   int width)
+{
+	int start, end;
 	CRITFLAGS
 
 	DBG(__func__)
 
 	CRITBEGIN
 
-	अगर ((dy < sy) || ((dy == sy) && (dx <= sx))) अणु
-		mga_fअगरo(4);
+	if ((dy < sy) || ((dy == sy) && (dx <= sx))) {
+		mga_fifo(4);
 		matrox_accel_restore_maccess(minfo);
 		mga_outl(M_DWGCTL, M_DWG_BITBLT | M_DWG_SHIFTZERO | M_DWG_SGNZERO |
 			M_DWG_BFCOL | M_DWG_REPLACE);
@@ -267,8 +266,8 @@ EXPORT_SYMBOL(matrox_cfbX_init);
 		width--;
 		start = sy*vxres+sx+curr_ydstorg(minfo);
 		end = start+width;
-	पूर्ण अन्यथा अणु
-		mga_fअगरo(5);
+	} else {
+		mga_fifo(5);
 		matrox_accel_restore_maccess(minfo);
 		mga_outl(M_DWGCTL, M_DWG_BITBLT | M_DWG_SHIFTZERO | M_DWG_BFCOL | M_DWG_REPLACE);
 		mga_outl(M_SGN, 5);
@@ -277,8 +276,8 @@ EXPORT_SYMBOL(matrox_cfbX_init);
 		end = (sy+height-1)*vxres+sx+curr_ydstorg(minfo);
 		start = end+width;
 		dy += height-1;
-	पूर्ण
-	mga_fअगरo(7);
+	}
+	mga_fifo(7);
 	matrox_accel_restore_maccess(minfo);
 	mga_outl(M_AR0, end);
 	mga_outl(M_AR3, start);
@@ -288,33 +287,33 @@ EXPORT_SYMBOL(matrox_cfbX_init);
 	WaitTillIdle();
 
 	CRITEND
-पूर्ण
+}
 
-अटल व्योम matroxfb_cfb4_copyarea(काष्ठा fb_info* info, स्थिर काष्ठा fb_copyarea* area) अणु
-	काष्ठा matrox_fb_info *minfo = info2minfo(info);
+static void matroxfb_cfb4_copyarea(struct fb_info* info, const struct fb_copyarea* area) {
+	struct matrox_fb_info *minfo = info2minfo(info);
 
-	अगर ((area->sx | area->dx | area->width) & 1)
+	if ((area->sx | area->dx | area->width) & 1)
 		cfb_copyarea(info, area);
-	अन्यथा
-		matrox_accel_bmove_lin(minfo, minfo->fbcon.var.xres_भव >> 1, area->sy, area->sx >> 1, area->dy, area->dx >> 1, area->height, area->width >> 1);
-पूर्ण
+	else
+		matrox_accel_bmove_lin(minfo, minfo->fbcon.var.xres_virtual >> 1, area->sy, area->sx >> 1, area->dy, area->dx >> 1, area->height, area->width >> 1);
+}
 
-अटल व्योम matroxfb_copyarea(काष्ठा fb_info* info, स्थिर काष्ठा fb_copyarea* area) अणु
-	काष्ठा matrox_fb_info *minfo = info2minfo(info);
+static void matroxfb_copyarea(struct fb_info* info, const struct fb_copyarea* area) {
+	struct matrox_fb_info *minfo = info2minfo(info);
 
-	matrox_accel_bmove(minfo, minfo->fbcon.var.xres_भव, area->sy, area->sx, area->dy, area->dx, area->height, area->width);
-पूर्ण
+	matrox_accel_bmove(minfo, minfo->fbcon.var.xres_virtual, area->sy, area->sx, area->dy, area->dx, area->height, area->width);
+}
 
-अटल व्योम matroxfb_accel_clear(काष्ठा matrox_fb_info *minfo, u_पूर्णांक32_t color,
-				 पूर्णांक sy, पूर्णांक sx, पूर्णांक height, पूर्णांक width)
-अणु
+static void matroxfb_accel_clear(struct matrox_fb_info *minfo, u_int32_t color,
+				 int sy, int sx, int height, int width)
+{
 	CRITFLAGS
 
 	DBG(__func__)
 
 	CRITBEGIN
 
-	mga_fअगरo(7);
+	mga_fifo(7);
 	matrox_accel_restore_maccess(minfo);
 	mga_outl(M_DWGCTL, minfo->accel.m_dwg_rect | M_DWG_REPLACE);
 	mga_outl(M_FCOL, color);
@@ -323,199 +322,199 @@ EXPORT_SYMBOL(matrox_cfbX_init);
 	WaitTillIdle();
 
 	CRITEND
-पूर्ण
+}
 
-अटल व्योम matroxfb_fillrect(काष्ठा fb_info* info, स्थिर काष्ठा fb_fillrect* rect) अणु
-	काष्ठा matrox_fb_info *minfo = info2minfo(info);
+static void matroxfb_fillrect(struct fb_info* info, const struct fb_fillrect* rect) {
+	struct matrox_fb_info *minfo = info2minfo(info);
 
-	चयन (rect->rop) अणु
-		हाल ROP_COPY:
-			matroxfb_accel_clear(minfo, ((u_पूर्णांक32_t *)info->pseuकरो_palette)[rect->color], rect->dy, rect->dx, rect->height, rect->width);
-			अवरोध;
-	पूर्ण
-पूर्ण
+	switch (rect->rop) {
+		case ROP_COPY:
+			matroxfb_accel_clear(minfo, ((u_int32_t *)info->pseudo_palette)[rect->color], rect->dy, rect->dx, rect->height, rect->width);
+			break;
+	}
+}
 
-अटल व्योम matroxfb_cfb4_clear(काष्ठा matrox_fb_info *minfo, u_पूर्णांक32_t bgx,
-				पूर्णांक sy, पूर्णांक sx, पूर्णांक height, पूर्णांक width)
-अणु
-	पूर्णांक whattoकरो;
+static void matroxfb_cfb4_clear(struct matrox_fb_info *minfo, u_int32_t bgx,
+				int sy, int sx, int height, int width)
+{
+	int whattodo;
 	CRITFLAGS
 
 	DBG(__func__)
 
 	CRITBEGIN
 
-	whattoकरो = 0;
-	अगर (sx & 1) अणु
+	whattodo = 0;
+	if (sx & 1) {
 		sx ++;
-		अगर (!width) वापस;
+		if (!width) return;
 		width --;
-		whattoकरो = 1;
-	पूर्ण
-	अगर (width & 1) अणु
-		whattoकरो |= 2;
-	पूर्ण
+		whattodo = 1;
+	}
+	if (width & 1) {
+		whattodo |= 2;
+	}
 	width >>= 1;
 	sx >>= 1;
-	अगर (width) अणु
-		mga_fअगरo(7);
+	if (width) {
+		mga_fifo(7);
 		matrox_accel_restore_maccess(minfo);
 		mga_outl(M_DWGCTL, minfo->accel.m_dwg_rect | M_DWG_REPLACE2);
 		mga_outl(M_FCOL, bgx);
 		mga_outl(M_FXBNDRY, ((sx + width) << 16) | sx);
-		mga_outl(M_YDST, sy * minfo->fbcon.var.xres_भव >> 6);
+		mga_outl(M_YDST, sy * minfo->fbcon.var.xres_virtual >> 6);
 		mga_outl(M_LEN | M_EXEC, height);
 		WaitTillIdle();
-	पूर्ण
-	अगर (whattoकरो) अणु
-		u_पूर्णांक32_t step = minfo->fbcon.var.xres_भव >> 1;
+	}
+	if (whattodo) {
+		u_int32_t step = minfo->fbcon.var.xres_virtual >> 1;
 		vaddr_t vbase = minfo->video.vbase;
-		अगर (whattoकरो & 1) अणु
-			अचिन्हित पूर्णांक uaddr = sy * step + sx - 1;
-			u_पूर्णांक32_t loop;
-			u_पूर्णांक8_t bgx2 = bgx & 0xF0;
-			क्रम (loop = height; loop > 0; loop --) अणु
-				mga_ग_लिखोb(vbase, uaddr, (mga_पढ़ोb(vbase, uaddr) & 0x0F) | bgx2);
+		if (whattodo & 1) {
+			unsigned int uaddr = sy * step + sx - 1;
+			u_int32_t loop;
+			u_int8_t bgx2 = bgx & 0xF0;
+			for (loop = height; loop > 0; loop --) {
+				mga_writeb(vbase, uaddr, (mga_readb(vbase, uaddr) & 0x0F) | bgx2);
 				uaddr += step;
-			पूर्ण
-		पूर्ण
-		अगर (whattoकरो & 2) अणु
-			अचिन्हित पूर्णांक uaddr = sy * step + sx + width;
-			u_पूर्णांक32_t loop;
-			u_पूर्णांक8_t bgx2 = bgx & 0x0F;
-			क्रम (loop = height; loop > 0; loop --) अणु
-				mga_ग_लिखोb(vbase, uaddr, (mga_पढ़ोb(vbase, uaddr) & 0xF0) | bgx2);
+			}
+		}
+		if (whattodo & 2) {
+			unsigned int uaddr = sy * step + sx + width;
+			u_int32_t loop;
+			u_int8_t bgx2 = bgx & 0x0F;
+			for (loop = height; loop > 0; loop --) {
+				mga_writeb(vbase, uaddr, (mga_readb(vbase, uaddr) & 0xF0) | bgx2);
 				uaddr += step;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	CRITEND
-पूर्ण
+}
 
-अटल व्योम matroxfb_cfb4_fillrect(काष्ठा fb_info* info, स्थिर काष्ठा fb_fillrect* rect) अणु
-	काष्ठा matrox_fb_info *minfo = info2minfo(info);
+static void matroxfb_cfb4_fillrect(struct fb_info* info, const struct fb_fillrect* rect) {
+	struct matrox_fb_info *minfo = info2minfo(info);
 
-	चयन (rect->rop) अणु
-		हाल ROP_COPY:
-			matroxfb_cfb4_clear(minfo, ((u_पूर्णांक32_t *)info->pseuकरो_palette)[rect->color], rect->dy, rect->dx, rect->height, rect->width);
-			अवरोध;
-	पूर्ण
-पूर्ण
+	switch (rect->rop) {
+		case ROP_COPY:
+			matroxfb_cfb4_clear(minfo, ((u_int32_t *)info->pseudo_palette)[rect->color], rect->dy, rect->dx, rect->height, rect->width);
+			break;
+	}
+}
 
-अटल व्योम matroxfb_1bpp_imageblit(काष्ठा matrox_fb_info *minfo, u_पूर्णांक32_t fgx,
-				    u_पूर्णांक32_t bgx, स्थिर u_पूर्णांक8_t *अक्षरdata,
-				    पूर्णांक width, पूर्णांक height, पूर्णांक yy, पूर्णांक xx)
-अणु
-	u_पूर्णांक32_t step;
-	u_पूर्णांक32_t ydstlen;
-	u_पूर्णांक32_t xlen;
-	u_पूर्णांक32_t ar0;
-	u_पूर्णांक32_t अक्षरcell;
-	u_पूर्णांक32_t fxbndry;
+static void matroxfb_1bpp_imageblit(struct matrox_fb_info *minfo, u_int32_t fgx,
+				    u_int32_t bgx, const u_int8_t *chardata,
+				    int width, int height, int yy, int xx)
+{
+	u_int32_t step;
+	u_int32_t ydstlen;
+	u_int32_t xlen;
+	u_int32_t ar0;
+	u_int32_t charcell;
+	u_int32_t fxbndry;
 	vaddr_t mmio;
-	पूर्णांक easy;
+	int easy;
 	CRITFLAGS
 
 	DBG_HEAVY(__func__);
 
 	step = (width + 7) >> 3;
-	अक्षरcell = height * step;
-	xlen = (अक्षरcell + 3) & ~3;
+	charcell = height * step;
+	xlen = (charcell + 3) & ~3;
 	ydstlen = (yy << 16) | height;
-	अगर (width == step << 3) अणु
+	if (width == step << 3) {
 		ar0 = height * width - 1;
 		easy = 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		ar0 = width - 1;
 		easy = 0;
-	पूर्ण
+	}
 
 	CRITBEGIN
 
-	mga_fअगरo(5);
+	mga_fifo(5);
 	matrox_accel_restore_maccess(minfo);
-	अगर (easy)
+	if (easy)
 		mga_outl(M_DWGCTL, M_DWG_ILOAD | M_DWG_SGNZERO | M_DWG_SHIFTZERO | M_DWG_BMONOWF | M_DWG_LINEAR | M_DWG_REPLACE);
-	अन्यथा
+	else
 		mga_outl(M_DWGCTL, M_DWG_ILOAD | M_DWG_SGNZERO | M_DWG_SHIFTZERO | M_DWG_BMONOWF | M_DWG_REPLACE);
 	mga_outl(M_FCOL, fgx);
 	mga_outl(M_BCOL, bgx);
 	fxbndry = ((xx + width - 1) << 16) | xx;
 	mmio = minfo->mmio.vbase;
 
-	mga_fअगरo(8);
+	mga_fifo(8);
 	matrox_accel_restore_maccess(minfo);
-	mga_ग_लिखोl(mmio, M_FXBNDRY, fxbndry);
-	mga_ग_लिखोl(mmio, M_AR0, ar0);
-	mga_ग_लिखोl(mmio, M_AR3, 0);
-	अगर (easy) अणु
-		mga_ग_लिखोl(mmio, M_YDSTLEN | M_EXEC, ydstlen);
-		mga_स_नकल_toio(mmio, अक्षरdata, xlen);
-	पूर्ण अन्यथा अणु
-		mga_ग_लिखोl(mmio, M_AR5, 0);
-		mga_ग_लिखोl(mmio, M_YDSTLEN | M_EXEC, ydstlen);
-		अगर ((step & 3) == 0) अणु
+	mga_writel(mmio, M_FXBNDRY, fxbndry);
+	mga_writel(mmio, M_AR0, ar0);
+	mga_writel(mmio, M_AR3, 0);
+	if (easy) {
+		mga_writel(mmio, M_YDSTLEN | M_EXEC, ydstlen);
+		mga_memcpy_toio(mmio, chardata, xlen);
+	} else {
+		mga_writel(mmio, M_AR5, 0);
+		mga_writel(mmio, M_YDSTLEN | M_EXEC, ydstlen);
+		if ((step & 3) == 0) {
 			/* Great. Source has 32bit aligned lines, so we can feed them
 			   directly to the accelerator. */
-			mga_स_नकल_toio(mmio, अक्षरdata, अक्षरcell);
-		पूर्ण अन्यथा अगर (step == 1) अणु
-			/* Special हाल क्रम 1..8bit widths */
-			जबतक (height--) अणु
-#अगर defined(__BIG_ENDIAN)
-				fb_ग_लिखोl((*अक्षरdata) << 24, mmio.vaddr);
-#अन्यथा
-				fb_ग_लिखोl(*अक्षरdata, mmio.vaddr);
-#पूर्ण_अगर
-				अक्षरdata++;
-			पूर्ण
-		पूर्ण अन्यथा अगर (step == 2) अणु
-			/* Special हाल क्रम 9..15bit widths */
-			जबतक (height--) अणु
-#अगर defined(__BIG_ENDIAN)
-				fb_ग_लिखोl((*(u_पूर्णांक16_t*)अक्षरdata) << 16, mmio.vaddr);
-#अन्यथा
-				fb_ग_लिखोl(*(u_पूर्णांक16_t*)अक्षरdata, mmio.vaddr);
-#पूर्ण_अगर
-				अक्षरdata += 2;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			mga_memcpy_toio(mmio, chardata, charcell);
+		} else if (step == 1) {
+			/* Special case for 1..8bit widths */
+			while (height--) {
+#if defined(__BIG_ENDIAN)
+				fb_writel((*chardata) << 24, mmio.vaddr);
+#else
+				fb_writel(*chardata, mmio.vaddr);
+#endif
+				chardata++;
+			}
+		} else if (step == 2) {
+			/* Special case for 9..15bit widths */
+			while (height--) {
+#if defined(__BIG_ENDIAN)
+				fb_writel((*(u_int16_t*)chardata) << 16, mmio.vaddr);
+#else
+				fb_writel(*(u_int16_t*)chardata, mmio.vaddr);
+#endif
+				chardata += 2;
+			}
+		} else {
 			/* Tell... well, why bother... */
-			जबतक (height--) अणु
-				माप_प्रकार i;
+			while (height--) {
+				size_t i;
 				
-				क्रम (i = 0; i < step; i += 4) अणु
-					/* Hope that there are at least three पढ़ोable bytes beyond the end of biपंचांगap */
-					fb_ग_लिखोl(get_unaligned((u_पूर्णांक32_t*)(अक्षरdata + i)),mmio.vaddr);
-				पूर्ण
-				अक्षरdata += step;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				for (i = 0; i < step; i += 4) {
+					/* Hope that there are at least three readable bytes beyond the end of bitmap */
+					fb_writel(get_unaligned((u_int32_t*)(chardata + i)),mmio.vaddr);
+				}
+				chardata += step;
+			}
+		}
+	}
 	WaitTillIdle();
 	CRITEND
-पूर्ण
+}
 
 
-अटल व्योम matroxfb_imageblit(काष्ठा fb_info* info, स्थिर काष्ठा fb_image* image) अणु
-	काष्ठा matrox_fb_info *minfo = info2minfo(info);
+static void matroxfb_imageblit(struct fb_info* info, const struct fb_image* image) {
+	struct matrox_fb_info *minfo = info2minfo(info);
 
 	DBG_HEAVY(__func__);
 
-	अगर (image->depth == 1) अणु
-		u_पूर्णांक32_t fgx, bgx;
+	if (image->depth == 1) {
+		u_int32_t fgx, bgx;
 
-		fgx = ((u_पूर्णांक32_t*)info->pseuकरो_palette)[image->fg_color];
-		bgx = ((u_पूर्णांक32_t*)info->pseuकरो_palette)[image->bg_color];
+		fgx = ((u_int32_t*)info->pseudo_palette)[image->fg_color];
+		bgx = ((u_int32_t*)info->pseudo_palette)[image->bg_color];
 		matroxfb_1bpp_imageblit(minfo, fgx, bgx, image->data, image->width, image->height, image->dy, image->dx);
-	पूर्ण अन्यथा अणु
-		/* Danger! image->depth is useless: logo paपूर्णांकing code always
+	} else {
+		/* Danger! image->depth is useless: logo painting code always
 		   passes framebuffer color depth here, although logo data are
-		   always 8bpp and info->pseuकरो_palette is changed to contain
-		   logo palette to be used (but only क्रम true/direct-color... sic...).
-		   So करो it completely in software... */
+		   always 8bpp and info->pseudo_palette is changed to contain
+		   logo palette to be used (but only for true/direct-color... sic...).
+		   So do it completely in software... */
 		cfb_imageblit(info, image);
-	पूर्ण
-पूर्ण
+	}
+}
 
 MODULE_LICENSE("GPL");

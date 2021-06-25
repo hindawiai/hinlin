@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * linux/arch/arm/mach-pxa/mfp.c
  *
@@ -11,47 +10,47 @@
  *             initial version
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/syscore_ops.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/syscore_ops.h>
 
-#समावेश <mach/hardware.h>
-#समावेश "mfp-pxa3xx.h"
-#समावेश <mach/pxa3xx-regs.h>
+#include <mach/hardware.h>
+#include "mfp-pxa3xx.h"
+#include <mach/pxa3xx-regs.h>
 
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 /*
- * Configure the MFPs appropriately क्रम suspend/resume.
- * FIXME: this should probably depend on which प्रणाली state we're
- * entering - क्रम instance, we might not want to place MFP pins in
- * a pull-करोwn mode अगर they're an active low chip select, and we're
+ * Configure the MFPs appropriately for suspend/resume.
+ * FIXME: this should probably depend on which system state we're
+ * entering - for instance, we might not want to place MFP pins in
+ * a pull-down mode if they're an active low chip select, and we're
  * just entering standby.
  */
-अटल पूर्णांक pxa3xx_mfp_suspend(व्योम)
-अणु
+static int pxa3xx_mfp_suspend(void)
+{
 	mfp_config_lpm();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम pxa3xx_mfp_resume(व्योम)
-अणु
+static void pxa3xx_mfp_resume(void)
+{
 	mfp_config_run();
 
 	/* clear RDH bit when MFP settings are restored
 	 *
-	 * NOTE: the last 3 bits DxS are ग_लिखो-1-to-clear so carefully
-	 * preserve them here in हाल they will be referenced later
+	 * NOTE: the last 3 bits DxS are write-1-to-clear so carefully
+	 * preserve them here in case they will be referenced later
 	 */
 	ASCR &= ~(ASCR_RDH | ASCR_D1S | ASCR_D2S | ASCR_D3S);
-पूर्ण
-#अन्यथा
-#घोषणा pxa3xx_mfp_suspend	शून्य
-#घोषणा pxa3xx_mfp_resume	शून्य
-#पूर्ण_अगर
+}
+#else
+#define pxa3xx_mfp_suspend	NULL
+#define pxa3xx_mfp_resume	NULL
+#endif
 
-काष्ठा syscore_ops pxa3xx_mfp_syscore_ops = अणु
+struct syscore_ops pxa3xx_mfp_syscore_ops = {
 	.suspend	= pxa3xx_mfp_suspend,
 	.resume		= pxa3xx_mfp_resume,
-पूर्ण;
+};

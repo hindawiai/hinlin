@@ -1,326 +1,325 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Architecture specअगरic OF callbacks.
+ * Architecture specific OF callbacks.
  */
-#समावेश <linux/export.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/list.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_fdt.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/libfdt.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/of_pci.h>
-#समावेश <linux/initrd.h>
+#include <linux/export.h>
+#include <linux/io.h>
+#include <linux/interrupt.h>
+#include <linux/list.h>
+#include <linux/of.h>
+#include <linux/of_fdt.h>
+#include <linux/of_address.h>
+#include <linux/of_platform.h>
+#include <linux/of_irq.h>
+#include <linux/libfdt.h>
+#include <linux/slab.h>
+#include <linux/pci.h>
+#include <linux/of_pci.h>
+#include <linux/initrd.h>
 
-#समावेश <यंत्र/irqकरोमुख्य.h>
-#समावेश <यंत्र/hpet.h>
-#समावेश <यंत्र/apic.h>
-#समावेश <यंत्र/io_apic.h>
-#समावेश <यंत्र/pci_x86.h>
-#समावेश <यंत्र/setup.h>
-#समावेश <यंत्र/i8259.h>
-#समावेश <यंत्र/prom.h>
+#include <asm/irqdomain.h>
+#include <asm/hpet.h>
+#include <asm/apic.h>
+#include <asm/io_apic.h>
+#include <asm/pci_x86.h>
+#include <asm/setup.h>
+#include <asm/i8259.h>
+#include <asm/prom.h>
 
 __initdata u64 initial_dtb;
-अक्षर __initdata cmd_line[COMMAND_LINE_SIZE];
+char __initdata cmd_line[COMMAND_LINE_SIZE];
 
-पूर्णांक __initdata of_ioapic;
+int __initdata of_ioapic;
 
-व्योम __init early_init_dt_scan_chosen_arch(अचिन्हित दीर्घ node)
-अणु
+void __init early_init_dt_scan_chosen_arch(unsigned long node)
+{
 	BUG();
-पूर्ण
+}
 
-व्योम __init early_init_dt_add_memory_arch(u64 base, u64 size)
-अणु
+void __init early_init_dt_add_memory_arch(u64 base, u64 size)
+{
 	BUG();
-पूर्ण
+}
 
-व्योम __init add_dtb(u64 data)
-अणु
-	initial_dtb = data + दुरत्व(काष्ठा setup_data, data);
-पूर्ण
+void __init add_dtb(u64 data)
+{
+	initial_dtb = data + offsetof(struct setup_data, data);
+}
 
 /*
  * CE4100 ids. Will be moved to machine_device_initcall() once we have it.
  */
-अटल काष्ठा of_device_id __initdata ce4100_ids[] = अणु
-	अणु .compatible = "intel,ce4100-cp", पूर्ण,
-	अणु .compatible = "isa", पूर्ण,
-	अणु .compatible = "pci", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static struct of_device_id __initdata ce4100_ids[] = {
+	{ .compatible = "intel,ce4100-cp", },
+	{ .compatible = "isa", },
+	{ .compatible = "pci", },
+	{},
+};
 
-अटल पूर्णांक __init add_bus_probe(व्योम)
-अणु
-	अगर (!of_have_populated_dt())
-		वापस 0;
+static int __init add_bus_probe(void)
+{
+	if (!of_have_populated_dt())
+		return 0;
 
-	वापस of_platक्रमm_bus_probe(शून्य, ce4100_ids, शून्य);
-पूर्ण
+	return of_platform_bus_probe(NULL, ce4100_ids, NULL);
+}
 device_initcall(add_bus_probe);
 
-#अगर_घोषित CONFIG_PCI
-काष्ठा device_node *pcibios_get_phb_of_node(काष्ठा pci_bus *bus)
-अणु
-	काष्ठा device_node *np;
+#ifdef CONFIG_PCI
+struct device_node *pcibios_get_phb_of_node(struct pci_bus *bus)
+{
+	struct device_node *np;
 
-	क्रम_each_node_by_type(np, "pci") अणु
-		स्थिर व्योम *prop;
-		अचिन्हित पूर्णांक bus_min;
+	for_each_node_by_type(np, "pci") {
+		const void *prop;
+		unsigned int bus_min;
 
-		prop = of_get_property(np, "bus-range", शून्य);
-		अगर (!prop)
-			जारी;
+		prop = of_get_property(np, "bus-range", NULL);
+		if (!prop)
+			continue;
 		bus_min = be32_to_cpup(prop);
-		अगर (bus->number == bus_min)
-			वापस np;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		if (bus->number == bus_min)
+			return np;
+	}
+	return NULL;
+}
 
-अटल पूर्णांक x86_of_pci_irq_enable(काष्ठा pci_dev *dev)
-अणु
+static int x86_of_pci_irq_enable(struct pci_dev *dev)
+{
 	u32 virq;
-	पूर्णांक ret;
+	int ret;
 	u8 pin;
 
-	ret = pci_पढ़ो_config_byte(dev, PCI_INTERRUPT_PIN, &pin);
-	अगर (ret)
-		वापस ret;
-	अगर (!pin)
-		वापस 0;
+	ret = pci_read_config_byte(dev, PCI_INTERRUPT_PIN, &pin);
+	if (ret)
+		return ret;
+	if (!pin)
+		return 0;
 
 	virq = of_irq_parse_and_map_pci(dev, 0, 0);
-	अगर (virq == 0)
-		वापस -EINVAL;
+	if (virq == 0)
+		return -EINVAL;
 	dev->irq = virq;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम x86_of_pci_irq_disable(काष्ठा pci_dev *dev)
-अणु
-पूर्ण
+static void x86_of_pci_irq_disable(struct pci_dev *dev)
+{
+}
 
-व्योम x86_of_pci_init(व्योम)
-अणु
+void x86_of_pci_init(void)
+{
 	pcibios_enable_irq = x86_of_pci_irq_enable;
 	pcibios_disable_irq = x86_of_pci_irq_disable;
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-अटल व्योम __init dtb_setup_hpet(व्योम)
-अणु
-#अगर_घोषित CONFIG_HPET_TIMER
-	काष्ठा device_node *dn;
-	काष्ठा resource r;
-	पूर्णांक ret;
+static void __init dtb_setup_hpet(void)
+{
+#ifdef CONFIG_HPET_TIMER
+	struct device_node *dn;
+	struct resource r;
+	int ret;
 
-	dn = of_find_compatible_node(शून्य, शून्य, "intel,ce4100-hpet");
-	अगर (!dn)
-		वापस;
+	dn = of_find_compatible_node(NULL, NULL, "intel,ce4100-hpet");
+	if (!dn)
+		return;
 	ret = of_address_to_resource(dn, 0, &r);
-	अगर (ret) अणु
+	if (ret) {
 		WARN_ON(1);
-		वापस;
-	पूर्ण
+		return;
+	}
 	hpet_address = r.start;
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-#अगर_घोषित CONFIG_X86_LOCAL_APIC
+#ifdef CONFIG_X86_LOCAL_APIC
 
-अटल व्योम __init dtb_cpu_setup(व्योम)
-अणु
-	काष्ठा device_node *dn;
+static void __init dtb_cpu_setup(void)
+{
+	struct device_node *dn;
 	u32 apic_id, version;
-	पूर्णांक ret;
+	int ret;
 
-	version = GET_APIC_VERSION(apic_पढ़ो(APIC_LVR));
-	क्रम_each_of_cpu_node(dn) अणु
-		ret = of_property_पढ़ो_u32(dn, "reg", &apic_id);
-		अगर (ret < 0) अणु
+	version = GET_APIC_VERSION(apic_read(APIC_LVR));
+	for_each_of_cpu_node(dn) {
+		ret = of_property_read_u32(dn, "reg", &apic_id);
+		if (ret < 0) {
 			pr_warn("%pOF: missing local APIC ID\n", dn);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		generic_processor_info(apic_id, version);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम __init dtb_lapic_setup(व्योम)
-अणु
-	काष्ठा device_node *dn;
-	काष्ठा resource r;
-	अचिन्हित दीर्घ lapic_addr = APIC_DEFAULT_PHYS_BASE;
-	पूर्णांक ret;
+static void __init dtb_lapic_setup(void)
+{
+	struct device_node *dn;
+	struct resource r;
+	unsigned long lapic_addr = APIC_DEFAULT_PHYS_BASE;
+	int ret;
 
-	dn = of_find_compatible_node(शून्य, शून्य, "intel,ce4100-lapic");
-	अगर (dn) अणु
+	dn = of_find_compatible_node(NULL, NULL, "intel,ce4100-lapic");
+	if (dn) {
 		ret = of_address_to_resource(dn, 0, &r);
-		अगर (WARN_ON(ret))
-			वापस;
+		if (WARN_ON(ret))
+			return;
 		lapic_addr = r.start;
-	पूर्ण
+	}
 
 	/* Did the boot loader setup the local APIC ? */
-	अगर (!boot_cpu_has(X86_FEATURE_APIC)) अणु
-		अगर (apic_क्रमce_enable(lapic_addr))
-			वापस;
-	पूर्ण
+	if (!boot_cpu_has(X86_FEATURE_APIC)) {
+		if (apic_force_enable(lapic_addr))
+			return;
+	}
 	smp_found_config = 1;
 	pic_mode = 1;
-	रेजिस्टर_lapic_address(lapic_addr);
-पूर्ण
+	register_lapic_address(lapic_addr);
+}
 
-#पूर्ण_अगर /* CONFIG_X86_LOCAL_APIC */
+#endif /* CONFIG_X86_LOCAL_APIC */
 
-#अगर_घोषित CONFIG_X86_IO_APIC
-अटल अचिन्हित पूर्णांक ioapic_id;
+#ifdef CONFIG_X86_IO_APIC
+static unsigned int ioapic_id;
 
-काष्ठा of_ioapic_type अणु
+struct of_ioapic_type {
 	u32 out_type;
 	u32 is_level;
 	u32 active_low;
-पूर्ण;
+};
 
-अटल काष्ठा of_ioapic_type of_ioapic_type[] =
-अणु
-	अणु
+static struct of_ioapic_type of_ioapic_type[] =
+{
+	{
 		.out_type	= IRQ_TYPE_EDGE_FALLING,
 		.is_level	= 0,
 		.active_low	= 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.out_type	= IRQ_TYPE_LEVEL_HIGH,
 		.is_level	= 1,
 		.active_low	= 0,
-	पूर्ण,
-	अणु
+	},
+	{
 		.out_type	= IRQ_TYPE_LEVEL_LOW,
 		.is_level	= 1,
 		.active_low	= 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.out_type	= IRQ_TYPE_EDGE_RISING,
 		.is_level	= 0,
 		.active_low	= 0,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक dt_irqकरोमुख्य_alloc(काष्ठा irq_करोमुख्य *करोमुख्य, अचिन्हित पूर्णांक virq,
-			      अचिन्हित पूर्णांक nr_irqs, व्योम *arg)
-अणु
-	काष्ठा irq_fwspec *fwspec = (काष्ठा irq_fwspec *)arg;
-	काष्ठा of_ioapic_type *it;
-	काष्ठा irq_alloc_info पंचांगp;
-	पूर्णांक type_index;
+static int dt_irqdomain_alloc(struct irq_domain *domain, unsigned int virq,
+			      unsigned int nr_irqs, void *arg)
+{
+	struct irq_fwspec *fwspec = (struct irq_fwspec *)arg;
+	struct of_ioapic_type *it;
+	struct irq_alloc_info tmp;
+	int type_index;
 
-	अगर (WARN_ON(fwspec->param_count < 2))
-		वापस -EINVAL;
+	if (WARN_ON(fwspec->param_count < 2))
+		return -EINVAL;
 
 	type_index = fwspec->param[1];
-	अगर (type_index >= ARRAY_SIZE(of_ioapic_type))
-		वापस -EINVAL;
+	if (type_index >= ARRAY_SIZE(of_ioapic_type))
+		return -EINVAL;
 
 	it = &of_ioapic_type[type_index];
-	ioapic_set_alloc_attr(&पंचांगp, NUMA_NO_NODE, it->is_level, it->active_low);
-	पंचांगp.devid = mpc_ioapic_id(mp_irqकरोमुख्य_ioapic_idx(करोमुख्य));
-	पंचांगp.ioapic.pin = fwspec->param[0];
+	ioapic_set_alloc_attr(&tmp, NUMA_NO_NODE, it->is_level, it->active_low);
+	tmp.devid = mpc_ioapic_id(mp_irqdomain_ioapic_idx(domain));
+	tmp.ioapic.pin = fwspec->param[0];
 
-	वापस mp_irqकरोमुख्य_alloc(करोमुख्य, virq, nr_irqs, &पंचांगp);
-पूर्ण
+	return mp_irqdomain_alloc(domain, virq, nr_irqs, &tmp);
+}
 
-अटल स्थिर काष्ठा irq_करोमुख्य_ops ioapic_irq_करोमुख्य_ops = अणु
-	.alloc		= dt_irqकरोमुख्य_alloc,
-	.मुक्त		= mp_irqकरोमुख्य_मुक्त,
-	.activate	= mp_irqकरोमुख्य_activate,
-	.deactivate	= mp_irqकरोमुख्य_deactivate,
-पूर्ण;
+static const struct irq_domain_ops ioapic_irq_domain_ops = {
+	.alloc		= dt_irqdomain_alloc,
+	.free		= mp_irqdomain_free,
+	.activate	= mp_irqdomain_activate,
+	.deactivate	= mp_irqdomain_deactivate,
+};
 
-अटल व्योम __init dtb_add_ioapic(काष्ठा device_node *dn)
-अणु
-	काष्ठा resource r;
-	पूर्णांक ret;
-	काष्ठा ioapic_करोमुख्य_cfg cfg = अणु
+static void __init dtb_add_ioapic(struct device_node *dn)
+{
+	struct resource r;
+	int ret;
+	struct ioapic_domain_cfg cfg = {
 		.type = IOAPIC_DOMAIN_DYNAMIC,
-		.ops = &ioapic_irq_करोमुख्य_ops,
+		.ops = &ioapic_irq_domain_ops,
 		.dev = dn,
-	पूर्ण;
+	};
 
 	ret = of_address_to_resource(dn, 0, &r);
-	अगर (ret) अणु
-		prपूर्णांकk(KERN_ERR "Can't obtain address from device node %pOF.\n", dn);
-		वापस;
-	पूर्ण
-	mp_रेजिस्टर_ioapic(++ioapic_id, r.start, gsi_top, &cfg);
-पूर्ण
+	if (ret) {
+		printk(KERN_ERR "Can't obtain address from device node %pOF.\n", dn);
+		return;
+	}
+	mp_register_ioapic(++ioapic_id, r.start, gsi_top, &cfg);
+}
 
-अटल व्योम __init dtb_ioapic_setup(व्योम)
-अणु
-	काष्ठा device_node *dn;
+static void __init dtb_ioapic_setup(void)
+{
+	struct device_node *dn;
 
-	क्रम_each_compatible_node(dn, शून्य, "intel,ce4100-ioapic")
+	for_each_compatible_node(dn, NULL, "intel,ce4100-ioapic")
 		dtb_add_ioapic(dn);
 
-	अगर (nr_ioapics) अणु
+	if (nr_ioapics) {
 		of_ioapic = 1;
-		वापस;
-	पूर्ण
-	prपूर्णांकk(KERN_ERR "Error: No information about IO-APIC in OF.\n");
-पूर्ण
-#अन्यथा
-अटल व्योम __init dtb_ioapic_setup(व्योम) अणुपूर्ण
-#पूर्ण_अगर
+		return;
+	}
+	printk(KERN_ERR "Error: No information about IO-APIC in OF.\n");
+}
+#else
+static void __init dtb_ioapic_setup(void) {}
+#endif
 
-अटल व्योम __init dtb_apic_setup(व्योम)
-अणु
-#अगर_घोषित CONFIG_X86_LOCAL_APIC
+static void __init dtb_apic_setup(void)
+{
+#ifdef CONFIG_X86_LOCAL_APIC
 	dtb_lapic_setup();
 	dtb_cpu_setup();
-#पूर्ण_अगर
+#endif
 	dtb_ioapic_setup();
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_OF_EARLY_FLATTREE
-अटल व्योम __init x86_flattree_get_config(व्योम)
-अणु
+#ifdef CONFIG_OF_EARLY_FLATTREE
+static void __init x86_flattree_get_config(void)
+{
 	u32 size, map_len;
-	व्योम *dt;
+	void *dt;
 
-	अगर (!initial_dtb)
-		वापस;
+	if (!initial_dtb)
+		return;
 
 	map_len = max(PAGE_SIZE - (initial_dtb & ~PAGE_MASK), (u64)128);
 
 	dt = early_memremap(initial_dtb, map_len);
 	size = fdt_totalsize(dt);
-	अगर (map_len < size) अणु
+	if (map_len < size) {
 		early_memunmap(dt, map_len);
 		dt = early_memremap(initial_dtb, size);
 		map_len = size;
-	पूर्ण
+	}
 
-	early_init_dt_verअगरy(dt);
+	early_init_dt_verify(dt);
 	unflatten_and_copy_device_tree();
 	early_memunmap(dt, map_len);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम x86_flattree_get_config(व्योम) अणु पूर्ण
-#पूर्ण_अगर
+}
+#else
+static inline void x86_flattree_get_config(void) { }
+#endif
 
-व्योम __init x86_dtb_init(व्योम)
-अणु
+void __init x86_dtb_init(void)
+{
 	x86_flattree_get_config();
 
-	अगर (!of_have_populated_dt())
-		वापस;
+	if (!of_have_populated_dt())
+		return;
 
 	dtb_setup_hpet();
 	dtb_apic_setup();
-पूर्ण
+}

@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,14 +20,14 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#समावेश "amdgpu.h"
-#समावेश "soc15.h"
+#include "amdgpu.h"
+#include "soc15.h"
 
-#समावेश "soc15_common.h"
-#समावेश "soc15_hw_ip.h"
+#include "soc15_common.h"
+#include "soc15_hw_ip.h"
 
-पूर्णांक emu_soc_asic_init(काष्ठा amdgpu_device *adev)
-अणु
-	वापस 0;
-पूर्ण
+int emu_soc_asic_init(struct amdgpu_device *adev)
+{
+	return 0;
+}
 

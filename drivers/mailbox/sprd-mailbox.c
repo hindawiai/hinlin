@@ -1,314 +1,313 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Spपढ़ोtrum mailbox driver
+ * Spreadtrum mailbox driver
  *
- * Copyright (c) 2020 Spपढ़ोtrum Communications Inc.
+ * Copyright (c) 2020 Spreadtrum Communications Inc.
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/mailbox_controller.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/clk.h>
+#include <linux/delay.h>
+#include <linux/err.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/mailbox_controller.h>
+#include <linux/module.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
+#include <linux/clk.h>
 
-#घोषणा SPRD_MBOX_ID		0x0
-#घोषणा SPRD_MBOX_MSG_LOW	0x4
-#घोषणा SPRD_MBOX_MSG_HIGH	0x8
-#घोषणा SPRD_MBOX_TRIGGER	0xc
-#घोषणा SPRD_MBOX_FIFO_RST	0x10
-#घोषणा SPRD_MBOX_FIFO_STS	0x14
-#घोषणा SPRD_MBOX_IRQ_STS	0x18
-#घोषणा SPRD_MBOX_IRQ_MSK	0x1c
-#घोषणा SPRD_MBOX_LOCK		0x20
-#घोषणा SPRD_MBOX_FIFO_DEPTH	0x24
+#define SPRD_MBOX_ID		0x0
+#define SPRD_MBOX_MSG_LOW	0x4
+#define SPRD_MBOX_MSG_HIGH	0x8
+#define SPRD_MBOX_TRIGGER	0xc
+#define SPRD_MBOX_FIFO_RST	0x10
+#define SPRD_MBOX_FIFO_STS	0x14
+#define SPRD_MBOX_IRQ_STS	0x18
+#define SPRD_MBOX_IRQ_MSK	0x1c
+#define SPRD_MBOX_LOCK		0x20
+#define SPRD_MBOX_FIFO_DEPTH	0x24
 
-/* Bit and mask definition क्रम inbox's SPRD_MBOX_FIFO_STS रेजिस्टर */
-#घोषणा SPRD_INBOX_FIFO_DELIVER_MASK		GENMASK(23, 16)
-#घोषणा SPRD_INBOX_FIFO_OVERLOW_MASK		GENMASK(15, 8)
-#घोषणा SPRD_INBOX_FIFO_DELIVER_SHIFT		16
-#घोषणा SPRD_INBOX_FIFO_BUSY_MASK		GENMASK(7, 0)
+/* Bit and mask definition for inbox's SPRD_MBOX_FIFO_STS register */
+#define SPRD_INBOX_FIFO_DELIVER_MASK		GENMASK(23, 16)
+#define SPRD_INBOX_FIFO_OVERLOW_MASK		GENMASK(15, 8)
+#define SPRD_INBOX_FIFO_DELIVER_SHIFT		16
+#define SPRD_INBOX_FIFO_BUSY_MASK		GENMASK(7, 0)
 
-/* Bit and mask definition क्रम SPRD_MBOX_IRQ_STS रेजिस्टर */
-#घोषणा SPRD_MBOX_IRQ_CLR			BIT(0)
+/* Bit and mask definition for SPRD_MBOX_IRQ_STS register */
+#define SPRD_MBOX_IRQ_CLR			BIT(0)
 
-/* Bit and mask definition क्रम outbox's SPRD_MBOX_FIFO_STS रेजिस्टर */
-#घोषणा SPRD_OUTBOX_FIFO_FULL			BIT(2)
-#घोषणा SPRD_OUTBOX_FIFO_WR_SHIFT		16
-#घोषणा SPRD_OUTBOX_FIFO_RD_SHIFT		24
-#घोषणा SPRD_OUTBOX_FIFO_POS_MASK		GENMASK(7, 0)
+/* Bit and mask definition for outbox's SPRD_MBOX_FIFO_STS register */
+#define SPRD_OUTBOX_FIFO_FULL			BIT(2)
+#define SPRD_OUTBOX_FIFO_WR_SHIFT		16
+#define SPRD_OUTBOX_FIFO_RD_SHIFT		24
+#define SPRD_OUTBOX_FIFO_POS_MASK		GENMASK(7, 0)
 
-/* Bit and mask definition क्रम inbox's SPRD_MBOX_IRQ_MSK रेजिस्टर */
-#घोषणा SPRD_INBOX_FIFO_BLOCK_IRQ		BIT(0)
-#घोषणा SPRD_INBOX_FIFO_OVERFLOW_IRQ		BIT(1)
-#घोषणा SPRD_INBOX_FIFO_DELIVER_IRQ		BIT(2)
-#घोषणा SPRD_INBOX_FIFO_IRQ_MASK		GENMASK(2, 0)
+/* Bit and mask definition for inbox's SPRD_MBOX_IRQ_MSK register */
+#define SPRD_INBOX_FIFO_BLOCK_IRQ		BIT(0)
+#define SPRD_INBOX_FIFO_OVERFLOW_IRQ		BIT(1)
+#define SPRD_INBOX_FIFO_DELIVER_IRQ		BIT(2)
+#define SPRD_INBOX_FIFO_IRQ_MASK		GENMASK(2, 0)
 
-/* Bit and mask definition क्रम outbox's SPRD_MBOX_IRQ_MSK रेजिस्टर */
-#घोषणा SPRD_OUTBOX_FIFO_NOT_EMPTY_IRQ		BIT(0)
-#घोषणा SPRD_OUTBOX_FIFO_IRQ_MASK		GENMASK(4, 0)
+/* Bit and mask definition for outbox's SPRD_MBOX_IRQ_MSK register */
+#define SPRD_OUTBOX_FIFO_NOT_EMPTY_IRQ		BIT(0)
+#define SPRD_OUTBOX_FIFO_IRQ_MASK		GENMASK(4, 0)
 
-#घोषणा SPRD_OUTBOX_BASE_SPAN			0x1000
-#घोषणा SPRD_MBOX_CHAN_MAX			8
-#घोषणा SPRD_SUPP_INBOX_ID_SC9863A		7
+#define SPRD_OUTBOX_BASE_SPAN			0x1000
+#define SPRD_MBOX_CHAN_MAX			8
+#define SPRD_SUPP_INBOX_ID_SC9863A		7
 
-काष्ठा sprd_mbox_priv अणु
-	काष्ठा mbox_controller	mbox;
-	काष्ठा device		*dev;
-	व्योम __iomem		*inbox_base;
-	व्योम __iomem		*outbox_base;
-	/*  Base रेजिस्टर address क्रम supplementary outbox */
-	व्योम __iomem		*supp_base;
-	काष्ठा clk		*clk;
-	u32			outbox_fअगरo_depth;
+struct sprd_mbox_priv {
+	struct mbox_controller	mbox;
+	struct device		*dev;
+	void __iomem		*inbox_base;
+	void __iomem		*outbox_base;
+	/*  Base register address for supplementary outbox */
+	void __iomem		*supp_base;
+	struct clk		*clk;
+	u32			outbox_fifo_depth;
 
-	काष्ठा mutex		lock;
+	struct mutex		lock;
 	u32			refcnt;
-	काष्ठा mbox_chan	chan[SPRD_MBOX_CHAN_MAX];
-पूर्ण;
+	struct mbox_chan	chan[SPRD_MBOX_CHAN_MAX];
+};
 
-अटल काष्ठा sprd_mbox_priv *to_sprd_mbox_priv(काष्ठा mbox_controller *mbox)
-अणु
-	वापस container_of(mbox, काष्ठा sprd_mbox_priv, mbox);
-पूर्ण
+static struct sprd_mbox_priv *to_sprd_mbox_priv(struct mbox_controller *mbox)
+{
+	return container_of(mbox, struct sprd_mbox_priv, mbox);
+}
 
-अटल u32 sprd_mbox_get_fअगरo_len(काष्ठा sprd_mbox_priv *priv, u32 fअगरo_sts)
-अणु
-	u32 wr_pos = (fअगरo_sts >> SPRD_OUTBOX_FIFO_WR_SHIFT) &
+static u32 sprd_mbox_get_fifo_len(struct sprd_mbox_priv *priv, u32 fifo_sts)
+{
+	u32 wr_pos = (fifo_sts >> SPRD_OUTBOX_FIFO_WR_SHIFT) &
 		SPRD_OUTBOX_FIFO_POS_MASK;
-	u32 rd_pos = (fअगरo_sts >> SPRD_OUTBOX_FIFO_RD_SHIFT) &
+	u32 rd_pos = (fifo_sts >> SPRD_OUTBOX_FIFO_RD_SHIFT) &
 		SPRD_OUTBOX_FIFO_POS_MASK;
-	u32 fअगरo_len;
+	u32 fifo_len;
 
 	/*
-	 * If the पढ़ो poपूर्णांकer is equal with ग_लिखो poपूर्णांकer, which means the fअगरo
+	 * If the read pointer is equal with write pointer, which means the fifo
 	 * is full or empty.
 	 */
-	अगर (wr_pos == rd_pos) अणु
-		अगर (fअगरo_sts & SPRD_OUTBOX_FIFO_FULL)
-			fअगरo_len = priv->outbox_fअगरo_depth;
-		अन्यथा
-			fअगरo_len = 0;
-	पूर्ण अन्यथा अगर (wr_pos > rd_pos) अणु
-		fअगरo_len = wr_pos - rd_pos;
-	पूर्ण अन्यथा अणु
-		fअगरo_len = priv->outbox_fअगरo_depth - rd_pos + wr_pos;
-	पूर्ण
+	if (wr_pos == rd_pos) {
+		if (fifo_sts & SPRD_OUTBOX_FIFO_FULL)
+			fifo_len = priv->outbox_fifo_depth;
+		else
+			fifo_len = 0;
+	} else if (wr_pos > rd_pos) {
+		fifo_len = wr_pos - rd_pos;
+	} else {
+		fifo_len = priv->outbox_fifo_depth - rd_pos + wr_pos;
+	}
 
-	वापस fअगरo_len;
-पूर्ण
+	return fifo_len;
+}
 
-अटल irqवापस_t करो_outbox_isr(व्योम __iomem *base, काष्ठा sprd_mbox_priv *priv)
-अणु
-	काष्ठा mbox_chan *chan;
-	u32 fअगरo_sts, fअगरo_len, msg[2];
-	पूर्णांक i, id;
+static irqreturn_t do_outbox_isr(void __iomem *base, struct sprd_mbox_priv *priv)
+{
+	struct mbox_chan *chan;
+	u32 fifo_sts, fifo_len, msg[2];
+	int i, id;
 
-	fअगरo_sts = पढ़ोl(base + SPRD_MBOX_FIFO_STS);
+	fifo_sts = readl(base + SPRD_MBOX_FIFO_STS);
 
-	fअगरo_len = sprd_mbox_get_fअगरo_len(priv, fअगरo_sts);
-	अगर (!fअगरo_len) अणु
+	fifo_len = sprd_mbox_get_fifo_len(priv, fifo_sts);
+	if (!fifo_len) {
 		dev_warn_ratelimited(priv->dev, "spurious outbox interrupt\n");
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 
-	क्रम (i = 0; i < fअगरo_len; i++) अणु
-		msg[0] = पढ़ोl(base + SPRD_MBOX_MSG_LOW);
-		msg[1] = पढ़ोl(base + SPRD_MBOX_MSG_HIGH);
-		id = पढ़ोl(base + SPRD_MBOX_ID);
+	for (i = 0; i < fifo_len; i++) {
+		msg[0] = readl(base + SPRD_MBOX_MSG_LOW);
+		msg[1] = readl(base + SPRD_MBOX_MSG_HIGH);
+		id = readl(base + SPRD_MBOX_ID);
 
 		chan = &priv->chan[id];
-		अगर (chan->cl)
-			mbox_chan_received_data(chan, (व्योम *)msg);
-		अन्यथा
+		if (chan->cl)
+			mbox_chan_received_data(chan, (void *)msg);
+		else
 			dev_warn_ratelimited(priv->dev,
 				    "message's been dropped at ch[%d]\n", id);
 
-		/* Trigger to update outbox FIFO poपूर्णांकer */
-		ग_लिखोl(0x1, base + SPRD_MBOX_TRIGGER);
-	पूर्ण
+		/* Trigger to update outbox FIFO pointer */
+		writel(0x1, base + SPRD_MBOX_TRIGGER);
+	}
 
-	/* Clear irq status after पढ़ोing all message. */
-	ग_लिखोl(SPRD_MBOX_IRQ_CLR, base + SPRD_MBOX_IRQ_STS);
+	/* Clear irq status after reading all message. */
+	writel(SPRD_MBOX_IRQ_CLR, base + SPRD_MBOX_IRQ_STS);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t sprd_mbox_outbox_isr(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा sprd_mbox_priv *priv = data;
+static irqreturn_t sprd_mbox_outbox_isr(int irq, void *data)
+{
+	struct sprd_mbox_priv *priv = data;
 
-	वापस करो_outbox_isr(priv->outbox_base, priv);
-पूर्ण
+	return do_outbox_isr(priv->outbox_base, priv);
+}
 
-अटल irqवापस_t sprd_mbox_supp_isr(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा sprd_mbox_priv *priv = data;
+static irqreturn_t sprd_mbox_supp_isr(int irq, void *data)
+{
+	struct sprd_mbox_priv *priv = data;
 
-	वापस करो_outbox_isr(priv->supp_base, priv);
-पूर्ण
+	return do_outbox_isr(priv->supp_base, priv);
+}
 
-अटल irqवापस_t sprd_mbox_inbox_isr(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा sprd_mbox_priv *priv = data;
-	काष्ठा mbox_chan *chan;
-	u32 fअगरo_sts, send_sts, busy, id;
+static irqreturn_t sprd_mbox_inbox_isr(int irq, void *data)
+{
+	struct sprd_mbox_priv *priv = data;
+	struct mbox_chan *chan;
+	u32 fifo_sts, send_sts, busy, id;
 
-	fअगरo_sts = पढ़ोl(priv->inbox_base + SPRD_MBOX_FIFO_STS);
+	fifo_sts = readl(priv->inbox_base + SPRD_MBOX_FIFO_STS);
 
 	/* Get the inbox data delivery status */
-	send_sts = (fअगरo_sts & SPRD_INBOX_FIFO_DELIVER_MASK) >>
+	send_sts = (fifo_sts & SPRD_INBOX_FIFO_DELIVER_MASK) >>
 		SPRD_INBOX_FIFO_DELIVER_SHIFT;
-	अगर (!send_sts) अणु
+	if (!send_sts) {
 		dev_warn_ratelimited(priv->dev, "spurious inbox interrupt\n");
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 
-	जबतक (send_sts) अणु
+	while (send_sts) {
 		id = __ffs(send_sts);
 		send_sts &= (send_sts - 1);
 
 		chan = &priv->chan[id];
 
 		/*
-		 * Check अगर the message was fetched by remote target, अगर yes,
+		 * Check if the message was fetched by remote target, if yes,
 		 * that means the transmission has been completed.
 		 */
-		busy = fअगरo_sts & SPRD_INBOX_FIFO_BUSY_MASK;
-		अगर (!(busy & BIT(id)))
-			mbox_chan_txकरोne(chan, 0);
-	पूर्ण
+		busy = fifo_sts & SPRD_INBOX_FIFO_BUSY_MASK;
+		if (!(busy & BIT(id)))
+			mbox_chan_txdone(chan, 0);
+	}
 
 	/* Clear FIFO delivery and overflow status */
-	ग_लिखोl(fअगरo_sts &
+	writel(fifo_sts &
 	       (SPRD_INBOX_FIFO_DELIVER_MASK | SPRD_INBOX_FIFO_OVERLOW_MASK),
 	       priv->inbox_base + SPRD_MBOX_FIFO_RST);
 
 	/* Clear irq status */
-	ग_लिखोl(SPRD_MBOX_IRQ_CLR, priv->inbox_base + SPRD_MBOX_IRQ_STS);
+	writel(SPRD_MBOX_IRQ_CLR, priv->inbox_base + SPRD_MBOX_IRQ_STS);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक sprd_mbox_send_data(काष्ठा mbox_chan *chan, व्योम *msg)
-अणु
-	काष्ठा sprd_mbox_priv *priv = to_sprd_mbox_priv(chan->mbox);
-	अचिन्हित दीर्घ id = (अचिन्हित दीर्घ)chan->con_priv;
+static int sprd_mbox_send_data(struct mbox_chan *chan, void *msg)
+{
+	struct sprd_mbox_priv *priv = to_sprd_mbox_priv(chan->mbox);
+	unsigned long id = (unsigned long)chan->con_priv;
 	u32 *data = msg;
 
-	/* Write data पूर्णांकo inbox FIFO, and only support 8 bytes every समय */
-	ग_लिखोl(data[0], priv->inbox_base + SPRD_MBOX_MSG_LOW);
-	ग_लिखोl(data[1], priv->inbox_base + SPRD_MBOX_MSG_HIGH);
+	/* Write data into inbox FIFO, and only support 8 bytes every time */
+	writel(data[0], priv->inbox_base + SPRD_MBOX_MSG_LOW);
+	writel(data[1], priv->inbox_base + SPRD_MBOX_MSG_HIGH);
 
 	/* Set target core id */
-	ग_लिखोl(id, priv->inbox_base + SPRD_MBOX_ID);
+	writel(id, priv->inbox_base + SPRD_MBOX_ID);
 
 	/* Trigger remote request */
-	ग_लिखोl(0x1, priv->inbox_base + SPRD_MBOX_TRIGGER);
+	writel(0x1, priv->inbox_base + SPRD_MBOX_TRIGGER);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sprd_mbox_flush(काष्ठा mbox_chan *chan, अचिन्हित दीर्घ समयout)
-अणु
-	काष्ठा sprd_mbox_priv *priv = to_sprd_mbox_priv(chan->mbox);
-	अचिन्हित दीर्घ id = (अचिन्हित दीर्घ)chan->con_priv;
+static int sprd_mbox_flush(struct mbox_chan *chan, unsigned long timeout)
+{
+	struct sprd_mbox_priv *priv = to_sprd_mbox_priv(chan->mbox);
+	unsigned long id = (unsigned long)chan->con_priv;
 	u32 busy;
 
-	समयout = jअगरfies + msecs_to_jअगरfies(समयout);
+	timeout = jiffies + msecs_to_jiffies(timeout);
 
-	जबतक (समय_beक्रमe(jअगरfies, समयout)) अणु
-		busy = पढ़ोl(priv->inbox_base + SPRD_MBOX_FIFO_STS) &
+	while (time_before(jiffies, timeout)) {
+		busy = readl(priv->inbox_base + SPRD_MBOX_FIFO_STS) &
 			SPRD_INBOX_FIFO_BUSY_MASK;
-		अगर (!(busy & BIT(id))) अणु
-			mbox_chan_txकरोne(chan, 0);
-			वापस 0;
-		पूर्ण
+		if (!(busy & BIT(id))) {
+			mbox_chan_txdone(chan, 0);
+			return 0;
+		}
 
 		udelay(1);
-	पूर्ण
+	}
 
-	वापस -ETIME;
-पूर्ण
+	return -ETIME;
+}
 
-अटल पूर्णांक sprd_mbox_startup(काष्ठा mbox_chan *chan)
-अणु
-	काष्ठा sprd_mbox_priv *priv = to_sprd_mbox_priv(chan->mbox);
+static int sprd_mbox_startup(struct mbox_chan *chan)
+{
+	struct sprd_mbox_priv *priv = to_sprd_mbox_priv(chan->mbox);
 	u32 val;
 
 	mutex_lock(&priv->lock);
-	अगर (priv->refcnt++ == 0) अणु
+	if (priv->refcnt++ == 0) {
 		/* Select outbox FIFO mode and reset the outbox FIFO status */
-		ग_लिखोl(0x0, priv->outbox_base + SPRD_MBOX_FIFO_RST);
+		writel(0x0, priv->outbox_base + SPRD_MBOX_FIFO_RST);
 
-		/* Enable inbox FIFO overflow and delivery पूर्णांकerrupt */
-		val = पढ़ोl(priv->inbox_base + SPRD_MBOX_IRQ_MSK);
+		/* Enable inbox FIFO overflow and delivery interrupt */
+		val = readl(priv->inbox_base + SPRD_MBOX_IRQ_MSK);
 		val &= ~(SPRD_INBOX_FIFO_OVERFLOW_IRQ | SPRD_INBOX_FIFO_DELIVER_IRQ);
-		ग_लिखोl(val, priv->inbox_base + SPRD_MBOX_IRQ_MSK);
+		writel(val, priv->inbox_base + SPRD_MBOX_IRQ_MSK);
 
-		/* Enable outbox FIFO not empty पूर्णांकerrupt */
-		val = पढ़ोl(priv->outbox_base + SPRD_MBOX_IRQ_MSK);
+		/* Enable outbox FIFO not empty interrupt */
+		val = readl(priv->outbox_base + SPRD_MBOX_IRQ_MSK);
 		val &= ~SPRD_OUTBOX_FIFO_NOT_EMPTY_IRQ;
-		ग_लिखोl(val, priv->outbox_base + SPRD_MBOX_IRQ_MSK);
+		writel(val, priv->outbox_base + SPRD_MBOX_IRQ_MSK);
 
 		/* Enable supplementary outbox as the fundamental one */
-		अगर (priv->supp_base) अणु
-			ग_लिखोl(0x0, priv->supp_base + SPRD_MBOX_FIFO_RST);
-			val = पढ़ोl(priv->supp_base + SPRD_MBOX_IRQ_MSK);
+		if (priv->supp_base) {
+			writel(0x0, priv->supp_base + SPRD_MBOX_FIFO_RST);
+			val = readl(priv->supp_base + SPRD_MBOX_IRQ_MSK);
 			val &= ~SPRD_OUTBOX_FIFO_NOT_EMPTY_IRQ;
-			ग_लिखोl(val, priv->supp_base + SPRD_MBOX_IRQ_MSK);
-		पूर्ण
-	पूर्ण
+			writel(val, priv->supp_base + SPRD_MBOX_IRQ_MSK);
+		}
+	}
 	mutex_unlock(&priv->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sprd_mbox_shutकरोwn(काष्ठा mbox_chan *chan)
-अणु
-	काष्ठा sprd_mbox_priv *priv = to_sprd_mbox_priv(chan->mbox);
+static void sprd_mbox_shutdown(struct mbox_chan *chan)
+{
+	struct sprd_mbox_priv *priv = to_sprd_mbox_priv(chan->mbox);
 
 	mutex_lock(&priv->lock);
-	अगर (--priv->refcnt == 0) अणु
-		/* Disable inbox & outbox पूर्णांकerrupt */
-		ग_लिखोl(SPRD_INBOX_FIFO_IRQ_MASK, priv->inbox_base + SPRD_MBOX_IRQ_MSK);
-		ग_लिखोl(SPRD_OUTBOX_FIFO_IRQ_MASK, priv->outbox_base + SPRD_MBOX_IRQ_MSK);
+	if (--priv->refcnt == 0) {
+		/* Disable inbox & outbox interrupt */
+		writel(SPRD_INBOX_FIFO_IRQ_MASK, priv->inbox_base + SPRD_MBOX_IRQ_MSK);
+		writel(SPRD_OUTBOX_FIFO_IRQ_MASK, priv->outbox_base + SPRD_MBOX_IRQ_MSK);
 
-		अगर (priv->supp_base)
-			ग_लिखोl(SPRD_OUTBOX_FIFO_IRQ_MASK,
+		if (priv->supp_base)
+			writel(SPRD_OUTBOX_FIFO_IRQ_MASK,
 			       priv->supp_base + SPRD_MBOX_IRQ_MSK);
-	पूर्ण
+	}
 	mutex_unlock(&priv->lock);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा mbox_chan_ops sprd_mbox_ops = अणु
+static const struct mbox_chan_ops sprd_mbox_ops = {
 	.send_data	= sprd_mbox_send_data,
 	.flush		= sprd_mbox_flush,
 	.startup	= sprd_mbox_startup,
-	.shutकरोwn	= sprd_mbox_shutकरोwn,
-पूर्ण;
+	.shutdown	= sprd_mbox_shutdown,
+};
 
-अटल व्योम sprd_mbox_disable(व्योम *data)
-अणु
-	काष्ठा sprd_mbox_priv *priv = data;
+static void sprd_mbox_disable(void *data)
+{
+	struct sprd_mbox_priv *priv = data;
 
 	clk_disable_unprepare(priv->clk);
-पूर्ण
+}
 
-अटल पूर्णांक sprd_mbox_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा sprd_mbox_priv *priv;
-	पूर्णांक ret, inbox_irq, outbox_irq, supp_irq;
-	अचिन्हित दीर्घ id, supp;
+static int sprd_mbox_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct sprd_mbox_priv *priv;
+	int ret, inbox_irq, outbox_irq, supp_irq;
+	unsigned long id, supp;
 
-	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	priv->dev = dev;
 	mutex_init(&priv->lock);
@@ -318,113 +317,113 @@
 	 * core, and uses (an) outbox(es) to receive messages from other
 	 * cores.
 	 *
-	 * Thus in general the mailbox controller supplies 2 dअगरferent
-	 * रेजिस्टर addresses and IRQ numbers क्रम inbox and outbox.
+	 * Thus in general the mailbox controller supplies 2 different
+	 * register addresses and IRQ numbers for inbox and outbox.
 	 *
 	 * If necessary, a supplementary inbox could be enabled optionally
-	 * with an independent FIFO and an extra पूर्णांकerrupt.
+	 * with an independent FIFO and an extra interrupt.
 	 */
-	priv->inbox_base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(priv->inbox_base))
-		वापस PTR_ERR(priv->inbox_base);
+	priv->inbox_base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(priv->inbox_base))
+		return PTR_ERR(priv->inbox_base);
 
-	priv->outbox_base = devm_platक्रमm_ioremap_resource(pdev, 1);
-	अगर (IS_ERR(priv->outbox_base))
-		वापस PTR_ERR(priv->outbox_base);
+	priv->outbox_base = devm_platform_ioremap_resource(pdev, 1);
+	if (IS_ERR(priv->outbox_base))
+		return PTR_ERR(priv->outbox_base);
 
 	priv->clk = devm_clk_get(dev, "enable");
-	अगर (IS_ERR(priv->clk)) अणु
+	if (IS_ERR(priv->clk)) {
 		dev_err(dev, "failed to get mailbox clock\n");
-		वापस PTR_ERR(priv->clk);
-	पूर्ण
+		return PTR_ERR(priv->clk);
+	}
 
 	ret = clk_prepare_enable(priv->clk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = devm_add_action_or_reset(dev, sprd_mbox_disable, priv);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to add mailbox disable action\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	inbox_irq = platक्रमm_get_irq_byname(pdev, "inbox");
-	अगर (inbox_irq < 0)
-		वापस inbox_irq;
+	inbox_irq = platform_get_irq_byname(pdev, "inbox");
+	if (inbox_irq < 0)
+		return inbox_irq;
 
 	ret = devm_request_irq(dev, inbox_irq, sprd_mbox_inbox_isr,
 			       IRQF_NO_SUSPEND, dev_name(dev), priv);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to request inbox IRQ: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	outbox_irq = platक्रमm_get_irq_byname(pdev, "outbox");
-	अगर (outbox_irq < 0)
-		वापस outbox_irq;
+	outbox_irq = platform_get_irq_byname(pdev, "outbox");
+	if (outbox_irq < 0)
+		return outbox_irq;
 
 	ret = devm_request_irq(dev, outbox_irq, sprd_mbox_outbox_isr,
 			       IRQF_NO_SUSPEND, dev_name(dev), priv);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to request outbox IRQ: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* Supplementary outbox IRQ is optional */
-	supp_irq = platक्रमm_get_irq_byname(pdev, "supp-outbox");
-	अगर (supp_irq > 0) अणु
+	supp_irq = platform_get_irq_byname(pdev, "supp-outbox");
+	if (supp_irq > 0) {
 		ret = devm_request_irq(dev, supp_irq, sprd_mbox_supp_isr,
 				       IRQF_NO_SUSPEND, dev_name(dev), priv);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "failed to request outbox IRQ: %d\n", ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		supp = (अचिन्हित दीर्घ) of_device_get_match_data(dev);
-		अगर (!supp) अणु
+		supp = (unsigned long) of_device_get_match_data(dev);
+		if (!supp) {
 			dev_err(dev, "no supplementary outbox specified\n");
-			वापस -ENODEV;
-		पूर्ण
+			return -ENODEV;
+		}
 		priv->supp_base = priv->outbox_base + (SPRD_OUTBOX_BASE_SPAN * supp);
-	पूर्ण
+	}
 
-	/* Get the शेष outbox FIFO depth */
-	priv->outbox_fअगरo_depth =
-		पढ़ोl(priv->outbox_base + SPRD_MBOX_FIFO_DEPTH) + 1;
+	/* Get the default outbox FIFO depth */
+	priv->outbox_fifo_depth =
+		readl(priv->outbox_base + SPRD_MBOX_FIFO_DEPTH) + 1;
 	priv->mbox.dev = dev;
 	priv->mbox.chans = &priv->chan[0];
 	priv->mbox.num_chans = SPRD_MBOX_CHAN_MAX;
 	priv->mbox.ops = &sprd_mbox_ops;
-	priv->mbox.txकरोne_irq = true;
+	priv->mbox.txdone_irq = true;
 
-	क्रम (id = 0; id < SPRD_MBOX_CHAN_MAX; id++)
-		priv->chan[id].con_priv = (व्योम *)id;
+	for (id = 0; id < SPRD_MBOX_CHAN_MAX; id++)
+		priv->chan[id].con_priv = (void *)id;
 
-	ret = devm_mbox_controller_रेजिस्टर(dev, &priv->mbox);
-	अगर (ret) अणु
+	ret = devm_mbox_controller_register(dev, &priv->mbox);
+	if (ret) {
 		dev_err(dev, "failed to register mailbox: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id sprd_mbox_of_match[] = अणु
-	अणु .compatible = "sprd,sc9860-mailbox" पूर्ण,
-	अणु .compatible = "sprd,sc9863a-mailbox",
-	  .data = (व्योम *)SPRD_SUPP_INBOX_ID_SC9863A पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id sprd_mbox_of_match[] = {
+	{ .compatible = "sprd,sc9860-mailbox" },
+	{ .compatible = "sprd,sc9863a-mailbox",
+	  .data = (void *)SPRD_SUPP_INBOX_ID_SC9863A },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, sprd_mbox_of_match);
 
-अटल काष्ठा platक्रमm_driver sprd_mbox_driver = अणु
-	.driver = अणु
+static struct platform_driver sprd_mbox_driver = {
+	.driver = {
 		.name = "sprd-mailbox",
 		.of_match_table = sprd_mbox_of_match,
-	पूर्ण,
+	},
 	.probe	= sprd_mbox_probe,
-पूर्ण;
-module_platक्रमm_driver(sprd_mbox_driver);
+};
+module_platform_driver(sprd_mbox_driver);
 
 MODULE_AUTHOR("Baolin Wang <baolin.wang@unisoc.com>");
 MODULE_DESCRIPTION("Spreadtrum mailbox driver");

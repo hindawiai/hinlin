@@ -1,40 +1,39 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Support क्रम the S1 button on Routerboard 532
+ * Support for the S1 button on Routerboard 532
  *
- * Copyright (C) 2009  Phil Sutter <n0-1@मुक्तwrt.org>
+ * Copyright (C) 2009  Phil Sutter <n0-1@freewrt.org>
  */
 
-#समावेश <linux/input.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/gpपन.स>
+#include <linux/input.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/gpio.h>
 
-#समावेश <यंत्र/mach-rc32434/gpपन.स>
-#समावेश <यंत्र/mach-rc32434/rb.h>
+#include <asm/mach-rc32434/gpio.h>
+#include <asm/mach-rc32434/rb.h>
 
-#घोषणा DRV_NAME "rb532-button"
+#define DRV_NAME "rb532-button"
 
-#घोषणा RB532_BTN_RATE 100 /* msec */
-#घोषणा RB532_BTN_KSYM BTN_0
+#define RB532_BTN_RATE 100 /* msec */
+#define RB532_BTN_KSYM BTN_0
 
 /* The S1 button state is provided by GPIO pin 1. But as this
- * pin is also used क्रम uart input as alternate function, the
- * operational modes must be चयनed first:
+ * pin is also used for uart input as alternate function, the
+ * operational modes must be switched first:
  * 1) disable uart using set_latch_u5()
  * 2) turn off alternate function implicitly through
  *    gpio_direction_input()
- * 3) पढ़ो the GPIO's current value
- * 4) unकरो step 2 by enabling alternate function (in this
+ * 3) read the GPIO's current value
+ * 4) undo step 2 by enabling alternate function (in this
  *    mode the GPIO direction is fixed, so no change needed)
  * 5) turn on uart again
  * The GPIO value occurs to be inverted, so pin high means
  * button is not pressed.
  */
-अटल bool rb532_button_pressed(व्योम)
-अणु
-	पूर्णांक val;
+static bool rb532_button_pressed(void)
+{
+	int val;
 
 	set_latch_u5(0, LO_FOFF);
 	gpio_direction_input(GPIO_BTN_S1);
@@ -44,23 +43,23 @@
 	rb532_gpio_set_func(GPIO_BTN_S1);
 	set_latch_u5(LO_FOFF, 0);
 
-	वापस !val;
-पूर्ण
+	return !val;
+}
 
-अटल व्योम rb532_button_poll(काष्ठा input_dev *input)
-अणु
+static void rb532_button_poll(struct input_dev *input)
+{
 	input_report_key(input, RB532_BTN_KSYM, rb532_button_pressed());
 	input_sync(input);
-पूर्ण
+}
 
-अटल पूर्णांक rb532_button_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा input_dev *input;
-	पूर्णांक error;
+static int rb532_button_probe(struct platform_device *pdev)
+{
+	struct input_dev *input;
+	int error;
 
 	input = devm_input_allocate_device(&pdev->dev);
-	अगर (!input)
-		वापस -ENOMEM;
+	if (!input)
+		return -ENOMEM;
 
 	input->name = "rb532 button";
 	input->phys = "rb532/button0";
@@ -69,25 +68,25 @@
 	input_set_capability(input, EV_KEY, RB532_BTN_KSYM);
 
 	error = input_setup_polling(input, rb532_button_poll);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	input_set_poll_पूर्णांकerval(input, RB532_BTN_RATE);
+	input_set_poll_interval(input, RB532_BTN_RATE);
 
-	error = input_रेजिस्टर_device(input);
-	अगर (error)
-		वापस error;
+	error = input_register_device(input);
+	if (error)
+		return error;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver rb532_button_driver = अणु
+static struct platform_driver rb532_button_driver = {
 	.probe = rb532_button_probe,
-	.driver = अणु
+	.driver = {
 		.name = DRV_NAME,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(rb532_button_driver);
+	},
+};
+module_platform_driver(rb532_button_driver);
 
 MODULE_AUTHOR("Phil Sutter <n0-1@freewrt.org>");
 MODULE_LICENSE("GPL");

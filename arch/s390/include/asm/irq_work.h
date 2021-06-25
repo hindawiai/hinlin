@@ -1,13 +1,12 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_S390_IRQ_WORK_H
-#घोषणा _ASM_S390_IRQ_WORK_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_S390_IRQ_WORK_H
+#define _ASM_S390_IRQ_WORK_H
 
-अटल अंतरभूत bool arch_irq_work_has_पूर्णांकerrupt(व्योम)
-अणु
-	वापस true;
-पूर्ण
+static inline bool arch_irq_work_has_interrupt(void)
+{
+	return true;
+}
 
-व्योम arch_irq_work_उठाओ(व्योम);
+void arch_irq_work_raise(void);
 
-#पूर्ण_अगर /* _ASM_S390_IRQ_WORK_H */
+#endif /* _ASM_S390_IRQ_WORK_H */

@@ -1,83 +1,82 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Apple Onboard Audio GPIO definitions
  *
  * Copyright 2006 Johannes Berg <johannes@sipsolutions.net>
  */
 
-#अगर_अघोषित __AOA_GPIO_H
-#घोषणा __AOA_GPIO_H
-#समावेश <linux/workqueue.h>
-#समावेश <linux/mutex.h>
-#समावेश <यंत्र/prom.h>
+#ifndef __AOA_GPIO_H
+#define __AOA_GPIO_H
+#include <linux/workqueue.h>
+#include <linux/mutex.h>
+#include <asm/prom.h>
 
-प्रकार व्योम (*notअगरy_func_t)(व्योम *data);
+typedef void (*notify_func_t)(void *data);
 
-क्रमागत notअगरy_type अणु
+enum notify_type {
 	AOA_NOTIFY_HEADPHONE,
 	AOA_NOTIFY_LINE_IN,
 	AOA_NOTIFY_LINE_OUT,
-पूर्ण;
+};
 
-काष्ठा gpio_runसमय;
-काष्ठा gpio_methods अणु
-	/* क्रम initialisation/de-initialisation of the GPIO layer */
-	व्योम (*init)(काष्ठा gpio_runसमय *rt);
-	व्योम (*निकास)(काष्ठा gpio_runसमय *rt);
+struct gpio_runtime;
+struct gpio_methods {
+	/* for initialisation/de-initialisation of the GPIO layer */
+	void (*init)(struct gpio_runtime *rt);
+	void (*exit)(struct gpio_runtime *rt);
 
 	/* turn off headphone, speakers, lineout */
-	व्योम (*all_amps_off)(काष्ठा gpio_runसमय *rt);
+	void (*all_amps_off)(struct gpio_runtime *rt);
 	/* turn headphone, speakers, lineout back to previous setting */
-	व्योम (*all_amps_restore)(काष्ठा gpio_runसमय *rt);
+	void (*all_amps_restore)(struct gpio_runtime *rt);
 
-	व्योम (*set_headphone)(काष्ठा gpio_runसमय *rt, पूर्णांक on);
-	व्योम (*set_speakers)(काष्ठा gpio_runसमय *rt, पूर्णांक on);
-	व्योम (*set_lineout)(काष्ठा gpio_runसमय *rt, पूर्णांक on);
-	व्योम (*set_master)(काष्ठा gpio_runसमय *rt, पूर्णांक on);
+	void (*set_headphone)(struct gpio_runtime *rt, int on);
+	void (*set_speakers)(struct gpio_runtime *rt, int on);
+	void (*set_lineout)(struct gpio_runtime *rt, int on);
+	void (*set_master)(struct gpio_runtime *rt, int on);
 
-	पूर्णांक (*get_headphone)(काष्ठा gpio_runसमय *rt);
-	पूर्णांक (*get_speakers)(काष्ठा gpio_runसमय *rt);
-	पूर्णांक (*get_lineout)(काष्ठा gpio_runसमय *rt);
-	पूर्णांक (*get_master)(काष्ठा gpio_runसमय *rt);
+	int (*get_headphone)(struct gpio_runtime *rt);
+	int (*get_speakers)(struct gpio_runtime *rt);
+	int (*get_lineout)(struct gpio_runtime *rt);
+	int (*get_master)(struct gpio_runtime *rt);
 
-	व्योम (*set_hw_reset)(काष्ठा gpio_runसमय *rt, पूर्णांक on);
+	void (*set_hw_reset)(struct gpio_runtime *rt, int on);
 
-	/* use this to be notअगरied of any events. The notअगरication
+	/* use this to be notified of any events. The notification
 	 * function is passed the data, and is called in process
 	 * context by the use of schedule_work.
-	 * The पूर्णांकerface क्रम it is that setting a function to शून्य
-	 * हटाओs it, and they वापस 0 अगर the operation succeeded,
-	 * and -EBUSY अगर the notअगरication is alपढ़ोy asचिन्हित by
-	 * someone अन्यथा. */
-	पूर्णांक (*set_notअगरy)(काष्ठा gpio_runसमय *rt,
-			  क्रमागत notअगरy_type type,
-			  notअगरy_func_t notअगरy,
-			  व्योम *data);
-	/* वापसs 0 अगर not plugged in, 1 अगर plugged in
+	 * The interface for it is that setting a function to NULL
+	 * removes it, and they return 0 if the operation succeeded,
+	 * and -EBUSY if the notification is already assigned by
+	 * someone else. */
+	int (*set_notify)(struct gpio_runtime *rt,
+			  enum notify_type type,
+			  notify_func_t notify,
+			  void *data);
+	/* returns 0 if not plugged in, 1 if plugged in
 	 * or a negative error code */
-	पूर्णांक (*get_detect)(काष्ठा gpio_runसमय *rt,
-			  क्रमागत notअगरy_type type);
-पूर्ण;
+	int (*get_detect)(struct gpio_runtime *rt,
+			  enum notify_type type);
+};
 
-काष्ठा gpio_notअगरication अणु
-	काष्ठा delayed_work work;
-	notअगरy_func_t notअगरy;
-	व्योम *data;
-	व्योम *gpio_निजी;
-	काष्ठा mutex mutex;
-पूर्ण;
+struct gpio_notification {
+	struct delayed_work work;
+	notify_func_t notify;
+	void *data;
+	void *gpio_private;
+	struct mutex mutex;
+};
 
-काष्ठा gpio_runसमय अणु
-	/* to be asचिन्हित by fabric */
-	काष्ठा device_node *node;
-	/* since everyone needs this poपूर्णांकer anyway... */
-	काष्ठा gpio_methods *methods;
+struct gpio_runtime {
+	/* to be assigned by fabric */
+	struct device_node *node;
+	/* since everyone needs this pointer anyway... */
+	struct gpio_methods *methods;
 	/* to be used by the gpio implementation */
-	पूर्णांक implementation_निजी;
-	काष्ठा gpio_notअगरication headphone_notअगरy;
-	काष्ठा gpio_notअगरication line_in_notअगरy;
-	काष्ठा gpio_notअगरication line_out_notअगरy;
-पूर्ण;
+	int implementation_private;
+	struct gpio_notification headphone_notify;
+	struct gpio_notification line_in_notify;
+	struct gpio_notification line_out_notify;
+};
 
-#पूर्ण_अगर /* __AOA_GPIO_H */
+#endif /* __AOA_GPIO_H */

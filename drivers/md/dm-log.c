@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2003 Sistina Software
  * Copyright (C) 2004-2008 Red Hat, Inc. All rights reserved.
@@ -6,51 +5,51 @@
  * This file is released under the LGPL.
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/dm-पन.स>
-#समावेश <linux/dm-dirty-log.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <linux/vmalloc.h>
+#include <linux/dm-io.h>
+#include <linux/dm-dirty-log.h>
 
-#समावेश <linux/device-mapper.h>
+#include <linux/device-mapper.h>
 
-#घोषणा DM_MSG_PREFIX "dirty region log"
+#define DM_MSG_PREFIX "dirty region log"
 
-अटल LIST_HEAD(_log_types);
-अटल DEFINE_SPINLOCK(_lock);
+static LIST_HEAD(_log_types);
+static DEFINE_SPINLOCK(_lock);
 
-अटल काष्ठा dm_dirty_log_type *__find_dirty_log_type(स्थिर अक्षर *name)
-अणु
-	काष्ठा dm_dirty_log_type *log_type;
+static struct dm_dirty_log_type *__find_dirty_log_type(const char *name)
+{
+	struct dm_dirty_log_type *log_type;
 
-	list_क्रम_each_entry(log_type, &_log_types, list)
-		अगर (!म_भेद(name, log_type->name))
-			वापस log_type;
+	list_for_each_entry(log_type, &_log_types, list)
+		if (!strcmp(name, log_type->name))
+			return log_type;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा dm_dirty_log_type *_get_dirty_log_type(स्थिर अक्षर *name)
-अणु
-	काष्ठा dm_dirty_log_type *log_type;
+static struct dm_dirty_log_type *_get_dirty_log_type(const char *name)
+{
+	struct dm_dirty_log_type *log_type;
 
 	spin_lock(&_lock);
 
 	log_type = __find_dirty_log_type(name);
-	अगर (log_type && !try_module_get(log_type->module))
-		log_type = शून्य;
+	if (log_type && !try_module_get(log_type->module))
+		log_type = NULL;
 
 	spin_unlock(&_lock);
 
-	वापस log_type;
-पूर्ण
+	return log_type;
+}
 
 /*
  * get_type
  * @type_name
  *
- * Attempt to retrieve the dm_dirty_log_type by name.  If not alपढ़ोy
+ * Attempt to retrieve the dm_dirty_log_type by name.  If not already
  * available, attempt to load the appropriate module.
  *
  * Log modules are named "dm-log-" followed by the 'type_name'.
@@ -58,129 +57,129 @@
  * This function will first try the module "dm-log-<type_name>",
  * then truncate 'type_name' on the last '-' and try again.
  *
- * For example, अगर type_name was "clustered-disk", it would search
+ * For example, if type_name was "clustered-disk", it would search
  * 'dm-log-clustered-disk' then 'dm-log-clustered'.
  *
- * Returns: dirty_log_type* on success, शून्य on failure
+ * Returns: dirty_log_type* on success, NULL on failure
  */
-अटल काष्ठा dm_dirty_log_type *get_type(स्थिर अक्षर *type_name)
-अणु
-	अक्षर *p, *type_name_dup;
-	काष्ठा dm_dirty_log_type *log_type;
+static struct dm_dirty_log_type *get_type(const char *type_name)
+{
+	char *p, *type_name_dup;
+	struct dm_dirty_log_type *log_type;
 
-	अगर (!type_name)
-		वापस शून्य;
+	if (!type_name)
+		return NULL;
 
 	log_type = _get_dirty_log_type(type_name);
-	अगर (log_type)
-		वापस log_type;
+	if (log_type)
+		return log_type;
 
 	type_name_dup = kstrdup(type_name, GFP_KERNEL);
-	अगर (!type_name_dup) अणु
+	if (!type_name_dup) {
 		DMWARN("No memory left to attempt log module load for \"%s\"",
 		       type_name);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	जबतक (request_module("dm-log-%s", type_name_dup) ||
-	       !(log_type = _get_dirty_log_type(type_name))) अणु
-		p = म_खोजप(type_name_dup, '-');
-		अगर (!p)
-			अवरोध;
+	while (request_module("dm-log-%s", type_name_dup) ||
+	       !(log_type = _get_dirty_log_type(type_name))) {
+		p = strrchr(type_name_dup, '-');
+		if (!p)
+			break;
 		p[0] = '\0';
-	पूर्ण
+	}
 
-	अगर (!log_type)
+	if (!log_type)
 		DMWARN("Module for logging type \"%s\" not found.", type_name);
 
-	kमुक्त(type_name_dup);
+	kfree(type_name_dup);
 
-	वापस log_type;
-पूर्ण
+	return log_type;
+}
 
-अटल व्योम put_type(काष्ठा dm_dirty_log_type *type)
-अणु
-	अगर (!type)
-		वापस;
+static void put_type(struct dm_dirty_log_type *type)
+{
+	if (!type)
+		return;
 
 	spin_lock(&_lock);
-	अगर (!__find_dirty_log_type(type->name))
-		जाओ out;
+	if (!__find_dirty_log_type(type->name))
+		goto out;
 
 	module_put(type->module);
 
 out:
 	spin_unlock(&_lock);
-पूर्ण
+}
 
-पूर्णांक dm_dirty_log_type_रेजिस्टर(काष्ठा dm_dirty_log_type *type)
-अणु
-	पूर्णांक r = 0;
+int dm_dirty_log_type_register(struct dm_dirty_log_type *type)
+{
+	int r = 0;
 
 	spin_lock(&_lock);
-	अगर (!__find_dirty_log_type(type->name))
+	if (!__find_dirty_log_type(type->name))
 		list_add(&type->list, &_log_types);
-	अन्यथा
+	else
 		r = -EEXIST;
 	spin_unlock(&_lock);
 
-	वापस r;
-पूर्ण
-EXPORT_SYMBOL(dm_dirty_log_type_रेजिस्टर);
+	return r;
+}
+EXPORT_SYMBOL(dm_dirty_log_type_register);
 
-पूर्णांक dm_dirty_log_type_unरेजिस्टर(काष्ठा dm_dirty_log_type *type)
-अणु
+int dm_dirty_log_type_unregister(struct dm_dirty_log_type *type)
+{
 	spin_lock(&_lock);
 
-	अगर (!__find_dirty_log_type(type->name)) अणु
+	if (!__find_dirty_log_type(type->name)) {
 		spin_unlock(&_lock);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	list_del(&type->list);
 
 	spin_unlock(&_lock);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(dm_dirty_log_type_unरेजिस्टर);
+	return 0;
+}
+EXPORT_SYMBOL(dm_dirty_log_type_unregister);
 
-काष्ठा dm_dirty_log *dm_dirty_log_create(स्थिर अक्षर *type_name,
-			काष्ठा dm_target *ti,
-			पूर्णांक (*flush_callback_fn)(काष्ठा dm_target *ti),
-			अचिन्हित पूर्णांक argc, अक्षर **argv)
-अणु
-	काष्ठा dm_dirty_log_type *type;
-	काष्ठा dm_dirty_log *log;
+struct dm_dirty_log *dm_dirty_log_create(const char *type_name,
+			struct dm_target *ti,
+			int (*flush_callback_fn)(struct dm_target *ti),
+			unsigned int argc, char **argv)
+{
+	struct dm_dirty_log_type *type;
+	struct dm_dirty_log *log;
 
-	log = kदो_स्मृति(माप(*log), GFP_KERNEL);
-	अगर (!log)
-		वापस शून्य;
+	log = kmalloc(sizeof(*log), GFP_KERNEL);
+	if (!log)
+		return NULL;
 
 	type = get_type(type_name);
-	अगर (!type) अणु
-		kमुक्त(log);
-		वापस शून्य;
-	पूर्ण
+	if (!type) {
+		kfree(log);
+		return NULL;
+	}
 
 	log->flush_callback_fn = flush_callback_fn;
 	log->type = type;
-	अगर (type->ctr(log, ti, argc, argv)) अणु
-		kमुक्त(log);
+	if (type->ctr(log, ti, argc, argv)) {
+		kfree(log);
 		put_type(type);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	वापस log;
-पूर्ण
+	return log;
+}
 EXPORT_SYMBOL(dm_dirty_log_create);
 
-व्योम dm_dirty_log_destroy(काष्ठा dm_dirty_log *log)
-अणु
+void dm_dirty_log_destroy(struct dm_dirty_log *log)
+{
 	log->type->dtr(log);
 	put_type(log->type);
-	kमुक्त(log);
-पूर्ण
+	kfree(log);
+}
 EXPORT_SYMBOL(dm_dirty_log_destroy);
 
 /*-----------------------------------------------------------------
@@ -188,17 +187,17 @@ EXPORT_SYMBOL(dm_dirty_log_destroy);
  * FIXME: need a reload method to be called from a resume
  *---------------------------------------------------------------*/
 /*
- * Magic क्रम persistent mirrors: "MiRr"
+ * Magic for persistent mirrors: "MiRr"
  */
-#घोषणा MIRROR_MAGIC 0x4D695272
+#define MIRROR_MAGIC 0x4D695272
 
 /*
  * The on-disk version of the metadata.
  */
-#घोषणा MIRROR_DISK_VERSION 2
-#घोषणा LOG_OFFSET 2
+#define MIRROR_DISK_VERSION 2
+#define LOG_OFFSET 2
 
-काष्ठा log_header_disk अणु
+struct log_header_disk {
 	__le32 magic;
 
 	/*
@@ -207,203 +206,203 @@ EXPORT_SYMBOL(dm_dirty_log_destroy);
 	 */
 	__le32 version;
 	__le64 nr_regions;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा log_header_core अणु
-	uपूर्णांक32_t magic;
-	uपूर्णांक32_t version;
-	uपूर्णांक64_t nr_regions;
-पूर्ण;
+struct log_header_core {
+	uint32_t magic;
+	uint32_t version;
+	uint64_t nr_regions;
+};
 
-काष्ठा log_c अणु
-	काष्ठा dm_target *ti;
-	पूर्णांक touched_dirtied;
-	पूर्णांक touched_cleaned;
-	पूर्णांक flush_failed;
-	uपूर्णांक32_t region_size;
-	अचिन्हित पूर्णांक region_count;
+struct log_c {
+	struct dm_target *ti;
+	int touched_dirtied;
+	int touched_cleaned;
+	int flush_failed;
+	uint32_t region_size;
+	unsigned int region_count;
 	region_t sync_count;
 
-	अचिन्हित bitset_uपूर्णांक32_count;
-	uपूर्णांक32_t *clean_bits;
-	uपूर्णांक32_t *sync_bits;
-	uपूर्णांक32_t *recovering_bits;	/* FIXME: this seems excessive */
+	unsigned bitset_uint32_count;
+	uint32_t *clean_bits;
+	uint32_t *sync_bits;
+	uint32_t *recovering_bits;	/* FIXME: this seems excessive */
 
-	पूर्णांक sync_search;
+	int sync_search;
 
 	/* Resync flag */
-	क्रमागत sync अणु
-		DEFAULTSYNC,	/* Synchronize अगर necessary */
-		NOSYNC,		/* Devices known to be alपढ़ोy in sync */
+	enum sync {
+		DEFAULTSYNC,	/* Synchronize if necessary */
+		NOSYNC,		/* Devices known to be already in sync */
 		FORCESYNC,	/* Force a sync to happen */
-	पूर्ण sync;
+	} sync;
 
-	काष्ठा dm_io_request io_req;
+	struct dm_io_request io_req;
 
 	/*
 	 * Disk log fields
 	 */
-	पूर्णांक log_dev_failed;
-	पूर्णांक log_dev_flush_failed;
-	काष्ठा dm_dev *log_dev;
-	काष्ठा log_header_core header;
+	int log_dev_failed;
+	int log_dev_flush_failed;
+	struct dm_dev *log_dev;
+	struct log_header_core header;
 
-	काष्ठा dm_io_region header_location;
-	काष्ठा log_header_disk *disk_header;
-पूर्ण;
+	struct dm_io_region header_location;
+	struct log_header_disk *disk_header;
+};
 
 /*
- * The touched member needs to be updated every समय we access
+ * The touched member needs to be updated every time we access
  * one of the bitsets.
  */
-अटल अंतरभूत पूर्णांक log_test_bit(uपूर्णांक32_t *bs, अचिन्हित bit)
-अणु
-	वापस test_bit_le(bit, bs) ? 1 : 0;
-पूर्ण
+static inline int log_test_bit(uint32_t *bs, unsigned bit)
+{
+	return test_bit_le(bit, bs) ? 1 : 0;
+}
 
-अटल अंतरभूत व्योम log_set_bit(काष्ठा log_c *l,
-			       uपूर्णांक32_t *bs, अचिन्हित bit)
-अणु
+static inline void log_set_bit(struct log_c *l,
+			       uint32_t *bs, unsigned bit)
+{
 	__set_bit_le(bit, bs);
 	l->touched_cleaned = 1;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम log_clear_bit(काष्ठा log_c *l,
-				 uपूर्णांक32_t *bs, अचिन्हित bit)
-अणु
+static inline void log_clear_bit(struct log_c *l,
+				 uint32_t *bs, unsigned bit)
+{
 	__clear_bit_le(bit, bs);
 	l->touched_dirtied = 1;
-पूर्ण
+}
 
 /*----------------------------------------------------------------
  * Header IO
  *--------------------------------------------------------------*/
-अटल व्योम header_to_disk(काष्ठा log_header_core *core, काष्ठा log_header_disk *disk)
-अणु
+static void header_to_disk(struct log_header_core *core, struct log_header_disk *disk)
+{
 	disk->magic = cpu_to_le32(core->magic);
 	disk->version = cpu_to_le32(core->version);
 	disk->nr_regions = cpu_to_le64(core->nr_regions);
-पूर्ण
+}
 
-अटल व्योम header_from_disk(काष्ठा log_header_core *core, काष्ठा log_header_disk *disk)
-अणु
+static void header_from_disk(struct log_header_core *core, struct log_header_disk *disk)
+{
 	core->magic = le32_to_cpu(disk->magic);
 	core->version = le32_to_cpu(disk->version);
 	core->nr_regions = le64_to_cpu(disk->nr_regions);
-पूर्ण
+}
 
-अटल पूर्णांक rw_header(काष्ठा log_c *lc, पूर्णांक op)
-अणु
+static int rw_header(struct log_c *lc, int op)
+{
 	lc->io_req.bi_op = op;
 	lc->io_req.bi_op_flags = 0;
 
-	वापस dm_io(&lc->io_req, 1, &lc->header_location, शून्य);
-पूर्ण
+	return dm_io(&lc->io_req, 1, &lc->header_location, NULL);
+}
 
-अटल पूर्णांक flush_header(काष्ठा log_c *lc)
-अणु
-	काष्ठा dm_io_region null_location = अणु
+static int flush_header(struct log_c *lc)
+{
+	struct dm_io_region null_location = {
 		.bdev = lc->header_location.bdev,
 		.sector = 0,
 		.count = 0,
-	पूर्ण;
+	};
 
 	lc->io_req.bi_op = REQ_OP_WRITE;
 	lc->io_req.bi_op_flags = REQ_PREFLUSH;
 
-	वापस dm_io(&lc->io_req, 1, &null_location, शून्य);
-पूर्ण
+	return dm_io(&lc->io_req, 1, &null_location, NULL);
+}
 
-अटल पूर्णांक पढ़ो_header(काष्ठा log_c *log)
-अणु
-	पूर्णांक r;
+static int read_header(struct log_c *log)
+{
+	int r;
 
 	r = rw_header(log, REQ_OP_READ);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	header_from_disk(&log->header, log->disk_header);
 
 	/* New log required? */
-	अगर (log->sync != DEFAULTSYNC || log->header.magic != MIRROR_MAGIC) अणु
+	if (log->sync != DEFAULTSYNC || log->header.magic != MIRROR_MAGIC) {
 		log->header.magic = MIRROR_MAGIC;
 		log->header.version = MIRROR_DISK_VERSION;
 		log->header.nr_regions = 0;
-	पूर्ण
+	}
 
-#अगर_घोषित __LITTLE_ENDIAN
-	अगर (log->header.version == 1)
+#ifdef __LITTLE_ENDIAN
+	if (log->header.version == 1)
 		log->header.version = 2;
-#पूर्ण_अगर
+#endif
 
-	अगर (log->header.version != MIRROR_DISK_VERSION) अणु
+	if (log->header.version != MIRROR_DISK_VERSION) {
 		DMWARN("incompatible disk log version");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक _check_region_size(काष्ठा dm_target *ti, uपूर्णांक32_t region_size)
-अणु
-	अगर (region_size < 2 || region_size > ti->len)
-		वापस 0;
+static int _check_region_size(struct dm_target *ti, uint32_t region_size)
+{
+	if (region_size < 2 || region_size > ti->len)
+		return 0;
 
-	अगर (!is_घातer_of_2(region_size))
-		वापस 0;
+	if (!is_power_of_2(region_size))
+		return 0;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /*----------------------------------------------------------------
- * core log स्थिरructor/deकाष्ठाor
+ * core log constructor/destructor
  *
  * argv contains region_size followed optionally by [no]sync
  *--------------------------------------------------------------*/
-#घोषणा BYTE_SHIFT 3
-अटल पूर्णांक create_log_context(काष्ठा dm_dirty_log *log, काष्ठा dm_target *ti,
-			      अचिन्हित पूर्णांक argc, अक्षर **argv,
-			      काष्ठा dm_dev *dev)
-अणु
-	क्रमागत sync sync = DEFAULTSYNC;
+#define BYTE_SHIFT 3
+static int create_log_context(struct dm_dirty_log *log, struct dm_target *ti,
+			      unsigned int argc, char **argv,
+			      struct dm_dev *dev)
+{
+	enum sync sync = DEFAULTSYNC;
 
-	काष्ठा log_c *lc;
-	uपूर्णांक32_t region_size;
-	अचिन्हित पूर्णांक region_count;
-	माप_प्रकार bitset_size, buf_size;
-	पूर्णांक r;
-	अक्षर dummy;
+	struct log_c *lc;
+	uint32_t region_size;
+	unsigned int region_count;
+	size_t bitset_size, buf_size;
+	int r;
+	char dummy;
 
-	अगर (argc < 1 || argc > 2) अणु
+	if (argc < 1 || argc > 2) {
 		DMWARN("wrong number of arguments to dirty region log");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (argc > 1) अणु
-		अगर (!म_भेद(argv[1], "sync"))
+	if (argc > 1) {
+		if (!strcmp(argv[1], "sync"))
 			sync = FORCESYNC;
-		अन्यथा अगर (!म_भेद(argv[1], "nosync"))
+		else if (!strcmp(argv[1], "nosync"))
 			sync = NOSYNC;
-		अन्यथा अणु
+		else {
 			DMWARN("unrecognised sync argument to "
 			       "dirty region log: %s", argv[1]);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	अगर (माला_पूछो(argv[0], "%u%c", &region_size, &dummy) != 1 ||
-	    !_check_region_size(ti, region_size)) अणु
+	if (sscanf(argv[0], "%u%c", &region_size, &dummy) != 1 ||
+	    !_check_region_size(ti, region_size)) {
 		DMWARN("invalid region size %s", argv[0]);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	region_count = dm_sector_भाग_up(ti->len, region_size);
+	region_count = dm_sector_div_up(ti->len, region_size);
 
-	lc = kदो_स्मृति(माप(*lc), GFP_KERNEL);
-	अगर (!lc) अणु
+	lc = kmalloc(sizeof(*lc), GFP_KERNEL);
+	if (!lc) {
 		DMWARN("couldn't allocate core log");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	lc->ti = ti;
 	lc->touched_dirtied = 0;
@@ -417,23 +416,23 @@ EXPORT_SYMBOL(dm_dirty_log_destroy);
 	 * Work out how many "unsigned long"s we need to hold the bitset.
 	 */
 	bitset_size = dm_round_up(region_count,
-				  माप(*lc->clean_bits) << BYTE_SHIFT);
+				  sizeof(*lc->clean_bits) << BYTE_SHIFT);
 	bitset_size >>= BYTE_SHIFT;
 
-	lc->bitset_uपूर्णांक32_count = bitset_size / माप(*lc->clean_bits);
+	lc->bitset_uint32_count = bitset_size / sizeof(*lc->clean_bits);
 
 	/*
 	 * Disk log?
 	 */
-	अगर (!dev) अणु
-		lc->clean_bits = vदो_स्मृति(bitset_size);
-		अगर (!lc->clean_bits) अणु
+	if (!dev) {
+		lc->clean_bits = vmalloc(bitset_size);
+		if (!lc->clean_bits) {
 			DMWARN("couldn't allocate clean bitset");
-			kमुक्त(lc);
-			वापस -ENOMEM;
-		पूर्ण
-		lc->disk_header = शून्य;
-	पूर्ण अन्यथा अणु
+			kfree(lc);
+			return -ENOMEM;
+		}
+		lc->disk_header = NULL;
+	} else {
 		lc->log_dev = dev;
 		lc->log_dev_failed = 0;
 		lc->log_dev_flush_failed = 0;
@@ -448,182 +447,182 @@ EXPORT_SYMBOL(dm_dirty_log_destroy);
 				bdev_logical_block_size(lc->header_location.
 							    bdev));
 
-		अगर (buf_size > i_size_पढ़ो(dev->bdev->bd_inode)) अणु
+		if (buf_size > i_size_read(dev->bdev->bd_inode)) {
 			DMWARN("log device %s too small: need %llu bytes",
-				dev->name, (अचिन्हित दीर्घ दीर्घ)buf_size);
-			kमुक्त(lc);
-			वापस -EINVAL;
-		पूर्ण
+				dev->name, (unsigned long long)buf_size);
+			kfree(lc);
+			return -EINVAL;
+		}
 
 		lc->header_location.count = buf_size >> SECTOR_SHIFT;
 
 		lc->io_req.mem.type = DM_IO_VMA;
-		lc->io_req.notअगरy.fn = शून्य;
+		lc->io_req.notify.fn = NULL;
 		lc->io_req.client = dm_io_client_create();
-		अगर (IS_ERR(lc->io_req.client)) अणु
+		if (IS_ERR(lc->io_req.client)) {
 			r = PTR_ERR(lc->io_req.client);
 			DMWARN("couldn't allocate disk io client");
-			kमुक्त(lc);
-			वापस r;
-		पूर्ण
+			kfree(lc);
+			return r;
+		}
 
-		lc->disk_header = vदो_स्मृति(buf_size);
-		अगर (!lc->disk_header) अणु
+		lc->disk_header = vmalloc(buf_size);
+		if (!lc->disk_header) {
 			DMWARN("couldn't allocate disk log buffer");
 			dm_io_client_destroy(lc->io_req.client);
-			kमुक्त(lc);
-			वापस -ENOMEM;
-		पूर्ण
+			kfree(lc);
+			return -ENOMEM;
+		}
 
 		lc->io_req.mem.ptr.vma = lc->disk_header;
-		lc->clean_bits = (व्योम *)lc->disk_header +
+		lc->clean_bits = (void *)lc->disk_header +
 				 (LOG_OFFSET << SECTOR_SHIFT);
-	पूर्ण
+	}
 
-	स_रखो(lc->clean_bits, -1, bitset_size);
+	memset(lc->clean_bits, -1, bitset_size);
 
-	lc->sync_bits = vदो_स्मृति(bitset_size);
-	अगर (!lc->sync_bits) अणु
+	lc->sync_bits = vmalloc(bitset_size);
+	if (!lc->sync_bits) {
 		DMWARN("couldn't allocate sync bitset");
-		अगर (!dev)
-			vमुक्त(lc->clean_bits);
-		अन्यथा
+		if (!dev)
+			vfree(lc->clean_bits);
+		else
 			dm_io_client_destroy(lc->io_req.client);
-		vमुक्त(lc->disk_header);
-		kमुक्त(lc);
-		वापस -ENOMEM;
-	पूर्ण
-	स_रखो(lc->sync_bits, (sync == NOSYNC) ? -1 : 0, bitset_size);
+		vfree(lc->disk_header);
+		kfree(lc);
+		return -ENOMEM;
+	}
+	memset(lc->sync_bits, (sync == NOSYNC) ? -1 : 0, bitset_size);
 	lc->sync_count = (sync == NOSYNC) ? region_count : 0;
 
 	lc->recovering_bits = vzalloc(bitset_size);
-	अगर (!lc->recovering_bits) अणु
+	if (!lc->recovering_bits) {
 		DMWARN("couldn't allocate sync bitset");
-		vमुक्त(lc->sync_bits);
-		अगर (!dev)
-			vमुक्त(lc->clean_bits);
-		अन्यथा
+		vfree(lc->sync_bits);
+		if (!dev)
+			vfree(lc->clean_bits);
+		else
 			dm_io_client_destroy(lc->io_req.client);
-		vमुक्त(lc->disk_header);
-		kमुक्त(lc);
-		वापस -ENOMEM;
-	पूर्ण
+		vfree(lc->disk_header);
+		kfree(lc);
+		return -ENOMEM;
+	}
 	lc->sync_search = 0;
 	log->context = lc;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक core_ctr(काष्ठा dm_dirty_log *log, काष्ठा dm_target *ti,
-		    अचिन्हित पूर्णांक argc, अक्षर **argv)
-अणु
-	वापस create_log_context(log, ti, argc, argv, शून्य);
-पूर्ण
+static int core_ctr(struct dm_dirty_log *log, struct dm_target *ti,
+		    unsigned int argc, char **argv)
+{
+	return create_log_context(log, ti, argc, argv, NULL);
+}
 
-अटल व्योम destroy_log_context(काष्ठा log_c *lc)
-अणु
-	vमुक्त(lc->sync_bits);
-	vमुक्त(lc->recovering_bits);
-	kमुक्त(lc);
-पूर्ण
+static void destroy_log_context(struct log_c *lc)
+{
+	vfree(lc->sync_bits);
+	vfree(lc->recovering_bits);
+	kfree(lc);
+}
 
-अटल व्योम core_dtr(काष्ठा dm_dirty_log *log)
-अणु
-	काष्ठा log_c *lc = (काष्ठा log_c *) log->context;
+static void core_dtr(struct dm_dirty_log *log)
+{
+	struct log_c *lc = (struct log_c *) log->context;
 
-	vमुक्त(lc->clean_bits);
+	vfree(lc->clean_bits);
 	destroy_log_context(lc);
-पूर्ण
+}
 
 /*----------------------------------------------------------------
- * disk log स्थिरructor/deकाष्ठाor
+ * disk log constructor/destructor
  *
  * argv contains log_device region_size followed optionally by [no]sync
  *--------------------------------------------------------------*/
-अटल पूर्णांक disk_ctr(काष्ठा dm_dirty_log *log, काष्ठा dm_target *ti,
-		    अचिन्हित पूर्णांक argc, अक्षर **argv)
-अणु
-	पूर्णांक r;
-	काष्ठा dm_dev *dev;
+static int disk_ctr(struct dm_dirty_log *log, struct dm_target *ti,
+		    unsigned int argc, char **argv)
+{
+	int r;
+	struct dm_dev *dev;
 
-	अगर (argc < 2 || argc > 3) अणु
+	if (argc < 2 || argc > 3) {
 		DMWARN("wrong number of arguments to disk dirty region log");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	r = dm_get_device(ti, argv[0], dm_table_get_mode(ti->table), &dev);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	r = create_log_context(log, ti, argc - 1, argv + 1, dev);
-	अगर (r) अणु
+	if (r) {
 		dm_put_device(ti, dev);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम disk_dtr(काष्ठा dm_dirty_log *log)
-अणु
-	काष्ठा log_c *lc = (काष्ठा log_c *) log->context;
+static void disk_dtr(struct dm_dirty_log *log)
+{
+	struct log_c *lc = (struct log_c *) log->context;
 
 	dm_put_device(lc->ti, lc->log_dev);
-	vमुक्त(lc->disk_header);
+	vfree(lc->disk_header);
 	dm_io_client_destroy(lc->io_req.client);
 	destroy_log_context(lc);
-पूर्ण
+}
 
-अटल व्योम fail_log_device(काष्ठा log_c *lc)
-अणु
-	अगर (lc->log_dev_failed)
-		वापस;
+static void fail_log_device(struct log_c *lc)
+{
+	if (lc->log_dev_failed)
+		return;
 
 	lc->log_dev_failed = 1;
 	dm_table_event(lc->ti->table);
-पूर्ण
+}
 
-अटल पूर्णांक disk_resume(काष्ठा dm_dirty_log *log)
-अणु
-	पूर्णांक r;
-	अचिन्हित i;
-	काष्ठा log_c *lc = (काष्ठा log_c *) log->context;
-	माप_प्रकार size = lc->bitset_uपूर्णांक32_count * माप(uपूर्णांक32_t);
+static int disk_resume(struct dm_dirty_log *log)
+{
+	int r;
+	unsigned i;
+	struct log_c *lc = (struct log_c *) log->context;
+	size_t size = lc->bitset_uint32_count * sizeof(uint32_t);
 
-	/* पढ़ो the disk header */
-	r = पढ़ो_header(lc);
-	अगर (r) अणु
+	/* read the disk header */
+	r = read_header(lc);
+	if (r) {
 		DMWARN("%s: Failed to read header on dirty region log device",
 		       lc->log_dev->name);
 		fail_log_device(lc);
 		/*
-		 * If the log device cannot be पढ़ो, we must assume
-		 * all regions are out-of-sync.  If we simply वापस
+		 * If the log device cannot be read, we must assume
+		 * all regions are out-of-sync.  If we simply return
 		 * here, the state will be uninitialized and could
-		 * lead us to वापस 'in-sync' status क्रम regions
+		 * lead us to return 'in-sync' status for regions
 		 * that are actually 'out-of-sync'.
 		 */
 		lc->header.nr_regions = 0;
-	पूर्ण
+	}
 
 	/* set or clear any new bits -- device has grown */
-	अगर (lc->sync == NOSYNC)
-		क्रम (i = lc->header.nr_regions; i < lc->region_count; i++)
+	if (lc->sync == NOSYNC)
+		for (i = lc->header.nr_regions; i < lc->region_count; i++)
 			/* FIXME: amazingly inefficient */
 			log_set_bit(lc, lc->clean_bits, i);
-	अन्यथा
-		क्रम (i = lc->header.nr_regions; i < lc->region_count; i++)
+	else
+		for (i = lc->header.nr_regions; i < lc->region_count; i++)
 			/* FIXME: amazingly inefficient */
 			log_clear_bit(lc, lc->clean_bits, i);
 
 	/* clear any old bits -- device has shrunk */
-	क्रम (i = lc->region_count; i % (माप(*lc->clean_bits) << BYTE_SHIFT); i++)
+	for (i = lc->region_count; i % (sizeof(*lc->clean_bits) << BYTE_SHIFT); i++)
 		log_clear_bit(lc, lc->clean_bits, i);
 
 	/* copy clean across to sync */
-	स_नकल(lc->sync_bits, lc->clean_bits, size);
+	memcpy(lc->sync_bits, lc->clean_bits, size);
 	lc->sync_count = memweight(lc->clean_bits,
-				lc->bitset_uपूर्णांक32_count * माप(uपूर्णांक32_t));
+				lc->bitset_uint32_count * sizeof(uint32_t));
 	lc->sync_search = 0;
 
 	/* set the correct number of regions in the header */
@@ -631,199 +630,199 @@ EXPORT_SYMBOL(dm_dirty_log_destroy);
 
 	header_to_disk(&lc->header, lc->disk_header);
 
-	/* ग_लिखो the new header */
+	/* write the new header */
 	r = rw_header(lc, REQ_OP_WRITE);
-	अगर (!r) अणु
+	if (!r) {
 		r = flush_header(lc);
-		अगर (r)
+		if (r)
 			lc->log_dev_flush_failed = 1;
-	पूर्ण
-	अगर (r) अणु
+	}
+	if (r) {
 		DMWARN("%s: Failed to write header on dirty region log device",
 		       lc->log_dev->name);
 		fail_log_device(lc);
-	पूर्ण
+	}
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल uपूर्णांक32_t core_get_region_size(काष्ठा dm_dirty_log *log)
-अणु
-	काष्ठा log_c *lc = (काष्ठा log_c *) log->context;
-	वापस lc->region_size;
-पूर्ण
+static uint32_t core_get_region_size(struct dm_dirty_log *log)
+{
+	struct log_c *lc = (struct log_c *) log->context;
+	return lc->region_size;
+}
 
-अटल पूर्णांक core_resume(काष्ठा dm_dirty_log *log)
-अणु
-	काष्ठा log_c *lc = (काष्ठा log_c *) log->context;
+static int core_resume(struct dm_dirty_log *log)
+{
+	struct log_c *lc = (struct log_c *) log->context;
 	lc->sync_search = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक core_is_clean(काष्ठा dm_dirty_log *log, region_t region)
-अणु
-	काष्ठा log_c *lc = (काष्ठा log_c *) log->context;
-	वापस log_test_bit(lc->clean_bits, region);
-पूर्ण
+static int core_is_clean(struct dm_dirty_log *log, region_t region)
+{
+	struct log_c *lc = (struct log_c *) log->context;
+	return log_test_bit(lc->clean_bits, region);
+}
 
-अटल पूर्णांक core_in_sync(काष्ठा dm_dirty_log *log, region_t region, पूर्णांक block)
-अणु
-	काष्ठा log_c *lc = (काष्ठा log_c *) log->context;
-	वापस log_test_bit(lc->sync_bits, region);
-पूर्ण
+static int core_in_sync(struct dm_dirty_log *log, region_t region, int block)
+{
+	struct log_c *lc = (struct log_c *) log->context;
+	return log_test_bit(lc->sync_bits, region);
+}
 
-अटल पूर्णांक core_flush(काष्ठा dm_dirty_log *log)
-अणु
+static int core_flush(struct dm_dirty_log *log)
+{
 	/* no op */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक disk_flush(काष्ठा dm_dirty_log *log)
-अणु
-	पूर्णांक r, i;
-	काष्ठा log_c *lc = log->context;
+static int disk_flush(struct dm_dirty_log *log)
+{
+	int r, i;
+	struct log_c *lc = log->context;
 
-	/* only ग_लिखो अगर the log has changed */
-	अगर (!lc->touched_cleaned && !lc->touched_dirtied)
-		वापस 0;
+	/* only write if the log has changed */
+	if (!lc->touched_cleaned && !lc->touched_dirtied)
+		return 0;
 
-	अगर (lc->touched_cleaned && log->flush_callback_fn &&
-	    log->flush_callback_fn(lc->ti)) अणु
+	if (lc->touched_cleaned && log->flush_callback_fn &&
+	    log->flush_callback_fn(lc->ti)) {
 		/*
-		 * At this poपूर्णांक it is impossible to determine which
+		 * At this point it is impossible to determine which
 		 * regions are clean and which are dirty (without
-		 * re-पढ़ोing the log off disk). So mark all of them
+		 * re-reading the log off disk). So mark all of them
 		 * dirty.
 		 */
 		lc->flush_failed = 1;
-		क्रम (i = 0; i < lc->region_count; i++)
+		for (i = 0; i < lc->region_count; i++)
 			log_clear_bit(lc, lc->clean_bits, i);
-	पूर्ण
+	}
 
 	r = rw_header(lc, REQ_OP_WRITE);
-	अगर (r)
+	if (r)
 		fail_log_device(lc);
-	अन्यथा अणु
-		अगर (lc->touched_dirtied) अणु
+	else {
+		if (lc->touched_dirtied) {
 			r = flush_header(lc);
-			अगर (r) अणु
+			if (r) {
 				lc->log_dev_flush_failed = 1;
 				fail_log_device(lc);
-			पूर्ण अन्यथा
+			} else
 				lc->touched_dirtied = 0;
-		पूर्ण
+		}
 		lc->touched_cleaned = 0;
-	पूर्ण
+	}
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल व्योम core_mark_region(काष्ठा dm_dirty_log *log, region_t region)
-अणु
-	काष्ठा log_c *lc = (काष्ठा log_c *) log->context;
+static void core_mark_region(struct dm_dirty_log *log, region_t region)
+{
+	struct log_c *lc = (struct log_c *) log->context;
 	log_clear_bit(lc, lc->clean_bits, region);
-पूर्ण
+}
 
-अटल व्योम core_clear_region(काष्ठा dm_dirty_log *log, region_t region)
-अणु
-	काष्ठा log_c *lc = (काष्ठा log_c *) log->context;
-	अगर (likely(!lc->flush_failed))
+static void core_clear_region(struct dm_dirty_log *log, region_t region)
+{
+	struct log_c *lc = (struct log_c *) log->context;
+	if (likely(!lc->flush_failed))
 		log_set_bit(lc, lc->clean_bits, region);
-पूर्ण
+}
 
-अटल पूर्णांक core_get_resync_work(काष्ठा dm_dirty_log *log, region_t *region)
-अणु
-	काष्ठा log_c *lc = (काष्ठा log_c *) log->context;
+static int core_get_resync_work(struct dm_dirty_log *log, region_t *region)
+{
+	struct log_c *lc = (struct log_c *) log->context;
 
-	अगर (lc->sync_search >= lc->region_count)
-		वापस 0;
+	if (lc->sync_search >= lc->region_count)
+		return 0;
 
-	करो अणु
+	do {
 		*region = find_next_zero_bit_le(lc->sync_bits,
 					     lc->region_count,
 					     lc->sync_search);
 		lc->sync_search = *region + 1;
 
-		अगर (*region >= lc->region_count)
-			वापस 0;
+		if (*region >= lc->region_count)
+			return 0;
 
-	पूर्ण जबतक (log_test_bit(lc->recovering_bits, *region));
+	} while (log_test_bit(lc->recovering_bits, *region));
 
 	log_set_bit(lc, lc->recovering_bits, *region);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल व्योम core_set_region_sync(काष्ठा dm_dirty_log *log, region_t region,
-				 पूर्णांक in_sync)
-अणु
-	काष्ठा log_c *lc = (काष्ठा log_c *) log->context;
+static void core_set_region_sync(struct dm_dirty_log *log, region_t region,
+				 int in_sync)
+{
+	struct log_c *lc = (struct log_c *) log->context;
 
 	log_clear_bit(lc, lc->recovering_bits, region);
-	अगर (in_sync) अणु
+	if (in_sync) {
 		log_set_bit(lc, lc->sync_bits, region);
                 lc->sync_count++;
-        पूर्ण अन्यथा अगर (log_test_bit(lc->sync_bits, region)) अणु
+        } else if (log_test_bit(lc->sync_bits, region)) {
 		lc->sync_count--;
 		log_clear_bit(lc, lc->sync_bits, region);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल region_t core_get_sync_count(काष्ठा dm_dirty_log *log)
-अणु
-        काष्ठा log_c *lc = (काष्ठा log_c *) log->context;
+static region_t core_get_sync_count(struct dm_dirty_log *log)
+{
+        struct log_c *lc = (struct log_c *) log->context;
 
-        वापस lc->sync_count;
-पूर्ण
+        return lc->sync_count;
+}
 
-#घोषणा	DMEMIT_SYNC \
-	अगर (lc->sync != DEFAULTSYNC) \
+#define	DMEMIT_SYNC \
+	if (lc->sync != DEFAULTSYNC) \
 		DMEMIT("%ssync ", lc->sync == NOSYNC ? "no" : "")
 
-अटल पूर्णांक core_status(काष्ठा dm_dirty_log *log, status_type_t status,
-		       अक्षर *result, अचिन्हित पूर्णांक maxlen)
-अणु
-	पूर्णांक sz = 0;
-	काष्ठा log_c *lc = log->context;
+static int core_status(struct dm_dirty_log *log, status_type_t status,
+		       char *result, unsigned int maxlen)
+{
+	int sz = 0;
+	struct log_c *lc = log->context;
 
-	चयन(status) अणु
-	हाल STATUSTYPE_INFO:
+	switch(status) {
+	case STATUSTYPE_INFO:
 		DMEMIT("1 %s", log->type->name);
-		अवरोध;
+		break;
 
-	हाल STATUSTYPE_TABLE:
+	case STATUSTYPE_TABLE:
 		DMEMIT("%s %u %u ", log->type->name,
 		       lc->sync == DEFAULTSYNC ? 1 : 2, lc->region_size);
 		DMEMIT_SYNC;
-	पूर्ण
+	}
 
-	वापस sz;
-पूर्ण
+	return sz;
+}
 
-अटल पूर्णांक disk_status(काष्ठा dm_dirty_log *log, status_type_t status,
-		       अक्षर *result, अचिन्हित पूर्णांक maxlen)
-अणु
-	पूर्णांक sz = 0;
-	काष्ठा log_c *lc = log->context;
+static int disk_status(struct dm_dirty_log *log, status_type_t status,
+		       char *result, unsigned int maxlen)
+{
+	int sz = 0;
+	struct log_c *lc = log->context;
 
-	चयन(status) अणु
-	हाल STATUSTYPE_INFO:
+	switch(status) {
+	case STATUSTYPE_INFO:
 		DMEMIT("3 %s %s %c", log->type->name, lc->log_dev->name,
 		       lc->log_dev_flush_failed ? 'F' :
 		       lc->log_dev_failed ? 'D' :
 		       'A');
-		अवरोध;
+		break;
 
-	हाल STATUSTYPE_TABLE:
+	case STATUSTYPE_TABLE:
 		DMEMIT("%s %u %s %u ", log->type->name,
 		       lc->sync == DEFAULTSYNC ? 2 : 3, lc->log_dev->name,
 		       lc->region_size);
 		DMEMIT_SYNC;
-	पूर्ण
+	}
 
-	वापस sz;
-पूर्ण
+	return sz;
+}
 
-अटल काष्ठा dm_dirty_log_type _core_type = अणु
+static struct dm_dirty_log_type _core_type = {
 	.name = "core",
 	.module = THIS_MODULE,
 	.ctr = core_ctr,
@@ -839,9 +838,9 @@ EXPORT_SYMBOL(dm_dirty_log_destroy);
 	.set_region_sync = core_set_region_sync,
 	.get_sync_count = core_get_sync_count,
 	.status = core_status,
-पूर्ण;
+};
 
-अटल काष्ठा dm_dirty_log_type _disk_type = अणु
+static struct dm_dirty_log_type _disk_type = {
 	.name = "disk",
 	.module = THIS_MODULE,
 	.ctr = disk_ctr,
@@ -858,33 +857,33 @@ EXPORT_SYMBOL(dm_dirty_log_destroy);
 	.set_region_sync = core_set_region_sync,
 	.get_sync_count = core_get_sync_count,
 	.status = disk_status,
-पूर्ण;
+};
 
-अटल पूर्णांक __init dm_dirty_log_init(व्योम)
-अणु
-	पूर्णांक r;
+static int __init dm_dirty_log_init(void)
+{
+	int r;
 
-	r = dm_dirty_log_type_रेजिस्टर(&_core_type);
-	अगर (r)
+	r = dm_dirty_log_type_register(&_core_type);
+	if (r)
 		DMWARN("couldn't register core log");
 
-	r = dm_dirty_log_type_रेजिस्टर(&_disk_type);
-	अगर (r) अणु
+	r = dm_dirty_log_type_register(&_disk_type);
+	if (r) {
 		DMWARN("couldn't register disk type");
-		dm_dirty_log_type_unरेजिस्टर(&_core_type);
-	पूर्ण
+		dm_dirty_log_type_unregister(&_core_type);
+	}
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल व्योम __निकास dm_dirty_log_निकास(व्योम)
-अणु
-	dm_dirty_log_type_unरेजिस्टर(&_disk_type);
-	dm_dirty_log_type_unरेजिस्टर(&_core_type);
-पूर्ण
+static void __exit dm_dirty_log_exit(void)
+{
+	dm_dirty_log_type_unregister(&_disk_type);
+	dm_dirty_log_type_unregister(&_core_type);
+}
 
 module_init(dm_dirty_log_init);
-module_निकास(dm_dirty_log_निकास);
+module_exit(dm_dirty_log_exit);
 
 MODULE_DESCRIPTION(DM_NAME " dirty region log");
 MODULE_AUTHOR("Joe Thornber, Heinz Mauelshagen <dm-devel@redhat.com>");

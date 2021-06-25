@@ -1,68 +1,67 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  sbs.c - ACPI Smart Battery System Driver ($Revision: 2.0 $)
  *
  *  Copyright (c) 2007 Alexey Starikovskiy <astarikovskiy@suse.de>
- *  Copyright (c) 2005-2007 Vladimir Lebedev <vladimir.p.lebedev@पूर्णांकel.com>
+ *  Copyright (c) 2005-2007 Vladimir Lebedev <vladimir.p.lebedev@intel.com>
  *  Copyright (c) 2005 Rich Townsend <rhdt@bartol.udel.edu>
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/kernel.h>
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/घातer_supply.h>
-#समावेश <linux/platक्रमm_data/x86/apple.h>
-#समावेश <acpi/battery.h>
+#include <linux/acpi.h>
+#include <linux/timer.h>
+#include <linux/jiffies.h>
+#include <linux/delay.h>
+#include <linux/power_supply.h>
+#include <linux/platform_data/x86/apple.h>
+#include <acpi/battery.h>
 
-#समावेश "sbshc.h"
+#include "sbshc.h"
 
-#घोषणा PREFIX "ACPI: "
+#define PREFIX "ACPI: "
 
-#घोषणा ACPI_SBS_CLASS			"sbs"
-#घोषणा ACPI_AC_CLASS			"ac_adapter"
-#घोषणा ACPI_SBS_DEVICE_NAME		"Smart Battery System"
-#घोषणा ACPI_BATTERY_सूची_NAME		"BAT%i"
-#घोषणा ACPI_AC_सूची_NAME		"AC0"
+#define ACPI_SBS_CLASS			"sbs"
+#define ACPI_AC_CLASS			"ac_adapter"
+#define ACPI_SBS_DEVICE_NAME		"Smart Battery System"
+#define ACPI_BATTERY_DIR_NAME		"BAT%i"
+#define ACPI_AC_DIR_NAME		"AC0"
 
-#घोषणा ACPI_SBS_NOTIFY_STATUS		0x80
-#घोषणा ACPI_SBS_NOTIFY_INFO		0x81
+#define ACPI_SBS_NOTIFY_STATUS		0x80
+#define ACPI_SBS_NOTIFY_INFO		0x81
 
 MODULE_AUTHOR("Alexey Starikovskiy <astarikovskiy@suse.de>");
 MODULE_DESCRIPTION("Smart Battery System ACPI interface driver");
 MODULE_LICENSE("GPL");
 
-अटल अचिन्हित पूर्णांक cache_समय = 1000;
-module_param(cache_समय, uपूर्णांक, 0644);
-MODULE_PARM_DESC(cache_समय, "cache time in milliseconds");
+static unsigned int cache_time = 1000;
+module_param(cache_time, uint, 0644);
+MODULE_PARM_DESC(cache_time, "cache time in milliseconds");
 
-#घोषणा MAX_SBS_BAT			4
-#घोषणा ACPI_SBS_BLOCK_MAX		32
+#define MAX_SBS_BAT			4
+#define ACPI_SBS_BLOCK_MAX		32
 
-अटल स्थिर काष्ठा acpi_device_id sbs_device_ids[] = अणु
-	अणु"ACPI0002", 0पूर्ण,
-	अणु"", 0पूर्ण,
-पूर्ण;
+static const struct acpi_device_id sbs_device_ids[] = {
+	{"ACPI0002", 0},
+	{"", 0},
+};
 MODULE_DEVICE_TABLE(acpi, sbs_device_ids);
 
-काष्ठा acpi_battery अणु
-	काष्ठा घातer_supply *bat;
-	काष्ठा घातer_supply_desc bat_desc;
-	काष्ठा acpi_sbs *sbs;
-	अचिन्हित दीर्घ update_समय;
-	अक्षर name[8];
-	अक्षर manufacturer_name[ACPI_SBS_BLOCK_MAX];
-	अक्षर device_name[ACPI_SBS_BLOCK_MAX];
-	अक्षर device_chemistry[ACPI_SBS_BLOCK_MAX];
+struct acpi_battery {
+	struct power_supply *bat;
+	struct power_supply_desc bat_desc;
+	struct acpi_sbs *sbs;
+	unsigned long update_time;
+	char name[8];
+	char manufacturer_name[ACPI_SBS_BLOCK_MAX];
+	char device_name[ACPI_SBS_BLOCK_MAX];
+	char device_chemistry[ACPI_SBS_BLOCK_MAX];
 	u16 alarm_capacity;
-	u16 full_अक्षरge_capacity;
+	u16 full_charge_capacity;
 	u16 design_capacity;
 	u16 design_voltage;
 	u16 serial_number;
@@ -72,181 +71,181 @@ MODULE_DEVICE_TABLE(acpi, sbs_device_ids);
 	s16 rate_now;
 	s16 rate_avg;
 	u16 capacity_now;
-	u16 state_of_अक्षरge;
+	u16 state_of_charge;
 	u16 state;
 	u16 mode;
 	u16 spec;
 	u8 id;
 	u8 present:1;
 	u8 have_sysfs_alarm:1;
-पूर्ण;
+};
 
-#घोषणा to_acpi_battery(x) घातer_supply_get_drvdata(x)
+#define to_acpi_battery(x) power_supply_get_drvdata(x)
 
-काष्ठा acpi_sbs अणु
-	काष्ठा घातer_supply *अक्षरger;
-	काष्ठा acpi_device *device;
-	काष्ठा acpi_smb_hc *hc;
-	काष्ठा mutex lock;
-	काष्ठा acpi_battery battery[MAX_SBS_BAT];
+struct acpi_sbs {
+	struct power_supply *charger;
+	struct acpi_device *device;
+	struct acpi_smb_hc *hc;
+	struct mutex lock;
+	struct acpi_battery battery[MAX_SBS_BAT];
 	u8 batteries_supported:4;
 	u8 manager_present:1;
-	u8 अक्षरger_present:1;
-	u8 अक्षरger_exists:1;
-पूर्ण;
+	u8 charger_present:1;
+	u8 charger_exists:1;
+};
 
-#घोषणा to_acpi_sbs(x) घातer_supply_get_drvdata(x)
+#define to_acpi_sbs(x) power_supply_get_drvdata(x)
 
-अटल पूर्णांक acpi_sbs_हटाओ(काष्ठा acpi_device *device);
-अटल पूर्णांक acpi_battery_get_state(काष्ठा acpi_battery *battery);
+static int acpi_sbs_remove(struct acpi_device *device);
+static int acpi_battery_get_state(struct acpi_battery *battery);
 
-अटल अंतरभूत पूर्णांक battery_scale(पूर्णांक log)
-अणु
-	पूर्णांक scale = 1;
-	जबतक (log--)
+static inline int battery_scale(int log)
+{
+	int scale = 1;
+	while (log--)
 		scale *= 10;
-	वापस scale;
-पूर्ण
+	return scale;
+}
 
-अटल अंतरभूत पूर्णांक acpi_battery_vscale(काष्ठा acpi_battery *battery)
-अणु
-	वापस battery_scale((battery->spec & 0x0f00) >> 8);
-पूर्ण
+static inline int acpi_battery_vscale(struct acpi_battery *battery)
+{
+	return battery_scale((battery->spec & 0x0f00) >> 8);
+}
 
-अटल अंतरभूत पूर्णांक acpi_battery_ipscale(काष्ठा acpi_battery *battery)
-अणु
-	वापस battery_scale((battery->spec & 0xf000) >> 12);
-पूर्ण
+static inline int acpi_battery_ipscale(struct acpi_battery *battery)
+{
+	return battery_scale((battery->spec & 0xf000) >> 12);
+}
 
-अटल अंतरभूत पूर्णांक acpi_battery_mode(काष्ठा acpi_battery *battery)
-अणु
-	वापस (battery->mode & 0x8000);
-पूर्ण
+static inline int acpi_battery_mode(struct acpi_battery *battery)
+{
+	return (battery->mode & 0x8000);
+}
 
-अटल अंतरभूत पूर्णांक acpi_battery_scale(काष्ठा acpi_battery *battery)
-अणु
-	वापस (acpi_battery_mode(battery) ? 10 : 1) *
+static inline int acpi_battery_scale(struct acpi_battery *battery)
+{
+	return (acpi_battery_mode(battery) ? 10 : 1) *
 	    acpi_battery_ipscale(battery);
-पूर्ण
+}
 
-अटल पूर्णांक sbs_get_ac_property(काष्ठा घातer_supply *psy,
-			       क्रमागत घातer_supply_property psp,
-			       जोड़ घातer_supply_propval *val)
-अणु
-	काष्ठा acpi_sbs *sbs = to_acpi_sbs(psy);
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_ONLINE:
-		val->पूर्णांकval = sbs->अक्षरger_present;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+static int sbs_get_ac_property(struct power_supply *psy,
+			       enum power_supply_property psp,
+			       union power_supply_propval *val)
+{
+	struct acpi_sbs *sbs = to_acpi_sbs(psy);
+	switch (psp) {
+	case POWER_SUPPLY_PROP_ONLINE:
+		val->intval = sbs->charger_present;
+		break;
+	default:
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल पूर्णांक acpi_battery_technology(काष्ठा acpi_battery *battery)
-अणु
-	अगर (!strहालcmp("NiCd", battery->device_chemistry))
-		वापस POWER_SUPPLY_TECHNOLOGY_NiCd;
-	अगर (!strहालcmp("NiMH", battery->device_chemistry))
-		वापस POWER_SUPPLY_TECHNOLOGY_NiMH;
-	अगर (!strहालcmp("LION", battery->device_chemistry))
-		वापस POWER_SUPPLY_TECHNOLOGY_LION;
-	अगर (!strहालcmp("LiP", battery->device_chemistry))
-		वापस POWER_SUPPLY_TECHNOLOGY_LIPO;
-	वापस POWER_SUPPLY_TECHNOLOGY_UNKNOWN;
-पूर्ण
+static int acpi_battery_technology(struct acpi_battery *battery)
+{
+	if (!strcasecmp("NiCd", battery->device_chemistry))
+		return POWER_SUPPLY_TECHNOLOGY_NiCd;
+	if (!strcasecmp("NiMH", battery->device_chemistry))
+		return POWER_SUPPLY_TECHNOLOGY_NiMH;
+	if (!strcasecmp("LION", battery->device_chemistry))
+		return POWER_SUPPLY_TECHNOLOGY_LION;
+	if (!strcasecmp("LiP", battery->device_chemistry))
+		return POWER_SUPPLY_TECHNOLOGY_LIPO;
+	return POWER_SUPPLY_TECHNOLOGY_UNKNOWN;
+}
 
-अटल पूर्णांक acpi_sbs_battery_get_property(काष्ठा घातer_supply *psy,
-					 क्रमागत घातer_supply_property psp,
-					 जोड़ घातer_supply_propval *val)
-अणु
-	काष्ठा acpi_battery *battery = to_acpi_battery(psy);
+static int acpi_sbs_battery_get_property(struct power_supply *psy,
+					 enum power_supply_property psp,
+					 union power_supply_propval *val)
+{
+	struct acpi_battery *battery = to_acpi_battery(psy);
 
-	अगर ((!battery->present) && psp != POWER_SUPPLY_PROP_PRESENT)
-		वापस -ENODEV;
+	if ((!battery->present) && psp != POWER_SUPPLY_PROP_PRESENT)
+		return -ENODEV;
 
 	acpi_battery_get_state(battery);
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_STATUS:
-		अगर (battery->rate_now < 0)
-			val->पूर्णांकval = POWER_SUPPLY_STATUS_DISCHARGING;
-		अन्यथा अगर (battery->rate_now > 0)
-			val->पूर्णांकval = POWER_SUPPLY_STATUS_CHARGING;
-		अन्यथा
-			val->पूर्णांकval = POWER_SUPPLY_STATUS_FULL;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_PRESENT:
-		val->पूर्णांकval = battery->present;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_TECHNOLOGY:
-		val->पूर्णांकval = acpi_battery_technology(battery);
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_CYCLE_COUNT:
-		val->पूर्णांकval = battery->cycle_count;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_VOLTAGE_MIN_DESIGN:
-		val->पूर्णांकval = battery->design_voltage *
+	switch (psp) {
+	case POWER_SUPPLY_PROP_STATUS:
+		if (battery->rate_now < 0)
+			val->intval = POWER_SUPPLY_STATUS_DISCHARGING;
+		else if (battery->rate_now > 0)
+			val->intval = POWER_SUPPLY_STATUS_CHARGING;
+		else
+			val->intval = POWER_SUPPLY_STATUS_FULL;
+		break;
+	case POWER_SUPPLY_PROP_PRESENT:
+		val->intval = battery->present;
+		break;
+	case POWER_SUPPLY_PROP_TECHNOLOGY:
+		val->intval = acpi_battery_technology(battery);
+		break;
+	case POWER_SUPPLY_PROP_CYCLE_COUNT:
+		val->intval = battery->cycle_count;
+		break;
+	case POWER_SUPPLY_PROP_VOLTAGE_MIN_DESIGN:
+		val->intval = battery->design_voltage *
 			acpi_battery_vscale(battery) * 1000;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_VOLTAGE_NOW:
-		val->पूर्णांकval = battery->voltage_now *
+		break;
+	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
+		val->intval = battery->voltage_now *
 				acpi_battery_vscale(battery) * 1000;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_CURRENT_NOW:
-	हाल POWER_SUPPLY_PROP_POWER_NOW:
-		val->पूर्णांकval = असल(battery->rate_now) *
+		break;
+	case POWER_SUPPLY_PROP_CURRENT_NOW:
+	case POWER_SUPPLY_PROP_POWER_NOW:
+		val->intval = abs(battery->rate_now) *
 				acpi_battery_ipscale(battery) * 1000;
-		val->पूर्णांकval *= (acpi_battery_mode(battery)) ?
+		val->intval *= (acpi_battery_mode(battery)) ?
 				(battery->voltage_now *
 				acpi_battery_vscale(battery) / 1000) : 1;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_CURRENT_AVG:
-	हाल POWER_SUPPLY_PROP_POWER_AVG:
-		val->पूर्णांकval = असल(battery->rate_avg) *
+		break;
+	case POWER_SUPPLY_PROP_CURRENT_AVG:
+	case POWER_SUPPLY_PROP_POWER_AVG:
+		val->intval = abs(battery->rate_avg) *
 				acpi_battery_ipscale(battery) * 1000;
-		val->पूर्णांकval *= (acpi_battery_mode(battery)) ?
+		val->intval *= (acpi_battery_mode(battery)) ?
 				(battery->voltage_now *
 				acpi_battery_vscale(battery) / 1000) : 1;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_CAPACITY:
-		val->पूर्णांकval = battery->state_of_अक्षरge;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN:
-	हाल POWER_SUPPLY_PROP_ENERGY_FULL_DESIGN:
-		val->पूर्णांकval = battery->design_capacity *
+		break;
+	case POWER_SUPPLY_PROP_CAPACITY:
+		val->intval = battery->state_of_charge;
+		break;
+	case POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN:
+	case POWER_SUPPLY_PROP_ENERGY_FULL_DESIGN:
+		val->intval = battery->design_capacity *
 			acpi_battery_scale(battery) * 1000;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_CHARGE_FULL:
-	हाल POWER_SUPPLY_PROP_ENERGY_FULL:
-		val->पूर्णांकval = battery->full_अक्षरge_capacity *
+		break;
+	case POWER_SUPPLY_PROP_CHARGE_FULL:
+	case POWER_SUPPLY_PROP_ENERGY_FULL:
+		val->intval = battery->full_charge_capacity *
 			acpi_battery_scale(battery) * 1000;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_CHARGE_NOW:
-	हाल POWER_SUPPLY_PROP_ENERGY_NOW:
-		val->पूर्णांकval = battery->capacity_now *
+		break;
+	case POWER_SUPPLY_PROP_CHARGE_NOW:
+	case POWER_SUPPLY_PROP_ENERGY_NOW:
+		val->intval = battery->capacity_now *
 				acpi_battery_scale(battery) * 1000;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_TEMP:
-		val->पूर्णांकval = battery->temp_now - 2730;	// dK -> dC
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_MODEL_NAME:
+		break;
+	case POWER_SUPPLY_PROP_TEMP:
+		val->intval = battery->temp_now - 2730;	// dK -> dC
+		break;
+	case POWER_SUPPLY_PROP_MODEL_NAME:
 		val->strval = battery->device_name;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_MANUFACTURER:
+		break;
+	case POWER_SUPPLY_PROP_MANUFACTURER:
 		val->strval = battery->manufacturer_name;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल क्रमागत घातer_supply_property sbs_ac_props[] = अणु
+static enum power_supply_property sbs_ac_props[] = {
 	POWER_SUPPLY_PROP_ONLINE,
-पूर्ण;
+};
 
-अटल क्रमागत घातer_supply_property sbs_अक्षरge_battery_props[] = अणु
+static enum power_supply_property sbs_charge_battery_props[] = {
 	POWER_SUPPLY_PROP_STATUS,
 	POWER_SUPPLY_PROP_PRESENT,
 	POWER_SUPPLY_PROP_TECHNOLOGY,
@@ -262,9 +261,9 @@ MODULE_DEVICE_TABLE(acpi, sbs_device_ids);
 	POWER_SUPPLY_PROP_TEMP,
 	POWER_SUPPLY_PROP_MODEL_NAME,
 	POWER_SUPPLY_PROP_MANUFACTURER,
-पूर्ण;
+};
 
-अटल क्रमागत घातer_supply_property sbs_energy_battery_props[] = अणु
+static enum power_supply_property sbs_energy_battery_props[] = {
 	POWER_SUPPLY_PROP_STATUS,
 	POWER_SUPPLY_PROP_PRESENT,
 	POWER_SUPPLY_PROP_TECHNOLOGY,
@@ -281,435 +280,435 @@ MODULE_DEVICE_TABLE(acpi, sbs_device_ids);
 	POWER_SUPPLY_PROP_TEMP,
 	POWER_SUPPLY_PROP_MODEL_NAME,
 	POWER_SUPPLY_PROP_MANUFACTURER,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा घातer_supply_desc acpi_sbs_अक्षरger_desc = अणु
+static const struct power_supply_desc acpi_sbs_charger_desc = {
 	.name		= "sbs-charger",
 	.type		= POWER_SUPPLY_TYPE_MAINS,
 	.properties	= sbs_ac_props,
 	.num_properties	= ARRAY_SIZE(sbs_ac_props),
 	.get_property	= sbs_get_ac_property,
-पूर्ण;
+};
 
 /* --------------------------------------------------------------------------
                             Smart Battery System Management
    -------------------------------------------------------------------------- */
 
-काष्ठा acpi_battery_पढ़ोer अणु
-	u8 command;		/* command क्रम battery */
+struct acpi_battery_reader {
+	u8 command;		/* command for battery */
 	u8 mode;		/* word or block? */
-	माप_प्रकार offset;		/* offset inside काष्ठा acpi_sbs_battery */
-पूर्ण;
+	size_t offset;		/* offset inside struct acpi_sbs_battery */
+};
 
-अटल काष्ठा acpi_battery_पढ़ोer info_पढ़ोers[] = अणु
-	अणु0x01, SMBUS_READ_WORD, दुरत्व(काष्ठा acpi_battery, alarm_capacity)पूर्ण,
-	अणु0x03, SMBUS_READ_WORD, दुरत्व(काष्ठा acpi_battery, mode)पूर्ण,
-	अणु0x10, SMBUS_READ_WORD, दुरत्व(काष्ठा acpi_battery, full_अक्षरge_capacity)पूर्ण,
-	अणु0x17, SMBUS_READ_WORD, दुरत्व(काष्ठा acpi_battery, cycle_count)पूर्ण,
-	अणु0x18, SMBUS_READ_WORD, दुरत्व(काष्ठा acpi_battery, design_capacity)पूर्ण,
-	अणु0x19, SMBUS_READ_WORD, दुरत्व(काष्ठा acpi_battery, design_voltage)पूर्ण,
-	अणु0x1a, SMBUS_READ_WORD, दुरत्व(काष्ठा acpi_battery, spec)पूर्ण,
-	अणु0x1c, SMBUS_READ_WORD, दुरत्व(काष्ठा acpi_battery, serial_number)पूर्ण,
-	अणु0x20, SMBUS_READ_BLOCK, दुरत्व(काष्ठा acpi_battery, manufacturer_name)पूर्ण,
-	अणु0x21, SMBUS_READ_BLOCK, दुरत्व(काष्ठा acpi_battery, device_name)पूर्ण,
-	अणु0x22, SMBUS_READ_BLOCK, दुरत्व(काष्ठा acpi_battery, device_chemistry)पूर्ण,
-पूर्ण;
+static struct acpi_battery_reader info_readers[] = {
+	{0x01, SMBUS_READ_WORD, offsetof(struct acpi_battery, alarm_capacity)},
+	{0x03, SMBUS_READ_WORD, offsetof(struct acpi_battery, mode)},
+	{0x10, SMBUS_READ_WORD, offsetof(struct acpi_battery, full_charge_capacity)},
+	{0x17, SMBUS_READ_WORD, offsetof(struct acpi_battery, cycle_count)},
+	{0x18, SMBUS_READ_WORD, offsetof(struct acpi_battery, design_capacity)},
+	{0x19, SMBUS_READ_WORD, offsetof(struct acpi_battery, design_voltage)},
+	{0x1a, SMBUS_READ_WORD, offsetof(struct acpi_battery, spec)},
+	{0x1c, SMBUS_READ_WORD, offsetof(struct acpi_battery, serial_number)},
+	{0x20, SMBUS_READ_BLOCK, offsetof(struct acpi_battery, manufacturer_name)},
+	{0x21, SMBUS_READ_BLOCK, offsetof(struct acpi_battery, device_name)},
+	{0x22, SMBUS_READ_BLOCK, offsetof(struct acpi_battery, device_chemistry)},
+};
 
-अटल काष्ठा acpi_battery_पढ़ोer state_पढ़ोers[] = अणु
-	अणु0x08, SMBUS_READ_WORD, दुरत्व(काष्ठा acpi_battery, temp_now)पूर्ण,
-	अणु0x09, SMBUS_READ_WORD, दुरत्व(काष्ठा acpi_battery, voltage_now)पूर्ण,
-	अणु0x0a, SMBUS_READ_WORD, दुरत्व(काष्ठा acpi_battery, rate_now)पूर्ण,
-	अणु0x0b, SMBUS_READ_WORD, दुरत्व(काष्ठा acpi_battery, rate_avg)पूर्ण,
-	अणु0x0f, SMBUS_READ_WORD, दुरत्व(काष्ठा acpi_battery, capacity_now)पूर्ण,
-	अणु0x0e, SMBUS_READ_WORD, दुरत्व(काष्ठा acpi_battery, state_of_अक्षरge)पूर्ण,
-	अणु0x16, SMBUS_READ_WORD, दुरत्व(काष्ठा acpi_battery, state)पूर्ण,
-पूर्ण;
+static struct acpi_battery_reader state_readers[] = {
+	{0x08, SMBUS_READ_WORD, offsetof(struct acpi_battery, temp_now)},
+	{0x09, SMBUS_READ_WORD, offsetof(struct acpi_battery, voltage_now)},
+	{0x0a, SMBUS_READ_WORD, offsetof(struct acpi_battery, rate_now)},
+	{0x0b, SMBUS_READ_WORD, offsetof(struct acpi_battery, rate_avg)},
+	{0x0f, SMBUS_READ_WORD, offsetof(struct acpi_battery, capacity_now)},
+	{0x0e, SMBUS_READ_WORD, offsetof(struct acpi_battery, state_of_charge)},
+	{0x16, SMBUS_READ_WORD, offsetof(struct acpi_battery, state)},
+};
 
-अटल पूर्णांक acpi_manager_get_info(काष्ठा acpi_sbs *sbs)
-अणु
-	पूर्णांक result = 0;
-	u16 battery_प्रणाली_info;
+static int acpi_manager_get_info(struct acpi_sbs *sbs)
+{
+	int result = 0;
+	u16 battery_system_info;
 
-	result = acpi_smbus_पढ़ो(sbs->hc, SMBUS_READ_WORD, ACPI_SBS_MANAGER,
-				 0x04, (u8 *)&battery_प्रणाली_info);
-	अगर (!result)
-		sbs->batteries_supported = battery_प्रणाली_info & 0x000f;
-	वापस result;
-पूर्ण
+	result = acpi_smbus_read(sbs->hc, SMBUS_READ_WORD, ACPI_SBS_MANAGER,
+				 0x04, (u8 *)&battery_system_info);
+	if (!result)
+		sbs->batteries_supported = battery_system_info & 0x000f;
+	return result;
+}
 
-अटल पूर्णांक acpi_battery_get_info(काष्ठा acpi_battery *battery)
-अणु
-	पूर्णांक i, result = 0;
+static int acpi_battery_get_info(struct acpi_battery *battery)
+{
+	int i, result = 0;
 
-	क्रम (i = 0; i < ARRAY_SIZE(info_पढ़ोers); ++i) अणु
-		result = acpi_smbus_पढ़ो(battery->sbs->hc,
-					 info_पढ़ोers[i].mode,
+	for (i = 0; i < ARRAY_SIZE(info_readers); ++i) {
+		result = acpi_smbus_read(battery->sbs->hc,
+					 info_readers[i].mode,
 					 ACPI_SBS_BATTERY,
-					 info_पढ़ोers[i].command,
+					 info_readers[i].command,
 					 (u8 *) battery +
-						info_पढ़ोers[i].offset);
-		अगर (result)
-			अवरोध;
-	पूर्ण
-	वापस result;
-पूर्ण
+						info_readers[i].offset);
+		if (result)
+			break;
+	}
+	return result;
+}
 
-अटल पूर्णांक acpi_battery_get_state(काष्ठा acpi_battery *battery)
-अणु
-	पूर्णांक i, result = 0;
+static int acpi_battery_get_state(struct acpi_battery *battery)
+{
+	int i, result = 0;
 
-	अगर (battery->update_समय &&
-	    समय_beक्रमe(jअगरfies, battery->update_समय +
-				msecs_to_jअगरfies(cache_समय)))
-		वापस 0;
-	क्रम (i = 0; i < ARRAY_SIZE(state_पढ़ोers); ++i) अणु
-		result = acpi_smbus_पढ़ो(battery->sbs->hc,
-					 state_पढ़ोers[i].mode,
+	if (battery->update_time &&
+	    time_before(jiffies, battery->update_time +
+				msecs_to_jiffies(cache_time)))
+		return 0;
+	for (i = 0; i < ARRAY_SIZE(state_readers); ++i) {
+		result = acpi_smbus_read(battery->sbs->hc,
+					 state_readers[i].mode,
 					 ACPI_SBS_BATTERY,
-					 state_पढ़ोers[i].command,
+					 state_readers[i].command,
 					 (u8 *)battery +
-						state_पढ़ोers[i].offset);
-		अगर (result)
-			जाओ end;
-	पूर्ण
+						state_readers[i].offset);
+		if (result)
+			goto end;
+	}
       end:
-	battery->update_समय = jअगरfies;
-	वापस result;
-पूर्ण
+	battery->update_time = jiffies;
+	return result;
+}
 
-अटल पूर्णांक acpi_battery_get_alarm(काष्ठा acpi_battery *battery)
-अणु
-	वापस acpi_smbus_पढ़ो(battery->sbs->hc, SMBUS_READ_WORD,
+static int acpi_battery_get_alarm(struct acpi_battery *battery)
+{
+	return acpi_smbus_read(battery->sbs->hc, SMBUS_READ_WORD,
 				 ACPI_SBS_BATTERY, 0x01,
 				 (u8 *)&battery->alarm_capacity);
-पूर्ण
+}
 
-अटल पूर्णांक acpi_battery_set_alarm(काष्ठा acpi_battery *battery)
-अणु
-	काष्ठा acpi_sbs *sbs = battery->sbs;
+static int acpi_battery_set_alarm(struct acpi_battery *battery)
+{
+	struct acpi_sbs *sbs = battery->sbs;
 	u16 value, sel = 1 << (battery->id + 12);
 
-	पूर्णांक ret;
+	int ret;
 
 
-	अगर (sbs->manager_present) अणु
-		ret = acpi_smbus_पढ़ो(sbs->hc, SMBUS_READ_WORD, ACPI_SBS_MANAGER,
+	if (sbs->manager_present) {
+		ret = acpi_smbus_read(sbs->hc, SMBUS_READ_WORD, ACPI_SBS_MANAGER,
 				0x01, (u8 *)&value);
-		अगर (ret)
-			जाओ end;
-		अगर ((value & 0xf000) != sel) अणु
+		if (ret)
+			goto end;
+		if ((value & 0xf000) != sel) {
 			value &= 0x0fff;
 			value |= sel;
-			ret = acpi_smbus_ग_लिखो(sbs->hc, SMBUS_WRITE_WORD,
+			ret = acpi_smbus_write(sbs->hc, SMBUS_WRITE_WORD,
 					 ACPI_SBS_MANAGER,
 					 0x01, (u8 *)&value, 2);
-			अगर (ret)
-				जाओ end;
-		पूर्ण
-	पूर्ण
-	ret = acpi_smbus_ग_लिखो(sbs->hc, SMBUS_WRITE_WORD, ACPI_SBS_BATTERY,
+			if (ret)
+				goto end;
+		}
+	}
+	ret = acpi_smbus_write(sbs->hc, SMBUS_WRITE_WORD, ACPI_SBS_BATTERY,
 				0x01, (u8 *)&battery->alarm_capacity, 2);
       end:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक acpi_ac_get_present(काष्ठा acpi_sbs *sbs)
-अणु
-	पूर्णांक result;
+static int acpi_ac_get_present(struct acpi_sbs *sbs)
+{
+	int result;
 	u16 status;
 
-	result = acpi_smbus_पढ़ो(sbs->hc, SMBUS_READ_WORD, ACPI_SBS_CHARGER,
+	result = acpi_smbus_read(sbs->hc, SMBUS_READ_WORD, ACPI_SBS_CHARGER,
 				 0x13, (u8 *) & status);
 
-	अगर (result)
-		वापस result;
+	if (result)
+		return result;
 
 	/*
 	 * The spec requires that bit 4 always be 1. If it's not set, assume
-	 * that the implementation करोesn't support an SBS अक्षरger.
+	 * that the implementation doesn't support an SBS charger.
 	 *
-	 * And on some MacBooks a status of 0xffff is always वापसed, no
-	 * matter whether the अक्षरger is plugged in or not, which is also
-	 * wrong, so ignore the SBS अक्षरger क्रम those too.
+	 * And on some MacBooks a status of 0xffff is always returned, no
+	 * matter whether the charger is plugged in or not, which is also
+	 * wrong, so ignore the SBS charger for those too.
 	 */
-	अगर (!((status >> 4) & 0x1) || status == 0xffff)
-		वापस -ENODEV;
+	if (!((status >> 4) & 0x1) || status == 0xffff)
+		return -ENODEV;
 
-	sbs->अक्षरger_present = (status >> 15) & 0x1;
-	वापस 0;
-पूर्ण
+	sbs->charger_present = (status >> 15) & 0x1;
+	return 0;
+}
 
-अटल sमाप_प्रकार acpi_battery_alarm_show(काष्ठा device *dev,
-					काष्ठा device_attribute *attr,
-					अक्षर *buf)
-अणु
-	काष्ठा acpi_battery *battery = to_acpi_battery(dev_get_drvdata(dev));
+static ssize_t acpi_battery_alarm_show(struct device *dev,
+					struct device_attribute *attr,
+					char *buf)
+{
+	struct acpi_battery *battery = to_acpi_battery(dev_get_drvdata(dev));
 	acpi_battery_get_alarm(battery);
-	वापस प्र_लिखो(buf, "%d\n", battery->alarm_capacity *
+	return sprintf(buf, "%d\n", battery->alarm_capacity *
 				acpi_battery_scale(battery) * 1000);
-पूर्ण
+}
 
-अटल sमाप_प्रकार acpi_battery_alarm_store(काष्ठा device *dev,
-					काष्ठा device_attribute *attr,
-					स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	अचिन्हित दीर्घ x;
-	काष्ठा acpi_battery *battery = to_acpi_battery(dev_get_drvdata(dev));
-	अगर (माला_पूछो(buf, "%lu\n", &x) == 1)
+static ssize_t acpi_battery_alarm_store(struct device *dev,
+					struct device_attribute *attr,
+					const char *buf, size_t count)
+{
+	unsigned long x;
+	struct acpi_battery *battery = to_acpi_battery(dev_get_drvdata(dev));
+	if (sscanf(buf, "%lu\n", &x) == 1)
 		battery->alarm_capacity = x /
 			(1000 * acpi_battery_scale(battery));
-	अगर (battery->present)
+	if (battery->present)
 		acpi_battery_set_alarm(battery);
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा device_attribute alarm_attr = अणु
-	.attr = अणु.name = "alarm", .mode = 0644पूर्ण,
+static const struct device_attribute alarm_attr = {
+	.attr = {.name = "alarm", .mode = 0644},
 	.show = acpi_battery_alarm_show,
 	.store = acpi_battery_alarm_store,
-पूर्ण;
+};
 
 /* --------------------------------------------------------------------------
                                  Driver Interface
    -------------------------------------------------------------------------- */
-अटल पूर्णांक acpi_battery_पढ़ो(काष्ठा acpi_battery *battery)
-अणु
-	पूर्णांक result = 0, saved_present = battery->present;
+static int acpi_battery_read(struct acpi_battery *battery)
+{
+	int result = 0, saved_present = battery->present;
 	u16 state;
 
-	अगर (battery->sbs->manager_present) अणु
-		result = acpi_smbus_पढ़ो(battery->sbs->hc, SMBUS_READ_WORD,
+	if (battery->sbs->manager_present) {
+		result = acpi_smbus_read(battery->sbs->hc, SMBUS_READ_WORD,
 				ACPI_SBS_MANAGER, 0x01, (u8 *)&state);
-		अगर (!result)
+		if (!result)
 			battery->present = state & (1 << battery->id);
 		state &= 0x0fff;
 		state |= 1 << (battery->id + 12);
-		acpi_smbus_ग_लिखो(battery->sbs->hc, SMBUS_WRITE_WORD,
+		acpi_smbus_write(battery->sbs->hc, SMBUS_WRITE_WORD,
 				  ACPI_SBS_MANAGER, 0x01, (u8 *)&state, 2);
-	पूर्ण अन्यथा अगर (battery->id == 0)
+	} else if (battery->id == 0)
 		battery->present = 1;
 
-	अगर (result || !battery->present)
-		वापस result;
+	if (result || !battery->present)
+		return result;
 
-	अगर (saved_present != battery->present) अणु
-		battery->update_समय = 0;
+	if (saved_present != battery->present) {
+		battery->update_time = 0;
 		result = acpi_battery_get_info(battery);
-		अगर (result) अणु
+		if (result) {
 			battery->present = 0;
-			वापस result;
-		पूर्ण
-	पूर्ण
+			return result;
+		}
+	}
 	result = acpi_battery_get_state(battery);
-	अगर (result)
+	if (result)
 		battery->present = 0;
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /* Smart Battery */
-अटल पूर्णांक acpi_battery_add(काष्ठा acpi_sbs *sbs, पूर्णांक id)
-अणु
-	काष्ठा acpi_battery *battery = &sbs->battery[id];
-	काष्ठा घातer_supply_config psy_cfg = अणु .drv_data = battery, पूर्ण;
-	पूर्णांक result;
+static int acpi_battery_add(struct acpi_sbs *sbs, int id)
+{
+	struct acpi_battery *battery = &sbs->battery[id];
+	struct power_supply_config psy_cfg = { .drv_data = battery, };
+	int result;
 
 	battery->id = id;
 	battery->sbs = sbs;
-	result = acpi_battery_पढ़ो(battery);
-	अगर (result)
-		वापस result;
+	result = acpi_battery_read(battery);
+	if (result)
+		return result;
 
-	प्र_लिखो(battery->name, ACPI_BATTERY_सूची_NAME, id);
+	sprintf(battery->name, ACPI_BATTERY_DIR_NAME, id);
 	battery->bat_desc.name = battery->name;
 	battery->bat_desc.type = POWER_SUPPLY_TYPE_BATTERY;
-	अगर (!acpi_battery_mode(battery)) अणु
-		battery->bat_desc.properties = sbs_अक्षरge_battery_props;
+	if (!acpi_battery_mode(battery)) {
+		battery->bat_desc.properties = sbs_charge_battery_props;
 		battery->bat_desc.num_properties =
-		    ARRAY_SIZE(sbs_अक्षरge_battery_props);
-	पूर्ण अन्यथा अणु
+		    ARRAY_SIZE(sbs_charge_battery_props);
+	} else {
 		battery->bat_desc.properties = sbs_energy_battery_props;
 		battery->bat_desc.num_properties =
 		    ARRAY_SIZE(sbs_energy_battery_props);
-	पूर्ण
+	}
 	battery->bat_desc.get_property = acpi_sbs_battery_get_property;
-	battery->bat = घातer_supply_रेजिस्टर(&sbs->device->dev,
+	battery->bat = power_supply_register(&sbs->device->dev,
 					&battery->bat_desc, &psy_cfg);
-	अगर (IS_ERR(battery->bat)) अणु
+	if (IS_ERR(battery->bat)) {
 		result = PTR_ERR(battery->bat);
-		battery->bat = शून्य;
-		जाओ end;
-	पूर्ण
+		battery->bat = NULL;
+		goto end;
+	}
 
 	result = device_create_file(&battery->bat->dev, &alarm_attr);
-	अगर (result)
-		जाओ end;
+	if (result)
+		goto end;
 	battery->have_sysfs_alarm = 1;
       end:
-	prपूर्णांकk(KERN_INFO PREFIX "%s [%s]: Battery Slot [%s] (battery %s)\n",
+	printk(KERN_INFO PREFIX "%s [%s]: Battery Slot [%s] (battery %s)\n",
 	       ACPI_SBS_DEVICE_NAME, acpi_device_bid(sbs->device),
 	       battery->name, battery->present ? "present" : "absent");
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल व्योम acpi_battery_हटाओ(काष्ठा acpi_sbs *sbs, पूर्णांक id)
-अणु
-	काष्ठा acpi_battery *battery = &sbs->battery[id];
+static void acpi_battery_remove(struct acpi_sbs *sbs, int id)
+{
+	struct acpi_battery *battery = &sbs->battery[id];
 
-	अगर (battery->bat) अणु
-		अगर (battery->have_sysfs_alarm)
-			device_हटाओ_file(&battery->bat->dev, &alarm_attr);
-		घातer_supply_unरेजिस्टर(battery->bat);
-	पूर्ण
-पूर्ण
+	if (battery->bat) {
+		if (battery->have_sysfs_alarm)
+			device_remove_file(&battery->bat->dev, &alarm_attr);
+		power_supply_unregister(battery->bat);
+	}
+}
 
-अटल पूर्णांक acpi_अक्षरger_add(काष्ठा acpi_sbs *sbs)
-अणु
-	पूर्णांक result;
-	काष्ठा घातer_supply_config psy_cfg = अणु .drv_data = sbs, पूर्ण;
+static int acpi_charger_add(struct acpi_sbs *sbs)
+{
+	int result;
+	struct power_supply_config psy_cfg = { .drv_data = sbs, };
 
 	result = acpi_ac_get_present(sbs);
-	अगर (result)
-		जाओ end;
+	if (result)
+		goto end;
 
-	sbs->अक्षरger_exists = 1;
-	sbs->अक्षरger = घातer_supply_रेजिस्टर(&sbs->device->dev,
-					&acpi_sbs_अक्षरger_desc, &psy_cfg);
-	अगर (IS_ERR(sbs->अक्षरger)) अणु
-		result = PTR_ERR(sbs->अक्षरger);
-		sbs->अक्षरger = शून्य;
-	पूर्ण
-	prपूर्णांकk(KERN_INFO PREFIX "%s [%s]: AC Adapter [%s] (%s)\n",
+	sbs->charger_exists = 1;
+	sbs->charger = power_supply_register(&sbs->device->dev,
+					&acpi_sbs_charger_desc, &psy_cfg);
+	if (IS_ERR(sbs->charger)) {
+		result = PTR_ERR(sbs->charger);
+		sbs->charger = NULL;
+	}
+	printk(KERN_INFO PREFIX "%s [%s]: AC Adapter [%s] (%s)\n",
 	       ACPI_SBS_DEVICE_NAME, acpi_device_bid(sbs->device),
-	       ACPI_AC_सूची_NAME, sbs->अक्षरger_present ? "on-line" : "off-line");
+	       ACPI_AC_DIR_NAME, sbs->charger_present ? "on-line" : "off-line");
       end:
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल व्योम acpi_अक्षरger_हटाओ(काष्ठा acpi_sbs *sbs)
-अणु
-	अगर (sbs->अक्षरger)
-		घातer_supply_unरेजिस्टर(sbs->अक्षरger);
-पूर्ण
+static void acpi_charger_remove(struct acpi_sbs *sbs)
+{
+	if (sbs->charger)
+		power_supply_unregister(sbs->charger);
+}
 
-अटल व्योम acpi_sbs_callback(व्योम *context)
-अणु
-	पूर्णांक id;
-	काष्ठा acpi_sbs *sbs = context;
-	काष्ठा acpi_battery *bat;
-	u8 saved_अक्षरger_state = sbs->अक्षरger_present;
+static void acpi_sbs_callback(void *context)
+{
+	int id;
+	struct acpi_sbs *sbs = context;
+	struct acpi_battery *bat;
+	u8 saved_charger_state = sbs->charger_present;
 	u8 saved_battery_state;
 
-	अगर (sbs->अक्षरger_exists) अणु
+	if (sbs->charger_exists) {
 		acpi_ac_get_present(sbs);
-		अगर (sbs->अक्षरger_present != saved_अक्षरger_state)
-			kobject_uevent(&sbs->अक्षरger->dev.kobj, KOBJ_CHANGE);
-	पूर्ण
+		if (sbs->charger_present != saved_charger_state)
+			kobject_uevent(&sbs->charger->dev.kobj, KOBJ_CHANGE);
+	}
 
-	अगर (sbs->manager_present) अणु
-		क्रम (id = 0; id < MAX_SBS_BAT; ++id) अणु
-			अगर (!(sbs->batteries_supported & (1 << id)))
-				जारी;
+	if (sbs->manager_present) {
+		for (id = 0; id < MAX_SBS_BAT; ++id) {
+			if (!(sbs->batteries_supported & (1 << id)))
+				continue;
 			bat = &sbs->battery[id];
 			saved_battery_state = bat->present;
-			acpi_battery_पढ़ो(bat);
-			अगर (saved_battery_state == bat->present)
-				जारी;
+			acpi_battery_read(bat);
+			if (saved_battery_state == bat->present)
+				continue;
 			kobject_uevent(&bat->bat->dev.kobj, KOBJ_CHANGE);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक acpi_sbs_add(काष्ठा acpi_device *device)
-अणु
-	काष्ठा acpi_sbs *sbs;
-	पूर्णांक result = 0;
-	पूर्णांक id;
+static int acpi_sbs_add(struct acpi_device *device)
+{
+	struct acpi_sbs *sbs;
+	int result = 0;
+	int id;
 
-	sbs = kzalloc(माप(काष्ठा acpi_sbs), GFP_KERNEL);
-	अगर (!sbs) अणु
+	sbs = kzalloc(sizeof(struct acpi_sbs), GFP_KERNEL);
+	if (!sbs) {
 		result = -ENOMEM;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
 	mutex_init(&sbs->lock);
 
 	sbs->hc = acpi_driver_data(device->parent);
 	sbs->device = device;
-	म_नकल(acpi_device_name(device), ACPI_SBS_DEVICE_NAME);
-	म_नकल(acpi_device_class(device), ACPI_SBS_CLASS);
+	strcpy(acpi_device_name(device), ACPI_SBS_DEVICE_NAME);
+	strcpy(acpi_device_class(device), ACPI_SBS_CLASS);
 	device->driver_data = sbs;
 
-	result = acpi_अक्षरger_add(sbs);
-	अगर (result && result != -ENODEV)
-		जाओ end;
+	result = acpi_charger_add(sbs);
+	if (result && result != -ENODEV)
+		goto end;
 
 	result = 0;
 
-	अगर (!x86_apple_machine) अणु
+	if (!x86_apple_machine) {
 		result = acpi_manager_get_info(sbs);
-		अगर (!result) अणु
+		if (!result) {
 			sbs->manager_present = 1;
-			क्रम (id = 0; id < MAX_SBS_BAT; ++id)
-				अगर ((sbs->batteries_supported & (1 << id)))
+			for (id = 0; id < MAX_SBS_BAT; ++id)
+				if ((sbs->batteries_supported & (1 << id)))
 					acpi_battery_add(sbs, id);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!sbs->manager_present)
+	if (!sbs->manager_present)
 		acpi_battery_add(sbs, 0);
 
-	acpi_smbus_रेजिस्टर_callback(sbs->hc, acpi_sbs_callback, sbs);
+	acpi_smbus_register_callback(sbs->hc, acpi_sbs_callback, sbs);
       end:
-	अगर (result)
-		acpi_sbs_हटाओ(device);
-	वापस result;
-पूर्ण
+	if (result)
+		acpi_sbs_remove(device);
+	return result;
+}
 
-अटल पूर्णांक acpi_sbs_हटाओ(काष्ठा acpi_device *device)
-अणु
-	काष्ठा acpi_sbs *sbs;
-	पूर्णांक id;
+static int acpi_sbs_remove(struct acpi_device *device)
+{
+	struct acpi_sbs *sbs;
+	int id;
 
-	अगर (!device)
-		वापस -EINVAL;
+	if (!device)
+		return -EINVAL;
 	sbs = acpi_driver_data(device);
-	अगर (!sbs)
-		वापस -EINVAL;
+	if (!sbs)
+		return -EINVAL;
 	mutex_lock(&sbs->lock);
-	acpi_smbus_unरेजिस्टर_callback(sbs->hc);
-	क्रम (id = 0; id < MAX_SBS_BAT; ++id)
-		acpi_battery_हटाओ(sbs, id);
-	acpi_अक्षरger_हटाओ(sbs);
+	acpi_smbus_unregister_callback(sbs->hc);
+	for (id = 0; id < MAX_SBS_BAT; ++id)
+		acpi_battery_remove(sbs, id);
+	acpi_charger_remove(sbs);
 	mutex_unlock(&sbs->lock);
 	mutex_destroy(&sbs->lock);
-	kमुक्त(sbs);
-	वापस 0;
-पूर्ण
+	kfree(sbs);
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक acpi_sbs_resume(काष्ठा device *dev)
-अणु
-	काष्ठा acpi_sbs *sbs;
-	अगर (!dev)
-		वापस -EINVAL;
+#ifdef CONFIG_PM_SLEEP
+static int acpi_sbs_resume(struct device *dev)
+{
+	struct acpi_sbs *sbs;
+	if (!dev)
+		return -EINVAL;
 	sbs = to_acpi_device(dev)->driver_data;
 	acpi_sbs_callback(sbs);
-	वापस 0;
-पूर्ण
-#अन्यथा
-#घोषणा acpi_sbs_resume शून्य
-#पूर्ण_अगर
+	return 0;
+}
+#else
+#define acpi_sbs_resume NULL
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(acpi_sbs_pm, शून्य, acpi_sbs_resume);
+static SIMPLE_DEV_PM_OPS(acpi_sbs_pm, NULL, acpi_sbs_resume);
 
-अटल काष्ठा acpi_driver acpi_sbs_driver = अणु
+static struct acpi_driver acpi_sbs_driver = {
 	.name = "sbs",
 	.class = ACPI_SBS_CLASS,
 	.ids = sbs_device_ids,
-	.ops = अणु
+	.ops = {
 		.add = acpi_sbs_add,
-		.हटाओ = acpi_sbs_हटाओ,
-		पूर्ण,
+		.remove = acpi_sbs_remove,
+		},
 	.drv.pm = &acpi_sbs_pm,
-पूर्ण;
+};
 module_acpi_driver(acpi_sbs_driver);

@@ -1,93 +1,92 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __LINUX_KSM_H
-#घोषणा __LINUX_KSM_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __LINUX_KSM_H
+#define __LINUX_KSM_H
 /*
  * Memory merging support.
  *
- * This code enables dynamic sharing of identical pages found in dअगरferent
- * memory areas, even अगर they are not shared by विभाजन().
+ * This code enables dynamic sharing of identical pages found in different
+ * memory areas, even if they are not shared by fork().
  */
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/rmap.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/coredump.h>
+#include <linux/bitops.h>
+#include <linux/mm.h>
+#include <linux/pagemap.h>
+#include <linux/rmap.h>
+#include <linux/sched.h>
+#include <linux/sched/coredump.h>
 
-काष्ठा stable_node;
-काष्ठा mem_cgroup;
+struct stable_node;
+struct mem_cgroup;
 
-#अगर_घोषित CONFIG_KSM
-पूर्णांक ksm_madvise(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ start,
-		अचिन्हित दीर्घ end, पूर्णांक advice, अचिन्हित दीर्घ *vm_flags);
-पूर्णांक __ksm_enter(काष्ठा mm_काष्ठा *mm);
-व्योम __ksm_निकास(काष्ठा mm_काष्ठा *mm);
+#ifdef CONFIG_KSM
+int ksm_madvise(struct vm_area_struct *vma, unsigned long start,
+		unsigned long end, int advice, unsigned long *vm_flags);
+int __ksm_enter(struct mm_struct *mm);
+void __ksm_exit(struct mm_struct *mm);
 
-अटल अंतरभूत पूर्णांक ksm_विभाजन(काष्ठा mm_काष्ठा *mm, काष्ठा mm_काष्ठा *oldmm)
-अणु
-	अगर (test_bit(MMF_VM_MERGEABLE, &oldmm->flags))
-		वापस __ksm_enter(mm);
-	वापस 0;
-पूर्ण
+static inline int ksm_fork(struct mm_struct *mm, struct mm_struct *oldmm)
+{
+	if (test_bit(MMF_VM_MERGEABLE, &oldmm->flags))
+		return __ksm_enter(mm);
+	return 0;
+}
 
-अटल अंतरभूत व्योम ksm_निकास(काष्ठा mm_काष्ठा *mm)
-अणु
-	अगर (test_bit(MMF_VM_MERGEABLE, &mm->flags))
-		__ksm_निकास(mm);
-पूर्ण
+static inline void ksm_exit(struct mm_struct *mm)
+{
+	if (test_bit(MMF_VM_MERGEABLE, &mm->flags))
+		__ksm_exit(mm);
+}
 
 /*
- * When करो_swap_page() first faults in from swap what used to be a KSM page,
- * no problem, it will be asचिन्हित to this vma's anon_vma; but thereafter,
- * it might be faulted पूर्णांकo a dअगरferent anon_vma (or perhaps to a dअगरferent
- * offset in the same anon_vma).  करो_swap_page() cannot करो all the locking
- * needed to reस्थिरitute a cross-anon_vma KSM page: क्रम now it has to make
+ * When do_swap_page() first faults in from swap what used to be a KSM page,
+ * no problem, it will be assigned to this vma's anon_vma; but thereafter,
+ * it might be faulted into a different anon_vma (or perhaps to a different
+ * offset in the same anon_vma).  do_swap_page() cannot do all the locking
+ * needed to reconstitute a cross-anon_vma KSM page: for now it has to make
  * a copy, and leave remerging the pages to a later pass of ksmd.
  *
  * We'd like to make this conditional on vma->vm_flags & VM_MERGEABLE,
- * but what अगर the vma was unmerged जबतक the page was swapped out?
+ * but what if the vma was unmerged while the page was swapped out?
  */
-काष्ठा page *ksm_might_need_to_copy(काष्ठा page *page,
-			काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ address);
+struct page *ksm_might_need_to_copy(struct page *page,
+			struct vm_area_struct *vma, unsigned long address);
 
-व्योम rmap_walk_ksm(काष्ठा page *page, काष्ठा rmap_walk_control *rwc);
-व्योम ksm_migrate_page(काष्ठा page *newpage, काष्ठा page *oldpage);
+void rmap_walk_ksm(struct page *page, struct rmap_walk_control *rwc);
+void ksm_migrate_page(struct page *newpage, struct page *oldpage);
 
-#अन्यथा  /* !CONFIG_KSM */
+#else  /* !CONFIG_KSM */
 
-अटल अंतरभूत पूर्णांक ksm_विभाजन(काष्ठा mm_काष्ठा *mm, काष्ठा mm_काष्ठा *oldmm)
-अणु
-	वापस 0;
-पूर्ण
+static inline int ksm_fork(struct mm_struct *mm, struct mm_struct *oldmm)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम ksm_निकास(काष्ठा mm_काष्ठा *mm)
-अणु
-पूर्ण
+static inline void ksm_exit(struct mm_struct *mm)
+{
+}
 
-#अगर_घोषित CONFIG_MMU
-अटल अंतरभूत पूर्णांक ksm_madvise(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ start,
-		अचिन्हित दीर्घ end, पूर्णांक advice, अचिन्हित दीर्घ *vm_flags)
-अणु
-	वापस 0;
-पूर्ण
+#ifdef CONFIG_MMU
+static inline int ksm_madvise(struct vm_area_struct *vma, unsigned long start,
+		unsigned long end, int advice, unsigned long *vm_flags)
+{
+	return 0;
+}
 
-अटल अंतरभूत काष्ठा page *ksm_might_need_to_copy(काष्ठा page *page,
-			काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ address)
-अणु
-	वापस page;
-पूर्ण
+static inline struct page *ksm_might_need_to_copy(struct page *page,
+			struct vm_area_struct *vma, unsigned long address)
+{
+	return page;
+}
 
-अटल अंतरभूत व्योम rmap_walk_ksm(काष्ठा page *page,
-			काष्ठा rmap_walk_control *rwc)
-अणु
-पूर्ण
+static inline void rmap_walk_ksm(struct page *page,
+			struct rmap_walk_control *rwc)
+{
+}
 
-अटल अंतरभूत व्योम ksm_migrate_page(काष्ठा page *newpage, काष्ठा page *oldpage)
-अणु
-पूर्ण
-#पूर्ण_अगर /* CONFIG_MMU */
-#पूर्ण_अगर /* !CONFIG_KSM */
+static inline void ksm_migrate_page(struct page *newpage, struct page *oldpage)
+{
+}
+#endif /* CONFIG_MMU */
+#endif /* !CONFIG_KSM */
 
-#पूर्ण_अगर /* __LINUX_KSM_H */
+#endif /* __LINUX_KSM_H */

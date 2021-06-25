@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _SPARC64_KDEBUG_H
-#घोषणा _SPARC64_KDEBUG_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _SPARC64_KDEBUG_H
+#define _SPARC64_KDEBUG_H
 
-काष्ठा pt_regs;
+struct pt_regs;
 
-व्योम bad_trap(काष्ठा pt_regs *, दीर्घ);
+void bad_trap(struct pt_regs *, long);
 
 /* Grossly misnamed. */
-क्रमागत die_val अणु
+enum die_val {
 	DIE_OOPS = 1,
 	DIE_DEBUG,	/* ta 0x70 */
 	DIE_DEBUG_2,	/* ta 0x71 */
@@ -20,6 +19,6 @@
 	DIE_CALL,
 	DIE_NMI,
 	DIE_NMIWATCHDOG,
-पूर्ण;
+};
 
-#पूर्ण_अगर
+#endif

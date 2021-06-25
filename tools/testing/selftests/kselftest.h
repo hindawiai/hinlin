@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * kselftest.h:	low-level kselftest framework to include from
  *		selftest programs. When possible, please use
@@ -11,12 +10,12 @@
  * Using this API consists of first counting how many tests your code
  * has to run, and then starting up the reporting:
  *
- *     ksft_prपूर्णांक_header();
+ *     ksft_print_header();
  *     ksft_set_plan(total_number_of_tests);
  *
  * For each test, report any progress, debugging, etc with:
  *
- *     ksft_prपूर्णांक_msg(fmt, ...);
+ *     ksft_print_msg(fmt, ...);
  *
  * and finally report the pass/fail/skip/xfail state of the test with one of:
  *
@@ -27,265 +26,265 @@
  *     ksft_test_result_xfail(fmt, ...);
  *     ksft_test_result_error(fmt, ...);
  *
- * When all tests are finished, clean up and निकास the program with one of:
+ * When all tests are finished, clean up and exit the program with one of:
  *
- *    ksft_निकास(condition);
- *    ksft_निकास_pass();
- *    ksft_निकास_fail();
+ *    ksft_exit(condition);
+ *    ksft_exit_pass();
+ *    ksft_exit_fail();
  *
  * If the program wants to report details on why the entire program has
- * failed, it can instead निकास with a message (this is usually करोne when
- * the program is पातing beक्रमe finishing all tests):
+ * failed, it can instead exit with a message (this is usually done when
+ * the program is aborting before finishing all tests):
  *
- *    ksft_निकास_fail_msg(fmt, ...);
+ *    ksft_exit_fail_msg(fmt, ...);
  *
  */
-#अगर_अघोषित __KSELFTEST_H
-#घोषणा __KSELFTEST_H
+#ifndef __KSELFTEST_H
+#define __KSELFTEST_H
 
-#समावेश <त्रुटिसं.स>
-#समावेश <मानककोष.स>
-#समावेश <unistd.h>
-#समावेश <मानकतर्क.स>
-#समावेश <मानकपन.स>
+#include <errno.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <stdarg.h>
+#include <stdio.h>
 
-/* define kselftest निकास codes */
-#घोषणा KSFT_PASS  0
-#घोषणा KSFT_FAIL  1
-#घोषणा KSFT_XFAIL 2
-#घोषणा KSFT_XPASS 3
-#घोषणा KSFT_SKIP  4
+/* define kselftest exit codes */
+#define KSFT_PASS  0
+#define KSFT_FAIL  1
+#define KSFT_XFAIL 2
+#define KSFT_XPASS 3
+#define KSFT_SKIP  4
 
 /* counters */
-काष्ठा ksft_count अणु
-	अचिन्हित पूर्णांक ksft_pass;
-	अचिन्हित पूर्णांक ksft_fail;
-	अचिन्हित पूर्णांक ksft_xfail;
-	अचिन्हित पूर्णांक ksft_xpass;
-	अचिन्हित पूर्णांक ksft_xskip;
-	अचिन्हित पूर्णांक ksft_error;
-पूर्ण;
+struct ksft_count {
+	unsigned int ksft_pass;
+	unsigned int ksft_fail;
+	unsigned int ksft_xfail;
+	unsigned int ksft_xpass;
+	unsigned int ksft_xskip;
+	unsigned int ksft_error;
+};
 
-अटल काष्ठा ksft_count ksft_cnt;
-अटल अचिन्हित पूर्णांक ksft_plan;
+static struct ksft_count ksft_cnt;
+static unsigned int ksft_plan;
 
-अटल अंतरभूत अचिन्हित पूर्णांक ksft_test_num(व्योम)
-अणु
-	वापस ksft_cnt.ksft_pass + ksft_cnt.ksft_fail +
+static inline unsigned int ksft_test_num(void)
+{
+	return ksft_cnt.ksft_pass + ksft_cnt.ksft_fail +
 		ksft_cnt.ksft_xfail + ksft_cnt.ksft_xpass +
 		ksft_cnt.ksft_xskip + ksft_cnt.ksft_error;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ksft_inc_pass_cnt(व्योम) अणु ksft_cnt.ksft_pass++; पूर्ण
-अटल अंतरभूत व्योम ksft_inc_fail_cnt(व्योम) अणु ksft_cnt.ksft_fail++; पूर्ण
-अटल अंतरभूत व्योम ksft_inc_xfail_cnt(व्योम) अणु ksft_cnt.ksft_xfail++; पूर्ण
-अटल अंतरभूत व्योम ksft_inc_xpass_cnt(व्योम) अणु ksft_cnt.ksft_xpass++; पूर्ण
-अटल अंतरभूत व्योम ksft_inc_xskip_cnt(व्योम) अणु ksft_cnt.ksft_xskip++; पूर्ण
-अटल अंतरभूत व्योम ksft_inc_error_cnt(व्योम) अणु ksft_cnt.ksft_error++; पूर्ण
+static inline void ksft_inc_pass_cnt(void) { ksft_cnt.ksft_pass++; }
+static inline void ksft_inc_fail_cnt(void) { ksft_cnt.ksft_fail++; }
+static inline void ksft_inc_xfail_cnt(void) { ksft_cnt.ksft_xfail++; }
+static inline void ksft_inc_xpass_cnt(void) { ksft_cnt.ksft_xpass++; }
+static inline void ksft_inc_xskip_cnt(void) { ksft_cnt.ksft_xskip++; }
+static inline void ksft_inc_error_cnt(void) { ksft_cnt.ksft_error++; }
 
-अटल अंतरभूत पूर्णांक ksft_get_pass_cnt(व्योम) अणु वापस ksft_cnt.ksft_pass; पूर्ण
-अटल अंतरभूत पूर्णांक ksft_get_fail_cnt(व्योम) अणु वापस ksft_cnt.ksft_fail; पूर्ण
-अटल अंतरभूत पूर्णांक ksft_get_xfail_cnt(व्योम) अणु वापस ksft_cnt.ksft_xfail; पूर्ण
-अटल अंतरभूत पूर्णांक ksft_get_xpass_cnt(व्योम) अणु वापस ksft_cnt.ksft_xpass; पूर्ण
-अटल अंतरभूत पूर्णांक ksft_get_xskip_cnt(व्योम) अणु वापस ksft_cnt.ksft_xskip; पूर्ण
-अटल अंतरभूत पूर्णांक ksft_get_error_cnt(व्योम) अणु वापस ksft_cnt.ksft_error; पूर्ण
+static inline int ksft_get_pass_cnt(void) { return ksft_cnt.ksft_pass; }
+static inline int ksft_get_fail_cnt(void) { return ksft_cnt.ksft_fail; }
+static inline int ksft_get_xfail_cnt(void) { return ksft_cnt.ksft_xfail; }
+static inline int ksft_get_xpass_cnt(void) { return ksft_cnt.ksft_xpass; }
+static inline int ksft_get_xskip_cnt(void) { return ksft_cnt.ksft_xskip; }
+static inline int ksft_get_error_cnt(void) { return ksft_cnt.ksft_error; }
 
-अटल अंतरभूत व्योम ksft_prपूर्णांक_header(व्योम)
-अणु
-	अगर (!(दो_पर्या("KSFT_TAP_LEVEL")))
-		म_लिखो("TAP version 13\n");
-पूर्ण
+static inline void ksft_print_header(void)
+{
+	if (!(getenv("KSFT_TAP_LEVEL")))
+		printf("TAP version 13\n");
+}
 
-अटल अंतरभूत व्योम ksft_set_plan(अचिन्हित पूर्णांक plan)
-अणु
+static inline void ksft_set_plan(unsigned int plan)
+{
 	ksft_plan = plan;
-	म_लिखो("1..%d\n", ksft_plan);
-पूर्ण
+	printf("1..%d\n", ksft_plan);
+}
 
-अटल अंतरभूत व्योम ksft_prपूर्णांक_cnts(व्योम)
-अणु
-	अगर (ksft_plan != ksft_test_num())
-		म_लिखो("# Planned tests != run tests (%u != %u)\n",
+static inline void ksft_print_cnts(void)
+{
+	if (ksft_plan != ksft_test_num())
+		printf("# Planned tests != run tests (%u != %u)\n",
 			ksft_plan, ksft_test_num());
-	म_लिखो("# Totals: pass:%d fail:%d xfail:%d xpass:%d skip:%d error:%d\n",
+	printf("# Totals: pass:%d fail:%d xfail:%d xpass:%d skip:%d error:%d\n",
 		ksft_cnt.ksft_pass, ksft_cnt.ksft_fail,
 		ksft_cnt.ksft_xfail, ksft_cnt.ksft_xpass,
 		ksft_cnt.ksft_xskip, ksft_cnt.ksft_error);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ksft_prपूर्णांक_msg(स्थिर अक्षर *msg, ...)
-अणु
-	पूर्णांक saved_त्रुटि_सं = त्रुटि_सं;
-	बहु_सूची args;
+static inline void ksft_print_msg(const char *msg, ...)
+{
+	int saved_errno = errno;
+	va_list args;
 
-	बहु_शुरू(args, msg);
-	म_लिखो("# ");
-	त्रुटि_सं = saved_त्रुटि_सं;
-	भ_लिखो(msg, args);
-	बहु_पूर्ण(args);
-पूर्ण
+	va_start(args, msg);
+	printf("# ");
+	errno = saved_errno;
+	vprintf(msg, args);
+	va_end(args);
+}
 
-अटल अंतरभूत व्योम ksft_test_result_pass(स्थिर अक्षर *msg, ...)
-अणु
-	पूर्णांक saved_त्रुटि_सं = त्रुटि_सं;
-	बहु_सूची args;
+static inline void ksft_test_result_pass(const char *msg, ...)
+{
+	int saved_errno = errno;
+	va_list args;
 
 	ksft_cnt.ksft_pass++;
 
-	बहु_शुरू(args, msg);
-	म_लिखो("ok %d ", ksft_test_num());
-	त्रुटि_सं = saved_त्रुटि_सं;
-	भ_लिखो(msg, args);
-	बहु_पूर्ण(args);
-पूर्ण
+	va_start(args, msg);
+	printf("ok %d ", ksft_test_num());
+	errno = saved_errno;
+	vprintf(msg, args);
+	va_end(args);
+}
 
-अटल अंतरभूत व्योम ksft_test_result_fail(स्थिर अक्षर *msg, ...)
-अणु
-	पूर्णांक saved_त्रुटि_सं = त्रुटि_सं;
-	बहु_सूची args;
+static inline void ksft_test_result_fail(const char *msg, ...)
+{
+	int saved_errno = errno;
+	va_list args;
 
 	ksft_cnt.ksft_fail++;
 
-	बहु_शुरू(args, msg);
-	म_लिखो("not ok %d ", ksft_test_num());
-	त्रुटि_सं = saved_त्रुटि_सं;
-	भ_लिखो(msg, args);
-	बहु_पूर्ण(args);
-पूर्ण
+	va_start(args, msg);
+	printf("not ok %d ", ksft_test_num());
+	errno = saved_errno;
+	vprintf(msg, args);
+	va_end(args);
+}
 
 /**
  * ksft_test_result() - Report test success based on truth of condition
  *
- * @condition: अगर true, report test success, otherwise failure.
+ * @condition: if true, report test success, otherwise failure.
  */
-#घोषणा ksft_test_result(condition, fmt, ...) करो अणु	\
-	अगर (!!(condition))				\
+#define ksft_test_result(condition, fmt, ...) do {	\
+	if (!!(condition))				\
 		ksft_test_result_pass(fmt, ##__VA_ARGS__);\
-	अन्यथा						\
+	else						\
 		ksft_test_result_fail(fmt, ##__VA_ARGS__);\
-	पूर्ण जबतक (0)
+	} while (0)
 
-अटल अंतरभूत व्योम ksft_test_result_xfail(स्थिर अक्षर *msg, ...)
-अणु
-	पूर्णांक saved_त्रुटि_सं = त्रुटि_सं;
-	बहु_सूची args;
+static inline void ksft_test_result_xfail(const char *msg, ...)
+{
+	int saved_errno = errno;
+	va_list args;
 
 	ksft_cnt.ksft_xfail++;
 
-	बहु_शुरू(args, msg);
-	म_लिखो("ok %d # XFAIL ", ksft_test_num());
-	त्रुटि_सं = saved_त्रुटि_सं;
-	भ_लिखो(msg, args);
-	बहु_पूर्ण(args);
-पूर्ण
+	va_start(args, msg);
+	printf("ok %d # XFAIL ", ksft_test_num());
+	errno = saved_errno;
+	vprintf(msg, args);
+	va_end(args);
+}
 
-अटल अंतरभूत व्योम ksft_test_result_skip(स्थिर अक्षर *msg, ...)
-अणु
-	पूर्णांक saved_त्रुटि_सं = त्रुटि_सं;
-	बहु_सूची args;
+static inline void ksft_test_result_skip(const char *msg, ...)
+{
+	int saved_errno = errno;
+	va_list args;
 
 	ksft_cnt.ksft_xskip++;
 
-	बहु_शुरू(args, msg);
-	म_लिखो("ok %d # SKIP ", ksft_test_num());
-	त्रुटि_सं = saved_त्रुटि_सं;
-	भ_लिखो(msg, args);
-	बहु_पूर्ण(args);
-पूर्ण
+	va_start(args, msg);
+	printf("ok %d # SKIP ", ksft_test_num());
+	errno = saved_errno;
+	vprintf(msg, args);
+	va_end(args);
+}
 
-/* TODO: how करोes "error" dअगरfer from "fail" or "skip"? */
-अटल अंतरभूत व्योम ksft_test_result_error(स्थिर अक्षर *msg, ...)
-अणु
-	पूर्णांक saved_त्रुटि_सं = त्रुटि_सं;
-	बहु_सूची args;
+/* TODO: how does "error" differ from "fail" or "skip"? */
+static inline void ksft_test_result_error(const char *msg, ...)
+{
+	int saved_errno = errno;
+	va_list args;
 
 	ksft_cnt.ksft_error++;
 
-	बहु_शुरू(args, msg);
-	म_लिखो("not ok %d # error ", ksft_test_num());
-	त्रुटि_सं = saved_त्रुटि_सं;
-	भ_लिखो(msg, args);
-	बहु_पूर्ण(args);
-पूर्ण
+	va_start(args, msg);
+	printf("not ok %d # error ", ksft_test_num());
+	errno = saved_errno;
+	vprintf(msg, args);
+	va_end(args);
+}
 
-अटल अंतरभूत पूर्णांक ksft_निकास_pass(व्योम)
-अणु
-	ksft_prपूर्णांक_cnts();
-	निकास(KSFT_PASS);
-पूर्ण
+static inline int ksft_exit_pass(void)
+{
+	ksft_print_cnts();
+	exit(KSFT_PASS);
+}
 
-अटल अंतरभूत पूर्णांक ksft_निकास_fail(व्योम)
-अणु
-	ksft_prपूर्णांक_cnts();
-	निकास(KSFT_FAIL);
-पूर्ण
+static inline int ksft_exit_fail(void)
+{
+	ksft_print_cnts();
+	exit(KSFT_FAIL);
+}
 
 /**
- * ksft_निकास() - Exit selftest based on truth of condition
+ * ksft_exit() - Exit selftest based on truth of condition
  *
- * @condition: अगर true, निकास self test with success, otherwise fail.
+ * @condition: if true, exit self test with success, otherwise fail.
  */
-#घोषणा ksft_निकास(condition) करो अणु	\
-	अगर (!!(condition))		\
-		ksft_निकास_pass();	\
-	अन्यथा				\
-		ksft_निकास_fail();	\
-	पूर्ण जबतक (0)
+#define ksft_exit(condition) do {	\
+	if (!!(condition))		\
+		ksft_exit_pass();	\
+	else				\
+		ksft_exit_fail();	\
+	} while (0)
 
-अटल अंतरभूत पूर्णांक ksft_निकास_fail_msg(स्थिर अक्षर *msg, ...)
-अणु
-	पूर्णांक saved_त्रुटि_सं = त्रुटि_सं;
-	बहु_सूची args;
+static inline int ksft_exit_fail_msg(const char *msg, ...)
+{
+	int saved_errno = errno;
+	va_list args;
 
-	बहु_शुरू(args, msg);
-	म_लिखो("Bail out! ");
-	त्रुटि_सं = saved_त्रुटि_सं;
-	भ_लिखो(msg, args);
-	बहु_पूर्ण(args);
+	va_start(args, msg);
+	printf("Bail out! ");
+	errno = saved_errno;
+	vprintf(msg, args);
+	va_end(args);
 
-	ksft_prपूर्णांक_cnts();
-	निकास(KSFT_FAIL);
-पूर्ण
+	ksft_print_cnts();
+	exit(KSFT_FAIL);
+}
 
-अटल अंतरभूत पूर्णांक ksft_निकास_xfail(व्योम)
-अणु
-	ksft_prपूर्णांक_cnts();
-	निकास(KSFT_XFAIL);
-पूर्ण
+static inline int ksft_exit_xfail(void)
+{
+	ksft_print_cnts();
+	exit(KSFT_XFAIL);
+}
 
-अटल अंतरभूत पूर्णांक ksft_निकास_xpass(व्योम)
-अणु
-	ksft_prपूर्णांक_cnts();
-	निकास(KSFT_XPASS);
-पूर्ण
+static inline int ksft_exit_xpass(void)
+{
+	ksft_print_cnts();
+	exit(KSFT_XPASS);
+}
 
-अटल अंतरभूत पूर्णांक ksft_निकास_skip(स्थिर अक्षर *msg, ...)
-अणु
-	पूर्णांक saved_त्रुटि_सं = त्रुटि_सं;
-	बहु_सूची args;
+static inline int ksft_exit_skip(const char *msg, ...)
+{
+	int saved_errno = errno;
+	va_list args;
 
-	बहु_शुरू(args, msg);
+	va_start(args, msg);
 
 	/*
-	 * FIXME: several tests misuse ksft_निकास_skip so produce
-	 * something sensible अगर some tests have alपढ़ोy been run
-	 * or a plan has been prपूर्णांकed.  Those tests should use
-	 * ksft_test_result_skip or ksft_निकास_fail_msg instead.
+	 * FIXME: several tests misuse ksft_exit_skip so produce
+	 * something sensible if some tests have already been run
+	 * or a plan has been printed.  Those tests should use
+	 * ksft_test_result_skip or ksft_exit_fail_msg instead.
 	 */
-	अगर (ksft_plan || ksft_test_num()) अणु
+	if (ksft_plan || ksft_test_num()) {
 		ksft_cnt.ksft_xskip++;
-		म_लिखो("ok %d # SKIP ", 1 + ksft_test_num());
-	पूर्ण अन्यथा अणु
-		म_लिखो("1..0 # SKIP ");
-	पूर्ण
-	अगर (msg) अणु
-		त्रुटि_सं = saved_त्रुटि_सं;
-		भ_लिखो(msg, args);
-		बहु_पूर्ण(args);
-	पूर्ण
-	अगर (ksft_test_num())
-		ksft_prपूर्णांक_cnts();
-	निकास(KSFT_SKIP);
-पूर्ण
+		printf("ok %d # SKIP ", 1 + ksft_test_num());
+	} else {
+		printf("1..0 # SKIP ");
+	}
+	if (msg) {
+		errno = saved_errno;
+		vprintf(msg, args);
+		va_end(args);
+	}
+	if (ksft_test_num())
+		ksft_print_cnts();
+	exit(KSFT_SKIP);
+}
 
-#पूर्ण_अगर /* __KSELFTEST_H */
+#endif /* __KSELFTEST_H */

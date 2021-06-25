@@ -1,98 +1,97 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ALPHA_PAGE_H
-#घोषणा _ALPHA_PAGE_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ALPHA_PAGE_H
+#define _ALPHA_PAGE_H
 
-#समावेश <linux/स्थिर.h>
-#समावेश <यंत्र/pal.h>
+#include <linux/const.h>
+#include <asm/pal.h>
 
 /* PAGE_SHIFT determines the page size */
-#घोषणा PAGE_SHIFT	13
-#घोषणा PAGE_SIZE	(_AC(1,UL) << PAGE_SHIFT)
-#घोषणा PAGE_MASK	(~(PAGE_SIZE-1))
+#define PAGE_SHIFT	13
+#define PAGE_SIZE	(_AC(1,UL) << PAGE_SHIFT)
+#define PAGE_MASK	(~(PAGE_SIZE-1))
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-#घोषणा STRICT_MM_TYPECHECKS
+#define STRICT_MM_TYPECHECKS
 
-बाह्य व्योम clear_page(व्योम *page);
-#घोषणा clear_user_page(page, vaddr, pg)	clear_page(page)
+extern void clear_page(void *page);
+#define clear_user_page(page, vaddr, pg)	clear_page(page)
 
-#घोषणा __alloc_zeroed_user_highpage(movableflags, vma, vaddr) \
+#define __alloc_zeroed_user_highpage(movableflags, vma, vaddr) \
 	alloc_page_vma(GFP_HIGHUSER | __GFP_ZERO | movableflags, vma, vmaddr)
-#घोषणा __HAVE_ARCH_ALLOC_ZEROED_USER_HIGHPAGE
+#define __HAVE_ARCH_ALLOC_ZEROED_USER_HIGHPAGE
 
-बाह्य व्योम copy_page(व्योम * _to, व्योम * _from);
-#घोषणा copy_user_page(to, from, vaddr, pg)	copy_page(to, from)
+extern void copy_page(void * _to, void * _from);
+#define copy_user_page(to, from, vaddr, pg)	copy_page(to, from)
 
-#अगर_घोषित STRICT_MM_TYPECHECKS
+#ifdef STRICT_MM_TYPECHECKS
 /*
  * These are used to make use of C type-checking..
  */
-प्रकार काष्ठा अणु अचिन्हित दीर्घ pte; पूर्ण pte_t;
-प्रकार काष्ठा अणु अचिन्हित दीर्घ pmd; पूर्ण pmd_t;
-प्रकार काष्ठा अणु अचिन्हित दीर्घ pgd; पूर्ण pgd_t;
-प्रकार काष्ठा अणु अचिन्हित दीर्घ pgprot; पूर्ण pgprot_t;
+typedef struct { unsigned long pte; } pte_t;
+typedef struct { unsigned long pmd; } pmd_t;
+typedef struct { unsigned long pgd; } pgd_t;
+typedef struct { unsigned long pgprot; } pgprot_t;
 
-#घोषणा pte_val(x)	((x).pte)
-#घोषणा pmd_val(x)	((x).pmd)
-#घोषणा pgd_val(x)	((x).pgd)
-#घोषणा pgprot_val(x)	((x).pgprot)
+#define pte_val(x)	((x).pte)
+#define pmd_val(x)	((x).pmd)
+#define pgd_val(x)	((x).pgd)
+#define pgprot_val(x)	((x).pgprot)
 
-#घोषणा __pte(x)	((pte_t) अणु (x) पूर्ण )
-#घोषणा __pmd(x)	((pmd_t) अणु (x) पूर्ण )
-#घोषणा __pgd(x)	((pgd_t) अणु (x) पूर्ण )
-#घोषणा __pgprot(x)	((pgprot_t) अणु (x) पूर्ण )
+#define __pte(x)	((pte_t) { (x) } )
+#define __pmd(x)	((pmd_t) { (x) } )
+#define __pgd(x)	((pgd_t) { (x) } )
+#define __pgprot(x)	((pgprot_t) { (x) } )
 
-#अन्यथा
+#else
 /*
- * .. जबतक these make it easier on the compiler
+ * .. while these make it easier on the compiler
  */
-प्रकार अचिन्हित दीर्घ pte_t;
-प्रकार अचिन्हित दीर्घ pmd_t;
-प्रकार अचिन्हित दीर्घ pgd_t;
-प्रकार अचिन्हित दीर्घ pgprot_t;
+typedef unsigned long pte_t;
+typedef unsigned long pmd_t;
+typedef unsigned long pgd_t;
+typedef unsigned long pgprot_t;
 
-#घोषणा pte_val(x)	(x)
-#घोषणा pmd_val(x)	(x)
-#घोषणा pgd_val(x)	(x)
-#घोषणा pgprot_val(x)	(x)
+#define pte_val(x)	(x)
+#define pmd_val(x)	(x)
+#define pgd_val(x)	(x)
+#define pgprot_val(x)	(x)
 
-#घोषणा __pte(x)	(x)
-#घोषणा __pgd(x)	(x)
-#घोषणा __pgprot(x)	(x)
+#define __pte(x)	(x)
+#define __pgd(x)	(x)
+#define __pgprot(x)	(x)
 
-#पूर्ण_अगर /* STRICT_MM_TYPECHECKS */
+#endif /* STRICT_MM_TYPECHECKS */
 
-प्रकार काष्ठा page *pgtable_t;
+typedef struct page *pgtable_t;
 
-#अगर_घोषित USE_48_BIT_KSEG
-#घोषणा PAGE_OFFSET		0xffff800000000000UL
-#अन्यथा
-#घोषणा PAGE_OFFSET		0xfffffc0000000000UL
-#पूर्ण_अगर
+#ifdef USE_48_BIT_KSEG
+#define PAGE_OFFSET		0xffff800000000000UL
+#else
+#define PAGE_OFFSET		0xfffffc0000000000UL
+#endif
 
-#अन्यथा
+#else
 
-#अगर_घोषित USE_48_BIT_KSEG
-#घोषणा PAGE_OFFSET		0xffff800000000000
-#अन्यथा
-#घोषणा PAGE_OFFSET		0xfffffc0000000000
-#पूर्ण_अगर
+#ifdef USE_48_BIT_KSEG
+#define PAGE_OFFSET		0xffff800000000000
+#else
+#define PAGE_OFFSET		0xfffffc0000000000
+#endif
 
-#पूर्ण_अगर /* !__ASSEMBLY__ */
+#endif /* !__ASSEMBLY__ */
 
-#घोषणा __pa(x)			((अचिन्हित दीर्घ) (x) - PAGE_OFFSET)
-#घोषणा __va(x)			((व्योम *)((अचिन्हित दीर्घ) (x) + PAGE_OFFSET))
+#define __pa(x)			((unsigned long) (x) - PAGE_OFFSET)
+#define __va(x)			((void *)((unsigned long) (x) + PAGE_OFFSET))
 
-#घोषणा virt_to_page(kaddr)	pfn_to_page(__pa(kaddr) >> PAGE_SHIFT)
-#घोषणा virt_addr_valid(kaddr)	pfn_valid((__pa(kaddr) >> PAGE_SHIFT))
+#define virt_to_page(kaddr)	pfn_to_page(__pa(kaddr) >> PAGE_SHIFT)
+#define virt_addr_valid(kaddr)	pfn_valid((__pa(kaddr) >> PAGE_SHIFT))
 
-#अगर_घोषित CONFIG_FLATMEM
-#घोषणा pfn_valid(pfn)		((pfn) < max_mapnr)
-#पूर्ण_अगर /* CONFIG_FLATMEM */
+#ifdef CONFIG_FLATMEM
+#define pfn_valid(pfn)		((pfn) < max_mapnr)
+#endif /* CONFIG_FLATMEM */
 
-#समावेश <यंत्र-generic/memory_model.h>
-#समावेश <यंत्र-generic/getorder.h>
+#include <asm-generic/memory_model.h>
+#include <asm-generic/getorder.h>
 
-#पूर्ण_अगर /* _ALPHA_PAGE_H */
+#endif /* _ALPHA_PAGE_H */

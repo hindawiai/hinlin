@@ -1,45 +1,44 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2013 Huawei Ltd.
  * Author: Jiang Liu <liuj97@gmail.com>
  *
  * Copyright (C) 2014 Zi Shen Lim <zlim.lnx@gmail.com>
  */
-#अगर_अघोषित	__ASM_INSN_H
-#घोषणा	__ASM_INSN_H
-#समावेश <linux/build_bug.h>
-#समावेश <linux/types.h>
+#ifndef	__ASM_INSN_H
+#define	__ASM_INSN_H
+#include <linux/build_bug.h>
+#include <linux/types.h>
 
-#समावेश <यंत्र/alternative.h>
+#include <asm/alternative.h>
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 /*
- * ARM Architecture Reference Manual क्रम ARMv8 Profile-A, Issue A.a
+ * ARM Architecture Reference Manual for ARMv8 Profile-A, Issue A.a
  * Section C3.1 "A64 instruction index by encoding":
- * AArch64 मुख्य encoding table
+ * AArch64 main encoding table
  *  Bit position
  *   28 27 26 25	Encoding Group
  *   0  0  -  -		Unallocated
  *   1  0  0  -		Data processing, immediate
- *   1  0  1  -		Branch, exception generation and प्रणाली inकाष्ठाions
+ *   1  0  1  -		Branch, exception generation and system instructions
  *   -  1  -  0		Loads and stores
- *   -  1  0  1		Data processing - रेजिस्टर
- *   0  1  1  1		Data processing - SIMD and भग्नing poपूर्णांक
- *   1  1  1  1		Data processing - SIMD and भग्नing poपूर्णांक
+ *   -  1  0  1		Data processing - register
+ *   0  1  1  1		Data processing - SIMD and floating point
+ *   1  1  1  1		Data processing - SIMD and floating point
  * "-" means "don't care"
  */
-क्रमागत aarch64_insn_encoding_class अणु
+enum aarch64_insn_encoding_class {
 	AARCH64_INSN_CLS_UNKNOWN,	/* UNALLOCATED */
 	AARCH64_INSN_CLS_DP_IMM,	/* Data processing - immediate */
-	AARCH64_INSN_CLS_DP_REG,	/* Data processing - रेजिस्टर */
+	AARCH64_INSN_CLS_DP_REG,	/* Data processing - register */
 	AARCH64_INSN_CLS_DP_FPSIMD,	/* Data processing - SIMD and FP */
 	AARCH64_INSN_CLS_LDST,		/* Loads and stores */
 	AARCH64_INSN_CLS_BR_SYS,	/* Branch, exception generation and
-					 * प्रणाली inकाष्ठाions */
-पूर्ण;
+					 * system instructions */
+};
 
-क्रमागत aarch64_insn_hपूर्णांक_cr_op अणु
+enum aarch64_insn_hint_cr_op {
 	AARCH64_INSN_HINT_NOP	= 0x0 << 5,
 	AARCH64_INSN_HINT_YIELD	= 0x1 << 5,
 	AARCH64_INSN_HINT_WFE	= 0x2 << 5,
@@ -70,9 +69,9 @@
 	AARCH64_INSN_HINT_BTIC  = 0x22 << 5,
 	AARCH64_INSN_HINT_BTIJ  = 0x24 << 5,
 	AARCH64_INSN_HINT_BTIJC = 0x26 << 5,
-पूर्ण;
+};
 
-क्रमागत aarch64_insn_imm_type अणु
+enum aarch64_insn_imm_type {
 	AARCH64_INSN_IMM_ADR,
 	AARCH64_INSN_IMM_26,
 	AARCH64_INSN_IMM_19,
@@ -86,9 +85,9 @@
 	AARCH64_INSN_IMM_R,
 	AARCH64_INSN_IMM_N,
 	AARCH64_INSN_IMM_MAX
-पूर्ण;
+};
 
-क्रमागत aarch64_insn_रेजिस्टर_type अणु
+enum aarch64_insn_register_type {
 	AARCH64_INSN_REGTYPE_RT,
 	AARCH64_INSN_REGTYPE_RN,
 	AARCH64_INSN_REGTYPE_RT2,
@@ -96,9 +95,9 @@
 	AARCH64_INSN_REGTYPE_RD,
 	AARCH64_INSN_REGTYPE_RA,
 	AARCH64_INSN_REGTYPE_RS,
-पूर्ण;
+};
 
-क्रमागत aarch64_insn_रेजिस्टर अणु
+enum aarch64_insn_register {
 	AARCH64_INSN_REG_0  = 0,
 	AARCH64_INSN_REG_1  = 1,
 	AARCH64_INSN_REG_2  = 2,
@@ -129,14 +128,14 @@
 	AARCH64_INSN_REG_27 = 27,
 	AARCH64_INSN_REG_28 = 28,
 	AARCH64_INSN_REG_29 = 29,
-	AARCH64_INSN_REG_FP = 29, /* Frame poपूर्णांकer */
+	AARCH64_INSN_REG_FP = 29, /* Frame pointer */
 	AARCH64_INSN_REG_30 = 30,
-	AARCH64_INSN_REG_LR = 30, /* Link रेजिस्टर */
-	AARCH64_INSN_REG_ZR = 31, /* Zero: as source रेजिस्टर */
-	AARCH64_INSN_REG_SP = 31  /* Stack poपूर्णांकer: as load/store base reg */
-पूर्ण;
+	AARCH64_INSN_REG_LR = 30, /* Link register */
+	AARCH64_INSN_REG_ZR = 31, /* Zero: as source register */
+	AARCH64_INSN_REG_SP = 31  /* Stack pointer: as load/store base reg */
+};
 
-क्रमागत aarch64_insn_special_रेजिस्टर अणु
+enum aarch64_insn_special_register {
 	AARCH64_INSN_SPCLREG_SPSR_EL1	= 0xC200,
 	AARCH64_INSN_SPCLREG_ELR_EL1	= 0xC201,
 	AARCH64_INSN_SPCLREG_SP_EL0	= 0xC208,
@@ -157,47 +156,47 @@
 	AARCH64_INSN_SPCLREG_SPSR_EL3	= 0xF200,
 	AARCH64_INSN_SPCLREG_ELR_EL3	= 0xF201,
 	AARCH64_INSN_SPCLREG_SP_EL2	= 0xF210
-पूर्ण;
+};
 
-क्रमागत aarch64_insn_variant अणु
+enum aarch64_insn_variant {
 	AARCH64_INSN_VARIANT_32BIT,
 	AARCH64_INSN_VARIANT_64BIT
-पूर्ण;
+};
 
-क्रमागत aarch64_insn_condition अणु
+enum aarch64_insn_condition {
 	AARCH64_INSN_COND_EQ = 0x0, /* == */
 	AARCH64_INSN_COND_NE = 0x1, /* != */
-	AARCH64_INSN_COND_CS = 0x2, /* अचिन्हित >= */
-	AARCH64_INSN_COND_CC = 0x3, /* अचिन्हित < */
+	AARCH64_INSN_COND_CS = 0x2, /* unsigned >= */
+	AARCH64_INSN_COND_CC = 0x3, /* unsigned < */
 	AARCH64_INSN_COND_MI = 0x4, /* < 0 */
 	AARCH64_INSN_COND_PL = 0x5, /* >= 0 */
 	AARCH64_INSN_COND_VS = 0x6, /* overflow */
 	AARCH64_INSN_COND_VC = 0x7, /* no overflow */
-	AARCH64_INSN_COND_HI = 0x8, /* अचिन्हित > */
-	AARCH64_INSN_COND_LS = 0x9, /* अचिन्हित <= */
-	AARCH64_INSN_COND_GE = 0xa, /* चिन्हित >= */
-	AARCH64_INSN_COND_LT = 0xb, /* चिन्हित < */
-	AARCH64_INSN_COND_GT = 0xc, /* चिन्हित > */
-	AARCH64_INSN_COND_LE = 0xd, /* चिन्हित <= */
+	AARCH64_INSN_COND_HI = 0x8, /* unsigned > */
+	AARCH64_INSN_COND_LS = 0x9, /* unsigned <= */
+	AARCH64_INSN_COND_GE = 0xa, /* signed >= */
+	AARCH64_INSN_COND_LT = 0xb, /* signed < */
+	AARCH64_INSN_COND_GT = 0xc, /* signed > */
+	AARCH64_INSN_COND_LE = 0xd, /* signed <= */
 	AARCH64_INSN_COND_AL = 0xe, /* always */
-पूर्ण;
+};
 
-क्रमागत aarch64_insn_branch_type अणु
+enum aarch64_insn_branch_type {
 	AARCH64_INSN_BRANCH_NOLINK,
 	AARCH64_INSN_BRANCH_LINK,
 	AARCH64_INSN_BRANCH_RETURN,
 	AARCH64_INSN_BRANCH_COMP_ZERO,
 	AARCH64_INSN_BRANCH_COMP_NONZERO,
-पूर्ण;
+};
 
-क्रमागत aarch64_insn_माप_प्रकारype अणु
+enum aarch64_insn_size_type {
 	AARCH64_INSN_SIZE_8,
 	AARCH64_INSN_SIZE_16,
 	AARCH64_INSN_SIZE_32,
 	AARCH64_INSN_SIZE_64,
-पूर्ण;
+};
 
-क्रमागत aarch64_insn_ldst_type अणु
+enum aarch64_insn_ldst_type {
 	AARCH64_INSN_LDST_LOAD_REG_OFFSET,
 	AARCH64_INSN_LDST_STORE_REG_OFFSET,
 	AARCH64_INSN_LDST_LOAD_PAIR_PRE_INDEX,
@@ -206,48 +205,48 @@
 	AARCH64_INSN_LDST_STORE_PAIR_POST_INDEX,
 	AARCH64_INSN_LDST_LOAD_EX,
 	AARCH64_INSN_LDST_STORE_EX,
-पूर्ण;
+};
 
-क्रमागत aarch64_insn_adsb_type अणु
+enum aarch64_insn_adsb_type {
 	AARCH64_INSN_ADSB_ADD,
 	AARCH64_INSN_ADSB_SUB,
 	AARCH64_INSN_ADSB_ADD_SETFLAGS,
 	AARCH64_INSN_ADSB_SUB_SETFLAGS
-पूर्ण;
+};
 
-क्रमागत aarch64_insn_movewide_type अणु
+enum aarch64_insn_movewide_type {
 	AARCH64_INSN_MOVEWIDE_ZERO,
 	AARCH64_INSN_MOVEWIDE_KEEP,
 	AARCH64_INSN_MOVEWIDE_INVERSE
-पूर्ण;
+};
 
-क्रमागत aarch64_insn_bitfield_type अणु
+enum aarch64_insn_bitfield_type {
 	AARCH64_INSN_BITFIELD_MOVE,
 	AARCH64_INSN_BITFIELD_MOVE_UNSIGNED,
 	AARCH64_INSN_BITFIELD_MOVE_SIGNED
-पूर्ण;
+};
 
-क्रमागत aarch64_insn_data1_type अणु
+enum aarch64_insn_data1_type {
 	AARCH64_INSN_DATA1_REVERSE_16,
 	AARCH64_INSN_DATA1_REVERSE_32,
 	AARCH64_INSN_DATA1_REVERSE_64,
-पूर्ण;
+};
 
-क्रमागत aarch64_insn_data2_type अणु
+enum aarch64_insn_data2_type {
 	AARCH64_INSN_DATA2_UDIV,
 	AARCH64_INSN_DATA2_SDIV,
 	AARCH64_INSN_DATA2_LSLV,
 	AARCH64_INSN_DATA2_LSRV,
 	AARCH64_INSN_DATA2_ASRV,
 	AARCH64_INSN_DATA2_RORV,
-पूर्ण;
+};
 
-क्रमागत aarch64_insn_data3_type अणु
+enum aarch64_insn_data3_type {
 	AARCH64_INSN_DATA3_MADD,
 	AARCH64_INSN_DATA3_MSUB,
-पूर्ण;
+};
 
-क्रमागत aarch64_insn_logic_type अणु
+enum aarch64_insn_logic_type {
 	AARCH64_INSN_LOGIC_AND,
 	AARCH64_INSN_LOGIC_BIC,
 	AARCH64_INSN_LOGIC_ORR,
@@ -256,40 +255,40 @@
 	AARCH64_INSN_LOGIC_EON,
 	AARCH64_INSN_LOGIC_AND_SETFLAGS,
 	AARCH64_INSN_LOGIC_BIC_SETFLAGS
-पूर्ण;
+};
 
-क्रमागत aarch64_insn_prfm_type अणु
+enum aarch64_insn_prfm_type {
 	AARCH64_INSN_PRFM_TYPE_PLD,
 	AARCH64_INSN_PRFM_TYPE_PLI,
 	AARCH64_INSN_PRFM_TYPE_PST,
-पूर्ण;
+};
 
-क्रमागत aarch64_insn_prfm_target अणु
+enum aarch64_insn_prfm_target {
 	AARCH64_INSN_PRFM_TARGET_L1,
 	AARCH64_INSN_PRFM_TARGET_L2,
 	AARCH64_INSN_PRFM_TARGET_L3,
-पूर्ण;
+};
 
-क्रमागत aarch64_insn_prfm_policy अणु
+enum aarch64_insn_prfm_policy {
 	AARCH64_INSN_PRFM_POLICY_KEEP,
 	AARCH64_INSN_PRFM_POLICY_STRM,
-पूर्ण;
+};
 
-क्रमागत aarch64_insn_adr_type अणु
+enum aarch64_insn_adr_type {
 	AARCH64_INSN_ADR_TYPE_ADRP,
 	AARCH64_INSN_ADR_TYPE_ADR,
-पूर्ण;
+};
 
-#घोषणा	__AARCH64_INSN_FUNCS(abbr, mask, val)				\
-अटल __always_अंतरभूत bool aarch64_insn_is_##abbr(u32 code)		\
-अणु									\
+#define	__AARCH64_INSN_FUNCS(abbr, mask, val)				\
+static __always_inline bool aarch64_insn_is_##abbr(u32 code)		\
+{									\
 	BUILD_BUG_ON(~(mask) & (val));					\
-	वापस (code & (mask)) == (val);				\
-पूर्ण									\
-अटल __always_अंतरभूत u32 aarch64_insn_get_##abbr##_value(व्योम)	\
-अणु									\
-	वापस (val);							\
-पूर्ण
+	return (code & (mask)) == (val);				\
+}									\
+static __always_inline u32 aarch64_insn_get_##abbr##_value(void)	\
+{									\
+	return (val);							\
+}
 
 __AARCH64_INSN_FUNCS(adr,	0x9F000000, 0x10000000)
 __AARCH64_INSN_FUNCS(adrp,	0x9F000000, 0x90000000)
@@ -323,8 +322,8 @@ __AARCH64_INSN_FUNCS(sub,	0x7F200000, 0x4B000000)
 __AARCH64_INSN_FUNCS(subs,	0x7F200000, 0x6B000000)
 __AARCH64_INSN_FUNCS(madd,	0x7FE08000, 0x1B000000)
 __AARCH64_INSN_FUNCS(msub,	0x7FE08000, 0x1B008000)
-__AARCH64_INSN_FUNCS(uभाग,	0x7FE0FC00, 0x1AC00800)
-__AARCH64_INSN_FUNCS(sभाग,	0x7FE0FC00, 0x1AC00C00)
+__AARCH64_INSN_FUNCS(udiv,	0x7FE0FC00, 0x1AC00800)
+__AARCH64_INSN_FUNCS(sdiv,	0x7FE0FC00, 0x1AC00C00)
 __AARCH64_INSN_FUNCS(lslv,	0x7FE0FC00, 0x1AC02000)
 __AARCH64_INSN_FUNCS(lsrv,	0x7FE0FC00, 0x1AC02400)
 __AARCH64_INSN_FUNCS(asrv,	0x7FE0FC00, 0x1AC02800)
@@ -357,7 +356,7 @@ __AARCH64_INSN_FUNCS(hvc,	0xFFE0001F, 0xD4000002)
 __AARCH64_INSN_FUNCS(smc,	0xFFE0001F, 0xD4000003)
 __AARCH64_INSN_FUNCS(brk,	0xFFE0001F, 0xD4200000)
 __AARCH64_INSN_FUNCS(exception,	0xFF000000, 0xD4000000)
-__AARCH64_INSN_FUNCS(hपूर्णांक,	0xFFFFF01F, 0xD503201F)
+__AARCH64_INSN_FUNCS(hint,	0xFFFFF01F, 0xD503201F)
 __AARCH64_INSN_FUNCS(br,	0xFFFFFC1F, 0xD61F0000)
 __AARCH64_INSN_FUNCS(br_auth,	0xFEFFF800, 0xD61F0800)
 __AARCH64_INSN_FUNCS(blr,	0xFFFFFC1F, 0xD63F0000)
@@ -370,143 +369,143 @@ __AARCH64_INSN_FUNCS(mrs,	0xFFF00000, 0xD5300000)
 __AARCH64_INSN_FUNCS(msr_imm,	0xFFF8F01F, 0xD500401F)
 __AARCH64_INSN_FUNCS(msr_reg,	0xFFF00000, 0xD5100000)
 
-#अघोषित	__AARCH64_INSN_FUNCS
+#undef	__AARCH64_INSN_FUNCS
 
-bool aarch64_insn_is_steppable_hपूर्णांक(u32 insn);
+bool aarch64_insn_is_steppable_hint(u32 insn);
 bool aarch64_insn_is_branch_imm(u32 insn);
 
-अटल अंतरभूत bool aarch64_insn_is_adr_adrp(u32 insn)
-अणु
-	वापस aarch64_insn_is_adr(insn) || aarch64_insn_is_adrp(insn);
-पूर्ण
+static inline bool aarch64_insn_is_adr_adrp(u32 insn)
+{
+	return aarch64_insn_is_adr(insn) || aarch64_insn_is_adrp(insn);
+}
 
-पूर्णांक aarch64_insn_पढ़ो(व्योम *addr, u32 *insnp);
-पूर्णांक aarch64_insn_ग_लिखो(व्योम *addr, u32 insn);
-क्रमागत aarch64_insn_encoding_class aarch64_get_insn_class(u32 insn);
+int aarch64_insn_read(void *addr, u32 *insnp);
+int aarch64_insn_write(void *addr, u32 insn);
+enum aarch64_insn_encoding_class aarch64_get_insn_class(u32 insn);
 bool aarch64_insn_uses_literal(u32 insn);
 bool aarch64_insn_is_branch(u32 insn);
-u64 aarch64_insn_decode_immediate(क्रमागत aarch64_insn_imm_type type, u32 insn);
-u32 aarch64_insn_encode_immediate(क्रमागत aarch64_insn_imm_type type,
+u64 aarch64_insn_decode_immediate(enum aarch64_insn_imm_type type, u32 insn);
+u32 aarch64_insn_encode_immediate(enum aarch64_insn_imm_type type,
 				  u32 insn, u64 imm);
-u32 aarch64_insn_decode_रेजिस्टर(क्रमागत aarch64_insn_रेजिस्टर_type type,
+u32 aarch64_insn_decode_register(enum aarch64_insn_register_type type,
 					 u32 insn);
-u32 aarch64_insn_gen_branch_imm(अचिन्हित दीर्घ pc, अचिन्हित दीर्घ addr,
-				क्रमागत aarch64_insn_branch_type type);
-u32 aarch64_insn_gen_comp_branch_imm(अचिन्हित दीर्घ pc, अचिन्हित दीर्घ addr,
-				     क्रमागत aarch64_insn_रेजिस्टर reg,
-				     क्रमागत aarch64_insn_variant variant,
-				     क्रमागत aarch64_insn_branch_type type);
-u32 aarch64_insn_gen_cond_branch_imm(अचिन्हित दीर्घ pc, अचिन्हित दीर्घ addr,
-				     क्रमागत aarch64_insn_condition cond);
-u32 aarch64_insn_gen_hपूर्णांक(क्रमागत aarch64_insn_hपूर्णांक_cr_op op);
-u32 aarch64_insn_gen_nop(व्योम);
-u32 aarch64_insn_gen_branch_reg(क्रमागत aarch64_insn_रेजिस्टर reg,
-				क्रमागत aarch64_insn_branch_type type);
-u32 aarch64_insn_gen_load_store_reg(क्रमागत aarch64_insn_रेजिस्टर reg,
-				    क्रमागत aarch64_insn_रेजिस्टर base,
-				    क्रमागत aarch64_insn_रेजिस्टर offset,
-				    क्रमागत aarch64_insn_माप_प्रकारype size,
-				    क्रमागत aarch64_insn_ldst_type type);
-u32 aarch64_insn_gen_load_store_pair(क्रमागत aarch64_insn_रेजिस्टर reg1,
-				     क्रमागत aarch64_insn_रेजिस्टर reg2,
-				     क्रमागत aarch64_insn_रेजिस्टर base,
-				     पूर्णांक offset,
-				     क्रमागत aarch64_insn_variant variant,
-				     क्रमागत aarch64_insn_ldst_type type);
-u32 aarch64_insn_gen_load_store_ex(क्रमागत aarch64_insn_रेजिस्टर reg,
-				   क्रमागत aarch64_insn_रेजिस्टर base,
-				   क्रमागत aarch64_insn_रेजिस्टर state,
-				   क्रमागत aarch64_insn_माप_प्रकारype size,
-				   क्रमागत aarch64_insn_ldst_type type);
-u32 aarch64_insn_gen_ldadd(क्रमागत aarch64_insn_रेजिस्टर result,
-			   क्रमागत aarch64_insn_रेजिस्टर address,
-			   क्रमागत aarch64_insn_रेजिस्टर value,
-			   क्रमागत aarch64_insn_माप_प्रकारype size);
-u32 aarch64_insn_gen_stadd(क्रमागत aarch64_insn_रेजिस्टर address,
-			   क्रमागत aarch64_insn_रेजिस्टर value,
-			   क्रमागत aarch64_insn_माप_प्रकारype size);
-u32 aarch64_insn_gen_add_sub_imm(क्रमागत aarch64_insn_रेजिस्टर dst,
-				 क्रमागत aarch64_insn_रेजिस्टर src,
-				 पूर्णांक imm, क्रमागत aarch64_insn_variant variant,
-				 क्रमागत aarch64_insn_adsb_type type);
-u32 aarch64_insn_gen_adr(अचिन्हित दीर्घ pc, अचिन्हित दीर्घ addr,
-			 क्रमागत aarch64_insn_रेजिस्टर reg,
-			 क्रमागत aarch64_insn_adr_type type);
-u32 aarch64_insn_gen_bitfield(क्रमागत aarch64_insn_रेजिस्टर dst,
-			      क्रमागत aarch64_insn_रेजिस्टर src,
-			      पूर्णांक immr, पूर्णांक imms,
-			      क्रमागत aarch64_insn_variant variant,
-			      क्रमागत aarch64_insn_bitfield_type type);
-u32 aarch64_insn_gen_movewide(क्रमागत aarch64_insn_रेजिस्टर dst,
-			      पूर्णांक imm, पूर्णांक shअगरt,
-			      क्रमागत aarch64_insn_variant variant,
-			      क्रमागत aarch64_insn_movewide_type type);
-u32 aarch64_insn_gen_add_sub_shअगरted_reg(क्रमागत aarch64_insn_रेजिस्टर dst,
-					 क्रमागत aarch64_insn_रेजिस्टर src,
-					 क्रमागत aarch64_insn_रेजिस्टर reg,
-					 पूर्णांक shअगरt,
-					 क्रमागत aarch64_insn_variant variant,
-					 क्रमागत aarch64_insn_adsb_type type);
-u32 aarch64_insn_gen_data1(क्रमागत aarch64_insn_रेजिस्टर dst,
-			   क्रमागत aarch64_insn_रेजिस्टर src,
-			   क्रमागत aarch64_insn_variant variant,
-			   क्रमागत aarch64_insn_data1_type type);
-u32 aarch64_insn_gen_data2(क्रमागत aarch64_insn_रेजिस्टर dst,
-			   क्रमागत aarch64_insn_रेजिस्टर src,
-			   क्रमागत aarch64_insn_रेजिस्टर reg,
-			   क्रमागत aarch64_insn_variant variant,
-			   क्रमागत aarch64_insn_data2_type type);
-u32 aarch64_insn_gen_data3(क्रमागत aarch64_insn_रेजिस्टर dst,
-			   क्रमागत aarch64_insn_रेजिस्टर src,
-			   क्रमागत aarch64_insn_रेजिस्टर reg1,
-			   क्रमागत aarch64_insn_रेजिस्टर reg2,
-			   क्रमागत aarch64_insn_variant variant,
-			   क्रमागत aarch64_insn_data3_type type);
-u32 aarch64_insn_gen_logical_shअगरted_reg(क्रमागत aarch64_insn_रेजिस्टर dst,
-					 क्रमागत aarch64_insn_रेजिस्टर src,
-					 क्रमागत aarch64_insn_रेजिस्टर reg,
-					 पूर्णांक shअगरt,
-					 क्रमागत aarch64_insn_variant variant,
-					 क्रमागत aarch64_insn_logic_type type);
-u32 aarch64_insn_gen_move_reg(क्रमागत aarch64_insn_रेजिस्टर dst,
-			      क्रमागत aarch64_insn_रेजिस्टर src,
-			      क्रमागत aarch64_insn_variant variant);
-u32 aarch64_insn_gen_logical_immediate(क्रमागत aarch64_insn_logic_type type,
-				       क्रमागत aarch64_insn_variant variant,
-				       क्रमागत aarch64_insn_रेजिस्टर Rn,
-				       क्रमागत aarch64_insn_रेजिस्टर Rd,
+u32 aarch64_insn_gen_branch_imm(unsigned long pc, unsigned long addr,
+				enum aarch64_insn_branch_type type);
+u32 aarch64_insn_gen_comp_branch_imm(unsigned long pc, unsigned long addr,
+				     enum aarch64_insn_register reg,
+				     enum aarch64_insn_variant variant,
+				     enum aarch64_insn_branch_type type);
+u32 aarch64_insn_gen_cond_branch_imm(unsigned long pc, unsigned long addr,
+				     enum aarch64_insn_condition cond);
+u32 aarch64_insn_gen_hint(enum aarch64_insn_hint_cr_op op);
+u32 aarch64_insn_gen_nop(void);
+u32 aarch64_insn_gen_branch_reg(enum aarch64_insn_register reg,
+				enum aarch64_insn_branch_type type);
+u32 aarch64_insn_gen_load_store_reg(enum aarch64_insn_register reg,
+				    enum aarch64_insn_register base,
+				    enum aarch64_insn_register offset,
+				    enum aarch64_insn_size_type size,
+				    enum aarch64_insn_ldst_type type);
+u32 aarch64_insn_gen_load_store_pair(enum aarch64_insn_register reg1,
+				     enum aarch64_insn_register reg2,
+				     enum aarch64_insn_register base,
+				     int offset,
+				     enum aarch64_insn_variant variant,
+				     enum aarch64_insn_ldst_type type);
+u32 aarch64_insn_gen_load_store_ex(enum aarch64_insn_register reg,
+				   enum aarch64_insn_register base,
+				   enum aarch64_insn_register state,
+				   enum aarch64_insn_size_type size,
+				   enum aarch64_insn_ldst_type type);
+u32 aarch64_insn_gen_ldadd(enum aarch64_insn_register result,
+			   enum aarch64_insn_register address,
+			   enum aarch64_insn_register value,
+			   enum aarch64_insn_size_type size);
+u32 aarch64_insn_gen_stadd(enum aarch64_insn_register address,
+			   enum aarch64_insn_register value,
+			   enum aarch64_insn_size_type size);
+u32 aarch64_insn_gen_add_sub_imm(enum aarch64_insn_register dst,
+				 enum aarch64_insn_register src,
+				 int imm, enum aarch64_insn_variant variant,
+				 enum aarch64_insn_adsb_type type);
+u32 aarch64_insn_gen_adr(unsigned long pc, unsigned long addr,
+			 enum aarch64_insn_register reg,
+			 enum aarch64_insn_adr_type type);
+u32 aarch64_insn_gen_bitfield(enum aarch64_insn_register dst,
+			      enum aarch64_insn_register src,
+			      int immr, int imms,
+			      enum aarch64_insn_variant variant,
+			      enum aarch64_insn_bitfield_type type);
+u32 aarch64_insn_gen_movewide(enum aarch64_insn_register dst,
+			      int imm, int shift,
+			      enum aarch64_insn_variant variant,
+			      enum aarch64_insn_movewide_type type);
+u32 aarch64_insn_gen_add_sub_shifted_reg(enum aarch64_insn_register dst,
+					 enum aarch64_insn_register src,
+					 enum aarch64_insn_register reg,
+					 int shift,
+					 enum aarch64_insn_variant variant,
+					 enum aarch64_insn_adsb_type type);
+u32 aarch64_insn_gen_data1(enum aarch64_insn_register dst,
+			   enum aarch64_insn_register src,
+			   enum aarch64_insn_variant variant,
+			   enum aarch64_insn_data1_type type);
+u32 aarch64_insn_gen_data2(enum aarch64_insn_register dst,
+			   enum aarch64_insn_register src,
+			   enum aarch64_insn_register reg,
+			   enum aarch64_insn_variant variant,
+			   enum aarch64_insn_data2_type type);
+u32 aarch64_insn_gen_data3(enum aarch64_insn_register dst,
+			   enum aarch64_insn_register src,
+			   enum aarch64_insn_register reg1,
+			   enum aarch64_insn_register reg2,
+			   enum aarch64_insn_variant variant,
+			   enum aarch64_insn_data3_type type);
+u32 aarch64_insn_gen_logical_shifted_reg(enum aarch64_insn_register dst,
+					 enum aarch64_insn_register src,
+					 enum aarch64_insn_register reg,
+					 int shift,
+					 enum aarch64_insn_variant variant,
+					 enum aarch64_insn_logic_type type);
+u32 aarch64_insn_gen_move_reg(enum aarch64_insn_register dst,
+			      enum aarch64_insn_register src,
+			      enum aarch64_insn_variant variant);
+u32 aarch64_insn_gen_logical_immediate(enum aarch64_insn_logic_type type,
+				       enum aarch64_insn_variant variant,
+				       enum aarch64_insn_register Rn,
+				       enum aarch64_insn_register Rd,
 				       u64 imm);
-u32 aarch64_insn_gen_extr(क्रमागत aarch64_insn_variant variant,
-			  क्रमागत aarch64_insn_रेजिस्टर Rm,
-			  क्रमागत aarch64_insn_रेजिस्टर Rn,
-			  क्रमागत aarch64_insn_रेजिस्टर Rd,
+u32 aarch64_insn_gen_extr(enum aarch64_insn_variant variant,
+			  enum aarch64_insn_register Rm,
+			  enum aarch64_insn_register Rn,
+			  enum aarch64_insn_register Rd,
 			  u8 lsb);
-u32 aarch64_insn_gen_prefetch(क्रमागत aarch64_insn_रेजिस्टर base,
-			      क्रमागत aarch64_insn_prfm_type type,
-			      क्रमागत aarch64_insn_prfm_target target,
-			      क्रमागत aarch64_insn_prfm_policy policy);
+u32 aarch64_insn_gen_prefetch(enum aarch64_insn_register base,
+			      enum aarch64_insn_prfm_type type,
+			      enum aarch64_insn_prfm_target target,
+			      enum aarch64_insn_prfm_policy policy);
 s32 aarch64_get_branch_offset(u32 insn);
 u32 aarch64_set_branch_offset(u32 insn, s32 offset);
 
-पूर्णांक aarch64_insn_patch_text_nosync(व्योम *addr, u32 insn);
-पूर्णांक aarch64_insn_patch_text(व्योम *addrs[], u32 insns[], पूर्णांक cnt);
+int aarch64_insn_patch_text_nosync(void *addr, u32 insn);
+int aarch64_insn_patch_text(void *addrs[], u32 insns[], int cnt);
 
 s32 aarch64_insn_adrp_get_offset(u32 insn);
 u32 aarch64_insn_adrp_set_offset(u32 insn, s32 offset);
 
 bool aarch32_insn_is_wide(u32 insn);
 
-#घोषणा A32_RN_OFFSET	16
-#घोषणा A32_RT_OFFSET	12
-#घोषणा A32_RT2_OFFSET	 0
+#define A32_RN_OFFSET	16
+#define A32_RT_OFFSET	12
+#define A32_RT2_OFFSET	 0
 
-u32 aarch64_insn_extract_प्रणाली_reg(u32 insn);
-u32 aarch32_insn_extract_reg_num(u32 insn, पूर्णांक offset);
+u32 aarch64_insn_extract_system_reg(u32 insn);
+u32 aarch32_insn_extract_reg_num(u32 insn, int offset);
 u32 aarch32_insn_mcr_extract_opc2(u32 insn);
 u32 aarch32_insn_mcr_extract_crm(u32 insn);
 
-प्रकार bool (pstate_check_t)(अचिन्हित दीर्घ);
-बाह्य pstate_check_t * स्थिर aarch32_opcode_cond_checks[16];
-#पूर्ण_अगर /* __ASSEMBLY__ */
+typedef bool (pstate_check_t)(unsigned long);
+extern pstate_check_t * const aarch32_opcode_cond_checks[16];
+#endif /* __ASSEMBLY__ */
 
-#पूर्ण_अगर	/* __ASM_INSN_H */
+#endif	/* __ASM_INSN_H */

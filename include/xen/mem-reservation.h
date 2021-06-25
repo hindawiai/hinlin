@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
 /*
  * Xen memory reservation utilities.
@@ -11,51 +10,51 @@
  * Copyright (c) 2018 Oleksandr Andrushchenko, EPAM Systems Inc.
  */
 
-#अगर_अघोषित _XENMEM_RESERVATION_H
-#घोषणा _XENMEM_RESERVATION_H
+#ifndef _XENMEM_RESERVATION_H
+#define _XENMEM_RESERVATION_H
 
-#समावेश <linux/highस्मृति.स>
+#include <linux/highmem.h>
 
-#समावेश <xen/page.h>
+#include <xen/page.h>
 
-बाह्य bool xen_scrub_pages;
+extern bool xen_scrub_pages;
 
-अटल अंतरभूत व्योम xenmem_reservation_scrub_page(काष्ठा page *page)
-अणु
-	अगर (xen_scrub_pages)
+static inline void xenmem_reservation_scrub_page(struct page *page)
+{
+	if (xen_scrub_pages)
 		clear_highpage(page);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_XEN_HAVE_PVMMU
-व्योम __xenmem_reservation_va_mapping_update(अचिन्हित दीर्घ count,
-					    काष्ठा page **pages,
+#ifdef CONFIG_XEN_HAVE_PVMMU
+void __xenmem_reservation_va_mapping_update(unsigned long count,
+					    struct page **pages,
 					    xen_pfn_t *frames);
 
-व्योम __xenmem_reservation_va_mapping_reset(अचिन्हित दीर्घ count,
-					   काष्ठा page **pages);
-#पूर्ण_अगर
+void __xenmem_reservation_va_mapping_reset(unsigned long count,
+					   struct page **pages);
+#endif
 
-अटल अंतरभूत व्योम xenmem_reservation_va_mapping_update(अचिन्हित दीर्घ count,
-							काष्ठा page **pages,
+static inline void xenmem_reservation_va_mapping_update(unsigned long count,
+							struct page **pages,
 							xen_pfn_t *frames)
-अणु
-#अगर_घोषित CONFIG_XEN_HAVE_PVMMU
-	अगर (!xen_feature(XENFEAT_स्वतः_translated_physmap))
+{
+#ifdef CONFIG_XEN_HAVE_PVMMU
+	if (!xen_feature(XENFEAT_auto_translated_physmap))
 		__xenmem_reservation_va_mapping_update(count, pages, frames);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल अंतरभूत व्योम xenmem_reservation_va_mapping_reset(अचिन्हित दीर्घ count,
-						       काष्ठा page **pages)
-अणु
-#अगर_घोषित CONFIG_XEN_HAVE_PVMMU
-	अगर (!xen_feature(XENFEAT_स्वतः_translated_physmap))
+static inline void xenmem_reservation_va_mapping_reset(unsigned long count,
+						       struct page **pages)
+{
+#ifdef CONFIG_XEN_HAVE_PVMMU
+	if (!xen_feature(XENFEAT_auto_translated_physmap))
 		__xenmem_reservation_va_mapping_reset(count, pages);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-पूर्णांक xenmem_reservation_increase(पूर्णांक count, xen_pfn_t *frames);
+int xenmem_reservation_increase(int count, xen_pfn_t *frames);
 
-पूर्णांक xenmem_reservation_decrease(पूर्णांक count, xen_pfn_t *frames);
+int xenmem_reservation_decrease(int count, xen_pfn_t *frames);
 
-#पूर्ण_अगर
+#endif

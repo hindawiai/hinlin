@@ -1,50 +1,49 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * x86 APERF/MPERF KHz calculation क्रम
+ * x86 APERF/MPERF KHz calculation for
  * /sys/.../cpufreq/scaling_cur_freq
  *
  * Copyright (C) 2017 Intel Corp.
- * Author: Len Brown <len.brown@पूर्णांकel.com>
+ * Author: Len Brown <len.brown@intel.com>
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/kसमय.स>
-#समावेश <linux/math64.h>
-#समावेश <linux/percpu.h>
-#समावेश <linux/cpufreq.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/sched/isolation.h>
-#समावेश <linux/rcupdate.h>
+#include <linux/delay.h>
+#include <linux/ktime.h>
+#include <linux/math64.h>
+#include <linux/percpu.h>
+#include <linux/cpufreq.h>
+#include <linux/smp.h>
+#include <linux/sched/isolation.h>
+#include <linux/rcupdate.h>
 
-#समावेश "cpu.h"
+#include "cpu.h"
 
-काष्ठा aperfmperf_sample अणु
-	अचिन्हित पूर्णांक	khz;
+struct aperfmperf_sample {
+	unsigned int	khz;
 	atomic_t	scfpending;
-	kसमय_प्रकार	समय;
+	ktime_t	time;
 	u64	aperf;
 	u64	mperf;
-पूर्ण;
+};
 
-अटल DEFINE_PER_CPU(काष्ठा aperfmperf_sample, samples);
+static DEFINE_PER_CPU(struct aperfmperf_sample, samples);
 
-#घोषणा APERFMPERF_CACHE_THRESHOLD_MS	10
-#घोषणा APERFMPERF_REFRESH_DELAY_MS	10
-#घोषणा APERFMPERF_STALE_THRESHOLD_MS	1000
+#define APERFMPERF_CACHE_THRESHOLD_MS	10
+#define APERFMPERF_REFRESH_DELAY_MS	10
+#define APERFMPERF_STALE_THRESHOLD_MS	1000
 
 /*
  * aperfmperf_snapshot_khz()
- * On the current CPU, snapshot APERF, MPERF, and jअगरfies
- * unless we alपढ़ोy did it within 10ms
+ * On the current CPU, snapshot APERF, MPERF, and jiffies
+ * unless we already did it within 10ms
  * calculate kHz, save snapshot
  */
-अटल व्योम aperfmperf_snapshot_khz(व्योम *dummy)
-अणु
+static void aperfmperf_snapshot_khz(void *dummy)
+{
 	u64 aperf, aperf_delta;
 	u64 mperf, mperf_delta;
-	काष्ठा aperfmperf_sample *s = this_cpu_ptr(&samples);
-	अचिन्हित दीर्घ flags;
+	struct aperfmperf_sample *s = this_cpu_ptr(&samples);
+	unsigned long flags;
 
 	local_irq_save(flags);
 	rdmsrl(MSR_IA32_APERF, aperf);
@@ -56,97 +55,97 @@
 
 	/*
 	 * There is no architectural guarantee that MPERF
-	 * increments faster than we can पढ़ो it.
+	 * increments faster than we can read it.
 	 */
-	अगर (mperf_delta == 0)
-		वापस;
+	if (mperf_delta == 0)
+		return;
 
-	s->समय = kसमय_get();
+	s->time = ktime_get();
 	s->aperf = aperf;
 	s->mperf = mperf;
-	s->khz = भाग64_u64((cpu_khz * aperf_delta), mperf_delta);
+	s->khz = div64_u64((cpu_khz * aperf_delta), mperf_delta);
 	atomic_set_release(&s->scfpending, 0);
-पूर्ण
+}
 
-अटल bool aperfmperf_snapshot_cpu(पूर्णांक cpu, kसमय_प्रकार now, bool रुको)
-अणु
-	s64 समय_delta = kसमय_ms_delta(now, per_cpu(samples.समय, cpu));
-	काष्ठा aperfmperf_sample *s = per_cpu_ptr(&samples, cpu);
+static bool aperfmperf_snapshot_cpu(int cpu, ktime_t now, bool wait)
+{
+	s64 time_delta = ktime_ms_delta(now, per_cpu(samples.time, cpu));
+	struct aperfmperf_sample *s = per_cpu_ptr(&samples, cpu);
 
-	/* Don't bother re-computing within the cache threshold समय. */
-	अगर (समय_delta < APERFMPERF_CACHE_THRESHOLD_MS)
-		वापस true;
+	/* Don't bother re-computing within the cache threshold time. */
+	if (time_delta < APERFMPERF_CACHE_THRESHOLD_MS)
+		return true;
 
-	अगर (!atomic_xchg(&s->scfpending, 1) || रुको)
-		smp_call_function_single(cpu, aperfmperf_snapshot_khz, शून्य, रुको);
+	if (!atomic_xchg(&s->scfpending, 1) || wait)
+		smp_call_function_single(cpu, aperfmperf_snapshot_khz, NULL, wait);
 
-	/* Return false अगर the previous iteration was too दीर्घ ago. */
-	वापस समय_delta <= APERFMPERF_STALE_THRESHOLD_MS;
-पूर्ण
+	/* Return false if the previous iteration was too long ago. */
+	return time_delta <= APERFMPERF_STALE_THRESHOLD_MS;
+}
 
-अचिन्हित पूर्णांक aperfmperf_get_khz(पूर्णांक cpu)
-अणु
-	अगर (!cpu_khz)
-		वापस 0;
+unsigned int aperfmperf_get_khz(int cpu)
+{
+	if (!cpu_khz)
+		return 0;
 
-	अगर (!boot_cpu_has(X86_FEATURE_APERFMPERF))
-		वापस 0;
+	if (!boot_cpu_has(X86_FEATURE_APERFMPERF))
+		return 0;
 
-	अगर (!housekeeping_cpu(cpu, HK_FLAG_MISC))
-		वापस 0;
+	if (!housekeeping_cpu(cpu, HK_FLAG_MISC))
+		return 0;
 
-	अगर (rcu_is_idle_cpu(cpu))
-		वापस 0; /* Idle CPUs are completely unपूर्णांकeresting. */
+	if (rcu_is_idle_cpu(cpu))
+		return 0; /* Idle CPUs are completely uninteresting. */
 
-	aperfmperf_snapshot_cpu(cpu, kसमय_get(), true);
-	वापस per_cpu(samples.khz, cpu);
-पूर्ण
+	aperfmperf_snapshot_cpu(cpu, ktime_get(), true);
+	return per_cpu(samples.khz, cpu);
+}
 
-व्योम arch_freq_prepare_all(व्योम)
-अणु
-	kसमय_प्रकार now = kसमय_get();
-	bool रुको = false;
-	पूर्णांक cpu;
+void arch_freq_prepare_all(void)
+{
+	ktime_t now = ktime_get();
+	bool wait = false;
+	int cpu;
 
-	अगर (!cpu_khz)
-		वापस;
+	if (!cpu_khz)
+		return;
 
-	अगर (!boot_cpu_has(X86_FEATURE_APERFMPERF))
-		वापस;
+	if (!boot_cpu_has(X86_FEATURE_APERFMPERF))
+		return;
 
-	क्रम_each_online_cpu(cpu) अणु
-		अगर (!housekeeping_cpu(cpu, HK_FLAG_MISC))
-			जारी;
-		अगर (rcu_is_idle_cpu(cpu))
-			जारी; /* Idle CPUs are completely unपूर्णांकeresting. */
-		अगर (!aperfmperf_snapshot_cpu(cpu, now, false))
-			रुको = true;
-	पूर्ण
+	for_each_online_cpu(cpu) {
+		if (!housekeeping_cpu(cpu, HK_FLAG_MISC))
+			continue;
+		if (rcu_is_idle_cpu(cpu))
+			continue; /* Idle CPUs are completely uninteresting. */
+		if (!aperfmperf_snapshot_cpu(cpu, now, false))
+			wait = true;
+	}
 
-	अगर (रुको)
+	if (wait)
 		msleep(APERFMPERF_REFRESH_DELAY_MS);
-पूर्ण
+}
 
-अचिन्हित पूर्णांक arch_freq_get_on_cpu(पूर्णांक cpu)
-अणु
-	काष्ठा aperfmperf_sample *s = per_cpu_ptr(&samples, cpu);
+unsigned int arch_freq_get_on_cpu(int cpu)
+{
+	struct aperfmperf_sample *s = per_cpu_ptr(&samples, cpu);
 
-	अगर (!cpu_khz)
-		वापस 0;
+	if (!cpu_khz)
+		return 0;
 
-	अगर (!boot_cpu_has(X86_FEATURE_APERFMPERF))
-		वापस 0;
+	if (!boot_cpu_has(X86_FEATURE_APERFMPERF))
+		return 0;
 
-	अगर (!housekeeping_cpu(cpu, HK_FLAG_MISC))
-		वापस 0;
+	if (!housekeeping_cpu(cpu, HK_FLAG_MISC))
+		return 0;
 
-	अगर (aperfmperf_snapshot_cpu(cpu, kसमय_get(), true))
-		वापस per_cpu(samples.khz, cpu);
+	if (aperfmperf_snapshot_cpu(cpu, ktime_get(), true))
+		return per_cpu(samples.khz, cpu);
 
 	msleep(APERFMPERF_REFRESH_DELAY_MS);
 	atomic_set(&s->scfpending, 1);
-	smp_mb(); /* ->scfpending beक्रमe smp_call_function_single(). */
-	smp_call_function_single(cpu, aperfmperf_snapshot_khz, शून्य, 1);
+	smp_mb(); /* ->scfpending before smp_call_function_single(). */
+	smp_call_function_single(cpu, aperfmperf_snapshot_khz, NULL, 1);
 
-	वापस per_cpu(samples.khz, cpu);
-पूर्ण
+	return per_cpu(samples.khz, cpu);
+}

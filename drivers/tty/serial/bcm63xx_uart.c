@@ -1,634 +1,633 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Derived from many drivers using generic_serial पूर्णांकerface.
+ * Derived from many drivers using generic_serial interface.
  *
- * Copyright (C) 2008 Maxime Bizon <mbizon@मुक्तbox.fr>
+ * Copyright (C) 2008 Maxime Bizon <mbizon@freebox.fr>
  *
- *  Serial driver क्रम BCM63xx पूर्णांकegrated UART.
+ *  Serial driver for BCM63xx integrated UART.
  *
  * Hardware flow control was _not_ tested since I only have RX/TX on
  * my board.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/init.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/module.h>
-#समावेश <linux/console.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/tty_flip.h>
-#समावेश <linux/sysrq.h>
-#समावेश <linux/serial.h>
-#समावेश <linux/serial_core.h>
-#समावेश <linux/serial_bcm63xx.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
+#include <linux/kernel.h>
+#include <linux/platform_device.h>
+#include <linux/init.h>
+#include <linux/delay.h>
+#include <linux/module.h>
+#include <linux/console.h>
+#include <linux/clk.h>
+#include <linux/tty.h>
+#include <linux/tty_flip.h>
+#include <linux/sysrq.h>
+#include <linux/serial.h>
+#include <linux/serial_core.h>
+#include <linux/serial_bcm63xx.h>
+#include <linux/io.h>
+#include <linux/of.h>
 
-#घोषणा BCM63XX_NR_UARTS	2
+#define BCM63XX_NR_UARTS	2
 
-अटल काष्ठा uart_port ports[BCM63XX_NR_UARTS];
+static struct uart_port ports[BCM63XX_NR_UARTS];
 
 /*
- * rx पूर्णांकerrupt mask / stat
+ * rx interrupt mask / stat
  *
  * mask:
- *  - rx fअगरo full
- *  - rx fअगरo above threshold
- *  - rx fअगरo not empty क्रम too दीर्घ
+ *  - rx fifo full
+ *  - rx fifo above threshold
+ *  - rx fifo not empty for too long
  */
-#घोषणा UART_RX_INT_MASK	(UART_IR_MASK(UART_IR_RXOVER) |		\
+#define UART_RX_INT_MASK	(UART_IR_MASK(UART_IR_RXOVER) |		\
 				UART_IR_MASK(UART_IR_RXTHRESH) |	\
 				UART_IR_MASK(UART_IR_RXTIMEOUT))
 
-#घोषणा UART_RX_INT_STAT	(UART_IR_STAT(UART_IR_RXOVER) |		\
+#define UART_RX_INT_STAT	(UART_IR_STAT(UART_IR_RXOVER) |		\
 				UART_IR_STAT(UART_IR_RXTHRESH) |	\
 				UART_IR_STAT(UART_IR_RXTIMEOUT))
 
 /*
- * tx पूर्णांकerrupt mask / stat
+ * tx interrupt mask / stat
  *
  * mask:
- * - tx fअगरo empty
- * - tx fअगरo below threshold
+ * - tx fifo empty
+ * - tx fifo below threshold
  */
-#घोषणा UART_TX_INT_MASK	(UART_IR_MASK(UART_IR_TXEMPTY) |	\
+#define UART_TX_INT_MASK	(UART_IR_MASK(UART_IR_TXEMPTY) |	\
 				UART_IR_MASK(UART_IR_TXTRESH))
 
-#घोषणा UART_TX_INT_STAT	(UART_IR_STAT(UART_IR_TXEMPTY) |	\
+#define UART_TX_INT_STAT	(UART_IR_STAT(UART_IR_TXEMPTY) |	\
 				UART_IR_STAT(UART_IR_TXTRESH))
 
 /*
- * बाह्यal input पूर्णांकerrupt
+ * external input interrupt
  *
  * mask: any edge on CTS, DCD
  */
-#घोषणा UART_EXTINP_INT_MASK	(UART_EXTINP_IRMASK(UART_EXTINP_IR_CTS) | \
+#define UART_EXTINP_INT_MASK	(UART_EXTINP_IRMASK(UART_EXTINP_IR_CTS) | \
 				 UART_EXTINP_IRMASK(UART_EXTINP_IR_DCD))
 
 /*
- * handy uart रेजिस्टर accessor
+ * handy uart register accessor
  */
-अटल अंतरभूत अचिन्हित पूर्णांक bcm_uart_पढ़ोl(काष्ठा uart_port *port,
-					 अचिन्हित पूर्णांक offset)
-अणु
-	वापस __raw_पढ़ोl(port->membase + offset);
-पूर्ण
+static inline unsigned int bcm_uart_readl(struct uart_port *port,
+					 unsigned int offset)
+{
+	return __raw_readl(port->membase + offset);
+}
 
-अटल अंतरभूत व्योम bcm_uart_ग_लिखोl(काष्ठा uart_port *port,
-				  अचिन्हित पूर्णांक value, अचिन्हित पूर्णांक offset)
-अणु
-	__raw_ग_लिखोl(value, port->membase + offset);
-पूर्ण
+static inline void bcm_uart_writel(struct uart_port *port,
+				  unsigned int value, unsigned int offset)
+{
+	__raw_writel(value, port->membase + offset);
+}
 
 /*
- * serial core request to check अगर uart tx fअगरo is empty
+ * serial core request to check if uart tx fifo is empty
  */
-अटल अचिन्हित पूर्णांक bcm_uart_tx_empty(काष्ठा uart_port *port)
-अणु
-	अचिन्हित पूर्णांक val;
+static unsigned int bcm_uart_tx_empty(struct uart_port *port)
+{
+	unsigned int val;
 
-	val = bcm_uart_पढ़ोl(port, UART_IR_REG);
-	वापस (val & UART_IR_STAT(UART_IR_TXEMPTY)) ? 1 : 0;
-पूर्ण
+	val = bcm_uart_readl(port, UART_IR_REG);
+	return (val & UART_IR_STAT(UART_IR_TXEMPTY)) ? 1 : 0;
+}
 
 /*
  * serial core request to set RTS and DTR pin state and loopback mode
  */
-अटल व्योम bcm_uart_set_mctrl(काष्ठा uart_port *port, अचिन्हित पूर्णांक mctrl)
-अणु
-	अचिन्हित पूर्णांक val;
+static void bcm_uart_set_mctrl(struct uart_port *port, unsigned int mctrl)
+{
+	unsigned int val;
 
-	val = bcm_uart_पढ़ोl(port, UART_MCTL_REG);
+	val = bcm_uart_readl(port, UART_MCTL_REG);
 	val &= ~(UART_MCTL_DTR_MASK | UART_MCTL_RTS_MASK);
 	/* invert of written value is reflected on the pin */
-	अगर (!(mctrl & TIOCM_DTR))
+	if (!(mctrl & TIOCM_DTR))
 		val |= UART_MCTL_DTR_MASK;
-	अगर (!(mctrl & TIOCM_RTS))
+	if (!(mctrl & TIOCM_RTS))
 		val |= UART_MCTL_RTS_MASK;
-	bcm_uart_ग_लिखोl(port, val, UART_MCTL_REG);
+	bcm_uart_writel(port, val, UART_MCTL_REG);
 
-	val = bcm_uart_पढ़ोl(port, UART_CTL_REG);
-	अगर (mctrl & TIOCM_LOOP)
+	val = bcm_uart_readl(port, UART_CTL_REG);
+	if (mctrl & TIOCM_LOOP)
 		val |= UART_CTL_LOOPBACK_MASK;
-	अन्यथा
+	else
 		val &= ~UART_CTL_LOOPBACK_MASK;
-	bcm_uart_ग_लिखोl(port, val, UART_CTL_REG);
-पूर्ण
+	bcm_uart_writel(port, val, UART_CTL_REG);
+}
 
 /*
- * serial core request to वापस RI, CTS, DCD and DSR pin state
+ * serial core request to return RI, CTS, DCD and DSR pin state
  */
-अटल अचिन्हित पूर्णांक bcm_uart_get_mctrl(काष्ठा uart_port *port)
-अणु
-	अचिन्हित पूर्णांक val, mctrl;
+static unsigned int bcm_uart_get_mctrl(struct uart_port *port)
+{
+	unsigned int val, mctrl;
 
 	mctrl = 0;
-	val = bcm_uart_पढ़ोl(port, UART_EXTINP_REG);
-	अगर (val & UART_EXTINP_RI_MASK)
+	val = bcm_uart_readl(port, UART_EXTINP_REG);
+	if (val & UART_EXTINP_RI_MASK)
 		mctrl |= TIOCM_RI;
-	अगर (val & UART_EXTINP_CTS_MASK)
+	if (val & UART_EXTINP_CTS_MASK)
 		mctrl |= TIOCM_CTS;
-	अगर (val & UART_EXTINP_DCD_MASK)
+	if (val & UART_EXTINP_DCD_MASK)
 		mctrl |= TIOCM_CD;
-	अगर (val & UART_EXTINP_DSR_MASK)
+	if (val & UART_EXTINP_DSR_MASK)
 		mctrl |= TIOCM_DSR;
-	वापस mctrl;
-पूर्ण
+	return mctrl;
+}
 
 /*
- * serial core request to disable tx ASAP (used क्रम flow control)
+ * serial core request to disable tx ASAP (used for flow control)
  */
-अटल व्योम bcm_uart_stop_tx(काष्ठा uart_port *port)
-अणु
-	अचिन्हित पूर्णांक val;
+static void bcm_uart_stop_tx(struct uart_port *port)
+{
+	unsigned int val;
 
-	val = bcm_uart_पढ़ोl(port, UART_CTL_REG);
+	val = bcm_uart_readl(port, UART_CTL_REG);
 	val &= ~(UART_CTL_TXEN_MASK);
-	bcm_uart_ग_लिखोl(port, val, UART_CTL_REG);
+	bcm_uart_writel(port, val, UART_CTL_REG);
 
-	val = bcm_uart_पढ़ोl(port, UART_IR_REG);
+	val = bcm_uart_readl(port, UART_IR_REG);
 	val &= ~UART_TX_INT_MASK;
-	bcm_uart_ग_लिखोl(port, val, UART_IR_REG);
-पूर्ण
+	bcm_uart_writel(port, val, UART_IR_REG);
+}
 
 /*
  * serial core request to (re)enable tx
  */
-अटल व्योम bcm_uart_start_tx(काष्ठा uart_port *port)
-अणु
-	अचिन्हित पूर्णांक val;
+static void bcm_uart_start_tx(struct uart_port *port)
+{
+	unsigned int val;
 
-	val = bcm_uart_पढ़ोl(port, UART_IR_REG);
+	val = bcm_uart_readl(port, UART_IR_REG);
 	val |= UART_TX_INT_MASK;
-	bcm_uart_ग_लिखोl(port, val, UART_IR_REG);
+	bcm_uart_writel(port, val, UART_IR_REG);
 
-	val = bcm_uart_पढ़ोl(port, UART_CTL_REG);
+	val = bcm_uart_readl(port, UART_CTL_REG);
 	val |= UART_CTL_TXEN_MASK;
-	bcm_uart_ग_लिखोl(port, val, UART_CTL_REG);
-पूर्ण
+	bcm_uart_writel(port, val, UART_CTL_REG);
+}
 
 /*
- * serial core request to stop rx, called beक्रमe port shutकरोwn
+ * serial core request to stop rx, called before port shutdown
  */
-अटल व्योम bcm_uart_stop_rx(काष्ठा uart_port *port)
-अणु
-	अचिन्हित पूर्णांक val;
+static void bcm_uart_stop_rx(struct uart_port *port)
+{
+	unsigned int val;
 
-	val = bcm_uart_पढ़ोl(port, UART_IR_REG);
+	val = bcm_uart_readl(port, UART_IR_REG);
 	val &= ~UART_RX_INT_MASK;
-	bcm_uart_ग_लिखोl(port, val, UART_IR_REG);
-पूर्ण
+	bcm_uart_writel(port, val, UART_IR_REG);
+}
 
 /*
- * serial core request to enable modem status पूर्णांकerrupt reporting
+ * serial core request to enable modem status interrupt reporting
  */
-अटल व्योम bcm_uart_enable_ms(काष्ठा uart_port *port)
-अणु
-	अचिन्हित पूर्णांक val;
+static void bcm_uart_enable_ms(struct uart_port *port)
+{
+	unsigned int val;
 
-	val = bcm_uart_पढ़ोl(port, UART_IR_REG);
+	val = bcm_uart_readl(port, UART_IR_REG);
 	val |= UART_IR_MASK(UART_IR_EXTIP);
-	bcm_uart_ग_लिखोl(port, val, UART_IR_REG);
-पूर्ण
+	bcm_uart_writel(port, val, UART_IR_REG);
+}
 
 /*
- * serial core request to start/stop emitting अवरोध अक्षर
+ * serial core request to start/stop emitting break char
  */
-अटल व्योम bcm_uart_अवरोध_ctl(काष्ठा uart_port *port, पूर्णांक ctl)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक val;
+static void bcm_uart_break_ctl(struct uart_port *port, int ctl)
+{
+	unsigned long flags;
+	unsigned int val;
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	val = bcm_uart_पढ़ोl(port, UART_CTL_REG);
-	अगर (ctl)
+	val = bcm_uart_readl(port, UART_CTL_REG);
+	if (ctl)
 		val |= UART_CTL_XMITBRK_MASK;
-	अन्यथा
+	else
 		val &= ~UART_CTL_XMITBRK_MASK;
-	bcm_uart_ग_लिखोl(port, val, UART_CTL_REG);
+	bcm_uart_writel(port, val, UART_CTL_REG);
 
 	spin_unlock_irqrestore(&port->lock, flags);
-पूर्ण
+}
 
 /*
- * वापस port type in string क्रमmat
+ * return port type in string format
  */
-अटल स्थिर अक्षर *bcm_uart_type(काष्ठा uart_port *port)
-अणु
-	वापस (port->type == PORT_BCM63XX) ? "bcm63xx_uart" : शून्य;
-पूर्ण
+static const char *bcm_uart_type(struct uart_port *port)
+{
+	return (port->type == PORT_BCM63XX) ? "bcm63xx_uart" : NULL;
+}
 
 /*
- * पढ़ो all अक्षरs in rx fअगरo and send them to core
+ * read all chars in rx fifo and send them to core
  */
-अटल व्योम bcm_uart_करो_rx(काष्ठा uart_port *port)
-अणु
-	काष्ठा tty_port *tty_port = &port->state->port;
-	अचिन्हित पूर्णांक max_count;
+static void bcm_uart_do_rx(struct uart_port *port)
+{
+	struct tty_port *tty_port = &port->state->port;
+	unsigned int max_count;
 
-	/* limit number of अक्षर पढ़ो in पूर्णांकerrupt, should not be
-	 * higher than fअगरo size anyway since we're much faster than
+	/* limit number of char read in interrupt, should not be
+	 * higher than fifo size anyway since we're much faster than
 	 * serial port */
 	max_count = 32;
-	करो अणु
-		अचिन्हित पूर्णांक iestat, c, cstat;
-		अक्षर flag;
+	do {
+		unsigned int iestat, c, cstat;
+		char flag;
 
-		/* get overrun/fअगरo empty inक्रमmation from ier
-		 * रेजिस्टर */
-		iestat = bcm_uart_पढ़ोl(port, UART_IR_REG);
+		/* get overrun/fifo empty information from ier
+		 * register */
+		iestat = bcm_uart_readl(port, UART_IR_REG);
 
-		अगर (unlikely(iestat & UART_IR_STAT(UART_IR_RXOVER))) अणु
-			अचिन्हित पूर्णांक val;
+		if (unlikely(iestat & UART_IR_STAT(UART_IR_RXOVER))) {
+			unsigned int val;
 
-			/* fअगरo reset is required to clear
-			 * पूर्णांकerrupt */
-			val = bcm_uart_पढ़ोl(port, UART_CTL_REG);
+			/* fifo reset is required to clear
+			 * interrupt */
+			val = bcm_uart_readl(port, UART_CTL_REG);
 			val |= UART_CTL_RSTRXFIFO_MASK;
-			bcm_uart_ग_लिखोl(port, val, UART_CTL_REG);
+			bcm_uart_writel(port, val, UART_CTL_REG);
 
 			port->icount.overrun++;
-			tty_insert_flip_अक्षर(tty_port, 0, TTY_OVERRUN);
-		पूर्ण
+			tty_insert_flip_char(tty_port, 0, TTY_OVERRUN);
+		}
 
-		अगर (!(iestat & UART_IR_STAT(UART_IR_RXNOTEMPTY)))
-			अवरोध;
+		if (!(iestat & UART_IR_STAT(UART_IR_RXNOTEMPTY)))
+			break;
 
-		cstat = c = bcm_uart_पढ़ोl(port, UART_FIFO_REG);
+		cstat = c = bcm_uart_readl(port, UART_FIFO_REG);
 		port->icount.rx++;
 		flag = TTY_NORMAL;
 		c &= 0xff;
 
-		अगर (unlikely((cstat & UART_FIFO_ANYERR_MASK))) अणु
-			/* करो stats first */
-			अगर (cstat & UART_FIFO_BRKDET_MASK) अणु
+		if (unlikely((cstat & UART_FIFO_ANYERR_MASK))) {
+			/* do stats first */
+			if (cstat & UART_FIFO_BRKDET_MASK) {
 				port->icount.brk++;
-				अगर (uart_handle_अवरोध(port))
-					जारी;
-			पूर्ण
+				if (uart_handle_break(port))
+					continue;
+			}
 
-			अगर (cstat & UART_FIFO_PARERR_MASK)
+			if (cstat & UART_FIFO_PARERR_MASK)
 				port->icount.parity++;
-			अगर (cstat & UART_FIFO_FRAMEERR_MASK)
+			if (cstat & UART_FIFO_FRAMEERR_MASK)
 				port->icount.frame++;
 
-			/* update flag wrt पढ़ो_status_mask */
-			cstat &= port->पढ़ो_status_mask;
-			अगर (cstat & UART_FIFO_BRKDET_MASK)
+			/* update flag wrt read_status_mask */
+			cstat &= port->read_status_mask;
+			if (cstat & UART_FIFO_BRKDET_MASK)
 				flag = TTY_BREAK;
-			अगर (cstat & UART_FIFO_FRAMEERR_MASK)
+			if (cstat & UART_FIFO_FRAMEERR_MASK)
 				flag = TTY_FRAME;
-			अगर (cstat & UART_FIFO_PARERR_MASK)
+			if (cstat & UART_FIFO_PARERR_MASK)
 				flag = TTY_PARITY;
-		पूर्ण
+		}
 
-		अगर (uart_handle_sysrq_अक्षर(port, c))
-			जारी;
+		if (uart_handle_sysrq_char(port, c))
+			continue;
 
 
-		अगर ((cstat & port->ignore_status_mask) == 0)
-			tty_insert_flip_अक्षर(tty_port, c, flag);
+		if ((cstat & port->ignore_status_mask) == 0)
+			tty_insert_flip_char(tty_port, c, flag);
 
-	पूर्ण जबतक (--max_count);
+	} while (--max_count);
 
 	tty_flip_buffer_push(tty_port);
-पूर्ण
+}
 
 /*
- * fill tx fअगरo with अक्षरs to send, stop when fअगरo is about to be full
- * or when all अक्षरs have been sent.
+ * fill tx fifo with chars to send, stop when fifo is about to be full
+ * or when all chars have been sent.
  */
-अटल व्योम bcm_uart_करो_tx(काष्ठा uart_port *port)
-अणु
-	काष्ठा circ_buf *xmit;
-	अचिन्हित पूर्णांक val, max_count;
+static void bcm_uart_do_tx(struct uart_port *port)
+{
+	struct circ_buf *xmit;
+	unsigned int val, max_count;
 
-	अगर (port->x_अक्षर) अणु
-		bcm_uart_ग_लिखोl(port, port->x_अक्षर, UART_FIFO_REG);
+	if (port->x_char) {
+		bcm_uart_writel(port, port->x_char, UART_FIFO_REG);
 		port->icount.tx++;
-		port->x_अक्षर = 0;
-		वापस;
-	पूर्ण
+		port->x_char = 0;
+		return;
+	}
 
-	अगर (uart_tx_stopped(port)) अणु
+	if (uart_tx_stopped(port)) {
 		bcm_uart_stop_tx(port);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	xmit = &port->state->xmit;
-	अगर (uart_circ_empty(xmit))
-		जाओ txq_empty;
+	if (uart_circ_empty(xmit))
+		goto txq_empty;
 
-	val = bcm_uart_पढ़ोl(port, UART_MCTL_REG);
+	val = bcm_uart_readl(port, UART_MCTL_REG);
 	val = (val & UART_MCTL_TXFIFOFILL_MASK) >> UART_MCTL_TXFIFOFILL_SHIFT;
-	max_count = port->fअगरosize - val;
+	max_count = port->fifosize - val;
 
-	जबतक (max_count--) अणु
-		अचिन्हित पूर्णांक c;
+	while (max_count--) {
+		unsigned int c;
 
 		c = xmit->buf[xmit->tail];
-		bcm_uart_ग_लिखोl(port, c, UART_FIFO_REG);
+		bcm_uart_writel(port, c, UART_FIFO_REG);
 		xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
 		port->icount.tx++;
-		अगर (uart_circ_empty(xmit))
-			अवरोध;
-	पूर्ण
+		if (uart_circ_empty(xmit))
+			break;
+	}
 
-	अगर (uart_circ_अक्षरs_pending(xmit) < WAKEUP_CHARS)
-		uart_ग_लिखो_wakeup(port);
+	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
+		uart_write_wakeup(port);
 
-	अगर (uart_circ_empty(xmit))
-		जाओ txq_empty;
-	वापस;
+	if (uart_circ_empty(xmit))
+		goto txq_empty;
+	return;
 
 txq_empty:
-	/* nothing to send, disable transmit पूर्णांकerrupt */
-	val = bcm_uart_पढ़ोl(port, UART_IR_REG);
+	/* nothing to send, disable transmit interrupt */
+	val = bcm_uart_readl(port, UART_IR_REG);
 	val &= ~UART_TX_INT_MASK;
-	bcm_uart_ग_लिखोl(port, val, UART_IR_REG);
-	वापस;
-पूर्ण
+	bcm_uart_writel(port, val, UART_IR_REG);
+	return;
+}
 
 /*
- * process uart पूर्णांकerrupt
+ * process uart interrupt
  */
-अटल irqवापस_t bcm_uart_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा uart_port *port;
-	अचिन्हित पूर्णांक irqstat;
+static irqreturn_t bcm_uart_interrupt(int irq, void *dev_id)
+{
+	struct uart_port *port;
+	unsigned int irqstat;
 
 	port = dev_id;
 	spin_lock(&port->lock);
 
-	irqstat = bcm_uart_पढ़ोl(port, UART_IR_REG);
-	अगर (irqstat & UART_RX_INT_STAT)
-		bcm_uart_करो_rx(port);
+	irqstat = bcm_uart_readl(port, UART_IR_REG);
+	if (irqstat & UART_RX_INT_STAT)
+		bcm_uart_do_rx(port);
 
-	अगर (irqstat & UART_TX_INT_STAT)
-		bcm_uart_करो_tx(port);
+	if (irqstat & UART_TX_INT_STAT)
+		bcm_uart_do_tx(port);
 
-	अगर (irqstat & UART_IR_MASK(UART_IR_EXTIP)) अणु
-		अचिन्हित पूर्णांक estat;
+	if (irqstat & UART_IR_MASK(UART_IR_EXTIP)) {
+		unsigned int estat;
 
-		estat = bcm_uart_पढ़ोl(port, UART_EXTINP_REG);
-		अगर (estat & UART_EXTINP_IRSTAT(UART_EXTINP_IR_CTS))
+		estat = bcm_uart_readl(port, UART_EXTINP_REG);
+		if (estat & UART_EXTINP_IRSTAT(UART_EXTINP_IR_CTS))
 			uart_handle_cts_change(port,
 					       estat & UART_EXTINP_CTS_MASK);
-		अगर (estat & UART_EXTINP_IRSTAT(UART_EXTINP_IR_DCD))
+		if (estat & UART_EXTINP_IRSTAT(UART_EXTINP_IR_DCD))
 			uart_handle_dcd_change(port,
 					       estat & UART_EXTINP_DCD_MASK);
-	पूर्ण
+	}
 
 	spin_unlock(&port->lock);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /*
  * enable rx & tx operation on uart
  */
-अटल व्योम bcm_uart_enable(काष्ठा uart_port *port)
-अणु
-	अचिन्हित पूर्णांक val;
+static void bcm_uart_enable(struct uart_port *port)
+{
+	unsigned int val;
 
-	val = bcm_uart_पढ़ोl(port, UART_CTL_REG);
+	val = bcm_uart_readl(port, UART_CTL_REG);
 	val |= (UART_CTL_BRGEN_MASK | UART_CTL_TXEN_MASK | UART_CTL_RXEN_MASK);
-	bcm_uart_ग_लिखोl(port, val, UART_CTL_REG);
-पूर्ण
+	bcm_uart_writel(port, val, UART_CTL_REG);
+}
 
 /*
  * disable rx & tx operation on uart
  */
-अटल व्योम bcm_uart_disable(काष्ठा uart_port *port)
-अणु
-	अचिन्हित पूर्णांक val;
+static void bcm_uart_disable(struct uart_port *port)
+{
+	unsigned int val;
 
-	val = bcm_uart_पढ़ोl(port, UART_CTL_REG);
+	val = bcm_uart_readl(port, UART_CTL_REG);
 	val &= ~(UART_CTL_BRGEN_MASK | UART_CTL_TXEN_MASK |
 		 UART_CTL_RXEN_MASK);
-	bcm_uart_ग_लिखोl(port, val, UART_CTL_REG);
-पूर्ण
+	bcm_uart_writel(port, val, UART_CTL_REG);
+}
 
 /*
- * clear all unपढ़ो data in rx fअगरo and unsent data in tx fअगरo
+ * clear all unread data in rx fifo and unsent data in tx fifo
  */
-अटल व्योम bcm_uart_flush(काष्ठा uart_port *port)
-अणु
-	अचिन्हित पूर्णांक val;
+static void bcm_uart_flush(struct uart_port *port)
+{
+	unsigned int val;
 
-	/* empty rx and tx fअगरo */
-	val = bcm_uart_पढ़ोl(port, UART_CTL_REG);
+	/* empty rx and tx fifo */
+	val = bcm_uart_readl(port, UART_CTL_REG);
 	val |= UART_CTL_RSTRXFIFO_MASK | UART_CTL_RSTTXFIFO_MASK;
-	bcm_uart_ग_लिखोl(port, val, UART_CTL_REG);
+	bcm_uart_writel(port, val, UART_CTL_REG);
 
-	/* पढ़ो any pending अक्षर to make sure all irq status are
+	/* read any pending char to make sure all irq status are
 	 * cleared */
-	(व्योम)bcm_uart_पढ़ोl(port, UART_FIFO_REG);
-पूर्ण
+	(void)bcm_uart_readl(port, UART_FIFO_REG);
+}
 
 /*
  * serial core request to initialize uart and start rx operation
  */
-अटल पूर्णांक bcm_uart_startup(काष्ठा uart_port *port)
-अणु
-	अचिन्हित पूर्णांक val;
-	पूर्णांक ret;
+static int bcm_uart_startup(struct uart_port *port)
+{
+	unsigned int val;
+	int ret;
 
 	/* mask all irq and flush port */
 	bcm_uart_disable(port);
-	bcm_uart_ग_लिखोl(port, 0, UART_IR_REG);
+	bcm_uart_writel(port, 0, UART_IR_REG);
 	bcm_uart_flush(port);
 
-	/* clear any pending बाह्यal input पूर्णांकerrupt */
-	(व्योम)bcm_uart_पढ़ोl(port, UART_EXTINP_REG);
+	/* clear any pending external input interrupt */
+	(void)bcm_uart_readl(port, UART_EXTINP_REG);
 
-	/* set rx/tx fअगरo thresh to fअगरo half size */
-	val = bcm_uart_पढ़ोl(port, UART_MCTL_REG);
+	/* set rx/tx fifo thresh to fifo half size */
+	val = bcm_uart_readl(port, UART_MCTL_REG);
 	val &= ~(UART_MCTL_RXFIFOTHRESH_MASK | UART_MCTL_TXFIFOTHRESH_MASK);
-	val |= (port->fअगरosize / 2) << UART_MCTL_RXFIFOTHRESH_SHIFT;
-	val |= (port->fअगरosize / 2) << UART_MCTL_TXFIFOTHRESH_SHIFT;
-	bcm_uart_ग_लिखोl(port, val, UART_MCTL_REG);
+	val |= (port->fifosize / 2) << UART_MCTL_RXFIFOTHRESH_SHIFT;
+	val |= (port->fifosize / 2) << UART_MCTL_TXFIFOTHRESH_SHIFT;
+	bcm_uart_writel(port, val, UART_MCTL_REG);
 
-	/* set rx fअगरo समयout to 1 अक्षर समय */
-	val = bcm_uart_पढ़ोl(port, UART_CTL_REG);
+	/* set rx fifo timeout to 1 char time */
+	val = bcm_uart_readl(port, UART_CTL_REG);
 	val &= ~UART_CTL_RXTMOUTCNT_MASK;
 	val |= 1 << UART_CTL_RXTMOUTCNT_SHIFT;
-	bcm_uart_ग_लिखोl(port, val, UART_CTL_REG);
+	bcm_uart_writel(port, val, UART_CTL_REG);
 
 	/* report any edge on dcd and cts */
 	val = UART_EXTINP_INT_MASK;
 	val |= UART_EXTINP_DCD_NOSENSE_MASK;
 	val |= UART_EXTINP_CTS_NOSENSE_MASK;
-	bcm_uart_ग_लिखोl(port, val, UART_EXTINP_REG);
+	bcm_uart_writel(port, val, UART_EXTINP_REG);
 
-	/* रेजिस्टर irq and enable rx पूर्णांकerrupts */
-	ret = request_irq(port->irq, bcm_uart_पूर्णांकerrupt, 0,
+	/* register irq and enable rx interrupts */
+	ret = request_irq(port->irq, bcm_uart_interrupt, 0,
 			  dev_name(port->dev), port);
-	अगर (ret)
-		वापस ret;
-	bcm_uart_ग_लिखोl(port, UART_RX_INT_MASK, UART_IR_REG);
+	if (ret)
+		return ret;
+	bcm_uart_writel(port, UART_RX_INT_MASK, UART_IR_REG);
 	bcm_uart_enable(port);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * serial core request to flush & disable uart
  */
-अटल व्योम bcm_uart_shutकरोwn(काष्ठा uart_port *port)
-अणु
-	अचिन्हित दीर्घ flags;
+static void bcm_uart_shutdown(struct uart_port *port)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&port->lock, flags);
-	bcm_uart_ग_लिखोl(port, 0, UART_IR_REG);
+	bcm_uart_writel(port, 0, UART_IR_REG);
 	spin_unlock_irqrestore(&port->lock, flags);
 
 	bcm_uart_disable(port);
 	bcm_uart_flush(port);
-	मुक्त_irq(port->irq, port);
-पूर्ण
+	free_irq(port->irq, port);
+}
 
 /*
  * serial core request to change current uart setting
  */
-अटल व्योम bcm_uart_set_termios(काष्ठा uart_port *port,
-				 काष्ठा ktermios *new,
-				 काष्ठा ktermios *old)
-अणु
-	अचिन्हित पूर्णांक ctl, baud, quot, ier;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक tries;
+static void bcm_uart_set_termios(struct uart_port *port,
+				 struct ktermios *new,
+				 struct ktermios *old)
+{
+	unsigned int ctl, baud, quot, ier;
+	unsigned long flags;
+	int tries;
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	/* Drain the hot tub fully beक्रमe we घातer it off क्रम the wपूर्णांकer. */
-	क्रम (tries = 3; !bcm_uart_tx_empty(port) && tries; tries--)
+	/* Drain the hot tub fully before we power it off for the winter. */
+	for (tries = 3; !bcm_uart_tx_empty(port) && tries; tries--)
 		mdelay(10);
 
-	/* disable uart जबतक changing speed */
+	/* disable uart while changing speed */
 	bcm_uart_disable(port);
 	bcm_uart_flush(port);
 
-	/* update Control रेजिस्टर */
-	ctl = bcm_uart_पढ़ोl(port, UART_CTL_REG);
+	/* update Control register */
+	ctl = bcm_uart_readl(port, UART_CTL_REG);
 	ctl &= ~UART_CTL_BITSPERSYM_MASK;
 
-	चयन (new->c_cflag & CSIZE) अणु
-	हाल CS5:
+	switch (new->c_cflag & CSIZE) {
+	case CS5:
 		ctl |= (0 << UART_CTL_BITSPERSYM_SHIFT);
-		अवरोध;
-	हाल CS6:
+		break;
+	case CS6:
 		ctl |= (1 << UART_CTL_BITSPERSYM_SHIFT);
-		अवरोध;
-	हाल CS7:
+		break;
+	case CS7:
 		ctl |= (2 << UART_CTL_BITSPERSYM_SHIFT);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ctl |= (3 << UART_CTL_BITSPERSYM_SHIFT);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	ctl &= ~UART_CTL_STOPBITS_MASK;
-	अगर (new->c_cflag & CSTOPB)
+	if (new->c_cflag & CSTOPB)
 		ctl |= UART_CTL_STOPBITS_2;
-	अन्यथा
+	else
 		ctl |= UART_CTL_STOPBITS_1;
 
 	ctl &= ~(UART_CTL_RXPAREN_MASK | UART_CTL_TXPAREN_MASK);
-	अगर (new->c_cflag & PARENB)
+	if (new->c_cflag & PARENB)
 		ctl |= (UART_CTL_RXPAREN_MASK | UART_CTL_TXPAREN_MASK);
 	ctl &= ~(UART_CTL_RXPAREVEN_MASK | UART_CTL_TXPAREVEN_MASK);
-	अगर (new->c_cflag & PARODD)
+	if (new->c_cflag & PARODD)
 		ctl |= (UART_CTL_RXPAREVEN_MASK | UART_CTL_TXPAREVEN_MASK);
-	bcm_uart_ग_लिखोl(port, ctl, UART_CTL_REG);
+	bcm_uart_writel(port, ctl, UART_CTL_REG);
 
-	/* update Baudword रेजिस्टर */
+	/* update Baudword register */
 	baud = uart_get_baud_rate(port, new, old, 0, port->uartclk / 16);
-	quot = uart_get_भागisor(port, baud) - 1;
-	bcm_uart_ग_लिखोl(port, quot, UART_BAUD_REG);
+	quot = uart_get_divisor(port, baud) - 1;
+	bcm_uart_writel(port, quot, UART_BAUD_REG);
 
-	/* update Interrupt रेजिस्टर */
-	ier = bcm_uart_पढ़ोl(port, UART_IR_REG);
+	/* update Interrupt register */
+	ier = bcm_uart_readl(port, UART_IR_REG);
 
 	ier &= ~UART_IR_MASK(UART_IR_EXTIP);
-	अगर (UART_ENABLE_MS(port, new->c_cflag))
+	if (UART_ENABLE_MS(port, new->c_cflag))
 		ier |= UART_IR_MASK(UART_IR_EXTIP);
 
-	bcm_uart_ग_लिखोl(port, ier, UART_IR_REG);
+	bcm_uart_writel(port, ier, UART_IR_REG);
 
-	/* update पढ़ो/ignore mask */
-	port->पढ़ो_status_mask = UART_FIFO_VALID_MASK;
-	अगर (new->c_अगरlag & INPCK) अणु
-		port->पढ़ो_status_mask |= UART_FIFO_FRAMEERR_MASK;
-		port->पढ़ो_status_mask |= UART_FIFO_PARERR_MASK;
-	पूर्ण
-	अगर (new->c_अगरlag & (IGNBRK | BRKINT))
-		port->पढ़ो_status_mask |= UART_FIFO_BRKDET_MASK;
+	/* update read/ignore mask */
+	port->read_status_mask = UART_FIFO_VALID_MASK;
+	if (new->c_iflag & INPCK) {
+		port->read_status_mask |= UART_FIFO_FRAMEERR_MASK;
+		port->read_status_mask |= UART_FIFO_PARERR_MASK;
+	}
+	if (new->c_iflag & (IGNBRK | BRKINT))
+		port->read_status_mask |= UART_FIFO_BRKDET_MASK;
 
 	port->ignore_status_mask = 0;
-	अगर (new->c_अगरlag & IGNPAR)
+	if (new->c_iflag & IGNPAR)
 		port->ignore_status_mask |= UART_FIFO_PARERR_MASK;
-	अगर (new->c_अगरlag & IGNBRK)
+	if (new->c_iflag & IGNBRK)
 		port->ignore_status_mask |= UART_FIFO_BRKDET_MASK;
-	अगर (!(new->c_cflag & CREAD))
+	if (!(new->c_cflag & CREAD))
 		port->ignore_status_mask |= UART_FIFO_VALID_MASK;
 
-	uart_update_समयout(port, new->c_cflag, baud);
+	uart_update_timeout(port, new->c_cflag, baud);
 	bcm_uart_enable(port);
 	spin_unlock_irqrestore(&port->lock, flags);
-पूर्ण
+}
 
 /*
  * serial core request to claim uart iomem
  */
-अटल पूर्णांक bcm_uart_request_port(काष्ठा uart_port *port)
-अणु
+static int bcm_uart_request_port(struct uart_port *port)
+{
 	/* UARTs always present */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * serial core request to release uart iomem
  */
-अटल व्योम bcm_uart_release_port(काष्ठा uart_port *port)
-अणु
+static void bcm_uart_release_port(struct uart_port *port)
+{
 	/* Nothing to release ... */
-पूर्ण
+}
 
 /*
- * serial core request to करो any port required स्वतःconfiguration
+ * serial core request to do any port required autoconfiguration
  */
-अटल व्योम bcm_uart_config_port(काष्ठा uart_port *port, पूर्णांक flags)
-अणु
-	अगर (flags & UART_CONFIG_TYPE) अणु
-		अगर (bcm_uart_request_port(port))
-			वापस;
+static void bcm_uart_config_port(struct uart_port *port, int flags)
+{
+	if (flags & UART_CONFIG_TYPE) {
+		if (bcm_uart_request_port(port))
+			return;
 		port->type = PORT_BCM63XX;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * serial core request to check that port inक्रमmation in serinfo are
+ * serial core request to check that port information in serinfo are
  * suitable
  */
-अटल पूर्णांक bcm_uart_verअगरy_port(काष्ठा uart_port *port,
-				काष्ठा serial_काष्ठा *serinfo)
-अणु
-	अगर (port->type != PORT_BCM63XX)
-		वापस -EINVAL;
-	अगर (port->irq != serinfo->irq)
-		वापस -EINVAL;
-	अगर (port->iotype != serinfo->io_type)
-		वापस -EINVAL;
-	अगर (port->mapbase != (अचिन्हित दीर्घ)serinfo->iomem_base)
-		वापस -EINVAL;
-	वापस 0;
-पूर्ण
+static int bcm_uart_verify_port(struct uart_port *port,
+				struct serial_struct *serinfo)
+{
+	if (port->type != PORT_BCM63XX)
+		return -EINVAL;
+	if (port->irq != serinfo->irq)
+		return -EINVAL;
+	if (port->iotype != serinfo->io_type)
+		return -EINVAL;
+	if (port->mapbase != (unsigned long)serinfo->iomem_base)
+		return -EINVAL;
+	return 0;
+}
 
 /* serial core callbacks */
-अटल स्थिर काष्ठा uart_ops bcm_uart_ops = अणु
+static const struct uart_ops bcm_uart_ops = {
 	.tx_empty	= bcm_uart_tx_empty,
 	.get_mctrl	= bcm_uart_get_mctrl,
 	.set_mctrl	= bcm_uart_set_mctrl,
@@ -636,161 +635,161 @@ txq_empty:
 	.stop_tx	= bcm_uart_stop_tx,
 	.stop_rx	= bcm_uart_stop_rx,
 	.enable_ms	= bcm_uart_enable_ms,
-	.अवरोध_ctl	= bcm_uart_अवरोध_ctl,
+	.break_ctl	= bcm_uart_break_ctl,
 	.startup	= bcm_uart_startup,
-	.shutकरोwn	= bcm_uart_shutकरोwn,
+	.shutdown	= bcm_uart_shutdown,
 	.set_termios	= bcm_uart_set_termios,
 	.type		= bcm_uart_type,
 	.release_port	= bcm_uart_release_port,
 	.request_port	= bcm_uart_request_port,
 	.config_port	= bcm_uart_config_port,
-	.verअगरy_port	= bcm_uart_verअगरy_port,
-पूर्ण;
+	.verify_port	= bcm_uart_verify_port,
+};
 
 
 
-#अगर_घोषित CONFIG_SERIAL_BCM63XX_CONSOLE
-अटल व्योम रुको_क्रम_xmitr(काष्ठा uart_port *port)
-अणु
-	अचिन्हित पूर्णांक पंचांगout;
+#ifdef CONFIG_SERIAL_BCM63XX_CONSOLE
+static void wait_for_xmitr(struct uart_port *port)
+{
+	unsigned int tmout;
 
-	/* Wait up to 10ms क्रम the अक्षरacter(s) to be sent. */
-	पंचांगout = 10000;
-	जबतक (--पंचांगout) अणु
-		अचिन्हित पूर्णांक val;
+	/* Wait up to 10ms for the character(s) to be sent. */
+	tmout = 10000;
+	while (--tmout) {
+		unsigned int val;
 
-		val = bcm_uart_पढ़ोl(port, UART_IR_REG);
-		अगर (val & UART_IR_STAT(UART_IR_TXEMPTY))
-			अवरोध;
+		val = bcm_uart_readl(port, UART_IR_REG);
+		if (val & UART_IR_STAT(UART_IR_TXEMPTY))
+			break;
 		udelay(1);
-	पूर्ण
+	}
 
-	/* Wait up to 1s क्रम flow control अगर necessary */
-	अगर (port->flags & UPF_CONS_FLOW) अणु
-		पंचांगout = 1000000;
-		जबतक (--पंचांगout) अणु
-			अचिन्हित पूर्णांक val;
+	/* Wait up to 1s for flow control if necessary */
+	if (port->flags & UPF_CONS_FLOW) {
+		tmout = 1000000;
+		while (--tmout) {
+			unsigned int val;
 
-			val = bcm_uart_पढ़ोl(port, UART_EXTINP_REG);
-			अगर (val & UART_EXTINP_CTS_MASK)
-				अवरोध;
+			val = bcm_uart_readl(port, UART_EXTINP_REG);
+			if (val & UART_EXTINP_CTS_MASK)
+				break;
 			udelay(1);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*
- * output given अक्षर
+ * output given char
  */
-अटल व्योम bcm_console_अक्षर_दो(काष्ठा uart_port *port, पूर्णांक ch)
-अणु
-	रुको_क्रम_xmitr(port);
-	bcm_uart_ग_लिखोl(port, ch, UART_FIFO_REG);
-पूर्ण
+static void bcm_console_putchar(struct uart_port *port, int ch)
+{
+	wait_for_xmitr(port);
+	bcm_uart_writel(port, ch, UART_FIFO_REG);
+}
 
 /*
  * console core request to output given string
  */
-अटल व्योम bcm_console_ग_लिखो(काष्ठा console *co, स्थिर अक्षर *s,
-			      अचिन्हित पूर्णांक count)
-अणु
-	काष्ठा uart_port *port;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक locked;
+static void bcm_console_write(struct console *co, const char *s,
+			      unsigned int count)
+{
+	struct uart_port *port;
+	unsigned long flags;
+	int locked;
 
 	port = &ports[co->index];
 
 	local_irq_save(flags);
-	अगर (port->sysrq) अणु
-		/* bcm_uart_पूर्णांकerrupt() alपढ़ोy took the lock */
+	if (port->sysrq) {
+		/* bcm_uart_interrupt() already took the lock */
 		locked = 0;
-	पूर्ण अन्यथा अगर (oops_in_progress) अणु
+	} else if (oops_in_progress) {
 		locked = spin_trylock(&port->lock);
-	पूर्ण अन्यथा अणु
+	} else {
 		spin_lock(&port->lock);
 		locked = 1;
-	पूर्ण
+	}
 
-	/* call helper to deal with \ल\न */
-	uart_console_ग_लिखो(port, s, count, bcm_console_अक्षर_दो);
+	/* call helper to deal with \r\n */
+	uart_console_write(port, s, count, bcm_console_putchar);
 
-	/* and रुको क्रम अक्षर to be transmitted */
-	रुको_क्रम_xmitr(port);
+	/* and wait for char to be transmitted */
+	wait_for_xmitr(port);
 
-	अगर (locked)
+	if (locked)
 		spin_unlock(&port->lock);
 	local_irq_restore(flags);
-पूर्ण
+}
 
 /*
  * console core request to setup given console, find matching uart
  * port and setup it.
  */
-अटल पूर्णांक bcm_console_setup(काष्ठा console *co, अक्षर *options)
-अणु
-	काष्ठा uart_port *port;
-	पूर्णांक baud = 9600;
-	पूर्णांक bits = 8;
-	पूर्णांक parity = 'n';
-	पूर्णांक flow = 'n';
+static int bcm_console_setup(struct console *co, char *options)
+{
+	struct uart_port *port;
+	int baud = 9600;
+	int bits = 8;
+	int parity = 'n';
+	int flow = 'n';
 
-	अगर (co->index < 0 || co->index >= BCM63XX_NR_UARTS)
-		वापस -EINVAL;
+	if (co->index < 0 || co->index >= BCM63XX_NR_UARTS)
+		return -EINVAL;
 	port = &ports[co->index];
-	अगर (!port->membase)
-		वापस -ENODEV;
-	अगर (options)
+	if (!port->membase)
+		return -ENODEV;
+	if (options)
 		uart_parse_options(options, &baud, &parity, &bits, &flow);
 
-	वापस uart_set_options(port, co, baud, parity, bits, flow);
-पूर्ण
+	return uart_set_options(port, co, baud, parity, bits, flow);
+}
 
-अटल काष्ठा uart_driver bcm_uart_driver;
+static struct uart_driver bcm_uart_driver;
 
-अटल काष्ठा console bcm63xx_console = अणु
+static struct console bcm63xx_console = {
 	.name		= "ttyS",
-	.ग_लिखो		= bcm_console_ग_लिखो,
+	.write		= bcm_console_write,
 	.device		= uart_console_device,
 	.setup		= bcm_console_setup,
 	.flags		= CON_PRINTBUFFER,
 	.index		= -1,
 	.data		= &bcm_uart_driver,
-पूर्ण;
+};
 
-अटल पूर्णांक __init bcm63xx_console_init(व्योम)
-अणु
-	रेजिस्टर_console(&bcm63xx_console);
-	वापस 0;
-पूर्ण
+static int __init bcm63xx_console_init(void)
+{
+	register_console(&bcm63xx_console);
+	return 0;
+}
 
 console_initcall(bcm63xx_console_init);
 
-अटल व्योम bcm_early_ग_लिखो(काष्ठा console *con, स्थिर अक्षर *s, अचिन्हित n)
-अणु
-	काष्ठा earlycon_device *dev = con->data;
+static void bcm_early_write(struct console *con, const char *s, unsigned n)
+{
+	struct earlycon_device *dev = con->data;
 
-	uart_console_ग_लिखो(&dev->port, s, n, bcm_console_अक्षर_दो);
-	रुको_क्रम_xmitr(&dev->port);
-पूर्ण
+	uart_console_write(&dev->port, s, n, bcm_console_putchar);
+	wait_for_xmitr(&dev->port);
+}
 
-अटल पूर्णांक __init bcm_early_console_setup(काष्ठा earlycon_device *device,
-					  स्थिर अक्षर *opt)
-अणु
-	अगर (!device->port.membase)
-		वापस -ENODEV;
+static int __init bcm_early_console_setup(struct earlycon_device *device,
+					  const char *opt)
+{
+	if (!device->port.membase)
+		return -ENODEV;
 
-	device->con->ग_लिखो = bcm_early_ग_लिखो;
-	वापस 0;
-पूर्ण
+	device->con->write = bcm_early_write;
+	return 0;
+}
 
 OF_EARLYCON_DECLARE(bcm63xx_uart, "brcm,bcm6345-uart", bcm_early_console_setup);
 
-#घोषणा BCM63XX_CONSOLE	(&bcm63xx_console)
-#अन्यथा
-#घोषणा BCM63XX_CONSOLE	शून्य
-#पूर्ण_अगर /* CONFIG_SERIAL_BCM63XX_CONSOLE */
+#define BCM63XX_CONSOLE	(&bcm63xx_console)
+#else
+#define BCM63XX_CONSOLE	NULL
+#endif /* CONFIG_SERIAL_BCM63XX_CONSOLE */
 
-अटल काष्ठा uart_driver bcm_uart_driver = अणु
+static struct uart_driver bcm_uart_driver = {
 	.owner		= THIS_MODULE,
 	.driver_name	= "bcm63xx_uart",
 	.dev_name	= "ttyS",
@@ -798,125 +797,125 @@ OF_EARLYCON_DECLARE(bcm63xx_uart, "brcm,bcm6345-uart", bcm_early_console_setup);
 	.minor		= 64,
 	.nr		= BCM63XX_NR_UARTS,
 	.cons		= BCM63XX_CONSOLE,
-पूर्ण;
+};
 
 /*
- * platक्रमm driver probe/हटाओ callback
+ * platform driver probe/remove callback
  */
-अटल पूर्णांक bcm_uart_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा resource *res_mem, *res_irq;
-	काष्ठा uart_port *port;
-	काष्ठा clk *clk;
-	पूर्णांक ret;
+static int bcm_uart_probe(struct platform_device *pdev)
+{
+	struct resource *res_mem, *res_irq;
+	struct uart_port *port;
+	struct clk *clk;
+	int ret;
 
-	अगर (pdev->dev.of_node) अणु
+	if (pdev->dev.of_node) {
 		pdev->id = of_alias_get_id(pdev->dev.of_node, "serial");
 
-		अगर (pdev->id < 0)
+		if (pdev->id < 0)
 			pdev->id = of_alias_get_id(pdev->dev.of_node, "uart");
-	पूर्ण
+	}
 
-	अगर (pdev->id < 0 || pdev->id >= BCM63XX_NR_UARTS)
-		वापस -EINVAL;
+	if (pdev->id < 0 || pdev->id >= BCM63XX_NR_UARTS)
+		return -EINVAL;
 
 	port = &ports[pdev->id];
-	अगर (port->membase)
-		वापस -EBUSY;
-	स_रखो(port, 0, माप(*port));
+	if (port->membase)
+		return -EBUSY;
+	memset(port, 0, sizeof(*port));
 
-	res_mem = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!res_mem)
-		वापस -ENODEV;
+	res_mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!res_mem)
+		return -ENODEV;
 
 	port->mapbase = res_mem->start;
 	port->membase = devm_ioremap_resource(&pdev->dev, res_mem);
-	अगर (IS_ERR(port->membase))
-		वापस PTR_ERR(port->membase);
+	if (IS_ERR(port->membase))
+		return PTR_ERR(port->membase);
 
-	res_irq = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, 0);
-	अगर (!res_irq)
-		वापस -ENODEV;
+	res_irq = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
+	if (!res_irq)
+		return -ENODEV;
 
 	clk = clk_get(&pdev->dev, "refclk");
-	अगर (IS_ERR(clk) && pdev->dev.of_node)
+	if (IS_ERR(clk) && pdev->dev.of_node)
 		clk = of_clk_get(pdev->dev.of_node, 0);
 
-	अगर (IS_ERR(clk))
-		वापस -ENODEV;
+	if (IS_ERR(clk))
+		return -ENODEV;
 
 	port->iotype = UPIO_MEM;
 	port->irq = res_irq->start;
 	port->ops = &bcm_uart_ops;
 	port->flags = UPF_BOOT_AUTOCONF;
 	port->dev = &pdev->dev;
-	port->fअगरosize = 16;
+	port->fifosize = 16;
 	port->uartclk = clk_get_rate(clk) / 2;
 	port->line = pdev->id;
 	port->has_sysrq = IS_ENABLED(CONFIG_SERIAL_BCM63XX_CONSOLE);
 	clk_put(clk);
 
 	ret = uart_add_one_port(&bcm_uart_driver, port);
-	अगर (ret) अणु
-		ports[pdev->id].membase = शून्य;
-		वापस ret;
-	पूर्ण
-	platक्रमm_set_drvdata(pdev, port);
-	वापस 0;
-पूर्ण
+	if (ret) {
+		ports[pdev->id].membase = NULL;
+		return ret;
+	}
+	platform_set_drvdata(pdev, port);
+	return 0;
+}
 
-अटल पूर्णांक bcm_uart_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा uart_port *port;
+static int bcm_uart_remove(struct platform_device *pdev)
+{
+	struct uart_port *port;
 
-	port = platक्रमm_get_drvdata(pdev);
-	uart_हटाओ_one_port(&bcm_uart_driver, port);
-	/* mark port as मुक्त */
-	ports[pdev->id].membase = शून्य;
-	वापस 0;
-पूर्ण
+	port = platform_get_drvdata(pdev);
+	uart_remove_one_port(&bcm_uart_driver, port);
+	/* mark port as free */
+	ports[pdev->id].membase = NULL;
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id bcm63xx_of_match[] = अणु
-	अणु .compatible = "brcm,bcm6345-uart" पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id bcm63xx_of_match[] = {
+	{ .compatible = "brcm,bcm6345-uart" },
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, bcm63xx_of_match);
 
 /*
- * platक्रमm driver stuff
+ * platform driver stuff
  */
-अटल काष्ठा platक्रमm_driver bcm_uart_platक्रमm_driver = अणु
+static struct platform_driver bcm_uart_platform_driver = {
 	.probe	= bcm_uart_probe,
-	.हटाओ	= bcm_uart_हटाओ,
-	.driver	= अणु
+	.remove	= bcm_uart_remove,
+	.driver	= {
 		.name  = "bcm63xx_uart",
 		.of_match_table = bcm63xx_of_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init bcm_uart_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init bcm_uart_init(void)
+{
+	int ret;
 
-	ret = uart_रेजिस्टर_driver(&bcm_uart_driver);
-	अगर (ret)
-		वापस ret;
+	ret = uart_register_driver(&bcm_uart_driver);
+	if (ret)
+		return ret;
 
-	ret = platक्रमm_driver_रेजिस्टर(&bcm_uart_platक्रमm_driver);
-	अगर (ret)
-		uart_unरेजिस्टर_driver(&bcm_uart_driver);
+	ret = platform_driver_register(&bcm_uart_platform_driver);
+	if (ret)
+		uart_unregister_driver(&bcm_uart_driver);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम __निकास bcm_uart_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&bcm_uart_platक्रमm_driver);
-	uart_unरेजिस्टर_driver(&bcm_uart_driver);
-पूर्ण
+static void __exit bcm_uart_exit(void)
+{
+	platform_driver_unregister(&bcm_uart_platform_driver);
+	uart_unregister_driver(&bcm_uart_driver);
+}
 
 module_init(bcm_uart_init);
-module_निकास(bcm_uart_निकास);
+module_exit(bcm_uart_exit);
 
 MODULE_AUTHOR("Maxime Bizon <mbizon@freebox.fr>");
 MODULE_DESCRIPTION("Broadcom 63xx integrated uart driver");

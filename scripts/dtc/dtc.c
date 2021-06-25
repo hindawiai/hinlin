@@ -1,80 +1,79 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * (C) Copyright David Gibson <dwg@au1.ibm.com>, IBM Corporation.  2005.
  */
 
-#समावेश <sys/स्थिति.स>
+#include <sys/stat.h>
 
-#समावेश "dtc.h"
-#समावेश "srcpos.h"
+#include "dtc.h"
+#include "srcpos.h"
 
 /*
  * Command line options
  */
-पूर्णांक quiet;		/* Level of quietness */
-पूर्णांक reservक्रमागत;		/* Number of memory reservation slots */
-पूर्णांक minsize;		/* Minimum blob size */
-पूर्णांक padsize;		/* Additional padding to blob */
-पूर्णांक alignsize;		/* Additional padding to blob accroding to the alignsize */
-पूर्णांक phandle_क्रमmat = PHANDLE_EPAPR;	/* Use linux,phandle or phandle properties */
-पूर्णांक generate_symbols;	/* enable symbols & fixup support */
-पूर्णांक generate_fixups;		/* suppress generation of fixups on symbol support */
-पूर्णांक स्वतः_label_aliases;		/* स्वतः generate labels -> aliases */
-पूर्णांक annotate;		/* Level of annotation: 1 क्रम input source location
-			   >1 क्रम full input source location. */
+int quiet;		/* Level of quietness */
+int reservenum;		/* Number of memory reservation slots */
+int minsize;		/* Minimum blob size */
+int padsize;		/* Additional padding to blob */
+int alignsize;		/* Additional padding to blob accroding to the alignsize */
+int phandle_format = PHANDLE_EPAPR;	/* Use linux,phandle or phandle properties */
+int generate_symbols;	/* enable symbols & fixup support */
+int generate_fixups;		/* suppress generation of fixups on symbol support */
+int auto_label_aliases;		/* auto generate labels -> aliases */
+int annotate;		/* Level of annotation: 1 for input source location
+			   >1 for full input source location. */
 
-अटल पूर्णांक is_घातer_of_2(पूर्णांक x)
-अणु
-	वापस (x > 0) && ((x & (x - 1)) == 0);
-पूर्ण
+static int is_power_of_2(int x)
+{
+	return (x > 0) && ((x & (x - 1)) == 0);
+}
 
-अटल व्योम fill_fullpaths(काष्ठा node *tree, स्थिर अक्षर *prefix)
-अणु
-	काष्ठा node *child;
-	स्थिर अक्षर *unit;
+static void fill_fullpaths(struct node *tree, const char *prefix)
+{
+	struct node *child;
+	const char *unit;
 
 	tree->fullpath = join_path(prefix, tree->name);
 
-	unit = म_अक्षर(tree->name, '@');
-	अगर (unit)
+	unit = strchr(tree->name, '@');
+	if (unit)
 		tree->basenamelen = unit - tree->name;
-	अन्यथा
-		tree->basenamelen = म_माप(tree->name);
+	else
+		tree->basenamelen = strlen(tree->name);
 
-	क्रम_each_child(tree, child)
+	for_each_child(tree, child)
 		fill_fullpaths(child, tree->fullpath);
-पूर्ण
+}
 
 /* Usage related data. */
-अटल स्थिर अक्षर usage_synopsis[] = "dtc [options] <input file>";
-अटल स्थिर अक्षर usage_लघु_opts[] = "qI:O:o:V:d:R:S:p:a:fb:i:H:sW:E:@AThv";
-अटल काष्ठा option स्थिर usage_दीर्घ_opts[] = अणु
-	अणु"quiet",            no_argument, शून्य, 'q'पूर्ण,
-	अणु"in-format",         a_argument, शून्य, 'I'पूर्ण,
-	अणु"out",               a_argument, शून्य, 'o'पूर्ण,
-	अणु"out-format",        a_argument, शून्य, 'O'पूर्ण,
-	अणु"out-version",       a_argument, शून्य, 'V'पूर्ण,
-	अणु"out-dependency",    a_argument, शून्य, 'd'पूर्ण,
-	अणु"reserve",           a_argument, शून्य, 'R'पूर्ण,
-	अणु"space",             a_argument, शून्य, 'S'पूर्ण,
-	अणु"pad",               a_argument, शून्य, 'p'पूर्ण,
-	अणु"align",             a_argument, शून्य, 'a'पूर्ण,
-	अणु"boot-cpu",          a_argument, शून्य, 'b'पूर्ण,
-	अणु"force",            no_argument, शून्य, 'f'पूर्ण,
-	अणु"include",           a_argument, शून्य, 'i'पूर्ण,
-	अणु"sort",             no_argument, शून्य, 's'पूर्ण,
-	अणु"phandle",           a_argument, शून्य, 'H'पूर्ण,
-	अणु"warning",           a_argument, शून्य, 'W'पूर्ण,
-	अणु"error",             a_argument, शून्य, 'E'पूर्ण,
-	अणु"symbols",	     no_argument, शून्य, '@'पूर्ण,
-	अणु"auto-alias",       no_argument, शून्य, 'A'पूर्ण,
-	अणु"annotate",         no_argument, शून्य, 'T'पूर्ण,
-	अणु"help",             no_argument, शून्य, 'h'पूर्ण,
-	अणु"version",          no_argument, शून्य, 'v'पूर्ण,
-	अणुशून्य,               no_argument, शून्य, 0x0पूर्ण,
-पूर्ण;
-अटल स्थिर अक्षर * स्थिर usage_opts_help[] = अणु
+static const char usage_synopsis[] = "dtc [options] <input file>";
+static const char usage_short_opts[] = "qI:O:o:V:d:R:S:p:a:fb:i:H:sW:E:@AThv";
+static struct option const usage_long_opts[] = {
+	{"quiet",            no_argument, NULL, 'q'},
+	{"in-format",         a_argument, NULL, 'I'},
+	{"out",               a_argument, NULL, 'o'},
+	{"out-format",        a_argument, NULL, 'O'},
+	{"out-version",       a_argument, NULL, 'V'},
+	{"out-dependency",    a_argument, NULL, 'd'},
+	{"reserve",           a_argument, NULL, 'R'},
+	{"space",             a_argument, NULL, 'S'},
+	{"pad",               a_argument, NULL, 'p'},
+	{"align",             a_argument, NULL, 'a'},
+	{"boot-cpu",          a_argument, NULL, 'b'},
+	{"force",            no_argument, NULL, 'f'},
+	{"include",           a_argument, NULL, 'i'},
+	{"sort",             no_argument, NULL, 's'},
+	{"phandle",           a_argument, NULL, 'H'},
+	{"warning",           a_argument, NULL, 'W'},
+	{"error",             a_argument, NULL, 'E'},
+	{"symbols",	     no_argument, NULL, '@'},
+	{"auto-alias",       no_argument, NULL, 'A'},
+	{"annotate",         no_argument, NULL, 'T'},
+	{"help",             no_argument, NULL, 'h'},
+	{"version",          no_argument, NULL, 'v'},
+	{NULL,               no_argument, NULL, 0x0},
+};
+static const char * const usage_opts_help[] = {
 	"\n\tQuiet: -q suppress warnings, -qq errors, -qqq all",
 	"\n\tInput formats are:\n"
 	 "\t\tdts - device tree source text\n"
@@ -84,11 +83,11 @@
 	"\n\tOutput formats are:\n"
 	 "\t\tdts - device tree source text\n"
 	 "\t\tdtb - device tree blob\n"
-#अगर_अघोषित NO_YAML
+#ifndef NO_YAML
 	 "\t\tyaml - device tree encoded as YAML\n"
-#पूर्ण_अगर
+#endif
 	 "\t\tasm - assembler source",
-	"\n\tBlob version to produce, defaults to "stringअगरy(DEFAULT_FDT_VERSION)" (for dtb and asm output)",
+	"\n\tBlob version to produce, defaults to "stringify(DEFAULT_FDT_VERSION)" (for dtb and asm output)",
 	"\n\tOutput dependency file",
 	"\n\tMake space for <number> reserve map entries (for dtb and asm output)",
 	"\n\tMake the blob at least <bytes> long (extra space)",
@@ -109,266 +108,266 @@
 	"\n\tAnnotate output .dts with input source file and line (-T -T for more details)",
 	"\n\tPrint this help and exit",
 	"\n\tPrint version and exit",
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर अक्षर *guess_type_by_name(स्थिर अक्षर *fname, स्थिर अक्षर *fallback)
-अणु
-	स्थिर अक्षर *s;
+static const char *guess_type_by_name(const char *fname, const char *fallback)
+{
+	const char *s;
 
-	s = म_खोजप(fname, '.');
-	अगर (s == शून्य)
-		वापस fallback;
-	अगर (!strहालcmp(s, ".dts"))
-		वापस "dts";
-	अगर (!strहालcmp(s, ".yaml"))
-		वापस "yaml";
-	अगर (!strहालcmp(s, ".dtbo"))
-		वापस "dtb";
-	अगर (!strहालcmp(s, ".dtb"))
-		वापस "dtb";
-	वापस fallback;
-पूर्ण
+	s = strrchr(fname, '.');
+	if (s == NULL)
+		return fallback;
+	if (!strcasecmp(s, ".dts"))
+		return "dts";
+	if (!strcasecmp(s, ".yaml"))
+		return "yaml";
+	if (!strcasecmp(s, ".dtbo"))
+		return "dtb";
+	if (!strcasecmp(s, ".dtb"))
+		return "dtb";
+	return fallback;
+}
 
-अटल स्थिर अक्षर *guess_input_क्रमmat(स्थिर अक्षर *fname, स्थिर अक्षर *fallback)
-अणु
-	काष्ठा stat statbuf;
+static const char *guess_input_format(const char *fname, const char *fallback)
+{
+	struct stat statbuf;
 	fdt32_t magic;
-	खाता *f;
+	FILE *f;
 
-	अगर (stat(fname, &statbuf) != 0)
-		वापस fallback;
+	if (stat(fname, &statbuf) != 0)
+		return fallback;
 
-	अगर (S_ISसूची(statbuf.st_mode))
-		वापस "fs";
+	if (S_ISDIR(statbuf.st_mode))
+		return "fs";
 
-	अगर (!S_ISREG(statbuf.st_mode))
-		वापस fallback;
+	if (!S_ISREG(statbuf.st_mode))
+		return fallback;
 
-	f = ख_खोलो(fname, "r");
-	अगर (f == शून्य)
-		वापस fallback;
-	अगर (ख_पढ़ो(&magic, 4, 1, f) != 1) अणु
-		ख_बंद(f);
-		वापस fallback;
-	पूर्ण
-	ख_बंद(f);
+	f = fopen(fname, "r");
+	if (f == NULL)
+		return fallback;
+	if (fread(&magic, 4, 1, f) != 1) {
+		fclose(f);
+		return fallback;
+	}
+	fclose(f);
 
-	अगर (fdt32_to_cpu(magic) == FDT_MAGIC)
-		वापस "dtb";
+	if (fdt32_to_cpu(magic) == FDT_MAGIC)
+		return "dtb";
 
-	वापस guess_type_by_name(fname, fallback);
-पूर्ण
+	return guess_type_by_name(fname, fallback);
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
-	काष्ठा dt_info *dti;
-	स्थिर अक्षर *inक्रमm = शून्य;
-	स्थिर अक्षर *outक्रमm = शून्य;
-	स्थिर अक्षर *outname = "-";
-	स्थिर अक्षर *depname = शून्य;
-	bool क्रमce = false, sort = false;
-	स्थिर अक्षर *arg;
-	पूर्णांक opt;
-	खाता *outf = शून्य;
-	पूर्णांक outversion = DEFAULT_FDT_VERSION;
-	दीर्घ दीर्घ cmdline_boot_cpuid = -1;
+int main(int argc, char *argv[])
+{
+	struct dt_info *dti;
+	const char *inform = NULL;
+	const char *outform = NULL;
+	const char *outname = "-";
+	const char *depname = NULL;
+	bool force = false, sort = false;
+	const char *arg;
+	int opt;
+	FILE *outf = NULL;
+	int outversion = DEFAULT_FDT_VERSION;
+	long long cmdline_boot_cpuid = -1;
 
 	quiet      = 0;
-	reservक्रमागत = 0;
+	reservenum = 0;
 	minsize    = 0;
 	padsize    = 0;
 	alignsize  = 0;
 
-	जबतक ((opt = util_getopt_दीर्घ()) != खातापूर्ण) अणु
-		चयन (opt) अणु
-		हाल 'I':
-			inक्रमm = optarg;
-			अवरोध;
-		हाल 'O':
-			outक्रमm = optarg;
-			अवरोध;
-		हाल 'o':
+	while ((opt = util_getopt_long()) != EOF) {
+		switch (opt) {
+		case 'I':
+			inform = optarg;
+			break;
+		case 'O':
+			outform = optarg;
+			break;
+		case 'o':
 			outname = optarg;
-			अवरोध;
-		हाल 'V':
-			outversion = म_से_दीर्घ(optarg, शून्य, 0);
-			अवरोध;
-		हाल 'd':
+			break;
+		case 'V':
+			outversion = strtol(optarg, NULL, 0);
+			break;
+		case 'd':
 			depname = optarg;
-			अवरोध;
-		हाल 'R':
-			reservक्रमागत = म_से_दीर्घ(optarg, शून्य, 0);
-			अवरोध;
-		हाल 'S':
-			minsize = म_से_दीर्घ(optarg, शून्य, 0);
-			अवरोध;
-		हाल 'p':
-			padsize = म_से_दीर्घ(optarg, शून्य, 0);
-			अवरोध;
-		हाल 'a':
-			alignsize = म_से_दीर्घ(optarg, शून्य, 0);
-			अगर (!is_घातer_of_2(alignsize))
+			break;
+		case 'R':
+			reservenum = strtol(optarg, NULL, 0);
+			break;
+		case 'S':
+			minsize = strtol(optarg, NULL, 0);
+			break;
+		case 'p':
+			padsize = strtol(optarg, NULL, 0);
+			break;
+		case 'a':
+			alignsize = strtol(optarg, NULL, 0);
+			if (!is_power_of_2(alignsize))
 				die("Invalid argument \"%d\" to -a option\n",
 				    alignsize);
-			अवरोध;
-		हाल 'f':
-			क्रमce = true;
-			अवरोध;
-		हाल 'q':
+			break;
+		case 'f':
+			force = true;
+			break;
+		case 'q':
 			quiet++;
-			अवरोध;
-		हाल 'b':
-			cmdline_boot_cpuid = म_से_दीर्घl(optarg, शून्य, 0);
-			अवरोध;
-		हाल 'i':
+			break;
+		case 'b':
+			cmdline_boot_cpuid = strtoll(optarg, NULL, 0);
+			break;
+		case 'i':
 			srcfile_add_search_path(optarg);
-			अवरोध;
-		हाल 'v':
+			break;
+		case 'v':
 			util_version();
-		हाल 'H':
-			अगर (streq(optarg, "legacy"))
-				phandle_क्रमmat = PHANDLE_LEGACY;
-			अन्यथा अगर (streq(optarg, "epapr"))
-				phandle_क्रमmat = PHANDLE_EPAPR;
-			अन्यथा अगर (streq(optarg, "both"))
-				phandle_क्रमmat = PHANDLE_BOTH;
-			अन्यथा
+		case 'H':
+			if (streq(optarg, "legacy"))
+				phandle_format = PHANDLE_LEGACY;
+			else if (streq(optarg, "epapr"))
+				phandle_format = PHANDLE_EPAPR;
+			else if (streq(optarg, "both"))
+				phandle_format = PHANDLE_BOTH;
+			else
 				die("Invalid argument \"%s\" to -H option\n",
 				    optarg);
-			अवरोध;
+			break;
 
-		हाल 's':
+		case 's':
 			sort = true;
-			अवरोध;
+			break;
 
-		हाल 'W':
+		case 'W':
 			parse_checks_option(true, false, optarg);
-			अवरोध;
+			break;
 
-		हाल 'E':
+		case 'E':
 			parse_checks_option(false, true, optarg);
-			अवरोध;
+			break;
 
-		हाल '@':
+		case '@':
 			generate_symbols = 1;
-			अवरोध;
-		हाल 'A':
-			स्वतः_label_aliases = 1;
-			अवरोध;
-		हाल 'T':
+			break;
+		case 'A':
+			auto_label_aliases = 1;
+			break;
+		case 'T':
 			annotate++;
-			अवरोध;
+			break;
 
-		हाल 'h':
-			usage(शून्य);
-		शेष:
+		case 'h':
+			usage(NULL);
+		default:
 			usage("unknown option");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (argc > (optind+1))
+	if (argc > (optind+1))
 		usage("missing files");
-	अन्यथा अगर (argc < (optind+1))
+	else if (argc < (optind+1))
 		arg = "-";
-	अन्यथा
+	else
 		arg = argv[optind];
 
 	/* minsize and padsize are mutually exclusive */
-	अगर (minsize && padsize)
+	if (minsize && padsize)
 		die("Can't set both -p and -S\n");
 
-	अगर (depname) अणु
-		depfile = ख_खोलो(depname, "w");
-		अगर (!depfile)
+	if (depname) {
+		depfile = fopen(depname, "w");
+		if (!depfile)
 			die("Couldn't open dependency file %s: %s\n", depname,
-			    म_त्रुटि(त्रुटि_सं));
-		ख_लिखो(depfile, "%s:", outname);
-	पूर्ण
+			    strerror(errno));
+		fprintf(depfile, "%s:", outname);
+	}
 
-	अगर (inक्रमm == शून्य)
-		inक्रमm = guess_input_क्रमmat(arg, "dts");
-	अगर (outक्रमm == शून्य) अणु
-		outक्रमm = guess_type_by_name(outname, शून्य);
-		अगर (outक्रमm == शून्य) अणु
-			अगर (streq(inक्रमm, "dts"))
-				outक्रमm = "dtb";
-			अन्यथा
-				outक्रमm = "dts";
-		पूर्ण
-	पूर्ण
-	अगर (annotate && (!streq(inक्रमm, "dts") || !streq(outक्रमm, "dts")))
+	if (inform == NULL)
+		inform = guess_input_format(arg, "dts");
+	if (outform == NULL) {
+		outform = guess_type_by_name(outname, NULL);
+		if (outform == NULL) {
+			if (streq(inform, "dts"))
+				outform = "dtb";
+			else
+				outform = "dts";
+		}
+	}
+	if (annotate && (!streq(inform, "dts") || !streq(outform, "dts")))
 		die("--annotate requires -I dts -O dts\n");
-	अगर (streq(inक्रमm, "dts"))
+	if (streq(inform, "dts"))
 		dti = dt_from_source(arg);
-	अन्यथा अगर (streq(inक्रमm, "fs"))
+	else if (streq(inform, "fs"))
 		dti = dt_from_fs(arg);
-	अन्यथा अगर(streq(inक्रमm, "dtb"))
+	else if(streq(inform, "dtb"))
 		dti = dt_from_blob(arg);
-	अन्यथा
-		die("Unknown input format \"%s\"\n", inक्रमm);
+	else
+		die("Unknown input format \"%s\"\n", inform);
 
 	dti->outname = outname;
 
-	अगर (depfile) अणु
-		ख_अक्षर_दो('\n', depfile);
-		ख_बंद(depfile);
-	पूर्ण
+	if (depfile) {
+		fputc('\n', depfile);
+		fclose(depfile);
+	}
 
-	अगर (cmdline_boot_cpuid != -1)
+	if (cmdline_boot_cpuid != -1)
 		dti->boot_cpuid_phys = cmdline_boot_cpuid;
 
 	fill_fullpaths(dti->dt, "");
 
-	/* on a plugin, generate by शेष */
-	अगर (dti->dtsflags & DTSF_PLUGIN) अणु
+	/* on a plugin, generate by default */
+	if (dti->dtsflags & DTSF_PLUGIN) {
 		generate_fixups = 1;
-	पूर्ण
+	}
 
-	process_checks(क्रमce, dti);
+	process_checks(force, dti);
 
-	अगर (स्वतः_label_aliases)
+	if (auto_label_aliases)
 		generate_label_tree(dti, "aliases", false);
 
-	अगर (generate_symbols)
+	if (generate_symbols)
 		generate_label_tree(dti, "__symbols__", true);
 
-	अगर (generate_fixups) अणु
+	if (generate_fixups) {
 		generate_fixups_tree(dti, "__fixups__");
 		generate_local_fixups_tree(dti, "__local_fixups__");
-	पूर्ण
+	}
 
-	अगर (sort)
+	if (sort)
 		sort_tree(dti);
 
-	अगर (streq(outname, "-")) अणु
-		outf = मानक_निकास;
-	पूर्ण अन्यथा अणु
-		outf = ख_खोलो(outname, "wb");
-		अगर (! outf)
+	if (streq(outname, "-")) {
+		outf = stdout;
+	} else {
+		outf = fopen(outname, "wb");
+		if (! outf)
 			die("Couldn't open output file %s: %s\n",
-			    outname, म_त्रुटि(त्रुटि_सं));
-	पूर्ण
+			    outname, strerror(errno));
+	}
 
-	अगर (streq(outक्रमm, "dts")) अणु
+	if (streq(outform, "dts")) {
 		dt_to_source(outf, dti);
-#अगर_अघोषित NO_YAML
-	पूर्ण अन्यथा अगर (streq(outक्रमm, "yaml")) अणु
-		अगर (!streq(inक्रमm, "dts"))
+#ifndef NO_YAML
+	} else if (streq(outform, "yaml")) {
+		if (!streq(inform, "dts"))
 			die("YAML output format requires dts input format\n");
 		dt_to_yaml(outf, dti);
-#पूर्ण_अगर
-	पूर्ण अन्यथा अगर (streq(outक्रमm, "dtb")) अणु
+#endif
+	} else if (streq(outform, "dtb")) {
 		dt_to_blob(outf, dti, outversion);
-	पूर्ण अन्यथा अगर (streq(outक्रमm, "dtbo")) अणु
+	} else if (streq(outform, "dtbo")) {
 		dt_to_blob(outf, dti, outversion);
-	पूर्ण अन्यथा अगर (streq(outक्रमm, "asm")) अणु
-		dt_to_यंत्र(outf, dti, outversion);
-	पूर्ण अन्यथा अगर (streq(outक्रमm, "null")) अणु
-		/* करो nothing */
-	पूर्ण अन्यथा अणु
-		die("Unknown output format \"%s\"\n", outक्रमm);
-	पूर्ण
+	} else if (streq(outform, "asm")) {
+		dt_to_asm(outf, dti, outversion);
+	} else if (streq(outform, "null")) {
+		/* do nothing */
+	} else {
+		die("Unknown output format \"%s\"\n", outform);
+	}
 
-	निकास(0);
-पूर्ण
+	exit(0);
+}

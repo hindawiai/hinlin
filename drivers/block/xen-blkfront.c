@@ -1,27 +1,26 @@
-<शैली गुरु>
 /*
  * blkfront.c
  *
- * XenLinux भव block device driver.
+ * XenLinux virtual block device driver.
  *
  * Copyright (c) 2003-2004, Keir Fraser & Steve Hand
- * Modअगरications by Mark A. Williamson are (c) Intel Research Cambridge
+ * Modifications by Mark A. Williamson are (c) Intel Research Cambridge
  * Copyright (c) 2004, Christian Limpach
  * Copyright (c) 2004, Andrew Warfield
  * Copyright (c) 2005, Christopher Clark
  * Copyright (c) 2005, XenSource Ltd
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of the GNU General Public License version 2
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version 2
  * as published by the Free Software Foundation; or, when distributed
- * separately from the Linux kernel or incorporated पूर्णांकo other
+ * separately from the Linux kernel or incorporated into other
  * software packages, subject to the following license:
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a copy
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this source file (the "Software"), to deal in the Software without
- * restriction, including without limitation the rights to use, copy, modअगरy,
+ * restriction, including without limitation the rights to use, copy, modify,
  * merge, publish, distribute, sublicense, and/or sell copies of the Software,
- * and to permit persons to whom the Software is furnished to करो so, subject to
+ * and to permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
@@ -36,96 +35,96 @@
  * IN THE SOFTWARE.
  */
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/blk-mq.h>
-#समावेश <linux/hdreg.h>
-#समावेश <linux/cdrom.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/biपंचांगap.h>
-#समावेश <linux/list.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/sched/mm.h>
+#include <linux/interrupt.h>
+#include <linux/blkdev.h>
+#include <linux/blk-mq.h>
+#include <linux/hdreg.h>
+#include <linux/cdrom.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/mutex.h>
+#include <linux/scatterlist.h>
+#include <linux/bitmap.h>
+#include <linux/list.h>
+#include <linux/workqueue.h>
+#include <linux/sched/mm.h>
 
-#समावेश <xen/xen.h>
-#समावेश <xen/xenbus.h>
-#समावेश <xen/grant_table.h>
-#समावेश <xen/events.h>
-#समावेश <xen/page.h>
-#समावेश <xen/platक्रमm_pci.h>
+#include <xen/xen.h>
+#include <xen/xenbus.h>
+#include <xen/grant_table.h>
+#include <xen/events.h>
+#include <xen/page.h>
+#include <xen/platform_pci.h>
 
-#समावेश <xen/पूर्णांकerface/grant_table.h>
-#समावेश <xen/पूर्णांकerface/io/blkअगर.h>
-#समावेश <xen/पूर्णांकerface/io/protocols.h>
+#include <xen/interface/grant_table.h>
+#include <xen/interface/io/blkif.h>
+#include <xen/interface/io/protocols.h>
 
-#समावेश <यंत्र/xen/hypervisor.h>
+#include <asm/xen/hypervisor.h>
 
 /*
  * The minimal size of segment supported by the block framework is PAGE_SIZE.
- * When Linux is using a dअगरferent page size than Xen, it may not be possible
+ * When Linux is using a different page size than Xen, it may not be possible
  * to put all the data in a single segment.
- * This can happen when the backend करोesn't support indirect descriptor and
- * thereक्रमe the maximum amount of data that a request can carry is
+ * This can happen when the backend doesn't support indirect descriptor and
+ * therefore the maximum amount of data that a request can carry is
  * BLKIF_MAX_SEGMENTS_PER_REQUEST * XEN_PAGE_SIZE = 44KB
  *
  * Note that we only support one extra request. So the Linux page size
  * should be <= ( 2 * BLKIF_MAX_SEGMENTS_PER_REQUEST * XEN_PAGE_SIZE) =
  * 88KB.
  */
-#घोषणा HAS_EXTRA_REQ (BLKIF_MAX_SEGMENTS_PER_REQUEST < XEN_PFN_PER_PAGE)
+#define HAS_EXTRA_REQ (BLKIF_MAX_SEGMENTS_PER_REQUEST < XEN_PFN_PER_PAGE)
 
-क्रमागत blkअगर_state अणु
+enum blkif_state {
 	BLKIF_STATE_DISCONNECTED,
 	BLKIF_STATE_CONNECTED,
 	BLKIF_STATE_SUSPENDED,
-पूर्ण;
+};
 
-काष्ठा grant अणु
+struct grant {
 	grant_ref_t gref;
-	काष्ठा page *page;
-	काष्ठा list_head node;
-पूर्ण;
+	struct page *page;
+	struct list_head node;
+};
 
-क्रमागत blk_req_status अणु
+enum blk_req_status {
 	REQ_WAITING,
 	REQ_DONE,
 	REQ_ERROR,
 	REQ_EOPNOTSUPP,
-पूर्ण;
+};
 
-काष्ठा blk_shaकरोw अणु
-	काष्ठा blkअगर_request req;
-	काष्ठा request *request;
-	काष्ठा grant **grants_used;
-	काष्ठा grant **indirect_grants;
-	काष्ठा scatterlist *sg;
-	अचिन्हित पूर्णांक num_sg;
-	क्रमागत blk_req_status status;
+struct blk_shadow {
+	struct blkif_request req;
+	struct request *request;
+	struct grant **grants_used;
+	struct grant **indirect_grants;
+	struct scatterlist *sg;
+	unsigned int num_sg;
+	enum blk_req_status status;
 
-	#घोषणा NO_ASSOCIATED_ID ~0UL
+	#define NO_ASSOCIATED_ID ~0UL
 	/*
-	 * Id of the sibling अगर we ever need 2 requests when handling a
+	 * Id of the sibling if we ever need 2 requests when handling a
 	 * block I/O request
 	 */
-	अचिन्हित दीर्घ associated_id;
-पूर्ण;
+	unsigned long associated_id;
+};
 
-काष्ठा blkअगर_req अणु
+struct blkif_req {
 	blk_status_t	error;
-पूर्ण;
+};
 
-अटल अंतरभूत काष्ठा blkअगर_req *blkअगर_req(काष्ठा request *rq)
-अणु
-	वापस blk_mq_rq_to_pdu(rq);
-पूर्ण
+static inline struct blkif_req *blkif_req(struct request *rq)
+{
+	return blk_mq_rq_to_pdu(rq);
+}
 
-अटल DEFINE_MUTEX(blkfront_mutex);
-अटल स्थिर काष्ठा block_device_operations xlvbd_block_fops;
-अटल काष्ठा delayed_work blkfront_work;
-अटल LIST_HEAD(info_list);
+static DEFINE_MUTEX(blkfront_mutex);
+static const struct block_device_operations xlvbd_block_fops;
+static struct delayed_work blkfront_work;
+static LIST_HEAD(info_list);
 
 /*
  * Maximum number of segments in indirect requests, the actual value used by
@@ -133,558 +132,558 @@
  * by the backend driver.
  */
 
-अटल अचिन्हित पूर्णांक xen_blkअगर_max_segments = 32;
-module_param_named(max_indirect_segments, xen_blkअगर_max_segments, uपूर्णांक, 0444);
+static unsigned int xen_blkif_max_segments = 32;
+module_param_named(max_indirect_segments, xen_blkif_max_segments, uint, 0444);
 MODULE_PARM_DESC(max_indirect_segments,
 		 "Maximum amount of segments in indirect requests (default is 32)");
 
-अटल अचिन्हित पूर्णांक xen_blkअगर_max_queues = 4;
-module_param_named(max_queues, xen_blkअगर_max_queues, uपूर्णांक, 0444);
+static unsigned int xen_blkif_max_queues = 4;
+module_param_named(max_queues, xen_blkif_max_queues, uint, 0444);
 MODULE_PARM_DESC(max_queues, "Maximum number of hardware queues/rings used per virtual disk");
 
 /*
- * Maximum order of pages to be used क्रम the shared ring between front and
+ * Maximum order of pages to be used for the shared ring between front and
  * backend, 4KB page granularity is used.
  */
-अटल अचिन्हित पूर्णांक xen_blkअगर_max_ring_order;
-module_param_named(max_ring_page_order, xen_blkअगर_max_ring_order, पूर्णांक, 0444);
+static unsigned int xen_blkif_max_ring_order;
+module_param_named(max_ring_page_order, xen_blkif_max_ring_order, int, 0444);
 MODULE_PARM_DESC(max_ring_page_order, "Maximum order of pages to be used for the shared ring");
 
-#घोषणा BLK_RING_SIZE(info)	\
-	__CONST_RING_SIZE(blkअगर, XEN_PAGE_SIZE * (info)->nr_ring_pages)
+#define BLK_RING_SIZE(info)	\
+	__CONST_RING_SIZE(blkif, XEN_PAGE_SIZE * (info)->nr_ring_pages)
 
 /*
- * ring-ref%u i=(-1UL) would take 11 अक्षरacters + 'ring-ref' is 8, so 19
- * अक्षरacters are enough. Define to 20 to keep consistent with backend.
+ * ring-ref%u i=(-1UL) would take 11 characters + 'ring-ref' is 8, so 19
+ * characters are enough. Define to 20 to keep consistent with backend.
  */
-#घोषणा RINGREF_NAME_LEN (20)
+#define RINGREF_NAME_LEN (20)
 /*
- * queue-%u would take 7 + 10(अच_पूर्णांक_उच्च) = 17 अक्षरacters.
+ * queue-%u would take 7 + 10(UINT_MAX) = 17 characters.
  */
-#घोषणा QUEUE_NAME_LEN (17)
+#define QUEUE_NAME_LEN (17)
 
 /*
  *  Per-ring info.
  *  Every blkfront device can associate with one or more blkfront_ring_info,
  *  depending on how many hardware queues/rings to be used.
  */
-काष्ठा blkfront_ring_info अणु
+struct blkfront_ring_info {
 	/* Lock to protect data in every ring buffer. */
 	spinlock_t ring_lock;
-	काष्ठा blkअगर_front_ring ring;
-	अचिन्हित पूर्णांक ring_ref[XENBUS_MAX_RING_GRANTS];
-	अचिन्हित पूर्णांक evtchn, irq;
-	काष्ठा work_काष्ठा work;
-	काष्ठा gnttab_मुक्त_callback callback;
-	काष्ठा list_head indirect_pages;
-	काष्ठा list_head grants;
-	अचिन्हित पूर्णांक persistent_gnts_c;
-	अचिन्हित दीर्घ shaकरोw_मुक्त;
-	काष्ठा blkfront_info *dev_info;
-	काष्ठा blk_shaकरोw shaकरोw[];
-पूर्ण;
+	struct blkif_front_ring ring;
+	unsigned int ring_ref[XENBUS_MAX_RING_GRANTS];
+	unsigned int evtchn, irq;
+	struct work_struct work;
+	struct gnttab_free_callback callback;
+	struct list_head indirect_pages;
+	struct list_head grants;
+	unsigned int persistent_gnts_c;
+	unsigned long shadow_free;
+	struct blkfront_info *dev_info;
+	struct blk_shadow shadow[];
+};
 
 /*
  * We have one of these per vbd, whether ide, scsi or 'other'.  They
- * hang in निजी_data off the gendisk काष्ठाure. We may end up
- * putting all kinds of पूर्णांकeresting stuff here :-)
+ * hang in private_data off the gendisk structure. We may end up
+ * putting all kinds of interesting stuff here :-)
  */
-काष्ठा blkfront_info
-अणु
-	काष्ठा mutex mutex;
-	काष्ठा xenbus_device *xbdev;
-	काष्ठा gendisk *gd;
+struct blkfront_info
+{
+	struct mutex mutex;
+	struct xenbus_device *xbdev;
+	struct gendisk *gd;
 	u16 sector_size;
-	अचिन्हित पूर्णांक physical_sector_size;
-	पूर्णांक vdevice;
-	blkअगर_vdev_t handle;
-	क्रमागत blkअगर_state connected;
+	unsigned int physical_sector_size;
+	int vdevice;
+	blkif_vdev_t handle;
+	enum blkif_state connected;
 	/* Number of pages per ring buffer. */
-	अचिन्हित पूर्णांक nr_ring_pages;
-	काष्ठा request_queue *rq;
-	अचिन्हित पूर्णांक feature_flush:1;
-	अचिन्हित पूर्णांक feature_fua:1;
-	अचिन्हित पूर्णांक feature_discard:1;
-	अचिन्हित पूर्णांक feature_secdiscard:1;
-	अचिन्हित पूर्णांक feature_persistent:1;
-	अचिन्हित पूर्णांक discard_granularity;
-	अचिन्हित पूर्णांक discard_alignment;
+	unsigned int nr_ring_pages;
+	struct request_queue *rq;
+	unsigned int feature_flush:1;
+	unsigned int feature_fua:1;
+	unsigned int feature_discard:1;
+	unsigned int feature_secdiscard:1;
+	unsigned int feature_persistent:1;
+	unsigned int discard_granularity;
+	unsigned int discard_alignment;
 	/* Number of 4KB segments handled */
-	अचिन्हित पूर्णांक max_indirect_segments;
-	पूर्णांक is_पढ़ोy;
-	काष्ठा blk_mq_tag_set tag_set;
-	काष्ठा blkfront_ring_info *rinfo;
-	अचिन्हित पूर्णांक nr_rings;
-	अचिन्हित पूर्णांक rinfo_size;
-	/* Save uncomplete reqs and bios क्रम migration. */
-	काष्ठा list_head requests;
-	काष्ठा bio_list bio_list;
-	काष्ठा list_head info_list;
-पूर्ण;
+	unsigned int max_indirect_segments;
+	int is_ready;
+	struct blk_mq_tag_set tag_set;
+	struct blkfront_ring_info *rinfo;
+	unsigned int nr_rings;
+	unsigned int rinfo_size;
+	/* Save uncomplete reqs and bios for migration. */
+	struct list_head requests;
+	struct bio_list bio_list;
+	struct list_head info_list;
+};
 
-अटल अचिन्हित पूर्णांक nr_minors;
-अटल अचिन्हित दीर्घ *minors;
-अटल DEFINE_SPINLOCK(minor_lock);
+static unsigned int nr_minors;
+static unsigned long *minors;
+static DEFINE_SPINLOCK(minor_lock);
 
-#घोषणा GRANT_INVALID_REF	0
+#define GRANT_INVALID_REF	0
 
-#घोषणा PARTS_PER_DISK		16
-#घोषणा PARTS_PER_EXT_DISK      256
+#define PARTS_PER_DISK		16
+#define PARTS_PER_EXT_DISK      256
 
-#घोषणा BLKIF_MAJOR(dev) ((dev)>>8)
-#घोषणा BLKIF_MINOR(dev) ((dev) & 0xff)
+#define BLKIF_MAJOR(dev) ((dev)>>8)
+#define BLKIF_MINOR(dev) ((dev) & 0xff)
 
-#घोषणा EXT_SHIFT 28
-#घोषणा EXTENDED (1<<EXT_SHIFT)
-#घोषणा VDEV_IS_EXTENDED(dev) ((dev)&(EXTENDED))
-#घोषणा BLKIF_MINOR_EXT(dev) ((dev)&(~EXTENDED))
-#घोषणा EMULATED_HD_DISK_MINOR_OFFSET (0)
-#घोषणा EMULATED_HD_DISK_NAME_OFFSET (EMULATED_HD_DISK_MINOR_OFFSET / 256)
-#घोषणा EMULATED_SD_DISK_MINOR_OFFSET (0)
-#घोषणा EMULATED_SD_DISK_NAME_OFFSET (EMULATED_SD_DISK_MINOR_OFFSET / 256)
+#define EXT_SHIFT 28
+#define EXTENDED (1<<EXT_SHIFT)
+#define VDEV_IS_EXTENDED(dev) ((dev)&(EXTENDED))
+#define BLKIF_MINOR_EXT(dev) ((dev)&(~EXTENDED))
+#define EMULATED_HD_DISK_MINOR_OFFSET (0)
+#define EMULATED_HD_DISK_NAME_OFFSET (EMULATED_HD_DISK_MINOR_OFFSET / 256)
+#define EMULATED_SD_DISK_MINOR_OFFSET (0)
+#define EMULATED_SD_DISK_NAME_OFFSET (EMULATED_SD_DISK_MINOR_OFFSET / 256)
 
-#घोषणा DEV_NAME	"xvd"	/* name in /dev */
+#define DEV_NAME	"xvd"	/* name in /dev */
 
 /*
  * Grants are always the same size as a Xen page (i.e 4KB).
  * A physical segment is always the same size as a Linux page.
  * Number of grants per physical segment
  */
-#घोषणा GRANTS_PER_PSEG	(PAGE_SIZE / XEN_PAGE_SIZE)
+#define GRANTS_PER_PSEG	(PAGE_SIZE / XEN_PAGE_SIZE)
 
-#घोषणा GRANTS_PER_INसूचीECT_FRAME \
-	(XEN_PAGE_SIZE / माप(काष्ठा blkअगर_request_segment))
+#define GRANTS_PER_INDIRECT_FRAME \
+	(XEN_PAGE_SIZE / sizeof(struct blkif_request_segment))
 
-#घोषणा INसूचीECT_GREFS(_grants)		\
-	DIV_ROUND_UP(_grants, GRANTS_PER_INसूचीECT_FRAME)
+#define INDIRECT_GREFS(_grants)		\
+	DIV_ROUND_UP(_grants, GRANTS_PER_INDIRECT_FRAME)
 
-अटल पूर्णांक blkfront_setup_indirect(काष्ठा blkfront_ring_info *rinfo);
-अटल व्योम blkfront_gather_backend_features(काष्ठा blkfront_info *info);
-अटल पूर्णांक negotiate_mq(काष्ठा blkfront_info *info);
+static int blkfront_setup_indirect(struct blkfront_ring_info *rinfo);
+static void blkfront_gather_backend_features(struct blkfront_info *info);
+static int negotiate_mq(struct blkfront_info *info);
 
-#घोषणा क्रम_each_rinfo(info, ptr, idx)				\
-	क्रम ((ptr) = (info)->rinfo, (idx) = 0;			\
+#define for_each_rinfo(info, ptr, idx)				\
+	for ((ptr) = (info)->rinfo, (idx) = 0;			\
 	     (idx) < (info)->nr_rings;				\
-	     (idx)++, (ptr) = (व्योम *)(ptr) + (info)->rinfo_size)
+	     (idx)++, (ptr) = (void *)(ptr) + (info)->rinfo_size)
 
-अटल अंतरभूत काष्ठा blkfront_ring_info *
-get_rinfo(स्थिर काष्ठा blkfront_info *info, अचिन्हित पूर्णांक i)
-अणु
+static inline struct blkfront_ring_info *
+get_rinfo(const struct blkfront_info *info, unsigned int i)
+{
 	BUG_ON(i >= info->nr_rings);
-	वापस (व्योम *)info->rinfo + i * info->rinfo_size;
-पूर्ण
+	return (void *)info->rinfo + i * info->rinfo_size;
+}
 
-अटल पूर्णांक get_id_from_मुक्तlist(काष्ठा blkfront_ring_info *rinfo)
-अणु
-	अचिन्हित दीर्घ मुक्त = rinfo->shaकरोw_मुक्त;
+static int get_id_from_freelist(struct blkfront_ring_info *rinfo)
+{
+	unsigned long free = rinfo->shadow_free;
 
-	BUG_ON(मुक्त >= BLK_RING_SIZE(rinfo->dev_info));
-	rinfo->shaकरोw_मुक्त = rinfo->shaकरोw[मुक्त].req.u.rw.id;
-	rinfo->shaकरोw[मुक्त].req.u.rw.id = 0x0fffffee; /* debug */
-	वापस मुक्त;
-पूर्ण
+	BUG_ON(free >= BLK_RING_SIZE(rinfo->dev_info));
+	rinfo->shadow_free = rinfo->shadow[free].req.u.rw.id;
+	rinfo->shadow[free].req.u.rw.id = 0x0fffffee; /* debug */
+	return free;
+}
 
-अटल पूर्णांक add_id_to_मुक्तlist(काष्ठा blkfront_ring_info *rinfo,
-			      अचिन्हित दीर्घ id)
-अणु
-	अगर (rinfo->shaकरोw[id].req.u.rw.id != id)
-		वापस -EINVAL;
-	अगर (rinfo->shaकरोw[id].request == शून्य)
-		वापस -EINVAL;
-	rinfo->shaकरोw[id].req.u.rw.id  = rinfo->shaकरोw_मुक्त;
-	rinfo->shaकरोw[id].request = शून्य;
-	rinfo->shaकरोw_मुक्त = id;
-	वापस 0;
-पूर्ण
+static int add_id_to_freelist(struct blkfront_ring_info *rinfo,
+			      unsigned long id)
+{
+	if (rinfo->shadow[id].req.u.rw.id != id)
+		return -EINVAL;
+	if (rinfo->shadow[id].request == NULL)
+		return -EINVAL;
+	rinfo->shadow[id].req.u.rw.id  = rinfo->shadow_free;
+	rinfo->shadow[id].request = NULL;
+	rinfo->shadow_free = id;
+	return 0;
+}
 
-अटल पूर्णांक fill_grant_buffer(काष्ठा blkfront_ring_info *rinfo, पूर्णांक num)
-अणु
-	काष्ठा blkfront_info *info = rinfo->dev_info;
-	काष्ठा page *granted_page;
-	काष्ठा grant *gnt_list_entry, *n;
-	पूर्णांक i = 0;
+static int fill_grant_buffer(struct blkfront_ring_info *rinfo, int num)
+{
+	struct blkfront_info *info = rinfo->dev_info;
+	struct page *granted_page;
+	struct grant *gnt_list_entry, *n;
+	int i = 0;
 
-	जबतक (i < num) अणु
-		gnt_list_entry = kzalloc(माप(काष्ठा grant), GFP_NOIO);
-		अगर (!gnt_list_entry)
-			जाओ out_of_memory;
+	while (i < num) {
+		gnt_list_entry = kzalloc(sizeof(struct grant), GFP_NOIO);
+		if (!gnt_list_entry)
+			goto out_of_memory;
 
-		अगर (info->feature_persistent) अणु
+		if (info->feature_persistent) {
 			granted_page = alloc_page(GFP_NOIO);
-			अगर (!granted_page) अणु
-				kमुक्त(gnt_list_entry);
-				जाओ out_of_memory;
-			पूर्ण
+			if (!granted_page) {
+				kfree(gnt_list_entry);
+				goto out_of_memory;
+			}
 			gnt_list_entry->page = granted_page;
-		पूर्ण
+		}
 
 		gnt_list_entry->gref = GRANT_INVALID_REF;
 		list_add(&gnt_list_entry->node, &rinfo->grants);
 		i++;
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 out_of_memory:
-	list_क्रम_each_entry_safe(gnt_list_entry, n,
-	                         &rinfo->grants, node) अणु
+	list_for_each_entry_safe(gnt_list_entry, n,
+	                         &rinfo->grants, node) {
 		list_del(&gnt_list_entry->node);
-		अगर (info->feature_persistent)
-			__मुक्त_page(gnt_list_entry->page);
-		kमुक्त(gnt_list_entry);
+		if (info->feature_persistent)
+			__free_page(gnt_list_entry->page);
+		kfree(gnt_list_entry);
 		i--;
-	पूर्ण
+	}
 	BUG_ON(i != 0);
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल काष्ठा grant *get_मुक्त_grant(काष्ठा blkfront_ring_info *rinfo)
-अणु
-	काष्ठा grant *gnt_list_entry;
+static struct grant *get_free_grant(struct blkfront_ring_info *rinfo)
+{
+	struct grant *gnt_list_entry;
 
 	BUG_ON(list_empty(&rinfo->grants));
-	gnt_list_entry = list_first_entry(&rinfo->grants, काष्ठा grant,
+	gnt_list_entry = list_first_entry(&rinfo->grants, struct grant,
 					  node);
 	list_del(&gnt_list_entry->node);
 
-	अगर (gnt_list_entry->gref != GRANT_INVALID_REF)
+	if (gnt_list_entry->gref != GRANT_INVALID_REF)
 		rinfo->persistent_gnts_c--;
 
-	वापस gnt_list_entry;
-पूर्ण
+	return gnt_list_entry;
+}
 
-अटल अंतरभूत व्योम grant_क्रमeign_access(स्थिर काष्ठा grant *gnt_list_entry,
-					स्थिर काष्ठा blkfront_info *info)
-अणु
-	gnttab_page_grant_क्रमeign_access_ref_one(gnt_list_entry->gref,
+static inline void grant_foreign_access(const struct grant *gnt_list_entry,
+					const struct blkfront_info *info)
+{
+	gnttab_page_grant_foreign_access_ref_one(gnt_list_entry->gref,
 						 info->xbdev->otherend_id,
 						 gnt_list_entry->page,
 						 0);
-पूर्ण
+}
 
-अटल काष्ठा grant *get_grant(grant_ref_t *gref_head,
-			       अचिन्हित दीर्घ gfn,
-			       काष्ठा blkfront_ring_info *rinfo)
-अणु
-	काष्ठा grant *gnt_list_entry = get_मुक्त_grant(rinfo);
-	काष्ठा blkfront_info *info = rinfo->dev_info;
+static struct grant *get_grant(grant_ref_t *gref_head,
+			       unsigned long gfn,
+			       struct blkfront_ring_info *rinfo)
+{
+	struct grant *gnt_list_entry = get_free_grant(rinfo);
+	struct blkfront_info *info = rinfo->dev_info;
 
-	अगर (gnt_list_entry->gref != GRANT_INVALID_REF)
-		वापस gnt_list_entry;
+	if (gnt_list_entry->gref != GRANT_INVALID_REF)
+		return gnt_list_entry;
 
 	/* Assign a gref to this page */
 	gnt_list_entry->gref = gnttab_claim_grant_reference(gref_head);
 	BUG_ON(gnt_list_entry->gref == -ENOSPC);
-	अगर (info->feature_persistent)
-		grant_क्रमeign_access(gnt_list_entry, info);
-	अन्यथा अणु
+	if (info->feature_persistent)
+		grant_foreign_access(gnt_list_entry, info);
+	else {
 		/* Grant access to the GFN passed by the caller */
-		gnttab_grant_क्रमeign_access_ref(gnt_list_entry->gref,
+		gnttab_grant_foreign_access_ref(gnt_list_entry->gref,
 						info->xbdev->otherend_id,
 						gfn, 0);
-	पूर्ण
+	}
 
-	वापस gnt_list_entry;
-पूर्ण
+	return gnt_list_entry;
+}
 
-अटल काष्ठा grant *get_indirect_grant(grant_ref_t *gref_head,
-					काष्ठा blkfront_ring_info *rinfo)
-अणु
-	काष्ठा grant *gnt_list_entry = get_मुक्त_grant(rinfo);
-	काष्ठा blkfront_info *info = rinfo->dev_info;
+static struct grant *get_indirect_grant(grant_ref_t *gref_head,
+					struct blkfront_ring_info *rinfo)
+{
+	struct grant *gnt_list_entry = get_free_grant(rinfo);
+	struct blkfront_info *info = rinfo->dev_info;
 
-	अगर (gnt_list_entry->gref != GRANT_INVALID_REF)
-		वापस gnt_list_entry;
+	if (gnt_list_entry->gref != GRANT_INVALID_REF)
+		return gnt_list_entry;
 
 	/* Assign a gref to this page */
 	gnt_list_entry->gref = gnttab_claim_grant_reference(gref_head);
 	BUG_ON(gnt_list_entry->gref == -ENOSPC);
-	अगर (!info->feature_persistent) अणु
-		काष्ठा page *indirect_page;
+	if (!info->feature_persistent) {
+		struct page *indirect_page;
 
-		/* Fetch a pre-allocated page to use क्रम indirect grefs */
+		/* Fetch a pre-allocated page to use for indirect grefs */
 		BUG_ON(list_empty(&rinfo->indirect_pages));
 		indirect_page = list_first_entry(&rinfo->indirect_pages,
-						 काष्ठा page, lru);
+						 struct page, lru);
 		list_del(&indirect_page->lru);
 		gnt_list_entry->page = indirect_page;
-	पूर्ण
-	grant_क्रमeign_access(gnt_list_entry, info);
+	}
+	grant_foreign_access(gnt_list_entry, info);
 
-	वापस gnt_list_entry;
-पूर्ण
+	return gnt_list_entry;
+}
 
-अटल स्थिर अक्षर *op_name(पूर्णांक op)
-अणु
-	अटल स्थिर अक्षर *स्थिर names[] = अणु
+static const char *op_name(int op)
+{
+	static const char *const names[] = {
 		[BLKIF_OP_READ] = "read",
 		[BLKIF_OP_WRITE] = "write",
 		[BLKIF_OP_WRITE_BARRIER] = "barrier",
 		[BLKIF_OP_FLUSH_DISKCACHE] = "flush",
-		[BLKIF_OP_DISCARD] = "discard" पूर्ण;
+		[BLKIF_OP_DISCARD] = "discard" };
 
-	अगर (op < 0 || op >= ARRAY_SIZE(names))
-		वापस "unknown";
+	if (op < 0 || op >= ARRAY_SIZE(names))
+		return "unknown";
 
-	अगर (!names[op])
-		वापस "reserved";
+	if (!names[op])
+		return "reserved";
 
-	वापस names[op];
-पूर्ण
-अटल पूर्णांक xlbd_reserve_minors(अचिन्हित पूर्णांक minor, अचिन्हित पूर्णांक nr)
-अणु
-	अचिन्हित पूर्णांक end = minor + nr;
-	पूर्णांक rc;
+	return names[op];
+}
+static int xlbd_reserve_minors(unsigned int minor, unsigned int nr)
+{
+	unsigned int end = minor + nr;
+	int rc;
 
-	अगर (end > nr_minors) अणु
-		अचिन्हित दीर्घ *biपंचांगap, *old;
+	if (end > nr_minors) {
+		unsigned long *bitmap, *old;
 
-		biपंचांगap = kसुस्मृति(BITS_TO_LONGS(end), माप(*biपंचांगap),
+		bitmap = kcalloc(BITS_TO_LONGS(end), sizeof(*bitmap),
 				 GFP_KERNEL);
-		अगर (biपंचांगap == शून्य)
-			वापस -ENOMEM;
+		if (bitmap == NULL)
+			return -ENOMEM;
 
 		spin_lock(&minor_lock);
-		अगर (end > nr_minors) अणु
+		if (end > nr_minors) {
 			old = minors;
-			स_नकल(biपंचांगap, minors,
-			       BITS_TO_LONGS(nr_minors) * माप(*biपंचांगap));
-			minors = biपंचांगap;
+			memcpy(bitmap, minors,
+			       BITS_TO_LONGS(nr_minors) * sizeof(*bitmap));
+			minors = bitmap;
 			nr_minors = BITS_TO_LONGS(end) * BITS_PER_LONG;
-		पूर्ण अन्यथा
-			old = biपंचांगap;
+		} else
+			old = bitmap;
 		spin_unlock(&minor_lock);
-		kमुक्त(old);
-	पूर्ण
+		kfree(old);
+	}
 
 	spin_lock(&minor_lock);
-	अगर (find_next_bit(minors, end, minor) >= end) अणु
-		biपंचांगap_set(minors, minor, nr);
+	if (find_next_bit(minors, end, minor) >= end) {
+		bitmap_set(minors, minor, nr);
 		rc = 0;
-	पूर्ण अन्यथा
+	} else
 		rc = -EBUSY;
 	spin_unlock(&minor_lock);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम xlbd_release_minors(अचिन्हित पूर्णांक minor, अचिन्हित पूर्णांक nr)
-अणु
-	अचिन्हित पूर्णांक end = minor + nr;
+static void xlbd_release_minors(unsigned int minor, unsigned int nr)
+{
+	unsigned int end = minor + nr;
 
 	BUG_ON(end > nr_minors);
 	spin_lock(&minor_lock);
-	biपंचांगap_clear(minors,  minor, nr);
+	bitmap_clear(minors,  minor, nr);
 	spin_unlock(&minor_lock);
-पूर्ण
+}
 
-अटल व्योम blkअगर_restart_queue_callback(व्योम *arg)
-अणु
-	काष्ठा blkfront_ring_info *rinfo = (काष्ठा blkfront_ring_info *)arg;
+static void blkif_restart_queue_callback(void *arg)
+{
+	struct blkfront_ring_info *rinfo = (struct blkfront_ring_info *)arg;
 	schedule_work(&rinfo->work);
-पूर्ण
+}
 
-अटल पूर्णांक blkअगर_getgeo(काष्ठा block_device *bd, काष्ठा hd_geometry *hg)
-अणु
-	/* We करोn't have real geometry info, but let's at least वापस
+static int blkif_getgeo(struct block_device *bd, struct hd_geometry *hg)
+{
+	/* We don't have real geometry info, but let's at least return
 	   values consistent with the size of the device */
 	sector_t nsect = get_capacity(bd->bd_disk);
 	sector_t cylinders = nsect;
 
 	hg->heads = 0xff;
 	hg->sectors = 0x3f;
-	sector_भाग(cylinders, hg->heads * hg->sectors);
+	sector_div(cylinders, hg->heads * hg->sectors);
 	hg->cylinders = cylinders;
-	अगर ((sector_t)(hg->cylinders + 1) * hg->heads * hg->sectors < nsect)
+	if ((sector_t)(hg->cylinders + 1) * hg->heads * hg->sectors < nsect)
 		hg->cylinders = 0xffff;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक blkअगर_ioctl(काष्ठा block_device *bdev, भ_शेषe_t mode,
-		       अचिन्हित command, अचिन्हित दीर्घ argument)
-अणु
-	काष्ठा blkfront_info *info = bdev->bd_disk->निजी_data;
-	पूर्णांक i;
+static int blkif_ioctl(struct block_device *bdev, fmode_t mode,
+		       unsigned command, unsigned long argument)
+{
+	struct blkfront_info *info = bdev->bd_disk->private_data;
+	int i;
 
 	dev_dbg(&info->xbdev->dev, "command: 0x%x, argument: 0x%lx\n",
-		command, (दीर्घ)argument);
+		command, (long)argument);
 
-	चयन (command) अणु
-	हाल CDROMMULTISESSION:
+	switch (command) {
+	case CDROMMULTISESSION:
 		dev_dbg(&info->xbdev->dev, "FIXME: support multisession CDs later\n");
-		क्रम (i = 0; i < माप(काष्ठा cdrom_multisession); i++)
-			अगर (put_user(0, (अक्षर __user *)(argument + i)))
-				वापस -EFAULT;
-		वापस 0;
+		for (i = 0; i < sizeof(struct cdrom_multisession); i++)
+			if (put_user(0, (char __user *)(argument + i)))
+				return -EFAULT;
+		return 0;
 
-	हाल CDROM_GET_CAPABILITY: अणु
-		काष्ठा gendisk *gd = info->gd;
-		अगर (gd->flags & GENHD_FL_CD)
-			वापस 0;
-		वापस -EINVAL;
-	पूर्ण
+	case CDROM_GET_CAPABILITY: {
+		struct gendisk *gd = info->gd;
+		if (gd->flags & GENHD_FL_CD)
+			return 0;
+		return -EINVAL;
+	}
 
-	शेष:
-		/*prपूर्णांकk(KERN_ALERT "ioctl %08x not supported by Xen blkdev\n",
+	default:
+		/*printk(KERN_ALERT "ioctl %08x not supported by Xen blkdev\n",
 		  command);*/
-		वापस -EINVAL; /* same वापस as native Linux */
-	पूर्ण
+		return -EINVAL; /* same return as native Linux */
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित दीर्घ blkअगर_ring_get_request(काष्ठा blkfront_ring_info *rinfo,
-					    काष्ठा request *req,
-					    काष्ठा blkअगर_request **ring_req)
-अणु
-	अचिन्हित दीर्घ id;
+static unsigned long blkif_ring_get_request(struct blkfront_ring_info *rinfo,
+					    struct request *req,
+					    struct blkif_request **ring_req)
+{
+	unsigned long id;
 
 	*ring_req = RING_GET_REQUEST(&rinfo->ring, rinfo->ring.req_prod_pvt);
 	rinfo->ring.req_prod_pvt++;
 
-	id = get_id_from_मुक्तlist(rinfo);
-	rinfo->shaकरोw[id].request = req;
-	rinfo->shaकरोw[id].status = REQ_WAITING;
-	rinfo->shaकरोw[id].associated_id = NO_ASSOCIATED_ID;
+	id = get_id_from_freelist(rinfo);
+	rinfo->shadow[id].request = req;
+	rinfo->shadow[id].status = REQ_WAITING;
+	rinfo->shadow[id].associated_id = NO_ASSOCIATED_ID;
 
 	(*ring_req)->u.rw.id = id;
 
-	वापस id;
-पूर्ण
+	return id;
+}
 
-अटल पूर्णांक blkअगर_queue_discard_req(काष्ठा request *req, काष्ठा blkfront_ring_info *rinfo)
-अणु
-	काष्ठा blkfront_info *info = rinfo->dev_info;
-	काष्ठा blkअगर_request *ring_req;
-	अचिन्हित दीर्घ id;
+static int blkif_queue_discard_req(struct request *req, struct blkfront_ring_info *rinfo)
+{
+	struct blkfront_info *info = rinfo->dev_info;
+	struct blkif_request *ring_req;
+	unsigned long id;
 
-	/* Fill out a communications ring काष्ठाure. */
-	id = blkअगर_ring_get_request(rinfo, req, &ring_req);
+	/* Fill out a communications ring structure. */
+	id = blkif_ring_get_request(rinfo, req, &ring_req);
 
 	ring_req->operation = BLKIF_OP_DISCARD;
 	ring_req->u.discard.nr_sectors = blk_rq_sectors(req);
 	ring_req->u.discard.id = id;
-	ring_req->u.discard.sector_number = (blkअगर_sector_t)blk_rq_pos(req);
-	अगर (req_op(req) == REQ_OP_SECURE_ERASE && info->feature_secdiscard)
+	ring_req->u.discard.sector_number = (blkif_sector_t)blk_rq_pos(req);
+	if (req_op(req) == REQ_OP_SECURE_ERASE && info->feature_secdiscard)
 		ring_req->u.discard.flag = BLKIF_DISCARD_SECURE;
-	अन्यथा
+	else
 		ring_req->u.discard.flag = 0;
 
-	/* Keep a निजी copy so we can reissue requests when recovering. */
-	rinfo->shaकरोw[id].req = *ring_req;
+	/* Keep a private copy so we can reissue requests when recovering. */
+	rinfo->shadow[id].req = *ring_req;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा setup_rw_req अणु
-	अचिन्हित पूर्णांक grant_idx;
-	काष्ठा blkअगर_request_segment *segments;
-	काष्ठा blkfront_ring_info *rinfo;
-	काष्ठा blkअगर_request *ring_req;
+struct setup_rw_req {
+	unsigned int grant_idx;
+	struct blkif_request_segment *segments;
+	struct blkfront_ring_info *rinfo;
+	struct blkif_request *ring_req;
 	grant_ref_t gref_head;
-	अचिन्हित पूर्णांक id;
-	/* Only used when persistent grant is used and it's a पढ़ो request */
+	unsigned int id;
+	/* Only used when persistent grant is used and it's a read request */
 	bool need_copy;
-	अचिन्हित पूर्णांक bvec_off;
-	अक्षर *bvec_data;
+	unsigned int bvec_off;
+	char *bvec_data;
 
 	bool require_extra_req;
-	काष्ठा blkअगर_request *extra_ring_req;
-पूर्ण;
+	struct blkif_request *extra_ring_req;
+};
 
-अटल व्योम blkअगर_setup_rw_req_grant(अचिन्हित दीर्घ gfn, अचिन्हित पूर्णांक offset,
-				     अचिन्हित पूर्णांक len, व्योम *data)
-अणु
-	काष्ठा setup_rw_req *setup = data;
-	पूर्णांक n, ref;
-	काष्ठा grant *gnt_list_entry;
-	अचिन्हित पूर्णांक fsect, lsect;
+static void blkif_setup_rw_req_grant(unsigned long gfn, unsigned int offset,
+				     unsigned int len, void *data)
+{
+	struct setup_rw_req *setup = data;
+	int n, ref;
+	struct grant *gnt_list_entry;
+	unsigned int fsect, lsect;
 	/* Convenient aliases */
-	अचिन्हित पूर्णांक grant_idx = setup->grant_idx;
-	काष्ठा blkअगर_request *ring_req = setup->ring_req;
-	काष्ठा blkfront_ring_info *rinfo = setup->rinfo;
+	unsigned int grant_idx = setup->grant_idx;
+	struct blkif_request *ring_req = setup->ring_req;
+	struct blkfront_ring_info *rinfo = setup->rinfo;
 	/*
-	 * We always use the shaकरोw of the first request to store the list
+	 * We always use the shadow of the first request to store the list
 	 * of grant associated to the block I/O request. This made the
-	 * completion more easy to handle even अगर the block I/O request is
+	 * completion more easy to handle even if the block I/O request is
 	 * split.
 	 */
-	काष्ठा blk_shaकरोw *shaकरोw = &rinfo->shaकरोw[setup->id];
+	struct blk_shadow *shadow = &rinfo->shadow[setup->id];
 
-	अगर (unlikely(setup->require_extra_req &&
-		     grant_idx >= BLKIF_MAX_SEGMENTS_PER_REQUEST)) अणु
+	if (unlikely(setup->require_extra_req &&
+		     grant_idx >= BLKIF_MAX_SEGMENTS_PER_REQUEST)) {
 		/*
 		 * We are using the second request, setup grant_idx
 		 * to be the index of the segment array.
 		 */
 		grant_idx -= BLKIF_MAX_SEGMENTS_PER_REQUEST;
 		ring_req = setup->extra_ring_req;
-	पूर्ण
+	}
 
-	अगर ((ring_req->operation == BLKIF_OP_INसूचीECT) &&
-	    (grant_idx % GRANTS_PER_INसूचीECT_FRAME == 0)) अणु
-		अगर (setup->segments)
+	if ((ring_req->operation == BLKIF_OP_INDIRECT) &&
+	    (grant_idx % GRANTS_PER_INDIRECT_FRAME == 0)) {
+		if (setup->segments)
 			kunmap_atomic(setup->segments);
 
-		n = grant_idx / GRANTS_PER_INसूचीECT_FRAME;
+		n = grant_idx / GRANTS_PER_INDIRECT_FRAME;
 		gnt_list_entry = get_indirect_grant(&setup->gref_head, rinfo);
-		shaकरोw->indirect_grants[n] = gnt_list_entry;
+		shadow->indirect_grants[n] = gnt_list_entry;
 		setup->segments = kmap_atomic(gnt_list_entry->page);
 		ring_req->u.indirect.indirect_grefs[n] = gnt_list_entry->gref;
-	पूर्ण
+	}
 
 	gnt_list_entry = get_grant(&setup->gref_head, gfn, rinfo);
 	ref = gnt_list_entry->gref;
 	/*
-	 * All the grants are stored in the shaकरोw of the first
-	 * request. Thereक्रमe we have to use the global index.
+	 * All the grants are stored in the shadow of the first
+	 * request. Therefore we have to use the global index.
 	 */
-	shaकरोw->grants_used[setup->grant_idx] = gnt_list_entry;
+	shadow->grants_used[setup->grant_idx] = gnt_list_entry;
 
-	अगर (setup->need_copy) अणु
-		व्योम *shared_data;
+	if (setup->need_copy) {
+		void *shared_data;
 
 		shared_data = kmap_atomic(gnt_list_entry->page);
 		/*
-		 * this करोes not wipe data stored outside the
+		 * this does not wipe data stored outside the
 		 * range sg->offset..sg->offset+sg->length.
-		 * Thereक्रमe, blkback *could* see data from
-		 * previous requests. This is OK as दीर्घ as
+		 * Therefore, blkback *could* see data from
+		 * previous requests. This is OK as long as
 		 * persistent grants are shared with just one
-		 * करोमुख्य. It may need refactoring अगर this
+		 * domain. It may need refactoring if this
 		 * changes
 		 */
-		स_नकल(shared_data + offset,
+		memcpy(shared_data + offset,
 		       setup->bvec_data + setup->bvec_off,
 		       len);
 
 		kunmap_atomic(shared_data);
 		setup->bvec_off += len;
-	पूर्ण
+	}
 
 	fsect = offset >> 9;
 	lsect = fsect + (len >> 9) - 1;
-	अगर (ring_req->operation != BLKIF_OP_INसूचीECT) अणु
+	if (ring_req->operation != BLKIF_OP_INDIRECT) {
 		ring_req->u.rw.seg[grant_idx] =
-			(काष्ठा blkअगर_request_segment) अणु
+			(struct blkif_request_segment) {
 				.gref       = ref,
 				.first_sect = fsect,
-				.last_sect  = lsect पूर्ण;
-	पूर्ण अन्यथा अणु
-		setup->segments[grant_idx % GRANTS_PER_INसूचीECT_FRAME] =
-			(काष्ठा blkअगर_request_segment) अणु
+				.last_sect  = lsect };
+	} else {
+		setup->segments[grant_idx % GRANTS_PER_INDIRECT_FRAME] =
+			(struct blkif_request_segment) {
 				.gref       = ref,
 				.first_sect = fsect,
-				.last_sect  = lsect पूर्ण;
-	पूर्ण
+				.last_sect  = lsect };
+	}
 
 	(setup->grant_idx)++;
-पूर्ण
+}
 
-अटल व्योम blkअगर_setup_extra_req(काष्ठा blkअगर_request *first,
-				  काष्ठा blkअगर_request *second)
-अणु
-	uपूर्णांक16_t nr_segments = first->u.rw.nr_segments;
+static void blkif_setup_extra_req(struct blkif_request *first,
+				  struct blkif_request *second)
+{
+	uint16_t nr_segments = first->u.rw.nr_segments;
 
 	/*
 	 * The second request is only present when the first request uses
@@ -698,260 +697,260 @@ out_of_memory:
 
 	second->u.rw.handle = first->u.rw.handle;
 	second->operation = first->operation;
-पूर्ण
+}
 
-अटल पूर्णांक blkअगर_queue_rw_req(काष्ठा request *req, काष्ठा blkfront_ring_info *rinfo)
-अणु
-	काष्ठा blkfront_info *info = rinfo->dev_info;
-	काष्ठा blkअगर_request *ring_req, *extra_ring_req = शून्य;
-	अचिन्हित दीर्घ id, extra_id = NO_ASSOCIATED_ID;
+static int blkif_queue_rw_req(struct request *req, struct blkfront_ring_info *rinfo)
+{
+	struct blkfront_info *info = rinfo->dev_info;
+	struct blkif_request *ring_req, *extra_ring_req = NULL;
+	unsigned long id, extra_id = NO_ASSOCIATED_ID;
 	bool require_extra_req = false;
-	पूर्णांक i;
-	काष्ठा setup_rw_req setup = अणु
+	int i;
+	struct setup_rw_req setup = {
 		.grant_idx = 0,
-		.segments = शून्य,
+		.segments = NULL,
 		.rinfo = rinfo,
 		.need_copy = rq_data_dir(req) && info->feature_persistent,
-	पूर्ण;
+	};
 
 	/*
-	 * Used to store अगर we are able to queue the request by just using
-	 * existing persistent grants, or अगर we have to get new grants,
-	 * as there are not sufficiently many मुक्त.
+	 * Used to store if we are able to queue the request by just using
+	 * existing persistent grants, or if we have to get new grants,
+	 * as there are not sufficiently many free.
 	 */
 	bool new_persistent_gnts = false;
-	काष्ठा scatterlist *sg;
-	पूर्णांक num_sg, max_grefs, num_grant;
+	struct scatterlist *sg;
+	int num_sg, max_grefs, num_grant;
 
 	max_grefs = req->nr_phys_segments * GRANTS_PER_PSEG;
-	अगर (max_grefs > BLKIF_MAX_SEGMENTS_PER_REQUEST)
+	if (max_grefs > BLKIF_MAX_SEGMENTS_PER_REQUEST)
 		/*
 		 * If we are using indirect segments we need to account
-		 * क्रम the indirect grefs used in the request.
+		 * for the indirect grefs used in the request.
 		 */
-		max_grefs += INसूचीECT_GREFS(max_grefs);
+		max_grefs += INDIRECT_GREFS(max_grefs);
 
-	/* Check अगर we have enough persistent grants to allocate a requests */
-	अगर (rinfo->persistent_gnts_c < max_grefs) अणु
+	/* Check if we have enough persistent grants to allocate a requests */
+	if (rinfo->persistent_gnts_c < max_grefs) {
 		new_persistent_gnts = true;
 
-		अगर (gnttab_alloc_grant_references(
+		if (gnttab_alloc_grant_references(
 		    max_grefs - rinfo->persistent_gnts_c,
-		    &setup.gref_head) < 0) अणु
-			gnttab_request_मुक्त_callback(
+		    &setup.gref_head) < 0) {
+			gnttab_request_free_callback(
 				&rinfo->callback,
-				blkअगर_restart_queue_callback,
+				blkif_restart_queue_callback,
 				rinfo,
 				max_grefs - rinfo->persistent_gnts_c);
-			वापस 1;
-		पूर्ण
-	पूर्ण
+			return 1;
+		}
+	}
 
-	/* Fill out a communications ring काष्ठाure. */
-	id = blkअगर_ring_get_request(rinfo, req, &ring_req);
+	/* Fill out a communications ring structure. */
+	id = blkif_ring_get_request(rinfo, req, &ring_req);
 
-	num_sg = blk_rq_map_sg(req->q, req, rinfo->shaकरोw[id].sg);
+	num_sg = blk_rq_map_sg(req->q, req, rinfo->shadow[id].sg);
 	num_grant = 0;
 	/* Calculate the number of grant used */
-	क्रम_each_sg(rinfo->shaकरोw[id].sg, sg, num_sg, i)
+	for_each_sg(rinfo->shadow[id].sg, sg, num_sg, i)
 	       num_grant += gnttab_count_grant(sg->offset, sg->length);
 
 	require_extra_req = info->max_indirect_segments == 0 &&
 		num_grant > BLKIF_MAX_SEGMENTS_PER_REQUEST;
 	BUG_ON(!HAS_EXTRA_REQ && require_extra_req);
 
-	rinfo->shaकरोw[id].num_sg = num_sg;
-	अगर (num_grant > BLKIF_MAX_SEGMENTS_PER_REQUEST &&
-	    likely(!require_extra_req)) अणु
+	rinfo->shadow[id].num_sg = num_sg;
+	if (num_grant > BLKIF_MAX_SEGMENTS_PER_REQUEST &&
+	    likely(!require_extra_req)) {
 		/*
 		 * The indirect operation can only be a BLKIF_OP_READ or
 		 * BLKIF_OP_WRITE
 		 */
 		BUG_ON(req_op(req) == REQ_OP_FLUSH || req->cmd_flags & REQ_FUA);
-		ring_req->operation = BLKIF_OP_INसूचीECT;
+		ring_req->operation = BLKIF_OP_INDIRECT;
 		ring_req->u.indirect.indirect_op = rq_data_dir(req) ?
 			BLKIF_OP_WRITE : BLKIF_OP_READ;
-		ring_req->u.indirect.sector_number = (blkअगर_sector_t)blk_rq_pos(req);
+		ring_req->u.indirect.sector_number = (blkif_sector_t)blk_rq_pos(req);
 		ring_req->u.indirect.handle = info->handle;
 		ring_req->u.indirect.nr_segments = num_grant;
-	पूर्ण अन्यथा अणु
-		ring_req->u.rw.sector_number = (blkअगर_sector_t)blk_rq_pos(req);
+	} else {
+		ring_req->u.rw.sector_number = (blkif_sector_t)blk_rq_pos(req);
 		ring_req->u.rw.handle = info->handle;
 		ring_req->operation = rq_data_dir(req) ?
 			BLKIF_OP_WRITE : BLKIF_OP_READ;
-		अगर (req_op(req) == REQ_OP_FLUSH || req->cmd_flags & REQ_FUA) अणु
+		if (req_op(req) == REQ_OP_FLUSH || req->cmd_flags & REQ_FUA) {
 			/*
-			 * Ideally we can करो an unordered flush-to-disk.
-			 * In हाल the backend onlysupports barriers, use that.
+			 * Ideally we can do an unordered flush-to-disk.
+			 * In case the backend onlysupports barriers, use that.
 			 * A barrier request a superset of FUA, so we can
 			 * implement it the same way.  (It's also a FLUSH+FUA,
-			 * since it is guaranteed ordered WRT previous ग_लिखोs.)
+			 * since it is guaranteed ordered WRT previous writes.)
 			 */
-			अगर (info->feature_flush && info->feature_fua)
+			if (info->feature_flush && info->feature_fua)
 				ring_req->operation =
 					BLKIF_OP_WRITE_BARRIER;
-			अन्यथा अगर (info->feature_flush)
+			else if (info->feature_flush)
 				ring_req->operation =
 					BLKIF_OP_FLUSH_DISKCACHE;
-			अन्यथा
+			else
 				ring_req->operation = 0;
-		पूर्ण
+		}
 		ring_req->u.rw.nr_segments = num_grant;
-		अगर (unlikely(require_extra_req)) अणु
-			extra_id = blkअगर_ring_get_request(rinfo, req,
+		if (unlikely(require_extra_req)) {
+			extra_id = blkif_ring_get_request(rinfo, req,
 							  &extra_ring_req);
 			/*
 			 * Only the first request contains the scatter-gather
 			 * list.
 			 */
-			rinfo->shaकरोw[extra_id].num_sg = 0;
+			rinfo->shadow[extra_id].num_sg = 0;
 
-			blkअगर_setup_extra_req(ring_req, extra_ring_req);
+			blkif_setup_extra_req(ring_req, extra_ring_req);
 
 			/* Link the 2 requests together */
-			rinfo->shaकरोw[extra_id].associated_id = id;
-			rinfo->shaकरोw[id].associated_id = extra_id;
-		पूर्ण
-	पूर्ण
+			rinfo->shadow[extra_id].associated_id = id;
+			rinfo->shadow[id].associated_id = extra_id;
+		}
+	}
 
 	setup.ring_req = ring_req;
 	setup.id = id;
 
 	setup.require_extra_req = require_extra_req;
-	अगर (unlikely(require_extra_req))
+	if (unlikely(require_extra_req))
 		setup.extra_ring_req = extra_ring_req;
 
-	क्रम_each_sg(rinfo->shaकरोw[id].sg, sg, num_sg, i) अणु
+	for_each_sg(rinfo->shadow[id].sg, sg, num_sg, i) {
 		BUG_ON(sg->offset + sg->length > PAGE_SIZE);
 
-		अगर (setup.need_copy) अणु
+		if (setup.need_copy) {
 			setup.bvec_off = sg->offset;
 			setup.bvec_data = kmap_atomic(sg_page(sg));
-		पूर्ण
+		}
 
-		gnttab_क्रमeach_grant_in_range(sg_page(sg),
+		gnttab_foreach_grant_in_range(sg_page(sg),
 					      sg->offset,
 					      sg->length,
-					      blkअगर_setup_rw_req_grant,
+					      blkif_setup_rw_req_grant,
 					      &setup);
 
-		अगर (setup.need_copy)
+		if (setup.need_copy)
 			kunmap_atomic(setup.bvec_data);
-	पूर्ण
-	अगर (setup.segments)
+	}
+	if (setup.segments)
 		kunmap_atomic(setup.segments);
 
-	/* Keep a निजी copy so we can reissue requests when recovering. */
-	rinfo->shaकरोw[id].req = *ring_req;
-	अगर (unlikely(require_extra_req))
-		rinfo->shaकरोw[extra_id].req = *extra_ring_req;
+	/* Keep a private copy so we can reissue requests when recovering. */
+	rinfo->shadow[id].req = *ring_req;
+	if (unlikely(require_extra_req))
+		rinfo->shadow[extra_id].req = *extra_ring_req;
 
-	अगर (new_persistent_gnts)
-		gnttab_मुक्त_grant_references(setup.gref_head);
+	if (new_persistent_gnts)
+		gnttab_free_grant_references(setup.gref_head);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Generate a Xen blkfront IO request from a blk layer request.  Reads
- * and ग_लिखोs are handled as expected.
+ * and writes are handled as expected.
  *
- * @req: a request काष्ठा
+ * @req: a request struct
  */
-अटल पूर्णांक blkअगर_queue_request(काष्ठा request *req, काष्ठा blkfront_ring_info *rinfo)
-अणु
-	अगर (unlikely(rinfo->dev_info->connected != BLKIF_STATE_CONNECTED))
-		वापस 1;
+static int blkif_queue_request(struct request *req, struct blkfront_ring_info *rinfo)
+{
+	if (unlikely(rinfo->dev_info->connected != BLKIF_STATE_CONNECTED))
+		return 1;
 
-	अगर (unlikely(req_op(req) == REQ_OP_DISCARD ||
+	if (unlikely(req_op(req) == REQ_OP_DISCARD ||
 		     req_op(req) == REQ_OP_SECURE_ERASE))
-		वापस blkअगर_queue_discard_req(req, rinfo);
-	अन्यथा
-		वापस blkअगर_queue_rw_req(req, rinfo);
-पूर्ण
+		return blkif_queue_discard_req(req, rinfo);
+	else
+		return blkif_queue_rw_req(req, rinfo);
+}
 
-अटल अंतरभूत व्योम flush_requests(काष्ठा blkfront_ring_info *rinfo)
-अणु
-	पूर्णांक notअगरy;
+static inline void flush_requests(struct blkfront_ring_info *rinfo)
+{
+	int notify;
 
-	RING_PUSH_REQUESTS_AND_CHECK_NOTIFY(&rinfo->ring, notअगरy);
+	RING_PUSH_REQUESTS_AND_CHECK_NOTIFY(&rinfo->ring, notify);
 
-	अगर (notअगरy)
-		notअगरy_remote_via_irq(rinfo->irq);
-पूर्ण
+	if (notify)
+		notify_remote_via_irq(rinfo->irq);
+}
 
-अटल अंतरभूत bool blkअगर_request_flush_invalid(काष्ठा request *req,
-					       काष्ठा blkfront_info *info)
-अणु
-	वापस (blk_rq_is_passthrough(req) ||
+static inline bool blkif_request_flush_invalid(struct request *req,
+					       struct blkfront_info *info)
+{
+	return (blk_rq_is_passthrough(req) ||
 		((req_op(req) == REQ_OP_FLUSH) &&
 		 !info->feature_flush) ||
 		((req->cmd_flags & REQ_FUA) &&
 		 !info->feature_fua));
-पूर्ण
+}
 
-अटल blk_status_t blkअगर_queue_rq(काष्ठा blk_mq_hw_ctx *hctx,
-			  स्थिर काष्ठा blk_mq_queue_data *qd)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक qid = hctx->queue_num;
-	काष्ठा blkfront_info *info = hctx->queue->queuedata;
-	काष्ठा blkfront_ring_info *rinfo = शून्य;
+static blk_status_t blkif_queue_rq(struct blk_mq_hw_ctx *hctx,
+			  const struct blk_mq_queue_data *qd)
+{
+	unsigned long flags;
+	int qid = hctx->queue_num;
+	struct blkfront_info *info = hctx->queue->queuedata;
+	struct blkfront_ring_info *rinfo = NULL;
 
 	rinfo = get_rinfo(info, qid);
 	blk_mq_start_request(qd->rq);
 	spin_lock_irqsave(&rinfo->ring_lock, flags);
-	अगर (RING_FULL(&rinfo->ring))
-		जाओ out_busy;
+	if (RING_FULL(&rinfo->ring))
+		goto out_busy;
 
-	अगर (blkअगर_request_flush_invalid(qd->rq, rinfo->dev_info))
-		जाओ out_err;
+	if (blkif_request_flush_invalid(qd->rq, rinfo->dev_info))
+		goto out_err;
 
-	अगर (blkअगर_queue_request(qd->rq, rinfo))
-		जाओ out_busy;
+	if (blkif_queue_request(qd->rq, rinfo))
+		goto out_busy;
 
 	flush_requests(rinfo);
 	spin_unlock_irqrestore(&rinfo->ring_lock, flags);
-	वापस BLK_STS_OK;
+	return BLK_STS_OK;
 
 out_err:
 	spin_unlock_irqrestore(&rinfo->ring_lock, flags);
-	वापस BLK_STS_IOERR;
+	return BLK_STS_IOERR;
 
 out_busy:
 	blk_mq_stop_hw_queue(hctx);
 	spin_unlock_irqrestore(&rinfo->ring_lock, flags);
-	वापस BLK_STS_DEV_RESOURCE;
-पूर्ण
+	return BLK_STS_DEV_RESOURCE;
+}
 
-अटल व्योम blkअगर_complete_rq(काष्ठा request *rq)
-अणु
-	blk_mq_end_request(rq, blkअगर_req(rq)->error);
-पूर्ण
+static void blkif_complete_rq(struct request *rq)
+{
+	blk_mq_end_request(rq, blkif_req(rq)->error);
+}
 
-अटल स्थिर काष्ठा blk_mq_ops blkfront_mq_ops = अणु
-	.queue_rq = blkअगर_queue_rq,
-	.complete = blkअगर_complete_rq,
-पूर्ण;
+static const struct blk_mq_ops blkfront_mq_ops = {
+	.queue_rq = blkif_queue_rq,
+	.complete = blkif_complete_rq,
+};
 
-अटल व्योम blkअगर_set_queue_limits(काष्ठा blkfront_info *info)
-अणु
-	काष्ठा request_queue *rq = info->rq;
-	काष्ठा gendisk *gd = info->gd;
-	अचिन्हित पूर्णांक segments = info->max_indirect_segments ? :
+static void blkif_set_queue_limits(struct blkfront_info *info)
+{
+	struct request_queue *rq = info->rq;
+	struct gendisk *gd = info->gd;
+	unsigned int segments = info->max_indirect_segments ? :
 				BLKIF_MAX_SEGMENTS_PER_REQUEST;
 
 	blk_queue_flag_set(QUEUE_FLAG_VIRT, rq);
 
-	अगर (info->feature_discard) अणु
+	if (info->feature_discard) {
 		blk_queue_flag_set(QUEUE_FLAG_DISCARD, rq);
 		blk_queue_max_discard_sectors(rq, get_capacity(gd));
 		rq->limits.discard_granularity = info->discard_granularity ?:
 						 info->physical_sector_size;
 		rq->limits.discard_alignment = info->discard_alignment;
-		अगर (info->feature_secdiscard)
+		if (info->feature_secdiscard)
 			blk_queue_flag_set(QUEUE_FLAG_SECERASE, rq);
-	पूर्ण
+	}
 
 	/* Hard sector size and max sectors impersonate the equiv. hardware. */
 	blk_queue_logical_block_size(rq, info->sector_size);
@@ -967,250 +966,250 @@ out_busy:
 
 	/* Make sure buffer addresses are sector-aligned. */
 	blk_queue_dma_alignment(rq, 511);
-पूर्ण
+}
 
-अटल पूर्णांक xlvbd_init_blk_queue(काष्ठा gendisk *gd, u16 sector_size,
-				अचिन्हित पूर्णांक physical_sector_size)
-अणु
-	काष्ठा request_queue *rq;
-	काष्ठा blkfront_info *info = gd->निजी_data;
+static int xlvbd_init_blk_queue(struct gendisk *gd, u16 sector_size,
+				unsigned int physical_sector_size)
+{
+	struct request_queue *rq;
+	struct blkfront_info *info = gd->private_data;
 
-	स_रखो(&info->tag_set, 0, माप(info->tag_set));
+	memset(&info->tag_set, 0, sizeof(info->tag_set));
 	info->tag_set.ops = &blkfront_mq_ops;
 	info->tag_set.nr_hw_queues = info->nr_rings;
-	अगर (HAS_EXTRA_REQ && info->max_indirect_segments == 0) अणु
+	if (HAS_EXTRA_REQ && info->max_indirect_segments == 0) {
 		/*
 		 * When indirect descriptior is not supported, the I/O request
 		 * will be split between multiple request in the ring.
-		 * To aव्योम problems when sending the request, भागide by
+		 * To avoid problems when sending the request, divide by
 		 * 2 the depth of the queue.
 		 */
 		info->tag_set.queue_depth =  BLK_RING_SIZE(info) / 2;
-	पूर्ण अन्यथा
+	} else
 		info->tag_set.queue_depth = BLK_RING_SIZE(info);
 	info->tag_set.numa_node = NUMA_NO_NODE;
 	info->tag_set.flags = BLK_MQ_F_SHOULD_MERGE;
-	info->tag_set.cmd_size = माप(काष्ठा blkअगर_req);
+	info->tag_set.cmd_size = sizeof(struct blkif_req);
 	info->tag_set.driver_data = info;
 
-	अगर (blk_mq_alloc_tag_set(&info->tag_set))
-		वापस -EINVAL;
+	if (blk_mq_alloc_tag_set(&info->tag_set))
+		return -EINVAL;
 	rq = blk_mq_init_queue(&info->tag_set);
-	अगर (IS_ERR(rq)) अणु
-		blk_mq_मुक्त_tag_set(&info->tag_set);
-		वापस PTR_ERR(rq);
-	पूर्ण
+	if (IS_ERR(rq)) {
+		blk_mq_free_tag_set(&info->tag_set);
+		return PTR_ERR(rq);
+	}
 
 	rq->queuedata = info;
 	info->rq = gd->queue = rq;
 	info->gd = gd;
 	info->sector_size = sector_size;
 	info->physical_sector_size = physical_sector_size;
-	blkअगर_set_queue_limits(info);
+	blkif_set_queue_limits(info);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर अक्षर *flush_info(काष्ठा blkfront_info *info)
-अणु
-	अगर (info->feature_flush && info->feature_fua)
-		वापस "barrier: enabled;";
-	अन्यथा अगर (info->feature_flush)
-		वापस "flush diskcache: enabled;";
-	अन्यथा
-		वापस "barrier or flush: disabled;";
-पूर्ण
+static const char *flush_info(struct blkfront_info *info)
+{
+	if (info->feature_flush && info->feature_fua)
+		return "barrier: enabled;";
+	else if (info->feature_flush)
+		return "flush diskcache: enabled;";
+	else
+		return "barrier or flush: disabled;";
+}
 
-अटल व्योम xlvbd_flush(काष्ठा blkfront_info *info)
-अणु
-	blk_queue_ग_लिखो_cache(info->rq, info->feature_flush ? true : false,
+static void xlvbd_flush(struct blkfront_info *info)
+{
+	blk_queue_write_cache(info->rq, info->feature_flush ? true : false,
 			      info->feature_fua ? true : false);
 	pr_info("blkfront: %s: %s %s %s %s %s\n",
 		info->gd->disk_name, flush_info(info),
 		"persistent grants:", info->feature_persistent ?
 		"enabled;" : "disabled;", "indirect descriptors:",
 		info->max_indirect_segments ? "enabled;" : "disabled;");
-पूर्ण
+}
 
-अटल पूर्णांक xen_translate_vdev(पूर्णांक vdevice, पूर्णांक *minor, अचिन्हित पूर्णांक *offset)
-अणु
-	पूर्णांक major;
+static int xen_translate_vdev(int vdevice, int *minor, unsigned int *offset)
+{
+	int major;
 	major = BLKIF_MAJOR(vdevice);
 	*minor = BLKIF_MINOR(vdevice);
-	चयन (major) अणु
-		हाल XEN_IDE0_MAJOR:
+	switch (major) {
+		case XEN_IDE0_MAJOR:
 			*offset = (*minor / 64) + EMULATED_HD_DISK_NAME_OFFSET;
 			*minor = ((*minor / 64) * PARTS_PER_DISK) +
 				EMULATED_HD_DISK_MINOR_OFFSET;
-			अवरोध;
-		हाल XEN_IDE1_MAJOR:
+			break;
+		case XEN_IDE1_MAJOR:
 			*offset = (*minor / 64) + 2 + EMULATED_HD_DISK_NAME_OFFSET;
 			*minor = (((*minor / 64) + 2) * PARTS_PER_DISK) +
 				EMULATED_HD_DISK_MINOR_OFFSET;
-			अवरोध;
-		हाल XEN_SCSI_DISK0_MAJOR:
+			break;
+		case XEN_SCSI_DISK0_MAJOR:
 			*offset = (*minor / PARTS_PER_DISK) + EMULATED_SD_DISK_NAME_OFFSET;
 			*minor = *minor + EMULATED_SD_DISK_MINOR_OFFSET;
-			अवरोध;
-		हाल XEN_SCSI_DISK1_MAJOR:
-		हाल XEN_SCSI_DISK2_MAJOR:
-		हाल XEN_SCSI_DISK3_MAJOR:
-		हाल XEN_SCSI_DISK4_MAJOR:
-		हाल XEN_SCSI_DISK5_MAJOR:
-		हाल XEN_SCSI_DISK6_MAJOR:
-		हाल XEN_SCSI_DISK7_MAJOR:
+			break;
+		case XEN_SCSI_DISK1_MAJOR:
+		case XEN_SCSI_DISK2_MAJOR:
+		case XEN_SCSI_DISK3_MAJOR:
+		case XEN_SCSI_DISK4_MAJOR:
+		case XEN_SCSI_DISK5_MAJOR:
+		case XEN_SCSI_DISK6_MAJOR:
+		case XEN_SCSI_DISK7_MAJOR:
 			*offset = (*minor / PARTS_PER_DISK) + 
 				((major - XEN_SCSI_DISK1_MAJOR + 1) * 16) +
 				EMULATED_SD_DISK_NAME_OFFSET;
 			*minor = *minor +
 				((major - XEN_SCSI_DISK1_MAJOR + 1) * 16 * PARTS_PER_DISK) +
 				EMULATED_SD_DISK_MINOR_OFFSET;
-			अवरोध;
-		हाल XEN_SCSI_DISK8_MAJOR:
-		हाल XEN_SCSI_DISK9_MAJOR:
-		हाल XEN_SCSI_DISK10_MAJOR:
-		हाल XEN_SCSI_DISK11_MAJOR:
-		हाल XEN_SCSI_DISK12_MAJOR:
-		हाल XEN_SCSI_DISK13_MAJOR:
-		हाल XEN_SCSI_DISK14_MAJOR:
-		हाल XEN_SCSI_DISK15_MAJOR:
+			break;
+		case XEN_SCSI_DISK8_MAJOR:
+		case XEN_SCSI_DISK9_MAJOR:
+		case XEN_SCSI_DISK10_MAJOR:
+		case XEN_SCSI_DISK11_MAJOR:
+		case XEN_SCSI_DISK12_MAJOR:
+		case XEN_SCSI_DISK13_MAJOR:
+		case XEN_SCSI_DISK14_MAJOR:
+		case XEN_SCSI_DISK15_MAJOR:
 			*offset = (*minor / PARTS_PER_DISK) + 
 				((major - XEN_SCSI_DISK8_MAJOR + 8) * 16) +
 				EMULATED_SD_DISK_NAME_OFFSET;
 			*minor = *minor +
 				((major - XEN_SCSI_DISK8_MAJOR + 8) * 16 * PARTS_PER_DISK) +
 				EMULATED_SD_DISK_MINOR_OFFSET;
-			अवरोध;
-		हाल XENVBD_MAJOR:
+			break;
+		case XENVBD_MAJOR:
 			*offset = *minor / PARTS_PER_DISK;
-			अवरोध;
-		शेष:
-			prपूर्णांकk(KERN_WARNING "blkfront: your disk configuration is "
+			break;
+		default:
+			printk(KERN_WARNING "blkfront: your disk configuration is "
 					"incorrect, please use an xvd device instead\n");
-			वापस -ENODEV;
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return -ENODEV;
+	}
+	return 0;
+}
 
-अटल अक्षर *encode_disk_name(अक्षर *ptr, अचिन्हित पूर्णांक n)
-अणु
-	अगर (n >= 26)
+static char *encode_disk_name(char *ptr, unsigned int n)
+{
+	if (n >= 26)
 		ptr = encode_disk_name(ptr, n / 26 - 1);
 	*ptr = 'a' + n % 26;
-	वापस ptr + 1;
-पूर्ण
+	return ptr + 1;
+}
 
-अटल पूर्णांक xlvbd_alloc_gendisk(blkअगर_sector_t capacity,
-			       काष्ठा blkfront_info *info,
+static int xlvbd_alloc_gendisk(blkif_sector_t capacity,
+			       struct blkfront_info *info,
 			       u16 vdisk_info, u16 sector_size,
-			       अचिन्हित पूर्णांक physical_sector_size)
-अणु
-	काष्ठा gendisk *gd;
-	पूर्णांक nr_minors = 1;
-	पूर्णांक err;
-	अचिन्हित पूर्णांक offset;
-	पूर्णांक minor;
-	पूर्णांक nr_parts;
-	अक्षर *ptr;
+			       unsigned int physical_sector_size)
+{
+	struct gendisk *gd;
+	int nr_minors = 1;
+	int err;
+	unsigned int offset;
+	int minor;
+	int nr_parts;
+	char *ptr;
 
-	BUG_ON(info->gd != शून्य);
-	BUG_ON(info->rq != शून्य);
+	BUG_ON(info->gd != NULL);
+	BUG_ON(info->rq != NULL);
 
-	अगर ((info->vdevice>>EXT_SHIFT) > 1) अणु
+	if ((info->vdevice>>EXT_SHIFT) > 1) {
 		/* this is above the extended range; something is wrong */
-		prपूर्णांकk(KERN_WARNING "blkfront: vdevice 0x%x is above the extended range; ignoring\n", info->vdevice);
-		वापस -ENODEV;
-	पूर्ण
+		printk(KERN_WARNING "blkfront: vdevice 0x%x is above the extended range; ignoring\n", info->vdevice);
+		return -ENODEV;
+	}
 
-	अगर (!VDEV_IS_EXTENDED(info->vdevice)) अणु
+	if (!VDEV_IS_EXTENDED(info->vdevice)) {
 		err = xen_translate_vdev(info->vdevice, &minor, &offset);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 		nr_parts = PARTS_PER_DISK;
-	पूर्ण अन्यथा अणु
+	} else {
 		minor = BLKIF_MINOR_EXT(info->vdevice);
 		nr_parts = PARTS_PER_EXT_DISK;
 		offset = minor / nr_parts;
-		अगर (xen_hvm_करोमुख्य() && offset < EMULATED_HD_DISK_NAME_OFFSET + 4)
-			prपूर्णांकk(KERN_WARNING "blkfront: vdevice 0x%x might conflict with "
+		if (xen_hvm_domain() && offset < EMULATED_HD_DISK_NAME_OFFSET + 4)
+			printk(KERN_WARNING "blkfront: vdevice 0x%x might conflict with "
 					"emulated IDE disks,\n\t choose an xvd device name"
 					"from xvde on\n", info->vdevice);
-	पूर्ण
-	अगर (minor >> MINORBITS) अणु
+	}
+	if (minor >> MINORBITS) {
 		pr_warn("blkfront: %#x's minor (%#x) out of range; ignoring\n",
 			info->vdevice, minor);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर ((minor % nr_parts) == 0)
+	if ((minor % nr_parts) == 0)
 		nr_minors = nr_parts;
 
 	err = xlbd_reserve_minors(minor, nr_minors);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 	err = -ENODEV;
 
 	gd = alloc_disk(nr_minors);
-	अगर (gd == शून्य)
-		जाओ release;
+	if (gd == NULL)
+		goto release;
 
-	म_नकल(gd->disk_name, DEV_NAME);
-	ptr = encode_disk_name(gd->disk_name + माप(DEV_NAME) - 1, offset);
+	strcpy(gd->disk_name, DEV_NAME);
+	ptr = encode_disk_name(gd->disk_name + sizeof(DEV_NAME) - 1, offset);
 	BUG_ON(ptr >= gd->disk_name + DISK_NAME_LEN);
-	अगर (nr_minors > 1)
+	if (nr_minors > 1)
 		*ptr = 0;
-	अन्यथा
-		snम_लिखो(ptr, gd->disk_name + DISK_NAME_LEN - ptr,
+	else
+		snprintf(ptr, gd->disk_name + DISK_NAME_LEN - ptr,
 			 "%d", minor & (nr_parts - 1));
 
 	gd->major = XENVBD_MAJOR;
 	gd->first_minor = minor;
 	gd->fops = &xlvbd_block_fops;
-	gd->निजी_data = info;
+	gd->private_data = info;
 	set_capacity(gd, capacity);
 
-	अगर (xlvbd_init_blk_queue(gd, sector_size, physical_sector_size)) अणु
+	if (xlvbd_init_blk_queue(gd, sector_size, physical_sector_size)) {
 		del_gendisk(gd);
-		जाओ release;
-	पूर्ण
+		goto release;
+	}
 
 	xlvbd_flush(info);
 
-	अगर (vdisk_info & VDISK_READONLY)
+	if (vdisk_info & VDISK_READONLY)
 		set_disk_ro(gd, 1);
 
-	अगर (vdisk_info & VDISK_REMOVABLE)
+	if (vdisk_info & VDISK_REMOVABLE)
 		gd->flags |= GENHD_FL_REMOVABLE;
 
-	अगर (vdisk_info & VDISK_CDROM)
+	if (vdisk_info & VDISK_CDROM)
 		gd->flags |= GENHD_FL_CD;
 
-	वापस 0;
+	return 0;
 
  release:
 	xlbd_release_minors(minor, nr_minors);
  out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम xlvbd_release_gendisk(काष्ठा blkfront_info *info)
-अणु
-	अचिन्हित पूर्णांक minor, nr_minors, i;
-	काष्ठा blkfront_ring_info *rinfo;
+static void xlvbd_release_gendisk(struct blkfront_info *info)
+{
+	unsigned int minor, nr_minors, i;
+	struct blkfront_ring_info *rinfo;
 
-	अगर (info->rq == शून्य)
-		वापस;
+	if (info->rq == NULL)
+		return;
 
-	/* No more blkअगर_request(). */
+	/* No more blkif_request(). */
 	blk_mq_stop_hw_queues(info->rq);
 
-	क्रम_each_rinfo(info, rinfo, i) अणु
+	for_each_rinfo(info, rinfo, i) {
 		/* No more gnttab callback work. */
-		gnttab_cancel_मुक्त_callback(&rinfo->callback);
+		gnttab_cancel_free_callback(&rinfo->callback);
 
-		/* Flush gnttab callback work. Must be करोne with no locks held. */
+		/* Flush gnttab callback work. Must be done with no locks held. */
 		flush_work(&rinfo->work);
-	पूर्ण
+	}
 
 	del_gendisk(info->gd);
 
@@ -1219,245 +1218,245 @@ out_busy:
 	xlbd_release_minors(minor, nr_minors);
 
 	blk_cleanup_queue(info->rq);
-	blk_mq_मुक्त_tag_set(&info->tag_set);
-	info->rq = शून्य;
+	blk_mq_free_tag_set(&info->tag_set);
+	info->rq = NULL;
 
 	put_disk(info->gd);
-	info->gd = शून्य;
-पूर्ण
+	info->gd = NULL;
+}
 
-/* Alपढ़ोy hold rinfo->ring_lock. */
-अटल अंतरभूत व्योम kick_pending_request_queues_locked(काष्ठा blkfront_ring_info *rinfo)
-अणु
-	अगर (!RING_FULL(&rinfo->ring))
+/* Already hold rinfo->ring_lock. */
+static inline void kick_pending_request_queues_locked(struct blkfront_ring_info *rinfo)
+{
+	if (!RING_FULL(&rinfo->ring))
 		blk_mq_start_stopped_hw_queues(rinfo->dev_info->rq, true);
-पूर्ण
+}
 
-अटल व्योम kick_pending_request_queues(काष्ठा blkfront_ring_info *rinfo)
-अणु
-	अचिन्हित दीर्घ flags;
+static void kick_pending_request_queues(struct blkfront_ring_info *rinfo)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&rinfo->ring_lock, flags);
 	kick_pending_request_queues_locked(rinfo);
 	spin_unlock_irqrestore(&rinfo->ring_lock, flags);
-पूर्ण
+}
 
-अटल व्योम blkअगर_restart_queue(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा blkfront_ring_info *rinfo = container_of(work, काष्ठा blkfront_ring_info, work);
+static void blkif_restart_queue(struct work_struct *work)
+{
+	struct blkfront_ring_info *rinfo = container_of(work, struct blkfront_ring_info, work);
 
-	अगर (rinfo->dev_info->connected == BLKIF_STATE_CONNECTED)
+	if (rinfo->dev_info->connected == BLKIF_STATE_CONNECTED)
 		kick_pending_request_queues(rinfo);
-पूर्ण
+}
 
-अटल व्योम blkअगर_मुक्त_ring(काष्ठा blkfront_ring_info *rinfo)
-अणु
-	काष्ठा grant *persistent_gnt, *n;
-	काष्ठा blkfront_info *info = rinfo->dev_info;
-	पूर्णांक i, j, segs;
+static void blkif_free_ring(struct blkfront_ring_info *rinfo)
+{
+	struct grant *persistent_gnt, *n;
+	struct blkfront_info *info = rinfo->dev_info;
+	int i, j, segs;
 
 	/*
 	 * Remove indirect pages, this only happens when using indirect
 	 * descriptors but not persistent grants
 	 */
-	अगर (!list_empty(&rinfo->indirect_pages)) अणु
-		काष्ठा page *indirect_page, *n;
+	if (!list_empty(&rinfo->indirect_pages)) {
+		struct page *indirect_page, *n;
 
 		BUG_ON(info->feature_persistent);
-		list_क्रम_each_entry_safe(indirect_page, n, &rinfo->indirect_pages, lru) अणु
+		list_for_each_entry_safe(indirect_page, n, &rinfo->indirect_pages, lru) {
 			list_del(&indirect_page->lru);
-			__मुक्त_page(indirect_page);
-		पूर्ण
-	पूर्ण
+			__free_page(indirect_page);
+		}
+	}
 
 	/* Remove all persistent grants. */
-	अगर (!list_empty(&rinfo->grants)) अणु
-		list_क्रम_each_entry_safe(persistent_gnt, n,
-					 &rinfo->grants, node) अणु
+	if (!list_empty(&rinfo->grants)) {
+		list_for_each_entry_safe(persistent_gnt, n,
+					 &rinfo->grants, node) {
 			list_del(&persistent_gnt->node);
-			अगर (persistent_gnt->gref != GRANT_INVALID_REF) अणु
-				gnttab_end_क्रमeign_access(persistent_gnt->gref,
+			if (persistent_gnt->gref != GRANT_INVALID_REF) {
+				gnttab_end_foreign_access(persistent_gnt->gref,
 							  0, 0UL);
 				rinfo->persistent_gnts_c--;
-			पूर्ण
-			अगर (info->feature_persistent)
-				__मुक्त_page(persistent_gnt->page);
-			kमुक्त(persistent_gnt);
-		पूर्ण
-	पूर्ण
+			}
+			if (info->feature_persistent)
+				__free_page(persistent_gnt->page);
+			kfree(persistent_gnt);
+		}
+	}
 	BUG_ON(rinfo->persistent_gnts_c != 0);
 
-	क्रम (i = 0; i < BLK_RING_SIZE(info); i++) अणु
+	for (i = 0; i < BLK_RING_SIZE(info); i++) {
 		/*
-		 * Clear persistent grants present in requests alपढ़ोy
+		 * Clear persistent grants present in requests already
 		 * on the shared ring
 		 */
-		अगर (!rinfo->shaकरोw[i].request)
-			जाओ मुक्त_shaकरोw;
+		if (!rinfo->shadow[i].request)
+			goto free_shadow;
 
-		segs = rinfo->shaकरोw[i].req.operation == BLKIF_OP_INसूचीECT ?
-		       rinfo->shaकरोw[i].req.u.indirect.nr_segments :
-		       rinfo->shaकरोw[i].req.u.rw.nr_segments;
-		क्रम (j = 0; j < segs; j++) अणु
-			persistent_gnt = rinfo->shaकरोw[i].grants_used[j];
-			gnttab_end_क्रमeign_access(persistent_gnt->gref, 0, 0UL);
-			अगर (info->feature_persistent)
-				__मुक्त_page(persistent_gnt->page);
-			kमुक्त(persistent_gnt);
-		पूर्ण
+		segs = rinfo->shadow[i].req.operation == BLKIF_OP_INDIRECT ?
+		       rinfo->shadow[i].req.u.indirect.nr_segments :
+		       rinfo->shadow[i].req.u.rw.nr_segments;
+		for (j = 0; j < segs; j++) {
+			persistent_gnt = rinfo->shadow[i].grants_used[j];
+			gnttab_end_foreign_access(persistent_gnt->gref, 0, 0UL);
+			if (info->feature_persistent)
+				__free_page(persistent_gnt->page);
+			kfree(persistent_gnt);
+		}
 
-		अगर (rinfo->shaकरोw[i].req.operation != BLKIF_OP_INसूचीECT)
+		if (rinfo->shadow[i].req.operation != BLKIF_OP_INDIRECT)
 			/*
-			 * If this is not an indirect operation करोn't try to
-			 * मुक्त indirect segments
+			 * If this is not an indirect operation don't try to
+			 * free indirect segments
 			 */
-			जाओ मुक्त_shaकरोw;
+			goto free_shadow;
 
-		क्रम (j = 0; j < INसूचीECT_GREFS(segs); j++) अणु
-			persistent_gnt = rinfo->shaकरोw[i].indirect_grants[j];
-			gnttab_end_क्रमeign_access(persistent_gnt->gref, 0, 0UL);
-			__मुक्त_page(persistent_gnt->page);
-			kमुक्त(persistent_gnt);
-		पूर्ण
+		for (j = 0; j < INDIRECT_GREFS(segs); j++) {
+			persistent_gnt = rinfo->shadow[i].indirect_grants[j];
+			gnttab_end_foreign_access(persistent_gnt->gref, 0, 0UL);
+			__free_page(persistent_gnt->page);
+			kfree(persistent_gnt);
+		}
 
-मुक्त_shaकरोw:
-		kvमुक्त(rinfo->shaकरोw[i].grants_used);
-		rinfo->shaकरोw[i].grants_used = शून्य;
-		kvमुक्त(rinfo->shaकरोw[i].indirect_grants);
-		rinfo->shaकरोw[i].indirect_grants = शून्य;
-		kvमुक्त(rinfo->shaकरोw[i].sg);
-		rinfo->shaकरोw[i].sg = शून्य;
-	पूर्ण
+free_shadow:
+		kvfree(rinfo->shadow[i].grants_used);
+		rinfo->shadow[i].grants_used = NULL;
+		kvfree(rinfo->shadow[i].indirect_grants);
+		rinfo->shadow[i].indirect_grants = NULL;
+		kvfree(rinfo->shadow[i].sg);
+		rinfo->shadow[i].sg = NULL;
+	}
 
 	/* No more gnttab callback work. */
-	gnttab_cancel_मुक्त_callback(&rinfo->callback);
+	gnttab_cancel_free_callback(&rinfo->callback);
 
-	/* Flush gnttab callback work. Must be करोne with no locks held. */
+	/* Flush gnttab callback work. Must be done with no locks held. */
 	flush_work(&rinfo->work);
 
 	/* Free resources associated with old device channel. */
-	क्रम (i = 0; i < info->nr_ring_pages; i++) अणु
-		अगर (rinfo->ring_ref[i] != GRANT_INVALID_REF) अणु
-			gnttab_end_क्रमeign_access(rinfo->ring_ref[i], 0, 0);
+	for (i = 0; i < info->nr_ring_pages; i++) {
+		if (rinfo->ring_ref[i] != GRANT_INVALID_REF) {
+			gnttab_end_foreign_access(rinfo->ring_ref[i], 0, 0);
 			rinfo->ring_ref[i] = GRANT_INVALID_REF;
-		पूर्ण
-	पूर्ण
-	मुक्त_pages((अचिन्हित दीर्घ)rinfo->ring.sring, get_order(info->nr_ring_pages * XEN_PAGE_SIZE));
-	rinfo->ring.sring = शून्य;
+		}
+	}
+	free_pages((unsigned long)rinfo->ring.sring, get_order(info->nr_ring_pages * XEN_PAGE_SIZE));
+	rinfo->ring.sring = NULL;
 
-	अगर (rinfo->irq)
+	if (rinfo->irq)
 		unbind_from_irqhandler(rinfo->irq, rinfo);
 	rinfo->evtchn = rinfo->irq = 0;
-पूर्ण
+}
 
-अटल व्योम blkअगर_मुक्त(काष्ठा blkfront_info *info, पूर्णांक suspend)
-अणु
-	अचिन्हित पूर्णांक i;
-	काष्ठा blkfront_ring_info *rinfo;
+static void blkif_free(struct blkfront_info *info, int suspend)
+{
+	unsigned int i;
+	struct blkfront_ring_info *rinfo;
 
 	/* Prevent new requests being issued until we fix things up. */
 	info->connected = suspend ?
 		BLKIF_STATE_SUSPENDED : BLKIF_STATE_DISCONNECTED;
-	/* No more blkअगर_request(). */
-	अगर (info->rq)
+	/* No more blkif_request(). */
+	if (info->rq)
 		blk_mq_stop_hw_queues(info->rq);
 
-	क्रम_each_rinfo(info, rinfo, i)
-		blkअगर_मुक्त_ring(rinfo);
+	for_each_rinfo(info, rinfo, i)
+		blkif_free_ring(rinfo);
 
-	kvमुक्त(info->rinfo);
-	info->rinfo = शून्य;
+	kvfree(info->rinfo);
+	info->rinfo = NULL;
 	info->nr_rings = 0;
-पूर्ण
+}
 
-काष्ठा copy_from_grant अणु
-	स्थिर काष्ठा blk_shaकरोw *s;
-	अचिन्हित पूर्णांक grant_idx;
-	अचिन्हित पूर्णांक bvec_offset;
-	अक्षर *bvec_data;
-पूर्ण;
+struct copy_from_grant {
+	const struct blk_shadow *s;
+	unsigned int grant_idx;
+	unsigned int bvec_offset;
+	char *bvec_data;
+};
 
-अटल व्योम blkअगर_copy_from_grant(अचिन्हित दीर्घ gfn, अचिन्हित पूर्णांक offset,
-				  अचिन्हित पूर्णांक len, व्योम *data)
-अणु
-	काष्ठा copy_from_grant *info = data;
-	अक्षर *shared_data;
+static void blkif_copy_from_grant(unsigned long gfn, unsigned int offset,
+				  unsigned int len, void *data)
+{
+	struct copy_from_grant *info = data;
+	char *shared_data;
 	/* Convenient aliases */
-	स्थिर काष्ठा blk_shaकरोw *s = info->s;
+	const struct blk_shadow *s = info->s;
 
 	shared_data = kmap_atomic(s->grants_used[info->grant_idx]->page);
 
-	स_नकल(info->bvec_data + info->bvec_offset,
+	memcpy(info->bvec_data + info->bvec_offset,
 	       shared_data + offset, len);
 
 	info->bvec_offset += len;
 	info->grant_idx++;
 
 	kunmap_atomic(shared_data);
-पूर्ण
+}
 
-अटल क्रमागत blk_req_status blkअगर_rsp_to_req_status(पूर्णांक rsp)
-अणु
-	चयन (rsp)
-	अणु
-	हाल BLKIF_RSP_OKAY:
-		वापस REQ_DONE;
-	हाल BLKIF_RSP_EOPNOTSUPP:
-		वापस REQ_EOPNOTSUPP;
-	हाल BLKIF_RSP_ERROR:
-	शेष:
-		वापस REQ_ERROR;
-	पूर्ण
-पूर्ण
+static enum blk_req_status blkif_rsp_to_req_status(int rsp)
+{
+	switch (rsp)
+	{
+	case BLKIF_RSP_OKAY:
+		return REQ_DONE;
+	case BLKIF_RSP_EOPNOTSUPP:
+		return REQ_EOPNOTSUPP;
+	case BLKIF_RSP_ERROR:
+	default:
+		return REQ_ERROR;
+	}
+}
 
 /*
  * Get the final status of the block request based on two ring response
  */
-अटल पूर्णांक blkअगर_get_final_status(क्रमागत blk_req_status s1,
-				  क्रमागत blk_req_status s2)
-अणु
+static int blkif_get_final_status(enum blk_req_status s1,
+				  enum blk_req_status s2)
+{
 	BUG_ON(s1 == REQ_WAITING);
 	BUG_ON(s2 == REQ_WAITING);
 
-	अगर (s1 == REQ_ERROR || s2 == REQ_ERROR)
-		वापस BLKIF_RSP_ERROR;
-	अन्यथा अगर (s1 == REQ_EOPNOTSUPP || s2 == REQ_EOPNOTSUPP)
-		वापस BLKIF_RSP_EOPNOTSUPP;
-	वापस BLKIF_RSP_OKAY;
-पूर्ण
+	if (s1 == REQ_ERROR || s2 == REQ_ERROR)
+		return BLKIF_RSP_ERROR;
+	else if (s1 == REQ_EOPNOTSUPP || s2 == REQ_EOPNOTSUPP)
+		return BLKIF_RSP_EOPNOTSUPP;
+	return BLKIF_RSP_OKAY;
+}
 
-अटल bool blkअगर_completion(अचिन्हित दीर्घ *id,
-			     काष्ठा blkfront_ring_info *rinfo,
-			     काष्ठा blkअगर_response *bret)
-अणु
-	पूर्णांक i = 0;
-	काष्ठा scatterlist *sg;
-	पूर्णांक num_sg, num_grant;
-	काष्ठा blkfront_info *info = rinfo->dev_info;
-	काष्ठा blk_shaकरोw *s = &rinfo->shaकरोw[*id];
-	काष्ठा copy_from_grant data = अणु
+static bool blkif_completion(unsigned long *id,
+			     struct blkfront_ring_info *rinfo,
+			     struct blkif_response *bret)
+{
+	int i = 0;
+	struct scatterlist *sg;
+	int num_sg, num_grant;
+	struct blkfront_info *info = rinfo->dev_info;
+	struct blk_shadow *s = &rinfo->shadow[*id];
+	struct copy_from_grant data = {
 		.grant_idx = 0,
-	पूर्ण;
+	};
 
-	num_grant = s->req.operation == BLKIF_OP_INसूचीECT ?
+	num_grant = s->req.operation == BLKIF_OP_INDIRECT ?
 		s->req.u.indirect.nr_segments : s->req.u.rw.nr_segments;
 
 	/* The I/O request may be split in two. */
-	अगर (unlikely(s->associated_id != NO_ASSOCIATED_ID)) अणु
-		काष्ठा blk_shaकरोw *s2 = &rinfo->shaकरोw[s->associated_id];
+	if (unlikely(s->associated_id != NO_ASSOCIATED_ID)) {
+		struct blk_shadow *s2 = &rinfo->shadow[s->associated_id];
 
-		/* Keep the status of the current response in shaकरोw. */
-		s->status = blkअगर_rsp_to_req_status(bret->status);
+		/* Keep the status of the current response in shadow. */
+		s->status = blkif_rsp_to_req_status(bret->status);
 
-		/* Wait the second response अगर not yet here. */
-		अगर (s2->status == REQ_WAITING)
-			वापस false;
+		/* Wait the second response if not yet here. */
+		if (s2->status == REQ_WAITING)
+			return false;
 
-		bret->status = blkअगर_get_final_status(s->status,
+		bret->status = blkif_get_final_status(s->status,
 						      s2->status);
 
 		/*
-		 * All the grants is stored in the first shaकरोw in order
+		 * All the grants is stored in the first shadow in order
 		 * to make the completion code simpler.
 		 */
 		num_grant += s2->req.u.rw.nr_segments;
@@ -1466,549 +1465,549 @@ out_busy:
 		 * The two responses may not come in order. Only the
 		 * first request will store the scatter-gather list.
 		 */
-		अगर (s2->num_sg != 0) अणु
+		if (s2->num_sg != 0) {
 			/* Update "id" with the ID of the first response. */
 			*id = s->associated_id;
 			s = s2;
-		पूर्ण
+		}
 
 		/*
-		 * We करोn't need anymore the second request, so recycling
+		 * We don't need anymore the second request, so recycling
 		 * it now.
 		 */
-		अगर (add_id_to_मुक्तlist(rinfo, s->associated_id))
+		if (add_id_to_freelist(rinfo, s->associated_id))
 			WARN(1, "%s: can't recycle the second part (id = %ld) of the request\n",
 			     info->gd->disk_name, s->associated_id);
-	पूर्ण
+	}
 
 	data.s = s;
 	num_sg = s->num_sg;
 
-	अगर (bret->operation == BLKIF_OP_READ && info->feature_persistent) अणु
-		क्रम_each_sg(s->sg, sg, num_sg, i) अणु
+	if (bret->operation == BLKIF_OP_READ && info->feature_persistent) {
+		for_each_sg(s->sg, sg, num_sg, i) {
 			BUG_ON(sg->offset + sg->length > PAGE_SIZE);
 
 			data.bvec_offset = sg->offset;
 			data.bvec_data = kmap_atomic(sg_page(sg));
 
-			gnttab_क्रमeach_grant_in_range(sg_page(sg),
+			gnttab_foreach_grant_in_range(sg_page(sg),
 						      sg->offset,
 						      sg->length,
-						      blkअगर_copy_from_grant,
+						      blkif_copy_from_grant,
 						      &data);
 
 			kunmap_atomic(data.bvec_data);
-		पूर्ण
-	पूर्ण
-	/* Add the persistent grant पूर्णांकo the list of मुक्त grants */
-	क्रम (i = 0; i < num_grant; i++) अणु
-		अगर (gnttab_query_क्रमeign_access(s->grants_used[i]->gref)) अणु
+		}
+	}
+	/* Add the persistent grant into the list of free grants */
+	for (i = 0; i < num_grant; i++) {
+		if (gnttab_query_foreign_access(s->grants_used[i]->gref)) {
 			/*
 			 * If the grant is still mapped by the backend (the
 			 * backend has chosen to make this grant persistent)
 			 * we add it at the head of the list, so it will be
 			 * reused first.
 			 */
-			अगर (!info->feature_persistent)
+			if (!info->feature_persistent)
 				pr_alert_ratelimited("backed has not unmapped grant: %u\n",
 						     s->grants_used[i]->gref);
 			list_add(&s->grants_used[i]->node, &rinfo->grants);
 			rinfo->persistent_gnts_c++;
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
 			 * If the grant is not mapped by the backend we end the
-			 * क्रमeign access and add it to the tail of the list,
+			 * foreign access and add it to the tail of the list,
 			 * so it will not be picked again unless we run out of
 			 * persistent grants.
 			 */
-			gnttab_end_क्रमeign_access(s->grants_used[i]->gref, 0, 0UL);
+			gnttab_end_foreign_access(s->grants_used[i]->gref, 0, 0UL);
 			s->grants_used[i]->gref = GRANT_INVALID_REF;
 			list_add_tail(&s->grants_used[i]->node, &rinfo->grants);
-		पूर्ण
-	पूर्ण
-	अगर (s->req.operation == BLKIF_OP_INसूचीECT) अणु
-		क्रम (i = 0; i < INसूचीECT_GREFS(num_grant); i++) अणु
-			अगर (gnttab_query_क्रमeign_access(s->indirect_grants[i]->gref)) अणु
-				अगर (!info->feature_persistent)
+		}
+	}
+	if (s->req.operation == BLKIF_OP_INDIRECT) {
+		for (i = 0; i < INDIRECT_GREFS(num_grant); i++) {
+			if (gnttab_query_foreign_access(s->indirect_grants[i]->gref)) {
+				if (!info->feature_persistent)
 					pr_alert_ratelimited("backed has not unmapped grant: %u\n",
 							     s->indirect_grants[i]->gref);
 				list_add(&s->indirect_grants[i]->node, &rinfo->grants);
 				rinfo->persistent_gnts_c++;
-			पूर्ण अन्यथा अणु
-				काष्ठा page *indirect_page;
+			} else {
+				struct page *indirect_page;
 
-				gnttab_end_क्रमeign_access(s->indirect_grants[i]->gref, 0, 0UL);
+				gnttab_end_foreign_access(s->indirect_grants[i]->gref, 0, 0UL);
 				/*
 				 * Add the used indirect page back to the list of
-				 * available pages क्रम indirect grefs.
+				 * available pages for indirect grefs.
 				 */
-				अगर (!info->feature_persistent) अणु
+				if (!info->feature_persistent) {
 					indirect_page = s->indirect_grants[i]->page;
 					list_add(&indirect_page->lru, &rinfo->indirect_pages);
-				पूर्ण
+				}
 				s->indirect_grants[i]->gref = GRANT_INVALID_REF;
 				list_add_tail(&s->indirect_grants[i]->node, &rinfo->grants);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल irqवापस_t blkअगर_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा request *req;
-	काष्ठा blkअगर_response *bret;
+static irqreturn_t blkif_interrupt(int irq, void *dev_id)
+{
+	struct request *req;
+	struct blkif_response *bret;
 	RING_IDX i, rp;
-	अचिन्हित दीर्घ flags;
-	काष्ठा blkfront_ring_info *rinfo = (काष्ठा blkfront_ring_info *)dev_id;
-	काष्ठा blkfront_info *info = rinfo->dev_info;
+	unsigned long flags;
+	struct blkfront_ring_info *rinfo = (struct blkfront_ring_info *)dev_id;
+	struct blkfront_info *info = rinfo->dev_info;
 
-	अगर (unlikely(info->connected != BLKIF_STATE_CONNECTED))
-		वापस IRQ_HANDLED;
+	if (unlikely(info->connected != BLKIF_STATE_CONNECTED))
+		return IRQ_HANDLED;
 
 	spin_lock_irqsave(&rinfo->ring_lock, flags);
  again:
 	rp = rinfo->ring.sring->rsp_prod;
 	rmb(); /* Ensure we see queued responses up to 'rp'. */
 
-	क्रम (i = rinfo->ring.rsp_cons; i != rp; i++) अणु
-		अचिन्हित दीर्घ id;
+	for (i = rinfo->ring.rsp_cons; i != rp; i++) {
+		unsigned long id;
 
 		bret = RING_GET_RESPONSE(&rinfo->ring, i);
 		id   = bret->id;
 		/*
 		 * The backend has messed up and given us an id that we would
 		 * never have given to it (we stamp it up to BLK_RING_SIZE -
-		 * look in get_id_from_मुक्तlist.
+		 * look in get_id_from_freelist.
 		 */
-		अगर (id >= BLK_RING_SIZE(info)) अणु
+		if (id >= BLK_RING_SIZE(info)) {
 			WARN(1, "%s: response to %s has incorrect id (%ld)\n",
 			     info->gd->disk_name, op_name(bret->operation), id);
 			/* We can't safely get the 'struct request' as
 			 * the id is busted. */
-			जारी;
-		पूर्ण
-		req  = rinfo->shaकरोw[id].request;
+			continue;
+		}
+		req  = rinfo->shadow[id].request;
 
-		अगर (bret->operation != BLKIF_OP_DISCARD) अणु
+		if (bret->operation != BLKIF_OP_DISCARD) {
 			/*
-			 * We may need to रुको क्रम an extra response अगर the
+			 * We may need to wait for an extra response if the
 			 * I/O request is split in 2
 			 */
-			अगर (!blkअगर_completion(&id, rinfo, bret))
-				जारी;
-		पूर्ण
+			if (!blkif_completion(&id, rinfo, bret))
+				continue;
+		}
 
-		अगर (add_id_to_मुक्तlist(rinfo, id)) अणु
+		if (add_id_to_freelist(rinfo, id)) {
 			WARN(1, "%s: response to %s (id %ld) couldn't be recycled!\n",
 			     info->gd->disk_name, op_name(bret->operation), id);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (bret->status == BLKIF_RSP_OKAY)
-			blkअगर_req(req)->error = BLK_STS_OK;
-		अन्यथा
-			blkअगर_req(req)->error = BLK_STS_IOERR;
+		if (bret->status == BLKIF_RSP_OKAY)
+			blkif_req(req)->error = BLK_STS_OK;
+		else
+			blkif_req(req)->error = BLK_STS_IOERR;
 
-		चयन (bret->operation) अणु
-		हाल BLKIF_OP_DISCARD:
-			अगर (unlikely(bret->status == BLKIF_RSP_EOPNOTSUPP)) अणु
-				काष्ठा request_queue *rq = info->rq;
-				prपूर्णांकk(KERN_WARNING "blkfront: %s: %s op failed\n",
+		switch (bret->operation) {
+		case BLKIF_OP_DISCARD:
+			if (unlikely(bret->status == BLKIF_RSP_EOPNOTSUPP)) {
+				struct request_queue *rq = info->rq;
+				printk(KERN_WARNING "blkfront: %s: %s op failed\n",
 					   info->gd->disk_name, op_name(bret->operation));
-				blkअगर_req(req)->error = BLK_STS_NOTSUPP;
+				blkif_req(req)->error = BLK_STS_NOTSUPP;
 				info->feature_discard = 0;
 				info->feature_secdiscard = 0;
 				blk_queue_flag_clear(QUEUE_FLAG_DISCARD, rq);
 				blk_queue_flag_clear(QUEUE_FLAG_SECERASE, rq);
-			पूर्ण
-			अवरोध;
-		हाल BLKIF_OP_FLUSH_DISKCACHE:
-		हाल BLKIF_OP_WRITE_BARRIER:
-			अगर (unlikely(bret->status == BLKIF_RSP_EOPNOTSUPP)) अणु
-				prपूर्णांकk(KERN_WARNING "blkfront: %s: %s op failed\n",
+			}
+			break;
+		case BLKIF_OP_FLUSH_DISKCACHE:
+		case BLKIF_OP_WRITE_BARRIER:
+			if (unlikely(bret->status == BLKIF_RSP_EOPNOTSUPP)) {
+				printk(KERN_WARNING "blkfront: %s: %s op failed\n",
 				       info->gd->disk_name, op_name(bret->operation));
-				blkअगर_req(req)->error = BLK_STS_NOTSUPP;
-			पूर्ण
-			अगर (unlikely(bret->status == BLKIF_RSP_ERROR &&
-				     rinfo->shaकरोw[id].req.u.rw.nr_segments == 0)) अणु
-				prपूर्णांकk(KERN_WARNING "blkfront: %s: empty %s op failed\n",
+				blkif_req(req)->error = BLK_STS_NOTSUPP;
+			}
+			if (unlikely(bret->status == BLKIF_RSP_ERROR &&
+				     rinfo->shadow[id].req.u.rw.nr_segments == 0)) {
+				printk(KERN_WARNING "blkfront: %s: empty %s op failed\n",
 				       info->gd->disk_name, op_name(bret->operation));
-				blkअगर_req(req)->error = BLK_STS_NOTSUPP;
-			पूर्ण
-			अगर (unlikely(blkअगर_req(req)->error)) अणु
-				अगर (blkअगर_req(req)->error == BLK_STS_NOTSUPP)
-					blkअगर_req(req)->error = BLK_STS_OK;
+				blkif_req(req)->error = BLK_STS_NOTSUPP;
+			}
+			if (unlikely(blkif_req(req)->error)) {
+				if (blkif_req(req)->error == BLK_STS_NOTSUPP)
+					blkif_req(req)->error = BLK_STS_OK;
 				info->feature_fua = 0;
 				info->feature_flush = 0;
 				xlvbd_flush(info);
-			पूर्ण
+			}
 			fallthrough;
-		हाल BLKIF_OP_READ:
-		हाल BLKIF_OP_WRITE:
-			अगर (unlikely(bret->status != BLKIF_RSP_OKAY))
+		case BLKIF_OP_READ:
+		case BLKIF_OP_WRITE:
+			if (unlikely(bret->status != BLKIF_RSP_OKAY))
 				dev_dbg(&info->xbdev->dev, "Bad return from blkdev data "
 					"request: %x\n", bret->status);
 
-			अवरोध;
-		शेष:
+			break;
+		default:
 			BUG();
-		पूर्ण
+		}
 
-		अगर (likely(!blk_should_fake_समयout(req->q)))
+		if (likely(!blk_should_fake_timeout(req->q)))
 			blk_mq_complete_request(req);
-	पूर्ण
+	}
 
 	rinfo->ring.rsp_cons = i;
 
-	अगर (i != rinfo->ring.req_prod_pvt) अणु
-		पूर्णांक more_to_करो;
-		RING_FINAL_CHECK_FOR_RESPONSES(&rinfo->ring, more_to_करो);
-		अगर (more_to_करो)
-			जाओ again;
-	पूर्ण अन्यथा
+	if (i != rinfo->ring.req_prod_pvt) {
+		int more_to_do;
+		RING_FINAL_CHECK_FOR_RESPONSES(&rinfo->ring, more_to_do);
+		if (more_to_do)
+			goto again;
+	} else
 		rinfo->ring.sring->rsp_event = i + 1;
 
 	kick_pending_request_queues_locked(rinfo);
 
 	spin_unlock_irqrestore(&rinfo->ring_lock, flags);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 
-अटल पूर्णांक setup_blkring(काष्ठा xenbus_device *dev,
-			 काष्ठा blkfront_ring_info *rinfo)
-अणु
-	काष्ठा blkअगर_sring *sring;
-	पूर्णांक err, i;
-	काष्ठा blkfront_info *info = rinfo->dev_info;
-	अचिन्हित दीर्घ ring_size = info->nr_ring_pages * XEN_PAGE_SIZE;
+static int setup_blkring(struct xenbus_device *dev,
+			 struct blkfront_ring_info *rinfo)
+{
+	struct blkif_sring *sring;
+	int err, i;
+	struct blkfront_info *info = rinfo->dev_info;
+	unsigned long ring_size = info->nr_ring_pages * XEN_PAGE_SIZE;
 	grant_ref_t gref[XENBUS_MAX_RING_GRANTS];
 
-	क्रम (i = 0; i < info->nr_ring_pages; i++)
+	for (i = 0; i < info->nr_ring_pages; i++)
 		rinfo->ring_ref[i] = GRANT_INVALID_REF;
 
-	sring = (काष्ठा blkअगर_sring *)__get_मुक्त_pages(GFP_NOIO | __GFP_HIGH,
+	sring = (struct blkif_sring *)__get_free_pages(GFP_NOIO | __GFP_HIGH,
 						       get_order(ring_size));
-	अगर (!sring) अणु
+	if (!sring) {
 		xenbus_dev_fatal(dev, -ENOMEM, "allocating shared ring");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	SHARED_RING_INIT(sring);
 	FRONT_RING_INIT(&rinfo->ring, sring, ring_size);
 
 	err = xenbus_grant_ring(dev, rinfo->ring.sring, info->nr_ring_pages, gref);
-	अगर (err < 0) अणु
-		मुक्त_pages((अचिन्हित दीर्घ)sring, get_order(ring_size));
-		rinfo->ring.sring = शून्य;
-		जाओ fail;
-	पूर्ण
-	क्रम (i = 0; i < info->nr_ring_pages; i++)
+	if (err < 0) {
+		free_pages((unsigned long)sring, get_order(ring_size));
+		rinfo->ring.sring = NULL;
+		goto fail;
+	}
+	for (i = 0; i < info->nr_ring_pages; i++)
 		rinfo->ring_ref[i] = gref[i];
 
 	err = xenbus_alloc_evtchn(dev, &rinfo->evtchn);
-	अगर (err)
-		जाओ fail;
+	if (err)
+		goto fail;
 
-	err = bind_evtchn_to_irqhandler(rinfo->evtchn, blkअगर_पूर्णांकerrupt, 0,
+	err = bind_evtchn_to_irqhandler(rinfo->evtchn, blkif_interrupt, 0,
 					"blkif", rinfo);
-	अगर (err <= 0) अणु
+	if (err <= 0) {
 		xenbus_dev_fatal(dev, err,
 				 "bind_evtchn_to_irqhandler failed");
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 	rinfo->irq = err;
 
-	वापस 0;
+	return 0;
 fail:
-	blkअगर_मुक्त(info, 0);
-	वापस err;
-पूर्ण
+	blkif_free(info, 0);
+	return err;
+}
 
 /*
  * Write out per-ring/queue nodes including ring-ref and event-channel, and each
  * ring buffer may have multi pages depending on ->nr_ring_pages.
  */
-अटल पूर्णांक ग_लिखो_per_ring_nodes(काष्ठा xenbus_transaction xbt,
-				काष्ठा blkfront_ring_info *rinfo, स्थिर अक्षर *dir)
-अणु
-	पूर्णांक err;
-	अचिन्हित पूर्णांक i;
-	स्थिर अक्षर *message = शून्य;
-	काष्ठा blkfront_info *info = rinfo->dev_info;
+static int write_per_ring_nodes(struct xenbus_transaction xbt,
+				struct blkfront_ring_info *rinfo, const char *dir)
+{
+	int err;
+	unsigned int i;
+	const char *message = NULL;
+	struct blkfront_info *info = rinfo->dev_info;
 
-	अगर (info->nr_ring_pages == 1) अणु
-		err = xenbus_म_लिखो(xbt, dir, "ring-ref", "%u", rinfo->ring_ref[0]);
-		अगर (err) अणु
+	if (info->nr_ring_pages == 1) {
+		err = xenbus_printf(xbt, dir, "ring-ref", "%u", rinfo->ring_ref[0]);
+		if (err) {
 			message = "writing ring-ref";
-			जाओ पात_transaction;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		क्रम (i = 0; i < info->nr_ring_pages; i++) अणु
-			अक्षर ring_ref_name[RINGREF_NAME_LEN];
+			goto abort_transaction;
+		}
+	} else {
+		for (i = 0; i < info->nr_ring_pages; i++) {
+			char ring_ref_name[RINGREF_NAME_LEN];
 
-			snम_लिखो(ring_ref_name, RINGREF_NAME_LEN, "ring-ref%u", i);
-			err = xenbus_म_लिखो(xbt, dir, ring_ref_name,
+			snprintf(ring_ref_name, RINGREF_NAME_LEN, "ring-ref%u", i);
+			err = xenbus_printf(xbt, dir, ring_ref_name,
 					    "%u", rinfo->ring_ref[i]);
-			अगर (err) अणु
+			if (err) {
 				message = "writing ring-ref";
-				जाओ पात_transaction;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto abort_transaction;
+			}
+		}
+	}
 
-	err = xenbus_म_लिखो(xbt, dir, "event-channel", "%u", rinfo->evtchn);
-	अगर (err) अणु
+	err = xenbus_printf(xbt, dir, "event-channel", "%u", rinfo->evtchn);
+	if (err) {
 		message = "writing event-channel";
-		जाओ पात_transaction;
-	पूर्ण
+		goto abort_transaction;
+	}
 
-	वापस 0;
+	return 0;
 
-पात_transaction:
+abort_transaction:
 	xenbus_transaction_end(xbt, 1);
-	अगर (message)
+	if (message)
 		xenbus_dev_fatal(info->xbdev, err, "%s", message);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम मुक्त_info(काष्ठा blkfront_info *info)
-अणु
+static void free_info(struct blkfront_info *info)
+{
 	list_del(&info->info_list);
-	kमुक्त(info);
-पूर्ण
+	kfree(info);
+}
 
 /* Common code used when first setting up, and when resuming. */
-अटल पूर्णांक talk_to_blkback(काष्ठा xenbus_device *dev,
-			   काष्ठा blkfront_info *info)
-अणु
-	स्थिर अक्षर *message = शून्य;
-	काष्ठा xenbus_transaction xbt;
-	पूर्णांक err;
-	अचिन्हित पूर्णांक i, max_page_order;
-	अचिन्हित पूर्णांक ring_page_order;
-	काष्ठा blkfront_ring_info *rinfo;
+static int talk_to_blkback(struct xenbus_device *dev,
+			   struct blkfront_info *info)
+{
+	const char *message = NULL;
+	struct xenbus_transaction xbt;
+	int err;
+	unsigned int i, max_page_order;
+	unsigned int ring_page_order;
+	struct blkfront_ring_info *rinfo;
 
-	अगर (!info)
-		वापस -ENODEV;
+	if (!info)
+		return -ENODEV;
 
-	max_page_order = xenbus_पढ़ो_अचिन्हित(info->xbdev->otherend,
+	max_page_order = xenbus_read_unsigned(info->xbdev->otherend,
 					      "max-ring-page-order", 0);
-	ring_page_order = min(xen_blkअगर_max_ring_order, max_page_order);
+	ring_page_order = min(xen_blkif_max_ring_order, max_page_order);
 	info->nr_ring_pages = 1 << ring_page_order;
 
 	err = negotiate_mq(info);
-	अगर (err)
-		जाओ destroy_blkring;
+	if (err)
+		goto destroy_blkring;
 
-	क्रम_each_rinfo(info, rinfo, i) अणु
+	for_each_rinfo(info, rinfo, i) {
 		/* Create shared ring, alloc event channel. */
 		err = setup_blkring(dev, rinfo);
-		अगर (err)
-			जाओ destroy_blkring;
-	पूर्ण
+		if (err)
+			goto destroy_blkring;
+	}
 
 again:
 	err = xenbus_transaction_start(&xbt);
-	अगर (err) अणु
+	if (err) {
 		xenbus_dev_fatal(dev, err, "starting transaction");
-		जाओ destroy_blkring;
-	पूर्ण
+		goto destroy_blkring;
+	}
 
-	अगर (info->nr_ring_pages > 1) अणु
-		err = xenbus_म_लिखो(xbt, dev->nodename, "ring-page-order", "%u",
+	if (info->nr_ring_pages > 1) {
+		err = xenbus_printf(xbt, dev->nodename, "ring-page-order", "%u",
 				    ring_page_order);
-		अगर (err) अणु
+		if (err) {
 			message = "writing ring-page-order";
-			जाओ पात_transaction;
-		पूर्ण
-	पूर्ण
+			goto abort_transaction;
+		}
+	}
 
-	/* We alपढ़ोy got the number of queues/rings in _probe */
-	अगर (info->nr_rings == 1) अणु
-		err = ग_लिखो_per_ring_nodes(xbt, info->rinfo, dev->nodename);
-		अगर (err)
-			जाओ destroy_blkring;
-	पूर्ण अन्यथा अणु
-		अक्षर *path;
-		माप_प्रकार pathsize;
+	/* We already got the number of queues/rings in _probe */
+	if (info->nr_rings == 1) {
+		err = write_per_ring_nodes(xbt, info->rinfo, dev->nodename);
+		if (err)
+			goto destroy_blkring;
+	} else {
+		char *path;
+		size_t pathsize;
 
-		err = xenbus_म_लिखो(xbt, dev->nodename, "multi-queue-num-queues", "%u",
+		err = xenbus_printf(xbt, dev->nodename, "multi-queue-num-queues", "%u",
 				    info->nr_rings);
-		अगर (err) अणु
+		if (err) {
 			message = "writing multi-queue-num-queues";
-			जाओ पात_transaction;
-		पूर्ण
+			goto abort_transaction;
+		}
 
-		pathsize = म_माप(dev->nodename) + QUEUE_NAME_LEN;
-		path = kदो_स्मृति(pathsize, GFP_KERNEL);
-		अगर (!path) अणु
+		pathsize = strlen(dev->nodename) + QUEUE_NAME_LEN;
+		path = kmalloc(pathsize, GFP_KERNEL);
+		if (!path) {
 			err = -ENOMEM;
 			message = "ENOMEM while writing ring references";
-			जाओ पात_transaction;
-		पूर्ण
+			goto abort_transaction;
+		}
 
-		क्रम_each_rinfo(info, rinfo, i) अणु
-			स_रखो(path, 0, pathsize);
-			snम_लिखो(path, pathsize, "%s/queue-%u", dev->nodename, i);
-			err = ग_लिखो_per_ring_nodes(xbt, rinfo, path);
-			अगर (err) अणु
-				kमुक्त(path);
-				जाओ destroy_blkring;
-			पूर्ण
-		पूर्ण
-		kमुक्त(path);
-	पूर्ण
-	err = xenbus_म_लिखो(xbt, dev->nodename, "protocol", "%s",
+		for_each_rinfo(info, rinfo, i) {
+			memset(path, 0, pathsize);
+			snprintf(path, pathsize, "%s/queue-%u", dev->nodename, i);
+			err = write_per_ring_nodes(xbt, rinfo, path);
+			if (err) {
+				kfree(path);
+				goto destroy_blkring;
+			}
+		}
+		kfree(path);
+	}
+	err = xenbus_printf(xbt, dev->nodename, "protocol", "%s",
 			    XEN_IO_PROTO_ABI_NATIVE);
-	अगर (err) अणु
+	if (err) {
 		message = "writing protocol";
-		जाओ पात_transaction;
-	पूर्ण
-	err = xenbus_म_लिखो(xbt, dev->nodename, "feature-persistent", "%u",
+		goto abort_transaction;
+	}
+	err = xenbus_printf(xbt, dev->nodename, "feature-persistent", "%u",
 			info->feature_persistent);
-	अगर (err)
+	if (err)
 		dev_warn(&dev->dev,
 			 "writing persistent grants feature to xenbus");
 
 	err = xenbus_transaction_end(xbt, 0);
-	अगर (err) अणु
-		अगर (err == -EAGAIN)
-			जाओ again;
+	if (err) {
+		if (err == -EAGAIN)
+			goto again;
 		xenbus_dev_fatal(dev, err, "completing transaction");
-		जाओ destroy_blkring;
-	पूर्ण
+		goto destroy_blkring;
+	}
 
-	क्रम_each_rinfo(info, rinfo, i) अणु
-		अचिन्हित पूर्णांक j;
+	for_each_rinfo(info, rinfo, i) {
+		unsigned int j;
 
-		क्रम (j = 0; j < BLK_RING_SIZE(info); j++)
-			rinfo->shaकरोw[j].req.u.rw.id = j + 1;
-		rinfo->shaकरोw[BLK_RING_SIZE(info)-1].req.u.rw.id = 0x0fffffff;
-	पूर्ण
-	xenbus_चयन_state(dev, XenbusStateInitialised);
+		for (j = 0; j < BLK_RING_SIZE(info); j++)
+			rinfo->shadow[j].req.u.rw.id = j + 1;
+		rinfo->shadow[BLK_RING_SIZE(info)-1].req.u.rw.id = 0x0fffffff;
+	}
+	xenbus_switch_state(dev, XenbusStateInitialised);
 
-	वापस 0;
+	return 0;
 
- पात_transaction:
+ abort_transaction:
 	xenbus_transaction_end(xbt, 1);
-	अगर (message)
+	if (message)
 		xenbus_dev_fatal(dev, err, "%s", message);
  destroy_blkring:
-	blkअगर_मुक्त(info, 0);
+	blkif_free(info, 0);
 
 	mutex_lock(&blkfront_mutex);
-	मुक्त_info(info);
+	free_info(info);
 	mutex_unlock(&blkfront_mutex);
 
-	dev_set_drvdata(&dev->dev, शून्य);
+	dev_set_drvdata(&dev->dev, NULL);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक negotiate_mq(काष्ठा blkfront_info *info)
-अणु
-	अचिन्हित पूर्णांक backend_max_queues;
-	अचिन्हित पूर्णांक i;
-	काष्ठा blkfront_ring_info *rinfo;
+static int negotiate_mq(struct blkfront_info *info)
+{
+	unsigned int backend_max_queues;
+	unsigned int i;
+	struct blkfront_ring_info *rinfo;
 
 	BUG_ON(info->nr_rings);
 
-	/* Check अगर backend supports multiple queues. */
-	backend_max_queues = xenbus_पढ़ो_अचिन्हित(info->xbdev->otherend,
+	/* Check if backend supports multiple queues. */
+	backend_max_queues = xenbus_read_unsigned(info->xbdev->otherend,
 						  "multi-queue-max-queues", 1);
-	info->nr_rings = min(backend_max_queues, xen_blkअगर_max_queues);
+	info->nr_rings = min(backend_max_queues, xen_blkif_max_queues);
 	/* We need at least one ring. */
-	अगर (!info->nr_rings)
+	if (!info->nr_rings)
 		info->nr_rings = 1;
 
-	info->rinfo_size = काष्ठा_size(info->rinfo, shaकरोw,
+	info->rinfo_size = struct_size(info->rinfo, shadow,
 				       BLK_RING_SIZE(info));
-	info->rinfo = kvसुस्मृति(info->nr_rings, info->rinfo_size, GFP_KERNEL);
-	अगर (!info->rinfo) अणु
+	info->rinfo = kvcalloc(info->nr_rings, info->rinfo_size, GFP_KERNEL);
+	if (!info->rinfo) {
 		xenbus_dev_fatal(info->xbdev, -ENOMEM, "allocating ring_info structure");
 		info->nr_rings = 0;
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	क्रम_each_rinfo(info, rinfo, i) अणु
+	for_each_rinfo(info, rinfo, i) {
 		INIT_LIST_HEAD(&rinfo->indirect_pages);
 		INIT_LIST_HEAD(&rinfo->grants);
 		rinfo->dev_info = info;
-		INIT_WORK(&rinfo->work, blkअगर_restart_queue);
+		INIT_WORK(&rinfo->work, blkif_restart_queue);
 		spin_lock_init(&rinfo->ring_lock);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /* Enable the persistent grants feature. */
-अटल bool feature_persistent = true;
+static bool feature_persistent = true;
 module_param(feature_persistent, bool, 0644);
 MODULE_PARM_DESC(feature_persistent,
 		"Enables the persistent grants feature");
 
 /*
- * Entry poपूर्णांक to this code when a new device is created.  Allocate the basic
- * काष्ठाures and the ring buffer क्रम communication with the backend, and
- * inक्रमm the backend of the appropriate details क्रम those.  Switch to
+ * Entry point to this code when a new device is created.  Allocate the basic
+ * structures and the ring buffer for communication with the backend, and
+ * inform the backend of the appropriate details for those.  Switch to
  * Initialised state.
  */
-अटल पूर्णांक blkfront_probe(काष्ठा xenbus_device *dev,
-			  स्थिर काष्ठा xenbus_device_id *id)
-अणु
-	पूर्णांक err, vdevice;
-	काष्ठा blkfront_info *info;
+static int blkfront_probe(struct xenbus_device *dev,
+			  const struct xenbus_device_id *id)
+{
+	int err, vdevice;
+	struct blkfront_info *info;
 
-	/* FIXME: Use dynamic device id अगर this is not set. */
-	err = xenbus_म_पूछो(XBT_NIL, dev->nodename,
+	/* FIXME: Use dynamic device id if this is not set. */
+	err = xenbus_scanf(XBT_NIL, dev->nodename,
 			   "virtual-device", "%i", &vdevice);
-	अगर (err != 1) अणु
+	if (err != 1) {
 		/* go looking in the extended area instead */
-		err = xenbus_म_पूछो(XBT_NIL, dev->nodename, "virtual-device-ext",
+		err = xenbus_scanf(XBT_NIL, dev->nodename, "virtual-device-ext",
 				   "%i", &vdevice);
-		अगर (err != 1) अणु
+		if (err != 1) {
 			xenbus_dev_fatal(dev, err, "reading virtual-device");
-			वापस err;
-		पूर्ण
-	पूर्ण
+			return err;
+		}
+	}
 
-	अगर (xen_hvm_करोमुख्य()) अणु
-		अक्षर *type;
-		पूर्णांक len;
-		/* no unplug has been करोne: करो not hook devices != xen vbds */
-		अगर (xen_has_pv_and_legacy_disk_devices()) अणु
-			पूर्णांक major;
+	if (xen_hvm_domain()) {
+		char *type;
+		int len;
+		/* no unplug has been done: do not hook devices != xen vbds */
+		if (xen_has_pv_and_legacy_disk_devices()) {
+			int major;
 
-			अगर (!VDEV_IS_EXTENDED(vdevice))
+			if (!VDEV_IS_EXTENDED(vdevice))
 				major = BLKIF_MAJOR(vdevice);
-			अन्यथा
+			else
 				major = XENVBD_MAJOR;
 
-			अगर (major != XENVBD_MAJOR) अणु
-				prपूर्णांकk(KERN_INFO
+			if (major != XENVBD_MAJOR) {
+				printk(KERN_INFO
 						"%s: HVM does not support vbd %d as xen block device\n",
 						__func__, vdevice);
-				वापस -ENODEV;
-			पूर्ण
-		पूर्ण
-		/* करो not create a PV cdrom device अगर we are an HVM guest */
-		type = xenbus_पढ़ो(XBT_NIL, dev->nodename, "device-type", &len);
-		अगर (IS_ERR(type))
-			वापस -ENODEV;
-		अगर (म_भेदन(type, "cdrom", 5) == 0) अणु
-			kमुक्त(type);
-			वापस -ENODEV;
-		पूर्ण
-		kमुक्त(type);
-	पूर्ण
-	info = kzalloc(माप(*info), GFP_KERNEL);
-	अगर (!info) अणु
+				return -ENODEV;
+			}
+		}
+		/* do not create a PV cdrom device if we are an HVM guest */
+		type = xenbus_read(XBT_NIL, dev->nodename, "device-type", &len);
+		if (IS_ERR(type))
+			return -ENODEV;
+		if (strncmp(type, "cdrom", 5) == 0) {
+			kfree(type);
+			return -ENODEV;
+		}
+		kfree(type);
+	}
+	info = kzalloc(sizeof(*info), GFP_KERNEL);
+	if (!info) {
 		xenbus_dev_fatal(dev, -ENOMEM, "allocating info structure");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	info->xbdev = dev;
 
@@ -2019,368 +2018,368 @@ MODULE_PARM_DESC(feature_persistent,
 	info->feature_persistent = feature_persistent;
 
 	/* Front end dir is a number, which is used as the id. */
-	info->handle = simple_म_से_अदीर्घ(म_खोजप(dev->nodename, '/')+1, शून्य, 0);
+	info->handle = simple_strtoul(strrchr(dev->nodename, '/')+1, NULL, 0);
 	dev_set_drvdata(&dev->dev, info);
 
 	mutex_lock(&blkfront_mutex);
 	list_add(&info->info_list, &info_list);
 	mutex_unlock(&blkfront_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक blkअगर_recover(काष्ठा blkfront_info *info)
-अणु
-	अचिन्हित पूर्णांक r_index;
-	काष्ठा request *req, *n;
-	पूर्णांक rc;
-	काष्ठा bio *bio;
-	अचिन्हित पूर्णांक segs;
-	काष्ठा blkfront_ring_info *rinfo;
+static int blkif_recover(struct blkfront_info *info)
+{
+	unsigned int r_index;
+	struct request *req, *n;
+	int rc;
+	struct bio *bio;
+	unsigned int segs;
+	struct blkfront_ring_info *rinfo;
 
 	blkfront_gather_backend_features(info);
 	/* Reset limits changed by blk_mq_update_nr_hw_queues(). */
-	blkअगर_set_queue_limits(info);
+	blkif_set_queue_limits(info);
 	segs = info->max_indirect_segments ? : BLKIF_MAX_SEGMENTS_PER_REQUEST;
 	blk_queue_max_segments(info->rq, segs / GRANTS_PER_PSEG);
 
-	क्रम_each_rinfo(info, rinfo, r_index) अणु
+	for_each_rinfo(info, rinfo, r_index) {
 		rc = blkfront_setup_indirect(rinfo);
-		अगर (rc)
-			वापस rc;
-	पूर्ण
-	xenbus_चयन_state(info->xbdev, XenbusStateConnected);
+		if (rc)
+			return rc;
+	}
+	xenbus_switch_state(info->xbdev, XenbusStateConnected);
 
-	/* Now safe क्रम us to use the shared ring */
+	/* Now safe for us to use the shared ring */
 	info->connected = BLKIF_STATE_CONNECTED;
 
-	क्रम_each_rinfo(info, rinfo, r_index) अणु
+	for_each_rinfo(info, rinfo, r_index) {
 		/* Kick any other new requests queued since we resumed */
 		kick_pending_request_queues(rinfo);
-	पूर्ण
+	}
 
-	list_क्रम_each_entry_safe(req, n, &info->requests, queuelist) अणु
+	list_for_each_entry_safe(req, n, &info->requests, queuelist) {
 		/* Requeue pending requests (flush or discard) */
 		list_del_init(&req->queuelist);
 		BUG_ON(req->nr_phys_segments > segs);
 		blk_mq_requeue_request(req, false);
-	पूर्ण
+	}
 	blk_mq_start_stopped_hw_queues(info->rq, true);
 	blk_mq_kick_requeue_list(info->rq);
 
-	जबतक ((bio = bio_list_pop(&info->bio_list)) != शून्य) अणु
+	while ((bio = bio_list_pop(&info->bio_list)) != NULL) {
 		/* Traverse the list of pending bios and re-queue them */
 		submit_bio(bio);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * We are reconnecting to the backend, due to a suspend/resume, or a backend
- * driver restart.  We tear करोwn our blkअगर काष्ठाure and recreate it, but
- * leave the device-layer काष्ठाures पूर्णांकact so that this is transparent to the
+ * driver restart.  We tear down our blkif structure and recreate it, but
+ * leave the device-layer structures intact so that this is transparent to the
  * rest of the kernel.
  */
-अटल पूर्णांक blkfront_resume(काष्ठा xenbus_device *dev)
-अणु
-	काष्ठा blkfront_info *info = dev_get_drvdata(&dev->dev);
-	पूर्णांक err = 0;
-	अचिन्हित पूर्णांक i, j;
-	काष्ठा blkfront_ring_info *rinfo;
+static int blkfront_resume(struct xenbus_device *dev)
+{
+	struct blkfront_info *info = dev_get_drvdata(&dev->dev);
+	int err = 0;
+	unsigned int i, j;
+	struct blkfront_ring_info *rinfo;
 
 	dev_dbg(&dev->dev, "blkfront_resume: %s\n", dev->nodename);
 
 	bio_list_init(&info->bio_list);
 	INIT_LIST_HEAD(&info->requests);
-	क्रम_each_rinfo(info, rinfo, i) अणु
-		काष्ठा bio_list merge_bio;
-		काष्ठा blk_shaकरोw *shaकरोw = rinfo->shaकरोw;
+	for_each_rinfo(info, rinfo, i) {
+		struct bio_list merge_bio;
+		struct blk_shadow *shadow = rinfo->shadow;
 
-		क्रम (j = 0; j < BLK_RING_SIZE(info); j++) अणु
+		for (j = 0; j < BLK_RING_SIZE(info); j++) {
 			/* Not in use? */
-			अगर (!shaकरोw[j].request)
-				जारी;
+			if (!shadow[j].request)
+				continue;
 
 			/*
 			 * Get the bios in the request so we can re-queue them.
 			 */
-			अगर (req_op(shaकरोw[j].request) == REQ_OP_FLUSH ||
-			    req_op(shaकरोw[j].request) == REQ_OP_DISCARD ||
-			    req_op(shaकरोw[j].request) == REQ_OP_SECURE_ERASE ||
-			    shaकरोw[j].request->cmd_flags & REQ_FUA) अणु
+			if (req_op(shadow[j].request) == REQ_OP_FLUSH ||
+			    req_op(shadow[j].request) == REQ_OP_DISCARD ||
+			    req_op(shadow[j].request) == REQ_OP_SECURE_ERASE ||
+			    shadow[j].request->cmd_flags & REQ_FUA) {
 				/*
-				 * Flush operations करोn't contain bios, so
+				 * Flush operations don't contain bios, so
 				 * we need to requeue the whole request
 				 *
-				 * XXX: but this करोesn't make any sense क्रम a
-				 * ग_लिखो with the FUA flag set..
+				 * XXX: but this doesn't make any sense for a
+				 * write with the FUA flag set..
 				 */
-				list_add(&shaकरोw[j].request->queuelist, &info->requests);
-				जारी;
-			पूर्ण
-			merge_bपन.सead = shaकरोw[j].request->bio;
-			merge_bio.tail = shaकरोw[j].request->biotail;
+				list_add(&shadow[j].request->queuelist, &info->requests);
+				continue;
+			}
+			merge_bio.head = shadow[j].request->bio;
+			merge_bio.tail = shadow[j].request->biotail;
 			bio_list_merge(&info->bio_list, &merge_bio);
-			shaकरोw[j].request->bio = शून्य;
-			blk_mq_end_request(shaकरोw[j].request, BLK_STS_OK);
-		पूर्ण
-	पूर्ण
+			shadow[j].request->bio = NULL;
+			blk_mq_end_request(shadow[j].request, BLK_STS_OK);
+		}
+	}
 
-	blkअगर_मुक्त(info, info->connected == BLKIF_STATE_CONNECTED);
+	blkif_free(info, info->connected == BLKIF_STATE_CONNECTED);
 
 	err = talk_to_blkback(dev, info);
-	अगर (!err)
+	if (!err)
 		blk_mq_update_nr_hw_queues(&info->tag_set, info->nr_rings);
 
 	/*
-	 * We have to रुको क्रम the backend to चयन to
-	 * connected state, since we want to पढ़ो which
+	 * We have to wait for the backend to switch to
+	 * connected state, since we want to read which
 	 * features it supports.
 	 */
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम blkfront_closing(काष्ठा blkfront_info *info)
-अणु
-	काष्ठा xenbus_device *xbdev = info->xbdev;
-	काष्ठा block_device *bdev = शून्य;
+static void blkfront_closing(struct blkfront_info *info)
+{
+	struct xenbus_device *xbdev = info->xbdev;
+	struct block_device *bdev = NULL;
 
 	mutex_lock(&info->mutex);
 
-	अगर (xbdev->state == XenbusStateClosing) अणु
+	if (xbdev->state == XenbusStateClosing) {
 		mutex_unlock(&info->mutex);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (info->gd)
+	if (info->gd)
 		bdev = bdgrab(info->gd->part0);
 
 	mutex_unlock(&info->mutex);
 
-	अगर (!bdev) अणु
-		xenbus_frontend_बंदd(xbdev);
-		वापस;
-	पूर्ण
+	if (!bdev) {
+		xenbus_frontend_closed(xbdev);
+		return;
+	}
 
 	mutex_lock(&bdev->bd_mutex);
 
-	अगर (bdev->bd_खोलोers) अणु
+	if (bdev->bd_openers) {
 		xenbus_dev_error(xbdev, -EBUSY,
 				 "Device in use; refusing to close");
-		xenbus_चयन_state(xbdev, XenbusStateClosing);
-	पूर्ण अन्यथा अणु
+		xenbus_switch_state(xbdev, XenbusStateClosing);
+	} else {
 		xlvbd_release_gendisk(info);
-		xenbus_frontend_बंदd(xbdev);
-	पूर्ण
+		xenbus_frontend_closed(xbdev);
+	}
 
 	mutex_unlock(&bdev->bd_mutex);
 	bdput(bdev);
-पूर्ण
+}
 
-अटल व्योम blkfront_setup_discard(काष्ठा blkfront_info *info)
-अणु
+static void blkfront_setup_discard(struct blkfront_info *info)
+{
 	info->feature_discard = 1;
-	info->discard_granularity = xenbus_पढ़ो_अचिन्हित(info->xbdev->otherend,
+	info->discard_granularity = xenbus_read_unsigned(info->xbdev->otherend,
 							 "discard-granularity",
 							 0);
-	info->discard_alignment = xenbus_पढ़ो_अचिन्हित(info->xbdev->otherend,
+	info->discard_alignment = xenbus_read_unsigned(info->xbdev->otherend,
 						       "discard-alignment", 0);
 	info->feature_secdiscard =
-		!!xenbus_पढ़ो_अचिन्हित(info->xbdev->otherend, "discard-secure",
+		!!xenbus_read_unsigned(info->xbdev->otherend, "discard-secure",
 				       0);
-पूर्ण
+}
 
-अटल पूर्णांक blkfront_setup_indirect(काष्ठा blkfront_ring_info *rinfo)
-अणु
-	अचिन्हित पूर्णांक psegs, grants, memflags;
-	पूर्णांक err, i;
-	काष्ठा blkfront_info *info = rinfo->dev_info;
+static int blkfront_setup_indirect(struct blkfront_ring_info *rinfo)
+{
+	unsigned int psegs, grants, memflags;
+	int err, i;
+	struct blkfront_info *info = rinfo->dev_info;
 
-	memflags = meदो_स्मृति_noio_save();
+	memflags = memalloc_noio_save();
 
-	अगर (info->max_indirect_segments == 0) अणु
-		अगर (!HAS_EXTRA_REQ)
+	if (info->max_indirect_segments == 0) {
+		if (!HAS_EXTRA_REQ)
 			grants = BLKIF_MAX_SEGMENTS_PER_REQUEST;
-		अन्यथा अणु
+		else {
 			/*
 			 * When an extra req is required, the maximum
 			 * grants supported is related to the size of the
 			 * Linux block segment.
 			 */
 			grants = GRANTS_PER_PSEG;
-		पूर्ण
-	पूर्ण
-	अन्यथा
+		}
+	}
+	else
 		grants = info->max_indirect_segments;
 	psegs = DIV_ROUND_UP(grants, GRANTS_PER_PSEG);
 
 	err = fill_grant_buffer(rinfo,
-				(grants + INसूचीECT_GREFS(grants)) * BLK_RING_SIZE(info));
-	अगर (err)
-		जाओ out_of_memory;
+				(grants + INDIRECT_GREFS(grants)) * BLK_RING_SIZE(info));
+	if (err)
+		goto out_of_memory;
 
-	अगर (!info->feature_persistent && info->max_indirect_segments) अणु
+	if (!info->feature_persistent && info->max_indirect_segments) {
 		/*
 		 * We are using indirect descriptors but not persistent
 		 * grants, we need to allocate a set of pages that can be
-		 * used क्रम mapping indirect grefs
+		 * used for mapping indirect grefs
 		 */
-		पूर्णांक num = INसूचीECT_GREFS(grants) * BLK_RING_SIZE(info);
+		int num = INDIRECT_GREFS(grants) * BLK_RING_SIZE(info);
 
 		BUG_ON(!list_empty(&rinfo->indirect_pages));
-		क्रम (i = 0; i < num; i++) अणु
-			काष्ठा page *indirect_page = alloc_page(GFP_KERNEL);
-			अगर (!indirect_page)
-				जाओ out_of_memory;
+		for (i = 0; i < num; i++) {
+			struct page *indirect_page = alloc_page(GFP_KERNEL);
+			if (!indirect_page)
+				goto out_of_memory;
 			list_add(&indirect_page->lru, &rinfo->indirect_pages);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्रम (i = 0; i < BLK_RING_SIZE(info); i++) अणु
-		rinfo->shaकरोw[i].grants_used =
-			kvसुस्मृति(grants,
-				 माप(rinfo->shaकरोw[i].grants_used[0]),
+	for (i = 0; i < BLK_RING_SIZE(info); i++) {
+		rinfo->shadow[i].grants_used =
+			kvcalloc(grants,
+				 sizeof(rinfo->shadow[i].grants_used[0]),
 				 GFP_KERNEL);
-		rinfo->shaकरोw[i].sg = kvसुस्मृति(psegs,
-					       माप(rinfo->shaकरोw[i].sg[0]),
+		rinfo->shadow[i].sg = kvcalloc(psegs,
+					       sizeof(rinfo->shadow[i].sg[0]),
 					       GFP_KERNEL);
-		अगर (info->max_indirect_segments)
-			rinfo->shaकरोw[i].indirect_grants =
-				kvसुस्मृति(INसूचीECT_GREFS(grants),
-					 माप(rinfo->shaकरोw[i].indirect_grants[0]),
+		if (info->max_indirect_segments)
+			rinfo->shadow[i].indirect_grants =
+				kvcalloc(INDIRECT_GREFS(grants),
+					 sizeof(rinfo->shadow[i].indirect_grants[0]),
 					 GFP_KERNEL);
-		अगर ((rinfo->shaकरोw[i].grants_used == शून्य) ||
-			(rinfo->shaकरोw[i].sg == शून्य) ||
+		if ((rinfo->shadow[i].grants_used == NULL) ||
+			(rinfo->shadow[i].sg == NULL) ||
 		     (info->max_indirect_segments &&
-		     (rinfo->shaकरोw[i].indirect_grants == शून्य)))
-			जाओ out_of_memory;
-		sg_init_table(rinfo->shaकरोw[i].sg, psegs);
-	पूर्ण
+		     (rinfo->shadow[i].indirect_grants == NULL)))
+			goto out_of_memory;
+		sg_init_table(rinfo->shadow[i].sg, psegs);
+	}
 
-	meदो_स्मृति_noio_restore(memflags);
+	memalloc_noio_restore(memflags);
 
-	वापस 0;
+	return 0;
 
 out_of_memory:
-	क्रम (i = 0; i < BLK_RING_SIZE(info); i++) अणु
-		kvमुक्त(rinfo->shaकरोw[i].grants_used);
-		rinfo->shaकरोw[i].grants_used = शून्य;
-		kvमुक्त(rinfo->shaकरोw[i].sg);
-		rinfo->shaकरोw[i].sg = शून्य;
-		kvमुक्त(rinfo->shaकरोw[i].indirect_grants);
-		rinfo->shaकरोw[i].indirect_grants = शून्य;
-	पूर्ण
-	अगर (!list_empty(&rinfo->indirect_pages)) अणु
-		काष्ठा page *indirect_page, *n;
-		list_क्रम_each_entry_safe(indirect_page, n, &rinfo->indirect_pages, lru) अणु
+	for (i = 0; i < BLK_RING_SIZE(info); i++) {
+		kvfree(rinfo->shadow[i].grants_used);
+		rinfo->shadow[i].grants_used = NULL;
+		kvfree(rinfo->shadow[i].sg);
+		rinfo->shadow[i].sg = NULL;
+		kvfree(rinfo->shadow[i].indirect_grants);
+		rinfo->shadow[i].indirect_grants = NULL;
+	}
+	if (!list_empty(&rinfo->indirect_pages)) {
+		struct page *indirect_page, *n;
+		list_for_each_entry_safe(indirect_page, n, &rinfo->indirect_pages, lru) {
 			list_del(&indirect_page->lru);
-			__मुक्त_page(indirect_page);
-		पूर्ण
-	पूर्ण
+			__free_page(indirect_page);
+		}
+	}
 
-	meदो_स्मृति_noio_restore(memflags);
+	memalloc_noio_restore(memflags);
 
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
 /*
  * Gather all backend feature-*
  */
-अटल व्योम blkfront_gather_backend_features(काष्ठा blkfront_info *info)
-अणु
-	अचिन्हित पूर्णांक indirect_segments;
+static void blkfront_gather_backend_features(struct blkfront_info *info)
+{
+	unsigned int indirect_segments;
 
 	info->feature_flush = 0;
 	info->feature_fua = 0;
 
 	/*
 	 * If there's no "feature-barrier" defined, then it means
-	 * we're dealing with a very old backend which ग_लिखोs
-	 * synchronously; nothing to करो.
+	 * we're dealing with a very old backend which writes
+	 * synchronously; nothing to do.
 	 *
 	 * If there are barriers, then we use flush.
 	 */
-	अगर (xenbus_पढ़ो_अचिन्हित(info->xbdev->otherend, "feature-barrier", 0)) अणु
+	if (xenbus_read_unsigned(info->xbdev->otherend, "feature-barrier", 0)) {
 		info->feature_flush = 1;
 		info->feature_fua = 1;
-	पूर्ण
+	}
 
 	/*
-	 * And अगर there is "feature-flush-cache" use that above
+	 * And if there is "feature-flush-cache" use that above
 	 * barriers.
 	 */
-	अगर (xenbus_पढ़ो_अचिन्हित(info->xbdev->otherend, "feature-flush-cache",
-				 0)) अणु
+	if (xenbus_read_unsigned(info->xbdev->otherend, "feature-flush-cache",
+				 0)) {
 		info->feature_flush = 1;
 		info->feature_fua = 0;
-	पूर्ण
+	}
 
-	अगर (xenbus_पढ़ो_अचिन्हित(info->xbdev->otherend, "feature-discard", 0))
+	if (xenbus_read_unsigned(info->xbdev->otherend, "feature-discard", 0))
 		blkfront_setup_discard(info);
 
-	अगर (info->feature_persistent)
+	if (info->feature_persistent)
 		info->feature_persistent =
-			!!xenbus_पढ़ो_अचिन्हित(info->xbdev->otherend,
+			!!xenbus_read_unsigned(info->xbdev->otherend,
 					       "feature-persistent", 0);
 
-	indirect_segments = xenbus_पढ़ो_अचिन्हित(info->xbdev->otherend,
+	indirect_segments = xenbus_read_unsigned(info->xbdev->otherend,
 					"feature-max-indirect-segments", 0);
-	अगर (indirect_segments > xen_blkअगर_max_segments)
-		indirect_segments = xen_blkअगर_max_segments;
-	अगर (indirect_segments <= BLKIF_MAX_SEGMENTS_PER_REQUEST)
+	if (indirect_segments > xen_blkif_max_segments)
+		indirect_segments = xen_blkif_max_segments;
+	if (indirect_segments <= BLKIF_MAX_SEGMENTS_PER_REQUEST)
 		indirect_segments = 0;
 	info->max_indirect_segments = indirect_segments;
 
-	अगर (info->feature_persistent) अणु
+	if (info->feature_persistent) {
 		mutex_lock(&blkfront_mutex);
 		schedule_delayed_work(&blkfront_work, HZ * 10);
 		mutex_unlock(&blkfront_mutex);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Invoked when the backend is finally 'ready' (and has told produced
  * the details about the physical device - #sectors, size, etc).
  */
-अटल व्योम blkfront_connect(काष्ठा blkfront_info *info)
-अणु
-	अचिन्हित दीर्घ दीर्घ sectors;
-	अचिन्हित दीर्घ sector_size;
-	अचिन्हित पूर्णांक physical_sector_size;
-	अचिन्हित पूर्णांक binfo;
-	पूर्णांक err, i;
-	काष्ठा blkfront_ring_info *rinfo;
+static void blkfront_connect(struct blkfront_info *info)
+{
+	unsigned long long sectors;
+	unsigned long sector_size;
+	unsigned int physical_sector_size;
+	unsigned int binfo;
+	int err, i;
+	struct blkfront_ring_info *rinfo;
 
-	चयन (info->connected) अणु
-	हाल BLKIF_STATE_CONNECTED:
+	switch (info->connected) {
+	case BLKIF_STATE_CONNECTED:
 		/*
-		 * Potentially, the back-end may be संकेतling
+		 * Potentially, the back-end may be signalling
 		 * a capacity change; update the capacity.
 		 */
-		err = xenbus_म_पूछो(XBT_NIL, info->xbdev->otherend,
+		err = xenbus_scanf(XBT_NIL, info->xbdev->otherend,
 				   "sectors", "%Lu", &sectors);
-		अगर (XENBUS_EXIST_ERR(err))
-			वापस;
-		prपूर्णांकk(KERN_INFO "Setting capacity to %Lu\n",
+		if (XENBUS_EXIST_ERR(err))
+			return;
+		printk(KERN_INFO "Setting capacity to %Lu\n",
 		       sectors);
-		set_capacity_and_notअगरy(info->gd, sectors);
+		set_capacity_and_notify(info->gd, sectors);
 
-		वापस;
-	हाल BLKIF_STATE_SUSPENDED:
+		return;
+	case BLKIF_STATE_SUSPENDED:
 		/*
-		 * If we are recovering from suspension, we need to रुको
-		 * क्रम the backend to announce it's features beक्रमe
-		 * reconnecting, at least we need to know अगर the backend
+		 * If we are recovering from suspension, we need to wait
+		 * for the backend to announce it's features before
+		 * reconnecting, at least we need to know if the backend
 		 * supports indirect descriptors, and how many.
 		 */
-		blkअगर_recover(info);
-		वापस;
+		blkif_recover(info);
+		return;
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
 	dev_dbg(&info->xbdev->dev, "%s:%s.\n",
 		__func__, info->xbdev->otherend);
@@ -2389,87 +2388,87 @@ out_of_memory:
 			    "sectors", "%llu", &sectors,
 			    "info", "%u", &binfo,
 			    "sector-size", "%lu", &sector_size,
-			    शून्य);
-	अगर (err) अणु
+			    NULL);
+	if (err) {
 		xenbus_dev_fatal(info->xbdev, err,
 				 "reading backend fields at %s",
 				 info->xbdev->otherend);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
 	 * physical-sector-size is a newer field, so old backends may not
 	 * provide this. Assume physical sector size to be the same as
-	 * sector_size in that हाल.
+	 * sector_size in that case.
 	 */
-	physical_sector_size = xenbus_पढ़ो_अचिन्हित(info->xbdev->otherend,
+	physical_sector_size = xenbus_read_unsigned(info->xbdev->otherend,
 						    "physical-sector-size",
 						    sector_size);
 	blkfront_gather_backend_features(info);
-	क्रम_each_rinfo(info, rinfo, i) अणु
+	for_each_rinfo(info, rinfo, i) {
 		err = blkfront_setup_indirect(rinfo);
-		अगर (err) अणु
+		if (err) {
 			xenbus_dev_fatal(info->xbdev, err, "setup_indirect at %s",
 					 info->xbdev->otherend);
-			blkअगर_मुक्त(info, 0);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			blkif_free(info, 0);
+			break;
+		}
+	}
 
 	err = xlvbd_alloc_gendisk(sectors, info, binfo, sector_size,
 				  physical_sector_size);
-	अगर (err) अणु
+	if (err) {
 		xenbus_dev_fatal(info->xbdev, err, "xlvbd_add at %s",
 				 info->xbdev->otherend);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	xenbus_चयन_state(info->xbdev, XenbusStateConnected);
+	xenbus_switch_state(info->xbdev, XenbusStateConnected);
 
 	/* Kick pending requests. */
 	info->connected = BLKIF_STATE_CONNECTED;
-	क्रम_each_rinfo(info, rinfo, i)
+	for_each_rinfo(info, rinfo, i)
 		kick_pending_request_queues(rinfo);
 
-	device_add_disk(&info->xbdev->dev, info->gd, शून्य);
+	device_add_disk(&info->xbdev->dev, info->gd, NULL);
 
-	info->is_पढ़ोy = 1;
-	वापस;
+	info->is_ready = 1;
+	return;
 
 fail:
-	blkअगर_मुक्त(info, 0);
-	वापस;
-पूर्ण
+	blkif_free(info, 0);
+	return;
+}
 
 /*
  * Callback received when the backend's state changes.
  */
-अटल व्योम blkback_changed(काष्ठा xenbus_device *dev,
-			    क्रमागत xenbus_state backend_state)
-अणु
-	काष्ठा blkfront_info *info = dev_get_drvdata(&dev->dev);
+static void blkback_changed(struct xenbus_device *dev,
+			    enum xenbus_state backend_state)
+{
+	struct blkfront_info *info = dev_get_drvdata(&dev->dev);
 
 	dev_dbg(&dev->dev, "blkfront:blkback_changed to state %d.\n", backend_state);
 
-	चयन (backend_state) अणु
-	हाल XenbusStateInitWait:
-		अगर (dev->state != XenbusStateInitialising)
-			अवरोध;
-		अगर (talk_to_blkback(dev, info))
-			अवरोध;
-		अवरोध;
-	हाल XenbusStateInitialising:
-	हाल XenbusStateInitialised:
-	हाल XenbusStateReconfiguring:
-	हाल XenbusStateReconfigured:
-	हाल XenbusStateUnknown:
-		अवरोध;
+	switch (backend_state) {
+	case XenbusStateInitWait:
+		if (dev->state != XenbusStateInitialising)
+			break;
+		if (talk_to_blkback(dev, info))
+			break;
+		break;
+	case XenbusStateInitialising:
+	case XenbusStateInitialised:
+	case XenbusStateReconfiguring:
+	case XenbusStateReconfigured:
+	case XenbusStateUnknown:
+		break;
 
-	हाल XenbusStateConnected:
+	case XenbusStateConnected:
 		/*
 		 * talk_to_blkback sets state to XenbusStateInitialised
 		 * and blkfront_connect sets it to XenbusStateConnected
-		 * (अगर connection went OK).
+		 * (if connection went OK).
 		 *
 		 * If the backend (or toolstack) decides to poke at backend
 		 * state (and re-trigger the watch by setting the state repeatedly
@@ -2477,289 +2476,289 @@ fail:
 		 * This is allowed as this is used to communicate to the guest
 		 * that the size of disk has changed!
 		 */
-		अगर ((dev->state != XenbusStateInitialised) &&
-		    (dev->state != XenbusStateConnected)) अणु
-			अगर (talk_to_blkback(dev, info))
-				अवरोध;
-		पूर्ण
+		if ((dev->state != XenbusStateInitialised) &&
+		    (dev->state != XenbusStateConnected)) {
+			if (talk_to_blkback(dev, info))
+				break;
+		}
 
 		blkfront_connect(info);
-		अवरोध;
+		break;
 
-	हाल XenbusStateClosed:
-		अगर (dev->state == XenbusStateClosed)
-			अवरोध;
+	case XenbusStateClosed:
+		if (dev->state == XenbusStateClosed)
+			break;
 		fallthrough;
-	हाल XenbusStateClosing:
-		अगर (info)
+	case XenbusStateClosing:
+		if (info)
 			blkfront_closing(info);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल पूर्णांक blkfront_हटाओ(काष्ठा xenbus_device *xbdev)
-अणु
-	काष्ठा blkfront_info *info = dev_get_drvdata(&xbdev->dev);
-	काष्ठा block_device *bdev = शून्य;
-	काष्ठा gendisk *disk;
+static int blkfront_remove(struct xenbus_device *xbdev)
+{
+	struct blkfront_info *info = dev_get_drvdata(&xbdev->dev);
+	struct block_device *bdev = NULL;
+	struct gendisk *disk;
 
 	dev_dbg(&xbdev->dev, "%s removed", xbdev->nodename);
 
-	अगर (!info)
-		वापस 0;
+	if (!info)
+		return 0;
 
-	blkअगर_मुक्त(info, 0);
+	blkif_free(info, 0);
 
 	mutex_lock(&info->mutex);
 
 	disk = info->gd;
-	अगर (disk)
+	if (disk)
 		bdev = bdgrab(disk->part0);
 
-	info->xbdev = शून्य;
+	info->xbdev = NULL;
 	mutex_unlock(&info->mutex);
 
-	अगर (!bdev) अणु
+	if (!bdev) {
 		mutex_lock(&blkfront_mutex);
-		मुक्त_info(info);
+		free_info(info);
 		mutex_unlock(&blkfront_mutex);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/*
-	 * The xbdev was हटाओd beक्रमe we reached the Closed
-	 * state. See अगर it's safe to हटाओ the disk. If the bdev
-	 * isn't बंदd yet, we let release take care of it.
+	 * The xbdev was removed before we reached the Closed
+	 * state. See if it's safe to remove the disk. If the bdev
+	 * isn't closed yet, we let release take care of it.
 	 */
 
 	mutex_lock(&bdev->bd_mutex);
-	info = disk->निजी_data;
+	info = disk->private_data;
 
 	dev_warn(disk_to_dev(disk),
 		 "%s was hot-unplugged, %d stale handles\n",
-		 xbdev->nodename, bdev->bd_खोलोers);
+		 xbdev->nodename, bdev->bd_openers);
 
-	अगर (info && !bdev->bd_खोलोers) अणु
+	if (info && !bdev->bd_openers) {
 		xlvbd_release_gendisk(info);
-		disk->निजी_data = शून्य;
+		disk->private_data = NULL;
 		mutex_lock(&blkfront_mutex);
-		मुक्त_info(info);
+		free_info(info);
 		mutex_unlock(&blkfront_mutex);
-	पूर्ण
+	}
 
 	mutex_unlock(&bdev->bd_mutex);
 	bdput(bdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक blkfront_is_पढ़ोy(काष्ठा xenbus_device *dev)
-अणु
-	काष्ठा blkfront_info *info = dev_get_drvdata(&dev->dev);
+static int blkfront_is_ready(struct xenbus_device *dev)
+{
+	struct blkfront_info *info = dev_get_drvdata(&dev->dev);
 
-	वापस info->is_पढ़ोy && info->xbdev;
-पूर्ण
+	return info->is_ready && info->xbdev;
+}
 
-अटल पूर्णांक blkअगर_खोलो(काष्ठा block_device *bdev, भ_शेषe_t mode)
-अणु
-	काष्ठा gendisk *disk = bdev->bd_disk;
-	काष्ठा blkfront_info *info;
-	पूर्णांक err = 0;
+static int blkif_open(struct block_device *bdev, fmode_t mode)
+{
+	struct gendisk *disk = bdev->bd_disk;
+	struct blkfront_info *info;
+	int err = 0;
 
 	mutex_lock(&blkfront_mutex);
 
-	info = disk->निजी_data;
-	अगर (!info) अणु
+	info = disk->private_data;
+	if (!info) {
 		/* xbdev gone */
 		err = -ERESTARTSYS;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	mutex_lock(&info->mutex);
 
-	अगर (!info->gd)
-		/* xbdev is बंदd */
+	if (!info->gd)
+		/* xbdev is closed */
 		err = -ERESTARTSYS;
 
 	mutex_unlock(&info->mutex);
 
 out:
 	mutex_unlock(&blkfront_mutex);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम blkअगर_release(काष्ठा gendisk *disk, भ_शेषe_t mode)
-अणु
-	काष्ठा blkfront_info *info = disk->निजी_data;
-	काष्ठा xenbus_device *xbdev;
+static void blkif_release(struct gendisk *disk, fmode_t mode)
+{
+	struct blkfront_info *info = disk->private_data;
+	struct xenbus_device *xbdev;
 
 	mutex_lock(&blkfront_mutex);
-	अगर (disk->part0->bd_खोलोers)
-		जाओ out_mutex;
+	if (disk->part0->bd_openers)
+		goto out_mutex;
 
 	/*
-	 * Check अगर we have been inकाष्ठाed to बंद. We will have
-	 * deferred this request, because the bdev was still खोलो.
+	 * Check if we have been instructed to close. We will have
+	 * deferred this request, because the bdev was still open.
 	 */
 
 	mutex_lock(&info->mutex);
 	xbdev = info->xbdev;
 
-	अगर (xbdev && xbdev->state == XenbusStateClosing) अणु
-		/* pending चयन to state बंदd */
+	if (xbdev && xbdev->state == XenbusStateClosing) {
+		/* pending switch to state closed */
 		dev_info(disk_to_dev(disk), "releasing disk\n");
 		xlvbd_release_gendisk(info);
-		xenbus_frontend_बंदd(info->xbdev);
- 	पूर्ण
+		xenbus_frontend_closed(info->xbdev);
+ 	}
 
 	mutex_unlock(&info->mutex);
 
-	अगर (!xbdev) अणु
+	if (!xbdev) {
 		/* sudden device removal */
 		dev_info(disk_to_dev(disk), "releasing disk\n");
 		xlvbd_release_gendisk(info);
-		disk->निजी_data = शून्य;
-		मुक्त_info(info);
-	पूर्ण
+		disk->private_data = NULL;
+		free_info(info);
+	}
 
 out_mutex:
 	mutex_unlock(&blkfront_mutex);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा block_device_operations xlvbd_block_fops =
-अणु
+static const struct block_device_operations xlvbd_block_fops =
+{
 	.owner = THIS_MODULE,
-	.खोलो = blkअगर_खोलो,
-	.release = blkअगर_release,
-	.getgeo = blkअगर_getgeo,
-	.ioctl = blkअगर_ioctl,
+	.open = blkif_open,
+	.release = blkif_release,
+	.getgeo = blkif_getgeo,
+	.ioctl = blkif_ioctl,
 	.compat_ioctl = blkdev_compat_ptr_ioctl,
-पूर्ण;
+};
 
 
-अटल स्थिर काष्ठा xenbus_device_id blkfront_ids[] = अणु
-	अणु "vbd" पूर्ण,
-	अणु "" पूर्ण
-पूर्ण;
+static const struct xenbus_device_id blkfront_ids[] = {
+	{ "vbd" },
+	{ "" }
+};
 
-अटल काष्ठा xenbus_driver blkfront_driver = अणु
+static struct xenbus_driver blkfront_driver = {
 	.ids  = blkfront_ids,
 	.probe = blkfront_probe,
-	.हटाओ = blkfront_हटाओ,
+	.remove = blkfront_remove,
 	.resume = blkfront_resume,
 	.otherend_changed = blkback_changed,
-	.is_पढ़ोy = blkfront_is_पढ़ोy,
-पूर्ण;
+	.is_ready = blkfront_is_ready,
+};
 
-अटल व्योम purge_persistent_grants(काष्ठा blkfront_info *info)
-अणु
-	अचिन्हित पूर्णांक i;
-	अचिन्हित दीर्घ flags;
-	काष्ठा blkfront_ring_info *rinfo;
+static void purge_persistent_grants(struct blkfront_info *info)
+{
+	unsigned int i;
+	unsigned long flags;
+	struct blkfront_ring_info *rinfo;
 
-	क्रम_each_rinfo(info, rinfo, i) अणु
-		काष्ठा grant *gnt_list_entry, *पंचांगp;
+	for_each_rinfo(info, rinfo, i) {
+		struct grant *gnt_list_entry, *tmp;
 
 		spin_lock_irqsave(&rinfo->ring_lock, flags);
 
-		अगर (rinfo->persistent_gnts_c == 0) अणु
+		if (rinfo->persistent_gnts_c == 0) {
 			spin_unlock_irqrestore(&rinfo->ring_lock, flags);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		list_क्रम_each_entry_safe(gnt_list_entry, पंचांगp, &rinfo->grants,
-					 node) अणु
-			अगर (gnt_list_entry->gref == GRANT_INVALID_REF ||
-			    gnttab_query_क्रमeign_access(gnt_list_entry->gref))
-				जारी;
+		list_for_each_entry_safe(gnt_list_entry, tmp, &rinfo->grants,
+					 node) {
+			if (gnt_list_entry->gref == GRANT_INVALID_REF ||
+			    gnttab_query_foreign_access(gnt_list_entry->gref))
+				continue;
 
 			list_del(&gnt_list_entry->node);
-			gnttab_end_क्रमeign_access(gnt_list_entry->gref, 0, 0UL);
+			gnttab_end_foreign_access(gnt_list_entry->gref, 0, 0UL);
 			rinfo->persistent_gnts_c--;
 			gnt_list_entry->gref = GRANT_INVALID_REF;
 			list_add_tail(&gnt_list_entry->node, &rinfo->grants);
-		पूर्ण
+		}
 
 		spin_unlock_irqrestore(&rinfo->ring_lock, flags);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम blkfront_delay_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा blkfront_info *info;
+static void blkfront_delay_work(struct work_struct *work)
+{
+	struct blkfront_info *info;
 	bool need_schedule_work = false;
 
 	mutex_lock(&blkfront_mutex);
 
-	list_क्रम_each_entry(info, &info_list, info_list) अणु
-		अगर (info->feature_persistent) अणु
+	list_for_each_entry(info, &info_list, info_list) {
+		if (info->feature_persistent) {
 			need_schedule_work = true;
 			mutex_lock(&info->mutex);
 			purge_persistent_grants(info);
 			mutex_unlock(&info->mutex);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (need_schedule_work)
+	if (need_schedule_work)
 		schedule_delayed_work(&blkfront_work, HZ * 10);
 
 	mutex_unlock(&blkfront_mutex);
-पूर्ण
+}
 
-अटल पूर्णांक __init xlblk_init(व्योम)
-अणु
-	पूर्णांक ret;
-	पूर्णांक nr_cpus = num_online_cpus();
+static int __init xlblk_init(void)
+{
+	int ret;
+	int nr_cpus = num_online_cpus();
 
-	अगर (!xen_करोमुख्य())
-		वापस -ENODEV;
+	if (!xen_domain())
+		return -ENODEV;
 
-	अगर (!xen_has_pv_disk_devices())
-		वापस -ENODEV;
+	if (!xen_has_pv_disk_devices())
+		return -ENODEV;
 
-	अगर (रेजिस्टर_blkdev(XENVBD_MAJOR, DEV_NAME)) अणु
+	if (register_blkdev(XENVBD_MAJOR, DEV_NAME)) {
 		pr_warn("xen_blk: can't get major %d with name %s\n",
 			XENVBD_MAJOR, DEV_NAME);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (xen_blkअगर_max_segments < BLKIF_MAX_SEGMENTS_PER_REQUEST)
-		xen_blkअगर_max_segments = BLKIF_MAX_SEGMENTS_PER_REQUEST;
+	if (xen_blkif_max_segments < BLKIF_MAX_SEGMENTS_PER_REQUEST)
+		xen_blkif_max_segments = BLKIF_MAX_SEGMENTS_PER_REQUEST;
 
-	अगर (xen_blkअगर_max_ring_order > XENBUS_MAX_RING_GRANT_ORDER) अणु
+	if (xen_blkif_max_ring_order > XENBUS_MAX_RING_GRANT_ORDER) {
 		pr_info("Invalid max_ring_order (%d), will use default max: %d.\n",
-			xen_blkअगर_max_ring_order, XENBUS_MAX_RING_GRANT_ORDER);
-		xen_blkअगर_max_ring_order = XENBUS_MAX_RING_GRANT_ORDER;
-	पूर्ण
+			xen_blkif_max_ring_order, XENBUS_MAX_RING_GRANT_ORDER);
+		xen_blkif_max_ring_order = XENBUS_MAX_RING_GRANT_ORDER;
+	}
 
-	अगर (xen_blkअगर_max_queues > nr_cpus) अणु
+	if (xen_blkif_max_queues > nr_cpus) {
 		pr_info("Invalid max_queues (%d), will use default max: %d.\n",
-			xen_blkअगर_max_queues, nr_cpus);
-		xen_blkअगर_max_queues = nr_cpus;
-	पूर्ण
+			xen_blkif_max_queues, nr_cpus);
+		xen_blkif_max_queues = nr_cpus;
+	}
 
 	INIT_DELAYED_WORK(&blkfront_work, blkfront_delay_work);
 
-	ret = xenbus_रेजिस्टर_frontend(&blkfront_driver);
-	अगर (ret) अणु
-		unरेजिस्टर_blkdev(XENVBD_MAJOR, DEV_NAME);
-		वापस ret;
-	पूर्ण
+	ret = xenbus_register_frontend(&blkfront_driver);
+	if (ret) {
+		unregister_blkdev(XENVBD_MAJOR, DEV_NAME);
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 module_init(xlblk_init);
 
 
-अटल व्योम __निकास xlblk_निकास(व्योम)
-अणु
+static void __exit xlblk_exit(void)
+{
 	cancel_delayed_work_sync(&blkfront_work);
 
-	xenbus_unरेजिस्टर_driver(&blkfront_driver);
-	unरेजिस्टर_blkdev(XENVBD_MAJOR, DEV_NAME);
-	kमुक्त(minors);
-पूर्ण
-module_निकास(xlblk_निकास);
+	xenbus_unregister_driver(&blkfront_driver);
+	unregister_blkdev(XENVBD_MAJOR, DEV_NAME);
+	kfree(minors);
+}
+module_exit(xlblk_exit);
 
 MODULE_DESCRIPTION("Xen virtual block device frontend");
 MODULE_LICENSE("GPL");

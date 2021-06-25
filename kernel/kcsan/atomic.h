@@ -1,24 +1,23 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Rules क्रम implicitly atomic memory accesses.
+ * Rules for implicitly atomic memory accesses.
  *
  * Copyright (C) 2019, Google LLC.
  */
 
-#अगर_अघोषित _KERNEL_KCSAN_ATOMIC_H
-#घोषणा _KERNEL_KCSAN_ATOMIC_H
+#ifndef _KERNEL_KCSAN_ATOMIC_H
+#define _KERNEL_KCSAN_ATOMIC_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
 /*
- * Special rules क्रम certain memory where concurrent conflicting accesses are
- * common, however, the current convention is to not mark them; वापसs true अगर
+ * Special rules for certain memory where concurrent conflicting accesses are
+ * common, however, the current convention is to not mark them; returns true if
  * access to @ptr should be considered atomic. Called from slow-path.
  */
-अटल bool kcsan_is_atomic_special(स्थिर अस्थिर व्योम *ptr)
-अणु
-	वापस false;
-पूर्ण
+static bool kcsan_is_atomic_special(const volatile void *ptr)
+{
+	return false;
+}
 
-#पूर्ण_अगर /* _KERNEL_KCSAN_ATOMIC_H */
+#endif /* _KERNEL_KCSAN_ATOMIC_H */

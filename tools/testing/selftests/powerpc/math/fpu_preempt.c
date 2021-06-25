@@ -1,110 +1,109 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright 2015, Cyril Bur, IBM Corp.
  *
- * This test attempts to see अगर the FPU रेजिस्टरs change across preemption.
- * Two things should be noted here a) The check_fpu function in यंत्र only checks
- * the non अस्थिर रेजिस्टरs as it is reused from the syscall test b) There is
- * no way to be sure preemption happened so this test just uses many thपढ़ोs
- * and a दीर्घ रुको. As such, a successful test करोesn't mean much but a failure
+ * This test attempts to see if the FPU registers change across preemption.
+ * Two things should be noted here a) The check_fpu function in asm only checks
+ * the non volatile registers as it is reused from the syscall test b) There is
+ * no way to be sure preemption happened so this test just uses many threads
+ * and a long wait. As such, a successful test doesn't mean much but a failure
  * is bad.
  */
 
-#समावेश <मानकपन.स>
-#समावेश <unistd.h>
-#समावेश <sys/syscall.h>
-#समावेश <sys/समय.स>
-#समावेश <sys/types.h>
-#समावेश <sys/रुको.h>
-#समावेश <मानककोष.स>
-#समावेश <pthपढ़ो.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/syscall.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <stdlib.h>
+#include <pthread.h>
 
-#समावेश "utils.h"
+#include "utils.h"
 
-/* Time to रुको क्रम workers to get preempted (seconds) */
-#घोषणा PREEMPT_TIME 20
+/* Time to wait for workers to get preempted (seconds) */
+#define PREEMPT_TIME 20
 /*
- * Factor by which to multiply number of online CPUs क्रम total number of
- * worker thपढ़ोs
+ * Factor by which to multiply number of online CPUs for total number of
+ * worker threads
  */
-#घोषणा THREAD_FACTOR 8
+#define THREAD_FACTOR 8
 
 
-__thपढ़ो द्विगुन darray[] = अणु0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0,
+__thread double darray[] = {0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0,
 		     1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0,
-		     2.1पूर्ण;
+		     2.1};
 
-पूर्णांक thपढ़ोs_starting;
-पूर्णांक running;
+int threads_starting;
+int running;
 
-बाह्य व्योम preempt_fpu(द्विगुन *darray, पूर्णांक *thपढ़ोs_starting, पूर्णांक *running);
+extern void preempt_fpu(double *darray, int *threads_starting, int *running);
 
-व्योम *preempt_fpu_c(व्योम *p)
-अणु
-	पूर्णांक i;
-	बेक्रम(pthपढ़ो_self());
-	क्रम (i = 0; i < 21; i++)
-		darray[i] = अक्रम();
+void *preempt_fpu_c(void *p)
+{
+	int i;
+	srand(pthread_self());
+	for (i = 0; i < 21; i++)
+		darray[i] = rand();
 
-	/* Test failed अगर it ever वापसs */
-	preempt_fpu(darray, &thपढ़ोs_starting, &running);
+	/* Test failed if it ever returns */
+	preempt_fpu(darray, &threads_starting, &running);
 
-	वापस p;
-पूर्ण
+	return p;
+}
 
-पूर्णांक test_preempt_fpu(व्योम)
-अणु
-	पूर्णांक i, rc, thपढ़ोs;
-	pthपढ़ो_t *tids;
+int test_preempt_fpu(void)
+{
+	int i, rc, threads;
+	pthread_t *tids;
 
-	thपढ़ोs = sysconf(_SC_NPROCESSORS_ONLN) * THREAD_FACTOR;
-	tids = दो_स्मृति((thपढ़ोs) * माप(pthपढ़ो_t));
+	threads = sysconf(_SC_NPROCESSORS_ONLN) * THREAD_FACTOR;
+	tids = malloc((threads) * sizeof(pthread_t));
 	FAIL_IF(!tids);
 
 	running = true;
-	thपढ़ोs_starting = thपढ़ोs;
-	क्रम (i = 0; i < thपढ़ोs; i++) अणु
-		rc = pthपढ़ो_create(&tids[i], शून्य, preempt_fpu_c, शून्य);
+	threads_starting = threads;
+	for (i = 0; i < threads; i++) {
+		rc = pthread_create(&tids[i], NULL, preempt_fpu_c, NULL);
 		FAIL_IF(rc);
-	पूर्ण
+	}
 
-	रखो_बफ(मानक_निकास, शून्य);
-	/* Not really necessary but nice to रुको क्रम every thपढ़ो to start */
-	म_लिखो("\tWaiting for all workers to start...");
-	जबतक(thपढ़ोs_starting)
-		यंत्र अस्थिर("": : :"memory");
-	म_लिखो("done\n");
+	setbuf(stdout, NULL);
+	/* Not really necessary but nice to wait for every thread to start */
+	printf("\tWaiting for all workers to start...");
+	while(threads_starting)
+		asm volatile("": : :"memory");
+	printf("done\n");
 
-	म_लिखो("\tWaiting for %d seconds to let some workers get preempted...", PREEMPT_TIME);
+	printf("\tWaiting for %d seconds to let some workers get preempted...", PREEMPT_TIME);
 	sleep(PREEMPT_TIME);
-	म_लिखो("done\n");
+	printf("done\n");
 
-	म_लिखो("\tStopping workers...");
+	printf("\tStopping workers...");
 	/*
 	 * Working are checking this value every loop. In preempt_fpu 'cmpwi r5,0; bne 2b'.
 	 * r5 will have loaded the value of running.
 	 */
 	running = 0;
-	क्रम (i = 0; i < thपढ़ोs; i++) अणु
-		व्योम *rc_p;
-		pthपढ़ो_join(tids[i], &rc_p);
+	for (i = 0; i < threads; i++) {
+		void *rc_p;
+		pthread_join(tids[i], &rc_p);
 
 		/*
 		 * Harness will say the fail was here, look at why preempt_fpu
-		 * वापसed
+		 * returned
 		 */
-		अगर ((दीर्घ) rc_p)
-			म_लिखो("oops\n");
-		FAIL_IF((दीर्घ) rc_p);
-	पूर्ण
-	म_लिखो("done\n");
+		if ((long) rc_p)
+			printf("oops\n");
+		FAIL_IF((long) rc_p);
+	}
+	printf("done\n");
 
-	मुक्त(tids);
-	वापस 0;
-पूर्ण
+	free(tids);
+	return 0;
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
-	वापस test_harness(test_preempt_fpu, "fpu_preempt");
-पूर्ण
+int main(int argc, char *argv[])
+{
+	return test_harness(test_preempt_fpu, "fpu_preempt");
+}

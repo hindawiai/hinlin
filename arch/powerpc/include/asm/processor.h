@@ -1,422 +1,421 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
-#अगर_अघोषित _ASM_POWERPC_PROCESSOR_H
-#घोषणा _ASM_POWERPC_PROCESSOR_H
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+#ifndef _ASM_POWERPC_PROCESSOR_H
+#define _ASM_POWERPC_PROCESSOR_H
 
 /*
  * Copyright (C) 2001 PPC 64 Team, IBM Corp
  */
 
-#समावेश <vdso/processor.h>
+#include <vdso/processor.h>
 
-#समावेश <यंत्र/reg.h>
+#include <asm/reg.h>
 
-#अगर_घोषित CONFIG_VSX
-#घोषणा TS_FPRWIDTH 2
+#ifdef CONFIG_VSX
+#define TS_FPRWIDTH 2
 
-#अगर_घोषित __BIG_ENDIAN__
-#घोषणा TS_FPROFFSET 0
-#घोषणा TS_VSRLOWOFFSET 1
-#अन्यथा
-#घोषणा TS_FPROFFSET 1
-#घोषणा TS_VSRLOWOFFSET 0
-#पूर्ण_अगर
+#ifdef __BIG_ENDIAN__
+#define TS_FPROFFSET 0
+#define TS_VSRLOWOFFSET 1
+#else
+#define TS_FPROFFSET 1
+#define TS_VSRLOWOFFSET 0
+#endif
 
-#अन्यथा
-#घोषणा TS_FPRWIDTH 1
-#घोषणा TS_FPROFFSET 0
-#पूर्ण_अगर
+#else
+#define TS_FPRWIDTH 1
+#define TS_FPROFFSET 0
+#endif
 
-#अगर_घोषित CONFIG_PPC64
+#ifdef CONFIG_PPC64
 /* Default SMT priority is set to 3. Use 11- 13bits to save priority. */
-#घोषणा PPR_PRIORITY 3
-#अगर_घोषित __ASSEMBLY__
-#घोषणा DEFAULT_PPR (PPR_PRIORITY << 50)
-#अन्यथा
-#घोषणा DEFAULT_PPR ((u64)PPR_PRIORITY << 50)
-#पूर्ण_अगर /* __ASSEMBLY__ */
-#पूर्ण_अगर /* CONFIG_PPC64 */
+#define PPR_PRIORITY 3
+#ifdef __ASSEMBLY__
+#define DEFAULT_PPR (PPR_PRIORITY << 50)
+#else
+#define DEFAULT_PPR ((u64)PPR_PRIORITY << 50)
+#endif /* __ASSEMBLY__ */
+#endif /* CONFIG_PPC64 */
 
-#अगर_अघोषित __ASSEMBLY__
-#समावेश <linux/types.h>
-#समावेश <linux/thपढ़ो_info.h>
-#समावेश <यंत्र/ptrace.h>
-#समावेश <यंत्र/hw_अवरोधpoपूर्णांक.h>
+#ifndef __ASSEMBLY__
+#include <linux/types.h>
+#include <linux/thread_info.h>
+#include <asm/ptrace.h>
+#include <asm/hw_breakpoint.h>
 
-/* We करो _not_ want to define new machine types at all, those must die
+/* We do _not_ want to define new machine types at all, those must die
  * in favor of using the device-tree
  * -- BenH.
  */
 
-/* PREP sub-platक्रमm types. Unused */
-#घोषणा _PREP_Motorola	0x01	/* motorola prep */
-#घोषणा _PREP_Firm	0x02	/* firmworks prep */
-#घोषणा _PREP_IBM	0x00	/* ibm prep */
-#घोषणा _PREP_Bull	0x03	/* bull prep */
+/* PREP sub-platform types. Unused */
+#define _PREP_Motorola	0x01	/* motorola prep */
+#define _PREP_Firm	0x02	/* firmworks prep */
+#define _PREP_IBM	0x00	/* ibm prep */
+#define _PREP_Bull	0x03	/* bull prep */
 
-/* CHRP sub-platक्रमm types. These are arbitrary */
-#घोषणा _CHRP_Motorola	0x04	/* motorola chrp, the cobra */
-#घोषणा _CHRP_IBM	0x05	/* IBM chrp, the दीर्घtrail and दीर्घtrail 2 */
-#घोषणा _CHRP_Pegasos	0x06	/* Genesi/bplan's Pegasos and Pegasos2 */
-#घोषणा _CHRP_briq	0x07	/* TotalImpact's briQ */
+/* CHRP sub-platform types. These are arbitrary */
+#define _CHRP_Motorola	0x04	/* motorola chrp, the cobra */
+#define _CHRP_IBM	0x05	/* IBM chrp, the longtrail and longtrail 2 */
+#define _CHRP_Pegasos	0x06	/* Genesi/bplan's Pegasos and Pegasos2 */
+#define _CHRP_briq	0x07	/* TotalImpact's briQ */
 
-#अगर defined(__KERNEL__) && defined(CONFIG_PPC32)
+#if defined(__KERNEL__) && defined(CONFIG_PPC32)
 
-बाह्य पूर्णांक _chrp_type;
+extern int _chrp_type;
 
-#पूर्ण_अगर /* defined(__KERNEL__) && defined(CONFIG_PPC32) */
+#endif /* defined(__KERNEL__) && defined(CONFIG_PPC32) */
 
-#अगर_घोषित __KERNEL__
+#ifdef __KERNEL__
 
-#अगर_घोषित CONFIG_PPC64
-#समावेश <यंत्र/task_size_64.h>
-#अन्यथा
-#समावेश <यंत्र/task_size_32.h>
-#पूर्ण_अगर
+#ifdef CONFIG_PPC64
+#include <asm/task_size_64.h>
+#else
+#include <asm/task_size_32.h>
+#endif
 
-काष्ठा task_काष्ठा;
-व्योम start_thपढ़ो(काष्ठा pt_regs *regs, अचिन्हित दीर्घ fdptr, अचिन्हित दीर्घ sp);
-व्योम release_thपढ़ो(काष्ठा task_काष्ठा *);
+struct task_struct;
+void start_thread(struct pt_regs *regs, unsigned long fdptr, unsigned long sp);
+void release_thread(struct task_struct *);
 
-#घोषणा TS_FPR(i) fp_state.fpr[i][TS_FPROFFSET]
-#घोषणा TS_CKFPR(i) ckfp_state.fpr[i][TS_FPROFFSET]
+#define TS_FPR(i) fp_state.fpr[i][TS_FPROFFSET]
+#define TS_CKFPR(i) ckfp_state.fpr[i][TS_FPROFFSET]
 
-/* FP and VSX 0-31 रेजिस्टर set */
-काष्ठा thपढ़ो_fp_state अणु
+/* FP and VSX 0-31 register set */
+struct thread_fp_state {
 	u64	fpr[32][TS_FPRWIDTH] __attribute__((aligned(16)));
-	u64	fpscr;		/* Floating poपूर्णांक status */
-पूर्ण;
+	u64	fpscr;		/* Floating point status */
+};
 
-/* Complete AltiVec रेजिस्टर set including VSCR */
-काष्ठा thपढ़ो_vr_state अणु
+/* Complete AltiVec register set including VSCR */
+struct thread_vr_state {
 	vector128	vr[32] __attribute__((aligned(16)));
 	vector128	vscr __attribute__((aligned(16)));
-पूर्ण;
+};
 
-काष्ठा debug_reg अणु
-#अगर_घोषित CONFIG_PPC_ADV_DEBUG_REGS
+struct debug_reg {
+#ifdef CONFIG_PPC_ADV_DEBUG_REGS
 	/*
 	 * The following help to manage the use of Debug Control Registers
-	 * om the BookE platक्रमms.
+	 * om the BookE platforms.
 	 */
-	uपूर्णांक32_t	dbcr0;
-	uपूर्णांक32_t	dbcr1;
-#अगर_घोषित CONFIG_BOOKE
-	uपूर्णांक32_t	dbcr2;
-#पूर्ण_अगर
+	uint32_t	dbcr0;
+	uint32_t	dbcr1;
+#ifdef CONFIG_BOOKE
+	uint32_t	dbcr2;
+#endif
 	/*
-	 * The stored value of the DBSR रेजिस्टर will be the value at the
-	 * last debug पूर्णांकerrupt. This रेजिस्टर can only be पढ़ो from the
-	 * user (will never be written to) and has value जबतक helping to
-	 * describe the reason क्रम the last debug trap.  Torez
+	 * The stored value of the DBSR register will be the value at the
+	 * last debug interrupt. This register can only be read from the
+	 * user (will never be written to) and has value while helping to
+	 * describe the reason for the last debug trap.  Torez
 	 */
-	uपूर्णांक32_t	dbsr;
+	uint32_t	dbsr;
 	/*
 	 * The following will contain addresses used by debug applications
 	 * to help trace and trap on particular address locations.
 	 * The bits in the Debug Control Registers above help define which
-	 * of the following रेजिस्टरs will contain valid data and/or addresses.
+	 * of the following registers will contain valid data and/or addresses.
 	 */
-	अचिन्हित दीर्घ	iac1;
-	अचिन्हित दीर्घ	iac2;
-#अगर CONFIG_PPC_ADV_DEBUG_IACS > 2
-	अचिन्हित दीर्घ	iac3;
-	अचिन्हित दीर्घ	iac4;
-#पूर्ण_अगर
-	अचिन्हित दीर्घ	dac1;
-	अचिन्हित दीर्घ	dac2;
-#अगर CONFIG_PPC_ADV_DEBUG_DVCS > 0
-	अचिन्हित दीर्घ	dvc1;
-	अचिन्हित दीर्घ	dvc2;
-#पूर्ण_अगर
-#पूर्ण_अगर
-पूर्ण;
+	unsigned long	iac1;
+	unsigned long	iac2;
+#if CONFIG_PPC_ADV_DEBUG_IACS > 2
+	unsigned long	iac3;
+	unsigned long	iac4;
+#endif
+	unsigned long	dac1;
+	unsigned long	dac2;
+#if CONFIG_PPC_ADV_DEBUG_DVCS > 0
+	unsigned long	dvc1;
+	unsigned long	dvc2;
+#endif
+#endif
+};
 
-काष्ठा thपढ़ो_काष्ठा अणु
-	अचिन्हित दीर्घ	ksp;		/* Kernel stack poपूर्णांकer */
+struct thread_struct {
+	unsigned long	ksp;		/* Kernel stack pointer */
 
-#अगर_घोषित CONFIG_PPC64
-	अचिन्हित दीर्घ	ksp_vsid;
-#पूर्ण_अगर
-	काष्ठा pt_regs	*regs;		/* Poपूर्णांकer to saved रेजिस्टर state */
-#अगर_घोषित CONFIG_BOOKE
+#ifdef CONFIG_PPC64
+	unsigned long	ksp_vsid;
+#endif
+	struct pt_regs	*regs;		/* Pointer to saved register state */
+#ifdef CONFIG_BOOKE
 	/* BookE base exception scratch space; align on cacheline */
-	अचिन्हित दीर्घ	normsave[8] ____cacheline_aligned;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PPC32
-	व्योम		*pgdir;		/* root of page-table tree */
-#अगर_घोषित CONFIG_PPC_RTAS
-	अचिन्हित दीर्घ	rtas_sp;	/* stack poपूर्णांकer क्रम when in RTAS */
-#पूर्ण_अगर
-#अगर defined(CONFIG_PPC_BOOK3S_32) && defined(CONFIG_PPC_KUAP)
-	अचिन्हित दीर्घ	kuap;		/* खोलोed segments क्रम user access */
-#पूर्ण_अगर
-	अचिन्हित दीर्घ	srr0;
-	अचिन्हित दीर्घ	srr1;
-	अचिन्हित दीर्घ	dar;
-	अचिन्हित दीर्घ	dsisr;
-#अगर_घोषित CONFIG_PPC_BOOK3S_32
-	अचिन्हित दीर्घ	r0, r3, r4, r5, r6, r8, r9, r11;
-	अचिन्हित दीर्घ	lr, ctr;
-#पूर्ण_अगर
-#पूर्ण_अगर /* CONFIG_PPC32 */
+	unsigned long	normsave[8] ____cacheline_aligned;
+#endif
+#ifdef CONFIG_PPC32
+	void		*pgdir;		/* root of page-table tree */
+#ifdef CONFIG_PPC_RTAS
+	unsigned long	rtas_sp;	/* stack pointer for when in RTAS */
+#endif
+#if defined(CONFIG_PPC_BOOK3S_32) && defined(CONFIG_PPC_KUAP)
+	unsigned long	kuap;		/* opened segments for user access */
+#endif
+	unsigned long	srr0;
+	unsigned long	srr1;
+	unsigned long	dar;
+	unsigned long	dsisr;
+#ifdef CONFIG_PPC_BOOK3S_32
+	unsigned long	r0, r3, r4, r5, r6, r8, r9, r11;
+	unsigned long	lr, ctr;
+#endif
+#endif /* CONFIG_PPC32 */
 	/* Debug Registers */
-	काष्ठा debug_reg debug;
-#अगर_घोषित CONFIG_PPC_FPU_REGS
-	काष्ठा thपढ़ो_fp_state	fp_state;
-	काष्ठा thपढ़ो_fp_state	*fp_save_area;
-#पूर्ण_अगर
-	पूर्णांक		fpexc_mode;	/* भग्नing-poपूर्णांक exception mode */
-	अचिन्हित पूर्णांक	align_ctl;	/* alignment handling control */
-#अगर_घोषित CONFIG_HAVE_HW_BREAKPOINT
-	काष्ठा perf_event *ptrace_bps[HBP_NUM_MAX];
+	struct debug_reg debug;
+#ifdef CONFIG_PPC_FPU_REGS
+	struct thread_fp_state	fp_state;
+	struct thread_fp_state	*fp_save_area;
+#endif
+	int		fpexc_mode;	/* floating-point exception mode */
+	unsigned int	align_ctl;	/* alignment handling control */
+#ifdef CONFIG_HAVE_HW_BREAKPOINT
+	struct perf_event *ptrace_bps[HBP_NUM_MAX];
 	/*
-	 * Helps identअगरy source of single-step exception and subsequent
-	 * hw-अवरोधpoपूर्णांक enablement
+	 * Helps identify source of single-step exception and subsequent
+	 * hw-breakpoint enablement
 	 */
-	काष्ठा perf_event *last_hit_ubp[HBP_NUM_MAX];
-#पूर्ण_अगर /* CONFIG_HAVE_HW_BREAKPOINT */
-	काष्ठा arch_hw_अवरोधpoपूर्णांक hw_brk[HBP_NUM_MAX]; /* hardware अवरोधpoपूर्णांक info */
-	अचिन्हित दीर्घ	trap_nr;	/* last trap # on this thपढ़ो */
+	struct perf_event *last_hit_ubp[HBP_NUM_MAX];
+#endif /* CONFIG_HAVE_HW_BREAKPOINT */
+	struct arch_hw_breakpoint hw_brk[HBP_NUM_MAX]; /* hardware breakpoint info */
+	unsigned long	trap_nr;	/* last trap # on this thread */
 	u8 load_slb;			/* Ages out SLB preload cache entries */
 	u8 load_fp;
-#अगर_घोषित CONFIG_ALTIVEC
+#ifdef CONFIG_ALTIVEC
 	u8 load_vec;
-	काष्ठा thपढ़ो_vr_state vr_state;
-	काष्ठा thपढ़ो_vr_state *vr_save_area;
-	अचिन्हित दीर्घ	vrsave;
-	पूर्णांक		used_vr;	/* set अगर process has used altivec */
-#पूर्ण_अगर /* CONFIG_ALTIVEC */
-#अगर_घोषित CONFIG_VSX
+	struct thread_vr_state vr_state;
+	struct thread_vr_state *vr_save_area;
+	unsigned long	vrsave;
+	int		used_vr;	/* set if process has used altivec */
+#endif /* CONFIG_ALTIVEC */
+#ifdef CONFIG_VSX
 	/* VSR status */
-	पूर्णांक		used_vsr;	/* set अगर process has used VSX */
-#पूर्ण_अगर /* CONFIG_VSX */
-#अगर_घोषित CONFIG_SPE
-	अचिन्हित दीर्घ	evr[32];	/* upper 32-bits of SPE regs */
+	int		used_vsr;	/* set if process has used VSX */
+#endif /* CONFIG_VSX */
+#ifdef CONFIG_SPE
+	unsigned long	evr[32];	/* upper 32-bits of SPE regs */
 	u64		acc;		/* Accumulator */
-	अचिन्हित दीर्घ	spefscr;	/* SPE & eFP status */
-	अचिन्हित दीर्घ	spefscr_last;	/* SPEFSCR value on last prctl
-					   call or trap वापस */
-	पूर्णांक		used_spe;	/* set अगर process has used spe */
-#पूर्ण_अगर /* CONFIG_SPE */
-#अगर_घोषित CONFIG_PPC_TRANSACTIONAL_MEM
-	u8	load_पंचांग;
-	u64		पंचांग_tfhar;	/* Transaction fail handler addr */
-	u64		पंचांग_texasr;	/* Transaction exception & summary */
-	u64		पंचांग_tfiar;	/* Transaction fail instr address reg */
-	काष्ठा pt_regs	ckpt_regs;	/* Checkpoपूर्णांकed रेजिस्टरs */
+	unsigned long	spefscr;	/* SPE & eFP status */
+	unsigned long	spefscr_last;	/* SPEFSCR value on last prctl
+					   call or trap return */
+	int		used_spe;	/* set if process has used spe */
+#endif /* CONFIG_SPE */
+#ifdef CONFIG_PPC_TRANSACTIONAL_MEM
+	u8	load_tm;
+	u64		tm_tfhar;	/* Transaction fail handler addr */
+	u64		tm_texasr;	/* Transaction exception & summary */
+	u64		tm_tfiar;	/* Transaction fail instr address reg */
+	struct pt_regs	ckpt_regs;	/* Checkpointed registers */
 
-	अचिन्हित दीर्घ	पंचांग_tar;
-	अचिन्हित दीर्घ	पंचांग_ppr;
-	अचिन्हित दीर्घ	पंचांग_dscr;
-	अचिन्हित दीर्घ   पंचांग_amr;
+	unsigned long	tm_tar;
+	unsigned long	tm_ppr;
+	unsigned long	tm_dscr;
+	unsigned long   tm_amr;
 
 	/*
-	 * Checkpoपूर्णांकed FP and VSX 0-31 रेजिस्टर set.
+	 * Checkpointed FP and VSX 0-31 register set.
 	 *
-	 * When a transaction is active/संकेतled/scheduled etc., *regs is the
+	 * When a transaction is active/signalled/scheduled etc., *regs is the
 	 * most recent set of/speculated GPRs with ckpt_regs being the older
-	 * checkpoपूर्णांकed regs to which we roll back अगर transaction पातs.
+	 * checkpointed regs to which we roll back if transaction aborts.
 	 *
 	 * These are analogous to how ckpt_regs and pt_regs work
 	 */
-	काष्ठा thपढ़ो_fp_state ckfp_state; /* Checkpoपूर्णांकed FP state */
-	काष्ठा thपढ़ो_vr_state ckvr_state; /* Checkpoपूर्णांकed VR state */
-	अचिन्हित दीर्घ	ckvrsave; /* Checkpoपूर्णांकed VRSAVE */
-#पूर्ण_अगर /* CONFIG_PPC_TRANSACTIONAL_MEM */
-#अगर_घोषित CONFIG_KVM_BOOK3S_32_HANDLER
-	व्योम*		kvm_shaकरोw_vcpu; /* KVM पूर्णांकernal data */
-#पूर्ण_अगर /* CONFIG_KVM_BOOK3S_32_HANDLER */
-#अगर defined(CONFIG_KVM) && defined(CONFIG_BOOKE)
-	काष्ठा kvm_vcpu	*kvm_vcpu;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PPC64
-	अचिन्हित दीर्घ	dscr;
-	अचिन्हित दीर्घ	fscr;
+	struct thread_fp_state ckfp_state; /* Checkpointed FP state */
+	struct thread_vr_state ckvr_state; /* Checkpointed VR state */
+	unsigned long	ckvrsave; /* Checkpointed VRSAVE */
+#endif /* CONFIG_PPC_TRANSACTIONAL_MEM */
+#ifdef CONFIG_KVM_BOOK3S_32_HANDLER
+	void*		kvm_shadow_vcpu; /* KVM internal data */
+#endif /* CONFIG_KVM_BOOK3S_32_HANDLER */
+#if defined(CONFIG_KVM) && defined(CONFIG_BOOKE)
+	struct kvm_vcpu	*kvm_vcpu;
+#endif
+#ifdef CONFIG_PPC64
+	unsigned long	dscr;
+	unsigned long	fscr;
 	/*
 	 * This member element dscr_inherit indicates that the process
-	 * has explicitly attempted and changed the DSCR रेजिस्टर value
-	 * क्रम itself. Hence kernel wont use the शेष CPU DSCR value
-	 * contained in the PACA काष्ठाure anymore during process context
-	 * चयन. Once this variable is set, this behaviour will also be
-	 * inherited to all the children of this process from that poपूर्णांक
+	 * has explicitly attempted and changed the DSCR register value
+	 * for itself. Hence kernel wont use the default CPU DSCR value
+	 * contained in the PACA structure anymore during process context
+	 * switch. Once this variable is set, this behaviour will also be
+	 * inherited to all the children of this process from that point
 	 * onwards.
 	 */
-	पूर्णांक		dscr_inherit;
-	अचिन्हित दीर्घ	tidr;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PPC_BOOK3S_64
-	अचिन्हित दीर्घ	tar;
-	अचिन्हित दीर्घ	ebbrr;
-	अचिन्हित दीर्घ	ebbhr;
-	अचिन्हित दीर्घ	bescr;
-	अचिन्हित दीर्घ	siar;
-	अचिन्हित दीर्घ	sdar;
-	अचिन्हित दीर्घ	sier;
-	अचिन्हित दीर्घ	mmcr2;
-	अचिन्हित 	mmcr0;
+	int		dscr_inherit;
+	unsigned long	tidr;
+#endif
+#ifdef CONFIG_PPC_BOOK3S_64
+	unsigned long	tar;
+	unsigned long	ebbrr;
+	unsigned long	ebbhr;
+	unsigned long	bescr;
+	unsigned long	siar;
+	unsigned long	sdar;
+	unsigned long	sier;
+	unsigned long	mmcr2;
+	unsigned 	mmcr0;
 
-	अचिन्हित 	used_ebb;
-	अचिन्हित दीर्घ   mmcr3;
-	अचिन्हित दीर्घ   sier2;
-	अचिन्हित दीर्घ   sier3;
+	unsigned 	used_ebb;
+	unsigned long   mmcr3;
+	unsigned long   sier2;
+	unsigned long   sier3;
 
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-#घोषणा ARCH_MIN_TASKALIGN 16
+#define ARCH_MIN_TASKALIGN 16
 
-#घोषणा INIT_SP		(माप(init_stack) + (अचिन्हित दीर्घ) &init_stack)
-#घोषणा INIT_SP_LIMIT	((अचिन्हित दीर्घ)&init_stack)
+#define INIT_SP		(sizeof(init_stack) + (unsigned long) &init_stack)
+#define INIT_SP_LIMIT	((unsigned long)&init_stack)
 
-#अगर_घोषित CONFIG_SPE
-#घोषणा SPEFSCR_INIT \
+#ifdef CONFIG_SPE
+#define SPEFSCR_INIT \
 	.spefscr = SPEFSCR_FINVE | SPEFSCR_FDBZE | SPEFSCR_FUNFE | SPEFSCR_FOVFE, \
 	.spefscr_last = SPEFSCR_FINVE | SPEFSCR_FDBZE | SPEFSCR_FUNFE | SPEFSCR_FOVFE,
-#अन्यथा
-#घोषणा SPEFSCR_INIT
-#पूर्ण_अगर
+#else
+#define SPEFSCR_INIT
+#endif
 
-#अगर_घोषित CONFIG_PPC32
-#घोषणा INIT_THREAD अणु \
+#ifdef CONFIG_PPC32
+#define INIT_THREAD { \
 	.ksp = INIT_SP, \
 	.pgdir = swapper_pg_dir, \
 	.fpexc_mode = MSR_FE0 | MSR_FE1, \
 	SPEFSCR_INIT \
-पूर्ण
-#अन्यथा
-#घोषणा INIT_THREAD  अणु \
+}
+#else
+#define INIT_THREAD  { \
 	.ksp = INIT_SP, \
 	.fpexc_mode = 0, \
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-#घोषणा task_pt_regs(tsk)	((tsk)->thपढ़ो.regs)
+#define task_pt_regs(tsk)	((tsk)->thread.regs)
 
-अचिन्हित दीर्घ get_wchan(काष्ठा task_काष्ठा *p);
+unsigned long get_wchan(struct task_struct *p);
 
-#घोषणा KSTK_EIP(tsk)  ((tsk)->thपढ़ो.regs? (tsk)->thपढ़ो.regs->nip: 0)
-#घोषणा KSTK_ESP(tsk)  ((tsk)->thपढ़ो.regs? (tsk)->thपढ़ो.regs->gpr[1]: 0)
+#define KSTK_EIP(tsk)  ((tsk)->thread.regs? (tsk)->thread.regs->nip: 0)
+#define KSTK_ESP(tsk)  ((tsk)->thread.regs? (tsk)->thread.regs->gpr[1]: 0)
 
-/* Get/set भग्नing-poपूर्णांक exception mode */
-#घोषणा GET_FPEXC_CTL(tsk, adr) get_fpexc_mode((tsk), (adr))
-#घोषणा SET_FPEXC_CTL(tsk, val) set_fpexc_mode((tsk), (val))
+/* Get/set floating-point exception mode */
+#define GET_FPEXC_CTL(tsk, adr) get_fpexc_mode((tsk), (adr))
+#define SET_FPEXC_CTL(tsk, val) set_fpexc_mode((tsk), (val))
 
-बाह्य पूर्णांक get_fpexc_mode(काष्ठा task_काष्ठा *tsk, अचिन्हित दीर्घ adr);
-बाह्य पूर्णांक set_fpexc_mode(काष्ठा task_काष्ठा *tsk, अचिन्हित पूर्णांक val);
+extern int get_fpexc_mode(struct task_struct *tsk, unsigned long adr);
+extern int set_fpexc_mode(struct task_struct *tsk, unsigned int val);
 
-#घोषणा GET_ENDIAN(tsk, adr) get_endian((tsk), (adr))
-#घोषणा SET_ENDIAN(tsk, val) set_endian((tsk), (val))
+#define GET_ENDIAN(tsk, adr) get_endian((tsk), (adr))
+#define SET_ENDIAN(tsk, val) set_endian((tsk), (val))
 
-बाह्य पूर्णांक get_endian(काष्ठा task_काष्ठा *tsk, अचिन्हित दीर्घ adr);
-बाह्य पूर्णांक set_endian(काष्ठा task_काष्ठा *tsk, अचिन्हित पूर्णांक val);
+extern int get_endian(struct task_struct *tsk, unsigned long adr);
+extern int set_endian(struct task_struct *tsk, unsigned int val);
 
-#घोषणा GET_UNALIGN_CTL(tsk, adr)	get_unalign_ctl((tsk), (adr))
-#घोषणा SET_UNALIGN_CTL(tsk, val)	set_unalign_ctl((tsk), (val))
+#define GET_UNALIGN_CTL(tsk, adr)	get_unalign_ctl((tsk), (adr))
+#define SET_UNALIGN_CTL(tsk, val)	set_unalign_ctl((tsk), (val))
 
-बाह्य पूर्णांक get_unalign_ctl(काष्ठा task_काष्ठा *tsk, अचिन्हित दीर्घ adr);
-बाह्य पूर्णांक set_unalign_ctl(काष्ठा task_काष्ठा *tsk, अचिन्हित पूर्णांक val);
+extern int get_unalign_ctl(struct task_struct *tsk, unsigned long adr);
+extern int set_unalign_ctl(struct task_struct *tsk, unsigned int val);
 
-बाह्य व्योम load_fp_state(काष्ठा thपढ़ो_fp_state *fp);
-बाह्य व्योम store_fp_state(काष्ठा thपढ़ो_fp_state *fp);
-बाह्य व्योम load_vr_state(काष्ठा thपढ़ो_vr_state *vr);
-बाह्य व्योम store_vr_state(काष्ठा thपढ़ो_vr_state *vr);
+extern void load_fp_state(struct thread_fp_state *fp);
+extern void store_fp_state(struct thread_fp_state *fp);
+extern void load_vr_state(struct thread_vr_state *vr);
+extern void store_vr_state(struct thread_vr_state *vr);
 
-अटल अंतरभूत अचिन्हित पूर्णांक __unpack_fe01(अचिन्हित दीर्घ msr_bits)
-अणु
-	वापस ((msr_bits & MSR_FE0) >> 10) | ((msr_bits & MSR_FE1) >> 8);
-पूर्ण
+static inline unsigned int __unpack_fe01(unsigned long msr_bits)
+{
+	return ((msr_bits & MSR_FE0) >> 10) | ((msr_bits & MSR_FE1) >> 8);
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ __pack_fe01(अचिन्हित पूर्णांक fpmode)
-अणु
-	वापस ((fpmode << 10) & MSR_FE0) | ((fpmode << 8) & MSR_FE1);
-पूर्ण
+static inline unsigned long __pack_fe01(unsigned int fpmode)
+{
+	return ((fpmode << 10) & MSR_FE0) | ((fpmode << 8) & MSR_FE1);
+}
 
-#अगर_घोषित CONFIG_PPC64
+#ifdef CONFIG_PPC64
 
-#घोषणा spin_begin()	HMT_low()
+#define spin_begin()	HMT_low()
 
-#घोषणा spin_cpu_relax()	barrier()
+#define spin_cpu_relax()	barrier()
 
-#घोषणा spin_end()	HMT_medium()
+#define spin_end()	HMT_medium()
 
-#घोषणा spin_until_cond(cond)					\
-करो अणु								\
-	अगर (unlikely(!(cond))) अणु				\
+#define spin_until_cond(cond)					\
+do {								\
+	if (unlikely(!(cond))) {				\
 		spin_begin();					\
-		करो अणु						\
+		do {						\
 			spin_cpu_relax();			\
-		पूर्ण जबतक (!(cond));				\
+		} while (!(cond));				\
 		spin_end();					\
-	पूर्ण							\
-पूर्ण जबतक (0)
+	}							\
+} while (0)
 
-#पूर्ण_अगर
+#endif
 
-/* Check that a certain kernel stack poपूर्णांकer is valid in task_काष्ठा p */
-पूर्णांक validate_sp(अचिन्हित दीर्घ sp, काष्ठा task_काष्ठा *p,
-                       अचिन्हित दीर्घ nbytes);
+/* Check that a certain kernel stack pointer is valid in task_struct p */
+int validate_sp(unsigned long sp, struct task_struct *p,
+                       unsigned long nbytes);
 
 /*
  * Prefetch macros.
  */
-#घोषणा ARCH_HAS_PREFETCH
-#घोषणा ARCH_HAS_PREFETCHW
-#घोषणा ARCH_HAS_SPINLOCK_PREFETCH
+#define ARCH_HAS_PREFETCH
+#define ARCH_HAS_PREFETCHW
+#define ARCH_HAS_SPINLOCK_PREFETCH
 
-अटल अंतरभूत व्योम prefetch(स्थिर व्योम *x)
-अणु
-	अगर (unlikely(!x))
-		वापस;
+static inline void prefetch(const void *x)
+{
+	if (unlikely(!x))
+		return;
 
-	__यंत्र__ __अस्थिर__ ("dcbt 0,%0" : : "r" (x));
-पूर्ण
+	__asm__ __volatile__ ("dcbt 0,%0" : : "r" (x));
+}
 
-अटल अंतरभूत व्योम prefetchw(स्थिर व्योम *x)
-अणु
-	अगर (unlikely(!x))
-		वापस;
+static inline void prefetchw(const void *x)
+{
+	if (unlikely(!x))
+		return;
 
-	__यंत्र__ __अस्थिर__ ("dcbtst 0,%0" : : "r" (x));
-पूर्ण
+	__asm__ __volatile__ ("dcbtst 0,%0" : : "r" (x));
+}
 
-#घोषणा spin_lock_prefetch(x)	prefetchw(x)
+#define spin_lock_prefetch(x)	prefetchw(x)
 
-#घोषणा HAVE_ARCH_PICK_MMAP_LAYOUT
+#define HAVE_ARCH_PICK_MMAP_LAYOUT
 
-/* यंत्र stubs */
-बाह्य अचिन्हित दीर्घ isa300_idle_stop_noloss(अचिन्हित दीर्घ psscr_val);
-बाह्य अचिन्हित दीर्घ isa300_idle_stop_mayloss(अचिन्हित दीर्घ psscr_val);
-बाह्य अचिन्हित दीर्घ isa206_idle_insn_mayloss(अचिन्हित दीर्घ type);
-#अगर_घोषित CONFIG_PPC_970_NAP
-बाह्य व्योम घातer4_idle_nap(व्योम);
-व्योम घातer4_idle_nap_वापस(व्योम);
-#पूर्ण_अगर
+/* asm stubs */
+extern unsigned long isa300_idle_stop_noloss(unsigned long psscr_val);
+extern unsigned long isa300_idle_stop_mayloss(unsigned long psscr_val);
+extern unsigned long isa206_idle_insn_mayloss(unsigned long type);
+#ifdef CONFIG_PPC_970_NAP
+extern void power4_idle_nap(void);
+void power4_idle_nap_return(void);
+#endif
 
-बाह्य अचिन्हित दीर्घ cpuidle_disable;
-क्रमागत idle_boot_override अणुIDLE_NO_OVERRIDE = 0, IDLE_POWERSAVE_OFFपूर्ण;
+extern unsigned long cpuidle_disable;
+enum idle_boot_override {IDLE_NO_OVERRIDE = 0, IDLE_POWERSAVE_OFF};
 
-बाह्य पूर्णांक घातersave_nap;	/* set अगर nap mode can be used in idle loop */
+extern int powersave_nap;	/* set if nap mode can be used in idle loop */
 
-बाह्य व्योम घातer7_idle_type(अचिन्हित दीर्घ type);
-बाह्य व्योम arch300_idle_type(अचिन्हित दीर्घ stop_psscr_val,
-			      अचिन्हित दीर्घ stop_psscr_mask);
+extern void power7_idle_type(unsigned long type);
+extern void arch300_idle_type(unsigned long stop_psscr_val,
+			      unsigned long stop_psscr_mask);
 
-बाह्य पूर्णांक fix_alignment(काष्ठा pt_regs *);
+extern int fix_alignment(struct pt_regs *);
 
-#अगर_घोषित CONFIG_PPC64
+#ifdef CONFIG_PPC64
 /*
  * We handle most unaligned accesses in hardware. On the other hand 
- * unaligned DMA can be very expensive on some ppc64 IO chips (it करोes
- * घातers of 2 ग_लिखोs until it reaches sufficient alignment).
+ * unaligned DMA can be very expensive on some ppc64 IO chips (it does
+ * powers of 2 writes until it reaches sufficient alignment).
  *
  * Based on this we disable the IP header alignment in network drivers.
  */
-#घोषणा NET_IP_ALIGN	0
-#पूर्ण_अगर
+#define NET_IP_ALIGN	0
+#endif
 
-पूर्णांक करो_mathemu(काष्ठा pt_regs *regs);
+int do_mathemu(struct pt_regs *regs);
 
-#पूर्ण_अगर /* __KERNEL__ */
-#पूर्ण_अगर /* __ASSEMBLY__ */
-#पूर्ण_अगर /* _ASM_POWERPC_PROCESSOR_H */
+#endif /* __KERNEL__ */
+#endif /* __ASSEMBLY__ */
+#endif /* _ASM_POWERPC_PROCESSOR_H */

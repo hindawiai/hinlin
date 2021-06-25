@@ -1,25 +1,24 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Callers outside of misc.c need access to the error reporting routines,
- * but the *_माला_दोtr() functions need to stay in misc.c because of how
- * स_नकल() and स_हटाओ() are defined क्रम the compressed boot environment.
+ * but the *_putstr() functions need to stay in misc.c because of how
+ * memcpy() and memmove() are defined for the compressed boot environment.
  */
-#समावेश "misc.h"
-#समावेश "error.h"
+#include "misc.h"
+#include "error.h"
 
-व्योम warn(अक्षर *m)
-अणु
-	error_माला_दोtr("\n\n");
-	error_माला_दोtr(m);
-	error_माला_दोtr("\n\n");
-पूर्ण
+void warn(char *m)
+{
+	error_putstr("\n\n");
+	error_putstr(m);
+	error_putstr("\n\n");
+}
 
-व्योम error(अक्षर *m)
-अणु
+void error(char *m)
+{
 	warn(m);
-	error_माला_दोtr(" -- System halted");
+	error_putstr(" -- System halted");
 
-	जबतक (1)
-		यंत्र("hlt");
-पूर्ण
+	while (1)
+		asm("hlt");
+}

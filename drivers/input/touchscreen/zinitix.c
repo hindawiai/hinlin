@@ -1,130 +1,129 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 
-#समावेश <linux/delay.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/input.h>
-#समावेश <linux/input/mt.h>
-#समावेश <linux/input/touchscreen.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/slab.h>
+#include <linux/delay.h>
+#include <linux/i2c.h>
+#include <linux/input.h>
+#include <linux/input/mt.h>
+#include <linux/input/touchscreen.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/regulator/consumer.h>
+#include <linux/slab.h>
 
 /* Register Map */
 
-#घोषणा BT541_SWRESET_CMD			0x0000
-#घोषणा BT541_WAKEUP_CMD			0x0001
+#define BT541_SWRESET_CMD			0x0000
+#define BT541_WAKEUP_CMD			0x0001
 
-#घोषणा BT541_IDLE_CMD				0x0004
-#घोषणा BT541_SLEEP_CMD				0x0005
+#define BT541_IDLE_CMD				0x0004
+#define BT541_SLEEP_CMD				0x0005
 
-#घोषणा BT541_CLEAR_INT_STATUS_CMD		0x0003
-#घोषणा BT541_CALIBRATE_CMD			0x0006
-#घोषणा BT541_SAVE_STATUS_CMD			0x0007
-#घोषणा BT541_SAVE_CALIBRATION_CMD		0x0008
-#घोषणा BT541_RECALL_FACTORY_CMD		0x000f
+#define BT541_CLEAR_INT_STATUS_CMD		0x0003
+#define BT541_CALIBRATE_CMD			0x0006
+#define BT541_SAVE_STATUS_CMD			0x0007
+#define BT541_SAVE_CALIBRATION_CMD		0x0008
+#define BT541_RECALL_FACTORY_CMD		0x000f
 
-#घोषणा BT541_THRESHOLD				0x0020
+#define BT541_THRESHOLD				0x0020
 
-#घोषणा BT541_LARGE_PALM_REJECT_AREA_TH		0x003F
+#define BT541_LARGE_PALM_REJECT_AREA_TH		0x003F
 
-#घोषणा BT541_DEBUG_REG				0x0115 /* 0~7 */
+#define BT541_DEBUG_REG				0x0115 /* 0~7 */
 
-#घोषणा BT541_TOUCH_MODE			0x0010
-#घोषणा BT541_CHIP_REVISION			0x0011
-#घोषणा BT541_FIRMWARE_VERSION			0x0012
+#define BT541_TOUCH_MODE			0x0010
+#define BT541_CHIP_REVISION			0x0011
+#define BT541_FIRMWARE_VERSION			0x0012
 
-#घोषणा ZINITIX_USB_DETECT			0x116
+#define ZINITIX_USB_DETECT			0x116
 
-#घोषणा BT541_MINOR_FW_VERSION			0x0121
+#define BT541_MINOR_FW_VERSION			0x0121
 
-#घोषणा BT541_VENDOR_ID				0x001C
-#घोषणा BT541_HW_ID				0x0014
+#define BT541_VENDOR_ID				0x001C
+#define BT541_HW_ID				0x0014
 
-#घोषणा BT541_DATA_VERSION_REG			0x0013
-#घोषणा BT541_SUPPORTED_FINGER_NUM		0x0015
-#घोषणा BT541_EEPROM_INFO			0x0018
-#घोषणा BT541_INITIAL_TOUCH_MODE		0x0019
+#define BT541_DATA_VERSION_REG			0x0013
+#define BT541_SUPPORTED_FINGER_NUM		0x0015
+#define BT541_EEPROM_INFO			0x0018
+#define BT541_INITIAL_TOUCH_MODE		0x0019
 
-#घोषणा BT541_TOTAL_NUMBER_OF_X			0x0060
-#घोषणा BT541_TOTAL_NUMBER_OF_Y			0x0061
+#define BT541_TOTAL_NUMBER_OF_X			0x0060
+#define BT541_TOTAL_NUMBER_OF_Y			0x0061
 
-#घोषणा BT541_DELAY_RAW_FOR_HOST		0x007f
+#define BT541_DELAY_RAW_FOR_HOST		0x007f
 
-#घोषणा BT541_BUTTON_SUPPORTED_NUM		0x00B0
-#घोषणा BT541_BUTTON_SENSITIVITY		0x00B2
-#घोषणा BT541_DUMMY_BUTTON_SENSITIVITY		0X00C8
+#define BT541_BUTTON_SUPPORTED_NUM		0x00B0
+#define BT541_BUTTON_SENSITIVITY		0x00B2
+#define BT541_DUMMY_BUTTON_SENSITIVITY		0X00C8
 
-#घोषणा BT541_X_RESOLUTION			0x00C0
-#घोषणा BT541_Y_RESOLUTION			0x00C1
+#define BT541_X_RESOLUTION			0x00C0
+#define BT541_Y_RESOLUTION			0x00C1
 
-#घोषणा BT541_POINT_STATUS_REG			0x0080
-#घोषणा BT541_ICON_STATUS_REG			0x00AA
+#define BT541_POINT_STATUS_REG			0x0080
+#define BT541_ICON_STATUS_REG			0x00AA
 
-#घोषणा BT541_POINT_COORD_REG			(BT541_POINT_STATUS_REG + 2)
+#define BT541_POINT_COORD_REG			(BT541_POINT_STATUS_REG + 2)
 
-#घोषणा BT541_AFE_FREQUENCY			0x0100
-#घोषणा BT541_DND_N_COUNT			0x0122
-#घोषणा BT541_DND_U_COUNT			0x0135
+#define BT541_AFE_FREQUENCY			0x0100
+#define BT541_DND_N_COUNT			0x0122
+#define BT541_DND_U_COUNT			0x0135
 
-#घोषणा BT541_RAWDATA_REG			0x0200
+#define BT541_RAWDATA_REG			0x0200
 
-#घोषणा BT541_EEPROM_INFO_REG			0x0018
+#define BT541_EEPROM_INFO_REG			0x0018
 
-#घोषणा BT541_INT_ENABLE_FLAG			0x00f0
-#घोषणा BT541_PERIODICAL_INTERRUPT_INTERVAL	0x00f1
+#define BT541_INT_ENABLE_FLAG			0x00f0
+#define BT541_PERIODICAL_INTERRUPT_INTERVAL	0x00f1
 
-#घोषणा BT541_BTN_WIDTH				0x016d
+#define BT541_BTN_WIDTH				0x016d
 
-#घोषणा BT541_CHECKSUM_RESULT			0x012c
+#define BT541_CHECKSUM_RESULT			0x012c
 
-#घोषणा BT541_INIT_FLASH			0x01d0
-#घोषणा BT541_WRITE_FLASH			0x01d1
-#घोषणा BT541_READ_FLASH			0x01d2
+#define BT541_INIT_FLASH			0x01d0
+#define BT541_WRITE_FLASH			0x01d1
+#define BT541_READ_FLASH			0x01d2
 
-#घोषणा ZINITIX_INTERNAL_FLAG_02		0x011e
-#घोषणा ZINITIX_INTERNAL_FLAG_03		0x011f
+#define ZINITIX_INTERNAL_FLAG_02		0x011e
+#define ZINITIX_INTERNAL_FLAG_03		0x011f
 
-#घोषणा ZINITIX_I2C_CHECKSUM_WCNT		0x016a
-#घोषणा ZINITIX_I2C_CHECKSUM_RESULT		0x016c
+#define ZINITIX_I2C_CHECKSUM_WCNT		0x016a
+#define ZINITIX_I2C_CHECKSUM_RESULT		0x016c
 
-/* Interrupt & status रेजिस्टर flags */
+/* Interrupt & status register flags */
 
-#घोषणा BIT_PT_CNT_CHANGE			BIT(0)
-#घोषणा BIT_DOWN				BIT(1)
-#घोषणा BIT_MOVE				BIT(2)
-#घोषणा BIT_UP					BIT(3)
-#घोषणा BIT_PALM				BIT(4)
-#घोषणा BIT_PALM_REJECT				BIT(5)
-#घोषणा BIT_RESERVED_0				BIT(6)
-#घोषणा BIT_RESERVED_1				BIT(7)
-#घोषणा BIT_WEIGHT_CHANGE			BIT(8)
-#घोषणा BIT_PT_NO_CHANGE			BIT(9)
-#घोषणा BIT_REJECT				BIT(10)
-#घोषणा BIT_PT_EXIST				BIT(11)
-#घोषणा BIT_RESERVED_2				BIT(12)
-#घोषणा BIT_ERROR				BIT(13)
-#घोषणा BIT_DEBUG				BIT(14)
-#घोषणा BIT_ICON_EVENT				BIT(15)
+#define BIT_PT_CNT_CHANGE			BIT(0)
+#define BIT_DOWN				BIT(1)
+#define BIT_MOVE				BIT(2)
+#define BIT_UP					BIT(3)
+#define BIT_PALM				BIT(4)
+#define BIT_PALM_REJECT				BIT(5)
+#define BIT_RESERVED_0				BIT(6)
+#define BIT_RESERVED_1				BIT(7)
+#define BIT_WEIGHT_CHANGE			BIT(8)
+#define BIT_PT_NO_CHANGE			BIT(9)
+#define BIT_REJECT				BIT(10)
+#define BIT_PT_EXIST				BIT(11)
+#define BIT_RESERVED_2				BIT(12)
+#define BIT_ERROR				BIT(13)
+#define BIT_DEBUG				BIT(14)
+#define BIT_ICON_EVENT				BIT(15)
 
-#घोषणा SUB_BIT_EXIST				BIT(0)
-#घोषणा SUB_BIT_DOWN				BIT(1)
-#घोषणा SUB_BIT_MOVE				BIT(2)
-#घोषणा SUB_BIT_UP				BIT(3)
-#घोषणा SUB_BIT_UPDATE				BIT(4)
-#घोषणा SUB_BIT_WAIT				BIT(5)
+#define SUB_BIT_EXIST				BIT(0)
+#define SUB_BIT_DOWN				BIT(1)
+#define SUB_BIT_MOVE				BIT(2)
+#define SUB_BIT_UP				BIT(3)
+#define SUB_BIT_UPDATE				BIT(4)
+#define SUB_BIT_WAIT				BIT(5)
 
-#घोषणा DEFAULT_TOUCH_POINT_MODE		2
-#घोषणा MAX_SUPPORTED_FINGER_NUM		5
+#define DEFAULT_TOUCH_POINT_MODE		2
+#define MAX_SUPPORTED_FINGER_NUM		5
 
-#घोषणा CHIP_ON_DELAY				15 // ms
-#घोषणा FIRMWARE_ON_DELAY			40 // ms
+#define CHIP_ON_DELAY				15 // ms
+#define FIRMWARE_ON_DELAY			40 // ms
 
-काष्ठा poपूर्णांक_coord अणु
+struct point_coord {
 	__le16	x;
 	__le16	y;
 	u8	width;
@@ -132,298 +131,298 @@
 	// currently unused, but needed as padding:
 	u8	minor_width;
 	u8	angle;
-पूर्ण;
+};
 
-काष्ठा touch_event अणु
+struct touch_event {
 	__le16	status;
 	u8	finger_cnt;
-	u8	समय_stamp;
-	काष्ठा poपूर्णांक_coord poपूर्णांक_coord[MAX_SUPPORTED_FINGER_NUM];
-पूर्ण;
+	u8	time_stamp;
+	struct point_coord point_coord[MAX_SUPPORTED_FINGER_NUM];
+};
 
-काष्ठा bt541_ts_data अणु
-	काष्ठा i2c_client *client;
-	काष्ठा input_dev *input_dev;
-	काष्ठा touchscreen_properties prop;
-	काष्ठा regulator_bulk_data supplies[2];
+struct bt541_ts_data {
+	struct i2c_client *client;
+	struct input_dev *input_dev;
+	struct touchscreen_properties prop;
+	struct regulator_bulk_data supplies[2];
 	u32 zinitix_mode;
-पूर्ण;
+};
 
-अटल पूर्णांक zinitix_पढ़ो_data(काष्ठा i2c_client *client,
-			     u16 reg, व्योम *values, माप_प्रकार length)
-अणु
+static int zinitix_read_data(struct i2c_client *client,
+			     u16 reg, void *values, size_t length)
+{
 	__le16 reg_le = cpu_to_le16(reg);
-	पूर्णांक ret;
+	int ret;
 
-	/* A single i2c_transfer() transaction करोes not work here. */
-	ret = i2c_master_send(client, (u8 *)&reg_le, माप(reg_le));
-	अगर (ret != माप(reg_le))
-		वापस ret < 0 ? ret : -EIO;
+	/* A single i2c_transfer() transaction does not work here. */
+	ret = i2c_master_send(client, (u8 *)&reg_le, sizeof(reg_le));
+	if (ret != sizeof(reg_le))
+		return ret < 0 ? ret : -EIO;
 
 	ret = i2c_master_recv(client, (u8 *)values, length);
-	अगर (ret != length)
-		वापस ret < 0 ? ret : -EIO;
+	if (ret != length)
+		return ret < 0 ? ret : -EIO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक zinitix_ग_लिखो_u16(काष्ठा i2c_client *client, u16 reg, u16 value)
-अणु
-	__le16 packet[2] = अणुcpu_to_le16(reg), cpu_to_le16(value)पूर्ण;
-	पूर्णांक ret;
+static int zinitix_write_u16(struct i2c_client *client, u16 reg, u16 value)
+{
+	__le16 packet[2] = {cpu_to_le16(reg), cpu_to_le16(value)};
+	int ret;
 
-	ret = i2c_master_send(client, (u8 *)packet, माप(packet));
-	अगर (ret != माप(packet))
-		वापस ret < 0 ? ret : -EIO;
+	ret = i2c_master_send(client, (u8 *)packet, sizeof(packet));
+	if (ret != sizeof(packet))
+		return ret < 0 ? ret : -EIO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक zinitix_ग_लिखो_cmd(काष्ठा i2c_client *client, u16 reg)
-अणु
+static int zinitix_write_cmd(struct i2c_client *client, u16 reg)
+{
 	__le16 reg_le = cpu_to_le16(reg);
-	पूर्णांक ret;
+	int ret;
 
-	ret = i2c_master_send(client, (u8 *)&reg_le, माप(reg_le));
-	अगर (ret != माप(reg_le))
-		वापस ret < 0 ? ret : -EIO;
+	ret = i2c_master_send(client, (u8 *)&reg_le, sizeof(reg_le));
+	if (ret != sizeof(reg_le))
+		return ret < 0 ? ret : -EIO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक zinitix_init_touch(काष्ठा bt541_ts_data *bt541)
-अणु
-	काष्ठा i2c_client *client = bt541->client;
-	पूर्णांक i;
-	पूर्णांक error;
+static int zinitix_init_touch(struct bt541_ts_data *bt541)
+{
+	struct i2c_client *client = bt541->client;
+	int i;
+	int error;
 
-	error = zinitix_ग_लिखो_cmd(client, BT541_SWRESET_CMD);
-	अगर (error) अणु
+	error = zinitix_write_cmd(client, BT541_SWRESET_CMD);
+	if (error) {
 		dev_err(&client->dev, "Failed to write reset command\n");
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	error = zinitix_ग_लिखो_u16(client, BT541_INT_ENABLE_FLAG, 0x0);
-	अगर (error) अणु
+	error = zinitix_write_u16(client, BT541_INT_ENABLE_FLAG, 0x0);
+	if (error) {
 		dev_err(&client->dev,
 			"Failed to reset interrupt enable flag\n");
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	/* initialize */
-	error = zinitix_ग_लिखो_u16(client, BT541_X_RESOLUTION,
+	error = zinitix_write_u16(client, BT541_X_RESOLUTION,
 				  bt541->prop.max_x);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	error = zinitix_ग_लिखो_u16(client, BT541_Y_RESOLUTION,
+	error = zinitix_write_u16(client, BT541_Y_RESOLUTION,
 				  bt541->prop.max_y);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	error = zinitix_ग_लिखो_u16(client, BT541_SUPPORTED_FINGER_NUM,
+	error = zinitix_write_u16(client, BT541_SUPPORTED_FINGER_NUM,
 				  MAX_SUPPORTED_FINGER_NUM);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	error = zinitix_ग_लिखो_u16(client, BT541_INITIAL_TOUCH_MODE,
+	error = zinitix_write_u16(client, BT541_INITIAL_TOUCH_MODE,
 				  bt541->zinitix_mode);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	error = zinitix_ग_लिखो_u16(client, BT541_TOUCH_MODE,
+	error = zinitix_write_u16(client, BT541_TOUCH_MODE,
 				  bt541->zinitix_mode);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	error = zinitix_ग_लिखो_u16(client, BT541_INT_ENABLE_FLAG,
+	error = zinitix_write_u16(client, BT541_INT_ENABLE_FLAG,
 				  BIT_PT_CNT_CHANGE | BIT_DOWN | BIT_MOVE |
 					BIT_UP);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	/* clear queue */
-	क्रम (i = 0; i < 10; i++) अणु
-		zinitix_ग_लिखो_cmd(client, BT541_CLEAR_INT_STATUS_CMD);
+	for (i = 0; i < 10; i++) {
+		zinitix_write_cmd(client, BT541_CLEAR_INT_STATUS_CMD);
 		udelay(10);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक zinitix_init_regulators(काष्ठा bt541_ts_data *bt541)
-अणु
-	काष्ठा i2c_client *client = bt541->client;
-	पूर्णांक error;
+static int zinitix_init_regulators(struct bt541_ts_data *bt541)
+{
+	struct i2c_client *client = bt541->client;
+	int error;
 
 	bt541->supplies[0].supply = "vdd";
 	bt541->supplies[1].supply = "vddo";
 	error = devm_regulator_bulk_get(&client->dev,
 					ARRAY_SIZE(bt541->supplies),
 					bt541->supplies);
-	अगर (error < 0) अणु
+	if (error < 0) {
 		dev_err(&client->dev, "Failed to get regulators: %d\n", error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक zinitix_send_घातer_on_sequence(काष्ठा bt541_ts_data *bt541)
-अणु
-	पूर्णांक error;
-	काष्ठा i2c_client *client = bt541->client;
+static int zinitix_send_power_on_sequence(struct bt541_ts_data *bt541)
+{
+	int error;
+	struct i2c_client *client = bt541->client;
 
-	error = zinitix_ग_लिखो_u16(client, 0xc000, 0x0001);
-	अगर (error) अणु
+	error = zinitix_write_u16(client, 0xc000, 0x0001);
+	if (error) {
 		dev_err(&client->dev,
 			"Failed to send power sequence(vendor cmd enable)\n");
-		वापस error;
-	पूर्ण
+		return error;
+	}
 	udelay(10);
 
-	error = zinitix_ग_लिखो_cmd(client, 0xc004);
-	अगर (error) अणु
+	error = zinitix_write_cmd(client, 0xc004);
+	if (error) {
 		dev_err(&client->dev,
 			"Failed to send power sequence (intn clear)\n");
-		वापस error;
-	पूर्ण
+		return error;
+	}
 	udelay(10);
 
-	error = zinitix_ग_लिखो_u16(client, 0xc002, 0x0001);
-	अगर (error) अणु
+	error = zinitix_write_u16(client, 0xc002, 0x0001);
+	if (error) {
 		dev_err(&client->dev,
 			"Failed to send power sequence (nvm init)\n");
-		वापस error;
-	पूर्ण
+		return error;
+	}
 	mdelay(2);
 
-	error = zinitix_ग_लिखो_u16(client, 0xc001, 0x0001);
-	अगर (error) अणु
+	error = zinitix_write_u16(client, 0xc001, 0x0001);
+	if (error) {
 		dev_err(&client->dev,
 			"Failed to send power sequence (program start)\n");
-		वापस error;
-	पूर्ण
+		return error;
+	}
 	msleep(FIRMWARE_ON_DELAY);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम zinitix_report_finger(काष्ठा bt541_ts_data *bt541, पूर्णांक slot,
-				  स्थिर काष्ठा poपूर्णांक_coord *p)
-अणु
+static void zinitix_report_finger(struct bt541_ts_data *bt541, int slot,
+				  const struct point_coord *p)
+{
 	input_mt_slot(bt541->input_dev, slot);
 	input_mt_report_slot_state(bt541->input_dev, MT_TOOL_FINGER, true);
 	touchscreen_report_pos(bt541->input_dev, &bt541->prop,
 			       le16_to_cpu(p->x), le16_to_cpu(p->y), true);
-	input_report_असल(bt541->input_dev, ABS_MT_TOUCH_MAJOR, p->width);
-पूर्ण
+	input_report_abs(bt541->input_dev, ABS_MT_TOUCH_MAJOR, p->width);
+}
 
-अटल irqवापस_t zinitix_ts_irq_handler(पूर्णांक irq, व्योम *bt541_handler)
-अणु
-	काष्ठा bt541_ts_data *bt541 = bt541_handler;
-	काष्ठा i2c_client *client = bt541->client;
-	काष्ठा touch_event touch_event;
-	पूर्णांक error;
-	पूर्णांक i;
+static irqreturn_t zinitix_ts_irq_handler(int irq, void *bt541_handler)
+{
+	struct bt541_ts_data *bt541 = bt541_handler;
+	struct i2c_client *client = bt541->client;
+	struct touch_event touch_event;
+	int error;
+	int i;
 
-	स_रखो(&touch_event, 0, माप(काष्ठा touch_event));
+	memset(&touch_event, 0, sizeof(struct touch_event));
 
-	error = zinitix_पढ़ो_data(bt541->client, BT541_POINT_STATUS_REG,
-				  &touch_event, माप(काष्ठा touch_event));
-	अगर (error) अणु
+	error = zinitix_read_data(bt541->client, BT541_POINT_STATUS_REG,
+				  &touch_event, sizeof(struct touch_event));
+	if (error) {
 		dev_err(&client->dev, "Failed to read in touchpoint struct\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	क्रम (i = 0; i < MAX_SUPPORTED_FINGER_NUM; i++)
-		अगर (touch_event.poपूर्णांक_coord[i].sub_status & SUB_BIT_EXIST)
+	for (i = 0; i < MAX_SUPPORTED_FINGER_NUM; i++)
+		if (touch_event.point_coord[i].sub_status & SUB_BIT_EXIST)
 			zinitix_report_finger(bt541, i,
-					      &touch_event.poपूर्णांक_coord[i]);
+					      &touch_event.point_coord[i]);
 
 	input_mt_sync_frame(bt541->input_dev);
 	input_sync(bt541->input_dev);
 
 out:
-	zinitix_ग_लिखो_cmd(bt541->client, BT541_CLEAR_INT_STATUS_CMD);
-	वापस IRQ_HANDLED;
-पूर्ण
+	zinitix_write_cmd(bt541->client, BT541_CLEAR_INT_STATUS_CMD);
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक zinitix_start(काष्ठा bt541_ts_data *bt541)
-अणु
-	पूर्णांक error;
+static int zinitix_start(struct bt541_ts_data *bt541)
+{
+	int error;
 
 	error = regulator_bulk_enable(ARRAY_SIZE(bt541->supplies),
 				      bt541->supplies);
-	अगर (error) अणु
+	if (error) {
 		dev_err(&bt541->client->dev,
 			"Failed to enable regulators: %d\n", error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	msleep(CHIP_ON_DELAY);
 
-	error = zinitix_send_घातer_on_sequence(bt541);
-	अगर (error) अणु
+	error = zinitix_send_power_on_sequence(bt541);
+	if (error) {
 		dev_err(&bt541->client->dev,
 			"Error while sending power-on sequence: %d\n", error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	error = zinitix_init_touch(bt541);
-	अगर (error) अणु
+	if (error) {
 		dev_err(&bt541->client->dev,
 			"Error while configuring touch IC\n");
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	enable_irq(bt541->client->irq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक zinitix_stop(काष्ठा bt541_ts_data *bt541)
-अणु
-	पूर्णांक error;
+static int zinitix_stop(struct bt541_ts_data *bt541)
+{
+	int error;
 
 	disable_irq(bt541->client->irq);
 
 	error = regulator_bulk_disable(ARRAY_SIZE(bt541->supplies),
 				       bt541->supplies);
-	अगर (error) अणु
+	if (error) {
 		dev_err(&bt541->client->dev,
 			"Failed to disable regulators: %d\n", error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक zinitix_input_खोलो(काष्ठा input_dev *dev)
-अणु
-	काष्ठा bt541_ts_data *bt541 = input_get_drvdata(dev);
+static int zinitix_input_open(struct input_dev *dev)
+{
+	struct bt541_ts_data *bt541 = input_get_drvdata(dev);
 
-	वापस zinitix_start(bt541);
-पूर्ण
+	return zinitix_start(bt541);
+}
 
-अटल व्योम zinitix_input_बंद(काष्ठा input_dev *dev)
-अणु
-	काष्ठा bt541_ts_data *bt541 = input_get_drvdata(dev);
+static void zinitix_input_close(struct input_dev *dev)
+{
+	struct bt541_ts_data *bt541 = input_get_drvdata(dev);
 
 	zinitix_stop(bt541);
-पूर्ण
+}
 
-अटल पूर्णांक zinitix_init_input_dev(काष्ठा bt541_ts_data *bt541)
-अणु
-	काष्ठा input_dev *input_dev;
-	पूर्णांक error;
+static int zinitix_init_input_dev(struct bt541_ts_data *bt541)
+{
+	struct input_dev *input_dev;
+	int error;
 
 	input_dev = devm_input_allocate_device(&bt541->client->dev);
-	अगर (!input_dev) अणु
+	if (!input_dev) {
 		dev_err(&bt541->client->dev,
 			"Failed to allocate input device.");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	input_set_drvdata(input_dev, bt541);
 	bt541->input_dev = input_dev;
@@ -431,150 +430,150 @@ out:
 	input_dev->name = "Zinitix Capacitive TouchScreen";
 	input_dev->phys = "input/ts";
 	input_dev->id.bustype = BUS_I2C;
-	input_dev->खोलो = zinitix_input_खोलो;
-	input_dev->बंद = zinitix_input_बंद;
+	input_dev->open = zinitix_input_open;
+	input_dev->close = zinitix_input_close;
 
 	input_set_capability(input_dev, EV_ABS, ABS_MT_POSITION_X);
 	input_set_capability(input_dev, EV_ABS, ABS_MT_POSITION_Y);
-	input_set_असल_params(input_dev, ABS_MT_WIDTH_MAJOR, 0, 255, 0, 0);
-	input_set_असल_params(input_dev, ABS_MT_TOUCH_MAJOR, 0, 255, 0, 0);
+	input_set_abs_params(input_dev, ABS_MT_WIDTH_MAJOR, 0, 255, 0, 0);
+	input_set_abs_params(input_dev, ABS_MT_TOUCH_MAJOR, 0, 255, 0, 0);
 
 	touchscreen_parse_properties(input_dev, true, &bt541->prop);
-	अगर (!bt541->prop.max_x || !bt541->prop.max_y) अणु
+	if (!bt541->prop.max_x || !bt541->prop.max_y) {
 		dev_err(&bt541->client->dev,
 			"Touchscreen-size-x and/or touchscreen-size-y not set in dts\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	error = input_mt_init_slots(input_dev, MAX_SUPPORTED_FINGER_NUM,
-				    INPUT_MT_सूचीECT | INPUT_MT_DROP_UNUSED);
-	अगर (error) अणु
+				    INPUT_MT_DIRECT | INPUT_MT_DROP_UNUSED);
+	if (error) {
 		dev_err(&bt541->client->dev,
 			"Failed to initialize MT slots: %d", error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	error = input_रेजिस्टर_device(input_dev);
-	अगर (error) अणु
+	error = input_register_device(input_dev);
+	if (error) {
 		dev_err(&bt541->client->dev,
 			"Failed to register input device: %d", error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक zinitix_ts_probe(काष्ठा i2c_client *client)
-अणु
-	काष्ठा bt541_ts_data *bt541;
-	पूर्णांक error;
+static int zinitix_ts_probe(struct i2c_client *client)
+{
+	struct bt541_ts_data *bt541;
+	int error;
 
-	अगर (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) अणु
+	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) {
 		dev_err(&client->dev,
 			"Failed to assert adapter's support for plain I2C.\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
-	bt541 = devm_kzalloc(&client->dev, माप(*bt541), GFP_KERNEL);
-	अगर (!bt541)
-		वापस -ENOMEM;
+	bt541 = devm_kzalloc(&client->dev, sizeof(*bt541), GFP_KERNEL);
+	if (!bt541)
+		return -ENOMEM;
 
 	bt541->client = client;
 	i2c_set_clientdata(client, bt541);
 
 	error = zinitix_init_regulators(bt541);
-	अगर (error) अणु
+	if (error) {
 		dev_err(&client->dev,
 			"Failed to initialize regulators: %d\n", error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	error = zinitix_init_input_dev(bt541);
-	अगर (error) अणु
+	if (error) {
 		dev_err(&client->dev,
 			"Failed to initialize input device: %d\n", error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	error = device_property_पढ़ो_u32(&client->dev, "zinitix,mode",
+	error = device_property_read_u32(&client->dev, "zinitix,mode",
 					 &bt541->zinitix_mode);
-	अगर (error < 0) अणु
+	if (error < 0) {
 		/* fall back to mode 2 */
 		bt541->zinitix_mode = DEFAULT_TOUCH_POINT_MODE;
-	पूर्ण
+	}
 
-	अगर (bt541->zinitix_mode != 2) अणु
+	if (bt541->zinitix_mode != 2) {
 		/*
-		 * If there are devices that करोn't support mode 2, support
-		 * क्रम other modes (0, 1) will be needed.
+		 * If there are devices that don't support mode 2, support
+		 * for other modes (0, 1) will be needed.
 		 */
 		dev_err(&client->dev,
 			"Malformed zinitix,mode property, must be 2 (supplied: %d)\n",
 			bt541->zinitix_mode);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	error = devm_request_thपढ़ोed_irq(&client->dev, client->irq,
-					  शून्य, zinitix_ts_irq_handler,
+	error = devm_request_threaded_irq(&client->dev, client->irq,
+					  NULL, zinitix_ts_irq_handler,
 					  IRQF_ONESHOT | IRQF_NO_AUTOEN,
 					  client->name, bt541);
-	अगर (error) अणु
+	if (error) {
 		dev_err(&client->dev, "Failed to request IRQ: %d\n", error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused zinitix_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
-	काष्ठा bt541_ts_data *bt541 = i2c_get_clientdata(client);
+static int __maybe_unused zinitix_suspend(struct device *dev)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct bt541_ts_data *bt541 = i2c_get_clientdata(client);
 
 	mutex_lock(&bt541->input_dev->mutex);
 
-	अगर (input_device_enabled(bt541->input_dev))
+	if (input_device_enabled(bt541->input_dev))
 		zinitix_stop(bt541);
 
 	mutex_unlock(&bt541->input_dev->mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused zinitix_resume(काष्ठा device *dev)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
-	काष्ठा bt541_ts_data *bt541 = i2c_get_clientdata(client);
-	पूर्णांक ret = 0;
+static int __maybe_unused zinitix_resume(struct device *dev)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct bt541_ts_data *bt541 = i2c_get_clientdata(client);
+	int ret = 0;
 
 	mutex_lock(&bt541->input_dev->mutex);
 
-	अगर (input_device_enabled(bt541->input_dev))
+	if (input_device_enabled(bt541->input_dev))
 		ret = zinitix_start(bt541);
 
 	mutex_unlock(&bt541->input_dev->mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल SIMPLE_DEV_PM_OPS(zinitix_pm_ops, zinitix_suspend, zinitix_resume);
+static SIMPLE_DEV_PM_OPS(zinitix_pm_ops, zinitix_suspend, zinitix_resume);
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id zinitix_of_match[] = अणु
-	अणु .compatible = "zinitix,bt541" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id zinitix_of_match[] = {
+	{ .compatible = "zinitix,bt541" },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, zinitix_of_match);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा i2c_driver zinitix_ts_driver = अणु
+static struct i2c_driver zinitix_ts_driver = {
 	.probe_new = zinitix_ts_probe,
-	.driver = अणु
+	.driver = {
 		.name = "Zinitix-TS",
 		.pm = &zinitix_pm_ops,
 		.of_match_table = of_match_ptr(zinitix_of_match),
-	पूर्ण,
-पूर्ण;
+	},
+};
 module_i2c_driver(zinitix_ts_driver);
 
 MODULE_AUTHOR("Michael Srba <Michael.Srba@seznam.cz>");

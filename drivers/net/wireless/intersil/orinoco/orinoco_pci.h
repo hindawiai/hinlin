@@ -1,55 +1,54 @@
-<शैली गुरु>
 /* orinoco_pci.h
  *
- * Common code क्रम all Orinoco drivers क्रम PCI devices, including
+ * Common code for all Orinoco drivers for PCI devices, including
  * both native PCI and PCMCIA-to-PCI bridges.
  *
  * Copyright (C) 2005, Pavel Roskin.
- * See मुख्य.c क्रम license.
+ * See main.c for license.
  */
 
-#अगर_अघोषित _ORINOCO_PCI_H
-#घोषणा _ORINOCO_PCI_H
+#ifndef _ORINOCO_PCI_H
+#define _ORINOCO_PCI_H
 
-#समावेश <linux/netdevice.h>
+#include <linux/netdevice.h>
 
-/* Driver specअगरic data */
-काष्ठा orinoco_pci_card अणु
-	व्योम __iomem *bridge_io;
-	व्योम __iomem *attr_io;
-पूर्ण;
+/* Driver specific data */
+struct orinoco_pci_card {
+	void __iomem *bridge_io;
+	void __iomem *attr_io;
+};
 
-अटल पूर्णांक __maybe_unused orinoco_pci_suspend(काष्ठा device *dev_d)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(dev_d);
-	काष्ठा orinoco_निजी *priv = pci_get_drvdata(pdev);
+static int __maybe_unused orinoco_pci_suspend(struct device *dev_d)
+{
+	struct pci_dev *pdev = to_pci_dev(dev_d);
+	struct orinoco_private *priv = pci_get_drvdata(pdev);
 
-	orinoco_करोwn(priv);
-	मुक्त_irq(pdev->irq, priv);
+	orinoco_down(priv);
+	free_irq(pdev->irq, priv);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused orinoco_pci_resume(काष्ठा device *dev_d)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(dev_d);
-	काष्ठा orinoco_निजी *priv = pci_get_drvdata(pdev);
-	काष्ठा net_device *dev = priv->ndev;
-	पूर्णांक err;
+static int __maybe_unused orinoco_pci_resume(struct device *dev_d)
+{
+	struct pci_dev *pdev = to_pci_dev(dev_d);
+	struct orinoco_private *priv = pci_get_drvdata(pdev);
+	struct net_device *dev = priv->ndev;
+	int err;
 
-	err = request_irq(pdev->irq, orinoco_पूर्णांकerrupt, IRQF_SHARED,
+	err = request_irq(pdev->irq, orinoco_interrupt, IRQF_SHARED,
 			  dev->name, priv);
-	अगर (err) अणु
-		prपूर्णांकk(KERN_ERR "%s: cannot re-allocate IRQ on resume\n",
+	if (err) {
+		printk(KERN_ERR "%s: cannot re-allocate IRQ on resume\n",
 		       dev->name);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	वापस orinoco_up(priv);
-पूर्ण
+	return orinoco_up(priv);
+}
 
-अटल SIMPLE_DEV_PM_OPS(orinoco_pci_pm_ops,
+static SIMPLE_DEV_PM_OPS(orinoco_pci_pm_ops,
 			 orinoco_pci_suspend,
 			 orinoco_pci_resume);
 
-#पूर्ण_अगर /* _ORINOCO_PCI_H */
+#endif /* _ORINOCO_PCI_H */

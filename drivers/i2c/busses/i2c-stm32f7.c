@@ -1,212 +1,211 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Driver क्रम STMicroelectronics STM32F7 I2C controller
+ * Driver for STMicroelectronics STM32F7 I2C controller
  *
  * This I2C controller is described in the STM32F75xxx and STM32F74xxx Soc
  * reference manual.
- * Please see below a link to the करोcumentation:
+ * Please see below a link to the documentation:
  * http://www.st.com/resource/en/reference_manual/dm00124865.pdf
  *
  * Copyright (C) M'boumba Cedric Madianga 2017
  * Copyright (C) STMicroelectronics 2017
  * Author: M'boumba Cedric Madianga <cedric.madianga@gmail.com>
  *
- * This driver is based on i2c-sपंचांग32f4.c
+ * This driver is based on i2c-stm32f4.c
  *
  */
-#समावेश <linux/clk.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/err.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/i2c-smbus.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/iopoll.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pinctrl/consumer.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/pm_wakeirq.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/reset.h>
-#समावेश <linux/slab.h>
+#include <linux/clk.h>
+#include <linux/delay.h>
+#include <linux/err.h>
+#include <linux/i2c.h>
+#include <linux/i2c-smbus.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/iopoll.h>
+#include <linux/mfd/syscon.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/of_platform.h>
+#include <linux/platform_device.h>
+#include <linux/pinctrl/consumer.h>
+#include <linux/pm_runtime.h>
+#include <linux/pm_wakeirq.h>
+#include <linux/regmap.h>
+#include <linux/reset.h>
+#include <linux/slab.h>
 
-#समावेश "i2c-stm32.h"
+#include "i2c-stm32.h"
 
-/* STM32F7 I2C रेजिस्टरs */
-#घोषणा STM32F7_I2C_CR1				0x00
-#घोषणा STM32F7_I2C_CR2				0x04
-#घोषणा STM32F7_I2C_OAR1			0x08
-#घोषणा STM32F7_I2C_OAR2			0x0C
-#घोषणा STM32F7_I2C_PECR			0x20
-#घोषणा STM32F7_I2C_TIMINGR			0x10
-#घोषणा STM32F7_I2C_ISR				0x18
-#घोषणा STM32F7_I2C_ICR				0x1C
-#घोषणा STM32F7_I2C_RXDR			0x24
-#घोषणा STM32F7_I2C_TXDR			0x28
+/* STM32F7 I2C registers */
+#define STM32F7_I2C_CR1				0x00
+#define STM32F7_I2C_CR2				0x04
+#define STM32F7_I2C_OAR1			0x08
+#define STM32F7_I2C_OAR2			0x0C
+#define STM32F7_I2C_PECR			0x20
+#define STM32F7_I2C_TIMINGR			0x10
+#define STM32F7_I2C_ISR				0x18
+#define STM32F7_I2C_ICR				0x1C
+#define STM32F7_I2C_RXDR			0x24
+#define STM32F7_I2C_TXDR			0x28
 
 /* STM32F7 I2C control 1 */
-#घोषणा STM32F7_I2C_CR1_PECEN			BIT(23)
-#घोषणा STM32F7_I2C_CR1_SMBHEN			BIT(20)
-#घोषणा STM32F7_I2C_CR1_WUPEN			BIT(18)
-#घोषणा STM32F7_I2C_CR1_SBC			BIT(16)
-#घोषणा STM32F7_I2C_CR1_RXDMAEN			BIT(15)
-#घोषणा STM32F7_I2C_CR1_TXDMAEN			BIT(14)
-#घोषणा STM32F7_I2C_CR1_ANFOFF			BIT(12)
-#घोषणा STM32F7_I2C_CR1_DNF_MASK		GENMASK(11, 8)
-#घोषणा STM32F7_I2C_CR1_DNF(n)			(((n) & 0xf) << 8)
-#घोषणा STM32F7_I2C_CR1_ERRIE			BIT(7)
-#घोषणा STM32F7_I2C_CR1_TCIE			BIT(6)
-#घोषणा STM32F7_I2C_CR1_STOPIE			BIT(5)
-#घोषणा STM32F7_I2C_CR1_NACKIE			BIT(4)
-#घोषणा STM32F7_I2C_CR1_ADDRIE			BIT(3)
-#घोषणा STM32F7_I2C_CR1_RXIE			BIT(2)
-#घोषणा STM32F7_I2C_CR1_TXIE			BIT(1)
-#घोषणा STM32F7_I2C_CR1_PE			BIT(0)
-#घोषणा STM32F7_I2C_ALL_IRQ_MASK		(STM32F7_I2C_CR1_ERRIE \
+#define STM32F7_I2C_CR1_PECEN			BIT(23)
+#define STM32F7_I2C_CR1_SMBHEN			BIT(20)
+#define STM32F7_I2C_CR1_WUPEN			BIT(18)
+#define STM32F7_I2C_CR1_SBC			BIT(16)
+#define STM32F7_I2C_CR1_RXDMAEN			BIT(15)
+#define STM32F7_I2C_CR1_TXDMAEN			BIT(14)
+#define STM32F7_I2C_CR1_ANFOFF			BIT(12)
+#define STM32F7_I2C_CR1_DNF_MASK		GENMASK(11, 8)
+#define STM32F7_I2C_CR1_DNF(n)			(((n) & 0xf) << 8)
+#define STM32F7_I2C_CR1_ERRIE			BIT(7)
+#define STM32F7_I2C_CR1_TCIE			BIT(6)
+#define STM32F7_I2C_CR1_STOPIE			BIT(5)
+#define STM32F7_I2C_CR1_NACKIE			BIT(4)
+#define STM32F7_I2C_CR1_ADDRIE			BIT(3)
+#define STM32F7_I2C_CR1_RXIE			BIT(2)
+#define STM32F7_I2C_CR1_TXIE			BIT(1)
+#define STM32F7_I2C_CR1_PE			BIT(0)
+#define STM32F7_I2C_ALL_IRQ_MASK		(STM32F7_I2C_CR1_ERRIE \
 						| STM32F7_I2C_CR1_TCIE \
 						| STM32F7_I2C_CR1_STOPIE \
 						| STM32F7_I2C_CR1_NACKIE \
 						| STM32F7_I2C_CR1_RXIE \
 						| STM32F7_I2C_CR1_TXIE)
-#घोषणा STM32F7_I2C_XFER_IRQ_MASK		(STM32F7_I2C_CR1_TCIE \
+#define STM32F7_I2C_XFER_IRQ_MASK		(STM32F7_I2C_CR1_TCIE \
 						| STM32F7_I2C_CR1_STOPIE \
 						| STM32F7_I2C_CR1_NACKIE \
 						| STM32F7_I2C_CR1_RXIE \
 						| STM32F7_I2C_CR1_TXIE)
 
 /* STM32F7 I2C control 2 */
-#घोषणा STM32F7_I2C_CR2_PECBYTE			BIT(26)
-#घोषणा STM32F7_I2C_CR2_RELOAD			BIT(24)
-#घोषणा STM32F7_I2C_CR2_NBYTES_MASK		GENMASK(23, 16)
-#घोषणा STM32F7_I2C_CR2_NBYTES(n)		(((n) & 0xff) << 16)
-#घोषणा STM32F7_I2C_CR2_NACK			BIT(15)
-#घोषणा STM32F7_I2C_CR2_STOP			BIT(14)
-#घोषणा STM32F7_I2C_CR2_START			BIT(13)
-#घोषणा STM32F7_I2C_CR2_HEAD10R			BIT(12)
-#घोषणा STM32F7_I2C_CR2_ADD10			BIT(11)
-#घोषणा STM32F7_I2C_CR2_RD_WRN			BIT(10)
-#घोषणा STM32F7_I2C_CR2_SADD10_MASK		GENMASK(9, 0)
-#घोषणा STM32F7_I2C_CR2_SADD10(n)		(((n) & \
+#define STM32F7_I2C_CR2_PECBYTE			BIT(26)
+#define STM32F7_I2C_CR2_RELOAD			BIT(24)
+#define STM32F7_I2C_CR2_NBYTES_MASK		GENMASK(23, 16)
+#define STM32F7_I2C_CR2_NBYTES(n)		(((n) & 0xff) << 16)
+#define STM32F7_I2C_CR2_NACK			BIT(15)
+#define STM32F7_I2C_CR2_STOP			BIT(14)
+#define STM32F7_I2C_CR2_START			BIT(13)
+#define STM32F7_I2C_CR2_HEAD10R			BIT(12)
+#define STM32F7_I2C_CR2_ADD10			BIT(11)
+#define STM32F7_I2C_CR2_RD_WRN			BIT(10)
+#define STM32F7_I2C_CR2_SADD10_MASK		GENMASK(9, 0)
+#define STM32F7_I2C_CR2_SADD10(n)		(((n) & \
 						STM32F7_I2C_CR2_SADD10_MASK))
-#घोषणा STM32F7_I2C_CR2_SADD7_MASK		GENMASK(7, 1)
-#घोषणा STM32F7_I2C_CR2_SADD7(n)		(((n) & 0x7f) << 1)
+#define STM32F7_I2C_CR2_SADD7_MASK		GENMASK(7, 1)
+#define STM32F7_I2C_CR2_SADD7(n)		(((n) & 0x7f) << 1)
 
 /* STM32F7 I2C Own Address 1 */
-#घोषणा STM32F7_I2C_OAR1_OA1EN			BIT(15)
-#घोषणा STM32F7_I2C_OAR1_OA1MODE		BIT(10)
-#घोषणा STM32F7_I2C_OAR1_OA1_10_MASK		GENMASK(9, 0)
-#घोषणा STM32F7_I2C_OAR1_OA1_10(n)		(((n) & \
+#define STM32F7_I2C_OAR1_OA1EN			BIT(15)
+#define STM32F7_I2C_OAR1_OA1MODE		BIT(10)
+#define STM32F7_I2C_OAR1_OA1_10_MASK		GENMASK(9, 0)
+#define STM32F7_I2C_OAR1_OA1_10(n)		(((n) & \
 						STM32F7_I2C_OAR1_OA1_10_MASK))
-#घोषणा STM32F7_I2C_OAR1_OA1_7_MASK		GENMASK(7, 1)
-#घोषणा STM32F7_I2C_OAR1_OA1_7(n)		(((n) & 0x7f) << 1)
-#घोषणा STM32F7_I2C_OAR1_MASK			(STM32F7_I2C_OAR1_OA1_7_MASK \
+#define STM32F7_I2C_OAR1_OA1_7_MASK		GENMASK(7, 1)
+#define STM32F7_I2C_OAR1_OA1_7(n)		(((n) & 0x7f) << 1)
+#define STM32F7_I2C_OAR1_MASK			(STM32F7_I2C_OAR1_OA1_7_MASK \
 						| STM32F7_I2C_OAR1_OA1_10_MASK \
 						| STM32F7_I2C_OAR1_OA1EN \
 						| STM32F7_I2C_OAR1_OA1MODE)
 
 /* STM32F7 I2C Own Address 2 */
-#घोषणा STM32F7_I2C_OAR2_OA2EN			BIT(15)
-#घोषणा STM32F7_I2C_OAR2_OA2MSK_MASK		GENMASK(10, 8)
-#घोषणा STM32F7_I2C_OAR2_OA2MSK(n)		(((n) & 0x7) << 8)
-#घोषणा STM32F7_I2C_OAR2_OA2_7_MASK		GENMASK(7, 1)
-#घोषणा STM32F7_I2C_OAR2_OA2_7(n)		(((n) & 0x7f) << 1)
-#घोषणा STM32F7_I2C_OAR2_MASK			(STM32F7_I2C_OAR2_OA2MSK_MASK \
+#define STM32F7_I2C_OAR2_OA2EN			BIT(15)
+#define STM32F7_I2C_OAR2_OA2MSK_MASK		GENMASK(10, 8)
+#define STM32F7_I2C_OAR2_OA2MSK(n)		(((n) & 0x7) << 8)
+#define STM32F7_I2C_OAR2_OA2_7_MASK		GENMASK(7, 1)
+#define STM32F7_I2C_OAR2_OA2_7(n)		(((n) & 0x7f) << 1)
+#define STM32F7_I2C_OAR2_MASK			(STM32F7_I2C_OAR2_OA2MSK_MASK \
 						| STM32F7_I2C_OAR2_OA2_7_MASK \
 						| STM32F7_I2C_OAR2_OA2EN)
 
 /* STM32F7 I2C Interrupt Status */
-#घोषणा STM32F7_I2C_ISR_ADDCODE_MASK		GENMASK(23, 17)
-#घोषणा STM32F7_I2C_ISR_ADDCODE_GET(n) \
+#define STM32F7_I2C_ISR_ADDCODE_MASK		GENMASK(23, 17)
+#define STM32F7_I2C_ISR_ADDCODE_GET(n) \
 				(((n) & STM32F7_I2C_ISR_ADDCODE_MASK) >> 17)
-#घोषणा STM32F7_I2C_ISR_सूची			BIT(16)
-#घोषणा STM32F7_I2C_ISR_BUSY			BIT(15)
-#घोषणा STM32F7_I2C_ISR_PECERR			BIT(11)
-#घोषणा STM32F7_I2C_ISR_ARLO			BIT(9)
-#घोषणा STM32F7_I2C_ISR_BERR			BIT(8)
-#घोषणा STM32F7_I2C_ISR_TCR			BIT(7)
-#घोषणा STM32F7_I2C_ISR_TC			BIT(6)
-#घोषणा STM32F7_I2C_ISR_STOPF			BIT(5)
-#घोषणा STM32F7_I2C_ISR_NACKF			BIT(4)
-#घोषणा STM32F7_I2C_ISR_ADDR			BIT(3)
-#घोषणा STM32F7_I2C_ISR_RXNE			BIT(2)
-#घोषणा STM32F7_I2C_ISR_TXIS			BIT(1)
-#घोषणा STM32F7_I2C_ISR_TXE			BIT(0)
+#define STM32F7_I2C_ISR_DIR			BIT(16)
+#define STM32F7_I2C_ISR_BUSY			BIT(15)
+#define STM32F7_I2C_ISR_PECERR			BIT(11)
+#define STM32F7_I2C_ISR_ARLO			BIT(9)
+#define STM32F7_I2C_ISR_BERR			BIT(8)
+#define STM32F7_I2C_ISR_TCR			BIT(7)
+#define STM32F7_I2C_ISR_TC			BIT(6)
+#define STM32F7_I2C_ISR_STOPF			BIT(5)
+#define STM32F7_I2C_ISR_NACKF			BIT(4)
+#define STM32F7_I2C_ISR_ADDR			BIT(3)
+#define STM32F7_I2C_ISR_RXNE			BIT(2)
+#define STM32F7_I2C_ISR_TXIS			BIT(1)
+#define STM32F7_I2C_ISR_TXE			BIT(0)
 
 /* STM32F7 I2C Interrupt Clear */
-#घोषणा STM32F7_I2C_ICR_PECCF			BIT(11)
-#घोषणा STM32F7_I2C_ICR_ARLOCF			BIT(9)
-#घोषणा STM32F7_I2C_ICR_BERRCF			BIT(8)
-#घोषणा STM32F7_I2C_ICR_STOPCF			BIT(5)
-#घोषणा STM32F7_I2C_ICR_NACKCF			BIT(4)
-#घोषणा STM32F7_I2C_ICR_ADDRCF			BIT(3)
+#define STM32F7_I2C_ICR_PECCF			BIT(11)
+#define STM32F7_I2C_ICR_ARLOCF			BIT(9)
+#define STM32F7_I2C_ICR_BERRCF			BIT(8)
+#define STM32F7_I2C_ICR_STOPCF			BIT(5)
+#define STM32F7_I2C_ICR_NACKCF			BIT(4)
+#define STM32F7_I2C_ICR_ADDRCF			BIT(3)
 
 /* STM32F7 I2C Timing */
-#घोषणा STM32F7_I2C_TIMINGR_PRESC(n)		(((n) & 0xf) << 28)
-#घोषणा STM32F7_I2C_TIMINGR_SCLDEL(n)		(((n) & 0xf) << 20)
-#घोषणा STM32F7_I2C_TIMINGR_SDADEL(n)		(((n) & 0xf) << 16)
-#घोषणा STM32F7_I2C_TIMINGR_SCLH(n)		(((n) & 0xff) << 8)
-#घोषणा STM32F7_I2C_TIMINGR_SCLL(n)		((n) & 0xff)
+#define STM32F7_I2C_TIMINGR_PRESC(n)		(((n) & 0xf) << 28)
+#define STM32F7_I2C_TIMINGR_SCLDEL(n)		(((n) & 0xf) << 20)
+#define STM32F7_I2C_TIMINGR_SDADEL(n)		(((n) & 0xf) << 16)
+#define STM32F7_I2C_TIMINGR_SCLH(n)		(((n) & 0xff) << 8)
+#define STM32F7_I2C_TIMINGR_SCLL(n)		((n) & 0xff)
 
-#घोषणा STM32F7_I2C_MAX_LEN			0xff
-#घोषणा STM32F7_I2C_DMA_LEN_MIN			0x16
-क्रमागत अणु
+#define STM32F7_I2C_MAX_LEN			0xff
+#define STM32F7_I2C_DMA_LEN_MIN			0x16
+enum {
 	STM32F7_SLAVE_HOSTNOTIFY,
 	STM32F7_SLAVE_7_10_BITS_ADDR,
 	STM32F7_SLAVE_7_BITS_ADDR,
 	STM32F7_I2C_MAX_SLAVE
-पूर्ण;
+};
 
-#घोषणा STM32F7_I2C_DNF_DEFAULT			0
-#घोषणा STM32F7_I2C_DNF_MAX			15
+#define STM32F7_I2C_DNF_DEFAULT			0
+#define STM32F7_I2C_DNF_MAX			15
 
-#घोषणा STM32F7_I2C_ANALOG_FILTER_DELAY_MIN	50	/* ns */
-#घोषणा STM32F7_I2C_ANALOG_FILTER_DELAY_MAX	260	/* ns */
+#define STM32F7_I2C_ANALOG_FILTER_DELAY_MIN	50	/* ns */
+#define STM32F7_I2C_ANALOG_FILTER_DELAY_MAX	260	/* ns */
 
-#घोषणा STM32F7_I2C_RISE_TIME_DEFAULT		25	/* ns */
-#घोषणा STM32F7_I2C_FALL_TIME_DEFAULT		10	/* ns */
+#define STM32F7_I2C_RISE_TIME_DEFAULT		25	/* ns */
+#define STM32F7_I2C_FALL_TIME_DEFAULT		10	/* ns */
 
-#घोषणा STM32F7_PRESC_MAX			BIT(4)
-#घोषणा STM32F7_SCLDEL_MAX			BIT(4)
-#घोषणा STM32F7_SDADEL_MAX			BIT(4)
-#घोषणा STM32F7_SCLH_MAX			BIT(8)
-#घोषणा STM32F7_SCLL_MAX			BIT(8)
+#define STM32F7_PRESC_MAX			BIT(4)
+#define STM32F7_SCLDEL_MAX			BIT(4)
+#define STM32F7_SDADEL_MAX			BIT(4)
+#define STM32F7_SCLH_MAX			BIT(8)
+#define STM32F7_SCLL_MAX			BIT(8)
 
-#घोषणा STM32F7_AUTOSUSPEND_DELAY		(HZ / 100)
+#define STM32F7_AUTOSUSPEND_DELAY		(HZ / 100)
 
 /**
- * काष्ठा sपंचांग32f7_i2c_regs - i2c f7 रेजिस्टरs backup
- * @cr1: Control रेजिस्टर 1
- * @cr2: Control रेजिस्टर 2
- * @oar1: Own address 1 रेजिस्टर
- * @oar2: Own address 2 रेजिस्टर
- * @पंचांगgr: Timing रेजिस्टर
+ * struct stm32f7_i2c_regs - i2c f7 registers backup
+ * @cr1: Control register 1
+ * @cr2: Control register 2
+ * @oar1: Own address 1 register
+ * @oar2: Own address 2 register
+ * @tmgr: Timing register
  */
-काष्ठा sपंचांग32f7_i2c_regs अणु
+struct stm32f7_i2c_regs {
 	u32 cr1;
 	u32 cr2;
 	u32 oar1;
 	u32 oar2;
-	u32 पंचांगgr;
-पूर्ण;
+	u32 tmgr;
+};
 
 /**
- * काष्ठा sपंचांग32f7_i2c_spec - निजी i2c specअगरication timing
+ * struct stm32f7_i2c_spec - private i2c specification timing
  * @rate: I2C bus speed (Hz)
- * @fall_max: Max fall समय of both SDA and SCL संकेतs (ns)
- * @rise_max: Max rise समय of both SDA and SCL संकेतs (ns)
- * @hddat_min: Min data hold समय (ns)
- * @vddat_max: Max data valid समय (ns)
- * @sudat_min: Min data setup समय (ns)
- * @l_min: Min low period of the SCL घड़ी (ns)
- * @h_min: Min high period of the SCL घड़ी (ns)
+ * @fall_max: Max fall time of both SDA and SCL signals (ns)
+ * @rise_max: Max rise time of both SDA and SCL signals (ns)
+ * @hddat_min: Min data hold time (ns)
+ * @vddat_max: Max data valid time (ns)
+ * @sudat_min: Min data setup time (ns)
+ * @l_min: Min low period of the SCL clock (ns)
+ * @h_min: Min high period of the SCL clock (ns)
  */
-काष्ठा sपंचांग32f7_i2c_spec अणु
+struct stm32f7_i2c_spec {
 	u32 rate;
 	u32 fall_max;
 	u32 rise_max;
@@ -215,144 +214,144 @@
 	u32 sudat_min;
 	u32 l_min;
 	u32 h_min;
-पूर्ण;
+};
 
 /**
- * काष्ठा sपंचांग32f7_i2c_setup - निजी I2C timing setup parameters
+ * struct stm32f7_i2c_setup - private I2C timing setup parameters
  * @speed_freq: I2C speed frequency  (Hz)
- * @घड़ी_src: I2C घड़ी source frequency (Hz)
- * @rise_समय: Rise समय (ns)
- * @fall_समय: Fall समय (ns)
- * @fmp_clr_offset: Fast Mode Plus clear रेजिस्टर offset from set रेजिस्टर
+ * @clock_src: I2C clock source frequency (Hz)
+ * @rise_time: Rise time (ns)
+ * @fall_time: Fall time (ns)
+ * @fmp_clr_offset: Fast Mode Plus clear register offset from set register
  */
-काष्ठा sपंचांग32f7_i2c_setup अणु
+struct stm32f7_i2c_setup {
 	u32 speed_freq;
-	u32 घड़ी_src;
-	u32 rise_समय;
-	u32 fall_समय;
+	u32 clock_src;
+	u32 rise_time;
+	u32 fall_time;
 	u32 fmp_clr_offset;
-पूर्ण;
+};
 
 /**
- * काष्ठा sपंचांग32f7_i2c_timings - निजी I2C output parameters
+ * struct stm32f7_i2c_timings - private I2C output parameters
  * @node: List entry
  * @presc: Prescaler value
- * @scldel: Data setup समय
- * @sdadel: Data hold समय
+ * @scldel: Data setup time
+ * @sdadel: Data hold time
  * @sclh: SCL high period (master mode)
  * @scll: SCL low period (master mode)
  */
-काष्ठा sपंचांग32f7_i2c_timings अणु
-	काष्ठा list_head node;
+struct stm32f7_i2c_timings {
+	struct list_head node;
 	u8 presc;
 	u8 scldel;
 	u8 sdadel;
 	u8 sclh;
 	u8 scll;
-पूर्ण;
+};
 
 /**
- * काष्ठा sपंचांग32f7_i2c_msg - client specअगरic data
+ * struct stm32f7_i2c_msg - client specific data
  * @addr: 8-bit or 10-bit slave addr, including r/w bit
  * @count: number of bytes to be transferred
  * @buf: data buffer
  * @result: result of the transfer
  * @stop: last I2C msg to be sent, i.e. STOP to be generated
- * @smbus: boolean to know अगर the I2C IP is used in SMBus mode
+ * @smbus: boolean to know if the I2C IP is used in SMBus mode
  * @size: type of SMBus protocol
- * @पढ़ो_ग_लिखो: direction of SMBus protocol
- * SMBus block पढ़ो and SMBus block ग_लिखो - block पढ़ो process call protocols
- * @smbus_buf: buffer to be used क्रम SMBus protocol transfer. It will
+ * @read_write: direction of SMBus protocol
+ * SMBus block read and SMBus block write - block read process call protocols
+ * @smbus_buf: buffer to be used for SMBus protocol transfer. It will
  * contain a maximum of 32 bytes of data + byte command + byte count + PEC
  * This buffer has to be 32-bit aligned to be compliant with memory address
- * रेजिस्टर in DMA mode.
+ * register in DMA mode.
  */
-काष्ठा sपंचांग32f7_i2c_msg अणु
+struct stm32f7_i2c_msg {
 	u16 addr;
 	u32 count;
 	u8 *buf;
-	पूर्णांक result;
+	int result;
 	bool stop;
 	bool smbus;
-	पूर्णांक size;
-	अक्षर पढ़ो_ग_लिखो;
+	int size;
+	char read_write;
 	u8 smbus_buf[I2C_SMBUS_BLOCK_MAX + 3] __aligned(4);
-पूर्ण;
+};
 
 /**
- * काष्ठा sपंचांग32f7_i2c_dev - निजी data of the controller
- * @adap: I2C adapter क्रम this controller
- * @dev: device क्रम this controller
- * @base: भव memory area
+ * struct stm32f7_i2c_dev - private data of the controller
+ * @adap: I2C adapter for this controller
+ * @dev: device for this controller
+ * @base: virtual memory area
  * @complete: completion of I2C message
- * @clk: hw i2c घड़ी
- * @bus_rate: I2C घड़ी frequency of the controller
- * @msg: Poपूर्णांकer to data to be written
+ * @clk: hw i2c clock
+ * @bus_rate: I2C clock frequency of the controller
+ * @msg: Pointer to data to be written
  * @msg_num: number of I2C messages to be executed
- * @msg_id: message identअगरiant
- * @f7_msg: customized i2c msg क्रम driver usage
+ * @msg_id: message identifiant
+ * @f7_msg: customized i2c msg for driver usage
  * @setup: I2C timing input setup
  * @timing: I2C computed timings
- * @slave: list of slave devices रेजिस्टरed on the I2C bus
+ * @slave: list of slave devices registered on the I2C bus
  * @slave_running: slave device currently used
- * @backup_regs: backup of i2c controller रेजिस्टरs (क्रम suspend/resume)
- * @slave_dir: transfer direction क्रम the current slave device
+ * @backup_regs: backup of i2c controller registers (for suspend/resume)
+ * @slave_dir: transfer direction for the current slave device
  * @master_mode: boolean to know in which mode the I2C is running (master or
  * slave)
  * @dma: dma data
- * @use_dma: boolean to know अगर dma is used in the current transfer
- * @regmap: holds SYSCFG phandle क्रम Fast Mode Plus bits
- * @fmp_sreg: रेजिस्टर address क्रम setting Fast Mode Plus bits
- * @fmp_creg: रेजिस्टर address क्रम clearing Fast Mode Plus bits
- * @fmp_mask: mask क्रम Fast Mode Plus bits in set रेजिस्टर
- * @wakeup_src: boolean to know अगर the device is a wakeup source
+ * @use_dma: boolean to know if dma is used in the current transfer
+ * @regmap: holds SYSCFG phandle for Fast Mode Plus bits
+ * @fmp_sreg: register address for setting Fast Mode Plus bits
+ * @fmp_creg: register address for clearing Fast Mode Plus bits
+ * @fmp_mask: mask for Fast Mode Plus bits in set register
+ * @wakeup_src: boolean to know if the device is a wakeup source
  * @smbus_mode: states that the controller is configured in SMBus mode
- * @host_notअगरy_client: SMBus host-notअगरy client
+ * @host_notify_client: SMBus host-notify client
  * @analog_filter: boolean to indicate enabling of the analog filter
  * @dnf_dt: value of digital filter requested via dt
  * @dnf: value of digital filter to apply
  */
-काष्ठा sपंचांग32f7_i2c_dev अणु
-	काष्ठा i2c_adapter adap;
-	काष्ठा device *dev;
-	व्योम __iomem *base;
-	काष्ठा completion complete;
-	काष्ठा clk *clk;
-	अचिन्हित पूर्णांक bus_rate;
-	काष्ठा i2c_msg *msg;
-	अचिन्हित पूर्णांक msg_num;
-	अचिन्हित पूर्णांक msg_id;
-	काष्ठा sपंचांग32f7_i2c_msg f7_msg;
-	काष्ठा sपंचांग32f7_i2c_setup setup;
-	काष्ठा sपंचांग32f7_i2c_timings timing;
-	काष्ठा i2c_client *slave[STM32F7_I2C_MAX_SLAVE];
-	काष्ठा i2c_client *slave_running;
-	काष्ठा sपंचांग32f7_i2c_regs backup_regs;
+struct stm32f7_i2c_dev {
+	struct i2c_adapter adap;
+	struct device *dev;
+	void __iomem *base;
+	struct completion complete;
+	struct clk *clk;
+	unsigned int bus_rate;
+	struct i2c_msg *msg;
+	unsigned int msg_num;
+	unsigned int msg_id;
+	struct stm32f7_i2c_msg f7_msg;
+	struct stm32f7_i2c_setup setup;
+	struct stm32f7_i2c_timings timing;
+	struct i2c_client *slave[STM32F7_I2C_MAX_SLAVE];
+	struct i2c_client *slave_running;
+	struct stm32f7_i2c_regs backup_regs;
 	u32 slave_dir;
 	bool master_mode;
-	काष्ठा sपंचांग32_i2c_dma *dma;
+	struct stm32_i2c_dma *dma;
 	bool use_dma;
-	काष्ठा regmap *regmap;
+	struct regmap *regmap;
 	u32 fmp_sreg;
 	u32 fmp_creg;
 	u32 fmp_mask;
 	bool wakeup_src;
 	bool smbus_mode;
-	काष्ठा i2c_client *host_notअगरy_client;
+	struct i2c_client *host_notify_client;
 	bool analog_filter;
 	u32 dnf_dt;
 	u32 dnf;
-पूर्ण;
+};
 
 /*
- * All these values are coming from I2C Specअगरication, Version 6.0, 4th of
+ * All these values are coming from I2C Specification, Version 6.0, 4th of
  * April 2014.
  *
- * Table10. Characteristics of the SDA and SCL bus lines क्रम Standard, Fast,
+ * Table10. Characteristics of the SDA and SCL bus lines for Standard, Fast,
  * and Fast-mode Plus I2C-bus devices
  */
-अटल काष्ठा sपंचांग32f7_i2c_spec sपंचांग32f7_i2c_specs[] = अणु
-	अणु
+static struct stm32f7_i2c_spec stm32f7_i2c_specs[] = {
+	{
 		.rate = I2C_MAX_STANDARD_MODE_FREQ,
 		.fall_max = 300,
 		.rise_max = 1000,
@@ -361,8 +360,8 @@
 		.sudat_min = 250,
 		.l_min = 4700,
 		.h_min = 4000,
-	पूर्ण,
-	अणु
+	},
+	{
 		.rate = I2C_MAX_FAST_MODE_FREQ,
 		.fall_max = 300,
 		.rise_max = 300,
@@ -371,8 +370,8 @@
 		.sudat_min = 100,
 		.l_min = 1300,
 		.h_min = 600,
-	पूर्ण,
-	अणु
+	},
+	{
 		.rate = I2C_MAX_FAST_MODE_PLUS_FREQ,
 		.fall_max = 100,
 		.rise_max = 120,
@@ -381,55 +380,55 @@
 		.sudat_min = 50,
 		.l_min = 500,
 		.h_min = 260,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा sपंचांग32f7_i2c_setup sपंचांग32f7_setup = अणु
-	.rise_समय = STM32F7_I2C_RISE_TIME_DEFAULT,
-	.fall_समय = STM32F7_I2C_FALL_TIME_DEFAULT,
-पूर्ण;
+static const struct stm32f7_i2c_setup stm32f7_setup = {
+	.rise_time = STM32F7_I2C_RISE_TIME_DEFAULT,
+	.fall_time = STM32F7_I2C_FALL_TIME_DEFAULT,
+};
 
-अटल स्थिर काष्ठा sपंचांग32f7_i2c_setup sपंचांग32mp15_setup = अणु
-	.rise_समय = STM32F7_I2C_RISE_TIME_DEFAULT,
-	.fall_समय = STM32F7_I2C_FALL_TIME_DEFAULT,
+static const struct stm32f7_i2c_setup stm32mp15_setup = {
+	.rise_time = STM32F7_I2C_RISE_TIME_DEFAULT,
+	.fall_time = STM32F7_I2C_FALL_TIME_DEFAULT,
 	.fmp_clr_offset = 0x40,
-पूर्ण;
+};
 
-अटल अंतरभूत व्योम sपंचांग32f7_i2c_set_bits(व्योम __iomem *reg, u32 mask)
-अणु
-	ग_लिखोl_relaxed(पढ़ोl_relaxed(reg) | mask, reg);
-पूर्ण
+static inline void stm32f7_i2c_set_bits(void __iomem *reg, u32 mask)
+{
+	writel_relaxed(readl_relaxed(reg) | mask, reg);
+}
 
-अटल अंतरभूत व्योम sपंचांग32f7_i2c_clr_bits(व्योम __iomem *reg, u32 mask)
-अणु
-	ग_लिखोl_relaxed(पढ़ोl_relaxed(reg) & ~mask, reg);
-पूर्ण
+static inline void stm32f7_i2c_clr_bits(void __iomem *reg, u32 mask)
+{
+	writel_relaxed(readl_relaxed(reg) & ~mask, reg);
+}
 
-अटल व्योम sपंचांग32f7_i2c_disable_irq(काष्ठा sपंचांग32f7_i2c_dev *i2c_dev, u32 mask)
-अणु
-	sपंचांग32f7_i2c_clr_bits(i2c_dev->base + STM32F7_I2C_CR1, mask);
-पूर्ण
+static void stm32f7_i2c_disable_irq(struct stm32f7_i2c_dev *i2c_dev, u32 mask)
+{
+	stm32f7_i2c_clr_bits(i2c_dev->base + STM32F7_I2C_CR1, mask);
+}
 
-अटल काष्ठा sपंचांग32f7_i2c_spec *sपंचांग32f7_get_specs(u32 rate)
-अणु
-	पूर्णांक i;
+static struct stm32f7_i2c_spec *stm32f7_get_specs(u32 rate)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(sपंचांग32f7_i2c_specs); i++)
-		अगर (rate <= sपंचांग32f7_i2c_specs[i].rate)
-			वापस &sपंचांग32f7_i2c_specs[i];
+	for (i = 0; i < ARRAY_SIZE(stm32f7_i2c_specs); i++)
+		if (rate <= stm32f7_i2c_specs[i].rate)
+			return &stm32f7_i2c_specs[i];
 
-	वापस ERR_PTR(-EINVAL);
-पूर्ण
+	return ERR_PTR(-EINVAL);
+}
 
-#घोषणा	RATE_MIN(rate)	((rate) * 8 / 10)
-अटल पूर्णांक sपंचांग32f7_i2c_compute_timing(काष्ठा sपंचांग32f7_i2c_dev *i2c_dev,
-				      काष्ठा sपंचांग32f7_i2c_setup *setup,
-				      काष्ठा sपंचांग32f7_i2c_timings *output)
-अणु
-	काष्ठा sपंचांग32f7_i2c_spec *specs;
+#define	RATE_MIN(rate)	((rate) * 8 / 10)
+static int stm32f7_i2c_compute_timing(struct stm32f7_i2c_dev *i2c_dev,
+				      struct stm32f7_i2c_setup *setup,
+				      struct stm32f7_i2c_timings *output)
+{
+	struct stm32f7_i2c_spec *specs;
 	u32 p_prev = STM32F7_PRESC_MAX;
 	u32 i2cclk = DIV_ROUND_CLOSEST(NSEC_PER_SEC,
-				       setup->घड़ी_src);
+				       setup->clock_src);
 	u32 i2cbus = DIV_ROUND_CLOSEST(NSEC_PER_SEC,
 				       setup->speed_freq);
 	u32 clk_error_prev = i2cbus;
@@ -437,36 +436,36 @@
 	u32 af_delay_min, af_delay_max;
 	u32 dnf_delay;
 	u32 clk_min, clk_max;
-	पूर्णांक sdadel_min, sdadel_max;
-	पूर्णांक scldel_min;
-	काष्ठा sपंचांग32f7_i2c_timings *v, *_v, *s;
-	काष्ठा list_head solutions;
+	int sdadel_min, sdadel_max;
+	int scldel_min;
+	struct stm32f7_i2c_timings *v, *_v, *s;
+	struct list_head solutions;
 	u16 p, l, a, h;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	specs = sपंचांग32f7_get_specs(setup->speed_freq);
-	अगर (specs == ERR_PTR(-EINVAL)) अणु
+	specs = stm32f7_get_specs(setup->speed_freq);
+	if (specs == ERR_PTR(-EINVAL)) {
 		dev_err(i2c_dev->dev, "speed out of bound {%d}\n",
 			setup->speed_freq);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर ((setup->rise_समय > specs->rise_max) ||
-	    (setup->fall_समय > specs->fall_max)) अणु
+	if ((setup->rise_time > specs->rise_max) ||
+	    (setup->fall_time > specs->fall_max)) {
 		dev_err(i2c_dev->dev,
 			"timings out of bound Rise{%d>%d}/Fall{%d>%d}\n",
-			setup->rise_समय, specs->rise_max,
-			setup->fall_समय, specs->fall_max);
-		वापस -EINVAL;
-	पूर्ण
+			setup->rise_time, specs->rise_max,
+			setup->fall_time, specs->fall_max);
+		return -EINVAL;
+	}
 
 	i2c_dev->dnf = DIV_ROUND_CLOSEST(i2c_dev->dnf_dt, i2cclk);
-	अगर (i2c_dev->dnf > STM32F7_I2C_DNF_MAX) अणु
+	if (i2c_dev->dnf > STM32F7_I2C_DNF_MAX) {
 		dev_err(i2c_dev->dev,
 			"DNF out of bound %d/%d\n",
 			i2c_dev->dnf * i2cclk, STM32F7_I2C_DNF_MAX * i2cclk);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*  Analog and Digital Filters */
 	af_delay_min =
@@ -477,42 +476,42 @@
 		 STM32F7_I2C_ANALOG_FILTER_DELAY_MAX : 0);
 	dnf_delay = i2c_dev->dnf * i2cclk;
 
-	sdadel_min = specs->hddat_min + setup->fall_समय -
+	sdadel_min = specs->hddat_min + setup->fall_time -
 		af_delay_min - (i2c_dev->dnf + 3) * i2cclk;
 
-	sdadel_max = specs->vddat_max - setup->rise_समय -
+	sdadel_max = specs->vddat_max - setup->rise_time -
 		af_delay_max - (i2c_dev->dnf + 4) * i2cclk;
 
-	scldel_min = setup->rise_समय + specs->sudat_min;
+	scldel_min = setup->rise_time + specs->sudat_min;
 
-	अगर (sdadel_min < 0)
+	if (sdadel_min < 0)
 		sdadel_min = 0;
-	अगर (sdadel_max < 0)
+	if (sdadel_max < 0)
 		sdadel_max = 0;
 
 	dev_dbg(i2c_dev->dev, "SDADEL(min/max): %i/%i, SCLDEL(Min): %i\n",
 		sdadel_min, sdadel_max, scldel_min);
 
 	INIT_LIST_HEAD(&solutions);
-	/* Compute possible values क्रम PRESC, SCLDEL and SDADEL */
-	क्रम (p = 0; p < STM32F7_PRESC_MAX; p++) अणु
-		क्रम (l = 0; l < STM32F7_SCLDEL_MAX; l++) अणु
+	/* Compute possible values for PRESC, SCLDEL and SDADEL */
+	for (p = 0; p < STM32F7_PRESC_MAX; p++) {
+		for (l = 0; l < STM32F7_SCLDEL_MAX; l++) {
 			u32 scldel = (l + 1) * (p + 1) * i2cclk;
 
-			अगर (scldel < scldel_min)
-				जारी;
+			if (scldel < scldel_min)
+				continue;
 
-			क्रम (a = 0; a < STM32F7_SDADEL_MAX; a++) अणु
+			for (a = 0; a < STM32F7_SDADEL_MAX; a++) {
 				u32 sdadel = (a * (p + 1) + 1) * i2cclk;
 
-				अगर (((sdadel >= sdadel_min) &&
+				if (((sdadel >= sdadel_min) &&
 				     (sdadel <= sdadel_max)) &&
-				    (p != p_prev)) अणु
-					v = kदो_स्मृति(माप(*v), GFP_KERNEL);
-					अगर (!v) अणु
+				    (p != p_prev)) {
+					v = kmalloc(sizeof(*v), GFP_KERNEL);
+					if (!v) {
 						ret = -ENOMEM;
-						जाओ निकास;
-					पूर्ण
+						goto exit;
+					}
 
 					v->presc = p;
 					v->scldel = l;
@@ -521,23 +520,23 @@
 
 					list_add_tail(&v->node,
 						      &solutions);
-					अवरोध;
-				पूर्ण
-			पूर्ण
+					break;
+				}
+			}
 
-			अगर (p_prev == p)
-				अवरोध;
-		पूर्ण
-	पूर्ण
+			if (p_prev == p)
+				break;
+		}
+	}
 
-	अगर (list_empty(&solutions)) अणु
+	if (list_empty(&solutions)) {
 		dev_err(i2c_dev->dev, "no Prescaler solution\n");
 		ret = -EPERM;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	tsync = af_delay_min + dnf_delay + (2 * i2cclk);
-	s = शून्य;
+	s = NULL;
 	clk_max = NSEC_PER_SEC / RATE_MIN(setup->speed_freq);
 	clk_min = NSEC_PER_SEC / setup->speed_freq;
 
@@ -545,53 +544,53 @@
 	 * Among Prescaler possibilities discovered above figures out SCL Low
 	 * and High Period. Provided:
 	 * - SCL Low Period has to be higher than SCL Clock Low Period
-	 *   defined by I2C Specअगरication. I2C Clock has to be lower than
+	 *   defined by I2C Specification. I2C Clock has to be lower than
 	 *   (SCL Low Period - Analog/Digital filters) / 4.
 	 * - SCL High Period has to be lower than SCL Clock High Period
-	 *   defined by I2C Specअगरication
+	 *   defined by I2C Specification
 	 * - I2C Clock has to be lower than SCL High Period
 	 */
-	list_क्रम_each_entry(v, &solutions, node) अणु
+	list_for_each_entry(v, &solutions, node) {
 		u32 prescaler = (v->presc + 1) * i2cclk;
 
-		क्रम (l = 0; l < STM32F7_SCLL_MAX; l++) अणु
+		for (l = 0; l < STM32F7_SCLL_MAX; l++) {
 			u32 tscl_l = (l + 1) * prescaler + tsync;
 
-			अगर ((tscl_l < specs->l_min) ||
+			if ((tscl_l < specs->l_min) ||
 			    (i2cclk >=
-			     ((tscl_l - af_delay_min - dnf_delay) / 4))) अणु
-				जारी;
-			पूर्ण
+			     ((tscl_l - af_delay_min - dnf_delay) / 4))) {
+				continue;
+			}
 
-			क्रम (h = 0; h < STM32F7_SCLH_MAX; h++) अणु
+			for (h = 0; h < STM32F7_SCLH_MAX; h++) {
 				u32 tscl_h = (h + 1) * prescaler + tsync;
 				u32 tscl = tscl_l + tscl_h +
-					setup->rise_समय + setup->fall_समय;
+					setup->rise_time + setup->fall_time;
 
-				अगर ((tscl >= clk_min) && (tscl <= clk_max) &&
+				if ((tscl >= clk_min) && (tscl <= clk_max) &&
 				    (tscl_h >= specs->h_min) &&
-				    (i2cclk < tscl_h)) अणु
-					पूर्णांक clk_error = tscl - i2cbus;
+				    (i2cclk < tscl_h)) {
+					int clk_error = tscl - i2cbus;
 
-					अगर (clk_error < 0)
+					if (clk_error < 0)
 						clk_error = -clk_error;
 
-					अगर (clk_error < clk_error_prev) अणु
+					if (clk_error < clk_error_prev) {
 						clk_error_prev = clk_error;
 						v->scll = l;
 						v->sclh = h;
 						s = v;
-					पूर्ण
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+					}
+				}
+			}
+		}
+	}
 
-	अगर (!s) अणु
+	if (!s) {
 		dev_err(i2c_dev->dev, "no solution at all\n");
 		ret = -EPERM;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	output->presc = s->presc;
 	output->scldel = s->scldel;
@@ -605,117 +604,117 @@
 		output->scldel, output->sdadel,
 		output->scll, output->sclh);
 
-निकास:
+exit:
 	/* Release list and memory */
-	list_क्रम_each_entry_safe(v, _v, &solutions, node) अणु
+	list_for_each_entry_safe(v, _v, &solutions, node) {
 		list_del(&v->node);
-		kमुक्त(v);
-	पूर्ण
+		kfree(v);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल u32 sपंचांग32f7_get_lower_rate(u32 rate)
-अणु
-	पूर्णांक i = ARRAY_SIZE(sपंचांग32f7_i2c_specs);
+static u32 stm32f7_get_lower_rate(u32 rate)
+{
+	int i = ARRAY_SIZE(stm32f7_i2c_specs);
 
-	जबतक (--i)
-		अगर (sपंचांग32f7_i2c_specs[i].rate < rate)
-			अवरोध;
+	while (--i)
+		if (stm32f7_i2c_specs[i].rate < rate)
+			break;
 
-	वापस sपंचांग32f7_i2c_specs[i].rate;
-पूर्ण
+	return stm32f7_i2c_specs[i].rate;
+}
 
-अटल पूर्णांक sपंचांग32f7_i2c_setup_timing(काष्ठा sपंचांग32f7_i2c_dev *i2c_dev,
-				    काष्ठा sपंचांग32f7_i2c_setup *setup)
-अणु
-	काष्ठा i2c_timings timings, *t = &timings;
-	पूर्णांक ret = 0;
+static int stm32f7_i2c_setup_timing(struct stm32f7_i2c_dev *i2c_dev,
+				    struct stm32f7_i2c_setup *setup)
+{
+	struct i2c_timings timings, *t = &timings;
+	int ret = 0;
 
 	t->bus_freq_hz = I2C_MAX_STANDARD_MODE_FREQ;
-	t->scl_rise_ns = i2c_dev->setup.rise_समय;
-	t->scl_fall_ns = i2c_dev->setup.fall_समय;
+	t->scl_rise_ns = i2c_dev->setup.rise_time;
+	t->scl_fall_ns = i2c_dev->setup.fall_time;
 
 	i2c_parse_fw_timings(i2c_dev->dev, t, false);
 
-	अगर (t->bus_freq_hz > I2C_MAX_FAST_MODE_PLUS_FREQ) अणु
+	if (t->bus_freq_hz > I2C_MAX_FAST_MODE_PLUS_FREQ) {
 		dev_err(i2c_dev->dev, "Invalid bus speed (%i>%i)\n",
 			t->bus_freq_hz, I2C_MAX_FAST_MODE_PLUS_FREQ);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	setup->speed_freq = t->bus_freq_hz;
-	i2c_dev->setup.rise_समय = t->scl_rise_ns;
-	i2c_dev->setup.fall_समय = t->scl_fall_ns;
+	i2c_dev->setup.rise_time = t->scl_rise_ns;
+	i2c_dev->setup.fall_time = t->scl_fall_ns;
 	i2c_dev->dnf_dt = t->digital_filter_width_ns;
-	setup->घड़ी_src = clk_get_rate(i2c_dev->clk);
+	setup->clock_src = clk_get_rate(i2c_dev->clk);
 
-	अगर (!setup->घड़ी_src) अणु
+	if (!setup->clock_src) {
 		dev_err(i2c_dev->dev, "clock rate is 0\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!of_property_पढ़ो_bool(i2c_dev->dev->of_node, "i2c-digital-filter"))
+	if (!of_property_read_bool(i2c_dev->dev->of_node, "i2c-digital-filter"))
 		i2c_dev->dnf_dt = STM32F7_I2C_DNF_DEFAULT;
 
-	करो अणु
-		ret = sपंचांग32f7_i2c_compute_timing(i2c_dev, setup,
+	do {
+		ret = stm32f7_i2c_compute_timing(i2c_dev, setup,
 						 &i2c_dev->timing);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(i2c_dev->dev,
 				"failed to compute I2C timings.\n");
-			अगर (setup->speed_freq <= I2C_MAX_STANDARD_MODE_FREQ)
-				अवरोध;
+			if (setup->speed_freq <= I2C_MAX_STANDARD_MODE_FREQ)
+				break;
 			setup->speed_freq =
-				sपंचांग32f7_get_lower_rate(setup->speed_freq);
+				stm32f7_get_lower_rate(setup->speed_freq);
 			dev_warn(i2c_dev->dev,
 				 "downgrade I2C Speed Freq to (%i)\n",
 				 setup->speed_freq);
-		पूर्ण
-	पूर्ण जबतक (ret);
+		}
+	} while (ret);
 
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(i2c_dev->dev, "Impossible to compute I2C timings.\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	i2c_dev->analog_filter = of_property_पढ़ो_bool(i2c_dev->dev->of_node,
+	i2c_dev->analog_filter = of_property_read_bool(i2c_dev->dev->of_node,
 						       "i2c-analog-filter");
 
 	dev_dbg(i2c_dev->dev, "I2C Speed(%i), Clk Source(%i)\n",
-		setup->speed_freq, setup->घड़ी_src);
+		setup->speed_freq, setup->clock_src);
 	dev_dbg(i2c_dev->dev, "I2C Rise(%i) and Fall(%i) Time\n",
-		setup->rise_समय, setup->fall_समय);
+		setup->rise_time, setup->fall_time);
 	dev_dbg(i2c_dev->dev, "I2C Analog Filter(%s), DNF(%i)\n",
 		(i2c_dev->analog_filter ? "On" : "Off"), i2c_dev->dnf);
 
 	i2c_dev->bus_rate = setup->speed_freq;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sपंचांग32f7_i2c_disable_dma_req(काष्ठा sपंचांग32f7_i2c_dev *i2c_dev)
-अणु
-	व्योम __iomem *base = i2c_dev->base;
+static void stm32f7_i2c_disable_dma_req(struct stm32f7_i2c_dev *i2c_dev)
+{
+	void __iomem *base = i2c_dev->base;
 	u32 mask = STM32F7_I2C_CR1_RXDMAEN | STM32F7_I2C_CR1_TXDMAEN;
 
-	sपंचांग32f7_i2c_clr_bits(base + STM32F7_I2C_CR1, mask);
-पूर्ण
+	stm32f7_i2c_clr_bits(base + STM32F7_I2C_CR1, mask);
+}
 
-अटल व्योम sपंचांग32f7_i2c_dma_callback(व्योम *arg)
-अणु
-	काष्ठा sपंचांग32f7_i2c_dev *i2c_dev = (काष्ठा sपंचांग32f7_i2c_dev *)arg;
-	काष्ठा sपंचांग32_i2c_dma *dma = i2c_dev->dma;
-	काष्ठा device *dev = dma->chan_using->device->dev;
+static void stm32f7_i2c_dma_callback(void *arg)
+{
+	struct stm32f7_i2c_dev *i2c_dev = (struct stm32f7_i2c_dev *)arg;
+	struct stm32_i2c_dma *dma = i2c_dev->dma;
+	struct device *dev = dma->chan_using->device->dev;
 
-	sपंचांग32f7_i2c_disable_dma_req(i2c_dev);
+	stm32f7_i2c_disable_dma_req(i2c_dev);
 	dma_unmap_single(dev, dma->dma_buf, dma->dma_len, dma->dma_data_dir);
 	complete(&dma->dma_complete);
-पूर्ण
+}
 
-अटल व्योम sपंचांग32f7_i2c_hw_config(काष्ठा sपंचांग32f7_i2c_dev *i2c_dev)
-अणु
-	काष्ठा sपंचांग32f7_i2c_timings *t = &i2c_dev->timing;
+static void stm32f7_i2c_hw_config(struct stm32f7_i2c_dev *i2c_dev)
+{
+	struct stm32f7_i2c_timings *t = &i2c_dev->timing;
 	u32 timing = 0;
 
 	/* Timing settings */
@@ -724,139 +723,139 @@
 	timing |= STM32F7_I2C_TIMINGR_SDADEL(t->sdadel);
 	timing |= STM32F7_I2C_TIMINGR_SCLH(t->sclh);
 	timing |= STM32F7_I2C_TIMINGR_SCLL(t->scll);
-	ग_लिखोl_relaxed(timing, i2c_dev->base + STM32F7_I2C_TIMINGR);
+	writel_relaxed(timing, i2c_dev->base + STM32F7_I2C_TIMINGR);
 
 	/* Configure the Analog Filter */
-	अगर (i2c_dev->analog_filter)
-		sपंचांग32f7_i2c_clr_bits(i2c_dev->base + STM32F7_I2C_CR1,
+	if (i2c_dev->analog_filter)
+		stm32f7_i2c_clr_bits(i2c_dev->base + STM32F7_I2C_CR1,
 				     STM32F7_I2C_CR1_ANFOFF);
-	अन्यथा
-		sपंचांग32f7_i2c_set_bits(i2c_dev->base + STM32F7_I2C_CR1,
+	else
+		stm32f7_i2c_set_bits(i2c_dev->base + STM32F7_I2C_CR1,
 				     STM32F7_I2C_CR1_ANFOFF);
 
 	/* Program the Digital Filter */
-	sपंचांग32f7_i2c_clr_bits(i2c_dev->base + STM32F7_I2C_CR1,
+	stm32f7_i2c_clr_bits(i2c_dev->base + STM32F7_I2C_CR1,
 			     STM32F7_I2C_CR1_DNF_MASK);
-	sपंचांग32f7_i2c_set_bits(i2c_dev->base + STM32F7_I2C_CR1,
+	stm32f7_i2c_set_bits(i2c_dev->base + STM32F7_I2C_CR1,
 			     STM32F7_I2C_CR1_DNF(i2c_dev->dnf));
 
-	sपंचांग32f7_i2c_set_bits(i2c_dev->base + STM32F7_I2C_CR1,
+	stm32f7_i2c_set_bits(i2c_dev->base + STM32F7_I2C_CR1,
 			     STM32F7_I2C_CR1_PE);
-पूर्ण
+}
 
-अटल व्योम sपंचांग32f7_i2c_ग_लिखो_tx_data(काष्ठा sपंचांग32f7_i2c_dev *i2c_dev)
-अणु
-	काष्ठा sपंचांग32f7_i2c_msg *f7_msg = &i2c_dev->f7_msg;
-	व्योम __iomem *base = i2c_dev->base;
+static void stm32f7_i2c_write_tx_data(struct stm32f7_i2c_dev *i2c_dev)
+{
+	struct stm32f7_i2c_msg *f7_msg = &i2c_dev->f7_msg;
+	void __iomem *base = i2c_dev->base;
 
-	अगर (f7_msg->count) अणु
-		ग_लिखोb_relaxed(*f7_msg->buf++, base + STM32F7_I2C_TXDR);
+	if (f7_msg->count) {
+		writeb_relaxed(*f7_msg->buf++, base + STM32F7_I2C_TXDR);
 		f7_msg->count--;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम sपंचांग32f7_i2c_पढ़ो_rx_data(काष्ठा sपंचांग32f7_i2c_dev *i2c_dev)
-अणु
-	काष्ठा sपंचांग32f7_i2c_msg *f7_msg = &i2c_dev->f7_msg;
-	व्योम __iomem *base = i2c_dev->base;
+static void stm32f7_i2c_read_rx_data(struct stm32f7_i2c_dev *i2c_dev)
+{
+	struct stm32f7_i2c_msg *f7_msg = &i2c_dev->f7_msg;
+	void __iomem *base = i2c_dev->base;
 
-	अगर (f7_msg->count) अणु
-		*f7_msg->buf++ = पढ़ोb_relaxed(base + STM32F7_I2C_RXDR);
+	if (f7_msg->count) {
+		*f7_msg->buf++ = readb_relaxed(base + STM32F7_I2C_RXDR);
 		f7_msg->count--;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Flush RX buffer has no data is expected */
-		पढ़ोb_relaxed(base + STM32F7_I2C_RXDR);
-	पूर्ण
-पूर्ण
+		readb_relaxed(base + STM32F7_I2C_RXDR);
+	}
+}
 
-अटल व्योम sपंचांग32f7_i2c_reload(काष्ठा sपंचांग32f7_i2c_dev *i2c_dev)
-अणु
-	काष्ठा sपंचांग32f7_i2c_msg *f7_msg = &i2c_dev->f7_msg;
+static void stm32f7_i2c_reload(struct stm32f7_i2c_dev *i2c_dev)
+{
+	struct stm32f7_i2c_msg *f7_msg = &i2c_dev->f7_msg;
 	u32 cr2;
 
-	अगर (i2c_dev->use_dma)
+	if (i2c_dev->use_dma)
 		f7_msg->count -= STM32F7_I2C_MAX_LEN;
 
-	cr2 = पढ़ोl_relaxed(i2c_dev->base + STM32F7_I2C_CR2);
+	cr2 = readl_relaxed(i2c_dev->base + STM32F7_I2C_CR2);
 
 	cr2 &= ~STM32F7_I2C_CR2_NBYTES_MASK;
-	अगर (f7_msg->count > STM32F7_I2C_MAX_LEN) अणु
+	if (f7_msg->count > STM32F7_I2C_MAX_LEN) {
 		cr2 |= STM32F7_I2C_CR2_NBYTES(STM32F7_I2C_MAX_LEN);
-	पूर्ण अन्यथा अणु
+	} else {
 		cr2 &= ~STM32F7_I2C_CR2_RELOAD;
 		cr2 |= STM32F7_I2C_CR2_NBYTES(f7_msg->count);
-	पूर्ण
+	}
 
-	ग_लिखोl_relaxed(cr2, i2c_dev->base + STM32F7_I2C_CR2);
-पूर्ण
+	writel_relaxed(cr2, i2c_dev->base + STM32F7_I2C_CR2);
+}
 
-अटल व्योम sपंचांग32f7_i2c_smbus_reload(काष्ठा sपंचांग32f7_i2c_dev *i2c_dev)
-अणु
-	काष्ठा sपंचांग32f7_i2c_msg *f7_msg = &i2c_dev->f7_msg;
+static void stm32f7_i2c_smbus_reload(struct stm32f7_i2c_dev *i2c_dev)
+{
+	struct stm32f7_i2c_msg *f7_msg = &i2c_dev->f7_msg;
 	u32 cr2;
 	u8 *val;
 
 	/*
 	 * For I2C_SMBUS_BLOCK_DATA && I2C_SMBUS_BLOCK_PROC_CALL, the first
-	 * data received inक्रमm us how many data will follow.
+	 * data received inform us how many data will follow.
 	 */
-	sपंचांग32f7_i2c_पढ़ो_rx_data(i2c_dev);
+	stm32f7_i2c_read_rx_data(i2c_dev);
 
 	/*
-	 * Update NBYTES with the value पढ़ो to जारी the transfer
+	 * Update NBYTES with the value read to continue the transfer
 	 */
-	val = f7_msg->buf - माप(u8);
+	val = f7_msg->buf - sizeof(u8);
 	f7_msg->count = *val;
-	cr2 = पढ़ोl_relaxed(i2c_dev->base + STM32F7_I2C_CR2);
+	cr2 = readl_relaxed(i2c_dev->base + STM32F7_I2C_CR2);
 	cr2 &= ~(STM32F7_I2C_CR2_NBYTES_MASK | STM32F7_I2C_CR2_RELOAD);
 	cr2 |= STM32F7_I2C_CR2_NBYTES(f7_msg->count);
-	ग_लिखोl_relaxed(cr2, i2c_dev->base + STM32F7_I2C_CR2);
-पूर्ण
+	writel_relaxed(cr2, i2c_dev->base + STM32F7_I2C_CR2);
+}
 
-अटल पूर्णांक sपंचांग32f7_i2c_release_bus(काष्ठा i2c_adapter *i2c_adap)
-अणु
-	काष्ठा sपंचांग32f7_i2c_dev *i2c_dev = i2c_get_adapdata(i2c_adap);
+static int stm32f7_i2c_release_bus(struct i2c_adapter *i2c_adap)
+{
+	struct stm32f7_i2c_dev *i2c_dev = i2c_get_adapdata(i2c_adap);
 
 	dev_info(i2c_dev->dev, "Trying to recover bus\n");
 
-	sपंचांग32f7_i2c_clr_bits(i2c_dev->base + STM32F7_I2C_CR1,
+	stm32f7_i2c_clr_bits(i2c_dev->base + STM32F7_I2C_CR1,
 			     STM32F7_I2C_CR1_PE);
 
-	sपंचांग32f7_i2c_hw_config(i2c_dev);
+	stm32f7_i2c_hw_config(i2c_dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sपंचांग32f7_i2c_रुको_मुक्त_bus(काष्ठा sपंचांग32f7_i2c_dev *i2c_dev)
-अणु
+static int stm32f7_i2c_wait_free_bus(struct stm32f7_i2c_dev *i2c_dev)
+{
 	u32 status;
-	पूर्णांक ret;
+	int ret;
 
-	ret = पढ़ोl_relaxed_poll_समयout(i2c_dev->base + STM32F7_I2C_ISR,
+	ret = readl_relaxed_poll_timeout(i2c_dev->base + STM32F7_I2C_ISR,
 					 status,
 					 !(status & STM32F7_I2C_ISR_BUSY),
 					 10, 1000);
-	अगर (!ret)
-		वापस 0;
+	if (!ret)
+		return 0;
 
 	dev_info(i2c_dev->dev, "bus busy\n");
 
-	ret = sपंचांग32f7_i2c_release_bus(&i2c_dev->adap);
-	अगर (ret) अणु
+	ret = stm32f7_i2c_release_bus(&i2c_dev->adap);
+	if (ret) {
 		dev_err(i2c_dev->dev, "Failed to recover the bus (%d)\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस -EBUSY;
-पूर्ण
+	return -EBUSY;
+}
 
-अटल व्योम sपंचांग32f7_i2c_xfer_msg(काष्ठा sपंचांग32f7_i2c_dev *i2c_dev,
-				 काष्ठा i2c_msg *msg)
-अणु
-	काष्ठा sपंचांग32f7_i2c_msg *f7_msg = &i2c_dev->f7_msg;
-	व्योम __iomem *base = i2c_dev->base;
+static void stm32f7_i2c_xfer_msg(struct stm32f7_i2c_dev *i2c_dev,
+				 struct i2c_msg *msg)
+{
+	struct stm32f7_i2c_msg *f7_msg = &i2c_dev->f7_msg;
+	void __iomem *base = i2c_dev->base;
 	u32 cr1, cr2;
-	पूर्णांक ret;
+	int ret;
 
 	f7_msg->addr = msg->addr;
 	f7_msg->buf = msg->buf;
@@ -866,97 +865,97 @@
 
 	reinit_completion(&i2c_dev->complete);
 
-	cr1 = पढ़ोl_relaxed(base + STM32F7_I2C_CR1);
-	cr2 = पढ़ोl_relaxed(base + STM32F7_I2C_CR2);
+	cr1 = readl_relaxed(base + STM32F7_I2C_CR1);
+	cr2 = readl_relaxed(base + STM32F7_I2C_CR2);
 
 	/* Set transfer direction */
 	cr2 &= ~STM32F7_I2C_CR2_RD_WRN;
-	अगर (msg->flags & I2C_M_RD)
+	if (msg->flags & I2C_M_RD)
 		cr2 |= STM32F7_I2C_CR2_RD_WRN;
 
 	/* Set slave address */
 	cr2 &= ~(STM32F7_I2C_CR2_HEAD10R | STM32F7_I2C_CR2_ADD10);
-	अगर (msg->flags & I2C_M_TEN) अणु
+	if (msg->flags & I2C_M_TEN) {
 		cr2 &= ~STM32F7_I2C_CR2_SADD10_MASK;
 		cr2 |= STM32F7_I2C_CR2_SADD10(f7_msg->addr);
 		cr2 |= STM32F7_I2C_CR2_ADD10;
-	पूर्ण अन्यथा अणु
+	} else {
 		cr2 &= ~STM32F7_I2C_CR2_SADD7_MASK;
 		cr2 |= STM32F7_I2C_CR2_SADD7(f7_msg->addr);
-	पूर्ण
+	}
 
-	/* Set nb bytes to transfer and reload अगर needed */
+	/* Set nb bytes to transfer and reload if needed */
 	cr2 &= ~(STM32F7_I2C_CR2_NBYTES_MASK | STM32F7_I2C_CR2_RELOAD);
-	अगर (f7_msg->count > STM32F7_I2C_MAX_LEN) अणु
+	if (f7_msg->count > STM32F7_I2C_MAX_LEN) {
 		cr2 |= STM32F7_I2C_CR2_NBYTES(STM32F7_I2C_MAX_LEN);
 		cr2 |= STM32F7_I2C_CR2_RELOAD;
-	पूर्ण अन्यथा अणु
+	} else {
 		cr2 |= STM32F7_I2C_CR2_NBYTES(f7_msg->count);
-	पूर्ण
+	}
 
-	/* Enable NACK, STOP, error and transfer complete पूर्णांकerrupts */
+	/* Enable NACK, STOP, error and transfer complete interrupts */
 	cr1 |= STM32F7_I2C_CR1_ERRIE | STM32F7_I2C_CR1_TCIE |
 		STM32F7_I2C_CR1_STOPIE | STM32F7_I2C_CR1_NACKIE;
 
-	/* Clear DMA req and TX/RX पूर्णांकerrupt */
+	/* Clear DMA req and TX/RX interrupt */
 	cr1 &= ~(STM32F7_I2C_CR1_RXIE | STM32F7_I2C_CR1_TXIE |
 			STM32F7_I2C_CR1_RXDMAEN | STM32F7_I2C_CR1_TXDMAEN);
 
-	/* Configure DMA or enable RX/TX पूर्णांकerrupt */
+	/* Configure DMA or enable RX/TX interrupt */
 	i2c_dev->use_dma = false;
-	अगर (i2c_dev->dma && f7_msg->count >= STM32F7_I2C_DMA_LEN_MIN) अणु
-		ret = sपंचांग32_i2c_prep_dma_xfer(i2c_dev->dev, i2c_dev->dma,
+	if (i2c_dev->dma && f7_msg->count >= STM32F7_I2C_DMA_LEN_MIN) {
+		ret = stm32_i2c_prep_dma_xfer(i2c_dev->dev, i2c_dev->dma,
 					      msg->flags & I2C_M_RD,
 					      f7_msg->count, f7_msg->buf,
-					      sपंचांग32f7_i2c_dma_callback,
+					      stm32f7_i2c_dma_callback,
 					      i2c_dev);
-		अगर (!ret)
+		if (!ret)
 			i2c_dev->use_dma = true;
-		अन्यथा
+		else
 			dev_warn(i2c_dev->dev, "can't use DMA\n");
-	पूर्ण
+	}
 
-	अगर (!i2c_dev->use_dma) अणु
-		अगर (msg->flags & I2C_M_RD)
+	if (!i2c_dev->use_dma) {
+		if (msg->flags & I2C_M_RD)
 			cr1 |= STM32F7_I2C_CR1_RXIE;
-		अन्यथा
+		else
 			cr1 |= STM32F7_I2C_CR1_TXIE;
-	पूर्ण अन्यथा अणु
-		अगर (msg->flags & I2C_M_RD)
+	} else {
+		if (msg->flags & I2C_M_RD)
 			cr1 |= STM32F7_I2C_CR1_RXDMAEN;
-		अन्यथा
+		else
 			cr1 |= STM32F7_I2C_CR1_TXDMAEN;
-	पूर्ण
+	}
 
 	/* Configure Start/Repeated Start */
 	cr2 |= STM32F7_I2C_CR2_START;
 
 	i2c_dev->master_mode = true;
 
-	/* Write configurations रेजिस्टरs */
-	ग_लिखोl_relaxed(cr1, base + STM32F7_I2C_CR1);
-	ग_लिखोl_relaxed(cr2, base + STM32F7_I2C_CR2);
-पूर्ण
+	/* Write configurations registers */
+	writel_relaxed(cr1, base + STM32F7_I2C_CR1);
+	writel_relaxed(cr2, base + STM32F7_I2C_CR2);
+}
 
-अटल पूर्णांक sपंचांग32f7_i2c_smbus_xfer_msg(काष्ठा sपंचांग32f7_i2c_dev *i2c_dev,
-				      अचिन्हित लघु flags, u8 command,
-				      जोड़ i2c_smbus_data *data)
-अणु
-	काष्ठा sपंचांग32f7_i2c_msg *f7_msg = &i2c_dev->f7_msg;
-	काष्ठा device *dev = i2c_dev->dev;
-	व्योम __iomem *base = i2c_dev->base;
+static int stm32f7_i2c_smbus_xfer_msg(struct stm32f7_i2c_dev *i2c_dev,
+				      unsigned short flags, u8 command,
+				      union i2c_smbus_data *data)
+{
+	struct stm32f7_i2c_msg *f7_msg = &i2c_dev->f7_msg;
+	struct device *dev = i2c_dev->dev;
+	void __iomem *base = i2c_dev->base;
 	u32 cr1, cr2;
-	पूर्णांक i, ret;
+	int i, ret;
 
 	f7_msg->result = 0;
 	reinit_completion(&i2c_dev->complete);
 
-	cr2 = पढ़ोl_relaxed(base + STM32F7_I2C_CR2);
-	cr1 = पढ़ोl_relaxed(base + STM32F7_I2C_CR1);
+	cr2 = readl_relaxed(base + STM32F7_I2C_CR2);
+	cr1 = readl_relaxed(base + STM32F7_I2C_CR1);
 
 	/* Set transfer direction */
 	cr2 &= ~STM32F7_I2C_CR2_RD_WRN;
-	अगर (f7_msg->पढ़ो_ग_लिखो)
+	if (f7_msg->read_write)
 		cr2 |= STM32F7_I2C_CR2_RD_WRN;
 
 	/* Set slave address */
@@ -964,181 +963,181 @@
 	cr2 |= STM32F7_I2C_CR2_SADD7(f7_msg->addr);
 
 	f7_msg->smbus_buf[0] = command;
-	चयन (f7_msg->size) अणु
-	हाल I2C_SMBUS_QUICK:
+	switch (f7_msg->size) {
+	case I2C_SMBUS_QUICK:
 		f7_msg->stop = true;
 		f7_msg->count = 0;
-		अवरोध;
-	हाल I2C_SMBUS_BYTE:
+		break;
+	case I2C_SMBUS_BYTE:
 		f7_msg->stop = true;
 		f7_msg->count = 1;
-		अवरोध;
-	हाल I2C_SMBUS_BYTE_DATA:
-		अगर (f7_msg->पढ़ो_ग_लिखो) अणु
+		break;
+	case I2C_SMBUS_BYTE_DATA:
+		if (f7_msg->read_write) {
 			f7_msg->stop = false;
 			f7_msg->count = 1;
 			cr2 &= ~STM32F7_I2C_CR2_RD_WRN;
-		पूर्ण अन्यथा अणु
+		} else {
 			f7_msg->stop = true;
 			f7_msg->count = 2;
 			f7_msg->smbus_buf[1] = data->byte;
-		पूर्ण
-		अवरोध;
-	हाल I2C_SMBUS_WORD_DATA:
-		अगर (f7_msg->पढ़ो_ग_लिखो) अणु
+		}
+		break;
+	case I2C_SMBUS_WORD_DATA:
+		if (f7_msg->read_write) {
 			f7_msg->stop = false;
 			f7_msg->count = 1;
 			cr2 &= ~STM32F7_I2C_CR2_RD_WRN;
-		पूर्ण अन्यथा अणु
+		} else {
 			f7_msg->stop = true;
 			f7_msg->count = 3;
 			f7_msg->smbus_buf[1] = data->word & 0xff;
 			f7_msg->smbus_buf[2] = data->word >> 8;
-		पूर्ण
-		अवरोध;
-	हाल I2C_SMBUS_BLOCK_DATA:
-		अगर (f7_msg->पढ़ो_ग_लिखो) अणु
+		}
+		break;
+	case I2C_SMBUS_BLOCK_DATA:
+		if (f7_msg->read_write) {
 			f7_msg->stop = false;
 			f7_msg->count = 1;
 			cr2 &= ~STM32F7_I2C_CR2_RD_WRN;
-		पूर्ण अन्यथा अणु
+		} else {
 			f7_msg->stop = true;
-			अगर (data->block[0] > I2C_SMBUS_BLOCK_MAX ||
-			    !data->block[0]) अणु
+			if (data->block[0] > I2C_SMBUS_BLOCK_MAX ||
+			    !data->block[0]) {
 				dev_err(dev, "Invalid block write size %d\n",
 					data->block[0]);
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 			f7_msg->count = data->block[0] + 2;
-			क्रम (i = 1; i < f7_msg->count; i++)
+			for (i = 1; i < f7_msg->count; i++)
 				f7_msg->smbus_buf[i] = data->block[i - 1];
-		पूर्ण
-		अवरोध;
-	हाल I2C_SMBUS_PROC_CALL:
+		}
+		break;
+	case I2C_SMBUS_PROC_CALL:
 		f7_msg->stop = false;
 		f7_msg->count = 3;
 		f7_msg->smbus_buf[1] = data->word & 0xff;
 		f7_msg->smbus_buf[2] = data->word >> 8;
 		cr2 &= ~STM32F7_I2C_CR2_RD_WRN;
-		f7_msg->पढ़ो_ग_लिखो = I2C_SMBUS_READ;
-		अवरोध;
-	हाल I2C_SMBUS_BLOCK_PROC_CALL:
+		f7_msg->read_write = I2C_SMBUS_READ;
+		break;
+	case I2C_SMBUS_BLOCK_PROC_CALL:
 		f7_msg->stop = false;
-		अगर (data->block[0] > I2C_SMBUS_BLOCK_MAX - 1) अणु
+		if (data->block[0] > I2C_SMBUS_BLOCK_MAX - 1) {
 			dev_err(dev, "Invalid block write size %d\n",
 				data->block[0]);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		f7_msg->count = data->block[0] + 2;
-		क्रम (i = 1; i < f7_msg->count; i++)
+		for (i = 1; i < f7_msg->count; i++)
 			f7_msg->smbus_buf[i] = data->block[i - 1];
 		cr2 &= ~STM32F7_I2C_CR2_RD_WRN;
-		f7_msg->पढ़ो_ग_लिखो = I2C_SMBUS_READ;
-		अवरोध;
-	हाल I2C_SMBUS_I2C_BLOCK_DATA:
+		f7_msg->read_write = I2C_SMBUS_READ;
+		break;
+	case I2C_SMBUS_I2C_BLOCK_DATA:
 		/* Rely on emulated i2c transfer (through master_xfer) */
-		वापस -EOPNOTSUPP;
-	शेष:
+		return -EOPNOTSUPP;
+	default:
 		dev_err(dev, "Unsupported smbus protocol %d\n", f7_msg->size);
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
 	f7_msg->buf = f7_msg->smbus_buf;
 
 	/* Configure PEC */
-	अगर ((flags & I2C_CLIENT_PEC) && f7_msg->size != I2C_SMBUS_QUICK) अणु
+	if ((flags & I2C_CLIENT_PEC) && f7_msg->size != I2C_SMBUS_QUICK) {
 		cr1 |= STM32F7_I2C_CR1_PECEN;
 		cr2 |= STM32F7_I2C_CR2_PECBYTE;
-		अगर (!f7_msg->पढ़ो_ग_लिखो)
+		if (!f7_msg->read_write)
 			f7_msg->count++;
-	पूर्ण अन्यथा अणु
+	} else {
 		cr1 &= ~STM32F7_I2C_CR1_PECEN;
 		cr2 &= ~STM32F7_I2C_CR2_PECBYTE;
-	पूर्ण
+	}
 
 	/* Set number of bytes to be transferred */
 	cr2 &= ~(STM32F7_I2C_CR2_NBYTES_MASK | STM32F7_I2C_CR2_RELOAD);
 	cr2 |= STM32F7_I2C_CR2_NBYTES(f7_msg->count);
 
-	/* Enable NACK, STOP, error and transfer complete पूर्णांकerrupts */
+	/* Enable NACK, STOP, error and transfer complete interrupts */
 	cr1 |= STM32F7_I2C_CR1_ERRIE | STM32F7_I2C_CR1_TCIE |
 		STM32F7_I2C_CR1_STOPIE | STM32F7_I2C_CR1_NACKIE;
 
-	/* Clear DMA req and TX/RX पूर्णांकerrupt */
+	/* Clear DMA req and TX/RX interrupt */
 	cr1 &= ~(STM32F7_I2C_CR1_RXIE | STM32F7_I2C_CR1_TXIE |
 			STM32F7_I2C_CR1_RXDMAEN | STM32F7_I2C_CR1_TXDMAEN);
 
-	/* Configure DMA or enable RX/TX पूर्णांकerrupt */
+	/* Configure DMA or enable RX/TX interrupt */
 	i2c_dev->use_dma = false;
-	अगर (i2c_dev->dma && f7_msg->count >= STM32F7_I2C_DMA_LEN_MIN) अणु
-		ret = sपंचांग32_i2c_prep_dma_xfer(i2c_dev->dev, i2c_dev->dma,
+	if (i2c_dev->dma && f7_msg->count >= STM32F7_I2C_DMA_LEN_MIN) {
+		ret = stm32_i2c_prep_dma_xfer(i2c_dev->dev, i2c_dev->dma,
 					      cr2 & STM32F7_I2C_CR2_RD_WRN,
 					      f7_msg->count, f7_msg->buf,
-					      sपंचांग32f7_i2c_dma_callback,
+					      stm32f7_i2c_dma_callback,
 					      i2c_dev);
-		अगर (!ret)
+		if (!ret)
 			i2c_dev->use_dma = true;
-		अन्यथा
+		else
 			dev_warn(i2c_dev->dev, "can't use DMA\n");
-	पूर्ण
+	}
 
-	अगर (!i2c_dev->use_dma) अणु
-		अगर (cr2 & STM32F7_I2C_CR2_RD_WRN)
+	if (!i2c_dev->use_dma) {
+		if (cr2 & STM32F7_I2C_CR2_RD_WRN)
 			cr1 |= STM32F7_I2C_CR1_RXIE;
-		अन्यथा
+		else
 			cr1 |= STM32F7_I2C_CR1_TXIE;
-	पूर्ण अन्यथा अणु
-		अगर (cr2 & STM32F7_I2C_CR2_RD_WRN)
+	} else {
+		if (cr2 & STM32F7_I2C_CR2_RD_WRN)
 			cr1 |= STM32F7_I2C_CR1_RXDMAEN;
-		अन्यथा
+		else
 			cr1 |= STM32F7_I2C_CR1_TXDMAEN;
-	पूर्ण
+	}
 
 	/* Set Start bit */
 	cr2 |= STM32F7_I2C_CR2_START;
 
 	i2c_dev->master_mode = true;
 
-	/* Write configurations रेजिस्टरs */
-	ग_लिखोl_relaxed(cr1, base + STM32F7_I2C_CR1);
-	ग_लिखोl_relaxed(cr2, base + STM32F7_I2C_CR2);
+	/* Write configurations registers */
+	writel_relaxed(cr1, base + STM32F7_I2C_CR1);
+	writel_relaxed(cr2, base + STM32F7_I2C_CR2);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sपंचांग32f7_i2c_smbus_rep_start(काष्ठा sपंचांग32f7_i2c_dev *i2c_dev)
-अणु
-	काष्ठा sपंचांग32f7_i2c_msg *f7_msg = &i2c_dev->f7_msg;
-	व्योम __iomem *base = i2c_dev->base;
+static void stm32f7_i2c_smbus_rep_start(struct stm32f7_i2c_dev *i2c_dev)
+{
+	struct stm32f7_i2c_msg *f7_msg = &i2c_dev->f7_msg;
+	void __iomem *base = i2c_dev->base;
 	u32 cr1, cr2;
-	पूर्णांक ret;
+	int ret;
 
-	cr2 = पढ़ोl_relaxed(base + STM32F7_I2C_CR2);
-	cr1 = पढ़ोl_relaxed(base + STM32F7_I2C_CR1);
+	cr2 = readl_relaxed(base + STM32F7_I2C_CR2);
+	cr1 = readl_relaxed(base + STM32F7_I2C_CR1);
 
 	/* Set transfer direction */
 	cr2 |= STM32F7_I2C_CR2_RD_WRN;
 
-	चयन (f7_msg->size) अणु
-	हाल I2C_SMBUS_BYTE_DATA:
+	switch (f7_msg->size) {
+	case I2C_SMBUS_BYTE_DATA:
 		f7_msg->count = 1;
-		अवरोध;
-	हाल I2C_SMBUS_WORD_DATA:
-	हाल I2C_SMBUS_PROC_CALL:
+		break;
+	case I2C_SMBUS_WORD_DATA:
+	case I2C_SMBUS_PROC_CALL:
 		f7_msg->count = 2;
-		अवरोध;
-	हाल I2C_SMBUS_BLOCK_DATA:
-	हाल I2C_SMBUS_BLOCK_PROC_CALL:
+		break;
+	case I2C_SMBUS_BLOCK_DATA:
+	case I2C_SMBUS_BLOCK_PROC_CALL:
 		f7_msg->count = 1;
 		cr2 |= STM32F7_I2C_CR2_RELOAD;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	f7_msg->buf = f7_msg->smbus_buf;
 	f7_msg->stop = true;
 
-	/* Add one byte क्रम PEC अगर needed */
-	अगर (cr1 & STM32F7_I2C_CR1_PECEN)
+	/* Add one byte for PEC if needed */
+	if (cr1 & STM32F7_I2C_CR1_PECEN)
 		f7_msg->count++;
 
 	/* Set number of bytes to be transferred */
@@ -1146,91 +1145,91 @@
 	cr2 |= STM32F7_I2C_CR2_NBYTES(f7_msg->count);
 
 	/*
-	 * Configure RX/TX पूर्णांकerrupt:
+	 * Configure RX/TX interrupt:
 	 */
 	cr1 &= ~(STM32F7_I2C_CR1_RXIE | STM32F7_I2C_CR1_TXIE);
 	cr1 |= STM32F7_I2C_CR1_RXIE;
 
 	/*
-	 * Configure DMA or enable RX/TX पूर्णांकerrupt:
-	 * For I2C_SMBUS_BLOCK_DATA and I2C_SMBUS_BLOCK_PROC_CALL we करोn't use
-	 * dma as we करोn't know in advance how many data will be received
+	 * Configure DMA or enable RX/TX interrupt:
+	 * For I2C_SMBUS_BLOCK_DATA and I2C_SMBUS_BLOCK_PROC_CALL we don't use
+	 * dma as we don't know in advance how many data will be received
 	 */
 	cr1 &= ~(STM32F7_I2C_CR1_RXIE | STM32F7_I2C_CR1_TXIE |
 		 STM32F7_I2C_CR1_RXDMAEN | STM32F7_I2C_CR1_TXDMAEN);
 
 	i2c_dev->use_dma = false;
-	अगर (i2c_dev->dma && f7_msg->count >= STM32F7_I2C_DMA_LEN_MIN &&
+	if (i2c_dev->dma && f7_msg->count >= STM32F7_I2C_DMA_LEN_MIN &&
 	    f7_msg->size != I2C_SMBUS_BLOCK_DATA &&
-	    f7_msg->size != I2C_SMBUS_BLOCK_PROC_CALL) अणु
-		ret = sपंचांग32_i2c_prep_dma_xfer(i2c_dev->dev, i2c_dev->dma,
+	    f7_msg->size != I2C_SMBUS_BLOCK_PROC_CALL) {
+		ret = stm32_i2c_prep_dma_xfer(i2c_dev->dev, i2c_dev->dma,
 					      cr2 & STM32F7_I2C_CR2_RD_WRN,
 					      f7_msg->count, f7_msg->buf,
-					      sपंचांग32f7_i2c_dma_callback,
+					      stm32f7_i2c_dma_callback,
 					      i2c_dev);
 
-		अगर (!ret)
+		if (!ret)
 			i2c_dev->use_dma = true;
-		अन्यथा
+		else
 			dev_warn(i2c_dev->dev, "can't use DMA\n");
-	पूर्ण
+	}
 
-	अगर (!i2c_dev->use_dma)
+	if (!i2c_dev->use_dma)
 		cr1 |= STM32F7_I2C_CR1_RXIE;
-	अन्यथा
+	else
 		cr1 |= STM32F7_I2C_CR1_RXDMAEN;
 
 	/* Configure Repeated Start */
 	cr2 |= STM32F7_I2C_CR2_START;
 
-	/* Write configurations रेजिस्टरs */
-	ग_लिखोl_relaxed(cr1, base + STM32F7_I2C_CR1);
-	ग_लिखोl_relaxed(cr2, base + STM32F7_I2C_CR2);
-पूर्ण
+	/* Write configurations registers */
+	writel_relaxed(cr1, base + STM32F7_I2C_CR1);
+	writel_relaxed(cr2, base + STM32F7_I2C_CR2);
+}
 
-अटल पूर्णांक sपंचांग32f7_i2c_smbus_check_pec(काष्ठा sपंचांग32f7_i2c_dev *i2c_dev)
-अणु
-	काष्ठा sपंचांग32f7_i2c_msg *f7_msg = &i2c_dev->f7_msg;
-	u8 count, पूर्णांकernal_pec, received_pec;
+static int stm32f7_i2c_smbus_check_pec(struct stm32f7_i2c_dev *i2c_dev)
+{
+	struct stm32f7_i2c_msg *f7_msg = &i2c_dev->f7_msg;
+	u8 count, internal_pec, received_pec;
 
-	पूर्णांकernal_pec = पढ़ोl_relaxed(i2c_dev->base + STM32F7_I2C_PECR);
+	internal_pec = readl_relaxed(i2c_dev->base + STM32F7_I2C_PECR);
 
-	चयन (f7_msg->size) अणु
-	हाल I2C_SMBUS_BYTE:
-	हाल I2C_SMBUS_BYTE_DATA:
+	switch (f7_msg->size) {
+	case I2C_SMBUS_BYTE:
+	case I2C_SMBUS_BYTE_DATA:
 		received_pec = f7_msg->smbus_buf[1];
-		अवरोध;
-	हाल I2C_SMBUS_WORD_DATA:
-	हाल I2C_SMBUS_PROC_CALL:
+		break;
+	case I2C_SMBUS_WORD_DATA:
+	case I2C_SMBUS_PROC_CALL:
 		received_pec = f7_msg->smbus_buf[2];
-		अवरोध;
-	हाल I2C_SMBUS_BLOCK_DATA:
-	हाल I2C_SMBUS_BLOCK_PROC_CALL:
+		break;
+	case I2C_SMBUS_BLOCK_DATA:
+	case I2C_SMBUS_BLOCK_PROC_CALL:
 		count = f7_msg->smbus_buf[0];
 		received_pec = f7_msg->smbus_buf[count];
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(i2c_dev->dev, "Unsupported smbus protocol for PEC\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (पूर्णांकernal_pec != received_pec) अणु
+	if (internal_pec != received_pec) {
 		dev_err(i2c_dev->dev, "Bad PEC 0x%02x vs. 0x%02x\n",
-			पूर्णांकernal_pec, received_pec);
-		वापस -EBADMSG;
-	पूर्ण
+			internal_pec, received_pec);
+		return -EBADMSG;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool sपंचांग32f7_i2c_is_addr_match(काष्ठा i2c_client *slave, u32 addcode)
-अणु
+static bool stm32f7_i2c_is_addr_match(struct i2c_client *slave, u32 addcode)
+{
 	u32 addr;
 
-	अगर (!slave)
-		वापस false;
+	if (!slave)
+		return false;
 
-	अगर (slave->flags & I2C_CLIENT_TEN) अणु
+	if (slave->flags & I2C_CLIENT_TEN) {
 		/*
 		 * For 10-bit addr, addcode = 11110XY with
 		 * X = Bit 9 of slave address
@@ -1238,762 +1237,762 @@
 		 */
 		addr = slave->addr >> 8;
 		addr |= 0x78;
-		अगर (addr == addcode)
-			वापस true;
-	पूर्ण अन्यथा अणु
+		if (addr == addcode)
+			return true;
+	} else {
 		addr = slave->addr & 0x7f;
-		अगर (addr == addcode)
-			वापस true;
-	पूर्ण
+		if (addr == addcode)
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल व्योम sपंचांग32f7_i2c_slave_start(काष्ठा sपंचांग32f7_i2c_dev *i2c_dev)
-अणु
-	काष्ठा i2c_client *slave = i2c_dev->slave_running;
-	व्योम __iomem *base = i2c_dev->base;
+static void stm32f7_i2c_slave_start(struct stm32f7_i2c_dev *i2c_dev)
+{
+	struct i2c_client *slave = i2c_dev->slave_running;
+	void __iomem *base = i2c_dev->base;
 	u32 mask;
 	u8 value = 0;
 
-	अगर (i2c_dev->slave_dir) अणु
-		/* Notअगरy i2c slave that new पढ़ो transfer is starting */
+	if (i2c_dev->slave_dir) {
+		/* Notify i2c slave that new read transfer is starting */
 		i2c_slave_event(slave, I2C_SLAVE_READ_REQUESTED, &value);
 
 		/*
-		 * Disable slave TX config in हाल of I2C combined message
+		 * Disable slave TX config in case of I2C combined message
 		 * (I2C Write followed by I2C Read)
 		 */
 		mask = STM32F7_I2C_CR2_RELOAD;
-		sपंचांग32f7_i2c_clr_bits(base + STM32F7_I2C_CR2, mask);
+		stm32f7_i2c_clr_bits(base + STM32F7_I2C_CR2, mask);
 		mask = STM32F7_I2C_CR1_SBC | STM32F7_I2C_CR1_RXIE |
 		       STM32F7_I2C_CR1_TCIE;
-		sपंचांग32f7_i2c_clr_bits(base + STM32F7_I2C_CR1, mask);
+		stm32f7_i2c_clr_bits(base + STM32F7_I2C_CR1, mask);
 
-		/* Enable TX empty, STOP, NACK पूर्णांकerrupts */
+		/* Enable TX empty, STOP, NACK interrupts */
 		mask =  STM32F7_I2C_CR1_STOPIE | STM32F7_I2C_CR1_NACKIE |
 			STM32F7_I2C_CR1_TXIE;
-		sपंचांग32f7_i2c_set_bits(base + STM32F7_I2C_CR1, mask);
+		stm32f7_i2c_set_bits(base + STM32F7_I2C_CR1, mask);
 
 		/* Write 1st data byte */
-		ग_लिखोl_relaxed(value, base + STM32F7_I2C_TXDR);
-	पूर्ण अन्यथा अणु
-		/* Notअगरy i2c slave that new ग_लिखो transfer is starting */
+		writel_relaxed(value, base + STM32F7_I2C_TXDR);
+	} else {
+		/* Notify i2c slave that new write transfer is starting */
 		i2c_slave_event(slave, I2C_SLAVE_WRITE_REQUESTED, &value);
 
 		/* Set reload mode to be able to ACK/NACK each received byte */
 		mask = STM32F7_I2C_CR2_RELOAD;
-		sपंचांग32f7_i2c_set_bits(base + STM32F7_I2C_CR2, mask);
+		stm32f7_i2c_set_bits(base + STM32F7_I2C_CR2, mask);
 
 		/*
-		 * Set STOP, NACK, RX empty and transfer complete पूर्णांकerrupts.*
+		 * Set STOP, NACK, RX empty and transfer complete interrupts.*
 		 * Set Slave Byte Control to be able to ACK/NACK each data
 		 * byte received
 		 */
 		mask =  STM32F7_I2C_CR1_STOPIE | STM32F7_I2C_CR1_NACKIE |
 			STM32F7_I2C_CR1_SBC | STM32F7_I2C_CR1_RXIE |
 			STM32F7_I2C_CR1_TCIE;
-		sपंचांग32f7_i2c_set_bits(base + STM32F7_I2C_CR1, mask);
-	पूर्ण
-पूर्ण
+		stm32f7_i2c_set_bits(base + STM32F7_I2C_CR1, mask);
+	}
+}
 
-अटल व्योम sपंचांग32f7_i2c_slave_addr(काष्ठा sपंचांग32f7_i2c_dev *i2c_dev)
-अणु
-	व्योम __iomem *base = i2c_dev->base;
+static void stm32f7_i2c_slave_addr(struct stm32f7_i2c_dev *i2c_dev)
+{
+	void __iomem *base = i2c_dev->base;
 	u32 isr, addcode, dir, mask;
-	पूर्णांक i;
+	int i;
 
-	isr = पढ़ोl_relaxed(i2c_dev->base + STM32F7_I2C_ISR);
+	isr = readl_relaxed(i2c_dev->base + STM32F7_I2C_ISR);
 	addcode = STM32F7_I2C_ISR_ADDCODE_GET(isr);
-	dir = isr & STM32F7_I2C_ISR_सूची;
+	dir = isr & STM32F7_I2C_ISR_DIR;
 
-	क्रम (i = 0; i < STM32F7_I2C_MAX_SLAVE; i++) अणु
-		अगर (sपंचांग32f7_i2c_is_addr_match(i2c_dev->slave[i], addcode)) अणु
+	for (i = 0; i < STM32F7_I2C_MAX_SLAVE; i++) {
+		if (stm32f7_i2c_is_addr_match(i2c_dev->slave[i], addcode)) {
 			i2c_dev->slave_running = i2c_dev->slave[i];
 			i2c_dev->slave_dir = dir;
 
 			/* Start I2C slave processing */
-			sपंचांग32f7_i2c_slave_start(i2c_dev);
+			stm32f7_i2c_slave_start(i2c_dev);
 
 			/* Clear ADDR flag */
 			mask = STM32F7_I2C_ICR_ADDRCF;
-			ग_लिखोl_relaxed(mask, base + STM32F7_I2C_ICR);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			writel_relaxed(mask, base + STM32F7_I2C_ICR);
+			break;
+		}
+	}
+}
 
-अटल पूर्णांक sपंचांग32f7_i2c_get_slave_id(काष्ठा sपंचांग32f7_i2c_dev *i2c_dev,
-				    काष्ठा i2c_client *slave, पूर्णांक *id)
-अणु
-	पूर्णांक i;
+static int stm32f7_i2c_get_slave_id(struct stm32f7_i2c_dev *i2c_dev,
+				    struct i2c_client *slave, int *id)
+{
+	int i;
 
-	क्रम (i = 0; i < STM32F7_I2C_MAX_SLAVE; i++) अणु
-		अगर (i2c_dev->slave[i] == slave) अणु
+	for (i = 0; i < STM32F7_I2C_MAX_SLAVE; i++) {
+		if (i2c_dev->slave[i] == slave) {
 			*id = i;
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
 	dev_err(i2c_dev->dev, "Slave 0x%x not registered\n", slave->addr);
 
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}
 
-अटल पूर्णांक sपंचांग32f7_i2c_get_मुक्त_slave_id(काष्ठा sपंचांग32f7_i2c_dev *i2c_dev,
-					 काष्ठा i2c_client *slave, पूर्णांक *id)
-अणु
-	काष्ठा device *dev = i2c_dev->dev;
-	पूर्णांक i;
+static int stm32f7_i2c_get_free_slave_id(struct stm32f7_i2c_dev *i2c_dev,
+					 struct i2c_client *slave, int *id)
+{
+	struct device *dev = i2c_dev->dev;
+	int i;
 
 	/*
 	 * slave[STM32F7_SLAVE_HOSTNOTIFY] support only SMBus Host address (0x8)
 	 * slave[STM32F7_SLAVE_7_10_BITS_ADDR] supports 7-bit and 10-bit slave address
 	 * slave[STM32F7_SLAVE_7_BITS_ADDR] supports 7-bit slave address only
 	 */
-	अगर (i2c_dev->smbus_mode && (slave->addr == 0x08)) अणु
-		अगर (i2c_dev->slave[STM32F7_SLAVE_HOSTNOTIFY])
-			जाओ fail;
+	if (i2c_dev->smbus_mode && (slave->addr == 0x08)) {
+		if (i2c_dev->slave[STM32F7_SLAVE_HOSTNOTIFY])
+			goto fail;
 		*id = STM32F7_SLAVE_HOSTNOTIFY;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	क्रम (i = STM32F7_I2C_MAX_SLAVE - 1; i > STM32F7_SLAVE_HOSTNOTIFY; i--) अणु
-		अगर ((i == STM32F7_SLAVE_7_BITS_ADDR) &&
+	for (i = STM32F7_I2C_MAX_SLAVE - 1; i > STM32F7_SLAVE_HOSTNOTIFY; i--) {
+		if ((i == STM32F7_SLAVE_7_BITS_ADDR) &&
 		    (slave->flags & I2C_CLIENT_TEN))
-			जारी;
-		अगर (!i2c_dev->slave[i]) अणु
+			continue;
+		if (!i2c_dev->slave[i]) {
 			*id = i;
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
 fail:
 	dev_err(dev, "Slave 0x%x could not be registered\n", slave->addr);
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल bool sपंचांग32f7_i2c_is_slave_रेजिस्टरed(काष्ठा sपंचांग32f7_i2c_dev *i2c_dev)
-अणु
-	पूर्णांक i;
+static bool stm32f7_i2c_is_slave_registered(struct stm32f7_i2c_dev *i2c_dev)
+{
+	int i;
 
-	क्रम (i = 0; i < STM32F7_I2C_MAX_SLAVE; i++) अणु
-		अगर (i2c_dev->slave[i])
-			वापस true;
-	पूर्ण
+	for (i = 0; i < STM32F7_I2C_MAX_SLAVE; i++) {
+		if (i2c_dev->slave[i])
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool sपंचांग32f7_i2c_is_slave_busy(काष्ठा sपंचांग32f7_i2c_dev *i2c_dev)
-अणु
-	पूर्णांक i, busy;
+static bool stm32f7_i2c_is_slave_busy(struct stm32f7_i2c_dev *i2c_dev)
+{
+	int i, busy;
 
 	busy = 0;
-	क्रम (i = 0; i < STM32F7_I2C_MAX_SLAVE; i++) अणु
-		अगर (i2c_dev->slave[i])
+	for (i = 0; i < STM32F7_I2C_MAX_SLAVE; i++) {
+		if (i2c_dev->slave[i])
 			busy++;
-	पूर्ण
+	}
 
-	वापस i == busy;
-पूर्ण
+	return i == busy;
+}
 
-अटल irqवापस_t sपंचांग32f7_i2c_slave_isr_event(काष्ठा sपंचांग32f7_i2c_dev *i2c_dev)
-अणु
-	व्योम __iomem *base = i2c_dev->base;
+static irqreturn_t stm32f7_i2c_slave_isr_event(struct stm32f7_i2c_dev *i2c_dev)
+{
+	void __iomem *base = i2c_dev->base;
 	u32 cr2, status, mask;
 	u8 val;
-	पूर्णांक ret;
+	int ret;
 
-	status = पढ़ोl_relaxed(i2c_dev->base + STM32F7_I2C_ISR);
+	status = readl_relaxed(i2c_dev->base + STM32F7_I2C_ISR);
 
 	/* Slave transmitter mode */
-	अगर (status & STM32F7_I2C_ISR_TXIS) अणु
+	if (status & STM32F7_I2C_ISR_TXIS) {
 		i2c_slave_event(i2c_dev->slave_running,
 				I2C_SLAVE_READ_PROCESSED,
 				&val);
 
 		/* Write data byte */
-		ग_लिखोl_relaxed(val, base + STM32F7_I2C_TXDR);
-	पूर्ण
+		writel_relaxed(val, base + STM32F7_I2C_TXDR);
+	}
 
-	/* Transfer Complete Reload क्रम Slave receiver mode */
-	अगर (status & STM32F7_I2C_ISR_TCR || status & STM32F7_I2C_ISR_RXNE) अणु
+	/* Transfer Complete Reload for Slave receiver mode */
+	if (status & STM32F7_I2C_ISR_TCR || status & STM32F7_I2C_ISR_RXNE) {
 		/*
 		 * Read data byte then set NBYTES to receive next byte or NACK
 		 * the current received byte
 		 */
-		val = पढ़ोb_relaxed(i2c_dev->base + STM32F7_I2C_RXDR);
+		val = readb_relaxed(i2c_dev->base + STM32F7_I2C_RXDR);
 		ret = i2c_slave_event(i2c_dev->slave_running,
 				      I2C_SLAVE_WRITE_RECEIVED,
 				      &val);
-		अगर (!ret) अणु
-			cr2 = पढ़ोl_relaxed(i2c_dev->base + STM32F7_I2C_CR2);
+		if (!ret) {
+			cr2 = readl_relaxed(i2c_dev->base + STM32F7_I2C_CR2);
 			cr2 |= STM32F7_I2C_CR2_NBYTES(1);
-			ग_लिखोl_relaxed(cr2, i2c_dev->base + STM32F7_I2C_CR2);
-		पूर्ण अन्यथा अणु
+			writel_relaxed(cr2, i2c_dev->base + STM32F7_I2C_CR2);
+		} else {
 			mask = STM32F7_I2C_CR2_NACK;
-			sपंचांग32f7_i2c_set_bits(base + STM32F7_I2C_CR2, mask);
-		पूर्ण
-	पूर्ण
+			stm32f7_i2c_set_bits(base + STM32F7_I2C_CR2, mask);
+		}
+	}
 
 	/* NACK received */
-	अगर (status & STM32F7_I2C_ISR_NACKF) अणु
+	if (status & STM32F7_I2C_ISR_NACKF) {
 		dev_dbg(i2c_dev->dev, "<%s>: Receive NACK\n", __func__);
-		ग_लिखोl_relaxed(STM32F7_I2C_ICR_NACKCF, base + STM32F7_I2C_ICR);
-	पूर्ण
+		writel_relaxed(STM32F7_I2C_ICR_NACKCF, base + STM32F7_I2C_ICR);
+	}
 
 	/* STOP received */
-	अगर (status & STM32F7_I2C_ISR_STOPF) अणु
-		/* Disable पूर्णांकerrupts */
-		sपंचांग32f7_i2c_disable_irq(i2c_dev, STM32F7_I2C_XFER_IRQ_MASK);
+	if (status & STM32F7_I2C_ISR_STOPF) {
+		/* Disable interrupts */
+		stm32f7_i2c_disable_irq(i2c_dev, STM32F7_I2C_XFER_IRQ_MASK);
 
-		अगर (i2c_dev->slave_dir) अणु
+		if (i2c_dev->slave_dir) {
 			/*
 			 * Flush TX buffer in order to not used the byte in
-			 * TXDR क्रम the next transfer
+			 * TXDR for the next transfer
 			 */
 			mask = STM32F7_I2C_ISR_TXE;
-			sपंचांग32f7_i2c_set_bits(base + STM32F7_I2C_ISR, mask);
-		पूर्ण
+			stm32f7_i2c_set_bits(base + STM32F7_I2C_ISR, mask);
+		}
 
 		/* Clear STOP flag */
-		ग_लिखोl_relaxed(STM32F7_I2C_ICR_STOPCF, base + STM32F7_I2C_ICR);
+		writel_relaxed(STM32F7_I2C_ICR_STOPCF, base + STM32F7_I2C_ICR);
 
-		/* Notअगरy i2c slave that a STOP flag has been detected */
+		/* Notify i2c slave that a STOP flag has been detected */
 		i2c_slave_event(i2c_dev->slave_running, I2C_SLAVE_STOP, &val);
 
-		i2c_dev->slave_running = शून्य;
-	पूर्ण
+		i2c_dev->slave_running = NULL;
+	}
 
 	/* Address match received */
-	अगर (status & STM32F7_I2C_ISR_ADDR)
-		sपंचांग32f7_i2c_slave_addr(i2c_dev);
+	if (status & STM32F7_I2C_ISR_ADDR)
+		stm32f7_i2c_slave_addr(i2c_dev);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t sपंचांग32f7_i2c_isr_event(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा sपंचांग32f7_i2c_dev *i2c_dev = data;
-	काष्ठा sपंचांग32f7_i2c_msg *f7_msg = &i2c_dev->f7_msg;
-	व्योम __iomem *base = i2c_dev->base;
+static irqreturn_t stm32f7_i2c_isr_event(int irq, void *data)
+{
+	struct stm32f7_i2c_dev *i2c_dev = data;
+	struct stm32f7_i2c_msg *f7_msg = &i2c_dev->f7_msg;
+	void __iomem *base = i2c_dev->base;
 	u32 status, mask;
-	पूर्णांक ret = IRQ_HANDLED;
+	int ret = IRQ_HANDLED;
 
-	/* Check अगर the पूर्णांकerrupt अगर क्रम a slave device */
-	अगर (!i2c_dev->master_mode) अणु
-		ret = sपंचांग32f7_i2c_slave_isr_event(i2c_dev);
-		वापस ret;
-	पूर्ण
+	/* Check if the interrupt if for a slave device */
+	if (!i2c_dev->master_mode) {
+		ret = stm32f7_i2c_slave_isr_event(i2c_dev);
+		return ret;
+	}
 
-	status = पढ़ोl_relaxed(i2c_dev->base + STM32F7_I2C_ISR);
+	status = readl_relaxed(i2c_dev->base + STM32F7_I2C_ISR);
 
 	/* Tx empty */
-	अगर (status & STM32F7_I2C_ISR_TXIS)
-		sपंचांग32f7_i2c_ग_लिखो_tx_data(i2c_dev);
+	if (status & STM32F7_I2C_ISR_TXIS)
+		stm32f7_i2c_write_tx_data(i2c_dev);
 
 	/* RX not empty */
-	अगर (status & STM32F7_I2C_ISR_RXNE)
-		sपंचांग32f7_i2c_पढ़ो_rx_data(i2c_dev);
+	if (status & STM32F7_I2C_ISR_RXNE)
+		stm32f7_i2c_read_rx_data(i2c_dev);
 
 	/* NACK received */
-	अगर (status & STM32F7_I2C_ISR_NACKF) अणु
+	if (status & STM32F7_I2C_ISR_NACKF) {
 		dev_dbg(i2c_dev->dev, "<%s>: Receive NACK (addr %x)\n",
 			__func__, f7_msg->addr);
-		ग_लिखोl_relaxed(STM32F7_I2C_ICR_NACKCF, base + STM32F7_I2C_ICR);
+		writel_relaxed(STM32F7_I2C_ICR_NACKCF, base + STM32F7_I2C_ICR);
 		f7_msg->result = -ENXIO;
-	पूर्ण
+	}
 
 	/* STOP detection flag */
-	अगर (status & STM32F7_I2C_ISR_STOPF) अणु
-		/* Disable पूर्णांकerrupts */
-		अगर (sपंचांग32f7_i2c_is_slave_रेजिस्टरed(i2c_dev))
+	if (status & STM32F7_I2C_ISR_STOPF) {
+		/* Disable interrupts */
+		if (stm32f7_i2c_is_slave_registered(i2c_dev))
 			mask = STM32F7_I2C_XFER_IRQ_MASK;
-		अन्यथा
+		else
 			mask = STM32F7_I2C_ALL_IRQ_MASK;
-		sपंचांग32f7_i2c_disable_irq(i2c_dev, mask);
+		stm32f7_i2c_disable_irq(i2c_dev, mask);
 
 		/* Clear STOP flag */
-		ग_लिखोl_relaxed(STM32F7_I2C_ICR_STOPCF, base + STM32F7_I2C_ICR);
+		writel_relaxed(STM32F7_I2C_ICR_STOPCF, base + STM32F7_I2C_ICR);
 
-		अगर (i2c_dev->use_dma) अणु
+		if (i2c_dev->use_dma) {
 			ret = IRQ_WAKE_THREAD;
-		पूर्ण अन्यथा अणु
+		} else {
 			i2c_dev->master_mode = false;
 			complete(&i2c_dev->complete);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Transfer complete */
-	अगर (status & STM32F7_I2C_ISR_TC) अणु
-		अगर (f7_msg->stop) अणु
+	if (status & STM32F7_I2C_ISR_TC) {
+		if (f7_msg->stop) {
 			mask = STM32F7_I2C_CR2_STOP;
-			sपंचांग32f7_i2c_set_bits(base + STM32F7_I2C_CR2, mask);
-		पूर्ण अन्यथा अगर (i2c_dev->use_dma) अणु
+			stm32f7_i2c_set_bits(base + STM32F7_I2C_CR2, mask);
+		} else if (i2c_dev->use_dma) {
 			ret = IRQ_WAKE_THREAD;
-		पूर्ण अन्यथा अगर (f7_msg->smbus) अणु
-			sपंचांग32f7_i2c_smbus_rep_start(i2c_dev);
-		पूर्ण अन्यथा अणु
+		} else if (f7_msg->smbus) {
+			stm32f7_i2c_smbus_rep_start(i2c_dev);
+		} else {
 			i2c_dev->msg_id++;
 			i2c_dev->msg++;
-			sपंचांग32f7_i2c_xfer_msg(i2c_dev, i2c_dev->msg);
-		पूर्ण
-	पूर्ण
+			stm32f7_i2c_xfer_msg(i2c_dev, i2c_dev->msg);
+		}
+	}
 
-	अगर (status & STM32F7_I2C_ISR_TCR) अणु
-		अगर (f7_msg->smbus)
-			sपंचांग32f7_i2c_smbus_reload(i2c_dev);
-		अन्यथा
-			sपंचांग32f7_i2c_reload(i2c_dev);
-	पूर्ण
+	if (status & STM32F7_I2C_ISR_TCR) {
+		if (f7_msg->smbus)
+			stm32f7_i2c_smbus_reload(i2c_dev);
+		else
+			stm32f7_i2c_reload(i2c_dev);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल irqवापस_t sपंचांग32f7_i2c_isr_event_thपढ़ो(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा sपंचांग32f7_i2c_dev *i2c_dev = data;
-	काष्ठा sपंचांग32f7_i2c_msg *f7_msg = &i2c_dev->f7_msg;
-	काष्ठा sपंचांग32_i2c_dma *dma = i2c_dev->dma;
+static irqreturn_t stm32f7_i2c_isr_event_thread(int irq, void *data)
+{
+	struct stm32f7_i2c_dev *i2c_dev = data;
+	struct stm32f7_i2c_msg *f7_msg = &i2c_dev->f7_msg;
+	struct stm32_i2c_dma *dma = i2c_dev->dma;
 	u32 status;
-	पूर्णांक ret;
+	int ret;
 
 	/*
-	 * Wait क्रम dma transfer completion beक्रमe sending next message or
+	 * Wait for dma transfer completion before sending next message or
 	 * notity the end of xfer to the client
 	 */
-	ret = रुको_क्रम_completion_समयout(&i2c_dev->dma->dma_complete, HZ);
-	अगर (!ret) अणु
+	ret = wait_for_completion_timeout(&i2c_dev->dma->dma_complete, HZ);
+	if (!ret) {
 		dev_dbg(i2c_dev->dev, "<%s>: Timed out\n", __func__);
-		sपंचांग32f7_i2c_disable_dma_req(i2c_dev);
+		stm32f7_i2c_disable_dma_req(i2c_dev);
 		dmaengine_terminate_all(dma->chan_using);
 		f7_msg->result = -ETIMEDOUT;
-	पूर्ण
+	}
 
-	status = पढ़ोl_relaxed(i2c_dev->base + STM32F7_I2C_ISR);
+	status = readl_relaxed(i2c_dev->base + STM32F7_I2C_ISR);
 
-	अगर (status & STM32F7_I2C_ISR_TC) अणु
-		अगर (f7_msg->smbus) अणु
-			sपंचांग32f7_i2c_smbus_rep_start(i2c_dev);
-		पूर्ण अन्यथा अणु
+	if (status & STM32F7_I2C_ISR_TC) {
+		if (f7_msg->smbus) {
+			stm32f7_i2c_smbus_rep_start(i2c_dev);
+		} else {
 			i2c_dev->msg_id++;
 			i2c_dev->msg++;
-			sपंचांग32f7_i2c_xfer_msg(i2c_dev, i2c_dev->msg);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			stm32f7_i2c_xfer_msg(i2c_dev, i2c_dev->msg);
+		}
+	} else {
 		i2c_dev->master_mode = false;
 		complete(&i2c_dev->complete);
-	पूर्ण
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t sपंचांग32f7_i2c_isr_error(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा sपंचांग32f7_i2c_dev *i2c_dev = data;
-	काष्ठा sपंचांग32f7_i2c_msg *f7_msg = &i2c_dev->f7_msg;
-	व्योम __iomem *base = i2c_dev->base;
-	काष्ठा device *dev = i2c_dev->dev;
-	काष्ठा sपंचांग32_i2c_dma *dma = i2c_dev->dma;
+static irqreturn_t stm32f7_i2c_isr_error(int irq, void *data)
+{
+	struct stm32f7_i2c_dev *i2c_dev = data;
+	struct stm32f7_i2c_msg *f7_msg = &i2c_dev->f7_msg;
+	void __iomem *base = i2c_dev->base;
+	struct device *dev = i2c_dev->dev;
+	struct stm32_i2c_dma *dma = i2c_dev->dma;
 	u32 status;
 
-	status = पढ़ोl_relaxed(i2c_dev->base + STM32F7_I2C_ISR);
+	status = readl_relaxed(i2c_dev->base + STM32F7_I2C_ISR);
 
 	/* Bus error */
-	अगर (status & STM32F7_I2C_ISR_BERR) अणु
+	if (status & STM32F7_I2C_ISR_BERR) {
 		dev_err(dev, "<%s>: Bus error accessing addr 0x%x\n",
 			__func__, f7_msg->addr);
-		ग_लिखोl_relaxed(STM32F7_I2C_ICR_BERRCF, base + STM32F7_I2C_ICR);
-		sपंचांग32f7_i2c_release_bus(&i2c_dev->adap);
+		writel_relaxed(STM32F7_I2C_ICR_BERRCF, base + STM32F7_I2C_ICR);
+		stm32f7_i2c_release_bus(&i2c_dev->adap);
 		f7_msg->result = -EIO;
-	पूर्ण
+	}
 
 	/* Arbitration loss */
-	अगर (status & STM32F7_I2C_ISR_ARLO) अणु
+	if (status & STM32F7_I2C_ISR_ARLO) {
 		dev_dbg(dev, "<%s>: Arbitration loss accessing addr 0x%x\n",
 			__func__, f7_msg->addr);
-		ग_लिखोl_relaxed(STM32F7_I2C_ICR_ARLOCF, base + STM32F7_I2C_ICR);
+		writel_relaxed(STM32F7_I2C_ICR_ARLOCF, base + STM32F7_I2C_ICR);
 		f7_msg->result = -EAGAIN;
-	पूर्ण
+	}
 
-	अगर (status & STM32F7_I2C_ISR_PECERR) अणु
+	if (status & STM32F7_I2C_ISR_PECERR) {
 		dev_err(dev, "<%s>: PEC error in reception accessing addr 0x%x\n",
 			__func__, f7_msg->addr);
-		ग_लिखोl_relaxed(STM32F7_I2C_ICR_PECCF, base + STM32F7_I2C_ICR);
+		writel_relaxed(STM32F7_I2C_ICR_PECCF, base + STM32F7_I2C_ICR);
 		f7_msg->result = -EINVAL;
-	पूर्ण
+	}
 
-	अगर (!i2c_dev->slave_running) अणु
+	if (!i2c_dev->slave_running) {
 		u32 mask;
-		/* Disable पूर्णांकerrupts */
-		अगर (sपंचांग32f7_i2c_is_slave_रेजिस्टरed(i2c_dev))
+		/* Disable interrupts */
+		if (stm32f7_i2c_is_slave_registered(i2c_dev))
 			mask = STM32F7_I2C_XFER_IRQ_MASK;
-		अन्यथा
+		else
 			mask = STM32F7_I2C_ALL_IRQ_MASK;
-		sपंचांग32f7_i2c_disable_irq(i2c_dev, mask);
-	पूर्ण
+		stm32f7_i2c_disable_irq(i2c_dev, mask);
+	}
 
 	/* Disable dma */
-	अगर (i2c_dev->use_dma) अणु
-		sपंचांग32f7_i2c_disable_dma_req(i2c_dev);
+	if (i2c_dev->use_dma) {
+		stm32f7_i2c_disable_dma_req(i2c_dev);
 		dmaengine_terminate_all(dma->chan_using);
-	पूर्ण
+	}
 
 	i2c_dev->master_mode = false;
 	complete(&i2c_dev->complete);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक sपंचांग32f7_i2c_xfer(काष्ठा i2c_adapter *i2c_adap,
-			    काष्ठा i2c_msg msgs[], पूर्णांक num)
-अणु
-	काष्ठा sपंचांग32f7_i2c_dev *i2c_dev = i2c_get_adapdata(i2c_adap);
-	काष्ठा sपंचांग32f7_i2c_msg *f7_msg = &i2c_dev->f7_msg;
-	काष्ठा sपंचांग32_i2c_dma *dma = i2c_dev->dma;
-	अचिन्हित दीर्घ समय_left;
-	पूर्णांक ret;
+static int stm32f7_i2c_xfer(struct i2c_adapter *i2c_adap,
+			    struct i2c_msg msgs[], int num)
+{
+	struct stm32f7_i2c_dev *i2c_dev = i2c_get_adapdata(i2c_adap);
+	struct stm32f7_i2c_msg *f7_msg = &i2c_dev->f7_msg;
+	struct stm32_i2c_dma *dma = i2c_dev->dma;
+	unsigned long time_left;
+	int ret;
 
 	i2c_dev->msg = msgs;
 	i2c_dev->msg_num = num;
 	i2c_dev->msg_id = 0;
 	f7_msg->smbus = false;
 
-	ret = pm_runसमय_resume_and_get(i2c_dev->dev);
-	अगर (ret < 0)
-		वापस ret;
+	ret = pm_runtime_resume_and_get(i2c_dev->dev);
+	if (ret < 0)
+		return ret;
 
-	ret = sपंचांग32f7_i2c_रुको_मुक्त_bus(i2c_dev);
-	अगर (ret)
-		जाओ pm_मुक्त;
+	ret = stm32f7_i2c_wait_free_bus(i2c_dev);
+	if (ret)
+		goto pm_free;
 
-	sपंचांग32f7_i2c_xfer_msg(i2c_dev, msgs);
+	stm32f7_i2c_xfer_msg(i2c_dev, msgs);
 
-	समय_left = रुको_क्रम_completion_समयout(&i2c_dev->complete,
-						i2c_dev->adap.समयout);
+	time_left = wait_for_completion_timeout(&i2c_dev->complete,
+						i2c_dev->adap.timeout);
 	ret = f7_msg->result;
 
-	अगर (!समय_left) अणु
+	if (!time_left) {
 		dev_dbg(i2c_dev->dev, "Access to slave 0x%x timed out\n",
 			i2c_dev->msg->addr);
-		अगर (i2c_dev->use_dma)
+		if (i2c_dev->use_dma)
 			dmaengine_terminate_all(dma->chan_using);
 		ret = -ETIMEDOUT;
-	पूर्ण
+	}
 
-pm_मुक्त:
-	pm_runसमय_mark_last_busy(i2c_dev->dev);
-	pm_runसमय_put_स्वतःsuspend(i2c_dev->dev);
+pm_free:
+	pm_runtime_mark_last_busy(i2c_dev->dev);
+	pm_runtime_put_autosuspend(i2c_dev->dev);
 
-	वापस (ret < 0) ? ret : num;
-पूर्ण
+	return (ret < 0) ? ret : num;
+}
 
-अटल पूर्णांक sपंचांग32f7_i2c_smbus_xfer(काष्ठा i2c_adapter *adapter, u16 addr,
-				  अचिन्हित लघु flags, अक्षर पढ़ो_ग_लिखो,
-				  u8 command, पूर्णांक size,
-				  जोड़ i2c_smbus_data *data)
-अणु
-	काष्ठा sपंचांग32f7_i2c_dev *i2c_dev = i2c_get_adapdata(adapter);
-	काष्ठा sपंचांग32f7_i2c_msg *f7_msg = &i2c_dev->f7_msg;
-	काष्ठा sपंचांग32_i2c_dma *dma = i2c_dev->dma;
-	काष्ठा device *dev = i2c_dev->dev;
-	अचिन्हित दीर्घ समयout;
-	पूर्णांक i, ret;
+static int stm32f7_i2c_smbus_xfer(struct i2c_adapter *adapter, u16 addr,
+				  unsigned short flags, char read_write,
+				  u8 command, int size,
+				  union i2c_smbus_data *data)
+{
+	struct stm32f7_i2c_dev *i2c_dev = i2c_get_adapdata(adapter);
+	struct stm32f7_i2c_msg *f7_msg = &i2c_dev->f7_msg;
+	struct stm32_i2c_dma *dma = i2c_dev->dma;
+	struct device *dev = i2c_dev->dev;
+	unsigned long timeout;
+	int i, ret;
 
 	f7_msg->addr = addr;
 	f7_msg->size = size;
-	f7_msg->पढ़ो_ग_लिखो = पढ़ो_ग_लिखो;
+	f7_msg->read_write = read_write;
 	f7_msg->smbus = true;
 
-	ret = pm_runसमय_resume_and_get(dev);
-	अगर (ret < 0)
-		वापस ret;
+	ret = pm_runtime_resume_and_get(dev);
+	if (ret < 0)
+		return ret;
 
-	ret = sपंचांग32f7_i2c_रुको_मुक्त_bus(i2c_dev);
-	अगर (ret)
-		जाओ pm_मुक्त;
+	ret = stm32f7_i2c_wait_free_bus(i2c_dev);
+	if (ret)
+		goto pm_free;
 
-	ret = sपंचांग32f7_i2c_smbus_xfer_msg(i2c_dev, flags, command, data);
-	अगर (ret)
-		जाओ pm_मुक्त;
+	ret = stm32f7_i2c_smbus_xfer_msg(i2c_dev, flags, command, data);
+	if (ret)
+		goto pm_free;
 
-	समयout = रुको_क्रम_completion_समयout(&i2c_dev->complete,
-					      i2c_dev->adap.समयout);
+	timeout = wait_for_completion_timeout(&i2c_dev->complete,
+					      i2c_dev->adap.timeout);
 	ret = f7_msg->result;
-	अगर (ret)
-		जाओ pm_मुक्त;
+	if (ret)
+		goto pm_free;
 
-	अगर (!समयout) अणु
+	if (!timeout) {
 		dev_dbg(dev, "Access to slave 0x%x timed out\n", f7_msg->addr);
-		अगर (i2c_dev->use_dma)
+		if (i2c_dev->use_dma)
 			dmaengine_terminate_all(dma->chan_using);
 		ret = -ETIMEDOUT;
-		जाओ pm_मुक्त;
-	पूर्ण
+		goto pm_free;
+	}
 
 	/* Check PEC */
-	अगर ((flags & I2C_CLIENT_PEC) && size != I2C_SMBUS_QUICK && पढ़ो_ग_लिखो) अणु
-		ret = sपंचांग32f7_i2c_smbus_check_pec(i2c_dev);
-		अगर (ret)
-			जाओ pm_मुक्त;
-	पूर्ण
+	if ((flags & I2C_CLIENT_PEC) && size != I2C_SMBUS_QUICK && read_write) {
+		ret = stm32f7_i2c_smbus_check_pec(i2c_dev);
+		if (ret)
+			goto pm_free;
+	}
 
-	अगर (पढ़ो_ग_लिखो && size != I2C_SMBUS_QUICK) अणु
-		चयन (size) अणु
-		हाल I2C_SMBUS_BYTE:
-		हाल I2C_SMBUS_BYTE_DATA:
+	if (read_write && size != I2C_SMBUS_QUICK) {
+		switch (size) {
+		case I2C_SMBUS_BYTE:
+		case I2C_SMBUS_BYTE_DATA:
 			data->byte = f7_msg->smbus_buf[0];
-		अवरोध;
-		हाल I2C_SMBUS_WORD_DATA:
-		हाल I2C_SMBUS_PROC_CALL:
+		break;
+		case I2C_SMBUS_WORD_DATA:
+		case I2C_SMBUS_PROC_CALL:
 			data->word = f7_msg->smbus_buf[0] |
 				(f7_msg->smbus_buf[1] << 8);
-		अवरोध;
-		हाल I2C_SMBUS_BLOCK_DATA:
-		हाल I2C_SMBUS_BLOCK_PROC_CALL:
-		क्रम (i = 0; i <= f7_msg->smbus_buf[0]; i++)
+		break;
+		case I2C_SMBUS_BLOCK_DATA:
+		case I2C_SMBUS_BLOCK_PROC_CALL:
+		for (i = 0; i <= f7_msg->smbus_buf[0]; i++)
 			data->block[i] = f7_msg->smbus_buf[i];
-		अवरोध;
-		शेष:
+		break;
+		default:
 			dev_err(dev, "Unsupported smbus transaction\n");
 			ret = -EINVAL;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-pm_मुक्त:
-	pm_runसमय_mark_last_busy(dev);
-	pm_runसमय_put_स्वतःsuspend(dev);
-	वापस ret;
-पूर्ण
+pm_free:
+	pm_runtime_mark_last_busy(dev);
+	pm_runtime_put_autosuspend(dev);
+	return ret;
+}
 
-अटल व्योम sपंचांग32f7_i2c_enable_wakeup(काष्ठा sपंचांग32f7_i2c_dev *i2c_dev,
+static void stm32f7_i2c_enable_wakeup(struct stm32f7_i2c_dev *i2c_dev,
 				      bool enable)
-अणु
-	व्योम __iomem *base = i2c_dev->base;
+{
+	void __iomem *base = i2c_dev->base;
 	u32 mask = STM32F7_I2C_CR1_WUPEN;
 
-	अगर (!i2c_dev->wakeup_src)
-		वापस;
+	if (!i2c_dev->wakeup_src)
+		return;
 
-	अगर (enable) अणु
+	if (enable) {
 		device_set_wakeup_enable(i2c_dev->dev, true);
-		sपंचांग32f7_i2c_set_bits(base + STM32F7_I2C_CR1, mask);
-	पूर्ण अन्यथा अणु
+		stm32f7_i2c_set_bits(base + STM32F7_I2C_CR1, mask);
+	} else {
 		device_set_wakeup_enable(i2c_dev->dev, false);
-		sपंचांग32f7_i2c_clr_bits(base + STM32F7_I2C_CR1, mask);
-	पूर्ण
-पूर्ण
+		stm32f7_i2c_clr_bits(base + STM32F7_I2C_CR1, mask);
+	}
+}
 
-अटल पूर्णांक sपंचांग32f7_i2c_reg_slave(काष्ठा i2c_client *slave)
-अणु
-	काष्ठा sपंचांग32f7_i2c_dev *i2c_dev = i2c_get_adapdata(slave->adapter);
-	व्योम __iomem *base = i2c_dev->base;
-	काष्ठा device *dev = i2c_dev->dev;
+static int stm32f7_i2c_reg_slave(struct i2c_client *slave)
+{
+	struct stm32f7_i2c_dev *i2c_dev = i2c_get_adapdata(slave->adapter);
+	void __iomem *base = i2c_dev->base;
+	struct device *dev = i2c_dev->dev;
 	u32 oar1, oar2, mask;
-	पूर्णांक id, ret;
+	int id, ret;
 
-	अगर (slave->flags & I2C_CLIENT_PEC) अणु
+	if (slave->flags & I2C_CLIENT_PEC) {
 		dev_err(dev, "SMBus PEC not supported in slave mode\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (sपंचांग32f7_i2c_is_slave_busy(i2c_dev)) अणु
+	if (stm32f7_i2c_is_slave_busy(i2c_dev)) {
 		dev_err(dev, "Too much slave registered\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	ret = sपंचांग32f7_i2c_get_मुक्त_slave_id(i2c_dev, slave, &id);
-	अगर (ret)
-		वापस ret;
+	ret = stm32f7_i2c_get_free_slave_id(i2c_dev, slave, &id);
+	if (ret)
+		return ret;
 
-	ret = pm_runसमय_resume_and_get(dev);
-	अगर (ret < 0)
-		वापस ret;
+	ret = pm_runtime_resume_and_get(dev);
+	if (ret < 0)
+		return ret;
 
-	अगर (!sपंचांग32f7_i2c_is_slave_रेजिस्टरed(i2c_dev))
-		sपंचांग32f7_i2c_enable_wakeup(i2c_dev, true);
+	if (!stm32f7_i2c_is_slave_registered(i2c_dev))
+		stm32f7_i2c_enable_wakeup(i2c_dev, true);
 
-	चयन (id) अणु
-	हाल 0:
+	switch (id) {
+	case 0:
 		/* Slave SMBus Host */
 		i2c_dev->slave[id] = slave;
-		अवरोध;
+		break;
 
-	हाल 1:
+	case 1:
 		/* Configure Own Address 1 */
-		oar1 = पढ़ोl_relaxed(i2c_dev->base + STM32F7_I2C_OAR1);
+		oar1 = readl_relaxed(i2c_dev->base + STM32F7_I2C_OAR1);
 		oar1 &= ~STM32F7_I2C_OAR1_MASK;
-		अगर (slave->flags & I2C_CLIENT_TEN) अणु
+		if (slave->flags & I2C_CLIENT_TEN) {
 			oar1 |= STM32F7_I2C_OAR1_OA1_10(slave->addr);
 			oar1 |= STM32F7_I2C_OAR1_OA1MODE;
-		पूर्ण अन्यथा अणु
+		} else {
 			oar1 |= STM32F7_I2C_OAR1_OA1_7(slave->addr);
-		पूर्ण
+		}
 		oar1 |= STM32F7_I2C_OAR1_OA1EN;
 		i2c_dev->slave[id] = slave;
-		ग_लिखोl_relaxed(oar1, i2c_dev->base + STM32F7_I2C_OAR1);
-		अवरोध;
+		writel_relaxed(oar1, i2c_dev->base + STM32F7_I2C_OAR1);
+		break;
 
-	हाल 2:
+	case 2:
 		/* Configure Own Address 2 */
-		oar2 = पढ़ोl_relaxed(i2c_dev->base + STM32F7_I2C_OAR2);
+		oar2 = readl_relaxed(i2c_dev->base + STM32F7_I2C_OAR2);
 		oar2 &= ~STM32F7_I2C_OAR2_MASK;
-		अगर (slave->flags & I2C_CLIENT_TEN) अणु
+		if (slave->flags & I2C_CLIENT_TEN) {
 			ret = -EOPNOTSUPP;
-			जाओ pm_मुक्त;
-		पूर्ण
+			goto pm_free;
+		}
 
 		oar2 |= STM32F7_I2C_OAR2_OA2_7(slave->addr);
 		oar2 |= STM32F7_I2C_OAR2_OA2EN;
 		i2c_dev->slave[id] = slave;
-		ग_लिखोl_relaxed(oar2, i2c_dev->base + STM32F7_I2C_OAR2);
-		अवरोध;
+		writel_relaxed(oar2, i2c_dev->base + STM32F7_I2C_OAR2);
+		break;
 
-	शेष:
+	default:
 		dev_err(dev, "I2C slave id not supported\n");
 		ret = -ENODEV;
-		जाओ pm_मुक्त;
-	पूर्ण
+		goto pm_free;
+	}
 
 	/* Enable ACK */
-	sपंचांग32f7_i2c_clr_bits(base + STM32F7_I2C_CR2, STM32F7_I2C_CR2_NACK);
+	stm32f7_i2c_clr_bits(base + STM32F7_I2C_CR2, STM32F7_I2C_CR2_NACK);
 
-	/* Enable Address match पूर्णांकerrupt, error पूर्णांकerrupt and enable I2C  */
+	/* Enable Address match interrupt, error interrupt and enable I2C  */
 	mask = STM32F7_I2C_CR1_ADDRIE | STM32F7_I2C_CR1_ERRIE |
 		STM32F7_I2C_CR1_PE;
-	sपंचांग32f7_i2c_set_bits(base + STM32F7_I2C_CR1, mask);
+	stm32f7_i2c_set_bits(base + STM32F7_I2C_CR1, mask);
 
 	ret = 0;
-pm_मुक्त:
-	अगर (!sपंचांग32f7_i2c_is_slave_रेजिस्टरed(i2c_dev))
-		sपंचांग32f7_i2c_enable_wakeup(i2c_dev, false);
+pm_free:
+	if (!stm32f7_i2c_is_slave_registered(i2c_dev))
+		stm32f7_i2c_enable_wakeup(i2c_dev, false);
 
-	pm_runसमय_mark_last_busy(dev);
-	pm_runसमय_put_स्वतःsuspend(dev);
+	pm_runtime_mark_last_busy(dev);
+	pm_runtime_put_autosuspend(dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sपंचांग32f7_i2c_unreg_slave(काष्ठा i2c_client *slave)
-अणु
-	काष्ठा sपंचांग32f7_i2c_dev *i2c_dev = i2c_get_adapdata(slave->adapter);
-	व्योम __iomem *base = i2c_dev->base;
+static int stm32f7_i2c_unreg_slave(struct i2c_client *slave)
+{
+	struct stm32f7_i2c_dev *i2c_dev = i2c_get_adapdata(slave->adapter);
+	void __iomem *base = i2c_dev->base;
 	u32 mask;
-	पूर्णांक id, ret;
+	int id, ret;
 
-	ret = sपंचांग32f7_i2c_get_slave_id(i2c_dev, slave, &id);
-	अगर (ret)
-		वापस ret;
+	ret = stm32f7_i2c_get_slave_id(i2c_dev, slave, &id);
+	if (ret)
+		return ret;
 
 	WARN_ON(!i2c_dev->slave[id]);
 
-	ret = pm_runसमय_resume_and_get(i2c_dev->dev);
-	अगर (ret < 0)
-		वापस ret;
+	ret = pm_runtime_resume_and_get(i2c_dev->dev);
+	if (ret < 0)
+		return ret;
 
-	अगर (id == 1) अणु
+	if (id == 1) {
 		mask = STM32F7_I2C_OAR1_OA1EN;
-		sपंचांग32f7_i2c_clr_bits(base + STM32F7_I2C_OAR1, mask);
-	पूर्ण अन्यथा अगर (id == 2) अणु
+		stm32f7_i2c_clr_bits(base + STM32F7_I2C_OAR1, mask);
+	} else if (id == 2) {
 		mask = STM32F7_I2C_OAR2_OA2EN;
-		sपंचांग32f7_i2c_clr_bits(base + STM32F7_I2C_OAR2, mask);
-	पूर्ण
+		stm32f7_i2c_clr_bits(base + STM32F7_I2C_OAR2, mask);
+	}
 
-	i2c_dev->slave[id] = शून्य;
+	i2c_dev->slave[id] = NULL;
 
-	अगर (!sपंचांग32f7_i2c_is_slave_रेजिस्टरed(i2c_dev)) अणु
-		sपंचांग32f7_i2c_disable_irq(i2c_dev, STM32F7_I2C_ALL_IRQ_MASK);
-		sपंचांग32f7_i2c_enable_wakeup(i2c_dev, false);
-	पूर्ण
+	if (!stm32f7_i2c_is_slave_registered(i2c_dev)) {
+		stm32f7_i2c_disable_irq(i2c_dev, STM32F7_I2C_ALL_IRQ_MASK);
+		stm32f7_i2c_enable_wakeup(i2c_dev, false);
+	}
 
-	pm_runसमय_mark_last_busy(i2c_dev->dev);
-	pm_runसमय_put_स्वतःsuspend(i2c_dev->dev);
+	pm_runtime_mark_last_busy(i2c_dev->dev);
+	pm_runtime_put_autosuspend(i2c_dev->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sपंचांग32f7_i2c_ग_लिखो_fm_plus_bits(काष्ठा sपंचांग32f7_i2c_dev *i2c_dev,
+static int stm32f7_i2c_write_fm_plus_bits(struct stm32f7_i2c_dev *i2c_dev,
 					  bool enable)
-अणु
-	पूर्णांक ret;
+{
+	int ret;
 
-	अगर (i2c_dev->bus_rate <= I2C_MAX_FAST_MODE_FREQ ||
-	    IS_ERR_OR_शून्य(i2c_dev->regmap))
+	if (i2c_dev->bus_rate <= I2C_MAX_FAST_MODE_FREQ ||
+	    IS_ERR_OR_NULL(i2c_dev->regmap))
 		/* Optional */
-		वापस 0;
+		return 0;
 
-	अगर (i2c_dev->fmp_sreg == i2c_dev->fmp_creg)
+	if (i2c_dev->fmp_sreg == i2c_dev->fmp_creg)
 		ret = regmap_update_bits(i2c_dev->regmap,
 					 i2c_dev->fmp_sreg,
 					 i2c_dev->fmp_mask,
 					 enable ? i2c_dev->fmp_mask : 0);
-	अन्यथा
-		ret = regmap_ग_लिखो(i2c_dev->regmap,
+	else
+		ret = regmap_write(i2c_dev->regmap,
 				   enable ? i2c_dev->fmp_sreg :
 					    i2c_dev->fmp_creg,
 				   i2c_dev->fmp_mask);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sपंचांग32f7_i2c_setup_fm_plus_bits(काष्ठा platक्रमm_device *pdev,
-					  काष्ठा sपंचांग32f7_i2c_dev *i2c_dev)
-अणु
-	काष्ठा device_node *np = pdev->dev.of_node;
-	पूर्णांक ret;
+static int stm32f7_i2c_setup_fm_plus_bits(struct platform_device *pdev,
+					  struct stm32f7_i2c_dev *i2c_dev)
+{
+	struct device_node *np = pdev->dev.of_node;
+	int ret;
 
 	i2c_dev->regmap = syscon_regmap_lookup_by_phandle(np, "st,syscfg-fmp");
-	अगर (IS_ERR(i2c_dev->regmap))
+	if (IS_ERR(i2c_dev->regmap))
 		/* Optional */
-		वापस 0;
+		return 0;
 
-	ret = of_property_पढ़ो_u32_index(np, "st,syscfg-fmp", 1,
+	ret = of_property_read_u32_index(np, "st,syscfg-fmp", 1,
 					 &i2c_dev->fmp_sreg);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	i2c_dev->fmp_creg = i2c_dev->fmp_sreg +
 			       i2c_dev->setup.fmp_clr_offset;
 
-	वापस of_property_पढ़ो_u32_index(np, "st,syscfg-fmp", 2,
+	return of_property_read_u32_index(np, "st,syscfg-fmp", 2,
 					  &i2c_dev->fmp_mask);
-पूर्ण
+}
 
-अटल पूर्णांक sपंचांग32f7_i2c_enable_smbus_host(काष्ठा sपंचांग32f7_i2c_dev *i2c_dev)
-अणु
-	काष्ठा i2c_adapter *adap = &i2c_dev->adap;
-	व्योम __iomem *base = i2c_dev->base;
-	काष्ठा i2c_client *client;
+static int stm32f7_i2c_enable_smbus_host(struct stm32f7_i2c_dev *i2c_dev)
+{
+	struct i2c_adapter *adap = &i2c_dev->adap;
+	void __iomem *base = i2c_dev->base;
+	struct i2c_client *client;
 
-	client = i2c_new_slave_host_notअगरy_device(adap);
-	अगर (IS_ERR(client))
-		वापस PTR_ERR(client);
+	client = i2c_new_slave_host_notify_device(adap);
+	if (IS_ERR(client))
+		return PTR_ERR(client);
 
-	i2c_dev->host_notअगरy_client = client;
+	i2c_dev->host_notify_client = client;
 
 	/* Enable SMBus Host address */
-	sपंचांग32f7_i2c_set_bits(base + STM32F7_I2C_CR1, STM32F7_I2C_CR1_SMBHEN);
+	stm32f7_i2c_set_bits(base + STM32F7_I2C_CR1, STM32F7_I2C_CR1_SMBHEN);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sपंचांग32f7_i2c_disable_smbus_host(काष्ठा sपंचांग32f7_i2c_dev *i2c_dev)
-अणु
-	व्योम __iomem *base = i2c_dev->base;
+static void stm32f7_i2c_disable_smbus_host(struct stm32f7_i2c_dev *i2c_dev)
+{
+	void __iomem *base = i2c_dev->base;
 
-	अगर (i2c_dev->host_notअगरy_client) अणु
+	if (i2c_dev->host_notify_client) {
 		/* Disable SMBus Host address */
-		sपंचांग32f7_i2c_clr_bits(base + STM32F7_I2C_CR1,
+		stm32f7_i2c_clr_bits(base + STM32F7_I2C_CR1,
 				     STM32F7_I2C_CR1_SMBHEN);
-		i2c_मुक्त_slave_host_notअगरy_device(i2c_dev->host_notअगरy_client);
-	पूर्ण
-पूर्ण
+		i2c_free_slave_host_notify_device(i2c_dev->host_notify_client);
+	}
+}
 
-अटल u32 sपंचांग32f7_i2c_func(काष्ठा i2c_adapter *adap)
-अणु
-	काष्ठा sपंचांग32f7_i2c_dev *i2c_dev = i2c_get_adapdata(adap);
+static u32 stm32f7_i2c_func(struct i2c_adapter *adap)
+{
+	struct stm32f7_i2c_dev *i2c_dev = i2c_get_adapdata(adap);
 
 	u32 func = I2C_FUNC_I2C | I2C_FUNC_10BIT_ADDR | I2C_FUNC_SLAVE |
 		   I2C_FUNC_SMBUS_QUICK | I2C_FUNC_SMBUS_BYTE |
@@ -2002,394 +2001,394 @@ pm_मुक्त:
 		   I2C_FUNC_SMBUS_PROC_CALL | I2C_FUNC_SMBUS_PEC |
 		   I2C_FUNC_SMBUS_I2C_BLOCK;
 
-	अगर (i2c_dev->smbus_mode)
+	if (i2c_dev->smbus_mode)
 		func |= I2C_FUNC_SMBUS_HOST_NOTIFY;
 
-	वापस func;
-पूर्ण
+	return func;
+}
 
-अटल स्थिर काष्ठा i2c_algorithm sपंचांग32f7_i2c_algo = अणु
-	.master_xfer = sपंचांग32f7_i2c_xfer,
-	.smbus_xfer = sपंचांग32f7_i2c_smbus_xfer,
-	.functionality = sपंचांग32f7_i2c_func,
-	.reg_slave = sपंचांग32f7_i2c_reg_slave,
-	.unreg_slave = sपंचांग32f7_i2c_unreg_slave,
-पूर्ण;
+static const struct i2c_algorithm stm32f7_i2c_algo = {
+	.master_xfer = stm32f7_i2c_xfer,
+	.smbus_xfer = stm32f7_i2c_smbus_xfer,
+	.functionality = stm32f7_i2c_func,
+	.reg_slave = stm32f7_i2c_reg_slave,
+	.unreg_slave = stm32f7_i2c_unreg_slave,
+};
 
-अटल पूर्णांक sपंचांग32f7_i2c_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sपंचांग32f7_i2c_dev *i2c_dev;
-	स्थिर काष्ठा sपंचांग32f7_i2c_setup *setup;
-	काष्ठा resource *res;
-	काष्ठा i2c_adapter *adap;
-	काष्ठा reset_control *rst;
+static int stm32f7_i2c_probe(struct platform_device *pdev)
+{
+	struct stm32f7_i2c_dev *i2c_dev;
+	const struct stm32f7_i2c_setup *setup;
+	struct resource *res;
+	struct i2c_adapter *adap;
+	struct reset_control *rst;
 	dma_addr_t phy_addr;
-	पूर्णांक irq_error, irq_event, ret;
+	int irq_error, irq_event, ret;
 
-	i2c_dev = devm_kzalloc(&pdev->dev, माप(*i2c_dev), GFP_KERNEL);
-	अगर (!i2c_dev)
-		वापस -ENOMEM;
+	i2c_dev = devm_kzalloc(&pdev->dev, sizeof(*i2c_dev), GFP_KERNEL);
+	if (!i2c_dev)
+		return -ENOMEM;
 
-	i2c_dev->base = devm_platक्रमm_get_and_ioremap_resource(pdev, 0, &res);
-	अगर (IS_ERR(i2c_dev->base))
-		वापस PTR_ERR(i2c_dev->base);
+	i2c_dev->base = devm_platform_get_and_ioremap_resource(pdev, 0, &res);
+	if (IS_ERR(i2c_dev->base))
+		return PTR_ERR(i2c_dev->base);
 	phy_addr = (dma_addr_t)res->start;
 
-	irq_event = platक्रमm_get_irq(pdev, 0);
-	अगर (irq_event <= 0)
-		वापस irq_event ? : -ENOENT;
+	irq_event = platform_get_irq(pdev, 0);
+	if (irq_event <= 0)
+		return irq_event ? : -ENOENT;
 
-	irq_error = platक्रमm_get_irq(pdev, 1);
-	अगर (irq_error <= 0)
-		वापस irq_error ? : -ENOENT;
+	irq_error = platform_get_irq(pdev, 1);
+	if (irq_error <= 0)
+		return irq_error ? : -ENOENT;
 
-	i2c_dev->wakeup_src = of_property_पढ़ो_bool(pdev->dev.of_node,
+	i2c_dev->wakeup_src = of_property_read_bool(pdev->dev.of_node,
 						    "wakeup-source");
 
-	i2c_dev->clk = devm_clk_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(i2c_dev->clk))
-		वापस dev_err_probe(&pdev->dev, PTR_ERR(i2c_dev->clk),
+	i2c_dev->clk = devm_clk_get(&pdev->dev, NULL);
+	if (IS_ERR(i2c_dev->clk))
+		return dev_err_probe(&pdev->dev, PTR_ERR(i2c_dev->clk),
 				     "Failed to get controller clock\n");
 
 	ret = clk_prepare_enable(i2c_dev->clk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "Failed to prepare_enable clock\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	rst = devm_reset_control_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(rst)) अणु
+	rst = devm_reset_control_get(&pdev->dev, NULL);
+	if (IS_ERR(rst)) {
 		ret = dev_err_probe(&pdev->dev, PTR_ERR(rst),
 				    "Error: Missing reset ctrl\n");
-		जाओ clk_मुक्त;
-	पूर्ण
-	reset_control_निश्चित(rst);
+		goto clk_free;
+	}
+	reset_control_assert(rst);
 	udelay(2);
-	reset_control_deनिश्चित(rst);
+	reset_control_deassert(rst);
 
 	i2c_dev->dev = &pdev->dev;
 
-	ret = devm_request_thपढ़ोed_irq(&pdev->dev, irq_event,
-					sपंचांग32f7_i2c_isr_event,
-					sपंचांग32f7_i2c_isr_event_thपढ़ो,
+	ret = devm_request_threaded_irq(&pdev->dev, irq_event,
+					stm32f7_i2c_isr_event,
+					stm32f7_i2c_isr_event_thread,
 					IRQF_ONESHOT,
 					pdev->name, i2c_dev);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "Failed to request irq event %i\n",
 			irq_event);
-		जाओ clk_मुक्त;
-	पूर्ण
+		goto clk_free;
+	}
 
-	ret = devm_request_irq(&pdev->dev, irq_error, sपंचांग32f7_i2c_isr_error, 0,
+	ret = devm_request_irq(&pdev->dev, irq_error, stm32f7_i2c_isr_error, 0,
 			       pdev->name, i2c_dev);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "Failed to request irq error %i\n",
 			irq_error);
-		जाओ clk_मुक्त;
-	पूर्ण
+		goto clk_free;
+	}
 
 	setup = of_device_get_match_data(&pdev->dev);
-	अगर (!setup) अणु
+	if (!setup) {
 		dev_err(&pdev->dev, "Can't get device data\n");
 		ret = -ENODEV;
-		जाओ clk_मुक्त;
-	पूर्ण
+		goto clk_free;
+	}
 	i2c_dev->setup = *setup;
 
-	ret = sपंचांग32f7_i2c_setup_timing(i2c_dev, &i2c_dev->setup);
-	अगर (ret)
-		जाओ clk_मुक्त;
+	ret = stm32f7_i2c_setup_timing(i2c_dev, &i2c_dev->setup);
+	if (ret)
+		goto clk_free;
 
-	/* Setup Fast mode plus अगर necessary */
-	अगर (i2c_dev->bus_rate > I2C_MAX_FAST_MODE_FREQ) अणु
-		ret = sपंचांग32f7_i2c_setup_fm_plus_bits(pdev, i2c_dev);
-		अगर (ret)
-			जाओ clk_मुक्त;
-		ret = sपंचांग32f7_i2c_ग_लिखो_fm_plus_bits(i2c_dev, true);
-		अगर (ret)
-			जाओ clk_मुक्त;
-	पूर्ण
+	/* Setup Fast mode plus if necessary */
+	if (i2c_dev->bus_rate > I2C_MAX_FAST_MODE_FREQ) {
+		ret = stm32f7_i2c_setup_fm_plus_bits(pdev, i2c_dev);
+		if (ret)
+			goto clk_free;
+		ret = stm32f7_i2c_write_fm_plus_bits(i2c_dev, true);
+		if (ret)
+			goto clk_free;
+	}
 
 	adap = &i2c_dev->adap;
 	i2c_set_adapdata(adap, i2c_dev);
-	snम_लिखो(adap->name, माप(adap->name), "STM32F7 I2C(%pa)",
+	snprintf(adap->name, sizeof(adap->name), "STM32F7 I2C(%pa)",
 		 &res->start);
 	adap->owner = THIS_MODULE;
-	adap->समयout = 2 * HZ;
+	adap->timeout = 2 * HZ;
 	adap->retries = 3;
-	adap->algo = &sपंचांग32f7_i2c_algo;
+	adap->algo = &stm32f7_i2c_algo;
 	adap->dev.parent = &pdev->dev;
 	adap->dev.of_node = pdev->dev.of_node;
 
 	init_completion(&i2c_dev->complete);
 
-	/* Init DMA config अगर supported */
-	i2c_dev->dma = sपंचांग32_i2c_dma_request(i2c_dev->dev, phy_addr,
+	/* Init DMA config if supported */
+	i2c_dev->dma = stm32_i2c_dma_request(i2c_dev->dev, phy_addr,
 					     STM32F7_I2C_TXDR,
 					     STM32F7_I2C_RXDR);
-	अगर (IS_ERR(i2c_dev->dma)) अणु
+	if (IS_ERR(i2c_dev->dma)) {
 		ret = PTR_ERR(i2c_dev->dma);
 		/* DMA support is optional, only report other errors */
-		अगर (ret != -ENODEV)
-			जाओ fmp_clear;
+		if (ret != -ENODEV)
+			goto fmp_clear;
 		dev_dbg(i2c_dev->dev, "No DMA option: fallback using interrupts\n");
-		i2c_dev->dma = शून्य;
-	पूर्ण
+		i2c_dev->dma = NULL;
+	}
 
-	अगर (i2c_dev->wakeup_src) अणु
+	if (i2c_dev->wakeup_src) {
 		device_set_wakeup_capable(i2c_dev->dev, true);
 
 		ret = dev_pm_set_wake_irq(i2c_dev->dev, irq_event);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(i2c_dev->dev, "Failed to set wake up irq\n");
-			जाओ clr_wakeup_capable;
-		पूर्ण
-	पूर्ण
+			goto clr_wakeup_capable;
+		}
+	}
 
-	platक्रमm_set_drvdata(pdev, i2c_dev);
+	platform_set_drvdata(pdev, i2c_dev);
 
-	pm_runसमय_set_स्वतःsuspend_delay(i2c_dev->dev,
+	pm_runtime_set_autosuspend_delay(i2c_dev->dev,
 					 STM32F7_AUTOSUSPEND_DELAY);
-	pm_runसमय_use_स्वतःsuspend(i2c_dev->dev);
-	pm_runसमय_set_active(i2c_dev->dev);
-	pm_runसमय_enable(i2c_dev->dev);
+	pm_runtime_use_autosuspend(i2c_dev->dev);
+	pm_runtime_set_active(i2c_dev->dev);
+	pm_runtime_enable(i2c_dev->dev);
 
-	pm_runसमय_get_noresume(&pdev->dev);
+	pm_runtime_get_noresume(&pdev->dev);
 
-	sपंचांग32f7_i2c_hw_config(i2c_dev);
+	stm32f7_i2c_hw_config(i2c_dev);
 
-	i2c_dev->smbus_mode = of_property_पढ़ो_bool(pdev->dev.of_node, "smbus");
+	i2c_dev->smbus_mode = of_property_read_bool(pdev->dev.of_node, "smbus");
 
 	ret = i2c_add_adapter(adap);
-	अगर (ret)
-		जाओ pm_disable;
+	if (ret)
+		goto pm_disable;
 
-	अगर (i2c_dev->smbus_mode) अणु
-		ret = sपंचांग32f7_i2c_enable_smbus_host(i2c_dev);
-		अगर (ret) अणु
+	if (i2c_dev->smbus_mode) {
+		ret = stm32f7_i2c_enable_smbus_host(i2c_dev);
+		if (ret) {
 			dev_err(i2c_dev->dev,
 				"failed to enable SMBus Host-Notify protocol (%d)\n",
 				ret);
-			जाओ i2c_adapter_हटाओ;
-		पूर्ण
-	पूर्ण
+			goto i2c_adapter_remove;
+		}
+	}
 
 	dev_info(i2c_dev->dev, "STM32F7 I2C-%d bus adapter\n", adap->nr);
 
-	pm_runसमय_mark_last_busy(i2c_dev->dev);
-	pm_runसमय_put_स्वतःsuspend(i2c_dev->dev);
+	pm_runtime_mark_last_busy(i2c_dev->dev);
+	pm_runtime_put_autosuspend(i2c_dev->dev);
 
-	वापस 0;
+	return 0;
 
-i2c_adapter_हटाओ:
+i2c_adapter_remove:
 	i2c_del_adapter(adap);
 
 pm_disable:
-	pm_runसमय_put_noidle(i2c_dev->dev);
-	pm_runसमय_disable(i2c_dev->dev);
-	pm_runसमय_set_suspended(i2c_dev->dev);
-	pm_runसमय_करोnt_use_स्वतःsuspend(i2c_dev->dev);
+	pm_runtime_put_noidle(i2c_dev->dev);
+	pm_runtime_disable(i2c_dev->dev);
+	pm_runtime_set_suspended(i2c_dev->dev);
+	pm_runtime_dont_use_autosuspend(i2c_dev->dev);
 
-	अगर (i2c_dev->wakeup_src)
+	if (i2c_dev->wakeup_src)
 		dev_pm_clear_wake_irq(i2c_dev->dev);
 
 clr_wakeup_capable:
-	अगर (i2c_dev->wakeup_src)
+	if (i2c_dev->wakeup_src)
 		device_set_wakeup_capable(i2c_dev->dev, false);
 
-	अगर (i2c_dev->dma) अणु
-		sपंचांग32_i2c_dma_मुक्त(i2c_dev->dma);
-		i2c_dev->dma = शून्य;
-	पूर्ण
+	if (i2c_dev->dma) {
+		stm32_i2c_dma_free(i2c_dev->dma);
+		i2c_dev->dma = NULL;
+	}
 
 fmp_clear:
-	sपंचांग32f7_i2c_ग_लिखो_fm_plus_bits(i2c_dev, false);
+	stm32f7_i2c_write_fm_plus_bits(i2c_dev, false);
 
-clk_मुक्त:
+clk_free:
 	clk_disable_unprepare(i2c_dev->clk);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sपंचांग32f7_i2c_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sपंचांग32f7_i2c_dev *i2c_dev = platक्रमm_get_drvdata(pdev);
+static int stm32f7_i2c_remove(struct platform_device *pdev)
+{
+	struct stm32f7_i2c_dev *i2c_dev = platform_get_drvdata(pdev);
 
-	sपंचांग32f7_i2c_disable_smbus_host(i2c_dev);
+	stm32f7_i2c_disable_smbus_host(i2c_dev);
 
 	i2c_del_adapter(&i2c_dev->adap);
-	pm_runसमय_get_sync(i2c_dev->dev);
+	pm_runtime_get_sync(i2c_dev->dev);
 
-	अगर (i2c_dev->wakeup_src) अणु
+	if (i2c_dev->wakeup_src) {
 		dev_pm_clear_wake_irq(i2c_dev->dev);
 		/*
-		 * enक्रमce that wakeup is disabled and that the device
+		 * enforce that wakeup is disabled and that the device
 		 * is marked as non wakeup capable
 		 */
 		device_init_wakeup(i2c_dev->dev, false);
-	पूर्ण
+	}
 
-	pm_runसमय_put_noidle(i2c_dev->dev);
-	pm_runसमय_disable(i2c_dev->dev);
-	pm_runसमय_set_suspended(i2c_dev->dev);
-	pm_runसमय_करोnt_use_स्वतःsuspend(i2c_dev->dev);
+	pm_runtime_put_noidle(i2c_dev->dev);
+	pm_runtime_disable(i2c_dev->dev);
+	pm_runtime_set_suspended(i2c_dev->dev);
+	pm_runtime_dont_use_autosuspend(i2c_dev->dev);
 
-	अगर (i2c_dev->dma) अणु
-		sपंचांग32_i2c_dma_मुक्त(i2c_dev->dma);
-		i2c_dev->dma = शून्य;
-	पूर्ण
+	if (i2c_dev->dma) {
+		stm32_i2c_dma_free(i2c_dev->dma);
+		i2c_dev->dma = NULL;
+	}
 
-	sपंचांग32f7_i2c_ग_लिखो_fm_plus_bits(i2c_dev, false);
+	stm32f7_i2c_write_fm_plus_bits(i2c_dev, false);
 
 	clk_disable_unprepare(i2c_dev->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused sपंचांग32f7_i2c_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा sपंचांग32f7_i2c_dev *i2c_dev = dev_get_drvdata(dev);
+static int __maybe_unused stm32f7_i2c_runtime_suspend(struct device *dev)
+{
+	struct stm32f7_i2c_dev *i2c_dev = dev_get_drvdata(dev);
 
-	अगर (!sपंचांग32f7_i2c_is_slave_रेजिस्टरed(i2c_dev))
+	if (!stm32f7_i2c_is_slave_registered(i2c_dev))
 		clk_disable_unprepare(i2c_dev->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused sपंचांग32f7_i2c_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा sपंचांग32f7_i2c_dev *i2c_dev = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static int __maybe_unused stm32f7_i2c_runtime_resume(struct device *dev)
+{
+	struct stm32f7_i2c_dev *i2c_dev = dev_get_drvdata(dev);
+	int ret;
 
-	अगर (!sपंचांग32f7_i2c_is_slave_रेजिस्टरed(i2c_dev)) अणु
+	if (!stm32f7_i2c_is_slave_registered(i2c_dev)) {
 		ret = clk_prepare_enable(i2c_dev->clk);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "failed to prepare_enable clock\n");
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused sपंचांग32f7_i2c_regs_backup(काष्ठा sपंचांग32f7_i2c_dev *i2c_dev)
-अणु
-	पूर्णांक ret;
-	काष्ठा sपंचांग32f7_i2c_regs *backup_regs = &i2c_dev->backup_regs;
+static int __maybe_unused stm32f7_i2c_regs_backup(struct stm32f7_i2c_dev *i2c_dev)
+{
+	int ret;
+	struct stm32f7_i2c_regs *backup_regs = &i2c_dev->backup_regs;
 
-	ret = pm_runसमय_resume_and_get(i2c_dev->dev);
-	अगर (ret < 0)
-		वापस ret;
+	ret = pm_runtime_resume_and_get(i2c_dev->dev);
+	if (ret < 0)
+		return ret;
 
-	backup_regs->cr1 = पढ़ोl_relaxed(i2c_dev->base + STM32F7_I2C_CR1);
-	backup_regs->cr2 = पढ़ोl_relaxed(i2c_dev->base + STM32F7_I2C_CR2);
-	backup_regs->oar1 = पढ़ोl_relaxed(i2c_dev->base + STM32F7_I2C_OAR1);
-	backup_regs->oar2 = पढ़ोl_relaxed(i2c_dev->base + STM32F7_I2C_OAR2);
-	backup_regs->पंचांगgr = पढ़ोl_relaxed(i2c_dev->base + STM32F7_I2C_TIMINGR);
-	sपंचांग32f7_i2c_ग_लिखो_fm_plus_bits(i2c_dev, false);
+	backup_regs->cr1 = readl_relaxed(i2c_dev->base + STM32F7_I2C_CR1);
+	backup_regs->cr2 = readl_relaxed(i2c_dev->base + STM32F7_I2C_CR2);
+	backup_regs->oar1 = readl_relaxed(i2c_dev->base + STM32F7_I2C_OAR1);
+	backup_regs->oar2 = readl_relaxed(i2c_dev->base + STM32F7_I2C_OAR2);
+	backup_regs->tmgr = readl_relaxed(i2c_dev->base + STM32F7_I2C_TIMINGR);
+	stm32f7_i2c_write_fm_plus_bits(i2c_dev, false);
 
-	pm_runसमय_put_sync(i2c_dev->dev);
+	pm_runtime_put_sync(i2c_dev->dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __maybe_unused sपंचांग32f7_i2c_regs_restore(काष्ठा sपंचांग32f7_i2c_dev *i2c_dev)
-अणु
+static int __maybe_unused stm32f7_i2c_regs_restore(struct stm32f7_i2c_dev *i2c_dev)
+{
 	u32 cr1;
-	पूर्णांक ret;
-	काष्ठा sपंचांग32f7_i2c_regs *backup_regs = &i2c_dev->backup_regs;
+	int ret;
+	struct stm32f7_i2c_regs *backup_regs = &i2c_dev->backup_regs;
 
-	ret = pm_runसमय_resume_and_get(i2c_dev->dev);
-	अगर (ret < 0)
-		वापस ret;
+	ret = pm_runtime_resume_and_get(i2c_dev->dev);
+	if (ret < 0)
+		return ret;
 
-	cr1 = पढ़ोl_relaxed(i2c_dev->base + STM32F7_I2C_CR1);
-	अगर (cr1 & STM32F7_I2C_CR1_PE)
-		sपंचांग32f7_i2c_clr_bits(i2c_dev->base + STM32F7_I2C_CR1,
+	cr1 = readl_relaxed(i2c_dev->base + STM32F7_I2C_CR1);
+	if (cr1 & STM32F7_I2C_CR1_PE)
+		stm32f7_i2c_clr_bits(i2c_dev->base + STM32F7_I2C_CR1,
 				     STM32F7_I2C_CR1_PE);
 
-	ग_लिखोl_relaxed(backup_regs->पंचांगgr, i2c_dev->base + STM32F7_I2C_TIMINGR);
-	ग_लिखोl_relaxed(backup_regs->cr1 & ~STM32F7_I2C_CR1_PE,
+	writel_relaxed(backup_regs->tmgr, i2c_dev->base + STM32F7_I2C_TIMINGR);
+	writel_relaxed(backup_regs->cr1 & ~STM32F7_I2C_CR1_PE,
 		       i2c_dev->base + STM32F7_I2C_CR1);
-	अगर (backup_regs->cr1 & STM32F7_I2C_CR1_PE)
-		sपंचांग32f7_i2c_set_bits(i2c_dev->base + STM32F7_I2C_CR1,
+	if (backup_regs->cr1 & STM32F7_I2C_CR1_PE)
+		stm32f7_i2c_set_bits(i2c_dev->base + STM32F7_I2C_CR1,
 				     STM32F7_I2C_CR1_PE);
-	ग_लिखोl_relaxed(backup_regs->cr2, i2c_dev->base + STM32F7_I2C_CR2);
-	ग_लिखोl_relaxed(backup_regs->oar1, i2c_dev->base + STM32F7_I2C_OAR1);
-	ग_लिखोl_relaxed(backup_regs->oar2, i2c_dev->base + STM32F7_I2C_OAR2);
-	sपंचांग32f7_i2c_ग_लिखो_fm_plus_bits(i2c_dev, true);
+	writel_relaxed(backup_regs->cr2, i2c_dev->base + STM32F7_I2C_CR2);
+	writel_relaxed(backup_regs->oar1, i2c_dev->base + STM32F7_I2C_OAR1);
+	writel_relaxed(backup_regs->oar2, i2c_dev->base + STM32F7_I2C_OAR2);
+	stm32f7_i2c_write_fm_plus_bits(i2c_dev, true);
 
-	pm_runसमय_put_sync(i2c_dev->dev);
+	pm_runtime_put_sync(i2c_dev->dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __maybe_unused sपंचांग32f7_i2c_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा sपंचांग32f7_i2c_dev *i2c_dev = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static int __maybe_unused stm32f7_i2c_suspend(struct device *dev)
+{
+	struct stm32f7_i2c_dev *i2c_dev = dev_get_drvdata(dev);
+	int ret;
 
 	i2c_mark_adapter_suspended(&i2c_dev->adap);
 
-	अगर (!device_may_wakeup(dev) && !device_wakeup_path(dev)) अणु
-		ret = sपंचांग32f7_i2c_regs_backup(i2c_dev);
-		अगर (ret < 0) अणु
+	if (!device_may_wakeup(dev) && !device_wakeup_path(dev)) {
+		ret = stm32f7_i2c_regs_backup(i2c_dev);
+		if (ret < 0) {
 			i2c_mark_adapter_resumed(&i2c_dev->adap);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		pinctrl_pm_select_sleep_state(dev);
-		pm_runसमय_क्रमce_suspend(dev);
-	पूर्ण
+		pm_runtime_force_suspend(dev);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused sपंचांग32f7_i2c_resume(काष्ठा device *dev)
-अणु
-	काष्ठा sपंचांग32f7_i2c_dev *i2c_dev = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static int __maybe_unused stm32f7_i2c_resume(struct device *dev)
+{
+	struct stm32f7_i2c_dev *i2c_dev = dev_get_drvdata(dev);
+	int ret;
 
-	अगर (!device_may_wakeup(dev) && !device_wakeup_path(dev)) अणु
-		ret = pm_runसमय_क्रमce_resume(dev);
-		अगर (ret < 0)
-			वापस ret;
-		pinctrl_pm_select_शेष_state(dev);
+	if (!device_may_wakeup(dev) && !device_wakeup_path(dev)) {
+		ret = pm_runtime_force_resume(dev);
+		if (ret < 0)
+			return ret;
+		pinctrl_pm_select_default_state(dev);
 
-		ret = sपंचांग32f7_i2c_regs_restore(i2c_dev);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+		ret = stm32f7_i2c_regs_restore(i2c_dev);
+		if (ret < 0)
+			return ret;
+	}
 
 	i2c_mark_adapter_resumed(&i2c_dev->adap);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops sपंचांग32f7_i2c_pm_ops = अणु
-	SET_RUNTIME_PM_OPS(sपंचांग32f7_i2c_runसमय_suspend,
-			   sपंचांग32f7_i2c_runसमय_resume, शून्य)
-	SET_SYSTEM_SLEEP_PM_OPS(sपंचांग32f7_i2c_suspend, sपंचांग32f7_i2c_resume)
-पूर्ण;
+static const struct dev_pm_ops stm32f7_i2c_pm_ops = {
+	SET_RUNTIME_PM_OPS(stm32f7_i2c_runtime_suspend,
+			   stm32f7_i2c_runtime_resume, NULL)
+	SET_SYSTEM_SLEEP_PM_OPS(stm32f7_i2c_suspend, stm32f7_i2c_resume)
+};
 
-अटल स्थिर काष्ठा of_device_id sपंचांग32f7_i2c_match[] = अणु
-	अणु .compatible = "st,stm32f7-i2c", .data = &sपंचांग32f7_setupपूर्ण,
-	अणु .compatible = "st,stm32mp15-i2c", .data = &sपंचांग32mp15_setupपूर्ण,
-	अणुपूर्ण,
-पूर्ण;
-MODULE_DEVICE_TABLE(of, sपंचांग32f7_i2c_match);
+static const struct of_device_id stm32f7_i2c_match[] = {
+	{ .compatible = "st,stm32f7-i2c", .data = &stm32f7_setup},
+	{ .compatible = "st,stm32mp15-i2c", .data = &stm32mp15_setup},
+	{},
+};
+MODULE_DEVICE_TABLE(of, stm32f7_i2c_match);
 
-अटल काष्ठा platक्रमm_driver sपंचांग32f7_i2c_driver = अणु
-	.driver = अणु
+static struct platform_driver stm32f7_i2c_driver = {
+	.driver = {
 		.name = "stm32f7-i2c",
-		.of_match_table = sपंचांग32f7_i2c_match,
-		.pm = &sपंचांग32f7_i2c_pm_ops,
-	पूर्ण,
-	.probe = sपंचांग32f7_i2c_probe,
-	.हटाओ = sपंचांग32f7_i2c_हटाओ,
-पूर्ण;
+		.of_match_table = stm32f7_i2c_match,
+		.pm = &stm32f7_i2c_pm_ops,
+	},
+	.probe = stm32f7_i2c_probe,
+	.remove = stm32f7_i2c_remove,
+};
 
-module_platक्रमm_driver(sपंचांग32f7_i2c_driver);
+module_platform_driver(stm32f7_i2c_driver);
 
 MODULE_AUTHOR("M'boumba Cedric Madianga <cedric.madianga@gmail.com>");
 MODULE_DESCRIPTION("STMicroelectronics STM32F7 I2C driver");

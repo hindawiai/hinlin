@@ -1,405 +1,404 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Driver क्रम Linear Technology LTC2945 I2C Power Monitor
+ * Driver for Linear Technology LTC2945 I2C Power Monitor
  *
  * Copyright (c) 2014 Guenter Roeck
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/err.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/hwmon.h>
-#समावेश <linux/hwmon-sysfs.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/regmap.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/err.h>
+#include <linux/slab.h>
+#include <linux/i2c.h>
+#include <linux/hwmon.h>
+#include <linux/hwmon-sysfs.h>
+#include <linux/jiffies.h>
+#include <linux/regmap.h>
 
-/* chip रेजिस्टरs */
-#घोषणा LTC2945_CONTROL			0x00
-#घोषणा LTC2945_ALERT			0x01
-#घोषणा LTC2945_STATUS			0x02
-#घोषणा LTC2945_FAULT			0x03
-#घोषणा LTC2945_POWER_H			0x05
-#घोषणा LTC2945_MAX_POWER_H		0x08
-#घोषणा LTC2945_MIN_POWER_H		0x0b
-#घोषणा LTC2945_MAX_POWER_THRES_H	0x0e
-#घोषणा LTC2945_MIN_POWER_THRES_H	0x11
-#घोषणा LTC2945_SENSE_H			0x14
-#घोषणा LTC2945_MAX_SENSE_H		0x16
-#घोषणा LTC2945_MIN_SENSE_H		0x18
-#घोषणा LTC2945_MAX_SENSE_THRES_H	0x1a
-#घोषणा LTC2945_MIN_SENSE_THRES_H	0x1c
-#घोषणा LTC2945_VIN_H			0x1e
-#घोषणा LTC2945_MAX_VIN_H		0x20
-#घोषणा LTC2945_MIN_VIN_H		0x22
-#घोषणा LTC2945_MAX_VIN_THRES_H		0x24
-#घोषणा LTC2945_MIN_VIN_THRES_H		0x26
-#घोषणा LTC2945_ADIN_H			0x28
-#घोषणा LTC2945_MAX_ADIN_H		0x2a
-#घोषणा LTC2945_MIN_ADIN_H		0x2c
-#घोषणा LTC2945_MAX_ADIN_THRES_H	0x2e
-#घोषणा LTC2945_MIN_ADIN_THRES_H	0x30
-#घोषणा LTC2945_MIN_ADIN_THRES_L	0x31
+/* chip registers */
+#define LTC2945_CONTROL			0x00
+#define LTC2945_ALERT			0x01
+#define LTC2945_STATUS			0x02
+#define LTC2945_FAULT			0x03
+#define LTC2945_POWER_H			0x05
+#define LTC2945_MAX_POWER_H		0x08
+#define LTC2945_MIN_POWER_H		0x0b
+#define LTC2945_MAX_POWER_THRES_H	0x0e
+#define LTC2945_MIN_POWER_THRES_H	0x11
+#define LTC2945_SENSE_H			0x14
+#define LTC2945_MAX_SENSE_H		0x16
+#define LTC2945_MIN_SENSE_H		0x18
+#define LTC2945_MAX_SENSE_THRES_H	0x1a
+#define LTC2945_MIN_SENSE_THRES_H	0x1c
+#define LTC2945_VIN_H			0x1e
+#define LTC2945_MAX_VIN_H		0x20
+#define LTC2945_MIN_VIN_H		0x22
+#define LTC2945_MAX_VIN_THRES_H		0x24
+#define LTC2945_MIN_VIN_THRES_H		0x26
+#define LTC2945_ADIN_H			0x28
+#define LTC2945_MAX_ADIN_H		0x2a
+#define LTC2945_MIN_ADIN_H		0x2c
+#define LTC2945_MAX_ADIN_THRES_H	0x2e
+#define LTC2945_MIN_ADIN_THRES_H	0x30
+#define LTC2945_MIN_ADIN_THRES_L	0x31
 
-/* Fault रेजिस्टर bits */
+/* Fault register bits */
 
-#घोषणा FAULT_ADIN_UV		(1 << 0)
-#घोषणा FAULT_ADIN_OV		(1 << 1)
-#घोषणा FAULT_VIN_UV		(1 << 2)
-#घोषणा FAULT_VIN_OV		(1 << 3)
-#घोषणा FAULT_SENSE_UV		(1 << 4)
-#घोषणा FAULT_SENSE_OV		(1 << 5)
-#घोषणा FAULT_POWER_UV		(1 << 6)
-#घोषणा FAULT_POWER_OV		(1 << 7)
+#define FAULT_ADIN_UV		(1 << 0)
+#define FAULT_ADIN_OV		(1 << 1)
+#define FAULT_VIN_UV		(1 << 2)
+#define FAULT_VIN_OV		(1 << 3)
+#define FAULT_SENSE_UV		(1 << 4)
+#define FAULT_SENSE_OV		(1 << 5)
+#define FAULT_POWER_UV		(1 << 6)
+#define FAULT_POWER_OV		(1 << 7)
 
-/* Control रेजिस्टर bits */
+/* Control register bits */
 
-#घोषणा CONTROL_MULT_SELECT	(1 << 0)
-#घोषणा CONTROL_TEST_MODE	(1 << 4)
+#define CONTROL_MULT_SELECT	(1 << 0)
+#define CONTROL_TEST_MODE	(1 << 4)
 
-अटल अंतरभूत bool is_घातer_reg(u8 reg)
-अणु
-	वापस reg < LTC2945_SENSE_H;
-पूर्ण
+static inline bool is_power_reg(u8 reg)
+{
+	return reg < LTC2945_SENSE_H;
+}
 
-/* Return the value from the given रेजिस्टर in uW, mV, or mA */
-अटल दीर्घ दीर्घ ltc2945_reg_to_val(काष्ठा device *dev, u8 reg)
-अणु
-	काष्ठा regmap *regmap = dev_get_drvdata(dev);
-	अचिन्हित पूर्णांक control;
+/* Return the value from the given register in uW, mV, or mA */
+static long long ltc2945_reg_to_val(struct device *dev, u8 reg)
+{
+	struct regmap *regmap = dev_get_drvdata(dev);
+	unsigned int control;
 	u8 buf[3];
-	दीर्घ दीर्घ val;
-	पूर्णांक ret;
+	long long val;
+	int ret;
 
-	ret = regmap_bulk_पढ़ो(regmap, reg, buf,
-			       is_घातer_reg(reg) ? 3 : 2);
-	अगर (ret < 0)
-		वापस ret;
+	ret = regmap_bulk_read(regmap, reg, buf,
+			       is_power_reg(reg) ? 3 : 2);
+	if (ret < 0)
+		return ret;
 
-	अगर (is_घातer_reg(reg)) अणु
-		/* घातer */
+	if (is_power_reg(reg)) {
+		/* power */
 		val = (buf[0] << 16) + (buf[1] << 8) + buf[2];
-	पूर्ण अन्यथा अणु
+	} else {
 		/* current, voltage */
 		val = (buf[0] << 4) + (buf[1] >> 4);
-	पूर्ण
+	}
 
-	चयन (reg) अणु
-	हाल LTC2945_POWER_H:
-	हाल LTC2945_MAX_POWER_H:
-	हाल LTC2945_MIN_POWER_H:
-	हाल LTC2945_MAX_POWER_THRES_H:
-	हाल LTC2945_MIN_POWER_THRES_H:
+	switch (reg) {
+	case LTC2945_POWER_H:
+	case LTC2945_MAX_POWER_H:
+	case LTC2945_MIN_POWER_H:
+	case LTC2945_MAX_POWER_THRES_H:
+	case LTC2945_MIN_POWER_THRES_H:
 		/*
 		 * Convert to uW by assuming current is measured with
 		 * an 1mOhm sense resistor, similar to current
 		 * measurements.
-		 * Control रेजिस्टर bit 0 selects अगर voltage at SENSE+/VDD
-		 * or voltage at ADIN is used to measure घातer.
+		 * Control register bit 0 selects if voltage at SENSE+/VDD
+		 * or voltage at ADIN is used to measure power.
 		 */
-		ret = regmap_पढ़ो(regmap, LTC2945_CONTROL, &control);
-		अगर (ret < 0)
-			वापस ret;
-		अगर (control & CONTROL_MULT_SELECT) अणु
+		ret = regmap_read(regmap, LTC2945_CONTROL, &control);
+		if (ret < 0)
+			return ret;
+		if (control & CONTROL_MULT_SELECT) {
 			/* 25 mV * 25 uV = 0.625 uV resolution. */
 			val *= 625LL;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* 0.5 mV * 25 uV = 0.0125 uV resolution. */
 			val = (val * 25LL) >> 1;
-		पूर्ण
-		अवरोध;
-	हाल LTC2945_VIN_H:
-	हाल LTC2945_MAX_VIN_H:
-	हाल LTC2945_MIN_VIN_H:
-	हाल LTC2945_MAX_VIN_THRES_H:
-	हाल LTC2945_MIN_VIN_THRES_H:
+		}
+		break;
+	case LTC2945_VIN_H:
+	case LTC2945_MAX_VIN_H:
+	case LTC2945_MIN_VIN_H:
+	case LTC2945_MAX_VIN_THRES_H:
+	case LTC2945_MIN_VIN_THRES_H:
 		/* 25 mV resolution. Convert to mV. */
 		val *= 25;
-		अवरोध;
-	हाल LTC2945_ADIN_H:
-	हाल LTC2945_MAX_ADIN_H:
-	हाल LTC2945_MIN_ADIN_THRES_H:
-	हाल LTC2945_MAX_ADIN_THRES_H:
-	हाल LTC2945_MIN_ADIN_H:
+		break;
+	case LTC2945_ADIN_H:
+	case LTC2945_MAX_ADIN_H:
+	case LTC2945_MIN_ADIN_THRES_H:
+	case LTC2945_MAX_ADIN_THRES_H:
+	case LTC2945_MIN_ADIN_H:
 		/* 0.5mV resolution. Convert to mV. */
 		val = val >> 1;
-		अवरोध;
-	हाल LTC2945_SENSE_H:
-	हाल LTC2945_MAX_SENSE_H:
-	हाल LTC2945_MIN_SENSE_H:
-	हाल LTC2945_MAX_SENSE_THRES_H:
-	हाल LTC2945_MIN_SENSE_THRES_H:
+		break;
+	case LTC2945_SENSE_H:
+	case LTC2945_MAX_SENSE_H:
+	case LTC2945_MIN_SENSE_H:
+	case LTC2945_MAX_SENSE_THRES_H:
+	case LTC2945_MIN_SENSE_THRES_H:
 		/*
 		 * 25 uV resolution. Convert to current as measured with
-		 * an 1 mOhm sense resistor, in mA. If a dअगरferent sense
+		 * an 1 mOhm sense resistor, in mA. If a different sense
 		 * resistor is installed, calculate the actual current by
-		 * भागiding the reported current by the sense resistor value
+		 * dividing the reported current by the sense resistor value
 		 * in mOhm.
 		 */
 		val *= 25;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	वापस val;
-पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
+	return val;
+}
 
-अटल पूर्णांक ltc2945_val_to_reg(काष्ठा device *dev, u8 reg,
-			      अचिन्हित दीर्घ val)
-अणु
-	काष्ठा regmap *regmap = dev_get_drvdata(dev);
-	अचिन्हित पूर्णांक control;
-	पूर्णांक ret;
+static int ltc2945_val_to_reg(struct device *dev, u8 reg,
+			      unsigned long val)
+{
+	struct regmap *regmap = dev_get_drvdata(dev);
+	unsigned int control;
+	int ret;
 
-	चयन (reg) अणु
-	हाल LTC2945_POWER_H:
-	हाल LTC2945_MAX_POWER_H:
-	हाल LTC2945_MIN_POWER_H:
-	हाल LTC2945_MAX_POWER_THRES_H:
-	हाल LTC2945_MIN_POWER_THRES_H:
+	switch (reg) {
+	case LTC2945_POWER_H:
+	case LTC2945_MAX_POWER_H:
+	case LTC2945_MIN_POWER_H:
+	case LTC2945_MAX_POWER_THRES_H:
+	case LTC2945_MIN_POWER_THRES_H:
 		/*
-		 * Convert to रेजिस्टर value by assuming current is measured
+		 * Convert to register value by assuming current is measured
 		 * with an 1mOhm sense resistor, similar to current
 		 * measurements.
-		 * Control रेजिस्टर bit 0 selects अगर voltage at SENSE+/VDD
-		 * or voltage at ADIN is used to measure घातer, which in turn
-		 * determines रेजिस्टर calculations.
+		 * Control register bit 0 selects if voltage at SENSE+/VDD
+		 * or voltage at ADIN is used to measure power, which in turn
+		 * determines register calculations.
 		 */
-		ret = regmap_पढ़ो(regmap, LTC2945_CONTROL, &control);
-		अगर (ret < 0)
-			वापस ret;
-		अगर (control & CONTROL_MULT_SELECT) अणु
+		ret = regmap_read(regmap, LTC2945_CONTROL, &control);
+		if (ret < 0)
+			return ret;
+		if (control & CONTROL_MULT_SELECT) {
 			/* 25 mV * 25 uV = 0.625 uV resolution. */
 			val = DIV_ROUND_CLOSEST(val, 625);
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
 			 * 0.5 mV * 25 uV = 0.0125 uV resolution.
-			 * Divide first to aव्योम overflow;
+			 * Divide first to avoid overflow;
 			 * accept loss of accuracy.
 			 */
 			val = DIV_ROUND_CLOSEST(val, 25) * 2;
-		पूर्ण
-		अवरोध;
-	हाल LTC2945_VIN_H:
-	हाल LTC2945_MAX_VIN_H:
-	हाल LTC2945_MIN_VIN_H:
-	हाल LTC2945_MAX_VIN_THRES_H:
-	हाल LTC2945_MIN_VIN_THRES_H:
+		}
+		break;
+	case LTC2945_VIN_H:
+	case LTC2945_MAX_VIN_H:
+	case LTC2945_MIN_VIN_H:
+	case LTC2945_MAX_VIN_THRES_H:
+	case LTC2945_MIN_VIN_THRES_H:
 		/* 25 mV resolution. */
 		val /= 25;
-		अवरोध;
-	हाल LTC2945_ADIN_H:
-	हाल LTC2945_MAX_ADIN_H:
-	हाल LTC2945_MIN_ADIN_THRES_H:
-	हाल LTC2945_MAX_ADIN_THRES_H:
-	हाल LTC2945_MIN_ADIN_H:
+		break;
+	case LTC2945_ADIN_H:
+	case LTC2945_MAX_ADIN_H:
+	case LTC2945_MIN_ADIN_THRES_H:
+	case LTC2945_MAX_ADIN_THRES_H:
+	case LTC2945_MIN_ADIN_H:
 		/* 0.5mV resolution. */
 		val *= 2;
-		अवरोध;
-	हाल LTC2945_SENSE_H:
-	हाल LTC2945_MAX_SENSE_H:
-	हाल LTC2945_MIN_SENSE_H:
-	हाल LTC2945_MAX_SENSE_THRES_H:
-	हाल LTC2945_MIN_SENSE_THRES_H:
+		break;
+	case LTC2945_SENSE_H:
+	case LTC2945_MAX_SENSE_H:
+	case LTC2945_MIN_SENSE_H:
+	case LTC2945_MAX_SENSE_THRES_H:
+	case LTC2945_MIN_SENSE_THRES_H:
 		/*
 		 * 25 uV resolution. Convert to current as measured with
-		 * an 1 mOhm sense resistor, in mA. If a dअगरferent sense
+		 * an 1 mOhm sense resistor, in mA. If a different sense
 		 * resistor is installed, calculate the actual current by
-		 * भागiding the reported current by the sense resistor value
+		 * dividing the reported current by the sense resistor value
 		 * in mOhm.
 		 */
 		val = DIV_ROUND_CLOSEST(val, 25);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	वापस val;
-पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
+	return val;
+}
 
-अटल sमाप_प्रकार ltc2945_value_show(काष्ठा device *dev,
-				  काष्ठा device_attribute *da, अक्षर *buf)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(da);
-	दीर्घ दीर्घ value;
+static ssize_t ltc2945_value_show(struct device *dev,
+				  struct device_attribute *da, char *buf)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(da);
+	long long value;
 
 	value = ltc2945_reg_to_val(dev, attr->index);
-	अगर (value < 0)
-		वापस value;
-	वापस sysfs_emit(buf, "%lld\n", value);
-पूर्ण
+	if (value < 0)
+		return value;
+	return sysfs_emit(buf, "%lld\n", value);
+}
 
-अटल sमाप_प्रकार ltc2945_value_store(काष्ठा device *dev,
-				   काष्ठा device_attribute *da,
-				   स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(da);
-	काष्ठा regmap *regmap = dev_get_drvdata(dev);
+static ssize_t ltc2945_value_store(struct device *dev,
+				   struct device_attribute *da,
+				   const char *buf, size_t count)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(da);
+	struct regmap *regmap = dev_get_drvdata(dev);
 	u8 reg = attr->index;
-	अचिन्हित दीर्घ val;
+	unsigned long val;
 	u8 regbuf[3];
-	पूर्णांक num_regs;
-	पूर्णांक regval;
-	पूर्णांक ret;
+	int num_regs;
+	int regval;
+	int ret;
 
-	ret = kम_से_अदीर्घ(buf, 10, &val);
-	अगर (ret)
-		वापस ret;
+	ret = kstrtoul(buf, 10, &val);
+	if (ret)
+		return ret;
 
-	/* convert to रेजिस्टर value, then clamp and ग_लिखो result */
+	/* convert to register value, then clamp and write result */
 	regval = ltc2945_val_to_reg(dev, reg, val);
-	अगर (is_घातer_reg(reg)) अणु
+	if (is_power_reg(reg)) {
 		regval = clamp_val(regval, 0, 0xffffff);
 		regbuf[0] = regval >> 16;
 		regbuf[1] = (regval >> 8) & 0xff;
 		regbuf[2] = regval;
 		num_regs = 3;
-	पूर्ण अन्यथा अणु
+	} else {
 		regval = clamp_val(regval, 0, 0xfff) << 4;
 		regbuf[0] = regval >> 8;
 		regbuf[1] = regval & 0xff;
 		num_regs = 2;
-	पूर्ण
-	ret = regmap_bulk_ग_लिखो(regmap, reg, regbuf, num_regs);
-	वापस ret < 0 ? ret : count;
-पूर्ण
+	}
+	ret = regmap_bulk_write(regmap, reg, regbuf, num_regs);
+	return ret < 0 ? ret : count;
+}
 
-अटल sमाप_प्रकार ltc2945_history_store(काष्ठा device *dev,
-				     काष्ठा device_attribute *da,
-				     स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(da);
-	काष्ठा regmap *regmap = dev_get_drvdata(dev);
+static ssize_t ltc2945_history_store(struct device *dev,
+				     struct device_attribute *da,
+				     const char *buf, size_t count)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(da);
+	struct regmap *regmap = dev_get_drvdata(dev);
 	u8 reg = attr->index;
-	पूर्णांक num_regs = is_घातer_reg(reg) ? 3 : 2;
-	u8 buf_min[3] = अणु 0xff, 0xff, 0xff पूर्ण;
-	u8 buf_max[3] = अणु 0, 0, 0 पूर्ण;
-	अचिन्हित दीर्घ val;
-	पूर्णांक ret;
+	int num_regs = is_power_reg(reg) ? 3 : 2;
+	u8 buf_min[3] = { 0xff, 0xff, 0xff };
+	u8 buf_max[3] = { 0, 0, 0 };
+	unsigned long val;
+	int ret;
 
-	ret = kम_से_अदीर्घ(buf, 10, &val);
-	अगर (ret)
-		वापस ret;
-	अगर (val != 1)
-		वापस -EINVAL;
+	ret = kstrtoul(buf, 10, &val);
+	if (ret)
+		return ret;
+	if (val != 1)
+		return -EINVAL;
 
 	ret = regmap_update_bits(regmap, LTC2945_CONTROL, CONTROL_TEST_MODE,
 				 CONTROL_TEST_MODE);
 
 	/* Reset minimum */
-	ret = regmap_bulk_ग_लिखो(regmap, reg, buf_min, num_regs);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_bulk_write(regmap, reg, buf_min, num_regs);
+	if (ret)
+		return ret;
 
-	चयन (reg) अणु
-	हाल LTC2945_MIN_POWER_H:
+	switch (reg) {
+	case LTC2945_MIN_POWER_H:
 		reg = LTC2945_MAX_POWER_H;
-		अवरोध;
-	हाल LTC2945_MIN_SENSE_H:
+		break;
+	case LTC2945_MIN_SENSE_H:
 		reg = LTC2945_MAX_SENSE_H;
-		अवरोध;
-	हाल LTC2945_MIN_VIN_H:
+		break;
+	case LTC2945_MIN_VIN_H:
 		reg = LTC2945_MAX_VIN_H;
-		अवरोध;
-	हाल LTC2945_MIN_ADIN_H:
+		break;
+	case LTC2945_MIN_ADIN_H:
 		reg = LTC2945_MAX_ADIN_H;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		WARN_ONCE(1, "Bad register: 0x%x\n", reg);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	/* Reset maximum */
-	ret = regmap_bulk_ग_लिखो(regmap, reg, buf_max, num_regs);
+	ret = regmap_bulk_write(regmap, reg, buf_max, num_regs);
 
-	/* Try resetting test mode even अगर there was an error */
+	/* Try resetting test mode even if there was an error */
 	regmap_update_bits(regmap, LTC2945_CONTROL, CONTROL_TEST_MODE, 0);
 
-	वापस ret ? : count;
-पूर्ण
+	return ret ? : count;
+}
 
-अटल sमाप_प्रकार ltc2945_bool_show(काष्ठा device *dev,
-				 काष्ठा device_attribute *da, अक्षर *buf)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(da);
-	काष्ठा regmap *regmap = dev_get_drvdata(dev);
-	अचिन्हित पूर्णांक fault;
-	पूर्णांक ret;
+static ssize_t ltc2945_bool_show(struct device *dev,
+				 struct device_attribute *da, char *buf)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(da);
+	struct regmap *regmap = dev_get_drvdata(dev);
+	unsigned int fault;
+	int ret;
 
-	ret = regmap_पढ़ो(regmap, LTC2945_FAULT, &fault);
-	अगर (ret < 0)
-		वापस ret;
+	ret = regmap_read(regmap, LTC2945_FAULT, &fault);
+	if (ret < 0)
+		return ret;
 
 	fault &= attr->index;
-	अगर (fault)		/* Clear reported faults in chip रेजिस्टर */
+	if (fault)		/* Clear reported faults in chip register */
 		regmap_update_bits(regmap, LTC2945_FAULT, attr->index, 0);
 
-	वापस sysfs_emit(buf, "%d\n", !!fault);
-पूर्ण
+	return sysfs_emit(buf, "%d\n", !!fault);
+}
 
 /* Input voltages */
 
-अटल SENSOR_DEVICE_ATTR_RO(in1_input, ltc2945_value, LTC2945_VIN_H);
-अटल SENSOR_DEVICE_ATTR_RW(in1_min, ltc2945_value, LTC2945_MIN_VIN_THRES_H);
-अटल SENSOR_DEVICE_ATTR_RW(in1_max, ltc2945_value, LTC2945_MAX_VIN_THRES_H);
-अटल SENSOR_DEVICE_ATTR_RO(in1_lowest, ltc2945_value, LTC2945_MIN_VIN_H);
-अटल SENSOR_DEVICE_ATTR_RO(in1_highest, ltc2945_value, LTC2945_MAX_VIN_H);
-अटल SENSOR_DEVICE_ATTR_WO(in1_reset_history, ltc2945_history,
+static SENSOR_DEVICE_ATTR_RO(in1_input, ltc2945_value, LTC2945_VIN_H);
+static SENSOR_DEVICE_ATTR_RW(in1_min, ltc2945_value, LTC2945_MIN_VIN_THRES_H);
+static SENSOR_DEVICE_ATTR_RW(in1_max, ltc2945_value, LTC2945_MAX_VIN_THRES_H);
+static SENSOR_DEVICE_ATTR_RO(in1_lowest, ltc2945_value, LTC2945_MIN_VIN_H);
+static SENSOR_DEVICE_ATTR_RO(in1_highest, ltc2945_value, LTC2945_MAX_VIN_H);
+static SENSOR_DEVICE_ATTR_WO(in1_reset_history, ltc2945_history,
 			     LTC2945_MIN_VIN_H);
 
-अटल SENSOR_DEVICE_ATTR_RO(in2_input, ltc2945_value, LTC2945_ADIN_H);
-अटल SENSOR_DEVICE_ATTR_RW(in2_min, ltc2945_value, LTC2945_MIN_ADIN_THRES_H);
-अटल SENSOR_DEVICE_ATTR_RW(in2_max, ltc2945_value, LTC2945_MAX_ADIN_THRES_H);
-अटल SENSOR_DEVICE_ATTR_RO(in2_lowest, ltc2945_value, LTC2945_MIN_ADIN_H);
-अटल SENSOR_DEVICE_ATTR_RO(in2_highest, ltc2945_value, LTC2945_MAX_ADIN_H);
-अटल SENSOR_DEVICE_ATTR_WO(in2_reset_history, ltc2945_history,
+static SENSOR_DEVICE_ATTR_RO(in2_input, ltc2945_value, LTC2945_ADIN_H);
+static SENSOR_DEVICE_ATTR_RW(in2_min, ltc2945_value, LTC2945_MIN_ADIN_THRES_H);
+static SENSOR_DEVICE_ATTR_RW(in2_max, ltc2945_value, LTC2945_MAX_ADIN_THRES_H);
+static SENSOR_DEVICE_ATTR_RO(in2_lowest, ltc2945_value, LTC2945_MIN_ADIN_H);
+static SENSOR_DEVICE_ATTR_RO(in2_highest, ltc2945_value, LTC2945_MAX_ADIN_H);
+static SENSOR_DEVICE_ATTR_WO(in2_reset_history, ltc2945_history,
 			     LTC2945_MIN_ADIN_H);
 
 /* Voltage alarms */
 
-अटल SENSOR_DEVICE_ATTR_RO(in1_min_alarm, ltc2945_bool, FAULT_VIN_UV);
-अटल SENSOR_DEVICE_ATTR_RO(in1_max_alarm, ltc2945_bool, FAULT_VIN_OV);
-अटल SENSOR_DEVICE_ATTR_RO(in2_min_alarm, ltc2945_bool, FAULT_ADIN_UV);
-अटल SENSOR_DEVICE_ATTR_RO(in2_max_alarm, ltc2945_bool, FAULT_ADIN_OV);
+static SENSOR_DEVICE_ATTR_RO(in1_min_alarm, ltc2945_bool, FAULT_VIN_UV);
+static SENSOR_DEVICE_ATTR_RO(in1_max_alarm, ltc2945_bool, FAULT_VIN_OV);
+static SENSOR_DEVICE_ATTR_RO(in2_min_alarm, ltc2945_bool, FAULT_ADIN_UV);
+static SENSOR_DEVICE_ATTR_RO(in2_max_alarm, ltc2945_bool, FAULT_ADIN_OV);
 
 /* Currents (via sense resistor) */
 
-अटल SENSOR_DEVICE_ATTR_RO(curr1_input, ltc2945_value, LTC2945_SENSE_H);
-अटल SENSOR_DEVICE_ATTR_RW(curr1_min, ltc2945_value,
+static SENSOR_DEVICE_ATTR_RO(curr1_input, ltc2945_value, LTC2945_SENSE_H);
+static SENSOR_DEVICE_ATTR_RW(curr1_min, ltc2945_value,
 			     LTC2945_MIN_SENSE_THRES_H);
-अटल SENSOR_DEVICE_ATTR_RW(curr1_max, ltc2945_value,
+static SENSOR_DEVICE_ATTR_RW(curr1_max, ltc2945_value,
 			     LTC2945_MAX_SENSE_THRES_H);
-अटल SENSOR_DEVICE_ATTR_RO(curr1_lowest, ltc2945_value, LTC2945_MIN_SENSE_H);
-अटल SENSOR_DEVICE_ATTR_RO(curr1_highest, ltc2945_value,
+static SENSOR_DEVICE_ATTR_RO(curr1_lowest, ltc2945_value, LTC2945_MIN_SENSE_H);
+static SENSOR_DEVICE_ATTR_RO(curr1_highest, ltc2945_value,
 			     LTC2945_MAX_SENSE_H);
-अटल SENSOR_DEVICE_ATTR_WO(curr1_reset_history, ltc2945_history,
+static SENSOR_DEVICE_ATTR_WO(curr1_reset_history, ltc2945_history,
 			     LTC2945_MIN_SENSE_H);
 
 /* Current alarms */
 
-अटल SENSOR_DEVICE_ATTR_RO(curr1_min_alarm, ltc2945_bool, FAULT_SENSE_UV);
-अटल SENSOR_DEVICE_ATTR_RO(curr1_max_alarm, ltc2945_bool, FAULT_SENSE_OV);
+static SENSOR_DEVICE_ATTR_RO(curr1_min_alarm, ltc2945_bool, FAULT_SENSE_UV);
+static SENSOR_DEVICE_ATTR_RO(curr1_max_alarm, ltc2945_bool, FAULT_SENSE_OV);
 
 /* Power */
 
-अटल SENSOR_DEVICE_ATTR_RO(घातer1_input, ltc2945_value, LTC2945_POWER_H);
-अटल SENSOR_DEVICE_ATTR_RW(घातer1_min, ltc2945_value,
+static SENSOR_DEVICE_ATTR_RO(power1_input, ltc2945_value, LTC2945_POWER_H);
+static SENSOR_DEVICE_ATTR_RW(power1_min, ltc2945_value,
 			     LTC2945_MIN_POWER_THRES_H);
-अटल SENSOR_DEVICE_ATTR_RW(घातer1_max, ltc2945_value,
+static SENSOR_DEVICE_ATTR_RW(power1_max, ltc2945_value,
 			     LTC2945_MAX_POWER_THRES_H);
-अटल SENSOR_DEVICE_ATTR_RO(घातer1_input_lowest, ltc2945_value,
+static SENSOR_DEVICE_ATTR_RO(power1_input_lowest, ltc2945_value,
 			     LTC2945_MIN_POWER_H);
-अटल SENSOR_DEVICE_ATTR_RO(घातer1_input_highest, ltc2945_value,
+static SENSOR_DEVICE_ATTR_RO(power1_input_highest, ltc2945_value,
 			     LTC2945_MAX_POWER_H);
-अटल SENSOR_DEVICE_ATTR_WO(घातer1_reset_history, ltc2945_history,
+static SENSOR_DEVICE_ATTR_WO(power1_reset_history, ltc2945_history,
 			     LTC2945_MIN_POWER_H);
 
 /* Power alarms */
 
-अटल SENSOR_DEVICE_ATTR_RO(घातer1_min_alarm, ltc2945_bool, FAULT_POWER_UV);
-अटल SENSOR_DEVICE_ATTR_RO(घातer1_max_alarm, ltc2945_bool, FAULT_POWER_OV);
+static SENSOR_DEVICE_ATTR_RO(power1_min_alarm, ltc2945_bool, FAULT_POWER_UV);
+static SENSOR_DEVICE_ATTR_RO(power1_max_alarm, ltc2945_bool, FAULT_POWER_OV);
 
-अटल काष्ठा attribute *ltc2945_attrs[] = अणु
+static struct attribute *ltc2945_attrs[] = {
 	&sensor_dev_attr_in1_input.dev_attr.attr,
 	&sensor_dev_attr_in1_min.dev_attr.attr,
 	&sensor_dev_attr_in1_max.dev_attr.attr,
@@ -427,60 +426,60 @@
 	&sensor_dev_attr_curr1_min_alarm.dev_attr.attr,
 	&sensor_dev_attr_curr1_max_alarm.dev_attr.attr,
 
-	&sensor_dev_attr_घातer1_input.dev_attr.attr,
-	&sensor_dev_attr_घातer1_min.dev_attr.attr,
-	&sensor_dev_attr_घातer1_max.dev_attr.attr,
-	&sensor_dev_attr_घातer1_input_lowest.dev_attr.attr,
-	&sensor_dev_attr_घातer1_input_highest.dev_attr.attr,
-	&sensor_dev_attr_घातer1_reset_history.dev_attr.attr,
-	&sensor_dev_attr_घातer1_min_alarm.dev_attr.attr,
-	&sensor_dev_attr_घातer1_max_alarm.dev_attr.attr,
+	&sensor_dev_attr_power1_input.dev_attr.attr,
+	&sensor_dev_attr_power1_min.dev_attr.attr,
+	&sensor_dev_attr_power1_max.dev_attr.attr,
+	&sensor_dev_attr_power1_input_lowest.dev_attr.attr,
+	&sensor_dev_attr_power1_input_highest.dev_attr.attr,
+	&sensor_dev_attr_power1_reset_history.dev_attr.attr,
+	&sensor_dev_attr_power1_min_alarm.dev_attr.attr,
+	&sensor_dev_attr_power1_max_alarm.dev_attr.attr,
 
-	शून्य,
-पूर्ण;
+	NULL,
+};
 ATTRIBUTE_GROUPS(ltc2945);
 
-अटल स्थिर काष्ठा regmap_config ltc2945_regmap_config = अणु
+static const struct regmap_config ltc2945_regmap_config = {
 	.reg_bits = 8,
 	.val_bits = 8,
-	.max_रेजिस्टर = LTC2945_MIN_ADIN_THRES_L,
-पूर्ण;
+	.max_register = LTC2945_MIN_ADIN_THRES_L,
+};
 
-अटल पूर्णांक ltc2945_probe(काष्ठा i2c_client *client)
-अणु
-	काष्ठा device *dev = &client->dev;
-	काष्ठा device *hwmon_dev;
-	काष्ठा regmap *regmap;
+static int ltc2945_probe(struct i2c_client *client)
+{
+	struct device *dev = &client->dev;
+	struct device *hwmon_dev;
+	struct regmap *regmap;
 
 	regmap = devm_regmap_init_i2c(client, &ltc2945_regmap_config);
-	अगर (IS_ERR(regmap)) अणु
+	if (IS_ERR(regmap)) {
 		dev_err(dev, "failed to allocate register map\n");
-		वापस PTR_ERR(regmap);
-	पूर्ण
+		return PTR_ERR(regmap);
+	}
 
 	/* Clear faults */
-	regmap_ग_लिखो(regmap, LTC2945_FAULT, 0x00);
+	regmap_write(regmap, LTC2945_FAULT, 0x00);
 
-	hwmon_dev = devm_hwmon_device_रेजिस्टर_with_groups(dev, client->name,
+	hwmon_dev = devm_hwmon_device_register_with_groups(dev, client->name,
 							   regmap,
 							   ltc2945_groups);
-	वापस PTR_ERR_OR_ZERO(hwmon_dev);
-पूर्ण
+	return PTR_ERR_OR_ZERO(hwmon_dev);
+}
 
-अटल स्थिर काष्ठा i2c_device_id ltc2945_id[] = अणु
-	अणु"ltc2945", 0पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id ltc2945_id[] = {
+	{"ltc2945", 0},
+	{ }
+};
 
 MODULE_DEVICE_TABLE(i2c, ltc2945_id);
 
-अटल काष्ठा i2c_driver ltc2945_driver = अणु
-	.driver = अणु
+static struct i2c_driver ltc2945_driver = {
+	.driver = {
 		   .name = "ltc2945",
-		   पूर्ण,
+		   },
 	.probe_new = ltc2945_probe,
 	.id_table = ltc2945_id,
-पूर्ण;
+};
 
 module_i2c_driver(ltc2945_driver);
 

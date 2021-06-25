@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  *  arch/arm/mach-pxa/include/mach/hardware.h
  *
@@ -8,20 +7,20 @@
  *  Copyright:	MontaVista Software Inc.
  */
 
-#अगर_अघोषित __ASM_ARCH_HARDWARE_H
-#घोषणा __ASM_ARCH_HARDWARE_H
+#ifndef __ASM_ARCH_HARDWARE_H
+#define __ASM_ARCH_HARDWARE_H
 
-#समावेश <mach/addr-map.h>
+#include <mach/addr-map.h>
 
 /*
- * Workarounds क्रम at least 2 errata so far require this.
+ * Workarounds for at least 2 errata so far require this.
  * The mapping is set in mach-pxa/generic.c.
  */
-#घोषणा UNCACHED_PHYS_0		0xfe000000
-#घोषणा UNCACHED_PHYS_0_SIZE	0x00100000
+#define UNCACHED_PHYS_0		0xfe000000
+#define UNCACHED_PHYS_0_SIZE	0x00100000
 
 /*
- * Intel PXA2xx पूर्णांकernal रेजिस्टर mapping:
+ * Intel PXA2xx internal register mapping:
  *
  * 0x40000000 - 0x41ffffff <--> 0xf2000000 - 0xf3ffffff
  * 0x44000000 - 0x45ffffff <--> 0xf4000000 - 0xf5ffffff
@@ -34,29 +33,29 @@
  * Note that not all PXA2xx chips implement all those addresses, and the
  * kernel only maps the minimum needed range of this mapping.
  */
-#घोषणा io_v2p(x) (0x3c000000 + ((x) & 0x01ffffff) + (((x) & 0x0e000000) << 1))
-#घोषणा io_p2v(x) IOMEM(0xf2000000 + ((x) & 0x01ffffff) + (((x) & 0x1c000000) >> 1))
+#define io_v2p(x) (0x3c000000 + ((x) & 0x01ffffff) + (((x) & 0x0e000000) << 1))
+#define io_p2v(x) IOMEM(0xf2000000 + ((x) & 0x01ffffff) + (((x) & 0x1c000000) >> 1))
 
-#अगर_अघोषित __ASSEMBLY__
-# define __REG(x)	(*((अस्थिर u32 __iomem *)io_p2v(x)))
+#ifndef __ASSEMBLY__
+# define __REG(x)	(*((volatile u32 __iomem *)io_p2v(x)))
 
-/* With indexed regs we करोn't want to feed the index through io_p2v()
-   especially अगर it is a variable, otherwise horrible code will result. */
+/* With indexed regs we don't want to feed the index through io_p2v()
+   especially if it is a variable, otherwise horrible code will result. */
 # define __REG2(x,y)	\
-	(*(अस्थिर u32 __iomem*)((u32)&__REG(x) + (y)))
+	(*(volatile u32 __iomem*)((u32)&__REG(x) + (y)))
 
 # define __PREG(x)	(io_v2p((u32)&(x)))
 
-#अन्यथा
+#else
 
 # define __REG(x)	io_p2v(x)
 # define __PREG(x)	io_v2p(x)
 
-#पूर्ण_अगर
+#endif
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-#समावेश <यंत्र/cputype.h>
+#include <asm/cputype.h>
 
 /*
  *   CPU     Stepping     CPU_ID         JTAG_ID
@@ -101,206 +100,206 @@
  *  PXA935	B0	0x56056936	0x6E653013
  *  PXA935	B1	0x56056938	0x8E653013
  */
-#अगर_घोषित CONFIG_PXA25x
-#घोषणा __cpu_is_pxa210(id)				\
-	(अणु						\
-		अचिन्हित पूर्णांक _id = (id) & 0xf3f0;	\
+#ifdef CONFIG_PXA25x
+#define __cpu_is_pxa210(id)				\
+	({						\
+		unsigned int _id = (id) & 0xf3f0;	\
 		_id == 0x2120;				\
-	पूर्ण)
+	})
 
-#घोषणा __cpu_is_pxa250(id)				\
-	(अणु						\
-		अचिन्हित पूर्णांक _id = (id) & 0xf3ff;	\
+#define __cpu_is_pxa250(id)				\
+	({						\
+		unsigned int _id = (id) & 0xf3ff;	\
 		_id <= 0x2105;				\
-	पूर्ण)
+	})
 
-#घोषणा __cpu_is_pxa255(id)				\
-	(अणु						\
-		अचिन्हित पूर्णांक _id = (id) & 0xffff;	\
+#define __cpu_is_pxa255(id)				\
+	({						\
+		unsigned int _id = (id) & 0xffff;	\
 		_id == 0x2d06;				\
-	पूर्ण)
+	})
 
-#घोषणा __cpu_is_pxa25x(id)				\
-	(अणु						\
-		अचिन्हित पूर्णांक _id = (id) & 0xf300;	\
+#define __cpu_is_pxa25x(id)				\
+	({						\
+		unsigned int _id = (id) & 0xf300;	\
 		_id == 0x2100;				\
-	पूर्ण)
-#अन्यथा
-#घोषणा __cpu_is_pxa210(id)	(0)
-#घोषणा __cpu_is_pxa250(id)	(0)
-#घोषणा __cpu_is_pxa255(id)	(0)
-#घोषणा __cpu_is_pxa25x(id)	(0)
-#पूर्ण_अगर
+	})
+#else
+#define __cpu_is_pxa210(id)	(0)
+#define __cpu_is_pxa250(id)	(0)
+#define __cpu_is_pxa255(id)	(0)
+#define __cpu_is_pxa25x(id)	(0)
+#endif
 
-#अगर_घोषित CONFIG_PXA27x
-#घोषणा __cpu_is_pxa27x(id)				\
-	(अणु						\
-		अचिन्हित पूर्णांक _id = (id) >> 4 & 0xfff;	\
+#ifdef CONFIG_PXA27x
+#define __cpu_is_pxa27x(id)				\
+	({						\
+		unsigned int _id = (id) >> 4 & 0xfff;	\
 		_id == 0x411;				\
-	पूर्ण)
-#अन्यथा
-#घोषणा __cpu_is_pxa27x(id)	(0)
-#पूर्ण_अगर
+	})
+#else
+#define __cpu_is_pxa27x(id)	(0)
+#endif
 
-#अगर_घोषित CONFIG_CPU_PXA300
-#घोषणा __cpu_is_pxa300(id)				\
-	(अणु						\
-		अचिन्हित पूर्णांक _id = (id) >> 4 & 0xfff;	\
+#ifdef CONFIG_CPU_PXA300
+#define __cpu_is_pxa300(id)				\
+	({						\
+		unsigned int _id = (id) >> 4 & 0xfff;	\
 		_id == 0x688;				\
-	 पूर्ण)
-#अन्यथा
-#घोषणा __cpu_is_pxa300(id)	(0)
-#पूर्ण_अगर
+	 })
+#else
+#define __cpu_is_pxa300(id)	(0)
+#endif
 
-#अगर_घोषित CONFIG_CPU_PXA310
-#घोषणा __cpu_is_pxa310(id)				\
-	(अणु						\
-		अचिन्हित पूर्णांक _id = (id) >> 4 & 0xfff;	\
+#ifdef CONFIG_CPU_PXA310
+#define __cpu_is_pxa310(id)				\
+	({						\
+		unsigned int _id = (id) >> 4 & 0xfff;	\
 		_id == 0x689;				\
-	 पूर्ण)
-#अन्यथा
-#घोषणा __cpu_is_pxa310(id)	(0)
-#पूर्ण_अगर
+	 })
+#else
+#define __cpu_is_pxa310(id)	(0)
+#endif
 
-#अगर_घोषित CONFIG_CPU_PXA320
-#घोषणा __cpu_is_pxa320(id)				\
-	(अणु						\
-		अचिन्हित पूर्णांक _id = (id) >> 4 & 0xfff;	\
+#ifdef CONFIG_CPU_PXA320
+#define __cpu_is_pxa320(id)				\
+	({						\
+		unsigned int _id = (id) >> 4 & 0xfff;	\
 		_id == 0x603 || _id == 0x682;		\
-	 पूर्ण)
-#अन्यथा
-#घोषणा __cpu_is_pxa320(id)	(0)
-#पूर्ण_अगर
+	 })
+#else
+#define __cpu_is_pxa320(id)	(0)
+#endif
 
-#अगर_घोषित CONFIG_CPU_PXA930
-#घोषणा __cpu_is_pxa930(id)				\
-	(अणु						\
-		अचिन्हित पूर्णांक _id = (id) >> 4 & 0xfff;	\
+#ifdef CONFIG_CPU_PXA930
+#define __cpu_is_pxa930(id)				\
+	({						\
+		unsigned int _id = (id) >> 4 & 0xfff;	\
 		_id == 0x683;				\
-	 पूर्ण)
-#अन्यथा
-#घोषणा __cpu_is_pxa930(id)	(0)
-#पूर्ण_अगर
+	 })
+#else
+#define __cpu_is_pxa930(id)	(0)
+#endif
 
-#अगर_घोषित CONFIG_CPU_PXA935
-#घोषणा __cpu_is_pxa935(id)				\
-	(अणु						\
-		अचिन्हित पूर्णांक _id = (id) >> 4 & 0xfff;	\
+#ifdef CONFIG_CPU_PXA935
+#define __cpu_is_pxa935(id)				\
+	({						\
+		unsigned int _id = (id) >> 4 & 0xfff;	\
 		_id == 0x693;				\
-	 पूर्ण)
-#अन्यथा
-#घोषणा __cpu_is_pxa935(id)	(0)
-#पूर्ण_अगर
+	 })
+#else
+#define __cpu_is_pxa935(id)	(0)
+#endif
 
-#घोषणा cpu_is_pxa210()					\
-	(अणु						\
-		__cpu_is_pxa210(पढ़ो_cpuid_id());	\
-	पूर्ण)
+#define cpu_is_pxa210()					\
+	({						\
+		__cpu_is_pxa210(read_cpuid_id());	\
+	})
 
-#घोषणा cpu_is_pxa250()					\
-	(अणु						\
-		__cpu_is_pxa250(पढ़ो_cpuid_id());	\
-	पूर्ण)
+#define cpu_is_pxa250()					\
+	({						\
+		__cpu_is_pxa250(read_cpuid_id());	\
+	})
 
-#घोषणा cpu_is_pxa255()                                 \
-	(अणु                                              \
-		__cpu_is_pxa255(पढ़ो_cpuid_id());       \
-	पूर्ण)
+#define cpu_is_pxa255()                                 \
+	({                                              \
+		__cpu_is_pxa255(read_cpuid_id());       \
+	})
 
-#घोषणा cpu_is_pxa25x()					\
-	(अणु						\
-		__cpu_is_pxa25x(पढ़ो_cpuid_id());	\
-	पूर्ण)
+#define cpu_is_pxa25x()					\
+	({						\
+		__cpu_is_pxa25x(read_cpuid_id());	\
+	})
 
-#घोषणा cpu_is_pxa27x()					\
-	(अणु						\
-		__cpu_is_pxa27x(पढ़ो_cpuid_id());	\
-	पूर्ण)
+#define cpu_is_pxa27x()					\
+	({						\
+		__cpu_is_pxa27x(read_cpuid_id());	\
+	})
 
-#घोषणा cpu_is_pxa300()					\
-	(अणु						\
-		__cpu_is_pxa300(पढ़ो_cpuid_id());	\
-	 पूर्ण)
+#define cpu_is_pxa300()					\
+	({						\
+		__cpu_is_pxa300(read_cpuid_id());	\
+	 })
 
-#घोषणा cpu_is_pxa310()					\
-	(अणु						\
-		__cpu_is_pxa310(पढ़ो_cpuid_id());	\
-	 पूर्ण)
+#define cpu_is_pxa310()					\
+	({						\
+		__cpu_is_pxa310(read_cpuid_id());	\
+	 })
 
-#घोषणा cpu_is_pxa320()					\
-	(अणु						\
-		__cpu_is_pxa320(पढ़ो_cpuid_id());	\
-	 पूर्ण)
+#define cpu_is_pxa320()					\
+	({						\
+		__cpu_is_pxa320(read_cpuid_id());	\
+	 })
 
-#घोषणा cpu_is_pxa930()					\
-	(अणु						\
-		__cpu_is_pxa930(पढ़ो_cpuid_id());	\
-	 पूर्ण)
+#define cpu_is_pxa930()					\
+	({						\
+		__cpu_is_pxa930(read_cpuid_id());	\
+	 })
 
-#घोषणा cpu_is_pxa935()					\
-	(अणु						\
-		__cpu_is_pxa935(पढ़ो_cpuid_id());	\
-	 पूर्ण)
+#define cpu_is_pxa935()					\
+	({						\
+		__cpu_is_pxa935(read_cpuid_id());	\
+	 })
 
 
 
 /*
  * CPUID Core Generation Bit
- * <= 0x2 क्रम pxa21x/pxa25x/pxa26x/pxa27x
+ * <= 0x2 for pxa21x/pxa25x/pxa26x/pxa27x
  */
-#अगर defined(CONFIG_PXA25x) || defined(CONFIG_PXA27x)
-#घोषणा __cpu_is_pxa2xx(id)				\
-	(अणु						\
-		अचिन्हित पूर्णांक _id = (id) >> 13 & 0x7;	\
+#if defined(CONFIG_PXA25x) || defined(CONFIG_PXA27x)
+#define __cpu_is_pxa2xx(id)				\
+	({						\
+		unsigned int _id = (id) >> 13 & 0x7;	\
 		_id <= 0x2;				\
-	 पूर्ण)
-#अन्यथा
-#घोषणा __cpu_is_pxa2xx(id)	(0)
-#पूर्ण_अगर
+	 })
+#else
+#define __cpu_is_pxa2xx(id)	(0)
+#endif
 
-#अगर_घोषित CONFIG_PXA3xx
-#घोषणा __cpu_is_pxa3xx(id)				\
-	(अणु						\
+#ifdef CONFIG_PXA3xx
+#define __cpu_is_pxa3xx(id)				\
+	({						\
 		__cpu_is_pxa300(id)			\
 			|| __cpu_is_pxa310(id)		\
 			|| __cpu_is_pxa320(id)		\
 			|| __cpu_is_pxa93x(id);		\
-	 पूर्ण)
-#अन्यथा
-#घोषणा __cpu_is_pxa3xx(id)	(0)
-#पूर्ण_अगर
+	 })
+#else
+#define __cpu_is_pxa3xx(id)	(0)
+#endif
 
-#अगर defined(CONFIG_CPU_PXA930) || defined(CONFIG_CPU_PXA935)
-#घोषणा __cpu_is_pxa93x(id)				\
-	(अणु						\
+#if defined(CONFIG_CPU_PXA930) || defined(CONFIG_CPU_PXA935)
+#define __cpu_is_pxa93x(id)				\
+	({						\
 		__cpu_is_pxa930(id)			\
 			|| __cpu_is_pxa935(id);		\
-	 पूर्ण)
-#अन्यथा
-#घोषणा __cpu_is_pxa93x(id)	(0)
-#पूर्ण_अगर
+	 })
+#else
+#define __cpu_is_pxa93x(id)	(0)
+#endif
 
-#घोषणा cpu_is_pxa2xx()					\
-	(अणु						\
-		__cpu_is_pxa2xx(पढ़ो_cpuid_id());	\
-	 पूर्ण)
+#define cpu_is_pxa2xx()					\
+	({						\
+		__cpu_is_pxa2xx(read_cpuid_id());	\
+	 })
 
-#घोषणा cpu_is_pxa3xx()					\
-	(अणु						\
-		__cpu_is_pxa3xx(पढ़ो_cpuid_id());	\
-	 पूर्ण)
+#define cpu_is_pxa3xx()					\
+	({						\
+		__cpu_is_pxa3xx(read_cpuid_id());	\
+	 })
 
-#घोषणा cpu_is_pxa93x()					\
-	(अणु						\
-		__cpu_is_pxa93x(पढ़ो_cpuid_id());	\
-	 पूर्ण)
+#define cpu_is_pxa93x()					\
+	({						\
+		__cpu_is_pxa93x(read_cpuid_id());	\
+	 })
 
 
 /*
- * वापस current memory and LCD घड़ी frequency in units of 10kHz
+ * return current memory and LCD clock frequency in units of 10kHz
  */
-बाह्य अचिन्हित पूर्णांक get_memclk_frequency_10khz(व्योम);
+extern unsigned int get_memclk_frequency_10khz(void);
 
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर  /* _ASM_ARCH_HARDWARE_H */
+#endif  /* _ASM_ARCH_HARDWARE_H */

@@ -1,9 +1,8 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * arch/arm/plat-omap/include/mach/mux.h
  *
- * Table of the Omap रेजिस्टर configurations क्रम the FUNC_MUX and
+ * Table of the Omap register configurations for the FUNC_MUX and
  * PULL_DWN combinations.
  *
  * Copyright (C) 2004 - 2008 Texas Instruments Inc.
@@ -11,121 +10,121 @@
  *
  * Written by Tony Lindgren
  *
- * NOTE: Please use the following naming style क्रम new pin entries.
+ * NOTE: Please use the following naming style for new pin entries.
  *	 For example, W8_1610_MMC2_DAT0, where:
  *	 - W8	     = ball
- *	 - 1610	     = 1510 or 1610, none अगर common क्रम both 1510 and 1610
+ *	 - 1610	     = 1510 or 1610, none if common for both 1510 and 1610
  *	 - MMC2_DAT0 = function
  */
 
-#अगर_अघोषित __ASM_ARCH_MUX_H
-#घोषणा __ASM_ARCH_MUX_H
+#ifndef __ASM_ARCH_MUX_H
+#define __ASM_ARCH_MUX_H
 
-#घोषणा PU_PD_SEL_NA		0	/* No pu_pd reg available */
-#घोषणा PULL_DWN_CTRL_NA	0	/* No pull-करोwn control needed */
+#define PU_PD_SEL_NA		0	/* No pu_pd reg available */
+#define PULL_DWN_CTRL_NA	0	/* No pull-down control needed */
 
-#अगर_घोषित	CONFIG_OMAP_MUX_DEBUG
-#घोषणा MUX_REG(reg, mode_offset, mode) .mux_reg_name = "FUNC_MUX_CTRL_"#reg, \
+#ifdef	CONFIG_OMAP_MUX_DEBUG
+#define MUX_REG(reg, mode_offset, mode) .mux_reg_name = "FUNC_MUX_CTRL_"#reg, \
 					.mux_reg = FUNC_MUX_CTRL_##reg, \
 					.mask_offset = mode_offset, \
 					.mask = mode,
 
-#घोषणा PULL_REG(reg, bit, status)	.pull_name = "PULL_DWN_CTRL_"#reg, \
+#define PULL_REG(reg, bit, status)	.pull_name = "PULL_DWN_CTRL_"#reg, \
 					.pull_reg = PULL_DWN_CTRL_##reg, \
 					.pull_bit = bit, \
 					.pull_val = status,
 
-#घोषणा PU_PD_REG(reg, status)		.pu_pd_name = "PU_PD_SEL_"#reg, \
+#define PU_PD_REG(reg, status)		.pu_pd_name = "PU_PD_SEL_"#reg, \
 					.pu_pd_reg = PU_PD_SEL_##reg, \
 					.pu_pd_val = status,
 
-#घोषणा MUX_REG_7XX(reg, mode_offset, mode) .mux_reg_name = "OMAP7XX_IO_CONF_"#reg, \
+#define MUX_REG_7XX(reg, mode_offset, mode) .mux_reg_name = "OMAP7XX_IO_CONF_"#reg, \
 					.mux_reg = OMAP7XX_IO_CONF_##reg, \
 					.mask_offset = mode_offset, \
 					.mask = mode,
 
-#घोषणा PULL_REG_7XX(reg, bit, status)	.pull_name = "OMAP7XX_IO_CONF_"#reg, \
+#define PULL_REG_7XX(reg, bit, status)	.pull_name = "OMAP7XX_IO_CONF_"#reg, \
 					.pull_reg = OMAP7XX_IO_CONF_##reg, \
 					.pull_bit = bit, \
 					.pull_val = status,
 
-#अन्यथा
+#else
 
-#घोषणा MUX_REG(reg, mode_offset, mode) .mux_reg = FUNC_MUX_CTRL_##reg, \
+#define MUX_REG(reg, mode_offset, mode) .mux_reg = FUNC_MUX_CTRL_##reg, \
 					.mask_offset = mode_offset, \
 					.mask = mode,
 
-#घोषणा PULL_REG(reg, bit, status)	.pull_reg = PULL_DWN_CTRL_##reg, \
+#define PULL_REG(reg, bit, status)	.pull_reg = PULL_DWN_CTRL_##reg, \
 					.pull_bit = bit, \
 					.pull_val = status,
 
-#घोषणा PU_PD_REG(reg, status)		.pu_pd_reg = PU_PD_SEL_##reg, \
+#define PU_PD_REG(reg, status)		.pu_pd_reg = PU_PD_SEL_##reg, \
 					.pu_pd_val = status,
 
-#घोषणा MUX_REG_7XX(reg, mode_offset, mode) \
+#define MUX_REG_7XX(reg, mode_offset, mode) \
 					.mux_reg = OMAP7XX_IO_CONF_##reg, \
 					.mask_offset = mode_offset, \
 					.mask = mode,
 
-#घोषणा PULL_REG_7XX(reg, bit, status)	.pull_reg = OMAP7XX_IO_CONF_##reg, \
+#define PULL_REG_7XX(reg, bit, status)	.pull_reg = OMAP7XX_IO_CONF_##reg, \
 					.pull_bit = bit, \
 					.pull_val = status,
 
-#पूर्ण_अगर /* CONFIG_OMAP_MUX_DEBUG */
+#endif /* CONFIG_OMAP_MUX_DEBUG */
 
-#घोषणा MUX_CFG(desc, mux_reg, mode_offset, mode,	\
+#define MUX_CFG(desc, mux_reg, mode_offset, mode,	\
 		pull_reg, pull_bit, pull_status,	\
 		pu_pd_reg, pu_pd_status, debug_status)	\
-अणु							\
+{							\
 	.name =	 desc,					\
 	.debug = debug_status,				\
 	MUX_REG(mux_reg, mode_offset, mode)		\
 	PULL_REG(pull_reg, pull_bit, pull_status)	\
 	PU_PD_REG(pu_pd_reg, pu_pd_status)		\
-पूर्ण,
+},
 
 
 /*
- * OMAP730/850 has a slightly dअगरferent config क्रम the pin mux.
+ * OMAP730/850 has a slightly different config for the pin mux.
  * - config regs are the OMAP7XX_IO_CONF_x regs (see omap7xx.h) regs and
  *   not the FUNC_MUX_CTRL_x regs from hardware.h
- * - क्रम pull-up/करोwn, only has one enable bit which is in the same रेजिस्टर
+ * - for pull-up/down, only has one enable bit which is in the same register
  *   as mux config
  */
-#घोषणा MUX_CFG_7XX(desc, mux_reg, mode_offset, mode,	\
+#define MUX_CFG_7XX(desc, mux_reg, mode_offset, mode,	\
 		   pull_bit, pull_status, debug_status)\
-अणु							\
+{							\
 	.name =	 desc,					\
 	.debug = debug_status,				\
 	MUX_REG_7XX(mux_reg, mode_offset, mode)		\
 	PULL_REG_7XX(mux_reg, pull_bit, pull_status)	\
 	PU_PD_REG(NA, 0)		\
-पूर्ण,
+},
 
-काष्ठा pin_config अणु
-	अक्षर 			*name;
-	स्थिर अचिन्हित पूर्णांक 	mux_reg;
-	अचिन्हित अक्षर		debug;
+struct pin_config {
+	char 			*name;
+	const unsigned int 	mux_reg;
+	unsigned char		debug;
 
-	स्थिर अचिन्हित अक्षर mask_offset;
-	स्थिर अचिन्हित अक्षर mask;
+	const unsigned char mask_offset;
+	const unsigned char mask;
 
-	स्थिर अक्षर *pull_name;
-	स्थिर अचिन्हित पूर्णांक pull_reg;
-	स्थिर अचिन्हित अक्षर pull_val;
-	स्थिर अचिन्हित अक्षर pull_bit;
+	const char *pull_name;
+	const unsigned int pull_reg;
+	const unsigned char pull_val;
+	const unsigned char pull_bit;
 
-	स्थिर अक्षर *pu_pd_name;
-	स्थिर अचिन्हित पूर्णांक pu_pd_reg;
-	स्थिर अचिन्हित अक्षर pu_pd_val;
+	const char *pu_pd_name;
+	const unsigned int pu_pd_reg;
+	const unsigned char pu_pd_val;
 
-#अगर	defined(CONFIG_OMAP_MUX_DEBUG) || defined(CONFIG_OMAP_MUX_WARNINGS)
-	स्थिर अक्षर *mux_reg_name;
-#पूर्ण_अगर
+#if	defined(CONFIG_OMAP_MUX_DEBUG) || defined(CONFIG_OMAP_MUX_WARNINGS)
+	const char *mux_reg_name;
+#endif
 
-पूर्ण;
+};
 
-क्रमागत omap7xx_index अणु
+enum omap7xx_index {
 	/* OMAP 730 keyboard */
 	E2_7XX_KBR0,
 	J7_7XX_KBR1,
@@ -165,9 +164,9 @@
 	/* UART */
 	UART_7XX_1,
 	UART_7XX_2,
-पूर्ण;
+};
 
-क्रमागत omap1xxx_index अणु
+enum omap1xxx_index {
 	/* UART1 (BT_UART_GATING)*/
 	UART1_TX = 0,
 	UART1_RTS,
@@ -184,7 +183,7 @@
 	UART3_CTS,
 	UART3_RTS,
 	UART3_CLKREQ,
-	UART3_BCLK,	/* 12MHz घड़ी out */
+	UART3_BCLK,	/* 12MHz clock out */
 	Y15_1610_UART3_RTS,
 
 	/* PWT & PWL */
@@ -273,9 +272,9 @@
 	R10_1610_MMC2_DAT3,
 	Y10_1610_MMC2_CLK,
 	Y8_1610_MMC2_CMD,
-	V9_1610_MMC2_CMDसूची,
-	V5_1610_MMC2_DATसूची0,
-	W19_1610_MMC2_DATसूची1,
+	V9_1610_MMC2_CMDDIR,
+	V5_1610_MMC2_DATDIR0,
+	W19_1610_MMC2_DATDIR1,
 	R18_1610_MMC2_CLKIN,
 
 	/* OMAP-1610 External Trace Interface */
@@ -332,10 +331,10 @@
 	MMC_CLK,
 	MMC_DAT3,
 
-	/* OMAP-1710 MMC CMDसूची and DATसूची0 */
+	/* OMAP-1710 MMC CMDDIR and DATDIR0 */
 	M15_1710_MMC_CLKI,
-	P19_1710_MMC_CMDसूची,
-	P20_1710_MMC_DATसूची0,
+	P19_1710_MMC_CMDDIR,
+	P20_1710_MMC_DATDIR0,
 
 	/* OMAP-1610 USB0 alternate pin configuration */
 	W9_USB0_TXEN,
@@ -418,25 +417,25 @@
 	W14_1610_CCP_DATAP,
 	Y14_1610_CCP_DATAM,
 
-पूर्ण;
+};
 
-काष्ठा omap_mux_cfg अणु
-	काष्ठा pin_config	*pins;
-	अचिन्हित दीर्घ		size;
-	पूर्णांक			(*cfg_reg)(स्थिर काष्ठा pin_config *cfg);
-पूर्ण;
+struct omap_mux_cfg {
+	struct pin_config	*pins;
+	unsigned long		size;
+	int			(*cfg_reg)(const struct pin_config *cfg);
+};
 
-#अगर_घोषित	CONFIG_OMAP_MUX
+#ifdef	CONFIG_OMAP_MUX
 /* setup pin muxing in Linux */
-बाह्य पूर्णांक omap1_mux_init(व्योम);
-बाह्य पूर्णांक omap_mux_रेजिस्टर(काष्ठा omap_mux_cfg *);
-बाह्य पूर्णांक omap_cfg_reg(अचिन्हित दीर्घ reg_cfg);
-#अन्यथा
-/* boot loader करोes it all (no warnings from CONFIG_OMAP_MUX_WARNINGS) */
-अटल अंतरभूत पूर्णांक omap1_mux_init(व्योम) अणु वापस 0; पूर्ण
-अटल अंतरभूत पूर्णांक omap_cfg_reg(अचिन्हित दीर्घ reg_cfg) अणु वापस 0; पूर्ण
-#पूर्ण_अगर
+extern int omap1_mux_init(void);
+extern int omap_mux_register(struct omap_mux_cfg *);
+extern int omap_cfg_reg(unsigned long reg_cfg);
+#else
+/* boot loader does it all (no warnings from CONFIG_OMAP_MUX_WARNINGS) */
+static inline int omap1_mux_init(void) { return 0; }
+static inline int omap_cfg_reg(unsigned long reg_cfg) { return 0; }
+#endif
 
-बाह्य पूर्णांक omap2_mux_init(व्योम);
+extern int omap2_mux_init(void);
 
-#पूर्ण_अगर
+#endif

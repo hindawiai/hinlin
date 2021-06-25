@@ -1,31 +1,30 @@
-<शैली गुरु>
-#अगर_अघोषित __NOUVEAU_MEM_H__
-#घोषणा __NOUVEAU_MEM_H__
-#समावेश <drm/tपंचांग/tपंचांग_bo_api.h>
-काष्ठा tपंचांग_tt;
+#ifndef __NOUVEAU_MEM_H__
+#define __NOUVEAU_MEM_H__
+#include <drm/ttm/ttm_bo_api.h>
+struct ttm_tt;
 
-#समावेश <nvअगर/स्मृति.स>
-#समावेश <nvअगर/vmm.h>
+#include <nvif/mem.h>
+#include <nvif/vmm.h>
 
-अटल अंतरभूत काष्ठा nouveau_mem *
-nouveau_mem(काष्ठा tपंचांग_resource *reg)
-अणु
-	वापस reg->mm_node;
-पूर्ण
+static inline struct nouveau_mem *
+nouveau_mem(struct ttm_resource *reg)
+{
+	return reg->mm_node;
+}
 
-काष्ठा nouveau_mem अणु
-	काष्ठा nouveau_cli *cli;
+struct nouveau_mem {
+	struct nouveau_cli *cli;
 	u8 kind;
 	u8 comp;
-	काष्ठा nvअगर_mem mem;
-	काष्ठा nvअगर_vma vma[2];
-पूर्ण;
+	struct nvif_mem mem;
+	struct nvif_vma vma[2];
+};
 
-पूर्णांक nouveau_mem_new(काष्ठा nouveau_cli *, u8 kind, u8 comp,
-		    काष्ठा tपंचांग_resource *);
-व्योम nouveau_mem_del(काष्ठा tपंचांग_resource *);
-पूर्णांक nouveau_mem_vram(काष्ठा tपंचांग_resource *, bool contig, u8 page);
-पूर्णांक nouveau_mem_host(काष्ठा tपंचांग_resource *, काष्ठा tपंचांग_tt *);
-व्योम nouveau_mem_fini(काष्ठा nouveau_mem *);
-पूर्णांक nouveau_mem_map(काष्ठा nouveau_mem *, काष्ठा nvअगर_vmm *, काष्ठा nvअगर_vma *);
-#पूर्ण_अगर
+int nouveau_mem_new(struct nouveau_cli *, u8 kind, u8 comp,
+		    struct ttm_resource *);
+void nouveau_mem_del(struct ttm_resource *);
+int nouveau_mem_vram(struct ttm_resource *, bool contig, u8 page);
+int nouveau_mem_host(struct ttm_resource *, struct ttm_tt *);
+void nouveau_mem_fini(struct nouveau_mem *);
+int nouveau_mem_map(struct nouveau_mem *, struct nvif_vmm *, struct nvif_vma *);
+#endif

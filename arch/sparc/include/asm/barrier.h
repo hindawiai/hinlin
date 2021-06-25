@@ -1,10 +1,9 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित ___ASM_SPARC_BARRIER_H
-#घोषणा ___ASM_SPARC_BARRIER_H
-#अगर defined(__sparc__) && defined(__arch64__)
-#समावेश <यंत्र/barrier_64.h>
-#अन्यथा
-#समावेश <यंत्र/barrier_32.h>
-#पूर्ण_अगर
-#पूर्ण_अगर
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef ___ASM_SPARC_BARRIER_H
+#define ___ASM_SPARC_BARRIER_H
+#if defined(__sparc__) && defined(__arch64__)
+#include <asm/barrier_64.h>
+#else
+#include <asm/barrier_32.h>
+#endif
+#endif

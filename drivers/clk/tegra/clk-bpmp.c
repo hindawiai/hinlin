@@ -1,301 +1,300 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2016-2020 NVIDIA Corporation
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/device.h>
-#समावेश <linux/seq_buf.h>
-#समावेश <linux/slab.h>
+#include <linux/clk-provider.h>
+#include <linux/device.h>
+#include <linux/seq_buf.h>
+#include <linux/slab.h>
 
-#समावेश <soc/tegra/bpmp.h>
-#समावेश <soc/tegra/bpmp-abi.h>
+#include <soc/tegra/bpmp.h>
+#include <soc/tegra/bpmp-abi.h>
 
-#घोषणा TEGRA_BPMP_DUMP_CLOCK_INFO	0
+#define TEGRA_BPMP_DUMP_CLOCK_INFO	0
 
-#घोषणा TEGRA_BPMP_CLK_HAS_MUX		BIT(0)
-#घोषणा TEGRA_BPMP_CLK_HAS_SET_RATE	BIT(1)
-#घोषणा TEGRA_BPMP_CLK_IS_ROOT		BIT(2)
+#define TEGRA_BPMP_CLK_HAS_MUX		BIT(0)
+#define TEGRA_BPMP_CLK_HAS_SET_RATE	BIT(1)
+#define TEGRA_BPMP_CLK_IS_ROOT		BIT(2)
 
-काष्ठा tegra_bpmp_clk_info अणु
-	अचिन्हित पूर्णांक id;
-	अक्षर name[MRQ_CLK_NAME_MAXLEN];
-	अचिन्हित पूर्णांक parents[MRQ_CLK_MAX_PARENTS];
-	अचिन्हित पूर्णांक num_parents;
-	अचिन्हित दीर्घ flags;
-पूर्ण;
+struct tegra_bpmp_clk_info {
+	unsigned int id;
+	char name[MRQ_CLK_NAME_MAXLEN];
+	unsigned int parents[MRQ_CLK_MAX_PARENTS];
+	unsigned int num_parents;
+	unsigned long flags;
+};
 
-काष्ठा tegra_bpmp_clk अणु
-	काष्ठा clk_hw hw;
+struct tegra_bpmp_clk {
+	struct clk_hw hw;
 
-	काष्ठा tegra_bpmp *bpmp;
-	अचिन्हित पूर्णांक id;
+	struct tegra_bpmp *bpmp;
+	unsigned int id;
 
-	अचिन्हित पूर्णांक num_parents;
-	अचिन्हित पूर्णांक *parents;
-पूर्ण;
+	unsigned int num_parents;
+	unsigned int *parents;
+};
 
-अटल अंतरभूत काष्ठा tegra_bpmp_clk *to_tegra_bpmp_clk(काष्ठा clk_hw *hw)
-अणु
-	वापस container_of(hw, काष्ठा tegra_bpmp_clk, hw);
-पूर्ण
+static inline struct tegra_bpmp_clk *to_tegra_bpmp_clk(struct clk_hw *hw)
+{
+	return container_of(hw, struct tegra_bpmp_clk, hw);
+}
 
-काष्ठा tegra_bpmp_clk_message अणु
-	अचिन्हित पूर्णांक cmd;
-	अचिन्हित पूर्णांक id;
+struct tegra_bpmp_clk_message {
+	unsigned int cmd;
+	unsigned int id;
 
-	काष्ठा अणु
-		स्थिर व्योम *data;
-		माप_प्रकार size;
-	पूर्ण tx;
+	struct {
+		const void *data;
+		size_t size;
+	} tx;
 
-	काष्ठा अणु
-		व्योम *data;
-		माप_प्रकार size;
-		पूर्णांक ret;
-	पूर्ण rx;
-पूर्ण;
+	struct {
+		void *data;
+		size_t size;
+		int ret;
+	} rx;
+};
 
-अटल पूर्णांक tegra_bpmp_clk_transfer(काष्ठा tegra_bpmp *bpmp,
-				   स्थिर काष्ठा tegra_bpmp_clk_message *clk)
-अणु
-	काष्ठा mrq_clk_request request;
-	काष्ठा tegra_bpmp_message msg;
-	व्योम *req = &request;
-	पूर्णांक err;
+static int tegra_bpmp_clk_transfer(struct tegra_bpmp *bpmp,
+				   const struct tegra_bpmp_clk_message *clk)
+{
+	struct mrq_clk_request request;
+	struct tegra_bpmp_message msg;
+	void *req = &request;
+	int err;
 
-	स_रखो(&request, 0, माप(request));
+	memset(&request, 0, sizeof(request));
 	request.cmd_and_id = (clk->cmd << 24) | clk->id;
 
 	/*
-	 * The mrq_clk_request काष्ठाure has an anonymous जोड़ at offset 4
-	 * that contains all possible sub-command काष्ठाures. Copy the data
-	 * to that जोड़. Ideally we'd be able to refer to it by name, but
-	 * करोing so would require changing the ABI header and increase the
-	 * मुख्यtenance burden.
+	 * The mrq_clk_request structure has an anonymous union at offset 4
+	 * that contains all possible sub-command structures. Copy the data
+	 * to that union. Ideally we'd be able to refer to it by name, but
+	 * doing so would require changing the ABI header and increase the
+	 * maintenance burden.
 	 */
-	स_नकल(req + 4, clk->tx.data, clk->tx.size);
+	memcpy(req + 4, clk->tx.data, clk->tx.size);
 
-	स_रखो(&msg, 0, माप(msg));
+	memset(&msg, 0, sizeof(msg));
 	msg.mrq = MRQ_CLK;
 	msg.tx.data = &request;
-	msg.tx.size = माप(request);
+	msg.tx.size = sizeof(request);
 	msg.rx.data = clk->rx.data;
 	msg.rx.size = clk->rx.size;
 
 	err = tegra_bpmp_transfer(bpmp, &msg);
-	अगर (err < 0)
-		वापस err;
-	अन्यथा अगर (msg.rx.ret < 0)
-		वापस -EINVAL;
+	if (err < 0)
+		return err;
+	else if (msg.rx.ret < 0)
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_bpmp_clk_prepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा tegra_bpmp_clk *clk = to_tegra_bpmp_clk(hw);
-	काष्ठा tegra_bpmp_clk_message msg;
+static int tegra_bpmp_clk_prepare(struct clk_hw *hw)
+{
+	struct tegra_bpmp_clk *clk = to_tegra_bpmp_clk(hw);
+	struct tegra_bpmp_clk_message msg;
 
-	स_रखो(&msg, 0, माप(msg));
+	memset(&msg, 0, sizeof(msg));
 	msg.cmd = CMD_CLK_ENABLE;
 	msg.id = clk->id;
 
-	वापस tegra_bpmp_clk_transfer(clk->bpmp, &msg);
-पूर्ण
+	return tegra_bpmp_clk_transfer(clk->bpmp, &msg);
+}
 
-अटल व्योम tegra_bpmp_clk_unprepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा tegra_bpmp_clk *clk = to_tegra_bpmp_clk(hw);
-	काष्ठा tegra_bpmp_clk_message msg;
-	पूर्णांक err;
+static void tegra_bpmp_clk_unprepare(struct clk_hw *hw)
+{
+	struct tegra_bpmp_clk *clk = to_tegra_bpmp_clk(hw);
+	struct tegra_bpmp_clk_message msg;
+	int err;
 
-	स_रखो(&msg, 0, माप(msg));
+	memset(&msg, 0, sizeof(msg));
 	msg.cmd = CMD_CLK_DISABLE;
 	msg.id = clk->id;
 
 	err = tegra_bpmp_clk_transfer(clk->bpmp, &msg);
-	अगर (err < 0)
+	if (err < 0)
 		dev_err(clk->bpmp->dev, "failed to disable clock %s: %d\n",
 			clk_hw_get_name(hw), err);
-पूर्ण
+}
 
-अटल पूर्णांक tegra_bpmp_clk_is_prepared(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा tegra_bpmp_clk *clk = to_tegra_bpmp_clk(hw);
-	काष्ठा cmd_clk_is_enabled_response response;
-	काष्ठा tegra_bpmp_clk_message msg;
-	पूर्णांक err;
+static int tegra_bpmp_clk_is_prepared(struct clk_hw *hw)
+{
+	struct tegra_bpmp_clk *clk = to_tegra_bpmp_clk(hw);
+	struct cmd_clk_is_enabled_response response;
+	struct tegra_bpmp_clk_message msg;
+	int err;
 
-	स_रखो(&msg, 0, माप(msg));
+	memset(&msg, 0, sizeof(msg));
 	msg.cmd = CMD_CLK_IS_ENABLED;
 	msg.id = clk->id;
 	msg.rx.data = &response;
-	msg.rx.size = माप(response);
+	msg.rx.size = sizeof(response);
 
 	err = tegra_bpmp_clk_transfer(clk->bpmp, &msg);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	वापस response.state;
-पूर्ण
+	return response.state;
+}
 
-अटल अचिन्हित दीर्घ tegra_bpmp_clk_recalc_rate(काष्ठा clk_hw *hw,
-						अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा tegra_bpmp_clk *clk = to_tegra_bpmp_clk(hw);
-	काष्ठा cmd_clk_get_rate_response response;
-	काष्ठा cmd_clk_get_rate_request request;
-	काष्ठा tegra_bpmp_clk_message msg;
-	पूर्णांक err;
+static unsigned long tegra_bpmp_clk_recalc_rate(struct clk_hw *hw,
+						unsigned long parent_rate)
+{
+	struct tegra_bpmp_clk *clk = to_tegra_bpmp_clk(hw);
+	struct cmd_clk_get_rate_response response;
+	struct cmd_clk_get_rate_request request;
+	struct tegra_bpmp_clk_message msg;
+	int err;
 
-	स_रखो(&msg, 0, माप(msg));
+	memset(&msg, 0, sizeof(msg));
 	msg.cmd = CMD_CLK_GET_RATE;
 	msg.id = clk->id;
 	msg.tx.data = &request;
-	msg.tx.size = माप(request);
+	msg.tx.size = sizeof(request);
 	msg.rx.data = &response;
-	msg.rx.size = माप(response);
+	msg.rx.size = sizeof(response);
 
 	err = tegra_bpmp_clk_transfer(clk->bpmp, &msg);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	वापस response.rate;
-पूर्ण
+	return response.rate;
+}
 
-अटल दीर्घ tegra_bpmp_clk_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				      अचिन्हित दीर्घ *parent_rate)
-अणु
-	काष्ठा tegra_bpmp_clk *clk = to_tegra_bpmp_clk(hw);
-	काष्ठा cmd_clk_round_rate_response response;
-	काष्ठा cmd_clk_round_rate_request request;
-	काष्ठा tegra_bpmp_clk_message msg;
-	पूर्णांक err;
+static long tegra_bpmp_clk_round_rate(struct clk_hw *hw, unsigned long rate,
+				      unsigned long *parent_rate)
+{
+	struct tegra_bpmp_clk *clk = to_tegra_bpmp_clk(hw);
+	struct cmd_clk_round_rate_response response;
+	struct cmd_clk_round_rate_request request;
+	struct tegra_bpmp_clk_message msg;
+	int err;
 
-	स_रखो(&request, 0, माप(request));
+	memset(&request, 0, sizeof(request));
 	request.rate = min_t(u64, rate, S64_MAX);
 
-	स_रखो(&msg, 0, माप(msg));
+	memset(&msg, 0, sizeof(msg));
 	msg.cmd = CMD_CLK_ROUND_RATE;
 	msg.id = clk->id;
 	msg.tx.data = &request;
-	msg.tx.size = माप(request);
+	msg.tx.size = sizeof(request);
 	msg.rx.data = &response;
-	msg.rx.size = माप(response);
+	msg.rx.size = sizeof(response);
 
 	err = tegra_bpmp_clk_transfer(clk->bpmp, &msg);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	वापस response.rate;
-पूर्ण
+	return response.rate;
+}
 
-अटल पूर्णांक tegra_bpmp_clk_set_parent(काष्ठा clk_hw *hw, u8 index)
-अणु
-	काष्ठा tegra_bpmp_clk *clk = to_tegra_bpmp_clk(hw);
-	काष्ठा cmd_clk_set_parent_response response;
-	काष्ठा cmd_clk_set_parent_request request;
-	काष्ठा tegra_bpmp_clk_message msg;
-	पूर्णांक err;
+static int tegra_bpmp_clk_set_parent(struct clk_hw *hw, u8 index)
+{
+	struct tegra_bpmp_clk *clk = to_tegra_bpmp_clk(hw);
+	struct cmd_clk_set_parent_response response;
+	struct cmd_clk_set_parent_request request;
+	struct tegra_bpmp_clk_message msg;
+	int err;
 
-	स_रखो(&request, 0, माप(request));
+	memset(&request, 0, sizeof(request));
 	request.parent_id = clk->parents[index];
 
-	स_रखो(&msg, 0, माप(msg));
+	memset(&msg, 0, sizeof(msg));
 	msg.cmd = CMD_CLK_SET_PARENT;
 	msg.id = clk->id;
 	msg.tx.data = &request;
-	msg.tx.size = माप(request);
+	msg.tx.size = sizeof(request);
 	msg.rx.data = &response;
-	msg.rx.size = माप(response);
+	msg.rx.size = sizeof(response);
 
 	err = tegra_bpmp_clk_transfer(clk->bpmp, &msg);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	/* XXX check parent ID in response */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u8 tegra_bpmp_clk_get_parent(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा tegra_bpmp_clk *clk = to_tegra_bpmp_clk(hw);
-	काष्ठा cmd_clk_get_parent_response response;
-	काष्ठा tegra_bpmp_clk_message msg;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक err;
+static u8 tegra_bpmp_clk_get_parent(struct clk_hw *hw)
+{
+	struct tegra_bpmp_clk *clk = to_tegra_bpmp_clk(hw);
+	struct cmd_clk_get_parent_response response;
+	struct tegra_bpmp_clk_message msg;
+	unsigned int i;
+	int err;
 
-	स_रखो(&msg, 0, माप(msg));
+	memset(&msg, 0, sizeof(msg));
 	msg.cmd = CMD_CLK_GET_PARENT;
 	msg.id = clk->id;
 	msg.rx.data = &response;
-	msg.rx.size = माप(response);
+	msg.rx.size = sizeof(response);
 
 	err = tegra_bpmp_clk_transfer(clk->bpmp, &msg);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		dev_err(clk->bpmp->dev, "failed to get parent for %s: %d\n",
 			clk_hw_get_name(hw), err);
-		वापस U8_MAX;
-	पूर्ण
+		return U8_MAX;
+	}
 
-	क्रम (i = 0; i < clk->num_parents; i++)
-		अगर (clk->parents[i] == response.parent_id)
-			वापस i;
+	for (i = 0; i < clk->num_parents; i++)
+		if (clk->parents[i] == response.parent_id)
+			return i;
 
-	वापस U8_MAX;
-पूर्ण
+	return U8_MAX;
+}
 
-अटल पूर्णांक tegra_bpmp_clk_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				   अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा tegra_bpmp_clk *clk = to_tegra_bpmp_clk(hw);
-	काष्ठा cmd_clk_set_rate_response response;
-	काष्ठा cmd_clk_set_rate_request request;
-	काष्ठा tegra_bpmp_clk_message msg;
+static int tegra_bpmp_clk_set_rate(struct clk_hw *hw, unsigned long rate,
+				   unsigned long parent_rate)
+{
+	struct tegra_bpmp_clk *clk = to_tegra_bpmp_clk(hw);
+	struct cmd_clk_set_rate_response response;
+	struct cmd_clk_set_rate_request request;
+	struct tegra_bpmp_clk_message msg;
 
-	स_रखो(&request, 0, माप(request));
+	memset(&request, 0, sizeof(request));
 	request.rate = min_t(u64, rate, S64_MAX);
 
-	स_रखो(&msg, 0, माप(msg));
+	memset(&msg, 0, sizeof(msg));
 	msg.cmd = CMD_CLK_SET_RATE;
 	msg.id = clk->id;
 	msg.tx.data = &request;
-	msg.tx.size = माप(request);
+	msg.tx.size = sizeof(request);
 	msg.rx.data = &response;
-	msg.rx.size = माप(response);
+	msg.rx.size = sizeof(response);
 
-	वापस tegra_bpmp_clk_transfer(clk->bpmp, &msg);
-पूर्ण
+	return tegra_bpmp_clk_transfer(clk->bpmp, &msg);
+}
 
-अटल स्थिर काष्ठा clk_ops tegra_bpmp_clk_gate_ops = अणु
+static const struct clk_ops tegra_bpmp_clk_gate_ops = {
 	.prepare = tegra_bpmp_clk_prepare,
 	.unprepare = tegra_bpmp_clk_unprepare,
 	.is_prepared = tegra_bpmp_clk_is_prepared,
 	.recalc_rate = tegra_bpmp_clk_recalc_rate,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा clk_ops tegra_bpmp_clk_mux_ops = अणु
+static const struct clk_ops tegra_bpmp_clk_mux_ops = {
 	.prepare = tegra_bpmp_clk_prepare,
 	.unprepare = tegra_bpmp_clk_unprepare,
 	.is_prepared = tegra_bpmp_clk_is_prepared,
 	.recalc_rate = tegra_bpmp_clk_recalc_rate,
 	.set_parent = tegra_bpmp_clk_set_parent,
 	.get_parent = tegra_bpmp_clk_get_parent,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा clk_ops tegra_bpmp_clk_rate_ops = अणु
+static const struct clk_ops tegra_bpmp_clk_rate_ops = {
 	.prepare = tegra_bpmp_clk_prepare,
 	.unprepare = tegra_bpmp_clk_unprepare,
 	.is_prepared = tegra_bpmp_clk_is_prepared,
 	.recalc_rate = tegra_bpmp_clk_recalc_rate,
 	.round_rate = tegra_bpmp_clk_round_rate,
 	.set_rate = tegra_bpmp_clk_set_rate,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा clk_ops tegra_bpmp_clk_mux_rate_ops = अणु
+static const struct clk_ops tegra_bpmp_clk_mux_rate_ops = {
 	.prepare = tegra_bpmp_clk_prepare,
 	.unprepare = tegra_bpmp_clk_unprepare,
 	.is_prepared = tegra_bpmp_clk_is_prepared,
@@ -304,326 +303,326 @@
 	.set_parent = tegra_bpmp_clk_set_parent,
 	.get_parent = tegra_bpmp_clk_get_parent,
 	.set_rate = tegra_bpmp_clk_set_rate,
-पूर्ण;
+};
 
-अटल पूर्णांक tegra_bpmp_clk_get_max_id(काष्ठा tegra_bpmp *bpmp)
-अणु
-	काष्ठा cmd_clk_get_max_clk_id_response response;
-	काष्ठा tegra_bpmp_clk_message msg;
-	पूर्णांक err;
+static int tegra_bpmp_clk_get_max_id(struct tegra_bpmp *bpmp)
+{
+	struct cmd_clk_get_max_clk_id_response response;
+	struct tegra_bpmp_clk_message msg;
+	int err;
 
-	स_रखो(&msg, 0, माप(msg));
+	memset(&msg, 0, sizeof(msg));
 	msg.cmd = CMD_CLK_GET_MAX_CLK_ID;
 	msg.rx.data = &response;
-	msg.rx.size = माप(response);
+	msg.rx.size = sizeof(response);
 
 	err = tegra_bpmp_clk_transfer(bpmp, &msg);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	अगर (response.max_id > पूर्णांक_उच्च)
-		वापस -E2BIG;
+	if (response.max_id > INT_MAX)
+		return -E2BIG;
 
-	वापस response.max_id;
-पूर्ण
+	return response.max_id;
+}
 
-अटल पूर्णांक tegra_bpmp_clk_get_info(काष्ठा tegra_bpmp *bpmp, अचिन्हित पूर्णांक id,
-				   काष्ठा tegra_bpmp_clk_info *info)
-अणु
-	काष्ठा cmd_clk_get_all_info_response response;
-	काष्ठा tegra_bpmp_clk_message msg;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक err;
+static int tegra_bpmp_clk_get_info(struct tegra_bpmp *bpmp, unsigned int id,
+				   struct tegra_bpmp_clk_info *info)
+{
+	struct cmd_clk_get_all_info_response response;
+	struct tegra_bpmp_clk_message msg;
+	unsigned int i;
+	int err;
 
-	स_रखो(&msg, 0, माप(msg));
+	memset(&msg, 0, sizeof(msg));
 	msg.cmd = CMD_CLK_GET_ALL_INFO;
 	msg.id = id;
 	msg.rx.data = &response;
-	msg.rx.size = माप(response);
+	msg.rx.size = sizeof(response);
 
 	err = tegra_bpmp_clk_transfer(bpmp, &msg);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	strlcpy(info->name, response.name, MRQ_CLK_NAME_MAXLEN);
 	info->num_parents = response.num_parents;
 
-	क्रम (i = 0; i < info->num_parents; i++)
+	for (i = 0; i < info->num_parents; i++)
 		info->parents[i] = response.parents[i];
 
 	info->flags = response.flags;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tegra_bpmp_clk_info_dump(काष्ठा tegra_bpmp *bpmp,
-				     स्थिर अक्षर *level,
-				     स्थिर काष्ठा tegra_bpmp_clk_info *info)
-अणु
-	स्थिर अक्षर *prefix = "";
-	काष्ठा seq_buf buf;
-	अचिन्हित पूर्णांक i;
-	अक्षर flags[64];
+static void tegra_bpmp_clk_info_dump(struct tegra_bpmp *bpmp,
+				     const char *level,
+				     const struct tegra_bpmp_clk_info *info)
+{
+	const char *prefix = "";
+	struct seq_buf buf;
+	unsigned int i;
+	char flags[64];
 
-	seq_buf_init(&buf, flags, माप(flags));
+	seq_buf_init(&buf, flags, sizeof(flags));
 
-	अगर (info->flags)
-		seq_buf_म_लिखो(&buf, "(");
+	if (info->flags)
+		seq_buf_printf(&buf, "(");
 
-	अगर (info->flags & TEGRA_BPMP_CLK_HAS_MUX) अणु
-		seq_buf_म_लिखो(&buf, "%smux", prefix);
+	if (info->flags & TEGRA_BPMP_CLK_HAS_MUX) {
+		seq_buf_printf(&buf, "%smux", prefix);
 		prefix = ", ";
-	पूर्ण
+	}
 
-	अगर ((info->flags & TEGRA_BPMP_CLK_HAS_SET_RATE) == 0) अणु
-		seq_buf_म_लिखो(&buf, "%sfixed", prefix);
+	if ((info->flags & TEGRA_BPMP_CLK_HAS_SET_RATE) == 0) {
+		seq_buf_printf(&buf, "%sfixed", prefix);
 		prefix = ", ";
-	पूर्ण
+	}
 
-	अगर (info->flags & TEGRA_BPMP_CLK_IS_ROOT) अणु
-		seq_buf_म_लिखो(&buf, "%sroot", prefix);
+	if (info->flags & TEGRA_BPMP_CLK_IS_ROOT) {
+		seq_buf_printf(&buf, "%sroot", prefix);
 		prefix = ", ";
-	पूर्ण
+	}
 
-	अगर (info->flags)
-		seq_buf_म_लिखो(&buf, ")");
+	if (info->flags)
+		seq_buf_printf(&buf, ")");
 
-	dev_prपूर्णांकk(level, bpmp->dev, "%03u: %s\n", info->id, info->name);
-	dev_prपूर्णांकk(level, bpmp->dev, "  flags: %lx %s\n", info->flags, flags);
-	dev_prपूर्णांकk(level, bpmp->dev, "  parents: %u\n", info->num_parents);
+	dev_printk(level, bpmp->dev, "%03u: %s\n", info->id, info->name);
+	dev_printk(level, bpmp->dev, "  flags: %lx %s\n", info->flags, flags);
+	dev_printk(level, bpmp->dev, "  parents: %u\n", info->num_parents);
 
-	क्रम (i = 0; i < info->num_parents; i++)
-		dev_prपूर्णांकk(level, bpmp->dev, "    %03u\n", info->parents[i]);
-पूर्ण
+	for (i = 0; i < info->num_parents; i++)
+		dev_printk(level, bpmp->dev, "    %03u\n", info->parents[i]);
+}
 
-अटल पूर्णांक tegra_bpmp_probe_घड़ीs(काष्ठा tegra_bpmp *bpmp,
-				   काष्ठा tegra_bpmp_clk_info **घड़ीsp)
-अणु
-	काष्ठा tegra_bpmp_clk_info *घड़ीs;
-	अचिन्हित पूर्णांक max_id, id, count = 0;
-	अचिन्हित पूर्णांक holes = 0;
-	पूर्णांक err;
+static int tegra_bpmp_probe_clocks(struct tegra_bpmp *bpmp,
+				   struct tegra_bpmp_clk_info **clocksp)
+{
+	struct tegra_bpmp_clk_info *clocks;
+	unsigned int max_id, id, count = 0;
+	unsigned int holes = 0;
+	int err;
 
 	err = tegra_bpmp_clk_get_max_id(bpmp);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	max_id = err;
 
 	dev_dbg(bpmp->dev, "maximum clock ID: %u\n", max_id);
 
-	घड़ीs = kसुस्मृति(max_id + 1, माप(*घड़ीs), GFP_KERNEL);
-	अगर (!घड़ीs)
-		वापस -ENOMEM;
+	clocks = kcalloc(max_id + 1, sizeof(*clocks), GFP_KERNEL);
+	if (!clocks)
+		return -ENOMEM;
 
-	क्रम (id = 0; id <= max_id; id++) अणु
-		काष्ठा tegra_bpmp_clk_info *info = &घड़ीs[count];
+	for (id = 0; id <= max_id; id++) {
+		struct tegra_bpmp_clk_info *info = &clocks[count];
 
 		err = tegra_bpmp_clk_get_info(bpmp, id, info);
-		अगर (err < 0)
-			जारी;
+		if (err < 0)
+			continue;
 
-		अगर (info->num_parents >= U8_MAX) अणु
+		if (info->num_parents >= U8_MAX) {
 			dev_err(bpmp->dev,
 				"clock %u has too many parents (%u, max: %u)\n",
 				id, info->num_parents, U8_MAX);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		/* घड़ी not exposed by BPMP */
-		अगर (info->name[0] == '\0') अणु
+		/* clock not exposed by BPMP */
+		if (info->name[0] == '\0') {
 			holes++;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		info->id = id;
 		count++;
 
-		अगर (TEGRA_BPMP_DUMP_CLOCK_INFO)
+		if (TEGRA_BPMP_DUMP_CLOCK_INFO)
 			tegra_bpmp_clk_info_dump(bpmp, KERN_DEBUG, info);
-	पूर्ण
+	}
 
 	dev_dbg(bpmp->dev, "holes: %u\n", holes);
-	*घड़ीsp = घड़ीs;
+	*clocksp = clocks;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा tegra_bpmp_clk_info *
-tegra_bpmp_clk_find(स्थिर काष्ठा tegra_bpmp_clk_info *घड़ीs,
-		    अचिन्हित पूर्णांक num_घड़ीs, अचिन्हित पूर्णांक id)
-अणु
-	अचिन्हित पूर्णांक i;
+static const struct tegra_bpmp_clk_info *
+tegra_bpmp_clk_find(const struct tegra_bpmp_clk_info *clocks,
+		    unsigned int num_clocks, unsigned int id)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < num_घड़ीs; i++)
-		अगर (घड़ीs[i].id == id)
-			वापस &घड़ीs[i];
+	for (i = 0; i < num_clocks; i++)
+		if (clocks[i].id == id)
+			return &clocks[i];
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा tegra_bpmp_clk *
-tegra_bpmp_clk_रेजिस्टर(काष्ठा tegra_bpmp *bpmp,
-			स्थिर काष्ठा tegra_bpmp_clk_info *info,
-			स्थिर काष्ठा tegra_bpmp_clk_info *घड़ीs,
-			अचिन्हित पूर्णांक num_घड़ीs)
-अणु
-	काष्ठा tegra_bpmp_clk *clk;
-	काष्ठा clk_init_data init;
-	स्थिर अक्षर **parents;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक err;
+static struct tegra_bpmp_clk *
+tegra_bpmp_clk_register(struct tegra_bpmp *bpmp,
+			const struct tegra_bpmp_clk_info *info,
+			const struct tegra_bpmp_clk_info *clocks,
+			unsigned int num_clocks)
+{
+	struct tegra_bpmp_clk *clk;
+	struct clk_init_data init;
+	const char **parents;
+	unsigned int i;
+	int err;
 
-	clk = devm_kzalloc(bpmp->dev, माप(*clk), GFP_KERNEL);
-	अगर (!clk)
-		वापस ERR_PTR(-ENOMEM);
+	clk = devm_kzalloc(bpmp->dev, sizeof(*clk), GFP_KERNEL);
+	if (!clk)
+		return ERR_PTR(-ENOMEM);
 
 	clk->id = info->id;
 	clk->bpmp = bpmp;
 
-	clk->parents = devm_kसुस्मृति(bpmp->dev, info->num_parents,
-				    माप(*clk->parents), GFP_KERNEL);
-	अगर (!clk->parents)
-		वापस ERR_PTR(-ENOMEM);
+	clk->parents = devm_kcalloc(bpmp->dev, info->num_parents,
+				    sizeof(*clk->parents), GFP_KERNEL);
+	if (!clk->parents)
+		return ERR_PTR(-ENOMEM);
 
 	clk->num_parents = info->num_parents;
 
-	/* hardware घड़ी initialization */
-	स_रखो(&init, 0, माप(init));
+	/* hardware clock initialization */
+	memset(&init, 0, sizeof(init));
 	init.name = info->name;
 	clk->hw.init = &init;
 
-	अगर (info->flags & TEGRA_BPMP_CLK_HAS_MUX) अणु
-		अगर (info->flags & TEGRA_BPMP_CLK_HAS_SET_RATE)
+	if (info->flags & TEGRA_BPMP_CLK_HAS_MUX) {
+		if (info->flags & TEGRA_BPMP_CLK_HAS_SET_RATE)
 			init.ops = &tegra_bpmp_clk_mux_rate_ops;
-		अन्यथा
+		else
 			init.ops = &tegra_bpmp_clk_mux_ops;
-	पूर्ण अन्यथा अणु
-		अगर (info->flags & TEGRA_BPMP_CLK_HAS_SET_RATE)
+	} else {
+		if (info->flags & TEGRA_BPMP_CLK_HAS_SET_RATE)
 			init.ops = &tegra_bpmp_clk_rate_ops;
-		अन्यथा
+		else
 			init.ops = &tegra_bpmp_clk_gate_ops;
-	पूर्ण
+	}
 
 	init.num_parents = info->num_parents;
 
-	parents = kसुस्मृति(info->num_parents, माप(*parents), GFP_KERNEL);
-	अगर (!parents)
-		वापस ERR_PTR(-ENOMEM);
+	parents = kcalloc(info->num_parents, sizeof(*parents), GFP_KERNEL);
+	if (!parents)
+		return ERR_PTR(-ENOMEM);
 
-	क्रम (i = 0; i < info->num_parents; i++) अणु
-		स्थिर काष्ठा tegra_bpmp_clk_info *parent;
+	for (i = 0; i < info->num_parents; i++) {
+		const struct tegra_bpmp_clk_info *parent;
 
-		/* keep a निजी copy of the ID to parent index map */
+		/* keep a private copy of the ID to parent index map */
 		clk->parents[i] = info->parents[i];
 
-		parent = tegra_bpmp_clk_find(घड़ीs, num_घड़ीs,
+		parent = tegra_bpmp_clk_find(clocks, num_clocks,
 					     info->parents[i]);
-		अगर (!parent) अणु
+		if (!parent) {
 			dev_err(bpmp->dev, "no parent %u found for %u\n",
 				info->parents[i], info->id);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		parents[i] = parent->name;
-	पूर्ण
+	}
 
 	init.parent_names = parents;
 
-	err = devm_clk_hw_रेजिस्टर(bpmp->dev, &clk->hw);
+	err = devm_clk_hw_register(bpmp->dev, &clk->hw);
 
-	kमुक्त(parents);
+	kfree(parents);
 
-	अगर (err < 0)
-		वापस ERR_PTR(err);
+	if (err < 0)
+		return ERR_PTR(err);
 
-	वापस clk;
-पूर्ण
+	return clk;
+}
 
-अटल पूर्णांक tegra_bpmp_रेजिस्टर_घड़ीs(काष्ठा tegra_bpmp *bpmp,
-				      काष्ठा tegra_bpmp_clk_info *infos,
-				      अचिन्हित पूर्णांक count)
-अणु
-	काष्ठा tegra_bpmp_clk *clk;
-	अचिन्हित पूर्णांक i;
+static int tegra_bpmp_register_clocks(struct tegra_bpmp *bpmp,
+				      struct tegra_bpmp_clk_info *infos,
+				      unsigned int count)
+{
+	struct tegra_bpmp_clk *clk;
+	unsigned int i;
 
-	bpmp->num_घड़ीs = count;
+	bpmp->num_clocks = count;
 
-	bpmp->घड़ीs = devm_kसुस्मृति(bpmp->dev, count, माप(clk), GFP_KERNEL);
-	अगर (!bpmp->घड़ीs)
-		वापस -ENOMEM;
+	bpmp->clocks = devm_kcalloc(bpmp->dev, count, sizeof(clk), GFP_KERNEL);
+	if (!bpmp->clocks)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < count; i++) अणु
-		काष्ठा tegra_bpmp_clk_info *info = &infos[i];
+	for (i = 0; i < count; i++) {
+		struct tegra_bpmp_clk_info *info = &infos[i];
 
-		clk = tegra_bpmp_clk_रेजिस्टर(bpmp, info, infos, count);
-		अगर (IS_ERR(clk)) अणु
+		clk = tegra_bpmp_clk_register(bpmp, info, infos, count);
+		if (IS_ERR(clk)) {
 			dev_err(bpmp->dev,
 				"failed to register clock %u (%s): %ld\n",
 				info->id, info->name, PTR_ERR(clk));
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		bpmp->घड़ीs[i] = clk;
-	पूर्ण
+		bpmp->clocks[i] = clk;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tegra_bpmp_unरेजिस्टर_घड़ीs(काष्ठा tegra_bpmp *bpmp)
-अणु
-	अचिन्हित पूर्णांक i;
+static void tegra_bpmp_unregister_clocks(struct tegra_bpmp *bpmp)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < bpmp->num_घड़ीs; i++)
-		clk_hw_unरेजिस्टर(&bpmp->घड़ीs[i]->hw);
-पूर्ण
+	for (i = 0; i < bpmp->num_clocks; i++)
+		clk_hw_unregister(&bpmp->clocks[i]->hw);
+}
 
-अटल काष्ठा clk_hw *tegra_bpmp_clk_of_xlate(काष्ठा of_phandle_args *clkspec,
-					      व्योम *data)
-अणु
-	अचिन्हित पूर्णांक id = clkspec->args[0], i;
-	काष्ठा tegra_bpmp *bpmp = data;
+static struct clk_hw *tegra_bpmp_clk_of_xlate(struct of_phandle_args *clkspec,
+					      void *data)
+{
+	unsigned int id = clkspec->args[0], i;
+	struct tegra_bpmp *bpmp = data;
 
-	क्रम (i = 0; i < bpmp->num_घड़ीs; i++) अणु
-		काष्ठा tegra_bpmp_clk *clk = bpmp->घड़ीs[i];
+	for (i = 0; i < bpmp->num_clocks; i++) {
+		struct tegra_bpmp_clk *clk = bpmp->clocks[i];
 
-		अगर (!clk)
-			जारी;
+		if (!clk)
+			continue;
 
-		अगर (clk->id == id)
-			वापस &clk->hw;
-	पूर्ण
+		if (clk->id == id)
+			return &clk->hw;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-पूर्णांक tegra_bpmp_init_घड़ीs(काष्ठा tegra_bpmp *bpmp)
-अणु
-	काष्ठा tegra_bpmp_clk_info *घड़ीs;
-	अचिन्हित पूर्णांक count;
-	पूर्णांक err;
+int tegra_bpmp_init_clocks(struct tegra_bpmp *bpmp)
+{
+	struct tegra_bpmp_clk_info *clocks;
+	unsigned int count;
+	int err;
 
-	err = tegra_bpmp_probe_घड़ीs(bpmp, &घड़ीs);
-	अगर (err < 0)
-		वापस err;
+	err = tegra_bpmp_probe_clocks(bpmp, &clocks);
+	if (err < 0)
+		return err;
 
 	count = err;
 
 	dev_dbg(bpmp->dev, "%u clocks probed\n", count);
 
-	err = tegra_bpmp_रेजिस्टर_घड़ीs(bpmp, घड़ीs, count);
-	अगर (err < 0)
-		जाओ मुक्त;
+	err = tegra_bpmp_register_clocks(bpmp, clocks, count);
+	if (err < 0)
+		goto free;
 
 	err = of_clk_add_hw_provider(bpmp->dev->of_node,
 				     tegra_bpmp_clk_of_xlate,
 				     bpmp);
-	अगर (err < 0) अणु
-		tegra_bpmp_unरेजिस्टर_घड़ीs(bpmp);
-		जाओ मुक्त;
-	पूर्ण
+	if (err < 0) {
+		tegra_bpmp_unregister_clocks(bpmp);
+		goto free;
+	}
 
-मुक्त:
-	kमुक्त(घड़ीs);
-	वापस err;
-पूर्ण
+free:
+	kfree(clocks);
+	return err;
+}

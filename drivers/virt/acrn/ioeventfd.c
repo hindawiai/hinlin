@@ -1,107 +1,106 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * ACRN HSM eventfd - use eventfd objects to संकेत expected I/O requests
+ * ACRN HSM eventfd - use eventfd objects to signal expected I/O requests
  *
  * Copyright (C) 2020 Intel Corporation. All rights reserved.
  *
  * Authors:
- *	Shuo Liu <shuo.a.liu@पूर्णांकel.com>
- *	Yakui Zhao <yakui.zhao@पूर्णांकel.com>
+ *	Shuo Liu <shuo.a.liu@intel.com>
+ *	Yakui Zhao <yakui.zhao@intel.com>
  */
 
-#समावेश <linux/eventfd.h>
-#समावेश <linux/slab.h>
+#include <linux/eventfd.h>
+#include <linux/slab.h>
 
-#समावेश "acrn_drv.h"
+#include "acrn_drv.h"
 
 /**
- * काष्ठा hsm_ioeventfd - Properties of HSM ioeventfd
+ * struct hsm_ioeventfd - Properties of HSM ioeventfd
  * @list:	Entry within &acrn_vm.ioeventfds of ioeventfds of a VM
  * @eventfd:	Eventfd of the HSM ioeventfd
  * @addr:	Address of I/O range
- * @data:	Data क्रम matching
+ * @data:	Data for matching
  * @length:	Length of I/O range
  * @type:	Type of I/O range (ACRN_IOREQ_TYPE_MMIO/ACRN_IOREQ_TYPE_PORTIO)
  * @wildcard:	Data matching or not
  */
-काष्ठा hsm_ioeventfd अणु
-	काष्ठा list_head	list;
-	काष्ठा eventfd_ctx	*eventfd;
+struct hsm_ioeventfd {
+	struct list_head	list;
+	struct eventfd_ctx	*eventfd;
 	u64			addr;
 	u64			data;
-	पूर्णांक			length;
-	पूर्णांक			type;
+	int			length;
+	int			type;
 	bool			wildcard;
-पूर्ण;
+};
 
-अटल अंतरभूत पूर्णांक ioreq_type_from_flags(पूर्णांक flags)
-अणु
-	वापस flags & ACRN_IOEVENTFD_FLAG_PIO ?
+static inline int ioreq_type_from_flags(int flags)
+{
+	return flags & ACRN_IOEVENTFD_FLAG_PIO ?
 		       ACRN_IOREQ_TYPE_PORTIO : ACRN_IOREQ_TYPE_MMIO;
-पूर्ण
+}
 
-अटल व्योम acrn_ioeventfd_shutकरोwn(काष्ठा acrn_vm *vm, काष्ठा hsm_ioeventfd *p)
-अणु
-	lockdep_निश्चित_held(&vm->ioeventfds_lock);
+static void acrn_ioeventfd_shutdown(struct acrn_vm *vm, struct hsm_ioeventfd *p)
+{
+	lockdep_assert_held(&vm->ioeventfds_lock);
 
 	eventfd_ctx_put(p->eventfd);
 	list_del(&p->list);
-	kमुक्त(p);
-पूर्ण
+	kfree(p);
+}
 
-अटल bool hsm_ioeventfd_is_conflict(काष्ठा acrn_vm *vm,
-				      काष्ठा hsm_ioeventfd *ioeventfd)
-अणु
-	काष्ठा hsm_ioeventfd *p;
+static bool hsm_ioeventfd_is_conflict(struct acrn_vm *vm,
+				      struct hsm_ioeventfd *ioeventfd)
+{
+	struct hsm_ioeventfd *p;
 
-	lockdep_निश्चित_held(&vm->ioeventfds_lock);
+	lockdep_assert_held(&vm->ioeventfds_lock);
 
 	/* Either one is wildcard, the data matching will be skipped. */
-	list_क्रम_each_entry(p, &vm->ioeventfds, list)
-		अगर (p->eventfd == ioeventfd->eventfd &&
+	list_for_each_entry(p, &vm->ioeventfds, list)
+		if (p->eventfd == ioeventfd->eventfd &&
 		    p->addr == ioeventfd->addr &&
 		    p->type == ioeventfd->type &&
 		    (p->wildcard || ioeventfd->wildcard ||
 			p->data == ioeventfd->data))
-			वापस true;
+			return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /*
  * Assign an eventfd to a VM and create a HSM ioeventfd associated with the
- * eventfd. The properties of the HSM ioeventfd are built from a &काष्ठा
+ * eventfd. The properties of the HSM ioeventfd are built from a &struct
  * acrn_ioeventfd.
  */
-अटल पूर्णांक acrn_ioeventfd_assign(काष्ठा acrn_vm *vm,
-				 काष्ठा acrn_ioeventfd *args)
-अणु
-	काष्ठा eventfd_ctx *eventfd;
-	काष्ठा hsm_ioeventfd *p;
-	पूर्णांक ret;
+static int acrn_ioeventfd_assign(struct acrn_vm *vm,
+				 struct acrn_ioeventfd *args)
+{
+	struct eventfd_ctx *eventfd;
+	struct hsm_ioeventfd *p;
+	int ret;
 
-	/* Check क्रम range overflow */
-	अगर (args->addr + args->len < args->addr)
-		वापस -EINVAL;
+	/* Check for range overflow */
+	if (args->addr + args->len < args->addr)
+		return -EINVAL;
 
 	/*
 	 * Currently, acrn_ioeventfd is used to support vhost. 1,2,4,8 width
 	 * accesses can cover vhost's requirements.
 	 */
-	अगर (!(args->len == 1 || args->len == 2 ||
+	if (!(args->len == 1 || args->len == 2 ||
 	      args->len == 4 || args->len == 8))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	eventfd = eventfd_ctx_fdget(args->fd);
-	अगर (IS_ERR(eventfd))
-		वापस PTR_ERR(eventfd);
+	if (IS_ERR(eventfd))
+		return PTR_ERR(eventfd);
 
-	p = kzalloc(माप(*p), GFP_KERNEL);
-	अगर (!p) अणु
+	p = kzalloc(sizeof(*p), GFP_KERNEL);
+	if (!p) {
 		ret = -ENOMEM;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	INIT_LIST_HEAD(&p->list);
 	p->addr = args->addr;
@@ -111,164 +110,164 @@
 
 	/*
 	 * ACRN_IOEVENTFD_FLAG_DATAMATCH flag is set in virtio 1.0 support, the
-	 * writing of notअगरication रेजिस्टर of each virtqueue may trigger the
-	 * notअगरication. There is no data matching requirement.
+	 * writing of notification register of each virtqueue may trigger the
+	 * notification. There is no data matching requirement.
 	 */
-	अगर (args->flags & ACRN_IOEVENTFD_FLAG_DATAMATCH)
+	if (args->flags & ACRN_IOEVENTFD_FLAG_DATAMATCH)
 		p->data = args->data;
-	अन्यथा
+	else
 		p->wildcard = true;
 
 	mutex_lock(&vm->ioeventfds_lock);
 
-	अगर (hsm_ioeventfd_is_conflict(vm, p)) अणु
+	if (hsm_ioeventfd_is_conflict(vm, p)) {
 		ret = -EEXIST;
-		जाओ unlock_fail;
-	पूर्ण
+		goto unlock_fail;
+	}
 
-	/* रेजिस्टर the I/O range पूर्णांकo ioreq client */
+	/* register the I/O range into ioreq client */
 	ret = acrn_ioreq_range_add(vm->ioeventfd_client, p->type,
 				   p->addr, p->addr + p->length - 1);
-	अगर (ret < 0)
-		जाओ unlock_fail;
+	if (ret < 0)
+		goto unlock_fail;
 
 	list_add_tail(&p->list, &vm->ioeventfds);
 	mutex_unlock(&vm->ioeventfds_lock);
 
-	वापस 0;
+	return 0;
 
 unlock_fail:
 	mutex_unlock(&vm->ioeventfds_lock);
-	kमुक्त(p);
+	kfree(p);
 fail:
 	eventfd_ctx_put(eventfd);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक acrn_ioeventfd_deassign(काष्ठा acrn_vm *vm,
-				   काष्ठा acrn_ioeventfd *args)
-अणु
-	काष्ठा hsm_ioeventfd *p;
-	काष्ठा eventfd_ctx *eventfd;
+static int acrn_ioeventfd_deassign(struct acrn_vm *vm,
+				   struct acrn_ioeventfd *args)
+{
+	struct hsm_ioeventfd *p;
+	struct eventfd_ctx *eventfd;
 
 	eventfd = eventfd_ctx_fdget(args->fd);
-	अगर (IS_ERR(eventfd))
-		वापस PTR_ERR(eventfd);
+	if (IS_ERR(eventfd))
+		return PTR_ERR(eventfd);
 
 	mutex_lock(&vm->ioeventfds_lock);
-	list_क्रम_each_entry(p, &vm->ioeventfds, list) अणु
-		अगर (p->eventfd != eventfd)
-			जारी;
+	list_for_each_entry(p, &vm->ioeventfds, list) {
+		if (p->eventfd != eventfd)
+			continue;
 
 		acrn_ioreq_range_del(vm->ioeventfd_client, p->type,
 				     p->addr, p->addr + p->length - 1);
-		acrn_ioeventfd_shutकरोwn(vm, p);
-		अवरोध;
-	पूर्ण
+		acrn_ioeventfd_shutdown(vm, p);
+		break;
+	}
 	mutex_unlock(&vm->ioeventfds_lock);
 
 	eventfd_ctx_put(eventfd);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा hsm_ioeventfd *hsm_ioeventfd_match(काष्ठा acrn_vm *vm, u64 addr,
-						 u64 data, पूर्णांक len, पूर्णांक type)
-अणु
-	काष्ठा hsm_ioeventfd *p = शून्य;
+static struct hsm_ioeventfd *hsm_ioeventfd_match(struct acrn_vm *vm, u64 addr,
+						 u64 data, int len, int type)
+{
+	struct hsm_ioeventfd *p = NULL;
 
-	lockdep_निश्चित_held(&vm->ioeventfds_lock);
+	lockdep_assert_held(&vm->ioeventfds_lock);
 
-	list_क्रम_each_entry(p, &vm->ioeventfds, list) अणु
-		अगर (p->type == type && p->addr == addr && p->length >= len &&
+	list_for_each_entry(p, &vm->ioeventfds, list) {
+		if (p->type == type && p->addr == addr && p->length >= len &&
 		    (p->wildcard || p->data == data))
-			वापस p;
-	पूर्ण
+			return p;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक acrn_ioeventfd_handler(काष्ठा acrn_ioreq_client *client,
-				  काष्ठा acrn_io_request *req)
-अणु
-	काष्ठा hsm_ioeventfd *p;
+static int acrn_ioeventfd_handler(struct acrn_ioreq_client *client,
+				  struct acrn_io_request *req)
+{
+	struct hsm_ioeventfd *p;
 	u64 addr, val;
-	पूर्णांक size;
+	int size;
 
-	अगर (req->type == ACRN_IOREQ_TYPE_MMIO) अणु
+	if (req->type == ACRN_IOREQ_TYPE_MMIO) {
 		/*
 		 * I/O requests are dispatched by range check only, so a
 		 * acrn_ioreq_client need process both READ and WRITE accesses
 		 * of same range. READ accesses are safe to be ignored here
-		 * because virtio PCI devices ग_लिखो the notअगरy रेजिस्टरs क्रम
-		 * notअगरication.
+		 * because virtio PCI devices write the notify registers for
+		 * notification.
 		 */
-		अगर (req->reqs.mmio_request.direction == ACRN_IOREQ_सूची_READ) अणु
-			/* पढ़ोing करोes nothing and वापस 0 */
+		if (req->reqs.mmio_request.direction == ACRN_IOREQ_DIR_READ) {
+			/* reading does nothing and return 0 */
 			req->reqs.mmio_request.value = 0;
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		addr = req->reqs.mmio_request.address;
 		size = req->reqs.mmio_request.size;
 		val = req->reqs.mmio_request.value;
-	पूर्ण अन्यथा अणु
-		अगर (req->reqs.pio_request.direction == ACRN_IOREQ_सूची_READ) अणु
-			/* पढ़ोing करोes nothing and वापस 0 */
+	} else {
+		if (req->reqs.pio_request.direction == ACRN_IOREQ_DIR_READ) {
+			/* reading does nothing and return 0 */
 			req->reqs.pio_request.value = 0;
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		addr = req->reqs.pio_request.address;
 		size = req->reqs.pio_request.size;
 		val = req->reqs.pio_request.value;
-	पूर्ण
+	}
 
 	mutex_lock(&client->vm->ioeventfds_lock);
 	p = hsm_ioeventfd_match(client->vm, addr, val, size, req->type);
-	अगर (p)
-		eventfd_संकेत(p->eventfd, 1);
+	if (p)
+		eventfd_signal(p->eventfd, 1);
 	mutex_unlock(&client->vm->ioeventfds_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक acrn_ioeventfd_config(काष्ठा acrn_vm *vm, काष्ठा acrn_ioeventfd *args)
-अणु
-	पूर्णांक ret;
+int acrn_ioeventfd_config(struct acrn_vm *vm, struct acrn_ioeventfd *args)
+{
+	int ret;
 
-	अगर (args->flags & ACRN_IOEVENTFD_FLAG_DEASSIGN)
+	if (args->flags & ACRN_IOEVENTFD_FLAG_DEASSIGN)
 		ret = acrn_ioeventfd_deassign(vm, args);
-	अन्यथा
+	else
 		ret = acrn_ioeventfd_assign(vm, args);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक acrn_ioeventfd_init(काष्ठा acrn_vm *vm)
-अणु
-	अक्षर name[ACRN_NAME_LEN];
+int acrn_ioeventfd_init(struct acrn_vm *vm)
+{
+	char name[ACRN_NAME_LEN];
 
 	mutex_init(&vm->ioeventfds_lock);
 	INIT_LIST_HEAD(&vm->ioeventfds);
-	snम_लिखो(name, माप(name), "ioeventfd-%u", vm->vmid);
+	snprintf(name, sizeof(name), "ioeventfd-%u", vm->vmid);
 	vm->ioeventfd_client = acrn_ioreq_client_create(vm,
 							acrn_ioeventfd_handler,
-							शून्य, false, name);
-	अगर (!vm->ioeventfd_client) अणु
+							NULL, false, name);
+	if (!vm->ioeventfd_client) {
 		dev_err(acrn_dev.this_device, "Failed to create ioeventfd ioreq client!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	dev_dbg(acrn_dev.this_device, "VM %u ioeventfd init.\n", vm->vmid);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम acrn_ioeventfd_deinit(काष्ठा acrn_vm *vm)
-अणु
-	काष्ठा hsm_ioeventfd *p, *next;
+void acrn_ioeventfd_deinit(struct acrn_vm *vm)
+{
+	struct hsm_ioeventfd *p, *next;
 
 	dev_dbg(acrn_dev.this_device, "VM %u ioeventfd deinit.\n", vm->vmid);
 	acrn_ioreq_client_destroy(vm->ioeventfd_client);
 	mutex_lock(&vm->ioeventfds_lock);
-	list_क्रम_each_entry_safe(p, next, &vm->ioeventfds, list)
-		acrn_ioeventfd_shutकरोwn(vm, p);
+	list_for_each_entry_safe(p, next, &vm->ioeventfds, list)
+		acrn_ioeventfd_shutdown(vm, p);
 	mutex_unlock(&vm->ioeventfds_lock);
-पूर्ण
+}

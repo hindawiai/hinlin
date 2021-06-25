@@ -1,175 +1,174 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Backlight driver क्रम OMAP based boards.
+ * Backlight driver for OMAP based boards.
  *
  * Copyright (c) 2006 Andrzej Zaborowski  <balrog@zabor.org>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/fb.h>
-#समावेश <linux/backlight.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/platक्रमm_data/omap1_bl.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/platform_device.h>
+#include <linux/fb.h>
+#include <linux/backlight.h>
+#include <linux/slab.h>
+#include <linux/platform_data/omap1_bl.h>
 
-#समावेश <mach/hardware.h>
-#समावेश <mach/mux.h>
+#include <mach/hardware.h>
+#include <mach/mux.h>
 
-#घोषणा OMAPBL_MAX_INTENSITY		0xff
+#define OMAPBL_MAX_INTENSITY		0xff
 
-काष्ठा omap_backlight अणु
-	पूर्णांक घातermode;
-	पूर्णांक current_पूर्णांकensity;
+struct omap_backlight {
+	int powermode;
+	int current_intensity;
 
-	काष्ठा device *dev;
-	काष्ठा omap_backlight_config *pdata;
-पूर्ण;
+	struct device *dev;
+	struct omap_backlight_config *pdata;
+};
 
-अटल अंतरभूत व्योम omapbl_send_पूर्णांकensity(पूर्णांक पूर्णांकensity)
-अणु
-	omap_ग_लिखोb(पूर्णांकensity, OMAP_PWL_ENABLE);
-पूर्ण
+static inline void omapbl_send_intensity(int intensity)
+{
+	omap_writeb(intensity, OMAP_PWL_ENABLE);
+}
 
-अटल अंतरभूत व्योम omapbl_send_enable(पूर्णांक enable)
-अणु
-	omap_ग_लिखोb(enable, OMAP_PWL_CLK_ENABLE);
-पूर्ण
+static inline void omapbl_send_enable(int enable)
+{
+	omap_writeb(enable, OMAP_PWL_CLK_ENABLE);
+}
 
-अटल व्योम omapbl_blank(काष्ठा omap_backlight *bl, पूर्णांक mode)
-अणु
-	अगर (bl->pdata->set_घातer)
-		bl->pdata->set_घातer(bl->dev, mode);
+static void omapbl_blank(struct omap_backlight *bl, int mode)
+{
+	if (bl->pdata->set_power)
+		bl->pdata->set_power(bl->dev, mode);
 
-	चयन (mode) अणु
-	हाल FB_BLANK_NORMAL:
-	हाल FB_BLANK_VSYNC_SUSPEND:
-	हाल FB_BLANK_HSYNC_SUSPEND:
-	हाल FB_BLANK_POWERDOWN:
-		omapbl_send_पूर्णांकensity(0);
+	switch (mode) {
+	case FB_BLANK_NORMAL:
+	case FB_BLANK_VSYNC_SUSPEND:
+	case FB_BLANK_HSYNC_SUSPEND:
+	case FB_BLANK_POWERDOWN:
+		omapbl_send_intensity(0);
 		omapbl_send_enable(0);
-		अवरोध;
+		break;
 
-	हाल FB_BLANK_UNBLANK:
-		omapbl_send_पूर्णांकensity(bl->current_पूर्णांकensity);
+	case FB_BLANK_UNBLANK:
+		omapbl_send_intensity(bl->current_intensity);
 		omapbl_send_enable(1);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक omapbl_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा backlight_device *bl_dev = dev_get_drvdata(dev);
-	काष्ठा omap_backlight *bl = bl_get_data(bl_dev);
+#ifdef CONFIG_PM_SLEEP
+static int omapbl_suspend(struct device *dev)
+{
+	struct backlight_device *bl_dev = dev_get_drvdata(dev);
+	struct omap_backlight *bl = bl_get_data(bl_dev);
 
 	omapbl_blank(bl, FB_BLANK_POWERDOWN);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक omapbl_resume(काष्ठा device *dev)
-अणु
-	काष्ठा backlight_device *bl_dev = dev_get_drvdata(dev);
-	काष्ठा omap_backlight *bl = bl_get_data(bl_dev);
+static int omapbl_resume(struct device *dev)
+{
+	struct backlight_device *bl_dev = dev_get_drvdata(dev);
+	struct omap_backlight *bl = bl_get_data(bl_dev);
 
-	omapbl_blank(bl, bl->घातermode);
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	omapbl_blank(bl, bl->powermode);
+	return 0;
+}
+#endif
 
-अटल पूर्णांक omapbl_set_घातer(काष्ठा backlight_device *dev, पूर्णांक state)
-अणु
-	काष्ठा omap_backlight *bl = bl_get_data(dev);
+static int omapbl_set_power(struct backlight_device *dev, int state)
+{
+	struct omap_backlight *bl = bl_get_data(dev);
 
 	omapbl_blank(bl, state);
-	bl->घातermode = state;
+	bl->powermode = state;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक omapbl_update_status(काष्ठा backlight_device *dev)
-अणु
-	काष्ठा omap_backlight *bl = bl_get_data(dev);
+static int omapbl_update_status(struct backlight_device *dev)
+{
+	struct omap_backlight *bl = bl_get_data(dev);
 
-	अगर (bl->current_पूर्णांकensity != dev->props.brightness) अणु
-		अगर (bl->घातermode == FB_BLANK_UNBLANK)
-			omapbl_send_पूर्णांकensity(dev->props.brightness);
-		bl->current_पूर्णांकensity = dev->props.brightness;
-	पूर्ण
+	if (bl->current_intensity != dev->props.brightness) {
+		if (bl->powermode == FB_BLANK_UNBLANK)
+			omapbl_send_intensity(dev->props.brightness);
+		bl->current_intensity = dev->props.brightness;
+	}
 
-	अगर (dev->props.fb_blank != bl->घातermode)
-		omapbl_set_घातer(dev, dev->props.fb_blank);
+	if (dev->props.fb_blank != bl->powermode)
+		omapbl_set_power(dev, dev->props.fb_blank);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक omapbl_get_पूर्णांकensity(काष्ठा backlight_device *dev)
-अणु
-	काष्ठा omap_backlight *bl = bl_get_data(dev);
+static int omapbl_get_intensity(struct backlight_device *dev)
+{
+	struct omap_backlight *bl = bl_get_data(dev);
 
-	वापस bl->current_पूर्णांकensity;
-पूर्ण
+	return bl->current_intensity;
+}
 
-अटल स्थिर काष्ठा backlight_ops omapbl_ops = अणु
-	.get_brightness = omapbl_get_पूर्णांकensity,
+static const struct backlight_ops omapbl_ops = {
+	.get_brightness = omapbl_get_intensity,
 	.update_status  = omapbl_update_status,
-पूर्ण;
+};
 
-अटल पूर्णांक omapbl_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा backlight_properties props;
-	काष्ठा backlight_device *dev;
-	काष्ठा omap_backlight *bl;
-	काष्ठा omap_backlight_config *pdata = dev_get_platdata(&pdev->dev);
+static int omapbl_probe(struct platform_device *pdev)
+{
+	struct backlight_properties props;
+	struct backlight_device *dev;
+	struct omap_backlight *bl;
+	struct omap_backlight_config *pdata = dev_get_platdata(&pdev->dev);
 
-	अगर (!pdata)
-		वापस -ENXIO;
+	if (!pdata)
+		return -ENXIO;
 
-	bl = devm_kzalloc(&pdev->dev, माप(काष्ठा omap_backlight),
+	bl = devm_kzalloc(&pdev->dev, sizeof(struct omap_backlight),
 			  GFP_KERNEL);
-	अगर (unlikely(!bl))
-		वापस -ENOMEM;
+	if (unlikely(!bl))
+		return -ENOMEM;
 
-	स_रखो(&props, 0, माप(काष्ठा backlight_properties));
+	memset(&props, 0, sizeof(struct backlight_properties));
 	props.type = BACKLIGHT_RAW;
 	props.max_brightness = OMAPBL_MAX_INTENSITY;
-	dev = devm_backlight_device_रेजिस्टर(&pdev->dev, "omap-bl", &pdev->dev,
+	dev = devm_backlight_device_register(&pdev->dev, "omap-bl", &pdev->dev,
 					bl, &omapbl_ops, &props);
-	अगर (IS_ERR(dev))
-		वापस PTR_ERR(dev);
+	if (IS_ERR(dev))
+		return PTR_ERR(dev);
 
-	bl->घातermode = FB_BLANK_POWERDOWN;
-	bl->current_पूर्णांकensity = 0;
+	bl->powermode = FB_BLANK_POWERDOWN;
+	bl->current_intensity = 0;
 
 	bl->pdata = pdata;
 	bl->dev = &pdev->dev;
 
-	platक्रमm_set_drvdata(pdev, dev);
+	platform_set_drvdata(pdev, dev);
 
 	omap_cfg_reg(PWL);	/* Conflicts with UART3 */
 
 	dev->props.fb_blank = FB_BLANK_UNBLANK;
-	dev->props.brightness = pdata->शेष_पूर्णांकensity;
+	dev->props.brightness = pdata->default_intensity;
 	omapbl_update_status(dev);
 
 	dev_info(&pdev->dev, "OMAP LCD backlight initialised\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल SIMPLE_DEV_PM_OPS(omapbl_pm_ops, omapbl_suspend, omapbl_resume);
+static SIMPLE_DEV_PM_OPS(omapbl_pm_ops, omapbl_suspend, omapbl_resume);
 
-अटल काष्ठा platक्रमm_driver omapbl_driver = अणु
+static struct platform_driver omapbl_driver = {
 	.probe		= omapbl_probe,
-	.driver		= अणु
+	.driver		= {
 		.name	= "omap-bl",
 		.pm	= &omapbl_pm_ops,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(omapbl_driver);
+module_platform_driver(omapbl_driver);
 
 MODULE_AUTHOR("Andrzej Zaborowski <balrog@zabor.org>");
 MODULE_DESCRIPTION("OMAP LCD Backlight driver");

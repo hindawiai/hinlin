@@ -1,161 +1,160 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) STMicroelectronics SA 2018
- * Author: Benjamin Gaignard <benjamin.gaignard@st.com> क्रम STMicroelectronics.
+ * Author: Benjamin Gaignard <benjamin.gaignard@st.com> for STMicroelectronics.
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/hwspinlock.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_runसमय.स>
+#include <linux/clk.h>
+#include <linux/delay.h>
+#include <linux/hwspinlock.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
 
-#समावेश "hwspinlock_internal.h"
+#include "hwspinlock_internal.h"
 
-#घोषणा STM32_MUTEX_COREID	BIT(8)
-#घोषणा STM32_MUTEX_LOCK_BIT	BIT(31)
-#घोषणा STM32_MUTEX_NUM_LOCKS	32
+#define STM32_MUTEX_COREID	BIT(8)
+#define STM32_MUTEX_LOCK_BIT	BIT(31)
+#define STM32_MUTEX_NUM_LOCKS	32
 
-काष्ठा sपंचांग32_hwspinlock अणु
-	काष्ठा clk *clk;
-	काष्ठा hwspinlock_device bank;
-पूर्ण;
+struct stm32_hwspinlock {
+	struct clk *clk;
+	struct hwspinlock_device bank;
+};
 
-अटल पूर्णांक sपंचांग32_hwspinlock_trylock(काष्ठा hwspinlock *lock)
-अणु
-	व्योम __iomem *lock_addr = lock->priv;
+static int stm32_hwspinlock_trylock(struct hwspinlock *lock)
+{
+	void __iomem *lock_addr = lock->priv;
 	u32 status;
 
-	ग_लिखोl(STM32_MUTEX_LOCK_BIT | STM32_MUTEX_COREID, lock_addr);
-	status = पढ़ोl(lock_addr);
+	writel(STM32_MUTEX_LOCK_BIT | STM32_MUTEX_COREID, lock_addr);
+	status = readl(lock_addr);
 
-	वापस status == (STM32_MUTEX_LOCK_BIT | STM32_MUTEX_COREID);
-पूर्ण
+	return status == (STM32_MUTEX_LOCK_BIT | STM32_MUTEX_COREID);
+}
 
-अटल व्योम sपंचांग32_hwspinlock_unlock(काष्ठा hwspinlock *lock)
-अणु
-	व्योम __iomem *lock_addr = lock->priv;
+static void stm32_hwspinlock_unlock(struct hwspinlock *lock)
+{
+	void __iomem *lock_addr = lock->priv;
 
-	ग_लिखोl(STM32_MUTEX_COREID, lock_addr);
-पूर्ण
+	writel(STM32_MUTEX_COREID, lock_addr);
+}
 
-अटल व्योम sपंचांग32_hwspinlock_relax(काष्ठा hwspinlock *lock)
-अणु
+static void stm32_hwspinlock_relax(struct hwspinlock *lock)
+{
 	ndelay(50);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा hwspinlock_ops sपंचांग32_hwspinlock_ops = अणु
-	.trylock	= sपंचांग32_hwspinlock_trylock,
-	.unlock		= sपंचांग32_hwspinlock_unlock,
-	.relax		= sपंचांग32_hwspinlock_relax,
-पूर्ण;
+static const struct hwspinlock_ops stm32_hwspinlock_ops = {
+	.trylock	= stm32_hwspinlock_trylock,
+	.unlock		= stm32_hwspinlock_unlock,
+	.relax		= stm32_hwspinlock_relax,
+};
 
-अटल पूर्णांक sपंचांग32_hwspinlock_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sपंचांग32_hwspinlock *hw;
-	व्योम __iomem *io_base;
-	माप_प्रकार array_size;
-	पूर्णांक i, ret;
+static int stm32_hwspinlock_probe(struct platform_device *pdev)
+{
+	struct stm32_hwspinlock *hw;
+	void __iomem *io_base;
+	size_t array_size;
+	int i, ret;
 
-	io_base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(io_base))
-		वापस PTR_ERR(io_base);
+	io_base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(io_base))
+		return PTR_ERR(io_base);
 
-	array_size = STM32_MUTEX_NUM_LOCKS * माप(काष्ठा hwspinlock);
-	hw = devm_kzalloc(&pdev->dev, माप(*hw) + array_size, GFP_KERNEL);
-	अगर (!hw)
-		वापस -ENOMEM;
+	array_size = STM32_MUTEX_NUM_LOCKS * sizeof(struct hwspinlock);
+	hw = devm_kzalloc(&pdev->dev, sizeof(*hw) + array_size, GFP_KERNEL);
+	if (!hw)
+		return -ENOMEM;
 
 	hw->clk = devm_clk_get(&pdev->dev, "hsem");
-	अगर (IS_ERR(hw->clk))
-		वापस PTR_ERR(hw->clk);
+	if (IS_ERR(hw->clk))
+		return PTR_ERR(hw->clk);
 
-	क्रम (i = 0; i < STM32_MUTEX_NUM_LOCKS; i++)
-		hw->bank.lock[i].priv = io_base + i * माप(u32);
+	for (i = 0; i < STM32_MUTEX_NUM_LOCKS; i++)
+		hw->bank.lock[i].priv = io_base + i * sizeof(u32);
 
-	platक्रमm_set_drvdata(pdev, hw);
-	pm_runसमय_enable(&pdev->dev);
+	platform_set_drvdata(pdev, hw);
+	pm_runtime_enable(&pdev->dev);
 
-	ret = hwspin_lock_रेजिस्टर(&hw->bank, &pdev->dev, &sपंचांग32_hwspinlock_ops,
+	ret = hwspin_lock_register(&hw->bank, &pdev->dev, &stm32_hwspinlock_ops,
 				   0, STM32_MUTEX_NUM_LOCKS);
 
-	अगर (ret)
-		pm_runसमय_disable(&pdev->dev);
+	if (ret)
+		pm_runtime_disable(&pdev->dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sपंचांग32_hwspinlock_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sपंचांग32_hwspinlock *hw = platक्रमm_get_drvdata(pdev);
-	पूर्णांक ret;
+static int stm32_hwspinlock_remove(struct platform_device *pdev)
+{
+	struct stm32_hwspinlock *hw = platform_get_drvdata(pdev);
+	int ret;
 
-	ret = hwspin_lock_unरेजिस्टर(&hw->bank);
-	अगर (ret)
+	ret = hwspin_lock_unregister(&hw->bank);
+	if (ret)
 		dev_err(&pdev->dev, "%s failed: %d\n", __func__, ret);
 
-	pm_runसमय_disable(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused sपंचांग32_hwspinlock_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा sपंचांग32_hwspinlock *hw = dev_get_drvdata(dev);
+static int __maybe_unused stm32_hwspinlock_runtime_suspend(struct device *dev)
+{
+	struct stm32_hwspinlock *hw = dev_get_drvdata(dev);
 
 	clk_disable_unprepare(hw->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused sपंचांग32_hwspinlock_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा sपंचांग32_hwspinlock *hw = dev_get_drvdata(dev);
+static int __maybe_unused stm32_hwspinlock_runtime_resume(struct device *dev)
+{
+	struct stm32_hwspinlock *hw = dev_get_drvdata(dev);
 
 	clk_prepare_enable(hw->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops sपंचांग32_hwspinlock_pm_ops = अणु
-	SET_RUNTIME_PM_OPS(sपंचांग32_hwspinlock_runसमय_suspend,
-			   sपंचांग32_hwspinlock_runसमय_resume,
-			   शून्य)
-पूर्ण;
+static const struct dev_pm_ops stm32_hwspinlock_pm_ops = {
+	SET_RUNTIME_PM_OPS(stm32_hwspinlock_runtime_suspend,
+			   stm32_hwspinlock_runtime_resume,
+			   NULL)
+};
 
-अटल स्थिर काष्ठा of_device_id sपंचांग32_hwpinlock_ids[] = अणु
-	अणु .compatible = "st,stm32-hwspinlock", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
-MODULE_DEVICE_TABLE(of, sपंचांग32_hwpinlock_ids);
+static const struct of_device_id stm32_hwpinlock_ids[] = {
+	{ .compatible = "st,stm32-hwspinlock", },
+	{},
+};
+MODULE_DEVICE_TABLE(of, stm32_hwpinlock_ids);
 
-अटल काष्ठा platक्रमm_driver sपंचांग32_hwspinlock_driver = अणु
-	.probe		= sपंचांग32_hwspinlock_probe,
-	.हटाओ		= sपंचांग32_hwspinlock_हटाओ,
-	.driver		= अणु
+static struct platform_driver stm32_hwspinlock_driver = {
+	.probe		= stm32_hwspinlock_probe,
+	.remove		= stm32_hwspinlock_remove,
+	.driver		= {
 		.name	= "stm32_hwspinlock",
-		.of_match_table = sपंचांग32_hwpinlock_ids,
-		.pm	= &sपंचांग32_hwspinlock_pm_ops,
-	पूर्ण,
-पूर्ण;
+		.of_match_table = stm32_hwpinlock_ids,
+		.pm	= &stm32_hwspinlock_pm_ops,
+	},
+};
 
-अटल पूर्णांक __init sपंचांग32_hwspinlock_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&sपंचांग32_hwspinlock_driver);
-पूर्ण
-/* board init code might need to reserve hwspinlocks क्रम predefined purposes */
-postcore_initcall(sपंचांग32_hwspinlock_init);
+static int __init stm32_hwspinlock_init(void)
+{
+	return platform_driver_register(&stm32_hwspinlock_driver);
+}
+/* board init code might need to reserve hwspinlocks for predefined purposes */
+postcore_initcall(stm32_hwspinlock_init);
 
-अटल व्योम __निकास sपंचांग32_hwspinlock_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&sपंचांग32_hwspinlock_driver);
-पूर्ण
-module_निकास(sपंचांग32_hwspinlock_निकास);
+static void __exit stm32_hwspinlock_exit(void)
+{
+	platform_driver_unregister(&stm32_hwspinlock_driver);
+}
+module_exit(stm32_hwspinlock_exit);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("Hardware spinlock driver for STM32 SoCs");

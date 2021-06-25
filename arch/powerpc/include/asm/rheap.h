@@ -1,10 +1,9 @@
-<शैली गुरु>
 /*
- * include/यंत्र-ppc/rheap.h
+ * include/asm-ppc/rheap.h
  *
- * Header file क्रम the implementation of a remote heap.
+ * Header file for the implementation of a remote heap.
  *
- * Author: Pantelis Antoniou <panto@पूर्णांकracom.gr>
+ * Author: Pantelis Antoniou <panto@intracom.gr>
  *
  * 2004 (c) INTRACOM S.A. Greece. This file is licensed under
  * the terms of the GNU General Public License version 2. This program
@@ -12,82 +11,82 @@
  * or implied.
  */
 
-#अगर_अघोषित __ASM_PPC_RHEAP_H__
-#घोषणा __ASM_PPC_RHEAP_H__
+#ifndef __ASM_PPC_RHEAP_H__
+#define __ASM_PPC_RHEAP_H__
 
-#समावेश <linux/list.h>
+#include <linux/list.h>
 
-प्रकार काष्ठा _rh_block अणु
-	काष्ठा list_head list;
-	अचिन्हित दीर्घ start;
-	पूर्णांक size;
-	स्थिर अक्षर *owner;
-पूर्ण rh_block_t;
+typedef struct _rh_block {
+	struct list_head list;
+	unsigned long start;
+	int size;
+	const char *owner;
+} rh_block_t;
 
-प्रकार काष्ठा _rh_info अणु
-	अचिन्हित पूर्णांक alignment;
-	पूर्णांक max_blocks;
-	पूर्णांक empty_slots;
+typedef struct _rh_info {
+	unsigned int alignment;
+	int max_blocks;
+	int empty_slots;
 	rh_block_t *block;
-	काष्ठा list_head empty_list;
-	काष्ठा list_head मुक्त_list;
-	काष्ठा list_head taken_list;
-	अचिन्हित पूर्णांक flags;
-पूर्ण rh_info_t;
+	struct list_head empty_list;
+	struct list_head free_list;
+	struct list_head taken_list;
+	unsigned int flags;
+} rh_info_t;
 
-#घोषणा RHIF_STATIC_INFO	0x1
-#घोषणा RHIF_STATIC_BLOCK	0x2
+#define RHIF_STATIC_INFO	0x1
+#define RHIF_STATIC_BLOCK	0x2
 
-प्रकार काष्ठा _rh_stats अणु
-	अचिन्हित दीर्घ start;
-	पूर्णांक size;
-	स्थिर अक्षर *owner;
-पूर्ण rh_stats_t;
+typedef struct _rh_stats {
+	unsigned long start;
+	int size;
+	const char *owner;
+} rh_stats_t;
 
-#घोषणा RHGS_FREE	0
-#घोषणा RHGS_TAKEN	1
+#define RHGS_FREE	0
+#define RHGS_TAKEN	1
 
 /* Create a remote heap dynamically */
-बाह्य rh_info_t *rh_create(अचिन्हित पूर्णांक alignment);
+extern rh_info_t *rh_create(unsigned int alignment);
 
 /* Destroy a remote heap, created by rh_create() */
-बाह्य व्योम rh_destroy(rh_info_t * info);
+extern void rh_destroy(rh_info_t * info);
 
 /* Initialize in place a remote info block */
-बाह्य व्योम rh_init(rh_info_t * info, अचिन्हित पूर्णांक alignment, पूर्णांक max_blocks,
+extern void rh_init(rh_info_t * info, unsigned int alignment, int max_blocks,
 		    rh_block_t * block);
 
-/* Attach a मुक्त region to manage */
-बाह्य पूर्णांक rh_attach_region(rh_info_t * info, अचिन्हित दीर्घ start, पूर्णांक size);
+/* Attach a free region to manage */
+extern int rh_attach_region(rh_info_t * info, unsigned long start, int size);
 
-/* Detach a मुक्त region */
-बाह्य अचिन्हित दीर्घ rh_detach_region(rh_info_t * info, अचिन्हित दीर्घ start, पूर्णांक size);
+/* Detach a free region */
+extern unsigned long rh_detach_region(rh_info_t * info, unsigned long start, int size);
 
 /* Allocate the given size from the remote heap (with alignment) */
-बाह्य अचिन्हित दीर्घ rh_alloc_align(rh_info_t * info, पूर्णांक size, पूर्णांक alignment,
-		स्थिर अक्षर *owner);
+extern unsigned long rh_alloc_align(rh_info_t * info, int size, int alignment,
+		const char *owner);
 
 /* Allocate the given size from the remote heap */
-बाह्य अचिन्हित दीर्घ rh_alloc(rh_info_t * info, पूर्णांक size, स्थिर अक्षर *owner);
+extern unsigned long rh_alloc(rh_info_t * info, int size, const char *owner);
 
 /* Allocate the given size from the given address */
-बाह्य अचिन्हित दीर्घ rh_alloc_fixed(rh_info_t * info, अचिन्हित दीर्घ start, पूर्णांक size,
-			    स्थिर अक्षर *owner);
+extern unsigned long rh_alloc_fixed(rh_info_t * info, unsigned long start, int size,
+			    const char *owner);
 
 /* Free the allocated area */
-बाह्य पूर्णांक rh_मुक्त(rh_info_t * info, अचिन्हित दीर्घ start);
+extern int rh_free(rh_info_t * info, unsigned long start);
 
-/* Get stats क्रम debugging purposes */
-बाह्य पूर्णांक rh_get_stats(rh_info_t * info, पूर्णांक what, पूर्णांक max_stats,
+/* Get stats for debugging purposes */
+extern int rh_get_stats(rh_info_t * info, int what, int max_stats,
 			rh_stats_t * stats);
 
 /* Simple dump of remote heap info */
-बाह्य व्योम rh_dump(rh_info_t * info);
+extern void rh_dump(rh_info_t * info);
 
 /* Simple dump of remote info block */
-व्योम rh_dump_blk(rh_info_t *info, rh_block_t *blk);
+void rh_dump_blk(rh_info_t *info, rh_block_t *blk);
 
 /* Set owner of taken block */
-बाह्य पूर्णांक rh_set_owner(rh_info_t * info, अचिन्हित दीर्घ start, स्थिर अक्षर *owner);
+extern int rh_set_owner(rh_info_t * info, unsigned long start, const char *owner);
 
-#पूर्ण_अगर				/* __ASM_PPC_RHEAP_H__ */
+#endif				/* __ASM_PPC_RHEAP_H__ */

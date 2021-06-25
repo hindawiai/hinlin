@@ -1,54 +1,53 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * This is included by init/मुख्य.c to check क्रम architecture-dependent bugs.
+ * This is included by init/main.c to check for architecture-dependent bugs.
  *
  * Copyright (C) 2007  Maciej W. Rozycki
  *
  * Needs:
- *	व्योम check_bugs(व्योम);
+ *	void check_bugs(void);
  */
-#अगर_अघोषित _ASM_BUGS_H
-#घोषणा _ASM_BUGS_H
+#ifndef _ASM_BUGS_H
+#define _ASM_BUGS_H
 
-#समावेश <linux/bug.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/smp.h>
+#include <linux/bug.h>
+#include <linux/delay.h>
+#include <linux/smp.h>
 
-#समावेश <यंत्र/cpu.h>
-#समावेश <यंत्र/cpu-info.h>
+#include <asm/cpu.h>
+#include <asm/cpu-info.h>
 
-बाह्य पूर्णांक daddiu_bug;
+extern int daddiu_bug;
 
-बाह्य व्योम check_bugs64_early(व्योम);
+extern void check_bugs64_early(void);
 
-बाह्य व्योम check_bugs32(व्योम);
-बाह्य व्योम check_bugs64(व्योम);
+extern void check_bugs32(void);
+extern void check_bugs64(void);
 
-अटल अंतरभूत व्योम check_bugs_early(व्योम)
-अणु
-	अगर (IS_ENABLED(CONFIG_CPU_R4X00_BUGS64))
+static inline void check_bugs_early(void)
+{
+	if (IS_ENABLED(CONFIG_CPU_R4X00_BUGS64))
 		check_bugs64_early();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम check_bugs(व्योम)
-अणु
-	अचिन्हित पूर्णांक cpu = smp_processor_id();
+static inline void check_bugs(void)
+{
+	unsigned int cpu = smp_processor_id();
 
-	cpu_data[cpu].udelay_val = loops_per_jअगरfy;
+	cpu_data[cpu].udelay_val = loops_per_jiffy;
 	check_bugs32();
 
-	अगर (IS_ENABLED(CONFIG_CPU_R4X00_BUGS64))
+	if (IS_ENABLED(CONFIG_CPU_R4X00_BUGS64))
 		check_bugs64();
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक r4k_daddiu_bug(व्योम)
-अणु
-	अगर (!IS_ENABLED(CONFIG_CPU_R4X00_BUGS64))
-		वापस 0;
+static inline int r4k_daddiu_bug(void)
+{
+	if (!IS_ENABLED(CONFIG_CPU_R4X00_BUGS64))
+		return 0;
 
 	WARN_ON(daddiu_bug < 0);
-	वापस daddiu_bug != 0;
-पूर्ण
+	return daddiu_bug != 0;
+}
 
-#पूर्ण_अगर /* _ASM_BUGS_H */
+#endif /* _ASM_BUGS_H */

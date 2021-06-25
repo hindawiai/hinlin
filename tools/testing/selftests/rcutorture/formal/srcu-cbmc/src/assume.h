@@ -1,18 +1,17 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित ASSUME_H
-#घोषणा ASSUME_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef ASSUME_H
+#define ASSUME_H
 
-/* Provide an assumption macro that can be disabled क्रम gcc. */
-#अगर_घोषित RUN
-#घोषणा assume(x) \
-	करो अणु \
+/* Provide an assumption macro that can be disabled for gcc. */
+#ifdef RUN
+#define assume(x) \
+	do { \
 		/* Evaluate x to suppress warnings. */ \
-		(व्योम) (x); \
-	पूर्ण जबतक (0)
+		(void) (x); \
+	} while (0)
 
-#अन्यथा
-#घोषणा assume(x) __CPROVER_assume(x)
-#पूर्ण_अगर
+#else
+#define assume(x) __CPROVER_assume(x)
+#endif
 
-#पूर्ण_अगर
+#endif

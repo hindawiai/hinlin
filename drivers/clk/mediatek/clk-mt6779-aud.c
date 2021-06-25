@@ -1,41 +1,40 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2019 MediaTek Inc.
  * Author: Wendell Lin <wendell.lin@mediatek.com>
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/clk-provider.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
 
-#समावेश "clk-mtk.h"
-#समावेश "clk-gate.h"
+#include "clk-mtk.h"
+#include "clk-gate.h"
 
-#समावेश <dt-bindings/घड़ी/mt6779-clk.h>
+#include <dt-bindings/clock/mt6779-clk.h>
 
-अटल स्थिर काष्ठा mtk_gate_regs audio0_cg_regs = अणु
+static const struct mtk_gate_regs audio0_cg_regs = {
 	.set_ofs = 0x0,
 	.clr_ofs = 0x0,
 	.sta_ofs = 0x0,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mtk_gate_regs audio1_cg_regs = अणु
+static const struct mtk_gate_regs audio1_cg_regs = {
 	.set_ofs = 0x4,
 	.clr_ofs = 0x4,
 	.sta_ofs = 0x4,
-पूर्ण;
+};
 
-#घोषणा GATE_AUDIO0(_id, _name, _parent, _shअगरt)		\
-	GATE_MTK(_id, _name, _parent, &audio0_cg_regs, _shअगरt,	\
+#define GATE_AUDIO0(_id, _name, _parent, _shift)		\
+	GATE_MTK(_id, _name, _parent, &audio0_cg_regs, _shift,	\
 		&mtk_clk_gate_ops_no_setclr)
-#घोषणा GATE_AUDIO1(_id, _name, _parent, _shअगरt)		\
-	GATE_MTK(_id, _name, _parent, &audio1_cg_regs, _shअगरt,	\
+#define GATE_AUDIO1(_id, _name, _parent, _shift)		\
+	GATE_MTK(_id, _name, _parent, &audio1_cg_regs, _shift,	\
 		&mtk_clk_gate_ops_no_setclr)
 
-अटल स्थिर काष्ठा mtk_gate audio_clks[] = अणु
+static const struct mtk_gate audio_clks[] = {
 	/* AUDIO0 */
 	GATE_AUDIO0(CLK_AUD_AFE, "aud_afe", "audio_sel", 2),
 	GATE_AUDIO0(CLK_AUD_22M, "aud_22m", "aud_eng1_sel", 8),
@@ -87,32 +86,32 @@
 		    "audio_sel", 30),
 	GATE_AUDIO1(CLK_AUD_3RD_DAC_HIRES, "aud_3rd_dac_hires",
 		    "audio_h_sel", 31),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id of_match_clk_mt6779_aud[] = अणु
-	अणु .compatible = "mediatek,mt6779-audio", पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id of_match_clk_mt6779_aud[] = {
+	{ .compatible = "mediatek,mt6779-audio", },
+	{}
+};
 
-अटल पूर्णांक clk_mt6779_aud_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा clk_onecell_data *clk_data;
-	काष्ठा device_node *node = pdev->dev.of_node;
+static int clk_mt6779_aud_probe(struct platform_device *pdev)
+{
+	struct clk_onecell_data *clk_data;
+	struct device_node *node = pdev->dev.of_node;
 
 	clk_data = mtk_alloc_clk_data(CLK_AUD_NR_CLK);
 
-	mtk_clk_रेजिस्टर_gates(node, audio_clks, ARRAY_SIZE(audio_clks),
+	mtk_clk_register_gates(node, audio_clks, ARRAY_SIZE(audio_clks),
 			       clk_data);
 
-	वापस of_clk_add_provider(node, of_clk_src_onecell_get, clk_data);
-पूर्ण
+	return of_clk_add_provider(node, of_clk_src_onecell_get, clk_data);
+}
 
-अटल काष्ठा platक्रमm_driver clk_mt6779_aud_drv = अणु
+static struct platform_driver clk_mt6779_aud_drv = {
 	.probe = clk_mt6779_aud_probe,
-	.driver = अणु
+	.driver = {
 		.name = "clk-mt6779-aud",
 		.of_match_table = of_match_clk_mt6779_aud,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-builtin_platक्रमm_driver(clk_mt6779_aud_drv);
+builtin_platform_driver(clk_mt6779_aud_drv);

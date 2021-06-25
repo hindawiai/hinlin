@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,15 +23,15 @@
  *
  */
 
-#अगर_अघोषित _DCE_IPP_H_
-#घोषणा _DCE_IPP_H_
+#ifndef _DCE_IPP_H_
+#define _DCE_IPP_H_
 
-#समावेश "ipp.h"
+#include "ipp.h"
 
-#घोषणा TO_DCE_IPP(ipp)\
-	container_of(ipp, काष्ठा dce_ipp, base)
+#define TO_DCE_IPP(ipp)\
+	container_of(ipp, struct dce_ipp, base)
 
-#घोषणा IPP_COMMON_REG_LIST_DCE_BASE(id) \
+#define IPP_COMMON_REG_LIST_DCE_BASE(id) \
 	SRI(CUR_UPDATE, DCP, id), \
 	SRI(CUR_CONTROL, DCP, id), \
 	SRI(CUR_POSITION, DCP, id), \
@@ -54,18 +53,18 @@
 	SRI(DC_LUT_SEQ_COLOR, DCP, id), \
 	SRI(DEGAMMA_CONTROL, DCP, id)
 
-#घोषणा IPP_DCE100_REG_LIST_DCE_BASE(id) \
+#define IPP_DCE100_REG_LIST_DCE_BASE(id) \
 	IPP_COMMON_REG_LIST_DCE_BASE(id), \
 	SRI(DCFE_MEM_PWR_CTRL, CRTC, id)
 
-#घोषणा IPP_DCE110_REG_LIST_DCE_BASE(id) \
+#define IPP_DCE110_REG_LIST_DCE_BASE(id) \
 	IPP_COMMON_REG_LIST_DCE_BASE(id), \
 	SRI(DCFE_MEM_PWR_CTRL, DCFE, id)
 
-#घोषणा IPP_SF(reg_name, field_name, post_fix)\
+#define IPP_SF(reg_name, field_name, post_fix)\
 	.field_name = reg_name ## __ ## field_name ## post_fix
 
-#घोषणा IPP_COMMON_MASK_SH_LIST_DCE_COMMON_BASE(mask_sh) \
+#define IPP_COMMON_MASK_SH_LIST_DCE_COMMON_BASE(mask_sh) \
 	IPP_SF(CUR_UPDATE, CURSOR_UPDATE_LOCK, mask_sh), \
 	IPP_SF(CUR_CONTROL, CURSOR_EN, mask_sh), \
 	IPP_SF(CUR_CONTROL, CURSOR_MODE, mask_sh), \
@@ -104,11 +103,11 @@
 	IPP_SF(DEGAMMA_CONTROL, CURSOR_DEGAMMA_MODE, mask_sh), \
 	IPP_SF(DEGAMMA_CONTROL, CURSOR2_DEGAMMA_MODE, mask_sh)
 
-#घोषणा IPP_DCE100_MASK_SH_LIST_DCE_COMMON_BASE(mask_sh) \
+#define IPP_DCE100_MASK_SH_LIST_DCE_COMMON_BASE(mask_sh) \
 	IPP_COMMON_MASK_SH_LIST_DCE_COMMON_BASE(mask_sh), \
 	IPP_SF(DCFE_MEM_PWR_CTRL, DCP_LUT_MEM_PWR_DIS, mask_sh)
 
-#घोषणा IPP_DCE120_MASK_SH_LIST_SOC_BASE(mask_sh) \
+#define IPP_DCE120_MASK_SH_LIST_SOC_BASE(mask_sh) \
 	IPP_SF(DCP0_CUR_UPDATE, CURSOR_UPDATE_LOCK, mask_sh), \
 	IPP_SF(DCP0_CUR_CONTROL, CURSOR_EN, mask_sh), \
 	IPP_SF(DCP0_CUR_CONTROL, CURSOR_MODE, mask_sh), \
@@ -148,8 +147,8 @@
 	IPP_SF(DCP0_DEGAMMA_CONTROL, CURSOR_DEGAMMA_MODE, mask_sh), \
 	IPP_SF(DCP0_DEGAMMA_CONTROL, CURSOR2_DEGAMMA_MODE, mask_sh)
 
-#अगर defined(CONFIG_DRM_AMD_DC_SI)
-#घोषणा IPP_DCE60_MASK_SH_LIST_DCE_COMMON_BASE(mask_sh) \
+#if defined(CONFIG_DRM_AMD_DC_SI)
+#define IPP_DCE60_MASK_SH_LIST_DCE_COMMON_BASE(mask_sh) \
 	IPP_SF(CUR_UPDATE, CURSOR_UPDATE_LOCK, mask_sh), \
 	IPP_SF(CUR_CONTROL, CURSOR_EN, mask_sh), \
 	IPP_SF(CUR_CONTROL, CURSOR_MODE, mask_sh), \
@@ -186,9 +185,9 @@
 	IPP_SF(DC_LUT_SEQ_COLOR, DC_LUT_SEQ_COLOR, mask_sh), \
 	IPP_SF(DEGAMMA_CONTROL, GRPH_DEGAMMA_MODE, mask_sh), \
 	IPP_SF(DEGAMMA_CONTROL, CURSOR_DEGAMMA_MODE, mask_sh)
-#पूर्ण_अगर
+#endif
 
-#घोषणा IPP_REG_FIELD_LIST(type) \
+#define IPP_REG_FIELD_LIST(type) \
 	type CURSOR_UPDATE_LOCK; \
 	type CURSOR_EN; \
 	type CURSOR_X_POSITION; \
@@ -228,61 +227,61 @@
 	type CURSOR_DEGAMMA_MODE; \
 	type CURSOR2_DEGAMMA_MODE
 
-काष्ठा dce_ipp_shअगरt अणु
-	IPP_REG_FIELD_LIST(uपूर्णांक8_t);
-पूर्ण;
+struct dce_ipp_shift {
+	IPP_REG_FIELD_LIST(uint8_t);
+};
 
-काष्ठा dce_ipp_mask अणु
-	IPP_REG_FIELD_LIST(uपूर्णांक32_t);
-पूर्ण;
+struct dce_ipp_mask {
+	IPP_REG_FIELD_LIST(uint32_t);
+};
 
-काष्ठा dce_ipp_रेजिस्टरs अणु
-	uपूर्णांक32_t CUR_UPDATE;
-	uपूर्णांक32_t CUR_CONTROL;
-	uपूर्णांक32_t CUR_POSITION;
-	uपूर्णांक32_t CUR_HOT_SPOT;
-	uपूर्णांक32_t CUR_COLOR1;
-	uपूर्णांक32_t CUR_COLOR2;
-	uपूर्णांक32_t CUR_SIZE;
-	uपूर्णांक32_t CUR_SURFACE_ADDRESS_HIGH;
-	uपूर्णांक32_t CUR_SURFACE_ADDRESS;
-	uपूर्णांक32_t PRESCALE_GRPH_CONTROL;
-	uपूर्णांक32_t PRESCALE_VALUES_GRPH_R;
-	uपूर्णांक32_t PRESCALE_VALUES_GRPH_G;
-	uपूर्णांक32_t PRESCALE_VALUES_GRPH_B;
-	uपूर्णांक32_t INPUT_GAMMA_CONTROL;
-	uपूर्णांक32_t DCFE_MEM_PWR_CTRL;
-	uपूर्णांक32_t DC_LUT_WRITE_EN_MASK;
-	uपूर्णांक32_t DC_LUT_RW_MODE;
-	uपूर्णांक32_t DC_LUT_CONTROL;
-	uपूर्णांक32_t DC_LUT_RW_INDEX;
-	uपूर्णांक32_t DC_LUT_SEQ_COLOR;
-	uपूर्णांक32_t DEGAMMA_CONTROL;
-पूर्ण;
+struct dce_ipp_registers {
+	uint32_t CUR_UPDATE;
+	uint32_t CUR_CONTROL;
+	uint32_t CUR_POSITION;
+	uint32_t CUR_HOT_SPOT;
+	uint32_t CUR_COLOR1;
+	uint32_t CUR_COLOR2;
+	uint32_t CUR_SIZE;
+	uint32_t CUR_SURFACE_ADDRESS_HIGH;
+	uint32_t CUR_SURFACE_ADDRESS;
+	uint32_t PRESCALE_GRPH_CONTROL;
+	uint32_t PRESCALE_VALUES_GRPH_R;
+	uint32_t PRESCALE_VALUES_GRPH_G;
+	uint32_t PRESCALE_VALUES_GRPH_B;
+	uint32_t INPUT_GAMMA_CONTROL;
+	uint32_t DCFE_MEM_PWR_CTRL;
+	uint32_t DC_LUT_WRITE_EN_MASK;
+	uint32_t DC_LUT_RW_MODE;
+	uint32_t DC_LUT_CONTROL;
+	uint32_t DC_LUT_RW_INDEX;
+	uint32_t DC_LUT_SEQ_COLOR;
+	uint32_t DEGAMMA_CONTROL;
+};
 
-काष्ठा dce_ipp अणु
-	काष्ठा input_pixel_processor base;
-	स्थिर काष्ठा dce_ipp_रेजिस्टरs *regs;
-	स्थिर काष्ठा dce_ipp_shअगरt *ipp_shअगरt;
-	स्थिर काष्ठा dce_ipp_mask *ipp_mask;
-पूर्ण;
+struct dce_ipp {
+	struct input_pixel_processor base;
+	const struct dce_ipp_registers *regs;
+	const struct dce_ipp_shift *ipp_shift;
+	const struct dce_ipp_mask *ipp_mask;
+};
 
-व्योम dce_ipp_स्थिरruct(काष्ठा dce_ipp *ipp_dce,
-	काष्ठा dc_context *ctx,
-	पूर्णांक inst,
-	स्थिर काष्ठा dce_ipp_रेजिस्टरs *regs,
-	स्थिर काष्ठा dce_ipp_shअगरt *ipp_shअगरt,
-	स्थिर काष्ठा dce_ipp_mask *ipp_mask);
+void dce_ipp_construct(struct dce_ipp *ipp_dce,
+	struct dc_context *ctx,
+	int inst,
+	const struct dce_ipp_registers *regs,
+	const struct dce_ipp_shift *ipp_shift,
+	const struct dce_ipp_mask *ipp_mask);
 
-#अगर defined(CONFIG_DRM_AMD_DC_SI)
-व्योम dce60_ipp_स्थिरruct(काष्ठा dce_ipp *ipp_dce,
-	काष्ठा dc_context *ctx,
-	पूर्णांक inst,
-	स्थिर काष्ठा dce_ipp_रेजिस्टरs *regs,
-	स्थिर काष्ठा dce_ipp_shअगरt *ipp_shअगरt,
-	स्थिर काष्ठा dce_ipp_mask *ipp_mask);
-#पूर्ण_अगर
+#if defined(CONFIG_DRM_AMD_DC_SI)
+void dce60_ipp_construct(struct dce_ipp *ipp_dce,
+	struct dc_context *ctx,
+	int inst,
+	const struct dce_ipp_registers *regs,
+	const struct dce_ipp_shift *ipp_shift,
+	const struct dce_ipp_mask *ipp_mask);
+#endif
 
-व्योम dce_ipp_destroy(काष्ठा input_pixel_processor **ipp);
+void dce_ipp_destroy(struct input_pixel_processor **ipp);
 
-#पूर्ण_अगर /* _DCE_IPP_H_ */
+#endif /* _DCE_IPP_H_ */

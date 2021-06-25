@@ -1,37 +1,36 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright 2003-2004, Instant802 Networks, Inc.
  * Copyright 2005-2006, Devicescape Software, Inc.
  * Copyright 2014-2015, Qualcomm Atheros, Inc.
  *
- * Reग_लिखो: Copyright (C) 2013 Linaro Ltd <ard.biesheuvel@linaro.org>
+ * Rewrite: Copyright (C) 2013 Linaro Ltd <ard.biesheuvel@linaro.org>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/err.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <crypto/aead.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/err.h>
+#include <linux/scatterlist.h>
+#include <crypto/aead.h>
 
-#समावेश "aead_api.h"
+#include "aead_api.h"
 
-पूर्णांक aead_encrypt(काष्ठा crypto_aead *tfm, u8 *b_0, u8 *aad, माप_प्रकार aad_len,
-		 u8 *data, माप_प्रकार data_len, u8 *mic)
-अणु
-	माप_प्रकार mic_len = crypto_aead_authsize(tfm);
-	काष्ठा scatterlist sg[3];
-	काष्ठा aead_request *aead_req;
-	पूर्णांक reqsize = माप(*aead_req) + crypto_aead_reqsize(tfm);
+int aead_encrypt(struct crypto_aead *tfm, u8 *b_0, u8 *aad, size_t aad_len,
+		 u8 *data, size_t data_len, u8 *mic)
+{
+	size_t mic_len = crypto_aead_authsize(tfm);
+	struct scatterlist sg[3];
+	struct aead_request *aead_req;
+	int reqsize = sizeof(*aead_req) + crypto_aead_reqsize(tfm);
 	u8 *__aad;
-	पूर्णांक ret;
+	int ret;
 
 	aead_req = kzalloc(reqsize + aad_len, GFP_ATOMIC);
-	अगर (!aead_req)
-		वापस -ENOMEM;
+	if (!aead_req)
+		return -ENOMEM;
 
 	__aad = (u8 *)aead_req + reqsize;
-	स_नकल(__aad, aad, aad_len);
+	memcpy(__aad, aad, aad_len);
 
 	sg_init_table(sg, 3);
 	sg_set_buf(&sg[0], __aad, aad_len);
@@ -43,30 +42,30 @@
 	aead_request_set_ad(aead_req, sg[0].length);
 
 	ret = crypto_aead_encrypt(aead_req);
-	kमुक्त_sensitive(aead_req);
+	kfree_sensitive(aead_req);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक aead_decrypt(काष्ठा crypto_aead *tfm, u8 *b_0, u8 *aad, माप_प्रकार aad_len,
-		 u8 *data, माप_प्रकार data_len, u8 *mic)
-अणु
-	माप_प्रकार mic_len = crypto_aead_authsize(tfm);
-	काष्ठा scatterlist sg[3];
-	काष्ठा aead_request *aead_req;
-	पूर्णांक reqsize = माप(*aead_req) + crypto_aead_reqsize(tfm);
+int aead_decrypt(struct crypto_aead *tfm, u8 *b_0, u8 *aad, size_t aad_len,
+		 u8 *data, size_t data_len, u8 *mic)
+{
+	size_t mic_len = crypto_aead_authsize(tfm);
+	struct scatterlist sg[3];
+	struct aead_request *aead_req;
+	int reqsize = sizeof(*aead_req) + crypto_aead_reqsize(tfm);
 	u8 *__aad;
-	पूर्णांक err;
+	int err;
 
-	अगर (data_len == 0)
-		वापस -EINVAL;
+	if (data_len == 0)
+		return -EINVAL;
 
 	aead_req = kzalloc(reqsize + aad_len, GFP_ATOMIC);
-	अगर (!aead_req)
-		वापस -ENOMEM;
+	if (!aead_req)
+		return -ENOMEM;
 
 	__aad = (u8 *)aead_req + reqsize;
-	स_नकल(__aad, aad, aad_len);
+	memcpy(__aad, aad, aad_len);
 
 	sg_init_table(sg, 3);
 	sg_set_buf(&sg[0], __aad, aad_len);
@@ -78,37 +77,37 @@
 	aead_request_set_ad(aead_req, sg[0].length);
 
 	err = crypto_aead_decrypt(aead_req);
-	kमुक्त_sensitive(aead_req);
+	kfree_sensitive(aead_req);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-काष्ठा crypto_aead *
-aead_key_setup_encrypt(स्थिर अक्षर *alg, स्थिर u8 key[],
-		       माप_प्रकार key_len, माप_प्रकार mic_len)
-अणु
-	काष्ठा crypto_aead *tfm;
-	पूर्णांक err;
+struct crypto_aead *
+aead_key_setup_encrypt(const char *alg, const u8 key[],
+		       size_t key_len, size_t mic_len)
+{
+	struct crypto_aead *tfm;
+	int err;
 
 	tfm = crypto_alloc_aead(alg, 0, CRYPTO_ALG_ASYNC);
-	अगर (IS_ERR(tfm))
-		वापस tfm;
+	if (IS_ERR(tfm))
+		return tfm;
 
 	err = crypto_aead_setkey(tfm, key, key_len);
-	अगर (err)
-		जाओ मुक्त_aead;
+	if (err)
+		goto free_aead;
 	err = crypto_aead_setauthsize(tfm, mic_len);
-	अगर (err)
-		जाओ मुक्त_aead;
+	if (err)
+		goto free_aead;
 
-	वापस tfm;
+	return tfm;
 
-मुक्त_aead:
-	crypto_मुक्त_aead(tfm);
-	वापस ERR_PTR(err);
-पूर्ण
+free_aead:
+	crypto_free_aead(tfm);
+	return ERR_PTR(err);
+}
 
-व्योम aead_key_मुक्त(काष्ठा crypto_aead *tfm)
-अणु
-	crypto_मुक्त_aead(tfm);
-पूर्ण
+void aead_key_free(struct crypto_aead *tfm)
+{
+	crypto_free_aead(tfm);
+}

@@ -1,252 +1,251 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * PCIe host controller driver क्रम Freescale Layerscape SoCs
+ * PCIe host controller driver for Freescale Layerscape SoCs
  *
  * Copyright (C) 2014 Freescale Semiconductor.
  *
- * Author: Minghuan Lian <Minghuan.Lian@मुक्तscale.com>
+ * Author: Minghuan Lian <Minghuan.Lian@freescale.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/init.h>
-#समावेश <linux/of_pci.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/resource.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/regmap.h>
+#include <linux/kernel.h>
+#include <linux/interrupt.h>
+#include <linux/init.h>
+#include <linux/of_pci.h>
+#include <linux/of_platform.h>
+#include <linux/of_irq.h>
+#include <linux/of_address.h>
+#include <linux/pci.h>
+#include <linux/platform_device.h>
+#include <linux/resource.h>
+#include <linux/mfd/syscon.h>
+#include <linux/regmap.h>
 
-#समावेश "pcie-designware.h"
+#include "pcie-designware.h"
 
 /* PEX1/2 Misc Ports Status Register */
-#घोषणा SCFG_PEXMSCPORTSR(pex_idx)	(0x94 + (pex_idx) * 4)
-#घोषणा LTSSM_STATE_SHIFT	20
-#घोषणा LTSSM_STATE_MASK	0x3f
-#घोषणा LTSSM_PCIE_L0		0x11 /* L0 state */
+#define SCFG_PEXMSCPORTSR(pex_idx)	(0x94 + (pex_idx) * 4)
+#define LTSSM_STATE_SHIFT	20
+#define LTSSM_STATE_MASK	0x3f
+#define LTSSM_PCIE_L0		0x11 /* L0 state */
 
 /* PEX Internal Configuration Registers */
-#घोषणा PCIE_STRFMR1		0x71c /* Symbol Timer & Filter Mask Register1 */
-#घोषणा PCIE_ABSERR		0x8d0 /* Bridge Slave Error Response Register */
-#घोषणा PCIE_ABSERR_SETTING	0x9401 /* Forward error of non-posted request */
+#define PCIE_STRFMR1		0x71c /* Symbol Timer & Filter Mask Register1 */
+#define PCIE_ABSERR		0x8d0 /* Bridge Slave Error Response Register */
+#define PCIE_ABSERR_SETTING	0x9401 /* Forward error of non-posted request */
 
-#घोषणा PCIE_IATU_NUM		6
+#define PCIE_IATU_NUM		6
 
-काष्ठा ls_pcie_drvdata अणु
+struct ls_pcie_drvdata {
 	u32 lut_offset;
-	u32 ltssm_shअगरt;
+	u32 ltssm_shift;
 	u32 lut_dbg;
-	स्थिर काष्ठा dw_pcie_host_ops *ops;
-	स्थिर काष्ठा dw_pcie_ops *dw_pcie_ops;
-पूर्ण;
+	const struct dw_pcie_host_ops *ops;
+	const struct dw_pcie_ops *dw_pcie_ops;
+};
 
-काष्ठा ls_pcie अणु
-	काष्ठा dw_pcie *pci;
-	व्योम __iomem *lut;
-	काष्ठा regmap *scfg;
-	स्थिर काष्ठा ls_pcie_drvdata *drvdata;
-	पूर्णांक index;
-पूर्ण;
+struct ls_pcie {
+	struct dw_pcie *pci;
+	void __iomem *lut;
+	struct regmap *scfg;
+	const struct ls_pcie_drvdata *drvdata;
+	int index;
+};
 
-#घोषणा to_ls_pcie(x)	dev_get_drvdata((x)->dev)
+#define to_ls_pcie(x)	dev_get_drvdata((x)->dev)
 
-अटल bool ls_pcie_is_bridge(काष्ठा ls_pcie *pcie)
-अणु
-	काष्ठा dw_pcie *pci = pcie->pci;
+static bool ls_pcie_is_bridge(struct ls_pcie *pcie)
+{
+	struct dw_pcie *pci = pcie->pci;
 	u32 header_type;
 
-	header_type = ioपढ़ो8(pci->dbi_base + PCI_HEADER_TYPE);
+	header_type = ioread8(pci->dbi_base + PCI_HEADER_TYPE);
 	header_type &= 0x7f;
 
-	वापस header_type == PCI_HEADER_TYPE_BRIDGE;
-पूर्ण
+	return header_type == PCI_HEADER_TYPE_BRIDGE;
+}
 
 /* Clear multi-function bit */
-अटल व्योम ls_pcie_clear_multअगरunction(काष्ठा ls_pcie *pcie)
-अणु
-	काष्ठा dw_pcie *pci = pcie->pci;
+static void ls_pcie_clear_multifunction(struct ls_pcie *pcie)
+{
+	struct dw_pcie *pci = pcie->pci;
 
-	ioग_लिखो8(PCI_HEADER_TYPE_BRIDGE, pci->dbi_base + PCI_HEADER_TYPE);
-पूर्ण
+	iowrite8(PCI_HEADER_TYPE_BRIDGE, pci->dbi_base + PCI_HEADER_TYPE);
+}
 
-/* Drop MSG TLP except क्रम Venकरोr MSG */
-अटल व्योम ls_pcie_drop_msg_tlp(काष्ठा ls_pcie *pcie)
-अणु
+/* Drop MSG TLP except for Vendor MSG */
+static void ls_pcie_drop_msg_tlp(struct ls_pcie *pcie)
+{
 	u32 val;
-	काष्ठा dw_pcie *pci = pcie->pci;
+	struct dw_pcie *pci = pcie->pci;
 
-	val = ioपढ़ो32(pci->dbi_base + PCIE_STRFMR1);
+	val = ioread32(pci->dbi_base + PCIE_STRFMR1);
 	val &= 0xDFFFFFFF;
-	ioग_लिखो32(val, pci->dbi_base + PCIE_STRFMR1);
-पूर्ण
+	iowrite32(val, pci->dbi_base + PCIE_STRFMR1);
+}
 
-अटल पूर्णांक ls1021_pcie_link_up(काष्ठा dw_pcie *pci)
-अणु
+static int ls1021_pcie_link_up(struct dw_pcie *pci)
+{
 	u32 state;
-	काष्ठा ls_pcie *pcie = to_ls_pcie(pci);
+	struct ls_pcie *pcie = to_ls_pcie(pci);
 
-	अगर (!pcie->scfg)
-		वापस 0;
+	if (!pcie->scfg)
+		return 0;
 
-	regmap_पढ़ो(pcie->scfg, SCFG_PEXMSCPORTSR(pcie->index), &state);
+	regmap_read(pcie->scfg, SCFG_PEXMSCPORTSR(pcie->index), &state);
 	state = (state >> LTSSM_STATE_SHIFT) & LTSSM_STATE_MASK;
 
-	अगर (state < LTSSM_PCIE_L0)
-		वापस 0;
+	if (state < LTSSM_PCIE_L0)
+		return 0;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक ls_pcie_link_up(काष्ठा dw_pcie *pci)
-अणु
-	काष्ठा ls_pcie *pcie = to_ls_pcie(pci);
+static int ls_pcie_link_up(struct dw_pcie *pci)
+{
+	struct ls_pcie *pcie = to_ls_pcie(pci);
 	u32 state;
 
-	state = (ioपढ़ो32(pcie->lut + pcie->drvdata->lut_dbg) >>
-		 pcie->drvdata->ltssm_shअगरt) &
+	state = (ioread32(pcie->lut + pcie->drvdata->lut_dbg) >>
+		 pcie->drvdata->ltssm_shift) &
 		 LTSSM_STATE_MASK;
 
-	अगर (state < LTSSM_PCIE_L0)
-		वापस 0;
+	if (state < LTSSM_PCIE_L0)
+		return 0;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /* Forward error response of outbound non-posted requests */
-अटल व्योम ls_pcie_fix_error_response(काष्ठा ls_pcie *pcie)
-अणु
-	काष्ठा dw_pcie *pci = pcie->pci;
+static void ls_pcie_fix_error_response(struct ls_pcie *pcie)
+{
+	struct dw_pcie *pci = pcie->pci;
 
-	ioग_लिखो32(PCIE_ABSERR_SETTING, pci->dbi_base + PCIE_ABSERR);
-पूर्ण
+	iowrite32(PCIE_ABSERR_SETTING, pci->dbi_base + PCIE_ABSERR);
+}
 
-अटल पूर्णांक ls_pcie_host_init(काष्ठा pcie_port *pp)
-अणु
-	काष्ठा dw_pcie *pci = to_dw_pcie_from_pp(pp);
-	काष्ठा ls_pcie *pcie = to_ls_pcie(pci);
+static int ls_pcie_host_init(struct pcie_port *pp)
+{
+	struct dw_pcie *pci = to_dw_pcie_from_pp(pp);
+	struct ls_pcie *pcie = to_ls_pcie(pci);
 
 	ls_pcie_fix_error_response(pcie);
 
 	dw_pcie_dbi_ro_wr_en(pci);
-	ls_pcie_clear_multअगरunction(pcie);
+	ls_pcie_clear_multifunction(pcie);
 	dw_pcie_dbi_ro_wr_dis(pci);
 
 	ls_pcie_drop_msg_tlp(pcie);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ls1021_pcie_host_init(काष्ठा pcie_port *pp)
-अणु
-	काष्ठा dw_pcie *pci = to_dw_pcie_from_pp(pp);
-	काष्ठा ls_pcie *pcie = to_ls_pcie(pci);
-	काष्ठा device *dev = pci->dev;
+static int ls1021_pcie_host_init(struct pcie_port *pp)
+{
+	struct dw_pcie *pci = to_dw_pcie_from_pp(pp);
+	struct ls_pcie *pcie = to_ls_pcie(pci);
+	struct device *dev = pci->dev;
 	u32 index[2];
-	पूर्णांक ret;
+	int ret;
 
 	pcie->scfg = syscon_regmap_lookup_by_phandle(dev->of_node,
 						     "fsl,pcie-scfg");
-	अगर (IS_ERR(pcie->scfg)) अणु
+	if (IS_ERR(pcie->scfg)) {
 		ret = PTR_ERR(pcie->scfg);
 		dev_err(dev, "No syscfg phandle specified\n");
-		pcie->scfg = शून्य;
-		वापस ret;
-	पूर्ण
+		pcie->scfg = NULL;
+		return ret;
+	}
 
-	अगर (of_property_पढ़ो_u32_array(dev->of_node,
-				       "fsl,pcie-scfg", index, 2)) अणु
-		pcie->scfg = शून्य;
-		वापस -EINVAL;
-	पूर्ण
+	if (of_property_read_u32_array(dev->of_node,
+				       "fsl,pcie-scfg", index, 2)) {
+		pcie->scfg = NULL;
+		return -EINVAL;
+	}
 	pcie->index = index[1];
 
-	वापस ls_pcie_host_init(pp);
-पूर्ण
+	return ls_pcie_host_init(pp);
+}
 
-अटल स्थिर काष्ठा dw_pcie_host_ops ls1021_pcie_host_ops = अणु
+static const struct dw_pcie_host_ops ls1021_pcie_host_ops = {
 	.host_init = ls1021_pcie_host_init,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा dw_pcie_host_ops ls_pcie_host_ops = अणु
+static const struct dw_pcie_host_ops ls_pcie_host_ops = {
 	.host_init = ls_pcie_host_init,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा dw_pcie_ops dw_ls1021_pcie_ops = अणु
+static const struct dw_pcie_ops dw_ls1021_pcie_ops = {
 	.link_up = ls1021_pcie_link_up,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा dw_pcie_ops dw_ls_pcie_ops = अणु
+static const struct dw_pcie_ops dw_ls_pcie_ops = {
 	.link_up = ls_pcie_link_up,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा ls_pcie_drvdata ls1021_drvdata = अणु
+static const struct ls_pcie_drvdata ls1021_drvdata = {
 	.ops = &ls1021_pcie_host_ops,
 	.dw_pcie_ops = &dw_ls1021_pcie_ops,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा ls_pcie_drvdata ls1043_drvdata = अणु
+static const struct ls_pcie_drvdata ls1043_drvdata = {
 	.lut_offset = 0x10000,
-	.ltssm_shअगरt = 24,
+	.ltssm_shift = 24,
 	.lut_dbg = 0x7fc,
 	.ops = &ls_pcie_host_ops,
 	.dw_pcie_ops = &dw_ls_pcie_ops,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा ls_pcie_drvdata ls1046_drvdata = अणु
+static const struct ls_pcie_drvdata ls1046_drvdata = {
 	.lut_offset = 0x80000,
-	.ltssm_shअगरt = 24,
+	.ltssm_shift = 24,
 	.lut_dbg = 0x407fc,
 	.ops = &ls_pcie_host_ops,
 	.dw_pcie_ops = &dw_ls_pcie_ops,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा ls_pcie_drvdata ls2080_drvdata = अणु
+static const struct ls_pcie_drvdata ls2080_drvdata = {
 	.lut_offset = 0x80000,
-	.ltssm_shअगरt = 0,
+	.ltssm_shift = 0,
 	.lut_dbg = 0x7fc,
 	.ops = &ls_pcie_host_ops,
 	.dw_pcie_ops = &dw_ls_pcie_ops,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा ls_pcie_drvdata ls2088_drvdata = अणु
+static const struct ls_pcie_drvdata ls2088_drvdata = {
 	.lut_offset = 0x80000,
-	.ltssm_shअगरt = 0,
+	.ltssm_shift = 0,
 	.lut_dbg = 0x407fc,
 	.ops = &ls_pcie_host_ops,
 	.dw_pcie_ops = &dw_ls_pcie_ops,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id ls_pcie_of_match[] = अणु
-	अणु .compatible = "fsl,ls1012a-pcie", .data = &ls1046_drvdata पूर्ण,
-	अणु .compatible = "fsl,ls1021a-pcie", .data = &ls1021_drvdata पूर्ण,
-	अणु .compatible = "fsl,ls1028a-pcie", .data = &ls2088_drvdata पूर्ण,
-	अणु .compatible = "fsl,ls1043a-pcie", .data = &ls1043_drvdata पूर्ण,
-	अणु .compatible = "fsl,ls1046a-pcie", .data = &ls1046_drvdata पूर्ण,
-	अणु .compatible = "fsl,ls2080a-pcie", .data = &ls2080_drvdata पूर्ण,
-	अणु .compatible = "fsl,ls2085a-pcie", .data = &ls2080_drvdata पूर्ण,
-	अणु .compatible = "fsl,ls2088a-pcie", .data = &ls2088_drvdata पूर्ण,
-	अणु .compatible = "fsl,ls1088a-pcie", .data = &ls2088_drvdata पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id ls_pcie_of_match[] = {
+	{ .compatible = "fsl,ls1012a-pcie", .data = &ls1046_drvdata },
+	{ .compatible = "fsl,ls1021a-pcie", .data = &ls1021_drvdata },
+	{ .compatible = "fsl,ls1028a-pcie", .data = &ls2088_drvdata },
+	{ .compatible = "fsl,ls1043a-pcie", .data = &ls1043_drvdata },
+	{ .compatible = "fsl,ls1046a-pcie", .data = &ls1046_drvdata },
+	{ .compatible = "fsl,ls2080a-pcie", .data = &ls2080_drvdata },
+	{ .compatible = "fsl,ls2085a-pcie", .data = &ls2080_drvdata },
+	{ .compatible = "fsl,ls2088a-pcie", .data = &ls2088_drvdata },
+	{ .compatible = "fsl,ls1088a-pcie", .data = &ls2088_drvdata },
+	{ },
+};
 
-अटल पूर्णांक ls_pcie_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा dw_pcie *pci;
-	काष्ठा ls_pcie *pcie;
-	काष्ठा resource *dbi_base;
+static int ls_pcie_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct dw_pcie *pci;
+	struct ls_pcie *pcie;
+	struct resource *dbi_base;
 
-	pcie = devm_kzalloc(dev, माप(*pcie), GFP_KERNEL);
-	अगर (!pcie)
-		वापस -ENOMEM;
+	pcie = devm_kzalloc(dev, sizeof(*pcie), GFP_KERNEL);
+	if (!pcie)
+		return -ENOMEM;
 
-	pci = devm_kzalloc(dev, माप(*pci), GFP_KERNEL);
-	अगर (!pci)
-		वापस -ENOMEM;
+	pci = devm_kzalloc(dev, sizeof(*pci), GFP_KERNEL);
+	if (!pci)
+		return -ENOMEM;
 
 	pcie->drvdata = of_device_get_match_data(dev);
 
@@ -256,27 +255,27 @@
 
 	pcie->pci = pci;
 
-	dbi_base = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "regs");
+	dbi_base = platform_get_resource_byname(pdev, IORESOURCE_MEM, "regs");
 	pci->dbi_base = devm_pci_remap_cfg_resource(dev, dbi_base);
-	अगर (IS_ERR(pci->dbi_base))
-		वापस PTR_ERR(pci->dbi_base);
+	if (IS_ERR(pci->dbi_base))
+		return PTR_ERR(pci->dbi_base);
 
 	pcie->lut = pci->dbi_base + pcie->drvdata->lut_offset;
 
-	अगर (!ls_pcie_is_bridge(pcie))
-		वापस -ENODEV;
+	if (!ls_pcie_is_bridge(pcie))
+		return -ENODEV;
 
-	platक्रमm_set_drvdata(pdev, pcie);
+	platform_set_drvdata(pdev, pcie);
 
-	वापस dw_pcie_host_init(&pci->pp);
-पूर्ण
+	return dw_pcie_host_init(&pci->pp);
+}
 
-अटल काष्ठा platक्रमm_driver ls_pcie_driver = अणु
+static struct platform_driver ls_pcie_driver = {
 	.probe = ls_pcie_probe,
-	.driver = अणु
+	.driver = {
 		.name = "layerscape-pcie",
 		.of_match_table = ls_pcie_of_match,
 		.suppress_bind_attrs = true,
-	पूर्ण,
-पूर्ण;
-builtin_platक्रमm_driver(ls_pcie_driver);
+	},
+};
+builtin_platform_driver(ls_pcie_driver);

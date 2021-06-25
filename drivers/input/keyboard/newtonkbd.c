@@ -1,31 +1,30 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  Copyright (c) 2000 Justin Cormack
  */
 
 /*
- * Newton keyboard driver क्रम Linux
+ * Newton keyboard driver for Linux
  */
 
 /*
  */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <linux/input.h>
-#समावेश <linux/serपन.स>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <linux/input.h>
+#include <linux/serio.h>
 
-#घोषणा DRIVER_DESC	"Newton keyboard driver"
+#define DRIVER_DESC	"Newton keyboard driver"
 
 MODULE_AUTHOR("Justin Cormack <j.cormack@doc.ic.ac.uk>");
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_LICENSE("GPL");
 
-#घोषणा NKBD_KEY	0x7f
-#घोषणा NKBD_PRESS	0x80
+#define NKBD_KEY	0x7f
+#define NKBD_PRESS	0x80
 
-अटल अचिन्हित अक्षर nkbd_keycode[128] = अणु
+static unsigned char nkbd_keycode[128] = {
 	KEY_A, KEY_S, KEY_D, KEY_F, KEY_H, KEY_G, KEY_Z, KEY_X,
 	KEY_C, KEY_V, 0, KEY_B, KEY_Q, KEY_W, KEY_E, KEY_R,
 	KEY_Y, KEY_T, KEY_1, KEY_2, KEY_3, KEY_4, KEY_6, KEY_5,
@@ -39,115 +38,115 @@ MODULE_LICENSE("GPL");
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	KEY_LEFT, KEY_RIGHT, KEY_DOWN, KEY_UP, 0
-पूर्ण;
+};
 
-काष्ठा nkbd अणु
-	अचिन्हित अक्षर keycode[128];
-	काष्ठा input_dev *dev;
-	काष्ठा serio *serio;
-	अक्षर phys[32];
-पूर्ण;
+struct nkbd {
+	unsigned char keycode[128];
+	struct input_dev *dev;
+	struct serio *serio;
+	char phys[32];
+};
 
-अटल irqवापस_t nkbd_पूर्णांकerrupt(काष्ठा serio *serio,
-		अचिन्हित अक्षर data, अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा nkbd *nkbd = serio_get_drvdata(serio);
+static irqreturn_t nkbd_interrupt(struct serio *serio,
+		unsigned char data, unsigned int flags)
+{
+	struct nkbd *nkbd = serio_get_drvdata(serio);
 
 	/* invalid scan codes are probably the init sequence, so we ignore them */
-	अगर (nkbd->keycode[data & NKBD_KEY]) अणु
+	if (nkbd->keycode[data & NKBD_KEY]) {
 		input_report_key(nkbd->dev, nkbd->keycode[data & NKBD_KEY], data & NKBD_PRESS);
 		input_sync(nkbd->dev);
-	पूर्ण
+	}
 
-	अन्यथा अगर (data == 0xe7) /* end of init sequence */
-		prपूर्णांकk(KERN_INFO "input: %s on %s\n", nkbd->dev->name, serio->phys);
-	वापस IRQ_HANDLED;
+	else if (data == 0xe7) /* end of init sequence */
+		printk(KERN_INFO "input: %s on %s\n", nkbd->dev->name, serio->phys);
+	return IRQ_HANDLED;
 
-पूर्ण
+}
 
-अटल पूर्णांक nkbd_connect(काष्ठा serio *serio, काष्ठा serio_driver *drv)
-अणु
-	काष्ठा nkbd *nkbd;
-	काष्ठा input_dev *input_dev;
-	पूर्णांक err = -ENOMEM;
-	पूर्णांक i;
+static int nkbd_connect(struct serio *serio, struct serio_driver *drv)
+{
+	struct nkbd *nkbd;
+	struct input_dev *input_dev;
+	int err = -ENOMEM;
+	int i;
 
-	nkbd = kzalloc(माप(काष्ठा nkbd), GFP_KERNEL);
+	nkbd = kzalloc(sizeof(struct nkbd), GFP_KERNEL);
 	input_dev = input_allocate_device();
-	अगर (!nkbd || !input_dev)
-		जाओ fail1;
+	if (!nkbd || !input_dev)
+		goto fail1;
 
 	nkbd->serio = serio;
 	nkbd->dev = input_dev;
-	snम_लिखो(nkbd->phys, माप(nkbd->phys), "%s/input0", serio->phys);
-	स_नकल(nkbd->keycode, nkbd_keycode, माप(nkbd->keycode));
+	snprintf(nkbd->phys, sizeof(nkbd->phys), "%s/input0", serio->phys);
+	memcpy(nkbd->keycode, nkbd_keycode, sizeof(nkbd->keycode));
 
 	input_dev->name = "Newton Keyboard";
 	input_dev->phys = nkbd->phys;
 	input_dev->id.bustype = BUS_RS232;
-	input_dev->id.venकरोr = SERIO_NEWTON;
+	input_dev->id.vendor = SERIO_NEWTON;
 	input_dev->id.product = 0x0001;
 	input_dev->id.version = 0x0100;
 	input_dev->dev.parent = &serio->dev;
 
 	input_dev->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_REP);
 	input_dev->keycode = nkbd->keycode;
-	input_dev->keycodesize = माप(अचिन्हित अक्षर);
+	input_dev->keycodesize = sizeof(unsigned char);
 	input_dev->keycodemax = ARRAY_SIZE(nkbd_keycode);
-	क्रम (i = 0; i < 128; i++)
+	for (i = 0; i < 128; i++)
 		set_bit(nkbd->keycode[i], input_dev->keybit);
 	clear_bit(0, input_dev->keybit);
 
 	serio_set_drvdata(serio, nkbd);
 
-	err = serio_खोलो(serio, drv);
-	अगर (err)
-		जाओ fail2;
+	err = serio_open(serio, drv);
+	if (err)
+		goto fail2;
 
-	err = input_रेजिस्टर_device(nkbd->dev);
-	अगर (err)
-		जाओ fail3;
+	err = input_register_device(nkbd->dev);
+	if (err)
+		goto fail3;
 
-	वापस 0;
+	return 0;
 
- fail3:	serio_बंद(serio);
- fail2:	serio_set_drvdata(serio, शून्य);
- fail1:	input_मुक्त_device(input_dev);
-	kमुक्त(nkbd);
-	वापस err;
-पूर्ण
+ fail3:	serio_close(serio);
+ fail2:	serio_set_drvdata(serio, NULL);
+ fail1:	input_free_device(input_dev);
+	kfree(nkbd);
+	return err;
+}
 
-अटल व्योम nkbd_disconnect(काष्ठा serio *serio)
-अणु
-	काष्ठा nkbd *nkbd = serio_get_drvdata(serio);
+static void nkbd_disconnect(struct serio *serio)
+{
+	struct nkbd *nkbd = serio_get_drvdata(serio);
 
-	serio_बंद(serio);
-	serio_set_drvdata(serio, शून्य);
-	input_unरेजिस्टर_device(nkbd->dev);
-	kमुक्त(nkbd);
-पूर्ण
+	serio_close(serio);
+	serio_set_drvdata(serio, NULL);
+	input_unregister_device(nkbd->dev);
+	kfree(nkbd);
+}
 
-अटल स्थिर काष्ठा serio_device_id nkbd_serio_ids[] = अणु
-	अणु
+static const struct serio_device_id nkbd_serio_ids[] = {
+	{
 		.type	= SERIO_RS232,
 		.proto	= SERIO_NEWTON,
 		.id	= SERIO_ANY,
 		.extra	= SERIO_ANY,
-	पूर्ण,
-	अणु 0 पूर्ण
-पूर्ण;
+	},
+	{ 0 }
+};
 
 MODULE_DEVICE_TABLE(serio, nkbd_serio_ids);
 
-अटल काष्ठा serio_driver nkbd_drv = अणु
-	.driver		= अणु
+static struct serio_driver nkbd_drv = {
+	.driver		= {
 		.name	= "newtonkbd",
-	पूर्ण,
+	},
 	.description	= DRIVER_DESC,
 	.id_table	= nkbd_serio_ids,
-	.पूर्णांकerrupt	= nkbd_पूर्णांकerrupt,
+	.interrupt	= nkbd_interrupt,
 	.connect	= nkbd_connect,
 	.disconnect	= nkbd_disconnect,
-पूर्ण;
+};
 
 module_serio_driver(nkbd_drv);

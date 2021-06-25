@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,13 +21,13 @@
  *
  */
 
-#अगर_अघोषित __SI_H__
-#घोषणा __SI_H__
+#ifndef __SI_H__
+#define __SI_H__
 
-#घोषणा SI_FLUSH_GPU_TLB_NUM_WREG	2
+#define SI_FLUSH_GPU_TLB_NUM_WREG	2
 
-व्योम si_srbm_select(काष्ठा amdgpu_device *adev,
+void si_srbm_select(struct amdgpu_device *adev,
 		     u32 me, u32 pipe, u32 queue, u32 vmid);
-पूर्णांक si_set_ip_blocks(काष्ठा amdgpu_device *adev);
+int si_set_ip_blocks(struct amdgpu_device *adev);
 
-#पूर्ण_अगर
+#endif

@@ -1,86 +1,85 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * LED Driver क्रम SGI Octane machines
+ * LED Driver for SGI Octane machines
  */
 
-#समावेश <यंत्र/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/leds.h>
+#include <asm/io.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/platform_device.h>
+#include <linux/leds.h>
 
-#घोषणा IP30_LED_SYSTEM	0
-#घोषणा IP30_LED_FAULT	1
+#define IP30_LED_SYSTEM	0
+#define IP30_LED_FAULT	1
 
-काष्ठा ip30_led अणु
-	काष्ठा led_classdev cdev;
+struct ip30_led {
+	struct led_classdev cdev;
 	u32 __iomem *reg;
-पूर्ण;
+};
 
-अटल व्योम ip30led_set(काष्ठा led_classdev *led_cdev,
-			क्रमागत led_brightness value)
-अणु
-	काष्ठा ip30_led *led = container_of(led_cdev, काष्ठा ip30_led, cdev);
+static void ip30led_set(struct led_classdev *led_cdev,
+			enum led_brightness value)
+{
+	struct ip30_led *led = container_of(led_cdev, struct ip30_led, cdev);
 
-	ग_लिखोl(value, led->reg);
-पूर्ण
+	writel(value, led->reg);
+}
 
-अटल पूर्णांक ip30led_create(काष्ठा platक्रमm_device *pdev, पूर्णांक num)
-अणु
-	काष्ठा resource *res;
-	काष्ठा ip30_led *data;
+static int ip30led_create(struct platform_device *pdev, int num)
+{
+	struct resource *res;
+	struct ip30_led *data;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, num);
-	अगर (!res)
-		वापस -EBUSY;
+	res = platform_get_resource(pdev, IORESOURCE_MEM, num);
+	if (!res)
+		return -EBUSY;
 
-	data = devm_kzalloc(&pdev->dev, माप(*data), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = devm_kzalloc(&pdev->dev, sizeof(*data), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
 	data->reg = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(data->reg))
-		वापस PTR_ERR(data->reg);
+	if (IS_ERR(data->reg))
+		return PTR_ERR(data->reg);
 
 
-	चयन (num) अणु
-	हाल IP30_LED_SYSTEM:
+	switch (num) {
+	case IP30_LED_SYSTEM:
 		data->cdev.name = "white:power";
-		अवरोध;
-	हाल IP30_LED_FAULT:
+		break;
+	case IP30_LED_FAULT:
 		data->cdev.name = "red:fault";
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	data->cdev.brightness = पढ़ोl(data->reg);
+	data->cdev.brightness = readl(data->reg);
 	data->cdev.max_brightness = 1;
 	data->cdev.brightness_set = ip30led_set;
 
-	वापस devm_led_classdev_रेजिस्टर(&pdev->dev, &data->cdev);
-पूर्ण
+	return devm_led_classdev_register(&pdev->dev, &data->cdev);
+}
 
-अटल पूर्णांक ip30led_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक ret;
+static int ip30led_probe(struct platform_device *pdev)
+{
+	int ret;
 
 	ret = ip30led_create(pdev, IP30_LED_SYSTEM);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस ip30led_create(pdev, IP30_LED_FAULT);
-पूर्ण
+	return ip30led_create(pdev, IP30_LED_FAULT);
+}
 
-अटल काष्ठा platक्रमm_driver ip30led_driver = अणु
+static struct platform_driver ip30led_driver = {
 	.probe		= ip30led_probe,
-	.driver		= अणु
+	.driver		= {
 		.name		= "ip30-leds",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(ip30led_driver);
+module_platform_driver(ip30led_driver);
 
 MODULE_AUTHOR("Thomas Bogendoerfer <tbogendoerfer@suse.de>");
 MODULE_DESCRIPTION("SGI Octane LED driver");

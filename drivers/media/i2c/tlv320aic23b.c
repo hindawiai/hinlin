@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * tlv320aic23b - driver version 0.0.1
  *
@@ -11,15 +10,15 @@
  * Copyright (C) 2005 Hans Verkuil <hverkuil@xs4all.nl>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/ioctl.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/videodev2.h>
-#समावेश <media/v4l2-device.h>
-#समावेश <media/v4l2-ctrls.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/slab.h>
+#include <linux/ioctl.h>
+#include <linux/uaccess.h>
+#include <linux/i2c.h>
+#include <linux/videodev2.h>
+#include <media/v4l2-device.h>
+#include <media/v4l2-ctrls.h>
 
 MODULE_DESCRIPTION("tlv320aic23b driver");
 MODULE_AUTHOR("Scott Alfter, Ulf Eklund, Hans Verkuil");
@@ -28,98 +27,98 @@ MODULE_LICENSE("GPL");
 
 /* ----------------------------------------------------------------------- */
 
-काष्ठा tlv320aic23b_state अणु
-	काष्ठा v4l2_subdev sd;
-	काष्ठा v4l2_ctrl_handler hdl;
-पूर्ण;
+struct tlv320aic23b_state {
+	struct v4l2_subdev sd;
+	struct v4l2_ctrl_handler hdl;
+};
 
-अटल अंतरभूत काष्ठा tlv320aic23b_state *to_state(काष्ठा v4l2_subdev *sd)
-अणु
-	वापस container_of(sd, काष्ठा tlv320aic23b_state, sd);
-पूर्ण
+static inline struct tlv320aic23b_state *to_state(struct v4l2_subdev *sd)
+{
+	return container_of(sd, struct tlv320aic23b_state, sd);
+}
 
-अटल अंतरभूत काष्ठा v4l2_subdev *to_sd(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	वापस &container_of(ctrl->handler, काष्ठा tlv320aic23b_state, hdl)->sd;
-पूर्ण
+static inline struct v4l2_subdev *to_sd(struct v4l2_ctrl *ctrl)
+{
+	return &container_of(ctrl->handler, struct tlv320aic23b_state, hdl)->sd;
+}
 
-अटल पूर्णांक tlv320aic23b_ग_लिखो(काष्ठा v4l2_subdev *sd, पूर्णांक reg, u16 val)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
-	पूर्णांक i;
+static int tlv320aic23b_write(struct v4l2_subdev *sd, int reg, u16 val)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+	int i;
 
-	अगर ((reg < 0 || reg > 9) && (reg != 15)) अणु
+	if ((reg < 0 || reg > 9) && (reg != 15)) {
 		v4l2_err(sd, "Invalid register R%d\n", reg);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	क्रम (i = 0; i < 3; i++)
-		अगर (i2c_smbus_ग_लिखो_byte_data(client,
+	for (i = 0; i < 3; i++)
+		if (i2c_smbus_write_byte_data(client,
 				(reg << 1) | (val >> 8), val & 0xff) == 0)
-			वापस 0;
+			return 0;
 	v4l2_err(sd, "I2C: cannot write %03x to register R%d\n", val, reg);
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल पूर्णांक tlv320aic23b_s_घड़ी_freq(काष्ठा v4l2_subdev *sd, u32 freq)
-अणु
-	चयन (freq) अणु
-	हाल 32000: /* set sample rate to 32 kHz */
-		tlv320aic23b_ग_लिखो(sd, 8, 0x018);
-		अवरोध;
-	हाल 44100: /* set sample rate to 44.1 kHz */
-		tlv320aic23b_ग_लिखो(sd, 8, 0x022);
-		अवरोध;
-	हाल 48000: /* set sample rate to 48 kHz */
-		tlv320aic23b_ग_लिखो(sd, 8, 0x000);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+static int tlv320aic23b_s_clock_freq(struct v4l2_subdev *sd, u32 freq)
+{
+	switch (freq) {
+	case 32000: /* set sample rate to 32 kHz */
+		tlv320aic23b_write(sd, 8, 0x018);
+		break;
+	case 44100: /* set sample rate to 44.1 kHz */
+		tlv320aic23b_write(sd, 8, 0x022);
+		break;
+	case 48000: /* set sample rate to 48 kHz */
+		tlv320aic23b_write(sd, 8, 0x000);
+		break;
+	default:
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल पूर्णांक tlv320aic23b_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	काष्ठा v4l2_subdev *sd = to_sd(ctrl);
+static int tlv320aic23b_s_ctrl(struct v4l2_ctrl *ctrl)
+{
+	struct v4l2_subdev *sd = to_sd(ctrl);
 
-	चयन (ctrl->id) अणु
-	हाल V4L2_CID_AUDIO_MUTE:
-		tlv320aic23b_ग_लिखो(sd, 0, 0x180); /* mute both channels */
+	switch (ctrl->id) {
+	case V4L2_CID_AUDIO_MUTE:
+		tlv320aic23b_write(sd, 0, 0x180); /* mute both channels */
 		/* set gain on both channels to +3.0 dB */
-		अगर (!ctrl->val)
-			tlv320aic23b_ग_लिखो(sd, 0, 0x119);
-		वापस 0;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+		if (!ctrl->val)
+			tlv320aic23b_write(sd, 0, 0x119);
+		return 0;
+	}
+	return -EINVAL;
+}
 
-अटल पूर्णांक tlv320aic23b_log_status(काष्ठा v4l2_subdev *sd)
-अणु
-	काष्ठा tlv320aic23b_state *state = to_state(sd);
+static int tlv320aic23b_log_status(struct v4l2_subdev *sd)
+{
+	struct tlv320aic23b_state *state = to_state(sd);
 
 	v4l2_ctrl_handler_log_status(&state->hdl, sd->name);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* ----------------------------------------------------------------------- */
 
-अटल स्थिर काष्ठा v4l2_ctrl_ops tlv320aic23b_ctrl_ops = अणु
+static const struct v4l2_ctrl_ops tlv320aic23b_ctrl_ops = {
 	.s_ctrl = tlv320aic23b_s_ctrl,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_core_ops tlv320aic23b_core_ops = अणु
+static const struct v4l2_subdev_core_ops tlv320aic23b_core_ops = {
 	.log_status = tlv320aic23b_log_status,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_audio_ops tlv320aic23b_audio_ops = अणु
-	.s_घड़ी_freq = tlv320aic23b_s_घड़ी_freq,
-पूर्ण;
+static const struct v4l2_subdev_audio_ops tlv320aic23b_audio_ops = {
+	.s_clock_freq = tlv320aic23b_s_clock_freq,
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_ops tlv320aic23b_ops = अणु
+static const struct v4l2_subdev_ops tlv320aic23b_ops = {
 	.core = &tlv320aic23b_core_ops,
 	.audio = &tlv320aic23b_audio_ops,
-पूर्ण;
+};
 
 /* ----------------------------------------------------------------------- */
 
@@ -130,79 +129,79 @@ MODULE_LICENSE("GPL");
  * concerning the addresses: i2c wants 7 bit (without the r/w bit), so '>>1'
  */
 
-अटल पूर्णांक tlv320aic23b_probe(काष्ठा i2c_client *client,
-			      स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा tlv320aic23b_state *state;
-	काष्ठा v4l2_subdev *sd;
+static int tlv320aic23b_probe(struct i2c_client *client,
+			      const struct i2c_device_id *id)
+{
+	struct tlv320aic23b_state *state;
+	struct v4l2_subdev *sd;
 
-	/* Check अगर the adapter supports the needed features */
-	अगर (!i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_BYTE_DATA))
-		वापस -EIO;
+	/* Check if the adapter supports the needed features */
+	if (!i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_BYTE_DATA))
+		return -EIO;
 
 	v4l_info(client, "chip found @ 0x%x (%s)\n",
 			client->addr << 1, client->adapter->name);
 
-	state = devm_kzalloc(&client->dev, माप(*state), GFP_KERNEL);
-	अगर (state == शून्य)
-		वापस -ENOMEM;
+	state = devm_kzalloc(&client->dev, sizeof(*state), GFP_KERNEL);
+	if (state == NULL)
+		return -ENOMEM;
 	sd = &state->sd;
 	v4l2_i2c_subdev_init(sd, client, &tlv320aic23b_ops);
 
 	/* Initialize tlv320aic23b */
 
 	/* RESET */
-	tlv320aic23b_ग_लिखो(sd, 15, 0x000);
+	tlv320aic23b_write(sd, 15, 0x000);
 	/* turn off DAC & mic input */
-	tlv320aic23b_ग_लिखो(sd, 6, 0x00A);
-	/* left-justअगरied, 24-bit, master mode */
-	tlv320aic23b_ग_लिखो(sd, 7, 0x049);
+	tlv320aic23b_write(sd, 6, 0x00A);
+	/* left-justified, 24-bit, master mode */
+	tlv320aic23b_write(sd, 7, 0x049);
 	/* set gain on both channels to +3.0 dB */
-	tlv320aic23b_ग_लिखो(sd, 0, 0x119);
+	tlv320aic23b_write(sd, 0, 0x119);
 	/* set sample rate to 48 kHz */
-	tlv320aic23b_ग_लिखो(sd, 8, 0x000);
-	/* activate digital पूर्णांकerface */
-	tlv320aic23b_ग_लिखो(sd, 9, 0x001);
+	tlv320aic23b_write(sd, 8, 0x000);
+	/* activate digital interface */
+	tlv320aic23b_write(sd, 9, 0x001);
 
 	v4l2_ctrl_handler_init(&state->hdl, 1);
 	v4l2_ctrl_new_std(&state->hdl, &tlv320aic23b_ctrl_ops,
 			V4L2_CID_AUDIO_MUTE, 0, 1, 1, 0);
 	sd->ctrl_handler = &state->hdl;
-	अगर (state->hdl.error) अणु
-		पूर्णांक err = state->hdl.error;
+	if (state->hdl.error) {
+		int err = state->hdl.error;
 
-		v4l2_ctrl_handler_मुक्त(&state->hdl);
-		वापस err;
-	पूर्ण
+		v4l2_ctrl_handler_free(&state->hdl);
+		return err;
+	}
 	v4l2_ctrl_handler_setup(&state->hdl);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tlv320aic23b_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा v4l2_subdev *sd = i2c_get_clientdata(client);
-	काष्ठा tlv320aic23b_state *state = to_state(sd);
+static int tlv320aic23b_remove(struct i2c_client *client)
+{
+	struct v4l2_subdev *sd = i2c_get_clientdata(client);
+	struct tlv320aic23b_state *state = to_state(sd);
 
-	v4l2_device_unरेजिस्टर_subdev(sd);
-	v4l2_ctrl_handler_मुक्त(&state->hdl);
-	वापस 0;
-पूर्ण
+	v4l2_device_unregister_subdev(sd);
+	v4l2_ctrl_handler_free(&state->hdl);
+	return 0;
+}
 
 /* ----------------------------------------------------------------------- */
 
-अटल स्थिर काष्ठा i2c_device_id tlv320aic23b_id[] = अणु
-	अणु "tlv320aic23b", 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id tlv320aic23b_id[] = {
+	{ "tlv320aic23b", 0 },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, tlv320aic23b_id);
 
-अटल काष्ठा i2c_driver tlv320aic23b_driver = अणु
-	.driver = अणु
+static struct i2c_driver tlv320aic23b_driver = {
+	.driver = {
 		.name	= "tlv320aic23b",
-	पूर्ण,
+	},
 	.probe		= tlv320aic23b_probe,
-	.हटाओ		= tlv320aic23b_हटाओ,
+	.remove		= tlv320aic23b_remove,
 	.id_table	= tlv320aic23b_id,
-पूर्ण;
+};
 
 module_i2c_driver(tlv320aic23b_driver);

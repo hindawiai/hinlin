@@ -1,1268 +1,1267 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <त्रुटिसं.स>
-#समावेश <पूर्णांकtypes.h>
-#समावेश <regex.h>
-#समावेश <मानककोष.स>
-#समावेश <linux/mman.h>
-#समावेश <linux/समय64.h>
-#समावेश "debug.h"
-#समावेश "dso.h"
-#समावेश "sort.h"
-#समावेश "hist.h"
-#समावेश "cacheline.h"
-#समावेश "comm.h"
-#समावेश "map.h"
-#समावेश "maps.h"
-#समावेश "symbol.h"
-#समावेश "map_symbol.h"
-#समावेश "branch.h"
-#समावेश "thread.h"
-#समावेश "evsel.h"
-#समावेश "evlist.h"
-#समावेश "srcline.h"
-#समावेश "strlist.h"
-#समावेश "strbuf.h"
-#समावेश <traceevent/event-parse.h>
-#समावेश "mem-events.h"
-#समावेश "annotate.h"
-#समावेश "event.h"
-#समावेश "time-utils.h"
-#समावेश "cgroup.h"
-#समावेश "machine.h"
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>
+// SPDX-License-Identifier: GPL-2.0
+#include <errno.h>
+#include <inttypes.h>
+#include <regex.h>
+#include <stdlib.h>
+#include <linux/mman.h>
+#include <linux/time64.h>
+#include "debug.h"
+#include "dso.h"
+#include "sort.h"
+#include "hist.h"
+#include "cacheline.h"
+#include "comm.h"
+#include "map.h"
+#include "maps.h"
+#include "symbol.h"
+#include "map_symbol.h"
+#include "branch.h"
+#include "thread.h"
+#include "evsel.h"
+#include "evlist.h"
+#include "srcline.h"
+#include "strlist.h"
+#include "strbuf.h"
+#include <traceevent/event-parse.h>
+#include "mem-events.h"
+#include "annotate.h"
+#include "event.h"
+#include "time-utils.h"
+#include "cgroup.h"
+#include "machine.h"
+#include <linux/kernel.h>
+#include <linux/string.h>
 
 regex_t		parent_regex;
-स्थिर अक्षर	शेष_parent_pattern[] = "^sys_|^करो_page_fault";
-स्थिर अक्षर	*parent_pattern = शेष_parent_pattern;
-स्थिर अक्षर	*शेष_sort_order = "comm,dso,symbol";
-स्थिर अक्षर	शेष_branch_sort_order[] = "comm,dso_from,symbol_from,symbol_to,cycles";
-स्थिर अक्षर	शेष_mem_sort_order[] = "local_weight,mem,sym,dso,symbol_daddr,dso_daddr,snoop,tlb,locked,blocked,local_ins_lat,p_stage_cyc";
-स्थिर अक्षर	शेष_top_sort_order[] = "dso,symbol";
-स्थिर अक्षर	शेष_dअगरf_sort_order[] = "dso,symbol";
-स्थिर अक्षर	शेष_tracepoपूर्णांक_sort_order[] = "trace";
-स्थिर अक्षर	*sort_order;
-स्थिर अक्षर	*field_order;
+const char	default_parent_pattern[] = "^sys_|^do_page_fault";
+const char	*parent_pattern = default_parent_pattern;
+const char	*default_sort_order = "comm,dso,symbol";
+const char	default_branch_sort_order[] = "comm,dso_from,symbol_from,symbol_to,cycles";
+const char	default_mem_sort_order[] = "local_weight,mem,sym,dso,symbol_daddr,dso_daddr,snoop,tlb,locked,blocked,local_ins_lat,p_stage_cyc";
+const char	default_top_sort_order[] = "dso,symbol";
+const char	default_diff_sort_order[] = "dso,symbol";
+const char	default_tracepoint_sort_order[] = "trace";
+const char	*sort_order;
+const char	*field_order;
 regex_t		ignore_callees_regex;
-पूर्णांक		have_ignore_callees = 0;
-क्रमागत sort_mode	sort__mode = SORT_MODE__NORMAL;
-स्थिर अक्षर	*dynamic_headers[] = अणु"local_ins_lat", "p_stage_cyc"पूर्ण;
-स्थिर अक्षर	*arch_specअगरic_sort_keys[] = अणु"p_stage_cyc"पूर्ण;
+int		have_ignore_callees = 0;
+enum sort_mode	sort__mode = SORT_MODE__NORMAL;
+const char	*dynamic_headers[] = {"local_ins_lat", "p_stage_cyc"};
+const char	*arch_specific_sort_keys[] = {"p_stage_cyc"};
 
 /*
- * Replaces all occurrences of a अक्षर used with the:
+ * Replaces all occurrences of a char used with the:
  *
  * -t, --field-separator
  *
- * option, that uses a special separator अक्षरacter and करोn't pad with spaces,
+ * option, that uses a special separator character and don't pad with spaces,
  * replacing all occurrences of this separator in symbol names (and other
  * output) with a '.' character, that thus it's the only non valid separator.
 */
-अटल पूर्णांक repsep_snम_लिखो(अक्षर *bf, माप_प्रकार size, स्थिर अक्षर *fmt, ...)
-अणु
-	पूर्णांक n;
-	बहु_सूची ap;
+static int repsep_snprintf(char *bf, size_t size, const char *fmt, ...)
+{
+	int n;
+	va_list ap;
 
-	बहु_शुरू(ap, fmt);
-	n = vsnम_लिखो(bf, size, fmt, ap);
-	अगर (symbol_conf.field_sep && n > 0) अणु
-		अक्षर *sep = bf;
+	va_start(ap, fmt);
+	n = vsnprintf(bf, size, fmt, ap);
+	if (symbol_conf.field_sep && n > 0) {
+		char *sep = bf;
 
-		जबतक (1) अणु
-			sep = म_अक्षर(sep, *symbol_conf.field_sep);
-			अगर (sep == शून्य)
-				अवरोध;
+		while (1) {
+			sep = strchr(sep, *symbol_conf.field_sep);
+			if (sep == NULL)
+				break;
 			*sep = '.';
-		पूर्ण
-	पूर्ण
-	बहु_पूर्ण(ap);
+		}
+	}
+	va_end(ap);
 
-	अगर (n >= (पूर्णांक)size)
-		वापस size - 1;
-	वापस n;
-पूर्ण
+	if (n >= (int)size)
+		return size - 1;
+	return n;
+}
 
-अटल पूर्णांक64_t cmp_null(स्थिर व्योम *l, स्थिर व्योम *r)
-अणु
-	अगर (!l && !r)
-		वापस 0;
-	अन्यथा अगर (!l)
-		वापस -1;
-	अन्यथा
-		वापस 1;
-पूर्ण
+static int64_t cmp_null(const void *l, const void *r)
+{
+	if (!l && !r)
+		return 0;
+	else if (!l)
+		return -1;
+	else
+		return 1;
+}
 
 /* --sort pid */
 
-अटल पूर्णांक64_t
-sort__thपढ़ो_cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	वापस right->thपढ़ो->tid - left->thपढ़ो->tid;
-पूर्ण
+static int64_t
+sort__thread_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+	return right->thread->tid - left->thread->tid;
+}
 
-अटल पूर्णांक hist_entry__thपढ़ो_snम_लिखो(काष्ठा hist_entry *he, अक्षर *bf,
-				       माप_प्रकार size, अचिन्हित पूर्णांक width)
-अणु
-	स्थिर अक्षर *comm = thपढ़ो__comm_str(he->thपढ़ो);
+static int hist_entry__thread_snprintf(struct hist_entry *he, char *bf,
+				       size_t size, unsigned int width)
+{
+	const char *comm = thread__comm_str(he->thread);
 
 	width = max(7U, width) - 8;
-	वापस repsep_snम_लिखो(bf, size, "%7d:%-*.*s", he->thपढ़ो->tid,
+	return repsep_snprintf(bf, size, "%7d:%-*.*s", he->thread->tid,
 			       width, width, comm ?: "");
-पूर्ण
+}
 
-अटल पूर्णांक hist_entry__thपढ़ो_filter(काष्ठा hist_entry *he, पूर्णांक type, स्थिर व्योम *arg)
-अणु
-	स्थिर काष्ठा thपढ़ो *th = arg;
+static int hist_entry__thread_filter(struct hist_entry *he, int type, const void *arg)
+{
+	const struct thread *th = arg;
 
-	अगर (type != HIST_FILTER__THREAD)
-		वापस -1;
+	if (type != HIST_FILTER__THREAD)
+		return -1;
 
-	वापस th && he->thपढ़ो != th;
-पूर्ण
+	return th && he->thread != th;
+}
 
-काष्ठा sort_entry sort_thपढ़ो = अणु
+struct sort_entry sort_thread = {
 	.se_header	= "    Pid:Command",
-	.se_cmp		= sort__thपढ़ो_cmp,
-	.se_snम_लिखो	= hist_entry__thपढ़ो_snम_लिखो,
-	.se_filter	= hist_entry__thपढ़ो_filter,
+	.se_cmp		= sort__thread_cmp,
+	.se_snprintf	= hist_entry__thread_snprintf,
+	.se_filter	= hist_entry__thread_filter,
 	.se_width_idx	= HISTC_THREAD,
-पूर्ण;
+};
 
 /* --sort comm */
 
 /*
- * We can't use poपूर्णांकer comparison in functions below,
- * because it gives dअगरferent results based on poपूर्णांकer
- * values, which could अवरोध some sorting assumptions.
+ * We can't use pointer comparison in functions below,
+ * because it gives different results based on pointer
+ * values, which could break some sorting assumptions.
  */
-अटल पूर्णांक64_t
-sort__comm_cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	वापस म_भेद(comm__str(right->comm), comm__str(left->comm));
-पूर्ण
+static int64_t
+sort__comm_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+	return strcmp(comm__str(right->comm), comm__str(left->comm));
+}
 
-अटल पूर्णांक64_t
-sort__comm_collapse(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	वापस म_भेद(comm__str(right->comm), comm__str(left->comm));
-पूर्ण
+static int64_t
+sort__comm_collapse(struct hist_entry *left, struct hist_entry *right)
+{
+	return strcmp(comm__str(right->comm), comm__str(left->comm));
+}
 
-अटल पूर्णांक64_t
-sort__comm_sort(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	वापस म_भेद(comm__str(right->comm), comm__str(left->comm));
-पूर्ण
+static int64_t
+sort__comm_sort(struct hist_entry *left, struct hist_entry *right)
+{
+	return strcmp(comm__str(right->comm), comm__str(left->comm));
+}
 
-अटल पूर्णांक hist_entry__comm_snम_लिखो(काष्ठा hist_entry *he, अक्षर *bf,
-				     माप_प्रकार size, अचिन्हित पूर्णांक width)
-अणु
-	वापस repsep_snम_लिखो(bf, size, "%-*.*s", width, width, comm__str(he->comm));
-पूर्ण
+static int hist_entry__comm_snprintf(struct hist_entry *he, char *bf,
+				     size_t size, unsigned int width)
+{
+	return repsep_snprintf(bf, size, "%-*.*s", width, width, comm__str(he->comm));
+}
 
-काष्ठा sort_entry sort_comm = अणु
+struct sort_entry sort_comm = {
 	.se_header	= "Command",
 	.se_cmp		= sort__comm_cmp,
 	.se_collapse	= sort__comm_collapse,
 	.se_sort	= sort__comm_sort,
-	.se_snम_लिखो	= hist_entry__comm_snम_लिखो,
-	.se_filter	= hist_entry__thपढ़ो_filter,
+	.se_snprintf	= hist_entry__comm_snprintf,
+	.se_filter	= hist_entry__thread_filter,
 	.se_width_idx	= HISTC_COMM,
-पूर्ण;
+};
 
 /* --sort dso */
 
-अटल पूर्णांक64_t _sort__dso_cmp(काष्ठा map *map_l, काष्ठा map *map_r)
-अणु
-	काष्ठा dso *dso_l = map_l ? map_l->dso : शून्य;
-	काष्ठा dso *dso_r = map_r ? map_r->dso : शून्य;
-	स्थिर अक्षर *dso_name_l, *dso_name_r;
+static int64_t _sort__dso_cmp(struct map *map_l, struct map *map_r)
+{
+	struct dso *dso_l = map_l ? map_l->dso : NULL;
+	struct dso *dso_r = map_r ? map_r->dso : NULL;
+	const char *dso_name_l, *dso_name_r;
 
-	अगर (!dso_l || !dso_r)
-		वापस cmp_null(dso_r, dso_l);
+	if (!dso_l || !dso_r)
+		return cmp_null(dso_r, dso_l);
 
-	अगर (verbose > 0) अणु
-		dso_name_l = dso_l->दीर्घ_name;
-		dso_name_r = dso_r->दीर्घ_name;
-	पूर्ण अन्यथा अणु
-		dso_name_l = dso_l->लघु_name;
-		dso_name_r = dso_r->लघु_name;
-	पूर्ण
+	if (verbose > 0) {
+		dso_name_l = dso_l->long_name;
+		dso_name_r = dso_r->long_name;
+	} else {
+		dso_name_l = dso_l->short_name;
+		dso_name_r = dso_r->short_name;
+	}
 
-	वापस म_भेद(dso_name_l, dso_name_r);
-पूर्ण
+	return strcmp(dso_name_l, dso_name_r);
+}
 
-अटल पूर्णांक64_t
-sort__dso_cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	वापस _sort__dso_cmp(right->ms.map, left->ms.map);
-पूर्ण
+static int64_t
+sort__dso_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+	return _sort__dso_cmp(right->ms.map, left->ms.map);
+}
 
-अटल पूर्णांक _hist_entry__dso_snम_लिखो(काष्ठा map *map, अक्षर *bf,
-				     माप_प्रकार size, अचिन्हित पूर्णांक width)
-अणु
-	अगर (map && map->dso) अणु
-		स्थिर अक्षर *dso_name = verbose > 0 ? map->dso->दीर्घ_name :
-			map->dso->लघु_name;
-		वापस repsep_snम_लिखो(bf, size, "%-*.*s", width, width, dso_name);
-	पूर्ण
+static int _hist_entry__dso_snprintf(struct map *map, char *bf,
+				     size_t size, unsigned int width)
+{
+	if (map && map->dso) {
+		const char *dso_name = verbose > 0 ? map->dso->long_name :
+			map->dso->short_name;
+		return repsep_snprintf(bf, size, "%-*.*s", width, width, dso_name);
+	}
 
-	वापस repsep_snम_लिखो(bf, size, "%-*.*s", width, width, "[unknown]");
-पूर्ण
+	return repsep_snprintf(bf, size, "%-*.*s", width, width, "[unknown]");
+}
 
-अटल पूर्णांक hist_entry__dso_snम_लिखो(काष्ठा hist_entry *he, अक्षर *bf,
-				    माप_प्रकार size, अचिन्हित पूर्णांक width)
-अणु
-	वापस _hist_entry__dso_snम_लिखो(he->ms.map, bf, size, width);
-पूर्ण
+static int hist_entry__dso_snprintf(struct hist_entry *he, char *bf,
+				    size_t size, unsigned int width)
+{
+	return _hist_entry__dso_snprintf(he->ms.map, bf, size, width);
+}
 
-अटल पूर्णांक hist_entry__dso_filter(काष्ठा hist_entry *he, पूर्णांक type, स्थिर व्योम *arg)
-अणु
-	स्थिर काष्ठा dso *dso = arg;
+static int hist_entry__dso_filter(struct hist_entry *he, int type, const void *arg)
+{
+	const struct dso *dso = arg;
 
-	अगर (type != HIST_FILTER__DSO)
-		वापस -1;
+	if (type != HIST_FILTER__DSO)
+		return -1;
 
-	वापस dso && (!he->ms.map || he->ms.map->dso != dso);
-पूर्ण
+	return dso && (!he->ms.map || he->ms.map->dso != dso);
+}
 
-काष्ठा sort_entry sort_dso = अणु
+struct sort_entry sort_dso = {
 	.se_header	= "Shared Object",
 	.se_cmp		= sort__dso_cmp,
-	.se_snम_लिखो	= hist_entry__dso_snम_लिखो,
+	.se_snprintf	= hist_entry__dso_snprintf,
 	.se_filter	= hist_entry__dso_filter,
 	.se_width_idx	= HISTC_DSO,
-पूर्ण;
+};
 
 /* --sort symbol */
 
-अटल पूर्णांक64_t _sort__addr_cmp(u64 left_ip, u64 right_ip)
-अणु
-	वापस (पूर्णांक64_t)(right_ip - left_ip);
-पूर्ण
+static int64_t _sort__addr_cmp(u64 left_ip, u64 right_ip)
+{
+	return (int64_t)(right_ip - left_ip);
+}
 
-पूर्णांक64_t _sort__sym_cmp(काष्ठा symbol *sym_l, काष्ठा symbol *sym_r)
-अणु
-	अगर (!sym_l || !sym_r)
-		वापस cmp_null(sym_l, sym_r);
+int64_t _sort__sym_cmp(struct symbol *sym_l, struct symbol *sym_r)
+{
+	if (!sym_l || !sym_r)
+		return cmp_null(sym_l, sym_r);
 
-	अगर (sym_l == sym_r)
-		वापस 0;
+	if (sym_l == sym_r)
+		return 0;
 
-	अगर (sym_l->अंतरभूतd || sym_r->अंतरभूतd) अणु
-		पूर्णांक ret = म_भेद(sym_l->name, sym_r->name);
+	if (sym_l->inlined || sym_r->inlined) {
+		int ret = strcmp(sym_l->name, sym_r->name);
 
-		अगर (ret)
-			वापस ret;
-		अगर ((sym_l->start <= sym_r->end) && (sym_l->end >= sym_r->start))
-			वापस 0;
-	पूर्ण
+		if (ret)
+			return ret;
+		if ((sym_l->start <= sym_r->end) && (sym_l->end >= sym_r->start))
+			return 0;
+	}
 
-	अगर (sym_l->start != sym_r->start)
-		वापस (पूर्णांक64_t)(sym_r->start - sym_l->start);
+	if (sym_l->start != sym_r->start)
+		return (int64_t)(sym_r->start - sym_l->start);
 
-	वापस (पूर्णांक64_t)(sym_r->end - sym_l->end);
-पूर्ण
+	return (int64_t)(sym_r->end - sym_l->end);
+}
 
-अटल पूर्णांक64_t
-sort__sym_cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	पूर्णांक64_t ret;
+static int64_t
+sort__sym_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+	int64_t ret;
 
-	अगर (!left->ms.sym && !right->ms.sym)
-		वापस _sort__addr_cmp(left->ip, right->ip);
+	if (!left->ms.sym && !right->ms.sym)
+		return _sort__addr_cmp(left->ip, right->ip);
 
 	/*
 	 * comparing symbol address alone is not enough since it's a
 	 * relative address within a dso.
 	 */
-	अगर (!hists__has(left->hists, dso) || hists__has(right->hists, dso)) अणु
+	if (!hists__has(left->hists, dso) || hists__has(right->hists, dso)) {
 		ret = sort__dso_cmp(left, right);
-		अगर (ret != 0)
-			वापस ret;
-	पूर्ण
+		if (ret != 0)
+			return ret;
+	}
 
-	वापस _sort__sym_cmp(left->ms.sym, right->ms.sym);
-पूर्ण
+	return _sort__sym_cmp(left->ms.sym, right->ms.sym);
+}
 
-अटल पूर्णांक64_t
-sort__sym_sort(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	अगर (!left->ms.sym || !right->ms.sym)
-		वापस cmp_null(left->ms.sym, right->ms.sym);
+static int64_t
+sort__sym_sort(struct hist_entry *left, struct hist_entry *right)
+{
+	if (!left->ms.sym || !right->ms.sym)
+		return cmp_null(left->ms.sym, right->ms.sym);
 
-	वापस म_भेद(right->ms.sym->name, left->ms.sym->name);
-पूर्ण
+	return strcmp(right->ms.sym->name, left->ms.sym->name);
+}
 
-अटल पूर्णांक _hist_entry__sym_snम_लिखो(काष्ठा map_symbol *ms,
-				     u64 ip, अक्षर level, अक्षर *bf, माप_प्रकार size,
-				     अचिन्हित पूर्णांक width)
-अणु
-	काष्ठा symbol *sym = ms->sym;
-	काष्ठा map *map = ms->map;
-	माप_प्रकार ret = 0;
+static int _hist_entry__sym_snprintf(struct map_symbol *ms,
+				     u64 ip, char level, char *bf, size_t size,
+				     unsigned int width)
+{
+	struct symbol *sym = ms->sym;
+	struct map *map = ms->map;
+	size_t ret = 0;
 
-	अगर (verbose > 0) अणु
-		अक्षर o = map ? dso__symtab_origin(map->dso) : '!';
+	if (verbose > 0) {
+		char o = map ? dso__symtab_origin(map->dso) : '!';
 		u64 rip = ip;
 
-		अगर (map && map->dso && map->dso->kernel
+		if (map && map->dso && map->dso->kernel
 		    && map->dso->adjust_symbols)
 			rip = map->unmap_ip(map, ip);
 
-		ret += repsep_snम_लिखो(bf, size, "%-#*llx %c ",
+		ret += repsep_snprintf(bf, size, "%-#*llx %c ",
 				       BITS_PER_LONG / 4 + 2, rip, o);
-	पूर्ण
+	}
 
-	ret += repsep_snम_लिखो(bf + ret, size - ret, "[%c] ", level);
-	अगर (sym && map) अणु
-		अगर (sym->type == STT_OBJECT) अणु
-			ret += repsep_snम_लिखो(bf + ret, size - ret, "%s", sym->name);
-			ret += repsep_snम_लिखो(bf + ret, size - ret, "+0x%llx",
+	ret += repsep_snprintf(bf + ret, size - ret, "[%c] ", level);
+	if (sym && map) {
+		if (sym->type == STT_OBJECT) {
+			ret += repsep_snprintf(bf + ret, size - ret, "%s", sym->name);
+			ret += repsep_snprintf(bf + ret, size - ret, "+0x%llx",
 					ip - map->unmap_ip(map, sym->start));
-		पूर्ण अन्यथा अणु
-			ret += repsep_snम_लिखो(bf + ret, size - ret, "%.*s",
+		} else {
+			ret += repsep_snprintf(bf + ret, size - ret, "%.*s",
 					       width - ret,
 					       sym->name);
-			अगर (sym->अंतरभूतd)
-				ret += repsep_snम_लिखो(bf + ret, size - ret,
+			if (sym->inlined)
+				ret += repsep_snprintf(bf + ret, size - ret,
 						       " (inlined)");
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		माप_प्रकार len = BITS_PER_LONG / 4;
-		ret += repsep_snम_लिखो(bf + ret, size - ret, "%-#.*llx",
+		}
+	} else {
+		size_t len = BITS_PER_LONG / 4;
+		ret += repsep_snprintf(bf + ret, size - ret, "%-#.*llx",
 				       len, ip);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक hist_entry__sym_snम_लिखो(काष्ठा hist_entry *he, अक्षर *bf, माप_प्रकार size, अचिन्हित पूर्णांक width)
-अणु
-	वापस _hist_entry__sym_snम_लिखो(&he->ms, he->ip,
+int hist_entry__sym_snprintf(struct hist_entry *he, char *bf, size_t size, unsigned int width)
+{
+	return _hist_entry__sym_snprintf(&he->ms, he->ip,
 					 he->level, bf, size, width);
-पूर्ण
+}
 
-अटल पूर्णांक hist_entry__sym_filter(काष्ठा hist_entry *he, पूर्णांक type, स्थिर व्योम *arg)
-अणु
-	स्थिर अक्षर *sym = arg;
+static int hist_entry__sym_filter(struct hist_entry *he, int type, const void *arg)
+{
+	const char *sym = arg;
 
-	अगर (type != HIST_FILTER__SYMBOL)
-		वापस -1;
+	if (type != HIST_FILTER__SYMBOL)
+		return -1;
 
-	वापस sym && (!he->ms.sym || !म_माला(he->ms.sym->name, sym));
-पूर्ण
+	return sym && (!he->ms.sym || !strstr(he->ms.sym->name, sym));
+}
 
-काष्ठा sort_entry sort_sym = अणु
+struct sort_entry sort_sym = {
 	.se_header	= "Symbol",
 	.se_cmp		= sort__sym_cmp,
 	.se_sort	= sort__sym_sort,
-	.se_snम_लिखो	= hist_entry__sym_snम_लिखो,
+	.se_snprintf	= hist_entry__sym_snprintf,
 	.se_filter	= hist_entry__sym_filter,
 	.se_width_idx	= HISTC_SYMBOL,
-पूर्ण;
+};
 
 /* --sort srcline */
 
-अक्षर *hist_entry__srcline(काष्ठा hist_entry *he)
-अणु
-	वापस map__srcline(he->ms.map, he->ip, he->ms.sym);
-पूर्ण
+char *hist_entry__srcline(struct hist_entry *he)
+{
+	return map__srcline(he->ms.map, he->ip, he->ms.sym);
+}
 
-अटल पूर्णांक64_t
-sort__srcline_cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	अगर (!left->srcline)
+static int64_t
+sort__srcline_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+	if (!left->srcline)
 		left->srcline = hist_entry__srcline(left);
-	अगर (!right->srcline)
+	if (!right->srcline)
 		right->srcline = hist_entry__srcline(right);
 
-	वापस म_भेद(right->srcline, left->srcline);
-पूर्ण
+	return strcmp(right->srcline, left->srcline);
+}
 
-अटल पूर्णांक hist_entry__srcline_snम_लिखो(काष्ठा hist_entry *he, अक्षर *bf,
-					माप_प्रकार size, अचिन्हित पूर्णांक width)
-अणु
-	अगर (!he->srcline)
+static int hist_entry__srcline_snprintf(struct hist_entry *he, char *bf,
+					size_t size, unsigned int width)
+{
+	if (!he->srcline)
 		he->srcline = hist_entry__srcline(he);
 
-	वापस repsep_snम_लिखो(bf, size, "%-.*s", width, he->srcline);
-पूर्ण
+	return repsep_snprintf(bf, size, "%-.*s", width, he->srcline);
+}
 
-काष्ठा sort_entry sort_srcline = अणु
+struct sort_entry sort_srcline = {
 	.se_header	= "Source:Line",
 	.se_cmp		= sort__srcline_cmp,
-	.se_snम_लिखो	= hist_entry__srcline_snम_लिखो,
+	.se_snprintf	= hist_entry__srcline_snprintf,
 	.se_width_idx	= HISTC_SRCLINE,
-पूर्ण;
+};
 
 /* --sort srcline_from */
 
-अटल अक्षर *addr_map_symbol__srcline(काष्ठा addr_map_symbol *ams)
-अणु
-	वापस map__srcline(ams->ms.map, ams->al_addr, ams->ms.sym);
-पूर्ण
+static char *addr_map_symbol__srcline(struct addr_map_symbol *ams)
+{
+	return map__srcline(ams->ms.map, ams->al_addr, ams->ms.sym);
+}
 
-अटल पूर्णांक64_t
-sort__srcline_from_cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	अगर (!left->branch_info->srcline_from)
+static int64_t
+sort__srcline_from_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+	if (!left->branch_info->srcline_from)
 		left->branch_info->srcline_from = addr_map_symbol__srcline(&left->branch_info->from);
 
-	अगर (!right->branch_info->srcline_from)
+	if (!right->branch_info->srcline_from)
 		right->branch_info->srcline_from = addr_map_symbol__srcline(&right->branch_info->from);
 
-	वापस म_भेद(right->branch_info->srcline_from, left->branch_info->srcline_from);
-पूर्ण
+	return strcmp(right->branch_info->srcline_from, left->branch_info->srcline_from);
+}
 
-अटल पूर्णांक hist_entry__srcline_from_snम_लिखो(काष्ठा hist_entry *he, अक्षर *bf,
-					माप_प्रकार size, अचिन्हित पूर्णांक width)
-अणु
-	वापस repsep_snम_लिखो(bf, size, "%-*.*s", width, width, he->branch_info->srcline_from);
-पूर्ण
+static int hist_entry__srcline_from_snprintf(struct hist_entry *he, char *bf,
+					size_t size, unsigned int width)
+{
+	return repsep_snprintf(bf, size, "%-*.*s", width, width, he->branch_info->srcline_from);
+}
 
-काष्ठा sort_entry sort_srcline_from = अणु
+struct sort_entry sort_srcline_from = {
 	.se_header	= "From Source:Line",
 	.se_cmp		= sort__srcline_from_cmp,
-	.se_snम_लिखो	= hist_entry__srcline_from_snम_लिखो,
+	.se_snprintf	= hist_entry__srcline_from_snprintf,
 	.se_width_idx	= HISTC_SRCLINE_FROM,
-पूर्ण;
+};
 
 /* --sort srcline_to */
 
-अटल पूर्णांक64_t
-sort__srcline_to_cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	अगर (!left->branch_info->srcline_to)
+static int64_t
+sort__srcline_to_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+	if (!left->branch_info->srcline_to)
 		left->branch_info->srcline_to = addr_map_symbol__srcline(&left->branch_info->to);
 
-	अगर (!right->branch_info->srcline_to)
+	if (!right->branch_info->srcline_to)
 		right->branch_info->srcline_to = addr_map_symbol__srcline(&right->branch_info->to);
 
-	वापस म_भेद(right->branch_info->srcline_to, left->branch_info->srcline_to);
-पूर्ण
+	return strcmp(right->branch_info->srcline_to, left->branch_info->srcline_to);
+}
 
-अटल पूर्णांक hist_entry__srcline_to_snम_लिखो(काष्ठा hist_entry *he, अक्षर *bf,
-					माप_प्रकार size, अचिन्हित पूर्णांक width)
-अणु
-	वापस repsep_snम_लिखो(bf, size, "%-*.*s", width, width, he->branch_info->srcline_to);
-पूर्ण
+static int hist_entry__srcline_to_snprintf(struct hist_entry *he, char *bf,
+					size_t size, unsigned int width)
+{
+	return repsep_snprintf(bf, size, "%-*.*s", width, width, he->branch_info->srcline_to);
+}
 
-काष्ठा sort_entry sort_srcline_to = अणु
+struct sort_entry sort_srcline_to = {
 	.se_header	= "To Source:Line",
 	.se_cmp		= sort__srcline_to_cmp,
-	.se_snम_लिखो	= hist_entry__srcline_to_snम_लिखो,
+	.se_snprintf	= hist_entry__srcline_to_snprintf,
 	.se_width_idx	= HISTC_SRCLINE_TO,
-पूर्ण;
+};
 
-अटल पूर्णांक hist_entry__sym_ipc_snम_लिखो(काष्ठा hist_entry *he, अक्षर *bf,
-					माप_प्रकार size, अचिन्हित पूर्णांक width)
-अणु
+static int hist_entry__sym_ipc_snprintf(struct hist_entry *he, char *bf,
+					size_t size, unsigned int width)
+{
 
-	काष्ठा symbol *sym = he->ms.sym;
-	काष्ठा annotation *notes;
-	द्विगुन ipc = 0.0, coverage = 0.0;
-	अक्षर पंचांगp[64];
+	struct symbol *sym = he->ms.sym;
+	struct annotation *notes;
+	double ipc = 0.0, coverage = 0.0;
+	char tmp[64];
 
-	अगर (!sym)
-		वापस repsep_snम_लिखो(bf, size, "%-*s", width, "-");
+	if (!sym)
+		return repsep_snprintf(bf, size, "%-*s", width, "-");
 
 	notes = symbol__annotation(sym);
 
-	अगर (notes->hit_cycles)
-		ipc = notes->hit_insn / ((द्विगुन)notes->hit_cycles);
+	if (notes->hit_cycles)
+		ipc = notes->hit_insn / ((double)notes->hit_cycles);
 
-	अगर (notes->total_insn) अणु
+	if (notes->total_insn) {
 		coverage = notes->cover_insn * 100.0 /
-			((द्विगुन)notes->total_insn);
-	पूर्ण
+			((double)notes->total_insn);
+	}
 
-	snम_लिखो(पंचांगp, माप(पंचांगp), "%-5.2f [%5.1f%%]", ipc, coverage);
-	वापस repsep_snम_लिखो(bf, size, "%-*s", width, पंचांगp);
-पूर्ण
+	snprintf(tmp, sizeof(tmp), "%-5.2f [%5.1f%%]", ipc, coverage);
+	return repsep_snprintf(bf, size, "%-*s", width, tmp);
+}
 
-काष्ठा sort_entry sort_sym_ipc = अणु
+struct sort_entry sort_sym_ipc = {
 	.se_header	= "IPC   [IPC Coverage]",
 	.se_cmp		= sort__sym_cmp,
-	.se_snम_लिखो	= hist_entry__sym_ipc_snम_लिखो,
+	.se_snprintf	= hist_entry__sym_ipc_snprintf,
 	.se_width_idx	= HISTC_SYMBOL_IPC,
-पूर्ण;
+};
 
-अटल पूर्णांक hist_entry__sym_ipc_null_snम_लिखो(काष्ठा hist_entry *he
+static int hist_entry__sym_ipc_null_snprintf(struct hist_entry *he
 					     __maybe_unused,
-					     अक्षर *bf, माप_प्रकार size,
-					     अचिन्हित पूर्णांक width)
-अणु
-	अक्षर पंचांगp[64];
+					     char *bf, size_t size,
+					     unsigned int width)
+{
+	char tmp[64];
 
-	snम_लिखो(पंचांगp, माप(पंचांगp), "%-5s %2s", "-", "-");
-	वापस repsep_snम_लिखो(bf, size, "%-*s", width, पंचांगp);
-पूर्ण
+	snprintf(tmp, sizeof(tmp), "%-5s %2s", "-", "-");
+	return repsep_snprintf(bf, size, "%-*s", width, tmp);
+}
 
-काष्ठा sort_entry sort_sym_ipc_null = अणु
+struct sort_entry sort_sym_ipc_null = {
 	.se_header	= "IPC   [IPC Coverage]",
 	.se_cmp		= sort__sym_cmp,
-	.se_snम_लिखो	= hist_entry__sym_ipc_null_snम_लिखो,
+	.se_snprintf	= hist_entry__sym_ipc_null_snprintf,
 	.se_width_idx	= HISTC_SYMBOL_IPC,
-पूर्ण;
+};
 
 /* --sort srcfile */
 
-अटल अक्षर no_srcfile[1];
+static char no_srcfile[1];
 
-अटल अक्षर *hist_entry__get_srcfile(काष्ठा hist_entry *e)
-अणु
-	अक्षर *sf, *p;
-	काष्ठा map *map = e->ms.map;
+static char *hist_entry__get_srcfile(struct hist_entry *e)
+{
+	char *sf, *p;
+	struct map *map = e->ms.map;
 
-	अगर (!map)
-		वापस no_srcfile;
+	if (!map)
+		return no_srcfile;
 
 	sf = __get_srcline(map->dso, map__rip_2objdump(map, e->ip),
 			 e->ms.sym, false, true, true, e->ip);
-	अगर (!म_भेद(sf, SRCLINE_UNKNOWN))
-		वापस no_srcfile;
-	p = म_अक्षर(sf, ':');
-	अगर (p && *sf) अणु
+	if (!strcmp(sf, SRCLINE_UNKNOWN))
+		return no_srcfile;
+	p = strchr(sf, ':');
+	if (p && *sf) {
 		*p = 0;
-		वापस sf;
-	पूर्ण
-	मुक्त(sf);
-	वापस no_srcfile;
-पूर्ण
+		return sf;
+	}
+	free(sf);
+	return no_srcfile;
+}
 
-अटल पूर्णांक64_t
-sort__srcfile_cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	अगर (!left->srcfile)
+static int64_t
+sort__srcfile_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+	if (!left->srcfile)
 		left->srcfile = hist_entry__get_srcfile(left);
-	अगर (!right->srcfile)
+	if (!right->srcfile)
 		right->srcfile = hist_entry__get_srcfile(right);
 
-	वापस म_भेद(right->srcfile, left->srcfile);
-पूर्ण
+	return strcmp(right->srcfile, left->srcfile);
+}
 
-अटल पूर्णांक hist_entry__srcfile_snम_लिखो(काष्ठा hist_entry *he, अक्षर *bf,
-					माप_प्रकार size, अचिन्हित पूर्णांक width)
-अणु
-	अगर (!he->srcfile)
+static int hist_entry__srcfile_snprintf(struct hist_entry *he, char *bf,
+					size_t size, unsigned int width)
+{
+	if (!he->srcfile)
 		he->srcfile = hist_entry__get_srcfile(he);
 
-	वापस repsep_snम_लिखो(bf, size, "%-.*s", width, he->srcfile);
-पूर्ण
+	return repsep_snprintf(bf, size, "%-.*s", width, he->srcfile);
+}
 
-काष्ठा sort_entry sort_srcfile = अणु
+struct sort_entry sort_srcfile = {
 	.se_header	= "Source File",
 	.se_cmp		= sort__srcfile_cmp,
-	.se_snम_लिखो	= hist_entry__srcfile_snम_लिखो,
-	.se_width_idx	= HISTC_SRCखाता,
-पूर्ण;
+	.se_snprintf	= hist_entry__srcfile_snprintf,
+	.se_width_idx	= HISTC_SRCFILE,
+};
 
 /* --sort parent */
 
-अटल पूर्णांक64_t
-sort__parent_cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	काष्ठा symbol *sym_l = left->parent;
-	काष्ठा symbol *sym_r = right->parent;
+static int64_t
+sort__parent_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+	struct symbol *sym_l = left->parent;
+	struct symbol *sym_r = right->parent;
 
-	अगर (!sym_l || !sym_r)
-		वापस cmp_null(sym_l, sym_r);
+	if (!sym_l || !sym_r)
+		return cmp_null(sym_l, sym_r);
 
-	वापस म_भेद(sym_r->name, sym_l->name);
-पूर्ण
+	return strcmp(sym_r->name, sym_l->name);
+}
 
-अटल पूर्णांक hist_entry__parent_snम_लिखो(काष्ठा hist_entry *he, अक्षर *bf,
-				       माप_प्रकार size, अचिन्हित पूर्णांक width)
-अणु
-	वापस repsep_snम_लिखो(bf, size, "%-*.*s", width, width,
+static int hist_entry__parent_snprintf(struct hist_entry *he, char *bf,
+				       size_t size, unsigned int width)
+{
+	return repsep_snprintf(bf, size, "%-*.*s", width, width,
 			      he->parent ? he->parent->name : "[other]");
-पूर्ण
+}
 
-काष्ठा sort_entry sort_parent = अणु
+struct sort_entry sort_parent = {
 	.se_header	= "Parent symbol",
 	.se_cmp		= sort__parent_cmp,
-	.se_snम_लिखो	= hist_entry__parent_snम_लिखो,
+	.se_snprintf	= hist_entry__parent_snprintf,
 	.se_width_idx	= HISTC_PARENT,
-पूर्ण;
+};
 
 /* --sort cpu */
 
-अटल पूर्णांक64_t
-sort__cpu_cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	वापस right->cpu - left->cpu;
-पूर्ण
+static int64_t
+sort__cpu_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+	return right->cpu - left->cpu;
+}
 
-अटल पूर्णांक hist_entry__cpu_snम_लिखो(काष्ठा hist_entry *he, अक्षर *bf,
-				    माप_प्रकार size, अचिन्हित पूर्णांक width)
-अणु
-	वापस repsep_snम_लिखो(bf, size, "%*.*d", width, width, he->cpu);
-पूर्ण
+static int hist_entry__cpu_snprintf(struct hist_entry *he, char *bf,
+				    size_t size, unsigned int width)
+{
+	return repsep_snprintf(bf, size, "%*.*d", width, width, he->cpu);
+}
 
-काष्ठा sort_entry sort_cpu = अणु
+struct sort_entry sort_cpu = {
 	.se_header      = "CPU",
 	.se_cmp	        = sort__cpu_cmp,
-	.se_snम_लिखो    = hist_entry__cpu_snम_लिखो,
+	.se_snprintf    = hist_entry__cpu_snprintf,
 	.se_width_idx	= HISTC_CPU,
-पूर्ण;
+};
 
 /* --sort cgroup_id */
 
-अटल पूर्णांक64_t _sort__cgroup_dev_cmp(u64 left_dev, u64 right_dev)
-अणु
-	वापस (पूर्णांक64_t)(right_dev - left_dev);
-पूर्ण
+static int64_t _sort__cgroup_dev_cmp(u64 left_dev, u64 right_dev)
+{
+	return (int64_t)(right_dev - left_dev);
+}
 
-अटल पूर्णांक64_t _sort__cgroup_inode_cmp(u64 left_ino, u64 right_ino)
-अणु
-	वापस (पूर्णांक64_t)(right_ino - left_ino);
-पूर्ण
+static int64_t _sort__cgroup_inode_cmp(u64 left_ino, u64 right_ino)
+{
+	return (int64_t)(right_ino - left_ino);
+}
 
-अटल पूर्णांक64_t
-sort__cgroup_id_cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	पूर्णांक64_t ret;
+static int64_t
+sort__cgroup_id_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+	int64_t ret;
 
 	ret = _sort__cgroup_dev_cmp(right->cgroup_id.dev, left->cgroup_id.dev);
-	अगर (ret != 0)
-		वापस ret;
+	if (ret != 0)
+		return ret;
 
-	वापस _sort__cgroup_inode_cmp(right->cgroup_id.ino,
+	return _sort__cgroup_inode_cmp(right->cgroup_id.ino,
 				       left->cgroup_id.ino);
-पूर्ण
+}
 
-अटल पूर्णांक hist_entry__cgroup_id_snम_लिखो(काष्ठा hist_entry *he,
-					  अक्षर *bf, माप_प्रकार size,
-					  अचिन्हित पूर्णांक width __maybe_unused)
-अणु
-	वापस repsep_snम_लिखो(bf, size, "%lu/0x%lx", he->cgroup_id.dev,
+static int hist_entry__cgroup_id_snprintf(struct hist_entry *he,
+					  char *bf, size_t size,
+					  unsigned int width __maybe_unused)
+{
+	return repsep_snprintf(bf, size, "%lu/0x%lx", he->cgroup_id.dev,
 			       he->cgroup_id.ino);
-पूर्ण
+}
 
-काष्ठा sort_entry sort_cgroup_id = अणु
+struct sort_entry sort_cgroup_id = {
 	.se_header      = "cgroup id (dev/inode)",
 	.se_cmp	        = sort__cgroup_id_cmp,
-	.se_snम_लिखो    = hist_entry__cgroup_id_snम_लिखो,
+	.se_snprintf    = hist_entry__cgroup_id_snprintf,
 	.se_width_idx	= HISTC_CGROUP_ID,
-पूर्ण;
+};
 
 /* --sort cgroup */
 
-अटल पूर्णांक64_t
-sort__cgroup_cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	वापस right->cgroup - left->cgroup;
-पूर्ण
+static int64_t
+sort__cgroup_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+	return right->cgroup - left->cgroup;
+}
 
-अटल पूर्णांक hist_entry__cgroup_snम_लिखो(काष्ठा hist_entry *he,
-				       अक्षर *bf, माप_प्रकार size,
-				       अचिन्हित पूर्णांक width __maybe_unused)
-अणु
-	स्थिर अक्षर *cgrp_name = "N/A";
+static int hist_entry__cgroup_snprintf(struct hist_entry *he,
+				       char *bf, size_t size,
+				       unsigned int width __maybe_unused)
+{
+	const char *cgrp_name = "N/A";
 
-	अगर (he->cgroup) अणु
-		काष्ठा cgroup *cgrp = cgroup__find(he->ms.maps->machine->env,
+	if (he->cgroup) {
+		struct cgroup *cgrp = cgroup__find(he->ms.maps->machine->env,
 						   he->cgroup);
-		अगर (cgrp != शून्य)
+		if (cgrp != NULL)
 			cgrp_name = cgrp->name;
-		अन्यथा
+		else
 			cgrp_name = "unknown";
-	पूर्ण
+	}
 
-	वापस repsep_snम_लिखो(bf, size, "%s", cgrp_name);
-पूर्ण
+	return repsep_snprintf(bf, size, "%s", cgrp_name);
+}
 
-काष्ठा sort_entry sort_cgroup = अणु
+struct sort_entry sort_cgroup = {
 	.se_header      = "Cgroup",
 	.se_cmp	        = sort__cgroup_cmp,
-	.se_snम_लिखो    = hist_entry__cgroup_snम_लिखो,
+	.se_snprintf    = hist_entry__cgroup_snprintf,
 	.se_width_idx	= HISTC_CGROUP,
-पूर्ण;
+};
 
 /* --sort socket */
 
-अटल पूर्णांक64_t
-sort__socket_cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	वापस right->socket - left->socket;
-पूर्ण
+static int64_t
+sort__socket_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+	return right->socket - left->socket;
+}
 
-अटल पूर्णांक hist_entry__socket_snम_लिखो(काष्ठा hist_entry *he, अक्षर *bf,
-				    माप_प्रकार size, अचिन्हित पूर्णांक width)
-अणु
-	वापस repsep_snम_लिखो(bf, size, "%*.*d", width, width-3, he->socket);
-पूर्ण
+static int hist_entry__socket_snprintf(struct hist_entry *he, char *bf,
+				    size_t size, unsigned int width)
+{
+	return repsep_snprintf(bf, size, "%*.*d", width, width-3, he->socket);
+}
 
-अटल पूर्णांक hist_entry__socket_filter(काष्ठा hist_entry *he, पूर्णांक type, स्थिर व्योम *arg)
-अणु
-	पूर्णांक sk = *(स्थिर पूर्णांक *)arg;
+static int hist_entry__socket_filter(struct hist_entry *he, int type, const void *arg)
+{
+	int sk = *(const int *)arg;
 
-	अगर (type != HIST_FILTER__SOCKET)
-		वापस -1;
+	if (type != HIST_FILTER__SOCKET)
+		return -1;
 
-	वापस sk >= 0 && he->socket != sk;
-पूर्ण
+	return sk >= 0 && he->socket != sk;
+}
 
-काष्ठा sort_entry sort_socket = अणु
+struct sort_entry sort_socket = {
 	.se_header      = "Socket",
 	.se_cmp	        = sort__socket_cmp,
-	.se_snम_लिखो    = hist_entry__socket_snम_लिखो,
+	.se_snprintf    = hist_entry__socket_snprintf,
 	.se_filter      = hist_entry__socket_filter,
 	.se_width_idx	= HISTC_SOCKET,
-पूर्ण;
+};
 
-/* --sort समय */
+/* --sort time */
 
-अटल पूर्णांक64_t
-sort__समय_cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	वापस right->समय - left->समय;
-पूर्ण
+static int64_t
+sort__time_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+	return right->time - left->time;
+}
 
-अटल पूर्णांक hist_entry__समय_snम_लिखो(काष्ठा hist_entry *he, अक्षर *bf,
-				    माप_प्रकार size, अचिन्हित पूर्णांक width)
-अणु
-	अक्षर he_समय[32];
+static int hist_entry__time_snprintf(struct hist_entry *he, char *bf,
+				    size_t size, unsigned int width)
+{
+	char he_time[32];
 
-	अगर (symbol_conf.nanosecs)
-		बारtamp__scnम_लिखो_nsec(he->समय, he_समय,
-					  माप(he_समय));
-	अन्यथा
-		बारtamp__scnम_लिखो_usec(he->समय, he_समय,
-					  माप(he_समय));
+	if (symbol_conf.nanosecs)
+		timestamp__scnprintf_nsec(he->time, he_time,
+					  sizeof(he_time));
+	else
+		timestamp__scnprintf_usec(he->time, he_time,
+					  sizeof(he_time));
 
-	वापस repsep_snम_लिखो(bf, size, "%-.*s", width, he_समय);
-पूर्ण
+	return repsep_snprintf(bf, size, "%-.*s", width, he_time);
+}
 
-काष्ठा sort_entry sort_समय = अणु
+struct sort_entry sort_time = {
 	.se_header      = "Time",
-	.se_cmp	        = sort__समय_cmp,
-	.se_snम_लिखो    = hist_entry__समय_snम_लिखो,
+	.se_cmp	        = sort__time_cmp,
+	.se_snprintf    = hist_entry__time_snprintf,
 	.se_width_idx	= HISTC_TIME,
-पूर्ण;
+};
 
 /* --sort trace */
 
-अटल अक्षर *get_trace_output(काष्ठा hist_entry *he)
-अणु
-	काष्ठा trace_seq seq;
-	काष्ठा evsel *evsel;
-	काष्ठा tep_record rec = अणु
+static char *get_trace_output(struct hist_entry *he)
+{
+	struct trace_seq seq;
+	struct evsel *evsel;
+	struct tep_record rec = {
 		.data = he->raw_data,
 		.size = he->raw_size,
-	पूर्ण;
+	};
 
 	evsel = hists_to_evsel(he->hists);
 
 	trace_seq_init(&seq);
-	अगर (symbol_conf.raw_trace) अणु
-		tep_prपूर्णांक_fields(&seq, he->raw_data, he->raw_size,
-				 evsel->tp_क्रमmat);
-	पूर्ण अन्यथा अणु
-		tep_prपूर्णांक_event(evsel->tp_क्रमmat->tep,
+	if (symbol_conf.raw_trace) {
+		tep_print_fields(&seq, he->raw_data, he->raw_size,
+				 evsel->tp_format);
+	} else {
+		tep_print_event(evsel->tp_format->tep,
 				&seq, &rec, "%s", TEP_PRINT_INFO);
-	पूर्ण
+	}
 	/*
 	 * Trim the buffer, it starts at 4KB and we're not going to
 	 * add anything more to this buffer.
 	 */
-	वापस पुनः_स्मृति(seq.buffer, seq.len + 1);
-पूर्ण
+	return realloc(seq.buffer, seq.len + 1);
+}
 
-अटल पूर्णांक64_t
-sort__trace_cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	काष्ठा evsel *evsel;
+static int64_t
+sort__trace_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+	struct evsel *evsel;
 
 	evsel = hists_to_evsel(left->hists);
-	अगर (evsel->core.attr.type != PERF_TYPE_TRACEPOINT)
-		वापस 0;
+	if (evsel->core.attr.type != PERF_TYPE_TRACEPOINT)
+		return 0;
 
-	अगर (left->trace_output == शून्य)
+	if (left->trace_output == NULL)
 		left->trace_output = get_trace_output(left);
-	अगर (right->trace_output == शून्य)
+	if (right->trace_output == NULL)
 		right->trace_output = get_trace_output(right);
 
-	वापस म_भेद(right->trace_output, left->trace_output);
-पूर्ण
+	return strcmp(right->trace_output, left->trace_output);
+}
 
-अटल पूर्णांक hist_entry__trace_snम_लिखो(काष्ठा hist_entry *he, अक्षर *bf,
-				    माप_प्रकार size, अचिन्हित पूर्णांक width)
-अणु
-	काष्ठा evsel *evsel;
+static int hist_entry__trace_snprintf(struct hist_entry *he, char *bf,
+				    size_t size, unsigned int width)
+{
+	struct evsel *evsel;
 
 	evsel = hists_to_evsel(he->hists);
-	अगर (evsel->core.attr.type != PERF_TYPE_TRACEPOINT)
-		वापस scnम_लिखो(bf, size, "%-.*s", width, "N/A");
+	if (evsel->core.attr.type != PERF_TYPE_TRACEPOINT)
+		return scnprintf(bf, size, "%-.*s", width, "N/A");
 
-	अगर (he->trace_output == शून्य)
+	if (he->trace_output == NULL)
 		he->trace_output = get_trace_output(he);
-	वापस repsep_snम_लिखो(bf, size, "%-.*s", width, he->trace_output);
-पूर्ण
+	return repsep_snprintf(bf, size, "%-.*s", width, he->trace_output);
+}
 
-काष्ठा sort_entry sort_trace = अणु
+struct sort_entry sort_trace = {
 	.se_header      = "Trace output",
 	.se_cmp	        = sort__trace_cmp,
-	.se_snम_लिखो    = hist_entry__trace_snम_लिखो,
+	.se_snprintf    = hist_entry__trace_snprintf,
 	.se_width_idx	= HISTC_TRACE,
-पूर्ण;
+};
 
-/* sort keys क्रम branch stacks */
+/* sort keys for branch stacks */
 
-अटल पूर्णांक64_t
-sort__dso_from_cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	अगर (!left->branch_info || !right->branch_info)
-		वापस cmp_null(left->branch_info, right->branch_info);
+static int64_t
+sort__dso_from_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+	if (!left->branch_info || !right->branch_info)
+		return cmp_null(left->branch_info, right->branch_info);
 
-	वापस _sort__dso_cmp(left->branch_info->from.ms.map,
+	return _sort__dso_cmp(left->branch_info->from.ms.map,
 			      right->branch_info->from.ms.map);
-पूर्ण
+}
 
-अटल पूर्णांक hist_entry__dso_from_snम_लिखो(काष्ठा hist_entry *he, अक्षर *bf,
-				    माप_प्रकार size, अचिन्हित पूर्णांक width)
-अणु
-	अगर (he->branch_info)
-		वापस _hist_entry__dso_snम_लिखो(he->branch_info->from.ms.map,
+static int hist_entry__dso_from_snprintf(struct hist_entry *he, char *bf,
+				    size_t size, unsigned int width)
+{
+	if (he->branch_info)
+		return _hist_entry__dso_snprintf(he->branch_info->from.ms.map,
 						 bf, size, width);
-	अन्यथा
-		वापस repsep_snम_लिखो(bf, size, "%-*.*s", width, width, "N/A");
-पूर्ण
+	else
+		return repsep_snprintf(bf, size, "%-*.*s", width, width, "N/A");
+}
 
-अटल पूर्णांक hist_entry__dso_from_filter(काष्ठा hist_entry *he, पूर्णांक type,
-				       स्थिर व्योम *arg)
-अणु
-	स्थिर काष्ठा dso *dso = arg;
+static int hist_entry__dso_from_filter(struct hist_entry *he, int type,
+				       const void *arg)
+{
+	const struct dso *dso = arg;
 
-	अगर (type != HIST_FILTER__DSO)
-		वापस -1;
+	if (type != HIST_FILTER__DSO)
+		return -1;
 
-	वापस dso && (!he->branch_info || !he->branch_info->from.ms.map ||
+	return dso && (!he->branch_info || !he->branch_info->from.ms.map ||
 		       he->branch_info->from.ms.map->dso != dso);
-पूर्ण
+}
 
-अटल पूर्णांक64_t
-sort__dso_to_cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	अगर (!left->branch_info || !right->branch_info)
-		वापस cmp_null(left->branch_info, right->branch_info);
+static int64_t
+sort__dso_to_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+	if (!left->branch_info || !right->branch_info)
+		return cmp_null(left->branch_info, right->branch_info);
 
-	वापस _sort__dso_cmp(left->branch_info->to.ms.map,
+	return _sort__dso_cmp(left->branch_info->to.ms.map,
 			      right->branch_info->to.ms.map);
-पूर्ण
+}
 
-अटल पूर्णांक hist_entry__dso_to_snम_लिखो(काष्ठा hist_entry *he, अक्षर *bf,
-				       माप_प्रकार size, अचिन्हित पूर्णांक width)
-अणु
-	अगर (he->branch_info)
-		वापस _hist_entry__dso_snम_लिखो(he->branch_info->to.ms.map,
+static int hist_entry__dso_to_snprintf(struct hist_entry *he, char *bf,
+				       size_t size, unsigned int width)
+{
+	if (he->branch_info)
+		return _hist_entry__dso_snprintf(he->branch_info->to.ms.map,
 						 bf, size, width);
-	अन्यथा
-		वापस repsep_snम_लिखो(bf, size, "%-*.*s", width, width, "N/A");
-पूर्ण
+	else
+		return repsep_snprintf(bf, size, "%-*.*s", width, width, "N/A");
+}
 
-अटल पूर्णांक hist_entry__dso_to_filter(काष्ठा hist_entry *he, पूर्णांक type,
-				     स्थिर व्योम *arg)
-अणु
-	स्थिर काष्ठा dso *dso = arg;
+static int hist_entry__dso_to_filter(struct hist_entry *he, int type,
+				     const void *arg)
+{
+	const struct dso *dso = arg;
 
-	अगर (type != HIST_FILTER__DSO)
-		वापस -1;
+	if (type != HIST_FILTER__DSO)
+		return -1;
 
-	वापस dso && (!he->branch_info || !he->branch_info->to.ms.map ||
+	return dso && (!he->branch_info || !he->branch_info->to.ms.map ||
 		       he->branch_info->to.ms.map->dso != dso);
-पूर्ण
+}
 
-अटल पूर्णांक64_t
-sort__sym_from_cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	काष्ठा addr_map_symbol *from_l = &left->branch_info->from;
-	काष्ठा addr_map_symbol *from_r = &right->branch_info->from;
+static int64_t
+sort__sym_from_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+	struct addr_map_symbol *from_l = &left->branch_info->from;
+	struct addr_map_symbol *from_r = &right->branch_info->from;
 
-	अगर (!left->branch_info || !right->branch_info)
-		वापस cmp_null(left->branch_info, right->branch_info);
+	if (!left->branch_info || !right->branch_info)
+		return cmp_null(left->branch_info, right->branch_info);
 
 	from_l = &left->branch_info->from;
 	from_r = &right->branch_info->from;
 
-	अगर (!from_l->ms.sym && !from_r->ms.sym)
-		वापस _sort__addr_cmp(from_l->addr, from_r->addr);
+	if (!from_l->ms.sym && !from_r->ms.sym)
+		return _sort__addr_cmp(from_l->addr, from_r->addr);
 
-	वापस _sort__sym_cmp(from_l->ms.sym, from_r->ms.sym);
-पूर्ण
+	return _sort__sym_cmp(from_l->ms.sym, from_r->ms.sym);
+}
 
-अटल पूर्णांक64_t
-sort__sym_to_cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	काष्ठा addr_map_symbol *to_l, *to_r;
+static int64_t
+sort__sym_to_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+	struct addr_map_symbol *to_l, *to_r;
 
-	अगर (!left->branch_info || !right->branch_info)
-		वापस cmp_null(left->branch_info, right->branch_info);
+	if (!left->branch_info || !right->branch_info)
+		return cmp_null(left->branch_info, right->branch_info);
 
 	to_l = &left->branch_info->to;
 	to_r = &right->branch_info->to;
 
-	अगर (!to_l->ms.sym && !to_r->ms.sym)
-		वापस _sort__addr_cmp(to_l->addr, to_r->addr);
+	if (!to_l->ms.sym && !to_r->ms.sym)
+		return _sort__addr_cmp(to_l->addr, to_r->addr);
 
-	वापस _sort__sym_cmp(to_l->ms.sym, to_r->ms.sym);
-पूर्ण
+	return _sort__sym_cmp(to_l->ms.sym, to_r->ms.sym);
+}
 
-अटल पूर्णांक hist_entry__sym_from_snम_लिखो(काष्ठा hist_entry *he, अक्षर *bf,
-					 माप_प्रकार size, अचिन्हित पूर्णांक width)
-अणु
-	अगर (he->branch_info) अणु
-		काष्ठा addr_map_symbol *from = &he->branch_info->from;
+static int hist_entry__sym_from_snprintf(struct hist_entry *he, char *bf,
+					 size_t size, unsigned int width)
+{
+	if (he->branch_info) {
+		struct addr_map_symbol *from = &he->branch_info->from;
 
-		वापस _hist_entry__sym_snम_लिखो(&from->ms, from->al_addr,
+		return _hist_entry__sym_snprintf(&from->ms, from->al_addr,
 						 he->level, bf, size, width);
-	पूर्ण
+	}
 
-	वापस repsep_snम_लिखो(bf, size, "%-*.*s", width, width, "N/A");
-पूर्ण
+	return repsep_snprintf(bf, size, "%-*.*s", width, width, "N/A");
+}
 
-अटल पूर्णांक hist_entry__sym_to_snम_लिखो(काष्ठा hist_entry *he, अक्षर *bf,
-				       माप_प्रकार size, अचिन्हित पूर्णांक width)
-अणु
-	अगर (he->branch_info) अणु
-		काष्ठा addr_map_symbol *to = &he->branch_info->to;
+static int hist_entry__sym_to_snprintf(struct hist_entry *he, char *bf,
+				       size_t size, unsigned int width)
+{
+	if (he->branch_info) {
+		struct addr_map_symbol *to = &he->branch_info->to;
 
-		वापस _hist_entry__sym_snम_लिखो(&to->ms, to->al_addr,
+		return _hist_entry__sym_snprintf(&to->ms, to->al_addr,
 						 he->level, bf, size, width);
-	पूर्ण
+	}
 
-	वापस repsep_snम_लिखो(bf, size, "%-*.*s", width, width, "N/A");
-पूर्ण
+	return repsep_snprintf(bf, size, "%-*.*s", width, width, "N/A");
+}
 
-अटल पूर्णांक hist_entry__sym_from_filter(काष्ठा hist_entry *he, पूर्णांक type,
-				       स्थिर व्योम *arg)
-अणु
-	स्थिर अक्षर *sym = arg;
+static int hist_entry__sym_from_filter(struct hist_entry *he, int type,
+				       const void *arg)
+{
+	const char *sym = arg;
 
-	अगर (type != HIST_FILTER__SYMBOL)
-		वापस -1;
+	if (type != HIST_FILTER__SYMBOL)
+		return -1;
 
-	वापस sym && !(he->branch_info && he->branch_info->from.ms.sym &&
-			म_माला(he->branch_info->from.ms.sym->name, sym));
-पूर्ण
+	return sym && !(he->branch_info && he->branch_info->from.ms.sym &&
+			strstr(he->branch_info->from.ms.sym->name, sym));
+}
 
-अटल पूर्णांक hist_entry__sym_to_filter(काष्ठा hist_entry *he, पूर्णांक type,
-				       स्थिर व्योम *arg)
-अणु
-	स्थिर अक्षर *sym = arg;
+static int hist_entry__sym_to_filter(struct hist_entry *he, int type,
+				       const void *arg)
+{
+	const char *sym = arg;
 
-	अगर (type != HIST_FILTER__SYMBOL)
-		वापस -1;
+	if (type != HIST_FILTER__SYMBOL)
+		return -1;
 
-	वापस sym && !(he->branch_info && he->branch_info->to.ms.sym &&
-		        म_माला(he->branch_info->to.ms.sym->name, sym));
-पूर्ण
+	return sym && !(he->branch_info && he->branch_info->to.ms.sym &&
+		        strstr(he->branch_info->to.ms.sym->name, sym));
+}
 
-काष्ठा sort_entry sort_dso_from = अणु
+struct sort_entry sort_dso_from = {
 	.se_header	= "Source Shared Object",
 	.se_cmp		= sort__dso_from_cmp,
-	.se_snम_लिखो	= hist_entry__dso_from_snम_लिखो,
+	.se_snprintf	= hist_entry__dso_from_snprintf,
 	.se_filter	= hist_entry__dso_from_filter,
 	.se_width_idx	= HISTC_DSO_FROM,
-पूर्ण;
+};
 
-काष्ठा sort_entry sort_dso_to = अणु
+struct sort_entry sort_dso_to = {
 	.se_header	= "Target Shared Object",
 	.se_cmp		= sort__dso_to_cmp,
-	.se_snम_लिखो	= hist_entry__dso_to_snम_लिखो,
+	.se_snprintf	= hist_entry__dso_to_snprintf,
 	.se_filter	= hist_entry__dso_to_filter,
 	.se_width_idx	= HISTC_DSO_TO,
-पूर्ण;
+};
 
-काष्ठा sort_entry sort_sym_from = अणु
+struct sort_entry sort_sym_from = {
 	.se_header	= "Source Symbol",
 	.se_cmp		= sort__sym_from_cmp,
-	.se_snम_लिखो	= hist_entry__sym_from_snम_लिखो,
+	.se_snprintf	= hist_entry__sym_from_snprintf,
 	.se_filter	= hist_entry__sym_from_filter,
 	.se_width_idx	= HISTC_SYMBOL_FROM,
-पूर्ण;
+};
 
-काष्ठा sort_entry sort_sym_to = अणु
+struct sort_entry sort_sym_to = {
 	.se_header	= "Target Symbol",
 	.se_cmp		= sort__sym_to_cmp,
-	.se_snम_लिखो	= hist_entry__sym_to_snम_लिखो,
+	.se_snprintf	= hist_entry__sym_to_snprintf,
 	.se_filter	= hist_entry__sym_to_filter,
 	.se_width_idx	= HISTC_SYMBOL_TO,
-पूर्ण;
+};
 
-अटल पूर्णांक64_t
-sort__mispredict_cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	अचिन्हित अक्षर mp, p;
+static int64_t
+sort__mispredict_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+	unsigned char mp, p;
 
-	अगर (!left->branch_info || !right->branch_info)
-		वापस cmp_null(left->branch_info, right->branch_info);
+	if (!left->branch_info || !right->branch_info)
+		return cmp_null(left->branch_info, right->branch_info);
 
 	mp = left->branch_info->flags.mispred != right->branch_info->flags.mispred;
 	p  = left->branch_info->flags.predicted != right->branch_info->flags.predicted;
-	वापस mp || p;
-पूर्ण
+	return mp || p;
+}
 
-अटल पूर्णांक hist_entry__mispredict_snम_लिखो(काष्ठा hist_entry *he, अक्षर *bf,
-				    माप_प्रकार size, अचिन्हित पूर्णांक width)अणु
-	अटल स्थिर अक्षर *out = "N/A";
+static int hist_entry__mispredict_snprintf(struct hist_entry *he, char *bf,
+				    size_t size, unsigned int width){
+	static const char *out = "N/A";
 
-	अगर (he->branch_info) अणु
-		अगर (he->branch_info->flags.predicted)
+	if (he->branch_info) {
+		if (he->branch_info->flags.predicted)
 			out = "N";
-		अन्यथा अगर (he->branch_info->flags.mispred)
+		else if (he->branch_info->flags.mispred)
 			out = "Y";
-	पूर्ण
+	}
 
-	वापस repsep_snम_लिखो(bf, size, "%-*.*s", width, width, out);
-पूर्ण
+	return repsep_snprintf(bf, size, "%-*.*s", width, width, out);
+}
 
-अटल पूर्णांक64_t
-sort__cycles_cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	अगर (!left->branch_info || !right->branch_info)
-		वापस cmp_null(left->branch_info, right->branch_info);
+static int64_t
+sort__cycles_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+	if (!left->branch_info || !right->branch_info)
+		return cmp_null(left->branch_info, right->branch_info);
 
-	वापस left->branch_info->flags.cycles -
+	return left->branch_info->flags.cycles -
 		right->branch_info->flags.cycles;
-पूर्ण
+}
 
-अटल पूर्णांक hist_entry__cycles_snम_लिखो(काष्ठा hist_entry *he, अक्षर *bf,
-				    माप_प्रकार size, अचिन्हित पूर्णांक width)
-अणु
-	अगर (!he->branch_info)
-		वापस scnम_लिखो(bf, size, "%-.*s", width, "N/A");
-	अगर (he->branch_info->flags.cycles == 0)
-		वापस repsep_snम_लिखो(bf, size, "%-*s", width, "-");
-	वापस repsep_snम_लिखो(bf, size, "%-*hd", width,
+static int hist_entry__cycles_snprintf(struct hist_entry *he, char *bf,
+				    size_t size, unsigned int width)
+{
+	if (!he->branch_info)
+		return scnprintf(bf, size, "%-.*s", width, "N/A");
+	if (he->branch_info->flags.cycles == 0)
+		return repsep_snprintf(bf, size, "%-*s", width, "-");
+	return repsep_snprintf(bf, size, "%-*hd", width,
 			       he->branch_info->flags.cycles);
-पूर्ण
+}
 
-काष्ठा sort_entry sort_cycles = अणु
+struct sort_entry sort_cycles = {
 	.se_header	= "Basic Block Cycles",
 	.se_cmp		= sort__cycles_cmp,
-	.se_snम_लिखो	= hist_entry__cycles_snम_लिखो,
+	.se_snprintf	= hist_entry__cycles_snprintf,
 	.se_width_idx	= HISTC_CYCLES,
-पूर्ण;
+};
 
 /* --sort daddr_sym */
-पूर्णांक64_t
-sort__daddr_cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	uपूर्णांक64_t l = 0, r = 0;
+int64_t
+sort__daddr_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+	uint64_t l = 0, r = 0;
 
-	अगर (left->mem_info)
+	if (left->mem_info)
 		l = left->mem_info->daddr.addr;
-	अगर (right->mem_info)
+	if (right->mem_info)
 		r = right->mem_info->daddr.addr;
 
-	वापस (पूर्णांक64_t)(r - l);
-पूर्ण
+	return (int64_t)(r - l);
+}
 
-अटल पूर्णांक hist_entry__daddr_snम_लिखो(काष्ठा hist_entry *he, अक्षर *bf,
-				    माप_प्रकार size, अचिन्हित पूर्णांक width)
-अणु
-	uपूर्णांक64_t addr = 0;
-	काष्ठा map_symbol *ms = शून्य;
+static int hist_entry__daddr_snprintf(struct hist_entry *he, char *bf,
+				    size_t size, unsigned int width)
+{
+	uint64_t addr = 0;
+	struct map_symbol *ms = NULL;
 
-	अगर (he->mem_info) अणु
+	if (he->mem_info) {
 		addr = he->mem_info->daddr.addr;
 		ms = &he->mem_info->daddr.ms;
-	पूर्ण
-	वापस _hist_entry__sym_snम_लिखो(ms, addr, he->level, bf, size, width);
-पूर्ण
+	}
+	return _hist_entry__sym_snprintf(ms, addr, he->level, bf, size, width);
+}
 
-पूर्णांक64_t
-sort__iaddr_cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	uपूर्णांक64_t l = 0, r = 0;
+int64_t
+sort__iaddr_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+	uint64_t l = 0, r = 0;
 
-	अगर (left->mem_info)
+	if (left->mem_info)
 		l = left->mem_info->iaddr.addr;
-	अगर (right->mem_info)
+	if (right->mem_info)
 		r = right->mem_info->iaddr.addr;
 
-	वापस (पूर्णांक64_t)(r - l);
-पूर्ण
+	return (int64_t)(r - l);
+}
 
-अटल पूर्णांक hist_entry__iaddr_snम_लिखो(काष्ठा hist_entry *he, अक्षर *bf,
-				    माप_प्रकार size, अचिन्हित पूर्णांक width)
-अणु
-	uपूर्णांक64_t addr = 0;
-	काष्ठा map_symbol *ms = शून्य;
+static int hist_entry__iaddr_snprintf(struct hist_entry *he, char *bf,
+				    size_t size, unsigned int width)
+{
+	uint64_t addr = 0;
+	struct map_symbol *ms = NULL;
 
-	अगर (he->mem_info) अणु
+	if (he->mem_info) {
 		addr = he->mem_info->iaddr.addr;
 		ms   = &he->mem_info->iaddr.ms;
-	पूर्ण
-	वापस _hist_entry__sym_snम_लिखो(ms, addr, he->level, bf, size, width);
-पूर्ण
+	}
+	return _hist_entry__sym_snprintf(ms, addr, he->level, bf, size, width);
+}
 
-अटल पूर्णांक64_t
-sort__dso_daddr_cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	काष्ठा map *map_l = शून्य;
-	काष्ठा map *map_r = शून्य;
+static int64_t
+sort__dso_daddr_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+	struct map *map_l = NULL;
+	struct map *map_r = NULL;
 
-	अगर (left->mem_info)
+	if (left->mem_info)
 		map_l = left->mem_info->daddr.ms.map;
-	अगर (right->mem_info)
+	if (right->mem_info)
 		map_r = right->mem_info->daddr.ms.map;
 
-	वापस _sort__dso_cmp(map_l, map_r);
-पूर्ण
+	return _sort__dso_cmp(map_l, map_r);
+}
 
-अटल पूर्णांक hist_entry__dso_daddr_snम_लिखो(काष्ठा hist_entry *he, अक्षर *bf,
-				    माप_प्रकार size, अचिन्हित पूर्णांक width)
-अणु
-	काष्ठा map *map = शून्य;
+static int hist_entry__dso_daddr_snprintf(struct hist_entry *he, char *bf,
+				    size_t size, unsigned int width)
+{
+	struct map *map = NULL;
 
-	अगर (he->mem_info)
+	if (he->mem_info)
 		map = he->mem_info->daddr.ms.map;
 
-	वापस _hist_entry__dso_snम_लिखो(map, bf, size, width);
-पूर्ण
+	return _hist_entry__dso_snprintf(map, bf, size, width);
+}
 
-अटल पूर्णांक64_t
-sort__locked_cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	जोड़ perf_mem_data_src data_src_l;
-	जोड़ perf_mem_data_src data_src_r;
+static int64_t
+sort__locked_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+	union perf_mem_data_src data_src_l;
+	union perf_mem_data_src data_src_r;
 
-	अगर (left->mem_info)
+	if (left->mem_info)
 		data_src_l = left->mem_info->data_src;
-	अन्यथा
+	else
 		data_src_l.mem_lock = PERF_MEM_LOCK_NA;
 
-	अगर (right->mem_info)
+	if (right->mem_info)
 		data_src_r = right->mem_info->data_src;
-	अन्यथा
+	else
 		data_src_r.mem_lock = PERF_MEM_LOCK_NA;
 
-	वापस (पूर्णांक64_t)(data_src_r.mem_lock - data_src_l.mem_lock);
-पूर्ण
+	return (int64_t)(data_src_r.mem_lock - data_src_l.mem_lock);
+}
 
-अटल पूर्णांक hist_entry__locked_snम_लिखो(काष्ठा hist_entry *he, अक्षर *bf,
-				    माप_प्रकार size, अचिन्हित पूर्णांक width)
-अणु
-	अक्षर out[10];
+static int hist_entry__locked_snprintf(struct hist_entry *he, char *bf,
+				    size_t size, unsigned int width)
+{
+	char out[10];
 
-	perf_mem__lck_scnम_लिखो(out, माप(out), he->mem_info);
-	वापस repsep_snम_लिखो(bf, size, "%.*s", width, out);
-पूर्ण
+	perf_mem__lck_scnprintf(out, sizeof(out), he->mem_info);
+	return repsep_snprintf(bf, size, "%.*s", width, out);
+}
 
-अटल पूर्णांक64_t
-sort__tlb_cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	जोड़ perf_mem_data_src data_src_l;
-	जोड़ perf_mem_data_src data_src_r;
+static int64_t
+sort__tlb_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+	union perf_mem_data_src data_src_l;
+	union perf_mem_data_src data_src_r;
 
-	अगर (left->mem_info)
+	if (left->mem_info)
 		data_src_l = left->mem_info->data_src;
-	अन्यथा
+	else
 		data_src_l.mem_dtlb = PERF_MEM_TLB_NA;
 
-	अगर (right->mem_info)
+	if (right->mem_info)
 		data_src_r = right->mem_info->data_src;
-	अन्यथा
+	else
 		data_src_r.mem_dtlb = PERF_MEM_TLB_NA;
 
-	वापस (पूर्णांक64_t)(data_src_r.mem_dtlb - data_src_l.mem_dtlb);
-पूर्ण
+	return (int64_t)(data_src_r.mem_dtlb - data_src_l.mem_dtlb);
+}
 
-अटल पूर्णांक hist_entry__tlb_snम_लिखो(काष्ठा hist_entry *he, अक्षर *bf,
-				    माप_प्रकार size, अचिन्हित पूर्णांक width)
-अणु
-	अक्षर out[64];
+static int hist_entry__tlb_snprintf(struct hist_entry *he, char *bf,
+				    size_t size, unsigned int width)
+{
+	char out[64];
 
-	perf_mem__tlb_scnम_लिखो(out, माप(out), he->mem_info);
-	वापस repsep_snम_लिखो(bf, size, "%-*s", width, out);
-पूर्ण
+	perf_mem__tlb_scnprintf(out, sizeof(out), he->mem_info);
+	return repsep_snprintf(bf, size, "%-*s", width, out);
+}
 
-अटल पूर्णांक64_t
-sort__lvl_cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	जोड़ perf_mem_data_src data_src_l;
-	जोड़ perf_mem_data_src data_src_r;
+static int64_t
+sort__lvl_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+	union perf_mem_data_src data_src_l;
+	union perf_mem_data_src data_src_r;
 
-	अगर (left->mem_info)
+	if (left->mem_info)
 		data_src_l = left->mem_info->data_src;
-	अन्यथा
+	else
 		data_src_l.mem_lvl = PERF_MEM_LVL_NA;
 
-	अगर (right->mem_info)
+	if (right->mem_info)
 		data_src_r = right->mem_info->data_src;
-	अन्यथा
+	else
 		data_src_r.mem_lvl = PERF_MEM_LVL_NA;
 
-	वापस (पूर्णांक64_t)(data_src_r.mem_lvl - data_src_l.mem_lvl);
-पूर्ण
+	return (int64_t)(data_src_r.mem_lvl - data_src_l.mem_lvl);
+}
 
-अटल पूर्णांक hist_entry__lvl_snम_लिखो(काष्ठा hist_entry *he, अक्षर *bf,
-				    माप_प्रकार size, अचिन्हित पूर्णांक width)
-अणु
-	अक्षर out[64];
+static int hist_entry__lvl_snprintf(struct hist_entry *he, char *bf,
+				    size_t size, unsigned int width)
+{
+	char out[64];
 
-	perf_mem__lvl_scnम_लिखो(out, माप(out), he->mem_info);
-	वापस repsep_snम_लिखो(bf, size, "%-*s", width, out);
-पूर्ण
+	perf_mem__lvl_scnprintf(out, sizeof(out), he->mem_info);
+	return repsep_snprintf(bf, size, "%-*s", width, out);
+}
 
-अटल पूर्णांक64_t
-sort__snoop_cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	जोड़ perf_mem_data_src data_src_l;
-	जोड़ perf_mem_data_src data_src_r;
+static int64_t
+sort__snoop_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+	union perf_mem_data_src data_src_l;
+	union perf_mem_data_src data_src_r;
 
-	अगर (left->mem_info)
+	if (left->mem_info)
 		data_src_l = left->mem_info->data_src;
-	अन्यथा
+	else
 		data_src_l.mem_snoop = PERF_MEM_SNOOP_NA;
 
-	अगर (right->mem_info)
+	if (right->mem_info)
 		data_src_r = right->mem_info->data_src;
-	अन्यथा
+	else
 		data_src_r.mem_snoop = PERF_MEM_SNOOP_NA;
 
-	वापस (पूर्णांक64_t)(data_src_r.mem_snoop - data_src_l.mem_snoop);
-पूर्ण
+	return (int64_t)(data_src_r.mem_snoop - data_src_l.mem_snoop);
+}
 
-अटल पूर्णांक hist_entry__snoop_snम_लिखो(काष्ठा hist_entry *he, अक्षर *bf,
-				    माप_प्रकार size, अचिन्हित पूर्णांक width)
-अणु
-	अक्षर out[64];
+static int hist_entry__snoop_snprintf(struct hist_entry *he, char *bf,
+				    size_t size, unsigned int width)
+{
+	char out[64];
 
-	perf_mem__snp_scnम_लिखो(out, माप(out), he->mem_info);
-	वापस repsep_snम_लिखो(bf, size, "%-*s", width, out);
-पूर्ण
+	perf_mem__snp_scnprintf(out, sizeof(out), he->mem_info);
+	return repsep_snprintf(bf, size, "%-*s", width, out);
+}
 
-पूर्णांक64_t
-sort__dcacheline_cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
+int64_t
+sort__dcacheline_cmp(struct hist_entry *left, struct hist_entry *right)
+{
 	u64 l, r;
-	काष्ठा map *l_map, *r_map;
-	पूर्णांक rc;
+	struct map *l_map, *r_map;
+	int rc;
 
-	अगर (!left->mem_info)  वापस -1;
-	अगर (!right->mem_info) वापस 1;
+	if (!left->mem_info)  return -1;
+	if (!right->mem_info) return 1;
 
 	/* group event types together */
-	अगर (left->cpumode > right->cpumode) वापस -1;
-	अगर (left->cpumode < right->cpumode) वापस 1;
+	if (left->cpumode > right->cpumode) return -1;
+	if (left->cpumode < right->cpumode) return 1;
 
 	l_map = left->mem_info->daddr.ms.map;
 	r_map = right->mem_info->daddr.ms.map;
 
-	/* अगर both are शून्य, jump to sort on al_addr instead */
-	अगर (!l_map && !r_map)
-		जाओ addr;
+	/* if both are NULL, jump to sort on al_addr instead */
+	if (!l_map && !r_map)
+		goto addr;
 
-	अगर (!l_map) वापस -1;
-	अगर (!r_map) वापस 1;
+	if (!l_map) return -1;
+	if (!r_map) return 1;
 
 	rc = dso__cmp_id(l_map->dso, r_map->dso);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 	/*
 	 * Addresses with no major/minor numbers are assumed to be
 	 * anonymous in userspace.  Sort those on pid then address.
@@ -1271,593 +1270,593 @@ sort__dcacheline_cmp(काष्ठा hist_entry *left, काष्ठा his
 	 * assumed to be unity mapped.  Sort those on address.
 	 */
 
-	अगर ((left->cpumode != PERF_RECORD_MISC_KERNEL) &&
+	if ((left->cpumode != PERF_RECORD_MISC_KERNEL) &&
 	    (!(l_map->flags & MAP_SHARED)) &&
 	    !l_map->dso->id.maj && !l_map->dso->id.min &&
-	    !l_map->dso->id.ino && !l_map->dso->id.ino_generation) अणु
+	    !l_map->dso->id.ino && !l_map->dso->id.ino_generation) {
 		/* userspace anonymous */
 
-		अगर (left->thपढ़ो->pid_ > right->thपढ़ो->pid_) वापस -1;
-		अगर (left->thपढ़ो->pid_ < right->thपढ़ो->pid_) वापस 1;
-	पूर्ण
+		if (left->thread->pid_ > right->thread->pid_) return -1;
+		if (left->thread->pid_ < right->thread->pid_) return 1;
+	}
 
 addr:
-	/* al_addr करोes all the right addr - start + offset calculations */
+	/* al_addr does all the right addr - start + offset calculations */
 	l = cl_address(left->mem_info->daddr.al_addr);
 	r = cl_address(right->mem_info->daddr.al_addr);
 
-	अगर (l > r) वापस -1;
-	अगर (l < r) वापस 1;
+	if (l > r) return -1;
+	if (l < r) return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hist_entry__dcacheline_snम_लिखो(काष्ठा hist_entry *he, अक्षर *bf,
-					  माप_प्रकार size, अचिन्हित पूर्णांक width)
-अणु
+static int hist_entry__dcacheline_snprintf(struct hist_entry *he, char *bf,
+					  size_t size, unsigned int width)
+{
 
-	uपूर्णांक64_t addr = 0;
-	काष्ठा map_symbol *ms = शून्य;
-	अक्षर level = he->level;
+	uint64_t addr = 0;
+	struct map_symbol *ms = NULL;
+	char level = he->level;
 
-	अगर (he->mem_info) अणु
-		काष्ठा map *map = he->mem_info->daddr.ms.map;
+	if (he->mem_info) {
+		struct map *map = he->mem_info->daddr.ms.map;
 
 		addr = cl_address(he->mem_info->daddr.al_addr);
 		ms = &he->mem_info->daddr.ms;
 
-		/* prपूर्णांक [s] क्रम shared data mmaps */
-		अगर ((he->cpumode != PERF_RECORD_MISC_KERNEL) &&
+		/* print [s] for shared data mmaps */
+		if ((he->cpumode != PERF_RECORD_MISC_KERNEL) &&
 		     map && !(map->prot & PROT_EXEC) &&
 		    (map->flags & MAP_SHARED) &&
 		    (map->dso->id.maj || map->dso->id.min ||
 		     map->dso->id.ino || map->dso->id.ino_generation))
 			level = 's';
-		अन्यथा अगर (!map)
+		else if (!map)
 			level = 'X';
-	पूर्ण
-	वापस _hist_entry__sym_snम_लिखो(ms, addr, level, bf, size, width);
-पूर्ण
+	}
+	return _hist_entry__sym_snprintf(ms, addr, level, bf, size, width);
+}
 
-काष्ठा sort_entry sort_mispredict = अणु
+struct sort_entry sort_mispredict = {
 	.se_header	= "Branch Mispredicted",
 	.se_cmp		= sort__mispredict_cmp,
-	.se_snम_लिखो	= hist_entry__mispredict_snम_लिखो,
+	.se_snprintf	= hist_entry__mispredict_snprintf,
 	.se_width_idx	= HISTC_MISPREDICT,
-पूर्ण;
+};
 
-अटल u64 he_weight(काष्ठा hist_entry *he)
-अणु
-	वापस he->stat.nr_events ? he->stat.weight / he->stat.nr_events : 0;
-पूर्ण
+static u64 he_weight(struct hist_entry *he)
+{
+	return he->stat.nr_events ? he->stat.weight / he->stat.nr_events : 0;
+}
 
-अटल पूर्णांक64_t
-sort__local_weight_cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	वापस he_weight(left) - he_weight(right);
-पूर्ण
+static int64_t
+sort__local_weight_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+	return he_weight(left) - he_weight(right);
+}
 
-अटल पूर्णांक hist_entry__local_weight_snम_लिखो(काष्ठा hist_entry *he, अक्षर *bf,
-				    माप_प्रकार size, अचिन्हित पूर्णांक width)
-अणु
-	वापस repsep_snम_लिखो(bf, size, "%-*llu", width, he_weight(he));
-पूर्ण
+static int hist_entry__local_weight_snprintf(struct hist_entry *he, char *bf,
+				    size_t size, unsigned int width)
+{
+	return repsep_snprintf(bf, size, "%-*llu", width, he_weight(he));
+}
 
-काष्ठा sort_entry sort_local_weight = अणु
+struct sort_entry sort_local_weight = {
 	.se_header	= "Local Weight",
 	.se_cmp		= sort__local_weight_cmp,
-	.se_snम_लिखो	= hist_entry__local_weight_snम_लिखो,
+	.se_snprintf	= hist_entry__local_weight_snprintf,
 	.se_width_idx	= HISTC_LOCAL_WEIGHT,
-पूर्ण;
+};
 
-अटल पूर्णांक64_t
-sort__global_weight_cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	वापस left->stat.weight - right->stat.weight;
-पूर्ण
+static int64_t
+sort__global_weight_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+	return left->stat.weight - right->stat.weight;
+}
 
-अटल पूर्णांक hist_entry__global_weight_snम_लिखो(काष्ठा hist_entry *he, अक्षर *bf,
-					      माप_प्रकार size, अचिन्हित पूर्णांक width)
-अणु
-	वापस repsep_snम_लिखो(bf, size, "%-*llu", width, he->stat.weight);
-पूर्ण
+static int hist_entry__global_weight_snprintf(struct hist_entry *he, char *bf,
+					      size_t size, unsigned int width)
+{
+	return repsep_snprintf(bf, size, "%-*llu", width, he->stat.weight);
+}
 
-काष्ठा sort_entry sort_global_weight = अणु
+struct sort_entry sort_global_weight = {
 	.se_header	= "Weight",
 	.se_cmp		= sort__global_weight_cmp,
-	.se_snम_लिखो	= hist_entry__global_weight_snम_लिखो,
+	.se_snprintf	= hist_entry__global_weight_snprintf,
 	.se_width_idx	= HISTC_GLOBAL_WEIGHT,
-पूर्ण;
+};
 
-अटल u64 he_ins_lat(काष्ठा hist_entry *he)
-अणु
-		वापस he->stat.nr_events ? he->stat.ins_lat / he->stat.nr_events : 0;
-पूर्ण
+static u64 he_ins_lat(struct hist_entry *he)
+{
+		return he->stat.nr_events ? he->stat.ins_lat / he->stat.nr_events : 0;
+}
 
-अटल पूर्णांक64_t
-sort__local_ins_lat_cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-		वापस he_ins_lat(left) - he_ins_lat(right);
-पूर्ण
+static int64_t
+sort__local_ins_lat_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+		return he_ins_lat(left) - he_ins_lat(right);
+}
 
-अटल पूर्णांक hist_entry__local_ins_lat_snम_लिखो(काष्ठा hist_entry *he, अक्षर *bf,
-					      माप_प्रकार size, अचिन्हित पूर्णांक width)
-अणु
-		वापस repsep_snम_लिखो(bf, size, "%-*u", width, he_ins_lat(he));
-पूर्ण
+static int hist_entry__local_ins_lat_snprintf(struct hist_entry *he, char *bf,
+					      size_t size, unsigned int width)
+{
+		return repsep_snprintf(bf, size, "%-*u", width, he_ins_lat(he));
+}
 
-काष्ठा sort_entry sort_local_ins_lat = अणु
+struct sort_entry sort_local_ins_lat = {
 	.se_header	= "Local INSTR Latency",
 	.se_cmp		= sort__local_ins_lat_cmp,
-	.se_snम_लिखो	= hist_entry__local_ins_lat_snम_लिखो,
+	.se_snprintf	= hist_entry__local_ins_lat_snprintf,
 	.se_width_idx	= HISTC_LOCAL_INS_LAT,
-पूर्ण;
+};
 
-अटल पूर्णांक64_t
-sort__global_ins_lat_cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-		वापस left->stat.ins_lat - right->stat.ins_lat;
-पूर्ण
+static int64_t
+sort__global_ins_lat_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+		return left->stat.ins_lat - right->stat.ins_lat;
+}
 
-अटल पूर्णांक hist_entry__global_ins_lat_snम_लिखो(काष्ठा hist_entry *he, अक्षर *bf,
-					       माप_प्रकार size, अचिन्हित पूर्णांक width)
-अणु
-		वापस repsep_snम_लिखो(bf, size, "%-*u", width, he->stat.ins_lat);
-पूर्ण
+static int hist_entry__global_ins_lat_snprintf(struct hist_entry *he, char *bf,
+					       size_t size, unsigned int width)
+{
+		return repsep_snprintf(bf, size, "%-*u", width, he->stat.ins_lat);
+}
 
-काष्ठा sort_entry sort_global_ins_lat = अणु
+struct sort_entry sort_global_ins_lat = {
 	.se_header	= "INSTR Latency",
 	.se_cmp		= sort__global_ins_lat_cmp,
-	.se_snम_लिखो	= hist_entry__global_ins_lat_snम_लिखो,
+	.se_snprintf	= hist_entry__global_ins_lat_snprintf,
 	.se_width_idx	= HISTC_GLOBAL_INS_LAT,
-पूर्ण;
+};
 
-अटल पूर्णांक64_t
-sort__global_p_stage_cyc_cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	वापस left->stat.p_stage_cyc - right->stat.p_stage_cyc;
-पूर्ण
+static int64_t
+sort__global_p_stage_cyc_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+	return left->stat.p_stage_cyc - right->stat.p_stage_cyc;
+}
 
-अटल पूर्णांक hist_entry__p_stage_cyc_snम_लिखो(काष्ठा hist_entry *he, अक्षर *bf,
-					माप_प्रकार size, अचिन्हित पूर्णांक width)
-अणु
-	वापस repsep_snम_लिखो(bf, size, "%-*u", width, he->stat.p_stage_cyc);
-पूर्ण
+static int hist_entry__p_stage_cyc_snprintf(struct hist_entry *he, char *bf,
+					size_t size, unsigned int width)
+{
+	return repsep_snprintf(bf, size, "%-*u", width, he->stat.p_stage_cyc);
+}
 
-काष्ठा sort_entry sort_p_stage_cyc = अणु
+struct sort_entry sort_p_stage_cyc = {
 	.se_header      = "Pipeline Stage Cycle",
 	.se_cmp         = sort__global_p_stage_cyc_cmp,
-	.se_snम_लिखो	= hist_entry__p_stage_cyc_snम_लिखो,
+	.se_snprintf	= hist_entry__p_stage_cyc_snprintf,
 	.se_width_idx	= HISTC_P_STAGE_CYC,
-पूर्ण;
+};
 
-काष्ठा sort_entry sort_mem_daddr_sym = अणु
+struct sort_entry sort_mem_daddr_sym = {
 	.se_header	= "Data Symbol",
 	.se_cmp		= sort__daddr_cmp,
-	.se_snम_लिखो	= hist_entry__daddr_snम_लिखो,
+	.se_snprintf	= hist_entry__daddr_snprintf,
 	.se_width_idx	= HISTC_MEM_DADDR_SYMBOL,
-पूर्ण;
+};
 
-काष्ठा sort_entry sort_mem_iaddr_sym = अणु
+struct sort_entry sort_mem_iaddr_sym = {
 	.se_header	= "Code Symbol",
 	.se_cmp		= sort__iaddr_cmp,
-	.se_snम_लिखो	= hist_entry__iaddr_snम_लिखो,
+	.se_snprintf	= hist_entry__iaddr_snprintf,
 	.se_width_idx	= HISTC_MEM_IADDR_SYMBOL,
-पूर्ण;
+};
 
-काष्ठा sort_entry sort_mem_daddr_dso = अणु
+struct sort_entry sort_mem_daddr_dso = {
 	.se_header	= "Data Object",
 	.se_cmp		= sort__dso_daddr_cmp,
-	.se_snम_लिखो	= hist_entry__dso_daddr_snम_लिखो,
+	.se_snprintf	= hist_entry__dso_daddr_snprintf,
 	.se_width_idx	= HISTC_MEM_DADDR_DSO,
-पूर्ण;
+};
 
-काष्ठा sort_entry sort_mem_locked = अणु
+struct sort_entry sort_mem_locked = {
 	.se_header	= "Locked",
 	.se_cmp		= sort__locked_cmp,
-	.se_snम_लिखो	= hist_entry__locked_snम_लिखो,
+	.se_snprintf	= hist_entry__locked_snprintf,
 	.se_width_idx	= HISTC_MEM_LOCKED,
-पूर्ण;
+};
 
-काष्ठा sort_entry sort_mem_tlb = अणु
+struct sort_entry sort_mem_tlb = {
 	.se_header	= "TLB access",
 	.se_cmp		= sort__tlb_cmp,
-	.se_snम_लिखो	= hist_entry__tlb_snम_लिखो,
+	.se_snprintf	= hist_entry__tlb_snprintf,
 	.se_width_idx	= HISTC_MEM_TLB,
-पूर्ण;
+};
 
-काष्ठा sort_entry sort_mem_lvl = अणु
+struct sort_entry sort_mem_lvl = {
 	.se_header	= "Memory access",
 	.se_cmp		= sort__lvl_cmp,
-	.se_snम_लिखो	= hist_entry__lvl_snम_लिखो,
+	.se_snprintf	= hist_entry__lvl_snprintf,
 	.se_width_idx	= HISTC_MEM_LVL,
-पूर्ण;
+};
 
-काष्ठा sort_entry sort_mem_snoop = अणु
+struct sort_entry sort_mem_snoop = {
 	.se_header	= "Snoop",
 	.se_cmp		= sort__snoop_cmp,
-	.se_snम_लिखो	= hist_entry__snoop_snम_लिखो,
+	.se_snprintf	= hist_entry__snoop_snprintf,
 	.se_width_idx	= HISTC_MEM_SNOOP,
-पूर्ण;
+};
 
-काष्ठा sort_entry sort_mem_dcacheline = अणु
+struct sort_entry sort_mem_dcacheline = {
 	.se_header	= "Data Cacheline",
 	.se_cmp		= sort__dcacheline_cmp,
-	.se_snम_लिखो	= hist_entry__dcacheline_snम_लिखो,
+	.se_snprintf	= hist_entry__dcacheline_snprintf,
 	.se_width_idx	= HISTC_MEM_DCACHELINE,
-पूर्ण;
+};
 
-अटल पूर्णांक64_t
-sort__blocked_cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	जोड़ perf_mem_data_src data_src_l;
-	जोड़ perf_mem_data_src data_src_r;
+static int64_t
+sort__blocked_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+	union perf_mem_data_src data_src_l;
+	union perf_mem_data_src data_src_r;
 
-	अगर (left->mem_info)
+	if (left->mem_info)
 		data_src_l = left->mem_info->data_src;
-	अन्यथा
+	else
 		data_src_l.mem_blk = PERF_MEM_BLK_NA;
 
-	अगर (right->mem_info)
+	if (right->mem_info)
 		data_src_r = right->mem_info->data_src;
-	अन्यथा
+	else
 		data_src_r.mem_blk = PERF_MEM_BLK_NA;
 
-	वापस (पूर्णांक64_t)(data_src_r.mem_blk - data_src_l.mem_blk);
-पूर्ण
+	return (int64_t)(data_src_r.mem_blk - data_src_l.mem_blk);
+}
 
-अटल पूर्णांक hist_entry__blocked_snम_लिखो(काष्ठा hist_entry *he, अक्षर *bf,
-					माप_प्रकार size, अचिन्हित पूर्णांक width)
-अणु
-	अक्षर out[16];
+static int hist_entry__blocked_snprintf(struct hist_entry *he, char *bf,
+					size_t size, unsigned int width)
+{
+	char out[16];
 
-	perf_mem__blk_scnम_लिखो(out, माप(out), he->mem_info);
-	वापस repsep_snम_लिखो(bf, size, "%.*s", width, out);
-पूर्ण
+	perf_mem__blk_scnprintf(out, sizeof(out), he->mem_info);
+	return repsep_snprintf(bf, size, "%.*s", width, out);
+}
 
-काष्ठा sort_entry sort_mem_blocked = अणु
+struct sort_entry sort_mem_blocked = {
 	.se_header	= "Blocked",
 	.se_cmp		= sort__blocked_cmp,
-	.se_snम_लिखो	= hist_entry__blocked_snम_लिखो,
+	.se_snprintf	= hist_entry__blocked_snprintf,
 	.se_width_idx	= HISTC_MEM_BLOCKED,
-पूर्ण;
+};
 
-अटल पूर्णांक64_t
-sort__phys_daddr_cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	uपूर्णांक64_t l = 0, r = 0;
+static int64_t
+sort__phys_daddr_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+	uint64_t l = 0, r = 0;
 
-	अगर (left->mem_info)
+	if (left->mem_info)
 		l = left->mem_info->daddr.phys_addr;
-	अगर (right->mem_info)
+	if (right->mem_info)
 		r = right->mem_info->daddr.phys_addr;
 
-	वापस (पूर्णांक64_t)(r - l);
-पूर्ण
+	return (int64_t)(r - l);
+}
 
-अटल पूर्णांक hist_entry__phys_daddr_snम_लिखो(काष्ठा hist_entry *he, अक्षर *bf,
-					   माप_प्रकार size, अचिन्हित पूर्णांक width)
-अणु
-	uपूर्णांक64_t addr = 0;
-	माप_प्रकार ret = 0;
-	माप_प्रकार len = BITS_PER_LONG / 4;
+static int hist_entry__phys_daddr_snprintf(struct hist_entry *he, char *bf,
+					   size_t size, unsigned int width)
+{
+	uint64_t addr = 0;
+	size_t ret = 0;
+	size_t len = BITS_PER_LONG / 4;
 
 	addr = he->mem_info->daddr.phys_addr;
 
-	ret += repsep_snम_लिखो(bf + ret, size - ret, "[%c] ", he->level);
+	ret += repsep_snprintf(bf + ret, size - ret, "[%c] ", he->level);
 
-	ret += repsep_snम_लिखो(bf + ret, size - ret, "%-#.*llx", len, addr);
+	ret += repsep_snprintf(bf + ret, size - ret, "%-#.*llx", len, addr);
 
-	ret += repsep_snम_लिखो(bf + ret, size - ret, "%-*s", width - ret, "");
+	ret += repsep_snprintf(bf + ret, size - ret, "%-*s", width - ret, "");
 
-	अगर (ret > width)
+	if (ret > width)
 		bf[width] = '\0';
 
-	वापस width;
-पूर्ण
+	return width;
+}
 
-काष्ठा sort_entry sort_mem_phys_daddr = अणु
+struct sort_entry sort_mem_phys_daddr = {
 	.se_header	= "Data Physical Address",
 	.se_cmp		= sort__phys_daddr_cmp,
-	.se_snम_लिखो	= hist_entry__phys_daddr_snम_लिखो,
+	.se_snprintf	= hist_entry__phys_daddr_snprintf,
 	.se_width_idx	= HISTC_MEM_PHYS_DADDR,
-पूर्ण;
+};
 
-अटल पूर्णांक64_t
-sort__data_page_size_cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	uपूर्णांक64_t l = 0, r = 0;
+static int64_t
+sort__data_page_size_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+	uint64_t l = 0, r = 0;
 
-	अगर (left->mem_info)
+	if (left->mem_info)
 		l = left->mem_info->daddr.data_page_size;
-	अगर (right->mem_info)
+	if (right->mem_info)
 		r = right->mem_info->daddr.data_page_size;
 
-	वापस (पूर्णांक64_t)(r - l);
-पूर्ण
+	return (int64_t)(r - l);
+}
 
-अटल पूर्णांक hist_entry__data_page_size_snम_लिखो(काष्ठा hist_entry *he, अक्षर *bf,
-					  माप_प्रकार size, अचिन्हित पूर्णांक width)
-अणु
-	अक्षर str[PAGE_SIZE_NAME_LEN];
+static int hist_entry__data_page_size_snprintf(struct hist_entry *he, char *bf,
+					  size_t size, unsigned int width)
+{
+	char str[PAGE_SIZE_NAME_LEN];
 
-	वापस repsep_snम_लिखो(bf, size, "%-*s", width,
+	return repsep_snprintf(bf, size, "%-*s", width,
 			       get_page_size_name(he->mem_info->daddr.data_page_size, str));
-पूर्ण
+}
 
-काष्ठा sort_entry sort_mem_data_page_size = अणु
+struct sort_entry sort_mem_data_page_size = {
 	.se_header	= "Data Page Size",
 	.se_cmp		= sort__data_page_size_cmp,
-	.se_snम_लिखो	= hist_entry__data_page_size_snम_लिखो,
+	.se_snprintf	= hist_entry__data_page_size_snprintf,
 	.se_width_idx	= HISTC_MEM_DATA_PAGE_SIZE,
-पूर्ण;
+};
 
-अटल पूर्णांक64_t
-sort__code_page_size_cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	uपूर्णांक64_t l = left->code_page_size;
-	uपूर्णांक64_t r = right->code_page_size;
+static int64_t
+sort__code_page_size_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+	uint64_t l = left->code_page_size;
+	uint64_t r = right->code_page_size;
 
-	वापस (पूर्णांक64_t)(r - l);
-पूर्ण
+	return (int64_t)(r - l);
+}
 
-अटल पूर्णांक hist_entry__code_page_size_snम_लिखो(काष्ठा hist_entry *he, अक्षर *bf,
-					  माप_प्रकार size, अचिन्हित पूर्णांक width)
-अणु
-	अक्षर str[PAGE_SIZE_NAME_LEN];
+static int hist_entry__code_page_size_snprintf(struct hist_entry *he, char *bf,
+					  size_t size, unsigned int width)
+{
+	char str[PAGE_SIZE_NAME_LEN];
 
-	वापस repsep_snम_लिखो(bf, size, "%-*s", width,
+	return repsep_snprintf(bf, size, "%-*s", width,
 			       get_page_size_name(he->code_page_size, str));
-पूर्ण
+}
 
-काष्ठा sort_entry sort_code_page_size = अणु
+struct sort_entry sort_code_page_size = {
 	.se_header	= "Code Page Size",
 	.se_cmp		= sort__code_page_size_cmp,
-	.se_snम_लिखो	= hist_entry__code_page_size_snम_लिखो,
+	.se_snprintf	= hist_entry__code_page_size_snprintf,
 	.se_width_idx	= HISTC_CODE_PAGE_SIZE,
-पूर्ण;
+};
 
-अटल पूर्णांक64_t
-sort__पात_cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	अगर (!left->branch_info || !right->branch_info)
-		वापस cmp_null(left->branch_info, right->branch_info);
+static int64_t
+sort__abort_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+	if (!left->branch_info || !right->branch_info)
+		return cmp_null(left->branch_info, right->branch_info);
 
-	वापस left->branch_info->flags.पात !=
-		right->branch_info->flags.पात;
-पूर्ण
+	return left->branch_info->flags.abort !=
+		right->branch_info->flags.abort;
+}
 
-अटल पूर्णांक hist_entry__पात_snम_लिखो(काष्ठा hist_entry *he, अक्षर *bf,
-				    माप_प्रकार size, अचिन्हित पूर्णांक width)
-अणु
-	अटल स्थिर अक्षर *out = "N/A";
+static int hist_entry__abort_snprintf(struct hist_entry *he, char *bf,
+				    size_t size, unsigned int width)
+{
+	static const char *out = "N/A";
 
-	अगर (he->branch_info) अणु
-		अगर (he->branch_info->flags.पात)
+	if (he->branch_info) {
+		if (he->branch_info->flags.abort)
 			out = "A";
-		अन्यथा
+		else
 			out = ".";
-	पूर्ण
+	}
 
-	वापस repsep_snम_लिखो(bf, size, "%-*s", width, out);
-पूर्ण
+	return repsep_snprintf(bf, size, "%-*s", width, out);
+}
 
-काष्ठा sort_entry sort_पात = अणु
+struct sort_entry sort_abort = {
 	.se_header	= "Transaction abort",
-	.se_cmp		= sort__पात_cmp,
-	.se_snम_लिखो	= hist_entry__पात_snम_लिखो,
+	.se_cmp		= sort__abort_cmp,
+	.se_snprintf	= hist_entry__abort_snprintf,
 	.se_width_idx	= HISTC_ABORT,
-पूर्ण;
+};
 
-अटल पूर्णांक64_t
-sort__in_tx_cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	अगर (!left->branch_info || !right->branch_info)
-		वापस cmp_null(left->branch_info, right->branch_info);
+static int64_t
+sort__in_tx_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+	if (!left->branch_info || !right->branch_info)
+		return cmp_null(left->branch_info, right->branch_info);
 
-	वापस left->branch_info->flags.in_tx !=
+	return left->branch_info->flags.in_tx !=
 		right->branch_info->flags.in_tx;
-पूर्ण
+}
 
-अटल पूर्णांक hist_entry__in_tx_snम_लिखो(काष्ठा hist_entry *he, अक्षर *bf,
-				    माप_प्रकार size, अचिन्हित पूर्णांक width)
-अणु
-	अटल स्थिर अक्षर *out = "N/A";
+static int hist_entry__in_tx_snprintf(struct hist_entry *he, char *bf,
+				    size_t size, unsigned int width)
+{
+	static const char *out = "N/A";
 
-	अगर (he->branch_info) अणु
-		अगर (he->branch_info->flags.in_tx)
+	if (he->branch_info) {
+		if (he->branch_info->flags.in_tx)
 			out = "T";
-		अन्यथा
+		else
 			out = ".";
-	पूर्ण
+	}
 
-	वापस repsep_snम_लिखो(bf, size, "%-*s", width, out);
-पूर्ण
+	return repsep_snprintf(bf, size, "%-*s", width, out);
+}
 
-काष्ठा sort_entry sort_in_tx = अणु
+struct sort_entry sort_in_tx = {
 	.se_header	= "Branch in transaction",
 	.se_cmp		= sort__in_tx_cmp,
-	.se_snम_लिखो	= hist_entry__in_tx_snम_लिखो,
+	.se_snprintf	= hist_entry__in_tx_snprintf,
 	.se_width_idx	= HISTC_IN_TX,
-पूर्ण;
+};
 
-अटल पूर्णांक64_t
-sort__transaction_cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	वापस left->transaction - right->transaction;
-पूर्ण
+static int64_t
+sort__transaction_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+	return left->transaction - right->transaction;
+}
 
-अटल अंतरभूत अक्षर *add_str(अक्षर *p, स्थिर अक्षर *str)
-अणु
-	म_नकल(p, str);
-	वापस p + म_माप(str);
-पूर्ण
+static inline char *add_str(char *p, const char *str)
+{
+	strcpy(p, str);
+	return p + strlen(str);
+}
 
-अटल काष्ठा txbit अणु
-	अचिन्हित flag;
-	स्थिर अक्षर *name;
-	पूर्णांक skip_क्रम_len;
-पूर्ण txbits[] = अणु
-	अणु PERF_TXN_ELISION,        "EL ",        0 पूर्ण,
-	अणु PERF_TXN_TRANSACTION,    "TX ",        1 पूर्ण,
-	अणु PERF_TXN_SYNC,           "SYNC ",      1 पूर्ण,
-	अणु PERF_TXN_ASYNC,          "ASYNC ",     0 पूर्ण,
-	अणु PERF_TXN_RETRY,          "RETRY ",     0 पूर्ण,
-	अणु PERF_TXN_CONFLICT,       "CON ",       0 पूर्ण,
-	अणु PERF_TXN_CAPACITY_WRITE, "CAP-WRITE ", 1 पूर्ण,
-	अणु PERF_TXN_CAPACITY_READ,  "CAP-READ ",  0 पूर्ण,
-	अणु 0, शून्य, 0 पूर्ण
-पूर्ण;
+static struct txbit {
+	unsigned flag;
+	const char *name;
+	int skip_for_len;
+} txbits[] = {
+	{ PERF_TXN_ELISION,        "EL ",        0 },
+	{ PERF_TXN_TRANSACTION,    "TX ",        1 },
+	{ PERF_TXN_SYNC,           "SYNC ",      1 },
+	{ PERF_TXN_ASYNC,          "ASYNC ",     0 },
+	{ PERF_TXN_RETRY,          "RETRY ",     0 },
+	{ PERF_TXN_CONFLICT,       "CON ",       0 },
+	{ PERF_TXN_CAPACITY_WRITE, "CAP-WRITE ", 1 },
+	{ PERF_TXN_CAPACITY_READ,  "CAP-READ ",  0 },
+	{ 0, NULL, 0 }
+};
 
-पूर्णांक hist_entry__transaction_len(व्योम)
-अणु
-	पूर्णांक i;
-	पूर्णांक len = 0;
+int hist_entry__transaction_len(void)
+{
+	int i;
+	int len = 0;
 
-	क्रम (i = 0; txbits[i].name; i++) अणु
-		अगर (!txbits[i].skip_क्रम_len)
-			len += म_माप(txbits[i].name);
-	पूर्ण
+	for (i = 0; txbits[i].name; i++) {
+		if (!txbits[i].skip_for_len)
+			len += strlen(txbits[i].name);
+	}
 	len += 4; /* :XX<space> */
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल पूर्णांक hist_entry__transaction_snम_लिखो(काष्ठा hist_entry *he, अक्षर *bf,
-					    माप_प्रकार size, अचिन्हित पूर्णांक width)
-अणु
+static int hist_entry__transaction_snprintf(struct hist_entry *he, char *bf,
+					    size_t size, unsigned int width)
+{
 	u64 t = he->transaction;
-	अक्षर buf[128];
-	अक्षर *p = buf;
-	पूर्णांक i;
+	char buf[128];
+	char *p = buf;
+	int i;
 
 	buf[0] = 0;
-	क्रम (i = 0; txbits[i].name; i++)
-		अगर (txbits[i].flag & t)
+	for (i = 0; txbits[i].name; i++)
+		if (txbits[i].flag & t)
 			p = add_str(p, txbits[i].name);
-	अगर (t && !(t & (PERF_TXN_SYNC|PERF_TXN_ASYNC)))
+	if (t && !(t & (PERF_TXN_SYNC|PERF_TXN_ASYNC)))
 		p = add_str(p, "NEITHER ");
-	अगर (t & PERF_TXN_ABORT_MASK) अणु
-		प्र_लिखो(p, ":%" PRIx64,
+	if (t & PERF_TXN_ABORT_MASK) {
+		sprintf(p, ":%" PRIx64,
 			(t & PERF_TXN_ABORT_MASK) >>
 			PERF_TXN_ABORT_SHIFT);
-		p += म_माप(p);
-	पूर्ण
+		p += strlen(p);
+	}
 
-	वापस repsep_snम_लिखो(bf, size, "%-*s", width, buf);
-पूर्ण
+	return repsep_snprintf(bf, size, "%-*s", width, buf);
+}
 
-काष्ठा sort_entry sort_transaction = अणु
+struct sort_entry sort_transaction = {
 	.se_header	= "Transaction                ",
 	.se_cmp		= sort__transaction_cmp,
-	.se_snम_लिखो	= hist_entry__transaction_snम_लिखो,
+	.se_snprintf	= hist_entry__transaction_snprintf,
 	.se_width_idx	= HISTC_TRANSACTION,
-पूर्ण;
+};
 
 /* --sort symbol_size */
 
-अटल पूर्णांक64_t _sort__sym_size_cmp(काष्ठा symbol *sym_l, काष्ठा symbol *sym_r)
-अणु
-	पूर्णांक64_t size_l = sym_l != शून्य ? symbol__size(sym_l) : 0;
-	पूर्णांक64_t size_r = sym_r != शून्य ? symbol__size(sym_r) : 0;
+static int64_t _sort__sym_size_cmp(struct symbol *sym_l, struct symbol *sym_r)
+{
+	int64_t size_l = sym_l != NULL ? symbol__size(sym_l) : 0;
+	int64_t size_r = sym_r != NULL ? symbol__size(sym_r) : 0;
 
-	वापस size_l < size_r ? -1 :
+	return size_l < size_r ? -1 :
 		size_l == size_r ? 0 : 1;
-पूर्ण
+}
 
-अटल पूर्णांक64_t
-sort__sym_size_cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	वापस _sort__sym_size_cmp(right->ms.sym, left->ms.sym);
-पूर्ण
+static int64_t
+sort__sym_size_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+	return _sort__sym_size_cmp(right->ms.sym, left->ms.sym);
+}
 
-अटल पूर्णांक _hist_entry__sym_size_snम_लिखो(काष्ठा symbol *sym, अक्षर *bf,
-					  माप_प्रकार bf_size, अचिन्हित पूर्णांक width)
-अणु
-	अगर (sym)
-		वापस repsep_snम_लिखो(bf, bf_size, "%*d", width, symbol__size(sym));
+static int _hist_entry__sym_size_snprintf(struct symbol *sym, char *bf,
+					  size_t bf_size, unsigned int width)
+{
+	if (sym)
+		return repsep_snprintf(bf, bf_size, "%*d", width, symbol__size(sym));
 
-	वापस repsep_snम_लिखो(bf, bf_size, "%*s", width, "unknown");
-पूर्ण
+	return repsep_snprintf(bf, bf_size, "%*s", width, "unknown");
+}
 
-अटल पूर्णांक hist_entry__sym_size_snम_लिखो(काष्ठा hist_entry *he, अक्षर *bf,
-					 माप_प्रकार size, अचिन्हित पूर्णांक width)
-अणु
-	वापस _hist_entry__sym_size_snम_लिखो(he->ms.sym, bf, size, width);
-पूर्ण
+static int hist_entry__sym_size_snprintf(struct hist_entry *he, char *bf,
+					 size_t size, unsigned int width)
+{
+	return _hist_entry__sym_size_snprintf(he->ms.sym, bf, size, width);
+}
 
-काष्ठा sort_entry sort_sym_size = अणु
+struct sort_entry sort_sym_size = {
 	.se_header	= "Symbol size",
 	.se_cmp		= sort__sym_size_cmp,
-	.se_snम_लिखो	= hist_entry__sym_size_snम_लिखो,
+	.se_snprintf	= hist_entry__sym_size_snprintf,
 	.se_width_idx	= HISTC_SYM_SIZE,
-पूर्ण;
+};
 
 /* --sort dso_size */
 
-अटल पूर्णांक64_t _sort__dso_size_cmp(काष्ठा map *map_l, काष्ठा map *map_r)
-अणु
-	पूर्णांक64_t size_l = map_l != शून्य ? map__size(map_l) : 0;
-	पूर्णांक64_t size_r = map_r != शून्य ? map__size(map_r) : 0;
+static int64_t _sort__dso_size_cmp(struct map *map_l, struct map *map_r)
+{
+	int64_t size_l = map_l != NULL ? map__size(map_l) : 0;
+	int64_t size_r = map_r != NULL ? map__size(map_r) : 0;
 
-	वापस size_l < size_r ? -1 :
+	return size_l < size_r ? -1 :
 		size_l == size_r ? 0 : 1;
-पूर्ण
+}
 
-अटल पूर्णांक64_t
-sort__dso_size_cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
-अणु
-	वापस _sort__dso_size_cmp(right->ms.map, left->ms.map);
-पूर्ण
+static int64_t
+sort__dso_size_cmp(struct hist_entry *left, struct hist_entry *right)
+{
+	return _sort__dso_size_cmp(right->ms.map, left->ms.map);
+}
 
-अटल पूर्णांक _hist_entry__dso_size_snम_लिखो(काष्ठा map *map, अक्षर *bf,
-					  माप_प्रकार bf_size, अचिन्हित पूर्णांक width)
-अणु
-	अगर (map && map->dso)
-		वापस repsep_snम_लिखो(bf, bf_size, "%*d", width,
+static int _hist_entry__dso_size_snprintf(struct map *map, char *bf,
+					  size_t bf_size, unsigned int width)
+{
+	if (map && map->dso)
+		return repsep_snprintf(bf, bf_size, "%*d", width,
 				       map__size(map));
 
-	वापस repsep_snम_लिखो(bf, bf_size, "%*s", width, "unknown");
-पूर्ण
+	return repsep_snprintf(bf, bf_size, "%*s", width, "unknown");
+}
 
-अटल पूर्णांक hist_entry__dso_size_snम_लिखो(काष्ठा hist_entry *he, अक्षर *bf,
-					 माप_प्रकार size, अचिन्हित पूर्णांक width)
-अणु
-	वापस _hist_entry__dso_size_snम_लिखो(he->ms.map, bf, size, width);
-पूर्ण
+static int hist_entry__dso_size_snprintf(struct hist_entry *he, char *bf,
+					 size_t size, unsigned int width)
+{
+	return _hist_entry__dso_size_snprintf(he->ms.map, bf, size, width);
+}
 
-काष्ठा sort_entry sort_dso_size = अणु
+struct sort_entry sort_dso_size = {
 	.se_header	= "DSO size",
 	.se_cmp		= sort__dso_size_cmp,
-	.se_snम_लिखो	= hist_entry__dso_size_snम_लिखो,
+	.se_snprintf	= hist_entry__dso_size_snprintf,
 	.se_width_idx	= HISTC_DSO_SIZE,
-पूर्ण;
+};
 
 
-काष्ठा sort_dimension अणु
-	स्थिर अक्षर		*name;
-	काष्ठा sort_entry	*entry;
-	पूर्णांक			taken;
-पूर्ण;
+struct sort_dimension {
+	const char		*name;
+	struct sort_entry	*entry;
+	int			taken;
+};
 
-पूर्णांक __weak arch_support_sort_key(स्थिर अक्षर *sort_key __maybe_unused)
-अणु
-	वापस 0;
-पूर्ण
+int __weak arch_support_sort_key(const char *sort_key __maybe_unused)
+{
+	return 0;
+}
 
-स्थिर अक्षर * __weak arch_perf_header_entry(स्थिर अक्षर *se_header)
-अणु
-	वापस se_header;
-पूर्ण
+const char * __weak arch_perf_header_entry(const char *se_header)
+{
+	return se_header;
+}
 
-अटल व्योम sort_dimension_add_dynamic_header(काष्ठा sort_dimension *sd)
-अणु
+static void sort_dimension_add_dynamic_header(struct sort_dimension *sd)
+{
 	sd->entry->se_header = arch_perf_header_entry(sd->entry->se_header);
-पूर्ण
+}
 
-#घोषणा DIM(d, n, func) [d] = अणु .name = n, .entry = &(func) पूर्ण
+#define DIM(d, n, func) [d] = { .name = n, .entry = &(func) }
 
-अटल काष्ठा sort_dimension common_sort_dimensions[] = अणु
-	DIM(SORT_PID, "pid", sort_thपढ़ो),
+static struct sort_dimension common_sort_dimensions[] = {
+	DIM(SORT_PID, "pid", sort_thread),
 	DIM(SORT_COMM, "comm", sort_comm),
 	DIM(SORT_DSO, "dso", sort_dso),
 	DIM(SORT_SYM, "symbol", sort_sym),
@@ -1865,7 +1864,7 @@ sort__dso_size_cmp(काष्ठा hist_entry *left, काष्ठा hist_
 	DIM(SORT_CPU, "cpu", sort_cpu),
 	DIM(SORT_SOCKET, "socket", sort_socket),
 	DIM(SORT_SRCLINE, "srcline", sort_srcline),
-	DIM(SORT_SRCखाता, "srcfile", sort_srcfile),
+	DIM(SORT_SRCFILE, "srcfile", sort_srcfile),
 	DIM(SORT_LOCAL_WEIGHT, "local_weight", sort_local_weight),
 	DIM(SORT_GLOBAL_WEIGHT, "weight", sort_global_weight),
 	DIM(SORT_TRANSACTION, "transaction", sort_transaction),
@@ -1874,37 +1873,37 @@ sort__dso_size_cmp(काष्ठा hist_entry *left, काष्ठा hist_
 	DIM(SORT_DSO_SIZE, "dso_size", sort_dso_size),
 	DIM(SORT_CGROUP, "cgroup", sort_cgroup),
 	DIM(SORT_CGROUP_ID, "cgroup_id", sort_cgroup_id),
-	DIM(SORT_SYM_IPC_शून्य, "ipc_null", sort_sym_ipc_null),
-	DIM(SORT_TIME, "time", sort_समय),
+	DIM(SORT_SYM_IPC_NULL, "ipc_null", sort_sym_ipc_null),
+	DIM(SORT_TIME, "time", sort_time),
 	DIM(SORT_CODE_PAGE_SIZE, "code_page_size", sort_code_page_size),
 	DIM(SORT_LOCAL_INS_LAT, "local_ins_lat", sort_local_ins_lat),
 	DIM(SORT_GLOBAL_INS_LAT, "ins_lat", sort_global_ins_lat),
 	DIM(SORT_PIPELINE_STAGE_CYC, "p_stage_cyc", sort_p_stage_cyc),
-पूर्ण;
+};
 
-#अघोषित DIM
+#undef DIM
 
-#घोषणा DIM(d, n, func) [d - __SORT_BRANCH_STACK] = अणु .name = n, .entry = &(func) पूर्ण
+#define DIM(d, n, func) [d - __SORT_BRANCH_STACK] = { .name = n, .entry = &(func) }
 
-अटल काष्ठा sort_dimension bstack_sort_dimensions[] = अणु
+static struct sort_dimension bstack_sort_dimensions[] = {
 	DIM(SORT_DSO_FROM, "dso_from", sort_dso_from),
 	DIM(SORT_DSO_TO, "dso_to", sort_dso_to),
 	DIM(SORT_SYM_FROM, "symbol_from", sort_sym_from),
 	DIM(SORT_SYM_TO, "symbol_to", sort_sym_to),
 	DIM(SORT_MISPREDICT, "mispredict", sort_mispredict),
 	DIM(SORT_IN_TX, "in_tx", sort_in_tx),
-	DIM(SORT_ABORT, "abort", sort_पात),
+	DIM(SORT_ABORT, "abort", sort_abort),
 	DIM(SORT_CYCLES, "cycles", sort_cycles),
 	DIM(SORT_SRCLINE_FROM, "srcline_from", sort_srcline_from),
 	DIM(SORT_SRCLINE_TO, "srcline_to", sort_srcline_to),
 	DIM(SORT_SYM_IPC, "ipc_lbr", sort_sym_ipc),
-पूर्ण;
+};
 
-#अघोषित DIM
+#undef DIM
 
-#घोषणा DIM(d, n, func) [d - __SORT_MEMORY_MODE] = अणु .name = n, .entry = &(func) पूर्ण
+#define DIM(d, n, func) [d - __SORT_MEMORY_MODE] = { .name = n, .entry = &(func) }
 
-अटल काष्ठा sort_dimension memory_sort_dimensions[] = अणु
+static struct sort_dimension memory_sort_dimensions[] = {
 	DIM(SORT_MEM_DADDR_SYMBOL, "symbol_daddr", sort_mem_daddr_sym),
 	DIM(SORT_MEM_IADDR_SYMBOL, "symbol_iaddr", sort_mem_iaddr_sym),
 	DIM(SORT_MEM_DADDR_DSO, "dso_daddr", sort_mem_daddr_dso),
@@ -1916,19 +1915,19 @@ sort__dso_size_cmp(काष्ठा hist_entry *left, काष्ठा hist_
 	DIM(SORT_MEM_PHYS_DADDR, "phys_daddr", sort_mem_phys_daddr),
 	DIM(SORT_MEM_DATA_PAGE_SIZE, "data_page_size", sort_mem_data_page_size),
 	DIM(SORT_MEM_BLOCKED, "blocked", sort_mem_blocked),
-पूर्ण;
+};
 
-#अघोषित DIM
+#undef DIM
 
-काष्ठा hpp_dimension अणु
-	स्थिर अक्षर		*name;
-	काष्ठा perf_hpp_fmt	*fmt;
-	पूर्णांक			taken;
-पूर्ण;
+struct hpp_dimension {
+	const char		*name;
+	struct perf_hpp_fmt	*fmt;
+	int			taken;
+};
 
-#घोषणा DIM(d, n) अणु .name = n, .fmt = &perf_hpp__क्रमmat[d], पूर्ण
+#define DIM(d, n) { .name = n, .fmt = &perf_hpp__format[d], }
 
-अटल काष्ठा hpp_dimension hpp_sort_dimensions[] = अणु
+static struct hpp_dimension hpp_sort_dimensions[] = {
 	DIM(PERF_HPP__OVERHEAD, "overhead"),
 	DIM(PERF_HPP__OVERHEAD_SYS, "overhead_sys"),
 	DIM(PERF_HPP__OVERHEAD_US, "overhead_us"),
@@ -1937,172 +1936,172 @@ sort__dso_size_cmp(काष्ठा hist_entry *left, काष्ठा hist_
 	DIM(PERF_HPP__OVERHEAD_ACC, "overhead_children"),
 	DIM(PERF_HPP__SAMPLES, "sample"),
 	DIM(PERF_HPP__PERIOD, "period"),
-पूर्ण;
+};
 
-#अघोषित DIM
+#undef DIM
 
-काष्ठा hpp_sort_entry अणु
-	काष्ठा perf_hpp_fmt hpp;
-	काष्ठा sort_entry *se;
-पूर्ण;
+struct hpp_sort_entry {
+	struct perf_hpp_fmt hpp;
+	struct sort_entry *se;
+};
 
-व्योम perf_hpp__reset_sort_width(काष्ठा perf_hpp_fmt *fmt, काष्ठा hists *hists)
-अणु
-	काष्ठा hpp_sort_entry *hse;
+void perf_hpp__reset_sort_width(struct perf_hpp_fmt *fmt, struct hists *hists)
+{
+	struct hpp_sort_entry *hse;
 
-	अगर (!perf_hpp__is_sort_entry(fmt))
-		वापस;
+	if (!perf_hpp__is_sort_entry(fmt))
+		return;
 
-	hse = container_of(fmt, काष्ठा hpp_sort_entry, hpp);
-	hists__new_col_len(hists, hse->se->se_width_idx, म_माप(fmt->name));
-पूर्ण
+	hse = container_of(fmt, struct hpp_sort_entry, hpp);
+	hists__new_col_len(hists, hse->se->se_width_idx, strlen(fmt->name));
+}
 
-अटल पूर्णांक __sort__hpp_header(काष्ठा perf_hpp_fmt *fmt, काष्ठा perf_hpp *hpp,
-			      काष्ठा hists *hists, पूर्णांक line __maybe_unused,
-			      पूर्णांक *span __maybe_unused)
-अणु
-	काष्ठा hpp_sort_entry *hse;
-	माप_प्रकार len = fmt->user_len;
+static int __sort__hpp_header(struct perf_hpp_fmt *fmt, struct perf_hpp *hpp,
+			      struct hists *hists, int line __maybe_unused,
+			      int *span __maybe_unused)
+{
+	struct hpp_sort_entry *hse;
+	size_t len = fmt->user_len;
 
-	hse = container_of(fmt, काष्ठा hpp_sort_entry, hpp);
+	hse = container_of(fmt, struct hpp_sort_entry, hpp);
 
-	अगर (!len)
+	if (!len)
 		len = hists__col_len(hists, hse->se->se_width_idx);
 
-	वापस scnम_लिखो(hpp->buf, hpp->size, "%-*.*s", len, len, fmt->name);
-पूर्ण
+	return scnprintf(hpp->buf, hpp->size, "%-*.*s", len, len, fmt->name);
+}
 
-अटल पूर्णांक __sort__hpp_width(काष्ठा perf_hpp_fmt *fmt,
-			     काष्ठा perf_hpp *hpp __maybe_unused,
-			     काष्ठा hists *hists)
-अणु
-	काष्ठा hpp_sort_entry *hse;
-	माप_प्रकार len = fmt->user_len;
+static int __sort__hpp_width(struct perf_hpp_fmt *fmt,
+			     struct perf_hpp *hpp __maybe_unused,
+			     struct hists *hists)
+{
+	struct hpp_sort_entry *hse;
+	size_t len = fmt->user_len;
 
-	hse = container_of(fmt, काष्ठा hpp_sort_entry, hpp);
+	hse = container_of(fmt, struct hpp_sort_entry, hpp);
 
-	अगर (!len)
+	if (!len)
 		len = hists__col_len(hists, hse->se->se_width_idx);
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल पूर्णांक __sort__hpp_entry(काष्ठा perf_hpp_fmt *fmt, काष्ठा perf_hpp *hpp,
-			     काष्ठा hist_entry *he)
-अणु
-	काष्ठा hpp_sort_entry *hse;
-	माप_प्रकार len = fmt->user_len;
+static int __sort__hpp_entry(struct perf_hpp_fmt *fmt, struct perf_hpp *hpp,
+			     struct hist_entry *he)
+{
+	struct hpp_sort_entry *hse;
+	size_t len = fmt->user_len;
 
-	hse = container_of(fmt, काष्ठा hpp_sort_entry, hpp);
+	hse = container_of(fmt, struct hpp_sort_entry, hpp);
 
-	अगर (!len)
+	if (!len)
 		len = hists__col_len(he->hists, hse->se->se_width_idx);
 
-	वापस hse->se->se_snम_लिखो(he, hpp->buf, hpp->size, len);
-पूर्ण
+	return hse->se->se_snprintf(he, hpp->buf, hpp->size, len);
+}
 
-अटल पूर्णांक64_t __sort__hpp_cmp(काष्ठा perf_hpp_fmt *fmt,
-			       काष्ठा hist_entry *a, काष्ठा hist_entry *b)
-अणु
-	काष्ठा hpp_sort_entry *hse;
+static int64_t __sort__hpp_cmp(struct perf_hpp_fmt *fmt,
+			       struct hist_entry *a, struct hist_entry *b)
+{
+	struct hpp_sort_entry *hse;
 
-	hse = container_of(fmt, काष्ठा hpp_sort_entry, hpp);
-	वापस hse->se->se_cmp(a, b);
-पूर्ण
+	hse = container_of(fmt, struct hpp_sort_entry, hpp);
+	return hse->se->se_cmp(a, b);
+}
 
-अटल पूर्णांक64_t __sort__hpp_collapse(काष्ठा perf_hpp_fmt *fmt,
-				    काष्ठा hist_entry *a, काष्ठा hist_entry *b)
-अणु
-	काष्ठा hpp_sort_entry *hse;
-	पूर्णांक64_t (*collapse_fn)(काष्ठा hist_entry *, काष्ठा hist_entry *);
+static int64_t __sort__hpp_collapse(struct perf_hpp_fmt *fmt,
+				    struct hist_entry *a, struct hist_entry *b)
+{
+	struct hpp_sort_entry *hse;
+	int64_t (*collapse_fn)(struct hist_entry *, struct hist_entry *);
 
-	hse = container_of(fmt, काष्ठा hpp_sort_entry, hpp);
+	hse = container_of(fmt, struct hpp_sort_entry, hpp);
 	collapse_fn = hse->se->se_collapse ?: hse->se->se_cmp;
-	वापस collapse_fn(a, b);
-पूर्ण
+	return collapse_fn(a, b);
+}
 
-अटल पूर्णांक64_t __sort__hpp_sort(काष्ठा perf_hpp_fmt *fmt,
-				काष्ठा hist_entry *a, काष्ठा hist_entry *b)
-अणु
-	काष्ठा hpp_sort_entry *hse;
-	पूर्णांक64_t (*sort_fn)(काष्ठा hist_entry *, काष्ठा hist_entry *);
+static int64_t __sort__hpp_sort(struct perf_hpp_fmt *fmt,
+				struct hist_entry *a, struct hist_entry *b)
+{
+	struct hpp_sort_entry *hse;
+	int64_t (*sort_fn)(struct hist_entry *, struct hist_entry *);
 
-	hse = container_of(fmt, काष्ठा hpp_sort_entry, hpp);
+	hse = container_of(fmt, struct hpp_sort_entry, hpp);
 	sort_fn = hse->se->se_sort ?: hse->se->se_cmp;
-	वापस sort_fn(a, b);
-पूर्ण
+	return sort_fn(a, b);
+}
 
-bool perf_hpp__is_sort_entry(काष्ठा perf_hpp_fmt *क्रमmat)
-अणु
-	वापस क्रमmat->header == __sort__hpp_header;
-पूर्ण
+bool perf_hpp__is_sort_entry(struct perf_hpp_fmt *format)
+{
+	return format->header == __sort__hpp_header;
+}
 
-#घोषणा MK_SORT_ENTRY_CHK(key)					\
-bool perf_hpp__is_ ## key ## _entry(काष्ठा perf_hpp_fmt *fmt)	\
-अणु								\
-	काष्ठा hpp_sort_entry *hse;				\
+#define MK_SORT_ENTRY_CHK(key)					\
+bool perf_hpp__is_ ## key ## _entry(struct perf_hpp_fmt *fmt)	\
+{								\
+	struct hpp_sort_entry *hse;				\
 								\
-	अगर (!perf_hpp__is_sort_entry(fmt))			\
-		वापस false;					\
+	if (!perf_hpp__is_sort_entry(fmt))			\
+		return false;					\
 								\
-	hse = container_of(fmt, काष्ठा hpp_sort_entry, hpp);	\
-	वापस hse->se == &sort_ ## key ;			\
-पूर्ण
+	hse = container_of(fmt, struct hpp_sort_entry, hpp);	\
+	return hse->se == &sort_ ## key ;			\
+}
 
 MK_SORT_ENTRY_CHK(trace)
 MK_SORT_ENTRY_CHK(srcline)
 MK_SORT_ENTRY_CHK(srcfile)
-MK_SORT_ENTRY_CHK(thपढ़ो)
+MK_SORT_ENTRY_CHK(thread)
 MK_SORT_ENTRY_CHK(comm)
 MK_SORT_ENTRY_CHK(dso)
 MK_SORT_ENTRY_CHK(sym)
 
 
-अटल bool __sort__hpp_equal(काष्ठा perf_hpp_fmt *a, काष्ठा perf_hpp_fmt *b)
-अणु
-	काष्ठा hpp_sort_entry *hse_a;
-	काष्ठा hpp_sort_entry *hse_b;
+static bool __sort__hpp_equal(struct perf_hpp_fmt *a, struct perf_hpp_fmt *b)
+{
+	struct hpp_sort_entry *hse_a;
+	struct hpp_sort_entry *hse_b;
 
-	अगर (!perf_hpp__is_sort_entry(a) || !perf_hpp__is_sort_entry(b))
-		वापस false;
+	if (!perf_hpp__is_sort_entry(a) || !perf_hpp__is_sort_entry(b))
+		return false;
 
-	hse_a = container_of(a, काष्ठा hpp_sort_entry, hpp);
-	hse_b = container_of(b, काष्ठा hpp_sort_entry, hpp);
+	hse_a = container_of(a, struct hpp_sort_entry, hpp);
+	hse_b = container_of(b, struct hpp_sort_entry, hpp);
 
-	वापस hse_a->se == hse_b->se;
-पूर्ण
+	return hse_a->se == hse_b->se;
+}
 
-अटल व्योम hse_मुक्त(काष्ठा perf_hpp_fmt *fmt)
-अणु
-	काष्ठा hpp_sort_entry *hse;
+static void hse_free(struct perf_hpp_fmt *fmt)
+{
+	struct hpp_sort_entry *hse;
 
-	hse = container_of(fmt, काष्ठा hpp_sort_entry, hpp);
-	मुक्त(hse);
-पूर्ण
+	hse = container_of(fmt, struct hpp_sort_entry, hpp);
+	free(hse);
+}
 
-अटल काष्ठा hpp_sort_entry *
-__sort_dimension__alloc_hpp(काष्ठा sort_dimension *sd, पूर्णांक level)
-अणु
-	काष्ठा hpp_sort_entry *hse;
+static struct hpp_sort_entry *
+__sort_dimension__alloc_hpp(struct sort_dimension *sd, int level)
+{
+	struct hpp_sort_entry *hse;
 
-	hse = दो_स्मृति(माप(*hse));
-	अगर (hse == शून्य) अणु
+	hse = malloc(sizeof(*hse));
+	if (hse == NULL) {
 		pr_err("Memory allocation failed\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	hse->se = sd->entry;
 	hse->hpp.name = sd->entry->se_header;
 	hse->hpp.header = __sort__hpp_header;
 	hse->hpp.width = __sort__hpp_width;
 	hse->hpp.entry = __sort__hpp_entry;
-	hse->hpp.color = शून्य;
+	hse->hpp.color = NULL;
 
 	hse->hpp.cmp = __sort__hpp_cmp;
 	hse->hpp.collapse = __sort__hpp_collapse;
 	hse->hpp.sort = __sort__hpp_sort;
 	hse->hpp.equal = __sort__hpp_equal;
-	hse->hpp.मुक्त = hse_मुक्त;
+	hse->hpp.free = hse_free;
 
 	INIT_LIST_HEAD(&hse->hpp.list);
 	INIT_LIST_HEAD(&hse->hpp.sort_list);
@@ -2111,331 +2110,331 @@ __sort_dimension__alloc_hpp(काष्ठा sort_dimension *sd, पूर्�
 	hse->hpp.user_len = 0;
 	hse->hpp.level = level;
 
-	वापस hse;
-पूर्ण
+	return hse;
+}
 
-अटल व्योम hpp_मुक्त(काष्ठा perf_hpp_fmt *fmt)
-अणु
-	मुक्त(fmt);
-पूर्ण
+static void hpp_free(struct perf_hpp_fmt *fmt)
+{
+	free(fmt);
+}
 
-अटल काष्ठा perf_hpp_fmt *__hpp_dimension__alloc_hpp(काष्ठा hpp_dimension *hd,
-						       पूर्णांक level)
-अणु
-	काष्ठा perf_hpp_fmt *fmt;
+static struct perf_hpp_fmt *__hpp_dimension__alloc_hpp(struct hpp_dimension *hd,
+						       int level)
+{
+	struct perf_hpp_fmt *fmt;
 
-	fmt = memdup(hd->fmt, माप(*fmt));
-	अगर (fmt) अणु
+	fmt = memdup(hd->fmt, sizeof(*fmt));
+	if (fmt) {
 		INIT_LIST_HEAD(&fmt->list);
 		INIT_LIST_HEAD(&fmt->sort_list);
-		fmt->मुक्त = hpp_मुक्त;
+		fmt->free = hpp_free;
 		fmt->level = level;
-	पूर्ण
+	}
 
-	वापस fmt;
-पूर्ण
+	return fmt;
+}
 
-पूर्णांक hist_entry__filter(काष्ठा hist_entry *he, पूर्णांक type, स्थिर व्योम *arg)
-अणु
-	काष्ठा perf_hpp_fmt *fmt;
-	काष्ठा hpp_sort_entry *hse;
-	पूर्णांक ret = -1;
-	पूर्णांक r;
+int hist_entry__filter(struct hist_entry *he, int type, const void *arg)
+{
+	struct perf_hpp_fmt *fmt;
+	struct hpp_sort_entry *hse;
+	int ret = -1;
+	int r;
 
-	perf_hpp_list__क्रम_each_क्रमmat(he->hpp_list, fmt) अणु
-		अगर (!perf_hpp__is_sort_entry(fmt))
-			जारी;
+	perf_hpp_list__for_each_format(he->hpp_list, fmt) {
+		if (!perf_hpp__is_sort_entry(fmt))
+			continue;
 
-		hse = container_of(fmt, काष्ठा hpp_sort_entry, hpp);
-		अगर (hse->se->se_filter == शून्य)
-			जारी;
+		hse = container_of(fmt, struct hpp_sort_entry, hpp);
+		if (hse->se->se_filter == NULL)
+			continue;
 
 		/*
-		 * hist entry is filtered अगर any of sort key in the hpp list
+		 * hist entry is filtered if any of sort key in the hpp list
 		 * is applied.  But it should skip non-matched filter types.
 		 */
 		r = hse->se->se_filter(he, type, arg);
-		अगर (r >= 0) अणु
-			अगर (ret < 0)
+		if (r >= 0) {
+			if (ret < 0)
 				ret = 0;
 			ret |= r;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __sort_dimension__add_hpp_sort(काष्ठा sort_dimension *sd,
-					  काष्ठा perf_hpp_list *list,
-					  पूर्णांक level)
-अणु
-	काष्ठा hpp_sort_entry *hse = __sort_dimension__alloc_hpp(sd, level);
+static int __sort_dimension__add_hpp_sort(struct sort_dimension *sd,
+					  struct perf_hpp_list *list,
+					  int level)
+{
+	struct hpp_sort_entry *hse = __sort_dimension__alloc_hpp(sd, level);
 
-	अगर (hse == शून्य)
-		वापस -1;
+	if (hse == NULL)
+		return -1;
 
-	perf_hpp_list__रेजिस्टर_sort_field(list, &hse->hpp);
-	वापस 0;
-पूर्ण
+	perf_hpp_list__register_sort_field(list, &hse->hpp);
+	return 0;
+}
 
-अटल पूर्णांक __sort_dimension__add_hpp_output(काष्ठा sort_dimension *sd,
-					    काष्ठा perf_hpp_list *list)
-अणु
-	काष्ठा hpp_sort_entry *hse = __sort_dimension__alloc_hpp(sd, 0);
+static int __sort_dimension__add_hpp_output(struct sort_dimension *sd,
+					    struct perf_hpp_list *list)
+{
+	struct hpp_sort_entry *hse = __sort_dimension__alloc_hpp(sd, 0);
 
-	अगर (hse == शून्य)
-		वापस -1;
+	if (hse == NULL)
+		return -1;
 
-	perf_hpp_list__column_रेजिस्टर(list, &hse->hpp);
-	वापस 0;
-पूर्ण
+	perf_hpp_list__column_register(list, &hse->hpp);
+	return 0;
+}
 
-काष्ठा hpp_dynamic_entry अणु
-	काष्ठा perf_hpp_fmt hpp;
-	काष्ठा evsel *evsel;
-	काष्ठा tep_क्रमmat_field *field;
-	अचिन्हित dynamic_len;
+struct hpp_dynamic_entry {
+	struct perf_hpp_fmt hpp;
+	struct evsel *evsel;
+	struct tep_format_field *field;
+	unsigned dynamic_len;
 	bool raw_trace;
-पूर्ण;
+};
 
-अटल पूर्णांक hde_width(काष्ठा hpp_dynamic_entry *hde)
-अणु
-	अगर (!hde->hpp.len) अणु
-		पूर्णांक len = hde->dynamic_len;
-		पूर्णांक namelen = म_माप(hde->field->name);
-		पूर्णांक fieldlen = hde->field->size;
+static int hde_width(struct hpp_dynamic_entry *hde)
+{
+	if (!hde->hpp.len) {
+		int len = hde->dynamic_len;
+		int namelen = strlen(hde->field->name);
+		int fieldlen = hde->field->size;
 
-		अगर (namelen > len)
+		if (namelen > len)
 			len = namelen;
 
-		अगर (!(hde->field->flags & TEP_FIELD_IS_STRING)) अणु
-			/* length क्रम prपूर्णांक hex numbers */
+		if (!(hde->field->flags & TEP_FIELD_IS_STRING)) {
+			/* length for print hex numbers */
 			fieldlen = hde->field->size * 2 + 2;
-		पूर्ण
-		अगर (fieldlen > len)
+		}
+		if (fieldlen > len)
 			len = fieldlen;
 
 		hde->hpp.len = len;
-	पूर्ण
-	वापस hde->hpp.len;
-पूर्ण
+	}
+	return hde->hpp.len;
+}
 
-अटल व्योम update_dynamic_len(काष्ठा hpp_dynamic_entry *hde,
-			       काष्ठा hist_entry *he)
-अणु
-	अक्षर *str, *pos;
-	काष्ठा tep_क्रमmat_field *field = hde->field;
-	माप_प्रकार namelen;
+static void update_dynamic_len(struct hpp_dynamic_entry *hde,
+			       struct hist_entry *he)
+{
+	char *str, *pos;
+	struct tep_format_field *field = hde->field;
+	size_t namelen;
 	bool last = false;
 
-	अगर (hde->raw_trace)
-		वापस;
+	if (hde->raw_trace)
+		return;
 
-	/* parse pretty prपूर्णांक result and update max length */
-	अगर (!he->trace_output)
+	/* parse pretty print result and update max length */
+	if (!he->trace_output)
 		he->trace_output = get_trace_output(he);
 
-	namelen = म_माप(field->name);
+	namelen = strlen(field->name);
 	str = he->trace_output;
 
-	जबतक (str) अणु
-		pos = म_अक्षर(str, ' ');
-		अगर (pos == शून्य) अणु
+	while (str) {
+		pos = strchr(str, ' ');
+		if (pos == NULL) {
 			last = true;
-			pos = str + म_माप(str);
-		पूर्ण
+			pos = str + strlen(str);
+		}
 
-		अगर (!म_भेदन(str, field->name, namelen)) अणु
-			माप_प्रकार len;
+		if (!strncmp(str, field->name, namelen)) {
+			size_t len;
 
 			str += namelen + 1;
 			len = pos - str;
 
-			अगर (len > hde->dynamic_len)
+			if (len > hde->dynamic_len)
 				hde->dynamic_len = len;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (last)
-			str = शून्य;
-		अन्यथा
+		if (last)
+			str = NULL;
+		else
 			str = pos + 1;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक __sort__hde_header(काष्ठा perf_hpp_fmt *fmt, काष्ठा perf_hpp *hpp,
-			      काष्ठा hists *hists __maybe_unused,
-			      पूर्णांक line __maybe_unused,
-			      पूर्णांक *span __maybe_unused)
-अणु
-	काष्ठा hpp_dynamic_entry *hde;
-	माप_प्रकार len = fmt->user_len;
+static int __sort__hde_header(struct perf_hpp_fmt *fmt, struct perf_hpp *hpp,
+			      struct hists *hists __maybe_unused,
+			      int line __maybe_unused,
+			      int *span __maybe_unused)
+{
+	struct hpp_dynamic_entry *hde;
+	size_t len = fmt->user_len;
 
-	hde = container_of(fmt, काष्ठा hpp_dynamic_entry, hpp);
+	hde = container_of(fmt, struct hpp_dynamic_entry, hpp);
 
-	अगर (!len)
+	if (!len)
 		len = hde_width(hde);
 
-	वापस scnम_लिखो(hpp->buf, hpp->size, "%*.*s", len, len, hde->field->name);
-पूर्ण
+	return scnprintf(hpp->buf, hpp->size, "%*.*s", len, len, hde->field->name);
+}
 
-अटल पूर्णांक __sort__hde_width(काष्ठा perf_hpp_fmt *fmt,
-			     काष्ठा perf_hpp *hpp __maybe_unused,
-			     काष्ठा hists *hists __maybe_unused)
-अणु
-	काष्ठा hpp_dynamic_entry *hde;
-	माप_प्रकार len = fmt->user_len;
+static int __sort__hde_width(struct perf_hpp_fmt *fmt,
+			     struct perf_hpp *hpp __maybe_unused,
+			     struct hists *hists __maybe_unused)
+{
+	struct hpp_dynamic_entry *hde;
+	size_t len = fmt->user_len;
 
-	hde = container_of(fmt, काष्ठा hpp_dynamic_entry, hpp);
+	hde = container_of(fmt, struct hpp_dynamic_entry, hpp);
 
-	अगर (!len)
+	if (!len)
 		len = hde_width(hde);
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-bool perf_hpp__defined_dynamic_entry(काष्ठा perf_hpp_fmt *fmt, काष्ठा hists *hists)
-अणु
-	काष्ठा hpp_dynamic_entry *hde;
+bool perf_hpp__defined_dynamic_entry(struct perf_hpp_fmt *fmt, struct hists *hists)
+{
+	struct hpp_dynamic_entry *hde;
 
-	hde = container_of(fmt, काष्ठा hpp_dynamic_entry, hpp);
+	hde = container_of(fmt, struct hpp_dynamic_entry, hpp);
 
-	वापस hists_to_evsel(hists) == hde->evsel;
-पूर्ण
+	return hists_to_evsel(hists) == hde->evsel;
+}
 
-अटल पूर्णांक __sort__hde_entry(काष्ठा perf_hpp_fmt *fmt, काष्ठा perf_hpp *hpp,
-			     काष्ठा hist_entry *he)
-अणु
-	काष्ठा hpp_dynamic_entry *hde;
-	माप_प्रकार len = fmt->user_len;
-	अक्षर *str, *pos;
-	काष्ठा tep_क्रमmat_field *field;
-	माप_प्रकार namelen;
+static int __sort__hde_entry(struct perf_hpp_fmt *fmt, struct perf_hpp *hpp,
+			     struct hist_entry *he)
+{
+	struct hpp_dynamic_entry *hde;
+	size_t len = fmt->user_len;
+	char *str, *pos;
+	struct tep_format_field *field;
+	size_t namelen;
 	bool last = false;
-	पूर्णांक ret;
+	int ret;
 
-	hde = container_of(fmt, काष्ठा hpp_dynamic_entry, hpp);
+	hde = container_of(fmt, struct hpp_dynamic_entry, hpp);
 
-	अगर (!len)
+	if (!len)
 		len = hde_width(hde);
 
-	अगर (hde->raw_trace)
-		जाओ raw_field;
+	if (hde->raw_trace)
+		goto raw_field;
 
-	अगर (!he->trace_output)
+	if (!he->trace_output)
 		he->trace_output = get_trace_output(he);
 
 	field = hde->field;
-	namelen = म_माप(field->name);
+	namelen = strlen(field->name);
 	str = he->trace_output;
 
-	जबतक (str) अणु
-		pos = म_अक्षर(str, ' ');
-		अगर (pos == शून्य) अणु
+	while (str) {
+		pos = strchr(str, ' ');
+		if (pos == NULL) {
 			last = true;
-			pos = str + म_माप(str);
-		पूर्ण
+			pos = str + strlen(str);
+		}
 
-		अगर (!म_भेदन(str, field->name, namelen)) अणु
+		if (!strncmp(str, field->name, namelen)) {
 			str += namelen + 1;
 			str = strndup(str, pos - str);
 
-			अगर (str == शून्य)
-				वापस scnम_लिखो(hpp->buf, hpp->size,
+			if (str == NULL)
+				return scnprintf(hpp->buf, hpp->size,
 						 "%*.*s", len, len, "ERROR");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (last)
-			str = शून्य;
-		अन्यथा
+		if (last)
+			str = NULL;
+		else
 			str = pos + 1;
-	पूर्ण
+	}
 
-	अगर (str == शून्य) अणु
-		काष्ठा trace_seq seq;
+	if (str == NULL) {
+		struct trace_seq seq;
 raw_field:
 		trace_seq_init(&seq);
-		tep_prपूर्णांक_field(&seq, he->raw_data, hde->field);
+		tep_print_field(&seq, he->raw_data, hde->field);
 		str = seq.buffer;
-	पूर्ण
+	}
 
-	ret = scnम_लिखो(hpp->buf, hpp->size, "%*.*s", len, len, str);
-	मुक्त(str);
-	वापस ret;
-पूर्ण
+	ret = scnprintf(hpp->buf, hpp->size, "%*.*s", len, len, str);
+	free(str);
+	return ret;
+}
 
-अटल पूर्णांक64_t __sort__hde_cmp(काष्ठा perf_hpp_fmt *fmt,
-			       काष्ठा hist_entry *a, काष्ठा hist_entry *b)
-अणु
-	काष्ठा hpp_dynamic_entry *hde;
-	काष्ठा tep_क्रमmat_field *field;
-	अचिन्हित offset, size;
+static int64_t __sort__hde_cmp(struct perf_hpp_fmt *fmt,
+			       struct hist_entry *a, struct hist_entry *b)
+{
+	struct hpp_dynamic_entry *hde;
+	struct tep_format_field *field;
+	unsigned offset, size;
 
-	hde = container_of(fmt, काष्ठा hpp_dynamic_entry, hpp);
+	hde = container_of(fmt, struct hpp_dynamic_entry, hpp);
 
-	अगर (b == शून्य) अणु
+	if (b == NULL) {
 		update_dynamic_len(hde, a);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	field = hde->field;
-	अगर (field->flags & TEP_FIELD_IS_DYNAMIC) अणु
-		अचिन्हित दीर्घ दीर्घ dyn;
+	if (field->flags & TEP_FIELD_IS_DYNAMIC) {
+		unsigned long long dyn;
 
-		tep_पढ़ो_number_field(field, a->raw_data, &dyn);
+		tep_read_number_field(field, a->raw_data, &dyn);
 		offset = dyn & 0xffff;
 		size = (dyn >> 16) & 0xffff;
 
-		/* record max width क्रम output */
-		अगर (size > hde->dynamic_len)
+		/* record max width for output */
+		if (size > hde->dynamic_len)
 			hde->dynamic_len = size;
-	पूर्ण अन्यथा अणु
+	} else {
 		offset = field->offset;
 		size = field->size;
-	पूर्ण
+	}
 
-	वापस स_भेद(a->raw_data + offset, b->raw_data + offset, size);
-पूर्ण
+	return memcmp(a->raw_data + offset, b->raw_data + offset, size);
+}
 
-bool perf_hpp__is_dynamic_entry(काष्ठा perf_hpp_fmt *fmt)
-अणु
-	वापस fmt->cmp == __sort__hde_cmp;
-पूर्ण
+bool perf_hpp__is_dynamic_entry(struct perf_hpp_fmt *fmt)
+{
+	return fmt->cmp == __sort__hde_cmp;
+}
 
-अटल bool __sort__hde_equal(काष्ठा perf_hpp_fmt *a, काष्ठा perf_hpp_fmt *b)
-अणु
-	काष्ठा hpp_dynamic_entry *hde_a;
-	काष्ठा hpp_dynamic_entry *hde_b;
+static bool __sort__hde_equal(struct perf_hpp_fmt *a, struct perf_hpp_fmt *b)
+{
+	struct hpp_dynamic_entry *hde_a;
+	struct hpp_dynamic_entry *hde_b;
 
-	अगर (!perf_hpp__is_dynamic_entry(a) || !perf_hpp__is_dynamic_entry(b))
-		वापस false;
+	if (!perf_hpp__is_dynamic_entry(a) || !perf_hpp__is_dynamic_entry(b))
+		return false;
 
-	hde_a = container_of(a, काष्ठा hpp_dynamic_entry, hpp);
-	hde_b = container_of(b, काष्ठा hpp_dynamic_entry, hpp);
+	hde_a = container_of(a, struct hpp_dynamic_entry, hpp);
+	hde_b = container_of(b, struct hpp_dynamic_entry, hpp);
 
-	वापस hde_a->field == hde_b->field;
-पूर्ण
+	return hde_a->field == hde_b->field;
+}
 
-अटल व्योम hde_मुक्त(काष्ठा perf_hpp_fmt *fmt)
-अणु
-	काष्ठा hpp_dynamic_entry *hde;
+static void hde_free(struct perf_hpp_fmt *fmt)
+{
+	struct hpp_dynamic_entry *hde;
 
-	hde = container_of(fmt, काष्ठा hpp_dynamic_entry, hpp);
-	मुक्त(hde);
-पूर्ण
+	hde = container_of(fmt, struct hpp_dynamic_entry, hpp);
+	free(hde);
+}
 
-अटल काष्ठा hpp_dynamic_entry *
-__alloc_dynamic_entry(काष्ठा evsel *evsel, काष्ठा tep_क्रमmat_field *field,
-		      पूर्णांक level)
-अणु
-	काष्ठा hpp_dynamic_entry *hde;
+static struct hpp_dynamic_entry *
+__alloc_dynamic_entry(struct evsel *evsel, struct tep_format_field *field,
+		      int level)
+{
+	struct hpp_dynamic_entry *hde;
 
-	hde = दो_स्मृति(माप(*hde));
-	अगर (hde == शून्य) अणु
+	hde = malloc(sizeof(*hde));
+	if (hde == NULL) {
 		pr_debug("Memory allocation failed\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	hde->evsel = evsel;
 	hde->field = field;
@@ -2445,13 +2444,13 @@ __alloc_dynamic_entry(काष्ठा evsel *evsel, काष्ठा tep_�
 	hde->hpp.header = __sort__hde_header;
 	hde->hpp.width  = __sort__hde_width;
 	hde->hpp.entry  = __sort__hde_entry;
-	hde->hpp.color  = शून्य;
+	hde->hpp.color  = NULL;
 
 	hde->hpp.cmp = __sort__hde_cmp;
 	hde->hpp.collapse = __sort__hde_cmp;
 	hde->hpp.sort = __sort__hde_cmp;
 	hde->hpp.equal = __sort__hde_equal;
-	hde->hpp.मुक्त = hde_मुक्त;
+	hde->hpp.free = hde_free;
 
 	INIT_LIST_HEAD(&hde->hpp.list);
 	INIT_LIST_HEAD(&hde->hpp.sort_list);
@@ -2460,922 +2459,922 @@ __alloc_dynamic_entry(काष्ठा evsel *evsel, काष्ठा tep_�
 	hde->hpp.user_len = 0;
 	hde->hpp.level = level;
 
-	वापस hde;
-पूर्ण
+	return hde;
+}
 
-काष्ठा perf_hpp_fmt *perf_hpp_fmt__dup(काष्ठा perf_hpp_fmt *fmt)
-अणु
-	काष्ठा perf_hpp_fmt *new_fmt = शून्य;
+struct perf_hpp_fmt *perf_hpp_fmt__dup(struct perf_hpp_fmt *fmt)
+{
+	struct perf_hpp_fmt *new_fmt = NULL;
 
-	अगर (perf_hpp__is_sort_entry(fmt)) अणु
-		काष्ठा hpp_sort_entry *hse, *new_hse;
+	if (perf_hpp__is_sort_entry(fmt)) {
+		struct hpp_sort_entry *hse, *new_hse;
 
-		hse = container_of(fmt, काष्ठा hpp_sort_entry, hpp);
-		new_hse = memdup(hse, माप(*hse));
-		अगर (new_hse)
+		hse = container_of(fmt, struct hpp_sort_entry, hpp);
+		new_hse = memdup(hse, sizeof(*hse));
+		if (new_hse)
 			new_fmt = &new_hse->hpp;
-	पूर्ण अन्यथा अगर (perf_hpp__is_dynamic_entry(fmt)) अणु
-		काष्ठा hpp_dynamic_entry *hde, *new_hde;
+	} else if (perf_hpp__is_dynamic_entry(fmt)) {
+		struct hpp_dynamic_entry *hde, *new_hde;
 
-		hde = container_of(fmt, काष्ठा hpp_dynamic_entry, hpp);
-		new_hde = memdup(hde, माप(*hde));
-		अगर (new_hde)
+		hde = container_of(fmt, struct hpp_dynamic_entry, hpp);
+		new_hde = memdup(hde, sizeof(*hde));
+		if (new_hde)
 			new_fmt = &new_hde->hpp;
-	पूर्ण अन्यथा अणु
-		new_fmt = memdup(fmt, माप(*fmt));
-	पूर्ण
+	} else {
+		new_fmt = memdup(fmt, sizeof(*fmt));
+	}
 
 	INIT_LIST_HEAD(&new_fmt->list);
 	INIT_LIST_HEAD(&new_fmt->sort_list);
 
-	वापस new_fmt;
-पूर्ण
+	return new_fmt;
+}
 
-अटल पूर्णांक parse_field_name(अक्षर *str, अक्षर **event, अक्षर **field, अक्षर **opt)
-अणु
-	अक्षर *event_name, *field_name, *opt_name;
+static int parse_field_name(char *str, char **event, char **field, char **opt)
+{
+	char *event_name, *field_name, *opt_name;
 
 	event_name = str;
-	field_name = म_अक्षर(str, '.');
+	field_name = strchr(str, '.');
 
-	अगर (field_name) अणु
+	if (field_name) {
 		*field_name++ = '\0';
-	पूर्ण अन्यथा अणु
-		event_name = शून्य;
+	} else {
+		event_name = NULL;
 		field_name = str;
-	पूर्ण
+	}
 
-	opt_name = म_अक्षर(field_name, '/');
-	अगर (opt_name)
+	opt_name = strchr(field_name, '/');
+	if (opt_name)
 		*opt_name++ = '\0';
 
 	*event = event_name;
 	*field = field_name;
 	*opt   = opt_name;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* find match evsel using a given event name.  The event name can be:
- *   1. '%' + event index (e.g. '%1' क्रम first event)
- *   2. full event name (e.g. sched:sched_चयन)
+ *   1. '%' + event index (e.g. '%1' for first event)
+ *   2. full event name (e.g. sched:sched_switch)
  *   3. partial event name (should not contain ':')
  */
-अटल काष्ठा evsel *find_evsel(काष्ठा evlist *evlist, अक्षर *event_name)
-अणु
-	काष्ठा evsel *evsel = शून्य;
-	काष्ठा evsel *pos;
+static struct evsel *find_evsel(struct evlist *evlist, char *event_name)
+{
+	struct evsel *evsel = NULL;
+	struct evsel *pos;
 	bool full_name;
 
-	/* हाल 1 */
-	अगर (event_name[0] == '%') अणु
-		पूर्णांक nr = म_से_दीर्घ(event_name+1, शून्य, 0);
+	/* case 1 */
+	if (event_name[0] == '%') {
+		int nr = strtol(event_name+1, NULL, 0);
 
-		अगर (nr > evlist->core.nr_entries)
-			वापस शून्य;
+		if (nr > evlist->core.nr_entries)
+			return NULL;
 
 		evsel = evlist__first(evlist);
-		जबतक (--nr > 0)
+		while (--nr > 0)
 			evsel = evsel__next(evsel);
 
-		वापस evsel;
-	पूर्ण
+		return evsel;
+	}
 
-	full_name = !!म_अक्षर(event_name, ':');
-	evlist__क्रम_each_entry(evlist, pos) अणु
-		/* हाल 2 */
-		अगर (full_name && !म_भेद(pos->name, event_name))
-			वापस pos;
-		/* हाल 3 */
-		अगर (!full_name && म_माला(pos->name, event_name)) अणु
-			अगर (evsel) अणु
+	full_name = !!strchr(event_name, ':');
+	evlist__for_each_entry(evlist, pos) {
+		/* case 2 */
+		if (full_name && !strcmp(pos->name, event_name))
+			return pos;
+		/* case 3 */
+		if (!full_name && strstr(pos->name, event_name)) {
+			if (evsel) {
 				pr_debug("'%s' event is ambiguous: it can be %s or %s\n",
 					 event_name, evsel->name, pos->name);
-				वापस शून्य;
-			पूर्ण
+				return NULL;
+			}
 			evsel = pos;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस evsel;
-पूर्ण
+	return evsel;
+}
 
-अटल पूर्णांक __dynamic_dimension__add(काष्ठा evsel *evsel,
-				    काष्ठा tep_क्रमmat_field *field,
-				    bool raw_trace, पूर्णांक level)
-अणु
-	काष्ठा hpp_dynamic_entry *hde;
+static int __dynamic_dimension__add(struct evsel *evsel,
+				    struct tep_format_field *field,
+				    bool raw_trace, int level)
+{
+	struct hpp_dynamic_entry *hde;
 
 	hde = __alloc_dynamic_entry(evsel, field, level);
-	अगर (hde == शून्य)
-		वापस -ENOMEM;
+	if (hde == NULL)
+		return -ENOMEM;
 
 	hde->raw_trace = raw_trace;
 
-	perf_hpp__रेजिस्टर_sort_field(&hde->hpp);
-	वापस 0;
-पूर्ण
+	perf_hpp__register_sort_field(&hde->hpp);
+	return 0;
+}
 
-अटल पूर्णांक add_evsel_fields(काष्ठा evsel *evsel, bool raw_trace, पूर्णांक level)
-अणु
-	पूर्णांक ret;
-	काष्ठा tep_क्रमmat_field *field;
+static int add_evsel_fields(struct evsel *evsel, bool raw_trace, int level)
+{
+	int ret;
+	struct tep_format_field *field;
 
-	field = evsel->tp_क्रमmat->क्रमmat.fields;
-	जबतक (field) अणु
+	field = evsel->tp_format->format.fields;
+	while (field) {
 		ret = __dynamic_dimension__add(evsel, field, raw_trace, level);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
 		field = field->next;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक add_all_dynamic_fields(काष्ठा evlist *evlist, bool raw_trace,
-				  पूर्णांक level)
-अणु
-	पूर्णांक ret;
-	काष्ठा evsel *evsel;
+static int add_all_dynamic_fields(struct evlist *evlist, bool raw_trace,
+				  int level)
+{
+	int ret;
+	struct evsel *evsel;
 
-	evlist__क्रम_each_entry(evlist, evsel) अणु
-		अगर (evsel->core.attr.type != PERF_TYPE_TRACEPOINT)
-			जारी;
+	evlist__for_each_entry(evlist, evsel) {
+		if (evsel->core.attr.type != PERF_TYPE_TRACEPOINT)
+			continue;
 
 		ret = add_evsel_fields(evsel, raw_trace, level);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (ret < 0)
+			return ret;
+	}
+	return 0;
+}
 
-अटल पूर्णांक add_all_matching_fields(काष्ठा evlist *evlist,
-				   अक्षर *field_name, bool raw_trace, पूर्णांक level)
-अणु
-	पूर्णांक ret = -ESRCH;
-	काष्ठा evsel *evsel;
-	काष्ठा tep_क्रमmat_field *field;
+static int add_all_matching_fields(struct evlist *evlist,
+				   char *field_name, bool raw_trace, int level)
+{
+	int ret = -ESRCH;
+	struct evsel *evsel;
+	struct tep_format_field *field;
 
-	evlist__क्रम_each_entry(evlist, evsel) अणु
-		अगर (evsel->core.attr.type != PERF_TYPE_TRACEPOINT)
-			जारी;
+	evlist__for_each_entry(evlist, evsel) {
+		if (evsel->core.attr.type != PERF_TYPE_TRACEPOINT)
+			continue;
 
-		field = tep_find_any_field(evsel->tp_क्रमmat, field_name);
-		अगर (field == शून्य)
-			जारी;
+		field = tep_find_any_field(evsel->tp_format, field_name);
+		if (field == NULL)
+			continue;
 
 		ret = __dynamic_dimension__add(evsel, field, raw_trace, level);
-		अगर (ret < 0)
-			अवरोध;
-	पूर्ण
-	वापस ret;
-पूर्ण
+		if (ret < 0)
+			break;
+	}
+	return ret;
+}
 
-अटल पूर्णांक add_dynamic_entry(काष्ठा evlist *evlist, स्थिर अक्षर *tok,
-			     पूर्णांक level)
-अणु
-	अक्षर *str, *event_name, *field_name, *opt_name;
-	काष्ठा evsel *evsel;
-	काष्ठा tep_क्रमmat_field *field;
+static int add_dynamic_entry(struct evlist *evlist, const char *tok,
+			     int level)
+{
+	char *str, *event_name, *field_name, *opt_name;
+	struct evsel *evsel;
+	struct tep_format_field *field;
 	bool raw_trace = symbol_conf.raw_trace;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	अगर (evlist == शून्य)
-		वापस -ENOENT;
+	if (evlist == NULL)
+		return -ENOENT;
 
 	str = strdup(tok);
-	अगर (str == शून्य)
-		वापस -ENOMEM;
+	if (str == NULL)
+		return -ENOMEM;
 
-	अगर (parse_field_name(str, &event_name, &field_name, &opt_name) < 0) अणु
+	if (parse_field_name(str, &event_name, &field_name, &opt_name) < 0) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (opt_name) अणु
-		अगर (म_भेद(opt_name, "raw")) अणु
+	if (opt_name) {
+		if (strcmp(opt_name, "raw")) {
 			pr_debug("unsupported field option %s\n", opt_name);
 			ret = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		raw_trace = true;
-	पूर्ण
+	}
 
-	अगर (!म_भेद(field_name, "trace_fields")) अणु
+	if (!strcmp(field_name, "trace_fields")) {
 		ret = add_all_dynamic_fields(evlist, raw_trace, level);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (event_name == शून्य) अणु
+	if (event_name == NULL) {
 		ret = add_all_matching_fields(evlist, field_name, raw_trace, level);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	evsel = find_evsel(evlist, event_name);
-	अगर (evsel == शून्य) अणु
+	if (evsel == NULL) {
 		pr_debug("Cannot find event: %s\n", event_name);
 		ret = -ENOENT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (evsel->core.attr.type != PERF_TYPE_TRACEPOINT) अणु
+	if (evsel->core.attr.type != PERF_TYPE_TRACEPOINT) {
 		pr_debug("%s is not a tracepoint event\n", event_name);
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!म_भेद(field_name, "*")) अणु
+	if (!strcmp(field_name, "*")) {
 		ret = add_evsel_fields(evsel, raw_trace, level);
-	पूर्ण अन्यथा अणु
-		field = tep_find_any_field(evsel->tp_क्रमmat, field_name);
-		अगर (field == शून्य) अणु
+	} else {
+		field = tep_find_any_field(evsel->tp_format, field_name);
+		if (field == NULL) {
 			pr_debug("Cannot find event field for %s.%s\n",
 				 event_name, field_name);
-			वापस -ENOENT;
-		पूर्ण
+			return -ENOENT;
+		}
 
 		ret = __dynamic_dimension__add(evsel, field, raw_trace, level);
-	पूर्ण
+	}
 
 out:
-	मुक्त(str);
-	वापस ret;
-पूर्ण
+	free(str);
+	return ret;
+}
 
-अटल पूर्णांक __sort_dimension__add(काष्ठा sort_dimension *sd,
-				 काष्ठा perf_hpp_list *list,
-				 पूर्णांक level)
-अणु
-	अगर (sd->taken)
-		वापस 0;
+static int __sort_dimension__add(struct sort_dimension *sd,
+				 struct perf_hpp_list *list,
+				 int level)
+{
+	if (sd->taken)
+		return 0;
 
-	अगर (__sort_dimension__add_hpp_sort(sd, list, level) < 0)
-		वापस -1;
+	if (__sort_dimension__add_hpp_sort(sd, list, level) < 0)
+		return -1;
 
-	अगर (sd->entry->se_collapse)
+	if (sd->entry->se_collapse)
 		list->need_collapse = 1;
 
 	sd->taken = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __hpp_dimension__add(काष्ठा hpp_dimension *hd,
-				काष्ठा perf_hpp_list *list,
-				पूर्णांक level)
-अणु
-	काष्ठा perf_hpp_fmt *fmt;
+static int __hpp_dimension__add(struct hpp_dimension *hd,
+				struct perf_hpp_list *list,
+				int level)
+{
+	struct perf_hpp_fmt *fmt;
 
-	अगर (hd->taken)
-		वापस 0;
+	if (hd->taken)
+		return 0;
 
 	fmt = __hpp_dimension__alloc_hpp(hd, level);
-	अगर (!fmt)
-		वापस -1;
+	if (!fmt)
+		return -1;
 
 	hd->taken = 1;
-	perf_hpp_list__रेजिस्टर_sort_field(list, fmt);
-	वापस 0;
-पूर्ण
+	perf_hpp_list__register_sort_field(list, fmt);
+	return 0;
+}
 
-अटल पूर्णांक __sort_dimension__add_output(काष्ठा perf_hpp_list *list,
-					काष्ठा sort_dimension *sd)
-अणु
-	अगर (sd->taken)
-		वापस 0;
+static int __sort_dimension__add_output(struct perf_hpp_list *list,
+					struct sort_dimension *sd)
+{
+	if (sd->taken)
+		return 0;
 
-	अगर (__sort_dimension__add_hpp_output(sd, list) < 0)
-		वापस -1;
+	if (__sort_dimension__add_hpp_output(sd, list) < 0)
+		return -1;
 
 	sd->taken = 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __hpp_dimension__add_output(काष्ठा perf_hpp_list *list,
-				       काष्ठा hpp_dimension *hd)
-अणु
-	काष्ठा perf_hpp_fmt *fmt;
+static int __hpp_dimension__add_output(struct perf_hpp_list *list,
+				       struct hpp_dimension *hd)
+{
+	struct perf_hpp_fmt *fmt;
 
-	अगर (hd->taken)
-		वापस 0;
+	if (hd->taken)
+		return 0;
 
 	fmt = __hpp_dimension__alloc_hpp(hd, 0);
-	अगर (!fmt)
-		वापस -1;
+	if (!fmt)
+		return -1;
 
 	hd->taken = 1;
-	perf_hpp_list__column_रेजिस्टर(list, fmt);
-	वापस 0;
-पूर्ण
+	perf_hpp_list__column_register(list, fmt);
+	return 0;
+}
 
-पूर्णांक hpp_dimension__add_output(अचिन्हित col)
-अणु
+int hpp_dimension__add_output(unsigned col)
+{
 	BUG_ON(col >= PERF_HPP__MAX_INDEX);
-	वापस __hpp_dimension__add_output(&perf_hpp_list, &hpp_sort_dimensions[col]);
-पूर्ण
+	return __hpp_dimension__add_output(&perf_hpp_list, &hpp_sort_dimensions[col]);
+}
 
-पूर्णांक sort_dimension__add(काष्ठा perf_hpp_list *list, स्थिर अक्षर *tok,
-			काष्ठा evlist *evlist,
-			पूर्णांक level)
-अणु
-	अचिन्हित पूर्णांक i, j;
+int sort_dimension__add(struct perf_hpp_list *list, const char *tok,
+			struct evlist *evlist,
+			int level)
+{
+	unsigned int i, j;
 
 	/*
-	 * Check to see अगर there are any arch specअगरic
-	 * sort dimensions not applicable क्रम the current
+	 * Check to see if there are any arch specific
+	 * sort dimensions not applicable for the current
 	 * architecture. If so, Skip that sort key since
-	 * we करोn't want to display it in the output fields.
+	 * we don't want to display it in the output fields.
 	 */
-	क्रम (j = 0; j < ARRAY_SIZE(arch_specअगरic_sort_keys); j++) अणु
-		अगर (!म_भेद(arch_specअगरic_sort_keys[j], tok) &&
-				!arch_support_sort_key(tok)) अणु
-			वापस 0;
-		पूर्ण
-	पूर्ण
+	for (j = 0; j < ARRAY_SIZE(arch_specific_sort_keys); j++) {
+		if (!strcmp(arch_specific_sort_keys[j], tok) &&
+				!arch_support_sort_key(tok)) {
+			return 0;
+		}
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(common_sort_dimensions); i++) अणु
-		काष्ठा sort_dimension *sd = &common_sort_dimensions[i];
+	for (i = 0; i < ARRAY_SIZE(common_sort_dimensions); i++) {
+		struct sort_dimension *sd = &common_sort_dimensions[i];
 
-		अगर (strnहालcmp(tok, sd->name, म_माप(tok)))
-			जारी;
+		if (strncasecmp(tok, sd->name, strlen(tok)))
+			continue;
 
-		क्रम (j = 0; j < ARRAY_SIZE(dynamic_headers); j++) अणु
-			अगर (!म_भेद(dynamic_headers[j], sd->name))
+		for (j = 0; j < ARRAY_SIZE(dynamic_headers); j++) {
+			if (!strcmp(dynamic_headers[j], sd->name))
 				sort_dimension_add_dynamic_header(sd);
-		पूर्ण
+		}
 
-		अगर (sd->entry == &sort_parent) अणु
-			पूर्णांक ret = regcomp(&parent_regex, parent_pattern, REG_EXTENDED);
-			अगर (ret) अणु
-				अक्षर err[बफ_मान];
+		if (sd->entry == &sort_parent) {
+			int ret = regcomp(&parent_regex, parent_pattern, REG_EXTENDED);
+			if (ret) {
+				char err[BUFSIZ];
 
-				regerror(ret, &parent_regex, err, माप(err));
+				regerror(ret, &parent_regex, err, sizeof(err));
 				pr_err("Invalid regex: %s\n%s", parent_pattern, err);
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 			list->parent = 1;
-		पूर्ण अन्यथा अगर (sd->entry == &sort_sym) अणु
+		} else if (sd->entry == &sort_sym) {
 			list->sym = 1;
 			/*
-			 * perf dअगरf displays the perक्रमmance dअगरference amongst
+			 * perf diff displays the performance difference amongst
 			 * two or more perf.data files. Those files could come
-			 * from dअगरferent binaries. So we should not compare
+			 * from different binaries. So we should not compare
 			 * their ips, but the name of symbol.
 			 */
-			अगर (sort__mode == SORT_MODE__DIFF)
+			if (sort__mode == SORT_MODE__DIFF)
 				sd->entry->se_collapse = sort__sym_sort;
 
-		पूर्ण अन्यथा अगर (sd->entry == &sort_dso) अणु
+		} else if (sd->entry == &sort_dso) {
 			list->dso = 1;
-		पूर्ण अन्यथा अगर (sd->entry == &sort_socket) अणु
+		} else if (sd->entry == &sort_socket) {
 			list->socket = 1;
-		पूर्ण अन्यथा अगर (sd->entry == &sort_thपढ़ो) अणु
-			list->thपढ़ो = 1;
-		पूर्ण अन्यथा अगर (sd->entry == &sort_comm) अणु
+		} else if (sd->entry == &sort_thread) {
+			list->thread = 1;
+		} else if (sd->entry == &sort_comm) {
 			list->comm = 1;
-		पूर्ण
+		}
 
-		वापस __sort_dimension__add(sd, list, level);
-	पूर्ण
+		return __sort_dimension__add(sd, list, level);
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(hpp_sort_dimensions); i++) अणु
-		काष्ठा hpp_dimension *hd = &hpp_sort_dimensions[i];
+	for (i = 0; i < ARRAY_SIZE(hpp_sort_dimensions); i++) {
+		struct hpp_dimension *hd = &hpp_sort_dimensions[i];
 
-		अगर (strnहालcmp(tok, hd->name, म_माप(tok)))
-			जारी;
+		if (strncasecmp(tok, hd->name, strlen(tok)))
+			continue;
 
-		वापस __hpp_dimension__add(hd, list, level);
-	पूर्ण
+		return __hpp_dimension__add(hd, list, level);
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(bstack_sort_dimensions); i++) अणु
-		काष्ठा sort_dimension *sd = &bstack_sort_dimensions[i];
+	for (i = 0; i < ARRAY_SIZE(bstack_sort_dimensions); i++) {
+		struct sort_dimension *sd = &bstack_sort_dimensions[i];
 
-		अगर (strnहालcmp(tok, sd->name, म_माप(tok)))
-			जारी;
+		if (strncasecmp(tok, sd->name, strlen(tok)))
+			continue;
 
-		अगर (sort__mode != SORT_MODE__BRANCH)
-			वापस -EINVAL;
+		if (sort__mode != SORT_MODE__BRANCH)
+			return -EINVAL;
 
-		अगर (sd->entry == &sort_sym_from || sd->entry == &sort_sym_to)
+		if (sd->entry == &sort_sym_from || sd->entry == &sort_sym_to)
 			list->sym = 1;
 
 		__sort_dimension__add(sd, list, level);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(memory_sort_dimensions); i++) अणु
-		काष्ठा sort_dimension *sd = &memory_sort_dimensions[i];
+	for (i = 0; i < ARRAY_SIZE(memory_sort_dimensions); i++) {
+		struct sort_dimension *sd = &memory_sort_dimensions[i];
 
-		अगर (strnहालcmp(tok, sd->name, म_माप(tok)))
-			जारी;
+		if (strncasecmp(tok, sd->name, strlen(tok)))
+			continue;
 
-		अगर (sort__mode != SORT_MODE__MEMORY)
-			वापस -EINVAL;
+		if (sort__mode != SORT_MODE__MEMORY)
+			return -EINVAL;
 
-		अगर (sd->entry == &sort_mem_dcacheline && cacheline_size() == 0)
-			वापस -EINVAL;
+		if (sd->entry == &sort_mem_dcacheline && cacheline_size() == 0)
+			return -EINVAL;
 
-		अगर (sd->entry == &sort_mem_daddr_sym)
+		if (sd->entry == &sort_mem_daddr_sym)
 			list->sym = 1;
 
 		__sort_dimension__add(sd, list, level);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (!add_dynamic_entry(evlist, tok, level))
-		वापस 0;
+	if (!add_dynamic_entry(evlist, tok, level))
+		return 0;
 
-	वापस -ESRCH;
-पूर्ण
+	return -ESRCH;
+}
 
-अटल पूर्णांक setup_sort_list(काष्ठा perf_hpp_list *list, अक्षर *str,
-			   काष्ठा evlist *evlist)
-अणु
-	अक्षर *पंचांगp, *tok;
-	पूर्णांक ret = 0;
-	पूर्णांक level = 0;
-	पूर्णांक next_level = 1;
+static int setup_sort_list(struct perf_hpp_list *list, char *str,
+			   struct evlist *evlist)
+{
+	char *tmp, *tok;
+	int ret = 0;
+	int level = 0;
+	int next_level = 1;
 	bool in_group = false;
 
-	करो अणु
+	do {
 		tok = str;
-		पंचांगp = strpbrk(str, "{}, ");
-		अगर (पंचांगp) अणु
-			अगर (in_group)
+		tmp = strpbrk(str, "{}, ");
+		if (tmp) {
+			if (in_group)
 				next_level = level;
-			अन्यथा
+			else
 				next_level = level + 1;
 
-			अगर (*पंचांगp == '{')
+			if (*tmp == '{')
 				in_group = true;
-			अन्यथा अगर (*पंचांगp == '}')
+			else if (*tmp == '}')
 				in_group = false;
 
-			*पंचांगp = '\0';
-			str = पंचांगp + 1;
-		पूर्ण
+			*tmp = '\0';
+			str = tmp + 1;
+		}
 
-		अगर (*tok) अणु
+		if (*tok) {
 			ret = sort_dimension__add(list, tok, evlist, level);
-			अगर (ret == -EINVAL) अणु
-				अगर (!cacheline_size() && !strnहालcmp(tok, "dcacheline", म_माप(tok)))
+			if (ret == -EINVAL) {
+				if (!cacheline_size() && !strncasecmp(tok, "dcacheline", strlen(tok)))
 					ui__error("The \"dcacheline\" --sort key needs to know the cacheline size and it couldn't be determined on this system");
-				अन्यथा
+				else
 					ui__error("Invalid --sort key: `%s'", tok);
-				अवरोध;
-			पूर्ण अन्यथा अगर (ret == -ESRCH) अणु
+				break;
+			} else if (ret == -ESRCH) {
 				ui__error("Unknown --sort key: `%s'", tok);
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
 		level = next_level;
-	पूर्ण जबतक (पंचांगp);
+	} while (tmp);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर अक्षर *get_शेष_sort_order(काष्ठा evlist *evlist)
-अणु
-	स्थिर अक्षर *शेष_sort_orders[] = अणु
-		शेष_sort_order,
-		शेष_branch_sort_order,
-		शेष_mem_sort_order,
-		शेष_top_sort_order,
-		शेष_dअगरf_sort_order,
-		शेष_tracepoपूर्णांक_sort_order,
-	पूर्ण;
+static const char *get_default_sort_order(struct evlist *evlist)
+{
+	const char *default_sort_orders[] = {
+		default_sort_order,
+		default_branch_sort_order,
+		default_mem_sort_order,
+		default_top_sort_order,
+		default_diff_sort_order,
+		default_tracepoint_sort_order,
+	};
 	bool use_trace = true;
-	काष्ठा evsel *evsel;
+	struct evsel *evsel;
 
-	BUG_ON(sort__mode >= ARRAY_SIZE(शेष_sort_orders));
+	BUG_ON(sort__mode >= ARRAY_SIZE(default_sort_orders));
 
-	अगर (evlist == शून्य || evlist__empty(evlist))
-		जाओ out_no_evlist;
+	if (evlist == NULL || evlist__empty(evlist))
+		goto out_no_evlist;
 
-	evlist__क्रम_each_entry(evlist, evsel) अणु
-		अगर (evsel->core.attr.type != PERF_TYPE_TRACEPOINT) अणु
+	evlist__for_each_entry(evlist, evsel) {
+		if (evsel->core.attr.type != PERF_TYPE_TRACEPOINT) {
 			use_trace = false;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (use_trace) अणु
+	if (use_trace) {
 		sort__mode = SORT_MODE__TRACEPOINT;
-		अगर (symbol_conf.raw_trace)
-			वापस "trace_fields";
-	पूर्ण
+		if (symbol_conf.raw_trace)
+			return "trace_fields";
+	}
 out_no_evlist:
-	वापस शेष_sort_orders[sort__mode];
-पूर्ण
+	return default_sort_orders[sort__mode];
+}
 
-अटल पूर्णांक setup_sort_order(काष्ठा evlist *evlist)
-अणु
-	अक्षर *new_sort_order;
+static int setup_sort_order(struct evlist *evlist)
+{
+	char *new_sort_order;
 
 	/*
-	 * Append '+'-prefixed sort order to the शेष sort
+	 * Append '+'-prefixed sort order to the default sort
 	 * order string.
 	 */
-	अगर (!sort_order || is_strict_order(sort_order))
-		वापस 0;
+	if (!sort_order || is_strict_order(sort_order))
+		return 0;
 
-	अगर (sort_order[1] == '\0') अणु
+	if (sort_order[1] == '\0') {
 		ui__error("Invalid --sort key: `+'");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
-	 * We allocate new sort_order string, but we never मुक्त it,
+	 * We allocate new sort_order string, but we never free it,
 	 * because it's checked over the rest of the code.
 	 */
-	अगर (aप्र_लिखो(&new_sort_order, "%s,%s",
-		     get_शेष_sort_order(evlist), sort_order + 1) < 0) अणु
+	if (asprintf(&new_sort_order, "%s,%s",
+		     get_default_sort_order(evlist), sort_order + 1) < 0) {
 		pr_err("Not enough memory to set up --sort");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	sort_order = new_sort_order;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Adds 'pre,' prefix into 'str' is 'pre' is
- * not alपढ़ोy part of 'str'.
+ * not already part of 'str'.
  */
-अटल अक्षर *prefix_अगर_not_in(स्थिर अक्षर *pre, अक्षर *str)
-अणु
-	अक्षर *n;
+static char *prefix_if_not_in(const char *pre, char *str)
+{
+	char *n;
 
-	अगर (!str || म_माला(str, pre))
-		वापस str;
+	if (!str || strstr(str, pre))
+		return str;
 
-	अगर (aप्र_लिखो(&n, "%s,%s", pre, str) < 0)
-		n = शून्य;
+	if (asprintf(&n, "%s,%s", pre, str) < 0)
+		n = NULL;
 
-	मुक्त(str);
-	वापस n;
-पूर्ण
+	free(str);
+	return n;
+}
 
-अटल अक्षर *setup_overhead(अक्षर *keys)
-अणु
-	अगर (sort__mode == SORT_MODE__DIFF)
-		वापस keys;
+static char *setup_overhead(char *keys)
+{
+	if (sort__mode == SORT_MODE__DIFF)
+		return keys;
 
-	keys = prefix_अगर_not_in("overhead", keys);
+	keys = prefix_if_not_in("overhead", keys);
 
-	अगर (symbol_conf.cumulate_callchain)
-		keys = prefix_अगर_not_in("overhead_children", keys);
+	if (symbol_conf.cumulate_callchain)
+		keys = prefix_if_not_in("overhead_children", keys);
 
-	वापस keys;
-पूर्ण
+	return keys;
+}
 
-अटल पूर्णांक __setup_sorting(काष्ठा evlist *evlist)
-अणु
-	अक्षर *str;
-	स्थिर अक्षर *sort_keys;
-	पूर्णांक ret = 0;
+static int __setup_sorting(struct evlist *evlist)
+{
+	char *str;
+	const char *sort_keys;
+	int ret = 0;
 
 	ret = setup_sort_order(evlist);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	sort_keys = sort_order;
-	अगर (sort_keys == शून्य) अणु
-		अगर (is_strict_order(field_order)) अणु
+	if (sort_keys == NULL) {
+		if (is_strict_order(field_order)) {
 			/*
-			 * If user specअगरied field order but no sort order,
-			 * we'll honor it and not add शेष sort orders.
+			 * If user specified field order but no sort order,
+			 * we'll honor it and not add default sort orders.
 			 */
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-		sort_keys = get_शेष_sort_order(evlist);
-	पूर्ण
+		sort_keys = get_default_sort_order(evlist);
+	}
 
 	str = strdup(sort_keys);
-	अगर (str == शून्य) अणु
+	if (str == NULL) {
 		pr_err("Not enough memory to setup sort keys");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	/*
-	 * Prepend overhead fields क्रम backward compatibility.
+	 * Prepend overhead fields for backward compatibility.
 	 */
-	अगर (!is_strict_order(field_order)) अणु
+	if (!is_strict_order(field_order)) {
 		str = setup_overhead(str);
-		अगर (str == शून्य) अणु
+		if (str == NULL) {
 			pr_err("Not enough memory to setup overhead keys");
-			वापस -ENOMEM;
-		पूर्ण
-	पूर्ण
+			return -ENOMEM;
+		}
+	}
 
 	ret = setup_sort_list(&perf_hpp_list, str, evlist);
 
-	मुक्त(str);
-	वापस ret;
-पूर्ण
+	free(str);
+	return ret;
+}
 
-व्योम perf_hpp__set_elide(पूर्णांक idx, bool elide)
-अणु
-	काष्ठा perf_hpp_fmt *fmt;
-	काष्ठा hpp_sort_entry *hse;
+void perf_hpp__set_elide(int idx, bool elide)
+{
+	struct perf_hpp_fmt *fmt;
+	struct hpp_sort_entry *hse;
 
-	perf_hpp_list__क्रम_each_क्रमmat(&perf_hpp_list, fmt) अणु
-		अगर (!perf_hpp__is_sort_entry(fmt))
-			जारी;
+	perf_hpp_list__for_each_format(&perf_hpp_list, fmt) {
+		if (!perf_hpp__is_sort_entry(fmt))
+			continue;
 
-		hse = container_of(fmt, काष्ठा hpp_sort_entry, hpp);
-		अगर (hse->se->se_width_idx == idx) अणु
+		hse = container_of(fmt, struct hpp_sort_entry, hpp);
+		if (hse->se->se_width_idx == idx) {
 			fmt->elide = elide;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		}
+	}
+}
 
-अटल bool __get_elide(काष्ठा strlist *list, स्थिर अक्षर *list_name, खाता *fp)
-अणु
-	अगर (list && strlist__nr_entries(list) == 1) अणु
-		अगर (fp != शून्य)
-			ख_लिखो(fp, "# %s: %s\n", list_name,
+static bool __get_elide(struct strlist *list, const char *list_name, FILE *fp)
+{
+	if (list && strlist__nr_entries(list) == 1) {
+		if (fp != NULL)
+			fprintf(fp, "# %s: %s\n", list_name,
 				strlist__entry(list, 0)->s);
-		वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+		return true;
+	}
+	return false;
+}
 
-अटल bool get_elide(पूर्णांक idx, खाता *output)
-अणु
-	चयन (idx) अणु
-	हाल HISTC_SYMBOL:
-		वापस __get_elide(symbol_conf.sym_list, "symbol", output);
-	हाल HISTC_DSO:
-		वापस __get_elide(symbol_conf.dso_list, "dso", output);
-	हाल HISTC_COMM:
-		वापस __get_elide(symbol_conf.comm_list, "comm", output);
-	शेष:
-		अवरोध;
-	पूर्ण
+static bool get_elide(int idx, FILE *output)
+{
+	switch (idx) {
+	case HISTC_SYMBOL:
+		return __get_elide(symbol_conf.sym_list, "symbol", output);
+	case HISTC_DSO:
+		return __get_elide(symbol_conf.dso_list, "dso", output);
+	case HISTC_COMM:
+		return __get_elide(symbol_conf.comm_list, "comm", output);
+	default:
+		break;
+	}
 
-	अगर (sort__mode != SORT_MODE__BRANCH)
-		वापस false;
+	if (sort__mode != SORT_MODE__BRANCH)
+		return false;
 
-	चयन (idx) अणु
-	हाल HISTC_SYMBOL_FROM:
-		वापस __get_elide(symbol_conf.sym_from_list, "sym_from", output);
-	हाल HISTC_SYMBOL_TO:
-		वापस __get_elide(symbol_conf.sym_to_list, "sym_to", output);
-	हाल HISTC_DSO_FROM:
-		वापस __get_elide(symbol_conf.dso_from_list, "dso_from", output);
-	हाल HISTC_DSO_TO:
-		वापस __get_elide(symbol_conf.dso_to_list, "dso_to", output);
-	शेष:
-		अवरोध;
-	पूर्ण
+	switch (idx) {
+	case HISTC_SYMBOL_FROM:
+		return __get_elide(symbol_conf.sym_from_list, "sym_from", output);
+	case HISTC_SYMBOL_TO:
+		return __get_elide(symbol_conf.sym_to_list, "sym_to", output);
+	case HISTC_DSO_FROM:
+		return __get_elide(symbol_conf.dso_from_list, "dso_from", output);
+	case HISTC_DSO_TO:
+		return __get_elide(symbol_conf.dso_to_list, "dso_to", output);
+	default:
+		break;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-व्योम sort__setup_elide(खाता *output)
-अणु
-	काष्ठा perf_hpp_fmt *fmt;
-	काष्ठा hpp_sort_entry *hse;
+void sort__setup_elide(FILE *output)
+{
+	struct perf_hpp_fmt *fmt;
+	struct hpp_sort_entry *hse;
 
-	perf_hpp_list__क्रम_each_क्रमmat(&perf_hpp_list, fmt) अणु
-		अगर (!perf_hpp__is_sort_entry(fmt))
-			जारी;
+	perf_hpp_list__for_each_format(&perf_hpp_list, fmt) {
+		if (!perf_hpp__is_sort_entry(fmt))
+			continue;
 
-		hse = container_of(fmt, काष्ठा hpp_sort_entry, hpp);
+		hse = container_of(fmt, struct hpp_sort_entry, hpp);
 		fmt->elide = get_elide(hse->se->se_width_idx, output);
-	पूर्ण
+	}
 
 	/*
 	 * It makes no sense to elide all of sort entries.
 	 * Just revert them to show up again.
 	 */
-	perf_hpp_list__क्रम_each_क्रमmat(&perf_hpp_list, fmt) अणु
-		अगर (!perf_hpp__is_sort_entry(fmt))
-			जारी;
+	perf_hpp_list__for_each_format(&perf_hpp_list, fmt) {
+		if (!perf_hpp__is_sort_entry(fmt))
+			continue;
 
-		अगर (!fmt->elide)
-			वापस;
-	पूर्ण
+		if (!fmt->elide)
+			return;
+	}
 
-	perf_hpp_list__क्रम_each_क्रमmat(&perf_hpp_list, fmt) अणु
-		अगर (!perf_hpp__is_sort_entry(fmt))
-			जारी;
+	perf_hpp_list__for_each_format(&perf_hpp_list, fmt) {
+		if (!perf_hpp__is_sort_entry(fmt))
+			continue;
 
 		fmt->elide = false;
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक output_field_add(काष्ठा perf_hpp_list *list, अक्षर *tok)
-अणु
-	अचिन्हित पूर्णांक i;
+int output_field_add(struct perf_hpp_list *list, char *tok)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(common_sort_dimensions); i++) अणु
-		काष्ठा sort_dimension *sd = &common_sort_dimensions[i];
+	for (i = 0; i < ARRAY_SIZE(common_sort_dimensions); i++) {
+		struct sort_dimension *sd = &common_sort_dimensions[i];
 
-		अगर (strnहालcmp(tok, sd->name, म_माप(tok)))
-			जारी;
+		if (strncasecmp(tok, sd->name, strlen(tok)))
+			continue;
 
-		वापस __sort_dimension__add_output(list, sd);
-	पूर्ण
+		return __sort_dimension__add_output(list, sd);
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(hpp_sort_dimensions); i++) अणु
-		काष्ठा hpp_dimension *hd = &hpp_sort_dimensions[i];
+	for (i = 0; i < ARRAY_SIZE(hpp_sort_dimensions); i++) {
+		struct hpp_dimension *hd = &hpp_sort_dimensions[i];
 
-		अगर (strnहालcmp(tok, hd->name, म_माप(tok)))
-			जारी;
+		if (strncasecmp(tok, hd->name, strlen(tok)))
+			continue;
 
-		वापस __hpp_dimension__add_output(list, hd);
-	पूर्ण
+		return __hpp_dimension__add_output(list, hd);
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(bstack_sort_dimensions); i++) अणु
-		काष्ठा sort_dimension *sd = &bstack_sort_dimensions[i];
+	for (i = 0; i < ARRAY_SIZE(bstack_sort_dimensions); i++) {
+		struct sort_dimension *sd = &bstack_sort_dimensions[i];
 
-		अगर (strnहालcmp(tok, sd->name, म_माप(tok)))
-			जारी;
+		if (strncasecmp(tok, sd->name, strlen(tok)))
+			continue;
 
-		अगर (sort__mode != SORT_MODE__BRANCH)
-			वापस -EINVAL;
+		if (sort__mode != SORT_MODE__BRANCH)
+			return -EINVAL;
 
-		वापस __sort_dimension__add_output(list, sd);
-	पूर्ण
+		return __sort_dimension__add_output(list, sd);
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(memory_sort_dimensions); i++) अणु
-		काष्ठा sort_dimension *sd = &memory_sort_dimensions[i];
+	for (i = 0; i < ARRAY_SIZE(memory_sort_dimensions); i++) {
+		struct sort_dimension *sd = &memory_sort_dimensions[i];
 
-		अगर (strnहालcmp(tok, sd->name, म_माप(tok)))
-			जारी;
+		if (strncasecmp(tok, sd->name, strlen(tok)))
+			continue;
 
-		अगर (sort__mode != SORT_MODE__MEMORY)
-			वापस -EINVAL;
+		if (sort__mode != SORT_MODE__MEMORY)
+			return -EINVAL;
 
-		वापस __sort_dimension__add_output(list, sd);
-	पूर्ण
+		return __sort_dimension__add_output(list, sd);
+	}
 
-	वापस -ESRCH;
-पूर्ण
+	return -ESRCH;
+}
 
-अटल पूर्णांक setup_output_list(काष्ठा perf_hpp_list *list, अक्षर *str)
-अणु
-	अक्षर *पंचांगp, *tok;
-	पूर्णांक ret = 0;
+static int setup_output_list(struct perf_hpp_list *list, char *str)
+{
+	char *tmp, *tok;
+	int ret = 0;
 
-	क्रम (tok = म_मोहर_r(str, ", ", &पंचांगp);
-			tok; tok = म_मोहर_r(शून्य, ", ", &पंचांगp)) अणु
+	for (tok = strtok_r(str, ", ", &tmp);
+			tok; tok = strtok_r(NULL, ", ", &tmp)) {
 		ret = output_field_add(list, tok);
-		अगर (ret == -EINVAL) अणु
+		if (ret == -EINVAL) {
 			ui__error("Invalid --fields key: `%s'", tok);
-			अवरोध;
-		पूर्ण अन्यथा अगर (ret == -ESRCH) अणु
+			break;
+		} else if (ret == -ESRCH) {
 			ui__error("Unknown --fields key: `%s'", tok);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम reset_dimensions(व्योम)
-अणु
-	अचिन्हित पूर्णांक i;
+void reset_dimensions(void)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(common_sort_dimensions); i++)
+	for (i = 0; i < ARRAY_SIZE(common_sort_dimensions); i++)
 		common_sort_dimensions[i].taken = 0;
 
-	क्रम (i = 0; i < ARRAY_SIZE(hpp_sort_dimensions); i++)
+	for (i = 0; i < ARRAY_SIZE(hpp_sort_dimensions); i++)
 		hpp_sort_dimensions[i].taken = 0;
 
-	क्रम (i = 0; i < ARRAY_SIZE(bstack_sort_dimensions); i++)
+	for (i = 0; i < ARRAY_SIZE(bstack_sort_dimensions); i++)
 		bstack_sort_dimensions[i].taken = 0;
 
-	क्रम (i = 0; i < ARRAY_SIZE(memory_sort_dimensions); i++)
+	for (i = 0; i < ARRAY_SIZE(memory_sort_dimensions); i++)
 		memory_sort_dimensions[i].taken = 0;
-पूर्ण
+}
 
-bool is_strict_order(स्थिर अक्षर *order)
-अणु
-	वापस order && (*order != '+');
-पूर्ण
+bool is_strict_order(const char *order)
+{
+	return order && (*order != '+');
+}
 
-अटल पूर्णांक __setup_output_field(व्योम)
-अणु
-	अक्षर *str, *strp;
-	पूर्णांक ret = -EINVAL;
+static int __setup_output_field(void)
+{
+	char *str, *strp;
+	int ret = -EINVAL;
 
-	अगर (field_order == शून्य)
-		वापस 0;
+	if (field_order == NULL)
+		return 0;
 
 	strp = str = strdup(field_order);
-	अगर (str == शून्य) अणु
+	if (str == NULL) {
 		pr_err("Not enough memory to setup output fields");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	अगर (!is_strict_order(field_order))
+	if (!is_strict_order(field_order))
 		strp++;
 
-	अगर (!म_माप(strp)) अणु
+	if (!strlen(strp)) {
 		ui__error("Invalid --fields key: `+'");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = setup_output_list(&perf_hpp_list, strp);
 
 out:
-	मुक्त(str);
-	वापस ret;
-पूर्ण
+	free(str);
+	return ret;
+}
 
-पूर्णांक setup_sorting(काष्ठा evlist *evlist)
-अणु
-	पूर्णांक err;
+int setup_sorting(struct evlist *evlist)
+{
+	int err;
 
 	err = __setup_sorting(evlist);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	अगर (parent_pattern != शेष_parent_pattern) अणु
+	if (parent_pattern != default_parent_pattern) {
 		err = sort_dimension__add(&perf_hpp_list, "parent", evlist, -1);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+		if (err < 0)
+			return err;
+	}
 
 	reset_dimensions();
 
 	/*
-	 * perf dअगरf करोesn't use शेष hpp output fields.
+	 * perf diff doesn't use default hpp output fields.
 	 */
-	अगर (sort__mode != SORT_MODE__DIFF)
+	if (sort__mode != SORT_MODE__DIFF)
 		perf_hpp__init();
 
 	err = __setup_output_field();
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	/* copy sort keys to output fields */
 	perf_hpp__setup_output_field(&perf_hpp_list);
 	/* and then copy output fields to sort keys */
 	perf_hpp__append_sort_keys(&perf_hpp_list);
 
-	/* setup hists-specअगरic output fields */
-	अगर (perf_hpp__setup_hists_क्रमmats(&perf_hpp_list, evlist) < 0)
-		वापस -1;
+	/* setup hists-specific output fields */
+	if (perf_hpp__setup_hists_formats(&perf_hpp_list, evlist) < 0)
+		return -1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम reset_output_field(व्योम)
-अणु
+void reset_output_field(void)
+{
 	perf_hpp_list.need_collapse = 0;
 	perf_hpp_list.parent = 0;
 	perf_hpp_list.sym = 0;
 	perf_hpp_list.dso = 0;
 
-	field_order = शून्य;
-	sort_order = शून्य;
+	field_order = NULL;
+	sort_order = NULL;
 
 	reset_dimensions();
 	perf_hpp__reset_output_field(&perf_hpp_list);
-पूर्ण
+}
 
-#घोषणा INDENT (3*8 + 1)
+#define INDENT (3*8 + 1)
 
-अटल व्योम add_key(काष्ठा strbuf *sb, स्थिर अक्षर *str, पूर्णांक *llen)
-अणु
-	अगर (*llen >= 75) अणु
+static void add_key(struct strbuf *sb, const char *str, int *llen)
+{
+	if (*llen >= 75) {
 		strbuf_addstr(sb, "\n\t\t\t ");
 		*llen = INDENT;
-	पूर्ण
+	}
 	strbuf_addf(sb, " %s", str);
-	*llen += म_माप(str) + 1;
-पूर्ण
+	*llen += strlen(str) + 1;
+}
 
-अटल व्योम add_sort_string(काष्ठा strbuf *sb, काष्ठा sort_dimension *s, पूर्णांक n,
-			    पूर्णांक *llen)
-अणु
-	पूर्णांक i;
+static void add_sort_string(struct strbuf *sb, struct sort_dimension *s, int n,
+			    int *llen)
+{
+	int i;
 
-	क्रम (i = 0; i < n; i++)
+	for (i = 0; i < n; i++)
 		add_key(sb, s[i].name, llen);
-पूर्ण
+}
 
-अटल व्योम add_hpp_sort_string(काष्ठा strbuf *sb, काष्ठा hpp_dimension *s, पूर्णांक n,
-				पूर्णांक *llen)
-अणु
-	पूर्णांक i;
+static void add_hpp_sort_string(struct strbuf *sb, struct hpp_dimension *s, int n,
+				int *llen)
+{
+	int i;
 
-	क्रम (i = 0; i < n; i++)
+	for (i = 0; i < n; i++)
 		add_key(sb, s[i].name, llen);
-पूर्ण
+}
 
-स्थिर अक्षर *sort_help(स्थिर अक्षर *prefix)
-अणु
-	काष्ठा strbuf sb;
-	अक्षर *s;
-	पूर्णांक len = म_माप(prefix) + INDENT;
+const char *sort_help(const char *prefix)
+{
+	struct strbuf sb;
+	char *s;
+	int len = strlen(prefix) + INDENT;
 
 	strbuf_init(&sb, 300);
 	strbuf_addstr(&sb, prefix);
@@ -3387,7 +3386,7 @@ out:
 			    ARRAY_SIZE(bstack_sort_dimensions), &len);
 	add_sort_string(&sb, memory_sort_dimensions,
 			    ARRAY_SIZE(memory_sort_dimensions), &len);
-	s = strbuf_detach(&sb, शून्य);
+	s = strbuf_detach(&sb, NULL);
 	strbuf_release(&sb);
-	वापस s;
-पूर्ण
+	return s;
+}

@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * PISMO memory driver - http://www.pismoworld.org/
  */
-#अगर_अघोषित __LINUX_MTD_PISMO_H
-#घोषणा __LINUX_MTD_PISMO_H
+#ifndef __LINUX_MTD_PISMO_H
+#define __LINUX_MTD_PISMO_H
 
-काष्ठा pismo_pdata अणु
-	व्योम			(*set_vpp)(व्योम *, पूर्णांक);
-	व्योम			*vpp_data;
+struct pismo_pdata {
+	void			(*set_vpp)(void *, int);
+	void			*vpp_data;
 	phys_addr_t		cs_addrs[5];
-पूर्ण;
+};
 
-#पूर्ण_अगर
+#endif

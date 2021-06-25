@@ -1,47 +1,46 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright 2003 Vivien Chappelier <vivien.chappelier@linux-mips.org>
- * Copyright 2008 Thomas Bogenकरोerfer <tsbogend@franken.de>
+ * Copyright 2008 Thomas Bogendoerfer <tsbogend@franken.de>
  */
 
-#अगर_अघोषित __SOUND_AD1843_H
-#घोषणा __SOUND_AD1843_H
+#ifndef __SOUND_AD1843_H
+#define __SOUND_AD1843_H
 
-काष्ठा snd_ad1843 अणु
-	व्योम *chip;
-	पूर्णांक (*पढ़ो)(व्योम *chip, पूर्णांक reg);
-	पूर्णांक (*ग_लिखो)(व्योम *chip, पूर्णांक reg, पूर्णांक val);
-पूर्ण;
+struct snd_ad1843 {
+	void *chip;
+	int (*read)(void *chip, int reg);
+	int (*write)(void *chip, int reg, int val);
+};
 
-#घोषणा AD1843_GAIN_RECLEV 0
-#घोषणा AD1843_GAIN_LINE   1
-#घोषणा AD1843_GAIN_LINE_2 2
-#घोषणा AD1843_GAIN_MIC    3
-#घोषणा AD1843_GAIN_PCM_0  4
-#घोषणा AD1843_GAIN_PCM_1  5
-#घोषणा AD1843_GAIN_SIZE   (AD1843_GAIN_PCM_1+1)
+#define AD1843_GAIN_RECLEV 0
+#define AD1843_GAIN_LINE   1
+#define AD1843_GAIN_LINE_2 2
+#define AD1843_GAIN_MIC    3
+#define AD1843_GAIN_PCM_0  4
+#define AD1843_GAIN_PCM_1  5
+#define AD1843_GAIN_SIZE   (AD1843_GAIN_PCM_1+1)
 
-पूर्णांक ad1843_get_gain_max(काष्ठा snd_ad1843 *ad1843, पूर्णांक id);
-पूर्णांक ad1843_get_gain(काष्ठा snd_ad1843 *ad1843, पूर्णांक id);
-पूर्णांक ad1843_set_gain(काष्ठा snd_ad1843 *ad1843, पूर्णांक id, पूर्णांक newval);
-पूर्णांक ad1843_get_recsrc(काष्ठा snd_ad1843 *ad1843);
-पूर्णांक ad1843_set_recsrc(काष्ठा snd_ad1843 *ad1843, पूर्णांक newsrc);
-व्योम ad1843_setup_dac(काष्ठा snd_ad1843 *ad1843,
-		      अचिन्हित पूर्णांक id,
-		      अचिन्हित पूर्णांक framerate,
-		      snd_pcm_क्रमmat_t fmt,
-		      अचिन्हित पूर्णांक channels);
-व्योम ad1843_shutकरोwn_dac(काष्ठा snd_ad1843 *ad1843,
-			 अचिन्हित पूर्णांक id);
-व्योम ad1843_setup_adc(काष्ठा snd_ad1843 *ad1843,
-		      अचिन्हित पूर्णांक framerate,
-		      snd_pcm_क्रमmat_t fmt,
-		      अचिन्हित पूर्णांक channels);
-व्योम ad1843_shutकरोwn_adc(काष्ठा snd_ad1843 *ad1843);
-पूर्णांक ad1843_init(काष्ठा snd_ad1843 *ad1843);
+int ad1843_get_gain_max(struct snd_ad1843 *ad1843, int id);
+int ad1843_get_gain(struct snd_ad1843 *ad1843, int id);
+int ad1843_set_gain(struct snd_ad1843 *ad1843, int id, int newval);
+int ad1843_get_recsrc(struct snd_ad1843 *ad1843);
+int ad1843_set_recsrc(struct snd_ad1843 *ad1843, int newsrc);
+void ad1843_setup_dac(struct snd_ad1843 *ad1843,
+		      unsigned int id,
+		      unsigned int framerate,
+		      snd_pcm_format_t fmt,
+		      unsigned int channels);
+void ad1843_shutdown_dac(struct snd_ad1843 *ad1843,
+			 unsigned int id);
+void ad1843_setup_adc(struct snd_ad1843 *ad1843,
+		      unsigned int framerate,
+		      snd_pcm_format_t fmt,
+		      unsigned int channels);
+void ad1843_shutdown_adc(struct snd_ad1843 *ad1843);
+int ad1843_init(struct snd_ad1843 *ad1843);
 
-#पूर्ण_अगर /* __SOUND_AD1843_H */
+#endif /* __SOUND_AD1843_H */

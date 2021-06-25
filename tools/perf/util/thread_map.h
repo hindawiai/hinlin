@@ -1,32 +1,31 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __PERF_THREAD_MAP_H
-#घोषणा __PERF_THREAD_MAP_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __PERF_THREAD_MAP_H
+#define __PERF_THREAD_MAP_H
 
-#समावेश <sys/types.h>
-#समावेश <मानकपन.स>
-#समावेश <linux/refcount.h>
-#समावेश <पूर्णांकernal/thपढ़ोmap.h>
-#समावेश <perf/thपढ़ोmap.h>
+#include <sys/types.h>
+#include <stdio.h>
+#include <linux/refcount.h>
+#include <internal/threadmap.h>
+#include <perf/threadmap.h>
 
-काष्ठा perf_record_thपढ़ो_map;
+struct perf_record_thread_map;
 
-काष्ठा perf_thपढ़ो_map *thपढ़ो_map__new_dummy(व्योम);
-काष्ठा perf_thपढ़ो_map *thपढ़ो_map__new_by_pid(pid_t pid);
-काष्ठा perf_thपढ़ो_map *thपढ़ो_map__new_by_tid(pid_t tid);
-काष्ठा perf_thपढ़ो_map *thपढ़ो_map__new_by_uid(uid_t uid);
-काष्ठा perf_thपढ़ो_map *thपढ़ो_map__new_all_cpus(व्योम);
-काष्ठा perf_thपढ़ो_map *thपढ़ो_map__new(pid_t pid, pid_t tid, uid_t uid);
-काष्ठा perf_thपढ़ो_map *thपढ़ो_map__new_event(काष्ठा perf_record_thपढ़ो_map *event);
+struct perf_thread_map *thread_map__new_dummy(void);
+struct perf_thread_map *thread_map__new_by_pid(pid_t pid);
+struct perf_thread_map *thread_map__new_by_tid(pid_t tid);
+struct perf_thread_map *thread_map__new_by_uid(uid_t uid);
+struct perf_thread_map *thread_map__new_all_cpus(void);
+struct perf_thread_map *thread_map__new(pid_t pid, pid_t tid, uid_t uid);
+struct perf_thread_map *thread_map__new_event(struct perf_record_thread_map *event);
 
-काष्ठा perf_thपढ़ो_map *thपढ़ो_map__new_str(स्थिर अक्षर *pid,
-		स्थिर अक्षर *tid, uid_t uid, bool all_thपढ़ोs);
+struct perf_thread_map *thread_map__new_str(const char *pid,
+		const char *tid, uid_t uid, bool all_threads);
 
-काष्ठा perf_thपढ़ो_map *thपढ़ो_map__new_by_tid_str(स्थिर अक्षर *tid_str);
+struct perf_thread_map *thread_map__new_by_tid_str(const char *tid_str);
 
-माप_प्रकार thपढ़ो_map__ख_लिखो(काष्ठा perf_thपढ़ो_map *thपढ़ोs, खाता *fp);
+size_t thread_map__fprintf(struct perf_thread_map *threads, FILE *fp);
 
-व्योम thपढ़ो_map__पढ़ो_comms(काष्ठा perf_thपढ़ो_map *thपढ़ोs);
-bool thपढ़ो_map__has(काष्ठा perf_thपढ़ो_map *thपढ़ोs, pid_t pid);
-पूर्णांक thपढ़ो_map__हटाओ(काष्ठा perf_thपढ़ो_map *thपढ़ोs, पूर्णांक idx);
-#पूर्ण_अगर	/* __PERF_THREAD_MAP_H */
+void thread_map__read_comms(struct perf_thread_map *threads);
+bool thread_map__has(struct perf_thread_map *threads, pid_t pid);
+int thread_map__remove(struct perf_thread_map *threads, int idx);
+#endif	/* __PERF_THREAD_MAP_H */

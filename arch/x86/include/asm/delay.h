@@ -1,13 +1,12 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_X86_DELAY_H
-#घोषणा _ASM_X86_DELAY_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_X86_DELAY_H
+#define _ASM_X86_DELAY_H
 
-#समावेश <यंत्र-generic/delay.h>
-#समावेश <linux/init.h>
+#include <asm-generic/delay.h>
+#include <linux/init.h>
 
-व्योम __init use_tsc_delay(व्योम);
-व्योम __init use_tछोड़ो_delay(व्योम);
-व्योम use_mरुकोx_delay(व्योम);
+void __init use_tsc_delay(void);
+void __init use_tpause_delay(void);
+void use_mwaitx_delay(void);
 
-#पूर्ण_अगर /* _ASM_X86_DELAY_H */
+#endif /* _ASM_X86_DELAY_H */

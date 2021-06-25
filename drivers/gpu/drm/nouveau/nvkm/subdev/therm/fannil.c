@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,32 +21,32 @@
  *
  * Authors: Ben Skeggs
  */
-#समावेश "priv.h"
+#include "priv.h"
 
-अटल पूर्णांक
-nvkm_fannil_get(काष्ठा nvkm_therm *therm)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static int
+nvkm_fannil_get(struct nvkm_therm *therm)
+{
+	return -ENODEV;
+}
 
-अटल पूर्णांक
-nvkm_fannil_set(काष्ठा nvkm_therm *therm, पूर्णांक percent)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static int
+nvkm_fannil_set(struct nvkm_therm *therm, int percent)
+{
+	return -ENODEV;
+}
 
-पूर्णांक
-nvkm_fannil_create(काष्ठा nvkm_therm *therm)
-अणु
-	काष्ठा nvkm_fan *priv;
+int
+nvkm_fannil_create(struct nvkm_therm *therm)
+{
+	struct nvkm_fan *priv;
 
-	priv = kzalloc(माप(*priv), GFP_KERNEL);
+	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
 	therm->fan = priv;
-	अगर (!priv)
-		वापस -ENOMEM;
+	if (!priv)
+		return -ENOMEM;
 
 	priv->type = "none / external";
 	priv->get = nvkm_fannil_get;
 	priv->set = nvkm_fannil_set;
-	वापस 0;
-पूर्ण
+	return 0;
+}

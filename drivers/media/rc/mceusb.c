@@ -1,174 +1,173 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Driver क्रम USB Winकरोws Media Center Ed. eHome Infrared Transceivers
+ * Driver for USB Windows Media Center Ed. eHome Infrared Transceivers
  *
  * Copyright (c) 2010-2011, Jarod Wilson <jarod@redhat.com>
  *
  * Based on the original lirc_mceusb and lirc_mceusb2 drivers, by Dan
  * Conti, Martin Blatter and Daniel Melander, the latter of which was
  * in turn also based on the lirc_atiusb driver by Paul Miller. The
- * two mce drivers were merged पूर्णांकo one by Jarod Wilson, with transmit
- * support क्रम the 1st-gen device added primarily by Patrick Calhoun,
+ * two mce drivers were merged into one by Jarod Wilson, with transmit
+ * support for the 1st-gen device added primarily by Patrick Calhoun,
  * with a bit of tweaks by Jarod. Debugging improvements and proper
- * support क्रम what appears to be 3rd-gen hardware added by Jarod.
+ * support for what appears to be 3rd-gen hardware added by Jarod.
  * Initial port from lirc driver to ir-core drivery by Jarod, based
- * partially on a port to an earlier proposed IR infraकाष्ठाure by
- * Jon Smirl, which included enhancements and simplअगरications to the
+ * partially on a port to an earlier proposed IR infrastructure by
+ * Jon Smirl, which included enhancements and simplifications to the
  * incoming IR buffer parsing routines.
  *
  * Updated in July of 2011 with the aid of Microsoft's official
- * remote/transceiver requirements and specअगरication करोcument, found at
- * करोwnload.microsoft.com, title
- * Winकरोws-Media-Center-RC-IR-Collection-Green-Button-Specअगरication-03-08-2011-V2.pdf
+ * remote/transceiver requirements and specification document, found at
+ * download.microsoft.com, title
+ * Windows-Media-Center-RC-IR-Collection-Green-Button-Specification-03-08-2011-V2.pdf
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/usb/input.h>
-#समावेश <linux/pm_wakeup.h>
-#समावेश <media/rc-core.h>
+#include <linux/device.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/workqueue.h>
+#include <linux/usb.h>
+#include <linux/usb/input.h>
+#include <linux/pm_wakeup.h>
+#include <media/rc-core.h>
 
-#घोषणा DRIVER_VERSION	"1.95"
-#घोषणा DRIVER_AUTHOR	"Jarod Wilson <jarod@redhat.com>"
-#घोषणा DRIVER_DESC	"Windows Media Center Ed. eHome Infrared Transceiver " \
+#define DRIVER_VERSION	"1.95"
+#define DRIVER_AUTHOR	"Jarod Wilson <jarod@redhat.com>"
+#define DRIVER_DESC	"Windows Media Center Ed. eHome Infrared Transceiver " \
 			"device driver"
-#घोषणा DRIVER_NAME	"mceusb"
+#define DRIVER_NAME	"mceusb"
 
-#घोषणा USB_TX_TIMEOUT		1000 /* in milliseconds */
-#घोषणा USB_CTRL_MSG_SZ		2  /* Size of usb ctrl msg on gen1 hw */
-#घोषणा MCE_G1_INIT_MSGS	40 /* Init messages on gen1 hw to throw out */
+#define USB_TX_TIMEOUT		1000 /* in milliseconds */
+#define USB_CTRL_MSG_SZ		2  /* Size of usb ctrl msg on gen1 hw */
+#define MCE_G1_INIT_MSGS	40 /* Init messages on gen1 hw to throw out */
 
-/* MCE स्थिरants */
-#घोषणा MCE_IRBUF_SIZE		128  /* TX IR buffer length */
-#घोषणा MCE_TIME_UNIT		50   /* Approx 50us resolution */
-#घोषणा MCE_PACKET_SIZE		31   /* Max length of packet (with header) */
-#घोषणा MCE_IRDATA_HEADER	(0x80 + MCE_PACKET_SIZE - 1)
-				     /* Actual क्रमmat is 0x80 + num_bytes */
-#घोषणा MCE_IRDATA_TRAILER	0x80 /* End of IR data */
-#घोषणा MCE_MAX_CHANNELS	2    /* Two transmitters, hardware dependent? */
-#घोषणा MCE_DEFAULT_TX_MASK	0x03 /* Vals: TX1=0x01, TX2=0x02, ALL=0x03 */
-#घोषणा MCE_PULSE_BIT		0x80 /* Pulse bit, MSB set == PULSE अन्यथा SPACE */
-#घोषणा MCE_PULSE_MASK		0x7f /* Pulse mask */
-#घोषणा MCE_MAX_PULSE_LENGTH	0x7f /* Longest transmittable pulse symbol */
+/* MCE constants */
+#define MCE_IRBUF_SIZE		128  /* TX IR buffer length */
+#define MCE_TIME_UNIT		50   /* Approx 50us resolution */
+#define MCE_PACKET_SIZE		31   /* Max length of packet (with header) */
+#define MCE_IRDATA_HEADER	(0x80 + MCE_PACKET_SIZE - 1)
+				     /* Actual format is 0x80 + num_bytes */
+#define MCE_IRDATA_TRAILER	0x80 /* End of IR data */
+#define MCE_MAX_CHANNELS	2    /* Two transmitters, hardware dependent? */
+#define MCE_DEFAULT_TX_MASK	0x03 /* Vals: TX1=0x01, TX2=0x02, ALL=0x03 */
+#define MCE_PULSE_BIT		0x80 /* Pulse bit, MSB set == PULSE else SPACE */
+#define MCE_PULSE_MASK		0x7f /* Pulse mask */
+#define MCE_MAX_PULSE_LENGTH	0x7f /* Longest transmittable pulse symbol */
 
 /*
- * The पूर्णांकerface between the host and the IR hardware is command-response
- * based. All commands and responses have a consistent क्रमmat, where a lead
- * byte always identअगरies the type of data following it. The lead byte has
+ * The interface between the host and the IR hardware is command-response
+ * based. All commands and responses have a consistent format, where a lead
+ * byte always identifies the type of data following it. The lead byte has
  * a port value in the 3 highest bits and a length value in the 5 lowest
  * bits.
  *
  * The length field is overloaded, with a value of 11111 indicating that the
  * following byte is a command or response code, and the length of the entire
  * message is determined by the code. If the length field is not 11111, then
- * it specअगरies the number of bytes of port data that follow.
+ * it specifies the number of bytes of port data that follow.
  */
-#घोषणा MCE_CMD			0x1f
-#घोषणा MCE_PORT_IR		0x4	/* (0x4 << 5) | MCE_CMD = 0x9f */
-#घोषणा MCE_PORT_SYS		0x7	/* (0x7 << 5) | MCE_CMD = 0xff */
-#घोषणा MCE_PORT_SER		0x6	/* 0xc0 through 0xdf flush & 0x1f bytes */
-#घोषणा MCE_PORT_MASK		0xe0	/* Mask out command bits */
+#define MCE_CMD			0x1f
+#define MCE_PORT_IR		0x4	/* (0x4 << 5) | MCE_CMD = 0x9f */
+#define MCE_PORT_SYS		0x7	/* (0x7 << 5) | MCE_CMD = 0xff */
+#define MCE_PORT_SER		0x6	/* 0xc0 through 0xdf flush & 0x1f bytes */
+#define MCE_PORT_MASK		0xe0	/* Mask out command bits */
 
 /* Command port headers */
-#घोषणा MCE_CMD_PORT_IR		0x9f	/* IR-related cmd/rsp */
-#घोषणा MCE_CMD_PORT_SYS	0xff	/* System (non-IR) device cmd/rsp */
+#define MCE_CMD_PORT_IR		0x9f	/* IR-related cmd/rsp */
+#define MCE_CMD_PORT_SYS	0xff	/* System (non-IR) device cmd/rsp */
 
 /* Commands that set device state  (2-4 bytes in length) */
-#घोषणा MCE_CMD_RESET		0xfe	/* Reset device, 2 bytes */
-#घोषणा MCE_CMD_RESUME		0xaa	/* Resume device after error, 2 bytes */
-#घोषणा MCE_CMD_SETIRCFS	0x06	/* Set tx carrier, 4 bytes */
-#घोषणा MCE_CMD_SETIRTIMEOUT	0x0c	/* Set समयout, 4 bytes */
-#घोषणा MCE_CMD_SETIRTXPORTS	0x08	/* Set tx ports, 3 bytes */
-#घोषणा MCE_CMD_SETIRRXPORTEN	0x14	/* Set rx ports, 3 bytes */
-#घोषणा MCE_CMD_FLASHLED	0x23	/* Flash receiver LED, 2 bytes */
+#define MCE_CMD_RESET		0xfe	/* Reset device, 2 bytes */
+#define MCE_CMD_RESUME		0xaa	/* Resume device after error, 2 bytes */
+#define MCE_CMD_SETIRCFS	0x06	/* Set tx carrier, 4 bytes */
+#define MCE_CMD_SETIRTIMEOUT	0x0c	/* Set timeout, 4 bytes */
+#define MCE_CMD_SETIRTXPORTS	0x08	/* Set tx ports, 3 bytes */
+#define MCE_CMD_SETIRRXPORTEN	0x14	/* Set rx ports, 3 bytes */
+#define MCE_CMD_FLASHLED	0x23	/* Flash receiver LED, 2 bytes */
 
 /* Commands that query device state (all 2 bytes, unless noted) */
-#घोषणा MCE_CMD_GETIRCFS	0x07	/* Get carrier */
-#घोषणा MCE_CMD_GETIRTIMEOUT	0x0d	/* Get समयout */
-#घोषणा MCE_CMD_GETIRTXPORTS	0x13	/* Get tx ports */
-#घोषणा MCE_CMD_GETIRRXPORTEN	0x15	/* Get rx ports */
-#घोषणा MCE_CMD_GETPORTSTATUS	0x11	/* Get tx port status, 3 bytes */
-#घोषणा MCE_CMD_GETIRNUMPORTS	0x16	/* Get number of ports */
-#घोषणा MCE_CMD_GETWAKESOURCE	0x17	/* Get wake source */
-#घोषणा MCE_CMD_GETEMVER	0x22	/* Get emulator पूर्णांकerface version */
-#घोषणा MCE_CMD_GETDEVDETAILS	0x21	/* Get device details (em ver2 only) */
-#घोषणा MCE_CMD_GETWAKESUPPORT	0x20	/* Get wake details (em ver2 only) */
-#घोषणा MCE_CMD_GETWAKEVERSION	0x18	/* Get wake pattern (em ver2 only) */
+#define MCE_CMD_GETIRCFS	0x07	/* Get carrier */
+#define MCE_CMD_GETIRTIMEOUT	0x0d	/* Get timeout */
+#define MCE_CMD_GETIRTXPORTS	0x13	/* Get tx ports */
+#define MCE_CMD_GETIRRXPORTEN	0x15	/* Get rx ports */
+#define MCE_CMD_GETPORTSTATUS	0x11	/* Get tx port status, 3 bytes */
+#define MCE_CMD_GETIRNUMPORTS	0x16	/* Get number of ports */
+#define MCE_CMD_GETWAKESOURCE	0x17	/* Get wake source */
+#define MCE_CMD_GETEMVER	0x22	/* Get emulator interface version */
+#define MCE_CMD_GETDEVDETAILS	0x21	/* Get device details (em ver2 only) */
+#define MCE_CMD_GETWAKESUPPORT	0x20	/* Get wake details (em ver2 only) */
+#define MCE_CMD_GETWAKEVERSION	0x18	/* Get wake pattern (em ver2 only) */
 
 /* Misc commands */
-#घोषणा MCE_CMD_NOP		0xff	/* No operation */
+#define MCE_CMD_NOP		0xff	/* No operation */
 
-/* Responses to commands (non-error हालs) */
-#घोषणा MCE_RSP_EQIRCFS		0x06	/* tx carrier, 4 bytes */
-#घोषणा MCE_RSP_EQIRTIMEOUT	0x0c	/* rx समयout, 4 bytes */
-#घोषणा MCE_RSP_GETWAKESOURCE	0x17	/* wake source, 3 bytes */
-#घोषणा MCE_RSP_EQIRTXPORTS	0x08	/* tx port mask, 3 bytes */
-#घोषणा MCE_RSP_EQIRRXPORTEN	0x14	/* rx port mask, 3 bytes */
-#घोषणा MCE_RSP_GETPORTSTATUS	0x11	/* tx port status, 7 bytes */
-#घोषणा MCE_RSP_EQIRRXCFCNT	0x15	/* rx carrier count, 4 bytes */
-#घोषणा MCE_RSP_EQIRNUMPORTS	0x16	/* number of ports, 4 bytes */
-#घोषणा MCE_RSP_EQWAKESUPPORT	0x20	/* wake capabilities, 3 bytes */
-#घोषणा MCE_RSP_EQWAKEVERSION	0x18	/* wake pattern details, 6 bytes */
-#घोषणा MCE_RSP_EQDEVDETAILS	0x21	/* device capabilities, 3 bytes */
-#घोषणा MCE_RSP_EQEMVER		0x22	/* emulator पूर्णांकerface ver, 3 bytes */
-#घोषणा MCE_RSP_FLASHLED	0x23	/* success flashing LED, 2 bytes */
+/* Responses to commands (non-error cases) */
+#define MCE_RSP_EQIRCFS		0x06	/* tx carrier, 4 bytes */
+#define MCE_RSP_EQIRTIMEOUT	0x0c	/* rx timeout, 4 bytes */
+#define MCE_RSP_GETWAKESOURCE	0x17	/* wake source, 3 bytes */
+#define MCE_RSP_EQIRTXPORTS	0x08	/* tx port mask, 3 bytes */
+#define MCE_RSP_EQIRRXPORTEN	0x14	/* rx port mask, 3 bytes */
+#define MCE_RSP_GETPORTSTATUS	0x11	/* tx port status, 7 bytes */
+#define MCE_RSP_EQIRRXCFCNT	0x15	/* rx carrier count, 4 bytes */
+#define MCE_RSP_EQIRNUMPORTS	0x16	/* number of ports, 4 bytes */
+#define MCE_RSP_EQWAKESUPPORT	0x20	/* wake capabilities, 3 bytes */
+#define MCE_RSP_EQWAKEVERSION	0x18	/* wake pattern details, 6 bytes */
+#define MCE_RSP_EQDEVDETAILS	0x21	/* device capabilities, 3 bytes */
+#define MCE_RSP_EQEMVER		0x22	/* emulator interface ver, 3 bytes */
+#define MCE_RSP_FLASHLED	0x23	/* success flashing LED, 2 bytes */
 
-/* Responses to error हालs, must send MCE_CMD_RESUME to clear them */
-#घोषणा MCE_RSP_CMD_ILLEGAL	0xfe	/* illegal command क्रम port, 2 bytes */
-#घोषणा MCE_RSP_TX_TIMEOUT	0x81	/* tx समयd out, 2 bytes */
+/* Responses to error cases, must send MCE_CMD_RESUME to clear them */
+#define MCE_RSP_CMD_ILLEGAL	0xfe	/* illegal command for port, 2 bytes */
+#define MCE_RSP_TX_TIMEOUT	0x81	/* tx timed out, 2 bytes */
 
 /* Misc commands/responses not defined in the MCE remote/transceiver spec */
-#घोषणा MCE_CMD_SIG_END		0x01	/* End of संकेत */
-#घोषणा MCE_CMD_PING		0x03	/* Ping device */
-#घोषणा MCE_CMD_UNKNOWN		0x04	/* Unknown */
-#घोषणा MCE_CMD_UNKNOWN2	0x05	/* Unknown */
-#घोषणा MCE_CMD_UNKNOWN3	0x09	/* Unknown */
-#घोषणा MCE_CMD_UNKNOWN4	0x0a	/* Unknown */
-#घोषणा MCE_CMD_G_REVISION	0x0b	/* Get hw/sw revision */
-#घोषणा MCE_CMD_UNKNOWN5	0x0e	/* Unknown */
-#घोषणा MCE_CMD_UNKNOWN6	0x0f	/* Unknown */
-#घोषणा MCE_CMD_UNKNOWN8	0x19	/* Unknown */
-#घोषणा MCE_CMD_UNKNOWN9	0x1b	/* Unknown */
-#घोषणा MCE_CMD_शून्य		0x00	/* These show up various places... */
+#define MCE_CMD_SIG_END		0x01	/* End of signal */
+#define MCE_CMD_PING		0x03	/* Ping device */
+#define MCE_CMD_UNKNOWN		0x04	/* Unknown */
+#define MCE_CMD_UNKNOWN2	0x05	/* Unknown */
+#define MCE_CMD_UNKNOWN3	0x09	/* Unknown */
+#define MCE_CMD_UNKNOWN4	0x0a	/* Unknown */
+#define MCE_CMD_G_REVISION	0x0b	/* Get hw/sw revision */
+#define MCE_CMD_UNKNOWN5	0x0e	/* Unknown */
+#define MCE_CMD_UNKNOWN6	0x0f	/* Unknown */
+#define MCE_CMD_UNKNOWN8	0x19	/* Unknown */
+#define MCE_CMD_UNKNOWN9	0x1b	/* Unknown */
+#define MCE_CMD_NULL		0x00	/* These show up various places... */
 
-/* अगर buf[i] & MCE_PORT_MASK == 0x80 and buf[i] != MCE_CMD_PORT_IR,
+/* if buf[i] & MCE_PORT_MASK == 0x80 and buf[i] != MCE_CMD_PORT_IR,
  * then we're looking at a raw IR data sample */
-#घोषणा MCE_COMMAND_IRDATA	0x80
-#घोषणा MCE_PACKET_LENGTH_MASK	0x1f /* Packet length mask */
+#define MCE_COMMAND_IRDATA	0x80
+#define MCE_PACKET_LENGTH_MASK	0x1f /* Packet length mask */
 
-#घोषणा VENDOR_PHILIPS		0x0471
-#घोषणा VENDOR_SMK		0x0609
-#घोषणा VENDOR_TATUNG		0x1460
-#घोषणा VENDOR_GATEWAY		0x107b
-#घोषणा VENDOR_SHUTTLE		0x1308
-#घोषणा VENDOR_SHUTTLE2		0x051c
-#घोषणा VENDOR_MITSUMI		0x03ee
-#घोषणा VENDOR_TOPSEED		0x1784
-#घोषणा VENDOR_RICAVISION	0x179d
-#घोषणा VENDOR_ITRON		0x195d
-#घोषणा VENDOR_FIC		0x1509
-#घोषणा VENDOR_LG		0x043e
-#घोषणा VENDOR_MICROSOFT	0x045e
-#घोषणा VENDOR_FORMOSA		0x147a
-#घोषणा VENDOR_FINTEK		0x1934
-#घोषणा VENDOR_PINNACLE		0x2304
-#घोषणा VENDOR_ECS		0x1019
-#घोषणा VENDOR_WISTRON		0x0fb8
-#घोषणा VENDOR_COMPRO		0x185b
-#घोषणा VENDOR_NORTHSTAR	0x04eb
-#घोषणा VENDOR_REALTEK		0x0bda
-#घोषणा VENDOR_TIVO		0x105a
-#घोषणा VENDOR_CONEXANT		0x0572
-#घोषणा VENDOR_TWISTEDMELON	0x2596
-#घोषणा VENDOR_HAUPPAUGE	0x2040
-#घोषणा VENDOR_PCTV		0x2013
-#घोषणा VENDOR_ADAPTEC		0x03f3
+#define VENDOR_PHILIPS		0x0471
+#define VENDOR_SMK		0x0609
+#define VENDOR_TATUNG		0x1460
+#define VENDOR_GATEWAY		0x107b
+#define VENDOR_SHUTTLE		0x1308
+#define VENDOR_SHUTTLE2		0x051c
+#define VENDOR_MITSUMI		0x03ee
+#define VENDOR_TOPSEED		0x1784
+#define VENDOR_RICAVISION	0x179d
+#define VENDOR_ITRON		0x195d
+#define VENDOR_FIC		0x1509
+#define VENDOR_LG		0x043e
+#define VENDOR_MICROSOFT	0x045e
+#define VENDOR_FORMOSA		0x147a
+#define VENDOR_FINTEK		0x1934
+#define VENDOR_PINNACLE		0x2304
+#define VENDOR_ECS		0x1019
+#define VENDOR_WISTRON		0x0fb8
+#define VENDOR_COMPRO		0x185b
+#define VENDOR_NORTHSTAR	0x04eb
+#define VENDOR_REALTEK		0x0bda
+#define VENDOR_TIVO		0x105a
+#define VENDOR_CONEXANT		0x0572
+#define VENDOR_TWISTEDMELON	0x2596
+#define VENDOR_HAUPPAUGE	0x2040
+#define VENDOR_PCTV		0x2013
+#define VENDOR_ADAPTEC		0x03f3
 
-क्रमागत mceusb_model_type अणु
+enum mceusb_model_type {
 	MCE_GEN2 = 0,		/* Most boards */
 	MCE_GEN1,
 	MCE_GEN3,
@@ -183,65 +182,65 @@
 	HAUPPAUGE_CX_HYBRID_TV,
 	EVROMEDIA_FULL_HYBRID_FULLHD,
 	ASTROMETA_T2HYBRID,
-पूर्ण;
+};
 
-काष्ठा mceusb_model अणु
+struct mceusb_model {
 	u32 mce_gen1:1;
 	u32 mce_gen2:1;
 	u32 mce_gen3:1;
 	u32 tx_mask_normal:1;
 	u32 no_tx:1;
-	u32 broken_irसमयout:1;
+	u32 broken_irtimeout:1;
 	/*
-	 * 2nd IR receiver (लघु-range, wideband) क्रम learning mode:
-	 *     0, असलent 2nd receiver (rx2)
+	 * 2nd IR receiver (short-range, wideband) for learning mode:
+	 *     0, absent 2nd receiver (rx2)
 	 *     1, rx2 present
 	 *     2, rx2 which under counts IR carrier cycles
 	 */
 	u32 rx2;
 
-	पूर्णांक ir_पूर्णांकfnum;
+	int ir_intfnum;
 
-	स्थिर अक्षर *rc_map;	/* Allow specअगरy a per-board map */
-	स्थिर अक्षर *name;	/* per-board name */
-पूर्ण;
+	const char *rc_map;	/* Allow specify a per-board map */
+	const char *name;	/* per-board name */
+};
 
-अटल स्थिर काष्ठा mceusb_model mceusb_model[] = अणु
-	[MCE_GEN1] = अणु
+static const struct mceusb_model mceusb_model[] = {
+	[MCE_GEN1] = {
 		.mce_gen1 = 1,
 		.tx_mask_normal = 1,
 		.rx2 = 2,
-	पूर्ण,
-	[MCE_GEN2] = अणु
+	},
+	[MCE_GEN2] = {
 		.mce_gen2 = 1,
 		.rx2 = 2,
-	पूर्ण,
-	[MCE_GEN2_NO_TX] = अणु
+	},
+	[MCE_GEN2_NO_TX] = {
 		.mce_gen2 = 1,
 		.no_tx = 1,
-	पूर्ण,
-	[MCE_GEN2_TX_INV] = अणु
+	},
+	[MCE_GEN2_TX_INV] = {
 		.mce_gen2 = 1,
 		.tx_mask_normal = 1,
 		.rx2 = 1,
-	पूर्ण,
-	[MCE_GEN2_TX_INV_RX_GOOD] = अणु
+	},
+	[MCE_GEN2_TX_INV_RX_GOOD] = {
 		.mce_gen2 = 1,
 		.tx_mask_normal = 1,
 		.rx2 = 2,
-	पूर्ण,
-	[MCE_GEN3] = अणु
+	},
+	[MCE_GEN3] = {
 		.mce_gen3 = 1,
 		.tx_mask_normal = 1,
 		.rx2 = 2,
-	पूर्ण,
-	[MCE_GEN3_BROKEN_IRTIMEOUT] = अणु
+	},
+	[MCE_GEN3_BROKEN_IRTIMEOUT] = {
 		.mce_gen3 = 1,
 		.tx_mask_normal = 1,
 		.rx2 = 2,
-		.broken_irसमयout = 1
-	पूर्ण,
-	[POLARIS_EVK] = अणु
+		.broken_irtimeout = 1
+	},
+	[POLARIS_EVK] = {
 		/*
 		 * In fact, the EVK is shipped without
 		 * remotes, but we should have something handy,
@@ -249,362 +248,362 @@
 		 */
 		.name = "Conexant Hybrid TV (cx231xx) MCE IR",
 		.rx2 = 2,
-	पूर्ण,
-	[CX_HYBRID_TV] = अणु
+	},
+	[CX_HYBRID_TV] = {
 		.no_tx = 1, /* tx isn't wired up at all */
 		.name = "Conexant Hybrid TV (cx231xx) MCE IR",
-	पूर्ण,
-	[HAUPPAUGE_CX_HYBRID_TV] = अणु
+	},
+	[HAUPPAUGE_CX_HYBRID_TV] = {
 		.no_tx = 1, /* eeprom says it has no tx */
 		.name = "Conexant Hybrid TV (cx231xx) MCE IR no TX",
-	पूर्ण,
-	[MULTIFUNCTION] = अणु
+	},
+	[MULTIFUNCTION] = {
 		.mce_gen2 = 1,
-		.ir_पूर्णांकfnum = 2,
+		.ir_intfnum = 2,
 		.rx2 = 2,
-	पूर्ण,
-	[TIVO_KIT] = अणु
+	},
+	[TIVO_KIT] = {
 		.mce_gen2 = 1,
 		.rc_map = RC_MAP_TIVO,
 		.rx2 = 2,
-	पूर्ण,
-	[EVROMEDIA_FULL_HYBRID_FULLHD] = अणु
+	},
+	[EVROMEDIA_FULL_HYBRID_FULLHD] = {
 		.name = "Evromedia USB Full Hybrid Full HD",
 		.no_tx = 1,
 		.rc_map = RC_MAP_MSI_DIGIVOX_III,
-	पूर्ण,
-	[ASTROMETA_T2HYBRID] = अणु
+	},
+	[ASTROMETA_T2HYBRID] = {
 		.name = "Astrometa T2Hybrid",
 		.no_tx = 1,
 		.rc_map = RC_MAP_ASTROMETA_T2HYBRID,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल स्थिर काष्ठा usb_device_id mceusb_dev_table[] = अणु
-	/* Original Microsoft MCE IR Transceiver (often HP-bअक्रमed) */
-	अणु USB_DEVICE(VENDOR_MICROSOFT, 0x006d),
-	  .driver_info = MCE_GEN1 पूर्ण,
-	/* Philips Infrared Transceiver - Sahara bअक्रमed */
-	अणु USB_DEVICE(VENDOR_PHILIPS, 0x0608) पूर्ण,
-	/* Philips Infrared Transceiver - HP bअक्रमed */
-	अणु USB_DEVICE(VENDOR_PHILIPS, 0x060c),
-	  .driver_info = MCE_GEN2_TX_INV पूर्ण,
+static const struct usb_device_id mceusb_dev_table[] = {
+	/* Original Microsoft MCE IR Transceiver (often HP-branded) */
+	{ USB_DEVICE(VENDOR_MICROSOFT, 0x006d),
+	  .driver_info = MCE_GEN1 },
+	/* Philips Infrared Transceiver - Sahara branded */
+	{ USB_DEVICE(VENDOR_PHILIPS, 0x0608) },
+	/* Philips Infrared Transceiver - HP branded */
+	{ USB_DEVICE(VENDOR_PHILIPS, 0x060c),
+	  .driver_info = MCE_GEN2_TX_INV },
 	/* Philips SRM5100 */
-	अणु USB_DEVICE(VENDOR_PHILIPS, 0x060d) पूर्ण,
+	{ USB_DEVICE(VENDOR_PHILIPS, 0x060d) },
 	/* Philips Infrared Transceiver - Omaura */
-	अणु USB_DEVICE(VENDOR_PHILIPS, 0x060f) पूर्ण,
+	{ USB_DEVICE(VENDOR_PHILIPS, 0x060f) },
 	/* Philips Infrared Transceiver - Spinel plus */
-	अणु USB_DEVICE(VENDOR_PHILIPS, 0x0613) पूर्ण,
+	{ USB_DEVICE(VENDOR_PHILIPS, 0x0613) },
 	/* Philips eHome Infrared Transceiver */
-	अणु USB_DEVICE(VENDOR_PHILIPS, 0x0815) पूर्ण,
-	/* Philips/Spinel plus IR transceiver क्रम ASUS */
-	अणु USB_DEVICE(VENDOR_PHILIPS, 0x206c) पूर्ण,
-	/* Philips/Spinel plus IR transceiver क्रम ASUS */
-	अणु USB_DEVICE(VENDOR_PHILIPS, 0x2088) पूर्ण,
-	/* Philips IR transceiver (Dell bअक्रमed) */
-	अणु USB_DEVICE(VENDOR_PHILIPS, 0x2093),
-	  .driver_info = MCE_GEN2_TX_INV पूर्ण,
-	/* Realtek MCE IR Receiver and card पढ़ोer */
-	अणु USB_DEVICE(VENDOR_REALTEK, 0x0161),
-	  .driver_info = MULTIFUNCTION पूर्ण,
+	{ USB_DEVICE(VENDOR_PHILIPS, 0x0815) },
+	/* Philips/Spinel plus IR transceiver for ASUS */
+	{ USB_DEVICE(VENDOR_PHILIPS, 0x206c) },
+	/* Philips/Spinel plus IR transceiver for ASUS */
+	{ USB_DEVICE(VENDOR_PHILIPS, 0x2088) },
+	/* Philips IR transceiver (Dell branded) */
+	{ USB_DEVICE(VENDOR_PHILIPS, 0x2093),
+	  .driver_info = MCE_GEN2_TX_INV },
+	/* Realtek MCE IR Receiver and card reader */
+	{ USB_DEVICE(VENDOR_REALTEK, 0x0161),
+	  .driver_info = MULTIFUNCTION },
 	/* SMK/Toshiba G83C0004D410 */
-	अणु USB_DEVICE(VENDOR_SMK, 0x031d),
-	  .driver_info = MCE_GEN2_TX_INV_RX_GOOD पूर्ण,
+	{ USB_DEVICE(VENDOR_SMK, 0x031d),
+	  .driver_info = MCE_GEN2_TX_INV_RX_GOOD },
 	/* SMK eHome Infrared Transceiver (Sony VAIO) */
-	अणु USB_DEVICE(VENDOR_SMK, 0x0322),
-	  .driver_info = MCE_GEN2_TX_INV पूर्ण,
+	{ USB_DEVICE(VENDOR_SMK, 0x0322),
+	  .driver_info = MCE_GEN2_TX_INV },
 	/* bundled with Hauppauge PVR-150 */
-	अणु USB_DEVICE(VENDOR_SMK, 0x0334),
-	  .driver_info = MCE_GEN2_TX_INV पूर्ण,
+	{ USB_DEVICE(VENDOR_SMK, 0x0334),
+	  .driver_info = MCE_GEN2_TX_INV },
 	/* SMK eHome Infrared Transceiver */
-	अणु USB_DEVICE(VENDOR_SMK, 0x0338) पूर्ण,
+	{ USB_DEVICE(VENDOR_SMK, 0x0338) },
 	/* SMK/I-O Data GV-MC7/RCKIT Receiver */
-	अणु USB_DEVICE(VENDOR_SMK, 0x0353),
-	  .driver_info = MCE_GEN2_NO_TX पूर्ण,
+	{ USB_DEVICE(VENDOR_SMK, 0x0353),
+	  .driver_info = MCE_GEN2_NO_TX },
 	/* SMK RXX6000 Infrared Receiver */
-	अणु USB_DEVICE(VENDOR_SMK, 0x0357),
-	  .driver_info = MCE_GEN2_NO_TX पूर्ण,
+	{ USB_DEVICE(VENDOR_SMK, 0x0357),
+	  .driver_info = MCE_GEN2_NO_TX },
 	/* Tatung eHome Infrared Transceiver */
-	अणु USB_DEVICE(VENDOR_TATUNG, 0x9150) पूर्ण,
+	{ USB_DEVICE(VENDOR_TATUNG, 0x9150) },
 	/* Shuttle eHome Infrared Transceiver */
-	अणु USB_DEVICE(VENDOR_SHUTTLE, 0xc001) पूर्ण,
+	{ USB_DEVICE(VENDOR_SHUTTLE, 0xc001) },
 	/* Shuttle eHome Infrared Transceiver */
-	अणु USB_DEVICE(VENDOR_SHUTTLE2, 0xc001) पूर्ण,
+	{ USB_DEVICE(VENDOR_SHUTTLE2, 0xc001) },
 	/* Gateway eHome Infrared Transceiver */
-	अणु USB_DEVICE(VENDOR_GATEWAY, 0x3009) पूर्ण,
+	{ USB_DEVICE(VENDOR_GATEWAY, 0x3009) },
 	/* Mitsumi */
-	अणु USB_DEVICE(VENDOR_MITSUMI, 0x2501) पूर्ण,
+	{ USB_DEVICE(VENDOR_MITSUMI, 0x2501) },
 	/* Topseed eHome Infrared Transceiver */
-	अणु USB_DEVICE(VENDOR_TOPSEED, 0x0001),
-	  .driver_info = MCE_GEN2_TX_INV पूर्ण,
+	{ USB_DEVICE(VENDOR_TOPSEED, 0x0001),
+	  .driver_info = MCE_GEN2_TX_INV },
 	/* Topseed HP eHome Infrared Transceiver */
-	अणु USB_DEVICE(VENDOR_TOPSEED, 0x0006),
-	  .driver_info = MCE_GEN2_TX_INV पूर्ण,
+	{ USB_DEVICE(VENDOR_TOPSEED, 0x0006),
+	  .driver_info = MCE_GEN2_TX_INV },
 	/* Topseed eHome Infrared Transceiver */
-	अणु USB_DEVICE(VENDOR_TOPSEED, 0x0007),
-	  .driver_info = MCE_GEN2_TX_INV पूर्ण,
+	{ USB_DEVICE(VENDOR_TOPSEED, 0x0007),
+	  .driver_info = MCE_GEN2_TX_INV },
 	/* Topseed eHome Infrared Transceiver */
-	अणु USB_DEVICE(VENDOR_TOPSEED, 0x0008),
-	  .driver_info = MCE_GEN3 पूर्ण,
+	{ USB_DEVICE(VENDOR_TOPSEED, 0x0008),
+	  .driver_info = MCE_GEN3 },
 	/* Topseed eHome Infrared Transceiver */
-	अणु USB_DEVICE(VENDOR_TOPSEED, 0x000a),
-	  .driver_info = MCE_GEN2_TX_INV पूर्ण,
+	{ USB_DEVICE(VENDOR_TOPSEED, 0x000a),
+	  .driver_info = MCE_GEN2_TX_INV },
 	/* Topseed eHome Infrared Transceiver */
-	अणु USB_DEVICE(VENDOR_TOPSEED, 0x0011),
-	  .driver_info = MCE_GEN3_BROKEN_IRTIMEOUT पूर्ण,
-	/* Ricavision पूर्णांकernal Infrared Transceiver */
-	अणु USB_DEVICE(VENDOR_RICAVISION, 0x0010) पूर्ण,
+	{ USB_DEVICE(VENDOR_TOPSEED, 0x0011),
+	  .driver_info = MCE_GEN3_BROKEN_IRTIMEOUT },
+	/* Ricavision internal Infrared Transceiver */
+	{ USB_DEVICE(VENDOR_RICAVISION, 0x0010) },
 	/* Itron ione Libra Q-11 */
-	अणु USB_DEVICE(VENDOR_ITRON, 0x7002) पूर्ण,
+	{ USB_DEVICE(VENDOR_ITRON, 0x7002) },
 	/* FIC eHome Infrared Transceiver */
-	अणु USB_DEVICE(VENDOR_FIC, 0x9242) पूर्ण,
+	{ USB_DEVICE(VENDOR_FIC, 0x9242) },
 	/* LG eHome Infrared Transceiver */
-	अणु USB_DEVICE(VENDOR_LG, 0x9803) पूर्ण,
+	{ USB_DEVICE(VENDOR_LG, 0x9803) },
 	/* Microsoft MCE Infrared Transceiver */
-	अणु USB_DEVICE(VENDOR_MICROSOFT, 0x00a0) पूर्ण,
+	{ USB_DEVICE(VENDOR_MICROSOFT, 0x00a0) },
 	/* Formosa eHome Infrared Transceiver */
-	अणु USB_DEVICE(VENDOR_FORMOSA, 0xe015) पूर्ण,
+	{ USB_DEVICE(VENDOR_FORMOSA, 0xe015) },
 	/* Formosa21 / eHome Infrared Receiver */
-	अणु USB_DEVICE(VENDOR_FORMOSA, 0xe016) पूर्ण,
+	{ USB_DEVICE(VENDOR_FORMOSA, 0xe016) },
 	/* Formosa aim / Trust MCE Infrared Receiver */
-	अणु USB_DEVICE(VENDOR_FORMOSA, 0xe017),
-	  .driver_info = MCE_GEN2_NO_TX पूर्ण,
+	{ USB_DEVICE(VENDOR_FORMOSA, 0xe017),
+	  .driver_info = MCE_GEN2_NO_TX },
 	/* Formosa Industrial Computing / Beanbag Emulation Device */
-	अणु USB_DEVICE(VENDOR_FORMOSA, 0xe018) पूर्ण,
+	{ USB_DEVICE(VENDOR_FORMOSA, 0xe018) },
 	/* Formosa21 / eHome Infrared Receiver */
-	अणु USB_DEVICE(VENDOR_FORMOSA, 0xe03a) पूर्ण,
+	{ USB_DEVICE(VENDOR_FORMOSA, 0xe03a) },
 	/* Formosa Industrial Computing AIM IR605/A */
-	अणु USB_DEVICE(VENDOR_FORMOSA, 0xe03c) पूर्ण,
+	{ USB_DEVICE(VENDOR_FORMOSA, 0xe03c) },
 	/* Formosa Industrial Computing */
-	अणु USB_DEVICE(VENDOR_FORMOSA, 0xe03e) पूर्ण,
+	{ USB_DEVICE(VENDOR_FORMOSA, 0xe03e) },
 	/* Formosa Industrial Computing */
-	अणु USB_DEVICE(VENDOR_FORMOSA, 0xe042) पूर्ण,
-	/* Fपूर्णांकek eHome Infrared Transceiver (HP bअक्रमed) */
-	अणु USB_DEVICE(VENDOR_FINTEK, 0x5168),
-	  .driver_info = MCE_GEN2_TX_INV पूर्ण,
-	/* Fपूर्णांकek eHome Infrared Transceiver */
-	अणु USB_DEVICE(VENDOR_FINTEK, 0x0602) पूर्ण,
-	/* Fपूर्णांकek eHome Infrared Transceiver (in the AOpen MP45) */
-	अणु USB_DEVICE(VENDOR_FINTEK, 0x0702) पूर्ण,
+	{ USB_DEVICE(VENDOR_FORMOSA, 0xe042) },
+	/* Fintek eHome Infrared Transceiver (HP branded) */
+	{ USB_DEVICE(VENDOR_FINTEK, 0x5168),
+	  .driver_info = MCE_GEN2_TX_INV },
+	/* Fintek eHome Infrared Transceiver */
+	{ USB_DEVICE(VENDOR_FINTEK, 0x0602) },
+	/* Fintek eHome Infrared Transceiver (in the AOpen MP45) */
+	{ USB_DEVICE(VENDOR_FINTEK, 0x0702) },
 	/* Pinnacle Remote Kit */
-	अणु USB_DEVICE(VENDOR_PINNACLE, 0x0225),
-	  .driver_info = MCE_GEN3 पूर्ण,
+	{ USB_DEVICE(VENDOR_PINNACLE, 0x0225),
+	  .driver_info = MCE_GEN3 },
 	/* Elitegroup Computer Systems IR */
-	अणु USB_DEVICE(VENDOR_ECS, 0x0f38) पूर्ण,
+	{ USB_DEVICE(VENDOR_ECS, 0x0f38) },
 	/* Wistron Corp. eHome Infrared Receiver */
-	अणु USB_DEVICE(VENDOR_WISTRON, 0x0002) पूर्ण,
+	{ USB_DEVICE(VENDOR_WISTRON, 0x0002) },
 	/* Compro K100 */
-	अणु USB_DEVICE(VENDOR_COMPRO, 0x3020) पूर्ण,
+	{ USB_DEVICE(VENDOR_COMPRO, 0x3020) },
 	/* Compro K100 v2 */
-	अणु USB_DEVICE(VENDOR_COMPRO, 0x3082) पूर्ण,
+	{ USB_DEVICE(VENDOR_COMPRO, 0x3082) },
 	/* Northstar Systems, Inc. eHome Infrared Transceiver */
-	अणु USB_DEVICE(VENDOR_NORTHSTAR, 0xe004) पूर्ण,
+	{ USB_DEVICE(VENDOR_NORTHSTAR, 0xe004) },
 	/* TiVo PC IR Receiver */
-	अणु USB_DEVICE(VENDOR_TIVO, 0x2000),
-	  .driver_info = TIVO_KIT पूर्ण,
+	{ USB_DEVICE(VENDOR_TIVO, 0x2000),
+	  .driver_info = TIVO_KIT },
 	/* Conexant Hybrid TV "Shelby" Polaris SDK */
-	अणु USB_DEVICE(VENDOR_CONEXANT, 0x58a1),
-	  .driver_info = POLARIS_EVK पूर्ण,
+	{ USB_DEVICE(VENDOR_CONEXANT, 0x58a1),
+	  .driver_info = POLARIS_EVK },
 	/* Conexant Hybrid TV RDU253S Polaris */
-	अणु USB_DEVICE(VENDOR_CONEXANT, 0x58a5),
-	  .driver_info = CX_HYBRID_TV पूर्ण,
+	{ USB_DEVICE(VENDOR_CONEXANT, 0x58a5),
+	  .driver_info = CX_HYBRID_TV },
 	/* Twisted Melon Inc. - Manta Mini Receiver */
-	अणु USB_DEVICE(VENDOR_TWISTEDMELON, 0x8008) पूर्ण,
+	{ USB_DEVICE(VENDOR_TWISTEDMELON, 0x8008) },
 	/* Twisted Melon Inc. - Manta Pico Receiver */
-	अणु USB_DEVICE(VENDOR_TWISTEDMELON, 0x8016) पूर्ण,
+	{ USB_DEVICE(VENDOR_TWISTEDMELON, 0x8016) },
 	/* Twisted Melon Inc. - Manta Transceiver */
-	अणु USB_DEVICE(VENDOR_TWISTEDMELON, 0x8042) पूर्ण,
+	{ USB_DEVICE(VENDOR_TWISTEDMELON, 0x8042) },
 	/* Hauppauge WINTV-HVR-HVR 930C-HD - based on cx231xx */
-	अणु USB_DEVICE(VENDOR_HAUPPAUGE, 0xb130),
-	  .driver_info = HAUPPAUGE_CX_HYBRID_TV पूर्ण,
-	अणु USB_DEVICE(VENDOR_HAUPPAUGE, 0xb131),
-	  .driver_info = HAUPPAUGE_CX_HYBRID_TV पूर्ण,
-	अणु USB_DEVICE(VENDOR_HAUPPAUGE, 0xb138),
-	  .driver_info = HAUPPAUGE_CX_HYBRID_TV पूर्ण,
-	अणु USB_DEVICE(VENDOR_HAUPPAUGE, 0xb139),
-	  .driver_info = HAUPPAUGE_CX_HYBRID_TV पूर्ण,
+	{ USB_DEVICE(VENDOR_HAUPPAUGE, 0xb130),
+	  .driver_info = HAUPPAUGE_CX_HYBRID_TV },
+	{ USB_DEVICE(VENDOR_HAUPPAUGE, 0xb131),
+	  .driver_info = HAUPPAUGE_CX_HYBRID_TV },
+	{ USB_DEVICE(VENDOR_HAUPPAUGE, 0xb138),
+	  .driver_info = HAUPPAUGE_CX_HYBRID_TV },
+	{ USB_DEVICE(VENDOR_HAUPPAUGE, 0xb139),
+	  .driver_info = HAUPPAUGE_CX_HYBRID_TV },
 	/* Hauppauge WinTV-HVR-935C - based on cx231xx */
-	अणु USB_DEVICE(VENDOR_HAUPPAUGE, 0xb151),
-	  .driver_info = HAUPPAUGE_CX_HYBRID_TV पूर्ण,
+	{ USB_DEVICE(VENDOR_HAUPPAUGE, 0xb151),
+	  .driver_info = HAUPPAUGE_CX_HYBRID_TV },
 	/* Hauppauge WinTV-HVR-955Q - based on cx231xx */
-	अणु USB_DEVICE(VENDOR_HAUPPAUGE, 0xb123),
-	  .driver_info = HAUPPAUGE_CX_HYBRID_TV पूर्ण,
+	{ USB_DEVICE(VENDOR_HAUPPAUGE, 0xb123),
+	  .driver_info = HAUPPAUGE_CX_HYBRID_TV },
 	/* Hauppauge WinTV-HVR-975 - based on cx231xx */
-	अणु USB_DEVICE(VENDOR_HAUPPAUGE, 0xb150),
-	  .driver_info = HAUPPAUGE_CX_HYBRID_TV पूर्ण,
-	अणु USB_DEVICE(VENDOR_PCTV, 0x0259),
-	  .driver_info = HAUPPAUGE_CX_HYBRID_TV पूर्ण,
-	अणु USB_DEVICE(VENDOR_PCTV, 0x025e),
-	  .driver_info = HAUPPAUGE_CX_HYBRID_TV पूर्ण,
+	{ USB_DEVICE(VENDOR_HAUPPAUGE, 0xb150),
+	  .driver_info = HAUPPAUGE_CX_HYBRID_TV },
+	{ USB_DEVICE(VENDOR_PCTV, 0x0259),
+	  .driver_info = HAUPPAUGE_CX_HYBRID_TV },
+	{ USB_DEVICE(VENDOR_PCTV, 0x025e),
+	  .driver_info = HAUPPAUGE_CX_HYBRID_TV },
 	/* Adaptec / HP eHome Receiver */
-	अणु USB_DEVICE(VENDOR_ADAPTEC, 0x0094) पूर्ण,
+	{ USB_DEVICE(VENDOR_ADAPTEC, 0x0094) },
 	/* Evromedia USB Full Hybrid Full HD */
-	अणु USB_DEVICE(0x1b80, 0xd3b2),
-	  .driver_info = EVROMEDIA_FULL_HYBRID_FULLHD पूर्ण,
+	{ USB_DEVICE(0x1b80, 0xd3b2),
+	  .driver_info = EVROMEDIA_FULL_HYBRID_FULLHD },
 	/* Astrometa T2hybrid */
-	अणु USB_DEVICE(0x15f4, 0x0135),
-	  .driver_info = ASTROMETA_T2HYBRID पूर्ण,
+	{ USB_DEVICE(0x15f4, 0x0135),
+	  .driver_info = ASTROMETA_T2HYBRID },
 
 	/* Terminating entry */
-	अणु पूर्ण
-पूर्ण;
+	{ }
+};
 
-/* data काष्ठाure क्रम each usb transceiver */
-काष्ठा mceusb_dev अणु
+/* data structure for each usb transceiver */
+struct mceusb_dev {
 	/* ir-core bits */
-	काष्ठा rc_dev *rc;
+	struct rc_dev *rc;
 
 	/* optional features we can enable */
 	bool carrier_report_enabled;
-	bool wideband_rx_enabled;	/* aka learning mode, लघु-range rx */
+	bool wideband_rx_enabled;	/* aka learning mode, short-range rx */
 
 	/* core device bits */
-	काष्ठा device *dev;
+	struct device *dev;
 
 	/* usb */
-	काष्ठा usb_device *usbdev;
-	काष्ठा usb_पूर्णांकerface *usbपूर्णांकf;
-	काष्ठा urb *urb_in;
-	अचिन्हित पूर्णांक pipe_in;
-	काष्ठा usb_endpoपूर्णांक_descriptor *usb_ep_out;
-	अचिन्हित पूर्णांक pipe_out;
+	struct usb_device *usbdev;
+	struct usb_interface *usbintf;
+	struct urb *urb_in;
+	unsigned int pipe_in;
+	struct usb_endpoint_descriptor *usb_ep_out;
+	unsigned int pipe_out;
 
 	/* buffers and dma */
-	अचिन्हित अक्षर *buf_in;
-	अचिन्हित पूर्णांक len_in;
+	unsigned char *buf_in;
+	unsigned int len_in;
 	dma_addr_t dma_in;
 
-	क्रमागत अणु
+	enum {
 		CMD_HEADER = 0,
 		SUBCMD,
 		CMD_DATA,
 		PARSE_IRDATA,
-	पूर्ण parser_state;
+	} parser_state;
 
-	u8 cmd, rem;		/* Reमुख्यing IR data bytes in packet */
+	u8 cmd, rem;		/* Remaining IR data bytes in packet */
 
-	काष्ठा अणु
+	struct {
 		u32 connected:1;
 		u32 tx_mask_normal:1;
 		u32 microsoft_gen1:1;
 		u32 no_tx:1;
 		u32 rx2;
-	पूर्ण flags;
+	} flags;
 
 	/* transmit support */
 	u32 carrier;
-	अचिन्हित अक्षर tx_mask;
+	unsigned char tx_mask;
 
-	अक्षर name[128];
-	अक्षर phys[64];
-	क्रमागत mceusb_model_type model;
+	char name[128];
+	char phys[64];
+	enum mceusb_model_type model;
 
 	bool need_reset;	/* flag to issue a device resume cmd */
-	u8 emver;		/* emulator पूर्णांकerface version */
+	u8 emver;		/* emulator interface version */
 	u8 num_txports;		/* number of transmit ports */
 	u8 num_rxports;		/* number of receive sensors */
-	u8 txports_cabled;	/* biपंचांगask of transmitters with cable */
-	u8 rxports_active;	/* biपंचांगask of active receive sensors */
+	u8 txports_cabled;	/* bitmask of transmitters with cable */
+	u8 rxports_active;	/* bitmask of active receive sensors */
 	bool learning_active;	/* wideband rx is active */
 
 	/* receiver carrier frequency detection support */
-	u32 pulse_tunit;	/* IR pulse "on" cumulative समय units */
-	u32 pulse_count;	/* pulse "on" count in measurement पूर्णांकerval */
+	u32 pulse_tunit;	/* IR pulse "on" cumulative time units */
+	u32 pulse_count;	/* pulse "on" count in measurement interval */
 
 	/*
-	 * support क्रम async error handler mceusb_deferred_kevent()
+	 * support for async error handler mceusb_deferred_kevent()
 	 * where usb_clear_halt(), usb_reset_configuration(),
-	 * usb_reset_device(), etc. must be करोne in process context
+	 * usb_reset_device(), etc. must be done in process context
 	 */
-	काष्ठा work_काष्ठा kevent;
-	अचिन्हित दीर्घ kevent_flags;
+	struct work_struct kevent;
+	unsigned long kevent_flags;
 #		define EVENT_TX_HALT	0
 #		define EVENT_RX_HALT	1
 #		define EVENT_RST_PEND	31
-पूर्ण;
+};
 
 /* MCE Device Command Strings, generally a port and command pair */
-अटल अक्षर DEVICE_RESUME[]	= अणुMCE_CMD_शून्य, MCE_CMD_PORT_SYS,
-				   MCE_CMD_RESUMEपूर्ण;
-अटल अक्षर GET_REVISION[]	= अणुMCE_CMD_PORT_SYS, MCE_CMD_G_REVISIONपूर्ण;
-अटल अक्षर GET_EMVER[]		= अणुMCE_CMD_PORT_SYS, MCE_CMD_GETEMVERपूर्ण;
-अटल अक्षर GET_WAKEVERSION[]	= अणुMCE_CMD_PORT_SYS, MCE_CMD_GETWAKEVERSIONपूर्ण;
-अटल अक्षर FLASH_LED[]		= अणुMCE_CMD_PORT_SYS, MCE_CMD_FLASHLEDपूर्ण;
-अटल अक्षर GET_UNKNOWN2[]	= अणुMCE_CMD_PORT_IR, MCE_CMD_UNKNOWN2पूर्ण;
-अटल अक्षर GET_CARRIER_FREQ[]	= अणुMCE_CMD_PORT_IR, MCE_CMD_GETIRCFSपूर्ण;
-अटल अक्षर GET_RX_TIMEOUT[]	= अणुMCE_CMD_PORT_IR, MCE_CMD_GETIRTIMEOUTपूर्ण;
-अटल अक्षर GET_NUM_PORTS[]	= अणुMCE_CMD_PORT_IR, MCE_CMD_GETIRNUMPORTSपूर्ण;
-अटल अक्षर GET_TX_BITMASK[]	= अणुMCE_CMD_PORT_IR, MCE_CMD_GETIRTXPORTSपूर्ण;
-अटल अक्षर GET_RX_SENSOR[]	= अणुMCE_CMD_PORT_IR, MCE_CMD_GETIRRXPORTENपूर्ण;
-/* sub in desired values in lower byte or bytes क्रम full command */
-/* FIXME: make use of these क्रम transmit.
-अटल अक्षर SET_CARRIER_FREQ[]	= अणुMCE_CMD_PORT_IR,
-				   MCE_CMD_SETIRCFS, 0x00, 0x00पूर्ण;
-अटल अक्षर SET_TX_BITMASK[]	= अणुMCE_CMD_PORT_IR, MCE_CMD_SETIRTXPORTS, 0x00पूर्ण;
-अटल अक्षर SET_RX_TIMEOUT[]	= अणुMCE_CMD_PORT_IR,
-				   MCE_CMD_SETIRTIMEOUT, 0x00, 0x00पूर्ण;
-अटल अक्षर SET_RX_SENSOR[]	= अणुMCE_CMD_PORT_IR,
-				   MCE_RSP_EQIRRXPORTEN, 0x00पूर्ण;
+static char DEVICE_RESUME[]	= {MCE_CMD_NULL, MCE_CMD_PORT_SYS,
+				   MCE_CMD_RESUME};
+static char GET_REVISION[]	= {MCE_CMD_PORT_SYS, MCE_CMD_G_REVISION};
+static char GET_EMVER[]		= {MCE_CMD_PORT_SYS, MCE_CMD_GETEMVER};
+static char GET_WAKEVERSION[]	= {MCE_CMD_PORT_SYS, MCE_CMD_GETWAKEVERSION};
+static char FLASH_LED[]		= {MCE_CMD_PORT_SYS, MCE_CMD_FLASHLED};
+static char GET_UNKNOWN2[]	= {MCE_CMD_PORT_IR, MCE_CMD_UNKNOWN2};
+static char GET_CARRIER_FREQ[]	= {MCE_CMD_PORT_IR, MCE_CMD_GETIRCFS};
+static char GET_RX_TIMEOUT[]	= {MCE_CMD_PORT_IR, MCE_CMD_GETIRTIMEOUT};
+static char GET_NUM_PORTS[]	= {MCE_CMD_PORT_IR, MCE_CMD_GETIRNUMPORTS};
+static char GET_TX_BITMASK[]	= {MCE_CMD_PORT_IR, MCE_CMD_GETIRTXPORTS};
+static char GET_RX_SENSOR[]	= {MCE_CMD_PORT_IR, MCE_CMD_GETIRRXPORTEN};
+/* sub in desired values in lower byte or bytes for full command */
+/* FIXME: make use of these for transmit.
+static char SET_CARRIER_FREQ[]	= {MCE_CMD_PORT_IR,
+				   MCE_CMD_SETIRCFS, 0x00, 0x00};
+static char SET_TX_BITMASK[]	= {MCE_CMD_PORT_IR, MCE_CMD_SETIRTXPORTS, 0x00};
+static char SET_RX_TIMEOUT[]	= {MCE_CMD_PORT_IR,
+				   MCE_CMD_SETIRTIMEOUT, 0x00, 0x00};
+static char SET_RX_SENSOR[]	= {MCE_CMD_PORT_IR,
+				   MCE_RSP_EQIRRXPORTEN, 0x00};
 */
 
-अटल पूर्णांक mceusb_cmd_datasize(u8 cmd, u8 subcmd)
-अणु
-	पूर्णांक datasize = 0;
+static int mceusb_cmd_datasize(u8 cmd, u8 subcmd)
+{
+	int datasize = 0;
 
-	चयन (cmd) अणु
-	हाल MCE_CMD_शून्य:
-		अगर (subcmd == MCE_CMD_PORT_SYS)
+	switch (cmd) {
+	case MCE_CMD_NULL:
+		if (subcmd == MCE_CMD_PORT_SYS)
 			datasize = 1;
-		अवरोध;
-	हाल MCE_CMD_PORT_SYS:
-		चयन (subcmd) अणु
-		हाल MCE_RSP_GETPORTSTATUS:
+		break;
+	case MCE_CMD_PORT_SYS:
+		switch (subcmd) {
+		case MCE_RSP_GETPORTSTATUS:
 			datasize = 5;
-			अवरोध;
-		हाल MCE_RSP_EQWAKEVERSION:
+			break;
+		case MCE_RSP_EQWAKEVERSION:
 			datasize = 4;
-			अवरोध;
-		हाल MCE_CMD_G_REVISION:
+			break;
+		case MCE_CMD_G_REVISION:
 			datasize = 4;
-			अवरोध;
-		हाल MCE_RSP_EQWAKESUPPORT:
-		हाल MCE_RSP_GETWAKESOURCE:
-		हाल MCE_RSP_EQDEVDETAILS:
-		हाल MCE_RSP_EQEMVER:
+			break;
+		case MCE_RSP_EQWAKESUPPORT:
+		case MCE_RSP_GETWAKESOURCE:
+		case MCE_RSP_EQDEVDETAILS:
+		case MCE_RSP_EQEMVER:
 			datasize = 1;
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल MCE_CMD_PORT_IR:
-		चयन (subcmd) अणु
-		हाल MCE_CMD_UNKNOWN:
-		हाल MCE_RSP_EQIRCFS:
-		हाल MCE_RSP_EQIRTIMEOUT:
-		हाल MCE_RSP_EQIRRXCFCNT:
-		हाल MCE_RSP_EQIRNUMPORTS:
+			break;
+		}
+		break;
+	case MCE_CMD_PORT_IR:
+		switch (subcmd) {
+		case MCE_CMD_UNKNOWN:
+		case MCE_RSP_EQIRCFS:
+		case MCE_RSP_EQIRTIMEOUT:
+		case MCE_RSP_EQIRRXCFCNT:
+		case MCE_RSP_EQIRNUMPORTS:
 			datasize = 2;
-			अवरोध;
-		हाल MCE_CMD_SIG_END:
-		हाल MCE_RSP_EQIRTXPORTS:
-		हाल MCE_RSP_EQIRRXPORTEN:
+			break;
+		case MCE_CMD_SIG_END:
+		case MCE_RSP_EQIRTXPORTS:
+		case MCE_RSP_EQIRRXPORTEN:
 			datasize = 1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस datasize;
-पूर्ण
+			break;
+		}
+	}
+	return datasize;
+}
 
-अटल व्योम mceusb_dev_prपूर्णांकdata(काष्ठा mceusb_dev *ir, u8 *buf, पूर्णांक buf_len,
-				 पूर्णांक offset, पूर्णांक len, bool out)
-अणु
-#अगर defined(DEBUG) || defined(CONFIG_DYNAMIC_DEBUG)
-	अक्षर *inout;
+static void mceusb_dev_printdata(struct mceusb_dev *ir, u8 *buf, int buf_len,
+				 int offset, int len, bool out)
+{
+#if defined(DEBUG) || defined(CONFIG_DYNAMIC_DEBUG)
+	char *inout;
 	u8 cmd, subcmd, *data;
-	काष्ठा device *dev = ir->dev;
+	struct device *dev = ir->dev;
 	u32 carrier, period;
 
-	अगर (offset < 0 || offset >= buf_len)
-		वापस;
+	if (offset < 0 || offset >= buf_len)
+		return;
 
 	dev_dbg(dev, "%cx data[%d]: %*ph (len=%d sz=%d)",
 		(out ? 't' : 'r'), offset,
@@ -617,359 +616,359 @@
 	data   = &buf[offset] + 2;
 
 	/* Trace meaningless 0xb1 0x60 header bytes on original receiver */
-	अगर (ir->flags.microsoft_gen1 && !out && !offset) अणु
+	if (ir->flags.microsoft_gen1 && !out && !offset) {
 		dev_dbg(dev, "MCE gen 1 header");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Trace IR data header or trailer */
-	अगर (cmd != MCE_CMD_PORT_IR &&
-	    (cmd & MCE_PORT_MASK) == MCE_COMMAND_IRDATA) अणु
-		अगर (cmd == MCE_IRDATA_TRAILER)
+	if (cmd != MCE_CMD_PORT_IR &&
+	    (cmd & MCE_PORT_MASK) == MCE_COMMAND_IRDATA) {
+		if (cmd == MCE_IRDATA_TRAILER)
 			dev_dbg(dev, "End of raw IR data");
-		अन्यथा
+		else
 			dev_dbg(dev, "Raw IR data, %d pulse/space samples",
 				cmd & MCE_PACKET_LENGTH_MASK);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Unexpected end of buffer? */
-	अगर (offset + len > buf_len)
-		वापस;
+	if (offset + len > buf_len)
+		return;
 
 	/* Decode MCE command/response */
-	चयन (cmd) अणु
-	हाल MCE_CMD_शून्य:
-		अगर (subcmd == MCE_CMD_शून्य)
-			अवरोध;
-		अगर ((subcmd == MCE_CMD_PORT_SYS) &&
+	switch (cmd) {
+	case MCE_CMD_NULL:
+		if (subcmd == MCE_CMD_NULL)
+			break;
+		if ((subcmd == MCE_CMD_PORT_SYS) &&
 		    (data[0] == MCE_CMD_RESUME))
 			dev_dbg(dev, "Device resume requested");
-		अन्यथा
+		else
 			dev_dbg(dev, "Unknown command 0x%02x 0x%02x",
 				 cmd, subcmd);
-		अवरोध;
-	हाल MCE_CMD_PORT_SYS:
-		चयन (subcmd) अणु
-		हाल MCE_RSP_EQEMVER:
-			अगर (!out)
+		break;
+	case MCE_CMD_PORT_SYS:
+		switch (subcmd) {
+		case MCE_RSP_EQEMVER:
+			if (!out)
 				dev_dbg(dev, "Emulator interface version %x",
 					 data[0]);
-			अवरोध;
-		हाल MCE_CMD_G_REVISION:
-			अगर (len == 2)
+			break;
+		case MCE_CMD_G_REVISION:
+			if (len == 2)
 				dev_dbg(dev, "Get hw/sw rev?");
-			अन्यथा
+			else
 				dev_dbg(dev, "hw/sw rev %*ph",
 					4, &buf[offset + 2]);
-			अवरोध;
-		हाल MCE_CMD_RESUME:
+			break;
+		case MCE_CMD_RESUME:
 			dev_dbg(dev, "Device resume requested");
-			अवरोध;
-		हाल MCE_RSP_CMD_ILLEGAL:
+			break;
+		case MCE_RSP_CMD_ILLEGAL:
 			dev_dbg(dev, "Illegal PORT_SYS command");
-			अवरोध;
-		हाल MCE_RSP_EQWAKEVERSION:
-			अगर (!out)
+			break;
+		case MCE_RSP_EQWAKEVERSION:
+			if (!out)
 				dev_dbg(dev, "Wake version, proto: 0x%02x, payload: 0x%02x, address: 0x%02x, version: 0x%02x",
 					data[0], data[1], data[2], data[3]);
-			अवरोध;
-		हाल MCE_RSP_GETPORTSTATUS:
-			अगर (!out)
+			break;
+		case MCE_RSP_GETPORTSTATUS:
+			if (!out)
 				/* We use data1 + 1 here, to match hw labels */
 				dev_dbg(dev, "TX port %d: blaster is%s connected",
 					 data[0] + 1, data[3] ? " not" : "");
-			अवरोध;
-		हाल MCE_CMD_FLASHLED:
+			break;
+		case MCE_CMD_FLASHLED:
 			dev_dbg(dev, "Attempting to flash LED");
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dev_dbg(dev, "Unknown command 0x%02x 0x%02x",
 				 cmd, subcmd);
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल MCE_CMD_PORT_IR:
-		चयन (subcmd) अणु
-		हाल MCE_CMD_SIG_END:
+			break;
+		}
+		break;
+	case MCE_CMD_PORT_IR:
+		switch (subcmd) {
+		case MCE_CMD_SIG_END:
 			dev_dbg(dev, "End of signal");
-			अवरोध;
-		हाल MCE_CMD_PING:
+			break;
+		case MCE_CMD_PING:
 			dev_dbg(dev, "Ping");
-			अवरोध;
-		हाल MCE_CMD_UNKNOWN:
+			break;
+		case MCE_CMD_UNKNOWN:
 			dev_dbg(dev, "Resp to 9f 05 of 0x%02x 0x%02x",
 				data[0], data[1]);
-			अवरोध;
-		हाल MCE_RSP_EQIRCFS:
-			अगर (!data[0] && !data[1]) अणु
+			break;
+		case MCE_RSP_EQIRCFS:
+			if (!data[0] && !data[1]) {
 				dev_dbg(dev, "%s: no carrier", inout);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			// prescaler should make sense
-			अगर (data[0] > 8)
-				अवरोध;
+			if (data[0] > 8)
+				break;
 			period = DIV_ROUND_CLOSEST((1U << data[0] * 2) *
 						   (data[1] + 1), 10);
-			अगर (!period)
-				अवरोध;
+			if (!period)
+				break;
 			carrier = USEC_PER_SEC / period;
 			dev_dbg(dev, "%s carrier of %u Hz (period %uus)",
 				 inout, carrier, period);
-			अवरोध;
-		हाल MCE_CMD_GETIRCFS:
+			break;
+		case MCE_CMD_GETIRCFS:
 			dev_dbg(dev, "Get carrier mode and freq");
-			अवरोध;
-		हाल MCE_RSP_EQIRTXPORTS:
+			break;
+		case MCE_RSP_EQIRTXPORTS:
 			dev_dbg(dev, "%s transmit blaster mask of 0x%02x",
 				 inout, data[0]);
-			अवरोध;
-		हाल MCE_RSP_EQIRTIMEOUT:
+			break;
+		case MCE_RSP_EQIRTIMEOUT:
 			/* value is in units of 50us, so x*50/1000 ms */
 			period = ((data[0] << 8) | data[1]) *
 				  MCE_TIME_UNIT / 1000;
 			dev_dbg(dev, "%s receive timeout of %d ms",
 				 inout, period);
-			अवरोध;
-		हाल MCE_CMD_GETIRTIMEOUT:
+			break;
+		case MCE_CMD_GETIRTIMEOUT:
 			dev_dbg(dev, "Get receive timeout");
-			अवरोध;
-		हाल MCE_CMD_GETIRTXPORTS:
+			break;
+		case MCE_CMD_GETIRTXPORTS:
 			dev_dbg(dev, "Get transmit blaster mask");
-			अवरोध;
-		हाल MCE_RSP_EQIRRXPORTEN:
+			break;
+		case MCE_RSP_EQIRRXPORTEN:
 			dev_dbg(dev, "%s %s-range receive sensor in use",
 				 inout, data[0] == 0x02 ? "short" : "long");
-			अवरोध;
-		हाल MCE_CMD_GETIRRXPORTEN:
+			break;
+		case MCE_CMD_GETIRRXPORTEN:
 		/* aka MCE_RSP_EQIRRXCFCNT */
-			अगर (out)
+			if (out)
 				dev_dbg(dev, "Get receive sensor");
-			अन्यथा
+			else
 				dev_dbg(dev, "RX carrier cycle count: %d",
 					((data[0] << 8) | data[1]));
-			अवरोध;
-		हाल MCE_RSP_EQIRNUMPORTS:
-			अगर (out)
-				अवरोध;
+			break;
+		case MCE_RSP_EQIRNUMPORTS:
+			if (out)
+				break;
 			dev_dbg(dev, "Num TX ports: %x, num RX ports: %x",
 				data[0], data[1]);
-			अवरोध;
-		हाल MCE_RSP_CMD_ILLEGAL:
+			break;
+		case MCE_RSP_CMD_ILLEGAL:
 			dev_dbg(dev, "Illegal PORT_IR command");
-			अवरोध;
-		हाल MCE_RSP_TX_TIMEOUT:
+			break;
+		case MCE_RSP_TX_TIMEOUT:
 			dev_dbg(dev, "IR TX timeout (TX buffer underrun)");
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dev_dbg(dev, "Unknown command 0x%02x 0x%02x",
 				 cmd, subcmd);
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-#पूर्ण_अगर
-पूर्ण
+			break;
+		}
+		break;
+	default:
+		break;
+	}
+#endif
+}
 
 /*
- * Schedule work that can't be करोne in पूर्णांकerrupt handlers
- * (mceusb_dev_recv() and mce_ग_लिखो_callback()) nor tasklets.
- * Invokes mceusb_deferred_kevent() क्रम recovering from
- * error events specअगरied by the kevent bit field.
+ * Schedule work that can't be done in interrupt handlers
+ * (mceusb_dev_recv() and mce_write_callback()) nor tasklets.
+ * Invokes mceusb_deferred_kevent() for recovering from
+ * error events specified by the kevent bit field.
  */
-अटल व्योम mceusb_defer_kevent(काष्ठा mceusb_dev *ir, पूर्णांक kevent)
-अणु
+static void mceusb_defer_kevent(struct mceusb_dev *ir, int kevent)
+{
 	set_bit(kevent, &ir->kevent_flags);
 
-	अगर (test_bit(EVENT_RST_PEND, &ir->kevent_flags)) अणु
+	if (test_bit(EVENT_RST_PEND, &ir->kevent_flags)) {
 		dev_dbg(ir->dev, "kevent %d dropped pending USB Reset Device",
 			kevent);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!schedule_work(&ir->kevent))
+	if (!schedule_work(&ir->kevent))
 		dev_dbg(ir->dev, "kevent %d already scheduled", kevent);
-	अन्यथा
+	else
 		dev_dbg(ir->dev, "kevent %d scheduled", kevent);
-पूर्ण
+}
 
-अटल व्योम mce_ग_लिखो_callback(काष्ठा urb *urb)
-अणु
-	अगर (!urb)
-		वापस;
+static void mce_write_callback(struct urb *urb)
+{
+	if (!urb)
+		return;
 
 	complete(urb->context);
-पूर्ण
+}
 
 /*
- * Write (TX/send) data to MCE device USB endpoपूर्णांक out.
- * Used क्रम IR blaster TX and MCE device commands.
+ * Write (TX/send) data to MCE device USB endpoint out.
+ * Used for IR blaster TX and MCE device commands.
  *
- * Return: The number of bytes written (> 0) or त्रुटि_सं (< 0).
+ * Return: The number of bytes written (> 0) or errno (< 0).
  */
-अटल पूर्णांक mce_ग_लिखो(काष्ठा mceusb_dev *ir, u8 *data, पूर्णांक size)
-अणु
-	पूर्णांक ret;
-	काष्ठा urb *urb;
-	काष्ठा device *dev = ir->dev;
-	अचिन्हित अक्षर *buf_out;
-	काष्ठा completion tx_करोne;
-	अचिन्हित दीर्घ expire;
-	अचिन्हित दीर्घ ret_रुको;
+static int mce_write(struct mceusb_dev *ir, u8 *data, int size)
+{
+	int ret;
+	struct urb *urb;
+	struct device *dev = ir->dev;
+	unsigned char *buf_out;
+	struct completion tx_done;
+	unsigned long expire;
+	unsigned long ret_wait;
 
-	mceusb_dev_prपूर्णांकdata(ir, data, size, 0, size, true);
+	mceusb_dev_printdata(ir, data, size, 0, size, true);
 
 	urb = usb_alloc_urb(0, GFP_KERNEL);
-	अगर (unlikely(!urb)) अणु
+	if (unlikely(!urb)) {
 		dev_err(dev, "Error: mce write couldn't allocate urb");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	buf_out = kदो_स्मृति(size, GFP_KERNEL);
-	अगर (!buf_out) अणु
-		usb_मुक्त_urb(urb);
-		वापस -ENOMEM;
-	पूर्ण
+	buf_out = kmalloc(size, GFP_KERNEL);
+	if (!buf_out) {
+		usb_free_urb(urb);
+		return -ENOMEM;
+	}
 
-	init_completion(&tx_करोne);
+	init_completion(&tx_done);
 
 	/* outbound data */
-	अगर (usb_endpoपूर्णांक_xfer_पूर्णांक(ir->usb_ep_out))
-		usb_fill_पूर्णांक_urb(urb, ir->usbdev, ir->pipe_out,
-				 buf_out, size, mce_ग_लिखो_callback, &tx_करोne,
+	if (usb_endpoint_xfer_int(ir->usb_ep_out))
+		usb_fill_int_urb(urb, ir->usbdev, ir->pipe_out,
+				 buf_out, size, mce_write_callback, &tx_done,
 				 ir->usb_ep_out->bInterval);
-	अन्यथा
+	else
 		usb_fill_bulk_urb(urb, ir->usbdev, ir->pipe_out,
-				  buf_out, size, mce_ग_लिखो_callback, &tx_करोne);
-	स_नकल(buf_out, data, size);
+				  buf_out, size, mce_write_callback, &tx_done);
+	memcpy(buf_out, data, size);
 
 	ret = usb_submit_urb(urb, GFP_KERNEL);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Error: mce write submit urb error = %d", ret);
-		kमुक्त(buf_out);
-		usb_मुक्त_urb(urb);
-		वापस ret;
-	पूर्ण
+		kfree(buf_out);
+		usb_free_urb(urb);
+		return ret;
+	}
 
-	expire = msecs_to_jअगरfies(USB_TX_TIMEOUT);
-	ret_रुको = रुको_क्रम_completion_समयout(&tx_करोne, expire);
-	अगर (!ret_रुको) अणु
+	expire = msecs_to_jiffies(USB_TX_TIMEOUT);
+	ret_wait = wait_for_completion_timeout(&tx_done, expire);
+	if (!ret_wait) {
 		dev_err(dev, "Error: mce write timed out (expire = %lu (%dms))",
 			expire, USB_TX_TIMEOUT);
-		usb_समाप्त_urb(urb);
+		usb_kill_urb(urb);
 		ret = (urb->status == -ENOENT ? -ETIMEDOUT : urb->status);
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = urb->status;
-	पूर्ण
-	अगर (ret >= 0)
+	}
+	if (ret >= 0)
 		ret = urb->actual_length;	/* bytes written */
 
-	चयन (urb->status) अणु
+	switch (urb->status) {
 	/* success */
-	हाल 0:
-		अवरोध;
+	case 0:
+		break;
 
-	हाल -ECONNRESET:
-	हाल -ENOENT:
-	हाल -EILSEQ:
-	हाल -ESHUTDOWN:
-		अवरोध;
+	case -ECONNRESET:
+	case -ENOENT:
+	case -EILSEQ:
+	case -ESHUTDOWN:
+		break;
 
-	हाल -EPIPE:
+	case -EPIPE:
 		dev_err(ir->dev, "Error: mce write urb status = %d (TX HALT)",
 			urb->status);
 		mceusb_defer_kevent(ir, EVENT_TX_HALT);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		dev_err(ir->dev, "Error: mce write urb status = %d",
 			urb->status);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	dev_dbg(dev, "tx done status = %d (wait = %lu, expire = %lu (%dms), urb->actual_length = %d, urb->status = %d)",
-		ret, ret_रुको, expire, USB_TX_TIMEOUT,
+		ret, ret_wait, expire, USB_TX_TIMEOUT,
 		urb->actual_length, urb->status);
 
-	kमुक्त(buf_out);
-	usb_मुक्त_urb(urb);
+	kfree(buf_out);
+	usb_free_urb(urb);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम mce_command_out(काष्ठा mceusb_dev *ir, u8 *data, पूर्णांक size)
-अणु
-	पूर्णांक rsize = माप(DEVICE_RESUME);
+static void mce_command_out(struct mceusb_dev *ir, u8 *data, int size)
+{
+	int rsize = sizeof(DEVICE_RESUME);
 
-	अगर (ir->need_reset) अणु
+	if (ir->need_reset) {
 		ir->need_reset = false;
-		mce_ग_लिखो(ir, DEVICE_RESUME, rsize);
+		mce_write(ir, DEVICE_RESUME, rsize);
 		msleep(10);
-	पूर्ण
+	}
 
-	mce_ग_लिखो(ir, data, size);
+	mce_write(ir, data, size);
 	msleep(10);
-पूर्ण
+}
 
 /*
  * Transmit IR out the MCE device IR blaster port(s).
  *
- * Convert IR pulse/space sequence from LIRC to MCE क्रमmat.
- * Break up a दीर्घ IR sequence पूर्णांकo multiple parts (MCE IR data packets).
+ * Convert IR pulse/space sequence from LIRC to MCE format.
+ * Break up a long IR sequence into multiple parts (MCE IR data packets).
  *
- * u32 txbuf[] consists of IR pulse, space, ..., and pulse बार in usec.
+ * u32 txbuf[] consists of IR pulse, space, ..., and pulse times in usec.
  * Pulses and spaces are implicit by their position.
  * The first IR sample, txbuf[0], is always a pulse.
  *
- * u8 irbuf[] consists of multiple IR data packets क्रम the MCE device.
+ * u8 irbuf[] consists of multiple IR data packets for the MCE device.
  * A packet is 1 u8 MCE_IRDATA_HEADER and up to 30 u8 IR samples.
- * An IR sample is 1-bit pulse/space flag with 7-bit समय
- * in MCE समय units (50usec).
+ * An IR sample is 1-bit pulse/space flag with 7-bit time
+ * in MCE time units (50usec).
  *
- * Return: The number of IR samples sent (> 0) or त्रुटि_सं (< 0).
+ * Return: The number of IR samples sent (> 0) or errno (< 0).
  */
-अटल पूर्णांक mceusb_tx_ir(काष्ठा rc_dev *dev, अचिन्हित *txbuf, अचिन्हित count)
-अणु
-	काष्ठा mceusb_dev *ir = dev->priv;
-	u8 cmdbuf[3] = अणु MCE_CMD_PORT_IR, MCE_CMD_SETIRTXPORTS, 0x00 पूर्ण;
+static int mceusb_tx_ir(struct rc_dev *dev, unsigned *txbuf, unsigned count)
+{
+	struct mceusb_dev *ir = dev->priv;
+	u8 cmdbuf[3] = { MCE_CMD_PORT_IR, MCE_CMD_SETIRTXPORTS, 0x00 };
 	u8 irbuf[MCE_IRBUF_SIZE];
-	पूर्णांक ircount = 0;
-	अचिन्हित पूर्णांक irsample;
-	पूर्णांक i, length, ret;
+	int ircount = 0;
+	unsigned int irsample;
+	int i, length, ret;
 
 	/* Send the set TX ports command */
 	cmdbuf[2] = ir->tx_mask;
-	mce_command_out(ir, cmdbuf, माप(cmdbuf));
+	mce_command_out(ir, cmdbuf, sizeof(cmdbuf));
 
 	/* Generate mce IR data packet */
-	क्रम (i = 0; i < count; i++) अणु
+	for (i = 0; i < count; i++) {
 		irsample = txbuf[i] / MCE_TIME_UNIT;
 
-		/* loop to support दीर्घ pulses/spaces > 6350us (127*50us) */
-		जबतक (irsample > 0) अणु
+		/* loop to support long pulses/spaces > 6350us (127*50us) */
+		while (irsample > 0) {
 			/* Insert IR header every 30th entry */
-			अगर (ircount % MCE_PACKET_SIZE == 0) अणु
-				/* Room क्रम IR header and one IR sample? */
-				अगर (ircount >= MCE_IRBUF_SIZE - 1) अणु
+			if (ircount % MCE_PACKET_SIZE == 0) {
+				/* Room for IR header and one IR sample? */
+				if (ircount >= MCE_IRBUF_SIZE - 1) {
 					/* Send near full buffer */
-					ret = mce_ग_लिखो(ir, irbuf, ircount);
-					अगर (ret < 0)
-						वापस ret;
+					ret = mce_write(ir, irbuf, ircount);
+					if (ret < 0)
+						return ret;
 					ircount = 0;
-				पूर्ण
+				}
 				irbuf[ircount++] = MCE_IRDATA_HEADER;
-			पूर्ण
+			}
 
 			/* Insert IR sample */
-			अगर (irsample <= MCE_MAX_PULSE_LENGTH) अणु
+			if (irsample <= MCE_MAX_PULSE_LENGTH) {
 				irbuf[ircount] = irsample;
 				irsample = 0;
-			पूर्ण अन्यथा अणु
+			} else {
 				irbuf[ircount] = MCE_MAX_PULSE_LENGTH;
 				irsample -= MCE_MAX_PULSE_LENGTH;
-			पूर्ण
+			}
 			/*
 			 * Even i = IR pulse
 			 * Odd  i = IR space
@@ -978,179 +977,179 @@
 			ircount++;
 
 			/* IR buffer full? */
-			अगर (ircount >= MCE_IRBUF_SIZE) अणु
+			if (ircount >= MCE_IRBUF_SIZE) {
 				/* Fix packet length in last header */
 				length = ircount % MCE_PACKET_SIZE;
-				अगर (length > 0)
+				if (length > 0)
 					irbuf[ircount - length] -=
 						MCE_PACKET_SIZE - length;
 				/* Send full buffer */
-				ret = mce_ग_लिखो(ir, irbuf, ircount);
-				अगर (ret < 0)
-					वापस ret;
+				ret = mce_write(ir, irbuf, ircount);
+				if (ret < 0)
+					return ret;
 				ircount = 0;
-			पूर्ण
-		पूर्ण
-	पूर्ण /* after क्रम loop, 0 <= ircount < MCE_IRBUF_SIZE */
+			}
+		}
+	} /* after for loop, 0 <= ircount < MCE_IRBUF_SIZE */
 
 	/* Fix packet length in last header */
 	length = ircount % MCE_PACKET_SIZE;
-	अगर (length > 0)
+	if (length > 0)
 		irbuf[ircount - length] -= MCE_PACKET_SIZE - length;
 
 	/* Append IR trailer (0x80) to final partial (or empty) IR buffer */
 	irbuf[ircount++] = MCE_IRDATA_TRAILER;
 
 	/* Send final buffer */
-	ret = mce_ग_लिखो(ir, irbuf, ircount);
-	अगर (ret < 0)
-		वापस ret;
+	ret = mce_write(ir, irbuf, ircount);
+	if (ret < 0)
+		return ret;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-/* Sets active IR outमाला_दो -- mce devices typically have two */
-अटल पूर्णांक mceusb_set_tx_mask(काष्ठा rc_dev *dev, u32 mask)
-अणु
-	काष्ठा mceusb_dev *ir = dev->priv;
+/* Sets active IR outputs -- mce devices typically have two */
+static int mceusb_set_tx_mask(struct rc_dev *dev, u32 mask)
+{
+	struct mceusb_dev *ir = dev->priv;
 
-	/* वापस number of transmitters */
-	पूर्णांक emitters = ir->num_txports ? ir->num_txports : 2;
+	/* return number of transmitters */
+	int emitters = ir->num_txports ? ir->num_txports : 2;
 
-	अगर (mask >= (1 << emitters))
-		वापस emitters;
+	if (mask >= (1 << emitters))
+		return emitters;
 
-	अगर (ir->flags.tx_mask_normal)
+	if (ir->flags.tx_mask_normal)
 		ir->tx_mask = mask;
-	अन्यथा
+	else
 		ir->tx_mask = (mask != MCE_DEFAULT_TX_MASK ?
 				mask ^ MCE_DEFAULT_TX_MASK : mask) << 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Sets the send carrier frequency and mode */
-अटल पूर्णांक mceusb_set_tx_carrier(काष्ठा rc_dev *dev, u32 carrier)
-अणु
-	काष्ठा mceusb_dev *ir = dev->priv;
-	पूर्णांक clk = 10000000;
-	पूर्णांक prescaler = 0, भागisor = 0;
-	अचिन्हित अक्षर cmdbuf[4] = अणु MCE_CMD_PORT_IR,
-				    MCE_CMD_SETIRCFS, 0x00, 0x00 पूर्ण;
+static int mceusb_set_tx_carrier(struct rc_dev *dev, u32 carrier)
+{
+	struct mceusb_dev *ir = dev->priv;
+	int clk = 10000000;
+	int prescaler = 0, divisor = 0;
+	unsigned char cmdbuf[4] = { MCE_CMD_PORT_IR,
+				    MCE_CMD_SETIRCFS, 0x00, 0x00 };
 
 	/* Carrier has changed */
-	अगर (ir->carrier != carrier) अणु
+	if (ir->carrier != carrier) {
 
-		अगर (carrier == 0) अणु
+		if (carrier == 0) {
 			ir->carrier = carrier;
 			cmdbuf[2] = MCE_CMD_SIG_END;
 			cmdbuf[3] = MCE_IRDATA_TRAILER;
 			dev_dbg(ir->dev, "disabling carrier modulation");
-			mce_command_out(ir, cmdbuf, माप(cmdbuf));
-			वापस 0;
-		पूर्ण
+			mce_command_out(ir, cmdbuf, sizeof(cmdbuf));
+			return 0;
+		}
 
-		क्रम (prescaler = 0; prescaler < 4; ++prescaler) अणु
-			भागisor = (clk >> (2 * prescaler)) / carrier;
-			अगर (भागisor <= 0xff) अणु
+		for (prescaler = 0; prescaler < 4; ++prescaler) {
+			divisor = (clk >> (2 * prescaler)) / carrier;
+			if (divisor <= 0xff) {
 				ir->carrier = carrier;
 				cmdbuf[2] = prescaler;
-				cmdbuf[3] = भागisor;
+				cmdbuf[3] = divisor;
 				dev_dbg(ir->dev, "requesting %u HZ carrier",
 								carrier);
 
 				/* Transmit new carrier to mce device */
-				mce_command_out(ir, cmdbuf, माप(cmdbuf));
-				वापस 0;
-			पूर्ण
-		पूर्ण
+				mce_command_out(ir, cmdbuf, sizeof(cmdbuf));
+				return 0;
+			}
+		}
 
-		वापस -EINVAL;
+		return -EINVAL;
 
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mceusb_set_समयout(काष्ठा rc_dev *dev, अचिन्हित पूर्णांक समयout)
-अणु
-	u8 cmdbuf[4] = अणु MCE_CMD_PORT_IR, MCE_CMD_SETIRTIMEOUT, 0, 0 पूर्ण;
-	काष्ठा mceusb_dev *ir = dev->priv;
-	अचिन्हित पूर्णांक units;
+static int mceusb_set_timeout(struct rc_dev *dev, unsigned int timeout)
+{
+	u8 cmdbuf[4] = { MCE_CMD_PORT_IR, MCE_CMD_SETIRTIMEOUT, 0, 0 };
+	struct mceusb_dev *ir = dev->priv;
+	unsigned int units;
 
-	units = DIV_ROUND_CLOSEST(समयout, MCE_TIME_UNIT);
+	units = DIV_ROUND_CLOSEST(timeout, MCE_TIME_UNIT);
 
 	cmdbuf[2] = units >> 8;
 	cmdbuf[3] = units;
 
-	mce_command_out(ir, cmdbuf, माप(cmdbuf));
+	mce_command_out(ir, cmdbuf, sizeof(cmdbuf));
 
-	/* get receiver समयout value */
-	mce_command_out(ir, GET_RX_TIMEOUT, माप(GET_RX_TIMEOUT));
+	/* get receiver timeout value */
+	mce_command_out(ir, GET_RX_TIMEOUT, sizeof(GET_RX_TIMEOUT));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Select or deselect the 2nd receiver port.
- * Second receiver is learning mode, wide-band, लघु-range receiver.
- * Only one receiver (दीर्घ or लघु range) may be active at a समय.
+ * Second receiver is learning mode, wide-band, short-range receiver.
+ * Only one receiver (long or short range) may be active at a time.
  */
-अटल पूर्णांक mceusb_set_rx_wideband(काष्ठा rc_dev *dev, पूर्णांक enable)
-अणु
-	काष्ठा mceusb_dev *ir = dev->priv;
-	अचिन्हित अक्षर cmdbuf[3] = अणु MCE_CMD_PORT_IR,
-				    MCE_CMD_SETIRRXPORTEN, 0x00 पूर्ण;
+static int mceusb_set_rx_wideband(struct rc_dev *dev, int enable)
+{
+	struct mceusb_dev *ir = dev->priv;
+	unsigned char cmdbuf[3] = { MCE_CMD_PORT_IR,
+				    MCE_CMD_SETIRRXPORTEN, 0x00 };
 
 	dev_dbg(ir->dev, "select %s-range receive sensor",
 		enable ? "short" : "long");
-	अगर (enable) अणु
+	if (enable) {
 		ir->wideband_rx_enabled = true;
-		cmdbuf[2] = 2;	/* port 2 is लघु range receiver */
-	पूर्ण अन्यथा अणु
+		cmdbuf[2] = 2;	/* port 2 is short range receiver */
+	} else {
 		ir->wideband_rx_enabled = false;
-		cmdbuf[2] = 1;	/* port 1 is दीर्घ range receiver */
-	पूर्ण
-	mce_command_out(ir, cmdbuf, माप(cmdbuf));
+		cmdbuf[2] = 1;	/* port 1 is long range receiver */
+	}
+	mce_command_out(ir, cmdbuf, sizeof(cmdbuf));
 	/* response from device sets ir->learning_active */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Enable/disable receiver carrier frequency pass through reporting.
- * Only the लघु-range receiver has carrier frequency measuring capability.
+ * Only the short-range receiver has carrier frequency measuring capability.
  * Implicitly select this receiver when enabling carrier frequency reporting.
  */
-अटल पूर्णांक mceusb_set_rx_carrier_report(काष्ठा rc_dev *dev, पूर्णांक enable)
-अणु
-	काष्ठा mceusb_dev *ir = dev->priv;
-	अचिन्हित अक्षर cmdbuf[3] = अणु MCE_CMD_PORT_IR,
-				    MCE_CMD_SETIRRXPORTEN, 0x00 पूर्ण;
+static int mceusb_set_rx_carrier_report(struct rc_dev *dev, int enable)
+{
+	struct mceusb_dev *ir = dev->priv;
+	unsigned char cmdbuf[3] = { MCE_CMD_PORT_IR,
+				    MCE_CMD_SETIRRXPORTEN, 0x00 };
 
 	dev_dbg(ir->dev, "%s short-range receiver carrier reporting",
 		enable ? "enable" : "disable");
-	अगर (enable) अणु
+	if (enable) {
 		ir->carrier_report_enabled = true;
-		अगर (!ir->learning_active) अणु
-			cmdbuf[2] = 2;	/* port 2 is लघु range receiver */
-			mce_command_out(ir, cmdbuf, माप(cmdbuf));
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		if (!ir->learning_active) {
+			cmdbuf[2] = 2;	/* port 2 is short range receiver */
+			mce_command_out(ir, cmdbuf, sizeof(cmdbuf));
+		}
+	} else {
 		ir->carrier_report_enabled = false;
 		/*
-		 * Revert to normal (दीर्घ-range) receiver only अगर the
-		 * wideband (लघु-range) receiver wasn't explicitly
+		 * Revert to normal (long-range) receiver only if the
+		 * wideband (short-range) receiver wasn't explicitly
 		 * enabled.
 		 */
-		अगर (ir->learning_active && !ir->wideband_rx_enabled) अणु
-			cmdbuf[2] = 1;	/* port 1 is दीर्घ range receiver */
-			mce_command_out(ir, cmdbuf, माप(cmdbuf));
-		पूर्ण
-	पूर्ण
+		if (ir->learning_active && !ir->wideband_rx_enabled) {
+			cmdbuf[2] = 1;	/* port 1 is long range receiver */
+			mce_command_out(ir, cmdbuf, sizeof(cmdbuf));
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Handle PORT_SYS/IR command response received from the MCE device.
@@ -1159,68 +1158,68 @@
  * in buf_in[]. The response itself determines its total length
  * (mceusb_cmd_datasize() + 2) and hence the minimum size of buf_in[].
  *
- * We करोn't करो anything but prपूर्णांक debug spew क्रम many of the command bits
- * we receive from the hardware, but some of them are useful inक्रमmation
+ * We don't do anything but print debug spew for many of the command bits
+ * we receive from the hardware, but some of them are useful information
  * we want to store so that we can use them.
  */
-अटल व्योम mceusb_handle_command(काष्ठा mceusb_dev *ir, u8 *buf_in)
-अणु
+static void mceusb_handle_command(struct mceusb_dev *ir, u8 *buf_in)
+{
 	u8 cmd = buf_in[0];
 	u8 subcmd = buf_in[1];
-	u8 *hi = &buf_in[2];		/* पढ़ो only when required */
-	u8 *lo = &buf_in[3];		/* पढ़ो only when required */
-	काष्ठा ir_raw_event rawir = अणुपूर्ण;
+	u8 *hi = &buf_in[2];		/* read only when required */
+	u8 *lo = &buf_in[3];		/* read only when required */
+	struct ir_raw_event rawir = {};
 	u32 carrier_cycles;
 	u32 cycles_fix;
 
-	अगर (cmd == MCE_CMD_PORT_SYS) अणु
-		चयन (subcmd) अणु
-		/* the one and only 5-byte वापस value command */
-		हाल MCE_RSP_GETPORTSTATUS:
-			अगर (buf_in[5] == 0 && *hi < 8)
+	if (cmd == MCE_CMD_PORT_SYS) {
+		switch (subcmd) {
+		/* the one and only 5-byte return value command */
+		case MCE_RSP_GETPORTSTATUS:
+			if (buf_in[5] == 0 && *hi < 8)
 				ir->txports_cabled |= 1 << *hi;
-			अवरोध;
+			break;
 
-		/* 1-byte वापस value commands */
-		हाल MCE_RSP_EQEMVER:
+		/* 1-byte return value commands */
+		case MCE_RSP_EQEMVER:
 			ir->emver = *hi;
-			अवरोध;
+			break;
 
-		/* No वापस value commands */
-		हाल MCE_RSP_CMD_ILLEGAL:
+		/* No return value commands */
+		case MCE_RSP_CMD_ILLEGAL:
 			ir->need_reset = true;
-			अवरोध;
+			break;
 
-		शेष:
-			अवरोध;
-		पूर्ण
+		default:
+			break;
+		}
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (cmd != MCE_CMD_PORT_IR)
-		वापस;
+	if (cmd != MCE_CMD_PORT_IR)
+		return;
 
-	चयन (subcmd) अणु
-	/* 2-byte वापस value commands */
-	हाल MCE_RSP_EQIRTIMEOUT:
-		ir->rc->समयout = (*hi << 8 | *lo) * MCE_TIME_UNIT;
-		अवरोध;
-	हाल MCE_RSP_EQIRNUMPORTS:
+	switch (subcmd) {
+	/* 2-byte return value commands */
+	case MCE_RSP_EQIRTIMEOUT:
+		ir->rc->timeout = (*hi << 8 | *lo) * MCE_TIME_UNIT;
+		break;
+	case MCE_RSP_EQIRNUMPORTS:
 		ir->num_txports = *hi;
 		ir->num_rxports = *lo;
-		अवरोध;
-	हाल MCE_RSP_EQIRRXCFCNT:
+		break;
+	case MCE_RSP_EQIRRXCFCNT:
 		/*
 		 * The carrier cycle counter can overflow and wrap around
 		 * without notice from the device. So frequency measurement
-		 * will be inaccurate with दीर्घ duration IR.
+		 * will be inaccurate with long duration IR.
 		 *
-		 * The दीर्घ-range (non learning) receiver always reports
+		 * The long-range (non learning) receiver always reports
 		 * zero count so we always ignore its report.
 		 */
-		अगर (ir->carrier_report_enabled && ir->learning_active &&
-		    ir->pulse_tunit > 0) अणु
+		if (ir->carrier_report_enabled && ir->learning_active &&
+		    ir->pulse_tunit > 0) {
 			carrier_cycles = (*hi << 8 | *lo);
 			/*
 			 * Adjust carrier cycle count by adding
@@ -1235,197 +1234,197 @@
 				rawir.carrier, ir->pulse_count, carrier_cycles,
 				ir->pulse_tunit, ir->flags.rx2);
 			ir_raw_event_store(ir->rc, &rawir);
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	/* 1-byte वापस value commands */
-	हाल MCE_RSP_EQIRTXPORTS:
+	/* 1-byte return value commands */
+	case MCE_RSP_EQIRTXPORTS:
 		ir->tx_mask = *hi;
-		अवरोध;
-	हाल MCE_RSP_EQIRRXPORTEN:
+		break;
+	case MCE_RSP_EQIRRXPORTEN:
 		ir->learning_active = ((*hi & 0x02) == 0x02);
-		अगर (ir->rxports_active != *hi) अणु
+		if (ir->rxports_active != *hi) {
 			dev_info(ir->dev, "%s-range (0x%x) receiver active",
 				 ir->learning_active ? "short" : "long", *hi);
 			ir->rxports_active = *hi;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	/* No वापस value commands */
-	हाल MCE_RSP_CMD_ILLEGAL:
-	हाल MCE_RSP_TX_TIMEOUT:
+	/* No return value commands */
+	case MCE_RSP_CMD_ILLEGAL:
+	case MCE_RSP_TX_TIMEOUT:
 		ir->need_reset = true;
-		अवरोध;
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+	default:
+		break;
+	}
+}
 
-अटल व्योम mceusb_process_ir_data(काष्ठा mceusb_dev *ir, पूर्णांक buf_len)
-अणु
-	काष्ठा ir_raw_event rawir = अणुपूर्ण;
+static void mceusb_process_ir_data(struct mceusb_dev *ir, int buf_len)
+{
+	struct ir_raw_event rawir = {};
 	bool event = false;
-	पूर्णांक i = 0;
+	int i = 0;
 
 	/* skip meaningless 0xb1 0x60 header bytes on orig receiver */
-	अगर (ir->flags.microsoft_gen1)
+	if (ir->flags.microsoft_gen1)
 		i = 2;
 
-	/* अगर there's no data, just वापस now */
-	अगर (buf_len <= i)
-		वापस;
+	/* if there's no data, just return now */
+	if (buf_len <= i)
+		return;
 
-	क्रम (; i < buf_len; i++) अणु
-		चयन (ir->parser_state) अणु
-		हाल SUBCMD:
+	for (; i < buf_len; i++) {
+		switch (ir->parser_state) {
+		case SUBCMD:
 			ir->rem = mceusb_cmd_datasize(ir->cmd, ir->buf_in[i]);
-			mceusb_dev_prपूर्णांकdata(ir, ir->buf_in, buf_len, i - 1,
+			mceusb_dev_printdata(ir, ir->buf_in, buf_len, i - 1,
 					     ir->rem + 2, false);
-			अगर (i + ir->rem < buf_len)
+			if (i + ir->rem < buf_len)
 				mceusb_handle_command(ir, &ir->buf_in[i - 1]);
 			ir->parser_state = CMD_DATA;
-			अवरोध;
-		हाल PARSE_IRDATA:
+			break;
+		case PARSE_IRDATA:
 			ir->rem--;
 			rawir.pulse = ((ir->buf_in[i] & MCE_PULSE_BIT) != 0);
 			rawir.duration = (ir->buf_in[i] & MCE_PULSE_MASK);
-			अगर (unlikely(!rawir.duration)) अणु
+			if (unlikely(!rawir.duration)) {
 				dev_dbg(ir->dev, "nonsensical irdata %02x with duration 0",
 					ir->buf_in[i]);
-				अवरोध;
-			पूर्ण
-			अगर (rawir.pulse) अणु
+				break;
+			}
+			if (rawir.pulse) {
 				ir->pulse_tunit += rawir.duration;
 				ir->pulse_count++;
-			पूर्ण
+			}
 			rawir.duration *= MCE_TIME_UNIT;
 
 			dev_dbg(ir->dev, "Storing %s %u us (%02x)",
 				rawir.pulse ? "pulse" : "space",
 				rawir.duration,	ir->buf_in[i]);
 
-			अगर (ir_raw_event_store_with_filter(ir->rc, &rawir))
+			if (ir_raw_event_store_with_filter(ir->rc, &rawir))
 				event = true;
-			अवरोध;
-		हाल CMD_DATA:
+			break;
+		case CMD_DATA:
 			ir->rem--;
-			अवरोध;
-		हाल CMD_HEADER:
+			break;
+		case CMD_HEADER:
 			ir->cmd = ir->buf_in[i];
-			अगर ((ir->cmd == MCE_CMD_PORT_IR) ||
+			if ((ir->cmd == MCE_CMD_PORT_IR) ||
 			    ((ir->cmd & MCE_PORT_MASK) !=
-			     MCE_COMMAND_IRDATA)) अणु
+			     MCE_COMMAND_IRDATA)) {
 				/*
 				 * got PORT_SYS, PORT_IR, or unknown
 				 * command response prefix
 				 */
 				ir->parser_state = SUBCMD;
-				जारी;
-			पूर्ण
+				continue;
+			}
 			/*
 			 * got IR data prefix (0x80 + num_bytes)
-			 * decode MCE packets of the क्रमm अणु0x83, AA, BB, CCपूर्ण
+			 * decode MCE packets of the form {0x83, AA, BB, CC}
 			 * IR data packets can span USB messages
 			 */
 			ir->rem = (ir->cmd & MCE_PACKET_LENGTH_MASK);
-			mceusb_dev_prपूर्णांकdata(ir, ir->buf_in, buf_len,
+			mceusb_dev_printdata(ir, ir->buf_in, buf_len,
 					     i, ir->rem + 1, false);
-			अगर (ir->rem) अणु
+			if (ir->rem) {
 				ir->parser_state = PARSE_IRDATA;
-			पूर्ण अन्यथा अणु
-				काष्ठा ir_raw_event ev = अणु
-					.समयout = 1,
-					.duration = ir->rc->समयout
-				पूर्ण;
+			} else {
+				struct ir_raw_event ev = {
+					.timeout = 1,
+					.duration = ir->rc->timeout
+				};
 
-				अगर (ir_raw_event_store_with_filter(ir->rc,
+				if (ir_raw_event_store_with_filter(ir->rc,
 								   &ev))
 					event = true;
 				ir->pulse_tunit = 0;
 				ir->pulse_count = 0;
-			पूर्ण
-			अवरोध;
-		पूर्ण
+			}
+			break;
+		}
 
-		अगर (ir->parser_state != CMD_HEADER && !ir->rem)
+		if (ir->parser_state != CMD_HEADER && !ir->rem)
 			ir->parser_state = CMD_HEADER;
-	पूर्ण
+	}
 
 	/*
 	 * Accept IR data spanning multiple rx buffers.
 	 * Reject MCE command response spanning multiple rx buffers.
 	 */
-	अगर (ir->parser_state != PARSE_IRDATA || !ir->rem)
+	if (ir->parser_state != PARSE_IRDATA || !ir->rem)
 		ir->parser_state = CMD_HEADER;
 
-	अगर (event) अणु
+	if (event) {
 		dev_dbg(ir->dev, "processed IR data");
 		ir_raw_event_handle(ir->rc);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम mceusb_dev_recv(काष्ठा urb *urb)
-अणु
-	काष्ठा mceusb_dev *ir;
+static void mceusb_dev_recv(struct urb *urb)
+{
+	struct mceusb_dev *ir;
 
-	अगर (!urb)
-		वापस;
+	if (!urb)
+		return;
 
 	ir = urb->context;
-	अगर (!ir) अणु
+	if (!ir) {
 		usb_unlink_urb(urb);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	चयन (urb->status) अणु
+	switch (urb->status) {
 	/* success */
-	हाल 0:
+	case 0:
 		mceusb_process_ir_data(ir, urb->actual_length);
-		अवरोध;
+		break;
 
-	हाल -ECONNRESET:
-	हाल -ENOENT:
-	हाल -EILSEQ:
-	हाल -ESHUTDOWN:
+	case -ECONNRESET:
+	case -ENOENT:
+	case -EILSEQ:
+	case -ESHUTDOWN:
 		usb_unlink_urb(urb);
-		वापस;
+		return;
 
-	हाल -EPIPE:
+	case -EPIPE:
 		dev_err(ir->dev, "Error: urb status = %d (RX HALT)",
 			urb->status);
 		mceusb_defer_kevent(ir, EVENT_RX_HALT);
-		वापस;
+		return;
 
-	शेष:
+	default:
 		dev_err(ir->dev, "Error: urb status = %d", urb->status);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	usb_submit_urb(urb, GFP_ATOMIC);
-पूर्ण
+}
 
-अटल व्योम mceusb_get_emulator_version(काष्ठा mceusb_dev *ir)
-अणु
+static void mceusb_get_emulator_version(struct mceusb_dev *ir)
+{
 	/* If we get no reply or an illegal command reply, its ver 1, says MS */
 	ir->emver = 1;
-	mce_command_out(ir, GET_EMVER, माप(GET_EMVER));
-पूर्ण
+	mce_command_out(ir, GET_EMVER, sizeof(GET_EMVER));
+}
 
-अटल व्योम mceusb_gen1_init(काष्ठा mceusb_dev *ir)
-अणु
-	पूर्णांक ret;
-	काष्ठा device *dev = ir->dev;
-	अक्षर *data;
+static void mceusb_gen1_init(struct mceusb_dev *ir)
+{
+	int ret;
+	struct device *dev = ir->dev;
+	char *data;
 
 	data = kzalloc(USB_CTRL_MSG_SZ, GFP_KERNEL);
-	अगर (!data) अणु
+	if (!data) {
 		dev_err(dev, "%s: memory allocation failed!", __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
-	 * This is a strange one. Winकरोws issues a set address to the device
+	 * This is a strange one. Windows issues a set address to the device
 	 * on the receive control pipe and expect a certain value pair back
 	 */
 	ret = usb_control_msg(ir->usbdev, usb_rcvctrlpipe(ir->usbdev, 0),
@@ -1438,174 +1437,174 @@
 	/* set feature: bit rate 38400 bps */
 	ret = usb_control_msg(ir->usbdev, usb_sndctrlpipe(ir->usbdev, 0),
 			      USB_REQ_SET_FEATURE, USB_TYPE_VENDOR,
-			      0xc04e, 0x0000, शून्य, 0, HZ * 3);
+			      0xc04e, 0x0000, NULL, 0, HZ * 3);
 
 	dev_dbg(dev, "set feature - ret = %d", ret);
 
-	/* bRequest 4: set अक्षर length to 8 bits */
+	/* bRequest 4: set char length to 8 bits */
 	ret = usb_control_msg(ir->usbdev, usb_sndctrlpipe(ir->usbdev, 0),
 			      4, USB_TYPE_VENDOR,
-			      0x0808, 0x0000, शून्य, 0, HZ * 3);
+			      0x0808, 0x0000, NULL, 0, HZ * 3);
 	dev_dbg(dev, "set char length - retB = %d", ret);
 
 	/* bRequest 2: set handshaking to use DTR/DSR */
 	ret = usb_control_msg(ir->usbdev, usb_sndctrlpipe(ir->usbdev, 0),
 			      2, USB_TYPE_VENDOR,
-			      0x0000, 0x0100, शून्य, 0, HZ * 3);
+			      0x0000, 0x0100, NULL, 0, HZ * 3);
 	dev_dbg(dev, "set handshake  - retC = %d", ret);
 
 	/* device resume */
-	mce_command_out(ir, DEVICE_RESUME, माप(DEVICE_RESUME));
+	mce_command_out(ir, DEVICE_RESUME, sizeof(DEVICE_RESUME));
 
 	/* get hw/sw revision? */
-	mce_command_out(ir, GET_REVISION, माप(GET_REVISION));
+	mce_command_out(ir, GET_REVISION, sizeof(GET_REVISION));
 
-	kमुक्त(data);
-पूर्ण
+	kfree(data);
+}
 
-अटल व्योम mceusb_gen2_init(काष्ठा mceusb_dev *ir)
-अणु
+static void mceusb_gen2_init(struct mceusb_dev *ir)
+{
 	/* device resume */
-	mce_command_out(ir, DEVICE_RESUME, माप(DEVICE_RESUME));
+	mce_command_out(ir, DEVICE_RESUME, sizeof(DEVICE_RESUME));
 
 	/* get wake version (protocol, key, address) */
-	mce_command_out(ir, GET_WAKEVERSION, माप(GET_WAKEVERSION));
+	mce_command_out(ir, GET_WAKEVERSION, sizeof(GET_WAKEVERSION));
 
-	/* unknown what this one actually वापसs... */
-	mce_command_out(ir, GET_UNKNOWN2, माप(GET_UNKNOWN2));
-पूर्ण
+	/* unknown what this one actually returns... */
+	mce_command_out(ir, GET_UNKNOWN2, sizeof(GET_UNKNOWN2));
+}
 
-अटल व्योम mceusb_get_parameters(काष्ठा mceusb_dev *ir)
-अणु
-	पूर्णांक i;
-	अचिन्हित अक्षर cmdbuf[3] = अणु MCE_CMD_PORT_SYS,
-				    MCE_CMD_GETPORTSTATUS, 0x00 पूर्ण;
+static void mceusb_get_parameters(struct mceusb_dev *ir)
+{
+	int i;
+	unsigned char cmdbuf[3] = { MCE_CMD_PORT_SYS,
+				    MCE_CMD_GETPORTSTATUS, 0x00 };
 
-	/* शेषs, अगर the hardware करोesn't support querying */
+	/* defaults, if the hardware doesn't support querying */
 	ir->num_txports = 2;
 	ir->num_rxports = 2;
 
 	/* get number of tx and rx ports */
-	mce_command_out(ir, GET_NUM_PORTS, माप(GET_NUM_PORTS));
+	mce_command_out(ir, GET_NUM_PORTS, sizeof(GET_NUM_PORTS));
 
 	/* get the carrier and frequency */
-	mce_command_out(ir, GET_CARRIER_FREQ, माप(GET_CARRIER_FREQ));
+	mce_command_out(ir, GET_CARRIER_FREQ, sizeof(GET_CARRIER_FREQ));
 
-	अगर (ir->num_txports && !ir->flags.no_tx)
-		/* get the transmitter biपंचांगask */
-		mce_command_out(ir, GET_TX_BITMASK, माप(GET_TX_BITMASK));
+	if (ir->num_txports && !ir->flags.no_tx)
+		/* get the transmitter bitmask */
+		mce_command_out(ir, GET_TX_BITMASK, sizeof(GET_TX_BITMASK));
 
-	/* get receiver समयout value */
-	mce_command_out(ir, GET_RX_TIMEOUT, माप(GET_RX_TIMEOUT));
+	/* get receiver timeout value */
+	mce_command_out(ir, GET_RX_TIMEOUT, sizeof(GET_RX_TIMEOUT));
 
 	/* get receiver sensor setting */
-	mce_command_out(ir, GET_RX_SENSOR, माप(GET_RX_SENSOR));
+	mce_command_out(ir, GET_RX_SENSOR, sizeof(GET_RX_SENSOR));
 
-	क्रम (i = 0; i < ir->num_txports; i++) अणु
+	for (i = 0; i < ir->num_txports; i++) {
 		cmdbuf[2] = i;
-		mce_command_out(ir, cmdbuf, माप(cmdbuf));
-	पूर्ण
-पूर्ण
+		mce_command_out(ir, cmdbuf, sizeof(cmdbuf));
+	}
+}
 
-अटल व्योम mceusb_flash_led(काष्ठा mceusb_dev *ir)
-अणु
-	अगर (ir->emver < 2)
-		वापस;
+static void mceusb_flash_led(struct mceusb_dev *ir)
+{
+	if (ir->emver < 2)
+		return;
 
-	mce_command_out(ir, FLASH_LED, माप(FLASH_LED));
-पूर्ण
+	mce_command_out(ir, FLASH_LED, sizeof(FLASH_LED));
+}
 
 /*
  * Workqueue function
- * क्रम resetting or recovering device after occurrence of error events
- * specअगरied in ir->kevent bit field.
- * Function runs (via schedule_work()) in non-पूर्णांकerrupt context, क्रम
- * calls here (such as usb_clear_halt()) requiring non-पूर्णांकerrupt context.
+ * for resetting or recovering device after occurrence of error events
+ * specified in ir->kevent bit field.
+ * Function runs (via schedule_work()) in non-interrupt context, for
+ * calls here (such as usb_clear_halt()) requiring non-interrupt context.
  */
-अटल व्योम mceusb_deferred_kevent(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा mceusb_dev *ir =
-		container_of(work, काष्ठा mceusb_dev, kevent);
-	पूर्णांक status;
+static void mceusb_deferred_kevent(struct work_struct *work)
+{
+	struct mceusb_dev *ir =
+		container_of(work, struct mceusb_dev, kevent);
+	int status;
 
 	dev_err(ir->dev, "kevent handler called (flags 0x%lx)",
 		ir->kevent_flags);
 
-	अगर (test_bit(EVENT_RST_PEND, &ir->kevent_flags)) अणु
+	if (test_bit(EVENT_RST_PEND, &ir->kevent_flags)) {
 		dev_err(ir->dev, "kevent handler canceled pending USB Reset Device");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (test_bit(EVENT_RX_HALT, &ir->kevent_flags)) अणु
+	if (test_bit(EVENT_RX_HALT, &ir->kevent_flags)) {
 		usb_unlink_urb(ir->urb_in);
 		status = usb_clear_halt(ir->usbdev, ir->pipe_in);
 		dev_err(ir->dev, "rx clear halt status = %d", status);
-		अगर (status < 0) अणु
+		if (status < 0) {
 			/*
 			 * Unable to clear RX halt/stall.
 			 * Will need to call usb_reset_device().
 			 */
 			dev_err(ir->dev,
 				"stuck RX HALT state requires USB Reset Device to clear");
-			usb_queue_reset_device(ir->usbपूर्णांकf);
+			usb_queue_reset_device(ir->usbintf);
 			set_bit(EVENT_RST_PEND, &ir->kevent_flags);
 			clear_bit(EVENT_RX_HALT, &ir->kevent_flags);
 
 			/* Cancel all other error events and handlers */
 			clear_bit(EVENT_TX_HALT, &ir->kevent_flags);
-			वापस;
-		पूर्ण
+			return;
+		}
 		clear_bit(EVENT_RX_HALT, &ir->kevent_flags);
 		status = usb_submit_urb(ir->urb_in, GFP_KERNEL);
-		अगर (status < 0) अणु
+		if (status < 0) {
 			dev_err(ir->dev, "rx unhalt submit urb error = %d",
 				status);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (test_bit(EVENT_TX_HALT, &ir->kevent_flags)) अणु
+	if (test_bit(EVENT_TX_HALT, &ir->kevent_flags)) {
 		status = usb_clear_halt(ir->usbdev, ir->pipe_out);
 		dev_err(ir->dev, "tx clear halt status = %d", status);
-		अगर (status < 0) अणु
+		if (status < 0) {
 			/*
 			 * Unable to clear TX halt/stall.
 			 * Will need to call usb_reset_device().
 			 */
 			dev_err(ir->dev,
 				"stuck TX HALT state requires USB Reset Device to clear");
-			usb_queue_reset_device(ir->usbपूर्णांकf);
+			usb_queue_reset_device(ir->usbintf);
 			set_bit(EVENT_RST_PEND, &ir->kevent_flags);
 			clear_bit(EVENT_TX_HALT, &ir->kevent_flags);
 
 			/* Cancel all other error events and handlers */
 			clear_bit(EVENT_RX_HALT, &ir->kevent_flags);
-			वापस;
-		पूर्ण
+			return;
+		}
 		clear_bit(EVENT_TX_HALT, &ir->kevent_flags);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल काष्ठा rc_dev *mceusb_init_rc_dev(काष्ठा mceusb_dev *ir)
-अणु
-	काष्ठा usb_device *udev = ir->usbdev;
-	काष्ठा device *dev = ir->dev;
-	काष्ठा rc_dev *rc;
-	पूर्णांक ret;
+static struct rc_dev *mceusb_init_rc_dev(struct mceusb_dev *ir)
+{
+	struct usb_device *udev = ir->usbdev;
+	struct device *dev = ir->dev;
+	struct rc_dev *rc;
+	int ret;
 
 	rc = rc_allocate_device(RC_DRIVER_IR_RAW);
-	अगर (!rc) अणु
+	if (!rc) {
 		dev_err(dev, "remote dev allocation failed");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	snम_लिखो(ir->name, माप(ir->name), "%s (%04x:%04x)",
+	snprintf(ir->name, sizeof(ir->name), "%s (%04x:%04x)",
 		 mceusb_model[ir->model].name ?
 			mceusb_model[ir->model].name :
 			"Media Center Ed. eHome Infrared Remote Transceiver",
-		 le16_to_cpu(ir->usbdev->descriptor.idVenकरोr),
+		 le16_to_cpu(ir->usbdev->descriptor.idVendor),
 		 le16_to_cpu(ir->usbdev->descriptor.idProduct));
 
-	usb_make_path(ir->usbdev, ir->phys, माप(ir->phys));
+	usb_make_path(ir->usbdev, ir->phys, sizeof(ir->phys));
 
 	rc->device_name = ir->name;
 	rc->input_phys = ir->phys;
@@ -1613,138 +1612,138 @@
 	rc->dev.parent = dev;
 	rc->priv = ir;
 	rc->allowed_protocols = RC_PROTO_BIT_ALL_IR_DECODER;
-	rc->min_समयout = MCE_TIME_UNIT;
-	rc->समयout = MS_TO_US(100);
-	अगर (!mceusb_model[ir->model].broken_irसमयout) अणु
-		rc->s_समयout = mceusb_set_समयout;
-		rc->max_समयout = 10 * IR_DEFAULT_TIMEOUT;
-	पूर्ण अन्यथा अणु
+	rc->min_timeout = MCE_TIME_UNIT;
+	rc->timeout = MS_TO_US(100);
+	if (!mceusb_model[ir->model].broken_irtimeout) {
+		rc->s_timeout = mceusb_set_timeout;
+		rc->max_timeout = 10 * IR_DEFAULT_TIMEOUT;
+	} else {
 		/*
-		 * If we can't set the समयout using CMD_SETIRTIMEOUT, we can
-		 * rely on software समयouts क्रम समयouts < 100ms.
+		 * If we can't set the timeout using CMD_SETIRTIMEOUT, we can
+		 * rely on software timeouts for timeouts < 100ms.
 		 */
-		rc->max_समयout = rc->समयout;
-	पूर्ण
-	अगर (!ir->flags.no_tx) अणु
+		rc->max_timeout = rc->timeout;
+	}
+	if (!ir->flags.no_tx) {
 		rc->s_tx_mask = mceusb_set_tx_mask;
 		rc->s_tx_carrier = mceusb_set_tx_carrier;
 		rc->tx_ir = mceusb_tx_ir;
-	पूर्ण
-	अगर (ir->flags.rx2 > 0) अणु
+	}
+	if (ir->flags.rx2 > 0) {
 		rc->s_learning_mode = mceusb_set_rx_wideband;
 		rc->s_carrier_report = mceusb_set_rx_carrier_report;
-	पूर्ण
+	}
 	rc->driver_name = DRIVER_NAME;
 
-	चयन (le16_to_cpu(udev->descriptor.idVenकरोr)) अणु
-	हाल VENDOR_HAUPPAUGE:
+	switch (le16_to_cpu(udev->descriptor.idVendor)) {
+	case VENDOR_HAUPPAUGE:
 		rc->map_name = RC_MAP_HAUPPAUGE;
-		अवरोध;
-	हाल VENDOR_PCTV:
+		break;
+	case VENDOR_PCTV:
 		rc->map_name = RC_MAP_PINNACLE_PCTV_HD;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		rc->map_name = RC_MAP_RC6_MCE;
-	पूर्ण
-	अगर (mceusb_model[ir->model].rc_map)
+	}
+	if (mceusb_model[ir->model].rc_map)
 		rc->map_name = mceusb_model[ir->model].rc_map;
 
-	ret = rc_रेजिस्टर_device(rc);
-	अगर (ret < 0) अणु
+	ret = rc_register_device(rc);
+	if (ret < 0) {
 		dev_err(dev, "remote dev registration failed");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	वापस rc;
+	return rc;
 
 out:
-	rc_मुक्त_device(rc);
-	वापस शून्य;
-पूर्ण
+	rc_free_device(rc);
+	return NULL;
+}
 
-अटल पूर्णांक mceusb_dev_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
-			    स्थिर काष्ठा usb_device_id *id)
-अणु
-	काष्ठा usb_device *dev = पूर्णांकerface_to_usbdev(पूर्णांकf);
-	काष्ठा usb_host_पूर्णांकerface *idesc;
-	काष्ठा usb_endpoपूर्णांक_descriptor *ep = शून्य;
-	काष्ठा usb_endpoपूर्णांक_descriptor *ep_in = शून्य;
-	काष्ठा usb_endpoपूर्णांक_descriptor *ep_out = शून्य;
-	काष्ठा mceusb_dev *ir = शून्य;
-	पूर्णांक pipe, maxp, i, res;
-	अक्षर buf[63], name[128] = "";
-	क्रमागत mceusb_model_type model = id->driver_info;
+static int mceusb_dev_probe(struct usb_interface *intf,
+			    const struct usb_device_id *id)
+{
+	struct usb_device *dev = interface_to_usbdev(intf);
+	struct usb_host_interface *idesc;
+	struct usb_endpoint_descriptor *ep = NULL;
+	struct usb_endpoint_descriptor *ep_in = NULL;
+	struct usb_endpoint_descriptor *ep_out = NULL;
+	struct mceusb_dev *ir = NULL;
+	int pipe, maxp, i, res;
+	char buf[63], name[128] = "";
+	enum mceusb_model_type model = id->driver_info;
 	bool is_gen3;
 	bool is_microsoft_gen1;
 	bool tx_mask_normal;
-	पूर्णांक ir_पूर्णांकfnum;
+	int ir_intfnum;
 
-	dev_dbg(&पूर्णांकf->dev, "%s called", __func__);
+	dev_dbg(&intf->dev, "%s called", __func__);
 
-	idesc  = पूर्णांकf->cur_altsetting;
+	idesc  = intf->cur_altsetting;
 
 	is_gen3 = mceusb_model[model].mce_gen3;
 	is_microsoft_gen1 = mceusb_model[model].mce_gen1;
 	tx_mask_normal = mceusb_model[model].tx_mask_normal;
-	ir_पूर्णांकfnum = mceusb_model[model].ir_पूर्णांकfnum;
+	ir_intfnum = mceusb_model[model].ir_intfnum;
 
-	/* There are multi-function devices with non-IR पूर्णांकerfaces */
-	अगर (idesc->desc.bInterfaceNumber != ir_पूर्णांकfnum)
-		वापस -ENODEV;
+	/* There are multi-function devices with non-IR interfaces */
+	if (idesc->desc.bInterfaceNumber != ir_intfnum)
+		return -ENODEV;
 
-	/* step through the endpoपूर्णांकs to find first bulk in and out endpoपूर्णांक */
-	क्रम (i = 0; i < idesc->desc.bNumEndpoपूर्णांकs; ++i) अणु
-		ep = &idesc->endpoपूर्णांक[i].desc;
+	/* step through the endpoints to find first bulk in and out endpoint */
+	for (i = 0; i < idesc->desc.bNumEndpoints; ++i) {
+		ep = &idesc->endpoint[i].desc;
 
-		अगर (ep_in == शून्य) अणु
-			अगर (usb_endpoपूर्णांक_is_bulk_in(ep)) अणु
+		if (ep_in == NULL) {
+			if (usb_endpoint_is_bulk_in(ep)) {
 				ep_in = ep;
-				dev_dbg(&पूर्णांकf->dev, "acceptable bulk inbound endpoint found\n");
-			पूर्ण अन्यथा अगर (usb_endpoपूर्णांक_is_पूर्णांक_in(ep)) अणु
+				dev_dbg(&intf->dev, "acceptable bulk inbound endpoint found\n");
+			} else if (usb_endpoint_is_int_in(ep)) {
 				ep_in = ep;
 				ep_in->bInterval = 1;
-				dev_dbg(&पूर्णांकf->dev, "acceptable interrupt inbound endpoint found\n");
-			पूर्ण
-		पूर्ण
+				dev_dbg(&intf->dev, "acceptable interrupt inbound endpoint found\n");
+			}
+		}
 
-		अगर (ep_out == शून्य) अणु
-			अगर (usb_endpoपूर्णांक_is_bulk_out(ep)) अणु
+		if (ep_out == NULL) {
+			if (usb_endpoint_is_bulk_out(ep)) {
 				ep_out = ep;
-				dev_dbg(&पूर्णांकf->dev, "acceptable bulk outbound endpoint found\n");
-			पूर्ण अन्यथा अगर (usb_endpoपूर्णांक_is_पूर्णांक_out(ep)) अणु
+				dev_dbg(&intf->dev, "acceptable bulk outbound endpoint found\n");
+			} else if (usb_endpoint_is_int_out(ep)) {
 				ep_out = ep;
 				ep_out->bInterval = 1;
-				dev_dbg(&पूर्णांकf->dev, "acceptable interrupt outbound endpoint found\n");
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	अगर (!ep_in || !ep_out) अणु
-		dev_dbg(&पूर्णांकf->dev, "required endpoints not found\n");
-		वापस -ENODEV;
-	पूर्ण
+				dev_dbg(&intf->dev, "acceptable interrupt outbound endpoint found\n");
+			}
+		}
+	}
+	if (!ep_in || !ep_out) {
+		dev_dbg(&intf->dev, "required endpoints not found\n");
+		return -ENODEV;
+	}
 
-	अगर (usb_endpoपूर्णांक_xfer_पूर्णांक(ep_in))
-		pipe = usb_rcvपूर्णांकpipe(dev, ep_in->bEndpoपूर्णांकAddress);
-	अन्यथा
-		pipe = usb_rcvbulkpipe(dev, ep_in->bEndpoपूर्णांकAddress);
+	if (usb_endpoint_xfer_int(ep_in))
+		pipe = usb_rcvintpipe(dev, ep_in->bEndpointAddress);
+	else
+		pipe = usb_rcvbulkpipe(dev, ep_in->bEndpointAddress);
 	maxp = usb_maxpacket(dev, pipe, usb_pipeout(pipe));
 
-	ir = kzalloc(माप(काष्ठा mceusb_dev), GFP_KERNEL);
-	अगर (!ir)
-		जाओ mem_alloc_fail;
+	ir = kzalloc(sizeof(struct mceusb_dev), GFP_KERNEL);
+	if (!ir)
+		goto mem_alloc_fail;
 
 	ir->pipe_in = pipe;
 	ir->buf_in = usb_alloc_coherent(dev, maxp, GFP_KERNEL, &ir->dma_in);
-	अगर (!ir->buf_in)
-		जाओ buf_in_alloc_fail;
+	if (!ir->buf_in)
+		goto buf_in_alloc_fail;
 
 	ir->urb_in = usb_alloc_urb(0, GFP_KERNEL);
-	अगर (!ir->urb_in)
-		जाओ urb_in_alloc_fail;
+	if (!ir->urb_in)
+		goto urb_in_alloc_fail;
 
-	ir->usbपूर्णांकf = पूर्णांकf;
+	ir->usbintf = intf;
 	ir->usbdev = usb_get_dev(dev);
-	ir->dev = &पूर्णांकf->dev;
+	ir->dev = &intf->dev;
 	ir->len_in = maxp;
 	ir->flags.microsoft_gen1 = is_microsoft_gen1;
 	ir->flags.tx_mask_normal = tx_mask_normal;
@@ -1752,40 +1751,40 @@ out:
 	ir->flags.rx2 = mceusb_model[model].rx2;
 	ir->model = model;
 
-	/* Saving usb पूर्णांकerface data क्रम use by the transmitter routine */
+	/* Saving usb interface data for use by the transmitter routine */
 	ir->usb_ep_out = ep_out;
-	अगर (usb_endpoपूर्णांक_xfer_पूर्णांक(ep_out))
-		ir->pipe_out = usb_sndपूर्णांकpipe(ir->usbdev,
-					      ep_out->bEndpoपूर्णांकAddress);
-	अन्यथा
+	if (usb_endpoint_xfer_int(ep_out))
+		ir->pipe_out = usb_sndintpipe(ir->usbdev,
+					      ep_out->bEndpointAddress);
+	else
 		ir->pipe_out = usb_sndbulkpipe(ir->usbdev,
-					       ep_out->bEndpoपूर्णांकAddress);
+					       ep_out->bEndpointAddress);
 
-	अगर (dev->descriptor.iManufacturer
+	if (dev->descriptor.iManufacturer
 	    && usb_string(dev, dev->descriptor.iManufacturer,
-			  buf, माप(buf)) > 0)
-		strscpy(name, buf, माप(name));
-	अगर (dev->descriptor.iProduct
+			  buf, sizeof(buf)) > 0)
+		strscpy(name, buf, sizeof(name));
+	if (dev->descriptor.iProduct
 	    && usb_string(dev, dev->descriptor.iProduct,
-			  buf, माप(buf)) > 0)
-		snम_लिखो(name + म_माप(name), माप(name) - म_माप(name),
+			  buf, sizeof(buf)) > 0)
+		snprintf(name + strlen(name), sizeof(name) - strlen(name),
 			 " %s", buf);
 
 	/*
-	 * Initialize async USB error handler beक्रमe रेजिस्टरing
+	 * Initialize async USB error handler before registering
 	 * or activating any mceusb RX and TX functions
 	 */
 	INIT_WORK(&ir->kevent, mceusb_deferred_kevent);
 
 	ir->rc = mceusb_init_rc_dev(ir);
-	अगर (!ir->rc)
-		जाओ rc_dev_fail;
+	if (!ir->rc)
+		goto rc_dev_fail;
 
 	/* wire up inbound data handler */
-	अगर (usb_endpoपूर्णांक_xfer_पूर्णांक(ep_in))
-		usb_fill_पूर्णांक_urb(ir->urb_in, dev, pipe, ir->buf_in, maxp,
+	if (usb_endpoint_xfer_int(ep_in))
+		usb_fill_int_urb(ir->urb_in, dev, pipe, ir->buf_in, maxp,
 				 mceusb_dev_recv, ir, ep_in->bInterval);
-	अन्यथा
+	else
 		usb_fill_bulk_urb(ir->urb_in, dev, pipe, ir->buf_in, maxp,
 				  mceusb_dev_recv, ir);
 
@@ -1793,99 +1792,99 @@ out:
 	ir->urb_in->transfer_flags |= URB_NO_TRANSFER_DMA_MAP;
 
 	/* flush buffers on the device */
-	dev_dbg(&पूर्णांकf->dev, "Flushing receive buffers");
+	dev_dbg(&intf->dev, "Flushing receive buffers");
 	res = usb_submit_urb(ir->urb_in, GFP_KERNEL);
-	अगर (res)
-		dev_err(&पूर्णांकf->dev, "failed to flush buffers: %d", res);
+	if (res)
+		dev_err(&intf->dev, "failed to flush buffers: %d", res);
 
 	/* figure out which firmware/emulator version this hardware has */
 	mceusb_get_emulator_version(ir);
 
 	/* initialize device */
-	अगर (ir->flags.microsoft_gen1)
+	if (ir->flags.microsoft_gen1)
 		mceusb_gen1_init(ir);
-	अन्यथा अगर (!is_gen3)
+	else if (!is_gen3)
 		mceusb_gen2_init(ir);
 
 	mceusb_get_parameters(ir);
 
 	mceusb_flash_led(ir);
 
-	अगर (!ir->flags.no_tx)
+	if (!ir->flags.no_tx)
 		mceusb_set_tx_mask(ir->rc, MCE_DEFAULT_TX_MASK);
 
-	usb_set_पूर्णांकfdata(पूर्णांकf, ir);
+	usb_set_intfdata(intf, ir);
 
 	/* enable wake via this device */
 	device_set_wakeup_capable(ir->dev, true);
 	device_set_wakeup_enable(ir->dev, true);
 
-	dev_info(&पूर्णांकf->dev, "Registered %s with mce emulator interface version %x",
+	dev_info(&intf->dev, "Registered %s with mce emulator interface version %x",
 		name, ir->emver);
-	dev_info(&पूर्णांकf->dev, "%x tx ports (0x%x cabled) and %x rx sensors (0x%x active)",
+	dev_info(&intf->dev, "%x tx ports (0x%x cabled) and %x rx sensors (0x%x active)",
 		 ir->num_txports, ir->txports_cabled,
 		 ir->num_rxports, ir->rxports_active);
 
-	वापस 0;
+	return 0;
 
 	/* Error-handling path */
 rc_dev_fail:
 	cancel_work_sync(&ir->kevent);
 	usb_put_dev(ir->usbdev);
-	usb_समाप्त_urb(ir->urb_in);
-	usb_मुक्त_urb(ir->urb_in);
+	usb_kill_urb(ir->urb_in);
+	usb_free_urb(ir->urb_in);
 urb_in_alloc_fail:
-	usb_मुक्त_coherent(dev, maxp, ir->buf_in, ir->dma_in);
+	usb_free_coherent(dev, maxp, ir->buf_in, ir->dma_in);
 buf_in_alloc_fail:
-	kमुक्त(ir);
+	kfree(ir);
 mem_alloc_fail:
-	dev_err(&पूर्णांकf->dev, "%s: device setup failed!", __func__);
+	dev_err(&intf->dev, "%s: device setup failed!", __func__);
 
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
 
-अटल व्योम mceusb_dev_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	काष्ठा usb_device *dev = पूर्णांकerface_to_usbdev(पूर्णांकf);
-	काष्ठा mceusb_dev *ir = usb_get_पूर्णांकfdata(पूर्णांकf);
+static void mceusb_dev_disconnect(struct usb_interface *intf)
+{
+	struct usb_device *dev = interface_to_usbdev(intf);
+	struct mceusb_dev *ir = usb_get_intfdata(intf);
 
-	dev_dbg(&पूर्णांकf->dev, "%s called", __func__);
+	dev_dbg(&intf->dev, "%s called", __func__);
 
-	usb_set_पूर्णांकfdata(पूर्णांकf, शून्य);
+	usb_set_intfdata(intf, NULL);
 
-	अगर (!ir)
-		वापस;
+	if (!ir)
+		return;
 
-	ir->usbdev = शून्य;
+	ir->usbdev = NULL;
 	cancel_work_sync(&ir->kevent);
-	rc_unरेजिस्टर_device(ir->rc);
-	usb_समाप्त_urb(ir->urb_in);
-	usb_मुक्त_urb(ir->urb_in);
-	usb_मुक्त_coherent(dev, ir->len_in, ir->buf_in, ir->dma_in);
+	rc_unregister_device(ir->rc);
+	usb_kill_urb(ir->urb_in);
+	usb_free_urb(ir->urb_in);
+	usb_free_coherent(dev, ir->len_in, ir->buf_in, ir->dma_in);
 	usb_put_dev(dev);
 
-	kमुक्त(ir);
-पूर्ण
+	kfree(ir);
+}
 
-अटल पूर्णांक mceusb_dev_suspend(काष्ठा usb_पूर्णांकerface *पूर्णांकf, pm_message_t message)
-अणु
-	काष्ठा mceusb_dev *ir = usb_get_पूर्णांकfdata(पूर्णांकf);
+static int mceusb_dev_suspend(struct usb_interface *intf, pm_message_t message)
+{
+	struct mceusb_dev *ir = usb_get_intfdata(intf);
 	dev_info(ir->dev, "suspend");
-	usb_समाप्त_urb(ir->urb_in);
-	वापस 0;
-पूर्ण
+	usb_kill_urb(ir->urb_in);
+	return 0;
+}
 
-अटल पूर्णांक mceusb_dev_resume(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	काष्ठा mceusb_dev *ir = usb_get_पूर्णांकfdata(पूर्णांकf);
+static int mceusb_dev_resume(struct usb_interface *intf)
+{
+	struct mceusb_dev *ir = usb_get_intfdata(intf);
 	dev_info(ir->dev, "resume");
-	अगर (usb_submit_urb(ir->urb_in, GFP_ATOMIC))
-		वापस -EIO;
-	वापस 0;
-पूर्ण
+	if (usb_submit_urb(ir->urb_in, GFP_ATOMIC))
+		return -EIO;
+	return 0;
+}
 
-अटल काष्ठा usb_driver mceusb_dev_driver = अणु
+static struct usb_driver mceusb_dev_driver = {
 	.name =		DRIVER_NAME,
 	.probe =	mceusb_dev_probe,
 	.disconnect =	mceusb_dev_disconnect,
@@ -1893,7 +1892,7 @@ mem_alloc_fail:
 	.resume =	mceusb_dev_resume,
 	.reset_resume =	mceusb_dev_resume,
 	.id_table =	mceusb_dev_table
-पूर्ण;
+};
 
 module_usb_driver(mceusb_dev_driver);
 

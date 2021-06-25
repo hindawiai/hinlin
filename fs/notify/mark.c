@@ -1,22 +1,21 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  Copyright (C) 2008 Red Hat, Inc., Eric Paris <eparis@redhat.com>
  */
 
 /*
- * fsnotअगरy inode mark locking/lअगरeसमय/and refcnting
+ * fsnotify inode mark locking/lifetime/and refcnting
  *
  * REFCNT:
  * The group->recnt and mark->refcnt tell how many "things" in the kernel
  * currently are referencing the objects. Both kind of objects typically will
- * live inside the kernel with a refcnt of 2, one क्रम its creation and one क्रम
+ * live inside the kernel with a refcnt of 2, one for its creation and one for
  * the reference a group and a mark hold to each other.
  * If you are holding the appropriate locks, you can take a reference and the
  * object itself is guaranteed to survive until the reference is dropped.
  *
  * LOCKING:
- * There are 3 locks involved with fsnotअगरy inode marks and they MUST be taken
+ * There are 3 locks involved with fsnotify inode marks and they MUST be taken
  * in order as follows:
  *
  * group->mark_mutex
@@ -24,563 +23,563 @@
  * mark->connector->lock
  *
  * group->mark_mutex protects the marks_list anchored inside a given group and
- * each mark is hooked via the g_list.  It also protects the groups निजी
+ * each mark is hooked via the g_list.  It also protects the groups private
  * data (i.e group limits).
 
  * mark->lock protects the marks attributes like its masks and flags.
  * Furthermore it protects the access to a reference of the group that the mark
- * is asचिन्हित to as well as the access to a reference of the inode/vfsmount
+ * is assigned to as well as the access to a reference of the inode/vfsmount
  * that is being watched by the mark.
  *
  * mark->connector->lock protects the list of marks anchored inside an
  * inode / vfsmount and each mark is hooked via the i_list.
  *
- * A list of notअगरication marks relating to inode / mnt is contained in
- * fsnotअगरy_mark_connector. That काष्ठाure is alive as दीर्घ as there are any
- * marks in the list and is also रक्षित by fsnotअगरy_mark_srcu. A mark माला_लो
- * detached from fsnotअगरy_mark_connector when last reference to the mark is
+ * A list of notification marks relating to inode / mnt is contained in
+ * fsnotify_mark_connector. That structure is alive as long as there are any
+ * marks in the list and is also protected by fsnotify_mark_srcu. A mark gets
+ * detached from fsnotify_mark_connector when last reference to the mark is
  * dropped.  Thus having mark reference is enough to protect mark->connector
- * poपूर्णांकer and to make sure fsnotअगरy_mark_connector cannot disappear. Also
- * because we हटाओ mark from g_list beक्रमe dropping mark reference associated
+ * pointer and to make sure fsnotify_mark_connector cannot disappear. Also
+ * because we remove mark from g_list before dropping mark reference associated
  * with that, any mark found through g_list is guaranteed to have
  * mark->connector set until we drop group->mark_mutex.
  *
  * LIFETIME:
  * Inode marks survive between when they are added to an inode and when their
- * refcnt==0. Marks are also रक्षित by fsnotअगरy_mark_srcu.
+ * refcnt==0. Marks are also protected by fsnotify_mark_srcu.
  *
- * The inode mark can be cleared क्रम a number of dअगरferent reasons including:
- * - The inode is unlinked क्रम the last समय.  (fsnotअगरy_inode_हटाओ)
- * - The inode is being evicted from cache. (fsnotअगरy_inode_delete)
- * - The fs the inode is on is unmounted.  (fsnotअगरy_inode_delete/fsnotअगरy_unmount_inodes)
- * - Something explicitly requests that it be हटाओd.  (fsnotअगरy_destroy_mark)
- * - The fsnotअगरy_group associated with the mark is going away and all such marks
- *   need to be cleaned up. (fsnotअगरy_clear_marks_by_group)
+ * The inode mark can be cleared for a number of different reasons including:
+ * - The inode is unlinked for the last time.  (fsnotify_inode_remove)
+ * - The inode is being evicted from cache. (fsnotify_inode_delete)
+ * - The fs the inode is on is unmounted.  (fsnotify_inode_delete/fsnotify_unmount_inodes)
+ * - Something explicitly requests that it be removed.  (fsnotify_destroy_mark)
+ * - The fsnotify_group associated with the mark is going away and all such marks
+ *   need to be cleaned up. (fsnotify_clear_marks_by_group)
  *
- * This has the very पूर्णांकeresting property of being able to run concurrently with
+ * This has the very interesting property of being able to run concurrently with
  * any (or all) other directions.
  */
 
-#समावेश <linux/fs.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/srcu.h>
-#समावेश <linux/ratelimit.h>
+#include <linux/fs.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/kthread.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/srcu.h>
+#include <linux/ratelimit.h>
 
-#समावेश <linux/atomic.h>
+#include <linux/atomic.h>
 
-#समावेश <linux/fsnotअगरy_backend.h>
-#समावेश "fsnotify.h"
+#include <linux/fsnotify_backend.h>
+#include "fsnotify.h"
 
-#घोषणा FSNOTIFY_REAPER_DELAY	(1)	/* 1 jअगरfy */
+#define FSNOTIFY_REAPER_DELAY	(1)	/* 1 jiffy */
 
-काष्ठा srcu_काष्ठा fsnotअगरy_mark_srcu;
-काष्ठा kmem_cache *fsnotअगरy_mark_connector_cachep;
+struct srcu_struct fsnotify_mark_srcu;
+struct kmem_cache *fsnotify_mark_connector_cachep;
 
-अटल DEFINE_SPINLOCK(destroy_lock);
-अटल LIST_HEAD(destroy_list);
-अटल काष्ठा fsnotअगरy_mark_connector *connector_destroy_list;
+static DEFINE_SPINLOCK(destroy_lock);
+static LIST_HEAD(destroy_list);
+static struct fsnotify_mark_connector *connector_destroy_list;
 
-अटल व्योम fsnotअगरy_mark_destroy_workfn(काष्ठा work_काष्ठा *work);
-अटल DECLARE_DELAYED_WORK(reaper_work, fsnotअगरy_mark_destroy_workfn);
+static void fsnotify_mark_destroy_workfn(struct work_struct *work);
+static DECLARE_DELAYED_WORK(reaper_work, fsnotify_mark_destroy_workfn);
 
-अटल व्योम fsnotअगरy_connector_destroy_workfn(काष्ठा work_काष्ठा *work);
-अटल DECLARE_WORK(connector_reaper_work, fsnotअगरy_connector_destroy_workfn);
+static void fsnotify_connector_destroy_workfn(struct work_struct *work);
+static DECLARE_WORK(connector_reaper_work, fsnotify_connector_destroy_workfn);
 
-व्योम fsnotअगरy_get_mark(काष्ठा fsnotअगरy_mark *mark)
-अणु
-	WARN_ON_ONCE(!refcount_पढ़ो(&mark->refcnt));
+void fsnotify_get_mark(struct fsnotify_mark *mark)
+{
+	WARN_ON_ONCE(!refcount_read(&mark->refcnt));
 	refcount_inc(&mark->refcnt);
-पूर्ण
+}
 
-अटल __u32 *fsnotअगरy_conn_mask_p(काष्ठा fsnotअगरy_mark_connector *conn)
-अणु
-	अगर (conn->type == FSNOTIFY_OBJ_TYPE_INODE)
-		वापस &fsnotअगरy_conn_inode(conn)->i_fsnotअगरy_mask;
-	अन्यथा अगर (conn->type == FSNOTIFY_OBJ_TYPE_VFSMOUNT)
-		वापस &fsnotअगरy_conn_mount(conn)->mnt_fsnotअगरy_mask;
-	अन्यथा अगर (conn->type == FSNOTIFY_OBJ_TYPE_SB)
-		वापस &fsnotअगरy_conn_sb(conn)->s_fsnotअगरy_mask;
-	वापस शून्य;
-पूर्ण
+static __u32 *fsnotify_conn_mask_p(struct fsnotify_mark_connector *conn)
+{
+	if (conn->type == FSNOTIFY_OBJ_TYPE_INODE)
+		return &fsnotify_conn_inode(conn)->i_fsnotify_mask;
+	else if (conn->type == FSNOTIFY_OBJ_TYPE_VFSMOUNT)
+		return &fsnotify_conn_mount(conn)->mnt_fsnotify_mask;
+	else if (conn->type == FSNOTIFY_OBJ_TYPE_SB)
+		return &fsnotify_conn_sb(conn)->s_fsnotify_mask;
+	return NULL;
+}
 
-__u32 fsnotअगरy_conn_mask(काष्ठा fsnotअगरy_mark_connector *conn)
-अणु
-	अगर (WARN_ON(!fsnotअगरy_valid_obj_type(conn->type)))
-		वापस 0;
+__u32 fsnotify_conn_mask(struct fsnotify_mark_connector *conn)
+{
+	if (WARN_ON(!fsnotify_valid_obj_type(conn->type)))
+		return 0;
 
-	वापस *fsnotअगरy_conn_mask_p(conn);
-पूर्ण
+	return *fsnotify_conn_mask_p(conn);
+}
 
-अटल व्योम __fsnotअगरy_recalc_mask(काष्ठा fsnotअगरy_mark_connector *conn)
-अणु
+static void __fsnotify_recalc_mask(struct fsnotify_mark_connector *conn)
+{
 	u32 new_mask = 0;
-	काष्ठा fsnotअगरy_mark *mark;
+	struct fsnotify_mark *mark;
 
-	निश्चित_spin_locked(&conn->lock);
+	assert_spin_locked(&conn->lock);
 	/* We can get detached connector here when inode is getting unlinked. */
-	अगर (!fsnotअगरy_valid_obj_type(conn->type))
-		वापस;
-	hlist_क्रम_each_entry(mark, &conn->list, obj_list) अणु
-		अगर (mark->flags & FSNOTIFY_MARK_FLAG_ATTACHED)
+	if (!fsnotify_valid_obj_type(conn->type))
+		return;
+	hlist_for_each_entry(mark, &conn->list, obj_list) {
+		if (mark->flags & FSNOTIFY_MARK_FLAG_ATTACHED)
 			new_mask |= mark->mask;
-	पूर्ण
-	*fsnotअगरy_conn_mask_p(conn) = new_mask;
-पूर्ण
+	}
+	*fsnotify_conn_mask_p(conn) = new_mask;
+}
 
 /*
- * Calculate mask of events क्रम a list of marks. The caller must make sure
+ * Calculate mask of events for a list of marks. The caller must make sure
  * connector and connector->obj cannot disappear under us.  Callers achieve
- * this by holding a mark->lock or mark->group->mark_mutex क्रम a mark on this
+ * this by holding a mark->lock or mark->group->mark_mutex for a mark on this
  * list.
  */
-व्योम fsnotअगरy_recalc_mask(काष्ठा fsnotअगरy_mark_connector *conn)
-अणु
-	अगर (!conn)
-		वापस;
+void fsnotify_recalc_mask(struct fsnotify_mark_connector *conn)
+{
+	if (!conn)
+		return;
 
 	spin_lock(&conn->lock);
-	__fsnotअगरy_recalc_mask(conn);
+	__fsnotify_recalc_mask(conn);
 	spin_unlock(&conn->lock);
-	अगर (conn->type == FSNOTIFY_OBJ_TYPE_INODE)
-		__fsnotअगरy_update_child_dentry_flags(
-					fsnotअगरy_conn_inode(conn));
-पूर्ण
+	if (conn->type == FSNOTIFY_OBJ_TYPE_INODE)
+		__fsnotify_update_child_dentry_flags(
+					fsnotify_conn_inode(conn));
+}
 
-/* Free all connectors queued क्रम मुक्तing once SRCU period ends */
-अटल व्योम fsnotअगरy_connector_destroy_workfn(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा fsnotअगरy_mark_connector *conn, *मुक्त;
+/* Free all connectors queued for freeing once SRCU period ends */
+static void fsnotify_connector_destroy_workfn(struct work_struct *work)
+{
+	struct fsnotify_mark_connector *conn, *free;
 
 	spin_lock(&destroy_lock);
 	conn = connector_destroy_list;
-	connector_destroy_list = शून्य;
+	connector_destroy_list = NULL;
 	spin_unlock(&destroy_lock);
 
-	synchronize_srcu(&fsnotअगरy_mark_srcu);
-	जबतक (conn) अणु
-		मुक्त = conn;
+	synchronize_srcu(&fsnotify_mark_srcu);
+	while (conn) {
+		free = conn;
 		conn = conn->destroy_next;
-		kmem_cache_मुक्त(fsnotअगरy_mark_connector_cachep, मुक्त);
-	पूर्ण
-पूर्ण
+		kmem_cache_free(fsnotify_mark_connector_cachep, free);
+	}
+}
 
-अटल व्योम *fsnotअगरy_detach_connector_from_object(
-					काष्ठा fsnotअगरy_mark_connector *conn,
-					अचिन्हित पूर्णांक *type)
-अणु
-	काष्ठा inode *inode = शून्य;
+static void *fsnotify_detach_connector_from_object(
+					struct fsnotify_mark_connector *conn,
+					unsigned int *type)
+{
+	struct inode *inode = NULL;
 
 	*type = conn->type;
-	अगर (conn->type == FSNOTIFY_OBJ_TYPE_DETACHED)
-		वापस शून्य;
+	if (conn->type == FSNOTIFY_OBJ_TYPE_DETACHED)
+		return NULL;
 
-	अगर (conn->type == FSNOTIFY_OBJ_TYPE_INODE) अणु
-		inode = fsnotअगरy_conn_inode(conn);
-		inode->i_fsnotअगरy_mask = 0;
-		atomic_दीर्घ_inc(&inode->i_sb->s_fsnotअगरy_inode_refs);
-	पूर्ण अन्यथा अगर (conn->type == FSNOTIFY_OBJ_TYPE_VFSMOUNT) अणु
-		fsnotअगरy_conn_mount(conn)->mnt_fsnotअगरy_mask = 0;
-	पूर्ण अन्यथा अगर (conn->type == FSNOTIFY_OBJ_TYPE_SB) अणु
-		fsnotअगरy_conn_sb(conn)->s_fsnotअगरy_mask = 0;
-	पूर्ण
+	if (conn->type == FSNOTIFY_OBJ_TYPE_INODE) {
+		inode = fsnotify_conn_inode(conn);
+		inode->i_fsnotify_mask = 0;
+		atomic_long_inc(&inode->i_sb->s_fsnotify_inode_refs);
+	} else if (conn->type == FSNOTIFY_OBJ_TYPE_VFSMOUNT) {
+		fsnotify_conn_mount(conn)->mnt_fsnotify_mask = 0;
+	} else if (conn->type == FSNOTIFY_OBJ_TYPE_SB) {
+		fsnotify_conn_sb(conn)->s_fsnotify_mask = 0;
+	}
 
-	rcu_assign_poपूर्णांकer(*(conn->obj), शून्य);
-	conn->obj = शून्य;
+	rcu_assign_pointer(*(conn->obj), NULL);
+	conn->obj = NULL;
 	conn->type = FSNOTIFY_OBJ_TYPE_DETACHED;
 
-	वापस inode;
-पूर्ण
+	return inode;
+}
 
-अटल व्योम fsnotअगरy_final_mark_destroy(काष्ठा fsnotअगरy_mark *mark)
-अणु
-	काष्ठा fsnotअगरy_group *group = mark->group;
+static void fsnotify_final_mark_destroy(struct fsnotify_mark *mark)
+{
+	struct fsnotify_group *group = mark->group;
 
-	अगर (WARN_ON_ONCE(!group))
-		वापस;
-	group->ops->मुक्त_mark(mark);
-	fsnotअगरy_put_group(group);
-पूर्ण
+	if (WARN_ON_ONCE(!group))
+		return;
+	group->ops->free_mark(mark);
+	fsnotify_put_group(group);
+}
 
 /* Drop object reference originally held by a connector */
-अटल व्योम fsnotअगरy_drop_object(अचिन्हित पूर्णांक type, व्योम *objp)
-अणु
-	काष्ठा inode *inode;
-	काष्ठा super_block *sb;
+static void fsnotify_drop_object(unsigned int type, void *objp)
+{
+	struct inode *inode;
+	struct super_block *sb;
 
-	अगर (!objp)
-		वापस;
+	if (!objp)
+		return;
 	/* Currently only inode references are passed to be dropped */
-	अगर (WARN_ON_ONCE(type != FSNOTIFY_OBJ_TYPE_INODE))
-		वापस;
+	if (WARN_ON_ONCE(type != FSNOTIFY_OBJ_TYPE_INODE))
+		return;
 	inode = objp;
 	sb = inode->i_sb;
 	iput(inode);
-	अगर (atomic_दीर्घ_dec_and_test(&sb->s_fsnotअगरy_inode_refs))
-		wake_up_var(&sb->s_fsnotअगरy_inode_refs);
-पूर्ण
+	if (atomic_long_dec_and_test(&sb->s_fsnotify_inode_refs))
+		wake_up_var(&sb->s_fsnotify_inode_refs);
+}
 
-व्योम fsnotअगरy_put_mark(काष्ठा fsnotअगरy_mark *mark)
-अणु
-	काष्ठा fsnotअगरy_mark_connector *conn = READ_ONCE(mark->connector);
-	व्योम *objp = शून्य;
-	अचिन्हित पूर्णांक type = FSNOTIFY_OBJ_TYPE_DETACHED;
-	bool मुक्त_conn = false;
+void fsnotify_put_mark(struct fsnotify_mark *mark)
+{
+	struct fsnotify_mark_connector *conn = READ_ONCE(mark->connector);
+	void *objp = NULL;
+	unsigned int type = FSNOTIFY_OBJ_TYPE_DETACHED;
+	bool free_conn = false;
 
 	/* Catch marks that were actually never attached to object */
-	अगर (!conn) अणु
-		अगर (refcount_dec_and_test(&mark->refcnt))
-			fsnotअगरy_final_mark_destroy(mark);
-		वापस;
-	पूर्ण
+	if (!conn) {
+		if (refcount_dec_and_test(&mark->refcnt))
+			fsnotify_final_mark_destroy(mark);
+		return;
+	}
 
 	/*
 	 * We have to be careful so that traversals of obj_list under lock can
 	 * safely grab mark reference.
 	 */
-	अगर (!refcount_dec_and_lock(&mark->refcnt, &conn->lock))
-		वापस;
+	if (!refcount_dec_and_lock(&mark->refcnt, &conn->lock))
+		return;
 
 	hlist_del_init_rcu(&mark->obj_list);
-	अगर (hlist_empty(&conn->list)) अणु
-		objp = fsnotअगरy_detach_connector_from_object(conn, &type);
-		मुक्त_conn = true;
-	पूर्ण अन्यथा अणु
-		__fsnotअगरy_recalc_mask(conn);
-	पूर्ण
-	WRITE_ONCE(mark->connector, शून्य);
+	if (hlist_empty(&conn->list)) {
+		objp = fsnotify_detach_connector_from_object(conn, &type);
+		free_conn = true;
+	} else {
+		__fsnotify_recalc_mask(conn);
+	}
+	WRITE_ONCE(mark->connector, NULL);
 	spin_unlock(&conn->lock);
 
-	fsnotअगरy_drop_object(type, objp);
+	fsnotify_drop_object(type, objp);
 
-	अगर (मुक्त_conn) अणु
+	if (free_conn) {
 		spin_lock(&destroy_lock);
 		conn->destroy_next = connector_destroy_list;
 		connector_destroy_list = conn;
 		spin_unlock(&destroy_lock);
-		queue_work(प्रणाली_unbound_wq, &connector_reaper_work);
-	पूर्ण
+		queue_work(system_unbound_wq, &connector_reaper_work);
+	}
 	/*
 	 * Note that we didn't update flags telling whether inode cares about
 	 * what's happening with children. We update these flags from
-	 * __fsnotअगरy_parent() lazily when next event happens on one of our
+	 * __fsnotify_parent() lazily when next event happens on one of our
 	 * children.
 	 */
 	spin_lock(&destroy_lock);
 	list_add(&mark->g_list, &destroy_list);
 	spin_unlock(&destroy_lock);
-	queue_delayed_work(प्रणाली_unbound_wq, &reaper_work,
+	queue_delayed_work(system_unbound_wq, &reaper_work,
 			   FSNOTIFY_REAPER_DELAY);
-पूर्ण
-EXPORT_SYMBOL_GPL(fsnotअगरy_put_mark);
+}
+EXPORT_SYMBOL_GPL(fsnotify_put_mark);
 
 /*
  * Get mark reference when we found the mark via lockless traversal of object
- * list. Mark can be alपढ़ोy हटाओd from the list by now and on its way to be
+ * list. Mark can be already removed from the list by now and on its way to be
  * destroyed once SRCU period ends.
  *
- * Also pin the group so it करोesn't disappear under us.
+ * Also pin the group so it doesn't disappear under us.
  */
-अटल bool fsnotअगरy_get_mark_safe(काष्ठा fsnotअगरy_mark *mark)
-अणु
-	अगर (!mark)
-		वापस true;
+static bool fsnotify_get_mark_safe(struct fsnotify_mark *mark)
+{
+	if (!mark)
+		return true;
 
-	अगर (refcount_inc_not_zero(&mark->refcnt)) अणु
+	if (refcount_inc_not_zero(&mark->refcnt)) {
 		spin_lock(&mark->lock);
-		अगर (mark->flags & FSNOTIFY_MARK_FLAG_ATTACHED) अणु
+		if (mark->flags & FSNOTIFY_MARK_FLAG_ATTACHED) {
 			/* mark is attached, group is still alive then */
-			atomic_inc(&mark->group->user_रुकोs);
+			atomic_inc(&mark->group->user_waits);
 			spin_unlock(&mark->lock);
-			वापस true;
-		पूर्ण
+			return true;
+		}
 		spin_unlock(&mark->lock);
-		fsnotअगरy_put_mark(mark);
-	पूर्ण
-	वापस false;
-पूर्ण
+		fsnotify_put_mark(mark);
+	}
+	return false;
+}
 
 /*
- * Puts marks and wakes up group deकाष्ठाion अगर necessary.
+ * Puts marks and wakes up group destruction if necessary.
  *
- * Pairs with fsnotअगरy_get_mark_safe()
+ * Pairs with fsnotify_get_mark_safe()
  */
-अटल व्योम fsnotअगरy_put_mark_wake(काष्ठा fsnotअगरy_mark *mark)
-अणु
-	अगर (mark) अणु
-		काष्ठा fsnotअगरy_group *group = mark->group;
+static void fsnotify_put_mark_wake(struct fsnotify_mark *mark)
+{
+	if (mark) {
+		struct fsnotify_group *group = mark->group;
 
-		fsnotअगरy_put_mark(mark);
+		fsnotify_put_mark(mark);
 		/*
-		 * We abuse notअगरication_रुकोq on group shutकरोwn क्रम रुकोing क्रम
-		 * all marks pinned when रुकोing क्रम userspace.
+		 * We abuse notification_waitq on group shutdown for waiting for
+		 * all marks pinned when waiting for userspace.
 		 */
-		अगर (atomic_dec_and_test(&group->user_रुकोs) && group->shutकरोwn)
-			wake_up(&group->notअगरication_रुकोq);
-	पूर्ण
-पूर्ण
+		if (atomic_dec_and_test(&group->user_waits) && group->shutdown)
+			wake_up(&group->notification_waitq);
+	}
+}
 
-bool fsnotअगरy_prepare_user_रुको(काष्ठा fsnotअगरy_iter_info *iter_info)
-	__releases(&fsnotअगरy_mark_srcu)
-अणु
-	पूर्णांक type;
+bool fsnotify_prepare_user_wait(struct fsnotify_iter_info *iter_info)
+	__releases(&fsnotify_mark_srcu)
+{
+	int type;
 
-	fsnotअगरy_क्रमeach_obj_type(type) अणु
-		/* This can fail अगर mark is being हटाओd */
-		अगर (!fsnotअगरy_get_mark_safe(iter_info->marks[type])) अणु
-			__release(&fsnotअगरy_mark_srcu);
-			जाओ fail;
-		पूर्ण
-	पूर्ण
+	fsnotify_foreach_obj_type(type) {
+		/* This can fail if mark is being removed */
+		if (!fsnotify_get_mark_safe(iter_info->marks[type])) {
+			__release(&fsnotify_mark_srcu);
+			goto fail;
+		}
+	}
 
 	/*
 	 * Now that both marks are pinned by refcount in the inode / vfsmount
 	 * lists, we can drop SRCU lock, and safely resume the list iteration
-	 * once userspace वापसs.
+	 * once userspace returns.
 	 */
-	srcu_पढ़ो_unlock(&fsnotअगरy_mark_srcu, iter_info->srcu_idx);
+	srcu_read_unlock(&fsnotify_mark_srcu, iter_info->srcu_idx);
 
-	वापस true;
+	return true;
 
 fail:
-	क्रम (type--; type >= 0; type--)
-		fsnotअगरy_put_mark_wake(iter_info->marks[type]);
-	वापस false;
-पूर्ण
+	for (type--; type >= 0; type--)
+		fsnotify_put_mark_wake(iter_info->marks[type]);
+	return false;
+}
 
-व्योम fsnotअगरy_finish_user_रुको(काष्ठा fsnotअगरy_iter_info *iter_info)
-	__acquires(&fsnotअगरy_mark_srcu)
-अणु
-	पूर्णांक type;
+void fsnotify_finish_user_wait(struct fsnotify_iter_info *iter_info)
+	__acquires(&fsnotify_mark_srcu)
+{
+	int type;
 
-	iter_info->srcu_idx = srcu_पढ़ो_lock(&fsnotअगरy_mark_srcu);
-	fsnotअगरy_क्रमeach_obj_type(type)
-		fsnotअगरy_put_mark_wake(iter_info->marks[type]);
-पूर्ण
+	iter_info->srcu_idx = srcu_read_lock(&fsnotify_mark_srcu);
+	fsnotify_foreach_obj_type(type)
+		fsnotify_put_mark_wake(iter_info->marks[type]);
+}
 
 /*
- * Mark mark as detached, हटाओ it from group list. Mark still stays in object
+ * Mark mark as detached, remove it from group list. Mark still stays in object
  * list until its last reference is dropped. Note that we rely on mark being
- * हटाओd from group list beक्रमe corresponding reference to it is dropped. In
- * particular we rely on mark->connector being valid जबतक we hold
- * group->mark_mutex अगर we found the mark through g_list.
+ * removed from group list before corresponding reference to it is dropped. In
+ * particular we rely on mark->connector being valid while we hold
+ * group->mark_mutex if we found the mark through g_list.
  *
  * Must be called with group->mark_mutex held. The caller must either hold
- * reference to the mark or be रक्षित by fsnotअगरy_mark_srcu.
+ * reference to the mark or be protected by fsnotify_mark_srcu.
  */
-व्योम fsnotअगरy_detach_mark(काष्ठा fsnotअगरy_mark *mark)
-अणु
-	काष्ठा fsnotअगरy_group *group = mark->group;
+void fsnotify_detach_mark(struct fsnotify_mark *mark)
+{
+	struct fsnotify_group *group = mark->group;
 
 	WARN_ON_ONCE(!mutex_is_locked(&group->mark_mutex));
-	WARN_ON_ONCE(!srcu_पढ़ो_lock_held(&fsnotअगरy_mark_srcu) &&
-		     refcount_पढ़ो(&mark->refcnt) < 1 +
+	WARN_ON_ONCE(!srcu_read_lock_held(&fsnotify_mark_srcu) &&
+		     refcount_read(&mark->refcnt) < 1 +
 			!!(mark->flags & FSNOTIFY_MARK_FLAG_ATTACHED));
 
 	spin_lock(&mark->lock);
-	/* something अन्यथा alपढ़ोy called this function on this mark */
-	अगर (!(mark->flags & FSNOTIFY_MARK_FLAG_ATTACHED)) अणु
+	/* something else already called this function on this mark */
+	if (!(mark->flags & FSNOTIFY_MARK_FLAG_ATTACHED)) {
 		spin_unlock(&mark->lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 	mark->flags &= ~FSNOTIFY_MARK_FLAG_ATTACHED;
 	list_del_init(&mark->g_list);
 	spin_unlock(&mark->lock);
 
-	/* Drop mark reference acquired in fsnotअगरy_add_mark_locked() */
-	fsnotअगरy_put_mark(mark);
-पूर्ण
+	/* Drop mark reference acquired in fsnotify_add_mark_locked() */
+	fsnotify_put_mark(mark);
+}
 
 /*
- * Free fsnotअगरy mark. The mark is actually only marked as being मुक्तd.  The
- * मुक्तing is actually happening only once last reference to the mark is
- * dropped from a workqueue which first रुकोs क्रम srcu period end.
+ * Free fsnotify mark. The mark is actually only marked as being freed.  The
+ * freeing is actually happening only once last reference to the mark is
+ * dropped from a workqueue which first waits for srcu period end.
  *
- * Caller must have a reference to the mark or be रक्षित by
- * fsnotअगरy_mark_srcu.
+ * Caller must have a reference to the mark or be protected by
+ * fsnotify_mark_srcu.
  */
-व्योम fsnotअगरy_मुक्त_mark(काष्ठा fsnotअगरy_mark *mark)
-अणु
-	काष्ठा fsnotअगरy_group *group = mark->group;
+void fsnotify_free_mark(struct fsnotify_mark *mark)
+{
+	struct fsnotify_group *group = mark->group;
 
 	spin_lock(&mark->lock);
-	/* something अन्यथा alपढ़ोy called this function on this mark */
-	अगर (!(mark->flags & FSNOTIFY_MARK_FLAG_ALIVE)) अणु
+	/* something else already called this function on this mark */
+	if (!(mark->flags & FSNOTIFY_MARK_FLAG_ALIVE)) {
 		spin_unlock(&mark->lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 	mark->flags &= ~FSNOTIFY_MARK_FLAG_ALIVE;
 	spin_unlock(&mark->lock);
 
 	/*
-	 * Some groups like to know that marks are being मुक्तd.  This is a
+	 * Some groups like to know that marks are being freed.  This is a
 	 * callback to the group function to let it know that this mark
-	 * is being मुक्तd.
+	 * is being freed.
 	 */
-	अगर (group->ops->मुक्तing_mark)
-		group->ops->मुक्तing_mark(mark, group);
-पूर्ण
+	if (group->ops->freeing_mark)
+		group->ops->freeing_mark(mark, group);
+}
 
-व्योम fsnotअगरy_destroy_mark(काष्ठा fsnotअगरy_mark *mark,
-			   काष्ठा fsnotअगरy_group *group)
-अणु
+void fsnotify_destroy_mark(struct fsnotify_mark *mark,
+			   struct fsnotify_group *group)
+{
 	mutex_lock_nested(&group->mark_mutex, SINGLE_DEPTH_NESTING);
-	fsnotअगरy_detach_mark(mark);
+	fsnotify_detach_mark(mark);
 	mutex_unlock(&group->mark_mutex);
-	fsnotअगरy_मुक्त_mark(mark);
-पूर्ण
-EXPORT_SYMBOL_GPL(fsnotअगरy_destroy_mark);
+	fsnotify_free_mark(mark);
+}
+EXPORT_SYMBOL_GPL(fsnotify_destroy_mark);
 
 /*
- * Sorting function क्रम lists of fsnotअगरy marks.
+ * Sorting function for lists of fsnotify marks.
  *
- * Fanotअगरy supports dअगरferent notअगरication classes (reflected as priority of
- * notअगरication group). Events shall be passed to notअगरication groups in
- * decreasing priority order. To achieve this marks in notअगरication lists क्रम
+ * Fanotify supports different notification classes (reflected as priority of
+ * notification group). Events shall be passed to notification groups in
+ * decreasing priority order. To achieve this marks in notification lists for
  * inodes and vfsmounts are sorted so that priorities of corresponding groups
  * are descending.
  *
  * Furthermore correct handling of the ignore mask requires processing inode
  * and vfsmount marks of each group together. Using the group address as
  * further sort criterion provides a unique sorting order and thus we can
- * merge inode and vfsmount lists of marks in linear समय and find groups
+ * merge inode and vfsmount lists of marks in linear time and find groups
  * present in both lists.
  *
- * A वापस value of 1 signअगरies that b has priority over a.
- * A वापस value of 0 signअगरies that the two marks have to be handled together.
- * A वापस value of -1 signअगरies that a has priority over b.
+ * A return value of 1 signifies that b has priority over a.
+ * A return value of 0 signifies that the two marks have to be handled together.
+ * A return value of -1 signifies that a has priority over b.
  */
-पूर्णांक fsnotअगरy_compare_groups(काष्ठा fsnotअगरy_group *a, काष्ठा fsnotअगरy_group *b)
-अणु
-	अगर (a == b)
-		वापस 0;
-	अगर (!a)
-		वापस 1;
-	अगर (!b)
-		वापस -1;
-	अगर (a->priority < b->priority)
-		वापस 1;
-	अगर (a->priority > b->priority)
-		वापस -1;
-	अगर (a < b)
-		वापस 1;
-	वापस -1;
-पूर्ण
+int fsnotify_compare_groups(struct fsnotify_group *a, struct fsnotify_group *b)
+{
+	if (a == b)
+		return 0;
+	if (!a)
+		return 1;
+	if (!b)
+		return -1;
+	if (a->priority < b->priority)
+		return 1;
+	if (a->priority > b->priority)
+		return -1;
+	if (a < b)
+		return 1;
+	return -1;
+}
 
-अटल पूर्णांक fsnotअगरy_attach_connector_to_object(fsnotअगरy_connp_t *connp,
-					       अचिन्हित पूर्णांक type,
+static int fsnotify_attach_connector_to_object(fsnotify_connp_t *connp,
+					       unsigned int type,
 					       __kernel_fsid_t *fsid)
-अणु
-	काष्ठा inode *inode = शून्य;
-	काष्ठा fsnotअगरy_mark_connector *conn;
+{
+	struct inode *inode = NULL;
+	struct fsnotify_mark_connector *conn;
 
-	conn = kmem_cache_alloc(fsnotअगरy_mark_connector_cachep, GFP_KERNEL);
-	अगर (!conn)
-		वापस -ENOMEM;
+	conn = kmem_cache_alloc(fsnotify_mark_connector_cachep, GFP_KERNEL);
+	if (!conn)
+		return -ENOMEM;
 	spin_lock_init(&conn->lock);
 	INIT_HLIST_HEAD(&conn->list);
 	conn->type = type;
 	conn->obj = connp;
-	/* Cache fsid of fileप्रणाली containing the object */
-	अगर (fsid) अणु
+	/* Cache fsid of filesystem containing the object */
+	if (fsid) {
 		conn->fsid = *fsid;
 		conn->flags = FSNOTIFY_CONN_FLAG_HAS_FSID;
-	पूर्ण अन्यथा अणु
+	} else {
 		conn->fsid.val[0] = conn->fsid.val[1] = 0;
 		conn->flags = 0;
-	पूर्ण
-	अगर (conn->type == FSNOTIFY_OBJ_TYPE_INODE)
-		inode = igrab(fsnotअगरy_conn_inode(conn));
+	}
+	if (conn->type == FSNOTIFY_OBJ_TYPE_INODE)
+		inode = igrab(fsnotify_conn_inode(conn));
 	/*
-	 * cmpxchg() provides the barrier so that पढ़ोers of *connp can see
-	 * only initialized काष्ठाure
+	 * cmpxchg() provides the barrier so that readers of *connp can see
+	 * only initialized structure
 	 */
-	अगर (cmpxchg(connp, शून्य, conn)) अणु
-		/* Someone अन्यथा created list काष्ठाure क्रम us */
-		अगर (inode)
+	if (cmpxchg(connp, NULL, conn)) {
+		/* Someone else created list structure for us */
+		if (inode)
 			iput(inode);
-		kmem_cache_मुक्त(fsnotअगरy_mark_connector_cachep, conn);
-	पूर्ण
+		kmem_cache_free(fsnotify_mark_connector_cachep, conn);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Get mark connector, make sure it is alive and वापस with its lock held.
- * This is क्रम users that get connector poपूर्णांकer from inode or mount. Users that
+ * Get mark connector, make sure it is alive and return with its lock held.
+ * This is for users that get connector pointer from inode or mount. Users that
  * hold reference to a mark on the list may directly lock connector->lock as
  * they are sure list cannot go away under them.
  */
-अटल काष्ठा fsnotअगरy_mark_connector *fsnotअगरy_grab_connector(
-						fsnotअगरy_connp_t *connp)
-अणु
-	काष्ठा fsnotअगरy_mark_connector *conn;
-	पूर्णांक idx;
+static struct fsnotify_mark_connector *fsnotify_grab_connector(
+						fsnotify_connp_t *connp)
+{
+	struct fsnotify_mark_connector *conn;
+	int idx;
 
-	idx = srcu_पढ़ो_lock(&fsnotअगरy_mark_srcu);
-	conn = srcu_dereference(*connp, &fsnotअगरy_mark_srcu);
-	अगर (!conn)
-		जाओ out;
+	idx = srcu_read_lock(&fsnotify_mark_srcu);
+	conn = srcu_dereference(*connp, &fsnotify_mark_srcu);
+	if (!conn)
+		goto out;
 	spin_lock(&conn->lock);
-	अगर (conn->type == FSNOTIFY_OBJ_TYPE_DETACHED) अणु
+	if (conn->type == FSNOTIFY_OBJ_TYPE_DETACHED) {
 		spin_unlock(&conn->lock);
-		srcu_पढ़ो_unlock(&fsnotअगरy_mark_srcu, idx);
-		वापस शून्य;
-	पूर्ण
+		srcu_read_unlock(&fsnotify_mark_srcu, idx);
+		return NULL;
+	}
 out:
-	srcu_पढ़ो_unlock(&fsnotअगरy_mark_srcu, idx);
-	वापस conn;
-पूर्ण
+	srcu_read_unlock(&fsnotify_mark_srcu, idx);
+	return conn;
+}
 
 /*
- * Add mark पूर्णांकo proper place in given list of marks. These marks may be used
- * क्रम the fsnotअगरy backend to determine which event types should be delivered
- * to which group and क्रम which inodes. These marks are ordered according to
+ * Add mark into proper place in given list of marks. These marks may be used
+ * for the fsnotify backend to determine which event types should be delivered
+ * to which group and for which inodes. These marks are ordered according to
  * priority, highest number first, and then by the group's location in memory.
  */
-अटल पूर्णांक fsnotअगरy_add_mark_list(काष्ठा fsnotअगरy_mark *mark,
-				  fsnotअगरy_connp_t *connp, अचिन्हित पूर्णांक type,
-				  पूर्णांक allow_dups, __kernel_fsid_t *fsid)
-अणु
-	काष्ठा fsnotअगरy_mark *lmark, *last = शून्य;
-	काष्ठा fsnotअगरy_mark_connector *conn;
-	पूर्णांक cmp;
-	पूर्णांक err = 0;
+static int fsnotify_add_mark_list(struct fsnotify_mark *mark,
+				  fsnotify_connp_t *connp, unsigned int type,
+				  int allow_dups, __kernel_fsid_t *fsid)
+{
+	struct fsnotify_mark *lmark, *last = NULL;
+	struct fsnotify_mark_connector *conn;
+	int cmp;
+	int err = 0;
 
-	अगर (WARN_ON(!fsnotअगरy_valid_obj_type(type)))
-		वापस -EINVAL;
+	if (WARN_ON(!fsnotify_valid_obj_type(type)))
+		return -EINVAL;
 
-	/* Backend is expected to check क्रम zero fsid (e.g. पंचांगpfs) */
-	अगर (fsid && WARN_ON_ONCE(!fsid->val[0] && !fsid->val[1]))
-		वापस -ENODEV;
+	/* Backend is expected to check for zero fsid (e.g. tmpfs) */
+	if (fsid && WARN_ON_ONCE(!fsid->val[0] && !fsid->val[1]))
+		return -ENODEV;
 
 restart:
 	spin_lock(&mark->lock);
-	conn = fsnotअगरy_grab_connector(connp);
-	अगर (!conn) अणु
+	conn = fsnotify_grab_connector(connp);
+	if (!conn) {
 		spin_unlock(&mark->lock);
-		err = fsnotअगरy_attach_connector_to_object(connp, type, fsid);
-		अगर (err)
-			वापस err;
-		जाओ restart;
-	पूर्ण अन्यथा अगर (fsid && !(conn->flags & FSNOTIFY_CONN_FLAG_HAS_FSID)) अणु
+		err = fsnotify_attach_connector_to_object(connp, type, fsid);
+		if (err)
+			return err;
+		goto restart;
+	} else if (fsid && !(conn->flags & FSNOTIFY_CONN_FLAG_HAS_FSID)) {
 		conn->fsid = *fsid;
-		/* Pairs with smp_rmb() in fanotअगरy_get_fsid() */
+		/* Pairs with smp_rmb() in fanotify_get_fsid() */
 		smp_wmb();
 		conn->flags |= FSNOTIFY_CONN_FLAG_HAS_FSID;
-	पूर्ण अन्यथा अगर (fsid && (conn->flags & FSNOTIFY_CONN_FLAG_HAS_FSID) &&
+	} else if (fsid && (conn->flags & FSNOTIFY_CONN_FLAG_HAS_FSID) &&
 		   (fsid->val[0] != conn->fsid.val[0] ||
-		    fsid->val[1] != conn->fsid.val[1])) अणु
+		    fsid->val[1] != conn->fsid.val[1])) {
 		/*
-		 * Backend is expected to check क्रम non unअगरorm fsid
+		 * Backend is expected to check for non uniform fsid
 		 * (e.g. btrfs), but maybe we missed something?
 		 * Only allow setting conn->fsid once to non zero fsid.
-		 * inotअगरy and non-fid fanotअगरy groups करो not set nor test
+		 * inotify and non-fid fanotify groups do not set nor test
 		 * conn->fsid.
 		 */
 		pr_warn_ratelimited("%s: fsid mismatch on object of type %u: "
@@ -588,34 +587,34 @@ restart:
 				    fsid->val[0], fsid->val[1],
 				    conn->fsid.val[0], conn->fsid.val[1]);
 		err = -EXDEV;
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
 	/* is mark the first mark? */
-	अगर (hlist_empty(&conn->list)) अणु
+	if (hlist_empty(&conn->list)) {
 		hlist_add_head_rcu(&mark->obj_list, &conn->list);
-		जाओ added;
-	पूर्ण
+		goto added;
+	}
 
 	/* should mark be in the middle of the current list? */
-	hlist_क्रम_each_entry(lmark, &conn->list, obj_list) अणु
+	hlist_for_each_entry(lmark, &conn->list, obj_list) {
 		last = lmark;
 
-		अगर ((lmark->group == mark->group) &&
+		if ((lmark->group == mark->group) &&
 		    (lmark->flags & FSNOTIFY_MARK_FLAG_ATTACHED) &&
-		    !allow_dups) अणु
+		    !allow_dups) {
 			err = -EEXIST;
-			जाओ out_err;
-		पूर्ण
+			goto out_err;
+		}
 
-		cmp = fsnotअगरy_compare_groups(lmark->group, mark->group);
-		अगर (cmp >= 0) अणु
-			hlist_add_beक्रमe_rcu(&mark->obj_list, &lmark->obj_list);
-			जाओ added;
-		पूर्ण
-	पूर्ण
+		cmp = fsnotify_compare_groups(lmark->group, mark->group);
+		if (cmp >= 0) {
+			hlist_add_before_rcu(&mark->obj_list, &lmark->obj_list);
+			goto added;
+		}
+	}
 
-	BUG_ON(last == शून्य);
+	BUG_ON(last == NULL);
 	/* mark should be the last entry.  last is the current last entry */
 	hlist_add_behind_rcu(&mark->obj_list, &last->obj_list);
 added:
@@ -628,20 +627,20 @@ added:
 out_err:
 	spin_unlock(&conn->lock);
 	spin_unlock(&mark->lock);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
  * Attach an initialized mark to a given group and fs object.
- * These marks may be used क्रम the fsnotअगरy backend to determine which
+ * These marks may be used for the fsnotify backend to determine which
  * event types should be delivered to which group.
  */
-पूर्णांक fsnotअगरy_add_mark_locked(काष्ठा fsnotअगरy_mark *mark,
-			     fsnotअगरy_connp_t *connp, अचिन्हित पूर्णांक type,
-			     पूर्णांक allow_dups, __kernel_fsid_t *fsid)
-अणु
-	काष्ठा fsnotअगरy_group *group = mark->group;
-	पूर्णांक ret = 0;
+int fsnotify_add_mark_locked(struct fsnotify_mark *mark,
+			     fsnotify_connp_t *connp, unsigned int type,
+			     int allow_dups, __kernel_fsid_t *fsid)
+{
+	struct fsnotify_group *group = mark->group;
+	int ret = 0;
 
 	BUG_ON(!mutex_is_locked(&group->mark_mutex));
 
@@ -655,17 +654,17 @@ out_err:
 	mark->flags |= FSNOTIFY_MARK_FLAG_ALIVE | FSNOTIFY_MARK_FLAG_ATTACHED;
 
 	list_add(&mark->g_list, &group->marks_list);
-	fsnotअगरy_get_mark(mark); /* क्रम g_list */
+	fsnotify_get_mark(mark); /* for g_list */
 	spin_unlock(&mark->lock);
 
-	ret = fsnotअगरy_add_mark_list(mark, connp, type, allow_dups, fsid);
-	अगर (ret)
-		जाओ err;
+	ret = fsnotify_add_mark_list(mark, connp, type, allow_dups, fsid);
+	if (ret)
+		goto err;
 
-	अगर (mark->mask)
-		fsnotअगरy_recalc_mask(mark->connector);
+	if (mark->mask)
+		fsnotify_recalc_mask(mark->connector);
 
-	वापस ret;
+	return ret;
 err:
 	spin_lock(&mark->lock);
 	mark->flags &= ~(FSNOTIFY_MARK_FLAG_ALIVE |
@@ -673,174 +672,174 @@ err:
 	list_del_init(&mark->g_list);
 	spin_unlock(&mark->lock);
 
-	fsnotअगरy_put_mark(mark);
-	वापस ret;
-पूर्ण
+	fsnotify_put_mark(mark);
+	return ret;
+}
 
-पूर्णांक fsnotअगरy_add_mark(काष्ठा fsnotअगरy_mark *mark, fsnotअगरy_connp_t *connp,
-		      अचिन्हित पूर्णांक type, पूर्णांक allow_dups, __kernel_fsid_t *fsid)
-अणु
-	पूर्णांक ret;
-	काष्ठा fsnotअगरy_group *group = mark->group;
+int fsnotify_add_mark(struct fsnotify_mark *mark, fsnotify_connp_t *connp,
+		      unsigned int type, int allow_dups, __kernel_fsid_t *fsid)
+{
+	int ret;
+	struct fsnotify_group *group = mark->group;
 
 	mutex_lock(&group->mark_mutex);
-	ret = fsnotअगरy_add_mark_locked(mark, connp, type, allow_dups, fsid);
+	ret = fsnotify_add_mark_locked(mark, connp, type, allow_dups, fsid);
 	mutex_unlock(&group->mark_mutex);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(fsnotअगरy_add_mark);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(fsnotify_add_mark);
 
 /*
  * Given a list of marks, find the mark associated with given group. If found
- * take a reference to that mark and वापस it, अन्यथा वापस शून्य.
+ * take a reference to that mark and return it, else return NULL.
  */
-काष्ठा fsnotअगरy_mark *fsnotअगरy_find_mark(fsnotअगरy_connp_t *connp,
-					 काष्ठा fsnotअगरy_group *group)
-अणु
-	काष्ठा fsnotअगरy_mark_connector *conn;
-	काष्ठा fsnotअगरy_mark *mark;
+struct fsnotify_mark *fsnotify_find_mark(fsnotify_connp_t *connp,
+					 struct fsnotify_group *group)
+{
+	struct fsnotify_mark_connector *conn;
+	struct fsnotify_mark *mark;
 
-	conn = fsnotअगरy_grab_connector(connp);
-	अगर (!conn)
-		वापस शून्य;
+	conn = fsnotify_grab_connector(connp);
+	if (!conn)
+		return NULL;
 
-	hlist_क्रम_each_entry(mark, &conn->list, obj_list) अणु
-		अगर (mark->group == group &&
-		    (mark->flags & FSNOTIFY_MARK_FLAG_ATTACHED)) अणु
-			fsnotअगरy_get_mark(mark);
+	hlist_for_each_entry(mark, &conn->list, obj_list) {
+		if (mark->group == group &&
+		    (mark->flags & FSNOTIFY_MARK_FLAG_ATTACHED)) {
+			fsnotify_get_mark(mark);
 			spin_unlock(&conn->lock);
-			वापस mark;
-		पूर्ण
-	पूर्ण
+			return mark;
+		}
+	}
 	spin_unlock(&conn->lock);
-	वापस शून्य;
-पूर्ण
-EXPORT_SYMBOL_GPL(fsnotअगरy_find_mark);
+	return NULL;
+}
+EXPORT_SYMBOL_GPL(fsnotify_find_mark);
 
 /* Clear any marks in a group with given type mask */
-व्योम fsnotअगरy_clear_marks_by_group(काष्ठा fsnotअगरy_group *group,
-				   अचिन्हित पूर्णांक type_mask)
-अणु
-	काष्ठा fsnotअगरy_mark *lmark, *mark;
-	LIST_HEAD(to_मुक्त);
-	काष्ठा list_head *head = &to_मुक्त;
+void fsnotify_clear_marks_by_group(struct fsnotify_group *group,
+				   unsigned int type_mask)
+{
+	struct fsnotify_mark *lmark, *mark;
+	LIST_HEAD(to_free);
+	struct list_head *head = &to_free;
 
-	/* Skip selection step अगर we want to clear all marks. */
-	अगर (type_mask == FSNOTIFY_OBJ_ALL_TYPES_MASK) अणु
+	/* Skip selection step if we want to clear all marks. */
+	if (type_mask == FSNOTIFY_OBJ_ALL_TYPES_MASK) {
 		head = &group->marks_list;
-		जाओ clear;
-	पूर्ण
+		goto clear;
+	}
 	/*
-	 * We have to be really careful here. Anyसमय we drop mark_mutex, e.g.
-	 * fsnotअगरy_clear_marks_by_inode() can come and मुक्त marks. Even in our
-	 * to_मुक्त list so we have to use mark_mutex even when accessing that
-	 * list. And मुक्तing mark requires us to drop mark_mutex. So we can
-	 * reliably मुक्त only the first mark in the list. That's why we first
-	 * move marks to मुक्त to to_मुक्त list in one go and then मुक्त marks in
-	 * to_मुक्त list one by one.
+	 * We have to be really careful here. Anytime we drop mark_mutex, e.g.
+	 * fsnotify_clear_marks_by_inode() can come and free marks. Even in our
+	 * to_free list so we have to use mark_mutex even when accessing that
+	 * list. And freeing mark requires us to drop mark_mutex. So we can
+	 * reliably free only the first mark in the list. That's why we first
+	 * move marks to free to to_free list in one go and then free marks in
+	 * to_free list one by one.
 	 */
 	mutex_lock_nested(&group->mark_mutex, SINGLE_DEPTH_NESTING);
-	list_क्रम_each_entry_safe(mark, lmark, &group->marks_list, g_list) अणु
-		अगर ((1U << mark->connector->type) & type_mask)
-			list_move(&mark->g_list, &to_मुक्त);
-	पूर्ण
+	list_for_each_entry_safe(mark, lmark, &group->marks_list, g_list) {
+		if ((1U << mark->connector->type) & type_mask)
+			list_move(&mark->g_list, &to_free);
+	}
 	mutex_unlock(&group->mark_mutex);
 
 clear:
-	जबतक (1) अणु
+	while (1) {
 		mutex_lock_nested(&group->mark_mutex, SINGLE_DEPTH_NESTING);
-		अगर (list_empty(head)) अणु
+		if (list_empty(head)) {
 			mutex_unlock(&group->mark_mutex);
-			अवरोध;
-		पूर्ण
-		mark = list_first_entry(head, काष्ठा fsnotअगरy_mark, g_list);
-		fsnotअगरy_get_mark(mark);
-		fsnotअगरy_detach_mark(mark);
+			break;
+		}
+		mark = list_first_entry(head, struct fsnotify_mark, g_list);
+		fsnotify_get_mark(mark);
+		fsnotify_detach_mark(mark);
 		mutex_unlock(&group->mark_mutex);
-		fsnotअगरy_मुक्त_mark(mark);
-		fsnotअगरy_put_mark(mark);
-	पूर्ण
-पूर्ण
+		fsnotify_free_mark(mark);
+		fsnotify_put_mark(mark);
+	}
+}
 
 /* Destroy all marks attached to an object via connector */
-व्योम fsnotअगरy_destroy_marks(fsnotअगरy_connp_t *connp)
-अणु
-	काष्ठा fsnotअगरy_mark_connector *conn;
-	काष्ठा fsnotअगरy_mark *mark, *old_mark = शून्य;
-	व्योम *objp;
-	अचिन्हित पूर्णांक type;
+void fsnotify_destroy_marks(fsnotify_connp_t *connp)
+{
+	struct fsnotify_mark_connector *conn;
+	struct fsnotify_mark *mark, *old_mark = NULL;
+	void *objp;
+	unsigned int type;
 
-	conn = fsnotअगरy_grab_connector(connp);
-	अगर (!conn)
-		वापस;
+	conn = fsnotify_grab_connector(connp);
+	if (!conn)
+		return;
 	/*
 	 * We have to be careful since we can race with e.g.
-	 * fsnotअगरy_clear_marks_by_group() and once we drop the conn->lock, the
-	 * list can get modअगरied. However we are holding mark reference and
-	 * thus our mark cannot be हटाओd from obj_list so we can जारी
+	 * fsnotify_clear_marks_by_group() and once we drop the conn->lock, the
+	 * list can get modified. However we are holding mark reference and
+	 * thus our mark cannot be removed from obj_list so we can continue
 	 * iteration after regaining conn->lock.
 	 */
-	hlist_क्रम_each_entry(mark, &conn->list, obj_list) अणु
-		fsnotअगरy_get_mark(mark);
+	hlist_for_each_entry(mark, &conn->list, obj_list) {
+		fsnotify_get_mark(mark);
 		spin_unlock(&conn->lock);
-		अगर (old_mark)
-			fsnotअगरy_put_mark(old_mark);
+		if (old_mark)
+			fsnotify_put_mark(old_mark);
 		old_mark = mark;
-		fsnotअगरy_destroy_mark(mark, mark->group);
+		fsnotify_destroy_mark(mark, mark->group);
 		spin_lock(&conn->lock);
-	पूर्ण
+	}
 	/*
-	 * Detach list from object now so that we करोn't pin inode until all
+	 * Detach list from object now so that we don't pin inode until all
 	 * mark references get dropped. It would lead to strange results such
 	 * as delaying inode deletion or blocking unmount.
 	 */
-	objp = fsnotअगरy_detach_connector_from_object(conn, &type);
+	objp = fsnotify_detach_connector_from_object(conn, &type);
 	spin_unlock(&conn->lock);
-	अगर (old_mark)
-		fsnotअगरy_put_mark(old_mark);
-	fsnotअगरy_drop_object(type, objp);
-पूर्ण
+	if (old_mark)
+		fsnotify_put_mark(old_mark);
+	fsnotify_drop_object(type, objp);
+}
 
 /*
  * Nothing fancy, just initialize lists and locks and counters.
  */
-व्योम fsnotअगरy_init_mark(काष्ठा fsnotअगरy_mark *mark,
-			काष्ठा fsnotअगरy_group *group)
-अणु
-	स_रखो(mark, 0, माप(*mark));
+void fsnotify_init_mark(struct fsnotify_mark *mark,
+			struct fsnotify_group *group)
+{
+	memset(mark, 0, sizeof(*mark));
 	spin_lock_init(&mark->lock);
 	refcount_set(&mark->refcnt, 1);
-	fsnotअगरy_get_group(group);
+	fsnotify_get_group(group);
 	mark->group = group;
-	WRITE_ONCE(mark->connector, शून्य);
-पूर्ण
-EXPORT_SYMBOL_GPL(fsnotअगरy_init_mark);
+	WRITE_ONCE(mark->connector, NULL);
+}
+EXPORT_SYMBOL_GPL(fsnotify_init_mark);
 
 /*
- * Destroy all marks in destroy_list, रुकोs क्रम SRCU period to finish beक्रमe
- * actually मुक्तing marks.
+ * Destroy all marks in destroy_list, waits for SRCU period to finish before
+ * actually freeing marks.
  */
-अटल व्योम fsnotअगरy_mark_destroy_workfn(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा fsnotअगरy_mark *mark, *next;
-	काष्ठा list_head निजी_destroy_list;
+static void fsnotify_mark_destroy_workfn(struct work_struct *work)
+{
+	struct fsnotify_mark *mark, *next;
+	struct list_head private_destroy_list;
 
 	spin_lock(&destroy_lock);
 	/* exchange the list head */
-	list_replace_init(&destroy_list, &निजी_destroy_list);
+	list_replace_init(&destroy_list, &private_destroy_list);
 	spin_unlock(&destroy_lock);
 
-	synchronize_srcu(&fsnotअगरy_mark_srcu);
+	synchronize_srcu(&fsnotify_mark_srcu);
 
-	list_क्रम_each_entry_safe(mark, next, &निजी_destroy_list, g_list) अणु
+	list_for_each_entry_safe(mark, next, &private_destroy_list, g_list) {
 		list_del_init(&mark->g_list);
-		fsnotअगरy_final_mark_destroy(mark);
-	पूर्ण
-पूर्ण
+		fsnotify_final_mark_destroy(mark);
+	}
+}
 
-/* Wait क्रम all marks queued क्रम deकाष्ठाion to be actually destroyed */
-व्योम fsnotअगरy_रुको_marks_destroyed(व्योम)
-अणु
+/* Wait for all marks queued for destruction to be actually destroyed */
+void fsnotify_wait_marks_destroyed(void)
+{
 	flush_delayed_work(&reaper_work);
-पूर्ण
-EXPORT_SYMBOL_GPL(fsnotअगरy_रुको_marks_destroyed);
+}
+EXPORT_SYMBOL_GPL(fsnotify_wait_marks_destroyed);

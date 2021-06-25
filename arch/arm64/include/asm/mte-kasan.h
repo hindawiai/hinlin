@@ -1,66 +1,65 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2020 ARM Ltd.
  */
-#अगर_अघोषित __ASM_MTE_KASAN_H
-#घोषणा __ASM_MTE_KASAN_H
+#ifndef __ASM_MTE_KASAN_H
+#define __ASM_MTE_KASAN_H
 
-#समावेश <यंत्र/mte-def.h>
+#include <asm/mte-def.h>
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-#अगर_घोषित CONFIG_ARM64_MTE
+#ifdef CONFIG_ARM64_MTE
 
 /*
- * These functions are meant to be only used from KASAN runसमय through
- * the arch_*() पूर्णांकerface defined in यंत्र/memory.h.
- * These functions करोn't include प्रणाली_supports_mte() checks,
+ * These functions are meant to be only used from KASAN runtime through
+ * the arch_*() interface defined in asm/memory.h.
+ * These functions don't include system_supports_mte() checks,
  * as KASAN only calls them when MTE is supported and enabled.
  */
 
-अटल अंतरभूत u8 mte_get_ptr_tag(व्योम *ptr)
-अणु
-	/* Note: The क्रमmat of KASAN tags is 0xF<x> */
+static inline u8 mte_get_ptr_tag(void *ptr)
+{
+	/* Note: The format of KASAN tags is 0xF<x> */
 	u8 tag = 0xF0 | (u8)(((u64)(ptr)) >> MTE_TAG_SHIFT);
 
-	वापस tag;
-पूर्ण
+	return tag;
+}
 
-/* Get allocation tag क्रम the address. */
-अटल अंतरभूत u8 mte_get_mem_tag(व्योम *addr)
-अणु
-	यंत्र(__MTE_PREAMBLE "ldg %0, [%0]"
+/* Get allocation tag for the address. */
+static inline u8 mte_get_mem_tag(void *addr)
+{
+	asm(__MTE_PREAMBLE "ldg %0, [%0]"
 		: "+r" (addr));
 
-	वापस mte_get_ptr_tag(addr);
-पूर्ण
+	return mte_get_ptr_tag(addr);
+}
 
-/* Generate a अक्रमom tag. */
-अटल अंतरभूत u8 mte_get_अक्रमom_tag(व्योम)
-अणु
-	व्योम *addr;
+/* Generate a random tag. */
+static inline u8 mte_get_random_tag(void)
+{
+	void *addr;
 
-	यंत्र(__MTE_PREAMBLE "irg %0, %0"
+	asm(__MTE_PREAMBLE "irg %0, %0"
 		: "=r" (addr));
 
-	वापस mte_get_ptr_tag(addr);
-पूर्ण
+	return mte_get_ptr_tag(addr);
+}
 
 /*
- * Assign allocation tags क्रम a region of memory based on the poपूर्णांकer tag.
- * Note: The address must be non-शून्य and MTE_GRANULE_SIZE aligned and
+ * Assign allocation tags for a region of memory based on the pointer tag.
+ * Note: The address must be non-NULL and MTE_GRANULE_SIZE aligned and
  * size must be non-zero and MTE_GRANULE_SIZE aligned.
  */
-अटल अंतरभूत व्योम mte_set_mem_tag_range(व्योम *addr, माप_प्रकार size,
+static inline void mte_set_mem_tag_range(void *addr, size_t size,
 						u8 tag, bool init)
-अणु
+{
 	u64 curr, end;
 
-	अगर (!size)
-		वापस;
+	if (!size)
+		return;
 
 	curr = (u64)__tag_set(addr, tag);
 	end = curr + size;
@@ -69,77 +68,77 @@
 	 * 'asm volatile' is required to prevent the compiler to move
 	 * the statement outside of the loop.
 	 */
-	अगर (init) अणु
-		करो अणु
-			यंत्र अस्थिर(__MTE_PREAMBLE "stzg %0, [%0]"
+	if (init) {
+		do {
+			asm volatile(__MTE_PREAMBLE "stzg %0, [%0]"
 				     :
 				     : "r" (curr)
 				     : "memory");
 			curr += MTE_GRANULE_SIZE;
-		पूर्ण जबतक (curr != end);
-	पूर्ण अन्यथा अणु
-		करो अणु
-			यंत्र अस्थिर(__MTE_PREAMBLE "stg %0, [%0]"
+		} while (curr != end);
+	} else {
+		do {
+			asm volatile(__MTE_PREAMBLE "stg %0, [%0]"
 				     :
 				     : "r" (curr)
 				     : "memory");
 			curr += MTE_GRANULE_SIZE;
-		पूर्ण जबतक (curr != end);
-	पूर्ण
-पूर्ण
+		} while (curr != end);
+	}
+}
 
-व्योम mte_enable_kernel_sync(व्योम);
-व्योम mte_enable_kernel_async(व्योम);
-व्योम mte_init_tags(u64 max_tag);
+void mte_enable_kernel_sync(void);
+void mte_enable_kernel_async(void);
+void mte_init_tags(u64 max_tag);
 
-व्योम mte_set_report_once(bool state);
-bool mte_report_once(व्योम);
+void mte_set_report_once(bool state);
+bool mte_report_once(void);
 
-#अन्यथा /* CONFIG_ARM64_MTE */
+#else /* CONFIG_ARM64_MTE */
 
-अटल अंतरभूत u8 mte_get_ptr_tag(व्योम *ptr)
-अणु
-	वापस 0xFF;
-पूर्ण
+static inline u8 mte_get_ptr_tag(void *ptr)
+{
+	return 0xFF;
+}
 
-अटल अंतरभूत u8 mte_get_mem_tag(व्योम *addr)
-अणु
-	वापस 0xFF;
-पूर्ण
+static inline u8 mte_get_mem_tag(void *addr)
+{
+	return 0xFF;
+}
 
-अटल अंतरभूत u8 mte_get_अक्रमom_tag(व्योम)
-अणु
-	वापस 0xFF;
-पूर्ण
+static inline u8 mte_get_random_tag(void)
+{
+	return 0xFF;
+}
 
-अटल अंतरभूत व्योम mte_set_mem_tag_range(व्योम *addr, माप_प्रकार size,
+static inline void mte_set_mem_tag_range(void *addr, size_t size,
 						u8 tag, bool init)
-अणु
-पूर्ण
+{
+}
 
-अटल अंतरभूत व्योम mte_enable_kernel_sync(व्योम)
-अणु
-पूर्ण
+static inline void mte_enable_kernel_sync(void)
+{
+}
 
-अटल अंतरभूत व्योम mte_enable_kernel_async(व्योम)
-अणु
-पूर्ण
+static inline void mte_enable_kernel_async(void)
+{
+}
 
-अटल अंतरभूत व्योम mte_init_tags(u64 max_tag)
-अणु
-पूर्ण
+static inline void mte_init_tags(u64 max_tag)
+{
+}
 
-अटल अंतरभूत व्योम mte_set_report_once(bool state)
-अणु
-पूर्ण
+static inline void mte_set_report_once(bool state)
+{
+}
 
-अटल अंतरभूत bool mte_report_once(व्योम)
-अणु
-	वापस false;
-पूर्ण
+static inline bool mte_report_once(void)
+{
+	return false;
+}
 
-#पूर्ण_अगर /* CONFIG_ARM64_MTE */
+#endif /* CONFIG_ARM64_MTE */
 
-#पूर्ण_अगर /* __ASSEMBLY__ */
+#endif /* __ASSEMBLY__ */
 
-#पूर्ण_अगर /* __ASM_MTE_KASAN_H  */
+#endif /* __ASM_MTE_KASAN_H  */

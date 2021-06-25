@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,279 +21,279 @@
  *
  * Authors: Ben Skeggs
  */
-#समावेश <core/object.h>
-#समावेश <core/client.h>
-#समावेश <core/engine.h>
+#include <core/object.h>
+#include <core/client.h>
+#include <core/engine.h>
 
-काष्ठा nvkm_object *
-nvkm_object_search(काष्ठा nvkm_client *client, u64 handle,
-		   स्थिर काष्ठा nvkm_object_func *func)
-अणु
-	काष्ठा nvkm_object *object;
+struct nvkm_object *
+nvkm_object_search(struct nvkm_client *client, u64 handle,
+		   const struct nvkm_object_func *func)
+{
+	struct nvkm_object *object;
 
-	अगर (handle) अणु
-		काष्ठा rb_node *node = client->objroot.rb_node;
-		जबतक (node) अणु
+	if (handle) {
+		struct rb_node *node = client->objroot.rb_node;
+		while (node) {
 			object = rb_entry(node, typeof(*object), node);
-			अगर (handle < object->object)
+			if (handle < object->object)
 				node = node->rb_left;
-			अन्यथा
-			अगर (handle > object->object)
+			else
+			if (handle > object->object)
 				node = node->rb_right;
-			अन्यथा
-				जाओ करोne;
-		पूर्ण
-		वापस ERR_PTR(-ENOENT);
-	पूर्ण अन्यथा अणु
+			else
+				goto done;
+		}
+		return ERR_PTR(-ENOENT);
+	} else {
 		object = &client->object;
-	पूर्ण
+	}
 
-करोne:
-	अगर (unlikely(func && object->func != func))
-		वापस ERR_PTR(-EINVAL);
-	वापस object;
-पूर्ण
+done:
+	if (unlikely(func && object->func != func))
+		return ERR_PTR(-EINVAL);
+	return object;
+}
 
-व्योम
-nvkm_object_हटाओ(काष्ठा nvkm_object *object)
-अणु
-	अगर (!RB_EMPTY_NODE(&object->node))
+void
+nvkm_object_remove(struct nvkm_object *object)
+{
+	if (!RB_EMPTY_NODE(&object->node))
 		rb_erase(&object->node, &object->client->objroot);
-पूर्ण
+}
 
 bool
-nvkm_object_insert(काष्ठा nvkm_object *object)
-अणु
-	काष्ठा rb_node **ptr = &object->client->objroot.rb_node;
-	काष्ठा rb_node *parent = शून्य;
+nvkm_object_insert(struct nvkm_object *object)
+{
+	struct rb_node **ptr = &object->client->objroot.rb_node;
+	struct rb_node *parent = NULL;
 
-	जबतक (*ptr) अणु
-		काष्ठा nvkm_object *this = rb_entry(*ptr, typeof(*this), node);
+	while (*ptr) {
+		struct nvkm_object *this = rb_entry(*ptr, typeof(*this), node);
 		parent = *ptr;
-		अगर (object->object < this->object)
+		if (object->object < this->object)
 			ptr = &parent->rb_left;
-		अन्यथा
-		अगर (object->object > this->object)
+		else
+		if (object->object > this->object)
 			ptr = &parent->rb_right;
-		अन्यथा
-			वापस false;
-	पूर्ण
+		else
+			return false;
+	}
 
 	rb_link_node(&object->node, parent, ptr);
 	rb_insert_color(&object->node, &object->client->objroot);
-	वापस true;
-पूर्ण
+	return true;
+}
 
-पूर्णांक
-nvkm_object_mthd(काष्ठा nvkm_object *object, u32 mthd, व्योम *data, u32 size)
-अणु
-	अगर (likely(object->func->mthd))
-		वापस object->func->mthd(object, mthd, data, size);
-	वापस -ENODEV;
-पूर्ण
+int
+nvkm_object_mthd(struct nvkm_object *object, u32 mthd, void *data, u32 size)
+{
+	if (likely(object->func->mthd))
+		return object->func->mthd(object, mthd, data, size);
+	return -ENODEV;
+}
 
-पूर्णांक
-nvkm_object_ntfy(काष्ठा nvkm_object *object, u32 mthd,
-		 काष्ठा nvkm_event **pevent)
-अणु
-	अगर (likely(object->func->ntfy))
-		वापस object->func->ntfy(object, mthd, pevent);
-	वापस -ENODEV;
-पूर्ण
+int
+nvkm_object_ntfy(struct nvkm_object *object, u32 mthd,
+		 struct nvkm_event **pevent)
+{
+	if (likely(object->func->ntfy))
+		return object->func->ntfy(object, mthd, pevent);
+	return -ENODEV;
+}
 
-पूर्णांक
-nvkm_object_map(काष्ठा nvkm_object *object, व्योम *argv, u32 argc,
-		क्रमागत nvkm_object_map *type, u64 *addr, u64 *size)
-अणु
-	अगर (likely(object->func->map))
-		वापस object->func->map(object, argv, argc, type, addr, size);
-	वापस -ENODEV;
-पूर्ण
+int
+nvkm_object_map(struct nvkm_object *object, void *argv, u32 argc,
+		enum nvkm_object_map *type, u64 *addr, u64 *size)
+{
+	if (likely(object->func->map))
+		return object->func->map(object, argv, argc, type, addr, size);
+	return -ENODEV;
+}
 
-पूर्णांक
-nvkm_object_unmap(काष्ठा nvkm_object *object)
-अणु
-	अगर (likely(object->func->unmap))
-		वापस object->func->unmap(object);
-	वापस -ENODEV;
-पूर्ण
+int
+nvkm_object_unmap(struct nvkm_object *object)
+{
+	if (likely(object->func->unmap))
+		return object->func->unmap(object);
+	return -ENODEV;
+}
 
-पूर्णांक
-nvkm_object_rd08(काष्ठा nvkm_object *object, u64 addr, u8 *data)
-अणु
-	अगर (likely(object->func->rd08))
-		वापस object->func->rd08(object, addr, data);
-	वापस -ENODEV;
-पूर्ण
+int
+nvkm_object_rd08(struct nvkm_object *object, u64 addr, u8 *data)
+{
+	if (likely(object->func->rd08))
+		return object->func->rd08(object, addr, data);
+	return -ENODEV;
+}
 
-पूर्णांक
-nvkm_object_rd16(काष्ठा nvkm_object *object, u64 addr, u16 *data)
-अणु
-	अगर (likely(object->func->rd16))
-		वापस object->func->rd16(object, addr, data);
-	वापस -ENODEV;
-पूर्ण
+int
+nvkm_object_rd16(struct nvkm_object *object, u64 addr, u16 *data)
+{
+	if (likely(object->func->rd16))
+		return object->func->rd16(object, addr, data);
+	return -ENODEV;
+}
 
-पूर्णांक
-nvkm_object_rd32(काष्ठा nvkm_object *object, u64 addr, u32 *data)
-अणु
-	अगर (likely(object->func->rd32))
-		वापस object->func->rd32(object, addr, data);
-	वापस -ENODEV;
-पूर्ण
+int
+nvkm_object_rd32(struct nvkm_object *object, u64 addr, u32 *data)
+{
+	if (likely(object->func->rd32))
+		return object->func->rd32(object, addr, data);
+	return -ENODEV;
+}
 
-पूर्णांक
-nvkm_object_wr08(काष्ठा nvkm_object *object, u64 addr, u8 data)
-अणु
-	अगर (likely(object->func->wr08))
-		वापस object->func->wr08(object, addr, data);
-	वापस -ENODEV;
-पूर्ण
+int
+nvkm_object_wr08(struct nvkm_object *object, u64 addr, u8 data)
+{
+	if (likely(object->func->wr08))
+		return object->func->wr08(object, addr, data);
+	return -ENODEV;
+}
 
-पूर्णांक
-nvkm_object_wr16(काष्ठा nvkm_object *object, u64 addr, u16 data)
-अणु
-	अगर (likely(object->func->wr16))
-		वापस object->func->wr16(object, addr, data);
-	वापस -ENODEV;
-पूर्ण
+int
+nvkm_object_wr16(struct nvkm_object *object, u64 addr, u16 data)
+{
+	if (likely(object->func->wr16))
+		return object->func->wr16(object, addr, data);
+	return -ENODEV;
+}
 
-पूर्णांक
-nvkm_object_wr32(काष्ठा nvkm_object *object, u64 addr, u32 data)
-अणु
-	अगर (likely(object->func->wr32))
-		वापस object->func->wr32(object, addr, data);
-	वापस -ENODEV;
-पूर्ण
+int
+nvkm_object_wr32(struct nvkm_object *object, u64 addr, u32 data)
+{
+	if (likely(object->func->wr32))
+		return object->func->wr32(object, addr, data);
+	return -ENODEV;
+}
 
-पूर्णांक
-nvkm_object_bind(काष्ठा nvkm_object *object, काष्ठा nvkm_gpuobj *gpuobj,
-		 पूर्णांक align, काष्ठा nvkm_gpuobj **pgpuobj)
-अणु
-	अगर (object->func->bind)
-		वापस object->func->bind(object, gpuobj, align, pgpuobj);
-	वापस -ENODEV;
-पूर्ण
+int
+nvkm_object_bind(struct nvkm_object *object, struct nvkm_gpuobj *gpuobj,
+		 int align, struct nvkm_gpuobj **pgpuobj)
+{
+	if (object->func->bind)
+		return object->func->bind(object, gpuobj, align, pgpuobj);
+	return -ENODEV;
+}
 
-पूर्णांक
-nvkm_object_fini(काष्ठा nvkm_object *object, bool suspend)
-अणु
-	स्थिर अक्षर *action = suspend ? "suspend" : "fini";
-	काष्ठा nvkm_object *child;
-	s64 समय;
-	पूर्णांक ret;
+int
+nvkm_object_fini(struct nvkm_object *object, bool suspend)
+{
+	const char *action = suspend ? "suspend" : "fini";
+	struct nvkm_object *child;
+	s64 time;
+	int ret;
 
-	nvअगर_debug(object, "%s children...\n", action);
-	समय = kसमय_प्रकारo_us(kसमय_get());
-	list_क्रम_each_entry(child, &object->tree, head) अणु
+	nvif_debug(object, "%s children...\n", action);
+	time = ktime_to_us(ktime_get());
+	list_for_each_entry(child, &object->tree, head) {
 		ret = nvkm_object_fini(child, suspend);
-		अगर (ret && suspend)
-			जाओ fail_child;
-	पूर्ण
+		if (ret && suspend)
+			goto fail_child;
+	}
 
-	nvअगर_debug(object, "%s running...\n", action);
-	अगर (object->func->fini) अणु
+	nvif_debug(object, "%s running...\n", action);
+	if (object->func->fini) {
 		ret = object->func->fini(object, suspend);
-		अगर (ret) अणु
-			nvअगर_error(object, "%s failed with %d\n", action, ret);
-			अगर (suspend)
-				जाओ fail;
-		पूर्ण
-	पूर्ण
+		if (ret) {
+			nvif_error(object, "%s failed with %d\n", action, ret);
+			if (suspend)
+				goto fail;
+		}
+	}
 
-	समय = kसमय_प्रकारo_us(kसमय_get()) - समय;
-	nvअगर_debug(object, "%s completed in %lldus\n", action, समय);
-	वापस 0;
+	time = ktime_to_us(ktime_get()) - time;
+	nvif_debug(object, "%s completed in %lldus\n", action, time);
+	return 0;
 
 fail:
-	अगर (object->func->init) अणु
-		पूर्णांक rret = object->func->init(object);
-		अगर (rret)
-			nvअगर_fatal(object, "failed to restart, %d\n", rret);
-	पूर्ण
+	if (object->func->init) {
+		int rret = object->func->init(object);
+		if (rret)
+			nvif_fatal(object, "failed to restart, %d\n", rret);
+	}
 fail_child:
-	list_क्रम_each_entry_जारी_reverse(child, &object->tree, head) अणु
+	list_for_each_entry_continue_reverse(child, &object->tree, head) {
 		nvkm_object_init(child);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-पूर्णांक
-nvkm_object_init(काष्ठा nvkm_object *object)
-अणु
-	काष्ठा nvkm_object *child;
-	s64 समय;
-	पूर्णांक ret;
+int
+nvkm_object_init(struct nvkm_object *object)
+{
+	struct nvkm_object *child;
+	s64 time;
+	int ret;
 
-	nvअगर_debug(object, "init running...\n");
-	समय = kसमय_प्रकारo_us(kसमय_get());
-	अगर (object->func->init) अणु
+	nvif_debug(object, "init running...\n");
+	time = ktime_to_us(ktime_get());
+	if (object->func->init) {
 		ret = object->func->init(object);
-		अगर (ret)
-			जाओ fail;
-	पूर्ण
+		if (ret)
+			goto fail;
+	}
 
-	nvअगर_debug(object, "init children...\n");
-	list_क्रम_each_entry(child, &object->tree, head) अणु
+	nvif_debug(object, "init children...\n");
+	list_for_each_entry(child, &object->tree, head) {
 		ret = nvkm_object_init(child);
-		अगर (ret)
-			जाओ fail_child;
-	पूर्ण
+		if (ret)
+			goto fail_child;
+	}
 
-	समय = kसमय_प्रकारo_us(kसमय_get()) - समय;
-	nvअगर_debug(object, "init completed in %lldus\n", समय);
-	वापस 0;
+	time = ktime_to_us(ktime_get()) - time;
+	nvif_debug(object, "init completed in %lldus\n", time);
+	return 0;
 
 fail_child:
-	list_क्रम_each_entry_जारी_reverse(child, &object->tree, head)
+	list_for_each_entry_continue_reverse(child, &object->tree, head)
 		nvkm_object_fini(child, false);
 fail:
-	nvअगर_error(object, "init failed with %d\n", ret);
-	अगर (object->func->fini)
+	nvif_error(object, "init failed with %d\n", ret);
+	if (object->func->fini)
 		object->func->fini(object, false);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम *
-nvkm_object_dtor(काष्ठा nvkm_object *object)
-अणु
-	काष्ठा nvkm_object *child, *ctemp;
-	व्योम *data = object;
-	s64 समय;
+void *
+nvkm_object_dtor(struct nvkm_object *object)
+{
+	struct nvkm_object *child, *ctemp;
+	void *data = object;
+	s64 time;
 
-	nvअगर_debug(object, "destroy children...\n");
-	समय = kसमय_प्रकारo_us(kसमय_get());
-	list_क्रम_each_entry_safe(child, ctemp, &object->tree, head) अणु
+	nvif_debug(object, "destroy children...\n");
+	time = ktime_to_us(ktime_get());
+	list_for_each_entry_safe(child, ctemp, &object->tree, head) {
 		nvkm_object_del(&child);
-	पूर्ण
+	}
 
-	nvअगर_debug(object, "destroy running...\n");
+	nvif_debug(object, "destroy running...\n");
 	nvkm_object_unmap(object);
-	अगर (object->func->dtor)
+	if (object->func->dtor)
 		data = object->func->dtor(object);
 	nvkm_engine_unref(&object->engine);
-	समय = kसमय_प्रकारo_us(kसमय_get()) - समय;
-	nvअगर_debug(object, "destroy completed in %lldus...\n", समय);
-	वापस data;
-पूर्ण
+	time = ktime_to_us(ktime_get()) - time;
+	nvif_debug(object, "destroy completed in %lldus...\n", time);
+	return data;
+}
 
-व्योम
-nvkm_object_del(काष्ठा nvkm_object **pobject)
-अणु
-	काष्ठा nvkm_object *object = *pobject;
-	अगर (object && !WARN_ON(!object->func)) अणु
+void
+nvkm_object_del(struct nvkm_object **pobject)
+{
+	struct nvkm_object *object = *pobject;
+	if (object && !WARN_ON(!object->func)) {
 		*pobject = nvkm_object_dtor(object);
-		nvkm_object_हटाओ(object);
+		nvkm_object_remove(object);
 		list_del(&object->head);
-		kमुक्त(*pobject);
-		*pobject = शून्य;
-	पूर्ण
-पूर्ण
+		kfree(*pobject);
+		*pobject = NULL;
+	}
+}
 
-व्योम
-nvkm_object_ctor(स्थिर काष्ठा nvkm_object_func *func,
-		 स्थिर काष्ठा nvkm_oclass *oclass, काष्ठा nvkm_object *object)
-अणु
+void
+nvkm_object_ctor(const struct nvkm_object_func *func,
+		 const struct nvkm_oclass *oclass, struct nvkm_object *object)
+{
 	object->func = func;
 	object->client = oclass->client;
 	object->engine = nvkm_engine_ref(oclass->engine);
@@ -307,31 +306,31 @@ nvkm_object_ctor(स्थिर काष्ठा nvkm_object_func *func,
 	INIT_LIST_HEAD(&object->tree);
 	RB_CLEAR_NODE(&object->node);
 	WARN_ON(IS_ERR(object->engine));
-पूर्ण
+}
 
-पूर्णांक
-nvkm_object_new_(स्थिर काष्ठा nvkm_object_func *func,
-		 स्थिर काष्ठा nvkm_oclass *oclass, व्योम *data, u32 size,
-		 काष्ठा nvkm_object **pobject)
-अणु
-	अगर (size == 0) अणु
-		अगर (!(*pobject = kzalloc(माप(**pobject), GFP_KERNEL)))
-			वापस -ENOMEM;
+int
+nvkm_object_new_(const struct nvkm_object_func *func,
+		 const struct nvkm_oclass *oclass, void *data, u32 size,
+		 struct nvkm_object **pobject)
+{
+	if (size == 0) {
+		if (!(*pobject = kzalloc(sizeof(**pobject), GFP_KERNEL)))
+			return -ENOMEM;
 		nvkm_object_ctor(func, oclass, *pobject);
-		वापस 0;
-	पूर्ण
-	वापस -ENOSYS;
-पूर्ण
+		return 0;
+	}
+	return -ENOSYS;
+}
 
-अटल स्थिर काष्ठा nvkm_object_func
-nvkm_object_func = अणु
-पूर्ण;
+static const struct nvkm_object_func
+nvkm_object_func = {
+};
 
-पूर्णांक
-nvkm_object_new(स्थिर काष्ठा nvkm_oclass *oclass, व्योम *data, u32 size,
-		काष्ठा nvkm_object **pobject)
-अणु
-	स्थिर काष्ठा nvkm_object_func *func =
+int
+nvkm_object_new(const struct nvkm_oclass *oclass, void *data, u32 size,
+		struct nvkm_object **pobject)
+{
+	const struct nvkm_object_func *func =
 		oclass->base.func ? oclass->base.func : &nvkm_object_func;
-	वापस nvkm_object_new_(func, oclass, data, size, pobject);
-पूर्ण
+	return nvkm_object_new_(func, oclass, data, size, pobject);
+}

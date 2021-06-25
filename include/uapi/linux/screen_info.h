@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _UAPI_SCREEN_INFO_H
-#घोषणा _UAPI_SCREEN_INFO_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _UAPI_SCREEN_INFO_H
+#define _UAPI_SCREEN_INFO_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
 /*
- * These are set up by the setup-routine at boot-समय:
+ * These are set up by the setup-routine at boot-time:
  */
 
-काष्ठा screen_info अणु
+struct screen_info {
 	__u8  orig_x;		/* 0x00 */
 	__u8  orig_y;		/* 0x01 */
 	__u16 ext_mem_k;	/* 0x02 */
@@ -22,7 +21,7 @@
 	__u16 unused3;		/* 0x0c */
 	__u8  orig_video_lines;	/* 0x0e */
 	__u8  orig_video_isVGA;	/* 0x0f */
-	__u16 orig_video_poपूर्णांकs;/* 0x10 */
+	__u16 orig_video_points;/* 0x10 */
 
 	/* VESA graphic mode -- linear frame buffer */
 	__u16 lfb_width;	/* 0x12 */
@@ -47,31 +46,31 @@
 	__u32 capabilities;     /* 0x36 */
 	__u32 ext_lfb_base;	/* 0x3a */
 	__u8  _reserved[2];	/* 0x3e */
-पूर्ण __attribute__((packed));
+} __attribute__((packed));
 
-#घोषणा VIDEO_TYPE_MDA		0x10	/* Monochrome Text Display	*/
-#घोषणा VIDEO_TYPE_CGA		0x11	/* CGA Display 			*/
-#घोषणा VIDEO_TYPE_EGAM		0x20	/* EGA/VGA in Monochrome Mode	*/
-#घोषणा VIDEO_TYPE_EGAC		0x21	/* EGA in Color Mode		*/
-#घोषणा VIDEO_TYPE_VGAC		0x22	/* VGA+ in Color Mode		*/
-#घोषणा VIDEO_TYPE_VLFB		0x23	/* VESA VGA in graphic mode	*/
+#define VIDEO_TYPE_MDA		0x10	/* Monochrome Text Display	*/
+#define VIDEO_TYPE_CGA		0x11	/* CGA Display 			*/
+#define VIDEO_TYPE_EGAM		0x20	/* EGA/VGA in Monochrome Mode	*/
+#define VIDEO_TYPE_EGAC		0x21	/* EGA in Color Mode		*/
+#define VIDEO_TYPE_VGAC		0x22	/* VGA+ in Color Mode		*/
+#define VIDEO_TYPE_VLFB		0x23	/* VESA VGA in graphic mode	*/
 
-#घोषणा VIDEO_TYPE_PICA_S3	0x30	/* ACER PICA-61 local S3 video	*/
-#घोषणा VIDEO_TYPE_MIPS_G364	0x31    /* MIPS Magnum 4000 G364 video  */
-#घोषणा VIDEO_TYPE_SGI          0x33    /* Various SGI graphics hardware */
+#define VIDEO_TYPE_PICA_S3	0x30	/* ACER PICA-61 local S3 video	*/
+#define VIDEO_TYPE_MIPS_G364	0x31    /* MIPS Magnum 4000 G364 video  */
+#define VIDEO_TYPE_SGI          0x33    /* Various SGI graphics hardware */
 
-#घोषणा VIDEO_TYPE_TGAC		0x40	/* DEC TGA */
+#define VIDEO_TYPE_TGAC		0x40	/* DEC TGA */
 
-#घोषणा VIDEO_TYPE_SUN          0x50    /* Sun frame buffer. */
-#घोषणा VIDEO_TYPE_SUNPCI       0x51    /* Sun PCI based frame buffer. */
+#define VIDEO_TYPE_SUN          0x50    /* Sun frame buffer. */
+#define VIDEO_TYPE_SUNPCI       0x51    /* Sun PCI based frame buffer. */
 
-#घोषणा VIDEO_TYPE_PMAC		0x60	/* PowerMacपूर्णांकosh frame buffer. */
+#define VIDEO_TYPE_PMAC		0x60	/* PowerMacintosh frame buffer. */
 
-#घोषणा VIDEO_TYPE_EFI		0x70	/* EFI graphic mode		*/
+#define VIDEO_TYPE_EFI		0x70	/* EFI graphic mode		*/
 
-#घोषणा VIDEO_FLAGS_NOCURSOR	(1 << 0) /* The video mode has no cursor set */
+#define VIDEO_FLAGS_NOCURSOR	(1 << 0) /* The video mode has no cursor set */
 
-#घोषणा VIDEO_CAPABILITY_SKIP_QUIRKS	(1 << 0)
-#घोषणा VIDEO_CAPABILITY_64BIT_BASE	(1 << 1)	/* Frame buffer base is 64-bit */
+#define VIDEO_CAPABILITY_SKIP_QUIRKS	(1 << 0)
+#define VIDEO_CAPABILITY_64BIT_BASE	(1 << 1)	/* Frame buffer base is 64-bit */
 
-#पूर्ण_अगर /* _UAPI_SCREEN_INFO_H */
+#endif /* _UAPI_SCREEN_INFO_H */

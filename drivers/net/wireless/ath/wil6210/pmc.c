@@ -1,34 +1,33 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: ISC
+// SPDX-License-Identifier: ISC
 /*
  * Copyright (c) 2012-2015,2017 Qualcomm Atheros, Inc.
  * Copyright (c) 2018, The Linux Foundation. All rights reserved.
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/fs.h>
-#समावेश <linux/seq_file.h>
-#समावेश "wmi.h"
-#समावेश "wil6210.h"
-#समावेश "txrx.h"
-#समावेश "pmc.h"
+#include <linux/types.h>
+#include <linux/errno.h>
+#include <linux/fs.h>
+#include <linux/seq_file.h>
+#include "wmi.h"
+#include "wil6210.h"
+#include "txrx.h"
+#include "pmc.h"
 
-काष्ठा desc_alloc_info अणु
+struct desc_alloc_info {
 	dma_addr_t pa;
-	व्योम	  *va;
-पूर्ण;
+	void	  *va;
+};
 
-अटल पूर्णांक wil_is_pmc_allocated(काष्ठा pmc_ctx *pmc)
-अणु
-	वापस !!pmc->pring_va;
-पूर्ण
+static int wil_is_pmc_allocated(struct pmc_ctx *pmc)
+{
+	return !!pmc->pring_va;
+}
 
-व्योम wil_pmc_init(काष्ठा wil6210_priv *wil)
-अणु
-	स_रखो(&wil->pmc, 0, माप(काष्ठा pmc_ctx));
+void wil_pmc_init(struct wil6210_priv *wil)
+{
+	memset(&wil->pmc, 0, sizeof(struct pmc_ctx));
 	mutex_init(&wil->pmc.lock);
-पूर्ण
+}
 
 /* Allocate the physical ring (p-ring) and the required
  * number of descriptors of required size.
@@ -37,47 +36,47 @@
  * dword's serial number in the lsw and reserved value
  * PCM_DATA_INVALID_DW_VAL in the msw.
  */
-व्योम wil_pmc_alloc(काष्ठा wil6210_priv *wil,
-		   पूर्णांक num_descriptors,
-		   पूर्णांक descriptor_size)
-अणु
+void wil_pmc_alloc(struct wil6210_priv *wil,
+		   int num_descriptors,
+		   int descriptor_size)
+{
 	u32 i;
-	काष्ठा pmc_ctx *pmc = &wil->pmc;
-	काष्ठा device *dev = wil_to_dev(wil);
-	काष्ठा wil6210_vअगर *vअगर = ndev_to_vअगर(wil->मुख्य_ndev);
-	काष्ठा wmi_pmc_cmd pmc_cmd = अणु0पूर्ण;
-	पूर्णांक last_cmd_err = -ENOMEM;
+	struct pmc_ctx *pmc = &wil->pmc;
+	struct device *dev = wil_to_dev(wil);
+	struct wil6210_vif *vif = ndev_to_vif(wil->main_ndev);
+	struct wmi_pmc_cmd pmc_cmd = {0};
+	int last_cmd_err = -ENOMEM;
 
 	mutex_lock(&pmc->lock);
 
-	अगर (wil_is_pmc_allocated(pmc)) अणु
+	if (wil_is_pmc_allocated(pmc)) {
 		/* sanity check */
 		wil_err(wil, "ERROR pmc is already allocated\n");
-		जाओ no_release_err;
-	पूर्ण
-	अगर ((num_descriptors <= 0) || (descriptor_size <= 0)) अणु
+		goto no_release_err;
+	}
+	if ((num_descriptors <= 0) || (descriptor_size <= 0)) {
 		wil_err(wil,
 			"Invalid params num_descriptors(%d), descriptor_size(%d)\n",
 			num_descriptors, descriptor_size);
 		last_cmd_err = -EINVAL;
-		जाओ no_release_err;
-	पूर्ण
+		goto no_release_err;
+	}
 
-	अगर (num_descriptors > (1 << WIL_RING_SIZE_ORDER_MAX)) अणु
+	if (num_descriptors > (1 << WIL_RING_SIZE_ORDER_MAX)) {
 		wil_err(wil,
 			"num_descriptors(%d) exceeds max ring size %d\n",
 			num_descriptors, 1 << WIL_RING_SIZE_ORDER_MAX);
 		last_cmd_err = -EINVAL;
-		जाओ no_release_err;
-	पूर्ण
+		goto no_release_err;
+	}
 
-	अगर (num_descriptors > पूर्णांक_उच्च / descriptor_size) अणु
+	if (num_descriptors > INT_MAX / descriptor_size) {
 		wil_err(wil,
 			"Overflow in num_descriptors(%d)*descriptor_size(%d)\n",
 			num_descriptors, descriptor_size);
 		last_cmd_err = -EINVAL;
-		जाओ no_release_err;
-	पूर्ण
+		goto no_release_err;
+	}
 
 	pmc->num_descriptors = num_descriptors;
 	pmc->descriptor_size = descriptor_size;
@@ -86,77 +85,77 @@
 		     num_descriptors, descriptor_size);
 
 	/* allocate descriptors info list in pmc context*/
-	pmc->descriptors = kसुस्मृति(num_descriptors,
-				  माप(काष्ठा desc_alloc_info),
+	pmc->descriptors = kcalloc(num_descriptors,
+				  sizeof(struct desc_alloc_info),
 				  GFP_KERNEL);
-	अगर (!pmc->descriptors) अणु
+	if (!pmc->descriptors) {
 		wil_err(wil, "ERROR allocating pmc skb list\n");
-		जाओ no_release_err;
-	पूर्ण
+		goto no_release_err;
+	}
 
 	wil_dbg_misc(wil, "pmc_alloc: allocated descriptors info list %p\n",
 		     pmc->descriptors);
 
 	/* Allocate pring buffer and descriptors.
-	 * vring->va should be aligned on its size rounded up to घातer of 2
+	 * vring->va should be aligned on its size rounded up to power of 2
 	 * This is granted by the dma_alloc_coherent.
 	 *
 	 * HW has limitation that all vrings addresses must share the same
 	 * upper 16 msb bits part of 48 bits address. To workaround that,
-	 * अगर we are using more than 32 bit addresses चयन to 32 bit
-	 * allocation beक्रमe allocating vring memory.
+	 * if we are using more than 32 bit addresses switch to 32 bit
+	 * allocation before allocating vring memory.
 	 *
-	 * There's no check क्रम the वापस value of dma_set_mask_and_coherent,
-	 * since we assume अगर we were able to set the mask during
-	 * initialization in this प्रणाली it will not fail अगर we set it again
+	 * There's no check for the return value of dma_set_mask_and_coherent,
+	 * since we assume if we were able to set the mask during
+	 * initialization in this system it will not fail if we set it again
 	 */
-	अगर (wil->dma_addr_size > 32)
+	if (wil->dma_addr_size > 32)
 		dma_set_mask_and_coherent(dev, DMA_BIT_MASK(32));
 
 	pmc->pring_va = dma_alloc_coherent(dev,
-			माप(काष्ठा vring_tx_desc) * num_descriptors,
+			sizeof(struct vring_tx_desc) * num_descriptors,
 			&pmc->pring_pa,
 			GFP_KERNEL);
 
-	अगर (wil->dma_addr_size > 32)
+	if (wil->dma_addr_size > 32)
 		dma_set_mask_and_coherent(dev,
 					  DMA_BIT_MASK(wil->dma_addr_size));
 
 	wil_dbg_misc(wil,
 		     "pmc_alloc: allocated pring %p => %pad. %zd x %d = total %zd bytes\n",
 		     pmc->pring_va, &pmc->pring_pa,
-		     माप(काष्ठा vring_tx_desc),
+		     sizeof(struct vring_tx_desc),
 		     num_descriptors,
-		     माप(काष्ठा vring_tx_desc) * num_descriptors);
+		     sizeof(struct vring_tx_desc) * num_descriptors);
 
-	अगर (!pmc->pring_va) अणु
+	if (!pmc->pring_va) {
 		wil_err(wil, "ERROR allocating pmc pring\n");
-		जाओ release_pmc_skb_list;
-	पूर्ण
+		goto release_pmc_skb_list;
+	}
 
 	/* initially, all descriptors are SW owned
 	 * For Tx, Rx, and PMC, ownership bit is at the same location, thus
 	 * we can use any
 	 */
-	क्रम (i = 0; i < num_descriptors; i++) अणु
-		काष्ठा vring_tx_desc *_d = &pmc->pring_va[i];
-		काष्ठा vring_tx_desc dd = अणुपूर्ण, *d = &dd;
-		पूर्णांक j = 0;
+	for (i = 0; i < num_descriptors; i++) {
+		struct vring_tx_desc *_d = &pmc->pring_va[i];
+		struct vring_tx_desc dd = {}, *d = &dd;
+		int j = 0;
 
 		pmc->descriptors[i].va = dma_alloc_coherent(dev,
 			descriptor_size,
 			&pmc->descriptors[i].pa,
 			GFP_KERNEL);
 
-		अगर (unlikely(!pmc->descriptors[i].va)) अणु
+		if (unlikely(!pmc->descriptors[i].va)) {
 			wil_err(wil, "ERROR allocating pmc descriptor %d", i);
-			जाओ release_pmc_skbs;
-		पूर्ण
+			goto release_pmc_skbs;
+		}
 
-		क्रम (j = 0; j < descriptor_size / माप(u32); j++) अणु
+		for (j = 0; j < descriptor_size / sizeof(u32); j++) {
 			u32 *p = (u32 *)pmc->descriptors[i].va + j;
 			*p = PCM_DATA_INVALID_DW_VAL | j;
-		पूर्ण
+		}
 
 		/* configure dma descriptor */
 		d->dma.addr.addr_low =
@@ -167,7 +166,7 @@
 		d->dma.length = cpu_to_le16(descriptor_size);
 		d->dma.d0 = BIT(9) | RX_DMA_D0_CMD_DMA_IT;
 		*_d = *d;
-	पूर्ण
+	}
 
 	wil_dbg_misc(wil, "pmc_alloc: allocated successfully\n");
 
@@ -178,158 +177,158 @@
 	wil_dbg_misc(wil, "pmc_alloc: send WMI_PMC_CMD with ALLOCATE op\n");
 	pmc->last_cmd_status = wmi_send(wil,
 					WMI_PMC_CMDID,
-					vअगर->mid,
+					vif->mid,
 					&pmc_cmd,
-					माप(pmc_cmd));
-	अगर (pmc->last_cmd_status) अणु
+					sizeof(pmc_cmd));
+	if (pmc->last_cmd_status) {
 		wil_err(wil,
 			"WMI_PMC_CMD with ALLOCATE op failed with status %d",
 			pmc->last_cmd_status);
-		जाओ release_pmc_skbs;
-	पूर्ण
+		goto release_pmc_skbs;
+	}
 
 	mutex_unlock(&pmc->lock);
 
-	वापस;
+	return;
 
 release_pmc_skbs:
 	wil_err(wil, "exit on error: Releasing skbs...\n");
-	क्रम (i = 0; i < num_descriptors && pmc->descriptors[i].va; i++) अणु
-		dma_मुक्त_coherent(dev,
+	for (i = 0; i < num_descriptors && pmc->descriptors[i].va; i++) {
+		dma_free_coherent(dev,
 				  descriptor_size,
 				  pmc->descriptors[i].va,
 				  pmc->descriptors[i].pa);
 
-		pmc->descriptors[i].va = शून्य;
-	पूर्ण
+		pmc->descriptors[i].va = NULL;
+	}
 	wil_err(wil, "exit on error: Releasing pring...\n");
 
-	dma_मुक्त_coherent(dev,
-			  माप(काष्ठा vring_tx_desc) * num_descriptors,
+	dma_free_coherent(dev,
+			  sizeof(struct vring_tx_desc) * num_descriptors,
 			  pmc->pring_va,
 			  pmc->pring_pa);
 
-	pmc->pring_va = शून्य;
+	pmc->pring_va = NULL;
 
 release_pmc_skb_list:
 	wil_err(wil, "exit on error: Releasing descriptors info list...\n");
-	kमुक्त(pmc->descriptors);
-	pmc->descriptors = शून्य;
+	kfree(pmc->descriptors);
+	pmc->descriptors = NULL;
 
 no_release_err:
 	pmc->last_cmd_status = last_cmd_err;
 	mutex_unlock(&pmc->lock);
-पूर्ण
+}
 
 /* Traverse the p-ring and release all buffers.
  * At the end release the p-ring memory
  */
-व्योम wil_pmc_मुक्त(काष्ठा wil6210_priv *wil, पूर्णांक send_pmc_cmd)
-अणु
-	काष्ठा pmc_ctx *pmc = &wil->pmc;
-	काष्ठा device *dev = wil_to_dev(wil);
-	काष्ठा wil6210_vअगर *vअगर = ndev_to_vअगर(wil->मुख्य_ndev);
-	काष्ठा wmi_pmc_cmd pmc_cmd = अणु0पूर्ण;
+void wil_pmc_free(struct wil6210_priv *wil, int send_pmc_cmd)
+{
+	struct pmc_ctx *pmc = &wil->pmc;
+	struct device *dev = wil_to_dev(wil);
+	struct wil6210_vif *vif = ndev_to_vif(wil->main_ndev);
+	struct wmi_pmc_cmd pmc_cmd = {0};
 
 	mutex_lock(&pmc->lock);
 
 	pmc->last_cmd_status = 0;
 
-	अगर (!wil_is_pmc_allocated(pmc)) अणु
+	if (!wil_is_pmc_allocated(pmc)) {
 		wil_dbg_misc(wil,
 			     "pmc_free: Error, can't free - not allocated\n");
 		pmc->last_cmd_status = -EPERM;
 		mutex_unlock(&pmc->lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (send_pmc_cmd) अणु
+	if (send_pmc_cmd) {
 		wil_dbg_misc(wil, "send WMI_PMC_CMD with RELEASE op\n");
 		pmc_cmd.op = WMI_PMC_RELEASE;
 		pmc->last_cmd_status =
-				wmi_send(wil, WMI_PMC_CMDID, vअगर->mid,
-					 &pmc_cmd, माप(pmc_cmd));
-		अगर (pmc->last_cmd_status) अणु
+				wmi_send(wil, WMI_PMC_CMDID, vif->mid,
+					 &pmc_cmd, sizeof(pmc_cmd));
+		if (pmc->last_cmd_status) {
 			wil_err(wil,
 				"WMI_PMC_CMD with RELEASE op failed, status %d",
 				pmc->last_cmd_status);
-			/* There's nothing we can करो with this error.
+			/* There's nothing we can do with this error.
 			 * Normally, it should never occur.
-			 * Continue to मुक्तing all memory allocated क्रम pmc.
+			 * Continue to freeing all memory allocated for pmc.
 			 */
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (pmc->pring_va) अणु
-		माप_प्रकार buf_size = माप(काष्ठा vring_tx_desc) *
+	if (pmc->pring_va) {
+		size_t buf_size = sizeof(struct vring_tx_desc) *
 				  pmc->num_descriptors;
 
 		wil_dbg_misc(wil, "pmc_free: free pring va %p\n",
 			     pmc->pring_va);
-		dma_मुक्त_coherent(dev, buf_size, pmc->pring_va, pmc->pring_pa);
+		dma_free_coherent(dev, buf_size, pmc->pring_va, pmc->pring_pa);
 
-		pmc->pring_va = शून्य;
-	पूर्ण अन्यथा अणु
+		pmc->pring_va = NULL;
+	} else {
 		pmc->last_cmd_status = -ENOENT;
-	पूर्ण
+	}
 
-	अगर (pmc->descriptors) अणु
-		पूर्णांक i;
+	if (pmc->descriptors) {
+		int i;
 
-		क्रम (i = 0;
-		     i < pmc->num_descriptors && pmc->descriptors[i].va; i++) अणु
-			dma_मुक्त_coherent(dev,
+		for (i = 0;
+		     i < pmc->num_descriptors && pmc->descriptors[i].va; i++) {
+			dma_free_coherent(dev,
 					  pmc->descriptor_size,
 					  pmc->descriptors[i].va,
 					  pmc->descriptors[i].pa);
-			pmc->descriptors[i].va = शून्य;
-		पूर्ण
+			pmc->descriptors[i].va = NULL;
+		}
 		wil_dbg_misc(wil, "pmc_free: free descriptor info %d/%d\n", i,
 			     pmc->num_descriptors);
 		wil_dbg_misc(wil,
 			     "pmc_free: free pmc descriptors info list %p\n",
 			     pmc->descriptors);
-		kमुक्त(pmc->descriptors);
-		pmc->descriptors = शून्य;
-	पूर्ण अन्यथा अणु
+		kfree(pmc->descriptors);
+		pmc->descriptors = NULL;
+	} else {
 		pmc->last_cmd_status = -ENOENT;
-	पूर्ण
+	}
 
 	mutex_unlock(&pmc->lock);
-पूर्ण
+}
 
-/* Status of the last operation requested via debugfs: alloc/मुक्त/पढ़ो.
- * 0 - success or negative त्रुटि_सं
+/* Status of the last operation requested via debugfs: alloc/free/read.
+ * 0 - success or negative errno
  */
-पूर्णांक wil_pmc_last_cmd_status(काष्ठा wil6210_priv *wil)
-अणु
+int wil_pmc_last_cmd_status(struct wil6210_priv *wil)
+{
 	wil_dbg_misc(wil, "pmc_last_cmd_status: status %d\n",
 		     wil->pmc.last_cmd_status);
 
-	वापस wil->pmc.last_cmd_status;
-पूर्ण
+	return wil->pmc.last_cmd_status;
+}
 
 /* Read from required position up to the end of current descriptor,
  * depends on descriptor size configured during alloc request.
  */
-sमाप_प्रकार wil_pmc_पढ़ो(काष्ठा file *filp, अक्षर __user *buf, माप_प्रकार count,
+ssize_t wil_pmc_read(struct file *filp, char __user *buf, size_t count,
 		     loff_t *f_pos)
-अणु
-	काष्ठा wil6210_priv *wil = filp->निजी_data;
-	काष्ठा pmc_ctx *pmc = &wil->pmc;
-	माप_प्रकार retval = 0;
-	अचिन्हित दीर्घ दीर्घ idx;
+{
+	struct wil6210_priv *wil = filp->private_data;
+	struct pmc_ctx *pmc = &wil->pmc;
+	size_t retval = 0;
+	unsigned long long idx;
 	loff_t offset;
-	माप_प्रकार pmc_size;
+	size_t pmc_size;
 
 	mutex_lock(&pmc->lock);
 
-	अगर (!wil_is_pmc_allocated(pmc)) अणु
+	if (!wil_is_pmc_allocated(pmc)) {
 		wil_err(wil, "error, pmc is not allocated!\n");
 		pmc->last_cmd_status = -EPERM;
 		mutex_unlock(&pmc->lock);
-		वापस -EPERM;
-	पूर्ण
+		return -EPERM;
+	}
 
 	pmc_size = pmc->descriptor_size * pmc->num_descriptors;
 
@@ -340,23 +339,23 @@ sमाप_प्रकार wil_pmc_पढ़ो(काष्ठा file *filp
 	pmc->last_cmd_status = 0;
 
 	idx = *f_pos;
-	करो_भाग(idx, pmc->descriptor_size);
+	do_div(idx, pmc->descriptor_size);
 	offset = *f_pos - (idx * pmc->descriptor_size);
 
-	अगर (*f_pos >= pmc_size) अणु
+	if (*f_pos >= pmc_size) {
 		wil_dbg_misc(wil,
 			     "pmc_read: reached end of pmc buf: %lld >= %u\n",
 			     *f_pos, (u32)pmc_size);
-		pmc->last_cmd_status = -दुस्फल;
-		जाओ out;
-	पूर्ण
+		pmc->last_cmd_status = -ERANGE;
+		goto out;
+	}
 
 	wil_dbg_misc(wil,
 		     "pmc_read: read from pos %lld (descriptor %llu, offset %llu) %zu bytes\n",
 		     *f_pos, idx, offset, count);
 
-	/* अगर no errors, वापस the copied byte count */
-	retval = simple_पढ़ो_from_buffer(buf,
+	/* if no errors, return the copied byte count */
+	retval = simple_read_from_buffer(buf,
 					 count,
 					 &offset,
 					 pmc->descriptors[idx].va,
@@ -365,50 +364,50 @@ sमाप_प्रकार wil_pmc_पढ़ो(काष्ठा file *filp
 out:
 	mutex_unlock(&pmc->lock);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-loff_t wil_pmc_llseek(काष्ठा file *filp, loff_t off, पूर्णांक whence)
-अणु
+loff_t wil_pmc_llseek(struct file *filp, loff_t off, int whence)
+{
 	loff_t newpos;
-	काष्ठा wil6210_priv *wil = filp->निजी_data;
-	काष्ठा pmc_ctx *pmc = &wil->pmc;
-	माप_प्रकार pmc_size;
+	struct wil6210_priv *wil = filp->private_data;
+	struct pmc_ctx *pmc = &wil->pmc;
+	size_t pmc_size;
 
 	mutex_lock(&pmc->lock);
 
-	अगर (!wil_is_pmc_allocated(pmc)) अणु
+	if (!wil_is_pmc_allocated(pmc)) {
 		wil_err(wil, "error, pmc is not allocated!\n");
 		pmc->last_cmd_status = -EPERM;
 		mutex_unlock(&pmc->lock);
-		वापस -EPERM;
-	पूर्ण
+		return -EPERM;
+	}
 
 	pmc_size = pmc->descriptor_size * pmc->num_descriptors;
 
-	चयन (whence) अणु
-	हाल 0: /* शुरू_से */
+	switch (whence) {
+	case 0: /* SEEK_SET */
 		newpos = off;
-		अवरोध;
+		break;
 
-	हाल 1: /* प्रस्तुत_से */
+	case 1: /* SEEK_CUR */
 		newpos = filp->f_pos + off;
-		अवरोध;
+		break;
 
-	हाल 2: /* अंत_से */
+	case 2: /* SEEK_END */
 		newpos = pmc_size;
-		अवरोध;
+		break;
 
-	शेष: /* can't happen */
+	default: /* can't happen */
 		newpos = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (newpos < 0) अणु
+	if (newpos < 0) {
 		newpos = -EINVAL;
-		जाओ out;
-	पूर्ण
-	अगर (newpos > pmc_size)
+		goto out;
+	}
+	if (newpos > pmc_size)
 		newpos = pmc_size;
 
 	filp->f_pos = newpos;
@@ -416,30 +415,30 @@ loff_t wil_pmc_llseek(काष्ठा file *filp, loff_t off, पूर्ण
 out:
 	mutex_unlock(&pmc->lock);
 
-	वापस newpos;
-पूर्ण
+	return newpos;
+}
 
-पूर्णांक wil_pmcring_पढ़ो(काष्ठा seq_file *s, व्योम *data)
-अणु
-	काष्ठा wil6210_priv *wil = s->निजी;
-	काष्ठा pmc_ctx *pmc = &wil->pmc;
-	माप_प्रकार pmc_ring_size =
-		माप(काष्ठा vring_rx_desc) * pmc->num_descriptors;
+int wil_pmcring_read(struct seq_file *s, void *data)
+{
+	struct wil6210_priv *wil = s->private;
+	struct pmc_ctx *pmc = &wil->pmc;
+	size_t pmc_ring_size =
+		sizeof(struct vring_rx_desc) * pmc->num_descriptors;
 
 	mutex_lock(&pmc->lock);
 
-	अगर (!wil_is_pmc_allocated(pmc)) अणु
+	if (!wil_is_pmc_allocated(pmc)) {
 		wil_err(wil, "error, pmc is not allocated!\n");
 		pmc->last_cmd_status = -EPERM;
 		mutex_unlock(&pmc->lock);
-		वापस -EPERM;
-	पूर्ण
+		return -EPERM;
+	}
 
 	wil_dbg_misc(wil, "pmcring_read: size %zu\n", pmc_ring_size);
 
-	seq_ग_लिखो(s, pmc->pring_va, pmc_ring_size);
+	seq_write(s, pmc->pring_va, pmc_ring_size);
 
 	mutex_unlock(&pmc->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

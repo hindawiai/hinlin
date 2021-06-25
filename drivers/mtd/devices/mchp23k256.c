@@ -1,71 +1,70 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * mchp23k256.c
  *
- * Driver क्रम Microchip 23k256 SPI RAM chips
+ * Driver for Microchip 23k256 SPI RAM chips
  *
- * Copyright तऊ 2016 Andrew Lunn <andrew@lunn.ch>
+ * Copyright © 2016 Andrew Lunn <andrew@lunn.ch>
  */
-#समावेश <linux/device.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mtd/mtd.h>
-#समावेश <linux/mtd/partitions.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sizes.h>
-#समावेश <linux/spi/flash.h>
-#समावेश <linux/spi/spi.h>
-#समावेश <linux/of_device.h>
+#include <linux/device.h>
+#include <linux/module.h>
+#include <linux/mtd/mtd.h>
+#include <linux/mtd/partitions.h>
+#include <linux/mutex.h>
+#include <linux/sched.h>
+#include <linux/sizes.h>
+#include <linux/spi/flash.h>
+#include <linux/spi/spi.h>
+#include <linux/of_device.h>
 
-#घोषणा MAX_CMD_SIZE		4
+#define MAX_CMD_SIZE		4
 
-काष्ठा mchp23_caps अणु
+struct mchp23_caps {
 	u8 addr_width;
-	अचिन्हित पूर्णांक size;
-पूर्ण;
+	unsigned int size;
+};
 
-काष्ठा mchp23k256_flash अणु
-	काष्ठा spi_device	*spi;
-	काष्ठा mutex		lock;
-	काष्ठा mtd_info		mtd;
-	स्थिर काष्ठा mchp23_caps	*caps;
-पूर्ण;
+struct mchp23k256_flash {
+	struct spi_device	*spi;
+	struct mutex		lock;
+	struct mtd_info		mtd;
+	const struct mchp23_caps	*caps;
+};
 
-#घोषणा MCHP23K256_CMD_WRITE_STATUS	0x01
-#घोषणा MCHP23K256_CMD_WRITE		0x02
-#घोषणा MCHP23K256_CMD_READ		0x03
-#घोषणा MCHP23K256_MODE_SEQ		BIT(6)
+#define MCHP23K256_CMD_WRITE_STATUS	0x01
+#define MCHP23K256_CMD_WRITE		0x02
+#define MCHP23K256_CMD_READ		0x03
+#define MCHP23K256_MODE_SEQ		BIT(6)
 
-#घोषणा to_mchp23k256_flash(x) container_of(x, काष्ठा mchp23k256_flash, mtd)
+#define to_mchp23k256_flash(x) container_of(x, struct mchp23k256_flash, mtd)
 
-अटल व्योम mchp23k256_addr2cmd(काष्ठा mchp23k256_flash *flash,
-				अचिन्हित पूर्णांक addr, u8 *cmd)
-अणु
-	पूर्णांक i;
+static void mchp23k256_addr2cmd(struct mchp23k256_flash *flash,
+				unsigned int addr, u8 *cmd)
+{
+	int i;
 
 	/*
 	 * Address is sent in big endian (MSB first) and we skip
 	 * the first entry of the cmd array which contains the cmd
 	 * opcode.
 	 */
-	क्रम (i = flash->caps->addr_width; i > 0; i--, addr >>= 8)
+	for (i = flash->caps->addr_width; i > 0; i--, addr >>= 8)
 		cmd[i] = addr;
-पूर्ण
+}
 
-अटल पूर्णांक mchp23k256_cmdsz(काष्ठा mchp23k256_flash *flash)
-अणु
-	वापस 1 + flash->caps->addr_width;
-पूर्ण
+static int mchp23k256_cmdsz(struct mchp23k256_flash *flash)
+{
+	return 1 + flash->caps->addr_width;
+}
 
-अटल पूर्णांक mchp23k256_ग_लिखो(काष्ठा mtd_info *mtd, loff_t to, माप_प्रकार len,
-			    माप_प्रकार *retlen, स्थिर अचिन्हित अक्षर *buf)
-अणु
-	काष्ठा mchp23k256_flash *flash = to_mchp23k256_flash(mtd);
-	काष्ठा spi_transfer transfer[2] = अणुपूर्ण;
-	काष्ठा spi_message message;
-	अचिन्हित अक्षर command[MAX_CMD_SIZE];
-	पूर्णांक ret, cmd_len;
+static int mchp23k256_write(struct mtd_info *mtd, loff_t to, size_t len,
+			    size_t *retlen, const unsigned char *buf)
+{
+	struct mchp23k256_flash *flash = to_mchp23k256_flash(mtd);
+	struct spi_transfer transfer[2] = {};
+	struct spi_message message;
+	unsigned char command[MAX_CMD_SIZE];
+	int ret, cmd_len;
 
 	spi_message_init(&message);
 
@@ -88,29 +87,29 @@
 
 	mutex_unlock(&flash->lock);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (retlen && message.actual_length > cmd_len)
+	if (retlen && message.actual_length > cmd_len)
 		*retlen += message.actual_length - cmd_len;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mchp23k256_पढ़ो(काष्ठा mtd_info *mtd, loff_t from, माप_प्रकार len,
-			   माप_प्रकार *retlen, अचिन्हित अक्षर *buf)
-अणु
-	काष्ठा mchp23k256_flash *flash = to_mchp23k256_flash(mtd);
-	काष्ठा spi_transfer transfer[2] = अणुपूर्ण;
-	काष्ठा spi_message message;
-	अचिन्हित अक्षर command[MAX_CMD_SIZE];
-	पूर्णांक ret, cmd_len;
+static int mchp23k256_read(struct mtd_info *mtd, loff_t from, size_t len,
+			   size_t *retlen, unsigned char *buf)
+{
+	struct mchp23k256_flash *flash = to_mchp23k256_flash(mtd);
+	struct spi_transfer transfer[2] = {};
+	struct spi_message message;
+	unsigned char command[MAX_CMD_SIZE];
+	int ret, cmd_len;
 
 	spi_message_init(&message);
 
 	cmd_len = mchp23k256_cmdsz(flash);
 
-	स_रखो(&transfer, 0, माप(transfer));
+	memset(&transfer, 0, sizeof(transfer));
 	command[0] = MCHP23K256_CMD_READ;
 	mchp23k256_addr2cmd(flash, from, command);
 
@@ -128,24 +127,24 @@
 
 	mutex_unlock(&flash->lock);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (retlen && message.actual_length > cmd_len)
+	if (retlen && message.actual_length > cmd_len)
 		*retlen += message.actual_length - cmd_len;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Set the device पूर्णांकo sequential mode. This allows पढ़ो/ग_लिखोs to the
+ * Set the device into sequential mode. This allows read/writes to the
  * entire SRAM in a single operation
  */
-अटल पूर्णांक mchp23k256_set_mode(काष्ठा spi_device *spi)
-अणु
-	काष्ठा spi_transfer transfer = अणुपूर्ण;
-	काष्ठा spi_message message;
-	अचिन्हित अक्षर command[2];
+static int mchp23k256_set_mode(struct spi_device *spi)
+{
+	struct spi_transfer transfer = {};
+	struct spi_message message;
+	unsigned char command[2];
 
 	spi_message_init(&message);
 
@@ -153,91 +152,91 @@
 	command[1] = MCHP23K256_MODE_SEQ;
 
 	transfer.tx_buf = command;
-	transfer.len = माप(command);
+	transfer.len = sizeof(command);
 	spi_message_add_tail(&transfer, &message);
 
-	वापस spi_sync(spi, &message);
-पूर्ण
+	return spi_sync(spi, &message);
+}
 
-अटल स्थिर काष्ठा mchp23_caps mchp23k256_caps = अणु
+static const struct mchp23_caps mchp23k256_caps = {
 	.size = SZ_32K,
 	.addr_width = 2,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mchp23_caps mchp23lcv1024_caps = अणु
+static const struct mchp23_caps mchp23lcv1024_caps = {
 	.size = SZ_128K,
 	.addr_width = 3,
-पूर्ण;
+};
 
-अटल पूर्णांक mchp23k256_probe(काष्ठा spi_device *spi)
-अणु
-	काष्ठा mchp23k256_flash *flash;
-	काष्ठा flash_platक्रमm_data *data;
-	पूर्णांक err;
+static int mchp23k256_probe(struct spi_device *spi)
+{
+	struct mchp23k256_flash *flash;
+	struct flash_platform_data *data;
+	int err;
 
-	flash = devm_kzalloc(&spi->dev, माप(*flash), GFP_KERNEL);
-	अगर (!flash)
-		वापस -ENOMEM;
+	flash = devm_kzalloc(&spi->dev, sizeof(*flash), GFP_KERNEL);
+	if (!flash)
+		return -ENOMEM;
 
 	flash->spi = spi;
 	mutex_init(&flash->lock);
 	spi_set_drvdata(spi, flash);
 
 	err = mchp23k256_set_mode(spi);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	data = dev_get_platdata(&spi->dev);
 
 	flash->caps = of_device_get_match_data(&spi->dev);
-	अगर (!flash->caps)
+	if (!flash->caps)
 		flash->caps = &mchp23k256_caps;
 
 	mtd_set_of_node(&flash->mtd, spi->dev.of_node);
 	flash->mtd.dev.parent	= &spi->dev;
 	flash->mtd.type		= MTD_RAM;
 	flash->mtd.flags	= MTD_CAP_RAM;
-	flash->mtd.ग_लिखोsize	= 1;
+	flash->mtd.writesize	= 1;
 	flash->mtd.size		= flash->caps->size;
-	flash->mtd._पढ़ो	= mchp23k256_पढ़ो;
-	flash->mtd._ग_लिखो	= mchp23k256_ग_लिखो;
+	flash->mtd._read	= mchp23k256_read;
+	flash->mtd._write	= mchp23k256_write;
 
-	err = mtd_device_रेजिस्टर(&flash->mtd, data ? data->parts : शून्य,
+	err = mtd_device_register(&flash->mtd, data ? data->parts : NULL,
 				  data ? data->nr_parts : 0);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mchp23k256_हटाओ(काष्ठा spi_device *spi)
-अणु
-	काष्ठा mchp23k256_flash *flash = spi_get_drvdata(spi);
+static int mchp23k256_remove(struct spi_device *spi)
+{
+	struct mchp23k256_flash *flash = spi_get_drvdata(spi);
 
-	वापस mtd_device_unरेजिस्टर(&flash->mtd);
-पूर्ण
+	return mtd_device_unregister(&flash->mtd);
+}
 
-अटल स्थिर काष्ठा of_device_id mchp23k256_of_table[] = अणु
-	अणु
+static const struct of_device_id mchp23k256_of_table[] = {
+	{
 		.compatible = "microchip,mchp23k256",
 		.data = &mchp23k256_caps,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "microchip,mchp23lcv1024",
 		.data = &mchp23lcv1024_caps,
-	पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+	},
+	{}
+};
 MODULE_DEVICE_TABLE(of, mchp23k256_of_table);
 
-अटल काष्ठा spi_driver mchp23k256_driver = अणु
-	.driver = अणु
+static struct spi_driver mchp23k256_driver = {
+	.driver = {
 		.name	= "mchp23k256",
 		.of_match_table = of_match_ptr(mchp23k256_of_table),
-	पूर्ण,
+	},
 	.probe		= mchp23k256_probe,
-	.हटाओ		= mchp23k256_हटाओ,
-पूर्ण;
+	.remove		= mchp23k256_remove,
+};
 
 module_spi_driver(mchp23k256_driver);
 

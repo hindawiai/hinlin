@@ -1,20 +1,19 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * arch/घातerpc/boot/ugecon.h
+ * arch/powerpc/boot/ugecon.h
  *
  * USB Gecko early bootwrapper console.
  * Copyright (C) 2008-2009 The GameCube Linux Team
  * Copyright (C) 2008,2009 Albert Herranz
  */
 
-#अगर_अघोषित __UGECON_H
-#घोषणा __UGECON_H
+#ifndef __UGECON_H
+#define __UGECON_H
 
-बाह्य व्योम *ug_probe(व्योम);
+extern void *ug_probe(void);
 
-बाह्य व्योम ug_अ_दो(अक्षर ch);
-बाह्य व्योम ug_console_ग_लिखो(स्थिर अक्षर *buf, पूर्णांक len);
+extern void ug_putc(char ch);
+extern void ug_console_write(const char *buf, int len);
 
-#पूर्ण_अगर /* __UGECON_H */
+#endif /* __UGECON_H */
 

@@ -1,109 +1,108 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
-#अगर_अघोषित __NVKM_FB_H__
-#घोषणा __NVKM_FB_H__
-#समावेश <core/subdev.h>
-#समावेश <core/mm.h>
+/* SPDX-License-Identifier: MIT */
+#ifndef __NVKM_FB_H__
+#define __NVKM_FB_H__
+#include <core/subdev.h>
+#include <core/mm.h>
 
-/* memory type/access flags, करो not match hardware values */
-#घोषणा NV_MEM_ACCESS_RO  1
-#घोषणा NV_MEM_ACCESS_WO  2
-#घोषणा NV_MEM_ACCESS_RW (NV_MEM_ACCESS_RO | NV_MEM_ACCESS_WO)
-#घोषणा NV_MEM_ACCESS_SYS 4
-#घोषणा NV_MEM_ACCESS_VM  8
-#घोषणा NV_MEM_ACCESS_NOSNOOP 16
+/* memory type/access flags, do not match hardware values */
+#define NV_MEM_ACCESS_RO  1
+#define NV_MEM_ACCESS_WO  2
+#define NV_MEM_ACCESS_RW (NV_MEM_ACCESS_RO | NV_MEM_ACCESS_WO)
+#define NV_MEM_ACCESS_SYS 4
+#define NV_MEM_ACCESS_VM  8
+#define NV_MEM_ACCESS_NOSNOOP 16
 
-#घोषणा NV_MEM_TARGET_VRAM        0
-#घोषणा NV_MEM_TARGET_PCI         1
-#घोषणा NV_MEM_TARGET_PCI_NOSNOOP 2
-#घोषणा NV_MEM_TARGET_VM          3
-#घोषणा NV_MEM_TARGET_GART        4
+#define NV_MEM_TARGET_VRAM        0
+#define NV_MEM_TARGET_PCI         1
+#define NV_MEM_TARGET_PCI_NOSNOOP 2
+#define NV_MEM_TARGET_VM          3
+#define NV_MEM_TARGET_GART        4
 
-#घोषणा NVKM_RAM_TYPE_VM 0x7f
-#घोषणा NV_MEM_COMP_VM 0x03
+#define NVKM_RAM_TYPE_VM 0x7f
+#define NV_MEM_COMP_VM 0x03
 
-काष्ठा nvkm_fb_tile अणु
-	काष्ठा nvkm_mm_node *tag;
+struct nvkm_fb_tile {
+	struct nvkm_mm_node *tag;
 	u32 addr;
 	u32 limit;
 	u32 pitch;
 	u32 zcomp;
-पूर्ण;
+};
 
-काष्ठा nvkm_fb अणु
-	स्थिर काष्ठा nvkm_fb_func *func;
-	काष्ठा nvkm_subdev subdev;
+struct nvkm_fb {
+	const struct nvkm_fb_func *func;
+	struct nvkm_subdev subdev;
 
-	काष्ठा nvkm_blob vpr_scrubber;
+	struct nvkm_blob vpr_scrubber;
 
-	काष्ठा nvkm_ram *ram;
+	struct nvkm_ram *ram;
 
-	काष्ठा अणु
-		काष्ठा mutex mutex; /* protects mm and nvkm_memory::tags */
-		काष्ठा nvkm_mm mm;
-	पूर्ण tags;
+	struct {
+		struct mutex mutex; /* protects mm and nvkm_memory::tags */
+		struct nvkm_mm mm;
+	} tags;
 
-	काष्ठा अणु
-		काष्ठा nvkm_fb_tile region[16];
-		पूर्णांक regions;
-	पूर्ण tile;
+	struct {
+		struct nvkm_fb_tile region[16];
+		int regions;
+	} tile;
 
 	u8 page;
 
-	काष्ठा nvkm_memory *mmu_rd;
-	काष्ठा nvkm_memory *mmu_wr;
-पूर्ण;
+	struct nvkm_memory *mmu_rd;
+	struct nvkm_memory *mmu_wr;
+};
 
-व्योम nvkm_fb_tile_init(काष्ठा nvkm_fb *, पूर्णांक region, u32 addr, u32 size,
-		       u32 pitch, u32 flags, काष्ठा nvkm_fb_tile *);
-व्योम nvkm_fb_tile_fini(काष्ठा nvkm_fb *, पूर्णांक region, काष्ठा nvkm_fb_tile *);
-व्योम nvkm_fb_tile_prog(काष्ठा nvkm_fb *, पूर्णांक region, काष्ठा nvkm_fb_tile *);
+void nvkm_fb_tile_init(struct nvkm_fb *, int region, u32 addr, u32 size,
+		       u32 pitch, u32 flags, struct nvkm_fb_tile *);
+void nvkm_fb_tile_fini(struct nvkm_fb *, int region, struct nvkm_fb_tile *);
+void nvkm_fb_tile_prog(struct nvkm_fb *, int region, struct nvkm_fb_tile *);
 
-पूर्णांक nv04_fb_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fb **);
-पूर्णांक nv10_fb_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fb **);
-पूर्णांक nv1a_fb_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fb **);
-पूर्णांक nv20_fb_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fb **);
-पूर्णांक nv25_fb_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fb **);
-पूर्णांक nv30_fb_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fb **);
-पूर्णांक nv35_fb_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fb **);
-पूर्णांक nv36_fb_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fb **);
-पूर्णांक nv40_fb_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fb **);
-पूर्णांक nv41_fb_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fb **);
-पूर्णांक nv44_fb_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fb **);
-पूर्णांक nv46_fb_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fb **);
-पूर्णांक nv47_fb_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fb **);
-पूर्णांक nv49_fb_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fb **);
-पूर्णांक nv4e_fb_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fb **);
-पूर्णांक nv50_fb_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fb **);
-पूर्णांक g84_fb_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fb **);
-पूर्णांक gt215_fb_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fb **);
-पूर्णांक mcp77_fb_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fb **);
-पूर्णांक mcp89_fb_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fb **);
-पूर्णांक gf100_fb_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fb **);
-पूर्णांक gf108_fb_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fb **);
-पूर्णांक gk104_fb_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fb **);
-पूर्णांक gk110_fb_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fb **);
-पूर्णांक gk20a_fb_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fb **);
-पूर्णांक gm107_fb_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fb **);
-पूर्णांक gm200_fb_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fb **);
-पूर्णांक gm20b_fb_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fb **);
-पूर्णांक gp100_fb_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fb **);
-पूर्णांक gp102_fb_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fb **);
-पूर्णांक gp10b_fb_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fb **);
-पूर्णांक gv100_fb_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fb **);
-पूर्णांक ga100_fb_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fb **);
-पूर्णांक ga102_fb_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fb **);
+int nv04_fb_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fb **);
+int nv10_fb_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fb **);
+int nv1a_fb_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fb **);
+int nv20_fb_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fb **);
+int nv25_fb_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fb **);
+int nv30_fb_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fb **);
+int nv35_fb_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fb **);
+int nv36_fb_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fb **);
+int nv40_fb_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fb **);
+int nv41_fb_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fb **);
+int nv44_fb_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fb **);
+int nv46_fb_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fb **);
+int nv47_fb_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fb **);
+int nv49_fb_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fb **);
+int nv4e_fb_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fb **);
+int nv50_fb_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fb **);
+int g84_fb_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fb **);
+int gt215_fb_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fb **);
+int mcp77_fb_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fb **);
+int mcp89_fb_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fb **);
+int gf100_fb_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fb **);
+int gf108_fb_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fb **);
+int gk104_fb_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fb **);
+int gk110_fb_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fb **);
+int gk20a_fb_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fb **);
+int gm107_fb_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fb **);
+int gm200_fb_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fb **);
+int gm20b_fb_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fb **);
+int gp100_fb_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fb **);
+int gp102_fb_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fb **);
+int gp10b_fb_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fb **);
+int gv100_fb_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fb **);
+int ga100_fb_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fb **);
+int ga102_fb_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fb **);
 
-#समावेश <subdev/मूलप्रण.स>
-#समावेश <subdev/bios/ramcfg.h>
+#include <subdev/bios.h>
+#include <subdev/bios/ramcfg.h>
 
-काष्ठा nvkm_ram_data अणु
-	काष्ठा list_head head;
-	काष्ठा nvbios_ramcfg bios;
+struct nvkm_ram_data {
+	struct list_head head;
+	struct nvbios_ramcfg bios;
 	u32 freq;
-पूर्ण;
+};
 
-क्रमागत nvkm_ram_type अणु
+enum nvkm_ram_type {
 	NVKM_RAM_TYPE_UNKNOWN = 0,
 	NVKM_RAM_TYPE_STOLEN,
 	NVKM_RAM_TYPE_SGRAM,
@@ -118,53 +117,53 @@
 	NVKM_RAM_TYPE_GDDR5X,
 	NVKM_RAM_TYPE_GDDR6,
 	NVKM_RAM_TYPE_HBM2,
-पूर्ण;
+};
 
-काष्ठा nvkm_ram अणु
-	स्थिर काष्ठा nvkm_ram_func *func;
-	काष्ठा nvkm_fb *fb;
-	क्रमागत nvkm_ram_type type;
+struct nvkm_ram {
+	const struct nvkm_ram_func *func;
+	struct nvkm_fb *fb;
+	enum nvkm_ram_type type;
 	u64 size;
 
-#घोषणा NVKM_RAM_MM_SHIFT 12
-#घोषणा NVKM_RAM_MM_ANY    (NVKM_MM_HEAP_ANY + 0)
-#घोषणा NVKM_RAM_MM_NORMAL (NVKM_MM_HEAP_ANY + 1)
-#घोषणा NVKM_RAM_MM_NOMAP  (NVKM_MM_HEAP_ANY + 2)
-#घोषणा NVKM_RAM_MM_MIXED  (NVKM_MM_HEAP_ANY + 3)
-	काष्ठा nvkm_mm vram;
+#define NVKM_RAM_MM_SHIFT 12
+#define NVKM_RAM_MM_ANY    (NVKM_MM_HEAP_ANY + 0)
+#define NVKM_RAM_MM_NORMAL (NVKM_MM_HEAP_ANY + 1)
+#define NVKM_RAM_MM_NOMAP  (NVKM_MM_HEAP_ANY + 2)
+#define NVKM_RAM_MM_MIXED  (NVKM_MM_HEAP_ANY + 3)
+	struct nvkm_mm vram;
 	u64 stolen;
-	काष्ठा mutex mutex;
+	struct mutex mutex;
 
-	पूर्णांक ranks;
-	पूर्णांक parts;
-	पूर्णांक part_mask;
+	int ranks;
+	int parts;
+	int part_mask;
 
 	u32 freq;
 	u32 mr[16];
 	u32 mr1_nuts;
 
-	काष्ठा nvkm_ram_data *next;
-	काष्ठा nvkm_ram_data क्रमmer;
-	काष्ठा nvkm_ram_data xition;
-	काष्ठा nvkm_ram_data target;
-पूर्ण;
+	struct nvkm_ram_data *next;
+	struct nvkm_ram_data former;
+	struct nvkm_ram_data xition;
+	struct nvkm_ram_data target;
+};
 
-पूर्णांक
-nvkm_ram_get(काष्ठा nvkm_device *, u8 heap, u8 type, u8 page, u64 size,
-	     bool contig, bool back, काष्ठा nvkm_memory **);
+int
+nvkm_ram_get(struct nvkm_device *, u8 heap, u8 type, u8 page, u64 size,
+	     bool contig, bool back, struct nvkm_memory **);
 
-काष्ठा nvkm_ram_func अणु
+struct nvkm_ram_func {
 	u64 upper;
-	u32 (*probe_fbp)(स्थिर काष्ठा nvkm_ram_func *, काष्ठा nvkm_device *,
-			 पूर्णांक fbp, पूर्णांक *pltcs);
-	u32 (*probe_fbp_amount)(स्थिर काष्ठा nvkm_ram_func *, u32 fbpao,
-				काष्ठा nvkm_device *, पूर्णांक fbp, पूर्णांक *pltcs);
-	u32 (*probe_fbpa_amount)(काष्ठा nvkm_device *, पूर्णांक fbpa);
-	व्योम *(*dtor)(काष्ठा nvkm_ram *);
-	पूर्णांक (*init)(काष्ठा nvkm_ram *);
+	u32 (*probe_fbp)(const struct nvkm_ram_func *, struct nvkm_device *,
+			 int fbp, int *pltcs);
+	u32 (*probe_fbp_amount)(const struct nvkm_ram_func *, u32 fbpao,
+				struct nvkm_device *, int fbp, int *pltcs);
+	u32 (*probe_fbpa_amount)(struct nvkm_device *, int fbpa);
+	void *(*dtor)(struct nvkm_ram *);
+	int (*init)(struct nvkm_ram *);
 
-	पूर्णांक (*calc)(काष्ठा nvkm_ram *, u32 freq);
-	पूर्णांक (*prog)(काष्ठा nvkm_ram *);
-	व्योम (*tidy)(काष्ठा nvkm_ram *);
-पूर्ण;
-#पूर्ण_अगर
+	int (*calc)(struct nvkm_ram *, u32 freq);
+	int (*prog)(struct nvkm_ram *);
+	void (*tidy)(struct nvkm_ram *);
+};
+#endif

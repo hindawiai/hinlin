@@ -1,12 +1,11 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (c) 1996, 2003 VIA Networking Technologies, Inc.
  * All rights reserved.
  *
  * File: device.h
  *
- * Purpose: MAC Data काष्ठाure
+ * Purpose: MAC Data structure
  *
  * Author: Tevin Chen
  *
@@ -14,231 +13,231 @@
  *
  */
 
-#अगर_अघोषित __DEVICE_H__
-#घोषणा __DEVICE_H__
+#ifndef __DEVICE_H__
+#define __DEVICE_H__
 
-#समावेश <linux/bits.h>
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/firmware.h>
-#समावेश <linux/suspend.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/wireless.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/crc32.h>
-#समावेश <net/mac80211.h>
+#include <linux/bits.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/firmware.h>
+#include <linux/suspend.h>
+#include <linux/if_arp.h>
+#include <linux/wireless.h>
+#include <linux/timer.h>
+#include <linux/usb.h>
+#include <linux/crc32.h>
+#include <net/mac80211.h>
 
-#अगर_घोषित SIOCETHTOOL
-#घोषणा DEVICE_ETHTOOL_IOCTL_SUPPORT
-#समावेश <linux/ethtool.h>
-#अन्यथा
-#अघोषित DEVICE_ETHTOOL_IOCTL_SUPPORT
-#पूर्ण_अगर
+#ifdef SIOCETHTOOL
+#define DEVICE_ETHTOOL_IOCTL_SUPPORT
+#include <linux/ethtool.h>
+#else
+#undef DEVICE_ETHTOOL_IOCTL_SUPPORT
+#endif
 
-#घोषणा RATE_1M		0
-#घोषणा RATE_2M		1
-#घोषणा RATE_5M		2
-#घोषणा RATE_11M	3
-#घोषणा RATE_6M		4
-#घोषणा RATE_9M		5
-#घोषणा RATE_12M	6
-#घोषणा RATE_18M	7
-#घोषणा RATE_24M	8
-#घोषणा RATE_36M	9
-#घोषणा RATE_48M	10
-#घोषणा RATE_54M	11
-#घोषणा RATE_AUTO	12
+#define RATE_1M		0
+#define RATE_2M		1
+#define RATE_5M		2
+#define RATE_11M	3
+#define RATE_6M		4
+#define RATE_9M		5
+#define RATE_12M	6
+#define RATE_18M	7
+#define RATE_24M	8
+#define RATE_36M	9
+#define RATE_48M	10
+#define RATE_54M	11
+#define RATE_AUTO	12
 
-#घोषणा MAX_RATE			12
-#घोषणा VNT_B_RATES	(BIT(RATE_1M) | BIT(RATE_2M) |\
+#define MAX_RATE			12
+#define VNT_B_RATES	(BIT(RATE_1M) | BIT(RATE_2M) |\
 			BIT(RATE_5M) | BIT(RATE_11M))
 
 /*
- * device specअगरic
+ * device specific
  */
 
-#समावेश "wcmd.h"
-#समावेश "desc.h"
-#समावेश "key.h"
-#समावेश "card.h"
+#include "wcmd.h"
+#include "desc.h"
+#include "key.h"
+#include "card.h"
 
-#घोषणा VNT_USB_VENDOR_ID                     0x160a
-#घोषणा VNT_USB_PRODUCT_ID                    0x3184
+#define VNT_USB_VENDOR_ID                     0x160a
+#define VNT_USB_PRODUCT_ID                    0x3184
 
-#घोषणा DEVICE_NAME			"vt6656"
-#घोषणा DEVICE_FULL_DRV_NAM		"VIA Networking Wireless LAN USB Driver"
+#define DEVICE_NAME			"vt6656"
+#define DEVICE_FULL_DRV_NAM		"VIA Networking Wireless LAN USB Driver"
 
-#घोषणा DEVICE_VERSION			"mac80211"
+#define DEVICE_VERSION			"mac80211"
 
-#घोषणा FIRMWARE_VERSION		0x133		/* version 1.51 */
-#घोषणा FIRMWARE_NAME			"vntwusb.fw"
-#घोषणा FIRMWARE_CHUNK_SIZE		0x400
+#define FIRMWARE_VERSION		0x133		/* version 1.51 */
+#define FIRMWARE_NAME			"vntwusb.fw"
+#define FIRMWARE_CHUNK_SIZE		0x400
 
-#घोषणा CONFIG_PATH			"/etc/vntconfiguration.dat"
+#define CONFIG_PATH			"/etc/vntconfiguration.dat"
 
-#घोषणा MAX_UINTS			8
-#घोषणा OPTION_DEFAULT			अणु [0 ... MAX_UINTS - 1] = -1पूर्ण
+#define MAX_UINTS			8
+#define OPTION_DEFAULT			{ [0 ... MAX_UINTS - 1] = -1}
 
-#घोषणा DUPLICATE_RX_CACHE_LENGTH       5
+#define DUPLICATE_RX_CACHE_LENGTH       5
 
-#घोषणा AUTO_FB_NONE            0
-#घोषणा AUTO_FB_0               1
-#घोषणा AUTO_FB_1               2
+#define AUTO_FB_NONE            0
+#define AUTO_FB_0               1
+#define AUTO_FB_1               2
 
-#घोषणा FB_RATE0                0
-#घोषणा FB_RATE1                1
+#define FB_RATE0                0
+#define FB_RATE1                1
 
 /* Antenna Mode */
-#घोषणा ANT_A                   0
-#घोषणा ANT_B                   1
-#घोषणा ANT_DIVERSITY           2
-#घोषणा ANT_RXD_TXA             3
-#घोषणा ANT_RXD_TXB             4
-#घोषणा ANT_UNKNOWN             0xFF
-#घोषणा ANT_TXA                 0
-#घोषणा ANT_TXB                 1
-#घोषणा ANT_RXA                 2
-#घोषणा ANT_RXB                 3
+#define ANT_A                   0
+#define ANT_B                   1
+#define ANT_DIVERSITY           2
+#define ANT_RXD_TXA             3
+#define ANT_RXD_TXB             4
+#define ANT_UNKNOWN             0xFF
+#define ANT_TXA                 0
+#define ANT_TXB                 1
+#define ANT_RXA                 2
+#define ANT_RXB                 3
 
-#घोषणा BB_VGA_LEVEL            4
-#घोषणा BB_VGA_CHANGE_THRESHOLD 3
+#define BB_VGA_LEVEL            4
+#define BB_VGA_CHANGE_THRESHOLD 3
 
-#घोषणा EEP_MAX_CONTEXT_SIZE    256
+#define EEP_MAX_CONTEXT_SIZE    256
 
 /* Contents in the EEPROM */
-#घोषणा EEP_OFS_PAR		0x0
-#घोषणा EEP_OFS_ANTENNA		0x17
-#घोषणा EEP_OFS_RADIOCTL	0x18
-#घोषणा EEP_OFS_RFTYPE		0x1b
-#घोषणा EEP_OFS_MINCHANNEL	0x1c
-#घोषणा EEP_OFS_MAXCHANNEL	0x1d
-#घोषणा EEP_OFS_SIGNATURE	0x1e
-#घोषणा EEP_OFS_ZONETYPE	0x1f
-#घोषणा EEP_OFS_RFTABLE		0x20
-#घोषणा EEP_OFS_PWR_CCK		0x20
-#घोषणा EEP_OFS_SETPT_CCK	0x21
-#घोषणा EEP_OFS_PWR_OFDMG	0x23
+#define EEP_OFS_PAR		0x0
+#define EEP_OFS_ANTENNA		0x17
+#define EEP_OFS_RADIOCTL	0x18
+#define EEP_OFS_RFTYPE		0x1b
+#define EEP_OFS_MINCHANNEL	0x1c
+#define EEP_OFS_MAXCHANNEL	0x1d
+#define EEP_OFS_SIGNATURE	0x1e
+#define EEP_OFS_ZONETYPE	0x1f
+#define EEP_OFS_RFTABLE		0x20
+#define EEP_OFS_PWR_CCK		0x20
+#define EEP_OFS_SETPT_CCK	0x21
+#define EEP_OFS_PWR_OFDMG	0x23
 
-#घोषणा EEP_OFS_CALIB_TX_IQ	0x24
-#घोषणा EEP_OFS_CALIB_TX_DC	0x25
-#घोषणा EEP_OFS_CALIB_RX_IQ	0x26
+#define EEP_OFS_CALIB_TX_IQ	0x24
+#define EEP_OFS_CALIB_TX_DC	0x25
+#define EEP_OFS_CALIB_RX_IQ	0x26
 
-#घोषणा EEP_OFS_MAJOR_VER	0x2e
-#घोषणा EEP_OFS_MINOR_VER	0x2f
+#define EEP_OFS_MAJOR_VER	0x2e
+#define EEP_OFS_MINOR_VER	0x2f
 
-#घोषणा EEP_OFS_CCK_PWR_TBL	0x30
-#घोषणा EEP_OFS_OFDM_PWR_TBL	0x40
-#घोषणा EEP_OFS_OFDMA_PWR_TBL	0x50
+#define EEP_OFS_CCK_PWR_TBL	0x30
+#define EEP_OFS_OFDM_PWR_TBL	0x40
+#define EEP_OFS_OFDMA_PWR_TBL	0x50
 
 /* Bits in EEP_OFS_ANTENNA */
-#घोषणा EEP_ANTENNA_MAIN	BIT(0)
-#घोषणा EEP_ANTENNA_AUX		BIT(1)
-#घोषणा EEP_ANTINV		BIT(2)
+#define EEP_ANTENNA_MAIN	BIT(0)
+#define EEP_ANTENNA_AUX		BIT(1)
+#define EEP_ANTINV		BIT(2)
 
 /* Bits in EEP_OFS_RADIOCTL */
-#घोषणा EEP_RADIOCTL_ENABLE	BIT(7)
+#define EEP_RADIOCTL_ENABLE	BIT(7)
 
 /* control commands */
-#घोषणा MESSAGE_TYPE_READ		0x1
-#घोषणा MESSAGE_TYPE_WRITE		0x0
-#घोषणा MESSAGE_TYPE_LOCK_OR		0x2
-#घोषणा MESSAGE_TYPE_LOCK_AND		0x3
-#घोषणा MESSAGE_TYPE_WRITE_MASK		0x4
-#घोषणा MESSAGE_TYPE_CARDINIT		0x5
-#घोषणा MESSAGE_TYPE_INIT_RSP		0x6
-#घोषणा MESSAGE_TYPE_MACSHUTDOWN	0x7
-#घोषणा MESSAGE_TYPE_SETKEY		0x8
-#घोषणा MESSAGE_TYPE_CLRKEYENTRY	0x9
-#घोषणा MESSAGE_TYPE_WRITE_MISCFF	0xa
-#घोषणा MESSAGE_TYPE_SET_ANTMD		0xb
-#घोषणा MESSAGE_TYPE_SELECT_CHANNEL	0xc
-#घोषणा MESSAGE_TYPE_SET_TSFTBTT	0xd
-#घोषणा MESSAGE_TYPE_SET_SSTIFS		0xe
-#घोषणा MESSAGE_TYPE_CHANGE_BBTYPE	0xf
-#घोषणा MESSAGE_TYPE_DISABLE_PS		0x10
-#घोषणा MESSAGE_TYPE_WRITE_IFRF		0x11
+#define MESSAGE_TYPE_READ		0x1
+#define MESSAGE_TYPE_WRITE		0x0
+#define MESSAGE_TYPE_LOCK_OR		0x2
+#define MESSAGE_TYPE_LOCK_AND		0x3
+#define MESSAGE_TYPE_WRITE_MASK		0x4
+#define MESSAGE_TYPE_CARDINIT		0x5
+#define MESSAGE_TYPE_INIT_RSP		0x6
+#define MESSAGE_TYPE_MACSHUTDOWN	0x7
+#define MESSAGE_TYPE_SETKEY		0x8
+#define MESSAGE_TYPE_CLRKEYENTRY	0x9
+#define MESSAGE_TYPE_WRITE_MISCFF	0xa
+#define MESSAGE_TYPE_SET_ANTMD		0xb
+#define MESSAGE_TYPE_SELECT_CHANNEL	0xc
+#define MESSAGE_TYPE_SET_TSFTBTT	0xd
+#define MESSAGE_TYPE_SET_SSTIFS		0xe
+#define MESSAGE_TYPE_CHANGE_BBTYPE	0xf
+#define MESSAGE_TYPE_DISABLE_PS		0x10
+#define MESSAGE_TYPE_WRITE_IFRF		0x11
 
-/* command पढ़ो/ग_लिखो(index) */
-#घोषणा MESSAGE_REQUEST_MEM		0x1
-#घोषणा MESSAGE_REQUEST_BBREG		0x2
-#घोषणा MESSAGE_REQUEST_MACREG		0x3
-#घोषणा MESSAGE_REQUEST_EEPROM		0x4
-#घोषणा MESSAGE_REQUEST_TSF		0x5
-#घोषणा MESSAGE_REQUEST_TBTT		0x6
-#घोषणा MESSAGE_REQUEST_BBAGC		0x7
-#घोषणा MESSAGE_REQUEST_VERSION		0x8
-#घोषणा MESSAGE_REQUEST_RF_INIT		0x9
-#घोषणा MESSAGE_REQUEST_RF_INIT2	0xa
-#घोषणा MESSAGE_REQUEST_RF_CH0		0xb
-#घोषणा MESSAGE_REQUEST_RF_CH1		0xc
-#घोषणा MESSAGE_REQUEST_RF_CH2		0xd
+/* command read/write(index) */
+#define MESSAGE_REQUEST_MEM		0x1
+#define MESSAGE_REQUEST_BBREG		0x2
+#define MESSAGE_REQUEST_MACREG		0x3
+#define MESSAGE_REQUEST_EEPROM		0x4
+#define MESSAGE_REQUEST_TSF		0x5
+#define MESSAGE_REQUEST_TBTT		0x6
+#define MESSAGE_REQUEST_BBAGC		0x7
+#define MESSAGE_REQUEST_VERSION		0x8
+#define MESSAGE_REQUEST_RF_INIT		0x9
+#define MESSAGE_REQUEST_RF_INIT2	0xa
+#define MESSAGE_REQUEST_RF_CH0		0xb
+#define MESSAGE_REQUEST_RF_CH1		0xc
+#define MESSAGE_REQUEST_RF_CH2		0xd
 
-/* USB रेजिस्टरs */
-#घोषणा USB_REG4			0x604
+/* USB registers */
+#define USB_REG4			0x604
 
-#घोषणा DEVICE_INIT_COLD	0x0 /* cold init */
-#घोषणा DEVICE_INIT_RESET	0x1 /* reset init or Dx to D0 घातer reमुख्य */
-#घोषणा DEVICE_INIT_DXPL	0x2 /* Dx to D0 घातer lost init */
+#define DEVICE_INIT_COLD	0x0 /* cold init */
+#define DEVICE_INIT_RESET	0x1 /* reset init or Dx to D0 power remain */
+#define DEVICE_INIT_DXPL	0x2 /* Dx to D0 power lost init */
 
 /* Device init */
-काष्ठा vnt_cmd_card_init अणु
+struct vnt_cmd_card_init {
 	u8 init_class;
 	u8 exist_sw_net_addr;
 	u8 sw_net_addr[6];
-	u8 लघु_retry_limit;
-	u8 दीर्घ_retry_limit;
-पूर्ण;
+	u8 short_retry_limit;
+	u8 long_retry_limit;
+};
 
-काष्ठा vnt_rsp_card_init अणु
+struct vnt_rsp_card_init {
 	u8 status;
 	u8 net_addr[6];
 	u8 rf_type;
 	u8 min_channel;
 	u8 max_channel;
-पूर्ण;
+};
 
 /* USB */
 
 /*
- * Enum of context types क्रम SendPacket
+ * Enum of context types for SendPacket
  */
-क्रमागत अणु
+enum {
 	CONTEXT_DATA_PACKET = 0,
 	CONTEXT_BEACON_PACKET
-पूर्ण;
+};
 
-काष्ठा vnt_rx_header अणु
+struct vnt_rx_header {
 	u32 wbk_status;
 	u8 rx_sts;
 	u8 rx_rate;
 	u16 pay_load_len;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा vnt_rx_tail अणु
-	__le64 tsf_समय;
+struct vnt_rx_tail {
+	__le64 tsf_time;
 	u8 sq;
 	u8 new_rsr;
 	u8 rssi;
 	u8 rsr;
 	u8 sq_3;
-पूर्ण __packed;
+} __packed;
 
 /* RCB (Receive Control Block) */
-काष्ठा vnt_rcb अणु
-	व्योम *priv;
-	काष्ठा urb *urb;
-	काष्ठा sk_buff *skb;
-पूर्ण;
+struct vnt_rcb {
+	void *priv;
+	struct urb *urb;
+	struct sk_buff *skb;
+};
 
 /* used to track bulk out irps */
-काष्ठा vnt_usb_send_context अणु
-	व्योम *priv;
-	काष्ठा sk_buff *skb;
-	व्योम *tx_buffer;
+struct vnt_usb_send_context {
+	void *priv;
+	struct sk_buff *skb;
+	void *tx_buffer;
 	u32 frame_len;
 	u16 tx_hdr_size;
 	u16 tx_rate;
@@ -246,53 +245,53 @@
 	u8 pkt_no;
 	u8 pkt_type;
 	bool in_use;
-पूर्ण;
+};
 
 /*
- * Structure to keep track of USB पूर्णांकerrupt packets
+ * Structure to keep track of USB interrupt packets
  */
-काष्ठा vnt_पूर्णांकerrupt_buffer अणु
+struct vnt_interrupt_buffer {
 	u8 *data_buf;
-पूर्ण;
+};
 
-/* flags क्रम options */
-#घोषणा DEVICE_FLAGS_UNPLUG		0
-#घोषणा DEVICE_FLAGS_DISCONNECTED	1
+/* flags for options */
+#define DEVICE_FLAGS_UNPLUG		0
+#define DEVICE_FLAGS_DISCONNECTED	1
 
-काष्ठा vnt_निजी अणु
+struct vnt_private {
 	/* mac80211 */
-	काष्ठा ieee80211_hw *hw;
-	काष्ठा ieee80211_vअगर *vअगर;
+	struct ieee80211_hw *hw;
+	struct ieee80211_vif *vif;
 	u8 mac_hw;
 	/* netdev */
-	काष्ठा usb_device *usb;
-	काष्ठा usb_पूर्णांकerface *पूर्णांकf;
+	struct usb_device *usb;
+	struct usb_interface *intf;
 
-	u64 tsf_समय;
+	u64 tsf_time;
 
 	u32 rx_buf_sz;
-	पूर्णांक mc_list_count;
+	int mc_list_count;
 
 	spinlock_t lock;
-	काष्ठा mutex usb_lock;
+	struct mutex usb_lock;
 
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	/* USB */
-	काष्ठा urb *पूर्णांकerrupt_urb;
-	u32 पूर्णांक_पूर्णांकerval;
+	struct urb *interrupt_urb;
+	u32 int_interval;
 
-	/* Variables to track resources क्रम the BULK In Pipe */
-	काष्ठा vnt_rcb *rcb[CB_MAX_RX_DESC];
+	/* Variables to track resources for the BULK In Pipe */
+	struct vnt_rcb *rcb[CB_MAX_RX_DESC];
 	u32 num_rcb;
 
-	/* Variables to track resources क्रम the BULK Out Pipe */
-	काष्ठा vnt_usb_send_context *tx_context[CB_MAX_TX_DESC];
-	काष्ठा usb_anchor tx_submitted;
+	/* Variables to track resources for the BULK Out Pipe */
+	struct vnt_usb_send_context *tx_context[CB_MAX_TX_DESC];
+	struct usb_anchor tx_submitted;
 	u32 num_tx_context;
 
-	/* Variables to track resources क्रम the Interrupt In Pipe */
-	काष्ठा vnt_पूर्णांकerrupt_buffer पूर्णांक_buf;
+	/* Variables to track resources for the Interrupt In Pipe */
+	struct vnt_interrupt_buffer int_buf;
 
 	/* Version control */
 	u16 firmware_version;
@@ -300,8 +299,8 @@
 	u8 rf_type;
 	u8 bb_rx_conf;
 
-	काष्ठा vnt_cmd_card_init init_command;
-	काष्ठा vnt_rsp_card_init init_response;
+	struct vnt_cmd_card_init init_command;
+	struct vnt_rsp_card_init init_response;
 	u8 current_net_addr[ETH_ALEN] __aligned(2);
 	u8 permanent_net_addr[ETH_ALEN] __aligned(2);
 
@@ -309,20 +308,20 @@
 
 	u64 current_tsf;
 
-	/* 802.11 MAC specअगरic */
+	/* 802.11 MAC specific */
 	u32 current_rssi;
 
 	/* Antenna Diversity */
-	पूर्णांक tx_rx_ant_inv;
+	int tx_rx_ant_inv;
 	u32 rx_antenna_sel;
 	u8 rx_antenna_mode;
 	u8 tx_antenna_mode;
 	u8 radio_ctl;
 
 	/* IFS & Cw */
-	u32 sअगरs;  /* Current SIFS */
-	u32 dअगरs;  /* Current DIFS */
-	u32 eअगरs;  /* Current EIFS */
+	u32 sifs;  /* Current SIFS */
+	u32 difs;  /* Current DIFS */
+	u32 eifs;  /* Current EIFS */
 	u32 slot;  /* Current SlotTime */
 
 	/* Rate */
@@ -340,7 +339,7 @@
 	u8 cck_pwr;
 	u8 ofdm_pwr_g;
 	u8 ofdm_pwr_a;
-	u8 घातer;
+	u8 power;
 	u8 cck_pwr_tbl[14];
 	u8 ofdm_pwr_tbl[14];
 	u8 ofdm_a_pwr_tbl[42];
@@ -348,9 +347,9 @@
 	u16 tx_rate_fb0;
 	u16 tx_rate_fb1;
 
-	क्रमागत nl80211_अगरtype op_mode;
+	enum nl80211_iftype op_mode;
 
-	पूर्णांक लघु_slot_समय;
+	int short_slot_time;
 
 	/* Power save */
 	u16 current_aid;
@@ -358,21 +357,21 @@
 	/* Beacon related */
 	u16 seq_counter;
 
-	क्रमागत vnt_cmd_state command_state;
+	enum vnt_cmd_state command_state;
 
-	क्रमागत vnt_cmd command;
+	enum vnt_cmd command;
 
 	/* 802.11 counter */
 
-	क्रमागत vnt_cmd cmd_queue[CMD_Q_SIZE];
+	enum vnt_cmd cmd_queue[CMD_Q_SIZE];
 	u32 cmd_dequeue_idx;
 	u32 cmd_enqueue_idx;
-	u32 मुक्त_cmd_queue;
-	पूर्णांक cmd_running;
+	u32 free_cmd_queue;
+	int cmd_running;
 
-	अचिन्हित दीर्घ key_entry_inuse;
+	unsigned long key_entry_inuse;
 
-	u8 स्वतः_fb_ctrl;
+	u8 auto_fb_ctrl;
 
 	/* For Update BaseBand VGA Gain Offset */
 	u8 bb_vga[BB_VGA_LEVEL];
@@ -380,19 +379,19 @@
 	u8 bb_pre_ed_rssi;
 	u8 bb_pre_ed_index;
 
-	/* command समयr */
-	काष्ठा delayed_work run_command_work;
+	/* command timer */
+	struct delayed_work run_command_work;
 
-	काष्ठा ieee80211_low_level_stats low_stats;
-पूर्ण;
+	struct ieee80211_low_level_stats low_stats;
+};
 
-#घोषणा ADD_ONE_WITH_WRAP_AROUND(uVar, uModulo) अणु	\
-	अगर ((uVar) >= ((uModulo) - 1))			\
+#define ADD_ONE_WITH_WRAP_AROUND(uVar, uModulo) {	\
+	if ((uVar) >= ((uModulo) - 1))			\
 		(uVar) = 0;				\
-	अन्यथा						\
+	else						\
 		(uVar)++;				\
-पूर्ण
+}
 
-पूर्णांक vnt_init(काष्ठा vnt_निजी *priv);
+int vnt_init(struct vnt_private *priv);
 
-#पूर्ण_अगर
+#endif

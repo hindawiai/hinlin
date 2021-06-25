@@ -1,60 +1,59 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Hardware definitions क्रम Palm Zire72
+ * Hardware definitions for Palm Zire72
  *
  * Authors:
  *	Vladimir "Farcaller" Pouzanov <farcaller@gmail.com>
  *	Sergey Lapin <slapin@ossfans.org>
- *	Alex Osborne <bobofकरोom@gmail.com>
+ *	Alex Osborne <bobofdoom@gmail.com>
  *	Jan Herman <2hp@seznam.cz>
  *
- * Reग_लिखो क्रम मुख्यline:
+ * Rewrite for mainline:
  *	Marek Vasut <marek.vasut@gmail.com>
  *
  * (find more info at www.hackndev.com)
  */
 
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/syscore_ops.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/gpio_keys.h>
-#समावेश <linux/input.h>
-#समावेश <linux/pda_घातer.h>
-#समावेश <linux/pwm_backlight.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/wm97xx.h>
-#समावेश <linux/घातer_supply.h>
-#समावेश <linux/platक्रमm_data/i2c-gpपन.स>
-#समावेश <linux/gpio/machine.h>
+#include <linux/platform_device.h>
+#include <linux/syscore_ops.h>
+#include <linux/delay.h>
+#include <linux/irq.h>
+#include <linux/gpio_keys.h>
+#include <linux/input.h>
+#include <linux/pda_power.h>
+#include <linux/pwm_backlight.h>
+#include <linux/gpio.h>
+#include <linux/wm97xx.h>
+#include <linux/power_supply.h>
+#include <linux/platform_data/i2c-gpio.h>
+#include <linux/gpio/machine.h>
 
-#समावेश <यंत्र/mach-types.h>
-#समावेश <यंत्र/suspend.h>
-#समावेश <यंत्र/mach/arch.h>
-#समावेश <यंत्र/mach/map.h>
+#include <asm/mach-types.h>
+#include <asm/suspend.h>
+#include <asm/mach/arch.h>
+#include <asm/mach/map.h>
 
-#समावेश "pxa27x.h"
-#समावेश <mach/audपन.स>
-#समावेश "palmz72.h"
-#समावेश <linux/platक्रमm_data/mmc-pxamci.h>
-#समावेश <linux/platक्रमm_data/video-pxafb.h>
-#समावेश <linux/platक्रमm_data/irda-pxaficp.h>
-#समावेश <linux/platक्रमm_data/keypad-pxa27x.h>
-#समावेश "udc.h"
-#समावेश <linux/platक्रमm_data/asoc-palm27x.h>
-#समावेश "palm27x.h"
+#include "pxa27x.h"
+#include <mach/audio.h>
+#include "palmz72.h"
+#include <linux/platform_data/mmc-pxamci.h>
+#include <linux/platform_data/video-pxafb.h>
+#include <linux/platform_data/irda-pxaficp.h>
+#include <linux/platform_data/keypad-pxa27x.h>
+#include "udc.h"
+#include <linux/platform_data/asoc-palm27x.h>
+#include "palm27x.h"
 
-#समावेश "pm.h"
-#समावेश <linux/platक्रमm_data/media/camera-pxa.h>
+#include "pm.h"
+#include <linux/platform_data/media/camera-pxa.h>
 
-#समावेश "generic.h"
-#समावेश "devices.h"
+#include "generic.h"
+#include "devices.h"
 
 /******************************************************************************
  * Pin configuration
  ******************************************************************************/
-अटल अचिन्हित दीर्घ palmz72_pin_config[] __initdata = अणु
+static unsigned long palmz72_pin_config[] __initdata = {
 	/* MMC */
 	GPIO32_MMC_CLK,
 	GPIO92_MMC_DAT_0,
@@ -64,7 +63,7 @@
 	GPIO112_MMC_CMD,
 	GPIO14_GPIO,	/* SD detect */
 	GPIO115_GPIO,	/* SD RO */
-	GPIO98_GPIO,	/* SD घातer */
+	GPIO98_GPIO,	/* SD power */
 
 	/* AC97 */
 	GPIO28_AC97_BITCLK,
@@ -98,10 +97,10 @@
 	/* LCD */
 	GPIOxx_LCD_TFT_16BPP,
 
-	GPIO20_GPIO,	/* bl घातer */
-	GPIO21_GPIO,	/* LCD border चयन */
+	GPIO20_GPIO,	/* bl power */
+	GPIO21_GPIO,	/* LCD border switch */
 	GPIO22_GPIO,	/* LCD border color */
-	GPIO96_GPIO,	/* lcd घातer */
+	GPIO96_GPIO,	/* lcd power */
 
 	/* PXA Camera */
 	GPIO81_CIF_DD_0,
@@ -117,7 +116,7 @@
 	GPIO93_CIF_DD_6,
 	GPIO108_CIF_DD_7,
 
-	GPIO56_GPIO,	/* OV9640 Powerकरोwn */
+	GPIO56_GPIO,	/* OV9640 Powerdown */
 	GPIO57_GPIO,	/* OV9640 Reset */
 	GPIO91_GPIO,	/* OV9640 Power */
 
@@ -126,16 +125,16 @@
 	GPIO118_GPIO,	/* I2C_SDA */
 
 	/* Misc. */
-	GPIO0_GPIO	| WAKEUP_ON_LEVEL_HIGH,	/* घातer detect */
+	GPIO0_GPIO	| WAKEUP_ON_LEVEL_HIGH,	/* power detect */
 	GPIO88_GPIO,				/* green led */
 	GPIO27_GPIO,				/* WM9712 IRQ */
-पूर्ण;
+};
 
 /******************************************************************************
  * GPIO keyboard
  ******************************************************************************/
-#अगर defined(CONFIG_KEYBOARD_PXA27x) || defined(CONFIG_KEYBOARD_PXA27x_MODULE)
-अटल स्थिर अचिन्हित पूर्णांक palmz72_matrix_keys[] = अणु
+#if defined(CONFIG_KEYBOARD_PXA27x) || defined(CONFIG_KEYBOARD_PXA27x_MODULE)
+static const unsigned int palmz72_matrix_keys[] = {
 	KEY(0, 0, KEY_POWER),
 	KEY(0, 1, KEY_F1),
 	KEY(0, 2, KEY_ENTER),
@@ -149,77 +148,77 @@
 
 	KEY(3, 0, KEY_RIGHT),
 	KEY(3, 2, KEY_LEFT),
-पूर्ण;
+};
 
-अटल काष्ठा matrix_keymap_data almz72_matrix_keymap_data = अणु
+static struct matrix_keymap_data almz72_matrix_keymap_data = {
 	.keymap			= palmz72_matrix_keys,
 	.keymap_size		= ARRAY_SIZE(palmz72_matrix_keys),
-पूर्ण;
+};
 
-अटल काष्ठा pxa27x_keypad_platक्रमm_data palmz72_keypad_platक्रमm_data = अणु
+static struct pxa27x_keypad_platform_data palmz72_keypad_platform_data = {
 	.matrix_key_rows	= 4,
 	.matrix_key_cols	= 3,
 	.matrix_keymap_data	= &almz72_matrix_keymap_data,
 
-	.debounce_पूर्णांकerval	= 30,
-पूर्ण;
+	.debounce_interval	= 30,
+};
 
-अटल व्योम __init palmz72_kpc_init(व्योम)
-अणु
-	pxa_set_keypad_info(&palmz72_keypad_platक्रमm_data);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम palmz72_kpc_init(व्योम) अणुपूर्ण
-#पूर्ण_अगर
+static void __init palmz72_kpc_init(void)
+{
+	pxa_set_keypad_info(&palmz72_keypad_platform_data);
+}
+#else
+static inline void palmz72_kpc_init(void) {}
+#endif
 
 /******************************************************************************
  * LEDs
  ******************************************************************************/
-#अगर defined(CONFIG_LEDS_GPIO) || defined(CONFIG_LEDS_GPIO_MODULE)
-अटल काष्ठा gpio_led gpio_leds[] = अणु
-	अणु
+#if defined(CONFIG_LEDS_GPIO) || defined(CONFIG_LEDS_GPIO_MODULE)
+static struct gpio_led gpio_leds[] = {
+	{
 		.name			= "palmz72:green:led",
-		.शेष_trigger	= "none",
+		.default_trigger	= "none",
 		.gpio			= GPIO_NR_PALMZ72_LED_GREEN,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा gpio_led_platक्रमm_data gpio_led_info = अणु
+static struct gpio_led_platform_data gpio_led_info = {
 	.leds		= gpio_leds,
 	.num_leds	= ARRAY_SIZE(gpio_leds),
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device palmz72_leds = अणु
+static struct platform_device palmz72_leds = {
 	.name	= "leds-gpio",
 	.id	= -1,
-	.dev	= अणु
-		.platक्रमm_data	= &gpio_led_info,
-	पूर्ण
-पूर्ण;
+	.dev	= {
+		.platform_data	= &gpio_led_info,
+	}
+};
 
-अटल व्योम __init palmz72_leds_init(व्योम)
-अणु
-	platक्रमm_device_रेजिस्टर(&palmz72_leds);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम palmz72_leds_init(व्योम) अणुपूर्ण
-#पूर्ण_अगर
+static void __init palmz72_leds_init(void)
+{
+	platform_device_register(&palmz72_leds);
+}
+#else
+static inline void palmz72_leds_init(void) {}
+#endif
 
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 
 /* We have some black magic here
- * PalmOS ROM on recover expects special काष्ठा physical address
- * to be transferred via PSPR. Using this काष्ठा PalmOS restores
- * its state after sleep. As क्रम Linux, we need to setup it the
+ * PalmOS ROM on recover expects special struct physical address
+ * to be transferred via PSPR. Using this struct PalmOS restores
+ * its state after sleep. As for Linux, we need to setup it the
  * same way. More than that, PalmOS ROM changes some values in memory.
- * For now only one location is found, which needs special treaपंचांगent.
+ * For now only one location is found, which needs special treatment.
  * Thanks to Alex Osborne, Andrzej Zaborowski, and lots of other people
- * क्रम पढ़ोing backtraces क्रम me :)
+ * for reading backtraces for me :)
  */
 
-#घोषणा PALMZ72_SAVE_DWORD ((अचिन्हित दीर्घ *)0xc0000050)
+#define PALMZ72_SAVE_DWORD ((unsigned long *)0xc0000050)
 
-अटल काष्ठा palmz72_resume_info palmz72_resume_info = अणु
+static struct palmz72_resume_info palmz72_resume_info = {
 	.magic0 = 0xb4e6,
 	.magic1 = 1,
 
@@ -227,17 +226,17 @@
 	.arm_control = 0,
 	.aux_control = 0,
 	.ttb = 0,
-	.करोमुख्य_access = 0,
+	.domain_access = 0,
 	.process_id = 0,
-पूर्ण;
+};
 
-अटल अचिन्हित दीर्घ store_ptr;
+static unsigned long store_ptr;
 
-/* syscore_ops क्रम Palm Zire 72 PM */
+/* syscore_ops for Palm Zire 72 PM */
 
-अटल पूर्णांक palmz72_pm_suspend(व्योम)
-अणु
-	/* setup the resume_info काष्ठा क्रम the original bootloader */
+static int palmz72_pm_suspend(void)
+{
+	/* setup the resume_info struct for the original bootloader */
 	palmz72_resume_info.resume_addr = (u32) cpu_resume;
 
 	/* Storing memory touched by ROM */
@@ -246,53 +245,53 @@
 	/* Setting PSPR to a proper value */
 	PSPR = __pa_symbol(&palmz72_resume_info);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम palmz72_pm_resume(व्योम)
-अणु
+static void palmz72_pm_resume(void)
+{
 	*PALMZ72_SAVE_DWORD = store_ptr;
-पूर्ण
+}
 
-अटल काष्ठा syscore_ops palmz72_pm_syscore_ops = अणु
+static struct syscore_ops palmz72_pm_syscore_ops = {
 	.suspend = palmz72_pm_suspend,
 	.resume = palmz72_pm_resume,
-पूर्ण;
+};
 
-अटल पूर्णांक __init palmz72_pm_init(व्योम)
-अणु
-	अगर (machine_is_palmz72()) अणु
-		रेजिस्टर_syscore_ops(&palmz72_pm_syscore_ops);
-		वापस 0;
-	पूर्ण
-	वापस -ENODEV;
-पूर्ण
+static int __init palmz72_pm_init(void)
+{
+	if (machine_is_palmz72()) {
+		register_syscore_ops(&palmz72_pm_syscore_ops);
+		return 0;
+	}
+	return -ENODEV;
+}
 
 device_initcall(palmz72_pm_init);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा gpiod_lookup_table palmz72_mci_gpio_table = अणु
+static struct gpiod_lookup_table palmz72_mci_gpio_table = {
 	.dev_id = "pxa2xx-mci.0",
-	.table = अणु
+	.table = {
 		GPIO_LOOKUP("gpio-pxa", GPIO_NR_PALMZ72_SD_DETECT_N,
 			    "cd", GPIO_ACTIVE_LOW),
 		GPIO_LOOKUP("gpio-pxa", GPIO_NR_PALMZ72_SD_RO,
 			    "wp", GPIO_ACTIVE_LOW),
 		GPIO_LOOKUP("gpio-pxa", GPIO_NR_PALMZ72_SD_POWER_N,
 			    "power", GPIO_ACTIVE_LOW),
-		अणु पूर्ण,
-	पूर्ण,
-पूर्ण;
+		{ },
+	},
+};
 
 /******************************************************************************
  * Machine init
  ******************************************************************************/
-अटल व्योम __init palmz72_init(व्योम)
-अणु
+static void __init palmz72_init(void)
+{
 	pxa2xx_mfp_config(ARRAY_AND_SIZE(palmz72_pin_config));
-	pxa_set_ffuart_info(शून्य);
-	pxa_set_btuart_info(शून्य);
-	pxa_set_stuart_info(शून्य);
+	pxa_set_ffuart_info(NULL);
+	pxa_set_btuart_info(NULL);
+	pxa_set_stuart_info(NULL);
 
 	palm27x_mmc_init(&palmz72_mci_gpio_table);
 	palm27x_lcd_init(-1, &palm_320x320_lcd_mode);
@@ -302,11 +301,11 @@ device_initcall(palmz72_pm_init);
 	palm27x_ac97_init(PALMZ72_BAT_MIN_VOLTAGE, PALMZ72_BAT_MAX_VOLTAGE,
 			-1, 113);
 	palm27x_pwm_init(-1, -1);
-	palm27x_घातer_init(-1, -1);
+	palm27x_power_init(-1, -1);
 	palm27x_pmic_init();
 	palmz72_kpc_init();
 	palmz72_leds_init();
-पूर्ण
+}
 
 MACHINE_START(PALMZ72, "Palm Zire72")
 	.atag_offset	= 0x100,
@@ -314,7 +313,7 @@ MACHINE_START(PALMZ72, "Palm Zire72")
 	.nr_irqs	= PXA_NR_IRQS,
 	.init_irq	= pxa27x_init_irq,
 	.handle_irq	= pxa27x_handle_irq,
-	.init_समय	= pxa_समयr_init,
+	.init_time	= pxa_timer_init,
 	.init_machine	= palmz72_init,
 	.restart	= pxa_restart,
 MACHINE_END

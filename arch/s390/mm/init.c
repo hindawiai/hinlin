@@ -1,120 +1,119 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  S390 version
  *    Copyright IBM Corp. 1999
- *    Author(s): Harपंचांगut Penner (hp@de.ibm.com)
+ *    Author(s): Hartmut Penner (hp@de.ibm.com)
  *
  *  Derived from "arch/i386/mm/init.c"
  *    Copyright (C) 1995  Linus Torvalds
  */
 
-#समावेश <linux/संकेत.स>
-#समावेश <linux/sched.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/माला.स>
-#समावेश <linux/types.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/mman.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/swap.h>
-#समावेश <linux/swiotlb.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/init.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/memblock.h>
-#समावेश <linux/memory.h>
-#समावेश <linux/pfn.h>
-#समावेश <linux/poison.h>
-#समावेश <linux/initrd.h>
-#समावेश <linux/export.h>
-#समावेश <linux/cma.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/dma-direct.h>
-#समावेश <यंत्र/processor.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/pgभाग.स>
-#समावेश <यंत्र/ptdump.h>
-#समावेश <यंत्र/dma.h>
-#समावेश <यंत्र/lowcore.h>
-#समावेश <यंत्र/tlb.h>
-#समावेश <यंत्र/tlbflush.h>
-#समावेश <यंत्र/sections.h>
-#समावेश <यंत्र/ctl_reg.h>
-#समावेश <यंत्र/sclp.h>
-#समावेश <यंत्र/set_memory.h>
-#समावेश <यंत्र/kasan.h>
-#समावेश <यंत्र/dma-mapping.h>
-#समावेश <यंत्र/uv.h>
-#समावेश <linux/virtio_config.h>
+#include <linux/signal.h>
+#include <linux/sched.h>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/string.h>
+#include <linux/types.h>
+#include <linux/ptrace.h>
+#include <linux/mman.h>
+#include <linux/mm.h>
+#include <linux/swap.h>
+#include <linux/swiotlb.h>
+#include <linux/smp.h>
+#include <linux/init.h>
+#include <linux/pagemap.h>
+#include <linux/memblock.h>
+#include <linux/memory.h>
+#include <linux/pfn.h>
+#include <linux/poison.h>
+#include <linux/initrd.h>
+#include <linux/export.h>
+#include <linux/cma.h>
+#include <linux/gfp.h>
+#include <linux/dma-direct.h>
+#include <asm/processor.h>
+#include <linux/uaccess.h>
+#include <asm/pgalloc.h>
+#include <asm/ptdump.h>
+#include <asm/dma.h>
+#include <asm/lowcore.h>
+#include <asm/tlb.h>
+#include <asm/tlbflush.h>
+#include <asm/sections.h>
+#include <asm/ctl_reg.h>
+#include <asm/sclp.h>
+#include <asm/set_memory.h>
+#include <asm/kasan.h>
+#include <asm/dma-mapping.h>
+#include <asm/uv.h>
+#include <linux/virtio_config.h>
 
 pgd_t swapper_pg_dir[PTRS_PER_PGD] __section(".bss..swapper_pg_dir");
-अटल pgd_t invalid_pg_dir[PTRS_PER_PGD] __section(".bss..invalid_pg_dir");
+static pgd_t invalid_pg_dir[PTRS_PER_PGD] __section(".bss..invalid_pg_dir");
 
-अचिन्हित दीर्घ s390_invalid_asce;
+unsigned long s390_invalid_asce;
 
-अचिन्हित दीर्घ empty_zero_page, zero_page_mask;
+unsigned long empty_zero_page, zero_page_mask;
 EXPORT_SYMBOL(empty_zero_page);
 EXPORT_SYMBOL(zero_page_mask);
 
-bool iniपंचांगem_मुक्तd;
+bool initmem_freed;
 
-अटल व्योम __init setup_zero_pages(व्योम)
-अणु
-	अचिन्हित पूर्णांक order;
-	काष्ठा page *page;
-	पूर्णांक i;
+static void __init setup_zero_pages(void)
+{
+	unsigned int order;
+	struct page *page;
+	int i;
 
 	/* Latest machines require a mapping granularity of 512KB */
 	order = 7;
 
-	/* Limit number of empty zero pages क्रम small memory sizes */
-	जबतक (order > 2 && (totalram_pages() >> 10) < (1UL << order))
+	/* Limit number of empty zero pages for small memory sizes */
+	while (order > 2 && (totalram_pages() >> 10) < (1UL << order))
 		order--;
 
-	empty_zero_page = __get_मुक्त_pages(GFP_KERNEL | __GFP_ZERO, order);
-	अगर (!empty_zero_page)
+	empty_zero_page = __get_free_pages(GFP_KERNEL | __GFP_ZERO, order);
+	if (!empty_zero_page)
 		panic("Out of memory in setup_zero_pages");
 
-	page = virt_to_page((व्योम *) empty_zero_page);
+	page = virt_to_page((void *) empty_zero_page);
 	split_page(page, order);
-	क्रम (i = 1 << order; i > 0; i--) अणु
+	for (i = 1 << order; i > 0; i--) {
 		mark_page_reserved(page);
 		page++;
-	पूर्ण
+	}
 
 	zero_page_mask = ((PAGE_SIZE << order) - 1) & PAGE_MASK;
-पूर्ण
+}
 
 /*
  * paging_init() sets up the page tables
  */
-व्योम __init paging_init(व्योम)
-अणु
-	अचिन्हित दीर्घ max_zone_pfns[MAX_NR_ZONES];
-	अचिन्हित दीर्घ pgd_type, asce_bits;
+void __init paging_init(void)
+{
+	unsigned long max_zone_pfns[MAX_NR_ZONES];
+	unsigned long pgd_type, asce_bits;
 	psw_t psw;
 
-	s390_invalid_asce  = (अचिन्हित दीर्घ)invalid_pg_dir;
+	s390_invalid_asce  = (unsigned long)invalid_pg_dir;
 	s390_invalid_asce |= _ASCE_TYPE_REGION3 | _ASCE_TABLE_LENGTH;
-	crst_table_init((अचिन्हित दीर्घ *)invalid_pg_dir, _REGION3_ENTRY_EMPTY);
+	crst_table_init((unsigned long *)invalid_pg_dir, _REGION3_ENTRY_EMPTY);
 	init_mm.pgd = swapper_pg_dir;
-	अगर (VMALLOC_END > _REGION2_SIZE) अणु
+	if (VMALLOC_END > _REGION2_SIZE) {
 		asce_bits = _ASCE_TYPE_REGION2 | _ASCE_TABLE_LENGTH;
 		pgd_type = _REGION2_ENTRY_EMPTY;
-	पूर्ण अन्यथा अणु
+	} else {
 		asce_bits = _ASCE_TYPE_REGION3 | _ASCE_TABLE_LENGTH;
 		pgd_type = _REGION3_ENTRY_EMPTY;
-	पूर्ण
+	}
 	init_mm.context.asce = (__pa(init_mm.pgd) & PAGE_MASK) | asce_bits;
 	S390_lowcore.kernel_asce = init_mm.context.asce;
 	S390_lowcore.user_asce = s390_invalid_asce;
-	crst_table_init((अचिन्हित दीर्घ *) init_mm.pgd, pgd_type);
+	crst_table_init((unsigned long *) init_mm.pgd, pgd_type);
 	vmem_map_init();
-	kasan_copy_shaकरोw_mapping();
+	kasan_copy_shadow_mapping();
 
-	/* enable भव mapping in kernel mode */
+	/* enable virtual mapping in kernel mode */
 	__ctl_load(S390_lowcore.kernel_asce, 1, 1);
 	__ctl_load(S390_lowcore.user_asce, 7, 7);
 	__ctl_load(S390_lowcore.kernel_asce, 13, 13);
@@ -122,198 +121,198 @@ bool iniपंचांगem_मुक्तd;
 	psw_bits(psw).dat = 1;
 	psw_bits(psw).as = PSW_BITS_AS_HOME;
 	__load_psw_mask(psw.mask);
-	kasan_मुक्त_early_identity();
+	kasan_free_early_identity();
 
 	sparse_init();
 	zone_dma_bits = 31;
-	स_रखो(max_zone_pfns, 0, माप(max_zone_pfns));
+	memset(max_zone_pfns, 0, sizeof(max_zone_pfns));
 	max_zone_pfns[ZONE_DMA] = PFN_DOWN(MAX_DMA_ADDRESS);
 	max_zone_pfns[ZONE_NORMAL] = max_low_pfn;
-	मुक्त_area_init(max_zone_pfns);
-पूर्ण
+	free_area_init(max_zone_pfns);
+}
 
-व्योम mark_rodata_ro(व्योम)
-अणु
-	अचिन्हित दीर्घ size = __end_ro_after_init - __start_ro_after_init;
+void mark_rodata_ro(void)
+{
+	unsigned long size = __end_ro_after_init - __start_ro_after_init;
 
-	set_memory_ro((अचिन्हित दीर्घ)__start_ro_after_init, size >> PAGE_SHIFT);
+	set_memory_ro((unsigned long)__start_ro_after_init, size >> PAGE_SHIFT);
 	pr_info("Write protected read-only-after-init data: %luk\n", size >> 10);
 	debug_checkwx();
-पूर्ण
+}
 
-पूर्णांक set_memory_encrypted(अचिन्हित दीर्घ addr, पूर्णांक numpages)
-अणु
-	पूर्णांक i;
+int set_memory_encrypted(unsigned long addr, int numpages)
+{
+	int i;
 
-	/* make specअगरied pages unshared, (swiotlb, dma_मुक्त) */
-	क्रम (i = 0; i < numpages; ++i) अणु
-		uv_हटाओ_shared(addr);
+	/* make specified pages unshared, (swiotlb, dma_free) */
+	for (i = 0; i < numpages; ++i) {
+		uv_remove_shared(addr);
 		addr += PAGE_SIZE;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-पूर्णांक set_memory_decrypted(अचिन्हित दीर्घ addr, पूर्णांक numpages)
-अणु
-	पूर्णांक i;
-	/* make specअगरied pages shared (swiotlb, dma_alloca) */
-	क्रम (i = 0; i < numpages; ++i) अणु
+int set_memory_decrypted(unsigned long addr, int numpages)
+{
+	int i;
+	/* make specified pages shared (swiotlb, dma_alloca) */
+	for (i = 0; i < numpages; ++i) {
 		uv_set_shared(addr);
 		addr += PAGE_SIZE;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-/* are we a रक्षित भवization guest? */
-bool क्रमce_dma_unencrypted(काष्ठा device *dev)
-अणु
-	वापस is_prot_virt_guest();
-पूर्ण
+/* are we a protected virtualization guest? */
+bool force_dma_unencrypted(struct device *dev)
+{
+	return is_prot_virt_guest();
+}
 
-#अगर_घोषित CONFIG_ARCH_HAS_RESTRICTED_VIRTIO_MEMORY_ACCESS
+#ifdef CONFIG_ARCH_HAS_RESTRICTED_VIRTIO_MEMORY_ACCESS
 
-पूर्णांक arch_has_restricted_virtio_memory_access(व्योम)
-अणु
-	वापस is_prot_virt_guest();
-पूर्ण
+int arch_has_restricted_virtio_memory_access(void)
+{
+	return is_prot_virt_guest();
+}
 EXPORT_SYMBOL(arch_has_restricted_virtio_memory_access);
 
-#पूर्ण_अगर
+#endif
 
-/* रक्षित भवization */
-अटल व्योम pv_init(व्योम)
-अणु
-	अगर (!is_prot_virt_guest())
-		वापस;
+/* protected virtualization */
+static void pv_init(void)
+{
+	if (!is_prot_virt_guest())
+		return;
 
 	/* make sure bounce buffers are shared */
 	swiotlb_init(1);
 	swiotlb_update_mem_attributes();
-	swiotlb_क्रमce = SWIOTLB_FORCE;
-पूर्ण
+	swiotlb_force = SWIOTLB_FORCE;
+}
 
-व्योम __init mem_init(व्योम)
-अणु
+void __init mem_init(void)
+{
 	cpumask_set_cpu(0, &init_mm.context.cpu_attach_mask);
 	cpumask_set_cpu(0, mm_cpumask(&init_mm));
 
 	set_max_mapnr(max_low_pfn);
-        high_memory = (व्योम *) __va(max_low_pfn * PAGE_SIZE);
+        high_memory = (void *) __va(max_low_pfn * PAGE_SIZE);
 
 	pv_init();
 
-	/* Setup guest page hपूर्णांकing */
+	/* Setup guest page hinting */
 	cmma_init();
 
-	/* this will put all low memory onto the मुक्तlists */
-	memblock_मुक्त_all();
+	/* this will put all low memory onto the freelists */
+	memblock_free_all();
 	setup_zero_pages();	/* Setup zeroed pages. */
 
 	cmma_init_nodat();
-पूर्ण
+}
 
-व्योम मुक्त_iniपंचांगem(व्योम)
-अणु
-	iniपंचांगem_मुक्तd = true;
-	__set_memory((अचिन्हित दीर्घ)_sinittext,
-		     (अचिन्हित दीर्घ)(_einittext - _sinittext) >> PAGE_SHIFT,
+void free_initmem(void)
+{
+	initmem_freed = true;
+	__set_memory((unsigned long)_sinittext,
+		     (unsigned long)(_einittext - _sinittext) >> PAGE_SHIFT,
 		     SET_MEMORY_RW | SET_MEMORY_NX);
-	मुक्त_iniपंचांगem_शेष(POISON_FREE_INITMEM);
-पूर्ण
+	free_initmem_default(POISON_FREE_INITMEM);
+}
 
-अचिन्हित दीर्घ memory_block_size_bytes(व्योम)
-अणु
+unsigned long memory_block_size_bytes(void)
+{
 	/*
 	 * Make sure the memory block size is always greater
 	 * or equal than the memory increment size.
 	 */
-	वापस max_t(अचिन्हित दीर्घ, MIN_MEMORY_BLOCK_SIZE, sclp.rzm);
-पूर्ण
+	return max_t(unsigned long, MIN_MEMORY_BLOCK_SIZE, sclp.rzm);
+}
 
-#अगर_घोषित CONFIG_MEMORY_HOTPLUG
+#ifdef CONFIG_MEMORY_HOTPLUG
 
-#अगर_घोषित CONFIG_CMA
+#ifdef CONFIG_CMA
 
 /* Prevent memory blocks which contain cma regions from going offline */
 
-काष्ठा s390_cma_mem_data अणु
-	अचिन्हित दीर्घ start;
-	अचिन्हित दीर्घ end;
-पूर्ण;
+struct s390_cma_mem_data {
+	unsigned long start;
+	unsigned long end;
+};
 
-अटल पूर्णांक s390_cma_check_range(काष्ठा cma *cma, व्योम *data)
-अणु
-	काष्ठा s390_cma_mem_data *mem_data;
-	अचिन्हित दीर्घ start, end;
+static int s390_cma_check_range(struct cma *cma, void *data)
+{
+	struct s390_cma_mem_data *mem_data;
+	unsigned long start, end;
 
 	mem_data = data;
 	start = cma_get_base(cma);
 	end = start + cma_get_size(cma);
-	अगर (end < mem_data->start)
-		वापस 0;
-	अगर (start >= mem_data->end)
-		वापस 0;
-	वापस -EBUSY;
-पूर्ण
+	if (end < mem_data->start)
+		return 0;
+	if (start >= mem_data->end)
+		return 0;
+	return -EBUSY;
+}
 
-अटल पूर्णांक s390_cma_mem_notअगरier(काष्ठा notअगरier_block *nb,
-				 अचिन्हित दीर्घ action, व्योम *data)
-अणु
-	काष्ठा s390_cma_mem_data mem_data;
-	काष्ठा memory_notअगरy *arg;
-	पूर्णांक rc = 0;
+static int s390_cma_mem_notifier(struct notifier_block *nb,
+				 unsigned long action, void *data)
+{
+	struct s390_cma_mem_data mem_data;
+	struct memory_notify *arg;
+	int rc = 0;
 
 	arg = data;
 	mem_data.start = arg->start_pfn << PAGE_SHIFT;
 	mem_data.end = mem_data.start + (arg->nr_pages << PAGE_SHIFT);
-	अगर (action == MEM_GOING_OFFLINE)
-		rc = cma_क्रम_each_area(s390_cma_check_range, &mem_data);
-	वापस notअगरier_from_त्रुटि_सं(rc);
-पूर्ण
+	if (action == MEM_GOING_OFFLINE)
+		rc = cma_for_each_area(s390_cma_check_range, &mem_data);
+	return notifier_from_errno(rc);
+}
 
-अटल काष्ठा notअगरier_block s390_cma_mem_nb = अणु
-	.notअगरier_call = s390_cma_mem_notअगरier,
-पूर्ण;
+static struct notifier_block s390_cma_mem_nb = {
+	.notifier_call = s390_cma_mem_notifier,
+};
 
-अटल पूर्णांक __init s390_cma_mem_init(व्योम)
-अणु
-	वापस रेजिस्टर_memory_notअगरier(&s390_cma_mem_nb);
-पूर्ण
+static int __init s390_cma_mem_init(void)
+{
+	return register_memory_notifier(&s390_cma_mem_nb);
+}
 device_initcall(s390_cma_mem_init);
 
-#पूर्ण_अगर /* CONFIG_CMA */
+#endif /* CONFIG_CMA */
 
-पूर्णांक arch_add_memory(पूर्णांक nid, u64 start, u64 size,
-		    काष्ठा mhp_params *params)
-अणु
-	अचिन्हित दीर्घ start_pfn = PFN_DOWN(start);
-	अचिन्हित दीर्घ size_pages = PFN_DOWN(size);
-	पूर्णांक rc;
+int arch_add_memory(int nid, u64 start, u64 size,
+		    struct mhp_params *params)
+{
+	unsigned long start_pfn = PFN_DOWN(start);
+	unsigned long size_pages = PFN_DOWN(size);
+	int rc;
 
-	अगर (WARN_ON_ONCE(params->alपंचांगap))
-		वापस -EINVAL;
+	if (WARN_ON_ONCE(params->altmap))
+		return -EINVAL;
 
-	अगर (WARN_ON_ONCE(params->pgprot.pgprot != PAGE_KERNEL.pgprot))
-		वापस -EINVAL;
+	if (WARN_ON_ONCE(params->pgprot.pgprot != PAGE_KERNEL.pgprot))
+		return -EINVAL;
 
 	VM_BUG_ON(!mhp_range_allowed(start, size, true));
 	rc = vmem_add_mapping(start, size);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	rc = __add_pages(nid, start_pfn, size_pages, params);
-	अगर (rc)
-		vmem_हटाओ_mapping(start, size);
-	वापस rc;
-पूर्ण
+	if (rc)
+		vmem_remove_mapping(start, size);
+	return rc;
+}
 
-व्योम arch_हटाओ_memory(पूर्णांक nid, u64 start, u64 size,
-			काष्ठा vmem_alपंचांगap *alपंचांगap)
-अणु
-	अचिन्हित दीर्घ start_pfn = start >> PAGE_SHIFT;
-	अचिन्हित दीर्घ nr_pages = size >> PAGE_SHIFT;
+void arch_remove_memory(int nid, u64 start, u64 size,
+			struct vmem_altmap *altmap)
+{
+	unsigned long start_pfn = start >> PAGE_SHIFT;
+	unsigned long nr_pages = size >> PAGE_SHIFT;
 
-	__हटाओ_pages(start_pfn, nr_pages, alपंचांगap);
-	vmem_हटाओ_mapping(start, size);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_MEMORY_HOTPLUG */
+	__remove_pages(start_pfn, nr_pages, altmap);
+	vmem_remove_mapping(start, size);
+}
+#endif /* CONFIG_MEMORY_HOTPLUG */

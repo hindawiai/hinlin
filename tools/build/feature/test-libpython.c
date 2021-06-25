@@ -1,11 +1,10 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <Python.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <Python.h>
 
-पूर्णांक मुख्य(व्योम)
-अणु
+int main(void)
+{
 	Py_Initialize();
 
-	वापस 0;
-पूर्ण
-#अघोषित _GNU_SOURCE
+	return 0;
+}
+#undef _GNU_SOURCE

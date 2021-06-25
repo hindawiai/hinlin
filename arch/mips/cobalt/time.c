@@ -1,42 +1,41 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  Cobalt समय initialization.
+ *  Cobalt time initialization.
  *
  *  Copyright (C) 2007  Yoichi Yuasa <yuasa@linux-mips.org>
  */
-#समावेश <linux/i8253.h>
-#समावेश <linux/init.h>
+#include <linux/i8253.h>
+#include <linux/init.h>
 
-#समावेश <यंत्र/gt64120.h>
-#समावेश <यंत्र/समय.स>
+#include <asm/gt64120.h>
+#include <asm/time.h>
 
-#घोषणा GT641XX_BASE_CLOCK	50000000	/* 50MHz */
+#define GT641XX_BASE_CLOCK	50000000	/* 50MHz */
 
-व्योम __init plat_समय_init(व्योम)
-अणु
+void __init plat_time_init(void)
+{
 	u32 start, end;
-	पूर्णांक i = HZ / 10;
+	int i = HZ / 10;
 
-	setup_pit_समयr();
+	setup_pit_timer();
 
-	gt641xx_set_base_घड़ी(GT641XX_BASE_CLOCK);
+	gt641xx_set_base_clock(GT641XX_BASE_CLOCK);
 
 	/*
-	 * MIPS counter frequency is measured during a 100msec पूर्णांकerval
-	 * using GT64111 समयr0.
+	 * MIPS counter frequency is measured during a 100msec interval
+	 * using GT64111 timer0.
 	 */
-	जबतक (!gt641xx_समयr0_state())
+	while (!gt641xx_timer0_state())
 		;
 
-	start = पढ़ो_c0_count();
+	start = read_c0_count();
 
-	जबतक (i--)
-		जबतक (!gt641xx_समयr0_state())
+	while (i--)
+		while (!gt641xx_timer0_state())
 			;
 
-	end = पढ़ो_c0_count();
+	end = read_c0_count();
 
 	mips_hpt_frequency = (end - start) * 10;
-	prपूर्णांकk(KERN_INFO "MIPS counter frequency %dHz\n", mips_hpt_frequency);
-पूर्ण
+	printk(KERN_INFO "MIPS counter frequency %dHz\n", mips_hpt_frequency);
+}

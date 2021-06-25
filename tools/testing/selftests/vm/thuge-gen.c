@@ -1,258 +1,257 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-/* Test selecting other page sizes क्रम mmap/shmget.
+// SPDX-License-Identifier: GPL-2.0
+/* Test selecting other page sizes for mmap/shmget.
 
-   Beक्रमe running this huge pages क्रम each huge page size must have been
+   Before running this huge pages for each huge page size must have been
    reserved.
    For large pages beyond MAX_ORDER (like 1GB on x86) boot options must be used.
    Also shmmax must be increased.
    And you need to run as root to work around some weird permissions in shm.
    And nothing using huge pages should run in parallel.
-   When the program पातs you may need to clean up the shm segments with
+   When the program aborts you may need to clean up the shm segments with
    ipcrm -m by hand, like this
-   suकरो ipcs | awk '$1 == "0x00000000" {print $2}' | xargs -n1 suकरो ipcrm -m
-   (warning this will हटाओ all अगर someone अन्यथा uses them) */
+   sudo ipcs | awk '$1 == "0x00000000" {print $2}' | xargs -n1 sudo ipcrm -m
+   (warning this will remove all if someone else uses them) */
 
-#घोषणा _GNU_SOURCE 1
-#समावेश <sys/mman.h>
-#समावेश <मानककोष.स>
-#समावेश <मानकपन.स>
-#समावेश <sys/ipc.h>
-#समावेश <sys/shm.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <glob.h>
-#समावेश <निश्चित.स>
-#समावेश <unistd.h>
-#समावेश <मानकतर्क.स>
-#समावेश <माला.स>
+#define _GNU_SOURCE 1
+#include <sys/mman.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#include <sys/stat.h>
+#include <glob.h>
+#include <assert.h>
+#include <unistd.h>
+#include <stdarg.h>
+#include <string.h>
 
-#घोषणा err(x) लिखो_त्रुटि(x), निकास(1)
+#define err(x) perror(x), exit(1)
 
-#घोषणा MAP_HUGE_2MB    (21 << MAP_HUGE_SHIFT)
-#घोषणा MAP_HUGE_1GB    (30 << MAP_HUGE_SHIFT)
-#घोषणा MAP_HUGE_SHIFT  26
-#घोषणा MAP_HUGE_MASK   0x3f
-#अगर !defined(MAP_HUGETLB)
-#घोषणा MAP_HUGETLB	0x40000
-#पूर्ण_अगर
+#define MAP_HUGE_2MB    (21 << MAP_HUGE_SHIFT)
+#define MAP_HUGE_1GB    (30 << MAP_HUGE_SHIFT)
+#define MAP_HUGE_SHIFT  26
+#define MAP_HUGE_MASK   0x3f
+#if !defined(MAP_HUGETLB)
+#define MAP_HUGETLB	0x40000
+#endif
 
-#घोषणा SHM_HUGETLB     04000   /* segment will use huge TLB pages */
-#घोषणा SHM_HUGE_SHIFT  26
-#घोषणा SHM_HUGE_MASK   0x3f
-#घोषणा SHM_HUGE_2MB    (21 << SHM_HUGE_SHIFT)
-#घोषणा SHM_HUGE_1GB    (30 << SHM_HUGE_SHIFT)
+#define SHM_HUGETLB     04000   /* segment will use huge TLB pages */
+#define SHM_HUGE_SHIFT  26
+#define SHM_HUGE_MASK   0x3f
+#define SHM_HUGE_2MB    (21 << SHM_HUGE_SHIFT)
+#define SHM_HUGE_1GB    (30 << SHM_HUGE_SHIFT)
 
-#घोषणा NUM_PAGESIZES   5
+#define NUM_PAGESIZES   5
 
-#घोषणा NUM_PAGES 4
+#define NUM_PAGES 4
 
-#घोषणा Dम_लिखो(fmt...) // म_लिखो(fmt)
+#define Dprintf(fmt...) // printf(fmt)
 
-अचिन्हित दीर्घ page_sizes[NUM_PAGESIZES];
-पूर्णांक num_page_sizes;
+unsigned long page_sizes[NUM_PAGESIZES];
+int num_page_sizes;
 
-पूर्णांक ilog2(अचिन्हित दीर्घ v)
-अणु
-	पूर्णांक l = 0;
-	जबतक ((1UL << l) < v)
+int ilog2(unsigned long v)
+{
+	int l = 0;
+	while ((1UL << l) < v)
 		l++;
-	वापस l;
-पूर्ण
+	return l;
+}
 
-व्योम find_pagesizes(व्योम)
-अणु
+void find_pagesizes(void)
+{
 	glob_t g;
-	पूर्णांक i;
-	glob("/sys/kernel/mm/hugepages/hugepages-*kB", 0, शून्य, &g);
-	निश्चित(g.gl_pathc <= NUM_PAGESIZES);
-	क्रम (i = 0; i < g.gl_pathc; i++) अणु
-		माला_पूछो(g.gl_pathv[i], "/sys/kernel/mm/hugepages/hugepages-%lukB",
+	int i;
+	glob("/sys/kernel/mm/hugepages/hugepages-*kB", 0, NULL, &g);
+	assert(g.gl_pathc <= NUM_PAGESIZES);
+	for (i = 0; i < g.gl_pathc; i++) {
+		sscanf(g.gl_pathv[i], "/sys/kernel/mm/hugepages/hugepages-%lukB",
 				&page_sizes[i]);
 		page_sizes[i] <<= 10;
-		म_लिखो("Found %luMB\n", page_sizes[i] >> 20);
-	पूर्ण
+		printf("Found %luMB\n", page_sizes[i] >> 20);
+	}
 	num_page_sizes = g.gl_pathc;
-	globमुक्त(&g);
-पूर्ण
+	globfree(&g);
+}
 
-अचिन्हित दीर्घ शेष_huge_page_size(व्योम)
-अणु
-	अचिन्हित दीर्घ hps = 0;
-	अक्षर *line = शून्य;
-	माप_प्रकार linelen = 0;
-	खाता *f = ख_खोलो("/proc/meminfo", "r");
-	अगर (!f)
-		वापस 0;
-	जबतक (getline(&line, &linelen, f) > 0) अणु
-		अगर (माला_पूछो(line, "Hugepagesize:       %lu kB", &hps) == 1) अणु
+unsigned long default_huge_page_size(void)
+{
+	unsigned long hps = 0;
+	char *line = NULL;
+	size_t linelen = 0;
+	FILE *f = fopen("/proc/meminfo", "r");
+	if (!f)
+		return 0;
+	while (getline(&line, &linelen, f) > 0) {
+		if (sscanf(line, "Hugepagesize:       %lu kB", &hps) == 1) {
 			hps <<= 10;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	मुक्त(line);
-	वापस hps;
-पूर्ण
+			break;
+		}
+	}
+	free(line);
+	return hps;
+}
 
-व्योम show(अचिन्हित दीर्घ ps)
-अणु
-	अक्षर buf[100];
-	अगर (ps == getpagesize())
-		वापस;
-	म_लिखो("%luMB: ", ps >> 20);
-	ख_साफ(मानक_निकास);
-	snम_लिखो(buf, माप buf,
+void show(unsigned long ps)
+{
+	char buf[100];
+	if (ps == getpagesize())
+		return;
+	printf("%luMB: ", ps >> 20);
+	fflush(stdout);
+	snprintf(buf, sizeof buf,
 		"cat /sys/kernel/mm/hugepages/hugepages-%lukB/free_hugepages",
 		ps >> 10);
-	प्रणाली(buf);
-पूर्ण
+	system(buf);
+}
 
-अचिन्हित दीर्घ पढ़ो_sysfs(पूर्णांक warn, अक्षर *fmt, ...)
-अणु
-	अक्षर *line = शून्य;
-	माप_प्रकार linelen = 0;
-	अक्षर buf[100];
-	खाता *f;
-	बहु_सूची ap;
-	अचिन्हित दीर्घ val = 0;
+unsigned long read_sysfs(int warn, char *fmt, ...)
+{
+	char *line = NULL;
+	size_t linelen = 0;
+	char buf[100];
+	FILE *f;
+	va_list ap;
+	unsigned long val = 0;
 
-	बहु_शुरू(ap, fmt);
-	vsnम_लिखो(buf, माप buf, fmt, ap);
-	बहु_पूर्ण(ap);
+	va_start(ap, fmt);
+	vsnprintf(buf, sizeof buf, fmt, ap);
+	va_end(ap);
 
-	f = ख_खोलो(buf, "r");
-	अगर (!f) अणु
-		अगर (warn)
-			म_लिखो("missing %s\n", buf);
-		वापस 0;
-	पूर्ण
-	अगर (getline(&line, &linelen, f) > 0) अणु
-		माला_पूछो(line, "%lu", &val);
-	पूर्ण
-	ख_बंद(f);
-	मुक्त(line);
-	वापस val;
-पूर्ण
+	f = fopen(buf, "r");
+	if (!f) {
+		if (warn)
+			printf("missing %s\n", buf);
+		return 0;
+	}
+	if (getline(&line, &linelen, f) > 0) {
+		sscanf(line, "%lu", &val);
+	}
+	fclose(f);
+	free(line);
+	return val;
+}
 
-अचिन्हित दीर्घ पढ़ो_मुक्त(अचिन्हित दीर्घ ps)
-अणु
-	वापस पढ़ो_sysfs(ps != getpagesize(),
+unsigned long read_free(unsigned long ps)
+{
+	return read_sysfs(ps != getpagesize(),
 			"/sys/kernel/mm/hugepages/hugepages-%lukB/free_hugepages",
 			ps >> 10);
-पूर्ण
+}
 
-व्योम test_mmap(अचिन्हित दीर्घ size, अचिन्हित flags)
-अणु
-	अक्षर *map;
-	अचिन्हित दीर्घ beक्रमe, after;
-	पूर्णांक err;
+void test_mmap(unsigned long size, unsigned flags)
+{
+	char *map;
+	unsigned long before, after;
+	int err;
 
-	beक्रमe = पढ़ो_मुक्त(size);
-	map = mmap(शून्य, size*NUM_PAGES, PROT_READ|PROT_WRITE,
+	before = read_free(size);
+	map = mmap(NULL, size*NUM_PAGES, PROT_READ|PROT_WRITE,
 			MAP_PRIVATE|MAP_ANONYMOUS|MAP_HUGETLB|flags, -1, 0);
 
-	अगर (map == (अक्षर *)-1) err("mmap");
-	स_रखो(map, 0xff, size*NUM_PAGES);
-	after = पढ़ो_मुक्त(size);
-	Dम_लिखो("before %lu after %lu diff %ld size %lu\n",
-		beक्रमe, after, beक्रमe - after, size);
-	निश्चित(size == getpagesize() || (beक्रमe - after) == NUM_PAGES);
+	if (map == (char *)-1) err("mmap");
+	memset(map, 0xff, size*NUM_PAGES);
+	after = read_free(size);
+	Dprintf("before %lu after %lu diff %ld size %lu\n",
+		before, after, before - after, size);
+	assert(size == getpagesize() || (before - after) == NUM_PAGES);
 	show(size);
 	err = munmap(map, size);
-	निश्चित(!err);
-पूर्ण
+	assert(!err);
+}
 
-व्योम test_shmget(अचिन्हित दीर्घ size, अचिन्हित flags)
-अणु
-	पूर्णांक id;
-	अचिन्हित दीर्घ beक्रमe, after;
-	पूर्णांक err;
+void test_shmget(unsigned long size, unsigned flags)
+{
+	int id;
+	unsigned long before, after;
+	int err;
 
-	beक्रमe = पढ़ो_मुक्त(size);
+	before = read_free(size);
 	id = shmget(IPC_PRIVATE, size * NUM_PAGES, IPC_CREAT|0600|flags);
-	अगर (id < 0) err("shmget");
+	if (id < 0) err("shmget");
 
-	काष्ठा shm_info i;
-	अगर (shmctl(id, SHM_INFO, (व्योम *)&i) < 0) err("shmctl");
-	Dम_लिखो("alloc %lu res %lu\n", i.shm_tot, i.shm_rss);
+	struct shm_info i;
+	if (shmctl(id, SHM_INFO, (void *)&i) < 0) err("shmctl");
+	Dprintf("alloc %lu res %lu\n", i.shm_tot, i.shm_rss);
 
 
-	Dम_लिखो("id %d\n", id);
-	अक्षर *map = shmat(id, शून्य, 0600);
-	अगर (map == (अक्षर*)-1) err("shmat");
+	Dprintf("id %d\n", id);
+	char *map = shmat(id, NULL, 0600);
+	if (map == (char*)-1) err("shmat");
 
-	shmctl(id, IPC_RMID, शून्य);
+	shmctl(id, IPC_RMID, NULL);
 
-	स_रखो(map, 0xff, size*NUM_PAGES);
-	after = पढ़ो_मुक्त(size);
+	memset(map, 0xff, size*NUM_PAGES);
+	after = read_free(size);
 
-	Dम_लिखो("before %lu after %lu diff %ld size %lu\n",
-		beक्रमe, after, beक्रमe - after, size);
-	निश्चित(size == getpagesize() || (beक्रमe - after) == NUM_PAGES);
+	Dprintf("before %lu after %lu diff %ld size %lu\n",
+		before, after, before - after, size);
+	assert(size == getpagesize() || (before - after) == NUM_PAGES);
 	show(size);
 	err = shmdt(map);
-	निश्चित(!err);
-पूर्ण
+	assert(!err);
+}
 
-व्योम sanity_checks(व्योम)
-अणु
-	पूर्णांक i;
-	अचिन्हित दीर्घ largest = getpagesize();
+void sanity_checks(void)
+{
+	int i;
+	unsigned long largest = getpagesize();
 
-	क्रम (i = 0; i < num_page_sizes; i++) अणु
-		अगर (page_sizes[i] > largest)
+	for (i = 0; i < num_page_sizes; i++) {
+		if (page_sizes[i] > largest)
 			largest = page_sizes[i];
 
-		अगर (पढ़ो_मुक्त(page_sizes[i]) < NUM_PAGES) अणु
-			म_लिखो("Not enough huge pages for page size %lu MB, need %u\n",
+		if (read_free(page_sizes[i]) < NUM_PAGES) {
+			printf("Not enough huge pages for page size %lu MB, need %u\n",
 				page_sizes[i] >> 20,
 				NUM_PAGES);
-			निकास(0);
-		पूर्ण
-	पूर्ण
+			exit(0);
+		}
+	}
 
-	अगर (पढ़ो_sysfs(0, "/proc/sys/kernel/shmmax") < NUM_PAGES * largest) अणु
-		म_लिखो("Please do echo %lu > /proc/sys/kernel/shmmax", largest * NUM_PAGES);
-		निकास(0);
-	पूर्ण
+	if (read_sysfs(0, "/proc/sys/kernel/shmmax") < NUM_PAGES * largest) {
+		printf("Please do echo %lu > /proc/sys/kernel/shmmax", largest * NUM_PAGES);
+		exit(0);
+	}
 
-#अगर defined(__x86_64__)
-	अगर (largest != 1U<<30) अणु
-		म_लिखो("No GB pages available on x86-64\n"
+#if defined(__x86_64__)
+	if (largest != 1U<<30) {
+		printf("No GB pages available on x86-64\n"
 		       "Please boot with hugepagesz=1G hugepages=%d\n", NUM_PAGES);
-		निकास(0);
-	पूर्ण
-#पूर्ण_अगर
-पूर्ण
+		exit(0);
+	}
+#endif
+}
 
-पूर्णांक मुख्य(व्योम)
-अणु
-	पूर्णांक i;
-	अचिन्हित शेष_hps = शेष_huge_page_size();
+int main(void)
+{
+	int i;
+	unsigned default_hps = default_huge_page_size();
 
 	find_pagesizes();
 
 	sanity_checks();
 
-	क्रम (i = 0; i < num_page_sizes; i++) अणु
-		अचिन्हित दीर्घ ps = page_sizes[i];
-		पूर्णांक arg = ilog2(ps) << MAP_HUGE_SHIFT;
-		म_लिखो("Testing %luMB mmap with shift %x\n", ps >> 20, arg);
+	for (i = 0; i < num_page_sizes; i++) {
+		unsigned long ps = page_sizes[i];
+		int arg = ilog2(ps) << MAP_HUGE_SHIFT;
+		printf("Testing %luMB mmap with shift %x\n", ps >> 20, arg);
 		test_mmap(ps, MAP_HUGETLB | arg);
-	पूर्ण
-	म_लिखो("Testing default huge mmap\n");
-	test_mmap(शेष_hps, SHM_HUGETLB);
+	}
+	printf("Testing default huge mmap\n");
+	test_mmap(default_hps, SHM_HUGETLB);
 
-	माला_दो("Testing non-huge shmget");
+	puts("Testing non-huge shmget");
 	test_shmget(getpagesize(), 0);
 
-	क्रम (i = 0; i < num_page_sizes; i++) अणु
-		अचिन्हित दीर्घ ps = page_sizes[i];
-		पूर्णांक arg = ilog2(ps) << SHM_HUGE_SHIFT;
-		म_लिखो("Testing %luMB shmget with shift %x\n", ps >> 20, arg);
+	for (i = 0; i < num_page_sizes; i++) {
+		unsigned long ps = page_sizes[i];
+		int arg = ilog2(ps) << SHM_HUGE_SHIFT;
+		printf("Testing %luMB shmget with shift %x\n", ps >> 20, arg);
 		test_shmget(ps, SHM_HUGETLB | arg);
-	पूर्ण
-	माला_दो("default huge shmget");
-	test_shmget(शेष_hps, SHM_HUGETLB);
+	}
+	puts("default huge shmget");
+	test_shmget(default_hps, SHM_HUGETLB);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

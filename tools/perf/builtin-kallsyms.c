@@ -1,70 +1,69 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * builtin-kallsyms.c
  *
- * Builtin command: Look क्रम a symbol in the running kernel and its modules
+ * Builtin command: Look for a symbol in the running kernel and its modules
  *
- * Copyright (C) 2017, Red Hat Inc, Arnalकरो Carvalho de Melo <acme@redhat.com>
+ * Copyright (C) 2017, Red Hat Inc, Arnaldo Carvalho de Melo <acme@redhat.com>
  */
-#समावेश <पूर्णांकtypes.h>
-#समावेश "builtin.h"
-#समावेश <linux/compiler.h>
-#समावेश <subcmd/parse-options.h>
-#समावेश "debug.h"
-#समावेश "dso.h"
-#समावेश "machine.h"
-#समावेश "map.h"
-#समावेश "symbol.h"
+#include <inttypes.h>
+#include "builtin.h"
+#include <linux/compiler.h>
+#include <subcmd/parse-options.h>
+#include "debug.h"
+#include "dso.h"
+#include "machine.h"
+#include "map.h"
+#include "symbol.h"
 
-अटल पूर्णांक __cmd_kallsyms(पूर्णांक argc, स्थिर अक्षर **argv)
-अणु
-	पूर्णांक i;
-	काष्ठा machine *machine = machine__new_kallsyms();
+static int __cmd_kallsyms(int argc, const char **argv)
+{
+	int i;
+	struct machine *machine = machine__new_kallsyms();
 
-	अगर (machine == शून्य) अणु
+	if (machine == NULL) {
 		pr_err("Couldn't read /proc/kallsyms\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	क्रम (i = 0; i < argc; ++i) अणु
-		काष्ठा map *map;
-		काष्ठा symbol *symbol = machine__find_kernel_symbol_by_name(machine, argv[i], &map);
+	for (i = 0; i < argc; ++i) {
+		struct map *map;
+		struct symbol *symbol = machine__find_kernel_symbol_by_name(machine, argv[i], &map);
 
-		अगर (symbol == शून्य) अणु
-			म_लिखो("%s: not found\n", argv[i]);
-			जारी;
-		पूर्ण
+		if (symbol == NULL) {
+			printf("%s: not found\n", argv[i]);
+			continue;
+		}
 
-		म_लिखो("%s: %s %s %#" PRIx64 "-%#" PRIx64 " (%#" PRIx64 "-%#" PRIx64")\n",
-			symbol->name, map->dso->लघु_name, map->dso->दीर्घ_name,
+		printf("%s: %s %s %#" PRIx64 "-%#" PRIx64 " (%#" PRIx64 "-%#" PRIx64")\n",
+			symbol->name, map->dso->short_name, map->dso->long_name,
 			map->unmap_ip(map, symbol->start), map->unmap_ip(map, symbol->end),
 			symbol->start, symbol->end);
-	पूर्ण
+	}
 
 	machine__delete(machine);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक cmd_kallsyms(पूर्णांक argc, स्थिर अक्षर **argv)
-अणु
-	स्थिर काष्ठा option options[] = अणु
+int cmd_kallsyms(int argc, const char **argv)
+{
+	const struct option options[] = {
 	OPT_INCR('v', "verbose", &verbose, "be more verbose (show counter open errors, etc)"),
 	OPT_END()
-	पूर्ण;
-	स्थिर अक्षर * स्थिर kallsyms_usage[] = अणु
+	};
+	const char * const kallsyms_usage[] = {
 		"perf kallsyms [<options>] symbol_name",
-		शून्य
-	पूर्ण;
+		NULL
+	};
 
 	argc = parse_options(argc, argv, options, kallsyms_usage, 0);
-	अगर (argc < 1)
+	if (argc < 1)
 		usage_with_options(kallsyms_usage, options);
 
 	symbol_conf.sort_by_name = true;
-	symbol_conf.try_vmlinux_path = (symbol_conf.vmlinux_name == शून्य);
-	अगर (symbol__init(शून्य) < 0)
-		वापस -1;
+	symbol_conf.try_vmlinux_path = (symbol_conf.vmlinux_name == NULL);
+	if (symbol__init(NULL) < 0)
+		return -1;
 
-	वापस __cmd_kallsyms(argc, argv);
-पूर्ण
+	return __cmd_kallsyms(argc, argv);
+}

@@ -1,50 +1,49 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause-Clear
+// SPDX-License-Identifier: BSD-3-Clause-Clear
 /*
  * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  */
 
-#समावेश <net/mac80211.h>
-#समावेश <linux/etherdevice.h>
-#समावेश "mac.h"
-#समावेश "core.h"
-#समावेश "debug.h"
-#समावेश "wmi.h"
-#समावेश "hw.h"
-#समावेश "dp_tx.h"
-#समावेश "dp_rx.h"
-#समावेश "testmode.h"
-#समावेश "peer.h"
-#समावेश "debugfs_sta.h"
+#include <net/mac80211.h>
+#include <linux/etherdevice.h>
+#include "mac.h"
+#include "core.h"
+#include "debug.h"
+#include "wmi.h"
+#include "hw.h"
+#include "dp_tx.h"
+#include "dp_rx.h"
+#include "testmode.h"
+#include "peer.h"
+#include "debugfs_sta.h"
 
-#घोषणा CHAN2G(_channel, _freq, _flags) अणु \
+#define CHAN2G(_channel, _freq, _flags) { \
 	.band                   = NL80211_BAND_2GHZ, \
 	.hw_value               = (_channel), \
 	.center_freq            = (_freq), \
 	.flags                  = (_flags), \
 	.max_antenna_gain       = 0, \
-	.max_घातer              = 30, \
-पूर्ण
+	.max_power              = 30, \
+}
 
-#घोषणा CHAN5G(_channel, _freq, _flags) अणु \
+#define CHAN5G(_channel, _freq, _flags) { \
 	.band                   = NL80211_BAND_5GHZ, \
 	.hw_value               = (_channel), \
 	.center_freq            = (_freq), \
 	.flags                  = (_flags), \
 	.max_antenna_gain       = 0, \
-	.max_घातer              = 30, \
-पूर्ण
+	.max_power              = 30, \
+}
 
-#घोषणा CHAN6G(_channel, _freq, _flags) अणु \
+#define CHAN6G(_channel, _freq, _flags) { \
 	.band                   = NL80211_BAND_6GHZ, \
 	.hw_value               = (_channel), \
 	.center_freq            = (_freq), \
 	.flags                  = (_flags), \
 	.max_antenna_gain       = 0, \
-	.max_घातer              = 30, \
-पूर्ण
+	.max_power              = 30, \
+}
 
-अटल स्थिर काष्ठा ieee80211_channel ath11k_2ghz_channels[] = अणु
+static const struct ieee80211_channel ath11k_2ghz_channels[] = {
 	CHAN2G(1, 2412, 0),
 	CHAN2G(2, 2417, 0),
 	CHAN2G(3, 2422, 0),
@@ -59,9 +58,9 @@
 	CHAN2G(12, 2467, 0),
 	CHAN2G(13, 2472, 0),
 	CHAN2G(14, 2484, 0),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा ieee80211_channel ath11k_5ghz_channels[] = अणु
+static const struct ieee80211_channel ath11k_5ghz_channels[] = {
 	CHAN5G(36, 5180, 0),
 	CHAN5G(40, 5200, 0),
 	CHAN5G(44, 5220, 0),
@@ -89,9 +88,9 @@
 	CHAN5G(165, 5825, 0),
 	CHAN5G(169, 5845, 0),
 	CHAN5G(173, 5865, 0),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा ieee80211_channel ath11k_6ghz_channels[] = अणु
+static const struct ieee80211_channel ath11k_6ghz_channels[] = {
 	CHAN6G(1, 5955, 0),
 	CHAN6G(5, 5975, 0),
 	CHAN6G(9, 5995, 0),
@@ -151,37 +150,37 @@
 	CHAN6G(225, 7075, 0),
 	CHAN6G(229, 7095, 0),
 	CHAN6G(233, 7115, 0),
-पूर्ण;
+};
 
-अटल काष्ठा ieee80211_rate ath11k_legacy_rates[] = अणु
-	अणु .bitrate = 10,
-	  .hw_value = ATH11K_HW_RATE_CCK_LP_1M पूर्ण,
-	अणु .bitrate = 20,
+static struct ieee80211_rate ath11k_legacy_rates[] = {
+	{ .bitrate = 10,
+	  .hw_value = ATH11K_HW_RATE_CCK_LP_1M },
+	{ .bitrate = 20,
 	  .hw_value = ATH11K_HW_RATE_CCK_LP_2M,
-	  .hw_value_लघु = ATH11K_HW_RATE_CCK_SP_2M,
-	  .flags = IEEE80211_RATE_SHORT_PREAMBLE पूर्ण,
-	अणु .bitrate = 55,
+	  .hw_value_short = ATH11K_HW_RATE_CCK_SP_2M,
+	  .flags = IEEE80211_RATE_SHORT_PREAMBLE },
+	{ .bitrate = 55,
 	  .hw_value = ATH11K_HW_RATE_CCK_LP_5_5M,
-	  .hw_value_लघु = ATH11K_HW_RATE_CCK_SP_5_5M,
-	  .flags = IEEE80211_RATE_SHORT_PREAMBLE पूर्ण,
-	अणु .bitrate = 110,
+	  .hw_value_short = ATH11K_HW_RATE_CCK_SP_5_5M,
+	  .flags = IEEE80211_RATE_SHORT_PREAMBLE },
+	{ .bitrate = 110,
 	  .hw_value = ATH11K_HW_RATE_CCK_LP_11M,
-	  .hw_value_लघु = ATH11K_HW_RATE_CCK_SP_11M,
-	  .flags = IEEE80211_RATE_SHORT_PREAMBLE पूर्ण,
+	  .hw_value_short = ATH11K_HW_RATE_CCK_SP_11M,
+	  .flags = IEEE80211_RATE_SHORT_PREAMBLE },
 
-	अणु .bitrate = 60, .hw_value = ATH11K_HW_RATE_OFDM_6M पूर्ण,
-	अणु .bitrate = 90, .hw_value = ATH11K_HW_RATE_OFDM_9M पूर्ण,
-	अणु .bitrate = 120, .hw_value = ATH11K_HW_RATE_OFDM_12M पूर्ण,
-	अणु .bitrate = 180, .hw_value = ATH11K_HW_RATE_OFDM_18M पूर्ण,
-	अणु .bitrate = 240, .hw_value = ATH11K_HW_RATE_OFDM_24M पूर्ण,
-	अणु .bitrate = 360, .hw_value = ATH11K_HW_RATE_OFDM_36M पूर्ण,
-	अणु .bitrate = 480, .hw_value = ATH11K_HW_RATE_OFDM_48M पूर्ण,
-	अणु .bitrate = 540, .hw_value = ATH11K_HW_RATE_OFDM_54M पूर्ण,
-पूर्ण;
+	{ .bitrate = 60, .hw_value = ATH11K_HW_RATE_OFDM_6M },
+	{ .bitrate = 90, .hw_value = ATH11K_HW_RATE_OFDM_9M },
+	{ .bitrate = 120, .hw_value = ATH11K_HW_RATE_OFDM_12M },
+	{ .bitrate = 180, .hw_value = ATH11K_HW_RATE_OFDM_18M },
+	{ .bitrate = 240, .hw_value = ATH11K_HW_RATE_OFDM_24M },
+	{ .bitrate = 360, .hw_value = ATH11K_HW_RATE_OFDM_36M },
+	{ .bitrate = 480, .hw_value = ATH11K_HW_RATE_OFDM_48M },
+	{ .bitrate = 540, .hw_value = ATH11K_HW_RATE_OFDM_54M },
+};
 
-अटल स्थिर पूर्णांक
-ath11k_phymodes[NUM_NL80211_BANDS][ATH11K_CHAN_WIDTH_NUM] = अणु
-	[NL80211_BAND_2GHZ] = अणु
+static const int
+ath11k_phymodes[NUM_NL80211_BANDS][ATH11K_CHAN_WIDTH_NUM] = {
+	[NL80211_BAND_2GHZ] = {
 			[NL80211_CHAN_WIDTH_5] = MODE_UNKNOWN,
 			[NL80211_CHAN_WIDTH_10] = MODE_UNKNOWN,
 			[NL80211_CHAN_WIDTH_20_NOHT] = MODE_11AX_HE20_2G,
@@ -190,8 +189,8 @@ ath11k_phymodes[NUM_NL80211_BANDS][ATH11K_CHAN_WIDTH_NUM] = अणु
 			[NL80211_CHAN_WIDTH_80] = MODE_11AX_HE80_2G,
 			[NL80211_CHAN_WIDTH_80P80] = MODE_UNKNOWN,
 			[NL80211_CHAN_WIDTH_160] = MODE_UNKNOWN,
-	पूर्ण,
-	[NL80211_BAND_5GHZ] = अणु
+	},
+	[NL80211_BAND_5GHZ] = {
 			[NL80211_CHAN_WIDTH_5] = MODE_UNKNOWN,
 			[NL80211_CHAN_WIDTH_10] = MODE_UNKNOWN,
 			[NL80211_CHAN_WIDTH_20_NOHT] = MODE_11AX_HE20,
@@ -200,8 +199,8 @@ ath11k_phymodes[NUM_NL80211_BANDS][ATH11K_CHAN_WIDTH_NUM] = अणु
 			[NL80211_CHAN_WIDTH_80] = MODE_11AX_HE80,
 			[NL80211_CHAN_WIDTH_160] = MODE_11AX_HE160,
 			[NL80211_CHAN_WIDTH_80P80] = MODE_11AX_HE80_80,
-	पूर्ण,
-	[NL80211_BAND_6GHZ] = अणु
+	},
+	[NL80211_BAND_6GHZ] = {
 			[NL80211_CHAN_WIDTH_5] = MODE_UNKNOWN,
 			[NL80211_CHAN_WIDTH_10] = MODE_UNKNOWN,
 			[NL80211_CHAN_WIDTH_20_NOHT] = MODE_11AX_HE20,
@@ -210,11 +209,11 @@ ath11k_phymodes[NUM_NL80211_BANDS][ATH11K_CHAN_WIDTH_NUM] = अणु
 			[NL80211_CHAN_WIDTH_80] = MODE_11AX_HE80,
 			[NL80211_CHAN_WIDTH_160] = MODE_11AX_HE160,
 			[NL80211_CHAN_WIDTH_80P80] = MODE_11AX_HE80_80,
-	पूर्ण,
+	},
 
-पूर्ण;
+};
 
-स्थिर काष्ठा htt_rx_ring_tlv_filter ath11k_mac_mon_status_filter_शेष = अणु
+const struct htt_rx_ring_tlv_filter ath11k_mac_mon_status_filter_default = {
 	.rx_filter = HTT_RX_FILTER_TLV_FLAGS_MPDU_START |
 		     HTT_RX_FILTER_TLV_FLAGS_PPDU_END |
 		     HTT_RX_FILTER_TLV_FLAGS_PPDU_END_STATUS_DONE,
@@ -223,857 +222,857 @@ ath11k_phymodes[NUM_NL80211_BANDS][ATH11K_CHAN_WIDTH_NUM] = अणु
 	.pkt_filter_flags2 = HTT_RX_FP_CTRL_FILTER_FLASG2,
 	.pkt_filter_flags3 = HTT_RX_FP_DATA_FILTER_FLASG3 |
 			     HTT_RX_FP_CTRL_FILTER_FLASG3
-पूर्ण;
+};
 
-#घोषणा ATH11K_MAC_FIRST_OFDM_RATE_IDX 4
-#घोषणा ath11k_g_rates ath11k_legacy_rates
-#घोषणा ath11k_g_rates_size (ARRAY_SIZE(ath11k_legacy_rates))
-#घोषणा ath11k_a_rates (ath11k_legacy_rates + 4)
-#घोषणा ath11k_a_rates_size (ARRAY_SIZE(ath11k_legacy_rates) - 4)
+#define ATH11K_MAC_FIRST_OFDM_RATE_IDX 4
+#define ath11k_g_rates ath11k_legacy_rates
+#define ath11k_g_rates_size (ARRAY_SIZE(ath11k_legacy_rates))
+#define ath11k_a_rates (ath11k_legacy_rates + 4)
+#define ath11k_a_rates_size (ARRAY_SIZE(ath11k_legacy_rates) - 4)
 
-#घोषणा ATH11K_MAC_SCAN_TIMEOUT_MSECS 200 /* in msecs */
+#define ATH11K_MAC_SCAN_TIMEOUT_MSECS 200 /* in msecs */
 
-अटल स्थिर u32 ath11k_smps_map[] = अणु
+static const u32 ath11k_smps_map[] = {
 	[WLAN_HT_CAP_SM_PS_STATIC] = WMI_PEER_SMPS_STATIC,
 	[WLAN_HT_CAP_SM_PS_DYNAMIC] = WMI_PEER_SMPS_DYNAMIC,
 	[WLAN_HT_CAP_SM_PS_INVALID] = WMI_PEER_SMPS_PS_NONE,
 	[WLAN_HT_CAP_SM_PS_DISABLED] = WMI_PEER_SMPS_PS_NONE,
-पूर्ण;
+};
 
-अटल पूर्णांक ath11k_start_vdev_delay(काष्ठा ieee80211_hw *hw,
-				   काष्ठा ieee80211_vअगर *vअगर);
+static int ath11k_start_vdev_delay(struct ieee80211_hw *hw,
+				   struct ieee80211_vif *vif);
 
 u8 ath11k_mac_bw_to_mac80211_bw(u8 bw)
-अणु
+{
 	u8 ret = 0;
 
-	चयन (bw) अणु
-	हाल ATH11K_BW_20:
+	switch (bw) {
+	case ATH11K_BW_20:
 		ret = RATE_INFO_BW_20;
-		अवरोध;
-	हाल ATH11K_BW_40:
+		break;
+	case ATH11K_BW_40:
 		ret = RATE_INFO_BW_40;
-		अवरोध;
-	हाल ATH11K_BW_80:
+		break;
+	case ATH11K_BW_80:
 		ret = RATE_INFO_BW_80;
-		अवरोध;
-	हाल ATH11K_BW_160:
+		break;
+	case ATH11K_BW_160:
 		ret = RATE_INFO_BW_160;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-क्रमागत ath11k_supported_bw ath11k_mac_mac80211_bw_to_ath11k_bw(क्रमागत rate_info_bw bw)
-अणु
-	चयन (bw) अणु
-	हाल RATE_INFO_BW_20:
-		वापस ATH11K_BW_20;
-	हाल RATE_INFO_BW_40:
-		वापस ATH11K_BW_40;
-	हाल RATE_INFO_BW_80:
-		वापस ATH11K_BW_80;
-	हाल RATE_INFO_BW_160:
-		वापस ATH11K_BW_160;
-	शेष:
-		वापस ATH11K_BW_20;
-	पूर्ण
-पूर्ण
+enum ath11k_supported_bw ath11k_mac_mac80211_bw_to_ath11k_bw(enum rate_info_bw bw)
+{
+	switch (bw) {
+	case RATE_INFO_BW_20:
+		return ATH11K_BW_20;
+	case RATE_INFO_BW_40:
+		return ATH11K_BW_40;
+	case RATE_INFO_BW_80:
+		return ATH11K_BW_80;
+	case RATE_INFO_BW_160:
+		return ATH11K_BW_160;
+	default:
+		return ATH11K_BW_20;
+	}
+}
 
-पूर्णांक ath11k_mac_hw_ratecode_to_legacy_rate(u8 hw_rc, u8 preamble, u8 *rateidx,
+int ath11k_mac_hw_ratecode_to_legacy_rate(u8 hw_rc, u8 preamble, u8 *rateidx,
 					  u16 *rate)
-अणु
-	/* As शेष, it is OFDM rates */
-	पूर्णांक i = ATH11K_MAC_FIRST_OFDM_RATE_IDX;
-	पूर्णांक max_rates_idx = ath11k_g_rates_size;
+{
+	/* As default, it is OFDM rates */
+	int i = ATH11K_MAC_FIRST_OFDM_RATE_IDX;
+	int max_rates_idx = ath11k_g_rates_size;
 
-	अगर (preamble == WMI_RATE_PREAMBLE_CCK) अणु
+	if (preamble == WMI_RATE_PREAMBLE_CCK) {
 		hw_rc &= ~ATH11k_HW_RATECODE_CCK_SHORT_PREAM_MASK;
 		i = 0;
 		max_rates_idx = ATH11K_MAC_FIRST_OFDM_RATE_IDX;
-	पूर्ण
+	}
 
-	जबतक (i < max_rates_idx) अणु
-		अगर (hw_rc == ath11k_legacy_rates[i].hw_value) अणु
+	while (i < max_rates_idx) {
+		if (hw_rc == ath11k_legacy_rates[i].hw_value) {
 			*rateidx = i;
 			*rate = ath11k_legacy_rates[i].bitrate;
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		i++;
-	पूर्ण
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक get_num_chains(u32 mask)
-अणु
-	पूर्णांक num_chains = 0;
+static int get_num_chains(u32 mask)
+{
+	int num_chains = 0;
 
-	जबतक (mask) अणु
-		अगर (mask & BIT(0))
+	while (mask) {
+		if (mask & BIT(0))
 			num_chains++;
 		mask >>= 1;
-	पूर्ण
+	}
 
-	वापस num_chains;
-पूर्ण
+	return num_chains;
+}
 
-u8 ath11k_mac_bitrate_to_idx(स्थिर काष्ठा ieee80211_supported_band *sband,
+u8 ath11k_mac_bitrate_to_idx(const struct ieee80211_supported_band *sband,
 			     u32 bitrate)
-अणु
-	पूर्णांक i;
+{
+	int i;
 
-	क्रम (i = 0; i < sband->n_bitrates; i++)
-		अगर (sband->bitrates[i].bitrate == bitrate)
-			वापस i;
+	for (i = 0; i < sband->n_bitrates; i++)
+		if (sband->bitrates[i].bitrate == bitrate)
+			return i;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u32
-ath11k_mac_max_ht_nss(स्थिर u8 ht_mcs_mask[IEEE80211_HT_MCS_MASK_LEN])
-अणु
-	पूर्णांक nss;
+static u32
+ath11k_mac_max_ht_nss(const u8 ht_mcs_mask[IEEE80211_HT_MCS_MASK_LEN])
+{
+	int nss;
 
-	क्रम (nss = IEEE80211_HT_MCS_MASK_LEN - 1; nss >= 0; nss--)
-		अगर (ht_mcs_mask[nss])
-			वापस nss + 1;
+	for (nss = IEEE80211_HT_MCS_MASK_LEN - 1; nss >= 0; nss--)
+		if (ht_mcs_mask[nss])
+			return nss + 1;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल u32
-ath11k_mac_max_vht_nss(स्थिर u16 vht_mcs_mask[NL80211_VHT_NSS_MAX])
-अणु
-	पूर्णांक nss;
+static u32
+ath11k_mac_max_vht_nss(const u16 vht_mcs_mask[NL80211_VHT_NSS_MAX])
+{
+	int nss;
 
-	क्रम (nss = NL80211_VHT_NSS_MAX - 1; nss >= 0; nss--)
-		अगर (vht_mcs_mask[nss])
-			वापस nss + 1;
+	for (nss = NL80211_VHT_NSS_MAX - 1; nss >= 0; nss--)
+		if (vht_mcs_mask[nss])
+			return nss + 1;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल u8 ath11k_parse_mpdudensity(u8 mpdudensity)
-अणु
-/* 802.11n D2.0 defined values क्रम "Minimum MPDU Start Spacing":
- *   0 क्रम no restriction
- *   1 क्रम 1/4 us
- *   2 क्रम 1/2 us
- *   3 क्रम 1 us
- *   4 क्रम 2 us
- *   5 क्रम 4 us
- *   6 क्रम 8 us
- *   7 क्रम 16 us
+static u8 ath11k_parse_mpdudensity(u8 mpdudensity)
+{
+/* 802.11n D2.0 defined values for "Minimum MPDU Start Spacing":
+ *   0 for no restriction
+ *   1 for 1/4 us
+ *   2 for 1/2 us
+ *   3 for 1 us
+ *   4 for 2 us
+ *   5 for 4 us
+ *   6 for 8 us
+ *   7 for 16 us
  */
-	चयन (mpdudensity) अणु
-	हाल 0:
-		वापस 0;
-	हाल 1:
-	हाल 2:
-	हाल 3:
+	switch (mpdudensity) {
+	case 0:
+		return 0;
+	case 1:
+	case 2:
+	case 3:
 	/* Our lower layer calculations limit our precision to
 	 * 1 microsecond
 	 */
-		वापस 1;
-	हाल 4:
-		वापस 2;
-	हाल 5:
-		वापस 4;
-	हाल 6:
-		वापस 8;
-	हाल 7:
-		वापस 16;
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+		return 1;
+	case 4:
+		return 2;
+	case 5:
+		return 4;
+	case 6:
+		return 8;
+	case 7:
+		return 16;
+	default:
+		return 0;
+	}
+}
 
-अटल पूर्णांक ath11k_mac_vअगर_chan(काष्ठा ieee80211_vअगर *vअगर,
-			       काष्ठा cfg80211_chan_def *def)
-अणु
-	काष्ठा ieee80211_chanctx_conf *conf;
+static int ath11k_mac_vif_chan(struct ieee80211_vif *vif,
+			       struct cfg80211_chan_def *def)
+{
+	struct ieee80211_chanctx_conf *conf;
 
-	rcu_पढ़ो_lock();
-	conf = rcu_dereference(vअगर->chanctx_conf);
-	अगर (!conf) अणु
-		rcu_पढ़ो_unlock();
-		वापस -ENOENT;
-	पूर्ण
+	rcu_read_lock();
+	conf = rcu_dereference(vif->chanctx_conf);
+	if (!conf) {
+		rcu_read_unlock();
+		return -ENOENT;
+	}
 
 	*def = conf->def;
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool ath11k_mac_bitrate_is_cck(पूर्णांक bitrate)
-अणु
-	चयन (bitrate) अणु
-	हाल 10:
-	हाल 20:
-	हाल 55:
-	हाल 110:
-		वापस true;
-	पूर्ण
+static bool ath11k_mac_bitrate_is_cck(int bitrate)
+{
+	switch (bitrate) {
+	case 10:
+	case 20:
+	case 55:
+	case 110:
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-u8 ath11k_mac_hw_rate_to_idx(स्थिर काष्ठा ieee80211_supported_band *sband,
+u8 ath11k_mac_hw_rate_to_idx(const struct ieee80211_supported_band *sband,
 			     u8 hw_rate, bool cck)
-अणु
-	स्थिर काष्ठा ieee80211_rate *rate;
-	पूर्णांक i;
+{
+	const struct ieee80211_rate *rate;
+	int i;
 
-	क्रम (i = 0; i < sband->n_bitrates; i++) अणु
+	for (i = 0; i < sband->n_bitrates; i++) {
 		rate = &sband->bitrates[i];
 
-		अगर (ath11k_mac_bitrate_is_cck(rate->bitrate) != cck)
-			जारी;
+		if (ath11k_mac_bitrate_is_cck(rate->bitrate) != cck)
+			continue;
 
-		अगर (rate->hw_value == hw_rate)
-			वापस i;
-		अन्यथा अगर (rate->flags & IEEE80211_RATE_SHORT_PREAMBLE &&
-			 rate->hw_value_लघु == hw_rate)
-			वापस i;
-	पूर्ण
+		if (rate->hw_value == hw_rate)
+			return i;
+		else if (rate->flags & IEEE80211_RATE_SHORT_PREAMBLE &&
+			 rate->hw_value_short == hw_rate)
+			return i;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u8 ath11k_mac_bitrate_to_rate(पूर्णांक bitrate)
-अणु
-	वापस DIV_ROUND_UP(bitrate, 5) |
+static u8 ath11k_mac_bitrate_to_rate(int bitrate)
+{
+	return DIV_ROUND_UP(bitrate, 5) |
 	       (ath11k_mac_bitrate_is_cck(bitrate) ? BIT(7) : 0);
-पूर्ण
+}
 
-अटल व्योम ath11k_get_arvअगर_iter(व्योम *data, u8 *mac,
-				  काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा ath11k_vअगर_iter *arvअगर_iter = data;
-	काष्ठा ath11k_vअगर *arvअगर = (व्योम *)vअगर->drv_priv;
+static void ath11k_get_arvif_iter(void *data, u8 *mac,
+				  struct ieee80211_vif *vif)
+{
+	struct ath11k_vif_iter *arvif_iter = data;
+	struct ath11k_vif *arvif = (void *)vif->drv_priv;
 
-	अगर (arvअगर->vdev_id == arvअगर_iter->vdev_id)
-		arvअगर_iter->arvअगर = arvअगर;
-पूर्ण
+	if (arvif->vdev_id == arvif_iter->vdev_id)
+		arvif_iter->arvif = arvif;
+}
 
-काष्ठा ath11k_vअगर *ath11k_mac_get_arvअगर(काष्ठा ath11k *ar, u32 vdev_id)
-अणु
-	काष्ठा ath11k_vअगर_iter arvअगर_iter;
+struct ath11k_vif *ath11k_mac_get_arvif(struct ath11k *ar, u32 vdev_id)
+{
+	struct ath11k_vif_iter arvif_iter;
 	u32 flags;
 
-	स_रखो(&arvअगर_iter, 0, माप(काष्ठा ath11k_vअगर_iter));
-	arvअगर_iter.vdev_id = vdev_id;
+	memset(&arvif_iter, 0, sizeof(struct ath11k_vif_iter));
+	arvif_iter.vdev_id = vdev_id;
 
 	flags = IEEE80211_IFACE_ITER_RESUME_ALL;
-	ieee80211_iterate_active_पूर्णांकerfaces_atomic(ar->hw,
+	ieee80211_iterate_active_interfaces_atomic(ar->hw,
 						   flags,
-						   ath11k_get_arvअगर_iter,
-						   &arvअगर_iter);
-	अगर (!arvअगर_iter.arvअगर) अणु
+						   ath11k_get_arvif_iter,
+						   &arvif_iter);
+	if (!arvif_iter.arvif) {
 		ath11k_warn(ar->ab, "No VIF found for vdev %d\n", vdev_id);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	वापस arvअगर_iter.arvअगर;
-पूर्ण
+	return arvif_iter.arvif;
+}
 
-काष्ठा ath11k_vअगर *ath11k_mac_get_arvअगर_by_vdev_id(काष्ठा ath11k_base *ab,
+struct ath11k_vif *ath11k_mac_get_arvif_by_vdev_id(struct ath11k_base *ab,
 						   u32 vdev_id)
-अणु
-	पूर्णांक i;
-	काष्ठा ath11k_pdev *pdev;
-	काष्ठा ath11k_vअगर *arvअगर;
+{
+	int i;
+	struct ath11k_pdev *pdev;
+	struct ath11k_vif *arvif;
 
-	क्रम (i = 0; i < ab->num_radios; i++) अणु
+	for (i = 0; i < ab->num_radios; i++) {
 		pdev = rcu_dereference(ab->pdevs_active[i]);
-		अगर (pdev && pdev->ar) अणु
-			arvअगर = ath11k_mac_get_arvअगर(pdev->ar, vdev_id);
-			अगर (arvअगर)
-				वापस arvअगर;
-		पूर्ण
-	पूर्ण
+		if (pdev && pdev->ar) {
+			arvif = ath11k_mac_get_arvif(pdev->ar, vdev_id);
+			if (arvif)
+				return arvif;
+		}
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-काष्ठा ath11k *ath11k_mac_get_ar_by_vdev_id(काष्ठा ath11k_base *ab, u32 vdev_id)
-अणु
-	पूर्णांक i;
-	काष्ठा ath11k_pdev *pdev;
+struct ath11k *ath11k_mac_get_ar_by_vdev_id(struct ath11k_base *ab, u32 vdev_id)
+{
+	int i;
+	struct ath11k_pdev *pdev;
 
-	क्रम (i = 0; i < ab->num_radios; i++) अणु
+	for (i = 0; i < ab->num_radios; i++) {
 		pdev = rcu_dereference(ab->pdevs_active[i]);
-		अगर (pdev && pdev->ar) अणु
-			अगर (pdev->ar->allocated_vdev_map & (1LL << vdev_id))
-				वापस pdev->ar;
-		पूर्ण
-	पूर्ण
+		if (pdev && pdev->ar) {
+			if (pdev->ar->allocated_vdev_map & (1LL << vdev_id))
+				return pdev->ar;
+		}
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-काष्ठा ath11k *ath11k_mac_get_ar_by_pdev_id(काष्ठा ath11k_base *ab, u32 pdev_id)
-अणु
-	पूर्णांक i;
-	काष्ठा ath11k_pdev *pdev;
+struct ath11k *ath11k_mac_get_ar_by_pdev_id(struct ath11k_base *ab, u32 pdev_id)
+{
+	int i;
+	struct ath11k_pdev *pdev;
 
-	अगर (ab->hw_params.single_pdev_only) अणु
+	if (ab->hw_params.single_pdev_only) {
 		pdev = rcu_dereference(ab->pdevs_active[0]);
-		वापस pdev ? pdev->ar : शून्य;
-	पूर्ण
+		return pdev ? pdev->ar : NULL;
+	}
 
-	अगर (WARN_ON(pdev_id > ab->num_radios))
-		वापस शून्य;
+	if (WARN_ON(pdev_id > ab->num_radios))
+		return NULL;
 
-	क्रम (i = 0; i < ab->num_radios; i++) अणु
+	for (i = 0; i < ab->num_radios; i++) {
 		pdev = rcu_dereference(ab->pdevs_active[i]);
 
-		अगर (pdev && pdev->pdev_id == pdev_id)
-			वापस (pdev->ar ? pdev->ar : शून्य);
-	पूर्ण
+		if (pdev && pdev->pdev_id == pdev_id)
+			return (pdev->ar ? pdev->ar : NULL);
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम ath11k_pdev_caps_update(काष्ठा ath11k *ar)
-अणु
-	काष्ठा ath11k_base *ab = ar->ab;
+static void ath11k_pdev_caps_update(struct ath11k *ar)
+{
+	struct ath11k_base *ab = ar->ab;
 
-	ar->max_tx_घातer = ab->target_caps.hw_max_tx_घातer;
+	ar->max_tx_power = ab->target_caps.hw_max_tx_power;
 
-	/* FIXME Set min_tx_घातer to ab->target_caps.hw_min_tx_घातer.
-	 * But since the received value in svcrdy is same as hw_max_tx_घातer,
-	 * we can set ar->min_tx_घातer to 0 currently until
+	/* FIXME Set min_tx_power to ab->target_caps.hw_min_tx_power.
+	 * But since the received value in svcrdy is same as hw_max_tx_power,
+	 * we can set ar->min_tx_power to 0 currently until
 	 * this is fixed in firmware
 	 */
-	ar->min_tx_घातer = 0;
+	ar->min_tx_power = 0;
 
-	ar->txघातer_limit_2g = ar->max_tx_घातer;
-	ar->txघातer_limit_5g = ar->max_tx_घातer;
-	ar->txघातer_scale = WMI_HOST_TP_SCALE_MAX;
-पूर्ण
+	ar->txpower_limit_2g = ar->max_tx_power;
+	ar->txpower_limit_5g = ar->max_tx_power;
+	ar->txpower_scale = WMI_HOST_TP_SCALE_MAX;
+}
 
-अटल पूर्णांक ath11k_mac_txघातer_recalc(काष्ठा ath11k *ar)
-अणु
-	काष्ठा ath11k_pdev *pdev = ar->pdev;
-	काष्ठा ath11k_vअगर *arvअगर;
-	पूर्णांक ret, txघातer = -1;
+static int ath11k_mac_txpower_recalc(struct ath11k *ar)
+{
+	struct ath11k_pdev *pdev = ar->pdev;
+	struct ath11k_vif *arvif;
+	int ret, txpower = -1;
 	u32 param;
 
-	lockdep_निश्चित_held(&ar->conf_mutex);
+	lockdep_assert_held(&ar->conf_mutex);
 
-	list_क्रम_each_entry(arvअगर, &ar->arvअगरs, list) अणु
-		अगर (arvअगर->txघातer <= 0)
-			जारी;
+	list_for_each_entry(arvif, &ar->arvifs, list) {
+		if (arvif->txpower <= 0)
+			continue;
 
-		अगर (txघातer == -1)
-			txघातer = arvअगर->txघातer;
-		अन्यथा
-			txघातer = min(txघातer, arvअगर->txघातer);
-	पूर्ण
+		if (txpower == -1)
+			txpower = arvif->txpower;
+		else
+			txpower = min(txpower, arvif->txpower);
+	}
 
-	अगर (txघातer == -1)
-		वापस 0;
+	if (txpower == -1)
+		return 0;
 
 	/* txpwr is set as 2 units per dBm in FW*/
-	txघातer = min_t(u32, max_t(u32, ar->min_tx_घातer, txघातer),
-			ar->max_tx_घातer) * 2;
+	txpower = min_t(u32, max_t(u32, ar->min_tx_power, txpower),
+			ar->max_tx_power) * 2;
 
 	ath11k_dbg(ar->ab, ATH11K_DBG_MAC, "txpower to set in hw %d\n",
-		   txघातer / 2);
+		   txpower / 2);
 
-	अगर ((pdev->cap.supported_bands & WMI_HOST_WLAN_2G_CAP) &&
-	    ar->txघातer_limit_2g != txघातer) अणु
+	if ((pdev->cap.supported_bands & WMI_HOST_WLAN_2G_CAP) &&
+	    ar->txpower_limit_2g != txpower) {
 		param = WMI_PDEV_PARAM_TXPOWER_LIMIT2G;
 		ret = ath11k_wmi_pdev_set_param(ar, param,
-						txघातer, ar->pdev->pdev_id);
-		अगर (ret)
-			जाओ fail;
-		ar->txघातer_limit_2g = txघातer;
-	पूर्ण
+						txpower, ar->pdev->pdev_id);
+		if (ret)
+			goto fail;
+		ar->txpower_limit_2g = txpower;
+	}
 
-	अगर ((pdev->cap.supported_bands & WMI_HOST_WLAN_5G_CAP) &&
-	    ar->txघातer_limit_5g != txघातer) अणु
+	if ((pdev->cap.supported_bands & WMI_HOST_WLAN_5G_CAP) &&
+	    ar->txpower_limit_5g != txpower) {
 		param = WMI_PDEV_PARAM_TXPOWER_LIMIT5G;
 		ret = ath11k_wmi_pdev_set_param(ar, param,
-						txघातer, ar->pdev->pdev_id);
-		अगर (ret)
-			जाओ fail;
-		ar->txघातer_limit_5g = txघातer;
-	पूर्ण
+						txpower, ar->pdev->pdev_id);
+		if (ret)
+			goto fail;
+		ar->txpower_limit_5g = txpower;
+	}
 
-	वापस 0;
+	return 0;
 
 fail:
 	ath11k_warn(ar->ab, "failed to recalc txpower limit %d using pdev param %d: %d\n",
-		    txघातer / 2, param, ret);
-	वापस ret;
-पूर्ण
+		    txpower / 2, param, ret);
+	return ret;
+}
 
-अटल पूर्णांक ath11k_recalc_rtscts_prot(काष्ठा ath11k_vअगर *arvअगर)
-अणु
-	काष्ठा ath11k *ar = arvअगर->ar;
+static int ath11k_recalc_rtscts_prot(struct ath11k_vif *arvif)
+{
+	struct ath11k *ar = arvif->ar;
 	u32 vdev_param, rts_cts = 0;
-	पूर्णांक ret;
+	int ret;
 
-	lockdep_निश्चित_held(&ar->conf_mutex);
+	lockdep_assert_held(&ar->conf_mutex);
 
 	vdev_param = WMI_VDEV_PARAM_ENABLE_RTSCTS;
 
-	/* Enable RTS/CTS protection क्रम sw retries (when legacy stations
-	 * are in BSS) or by शेष only क्रम second rate series.
-	 * TODO: Check अगर we need to enable CTS 2 Self in any हाल
+	/* Enable RTS/CTS protection for sw retries (when legacy stations
+	 * are in BSS) or by default only for second rate series.
+	 * TODO: Check if we need to enable CTS 2 Self in any case
 	 */
 	rts_cts = WMI_USE_RTS_CTS;
 
-	अगर (arvअगर->num_legacy_stations > 0)
+	if (arvif->num_legacy_stations > 0)
 		rts_cts |= WMI_RTSCTS_ACROSS_SW_RETRIES << 4;
-	अन्यथा
+	else
 		rts_cts |= WMI_RTSCTS_FOR_SECOND_RATESERIES << 4;
 
 	/* Need not send duplicate param value to firmware */
-	अगर (arvअगर->rtscts_prot_mode == rts_cts)
-		वापस 0;
+	if (arvif->rtscts_prot_mode == rts_cts)
+		return 0;
 
-	arvअगर->rtscts_prot_mode = rts_cts;
+	arvif->rtscts_prot_mode = rts_cts;
 
 	ath11k_dbg(ar->ab, ATH11K_DBG_MAC, "mac vdev %d recalc rts/cts prot %d\n",
-		   arvअगर->vdev_id, rts_cts);
+		   arvif->vdev_id, rts_cts);
 
-	ret =  ath11k_wmi_vdev_set_param_cmd(ar, arvअगर->vdev_id,
+	ret =  ath11k_wmi_vdev_set_param_cmd(ar, arvif->vdev_id,
 					     vdev_param, rts_cts);
-	अगर (ret)
+	if (ret)
 		ath11k_warn(ar->ab, "failed to recalculate rts/cts prot for vdev %d: %d\n",
-			    arvअगर->vdev_id, ret);
+			    arvif->vdev_id, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ath11k_mac_set_kickout(काष्ठा ath11k_vअगर *arvअगर)
-अणु
-	काष्ठा ath11k *ar = arvअगर->ar;
+static int ath11k_mac_set_kickout(struct ath11k_vif *arvif)
+{
+	struct ath11k *ar = arvif->ar;
 	u32 param;
-	पूर्णांक ret;
+	int ret;
 
 	ret = ath11k_wmi_pdev_set_param(ar, WMI_PDEV_PARAM_STA_KICKOUT_TH,
 					ATH11K_KICKOUT_THRESHOLD,
 					ar->pdev->pdev_id);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ar->ab, "failed to set kickout threshold on vdev %i: %d\n",
-			    arvअगर->vdev_id, ret);
-		वापस ret;
-	पूर्ण
+			    arvif->vdev_id, ret);
+		return ret;
+	}
 
 	param = WMI_VDEV_PARAM_AP_KEEPALIVE_MIN_IDLE_INACTIVE_TIME_SECS;
-	ret = ath11k_wmi_vdev_set_param_cmd(ar, arvअगर->vdev_id, param,
+	ret = ath11k_wmi_vdev_set_param_cmd(ar, arvif->vdev_id, param,
 					    ATH11K_KEEPALIVE_MIN_IDLE);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ar->ab, "failed to set keepalive minimum idle time on vdev %i: %d\n",
-			    arvअगर->vdev_id, ret);
-		वापस ret;
-	पूर्ण
+			    arvif->vdev_id, ret);
+		return ret;
+	}
 
 	param = WMI_VDEV_PARAM_AP_KEEPALIVE_MAX_IDLE_INACTIVE_TIME_SECS;
-	ret = ath11k_wmi_vdev_set_param_cmd(ar, arvअगर->vdev_id, param,
+	ret = ath11k_wmi_vdev_set_param_cmd(ar, arvif->vdev_id, param,
 					    ATH11K_KEEPALIVE_MAX_IDLE);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ar->ab, "failed to set keepalive maximum idle time on vdev %i: %d\n",
-			    arvअगर->vdev_id, ret);
-		वापस ret;
-	पूर्ण
+			    arvif->vdev_id, ret);
+		return ret;
+	}
 
 	param = WMI_VDEV_PARAM_AP_KEEPALIVE_MAX_UNRESPONSIVE_TIME_SECS;
-	ret = ath11k_wmi_vdev_set_param_cmd(ar, arvअगर->vdev_id, param,
+	ret = ath11k_wmi_vdev_set_param_cmd(ar, arvif->vdev_id, param,
 					    ATH11K_KEEPALIVE_MAX_UNRESPONSIVE);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ar->ab, "failed to set keepalive maximum unresponsive time on vdev %i: %d\n",
-			    arvअगर->vdev_id, ret);
-		वापस ret;
-	पूर्ण
+			    arvif->vdev_id, ret);
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम ath11k_mac_peer_cleanup_all(काष्ठा ath11k *ar)
-अणु
-	काष्ठा ath11k_peer *peer, *पंचांगp;
-	काष्ठा ath11k_base *ab = ar->ab;
+void ath11k_mac_peer_cleanup_all(struct ath11k *ar)
+{
+	struct ath11k_peer *peer, *tmp;
+	struct ath11k_base *ab = ar->ab;
 
-	lockdep_निश्चित_held(&ar->conf_mutex);
+	lockdep_assert_held(&ar->conf_mutex);
 
 	spin_lock_bh(&ab->base_lock);
-	list_क्रम_each_entry_safe(peer, पंचांगp, &ab->peers, list) अणु
+	list_for_each_entry_safe(peer, tmp, &ab->peers, list) {
 		ath11k_peer_rx_tid_cleanup(ar, peer);
 		list_del(&peer->list);
-		kमुक्त(peer);
-	पूर्ण
+		kfree(peer);
+	}
 	spin_unlock_bh(&ab->base_lock);
 
 	ar->num_peers = 0;
 	ar->num_stations = 0;
-पूर्ण
+}
 
-अटल पूर्णांक ath11k_monitor_vdev_up(काष्ठा ath11k *ar, पूर्णांक vdev_id)
-अणु
-	पूर्णांक ret = 0;
+static int ath11k_monitor_vdev_up(struct ath11k *ar, int vdev_id)
+{
+	int ret = 0;
 
 	ret = ath11k_wmi_vdev_up(ar, vdev_id, 0, ar->mac_addr);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ar->ab, "failed to put up monitor vdev %i: %d\n",
 			    vdev_id, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ath11k_dbg(ar->ab, ATH11K_DBG_MAC, "mac monitor vdev %i started\n",
 		   vdev_id);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ath11k_mac_op_config(काष्ठा ieee80211_hw *hw, u32 changed)
-अणु
+static int ath11k_mac_op_config(struct ieee80211_hw *hw, u32 changed)
+{
 	/* mac80211 requires this op to be present and that's why
 	 * there's an empty function, this can be extended when
 	 * required.
 	 */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ath11k_mac_setup_bcn_पंचांगpl(काष्ठा ath11k_vअगर *arvअगर)
-अणु
-	काष्ठा ath11k *ar = arvअगर->ar;
-	काष्ठा ath11k_base *ab = ar->ab;
-	काष्ठा ieee80211_hw *hw = ar->hw;
-	काष्ठा ieee80211_vअगर *vअगर = arvअगर->vअगर;
-	काष्ठा ieee80211_mutable_offsets offs = अणुपूर्ण;
-	काष्ठा sk_buff *bcn;
-	काष्ठा ieee80211_mgmt *mgmt;
+static int ath11k_mac_setup_bcn_tmpl(struct ath11k_vif *arvif)
+{
+	struct ath11k *ar = arvif->ar;
+	struct ath11k_base *ab = ar->ab;
+	struct ieee80211_hw *hw = ar->hw;
+	struct ieee80211_vif *vif = arvif->vif;
+	struct ieee80211_mutable_offsets offs = {};
+	struct sk_buff *bcn;
+	struct ieee80211_mgmt *mgmt;
 	u8 *ies;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (arvअगर->vdev_type != WMI_VDEV_TYPE_AP)
-		वापस 0;
+	if (arvif->vdev_type != WMI_VDEV_TYPE_AP)
+		return 0;
 
-	bcn = ieee80211_beacon_get_ढाँचा(hw, vअगर, &offs);
-	अगर (!bcn) अणु
+	bcn = ieee80211_beacon_get_template(hw, vif, &offs);
+	if (!bcn) {
 		ath11k_warn(ab, "failed to get beacon template from mac80211\n");
-		वापस -EPERM;
-	पूर्ण
+		return -EPERM;
+	}
 
 	ies = bcn->data + ieee80211_get_hdrlen_from_skb(bcn);
-	ies += माप(mgmt->u.beacon);
+	ies += sizeof(mgmt->u.beacon);
 
-	अगर (cfg80211_find_ie(WLAN_EID_RSN, ies, (skb_tail_poपूर्णांकer(bcn) - ies)))
-		arvअगर->rsnie_present = true;
+	if (cfg80211_find_ie(WLAN_EID_RSN, ies, (skb_tail_pointer(bcn) - ies)))
+		arvif->rsnie_present = true;
 
-	अगर (cfg80211_find_venकरोr_ie(WLAN_OUI_MICROSOFT,
+	if (cfg80211_find_vendor_ie(WLAN_OUI_MICROSOFT,
 				    WLAN_OUI_TYPE_MICROSOFT_WPA,
-				    ies, (skb_tail_poपूर्णांकer(bcn) - ies)))
-		arvअगर->wpaie_present = true;
+				    ies, (skb_tail_pointer(bcn) - ies)))
+		arvif->wpaie_present = true;
 
-	ret = ath11k_wmi_bcn_पंचांगpl(ar, arvअगर->vdev_id, &offs, bcn);
+	ret = ath11k_wmi_bcn_tmpl(ar, arvif->vdev_id, &offs, bcn);
 
-	kमुक्त_skb(bcn);
+	kfree_skb(bcn);
 
-	अगर (ret)
+	if (ret)
 		ath11k_warn(ab, "failed to submit beacon template command: %d\n",
 			    ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ath11k_control_beaconing(काष्ठा ath11k_vअगर *arvअगर,
-				     काष्ठा ieee80211_bss_conf *info)
-अणु
-	काष्ठा ath11k *ar = arvअगर->ar;
-	पूर्णांक ret = 0;
+static void ath11k_control_beaconing(struct ath11k_vif *arvif,
+				     struct ieee80211_bss_conf *info)
+{
+	struct ath11k *ar = arvif->ar;
+	int ret = 0;
 
-	lockdep_निश्चित_held(&arvअगर->ar->conf_mutex);
+	lockdep_assert_held(&arvif->ar->conf_mutex);
 
-	अगर (!info->enable_beacon) अणु
-		ret = ath11k_wmi_vdev_करोwn(ar, arvअगर->vdev_id);
-		अगर (ret)
+	if (!info->enable_beacon) {
+		ret = ath11k_wmi_vdev_down(ar, arvif->vdev_id);
+		if (ret)
 			ath11k_warn(ar->ab, "failed to down vdev_id %i: %d\n",
-				    arvअगर->vdev_id, ret);
+				    arvif->vdev_id, ret);
 
-		arvअगर->is_up = false;
-		वापस;
-	पूर्ण
+		arvif->is_up = false;
+		return;
+	}
 
-	/* Install the beacon ढाँचा to the FW */
-	ret = ath11k_mac_setup_bcn_पंचांगpl(arvअगर);
-	अगर (ret) अणु
+	/* Install the beacon template to the FW */
+	ret = ath11k_mac_setup_bcn_tmpl(arvif);
+	if (ret) {
 		ath11k_warn(ar->ab, "failed to update bcn tmpl during vdev up: %d\n",
 			    ret);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	arvअगर->tx_seq_no = 0x1000;
+	arvif->tx_seq_no = 0x1000;
 
-	arvअगर->aid = 0;
+	arvif->aid = 0;
 
-	ether_addr_copy(arvअगर->bssid, info->bssid);
+	ether_addr_copy(arvif->bssid, info->bssid);
 
-	ret = ath11k_wmi_vdev_up(arvअगर->ar, arvअगर->vdev_id, arvअगर->aid,
-				 arvअगर->bssid);
-	अगर (ret) अणु
+	ret = ath11k_wmi_vdev_up(arvif->ar, arvif->vdev_id, arvif->aid,
+				 arvif->bssid);
+	if (ret) {
 		ath11k_warn(ar->ab, "failed to bring up vdev %d: %i\n",
-			    arvअगर->vdev_id, ret);
-		वापस;
-	पूर्ण
+			    arvif->vdev_id, ret);
+		return;
+	}
 
-	arvअगर->is_up = true;
+	arvif->is_up = true;
 
-	ath11k_dbg(ar->ab, ATH11K_DBG_MAC, "mac vdev %d up\n", arvअगर->vdev_id);
-पूर्ण
+	ath11k_dbg(ar->ab, ATH11K_DBG_MAC, "mac vdev %d up\n", arvif->vdev_id);
+}
 
-अटल व्योम ath11k_mac_handle_beacon_iter(व्योम *data, u8 *mac,
-					  काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा sk_buff *skb = data;
-	काष्ठा ieee80211_mgmt *mgmt = (व्योम *)skb->data;
-	काष्ठा ath11k_vअगर *arvअगर = (व्योम *)vअगर->drv_priv;
+static void ath11k_mac_handle_beacon_iter(void *data, u8 *mac,
+					  struct ieee80211_vif *vif)
+{
+	struct sk_buff *skb = data;
+	struct ieee80211_mgmt *mgmt = (void *)skb->data;
+	struct ath11k_vif *arvif = (void *)vif->drv_priv;
 
-	अगर (vअगर->type != NL80211_IFTYPE_STATION)
-		वापस;
+	if (vif->type != NL80211_IFTYPE_STATION)
+		return;
 
-	अगर (!ether_addr_equal(mgmt->bssid, vअगर->bss_conf.bssid))
-		वापस;
+	if (!ether_addr_equal(mgmt->bssid, vif->bss_conf.bssid))
+		return;
 
-	cancel_delayed_work(&arvअगर->connection_loss_work);
-पूर्ण
+	cancel_delayed_work(&arvif->connection_loss_work);
+}
 
-व्योम ath11k_mac_handle_beacon(काष्ठा ath11k *ar, काष्ठा sk_buff *skb)
-अणु
-	ieee80211_iterate_active_पूर्णांकerfaces_atomic(ar->hw,
+void ath11k_mac_handle_beacon(struct ath11k *ar, struct sk_buff *skb)
+{
+	ieee80211_iterate_active_interfaces_atomic(ar->hw,
 						   IEEE80211_IFACE_ITER_NORMAL,
 						   ath11k_mac_handle_beacon_iter,
 						   skb);
-पूर्ण
+}
 
-अटल व्योम ath11k_mac_handle_beacon_miss_iter(व्योम *data, u8 *mac,
-					       काष्ठा ieee80211_vअगर *vअगर)
-अणु
+static void ath11k_mac_handle_beacon_miss_iter(void *data, u8 *mac,
+					       struct ieee80211_vif *vif)
+{
 	u32 *vdev_id = data;
-	काष्ठा ath11k_vअगर *arvअगर = (व्योम *)vअगर->drv_priv;
-	काष्ठा ath11k *ar = arvअगर->ar;
-	काष्ठा ieee80211_hw *hw = ar->hw;
+	struct ath11k_vif *arvif = (void *)vif->drv_priv;
+	struct ath11k *ar = arvif->ar;
+	struct ieee80211_hw *hw = ar->hw;
 
-	अगर (arvअगर->vdev_id != *vdev_id)
-		वापस;
+	if (arvif->vdev_id != *vdev_id)
+		return;
 
-	अगर (!arvअगर->is_up)
-		वापस;
+	if (!arvif->is_up)
+		return;
 
-	ieee80211_beacon_loss(vअगर);
+	ieee80211_beacon_loss(vif);
 
-	/* Firmware करोesn't report beacon loss events repeatedly. If AP probe
-	 * (करोne by mac80211) succeeds but beacons करो not resume then it
-	 * करोesn't make sense to जारी operation. Queue connection loss work
+	/* Firmware doesn't report beacon loss events repeatedly. If AP probe
+	 * (done by mac80211) succeeds but beacons do not resume then it
+	 * doesn't make sense to continue operation. Queue connection loss work
 	 * which can be cancelled when beacon is received.
 	 */
-	ieee80211_queue_delayed_work(hw, &arvअगर->connection_loss_work,
+	ieee80211_queue_delayed_work(hw, &arvif->connection_loss_work,
 				     ATH11K_CONNECTION_LOSS_HZ);
-पूर्ण
+}
 
-व्योम ath11k_mac_handle_beacon_miss(काष्ठा ath11k *ar, u32 vdev_id)
-अणु
-	ieee80211_iterate_active_पूर्णांकerfaces_atomic(ar->hw,
+void ath11k_mac_handle_beacon_miss(struct ath11k *ar, u32 vdev_id)
+{
+	ieee80211_iterate_active_interfaces_atomic(ar->hw,
 						   IEEE80211_IFACE_ITER_NORMAL,
 						   ath11k_mac_handle_beacon_miss_iter,
 						   &vdev_id);
-पूर्ण
+}
 
-अटल व्योम ath11k_mac_vअगर_sta_connection_loss_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ath11k_vअगर *arvअगर = container_of(work, काष्ठा ath11k_vअगर,
+static void ath11k_mac_vif_sta_connection_loss_work(struct work_struct *work)
+{
+	struct ath11k_vif *arvif = container_of(work, struct ath11k_vif,
 						connection_loss_work.work);
-	काष्ठा ieee80211_vअगर *vअगर = arvअगर->vअगर;
+	struct ieee80211_vif *vif = arvif->vif;
 
-	अगर (!arvअगर->is_up)
-		वापस;
+	if (!arvif->is_up)
+		return;
 
-	ieee80211_connection_loss(vअगर);
-पूर्ण
+	ieee80211_connection_loss(vif);
+}
 
-अटल व्योम ath11k_peer_assoc_h_basic(काष्ठा ath11k *ar,
-				      काष्ठा ieee80211_vअगर *vअगर,
-				      काष्ठा ieee80211_sta *sta,
-				      काष्ठा peer_assoc_params *arg)
-अणु
-	काष्ठा ath11k_vअगर *arvअगर = (व्योम *)vअगर->drv_priv;
+static void ath11k_peer_assoc_h_basic(struct ath11k *ar,
+				      struct ieee80211_vif *vif,
+				      struct ieee80211_sta *sta,
+				      struct peer_assoc_params *arg)
+{
+	struct ath11k_vif *arvif = (void *)vif->drv_priv;
 	u32 aid;
 
-	lockdep_निश्चित_held(&ar->conf_mutex);
+	lockdep_assert_held(&ar->conf_mutex);
 
-	अगर (vअगर->type == NL80211_IFTYPE_STATION)
-		aid = vअगर->bss_conf.aid;
-	अन्यथा
+	if (vif->type == NL80211_IFTYPE_STATION)
+		aid = vif->bss_conf.aid;
+	else
 		aid = sta->aid;
 
 	ether_addr_copy(arg->peer_mac, sta->addr);
-	arg->vdev_id = arvअगर->vdev_id;
+	arg->vdev_id = arvif->vdev_id;
 	arg->peer_associd = aid;
 	arg->auth_flag = true;
-	/* TODO: STA WAR in ath10k क्रम listen पूर्णांकerval required? */
-	arg->peer_listen_पूर्णांकval = ar->hw->conf.listen_पूर्णांकerval;
+	/* TODO: STA WAR in ath10k for listen interval required? */
+	arg->peer_listen_intval = ar->hw->conf.listen_interval;
 	arg->peer_nss = 1;
-	arg->peer_caps = vअगर->bss_conf.assoc_capability;
-पूर्ण
+	arg->peer_caps = vif->bss_conf.assoc_capability;
+}
 
-अटल व्योम ath11k_peer_assoc_h_crypto(काष्ठा ath11k *ar,
-				       काष्ठा ieee80211_vअगर *vअगर,
-				       काष्ठा ieee80211_sta *sta,
-				       काष्ठा peer_assoc_params *arg)
-अणु
-	काष्ठा ieee80211_bss_conf *info = &vअगर->bss_conf;
-	काष्ठा cfg80211_chan_def def;
-	काष्ठा cfg80211_bss *bss;
-	काष्ठा ath11k_vअगर *arvअगर = (काष्ठा ath11k_vअगर *)vअगर->drv_priv;
-	स्थिर u8 *rsnie = शून्य;
-	स्थिर u8 *wpaie = शून्य;
+static void ath11k_peer_assoc_h_crypto(struct ath11k *ar,
+				       struct ieee80211_vif *vif,
+				       struct ieee80211_sta *sta,
+				       struct peer_assoc_params *arg)
+{
+	struct ieee80211_bss_conf *info = &vif->bss_conf;
+	struct cfg80211_chan_def def;
+	struct cfg80211_bss *bss;
+	struct ath11k_vif *arvif = (struct ath11k_vif *)vif->drv_priv;
+	const u8 *rsnie = NULL;
+	const u8 *wpaie = NULL;
 
-	lockdep_निश्चित_held(&ar->conf_mutex);
+	lockdep_assert_held(&ar->conf_mutex);
 
-	अगर (WARN_ON(ath11k_mac_vअगर_chan(vअगर, &def)))
-		वापस;
+	if (WARN_ON(ath11k_mac_vif_chan(vif, &def)))
+		return;
 
-	bss = cfg80211_get_bss(ar->hw->wiphy, def.chan, info->bssid, शून्य, 0,
+	bss = cfg80211_get_bss(ar->hw->wiphy, def.chan, info->bssid, NULL, 0,
 			       IEEE80211_BSS_TYPE_ANY, IEEE80211_PRIVACY_ANY);
 
-	अगर (arvअगर->rsnie_present || arvअगर->wpaie_present) अणु
+	if (arvif->rsnie_present || arvif->wpaie_present) {
 		arg->need_ptk_4_way = true;
-		अगर (arvअगर->wpaie_present)
+		if (arvif->wpaie_present)
 			arg->need_gtk_2_way = true;
-	पूर्ण अन्यथा अगर (bss) अणु
-		स्थिर काष्ठा cfg80211_bss_ies *ies;
+	} else if (bss) {
+		const struct cfg80211_bss_ies *ies;
 
-		rcu_पढ़ो_lock();
+		rcu_read_lock();
 		rsnie = ieee80211_bss_get_ie(bss, WLAN_EID_RSN);
 
 		ies = rcu_dereference(bss->ies);
 
-		wpaie = cfg80211_find_venकरोr_ie(WLAN_OUI_MICROSOFT,
+		wpaie = cfg80211_find_vendor_ie(WLAN_OUI_MICROSOFT,
 						WLAN_OUI_TYPE_MICROSOFT_WPA,
 						ies->data,
 						ies->len);
-		rcu_पढ़ो_unlock();
+		rcu_read_unlock();
 		cfg80211_put_bss(ar->hw->wiphy, bss);
-	पूर्ण
+	}
 
 	/* FIXME: base on RSN IE/WPA IE is a correct idea? */
-	अगर (rsnie || wpaie) अणु
+	if (rsnie || wpaie) {
 		ath11k_dbg(ar->ab, ATH11K_DBG_WMI,
 			   "%s: rsn ie found\n", __func__);
 		arg->need_ptk_4_way = true;
-	पूर्ण
+	}
 
-	अगर (wpaie) अणु
+	if (wpaie) {
 		ath11k_dbg(ar->ab, ATH11K_DBG_WMI,
 			   "%s: wpa ie found\n", __func__);
 		arg->need_gtk_2_way = true;
-	पूर्ण
+	}
 
-	अगर (sta->mfp) अणु
-		/* TODO: Need to check अगर FW supports PMF? */
+	if (sta->mfp) {
+		/* TODO: Need to check if FW supports PMF? */
 		arg->is_pmf_enabled = true;
-	पूर्ण
+	}
 
 	/* TODO: safe_mode_enabled (bypass 4-way handshake) flag req? */
-पूर्ण
+}
 
-अटल व्योम ath11k_peer_assoc_h_rates(काष्ठा ath11k *ar,
-				      काष्ठा ieee80211_vअगर *vअगर,
-				      काष्ठा ieee80211_sta *sta,
-				      काष्ठा peer_assoc_params *arg)
-अणु
-	काष्ठा ath11k_vअगर *arvअगर = (व्योम *)vअगर->drv_priv;
-	काष्ठा wmi_rate_set_arg *rateset = &arg->peer_legacy_rates;
-	काष्ठा cfg80211_chan_def def;
-	स्थिर काष्ठा ieee80211_supported_band *sband;
-	स्थिर काष्ठा ieee80211_rate *rates;
-	क्रमागत nl80211_band band;
+static void ath11k_peer_assoc_h_rates(struct ath11k *ar,
+				      struct ieee80211_vif *vif,
+				      struct ieee80211_sta *sta,
+				      struct peer_assoc_params *arg)
+{
+	struct ath11k_vif *arvif = (void *)vif->drv_priv;
+	struct wmi_rate_set_arg *rateset = &arg->peer_legacy_rates;
+	struct cfg80211_chan_def def;
+	const struct ieee80211_supported_band *sband;
+	const struct ieee80211_rate *rates;
+	enum nl80211_band band;
 	u32 ratemask;
 	u8 rate;
-	पूर्णांक i;
+	int i;
 
-	lockdep_निश्चित_held(&ar->conf_mutex);
+	lockdep_assert_held(&ar->conf_mutex);
 
-	अगर (WARN_ON(ath11k_mac_vअगर_chan(vअगर, &def)))
-		वापस;
+	if (WARN_ON(ath11k_mac_vif_chan(vif, &def)))
+		return;
 
 	band = def.chan->band;
 	sband = ar->hw->wiphy->bands[band];
 	ratemask = sta->supp_rates[band];
-	ratemask &= arvअगर->bitrate_mask.control[band].legacy;
+	ratemask &= arvif->bitrate_mask.control[band].legacy;
 	rates = sband->bitrates;
 
 	rateset->num_rates = 0;
 
-	क्रम (i = 0; i < 32; i++, ratemask >>= 1, rates++) अणु
-		अगर (!(ratemask & 1))
-			जारी;
+	for (i = 0; i < 32; i++, ratemask >>= 1, rates++) {
+		if (!(ratemask & 1))
+			continue;
 
 		rate = ath11k_mac_bitrate_to_rate(rates->bitrate);
 		rateset->rates[rateset->num_rates] = rate;
 		rateset->num_rates++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल bool
-ath11k_peer_assoc_h_ht_masked(स्थिर u8 ht_mcs_mask[IEEE80211_HT_MCS_MASK_LEN])
-अणु
-	पूर्णांक nss;
+static bool
+ath11k_peer_assoc_h_ht_masked(const u8 ht_mcs_mask[IEEE80211_HT_MCS_MASK_LEN])
+{
+	int nss;
 
-	क्रम (nss = 0; nss < IEEE80211_HT_MCS_MASK_LEN; nss++)
-		अगर (ht_mcs_mask[nss])
-			वापस false;
+	for (nss = 0; nss < IEEE80211_HT_MCS_MASK_LEN; nss++)
+		if (ht_mcs_mask[nss])
+			return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool
-ath11k_peer_assoc_h_vht_masked(स्थिर u16 vht_mcs_mask[NL80211_VHT_NSS_MAX])
-अणु
-	पूर्णांक nss;
+static bool
+ath11k_peer_assoc_h_vht_masked(const u16 vht_mcs_mask[NL80211_VHT_NSS_MAX])
+{
+	int nss;
 
-	क्रम (nss = 0; nss < NL80211_VHT_NSS_MAX; nss++)
-		अगर (vht_mcs_mask[nss])
-			वापस false;
+	for (nss = 0; nss < NL80211_VHT_NSS_MAX; nss++)
+		if (vht_mcs_mask[nss])
+			return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम ath11k_peer_assoc_h_ht(काष्ठा ath11k *ar,
-				   काष्ठा ieee80211_vअगर *vअगर,
-				   काष्ठा ieee80211_sta *sta,
-				   काष्ठा peer_assoc_params *arg)
-अणु
-	स्थिर काष्ठा ieee80211_sta_ht_cap *ht_cap = &sta->ht_cap;
-	काष्ठा ath11k_vअगर *arvअगर = (व्योम *)vअगर->drv_priv;
-	काष्ठा cfg80211_chan_def def;
-	क्रमागत nl80211_band band;
-	स्थिर u8 *ht_mcs_mask;
-	पूर्णांक i, n;
+static void ath11k_peer_assoc_h_ht(struct ath11k *ar,
+				   struct ieee80211_vif *vif,
+				   struct ieee80211_sta *sta,
+				   struct peer_assoc_params *arg)
+{
+	const struct ieee80211_sta_ht_cap *ht_cap = &sta->ht_cap;
+	struct ath11k_vif *arvif = (void *)vif->drv_priv;
+	struct cfg80211_chan_def def;
+	enum nl80211_band band;
+	const u8 *ht_mcs_mask;
+	int i, n;
 	u8 max_nss;
 	u32 stbc;
 
-	lockdep_निश्चित_held(&ar->conf_mutex);
+	lockdep_assert_held(&ar->conf_mutex);
 
-	अगर (WARN_ON(ath11k_mac_vअगर_chan(vअगर, &def)))
-		वापस;
+	if (WARN_ON(ath11k_mac_vif_chan(vif, &def)))
+		return;
 
-	अगर (!ht_cap->ht_supported)
-		वापस;
+	if (!ht_cap->ht_supported)
+		return;
 
 	band = def.chan->band;
-	ht_mcs_mask = arvअगर->bitrate_mask.control[band].ht_mcs;
+	ht_mcs_mask = arvif->bitrate_mask.control[band].ht_mcs;
 
-	अगर (ath11k_peer_assoc_h_ht_masked(ht_mcs_mask))
-		वापस;
+	if (ath11k_peer_assoc_h_ht_masked(ht_mcs_mask))
+		return;
 
 	arg->ht_flag = true;
 
@@ -1086,160 +1085,160 @@ ath11k_peer_assoc_h_vht_masked(स्थिर u16 vht_mcs_mask[NL80211_VHT_NSS_
 	arg->peer_ht_caps = ht_cap->cap;
 	arg->peer_rate_caps |= WMI_HOST_RC_HT_FLAG;
 
-	अगर (ht_cap->cap & IEEE80211_HT_CAP_LDPC_CODING)
+	if (ht_cap->cap & IEEE80211_HT_CAP_LDPC_CODING)
 		arg->ldpc_flag = true;
 
-	अगर (sta->bandwidth >= IEEE80211_STA_RX_BW_40) अणु
+	if (sta->bandwidth >= IEEE80211_STA_RX_BW_40) {
 		arg->bw_40 = true;
 		arg->peer_rate_caps |= WMI_HOST_RC_CW40_FLAG;
-	पूर्ण
+	}
 
-	अगर (arvअगर->bitrate_mask.control[band].gi != NL80211_TXRATE_FORCE_LGI) अणु
-		अगर (ht_cap->cap & (IEEE80211_HT_CAP_SGI_20 |
+	if (arvif->bitrate_mask.control[band].gi != NL80211_TXRATE_FORCE_LGI) {
+		if (ht_cap->cap & (IEEE80211_HT_CAP_SGI_20 |
 		    IEEE80211_HT_CAP_SGI_40))
 			arg->peer_rate_caps |= WMI_HOST_RC_SGI_FLAG;
-	पूर्ण
+	}
 
-	अगर (ht_cap->cap & IEEE80211_HT_CAP_TX_STBC) अणु
+	if (ht_cap->cap & IEEE80211_HT_CAP_TX_STBC) {
 		arg->peer_rate_caps |= WMI_HOST_RC_TX_STBC_FLAG;
 		arg->stbc_flag = true;
-	पूर्ण
+	}
 
-	अगर (ht_cap->cap & IEEE80211_HT_CAP_RX_STBC) अणु
+	if (ht_cap->cap & IEEE80211_HT_CAP_RX_STBC) {
 		stbc = ht_cap->cap & IEEE80211_HT_CAP_RX_STBC;
 		stbc = stbc >> IEEE80211_HT_CAP_RX_STBC_SHIFT;
 		stbc = stbc << WMI_HOST_RC_RX_STBC_FLAG_S;
 		arg->peer_rate_caps |= stbc;
 		arg->stbc_flag = true;
-	पूर्ण
+	}
 
-	अगर (ht_cap->mcs.rx_mask[1] && ht_cap->mcs.rx_mask[2])
+	if (ht_cap->mcs.rx_mask[1] && ht_cap->mcs.rx_mask[2])
 		arg->peer_rate_caps |= WMI_HOST_RC_TS_FLAG;
-	अन्यथा अगर (ht_cap->mcs.rx_mask[1])
+	else if (ht_cap->mcs.rx_mask[1])
 		arg->peer_rate_caps |= WMI_HOST_RC_DS_FLAG;
 
-	क्रम (i = 0, n = 0, max_nss = 0; i < IEEE80211_HT_MCS_MASK_LEN * 8; i++)
-		अगर ((ht_cap->mcs.rx_mask[i / 8] & BIT(i % 8)) &&
-		    (ht_mcs_mask[i / 8] & BIT(i % 8))) अणु
+	for (i = 0, n = 0, max_nss = 0; i < IEEE80211_HT_MCS_MASK_LEN * 8; i++)
+		if ((ht_cap->mcs.rx_mask[i / 8] & BIT(i % 8)) &&
+		    (ht_mcs_mask[i / 8] & BIT(i % 8))) {
 			max_nss = (i / 8) + 1;
 			arg->peer_ht_rates.rates[n++] = i;
-		पूर्ण
+		}
 
-	/* This is a workaround क्रम HT-enabled STAs which अवरोध the spec
+	/* This is a workaround for HT-enabled STAs which break the spec
 	 * and have no HT capabilities RX mask (no HT RX MCS map).
 	 *
 	 * As per spec, in section 20.3.5 Modulation and coding scheme (MCS),
 	 * MCS 0 through 7 are mandatory in 20MHz with 800 ns GI at all STAs.
 	 *
-	 * Firmware निश्चितs अगर such situation occurs.
+	 * Firmware asserts if such situation occurs.
 	 */
-	अगर (n == 0) अणु
+	if (n == 0) {
 		arg->peer_ht_rates.num_rates = 8;
-		क्रम (i = 0; i < arg->peer_ht_rates.num_rates; i++)
+		for (i = 0; i < arg->peer_ht_rates.num_rates; i++)
 			arg->peer_ht_rates.rates[i] = i;
-	पूर्ण अन्यथा अणु
+	} else {
 		arg->peer_ht_rates.num_rates = n;
 		arg->peer_nss = min(sta->rx_nss, max_nss);
-	पूर्ण
+	}
 
 	ath11k_dbg(ar->ab, ATH11K_DBG_MAC, "mac ht peer %pM mcs cnt %d nss %d\n",
 		   arg->peer_mac,
 		   arg->peer_ht_rates.num_rates,
 		   arg->peer_nss);
-पूर्ण
+}
 
-अटल पूर्णांक ath11k_mac_get_max_vht_mcs_map(u16 mcs_map, पूर्णांक nss)
-अणु
-	चयन ((mcs_map >> (2 * nss)) & 0x3) अणु
-	हाल IEEE80211_VHT_MCS_SUPPORT_0_7: वापस BIT(8) - 1;
-	हाल IEEE80211_VHT_MCS_SUPPORT_0_8: वापस BIT(9) - 1;
-	हाल IEEE80211_VHT_MCS_SUPPORT_0_9: वापस BIT(10) - 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+static int ath11k_mac_get_max_vht_mcs_map(u16 mcs_map, int nss)
+{
+	switch ((mcs_map >> (2 * nss)) & 0x3) {
+	case IEEE80211_VHT_MCS_SUPPORT_0_7: return BIT(8) - 1;
+	case IEEE80211_VHT_MCS_SUPPORT_0_8: return BIT(9) - 1;
+	case IEEE80211_VHT_MCS_SUPPORT_0_9: return BIT(10) - 1;
+	}
+	return 0;
+}
 
-अटल u16
+static u16
 ath11k_peer_assoc_h_vht_limit(u16 tx_mcs_set,
-			      स्थिर u16 vht_mcs_limit[NL80211_VHT_NSS_MAX])
-अणु
-	पूर्णांक idx_limit;
-	पूर्णांक nss;
+			      const u16 vht_mcs_limit[NL80211_VHT_NSS_MAX])
+{
+	int idx_limit;
+	int nss;
 	u16 mcs_map;
 	u16 mcs;
 
-	क्रम (nss = 0; nss < NL80211_VHT_NSS_MAX; nss++) अणु
+	for (nss = 0; nss < NL80211_VHT_NSS_MAX; nss++) {
 		mcs_map = ath11k_mac_get_max_vht_mcs_map(tx_mcs_set, nss) &
 			  vht_mcs_limit[nss];
 
-		अगर (mcs_map)
+		if (mcs_map)
 			idx_limit = fls(mcs_map) - 1;
-		अन्यथा
+		else
 			idx_limit = -1;
 
-		चयन (idx_limit) अणु
-		हाल 0:
-		हाल 1:
-		हाल 2:
-		हाल 3:
-		हाल 4:
-		हाल 5:
-		हाल 6:
-		हाल 7:
+		switch (idx_limit) {
+		case 0:
+		case 1:
+		case 2:
+		case 3:
+		case 4:
+		case 5:
+		case 6:
+		case 7:
 			mcs = IEEE80211_VHT_MCS_SUPPORT_0_7;
-			अवरोध;
-		हाल 8:
+			break;
+		case 8:
 			mcs = IEEE80211_VHT_MCS_SUPPORT_0_8;
-			अवरोध;
-		हाल 9:
+			break;
+		case 9:
 			mcs = IEEE80211_VHT_MCS_SUPPORT_0_9;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			WARN_ON(1);
 			fallthrough;
-		हाल -1:
+		case -1:
 			mcs = IEEE80211_VHT_MCS_NOT_SUPPORTED;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		tx_mcs_set &= ~(0x3 << (nss * 2));
 		tx_mcs_set |= mcs << (nss * 2);
-	पूर्ण
+	}
 
-	वापस tx_mcs_set;
-पूर्ण
+	return tx_mcs_set;
+}
 
-अटल व्योम ath11k_peer_assoc_h_vht(काष्ठा ath11k *ar,
-				    काष्ठा ieee80211_vअगर *vअगर,
-				    काष्ठा ieee80211_sta *sta,
-				    काष्ठा peer_assoc_params *arg)
-अणु
-	स्थिर काष्ठा ieee80211_sta_vht_cap *vht_cap = &sta->vht_cap;
-	काष्ठा ath11k_vअगर *arvअगर = (व्योम *)vअगर->drv_priv;
-	काष्ठा cfg80211_chan_def def;
-	क्रमागत nl80211_band band;
-	स्थिर u16 *vht_mcs_mask;
+static void ath11k_peer_assoc_h_vht(struct ath11k *ar,
+				    struct ieee80211_vif *vif,
+				    struct ieee80211_sta *sta,
+				    struct peer_assoc_params *arg)
+{
+	const struct ieee80211_sta_vht_cap *vht_cap = &sta->vht_cap;
+	struct ath11k_vif *arvif = (void *)vif->drv_priv;
+	struct cfg80211_chan_def def;
+	enum nl80211_band band;
+	const u16 *vht_mcs_mask;
 	u8 ampdu_factor;
 	u8 max_nss, vht_mcs;
-	पूर्णांक i;
+	int i;
 
-	अगर (WARN_ON(ath11k_mac_vअगर_chan(vअगर, &def)))
-		वापस;
+	if (WARN_ON(ath11k_mac_vif_chan(vif, &def)))
+		return;
 
-	अगर (!vht_cap->vht_supported)
-		वापस;
+	if (!vht_cap->vht_supported)
+		return;
 
 	band = def.chan->band;
-	vht_mcs_mask = arvअगर->bitrate_mask.control[band].vht_mcs;
+	vht_mcs_mask = arvif->bitrate_mask.control[band].vht_mcs;
 
-	अगर (ath11k_peer_assoc_h_vht_masked(vht_mcs_mask))
-		वापस;
+	if (ath11k_peer_assoc_h_vht_masked(vht_mcs_mask))
+		return;
 
 	arg->vht_flag = true;
 
 	/* TODO: similar flags required? */
 	arg->vht_capable = true;
 
-	अगर (def.chan->band == NL80211_BAND_2GHZ)
+	if (def.chan->band == NL80211_BAND_2GHZ)
 		arg->vht_ng_flag = true;
 
 	arg->peer_vht_caps = vht_cap->cap;
@@ -1250,30 +1249,30 @@ ath11k_peer_assoc_h_vht_limit(u16 tx_mcs_set,
 
 	/* Workaround: Some Netgear/Linksys 11ac APs set Rx A-MPDU factor to
 	 * zero in VHT IE. Using it would result in degraded throughput.
-	 * arg->peer_max_mpdu at this poपूर्णांक contains HT max_mpdu so keep
-	 * it अगर VHT max_mpdu is smaller.
+	 * arg->peer_max_mpdu at this point contains HT max_mpdu so keep
+	 * it if VHT max_mpdu is smaller.
 	 */
 	arg->peer_max_mpdu = max(arg->peer_max_mpdu,
 				 (1U << (IEEE80211_HT_MAX_AMPDU_FACTOR +
 					ampdu_factor)) - 1);
 
-	अगर (sta->bandwidth == IEEE80211_STA_RX_BW_80)
+	if (sta->bandwidth == IEEE80211_STA_RX_BW_80)
 		arg->bw_80 = true;
 
-	अगर (sta->bandwidth == IEEE80211_STA_RX_BW_160)
+	if (sta->bandwidth == IEEE80211_STA_RX_BW_160)
 		arg->bw_160 = true;
 
-	/* Calculate peer NSS capability from VHT capabilities अगर STA
+	/* Calculate peer NSS capability from VHT capabilities if STA
 	 * supports VHT.
 	 */
-	क्रम (i = 0, max_nss = 0, vht_mcs = 0; i < NL80211_VHT_NSS_MAX; i++) अणु
+	for (i = 0, max_nss = 0, vht_mcs = 0; i < NL80211_VHT_NSS_MAX; i++) {
 		vht_mcs = __le16_to_cpu(vht_cap->vht_mcs.rx_mcs_map) >>
 			  (2 * i) & 3;
 
-		अगर (vht_mcs != IEEE80211_VHT_MCS_NOT_SUPPORTED &&
+		if (vht_mcs != IEEE80211_VHT_MCS_NOT_SUPPORTED &&
 		    vht_mcs_mask[i])
 			max_nss = i + 1;
-	पूर्ण
+	}
 	arg->peer_nss = min(sta->rx_nss, max_nss);
 	arg->rx_max_rate = __le16_to_cpu(vht_cap->vht_mcs.rx_highest);
 	arg->rx_mcs_set = __le16_to_cpu(vht_cap->vht_mcs.rx_mcs_map);
@@ -1281,14 +1280,14 @@ ath11k_peer_assoc_h_vht_limit(u16 tx_mcs_set,
 	arg->tx_mcs_set = ath11k_peer_assoc_h_vht_limit(
 		__le16_to_cpu(vht_cap->vht_mcs.tx_mcs_map), vht_mcs_mask);
 
-	/* In IPQ8074 platक्रमm, VHT mcs rate 10 and 11 is enabled by शेष.
+	/* In IPQ8074 platform, VHT mcs rate 10 and 11 is enabled by default.
 	 * VHT mcs rate 10 and 11 is not suppoerted in 11ac standard.
 	 * so explicitly disable the VHT MCS rate 10 and 11 in 11ac mode.
 	 */
 	arg->tx_mcs_set &= ~IEEE80211_VHT_MCS_SUPPORT_0_11_MASK;
 	arg->tx_mcs_set |= IEEE80211_DISABLE_VHT_MCS_SUPPORT_0_11;
 
-	अगर ((arg->tx_mcs_set & IEEE80211_VHT_MCS_NOT_SUPPORTED) ==
+	if ((arg->tx_mcs_set & IEEE80211_VHT_MCS_NOT_SUPPORTED) ==
 			IEEE80211_VHT_MCS_NOT_SUPPORTED)
 		arg->peer_vht_caps &= ~IEEE80211_VHT_CAP_MU_BEAMFORMEE_CAPABLE;
 
@@ -1299,58 +1298,58 @@ ath11k_peer_assoc_h_vht_limit(u16 tx_mcs_set,
 		   sta->addr, arg->peer_max_mpdu, arg->peer_flags);
 
 	/* TODO: rxnss_override */
-पूर्ण
+}
 
-अटल व्योम ath11k_peer_assoc_h_he(काष्ठा ath11k *ar,
-				   काष्ठा ieee80211_vअगर *vअगर,
-				   काष्ठा ieee80211_sta *sta,
-				   काष्ठा peer_assoc_params *arg)
-अणु
-	स्थिर काष्ठा ieee80211_sta_he_cap *he_cap = &sta->he_cap;
+static void ath11k_peer_assoc_h_he(struct ath11k *ar,
+				   struct ieee80211_vif *vif,
+				   struct ieee80211_sta *sta,
+				   struct peer_assoc_params *arg)
+{
+	const struct ieee80211_sta_he_cap *he_cap = &sta->he_cap;
 	u8 ampdu_factor;
 	u16 v;
 
-	अगर (!he_cap->has_he)
-		वापस;
+	if (!he_cap->has_he)
+		return;
 
 	arg->he_flag = true;
 
-	स_नकल(&arg->peer_he_cap_macinfo, he_cap->he_cap_elem.mac_cap_info,
-	       माप(arg->peer_he_cap_macinfo));
-	स_नकल(&arg->peer_he_cap_phyinfo, he_cap->he_cap_elem.phy_cap_info,
-	       माप(arg->peer_he_cap_phyinfo));
-	arg->peer_he_ops = vअगर->bss_conf.he_oper.params;
+	memcpy(&arg->peer_he_cap_macinfo, he_cap->he_cap_elem.mac_cap_info,
+	       sizeof(arg->peer_he_cap_macinfo));
+	memcpy(&arg->peer_he_cap_phyinfo, he_cap->he_cap_elem.phy_cap_info,
+	       sizeof(arg->peer_he_cap_phyinfo));
+	arg->peer_he_ops = vif->bss_conf.he_oper.params;
 
 	/* the top most byte is used to indicate BSS color info */
 	arg->peer_he_ops &= 0xffffff;
 
-	/* As per section 26.6.1 11ax Draft5.0, अगर the Max AMPDU Exponent Extension
-	 * in HE cap is zero, use the arg->peer_max_mpdu as calculated जबतक parsing
-	 * VHT caps(अगर VHT caps is present) or HT caps (अगर VHT caps is not present).
+	/* As per section 26.6.1 11ax Draft5.0, if the Max AMPDU Exponent Extension
+	 * in HE cap is zero, use the arg->peer_max_mpdu as calculated while parsing
+	 * VHT caps(if VHT caps is present) or HT caps (if VHT caps is not present).
 	 *
 	 * For non-zero value of Max AMPDU Extponent Extension in HE MAC caps,
-	 * अगर a HE STA sends VHT cap and HE cap IE in assoc request then, use
+	 * if a HE STA sends VHT cap and HE cap IE in assoc request then, use
 	 * MAX_AMPDU_LEN_FACTOR as 20 to calculate max_ampdu length.
-	 * If a HE STA that करोes not send VHT cap, but HE and HT cap in assoc
+	 * If a HE STA that does not send VHT cap, but HE and HT cap in assoc
 	 * request, then use MAX_AMPDU_LEN_FACTOR as 16 to calculate max_ampdu
 	 * length.
 	 */
 	ampdu_factor = u8_get_bits(he_cap->he_cap_elem.mac_cap_info[3],
 				   IEEE80211_HE_MAC_CAP3_MAX_AMPDU_LEN_EXP_MASK);
 
-	अगर (ampdu_factor) अणु
-		अगर (sta->vht_cap.vht_supported)
+	if (ampdu_factor) {
+		if (sta->vht_cap.vht_supported)
 			arg->peer_max_mpdu = (1 << (IEEE80211_HE_VHT_MAX_AMPDU_FACTOR +
 						    ampdu_factor)) - 1;
-		अन्यथा अगर (sta->ht_cap.ht_supported)
+		else if (sta->ht_cap.ht_supported)
 			arg->peer_max_mpdu = (1 << (IEEE80211_HE_HT_MAX_AMPDU_FACTOR +
 						    ampdu_factor)) - 1;
-	पूर्ण
+	}
 
-	अगर (he_cap->he_cap_elem.phy_cap_info[6] &
-	    IEEE80211_HE_PHY_CAP6_PPE_THRESHOLD_PRESENT) अणु
-		पूर्णांक bit = 7;
-		पूर्णांक nss, ru;
+	if (he_cap->he_cap_elem.phy_cap_info[6] &
+	    IEEE80211_HE_PHY_CAP6_PPE_THRESHOLD_PRESENT) {
+		int bit = 7;
+		int nss, ru;
 
 		arg->peer_ppet.numss_m1 = he_cap->ppe_thres[0] &
 					  IEEE80211_PPE_THRES_NSS_MASK;
@@ -1359,34 +1358,34 @@ ath11k_peer_assoc_h_vht_limit(u16 tx_mcs_set,
 			 IEEE80211_PPE_THRES_RU_INDEX_BITMASK_MASK) >>
 			IEEE80211_PPE_THRES_RU_INDEX_BITMASK_POS;
 
-		क्रम (nss = 0; nss <= arg->peer_ppet.numss_m1; nss++) अणु
-			क्रम (ru = 0; ru < 4; ru++) अणु
+		for (nss = 0; nss <= arg->peer_ppet.numss_m1; nss++) {
+			for (ru = 0; ru < 4; ru++) {
 				u32 val = 0;
-				पूर्णांक i;
+				int i;
 
-				अगर ((arg->peer_ppet.ru_bit_mask & BIT(ru)) == 0)
-					जारी;
-				क्रम (i = 0; i < 6; i++) अणु
+				if ((arg->peer_ppet.ru_bit_mask & BIT(ru)) == 0)
+					continue;
+				for (i = 0; i < 6; i++) {
 					val >>= 1;
 					val |= ((he_cap->ppe_thres[bit / 8] >>
 						 (bit % 8)) & 0x1) << 5;
 					bit++;
-				पूर्ण
+				}
 				arg->peer_ppet.ppet16_ppet8_ru3_ru0[nss] |=
 								val << (ru * 6);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	अगर (he_cap->he_cap_elem.mac_cap_info[0] & IEEE80211_HE_MAC_CAP0_TWT_RES)
+	if (he_cap->he_cap_elem.mac_cap_info[0] & IEEE80211_HE_MAC_CAP0_TWT_RES)
 		arg->twt_responder = true;
-	अगर (he_cap->he_cap_elem.mac_cap_info[0] & IEEE80211_HE_MAC_CAP0_TWT_REQ)
+	if (he_cap->he_cap_elem.mac_cap_info[0] & IEEE80211_HE_MAC_CAP0_TWT_REQ)
 		arg->twt_requester = true;
 
-	चयन (sta->bandwidth) अणु
-	हाल IEEE80211_STA_RX_BW_160:
-		अगर (he_cap->he_cap_elem.phy_cap_info[0] &
-		    IEEE80211_HE_PHY_CAP0_CHANNEL_WIDTH_SET_80PLUS80_MHZ_IN_5G) अणु
+	switch (sta->bandwidth) {
+	case IEEE80211_STA_RX_BW_160:
+		if (he_cap->he_cap_elem.phy_cap_info[0] &
+		    IEEE80211_HE_PHY_CAP0_CHANNEL_WIDTH_SET_80PLUS80_MHZ_IN_5G) {
 			v = le16_to_cpu(he_cap->he_mcs_nss_supp.rx_mcs_80p80);
 			arg->peer_he_rx_mcs_set[WMI_HECAP_TXRX_MCS_NSS_IDX_80_80] = v;
 
@@ -1394,7 +1393,7 @@ ath11k_peer_assoc_h_vht_limit(u16 tx_mcs_set,
 			arg->peer_he_tx_mcs_set[WMI_HECAP_TXRX_MCS_NSS_IDX_80_80] = v;
 
 			arg->peer_he_mcs_count++;
-		पूर्ण
+		}
 		v = le16_to_cpu(he_cap->he_mcs_nss_supp.rx_mcs_160);
 		arg->peer_he_rx_mcs_set[WMI_HECAP_TXRX_MCS_NSS_IDX_160] = v;
 
@@ -1404,7 +1403,7 @@ ath11k_peer_assoc_h_vht_limit(u16 tx_mcs_set,
 		arg->peer_he_mcs_count++;
 		fallthrough;
 
-	शेष:
+	default:
 		v = le16_to_cpu(he_cap->he_mcs_nss_supp.rx_mcs_80);
 		arg->peer_he_rx_mcs_set[WMI_HECAP_TXRX_MCS_NSS_IDX_80] = v;
 
@@ -1412,553 +1411,553 @@ ath11k_peer_assoc_h_vht_limit(u16 tx_mcs_set,
 		arg->peer_he_tx_mcs_set[WMI_HECAP_TXRX_MCS_NSS_IDX_80] = v;
 
 		arg->peer_he_mcs_count++;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम ath11k_peer_assoc_h_smps(काष्ठा ieee80211_sta *sta,
-				     काष्ठा peer_assoc_params *arg)
-अणु
-	स्थिर काष्ठा ieee80211_sta_ht_cap *ht_cap = &sta->ht_cap;
-	पूर्णांक smps;
+static void ath11k_peer_assoc_h_smps(struct ieee80211_sta *sta,
+				     struct peer_assoc_params *arg)
+{
+	const struct ieee80211_sta_ht_cap *ht_cap = &sta->ht_cap;
+	int smps;
 
-	अगर (!ht_cap->ht_supported)
-		वापस;
+	if (!ht_cap->ht_supported)
+		return;
 
 	smps = ht_cap->cap & IEEE80211_HT_CAP_SM_PS;
 	smps >>= IEEE80211_HT_CAP_SM_PS_SHIFT;
 
-	चयन (smps) अणु
-	हाल WLAN_HT_CAP_SM_PS_STATIC:
-		arg->अटल_mimops_flag = true;
-		अवरोध;
-	हाल WLAN_HT_CAP_SM_PS_DYNAMIC:
+	switch (smps) {
+	case WLAN_HT_CAP_SM_PS_STATIC:
+		arg->static_mimops_flag = true;
+		break;
+	case WLAN_HT_CAP_SM_PS_DYNAMIC:
 		arg->dynamic_mimops_flag = true;
-		अवरोध;
-	हाल WLAN_HT_CAP_SM_PS_DISABLED:
+		break;
+	case WLAN_HT_CAP_SM_PS_DISABLED:
 		arg->spatial_mux_flag = true;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-अटल व्योम ath11k_peer_assoc_h_qos(काष्ठा ath11k *ar,
-				    काष्ठा ieee80211_vअगर *vअगर,
-				    काष्ठा ieee80211_sta *sta,
-				    काष्ठा peer_assoc_params *arg)
-अणु
-	काष्ठा ath11k_vअगर *arvअगर = (व्योम *)vअगर->drv_priv;
+static void ath11k_peer_assoc_h_qos(struct ath11k *ar,
+				    struct ieee80211_vif *vif,
+				    struct ieee80211_sta *sta,
+				    struct peer_assoc_params *arg)
+{
+	struct ath11k_vif *arvif = (void *)vif->drv_priv;
 
-	चयन (arvअगर->vdev_type) अणु
-	हाल WMI_VDEV_TYPE_AP:
-		अगर (sta->wme) अणु
+	switch (arvif->vdev_type) {
+	case WMI_VDEV_TYPE_AP:
+		if (sta->wme) {
 			/* TODO: Check WME vs QoS */
 			arg->is_wme_set = true;
 			arg->qos_flag = true;
-		पूर्ण
+		}
 
-		अगर (sta->wme && sta->uapsd_queues) अणु
+		if (sta->wme && sta->uapsd_queues) {
 			/* TODO: Check WME vs QoS */
 			arg->is_wme_set = true;
 			arg->apsd_flag = true;
 			arg->peer_rate_caps |= WMI_HOST_RC_UAPSD_FLAG;
-		पूर्ण
-		अवरोध;
-	हाल WMI_VDEV_TYPE_STA:
-		अगर (sta->wme) अणु
+		}
+		break;
+	case WMI_VDEV_TYPE_STA:
+		if (sta->wme) {
 			arg->is_wme_set = true;
 			arg->qos_flag = true;
-		पूर्ण
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		}
+		break;
+	default:
+		break;
+	}
 
 	ath11k_dbg(ar->ab, ATH11K_DBG_MAC, "mac peer %pM qos %d\n",
 		   sta->addr, arg->qos_flag);
-पूर्ण
+}
 
-अटल पूर्णांक ath11k_peer_assoc_qos_ap(काष्ठा ath11k *ar,
-				    काष्ठा ath11k_vअगर *arvअगर,
-				    काष्ठा ieee80211_sta *sta)
-अणु
-	काष्ठा ap_ps_params params;
+static int ath11k_peer_assoc_qos_ap(struct ath11k *ar,
+				    struct ath11k_vif *arvif,
+				    struct ieee80211_sta *sta)
+{
+	struct ap_ps_params params;
 	u32 max_sp;
 	u32 uapsd;
-	पूर्णांक ret;
+	int ret;
 
-	lockdep_निश्चित_held(&ar->conf_mutex);
+	lockdep_assert_held(&ar->conf_mutex);
 
-	params.vdev_id = arvअगर->vdev_id;
+	params.vdev_id = arvif->vdev_id;
 
 	ath11k_dbg(ar->ab, ATH11K_DBG_MAC, "mac uapsd_queues 0x%x max_sp %d\n",
 		   sta->uapsd_queues, sta->max_sp);
 
 	uapsd = 0;
-	अगर (sta->uapsd_queues & IEEE80211_WMM_IE_STA_QOSINFO_AC_VO)
+	if (sta->uapsd_queues & IEEE80211_WMM_IE_STA_QOSINFO_AC_VO)
 		uapsd |= WMI_AP_PS_UAPSD_AC3_DELIVERY_EN |
 			 WMI_AP_PS_UAPSD_AC3_TRIGGER_EN;
-	अगर (sta->uapsd_queues & IEEE80211_WMM_IE_STA_QOSINFO_AC_VI)
+	if (sta->uapsd_queues & IEEE80211_WMM_IE_STA_QOSINFO_AC_VI)
 		uapsd |= WMI_AP_PS_UAPSD_AC2_DELIVERY_EN |
 			 WMI_AP_PS_UAPSD_AC2_TRIGGER_EN;
-	अगर (sta->uapsd_queues & IEEE80211_WMM_IE_STA_QOSINFO_AC_BK)
+	if (sta->uapsd_queues & IEEE80211_WMM_IE_STA_QOSINFO_AC_BK)
 		uapsd |= WMI_AP_PS_UAPSD_AC1_DELIVERY_EN |
 			 WMI_AP_PS_UAPSD_AC1_TRIGGER_EN;
-	अगर (sta->uapsd_queues & IEEE80211_WMM_IE_STA_QOSINFO_AC_BE)
+	if (sta->uapsd_queues & IEEE80211_WMM_IE_STA_QOSINFO_AC_BE)
 		uapsd |= WMI_AP_PS_UAPSD_AC0_DELIVERY_EN |
 			 WMI_AP_PS_UAPSD_AC0_TRIGGER_EN;
 
 	max_sp = 0;
-	अगर (sta->max_sp < MAX_WMI_AP_PS_PEER_PARAM_MAX_SP)
+	if (sta->max_sp < MAX_WMI_AP_PS_PEER_PARAM_MAX_SP)
 		max_sp = sta->max_sp;
 
 	params.param = WMI_AP_PS_PEER_PARAM_UAPSD;
 	params.value = uapsd;
 	ret = ath11k_wmi_send_set_ap_ps_param_cmd(ar, sta->addr, &params);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	params.param = WMI_AP_PS_PEER_PARAM_MAX_SP;
 	params.value = max_sp;
 	ret = ath11k_wmi_send_set_ap_ps_param_cmd(ar, sta->addr, &params);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	/* TODO revisit during testing */
 	params.param = WMI_AP_PS_PEER_PARAM_SIFS_RESP_FRMTYPE;
 	params.value = DISABLE_SIFS_RESPONSE_TRIGGER;
 	ret = ath11k_wmi_send_set_ap_ps_param_cmd(ar, sta->addr, &params);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	params.param = WMI_AP_PS_PEER_PARAM_SIFS_RESP_UAPSD;
 	params.value = DISABLE_SIFS_RESPONSE_TRIGGER;
 	ret = ath11k_wmi_send_set_ap_ps_param_cmd(ar, sta->addr, &params);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
-	वापस 0;
+	return 0;
 
 err:
 	ath11k_warn(ar->ab, "failed to set ap ps peer param %d for vdev %i: %d\n",
-		    params.param, arvअगर->vdev_id, ret);
-	वापस ret;
-पूर्ण
+		    params.param, arvif->vdev_id, ret);
+	return ret;
+}
 
-अटल bool ath11k_mac_sta_has_ofdm_only(काष्ठा ieee80211_sta *sta)
-अणु
-	वापस sta->supp_rates[NL80211_BAND_2GHZ] >>
+static bool ath11k_mac_sta_has_ofdm_only(struct ieee80211_sta *sta)
+{
+	return sta->supp_rates[NL80211_BAND_2GHZ] >>
 	       ATH11K_MAC_FIRST_OFDM_RATE_IDX;
-पूर्ण
+}
 
-अटल क्रमागत wmi_phy_mode ath11k_mac_get_phymode_vht(काष्ठा ath11k *ar,
-						    काष्ठा ieee80211_sta *sta)
-अणु
-	अगर (sta->bandwidth == IEEE80211_STA_RX_BW_160) अणु
-		चयन (sta->vht_cap.cap &
-			IEEE80211_VHT_CAP_SUPP_CHAN_WIDTH_MASK) अणु
-		हाल IEEE80211_VHT_CAP_SUPP_CHAN_WIDTH_160MHZ:
-			वापस MODE_11AC_VHT160;
-		हाल IEEE80211_VHT_CAP_SUPP_CHAN_WIDTH_160_80PLUS80MHZ:
-			वापस MODE_11AC_VHT80_80;
-		शेष:
-			/* not sure अगर this is a valid हाल? */
-			वापस MODE_11AC_VHT160;
-		पूर्ण
-	पूर्ण
+static enum wmi_phy_mode ath11k_mac_get_phymode_vht(struct ath11k *ar,
+						    struct ieee80211_sta *sta)
+{
+	if (sta->bandwidth == IEEE80211_STA_RX_BW_160) {
+		switch (sta->vht_cap.cap &
+			IEEE80211_VHT_CAP_SUPP_CHAN_WIDTH_MASK) {
+		case IEEE80211_VHT_CAP_SUPP_CHAN_WIDTH_160MHZ:
+			return MODE_11AC_VHT160;
+		case IEEE80211_VHT_CAP_SUPP_CHAN_WIDTH_160_80PLUS80MHZ:
+			return MODE_11AC_VHT80_80;
+		default:
+			/* not sure if this is a valid case? */
+			return MODE_11AC_VHT160;
+		}
+	}
 
-	अगर (sta->bandwidth == IEEE80211_STA_RX_BW_80)
-		वापस MODE_11AC_VHT80;
+	if (sta->bandwidth == IEEE80211_STA_RX_BW_80)
+		return MODE_11AC_VHT80;
 
-	अगर (sta->bandwidth == IEEE80211_STA_RX_BW_40)
-		वापस MODE_11AC_VHT40;
+	if (sta->bandwidth == IEEE80211_STA_RX_BW_40)
+		return MODE_11AC_VHT40;
 
-	अगर (sta->bandwidth == IEEE80211_STA_RX_BW_20)
-		वापस MODE_11AC_VHT20;
+	if (sta->bandwidth == IEEE80211_STA_RX_BW_20)
+		return MODE_11AC_VHT20;
 
-	वापस MODE_UNKNOWN;
-पूर्ण
+	return MODE_UNKNOWN;
+}
 
-अटल क्रमागत wmi_phy_mode ath11k_mac_get_phymode_he(काष्ठा ath11k *ar,
-						   काष्ठा ieee80211_sta *sta)
-अणु
-	अगर (sta->bandwidth == IEEE80211_STA_RX_BW_160) अणु
-		अगर (sta->he_cap.he_cap_elem.phy_cap_info[0] &
+static enum wmi_phy_mode ath11k_mac_get_phymode_he(struct ath11k *ar,
+						   struct ieee80211_sta *sta)
+{
+	if (sta->bandwidth == IEEE80211_STA_RX_BW_160) {
+		if (sta->he_cap.he_cap_elem.phy_cap_info[0] &
 		     IEEE80211_HE_PHY_CAP0_CHANNEL_WIDTH_SET_160MHZ_IN_5G)
-			वापस MODE_11AX_HE160;
-		अन्यथा अगर (sta->he_cap.he_cap_elem.phy_cap_info[0] &
+			return MODE_11AX_HE160;
+		else if (sta->he_cap.he_cap_elem.phy_cap_info[0] &
 		     IEEE80211_HE_PHY_CAP0_CHANNEL_WIDTH_SET_80PLUS80_MHZ_IN_5G)
-			वापस MODE_11AX_HE80_80;
-		/* not sure अगर this is a valid हाल? */
-		वापस MODE_11AX_HE160;
-	पूर्ण
+			return MODE_11AX_HE80_80;
+		/* not sure if this is a valid case? */
+		return MODE_11AX_HE160;
+	}
 
-	अगर (sta->bandwidth == IEEE80211_STA_RX_BW_80)
-		वापस MODE_11AX_HE80;
+	if (sta->bandwidth == IEEE80211_STA_RX_BW_80)
+		return MODE_11AX_HE80;
 
-	अगर (sta->bandwidth == IEEE80211_STA_RX_BW_40)
-		वापस MODE_11AX_HE40;
+	if (sta->bandwidth == IEEE80211_STA_RX_BW_40)
+		return MODE_11AX_HE40;
 
-	अगर (sta->bandwidth == IEEE80211_STA_RX_BW_20)
-		वापस MODE_11AX_HE20;
+	if (sta->bandwidth == IEEE80211_STA_RX_BW_20)
+		return MODE_11AX_HE20;
 
-	वापस MODE_UNKNOWN;
-पूर्ण
+	return MODE_UNKNOWN;
+}
 
-अटल व्योम ath11k_peer_assoc_h_phymode(काष्ठा ath11k *ar,
-					काष्ठा ieee80211_vअगर *vअगर,
-					काष्ठा ieee80211_sta *sta,
-					काष्ठा peer_assoc_params *arg)
-अणु
-	काष्ठा ath11k_vअगर *arvअगर = (व्योम *)vअगर->drv_priv;
-	काष्ठा cfg80211_chan_def def;
-	क्रमागत nl80211_band band;
-	स्थिर u8 *ht_mcs_mask;
-	स्थिर u16 *vht_mcs_mask;
-	क्रमागत wmi_phy_mode phymode = MODE_UNKNOWN;
+static void ath11k_peer_assoc_h_phymode(struct ath11k *ar,
+					struct ieee80211_vif *vif,
+					struct ieee80211_sta *sta,
+					struct peer_assoc_params *arg)
+{
+	struct ath11k_vif *arvif = (void *)vif->drv_priv;
+	struct cfg80211_chan_def def;
+	enum nl80211_band band;
+	const u8 *ht_mcs_mask;
+	const u16 *vht_mcs_mask;
+	enum wmi_phy_mode phymode = MODE_UNKNOWN;
 
-	अगर (WARN_ON(ath11k_mac_vअगर_chan(vअगर, &def)))
-		वापस;
+	if (WARN_ON(ath11k_mac_vif_chan(vif, &def)))
+		return;
 
 	band = def.chan->band;
-	ht_mcs_mask = arvअगर->bitrate_mask.control[band].ht_mcs;
-	vht_mcs_mask = arvअगर->bitrate_mask.control[band].vht_mcs;
+	ht_mcs_mask = arvif->bitrate_mask.control[band].ht_mcs;
+	vht_mcs_mask = arvif->bitrate_mask.control[band].vht_mcs;
 
-	चयन (band) अणु
-	हाल NL80211_BAND_2GHZ:
-		अगर (sta->he_cap.has_he) अणु
-			अगर (sta->bandwidth == IEEE80211_STA_RX_BW_80)
+	switch (band) {
+	case NL80211_BAND_2GHZ:
+		if (sta->he_cap.has_he) {
+			if (sta->bandwidth == IEEE80211_STA_RX_BW_80)
 				phymode = MODE_11AX_HE80_2G;
-			अन्यथा अगर (sta->bandwidth == IEEE80211_STA_RX_BW_40)
+			else if (sta->bandwidth == IEEE80211_STA_RX_BW_40)
 				phymode = MODE_11AX_HE40_2G;
-			अन्यथा
+			else
 				phymode = MODE_11AX_HE20_2G;
-		पूर्ण अन्यथा अगर (sta->vht_cap.vht_supported &&
-		    !ath11k_peer_assoc_h_vht_masked(vht_mcs_mask)) अणु
-			अगर (sta->bandwidth == IEEE80211_STA_RX_BW_40)
+		} else if (sta->vht_cap.vht_supported &&
+		    !ath11k_peer_assoc_h_vht_masked(vht_mcs_mask)) {
+			if (sta->bandwidth == IEEE80211_STA_RX_BW_40)
 				phymode = MODE_11AC_VHT40;
-			अन्यथा
+			else
 				phymode = MODE_11AC_VHT20;
-		पूर्ण अन्यथा अगर (sta->ht_cap.ht_supported &&
-			   !ath11k_peer_assoc_h_ht_masked(ht_mcs_mask)) अणु
-			अगर (sta->bandwidth == IEEE80211_STA_RX_BW_40)
+		} else if (sta->ht_cap.ht_supported &&
+			   !ath11k_peer_assoc_h_ht_masked(ht_mcs_mask)) {
+			if (sta->bandwidth == IEEE80211_STA_RX_BW_40)
 				phymode = MODE_11NG_HT40;
-			अन्यथा
+			else
 				phymode = MODE_11NG_HT20;
-		पूर्ण अन्यथा अगर (ath11k_mac_sta_has_ofdm_only(sta)) अणु
+		} else if (ath11k_mac_sta_has_ofdm_only(sta)) {
 			phymode = MODE_11G;
-		पूर्ण अन्यथा अणु
+		} else {
 			phymode = MODE_11B;
-		पूर्ण
-		अवरोध;
-	हाल NL80211_BAND_5GHZ:
-	हाल NL80211_BAND_6GHZ:
+		}
+		break;
+	case NL80211_BAND_5GHZ:
+	case NL80211_BAND_6GHZ:
 		/* Check HE first */
-		अगर (sta->he_cap.has_he) अणु
+		if (sta->he_cap.has_he) {
 			phymode = ath11k_mac_get_phymode_he(ar, sta);
-		पूर्ण अन्यथा अगर (sta->vht_cap.vht_supported &&
-		    !ath11k_peer_assoc_h_vht_masked(vht_mcs_mask)) अणु
+		} else if (sta->vht_cap.vht_supported &&
+		    !ath11k_peer_assoc_h_vht_masked(vht_mcs_mask)) {
 			phymode = ath11k_mac_get_phymode_vht(ar, sta);
-		पूर्ण अन्यथा अगर (sta->ht_cap.ht_supported &&
-			   !ath11k_peer_assoc_h_ht_masked(ht_mcs_mask)) अणु
-			अगर (sta->bandwidth >= IEEE80211_STA_RX_BW_40)
+		} else if (sta->ht_cap.ht_supported &&
+			   !ath11k_peer_assoc_h_ht_masked(ht_mcs_mask)) {
+			if (sta->bandwidth >= IEEE80211_STA_RX_BW_40)
 				phymode = MODE_11NA_HT40;
-			अन्यथा
+			else
 				phymode = MODE_11NA_HT20;
-		पूर्ण अन्यथा अणु
+		} else {
 			phymode = MODE_11A;
-		पूर्ण
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		}
+		break;
+	default:
+		break;
+	}
 
 	ath11k_dbg(ar->ab, ATH11K_DBG_MAC, "mac peer %pM phymode %s\n",
 		   sta->addr, ath11k_wmi_phymode_str(phymode));
 
 	arg->peer_phymode = phymode;
 	WARN_ON(phymode == MODE_UNKNOWN);
-पूर्ण
+}
 
-अटल व्योम ath11k_peer_assoc_prepare(काष्ठा ath11k *ar,
-				      काष्ठा ieee80211_vअगर *vअगर,
-				      काष्ठा ieee80211_sta *sta,
-				      काष्ठा peer_assoc_params *arg,
+static void ath11k_peer_assoc_prepare(struct ath11k *ar,
+				      struct ieee80211_vif *vif,
+				      struct ieee80211_sta *sta,
+				      struct peer_assoc_params *arg,
 				      bool reassoc)
-अणु
-	lockdep_निश्चित_held(&ar->conf_mutex);
+{
+	lockdep_assert_held(&ar->conf_mutex);
 
-	स_रखो(arg, 0, माप(*arg));
+	memset(arg, 0, sizeof(*arg));
 
-	reinit_completion(&ar->peer_assoc_करोne);
+	reinit_completion(&ar->peer_assoc_done);
 
 	arg->peer_new_assoc = !reassoc;
-	ath11k_peer_assoc_h_basic(ar, vअगर, sta, arg);
-	ath11k_peer_assoc_h_crypto(ar, vअगर, sta, arg);
-	ath11k_peer_assoc_h_rates(ar, vअगर, sta, arg);
-	ath11k_peer_assoc_h_ht(ar, vअगर, sta, arg);
-	ath11k_peer_assoc_h_vht(ar, vअगर, sta, arg);
-	ath11k_peer_assoc_h_he(ar, vअगर, sta, arg);
-	ath11k_peer_assoc_h_qos(ar, vअगर, sta, arg);
-	ath11k_peer_assoc_h_phymode(ar, vअगर, sta, arg);
+	ath11k_peer_assoc_h_basic(ar, vif, sta, arg);
+	ath11k_peer_assoc_h_crypto(ar, vif, sta, arg);
+	ath11k_peer_assoc_h_rates(ar, vif, sta, arg);
+	ath11k_peer_assoc_h_ht(ar, vif, sta, arg);
+	ath11k_peer_assoc_h_vht(ar, vif, sta, arg);
+	ath11k_peer_assoc_h_he(ar, vif, sta, arg);
+	ath11k_peer_assoc_h_qos(ar, vif, sta, arg);
+	ath11k_peer_assoc_h_phymode(ar, vif, sta, arg);
 	ath11k_peer_assoc_h_smps(sta, arg);
 
 	/* TODO: amsdu_disable req? */
-पूर्ण
+}
 
-अटल पूर्णांक ath11k_setup_peer_smps(काष्ठा ath11k *ar, काष्ठा ath11k_vअगर *arvअगर,
-				  स्थिर u8 *addr,
-				  स्थिर काष्ठा ieee80211_sta_ht_cap *ht_cap)
-अणु
-	पूर्णांक smps;
+static int ath11k_setup_peer_smps(struct ath11k *ar, struct ath11k_vif *arvif,
+				  const u8 *addr,
+				  const struct ieee80211_sta_ht_cap *ht_cap)
+{
+	int smps;
 
-	अगर (!ht_cap->ht_supported)
-		वापस 0;
+	if (!ht_cap->ht_supported)
+		return 0;
 
 	smps = ht_cap->cap & IEEE80211_HT_CAP_SM_PS;
 	smps >>= IEEE80211_HT_CAP_SM_PS_SHIFT;
 
-	अगर (smps >= ARRAY_SIZE(ath11k_smps_map))
-		वापस -EINVAL;
+	if (smps >= ARRAY_SIZE(ath11k_smps_map))
+		return -EINVAL;
 
-	वापस ath11k_wmi_set_peer_param(ar, addr, arvअगर->vdev_id,
+	return ath11k_wmi_set_peer_param(ar, addr, arvif->vdev_id,
 					 WMI_PEER_MIMO_PS_STATE,
 					 ath11k_smps_map[smps]);
-पूर्ण
+}
 
-अटल व्योम ath11k_bss_assoc(काष्ठा ieee80211_hw *hw,
-			     काष्ठा ieee80211_vअगर *vअगर,
-			     काष्ठा ieee80211_bss_conf *bss_conf)
-अणु
-	काष्ठा ath11k *ar = hw->priv;
-	काष्ठा ath11k_vअगर *arvअगर = (व्योम *)vअगर->drv_priv;
-	काष्ठा peer_assoc_params peer_arg;
-	काष्ठा ieee80211_sta *ap_sta;
-	पूर्णांक ret;
+static void ath11k_bss_assoc(struct ieee80211_hw *hw,
+			     struct ieee80211_vif *vif,
+			     struct ieee80211_bss_conf *bss_conf)
+{
+	struct ath11k *ar = hw->priv;
+	struct ath11k_vif *arvif = (void *)vif->drv_priv;
+	struct peer_assoc_params peer_arg;
+	struct ieee80211_sta *ap_sta;
+	int ret;
 
-	lockdep_निश्चित_held(&ar->conf_mutex);
+	lockdep_assert_held(&ar->conf_mutex);
 
 	ath11k_dbg(ar->ab, ATH11K_DBG_MAC, "mac vdev %i assoc bssid %pM aid %d\n",
-		   arvअगर->vdev_id, arvअगर->bssid, arvअगर->aid);
+		   arvif->vdev_id, arvif->bssid, arvif->aid);
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
-	ap_sta = ieee80211_find_sta(vअगर, bss_conf->bssid);
-	अगर (!ap_sta) अणु
+	ap_sta = ieee80211_find_sta(vif, bss_conf->bssid);
+	if (!ap_sta) {
 		ath11k_warn(ar->ab, "failed to find station entry for bss %pM vdev %i\n",
-			    bss_conf->bssid, arvअगर->vdev_id);
-		rcu_पढ़ो_unlock();
-		वापस;
-	पूर्ण
+			    bss_conf->bssid, arvif->vdev_id);
+		rcu_read_unlock();
+		return;
+	}
 
-	ath11k_peer_assoc_prepare(ar, vअगर, ap_sta, &peer_arg, false);
+	ath11k_peer_assoc_prepare(ar, vif, ap_sta, &peer_arg, false);
 
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
 	ret = ath11k_wmi_send_peer_assoc_cmd(ar, &peer_arg);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ar->ab, "failed to run peer assoc for %pM vdev %i: %d\n",
-			    bss_conf->bssid, arvअगर->vdev_id, ret);
-		वापस;
-	पूर्ण
+			    bss_conf->bssid, arvif->vdev_id, ret);
+		return;
+	}
 
-	अगर (!रुको_क्रम_completion_समयout(&ar->peer_assoc_करोne, 1 * HZ)) अणु
+	if (!wait_for_completion_timeout(&ar->peer_assoc_done, 1 * HZ)) {
 		ath11k_warn(ar->ab, "failed to get peer assoc conf event for %pM vdev %i\n",
-			    bss_conf->bssid, arvअगर->vdev_id);
-		वापस;
-	पूर्ण
+			    bss_conf->bssid, arvif->vdev_id);
+		return;
+	}
 
-	ret = ath11k_setup_peer_smps(ar, arvअगर, bss_conf->bssid,
+	ret = ath11k_setup_peer_smps(ar, arvif, bss_conf->bssid,
 				     &ap_sta->ht_cap);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ar->ab, "failed to setup peer SMPS for vdev %d: %d\n",
-			    arvअगर->vdev_id, ret);
-		वापस;
-	पूर्ण
+			    arvif->vdev_id, ret);
+		return;
+	}
 
-	WARN_ON(arvअगर->is_up);
+	WARN_ON(arvif->is_up);
 
-	arvअगर->aid = bss_conf->aid;
-	ether_addr_copy(arvअगर->bssid, bss_conf->bssid);
+	arvif->aid = bss_conf->aid;
+	ether_addr_copy(arvif->bssid, bss_conf->bssid);
 
-	ret = ath11k_wmi_vdev_up(ar, arvअगर->vdev_id, arvअगर->aid, arvअगर->bssid);
-	अगर (ret) अणु
+	ret = ath11k_wmi_vdev_up(ar, arvif->vdev_id, arvif->aid, arvif->bssid);
+	if (ret) {
 		ath11k_warn(ar->ab, "failed to set vdev %d up: %d\n",
-			    arvअगर->vdev_id, ret);
-		वापस;
-	पूर्ण
+			    arvif->vdev_id, ret);
+		return;
+	}
 
-	arvअगर->is_up = true;
+	arvif->is_up = true;
 
 	ath11k_dbg(ar->ab, ATH11K_DBG_MAC,
 		   "mac vdev %d up (associated) bssid %pM aid %d\n",
-		   arvअगर->vdev_id, bss_conf->bssid, bss_conf->aid);
+		   arvif->vdev_id, bss_conf->bssid, bss_conf->aid);
 
 	/* Authorize BSS Peer */
-	ret = ath11k_wmi_set_peer_param(ar, arvअगर->bssid,
-					arvअगर->vdev_id,
+	ret = ath11k_wmi_set_peer_param(ar, arvif->bssid,
+					arvif->vdev_id,
 					WMI_PEER_AUTHORIZE,
 					1);
-	अगर (ret)
+	if (ret)
 		ath11k_warn(ar->ab, "Unable to authorize BSS peer: %d\n", ret);
 
-	ret = ath11k_wmi_send_obss_spr_cmd(ar, arvअगर->vdev_id,
+	ret = ath11k_wmi_send_obss_spr_cmd(ar, arvif->vdev_id,
 					   &bss_conf->he_obss_pd);
-	अगर (ret)
+	if (ret)
 		ath11k_warn(ar->ab, "failed to set vdev %i OBSS PD parameters: %d\n",
-			    arvअगर->vdev_id, ret);
-पूर्ण
+			    arvif->vdev_id, ret);
+}
 
-अटल व्योम ath11k_bss_disassoc(काष्ठा ieee80211_hw *hw,
-				काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा ath11k *ar = hw->priv;
-	काष्ठा ath11k_vअगर *arvअगर = (व्योम *)vअगर->drv_priv;
-	पूर्णांक ret;
+static void ath11k_bss_disassoc(struct ieee80211_hw *hw,
+				struct ieee80211_vif *vif)
+{
+	struct ath11k *ar = hw->priv;
+	struct ath11k_vif *arvif = (void *)vif->drv_priv;
+	int ret;
 
-	lockdep_निश्चित_held(&ar->conf_mutex);
+	lockdep_assert_held(&ar->conf_mutex);
 
 	ath11k_dbg(ar->ab, ATH11K_DBG_MAC, "mac vdev %i disassoc bssid %pM\n",
-		   arvअगर->vdev_id, arvअगर->bssid);
+		   arvif->vdev_id, arvif->bssid);
 
-	ret = ath11k_wmi_vdev_करोwn(ar, arvअगर->vdev_id);
-	अगर (ret)
+	ret = ath11k_wmi_vdev_down(ar, arvif->vdev_id);
+	if (ret)
 		ath11k_warn(ar->ab, "failed to down vdev %i: %d\n",
-			    arvअगर->vdev_id, ret);
+			    arvif->vdev_id, ret);
 
-	arvअगर->is_up = false;
+	arvif->is_up = false;
 
-	cancel_delayed_work_sync(&arvअगर->connection_loss_work);
-पूर्ण
+	cancel_delayed_work_sync(&arvif->connection_loss_work);
+}
 
-अटल u32 ath11k_mac_get_rate_hw_value(पूर्णांक bitrate)
-अणु
+static u32 ath11k_mac_get_rate_hw_value(int bitrate)
+{
 	u32 preamble;
 	u16 hw_value;
-	पूर्णांक rate;
-	माप_प्रकार i;
+	int rate;
+	size_t i;
 
-	अगर (ath11k_mac_bitrate_is_cck(bitrate))
+	if (ath11k_mac_bitrate_is_cck(bitrate))
 		preamble = WMI_RATE_PREAMBLE_CCK;
-	अन्यथा
+	else
 		preamble = WMI_RATE_PREAMBLE_OFDM;
 
-	क्रम (i = 0; i < ARRAY_SIZE(ath11k_legacy_rates); i++) अणु
-		अगर (ath11k_legacy_rates[i].bitrate != bitrate)
-			जारी;
+	for (i = 0; i < ARRAY_SIZE(ath11k_legacy_rates); i++) {
+		if (ath11k_legacy_rates[i].bitrate != bitrate)
+			continue;
 
 		hw_value = ath11k_legacy_rates[i].hw_value;
 		rate = ATH11K_HW_RATE_CODE(hw_value, 0, preamble);
 
-		वापस rate;
-	पूर्ण
+		return rate;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल व्योम ath11k_recalculate_mgmt_rate(काष्ठा ath11k *ar,
-					 काष्ठा ieee80211_vअगर *vअगर,
-					 काष्ठा cfg80211_chan_def *def)
-अणु
-	काष्ठा ath11k_vअगर *arvअगर = (व्योम *)vअगर->drv_priv;
-	स्थिर काष्ठा ieee80211_supported_band *sband;
+static void ath11k_recalculate_mgmt_rate(struct ath11k *ar,
+					 struct ieee80211_vif *vif,
+					 struct cfg80211_chan_def *def)
+{
+	struct ath11k_vif *arvif = (void *)vif->drv_priv;
+	const struct ieee80211_supported_band *sband;
 	u8 basic_rate_idx;
-	पूर्णांक hw_rate_code;
+	int hw_rate_code;
 	u32 vdev_param;
 	u16 bitrate;
-	पूर्णांक ret;
+	int ret;
 
-	lockdep_निश्चित_held(&ar->conf_mutex);
+	lockdep_assert_held(&ar->conf_mutex);
 
 	sband = ar->hw->wiphy->bands[def->chan->band];
-	basic_rate_idx = ffs(vअगर->bss_conf.basic_rates) - 1;
+	basic_rate_idx = ffs(vif->bss_conf.basic_rates) - 1;
 	bitrate = sband->bitrates[basic_rate_idx].bitrate;
 
 	hw_rate_code = ath11k_mac_get_rate_hw_value(bitrate);
-	अगर (hw_rate_code < 0) अणु
+	if (hw_rate_code < 0) {
 		ath11k_warn(ar->ab, "bitrate not supported %d\n", bitrate);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	vdev_param = WMI_VDEV_PARAM_MGMT_RATE;
-	ret = ath11k_wmi_vdev_set_param_cmd(ar, arvअगर->vdev_id, vdev_param,
+	ret = ath11k_wmi_vdev_set_param_cmd(ar, arvif->vdev_id, vdev_param,
 					    hw_rate_code);
-	अगर (ret)
+	if (ret)
 		ath11k_warn(ar->ab, "failed to set mgmt tx rate %d\n", ret);
 
 	vdev_param = WMI_VDEV_PARAM_BEACON_RATE;
-	ret = ath11k_wmi_vdev_set_param_cmd(ar, arvअगर->vdev_id, vdev_param,
+	ret = ath11k_wmi_vdev_set_param_cmd(ar, arvif->vdev_id, vdev_param,
 					    hw_rate_code);
-	अगर (ret)
+	if (ret)
 		ath11k_warn(ar->ab, "failed to set beacon tx rate %d\n", ret);
-पूर्ण
+}
 
-अटल पूर्णांक ath11k_mac_fils_discovery(काष्ठा ath11k_vअगर *arvअगर,
-				     काष्ठा ieee80211_bss_conf *info)
-अणु
-	काष्ठा ath11k *ar = arvअगर->ar;
-	काष्ठा sk_buff *पंचांगpl;
-	पूर्णांक ret;
-	u32 पूर्णांकerval;
+static int ath11k_mac_fils_discovery(struct ath11k_vif *arvif,
+				     struct ieee80211_bss_conf *info)
+{
+	struct ath11k *ar = arvif->ar;
+	struct sk_buff *tmpl;
+	int ret;
+	u32 interval;
 	bool unsol_bcast_probe_resp_enabled = false;
 
-	अगर (info->fils_discovery.max_पूर्णांकerval) अणु
-		पूर्णांकerval = info->fils_discovery.max_पूर्णांकerval;
+	if (info->fils_discovery.max_interval) {
+		interval = info->fils_discovery.max_interval;
 
-		पंचांगpl = ieee80211_get_fils_discovery_पंचांगpl(ar->hw, arvअगर->vअगर);
-		अगर (पंचांगpl)
-			ret = ath11k_wmi_fils_discovery_पंचांगpl(ar, arvअगर->vdev_id,
-							     पंचांगpl);
-	पूर्ण अन्यथा अगर (info->unsol_bcast_probe_resp_पूर्णांकerval) अणु
+		tmpl = ieee80211_get_fils_discovery_tmpl(ar->hw, arvif->vif);
+		if (tmpl)
+			ret = ath11k_wmi_fils_discovery_tmpl(ar, arvif->vdev_id,
+							     tmpl);
+	} else if (info->unsol_bcast_probe_resp_interval) {
 		unsol_bcast_probe_resp_enabled = 1;
-		पूर्णांकerval = info->unsol_bcast_probe_resp_पूर्णांकerval;
+		interval = info->unsol_bcast_probe_resp_interval;
 
-		पंचांगpl = ieee80211_get_unsol_bcast_probe_resp_पंचांगpl(ar->hw,
-								 arvअगर->vअगर);
-		अगर (पंचांगpl)
-			ret = ath11k_wmi_probe_resp_पंचांगpl(ar, arvअगर->vdev_id,
-							 पंचांगpl);
-	पूर्ण अन्यथा अणु /* Disable */
-		वापस ath11k_wmi_fils_discovery(ar, arvअगर->vdev_id, 0, false);
-	पूर्ण
+		tmpl = ieee80211_get_unsol_bcast_probe_resp_tmpl(ar->hw,
+								 arvif->vif);
+		if (tmpl)
+			ret = ath11k_wmi_probe_resp_tmpl(ar, arvif->vdev_id,
+							 tmpl);
+	} else { /* Disable */
+		return ath11k_wmi_fils_discovery(ar, arvif->vdev_id, 0, false);
+	}
 
-	अगर (!पंचांगpl) अणु
+	if (!tmpl) {
 		ath11k_warn(ar->ab,
 			    "mac vdev %i failed to retrieve %s template\n",
-			    arvअगर->vdev_id, (unsol_bcast_probe_resp_enabled ?
+			    arvif->vdev_id, (unsol_bcast_probe_resp_enabled ?
 			    "unsolicited broadcast probe response" :
 			    "FILS discovery"));
-		वापस -EPERM;
-	पूर्ण
-	kमुक्त_skb(पंचांगpl);
+		return -EPERM;
+	}
+	kfree_skb(tmpl);
 
-	अगर (!ret)
-		ret = ath11k_wmi_fils_discovery(ar, arvअगर->vdev_id, पूर्णांकerval,
+	if (!ret)
+		ret = ath11k_wmi_fils_discovery(ar, arvif->vdev_id, interval,
 						unsol_bcast_probe_resp_enabled);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ath11k_mac_config_obss_pd(काष्ठा ath11k *ar,
-				     काष्ठा ieee80211_he_obss_pd *he_obss_pd)
-अणु
-	u32 biपंचांगap[2], param_id, param_val, pdev_id;
-	पूर्णांक ret;
+static int ath11k_mac_config_obss_pd(struct ath11k *ar,
+				     struct ieee80211_he_obss_pd *he_obss_pd)
+{
+	u32 bitmap[2], param_id, param_val, pdev_id;
+	int ret;
 	s8 non_srg_th = 0, srg_th = 0;
 
 	pdev_id = ar->pdev->pdev_id;
 
 	/* Set and enable SRG/non-SRG OBSS PD Threshold */
 	param_id = WMI_PDEV_PARAM_SET_CMD_OBSS_PD_THRESHOLD;
-	अगर (test_bit(ATH11K_FLAG_MONITOR_ENABLED, &ar->monitor_flags)) अणु
+	if (test_bit(ATH11K_FLAG_MONITOR_ENABLED, &ar->monitor_flags)) {
 		ret = ath11k_wmi_pdev_set_param(ar, param_id, 0, pdev_id);
-		अगर (ret)
+		if (ret)
 			ath11k_warn(ar->ab,
 				    "failed to set obss_pd_threshold for pdev: %u\n",
 				    pdev_id);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ath11k_dbg(ar->ab, ATH11K_DBG_MAC,
 		   "mac obss pd sr_ctrl %x non_srg_thres %u srg_max %u\n",
@@ -1967,947 +1966,947 @@ err:
 
 	param_val = 0;
 
-	अगर (he_obss_pd->sr_ctrl &
-	    IEEE80211_HE_SPR_NON_SRG_OBSS_PD_SR_DISALLOWED) अणु
+	if (he_obss_pd->sr_ctrl &
+	    IEEE80211_HE_SPR_NON_SRG_OBSS_PD_SR_DISALLOWED) {
 		non_srg_th = ATH11K_OBSS_PD_MAX_THRESHOLD;
-	पूर्ण अन्यथा अणु
-		अगर (he_obss_pd->sr_ctrl & IEEE80211_HE_SPR_NON_SRG_OFFSET_PRESENT)
+	} else {
+		if (he_obss_pd->sr_ctrl & IEEE80211_HE_SPR_NON_SRG_OFFSET_PRESENT)
 			non_srg_th = (ATH11K_OBSS_PD_MAX_THRESHOLD +
 				      he_obss_pd->non_srg_max_offset);
-		अन्यथा
+		else
 			non_srg_th = ATH11K_OBSS_PD_NON_SRG_MAX_THRESHOLD;
 
 		param_val |= ATH11K_OBSS_PD_NON_SRG_EN;
-	पूर्ण
+	}
 
-	अगर (he_obss_pd->sr_ctrl & IEEE80211_HE_SPR_SRG_INFORMATION_PRESENT) अणु
+	if (he_obss_pd->sr_ctrl & IEEE80211_HE_SPR_SRG_INFORMATION_PRESENT) {
 		srg_th = ATH11K_OBSS_PD_MAX_THRESHOLD + he_obss_pd->max_offset;
 		param_val |= ATH11K_OBSS_PD_SRG_EN;
-	पूर्ण
+	}
 
-	अगर (test_bit(WMI_TLV_SERVICE_SRG_SRP_SPATIAL_REUSE_SUPPORT,
-		     ar->ab->wmi_ab.svc_map)) अणु
+	if (test_bit(WMI_TLV_SERVICE_SRG_SRP_SPATIAL_REUSE_SUPPORT,
+		     ar->ab->wmi_ab.svc_map)) {
 		param_val |= ATH11K_OBSS_PD_THRESHOLD_IN_DBM;
 		param_val |= FIELD_PREP(GENMASK(15, 8), srg_th);
-	पूर्ण अन्यथा अणु
+	} else {
 		non_srg_th -= ATH11K_DEFAULT_NOISE_FLOOR;
 		/* SRG not supported and threshold in dB */
 		param_val &= ~(ATH11K_OBSS_PD_SRG_EN |
 			       ATH11K_OBSS_PD_THRESHOLD_IN_DBM);
-	पूर्ण
+	}
 
 	param_val |= (non_srg_th & GENMASK(7, 0));
 	ret = ath11k_wmi_pdev_set_param(ar, param_id, param_val, pdev_id);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ar->ab,
 			    "failed to set obss_pd_threshold for pdev: %u\n",
 			    pdev_id);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* Enable OBSS PD क्रम all access category */
+	/* Enable OBSS PD for all access category */
 	param_id  = WMI_PDEV_PARAM_SET_CMD_OBSS_PD_PER_AC;
 	param_val = 0xf;
 	ret = ath11k_wmi_pdev_set_param(ar, param_id, param_val, pdev_id);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ar->ab,
 			    "failed to set obss_pd_per_ac for pdev: %u\n",
 			    pdev_id);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* Set SR Prohibit */
 	param_id  = WMI_PDEV_PARAM_ENABLE_SR_PROHIBIT;
 	param_val = !!(he_obss_pd->sr_ctrl &
 		       IEEE80211_HE_SPR_HESIGA_SR_VAL15_ALLOWED);
 	ret = ath11k_wmi_pdev_set_param(ar, param_id, param_val, pdev_id);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ar->ab, "failed to set sr_prohibit for pdev: %u\n",
 			    pdev_id);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (!test_bit(WMI_TLV_SERVICE_SRG_SRP_SPATIAL_REUSE_SUPPORT,
+	if (!test_bit(WMI_TLV_SERVICE_SRG_SRP_SPATIAL_REUSE_SUPPORT,
 		      ar->ab->wmi_ab.svc_map))
-		वापस 0;
+		return 0;
 
-	/* Set SRG BSS Color Biपंचांगap */
-	स_नकल(biपंचांगap, he_obss_pd->bss_color_biपंचांगap, माप(biपंचांगap));
-	ret = ath11k_wmi_pdev_set_srg_bss_color_biपंचांगap(ar, biपंचांगap);
-	अगर (ret) अणु
+	/* Set SRG BSS Color Bitmap */
+	memcpy(bitmap, he_obss_pd->bss_color_bitmap, sizeof(bitmap));
+	ret = ath11k_wmi_pdev_set_srg_bss_color_bitmap(ar, bitmap);
+	if (ret) {
 		ath11k_warn(ar->ab,
 			    "failed to set bss_color_bitmap for pdev: %u\n",
 			    pdev_id);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* Set SRG Partial BSSID Biपंचांगap */
-	स_नकल(biपंचांगap, he_obss_pd->partial_bssid_biपंचांगap, माप(biपंचांगap));
-	ret = ath11k_wmi_pdev_set_srg_patial_bssid_biपंचांगap(ar, biपंचांगap);
-	अगर (ret) अणु
+	/* Set SRG Partial BSSID Bitmap */
+	memcpy(bitmap, he_obss_pd->partial_bssid_bitmap, sizeof(bitmap));
+	ret = ath11k_wmi_pdev_set_srg_patial_bssid_bitmap(ar, bitmap);
+	if (ret) {
 		ath11k_warn(ar->ab,
 			    "failed to set partial_bssid_bitmap for pdev: %u\n",
 			    pdev_id);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	स_रखो(biपंचांगap, 0xff, माप(biपंचांगap));
+	memset(bitmap, 0xff, sizeof(bitmap));
 
-	/* Enable all BSS Colors क्रम SRG */
-	ret = ath11k_wmi_pdev_srg_obss_color_enable_biपंचांगap(ar, biपंचांगap);
-	अगर (ret) अणु
+	/* Enable all BSS Colors for SRG */
+	ret = ath11k_wmi_pdev_srg_obss_color_enable_bitmap(ar, bitmap);
+	if (ret) {
 		ath11k_warn(ar->ab,
 			    "failed to set srg_color_en_bitmap pdev: %u\n",
 			    pdev_id);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* Enable all patial BSSID mask क्रम SRG */
-	ret = ath11k_wmi_pdev_srg_obss_bssid_enable_biपंचांगap(ar, biपंचांगap);
-	अगर (ret) अणु
+	/* Enable all patial BSSID mask for SRG */
+	ret = ath11k_wmi_pdev_srg_obss_bssid_enable_bitmap(ar, bitmap);
+	if (ret) {
 		ath11k_warn(ar->ab,
 			    "failed to set srg_bssid_en_bitmap pdev: %u\n",
 			    pdev_id);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* Enable all BSS Colors क्रम non-SRG */
-	ret = ath11k_wmi_pdev_non_srg_obss_color_enable_biपंचांगap(ar, biपंचांगap);
-	अगर (ret) अणु
+	/* Enable all BSS Colors for non-SRG */
+	ret = ath11k_wmi_pdev_non_srg_obss_color_enable_bitmap(ar, bitmap);
+	if (ret) {
 		ath11k_warn(ar->ab,
 			    "failed to set non_srg_color_en_bitmap pdev: %u\n",
 			    pdev_id);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* Enable all patial BSSID mask क्रम non-SRG */
-	ret = ath11k_wmi_pdev_non_srg_obss_bssid_enable_biपंचांगap(ar, biपंचांगap);
-	अगर (ret) अणु
+	/* Enable all patial BSSID mask for non-SRG */
+	ret = ath11k_wmi_pdev_non_srg_obss_bssid_enable_bitmap(ar, bitmap);
+	if (ret) {
 		ath11k_warn(ar->ab,
 			    "failed to set non_srg_bssid_en_bitmap pdev: %u\n",
 			    pdev_id);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ath11k_mac_op_bss_info_changed(काष्ठा ieee80211_hw *hw,
-					   काष्ठा ieee80211_vअगर *vअगर,
-					   काष्ठा ieee80211_bss_conf *info,
+static void ath11k_mac_op_bss_info_changed(struct ieee80211_hw *hw,
+					   struct ieee80211_vif *vif,
+					   struct ieee80211_bss_conf *info,
 					   u32 changed)
-अणु
-	काष्ठा ath11k *ar = hw->priv;
-	काष्ठा ath11k_vअगर *arvअगर = ath11k_vअगर_to_arvअगर(vअगर);
-	काष्ठा cfg80211_chan_def def;
+{
+	struct ath11k *ar = hw->priv;
+	struct ath11k_vif *arvif = ath11k_vif_to_arvif(vif);
+	struct cfg80211_chan_def def;
 	u32 param_id, param_value;
-	क्रमागत nl80211_band band;
+	enum nl80211_band band;
 	u32 vdev_param;
-	पूर्णांक mcast_rate;
+	int mcast_rate;
 	u32 preamble;
 	u16 hw_value;
 	u16 bitrate;
-	पूर्णांक ret = 0;
+	int ret = 0;
 	u8 rateidx;
 	u32 rate;
 
 	mutex_lock(&ar->conf_mutex);
 
-	अगर (changed & BSS_CHANGED_BEACON_INT) अणु
-		arvअगर->beacon_पूर्णांकerval = info->beacon_पूर्णांक;
+	if (changed & BSS_CHANGED_BEACON_INT) {
+		arvif->beacon_interval = info->beacon_int;
 
 		param_id = WMI_VDEV_PARAM_BEACON_INTERVAL;
-		ret = ath11k_wmi_vdev_set_param_cmd(ar, arvअगर->vdev_id,
+		ret = ath11k_wmi_vdev_set_param_cmd(ar, arvif->vdev_id,
 						    param_id,
-						    arvअगर->beacon_पूर्णांकerval);
-		अगर (ret)
+						    arvif->beacon_interval);
+		if (ret)
 			ath11k_warn(ar->ab, "Failed to set beacon interval for VDEV: %d\n",
-				    arvअगर->vdev_id);
-		अन्यथा
+				    arvif->vdev_id);
+		else
 			ath11k_dbg(ar->ab, ATH11K_DBG_MAC,
 				   "Beacon interval: %d set for VDEV: %d\n",
-				   arvअगर->beacon_पूर्णांकerval, arvअगर->vdev_id);
-	पूर्ण
+				   arvif->beacon_interval, arvif->vdev_id);
+	}
 
-	अगर (changed & BSS_CHANGED_BEACON) अणु
+	if (changed & BSS_CHANGED_BEACON) {
 		param_id = WMI_PDEV_PARAM_BEACON_TX_MODE;
 		param_value = WMI_BEACON_STAGGERED_MODE;
 		ret = ath11k_wmi_pdev_set_param(ar, param_id,
 						param_value, ar->pdev->pdev_id);
-		अगर (ret)
+		if (ret)
 			ath11k_warn(ar->ab, "Failed to set beacon mode for VDEV: %d\n",
-				    arvअगर->vdev_id);
-		अन्यथा
+				    arvif->vdev_id);
+		else
 			ath11k_dbg(ar->ab, ATH11K_DBG_MAC,
 				   "Set staggered beacon mode for VDEV: %d\n",
-				   arvअगर->vdev_id);
+				   arvif->vdev_id);
 
-		ret = ath11k_mac_setup_bcn_पंचांगpl(arvअगर);
-		अगर (ret)
+		ret = ath11k_mac_setup_bcn_tmpl(arvif);
+		if (ret)
 			ath11k_warn(ar->ab, "failed to update bcn template: %d\n",
 				    ret);
-	पूर्ण
+	}
 
-	अगर (changed & (BSS_CHANGED_BEACON_INFO | BSS_CHANGED_BEACON)) अणु
-		arvअगर->dtim_period = info->dtim_period;
+	if (changed & (BSS_CHANGED_BEACON_INFO | BSS_CHANGED_BEACON)) {
+		arvif->dtim_period = info->dtim_period;
 
 		param_id = WMI_VDEV_PARAM_DTIM_PERIOD;
-		ret = ath11k_wmi_vdev_set_param_cmd(ar, arvअगर->vdev_id,
+		ret = ath11k_wmi_vdev_set_param_cmd(ar, arvif->vdev_id,
 						    param_id,
-						    arvअगर->dtim_period);
+						    arvif->dtim_period);
 
-		अगर (ret)
+		if (ret)
 			ath11k_warn(ar->ab, "Failed to set dtim period for VDEV %d: %i\n",
-				    arvअगर->vdev_id, ret);
-		अन्यथा
+				    arvif->vdev_id, ret);
+		else
 			ath11k_dbg(ar->ab, ATH11K_DBG_MAC,
 				   "DTIM period: %d set for VDEV: %d\n",
-				   arvअगर->dtim_period, arvअगर->vdev_id);
-	पूर्ण
+				   arvif->dtim_period, arvif->vdev_id);
+	}
 
-	अगर (changed & BSS_CHANGED_SSID &&
-	    vअगर->type == NL80211_IFTYPE_AP) अणु
-		arvअगर->u.ap.ssid_len = info->ssid_len;
-		अगर (info->ssid_len)
-			स_नकल(arvअगर->u.ap.ssid, info->ssid, info->ssid_len);
-		arvअगर->u.ap.hidden_ssid = info->hidden_ssid;
-	पूर्ण
+	if (changed & BSS_CHANGED_SSID &&
+	    vif->type == NL80211_IFTYPE_AP) {
+		arvif->u.ap.ssid_len = info->ssid_len;
+		if (info->ssid_len)
+			memcpy(arvif->u.ap.ssid, info->ssid, info->ssid_len);
+		arvif->u.ap.hidden_ssid = info->hidden_ssid;
+	}
 
-	अगर (changed & BSS_CHANGED_BSSID && !is_zero_ether_addr(info->bssid))
-		ether_addr_copy(arvअगर->bssid, info->bssid);
+	if (changed & BSS_CHANGED_BSSID && !is_zero_ether_addr(info->bssid))
+		ether_addr_copy(arvif->bssid, info->bssid);
 
-	अगर (changed & BSS_CHANGED_BEACON_ENABLED) अणु
-		ath11k_control_beaconing(arvअगर, info);
+	if (changed & BSS_CHANGED_BEACON_ENABLED) {
+		ath11k_control_beaconing(arvif, info);
 
-		अगर (arvअगर->is_up && vअगर->bss_conf.he_support &&
-		    vअगर->bss_conf.he_oper.params) अणु
-			ret = ath11k_wmi_vdev_set_param_cmd(ar, arvअगर->vdev_id,
+		if (arvif->is_up && vif->bss_conf.he_support &&
+		    vif->bss_conf.he_oper.params) {
+			ret = ath11k_wmi_vdev_set_param_cmd(ar, arvif->vdev_id,
 							    WMI_VDEV_PARAM_BA_MODE,
 							    WMI_BA_MODE_BUFFER_SIZE_256);
-			अगर (ret)
+			if (ret)
 				ath11k_warn(ar->ab,
 					    "failed to set BA BUFFER SIZE 256 for vdev: %d\n",
-					    arvअगर->vdev_id);
+					    arvif->vdev_id);
 
 			param_id = WMI_VDEV_PARAM_HEOPS_0_31;
-			param_value = vअगर->bss_conf.he_oper.params;
-			ret = ath11k_wmi_vdev_set_param_cmd(ar, arvअगर->vdev_id,
+			param_value = vif->bss_conf.he_oper.params;
+			ret = ath11k_wmi_vdev_set_param_cmd(ar, arvif->vdev_id,
 							    param_id, param_value);
 			ath11k_dbg(ar->ab, ATH11K_DBG_MAC,
 				   "he oper param: %x set for VDEV: %d\n",
-				   param_value, arvअगर->vdev_id);
+				   param_value, arvif->vdev_id);
 
-			अगर (ret)
+			if (ret)
 				ath11k_warn(ar->ab, "Failed to set he oper params %x for VDEV %d: %i\n",
-					    param_value, arvअगर->vdev_id, ret);
-		पूर्ण
-	पूर्ण
+					    param_value, arvif->vdev_id, ret);
+		}
+	}
 
-	अगर (changed & BSS_CHANGED_ERP_CTS_PROT) अणु
+	if (changed & BSS_CHANGED_ERP_CTS_PROT) {
 		u32 cts_prot;
 
 		cts_prot = !!(info->use_cts_prot);
 		param_id = WMI_VDEV_PARAM_PROTECTION_MODE;
 
-		अगर (arvअगर->is_started) अणु
-			ret = ath11k_wmi_vdev_set_param_cmd(ar, arvअगर->vdev_id,
+		if (arvif->is_started) {
+			ret = ath11k_wmi_vdev_set_param_cmd(ar, arvif->vdev_id,
 							    param_id, cts_prot);
-			अगर (ret)
+			if (ret)
 				ath11k_warn(ar->ab, "Failed to set CTS prot for VDEV: %d\n",
-					    arvअगर->vdev_id);
-			अन्यथा
+					    arvif->vdev_id);
+			else
 				ath11k_dbg(ar->ab, ATH11K_DBG_MAC, "Set CTS prot: %d for VDEV: %d\n",
-					   cts_prot, arvअगर->vdev_id);
-		पूर्ण अन्यथा अणु
+					   cts_prot, arvif->vdev_id);
+		} else {
 			ath11k_dbg(ar->ab, ATH11K_DBG_MAC, "defer protection mode setup, vdev is not ready yet\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (changed & BSS_CHANGED_ERP_SLOT) अणु
-		u32 slotसमय;
+	if (changed & BSS_CHANGED_ERP_SLOT) {
+		u32 slottime;
 
-		अगर (info->use_लघु_slot)
-			slotसमय = WMI_VDEV_SLOT_TIME_SHORT; /* 9us */
+		if (info->use_short_slot)
+			slottime = WMI_VDEV_SLOT_TIME_SHORT; /* 9us */
 
-		अन्यथा
-			slotसमय = WMI_VDEV_SLOT_TIME_LONG; /* 20us */
+		else
+			slottime = WMI_VDEV_SLOT_TIME_LONG; /* 20us */
 
 		param_id = WMI_VDEV_PARAM_SLOT_TIME;
-		ret = ath11k_wmi_vdev_set_param_cmd(ar, arvअगर->vdev_id,
-						    param_id, slotसमय);
-		अगर (ret)
+		ret = ath11k_wmi_vdev_set_param_cmd(ar, arvif->vdev_id,
+						    param_id, slottime);
+		if (ret)
 			ath11k_warn(ar->ab, "Failed to set erp slot for VDEV: %d\n",
-				    arvअगर->vdev_id);
-		अन्यथा
+				    arvif->vdev_id);
+		else
 			ath11k_dbg(ar->ab, ATH11K_DBG_MAC,
 				   "Set slottime: %d for VDEV: %d\n",
-				   slotसमय, arvअगर->vdev_id);
-	पूर्ण
+				   slottime, arvif->vdev_id);
+	}
 
-	अगर (changed & BSS_CHANGED_ERP_PREAMBLE) अणु
+	if (changed & BSS_CHANGED_ERP_PREAMBLE) {
 		u32 preamble;
 
-		अगर (info->use_लघु_preamble)
+		if (info->use_short_preamble)
 			preamble = WMI_VDEV_PREAMBLE_SHORT;
-		अन्यथा
+		else
 			preamble = WMI_VDEV_PREAMBLE_LONG;
 
 		param_id = WMI_VDEV_PARAM_PREAMBLE;
-		ret = ath11k_wmi_vdev_set_param_cmd(ar, arvअगर->vdev_id,
+		ret = ath11k_wmi_vdev_set_param_cmd(ar, arvif->vdev_id,
 						    param_id, preamble);
-		अगर (ret)
+		if (ret)
 			ath11k_warn(ar->ab, "Failed to set preamble for VDEV: %d\n",
-				    arvअगर->vdev_id);
-		अन्यथा
+				    arvif->vdev_id);
+		else
 			ath11k_dbg(ar->ab, ATH11K_DBG_MAC,
 				   "Set preamble: %d for VDEV: %d\n",
-				   preamble, arvअगर->vdev_id);
-	पूर्ण
+				   preamble, arvif->vdev_id);
+	}
 
-	अगर (changed & BSS_CHANGED_ASSOC) अणु
-		अगर (info->assoc)
-			ath11k_bss_assoc(hw, vअगर, info);
-		अन्यथा
-			ath11k_bss_disassoc(hw, vअगर);
-	पूर्ण
+	if (changed & BSS_CHANGED_ASSOC) {
+		if (info->assoc)
+			ath11k_bss_assoc(hw, vif, info);
+		else
+			ath11k_bss_disassoc(hw, vif);
+	}
 
-	अगर (changed & BSS_CHANGED_TXPOWER) अणु
+	if (changed & BSS_CHANGED_TXPOWER) {
 		ath11k_dbg(ar->ab, ATH11K_DBG_MAC, "mac vdev_id %i txpower %d\n",
-			   arvअगर->vdev_id, info->txघातer);
+			   arvif->vdev_id, info->txpower);
 
-		arvअगर->txघातer = info->txघातer;
-		ath11k_mac_txघातer_recalc(ar);
-	पूर्ण
+		arvif->txpower = info->txpower;
+		ath11k_mac_txpower_recalc(ar);
+	}
 
-	अगर (changed & BSS_CHANGED_MCAST_RATE &&
-	    !ath11k_mac_vअगर_chan(arvअगर->vअगर, &def)) अणु
+	if (changed & BSS_CHANGED_MCAST_RATE &&
+	    !ath11k_mac_vif_chan(arvif->vif, &def)) {
 		band = def.chan->band;
-		mcast_rate = vअगर->bss_conf.mcast_rate[band];
+		mcast_rate = vif->bss_conf.mcast_rate[band];
 
-		अगर (mcast_rate > 0)
+		if (mcast_rate > 0)
 			rateidx = mcast_rate - 1;
-		अन्यथा
-			rateidx = ffs(vअगर->bss_conf.basic_rates) - 1;
+		else
+			rateidx = ffs(vif->bss_conf.basic_rates) - 1;
 
-		अगर (ar->pdev->cap.supported_bands & WMI_HOST_WLAN_5G_CAP)
+		if (ar->pdev->cap.supported_bands & WMI_HOST_WLAN_5G_CAP)
 			rateidx += ATH11K_MAC_FIRST_OFDM_RATE_IDX;
 
 		bitrate = ath11k_legacy_rates[rateidx].bitrate;
 		hw_value = ath11k_legacy_rates[rateidx].hw_value;
 
-		अगर (ath11k_mac_bitrate_is_cck(bitrate))
+		if (ath11k_mac_bitrate_is_cck(bitrate))
 			preamble = WMI_RATE_PREAMBLE_CCK;
-		अन्यथा
+		else
 			preamble = WMI_RATE_PREAMBLE_OFDM;
 
 		rate = ATH11K_HW_RATE_CODE(hw_value, 0, preamble);
 
 		ath11k_dbg(ar->ab, ATH11K_DBG_MAC,
 			   "mac vdev %d mcast_rate %x\n",
-			   arvअगर->vdev_id, rate);
+			   arvif->vdev_id, rate);
 
 		vdev_param = WMI_VDEV_PARAM_MCAST_DATA_RATE;
-		ret = ath11k_wmi_vdev_set_param_cmd(ar, arvअगर->vdev_id,
+		ret = ath11k_wmi_vdev_set_param_cmd(ar, arvif->vdev_id,
 						    vdev_param, rate);
-		अगर (ret)
+		if (ret)
 			ath11k_warn(ar->ab,
 				    "failed to set mcast rate on vdev %i: %d\n",
-				    arvअगर->vdev_id,  ret);
+				    arvif->vdev_id,  ret);
 
 		vdev_param = WMI_VDEV_PARAM_BCAST_DATA_RATE;
-		ret = ath11k_wmi_vdev_set_param_cmd(ar, arvअगर->vdev_id,
+		ret = ath11k_wmi_vdev_set_param_cmd(ar, arvif->vdev_id,
 						    vdev_param, rate);
-		अगर (ret)
+		if (ret)
 			ath11k_warn(ar->ab,
 				    "failed to set bcast rate on vdev %i: %d\n",
-				    arvअगर->vdev_id,  ret);
-	पूर्ण
+				    arvif->vdev_id,  ret);
+	}
 
-	अगर (changed & BSS_CHANGED_BASIC_RATES &&
-	    !ath11k_mac_vअगर_chan(arvअगर->vअगर, &def))
-		ath11k_recalculate_mgmt_rate(ar, vअगर, &def);
+	if (changed & BSS_CHANGED_BASIC_RATES &&
+	    !ath11k_mac_vif_chan(arvif->vif, &def))
+		ath11k_recalculate_mgmt_rate(ar, vif, &def);
 
-	अगर (changed & BSS_CHANGED_TWT) अणु
-		अगर (info->twt_requester || info->twt_responder)
+	if (changed & BSS_CHANGED_TWT) {
+		if (info->twt_requester || info->twt_responder)
 			ath11k_wmi_send_twt_enable_cmd(ar, ar->pdev->pdev_id);
-		अन्यथा
+		else
 			ath11k_wmi_send_twt_disable_cmd(ar, ar->pdev->pdev_id);
-	पूर्ण
+	}
 
-	अगर (changed & BSS_CHANGED_HE_OBSS_PD)
+	if (changed & BSS_CHANGED_HE_OBSS_PD)
 		ath11k_mac_config_obss_pd(ar, &info->he_obss_pd);
 
-	अगर (changed & BSS_CHANGED_HE_BSS_COLOR) अणु
-		अगर (vअगर->type == NL80211_IFTYPE_AP) अणु
+	if (changed & BSS_CHANGED_HE_BSS_COLOR) {
+		if (vif->type == NL80211_IFTYPE_AP) {
 			ret = ath11k_wmi_send_obss_color_collision_cfg_cmd(
-				ar, arvअगर->vdev_id, info->he_bss_color.color,
+				ar, arvif->vdev_id, info->he_bss_color.color,
 				ATH11K_BSS_COLOR_COLLISION_DETECTION_AP_PERIOD_MS,
 				info->he_bss_color.enabled);
-			अगर (ret)
+			if (ret)
 				ath11k_warn(ar->ab, "failed to set bss color collision on vdev %i: %d\n",
-					    arvअगर->vdev_id,  ret);
-		पूर्ण अन्यथा अगर (vअगर->type == NL80211_IFTYPE_STATION) अणु
+					    arvif->vdev_id,  ret);
+		} else if (vif->type == NL80211_IFTYPE_STATION) {
 			ret = ath11k_wmi_send_bss_color_change_enable_cmd(ar,
-									  arvअगर->vdev_id,
+									  arvif->vdev_id,
 									  1);
-			अगर (ret)
+			if (ret)
 				ath11k_warn(ar->ab, "failed to enable bss color change on vdev %i: %d\n",
-					    arvअगर->vdev_id,  ret);
+					    arvif->vdev_id,  ret);
 			ret = ath11k_wmi_send_obss_color_collision_cfg_cmd(
-				ar, arvअगर->vdev_id, 0,
+				ar, arvif->vdev_id, 0,
 				ATH11K_BSS_COLOR_COLLISION_DETECTION_STA_PERIOD_MS, 1);
-			अगर (ret)
+			if (ret)
 				ath11k_warn(ar->ab, "failed to set bss color collision on vdev %i: %d\n",
-					    arvअगर->vdev_id,  ret);
-		पूर्ण
-	पूर्ण
+					    arvif->vdev_id,  ret);
+		}
+	}
 
-	अगर (changed & BSS_CHANGED_FILS_DISCOVERY ||
+	if (changed & BSS_CHANGED_FILS_DISCOVERY ||
 	    changed & BSS_CHANGED_UNSOL_BCAST_PROBE_RESP)
-		ath11k_mac_fils_discovery(arvअगर, info);
+		ath11k_mac_fils_discovery(arvif, info);
 
 	mutex_unlock(&ar->conf_mutex);
-पूर्ण
+}
 
-व्योम __ath11k_mac_scan_finish(काष्ठा ath11k *ar)
-अणु
-	lockdep_निश्चित_held(&ar->data_lock);
+void __ath11k_mac_scan_finish(struct ath11k *ar)
+{
+	lockdep_assert_held(&ar->data_lock);
 
-	चयन (ar->scan.state) अणु
-	हाल ATH11K_SCAN_IDLE:
-		अवरोध;
-	हाल ATH11K_SCAN_RUNNING:
-	हाल ATH11K_SCAN_ABORTING:
-		अगर (!ar->scan.is_roc) अणु
-			काष्ठा cfg80211_scan_info info = अणु
-				.पातed = (ar->scan.state ==
+	switch (ar->scan.state) {
+	case ATH11K_SCAN_IDLE:
+		break;
+	case ATH11K_SCAN_RUNNING:
+	case ATH11K_SCAN_ABORTING:
+		if (!ar->scan.is_roc) {
+			struct cfg80211_scan_info info = {
+				.aborted = (ar->scan.state ==
 					    ATH11K_SCAN_ABORTING),
-			पूर्ण;
+			};
 
 			ieee80211_scan_completed(ar->hw, &info);
-		पूर्ण अन्यथा अगर (ar->scan.roc_notअगरy) अणु
-			ieee80211_reमुख्य_on_channel_expired(ar->hw);
-		पूर्ण
+		} else if (ar->scan.roc_notify) {
+			ieee80211_remain_on_channel_expired(ar->hw);
+		}
 		fallthrough;
-	हाल ATH11K_SCAN_STARTING:
+	case ATH11K_SCAN_STARTING:
 		ar->scan.state = ATH11K_SCAN_IDLE;
-		ar->scan_channel = शून्य;
+		ar->scan_channel = NULL;
 		ar->scan.roc_freq = 0;
-		cancel_delayed_work(&ar->scan.समयout);
+		cancel_delayed_work(&ar->scan.timeout);
 		complete(&ar->scan.completed);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-व्योम ath11k_mac_scan_finish(काष्ठा ath11k *ar)
-अणु
+void ath11k_mac_scan_finish(struct ath11k *ar)
+{
 	spin_lock_bh(&ar->data_lock);
 	__ath11k_mac_scan_finish(ar);
 	spin_unlock_bh(&ar->data_lock);
-पूर्ण
+}
 
-अटल पूर्णांक ath11k_scan_stop(काष्ठा ath11k *ar)
-अणु
-	काष्ठा scan_cancel_param arg = अणु
+static int ath11k_scan_stop(struct ath11k *ar)
+{
+	struct scan_cancel_param arg = {
 		.req_type = WLAN_SCAN_CANCEL_SINGLE,
 		.scan_id = ATH11K_SCAN_ID,
-	पूर्ण;
-	पूर्णांक ret;
+	};
+	int ret;
 
-	lockdep_निश्चित_held(&ar->conf_mutex);
+	lockdep_assert_held(&ar->conf_mutex);
 
 	/* TODO: Fill other STOP Params */
 	arg.pdev_id = ar->pdev->pdev_id;
 
 	ret = ath11k_wmi_send_scan_stop_cmd(ar, &arg);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ar->ab, "failed to stop wmi scan: %d\n", ret);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = रुको_क्रम_completion_समयout(&ar->scan.completed, 3 * HZ);
-	अगर (ret == 0) अणु
+	ret = wait_for_completion_timeout(&ar->scan.completed, 3 * HZ);
+	if (ret == 0) {
 		ath11k_warn(ar->ab,
 			    "failed to receive scan abort comple: timed out\n");
 		ret = -ETIMEDOUT;
-	पूर्ण अन्यथा अगर (ret > 0) अणु
+	} else if (ret > 0) {
 		ret = 0;
-	पूर्ण
+	}
 
 out:
-	/* Scan state should be updated upon scan completion but in हाल
-	 * firmware fails to deliver the event (क्रम whatever reason) it is
+	/* Scan state should be updated upon scan completion but in case
+	 * firmware fails to deliver the event (for whatever reason) it is
 	 * desired to clean up scan state anyway. Firmware may have just
 	 * dropped the scan completion event delivery due to transport pipe
-	 * being overflown with data and/or it can recover on its own beक्रमe
+	 * being overflown with data and/or it can recover on its own before
 	 * next scan request is submitted.
 	 */
 	spin_lock_bh(&ar->data_lock);
-	अगर (ar->scan.state != ATH11K_SCAN_IDLE)
+	if (ar->scan.state != ATH11K_SCAN_IDLE)
 		__ath11k_mac_scan_finish(ar);
 	spin_unlock_bh(&ar->data_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ath11k_scan_पात(काष्ठा ath11k *ar)
-अणु
-	पूर्णांक ret;
+static void ath11k_scan_abort(struct ath11k *ar)
+{
+	int ret;
 
-	lockdep_निश्चित_held(&ar->conf_mutex);
+	lockdep_assert_held(&ar->conf_mutex);
 
 	spin_lock_bh(&ar->data_lock);
 
-	चयन (ar->scan.state) अणु
-	हाल ATH11K_SCAN_IDLE:
-		/* This can happen अगर समयout worker kicked in and called
-		 * पातion जबतक scan completion was being processed.
+	switch (ar->scan.state) {
+	case ATH11K_SCAN_IDLE:
+		/* This can happen if timeout worker kicked in and called
+		 * abortion while scan completion was being processed.
 		 */
-		अवरोध;
-	हाल ATH11K_SCAN_STARTING:
-	हाल ATH11K_SCAN_ABORTING:
+		break;
+	case ATH11K_SCAN_STARTING:
+	case ATH11K_SCAN_ABORTING:
 		ath11k_warn(ar->ab, "refusing scan abortion due to invalid scan state: %d\n",
 			    ar->scan.state);
-		अवरोध;
-	हाल ATH11K_SCAN_RUNNING:
+		break;
+	case ATH11K_SCAN_RUNNING:
 		ar->scan.state = ATH11K_SCAN_ABORTING;
 		spin_unlock_bh(&ar->data_lock);
 
 		ret = ath11k_scan_stop(ar);
-		अगर (ret)
+		if (ret)
 			ath11k_warn(ar->ab, "failed to abort scan: %d\n", ret);
 
 		spin_lock_bh(&ar->data_lock);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	spin_unlock_bh(&ar->data_lock);
-पूर्ण
+}
 
-अटल व्योम ath11k_scan_समयout_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ath11k *ar = container_of(work, काष्ठा ath11k,
-					 scan.समयout.work);
+static void ath11k_scan_timeout_work(struct work_struct *work)
+{
+	struct ath11k *ar = container_of(work, struct ath11k,
+					 scan.timeout.work);
 
 	mutex_lock(&ar->conf_mutex);
-	ath11k_scan_पात(ar);
+	ath11k_scan_abort(ar);
 	mutex_unlock(&ar->conf_mutex);
-पूर्ण
+}
 
-अटल पूर्णांक ath11k_start_scan(काष्ठा ath11k *ar,
-			     काष्ठा scan_req_params *arg)
-अणु
-	पूर्णांक ret;
+static int ath11k_start_scan(struct ath11k *ar,
+			     struct scan_req_params *arg)
+{
+	int ret;
 
-	lockdep_निश्चित_held(&ar->conf_mutex);
+	lockdep_assert_held(&ar->conf_mutex);
 
-	अगर (ath11k_spectral_get_mode(ar) == ATH11K_SPECTRAL_BACKGROUND)
+	if (ath11k_spectral_get_mode(ar) == ATH11K_SPECTRAL_BACKGROUND)
 		ath11k_spectral_reset_buffer(ar);
 
 	ret = ath11k_wmi_send_scan_start_cmd(ar, arg);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = रुको_क्रम_completion_समयout(&ar->scan.started, 1 * HZ);
-	अगर (ret == 0) अणु
+	ret = wait_for_completion_timeout(&ar->scan.started, 1 * HZ);
+	if (ret == 0) {
 		ret = ath11k_scan_stop(ar);
-		अगर (ret)
+		if (ret)
 			ath11k_warn(ar->ab, "failed to stop scan: %d\n", ret);
 
-		वापस -ETIMEDOUT;
-	पूर्ण
+		return -ETIMEDOUT;
+	}
 
-	/* If we failed to start the scan, वापस error code at
-	 * this poपूर्णांक.  This is probably due to some issue in the
+	/* If we failed to start the scan, return error code at
+	 * this point.  This is probably due to some issue in the
 	 * firmware, but no need to wedge the driver due to that...
 	 */
 	spin_lock_bh(&ar->data_lock);
-	अगर (ar->scan.state == ATH11K_SCAN_IDLE) अणु
+	if (ar->scan.state == ATH11K_SCAN_IDLE) {
 		spin_unlock_bh(&ar->data_lock);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	spin_unlock_bh(&ar->data_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ath11k_mac_op_hw_scan(काष्ठा ieee80211_hw *hw,
-				 काष्ठा ieee80211_vअगर *vअगर,
-				 काष्ठा ieee80211_scan_request *hw_req)
-अणु
-	काष्ठा ath11k *ar = hw->priv;
-	काष्ठा ath11k_vअगर *arvअगर = ath11k_vअगर_to_arvअगर(vअगर);
-	काष्ठा cfg80211_scan_request *req = &hw_req->req;
-	काष्ठा scan_req_params arg;
-	पूर्णांक ret = 0;
-	पूर्णांक i;
+static int ath11k_mac_op_hw_scan(struct ieee80211_hw *hw,
+				 struct ieee80211_vif *vif,
+				 struct ieee80211_scan_request *hw_req)
+{
+	struct ath11k *ar = hw->priv;
+	struct ath11k_vif *arvif = ath11k_vif_to_arvif(vif);
+	struct cfg80211_scan_request *req = &hw_req->req;
+	struct scan_req_params arg;
+	int ret = 0;
+	int i;
 
 	mutex_lock(&ar->conf_mutex);
 
 	spin_lock_bh(&ar->data_lock);
-	चयन (ar->scan.state) अणु
-	हाल ATH11K_SCAN_IDLE:
+	switch (ar->scan.state) {
+	case ATH11K_SCAN_IDLE:
 		reinit_completion(&ar->scan.started);
 		reinit_completion(&ar->scan.completed);
 		ar->scan.state = ATH11K_SCAN_STARTING;
 		ar->scan.is_roc = false;
-		ar->scan.vdev_id = arvअगर->vdev_id;
+		ar->scan.vdev_id = arvif->vdev_id;
 		ret = 0;
-		अवरोध;
-	हाल ATH11K_SCAN_STARTING:
-	हाल ATH11K_SCAN_RUNNING:
-	हाल ATH11K_SCAN_ABORTING:
+		break;
+	case ATH11K_SCAN_STARTING:
+	case ATH11K_SCAN_RUNNING:
+	case ATH11K_SCAN_ABORTING:
 		ret = -EBUSY;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	spin_unlock_bh(&ar->data_lock);
 
-	अगर (ret)
-		जाओ निकास;
+	if (ret)
+		goto exit;
 
-	स_रखो(&arg, 0, माप(arg));
+	memset(&arg, 0, sizeof(arg));
 	ath11k_wmi_start_scan_init(ar, &arg);
-	arg.vdev_id = arvअगर->vdev_id;
+	arg.vdev_id = arvif->vdev_id;
 	arg.scan_id = ATH11K_SCAN_ID;
 
-	अगर (req->ie_len) अणु
+	if (req->ie_len) {
 		arg.extraie.len = req->ie_len;
 		arg.extraie.ptr = kzalloc(req->ie_len, GFP_KERNEL);
-		स_नकल(arg.extraie.ptr, req->ie, req->ie_len);
-	पूर्ण
+		memcpy(arg.extraie.ptr, req->ie, req->ie_len);
+	}
 
-	अगर (req->n_ssids) अणु
+	if (req->n_ssids) {
 		arg.num_ssids = req->n_ssids;
-		क्रम (i = 0; i < arg.num_ssids; i++) अणु
+		for (i = 0; i < arg.num_ssids; i++) {
 			arg.ssid[i].length  = req->ssids[i].ssid_len;
-			स_नकल(&arg.ssid[i].ssid, req->ssids[i].ssid,
+			memcpy(&arg.ssid[i].ssid, req->ssids[i].ssid,
 			       req->ssids[i].ssid_len);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		arg.scan_flags |= WMI_SCAN_FLAG_PASSIVE;
-	पूर्ण
+	}
 
-	अगर (req->n_channels) अणु
+	if (req->n_channels) {
 		arg.num_chan = req->n_channels;
-		क्रम (i = 0; i < arg.num_chan; i++)
+		for (i = 0; i < arg.num_chan; i++)
 			arg.chan_list[i] = req->channels[i]->center_freq;
-	पूर्ण
+	}
 
 	ret = ath11k_start_scan(ar, &arg);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ar->ab, "failed to start hw scan: %d\n", ret);
 		spin_lock_bh(&ar->data_lock);
 		ar->scan.state = ATH11K_SCAN_IDLE;
 		spin_unlock_bh(&ar->data_lock);
-	पूर्ण
+	}
 
-	/* Add a 200ms margin to account क्रम event/command processing */
-	ieee80211_queue_delayed_work(ar->hw, &ar->scan.समयout,
-				     msecs_to_jअगरfies(arg.max_scan_समय +
+	/* Add a 200ms margin to account for event/command processing */
+	ieee80211_queue_delayed_work(ar->hw, &ar->scan.timeout,
+				     msecs_to_jiffies(arg.max_scan_time +
 						      ATH11K_MAC_SCAN_TIMEOUT_MSECS));
 
-निकास:
-	अगर (req->ie_len)
-		kमुक्त(arg.extraie.ptr);
+exit:
+	if (req->ie_len)
+		kfree(arg.extraie.ptr);
 
 	mutex_unlock(&ar->conf_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ath11k_mac_op_cancel_hw_scan(काष्ठा ieee80211_hw *hw,
-					 काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा ath11k *ar = hw->priv;
+static void ath11k_mac_op_cancel_hw_scan(struct ieee80211_hw *hw,
+					 struct ieee80211_vif *vif)
+{
+	struct ath11k *ar = hw->priv;
 
 	mutex_lock(&ar->conf_mutex);
-	ath11k_scan_पात(ar);
+	ath11k_scan_abort(ar);
 	mutex_unlock(&ar->conf_mutex);
 
-	cancel_delayed_work_sync(&ar->scan.समयout);
-पूर्ण
+	cancel_delayed_work_sync(&ar->scan.timeout);
+}
 
-अटल पूर्णांक ath11k_install_key(काष्ठा ath11k_vअगर *arvअगर,
-			      काष्ठा ieee80211_key_conf *key,
-			      क्रमागत set_key_cmd cmd,
-			      स्थिर u8 *macaddr, u32 flags)
-अणु
-	पूर्णांक ret;
-	काष्ठा ath11k *ar = arvअगर->ar;
-	काष्ठा wmi_vdev_install_key_arg arg = अणु
-		.vdev_id = arvअगर->vdev_id,
+static int ath11k_install_key(struct ath11k_vif *arvif,
+			      struct ieee80211_key_conf *key,
+			      enum set_key_cmd cmd,
+			      const u8 *macaddr, u32 flags)
+{
+	int ret;
+	struct ath11k *ar = arvif->ar;
+	struct wmi_vdev_install_key_arg arg = {
+		.vdev_id = arvif->vdev_id,
 		.key_idx = key->keyidx,
 		.key_len = key->keylen,
 		.key_data = key->key,
 		.key_flags = flags,
 		.macaddr = macaddr,
-	पूर्ण;
+	};
 
-	lockdep_निश्चित_held(&arvअगर->ar->conf_mutex);
+	lockdep_assert_held(&arvif->ar->conf_mutex);
 
-	reinit_completion(&ar->install_key_करोne);
+	reinit_completion(&ar->install_key_done);
 
-	अगर (test_bit(ATH11K_FLAG_HW_CRYPTO_DISABLED, &ar->ab->dev_flags))
-		वापस 0;
+	if (test_bit(ATH11K_FLAG_HW_CRYPTO_DISABLED, &ar->ab->dev_flags))
+		return 0;
 
-	अगर (cmd == DISABLE_KEY) अणु
-		/* TODO: Check अगर FW expects  value other than NONE क्रम del */
+	if (cmd == DISABLE_KEY) {
+		/* TODO: Check if FW expects  value other than NONE for del */
 		/* arg.key_cipher = WMI_CIPHER_NONE; */
 		arg.key_len = 0;
-		arg.key_data = शून्य;
-		जाओ install;
-	पूर्ण
+		arg.key_data = NULL;
+		goto install;
+	}
 
-	चयन (key->cipher) अणु
-	हाल WLAN_CIPHER_SUITE_CCMP:
+	switch (key->cipher) {
+	case WLAN_CIPHER_SUITE_CCMP:
 		arg.key_cipher = WMI_CIPHER_AES_CCM;
-		/* TODO: Re-check अगर flag is valid */
+		/* TODO: Re-check if flag is valid */
 		key->flags |= IEEE80211_KEY_FLAG_GENERATE_IV_MGMT;
-		अवरोध;
-	हाल WLAN_CIPHER_SUITE_TKIP:
+		break;
+	case WLAN_CIPHER_SUITE_TKIP:
 		arg.key_cipher = WMI_CIPHER_TKIP;
 		arg.key_txmic_len = 8;
 		arg.key_rxmic_len = 8;
-		अवरोध;
-	हाल WLAN_CIPHER_SUITE_CCMP_256:
+		break;
+	case WLAN_CIPHER_SUITE_CCMP_256:
 		arg.key_cipher = WMI_CIPHER_AES_CCM;
-		अवरोध;
-	हाल WLAN_CIPHER_SUITE_GCMP:
-	हाल WLAN_CIPHER_SUITE_GCMP_256:
+		break;
+	case WLAN_CIPHER_SUITE_GCMP:
+	case WLAN_CIPHER_SUITE_GCMP_256:
 		arg.key_cipher = WMI_CIPHER_AES_GCM;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ath11k_warn(ar->ab, "cipher %d is not supported\n", key->cipher);
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	अगर (test_bit(ATH11K_FLAG_RAW_MODE, &ar->ab->dev_flags))
+	if (test_bit(ATH11K_FLAG_RAW_MODE, &ar->ab->dev_flags))
 		key->flags |= IEEE80211_KEY_FLAG_GENERATE_IV |
 			      IEEE80211_KEY_FLAG_RESERVE_TAILROOM;
 
 install:
-	ret = ath11k_wmi_vdev_install_key(arvअगर->ar, &arg);
+	ret = ath11k_wmi_vdev_install_key(arvif->ar, &arg);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (!रुको_क्रम_completion_समयout(&ar->install_key_करोne, 1 * HZ))
-		वापस -ETIMEDOUT;
+	if (!wait_for_completion_timeout(&ar->install_key_done, 1 * HZ))
+		return -ETIMEDOUT;
 
-	वापस ar->install_key_status ? -EINVAL : 0;
-पूर्ण
+	return ar->install_key_status ? -EINVAL : 0;
+}
 
-अटल पूर्णांक ath11k_clear_peer_keys(काष्ठा ath11k_vअगर *arvअगर,
-				  स्थिर u8 *addr)
-अणु
-	काष्ठा ath11k *ar = arvअगर->ar;
-	काष्ठा ath11k_base *ab = ar->ab;
-	काष्ठा ath11k_peer *peer;
-	पूर्णांक first_त्रुटि_सं = 0;
-	पूर्णांक ret;
-	पूर्णांक i;
+static int ath11k_clear_peer_keys(struct ath11k_vif *arvif,
+				  const u8 *addr)
+{
+	struct ath11k *ar = arvif->ar;
+	struct ath11k_base *ab = ar->ab;
+	struct ath11k_peer *peer;
+	int first_errno = 0;
+	int ret;
+	int i;
 	u32 flags = 0;
 
-	lockdep_निश्चित_held(&ar->conf_mutex);
+	lockdep_assert_held(&ar->conf_mutex);
 
 	spin_lock_bh(&ab->base_lock);
-	peer = ath11k_peer_find(ab, arvअगर->vdev_id, addr);
+	peer = ath11k_peer_find(ab, arvif->vdev_id, addr);
 	spin_unlock_bh(&ab->base_lock);
 
-	अगर (!peer)
-		वापस -ENOENT;
+	if (!peer)
+		return -ENOENT;
 
-	क्रम (i = 0; i < ARRAY_SIZE(peer->keys); i++) अणु
-		अगर (!peer->keys[i])
-			जारी;
+	for (i = 0; i < ARRAY_SIZE(peer->keys); i++) {
+		if (!peer->keys[i])
+			continue;
 
 		/* key flags are not required to delete the key */
-		ret = ath11k_install_key(arvअगर, peer->keys[i],
+		ret = ath11k_install_key(arvif, peer->keys[i],
 					 DISABLE_KEY, addr, flags);
-		अगर (ret < 0 && first_त्रुटि_सं == 0)
-			first_त्रुटि_सं = ret;
+		if (ret < 0 && first_errno == 0)
+			first_errno = ret;
 
-		अगर (ret < 0)
+		if (ret < 0)
 			ath11k_warn(ab, "failed to remove peer key %d: %d\n",
 				    i, ret);
 
 		spin_lock_bh(&ab->base_lock);
-		peer->keys[i] = शून्य;
+		peer->keys[i] = NULL;
 		spin_unlock_bh(&ab->base_lock);
-	पूर्ण
+	}
 
-	वापस first_त्रुटि_सं;
-पूर्ण
+	return first_errno;
+}
 
-अटल पूर्णांक ath11k_mac_op_set_key(काष्ठा ieee80211_hw *hw, क्रमागत set_key_cmd cmd,
-				 काष्ठा ieee80211_vअगर *vअगर, काष्ठा ieee80211_sta *sta,
-				 काष्ठा ieee80211_key_conf *key)
-अणु
-	काष्ठा ath11k *ar = hw->priv;
-	काष्ठा ath11k_base *ab = ar->ab;
-	काष्ठा ath11k_vअगर *arvअगर = ath11k_vअगर_to_arvअगर(vअगर);
-	काष्ठा ath11k_peer *peer;
-	काष्ठा ath11k_sta *arsta;
-	स्थिर u8 *peer_addr;
-	पूर्णांक ret = 0;
+static int ath11k_mac_op_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
+				 struct ieee80211_vif *vif, struct ieee80211_sta *sta,
+				 struct ieee80211_key_conf *key)
+{
+	struct ath11k *ar = hw->priv;
+	struct ath11k_base *ab = ar->ab;
+	struct ath11k_vif *arvif = ath11k_vif_to_arvif(vif);
+	struct ath11k_peer *peer;
+	struct ath11k_sta *arsta;
+	const u8 *peer_addr;
+	int ret = 0;
 	u32 flags = 0;
 
-	/* BIP needs to be करोne in software */
-	अगर (key->cipher == WLAN_CIPHER_SUITE_AES_CMAC ||
+	/* BIP needs to be done in software */
+	if (key->cipher == WLAN_CIPHER_SUITE_AES_CMAC ||
 	    key->cipher == WLAN_CIPHER_SUITE_BIP_GMAC_128 ||
 	    key->cipher == WLAN_CIPHER_SUITE_BIP_GMAC_256 ||
 	    key->cipher == WLAN_CIPHER_SUITE_BIP_CMAC_256)
-		वापस 1;
+		return 1;
 
-	अगर (test_bit(ATH11K_FLAG_HW_CRYPTO_DISABLED, &ar->ab->dev_flags))
-		वापस 1;
+	if (test_bit(ATH11K_FLAG_HW_CRYPTO_DISABLED, &ar->ab->dev_flags))
+		return 1;
 
-	अगर (key->keyidx > WMI_MAX_KEY_INDEX)
-		वापस -ENOSPC;
+	if (key->keyidx > WMI_MAX_KEY_INDEX)
+		return -ENOSPC;
 
 	mutex_lock(&ar->conf_mutex);
 
-	अगर (sta)
+	if (sta)
 		peer_addr = sta->addr;
-	अन्यथा अगर (arvअगर->vdev_type == WMI_VDEV_TYPE_STA)
-		peer_addr = vअगर->bss_conf.bssid;
-	अन्यथा
-		peer_addr = vअगर->addr;
+	else if (arvif->vdev_type == WMI_VDEV_TYPE_STA)
+		peer_addr = vif->bss_conf.bssid;
+	else
+		peer_addr = vif->addr;
 
 	key->hw_key_idx = key->keyidx;
 
 	/* the peer should not disappear in mid-way (unless FW goes awry) since
-	 * we alपढ़ोy hold conf_mutex. we just make sure its there now.
+	 * we already hold conf_mutex. we just make sure its there now.
 	 */
 	spin_lock_bh(&ab->base_lock);
-	peer = ath11k_peer_find(ab, arvअगर->vdev_id, peer_addr);
+	peer = ath11k_peer_find(ab, arvif->vdev_id, peer_addr);
 
 	/* flush the fragments cache during key (re)install to
-	 * ensure all frags in the new frag list beदीर्घ to the same key.
+	 * ensure all frags in the new frag list belong to the same key.
 	 */
-	अगर (peer && cmd == SET_KEY)
+	if (peer && cmd == SET_KEY)
 		ath11k_peer_frags_flush(ar, peer);
 	spin_unlock_bh(&ab->base_lock);
 
-	अगर (!peer) अणु
-		अगर (cmd == SET_KEY) अणु
+	if (!peer) {
+		if (cmd == SET_KEY) {
 			ath11k_warn(ab, "cannot install key for non-existent peer %pM\n",
 				    peer_addr);
 			ret = -EOPNOTSUPP;
-			जाओ निकास;
-		पूर्ण अन्यथा अणु
-			/* अगर the peer करोesn't exist there is no key to disable
+			goto exit;
+		} else {
+			/* if the peer doesn't exist there is no key to disable
 			 * anymore
 			 */
-			जाओ निकास;
-		पूर्ण
-	पूर्ण
+			goto exit;
+		}
+	}
 
-	अगर (key->flags & IEEE80211_KEY_FLAG_PAIRWISE)
+	if (key->flags & IEEE80211_KEY_FLAG_PAIRWISE)
 		flags |= WMI_KEY_PAIRWISE;
-	अन्यथा
+	else
 		flags |= WMI_KEY_GROUP;
 
-	ret = ath11k_install_key(arvअगर, key, cmd, peer_addr, flags);
-	अगर (ret) अणु
+	ret = ath11k_install_key(arvif, key, cmd, peer_addr, flags);
+	if (ret) {
 		ath11k_warn(ab, "ath11k_install_key failed (%d)\n", ret);
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	ret = ath11k_dp_peer_rx_pn_replay_config(arvअगर, peer_addr, cmd, key);
-	अगर (ret) अणु
+	ret = ath11k_dp_peer_rx_pn_replay_config(arvif, peer_addr, cmd, key);
+	if (ret) {
 		ath11k_warn(ab, "failed to offload PN replay detection %d\n", ret);
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	spin_lock_bh(&ab->base_lock);
-	peer = ath11k_peer_find(ab, arvअगर->vdev_id, peer_addr);
-	अगर (peer && cmd == SET_KEY) अणु
+	peer = ath11k_peer_find(ab, arvif->vdev_id, peer_addr);
+	if (peer && cmd == SET_KEY) {
 		peer->keys[key->keyidx] = key;
-		अगर (key->flags & IEEE80211_KEY_FLAG_PAIRWISE) अणु
+		if (key->flags & IEEE80211_KEY_FLAG_PAIRWISE) {
 			peer->ucast_keyidx = key->keyidx;
 			peer->sec_type = ath11k_dp_tx_get_encrypt_type(key->cipher);
-		पूर्ण अन्यथा अणु
+		} else {
 			peer->mcast_keyidx = key->keyidx;
 			peer->sec_type_grp = ath11k_dp_tx_get_encrypt_type(key->cipher);
-		पूर्ण
-	पूर्ण अन्यथा अगर (peer && cmd == DISABLE_KEY) अणु
-		peer->keys[key->keyidx] = शून्य;
-		अगर (key->flags & IEEE80211_KEY_FLAG_PAIRWISE)
+		}
+	} else if (peer && cmd == DISABLE_KEY) {
+		peer->keys[key->keyidx] = NULL;
+		if (key->flags & IEEE80211_KEY_FLAG_PAIRWISE)
 			peer->ucast_keyidx = 0;
-		अन्यथा
+		else
 			peer->mcast_keyidx = 0;
-	पूर्ण अन्यथा अगर (!peer)
+	} else if (!peer)
 		/* impossible unless FW goes crazy */
 		ath11k_warn(ab, "peer %pM disappeared!\n", peer_addr);
 
-	अगर (sta) अणु
-		arsta = (काष्ठा ath11k_sta *)sta->drv_priv;
+	if (sta) {
+		arsta = (struct ath11k_sta *)sta->drv_priv;
 
-		चयन (key->cipher) अणु
-		हाल WLAN_CIPHER_SUITE_TKIP:
-		हाल WLAN_CIPHER_SUITE_CCMP:
-		हाल WLAN_CIPHER_SUITE_CCMP_256:
-		हाल WLAN_CIPHER_SUITE_GCMP:
-		हाल WLAN_CIPHER_SUITE_GCMP_256:
-			अगर (cmd == SET_KEY)
+		switch (key->cipher) {
+		case WLAN_CIPHER_SUITE_TKIP:
+		case WLAN_CIPHER_SUITE_CCMP:
+		case WLAN_CIPHER_SUITE_CCMP_256:
+		case WLAN_CIPHER_SUITE_GCMP:
+		case WLAN_CIPHER_SUITE_GCMP_256:
+			if (cmd == SET_KEY)
 				arsta->pn_type = HAL_PN_TYPE_WPA;
-			अन्यथा
+			else
 				arsta->pn_type = HAL_PN_TYPE_NONE;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			arsta->pn_type = HAL_PN_TYPE_NONE;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	spin_unlock_bh(&ab->base_lock);
 
-निकास:
+exit:
 	mutex_unlock(&ar->conf_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक
-ath11k_mac_bitrate_mask_num_vht_rates(काष्ठा ath11k *ar,
-				      क्रमागत nl80211_band band,
-				      स्थिर काष्ठा cfg80211_bitrate_mask *mask)
-अणु
-	पूर्णांक num_rates = 0;
-	पूर्णांक i;
+static int
+ath11k_mac_bitrate_mask_num_vht_rates(struct ath11k *ar,
+				      enum nl80211_band band,
+				      const struct cfg80211_bitrate_mask *mask)
+{
+	int num_rates = 0;
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(mask->control[band].vht_mcs); i++)
+	for (i = 0; i < ARRAY_SIZE(mask->control[band].vht_mcs); i++)
 		num_rates += hweight16(mask->control[band].vht_mcs[i]);
 
-	वापस num_rates;
-पूर्ण
+	return num_rates;
+}
 
-अटल पूर्णांक
-ath11k_mac_set_peer_vht_fixed_rate(काष्ठा ath11k_vअगर *arvअगर,
-				   काष्ठा ieee80211_sta *sta,
-				   स्थिर काष्ठा cfg80211_bitrate_mask *mask,
-				   क्रमागत nl80211_band band)
-अणु
-	काष्ठा ath11k *ar = arvअगर->ar;
+static int
+ath11k_mac_set_peer_vht_fixed_rate(struct ath11k_vif *arvif,
+				   struct ieee80211_sta *sta,
+				   const struct cfg80211_bitrate_mask *mask,
+				   enum nl80211_band band)
+{
+	struct ath11k *ar = arvif->ar;
 	u8 vht_rate, nss;
 	u32 rate_code;
-	पूर्णांक ret, i;
+	int ret, i;
 
-	lockdep_निश्चित_held(&ar->conf_mutex);
+	lockdep_assert_held(&ar->conf_mutex);
 
 	nss = 0;
 
-	क्रम (i = 0; i < ARRAY_SIZE(mask->control[band].vht_mcs); i++) अणु
-		अगर (hweight16(mask->control[band].vht_mcs[i]) == 1) अणु
+	for (i = 0; i < ARRAY_SIZE(mask->control[band].vht_mcs); i++) {
+		if (hweight16(mask->control[band].vht_mcs[i]) == 1) {
 			nss = i + 1;
 			vht_rate = ffs(mask->control[band].vht_mcs[i]) - 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!nss) अणु
+	if (!nss) {
 		ath11k_warn(ar->ab, "No single VHT Fixed rate found to set for %pM",
 			    sta->addr);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ath11k_dbg(ar->ab, ATH11K_DBG_MAC,
 		   "Setting Fixed VHT Rate for peer %pM. Device will not switch to any other selected rates",
@@ -2916,151 +2915,151 @@ ath11k_mac_set_peer_vht_fixed_rate(काष्ठा ath11k_vअगर *arvअ�
 	rate_code = ATH11K_HW_RATE_CODE(vht_rate, nss - 1,
 					WMI_RATE_PREAMBLE_VHT);
 	ret = ath11k_wmi_set_peer_param(ar, sta->addr,
-					arvअगर->vdev_id,
+					arvif->vdev_id,
 					WMI_PEER_PARAM_FIXED_RATE,
 					rate_code);
-	अगर (ret)
+	if (ret)
 		ath11k_warn(ar->ab,
 			    "failed to update STA %pM Fixed Rate %d: %d\n",
 			     sta->addr, rate_code, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ath11k_station_assoc(काष्ठा ath11k *ar,
-				काष्ठा ieee80211_vअगर *vअगर,
-				काष्ठा ieee80211_sta *sta,
+static int ath11k_station_assoc(struct ath11k *ar,
+				struct ieee80211_vif *vif,
+				struct ieee80211_sta *sta,
 				bool reassoc)
-अणु
-	काष्ठा ath11k_vअगर *arvअगर = ath11k_vअगर_to_arvअगर(vअगर);
-	काष्ठा peer_assoc_params peer_arg;
-	पूर्णांक ret = 0;
-	काष्ठा cfg80211_chan_def def;
-	क्रमागत nl80211_band band;
-	काष्ठा cfg80211_bitrate_mask *mask;
+{
+	struct ath11k_vif *arvif = ath11k_vif_to_arvif(vif);
+	struct peer_assoc_params peer_arg;
+	int ret = 0;
+	struct cfg80211_chan_def def;
+	enum nl80211_band band;
+	struct cfg80211_bitrate_mask *mask;
 	u8 num_vht_rates;
 
-	lockdep_निश्चित_held(&ar->conf_mutex);
+	lockdep_assert_held(&ar->conf_mutex);
 
-	अगर (WARN_ON(ath11k_mac_vअगर_chan(vअगर, &def)))
-		वापस -EPERM;
+	if (WARN_ON(ath11k_mac_vif_chan(vif, &def)))
+		return -EPERM;
 
 	band = def.chan->band;
-	mask = &arvअगर->bitrate_mask;
+	mask = &arvif->bitrate_mask;
 
-	ath11k_peer_assoc_prepare(ar, vअगर, sta, &peer_arg, reassoc);
+	ath11k_peer_assoc_prepare(ar, vif, sta, &peer_arg, reassoc);
 
 	ret = ath11k_wmi_send_peer_assoc_cmd(ar, &peer_arg);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ar->ab, "failed to run peer assoc for STA %pM vdev %i: %d\n",
-			    sta->addr, arvअगर->vdev_id, ret);
-		वापस ret;
-	पूर्ण
+			    sta->addr, arvif->vdev_id, ret);
+		return ret;
+	}
 
-	अगर (!रुको_क्रम_completion_समयout(&ar->peer_assoc_करोne, 1 * HZ)) अणु
+	if (!wait_for_completion_timeout(&ar->peer_assoc_done, 1 * HZ)) {
 		ath11k_warn(ar->ab, "failed to get peer assoc conf event for %pM vdev %i\n",
-			    sta->addr, arvअगर->vdev_id);
-		वापस -ETIMEDOUT;
-	पूर्ण
+			    sta->addr, arvif->vdev_id);
+		return -ETIMEDOUT;
+	}
 
 	num_vht_rates = ath11k_mac_bitrate_mask_num_vht_rates(ar, band, mask);
 
 	/* If single VHT rate is configured (by set_bitrate_mask()),
-	 * peer_assoc will disable VHT. This is now enabled by a peer specअगरic
+	 * peer_assoc will disable VHT. This is now enabled by a peer specific
 	 * fixed param.
-	 * Note that all other rates and NSS will be disabled क्रम this peer.
+	 * Note that all other rates and NSS will be disabled for this peer.
 	 */
-	अगर (sta->vht_cap.vht_supported && num_vht_rates == 1) अणु
-		ret = ath11k_mac_set_peer_vht_fixed_rate(arvअगर, sta, mask,
+	if (sta->vht_cap.vht_supported && num_vht_rates == 1) {
+		ret = ath11k_mac_set_peer_vht_fixed_rate(arvif, sta, mask,
 							 band);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	/* Re-assoc is run only to update supported rates क्रम given station. It
-	 * करोesn't make much sense to reconfigure the peer completely.
+	/* Re-assoc is run only to update supported rates for given station. It
+	 * doesn't make much sense to reconfigure the peer completely.
 	 */
-	अगर (reassoc)
-		वापस 0;
+	if (reassoc)
+		return 0;
 
-	ret = ath11k_setup_peer_smps(ar, arvअगर, sta->addr,
+	ret = ath11k_setup_peer_smps(ar, arvif, sta->addr,
 				     &sta->ht_cap);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ar->ab, "failed to setup peer SMPS for vdev %d: %d\n",
-			    arvअगर->vdev_id, ret);
-		वापस ret;
-	पूर्ण
+			    arvif->vdev_id, ret);
+		return ret;
+	}
 
-	अगर (!sta->wme) अणु
-		arvअगर->num_legacy_stations++;
-		ret = ath11k_recalc_rtscts_prot(arvअगर);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	if (!sta->wme) {
+		arvif->num_legacy_stations++;
+		ret = ath11k_recalc_rtscts_prot(arvif);
+		if (ret)
+			return ret;
+	}
 
-	अगर (sta->wme && sta->uapsd_queues) अणु
-		ret = ath11k_peer_assoc_qos_ap(ar, arvअगर, sta);
-		अगर (ret) अणु
+	if (sta->wme && sta->uapsd_queues) {
+		ret = ath11k_peer_assoc_qos_ap(ar, arvif, sta);
+		if (ret) {
 			ath11k_warn(ar->ab, "failed to set qos params for STA %pM for vdev %i: %d\n",
-				    sta->addr, arvअगर->vdev_id, ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+				    sta->addr, arvif->vdev_id, ret);
+			return ret;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ath11k_station_disassoc(काष्ठा ath11k *ar,
-				   काष्ठा ieee80211_vअगर *vअगर,
-				   काष्ठा ieee80211_sta *sta)
-अणु
-	काष्ठा ath11k_vअगर *arvअगर = (व्योम *)vअगर->drv_priv;
-	पूर्णांक ret = 0;
+static int ath11k_station_disassoc(struct ath11k *ar,
+				   struct ieee80211_vif *vif,
+				   struct ieee80211_sta *sta)
+{
+	struct ath11k_vif *arvif = (void *)vif->drv_priv;
+	int ret = 0;
 
-	lockdep_निश्चित_held(&ar->conf_mutex);
+	lockdep_assert_held(&ar->conf_mutex);
 
-	अगर (!sta->wme) अणु
-		arvअगर->num_legacy_stations--;
-		ret = ath11k_recalc_rtscts_prot(arvअगर);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	if (!sta->wme) {
+		arvif->num_legacy_stations--;
+		ret = ath11k_recalc_rtscts_prot(arvif);
+		if (ret)
+			return ret;
+	}
 
-	ret = ath11k_clear_peer_keys(arvअगर, sta->addr);
-	अगर (ret) अणु
+	ret = ath11k_clear_peer_keys(arvif, sta->addr);
+	if (ret) {
 		ath11k_warn(ar->ab, "failed to clear all peer keys for vdev %i: %d\n",
-			    arvअगर->vdev_id, ret);
-		वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+			    arvif->vdev_id, ret);
+		return ret;
+	}
+	return 0;
+}
 
-अटल व्योम ath11k_sta_rc_update_wk(काष्ठा work_काष्ठा *wk)
-अणु
-	काष्ठा ath11k *ar;
-	काष्ठा ath11k_vअगर *arvअगर;
-	काष्ठा ath11k_sta *arsta;
-	काष्ठा ieee80211_sta *sta;
-	काष्ठा cfg80211_chan_def def;
-	क्रमागत nl80211_band band;
-	स्थिर u8 *ht_mcs_mask;
-	स्थिर u16 *vht_mcs_mask;
+static void ath11k_sta_rc_update_wk(struct work_struct *wk)
+{
+	struct ath11k *ar;
+	struct ath11k_vif *arvif;
+	struct ath11k_sta *arsta;
+	struct ieee80211_sta *sta;
+	struct cfg80211_chan_def def;
+	enum nl80211_band band;
+	const u8 *ht_mcs_mask;
+	const u16 *vht_mcs_mask;
 	u32 changed, bw, nss, smps;
-	पूर्णांक err, num_vht_rates;
-	स्थिर काष्ठा cfg80211_bitrate_mask *mask;
-	काष्ठा peer_assoc_params peer_arg;
+	int err, num_vht_rates;
+	const struct cfg80211_bitrate_mask *mask;
+	struct peer_assoc_params peer_arg;
 
-	arsta = container_of(wk, काष्ठा ath11k_sta, update_wk);
-	sta = container_of((व्योम *)arsta, काष्ठा ieee80211_sta, drv_priv);
-	arvअगर = arsta->arvअगर;
-	ar = arvअगर->ar;
+	arsta = container_of(wk, struct ath11k_sta, update_wk);
+	sta = container_of((void *)arsta, struct ieee80211_sta, drv_priv);
+	arvif = arsta->arvif;
+	ar = arvif->ar;
 
-	अगर (WARN_ON(ath11k_mac_vअगर_chan(arvअगर->vअगर, &def)))
-		वापस;
+	if (WARN_ON(ath11k_mac_vif_chan(arvif->vif, &def)))
+		return;
 
 	band = def.chan->band;
-	ht_mcs_mask = arvअगर->bitrate_mask.control[band].ht_mcs;
-	vht_mcs_mask = arvअगर->bitrate_mask.control[band].vht_mcs;
+	ht_mcs_mask = arvif->bitrate_mask.control[band].ht_mcs;
+	vht_mcs_mask = arvif->bitrate_mask.control[band].vht_mcs;
 
 	spin_lock_bh(&ar->data_lock);
 
@@ -3079,337 +3078,337 @@ ath11k_mac_set_peer_vht_fixed_rate(काष्ठा ath11k_vअगर *arvअ�
 	nss = min(nss, max(ath11k_mac_max_ht_nss(ht_mcs_mask),
 			   ath11k_mac_max_vht_nss(vht_mcs_mask)));
 
-	अगर (changed & IEEE80211_RC_BW_CHANGED) अणु
-		err = ath11k_wmi_set_peer_param(ar, sta->addr, arvअगर->vdev_id,
+	if (changed & IEEE80211_RC_BW_CHANGED) {
+		err = ath11k_wmi_set_peer_param(ar, sta->addr, arvif->vdev_id,
 						WMI_PEER_CHWIDTH, bw);
-		अगर (err)
+		if (err)
 			ath11k_warn(ar->ab, "failed to update STA %pM peer bw %d: %d\n",
 				    sta->addr, bw, err);
-	पूर्ण
+	}
 
-	अगर (changed & IEEE80211_RC_NSS_CHANGED) अणु
+	if (changed & IEEE80211_RC_NSS_CHANGED) {
 		ath11k_dbg(ar->ab, ATH11K_DBG_MAC, "mac update sta %pM nss %d\n",
 			   sta->addr, nss);
 
-		err = ath11k_wmi_set_peer_param(ar, sta->addr, arvअगर->vdev_id,
+		err = ath11k_wmi_set_peer_param(ar, sta->addr, arvif->vdev_id,
 						WMI_PEER_NSS, nss);
-		अगर (err)
+		if (err)
 			ath11k_warn(ar->ab, "failed to update STA %pM nss %d: %d\n",
 				    sta->addr, nss, err);
-	पूर्ण
+	}
 
-	अगर (changed & IEEE80211_RC_SMPS_CHANGED) अणु
+	if (changed & IEEE80211_RC_SMPS_CHANGED) {
 		ath11k_dbg(ar->ab, ATH11K_DBG_MAC, "mac update sta %pM smps %d\n",
 			   sta->addr, smps);
 
-		err = ath11k_wmi_set_peer_param(ar, sta->addr, arvअगर->vdev_id,
+		err = ath11k_wmi_set_peer_param(ar, sta->addr, arvif->vdev_id,
 						WMI_PEER_MIMO_PS_STATE, smps);
-		अगर (err)
+		if (err)
 			ath11k_warn(ar->ab, "failed to update STA %pM smps %d: %d\n",
 				    sta->addr, smps, err);
-	पूर्ण
+	}
 
-	अगर (changed & IEEE80211_RC_SUPP_RATES_CHANGED) अणु
-		mask = &arvअगर->bitrate_mask;
+	if (changed & IEEE80211_RC_SUPP_RATES_CHANGED) {
+		mask = &arvif->bitrate_mask;
 		num_vht_rates = ath11k_mac_bitrate_mask_num_vht_rates(ar, band,
 								      mask);
 
 		/* Peer_assoc_prepare will reject vht rates in
-		 * bitrate_mask अगर its not available in range क्रमmat and
+		 * bitrate_mask if its not available in range format and
 		 * sets vht tx_rateset as unsupported. So multiple VHT MCS
 		 * setting(eg. MCS 4,5,6) per peer is not supported here.
 		 * But, Single rate in VHT mask can be set as per-peer
-		 * fixed rate. But even अगर any HT rates are configured in
-		 * the bitrate mask, device will not चयन to those rates
+		 * fixed rate. But even if any HT rates are configured in
+		 * the bitrate mask, device will not switch to those rates
 		 * when per-peer Fixed rate is set.
-		 * TODO: Check RATEMASK_CMDID to support स्वतः rates selection
-		 * across HT/VHT and क्रम multiple VHT MCS support.
+		 * TODO: Check RATEMASK_CMDID to support auto rates selection
+		 * across HT/VHT and for multiple VHT MCS support.
 		 */
-		अगर (sta->vht_cap.vht_supported && num_vht_rates == 1) अणु
-			ath11k_mac_set_peer_vht_fixed_rate(arvअगर, sta, mask,
+		if (sta->vht_cap.vht_supported && num_vht_rates == 1) {
+			ath11k_mac_set_peer_vht_fixed_rate(arvif, sta, mask,
 							   band);
-		पूर्ण अन्यथा अणु
+		} else {
 			/* If the peer is non-VHT or no fixed VHT rate
 			 * is provided in the new bitrate mask we set the
 			 * other rates using peer_assoc command.
 			 */
-			ath11k_peer_assoc_prepare(ar, arvअगर->vअगर, sta,
+			ath11k_peer_assoc_prepare(ar, arvif->vif, sta,
 						  &peer_arg, true);
 
 			err = ath11k_wmi_send_peer_assoc_cmd(ar, &peer_arg);
-			अगर (err)
+			if (err)
 				ath11k_warn(ar->ab, "failed to run peer assoc for STA %pM vdev %i: %d\n",
-					    sta->addr, arvअगर->vdev_id, err);
+					    sta->addr, arvif->vdev_id, err);
 
-			अगर (!रुको_क्रम_completion_समयout(&ar->peer_assoc_करोne, 1 * HZ))
+			if (!wait_for_completion_timeout(&ar->peer_assoc_done, 1 * HZ))
 				ath11k_warn(ar->ab, "failed to get peer assoc conf event for %pM vdev %i\n",
-					    sta->addr, arvअगर->vdev_id);
-		पूर्ण
-	पूर्ण
+					    sta->addr, arvif->vdev_id);
+		}
+	}
 
 	mutex_unlock(&ar->conf_mutex);
-पूर्ण
+}
 
-अटल पूर्णांक ath11k_mac_inc_num_stations(काष्ठा ath11k_vअगर *arvअगर,
-				       काष्ठा ieee80211_sta *sta)
-अणु
-	काष्ठा ath11k *ar = arvअगर->ar;
+static int ath11k_mac_inc_num_stations(struct ath11k_vif *arvif,
+				       struct ieee80211_sta *sta)
+{
+	struct ath11k *ar = arvif->ar;
 
-	lockdep_निश्चित_held(&ar->conf_mutex);
+	lockdep_assert_held(&ar->conf_mutex);
 
-	अगर (arvअगर->vdev_type == WMI_VDEV_TYPE_STA && !sta->tdls)
-		वापस 0;
+	if (arvif->vdev_type == WMI_VDEV_TYPE_STA && !sta->tdls)
+		return 0;
 
-	अगर (ar->num_stations >= ar->max_num_stations)
-		वापस -ENOBUFS;
+	if (ar->num_stations >= ar->max_num_stations)
+		return -ENOBUFS;
 
 	ar->num_stations++;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ath11k_mac_dec_num_stations(काष्ठा ath11k_vअगर *arvअगर,
-					काष्ठा ieee80211_sta *sta)
-अणु
-	काष्ठा ath11k *ar = arvअगर->ar;
+static void ath11k_mac_dec_num_stations(struct ath11k_vif *arvif,
+					struct ieee80211_sta *sta)
+{
+	struct ath11k *ar = arvif->ar;
 
-	lockdep_निश्चित_held(&ar->conf_mutex);
+	lockdep_assert_held(&ar->conf_mutex);
 
-	अगर (arvअगर->vdev_type == WMI_VDEV_TYPE_STA && !sta->tdls)
-		वापस;
+	if (arvif->vdev_type == WMI_VDEV_TYPE_STA && !sta->tdls)
+		return;
 
 	ar->num_stations--;
-पूर्ण
+}
 
-अटल पूर्णांक ath11k_mac_station_add(काष्ठा ath11k *ar,
-				  काष्ठा ieee80211_vअगर *vअगर,
-				  काष्ठा ieee80211_sta *sta)
-अणु
-	काष्ठा ath11k_base *ab = ar->ab;
-	काष्ठा ath11k_vअगर *arvअगर = ath11k_vअगर_to_arvअगर(vअगर);
-	काष्ठा ath11k_sta *arsta = (काष्ठा ath11k_sta *)sta->drv_priv;
-	काष्ठा peer_create_params peer_param;
-	पूर्णांक ret;
+static int ath11k_mac_station_add(struct ath11k *ar,
+				  struct ieee80211_vif *vif,
+				  struct ieee80211_sta *sta)
+{
+	struct ath11k_base *ab = ar->ab;
+	struct ath11k_vif *arvif = ath11k_vif_to_arvif(vif);
+	struct ath11k_sta *arsta = (struct ath11k_sta *)sta->drv_priv;
+	struct peer_create_params peer_param;
+	int ret;
 
-	lockdep_निश्चित_held(&ar->conf_mutex);
+	lockdep_assert_held(&ar->conf_mutex);
 
-	ret = ath11k_mac_inc_num_stations(arvअगर, sta);
-	अगर (ret) अणु
+	ret = ath11k_mac_inc_num_stations(arvif, sta);
+	if (ret) {
 		ath11k_warn(ab, "refusing to associate station: too many connected already (%d)\n",
 			    ar->max_num_stations);
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	arsta->rx_stats = kzalloc(माप(*arsta->rx_stats), GFP_KERNEL);
-	अगर (!arsta->rx_stats) अणु
+	arsta->rx_stats = kzalloc(sizeof(*arsta->rx_stats), GFP_KERNEL);
+	if (!arsta->rx_stats) {
 		ret = -ENOMEM;
-		जाओ dec_num_station;
-	पूर्ण
+		goto dec_num_station;
+	}
 
-	peer_param.vdev_id = arvअगर->vdev_id;
+	peer_param.vdev_id = arvif->vdev_id;
 	peer_param.peer_addr = sta->addr;
 	peer_param.peer_type = WMI_PEER_TYPE_DEFAULT;
 
-	ret = ath11k_peer_create(ar, arvअगर, sta, &peer_param);
-	अगर (ret) अणु
+	ret = ath11k_peer_create(ar, arvif, sta, &peer_param);
+	if (ret) {
 		ath11k_warn(ab, "Failed to add peer: %pM for VDEV: %d\n",
-			    sta->addr, arvअगर->vdev_id);
-		जाओ मुक्त_rx_stats;
-	पूर्ण
+			    sta->addr, arvif->vdev_id);
+		goto free_rx_stats;
+	}
 
 	ath11k_dbg(ab, ATH11K_DBG_MAC, "Added peer: %pM for VDEV: %d\n",
-		   sta->addr, arvअगर->vdev_id);
+		   sta->addr, arvif->vdev_id);
 
-	अगर (ath11k_debugfs_is_extd_tx_stats_enabled(ar)) अणु
-		arsta->tx_stats = kzalloc(माप(*arsta->tx_stats), GFP_KERNEL);
-		अगर (!arsta->tx_stats) अणु
+	if (ath11k_debugfs_is_extd_tx_stats_enabled(ar)) {
+		arsta->tx_stats = kzalloc(sizeof(*arsta->tx_stats), GFP_KERNEL);
+		if (!arsta->tx_stats) {
 			ret = -ENOMEM;
-			जाओ मुक्त_peer;
-		पूर्ण
-	पूर्ण
+			goto free_peer;
+		}
+	}
 
-	अगर (ieee80211_vअगर_is_mesh(vअगर)) अणु
+	if (ieee80211_vif_is_mesh(vif)) {
 		ret = ath11k_wmi_set_peer_param(ar, sta->addr,
-						arvअगर->vdev_id,
+						arvif->vdev_id,
 						WMI_PEER_USE_4ADDR, 1);
-		अगर (ret) अणु
+		if (ret) {
 			ath11k_warn(ab, "failed to STA %pM 4addr capability: %d\n",
 				    sta->addr, ret);
-			जाओ मुक्त_tx_stats;
-		पूर्ण
-	पूर्ण
+			goto free_tx_stats;
+		}
+	}
 
-	ret = ath11k_dp_peer_setup(ar, arvअगर->vdev_id, sta->addr);
-	अगर (ret) अणु
+	ret = ath11k_dp_peer_setup(ar, arvif->vdev_id, sta->addr);
+	if (ret) {
 		ath11k_warn(ab, "failed to setup dp for peer %pM on vdev %i (%d)\n",
-			    sta->addr, arvअगर->vdev_id, ret);
-		जाओ मुक्त_tx_stats;
-	पूर्ण
+			    sta->addr, arvif->vdev_id, ret);
+		goto free_tx_stats;
+	}
 
-	अगर (ab->hw_params.vdev_start_delay &&
-	    !arvअगर->is_started &&
-	    arvअगर->vdev_type != WMI_VDEV_TYPE_AP) अणु
-		ret = ath11k_start_vdev_delay(ar->hw, vअगर);
-		अगर (ret) अणु
+	if (ab->hw_params.vdev_start_delay &&
+	    !arvif->is_started &&
+	    arvif->vdev_type != WMI_VDEV_TYPE_AP) {
+		ret = ath11k_start_vdev_delay(ar->hw, vif);
+		if (ret) {
 			ath11k_warn(ab, "failed to delay vdev start: %d\n", ret);
-			जाओ मुक्त_tx_stats;
-		पूर्ण
-	पूर्ण
+			goto free_tx_stats;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
-मुक्त_tx_stats:
-	kमुक्त(arsta->tx_stats);
-	arsta->tx_stats = शून्य;
-मुक्त_peer:
-	ath11k_peer_delete(ar, arvअगर->vdev_id, sta->addr);
-मुक्त_rx_stats:
-	kमुक्त(arsta->rx_stats);
-	arsta->rx_stats = शून्य;
+free_tx_stats:
+	kfree(arsta->tx_stats);
+	arsta->tx_stats = NULL;
+free_peer:
+	ath11k_peer_delete(ar, arvif->vdev_id, sta->addr);
+free_rx_stats:
+	kfree(arsta->rx_stats);
+	arsta->rx_stats = NULL;
 dec_num_station:
-	ath11k_mac_dec_num_stations(arvअगर, sta);
-निकास:
-	वापस ret;
-पूर्ण
+	ath11k_mac_dec_num_stations(arvif, sta);
+exit:
+	return ret;
+}
 
-अटल पूर्णांक ath11k_mac_op_sta_state(काष्ठा ieee80211_hw *hw,
-				   काष्ठा ieee80211_vअगर *vअगर,
-				   काष्ठा ieee80211_sta *sta,
-				   क्रमागत ieee80211_sta_state old_state,
-				   क्रमागत ieee80211_sta_state new_state)
-अणु
-	काष्ठा ath11k *ar = hw->priv;
-	काष्ठा ath11k_vअगर *arvअगर = ath11k_vअगर_to_arvअगर(vअगर);
-	काष्ठा ath11k_sta *arsta = (काष्ठा ath11k_sta *)sta->drv_priv;
-	काष्ठा ath11k_peer *peer;
-	पूर्णांक ret = 0;
+static int ath11k_mac_op_sta_state(struct ieee80211_hw *hw,
+				   struct ieee80211_vif *vif,
+				   struct ieee80211_sta *sta,
+				   enum ieee80211_sta_state old_state,
+				   enum ieee80211_sta_state new_state)
+{
+	struct ath11k *ar = hw->priv;
+	struct ath11k_vif *arvif = ath11k_vif_to_arvif(vif);
+	struct ath11k_sta *arsta = (struct ath11k_sta *)sta->drv_priv;
+	struct ath11k_peer *peer;
+	int ret = 0;
 
-	/* cancel must be करोne outside the mutex to aव्योम deadlock */
-	अगर ((old_state == IEEE80211_STA_NONE &&
+	/* cancel must be done outside the mutex to avoid deadlock */
+	if ((old_state == IEEE80211_STA_NONE &&
 	     new_state == IEEE80211_STA_NOTEXIST))
 		cancel_work_sync(&arsta->update_wk);
 
 	mutex_lock(&ar->conf_mutex);
 
-	अगर (old_state == IEEE80211_STA_NOTEXIST &&
-	    new_state == IEEE80211_STA_NONE) अणु
-		स_रखो(arsta, 0, माप(*arsta));
-		arsta->arvअगर = arvअगर;
+	if (old_state == IEEE80211_STA_NOTEXIST &&
+	    new_state == IEEE80211_STA_NONE) {
+		memset(arsta, 0, sizeof(*arsta));
+		arsta->arvif = arvif;
 		INIT_WORK(&arsta->update_wk, ath11k_sta_rc_update_wk);
 
-		ret = ath11k_mac_station_add(ar, vअगर, sta);
-		अगर (ret)
+		ret = ath11k_mac_station_add(ar, vif, sta);
+		if (ret)
 			ath11k_warn(ar->ab, "Failed to add station: %pM for VDEV: %d\n",
-				    sta->addr, arvअगर->vdev_id);
-	पूर्ण अन्यथा अगर ((old_state == IEEE80211_STA_NONE &&
-		    new_state == IEEE80211_STA_NOTEXIST)) अणु
-		ath11k_dp_peer_cleanup(ar, arvअगर->vdev_id, sta->addr);
+				    sta->addr, arvif->vdev_id);
+	} else if ((old_state == IEEE80211_STA_NONE &&
+		    new_state == IEEE80211_STA_NOTEXIST)) {
+		ath11k_dp_peer_cleanup(ar, arvif->vdev_id, sta->addr);
 
-		ret = ath11k_peer_delete(ar, arvअगर->vdev_id, sta->addr);
-		अगर (ret)
+		ret = ath11k_peer_delete(ar, arvif->vdev_id, sta->addr);
+		if (ret)
 			ath11k_warn(ar->ab, "Failed to delete peer: %pM for VDEV: %d\n",
-				    sta->addr, arvअगर->vdev_id);
-		अन्यथा
+				    sta->addr, arvif->vdev_id);
+		else
 			ath11k_dbg(ar->ab, ATH11K_DBG_MAC, "Removed peer: %pM for VDEV: %d\n",
-				   sta->addr, arvअगर->vdev_id);
+				   sta->addr, arvif->vdev_id);
 
-		ath11k_mac_dec_num_stations(arvअगर, sta);
+		ath11k_mac_dec_num_stations(arvif, sta);
 		spin_lock_bh(&ar->ab->base_lock);
-		peer = ath11k_peer_find(ar->ab, arvअगर->vdev_id, sta->addr);
-		अगर (peer && peer->sta == sta) अणु
+		peer = ath11k_peer_find(ar->ab, arvif->vdev_id, sta->addr);
+		if (peer && peer->sta == sta) {
 			ath11k_warn(ar->ab, "Found peer entry %pM n vdev %i after it was supposedly removed\n",
-				    vअगर->addr, arvअगर->vdev_id);
-			peer->sta = शून्य;
+				    vif->addr, arvif->vdev_id);
+			peer->sta = NULL;
 			list_del(&peer->list);
-			kमुक्त(peer);
+			kfree(peer);
 			ar->num_peers--;
-		पूर्ण
+		}
 		spin_unlock_bh(&ar->ab->base_lock);
 
-		kमुक्त(arsta->tx_stats);
-		arsta->tx_stats = शून्य;
+		kfree(arsta->tx_stats);
+		arsta->tx_stats = NULL;
 
-		kमुक्त(arsta->rx_stats);
-		arsta->rx_stats = शून्य;
-	पूर्ण अन्यथा अगर (old_state == IEEE80211_STA_AUTH &&
+		kfree(arsta->rx_stats);
+		arsta->rx_stats = NULL;
+	} else if (old_state == IEEE80211_STA_AUTH &&
 		   new_state == IEEE80211_STA_ASSOC &&
-		   (vअगर->type == NL80211_IFTYPE_AP ||
-		    vअगर->type == NL80211_IFTYPE_MESH_POINT ||
-		    vअगर->type == NL80211_IFTYPE_ADHOC)) अणु
-		ret = ath11k_station_assoc(ar, vअगर, sta, false);
-		अगर (ret)
+		   (vif->type == NL80211_IFTYPE_AP ||
+		    vif->type == NL80211_IFTYPE_MESH_POINT ||
+		    vif->type == NL80211_IFTYPE_ADHOC)) {
+		ret = ath11k_station_assoc(ar, vif, sta, false);
+		if (ret)
 			ath11k_warn(ar->ab, "Failed to associate station: %pM\n",
 				    sta->addr);
-	पूर्ण अन्यथा अगर (old_state == IEEE80211_STA_ASSOC &&
+	} else if (old_state == IEEE80211_STA_ASSOC &&
 		   new_state == IEEE80211_STA_AUTH &&
-		   (vअगर->type == NL80211_IFTYPE_AP ||
-		    vअगर->type == NL80211_IFTYPE_MESH_POINT ||
-		    vअगर->type == NL80211_IFTYPE_ADHOC)) अणु
-		ret = ath11k_station_disassoc(ar, vअगर, sta);
-		अगर (ret)
+		   (vif->type == NL80211_IFTYPE_AP ||
+		    vif->type == NL80211_IFTYPE_MESH_POINT ||
+		    vif->type == NL80211_IFTYPE_ADHOC)) {
+		ret = ath11k_station_disassoc(ar, vif, sta);
+		if (ret)
 			ath11k_warn(ar->ab, "Failed to disassociate station: %pM\n",
 				    sta->addr);
-	पूर्ण
+	}
 
 	mutex_unlock(&ar->conf_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ath11k_mac_op_sta_set_txpwr(काष्ठा ieee80211_hw *hw,
-				       काष्ठा ieee80211_vअगर *vअगर,
-				       काष्ठा ieee80211_sta *sta)
-अणु
-	काष्ठा ath11k *ar = hw->priv;
-	काष्ठा ath11k_vअगर *arvअगर = (व्योम *)vअगर->drv_priv;
-	पूर्णांक ret = 0;
+static int ath11k_mac_op_sta_set_txpwr(struct ieee80211_hw *hw,
+				       struct ieee80211_vif *vif,
+				       struct ieee80211_sta *sta)
+{
+	struct ath11k *ar = hw->priv;
+	struct ath11k_vif *arvif = (void *)vif->drv_priv;
+	int ret = 0;
 	s16 txpwr;
 
-	अगर (sta->txpwr.type == NL80211_TX_POWER_AUTOMATIC) अणु
+	if (sta->txpwr.type == NL80211_TX_POWER_AUTOMATIC) {
 		txpwr = 0;
-	पूर्ण अन्यथा अणु
-		txpwr = sta->txpwr.घातer;
-		अगर (!txpwr)
-			वापस -EINVAL;
-	पूर्ण
+	} else {
+		txpwr = sta->txpwr.power;
+		if (!txpwr)
+			return -EINVAL;
+	}
 
-	अगर (txpwr > ATH11K_TX_POWER_MAX_VAL || txpwr < ATH11K_TX_POWER_MIN_VAL)
-		वापस -EINVAL;
+	if (txpwr > ATH11K_TX_POWER_MAX_VAL || txpwr < ATH11K_TX_POWER_MIN_VAL)
+		return -EINVAL;
 
 	mutex_lock(&ar->conf_mutex);
 
-	ret = ath11k_wmi_set_peer_param(ar, sta->addr, arvअगर->vdev_id,
+	ret = ath11k_wmi_set_peer_param(ar, sta->addr, arvif->vdev_id,
 					WMI_PEER_USE_FIXED_PWR, txpwr);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ar->ab, "failed to set tx power for station ret: %d\n",
 			    ret);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 out:
 	mutex_unlock(&ar->conf_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ath11k_mac_op_sta_rc_update(काष्ठा ieee80211_hw *hw,
-					काष्ठा ieee80211_vअगर *vअगर,
-					काष्ठा ieee80211_sta *sta,
+static void ath11k_mac_op_sta_rc_update(struct ieee80211_hw *hw,
+					struct ieee80211_vif *vif,
+					struct ieee80211_sta *sta,
 					u32 changed)
-अणु
-	काष्ठा ath11k *ar = hw->priv;
-	काष्ठा ath11k_sta *arsta = (काष्ठा ath11k_sta *)sta->drv_priv;
-	काष्ठा ath11k_vअगर *arvअगर = (व्योम *)vअगर->drv_priv;
-	काष्ठा ath11k_peer *peer;
+{
+	struct ath11k *ar = hw->priv;
+	struct ath11k_sta *arsta = (struct ath11k_sta *)sta->drv_priv;
+	struct ath11k_vif *arvif = (void *)vif->drv_priv;
+	struct ath11k_peer *peer;
 	u32 bw, smps;
 
 	spin_lock_bh(&ar->ab->base_lock);
 
-	peer = ath11k_peer_find(ar->ab, arvअगर->vdev_id, sta->addr);
-	अगर (!peer) अणु
+	peer = ath11k_peer_find(ar->ab, arvif->vdev_id, sta->addr);
+	if (!peer) {
 		spin_unlock_bh(&ar->ab->base_lock);
 		ath11k_warn(ar->ab, "mac sta rc update failed to find peer %pM on vdev %i\n",
-			    sta->addr, arvअगर->vdev_id);
-		वापस;
-	पूर्ण
+			    sta->addr, arvif->vdev_id);
+		return;
+	}
 
 	spin_unlock_bh(&ar->ab->base_lock);
 
@@ -3420,185 +3419,185 @@ out:
 
 	spin_lock_bh(&ar->data_lock);
 
-	अगर (changed & IEEE80211_RC_BW_CHANGED) अणु
+	if (changed & IEEE80211_RC_BW_CHANGED) {
 		bw = WMI_PEER_CHWIDTH_20MHZ;
 
-		चयन (sta->bandwidth) अणु
-		हाल IEEE80211_STA_RX_BW_20:
+		switch (sta->bandwidth) {
+		case IEEE80211_STA_RX_BW_20:
 			bw = WMI_PEER_CHWIDTH_20MHZ;
-			अवरोध;
-		हाल IEEE80211_STA_RX_BW_40:
+			break;
+		case IEEE80211_STA_RX_BW_40:
 			bw = WMI_PEER_CHWIDTH_40MHZ;
-			अवरोध;
-		हाल IEEE80211_STA_RX_BW_80:
+			break;
+		case IEEE80211_STA_RX_BW_80:
 			bw = WMI_PEER_CHWIDTH_80MHZ;
-			अवरोध;
-		हाल IEEE80211_STA_RX_BW_160:
+			break;
+		case IEEE80211_STA_RX_BW_160:
 			bw = WMI_PEER_CHWIDTH_160MHZ;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			ath11k_warn(ar->ab, "Invalid bandwidth %d in rc update for %pM\n",
 				    sta->bandwidth, sta->addr);
 			bw = WMI_PEER_CHWIDTH_20MHZ;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		arsta->bw = bw;
-	पूर्ण
+	}
 
-	अगर (changed & IEEE80211_RC_NSS_CHANGED)
+	if (changed & IEEE80211_RC_NSS_CHANGED)
 		arsta->nss = sta->rx_nss;
 
-	अगर (changed & IEEE80211_RC_SMPS_CHANGED) अणु
+	if (changed & IEEE80211_RC_SMPS_CHANGED) {
 		smps = WMI_PEER_SMPS_PS_NONE;
 
-		चयन (sta->smps_mode) अणु
-		हाल IEEE80211_SMPS_AUTOMATIC:
-		हाल IEEE80211_SMPS_OFF:
+		switch (sta->smps_mode) {
+		case IEEE80211_SMPS_AUTOMATIC:
+		case IEEE80211_SMPS_OFF:
 			smps = WMI_PEER_SMPS_PS_NONE;
-			अवरोध;
-		हाल IEEE80211_SMPS_STATIC:
+			break;
+		case IEEE80211_SMPS_STATIC:
 			smps = WMI_PEER_SMPS_STATIC;
-			अवरोध;
-		हाल IEEE80211_SMPS_DYNAMIC:
+			break;
+		case IEEE80211_SMPS_DYNAMIC:
 			smps = WMI_PEER_SMPS_DYNAMIC;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			ath11k_warn(ar->ab, "Invalid smps %d in sta rc update for %pM\n",
 				    sta->smps_mode, sta->addr);
 			smps = WMI_PEER_SMPS_PS_NONE;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		arsta->smps = smps;
-	पूर्ण
+	}
 
 	arsta->changed |= changed;
 
 	spin_unlock_bh(&ar->data_lock);
 
 	ieee80211_queue_work(hw, &arsta->update_wk);
-पूर्ण
+}
 
-अटल पूर्णांक ath11k_conf_tx_uapsd(काष्ठा ath11k *ar, काष्ठा ieee80211_vअगर *vअगर,
+static int ath11k_conf_tx_uapsd(struct ath11k *ar, struct ieee80211_vif *vif,
 				u16 ac, bool enable)
-अणु
-	काष्ठा ath11k_vअगर *arvअगर = ath11k_vअगर_to_arvअगर(vअगर);
+{
+	struct ath11k_vif *arvif = ath11k_vif_to_arvif(vif);
 	u32 value = 0;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	अगर (arvअगर->vdev_type != WMI_VDEV_TYPE_STA)
-		वापस 0;
+	if (arvif->vdev_type != WMI_VDEV_TYPE_STA)
+		return 0;
 
-	चयन (ac) अणु
-	हाल IEEE80211_AC_VO:
+	switch (ac) {
+	case IEEE80211_AC_VO:
 		value = WMI_STA_PS_UAPSD_AC3_DELIVERY_EN |
 			WMI_STA_PS_UAPSD_AC3_TRIGGER_EN;
-		अवरोध;
-	हाल IEEE80211_AC_VI:
+		break;
+	case IEEE80211_AC_VI:
 		value = WMI_STA_PS_UAPSD_AC2_DELIVERY_EN |
 			WMI_STA_PS_UAPSD_AC2_TRIGGER_EN;
-		अवरोध;
-	हाल IEEE80211_AC_BE:
+		break;
+	case IEEE80211_AC_BE:
 		value = WMI_STA_PS_UAPSD_AC1_DELIVERY_EN |
 			WMI_STA_PS_UAPSD_AC1_TRIGGER_EN;
-		अवरोध;
-	हाल IEEE80211_AC_BK:
+		break;
+	case IEEE80211_AC_BK:
 		value = WMI_STA_PS_UAPSD_AC0_DELIVERY_EN |
 			WMI_STA_PS_UAPSD_AC0_TRIGGER_EN;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (enable)
-		arvअगर->u.sta.uapsd |= value;
-	अन्यथा
-		arvअगर->u.sta.uapsd &= ~value;
+	if (enable)
+		arvif->u.sta.uapsd |= value;
+	else
+		arvif->u.sta.uapsd &= ~value;
 
-	ret = ath11k_wmi_set_sta_ps_param(ar, arvअगर->vdev_id,
+	ret = ath11k_wmi_set_sta_ps_param(ar, arvif->vdev_id,
 					  WMI_STA_PS_PARAM_UAPSD,
-					  arvअगर->u.sta.uapsd);
-	अगर (ret) अणु
+					  arvif->u.sta.uapsd);
+	if (ret) {
 		ath11k_warn(ar->ab, "could not set uapsd params %d\n", ret);
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	अगर (arvअगर->u.sta.uapsd)
+	if (arvif->u.sta.uapsd)
 		value = WMI_STA_PS_RX_WAKE_POLICY_POLL_UAPSD;
-	अन्यथा
+	else
 		value = WMI_STA_PS_RX_WAKE_POLICY_WAKE;
 
-	ret = ath11k_wmi_set_sta_ps_param(ar, arvअगर->vdev_id,
+	ret = ath11k_wmi_set_sta_ps_param(ar, arvif->vdev_id,
 					  WMI_STA_PS_PARAM_RX_WAKE_POLICY,
 					  value);
-	अगर (ret)
+	if (ret)
 		ath11k_warn(ar->ab, "could not set rx wake param %d\n", ret);
 
-निकास:
-	वापस ret;
-पूर्ण
+exit:
+	return ret;
+}
 
-अटल पूर्णांक ath11k_mac_op_conf_tx(काष्ठा ieee80211_hw *hw,
-				 काष्ठा ieee80211_vअगर *vअगर, u16 ac,
-				 स्थिर काष्ठा ieee80211_tx_queue_params *params)
-अणु
-	काष्ठा ath11k *ar = hw->priv;
-	काष्ठा ath11k_vअगर *arvअगर = (व्योम *)vअगर->drv_priv;
-	काष्ठा wmi_wmm_params_arg *p = शून्य;
-	पूर्णांक ret;
+static int ath11k_mac_op_conf_tx(struct ieee80211_hw *hw,
+				 struct ieee80211_vif *vif, u16 ac,
+				 const struct ieee80211_tx_queue_params *params)
+{
+	struct ath11k *ar = hw->priv;
+	struct ath11k_vif *arvif = (void *)vif->drv_priv;
+	struct wmi_wmm_params_arg *p = NULL;
+	int ret;
 
 	mutex_lock(&ar->conf_mutex);
 
-	चयन (ac) अणु
-	हाल IEEE80211_AC_VO:
-		p = &arvअगर->wmm_params.ac_vo;
-		अवरोध;
-	हाल IEEE80211_AC_VI:
-		p = &arvअगर->wmm_params.ac_vi;
-		अवरोध;
-	हाल IEEE80211_AC_BE:
-		p = &arvअगर->wmm_params.ac_be;
-		अवरोध;
-	हाल IEEE80211_AC_BK:
-		p = &arvअगर->wmm_params.ac_bk;
-		अवरोध;
-	पूर्ण
+	switch (ac) {
+	case IEEE80211_AC_VO:
+		p = &arvif->wmm_params.ac_vo;
+		break;
+	case IEEE80211_AC_VI:
+		p = &arvif->wmm_params.ac_vi;
+		break;
+	case IEEE80211_AC_BE:
+		p = &arvif->wmm_params.ac_be;
+		break;
+	case IEEE80211_AC_BK:
+		p = &arvif->wmm_params.ac_bk;
+		break;
+	}
 
-	अगर (WARN_ON(!p)) अणु
+	if (WARN_ON(!p)) {
 		ret = -EINVAL;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	p->cwmin = params->cw_min;
 	p->cwmax = params->cw_max;
-	p->aअगरs = params->aअगरs;
+	p->aifs = params->aifs;
 	p->txop = params->txop;
 
-	ret = ath11k_wmi_send_wmm_update_cmd_tlv(ar, arvअगर->vdev_id,
-						 &arvअगर->wmm_params);
-	अगर (ret) अणु
+	ret = ath11k_wmi_send_wmm_update_cmd_tlv(ar, arvif->vdev_id,
+						 &arvif->wmm_params);
+	if (ret) {
 		ath11k_warn(ar->ab, "failed to set wmm params: %d\n", ret);
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	ret = ath11k_conf_tx_uapsd(ar, vअगर, ac, params->uapsd);
+	ret = ath11k_conf_tx_uapsd(ar, vif, ac, params->uapsd);
 
-	अगर (ret)
+	if (ret)
 		ath11k_warn(ar->ab, "failed to set sta uapsd: %d\n", ret);
 
-निकास:
+exit:
 	mutex_unlock(&ar->conf_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा ieee80211_sta_ht_cap
-ath11k_create_ht_cap(काष्ठा ath11k *ar, u32 ar_ht_cap, u32 rate_cap_rx_chainmask)
-अणु
-	पूर्णांक i;
-	काष्ठा ieee80211_sta_ht_cap ht_cap = अणु0पूर्ण;
+static struct ieee80211_sta_ht_cap
+ath11k_create_ht_cap(struct ath11k *ar, u32 ar_ht_cap, u32 rate_cap_rx_chainmask)
+{
+	int i;
+	struct ieee80211_sta_ht_cap ht_cap = {0};
 	u32 ar_vht_cap = ar->pdev->cap.vht_cap;
 
-	अगर (!(ar_ht_cap & WMI_HT_CAP_ENABLED))
-		वापस ht_cap;
+	if (!(ar_ht_cap & WMI_HT_CAP_ENABLED))
+		return ht_cap;
 
 	ht_cap.ht_supported = 1;
 	ht_cap.ampdu_factor = IEEE80211_HT_MAX_AMPDU_64K;
@@ -3607,25 +3606,25 @@ ath11k_create_ht_cap(काष्ठा ath11k *ar, u32 ar_ht_cap, u32 rate_cap_
 	ht_cap.cap |= IEEE80211_HT_CAP_DSSSCCK40;
 	ht_cap.cap |= WLAN_HT_CAP_SM_PS_STATIC << IEEE80211_HT_CAP_SM_PS_SHIFT;
 
-	अगर (ar_ht_cap & WMI_HT_CAP_HT20_SGI)
+	if (ar_ht_cap & WMI_HT_CAP_HT20_SGI)
 		ht_cap.cap |= IEEE80211_HT_CAP_SGI_20;
 
-	अगर (ar_ht_cap & WMI_HT_CAP_HT40_SGI)
+	if (ar_ht_cap & WMI_HT_CAP_HT40_SGI)
 		ht_cap.cap |= IEEE80211_HT_CAP_SGI_40;
 
-	अगर (ar_ht_cap & WMI_HT_CAP_DYNAMIC_SMPS) अणु
+	if (ar_ht_cap & WMI_HT_CAP_DYNAMIC_SMPS) {
 		u32 smps;
 
 		smps   = WLAN_HT_CAP_SM_PS_DYNAMIC;
 		smps <<= IEEE80211_HT_CAP_SM_PS_SHIFT;
 
 		ht_cap.cap |= smps;
-	पूर्ण
+	}
 
-	अगर (ar_ht_cap & WMI_HT_CAP_TX_STBC)
+	if (ar_ht_cap & WMI_HT_CAP_TX_STBC)
 		ht_cap.cap |= IEEE80211_HT_CAP_TX_STBC;
 
-	अगर (ar_ht_cap & WMI_HT_CAP_RX_STBC) अणु
+	if (ar_ht_cap & WMI_HT_CAP_RX_STBC) {
 		u32 stbc;
 
 		stbc   = ar_ht_cap;
@@ -3635,95 +3634,95 @@ ath11k_create_ht_cap(काष्ठा ath11k *ar, u32 ar_ht_cap, u32 rate_cap_
 		stbc  &= IEEE80211_HT_CAP_RX_STBC;
 
 		ht_cap.cap |= stbc;
-	पूर्ण
+	}
 
-	अगर (ar_ht_cap & WMI_HT_CAP_RX_LDPC)
+	if (ar_ht_cap & WMI_HT_CAP_RX_LDPC)
 		ht_cap.cap |= IEEE80211_HT_CAP_LDPC_CODING;
 
-	अगर (ar_ht_cap & WMI_HT_CAP_L_SIG_TXOP_PROT)
+	if (ar_ht_cap & WMI_HT_CAP_L_SIG_TXOP_PROT)
 		ht_cap.cap |= IEEE80211_HT_CAP_LSIG_TXOP_PROT;
 
-	अगर (ar_vht_cap & WMI_VHT_CAP_MAX_MPDU_LEN_MASK)
+	if (ar_vht_cap & WMI_VHT_CAP_MAX_MPDU_LEN_MASK)
 		ht_cap.cap |= IEEE80211_HT_CAP_MAX_AMSDU;
 
-	क्रम (i = 0; i < ar->num_rx_chains; i++) अणु
-		अगर (rate_cap_rx_chainmask & BIT(i))
+	for (i = 0; i < ar->num_rx_chains; i++) {
+		if (rate_cap_rx_chainmask & BIT(i))
 			ht_cap.mcs.rx_mask[i] = 0xFF;
-	पूर्ण
+	}
 
 	ht_cap.mcs.tx_params |= IEEE80211_HT_MCS_TX_DEFINED;
 
-	वापस ht_cap;
-पूर्ण
+	return ht_cap;
+}
 
-अटल पूर्णांक ath11k_mac_set_txbf_conf(काष्ठा ath11k_vअगर *arvअगर)
-अणु
+static int ath11k_mac_set_txbf_conf(struct ath11k_vif *arvif)
+{
 	u32 value = 0;
-	काष्ठा ath11k *ar = arvअगर->ar;
-	पूर्णांक nsts;
-	पूर्णांक sound_dim;
+	struct ath11k *ar = arvif->ar;
+	int nsts;
+	int sound_dim;
 	u32 vht_cap = ar->pdev->cap.vht_cap;
 	u32 vdev_param = WMI_VDEV_PARAM_TXBF;
 
-	अगर (vht_cap & (IEEE80211_VHT_CAP_SU_BEAMFORMEE_CAPABLE)) अणु
+	if (vht_cap & (IEEE80211_VHT_CAP_SU_BEAMFORMEE_CAPABLE)) {
 		nsts = vht_cap & IEEE80211_VHT_CAP_BEAMFORMEE_STS_MASK;
 		nsts >>= IEEE80211_VHT_CAP_BEAMFORMEE_STS_SHIFT;
 		value |= SM(nsts, WMI_TXBF_STS_CAP_OFFSET);
-	पूर्ण
+	}
 
-	अगर (vht_cap & (IEEE80211_VHT_CAP_SU_BEAMFORMER_CAPABLE)) अणु
+	if (vht_cap & (IEEE80211_VHT_CAP_SU_BEAMFORMER_CAPABLE)) {
 		sound_dim = vht_cap &
 			    IEEE80211_VHT_CAP_SOUNDING_DIMENSIONS_MASK;
 		sound_dim >>= IEEE80211_VHT_CAP_SOUNDING_DIMENSIONS_SHIFT;
-		अगर (sound_dim > (ar->num_tx_chains - 1))
+		if (sound_dim > (ar->num_tx_chains - 1))
 			sound_dim = ar->num_tx_chains - 1;
 		value |= SM(sound_dim, WMI_BF_SOUND_DIM_OFFSET);
-	पूर्ण
+	}
 
-	अगर (!value)
-		वापस 0;
+	if (!value)
+		return 0;
 
-	अगर (vht_cap & IEEE80211_VHT_CAP_SU_BEAMFORMER_CAPABLE) अणु
+	if (vht_cap & IEEE80211_VHT_CAP_SU_BEAMFORMER_CAPABLE) {
 		value |= WMI_VDEV_PARAM_TXBF_SU_TX_BFER;
 
-		अगर ((vht_cap & IEEE80211_VHT_CAP_MU_BEAMFORMER_CAPABLE) &&
-		    arvअगर->vdev_type == WMI_VDEV_TYPE_AP)
+		if ((vht_cap & IEEE80211_VHT_CAP_MU_BEAMFORMER_CAPABLE) &&
+		    arvif->vdev_type == WMI_VDEV_TYPE_AP)
 			value |= WMI_VDEV_PARAM_TXBF_MU_TX_BFER;
-	पूर्ण
+	}
 
 	/* TODO: SUBFEE not validated in HK, disable here until validated? */
 
-	अगर (vht_cap & IEEE80211_VHT_CAP_SU_BEAMFORMEE_CAPABLE) अणु
+	if (vht_cap & IEEE80211_VHT_CAP_SU_BEAMFORMEE_CAPABLE) {
 		value |= WMI_VDEV_PARAM_TXBF_SU_TX_BFEE;
 
-		अगर ((vht_cap & IEEE80211_VHT_CAP_MU_BEAMFORMEE_CAPABLE) &&
-		    arvअगर->vdev_type == WMI_VDEV_TYPE_STA)
+		if ((vht_cap & IEEE80211_VHT_CAP_MU_BEAMFORMEE_CAPABLE) &&
+		    arvif->vdev_type == WMI_VDEV_TYPE_STA)
 			value |= WMI_VDEV_PARAM_TXBF_MU_TX_BFEE;
-	पूर्ण
+	}
 
-	वापस ath11k_wmi_vdev_set_param_cmd(ar, arvअगर->vdev_id,
+	return ath11k_wmi_vdev_set_param_cmd(ar, arvif->vdev_id,
 					     vdev_param, value);
-पूर्ण
+}
 
-अटल व्योम ath11k_set_vht_txbf_cap(काष्ठा ath11k *ar, u32 *vht_cap)
-अणु
+static void ath11k_set_vht_txbf_cap(struct ath11k *ar, u32 *vht_cap)
+{
 	bool subfer, subfee;
-	पूर्णांक sound_dim = 0;
+	int sound_dim = 0;
 
 	subfer = !!(*vht_cap & (IEEE80211_VHT_CAP_SU_BEAMFORMER_CAPABLE));
 	subfee = !!(*vht_cap & (IEEE80211_VHT_CAP_SU_BEAMFORMEE_CAPABLE));
 
-	अगर (ar->num_tx_chains < 2) अणु
+	if (ar->num_tx_chains < 2) {
 		*vht_cap &= ~(IEEE80211_VHT_CAP_SU_BEAMFORMER_CAPABLE);
 		subfer = false;
-	पूर्ण
+	}
 
-	/* If SU Beaक्रमmer is not set, then disable MU Beamक्रमmer Capability */
-	अगर (!subfer)
+	/* If SU Beaformer is not set, then disable MU Beamformer Capability */
+	if (!subfer)
 		*vht_cap &= ~(IEEE80211_VHT_CAP_MU_BEAMFORMER_CAPABLE);
 
-	/* If SU Beaक्रमmee is not set, then disable MU Beamक्रमmee Capability */
-	अगर (!subfee)
+	/* If SU Beaformee is not set, then disable MU Beamformee Capability */
+	if (!subfee)
 		*vht_cap &= ~(IEEE80211_VHT_CAP_MU_BEAMFORMEE_CAPABLE);
 
 	sound_dim = (*vht_cap & IEEE80211_VHT_CAP_SOUNDING_DIMENSIONS_MASK);
@@ -3732,28 +3731,28 @@ ath11k_create_ht_cap(काष्ठा ath11k *ar, u32 ar_ht_cap, u32 rate_cap_
 
 	/* TODO: Need to check invalid STS and Sound_dim values set by FW? */
 
-	/* Enable Sounding Dimension Field only अगर SU BF is enabled */
-	अगर (subfer) अणु
-		अगर (sound_dim > (ar->num_tx_chains - 1))
+	/* Enable Sounding Dimension Field only if SU BF is enabled */
+	if (subfer) {
+		if (sound_dim > (ar->num_tx_chains - 1))
 			sound_dim = ar->num_tx_chains - 1;
 
 		sound_dim <<= IEEE80211_VHT_CAP_SOUNDING_DIMENSIONS_SHIFT;
 		sound_dim &=  IEEE80211_VHT_CAP_SOUNDING_DIMENSIONS_MASK;
 		*vht_cap |= sound_dim;
-	पूर्ण
+	}
 
-	/* Use the STS advertised by FW unless SU Beamक्रमmee is not supported*/
-	अगर (!subfee)
+	/* Use the STS advertised by FW unless SU Beamformee is not supported*/
+	if (!subfee)
 		*vht_cap &= ~(IEEE80211_VHT_CAP_BEAMFORMEE_STS_MASK);
-पूर्ण
+}
 
-अटल काष्ठा ieee80211_sta_vht_cap
-ath11k_create_vht_cap(काष्ठा ath11k *ar, u32 rate_cap_tx_chainmask,
+static struct ieee80211_sta_vht_cap
+ath11k_create_vht_cap(struct ath11k *ar, u32 rate_cap_tx_chainmask,
 		      u32 rate_cap_rx_chainmask)
-अणु
-	काष्ठा ieee80211_sta_vht_cap vht_cap = अणु0पूर्ण;
+{
+	struct ieee80211_sta_vht_cap vht_cap = {0};
 	u16 txmcs_map, rxmcs_map;
-	पूर्णांक i;
+	int i;
 
 	vht_cap.vht_supported = 1;
 	vht_cap.cap = ar->pdev->cap.vht_cap;
@@ -3767,101 +3766,101 @@ ath11k_create_vht_cap(काष्ठा ath11k *ar, u32 rate_cap_tx_chainmask,
 
 	rxmcs_map = 0;
 	txmcs_map = 0;
-	क्रम (i = 0; i < 8; i++) अणु
-		अगर (i < ar->num_tx_chains && rate_cap_tx_chainmask & BIT(i))
+	for (i = 0; i < 8; i++) {
+		if (i < ar->num_tx_chains && rate_cap_tx_chainmask & BIT(i))
 			txmcs_map |= IEEE80211_VHT_MCS_SUPPORT_0_9 << (i * 2);
-		अन्यथा
+		else
 			txmcs_map |= IEEE80211_VHT_MCS_NOT_SUPPORTED << (i * 2);
 
-		अगर (i < ar->num_rx_chains && rate_cap_rx_chainmask & BIT(i))
+		if (i < ar->num_rx_chains && rate_cap_rx_chainmask & BIT(i))
 			rxmcs_map |= IEEE80211_VHT_MCS_SUPPORT_0_9 << (i * 2);
-		अन्यथा
+		else
 			rxmcs_map |= IEEE80211_VHT_MCS_NOT_SUPPORTED << (i * 2);
-	पूर्ण
+	}
 
-	अगर (rate_cap_tx_chainmask <= 1)
+	if (rate_cap_tx_chainmask <= 1)
 		vht_cap.cap &= ~IEEE80211_VHT_CAP_TXSTBC;
 
 	vht_cap.vht_mcs.rx_mcs_map = cpu_to_le16(rxmcs_map);
 	vht_cap.vht_mcs.tx_mcs_map = cpu_to_le16(txmcs_map);
 
-	वापस vht_cap;
-पूर्ण
+	return vht_cap;
+}
 
-अटल व्योम ath11k_mac_setup_ht_vht_cap(काष्ठा ath11k *ar,
-					काष्ठा ath11k_pdev_cap *cap,
+static void ath11k_mac_setup_ht_vht_cap(struct ath11k *ar,
+					struct ath11k_pdev_cap *cap,
 					u32 *ht_cap_info)
-अणु
-	काष्ठा ieee80211_supported_band *band;
+{
+	struct ieee80211_supported_band *band;
 	u32 rate_cap_tx_chainmask;
 	u32 rate_cap_rx_chainmask;
 	u32 ht_cap;
 
-	rate_cap_tx_chainmask = ar->cfg_tx_chainmask >> cap->tx_chain_mask_shअगरt;
-	rate_cap_rx_chainmask = ar->cfg_rx_chainmask >> cap->rx_chain_mask_shअगरt;
+	rate_cap_tx_chainmask = ar->cfg_tx_chainmask >> cap->tx_chain_mask_shift;
+	rate_cap_rx_chainmask = ar->cfg_rx_chainmask >> cap->rx_chain_mask_shift;
 
-	अगर (cap->supported_bands & WMI_HOST_WLAN_2G_CAP) अणु
+	if (cap->supported_bands & WMI_HOST_WLAN_2G_CAP) {
 		band = &ar->mac.sbands[NL80211_BAND_2GHZ];
 		ht_cap = cap->band[NL80211_BAND_2GHZ].ht_cap_info;
-		अगर (ht_cap_info)
+		if (ht_cap_info)
 			*ht_cap_info = ht_cap;
 		band->ht_cap = ath11k_create_ht_cap(ar, ht_cap,
 						    rate_cap_rx_chainmask);
-	पूर्ण
+	}
 
-	अगर (cap->supported_bands & WMI_HOST_WLAN_5G_CAP && !ar->supports_6ghz) अणु
+	if (cap->supported_bands & WMI_HOST_WLAN_5G_CAP && !ar->supports_6ghz) {
 		band = &ar->mac.sbands[NL80211_BAND_5GHZ];
 		ht_cap = cap->band[NL80211_BAND_5GHZ].ht_cap_info;
-		अगर (ht_cap_info)
+		if (ht_cap_info)
 			*ht_cap_info = ht_cap;
 		band->ht_cap = ath11k_create_ht_cap(ar, ht_cap,
 						    rate_cap_rx_chainmask);
 		band->vht_cap = ath11k_create_vht_cap(ar, rate_cap_tx_chainmask,
 						      rate_cap_rx_chainmask);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक ath11k_check_chain_mask(काष्ठा ath11k *ar, u32 ant, bool is_tx_ant)
-अणु
+static int ath11k_check_chain_mask(struct ath11k *ar, u32 ant, bool is_tx_ant)
+{
 	/* TODO: Check the request chainmask against the supported
-	 * chainmask table which is advertised in extented_service_पढ़ोy event
+	 * chainmask table which is advertised in extented_service_ready event
 	 */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ath11k_gen_ppe_thresh(काष्ठा ath11k_ppe_threshold *fw_ppet,
+static void ath11k_gen_ppe_thresh(struct ath11k_ppe_threshold *fw_ppet,
 				  u8 *he_ppet)
-अणु
-	पूर्णांक nss, ru;
+{
+	int nss, ru;
 	u8 bit = 7;
 
 	he_ppet[0] = fw_ppet->numss_m1 & IEEE80211_PPE_THRES_NSS_MASK;
 	he_ppet[0] |= (fw_ppet->ru_bit_mask <<
 		       IEEE80211_PPE_THRES_RU_INDEX_BITMASK_POS) &
 		      IEEE80211_PPE_THRES_RU_INDEX_BITMASK_MASK;
-	क्रम (nss = 0; nss <= fw_ppet->numss_m1; nss++) अणु
-		क्रम (ru = 0; ru < 4; ru++) अणु
+	for (nss = 0; nss <= fw_ppet->numss_m1; nss++) {
+		for (ru = 0; ru < 4; ru++) {
 			u8 val;
-			पूर्णांक i;
+			int i;
 
-			अगर ((fw_ppet->ru_bit_mask & BIT(ru)) == 0)
-				जारी;
+			if ((fw_ppet->ru_bit_mask & BIT(ru)) == 0)
+				continue;
 			val = (fw_ppet->ppet16_ppet8_ru3_ru0[nss] >> (ru * 6)) &
 			       0x3f;
 			val = ((val >> 3) & 0x7) | ((val & 0x7) << 3);
-			क्रम (i = 5; i >= 0; i--) अणु
+			for (i = 5; i >= 0; i--) {
 				he_ppet[bit / 8] |=
 					((val >> i) & 0x1) << ((bit % 8));
 				bit++;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
-अटल व्योम
-ath11k_mac_filter_he_cap_mesh(काष्ठा ieee80211_he_cap_elem *he_cap_elem)
-अणु
+static void
+ath11k_mac_filter_he_cap_mesh(struct ieee80211_he_cap_elem *he_cap_elem)
+{
 	u8 m;
 
 	m = IEEE80211_HE_MAC_CAP0_TWT_RES |
@@ -3928,19 +3927,19 @@ ath11k_mac_filter_he_cap_mesh(काष्ठा ieee80211_he_cap_elem *he_cap_e
 	    IEEE80211_HE_PHY_CAP9_RX_FULL_BW_SU_USING_MU_WITH_COMP_SIGB |
 	    IEEE80211_HE_PHY_CAP9_RX_FULL_BW_SU_USING_MU_WITH_NON_COMP_SIGB;
 	he_cap_elem->phy_cap_info[9] &= ~m;
-पूर्ण
+}
 
-अटल __le16 ath11k_mac_setup_he_6ghz_cap(काष्ठा ath11k_pdev_cap *pcap,
-					   काष्ठा ath11k_band_cap *bcap)
-अणु
+static __le16 ath11k_mac_setup_he_6ghz_cap(struct ath11k_pdev_cap *pcap,
+					   struct ath11k_band_cap *bcap)
+{
 	u8 val;
 
 	bcap->he_6ghz_capa = IEEE80211_HT_MPDU_DENSITY_NONE;
-	अगर (bcap->ht_cap_info & WMI_HT_CAP_DYNAMIC_SMPS)
+	if (bcap->ht_cap_info & WMI_HT_CAP_DYNAMIC_SMPS)
 		bcap->he_6ghz_capa |=
 			FIELD_PREP(IEEE80211_HE_6GHZ_CAP_SM_PS,
 				   WLAN_HT_CAP_SM_PS_DYNAMIC);
-	अन्यथा
+	else
 		bcap->he_6ghz_capa |=
 			FIELD_PREP(IEEE80211_HE_6GHZ_CAP_SM_PS,
 				   WLAN_HT_CAP_SM_PS_DISABLED);
@@ -3951,43 +3950,43 @@ ath11k_mac_filter_he_cap_mesh(काष्ठा ieee80211_he_cap_elem *he_cap_e
 	val = FIELD_GET(IEEE80211_VHT_CAP_MAX_MPDU_MASK, pcap->vht_cap);
 	bcap->he_6ghz_capa |=
 		FIELD_PREP(IEEE80211_HE_6GHZ_CAP_MAX_MPDU_LEN, val);
-	अगर (pcap->vht_cap & IEEE80211_VHT_CAP_RX_ANTENNA_PATTERN)
+	if (pcap->vht_cap & IEEE80211_VHT_CAP_RX_ANTENNA_PATTERN)
 		bcap->he_6ghz_capa |= IEEE80211_HE_6GHZ_CAP_RX_ANTPAT_CONS;
-	अगर (pcap->vht_cap & IEEE80211_VHT_CAP_TX_ANTENNA_PATTERN)
+	if (pcap->vht_cap & IEEE80211_VHT_CAP_TX_ANTENNA_PATTERN)
 		bcap->he_6ghz_capa |= IEEE80211_HE_6GHZ_CAP_TX_ANTPAT_CONS;
 
-	वापस cpu_to_le16(bcap->he_6ghz_capa);
-पूर्ण
+	return cpu_to_le16(bcap->he_6ghz_capa);
+}
 
-अटल पूर्णांक ath11k_mac_copy_he_cap(काष्ठा ath11k *ar,
-				  काष्ठा ath11k_pdev_cap *cap,
-				  काष्ठा ieee80211_sband_अगरtype_data *data,
-				  पूर्णांक band)
-अणु
-	पूर्णांक i, idx = 0;
+static int ath11k_mac_copy_he_cap(struct ath11k *ar,
+				  struct ath11k_pdev_cap *cap,
+				  struct ieee80211_sband_iftype_data *data,
+				  int band)
+{
+	int i, idx = 0;
 
-	क्रम (i = 0; i < NUM_NL80211_IFTYPES; i++) अणु
-		काष्ठा ieee80211_sta_he_cap *he_cap = &data[idx].he_cap;
-		काष्ठा ath11k_band_cap *band_cap = &cap->band[band];
-		काष्ठा ieee80211_he_cap_elem *he_cap_elem =
+	for (i = 0; i < NUM_NL80211_IFTYPES; i++) {
+		struct ieee80211_sta_he_cap *he_cap = &data[idx].he_cap;
+		struct ath11k_band_cap *band_cap = &cap->band[band];
+		struct ieee80211_he_cap_elem *he_cap_elem =
 				&he_cap->he_cap_elem;
 
-		चयन (i) अणु
-		हाल NL80211_IFTYPE_STATION:
-		हाल NL80211_IFTYPE_AP:
-		हाल NL80211_IFTYPE_MESH_POINT:
-			अवरोध;
+		switch (i) {
+		case NL80211_IFTYPE_STATION:
+		case NL80211_IFTYPE_AP:
+		case NL80211_IFTYPE_MESH_POINT:
+			break;
 
-		शेष:
-			जारी;
-		पूर्ण
+		default:
+			continue;
+		}
 
 		data[idx].types_mask = BIT(i);
 		he_cap->has_he = true;
-		स_नकल(he_cap_elem->mac_cap_info, band_cap->he_cap_info,
-		       माप(he_cap_elem->mac_cap_info));
-		स_नकल(he_cap_elem->phy_cap_info, band_cap->he_cap_phy_info,
-		       माप(he_cap_elem->phy_cap_info));
+		memcpy(he_cap_elem->mac_cap_info, band_cap->he_cap_info,
+		       sizeof(he_cap_elem->mac_cap_info));
+		memcpy(he_cap_elem->phy_cap_info, band_cap->he_cap_phy_info,
+		       sizeof(he_cap_elem->phy_cap_info));
 
 		he_cap_elem->mac_cap_info[1] &=
 			IEEE80211_HE_MAC_CAP1_TF_MAC_PAD_DUR_MASK;
@@ -3996,25 +3995,25 @@ ath11k_mac_filter_he_cap_mesh(काष्ठा ieee80211_he_cap_elem *he_cap_e
 			~IEEE80211_HE_PHY_CAP5_BEAMFORMEE_NUM_SND_DIM_UNDER_80MHZ_MASK;
 		he_cap_elem->phy_cap_info[5] |= ar->num_tx_chains - 1;
 
-		चयन (i) अणु
-		हाल NL80211_IFTYPE_AP:
+		switch (i) {
+		case NL80211_IFTYPE_AP:
 			he_cap_elem->phy_cap_info[3] &=
 				~IEEE80211_HE_PHY_CAP3_DCM_MAX_CONST_TX_MASK;
 			he_cap_elem->phy_cap_info[9] |=
 				IEEE80211_HE_PHY_CAP9_RX_1024_QAM_LESS_THAN_242_TONE_RU;
-			अवरोध;
-		हाल NL80211_IFTYPE_STATION:
+			break;
+		case NL80211_IFTYPE_STATION:
 			he_cap_elem->mac_cap_info[0] &=
 				~IEEE80211_HE_MAC_CAP0_TWT_RES;
 			he_cap_elem->mac_cap_info[0] |=
 				IEEE80211_HE_MAC_CAP0_TWT_REQ;
 			he_cap_elem->phy_cap_info[9] |=
 				IEEE80211_HE_PHY_CAP9_TX_1024_QAM_LESS_THAN_242_TONE_RU;
-			अवरोध;
-		हाल NL80211_IFTYPE_MESH_POINT:
+			break;
+		case NL80211_IFTYPE_MESH_POINT:
 			ath11k_mac_filter_he_cap_mesh(he_cap_elem);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		he_cap->he_mcs_nss_supp.rx_mcs_80 =
 			cpu_to_le16(band_cap->he_mcs & 0xffff);
@@ -4029,424 +4028,424 @@ ath11k_mac_filter_he_cap_mesh(काष्ठा ieee80211_he_cap_elem *he_cap_e
 		he_cap->he_mcs_nss_supp.tx_mcs_80p80 =
 			cpu_to_le16((band_cap->he_mcs >> 16) & 0xffff);
 
-		स_रखो(he_cap->ppe_thres, 0, माप(he_cap->ppe_thres));
-		अगर (he_cap_elem->phy_cap_info[6] &
+		memset(he_cap->ppe_thres, 0, sizeof(he_cap->ppe_thres));
+		if (he_cap_elem->phy_cap_info[6] &
 		    IEEE80211_HE_PHY_CAP6_PPE_THRESHOLD_PRESENT)
 			ath11k_gen_ppe_thresh(&band_cap->he_ppet,
 					      he_cap->ppe_thres);
 
-		अगर (band == NL80211_BAND_6GHZ) अणु
+		if (band == NL80211_BAND_6GHZ) {
 			data[idx].he_6ghz_capa.capa =
 				ath11k_mac_setup_he_6ghz_cap(cap, band_cap);
-		पूर्ण
+		}
 		idx++;
-	पूर्ण
+	}
 
-	वापस idx;
-पूर्ण
+	return idx;
+}
 
-अटल व्योम ath11k_mac_setup_he_cap(काष्ठा ath11k *ar,
-				    काष्ठा ath11k_pdev_cap *cap)
-अणु
-	काष्ठा ieee80211_supported_band *band;
-	पूर्णांक count;
+static void ath11k_mac_setup_he_cap(struct ath11k *ar,
+				    struct ath11k_pdev_cap *cap)
+{
+	struct ieee80211_supported_band *band;
+	int count;
 
-	अगर (cap->supported_bands & WMI_HOST_WLAN_2G_CAP) अणु
+	if (cap->supported_bands & WMI_HOST_WLAN_2G_CAP) {
 		count = ath11k_mac_copy_he_cap(ar, cap,
-					       ar->mac.अगरtype[NL80211_BAND_2GHZ],
+					       ar->mac.iftype[NL80211_BAND_2GHZ],
 					       NL80211_BAND_2GHZ);
 		band = &ar->mac.sbands[NL80211_BAND_2GHZ];
-		band->अगरtype_data = ar->mac.अगरtype[NL80211_BAND_2GHZ];
-		band->n_अगरtype_data = count;
-	पूर्ण
+		band->iftype_data = ar->mac.iftype[NL80211_BAND_2GHZ];
+		band->n_iftype_data = count;
+	}
 
-	अगर (cap->supported_bands & WMI_HOST_WLAN_5G_CAP) अणु
+	if (cap->supported_bands & WMI_HOST_WLAN_5G_CAP) {
 		count = ath11k_mac_copy_he_cap(ar, cap,
-					       ar->mac.अगरtype[NL80211_BAND_5GHZ],
+					       ar->mac.iftype[NL80211_BAND_5GHZ],
 					       NL80211_BAND_5GHZ);
 		band = &ar->mac.sbands[NL80211_BAND_5GHZ];
-		band->अगरtype_data = ar->mac.अगरtype[NL80211_BAND_5GHZ];
-		band->n_अगरtype_data = count;
-	पूर्ण
+		band->iftype_data = ar->mac.iftype[NL80211_BAND_5GHZ];
+		band->n_iftype_data = count;
+	}
 
-	अगर (cap->supported_bands & WMI_HOST_WLAN_5G_CAP &&
-	    ar->supports_6ghz) अणु
+	if (cap->supported_bands & WMI_HOST_WLAN_5G_CAP &&
+	    ar->supports_6ghz) {
 		count = ath11k_mac_copy_he_cap(ar, cap,
-					       ar->mac.अगरtype[NL80211_BAND_6GHZ],
+					       ar->mac.iftype[NL80211_BAND_6GHZ],
 					       NL80211_BAND_6GHZ);
 		band = &ar->mac.sbands[NL80211_BAND_6GHZ];
-		band->अगरtype_data = ar->mac.अगरtype[NL80211_BAND_6GHZ];
-		band->n_अगरtype_data = count;
-	पूर्ण
-पूर्ण
+		band->iftype_data = ar->mac.iftype[NL80211_BAND_6GHZ];
+		band->n_iftype_data = count;
+	}
+}
 
-अटल पूर्णांक __ath11k_set_antenna(काष्ठा ath11k *ar, u32 tx_ant, u32 rx_ant)
-अणु
-	पूर्णांक ret;
+static int __ath11k_set_antenna(struct ath11k *ar, u32 tx_ant, u32 rx_ant)
+{
+	int ret;
 
-	lockdep_निश्चित_held(&ar->conf_mutex);
+	lockdep_assert_held(&ar->conf_mutex);
 
-	अगर (ath11k_check_chain_mask(ar, tx_ant, true))
-		वापस -EINVAL;
+	if (ath11k_check_chain_mask(ar, tx_ant, true))
+		return -EINVAL;
 
-	अगर (ath11k_check_chain_mask(ar, rx_ant, false))
-		वापस -EINVAL;
+	if (ath11k_check_chain_mask(ar, rx_ant, false))
+		return -EINVAL;
 
 	ar->cfg_tx_chainmask = tx_ant;
 	ar->cfg_rx_chainmask = rx_ant;
 
-	अगर (ar->state != ATH11K_STATE_ON &&
+	if (ar->state != ATH11K_STATE_ON &&
 	    ar->state != ATH11K_STATE_RESTARTED)
-		वापस 0;
+		return 0;
 
 	ret = ath11k_wmi_pdev_set_param(ar, WMI_PDEV_PARAM_TX_CHAIN_MASK,
 					tx_ant, ar->pdev->pdev_id);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ar->ab, "failed to set tx-chainmask: %d, req 0x%x\n",
 			    ret, tx_ant);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ar->num_tx_chains = get_num_chains(tx_ant);
 
 	ret = ath11k_wmi_pdev_set_param(ar, WMI_PDEV_PARAM_RX_CHAIN_MASK,
 					rx_ant, ar->pdev->pdev_id);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ar->ab, "failed to set rx-chainmask: %d, req 0x%x\n",
 			    ret, rx_ant);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ar->num_rx_chains = get_num_chains(rx_ant);
 
 	/* Reload HT/VHT/HE capability */
-	ath11k_mac_setup_ht_vht_cap(ar, &ar->pdev->cap, शून्य);
+	ath11k_mac_setup_ht_vht_cap(ar, &ar->pdev->cap, NULL);
 	ath11k_mac_setup_he_cap(ar, &ar->pdev->cap);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ath11k_mac_tx_mgmt_pending_मुक्त(पूर्णांक buf_id, व्योम *skb, व्योम *ctx)
-अणु
-	काष्ठा sk_buff *msdu = skb;
-	काष्ठा ieee80211_tx_info *info;
-	काष्ठा ath11k *ar = ctx;
-	काष्ठा ath11k_base *ab = ar->ab;
+int ath11k_mac_tx_mgmt_pending_free(int buf_id, void *skb, void *ctx)
+{
+	struct sk_buff *msdu = skb;
+	struct ieee80211_tx_info *info;
+	struct ath11k *ar = ctx;
+	struct ath11k_base *ab = ar->ab;
 
 	spin_lock_bh(&ar->txmgmt_idr_lock);
-	idr_हटाओ(&ar->txmgmt_idr, buf_id);
+	idr_remove(&ar->txmgmt_idr, buf_id);
 	spin_unlock_bh(&ar->txmgmt_idr_lock);
 	dma_unmap_single(ab->dev, ATH11K_SKB_CB(msdu)->paddr, msdu->len,
 			 DMA_TO_DEVICE);
 
 	info = IEEE80211_SKB_CB(msdu);
-	स_रखो(&info->status, 0, माप(info->status));
+	memset(&info->status, 0, sizeof(info->status));
 
-	ieee80211_मुक्त_txskb(ar->hw, msdu);
+	ieee80211_free_txskb(ar->hw, msdu);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ath11k_mac_vअगर_txmgmt_idr_हटाओ(पूर्णांक buf_id, व्योम *skb, व्योम *ctx)
-अणु
-	काष्ठा ieee80211_vअगर *vअगर = ctx;
-	काष्ठा ath11k_skb_cb *skb_cb = ATH11K_SKB_CB((काष्ठा sk_buff *)skb);
-	काष्ठा sk_buff *msdu = skb;
-	काष्ठा ath11k *ar = skb_cb->ar;
-	काष्ठा ath11k_base *ab = ar->ab;
+static int ath11k_mac_vif_txmgmt_idr_remove(int buf_id, void *skb, void *ctx)
+{
+	struct ieee80211_vif *vif = ctx;
+	struct ath11k_skb_cb *skb_cb = ATH11K_SKB_CB((struct sk_buff *)skb);
+	struct sk_buff *msdu = skb;
+	struct ath11k *ar = skb_cb->ar;
+	struct ath11k_base *ab = ar->ab;
 
-	अगर (skb_cb->vअगर == vअगर) अणु
+	if (skb_cb->vif == vif) {
 		spin_lock_bh(&ar->txmgmt_idr_lock);
-		idr_हटाओ(&ar->txmgmt_idr, buf_id);
+		idr_remove(&ar->txmgmt_idr, buf_id);
 		spin_unlock_bh(&ar->txmgmt_idr_lock);
 		dma_unmap_single(ab->dev, skb_cb->paddr, msdu->len,
 				 DMA_TO_DEVICE);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ath11k_mac_mgmt_tx_wmi(काष्ठा ath11k *ar, काष्ठा ath11k_vअगर *arvअगर,
-				  काष्ठा sk_buff *skb)
-अणु
-	काष्ठा ath11k_base *ab = ar->ab;
-	काष्ठा ieee80211_hdr *hdr = (काष्ठा ieee80211_hdr *)skb->data;
-	काष्ठा ieee80211_tx_info *info;
+static int ath11k_mac_mgmt_tx_wmi(struct ath11k *ar, struct ath11k_vif *arvif,
+				  struct sk_buff *skb)
+{
+	struct ath11k_base *ab = ar->ab;
+	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *)skb->data;
+	struct ieee80211_tx_info *info;
 	dma_addr_t paddr;
-	पूर्णांक buf_id;
-	पूर्णांक ret;
+	int buf_id;
+	int ret;
 
 	spin_lock_bh(&ar->txmgmt_idr_lock);
 	buf_id = idr_alloc(&ar->txmgmt_idr, skb, 0,
 			   ATH11K_TX_MGMT_NUM_PENDING_MAX, GFP_ATOMIC);
 	spin_unlock_bh(&ar->txmgmt_idr_lock);
-	अगर (buf_id < 0)
-		वापस -ENOSPC;
+	if (buf_id < 0)
+		return -ENOSPC;
 
 	info = IEEE80211_SKB_CB(skb);
-	अगर (!(info->flags & IEEE80211_TX_CTL_HW_80211_ENCAP)) अणु
-		अगर ((ieee80211_is_action(hdr->frame_control) ||
+	if (!(info->flags & IEEE80211_TX_CTL_HW_80211_ENCAP)) {
+		if ((ieee80211_is_action(hdr->frame_control) ||
 		     ieee80211_is_deauth(hdr->frame_control) ||
 		     ieee80211_is_disassoc(hdr->frame_control)) &&
-		     ieee80211_has_रक्षित(hdr->frame_control)) अणु
+		     ieee80211_has_protected(hdr->frame_control)) {
 			skb_put(skb, IEEE80211_CCMP_MIC_LEN);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	paddr = dma_map_single(ab->dev, skb->data, skb->len, DMA_TO_DEVICE);
-	अगर (dma_mapping_error(ab->dev, paddr)) अणु
+	if (dma_mapping_error(ab->dev, paddr)) {
 		ath11k_warn(ab, "failed to DMA map mgmt Tx buffer\n");
 		ret = -EIO;
-		जाओ err_मुक्त_idr;
-	पूर्ण
+		goto err_free_idr;
+	}
 
 	ATH11K_SKB_CB(skb)->paddr = paddr;
 
-	ret = ath11k_wmi_mgmt_send(ar, arvअगर->vdev_id, buf_id, skb);
-	अगर (ret) अणु
+	ret = ath11k_wmi_mgmt_send(ar, arvif->vdev_id, buf_id, skb);
+	if (ret) {
 		ath11k_warn(ar->ab, "failed to send mgmt frame: %d\n", ret);
-		जाओ err_unmap_buf;
-	पूर्ण
+		goto err_unmap_buf;
+	}
 
-	वापस 0;
+	return 0;
 
 err_unmap_buf:
 	dma_unmap_single(ab->dev, ATH11K_SKB_CB(skb)->paddr,
 			 skb->len, DMA_TO_DEVICE);
-err_मुक्त_idr:
+err_free_idr:
 	spin_lock_bh(&ar->txmgmt_idr_lock);
-	idr_हटाओ(&ar->txmgmt_idr, buf_id);
+	idr_remove(&ar->txmgmt_idr, buf_id);
 	spin_unlock_bh(&ar->txmgmt_idr_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ath11k_mgmt_over_wmi_tx_purge(काष्ठा ath11k *ar)
-अणु
-	काष्ठा sk_buff *skb;
+static void ath11k_mgmt_over_wmi_tx_purge(struct ath11k *ar)
+{
+	struct sk_buff *skb;
 
-	जबतक ((skb = skb_dequeue(&ar->wmi_mgmt_tx_queue)) != शून्य)
-		ieee80211_मुक्त_txskb(ar->hw, skb);
-पूर्ण
+	while ((skb = skb_dequeue(&ar->wmi_mgmt_tx_queue)) != NULL)
+		ieee80211_free_txskb(ar->hw, skb);
+}
 
-अटल व्योम ath11k_mgmt_over_wmi_tx_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ath11k *ar = container_of(work, काष्ठा ath11k, wmi_mgmt_tx_work);
-	काष्ठा ath11k_skb_cb *skb_cb;
-	काष्ठा ath11k_vअगर *arvअगर;
-	काष्ठा sk_buff *skb;
-	पूर्णांक ret;
+static void ath11k_mgmt_over_wmi_tx_work(struct work_struct *work)
+{
+	struct ath11k *ar = container_of(work, struct ath11k, wmi_mgmt_tx_work);
+	struct ath11k_skb_cb *skb_cb;
+	struct ath11k_vif *arvif;
+	struct sk_buff *skb;
+	int ret;
 
-	जबतक ((skb = skb_dequeue(&ar->wmi_mgmt_tx_queue)) != शून्य) अणु
+	while ((skb = skb_dequeue(&ar->wmi_mgmt_tx_queue)) != NULL) {
 		skb_cb = ATH11K_SKB_CB(skb);
-		अगर (!skb_cb->vअगर) अणु
+		if (!skb_cb->vif) {
 			ath11k_warn(ar->ab, "no vif found for mgmt frame\n");
-			ieee80211_मुक्त_txskb(ar->hw, skb);
-			जारी;
-		पूर्ण
+			ieee80211_free_txskb(ar->hw, skb);
+			continue;
+		}
 
-		arvअगर = ath11k_vअगर_to_arvअगर(skb_cb->vअगर);
-		अगर (ar->allocated_vdev_map & (1LL << arvअगर->vdev_id) &&
-		    arvअगर->is_started) अणु
-			ret = ath11k_mac_mgmt_tx_wmi(ar, arvअगर, skb);
-			अगर (ret) अणु
+		arvif = ath11k_vif_to_arvif(skb_cb->vif);
+		if (ar->allocated_vdev_map & (1LL << arvif->vdev_id) &&
+		    arvif->is_started) {
+			ret = ath11k_mac_mgmt_tx_wmi(ar, arvif, skb);
+			if (ret) {
 				ath11k_warn(ar->ab, "failed to tx mgmt frame, vdev_id %d :%d\n",
-					    arvअगर->vdev_id, ret);
-				ieee80211_मुक्त_txskb(ar->hw, skb);
-			पूर्ण अन्यथा अणु
+					    arvif->vdev_id, ret);
+				ieee80211_free_txskb(ar->hw, skb);
+			} else {
 				atomic_inc(&ar->num_pending_mgmt_tx);
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			ath11k_warn(ar->ab,
 				    "dropping mgmt frame for vdev %d, is_started %d\n",
-				    arvअगर->vdev_id,
-				    arvअगर->is_started);
-			ieee80211_मुक्त_txskb(ar->hw, skb);
-		पूर्ण
-	पूर्ण
-पूर्ण
+				    arvif->vdev_id,
+				    arvif->is_started);
+			ieee80211_free_txskb(ar->hw, skb);
+		}
+	}
+}
 
-अटल पूर्णांक ath11k_mac_mgmt_tx(काष्ठा ath11k *ar, काष्ठा sk_buff *skb,
+static int ath11k_mac_mgmt_tx(struct ath11k *ar, struct sk_buff *skb,
 			      bool is_prb_rsp)
-अणु
-	काष्ठा sk_buff_head *q = &ar->wmi_mgmt_tx_queue;
+{
+	struct sk_buff_head *q = &ar->wmi_mgmt_tx_queue;
 
-	अगर (test_bit(ATH11K_FLAG_CRASH_FLUSH, &ar->ab->dev_flags))
-		वापस -ESHUTDOWN;
+	if (test_bit(ATH11K_FLAG_CRASH_FLUSH, &ar->ab->dev_flags))
+		return -ESHUTDOWN;
 
 	/* Drop probe response packets when the pending management tx
 	 * count has reached a certain threshold, so as to prioritize
-	 * other mgmt packets like auth and assoc to be sent on समय
-	 * क्रम establishing successful connections.
+	 * other mgmt packets like auth and assoc to be sent on time
+	 * for establishing successful connections.
 	 */
-	अगर (is_prb_rsp &&
-	    atomic_पढ़ो(&ar->num_pending_mgmt_tx) > ATH11K_PRB_RSP_DROP_THRESHOLD) अणु
+	if (is_prb_rsp &&
+	    atomic_read(&ar->num_pending_mgmt_tx) > ATH11K_PRB_RSP_DROP_THRESHOLD) {
 		ath11k_warn(ar->ab,
 			    "dropping probe response as pending queue is almost full\n");
-		वापस -ENOSPC;
-	पूर्ण
+		return -ENOSPC;
+	}
 
-	अगर (skb_queue_len_lockless(q) >= ATH11K_TX_MGMT_NUM_PENDING_MAX) अणु
+	if (skb_queue_len_lockless(q) >= ATH11K_TX_MGMT_NUM_PENDING_MAX) {
 		ath11k_warn(ar->ab, "mgmt tx queue is full\n");
-		वापस -ENOSPC;
-	पूर्ण
+		return -ENOSPC;
+	}
 
 	skb_queue_tail(q, skb);
 	ieee80211_queue_work(ar->hw, &ar->wmi_mgmt_tx_work);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ath11k_mac_op_tx(काष्ठा ieee80211_hw *hw,
-			     काष्ठा ieee80211_tx_control *control,
-			     काष्ठा sk_buff *skb)
-अणु
-	काष्ठा ath11k_skb_cb *skb_cb = ATH11K_SKB_CB(skb);
-	काष्ठा ath11k *ar = hw->priv;
-	काष्ठा ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
-	काष्ठा ieee80211_vअगर *vअगर = info->control.vअगर;
-	काष्ठा ath11k_vअगर *arvअगर = ath11k_vअगर_to_arvअगर(vअगर);
-	काष्ठा ieee80211_hdr *hdr = (काष्ठा ieee80211_hdr *)skb->data;
-	काष्ठा ieee80211_key_conf *key = info->control.hw_key;
+static void ath11k_mac_op_tx(struct ieee80211_hw *hw,
+			     struct ieee80211_tx_control *control,
+			     struct sk_buff *skb)
+{
+	struct ath11k_skb_cb *skb_cb = ATH11K_SKB_CB(skb);
+	struct ath11k *ar = hw->priv;
+	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
+	struct ieee80211_vif *vif = info->control.vif;
+	struct ath11k_vif *arvif = ath11k_vif_to_arvif(vif);
+	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *)skb->data;
+	struct ieee80211_key_conf *key = info->control.hw_key;
 	u32 info_flags = info->flags;
 	bool is_prb_rsp;
-	पूर्णांक ret;
+	int ret;
 
-	स_रखो(skb_cb, 0, माप(*skb_cb));
-	skb_cb->vअगर = vअगर;
+	memset(skb_cb, 0, sizeof(*skb_cb));
+	skb_cb->vif = vif;
 
-	अगर (key) अणु
+	if (key) {
 		skb_cb->cipher = key->cipher;
 		skb_cb->flags |= ATH11K_SKB_CIPHER_SET;
-	पूर्ण
+	}
 
-	अगर (info_flags & IEEE80211_TX_CTL_HW_80211_ENCAP) अणु
+	if (info_flags & IEEE80211_TX_CTL_HW_80211_ENCAP) {
 		skb_cb->flags |= ATH11K_SKB_HW_80211_ENCAP;
-	पूर्ण अन्यथा अगर (ieee80211_is_mgmt(hdr->frame_control)) अणु
+	} else if (ieee80211_is_mgmt(hdr->frame_control)) {
 		is_prb_rsp = ieee80211_is_probe_resp(hdr->frame_control);
 		ret = ath11k_mac_mgmt_tx(ar, skb, is_prb_rsp);
-		अगर (ret) अणु
+		if (ret) {
 			ath11k_warn(ar->ab, "failed to queue management frame %d\n",
 				    ret);
-			ieee80211_मुक्त_txskb(ar->hw, skb);
-		पूर्ण
-		वापस;
-	पूर्ण
+			ieee80211_free_txskb(ar->hw, skb);
+		}
+		return;
+	}
 
-	ret = ath11k_dp_tx(ar, arvअगर, skb);
-	अगर (ret) अणु
+	ret = ath11k_dp_tx(ar, arvif, skb);
+	if (ret) {
 		ath11k_warn(ar->ab, "failed to transmit frame %d\n", ret);
-		ieee80211_मुक्त_txskb(ar->hw, skb);
-	पूर्ण
-पूर्ण
+		ieee80211_free_txskb(ar->hw, skb);
+	}
+}
 
-व्योम ath11k_mac_drain_tx(काष्ठा ath11k *ar)
-अणु
-	/* make sure rcu-रक्षित mac80211 tx path itself is drained */
+void ath11k_mac_drain_tx(struct ath11k *ar)
+{
+	/* make sure rcu-protected mac80211 tx path itself is drained */
 	synchronize_net();
 
 	cancel_work_sync(&ar->wmi_mgmt_tx_work);
 	ath11k_mgmt_over_wmi_tx_purge(ar);
-पूर्ण
+}
 
-अटल पूर्णांक ath11k_mac_config_mon_status_शेष(काष्ठा ath11k *ar, bool enable)
-अणु
-	काष्ठा htt_rx_ring_tlv_filter tlv_filter = अणु0पूर्ण;
-	काष्ठा ath11k_base *ab = ar->ab;
-	पूर्णांक i, ret = 0;
+static int ath11k_mac_config_mon_status_default(struct ath11k *ar, bool enable)
+{
+	struct htt_rx_ring_tlv_filter tlv_filter = {0};
+	struct ath11k_base *ab = ar->ab;
+	int i, ret = 0;
 	u32 ring_id;
 
-	अगर (enable) अणु
-		tlv_filter = ath11k_mac_mon_status_filter_शेष;
-		अगर (ath11k_debugfs_rx_filter(ar))
+	if (enable) {
+		tlv_filter = ath11k_mac_mon_status_filter_default;
+		if (ath11k_debugfs_rx_filter(ar))
 			tlv_filter.rx_filter = ath11k_debugfs_rx_filter(ar);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < ab->hw_params.num_rxmda_per_pdev; i++) अणु
+	for (i = 0; i < ab->hw_params.num_rxmda_per_pdev; i++) {
 		ring_id = ar->dp.rx_mon_status_refill_ring[i].refill_buf_ring.ring_id;
 		ret = ath11k_dp_tx_htt_rx_filter_setup(ar->ab, ring_id,
 						       ar->dp.mac_id + i,
 						       HAL_RXDMA_MONITOR_STATUS,
 						       DP_RX_BUFFER_SIZE,
 						       &tlv_filter);
-	पूर्ण
+	}
 
-	अगर (enable && !ar->ab->hw_params.rxdma1_enable)
-		mod_समयr(&ar->ab->mon_reap_समयr, jअगरfies +
-			  msecs_to_jअगरfies(ATH11K_MON_TIMER_INTERVAL));
+	if (enable && !ar->ab->hw_params.rxdma1_enable)
+		mod_timer(&ar->ab->mon_reap_timer, jiffies +
+			  msecs_to_jiffies(ATH11K_MON_TIMER_INTERVAL));
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ath11k_mac_op_start(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा ath11k *ar = hw->priv;
-	काष्ठा ath11k_base *ab = ar->ab;
-	काष्ठा ath11k_pdev *pdev = ar->pdev;
-	पूर्णांक ret;
+static int ath11k_mac_op_start(struct ieee80211_hw *hw)
+{
+	struct ath11k *ar = hw->priv;
+	struct ath11k_base *ab = ar->ab;
+	struct ath11k_pdev *pdev = ar->pdev;
+	int ret;
 
 	ath11k_mac_drain_tx(ar);
 	mutex_lock(&ar->conf_mutex);
 
-	चयन (ar->state) अणु
-	हाल ATH11K_STATE_OFF:
+	switch (ar->state) {
+	case ATH11K_STATE_OFF:
 		ar->state = ATH11K_STATE_ON;
-		अवरोध;
-	हाल ATH11K_STATE_RESTARTING:
+		break;
+	case ATH11K_STATE_RESTARTING:
 		ar->state = ATH11K_STATE_RESTARTED;
-		अवरोध;
-	हाल ATH11K_STATE_RESTARTED:
-	हाल ATH11K_STATE_WEDGED:
-	हाल ATH11K_STATE_ON:
+		break;
+	case ATH11K_STATE_RESTARTED:
+	case ATH11K_STATE_WEDGED:
+	case ATH11K_STATE_ON:
 		WARN_ON(1);
 		ret = -EINVAL;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	ret = ath11k_wmi_pdev_set_param(ar, WMI_PDEV_PARAM_PMF_QOS,
 					1, pdev->pdev_id);
 
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_err(ar->ab, "failed to enable PMF QOS: (%d\n", ret);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	ret = ath11k_wmi_pdev_set_param(ar, WMI_PDEV_PARAM_DYNAMIC_BW, 1,
 					pdev->pdev_id);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_err(ar->ab, "failed to enable dynamic bw: %d\n", ret);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	ret = ath11k_wmi_pdev_set_param(ar, WMI_PDEV_PARAM_ARP_AC_OVERRIDE,
 					0, pdev->pdev_id);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_err(ab, "failed to set ac override for ARP: %d\n",
 			   ret);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	ret = ath11k_wmi_send_dfs_phyerr_offload_enable_cmd(ar, pdev->pdev_id);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_err(ab, "failed to offload radar detection: %d\n",
 			   ret);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	ret = ath11k_dp_tx_htt_h2t_ppdu_stats_req(ar,
 						  HTT_PPDU_STATS_TAG_DEFAULT);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_err(ab, "failed to req ppdu stats: %d\n", ret);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	ret = ath11k_wmi_pdev_set_param(ar, WMI_PDEV_PARAM_MESH_MCAST_ENABLE,
 					1, pdev->pdev_id);
 
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_err(ar->ab, "failed to enable MESH MCAST ENABLE: (%d\n", ret);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	__ath11k_set_antenna(ar, ar->cfg_tx_chainmask, ar->cfg_rx_chainmask);
 
@@ -4459,54 +4458,54 @@ err_मुक्त_idr:
 	ar->num_peers = 0;
 	ar->allocated_vdev_map = 0;
 
-	/* Configure monitor status ring with शेष rx_filter to get rx status
+	/* Configure monitor status ring with default rx_filter to get rx status
 	 * such as rssi, rx_duration.
 	 */
-	ret = ath11k_mac_config_mon_status_शेष(ar, true);
-	अगर (ret) अणु
+	ret = ath11k_mac_config_mon_status_default(ar, true);
+	if (ret) {
 		ath11k_err(ab, "failed to configure monitor status ring with default rx_filter: (%d)\n",
 			   ret);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	/* Configure the hash seed क्रम hash based reo dest ring selection */
+	/* Configure the hash seed for hash based reo dest ring selection */
 	ath11k_wmi_pdev_lro_cfg(ar, ar->pdev->pdev_id);
 
 	/* allow device to enter IMPS */
-	अगर (ab->hw_params.idle_ps) अणु
+	if (ab->hw_params.idle_ps) {
 		ret = ath11k_wmi_pdev_set_param(ar, WMI_PDEV_PARAM_IDLE_PS_CONFIG,
 						1, pdev->pdev_id);
-		अगर (ret) अणु
+		if (ret) {
 			ath11k_err(ab, "failed to enable idle ps: %d\n", ret);
-			जाओ err;
-		पूर्ण
-	पूर्ण
+			goto err;
+		}
+	}
 
 	mutex_unlock(&ar->conf_mutex);
 
-	rcu_assign_poपूर्णांकer(ab->pdevs_active[ar->pdev_idx],
+	rcu_assign_pointer(ab->pdevs_active[ar->pdev_idx],
 			   &ab->pdevs[ar->pdev_idx]);
 
-	वापस 0;
+	return 0;
 
 err:
 	ar->state = ATH11K_STATE_OFF;
 	mutex_unlock(&ar->conf_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ath11k_mac_op_stop(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा ath11k *ar = hw->priv;
-	काष्ठा htt_ppdu_stats_info *ppdu_stats, *पंचांगp;
-	पूर्णांक ret;
+static void ath11k_mac_op_stop(struct ieee80211_hw *hw)
+{
+	struct ath11k *ar = hw->priv;
+	struct htt_ppdu_stats_info *ppdu_stats, *tmp;
+	int ret;
 
 	ath11k_mac_drain_tx(ar);
 
 	mutex_lock(&ar->conf_mutex);
-	ret = ath11k_mac_config_mon_status_शेष(ar, false);
-	अगर (ret)
+	ret = ath11k_mac_config_mon_status_default(ar, false);
+	if (ret)
 		ath11k_err(ar->ab, "failed to clear rx_filter for monitor status ring: (%d)\n",
 			   ret);
 
@@ -4514,61 +4513,61 @@ err:
 	ar->state = ATH11K_STATE_OFF;
 	mutex_unlock(&ar->conf_mutex);
 
-	cancel_delayed_work_sync(&ar->scan.समयout);
+	cancel_delayed_work_sync(&ar->scan.timeout);
 	cancel_work_sync(&ar->regd_update_work);
 
 	spin_lock_bh(&ar->data_lock);
-	list_क्रम_each_entry_safe(ppdu_stats, पंचांगp, &ar->ppdu_stats_info, list) अणु
+	list_for_each_entry_safe(ppdu_stats, tmp, &ar->ppdu_stats_info, list) {
 		list_del(&ppdu_stats->list);
-		kमुक्त(ppdu_stats);
-	पूर्ण
+		kfree(ppdu_stats);
+	}
 	spin_unlock_bh(&ar->data_lock);
 
-	rcu_assign_poपूर्णांकer(ar->ab->pdevs_active[ar->pdev_idx], शून्य);
+	rcu_assign_pointer(ar->ab->pdevs_active[ar->pdev_idx], NULL);
 
 	synchronize_rcu();
 
 	atomic_set(&ar->num_pending_mgmt_tx, 0);
-पूर्ण
+}
 
-अटल व्योम
-ath11k_mac_setup_vdev_create_params(काष्ठा ath11k_vअगर *arvअगर,
-				    काष्ठा vdev_create_params *params)
-अणु
-	काष्ठा ath11k *ar = arvअगर->ar;
-	काष्ठा ath11k_pdev *pdev = ar->pdev;
+static void
+ath11k_mac_setup_vdev_create_params(struct ath11k_vif *arvif,
+				    struct vdev_create_params *params)
+{
+	struct ath11k *ar = arvif->ar;
+	struct ath11k_pdev *pdev = ar->pdev;
 
-	params->अगर_id = arvअगर->vdev_id;
-	params->type = arvअगर->vdev_type;
-	params->subtype = arvअगर->vdev_subtype;
+	params->if_id = arvif->vdev_id;
+	params->type = arvif->vdev_type;
+	params->subtype = arvif->vdev_subtype;
 	params->pdev_id = pdev->pdev_id;
 
-	अगर (pdev->cap.supported_bands & WMI_HOST_WLAN_2G_CAP) अणु
+	if (pdev->cap.supported_bands & WMI_HOST_WLAN_2G_CAP) {
 		params->chains[NL80211_BAND_2GHZ].tx = ar->num_tx_chains;
 		params->chains[NL80211_BAND_2GHZ].rx = ar->num_rx_chains;
-	पूर्ण
-	अगर (pdev->cap.supported_bands & WMI_HOST_WLAN_5G_CAP) अणु
+	}
+	if (pdev->cap.supported_bands & WMI_HOST_WLAN_5G_CAP) {
 		params->chains[NL80211_BAND_5GHZ].tx = ar->num_tx_chains;
 		params->chains[NL80211_BAND_5GHZ].rx = ar->num_rx_chains;
-	पूर्ण
-	अगर (pdev->cap.supported_bands & WMI_HOST_WLAN_5G_CAP &&
-	    ar->supports_6ghz) अणु
+	}
+	if (pdev->cap.supported_bands & WMI_HOST_WLAN_5G_CAP &&
+	    ar->supports_6ghz) {
 		params->chains[NL80211_BAND_6GHZ].tx = ar->num_tx_chains;
 		params->chains[NL80211_BAND_6GHZ].rx = ar->num_rx_chains;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल u32
-ath11k_mac_prepare_he_mode(काष्ठा ath11k_pdev *pdev, u32 vअगरtype)
-अणु
-	काष्ठा ath11k_pdev_cap *pdev_cap = &pdev->cap;
-	काष्ठा ath11k_band_cap *cap_band = शून्य;
-	u32 *hecap_phy_ptr = शून्य;
+static u32
+ath11k_mac_prepare_he_mode(struct ath11k_pdev *pdev, u32 viftype)
+{
+	struct ath11k_pdev_cap *pdev_cap = &pdev->cap;
+	struct ath11k_band_cap *cap_band = NULL;
+	u32 *hecap_phy_ptr = NULL;
 	u32 hemode = 0;
 
-	अगर (pdev->cap.supported_bands & WMI_HOST_WLAN_2G_CAP)
+	if (pdev->cap.supported_bands & WMI_HOST_WLAN_2G_CAP)
 		cap_band = &pdev_cap->band[NL80211_BAND_2GHZ];
-	अन्यथा
+	else
 		cap_band = &pdev_cap->band[NL80211_BAND_5GHZ];
 
 	hecap_phy_ptr = &cap_band->he_cap_phy_info[0];
@@ -4578,393 +4577,393 @@ ath11k_mac_prepare_he_mode(काष्ठा ath11k_pdev *pdev, u32 vअगरt
 		 FIELD_PREP(HE_MODE_UL_MUMIMO, HECAP_PHY_ULMUMIMO_GET(hecap_phy_ptr));
 
 	/* TODO WDS and other modes */
-	अगर (vअगरtype == NL80211_IFTYPE_AP) अणु
+	if (viftype == NL80211_IFTYPE_AP) {
 		hemode |= FIELD_PREP(HE_MODE_MU_TX_BFER,
 			  HECAP_PHY_MUBFMR_GET(hecap_phy_ptr)) |
 			  FIELD_PREP(HE_MODE_DL_OFDMA, HE_DL_MUOFDMA_ENABLE) |
 			  FIELD_PREP(HE_MODE_UL_OFDMA, HE_UL_MUOFDMA_ENABLE);
-	पूर्ण अन्यथा अणु
+	} else {
 		hemode |= FIELD_PREP(HE_MODE_MU_TX_BFEE, HE_MU_BFEE_ENABLE);
-	पूर्ण
+	}
 
-	वापस hemode;
-पूर्ण
+	return hemode;
+}
 
-अटल पूर्णांक ath11k_set_he_mu_sounding_mode(काष्ठा ath11k *ar,
-					  काष्ठा ath11k_vअगर *arvअगर)
-अणु
+static int ath11k_set_he_mu_sounding_mode(struct ath11k *ar,
+					  struct ath11k_vif *arvif)
+{
 	u32 param_id, param_value;
-	काष्ठा ath11k_base *ab = ar->ab;
-	पूर्णांक ret = 0;
+	struct ath11k_base *ab = ar->ab;
+	int ret = 0;
 
 	param_id = WMI_VDEV_PARAM_SET_HEMU_MODE;
-	param_value = ath11k_mac_prepare_he_mode(ar->pdev, arvअगर->vअगर->type);
-	ret = ath11k_wmi_vdev_set_param_cmd(ar, arvअगर->vdev_id,
+	param_value = ath11k_mac_prepare_he_mode(ar->pdev, arvif->vif->type);
+	ret = ath11k_wmi_vdev_set_param_cmd(ar, arvif->vdev_id,
 					    param_id, param_value);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ab, "failed to set vdev %d HE MU mode: %d param_value %x\n",
-			    arvअगर->vdev_id, ret, param_value);
-		वापस ret;
-	पूर्ण
+			    arvif->vdev_id, ret, param_value);
+		return ret;
+	}
 	param_id = WMI_VDEV_PARAM_SET_HE_SOUNDING_MODE;
 	param_value =
 		FIELD_PREP(HE_VHT_SOUNDING_MODE, HE_VHT_SOUNDING_MODE_ENABLE) |
 		FIELD_PREP(HE_TRIG_NONTRIG_SOUNDING_MODE,
 			   HE_TRIG_NONTRIG_SOUNDING_MODE_ENABLE);
-	ret = ath11k_wmi_vdev_set_param_cmd(ar, arvअगर->vdev_id,
+	ret = ath11k_wmi_vdev_set_param_cmd(ar, arvif->vdev_id,
 					    param_id, param_value);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ab, "failed to set vdev %d HE MU mode: %d\n",
-			    arvअगर->vdev_id, ret);
-		वापस ret;
-	पूर्ण
-	वापस ret;
-पूर्ण
+			    arvif->vdev_id, ret);
+		return ret;
+	}
+	return ret;
+}
 
-अटल व्योम ath11k_mac_op_update_vअगर_offload(काष्ठा ieee80211_hw *hw,
-					     काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा ath11k *ar = hw->priv;
-	काष्ठा ath11k_base *ab = ar->ab;
-	काष्ठा ath11k_vअगर *arvअगर = ath11k_vअगर_to_arvअगर(vअगर);
+static void ath11k_mac_op_update_vif_offload(struct ieee80211_hw *hw,
+					     struct ieee80211_vif *vif)
+{
+	struct ath11k *ar = hw->priv;
+	struct ath11k_base *ab = ar->ab;
+	struct ath11k_vif *arvif = ath11k_vif_to_arvif(vif);
 	u32 param_id, param_value;
-	पूर्णांक ret;
+	int ret;
 
 	param_id = WMI_VDEV_PARAM_TX_ENCAP_TYPE;
-	अगर (ath11k_frame_mode != ATH11K_HW_TXRX_ETHERNET ||
-	    (vअगर->type != NL80211_IFTYPE_STATION &&
-	     vअगर->type != NL80211_IFTYPE_AP))
-		vअगर->offload_flags &= ~IEEE80211_OFFLOAD_ENCAP_ENABLED;
+	if (ath11k_frame_mode != ATH11K_HW_TXRX_ETHERNET ||
+	    (vif->type != NL80211_IFTYPE_STATION &&
+	     vif->type != NL80211_IFTYPE_AP))
+		vif->offload_flags &= ~IEEE80211_OFFLOAD_ENCAP_ENABLED;
 
-	अगर (vअगर->offload_flags & IEEE80211_OFFLOAD_ENCAP_ENABLED)
+	if (vif->offload_flags & IEEE80211_OFFLOAD_ENCAP_ENABLED)
 		param_value = ATH11K_HW_TXRX_ETHERNET;
-	अन्यथा अगर (test_bit(ATH11K_FLAG_RAW_MODE, &ab->dev_flags))
+	else if (test_bit(ATH11K_FLAG_RAW_MODE, &ab->dev_flags))
 		param_value = ATH11K_HW_TXRX_RAW;
-	अन्यथा
+	else
 		param_value = ATH11K_HW_TXRX_NATIVE_WIFI;
 
-	ret = ath11k_wmi_vdev_set_param_cmd(ar, arvअगर->vdev_id,
+	ret = ath11k_wmi_vdev_set_param_cmd(ar, arvif->vdev_id,
 					    param_id, param_value);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ab, "failed to set vdev %d tx encap mode: %d\n",
-			    arvअगर->vdev_id, ret);
-		vअगर->offload_flags &= ~IEEE80211_OFFLOAD_ENCAP_ENABLED;
-	पूर्ण
-पूर्ण
+			    arvif->vdev_id, ret);
+		vif->offload_flags &= ~IEEE80211_OFFLOAD_ENCAP_ENABLED;
+	}
+}
 
-अटल पूर्णांक ath11k_mac_op_add_पूर्णांकerface(काष्ठा ieee80211_hw *hw,
-				       काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा ath11k *ar = hw->priv;
-	काष्ठा ath11k_base *ab = ar->ab;
-	काष्ठा ath11k_vअगर *arvअगर = ath11k_vअगर_to_arvअगर(vअगर);
-	काष्ठा vdev_create_params vdev_param = अणु0पूर्ण;
-	काष्ठा peer_create_params peer_param;
+static int ath11k_mac_op_add_interface(struct ieee80211_hw *hw,
+				       struct ieee80211_vif *vif)
+{
+	struct ath11k *ar = hw->priv;
+	struct ath11k_base *ab = ar->ab;
+	struct ath11k_vif *arvif = ath11k_vif_to_arvif(vif);
+	struct vdev_create_params vdev_param = {0};
+	struct peer_create_params peer_param;
 	u32 param_id, param_value;
 	u16 nss;
-	पूर्णांक i;
-	पूर्णांक ret;
-	पूर्णांक bit;
+	int i;
+	int ret;
+	int bit;
 
-	vअगर->driver_flags |= IEEE80211_VIF_SUPPORTS_UAPSD;
+	vif->driver_flags |= IEEE80211_VIF_SUPPORTS_UAPSD;
 
 	mutex_lock(&ar->conf_mutex);
 
-	अगर (vअगर->type == NL80211_IFTYPE_AP &&
-	    ar->num_peers > (ar->max_num_peers - 1)) अणु
+	if (vif->type == NL80211_IFTYPE_AP &&
+	    ar->num_peers > (ar->max_num_peers - 1)) {
 		ath11k_warn(ab, "failed to create vdev due to insufficient peer entry resource in firmware\n");
 		ret = -ENOBUFS;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	अगर (ar->num_created_vdevs > (TARGET_NUM_VDEVS - 1)) अणु
+	if (ar->num_created_vdevs > (TARGET_NUM_VDEVS - 1)) {
 		ath11k_warn(ab, "failed to create vdev, reached max vdev limit %d\n",
 			    TARGET_NUM_VDEVS);
 		ret = -EBUSY;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	स_रखो(arvअगर, 0, माप(*arvअगर));
+	memset(arvif, 0, sizeof(*arvif));
 
-	arvअगर->ar = ar;
-	arvअगर->vअगर = vअगर;
+	arvif->ar = ar;
+	arvif->vif = vif;
 
-	INIT_LIST_HEAD(&arvअगर->list);
-	INIT_DELAYED_WORK(&arvअगर->connection_loss_work,
-			  ath11k_mac_vअगर_sta_connection_loss_work);
+	INIT_LIST_HEAD(&arvif->list);
+	INIT_DELAYED_WORK(&arvif->connection_loss_work,
+			  ath11k_mac_vif_sta_connection_loss_work);
 
-	क्रम (i = 0; i < ARRAY_SIZE(arvअगर->bitrate_mask.control); i++) अणु
-		arvअगर->bitrate_mask.control[i].legacy = 0xffffffff;
-		स_रखो(arvअगर->bitrate_mask.control[i].ht_mcs, 0xff,
-		       माप(arvअगर->bitrate_mask.control[i].ht_mcs));
-		स_रखो(arvअगर->bitrate_mask.control[i].vht_mcs, 0xff,
-		       माप(arvअगर->bitrate_mask.control[i].vht_mcs));
-	पूर्ण
+	for (i = 0; i < ARRAY_SIZE(arvif->bitrate_mask.control); i++) {
+		arvif->bitrate_mask.control[i].legacy = 0xffffffff;
+		memset(arvif->bitrate_mask.control[i].ht_mcs, 0xff,
+		       sizeof(arvif->bitrate_mask.control[i].ht_mcs));
+		memset(arvif->bitrate_mask.control[i].vht_mcs, 0xff,
+		       sizeof(arvif->bitrate_mask.control[i].vht_mcs));
+	}
 
-	bit = __ffs64(ab->मुक्त_vdev_map);
+	bit = __ffs64(ab->free_vdev_map);
 
-	arvअगर->vdev_id = bit;
-	arvअगर->vdev_subtype = WMI_VDEV_SUBTYPE_NONE;
+	arvif->vdev_id = bit;
+	arvif->vdev_subtype = WMI_VDEV_SUBTYPE_NONE;
 
-	चयन (vअगर->type) अणु
-	हाल NL80211_IFTYPE_UNSPECIFIED:
-	हाल NL80211_IFTYPE_STATION:
-		arvअगर->vdev_type = WMI_VDEV_TYPE_STA;
-		अवरोध;
-	हाल NL80211_IFTYPE_MESH_POINT:
-		arvअगर->vdev_subtype = WMI_VDEV_SUBTYPE_MESH_11S;
+	switch (vif->type) {
+	case NL80211_IFTYPE_UNSPECIFIED:
+	case NL80211_IFTYPE_STATION:
+		arvif->vdev_type = WMI_VDEV_TYPE_STA;
+		break;
+	case NL80211_IFTYPE_MESH_POINT:
+		arvif->vdev_subtype = WMI_VDEV_SUBTYPE_MESH_11S;
 		fallthrough;
-	हाल NL80211_IFTYPE_AP:
-		arvअगर->vdev_type = WMI_VDEV_TYPE_AP;
-		अवरोध;
-	हाल NL80211_IFTYPE_MONITOR:
-		arvअगर->vdev_type = WMI_VDEV_TYPE_MONITOR;
-		अवरोध;
-	शेष:
+	case NL80211_IFTYPE_AP:
+		arvif->vdev_type = WMI_VDEV_TYPE_AP;
+		break;
+	case NL80211_IFTYPE_MONITOR:
+		arvif->vdev_type = WMI_VDEV_TYPE_MONITOR;
+		break;
+	default:
 		WARN_ON(1);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	ath11k_dbg(ar->ab, ATH11K_DBG_MAC, "mac add interface id %d type %d subtype %d map %llx\n",
-		   arvअगर->vdev_id, arvअगर->vdev_type, arvअगर->vdev_subtype,
-		   ab->मुक्त_vdev_map);
+		   arvif->vdev_id, arvif->vdev_type, arvif->vdev_subtype,
+		   ab->free_vdev_map);
 
-	vअगर->cab_queue = arvअगर->vdev_id % (ATH11K_HW_MAX_QUEUES - 1);
-	क्रम (i = 0; i < ARRAY_SIZE(vअगर->hw_queue); i++)
-		vअगर->hw_queue[i] = i % (ATH11K_HW_MAX_QUEUES - 1);
+	vif->cab_queue = arvif->vdev_id % (ATH11K_HW_MAX_QUEUES - 1);
+	for (i = 0; i < ARRAY_SIZE(vif->hw_queue); i++)
+		vif->hw_queue[i] = i % (ATH11K_HW_MAX_QUEUES - 1);
 
-	ath11k_mac_setup_vdev_create_params(arvअगर, &vdev_param);
+	ath11k_mac_setup_vdev_create_params(arvif, &vdev_param);
 
-	ret = ath11k_wmi_vdev_create(ar, vअगर->addr, &vdev_param);
-	अगर (ret) अणु
+	ret = ath11k_wmi_vdev_create(ar, vif->addr, &vdev_param);
+	if (ret) {
 		ath11k_warn(ab, "failed to create WMI vdev %d: %d\n",
-			    arvअगर->vdev_id, ret);
-		जाओ err;
-	पूर्ण
+			    arvif->vdev_id, ret);
+		goto err;
+	}
 
 	ar->num_created_vdevs++;
 	ath11k_dbg(ab, ATH11K_DBG_MAC, "vdev %pM created, vdev_id %d\n",
-		   vअगर->addr, arvअगर->vdev_id);
-	ar->allocated_vdev_map |= 1LL << arvअगर->vdev_id;
-	ab->मुक्त_vdev_map &= ~(1LL << arvअगर->vdev_id);
+		   vif->addr, arvif->vdev_id);
+	ar->allocated_vdev_map |= 1LL << arvif->vdev_id;
+	ab->free_vdev_map &= ~(1LL << arvif->vdev_id);
 
 	spin_lock_bh(&ar->data_lock);
-	list_add(&arvअगर->list, &ar->arvअगरs);
+	list_add(&arvif->list, &ar->arvifs);
 	spin_unlock_bh(&ar->data_lock);
 
-	ath11k_mac_op_update_vअगर_offload(hw, vअगर);
+	ath11k_mac_op_update_vif_offload(hw, vif);
 
 	nss = get_num_chains(ar->cfg_tx_chainmask) ? : 1;
-	ret = ath11k_wmi_vdev_set_param_cmd(ar, arvअगर->vdev_id,
+	ret = ath11k_wmi_vdev_set_param_cmd(ar, arvif->vdev_id,
 					    WMI_VDEV_PARAM_NSS, nss);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ab, "failed to set vdev %d chainmask 0x%x, nss %d :%d\n",
-			    arvअगर->vdev_id, ar->cfg_tx_chainmask, nss, ret);
-		जाओ err_vdev_del;
-	पूर्ण
+			    arvif->vdev_id, ar->cfg_tx_chainmask, nss, ret);
+		goto err_vdev_del;
+	}
 
-	चयन (arvअगर->vdev_type) अणु
-	हाल WMI_VDEV_TYPE_AP:
-		peer_param.vdev_id = arvअगर->vdev_id;
-		peer_param.peer_addr = vअगर->addr;
+	switch (arvif->vdev_type) {
+	case WMI_VDEV_TYPE_AP:
+		peer_param.vdev_id = arvif->vdev_id;
+		peer_param.peer_addr = vif->addr;
 		peer_param.peer_type = WMI_PEER_TYPE_DEFAULT;
-		ret = ath11k_peer_create(ar, arvअगर, शून्य, &peer_param);
-		अगर (ret) अणु
+		ret = ath11k_peer_create(ar, arvif, NULL, &peer_param);
+		if (ret) {
 			ath11k_warn(ab, "failed to vdev %d create peer for AP: %d\n",
-				    arvअगर->vdev_id, ret);
-			जाओ err_vdev_del;
-		पूर्ण
+				    arvif->vdev_id, ret);
+			goto err_vdev_del;
+		}
 
-		ret = ath11k_mac_set_kickout(arvअगर);
-		अगर (ret) अणु
+		ret = ath11k_mac_set_kickout(arvif);
+		if (ret) {
 			ath11k_warn(ar->ab, "failed to set vdev %i kickout parameters: %d\n",
-				    arvअगर->vdev_id, ret);
-			जाओ err_peer_del;
-		पूर्ण
-		अवरोध;
-	हाल WMI_VDEV_TYPE_STA:
+				    arvif->vdev_id, ret);
+			goto err_peer_del;
+		}
+		break;
+	case WMI_VDEV_TYPE_STA:
 		param_id = WMI_STA_PS_PARAM_RX_WAKE_POLICY;
 		param_value = WMI_STA_PS_RX_WAKE_POLICY_WAKE;
-		ret = ath11k_wmi_set_sta_ps_param(ar, arvअगर->vdev_id,
+		ret = ath11k_wmi_set_sta_ps_param(ar, arvif->vdev_id,
 						  param_id, param_value);
-		अगर (ret) अणु
+		if (ret) {
 			ath11k_warn(ar->ab, "failed to set vdev %d RX wake policy: %d\n",
-				    arvअगर->vdev_id, ret);
-			जाओ err_peer_del;
-		पूर्ण
+				    arvif->vdev_id, ret);
+			goto err_peer_del;
+		}
 
 		param_id = WMI_STA_PS_PARAM_TX_WAKE_THRESHOLD;
 		param_value = WMI_STA_PS_TX_WAKE_THRESHOLD_ALWAYS;
-		ret = ath11k_wmi_set_sta_ps_param(ar, arvअगर->vdev_id,
+		ret = ath11k_wmi_set_sta_ps_param(ar, arvif->vdev_id,
 						  param_id, param_value);
-		अगर (ret) अणु
+		if (ret) {
 			ath11k_warn(ar->ab, "failed to set vdev %d TX wake threshold: %d\n",
-				    arvअगर->vdev_id, ret);
-			जाओ err_peer_del;
-		पूर्ण
+				    arvif->vdev_id, ret);
+			goto err_peer_del;
+		}
 
 		param_id = WMI_STA_PS_PARAM_PSPOLL_COUNT;
 		param_value = WMI_STA_PS_PSPOLL_COUNT_NO_MAX;
-		ret = ath11k_wmi_set_sta_ps_param(ar, arvअगर->vdev_id,
+		ret = ath11k_wmi_set_sta_ps_param(ar, arvif->vdev_id,
 						  param_id, param_value);
-		अगर (ret) अणु
+		if (ret) {
 			ath11k_warn(ar->ab, "failed to set vdev %d pspoll count: %d\n",
-				    arvअगर->vdev_id, ret);
-			जाओ err_peer_del;
-		पूर्ण
+				    arvif->vdev_id, ret);
+			goto err_peer_del;
+		}
 
-		ret = ath11k_wmi_pdev_set_ps_mode(ar, arvअगर->vdev_id, false);
-		अगर (ret) अणु
+		ret = ath11k_wmi_pdev_set_ps_mode(ar, arvif->vdev_id, false);
+		if (ret) {
 			ath11k_warn(ar->ab, "failed to disable vdev %d ps mode: %d\n",
-				    arvअगर->vdev_id, ret);
-			जाओ err_peer_del;
-		पूर्ण
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+				    arvif->vdev_id, ret);
+			goto err_peer_del;
+		}
+		break;
+	default:
+		break;
+	}
 
-	arvअगर->txघातer = vअगर->bss_conf.txघातer;
-	ret = ath11k_mac_txघातer_recalc(ar);
-	अगर (ret)
-		जाओ err_peer_del;
+	arvif->txpower = vif->bss_conf.txpower;
+	ret = ath11k_mac_txpower_recalc(ar);
+	if (ret)
+		goto err_peer_del;
 
 	param_id = WMI_VDEV_PARAM_RTS_THRESHOLD;
 	param_value = ar->hw->wiphy->rts_threshold;
-	ret = ath11k_wmi_vdev_set_param_cmd(ar, arvअगर->vdev_id,
+	ret = ath11k_wmi_vdev_set_param_cmd(ar, arvif->vdev_id,
 					    param_id, param_value);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ar->ab, "failed to set rts threshold for vdev %d: %d\n",
-			    arvअगर->vdev_id, ret);
-	पूर्ण
+			    arvif->vdev_id, ret);
+	}
 
-	ath11k_dp_vdev_tx_attach(ar, arvअगर);
+	ath11k_dp_vdev_tx_attach(ar, arvif);
 
 	mutex_unlock(&ar->conf_mutex);
 
-	वापस 0;
+	return 0;
 
 err_peer_del:
-	अगर (arvअगर->vdev_type == WMI_VDEV_TYPE_AP) अणु
-		reinit_completion(&ar->peer_delete_करोne);
+	if (arvif->vdev_type == WMI_VDEV_TYPE_AP) {
+		reinit_completion(&ar->peer_delete_done);
 
-		ret = ath11k_wmi_send_peer_delete_cmd(ar, vअगर->addr,
-						      arvअगर->vdev_id);
-		अगर (ret) अणु
+		ret = ath11k_wmi_send_peer_delete_cmd(ar, vif->addr,
+						      arvif->vdev_id);
+		if (ret) {
 			ath11k_warn(ar->ab, "failed to delete peer vdev_id %d addr %pM\n",
-				    arvअगर->vdev_id, vअगर->addr);
-			जाओ err;
-		पूर्ण
+				    arvif->vdev_id, vif->addr);
+			goto err;
+		}
 
-		ret = ath11k_रुको_क्रम_peer_delete_करोne(ar, arvअगर->vdev_id,
-						       vअगर->addr);
-		अगर (ret)
-			जाओ err;
+		ret = ath11k_wait_for_peer_delete_done(ar, arvif->vdev_id,
+						       vif->addr);
+		if (ret)
+			goto err;
 
 		ar->num_peers--;
-	पूर्ण
+	}
 
 err_vdev_del:
-	ath11k_wmi_vdev_delete(ar, arvअगर->vdev_id);
+	ath11k_wmi_vdev_delete(ar, arvif->vdev_id);
 	ar->num_created_vdevs--;
-	ar->allocated_vdev_map &= ~(1LL << arvअगर->vdev_id);
-	ab->मुक्त_vdev_map |= 1LL << arvअगर->vdev_id;
+	ar->allocated_vdev_map &= ~(1LL << arvif->vdev_id);
+	ab->free_vdev_map |= 1LL << arvif->vdev_id;
 	spin_lock_bh(&ar->data_lock);
-	list_del(&arvअगर->list);
+	list_del(&arvif->list);
 	spin_unlock_bh(&ar->data_lock);
 
 err:
 	mutex_unlock(&ar->conf_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ath11k_mac_vअगर_unref(पूर्णांक buf_id, व्योम *skb, व्योम *ctx)
-अणु
-	काष्ठा ieee80211_vअगर *vअगर = (काष्ठा ieee80211_vअगर *)ctx;
-	काष्ठा ath11k_skb_cb *skb_cb = ATH11K_SKB_CB((काष्ठा sk_buff *)skb);
+static int ath11k_mac_vif_unref(int buf_id, void *skb, void *ctx)
+{
+	struct ieee80211_vif *vif = (struct ieee80211_vif *)ctx;
+	struct ath11k_skb_cb *skb_cb = ATH11K_SKB_CB((struct sk_buff *)skb);
 
-	अगर (skb_cb->vअगर == vअगर)
-		skb_cb->vअगर = शून्य;
+	if (skb_cb->vif == vif)
+		skb_cb->vif = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ath11k_mac_op_हटाओ_पूर्णांकerface(काष्ठा ieee80211_hw *hw,
-					   काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा ath11k *ar = hw->priv;
-	काष्ठा ath11k_vअगर *arvअगर = ath11k_vअगर_to_arvअगर(vअगर);
-	काष्ठा ath11k_base *ab = ar->ab;
-	अचिन्हित दीर्घ समय_left;
-	पूर्णांक ret;
-	पूर्णांक i;
+static void ath11k_mac_op_remove_interface(struct ieee80211_hw *hw,
+					   struct ieee80211_vif *vif)
+{
+	struct ath11k *ar = hw->priv;
+	struct ath11k_vif *arvif = ath11k_vif_to_arvif(vif);
+	struct ath11k_base *ab = ar->ab;
+	unsigned long time_left;
+	int ret;
+	int i;
 
-	cancel_delayed_work_sync(&arvअगर->connection_loss_work);
+	cancel_delayed_work_sync(&arvif->connection_loss_work);
 
 	mutex_lock(&ar->conf_mutex);
 
 	ath11k_dbg(ab, ATH11K_DBG_MAC, "mac remove interface (vdev %d)\n",
-		   arvअगर->vdev_id);
+		   arvif->vdev_id);
 
-	अगर (arvअगर->vdev_type == WMI_VDEV_TYPE_AP) अणु
-		ret = ath11k_peer_delete(ar, arvअगर->vdev_id, vअगर->addr);
-		अगर (ret)
+	if (arvif->vdev_type == WMI_VDEV_TYPE_AP) {
+		ret = ath11k_peer_delete(ar, arvif->vdev_id, vif->addr);
+		if (ret)
 			ath11k_warn(ab, "failed to submit AP self-peer removal on vdev %d: %d\n",
-				    arvअगर->vdev_id, ret);
-	पूर्ण
+				    arvif->vdev_id, ret);
+	}
 
-	reinit_completion(&ar->vdev_delete_करोne);
+	reinit_completion(&ar->vdev_delete_done);
 
-	ret = ath11k_wmi_vdev_delete(ar, arvअगर->vdev_id);
-	अगर (ret) अणु
+	ret = ath11k_wmi_vdev_delete(ar, arvif->vdev_id);
+	if (ret) {
 		ath11k_warn(ab, "failed to delete WMI vdev %d: %d\n",
-			    arvअगर->vdev_id, ret);
-		जाओ err_vdev_del;
-	पूर्ण
+			    arvif->vdev_id, ret);
+		goto err_vdev_del;
+	}
 
-	समय_left = रुको_क्रम_completion_समयout(&ar->vdev_delete_करोne,
+	time_left = wait_for_completion_timeout(&ar->vdev_delete_done,
 						ATH11K_VDEV_DELETE_TIMEOUT_HZ);
-	अगर (समय_left == 0) अणु
+	if (time_left == 0) {
 		ath11k_warn(ab, "Timeout in receiving vdev delete response\n");
-		जाओ err_vdev_del;
-	पूर्ण
+		goto err_vdev_del;
+	}
 
-	ab->मुक्त_vdev_map |= 1LL << (arvअगर->vdev_id);
-	ar->allocated_vdev_map &= ~(1LL << arvअगर->vdev_id);
+	ab->free_vdev_map |= 1LL << (arvif->vdev_id);
+	ar->allocated_vdev_map &= ~(1LL << arvif->vdev_id);
 	ar->num_created_vdevs--;
 
 	ath11k_dbg(ab, ATH11K_DBG_MAC, "vdev %pM deleted, vdev_id %d\n",
-		   vअगर->addr, arvअगर->vdev_id);
+		   vif->addr, arvif->vdev_id);
 
 err_vdev_del:
 	spin_lock_bh(&ar->data_lock);
-	list_del(&arvअगर->list);
+	list_del(&arvif->list);
 	spin_unlock_bh(&ar->data_lock);
 
-	ath11k_peer_cleanup(ar, arvअगर->vdev_id);
+	ath11k_peer_cleanup(ar, arvif->vdev_id);
 
-	idr_क्रम_each(&ar->txmgmt_idr,
-		     ath11k_mac_vअगर_txmgmt_idr_हटाओ, vअगर);
+	idr_for_each(&ar->txmgmt_idr,
+		     ath11k_mac_vif_txmgmt_idr_remove, vif);
 
-	क्रम (i = 0; i < DP_TCL_NUM_RING_MAX; i++) अणु
+	for (i = 0; i < DP_TCL_NUM_RING_MAX; i++) {
 		spin_lock_bh(&ab->dp.tx_ring[i].tx_idr_lock);
-		idr_क्रम_each(&ab->dp.tx_ring[i].txbuf_idr,
-			     ath11k_mac_vअगर_unref, vअगर);
+		idr_for_each(&ab->dp.tx_ring[i].txbuf_idr,
+			     ath11k_mac_vif_unref, vif);
 		spin_unlock_bh(&ab->dp.tx_ring[i].tx_idr_lock);
-	पूर्ण
+	}
 
-	/* Recalc txघातer क्रम reमुख्यing vdev */
-	ath11k_mac_txघातer_recalc(ar);
+	/* Recalc txpower for remaining vdev */
+	ath11k_mac_txpower_recalc(ar);
 	clear_bit(ATH11K_FLAG_MONITOR_ENABLED, &ar->monitor_flags);
 
-	/* TODO: recal traffic छोड़ो state based on the available vdevs */
+	/* TODO: recal traffic pause state based on the available vdevs */
 
 	mutex_unlock(&ar->conf_mutex);
-पूर्ण
+}
 
-/* FIXME: Has to be verअगरied. */
-#घोषणा SUPPORTED_FILTERS			\
+/* FIXME: Has to be verified. */
+#define SUPPORTED_FILTERS			\
 	(FIF_ALLMULTI |				\
 	FIF_CONTROL |				\
 	FIF_PSPOLL |				\
@@ -4973,14 +4972,14 @@ err_vdev_del:
 	FIF_PROBE_REQ |				\
 	FIF_FCSFAIL)
 
-अटल व्योम ath11k_mac_op_configure_filter(काष्ठा ieee80211_hw *hw,
-					   अचिन्हित पूर्णांक changed_flags,
-					   अचिन्हित पूर्णांक *total_flags,
+static void ath11k_mac_op_configure_filter(struct ieee80211_hw *hw,
+					   unsigned int changed_flags,
+					   unsigned int *total_flags,
 					   u64 multicast)
-अणु
-	काष्ठा ath11k *ar = hw->priv;
+{
+	struct ath11k *ar = hw->priv;
 	bool reset_flag = false;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	mutex_lock(&ar->conf_mutex);
 
@@ -4992,25 +4991,25 @@ err_vdev_del:
 	reset_flag = !(ar->filter_flags & FIF_BCN_PRBRESP_PROMISC);
 
 	ret = ath11k_dp_tx_htt_monitor_mode_ring_config(ar, reset_flag);
-	अगर (!ret) अणु
-		अगर (!reset_flag)
+	if (!ret) {
+		if (!reset_flag)
 			set_bit(ATH11K_FLAG_MONITOR_ENABLED, &ar->monitor_flags);
-		अन्यथा
+		else
 			clear_bit(ATH11K_FLAG_MONITOR_ENABLED, &ar->monitor_flags);
-	पूर्ण अन्यथा अणु
+	} else {
 		ath11k_warn(ar->ab,
 			    "fail to set monitor filter: %d\n", ret);
-	पूर्ण
+	}
 	ath11k_dbg(ar->ab, ATH11K_DBG_MAC,
 		   "changed_flags:0x%x, total_flags:0x%x, reset_flag:%d\n",
 		   changed_flags, *total_flags, reset_flag);
 
 	mutex_unlock(&ar->conf_mutex);
-पूर्ण
+}
 
-अटल पूर्णांक ath11k_mac_op_get_antenna(काष्ठा ieee80211_hw *hw, u32 *tx_ant, u32 *rx_ant)
-अणु
-	काष्ठा ath11k *ar = hw->priv;
+static int ath11k_mac_op_get_antenna(struct ieee80211_hw *hw, u32 *tx_ant, u32 *rx_ant)
+{
+	struct ath11k *ar = hw->priv;
 
 	mutex_lock(&ar->conf_mutex);
 
@@ -5019,59 +5018,59 @@ err_vdev_del:
 
 	mutex_unlock(&ar->conf_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ath11k_mac_op_set_antenna(काष्ठा ieee80211_hw *hw, u32 tx_ant, u32 rx_ant)
-अणु
-	काष्ठा ath11k *ar = hw->priv;
-	पूर्णांक ret;
+static int ath11k_mac_op_set_antenna(struct ieee80211_hw *hw, u32 tx_ant, u32 rx_ant)
+{
+	struct ath11k *ar = hw->priv;
+	int ret;
 
 	mutex_lock(&ar->conf_mutex);
 	ret = __ath11k_set_antenna(ar, tx_ant, rx_ant);
 	mutex_unlock(&ar->conf_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ath11k_mac_op_ampdu_action(काष्ठा ieee80211_hw *hw,
-				      काष्ठा ieee80211_vअगर *vअगर,
-				      काष्ठा ieee80211_ampdu_params *params)
-अणु
-	काष्ठा ath11k *ar = hw->priv;
-	पूर्णांक ret = -EINVAL;
+static int ath11k_mac_op_ampdu_action(struct ieee80211_hw *hw,
+				      struct ieee80211_vif *vif,
+				      struct ieee80211_ampdu_params *params)
+{
+	struct ath11k *ar = hw->priv;
+	int ret = -EINVAL;
 
 	mutex_lock(&ar->conf_mutex);
 
-	चयन (params->action) अणु
-	हाल IEEE80211_AMPDU_RX_START:
+	switch (params->action) {
+	case IEEE80211_AMPDU_RX_START:
 		ret = ath11k_dp_rx_ampdu_start(ar, params);
-		अवरोध;
-	हाल IEEE80211_AMPDU_RX_STOP:
+		break;
+	case IEEE80211_AMPDU_RX_STOP:
 		ret = ath11k_dp_rx_ampdu_stop(ar, params);
-		अवरोध;
-	हाल IEEE80211_AMPDU_TX_START:
-	हाल IEEE80211_AMPDU_TX_STOP_CONT:
-	हाल IEEE80211_AMPDU_TX_STOP_FLUSH:
-	हाल IEEE80211_AMPDU_TX_STOP_FLUSH_CONT:
-	हाल IEEE80211_AMPDU_TX_OPERATIONAL:
+		break;
+	case IEEE80211_AMPDU_TX_START:
+	case IEEE80211_AMPDU_TX_STOP_CONT:
+	case IEEE80211_AMPDU_TX_STOP_FLUSH:
+	case IEEE80211_AMPDU_TX_STOP_FLUSH_CONT:
+	case IEEE80211_AMPDU_TX_OPERATIONAL:
 		/* Tx A-MPDU aggregation offloaded to hw/fw so deny mac80211
 		 * Tx aggregation requests.
 		 */
 		ret = -EOPNOTSUPP;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	mutex_unlock(&ar->conf_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ath11k_mac_op_add_chanctx(काष्ठा ieee80211_hw *hw,
-				     काष्ठा ieee80211_chanctx_conf *ctx)
-अणु
-	काष्ठा ath11k *ar = hw->priv;
-	काष्ठा ath11k_base *ab = ar->ab;
+static int ath11k_mac_op_add_chanctx(struct ieee80211_hw *hw,
+				     struct ieee80211_chanctx_conf *ctx)
+{
+	struct ath11k *ar = hw->priv;
+	struct ath11k_base *ab = ar->ab;
 
 	ath11k_dbg(ab, ATH11K_DBG_MAC,
 		   "mac chanctx add freq %u width %d ptr %pK\n",
@@ -5080,22 +5079,22 @@ err_vdev_del:
 	mutex_lock(&ar->conf_mutex);
 
 	spin_lock_bh(&ar->data_lock);
-	/* TODO: In हाल of multiple channel context, populate rx_channel from
-	 * Rx PPDU desc inक्रमmation.
+	/* TODO: In case of multiple channel context, populate rx_channel from
+	 * Rx PPDU desc information.
 	 */
 	ar->rx_channel = ctx->def.chan;
 	spin_unlock_bh(&ar->data_lock);
 
 	mutex_unlock(&ar->conf_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ath11k_mac_op_हटाओ_chanctx(काष्ठा ieee80211_hw *hw,
-					 काष्ठा ieee80211_chanctx_conf *ctx)
-अणु
-	काष्ठा ath11k *ar = hw->priv;
-	काष्ठा ath11k_base *ab = ar->ab;
+static void ath11k_mac_op_remove_chanctx(struct ieee80211_hw *hw,
+					 struct ieee80211_chanctx_conf *ctx)
+{
+	struct ath11k *ar = hw->priv;
+	struct ath11k_base *ab = ar->ab;
 
 	ath11k_dbg(ab, ATH11K_DBG_MAC,
 		   "mac chanctx remove freq %u width %d ptr %pK\n",
@@ -5104,47 +5103,47 @@ err_vdev_del:
 	mutex_lock(&ar->conf_mutex);
 
 	spin_lock_bh(&ar->data_lock);
-	/* TODO: In हाल of there is one more channel context left, populate
-	 * rx_channel with the channel of that reमुख्यing channel context.
+	/* TODO: In case of there is one more channel context left, populate
+	 * rx_channel with the channel of that remaining channel context.
 	 */
-	ar->rx_channel = शून्य;
+	ar->rx_channel = NULL;
 	spin_unlock_bh(&ar->data_lock);
 
 	mutex_unlock(&ar->conf_mutex);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक ath11k_mac_vdev_setup_sync(काष्ठा ath11k *ar)
-अणु
-	lockdep_निश्चित_held(&ar->conf_mutex);
+static inline int ath11k_mac_vdev_setup_sync(struct ath11k *ar)
+{
+	lockdep_assert_held(&ar->conf_mutex);
 
-	अगर (test_bit(ATH11K_FLAG_CRASH_FLUSH, &ar->ab->dev_flags))
-		वापस -ESHUTDOWN;
+	if (test_bit(ATH11K_FLAG_CRASH_FLUSH, &ar->ab->dev_flags))
+		return -ESHUTDOWN;
 
-	अगर (!रुको_क्रम_completion_समयout(&ar->vdev_setup_करोne,
+	if (!wait_for_completion_timeout(&ar->vdev_setup_done,
 					 ATH11K_VDEV_SETUP_TIMEOUT_HZ))
-		वापस -ETIMEDOUT;
+		return -ETIMEDOUT;
 
-	वापस ar->last_wmi_vdev_start_status ? -EINVAL : 0;
-पूर्ण
+	return ar->last_wmi_vdev_start_status ? -EINVAL : 0;
+}
 
-अटल पूर्णांक
-ath11k_mac_vdev_start_restart(काष्ठा ath11k_vअगर *arvअगर,
-			      स्थिर काष्ठा cfg80211_chan_def *chandef,
+static int
+ath11k_mac_vdev_start_restart(struct ath11k_vif *arvif,
+			      const struct cfg80211_chan_def *chandef,
 			      bool restart)
-अणु
-	काष्ठा ath11k *ar = arvअगर->ar;
-	काष्ठा ath11k_base *ab = ar->ab;
-	काष्ठा wmi_vdev_start_req_arg arg = अणुपूर्ण;
-	पूर्णांक he_support = arvअगर->vअगर->bss_conf.he_support;
-	पूर्णांक ret = 0;
+{
+	struct ath11k *ar = arvif->ar;
+	struct ath11k_base *ab = ar->ab;
+	struct wmi_vdev_start_req_arg arg = {};
+	int he_support = arvif->vif->bss_conf.he_support;
+	int ret = 0;
 
-	lockdep_निश्चित_held(&ar->conf_mutex);
+	lockdep_assert_held(&ar->conf_mutex);
 
-	reinit_completion(&ar->vdev_setup_करोne);
+	reinit_completion(&ar->vdev_setup_done);
 
-	arg.vdev_id = arvअगर->vdev_id;
-	arg.dtim_period = arvअगर->dtim_period;
-	arg.bcn_पूर्णांकval = arvअगर->beacon_पूर्णांकerval;
+	arg.vdev_id = arvif->vdev_id;
+	arg.dtim_period = arvif->dtim_period;
+	arg.bcn_intval = arvif->beacon_interval;
 
 	arg.channel.freq = chandef->chan->center_freq;
 	arg.channel.band_center_freq1 = chandef->center_freq1;
@@ -5152,20 +5151,20 @@ ath11k_mac_vdev_start_restart(काष्ठा ath11k_vअगर *arvअगर
 	arg.channel.mode =
 		ath11k_phymodes[chandef->chan->band][chandef->width];
 
-	arg.channel.min_घातer = 0;
-	arg.channel.max_घातer = chandef->chan->max_घातer * 2;
-	arg.channel.max_reg_घातer = chandef->chan->max_reg_घातer * 2;
+	arg.channel.min_power = 0;
+	arg.channel.max_power = chandef->chan->max_power * 2;
+	arg.channel.max_reg_power = chandef->chan->max_reg_power * 2;
 	arg.channel.max_antenna_gain = chandef->chan->max_antenna_gain * 2;
 
 	arg.pref_tx_streams = ar->num_tx_chains;
 	arg.pref_rx_streams = ar->num_rx_chains;
 
-	अगर (arvअगर->vdev_type == WMI_VDEV_TYPE_AP) अणु
-		arg.ssid = arvअगर->u.ap.ssid;
-		arg.ssid_len = arvअगर->u.ap.ssid_len;
-		arg.hidden_ssid = arvअगर->u.ap.hidden_ssid;
+	if (arvif->vdev_type == WMI_VDEV_TYPE_AP) {
+		arg.ssid = arvif->u.ap.ssid;
+		arg.ssid_len = arvif->u.ap.ssid_len;
+		arg.hidden_ssid = arvif->u.ap.hidden_ssid;
 
-		/* For now allow DFS क्रम AP mode */
+		/* For now allow DFS for AP mode */
 		arg.channel.chan_radar =
 			!!(chandef->chan->flags & IEEE80211_CHAN_RADAR);
 
@@ -5175,18 +5174,18 @@ ath11k_mac_vdev_start_restart(काष्ठा ath11k_vअगर *arvअगर
 		arg.channel.passive = arg.channel.chan_radar;
 
 		spin_lock_bh(&ab->base_lock);
-		arg.regकरोमुख्य = ar->ab->dfs_region;
+		arg.regdomain = ar->ab->dfs_region;
 		spin_unlock_bh(&ab->base_lock);
 
-		अगर (he_support) अणु
-			ret = ath11k_set_he_mu_sounding_mode(ar, arvअगर);
-			अगर (ret) अणु
+		if (he_support) {
+			ret = ath11k_set_he_mu_sounding_mode(ar, arvif);
+			if (ret) {
 				ath11k_warn(ar->ab, "failed to set he mode vdev %i\n",
 					    arg.vdev_id);
-				वापस ret;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return ret;
+			}
+		}
+	}
 
 	arg.channel.passive |= !!(chandef->chan->flags & IEEE80211_CHAN_NO_IR);
 
@@ -5196,247 +5195,247 @@ ath11k_mac_vdev_start_restart(काष्ठा ath11k_vअगर *arvअगर
 		   ath11k_wmi_phymode_str(arg.channel.mode));
 
 	ret = ath11k_wmi_vdev_start(ar, &arg, restart);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ar->ab, "failed to %s WMI vdev %i\n",
 			    restart ? "restart" : "start", arg.vdev_id);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = ath11k_mac_vdev_setup_sync(ar);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ab, "failed to synchronize setup for vdev %i %s: %d\n",
 			    arg.vdev_id, restart ? "restart" : "start", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ar->num_started_vdevs++;
 	ath11k_dbg(ab, ATH11K_DBG_MAC,  "vdev %pM started, vdev_id %d\n",
-		   arvअगर->vअगर->addr, arvअगर->vdev_id);
+		   arvif->vif->addr, arvif->vdev_id);
 
-	/* Enable CAC Flag in the driver by checking the channel DFS cac समय,
-	 * i.e dfs_cac_ms value which will be valid only क्रम radar channels
+	/* Enable CAC Flag in the driver by checking the channel DFS cac time,
+	 * i.e dfs_cac_ms value which will be valid only for radar channels
 	 * and state as NL80211_DFS_USABLE which indicates CAC needs to be
-	 * करोne beक्रमe channel usage. This flags is used to drop rx packets.
+	 * done before channel usage. This flags is used to drop rx packets.
 	 * during CAC.
 	 */
-	/* TODO Set the flag क्रम other पूर्णांकerface types as required */
-	अगर (arvअगर->vdev_type == WMI_VDEV_TYPE_AP &&
+	/* TODO Set the flag for other interface types as required */
+	if (arvif->vdev_type == WMI_VDEV_TYPE_AP &&
 	    chandef->chan->dfs_cac_ms &&
-	    chandef->chan->dfs_state == NL80211_DFS_USABLE) अणु
+	    chandef->chan->dfs_state == NL80211_DFS_USABLE) {
 		set_bit(ATH11K_CAC_RUNNING, &ar->dev_flags);
 		ath11k_dbg(ab, ATH11K_DBG_MAC,
 			   "CAC Started in chan_freq %d for vdev %d\n",
 			   arg.channel.freq, arg.vdev_id);
-	पूर्ण
+	}
 
-	ret = ath11k_mac_set_txbf_conf(arvअगर);
-	अगर (ret)
+	ret = ath11k_mac_set_txbf_conf(arvif);
+	if (ret)
 		ath11k_warn(ab, "failed to set txbf conf for vdev %d: %d\n",
-			    arvअगर->vdev_id, ret);
+			    arvif->vdev_id, ret);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ath11k_mac_vdev_stop(काष्ठा ath11k_vअगर *arvअगर)
-अणु
-	काष्ठा ath11k *ar = arvअगर->ar;
-	पूर्णांक ret;
+static int ath11k_mac_vdev_stop(struct ath11k_vif *arvif)
+{
+	struct ath11k *ar = arvif->ar;
+	int ret;
 
-	lockdep_निश्चित_held(&ar->conf_mutex);
+	lockdep_assert_held(&ar->conf_mutex);
 
-	reinit_completion(&ar->vdev_setup_करोne);
+	reinit_completion(&ar->vdev_setup_done);
 
-	ret = ath11k_wmi_vdev_stop(ar, arvअगर->vdev_id);
-	अगर (ret) अणु
+	ret = ath11k_wmi_vdev_stop(ar, arvif->vdev_id);
+	if (ret) {
 		ath11k_warn(ar->ab, "failed to stop WMI vdev %i: %d\n",
-			    arvअगर->vdev_id, ret);
-		जाओ err;
-	पूर्ण
+			    arvif->vdev_id, ret);
+		goto err;
+	}
 
 	ret = ath11k_mac_vdev_setup_sync(ar);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ar->ab, "failed to synchronize setup for vdev %i: %d\n",
-			    arvअगर->vdev_id, ret);
-		जाओ err;
-	पूर्ण
+			    arvif->vdev_id, ret);
+		goto err;
+	}
 
 	WARN_ON(ar->num_started_vdevs == 0);
 
 	ar->num_started_vdevs--;
 	ath11k_dbg(ar->ab, ATH11K_DBG_MAC, "vdev %pM stopped, vdev_id %d\n",
-		   arvअगर->vअगर->addr, arvअगर->vdev_id);
+		   arvif->vif->addr, arvif->vdev_id);
 
-	अगर (test_bit(ATH11K_CAC_RUNNING, &ar->dev_flags)) अणु
+	if (test_bit(ATH11K_CAC_RUNNING, &ar->dev_flags)) {
 		clear_bit(ATH11K_CAC_RUNNING, &ar->dev_flags);
 		ath11k_dbg(ar->ab, ATH11K_DBG_MAC, "CAC Stopped for vdev %d\n",
-			   arvअगर->vdev_id);
-	पूर्ण
+			   arvif->vdev_id);
+	}
 
-	वापस 0;
+	return 0;
 err:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ath11k_mac_vdev_start(काष्ठा ath11k_vअगर *arvअगर,
-				 स्थिर काष्ठा cfg80211_chan_def *chandef)
-अणु
-	वापस ath11k_mac_vdev_start_restart(arvअगर, chandef, false);
-पूर्ण
+static int ath11k_mac_vdev_start(struct ath11k_vif *arvif,
+				 const struct cfg80211_chan_def *chandef)
+{
+	return ath11k_mac_vdev_start_restart(arvif, chandef, false);
+}
 
-अटल पूर्णांक ath11k_mac_vdev_restart(काष्ठा ath11k_vअगर *arvअगर,
-				   स्थिर काष्ठा cfg80211_chan_def *chandef)
-अणु
-	वापस ath11k_mac_vdev_start_restart(arvअगर, chandef, true);
-पूर्ण
+static int ath11k_mac_vdev_restart(struct ath11k_vif *arvif,
+				   const struct cfg80211_chan_def *chandef)
+{
+	return ath11k_mac_vdev_start_restart(arvif, chandef, true);
+}
 
-काष्ठा ath11k_mac_change_chanctx_arg अणु
-	काष्ठा ieee80211_chanctx_conf *ctx;
-	काष्ठा ieee80211_vअगर_chanctx_चयन *vअगरs;
-	पूर्णांक n_vअगरs;
-	पूर्णांक next_vअगर;
-पूर्ण;
+struct ath11k_mac_change_chanctx_arg {
+	struct ieee80211_chanctx_conf *ctx;
+	struct ieee80211_vif_chanctx_switch *vifs;
+	int n_vifs;
+	int next_vif;
+};
 
-अटल व्योम
-ath11k_mac_change_chanctx_cnt_iter(व्योम *data, u8 *mac,
-				   काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा ath11k_mac_change_chanctx_arg *arg = data;
+static void
+ath11k_mac_change_chanctx_cnt_iter(void *data, u8 *mac,
+				   struct ieee80211_vif *vif)
+{
+	struct ath11k_mac_change_chanctx_arg *arg = data;
 
-	अगर (rcu_access_poपूर्णांकer(vअगर->chanctx_conf) != arg->ctx)
-		वापस;
+	if (rcu_access_pointer(vif->chanctx_conf) != arg->ctx)
+		return;
 
-	arg->n_vअगरs++;
-पूर्ण
+	arg->n_vifs++;
+}
 
-अटल व्योम
-ath11k_mac_change_chanctx_fill_iter(व्योम *data, u8 *mac,
-				    काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा ath11k_mac_change_chanctx_arg *arg = data;
-	काष्ठा ieee80211_chanctx_conf *ctx;
+static void
+ath11k_mac_change_chanctx_fill_iter(void *data, u8 *mac,
+				    struct ieee80211_vif *vif)
+{
+	struct ath11k_mac_change_chanctx_arg *arg = data;
+	struct ieee80211_chanctx_conf *ctx;
 
-	ctx = rcu_access_poपूर्णांकer(vअगर->chanctx_conf);
-	अगर (ctx != arg->ctx)
-		वापस;
+	ctx = rcu_access_pointer(vif->chanctx_conf);
+	if (ctx != arg->ctx)
+		return;
 
-	अगर (WARN_ON(arg->next_vअगर == arg->n_vअगरs))
-		वापस;
+	if (WARN_ON(arg->next_vif == arg->n_vifs))
+		return;
 
-	arg->vअगरs[arg->next_vअगर].vअगर = vअगर;
-	arg->vअगरs[arg->next_vअगर].old_ctx = ctx;
-	arg->vअगरs[arg->next_vअगर].new_ctx = ctx;
-	arg->next_vअगर++;
-पूर्ण
+	arg->vifs[arg->next_vif].vif = vif;
+	arg->vifs[arg->next_vif].old_ctx = ctx;
+	arg->vifs[arg->next_vif].new_ctx = ctx;
+	arg->next_vif++;
+}
 
-अटल व्योम
-ath11k_mac_update_vअगर_chan(काष्ठा ath11k *ar,
-			   काष्ठा ieee80211_vअगर_chanctx_चयन *vअगरs,
-			   पूर्णांक n_vअगरs)
-अणु
-	काष्ठा ath11k_base *ab = ar->ab;
-	काष्ठा ath11k_vअगर *arvअगर;
-	पूर्णांक ret;
-	पूर्णांक i;
+static void
+ath11k_mac_update_vif_chan(struct ath11k *ar,
+			   struct ieee80211_vif_chanctx_switch *vifs,
+			   int n_vifs)
+{
+	struct ath11k_base *ab = ar->ab;
+	struct ath11k_vif *arvif;
+	int ret;
+	int i;
 
-	lockdep_निश्चित_held(&ar->conf_mutex);
+	lockdep_assert_held(&ar->conf_mutex);
 
-	क्रम (i = 0; i < n_vअगरs; i++) अणु
-		arvअगर = (व्योम *)vअगरs[i].vअगर->drv_priv;
+	for (i = 0; i < n_vifs; i++) {
+		arvif = (void *)vifs[i].vif->drv_priv;
 
 		ath11k_dbg(ab, ATH11K_DBG_MAC,
 			   "mac chanctx switch vdev_id %i freq %u->%u width %d->%d\n",
-			   arvअगर->vdev_id,
-			   vअगरs[i].old_ctx->def.chan->center_freq,
-			   vअगरs[i].new_ctx->def.chan->center_freq,
-			   vअगरs[i].old_ctx->def.width,
-			   vअगरs[i].new_ctx->def.width);
+			   arvif->vdev_id,
+			   vifs[i].old_ctx->def.chan->center_freq,
+			   vifs[i].new_ctx->def.chan->center_freq,
+			   vifs[i].old_ctx->def.width,
+			   vifs[i].new_ctx->def.width);
 
-		अगर (WARN_ON(!arvअगर->is_started))
-			जारी;
+		if (WARN_ON(!arvif->is_started))
+			continue;
 
-		अगर (WARN_ON(!arvअगर->is_up))
-			जारी;
+		if (WARN_ON(!arvif->is_up))
+			continue;
 
-		ret = ath11k_wmi_vdev_करोwn(ar, arvअगर->vdev_id);
-		अगर (ret) अणु
+		ret = ath11k_wmi_vdev_down(ar, arvif->vdev_id);
+		if (ret) {
 			ath11k_warn(ab, "failed to down vdev %d: %d\n",
-				    arvअगर->vdev_id, ret);
-			जारी;
-		पूर्ण
-	पूर्ण
+				    arvif->vdev_id, ret);
+			continue;
+		}
+	}
 
-	/* All relevant vdevs are करोwned and associated channel resources
-	 * should be available क्रम the channel चयन now.
+	/* All relevant vdevs are downed and associated channel resources
+	 * should be available for the channel switch now.
 	 */
 
 	/* TODO: Update ar->rx_channel */
 
-	क्रम (i = 0; i < n_vअगरs; i++) अणु
-		arvअगर = (व्योम *)vअगरs[i].vअगर->drv_priv;
+	for (i = 0; i < n_vifs; i++) {
+		arvif = (void *)vifs[i].vif->drv_priv;
 
-		अगर (WARN_ON(!arvअगर->is_started))
-			जारी;
+		if (WARN_ON(!arvif->is_started))
+			continue;
 
-		अगर (WARN_ON(!arvअगर->is_up))
-			जारी;
+		if (WARN_ON(!arvif->is_up))
+			continue;
 
-		ret = ath11k_mac_setup_bcn_पंचांगpl(arvअगर);
-		अगर (ret)
+		ret = ath11k_mac_setup_bcn_tmpl(arvif);
+		if (ret)
 			ath11k_warn(ab, "failed to update bcn tmpl during csa: %d\n",
 				    ret);
 
-		ret = ath11k_mac_vdev_restart(arvअगर, &vअगरs[i].new_ctx->def);
-		अगर (ret) अणु
+		ret = ath11k_mac_vdev_restart(arvif, &vifs[i].new_ctx->def);
+		if (ret) {
 			ath11k_warn(ab, "failed to restart vdev %d: %d\n",
-				    arvअगर->vdev_id, ret);
-			जारी;
-		पूर्ण
+				    arvif->vdev_id, ret);
+			continue;
+		}
 
-		ret = ath11k_wmi_vdev_up(arvअगर->ar, arvअगर->vdev_id, arvअगर->aid,
-					 arvअगर->bssid);
-		अगर (ret) अणु
+		ret = ath11k_wmi_vdev_up(arvif->ar, arvif->vdev_id, arvif->aid,
+					 arvif->bssid);
+		if (ret) {
 			ath11k_warn(ab, "failed to bring vdev up %d: %d\n",
-				    arvअगर->vdev_id, ret);
-			जारी;
-		पूर्ण
-	पूर्ण
-पूर्ण
+				    arvif->vdev_id, ret);
+			continue;
+		}
+	}
+}
 
-अटल व्योम
-ath11k_mac_update_active_vअगर_chan(काष्ठा ath11k *ar,
-				  काष्ठा ieee80211_chanctx_conf *ctx)
-अणु
-	काष्ठा ath11k_mac_change_chanctx_arg arg = अणु .ctx = ctx पूर्ण;
+static void
+ath11k_mac_update_active_vif_chan(struct ath11k *ar,
+				  struct ieee80211_chanctx_conf *ctx)
+{
+	struct ath11k_mac_change_chanctx_arg arg = { .ctx = ctx };
 
-	lockdep_निश्चित_held(&ar->conf_mutex);
+	lockdep_assert_held(&ar->conf_mutex);
 
-	ieee80211_iterate_active_पूर्णांकerfaces_atomic(ar->hw,
+	ieee80211_iterate_active_interfaces_atomic(ar->hw,
 						   IEEE80211_IFACE_ITER_NORMAL,
 						   ath11k_mac_change_chanctx_cnt_iter,
 						   &arg);
-	अगर (arg.n_vअगरs == 0)
-		वापस;
+	if (arg.n_vifs == 0)
+		return;
 
-	arg.vअगरs = kसुस्मृति(arg.n_vअगरs, माप(arg.vअगरs[0]), GFP_KERNEL);
-	अगर (!arg.vअगरs)
-		वापस;
+	arg.vifs = kcalloc(arg.n_vifs, sizeof(arg.vifs[0]), GFP_KERNEL);
+	if (!arg.vifs)
+		return;
 
-	ieee80211_iterate_active_पूर्णांकerfaces_atomic(ar->hw,
+	ieee80211_iterate_active_interfaces_atomic(ar->hw,
 						   IEEE80211_IFACE_ITER_NORMAL,
 						   ath11k_mac_change_chanctx_fill_iter,
 						   &arg);
 
-	ath11k_mac_update_vअगर_chan(ar, arg.vअगरs, arg.n_vअगरs);
+	ath11k_mac_update_vif_chan(ar, arg.vifs, arg.n_vifs);
 
-	kमुक्त(arg.vअगरs);
-पूर्ण
+	kfree(arg.vifs);
+}
 
-अटल व्योम ath11k_mac_op_change_chanctx(काष्ठा ieee80211_hw *hw,
-					 काष्ठा ieee80211_chanctx_conf *ctx,
+static void ath11k_mac_op_change_chanctx(struct ieee80211_hw *hw,
+					 struct ieee80211_chanctx_conf *ctx,
 					 u32 changed)
-अणु
-	काष्ठा ath11k *ar = hw->priv;
-	काष्ठा ath11k_base *ab = ar->ab;
+{
+	struct ath11k *ar = hw->priv;
+	struct ath11k_base *ab = ar->ab;
 
 	mutex_lock(&ar->conf_mutex);
 
@@ -5444,115 +5443,115 @@ ath11k_mac_update_active_vअगर_chan(काष्ठा ath11k *ar,
 		   "mac chanctx change freq %u width %d ptr %pK changed %x\n",
 		   ctx->def.chan->center_freq, ctx->def.width, ctx, changed);
 
-	/* This shouldn't really happen because channel चयनing should use
-	 * चयन_vअगर_chanctx().
+	/* This shouldn't really happen because channel switching should use
+	 * switch_vif_chanctx().
 	 */
-	अगर (WARN_ON(changed & IEEE80211_CHANCTX_CHANGE_CHANNEL))
-		जाओ unlock;
+	if (WARN_ON(changed & IEEE80211_CHANCTX_CHANGE_CHANNEL))
+		goto unlock;
 
-	अगर (changed & IEEE80211_CHANCTX_CHANGE_WIDTH)
-		ath11k_mac_update_active_vअगर_chan(ar, ctx);
+	if (changed & IEEE80211_CHANCTX_CHANGE_WIDTH)
+		ath11k_mac_update_active_vif_chan(ar, ctx);
 
 	/* TODO: Recalc radar detection */
 
 unlock:
 	mutex_unlock(&ar->conf_mutex);
-पूर्ण
+}
 
-अटल पूर्णांक ath11k_start_vdev_delay(काष्ठा ieee80211_hw *hw,
-				   काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा ath11k *ar = hw->priv;
-	काष्ठा ath11k_base *ab = ar->ab;
-	काष्ठा ath11k_vअगर *arvअगर = (व्योम *)vअगर->drv_priv;
-	पूर्णांक ret;
+static int ath11k_start_vdev_delay(struct ieee80211_hw *hw,
+				   struct ieee80211_vif *vif)
+{
+	struct ath11k *ar = hw->priv;
+	struct ath11k_base *ab = ar->ab;
+	struct ath11k_vif *arvif = (void *)vif->drv_priv;
+	int ret;
 
-	अगर (WARN_ON(arvअगर->is_started))
-		वापस -EBUSY;
+	if (WARN_ON(arvif->is_started))
+		return -EBUSY;
 
-	ret = ath11k_mac_vdev_start(arvअगर, &arvअगर->chanctx.def);
-	अगर (ret) अणु
+	ret = ath11k_mac_vdev_start(arvif, &arvif->chanctx.def);
+	if (ret) {
 		ath11k_warn(ab, "failed to start vdev %i addr %pM on freq %d: %d\n",
-			    arvअगर->vdev_id, vअगर->addr,
-			    arvअगर->chanctx.def.chan->center_freq, ret);
-		वापस ret;
-	पूर्ण
+			    arvif->vdev_id, vif->addr,
+			    arvif->chanctx.def.chan->center_freq, ret);
+		return ret;
+	}
 
-	अगर (arvअगर->vdev_type == WMI_VDEV_TYPE_MONITOR) अणु
-		ret = ath11k_monitor_vdev_up(ar, arvअगर->vdev_id);
-		अगर (ret) अणु
+	if (arvif->vdev_type == WMI_VDEV_TYPE_MONITOR) {
+		ret = ath11k_monitor_vdev_up(ar, arvif->vdev_id);
+		if (ret) {
 			ath11k_warn(ab, "failed put monitor up: %d\n", ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	arvअगर->is_started = true;
+	arvif->is_started = true;
 
 	/* TODO: Setup ps and cts/rts protection */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-ath11k_mac_op_assign_vअगर_chanctx(काष्ठा ieee80211_hw *hw,
-				 काष्ठा ieee80211_vअगर *vअगर,
-				 काष्ठा ieee80211_chanctx_conf *ctx)
-अणु
-	काष्ठा ath11k *ar = hw->priv;
-	काष्ठा ath11k_base *ab = ar->ab;
-	काष्ठा ath11k_vअगर *arvअगर = (व्योम *)vअगर->drv_priv;
-	पूर्णांक ret;
-	काष्ठा peer_create_params param;
+static int
+ath11k_mac_op_assign_vif_chanctx(struct ieee80211_hw *hw,
+				 struct ieee80211_vif *vif,
+				 struct ieee80211_chanctx_conf *ctx)
+{
+	struct ath11k *ar = hw->priv;
+	struct ath11k_base *ab = ar->ab;
+	struct ath11k_vif *arvif = (void *)vif->drv_priv;
+	int ret;
+	struct peer_create_params param;
 
 	mutex_lock(&ar->conf_mutex);
 
 	ath11k_dbg(ab, ATH11K_DBG_MAC,
 		   "mac chanctx assign ptr %pK vdev_id %i\n",
-		   ctx, arvअगर->vdev_id);
+		   ctx, arvif->vdev_id);
 
-	/* क्रम QCA6390 bss peer must be created beक्रमe vdev_start */
-	अगर (ab->hw_params.vdev_start_delay &&
-	    arvअगर->vdev_type != WMI_VDEV_TYPE_AP &&
-	    arvअगर->vdev_type != WMI_VDEV_TYPE_MONITOR &&
-	    !ath11k_peer_find_by_vdev_id(ab, arvअगर->vdev_id)) अणु
-		स_नकल(&arvअगर->chanctx, ctx, माप(*ctx));
+	/* for QCA6390 bss peer must be created before vdev_start */
+	if (ab->hw_params.vdev_start_delay &&
+	    arvif->vdev_type != WMI_VDEV_TYPE_AP &&
+	    arvif->vdev_type != WMI_VDEV_TYPE_MONITOR &&
+	    !ath11k_peer_find_by_vdev_id(ab, arvif->vdev_id)) {
+		memcpy(&arvif->chanctx, ctx, sizeof(*ctx));
 		ret = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (WARN_ON(arvअगर->is_started)) अणु
+	if (WARN_ON(arvif->is_started)) {
 		ret = -EBUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (ab->hw_params.vdev_start_delay &&
-	    arvअगर->vdev_type != WMI_VDEV_TYPE_AP &&
-	    arvअगर->vdev_type != WMI_VDEV_TYPE_MONITOR) अणु
-		param.vdev_id = arvअगर->vdev_id;
+	if (ab->hw_params.vdev_start_delay &&
+	    arvif->vdev_type != WMI_VDEV_TYPE_AP &&
+	    arvif->vdev_type != WMI_VDEV_TYPE_MONITOR) {
+		param.vdev_id = arvif->vdev_id;
 		param.peer_type = WMI_PEER_TYPE_DEFAULT;
 		param.peer_addr = ar->mac_addr;
 
-		ret = ath11k_peer_create(ar, arvअगर, शून्य, &param);
-		अगर (ret) अणु
+		ret = ath11k_peer_create(ar, arvif, NULL, &param);
+		if (ret) {
 			ath11k_warn(ab, "failed to create peer after vdev start delay: %d",
 				    ret);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	ret = ath11k_mac_vdev_start(arvअगर, &ctx->def);
-	अगर (ret) अणु
+	ret = ath11k_mac_vdev_start(arvif, &ctx->def);
+	if (ret) {
 		ath11k_warn(ab, "failed to start vdev %i addr %pM on freq %d: %d\n",
-			    arvअगर->vdev_id, vअगर->addr,
+			    arvif->vdev_id, vif->addr,
 			    ctx->def.chan->center_freq, ret);
-		जाओ out;
-	पूर्ण
-	अगर (arvअगर->vdev_type == WMI_VDEV_TYPE_MONITOR) अणु
-		ret = ath11k_monitor_vdev_up(ar, arvअगर->vdev_id);
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+		goto out;
+	}
+	if (arvif->vdev_type == WMI_VDEV_TYPE_MONITOR) {
+		ret = ath11k_monitor_vdev_up(ar, arvif->vdev_id);
+		if (ret)
+			goto out;
+	}
 
-	arvअगर->is_started = true;
+	arvif->is_started = true;
 
 	/* TODO: Setup ps and cts/rts protection */
 
@@ -5561,374 +5560,374 @@ ath11k_mac_op_assign_vअगर_chanctx(काष्ठा ieee80211_hw *hw,
 out:
 	mutex_unlock(&ar->conf_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम
-ath11k_mac_op_unassign_vअगर_chanctx(काष्ठा ieee80211_hw *hw,
-				   काष्ठा ieee80211_vअगर *vअगर,
-				   काष्ठा ieee80211_chanctx_conf *ctx)
-अणु
-	काष्ठा ath11k *ar = hw->priv;
-	काष्ठा ath11k_base *ab = ar->ab;
-	काष्ठा ath11k_vअगर *arvअगर = (व्योम *)vअगर->drv_priv;
-	पूर्णांक ret;
+static void
+ath11k_mac_op_unassign_vif_chanctx(struct ieee80211_hw *hw,
+				   struct ieee80211_vif *vif,
+				   struct ieee80211_chanctx_conf *ctx)
+{
+	struct ath11k *ar = hw->priv;
+	struct ath11k_base *ab = ar->ab;
+	struct ath11k_vif *arvif = (void *)vif->drv_priv;
+	int ret;
 
 	mutex_lock(&ar->conf_mutex);
 
 	ath11k_dbg(ab, ATH11K_DBG_MAC,
 		   "mac chanctx unassign ptr %pK vdev_id %i\n",
-		   ctx, arvअगर->vdev_id);
+		   ctx, arvif->vdev_id);
 
-	WARN_ON(!arvअगर->is_started);
+	WARN_ON(!arvif->is_started);
 
-	अगर (ab->hw_params.vdev_start_delay &&
-	    arvअगर->vdev_type == WMI_VDEV_TYPE_MONITOR &&
+	if (ab->hw_params.vdev_start_delay &&
+	    arvif->vdev_type == WMI_VDEV_TYPE_MONITOR &&
 	    ath11k_peer_find_by_addr(ab, ar->mac_addr))
-		ath11k_peer_delete(ar, arvअगर->vdev_id, ar->mac_addr);
+		ath11k_peer_delete(ar, arvif->vdev_id, ar->mac_addr);
 
-	ret = ath11k_mac_vdev_stop(arvअगर);
-	अगर (ret)
+	ret = ath11k_mac_vdev_stop(arvif);
+	if (ret)
 		ath11k_warn(ab, "failed to stop vdev %i: %d\n",
-			    arvअगर->vdev_id, ret);
+			    arvif->vdev_id, ret);
 
-	arvअगर->is_started = false;
+	arvif->is_started = false;
 
-	अगर (ab->hw_params.vdev_start_delay &&
-	    arvअगर->vdev_type == WMI_VDEV_TYPE_MONITOR)
-		ath11k_wmi_vdev_करोwn(ar, arvअगर->vdev_id);
+	if (ab->hw_params.vdev_start_delay &&
+	    arvif->vdev_type == WMI_VDEV_TYPE_MONITOR)
+		ath11k_wmi_vdev_down(ar, arvif->vdev_id);
 
 	mutex_unlock(&ar->conf_mutex);
-पूर्ण
+}
 
-अटल पूर्णांक
-ath11k_mac_op_चयन_vअगर_chanctx(काष्ठा ieee80211_hw *hw,
-				 काष्ठा ieee80211_vअगर_chanctx_चयन *vअगरs,
-				 पूर्णांक n_vअगरs,
-				 क्रमागत ieee80211_chanctx_चयन_mode mode)
-अणु
-	काष्ठा ath11k *ar = hw->priv;
+static int
+ath11k_mac_op_switch_vif_chanctx(struct ieee80211_hw *hw,
+				 struct ieee80211_vif_chanctx_switch *vifs,
+				 int n_vifs,
+				 enum ieee80211_chanctx_switch_mode mode)
+{
+	struct ath11k *ar = hw->priv;
 
 	mutex_lock(&ar->conf_mutex);
 
 	ath11k_dbg(ar->ab, ATH11K_DBG_MAC,
 		   "mac chanctx switch n_vifs %d mode %d\n",
-		   n_vअगरs, mode);
-	ath11k_mac_update_vअगर_chan(ar, vअगरs, n_vअगरs);
+		   n_vifs, mode);
+	ath11k_mac_update_vif_chan(ar, vifs, n_vifs);
 
 	mutex_unlock(&ar->conf_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-ath11k_set_vdev_param_to_all_vअगरs(काष्ठा ath11k *ar, पूर्णांक param, u32 value)
-अणु
-	काष्ठा ath11k_vअगर *arvअगर;
-	पूर्णांक ret = 0;
+static int
+ath11k_set_vdev_param_to_all_vifs(struct ath11k *ar, int param, u32 value)
+{
+	struct ath11k_vif *arvif;
+	int ret = 0;
 
 	mutex_lock(&ar->conf_mutex);
-	list_क्रम_each_entry(arvअगर, &ar->arvअगरs, list) अणु
+	list_for_each_entry(arvif, &ar->arvifs, list) {
 		ath11k_dbg(ar->ab, ATH11K_DBG_MAC, "setting mac vdev %d param %d value %d\n",
-			   param, arvअगर->vdev_id, value);
+			   param, arvif->vdev_id, value);
 
-		ret = ath11k_wmi_vdev_set_param_cmd(ar, arvअगर->vdev_id,
+		ret = ath11k_wmi_vdev_set_param_cmd(ar, arvif->vdev_id,
 						    param, value);
-		अगर (ret) अणु
+		if (ret) {
 			ath11k_warn(ar->ab, "failed to set param %d for vdev %d: %d\n",
-				    param, arvअगर->vdev_id, ret);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+				    param, arvif->vdev_id, ret);
+			break;
+		}
+	}
 	mutex_unlock(&ar->conf_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* mac80211 stores device specअगरic RTS/Fragmentation threshold value,
- * this is set पूर्णांकerface specअगरic to firmware from ath11k driver
+/* mac80211 stores device specific RTS/Fragmentation threshold value,
+ * this is set interface specific to firmware from ath11k driver
  */
-अटल पूर्णांक ath11k_mac_op_set_rts_threshold(काष्ठा ieee80211_hw *hw, u32 value)
-अणु
-	काष्ठा ath11k *ar = hw->priv;
-	पूर्णांक param_id = WMI_VDEV_PARAM_RTS_THRESHOLD;
+static int ath11k_mac_op_set_rts_threshold(struct ieee80211_hw *hw, u32 value)
+{
+	struct ath11k *ar = hw->priv;
+	int param_id = WMI_VDEV_PARAM_RTS_THRESHOLD;
 
-	वापस ath11k_set_vdev_param_to_all_vअगरs(ar, param_id, value);
-पूर्ण
+	return ath11k_set_vdev_param_to_all_vifs(ar, param_id, value);
+}
 
-अटल पूर्णांक ath11k_mac_op_set_frag_threshold(काष्ठा ieee80211_hw *hw, u32 value)
-अणु
-	/* Even though there's a WMI vdev param क्रम fragmentation threshold no
+static int ath11k_mac_op_set_frag_threshold(struct ieee80211_hw *hw, u32 value)
+{
+	/* Even though there's a WMI vdev param for fragmentation threshold no
 	 * known firmware actually implements it. Moreover it is not possible to
 	 * rely frame fragmentation to mac80211 because firmware clears the
-	 * "more fragments" bit in frame control making it impossible क्रम remote
+	 * "more fragments" bit in frame control making it impossible for remote
 	 * devices to reassemble frames.
 	 *
 	 * Hence implement a dummy callback just to say fragmentation isn't
-	 * supported. This effectively prevents mac80211 from करोing frame
+	 * supported. This effectively prevents mac80211 from doing frame
 	 * fragmentation in software.
 	 */
-	वापस -EOPNOTSUPP;
-पूर्ण
+	return -EOPNOTSUPP;
+}
 
-अटल व्योम ath11k_mac_op_flush(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
+static void ath11k_mac_op_flush(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 				u32 queues, bool drop)
-अणु
-	काष्ठा ath11k *ar = hw->priv;
-	दीर्घ समय_left;
+{
+	struct ath11k *ar = hw->priv;
+	long time_left;
 
-	अगर (drop)
-		वापस;
+	if (drop)
+		return;
 
-	समय_left = रुको_event_समयout(ar->dp.tx_empty_रुकोq,
-				       (atomic_पढ़ो(&ar->dp.num_tx_pending) == 0),
+	time_left = wait_event_timeout(ar->dp.tx_empty_waitq,
+				       (atomic_read(&ar->dp.num_tx_pending) == 0),
 				       ATH11K_FLUSH_TIMEOUT);
-	अगर (समय_left == 0)
-		ath11k_warn(ar->ab, "failed to flush transmit queue %ld\n", समय_left);
-पूर्ण
+	if (time_left == 0)
+		ath11k_warn(ar->ab, "failed to flush transmit queue %ld\n", time_left);
+}
 
-अटल पूर्णांक
-ath11k_mac_bitrate_mask_num_ht_rates(काष्ठा ath11k *ar,
-				     क्रमागत nl80211_band band,
-				     स्थिर काष्ठा cfg80211_bitrate_mask *mask)
-अणु
-	पूर्णांक num_rates = 0;
-	पूर्णांक i;
+static int
+ath11k_mac_bitrate_mask_num_ht_rates(struct ath11k *ar,
+				     enum nl80211_band band,
+				     const struct cfg80211_bitrate_mask *mask)
+{
+	int num_rates = 0;
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(mask->control[band].ht_mcs); i++)
+	for (i = 0; i < ARRAY_SIZE(mask->control[band].ht_mcs); i++)
 		num_rates += hweight16(mask->control[band].ht_mcs[i]);
 
-	वापस num_rates;
-पूर्ण
+	return num_rates;
+}
 
-अटल bool
-ath11k_mac_has_single_legacy_rate(काष्ठा ath11k *ar,
-				  क्रमागत nl80211_band band,
-				  स्थिर काष्ठा cfg80211_bitrate_mask *mask)
-अणु
-	पूर्णांक num_rates = 0;
+static bool
+ath11k_mac_has_single_legacy_rate(struct ath11k *ar,
+				  enum nl80211_band band,
+				  const struct cfg80211_bitrate_mask *mask)
+{
+	int num_rates = 0;
 
 	num_rates = hweight32(mask->control[band].legacy);
 
-	अगर (ath11k_mac_bitrate_mask_num_ht_rates(ar, band, mask))
-		वापस false;
+	if (ath11k_mac_bitrate_mask_num_ht_rates(ar, band, mask))
+		return false;
 
-	अगर (ath11k_mac_bitrate_mask_num_vht_rates(ar, band, mask))
-		वापस false;
+	if (ath11k_mac_bitrate_mask_num_vht_rates(ar, band, mask))
+		return false;
 
-	वापस num_rates == 1;
-पूर्ण
+	return num_rates == 1;
+}
 
-अटल bool
-ath11k_mac_bitrate_mask_get_single_nss(काष्ठा ath11k *ar,
-				       क्रमागत nl80211_band band,
-				       स्थिर काष्ठा cfg80211_bitrate_mask *mask,
-				       पूर्णांक *nss)
-अणु
-	काष्ठा ieee80211_supported_band *sband = &ar->mac.sbands[band];
+static bool
+ath11k_mac_bitrate_mask_get_single_nss(struct ath11k *ar,
+				       enum nl80211_band band,
+				       const struct cfg80211_bitrate_mask *mask,
+				       int *nss)
+{
+	struct ieee80211_supported_band *sband = &ar->mac.sbands[band];
 	u16 vht_mcs_map = le16_to_cpu(sband->vht_cap.vht_mcs.tx_mcs_map);
 	u8 ht_nss_mask = 0;
 	u8 vht_nss_mask = 0;
-	पूर्णांक i;
+	int i;
 
 	/* No need to consider legacy here. Basic rates are always present
 	 * in bitrate mask
 	 */
 
-	क्रम (i = 0; i < ARRAY_SIZE(mask->control[band].ht_mcs); i++) अणु
-		अगर (mask->control[band].ht_mcs[i] == 0)
-			जारी;
-		अन्यथा अगर (mask->control[band].ht_mcs[i] ==
+	for (i = 0; i < ARRAY_SIZE(mask->control[band].ht_mcs); i++) {
+		if (mask->control[band].ht_mcs[i] == 0)
+			continue;
+		else if (mask->control[band].ht_mcs[i] ==
 			 sband->ht_cap.mcs.rx_mask[i])
 			ht_nss_mask |= BIT(i);
-		अन्यथा
-			वापस false;
-	पूर्ण
+		else
+			return false;
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(mask->control[band].vht_mcs); i++) अणु
-		अगर (mask->control[band].vht_mcs[i] == 0)
-			जारी;
-		अन्यथा अगर (mask->control[band].vht_mcs[i] ==
+	for (i = 0; i < ARRAY_SIZE(mask->control[band].vht_mcs); i++) {
+		if (mask->control[band].vht_mcs[i] == 0)
+			continue;
+		else if (mask->control[band].vht_mcs[i] ==
 			 ath11k_mac_get_max_vht_mcs_map(vht_mcs_map, i))
 			vht_nss_mask |= BIT(i);
-		अन्यथा
-			वापस false;
-	पूर्ण
+		else
+			return false;
+	}
 
-	अगर (ht_nss_mask != vht_nss_mask)
-		वापस false;
+	if (ht_nss_mask != vht_nss_mask)
+		return false;
 
-	अगर (ht_nss_mask == 0)
-		वापस false;
+	if (ht_nss_mask == 0)
+		return false;
 
-	अगर (BIT(fls(ht_nss_mask)) - 1 != ht_nss_mask)
-		वापस false;
+	if (BIT(fls(ht_nss_mask)) - 1 != ht_nss_mask)
+		return false;
 
 	*nss = fls(ht_nss_mask);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक
-ath11k_mac_get_single_legacy_rate(काष्ठा ath11k *ar,
-				  क्रमागत nl80211_band band,
-				  स्थिर काष्ठा cfg80211_bitrate_mask *mask,
+static int
+ath11k_mac_get_single_legacy_rate(struct ath11k *ar,
+				  enum nl80211_band band,
+				  const struct cfg80211_bitrate_mask *mask,
 				  u32 *rate, u8 *nss)
-अणु
-	पूर्णांक rate_idx;
+{
+	int rate_idx;
 	u16 bitrate;
 	u8 preamble;
 	u8 hw_rate;
 
-	अगर (hweight32(mask->control[band].legacy) != 1)
-		वापस -EINVAL;
+	if (hweight32(mask->control[band].legacy) != 1)
+		return -EINVAL;
 
 	rate_idx = ffs(mask->control[band].legacy) - 1;
 
-	अगर (band == NL80211_BAND_5GHZ || band == NL80211_BAND_6GHZ)
+	if (band == NL80211_BAND_5GHZ || band == NL80211_BAND_6GHZ)
 		rate_idx += ATH11K_MAC_FIRST_OFDM_RATE_IDX;
 
 	hw_rate = ath11k_legacy_rates[rate_idx].hw_value;
 	bitrate = ath11k_legacy_rates[rate_idx].bitrate;
 
-	अगर (ath11k_mac_bitrate_is_cck(bitrate))
+	if (ath11k_mac_bitrate_is_cck(bitrate))
 		preamble = WMI_RATE_PREAMBLE_CCK;
-	अन्यथा
+	else
 		preamble = WMI_RATE_PREAMBLE_OFDM;
 
 	*nss = 1;
 	*rate = ATH11K_HW_RATE_CODE(hw_rate, 0, preamble);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ath11k_mac_set_fixed_rate_params(काष्ठा ath11k_vअगर *arvअगर,
+static int ath11k_mac_set_fixed_rate_params(struct ath11k_vif *arvif,
 					    u32 rate, u8 nss, u8 sgi, u8 ldpc)
-अणु
-	काष्ठा ath11k *ar = arvअगर->ar;
+{
+	struct ath11k *ar = arvif->ar;
 	u32 vdev_param;
-	पूर्णांक ret;
+	int ret;
 
-	lockdep_निश्चित_held(&ar->conf_mutex);
+	lockdep_assert_held(&ar->conf_mutex);
 
 	ath11k_dbg(ar->ab, ATH11K_DBG_MAC, "mac set fixed rate params vdev %i rate 0x%02x nss %u sgi %u\n",
-		   arvअगर->vdev_id, rate, nss, sgi);
+		   arvif->vdev_id, rate, nss, sgi);
 
 	vdev_param = WMI_VDEV_PARAM_FIXED_RATE;
-	ret = ath11k_wmi_vdev_set_param_cmd(ar, arvअगर->vdev_id,
+	ret = ath11k_wmi_vdev_set_param_cmd(ar, arvif->vdev_id,
 					    vdev_param, rate);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ar->ab, "failed to set fixed rate param 0x%02x: %d\n",
 			    rate, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	vdev_param = WMI_VDEV_PARAM_NSS;
-	ret = ath11k_wmi_vdev_set_param_cmd(ar, arvअगर->vdev_id,
+	ret = ath11k_wmi_vdev_set_param_cmd(ar, arvif->vdev_id,
 					    vdev_param, nss);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ar->ab, "failed to set nss param %d: %d\n",
 			    nss, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	vdev_param = WMI_VDEV_PARAM_SGI;
-	ret = ath11k_wmi_vdev_set_param_cmd(ar, arvअगर->vdev_id,
+	ret = ath11k_wmi_vdev_set_param_cmd(ar, arvif->vdev_id,
 					    vdev_param, sgi);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ar->ab, "failed to set sgi param %d: %d\n",
 			    sgi, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	vdev_param = WMI_VDEV_PARAM_LDPC;
-	ret = ath11k_wmi_vdev_set_param_cmd(ar, arvअगर->vdev_id,
+	ret = ath11k_wmi_vdev_set_param_cmd(ar, arvif->vdev_id,
 					    vdev_param, ldpc);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ar->ab, "failed to set ldpc param %d: %d\n",
 			    ldpc, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool
-ath11k_mac_vht_mcs_range_present(काष्ठा ath11k *ar,
-				 क्रमागत nl80211_band band,
-				 स्थिर काष्ठा cfg80211_bitrate_mask *mask)
-अणु
-	पूर्णांक i;
+static bool
+ath11k_mac_vht_mcs_range_present(struct ath11k *ar,
+				 enum nl80211_band band,
+				 const struct cfg80211_bitrate_mask *mask)
+{
+	int i;
 	u16 vht_mcs;
 
-	क्रम (i = 0; i < NL80211_VHT_NSS_MAX; i++) अणु
+	for (i = 0; i < NL80211_VHT_NSS_MAX; i++) {
 		vht_mcs = mask->control[band].vht_mcs[i];
 
-		चयन (vht_mcs) अणु
-		हाल 0:
-		हाल BIT(8) - 1:
-		हाल BIT(9) - 1:
-		हाल BIT(10) - 1:
-			अवरोध;
-		शेष:
-			वापस false;
-		पूर्ण
-	पूर्ण
+		switch (vht_mcs) {
+		case 0:
+		case BIT(8) - 1:
+		case BIT(9) - 1:
+		case BIT(10) - 1:
+			break;
+		default:
+			return false;
+		}
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम ath11k_mac_set_bitrate_mask_iter(व्योम *data,
-					     काष्ठा ieee80211_sta *sta)
-अणु
-	काष्ठा ath11k_vअगर *arvअगर = data;
-	काष्ठा ath11k_sta *arsta = (काष्ठा ath11k_sta *)sta->drv_priv;
-	काष्ठा ath11k *ar = arvअगर->ar;
+static void ath11k_mac_set_bitrate_mask_iter(void *data,
+					     struct ieee80211_sta *sta)
+{
+	struct ath11k_vif *arvif = data;
+	struct ath11k_sta *arsta = (struct ath11k_sta *)sta->drv_priv;
+	struct ath11k *ar = arvif->ar;
 
 	spin_lock_bh(&ar->data_lock);
 	arsta->changed |= IEEE80211_RC_SUPP_RATES_CHANGED;
 	spin_unlock_bh(&ar->data_lock);
 
 	ieee80211_queue_work(ar->hw, &arsta->update_wk);
-पूर्ण
+}
 
-अटल व्योम ath11k_mac_disable_peer_fixed_rate(व्योम *data,
-					       काष्ठा ieee80211_sta *sta)
-अणु
-	काष्ठा ath11k_vअगर *arvअगर = data;
-	काष्ठा ath11k *ar = arvअगर->ar;
-	पूर्णांक ret;
+static void ath11k_mac_disable_peer_fixed_rate(void *data,
+					       struct ieee80211_sta *sta)
+{
+	struct ath11k_vif *arvif = data;
+	struct ath11k *ar = arvif->ar;
+	int ret;
 
 	ret = ath11k_wmi_set_peer_param(ar, sta->addr,
-					arvअगर->vdev_id,
+					arvif->vdev_id,
 					WMI_PEER_PARAM_FIXED_RATE,
 					WMI_FIXED_RATE_NONE);
-	अगर (ret)
+	if (ret)
 		ath11k_warn(ar->ab,
 			    "failed to disable peer fixed rate for STA %pM ret %d\n",
 			    sta->addr, ret);
-पूर्ण
+}
 
-अटल पूर्णांक
-ath11k_mac_op_set_bitrate_mask(काष्ठा ieee80211_hw *hw,
-			       काष्ठा ieee80211_vअगर *vअगर,
-			       स्थिर काष्ठा cfg80211_bitrate_mask *mask)
-अणु
-	काष्ठा ath11k_vअगर *arvअगर = (व्योम *)vअगर->drv_priv;
-	काष्ठा cfg80211_chan_def def;
-	काष्ठा ath11k *ar = arvअगर->ar;
-	क्रमागत nl80211_band band;
-	स्थिर u8 *ht_mcs_mask;
-	स्थिर u16 *vht_mcs_mask;
+static int
+ath11k_mac_op_set_bitrate_mask(struct ieee80211_hw *hw,
+			       struct ieee80211_vif *vif,
+			       const struct cfg80211_bitrate_mask *mask)
+{
+	struct ath11k_vif *arvif = (void *)vif->drv_priv;
+	struct cfg80211_chan_def def;
+	struct ath11k *ar = arvif->ar;
+	enum nl80211_band band;
+	const u8 *ht_mcs_mask;
+	const u16 *vht_mcs_mask;
 	u32 rate;
 	u8 nss;
 	u8 sgi;
 	u8 ldpc;
-	पूर्णांक single_nss;
-	पूर्णांक ret;
-	पूर्णांक num_rates;
+	int single_nss;
+	int ret;
+	int num_rates;
 
-	अगर (ath11k_mac_vअगर_chan(vअगर, &def))
-		वापस -EPERM;
+	if (ath11k_mac_vif_chan(vif, &def))
+		return -EPERM;
 
 	band = def.chan->band;
 	ht_mcs_mask = mask->control[band].ht_mcs;
@@ -5936,202 +5935,202 @@ ath11k_mac_op_set_bitrate_mask(काष्ठा ieee80211_hw *hw,
 	ldpc = !!(ar->ht_cap_info & WMI_HT_CAP_LDPC);
 
 	sgi = mask->control[band].gi;
-	अगर (sgi == NL80211_TXRATE_FORCE_LGI)
-		वापस -EINVAL;
+	if (sgi == NL80211_TXRATE_FORCE_LGI)
+		return -EINVAL;
 
-	/* mac80211 करोesn't support sending a fixed HT/VHT MCS alone, rather it
-	 * requires passing atleast one of used basic rates aदीर्घ with them.
-	 * Fixed rate setting across dअगरferent preambles(legacy, HT, VHT) is
+	/* mac80211 doesn't support sending a fixed HT/VHT MCS alone, rather it
+	 * requires passing atleast one of used basic rates along with them.
+	 * Fixed rate setting across different preambles(legacy, HT, VHT) is
 	 * not supported by the FW. Hence use of FIXED_RATE vdev param is not
-	 * suitable क्रम setting single HT/VHT rates.
+	 * suitable for setting single HT/VHT rates.
 	 * But, there could be a single basic rate passed from userspace which
-	 * can be करोne through the FIXED_RATE param.
+	 * can be done through the FIXED_RATE param.
 	 */
-	अगर (ath11k_mac_has_single_legacy_rate(ar, band, mask)) अणु
+	if (ath11k_mac_has_single_legacy_rate(ar, band, mask)) {
 		ret = ath11k_mac_get_single_legacy_rate(ar, band, mask, &rate,
 							&nss);
-		अगर (ret) अणु
+		if (ret) {
 			ath11k_warn(ar->ab, "failed to get single legacy rate for vdev %i: %d\n",
-				    arvअगर->vdev_id, ret);
-			वापस ret;
-		पूर्ण
+				    arvif->vdev_id, ret);
+			return ret;
+		}
 		ieee80211_iterate_stations_atomic(ar->hw,
 						  ath11k_mac_disable_peer_fixed_rate,
-						  arvअगर);
-	पूर्ण अन्यथा अगर (ath11k_mac_bitrate_mask_get_single_nss(ar, band, mask,
-							  &single_nss)) अणु
+						  arvif);
+	} else if (ath11k_mac_bitrate_mask_get_single_nss(ar, band, mask,
+							  &single_nss)) {
 		rate = WMI_FIXED_RATE_NONE;
 		nss = single_nss;
-	पूर्ण अन्यथा अणु
+	} else {
 		rate = WMI_FIXED_RATE_NONE;
 		nss = min_t(u32, ar->num_tx_chains,
 			    max(ath11k_mac_max_ht_nss(ht_mcs_mask),
 				ath11k_mac_max_vht_nss(vht_mcs_mask)));
 
-		/* If multiple rates across dअगरferent preambles are given
+		/* If multiple rates across different preambles are given
 		 * we can reconfigure this info with all peers using PEER_ASSOC
-		 * command with the below exception हालs.
+		 * command with the below exception cases.
 		 * - Single VHT Rate : peer_assoc command accommodates only MCS
-		 * range values i.e 0-7, 0-8, 0-9 क्रम VHT. Though mac80211
-		 * mandates passing basic rates aदीर्घ with HT/VHT rates, FW
-		 * करोesn't allow चयनing from VHT to Legacy. Hence instead of
+		 * range values i.e 0-7, 0-8, 0-9 for VHT. Though mac80211
+		 * mandates passing basic rates along with HT/VHT rates, FW
+		 * doesn't allow switching from VHT to Legacy. Hence instead of
 		 * setting legacy and VHT rates using RATEMASK_CMD vdev cmd,
 		 * we could set this VHT rate as peer fixed rate param, which
 		 * will override FIXED rate and FW rate control algorithm.
-		 * If single VHT rate is passed aदीर्घ with HT rates, we select
-		 * the VHT rate as fixed rate क्रम vht peers.
+		 * If single VHT rate is passed along with HT rates, we select
+		 * the VHT rate as fixed rate for vht peers.
 		 * - Multiple VHT Rates : When Multiple VHT rates are given,this
 		 * can be set using RATEMASK CMD which uses FW rate-ctl alg.
 		 * TODO: Setting multiple VHT MCS and replacing peer_assoc with
-		 * RATEMASK_CMDID can cover all use हालs of setting rates
+		 * RATEMASK_CMDID can cover all use cases of setting rates
 		 * across multiple preambles and rates within same type.
-		 * But requires more validation of the command at this poपूर्णांक.
+		 * But requires more validation of the command at this point.
 		 */
 
 		num_rates = ath11k_mac_bitrate_mask_num_vht_rates(ar, band,
 								  mask);
 
-		अगर (!ath11k_mac_vht_mcs_range_present(ar, band, mask) &&
-		    num_rates > 1) अणु
+		if (!ath11k_mac_vht_mcs_range_present(ar, band, mask) &&
+		    num_rates > 1) {
 			/* TODO: Handle multiple VHT MCS values setting using
 			 * RATEMASK CMD
 			 */
 			ath11k_warn(ar->ab,
 				    "Setting more than one MCS Value in bitrate mask not supported\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		ieee80211_iterate_stations_atomic(ar->hw,
 						  ath11k_mac_disable_peer_fixed_rate,
-						  arvअगर);
+						  arvif);
 
 		mutex_lock(&ar->conf_mutex);
 
-		arvअगर->bitrate_mask = *mask;
+		arvif->bitrate_mask = *mask;
 		ieee80211_iterate_stations_atomic(ar->hw,
 						  ath11k_mac_set_bitrate_mask_iter,
-						  arvअगर);
+						  arvif);
 
 		mutex_unlock(&ar->conf_mutex);
-	पूर्ण
+	}
 
 	mutex_lock(&ar->conf_mutex);
 
-	ret = ath11k_mac_set_fixed_rate_params(arvअगर, rate, nss, sgi, ldpc);
-	अगर (ret) अणु
+	ret = ath11k_mac_set_fixed_rate_params(arvif, rate, nss, sgi, ldpc);
+	if (ret) {
 		ath11k_warn(ar->ab, "failed to set fixed rate params on vdev %i: %d\n",
-			    arvअगर->vdev_id, ret);
-	पूर्ण
+			    arvif->vdev_id, ret);
+	}
 
 	mutex_unlock(&ar->conf_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम
-ath11k_mac_op_reconfig_complete(काष्ठा ieee80211_hw *hw,
-				क्रमागत ieee80211_reconfig_type reconfig_type)
-अणु
-	काष्ठा ath11k *ar = hw->priv;
+static void
+ath11k_mac_op_reconfig_complete(struct ieee80211_hw *hw,
+				enum ieee80211_reconfig_type reconfig_type)
+{
+	struct ath11k *ar = hw->priv;
 
-	अगर (reconfig_type != IEEE80211_RECONFIG_TYPE_RESTART)
-		वापस;
+	if (reconfig_type != IEEE80211_RECONFIG_TYPE_RESTART)
+		return;
 
 	mutex_lock(&ar->conf_mutex);
 
-	अगर (ar->state == ATH11K_STATE_RESTARTED) अणु
+	if (ar->state == ATH11K_STATE_RESTARTED) {
 		ath11k_warn(ar->ab, "pdev %d successfully recovered\n",
 			    ar->pdev->pdev_id);
 		ar->state = ATH11K_STATE_ON;
 		ieee80211_wake_queues(ar->hw);
-	पूर्ण
+	}
 
 	mutex_unlock(&ar->conf_mutex);
-पूर्ण
+}
 
-अटल व्योम
-ath11k_mac_update_bss_chan_survey(काष्ठा ath11k *ar,
-				  काष्ठा ieee80211_channel *channel)
-अणु
-	पूर्णांक ret;
-	क्रमागत wmi_bss_chan_info_req_type type = WMI_BSS_SURVEY_REQ_TYPE_READ;
+static void
+ath11k_mac_update_bss_chan_survey(struct ath11k *ar,
+				  struct ieee80211_channel *channel)
+{
+	int ret;
+	enum wmi_bss_chan_info_req_type type = WMI_BSS_SURVEY_REQ_TYPE_READ;
 
-	lockdep_निश्चित_held(&ar->conf_mutex);
+	lockdep_assert_held(&ar->conf_mutex);
 
-	अगर (!test_bit(WMI_TLV_SERVICE_BSS_CHANNEL_INFO_64, ar->ab->wmi_ab.svc_map) ||
+	if (!test_bit(WMI_TLV_SERVICE_BSS_CHANNEL_INFO_64, ar->ab->wmi_ab.svc_map) ||
 	    ar->rx_channel != channel)
-		वापस;
+		return;
 
-	अगर (ar->scan.state != ATH11K_SCAN_IDLE) अणु
+	if (ar->scan.state != ATH11K_SCAN_IDLE) {
 		ath11k_dbg(ar->ab, ATH11K_DBG_MAC,
 			   "ignoring bss chan info req while scanning..\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	reinit_completion(&ar->bss_survey_करोne);
+	reinit_completion(&ar->bss_survey_done);
 
 	ret = ath11k_wmi_pdev_bss_chan_info_request(ar, type);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_warn(ar->ab, "failed to send pdev bss chan info request\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	ret = रुको_क्रम_completion_समयout(&ar->bss_survey_करोne, 3 * HZ);
-	अगर (ret == 0)
+	ret = wait_for_completion_timeout(&ar->bss_survey_done, 3 * HZ);
+	if (ret == 0)
 		ath11k_warn(ar->ab, "bss channel survey timed out\n");
-पूर्ण
+}
 
-अटल पूर्णांक ath11k_mac_op_get_survey(काष्ठा ieee80211_hw *hw, पूर्णांक idx,
-				    काष्ठा survey_info *survey)
-अणु
-	काष्ठा ath11k *ar = hw->priv;
-	काष्ठा ieee80211_supported_band *sband;
-	काष्ठा survey_info *ar_survey;
-	पूर्णांक ret = 0;
+static int ath11k_mac_op_get_survey(struct ieee80211_hw *hw, int idx,
+				    struct survey_info *survey)
+{
+	struct ath11k *ar = hw->priv;
+	struct ieee80211_supported_band *sband;
+	struct survey_info *ar_survey;
+	int ret = 0;
 
-	अगर (idx >= ATH11K_NUM_CHANS)
-		वापस -ENOENT;
+	if (idx >= ATH11K_NUM_CHANS)
+		return -ENOENT;
 
 	ar_survey = &ar->survey[idx];
 
 	mutex_lock(&ar->conf_mutex);
 
 	sband = hw->wiphy->bands[NL80211_BAND_2GHZ];
-	अगर (sband && idx >= sband->n_channels) अणु
+	if (sband && idx >= sband->n_channels) {
 		idx -= sband->n_channels;
-		sband = शून्य;
-	पूर्ण
+		sband = NULL;
+	}
 
-	अगर (!sband)
+	if (!sband)
 		sband = hw->wiphy->bands[NL80211_BAND_5GHZ];
 
-	अगर (!sband || idx >= sband->n_channels) अणु
+	if (!sband || idx >= sband->n_channels) {
 		ret = -ENOENT;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	ath11k_mac_update_bss_chan_survey(ar, &sband->channels[idx]);
 
 	spin_lock_bh(&ar->data_lock);
-	स_नकल(survey, ar_survey, माप(*survey));
+	memcpy(survey, ar_survey, sizeof(*survey));
 	spin_unlock_bh(&ar->data_lock);
 
 	survey->channel = &sband->channels[idx];
 
-	अगर (ar->rx_channel == survey->channel)
+	if (ar->rx_channel == survey->channel)
 		survey->filled |= SURVEY_INFO_IN_USE;
 
-निकास:
+exit:
 	mutex_unlock(&ar->conf_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ath11k_mac_op_sta_statistics(काष्ठा ieee80211_hw *hw,
-					 काष्ठा ieee80211_vअगर *vअगर,
-					 काष्ठा ieee80211_sta *sta,
-					 काष्ठा station_info *sinfo)
-अणु
-	काष्ठा ath11k_sta *arsta = (काष्ठा ath11k_sta *)sta->drv_priv;
+static void ath11k_mac_op_sta_statistics(struct ieee80211_hw *hw,
+					 struct ieee80211_vif *vif,
+					 struct ieee80211_sta *sta,
+					 struct station_info *sinfo)
+{
+	struct ath11k_sta *arsta = (struct ath11k_sta *)sta->drv_priv;
 
 	sinfo->rx_duration = arsta->rx_duration;
 	sinfo->filled |= BIT_ULL(NL80211_STA_INFO_RX_DURATION);
@@ -6139,35 +6138,35 @@ ath11k_mac_update_bss_chan_survey(काष्ठा ath11k *ar,
 	sinfo->tx_duration = arsta->tx_duration;
 	sinfo->filled |= BIT_ULL(NL80211_STA_INFO_TX_DURATION);
 
-	अगर (!arsta->txrate.legacy && !arsta->txrate.nss)
-		वापस;
+	if (!arsta->txrate.legacy && !arsta->txrate.nss)
+		return;
 
-	अगर (arsta->txrate.legacy) अणु
+	if (arsta->txrate.legacy) {
 		sinfo->txrate.legacy = arsta->txrate.legacy;
-	पूर्ण अन्यथा अणु
+	} else {
 		sinfo->txrate.mcs = arsta->txrate.mcs;
 		sinfo->txrate.nss = arsta->txrate.nss;
 		sinfo->txrate.bw = arsta->txrate.bw;
 		sinfo->txrate.he_gi = arsta->txrate.he_gi;
 		sinfo->txrate.he_dcm = arsta->txrate.he_dcm;
 		sinfo->txrate.he_ru_alloc = arsta->txrate.he_ru_alloc;
-	पूर्ण
+	}
 	sinfo->txrate.flags = arsta->txrate.flags;
 	sinfo->filled |= BIT_ULL(NL80211_STA_INFO_TX_BITRATE);
 
-	/* TODO: Use real NF instead of शेष one. */
-	sinfo->संकेत = arsta->rssi_comb + ATH11K_DEFAULT_NOISE_FLOOR;
+	/* TODO: Use real NF instead of default one. */
+	sinfo->signal = arsta->rssi_comb + ATH11K_DEFAULT_NOISE_FLOOR;
 	sinfo->filled |= BIT_ULL(NL80211_STA_INFO_SIGNAL);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा ieee80211_ops ath11k_ops = अणु
+static const struct ieee80211_ops ath11k_ops = {
 	.tx				= ath11k_mac_op_tx,
 	.start                          = ath11k_mac_op_start,
 	.stop                           = ath11k_mac_op_stop,
 	.reconfig_complete              = ath11k_mac_op_reconfig_complete,
-	.add_पूर्णांकerface                  = ath11k_mac_op_add_पूर्णांकerface,
-	.हटाओ_पूर्णांकerface		= ath11k_mac_op_हटाओ_पूर्णांकerface,
-	.update_vअगर_offload		= ath11k_mac_op_update_vअगर_offload,
+	.add_interface                  = ath11k_mac_op_add_interface,
+	.remove_interface		= ath11k_mac_op_remove_interface,
+	.update_vif_offload		= ath11k_mac_op_update_vif_offload,
 	.config                         = ath11k_mac_op_config,
 	.bss_info_changed               = ath11k_mac_op_bss_info_changed,
 	.configure_filter		= ath11k_mac_op_configure_filter,
@@ -6182,61 +6181,61 @@ ath11k_mac_update_bss_chan_survey(काष्ठा ath11k *ar,
 	.get_antenna			= ath11k_mac_op_get_antenna,
 	.ampdu_action			= ath11k_mac_op_ampdu_action,
 	.add_chanctx			= ath11k_mac_op_add_chanctx,
-	.हटाओ_chanctx			= ath11k_mac_op_हटाओ_chanctx,
+	.remove_chanctx			= ath11k_mac_op_remove_chanctx,
 	.change_chanctx			= ath11k_mac_op_change_chanctx,
-	.assign_vअगर_chanctx		= ath11k_mac_op_assign_vअगर_chanctx,
-	.unassign_vअगर_chanctx		= ath11k_mac_op_unassign_vअगर_chanctx,
-	.चयन_vअगर_chanctx		= ath11k_mac_op_चयन_vअगर_chanctx,
+	.assign_vif_chanctx		= ath11k_mac_op_assign_vif_chanctx,
+	.unassign_vif_chanctx		= ath11k_mac_op_unassign_vif_chanctx,
+	.switch_vif_chanctx		= ath11k_mac_op_switch_vif_chanctx,
 	.set_rts_threshold		= ath11k_mac_op_set_rts_threshold,
 	.set_frag_threshold		= ath11k_mac_op_set_frag_threshold,
 	.set_bitrate_mask		= ath11k_mac_op_set_bitrate_mask,
 	.get_survey			= ath11k_mac_op_get_survey,
 	.flush				= ath11k_mac_op_flush,
 	.sta_statistics			= ath11k_mac_op_sta_statistics,
-	CFG80211_TESTMODE_CMD(ath11k_पंचांग_cmd)
-#अगर_घोषित CONFIG_ATH11K_DEBUGFS
+	CFG80211_TESTMODE_CMD(ath11k_tm_cmd)
+#ifdef CONFIG_ATH11K_DEBUGFS
 	.sta_add_debugfs		= ath11k_debugfs_sta_op_add,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-अटल व्योम ath11k_mac_update_ch_list(काष्ठा ath11k *ar,
-				      काष्ठा ieee80211_supported_band *band,
+static void ath11k_mac_update_ch_list(struct ath11k *ar,
+				      struct ieee80211_supported_band *band,
 				      u32 freq_low, u32 freq_high)
-अणु
-	पूर्णांक i;
+{
+	int i;
 
-	अगर (!(freq_low && freq_high))
-		वापस;
+	if (!(freq_low && freq_high))
+		return;
 
-	क्रम (i = 0; i < band->n_channels; i++) अणु
-		अगर (band->channels[i].center_freq < freq_low ||
+	for (i = 0; i < band->n_channels; i++) {
+		if (band->channels[i].center_freq < freq_low ||
 		    band->channels[i].center_freq > freq_high)
 			band->channels[i].flags |= IEEE80211_CHAN_DISABLED;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल u32 ath11k_get_phy_id(काष्ठा ath11k *ar, u32 band)
-अणु
-	काष्ठा ath11k_pdev *pdev = ar->pdev;
-	काष्ठा ath11k_pdev_cap *pdev_cap = &pdev->cap;
+static u32 ath11k_get_phy_id(struct ath11k *ar, u32 band)
+{
+	struct ath11k_pdev *pdev = ar->pdev;
+	struct ath11k_pdev_cap *pdev_cap = &pdev->cap;
 
-	अगर (band == WMI_HOST_WLAN_2G_CAP)
-		वापस pdev_cap->band[NL80211_BAND_2GHZ].phy_id;
+	if (band == WMI_HOST_WLAN_2G_CAP)
+		return pdev_cap->band[NL80211_BAND_2GHZ].phy_id;
 
-	अगर (band == WMI_HOST_WLAN_5G_CAP)
-		वापस pdev_cap->band[NL80211_BAND_5GHZ].phy_id;
+	if (band == WMI_HOST_WLAN_5G_CAP)
+		return pdev_cap->band[NL80211_BAND_5GHZ].phy_id;
 
 	ath11k_warn(ar->ab, "unsupported phy cap:%d\n", band);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ath11k_mac_setup_channels_rates(काष्ठा ath11k *ar,
+static int ath11k_mac_setup_channels_rates(struct ath11k *ar,
 					   u32 supported_bands)
-अणु
-	काष्ठा ieee80211_supported_band *band;
-	काष्ठा ath11k_hal_reg_capabilities_ext *reg_cap;
-	व्योम *channels;
+{
+	struct ieee80211_supported_band *band;
+	struct ath11k_hal_reg_capabilities_ext *reg_cap;
+	void *channels;
 	u32 phy_id;
 
 	BUILD_BUG_ON((ARRAY_SIZE(ath11k_2ghz_channels) +
@@ -6246,12 +6245,12 @@ ath11k_mac_update_bss_chan_survey(काष्ठा ath11k *ar,
 
 	reg_cap = &ar->ab->hal_reg_cap[ar->pdev_idx];
 
-	अगर (supported_bands & WMI_HOST_WLAN_2G_CAP) अणु
+	if (supported_bands & WMI_HOST_WLAN_2G_CAP) {
 		channels = kmemdup(ath11k_2ghz_channels,
-				   माप(ath11k_2ghz_channels),
+				   sizeof(ath11k_2ghz_channels),
 				   GFP_KERNEL);
-		अगर (!channels)
-			वापस -ENOMEM;
+		if (!channels)
+			return -ENOMEM;
 
 		band = &ar->mac.sbands[NL80211_BAND_2GHZ];
 		band->band = NL80211_BAND_2GHZ;
@@ -6261,23 +6260,23 @@ ath11k_mac_update_bss_chan_survey(काष्ठा ath11k *ar,
 		band->bitrates = ath11k_g_rates;
 		ar->hw->wiphy->bands[NL80211_BAND_2GHZ] = band;
 
-		अगर (ar->ab->hw_params.single_pdev_only) अणु
+		if (ar->ab->hw_params.single_pdev_only) {
 			phy_id = ath11k_get_phy_id(ar, WMI_HOST_WLAN_2G_CAP);
 			reg_cap = &ar->ab->hal_reg_cap[phy_id];
-		पूर्ण
+		}
 		ath11k_mac_update_ch_list(ar, band,
 					  reg_cap->low_2ghz_chan,
 					  reg_cap->high_2ghz_chan);
-	पूर्ण
+	}
 
-	अगर (supported_bands & WMI_HOST_WLAN_5G_CAP) अणु
-		अगर (reg_cap->high_5ghz_chan >= ATH11K_MAX_6G_FREQ) अणु
+	if (supported_bands & WMI_HOST_WLAN_5G_CAP) {
+		if (reg_cap->high_5ghz_chan >= ATH11K_MAX_6G_FREQ) {
 			channels = kmemdup(ath11k_6ghz_channels,
-					   माप(ath11k_6ghz_channels), GFP_KERNEL);
-			अगर (!channels) अणु
-				kमुक्त(ar->mac.sbands[NL80211_BAND_2GHZ].channels);
-				वापस -ENOMEM;
-			पूर्ण
+					   sizeof(ath11k_6ghz_channels), GFP_KERNEL);
+			if (!channels) {
+				kfree(ar->mac.sbands[NL80211_BAND_2GHZ].channels);
+				return -ENOMEM;
+			}
 
 			ar->supports_6ghz = true;
 			band = &ar->mac.sbands[NL80211_BAND_6GHZ];
@@ -6290,17 +6289,17 @@ ath11k_mac_update_bss_chan_survey(काष्ठा ath11k *ar,
 			ath11k_mac_update_ch_list(ar, band,
 						  reg_cap->low_5ghz_chan,
 						  reg_cap->high_5ghz_chan);
-		पूर्ण
+		}
 
-		अगर (reg_cap->low_5ghz_chan < ATH11K_MIN_6G_FREQ) अणु
+		if (reg_cap->low_5ghz_chan < ATH11K_MIN_6G_FREQ) {
 			channels = kmemdup(ath11k_5ghz_channels,
-					   माप(ath11k_5ghz_channels),
+					   sizeof(ath11k_5ghz_channels),
 					   GFP_KERNEL);
-			अगर (!channels) अणु
-				kमुक्त(ar->mac.sbands[NL80211_BAND_2GHZ].channels);
-				kमुक्त(ar->mac.sbands[NL80211_BAND_6GHZ].channels);
-				वापस -ENOMEM;
-			पूर्ण
+			if (!channels) {
+				kfree(ar->mac.sbands[NL80211_BAND_2GHZ].channels);
+				kfree(ar->mac.sbands[NL80211_BAND_6GHZ].channels);
+				return -ENOMEM;
+			}
 
 			band = &ar->mac.sbands[NL80211_BAND_5GHZ];
 			band->band = NL80211_BAND_5GHZ;
@@ -6310,38 +6309,38 @@ ath11k_mac_update_bss_chan_survey(काष्ठा ath11k *ar,
 			band->bitrates = ath11k_a_rates;
 			ar->hw->wiphy->bands[NL80211_BAND_5GHZ] = band;
 
-			अगर (ar->ab->hw_params.single_pdev_only) अणु
+			if (ar->ab->hw_params.single_pdev_only) {
 				phy_id = ath11k_get_phy_id(ar, WMI_HOST_WLAN_5G_CAP);
 				reg_cap = &ar->ab->hal_reg_cap[phy_id];
-			पूर्ण
+			}
 
 			ath11k_mac_update_ch_list(ar, band,
 						  reg_cap->low_5ghz_chan,
 						  reg_cap->high_5ghz_chan);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ath11k_mac_setup_अगरace_combinations(काष्ठा ath11k *ar)
-अणु
-	काष्ठा ath11k_base *ab = ar->ab;
-	काष्ठा ieee80211_अगरace_combination *combinations;
-	काष्ठा ieee80211_अगरace_limit *limits;
-	पूर्णांक n_limits;
+static int ath11k_mac_setup_iface_combinations(struct ath11k *ar)
+{
+	struct ath11k_base *ab = ar->ab;
+	struct ieee80211_iface_combination *combinations;
+	struct ieee80211_iface_limit *limits;
+	int n_limits;
 
-	combinations = kzalloc(माप(*combinations), GFP_KERNEL);
-	अगर (!combinations)
-		वापस -ENOMEM;
+	combinations = kzalloc(sizeof(*combinations), GFP_KERNEL);
+	if (!combinations)
+		return -ENOMEM;
 
 	n_limits = 2;
 
-	limits = kसुस्मृति(n_limits, माप(*limits), GFP_KERNEL);
-	अगर (!limits) अणु
-		kमुक्त(combinations);
-		वापस -ENOMEM;
-	पूर्ण
+	limits = kcalloc(n_limits, sizeof(*limits), GFP_KERNEL);
+	if (!limits) {
+		kfree(combinations);
+		return -ENOMEM;
+	}
 
 	limits[0].max = 1;
 	limits[0].types |= BIT(NL80211_IFTYPE_STATION);
@@ -6349,104 +6348,104 @@ ath11k_mac_update_bss_chan_survey(काष्ठा ath11k *ar,
 	limits[1].max = 16;
 	limits[1].types |= BIT(NL80211_IFTYPE_AP);
 
-	अगर (IS_ENABLED(CONFIG_MAC80211_MESH) &&
-	    ab->hw_params.पूर्णांकerface_modes & BIT(NL80211_IFTYPE_MESH_POINT))
+	if (IS_ENABLED(CONFIG_MAC80211_MESH) &&
+	    ab->hw_params.interface_modes & BIT(NL80211_IFTYPE_MESH_POINT))
 		limits[1].types |= BIT(NL80211_IFTYPE_MESH_POINT);
 
 	combinations[0].limits = limits;
 	combinations[0].n_limits = n_limits;
-	combinations[0].max_पूर्णांकerfaces = 16;
-	combinations[0].num_dअगरferent_channels = 1;
-	combinations[0].beacon_पूर्णांक_infra_match = true;
-	combinations[0].beacon_पूर्णांक_min_gcd = 100;
+	combinations[0].max_interfaces = 16;
+	combinations[0].num_different_channels = 1;
+	combinations[0].beacon_int_infra_match = true;
+	combinations[0].beacon_int_min_gcd = 100;
 	combinations[0].radar_detect_widths = BIT(NL80211_CHAN_WIDTH_20_NOHT) |
 						BIT(NL80211_CHAN_WIDTH_20) |
 						BIT(NL80211_CHAN_WIDTH_40) |
 						BIT(NL80211_CHAN_WIDTH_80);
 
-	ar->hw->wiphy->अगरace_combinations = combinations;
-	ar->hw->wiphy->n_अगरace_combinations = 1;
+	ar->hw->wiphy->iface_combinations = combinations;
+	ar->hw->wiphy->n_iface_combinations = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर u8 ath11k_अगर_types_ext_capa[] = अणु
+static const u8 ath11k_if_types_ext_capa[] = {
 	[0] = WLAN_EXT_CAPA1_EXT_CHANNEL_SWITCHING,
 	[7] = WLAN_EXT_CAPA8_OPMODE_NOTIF,
-पूर्ण;
+};
 
-अटल स्थिर u8 ath11k_अगर_types_ext_capa_sta[] = अणु
+static const u8 ath11k_if_types_ext_capa_sta[] = {
 	[0] = WLAN_EXT_CAPA1_EXT_CHANNEL_SWITCHING,
 	[7] = WLAN_EXT_CAPA8_OPMODE_NOTIF,
 	[9] = WLAN_EXT_CAPA10_TWT_REQUESTER_SUPPORT,
-पूर्ण;
+};
 
-अटल स्थिर u8 ath11k_अगर_types_ext_capa_ap[] = अणु
+static const u8 ath11k_if_types_ext_capa_ap[] = {
 	[0] = WLAN_EXT_CAPA1_EXT_CHANNEL_SWITCHING,
 	[7] = WLAN_EXT_CAPA8_OPMODE_NOTIF,
 	[9] = WLAN_EXT_CAPA10_TWT_RESPONDER_SUPPORT,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा wiphy_अगरtype_ext_capab ath11k_अगरtypes_ext_capa[] = अणु
-	अणु
-		.extended_capabilities = ath11k_अगर_types_ext_capa,
-		.extended_capabilities_mask = ath11k_अगर_types_ext_capa,
-		.extended_capabilities_len = माप(ath11k_अगर_types_ext_capa),
-	पूर्ण, अणु
-		.अगरtype = NL80211_IFTYPE_STATION,
-		.extended_capabilities = ath11k_अगर_types_ext_capa_sta,
-		.extended_capabilities_mask = ath11k_अगर_types_ext_capa_sta,
+static const struct wiphy_iftype_ext_capab ath11k_iftypes_ext_capa[] = {
+	{
+		.extended_capabilities = ath11k_if_types_ext_capa,
+		.extended_capabilities_mask = ath11k_if_types_ext_capa,
+		.extended_capabilities_len = sizeof(ath11k_if_types_ext_capa),
+	}, {
+		.iftype = NL80211_IFTYPE_STATION,
+		.extended_capabilities = ath11k_if_types_ext_capa_sta,
+		.extended_capabilities_mask = ath11k_if_types_ext_capa_sta,
 		.extended_capabilities_len =
-				माप(ath11k_अगर_types_ext_capa_sta),
-	पूर्ण, अणु
-		.अगरtype = NL80211_IFTYPE_AP,
-		.extended_capabilities = ath11k_अगर_types_ext_capa_ap,
-		.extended_capabilities_mask = ath11k_अगर_types_ext_capa_ap,
+				sizeof(ath11k_if_types_ext_capa_sta),
+	}, {
+		.iftype = NL80211_IFTYPE_AP,
+		.extended_capabilities = ath11k_if_types_ext_capa_ap,
+		.extended_capabilities_mask = ath11k_if_types_ext_capa_ap,
 		.extended_capabilities_len =
-				माप(ath11k_अगर_types_ext_capa_ap),
-	पूर्ण,
-पूर्ण;
+				sizeof(ath11k_if_types_ext_capa_ap),
+	},
+};
 
-अटल व्योम __ath11k_mac_unरेजिस्टर(काष्ठा ath11k *ar)
-अणु
+static void __ath11k_mac_unregister(struct ath11k *ar)
+{
 	cancel_work_sync(&ar->regd_update_work);
 
-	ieee80211_unरेजिस्टर_hw(ar->hw);
+	ieee80211_unregister_hw(ar->hw);
 
-	idr_क्रम_each(&ar->txmgmt_idr, ath11k_mac_tx_mgmt_pending_मुक्त, ar);
+	idr_for_each(&ar->txmgmt_idr, ath11k_mac_tx_mgmt_pending_free, ar);
 	idr_destroy(&ar->txmgmt_idr);
 
-	kमुक्त(ar->mac.sbands[NL80211_BAND_2GHZ].channels);
-	kमुक्त(ar->mac.sbands[NL80211_BAND_5GHZ].channels);
-	kमुक्त(ar->mac.sbands[NL80211_BAND_6GHZ].channels);
+	kfree(ar->mac.sbands[NL80211_BAND_2GHZ].channels);
+	kfree(ar->mac.sbands[NL80211_BAND_5GHZ].channels);
+	kfree(ar->mac.sbands[NL80211_BAND_6GHZ].channels);
 
-	kमुक्त(ar->hw->wiphy->अगरace_combinations[0].limits);
-	kमुक्त(ar->hw->wiphy->अगरace_combinations);
+	kfree(ar->hw->wiphy->iface_combinations[0].limits);
+	kfree(ar->hw->wiphy->iface_combinations);
 
-	SET_IEEE80211_DEV(ar->hw, शून्य);
-पूर्ण
+	SET_IEEE80211_DEV(ar->hw, NULL);
+}
 
-व्योम ath11k_mac_unरेजिस्टर(काष्ठा ath11k_base *ab)
-अणु
-	काष्ठा ath11k *ar;
-	काष्ठा ath11k_pdev *pdev;
-	पूर्णांक i;
+void ath11k_mac_unregister(struct ath11k_base *ab)
+{
+	struct ath11k *ar;
+	struct ath11k_pdev *pdev;
+	int i;
 
-	क्रम (i = 0; i < ab->num_radios; i++) अणु
+	for (i = 0; i < ab->num_radios; i++) {
 		pdev = &ab->pdevs[i];
 		ar = pdev->ar;
-		अगर (!ar)
-			जारी;
+		if (!ar)
+			continue;
 
-		__ath11k_mac_unरेजिस्टर(ar);
-	पूर्ण
-पूर्ण
+		__ath11k_mac_unregister(ar);
+	}
+}
 
-अटल पूर्णांक __ath11k_mac_रेजिस्टर(काष्ठा ath11k *ar)
-अणु
-	काष्ठा ath11k_base *ab = ar->ab;
-	काष्ठा ath11k_pdev_cap *cap = &ar->pdev->cap;
-	अटल स्थिर u32 cipher_suites[] = अणु
+static int __ath11k_mac_register(struct ath11k *ar)
+{
+	struct ath11k_base *ab = ar->ab;
+	struct ath11k_pdev_cap *cap = &ar->pdev->cap;
+	static const u32 cipher_suites[] = {
 		WLAN_CIPHER_SUITE_TKIP,
 		WLAN_CIPHER_SUITE_CCMP,
 		WLAN_CIPHER_SUITE_AES_CMAC,
@@ -6456,8 +6455,8 @@ ath11k_mac_update_bss_chan_survey(काष्ठा ath11k *ar,
 		WLAN_CIPHER_SUITE_GCMP,
 		WLAN_CIPHER_SUITE_GCMP_256,
 		WLAN_CIPHER_SUITE_CCMP_256,
-	पूर्ण;
-	पूर्णांक ret;
+	};
+	int ret;
 	u32 ht_cap = 0;
 
 	ath11k_pdev_caps_update(ar);
@@ -6468,22 +6467,22 @@ ath11k_mac_update_bss_chan_survey(काष्ठा ath11k *ar,
 
 	ret = ath11k_mac_setup_channels_rates(ar,
 					      cap->supported_bands);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	ath11k_mac_setup_ht_vht_cap(ar, cap, &ht_cap);
 	ath11k_mac_setup_he_cap(ar, cap);
 
-	ret = ath11k_mac_setup_अगरace_combinations(ar);
-	अगर (ret) अणु
+	ret = ath11k_mac_setup_iface_combinations(ar);
+	if (ret) {
 		ath11k_err(ar->ab, "failed to setup interface combinations: %d\n", ret);
-		जाओ err_मुक्त_channels;
-	पूर्ण
+		goto err_free_channels;
+	}
 
 	ar->hw->wiphy->available_antennas_rx = cap->rx_chain_mask;
 	ar->hw->wiphy->available_antennas_tx = cap->tx_chain_mask;
 
-	ar->hw->wiphy->पूर्णांकerface_modes = ab->hw_params.पूर्णांकerface_modes;
+	ar->hw->wiphy->interface_modes = ab->hw_params.interface_modes;
 
 	ieee80211_hw_set(ar->hw, SIGNAL_DBM);
 	ieee80211_hw_set(ar->hw, SUPPORTS_PS);
@@ -6501,32 +6500,32 @@ ath11k_mac_update_bss_chan_survey(काष्ठा ath11k *ar,
 	ieee80211_hw_set(ar->hw, SUPPORTS_TX_FRAG);
 	ieee80211_hw_set(ar->hw, REPORTS_LOW_ACK);
 	ieee80211_hw_set(ar->hw, SUPPORTS_TX_ENCAP_OFFLOAD);
-	अगर (ht_cap & WMI_HT_CAP_ENABLED) अणु
+	if (ht_cap & WMI_HT_CAP_ENABLED) {
 		ieee80211_hw_set(ar->hw, AMPDU_AGGREGATION);
 		ieee80211_hw_set(ar->hw, TX_AMPDU_SETUP_IN_HW);
 		ieee80211_hw_set(ar->hw, SUPPORTS_REORDERING_BUFFER);
 		ieee80211_hw_set(ar->hw, SUPPORTS_AMSDU_IN_AMPDU);
 		ieee80211_hw_set(ar->hw, USES_RSS);
-	पूर्ण
+	}
 
 	ar->hw->wiphy->features |= NL80211_FEATURE_STATIC_SMPS;
 	ar->hw->wiphy->flags |= WIPHY_FLAG_IBSS_RSN;
 
-	/* TODO: Check अगर HT capability advertised from firmware is dअगरferent
-	 * क्रम each band क्रम a dual band capable radio. It will be tricky to
-	 * handle it when the ht capability dअगरferent क्रम each band.
+	/* TODO: Check if HT capability advertised from firmware is different
+	 * for each band for a dual band capable radio. It will be tricky to
+	 * handle it when the ht capability different for each band.
 	 */
-	अगर (ht_cap & WMI_HT_CAP_DYNAMIC_SMPS)
+	if (ht_cap & WMI_HT_CAP_DYNAMIC_SMPS)
 		ar->hw->wiphy->features |= NL80211_FEATURE_DYNAMIC_SMPS;
 
 	ar->hw->wiphy->max_scan_ssids = WLAN_SCAN_PARAMS_MAX_SSID;
 	ar->hw->wiphy->max_scan_ie_len = WLAN_SCAN_PARAMS_MAX_IE_LEN;
 
-	ar->hw->max_listen_पूर्णांकerval = ATH11K_MAX_HW_LISTEN_INTERVAL;
+	ar->hw->max_listen_interval = ATH11K_MAX_HW_LISTEN_INTERVAL;
 
 	ar->hw->wiphy->flags |= WIPHY_FLAG_HAS_REMAIN_ON_CHANNEL;
 	ar->hw->wiphy->flags |= WIPHY_FLAG_HAS_CHANNEL_SWITCH;
-	ar->hw->wiphy->max_reमुख्य_on_channel_duration = 5000;
+	ar->hw->wiphy->max_remain_on_channel_duration = 5000;
 
 	ar->hw->wiphy->flags |= WIPHY_FLAG_AP_UAPSD;
 	ar->hw->wiphy->features |= NL80211_FEATURE_AP_MODE_CHAN_WIDTH_CHANGE |
@@ -6542,8 +6541,8 @@ ath11k_mac_update_bss_chan_survey(काष्ठा ath11k *ar,
 	ar->hw->offchannel_tx_hw_queue = ATH11K_HW_MAX_QUEUES - 1;
 	ar->hw->max_rx_aggregation_subframes = IEEE80211_MAX_AMPDU_BUF;
 
-	ar->hw->vअगर_data_size = माप(काष्ठा ath11k_vअगर);
-	ar->hw->sta_data_size = माप(काष्ठा ath11k_sta);
+	ar->hw->vif_data_size = sizeof(struct ath11k_vif);
+	ar->hw->sta_data_size = sizeof(struct ath11k_sta);
 
 	wiphy_ext_feature_set(ar->hw->wiphy, NL80211_EXT_FEATURE_CQM_RSSI_LIST);
 	wiphy_ext_feature_set(ar->hw->wiphy, NL80211_EXT_FEATURE_STA_TX_PWR);
@@ -6551,134 +6550,134 @@ ath11k_mac_update_bss_chan_survey(काष्ठा ath11k *ar,
 	ar->hw->wiphy->cipher_suites = cipher_suites;
 	ar->hw->wiphy->n_cipher_suites = ARRAY_SIZE(cipher_suites);
 
-	ar->hw->wiphy->अगरtype_ext_capab = ath11k_अगरtypes_ext_capa;
-	ar->hw->wiphy->num_अगरtype_ext_capab =
-		ARRAY_SIZE(ath11k_अगरtypes_ext_capa);
+	ar->hw->wiphy->iftype_ext_capab = ath11k_iftypes_ext_capa;
+	ar->hw->wiphy->num_iftype_ext_capab =
+		ARRAY_SIZE(ath11k_iftypes_ext_capa);
 
-	अगर (ar->supports_6ghz) अणु
+	if (ar->supports_6ghz) {
 		wiphy_ext_feature_set(ar->hw->wiphy,
 				      NL80211_EXT_FEATURE_FILS_DISCOVERY);
 		wiphy_ext_feature_set(ar->hw->wiphy,
 				      NL80211_EXT_FEATURE_UNSOL_BCAST_PROBE_RESP);
-	पूर्ण
+	}
 
 	ath11k_reg_init(ar);
 
-	अगर (!test_bit(ATH11K_FLAG_RAW_MODE, &ab->dev_flags)) अणु
+	if (!test_bit(ATH11K_FLAG_RAW_MODE, &ab->dev_flags)) {
 		ar->hw->netdev_features = NETIF_F_HW_CSUM;
 		ieee80211_hw_set(ar->hw, SW_CRYPTO_CONTROL);
 		ieee80211_hw_set(ar->hw, SUPPORT_FAST_XMIT);
-	पूर्ण
+	}
 
-	ret = ieee80211_रेजिस्टर_hw(ar->hw);
-	अगर (ret) अणु
+	ret = ieee80211_register_hw(ar->hw);
+	if (ret) {
 		ath11k_err(ar->ab, "ieee80211 registration failed: %d\n", ret);
-		जाओ err_मुक्त_अगर_combs;
-	पूर्ण
+		goto err_free_if_combs;
+	}
 
-	अगर (!ab->hw_params.supports_monitor)
-		/* There's a race between calling ieee80211_रेजिस्टर_hw()
-		 * and here where the monitor mode is enabled क्रम a little
-		 * जबतक. But that समय is so लघु and in practise it make
-		 * a dअगरference in real lअगरe.
+	if (!ab->hw_params.supports_monitor)
+		/* There's a race between calling ieee80211_register_hw()
+		 * and here where the monitor mode is enabled for a little
+		 * while. But that time is so short and in practise it make
+		 * a difference in real life.
 		 */
-		ar->hw->wiphy->पूर्णांकerface_modes &= ~BIT(NL80211_IFTYPE_MONITOR);
+		ar->hw->wiphy->interface_modes &= ~BIT(NL80211_IFTYPE_MONITOR);
 
 	/* Apply the regd received during initialization */
 	ret = ath11k_regd_update(ar, true);
-	अगर (ret) अणु
+	if (ret) {
 		ath11k_err(ar->ab, "ath11k regd update failed: %d\n", ret);
-		जाओ err_unरेजिस्टर_hw;
-	पूर्ण
+		goto err_unregister_hw;
+	}
 
-	ret = ath11k_debugfs_रेजिस्टर(ar);
-	अगर (ret) अणु
+	ret = ath11k_debugfs_register(ar);
+	if (ret) {
 		ath11k_err(ar->ab, "debugfs registration failed: %d\n", ret);
-		जाओ err_unरेजिस्टर_hw;
-	पूर्ण
+		goto err_unregister_hw;
+	}
 
-	वापस 0;
+	return 0;
 
-err_unरेजिस्टर_hw:
-	ieee80211_unरेजिस्टर_hw(ar->hw);
+err_unregister_hw:
+	ieee80211_unregister_hw(ar->hw);
 
-err_मुक्त_अगर_combs:
-	kमुक्त(ar->hw->wiphy->अगरace_combinations[0].limits);
-	kमुक्त(ar->hw->wiphy->अगरace_combinations);
+err_free_if_combs:
+	kfree(ar->hw->wiphy->iface_combinations[0].limits);
+	kfree(ar->hw->wiphy->iface_combinations);
 
-err_मुक्त_channels:
-	kमुक्त(ar->mac.sbands[NL80211_BAND_2GHZ].channels);
-	kमुक्त(ar->mac.sbands[NL80211_BAND_5GHZ].channels);
-	kमुक्त(ar->mac.sbands[NL80211_BAND_6GHZ].channels);
+err_free_channels:
+	kfree(ar->mac.sbands[NL80211_BAND_2GHZ].channels);
+	kfree(ar->mac.sbands[NL80211_BAND_5GHZ].channels);
+	kfree(ar->mac.sbands[NL80211_BAND_6GHZ].channels);
 
 err:
-	SET_IEEE80211_DEV(ar->hw, शून्य);
-	वापस ret;
-पूर्ण
+	SET_IEEE80211_DEV(ar->hw, NULL);
+	return ret;
+}
 
-पूर्णांक ath11k_mac_रेजिस्टर(काष्ठा ath11k_base *ab)
-अणु
-	काष्ठा ath11k *ar;
-	काष्ठा ath11k_pdev *pdev;
-	पूर्णांक i;
-	पूर्णांक ret;
+int ath11k_mac_register(struct ath11k_base *ab)
+{
+	struct ath11k *ar;
+	struct ath11k_pdev *pdev;
+	int i;
+	int ret;
 
-	अगर (test_bit(ATH11K_FLAG_REGISTERED, &ab->dev_flags))
-		वापस 0;
+	if (test_bit(ATH11K_FLAG_REGISTERED, &ab->dev_flags))
+		return 0;
 
-	क्रम (i = 0; i < ab->num_radios; i++) अणु
+	for (i = 0; i < ab->num_radios; i++) {
 		pdev = &ab->pdevs[i];
 		ar = pdev->ar;
-		अगर (ab->pdevs_macaddr_valid) अणु
+		if (ab->pdevs_macaddr_valid) {
 			ether_addr_copy(ar->mac_addr, pdev->mac_addr);
-		पूर्ण अन्यथा अणु
+		} else {
 			ether_addr_copy(ar->mac_addr, ab->mac_addr);
 			ar->mac_addr[4] += i;
-		पूर्ण
+		}
 
-		ret = __ath11k_mac_रेजिस्टर(ar);
-		अगर (ret)
-			जाओ err_cleanup;
+		ret = __ath11k_mac_register(ar);
+		if (ret)
+			goto err_cleanup;
 
 		idr_init(&ar->txmgmt_idr);
 		spin_lock_init(&ar->txmgmt_idr_lock);
-	पूर्ण
+	}
 
 	/* Initialize channel counters frequency value in hertz */
 	ab->cc_freq_hz = IPQ8074_CC_FREQ_HERTZ;
-	ab->मुक्त_vdev_map = (1LL << (ab->num_radios * TARGET_NUM_VDEVS)) - 1;
+	ab->free_vdev_map = (1LL << (ab->num_radios * TARGET_NUM_VDEVS)) - 1;
 
-	वापस 0;
+	return 0;
 
 err_cleanup:
-	क्रम (i = i - 1; i >= 0; i--) अणु
+	for (i = i - 1; i >= 0; i--) {
 		pdev = &ab->pdevs[i];
 		ar = pdev->ar;
-		__ath11k_mac_unरेजिस्टर(ar);
-	पूर्ण
+		__ath11k_mac_unregister(ar);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक ath11k_mac_allocate(काष्ठा ath11k_base *ab)
-अणु
-	काष्ठा ieee80211_hw *hw;
-	काष्ठा ath11k *ar;
-	काष्ठा ath11k_pdev *pdev;
-	पूर्णांक ret;
-	पूर्णांक i;
+int ath11k_mac_allocate(struct ath11k_base *ab)
+{
+	struct ieee80211_hw *hw;
+	struct ath11k *ar;
+	struct ath11k_pdev *pdev;
+	int ret;
+	int i;
 
-	अगर (test_bit(ATH11K_FLAG_REGISTERED, &ab->dev_flags))
-		वापस 0;
+	if (test_bit(ATH11K_FLAG_REGISTERED, &ab->dev_flags))
+		return 0;
 
-	क्रम (i = 0; i < ab->num_radios; i++) अणु
+	for (i = 0; i < ab->num_radios; i++) {
 		pdev = &ab->pdevs[i];
-		hw = ieee80211_alloc_hw(माप(काष्ठा ath11k), &ath11k_ops);
-		अगर (!hw) अणु
+		hw = ieee80211_alloc_hw(sizeof(struct ath11k), &ath11k_ops);
+		if (!hw) {
 			ath11k_warn(ab, "failed to allocate mac80211 hw device\n");
 			ret = -ENOMEM;
-			जाओ err_मुक्त_mac;
-		पूर्ण
+			goto err_free_mac;
+		}
 
 		ar = hw->priv;
 		ar->hw = hw;
@@ -6688,8 +6687,8 @@ err_cleanup:
 		ar->lmac_id = ath11k_hw_get_mac_from_pdev_id(&ab->hw_params, i);
 
 		ar->wmi = &ab->wmi_ab.wmi[i];
-		/* FIXME wmi[0] is alपढ़ोy initialized during attach,
-		 * Should we करो this again?
+		/* FIXME wmi[0] is already initialized during attach,
+		 * Should we do this again?
 		 */
 		ath11k_wmi_pdev_attach(ab, i);
 
@@ -6700,48 +6699,48 @@ err_cleanup:
 
 		pdev->ar = ar;
 		spin_lock_init(&ar->data_lock);
-		INIT_LIST_HEAD(&ar->arvअगरs);
+		INIT_LIST_HEAD(&ar->arvifs);
 		INIT_LIST_HEAD(&ar->ppdu_stats_info);
 		mutex_init(&ar->conf_mutex);
-		init_completion(&ar->vdev_setup_करोne);
-		init_completion(&ar->vdev_delete_करोne);
-		init_completion(&ar->peer_assoc_करोne);
-		init_completion(&ar->peer_delete_करोne);
-		init_completion(&ar->install_key_करोne);
-		init_completion(&ar->bss_survey_करोne);
+		init_completion(&ar->vdev_setup_done);
+		init_completion(&ar->vdev_delete_done);
+		init_completion(&ar->peer_assoc_done);
+		init_completion(&ar->peer_delete_done);
+		init_completion(&ar->install_key_done);
+		init_completion(&ar->bss_survey_done);
 		init_completion(&ar->scan.started);
 		init_completion(&ar->scan.completed);
 		init_completion(&ar->thermal.wmi_sync);
 
-		INIT_DELAYED_WORK(&ar->scan.समयout, ath11k_scan_समयout_work);
+		INIT_DELAYED_WORK(&ar->scan.timeout, ath11k_scan_timeout_work);
 		INIT_WORK(&ar->regd_update_work, ath11k_regd_update_work);
 
 		INIT_WORK(&ar->wmi_mgmt_tx_work, ath11k_mgmt_over_wmi_tx_work);
 		skb_queue_head_init(&ar->wmi_mgmt_tx_queue);
 		clear_bit(ATH11K_FLAG_MONITOR_ENABLED, &ar->monitor_flags);
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
-err_मुक्त_mac:
+err_free_mac:
 	ath11k_mac_destroy(ab);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम ath11k_mac_destroy(काष्ठा ath11k_base *ab)
-अणु
-	काष्ठा ath11k *ar;
-	काष्ठा ath11k_pdev *pdev;
-	पूर्णांक i;
+void ath11k_mac_destroy(struct ath11k_base *ab)
+{
+	struct ath11k *ar;
+	struct ath11k_pdev *pdev;
+	int i;
 
-	क्रम (i = 0; i < ab->num_radios; i++) अणु
+	for (i = 0; i < ab->num_radios; i++) {
 		pdev = &ab->pdevs[i];
 		ar = pdev->ar;
-		अगर (!ar)
-			जारी;
+		if (!ar)
+			continue;
 
-		ieee80211_मुक्त_hw(ar->hw);
-		pdev->ar = शून्य;
-	पूर्ण
-पूर्ण
+		ieee80211_free_hw(ar->hw);
+		pdev->ar = NULL;
+	}
+}

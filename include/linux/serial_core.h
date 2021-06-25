@@ -1,93 +1,92 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- *  linux/drivers/अक्षर/serial_core.h
+ *  linux/drivers/char/serial_core.h
  *
  *  Copyright (C) 2000 Deep Blue Solutions Ltd.
  */
-#अगर_अघोषित LINUX_SERIAL_CORE_H
-#घोषणा LINUX_SERIAL_CORE_H
+#ifndef LINUX_SERIAL_CORE_H
+#define LINUX_SERIAL_CORE_H
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/compiler.h>
-#समावेश <linux/console.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/circ_buf.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/sysrq.h>
-#समावेश <uapi/linux/serial_core.h>
+#include <linux/bitops.h>
+#include <linux/compiler.h>
+#include <linux/console.h>
+#include <linux/interrupt.h>
+#include <linux/circ_buf.h>
+#include <linux/spinlock.h>
+#include <linux/sched.h>
+#include <linux/tty.h>
+#include <linux/mutex.h>
+#include <linux/sysrq.h>
+#include <uapi/linux/serial_core.h>
 
-#अगर_घोषित CONFIG_SERIAL_CORE_CONSOLE
-#घोषणा uart_console(port) \
+#ifdef CONFIG_SERIAL_CORE_CONSOLE
+#define uart_console(port) \
 	((port)->cons && (port)->cons->index == (port)->line)
-#अन्यथा
-#घोषणा uart_console(port)      (अणु (व्योम)port; 0; पूर्ण)
-#पूर्ण_अगर
+#else
+#define uart_console(port)      ({ (void)port; 0; })
+#endif
 
-काष्ठा uart_port;
-काष्ठा serial_काष्ठा;
-काष्ठा device;
-काष्ठा gpio_desc;
+struct uart_port;
+struct serial_struct;
+struct device;
+struct gpio_desc;
 
 /*
- * This काष्ठाure describes all the operations that can be करोne on the
- * physical hardware.  See Documentation/driver-api/serial/driver.rst क्रम details.
+ * This structure describes all the operations that can be done on the
+ * physical hardware.  See Documentation/driver-api/serial/driver.rst for details.
  */
-काष्ठा uart_ops अणु
-	अचिन्हित पूर्णांक	(*tx_empty)(काष्ठा uart_port *);
-	व्योम		(*set_mctrl)(काष्ठा uart_port *, अचिन्हित पूर्णांक mctrl);
-	अचिन्हित पूर्णांक	(*get_mctrl)(काष्ठा uart_port *);
-	व्योम		(*stop_tx)(काष्ठा uart_port *);
-	व्योम		(*start_tx)(काष्ठा uart_port *);
-	व्योम		(*throttle)(काष्ठा uart_port *);
-	व्योम		(*unthrottle)(काष्ठा uart_port *);
-	व्योम		(*send_xअक्षर)(काष्ठा uart_port *, अक्षर ch);
-	व्योम		(*stop_rx)(काष्ठा uart_port *);
-	व्योम		(*enable_ms)(काष्ठा uart_port *);
-	व्योम		(*अवरोध_ctl)(काष्ठा uart_port *, पूर्णांक ctl);
-	पूर्णांक		(*startup)(काष्ठा uart_port *);
-	व्योम		(*shutकरोwn)(काष्ठा uart_port *);
-	व्योम		(*flush_buffer)(काष्ठा uart_port *);
-	व्योम		(*set_termios)(काष्ठा uart_port *, काष्ठा ktermios *new,
-				       काष्ठा ktermios *old);
-	व्योम		(*set_ldisc)(काष्ठा uart_port *, काष्ठा ktermios *);
-	व्योम		(*pm)(काष्ठा uart_port *, अचिन्हित पूर्णांक state,
-			      अचिन्हित पूर्णांक oldstate);
+struct uart_ops {
+	unsigned int	(*tx_empty)(struct uart_port *);
+	void		(*set_mctrl)(struct uart_port *, unsigned int mctrl);
+	unsigned int	(*get_mctrl)(struct uart_port *);
+	void		(*stop_tx)(struct uart_port *);
+	void		(*start_tx)(struct uart_port *);
+	void		(*throttle)(struct uart_port *);
+	void		(*unthrottle)(struct uart_port *);
+	void		(*send_xchar)(struct uart_port *, char ch);
+	void		(*stop_rx)(struct uart_port *);
+	void		(*enable_ms)(struct uart_port *);
+	void		(*break_ctl)(struct uart_port *, int ctl);
+	int		(*startup)(struct uart_port *);
+	void		(*shutdown)(struct uart_port *);
+	void		(*flush_buffer)(struct uart_port *);
+	void		(*set_termios)(struct uart_port *, struct ktermios *new,
+				       struct ktermios *old);
+	void		(*set_ldisc)(struct uart_port *, struct ktermios *);
+	void		(*pm)(struct uart_port *, unsigned int state,
+			      unsigned int oldstate);
 
 	/*
 	 * Return a string describing the type of the port
 	 */
-	स्थिर अक्षर	*(*type)(काष्ठा uart_port *);
+	const char	*(*type)(struct uart_port *);
 
 	/*
 	 * Release IO and memory resources used by the port.
-	 * This includes iounmap अगर necessary.
+	 * This includes iounmap if necessary.
 	 */
-	व्योम		(*release_port)(काष्ठा uart_port *);
+	void		(*release_port)(struct uart_port *);
 
 	/*
 	 * Request IO and memory resources used by the port.
-	 * This includes iomapping the port अगर necessary.
+	 * This includes iomapping the port if necessary.
 	 */
-	पूर्णांक		(*request_port)(काष्ठा uart_port *);
-	व्योम		(*config_port)(काष्ठा uart_port *, पूर्णांक);
-	पूर्णांक		(*verअगरy_port)(काष्ठा uart_port *, काष्ठा serial_काष्ठा *);
-	पूर्णांक		(*ioctl)(काष्ठा uart_port *, अचिन्हित पूर्णांक, अचिन्हित दीर्घ);
-#अगर_घोषित CONFIG_CONSOLE_POLL
-	पूर्णांक		(*poll_init)(काष्ठा uart_port *);
-	व्योम		(*poll_put_अक्षर)(काष्ठा uart_port *, अचिन्हित अक्षर);
-	पूर्णांक		(*poll_get_अक्षर)(काष्ठा uart_port *);
-#पूर्ण_अगर
-पूर्ण;
+	int		(*request_port)(struct uart_port *);
+	void		(*config_port)(struct uart_port *, int);
+	int		(*verify_port)(struct uart_port *, struct serial_struct *);
+	int		(*ioctl)(struct uart_port *, unsigned int, unsigned long);
+#ifdef CONFIG_CONSOLE_POLL
+	int		(*poll_init)(struct uart_port *);
+	void		(*poll_put_char)(struct uart_port *, unsigned char);
+	int		(*poll_get_char)(struct uart_port *);
+#endif
+};
 
-#घोषणा NO_POLL_CHAR		0x00ff0000
-#घोषणा UART_CONFIG_TYPE	(1 << 0)
-#घोषणा UART_CONFIG_IRQ		(1 << 1)
+#define NO_POLL_CHAR		0x00ff0000
+#define UART_CONFIG_TYPE	(1 << 0)
+#define UART_CONFIG_IRQ		(1 << 1)
 
-काष्ठा uart_icount अणु
+struct uart_icount {
 	__u32	cts;
 	__u32	dsr;
 	__u32	rng;
@@ -99,470 +98,470 @@
 	__u32	parity;
 	__u32	brk;
 	__u32	buf_overrun;
-पूर्ण;
+};
 
-प्रकार अचिन्हित पूर्णांक __bitwise upf_t;
-प्रकार अचिन्हित पूर्णांक __bitwise upstat_t;
+typedef unsigned int __bitwise upf_t;
+typedef unsigned int __bitwise upstat_t;
 
-काष्ठा uart_port अणु
+struct uart_port {
 	spinlock_t		lock;			/* port lock */
-	अचिन्हित दीर्घ		iobase;			/* in/out[bwl] */
-	अचिन्हित अक्षर __iomem	*membase;		/* पढ़ो/ग_लिखो[bwl] */
-	अचिन्हित पूर्णांक		(*serial_in)(काष्ठा uart_port *, पूर्णांक);
-	व्योम			(*serial_out)(काष्ठा uart_port *, पूर्णांक, पूर्णांक);
-	व्योम			(*set_termios)(काष्ठा uart_port *,
-				               काष्ठा ktermios *new,
-				               काष्ठा ktermios *old);
-	व्योम			(*set_ldisc)(काष्ठा uart_port *,
-					     काष्ठा ktermios *);
-	अचिन्हित पूर्णांक		(*get_mctrl)(काष्ठा uart_port *);
-	व्योम			(*set_mctrl)(काष्ठा uart_port *, अचिन्हित पूर्णांक);
-	अचिन्हित पूर्णांक		(*get_भागisor)(काष्ठा uart_port *,
-					       अचिन्हित पूर्णांक baud,
-					       अचिन्हित पूर्णांक *frac);
-	व्योम			(*set_भागisor)(काष्ठा uart_port *,
-					       अचिन्हित पूर्णांक baud,
-					       अचिन्हित पूर्णांक quot,
-					       अचिन्हित पूर्णांक quot_frac);
-	पूर्णांक			(*startup)(काष्ठा uart_port *port);
-	व्योम			(*shutकरोwn)(काष्ठा uart_port *port);
-	व्योम			(*throttle)(काष्ठा uart_port *port);
-	व्योम			(*unthrottle)(काष्ठा uart_port *port);
-	पूर्णांक			(*handle_irq)(काष्ठा uart_port *);
-	व्योम			(*pm)(काष्ठा uart_port *, अचिन्हित पूर्णांक state,
-				      अचिन्हित पूर्णांक old);
-	व्योम			(*handle_अवरोध)(काष्ठा uart_port *);
-	पूर्णांक			(*rs485_config)(काष्ठा uart_port *,
-						काष्ठा serial_rs485 *rs485);
-	पूर्णांक			(*iso7816_config)(काष्ठा uart_port *,
-						  काष्ठा serial_iso7816 *iso7816);
-	अचिन्हित पूर्णांक		irq;			/* irq number */
-	अचिन्हित दीर्घ		irqflags;		/* irq flags  */
-	अचिन्हित पूर्णांक		uartclk;		/* base uart घड़ी */
-	अचिन्हित पूर्णांक		fअगरosize;		/* tx fअगरo size */
-	अचिन्हित अक्षर		x_अक्षर;			/* xon/xoff अक्षर */
-	अचिन्हित अक्षर		regshअगरt;		/* reg offset shअगरt */
-	अचिन्हित अक्षर		iotype;			/* io access style */
-	अचिन्हित अक्षर		quirks;			/* पूर्णांकernal quirks */
+	unsigned long		iobase;			/* in/out[bwl] */
+	unsigned char __iomem	*membase;		/* read/write[bwl] */
+	unsigned int		(*serial_in)(struct uart_port *, int);
+	void			(*serial_out)(struct uart_port *, int, int);
+	void			(*set_termios)(struct uart_port *,
+				               struct ktermios *new,
+				               struct ktermios *old);
+	void			(*set_ldisc)(struct uart_port *,
+					     struct ktermios *);
+	unsigned int		(*get_mctrl)(struct uart_port *);
+	void			(*set_mctrl)(struct uart_port *, unsigned int);
+	unsigned int		(*get_divisor)(struct uart_port *,
+					       unsigned int baud,
+					       unsigned int *frac);
+	void			(*set_divisor)(struct uart_port *,
+					       unsigned int baud,
+					       unsigned int quot,
+					       unsigned int quot_frac);
+	int			(*startup)(struct uart_port *port);
+	void			(*shutdown)(struct uart_port *port);
+	void			(*throttle)(struct uart_port *port);
+	void			(*unthrottle)(struct uart_port *port);
+	int			(*handle_irq)(struct uart_port *);
+	void			(*pm)(struct uart_port *, unsigned int state,
+				      unsigned int old);
+	void			(*handle_break)(struct uart_port *);
+	int			(*rs485_config)(struct uart_port *,
+						struct serial_rs485 *rs485);
+	int			(*iso7816_config)(struct uart_port *,
+						  struct serial_iso7816 *iso7816);
+	unsigned int		irq;			/* irq number */
+	unsigned long		irqflags;		/* irq flags  */
+	unsigned int		uartclk;		/* base uart clock */
+	unsigned int		fifosize;		/* tx fifo size */
+	unsigned char		x_char;			/* xon/xoff char */
+	unsigned char		regshift;		/* reg offset shift */
+	unsigned char		iotype;			/* io access style */
+	unsigned char		quirks;			/* internal quirks */
 
-#घोषणा UPIO_PORT		(SERIAL_IO_PORT)	/* 8b I/O port access */
-#घोषणा UPIO_HUB6		(SERIAL_IO_HUB6)	/* Hub6 ISA card */
-#घोषणा UPIO_MEM		(SERIAL_IO_MEM)		/* driver-specअगरic */
-#घोषणा UPIO_MEM32		(SERIAL_IO_MEM32)	/* 32b little endian */
-#घोषणा UPIO_AU			(SERIAL_IO_AU)		/* Au1x00 and RT288x type IO */
-#घोषणा UPIO_TSI		(SERIAL_IO_TSI)		/* Tsi108/109 type IO */
-#घोषणा UPIO_MEM32BE		(SERIAL_IO_MEM32BE)	/* 32b big endian */
-#घोषणा UPIO_MEM16		(SERIAL_IO_MEM16)	/* 16b little endian */
+#define UPIO_PORT		(SERIAL_IO_PORT)	/* 8b I/O port access */
+#define UPIO_HUB6		(SERIAL_IO_HUB6)	/* Hub6 ISA card */
+#define UPIO_MEM		(SERIAL_IO_MEM)		/* driver-specific */
+#define UPIO_MEM32		(SERIAL_IO_MEM32)	/* 32b little endian */
+#define UPIO_AU			(SERIAL_IO_AU)		/* Au1x00 and RT288x type IO */
+#define UPIO_TSI		(SERIAL_IO_TSI)		/* Tsi108/109 type IO */
+#define UPIO_MEM32BE		(SERIAL_IO_MEM32BE)	/* 32b big endian */
+#define UPIO_MEM16		(SERIAL_IO_MEM16)	/* 16b little endian */
 
-	/* quirks must be updated जबतक holding port mutex */
-#घोषणा UPQ_NO_TXEN_TEST	BIT(0)
+	/* quirks must be updated while holding port mutex */
+#define UPQ_NO_TXEN_TEST	BIT(0)
 
-	अचिन्हित पूर्णांक		पढ़ो_status_mask;	/* driver specअगरic */
-	अचिन्हित पूर्णांक		ignore_status_mask;	/* driver specअगरic */
-	काष्ठा uart_state	*state;			/* poपूर्णांकer to parent state */
-	काष्ठा uart_icount	icount;			/* statistics */
+	unsigned int		read_status_mask;	/* driver specific */
+	unsigned int		ignore_status_mask;	/* driver specific */
+	struct uart_state	*state;			/* pointer to parent state */
+	struct uart_icount	icount;			/* statistics */
 
-	काष्ठा console		*cons;			/* काष्ठा console, अगर any */
-	/* flags must be updated जबतक holding port mutex */
+	struct console		*cons;			/* struct console, if any */
+	/* flags must be updated while holding port mutex */
 	upf_t			flags;
 
 	/*
 	 * These flags must be equivalent to the flags defined in
 	 * include/uapi/linux/tty_flags.h which are the userspace definitions
-	 * asचिन्हित from the serial_काष्ठा flags in uart_set_info()
-	 * [क्रम bit definitions in the UPF_CHANGE_MASK]
+	 * assigned from the serial_struct flags in uart_set_info()
+	 * [for bit definitions in the UPF_CHANGE_MASK]
 	 *
 	 * Bits [0..UPF_LAST_USER] are userspace defined/visible/changeable
-	 * The reमुख्यing bits are serial-core specअगरic and not modअगरiable by
+	 * The remaining bits are serial-core specific and not modifiable by
 	 * userspace.
 	 */
-#घोषणा UPF_FOURPORT		((__क्रमce upf_t) ASYNC_FOURPORT       /* 1  */ )
-#घोषणा UPF_SAK			((__क्रमce upf_t) ASYNC_SAK            /* 2  */ )
-#घोषणा UPF_SPD_HI		((__क्रमce upf_t) ASYNC_SPD_HI         /* 4  */ )
-#घोषणा UPF_SPD_VHI		((__क्रमce upf_t) ASYNC_SPD_VHI        /* 5  */ )
-#घोषणा UPF_SPD_CUST		((__क्रमce upf_t) ASYNC_SPD_CUST   /* 0x0030 */ )
-#घोषणा UPF_SPD_WARP		((__क्रमce upf_t) ASYNC_SPD_WARP   /* 0x1010 */ )
-#घोषणा UPF_SPD_MASK		((__क्रमce upf_t) ASYNC_SPD_MASK   /* 0x1030 */ )
-#घोषणा UPF_SKIP_TEST		((__क्रमce upf_t) ASYNC_SKIP_TEST      /* 6  */ )
-#घोषणा UPF_AUTO_IRQ		((__क्रमce upf_t) ASYNC_AUTO_IRQ       /* 7  */ )
-#घोषणा UPF_HARDPPS_CD		((__क्रमce upf_t) ASYNC_HARDPPS_CD     /* 11 */ )
-#घोषणा UPF_SPD_SHI		((__क्रमce upf_t) ASYNC_SPD_SHI        /* 12 */ )
-#घोषणा UPF_LOW_LATENCY		((__क्रमce upf_t) ASYNC_LOW_LATENCY    /* 13 */ )
-#घोषणा UPF_BUGGY_UART		((__क्रमce upf_t) ASYNC_BUGGY_UART     /* 14 */ )
-#घोषणा UPF_MAGIC_MULTIPLIER	((__क्रमce upf_t) ASYNC_MAGIC_MULTIPLIER /* 16 */ )
+#define UPF_FOURPORT		((__force upf_t) ASYNC_FOURPORT       /* 1  */ )
+#define UPF_SAK			((__force upf_t) ASYNC_SAK            /* 2  */ )
+#define UPF_SPD_HI		((__force upf_t) ASYNC_SPD_HI         /* 4  */ )
+#define UPF_SPD_VHI		((__force upf_t) ASYNC_SPD_VHI        /* 5  */ )
+#define UPF_SPD_CUST		((__force upf_t) ASYNC_SPD_CUST   /* 0x0030 */ )
+#define UPF_SPD_WARP		((__force upf_t) ASYNC_SPD_WARP   /* 0x1010 */ )
+#define UPF_SPD_MASK		((__force upf_t) ASYNC_SPD_MASK   /* 0x1030 */ )
+#define UPF_SKIP_TEST		((__force upf_t) ASYNC_SKIP_TEST      /* 6  */ )
+#define UPF_AUTO_IRQ		((__force upf_t) ASYNC_AUTO_IRQ       /* 7  */ )
+#define UPF_HARDPPS_CD		((__force upf_t) ASYNC_HARDPPS_CD     /* 11 */ )
+#define UPF_SPD_SHI		((__force upf_t) ASYNC_SPD_SHI        /* 12 */ )
+#define UPF_LOW_LATENCY		((__force upf_t) ASYNC_LOW_LATENCY    /* 13 */ )
+#define UPF_BUGGY_UART		((__force upf_t) ASYNC_BUGGY_UART     /* 14 */ )
+#define UPF_MAGIC_MULTIPLIER	((__force upf_t) ASYNC_MAGIC_MULTIPLIER /* 16 */ )
 
-#घोषणा UPF_NO_THRE_TEST	((__क्रमce upf_t) (1 << 19))
+#define UPF_NO_THRE_TEST	((__force upf_t) (1 << 19))
 /* Port has hardware-assisted h/w flow control */
-#घोषणा UPF_AUTO_CTS		((__क्रमce upf_t) (1 << 20))
-#घोषणा UPF_AUTO_RTS		((__क्रमce upf_t) (1 << 21))
-#घोषणा UPF_HARD_FLOW		((__क्रमce upf_t) (UPF_AUTO_CTS | UPF_AUTO_RTS))
+#define UPF_AUTO_CTS		((__force upf_t) (1 << 20))
+#define UPF_AUTO_RTS		((__force upf_t) (1 << 21))
+#define UPF_HARD_FLOW		((__force upf_t) (UPF_AUTO_CTS | UPF_AUTO_RTS))
 /* Port has hardware-assisted s/w flow control */
-#घोषणा UPF_SOFT_FLOW		((__क्रमce upf_t) (1 << 22))
-#घोषणा UPF_CONS_FLOW		((__क्रमce upf_t) (1 << 23))
-#घोषणा UPF_SHARE_IRQ		((__क्रमce upf_t) (1 << 24))
-#घोषणा UPF_EXAR_EFR		((__क्रमce upf_t) (1 << 25))
-#घोषणा UPF_BUG_THRE		((__क्रमce upf_t) (1 << 26))
+#define UPF_SOFT_FLOW		((__force upf_t) (1 << 22))
+#define UPF_CONS_FLOW		((__force upf_t) (1 << 23))
+#define UPF_SHARE_IRQ		((__force upf_t) (1 << 24))
+#define UPF_EXAR_EFR		((__force upf_t) (1 << 25))
+#define UPF_BUG_THRE		((__force upf_t) (1 << 26))
 /* The exact UART type is known and should not be probed.  */
-#घोषणा UPF_FIXED_TYPE		((__क्रमce upf_t) (1 << 27))
-#घोषणा UPF_BOOT_AUTOCONF	((__क्रमce upf_t) (1 << 28))
-#घोषणा UPF_FIXED_PORT		((__क्रमce upf_t) (1 << 29))
-#घोषणा UPF_DEAD		((__क्रमce upf_t) (1 << 30))
-#घोषणा UPF_IOREMAP		((__क्रमce upf_t) (1 << 31))
+#define UPF_FIXED_TYPE		((__force upf_t) (1 << 27))
+#define UPF_BOOT_AUTOCONF	((__force upf_t) (1 << 28))
+#define UPF_FIXED_PORT		((__force upf_t) (1 << 29))
+#define UPF_DEAD		((__force upf_t) (1 << 30))
+#define UPF_IOREMAP		((__force upf_t) (1 << 31))
 
-#घोषणा __UPF_CHANGE_MASK	0x17fff
-#घोषणा UPF_CHANGE_MASK		((__क्रमce upf_t) __UPF_CHANGE_MASK)
-#घोषणा UPF_USR_MASK		((__क्रमce upf_t) (UPF_SPD_MASK|UPF_LOW_LATENCY))
+#define __UPF_CHANGE_MASK	0x17fff
+#define UPF_CHANGE_MASK		((__force upf_t) __UPF_CHANGE_MASK)
+#define UPF_USR_MASK		((__force upf_t) (UPF_SPD_MASK|UPF_LOW_LATENCY))
 
-#अगर __UPF_CHANGE_MASK > ASYNC_FLAGS
-#त्रुटि Change mask not equivalent to userspace-visible bit defines
-#पूर्ण_अगर
+#if __UPF_CHANGE_MASK > ASYNC_FLAGS
+#error Change mask not equivalent to userspace-visible bit defines
+#endif
 
 	/*
 	 * Must hold termios_rwsem, port mutex and port lock to change;
-	 * can hold any one lock to पढ़ो.
+	 * can hold any one lock to read.
 	 */
 	upstat_t		status;
 
-#घोषणा UPSTAT_CTS_ENABLE	((__क्रमce upstat_t) (1 << 0))
-#घोषणा UPSTAT_DCD_ENABLE	((__क्रमce upstat_t) (1 << 1))
-#घोषणा UPSTAT_AUTORTS		((__क्रमce upstat_t) (1 << 2))
-#घोषणा UPSTAT_AUTOCTS		((__क्रमce upstat_t) (1 << 3))
-#घोषणा UPSTAT_AUTOXOFF		((__क्रमce upstat_t) (1 << 4))
-#घोषणा UPSTAT_SYNC_FIFO	((__क्रमce upstat_t) (1 << 5))
+#define UPSTAT_CTS_ENABLE	((__force upstat_t) (1 << 0))
+#define UPSTAT_DCD_ENABLE	((__force upstat_t) (1 << 1))
+#define UPSTAT_AUTORTS		((__force upstat_t) (1 << 2))
+#define UPSTAT_AUTOCTS		((__force upstat_t) (1 << 3))
+#define UPSTAT_AUTOXOFF		((__force upstat_t) (1 << 4))
+#define UPSTAT_SYNC_FIFO	((__force upstat_t) (1 << 5))
 
-	पूर्णांक			hw_stopped;		/* sw-assisted CTS flow state */
-	अचिन्हित पूर्णांक		mctrl;			/* current modem ctrl settings */
-	अचिन्हित पूर्णांक		समयout;		/* अक्षरacter-based समयout */
-	अचिन्हित पूर्णांक		type;			/* port type */
-	स्थिर काष्ठा uart_ops	*ops;
-	अचिन्हित पूर्णांक		custom_भागisor;
-	अचिन्हित पूर्णांक		line;			/* port index */
-	अचिन्हित पूर्णांक		minor;
-	resource_माप_प्रकार		mapbase;		/* क्रम ioremap */
-	resource_माप_प्रकार		mapsize;
-	काष्ठा device		*dev;			/* parent device */
+	int			hw_stopped;		/* sw-assisted CTS flow state */
+	unsigned int		mctrl;			/* current modem ctrl settings */
+	unsigned int		timeout;		/* character-based timeout */
+	unsigned int		type;			/* port type */
+	const struct uart_ops	*ops;
+	unsigned int		custom_divisor;
+	unsigned int		line;			/* port index */
+	unsigned int		minor;
+	resource_size_t		mapbase;		/* for ioremap */
+	resource_size_t		mapsize;
+	struct device		*dev;			/* parent device */
 
-	अचिन्हित दीर्घ		sysrq;			/* sysrq समयout */
-	अचिन्हित पूर्णांक		sysrq_ch;		/* अक्षर क्रम sysrq */
-	अचिन्हित अक्षर		has_sysrq;
-	अचिन्हित अक्षर		sysrq_seq;		/* index in sysrq_toggle_seq */
+	unsigned long		sysrq;			/* sysrq timeout */
+	unsigned int		sysrq_ch;		/* char for sysrq */
+	unsigned char		has_sysrq;
+	unsigned char		sysrq_seq;		/* index in sysrq_toggle_seq */
 
-	अचिन्हित अक्षर		hub6;			/* this should be in the 8250 driver */
-	अचिन्हित अक्षर		suspended;
-	अचिन्हित अक्षर		console_reinit;
-	स्थिर अक्षर		*name;			/* port name */
-	काष्ठा attribute_group	*attr_group;		/* port specअगरic attributes */
-	स्थिर काष्ठा attribute_group **tty_groups;	/* all attributes (serial core use only) */
-	काष्ठा serial_rs485     rs485;
-	काष्ठा gpio_desc	*rs485_term_gpio;	/* enable RS485 bus termination */
-	काष्ठा serial_iso7816   iso7816;
-	व्योम			*निजी_data;		/* generic platक्रमm data poपूर्णांकer */
-पूर्ण;
+	unsigned char		hub6;			/* this should be in the 8250 driver */
+	unsigned char		suspended;
+	unsigned char		console_reinit;
+	const char		*name;			/* port name */
+	struct attribute_group	*attr_group;		/* port specific attributes */
+	const struct attribute_group **tty_groups;	/* all attributes (serial core use only) */
+	struct serial_rs485     rs485;
+	struct gpio_desc	*rs485_term_gpio;	/* enable RS485 bus termination */
+	struct serial_iso7816   iso7816;
+	void			*private_data;		/* generic platform data pointer */
+};
 
-अटल अंतरभूत पूर्णांक serial_port_in(काष्ठा uart_port *up, पूर्णांक offset)
-अणु
-	वापस up->serial_in(up, offset);
-पूर्ण
+static inline int serial_port_in(struct uart_port *up, int offset)
+{
+	return up->serial_in(up, offset);
+}
 
-अटल अंतरभूत व्योम serial_port_out(काष्ठा uart_port *up, पूर्णांक offset, पूर्णांक value)
-अणु
+static inline void serial_port_out(struct uart_port *up, int offset, int value)
+{
 	up->serial_out(up, offset, value);
-पूर्ण
+}
 
 /**
- * क्रमागत uart_pm_state - घातer states क्रम UARTs
- * @UART_PM_STATE_ON: UART is घातered, up and operational
- * @UART_PM_STATE_OFF: UART is घातered off
+ * enum uart_pm_state - power states for UARTs
+ * @UART_PM_STATE_ON: UART is powered, up and operational
+ * @UART_PM_STATE_OFF: UART is powered off
  * @UART_PM_STATE_UNDEFINED: sentinel
  */
-क्रमागत uart_pm_state अणु
+enum uart_pm_state {
 	UART_PM_STATE_ON = 0,
 	UART_PM_STATE_OFF = 3, /* number taken from ACPI */
 	UART_PM_STATE_UNDEFINED,
-पूर्ण;
+};
 
 /*
- * This is the state inक्रमmation which is persistent across खोलोs.
+ * This is the state information which is persistent across opens.
  */
-काष्ठा uart_state अणु
-	काष्ठा tty_port		port;
+struct uart_state {
+	struct tty_port		port;
 
-	क्रमागत uart_pm_state	pm_state;
-	काष्ठा circ_buf		xmit;
+	enum uart_pm_state	pm_state;
+	struct circ_buf		xmit;
 
 	atomic_t		refcount;
-	रुको_queue_head_t	हटाओ_रुको;
-	काष्ठा uart_port	*uart_port;
-पूर्ण;
+	wait_queue_head_t	remove_wait;
+	struct uart_port	*uart_port;
+};
 
-#घोषणा UART_XMIT_SIZE	PAGE_SIZE
+#define UART_XMIT_SIZE	PAGE_SIZE
 
 
-/* number of अक्षरacters left in xmit buffer beक्रमe we ask क्रम more */
-#घोषणा WAKEUP_CHARS		256
+/* number of characters left in xmit buffer before we ask for more */
+#define WAKEUP_CHARS		256
 
-काष्ठा module;
-काष्ठा tty_driver;
+struct module;
+struct tty_driver;
 
-काष्ठा uart_driver अणु
-	काष्ठा module		*owner;
-	स्थिर अक्षर		*driver_name;
-	स्थिर अक्षर		*dev_name;
-	पूर्णांक			 major;
-	पूर्णांक			 minor;
-	पूर्णांक			 nr;
-	काष्ठा console		*cons;
+struct uart_driver {
+	struct module		*owner;
+	const char		*driver_name;
+	const char		*dev_name;
+	int			 major;
+	int			 minor;
+	int			 nr;
+	struct console		*cons;
 
 	/*
-	 * these are निजी; the low level driver should not
-	 * touch these; they should be initialised to शून्य
+	 * these are private; the low level driver should not
+	 * touch these; they should be initialised to NULL
 	 */
-	काष्ठा uart_state	*state;
-	काष्ठा tty_driver	*tty_driver;
-पूर्ण;
+	struct uart_state	*state;
+	struct tty_driver	*tty_driver;
+};
 
-व्योम uart_ग_लिखो_wakeup(काष्ठा uart_port *port);
+void uart_write_wakeup(struct uart_port *port);
 
 /*
  * Baud rate helpers.
  */
-व्योम uart_update_समयout(काष्ठा uart_port *port, अचिन्हित पूर्णांक cflag,
-			 अचिन्हित पूर्णांक baud);
-अचिन्हित पूर्णांक uart_get_baud_rate(काष्ठा uart_port *port, काष्ठा ktermios *termios,
-				काष्ठा ktermios *old, अचिन्हित पूर्णांक min,
-				अचिन्हित पूर्णांक max);
-अचिन्हित पूर्णांक uart_get_भागisor(काष्ठा uart_port *port, अचिन्हित पूर्णांक baud);
+void uart_update_timeout(struct uart_port *port, unsigned int cflag,
+			 unsigned int baud);
+unsigned int uart_get_baud_rate(struct uart_port *port, struct ktermios *termios,
+				struct ktermios *old, unsigned int min,
+				unsigned int max);
+unsigned int uart_get_divisor(struct uart_port *port, unsigned int baud);
 
-/* Base समयr पूर्णांकerval क्रम polling */
-अटल अंतरभूत पूर्णांक uart_poll_समयout(काष्ठा uart_port *port)
-अणु
-	पूर्णांक समयout = port->समयout;
+/* Base timer interval for polling */
+static inline int uart_poll_timeout(struct uart_port *port)
+{
+	int timeout = port->timeout;
 
-	वापस समयout > 6 ? (समयout / 2 - 2) : 1;
-पूर्ण
+	return timeout > 6 ? (timeout / 2 - 2) : 1;
+}
 
 /*
  * Console helpers.
  */
-काष्ठा earlycon_device अणु
-	काष्ठा console *con;
-	काष्ठा uart_port port;
-	अक्षर options[16];		/* e.g., 115200n8 */
-	अचिन्हित पूर्णांक baud;
-पूर्ण;
+struct earlycon_device {
+	struct console *con;
+	struct uart_port port;
+	char options[16];		/* e.g., 115200n8 */
+	unsigned int baud;
+};
 
-काष्ठा earlycon_id अणु
-	अक्षर	name[15];
-	अक्षर	name_term;	/* In हाल compiler didn't '\0' term name */
-	अक्षर	compatible[128];
-	पूर्णांक	(*setup)(काष्ठा earlycon_device *, स्थिर अक्षर *options);
-पूर्ण;
+struct earlycon_id {
+	char	name[15];
+	char	name_term;	/* In case compiler didn't '\0' term name */
+	char	compatible[128];
+	int	(*setup)(struct earlycon_device *, const char *options);
+};
 
-बाह्य स्थिर काष्ठा earlycon_id __earlycon_table[];
-बाह्य स्थिर काष्ठा earlycon_id __earlycon_table_end[];
+extern const struct earlycon_id __earlycon_table[];
+extern const struct earlycon_id __earlycon_table_end[];
 
-#अगर defined(CONFIG_SERIAL_EARLYCON) && !defined(MODULE)
-#घोषणा EARLYCON_USED_OR_UNUSED	__used
-#अन्यथा
-#घोषणा EARLYCON_USED_OR_UNUSED	__maybe_unused
-#पूर्ण_अगर
+#if defined(CONFIG_SERIAL_EARLYCON) && !defined(MODULE)
+#define EARLYCON_USED_OR_UNUSED	__used
+#else
+#define EARLYCON_USED_OR_UNUSED	__maybe_unused
+#endif
 
-#घोषणा OF_EARLYCON_DECLARE(_name, compat, fn)				\
-	अटल स्थिर काष्ठा earlycon_id __UNIQUE_ID(__earlycon_##_name) \
+#define OF_EARLYCON_DECLARE(_name, compat, fn)				\
+	static const struct earlycon_id __UNIQUE_ID(__earlycon_##_name) \
 		EARLYCON_USED_OR_UNUSED  __section("__earlycon_table")  \
-		__aligned(__alignof__(काष्ठा earlycon_id))		\
-		= अणु .name = __stringअगरy(_name),				\
+		__aligned(__alignof__(struct earlycon_id))		\
+		= { .name = __stringify(_name),				\
 		    .compatible = compat,				\
-		    .setup = fn पूर्ण
+		    .setup = fn }
 
-#घोषणा EARLYCON_DECLARE(_name, fn)	OF_EARLYCON_DECLARE(_name, "", fn)
+#define EARLYCON_DECLARE(_name, fn)	OF_EARLYCON_DECLARE(_name, "", fn)
 
-बाह्य पूर्णांक of_setup_earlycon(स्थिर काष्ठा earlycon_id *match,
-			     अचिन्हित दीर्घ node,
-			     स्थिर अक्षर *options);
+extern int of_setup_earlycon(const struct earlycon_id *match,
+			     unsigned long node,
+			     const char *options);
 
-#अगर_घोषित CONFIG_SERIAL_EARLYCON
-बाह्य bool earlycon_acpi_spcr_enable __initdata;
-पूर्णांक setup_earlycon(अक्षर *buf);
-#अन्यथा
-अटल स्थिर bool earlycon_acpi_spcr_enable EARLYCON_USED_OR_UNUSED;
-अटल अंतरभूत पूर्णांक setup_earlycon(अक्षर *buf) अणु वापस 0; पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_SERIAL_EARLYCON
+extern bool earlycon_acpi_spcr_enable __initdata;
+int setup_earlycon(char *buf);
+#else
+static const bool earlycon_acpi_spcr_enable EARLYCON_USED_OR_UNUSED;
+static inline int setup_earlycon(char *buf) { return 0; }
+#endif
 
-काष्ठा uart_port *uart_get_console(काष्ठा uart_port *ports, पूर्णांक nr,
-				   काष्ठा console *c);
-पूर्णांक uart_parse_earlycon(अक्षर *p, अचिन्हित अक्षर *iotype, resource_माप_प्रकार *addr,
-			अक्षर **options);
-व्योम uart_parse_options(स्थिर अक्षर *options, पूर्णांक *baud, पूर्णांक *parity, पूर्णांक *bits,
-			पूर्णांक *flow);
-पूर्णांक uart_set_options(काष्ठा uart_port *port, काष्ठा console *co, पूर्णांक baud,
-		     पूर्णांक parity, पूर्णांक bits, पूर्णांक flow);
-काष्ठा tty_driver *uart_console_device(काष्ठा console *co, पूर्णांक *index);
-व्योम uart_console_ग_लिखो(काष्ठा uart_port *port, स्थिर अक्षर *s,
-			अचिन्हित पूर्णांक count,
-			व्योम (*अक्षर_दो)(काष्ठा uart_port *, पूर्णांक));
+struct uart_port *uart_get_console(struct uart_port *ports, int nr,
+				   struct console *c);
+int uart_parse_earlycon(char *p, unsigned char *iotype, resource_size_t *addr,
+			char **options);
+void uart_parse_options(const char *options, int *baud, int *parity, int *bits,
+			int *flow);
+int uart_set_options(struct uart_port *port, struct console *co, int baud,
+		     int parity, int bits, int flow);
+struct tty_driver *uart_console_device(struct console *co, int *index);
+void uart_console_write(struct uart_port *port, const char *s,
+			unsigned int count,
+			void (*putchar)(struct uart_port *, int));
 
 /*
  * Port/driver registration/removal
  */
-पूर्णांक uart_रेजिस्टर_driver(काष्ठा uart_driver *uart);
-व्योम uart_unरेजिस्टर_driver(काष्ठा uart_driver *uart);
-पूर्णांक uart_add_one_port(काष्ठा uart_driver *reg, काष्ठा uart_port *port);
-पूर्णांक uart_हटाओ_one_port(काष्ठा uart_driver *reg, काष्ठा uart_port *port);
-पूर्णांक uart_match_port(काष्ठा uart_port *port1, काष्ठा uart_port *port2);
+int uart_register_driver(struct uart_driver *uart);
+void uart_unregister_driver(struct uart_driver *uart);
+int uart_add_one_port(struct uart_driver *reg, struct uart_port *port);
+int uart_remove_one_port(struct uart_driver *reg, struct uart_port *port);
+int uart_match_port(struct uart_port *port1, struct uart_port *port2);
 
 /*
  * Power Management
  */
-पूर्णांक uart_suspend_port(काष्ठा uart_driver *reg, काष्ठा uart_port *port);
-पूर्णांक uart_resume_port(काष्ठा uart_driver *reg, काष्ठा uart_port *port);
+int uart_suspend_port(struct uart_driver *reg, struct uart_port *port);
+int uart_resume_port(struct uart_driver *reg, struct uart_port *port);
 
-#घोषणा uart_circ_empty(circ)		((circ)->head == (circ)->tail)
-#घोषणा uart_circ_clear(circ)		((circ)->head = (circ)->tail = 0)
+#define uart_circ_empty(circ)		((circ)->head == (circ)->tail)
+#define uart_circ_clear(circ)		((circ)->head = (circ)->tail = 0)
 
-#घोषणा uart_circ_अक्षरs_pending(circ)	\
+#define uart_circ_chars_pending(circ)	\
 	(CIRC_CNT((circ)->head, (circ)->tail, UART_XMIT_SIZE))
 
-#घोषणा uart_circ_अक्षरs_मुक्त(circ)	\
+#define uart_circ_chars_free(circ)	\
 	(CIRC_SPACE((circ)->head, (circ)->tail, UART_XMIT_SIZE))
 
-अटल अंतरभूत पूर्णांक uart_tx_stopped(काष्ठा uart_port *port)
-अणु
-	काष्ठा tty_काष्ठा *tty = port->state->port.tty;
-	अगर ((tty && tty->stopped) || port->hw_stopped)
-		वापस 1;
-	वापस 0;
-पूर्ण
+static inline int uart_tx_stopped(struct uart_port *port)
+{
+	struct tty_struct *tty = port->state->port.tty;
+	if ((tty && tty->stopped) || port->hw_stopped)
+		return 1;
+	return 0;
+}
 
-अटल अंतरभूत bool uart_cts_enabled(काष्ठा uart_port *uport)
-अणु
-	वापस !!(uport->status & UPSTAT_CTS_ENABLE);
-पूर्ण
+static inline bool uart_cts_enabled(struct uart_port *uport)
+{
+	return !!(uport->status & UPSTAT_CTS_ENABLE);
+}
 
-अटल अंतरभूत bool uart_softcts_mode(काष्ठा uart_port *uport)
-अणु
+static inline bool uart_softcts_mode(struct uart_port *uport)
+{
 	upstat_t mask = UPSTAT_CTS_ENABLE | UPSTAT_AUTOCTS;
 
-	वापस ((uport->status & mask) == UPSTAT_CTS_ENABLE);
-पूर्ण
+	return ((uport->status & mask) == UPSTAT_CTS_ENABLE);
+}
 
 /*
- * The following are helper functions क्रम the low level drivers.
+ * The following are helper functions for the low level drivers.
  */
 
-बाह्य व्योम uart_handle_dcd_change(काष्ठा uart_port *uport,
-		अचिन्हित पूर्णांक status);
-बाह्य व्योम uart_handle_cts_change(काष्ठा uart_port *uport,
-		अचिन्हित पूर्णांक status);
+extern void uart_handle_dcd_change(struct uart_port *uport,
+		unsigned int status);
+extern void uart_handle_cts_change(struct uart_port *uport,
+		unsigned int status);
 
-बाह्य व्योम uart_insert_अक्षर(काष्ठा uart_port *port, अचिन्हित पूर्णांक status,
-		 अचिन्हित पूर्णांक overrun, अचिन्हित पूर्णांक ch, अचिन्हित पूर्णांक flag);
+extern void uart_insert_char(struct uart_port *port, unsigned int status,
+		 unsigned int overrun, unsigned int ch, unsigned int flag);
 
-#अगर_घोषित CONFIG_MAGIC_SYSRQ_SERIAL
-#घोषणा SYSRQ_TIMEOUT	(HZ * 5)
+#ifdef CONFIG_MAGIC_SYSRQ_SERIAL
+#define SYSRQ_TIMEOUT	(HZ * 5)
 
-bool uart_try_toggle_sysrq(काष्ठा uart_port *port, अचिन्हित पूर्णांक ch);
+bool uart_try_toggle_sysrq(struct uart_port *port, unsigned int ch);
 
-अटल अंतरभूत पूर्णांक uart_handle_sysrq_अक्षर(काष्ठा uart_port *port, अचिन्हित पूर्णांक ch)
-अणु
-	अगर (!port->sysrq)
-		वापस 0;
+static inline int uart_handle_sysrq_char(struct uart_port *port, unsigned int ch)
+{
+	if (!port->sysrq)
+		return 0;
 
-	अगर (ch && समय_beक्रमe(jअगरfies, port->sysrq)) अणु
-		अगर (sysrq_mask()) अणु
+	if (ch && time_before(jiffies, port->sysrq)) {
+		if (sysrq_mask()) {
 			handle_sysrq(ch);
 			port->sysrq = 0;
-			वापस 1;
-		पूर्ण
-		अगर (uart_try_toggle_sysrq(port, ch))
-			वापस 1;
-	पूर्ण
+			return 1;
+		}
+		if (uart_try_toggle_sysrq(port, ch))
+			return 1;
+	}
 	port->sysrq = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक uart_prepare_sysrq_अक्षर(काष्ठा uart_port *port, अचिन्हित पूर्णांक ch)
-अणु
-	अगर (!port->sysrq)
-		वापस 0;
+static inline int uart_prepare_sysrq_char(struct uart_port *port, unsigned int ch)
+{
+	if (!port->sysrq)
+		return 0;
 
-	अगर (ch && समय_beक्रमe(jअगरfies, port->sysrq)) अणु
-		अगर (sysrq_mask()) अणु
+	if (ch && time_before(jiffies, port->sysrq)) {
+		if (sysrq_mask()) {
 			port->sysrq_ch = ch;
 			port->sysrq = 0;
-			वापस 1;
-		पूर्ण
-		अगर (uart_try_toggle_sysrq(port, ch))
-			वापस 1;
-	पूर्ण
+			return 1;
+		}
+		if (uart_try_toggle_sysrq(port, ch))
+			return 1;
+	}
 	port->sysrq = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत व्योम uart_unlock_and_check_sysrq(काष्ठा uart_port *port)
-अणु
-	पूर्णांक sysrq_ch;
+static inline void uart_unlock_and_check_sysrq(struct uart_port *port)
+{
+	int sysrq_ch;
 
-	अगर (!port->has_sysrq) अणु
+	if (!port->has_sysrq) {
 		spin_unlock(&port->lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	sysrq_ch = port->sysrq_ch;
 	port->sysrq_ch = 0;
 
 	spin_unlock(&port->lock);
 
-	अगर (sysrq_ch)
+	if (sysrq_ch)
 		handle_sysrq(sysrq_ch);
-पूर्ण
-#अन्यथा	/* CONFIG_MAGIC_SYSRQ_SERIAL */
-अटल अंतरभूत पूर्णांक uart_handle_sysrq_अक्षर(काष्ठा uart_port *port, अचिन्हित पूर्णांक ch)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत पूर्णांक uart_prepare_sysrq_अक्षर(काष्ठा uart_port *port, अचिन्हित पूर्णांक ch)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत व्योम uart_unlock_and_check_sysrq(काष्ठा uart_port *port)
-अणु
+}
+#else	/* CONFIG_MAGIC_SYSRQ_SERIAL */
+static inline int uart_handle_sysrq_char(struct uart_port *port, unsigned int ch)
+{
+	return 0;
+}
+static inline int uart_prepare_sysrq_char(struct uart_port *port, unsigned int ch)
+{
+	return 0;
+}
+static inline void uart_unlock_and_check_sysrq(struct uart_port *port)
+{
 	spin_unlock(&port->lock);
-पूर्ण
-#पूर्ण_अगर	/* CONFIG_MAGIC_SYSRQ_SERIAL */
+}
+#endif	/* CONFIG_MAGIC_SYSRQ_SERIAL */
 
 /*
- * We करो the SysRQ and SAK checking like this...
+ * We do the SysRQ and SAK checking like this...
  */
-अटल अंतरभूत पूर्णांक uart_handle_अवरोध(काष्ठा uart_port *port)
-अणु
-	काष्ठा uart_state *state = port->state;
+static inline int uart_handle_break(struct uart_port *port)
+{
+	struct uart_state *state = port->state;
 
-	अगर (port->handle_अवरोध)
-		port->handle_अवरोध(port);
+	if (port->handle_break)
+		port->handle_break(port);
 
-#अगर_घोषित CONFIG_MAGIC_SYSRQ_SERIAL
-	अगर (port->has_sysrq && uart_console(port)) अणु
-		अगर (!port->sysrq) अणु
-			port->sysrq = jअगरfies + SYSRQ_TIMEOUT;
-			वापस 1;
-		पूर्ण
+#ifdef CONFIG_MAGIC_SYSRQ_SERIAL
+	if (port->has_sysrq && uart_console(port)) {
+		if (!port->sysrq) {
+			port->sysrq = jiffies + SYSRQ_TIMEOUT;
+			return 1;
+		}
 		port->sysrq = 0;
-	पूर्ण
-#पूर्ण_अगर
-	अगर (port->flags & UPF_SAK)
-		करो_SAK(state->port.tty);
-	वापस 0;
-पूर्ण
+	}
+#endif
+	if (port->flags & UPF_SAK)
+		do_SAK(state->port.tty);
+	return 0;
+}
 
 /*
- *	UART_ENABLE_MS - determine अगर port should enable modem status irqs
+ *	UART_ENABLE_MS - determine if port should enable modem status irqs
  */
-#घोषणा UART_ENABLE_MS(port,cflag)	((port)->flags & UPF_HARDPPS_CD || \
+#define UART_ENABLE_MS(port,cflag)	((port)->flags & UPF_HARDPPS_CD || \
 					 (cflag) & CRTSCTS || \
 					 !((cflag) & CLOCAL))
 
-पूर्णांक uart_get_rs485_mode(काष्ठा uart_port *port);
-#पूर्ण_अगर /* LINUX_SERIAL_CORE_H */
+int uart_get_rs485_mode(struct uart_port *port);
+#endif /* LINUX_SERIAL_CORE_H */

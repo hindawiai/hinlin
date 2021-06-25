@@ -1,34 +1,33 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_INCLUDE_PATH ../../drivers/dma-buf
-#घोषणा TRACE_SYSTEM sync_trace
+/* SPDX-License-Identifier: GPL-2.0 */
+#undef TRACE_SYSTEM
+#define TRACE_INCLUDE_PATH ../../drivers/dma-buf
+#define TRACE_SYSTEM sync_trace
 
-#अगर !defined(_TRACE_SYNC_H) || defined(TRACE_HEADER_MULTI_READ)
-#घोषणा _TRACE_SYNC_H
+#if !defined(_TRACE_SYNC_H) || defined(TRACE_HEADER_MULTI_READ)
+#define _TRACE_SYNC_H
 
-#समावेश "sync_debug.h"
-#समावेश <linux/tracepoपूर्णांक.h>
+#include "sync_debug.h"
+#include <linux/tracepoint.h>
 
-TRACE_EVENT(sync_समयline,
-	TP_PROTO(काष्ठा sync_समयline *समयline),
+TRACE_EVENT(sync_timeline,
+	TP_PROTO(struct sync_timeline *timeline),
 
-	TP_ARGS(समयline),
+	TP_ARGS(timeline),
 
 	TP_STRUCT__entry(
-			__string(name, समयline->name)
+			__string(name, timeline->name)
 			__field(u32, value)
 	),
 
 	TP_fast_assign(
-			__assign_str(name, समयline->name);
-			__entry->value = समयline->value;
+			__assign_str(name, timeline->name);
+			__entry->value = timeline->value;
 	),
 
-	TP_prपूर्णांकk("name=%s value=%d", __get_str(name), __entry->value)
+	TP_printk("name=%s value=%d", __get_str(name), __entry->value)
 );
 
-#पूर्ण_अगर /* अगर !defined(_TRACE_SYNC_H) || defined(TRACE_HEADER_MULTI_READ) */
+#endif /* if !defined(_TRACE_SYNC_H) || defined(TRACE_HEADER_MULTI_READ) */
 
 /* This part must be outside protection */
-#समावेश <trace/define_trace.h>
+#include <trace/define_trace.h>

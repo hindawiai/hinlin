@@ -1,30 +1,29 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2019 ARM Limited
  *
- * Generic test wrapper क्रम arm64 संकेत tests.
+ * Generic test wrapper for arm64 signal tests.
  *
- * Each test provides its own tde काष्ठा tdescr descriptor to link with
+ * Each test provides its own tde struct tdescr descriptor to link with
  * this wrapper. Framework provides common helpers.
  */
-#समावेश <kselftest.h>
+#include <kselftest.h>
 
-#समावेश "test_signals.h"
-#समावेश "test_signals_utils.h"
+#include "test_signals.h"
+#include "test_signals_utils.h"
 
-काष्ठा tdescr *current;
+struct tdescr *current;
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
+int main(int argc, char *argv[])
+{
 	current = &tde;
 
-	ksft_prपूर्णांक_msg("%s :: %s\n", current->name, current->descr);
-	अगर (test_setup(current) && test_init(current)) अणु
+	ksft_print_msg("%s :: %s\n", current->name, current->descr);
+	if (test_setup(current) && test_init(current)) {
 		test_run(current);
 		test_cleanup(current);
-	पूर्ण
+	}
 	test_result(current);
 
-	वापस current->result;
-पूर्ण
+	return current->result;
+}

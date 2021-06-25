@@ -1,18 +1,17 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
-#अगर_अघोषित __PSTORE_ZONE_H_
-#घोषणा __PSTORE_ZONE_H_
+#ifndef __PSTORE_ZONE_H_
+#define __PSTORE_ZONE_H_
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-प्रकार sमाप_प्रकार (*pstore_zone_पढ़ो_op)(अक्षर *, माप_प्रकार, loff_t);
-प्रकार sमाप_प्रकार (*pstore_zone_ग_लिखो_op)(स्थिर अक्षर *, माप_प्रकार, loff_t);
-प्रकार sमाप_प्रकार (*pstore_zone_erase_op)(माप_प्रकार, loff_t);
+typedef ssize_t (*pstore_zone_read_op)(char *, size_t, loff_t);
+typedef ssize_t (*pstore_zone_write_op)(const char *, size_t, loff_t);
+typedef ssize_t (*pstore_zone_erase_op)(size_t, loff_t);
 /**
- * काष्ठा pstore_zone_info - pstore/zone back-end driver काष्ठाure
+ * struct pstore_zone_info - pstore/zone back-end driver structure
  *
- * @owner:	Module which is responsible क्रम this back-end driver.
+ * @owner:	Module which is responsible for this back-end driver.
  * @name:	Name of the back-end driver.
  * @total_size: The total size in bytes pstore/zone can use. It must be greater
  *		than 4096 and be multiple of 4096.
@@ -22,40 +21,40 @@
  * @pmsg_size:	The size of pmsg zone which is the same as @kmsg_size.
  * @console_size:The size of console zone which is the same as @kmsg_size.
  * @ftrace_size:The size of ftrace zone which is the same as @kmsg_size.
- * @पढ़ो:	The general पढ़ो operation. Both of the function parameters
+ * @read:	The general read operation. Both of the function parameters
  *		@size and @offset are relative value to storage.
- *		On success, the number of bytes should be वापसed, others
+ *		On success, the number of bytes should be returned, others
  *		mean error.
- * @ग_लिखो:	The same as @पढ़ो, but the following error number:
- *		-EBUSY means try to ग_लिखो again later.
+ * @write:	The same as @read, but the following error number:
+ *		-EBUSY means try to write again later.
  *		-ENOMSG means to try next zone.
- * @erase:	The general erase operation क्रम device with special removing
+ * @erase:	The general erase operation for device with special removing
  *		job. Both of the function parameters @size and @offset are
  *		relative value to storage.
  *		Return 0 on success and others on failure.
- * @panic_ग_लिखो:The ग_लिखो operation only used क्रम panic हाल. It's optional
- *		अगर you करो not care panic log. The parameters are relative
+ * @panic_write:The write operation only used for panic case. It's optional
+ *		if you do not care panic log. The parameters are relative
  *		value to storage.
- *		On success, the number of bytes should be वापसed, others
+ *		On success, the number of bytes should be returned, others
  *		excluding -ENOMSG mean error. -ENOMSG means to try next zone.
  */
-काष्ठा pstore_zone_info अणु
-	काष्ठा module *owner;
-	स्थिर अक्षर *name;
+struct pstore_zone_info {
+	struct module *owner;
+	const char *name;
 
-	अचिन्हित दीर्घ total_size;
-	अचिन्हित दीर्घ kmsg_size;
-	पूर्णांक max_reason;
-	अचिन्हित दीर्घ pmsg_size;
-	अचिन्हित दीर्घ console_size;
-	अचिन्हित दीर्घ ftrace_size;
-	pstore_zone_पढ़ो_op पढ़ो;
-	pstore_zone_ग_लिखो_op ग_लिखो;
+	unsigned long total_size;
+	unsigned long kmsg_size;
+	int max_reason;
+	unsigned long pmsg_size;
+	unsigned long console_size;
+	unsigned long ftrace_size;
+	pstore_zone_read_op read;
+	pstore_zone_write_op write;
 	pstore_zone_erase_op erase;
-	pstore_zone_ग_लिखो_op panic_ग_लिखो;
-पूर्ण;
+	pstore_zone_write_op panic_write;
+};
 
-बाह्य पूर्णांक रेजिस्टर_pstore_zone(काष्ठा pstore_zone_info *info);
-बाह्य व्योम unरेजिस्टर_pstore_zone(काष्ठा pstore_zone_info *info);
+extern int register_pstore_zone(struct pstore_zone_info *info);
+extern void unregister_pstore_zone(struct pstore_zone_info *info);
 
-#पूर्ण_अगर
+#endif

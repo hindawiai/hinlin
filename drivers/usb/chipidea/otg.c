@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * otg.c - ChipIdea USB IP core OTG driver
  *
@@ -9,259 +8,259 @@
  */
 
 /*
- * This file मुख्यly handles otgsc रेजिस्टर, OTG fsm operations क्रम HNP and SRP
+ * This file mainly handles otgsc register, OTG fsm operations for HNP and SRP
  * are also included.
  */
 
-#समावेश <linux/usb/otg.h>
-#समावेश <linux/usb/gadget.h>
-#समावेश <linux/usb/chipidea.h>
+#include <linux/usb/otg.h>
+#include <linux/usb/gadget.h>
+#include <linux/usb/chipidea.h>
 
-#समावेश "ci.h"
-#समावेश "bits.h"
-#समावेश "otg.h"
-#समावेश "otg_fsm.h"
+#include "ci.h"
+#include "bits.h"
+#include "otg.h"
+#include "otg_fsm.h"
 
 /**
- * hw_पढ़ो_otgsc वापसs otgsc रेजिस्टर bits value.
+ * hw_read_otgsc returns otgsc register bits value.
  * @ci: the controller
  * @mask: bitfield mask
  */
-u32 hw_पढ़ो_otgsc(काष्ठा ci_hdrc *ci, u32 mask)
-अणु
-	काष्ठा ci_hdrc_cable *cable;
-	u32 val = hw_पढ़ो(ci, OP_OTGSC, mask);
+u32 hw_read_otgsc(struct ci_hdrc *ci, u32 mask)
+{
+	struct ci_hdrc_cable *cable;
+	u32 val = hw_read(ci, OP_OTGSC, mask);
 
 	/*
-	 * If using extcon framework क्रम VBUS and/or ID संकेत
-	 * detection overग_लिखो OTGSC रेजिस्टर value
+	 * If using extcon framework for VBUS and/or ID signal
+	 * detection overwrite OTGSC register value
 	 */
 	cable = &ci->platdata->vbus_extcon;
-	अगर (!IS_ERR(cable->edev) || ci->role_चयन) अणु
-		अगर (cable->changed)
+	if (!IS_ERR(cable->edev) || ci->role_switch) {
+		if (cable->changed)
 			val |= OTGSC_BSVIS;
-		अन्यथा
+		else
 			val &= ~OTGSC_BSVIS;
 
-		अगर (cable->connected)
+		if (cable->connected)
 			val |= OTGSC_BSV;
-		अन्यथा
+		else
 			val &= ~OTGSC_BSV;
 
-		अगर (cable->enabled)
+		if (cable->enabled)
 			val |= OTGSC_BSVIE;
-		अन्यथा
+		else
 			val &= ~OTGSC_BSVIE;
-	पूर्ण
+	}
 
 	cable = &ci->platdata->id_extcon;
-	अगर (!IS_ERR(cable->edev) || ci->role_चयन) अणु
-		अगर (cable->changed)
+	if (!IS_ERR(cable->edev) || ci->role_switch) {
+		if (cable->changed)
 			val |= OTGSC_IDIS;
-		अन्यथा
+		else
 			val &= ~OTGSC_IDIS;
 
-		अगर (cable->connected)
+		if (cable->connected)
 			val &= ~OTGSC_ID; /* host */
-		अन्यथा
+		else
 			val |= OTGSC_ID; /* device */
 
-		अगर (cable->enabled)
+		if (cable->enabled)
 			val |= OTGSC_IDIE;
-		अन्यथा
+		else
 			val &= ~OTGSC_IDIE;
-	पूर्ण
+	}
 
-	वापस val & mask;
-पूर्ण
+	return val & mask;
+}
 
 /**
- * hw_ग_लिखो_otgsc updates target bits of OTGSC रेजिस्टर.
+ * hw_write_otgsc updates target bits of OTGSC register.
  * @ci: the controller
  * @mask: bitfield mask
  * @data: to be written
  */
-व्योम hw_ग_लिखो_otgsc(काष्ठा ci_hdrc *ci, u32 mask, u32 data)
-अणु
-	काष्ठा ci_hdrc_cable *cable;
+void hw_write_otgsc(struct ci_hdrc *ci, u32 mask, u32 data)
+{
+	struct ci_hdrc_cable *cable;
 
 	cable = &ci->platdata->vbus_extcon;
-	अगर (!IS_ERR(cable->edev) || ci->role_चयन) अणु
-		अगर (data & mask & OTGSC_BSVIS)
+	if (!IS_ERR(cable->edev) || ci->role_switch) {
+		if (data & mask & OTGSC_BSVIS)
 			cable->changed = false;
 
-		/* Don't enable vbus पूर्णांकerrupt अगर using बाह्यal notअगरier */
-		अगर (data & mask & OTGSC_BSVIE) अणु
+		/* Don't enable vbus interrupt if using external notifier */
+		if (data & mask & OTGSC_BSVIE) {
 			cable->enabled = true;
 			data &= ~OTGSC_BSVIE;
-		पूर्ण अन्यथा अगर (mask & OTGSC_BSVIE) अणु
+		} else if (mask & OTGSC_BSVIE) {
 			cable->enabled = false;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	cable = &ci->platdata->id_extcon;
-	अगर (!IS_ERR(cable->edev) || ci->role_चयन) अणु
-		अगर (data & mask & OTGSC_IDIS)
+	if (!IS_ERR(cable->edev) || ci->role_switch) {
+		if (data & mask & OTGSC_IDIS)
 			cable->changed = false;
 
-		/* Don't enable id पूर्णांकerrupt अगर using बाह्यal notअगरier */
-		अगर (data & mask & OTGSC_IDIE) अणु
+		/* Don't enable id interrupt if using external notifier */
+		if (data & mask & OTGSC_IDIE) {
 			cable->enabled = true;
 			data &= ~OTGSC_IDIE;
-		पूर्ण अन्यथा अगर (mask & OTGSC_IDIE) अणु
+		} else if (mask & OTGSC_IDIE) {
 			cable->enabled = false;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	hw_ग_लिखो(ci, OP_OTGSC, mask | OTGSC_INT_STATUS_BITS, data);
-पूर्ण
+	hw_write(ci, OP_OTGSC, mask | OTGSC_INT_STATUS_BITS, data);
+}
 
 /**
  * ci_otg_role - pick role based on ID pin state
  * @ci: the controller
  */
-क्रमागत ci_role ci_otg_role(काष्ठा ci_hdrc *ci)
-अणु
-	क्रमागत ci_role role = hw_पढ़ो_otgsc(ci, OTGSC_ID)
+enum ci_role ci_otg_role(struct ci_hdrc *ci)
+{
+	enum ci_role role = hw_read_otgsc(ci, OTGSC_ID)
 		? CI_ROLE_GADGET
 		: CI_ROLE_HOST;
 
-	वापस role;
-पूर्ण
+	return role;
+}
 
-व्योम ci_handle_vbus_change(काष्ठा ci_hdrc *ci)
-अणु
-	अगर (!ci->is_otg)
-		वापस;
+void ci_handle_vbus_change(struct ci_hdrc *ci)
+{
+	if (!ci->is_otg)
+		return;
 
-	अगर (hw_पढ़ो_otgsc(ci, OTGSC_BSV) && !ci->vbus_active)
+	if (hw_read_otgsc(ci, OTGSC_BSV) && !ci->vbus_active)
 		usb_gadget_vbus_connect(&ci->gadget);
-	अन्यथा अगर (!hw_पढ़ो_otgsc(ci, OTGSC_BSV) && ci->vbus_active)
+	else if (!hw_read_otgsc(ci, OTGSC_BSV) && ci->vbus_active)
 		usb_gadget_vbus_disconnect(&ci->gadget);
-पूर्ण
+}
 
 /**
- * When we चयन to device mode, the vbus value should be lower
- * than OTGSC_BSV beक्रमe connecting to host.
+ * When we switch to device mode, the vbus value should be lower
+ * than OTGSC_BSV before connecting to host.
  *
  * @ci: the controller
  *
- * This function वापसs an error code अगर समयout
+ * This function returns an error code if timeout
  */
-अटल पूर्णांक hw_रुको_vbus_lower_bsv(काष्ठा ci_hdrc *ci)
-अणु
-	अचिन्हित दीर्घ elapse = jअगरfies + msecs_to_jअगरfies(5000);
+static int hw_wait_vbus_lower_bsv(struct ci_hdrc *ci)
+{
+	unsigned long elapse = jiffies + msecs_to_jiffies(5000);
 	u32 mask = OTGSC_BSV;
 
-	जबतक (hw_पढ़ो_otgsc(ci, mask)) अणु
-		अगर (समय_after(jअगरfies, elapse)) अणु
+	while (hw_read_otgsc(ci, mask)) {
+		if (time_after(jiffies, elapse)) {
 			dev_err(ci->dev, "timeout waiting for %08x in OTGSC\n",
 					mask);
-			वापस -ETIMEDOUT;
-		पूर्ण
+			return -ETIMEDOUT;
+		}
 		msleep(20);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ci_handle_id_चयन(काष्ठा ci_hdrc *ci)
-अणु
-	क्रमागत ci_role role = ci_otg_role(ci);
+static void ci_handle_id_switch(struct ci_hdrc *ci)
+{
+	enum ci_role role = ci_otg_role(ci);
 
-	अगर (role != ci->role) अणु
+	if (role != ci->role) {
 		dev_dbg(ci->dev, "switching from %s to %s\n",
 			ci_role(ci)->name, ci->roles[role]->name);
 
-		अगर (ci->vbus_active && ci->role == CI_ROLE_GADGET)
+		if (ci->vbus_active && ci->role == CI_ROLE_GADGET)
 			/*
 			 * vbus disconnect event is lost due to role
-			 * चयन occurs during प्रणाली suspend.
+			 * switch occurs during system suspend.
 			 */
 			usb_gadget_vbus_disconnect(&ci->gadget);
 
 		ci_role_stop(ci);
 
-		अगर (role == CI_ROLE_GADGET &&
+		if (role == CI_ROLE_GADGET &&
 				IS_ERR(ci->platdata->vbus_extcon.edev))
 			/*
-			 * Wait vbus lower than OTGSC_BSV beक्रमe connecting
-			 * to host. If connecting status is from an बाह्यal
-			 * connector instead of रेजिस्टर, we करोn't need to
+			 * Wait vbus lower than OTGSC_BSV before connecting
+			 * to host. If connecting status is from an external
+			 * connector instead of register, we don't need to
 			 * care vbus on the board, since it will not affect
-			 * बाह्यal connector status.
+			 * external connector status.
 			 */
-			hw_रुको_vbus_lower_bsv(ci);
+			hw_wait_vbus_lower_bsv(ci);
 
 		ci_role_start(ci, role);
-		/* vbus change may have alपढ़ोy occurred */
-		अगर (role == CI_ROLE_GADGET)
+		/* vbus change may have already occurred */
+		if (role == CI_ROLE_GADGET)
 			ci_handle_vbus_change(ci);
-	पूर्ण
-पूर्ण
+	}
+}
 /**
- * ci_otg_work - perक्रमm otg (vbus/id) event handle
- * @work: work काष्ठा
+ * ci_otg_work - perform otg (vbus/id) event handle
+ * @work: work struct
  */
-अटल व्योम ci_otg_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ci_hdrc *ci = container_of(work, काष्ठा ci_hdrc, work);
+static void ci_otg_work(struct work_struct *work)
+{
+	struct ci_hdrc *ci = container_of(work, struct ci_hdrc, work);
 
-	अगर (ci_otg_is_fsm_mode(ci) && !ci_otg_fsm_work(ci)) अणु
+	if (ci_otg_is_fsm_mode(ci) && !ci_otg_fsm_work(ci)) {
 		enable_irq(ci->irq);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	pm_runसमय_get_sync(ci->dev);
+	pm_runtime_get_sync(ci->dev);
 
-	अगर (ci->id_event) अणु
+	if (ci->id_event) {
 		ci->id_event = false;
-		ci_handle_id_चयन(ci);
-	पूर्ण
+		ci_handle_id_switch(ci);
+	}
 
-	अगर (ci->b_sess_valid_event) अणु
+	if (ci->b_sess_valid_event) {
 		ci->b_sess_valid_event = false;
 		ci_handle_vbus_change(ci);
-	पूर्ण
+	}
 
-	pm_runसमय_put_sync(ci->dev);
+	pm_runtime_put_sync(ci->dev);
 
 	enable_irq(ci->irq);
-पूर्ण
+}
 
 
 /**
- * ci_hdrc_otg_init - initialize otg काष्ठा
+ * ci_hdrc_otg_init - initialize otg struct
  * @ci: the controller
  */
-पूर्णांक ci_hdrc_otg_init(काष्ठा ci_hdrc *ci)
-अणु
+int ci_hdrc_otg_init(struct ci_hdrc *ci)
+{
 	INIT_WORK(&ci->work, ci_otg_work);
-	ci->wq = create_मुक्तzable_workqueue("ci_otg");
-	अगर (!ci->wq) अणु
+	ci->wq = create_freezable_workqueue("ci_otg");
+	if (!ci->wq) {
 		dev_err(ci->dev, "can't create workqueue\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (ci_otg_is_fsm_mode(ci))
-		वापस ci_hdrc_otg_fsm_init(ci);
+	if (ci_otg_is_fsm_mode(ci))
+		return ci_hdrc_otg_fsm_init(ci);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * ci_hdrc_otg_destroy - destroy otg काष्ठा
+ * ci_hdrc_otg_destroy - destroy otg struct
  * @ci: the controller
  */
-व्योम ci_hdrc_otg_destroy(काष्ठा ci_hdrc *ci)
-अणु
-	अगर (ci->wq) अणु
+void ci_hdrc_otg_destroy(struct ci_hdrc *ci)
+{
+	if (ci->wq) {
 		flush_workqueue(ci->wq);
 		destroy_workqueue(ci->wq);
-	पूर्ण
+	}
 	/* Disable all OTG irq and clear status */
-	hw_ग_लिखो_otgsc(ci, OTGSC_INT_EN_BITS | OTGSC_INT_STATUS_BITS,
+	hw_write_otgsc(ci, OTGSC_INT_EN_BITS | OTGSC_INT_STATUS_BITS,
 						OTGSC_INT_STATUS_BITS);
-	अगर (ci_otg_is_fsm_mode(ci))
-		ci_hdrc_otg_fsm_हटाओ(ci);
-पूर्ण
+	if (ci_otg_is_fsm_mode(ci))
+		ci_hdrc_otg_fsm_remove(ci);
+}

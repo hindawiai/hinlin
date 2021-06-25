@@ -1,194 +1,193 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright 2020, NXP Semiconductors
  */
-#समावेश <net/tc_act/tc_gate.h>
-#समावेश <linux/dsa/8021q.h>
-#समावेश "sja1105_vl.h"
+#include <net/tc_act/tc_gate.h>
+#include <linux/dsa/8021q.h>
+#include "sja1105_vl.h"
 
-#घोषणा SJA1105_SIZE_VL_STATUS			8
+#define SJA1105_SIZE_VL_STATUS			8
 
-/* Insert पूर्णांकo the global gate list, sorted by gate action समय. */
-अटल पूर्णांक sja1105_insert_gate_entry(काष्ठा sja1105_gating_config *gating_cfg,
-				     काष्ठा sja1105_rule *rule,
-				     u8 gate_state, s64 entry_समय,
-				     काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा sja1105_gate_entry *e;
-	पूर्णांक rc;
+/* Insert into the global gate list, sorted by gate action time. */
+static int sja1105_insert_gate_entry(struct sja1105_gating_config *gating_cfg,
+				     struct sja1105_rule *rule,
+				     u8 gate_state, s64 entry_time,
+				     struct netlink_ext_ack *extack)
+{
+	struct sja1105_gate_entry *e;
+	int rc;
 
-	e = kzalloc(माप(*e), GFP_KERNEL);
-	अगर (!e)
-		वापस -ENOMEM;
+	e = kzalloc(sizeof(*e), GFP_KERNEL);
+	if (!e)
+		return -ENOMEM;
 
 	e->rule = rule;
 	e->gate_state = gate_state;
-	e->पूर्णांकerval = entry_समय;
+	e->interval = entry_time;
 
-	अगर (list_empty(&gating_cfg->entries)) अणु
+	if (list_empty(&gating_cfg->entries)) {
 		list_add(&e->list, &gating_cfg->entries);
-	पूर्ण अन्यथा अणु
-		काष्ठा sja1105_gate_entry *p;
+	} else {
+		struct sja1105_gate_entry *p;
 
-		list_क्रम_each_entry(p, &gating_cfg->entries, list) अणु
-			अगर (p->पूर्णांकerval == e->पूर्णांकerval) अणु
+		list_for_each_entry(p, &gating_cfg->entries, list) {
+			if (p->interval == e->interval) {
 				NL_SET_ERR_MSG_MOD(extack,
 						   "Gate conflict");
 				rc = -EBUSY;
-				जाओ err;
-			पूर्ण
+				goto err;
+			}
 
-			अगर (e->पूर्णांकerval < p->पूर्णांकerval)
-				अवरोध;
-		पूर्ण
+			if (e->interval < p->interval)
+				break;
+		}
 		list_add(&e->list, p->list.prev);
-	पूर्ण
+	}
 
 	gating_cfg->num_entries++;
 
-	वापस 0;
+	return 0;
 err:
-	kमुक्त(e);
-	वापस rc;
-पूर्ण
+	kfree(e);
+	return rc;
+}
 
-/* The gate entries contain असलolute बार in their e->पूर्णांकerval field. Convert
- * that to proper पूर्णांकervals (i.e. "0, 5, 10, 15" to "5, 5, 5, 5").
+/* The gate entries contain absolute times in their e->interval field. Convert
+ * that to proper intervals (i.e. "0, 5, 10, 15" to "5, 5, 5, 5").
  */
-अटल व्योम
-sja1105_gating_cfg_समय_प्रकारo_पूर्णांकerval(काष्ठा sja1105_gating_config *gating_cfg,
-				    u64 cycle_समय)
-अणु
-	काष्ठा sja1105_gate_entry *last_e;
-	काष्ठा sja1105_gate_entry *e;
-	काष्ठा list_head *prev;
+static void
+sja1105_gating_cfg_time_to_interval(struct sja1105_gating_config *gating_cfg,
+				    u64 cycle_time)
+{
+	struct sja1105_gate_entry *last_e;
+	struct sja1105_gate_entry *e;
+	struct list_head *prev;
 
-	list_क्रम_each_entry(e, &gating_cfg->entries, list) अणु
-		काष्ठा sja1105_gate_entry *p;
+	list_for_each_entry(e, &gating_cfg->entries, list) {
+		struct sja1105_gate_entry *p;
 
 		prev = e->list.prev;
 
-		अगर (prev == &gating_cfg->entries)
-			जारी;
+		if (prev == &gating_cfg->entries)
+			continue;
 
-		p = list_entry(prev, काष्ठा sja1105_gate_entry, list);
-		p->पूर्णांकerval = e->पूर्णांकerval - p->पूर्णांकerval;
-	पूर्ण
+		p = list_entry(prev, struct sja1105_gate_entry, list);
+		p->interval = e->interval - p->interval;
+	}
 	last_e = list_last_entry(&gating_cfg->entries,
-				 काष्ठा sja1105_gate_entry, list);
-	last_e->पूर्णांकerval = cycle_समय - last_e->पूर्णांकerval;
-पूर्ण
+				 struct sja1105_gate_entry, list);
+	last_e->interval = cycle_time - last_e->interval;
+}
 
-अटल व्योम sja1105_मुक्त_gating_config(काष्ठा sja1105_gating_config *gating_cfg)
-अणु
-	काष्ठा sja1105_gate_entry *e, *n;
+static void sja1105_free_gating_config(struct sja1105_gating_config *gating_cfg)
+{
+	struct sja1105_gate_entry *e, *n;
 
-	list_क्रम_each_entry_safe(e, n, &gating_cfg->entries, list) अणु
+	list_for_each_entry_safe(e, n, &gating_cfg->entries, list) {
 		list_del(&e->list);
-		kमुक्त(e);
-	पूर्ण
-पूर्ण
+		kfree(e);
+	}
+}
 
-अटल पूर्णांक sja1105_compose_gating_subschedule(काष्ठा sja1105_निजी *priv,
-					      काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा sja1105_gating_config *gating_cfg = &priv->tas_data.gating_cfg;
-	काष्ठा sja1105_rule *rule;
-	s64 max_cycle_समय = 0;
-	s64 its_base_समय = 0;
-	पूर्णांक i, rc = 0;
+static int sja1105_compose_gating_subschedule(struct sja1105_private *priv,
+					      struct netlink_ext_ack *extack)
+{
+	struct sja1105_gating_config *gating_cfg = &priv->tas_data.gating_cfg;
+	struct sja1105_rule *rule;
+	s64 max_cycle_time = 0;
+	s64 its_base_time = 0;
+	int i, rc = 0;
 
-	sja1105_मुक्त_gating_config(gating_cfg);
+	sja1105_free_gating_config(gating_cfg);
 
-	list_क्रम_each_entry(rule, &priv->flow_block.rules, list) अणु
-		अगर (rule->type != SJA1105_RULE_VL)
-			जारी;
-		अगर (rule->vl.type != SJA1105_VL_TIME_TRIGGERED)
-			जारी;
+	list_for_each_entry(rule, &priv->flow_block.rules, list) {
+		if (rule->type != SJA1105_RULE_VL)
+			continue;
+		if (rule->vl.type != SJA1105_VL_TIME_TRIGGERED)
+			continue;
 
-		अगर (max_cycle_समय < rule->vl.cycle_समय) अणु
-			max_cycle_समय = rule->vl.cycle_समय;
-			its_base_समय = rule->vl.base_समय;
-		पूर्ण
-	पूर्ण
+		if (max_cycle_time < rule->vl.cycle_time) {
+			max_cycle_time = rule->vl.cycle_time;
+			its_base_time = rule->vl.base_time;
+		}
+	}
 
-	अगर (!max_cycle_समय)
-		वापस 0;
+	if (!max_cycle_time)
+		return 0;
 
 	dev_dbg(priv->ds->dev, "max_cycle_time %lld its_base_time %lld\n",
-		max_cycle_समय, its_base_समय);
+		max_cycle_time, its_base_time);
 
-	gating_cfg->base_समय = its_base_समय;
-	gating_cfg->cycle_समय = max_cycle_समय;
+	gating_cfg->base_time = its_base_time;
+	gating_cfg->cycle_time = max_cycle_time;
 	gating_cfg->num_entries = 0;
 
-	list_क्रम_each_entry(rule, &priv->flow_block.rules, list) अणु
-		s64 समय;
+	list_for_each_entry(rule, &priv->flow_block.rules, list) {
+		s64 time;
 		s64 rbt;
 
-		अगर (rule->type != SJA1105_RULE_VL)
-			जारी;
-		अगर (rule->vl.type != SJA1105_VL_TIME_TRIGGERED)
-			जारी;
+		if (rule->type != SJA1105_RULE_VL)
+			continue;
+		if (rule->vl.type != SJA1105_VL_TIME_TRIGGERED)
+			continue;
 
-		/* Calculate the dअगरference between this gating schedule's
-		 * base समय, and the base समय of the gating schedule with the
-		 * दीर्घest cycle समय. We call it the relative base समय (rbt).
+		/* Calculate the difference between this gating schedule's
+		 * base time, and the base time of the gating schedule with the
+		 * longest cycle time. We call it the relative base time (rbt).
 		 */
-		rbt = future_base_समय(rule->vl.base_समय, rule->vl.cycle_समय,
-				       its_base_समय);
-		rbt -= its_base_समय;
+		rbt = future_base_time(rule->vl.base_time, rule->vl.cycle_time,
+				       its_base_time);
+		rbt -= its_base_time;
 
-		समय = rbt;
+		time = rbt;
 
-		क्रम (i = 0; i < rule->vl.num_entries; i++) अणु
+		for (i = 0; i < rule->vl.num_entries; i++) {
 			u8 gate_state = rule->vl.entries[i].gate_state;
-			s64 entry_समय = समय;
+			s64 entry_time = time;
 
-			जबतक (entry_समय < max_cycle_समय) अणु
+			while (entry_time < max_cycle_time) {
 				rc = sja1105_insert_gate_entry(gating_cfg, rule,
 							       gate_state,
-							       entry_समय,
+							       entry_time,
 							       extack);
-				अगर (rc)
-					जाओ err;
+				if (rc)
+					goto err;
 
-				entry_समय += rule->vl.cycle_समय;
-			पूर्ण
-			समय += rule->vl.entries[i].पूर्णांकerval;
-		पूर्ण
-	पूर्ण
+				entry_time += rule->vl.cycle_time;
+			}
+			time += rule->vl.entries[i].interval;
+		}
+	}
 
-	sja1105_gating_cfg_समय_प्रकारo_पूर्णांकerval(gating_cfg, max_cycle_समय);
+	sja1105_gating_cfg_time_to_interval(gating_cfg, max_cycle_time);
 
-	वापस 0;
+	return 0;
 err:
-	sja1105_मुक्त_gating_config(gating_cfg);
-	वापस rc;
-पूर्ण
+	sja1105_free_gating_config(gating_cfg);
+	return rc;
+}
 
-/* The चयन flow classअगरication core implements TTEthernet, which 'thinks' in
+/* The switch flow classification core implements TTEthernet, which 'thinks' in
  * terms of Virtual Links (VL), a concept borrowed from ARINC 664 part 7.
  * However it also has one other operating mode (VLLUPFORMAT=0) where it acts
- * somewhat बंदr to a pre-standard implementation of IEEE 802.1Qci
+ * somewhat closer to a pre-standard implementation of IEEE 802.1Qci
  * (Per-Stream Filtering and Policing), which is what the driver is going to be
  * implementing.
  *
  *                                 VL Lookup
- *        Key = अणुDMAC && VLANID   +---------+  Key = अणु (DMAC[47:16] & VLMASK ==
+ *        Key = {DMAC && VLANID   +---------+  Key = { (DMAC[47:16] & VLMASK ==
  *               && VLAN PCP      |         |                         VLMARKER)
- *               && INGRESS PORTपूर्ण +---------+                      (both fixed)
+ *               && INGRESS PORT} +---------+                      (both fixed)
  *            (exact match,            |             && DMAC[15:0] == VLID
- *         all specअगरied in rule)      |                    (specअगरied in rule)
- *                                     v             && INGRESS PORT पूर्ण
+ *         all specified in rule)      |                    (specified in rule)
+ *                                     v             && INGRESS PORT }
  *                               ------------
  *                    0 (PSFP)  /            \  1 (ARINC664)
  *                 +-----------/  VLLUPFORMAT \----------+
  *                 |           \    (fixed)   /          |
  *                 |            \            /           |
- *  0 (क्रमwarding) v             ------------            |
+ *  0 (forwarding) v             ------------            |
  *           ------------                                |
- *          /            \  1 (QoS classअगरication)       |
+ *          /            \  1 (QoS classification)       |
  *     +---/  ISCRITICAL  \-----------+                  |
  *     |   \  (per rule)  /           |                  |
  *     |    \            /   VLID taken from      VLID taken from
@@ -204,8 +203,8 @@ err:
  *  |                       +--------------|         |
  *  |                       |  select TYPE +---------+
  *  |                       v
- *  |   0 (rate      ------------    1 (समय
- *  |  स्थिरrained) /            \   triggered)
+ *  |   0 (rate      ------------    1 (time
+ *  |  constrained) /            \   triggered)
  *  |       +------/     TYPE     \------------+
  *  |       |      \  (per VLID)  /            |
  *  |       v       \            /             v
@@ -216,7 +215,7 @@ err:
  *  |  +---------+                        +---------+
  *  |  select SHARINDX                 select SHARINDX to
  *  |  to rate-limit                 re-enter VL Forwarding
- *  |  groups of VL's               with new VLID क्रम egress
+ *  |  groups of VL's               with new VLID for egress
  *  |  to same quota                           |
  *  |       |                                  |
  *  |  select MAXLEN -> exceed => drop    select MAXLEN -> exceed => drop
@@ -241,14 +240,14 @@ err:
  *  |  select BAG, -> exceed => drop           |
  *  |    JITTER                                v
  *  |       |             ----------------------------------------------
- *  |       |            /    Reception Winकरोw is खोलो क्रम this VL      \
+ *  |       |            /    Reception Window is open for this VL      \
  *  |       |           /    (the Schedule Table executes an entry i     \
- *  |       |          /   M <= i < N, क्रम which these conditions hold):  \ no
+ *  |       |          /   M <= i < N, for which these conditions hold):  \ no
  *  |       |    +----/                                                    \-+
  *  |       |    |yes \       WINST[M] == 1 && WINSTINDEX[M] == VLID       / |
  *  |       |    |     \     WINEND[N] == 1 && WINSTINDEX[N] == VLID      /  |
  *  |       |    |      \                                                /   |
- *  |       |    |       \ (the VL winकरोw has खोलोed and not yet बंदd)/    |
+ *  |       |    |       \ (the VL window has opened and not yet closed)/    |
  *  |       |    |        ----------------------------------------------     |
  *  |       |    v                                                           v
  *  |       |  dispatch to DESTPORTS when the Schedule Table               drop
@@ -256,220 +255,220 @@ err:
  *  v       v
  * dispatch immediately to DESTPORTS
  *
- * The per-port classअगरication key is always composed of अणुDMAC, VID, PCPपूर्ण and
- * is non-maskable. This 'looks like' the शून्य stream identअगरication function
- * from IEEE 802.1CB clause 6, except क्रम the extra VLAN PCP. When the चयन
- * ports operate as VLAN-unaware, we करो allow the user to not specअगरy the VLAN
- * ID and PCP, and then the port-based शेषs will be used.
+ * The per-port classification key is always composed of {DMAC, VID, PCP} and
+ * is non-maskable. This 'looks like' the NULL stream identification function
+ * from IEEE 802.1CB clause 6, except for the extra VLAN PCP. When the switch
+ * ports operate as VLAN-unaware, we do allow the user to not specify the VLAN
+ * ID and PCP, and then the port-based defaults will be used.
  *
- * In TTEthernet, routing is something that needs to be करोne manually क्रम each
+ * In TTEthernet, routing is something that needs to be done manually for each
  * Virtual Link. So the flow action must always include one of:
  * a. 'redirect', 'trap' or 'drop': select the egress port list
  * Additionally, the following actions may be applied on a Virtual Link,
- * turning it पूर्णांकo 'critical' traffic:
- * b. 'police': turn it पूर्णांकo a rate-स्थिरrained VL, with bandwidth limitation
+ * turning it into 'critical' traffic:
+ * b. 'police': turn it into a rate-constrained VL, with bandwidth limitation
  *    given by the maximum frame length, bandwidth allocation gap (BAG) and
  *    maximum jitter.
- * c. 'gate': turn it पूर्णांकo a समय-triggered VL, which can be only be received
- *    and क्रमwarded according to a given schedule.
+ * c. 'gate': turn it into a time-triggered VL, which can be only be received
+ *    and forwarded according to a given schedule.
  */
 
-अटल bool sja1105_vl_key_lower(काष्ठा sja1105_vl_lookup_entry *a,
-				 काष्ठा sja1105_vl_lookup_entry *b)
-अणु
-	अगर (a->macaddr < b->macaddr)
-		वापस true;
-	अगर (a->macaddr > b->macaddr)
-		वापस false;
-	अगर (a->vlanid < b->vlanid)
-		वापस true;
-	अगर (a->vlanid > b->vlanid)
-		वापस false;
-	अगर (a->port < b->port)
-		वापस true;
-	अगर (a->port > b->port)
-		वापस false;
-	अगर (a->vlanprior < b->vlanprior)
-		वापस true;
-	अगर (a->vlanprior > b->vlanprior)
-		वापस false;
+static bool sja1105_vl_key_lower(struct sja1105_vl_lookup_entry *a,
+				 struct sja1105_vl_lookup_entry *b)
+{
+	if (a->macaddr < b->macaddr)
+		return true;
+	if (a->macaddr > b->macaddr)
+		return false;
+	if (a->vlanid < b->vlanid)
+		return true;
+	if (a->vlanid > b->vlanid)
+		return false;
+	if (a->port < b->port)
+		return true;
+	if (a->port > b->port)
+		return false;
+	if (a->vlanprior < b->vlanprior)
+		return true;
+	if (a->vlanprior > b->vlanprior)
+		return false;
 	/* Keys are equal */
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक sja1105_init_भव_links(काष्ठा sja1105_निजी *priv,
-				      काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा sja1105_vl_policing_entry *vl_policing;
-	काष्ठा sja1105_vl_क्रमwarding_entry *vl_fwd;
-	काष्ठा sja1105_vl_lookup_entry *vl_lookup;
-	bool have_critical_भव_links = false;
-	काष्ठा sja1105_table *table;
-	काष्ठा sja1105_rule *rule;
-	पूर्णांक num_भव_links = 0;
-	पूर्णांक max_sharindx = 0;
-	पूर्णांक i, j, k;
+static int sja1105_init_virtual_links(struct sja1105_private *priv,
+				      struct netlink_ext_ack *extack)
+{
+	struct sja1105_vl_policing_entry *vl_policing;
+	struct sja1105_vl_forwarding_entry *vl_fwd;
+	struct sja1105_vl_lookup_entry *vl_lookup;
+	bool have_critical_virtual_links = false;
+	struct sja1105_table *table;
+	struct sja1105_rule *rule;
+	int num_virtual_links = 0;
+	int max_sharindx = 0;
+	int i, j, k;
 
 	/* Figure out the dimensioning of the problem */
-	list_क्रम_each_entry(rule, &priv->flow_block.rules, list) अणु
-		अगर (rule->type != SJA1105_RULE_VL)
-			जारी;
+	list_for_each_entry(rule, &priv->flow_block.rules, list) {
+		if (rule->type != SJA1105_RULE_VL)
+			continue;
 		/* Each VL lookup entry matches on a single ingress port */
-		num_भव_links += hweight_दीर्घ(rule->port_mask);
+		num_virtual_links += hweight_long(rule->port_mask);
 
-		अगर (rule->vl.type != SJA1105_VL_NONCRITICAL)
-			have_critical_भव_links = true;
-		अगर (max_sharindx < rule->vl.sharindx)
+		if (rule->vl.type != SJA1105_VL_NONCRITICAL)
+			have_critical_virtual_links = true;
+		if (max_sharindx < rule->vl.sharindx)
 			max_sharindx = rule->vl.sharindx;
-	पूर्ण
+	}
 
-	अगर (num_भव_links > SJA1105_MAX_VL_LOOKUP_COUNT) अणु
+	if (num_virtual_links > SJA1105_MAX_VL_LOOKUP_COUNT) {
 		NL_SET_ERR_MSG_MOD(extack, "Not enough VL entries available");
-		वापस -ENOSPC;
-	पूर्ण
+		return -ENOSPC;
+	}
 
-	अगर (max_sharindx + 1 > SJA1105_MAX_VL_LOOKUP_COUNT) अणु
+	if (max_sharindx + 1 > SJA1105_MAX_VL_LOOKUP_COUNT) {
 		NL_SET_ERR_MSG_MOD(extack, "Policer index out of range");
-		वापस -ENOSPC;
-	पूर्ण
+		return -ENOSPC;
+	}
 
-	max_sharindx = max_t(पूर्णांक, num_भव_links, max_sharindx) + 1;
+	max_sharindx = max_t(int, num_virtual_links, max_sharindx) + 1;
 
 	/* Discard previous VL Lookup Table */
-	table = &priv->अटल_config.tables[BLK_IDX_VL_LOOKUP];
-	अगर (table->entry_count) अणु
-		kमुक्त(table->entries);
+	table = &priv->static_config.tables[BLK_IDX_VL_LOOKUP];
+	if (table->entry_count) {
+		kfree(table->entries);
 		table->entry_count = 0;
-	पूर्ण
+	}
 
 	/* Discard previous VL Policing Table */
-	table = &priv->अटल_config.tables[BLK_IDX_VL_POLICING];
-	अगर (table->entry_count) अणु
-		kमुक्त(table->entries);
+	table = &priv->static_config.tables[BLK_IDX_VL_POLICING];
+	if (table->entry_count) {
+		kfree(table->entries);
 		table->entry_count = 0;
-	पूर्ण
+	}
 
 	/* Discard previous VL Forwarding Table */
-	table = &priv->अटल_config.tables[BLK_IDX_VL_FORWARDING];
-	अगर (table->entry_count) अणु
-		kमुक्त(table->entries);
+	table = &priv->static_config.tables[BLK_IDX_VL_FORWARDING];
+	if (table->entry_count) {
+		kfree(table->entries);
 		table->entry_count = 0;
-	पूर्ण
+	}
 
 	/* Discard previous VL Forwarding Parameters Table */
-	table = &priv->अटल_config.tables[BLK_IDX_VL_FORWARDING_PARAMS];
-	अगर (table->entry_count) अणु
-		kमुक्त(table->entries);
+	table = &priv->static_config.tables[BLK_IDX_VL_FORWARDING_PARAMS];
+	if (table->entry_count) {
+		kfree(table->entries);
 		table->entry_count = 0;
-	पूर्ण
+	}
 
-	/* Nothing to करो */
-	अगर (!num_भव_links)
-		वापस 0;
+	/* Nothing to do */
+	if (!num_virtual_links)
+		return 0;
 
-	/* Pre-allocate space in the अटल config tables */
+	/* Pre-allocate space in the static config tables */
 
 	/* VL Lookup Table */
-	table = &priv->अटल_config.tables[BLK_IDX_VL_LOOKUP];
-	table->entries = kसुस्मृति(num_भव_links,
+	table = &priv->static_config.tables[BLK_IDX_VL_LOOKUP];
+	table->entries = kcalloc(num_virtual_links,
 				 table->ops->unpacked_entry_size,
 				 GFP_KERNEL);
-	अगर (!table->entries)
-		वापस -ENOMEM;
-	table->entry_count = num_भव_links;
+	if (!table->entries)
+		return -ENOMEM;
+	table->entry_count = num_virtual_links;
 	vl_lookup = table->entries;
 
 	k = 0;
 
-	list_क्रम_each_entry(rule, &priv->flow_block.rules, list) अणु
-		अचिन्हित दीर्घ port;
+	list_for_each_entry(rule, &priv->flow_block.rules, list) {
+		unsigned long port;
 
-		अगर (rule->type != SJA1105_RULE_VL)
-			जारी;
+		if (rule->type != SJA1105_RULE_VL)
+			continue;
 
-		क्रम_each_set_bit(port, &rule->port_mask, SJA1105_NUM_PORTS) अणु
-			vl_lookup[k].क्रमmat = SJA1105_VL_FORMAT_PSFP;
+		for_each_set_bit(port, &rule->port_mask, SJA1105_NUM_PORTS) {
+			vl_lookup[k].format = SJA1105_VL_FORMAT_PSFP;
 			vl_lookup[k].port = port;
 			vl_lookup[k].macaddr = rule->key.vl.dmac;
-			अगर (rule->key.type == SJA1105_KEY_VLAN_AWARE_VL) अणु
+			if (rule->key.type == SJA1105_KEY_VLAN_AWARE_VL) {
 				vl_lookup[k].vlanid = rule->key.vl.vid;
 				vl_lookup[k].vlanprior = rule->key.vl.pcp;
-			पूर्ण अन्यथा अणु
+			} else {
 				u16 vid = dsa_8021q_rx_vid(priv->ds, port);
 
 				vl_lookup[k].vlanid = vid;
 				vl_lookup[k].vlanprior = 0;
-			पूर्ण
+			}
 			/* For critical VLs, the DESTPORTS mask is taken from
-			 * the VL Forwarding Table, so no poपूर्णांक in putting it
+			 * the VL Forwarding Table, so no point in putting it
 			 * in the VL Lookup Table
 			 */
-			अगर (rule->vl.type == SJA1105_VL_NONCRITICAL)
+			if (rule->vl.type == SJA1105_VL_NONCRITICAL)
 				vl_lookup[k].destports = rule->vl.destports;
-			अन्यथा
+			else
 				vl_lookup[k].iscritical = true;
 			vl_lookup[k].flow_cookie = rule->cookie;
 			k++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* UM10944.pdf chapter 4.2.3 VL Lookup table:
 	 * "the entries in the VL Lookup table must be sorted in ascending
 	 * order (i.e. the smallest value must be loaded first) according to
 	 * the following sort order: MACADDR, VLANID, PORT, VLANPRIOR."
 	 */
-	क्रम (i = 0; i < num_भव_links; i++) अणु
-		काष्ठा sja1105_vl_lookup_entry *a = &vl_lookup[i];
+	for (i = 0; i < num_virtual_links; i++) {
+		struct sja1105_vl_lookup_entry *a = &vl_lookup[i];
 
-		क्रम (j = i + 1; j < num_भव_links; j++) अणु
-			काष्ठा sja1105_vl_lookup_entry *b = &vl_lookup[j];
+		for (j = i + 1; j < num_virtual_links; j++) {
+			struct sja1105_vl_lookup_entry *b = &vl_lookup[j];
 
-			अगर (sja1105_vl_key_lower(b, a)) अणु
-				काष्ठा sja1105_vl_lookup_entry पंचांगp = *a;
+			if (sja1105_vl_key_lower(b, a)) {
+				struct sja1105_vl_lookup_entry tmp = *a;
 
 				*a = *b;
-				*b = पंचांगp;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				*b = tmp;
+			}
+		}
+	}
 
-	अगर (!have_critical_भव_links)
-		वापस 0;
+	if (!have_critical_virtual_links)
+		return 0;
 
 	/* VL Policing Table */
-	table = &priv->अटल_config.tables[BLK_IDX_VL_POLICING];
-	table->entries = kसुस्मृति(max_sharindx, table->ops->unpacked_entry_size,
+	table = &priv->static_config.tables[BLK_IDX_VL_POLICING];
+	table->entries = kcalloc(max_sharindx, table->ops->unpacked_entry_size,
 				 GFP_KERNEL);
-	अगर (!table->entries)
-		वापस -ENOMEM;
+	if (!table->entries)
+		return -ENOMEM;
 	table->entry_count = max_sharindx;
 	vl_policing = table->entries;
 
 	/* VL Forwarding Table */
-	table = &priv->अटल_config.tables[BLK_IDX_VL_FORWARDING];
-	table->entries = kसुस्मृति(max_sharindx, table->ops->unpacked_entry_size,
+	table = &priv->static_config.tables[BLK_IDX_VL_FORWARDING];
+	table->entries = kcalloc(max_sharindx, table->ops->unpacked_entry_size,
 				 GFP_KERNEL);
-	अगर (!table->entries)
-		वापस -ENOMEM;
+	if (!table->entries)
+		return -ENOMEM;
 	table->entry_count = max_sharindx;
 	vl_fwd = table->entries;
 
 	/* VL Forwarding Parameters Table */
-	table = &priv->अटल_config.tables[BLK_IDX_VL_FORWARDING_PARAMS];
-	table->entries = kसुस्मृति(1, table->ops->unpacked_entry_size,
+	table = &priv->static_config.tables[BLK_IDX_VL_FORWARDING_PARAMS];
+	table->entries = kcalloc(1, table->ops->unpacked_entry_size,
 				 GFP_KERNEL);
-	अगर (!table->entries)
-		वापस -ENOMEM;
+	if (!table->entries)
+		return -ENOMEM;
 	table->entry_count = 1;
 
-	क्रम (i = 0; i < num_भव_links; i++) अणु
-		अचिन्हित दीर्घ cookie = vl_lookup[i].flow_cookie;
-		काष्ठा sja1105_rule *rule = sja1105_rule_find(priv, cookie);
+	for (i = 0; i < num_virtual_links; i++) {
+		unsigned long cookie = vl_lookup[i].flow_cookie;
+		struct sja1105_rule *rule = sja1105_rule_find(priv, cookie);
 
-		अगर (rule->vl.type == SJA1105_VL_NONCRITICAL)
-			जारी;
-		अगर (rule->vl.type == SJA1105_VL_TIME_TRIGGERED) अणु
-			पूर्णांक sharindx = rule->vl.sharindx;
+		if (rule->vl.type == SJA1105_VL_NONCRITICAL)
+			continue;
+		if (rule->vl.type == SJA1105_VL_TIME_TRIGGERED) {
+			int sharindx = rule->vl.sharindx;
 
 			vl_policing[i].type = 1;
 			vl_policing[i].sharindx = sharindx;
@@ -481,138 +480,138 @@ err:
 			vl_fwd[sharindx].priority = rule->vl.ipv;
 			vl_fwd[sharindx].partition = 0;
 			vl_fwd[sharindx].destports = rule->vl.destports;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	sja1105_frame_memory_partitioning(priv);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक sja1105_vl_redirect(काष्ठा sja1105_निजी *priv, पूर्णांक port,
-			काष्ठा netlink_ext_ack *extack, अचिन्हित दीर्घ cookie,
-			काष्ठा sja1105_key *key, अचिन्हित दीर्घ destports,
+int sja1105_vl_redirect(struct sja1105_private *priv, int port,
+			struct netlink_ext_ack *extack, unsigned long cookie,
+			struct sja1105_key *key, unsigned long destports,
 			bool append)
-अणु
-	काष्ठा sja1105_rule *rule = sja1105_rule_find(priv, cookie);
-	पूर्णांक rc;
+{
+	struct sja1105_rule *rule = sja1105_rule_find(priv, cookie);
+	int rc;
 
-	अगर (priv->vlan_state == SJA1105_VLAN_UNAWARE &&
-	    key->type != SJA1105_KEY_VLAN_UNAWARE_VL) अणु
+	if (priv->vlan_state == SJA1105_VLAN_UNAWARE &&
+	    key->type != SJA1105_KEY_VLAN_UNAWARE_VL) {
 		NL_SET_ERR_MSG_MOD(extack,
 				   "Can only redirect based on DMAC");
-		वापस -EOPNOTSUPP;
-	पूर्ण अन्यथा अगर ((priv->vlan_state == SJA1105_VLAN_BEST_EFFORT ||
+		return -EOPNOTSUPP;
+	} else if ((priv->vlan_state == SJA1105_VLAN_BEST_EFFORT ||
 		    priv->vlan_state == SJA1105_VLAN_FILTERING_FULL) &&
-		   key->type != SJA1105_KEY_VLAN_AWARE_VL) अणु
+		   key->type != SJA1105_KEY_VLAN_AWARE_VL) {
 		NL_SET_ERR_MSG_MOD(extack,
 				   "Can only redirect based on {DMAC, VID, PCP}");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	अगर (!rule) अणु
-		rule = kzalloc(माप(*rule), GFP_KERNEL);
-		अगर (!rule)
-			वापस -ENOMEM;
+	if (!rule) {
+		rule = kzalloc(sizeof(*rule), GFP_KERNEL);
+		if (!rule)
+			return -ENOMEM;
 
 		rule->cookie = cookie;
 		rule->type = SJA1105_RULE_VL;
 		rule->key = *key;
 		list_add(&rule->list, &priv->flow_block.rules);
-	पूर्ण
+	}
 
 	rule->port_mask |= BIT(port);
-	अगर (append)
+	if (append)
 		rule->vl.destports |= destports;
-	अन्यथा
+	else
 		rule->vl.destports = destports;
 
-	rc = sja1105_init_भव_links(priv, extack);
-	अगर (rc) अणु
+	rc = sja1105_init_virtual_links(priv, extack);
+	if (rc) {
 		rule->port_mask &= ~BIT(port);
-		अगर (!rule->port_mask) अणु
+		if (!rule->port_mask) {
 			list_del(&rule->list);
-			kमुक्त(rule);
-		पूर्ण
-	पूर्ण
+			kfree(rule);
+		}
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक sja1105_vl_delete(काष्ठा sja1105_निजी *priv, पूर्णांक port,
-		      काष्ठा sja1105_rule *rule, काष्ठा netlink_ext_ack *extack)
-अणु
-	पूर्णांक rc;
+int sja1105_vl_delete(struct sja1105_private *priv, int port,
+		      struct sja1105_rule *rule, struct netlink_ext_ack *extack)
+{
+	int rc;
 
 	rule->port_mask &= ~BIT(port);
-	अगर (!rule->port_mask) अणु
+	if (!rule->port_mask) {
 		list_del(&rule->list);
-		kमुक्त(rule);
-	पूर्ण
+		kfree(rule);
+	}
 
 	rc = sja1105_compose_gating_subschedule(priv, extack);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	rc = sja1105_init_भव_links(priv, extack);
-	अगर (rc)
-		वापस rc;
+	rc = sja1105_init_virtual_links(priv, extack);
+	if (rc)
+		return rc;
 
 	rc = sja1105_init_scheduling(priv);
-	अगर (rc < 0)
-		वापस rc;
+	if (rc < 0)
+		return rc;
 
-	वापस sja1105_अटल_config_reload(priv, SJA1105_VIRTUAL_LINKS);
-पूर्ण
+	return sja1105_static_config_reload(priv, SJA1105_VIRTUAL_LINKS);
+}
 
-पूर्णांक sja1105_vl_gate(काष्ठा sja1105_निजी *priv, पूर्णांक port,
-		    काष्ठा netlink_ext_ack *extack, अचिन्हित दीर्घ cookie,
-		    काष्ठा sja1105_key *key, u32 index, s32 prio,
-		    u64 base_समय, u64 cycle_समय, u64 cycle_समय_ext,
-		    u32 num_entries, काष्ठा action_gate_entry *entries)
-अणु
-	काष्ठा sja1105_rule *rule = sja1105_rule_find(priv, cookie);
-	पूर्णांक ipv = -1;
-	पूर्णांक i, rc;
+int sja1105_vl_gate(struct sja1105_private *priv, int port,
+		    struct netlink_ext_ack *extack, unsigned long cookie,
+		    struct sja1105_key *key, u32 index, s32 prio,
+		    u64 base_time, u64 cycle_time, u64 cycle_time_ext,
+		    u32 num_entries, struct action_gate_entry *entries)
+{
+	struct sja1105_rule *rule = sja1105_rule_find(priv, cookie);
+	int ipv = -1;
+	int i, rc;
 	s32 rem;
 
-	अगर (cycle_समय_ext) अणु
+	if (cycle_time_ext) {
 		NL_SET_ERR_MSG_MOD(extack,
 				   "Cycle time extension not supported");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	भाग_s64_rem(base_समय, sja1105_delta_to_ns(1), &rem);
-	अगर (rem) अणु
+	div_s64_rem(base_time, sja1105_delta_to_ns(1), &rem);
+	if (rem) {
 		NL_SET_ERR_MSG_MOD(extack,
 				   "Base time must be multiple of 200 ns");
-		वापस -दुस्फल;
-	पूर्ण
+		return -ERANGE;
+	}
 
-	भाग_s64_rem(cycle_समय, sja1105_delta_to_ns(1), &rem);
-	अगर (rem) अणु
+	div_s64_rem(cycle_time, sja1105_delta_to_ns(1), &rem);
+	if (rem) {
 		NL_SET_ERR_MSG_MOD(extack,
 				   "Cycle time must be multiple of 200 ns");
-		वापस -दुस्फल;
-	पूर्ण
+		return -ERANGE;
+	}
 
-	अगर (priv->vlan_state == SJA1105_VLAN_UNAWARE &&
-	    key->type != SJA1105_KEY_VLAN_UNAWARE_VL) अणु
+	if (priv->vlan_state == SJA1105_VLAN_UNAWARE &&
+	    key->type != SJA1105_KEY_VLAN_UNAWARE_VL) {
 		NL_SET_ERR_MSG_MOD(extack,
 				   "Can only gate based on DMAC");
-		वापस -EOPNOTSUPP;
-	पूर्ण अन्यथा अगर ((priv->vlan_state == SJA1105_VLAN_BEST_EFFORT ||
+		return -EOPNOTSUPP;
+	} else if ((priv->vlan_state == SJA1105_VLAN_BEST_EFFORT ||
 		    priv->vlan_state == SJA1105_VLAN_FILTERING_FULL) &&
-		   key->type != SJA1105_KEY_VLAN_AWARE_VL) अणु
+		   key->type != SJA1105_KEY_VLAN_AWARE_VL) {
 		NL_SET_ERR_MSG_MOD(extack,
 				   "Can only gate based on {DMAC, VID, PCP}");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	अगर (!rule) अणु
-		rule = kzalloc(माप(*rule), GFP_KERNEL);
-		अगर (!rule)
-			वापस -ENOMEM;
+	if (!rule) {
+		rule = kzalloc(sizeof(*rule), GFP_KERNEL);
+		if (!rule)
+			return -ENOMEM;
 
 		list_add(&rule->list, &priv->flow_block.rules);
 		rule->cookie = cookie;
@@ -620,158 +619,158 @@ err:
 		rule->key = *key;
 		rule->vl.type = SJA1105_VL_TIME_TRIGGERED;
 		rule->vl.sharindx = index;
-		rule->vl.base_समय = base_समय;
-		rule->vl.cycle_समय = cycle_समय;
+		rule->vl.base_time = base_time;
+		rule->vl.cycle_time = cycle_time;
 		rule->vl.num_entries = num_entries;
-		rule->vl.entries = kसुस्मृति(num_entries,
-					   माप(काष्ठा action_gate_entry),
+		rule->vl.entries = kcalloc(num_entries,
+					   sizeof(struct action_gate_entry),
 					   GFP_KERNEL);
-		अगर (!rule->vl.entries) अणु
+		if (!rule->vl.entries) {
 			rc = -ENOMEM;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		क्रम (i = 0; i < num_entries; i++) अणु
-			भाग_s64_rem(entries[i].पूर्णांकerval,
+		for (i = 0; i < num_entries; i++) {
+			div_s64_rem(entries[i].interval,
 				    sja1105_delta_to_ns(1), &rem);
-			अगर (rem) अणु
+			if (rem) {
 				NL_SET_ERR_MSG_MOD(extack,
 						   "Interval must be multiple of 200 ns");
-				rc = -दुस्फल;
-				जाओ out;
-			पूर्ण
+				rc = -ERANGE;
+				goto out;
+			}
 
-			अगर (!entries[i].पूर्णांकerval) अणु
+			if (!entries[i].interval) {
 				NL_SET_ERR_MSG_MOD(extack,
 						   "Interval cannot be zero");
-				rc = -दुस्फल;
-				जाओ out;
-			पूर्ण
+				rc = -ERANGE;
+				goto out;
+			}
 
-			अगर (ns_to_sja1105_delta(entries[i].पूर्णांकerval) >
-			    SJA1105_TAS_MAX_DELTA) अणु
+			if (ns_to_sja1105_delta(entries[i].interval) >
+			    SJA1105_TAS_MAX_DELTA) {
 				NL_SET_ERR_MSG_MOD(extack,
 						   "Maximum interval is 52 ms");
-				rc = -दुस्फल;
-				जाओ out;
-			पूर्ण
+				rc = -ERANGE;
+				goto out;
+			}
 
-			अगर (entries[i].maxoctets != -1) अणु
+			if (entries[i].maxoctets != -1) {
 				NL_SET_ERR_MSG_MOD(extack,
 						   "Cannot offload IntervalOctetMax");
 				rc = -EOPNOTSUPP;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
-			अगर (ipv == -1) अणु
+			if (ipv == -1) {
 				ipv = entries[i].ipv;
-			पूर्ण अन्यथा अगर (ipv != entries[i].ipv) अणु
+			} else if (ipv != entries[i].ipv) {
 				NL_SET_ERR_MSG_MOD(extack,
 						   "Only support a single IPV per VL");
 				rc = -EOPNOTSUPP;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
 			rule->vl.entries[i] = entries[i];
-		पूर्ण
+		}
 
-		अगर (ipv == -1) अणु
-			अगर (key->type == SJA1105_KEY_VLAN_AWARE_VL)
+		if (ipv == -1) {
+			if (key->type == SJA1105_KEY_VLAN_AWARE_VL)
 				ipv = key->vl.pcp;
-			अन्यथा
+			else
 				ipv = 0;
-		पूर्ण
+		}
 
 		/* TODO: support per-flow MTU */
 		rule->vl.maxlen = VLAN_ETH_FRAME_LEN + ETH_FCS_LEN;
 		rule->vl.ipv = ipv;
-	पूर्ण
+	}
 
 	rule->port_mask |= BIT(port);
 
 	rc = sja1105_compose_gating_subschedule(priv, extack);
-	अगर (rc)
-		जाओ out;
+	if (rc)
+		goto out;
 
-	rc = sja1105_init_भव_links(priv, extack);
-	अगर (rc)
-		जाओ out;
+	rc = sja1105_init_virtual_links(priv, extack);
+	if (rc)
+		goto out;
 
-	अगर (sja1105_gating_check_conflicts(priv, -1, extack)) अणु
+	if (sja1105_gating_check_conflicts(priv, -1, extack)) {
 		NL_SET_ERR_MSG_MOD(extack, "Conflict with tc-taprio schedule");
-		rc = -दुस्फल;
-		जाओ out;
-	पूर्ण
+		rc = -ERANGE;
+		goto out;
+	}
 
 out:
-	अगर (rc) अणु
+	if (rc) {
 		rule->port_mask &= ~BIT(port);
-		अगर (!rule->port_mask) अणु
+		if (!rule->port_mask) {
 			list_del(&rule->list);
-			kमुक्त(rule->vl.entries);
-			kमुक्त(rule);
-		पूर्ण
-	पूर्ण
+			kfree(rule->vl.entries);
+			kfree(rule);
+		}
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक sja1105_find_vlid(काष्ठा sja1105_निजी *priv, पूर्णांक port,
-			     काष्ठा sja1105_key *key)
-अणु
-	काष्ठा sja1105_vl_lookup_entry *vl_lookup;
-	काष्ठा sja1105_table *table;
-	पूर्णांक i;
+static int sja1105_find_vlid(struct sja1105_private *priv, int port,
+			     struct sja1105_key *key)
+{
+	struct sja1105_vl_lookup_entry *vl_lookup;
+	struct sja1105_table *table;
+	int i;
 
-	अगर (WARN_ON(key->type != SJA1105_KEY_VLAN_AWARE_VL &&
+	if (WARN_ON(key->type != SJA1105_KEY_VLAN_AWARE_VL &&
 		    key->type != SJA1105_KEY_VLAN_UNAWARE_VL))
-		वापस -1;
+		return -1;
 
-	table = &priv->अटल_config.tables[BLK_IDX_VL_LOOKUP];
+	table = &priv->static_config.tables[BLK_IDX_VL_LOOKUP];
 	vl_lookup = table->entries;
 
-	क्रम (i = 0; i < table->entry_count; i++) अणु
-		अगर (key->type == SJA1105_KEY_VLAN_AWARE_VL) अणु
-			अगर (vl_lookup[i].port == port &&
+	for (i = 0; i < table->entry_count; i++) {
+		if (key->type == SJA1105_KEY_VLAN_AWARE_VL) {
+			if (vl_lookup[i].port == port &&
 			    vl_lookup[i].macaddr == key->vl.dmac &&
 			    vl_lookup[i].vlanid == key->vl.vid &&
 			    vl_lookup[i].vlanprior == key->vl.pcp)
-				वापस i;
-		पूर्ण अन्यथा अणु
-			अगर (vl_lookup[i].port == port &&
+				return i;
+		} else {
+			if (vl_lookup[i].port == port &&
 			    vl_lookup[i].macaddr == key->vl.dmac)
-				वापस i;
-		पूर्ण
-	पूर्ण
+				return i;
+		}
+	}
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-पूर्णांक sja1105_vl_stats(काष्ठा sja1105_निजी *priv, पूर्णांक port,
-		     काष्ठा sja1105_rule *rule, काष्ठा flow_stats *stats,
-		     काष्ठा netlink_ext_ack *extack)
-अणु
-	स्थिर काष्ठा sja1105_regs *regs = priv->info->regs;
-	u8 buf[SJA1105_SIZE_VL_STATUS] = अणु0पूर्ण;
+int sja1105_vl_stats(struct sja1105_private *priv, int port,
+		     struct sja1105_rule *rule, struct flow_stats *stats,
+		     struct netlink_ext_ack *extack)
+{
+	const struct sja1105_regs *regs = priv->info->regs;
+	u8 buf[SJA1105_SIZE_VL_STATUS] = {0};
 	u64 unreleased;
 	u64 timingerr;
 	u64 lengtherr;
-	पूर्णांक vlid, rc;
+	int vlid, rc;
 	u64 pkts;
 
-	अगर (rule->vl.type != SJA1105_VL_TIME_TRIGGERED)
-		वापस 0;
+	if (rule->vl.type != SJA1105_VL_TIME_TRIGGERED)
+		return 0;
 
 	vlid = sja1105_find_vlid(priv, port, &rule->key);
-	अगर (vlid < 0)
-		वापस 0;
+	if (vlid < 0)
+		return 0;
 
 	rc = sja1105_xfer_buf(priv, SPI_READ, regs->vl_status + 2 * vlid, buf,
 			      SJA1105_SIZE_VL_STATUS);
-	अगर (rc) अणु
+	if (rc) {
 		NL_SET_ERR_MSG_MOD(extack, "SPI access failed");
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	sja1105_unpack(buf, &timingerr,  31, 16, SJA1105_SIZE_VL_STATUS);
 	sja1105_unpack(buf, &unreleased, 15,  0, SJA1105_SIZE_VL_STATUS);
@@ -780,11 +779,11 @@ out:
 	pkts = timingerr + unreleased + lengtherr;
 
 	flow_stats_update(stats, 0, pkts - rule->vl.stats.pkts, 0,
-			  jअगरfies - rule->vl.stats.lastused,
+			  jiffies - rule->vl.stats.lastused,
 			  FLOW_ACTION_HW_STATS_IMMEDIATE);
 
 	rule->vl.stats.pkts = pkts;
-	rule->vl.stats.lastused = jअगरfies;
+	rule->vl.stats.lastused = jiffies;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

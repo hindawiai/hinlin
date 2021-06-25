@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2001 Sistina Software (UK) Limited.
  * Copyright (C) 2004-2008 Red Hat, Inc. All rights reserved.
@@ -6,410 +5,410 @@
  * This file is released under the GPL.
  */
 
-#समावेश "dm-core.h"
+#include "dm-core.h"
 
-#समावेश <linux/module.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/namei.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/माला.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/atomic.h>
-#समावेश <linux/blk-mq.h>
-#समावेश <linux/mount.h>
-#समावेश <linux/dax.h>
+#include <linux/module.h>
+#include <linux/vmalloc.h>
+#include <linux/blkdev.h>
+#include <linux/namei.h>
+#include <linux/ctype.h>
+#include <linux/string.h>
+#include <linux/slab.h>
+#include <linux/interrupt.h>
+#include <linux/mutex.h>
+#include <linux/delay.h>
+#include <linux/atomic.h>
+#include <linux/blk-mq.h>
+#include <linux/mount.h>
+#include <linux/dax.h>
 
-#घोषणा DM_MSG_PREFIX "table"
+#define DM_MSG_PREFIX "table"
 
-#घोषणा NODE_SIZE L1_CACHE_BYTES
-#घोषणा KEYS_PER_NODE (NODE_SIZE / माप(sector_t))
-#घोषणा CHILDREN_PER_NODE (KEYS_PER_NODE + 1)
+#define NODE_SIZE L1_CACHE_BYTES
+#define KEYS_PER_NODE (NODE_SIZE / sizeof(sector_t))
+#define CHILDREN_PER_NODE (KEYS_PER_NODE + 1)
 
 /*
- * Similar to उच्चमानing(log_size(n))
+ * Similar to ceiling(log_size(n))
  */
-अटल अचिन्हित पूर्णांक पूर्णांक_log(अचिन्हित पूर्णांक n, अचिन्हित पूर्णांक base)
-अणु
-	पूर्णांक result = 0;
+static unsigned int int_log(unsigned int n, unsigned int base)
+{
+	int result = 0;
 
-	जबतक (n > 1) अणु
-		n = dm_भाग_up(n, base);
+	while (n > 1) {
+		n = dm_div_up(n, base);
 		result++;
-	पूर्ण
+	}
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /*
  * Calculate the index of the child node of the n'th node k'th key.
  */
-अटल अंतरभूत अचिन्हित पूर्णांक get_child(अचिन्हित पूर्णांक n, अचिन्हित पूर्णांक k)
-अणु
-	वापस (n * CHILDREN_PER_NODE) + k;
-पूर्ण
+static inline unsigned int get_child(unsigned int n, unsigned int k)
+{
+	return (n * CHILDREN_PER_NODE) + k;
+}
 
 /*
  * Return the n'th node of level l from table t.
  */
-अटल अंतरभूत sector_t *get_node(काष्ठा dm_table *t,
-				 अचिन्हित पूर्णांक l, अचिन्हित पूर्णांक n)
-अणु
-	वापस t->index[l] + (n * KEYS_PER_NODE);
-पूर्ण
+static inline sector_t *get_node(struct dm_table *t,
+				 unsigned int l, unsigned int n)
+{
+	return t->index[l] + (n * KEYS_PER_NODE);
+}
 
 /*
  * Return the highest key that you could lookup from the n'th
  * node on level l of the btree.
  */
-अटल sector_t high(काष्ठा dm_table *t, अचिन्हित पूर्णांक l, अचिन्हित पूर्णांक n)
-अणु
-	क्रम (; l < t->depth - 1; l++)
+static sector_t high(struct dm_table *t, unsigned int l, unsigned int n)
+{
+	for (; l < t->depth - 1; l++)
 		n = get_child(n, CHILDREN_PER_NODE - 1);
 
-	अगर (n >= t->counts[l])
-		वापस (sector_t) - 1;
+	if (n >= t->counts[l])
+		return (sector_t) - 1;
 
-	वापस get_node(t, l, n)[KEYS_PER_NODE - 1];
-पूर्ण
+	return get_node(t, l, n)[KEYS_PER_NODE - 1];
+}
 
 /*
  * Fills in a level of the btree based on the highs of the level
  * below it.
  */
-अटल पूर्णांक setup_btree_index(अचिन्हित पूर्णांक l, काष्ठा dm_table *t)
-अणु
-	अचिन्हित पूर्णांक n, k;
+static int setup_btree_index(unsigned int l, struct dm_table *t)
+{
+	unsigned int n, k;
 	sector_t *node;
 
-	क्रम (n = 0U; n < t->counts[l]; n++) अणु
+	for (n = 0U; n < t->counts[l]; n++) {
 		node = get_node(t, l, n);
 
-		क्रम (k = 0U; k < KEYS_PER_NODE; k++)
+		for (k = 0U; k < KEYS_PER_NODE; k++)
 			node[k] = high(t, l + 1, get_child(n, k));
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * highs, and tarमाला_लो are managed as dynamic arrays during a
+ * highs, and targets are managed as dynamic arrays during a
  * table load.
  */
-अटल पूर्णांक alloc_tarमाला_लो(काष्ठा dm_table *t, अचिन्हित पूर्णांक num)
-अणु
+static int alloc_targets(struct dm_table *t, unsigned int num)
+{
 	sector_t *n_highs;
-	काष्ठा dm_target *n_tarमाला_लो;
+	struct dm_target *n_targets;
 
 	/*
 	 * Allocate both the target array and offset array at once.
 	 */
-	n_highs = kvसुस्मृति(num, माप(काष्ठा dm_target) + माप(sector_t),
+	n_highs = kvcalloc(num, sizeof(struct dm_target) + sizeof(sector_t),
 			   GFP_KERNEL);
-	अगर (!n_highs)
-		वापस -ENOMEM;
+	if (!n_highs)
+		return -ENOMEM;
 
-	n_tarमाला_लो = (काष्ठा dm_target *) (n_highs + num);
+	n_targets = (struct dm_target *) (n_highs + num);
 
-	स_रखो(n_highs, -1, माप(*n_highs) * num);
-	kvमुक्त(t->highs);
+	memset(n_highs, -1, sizeof(*n_highs) * num);
+	kvfree(t->highs);
 
 	t->num_allocated = num;
 	t->highs = n_highs;
-	t->tarमाला_लो = n_tarमाला_लो;
+	t->targets = n_targets;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक dm_table_create(काष्ठा dm_table **result, भ_शेषe_t mode,
-		    अचिन्हित num_tarमाला_लो, काष्ठा mapped_device *md)
-अणु
-	काष्ठा dm_table *t = kzalloc(माप(*t), GFP_KERNEL);
+int dm_table_create(struct dm_table **result, fmode_t mode,
+		    unsigned num_targets, struct mapped_device *md)
+{
+	struct dm_table *t = kzalloc(sizeof(*t), GFP_KERNEL);
 
-	अगर (!t)
-		वापस -ENOMEM;
+	if (!t)
+		return -ENOMEM;
 
 	INIT_LIST_HEAD(&t->devices);
 
-	अगर (!num_tarमाला_लो)
-		num_tarमाला_लो = KEYS_PER_NODE;
+	if (!num_targets)
+		num_targets = KEYS_PER_NODE;
 
-	num_tarमाला_लो = dm_round_up(num_tarमाला_लो, KEYS_PER_NODE);
+	num_targets = dm_round_up(num_targets, KEYS_PER_NODE);
 
-	अगर (!num_tarमाला_लो) अणु
-		kमुक्त(t);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!num_targets) {
+		kfree(t);
+		return -ENOMEM;
+	}
 
-	अगर (alloc_tarमाला_लो(t, num_tarमाला_लो)) अणु
-		kमुक्त(t);
-		वापस -ENOMEM;
-	पूर्ण
+	if (alloc_targets(t, num_targets)) {
+		kfree(t);
+		return -ENOMEM;
+	}
 
 	t->type = DM_TYPE_NONE;
 	t->mode = mode;
 	t->md = md;
 	*result = t;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम मुक्त_devices(काष्ठा list_head *devices, काष्ठा mapped_device *md)
-अणु
-	काष्ठा list_head *पंचांगp, *next;
+static void free_devices(struct list_head *devices, struct mapped_device *md)
+{
+	struct list_head *tmp, *next;
 
-	list_क्रम_each_safe(पंचांगp, next, devices) अणु
-		काष्ठा dm_dev_पूर्णांकernal *dd =
-		    list_entry(पंचांगp, काष्ठा dm_dev_पूर्णांकernal, list);
+	list_for_each_safe(tmp, next, devices) {
+		struct dm_dev_internal *dd =
+		    list_entry(tmp, struct dm_dev_internal, list);
 		DMWARN("%s: dm_table_destroy: dm_put_device call missing for %s",
 		       dm_device_name(md), dd->dm_dev->name);
 		dm_put_table_device(md, dd->dm_dev);
-		kमुक्त(dd);
-	पूर्ण
-पूर्ण
+		kfree(dd);
+	}
+}
 
-अटल व्योम dm_table_destroy_keyslot_manager(काष्ठा dm_table *t);
+static void dm_table_destroy_keyslot_manager(struct dm_table *t);
 
-व्योम dm_table_destroy(काष्ठा dm_table *t)
-अणु
-	अचिन्हित पूर्णांक i;
+void dm_table_destroy(struct dm_table *t)
+{
+	unsigned int i;
 
-	अगर (!t)
-		वापस;
+	if (!t)
+		return;
 
-	/* मुक्त the indexes */
-	अगर (t->depth >= 2)
-		kvमुक्त(t->index[t->depth - 2]);
+	/* free the indexes */
+	if (t->depth >= 2)
+		kvfree(t->index[t->depth - 2]);
 
-	/* मुक्त the tarमाला_लो */
-	क्रम (i = 0; i < t->num_tarमाला_लो; i++) अणु
-		काष्ठा dm_target *tgt = t->tarमाला_लो + i;
+	/* free the targets */
+	for (i = 0; i < t->num_targets; i++) {
+		struct dm_target *tgt = t->targets + i;
 
-		अगर (tgt->type->dtr)
+		if (tgt->type->dtr)
 			tgt->type->dtr(tgt);
 
 		dm_put_target_type(tgt->type);
-	पूर्ण
+	}
 
-	kvमुक्त(t->highs);
+	kvfree(t->highs);
 
-	/* मुक्त the device list */
-	मुक्त_devices(&t->devices, t->md);
+	/* free the device list */
+	free_devices(&t->devices, t->md);
 
-	dm_मुक्त_md_mempools(t->mempools);
+	dm_free_md_mempools(t->mempools);
 
 	dm_table_destroy_keyslot_manager(t);
 
-	kमुक्त(t);
-पूर्ण
+	kfree(t);
+}
 
 /*
- * See अगर we've alपढ़ोy got a device in the list.
+ * See if we've already got a device in the list.
  */
-अटल काष्ठा dm_dev_पूर्णांकernal *find_device(काष्ठा list_head *l, dev_t dev)
-अणु
-	काष्ठा dm_dev_पूर्णांकernal *dd;
+static struct dm_dev_internal *find_device(struct list_head *l, dev_t dev)
+{
+	struct dm_dev_internal *dd;
 
-	list_क्रम_each_entry (dd, l, list)
-		अगर (dd->dm_dev->bdev->bd_dev == dev)
-			वापस dd;
+	list_for_each_entry (dd, l, list)
+		if (dd->dm_dev->bdev->bd_dev == dev)
+			return dd;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /*
  * If possible, this checks an area of a destination device is invalid.
  */
-अटल पूर्णांक device_area_is_invalid(काष्ठा dm_target *ti, काष्ठा dm_dev *dev,
-				  sector_t start, sector_t len, व्योम *data)
-अणु
-	काष्ठा queue_limits *limits = data;
-	काष्ठा block_device *bdev = dev->bdev;
+static int device_area_is_invalid(struct dm_target *ti, struct dm_dev *dev,
+				  sector_t start, sector_t len, void *data)
+{
+	struct queue_limits *limits = data;
+	struct block_device *bdev = dev->bdev;
 	sector_t dev_size =
-		i_size_पढ़ो(bdev->bd_inode) >> SECTOR_SHIFT;
-	अचिन्हित लघु logical_block_size_sectors =
+		i_size_read(bdev->bd_inode) >> SECTOR_SHIFT;
+	unsigned short logical_block_size_sectors =
 		limits->logical_block_size >> SECTOR_SHIFT;
-	अक्षर b[BDEVNAME_SIZE];
+	char b[BDEVNAME_SIZE];
 
-	अगर (!dev_size)
-		वापस 0;
+	if (!dev_size)
+		return 0;
 
-	अगर ((start >= dev_size) || (start + len > dev_size)) अणु
+	if ((start >= dev_size) || (start + len > dev_size)) {
 		DMWARN("%s: %s too small for target: "
 		       "start=%llu, len=%llu, dev_size=%llu",
 		       dm_device_name(ti->table->md), bdevname(bdev, b),
-		       (अचिन्हित दीर्घ दीर्घ)start,
-		       (अचिन्हित दीर्घ दीर्घ)len,
-		       (अचिन्हित दीर्घ दीर्घ)dev_size);
-		वापस 1;
-	पूर्ण
+		       (unsigned long long)start,
+		       (unsigned long long)len,
+		       (unsigned long long)dev_size);
+		return 1;
+	}
 
 	/*
 	 * If the target is mapped to zoned block device(s), check
 	 * that the zones are not partially mapped.
 	 */
-	अगर (bdev_zoned_model(bdev) != BLK_ZONED_NONE) अणु
-		अचिन्हित पूर्णांक zone_sectors = bdev_zone_sectors(bdev);
+	if (bdev_zoned_model(bdev) != BLK_ZONED_NONE) {
+		unsigned int zone_sectors = bdev_zone_sectors(bdev);
 
-		अगर (start & (zone_sectors - 1)) अणु
+		if (start & (zone_sectors - 1)) {
 			DMWARN("%s: start=%llu not aligned to h/w zone size %u of %s",
 			       dm_device_name(ti->table->md),
-			       (अचिन्हित दीर्घ दीर्घ)start,
+			       (unsigned long long)start,
 			       zone_sectors, bdevname(bdev, b));
-			वापस 1;
-		पूर्ण
+			return 1;
+		}
 
 		/*
 		 * Note: The last zone of a zoned block device may be smaller
-		 * than other zones. So क्रम a target mapping the end of a
+		 * than other zones. So for a target mapping the end of a
 		 * zoned block device with such a zone, len would not be zone
-		 * aligned. We करो not allow such last smaller zone to be part
+		 * aligned. We do not allow such last smaller zone to be part
 		 * of the mapping here to ensure that mappings with multiple
-		 * devices करो not end up with a smaller zone in the middle of
+		 * devices do not end up with a smaller zone in the middle of
 		 * the sector range.
 		 */
-		अगर (len & (zone_sectors - 1)) अणु
+		if (len & (zone_sectors - 1)) {
 			DMWARN("%s: len=%llu not aligned to h/w zone size %u of %s",
 			       dm_device_name(ti->table->md),
-			       (अचिन्हित दीर्घ दीर्घ)len,
+			       (unsigned long long)len,
 			       zone_sectors, bdevname(bdev, b));
-			वापस 1;
-		पूर्ण
-	पूर्ण
+			return 1;
+		}
+	}
 
-	अगर (logical_block_size_sectors <= 1)
-		वापस 0;
+	if (logical_block_size_sectors <= 1)
+		return 0;
 
-	अगर (start & (logical_block_size_sectors - 1)) अणु
+	if (start & (logical_block_size_sectors - 1)) {
 		DMWARN("%s: start=%llu not aligned to h/w "
 		       "logical block size %u of %s",
 		       dm_device_name(ti->table->md),
-		       (अचिन्हित दीर्घ दीर्घ)start,
+		       (unsigned long long)start,
 		       limits->logical_block_size, bdevname(bdev, b));
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	अगर (len & (logical_block_size_sectors - 1)) अणु
+	if (len & (logical_block_size_sectors - 1)) {
 		DMWARN("%s: len=%llu not aligned to h/w "
 		       "logical block size %u of %s",
 		       dm_device_name(ti->table->md),
-		       (अचिन्हित दीर्घ दीर्घ)len,
+		       (unsigned long long)len,
 		       limits->logical_block_size, bdevname(bdev, b));
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * This upgrades the mode on an alपढ़ोy खोलो dm_dev, being
- * careful to leave things as they were अगर we fail to reखोलो the
- * device and not to touch the existing bdev field in हाल
+ * This upgrades the mode on an already open dm_dev, being
+ * careful to leave things as they were if we fail to reopen the
+ * device and not to touch the existing bdev field in case
  * it is accessed concurrently.
  */
-अटल पूर्णांक upgrade_mode(काष्ठा dm_dev_पूर्णांकernal *dd, भ_शेषe_t new_mode,
-			काष्ठा mapped_device *md)
-अणु
-	पूर्णांक r;
-	काष्ठा dm_dev *old_dev, *new_dev;
+static int upgrade_mode(struct dm_dev_internal *dd, fmode_t new_mode,
+			struct mapped_device *md)
+{
+	int r;
+	struct dm_dev *old_dev, *new_dev;
 
 	old_dev = dd->dm_dev;
 
 	r = dm_get_table_device(md, dd->dm_dev->bdev->bd_dev,
 				dd->dm_dev->mode | new_mode, &new_dev);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	dd->dm_dev = new_dev;
 	dm_put_table_device(md, old_dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Convert the path to a device
  */
-dev_t dm_get_dev_t(स्थिर अक्षर *path)
-अणु
+dev_t dm_get_dev_t(const char *path)
+{
 	dev_t dev;
 
-	अगर (lookup_bdev(path, &dev))
+	if (lookup_bdev(path, &dev))
 		dev = name_to_dev_t(path);
-	वापस dev;
-पूर्ण
+	return dev;
+}
 EXPORT_SYMBOL_GPL(dm_get_dev_t);
 
 /*
- * Add a device to the list, or just increment the usage count अगर
- * it's alपढ़ोy present.
+ * Add a device to the list, or just increment the usage count if
+ * it's already present.
  */
-पूर्णांक dm_get_device(काष्ठा dm_target *ti, स्थिर अक्षर *path, भ_शेषe_t mode,
-		  काष्ठा dm_dev **result)
-अणु
-	पूर्णांक r;
+int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
+		  struct dm_dev **result)
+{
+	int r;
 	dev_t dev;
-	अचिन्हित पूर्णांक major, minor;
-	अक्षर dummy;
-	काष्ठा dm_dev_पूर्णांकernal *dd;
-	काष्ठा dm_table *t = ti->table;
+	unsigned int major, minor;
+	char dummy;
+	struct dm_dev_internal *dd;
+	struct dm_table *t = ti->table;
 
 	BUG_ON(!t);
 
-	अगर (माला_पूछो(path, "%u:%u%c", &major, &minor, &dummy) == 2) अणु
+	if (sscanf(path, "%u:%u%c", &major, &minor, &dummy) == 2) {
 		/* Extract the major/minor numbers */
 		dev = MKDEV(major, minor);
-		अगर (MAJOR(dev) != major || MINOR(dev) != minor)
-			वापस -EOVERFLOW;
-	पूर्ण अन्यथा अणु
+		if (MAJOR(dev) != major || MINOR(dev) != minor)
+			return -EOVERFLOW;
+	} else {
 		dev = dm_get_dev_t(path);
-		अगर (!dev)
-			वापस -ENODEV;
-	पूर्ण
+		if (!dev)
+			return -ENODEV;
+	}
 
 	dd = find_device(&t->devices, dev);
-	अगर (!dd) अणु
-		dd = kदो_स्मृति(माप(*dd), GFP_KERNEL);
-		अगर (!dd)
-			वापस -ENOMEM;
+	if (!dd) {
+		dd = kmalloc(sizeof(*dd), GFP_KERNEL);
+		if (!dd)
+			return -ENOMEM;
 
-		अगर ((r = dm_get_table_device(t->md, dev, mode, &dd->dm_dev))) अणु
-			kमुक्त(dd);
-			वापस r;
-		पूर्ण
+		if ((r = dm_get_table_device(t->md, dev, mode, &dd->dm_dev))) {
+			kfree(dd);
+			return r;
+		}
 
 		refcount_set(&dd->count, 1);
 		list_add(&dd->list, &t->devices);
-		जाओ out;
+		goto out;
 
-	पूर्ण अन्यथा अगर (dd->dm_dev->mode != (mode | dd->dm_dev->mode)) अणु
+	} else if (dd->dm_dev->mode != (mode | dd->dm_dev->mode)) {
 		r = upgrade_mode(dd, mode, t->md);
-		अगर (r)
-			वापस r;
-	पूर्ण
+		if (r)
+			return r;
+	}
 	refcount_inc(&dd->count);
 out:
 	*result = dd->dm_dev;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(dm_get_device);
 
-अटल पूर्णांक dm_set_device_limits(काष्ठा dm_target *ti, काष्ठा dm_dev *dev,
-				sector_t start, sector_t len, व्योम *data)
-अणु
-	काष्ठा queue_limits *limits = data;
-	काष्ठा block_device *bdev = dev->bdev;
-	काष्ठा request_queue *q = bdev_get_queue(bdev);
-	अक्षर b[BDEVNAME_SIZE];
+static int dm_set_device_limits(struct dm_target *ti, struct dm_dev *dev,
+				sector_t start, sector_t len, void *data)
+{
+	struct queue_limits *limits = data;
+	struct block_device *bdev = dev->bdev;
+	struct request_queue *q = bdev_get_queue(bdev);
+	char b[BDEVNAME_SIZE];
 
-	अगर (unlikely(!q)) अणु
+	if (unlikely(!q)) {
 		DMWARN("%s: Cannot set limits for nonexistent device %s",
 		       dm_device_name(ti->table->md), bdevname(bdev, b));
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (blk_stack_limits(limits, &q->limits,
+	if (blk_stack_limits(limits, &q->limits,
 			get_start_sect(bdev) + start) < 0)
 		DMWARN("%s: adding target device %s caused an alignment inconsistency: "
 		       "physical_block_size=%u, logical_block_size=%u, "
@@ -418,279 +417,279 @@ EXPORT_SYMBOL(dm_get_device);
 		       q->limits.physical_block_size,
 		       q->limits.logical_block_size,
 		       q->limits.alignment_offset,
-		       (अचिन्हित दीर्घ दीर्घ) start << SECTOR_SHIFT);
-	वापस 0;
-पूर्ण
+		       (unsigned long long) start << SECTOR_SHIFT);
+	return 0;
+}
 
 /*
- * Decrement a device's use count and हटाओ it अगर necessary.
+ * Decrement a device's use count and remove it if necessary.
  */
-व्योम dm_put_device(काष्ठा dm_target *ti, काष्ठा dm_dev *d)
-अणु
-	पूर्णांक found = 0;
-	काष्ठा list_head *devices = &ti->table->devices;
-	काष्ठा dm_dev_पूर्णांकernal *dd;
+void dm_put_device(struct dm_target *ti, struct dm_dev *d)
+{
+	int found = 0;
+	struct list_head *devices = &ti->table->devices;
+	struct dm_dev_internal *dd;
 
-	list_क्रम_each_entry(dd, devices, list) अणु
-		अगर (dd->dm_dev == d) अणु
+	list_for_each_entry(dd, devices, list) {
+		if (dd->dm_dev == d) {
 			found = 1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (!found) अणु
+			break;
+		}
+	}
+	if (!found) {
 		DMWARN("%s: device %s not in table devices list",
 		       dm_device_name(ti->table->md), d->name);
-		वापस;
-	पूर्ण
-	अगर (refcount_dec_and_test(&dd->count)) अणु
+		return;
+	}
+	if (refcount_dec_and_test(&dd->count)) {
 		dm_put_table_device(ti->table->md, d);
 		list_del(&dd->list);
-		kमुक्त(dd);
-	पूर्ण
-पूर्ण
+		kfree(dd);
+	}
+}
 EXPORT_SYMBOL(dm_put_device);
 
 /*
- * Checks to see अगर the target joins onto the end of the table.
+ * Checks to see if the target joins onto the end of the table.
  */
-अटल पूर्णांक adjoin(काष्ठा dm_table *table, काष्ठा dm_target *ti)
-अणु
-	काष्ठा dm_target *prev;
+static int adjoin(struct dm_table *table, struct dm_target *ti)
+{
+	struct dm_target *prev;
 
-	अगर (!table->num_tarमाला_लो)
-		वापस !ti->begin;
+	if (!table->num_targets)
+		return !ti->begin;
 
-	prev = &table->tarमाला_लो[table->num_tarमाला_लो - 1];
-	वापस (ti->begin == (prev->begin + prev->len));
-पूर्ण
+	prev = &table->targets[table->num_targets - 1];
+	return (ti->begin == (prev->begin + prev->len));
+}
 
 /*
  * Used to dynamically allocate the arg array.
  *
- * We करो first allocation with GFP_NOIO because dm-mpath and dm-thin must
- * process messages even अगर some device is suspended. These messages have a
+ * We do first allocation with GFP_NOIO because dm-mpath and dm-thin must
+ * process messages even if some device is suspended. These messages have a
  * small fixed number of arguments.
  *
- * On the other hand, dm-चयन needs to process bulk data using messages and
+ * On the other hand, dm-switch needs to process bulk data using messages and
  * excessive use of GFP_NOIO could cause trouble.
  */
-अटल अक्षर **पुनः_स्मृति_argv(अचिन्हित *size, अक्षर **old_argv)
-अणु
-	अक्षर **argv;
-	अचिन्हित new_size;
+static char **realloc_argv(unsigned *size, char **old_argv)
+{
+	char **argv;
+	unsigned new_size;
 	gfp_t gfp;
 
-	अगर (*size) अणु
+	if (*size) {
 		new_size = *size * 2;
 		gfp = GFP_KERNEL;
-	पूर्ण अन्यथा अणु
+	} else {
 		new_size = 8;
 		gfp = GFP_NOIO;
-	पूर्ण
-	argv = kदो_स्मृति_array(new_size, माप(*argv), gfp);
-	अगर (argv && old_argv) अणु
-		स_नकल(argv, old_argv, *size * माप(*argv));
+	}
+	argv = kmalloc_array(new_size, sizeof(*argv), gfp);
+	if (argv && old_argv) {
+		memcpy(argv, old_argv, *size * sizeof(*argv));
 		*size = new_size;
-	पूर्ण
+	}
 
-	kमुक्त(old_argv);
-	वापस argv;
-पूर्ण
+	kfree(old_argv);
+	return argv;
+}
 
 /*
- * Deकाष्ठाively splits up the argument list to pass to ctr.
+ * Destructively splits up the argument list to pass to ctr.
  */
-पूर्णांक dm_split_args(पूर्णांक *argc, अक्षर ***argvp, अक्षर *input)
-अणु
-	अक्षर *start, *end = input, *out, **argv = शून्य;
-	अचिन्हित array_size = 0;
+int dm_split_args(int *argc, char ***argvp, char *input)
+{
+	char *start, *end = input, *out, **argv = NULL;
+	unsigned array_size = 0;
 
 	*argc = 0;
 
-	अगर (!input) अणु
-		*argvp = शून्य;
-		वापस 0;
-	पूर्ण
+	if (!input) {
+		*argvp = NULL;
+		return 0;
+	}
 
-	argv = पुनः_स्मृति_argv(&array_size, argv);
-	अगर (!argv)
-		वापस -ENOMEM;
+	argv = realloc_argv(&array_size, argv);
+	if (!argv)
+		return -ENOMEM;
 
-	जबतक (1) अणु
+	while (1) {
 		/* Skip whitespace */
 		start = skip_spaces(end);
 
-		अगर (!*start)
-			अवरोध;	/* success, we hit the end */
+		if (!*start)
+			break;	/* success, we hit the end */
 
-		/* 'out' is used to हटाओ any back-quotes */
+		/* 'out' is used to remove any back-quotes */
 		end = out = start;
-		जबतक (*end) अणु
+		while (*end) {
 			/* Everything apart from '\0' can be quoted */
-			अगर (*end == '\\' && *(end + 1)) अणु
+			if (*end == '\\' && *(end + 1)) {
 				*out++ = *(end + 1);
 				end += 2;
-				जारी;
-			पूर्ण
+				continue;
+			}
 
-			अगर (है_खाली(*end))
-				अवरोध;	/* end of token */
+			if (isspace(*end))
+				break;	/* end of token */
 
 			*out++ = *end++;
-		पूर्ण
+		}
 
-		/* have we alपढ़ोy filled the array ? */
-		अगर ((*argc + 1) > array_size) अणु
-			argv = पुनः_स्मृति_argv(&array_size, argv);
-			अगर (!argv)
-				वापस -ENOMEM;
-		पूर्ण
+		/* have we already filled the array ? */
+		if ((*argc + 1) > array_size) {
+			argv = realloc_argv(&array_size, argv);
+			if (!argv)
+				return -ENOMEM;
+		}
 
 		/* we know this is whitespace */
-		अगर (*end)
+		if (*end)
 			end++;
 
 		/* terminate the string and put it in the array */
 		*out = '\0';
 		argv[*argc] = start;
 		(*argc)++;
-	पूर्ण
+	}
 
 	*argvp = argv;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Impose necessary and sufficient conditions on a devices's table such
  * that any incoming bio which respects its logical_block_size can be
  * processed successfully.  If it falls across the boundary between
- * two or more tarमाला_लो, the size of each piece it माला_लो split पूर्णांकo must
+ * two or more targets, the size of each piece it gets split into must
  * be compatible with the logical_block_size of the target processing it.
  */
-अटल पूर्णांक validate_hardware_logical_block_alignment(काष्ठा dm_table *table,
-						 काष्ठा queue_limits *limits)
-अणु
+static int validate_hardware_logical_block_alignment(struct dm_table *table,
+						 struct queue_limits *limits)
+{
 	/*
 	 * This function uses arithmetic modulo the logical_block_size
 	 * (in units of 512-byte sectors).
 	 */
-	अचिन्हित लघु device_logical_block_size_sects =
+	unsigned short device_logical_block_size_sects =
 		limits->logical_block_size >> SECTOR_SHIFT;
 
 	/*
 	 * Offset of the start of the next table entry, mod logical_block_size.
 	 */
-	अचिन्हित लघु next_target_start = 0;
+	unsigned short next_target_start = 0;
 
 	/*
 	 * Given an aligned bio that extends beyond the end of a
 	 * target, how many sectors must the next target handle?
 	 */
-	अचिन्हित लघु reमुख्यing = 0;
+	unsigned short remaining = 0;
 
-	काष्ठा dm_target *ti;
-	काष्ठा queue_limits ti_limits;
-	अचिन्हित i;
+	struct dm_target *ti;
+	struct queue_limits ti_limits;
+	unsigned i;
 
 	/*
 	 * Check each entry in the table in turn.
 	 */
-	क्रम (i = 0; i < dm_table_get_num_tarमाला_लो(table); i++) अणु
+	for (i = 0; i < dm_table_get_num_targets(table); i++) {
 		ti = dm_table_get_target(table, i);
 
 		blk_set_stacking_limits(&ti_limits);
 
 		/* combine all target devices' limits */
-		अगर (ti->type->iterate_devices)
+		if (ti->type->iterate_devices)
 			ti->type->iterate_devices(ti, dm_set_device_limits,
 						  &ti_limits);
 
 		/*
-		 * If the reमुख्यing sectors fall entirely within this
+		 * If the remaining sectors fall entirely within this
 		 * table entry are they compatible with its logical_block_size?
 		 */
-		अगर (reमुख्यing < ti->len &&
-		    reमुख्यing & ((ti_limits.logical_block_size >>
+		if (remaining < ti->len &&
+		    remaining & ((ti_limits.logical_block_size >>
 				  SECTOR_SHIFT) - 1))
-			अवरोध;	/* Error */
+			break;	/* Error */
 
 		next_target_start =
-		    (अचिन्हित लघु) ((next_target_start + ti->len) &
+		    (unsigned short) ((next_target_start + ti->len) &
 				      (device_logical_block_size_sects - 1));
-		reमुख्यing = next_target_start ?
+		remaining = next_target_start ?
 		    device_logical_block_size_sects - next_target_start : 0;
-	पूर्ण
+	}
 
-	अगर (reमुख्यing) अणु
+	if (remaining) {
 		DMWARN("%s: table line %u (start sect %llu len %llu) "
 		       "not aligned to h/w logical block size %u",
 		       dm_device_name(table->md), i,
-		       (अचिन्हित दीर्घ दीर्घ) ti->begin,
-		       (अचिन्हित दीर्घ दीर्घ) ti->len,
+		       (unsigned long long) ti->begin,
+		       (unsigned long long) ti->len,
 		       limits->logical_block_size);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक dm_table_add_target(काष्ठा dm_table *t, स्थिर अक्षर *type,
-			sector_t start, sector_t len, अक्षर *params)
-अणु
-	पूर्णांक r = -EINVAL, argc;
-	अक्षर **argv;
-	काष्ठा dm_target *tgt;
+int dm_table_add_target(struct dm_table *t, const char *type,
+			sector_t start, sector_t len, char *params)
+{
+	int r = -EINVAL, argc;
+	char **argv;
+	struct dm_target *tgt;
 
-	अगर (t->singleton) अणु
+	if (t->singleton) {
 		DMERR("%s: target type %s must appear alone in table",
-		      dm_device_name(t->md), t->tarमाला_लो->type->name);
-		वापस -EINVAL;
-	पूर्ण
+		      dm_device_name(t->md), t->targets->type->name);
+		return -EINVAL;
+	}
 
-	BUG_ON(t->num_tarमाला_लो >= t->num_allocated);
+	BUG_ON(t->num_targets >= t->num_allocated);
 
-	tgt = t->tarमाला_लो + t->num_tarमाला_लो;
-	स_रखो(tgt, 0, माप(*tgt));
+	tgt = t->targets + t->num_targets;
+	memset(tgt, 0, sizeof(*tgt));
 
-	अगर (!len) अणु
+	if (!len) {
 		DMERR("%s: zero-length target", dm_device_name(t->md));
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	tgt->type = dm_get_target_type(type);
-	अगर (!tgt->type) अणु
+	if (!tgt->type) {
 		DMERR("%s: %s: unknown target type", dm_device_name(t->md), type);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (dm_target_needs_singleton(tgt->type)) अणु
-		अगर (t->num_tarमाला_लो) अणु
+	if (dm_target_needs_singleton(tgt->type)) {
+		if (t->num_targets) {
 			tgt->error = "singleton target type must appear alone in table";
-			जाओ bad;
-		पूर्ण
+			goto bad;
+		}
 		t->singleton = true;
-	पूर्ण
+	}
 
-	अगर (dm_target_always_ग_लिखोable(tgt->type) && !(t->mode & FMODE_WRITE)) अणु
+	if (dm_target_always_writeable(tgt->type) && !(t->mode & FMODE_WRITE)) {
 		tgt->error = "target type may not be included in a read-only table";
-		जाओ bad;
-	पूर्ण
+		goto bad;
+	}
 
-	अगर (t->immutable_target_type) अणु
-		अगर (t->immutable_target_type != tgt->type) अणु
+	if (t->immutable_target_type) {
+		if (t->immutable_target_type != tgt->type) {
 			tgt->error = "immutable target type cannot be mixed with other target types";
-			जाओ bad;
-		पूर्ण
-	पूर्ण अन्यथा अगर (dm_target_is_immutable(tgt->type)) अणु
-		अगर (t->num_tarमाला_लो) अणु
+			goto bad;
+		}
+	} else if (dm_target_is_immutable(tgt->type)) {
+		if (t->num_targets) {
 			tgt->error = "immutable target type cannot be mixed with other target types";
-			जाओ bad;
-		पूर्ण
+			goto bad;
+		}
 		t->immutable_target_type = tgt->type;
-	पूर्ण
+	}
 
-	अगर (dm_target_has_पूर्णांकegrity(tgt->type))
-		t->पूर्णांकegrity_added = 1;
+	if (dm_target_has_integrity(tgt->type))
+		t->integrity_added = 1;
 
 	tgt->table = t;
 	tgt->begin = start;
@@ -700,882 +699,882 @@ EXPORT_SYMBOL(dm_put_device);
 	/*
 	 * Does this target adjoin the previous one ?
 	 */
-	अगर (!adjoin(t, tgt)) अणु
+	if (!adjoin(t, tgt)) {
 		tgt->error = "Gap in table";
-		जाओ bad;
-	पूर्ण
+		goto bad;
+	}
 
 	r = dm_split_args(&argc, &argv, params);
-	अगर (r) अणु
+	if (r) {
 		tgt->error = "couldn't split parameters (insufficient memory)";
-		जाओ bad;
-	पूर्ण
+		goto bad;
+	}
 
 	r = tgt->type->ctr(tgt, argc, argv);
-	kमुक्त(argv);
-	अगर (r)
-		जाओ bad;
+	kfree(argv);
+	if (r)
+		goto bad;
 
-	t->highs[t->num_tarमाला_लो++] = tgt->begin + tgt->len - 1;
+	t->highs[t->num_targets++] = tgt->begin + tgt->len - 1;
 
-	अगर (!tgt->num_discard_bios && tgt->discards_supported)
+	if (!tgt->num_discard_bios && tgt->discards_supported)
 		DMWARN("%s: %s: ignoring discards_supported because num_discard_bios is zero.",
 		       dm_device_name(t->md), type);
 
-	वापस 0;
+	return 0;
 
  bad:
 	DMERR("%s: %s: %s", dm_device_name(t->md), type, tgt->error);
 	dm_put_target_type(tgt->type);
-	वापस r;
-पूर्ण
+	return r;
+}
 
 /*
  * Target argument parsing helpers.
  */
-अटल पूर्णांक validate_next_arg(स्थिर काष्ठा dm_arg *arg,
-			     काष्ठा dm_arg_set *arg_set,
-			     अचिन्हित *value, अक्षर **error, अचिन्हित grouped)
-अणु
-	स्थिर अक्षर *arg_str = dm_shअगरt_arg(arg_set);
-	अक्षर dummy;
+static int validate_next_arg(const struct dm_arg *arg,
+			     struct dm_arg_set *arg_set,
+			     unsigned *value, char **error, unsigned grouped)
+{
+	const char *arg_str = dm_shift_arg(arg_set);
+	char dummy;
 
-	अगर (!arg_str ||
-	    (माला_पूछो(arg_str, "%u%c", value, &dummy) != 1) ||
+	if (!arg_str ||
+	    (sscanf(arg_str, "%u%c", value, &dummy) != 1) ||
 	    (*value < arg->min) ||
 	    (*value > arg->max) ||
-	    (grouped && arg_set->argc < *value)) अणु
+	    (grouped && arg_set->argc < *value)) {
 		*error = arg->error;
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक dm_पढ़ो_arg(स्थिर काष्ठा dm_arg *arg, काष्ठा dm_arg_set *arg_set,
-		अचिन्हित *value, अक्षर **error)
-अणु
-	वापस validate_next_arg(arg, arg_set, value, error, 0);
-पूर्ण
-EXPORT_SYMBOL(dm_पढ़ो_arg);
+int dm_read_arg(const struct dm_arg *arg, struct dm_arg_set *arg_set,
+		unsigned *value, char **error)
+{
+	return validate_next_arg(arg, arg_set, value, error, 0);
+}
+EXPORT_SYMBOL(dm_read_arg);
 
-पूर्णांक dm_पढ़ो_arg_group(स्थिर काष्ठा dm_arg *arg, काष्ठा dm_arg_set *arg_set,
-		      अचिन्हित *value, अक्षर **error)
-अणु
-	वापस validate_next_arg(arg, arg_set, value, error, 1);
-पूर्ण
-EXPORT_SYMBOL(dm_पढ़ो_arg_group);
+int dm_read_arg_group(const struct dm_arg *arg, struct dm_arg_set *arg_set,
+		      unsigned *value, char **error)
+{
+	return validate_next_arg(arg, arg_set, value, error, 1);
+}
+EXPORT_SYMBOL(dm_read_arg_group);
 
-स्थिर अक्षर *dm_shअगरt_arg(काष्ठा dm_arg_set *as)
-अणु
-	अक्षर *r;
+const char *dm_shift_arg(struct dm_arg_set *as)
+{
+	char *r;
 
-	अगर (as->argc) अणु
+	if (as->argc) {
 		as->argc--;
 		r = *as->argv;
 		as->argv++;
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
-	वापस शून्य;
-पूर्ण
-EXPORT_SYMBOL(dm_shअगरt_arg);
+	return NULL;
+}
+EXPORT_SYMBOL(dm_shift_arg);
 
-व्योम dm_consume_args(काष्ठा dm_arg_set *as, अचिन्हित num_args)
-अणु
+void dm_consume_args(struct dm_arg_set *as, unsigned num_args)
+{
 	BUG_ON(as->argc < num_args);
 	as->argc -= num_args;
 	as->argv += num_args;
-पूर्ण
+}
 EXPORT_SYMBOL(dm_consume_args);
 
-अटल bool __table_type_bio_based(क्रमागत dm_queue_mode table_type)
-अणु
-	वापस (table_type == DM_TYPE_BIO_BASED ||
+static bool __table_type_bio_based(enum dm_queue_mode table_type)
+{
+	return (table_type == DM_TYPE_BIO_BASED ||
 		table_type == DM_TYPE_DAX_BIO_BASED);
-पूर्ण
+}
 
-अटल bool __table_type_request_based(क्रमागत dm_queue_mode table_type)
-अणु
-	वापस table_type == DM_TYPE_REQUEST_BASED;
-पूर्ण
+static bool __table_type_request_based(enum dm_queue_mode table_type)
+{
+	return table_type == DM_TYPE_REQUEST_BASED;
+}
 
-व्योम dm_table_set_type(काष्ठा dm_table *t, क्रमागत dm_queue_mode type)
-अणु
+void dm_table_set_type(struct dm_table *t, enum dm_queue_mode type)
+{
 	t->type = type;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(dm_table_set_type);
 
 /* validate the dax capability of the target device span */
-पूर्णांक device_not_dax_capable(काष्ठा dm_target *ti, काष्ठा dm_dev *dev,
-			sector_t start, sector_t len, व्योम *data)
-अणु
-	पूर्णांक blocksize = *(पूर्णांक *) data, id;
+int device_not_dax_capable(struct dm_target *ti, struct dm_dev *dev,
+			sector_t start, sector_t len, void *data)
+{
+	int blocksize = *(int *) data, id;
 	bool rc;
 
-	id = dax_पढ़ो_lock();
+	id = dax_read_lock();
 	rc = !dax_supported(dev->dax_dev, dev->bdev, blocksize, start, len);
-	dax_पढ़ो_unlock(id);
+	dax_read_unlock(id);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /* Check devices support synchronous DAX */
-अटल पूर्णांक device_not_dax_synchronous_capable(काष्ठा dm_target *ti, काष्ठा dm_dev *dev,
-					      sector_t start, sector_t len, व्योम *data)
-अणु
-	वापस !dev->dax_dev || !dax_synchronous(dev->dax_dev);
-पूर्ण
+static int device_not_dax_synchronous_capable(struct dm_target *ti, struct dm_dev *dev,
+					      sector_t start, sector_t len, void *data)
+{
+	return !dev->dax_dev || !dax_synchronous(dev->dax_dev);
+}
 
-bool dm_table_supports_dax(काष्ठा dm_table *t,
-			   iterate_devices_callout_fn iterate_fn, पूर्णांक *blocksize)
-अणु
-	काष्ठा dm_target *ti;
-	अचिन्हित i;
+bool dm_table_supports_dax(struct dm_table *t,
+			   iterate_devices_callout_fn iterate_fn, int *blocksize)
+{
+	struct dm_target *ti;
+	unsigned i;
 
-	/* Ensure that all tarमाला_लो support DAX. */
-	क्रम (i = 0; i < dm_table_get_num_tarमाला_लो(t); i++) अणु
+	/* Ensure that all targets support DAX. */
+	for (i = 0; i < dm_table_get_num_targets(t); i++) {
 		ti = dm_table_get_target(t, i);
 
-		अगर (!ti->type->direct_access)
-			वापस false;
+		if (!ti->type->direct_access)
+			return false;
 
-		अगर (!ti->type->iterate_devices ||
+		if (!ti->type->iterate_devices ||
 		    ti->type->iterate_devices(ti, iterate_fn, blocksize))
-			वापस false;
-	पूर्ण
+			return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक device_is_rq_stackable(काष्ठा dm_target *ti, काष्ठा dm_dev *dev,
-				  sector_t start, sector_t len, व्योम *data)
-अणु
-	काष्ठा block_device *bdev = dev->bdev;
-	काष्ठा request_queue *q = bdev_get_queue(bdev);
+static int device_is_rq_stackable(struct dm_target *ti, struct dm_dev *dev,
+				  sector_t start, sector_t len, void *data)
+{
+	struct block_device *bdev = dev->bdev;
+	struct request_queue *q = bdev_get_queue(bdev);
 
 	/* request-based cannot stack on partitions! */
-	अगर (bdev_is_partition(bdev))
-		वापस false;
+	if (bdev_is_partition(bdev))
+		return false;
 
-	वापस queue_is_mq(q);
-पूर्ण
+	return queue_is_mq(q);
+}
 
-अटल पूर्णांक dm_table_determine_type(काष्ठा dm_table *t)
-अणु
-	अचिन्हित i;
-	अचिन्हित bio_based = 0, request_based = 0, hybrid = 0;
-	काष्ठा dm_target *tgt;
-	काष्ठा list_head *devices = dm_table_get_devices(t);
-	क्रमागत dm_queue_mode live_md_type = dm_get_md_type(t->md);
-	पूर्णांक page_size = PAGE_SIZE;
+static int dm_table_determine_type(struct dm_table *t)
+{
+	unsigned i;
+	unsigned bio_based = 0, request_based = 0, hybrid = 0;
+	struct dm_target *tgt;
+	struct list_head *devices = dm_table_get_devices(t);
+	enum dm_queue_mode live_md_type = dm_get_md_type(t->md);
+	int page_size = PAGE_SIZE;
 
-	अगर (t->type != DM_TYPE_NONE) अणु
-		/* target alपढ़ोy set the table's type */
-		अगर (t->type == DM_TYPE_BIO_BASED) अणु
+	if (t->type != DM_TYPE_NONE) {
+		/* target already set the table's type */
+		if (t->type == DM_TYPE_BIO_BASED) {
 			/* possibly upgrade to a variant of bio-based */
-			जाओ verअगरy_bio_based;
-		पूर्ण
+			goto verify_bio_based;
+		}
 		BUG_ON(t->type == DM_TYPE_DAX_BIO_BASED);
-		जाओ verअगरy_rq_based;
-	पूर्ण
+		goto verify_rq_based;
+	}
 
-	क्रम (i = 0; i < t->num_tarमाला_लो; i++) अणु
-		tgt = t->tarमाला_लो + i;
-		अगर (dm_target_hybrid(tgt))
+	for (i = 0; i < t->num_targets; i++) {
+		tgt = t->targets + i;
+		if (dm_target_hybrid(tgt))
 			hybrid = 1;
-		अन्यथा अगर (dm_target_request_based(tgt))
+		else if (dm_target_request_based(tgt))
 			request_based = 1;
-		अन्यथा
+		else
 			bio_based = 1;
 
-		अगर (bio_based && request_based) अणु
+		if (bio_based && request_based) {
 			DMERR("Inconsistent table: different target types"
 			      " can't be mixed up");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	अगर (hybrid && !bio_based && !request_based) अणु
+	if (hybrid && !bio_based && !request_based) {
 		/*
-		 * The tarमाला_लो can work either way.
+		 * The targets can work either way.
 		 * Determine the type from the live device.
-		 * Default to bio-based अगर device is new.
+		 * Default to bio-based if device is new.
 		 */
-		अगर (__table_type_request_based(live_md_type))
+		if (__table_type_request_based(live_md_type))
 			request_based = 1;
-		अन्यथा
+		else
 			bio_based = 1;
-	पूर्ण
+	}
 
-	अगर (bio_based) अणु
-verअगरy_bio_based:
+	if (bio_based) {
+verify_bio_based:
 		/* We must use this table as bio-based */
 		t->type = DM_TYPE_BIO_BASED;
-		अगर (dm_table_supports_dax(t, device_not_dax_capable, &page_size) ||
-		    (list_empty(devices) && live_md_type == DM_TYPE_DAX_BIO_BASED)) अणु
+		if (dm_table_supports_dax(t, device_not_dax_capable, &page_size) ||
+		    (list_empty(devices) && live_md_type == DM_TYPE_DAX_BIO_BASED)) {
 			t->type = DM_TYPE_DAX_BIO_BASED;
-		पूर्ण
-		वापस 0;
-	पूर्ण
+		}
+		return 0;
+	}
 
-	BUG_ON(!request_based); /* No tarमाला_लो in this table */
+	BUG_ON(!request_based); /* No targets in this table */
 
 	t->type = DM_TYPE_REQUEST_BASED;
 
-verअगरy_rq_based:
+verify_rq_based:
 	/*
 	 * Request-based dm supports only tables that have a single target now.
-	 * To support multiple tarमाला_लो, request splitting support is needed,
+	 * To support multiple targets, request splitting support is needed,
 	 * and that needs lots of changes in the block-layer.
-	 * (e.g. request completion process क्रम partial completion.)
+	 * (e.g. request completion process for partial completion.)
 	 */
-	अगर (t->num_tarमाला_लो > 1) अणु
+	if (t->num_targets > 1) {
 		DMERR("request-based DM doesn't support multiple targets");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (list_empty(devices)) अणु
-		पूर्णांक srcu_idx;
-		काष्ठा dm_table *live_table = dm_get_live_table(t->md, &srcu_idx);
+	if (list_empty(devices)) {
+		int srcu_idx;
+		struct dm_table *live_table = dm_get_live_table(t->md, &srcu_idx);
 
 		/* inherit live table's type */
-		अगर (live_table)
+		if (live_table)
 			t->type = live_table->type;
 		dm_put_live_table(t->md, srcu_idx);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	tgt = dm_table_get_immutable_target(t);
-	अगर (!tgt) अणु
+	if (!tgt) {
 		DMERR("table load rejected: immutable target is required");
-		वापस -EINVAL;
-	पूर्ण अन्यथा अगर (tgt->max_io_len) अणु
+		return -EINVAL;
+	} else if (tgt->max_io_len) {
 		DMERR("table load rejected: immutable target that splits IO is not supported");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Non-request-stackable devices can't be used क्रम request-based dm */
-	अगर (!tgt->type->iterate_devices ||
-	    !tgt->type->iterate_devices(tgt, device_is_rq_stackable, शून्य)) अणु
+	/* Non-request-stackable devices can't be used for request-based dm */
+	if (!tgt->type->iterate_devices ||
+	    !tgt->type->iterate_devices(tgt, device_is_rq_stackable, NULL)) {
 		DMERR("table load rejected: including non-request-stackable devices");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-क्रमागत dm_queue_mode dm_table_get_type(काष्ठा dm_table *t)
-अणु
-	वापस t->type;
-पूर्ण
+enum dm_queue_mode dm_table_get_type(struct dm_table *t)
+{
+	return t->type;
+}
 
-काष्ठा target_type *dm_table_get_immutable_target_type(काष्ठा dm_table *t)
-अणु
-	वापस t->immutable_target_type;
-पूर्ण
+struct target_type *dm_table_get_immutable_target_type(struct dm_table *t)
+{
+	return t->immutable_target_type;
+}
 
-काष्ठा dm_target *dm_table_get_immutable_target(काष्ठा dm_table *t)
-अणु
+struct dm_target *dm_table_get_immutable_target(struct dm_table *t)
+{
 	/* Immutable target is implicitly a singleton */
-	अगर (t->num_tarमाला_लो > 1 ||
-	    !dm_target_is_immutable(t->tarमाला_लो[0].type))
-		वापस शून्य;
+	if (t->num_targets > 1 ||
+	    !dm_target_is_immutable(t->targets[0].type))
+		return NULL;
 
-	वापस t->tarमाला_लो;
-पूर्ण
+	return t->targets;
+}
 
-काष्ठा dm_target *dm_table_get_wildcard_target(काष्ठा dm_table *t)
-अणु
-	काष्ठा dm_target *ti;
-	अचिन्हित i;
+struct dm_target *dm_table_get_wildcard_target(struct dm_table *t)
+{
+	struct dm_target *ti;
+	unsigned i;
 
-	क्रम (i = 0; i < dm_table_get_num_tarमाला_लो(t); i++) अणु
+	for (i = 0; i < dm_table_get_num_targets(t); i++) {
 		ti = dm_table_get_target(t, i);
-		अगर (dm_target_is_wildcard(ti->type))
-			वापस ti;
-	पूर्ण
+		if (dm_target_is_wildcard(ti->type))
+			return ti;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-bool dm_table_bio_based(काष्ठा dm_table *t)
-अणु
-	वापस __table_type_bio_based(dm_table_get_type(t));
-पूर्ण
+bool dm_table_bio_based(struct dm_table *t)
+{
+	return __table_type_bio_based(dm_table_get_type(t));
+}
 
-bool dm_table_request_based(काष्ठा dm_table *t)
-अणु
-	वापस __table_type_request_based(dm_table_get_type(t));
-पूर्ण
+bool dm_table_request_based(struct dm_table *t)
+{
+	return __table_type_request_based(dm_table_get_type(t));
+}
 
-अटल पूर्णांक dm_table_alloc_md_mempools(काष्ठा dm_table *t, काष्ठा mapped_device *md)
-अणु
-	क्रमागत dm_queue_mode type = dm_table_get_type(t);
-	अचिन्हित per_io_data_size = 0;
-	अचिन्हित min_pool_size = 0;
-	काष्ठा dm_target *ti;
-	अचिन्हित i;
+static int dm_table_alloc_md_mempools(struct dm_table *t, struct mapped_device *md)
+{
+	enum dm_queue_mode type = dm_table_get_type(t);
+	unsigned per_io_data_size = 0;
+	unsigned min_pool_size = 0;
+	struct dm_target *ti;
+	unsigned i;
 
-	अगर (unlikely(type == DM_TYPE_NONE)) अणु
+	if (unlikely(type == DM_TYPE_NONE)) {
 		DMWARN("no table type is set, can't allocate mempools");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (__table_type_bio_based(type))
-		क्रम (i = 0; i < t->num_tarमाला_लो; i++) अणु
-			ti = t->tarमाला_लो + i;
+	if (__table_type_bio_based(type))
+		for (i = 0; i < t->num_targets; i++) {
+			ti = t->targets + i;
 			per_io_data_size = max(per_io_data_size, ti->per_io_data_size);
 			min_pool_size = max(min_pool_size, ti->num_flush_bios);
-		पूर्ण
+		}
 
-	t->mempools = dm_alloc_md_mempools(md, type, t->पूर्णांकegrity_supported,
+	t->mempools = dm_alloc_md_mempools(md, type, t->integrity_supported,
 					   per_io_data_size, min_pool_size);
-	अगर (!t->mempools)
-		वापस -ENOMEM;
+	if (!t->mempools)
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम dm_table_मुक्त_md_mempools(काष्ठा dm_table *t)
-अणु
-	dm_मुक्त_md_mempools(t->mempools);
-	t->mempools = शून्य;
-पूर्ण
+void dm_table_free_md_mempools(struct dm_table *t)
+{
+	dm_free_md_mempools(t->mempools);
+	t->mempools = NULL;
+}
 
-काष्ठा dm_md_mempools *dm_table_get_md_mempools(काष्ठा dm_table *t)
-अणु
-	वापस t->mempools;
-पूर्ण
+struct dm_md_mempools *dm_table_get_md_mempools(struct dm_table *t)
+{
+	return t->mempools;
+}
 
-अटल पूर्णांक setup_indexes(काष्ठा dm_table *t)
-अणु
-	पूर्णांक i;
-	अचिन्हित पूर्णांक total = 0;
+static int setup_indexes(struct dm_table *t)
+{
+	int i;
+	unsigned int total = 0;
 	sector_t *indexes;
 
-	/* allocate the space क्रम *all* the indexes */
-	क्रम (i = t->depth - 2; i >= 0; i--) अणु
-		t->counts[i] = dm_भाग_up(t->counts[i + 1], CHILDREN_PER_NODE);
+	/* allocate the space for *all* the indexes */
+	for (i = t->depth - 2; i >= 0; i--) {
+		t->counts[i] = dm_div_up(t->counts[i + 1], CHILDREN_PER_NODE);
 		total += t->counts[i];
-	पूर्ण
+	}
 
-	indexes = kvसुस्मृति(total, NODE_SIZE, GFP_KERNEL);
-	अगर (!indexes)
-		वापस -ENOMEM;
+	indexes = kvcalloc(total, NODE_SIZE, GFP_KERNEL);
+	if (!indexes)
+		return -ENOMEM;
 
-	/* set up पूर्णांकernal nodes, bottom-up */
-	क्रम (i = t->depth - 2; i >= 0; i--) अणु
+	/* set up internal nodes, bottom-up */
+	for (i = t->depth - 2; i >= 0; i--) {
 		t->index[i] = indexes;
 		indexes += (KEYS_PER_NODE * t->counts[i]);
 		setup_btree_index(i, t);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Builds the btree to index the map.
  */
-अटल पूर्णांक dm_table_build_index(काष्ठा dm_table *t)
-अणु
-	पूर्णांक r = 0;
-	अचिन्हित पूर्णांक leaf_nodes;
+static int dm_table_build_index(struct dm_table *t)
+{
+	int r = 0;
+	unsigned int leaf_nodes;
 
 	/* how many indexes will the btree have ? */
-	leaf_nodes = dm_भाग_up(t->num_tarमाला_लो, KEYS_PER_NODE);
-	t->depth = 1 + पूर्णांक_log(leaf_nodes, CHILDREN_PER_NODE);
+	leaf_nodes = dm_div_up(t->num_targets, KEYS_PER_NODE);
+	t->depth = 1 + int_log(leaf_nodes, CHILDREN_PER_NODE);
 
-	/* leaf layer has alपढ़ोy been set up */
+	/* leaf layer has already been set up */
 	t->counts[t->depth - 1] = leaf_nodes;
 	t->index[t->depth - 1] = t->highs;
 
-	अगर (t->depth >= 2)
+	if (t->depth >= 2)
 		r = setup_indexes(t);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल bool पूर्णांकegrity_profile_exists(काष्ठा gendisk *disk)
-अणु
-	वापस !!blk_get_पूर्णांकegrity(disk);
-पूर्ण
+static bool integrity_profile_exists(struct gendisk *disk)
+{
+	return !!blk_get_integrity(disk);
+}
 
 /*
- * Get a disk whose पूर्णांकegrity profile reflects the table's profile.
- * Returns शून्य अगर पूर्णांकegrity support was inconsistent or unavailable.
+ * Get a disk whose integrity profile reflects the table's profile.
+ * Returns NULL if integrity support was inconsistent or unavailable.
  */
-अटल काष्ठा gendisk * dm_table_get_पूर्णांकegrity_disk(काष्ठा dm_table *t)
-अणु
-	काष्ठा list_head *devices = dm_table_get_devices(t);
-	काष्ठा dm_dev_पूर्णांकernal *dd = शून्य;
-	काष्ठा gendisk *prev_disk = शून्य, *ढाँचा_disk = शून्य;
-	अचिन्हित i;
+static struct gendisk * dm_table_get_integrity_disk(struct dm_table *t)
+{
+	struct list_head *devices = dm_table_get_devices(t);
+	struct dm_dev_internal *dd = NULL;
+	struct gendisk *prev_disk = NULL, *template_disk = NULL;
+	unsigned i;
 
-	क्रम (i = 0; i < dm_table_get_num_tarमाला_लो(t); i++) अणु
-		काष्ठा dm_target *ti = dm_table_get_target(t, i);
-		अगर (!dm_target_passes_पूर्णांकegrity(ti->type))
-			जाओ no_पूर्णांकegrity;
-	पूर्ण
+	for (i = 0; i < dm_table_get_num_targets(t); i++) {
+		struct dm_target *ti = dm_table_get_target(t, i);
+		if (!dm_target_passes_integrity(ti->type))
+			goto no_integrity;
+	}
 
-	list_क्रम_each_entry(dd, devices, list) अणु
-		ढाँचा_disk = dd->dm_dev->bdev->bd_disk;
-		अगर (!पूर्णांकegrity_profile_exists(ढाँचा_disk))
-			जाओ no_पूर्णांकegrity;
-		अन्यथा अगर (prev_disk &&
-			 blk_पूर्णांकegrity_compare(prev_disk, ढाँचा_disk) < 0)
-			जाओ no_पूर्णांकegrity;
-		prev_disk = ढाँचा_disk;
-	पूर्ण
+	list_for_each_entry(dd, devices, list) {
+		template_disk = dd->dm_dev->bdev->bd_disk;
+		if (!integrity_profile_exists(template_disk))
+			goto no_integrity;
+		else if (prev_disk &&
+			 blk_integrity_compare(prev_disk, template_disk) < 0)
+			goto no_integrity;
+		prev_disk = template_disk;
+	}
 
-	वापस ढाँचा_disk;
+	return template_disk;
 
-no_पूर्णांकegrity:
-	अगर (prev_disk)
+no_integrity:
+	if (prev_disk)
 		DMWARN("%s: integrity not set: %s and %s profile mismatch",
 		       dm_device_name(t->md),
 		       prev_disk->disk_name,
-		       ढाँचा_disk->disk_name);
-	वापस शून्य;
-पूर्ण
+		       template_disk->disk_name);
+	return NULL;
+}
 
 /*
- * Register the mapped device क्रम blk_पूर्णांकegrity support अगर the
- * underlying devices have an पूर्णांकegrity profile.  But all devices may
+ * Register the mapped device for blk_integrity support if the
+ * underlying devices have an integrity profile.  But all devices may
  * not have matching profiles (checking all devices isn't reliable
  * during table load because this table may use other DM device(s) which
- * must be resumed beक्रमe they will have an initialized पूर्णांकegity
- * profile).  Consequently, stacked DM devices क्रमce a 2 stage पूर्णांकegrity
+ * must be resumed before they will have an initialized integity
+ * profile).  Consequently, stacked DM devices force a 2 stage integrity
  * profile validation: First pass during table load, final pass during
  * resume.
  */
-अटल पूर्णांक dm_table_रेजिस्टर_पूर्णांकegrity(काष्ठा dm_table *t)
-अणु
-	काष्ठा mapped_device *md = t->md;
-	काष्ठा gendisk *ढाँचा_disk = शून्य;
+static int dm_table_register_integrity(struct dm_table *t)
+{
+	struct mapped_device *md = t->md;
+	struct gendisk *template_disk = NULL;
 
-	/* If target handles पूर्णांकegrity itself करो not रेजिस्टर it here. */
-	अगर (t->पूर्णांकegrity_added)
-		वापस 0;
+	/* If target handles integrity itself do not register it here. */
+	if (t->integrity_added)
+		return 0;
 
-	ढाँचा_disk = dm_table_get_पूर्णांकegrity_disk(t);
-	अगर (!ढाँचा_disk)
-		वापस 0;
+	template_disk = dm_table_get_integrity_disk(t);
+	if (!template_disk)
+		return 0;
 
-	अगर (!पूर्णांकegrity_profile_exists(dm_disk(md))) अणु
-		t->पूर्णांकegrity_supported = true;
+	if (!integrity_profile_exists(dm_disk(md))) {
+		t->integrity_supported = true;
 		/*
-		 * Register पूर्णांकegrity profile during table load; we can करो
+		 * Register integrity profile during table load; we can do
 		 * this because the final profile must match during resume.
 		 */
-		blk_पूर्णांकegrity_रेजिस्टर(dm_disk(md),
-				       blk_get_पूर्णांकegrity(ढाँचा_disk));
-		वापस 0;
-	पूर्ण
+		blk_integrity_register(dm_disk(md),
+				       blk_get_integrity(template_disk));
+		return 0;
+	}
 
 	/*
-	 * If DM device alपढ़ोy has an initialized पूर्णांकegrity
+	 * If DM device already has an initialized integrity
 	 * profile the new profile should not conflict.
 	 */
-	अगर (blk_पूर्णांकegrity_compare(dm_disk(md), ढाँचा_disk) < 0) अणु
+	if (blk_integrity_compare(dm_disk(md), template_disk) < 0) {
 		DMWARN("%s: conflict with existing integrity profile: "
 		       "%s profile mismatch",
 		       dm_device_name(t->md),
-		       ढाँचा_disk->disk_name);
-		वापस 1;
-	पूर्ण
+		       template_disk->disk_name);
+		return 1;
+	}
 
-	/* Preserve existing पूर्णांकegrity profile */
-	t->पूर्णांकegrity_supported = true;
-	वापस 0;
-पूर्ण
+	/* Preserve existing integrity profile */
+	t->integrity_supported = true;
+	return 0;
+}
 
-#अगर_घोषित CONFIG_BLK_INLINE_ENCRYPTION
+#ifdef CONFIG_BLK_INLINE_ENCRYPTION
 
-काष्ठा dm_keyslot_manager अणु
-	काष्ठा blk_keyslot_manager ksm;
-	काष्ठा mapped_device *md;
-पूर्ण;
+struct dm_keyslot_manager {
+	struct blk_keyslot_manager ksm;
+	struct mapped_device *md;
+};
 
-काष्ठा dm_keyslot_evict_args अणु
-	स्थिर काष्ठा blk_crypto_key *key;
-	पूर्णांक err;
-पूर्ण;
+struct dm_keyslot_evict_args {
+	const struct blk_crypto_key *key;
+	int err;
+};
 
-अटल पूर्णांक dm_keyslot_evict_callback(काष्ठा dm_target *ti, काष्ठा dm_dev *dev,
-				     sector_t start, sector_t len, व्योम *data)
-अणु
-	काष्ठा dm_keyslot_evict_args *args = data;
-	पूर्णांक err;
+static int dm_keyslot_evict_callback(struct dm_target *ti, struct dm_dev *dev,
+				     sector_t start, sector_t len, void *data)
+{
+	struct dm_keyslot_evict_args *args = data;
+	int err;
 
 	err = blk_crypto_evict_key(bdev_get_queue(dev->bdev), args->key);
-	अगर (!args->err)
+	if (!args->err)
 		args->err = err;
 	/* Always try to evict the key from all devices. */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * When an अंतरभूत encryption key is evicted from a device-mapper device, evict
+ * When an inline encryption key is evicted from a device-mapper device, evict
  * it from all the underlying devices.
  */
-अटल पूर्णांक dm_keyslot_evict(काष्ठा blk_keyslot_manager *ksm,
-			    स्थिर काष्ठा blk_crypto_key *key, अचिन्हित पूर्णांक slot)
-अणु
-	काष्ठा dm_keyslot_manager *dksm = container_of(ksm,
-						       काष्ठा dm_keyslot_manager,
+static int dm_keyslot_evict(struct blk_keyslot_manager *ksm,
+			    const struct blk_crypto_key *key, unsigned int slot)
+{
+	struct dm_keyslot_manager *dksm = container_of(ksm,
+						       struct dm_keyslot_manager,
 						       ksm);
-	काष्ठा mapped_device *md = dksm->md;
-	काष्ठा dm_keyslot_evict_args args = अणु key पूर्ण;
-	काष्ठा dm_table *t;
-	पूर्णांक srcu_idx;
-	पूर्णांक i;
-	काष्ठा dm_target *ti;
+	struct mapped_device *md = dksm->md;
+	struct dm_keyslot_evict_args args = { key };
+	struct dm_table *t;
+	int srcu_idx;
+	int i;
+	struct dm_target *ti;
 
 	t = dm_get_live_table(md, &srcu_idx);
-	अगर (!t)
-		वापस 0;
-	क्रम (i = 0; i < dm_table_get_num_tarमाला_लो(t); i++) अणु
+	if (!t)
+		return 0;
+	for (i = 0; i < dm_table_get_num_targets(t); i++) {
 		ti = dm_table_get_target(t, i);
-		अगर (!ti->type->iterate_devices)
-			जारी;
+		if (!ti->type->iterate_devices)
+			continue;
 		ti->type->iterate_devices(ti, dm_keyslot_evict_callback, &args);
-	पूर्ण
+	}
 	dm_put_live_table(md, srcu_idx);
-	वापस args.err;
-पूर्ण
+	return args.err;
+}
 
-अटल काष्ठा blk_ksm_ll_ops dm_ksm_ll_ops = अणु
+static struct blk_ksm_ll_ops dm_ksm_ll_ops = {
 	.keyslot_evict = dm_keyslot_evict,
-पूर्ण;
+};
 
-अटल पूर्णांक device_पूर्णांकersect_crypto_modes(काष्ठा dm_target *ti,
-					 काष्ठा dm_dev *dev, sector_t start,
-					 sector_t len, व्योम *data)
-अणु
-	काष्ठा blk_keyslot_manager *parent = data;
-	काष्ठा blk_keyslot_manager *child = bdev_get_queue(dev->bdev)->ksm;
+static int device_intersect_crypto_modes(struct dm_target *ti,
+					 struct dm_dev *dev, sector_t start,
+					 sector_t len, void *data)
+{
+	struct blk_keyslot_manager *parent = data;
+	struct blk_keyslot_manager *child = bdev_get_queue(dev->bdev)->ksm;
 
-	blk_ksm_पूर्णांकersect_modes(parent, child);
-	वापस 0;
-पूर्ण
+	blk_ksm_intersect_modes(parent, child);
+	return 0;
+}
 
-व्योम dm_destroy_keyslot_manager(काष्ठा blk_keyslot_manager *ksm)
-अणु
-	काष्ठा dm_keyslot_manager *dksm = container_of(ksm,
-						       काष्ठा dm_keyslot_manager,
+void dm_destroy_keyslot_manager(struct blk_keyslot_manager *ksm)
+{
+	struct dm_keyslot_manager *dksm = container_of(ksm,
+						       struct dm_keyslot_manager,
 						       ksm);
 
-	अगर (!ksm)
-		वापस;
+	if (!ksm)
+		return;
 
 	blk_ksm_destroy(ksm);
-	kमुक्त(dksm);
-पूर्ण
+	kfree(dksm);
+}
 
-अटल व्योम dm_table_destroy_keyslot_manager(काष्ठा dm_table *t)
-अणु
+static void dm_table_destroy_keyslot_manager(struct dm_table *t)
+{
 	dm_destroy_keyslot_manager(t->ksm);
-	t->ksm = शून्य;
-पूर्ण
+	t->ksm = NULL;
+}
 
 /*
- * Conकाष्ठाs and initializes t->ksm with a keyslot manager that
+ * Constructs and initializes t->ksm with a keyslot manager that
  * represents the common set of crypto capabilities of the devices
- * described by the dm_table. However, अगर the स्थिरructed keyslot
- * manager करोes not support a superset of the crypto capabilities
+ * described by the dm_table. However, if the constructed keyslot
+ * manager does not support a superset of the crypto capabilities
  * supported by the current keyslot manager of the mapped_device,
- * it वापसs an error instead, since we करोn't support restricting
- * crypto capabilities on table changes. Finally, अगर the स्थिरructed
- * keyslot manager करोesn't actually support any crypto modes at all,
- * it just वापसs शून्य.
+ * it returns an error instead, since we don't support restricting
+ * crypto capabilities on table changes. Finally, if the constructed
+ * keyslot manager doesn't actually support any crypto modes at all,
+ * it just returns NULL.
  */
-अटल पूर्णांक dm_table_स्थिरruct_keyslot_manager(काष्ठा dm_table *t)
-अणु
-	काष्ठा dm_keyslot_manager *dksm;
-	काष्ठा blk_keyslot_manager *ksm;
-	काष्ठा dm_target *ti;
-	अचिन्हित पूर्णांक i;
+static int dm_table_construct_keyslot_manager(struct dm_table *t)
+{
+	struct dm_keyslot_manager *dksm;
+	struct blk_keyslot_manager *ksm;
+	struct dm_target *ti;
+	unsigned int i;
 	bool ksm_is_empty = true;
 
-	dksm = kदो_स्मृति(माप(*dksm), GFP_KERNEL);
-	अगर (!dksm)
-		वापस -ENOMEM;
+	dksm = kmalloc(sizeof(*dksm), GFP_KERNEL);
+	if (!dksm)
+		return -ENOMEM;
 	dksm->md = t->md;
 
 	ksm = &dksm->ksm;
 	blk_ksm_init_passthrough(ksm);
 	ksm->ksm_ll_ops = dm_ksm_ll_ops;
-	ksm->max_dun_bytes_supported = अच_पूर्णांक_उच्च;
-	स_रखो(ksm->crypto_modes_supported, 0xFF,
-	       माप(ksm->crypto_modes_supported));
+	ksm->max_dun_bytes_supported = UINT_MAX;
+	memset(ksm->crypto_modes_supported, 0xFF,
+	       sizeof(ksm->crypto_modes_supported));
 
-	क्रम (i = 0; i < dm_table_get_num_tarमाला_लो(t); i++) अणु
+	for (i = 0; i < dm_table_get_num_targets(t); i++) {
 		ti = dm_table_get_target(t, i);
 
-		अगर (!dm_target_passes_crypto(ti->type)) अणु
-			blk_ksm_पूर्णांकersect_modes(ksm, शून्य);
-			अवरोध;
-		पूर्ण
-		अगर (!ti->type->iterate_devices)
-			जारी;
-		ti->type->iterate_devices(ti, device_पूर्णांकersect_crypto_modes,
+		if (!dm_target_passes_crypto(ti->type)) {
+			blk_ksm_intersect_modes(ksm, NULL);
+			break;
+		}
+		if (!ti->type->iterate_devices)
+			continue;
+		ti->type->iterate_devices(ti, device_intersect_crypto_modes,
 					  ksm);
-	पूर्ण
+	}
 
-	अगर (t->md->queue && !blk_ksm_is_superset(ksm, t->md->queue->ksm)) अणु
+	if (t->md->queue && !blk_ksm_is_superset(ksm, t->md->queue->ksm)) {
 		DMWARN("Inline encryption capabilities of new DM table were more restrictive than the old table's. This is not supported!");
 		dm_destroy_keyslot_manager(ksm);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
-	 * If the new KSM करोesn't actually support any crypto modes, we may as
-	 * well represent it with a शून्य ksm.
+	 * If the new KSM doesn't actually support any crypto modes, we may as
+	 * well represent it with a NULL ksm.
 	 */
 	ksm_is_empty = true;
-	क्रम (i = 0; i < ARRAY_SIZE(ksm->crypto_modes_supported); i++) अणु
-		अगर (ksm->crypto_modes_supported[i]) अणु
+	for (i = 0; i < ARRAY_SIZE(ksm->crypto_modes_supported); i++) {
+		if (ksm->crypto_modes_supported[i]) {
 			ksm_is_empty = false;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (ksm_is_empty) अणु
+	if (ksm_is_empty) {
 		dm_destroy_keyslot_manager(ksm);
-		ksm = शून्य;
-	पूर्ण
+		ksm = NULL;
+	}
 
 	/*
-	 * t->ksm is only set temporarily जबतक the table is being set
-	 * up, and it माला_लो set to शून्य after the capabilities have
+	 * t->ksm is only set temporarily while the table is being set
+	 * up, and it gets set to NULL after the capabilities have
 	 * been transferred to the request_queue.
 	 */
 	t->ksm = ksm;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम dm_update_keyslot_manager(काष्ठा request_queue *q,
-				      काष्ठा dm_table *t)
-अणु
-	अगर (!t->ksm)
-		वापस;
+static void dm_update_keyslot_manager(struct request_queue *q,
+				      struct dm_table *t)
+{
+	if (!t->ksm)
+		return;
 
 	/* Make the ksm less restrictive */
-	अगर (!q->ksm) अणु
-		blk_ksm_रेजिस्टर(t->ksm, q);
-	पूर्ण अन्यथा अणु
+	if (!q->ksm) {
+		blk_ksm_register(t->ksm, q);
+	} else {
 		blk_ksm_update_capabilities(q->ksm, t->ksm);
 		dm_destroy_keyslot_manager(t->ksm);
-	पूर्ण
-	t->ksm = शून्य;
-पूर्ण
+	}
+	t->ksm = NULL;
+}
 
-#अन्यथा /* CONFIG_BLK_INLINE_ENCRYPTION */
+#else /* CONFIG_BLK_INLINE_ENCRYPTION */
 
-अटल पूर्णांक dm_table_स्थिरruct_keyslot_manager(काष्ठा dm_table *t)
-अणु
-	वापस 0;
-पूर्ण
+static int dm_table_construct_keyslot_manager(struct dm_table *t)
+{
+	return 0;
+}
 
-व्योम dm_destroy_keyslot_manager(काष्ठा blk_keyslot_manager *ksm)
-अणु
-पूर्ण
+void dm_destroy_keyslot_manager(struct blk_keyslot_manager *ksm)
+{
+}
 
-अटल व्योम dm_table_destroy_keyslot_manager(काष्ठा dm_table *t)
-अणु
-पूर्ण
+static void dm_table_destroy_keyslot_manager(struct dm_table *t)
+{
+}
 
-अटल व्योम dm_update_keyslot_manager(काष्ठा request_queue *q,
-				      काष्ठा dm_table *t)
-अणु
-पूर्ण
+static void dm_update_keyslot_manager(struct request_queue *q,
+				      struct dm_table *t)
+{
+}
 
-#पूर्ण_अगर /* !CONFIG_BLK_INLINE_ENCRYPTION */
+#endif /* !CONFIG_BLK_INLINE_ENCRYPTION */
 
 /*
- * Prepares the table क्रम use by building the indices,
+ * Prepares the table for use by building the indices,
  * setting the type, and allocating mempools.
  */
-पूर्णांक dm_table_complete(काष्ठा dm_table *t)
-अणु
-	पूर्णांक r;
+int dm_table_complete(struct dm_table *t)
+{
+	int r;
 
 	r = dm_table_determine_type(t);
-	अगर (r) अणु
+	if (r) {
 		DMERR("unable to determine table type");
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
 	r = dm_table_build_index(t);
-	अगर (r) अणु
+	if (r) {
 		DMERR("unable to build btrees");
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
-	r = dm_table_रेजिस्टर_पूर्णांकegrity(t);
-	अगर (r) अणु
+	r = dm_table_register_integrity(t);
+	if (r) {
 		DMERR("could not register integrity profile.");
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
-	r = dm_table_स्थिरruct_keyslot_manager(t);
-	अगर (r) अणु
+	r = dm_table_construct_keyslot_manager(t);
+	if (r) {
 		DMERR("could not construct keyslot manager.");
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
 	r = dm_table_alloc_md_mempools(t, t->md);
-	अगर (r)
+	if (r)
 		DMERR("unable to allocate mempools");
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल DEFINE_MUTEX(_event_lock);
-व्योम dm_table_event_callback(काष्ठा dm_table *t,
-			     व्योम (*fn)(व्योम *), व्योम *context)
-अणु
+static DEFINE_MUTEX(_event_lock);
+void dm_table_event_callback(struct dm_table *t,
+			     void (*fn)(void *), void *context)
+{
 	mutex_lock(&_event_lock);
 	t->event_fn = fn;
 	t->event_context = context;
 	mutex_unlock(&_event_lock);
-पूर्ण
+}
 
-व्योम dm_table_event(काष्ठा dm_table *t)
-अणु
+void dm_table_event(struct dm_table *t)
+{
 	mutex_lock(&_event_lock);
-	अगर (t->event_fn)
+	if (t->event_fn)
 		t->event_fn(t->event_context);
 	mutex_unlock(&_event_lock);
-पूर्ण
+}
 EXPORT_SYMBOL(dm_table_event);
 
-अंतरभूत sector_t dm_table_get_size(काष्ठा dm_table *t)
-अणु
-	वापस t->num_tarमाला_लो ? (t->highs[t->num_tarमाला_लो - 1] + 1) : 0;
-पूर्ण
+inline sector_t dm_table_get_size(struct dm_table *t)
+{
+	return t->num_targets ? (t->highs[t->num_targets - 1] + 1) : 0;
+}
 EXPORT_SYMBOL(dm_table_get_size);
 
-काष्ठा dm_target *dm_table_get_target(काष्ठा dm_table *t, अचिन्हित पूर्णांक index)
-अणु
-	अगर (index >= t->num_tarमाला_लो)
-		वापस शून्य;
+struct dm_target *dm_table_get_target(struct dm_table *t, unsigned int index)
+{
+	if (index >= t->num_targets)
+		return NULL;
 
-	वापस t->tarमाला_लो + index;
-पूर्ण
+	return t->targets + index;
+}
 
 /*
- * Search the btree क्रम the correct target.
+ * Search the btree for the correct target.
  *
- * Caller should check वापसed poपूर्णांकer क्रम शून्य
+ * Caller should check returned pointer for NULL
  * to trap I/O beyond end of device.
  */
-काष्ठा dm_target *dm_table_find_target(काष्ठा dm_table *t, sector_t sector)
-अणु
-	अचिन्हित पूर्णांक l, n = 0, k = 0;
+struct dm_target *dm_table_find_target(struct dm_table *t, sector_t sector)
+{
+	unsigned int l, n = 0, k = 0;
 	sector_t *node;
 
-	अगर (unlikely(sector >= dm_table_get_size(t)))
-		वापस शून्य;
+	if (unlikely(sector >= dm_table_get_size(t)))
+		return NULL;
 
-	क्रम (l = 0; l < t->depth; l++) अणु
+	for (l = 0; l < t->depth; l++) {
 		n = get_child(n, k);
 		node = get_node(t, l, n);
 
-		क्रम (k = 0; k < KEYS_PER_NODE; k++)
-			अगर (node[k] >= sector)
-				अवरोध;
-	पूर्ण
+		for (k = 0; k < KEYS_PER_NODE; k++)
+			if (node[k] >= sector)
+				break;
+	}
 
-	वापस &t->tarमाला_लो[(KEYS_PER_NODE * n) + k];
-पूर्ण
+	return &t->targets[(KEYS_PER_NODE * n) + k];
+}
 
 /*
  * type->iterate_devices() should be called when the sanity check needs to
  * iterate and check all underlying data devices. iterate_devices() will
- * iterate all underlying data devices until it encounters a non-zero वापस
- * code, वापसed by whether the input iterate_devices_callout_fn, or
- * iterate_devices() itself पूर्णांकernally.
+ * iterate all underlying data devices until it encounters a non-zero return
+ * code, returned by whether the input iterate_devices_callout_fn, or
+ * iterate_devices() itself internally.
  *
  * For some target type (e.g. dm-stripe), one call of iterate_devices() may
- * iterate multiple underlying devices पूर्णांकernally, in which हाल a non-zero
- * वापस code वापसed by iterate_devices_callout_fn will stop the iteration
+ * iterate multiple underlying devices internally, in which case a non-zero
+ * return code returned by iterate_devices_callout_fn will stop the iteration
  * in advance.
  *
  * Cases requiring _any_ underlying device supporting some kind of attribute,
- * should use the iteration काष्ठाure like dm_table_any_dev_attr(), or call
+ * should use the iteration structure like dm_table_any_dev_attr(), or call
  * it directly. @func should handle semantics of positive examples, e.g.
  * capable of something.
  *
  * Cases requiring _all_ underlying devices supporting some kind of attribute,
- * should use the iteration काष्ठाure like dm_table_supports_noरुको() or
- * dm_table_supports_discards(). Or पूर्णांकroduce dm_table_all_devs_attr() that
+ * should use the iteration structure like dm_table_supports_nowait() or
+ * dm_table_supports_discards(). Or introduce dm_table_all_devs_attr() that
  * uses an @anti_func that handle semantics of counter examples, e.g. not
- * capable of something. So: वापस !dm_table_any_dev_attr(t, anti_func, data);
+ * capable of something. So: return !dm_table_any_dev_attr(t, anti_func, data);
  */
-अटल bool dm_table_any_dev_attr(काष्ठा dm_table *t,
-				  iterate_devices_callout_fn func, व्योम *data)
-अणु
-	काष्ठा dm_target *ti;
-	अचिन्हित पूर्णांक i;
+static bool dm_table_any_dev_attr(struct dm_table *t,
+				  iterate_devices_callout_fn func, void *data)
+{
+	struct dm_target *ti;
+	unsigned int i;
 
-	क्रम (i = 0; i < dm_table_get_num_tarमाला_लो(t); i++) अणु
+	for (i = 0; i < dm_table_get_num_targets(t); i++) {
 		ti = dm_table_get_target(t, i);
 
-		अगर (ti->type->iterate_devices &&
+		if (ti->type->iterate_devices &&
 		    ti->type->iterate_devices(ti, func, data))
-			वापस true;
-        पूर्ण
+			return true;
+        }
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक count_device(काष्ठा dm_target *ti, काष्ठा dm_dev *dev,
-			sector_t start, sector_t len, व्योम *data)
-अणु
-	अचिन्हित *num_devices = data;
+static int count_device(struct dm_target *ti, struct dm_dev *dev,
+			sector_t start, sector_t len, void *data)
+{
+	unsigned *num_devices = data;
 
 	(*num_devices)++;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Check whether a table has no data devices attached using each
  * target's iterate_devices method.
- * Returns false अगर the result is unknown because a target करोesn't
+ * Returns false if the result is unknown because a target doesn't
  * support iterate_devices.
  */
-bool dm_table_has_no_data_devices(काष्ठा dm_table *table)
-अणु
-	काष्ठा dm_target *ti;
-	अचिन्हित i, num_devices;
+bool dm_table_has_no_data_devices(struct dm_table *table)
+{
+	struct dm_target *ti;
+	unsigned i, num_devices;
 
-	क्रम (i = 0; i < dm_table_get_num_tarमाला_लो(table); i++) अणु
+	for (i = 0; i < dm_table_get_num_targets(table); i++) {
 		ti = dm_table_get_target(table, i);
 
-		अगर (!ti->type->iterate_devices)
-			वापस false;
+		if (!ti->type->iterate_devices)
+			return false;
 
 		num_devices = 0;
 		ti->type->iterate_devices(ti, count_device, &num_devices);
-		अगर (num_devices)
-			वापस false;
-	पूर्ण
+		if (num_devices)
+			return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक device_not_zoned_model(काष्ठा dm_target *ti, काष्ठा dm_dev *dev,
-				  sector_t start, sector_t len, व्योम *data)
-अणु
-	काष्ठा request_queue *q = bdev_get_queue(dev->bdev);
-	क्रमागत blk_zoned_model *zoned_model = data;
+static int device_not_zoned_model(struct dm_target *ti, struct dm_dev *dev,
+				  sector_t start, sector_t len, void *data)
+{
+	struct request_queue *q = bdev_get_queue(dev->bdev);
+	enum blk_zoned_model *zoned_model = data;
 
-	वापस blk_queue_zoned_model(q) != *zoned_model;
-पूर्ण
+	return blk_queue_zoned_model(q) != *zoned_model;
+}
 
 /*
  * Check the device zoned model based on the target feature flag. If the target
@@ -1584,93 +1583,93 @@ bool dm_table_has_no_data_devices(काष्ठा dm_table *table)
  * has the DM_TARGET_MIXED_ZONED_MODEL feature set, the devices can have any
  * zoned model with all zoned devices having the same zone size.
  */
-अटल bool dm_table_supports_zoned_model(काष्ठा dm_table *t,
-					  क्रमागत blk_zoned_model zoned_model)
-अणु
-	काष्ठा dm_target *ti;
-	अचिन्हित i;
+static bool dm_table_supports_zoned_model(struct dm_table *t,
+					  enum blk_zoned_model zoned_model)
+{
+	struct dm_target *ti;
+	unsigned i;
 
-	क्रम (i = 0; i < dm_table_get_num_tarमाला_लो(t); i++) अणु
+	for (i = 0; i < dm_table_get_num_targets(t); i++) {
 		ti = dm_table_get_target(t, i);
 
-		अगर (dm_target_supports_zoned_hm(ti->type)) अणु
-			अगर (!ti->type->iterate_devices ||
+		if (dm_target_supports_zoned_hm(ti->type)) {
+			if (!ti->type->iterate_devices ||
 			    ti->type->iterate_devices(ti, device_not_zoned_model,
 						      &zoned_model))
-				वापस false;
-		पूर्ण अन्यथा अगर (!dm_target_supports_mixed_zoned_model(ti->type)) अणु
-			अगर (zoned_model == BLK_ZONED_HM)
-				वापस false;
-		पूर्ण
-	पूर्ण
+				return false;
+		} else if (!dm_target_supports_mixed_zoned_model(ti->type)) {
+			if (zoned_model == BLK_ZONED_HM)
+				return false;
+		}
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक device_not_matches_zone_sectors(काष्ठा dm_target *ti, काष्ठा dm_dev *dev,
-					   sector_t start, sector_t len, व्योम *data)
-अणु
-	काष्ठा request_queue *q = bdev_get_queue(dev->bdev);
-	अचिन्हित पूर्णांक *zone_sectors = data;
+static int device_not_matches_zone_sectors(struct dm_target *ti, struct dm_dev *dev,
+					   sector_t start, sector_t len, void *data)
+{
+	struct request_queue *q = bdev_get_queue(dev->bdev);
+	unsigned int *zone_sectors = data;
 
-	अगर (!blk_queue_is_zoned(q))
-		वापस 0;
+	if (!blk_queue_is_zoned(q))
+		return 0;
 
-	वापस blk_queue_zone_sectors(q) != *zone_sectors;
-पूर्ण
+	return blk_queue_zone_sectors(q) != *zone_sectors;
+}
 
 /*
- * Check consistency of zoned model and zone sectors across all tarमाला_लो. For
- * zone sectors, अगर the destination device is a zoned block device, it shall
- * have the specअगरied zone_sectors.
+ * Check consistency of zoned model and zone sectors across all targets. For
+ * zone sectors, if the destination device is a zoned block device, it shall
+ * have the specified zone_sectors.
  */
-अटल पूर्णांक validate_hardware_zoned_model(काष्ठा dm_table *table,
-					 क्रमागत blk_zoned_model zoned_model,
-					 अचिन्हित पूर्णांक zone_sectors)
-अणु
-	अगर (zoned_model == BLK_ZONED_NONE)
-		वापस 0;
+static int validate_hardware_zoned_model(struct dm_table *table,
+					 enum blk_zoned_model zoned_model,
+					 unsigned int zone_sectors)
+{
+	if (zoned_model == BLK_ZONED_NONE)
+		return 0;
 
-	अगर (!dm_table_supports_zoned_model(table, zoned_model)) अणु
+	if (!dm_table_supports_zoned_model(table, zoned_model)) {
 		DMERR("%s: zoned model is not consistent across all devices",
 		      dm_device_name(table->md));
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Check zone size validity and compatibility */
-	अगर (!zone_sectors || !is_घातer_of_2(zone_sectors))
-		वापस -EINVAL;
+	if (!zone_sectors || !is_power_of_2(zone_sectors))
+		return -EINVAL;
 
-	अगर (dm_table_any_dev_attr(table, device_not_matches_zone_sectors, &zone_sectors)) अणु
+	if (dm_table_any_dev_attr(table, device_not_matches_zone_sectors, &zone_sectors)) {
 		DMERR("%s: zone sectors is not consistent across all zoned devices",
 		      dm_device_name(table->md));
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Establish the new table's queue_limits and validate them.
  */
-पूर्णांक dm_calculate_queue_limits(काष्ठा dm_table *table,
-			      काष्ठा queue_limits *limits)
-अणु
-	काष्ठा dm_target *ti;
-	काष्ठा queue_limits ti_limits;
-	अचिन्हित i;
-	क्रमागत blk_zoned_model zoned_model = BLK_ZONED_NONE;
-	अचिन्हित पूर्णांक zone_sectors = 0;
+int dm_calculate_queue_limits(struct dm_table *table,
+			      struct queue_limits *limits)
+{
+	struct dm_target *ti;
+	struct queue_limits ti_limits;
+	unsigned i;
+	enum blk_zoned_model zoned_model = BLK_ZONED_NONE;
+	unsigned int zone_sectors = 0;
 
 	blk_set_stacking_limits(limits);
 
-	क्रम (i = 0; i < dm_table_get_num_tarमाला_लो(table); i++) अणु
+	for (i = 0; i < dm_table_get_num_targets(table); i++) {
 		blk_set_stacking_limits(&ti_limits);
 
 		ti = dm_table_get_target(table, i);
 
-		अगर (!ti->type->iterate_devices)
-			जाओ combine_limits;
+		if (!ti->type->iterate_devices)
+			goto combine_limits;
 
 		/*
 		 * Combine queue limits of all the devices this target uses.
@@ -1678,327 +1677,327 @@ bool dm_table_has_no_data_devices(काष्ठा dm_table *table)
 		ti->type->iterate_devices(ti, dm_set_device_limits,
 					  &ti_limits);
 
-		अगर (zoned_model == BLK_ZONED_NONE && ti_limits.zoned != BLK_ZONED_NONE) अणु
+		if (zoned_model == BLK_ZONED_NONE && ti_limits.zoned != BLK_ZONED_NONE) {
 			/*
 			 * After stacking all limits, validate all devices
 			 * in table support this zoned model and zone sectors.
 			 */
 			zoned_model = ti_limits.zoned;
 			zone_sectors = ti_limits.chunk_sectors;
-		पूर्ण
+		}
 
-		/* Set I/O hपूर्णांकs portion of queue limits */
-		अगर (ti->type->io_hपूर्णांकs)
-			ti->type->io_hपूर्णांकs(ti, &ti_limits);
+		/* Set I/O hints portion of queue limits */
+		if (ti->type->io_hints)
+			ti->type->io_hints(ti, &ti_limits);
 
 		/*
 		 * Check each device area is consistent with the target's
 		 * overall queue limits.
 		 */
-		अगर (ti->type->iterate_devices(ti, device_area_is_invalid,
+		if (ti->type->iterate_devices(ti, device_area_is_invalid,
 					      &ti_limits))
-			वापस -EINVAL;
+			return -EINVAL;
 
 combine_limits:
 		/*
-		 * Merge this target's queue limits पूर्णांकo the overall limits
-		 * क्रम the table.
+		 * Merge this target's queue limits into the overall limits
+		 * for the table.
 		 */
-		अगर (blk_stack_limits(limits, &ti_limits, 0) < 0)
+		if (blk_stack_limits(limits, &ti_limits, 0) < 0)
 			DMWARN("%s: adding target device "
 			       "(start sect %llu len %llu) "
 			       "caused an alignment inconsistency",
 			       dm_device_name(table->md),
-			       (अचिन्हित दीर्घ दीर्घ) ti->begin,
-			       (अचिन्हित दीर्घ दीर्घ) ti->len);
-	पूर्ण
+			       (unsigned long long) ti->begin,
+			       (unsigned long long) ti->len);
+	}
 
 	/*
-	 * Verअगरy that the zoned model and zone sectors, as determined beक्रमe
-	 * any .io_hपूर्णांकs override, are the same across all devices in the table.
-	 * - this is especially relevant अगर .io_hपूर्णांकs is emulating a disk-managed
+	 * Verify that the zoned model and zone sectors, as determined before
+	 * any .io_hints override, are the same across all devices in the table.
+	 * - this is especially relevant if .io_hints is emulating a disk-managed
 	 *   zoned model (aka BLK_ZONED_NONE) on host-managed zoned block devices.
 	 * BUT...
 	 */
-	अगर (limits->zoned != BLK_ZONED_NONE) अणु
+	if (limits->zoned != BLK_ZONED_NONE) {
 		/*
 		 * ...IF the above limits stacking determined a zoned model
-		 * validate that all of the table's devices conक्रमm to it.
+		 * validate that all of the table's devices conform to it.
 		 */
 		zoned_model = limits->zoned;
 		zone_sectors = limits->chunk_sectors;
-	पूर्ण
-	अगर (validate_hardware_zoned_model(table, zoned_model, zone_sectors))
-		वापस -EINVAL;
+	}
+	if (validate_hardware_zoned_model(table, zoned_model, zone_sectors))
+		return -EINVAL;
 
-	वापस validate_hardware_logical_block_alignment(table, limits);
-पूर्ण
+	return validate_hardware_logical_block_alignment(table, limits);
+}
 
 /*
- * Verअगरy that all devices have an पूर्णांकegrity profile that matches the
+ * Verify that all devices have an integrity profile that matches the
  * DM device's registered integrity profile.  If the profiles don't
- * match then unरेजिस्टर the DM device's पूर्णांकegrity profile.
+ * match then unregister the DM device's integrity profile.
  */
-अटल व्योम dm_table_verअगरy_पूर्णांकegrity(काष्ठा dm_table *t)
-अणु
-	काष्ठा gendisk *ढाँचा_disk = शून्य;
+static void dm_table_verify_integrity(struct dm_table *t)
+{
+	struct gendisk *template_disk = NULL;
 
-	अगर (t->पूर्णांकegrity_added)
-		वापस;
+	if (t->integrity_added)
+		return;
 
-	अगर (t->पूर्णांकegrity_supported) अणु
+	if (t->integrity_supported) {
 		/*
-		 * Verअगरy that the original पूर्णांकegrity profile
+		 * Verify that the original integrity profile
 		 * matches all the devices in this table.
 		 */
-		ढाँचा_disk = dm_table_get_पूर्णांकegrity_disk(t);
-		अगर (ढाँचा_disk &&
-		    blk_पूर्णांकegrity_compare(dm_disk(t->md), ढाँचा_disk) >= 0)
-			वापस;
-	पूर्ण
+		template_disk = dm_table_get_integrity_disk(t);
+		if (template_disk &&
+		    blk_integrity_compare(dm_disk(t->md), template_disk) >= 0)
+			return;
+	}
 
-	अगर (पूर्णांकegrity_profile_exists(dm_disk(t->md))) अणु
+	if (integrity_profile_exists(dm_disk(t->md))) {
 		DMWARN("%s: unable to establish an integrity profile",
 		       dm_device_name(t->md));
-		blk_पूर्णांकegrity_unरेजिस्टर(dm_disk(t->md));
-	पूर्ण
-पूर्ण
+		blk_integrity_unregister(dm_disk(t->md));
+	}
+}
 
-अटल पूर्णांक device_flush_capable(काष्ठा dm_target *ti, काष्ठा dm_dev *dev,
-				sector_t start, sector_t len, व्योम *data)
-अणु
-	अचिन्हित दीर्घ flush = (अचिन्हित दीर्घ) data;
-	काष्ठा request_queue *q = bdev_get_queue(dev->bdev);
+static int device_flush_capable(struct dm_target *ti, struct dm_dev *dev,
+				sector_t start, sector_t len, void *data)
+{
+	unsigned long flush = (unsigned long) data;
+	struct request_queue *q = bdev_get_queue(dev->bdev);
 
-	वापस (q->queue_flags & flush);
-पूर्ण
+	return (q->queue_flags & flush);
+}
 
-अटल bool dm_table_supports_flush(काष्ठा dm_table *t, अचिन्हित दीर्घ flush)
-अणु
-	काष्ठा dm_target *ti;
-	अचिन्हित i;
+static bool dm_table_supports_flush(struct dm_table *t, unsigned long flush)
+{
+	struct dm_target *ti;
+	unsigned i;
 
 	/*
 	 * Require at least one underlying device to support flushes.
-	 * t->devices includes पूर्णांकernal dm devices such as mirror logs
-	 * so we need to use iterate_devices here, which tarमाला_लो
+	 * t->devices includes internal dm devices such as mirror logs
+	 * so we need to use iterate_devices here, which targets
 	 * supporting flushes must provide.
 	 */
-	क्रम (i = 0; i < dm_table_get_num_tarमाला_लो(t); i++) अणु
+	for (i = 0; i < dm_table_get_num_targets(t); i++) {
 		ti = dm_table_get_target(t, i);
 
-		अगर (!ti->num_flush_bios)
-			जारी;
+		if (!ti->num_flush_bios)
+			continue;
 
-		अगर (ti->flush_supported)
-			वापस true;
+		if (ti->flush_supported)
+			return true;
 
-		अगर (ti->type->iterate_devices &&
-		    ti->type->iterate_devices(ti, device_flush_capable, (व्योम *) flush))
-			वापस true;
-	पूर्ण
+		if (ti->type->iterate_devices &&
+		    ti->type->iterate_devices(ti, device_flush_capable, (void *) flush))
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक device_dax_ग_लिखो_cache_enabled(काष्ठा dm_target *ti,
-					  काष्ठा dm_dev *dev, sector_t start,
-					  sector_t len, व्योम *data)
-अणु
-	काष्ठा dax_device *dax_dev = dev->dax_dev;
+static int device_dax_write_cache_enabled(struct dm_target *ti,
+					  struct dm_dev *dev, sector_t start,
+					  sector_t len, void *data)
+{
+	struct dax_device *dax_dev = dev->dax_dev;
 
-	अगर (!dax_dev)
-		वापस false;
+	if (!dax_dev)
+		return false;
 
-	अगर (dax_ग_लिखो_cache_enabled(dax_dev))
-		वापस true;
-	वापस false;
-पूर्ण
+	if (dax_write_cache_enabled(dax_dev))
+		return true;
+	return false;
+}
 
-अटल पूर्णांक device_is_rotational(काष्ठा dm_target *ti, काष्ठा dm_dev *dev,
-				sector_t start, sector_t len, व्योम *data)
-अणु
-	काष्ठा request_queue *q = bdev_get_queue(dev->bdev);
+static int device_is_rotational(struct dm_target *ti, struct dm_dev *dev,
+				sector_t start, sector_t len, void *data)
+{
+	struct request_queue *q = bdev_get_queue(dev->bdev);
 
-	वापस !blk_queue_nonrot(q);
-पूर्ण
+	return !blk_queue_nonrot(q);
+}
 
-अटल पूर्णांक device_is_not_अक्रमom(काष्ठा dm_target *ti, काष्ठा dm_dev *dev,
-			     sector_t start, sector_t len, व्योम *data)
-अणु
-	काष्ठा request_queue *q = bdev_get_queue(dev->bdev);
+static int device_is_not_random(struct dm_target *ti, struct dm_dev *dev,
+			     sector_t start, sector_t len, void *data)
+{
+	struct request_queue *q = bdev_get_queue(dev->bdev);
 
-	वापस !blk_queue_add_अक्रमom(q);
-पूर्ण
+	return !blk_queue_add_random(q);
+}
 
-अटल पूर्णांक device_not_ग_लिखो_same_capable(काष्ठा dm_target *ti, काष्ठा dm_dev *dev,
-					 sector_t start, sector_t len, व्योम *data)
-अणु
-	काष्ठा request_queue *q = bdev_get_queue(dev->bdev);
+static int device_not_write_same_capable(struct dm_target *ti, struct dm_dev *dev,
+					 sector_t start, sector_t len, void *data)
+{
+	struct request_queue *q = bdev_get_queue(dev->bdev);
 
-	वापस !q->limits.max_ग_लिखो_same_sectors;
-पूर्ण
+	return !q->limits.max_write_same_sectors;
+}
 
-अटल bool dm_table_supports_ग_लिखो_same(काष्ठा dm_table *t)
-अणु
-	काष्ठा dm_target *ti;
-	अचिन्हित i;
+static bool dm_table_supports_write_same(struct dm_table *t)
+{
+	struct dm_target *ti;
+	unsigned i;
 
-	क्रम (i = 0; i < dm_table_get_num_tarमाला_लो(t); i++) अणु
+	for (i = 0; i < dm_table_get_num_targets(t); i++) {
 		ti = dm_table_get_target(t, i);
 
-		अगर (!ti->num_ग_लिखो_same_bios)
-			वापस false;
+		if (!ti->num_write_same_bios)
+			return false;
 
-		अगर (!ti->type->iterate_devices ||
-		    ti->type->iterate_devices(ti, device_not_ग_लिखो_same_capable, शून्य))
-			वापस false;
-	पूर्ण
+		if (!ti->type->iterate_devices ||
+		    ti->type->iterate_devices(ti, device_not_write_same_capable, NULL))
+			return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक device_not_ग_लिखो_zeroes_capable(काष्ठा dm_target *ti, काष्ठा dm_dev *dev,
-					   sector_t start, sector_t len, व्योम *data)
-अणु
-	काष्ठा request_queue *q = bdev_get_queue(dev->bdev);
+static int device_not_write_zeroes_capable(struct dm_target *ti, struct dm_dev *dev,
+					   sector_t start, sector_t len, void *data)
+{
+	struct request_queue *q = bdev_get_queue(dev->bdev);
 
-	वापस !q->limits.max_ग_लिखो_zeroes_sectors;
-पूर्ण
+	return !q->limits.max_write_zeroes_sectors;
+}
 
-अटल bool dm_table_supports_ग_लिखो_zeroes(काष्ठा dm_table *t)
-अणु
-	काष्ठा dm_target *ti;
-	अचिन्हित i = 0;
+static bool dm_table_supports_write_zeroes(struct dm_table *t)
+{
+	struct dm_target *ti;
+	unsigned i = 0;
 
-	जबतक (i < dm_table_get_num_tarमाला_लो(t)) अणु
+	while (i < dm_table_get_num_targets(t)) {
 		ti = dm_table_get_target(t, i++);
 
-		अगर (!ti->num_ग_लिखो_zeroes_bios)
-			वापस false;
+		if (!ti->num_write_zeroes_bios)
+			return false;
 
-		अगर (!ti->type->iterate_devices ||
-		    ti->type->iterate_devices(ti, device_not_ग_लिखो_zeroes_capable, शून्य))
-			वापस false;
-	पूर्ण
+		if (!ti->type->iterate_devices ||
+		    ti->type->iterate_devices(ti, device_not_write_zeroes_capable, NULL))
+			return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक device_not_noरुको_capable(काष्ठा dm_target *ti, काष्ठा dm_dev *dev,
-				     sector_t start, sector_t len, व्योम *data)
-अणु
-	काष्ठा request_queue *q = bdev_get_queue(dev->bdev);
+static int device_not_nowait_capable(struct dm_target *ti, struct dm_dev *dev,
+				     sector_t start, sector_t len, void *data)
+{
+	struct request_queue *q = bdev_get_queue(dev->bdev);
 
-	वापस !blk_queue_noरुको(q);
-पूर्ण
+	return !blk_queue_nowait(q);
+}
 
-अटल bool dm_table_supports_noरुको(काष्ठा dm_table *t)
-अणु
-	काष्ठा dm_target *ti;
-	अचिन्हित i = 0;
+static bool dm_table_supports_nowait(struct dm_table *t)
+{
+	struct dm_target *ti;
+	unsigned i = 0;
 
-	जबतक (i < dm_table_get_num_tarमाला_लो(t)) अणु
+	while (i < dm_table_get_num_targets(t)) {
 		ti = dm_table_get_target(t, i++);
 
-		अगर (!dm_target_supports_noरुको(ti->type))
-			वापस false;
+		if (!dm_target_supports_nowait(ti->type))
+			return false;
 
-		अगर (!ti->type->iterate_devices ||
-		    ti->type->iterate_devices(ti, device_not_noरुको_capable, शून्य))
-			वापस false;
-	पूर्ण
+		if (!ti->type->iterate_devices ||
+		    ti->type->iterate_devices(ti, device_not_nowait_capable, NULL))
+			return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक device_not_discard_capable(काष्ठा dm_target *ti, काष्ठा dm_dev *dev,
-				      sector_t start, sector_t len, व्योम *data)
-अणु
-	काष्ठा request_queue *q = bdev_get_queue(dev->bdev);
+static int device_not_discard_capable(struct dm_target *ti, struct dm_dev *dev,
+				      sector_t start, sector_t len, void *data)
+{
+	struct request_queue *q = bdev_get_queue(dev->bdev);
 
-	वापस !blk_queue_discard(q);
-पूर्ण
+	return !blk_queue_discard(q);
+}
 
-अटल bool dm_table_supports_discards(काष्ठा dm_table *t)
-अणु
-	काष्ठा dm_target *ti;
-	अचिन्हित i;
+static bool dm_table_supports_discards(struct dm_table *t)
+{
+	struct dm_target *ti;
+	unsigned i;
 
-	क्रम (i = 0; i < dm_table_get_num_tarमाला_लो(t); i++) अणु
+	for (i = 0; i < dm_table_get_num_targets(t); i++) {
 		ti = dm_table_get_target(t, i);
 
-		अगर (!ti->num_discard_bios)
-			वापस false;
+		if (!ti->num_discard_bios)
+			return false;
 
 		/*
 		 * Either the target provides discard support (as implied by setting
 		 * 'discards_supported') or it relies on _all_ data devices having
 		 * discard support.
 		 */
-		अगर (!ti->discards_supported &&
+		if (!ti->discards_supported &&
 		    (!ti->type->iterate_devices ||
-		     ti->type->iterate_devices(ti, device_not_discard_capable, शून्य)))
-			वापस false;
-	पूर्ण
+		     ti->type->iterate_devices(ti, device_not_discard_capable, NULL)))
+			return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक device_not_secure_erase_capable(काष्ठा dm_target *ti,
-					   काष्ठा dm_dev *dev, sector_t start,
-					   sector_t len, व्योम *data)
-अणु
-	काष्ठा request_queue *q = bdev_get_queue(dev->bdev);
+static int device_not_secure_erase_capable(struct dm_target *ti,
+					   struct dm_dev *dev, sector_t start,
+					   sector_t len, void *data)
+{
+	struct request_queue *q = bdev_get_queue(dev->bdev);
 
-	वापस !blk_queue_secure_erase(q);
-पूर्ण
+	return !blk_queue_secure_erase(q);
+}
 
-अटल bool dm_table_supports_secure_erase(काष्ठा dm_table *t)
-अणु
-	काष्ठा dm_target *ti;
-	अचिन्हित पूर्णांक i;
+static bool dm_table_supports_secure_erase(struct dm_table *t)
+{
+	struct dm_target *ti;
+	unsigned int i;
 
-	क्रम (i = 0; i < dm_table_get_num_tarमाला_लो(t); i++) अणु
+	for (i = 0; i < dm_table_get_num_targets(t); i++) {
 		ti = dm_table_get_target(t, i);
 
-		अगर (!ti->num_secure_erase_bios)
-			वापस false;
+		if (!ti->num_secure_erase_bios)
+			return false;
 
-		अगर (!ti->type->iterate_devices ||
-		    ti->type->iterate_devices(ti, device_not_secure_erase_capable, शून्य))
-			वापस false;
-	पूर्ण
+		if (!ti->type->iterate_devices ||
+		    ti->type->iterate_devices(ti, device_not_secure_erase_capable, NULL))
+			return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक device_requires_stable_pages(काष्ठा dm_target *ti,
-					काष्ठा dm_dev *dev, sector_t start,
-					sector_t len, व्योम *data)
-अणु
-	काष्ठा request_queue *q = bdev_get_queue(dev->bdev);
+static int device_requires_stable_pages(struct dm_target *ti,
+					struct dm_dev *dev, sector_t start,
+					sector_t len, void *data)
+{
+	struct request_queue *q = bdev_get_queue(dev->bdev);
 
-	वापस blk_queue_stable_ग_लिखोs(q);
-पूर्ण
+	return blk_queue_stable_writes(q);
+}
 
-व्योम dm_table_set_restrictions(काष्ठा dm_table *t, काष्ठा request_queue *q,
-			       काष्ठा queue_limits *limits)
-अणु
+void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
+			       struct queue_limits *limits)
+{
 	bool wc = false, fua = false;
-	पूर्णांक page_size = PAGE_SIZE;
+	int page_size = PAGE_SIZE;
 
 	/*
 	 * Copy table's limits to the DM device's request_queue
 	 */
 	q->limits = *limits;
 
-	अगर (dm_table_supports_noरुको(t))
+	if (dm_table_supports_nowait(t))
 		blk_queue_flag_set(QUEUE_FLAG_NOWAIT, q);
-	अन्यथा
+	else
 		blk_queue_flag_clear(QUEUE_FLAG_NOWAIT, q);
 
-	अगर (!dm_table_supports_discards(t)) अणु
+	if (!dm_table_supports_discards(t)) {
 		blk_queue_flag_clear(QUEUE_FLAG_DISCARD, q);
 		/* Must also clear discard limits... */
 		q->limits.max_discard_sectors = 0;
@@ -2006,202 +2005,202 @@ combine_limits:
 		q->limits.discard_granularity = 0;
 		q->limits.discard_alignment = 0;
 		q->limits.discard_misaligned = 0;
-	पूर्ण अन्यथा
+	} else
 		blk_queue_flag_set(QUEUE_FLAG_DISCARD, q);
 
-	अगर (dm_table_supports_secure_erase(t))
+	if (dm_table_supports_secure_erase(t))
 		blk_queue_flag_set(QUEUE_FLAG_SECERASE, q);
 
-	अगर (dm_table_supports_flush(t, (1UL << QUEUE_FLAG_WC))) अणु
+	if (dm_table_supports_flush(t, (1UL << QUEUE_FLAG_WC))) {
 		wc = true;
-		अगर (dm_table_supports_flush(t, (1UL << QUEUE_FLAG_FUA)))
+		if (dm_table_supports_flush(t, (1UL << QUEUE_FLAG_FUA)))
 			fua = true;
-	पूर्ण
-	blk_queue_ग_लिखो_cache(q, wc, fua);
+	}
+	blk_queue_write_cache(q, wc, fua);
 
-	अगर (dm_table_supports_dax(t, device_not_dax_capable, &page_size)) अणु
+	if (dm_table_supports_dax(t, device_not_dax_capable, &page_size)) {
 		blk_queue_flag_set(QUEUE_FLAG_DAX, q);
-		अगर (dm_table_supports_dax(t, device_not_dax_synchronous_capable, शून्य))
+		if (dm_table_supports_dax(t, device_not_dax_synchronous_capable, NULL))
 			set_dax_synchronous(t->md->dax_dev);
-	पूर्ण
-	अन्यथा
+	}
+	else
 		blk_queue_flag_clear(QUEUE_FLAG_DAX, q);
 
-	अगर (dm_table_any_dev_attr(t, device_dax_ग_लिखो_cache_enabled, शून्य))
-		dax_ग_लिखो_cache(t->md->dax_dev, true);
+	if (dm_table_any_dev_attr(t, device_dax_write_cache_enabled, NULL))
+		dax_write_cache(t->md->dax_dev, true);
 
 	/* Ensure that all underlying devices are non-rotational. */
-	अगर (dm_table_any_dev_attr(t, device_is_rotational, शून्य))
+	if (dm_table_any_dev_attr(t, device_is_rotational, NULL))
 		blk_queue_flag_clear(QUEUE_FLAG_NONROT, q);
-	अन्यथा
+	else
 		blk_queue_flag_set(QUEUE_FLAG_NONROT, q);
 
-	अगर (!dm_table_supports_ग_लिखो_same(t))
-		q->limits.max_ग_लिखो_same_sectors = 0;
-	अगर (!dm_table_supports_ग_लिखो_zeroes(t))
-		q->limits.max_ग_लिखो_zeroes_sectors = 0;
+	if (!dm_table_supports_write_same(t))
+		q->limits.max_write_same_sectors = 0;
+	if (!dm_table_supports_write_zeroes(t))
+		q->limits.max_write_zeroes_sectors = 0;
 
-	dm_table_verअगरy_पूर्णांकegrity(t);
+	dm_table_verify_integrity(t);
 
 	/*
-	 * Some devices करोn't use blk_पूर्णांकegrity but still want stable pages
-	 * because they करो their own checksumming.
+	 * Some devices don't use blk_integrity but still want stable pages
+	 * because they do their own checksumming.
 	 * If any underlying device requires stable pages, a table must require
-	 * them as well.  Only tarमाला_लो that support iterate_devices are considered:
-	 * करोn't want error, zero, etc to require stable pages.
+	 * them as well.  Only targets that support iterate_devices are considered:
+	 * don't want error, zero, etc to require stable pages.
 	 */
-	अगर (dm_table_any_dev_attr(t, device_requires_stable_pages, शून्य))
+	if (dm_table_any_dev_attr(t, device_requires_stable_pages, NULL))
 		blk_queue_flag_set(QUEUE_FLAG_STABLE_WRITES, q);
-	अन्यथा
+	else
 		blk_queue_flag_clear(QUEUE_FLAG_STABLE_WRITES, q);
 
 	/*
 	 * Determine whether or not this queue's I/O timings contribute
-	 * to the entropy pool, Only request-based tarमाला_लो use this.
-	 * Clear QUEUE_FLAG_ADD_RANDOM अगर any underlying device करोes not
+	 * to the entropy pool, Only request-based targets use this.
+	 * Clear QUEUE_FLAG_ADD_RANDOM if any underlying device does not
 	 * have it set.
 	 */
-	अगर (blk_queue_add_अक्रमom(q) &&
-	    dm_table_any_dev_attr(t, device_is_not_अक्रमom, शून्य))
+	if (blk_queue_add_random(q) &&
+	    dm_table_any_dev_attr(t, device_is_not_random, NULL))
 		blk_queue_flag_clear(QUEUE_FLAG_ADD_RANDOM, q);
 
 	/*
-	 * For a zoned target, the number of zones should be updated क्रम the
+	 * For a zoned target, the number of zones should be updated for the
 	 * correct value to be exposed in sysfs queue/nr_zones. For a BIO based
 	 * target, this is all that is needed.
 	 */
-#अगर_घोषित CONFIG_BLK_DEV_ZONED
-	अगर (blk_queue_is_zoned(q)) अणु
+#ifdef CONFIG_BLK_DEV_ZONED
+	if (blk_queue_is_zoned(q)) {
 		WARN_ON_ONCE(queue_is_mq(q));
 		q->nr_zones = blkdev_nr_zones(t->md->disk);
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
 	dm_update_keyslot_manager(q, t);
-	blk_queue_update_पढ़ोahead(q);
-पूर्ण
+	blk_queue_update_readahead(q);
+}
 
-अचिन्हित पूर्णांक dm_table_get_num_tarमाला_लो(काष्ठा dm_table *t)
-अणु
-	वापस t->num_tarमाला_लो;
-पूर्ण
+unsigned int dm_table_get_num_targets(struct dm_table *t)
+{
+	return t->num_targets;
+}
 
-काष्ठा list_head *dm_table_get_devices(काष्ठा dm_table *t)
-अणु
-	वापस &t->devices;
-पूर्ण
+struct list_head *dm_table_get_devices(struct dm_table *t)
+{
+	return &t->devices;
+}
 
-भ_शेषe_t dm_table_get_mode(काष्ठा dm_table *t)
-अणु
-	वापस t->mode;
-पूर्ण
+fmode_t dm_table_get_mode(struct dm_table *t)
+{
+	return t->mode;
+}
 EXPORT_SYMBOL(dm_table_get_mode);
 
-क्रमागत suspend_mode अणु
+enum suspend_mode {
 	PRESUSPEND,
 	PRESUSPEND_UNDO,
 	POSTSUSPEND,
-पूर्ण;
+};
 
-अटल व्योम suspend_tarमाला_लो(काष्ठा dm_table *t, क्रमागत suspend_mode mode)
-अणु
-	पूर्णांक i = t->num_tarमाला_लो;
-	काष्ठा dm_target *ti = t->tarमाला_लो;
+static void suspend_targets(struct dm_table *t, enum suspend_mode mode)
+{
+	int i = t->num_targets;
+	struct dm_target *ti = t->targets;
 
-	lockdep_निश्चित_held(&t->md->suspend_lock);
+	lockdep_assert_held(&t->md->suspend_lock);
 
-	जबतक (i--) अणु
-		चयन (mode) अणु
-		हाल PRESUSPEND:
-			अगर (ti->type->presuspend)
+	while (i--) {
+		switch (mode) {
+		case PRESUSPEND:
+			if (ti->type->presuspend)
 				ti->type->presuspend(ti);
-			अवरोध;
-		हाल PRESUSPEND_UNDO:
-			अगर (ti->type->presuspend_unकरो)
-				ti->type->presuspend_unकरो(ti);
-			अवरोध;
-		हाल POSTSUSPEND:
-			अगर (ti->type->postsuspend)
+			break;
+		case PRESUSPEND_UNDO:
+			if (ti->type->presuspend_undo)
+				ti->type->presuspend_undo(ti);
+			break;
+		case POSTSUSPEND:
+			if (ti->type->postsuspend)
 				ti->type->postsuspend(ti);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		ti++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम dm_table_presuspend_tarमाला_लो(काष्ठा dm_table *t)
-अणु
-	अगर (!t)
-		वापस;
+void dm_table_presuspend_targets(struct dm_table *t)
+{
+	if (!t)
+		return;
 
-	suspend_tarमाला_लो(t, PRESUSPEND);
-पूर्ण
+	suspend_targets(t, PRESUSPEND);
+}
 
-व्योम dm_table_presuspend_unकरो_tarमाला_लो(काष्ठा dm_table *t)
-अणु
-	अगर (!t)
-		वापस;
+void dm_table_presuspend_undo_targets(struct dm_table *t)
+{
+	if (!t)
+		return;
 
-	suspend_tarमाला_लो(t, PRESUSPEND_UNDO);
-पूर्ण
+	suspend_targets(t, PRESUSPEND_UNDO);
+}
 
-व्योम dm_table_postsuspend_tarमाला_लो(काष्ठा dm_table *t)
-अणु
-	अगर (!t)
-		वापस;
+void dm_table_postsuspend_targets(struct dm_table *t)
+{
+	if (!t)
+		return;
 
-	suspend_tarमाला_लो(t, POSTSUSPEND);
-पूर्ण
+	suspend_targets(t, POSTSUSPEND);
+}
 
-पूर्णांक dm_table_resume_tarमाला_लो(काष्ठा dm_table *t)
-अणु
-	पूर्णांक i, r = 0;
+int dm_table_resume_targets(struct dm_table *t)
+{
+	int i, r = 0;
 
-	lockdep_निश्चित_held(&t->md->suspend_lock);
+	lockdep_assert_held(&t->md->suspend_lock);
 
-	क्रम (i = 0; i < t->num_tarमाला_लो; i++) अणु
-		काष्ठा dm_target *ti = t->tarमाला_लो + i;
+	for (i = 0; i < t->num_targets; i++) {
+		struct dm_target *ti = t->targets + i;
 
-		अगर (!ti->type->preresume)
-			जारी;
+		if (!ti->type->preresume)
+			continue;
 
 		r = ti->type->preresume(ti);
-		अगर (r) अणु
+		if (r) {
 			DMERR("%s: %s: preresume failed, error = %d",
 			      dm_device_name(t->md), ti->type->name, r);
-			वापस r;
-		पूर्ण
-	पूर्ण
+			return r;
+		}
+	}
 
-	क्रम (i = 0; i < t->num_tarमाला_लो; i++) अणु
-		काष्ठा dm_target *ti = t->tarमाला_लो + i;
+	for (i = 0; i < t->num_targets; i++) {
+		struct dm_target *ti = t->targets + i;
 
-		अगर (ti->type->resume)
+		if (ti->type->resume)
 			ti->type->resume(ti);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा mapped_device *dm_table_get_md(काष्ठा dm_table *t)
-अणु
-	वापस t->md;
-पूर्ण
+struct mapped_device *dm_table_get_md(struct dm_table *t)
+{
+	return t->md;
+}
 EXPORT_SYMBOL(dm_table_get_md);
 
-स्थिर अक्षर *dm_table_device_name(काष्ठा dm_table *t)
-अणु
-	वापस dm_device_name(t->md);
-पूर्ण
+const char *dm_table_device_name(struct dm_table *t)
+{
+	return dm_device_name(t->md);
+}
 EXPORT_SYMBOL_GPL(dm_table_device_name);
 
-व्योम dm_table_run_md_queue_async(काष्ठा dm_table *t)
-अणु
-	अगर (!dm_table_request_based(t))
-		वापस;
+void dm_table_run_md_queue_async(struct dm_table *t)
+{
+	if (!dm_table_request_based(t))
+		return;
 
-	अगर (t->md->queue)
+	if (t->md->queue)
 		blk_mq_run_hw_queues(t->md->queue, true);
-पूर्ण
+}
 EXPORT_SYMBOL(dm_table_run_md_queue_async);
 

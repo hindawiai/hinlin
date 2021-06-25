@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *
  * Author	Karsten Keil <kkeil@novell.com>
@@ -7,263 +6,263 @@
  * Copyright 2008  by Karsten Keil <kkeil@novell.com>
  */
 
-#समावेश <linux/mISDNअगर.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/export.h>
-#समावेश "core.h"
+#include <linux/mISDNif.h>
+#include <linux/slab.h>
+#include <linux/export.h>
+#include "core.h"
 
-अटल u_पूर्णांक	*debug;
+static u_int	*debug;
 
-अटल काष्ठा proto mISDN_proto = अणु
+static struct proto mISDN_proto = {
 	.name		= "misdn",
 	.owner		= THIS_MODULE,
-	.obj_size	= माप(काष्ठा mISDN_sock)
-पूर्ण;
+	.obj_size	= sizeof(struct mISDN_sock)
+};
 
-#घोषणा _pms(sk)	((काष्ठा mISDN_sock *)sk)
+#define _pms(sk)	((struct mISDN_sock *)sk)
 
-अटल काष्ठा mISDN_sock_list	data_sockets = अणु
+static struct mISDN_sock_list	data_sockets = {
 	.lock = __RW_LOCK_UNLOCKED(data_sockets.lock)
-पूर्ण;
+};
 
-अटल काष्ठा mISDN_sock_list	base_sockets = अणु
+static struct mISDN_sock_list	base_sockets = {
 	.lock = __RW_LOCK_UNLOCKED(base_sockets.lock)
-पूर्ण;
+};
 
-#घोषणा L2_HEADER_LEN	4
+#define L2_HEADER_LEN	4
 
-अटल अंतरभूत काष्ठा sk_buff *
-_l2_alloc_skb(अचिन्हित पूर्णांक len, gfp_t gfp_mask)
-अणु
-	काष्ठा sk_buff  *skb;
+static inline struct sk_buff *
+_l2_alloc_skb(unsigned int len, gfp_t gfp_mask)
+{
+	struct sk_buff  *skb;
 
 	skb = alloc_skb(len + L2_HEADER_LEN, gfp_mask);
-	अगर (likely(skb))
+	if (likely(skb))
 		skb_reserve(skb, L2_HEADER_LEN);
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल व्योम
-mISDN_sock_link(काष्ठा mISDN_sock_list *l, काष्ठा sock *sk)
-अणु
-	ग_लिखो_lock_bh(&l->lock);
+static void
+mISDN_sock_link(struct mISDN_sock_list *l, struct sock *sk)
+{
+	write_lock_bh(&l->lock);
 	sk_add_node(sk, &l->head);
-	ग_लिखो_unlock_bh(&l->lock);
-पूर्ण
+	write_unlock_bh(&l->lock);
+}
 
-अटल व्योम mISDN_sock_unlink(काष्ठा mISDN_sock_list *l, काष्ठा sock *sk)
-अणु
-	ग_लिखो_lock_bh(&l->lock);
+static void mISDN_sock_unlink(struct mISDN_sock_list *l, struct sock *sk)
+{
+	write_lock_bh(&l->lock);
 	sk_del_node_init(sk);
-	ग_लिखो_unlock_bh(&l->lock);
-पूर्ण
+	write_unlock_bh(&l->lock);
+}
 
-अटल पूर्णांक
-mISDN_send(काष्ठा mISDNchannel *ch, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा mISDN_sock *msk;
-	पूर्णांक	err;
+static int
+mISDN_send(struct mISDNchannel *ch, struct sk_buff *skb)
+{
+	struct mISDN_sock *msk;
+	int	err;
 
-	msk = container_of(ch, काष्ठा mISDN_sock, ch);
-	अगर (*debug & DEBUG_SOCKET)
-		prपूर्णांकk(KERN_DEBUG "%s len %d %p\n", __func__, skb->len, skb);
-	अगर (msk->sk.sk_state == MISDN_CLOSED)
-		वापस -EUNATCH;
-	__net_बारtamp(skb);
+	msk = container_of(ch, struct mISDN_sock, ch);
+	if (*debug & DEBUG_SOCKET)
+		printk(KERN_DEBUG "%s len %d %p\n", __func__, skb->len, skb);
+	if (msk->sk.sk_state == MISDN_CLOSED)
+		return -EUNATCH;
+	__net_timestamp(skb);
 	err = sock_queue_rcv_skb(&msk->sk, skb);
-	अगर (err)
-		prपूर्णांकk(KERN_WARNING "%s: error %d\n", __func__, err);
-	वापस err;
-पूर्ण
+	if (err)
+		printk(KERN_WARNING "%s: error %d\n", __func__, err);
+	return err;
+}
 
-अटल पूर्णांक
-mISDN_ctrl(काष्ठा mISDNchannel *ch, u_पूर्णांक cmd, व्योम *arg)
-अणु
-	काष्ठा mISDN_sock *msk;
+static int
+mISDN_ctrl(struct mISDNchannel *ch, u_int cmd, void *arg)
+{
+	struct mISDN_sock *msk;
 
-	msk = container_of(ch, काष्ठा mISDN_sock, ch);
-	अगर (*debug & DEBUG_SOCKET)
-		prपूर्णांकk(KERN_DEBUG "%s(%p, %x, %p)\n", __func__, ch, cmd, arg);
-	चयन (cmd) अणु
-	हाल CLOSE_CHANNEL:
+	msk = container_of(ch, struct mISDN_sock, ch);
+	if (*debug & DEBUG_SOCKET)
+		printk(KERN_DEBUG "%s(%p, %x, %p)\n", __func__, ch, cmd, arg);
+	switch (cmd) {
+	case CLOSE_CHANNEL:
 		msk->sk.sk_state = MISDN_CLOSED;
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	}
+	return 0;
+}
 
-अटल अंतरभूत व्योम
-mISDN_sock_cmsg(काष्ठा sock *sk, काष्ठा msghdr *msg, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा __kernel_old_समयval	tv;
+static inline void
+mISDN_sock_cmsg(struct sock *sk, struct msghdr *msg, struct sk_buff *skb)
+{
+	struct __kernel_old_timeval	tv;
 
-	अगर (_pms(sk)->cmask & MISDN_TIME_STAMP) अणु
-		skb_get_बारtamp(skb, &tv);
-		put_cmsg(msg, SOL_MISDN, MISDN_TIME_STAMP, माप(tv), &tv);
-	पूर्ण
-पूर्ण
+	if (_pms(sk)->cmask & MISDN_TIME_STAMP) {
+		skb_get_timestamp(skb, &tv);
+		put_cmsg(msg, SOL_MISDN, MISDN_TIME_STAMP, sizeof(tv), &tv);
+	}
+}
 
-अटल पूर्णांक
-mISDN_sock_recvmsg(काष्ठा socket *sock, काष्ठा msghdr *msg, माप_प्रकार len,
-		   पूर्णांक flags)
-अणु
-	काष्ठा sk_buff		*skb;
-	काष्ठा sock		*sk = sock->sk;
+static int
+mISDN_sock_recvmsg(struct socket *sock, struct msghdr *msg, size_t len,
+		   int flags)
+{
+	struct sk_buff		*skb;
+	struct sock		*sk = sock->sk;
 
-	पूर्णांक		copied, err;
+	int		copied, err;
 
-	अगर (*debug & DEBUG_SOCKET)
-		prपूर्णांकk(KERN_DEBUG "%s: len %d, flags %x ch.nr %d, proto %x\n",
-		       __func__, (पूर्णांक)len, flags, _pms(sk)->ch.nr,
+	if (*debug & DEBUG_SOCKET)
+		printk(KERN_DEBUG "%s: len %d, flags %x ch.nr %d, proto %x\n",
+		       __func__, (int)len, flags, _pms(sk)->ch.nr,
 		       sk->sk_protocol);
-	अगर (flags & (MSG_OOB))
-		वापस -EOPNOTSUPP;
+	if (flags & (MSG_OOB))
+		return -EOPNOTSUPP;
 
-	अगर (sk->sk_state == MISDN_CLOSED)
-		वापस 0;
+	if (sk->sk_state == MISDN_CLOSED)
+		return 0;
 
 	skb = skb_recv_datagram(sk, flags, flags & MSG_DONTWAIT, &err);
-	अगर (!skb)
-		वापस err;
+	if (!skb)
+		return err;
 
-	अगर (msg->msg_name) अणु
-		DECLARE_SOCKADDR(काष्ठा sockaddr_mISDN *, maddr, msg->msg_name);
+	if (msg->msg_name) {
+		DECLARE_SOCKADDR(struct sockaddr_mISDN *, maddr, msg->msg_name);
 
 		maddr->family = AF_ISDN;
 		maddr->dev = _pms(sk)->dev->id;
-		अगर ((sk->sk_protocol == ISDN_P_LAPD_TE) ||
-		    (sk->sk_protocol == ISDN_P_LAPD_NT)) अणु
+		if ((sk->sk_protocol == ISDN_P_LAPD_TE) ||
+		    (sk->sk_protocol == ISDN_P_LAPD_NT)) {
 			maddr->channel = (mISDN_HEAD_ID(skb) >> 16) & 0xff;
 			maddr->tei =  (mISDN_HEAD_ID(skb) >> 8) & 0xff;
 			maddr->sapi = mISDN_HEAD_ID(skb) & 0xff;
-		पूर्ण अन्यथा अणु
+		} else {
 			maddr->channel = _pms(sk)->ch.nr;
 			maddr->sapi = _pms(sk)->ch.addr & 0xFF;
 			maddr->tei =  (_pms(sk)->ch.addr >> 8) & 0xFF;
-		पूर्ण
-		msg->msg_namelen = माप(*maddr);
-	पूर्ण
+		}
+		msg->msg_namelen = sizeof(*maddr);
+	}
 
 	copied = skb->len + MISDN_HEADER_LEN;
-	अगर (len < copied) अणु
-		अगर (flags & MSG_PEEK)
+	if (len < copied) {
+		if (flags & MSG_PEEK)
 			refcount_dec(&skb->users);
-		अन्यथा
+		else
 			skb_queue_head(&sk->sk_receive_queue, skb);
-		वापस -ENOSPC;
-	पूर्ण
-	स_नकल(skb_push(skb, MISDN_HEADER_LEN), mISDN_HEAD_P(skb),
+		return -ENOSPC;
+	}
+	memcpy(skb_push(skb, MISDN_HEADER_LEN), mISDN_HEAD_P(skb),
 	       MISDN_HEADER_LEN);
 
 	err = skb_copy_datagram_msg(skb, 0, msg, copied);
 
 	mISDN_sock_cmsg(sk, msg, skb);
 
-	skb_मुक्त_datagram(sk, skb);
+	skb_free_datagram(sk, skb);
 
-	वापस err ? : copied;
-पूर्ण
+	return err ? : copied;
+}
 
-अटल पूर्णांक
-mISDN_sock_sendmsg(काष्ठा socket *sock, काष्ठा msghdr *msg, माप_प्रकार len)
-अणु
-	काष्ठा sock		*sk = sock->sk;
-	काष्ठा sk_buff		*skb;
-	पूर्णांक			err = -ENOMEM;
+static int
+mISDN_sock_sendmsg(struct socket *sock, struct msghdr *msg, size_t len)
+{
+	struct sock		*sk = sock->sk;
+	struct sk_buff		*skb;
+	int			err = -ENOMEM;
 
-	अगर (*debug & DEBUG_SOCKET)
-		prपूर्णांकk(KERN_DEBUG "%s: len %d flags %x ch %d proto %x\n",
-		       __func__, (पूर्णांक)len, msg->msg_flags, _pms(sk)->ch.nr,
+	if (*debug & DEBUG_SOCKET)
+		printk(KERN_DEBUG "%s: len %d flags %x ch %d proto %x\n",
+		       __func__, (int)len, msg->msg_flags, _pms(sk)->ch.nr,
 		       sk->sk_protocol);
 
-	अगर (msg->msg_flags & MSG_OOB)
-		वापस -EOPNOTSUPP;
+	if (msg->msg_flags & MSG_OOB)
+		return -EOPNOTSUPP;
 
-	अगर (msg->msg_flags & ~(MSG_DONTWAIT | MSG_NOSIGNAL | MSG_ERRQUEUE))
-		वापस -EINVAL;
+	if (msg->msg_flags & ~(MSG_DONTWAIT | MSG_NOSIGNAL | MSG_ERRQUEUE))
+		return -EINVAL;
 
-	अगर (len < MISDN_HEADER_LEN)
-		वापस -EINVAL;
+	if (len < MISDN_HEADER_LEN)
+		return -EINVAL;
 
-	अगर (sk->sk_state != MISDN_BOUND)
-		वापस -EBADFD;
+	if (sk->sk_state != MISDN_BOUND)
+		return -EBADFD;
 
 	lock_sock(sk);
 
 	skb = _l2_alloc_skb(len, GFP_KERNEL);
-	अगर (!skb)
-		जाओ करोne;
+	if (!skb)
+		goto done;
 
-	अगर (स_नकल_from_msg(skb_put(skb, len), msg, len)) अणु
+	if (memcpy_from_msg(skb_put(skb, len), msg, len)) {
 		err = -EFAULT;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	स_नकल(mISDN_HEAD_P(skb), skb->data, MISDN_HEADER_LEN);
+	memcpy(mISDN_HEAD_P(skb), skb->data, MISDN_HEADER_LEN);
 	skb_pull(skb, MISDN_HEADER_LEN);
 
-	अगर (msg->msg_namelen >= माप(काष्ठा sockaddr_mISDN)) अणु
-		/* अगर we have a address, we use it */
-		DECLARE_SOCKADDR(काष्ठा sockaddr_mISDN *, maddr, msg->msg_name);
+	if (msg->msg_namelen >= sizeof(struct sockaddr_mISDN)) {
+		/* if we have a address, we use it */
+		DECLARE_SOCKADDR(struct sockaddr_mISDN *, maddr, msg->msg_name);
 		mISDN_HEAD_ID(skb) = maddr->channel;
-	पूर्ण अन्यथा अणु /* use शेष क्रम L2 messages */
-		अगर ((sk->sk_protocol == ISDN_P_LAPD_TE) ||
+	} else { /* use default for L2 messages */
+		if ((sk->sk_protocol == ISDN_P_LAPD_TE) ||
 		    (sk->sk_protocol == ISDN_P_LAPD_NT))
 			mISDN_HEAD_ID(skb) = _pms(sk)->ch.nr;
-	पूर्ण
+	}
 
-	अगर (*debug & DEBUG_SOCKET)
-		prपूर्णांकk(KERN_DEBUG "%s: ID:%x\n",
+	if (*debug & DEBUG_SOCKET)
+		printk(KERN_DEBUG "%s: ID:%x\n",
 		       __func__, mISDN_HEAD_ID(skb));
 
 	err = -ENODEV;
-	अगर (!_pms(sk)->ch.peer)
-		जाओ करोne;
+	if (!_pms(sk)->ch.peer)
+		goto done;
 	err = _pms(sk)->ch.recv(_pms(sk)->ch.peer, skb);
-	अगर (err)
-		जाओ करोne;
-	अन्यथा अणु
-		skb = शून्य;
+	if (err)
+		goto done;
+	else {
+		skb = NULL;
 		err = len;
-	पूर्ण
+	}
 
-करोne:
-	kमुक्त_skb(skb);
+done:
+	kfree_skb(skb);
 	release_sock(sk);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक
-data_sock_release(काष्ठा socket *sock)
-अणु
-	काष्ठा sock *sk = sock->sk;
+static int
+data_sock_release(struct socket *sock)
+{
+	struct sock *sk = sock->sk;
 
-	अगर (*debug & DEBUG_SOCKET)
-		prपूर्णांकk(KERN_DEBUG "%s(%p) sk=%p\n", __func__, sock, sk);
-	अगर (!sk)
-		वापस 0;
-	चयन (sk->sk_protocol) अणु
-	हाल ISDN_P_TE_S0:
-	हाल ISDN_P_NT_S0:
-	हाल ISDN_P_TE_E1:
-	हाल ISDN_P_NT_E1:
-		अगर (sk->sk_state == MISDN_BOUND)
+	if (*debug & DEBUG_SOCKET)
+		printk(KERN_DEBUG "%s(%p) sk=%p\n", __func__, sock, sk);
+	if (!sk)
+		return 0;
+	switch (sk->sk_protocol) {
+	case ISDN_P_TE_S0:
+	case ISDN_P_NT_S0:
+	case ISDN_P_TE_E1:
+	case ISDN_P_NT_E1:
+		if (sk->sk_state == MISDN_BOUND)
 			delete_channel(&_pms(sk)->ch);
-		अन्यथा
+		else
 			mISDN_sock_unlink(&data_sockets, sk);
-		अवरोध;
-	हाल ISDN_P_LAPD_TE:
-	हाल ISDN_P_LAPD_NT:
-	हाल ISDN_P_B_RAW:
-	हाल ISDN_P_B_HDLC:
-	हाल ISDN_P_B_X75SLP:
-	हाल ISDN_P_B_L2DTMF:
-	हाल ISDN_P_B_L2DSP:
-	हाल ISDN_P_B_L2DSPHDLC:
+		break;
+	case ISDN_P_LAPD_TE:
+	case ISDN_P_LAPD_NT:
+	case ISDN_P_B_RAW:
+	case ISDN_P_B_HDLC:
+	case ISDN_P_B_X75SLP:
+	case ISDN_P_B_L2DTMF:
+	case ISDN_P_B_L2DSP:
+	case ISDN_P_B_L2DSPHDLC:
 		delete_channel(&_pms(sk)->ch);
 		mISDN_sock_unlink(&data_sockets, sk);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	lock_sock(sk);
 
@@ -273,291 +272,291 @@ data_sock_release(काष्ठा socket *sock)
 	release_sock(sk);
 	sock_put(sk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-data_sock_ioctl_bound(काष्ठा sock *sk, अचिन्हित पूर्णांक cmd, व्योम __user *p)
-अणु
-	काष्ठा mISDN_ctrl_req	cq;
-	पूर्णांक			err = -EINVAL, val[2];
-	काष्ठा mISDNchannel	*bchan, *next;
+static int
+data_sock_ioctl_bound(struct sock *sk, unsigned int cmd, void __user *p)
+{
+	struct mISDN_ctrl_req	cq;
+	int			err = -EINVAL, val[2];
+	struct mISDNchannel	*bchan, *next;
 
 	lock_sock(sk);
-	अगर (!_pms(sk)->dev) अणु
+	if (!_pms(sk)->dev) {
 		err = -ENODEV;
-		जाओ करोne;
-	पूर्ण
-	चयन (cmd) अणु
-	हाल IMCTRLREQ:
-		अगर (copy_from_user(&cq, p, माप(cq))) अणु
+		goto done;
+	}
+	switch (cmd) {
+	case IMCTRLREQ:
+		if (copy_from_user(&cq, p, sizeof(cq))) {
 			err = -EFAULT;
-			अवरोध;
-		पूर्ण
-		अगर ((sk->sk_protocol & ~ISDN_P_B_MASK) == ISDN_P_B_START) अणु
-			list_क्रम_each_entry_safe(bchan, next,
-						 &_pms(sk)->dev->bchannels, list) अणु
-				अगर (bchan->nr == cq.channel) अणु
+			break;
+		}
+		if ((sk->sk_protocol & ~ISDN_P_B_MASK) == ISDN_P_B_START) {
+			list_for_each_entry_safe(bchan, next,
+						 &_pms(sk)->dev->bchannels, list) {
+				if (bchan->nr == cq.channel) {
 					err = bchan->ctrl(bchan,
 							  CONTROL_CHANNEL, &cq);
-					अवरोध;
-				पूर्ण
-			पूर्ण
-		पूर्ण अन्यथा
+					break;
+				}
+			}
+		} else
 			err = _pms(sk)->dev->D.ctrl(&_pms(sk)->dev->D,
 						    CONTROL_CHANNEL, &cq);
-		अगर (err)
-			अवरोध;
-		अगर (copy_to_user(p, &cq, माप(cq)))
+		if (err)
+			break;
+		if (copy_to_user(p, &cq, sizeof(cq)))
 			err = -EFAULT;
-		अवरोध;
-	हाल IMCLEAR_L2:
-		अगर (sk->sk_protocol != ISDN_P_LAPD_NT) अणु
+		break;
+	case IMCLEAR_L2:
+		if (sk->sk_protocol != ISDN_P_LAPD_NT) {
 			err = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		val[0] = cmd;
-		अगर (get_user(val[1], (पूर्णांक __user *)p)) अणु
+		if (get_user(val[1], (int __user *)p)) {
 			err = -EFAULT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		err = _pms(sk)->dev->teimgr->ctrl(_pms(sk)->dev->teimgr,
 						  CONTROL_CHANNEL, val);
-		अवरोध;
-	हाल IMHOLD_L1:
-		अगर (sk->sk_protocol != ISDN_P_LAPD_NT
-		    && sk->sk_protocol != ISDN_P_LAPD_TE) अणु
+		break;
+	case IMHOLD_L1:
+		if (sk->sk_protocol != ISDN_P_LAPD_NT
+		    && sk->sk_protocol != ISDN_P_LAPD_TE) {
 			err = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		val[0] = cmd;
-		अगर (get_user(val[1], (पूर्णांक __user *)p)) अणु
+		if (get_user(val[1], (int __user *)p)) {
 			err = -EFAULT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		err = _pms(sk)->dev->teimgr->ctrl(_pms(sk)->dev->teimgr,
 						  CONTROL_CHANNEL, val);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		err = -EINVAL;
-		अवरोध;
-	पूर्ण
-करोne:
+		break;
+	}
+done:
 	release_sock(sk);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक
-data_sock_ioctl(काष्ठा socket *sock, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	पूर्णांक			err = 0, id;
-	काष्ठा sock		*sk = sock->sk;
-	काष्ठा mISDNdevice	*dev;
-	काष्ठा mISDNversion	ver;
+static int
+data_sock_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
+{
+	int			err = 0, id;
+	struct sock		*sk = sock->sk;
+	struct mISDNdevice	*dev;
+	struct mISDNversion	ver;
 
-	चयन (cmd) अणु
-	हाल IMGETVERSION:
+	switch (cmd) {
+	case IMGETVERSION:
 		ver.major = MISDN_MAJOR_VERSION;
 		ver.minor = MISDN_MINOR_VERSION;
 		ver.release = MISDN_RELEASE;
-		अगर (copy_to_user((व्योम __user *)arg, &ver, माप(ver)))
+		if (copy_to_user((void __user *)arg, &ver, sizeof(ver)))
 			err = -EFAULT;
-		अवरोध;
-	हाल IMGETCOUNT:
+		break;
+	case IMGETCOUNT:
 		id = get_mdevice_count();
-		अगर (put_user(id, (पूर्णांक __user *)arg))
+		if (put_user(id, (int __user *)arg))
 			err = -EFAULT;
-		अवरोध;
-	हाल IMGETDEVINFO:
-		अगर (get_user(id, (पूर्णांक __user *)arg)) अणु
+		break;
+	case IMGETDEVINFO:
+		if (get_user(id, (int __user *)arg)) {
 			err = -EFAULT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		dev = get_mdevice(id);
-		अगर (dev) अणु
-			काष्ठा mISDN_devinfo di;
+		if (dev) {
+			struct mISDN_devinfo di;
 
-			स_रखो(&di, 0, माप(di));
+			memset(&di, 0, sizeof(di));
 			di.id = dev->id;
 			di.Dprotocols = dev->Dprotocols;
 			di.Bprotocols = dev->Bprotocols | get_all_Bprotocols();
 			di.protocol = dev->D.protocol;
-			स_नकल(di.channelmap, dev->channelmap,
-			       माप(di.channelmap));
+			memcpy(di.channelmap, dev->channelmap,
+			       sizeof(di.channelmap));
 			di.nrbchan = dev->nrbchan;
-			strscpy(di.name, dev_name(&dev->dev), माप(di.name));
-			अगर (copy_to_user((व्योम __user *)arg, &di, माप(di)))
+			strscpy(di.name, dev_name(&dev->dev), sizeof(di.name));
+			if (copy_to_user((void __user *)arg, &di, sizeof(di)))
 				err = -EFAULT;
-		पूर्ण अन्यथा
+		} else
 			err = -ENODEV;
-		अवरोध;
-	शेष:
-		अगर (sk->sk_state == MISDN_BOUND)
+		break;
+	default:
+		if (sk->sk_state == MISDN_BOUND)
 			err = data_sock_ioctl_bound(sk, cmd,
-						    (व्योम __user *)arg);
-		अन्यथा
+						    (void __user *)arg);
+		else
 			err = -ENOTCONN;
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-अटल पूर्णांक data_sock_setsockopt(काष्ठा socket *sock, पूर्णांक level, पूर्णांक optname,
-				sockptr_t optval, अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	पूर्णांक err = 0, opt = 0;
+static int data_sock_setsockopt(struct socket *sock, int level, int optname,
+				sockptr_t optval, unsigned int len)
+{
+	struct sock *sk = sock->sk;
+	int err = 0, opt = 0;
 
-	अगर (*debug & DEBUG_SOCKET)
-		prपूर्णांकk(KERN_DEBUG "%s(%p, %d, %x, optval, %d)\n", __func__, sock,
+	if (*debug & DEBUG_SOCKET)
+		printk(KERN_DEBUG "%s(%p, %d, %x, optval, %d)\n", __func__, sock,
 		       level, optname, len);
 
 	lock_sock(sk);
 
-	चयन (optname) अणु
-	हाल MISDN_TIME_STAMP:
-		अगर (copy_from_sockptr(&opt, optval, माप(पूर्णांक))) अणु
+	switch (optname) {
+	case MISDN_TIME_STAMP:
+		if (copy_from_sockptr(&opt, optval, sizeof(int))) {
 			err = -EFAULT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (opt)
+		if (opt)
 			_pms(sk)->cmask |= MISDN_TIME_STAMP;
-		अन्यथा
+		else
 			_pms(sk)->cmask &= ~MISDN_TIME_STAMP;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		err = -ENOPROTOOPT;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	release_sock(sk);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक data_sock_माला_लोockopt(काष्ठा socket *sock, पूर्णांक level, पूर्णांक optname,
-				अक्षर __user *optval, पूर्णांक __user *optlen)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	पूर्णांक len, opt;
+static int data_sock_getsockopt(struct socket *sock, int level, int optname,
+				char __user *optval, int __user *optlen)
+{
+	struct sock *sk = sock->sk;
+	int len, opt;
 
-	अगर (get_user(len, optlen))
-		वापस -EFAULT;
+	if (get_user(len, optlen))
+		return -EFAULT;
 
-	अगर (len != माप(अक्षर))
-		वापस -EINVAL;
+	if (len != sizeof(char))
+		return -EINVAL;
 
-	चयन (optname) अणु
-	हाल MISDN_TIME_STAMP:
-		अगर (_pms(sk)->cmask & MISDN_TIME_STAMP)
+	switch (optname) {
+	case MISDN_TIME_STAMP:
+		if (_pms(sk)->cmask & MISDN_TIME_STAMP)
 			opt = 1;
-		अन्यथा
+		else
 			opt = 0;
 
-		अगर (put_user(opt, optval))
-			वापस -EFAULT;
-		अवरोध;
-	शेष:
-		वापस -ENOPROTOOPT;
-	पूर्ण
+		if (put_user(opt, optval))
+			return -EFAULT;
+		break;
+	default:
+		return -ENOPROTOOPT;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-data_sock_bind(काष्ठा socket *sock, काष्ठा sockaddr *addr, पूर्णांक addr_len)
-अणु
-	काष्ठा sockaddr_mISDN *maddr = (काष्ठा sockaddr_mISDN *) addr;
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा sock *csk;
-	पूर्णांक err = 0;
+static int
+data_sock_bind(struct socket *sock, struct sockaddr *addr, int addr_len)
+{
+	struct sockaddr_mISDN *maddr = (struct sockaddr_mISDN *) addr;
+	struct sock *sk = sock->sk;
+	struct sock *csk;
+	int err = 0;
 
-	अगर (*debug & DEBUG_SOCKET)
-		prपूर्णांकk(KERN_DEBUG "%s(%p) sk=%p\n", __func__, sock, sk);
-	अगर (addr_len != माप(काष्ठा sockaddr_mISDN))
-		वापस -EINVAL;
-	अगर (!maddr || maddr->family != AF_ISDN)
-		वापस -EINVAL;
+	if (*debug & DEBUG_SOCKET)
+		printk(KERN_DEBUG "%s(%p) sk=%p\n", __func__, sock, sk);
+	if (addr_len != sizeof(struct sockaddr_mISDN))
+		return -EINVAL;
+	if (!maddr || maddr->family != AF_ISDN)
+		return -EINVAL;
 
 	lock_sock(sk);
 
-	अगर (_pms(sk)->dev) अणु
+	if (_pms(sk)->dev) {
 		err = -EALREADY;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 	_pms(sk)->dev = get_mdevice(maddr->dev);
-	अगर (!_pms(sk)->dev) अणु
+	if (!_pms(sk)->dev) {
 		err = -ENODEV;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (sk->sk_protocol < ISDN_P_B_START) अणु
-		पढ़ो_lock_bh(&data_sockets.lock);
-		sk_क्रम_each(csk, &data_sockets.head) अणु
-			अगर (sk == csk)
-				जारी;
-			अगर (_pms(csk)->dev != _pms(sk)->dev)
-				जारी;
-			अगर (csk->sk_protocol >= ISDN_P_B_START)
-				जारी;
-			अगर (IS_ISDN_P_TE(csk->sk_protocol)
+	if (sk->sk_protocol < ISDN_P_B_START) {
+		read_lock_bh(&data_sockets.lock);
+		sk_for_each(csk, &data_sockets.head) {
+			if (sk == csk)
+				continue;
+			if (_pms(csk)->dev != _pms(sk)->dev)
+				continue;
+			if (csk->sk_protocol >= ISDN_P_B_START)
+				continue;
+			if (IS_ISDN_P_TE(csk->sk_protocol)
 			    == IS_ISDN_P_TE(sk->sk_protocol))
-				जारी;
-			पढ़ो_unlock_bh(&data_sockets.lock);
+				continue;
+			read_unlock_bh(&data_sockets.lock);
 			err = -EBUSY;
-			जाओ करोne;
-		पूर्ण
-		पढ़ो_unlock_bh(&data_sockets.lock);
-	पूर्ण
+			goto done;
+		}
+		read_unlock_bh(&data_sockets.lock);
+	}
 
 	_pms(sk)->ch.send = mISDN_send;
 	_pms(sk)->ch.ctrl = mISDN_ctrl;
 
-	चयन (sk->sk_protocol) अणु
-	हाल ISDN_P_TE_S0:
-	हाल ISDN_P_NT_S0:
-	हाल ISDN_P_TE_E1:
-	हाल ISDN_P_NT_E1:
+	switch (sk->sk_protocol) {
+	case ISDN_P_TE_S0:
+	case ISDN_P_NT_S0:
+	case ISDN_P_TE_E1:
+	case ISDN_P_NT_E1:
 		mISDN_sock_unlink(&data_sockets, sk);
 		err = connect_layer1(_pms(sk)->dev, &_pms(sk)->ch,
 				     sk->sk_protocol, maddr);
-		अगर (err)
+		if (err)
 			mISDN_sock_link(&data_sockets, sk);
-		अवरोध;
-	हाल ISDN_P_LAPD_TE:
-	हाल ISDN_P_LAPD_NT:
+		break;
+	case ISDN_P_LAPD_TE:
+	case ISDN_P_LAPD_NT:
 		err = create_l2entity(_pms(sk)->dev, &_pms(sk)->ch,
 				      sk->sk_protocol, maddr);
-		अवरोध;
-	हाल ISDN_P_B_RAW:
-	हाल ISDN_P_B_HDLC:
-	हाल ISDN_P_B_X75SLP:
-	हाल ISDN_P_B_L2DTMF:
-	हाल ISDN_P_B_L2DSP:
-	हाल ISDN_P_B_L2DSPHDLC:
+		break;
+	case ISDN_P_B_RAW:
+	case ISDN_P_B_HDLC:
+	case ISDN_P_B_X75SLP:
+	case ISDN_P_B_L2DTMF:
+	case ISDN_P_B_L2DSP:
+	case ISDN_P_B_L2DSPHDLC:
 		err = connect_Bstack(_pms(sk)->dev, &_pms(sk)->ch,
 				     sk->sk_protocol, maddr);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		err = -EPROTONOSUPPORT;
-	पूर्ण
-	अगर (err)
-		जाओ करोne;
+	}
+	if (err)
+		goto done;
 	sk->sk_state = MISDN_BOUND;
 	_pms(sk)->ch.protocol = sk->sk_protocol;
 
-करोne:
+done:
 	release_sock(sk);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक
-data_sock_getname(काष्ठा socket *sock, काष्ठा sockaddr *addr,
-		  पूर्णांक peer)
-अणु
-	काष्ठा sockaddr_mISDN	*maddr = (काष्ठा sockaddr_mISDN *) addr;
-	काष्ठा sock		*sk = sock->sk;
+static int
+data_sock_getname(struct socket *sock, struct sockaddr *addr,
+		  int peer)
+{
+	struct sockaddr_mISDN	*maddr = (struct sockaddr_mISDN *) addr;
+	struct sock		*sk = sock->sk;
 
-	अगर (!_pms(sk)->dev)
-		वापस -EBADFD;
+	if (!_pms(sk)->dev)
+		return -EBADFD;
 
 	lock_sock(sk);
 
@@ -567,10 +566,10 @@ data_sock_getname(काष्ठा socket *sock, काष्ठा sockaddr *
 	maddr->sapi = _pms(sk)->ch.addr & 0xff;
 	maddr->tei = (_pms(sk)->ch.addr >> 8) & 0xff;
 	release_sock(sk);
-	वापस माप(*maddr);
-पूर्ण
+	return sizeof(*maddr);
+}
 
-अटल स्थिर काष्ठा proto_ops data_sock_ops = अणु
+static const struct proto_ops data_sock_ops = {
 	.family		= PF_ISDN,
 	.owner		= THIS_MODULE,
 	.release	= data_sock_release,
@@ -581,26 +580,26 @@ data_sock_getname(काष्ठा socket *sock, काष्ठा sockaddr *
 	.recvmsg	= mISDN_sock_recvmsg,
 	.poll		= datagram_poll,
 	.listen		= sock_no_listen,
-	.shutकरोwn	= sock_no_shutकरोwn,
+	.shutdown	= sock_no_shutdown,
 	.setsockopt	= data_sock_setsockopt,
-	.माला_लोockopt	= data_sock_माला_लोockopt,
+	.getsockopt	= data_sock_getsockopt,
 	.connect	= sock_no_connect,
 	.socketpair	= sock_no_socketpair,
 	.accept		= sock_no_accept,
 	.mmap		= sock_no_mmap
-पूर्ण;
+};
 
-अटल पूर्णांक
-data_sock_create(काष्ठा net *net, काष्ठा socket *sock, पूर्णांक protocol, पूर्णांक kern)
-अणु
-	काष्ठा sock *sk;
+static int
+data_sock_create(struct net *net, struct socket *sock, int protocol, int kern)
+{
+	struct sock *sk;
 
-	अगर (sock->type != SOCK_DGRAM)
-		वापस -ESOCKTNOSUPPORT;
+	if (sock->type != SOCK_DGRAM)
+		return -ESOCKTNOSUPPORT;
 
 	sk = sk_alloc(net, PF_ISDN, GFP_KERNEL, &mISDN_proto, kern);
-	अगर (!sk)
-		वापस -ENOMEM;
+	if (!sk)
+		return -ENOMEM;
 
 	sock_init_data(sock, sk);
 
@@ -612,123 +611,123 @@ data_sock_create(काष्ठा net *net, काष्ठा socket *sock, �
 	sk->sk_state    = MISDN_OPEN;
 	mISDN_sock_link(&data_sockets, sk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-base_sock_release(काष्ठा socket *sock)
-अणु
-	काष्ठा sock *sk = sock->sk;
+static int
+base_sock_release(struct socket *sock)
+{
+	struct sock *sk = sock->sk;
 
-	prपूर्णांकk(KERN_DEBUG "%s(%p) sk=%p\n", __func__, sock, sk);
-	अगर (!sk)
-		वापस 0;
+	printk(KERN_DEBUG "%s(%p) sk=%p\n", __func__, sock, sk);
+	if (!sk)
+		return 0;
 
 	mISDN_sock_unlink(&base_sockets, sk);
 	sock_orphan(sk);
 	sock_put(sk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-base_sock_ioctl(काष्ठा socket *sock, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	पूर्णांक			err = 0, id;
-	काष्ठा mISDNdevice	*dev;
-	काष्ठा mISDNversion	ver;
+static int
+base_sock_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
+{
+	int			err = 0, id;
+	struct mISDNdevice	*dev;
+	struct mISDNversion	ver;
 
-	चयन (cmd) अणु
-	हाल IMGETVERSION:
+	switch (cmd) {
+	case IMGETVERSION:
 		ver.major = MISDN_MAJOR_VERSION;
 		ver.minor = MISDN_MINOR_VERSION;
 		ver.release = MISDN_RELEASE;
-		अगर (copy_to_user((व्योम __user *)arg, &ver, माप(ver)))
+		if (copy_to_user((void __user *)arg, &ver, sizeof(ver)))
 			err = -EFAULT;
-		अवरोध;
-	हाल IMGETCOUNT:
+		break;
+	case IMGETCOUNT:
 		id = get_mdevice_count();
-		अगर (put_user(id, (पूर्णांक __user *)arg))
+		if (put_user(id, (int __user *)arg))
 			err = -EFAULT;
-		अवरोध;
-	हाल IMGETDEVINFO:
-		अगर (get_user(id, (पूर्णांक __user *)arg)) अणु
+		break;
+	case IMGETDEVINFO:
+		if (get_user(id, (int __user *)arg)) {
 			err = -EFAULT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		dev = get_mdevice(id);
-		अगर (dev) अणु
-			काष्ठा mISDN_devinfo di;
+		if (dev) {
+			struct mISDN_devinfo di;
 
-			स_रखो(&di, 0, माप(di));
+			memset(&di, 0, sizeof(di));
 			di.id = dev->id;
 			di.Dprotocols = dev->Dprotocols;
 			di.Bprotocols = dev->Bprotocols | get_all_Bprotocols();
 			di.protocol = dev->D.protocol;
-			स_नकल(di.channelmap, dev->channelmap,
-			       माप(di.channelmap));
+			memcpy(di.channelmap, dev->channelmap,
+			       sizeof(di.channelmap));
 			di.nrbchan = dev->nrbchan;
-			strscpy(di.name, dev_name(&dev->dev), माप(di.name));
-			अगर (copy_to_user((व्योम __user *)arg, &di, माप(di)))
+			strscpy(di.name, dev_name(&dev->dev), sizeof(di.name));
+			if (copy_to_user((void __user *)arg, &di, sizeof(di)))
 				err = -EFAULT;
-		पूर्ण अन्यथा
+		} else
 			err = -ENODEV;
-		अवरोध;
-	हाल IMSETDEVNAME:
-	अणु
-		काष्ठा mISDN_devनाम dn;
-		अगर (copy_from_user(&dn, (व्योम __user *)arg,
-				   माप(dn))) अणु
+		break;
+	case IMSETDEVNAME:
+	{
+		struct mISDN_devrename dn;
+		if (copy_from_user(&dn, (void __user *)arg,
+				   sizeof(dn))) {
 			err = -EFAULT;
-			अवरोध;
-		पूर्ण
-		dn.name[माप(dn.name) - 1] = '\0';
+			break;
+		}
+		dn.name[sizeof(dn.name) - 1] = '\0';
 		dev = get_mdevice(dn.id);
-		अगर (dev)
-			err = device_नाम(&dev->dev, dn.name);
-		अन्यथा
+		if (dev)
+			err = device_rename(&dev->dev, dn.name);
+		else
 			err = -ENODEV;
-	पूर्ण
-	अवरोध;
-	शेष:
+	}
+	break;
+	default:
 		err = -EINVAL;
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-अटल पूर्णांक
-base_sock_bind(काष्ठा socket *sock, काष्ठा sockaddr *addr, पूर्णांक addr_len)
-अणु
-	काष्ठा sockaddr_mISDN *maddr = (काष्ठा sockaddr_mISDN *) addr;
-	काष्ठा sock *sk = sock->sk;
-	पूर्णांक err = 0;
+static int
+base_sock_bind(struct socket *sock, struct sockaddr *addr, int addr_len)
+{
+	struct sockaddr_mISDN *maddr = (struct sockaddr_mISDN *) addr;
+	struct sock *sk = sock->sk;
+	int err = 0;
 
-	अगर (addr_len < माप(काष्ठा sockaddr_mISDN))
-		वापस -EINVAL;
+	if (addr_len < sizeof(struct sockaddr_mISDN))
+		return -EINVAL;
 
-	अगर (!maddr || maddr->family != AF_ISDN)
-		वापस -EINVAL;
+	if (!maddr || maddr->family != AF_ISDN)
+		return -EINVAL;
 
 	lock_sock(sk);
 
-	अगर (_pms(sk)->dev) अणु
+	if (_pms(sk)->dev) {
 		err = -EALREADY;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	_pms(sk)->dev = get_mdevice(maddr->dev);
-	अगर (!_pms(sk)->dev) अणु
+	if (!_pms(sk)->dev) {
 		err = -ENODEV;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 	sk->sk_state = MISDN_BOUND;
 
-करोne:
+done:
 	release_sock(sk);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल स्थिर काष्ठा proto_ops base_sock_ops = अणु
+static const struct proto_ops base_sock_ops = {
 	.family		= PF_ISDN,
 	.owner		= THIS_MODULE,
 	.release	= base_sock_release,
@@ -738,27 +737,27 @@ base_sock_bind(काष्ठा socket *sock, काष्ठा sockaddr *add
 	.sendmsg	= sock_no_sendmsg,
 	.recvmsg	= sock_no_recvmsg,
 	.listen		= sock_no_listen,
-	.shutकरोwn	= sock_no_shutकरोwn,
+	.shutdown	= sock_no_shutdown,
 	.connect	= sock_no_connect,
 	.socketpair	= sock_no_socketpair,
 	.accept		= sock_no_accept,
 	.mmap		= sock_no_mmap
-पूर्ण;
+};
 
 
-अटल पूर्णांक
-base_sock_create(काष्ठा net *net, काष्ठा socket *sock, पूर्णांक protocol, पूर्णांक kern)
-अणु
-	काष्ठा sock *sk;
+static int
+base_sock_create(struct net *net, struct socket *sock, int protocol, int kern)
+{
+	struct sock *sk;
 
-	अगर (sock->type != SOCK_RAW)
-		वापस -ESOCKTNOSUPPORT;
-	अगर (!capable(CAP_NET_RAW))
-		वापस -EPERM;
+	if (sock->type != SOCK_RAW)
+		return -ESOCKTNOSUPPORT;
+	if (!capable(CAP_NET_RAW))
+		return -EPERM;
 
 	sk = sk_alloc(net, PF_ISDN, GFP_KERNEL, &mISDN_proto, kern);
-	अगर (!sk)
-		वापस -ENOMEM;
+	if (!sk)
+		return -ENOMEM;
 
 	sock_init_data(sock, sk);
 	sock->ops = &base_sock_ops;
@@ -768,59 +767,59 @@ base_sock_create(काष्ठा net *net, काष्ठा socket *sock, �
 	sk->sk_state    = MISDN_OPEN;
 	mISDN_sock_link(&base_sockets, sk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-mISDN_sock_create(काष्ठा net *net, काष्ठा socket *sock, पूर्णांक proto, पूर्णांक kern)
-अणु
-	पूर्णांक err = -EPROTONOSUPPORT;
+static int
+mISDN_sock_create(struct net *net, struct socket *sock, int proto, int kern)
+{
+	int err = -EPROTONOSUPPORT;
 
-	चयन (proto) अणु
-	हाल ISDN_P_BASE:
+	switch (proto) {
+	case ISDN_P_BASE:
 		err = base_sock_create(net, sock, proto, kern);
-		अवरोध;
-	हाल ISDN_P_TE_S0:
-	हाल ISDN_P_NT_S0:
-	हाल ISDN_P_TE_E1:
-	हाल ISDN_P_NT_E1:
-	हाल ISDN_P_LAPD_TE:
-	हाल ISDN_P_LAPD_NT:
-	हाल ISDN_P_B_RAW:
-	हाल ISDN_P_B_HDLC:
-	हाल ISDN_P_B_X75SLP:
-	हाल ISDN_P_B_L2DTMF:
-	हाल ISDN_P_B_L2DSP:
-	हाल ISDN_P_B_L2DSPHDLC:
+		break;
+	case ISDN_P_TE_S0:
+	case ISDN_P_NT_S0:
+	case ISDN_P_TE_E1:
+	case ISDN_P_NT_E1:
+	case ISDN_P_LAPD_TE:
+	case ISDN_P_LAPD_NT:
+	case ISDN_P_B_RAW:
+	case ISDN_P_B_HDLC:
+	case ISDN_P_B_X75SLP:
+	case ISDN_P_B_L2DTMF:
+	case ISDN_P_B_L2DSP:
+	case ISDN_P_B_L2DSPHDLC:
 		err = data_sock_create(net, sock, proto, kern);
-		अवरोध;
-	शेष:
-		वापस err;
-	पूर्ण
+		break;
+	default:
+		return err;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल स्थिर काष्ठा net_proto_family mISDN_sock_family_ops = अणु
+static const struct net_proto_family mISDN_sock_family_ops = {
 	.owner  = THIS_MODULE,
 	.family = PF_ISDN,
 	.create = mISDN_sock_create,
-पूर्ण;
+};
 
-पूर्णांक
-misdn_sock_init(u_पूर्णांक *deb)
-अणु
-	पूर्णांक err;
+int
+misdn_sock_init(u_int *deb)
+{
+	int err;
 
 	debug = deb;
-	err = sock_रेजिस्टर(&mISDN_sock_family_ops);
-	अगर (err)
-		prपूर्णांकk(KERN_ERR "%s: error(%d)\n", __func__, err);
-	वापस err;
-पूर्ण
+	err = sock_register(&mISDN_sock_family_ops);
+	if (err)
+		printk(KERN_ERR "%s: error(%d)\n", __func__, err);
+	return err;
+}
 
-व्योम
-misdn_sock_cleanup(व्योम)
-अणु
-	sock_unरेजिस्टर(PF_ISDN);
-पूर्ण
+void
+misdn_sock_cleanup(void)
+{
+	sock_unregister(PF_ISDN);
+}

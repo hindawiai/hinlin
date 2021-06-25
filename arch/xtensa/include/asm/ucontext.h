@@ -1,23 +1,22 @@
-<शैली गुरु>
 /*
- * include/यंत्र-xtensa/ucontext.h
+ * include/asm-xtensa/ucontext.h
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 2001 - 2005 Tensilica Inc.
  */
 
-#अगर_अघोषित _XTENSA_UCONTEXT_H
-#घोषणा _XTENSA_UCONTEXT_H
+#ifndef _XTENSA_UCONTEXT_H
+#define _XTENSA_UCONTEXT_H
 
-काष्ठा ucontext अणु
-	अचिन्हित दीर्घ	  uc_flags;
-	काष्ठा ucontext  *uc_link;
+struct ucontext {
+	unsigned long	  uc_flags;
+	struct ucontext  *uc_link;
 	stack_t		  uc_stack;
-	काष्ठा sigcontext uc_mcontext;
-	sigset_t	  uc_sigmask;	/* mask last क्रम extensibility */
-पूर्ण;
+	struct sigcontext uc_mcontext;
+	sigset_t	  uc_sigmask;	/* mask last for extensibility */
+};
 
-#पूर्ण_अगर /* _XTENSA_UCONTEXT_H */
+#endif /* _XTENSA_UCONTEXT_H */

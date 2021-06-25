@@ -1,192 +1,191 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * command काष्ठाure borrowed from udev
+ * command structure borrowed from udev
  * (git://git.kernel.org/pub/scm/linux/hotplug/udev.git)
  *
  * Copyright (C) 2011 matt mooney <mfm@muteddisk.com>
  *               2005-2007 Takahiro Hirofuchi
  */
 
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
+#include <stdio.h>
+#include <stdlib.h>
 
-#समावेश <getopt.h>
-#समावेश <syslog.h>
+#include <getopt.h>
+#include <syslog.h>
 
-#समावेश "usbip_common.h"
-#समावेश "usbip_network.h"
-#समावेश "usbip.h"
+#include "usbip_common.h"
+#include "usbip_network.h"
+#include "usbip.h"
 
-अटल पूर्णांक usbip_help(पूर्णांक argc, अक्षर *argv[]);
-अटल पूर्णांक usbip_version(पूर्णांक argc, अक्षर *argv[]);
+static int usbip_help(int argc, char *argv[]);
+static int usbip_version(int argc, char *argv[]);
 
-अटल स्थिर अक्षर usbip_version_string[] = PACKAGE_STRING;
+static const char usbip_version_string[] = PACKAGE_STRING;
 
-अटल स्थिर अक्षर usbip_usage_string[] =
+static const char usbip_usage_string[] =
 	"usbip [--debug] [--log] [--tcp-port PORT] [version]\n"
 	"             [help] <command> <args>\n";
 
-अटल व्योम usbip_usage(व्योम)
-अणु
-	म_लिखो("usage: %s", usbip_usage_string);
-पूर्ण
+static void usbip_usage(void)
+{
+	printf("usage: %s", usbip_usage_string);
+}
 
-काष्ठा command अणु
-	स्थिर अक्षर *name;
-	पूर्णांक (*fn)(पूर्णांक argc, अक्षर *argv[]);
-	स्थिर अक्षर *help;
-	व्योम (*usage)(व्योम);
-पूर्ण;
+struct command {
+	const char *name;
+	int (*fn)(int argc, char *argv[]);
+	const char *help;
+	void (*usage)(void);
+};
 
-अटल स्थिर काष्ठा command cmds[] = अणु
-	अणु
+static const struct command cmds[] = {
+	{
 		.name  = "help",
 		.fn    = usbip_help,
-		.help  = शून्य,
-		.usage = शून्य
-	पूर्ण,
-	अणु
+		.help  = NULL,
+		.usage = NULL
+	},
+	{
 		.name  = "version",
 		.fn    = usbip_version,
-		.help  = शून्य,
-		.usage = शून्य
-	पूर्ण,
-	अणु
+		.help  = NULL,
+		.usage = NULL
+	},
+	{
 		.name  = "attach",
 		.fn    = usbip_attach,
 		.help  = "Attach a remote USB device",
 		.usage = usbip_attach_usage
-	पूर्ण,
-	अणु
+	},
+	{
 		.name  = "detach",
 		.fn    = usbip_detach,
 		.help  = "Detach a remote USB device",
 		.usage = usbip_detach_usage
-	पूर्ण,
-	अणु
+	},
+	{
 		.name  = "list",
 		.fn    = usbip_list,
 		.help  = "List exportable or local USB devices",
 		.usage = usbip_list_usage
-	पूर्ण,
-	अणु
+	},
+	{
 		.name  = "bind",
 		.fn    = usbip_bind,
 		.help  = "Bind device to " USBIP_HOST_DRV_NAME ".ko",
 		.usage = usbip_bind_usage
-	पूर्ण,
-	अणु
+	},
+	{
 		.name  = "unbind",
 		.fn    = usbip_unbind,
 		.help  = "Unbind device from " USBIP_HOST_DRV_NAME ".ko",
 		.usage = usbip_unbind_usage
-	पूर्ण,
-	अणु
+	},
+	{
 		.name  = "port",
 		.fn    = usbip_port_show,
 		.help  = "Show imported USB devices",
-		.usage = शून्य
-	पूर्ण,
-	अणु शून्य, शून्य, शून्य, शून्य पूर्ण
-पूर्ण;
+		.usage = NULL
+	},
+	{ NULL, NULL, NULL, NULL }
+};
 
-अटल पूर्णांक usbip_help(पूर्णांक argc, अक्षर *argv[])
-अणु
-	स्थिर काष्ठा command *cmd;
-	पूर्णांक i;
-	पूर्णांक ret = 0;
+static int usbip_help(int argc, char *argv[])
+{
+	const struct command *cmd;
+	int i;
+	int ret = 0;
 
-	अगर (argc > 1 && argv++) अणु
-		क्रम (i = 0; cmds[i].name != शून्य; i++)
-			अगर (!म_भेद(cmds[i].name, argv[0]) && cmds[i].usage) अणु
+	if (argc > 1 && argv++) {
+		for (i = 0; cmds[i].name != NULL; i++)
+			if (!strcmp(cmds[i].name, argv[0]) && cmds[i].usage) {
 				cmds[i].usage();
-				जाओ करोne;
-			पूर्ण
+				goto done;
+			}
 		ret = -1;
-	पूर्ण
+	}
 
 	usbip_usage();
-	म_लिखो("\n");
-	क्रम (cmd = cmds; cmd->name != शून्य; cmd++)
-		अगर (cmd->help != शून्य)
-			म_लिखो("  %-10s %s\n", cmd->name, cmd->help);
-	म_लिखो("\n");
-करोne:
-	वापस ret;
-पूर्ण
+	printf("\n");
+	for (cmd = cmds; cmd->name != NULL; cmd++)
+		if (cmd->help != NULL)
+			printf("  %-10s %s\n", cmd->name, cmd->help);
+	printf("\n");
+done:
+	return ret;
+}
 
-अटल पूर्णांक usbip_version(पूर्णांक argc, अक्षर *argv[])
-अणु
-	(व्योम) argc;
-	(व्योम) argv;
+static int usbip_version(int argc, char *argv[])
+{
+	(void) argc;
+	(void) argv;
 
-	म_लिखो(PROGNAME " (%s)\n", usbip_version_string);
-	वापस 0;
-पूर्ण
+	printf(PROGNAME " (%s)\n", usbip_version_string);
+	return 0;
+}
 
-अटल पूर्णांक run_command(स्थिर काष्ठा command *cmd, पूर्णांक argc, अक्षर *argv[])
-अणु
+static int run_command(const struct command *cmd, int argc, char *argv[])
+{
 	dbg("running command: `%s'", cmd->name);
-	वापस cmd->fn(argc, argv);
-पूर्ण
+	return cmd->fn(argc, argv);
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
-	अटल स्थिर काष्ठा option opts[] = अणु
-		अणु "debug",    no_argument,       शून्य, 'd' पूर्ण,
-		अणु "log",      no_argument,       शून्य, 'l' पूर्ण,
-		अणु "tcp-port", required_argument, शून्य, 't' पूर्ण,
-		अणु शून्य,       0,                 शून्य,  0  पूर्ण
-	पूर्ण;
+int main(int argc, char *argv[])
+{
+	static const struct option opts[] = {
+		{ "debug",    no_argument,       NULL, 'd' },
+		{ "log",      no_argument,       NULL, 'l' },
+		{ "tcp-port", required_argument, NULL, 't' },
+		{ NULL,       0,                 NULL,  0  }
+	};
 
-	अक्षर *cmd;
-	पूर्णांक opt;
-	पूर्णांक i, rc = -1;
+	char *cmd;
+	int opt;
+	int i, rc = -1;
 
-	usbip_use_मानक_त्रुटि = 1;
+	usbip_use_stderr = 1;
 	opterr = 0;
-	क्रम (;;) अणु
-		opt = getopt_दीर्घ(argc, argv, "+dlt:", opts, शून्य);
+	for (;;) {
+		opt = getopt_long(argc, argv, "+dlt:", opts, NULL);
 
-		अगर (opt == -1)
-			अवरोध;
+		if (opt == -1)
+			break;
 
-		चयन (opt) अणु
-		हाल 'd':
+		switch (opt) {
+		case 'd':
 			usbip_use_debug = 1;
-			अवरोध;
-		हाल 'l':
+			break;
+		case 'l':
 			usbip_use_syslog = 1;
-			खोलोlog("", LOG_PID, LOG_USER);
-			अवरोध;
-		हाल 't':
+			openlog("", LOG_PID, LOG_USER);
+			break;
+		case 't':
 			usbip_setup_port_number(optarg);
-			अवरोध;
-		हाल '?':
-			म_लिखो("usbip: invalid option\n");
-			/* Terminate after prपूर्णांकing error */
+			break;
+		case '?':
+			printf("usbip: invalid option\n");
+			/* Terminate after printing error */
 			/* FALLTHRU */
-		शेष:
+		default:
 			usbip_usage();
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	cmd = argv[optind];
-	अगर (cmd) अणु
-		क्रम (i = 0; cmds[i].name != शून्य; i++)
-			अगर (!म_भेद(cmds[i].name, cmd)) अणु
+	if (cmd) {
+		for (i = 0; cmds[i].name != NULL; i++)
+			if (!strcmp(cmds[i].name, cmd)) {
 				argc -= optind;
 				argv += optind;
 				optind = 0;
 				rc = run_command(&cmds[i], argc, argv);
-				जाओ out;
-			पूर्ण
-	पूर्ण
+				goto out;
+			}
+	}
 
 	/* invalid command */
-	usbip_help(0, शून्य);
+	usbip_help(0, NULL);
 out:
-	वापस (rc > -1 ? निकास_सफल : निकास_त्रुटि);
-पूर्ण
+	return (rc > -1 ? EXIT_SUCCESS : EXIT_FAILURE);
+}

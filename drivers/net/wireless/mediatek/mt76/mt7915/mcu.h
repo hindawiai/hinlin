@@ -1,11 +1,10 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: ISC */
+/* SPDX-License-Identifier: ISC */
 /* Copyright (C) 2020 MediaTek Inc. */
 
-#अगर_अघोषित __MT7915_MCU_H
-#घोषणा __MT7915_MCU_H
+#ifndef __MT7915_MCU_H
+#define __MT7915_MCU_H
 
-काष्ठा mt7915_mcu_txd अणु
+struct mt7915_mcu_txd {
 	__le32 txd[8];
 
 	__le16 len;
@@ -13,7 +12,7 @@
 
 	u8 cid;
 	u8 pkt_type;
-	u8 set_query; /* FW करोn't care */
+	u8 set_query; /* FW don't care */
 	u8 seq;
 
 	u8 uc_d2b0_rev;
@@ -22,10 +21,10 @@
 	u8 ext_cid_ack;
 
 	u32 reserved[5];
-पूर्ण __packed __aligned(4);
+} __packed __aligned(4);
 
 /* event table */
-क्रमागत अणु
+enum {
 	MCU_EVENT_TARGET_ADDRESS_LEN = 0x01,
 	MCU_EVENT_FW_START = 0x01,
 	MCU_EVENT_GENERIC = 0x01,
@@ -34,10 +33,10 @@
 	MCU_EVENT_CH_PRIVILEGE = 0x18,
 	MCU_EVENT_EXT = 0xed,
 	MCU_EVENT_RESTART_DL = 0xef,
-पूर्ण;
+};
 
 /* ext event table */
-क्रमागत अणु
+enum {
 	MCU_EXT_EVENT_PS_SYNC = 0x5,
 	MCU_EXT_EVENT_FW_LOG_2_HOST = 0x13,
 	MCU_EXT_EVENT_THERMAL_PROTECT = 0x22,
@@ -45,16 +44,16 @@
 	MCU_EXT_EVENT_RDD_REPORT = 0x3a,
 	MCU_EXT_EVENT_CSA_NOTIFY = 0x4f,
 	MCU_EXT_EVENT_RATE_REPORT = 0x87,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	MCU_ATE_SET_TRX = 0x1,
 	MCU_ATE_SET_FREQ_OFFSET = 0xa,
 	MCU_ATE_SET_SLOT_TIME = 0x13,
 	MCU_ATE_CLEAN_TXQUEUE = 0x1c,
-पूर्ण;
+};
 
-काष्ठा mt7915_mcu_rxd अणु
+struct mt7915_mcu_rxd {
 	__le32 rxd[6];
 
 	__le16 len;
@@ -67,27 +66,27 @@
 	u8 ext_eid;
 	u8 __rsv1[2];
 	u8 s2d_index;
-पूर्ण;
+};
 
-काष्ठा mt7915_mcu_csa_notअगरy अणु
-	काष्ठा mt7915_mcu_rxd rxd;
+struct mt7915_mcu_csa_notify {
+	struct mt7915_mcu_rxd rxd;
 
 	u8 omac_idx;
 	u8 csa_count;
 	u8 band_idx;
 	u8 rsv;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा mt7915_mcu_rdd_report अणु
-	काष्ठा mt7915_mcu_rxd rxd;
+struct mt7915_mcu_rdd_report {
+	struct mt7915_mcu_rxd rxd;
 
 	u8 band_idx;
-	u8 दीर्घ_detected;
-	u8 स्थिरant_prf_detected;
+	u8 long_detected;
+	u8 constant_prf_detected;
 	u8 staggered_prf_detected;
 	u8 radar_type_idx;
 	u8 periodic_pulse_num;
-	u8 दीर्घ_pulse_num;
+	u8 long_pulse_num;
 	u8 hw_pulse_num;
 
 	u8 out_lpn;
@@ -100,50 +99,50 @@
 
 	u8 rsv;
 
-	__le32 out_pri_स्थिर;
+	__le32 out_pri_const;
 	__le32 out_pri_stg[3];
 
-	काष्ठा अणु
+	struct {
 		__le32 start;
 		__le16 pulse_width;
-		__le16 pulse_घातer;
+		__le16 pulse_power;
 		u8 mdrdy_flag;
 		u8 rsv[3];
-	पूर्ण दीर्घ_pulse[32];
+	} long_pulse[32];
 
-	काष्ठा अणु
+	struct {
 		__le32 start;
 		__le16 pulse_width;
-		__le16 pulse_घातer;
+		__le16 pulse_power;
 		u8 mdrdy_flag;
 		u8 rsv[3];
-	पूर्ण periodic_pulse[32];
+	} periodic_pulse[32];
 
-	काष्ठा अणु
+	struct {
 		__le32 start;
 		__le16 pulse_width;
-		__le16 pulse_घातer;
+		__le16 pulse_power;
 		u8 sc_pass;
 		u8 sw_reset;
 		u8 mdrdy_flag;
 		u8 tx_active;
-	पूर्ण hw_pulse[32];
-पूर्ण __packed;
+	} hw_pulse[32];
+} __packed;
 
-काष्ठा mt7915_mcu_eeprom अणु
+struct mt7915_mcu_eeprom {
 	u8 buffer_mode;
-	u8 क्रमmat;
+	u8 format;
 	__le16 len;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा mt7915_mcu_eeprom_info अणु
+struct mt7915_mcu_eeprom_info {
 	__le32 addr;
 	__le32 valid;
 	u8 data[16];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा mt7915_mcu_ra_info अणु
-	काष्ठा mt7915_mcu_rxd rxd;
+struct mt7915_mcu_ra_info {
+	struct mt7915_mcu_rxd rxd;
 
 	__le32 event_id;
 	__le16 wlan_idx;
@@ -152,13 +151,13 @@
 	__le16 dump_group;
 
 	__le32 suggest_rate;
-	__le32 min_rate;	/* क्रम dynamic sounding */
-	__le32 max_rate;	/* क्रम dynamic sounding */
-	__le32 init_rate_करोwn_rate;
+	__le32 min_rate;	/* for dynamic sounding */
+	__le32 max_rate;	/* for dynamic sounding */
+	__le32 init_rate_down_rate;
 
 	__le16 curr_rate;
-	__le16 init_rate_करोwn_total;
-	__le16 init_rate_करोwn_succ;
+	__le16 init_rate_down_total;
+	__le16 init_rate_down_succ;
 	__le16 success;
 	__le16 attempts;
 
@@ -173,11 +172,11 @@
 	u8 suggest_wf;
 	u8 try_up_check;
 	u8 prob_up_period;
-	u8 prob_करोwn_pending;
-पूर्ण __packed;
+	u8 prob_down_pending;
+} __packed;
 
 
-काष्ठा mt7915_mcu_phy_rx_info अणु
+struct mt7915_mcu_phy_rx_info {
 	u8 category;
 	u8 rate;
 	u8 mode;
@@ -186,62 +185,62 @@
 	u8 coding;
 	u8 stbc;
 	u8 bw;
-पूर्ण;
+};
 
-#घोषणा MT_RA_RATE_NSS			GENMASK(8, 6)
-#घोषणा MT_RA_RATE_MCS			GENMASK(3, 0)
-#घोषणा MT_RA_RATE_TX_MODE		GENMASK(12, 9)
-#घोषणा MT_RA_RATE_DCM_EN		BIT(4)
-#घोषणा MT_RA_RATE_BW			GENMASK(14, 13)
+#define MT_RA_RATE_NSS			GENMASK(8, 6)
+#define MT_RA_RATE_MCS			GENMASK(3, 0)
+#define MT_RA_RATE_TX_MODE		GENMASK(12, 9)
+#define MT_RA_RATE_DCM_EN		BIT(4)
+#define MT_RA_RATE_BW			GENMASK(14, 13)
 
-काष्ठा edca अणु
+struct edca {
 	u8 queue;
 	u8 set;
-	u8 aअगरs;
+	u8 aifs;
 	u8 cw_min;
 	__le16 cw_max;
 	__le16 txop;
-पूर्ण;
+};
 
-काष्ठा mt7915_mcu_tx अणु
+struct mt7915_mcu_tx {
 	u8 total;
 	u8 action;
 	u8 valid;
 	u8 mode;
 
-	काष्ठा edca edca[IEEE80211_NUM_ACS];
-पूर्ण __packed;
+	struct edca edca[IEEE80211_NUM_ACS];
+} __packed;
 
-#घोषणा WMM_AIFS_SET		BIT(0)
-#घोषणा WMM_CW_MIN_SET		BIT(1)
-#घोषणा WMM_CW_MAX_SET		BIT(2)
-#घोषणा WMM_TXOP_SET		BIT(3)
-#घोषणा WMM_PARAM_SET		GENMASK(3, 0)
+#define WMM_AIFS_SET		BIT(0)
+#define WMM_CW_MIN_SET		BIT(1)
+#define WMM_CW_MAX_SET		BIT(2)
+#define WMM_TXOP_SET		BIT(3)
+#define WMM_PARAM_SET		GENMASK(3, 0)
 
-#घोषणा MCU_PQ_ID(p, q)			(((p) << 15) | ((q) << 10))
-#घोषणा MCU_PKT_ID			0xa0
+#define MCU_PQ_ID(p, q)			(((p) << 15) | ((q) << 10))
+#define MCU_PKT_ID			0xa0
 
-क्रमागत अणु
+enum {
 	MCU_Q_QUERY,
 	MCU_Q_SET,
 	MCU_Q_RESERVED,
 	MCU_Q_NA
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	MCU_S2D_H2N,
 	MCU_S2D_C2N,
 	MCU_S2D_H2C,
 	MCU_S2D_H2CN
-पूर्ण;
+};
 
 
-#घोषणा __MCU_CMD_FIELD_ID	GENMASK(7, 0)
-#घोषणा __MCU_CMD_FIELD_EXT_ID	GENMASK(15, 8)
-#घोषणा __MCU_CMD_FIELD_QUERY	BIT(16)
-#घोषणा __MCU_CMD_FIELD_WA	BIT(17)
+#define __MCU_CMD_FIELD_ID	GENMASK(7, 0)
+#define __MCU_CMD_FIELD_EXT_ID	GENMASK(15, 8)
+#define __MCU_CMD_FIELD_QUERY	BIT(16)
+#define __MCU_CMD_FIELD_WA	BIT(17)
 
-क्रमागत अणु
+enum {
 	MCU_CMD_TARGET_ADDRESS_LEN_REQ = 0x01,
 	MCU_CMD_FW_START_REQ = 0x02,
 	MCU_CMD_INIT_ACCESS_REG = 0x3,
@@ -253,9 +252,9 @@
 	MCU_CMD_EXT_CID = 0xED,
 	MCU_CMD_FW_SCATTER = 0xEE,
 	MCU_CMD_RESTART_DL_REQ = 0xEF,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	MCU_EXT_CMD_EFUSE_ACCESS = 0x01,
 	MCU_EXT_CMD_RF_TEST = 0x04,
 	MCU_EXT_CMD_PM_STATE_CTRL = 0x07,
@@ -288,99 +287,99 @@
 	MCU_EXT_CMD_GROUP_PRE_CAL_INFO = 0xab,
 	MCU_EXT_CMD_DPD_PRE_CAL_INFO = 0xac,
 	MCU_EXT_CMD_PHY_STAT_INFO = 0xad,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	MCU_WA_PARAM_CMD_QUERY,
 	MCU_WA_PARAM_CMD_SET,
 	MCU_WA_PARAM_CMD_CAPABILITY,
 	MCU_WA_PARAM_CMD_DEBUG,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	MCU_WA_PARAM_RED = 0x0e,
-पूर्ण;
+};
 
-#घोषणा MCU_CMD(_t)		FIELD_PREP(__MCU_CMD_FIELD_ID, MCU_CMD_##_t)
-#घोषणा MCU_EXT_CMD(_t)		(MCU_CMD(EXT_CID) | \
+#define MCU_CMD(_t)		FIELD_PREP(__MCU_CMD_FIELD_ID, MCU_CMD_##_t)
+#define MCU_EXT_CMD(_t)		(MCU_CMD(EXT_CID) | \
 				 FIELD_PREP(__MCU_CMD_FIELD_EXT_ID, \
 					    MCU_EXT_CMD_##_t))
-#घोषणा MCU_EXT_QUERY(_t)	(MCU_EXT_CMD(_t) | __MCU_CMD_FIELD_QUERY)
+#define MCU_EXT_QUERY(_t)	(MCU_EXT_CMD(_t) | __MCU_CMD_FIELD_QUERY)
 
-#घोषणा MCU_WA_CMD(_t)		(MCU_CMD(_t) | __MCU_CMD_FIELD_WA)
-#घोषणा MCU_WA_EXT_CMD(_t)	(MCU_EXT_CMD(_t) | __MCU_CMD_FIELD_WA)
-#घोषणा MCU_WA_PARAM_CMD(_t)	(MCU_WA_CMD(WA_PARAM) | \
+#define MCU_WA_CMD(_t)		(MCU_CMD(_t) | __MCU_CMD_FIELD_WA)
+#define MCU_WA_EXT_CMD(_t)	(MCU_EXT_CMD(_t) | __MCU_CMD_FIELD_WA)
+#define MCU_WA_PARAM_CMD(_t)	(MCU_WA_CMD(WA_PARAM) | \
 				 FIELD_PREP(__MCU_CMD_FIELD_EXT_ID, \
 					    MCU_WA_PARAM_CMD_##_t))
 
-क्रमागत अणु
+enum {
 	PATCH_SEM_RELEASE,
 	PATCH_SEM_GET
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	PATCH_NOT_DL_SEM_FAIL,
 	PATCH_IS_DL,
 	PATCH_NOT_DL_SEM_SUCCESS,
 	PATCH_REL_SEM_SUCCESS
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	FW_STATE_INITIAL,
 	FW_STATE_FW_DOWNLOAD,
 	FW_STATE_NORMAL_OPERATION,
 	FW_STATE_NORMAL_TRX,
 	FW_STATE_WACPU_RDY        = 7
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	EE_MODE_EFUSE,
 	EE_MODE_BUFFER,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	EE_FORMAT_BIN,
 	EE_FORMAT_WHOLE,
 	EE_FORMAT_MULTIPLE,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	MCU_PHY_STATE_TX_RATE,
 	MCU_PHY_STATE_RX_RATE,
 	MCU_PHY_STATE_RSSI,
 	MCU_PHY_STATE_CONTENTION_RX_RATE,
 	MCU_PHY_STATE_OFDMLQ_CNINFO,
-पूर्ण;
+};
 
-#घोषणा STA_TYPE_STA			BIT(0)
-#घोषणा STA_TYPE_AP			BIT(1)
-#घोषणा STA_TYPE_ADHOC			BIT(2)
-#घोषणा STA_TYPE_WDS			BIT(4)
-#घोषणा STA_TYPE_BC			BIT(5)
+#define STA_TYPE_STA			BIT(0)
+#define STA_TYPE_AP			BIT(1)
+#define STA_TYPE_ADHOC			BIT(2)
+#define STA_TYPE_WDS			BIT(4)
+#define STA_TYPE_BC			BIT(5)
 
-#घोषणा NETWORK_INFRA			BIT(16)
-#घोषणा NETWORK_P2P			BIT(17)
-#घोषणा NETWORK_IBSS			BIT(18)
-#घोषणा NETWORK_WDS			BIT(21)
+#define NETWORK_INFRA			BIT(16)
+#define NETWORK_P2P			BIT(17)
+#define NETWORK_IBSS			BIT(18)
+#define NETWORK_WDS			BIT(21)
 
-#घोषणा CONNECTION_INFRA_STA		(STA_TYPE_STA | NETWORK_INFRA)
-#घोषणा CONNECTION_INFRA_AP		(STA_TYPE_AP | NETWORK_INFRA)
-#घोषणा CONNECTION_P2P_GC		(STA_TYPE_STA | NETWORK_P2P)
-#घोषणा CONNECTION_P2P_GO		(STA_TYPE_AP | NETWORK_P2P)
-#घोषणा CONNECTION_IBSS_ADHOC		(STA_TYPE_ADHOC | NETWORK_IBSS)
-#घोषणा CONNECTION_WDS			(STA_TYPE_WDS | NETWORK_WDS)
-#घोषणा CONNECTION_INFRA_BC		(STA_TYPE_BC | NETWORK_INFRA)
+#define CONNECTION_INFRA_STA		(STA_TYPE_STA | NETWORK_INFRA)
+#define CONNECTION_INFRA_AP		(STA_TYPE_AP | NETWORK_INFRA)
+#define CONNECTION_P2P_GC		(STA_TYPE_STA | NETWORK_P2P)
+#define CONNECTION_P2P_GO		(STA_TYPE_AP | NETWORK_P2P)
+#define CONNECTION_IBSS_ADHOC		(STA_TYPE_ADHOC | NETWORK_IBSS)
+#define CONNECTION_WDS			(STA_TYPE_WDS | NETWORK_WDS)
+#define CONNECTION_INFRA_BC		(STA_TYPE_BC | NETWORK_INFRA)
 
-#घोषणा CONN_STATE_DISCONNECT		0
-#घोषणा CONN_STATE_CONNECT		1
-#घोषणा CONN_STATE_PORT_SECURE		2
+#define CONN_STATE_DISCONNECT		0
+#define CONN_STATE_CONNECT		1
+#define CONN_STATE_PORT_SECURE		2
 
-क्रमागत अणु
+enum {
 	DEV_INFO_ACTIVE,
 	DEV_INFO_MAX_NUM
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	SCS_SEND_DATA,
 	SCS_SET_MANUAL_PD_TH,
 	SCS_CONFIG,
@@ -388,9 +387,9 @@
 	SCS_SHOW_INFO,
 	SCS_GET_GLO_ADDR,
 	SCS_GET_GLO_ADDR_EVENT,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	CMD_CBW_20MHZ = IEEE80211_STA_RX_BW_20,
 	CMD_CBW_40MHZ = IEEE80211_STA_RX_BW_40,
 	CMD_CBW_80MHZ = IEEE80211_STA_RX_BW_80,
@@ -403,14 +402,14 @@
 	CMD_HE_MCS_BW160,
 	CMD_HE_MCS_BW8080,
 	CMD_HE_MCS_BW_NUM
-पूर्ण;
+};
 
-काष्ठा tlv अणु
+struct tlv {
 	__le16 tag;
 	__le16 len;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा bss_info_omac अणु
+struct bss_info_omac {
 	__le16 tag;
 	__le16 len;
 	u8 hw_bss_idx;
@@ -419,15 +418,15 @@
 	u8 rsv0;
 	__le32 conn_type;
 	u32 rsv1;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा bss_info_basic अणु
+struct bss_info_basic {
 	__le16 tag;
 	__le16 len;
 	__le32 network_type;
 	u8 active;
 	u8 rsv0;
-	__le16 bcn_पूर्णांकerval;
+	__le16 bcn_interval;
 	u8 bssid[ETH_ALEN];
 	u8 wmm_idx;
 	u8 dtim_period;
@@ -438,77 +437,77 @@
 	u8 non_tx_bssid;/* non-transmitted BSSID, 0: transmitted BSSID */
 	u8 bmc_wcid_hi;	/* high Byte and version */
 	u8 rsv[2];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा bss_info_rf_ch अणु
+struct bss_info_rf_ch {
 	__le16 tag;
 	__le16 len;
 	u8 pri_ch;
 	u8 center_ch0;
 	u8 center_ch1;
 	u8 bw;
-	u8 he_ru26_block;	/* 1: करोn't send HETB in RU26, 0: allow */
+	u8 he_ru26_block;	/* 1: don't send HETB in RU26, 0: allow */
 	u8 he_all_disable;	/* 1: disallow all HETB, 0: allow */
 	u8 rsv[2];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा bss_info_ext_bss अणु
+struct bss_info_ext_bss {
 	__le16 tag;
 	__le16 len;
 	__le32 mbss_tsf_offset; /* in unit of us */
 	u8 rsv[8];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा bss_info_bmc_rate अणु
+struct bss_info_bmc_rate {
 	__le16 tag;
 	__le16 len;
 	__le16 bc_trans;
 	__le16 mc_trans;
-	u8 लघु_preamble;
+	u8 short_preamble;
 	u8 rsv[7];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा bss_info_ra अणु
+struct bss_info_ra {
 	__le16 tag;
 	__le16 len;
 	u8 op_mode;
 	u8 adhoc_en;
-	u8 लघु_preamble;
+	u8 short_preamble;
 	u8 tx_streams;
 	u8 rx_streams;
 	u8 algo;
-	u8 क्रमce_sgi;
-	u8 क्रमce_gf;
+	u8 force_sgi;
+	u8 force_gf;
 	u8 ht_mode;
-	u8 has_20_sta;		/* Check अगर any sta support GF. */
+	u8 has_20_sta;		/* Check if any sta support GF. */
 	u8 bss_width_trigger_events;
 	u8 vht_nss_cap;
-	u8 vht_bw_संकेत;	/* not use */
-	u8 vht_क्रमce_sgi;	/* not use */
+	u8 vht_bw_signal;	/* not use */
+	u8 vht_force_sgi;	/* not use */
 	u8 se_off;
 	u8 antenna_idx;
 	u8 train_up_rule;
 	u8 rsv[3];
-	अचिन्हित लघु train_up_high_thres;
-	लघु train_up_rule_rssi;
-	अचिन्हित लघु low_traffic_thres;
+	unsigned short train_up_high_thres;
+	short train_up_rule_rssi;
+	unsigned short low_traffic_thres;
 	__le16 max_phyrate;
 	__le32 phy_cap;
-	__le32 पूर्णांकerval;
-	__le32 fast_पूर्णांकerval;
-पूर्ण __packed;
+	__le32 interval;
+	__le32 fast_interval;
+} __packed;
 
-काष्ठा bss_info_hw_amsdu अणु
+struct bss_info_hw_amsdu {
 	__le16 tag;
 	__le16 len;
-	__le32 cmp_biपंचांगap_0;
-	__le32 cmp_biपंचांगap_1;
+	__le32 cmp_bitmap_0;
+	__le32 cmp_bitmap_1;
 	__le16 trig_thres;
 	u8 enable;
 	u8 rsv;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा bss_info_he अणु
+struct bss_info_he {
 	__le16 tag;
 	__le16 len;
 	u8 he_pe_duration;
@@ -516,66 +515,66 @@
 	__le16 he_rts_thres;
 	__le16 max_nss_mcs[CMD_HE_MCS_BW_NUM];
 	u8 rsv[6];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा bss_info_bcn अणु
+struct bss_info_bcn {
 	__le16 tag;
 	__le16 len;
 	u8 ver;
 	u8 enable;
 	__le16 sub_ntlv;
-पूर्ण __packed __aligned(4);
+} __packed __aligned(4);
 
-काष्ठा bss_info_bcn_csa अणु
+struct bss_info_bcn_csa {
 	__le16 tag;
 	__le16 len;
 	u8 cnt;
 	u8 rsv[3];
-पूर्ण __packed __aligned(4);
+} __packed __aligned(4);
 
-काष्ठा bss_info_bcn_bcc अणु
+struct bss_info_bcn_bcc {
 	__le16 tag;
 	__le16 len;
 	u8 cnt;
 	u8 rsv[3];
-पूर्ण __packed __aligned(4);
+} __packed __aligned(4);
 
-काष्ठा bss_info_bcn_mbss अणु
-#घोषणा MAX_BEACON_NUM	32
+struct bss_info_bcn_mbss {
+#define MAX_BEACON_NUM	32
 	__le16 tag;
 	__le16 len;
-	__le32 biपंचांगap;
+	__le32 bitmap;
 	__le16 offset[MAX_BEACON_NUM];
 	u8 rsv[8];
-पूर्ण __packed __aligned(4);
+} __packed __aligned(4);
 
-काष्ठा bss_info_bcn_cont अणु
+struct bss_info_bcn_cont {
 	__le16 tag;
 	__le16 len;
 	__le16 tim_ofs;
 	__le16 csa_ofs;
 	__le16 bcc_ofs;
 	__le16 pkt_len;
-पूर्ण __packed __aligned(4);
+} __packed __aligned(4);
 
-क्रमागत अणु
+enum {
 	BSS_INFO_BCN_CSA,
 	BSS_INFO_BCN_BCC,
 	BSS_INFO_BCN_MBSSID,
 	BSS_INFO_BCN_CONTENT,
 	BSS_INFO_BCN_MAX
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	BSS_INFO_OMAC,
 	BSS_INFO_BASIC,
-	BSS_INFO_RF_CH,		/* optional, क्रम BT/LTE coex */
+	BSS_INFO_RF_CH,		/* optional, for BT/LTE coex */
 	BSS_INFO_PM,		/* sta only */
 	BSS_INFO_UAPSD,		/* sta only */
 	BSS_INFO_ROAM_DETECT,	/* obsoleted */
 	BSS_INFO_LQ_RM,		/* obsoleted */
 	BSS_INFO_EXT_BSS,
-	BSS_INFO_BMC_RATE,	/* क्रम bmc rate control in CR4 */
+	BSS_INFO_BMC_RATE,	/* for bmc rate control in CR4 */
 	BSS_INFO_SYNC_MODE,	/* obsoleted */
 	BSS_INFO_RA,
 	BSS_INFO_HW_AMSDU,
@@ -585,24 +584,24 @@
 	BSS_INFO_OFFLOAD,
 	BSS_INFO_11V_MBSSID,
 	BSS_INFO_MAX_NUM
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	WTBL_RESET_AND_SET = 1,
 	WTBL_SET,
 	WTBL_QUERY,
 	WTBL_RESET_ALL
-पूर्ण;
+};
 
-काष्ठा wtbl_req_hdr अणु
+struct wtbl_req_hdr {
 	u8 wlan_idx_lo;
 	u8 operation;
 	__le16 tlv_num;
 	u8 wlan_idx_hi;
 	u8 rsv[3];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wtbl_generic अणु
+struct wtbl_generic {
 	__le16 tag;
 	__le16 len;
 	u8 peer_addr[ETH_ALEN];
@@ -615,9 +614,9 @@
 	__le16 partial_aid;
 	u8 baf_en;
 	u8 aad_om;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wtbl_rx अणु
+struct wtbl_rx {
 	__le16 tag;
 	__le16 len;
 	u8 rcid;
@@ -625,9 +624,9 @@
 	u8 rca2;
 	u8 rv;
 	u8 rsv[4];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wtbl_ht अणु
+struct wtbl_ht {
 	__le16 tag;
 	__le16 len;
 	u8 ht;
@@ -635,9 +634,9 @@
 	u8 af;
 	u8 mm;
 	u8 rsv[4];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wtbl_vht अणु
+struct wtbl_vht {
 	__le16 tag;
 	__le16 len;
 	u8 ldpc;
@@ -645,30 +644,30 @@
 	u8 vht;
 	u8 txop_ps;
 	u8 rsv[4];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wtbl_hdr_trans अणु
+struct wtbl_hdr_trans {
 	__le16 tag;
 	__le16 len;
 	u8 to_ds;
 	u8 from_ds;
 	u8 no_rx_trans;
 	u8 _rsv;
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	MT_BA_TYPE_INVALID,
 	MT_BA_TYPE_ORIGINATOR,
 	MT_BA_TYPE_RECIPIENT
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	RST_BA_MAC_TID_MATCH,
 	RST_BA_MAC_MATCH,
 	RST_BA_NO_MATCH
-पूर्ण;
+};
 
-काष्ठा wtbl_ba अणु
+struct wtbl_ba {
 	__le16 tag;
 	__le16 len;
 	/* common */
@@ -687,16 +686,16 @@
 	u8 rst_ba_sb;
 	u8 band_idx;
 	u8 rsv1[4];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wtbl_smps अणु
+struct wtbl_smps {
 	__le16 tag;
 	__le16 len;
 	u8 smps;
 	u8 rsv[3];
-पूर्ण __packed;
+} __packed;
 
-क्रमागत अणु
+enum {
 	WTBL_GENERIC,
 	WTBL_RX,
 	WTBL_HT,
@@ -715,14 +714,14 @@
 	WTBL_PN,
 	WTBL_SPE,
 	WTBL_MAX_NUM
-पूर्ण;
+};
 
-काष्ठा sta_ntlv_hdr अणु
+struct sta_ntlv_hdr {
 	u8 rsv[2];
 	__le16 tlv_num;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा sta_req_hdr अणु
+struct sta_req_hdr {
 	u8 bss_idx;
 	u8 wlan_idx_lo;
 	__le16 tlv_num;
@@ -730,9 +729,9 @@
 	u8 muar_idx;
 	u8 wlan_idx_hi;
 	u8 rsv;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा sta_rec_basic अणु
+struct sta_rec_basic {
 	__le16 tag;
 	__le16 len;
 	__le32 conn_type;
@@ -741,16 +740,16 @@
 	__le16 aid;
 	u8 peer_addr[ETH_ALEN];
 	__le16 extra_info;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा sta_rec_ht अणु
+struct sta_rec_ht {
 	__le16 tag;
 	__le16 len;
 	__le16 ht_cap;
 	u16 rsv;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा sta_rec_vht अणु
+struct sta_rec_vht {
 	__le16 tag;
 	__le16 len;
 	__le32 vht_cap;
@@ -758,32 +757,32 @@
 	__le16 vht_tx_mcs_map;
 	u8 rts_bw_sig;
 	u8 rsv[3];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा sta_rec_uapsd अणु
+struct sta_rec_uapsd {
 	__le16 tag;
 	__le16 len;
 	u8 dac_map;
 	u8 tac_map;
 	u8 max_sp;
 	u8 rsv0;
-	__le16 listen_पूर्णांकerval;
+	__le16 listen_interval;
 	u8 rsv1[2];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा sta_rec_muru अणु
+struct sta_rec_muru {
 	__le16 tag;
 	__le16 len;
 
-	काष्ठा अणु
+	struct {
 		bool ofdma_dl_en;
 		bool ofdma_ul_en;
 		bool mimo_dl_en;
 		bool mimo_ul_en;
 		u8 rsv[4];
-	पूर्ण cfg;
+	} cfg;
 
-	काष्ठा अणु
+	struct {
 		u8 punc_pream_rx;
 		bool he_20m_in_40m_2g;
 		bool he_20m_in_160m;
@@ -792,31 +791,31 @@
 		bool rx_su_comp_sigb;
 		bool rx_su_non_comp_sigb;
 		u8 rsv;
-	पूर्ण ofdma_dl;
+	} ofdma_dl;
 
-	काष्ठा अणु
+	struct {
 		u8 t_frame_dur;
 		u8 mu_cascading;
 		u8 uo_ra;
 		u8 he_2x996_tone;
 		u8 rx_t_frame_11ac;
 		u8 rsv[3];
-	पूर्ण ofdma_ul;
+	} ofdma_ul;
 
-	काष्ठा अणु
+	struct {
 		bool vht_mu_bfee;
 		bool partial_bw_dl_mimo;
 		u8 rsv[2];
-	पूर्ण mimo_dl;
+	} mimo_dl;
 
-	काष्ठा अणु
+	struct {
 		bool full_ul_mimo;
 		bool partial_ul_mimo;
 		u8 rsv[2];
-	पूर्ण mimo_ul;
-पूर्ण __packed;
+	} mimo_ul;
+} __packed;
 
-काष्ठा sta_rec_he अणु
+struct sta_rec_he {
 	__le16 tag;
 	__le16 len;
 
@@ -838,9 +837,9 @@
 	__le16 max_nss_mcs[CMD_HE_MCS_BW_NUM];
 
 	u8 rsv2[2];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा sta_rec_ba अणु
+struct sta_rec_ba {
 	__le16 tag;
 	__le16 len;
 	u8 tid;
@@ -849,36 +848,36 @@
 	u8 ba_en;
 	__le16 ssn;
 	__le16 winsize;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा sta_rec_amsdu अणु
+struct sta_rec_amsdu {
 	__le16 tag;
 	__le16 len;
 	u8 max_amsdu_num;
 	u8 max_mpdu_size;
 	u8 amsdu_en;
 	u8 rsv;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा sec_key अणु
+struct sec_key {
 	u8 cipher_id;
 	u8 cipher_len;
 	u8 key_id;
 	u8 key_len;
 	u8 key[32];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा sta_rec_sec अणु
+struct sta_rec_sec {
 	__le16 tag;
 	__le16 len;
 	u8 add;
 	u8 n_cipher;
 	u8 rsv[2];
 
-	काष्ठा sec_key key[2];
-पूर्ण __packed;
+	struct sec_key key[2];
+} __packed;
 
-काष्ठा ra_phy अणु
+struct ra_phy {
 	u8 type;
 	u8 flag;
 	u8 stbc;
@@ -888,14 +887,14 @@
 	u8 mcs;
 	u8 nss;
 	u8 he_ltf;
-पूर्ण;
+};
 
-काष्ठा sta_rec_ra अणु
+struct sta_rec_ra {
 	__le16 tag;
 	__le16 len;
 
 	u8 valid;
-	u8 स्वतः_rate;
+	u8 auto_rate;
 	u8 phy_mode;
 	u8 channel;
 	u8 bw;
@@ -922,10 +921,10 @@
 
 	__le32 sta_status;
 
-	काष्ठा ra_phy phy;
-पूर्ण __packed;
+	struct ra_phy phy;
+} __packed;
 
-काष्ठा sta_rec_ra_fixed अणु
+struct sta_rec_ra_fixed {
 	__le16 tag;
 	__le16 len;
 
@@ -935,29 +934,29 @@
 	u8 op_vht_rx_nss;
 	u8 op_vht_rx_nss_type;
 
-	काष्ठा ra_phy phy;
+	struct ra_phy phy;
 
 	u8 spe_en;
-	u8 लघु_preamble;
+	u8 short_preamble;
 	u8 is_5g;
 	u8 mmps_mode;
-पूर्ण __packed;
+} __packed;
 
-#घोषणा RATE_PARAM_FIXED		3
-#घोषणा RATE_PARAM_AUTO			20
-#घोषणा RATE_CFG_MCS			GENMASK(3, 0)
-#घोषणा RATE_CFG_NSS			GENMASK(7, 4)
-#घोषणा RATE_CFG_GI			GENMASK(11, 8)
-#घोषणा RATE_CFG_BW			GENMASK(15, 12)
-#घोषणा RATE_CFG_STBC			GENMASK(19, 16)
-#घोषणा RATE_CFG_LDPC			GENMASK(23, 20)
-#घोषणा RATE_CFG_PHY_TYPE		GENMASK(27, 24)
+#define RATE_PARAM_FIXED		3
+#define RATE_PARAM_AUTO			20
+#define RATE_CFG_MCS			GENMASK(3, 0)
+#define RATE_CFG_NSS			GENMASK(7, 4)
+#define RATE_CFG_GI			GENMASK(11, 8)
+#define RATE_CFG_BW			GENMASK(15, 12)
+#define RATE_CFG_STBC			GENMASK(19, 16)
+#define RATE_CFG_LDPC			GENMASK(23, 20)
+#define RATE_CFG_PHY_TYPE		GENMASK(27, 24)
 
-काष्ठा sta_rec_bf अणु
+struct sta_rec_bf {
 	__le16 tag;
 	__le16 len;
 
-	__le16 pfmu;		/* 0xffff: no access right क्रम PFMU */
+	__le16 pfmu;		/* 0xffff: no access right for PFMU */
 	bool su_mu;		/* 0: SU, 1: MU */
 	u8 bf_cap;		/* 0: iBF, 1: eBF */
 	u8 sounding_phy;	/* 0: legacy, 1: OFDM, 2: HT, 4: VHT */
@@ -971,18 +970,18 @@
 
 	u8 mem_total;
 	u8 mem_20m;
-	काष्ठा अणु
+	struct {
 		u8 row;
 		u8 col: 6, row_msb: 2;
-	पूर्ण mem[4];
+	} mem[4];
 
 	__le16 smart_ant;
 	u8 se_idx;
-	u8 स्वतः_sounding;	/* b7: low traffic indicator
-				 * b6: Stop sounding क्रम this entry
+	u8 auto_sounding;	/* b7: low traffic indicator
+				 * b6: Stop sounding for this entry
 				 * b5 ~ b0: postpone sounding
 				 */
-	u8 ibf_समयout;
+	u8 ibf_timeout;
 	u8 ibf_dbw;
 	u8 ibf_ncol;
 	u8 ibf_nrow;
@@ -1000,17 +999,17 @@
 
 	u8 he_ltf;
 	u8 rsv[2];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा sta_rec_bfee अणु
+struct sta_rec_bfee {
 	__le16 tag;
 	__le16 len;
 	bool fb_identity_matrix;	/* 1: feedback identity matrix */
 	bool ignore_feedback;		/* 1: ignore */
 	u8 rsv[2];
-पूर्ण __packed;
+} __packed;
 
-क्रमागत अणु
+enum {
 	STA_REC_BASIC,
 	STA_REC_RA,
 	STA_REC_RA_CMM_INFO,
@@ -1019,7 +1018,7 @@
 	STA_REC_AMSDU,
 	STA_REC_BA,
 	STA_REC_RED,		/* not used */
-	STA_REC_TX_PROC,	/* क्रम hdr trans and CSO in CR4 */
+	STA_REC_TX_PROC,	/* for hdr trans and CSO in CR4 */
 	STA_REC_HT,
 	STA_REC_VHT,
 	STA_REC_APPS,
@@ -1033,9 +1032,9 @@
 	STA_REC_MUEDCA,
 	STA_REC_BFEE,
 	STA_REC_MAX_NUM
-पूर्ण;
+};
 
-क्रमागत mt7915_cipher_type अणु
+enum mt7915_cipher_type {
 	MT_CIPHER_NONE,
 	MT_CIPHER_WEP40,
 	MT_CIPHER_WEP104,
@@ -1047,9 +1046,9 @@
 	MT_CIPHER_GCMP_256,
 	MT_CIPHER_WAPI,
 	MT_CIPHER_BIP_CMAC_128,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	CH_SWITCH_NORMAL = 0,
 	CH_SWITCH_SCAN = 3,
 	CH_SWITCH_MCC = 4,
@@ -1058,112 +1057,112 @@
 	CH_SWITCH_BACKGROUND_SCAN_RUNNING = 7,
 	CH_SWITCH_BACKGROUND_SCAN_STOP = 8,
 	CH_SWITCH_SCAN_BYPASS_DPD = 9
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	THERMAL_SENSOR_TEMP_QUERY,
 	THERMAL_SENSOR_MANUAL_CTRL,
 	THERMAL_SENSOR_INFO_QUERY,
 	THERMAL_SENSOR_TASK_CTRL,
-पूर्ण;
+};
 
-क्रमागत अणु
-	MT_EBF = BIT(0),	/* explicit beamक्रमming */
-	MT_IBF = BIT(1)		/* implicit beamक्रमming */
-पूर्ण;
+enum {
+	MT_EBF = BIT(0),	/* explicit beamforming */
+	MT_IBF = BIT(1)		/* implicit beamforming */
+};
 
-#घोषणा MT7915_WTBL_UPDATE_MAX_SIZE	(माप(काष्ठा wtbl_req_hdr) +	\
-					 माप(काष्ठा wtbl_generic) +	\
-					 माप(काष्ठा wtbl_rx) +	\
-					 माप(काष्ठा wtbl_ht) +	\
-					 माप(काष्ठा wtbl_vht) +	\
-					 माप(काष्ठा wtbl_hdr_trans) +\
-					 माप(काष्ठा wtbl_ba) +	\
-					 माप(काष्ठा wtbl_smps))
+#define MT7915_WTBL_UPDATE_MAX_SIZE	(sizeof(struct wtbl_req_hdr) +	\
+					 sizeof(struct wtbl_generic) +	\
+					 sizeof(struct wtbl_rx) +	\
+					 sizeof(struct wtbl_ht) +	\
+					 sizeof(struct wtbl_vht) +	\
+					 sizeof(struct wtbl_hdr_trans) +\
+					 sizeof(struct wtbl_ba) +	\
+					 sizeof(struct wtbl_smps))
 
-#घोषणा MT7915_STA_UPDATE_MAX_SIZE	(माप(काष्ठा sta_req_hdr) +	\
-					 माप(काष्ठा sta_rec_basic) +	\
-					 माप(काष्ठा sta_rec_ht) +	\
-					 माप(काष्ठा sta_rec_he) +	\
-					 माप(काष्ठा sta_rec_ba) +	\
-					 माप(काष्ठा sta_rec_vht) +	\
-					 माप(काष्ठा sta_rec_uapsd) + \
-					 माप(काष्ठा sta_rec_amsdu) +	\
-					 माप(काष्ठा tlv) +		\
+#define MT7915_STA_UPDATE_MAX_SIZE	(sizeof(struct sta_req_hdr) +	\
+					 sizeof(struct sta_rec_basic) +	\
+					 sizeof(struct sta_rec_ht) +	\
+					 sizeof(struct sta_rec_he) +	\
+					 sizeof(struct sta_rec_ba) +	\
+					 sizeof(struct sta_rec_vht) +	\
+					 sizeof(struct sta_rec_uapsd) + \
+					 sizeof(struct sta_rec_amsdu) +	\
+					 sizeof(struct tlv) +		\
 					 MT7915_WTBL_UPDATE_MAX_SIZE)
 
-#घोषणा MT7915_BSS_UPDATE_MAX_SIZE	(माप(काष्ठा sta_req_hdr) +	\
-					 माप(काष्ठा bss_info_omac) +	\
-					 माप(काष्ठा bss_info_basic) +\
-					 माप(काष्ठा bss_info_rf_ch) +\
-					 माप(काष्ठा bss_info_ra) +	\
-					 माप(काष्ठा bss_info_hw_amsdu) +\
-					 माप(काष्ठा bss_info_he) +	\
-					 माप(काष्ठा bss_info_bmc_rate) +\
-					 माप(काष्ठा bss_info_ext_bss))
+#define MT7915_BSS_UPDATE_MAX_SIZE	(sizeof(struct sta_req_hdr) +	\
+					 sizeof(struct bss_info_omac) +	\
+					 sizeof(struct bss_info_basic) +\
+					 sizeof(struct bss_info_rf_ch) +\
+					 sizeof(struct bss_info_ra) +	\
+					 sizeof(struct bss_info_hw_amsdu) +\
+					 sizeof(struct bss_info_he) +	\
+					 sizeof(struct bss_info_bmc_rate) +\
+					 sizeof(struct bss_info_ext_bss))
 
-#घोषणा MT7915_BEACON_UPDATE_SIZE	(माप(काष्ठा sta_req_hdr) +	\
-					 माप(काष्ठा bss_info_bcn_csa) + \
-					 माप(काष्ठा bss_info_bcn_bcc) + \
-					 माप(काष्ठा bss_info_bcn_mbss) + \
-					 माप(काष्ठा bss_info_bcn_cont))
+#define MT7915_BEACON_UPDATE_SIZE	(sizeof(struct sta_req_hdr) +	\
+					 sizeof(struct bss_info_bcn_csa) + \
+					 sizeof(struct bss_info_bcn_bcc) + \
+					 sizeof(struct bss_info_bcn_mbss) + \
+					 sizeof(struct bss_info_bcn_cont))
 
-#घोषणा PHY_MODE_A			BIT(0)
-#घोषणा PHY_MODE_B			BIT(1)
-#घोषणा PHY_MODE_G			BIT(2)
-#घोषणा PHY_MODE_GN			BIT(3)
-#घोषणा PHY_MODE_AN			BIT(4)
-#घोषणा PHY_MODE_AC			BIT(5)
-#घोषणा PHY_MODE_AX_24G			BIT(6)
-#घोषणा PHY_MODE_AX_5G			BIT(7)
-#घोषणा PHY_MODE_AX_6G			BIT(8)
+#define PHY_MODE_A			BIT(0)
+#define PHY_MODE_B			BIT(1)
+#define PHY_MODE_G			BIT(2)
+#define PHY_MODE_GN			BIT(3)
+#define PHY_MODE_AN			BIT(4)
+#define PHY_MODE_AC			BIT(5)
+#define PHY_MODE_AX_24G			BIT(6)
+#define PHY_MODE_AX_5G			BIT(7)
+#define PHY_MODE_AX_6G			BIT(8)
 
-#घोषणा MODE_CCK			BIT(0)
-#घोषणा MODE_OFDM			BIT(1)
-#घोषणा MODE_HT				BIT(2)
-#घोषणा MODE_VHT			BIT(3)
-#घोषणा MODE_HE				BIT(4)
+#define MODE_CCK			BIT(0)
+#define MODE_OFDM			BIT(1)
+#define MODE_HT				BIT(2)
+#define MODE_VHT			BIT(3)
+#define MODE_HE				BIT(4)
 
-#घोषणा STA_CAP_WMM			BIT(0)
-#घोषणा STA_CAP_SGI_20			BIT(4)
-#घोषणा STA_CAP_SGI_40			BIT(5)
-#घोषणा STA_CAP_TX_STBC			BIT(6)
-#घोषणा STA_CAP_RX_STBC			BIT(7)
-#घोषणा STA_CAP_VHT_SGI_80		BIT(16)
-#घोषणा STA_CAP_VHT_SGI_160		BIT(17)
-#घोषणा STA_CAP_VHT_TX_STBC		BIT(18)
-#घोषणा STA_CAP_VHT_RX_STBC		BIT(19)
-#घोषणा STA_CAP_VHT_LDPC		BIT(23)
-#घोषणा STA_CAP_LDPC			BIT(24)
-#घोषणा STA_CAP_HT			BIT(26)
-#घोषणा STA_CAP_VHT			BIT(27)
-#घोषणा STA_CAP_HE			BIT(28)
+#define STA_CAP_WMM			BIT(0)
+#define STA_CAP_SGI_20			BIT(4)
+#define STA_CAP_SGI_40			BIT(5)
+#define STA_CAP_TX_STBC			BIT(6)
+#define STA_CAP_RX_STBC			BIT(7)
+#define STA_CAP_VHT_SGI_80		BIT(16)
+#define STA_CAP_VHT_SGI_160		BIT(17)
+#define STA_CAP_VHT_TX_STBC		BIT(18)
+#define STA_CAP_VHT_RX_STBC		BIT(19)
+#define STA_CAP_VHT_LDPC		BIT(23)
+#define STA_CAP_LDPC			BIT(24)
+#define STA_CAP_HT			BIT(26)
+#define STA_CAP_VHT			BIT(27)
+#define STA_CAP_HE			BIT(28)
 
 /* HE MAC */
-#घोषणा STA_REC_HE_CAP_HTC			BIT(0)
-#घोषणा STA_REC_HE_CAP_BQR			BIT(1)
-#घोषणा STA_REC_HE_CAP_BSR			BIT(2)
-#घोषणा STA_REC_HE_CAP_OM			BIT(3)
-#घोषणा STA_REC_HE_CAP_AMSDU_IN_AMPDU		BIT(4)
+#define STA_REC_HE_CAP_HTC			BIT(0)
+#define STA_REC_HE_CAP_BQR			BIT(1)
+#define STA_REC_HE_CAP_BSR			BIT(2)
+#define STA_REC_HE_CAP_OM			BIT(3)
+#define STA_REC_HE_CAP_AMSDU_IN_AMPDU		BIT(4)
 /* HE PHY */
-#घोषणा STA_REC_HE_CAP_DUAL_BAND		BIT(5)
-#घोषणा STA_REC_HE_CAP_LDPC			BIT(6)
-#घोषणा STA_REC_HE_CAP_TRIG_CQI_FK		BIT(7)
-#घोषणा STA_REC_HE_CAP_PARTIAL_BW_EXT_RANGE	BIT(8)
+#define STA_REC_HE_CAP_DUAL_BAND		BIT(5)
+#define STA_REC_HE_CAP_LDPC			BIT(6)
+#define STA_REC_HE_CAP_TRIG_CQI_FK		BIT(7)
+#define STA_REC_HE_CAP_PARTIAL_BW_EXT_RANGE	BIT(8)
 /* STBC */
-#घोषणा STA_REC_HE_CAP_LE_EQ_80M_TX_STBC	BIT(9)
-#घोषणा STA_REC_HE_CAP_LE_EQ_80M_RX_STBC	BIT(10)
-#घोषणा STA_REC_HE_CAP_GT_80M_TX_STBC		BIT(11)
-#घोषणा STA_REC_HE_CAP_GT_80M_RX_STBC		BIT(12)
+#define STA_REC_HE_CAP_LE_EQ_80M_TX_STBC	BIT(9)
+#define STA_REC_HE_CAP_LE_EQ_80M_RX_STBC	BIT(10)
+#define STA_REC_HE_CAP_GT_80M_TX_STBC		BIT(11)
+#define STA_REC_HE_CAP_GT_80M_RX_STBC		BIT(12)
 /* GI */
-#घोषणा STA_REC_HE_CAP_SU_PPDU_1LTF_8US_GI	BIT(13)
-#घोषणा STA_REC_HE_CAP_SU_MU_PPDU_4LTF_8US_GI	BIT(14)
-#घोषणा STA_REC_HE_CAP_ER_SU_PPDU_1LTF_8US_GI	BIT(15)
-#घोषणा STA_REC_HE_CAP_ER_SU_PPDU_4LTF_8US_GI	BIT(16)
-#घोषणा STA_REC_HE_CAP_NDP_4LTF_3DOT2MS_GI	BIT(17)
+#define STA_REC_HE_CAP_SU_PPDU_1LTF_8US_GI	BIT(13)
+#define STA_REC_HE_CAP_SU_MU_PPDU_4LTF_8US_GI	BIT(14)
+#define STA_REC_HE_CAP_ER_SU_PPDU_1LTF_8US_GI	BIT(15)
+#define STA_REC_HE_CAP_ER_SU_PPDU_4LTF_8US_GI	BIT(16)
+#define STA_REC_HE_CAP_NDP_4LTF_3DOT2MS_GI	BIT(17)
 /* 242 TONE */
-#घोषणा STA_REC_HE_CAP_BW20_RU242_SUPPORT	BIT(18)
-#घोषणा STA_REC_HE_CAP_TX_1024QAM_UNDER_RU242	BIT(19)
-#घोषणा STA_REC_HE_CAP_RX_1024QAM_UNDER_RU242	BIT(20)
+#define STA_REC_HE_CAP_BW20_RU242_SUPPORT	BIT(18)
+#define STA_REC_HE_CAP_TX_1024QAM_UNDER_RU242	BIT(19)
+#define STA_REC_HE_CAP_RX_1024QAM_UNDER_RU242	BIT(20)
 
-#पूर्ण_अगर
+#endif

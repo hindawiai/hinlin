@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  linux/arch/arm/mach-pxa/irq.c
  *
@@ -9,263 +8,263 @@
  *  Created:	Jun 15, 2001
  *  Copyright:	MontaVista Software Inc.
  */
-#समावेश <linux/bitops.h>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/syscore_ops.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/irq.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_irq.h>
+#include <linux/bitops.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/interrupt.h>
+#include <linux/syscore_ops.h>
+#include <linux/io.h>
+#include <linux/irq.h>
+#include <linux/of_address.h>
+#include <linux/of_irq.h>
 
-#समावेश <यंत्र/exception.h>
+#include <asm/exception.h>
 
-#समावेश <mach/hardware.h>
-#समावेश <mach/irqs.h>
+#include <mach/hardware.h>
+#include <mach/irqs.h>
 
-#समावेश "generic.h"
+#include "generic.h"
 
-#घोषणा ICIP			(0x000)
-#घोषणा ICMR			(0x004)
-#घोषणा ICLR			(0x008)
-#घोषणा ICFR			(0x00c)
-#घोषणा ICPR			(0x010)
-#घोषणा ICCR			(0x014)
-#घोषणा ICHP			(0x018)
-#घोषणा IPR(i)			(((i) < 32) ? (0x01c + ((i) << 2)) :		\
+#define ICIP			(0x000)
+#define ICMR			(0x004)
+#define ICLR			(0x008)
+#define ICFR			(0x00c)
+#define ICPR			(0x010)
+#define ICCR			(0x014)
+#define ICHP			(0x018)
+#define IPR(i)			(((i) < 32) ? (0x01c + ((i) << 2)) :		\
 				((i) < 64) ? (0x0b0 + (((i) - 32) << 2)) :	\
 				      (0x144 + (((i) - 64) << 2)))
-#घोषणा ICHP_VAL_IRQ		(1 << 31)
-#घोषणा ICHP_IRQ(i)		(((i) >> 16) & 0x7fff)
-#घोषणा IPR_VALID		(1 << 31)
+#define ICHP_VAL_IRQ		(1 << 31)
+#define ICHP_IRQ(i)		(((i) >> 16) & 0x7fff)
+#define IPR_VALID		(1 << 31)
 
-#घोषणा MAX_INTERNAL_IRQS	128
+#define MAX_INTERNAL_IRQS	128
 
 /*
- * This is क्रम peripheral IRQs पूर्णांकernal to the PXA chip.
+ * This is for peripheral IRQs internal to the PXA chip.
  */
 
-अटल व्योम __iomem *pxa_irq_base;
-अटल पूर्णांक pxa_पूर्णांकernal_irq_nr;
-अटल bool cpu_has_ipr;
-अटल काष्ठा irq_करोमुख्य *pxa_irq_करोमुख्य;
+static void __iomem *pxa_irq_base;
+static int pxa_internal_irq_nr;
+static bool cpu_has_ipr;
+static struct irq_domain *pxa_irq_domain;
 
-अटल अंतरभूत व्योम __iomem *irq_base(पूर्णांक i)
-अणु
-	अटल अचिन्हित दीर्घ phys_base_offset[] = अणु
+static inline void __iomem *irq_base(int i)
+{
+	static unsigned long phys_base_offset[] = {
 		0x0,
 		0x9c,
 		0x130,
-	पूर्ण;
+	};
 
-	वापस pxa_irq_base + phys_base_offset[i];
-पूर्ण
+	return pxa_irq_base + phys_base_offset[i];
+}
 
-व्योम pxa_mask_irq(काष्ठा irq_data *d)
-अणु
-	व्योम __iomem *base = irq_data_get_irq_chip_data(d);
+void pxa_mask_irq(struct irq_data *d)
+{
+	void __iomem *base = irq_data_get_irq_chip_data(d);
 	irq_hw_number_t irq = irqd_to_hwirq(d);
-	uपूर्णांक32_t icmr = __raw_पढ़ोl(base + ICMR);
+	uint32_t icmr = __raw_readl(base + ICMR);
 
 	icmr &= ~BIT(irq & 0x1f);
-	__raw_ग_लिखोl(icmr, base + ICMR);
-पूर्ण
+	__raw_writel(icmr, base + ICMR);
+}
 
-व्योम pxa_unmask_irq(काष्ठा irq_data *d)
-अणु
-	व्योम __iomem *base = irq_data_get_irq_chip_data(d);
+void pxa_unmask_irq(struct irq_data *d)
+{
+	void __iomem *base = irq_data_get_irq_chip_data(d);
 	irq_hw_number_t irq = irqd_to_hwirq(d);
-	uपूर्णांक32_t icmr = __raw_पढ़ोl(base + ICMR);
+	uint32_t icmr = __raw_readl(base + ICMR);
 
 	icmr |= BIT(irq & 0x1f);
-	__raw_ग_लिखोl(icmr, base + ICMR);
-पूर्ण
+	__raw_writel(icmr, base + ICMR);
+}
 
-अटल काष्ठा irq_chip pxa_पूर्णांकernal_irq_chip = अणु
+static struct irq_chip pxa_internal_irq_chip = {
 	.name		= "SC",
 	.irq_ack	= pxa_mask_irq,
 	.irq_mask	= pxa_mask_irq,
 	.irq_unmask	= pxa_unmask_irq,
-पूर्ण;
+};
 
-यंत्रlinkage व्योम __exception_irq_entry icip_handle_irq(काष्ठा pt_regs *regs)
-अणु
-	uपूर्णांक32_t icip, icmr, mask;
+asmlinkage void __exception_irq_entry icip_handle_irq(struct pt_regs *regs)
+{
+	uint32_t icip, icmr, mask;
 
-	करो अणु
-		icip = __raw_पढ़ोl(pxa_irq_base + ICIP);
-		icmr = __raw_पढ़ोl(pxa_irq_base + ICMR);
+	do {
+		icip = __raw_readl(pxa_irq_base + ICIP);
+		icmr = __raw_readl(pxa_irq_base + ICMR);
 		mask = icip & icmr;
 
-		अगर (mask == 0)
-			अवरोध;
+		if (mask == 0)
+			break;
 
 		handle_IRQ(PXA_IRQ(fls(mask) - 1), regs);
-	पूर्ण जबतक (1);
-पूर्ण
+	} while (1);
+}
 
-यंत्रlinkage व्योम __exception_irq_entry ichp_handle_irq(काष्ठा pt_regs *regs)
-अणु
-	uपूर्णांक32_t ichp;
+asmlinkage void __exception_irq_entry ichp_handle_irq(struct pt_regs *regs)
+{
+	uint32_t ichp;
 
-	करो अणु
-		__यंत्र__ __अस्थिर__("mrc p6, 0, %0, c5, c0, 0\n": "=r"(ichp));
+	do {
+		__asm__ __volatile__("mrc p6, 0, %0, c5, c0, 0\n": "=r"(ichp));
 
-		अगर ((ichp & ICHP_VAL_IRQ) == 0)
-			अवरोध;
+		if ((ichp & ICHP_VAL_IRQ) == 0)
+			break;
 
 		handle_IRQ(PXA_IRQ(ICHP_IRQ(ichp)), regs);
-	पूर्ण जबतक (1);
-पूर्ण
+	} while (1);
+}
 
-अटल पूर्णांक pxa_irq_map(काष्ठा irq_करोमुख्य *h, अचिन्हित पूर्णांक virq,
+static int pxa_irq_map(struct irq_domain *h, unsigned int virq,
 		       irq_hw_number_t hw)
-अणु
-	व्योम __iomem *base = irq_base(hw / 32);
+{
+	void __iomem *base = irq_base(hw / 32);
 
-	/* initialize पूर्णांकerrupt priority */
-	अगर (cpu_has_ipr)
-		__raw_ग_लिखोl(hw | IPR_VALID, pxa_irq_base + IPR(hw));
+	/* initialize interrupt priority */
+	if (cpu_has_ipr)
+		__raw_writel(hw | IPR_VALID, pxa_irq_base + IPR(hw));
 
-	irq_set_chip_and_handler(virq, &pxa_पूर्णांकernal_irq_chip,
+	irq_set_chip_and_handler(virq, &pxa_internal_irq_chip,
 				 handle_level_irq);
 	irq_set_chip_data(virq, base);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा irq_करोमुख्य_ops pxa_irq_ops = अणु
+static const struct irq_domain_ops pxa_irq_ops = {
 	.map    = pxa_irq_map,
-	.xlate  = irq_करोमुख्य_xlate_onecell,
-पूर्ण;
+	.xlate  = irq_domain_xlate_onecell,
+};
 
-अटल __init व्योम
-pxa_init_irq_common(काष्ठा device_node *node, पूर्णांक irq_nr,
-		    पूर्णांक (*fn)(काष्ठा irq_data *, अचिन्हित पूर्णांक))
-अणु
-	पूर्णांक n;
+static __init void
+pxa_init_irq_common(struct device_node *node, int irq_nr,
+		    int (*fn)(struct irq_data *, unsigned int))
+{
+	int n;
 
-	pxa_पूर्णांकernal_irq_nr = irq_nr;
-	pxa_irq_करोमुख्य = irq_करोमुख्य_add_legacy(node, irq_nr,
+	pxa_internal_irq_nr = irq_nr;
+	pxa_irq_domain = irq_domain_add_legacy(node, irq_nr,
 					       PXA_IRQ(0), 0,
-					       &pxa_irq_ops, शून्य);
-	अगर (!pxa_irq_करोमुख्य)
+					       &pxa_irq_ops, NULL);
+	if (!pxa_irq_domain)
 		panic("Unable to add PXA IRQ domain\n");
-	irq_set_शेष_host(pxa_irq_करोमुख्य);
+	irq_set_default_host(pxa_irq_domain);
 
-	क्रम (n = 0; n < irq_nr; n += 32) अणु
-		व्योम __iomem *base = irq_base(n >> 5);
+	for (n = 0; n < irq_nr; n += 32) {
+		void __iomem *base = irq_base(n >> 5);
 
-		__raw_ग_लिखोl(0, base + ICMR);	/* disable all IRQs */
-		__raw_ग_लिखोl(0, base + ICLR);	/* all IRQs are IRQ, not FIQ */
-	पूर्ण
-	/* only unmasked पूर्णांकerrupts kick us out of idle */
-	__raw_ग_लिखोl(1, irq_base(0) + ICCR);
+		__raw_writel(0, base + ICMR);	/* disable all IRQs */
+		__raw_writel(0, base + ICLR);	/* all IRQs are IRQ, not FIQ */
+	}
+	/* only unmasked interrupts kick us out of idle */
+	__raw_writel(1, irq_base(0) + ICCR);
 
-	pxa_पूर्णांकernal_irq_chip.irq_set_wake = fn;
-पूर्ण
+	pxa_internal_irq_chip.irq_set_wake = fn;
+}
 
-व्योम __init pxa_init_irq(पूर्णांक irq_nr, पूर्णांक (*fn)(काष्ठा irq_data *, अचिन्हित पूर्णांक))
-अणु
+void __init pxa_init_irq(int irq_nr, int (*fn)(struct irq_data *, unsigned int))
+{
 	BUG_ON(irq_nr > MAX_INTERNAL_IRQS);
 
 	pxa_irq_base = io_p2v(0x40d00000);
 	cpu_has_ipr = !cpu_is_pxa25x();
-	pxa_init_irq_common(शून्य, irq_nr, fn);
-पूर्ण
+	pxa_init_irq_common(NULL, irq_nr, fn);
+}
 
-#अगर_घोषित CONFIG_PM
-अटल अचिन्हित दीर्घ saved_icmr[MAX_INTERNAL_IRQS/32];
-अटल अचिन्हित दीर्घ saved_ipr[MAX_INTERNAL_IRQS];
+#ifdef CONFIG_PM
+static unsigned long saved_icmr[MAX_INTERNAL_IRQS/32];
+static unsigned long saved_ipr[MAX_INTERNAL_IRQS];
 
-अटल पूर्णांक pxa_irq_suspend(व्योम)
-अणु
-	पूर्णांक i;
+static int pxa_irq_suspend(void)
+{
+	int i;
 
-	क्रम (i = 0; i < DIV_ROUND_UP(pxa_पूर्णांकernal_irq_nr, 32); i++) अणु
-		व्योम __iomem *base = irq_base(i);
+	for (i = 0; i < DIV_ROUND_UP(pxa_internal_irq_nr, 32); i++) {
+		void __iomem *base = irq_base(i);
 
-		saved_icmr[i] = __raw_पढ़ोl(base + ICMR);
-		__raw_ग_लिखोl(0, base + ICMR);
-	पूर्ण
+		saved_icmr[i] = __raw_readl(base + ICMR);
+		__raw_writel(0, base + ICMR);
+	}
 
-	अगर (cpu_has_ipr) अणु
-		क्रम (i = 0; i < pxa_पूर्णांकernal_irq_nr; i++)
-			saved_ipr[i] = __raw_पढ़ोl(pxa_irq_base + IPR(i));
-	पूर्ण
+	if (cpu_has_ipr) {
+		for (i = 0; i < pxa_internal_irq_nr; i++)
+			saved_ipr[i] = __raw_readl(pxa_irq_base + IPR(i));
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम pxa_irq_resume(व्योम)
-अणु
-	पूर्णांक i;
+static void pxa_irq_resume(void)
+{
+	int i;
 
-	क्रम (i = 0; i < DIV_ROUND_UP(pxa_पूर्णांकernal_irq_nr, 32); i++) अणु
-		व्योम __iomem *base = irq_base(i);
+	for (i = 0; i < DIV_ROUND_UP(pxa_internal_irq_nr, 32); i++) {
+		void __iomem *base = irq_base(i);
 
-		__raw_ग_लिखोl(saved_icmr[i], base + ICMR);
-		__raw_ग_लिखोl(0, base + ICLR);
-	पूर्ण
+		__raw_writel(saved_icmr[i], base + ICMR);
+		__raw_writel(0, base + ICLR);
+	}
 
-	अगर (cpu_has_ipr)
-		क्रम (i = 0; i < pxa_पूर्णांकernal_irq_nr; i++)
-			__raw_ग_लिखोl(saved_ipr[i], pxa_irq_base + IPR(i));
+	if (cpu_has_ipr)
+		for (i = 0; i < pxa_internal_irq_nr; i++)
+			__raw_writel(saved_ipr[i], pxa_irq_base + IPR(i));
 
-	__raw_ग_लिखोl(1, pxa_irq_base + ICCR);
-पूर्ण
-#अन्यथा
-#घोषणा pxa_irq_suspend		शून्य
-#घोषणा pxa_irq_resume		शून्य
-#पूर्ण_अगर
+	__raw_writel(1, pxa_irq_base + ICCR);
+}
+#else
+#define pxa_irq_suspend		NULL
+#define pxa_irq_resume		NULL
+#endif
 
-काष्ठा syscore_ops pxa_irq_syscore_ops = अणु
+struct syscore_ops pxa_irq_syscore_ops = {
 	.suspend	= pxa_irq_suspend,
 	.resume		= pxa_irq_resume,
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id पूर्णांकc_ids[] __initस्थिर = अणु
-	अणु .compatible = "marvell,pxa-intc", पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id intc_ids[] __initconst = {
+	{ .compatible = "marvell,pxa-intc", },
+	{}
+};
 
-व्योम __init pxa_dt_irq_init(पूर्णांक (*fn)(काष्ठा irq_data *, अचिन्हित पूर्णांक))
-अणु
-	काष्ठा device_node *node;
-	काष्ठा resource res;
-	पूर्णांक ret;
+void __init pxa_dt_irq_init(int (*fn)(struct irq_data *, unsigned int))
+{
+	struct device_node *node;
+	struct resource res;
+	int ret;
 
-	node = of_find_matching_node(शून्य, पूर्णांकc_ids);
-	अगर (!node) अणु
+	node = of_find_matching_node(NULL, intc_ids);
+	if (!node) {
 		pr_err("Failed to find interrupt controller in arch-pxa\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	ret = of_property_पढ़ो_u32(node, "marvell,intc-nr-irqs",
-				   &pxa_पूर्णांकernal_irq_nr);
-	अगर (ret) अणु
+	ret = of_property_read_u32(node, "marvell,intc-nr-irqs",
+				   &pxa_internal_irq_nr);
+	if (ret) {
 		pr_err("Not found marvell,intc-nr-irqs property\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	ret = of_address_to_resource(node, 0, &res);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		pr_err("No registers defined for node\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 	pxa_irq_base = io_p2v(res.start);
 
-	अगर (of_find_property(node, "marvell,intc-priority", शून्य))
+	if (of_find_property(node, "marvell,intc-priority", NULL))
 		cpu_has_ipr = 1;
 
-	ret = irq_alloc_descs(-1, 0, pxa_पूर्णांकernal_irq_nr, 0);
-	अगर (ret < 0) अणु
+	ret = irq_alloc_descs(-1, 0, pxa_internal_irq_nr, 0);
+	if (ret < 0) {
 		pr_err("Failed to allocate IRQ numbers\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	pxa_init_irq_common(node, pxa_पूर्णांकernal_irq_nr, fn);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_OF */
+	pxa_init_irq_common(node, pxa_internal_irq_nr, fn);
+}
+#endif /* CONFIG_OF */

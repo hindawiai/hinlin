@@ -1,157 +1,156 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: ISC
+// SPDX-License-Identifier: ISC
 /*
  * Copyright (c) 2016-2017 Qualcomm Atheros, Inc. All rights reserved.
  * Copyright (c) 2015 The Linux Foundation. All rights reserved.
  */
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/reset.h>
-#समावेश "core.h"
-#समावेश "debug.h"
-#समावेश "pci.h"
-#समावेश "ahb.h"
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/clk.h>
+#include <linux/reset.h>
+#include "core.h"
+#include "debug.h"
+#include "pci.h"
+#include "ahb.h"
 
-अटल स्थिर काष्ठा of_device_id ath10k_ahb_of_match[] = अणु
-	अणु .compatible = "qcom,ipq4019-wifi",
-	  .data = (व्योम *)ATH10K_HW_QCA4019
-	पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id ath10k_ahb_of_match[] = {
+	{ .compatible = "qcom,ipq4019-wifi",
+	  .data = (void *)ATH10K_HW_QCA4019
+	},
+	{ }
+};
 
 MODULE_DEVICE_TABLE(of, ath10k_ahb_of_match);
 
-#घोषणा QCA4019_SRAM_ADDR      0x000C0000
-#घोषणा QCA4019_SRAM_LEN       0x00040000 /* 256 kb */
+#define QCA4019_SRAM_ADDR      0x000C0000
+#define QCA4019_SRAM_LEN       0x00040000 /* 256 kb */
 
-अटल अंतरभूत काष्ठा ath10k_ahb *ath10k_ahb_priv(काष्ठा ath10k *ar)
-अणु
-	वापस &((काष्ठा ath10k_pci *)ar->drv_priv)->ahb[0];
-पूर्ण
+static inline struct ath10k_ahb *ath10k_ahb_priv(struct ath10k *ar)
+{
+	return &((struct ath10k_pci *)ar->drv_priv)->ahb[0];
+}
 
-अटल व्योम ath10k_ahb_ग_लिखो32(काष्ठा ath10k *ar, u32 offset, u32 value)
-अणु
-	काष्ठा ath10k_ahb *ar_ahb = ath10k_ahb_priv(ar);
+static void ath10k_ahb_write32(struct ath10k *ar, u32 offset, u32 value)
+{
+	struct ath10k_ahb *ar_ahb = ath10k_ahb_priv(ar);
 
-	ioग_लिखो32(value, ar_ahb->mem + offset);
-पूर्ण
+	iowrite32(value, ar_ahb->mem + offset);
+}
 
-अटल u32 ath10k_ahb_पढ़ो32(काष्ठा ath10k *ar, u32 offset)
-अणु
-	काष्ठा ath10k_ahb *ar_ahb = ath10k_ahb_priv(ar);
+static u32 ath10k_ahb_read32(struct ath10k *ar, u32 offset)
+{
+	struct ath10k_ahb *ar_ahb = ath10k_ahb_priv(ar);
 
-	वापस ioपढ़ो32(ar_ahb->mem + offset);
-पूर्ण
+	return ioread32(ar_ahb->mem + offset);
+}
 
-अटल u32 ath10k_ahb_gcc_पढ़ो32(काष्ठा ath10k *ar, u32 offset)
-अणु
-	काष्ठा ath10k_ahb *ar_ahb = ath10k_ahb_priv(ar);
+static u32 ath10k_ahb_gcc_read32(struct ath10k *ar, u32 offset)
+{
+	struct ath10k_ahb *ar_ahb = ath10k_ahb_priv(ar);
 
-	वापस ioपढ़ो32(ar_ahb->gcc_mem + offset);
-पूर्ण
+	return ioread32(ar_ahb->gcc_mem + offset);
+}
 
-अटल व्योम ath10k_ahb_tcsr_ग_लिखो32(काष्ठा ath10k *ar, u32 offset, u32 value)
-अणु
-	काष्ठा ath10k_ahb *ar_ahb = ath10k_ahb_priv(ar);
+static void ath10k_ahb_tcsr_write32(struct ath10k *ar, u32 offset, u32 value)
+{
+	struct ath10k_ahb *ar_ahb = ath10k_ahb_priv(ar);
 
-	ioग_लिखो32(value, ar_ahb->tcsr_mem + offset);
-पूर्ण
+	iowrite32(value, ar_ahb->tcsr_mem + offset);
+}
 
-अटल u32 ath10k_ahb_tcsr_पढ़ो32(काष्ठा ath10k *ar, u32 offset)
-अणु
-	काष्ठा ath10k_ahb *ar_ahb = ath10k_ahb_priv(ar);
+static u32 ath10k_ahb_tcsr_read32(struct ath10k *ar, u32 offset)
+{
+	struct ath10k_ahb *ar_ahb = ath10k_ahb_priv(ar);
 
-	वापस ioपढ़ो32(ar_ahb->tcsr_mem + offset);
-पूर्ण
+	return ioread32(ar_ahb->tcsr_mem + offset);
+}
 
-अटल u32 ath10k_ahb_soc_पढ़ो32(काष्ठा ath10k *ar, u32 addr)
-अणु
-	वापस ath10k_ahb_पढ़ो32(ar, RTC_SOC_BASE_ADDRESS + addr);
-पूर्ण
+static u32 ath10k_ahb_soc_read32(struct ath10k *ar, u32 addr)
+{
+	return ath10k_ahb_read32(ar, RTC_SOC_BASE_ADDRESS + addr);
+}
 
-अटल पूर्णांक ath10k_ahb_get_num_banks(काष्ठा ath10k *ar)
-अणु
-	अगर (ar->hw_rev == ATH10K_HW_QCA4019)
-		वापस 1;
+static int ath10k_ahb_get_num_banks(struct ath10k *ar)
+{
+	if (ar->hw_rev == ATH10K_HW_QCA4019)
+		return 1;
 
 	ath10k_warn(ar, "unknown number of banks, assuming 1\n");
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक ath10k_ahb_घड़ी_init(काष्ठा ath10k *ar)
-अणु
-	काष्ठा ath10k_ahb *ar_ahb = ath10k_ahb_priv(ar);
-	काष्ठा device *dev;
+static int ath10k_ahb_clock_init(struct ath10k *ar)
+{
+	struct ath10k_ahb *ar_ahb = ath10k_ahb_priv(ar);
+	struct device *dev;
 
 	dev = &ar_ahb->pdev->dev;
 
 	ar_ahb->cmd_clk = devm_clk_get(dev, "wifi_wcss_cmd");
-	अगर (IS_ERR_OR_शून्य(ar_ahb->cmd_clk)) अणु
+	if (IS_ERR_OR_NULL(ar_ahb->cmd_clk)) {
 		ath10k_err(ar, "failed to get cmd clk: %ld\n",
 			   PTR_ERR(ar_ahb->cmd_clk));
-		वापस ar_ahb->cmd_clk ? PTR_ERR(ar_ahb->cmd_clk) : -ENODEV;
-	पूर्ण
+		return ar_ahb->cmd_clk ? PTR_ERR(ar_ahb->cmd_clk) : -ENODEV;
+	}
 
 	ar_ahb->ref_clk = devm_clk_get(dev, "wifi_wcss_ref");
-	अगर (IS_ERR_OR_शून्य(ar_ahb->ref_clk)) अणु
+	if (IS_ERR_OR_NULL(ar_ahb->ref_clk)) {
 		ath10k_err(ar, "failed to get ref clk: %ld\n",
 			   PTR_ERR(ar_ahb->ref_clk));
-		वापस ar_ahb->ref_clk ? PTR_ERR(ar_ahb->ref_clk) : -ENODEV;
-	पूर्ण
+		return ar_ahb->ref_clk ? PTR_ERR(ar_ahb->ref_clk) : -ENODEV;
+	}
 
 	ar_ahb->rtc_clk = devm_clk_get(dev, "wifi_wcss_rtc");
-	अगर (IS_ERR_OR_शून्य(ar_ahb->rtc_clk)) अणु
+	if (IS_ERR_OR_NULL(ar_ahb->rtc_clk)) {
 		ath10k_err(ar, "failed to get rtc clk: %ld\n",
 			   PTR_ERR(ar_ahb->rtc_clk));
-		वापस ar_ahb->rtc_clk ? PTR_ERR(ar_ahb->rtc_clk) : -ENODEV;
-	पूर्ण
+		return ar_ahb->rtc_clk ? PTR_ERR(ar_ahb->rtc_clk) : -ENODEV;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ath10k_ahb_घड़ी_deinit(काष्ठा ath10k *ar)
-अणु
-	काष्ठा ath10k_ahb *ar_ahb = ath10k_ahb_priv(ar);
+static void ath10k_ahb_clock_deinit(struct ath10k *ar)
+{
+	struct ath10k_ahb *ar_ahb = ath10k_ahb_priv(ar);
 
-	ar_ahb->cmd_clk = शून्य;
-	ar_ahb->ref_clk = शून्य;
-	ar_ahb->rtc_clk = शून्य;
-पूर्ण
+	ar_ahb->cmd_clk = NULL;
+	ar_ahb->ref_clk = NULL;
+	ar_ahb->rtc_clk = NULL;
+}
 
-अटल पूर्णांक ath10k_ahb_घड़ी_enable(काष्ठा ath10k *ar)
-अणु
-	काष्ठा ath10k_ahb *ar_ahb = ath10k_ahb_priv(ar);
-	पूर्णांक ret;
+static int ath10k_ahb_clock_enable(struct ath10k *ar)
+{
+	struct ath10k_ahb *ar_ahb = ath10k_ahb_priv(ar);
+	int ret;
 
-	अगर (IS_ERR_OR_शून्य(ar_ahb->cmd_clk) ||
-	    IS_ERR_OR_शून्य(ar_ahb->ref_clk) ||
-	    IS_ERR_OR_शून्य(ar_ahb->rtc_clk)) अणु
+	if (IS_ERR_OR_NULL(ar_ahb->cmd_clk) ||
+	    IS_ERR_OR_NULL(ar_ahb->ref_clk) ||
+	    IS_ERR_OR_NULL(ar_ahb->rtc_clk)) {
 		ath10k_err(ar, "clock(s) is/are not initialized\n");
 		ret = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = clk_prepare_enable(ar_ahb->cmd_clk);
-	अगर (ret) अणु
+	if (ret) {
 		ath10k_err(ar, "failed to enable cmd clk: %d\n", ret);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = clk_prepare_enable(ar_ahb->ref_clk);
-	अगर (ret) अणु
+	if (ret) {
 		ath10k_err(ar, "failed to enable ref clk: %d\n", ret);
-		जाओ err_cmd_clk_disable;
-	पूर्ण
+		goto err_cmd_clk_disable;
+	}
 
 	ret = clk_prepare_enable(ar_ahb->rtc_clk);
-	अगर (ret) अणु
+	if (ret) {
 		ath10k_err(ar, "failed to enable rtc clk: %d\n", ret);
-		जाओ err_ref_clk_disable;
-	पूर्ण
+		goto err_ref_clk_disable;
+	}
 
-	वापस 0;
+	return 0;
 
 err_ref_clk_disable:
 	clk_disable_unprepare(ar_ahb->ref_clk);
@@ -160,485 +159,485 @@ err_cmd_clk_disable:
 	clk_disable_unprepare(ar_ahb->cmd_clk);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ath10k_ahb_घड़ी_disable(काष्ठा ath10k *ar)
-अणु
-	काष्ठा ath10k_ahb *ar_ahb = ath10k_ahb_priv(ar);
+static void ath10k_ahb_clock_disable(struct ath10k *ar)
+{
+	struct ath10k_ahb *ar_ahb = ath10k_ahb_priv(ar);
 
 	clk_disable_unprepare(ar_ahb->cmd_clk);
 
 	clk_disable_unprepare(ar_ahb->ref_clk);
 
 	clk_disable_unprepare(ar_ahb->rtc_clk);
-पूर्ण
+}
 
-अटल पूर्णांक ath10k_ahb_rst_ctrl_init(काष्ठा ath10k *ar)
-अणु
-	काष्ठा ath10k_ahb *ar_ahb = ath10k_ahb_priv(ar);
-	काष्ठा device *dev;
+static int ath10k_ahb_rst_ctrl_init(struct ath10k *ar)
+{
+	struct ath10k_ahb *ar_ahb = ath10k_ahb_priv(ar);
+	struct device *dev;
 
 	dev = &ar_ahb->pdev->dev;
 
 	ar_ahb->core_cold_rst = devm_reset_control_get_exclusive(dev,
 								 "wifi_core_cold");
-	अगर (IS_ERR(ar_ahb->core_cold_rst)) अणु
+	if (IS_ERR(ar_ahb->core_cold_rst)) {
 		ath10k_err(ar, "failed to get core cold rst ctrl: %ld\n",
 			   PTR_ERR(ar_ahb->core_cold_rst));
-		वापस PTR_ERR(ar_ahb->core_cold_rst);
-	पूर्ण
+		return PTR_ERR(ar_ahb->core_cold_rst);
+	}
 
 	ar_ahb->radio_cold_rst = devm_reset_control_get_exclusive(dev,
 								  "wifi_radio_cold");
-	अगर (IS_ERR(ar_ahb->radio_cold_rst)) अणु
+	if (IS_ERR(ar_ahb->radio_cold_rst)) {
 		ath10k_err(ar, "failed to get radio cold rst ctrl: %ld\n",
 			   PTR_ERR(ar_ahb->radio_cold_rst));
-		वापस PTR_ERR(ar_ahb->radio_cold_rst);
-	पूर्ण
+		return PTR_ERR(ar_ahb->radio_cold_rst);
+	}
 
 	ar_ahb->radio_warm_rst = devm_reset_control_get_exclusive(dev,
 								  "wifi_radio_warm");
-	अगर (IS_ERR(ar_ahb->radio_warm_rst)) अणु
+	if (IS_ERR(ar_ahb->radio_warm_rst)) {
 		ath10k_err(ar, "failed to get radio warm rst ctrl: %ld\n",
 			   PTR_ERR(ar_ahb->radio_warm_rst));
-		वापस PTR_ERR(ar_ahb->radio_warm_rst);
-	पूर्ण
+		return PTR_ERR(ar_ahb->radio_warm_rst);
+	}
 
-	ar_ahb->radio_srअगर_rst = devm_reset_control_get_exclusive(dev,
+	ar_ahb->radio_srif_rst = devm_reset_control_get_exclusive(dev,
 								  "wifi_radio_srif");
-	अगर (IS_ERR(ar_ahb->radio_srअगर_rst)) अणु
+	if (IS_ERR(ar_ahb->radio_srif_rst)) {
 		ath10k_err(ar, "failed to get radio srif rst ctrl: %ld\n",
-			   PTR_ERR(ar_ahb->radio_srअगर_rst));
-		वापस PTR_ERR(ar_ahb->radio_srअगर_rst);
-	पूर्ण
+			   PTR_ERR(ar_ahb->radio_srif_rst));
+		return PTR_ERR(ar_ahb->radio_srif_rst);
+	}
 
 	ar_ahb->cpu_init_rst = devm_reset_control_get_exclusive(dev,
 								"wifi_cpu_init");
-	अगर (IS_ERR(ar_ahb->cpu_init_rst)) अणु
+	if (IS_ERR(ar_ahb->cpu_init_rst)) {
 		ath10k_err(ar, "failed to get cpu init rst ctrl: %ld\n",
 			   PTR_ERR(ar_ahb->cpu_init_rst));
-		वापस PTR_ERR(ar_ahb->cpu_init_rst);
-	पूर्ण
+		return PTR_ERR(ar_ahb->cpu_init_rst);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ath10k_ahb_rst_ctrl_deinit(काष्ठा ath10k *ar)
-अणु
-	काष्ठा ath10k_ahb *ar_ahb = ath10k_ahb_priv(ar);
+static void ath10k_ahb_rst_ctrl_deinit(struct ath10k *ar)
+{
+	struct ath10k_ahb *ar_ahb = ath10k_ahb_priv(ar);
 
-	ar_ahb->core_cold_rst = शून्य;
-	ar_ahb->radio_cold_rst = शून्य;
-	ar_ahb->radio_warm_rst = शून्य;
-	ar_ahb->radio_srअगर_rst = शून्य;
-	ar_ahb->cpu_init_rst = शून्य;
-पूर्ण
+	ar_ahb->core_cold_rst = NULL;
+	ar_ahb->radio_cold_rst = NULL;
+	ar_ahb->radio_warm_rst = NULL;
+	ar_ahb->radio_srif_rst = NULL;
+	ar_ahb->cpu_init_rst = NULL;
+}
 
-अटल पूर्णांक ath10k_ahb_release_reset(काष्ठा ath10k *ar)
-अणु
-	काष्ठा ath10k_ahb *ar_ahb = ath10k_ahb_priv(ar);
-	पूर्णांक ret;
+static int ath10k_ahb_release_reset(struct ath10k *ar)
+{
+	struct ath10k_ahb *ar_ahb = ath10k_ahb_priv(ar);
+	int ret;
 
-	अगर (IS_ERR_OR_शून्य(ar_ahb->radio_cold_rst) ||
-	    IS_ERR_OR_शून्य(ar_ahb->radio_warm_rst) ||
-	    IS_ERR_OR_शून्य(ar_ahb->radio_srअगर_rst) ||
-	    IS_ERR_OR_शून्य(ar_ahb->cpu_init_rst)) अणु
+	if (IS_ERR_OR_NULL(ar_ahb->radio_cold_rst) ||
+	    IS_ERR_OR_NULL(ar_ahb->radio_warm_rst) ||
+	    IS_ERR_OR_NULL(ar_ahb->radio_srif_rst) ||
+	    IS_ERR_OR_NULL(ar_ahb->cpu_init_rst)) {
 		ath10k_err(ar, "rst ctrl(s) is/are not initialized\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ret = reset_control_deनिश्चित(ar_ahb->radio_cold_rst);
-	अगर (ret) अणु
+	ret = reset_control_deassert(ar_ahb->radio_cold_rst);
+	if (ret) {
 		ath10k_err(ar, "failed to deassert radio cold rst: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = reset_control_deनिश्चित(ar_ahb->radio_warm_rst);
-	अगर (ret) अणु
+	ret = reset_control_deassert(ar_ahb->radio_warm_rst);
+	if (ret) {
 		ath10k_err(ar, "failed to deassert radio warm rst: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = reset_control_deनिश्चित(ar_ahb->radio_srअगर_rst);
-	अगर (ret) अणु
+	ret = reset_control_deassert(ar_ahb->radio_srif_rst);
+	if (ret) {
 		ath10k_err(ar, "failed to deassert radio srif rst: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = reset_control_deनिश्चित(ar_ahb->cpu_init_rst);
-	अगर (ret) अणु
+	ret = reset_control_deassert(ar_ahb->cpu_init_rst);
+	if (ret) {
 		ath10k_err(ar, "failed to deassert cpu init rst: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ath10k_ahb_halt_axi_bus(काष्ठा ath10k *ar, u32 haltreq_reg,
+static void ath10k_ahb_halt_axi_bus(struct ath10k *ar, u32 haltreq_reg,
 				    u32 haltack_reg)
-अणु
-	अचिन्हित दीर्घ समयout;
+{
+	unsigned long timeout;
 	u32 val;
 
 	/* Issue halt axi bus request */
-	val = ath10k_ahb_tcsr_पढ़ो32(ar, haltreq_reg);
+	val = ath10k_ahb_tcsr_read32(ar, haltreq_reg);
 	val |= AHB_AXI_BUS_HALT_REQ;
-	ath10k_ahb_tcsr_ग_लिखो32(ar, haltreq_reg, val);
+	ath10k_ahb_tcsr_write32(ar, haltreq_reg, val);
 
-	/* Wait क्रम axi bus halted ack */
-	समयout = jअगरfies + msecs_to_jअगरfies(ATH10K_AHB_AXI_BUS_HALT_TIMEOUT);
-	करो अणु
-		val = ath10k_ahb_tcsr_पढ़ो32(ar, haltack_reg);
-		अगर (val & AHB_AXI_BUS_HALT_ACK)
-			अवरोध;
+	/* Wait for axi bus halted ack */
+	timeout = jiffies + msecs_to_jiffies(ATH10K_AHB_AXI_BUS_HALT_TIMEOUT);
+	do {
+		val = ath10k_ahb_tcsr_read32(ar, haltack_reg);
+		if (val & AHB_AXI_BUS_HALT_ACK)
+			break;
 
 		mdelay(1);
-	पूर्ण जबतक (समय_beक्रमe(jअगरfies, समयout));
+	} while (time_before(jiffies, timeout));
 
-	अगर (!(val & AHB_AXI_BUS_HALT_ACK)) अणु
+	if (!(val & AHB_AXI_BUS_HALT_ACK)) {
 		ath10k_err(ar, "failed to halt axi bus: %d\n", val);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	ath10k_dbg(ar, ATH10K_DBG_AHB, "axi bus halted\n");
-पूर्ण
+}
 
-अटल व्योम ath10k_ahb_halt_chip(काष्ठा ath10k *ar)
-अणु
-	काष्ठा ath10k_ahb *ar_ahb = ath10k_ahb_priv(ar);
+static void ath10k_ahb_halt_chip(struct ath10k *ar)
+{
+	struct ath10k_ahb *ar_ahb = ath10k_ahb_priv(ar);
 	u32 core_id, glb_cfg_reg, haltreq_reg, haltack_reg;
 	u32 val;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (IS_ERR_OR_शून्य(ar_ahb->core_cold_rst) ||
-	    IS_ERR_OR_शून्य(ar_ahb->radio_cold_rst) ||
-	    IS_ERR_OR_शून्य(ar_ahb->radio_warm_rst) ||
-	    IS_ERR_OR_शून्य(ar_ahb->radio_srअगर_rst) ||
-	    IS_ERR_OR_शून्य(ar_ahb->cpu_init_rst)) अणु
+	if (IS_ERR_OR_NULL(ar_ahb->core_cold_rst) ||
+	    IS_ERR_OR_NULL(ar_ahb->radio_cold_rst) ||
+	    IS_ERR_OR_NULL(ar_ahb->radio_warm_rst) ||
+	    IS_ERR_OR_NULL(ar_ahb->radio_srif_rst) ||
+	    IS_ERR_OR_NULL(ar_ahb->cpu_init_rst)) {
 		ath10k_err(ar, "rst ctrl(s) is/are not initialized\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	core_id = ath10k_ahb_पढ़ो32(ar, ATH10K_AHB_WLAN_CORE_ID_REG);
+	core_id = ath10k_ahb_read32(ar, ATH10K_AHB_WLAN_CORE_ID_REG);
 
-	चयन (core_id) अणु
-	हाल 0:
+	switch (core_id) {
+	case 0:
 		glb_cfg_reg = ATH10K_AHB_TCSR_WIFI0_GLB_CFG;
 		haltreq_reg = ATH10K_AHB_TCSR_WCSS0_HALTREQ;
 		haltack_reg = ATH10K_AHB_TCSR_WCSS0_HALTACK;
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		glb_cfg_reg = ATH10K_AHB_TCSR_WIFI1_GLB_CFG;
 		haltreq_reg = ATH10K_AHB_TCSR_WCSS1_HALTREQ;
 		haltack_reg = ATH10K_AHB_TCSR_WCSS1_HALTACK;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ath10k_err(ar, "invalid core id %d found, skipping reset sequence\n",
 			   core_id);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	ath10k_ahb_halt_axi_bus(ar, haltreq_reg, haltack_reg);
 
-	val = ath10k_ahb_tcsr_पढ़ो32(ar, glb_cfg_reg);
+	val = ath10k_ahb_tcsr_read32(ar, glb_cfg_reg);
 	val |= TCSR_WIFIX_GLB_CFG_DISABLE_CORE_CLK;
-	ath10k_ahb_tcsr_ग_लिखो32(ar, glb_cfg_reg, val);
+	ath10k_ahb_tcsr_write32(ar, glb_cfg_reg, val);
 
-	ret = reset_control_निश्चित(ar_ahb->core_cold_rst);
-	अगर (ret)
+	ret = reset_control_assert(ar_ahb->core_cold_rst);
+	if (ret)
 		ath10k_err(ar, "failed to assert core cold rst: %d\n", ret);
 	msleep(1);
 
-	ret = reset_control_निश्चित(ar_ahb->radio_cold_rst);
-	अगर (ret)
+	ret = reset_control_assert(ar_ahb->radio_cold_rst);
+	if (ret)
 		ath10k_err(ar, "failed to assert radio cold rst: %d\n", ret);
 	msleep(1);
 
-	ret = reset_control_निश्चित(ar_ahb->radio_warm_rst);
-	अगर (ret)
+	ret = reset_control_assert(ar_ahb->radio_warm_rst);
+	if (ret)
 		ath10k_err(ar, "failed to assert radio warm rst: %d\n", ret);
 	msleep(1);
 
-	ret = reset_control_निश्चित(ar_ahb->radio_srअगर_rst);
-	अगर (ret)
+	ret = reset_control_assert(ar_ahb->radio_srif_rst);
+	if (ret)
 		ath10k_err(ar, "failed to assert radio srif rst: %d\n", ret);
 	msleep(1);
 
-	ret = reset_control_निश्चित(ar_ahb->cpu_init_rst);
-	अगर (ret)
+	ret = reset_control_assert(ar_ahb->cpu_init_rst);
+	if (ret)
 		ath10k_err(ar, "failed to assert cpu init rst: %d\n", ret);
 	msleep(10);
 
-	/* Clear halt req and core घड़ी disable req beक्रमe
-	 * deनिश्चितing wअगरi core reset.
+	/* Clear halt req and core clock disable req before
+	 * deasserting wifi core reset.
 	 */
-	val = ath10k_ahb_tcsr_पढ़ो32(ar, haltreq_reg);
+	val = ath10k_ahb_tcsr_read32(ar, haltreq_reg);
 	val &= ~AHB_AXI_BUS_HALT_REQ;
-	ath10k_ahb_tcsr_ग_लिखो32(ar, haltreq_reg, val);
+	ath10k_ahb_tcsr_write32(ar, haltreq_reg, val);
 
-	val = ath10k_ahb_tcsr_पढ़ो32(ar, glb_cfg_reg);
+	val = ath10k_ahb_tcsr_read32(ar, glb_cfg_reg);
 	val &= ~TCSR_WIFIX_GLB_CFG_DISABLE_CORE_CLK;
-	ath10k_ahb_tcsr_ग_लिखो32(ar, glb_cfg_reg, val);
+	ath10k_ahb_tcsr_write32(ar, glb_cfg_reg, val);
 
-	ret = reset_control_deनिश्चित(ar_ahb->core_cold_rst);
-	अगर (ret)
+	ret = reset_control_deassert(ar_ahb->core_cold_rst);
+	if (ret)
 		ath10k_err(ar, "failed to deassert core cold rst: %d\n", ret);
 
 	ath10k_dbg(ar, ATH10K_DBG_AHB, "core %d reset done\n", core_id);
-पूर्ण
+}
 
-अटल irqवापस_t ath10k_ahb_पूर्णांकerrupt_handler(पूर्णांक irq, व्योम *arg)
-अणु
-	काष्ठा ath10k *ar = arg;
+static irqreturn_t ath10k_ahb_interrupt_handler(int irq, void *arg)
+{
+	struct ath10k *ar = arg;
 
-	अगर (!ath10k_pci_irq_pending(ar))
-		वापस IRQ_NONE;
+	if (!ath10k_pci_irq_pending(ar))
+		return IRQ_NONE;
 
 	ath10k_pci_disable_and_clear_legacy_irq(ar);
 	ath10k_pci_irq_msi_fw_mask(ar);
 	napi_schedule(&ar->napi);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक ath10k_ahb_request_irq_legacy(काष्ठा ath10k *ar)
-अणु
-	काष्ठा ath10k_pci *ar_pci = ath10k_pci_priv(ar);
-	काष्ठा ath10k_ahb *ar_ahb = ath10k_ahb_priv(ar);
-	पूर्णांक ret;
+static int ath10k_ahb_request_irq_legacy(struct ath10k *ar)
+{
+	struct ath10k_pci *ar_pci = ath10k_pci_priv(ar);
+	struct ath10k_ahb *ar_ahb = ath10k_ahb_priv(ar);
+	int ret;
 
 	ret = request_irq(ar_ahb->irq,
-			  ath10k_ahb_पूर्णांकerrupt_handler,
+			  ath10k_ahb_interrupt_handler,
 			  IRQF_SHARED, "ath10k_ahb", ar);
-	अगर (ret) अणु
+	if (ret) {
 		ath10k_warn(ar, "failed to request legacy irq %d: %d\n",
 			    ar_ahb->irq, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	ar_pci->oper_irq_mode = ATH10K_PCI_IRQ_LEGACY;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ath10k_ahb_release_irq_legacy(काष्ठा ath10k *ar)
-अणु
-	काष्ठा ath10k_ahb *ar_ahb = ath10k_ahb_priv(ar);
+static void ath10k_ahb_release_irq_legacy(struct ath10k *ar)
+{
+	struct ath10k_ahb *ar_ahb = ath10k_ahb_priv(ar);
 
-	मुक्त_irq(ar_ahb->irq, ar);
-पूर्ण
+	free_irq(ar_ahb->irq, ar);
+}
 
-अटल व्योम ath10k_ahb_irq_disable(काष्ठा ath10k *ar)
-अणु
-	ath10k_ce_disable_पूर्णांकerrupts(ar);
+static void ath10k_ahb_irq_disable(struct ath10k *ar)
+{
+	ath10k_ce_disable_interrupts(ar);
 	ath10k_pci_disable_and_clear_legacy_irq(ar);
-पूर्ण
+}
 
-अटल पूर्णांक ath10k_ahb_resource_init(काष्ठा ath10k *ar)
-अणु
-	काष्ठा ath10k_ahb *ar_ahb = ath10k_ahb_priv(ar);
-	काष्ठा platक्रमm_device *pdev;
-	काष्ठा resource *res;
-	पूर्णांक ret;
+static int ath10k_ahb_resource_init(struct ath10k *ar)
+{
+	struct ath10k_ahb *ar_ahb = ath10k_ahb_priv(ar);
+	struct platform_device *pdev;
+	struct resource *res;
+	int ret;
 
 	pdev = ar_ahb->pdev;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!res) अणु
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!res) {
 		ath10k_err(ar, "failed to get memory resource\n");
 		ret = -ENXIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ar_ahb->mem = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(ar_ahb->mem)) अणु
+	if (IS_ERR(ar_ahb->mem)) {
 		ath10k_err(ar, "mem ioremap error\n");
 		ret = PTR_ERR(ar_ahb->mem);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ar_ahb->mem_len = resource_size(res);
 
 	ar_ahb->gcc_mem = ioremap(ATH10K_GCC_REG_BASE,
 				  ATH10K_GCC_REG_SIZE);
-	अगर (!ar_ahb->gcc_mem) अणु
+	if (!ar_ahb->gcc_mem) {
 		ath10k_err(ar, "gcc mem ioremap error\n");
 		ret = -ENOMEM;
-		जाओ err_mem_unmap;
-	पूर्ण
+		goto err_mem_unmap;
+	}
 
 	ar_ahb->tcsr_mem = ioremap(ATH10K_TCSR_REG_BASE,
 				   ATH10K_TCSR_REG_SIZE);
-	अगर (!ar_ahb->tcsr_mem) अणु
+	if (!ar_ahb->tcsr_mem) {
 		ath10k_err(ar, "tcsr mem ioremap error\n");
 		ret = -ENOMEM;
-		जाओ err_gcc_mem_unmap;
-	पूर्ण
+		goto err_gcc_mem_unmap;
+	}
 
 	ret = dma_set_mask(&pdev->dev, DMA_BIT_MASK(32));
-	अगर (ret) अणु
+	if (ret) {
 		ath10k_err(ar, "failed to set 32-bit dma mask: %d\n", ret);
-		जाओ err_tcsr_mem_unmap;
-	पूर्ण
+		goto err_tcsr_mem_unmap;
+	}
 
 	ret = dma_set_coherent_mask(&pdev->dev, DMA_BIT_MASK(32));
-	अगर (ret) अणु
+	if (ret) {
 		ath10k_err(ar, "failed to set 32-bit consistent dma: %d\n",
 			   ret);
-		जाओ err_tcsr_mem_unmap;
-	पूर्ण
+		goto err_tcsr_mem_unmap;
+	}
 
-	ret = ath10k_ahb_घड़ी_init(ar);
-	अगर (ret)
-		जाओ err_tcsr_mem_unmap;
+	ret = ath10k_ahb_clock_init(ar);
+	if (ret)
+		goto err_tcsr_mem_unmap;
 
 	ret = ath10k_ahb_rst_ctrl_init(ar);
-	अगर (ret)
-		जाओ err_घड़ी_deinit;
+	if (ret)
+		goto err_clock_deinit;
 
-	ar_ahb->irq = platक्रमm_get_irq_byname(pdev, "legacy");
-	अगर (ar_ahb->irq < 0) अणु
+	ar_ahb->irq = platform_get_irq_byname(pdev, "legacy");
+	if (ar_ahb->irq < 0) {
 		ath10k_err(ar, "failed to get irq number: %d\n", ar_ahb->irq);
 		ret = ar_ahb->irq;
-		जाओ err_घड़ी_deinit;
-	पूर्ण
+		goto err_clock_deinit;
+	}
 
 	ath10k_dbg(ar, ATH10K_DBG_BOOT, "irq: %d\n", ar_ahb->irq);
 
 	ath10k_dbg(ar, ATH10K_DBG_BOOT, "mem: 0x%pK mem_len: %lu gcc mem: 0x%pK tcsr_mem: 0x%pK\n",
 		   ar_ahb->mem, ar_ahb->mem_len,
 		   ar_ahb->gcc_mem, ar_ahb->tcsr_mem);
-	वापस 0;
+	return 0;
 
-err_घड़ी_deinit:
-	ath10k_ahb_घड़ी_deinit(ar);
+err_clock_deinit:
+	ath10k_ahb_clock_deinit(ar);
 
 err_tcsr_mem_unmap:
 	iounmap(ar_ahb->tcsr_mem);
 
 err_gcc_mem_unmap:
-	ar_ahb->tcsr_mem = शून्य;
+	ar_ahb->tcsr_mem = NULL;
 	iounmap(ar_ahb->gcc_mem);
 
 err_mem_unmap:
-	ar_ahb->gcc_mem = शून्य;
+	ar_ahb->gcc_mem = NULL;
 	devm_iounmap(&pdev->dev, ar_ahb->mem);
 
 out:
-	ar_ahb->mem = शून्य;
-	वापस ret;
-पूर्ण
+	ar_ahb->mem = NULL;
+	return ret;
+}
 
-अटल व्योम ath10k_ahb_resource_deinit(काष्ठा ath10k *ar)
-अणु
-	काष्ठा ath10k_ahb *ar_ahb = ath10k_ahb_priv(ar);
-	काष्ठा device *dev;
+static void ath10k_ahb_resource_deinit(struct ath10k *ar)
+{
+	struct ath10k_ahb *ar_ahb = ath10k_ahb_priv(ar);
+	struct device *dev;
 
 	dev = &ar_ahb->pdev->dev;
 
-	अगर (ar_ahb->mem)
+	if (ar_ahb->mem)
 		devm_iounmap(dev, ar_ahb->mem);
 
-	अगर (ar_ahb->gcc_mem)
+	if (ar_ahb->gcc_mem)
 		iounmap(ar_ahb->gcc_mem);
 
-	अगर (ar_ahb->tcsr_mem)
+	if (ar_ahb->tcsr_mem)
 		iounmap(ar_ahb->tcsr_mem);
 
-	ar_ahb->mem = शून्य;
-	ar_ahb->gcc_mem = शून्य;
-	ar_ahb->tcsr_mem = शून्य;
+	ar_ahb->mem = NULL;
+	ar_ahb->gcc_mem = NULL;
+	ar_ahb->tcsr_mem = NULL;
 
-	ath10k_ahb_घड़ी_deinit(ar);
+	ath10k_ahb_clock_deinit(ar);
 	ath10k_ahb_rst_ctrl_deinit(ar);
-पूर्ण
+}
 
-अटल पूर्णांक ath10k_ahb_prepare_device(काष्ठा ath10k *ar)
-अणु
+static int ath10k_ahb_prepare_device(struct ath10k *ar)
+{
 	u32 val;
-	पूर्णांक ret;
+	int ret;
 
-	ret = ath10k_ahb_घड़ी_enable(ar);
-	अगर (ret) अणु
+	ret = ath10k_ahb_clock_enable(ar);
+	if (ret) {
 		ath10k_err(ar, "failed to enable clocks\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* Clock क्रम the target is supplied from outside of target (ie,
-	 * बाह्यal घड़ी module controlled by the host). Target needs
+	/* Clock for the target is supplied from outside of target (ie,
+	 * external clock module controlled by the host). Target needs
 	 * to know what frequency target cpu is configured which is needed
-	 * क्रम target पूर्णांकernal use. Read target cpu frequency info from
-	 * gcc रेजिस्टर and ग_लिखो पूर्णांकo target's scratch रेजिस्टर where
-	 * target expects this inक्रमmation.
+	 * for target internal use. Read target cpu frequency info from
+	 * gcc register and write into target's scratch register where
+	 * target expects this information.
 	 */
-	val = ath10k_ahb_gcc_पढ़ो32(ar, ATH10K_AHB_GCC_FEPLL_PLL_DIV);
-	ath10k_ahb_ग_लिखो32(ar, ATH10K_AHB_WIFI_SCRATCH_5_REG, val);
+	val = ath10k_ahb_gcc_read32(ar, ATH10K_AHB_GCC_FEPLL_PLL_DIV);
+	ath10k_ahb_write32(ar, ATH10K_AHB_WIFI_SCRATCH_5_REG, val);
 
 	ret = ath10k_ahb_release_reset(ar);
-	अगर (ret)
-		जाओ err_clk_disable;
+	if (ret)
+		goto err_clk_disable;
 
 	ath10k_ahb_irq_disable(ar);
 
-	ath10k_ahb_ग_लिखो32(ar, FW_INDICATOR_ADDRESS, FW_IND_HOST_READY);
+	ath10k_ahb_write32(ar, FW_INDICATOR_ADDRESS, FW_IND_HOST_READY);
 
-	ret = ath10k_pci_रुको_क्रम_target_init(ar);
-	अगर (ret)
-		जाओ err_halt_chip;
+	ret = ath10k_pci_wait_for_target_init(ar);
+	if (ret)
+		goto err_halt_chip;
 
-	वापस 0;
+	return 0;
 
 err_halt_chip:
 	ath10k_ahb_halt_chip(ar);
 
 err_clk_disable:
-	ath10k_ahb_घड़ी_disable(ar);
+	ath10k_ahb_clock_disable(ar);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ath10k_ahb_chip_reset(काष्ठा ath10k *ar)
-अणु
-	पूर्णांक ret;
+static int ath10k_ahb_chip_reset(struct ath10k *ar)
+{
+	int ret;
 
 	ath10k_ahb_halt_chip(ar);
-	ath10k_ahb_घड़ी_disable(ar);
+	ath10k_ahb_clock_disable(ar);
 
 	ret = ath10k_ahb_prepare_device(ar);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ath10k_ahb_wake_target_cpu(काष्ठा ath10k *ar)
-अणु
+static int ath10k_ahb_wake_target_cpu(struct ath10k *ar)
+{
 	u32 addr, val;
 
 	addr = SOC_CORE_BASE_ADDRESS | CORE_CTRL_ADDRESS;
-	val = ath10k_ahb_पढ़ो32(ar, addr);
+	val = ath10k_ahb_read32(ar, addr);
 	val |= ATH10K_AHB_CORE_CTRL_CPU_INTR_MASK;
-	ath10k_ahb_ग_लिखो32(ar, addr, val);
+	ath10k_ahb_write32(ar, addr, val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ath10k_ahb_hअगर_start(काष्ठा ath10k *ar)
-अणु
+static int ath10k_ahb_hif_start(struct ath10k *ar)
+{
 	ath10k_dbg(ar, ATH10K_DBG_BOOT, "boot ahb hif start\n");
 
 	ath10k_core_napi_enable(ar);
-	ath10k_ce_enable_पूर्णांकerrupts(ar);
+	ath10k_ce_enable_interrupts(ar);
 	ath10k_pci_enable_legacy_irq(ar);
 
 	ath10k_pci_rx_post(ar);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ath10k_ahb_hअगर_stop(काष्ठा ath10k *ar)
-अणु
-	काष्ठा ath10k_ahb *ar_ahb = ath10k_ahb_priv(ar);
+static void ath10k_ahb_hif_stop(struct ath10k *ar)
+{
+	struct ath10k_ahb *ar_ahb = ath10k_ahb_priv(ar);
 
 	ath10k_dbg(ar, ATH10K_DBG_BOOT, "boot ahb hif stop\n");
 
@@ -648,115 +647,115 @@ err_clk_disable:
 	ath10k_core_napi_sync_disable(ar);
 
 	ath10k_pci_flush(ar);
-पूर्ण
+}
 
-अटल पूर्णांक ath10k_ahb_hअगर_घातer_up(काष्ठा ath10k *ar,
-				   क्रमागत ath10k_firmware_mode fw_mode)
-अणु
-	पूर्णांक ret;
+static int ath10k_ahb_hif_power_up(struct ath10k *ar,
+				   enum ath10k_firmware_mode fw_mode)
+{
+	int ret;
 
 	ath10k_dbg(ar, ATH10K_DBG_BOOT, "boot ahb hif power up\n");
 
 	ret = ath10k_ahb_chip_reset(ar);
-	अगर (ret) अणु
+	if (ret) {
 		ath10k_err(ar, "failed to reset chip: %d\n", ret);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = ath10k_pci_init_pipes(ar);
-	अगर (ret) अणु
+	if (ret) {
 		ath10k_err(ar, "failed to initialize CE: %d\n", ret);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = ath10k_pci_init_config(ar);
-	अगर (ret) अणु
+	if (ret) {
 		ath10k_err(ar, "failed to setup init config: %d\n", ret);
-		जाओ err_ce_deinit;
-	पूर्ण
+		goto err_ce_deinit;
+	}
 
 	ret = ath10k_ahb_wake_target_cpu(ar);
-	अगर (ret) अणु
+	if (ret) {
 		ath10k_err(ar, "could not wake up target CPU: %d\n", ret);
-		जाओ err_ce_deinit;
-	पूर्ण
+		goto err_ce_deinit;
+	}
 
-	वापस 0;
+	return 0;
 
 err_ce_deinit:
 	ath10k_pci_ce_deinit(ar);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल u32 ath10k_ahb_qca4019_targ_cpu_to_ce_addr(काष्ठा ath10k *ar, u32 addr)
-अणु
+static u32 ath10k_ahb_qca4019_targ_cpu_to_ce_addr(struct ath10k *ar, u32 addr)
+{
 	u32 val = 0, region = addr & 0xfffff;
 
-	val = ath10k_pci_पढ़ो32(ar, PCIE_BAR_REG_ADDRESS);
+	val = ath10k_pci_read32(ar, PCIE_BAR_REG_ADDRESS);
 
-	अगर (region >= QCA4019_SRAM_ADDR && region <=
-	    (QCA4019_SRAM_ADDR + QCA4019_SRAM_LEN)) अणु
-		/* SRAM contents क्रम QCA4019 can be directly accessed and
+	if (region >= QCA4019_SRAM_ADDR && region <=
+	    (QCA4019_SRAM_ADDR + QCA4019_SRAM_LEN)) {
+		/* SRAM contents for QCA4019 can be directly accessed and
 		 * no conversions are required
 		 */
 		val |= region;
-	पूर्ण अन्यथा अणु
+	} else {
 		val |= 0x100000 | region;
-	पूर्ण
+	}
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल स्थिर काष्ठा ath10k_hअगर_ops ath10k_ahb_hअगर_ops = अणु
-	.tx_sg                  = ath10k_pci_hअगर_tx_sg,
-	.diag_पढ़ो              = ath10k_pci_hअगर_diag_पढ़ो,
-	.diag_ग_लिखो             = ath10k_pci_diag_ग_लिखो_mem,
-	.exchange_bmi_msg       = ath10k_pci_hअगर_exchange_bmi_msg,
-	.start                  = ath10k_ahb_hअगर_start,
-	.stop                   = ath10k_ahb_hअगर_stop,
-	.map_service_to_pipe    = ath10k_pci_hअगर_map_service_to_pipe,
-	.get_शेष_pipe       = ath10k_pci_hअगर_get_शेष_pipe,
-	.send_complete_check    = ath10k_pci_hअगर_send_complete_check,
-	.get_मुक्त_queue_number  = ath10k_pci_hअगर_get_मुक्त_queue_number,
-	.घातer_up               = ath10k_ahb_hअगर_घातer_up,
-	.घातer_करोwn             = ath10k_pci_hअगर_घातer_करोwn,
-	.पढ़ो32                 = ath10k_ahb_पढ़ो32,
-	.ग_लिखो32                = ath10k_ahb_ग_लिखो32,
-पूर्ण;
+static const struct ath10k_hif_ops ath10k_ahb_hif_ops = {
+	.tx_sg                  = ath10k_pci_hif_tx_sg,
+	.diag_read              = ath10k_pci_hif_diag_read,
+	.diag_write             = ath10k_pci_diag_write_mem,
+	.exchange_bmi_msg       = ath10k_pci_hif_exchange_bmi_msg,
+	.start                  = ath10k_ahb_hif_start,
+	.stop                   = ath10k_ahb_hif_stop,
+	.map_service_to_pipe    = ath10k_pci_hif_map_service_to_pipe,
+	.get_default_pipe       = ath10k_pci_hif_get_default_pipe,
+	.send_complete_check    = ath10k_pci_hif_send_complete_check,
+	.get_free_queue_number  = ath10k_pci_hif_get_free_queue_number,
+	.power_up               = ath10k_ahb_hif_power_up,
+	.power_down             = ath10k_pci_hif_power_down,
+	.read32                 = ath10k_ahb_read32,
+	.write32                = ath10k_ahb_write32,
+};
 
-अटल स्थिर काष्ठा ath10k_bus_ops ath10k_ahb_bus_ops = अणु
-	.पढ़ो32		= ath10k_ahb_पढ़ो32,
-	.ग_लिखो32	= ath10k_ahb_ग_लिखो32,
+static const struct ath10k_bus_ops ath10k_ahb_bus_ops = {
+	.read32		= ath10k_ahb_read32,
+	.write32	= ath10k_ahb_write32,
 	.get_num_banks	= ath10k_ahb_get_num_banks,
-पूर्ण;
+};
 
-अटल पूर्णांक ath10k_ahb_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा ath10k *ar;
-	काष्ठा ath10k_ahb *ar_ahb;
-	काष्ठा ath10k_pci *ar_pci;
-	स्थिर काष्ठा of_device_id *of_id;
-	क्रमागत ath10k_hw_rev hw_rev;
-	माप_प्रकार size;
-	पूर्णांक ret;
-	काष्ठा ath10k_bus_params bus_params = अणुपूर्ण;
+static int ath10k_ahb_probe(struct platform_device *pdev)
+{
+	struct ath10k *ar;
+	struct ath10k_ahb *ar_ahb;
+	struct ath10k_pci *ar_pci;
+	const struct of_device_id *of_id;
+	enum ath10k_hw_rev hw_rev;
+	size_t size;
+	int ret;
+	struct ath10k_bus_params bus_params = {};
 
 	of_id = of_match_device(ath10k_ahb_of_match, &pdev->dev);
-	अगर (!of_id) अणु
+	if (!of_id) {
 		dev_err(&pdev->dev, "failed to find matching device tree id\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	hw_rev = (क्रमागत ath10k_hw_rev)of_id->data;
+	hw_rev = (enum ath10k_hw_rev)of_id->data;
 
-	size = माप(*ar_pci) + माप(*ar_ahb);
+	size = sizeof(*ar_pci) + sizeof(*ar_ahb);
 	ar = ath10k_core_create(size, &pdev->dev, ATH10K_BUS_AHB,
-				hw_rev, &ath10k_ahb_hअगर_ops);
-	अगर (!ar) अणु
+				hw_rev, &ath10k_ahb_hif_ops);
+	if (!ar) {
 		dev_err(&pdev->dev, "failed to allocate core\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	ath10k_dbg(ar, ATH10K_DBG_BOOT, "ahb probe\n");
 
@@ -764,11 +763,11 @@ out:
 	ar_ahb = ath10k_ahb_priv(ar);
 
 	ar_ahb->pdev = pdev;
-	platक्रमm_set_drvdata(pdev, ar);
+	platform_set_drvdata(pdev, ar);
 
 	ret = ath10k_ahb_resource_init(ar);
-	अगर (ret)
-		जाओ err_core_destroy;
+	if (ret)
+		goto err_core_destroy;
 
 	ar->dev_id = 0;
 	ar_pci->mem = ar_ahb->mem;
@@ -779,47 +778,47 @@ out:
 	ar->ce_priv = &ar_pci->ce;
 
 	ret = ath10k_pci_setup_resource(ar);
-	अगर (ret) अणु
+	if (ret) {
 		ath10k_err(ar, "failed to setup resource: %d\n", ret);
-		जाओ err_resource_deinit;
-	पूर्ण
+		goto err_resource_deinit;
+	}
 
 	ath10k_pci_init_napi(ar);
 
 	ret = ath10k_ahb_request_irq_legacy(ar);
-	अगर (ret)
-		जाओ err_मुक्त_pipes;
+	if (ret)
+		goto err_free_pipes;
 
 	ret = ath10k_ahb_prepare_device(ar);
-	अगर (ret)
-		जाओ err_मुक्त_irq;
+	if (ret)
+		goto err_free_irq;
 
 	ath10k_pci_ce_deinit(ar);
 
 	bus_params.dev_type = ATH10K_DEV_TYPE_LL;
-	bus_params.chip_id = ath10k_ahb_soc_पढ़ो32(ar, SOC_CHIP_ID_ADDRESS);
-	अगर (bus_params.chip_id == 0xffffffff) अणु
+	bus_params.chip_id = ath10k_ahb_soc_read32(ar, SOC_CHIP_ID_ADDRESS);
+	if (bus_params.chip_id == 0xffffffff) {
 		ath10k_err(ar, "failed to get chip id\n");
 		ret = -ENODEV;
-		जाओ err_halt_device;
-	पूर्ण
+		goto err_halt_device;
+	}
 
-	ret = ath10k_core_रेजिस्टर(ar, &bus_params);
-	अगर (ret) अणु
+	ret = ath10k_core_register(ar, &bus_params);
+	if (ret) {
 		ath10k_err(ar, "failed to register driver core: %d\n", ret);
-		जाओ err_halt_device;
-	पूर्ण
+		goto err_halt_device;
+	}
 
-	वापस 0;
+	return 0;
 
 err_halt_device:
 	ath10k_ahb_halt_chip(ar);
-	ath10k_ahb_घड़ी_disable(ar);
+	ath10k_ahb_clock_disable(ar);
 
-err_मुक्त_irq:
+err_free_irq:
 	ath10k_ahb_release_irq_legacy(ar);
 
-err_मुक्त_pipes:
+err_free_pipes:
 	ath10k_pci_release_resource(ar);
 
 err_resource_deinit:
@@ -827,61 +826,61 @@ err_resource_deinit:
 
 err_core_destroy:
 	ath10k_core_destroy(ar);
-	platक्रमm_set_drvdata(pdev, शून्य);
+	platform_set_drvdata(pdev, NULL);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ath10k_ahb_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा ath10k *ar = platक्रमm_get_drvdata(pdev);
-	काष्ठा ath10k_ahb *ar_ahb;
+static int ath10k_ahb_remove(struct platform_device *pdev)
+{
+	struct ath10k *ar = platform_get_drvdata(pdev);
+	struct ath10k_ahb *ar_ahb;
 
-	अगर (!ar)
-		वापस -EINVAL;
+	if (!ar)
+		return -EINVAL;
 
 	ar_ahb = ath10k_ahb_priv(ar);
 
-	अगर (!ar_ahb)
-		वापस -EINVAL;
+	if (!ar_ahb)
+		return -EINVAL;
 
 	ath10k_dbg(ar, ATH10K_DBG_AHB, "ahb remove\n");
 
-	ath10k_core_unरेजिस्टर(ar);
+	ath10k_core_unregister(ar);
 	ath10k_ahb_irq_disable(ar);
 	ath10k_ahb_release_irq_legacy(ar);
 	ath10k_pci_release_resource(ar);
 	ath10k_ahb_halt_chip(ar);
-	ath10k_ahb_घड़ी_disable(ar);
+	ath10k_ahb_clock_disable(ar);
 	ath10k_ahb_resource_deinit(ar);
 	ath10k_core_destroy(ar);
 
-	platक्रमm_set_drvdata(pdev, शून्य);
+	platform_set_drvdata(pdev, NULL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver ath10k_ahb_driver = अणु
-	.driver         = अणु
+static struct platform_driver ath10k_ahb_driver = {
+	.driver         = {
 		.name   = "ath10k_ahb",
 		.of_match_table = ath10k_ahb_of_match,
-	पूर्ण,
+	},
 	.probe  = ath10k_ahb_probe,
-	.हटाओ = ath10k_ahb_हटाओ,
-पूर्ण;
+	.remove = ath10k_ahb_remove,
+};
 
-पूर्णांक ath10k_ahb_init(व्योम)
-अणु
-	पूर्णांक ret;
+int ath10k_ahb_init(void)
+{
+	int ret;
 
-	ret = platक्रमm_driver_रेजिस्टर(&ath10k_ahb_driver);
-	अगर (ret)
-		prपूर्णांकk(KERN_ERR "failed to register ath10k ahb driver: %d\n",
+	ret = platform_driver_register(&ath10k_ahb_driver);
+	if (ret)
+		printk(KERN_ERR "failed to register ath10k ahb driver: %d\n",
 		       ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम ath10k_ahb_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&ath10k_ahb_driver);
-पूर्ण
+void ath10k_ahb_exit(void)
+{
+	platform_driver_unregister(&ath10k_ahb_driver);
+}

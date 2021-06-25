@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2015 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,91 +21,91 @@
  *
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
-#समावेश "chan.h"
+#include "chan.h"
 
-#समावेश <core/notअगरy.h>
-#समावेश <engine/fअगरo.h>
+#include <core/notify.h>
+#include <engine/fifo.h>
 
-#समावेश <nvअगर/event.h>
-#समावेश <nvअगर/unpack.h>
+#include <nvif/event.h>
+#include <nvif/unpack.h>
 
 bool
-nvkm_sw_chan_mthd(काष्ठा nvkm_sw_chan *chan, पूर्णांक subc, u32 mthd, u32 data)
-अणु
-	चयन (mthd) अणु
-	हाल 0x0000:
-		वापस true;
-	हाल 0x0500:
-		nvkm_event_send(&chan->event, 1, 0, शून्य, 0);
-		वापस true;
-	शेष:
-		अगर (chan->func->mthd)
-			वापस chan->func->mthd(chan, subc, mthd, data);
-		अवरोध;
-	पूर्ण
-	वापस false;
-पूर्ण
+nvkm_sw_chan_mthd(struct nvkm_sw_chan *chan, int subc, u32 mthd, u32 data)
+{
+	switch (mthd) {
+	case 0x0000:
+		return true;
+	case 0x0500:
+		nvkm_event_send(&chan->event, 1, 0, NULL, 0);
+		return true;
+	default:
+		if (chan->func->mthd)
+			return chan->func->mthd(chan, subc, mthd, data);
+		break;
+	}
+	return false;
+}
 
-अटल पूर्णांक
-nvkm_sw_chan_event_ctor(काष्ठा nvkm_object *object, व्योम *data, u32 size,
-			काष्ठा nvkm_notअगरy *notअगरy)
-अणु
-	जोड़ अणु
-		काष्ठा nvअगर_notअगरy_uevent_req none;
-	पूर्ण *req = data;
-	पूर्णांक ret = -ENOSYS;
+static int
+nvkm_sw_chan_event_ctor(struct nvkm_object *object, void *data, u32 size,
+			struct nvkm_notify *notify)
+{
+	union {
+		struct nvif_notify_uevent_req none;
+	} *req = data;
+	int ret = -ENOSYS;
 
-	अगर (!(ret = nvअगर_unvers(ret, &data, &size, req->none))) अणु
-		notअगरy->size  = माप(काष्ठा nvअगर_notअगरy_uevent_rep);
-		notअगरy->types = 1;
-		notअगरy->index = 0;
-	पूर्ण
+	if (!(ret = nvif_unvers(ret, &data, &size, req->none))) {
+		notify->size  = sizeof(struct nvif_notify_uevent_rep);
+		notify->types = 1;
+		notify->index = 0;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा nvkm_event_func
-nvkm_sw_chan_event = अणु
+static const struct nvkm_event_func
+nvkm_sw_chan_event = {
 	.ctor = nvkm_sw_chan_event_ctor,
-पूर्ण;
+};
 
-अटल व्योम *
-nvkm_sw_chan_dtor(काष्ठा nvkm_object *object)
-अणु
-	काष्ठा nvkm_sw_chan *chan = nvkm_sw_chan(object);
-	काष्ठा nvkm_sw *sw = chan->sw;
-	अचिन्हित दीर्घ flags;
-	व्योम *data = chan;
+static void *
+nvkm_sw_chan_dtor(struct nvkm_object *object)
+{
+	struct nvkm_sw_chan *chan = nvkm_sw_chan(object);
+	struct nvkm_sw *sw = chan->sw;
+	unsigned long flags;
+	void *data = chan;
 
-	अगर (chan->func->dtor)
+	if (chan->func->dtor)
 		data = chan->func->dtor(chan);
 	nvkm_event_fini(&chan->event);
 
 	spin_lock_irqsave(&sw->engine.lock, flags);
 	list_del(&chan->head);
 	spin_unlock_irqrestore(&sw->engine.lock, flags);
-	वापस data;
-पूर्ण
+	return data;
+}
 
-अटल स्थिर काष्ठा nvkm_object_func
-nvkm_sw_chan = अणु
+static const struct nvkm_object_func
+nvkm_sw_chan = {
 	.dtor = nvkm_sw_chan_dtor,
-पूर्ण;
+};
 
-पूर्णांक
-nvkm_sw_chan_ctor(स्थिर काष्ठा nvkm_sw_chan_func *func, काष्ठा nvkm_sw *sw,
-		  काष्ठा nvkm_fअगरo_chan *fअगरo, स्थिर काष्ठा nvkm_oclass *oclass,
-		  काष्ठा nvkm_sw_chan *chan)
-अणु
-	अचिन्हित दीर्घ flags;
+int
+nvkm_sw_chan_ctor(const struct nvkm_sw_chan_func *func, struct nvkm_sw *sw,
+		  struct nvkm_fifo_chan *fifo, const struct nvkm_oclass *oclass,
+		  struct nvkm_sw_chan *chan)
+{
+	unsigned long flags;
 
 	nvkm_object_ctor(&nvkm_sw_chan, oclass, &chan->object);
 	chan->func = func;
 	chan->sw = sw;
-	chan->fअगरo = fअगरo;
+	chan->fifo = fifo;
 	spin_lock_irqsave(&sw->engine.lock, flags);
 	list_add(&chan->head, &sw->chan);
 	spin_unlock_irqrestore(&sw->engine.lock, flags);
 
-	वापस nvkm_event_init(&nvkm_sw_chan_event, 1, 1, &chan->event);
-पूर्ण
+	return nvkm_event_init(&nvkm_sw_chan_event, 1, 1, &chan->event);
+}

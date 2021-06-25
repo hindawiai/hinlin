@@ -1,42 +1,41 @@
-<शैली गुरु>
 /*
  * Copyright(c) 2015 - 2018 Intel Corporation.
  *
  * This file is provided under a dual BSD/GPLv2 license.  When using or
- * redistributing this file, you may करो so under either license.
+ * redistributing this file, you may do so under either license.
  *
  * GPL LICENSE SUMMARY
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of version 2 of the GNU General Public License as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License क्रम more details.
+ * General Public License for more details.
  *
  * BSD LICENSE
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
  * are met:
  *
  *  - Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- *  - Redistributions in binary क्रमm must reproduce the above copyright
+ *  - Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
- *    the करोcumentation and/or other materials provided with the
+ *    the documentation and/or other materials provided with the
  *    distribution.
  *  - Neither the name of Intel Corporation nor the names of its
- *    contributors may be used to enकरोrse or promote products derived
- *    from this software without specअगरic prior written permission.
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -46,51 +45,51 @@
  *
  */
 
-#समावेश <linux/spinlock.h>
-#समावेश <linux/seqlock.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/highस्मृति.स>
+#include <linux/spinlock.h>
+#include <linux/seqlock.h>
+#include <linux/netdevice.h>
+#include <linux/moduleparam.h>
+#include <linux/bitops.h>
+#include <linux/timer.h>
+#include <linux/vmalloc.h>
+#include <linux/highmem.h>
 
-#समावेश "hfi.h"
-#समावेश "common.h"
-#समावेश "qp.h"
-#समावेश "sdma.h"
-#समावेश "iowait.h"
-#समावेश "trace.h"
+#include "hfi.h"
+#include "common.h"
+#include "qp.h"
+#include "sdma.h"
+#include "iowait.h"
+#include "trace.h"
 
-/* must be a घातer of 2 >= 64 <= 32768 */
-#घोषणा SDMA_DESCQ_CNT 2048
-#घोषणा SDMA_DESC_INTR 64
-#घोषणा INVALID_TAIL 0xffff
-#घोषणा SDMA_PAD max_t(माप_प्रकार, MAX_16B_PADDING, माप(u32))
+/* must be a power of 2 >= 64 <= 32768 */
+#define SDMA_DESCQ_CNT 2048
+#define SDMA_DESC_INTR 64
+#define INVALID_TAIL 0xffff
+#define SDMA_PAD max_t(size_t, MAX_16B_PADDING, sizeof(u32))
 
-अटल uपूर्णांक sdma_descq_cnt = SDMA_DESCQ_CNT;
-module_param(sdma_descq_cnt, uपूर्णांक, S_IRUGO);
+static uint sdma_descq_cnt = SDMA_DESCQ_CNT;
+module_param(sdma_descq_cnt, uint, S_IRUGO);
 MODULE_PARM_DESC(sdma_descq_cnt, "Number of SDMA descq entries");
 
-अटल uपूर्णांक sdma_idle_cnt = 250;
-module_param(sdma_idle_cnt, uपूर्णांक, S_IRUGO);
+static uint sdma_idle_cnt = 250;
+module_param(sdma_idle_cnt, uint, S_IRUGO);
 MODULE_PARM_DESC(sdma_idle_cnt, "sdma interrupt idle delay (ns,default 250)");
 
-uपूर्णांक mod_num_sdma;
-module_param_named(num_sdma, mod_num_sdma, uपूर्णांक, S_IRUGO);
+uint mod_num_sdma;
+module_param_named(num_sdma, mod_num_sdma, uint, S_IRUGO);
 MODULE_PARM_DESC(num_sdma, "Set max number SDMA engines to use");
 
-अटल uपूर्णांक sdma_desct_पूर्णांकr = SDMA_DESC_INTR;
-module_param_named(desct_पूर्णांकr, sdma_desct_पूर्णांकr, uपूर्णांक, S_IRUGO | S_IWUSR);
-MODULE_PARM_DESC(desct_पूर्णांकr, "Number of SDMA descriptor before interrupt");
+static uint sdma_desct_intr = SDMA_DESC_INTR;
+module_param_named(desct_intr, sdma_desct_intr, uint, S_IRUGO | S_IWUSR);
+MODULE_PARM_DESC(desct_intr, "Number of SDMA descriptor before interrupt");
 
-#घोषणा SDMA_WAIT_BATCH_SIZE 20
-/* max रुको समय क्रम a SDMA engine to indicate it has halted */
-#घोषणा SDMA_ERR_HALT_TIMEOUT 10 /* ms */
+#define SDMA_WAIT_BATCH_SIZE 20
+/* max wait time for a SDMA engine to indicate it has halted */
+#define SDMA_ERR_HALT_TIMEOUT 10 /* ms */
 /* all SDMA engine errors that cause a halt */
 
-#घोषणा SD(name) SEND_DMA_##name
-#घोषणा ALL_SDMA_ENG_HALT_ERRS \
+#define SD(name) SEND_DMA_##name
+#define ALL_SDMA_ENG_HALT_ERRS \
 	(SD(ENG_ERR_STATUS_SDMA_WRONG_DW_ERR_SMASK) \
 	| SD(ENG_ERR_STATUS_SDMA_GEN_MISMATCH_ERR_SMASK) \
 	| SD(ENG_ERR_STATUS_SDMA_TOO_LONG_ERR_SMASK) \
@@ -111,278 +110,278 @@ MODULE_PARM_DESC(desct_पूर्णांकr, "Number of SDMA descriptor bef
 	| SD(ENG_ERR_STATUS_SDMA_HEADER_REQUEST_FIFO_UNC_ERR_SMASK))
 
 /* sdma_sendctrl operations */
-#घोषणा SDMA_SENDCTRL_OP_ENABLE    BIT(0)
-#घोषणा SDMA_SENDCTRL_OP_INTENABLE BIT(1)
-#घोषणा SDMA_SENDCTRL_OP_HALT      BIT(2)
-#घोषणा SDMA_SENDCTRL_OP_CLEANUP   BIT(3)
+#define SDMA_SENDCTRL_OP_ENABLE    BIT(0)
+#define SDMA_SENDCTRL_OP_INTENABLE BIT(1)
+#define SDMA_SENDCTRL_OP_HALT      BIT(2)
+#define SDMA_SENDCTRL_OP_CLEANUP   BIT(3)
 
-/* handle दीर्घ defines */
-#घोषणा SDMA_EGRESS_PACKET_OCCUPANCY_SMASK \
+/* handle long defines */
+#define SDMA_EGRESS_PACKET_OCCUPANCY_SMASK \
 SEND_EGRESS_SEND_DMA_STATUS_SDMA_EGRESS_PACKET_OCCUPANCY_SMASK
-#घोषणा SDMA_EGRESS_PACKET_OCCUPANCY_SHIFT \
+#define SDMA_EGRESS_PACKET_OCCUPANCY_SHIFT \
 SEND_EGRESS_SEND_DMA_STATUS_SDMA_EGRESS_PACKET_OCCUPANCY_SHIFT
 
-अटल स्थिर अक्षर * स्थिर sdma_state_names[] = अणु
-	[sdma_state_s00_hw_करोwn]                = "s00_HwDown",
-	[sdma_state_s10_hw_start_up_halt_रुको]  = "s10_HwStartUpHaltWait",
-	[sdma_state_s15_hw_start_up_clean_रुको] = "s15_HwStartUpCleanWait",
+static const char * const sdma_state_names[] = {
+	[sdma_state_s00_hw_down]                = "s00_HwDown",
+	[sdma_state_s10_hw_start_up_halt_wait]  = "s10_HwStartUpHaltWait",
+	[sdma_state_s15_hw_start_up_clean_wait] = "s15_HwStartUpCleanWait",
 	[sdma_state_s20_idle]                   = "s20_Idle",
-	[sdma_state_s30_sw_clean_up_रुको]       = "s30_SwCleanUpWait",
-	[sdma_state_s40_hw_clean_up_रुको]       = "s40_HwCleanUpWait",
-	[sdma_state_s50_hw_halt_रुको]           = "s50_HwHaltWait",
-	[sdma_state_s60_idle_halt_रुको]         = "s60_IdleHaltWait",
-	[sdma_state_s80_hw_मुक्तze]		= "s80_HwFreeze",
-	[sdma_state_s82_मुक्तze_sw_clean]	= "s82_FreezeSwClean",
+	[sdma_state_s30_sw_clean_up_wait]       = "s30_SwCleanUpWait",
+	[sdma_state_s40_hw_clean_up_wait]       = "s40_HwCleanUpWait",
+	[sdma_state_s50_hw_halt_wait]           = "s50_HwHaltWait",
+	[sdma_state_s60_idle_halt_wait]         = "s60_IdleHaltWait",
+	[sdma_state_s80_hw_freeze]		= "s80_HwFreeze",
+	[sdma_state_s82_freeze_sw_clean]	= "s82_FreezeSwClean",
 	[sdma_state_s99_running]                = "s99_Running",
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_SDMA_VERBOSITY
-अटल स्थिर अक्षर * स्थिर sdma_event_names[] = अणु
-	[sdma_event_e00_go_hw_करोwn]   = "e00_GoHwDown",
+#ifdef CONFIG_SDMA_VERBOSITY
+static const char * const sdma_event_names[] = {
+	[sdma_event_e00_go_hw_down]   = "e00_GoHwDown",
 	[sdma_event_e10_go_hw_start]  = "e10_GoHwStart",
-	[sdma_event_e15_hw_halt_करोne] = "e15_HwHaltDone",
-	[sdma_event_e25_hw_clean_up_करोne] = "e25_HwCleanUpDone",
+	[sdma_event_e15_hw_halt_done] = "e15_HwHaltDone",
+	[sdma_event_e25_hw_clean_up_done] = "e25_HwCleanUpDone",
 	[sdma_event_e30_go_running]   = "e30_GoRunning",
 	[sdma_event_e40_sw_cleaned]   = "e40_SwCleaned",
 	[sdma_event_e50_hw_cleaned]   = "e50_HwCleaned",
 	[sdma_event_e60_hw_halted]    = "e60_HwHalted",
 	[sdma_event_e70_go_idle]      = "e70_GoIdle",
-	[sdma_event_e80_hw_मुक्तze]    = "e80_HwFreeze",
+	[sdma_event_e80_hw_freeze]    = "e80_HwFreeze",
 	[sdma_event_e81_hw_frozen]    = "e81_HwFrozen",
-	[sdma_event_e82_hw_unमुक्तze]  = "e82_HwUnfreeze",
-	[sdma_event_e85_link_करोwn]    = "e85_LinkDown",
+	[sdma_event_e82_hw_unfreeze]  = "e82_HwUnfreeze",
+	[sdma_event_e85_link_down]    = "e85_LinkDown",
 	[sdma_event_e90_sw_halted]    = "e90_SwHalted",
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-अटल स्थिर काष्ठा sdma_set_state_action sdma_action_table[] = अणु
-	[sdma_state_s00_hw_करोwn] = अणु
+static const struct sdma_set_state_action sdma_action_table[] = {
+	[sdma_state_s00_hw_down] = {
 		.go_s99_running_tofalse = 1,
 		.op_enable = 0,
-		.op_पूर्णांकenable = 0,
+		.op_intenable = 0,
 		.op_halt = 0,
 		.op_cleanup = 0,
-	पूर्ण,
-	[sdma_state_s10_hw_start_up_halt_रुको] = अणु
+	},
+	[sdma_state_s10_hw_start_up_halt_wait] = {
 		.op_enable = 0,
-		.op_पूर्णांकenable = 0,
+		.op_intenable = 0,
 		.op_halt = 1,
 		.op_cleanup = 0,
-	पूर्ण,
-	[sdma_state_s15_hw_start_up_clean_रुको] = अणु
+	},
+	[sdma_state_s15_hw_start_up_clean_wait] = {
 		.op_enable = 0,
-		.op_पूर्णांकenable = 1,
+		.op_intenable = 1,
 		.op_halt = 0,
 		.op_cleanup = 1,
-	पूर्ण,
-	[sdma_state_s20_idle] = अणु
+	},
+	[sdma_state_s20_idle] = {
 		.op_enable = 0,
-		.op_पूर्णांकenable = 1,
+		.op_intenable = 1,
 		.op_halt = 0,
 		.op_cleanup = 0,
-	पूर्ण,
-	[sdma_state_s30_sw_clean_up_रुको] = अणु
+	},
+	[sdma_state_s30_sw_clean_up_wait] = {
 		.op_enable = 0,
-		.op_पूर्णांकenable = 0,
+		.op_intenable = 0,
 		.op_halt = 0,
 		.op_cleanup = 0,
-	पूर्ण,
-	[sdma_state_s40_hw_clean_up_रुको] = अणु
+	},
+	[sdma_state_s40_hw_clean_up_wait] = {
 		.op_enable = 0,
-		.op_पूर्णांकenable = 0,
+		.op_intenable = 0,
 		.op_halt = 0,
 		.op_cleanup = 1,
-	पूर्ण,
-	[sdma_state_s50_hw_halt_रुको] = अणु
+	},
+	[sdma_state_s50_hw_halt_wait] = {
 		.op_enable = 0,
-		.op_पूर्णांकenable = 0,
+		.op_intenable = 0,
 		.op_halt = 0,
 		.op_cleanup = 0,
-	पूर्ण,
-	[sdma_state_s60_idle_halt_रुको] = अणु
+	},
+	[sdma_state_s60_idle_halt_wait] = {
 		.go_s99_running_tofalse = 1,
 		.op_enable = 0,
-		.op_पूर्णांकenable = 0,
+		.op_intenable = 0,
 		.op_halt = 1,
 		.op_cleanup = 0,
-	पूर्ण,
-	[sdma_state_s80_hw_मुक्तze] = अणु
+	},
+	[sdma_state_s80_hw_freeze] = {
 		.op_enable = 0,
-		.op_पूर्णांकenable = 0,
+		.op_intenable = 0,
 		.op_halt = 0,
 		.op_cleanup = 0,
-	पूर्ण,
-	[sdma_state_s82_मुक्तze_sw_clean] = अणु
+	},
+	[sdma_state_s82_freeze_sw_clean] = {
 		.op_enable = 0,
-		.op_पूर्णांकenable = 0,
+		.op_intenable = 0,
 		.op_halt = 0,
 		.op_cleanup = 0,
-	पूर्ण,
-	[sdma_state_s99_running] = अणु
+	},
+	[sdma_state_s99_running] = {
 		.op_enable = 1,
-		.op_पूर्णांकenable = 1,
+		.op_intenable = 1,
 		.op_halt = 0,
 		.op_cleanup = 0,
 		.go_s99_running_totrue = 1,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-#घोषणा SDMA_TAIL_UPDATE_THRESH 0x1F
+#define SDMA_TAIL_UPDATE_THRESH 0x1F
 
-/* declare all अटलs here rather than keep sorting */
-अटल व्योम sdma_complete(काष्ठा kref *);
-अटल व्योम sdma_finalput(काष्ठा sdma_state *);
-अटल व्योम sdma_get(काष्ठा sdma_state *);
-अटल व्योम sdma_hw_clean_up_task(काष्ठा tasklet_काष्ठा *);
-अटल व्योम sdma_put(काष्ठा sdma_state *);
-अटल व्योम sdma_set_state(काष्ठा sdma_engine *, क्रमागत sdma_states);
-अटल व्योम sdma_start_hw_clean_up(काष्ठा sdma_engine *);
-अटल व्योम sdma_sw_clean_up_task(काष्ठा tasklet_काष्ठा *);
-अटल व्योम sdma_sendctrl(काष्ठा sdma_engine *, अचिन्हित);
-अटल व्योम init_sdma_regs(काष्ठा sdma_engine *, u32, uपूर्णांक);
-अटल व्योम sdma_process_event(
-	काष्ठा sdma_engine *sde,
-	क्रमागत sdma_events event);
-अटल व्योम __sdma_process_event(
-	काष्ठा sdma_engine *sde,
-	क्रमागत sdma_events event);
-अटल व्योम dump_sdma_state(काष्ठा sdma_engine *sde);
-अटल व्योम sdma_make_progress(काष्ठा sdma_engine *sde, u64 status);
-अटल व्योम sdma_desc_avail(काष्ठा sdma_engine *sde, uपूर्णांक avail);
-अटल व्योम sdma_flush_descq(काष्ठा sdma_engine *sde);
+/* declare all statics here rather than keep sorting */
+static void sdma_complete(struct kref *);
+static void sdma_finalput(struct sdma_state *);
+static void sdma_get(struct sdma_state *);
+static void sdma_hw_clean_up_task(struct tasklet_struct *);
+static void sdma_put(struct sdma_state *);
+static void sdma_set_state(struct sdma_engine *, enum sdma_states);
+static void sdma_start_hw_clean_up(struct sdma_engine *);
+static void sdma_sw_clean_up_task(struct tasklet_struct *);
+static void sdma_sendctrl(struct sdma_engine *, unsigned);
+static void init_sdma_regs(struct sdma_engine *, u32, uint);
+static void sdma_process_event(
+	struct sdma_engine *sde,
+	enum sdma_events event);
+static void __sdma_process_event(
+	struct sdma_engine *sde,
+	enum sdma_events event);
+static void dump_sdma_state(struct sdma_engine *sde);
+static void sdma_make_progress(struct sdma_engine *sde, u64 status);
+static void sdma_desc_avail(struct sdma_engine *sde, uint avail);
+static void sdma_flush_descq(struct sdma_engine *sde);
 
 /**
- * sdma_state_name() - वापस state string from क्रमागत
+ * sdma_state_name() - return state string from enum
  * @state: state
  */
-अटल स्थिर अक्षर *sdma_state_name(क्रमागत sdma_states state)
-अणु
-	वापस sdma_state_names[state];
-पूर्ण
+static const char *sdma_state_name(enum sdma_states state)
+{
+	return sdma_state_names[state];
+}
 
-अटल व्योम sdma_get(काष्ठा sdma_state *ss)
-अणु
+static void sdma_get(struct sdma_state *ss)
+{
 	kref_get(&ss->kref);
-पूर्ण
+}
 
-अटल व्योम sdma_complete(काष्ठा kref *kref)
-अणु
-	काष्ठा sdma_state *ss =
-		container_of(kref, काष्ठा sdma_state, kref);
+static void sdma_complete(struct kref *kref)
+{
+	struct sdma_state *ss =
+		container_of(kref, struct sdma_state, kref);
 
 	complete(&ss->comp);
-पूर्ण
+}
 
-अटल व्योम sdma_put(काष्ठा sdma_state *ss)
-अणु
+static void sdma_put(struct sdma_state *ss)
+{
 	kref_put(&ss->kref, sdma_complete);
-पूर्ण
+}
 
-अटल व्योम sdma_finalput(काष्ठा sdma_state *ss)
-अणु
+static void sdma_finalput(struct sdma_state *ss)
+{
 	sdma_put(ss);
-	रुको_क्रम_completion(&ss->comp);
-पूर्ण
+	wait_for_completion(&ss->comp);
+}
 
-अटल अंतरभूत व्योम ग_लिखो_sde_csr(
-	काष्ठा sdma_engine *sde,
+static inline void write_sde_csr(
+	struct sdma_engine *sde,
 	u32 offset0,
 	u64 value)
-अणु
-	ग_लिखो_kctxt_csr(sde->dd, sde->this_idx, offset0, value);
-पूर्ण
+{
+	write_kctxt_csr(sde->dd, sde->this_idx, offset0, value);
+}
 
-अटल अंतरभूत u64 पढ़ो_sde_csr(
-	काष्ठा sdma_engine *sde,
+static inline u64 read_sde_csr(
+	struct sdma_engine *sde,
 	u32 offset0)
-अणु
-	वापस पढ़ो_kctxt_csr(sde->dd, sde->this_idx, offset0);
-पूर्ण
+{
+	return read_kctxt_csr(sde->dd, sde->this_idx, offset0);
+}
 
 /*
- * sdma_रुको_क्रम_packet_egress() - रुको क्रम the VL FIFO occupancy क्रम
+ * sdma_wait_for_packet_egress() - wait for the VL FIFO occupancy for
  * sdma engine 'sde' to drop to 0.
  */
-अटल व्योम sdma_रुको_क्रम_packet_egress(काष्ठा sdma_engine *sde,
-					पूर्णांक छोड़ो)
-अणु
+static void sdma_wait_for_packet_egress(struct sdma_engine *sde,
+					int pause)
+{
 	u64 off = 8 * sde->this_idx;
-	काष्ठा hfi1_devdata *dd = sde->dd;
-	पूर्णांक lcnt = 0;
+	struct hfi1_devdata *dd = sde->dd;
+	int lcnt = 0;
 	u64 reg_prev;
 	u64 reg = 0;
 
-	जबतक (1) अणु
+	while (1) {
 		reg_prev = reg;
-		reg = पढ़ो_csr(dd, off + SEND_EGRESS_SEND_DMA_STATUS);
+		reg = read_csr(dd, off + SEND_EGRESS_SEND_DMA_STATUS);
 
 		reg &= SDMA_EGRESS_PACKET_OCCUPANCY_SMASK;
 		reg >>= SDMA_EGRESS_PACKET_OCCUPANCY_SHIFT;
-		अगर (reg == 0)
-			अवरोध;
-		/* counter is reest अगर accupancy count changes */
-		अगर (reg != reg_prev)
+		if (reg == 0)
+			break;
+		/* counter is reest if accupancy count changes */
+		if (reg != reg_prev)
 			lcnt = 0;
-		अगर (lcnt++ > 500) अणु
-			/* समयd out - bounce the link */
+		if (lcnt++ > 500) {
+			/* timed out - bounce the link */
 			dd_dev_err(dd, "%s: engine %u timeout waiting for packets to egress, remaining count %u, bouncing link\n",
 				   __func__, sde->this_idx, (u32)reg);
 			queue_work(dd->pport->link_wq,
 				   &dd->pport->link_bounce_work);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		udelay(1);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * sdma_रुको() - रुको क्रम packet egress to complete क्रम all SDMA engines,
- * and छोड़ो क्रम credit वापस.
+ * sdma_wait() - wait for packet egress to complete for all SDMA engines,
+ * and pause for credit return.
  */
-व्योम sdma_रुको(काष्ठा hfi1_devdata *dd)
-अणु
-	पूर्णांक i;
+void sdma_wait(struct hfi1_devdata *dd)
+{
+	int i;
 
-	क्रम (i = 0; i < dd->num_sdma; i++) अणु
-		काष्ठा sdma_engine *sde = &dd->per_sdma[i];
+	for (i = 0; i < dd->num_sdma; i++) {
+		struct sdma_engine *sde = &dd->per_sdma[i];
 
-		sdma_रुको_क्रम_packet_egress(sde, 0);
-	पूर्ण
-पूर्ण
+		sdma_wait_for_packet_egress(sde, 0);
+	}
+}
 
-अटल अंतरभूत व्योम sdma_set_desc_cnt(काष्ठा sdma_engine *sde, अचिन्हित cnt)
-अणु
+static inline void sdma_set_desc_cnt(struct sdma_engine *sde, unsigned cnt)
+{
 	u64 reg;
 
-	अगर (!(sde->dd->flags & HFI1_HAS_SDMA_TIMEOUT))
-		वापस;
+	if (!(sde->dd->flags & HFI1_HAS_SDMA_TIMEOUT))
+		return;
 	reg = cnt;
 	reg &= SD(DESC_CNT_CNT_MASK);
 	reg <<= SD(DESC_CNT_CNT_SHIFT);
-	ग_लिखो_sde_csr(sde, SD(DESC_CNT), reg);
-पूर्ण
+	write_sde_csr(sde, SD(DESC_CNT), reg);
+}
 
-अटल अंतरभूत व्योम complete_tx(काष्ठा sdma_engine *sde,
-			       काष्ठा sdma_txreq *tx,
-			       पूर्णांक res)
-अणु
-	/* protect against complete modअगरying */
-	काष्ठा ioरुको *रुको = tx->रुको;
+static inline void complete_tx(struct sdma_engine *sde,
+			       struct sdma_txreq *tx,
+			       int res)
+{
+	/* protect against complete modifying */
+	struct iowait *wait = tx->wait;
 	callback_t complete = tx->complete;
 
-#अगर_घोषित CONFIG_HFI1_DEBUG_SDMA_ORDER
+#ifdef CONFIG_HFI1_DEBUG_SDMA_ORDER
 	trace_hfi1_sdma_out_sn(sde, tx->sn);
-	अगर (WARN_ON_ONCE(sde->head_sn != tx->sn))
+	if (WARN_ON_ONCE(sde->head_sn != tx->sn))
 		dd_dev_err(sde->dd, "expected %llu got %llu\n",
 			   sde->head_sn, tx->sn);
 	sde->head_sn++;
-#पूर्ण_अगर
+#endif
 	__sdma_txclean(sde->dd, tx);
-	अगर (complete)
+	if (complete)
 		(*complete)(tx, res);
-	अगर (ioरुको_sdma_dec(रुको))
-		ioरुको_drain_wakeup(रुको);
-पूर्ण
+	if (iowait_sdma_dec(wait))
+		iowait_drain_wakeup(wait);
+}
 
 /*
  * Complete all the sdma requests with a SDMA_TXREQ_S_ABORTED status
@@ -391,23 +390,23 @@ SEND_EGRESS_SEND_DMA_STATUS_SDMA_EGRESS_PACKET_OCCUPANCY_SHIFT
  * - in the descq ring
  * - in the flush list
  *
- * To aव्योम ordering issues the descq ring needs to be flushed
+ * To avoid ordering issues the descq ring needs to be flushed
  * first followed by the flush list.
  *
  * This routine is called from two places
  * - From a work queue item
- * - Directly from the state machine just beक्रमe setting the
+ * - Directly from the state machine just before setting the
  *   state to running
  *
  * Must be called with head_lock held
  *
  */
-अटल व्योम sdma_flush(काष्ठा sdma_engine *sde)
-अणु
-	काष्ठा sdma_txreq *txp, *txp_next;
+static void sdma_flush(struct sdma_engine *sde)
+{
+	struct sdma_txreq *txp, *txp_next;
 	LIST_HEAD(flushlist);
-	अचिन्हित दीर्घ flags;
-	uपूर्णांक seq;
+	unsigned long flags;
+	uint seq;
 
 	/* flush from head to tail */
 	sdma_flush_descq(sde);
@@ -416,206 +415,206 @@ SEND_EGRESS_SEND_DMA_STATUS_SDMA_EGRESS_PACKET_OCCUPANCY_SHIFT
 	list_splice_init(&sde->flushlist, &flushlist);
 	spin_unlock_irqrestore(&sde->flushlist_lock, flags);
 	/* flush from flush list */
-	list_क्रम_each_entry_safe(txp, txp_next, &flushlist, list)
+	list_for_each_entry_safe(txp, txp_next, &flushlist, list)
 		complete_tx(sde, txp, SDMA_TXREQ_S_ABORTED);
-	/* wakeup QPs orphaned on the dmaरुको list */
-	करो अणु
-		काष्ठा ioरुको *w, *nw;
+	/* wakeup QPs orphaned on the dmawait list */
+	do {
+		struct iowait *w, *nw;
 
-		seq = पढ़ो_seqbegin(&sde->रुकोlock);
-		अगर (!list_empty(&sde->dmaरुको)) अणु
-			ग_लिखो_seqlock(&sde->रुकोlock);
-			list_क्रम_each_entry_safe(w, nw, &sde->dmaरुको, list) अणु
-				अगर (w->wakeup) अणु
+		seq = read_seqbegin(&sde->waitlock);
+		if (!list_empty(&sde->dmawait)) {
+			write_seqlock(&sde->waitlock);
+			list_for_each_entry_safe(w, nw, &sde->dmawait, list) {
+				if (w->wakeup) {
 					w->wakeup(w, SDMA_AVAIL_REASON);
 					list_del_init(&w->list);
-				पूर्ण
-			पूर्ण
-			ग_लिखो_sequnlock(&sde->रुकोlock);
-		पूर्ण
-	पूर्ण जबतक (पढ़ो_seqretry(&sde->रुकोlock, seq));
-पूर्ण
+				}
+			}
+			write_sequnlock(&sde->waitlock);
+		}
+	} while (read_seqretry(&sde->waitlock, seq));
+}
 
 /*
- * Fields a work request क्रम flushing the descq ring
+ * Fields a work request for flushing the descq ring
  * and the flush list
  *
  * If the engine has been brought to running during
  * the scheduling delay, the flush is ignored, assuming
  * that the process of bringing the engine to running
- * would have करोne this flush prior to going to running.
+ * would have done this flush prior to going to running.
  *
  */
-अटल व्योम sdma_field_flush(काष्ठा work_काष्ठा *work)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा sdma_engine *sde =
-		container_of(work, काष्ठा sdma_engine, flush_worker);
+static void sdma_field_flush(struct work_struct *work)
+{
+	unsigned long flags;
+	struct sdma_engine *sde =
+		container_of(work, struct sdma_engine, flush_worker);
 
-	ग_लिखो_seqlock_irqsave(&sde->head_lock, flags);
-	अगर (!__sdma_running(sde))
+	write_seqlock_irqsave(&sde->head_lock, flags);
+	if (!__sdma_running(sde))
 		sdma_flush(sde);
-	ग_लिखो_sequnlock_irqrestore(&sde->head_lock, flags);
-पूर्ण
+	write_sequnlock_irqrestore(&sde->head_lock, flags);
+}
 
-अटल व्योम sdma_err_halt_रुको(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा sdma_engine *sde = container_of(work, काष्ठा sdma_engine,
+static void sdma_err_halt_wait(struct work_struct *work)
+{
+	struct sdma_engine *sde = container_of(work, struct sdma_engine,
 						err_halt_worker);
 	u64 statuscsr;
-	अचिन्हित दीर्घ समयout;
+	unsigned long timeout;
 
-	समयout = jअगरfies + msecs_to_jअगरfies(SDMA_ERR_HALT_TIMEOUT);
-	जबतक (1) अणु
-		statuscsr = पढ़ो_sde_csr(sde, SD(STATUS));
+	timeout = jiffies + msecs_to_jiffies(SDMA_ERR_HALT_TIMEOUT);
+	while (1) {
+		statuscsr = read_sde_csr(sde, SD(STATUS));
 		statuscsr &= SD(STATUS_ENG_HALTED_SMASK);
-		अगर (statuscsr)
-			अवरोध;
-		अगर (समय_after(jअगरfies, समयout)) अणु
+		if (statuscsr)
+			break;
+		if (time_after(jiffies, timeout)) {
 			dd_dev_err(sde->dd,
 				   "SDMA engine %d - timeout waiting for engine to halt\n",
 				   sde->this_idx);
 			/*
-			 * Continue anyway.  This could happen अगर there was
+			 * Continue anyway.  This could happen if there was
 			 * an uncorrectable error in the wrong spot.
 			 */
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		usleep_range(80, 120);
-	पूर्ण
+	}
 
-	sdma_process_event(sde, sdma_event_e15_hw_halt_करोne);
-पूर्ण
+	sdma_process_event(sde, sdma_event_e15_hw_halt_done);
+}
 
-अटल व्योम sdma_err_progress_check_schedule(काष्ठा sdma_engine *sde)
-अणु
-	अगर (!is_bx(sde->dd) && HFI1_CAP_IS_KSET(SDMA_AHG)) अणु
-		अचिन्हित index;
-		काष्ठा hfi1_devdata *dd = sde->dd;
+static void sdma_err_progress_check_schedule(struct sdma_engine *sde)
+{
+	if (!is_bx(sde->dd) && HFI1_CAP_IS_KSET(SDMA_AHG)) {
+		unsigned index;
+		struct hfi1_devdata *dd = sde->dd;
 
-		क्रम (index = 0; index < dd->num_sdma; index++) अणु
-			काष्ठा sdma_engine *curr_sdma = &dd->per_sdma[index];
+		for (index = 0; index < dd->num_sdma; index++) {
+			struct sdma_engine *curr_sdma = &dd->per_sdma[index];
 
-			अगर (curr_sdma != sde)
+			if (curr_sdma != sde)
 				curr_sdma->progress_check_head =
 							curr_sdma->descq_head;
-		पूर्ण
+		}
 		dd_dev_err(sde->dd,
 			   "SDMA engine %d - check scheduled\n",
 				sde->this_idx);
-		mod_समयr(&sde->err_progress_check_समयr, jअगरfies + 10);
-	पूर्ण
-पूर्ण
+		mod_timer(&sde->err_progress_check_timer, jiffies + 10);
+	}
+}
 
-अटल व्योम sdma_err_progress_check(काष्ठा समयr_list *t)
-अणु
-	अचिन्हित index;
-	काष्ठा sdma_engine *sde = from_समयr(sde, t, err_progress_check_समयr);
+static void sdma_err_progress_check(struct timer_list *t)
+{
+	unsigned index;
+	struct sdma_engine *sde = from_timer(sde, t, err_progress_check_timer);
 
 	dd_dev_err(sde->dd, "SDE progress check event\n");
-	क्रम (index = 0; index < sde->dd->num_sdma; index++) अणु
-		काष्ठा sdma_engine *curr_sde = &sde->dd->per_sdma[index];
-		अचिन्हित दीर्घ flags;
+	for (index = 0; index < sde->dd->num_sdma; index++) {
+		struct sdma_engine *curr_sde = &sde->dd->per_sdma[index];
+		unsigned long flags;
 
 		/* check progress on each engine except the current one */
-		अगर (curr_sde == sde)
-			जारी;
+		if (curr_sde == sde)
+			continue;
 		/*
-		 * We must lock पूर्णांकerrupts when acquiring sde->lock,
-		 * to aव्योम a deadlock अगर पूर्णांकerrupt triggers and spins on
+		 * We must lock interrupts when acquiring sde->lock,
+		 * to avoid a deadlock if interrupt triggers and spins on
 		 * the same lock on same CPU
 		 */
 		spin_lock_irqsave(&curr_sde->tail_lock, flags);
-		ग_लिखो_seqlock(&curr_sde->head_lock);
+		write_seqlock(&curr_sde->head_lock);
 
 		/* skip non-running queues */
-		अगर (curr_sde->state.current_state != sdma_state_s99_running) अणु
-			ग_लिखो_sequnlock(&curr_sde->head_lock);
+		if (curr_sde->state.current_state != sdma_state_s99_running) {
+			write_sequnlock(&curr_sde->head_lock);
 			spin_unlock_irqrestore(&curr_sde->tail_lock, flags);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर ((curr_sde->descq_head != curr_sde->descq_tail) &&
+		if ((curr_sde->descq_head != curr_sde->descq_tail) &&
 		    (curr_sde->descq_head ==
 				curr_sde->progress_check_head))
 			__sdma_process_event(curr_sde,
 					     sdma_event_e90_sw_halted);
-		ग_लिखो_sequnlock(&curr_sde->head_lock);
+		write_sequnlock(&curr_sde->head_lock);
 		spin_unlock_irqrestore(&curr_sde->tail_lock, flags);
-	पूर्ण
+	}
 	schedule_work(&sde->err_halt_worker);
-पूर्ण
+}
 
-अटल व्योम sdma_hw_clean_up_task(काष्ठा tasklet_काष्ठा *t)
-अणु
-	काष्ठा sdma_engine *sde = from_tasklet(sde, t,
+static void sdma_hw_clean_up_task(struct tasklet_struct *t)
+{
+	struct sdma_engine *sde = from_tasklet(sde, t,
 					       sdma_hw_clean_up_task);
 	u64 statuscsr;
 
-	जबतक (1) अणु
-#अगर_घोषित CONFIG_SDMA_VERBOSITY
+	while (1) {
+#ifdef CONFIG_SDMA_VERBOSITY
 		dd_dev_err(sde->dd, "CONFIG SDMA(%u) %s:%d %s()\n",
-			   sde->this_idx, slashstrip(__खाता__), __LINE__,
+			   sde->this_idx, slashstrip(__FILE__), __LINE__,
 			__func__);
-#पूर्ण_अगर
-		statuscsr = पढ़ो_sde_csr(sde, SD(STATUS));
+#endif
+		statuscsr = read_sde_csr(sde, SD(STATUS));
 		statuscsr &= SD(STATUS_ENG_CLEANED_UP_SMASK);
-		अगर (statuscsr)
-			अवरोध;
+		if (statuscsr)
+			break;
 		udelay(10);
-	पूर्ण
+	}
 
-	sdma_process_event(sde, sdma_event_e25_hw_clean_up_करोne);
-पूर्ण
+	sdma_process_event(sde, sdma_event_e25_hw_clean_up_done);
+}
 
-अटल अंतरभूत काष्ठा sdma_txreq *get_txhead(काष्ठा sdma_engine *sde)
-अणु
-	वापस sde->tx_ring[sde->tx_head & sde->sdma_mask];
-पूर्ण
+static inline struct sdma_txreq *get_txhead(struct sdma_engine *sde)
+{
+	return sde->tx_ring[sde->tx_head & sde->sdma_mask];
+}
 
 /*
- * flush ring क्रम recovery
+ * flush ring for recovery
  */
-अटल व्योम sdma_flush_descq(काष्ठा sdma_engine *sde)
-अणु
+static void sdma_flush_descq(struct sdma_engine *sde)
+{
 	u16 head, tail;
-	पूर्णांक progress = 0;
-	काष्ठा sdma_txreq *txp = get_txhead(sde);
+	int progress = 0;
+	struct sdma_txreq *txp = get_txhead(sde);
 
-	/* The reason क्रम some of the complनिकासy of this code is that
+	/* The reason for some of the complexity of this code is that
 	 * not all descriptors have corresponding txps.  So, we have to
-	 * be able to skip over descs until we wander पूर्णांकo the range of
+	 * be able to skip over descs until we wander into the range of
 	 * the next txp on the list.
 	 */
 	head = sde->descq_head & sde->sdma_mask;
 	tail = sde->descq_tail & sde->sdma_mask;
-	जबतक (head != tail) अणु
-		/* advance head, wrap अगर needed */
+	while (head != tail) {
+		/* advance head, wrap if needed */
 		head = ++sde->descq_head & sde->sdma_mask;
-		/* अगर now past this txp's descs, करो the callback */
-		अगर (txp && txp->next_descq_idx == head) अणु
-			/* हटाओ from list */
-			sde->tx_ring[sde->tx_head++ & sde->sdma_mask] = शून्य;
+		/* if now past this txp's descs, do the callback */
+		if (txp && txp->next_descq_idx == head) {
+			/* remove from list */
+			sde->tx_ring[sde->tx_head++ & sde->sdma_mask] = NULL;
 			complete_tx(sde, txp, SDMA_TXREQ_S_ABORTED);
 			trace_hfi1_sdma_progress(sde, head, tail, txp);
 			txp = get_txhead(sde);
-		पूर्ण
+		}
 		progress++;
-	पूर्ण
-	अगर (progress)
-		sdma_desc_avail(sde, sdma_descq_मुक्तcnt(sde));
-पूर्ण
+	}
+	if (progress)
+		sdma_desc_avail(sde, sdma_descq_freecnt(sde));
+}
 
-अटल व्योम sdma_sw_clean_up_task(काष्ठा tasklet_काष्ठा *t)
-अणु
-	काष्ठा sdma_engine *sde = from_tasklet(sde, t, sdma_sw_clean_up_task);
-	अचिन्हित दीर्घ flags;
+static void sdma_sw_clean_up_task(struct tasklet_struct *t)
+{
+	struct sdma_engine *sde = from_tasklet(sde, t, sdma_sw_clean_up_task);
+	unsigned long flags;
 
 	spin_lock_irqsave(&sde->tail_lock, flags);
-	ग_लिखो_seqlock(&sde->head_lock);
+	write_seqlock(&sde->head_lock);
 
 	/*
-	 * At this poपूर्णांक, the following should always be true:
+	 * At this point, the following should always be true:
 	 * - We are halted, so no more descriptors are getting retired.
 	 * - We are not running, so no one is submitting new work.
 	 * - Only we can send the e40_sw_cleaned, so we can't start
@@ -625,12 +624,12 @@ SEND_EGRESS_SEND_DMA_STATUS_SDMA_EGRESS_PACKET_OCCUPANCY_SHIFT
 
 	/*
 	 * In the error clean up sequence, software clean must be called
-	 * beक्रमe the hardware clean so we can use the hardware head in
-	 * the progress routine.  A hardware clean or SPC unमुक्तze will
+	 * before the hardware clean so we can use the hardware head in
+	 * the progress routine.  A hardware clean or SPC unfreeze will
 	 * reset the hardware head.
 	 *
 	 * Process all retired requests. The progress routine will use the
-	 * latest physical hardware head - we are not running so speed करोes
+	 * latest physical hardware head - we are not running so speed does
 	 * not matter.
 	 */
 	sdma_make_progress(sde, 0);
@@ -639,43 +638,43 @@ SEND_EGRESS_SEND_DMA_STATUS_SDMA_EGRESS_PACKET_OCCUPANCY_SHIFT
 
 	/*
 	 * Reset our notion of head and tail.
-	 * Note that the HW रेजिस्टरs have been reset via an earlier
+	 * Note that the HW registers have been reset via an earlier
 	 * clean up.
 	 */
 	sde->descq_tail = 0;
 	sde->descq_head = 0;
-	sde->desc_avail = sdma_descq_मुक्तcnt(sde);
+	sde->desc_avail = sdma_descq_freecnt(sde);
 	*sde->head_dma = 0;
 
 	__sdma_process_event(sde, sdma_event_e40_sw_cleaned);
 
-	ग_लिखो_sequnlock(&sde->head_lock);
+	write_sequnlock(&sde->head_lock);
 	spin_unlock_irqrestore(&sde->tail_lock, flags);
-पूर्ण
+}
 
-अटल व्योम sdma_sw_tear_करोwn(काष्ठा sdma_engine *sde)
-अणु
-	काष्ठा sdma_state *ss = &sde->state;
+static void sdma_sw_tear_down(struct sdma_engine *sde)
+{
+	struct sdma_state *ss = &sde->state;
 
 	/* Releasing this reference means the state machine has stopped. */
 	sdma_put(ss);
 
-	/* stop रुकोing क्रम all unमुक्तze events to complete */
-	atomic_set(&sde->dd->sdma_unमुक्तze_count, -1);
-	wake_up_पूर्णांकerruptible(&sde->dd->sdma_unमुक्तze_wq);
-पूर्ण
+	/* stop waiting for all unfreeze events to complete */
+	atomic_set(&sde->dd->sdma_unfreeze_count, -1);
+	wake_up_interruptible(&sde->dd->sdma_unfreeze_wq);
+}
 
-अटल व्योम sdma_start_hw_clean_up(काष्ठा sdma_engine *sde)
-अणु
+static void sdma_start_hw_clean_up(struct sdma_engine *sde)
+{
 	tasklet_hi_schedule(&sde->sdma_hw_clean_up_task);
-पूर्ण
+}
 
-अटल व्योम sdma_set_state(काष्ठा sdma_engine *sde,
-			   क्रमागत sdma_states next_state)
-अणु
-	काष्ठा sdma_state *ss = &sde->state;
-	स्थिर काष्ठा sdma_set_state_action *action = sdma_action_table;
-	अचिन्हित op = 0;
+static void sdma_set_state(struct sdma_engine *sde,
+			   enum sdma_states next_state)
+{
+	struct sdma_state *ss = &sde->state;
+	const struct sdma_set_state_action *action = sdma_action_table;
+	unsigned op = 0;
 
 	trace_hfi1_sdma_state(
 		sde,
@@ -687,31 +686,31 @@ SEND_EGRESS_SEND_DMA_STATUS_SDMA_EGRESS_PACKET_OCCUPANCY_SHIFT
 	ss->previous_op = ss->current_op;
 	ss->current_state = next_state;
 
-	अगर (ss->previous_state != sdma_state_s99_running &&
+	if (ss->previous_state != sdma_state_s99_running &&
 	    next_state == sdma_state_s99_running)
 		sdma_flush(sde);
 
-	अगर (action[next_state].op_enable)
+	if (action[next_state].op_enable)
 		op |= SDMA_SENDCTRL_OP_ENABLE;
 
-	अगर (action[next_state].op_पूर्णांकenable)
+	if (action[next_state].op_intenable)
 		op |= SDMA_SENDCTRL_OP_INTENABLE;
 
-	अगर (action[next_state].op_halt)
+	if (action[next_state].op_halt)
 		op |= SDMA_SENDCTRL_OP_HALT;
 
-	अगर (action[next_state].op_cleanup)
+	if (action[next_state].op_cleanup)
 		op |= SDMA_SENDCTRL_OP_CLEANUP;
 
-	अगर (action[next_state].go_s99_running_tofalse)
+	if (action[next_state].go_s99_running_tofalse)
 		ss->go_s99_running = 0;
 
-	अगर (action[next_state].go_s99_running_totrue)
+	if (action[next_state].go_s99_running_totrue)
 		ss->go_s99_running = 1;
 
 	ss->current_op = op;
 	sdma_sendctrl(sde, ss->current_op);
-पूर्ण
+}
 
 /**
  * sdma_get_descq_cnt() - called when device probed
@@ -725,272 +724,272 @@ SEND_EGRESS_SEND_DMA_STATUS_SDMA_EGRESS_PACKET_OCCUPANCY_SHIFT
  * alloc tx's.
  *
  */
-u16 sdma_get_descq_cnt(व्योम)
-अणु
+u16 sdma_get_descq_cnt(void)
+{
 	u16 count = sdma_descq_cnt;
 
-	अगर (!count)
-		वापस SDMA_DESCQ_CNT;
-	/* count must be a घातer of 2 greater than 64 and less than
-	 * 32768.   Otherwise वापस शेष.
+	if (!count)
+		return SDMA_DESCQ_CNT;
+	/* count must be a power of 2 greater than 64 and less than
+	 * 32768.   Otherwise return default.
 	 */
-	अगर (!is_घातer_of_2(count))
-		वापस SDMA_DESCQ_CNT;
-	अगर (count < 64 || count > 32768)
-		वापस SDMA_DESCQ_CNT;
-	वापस count;
-पूर्ण
+	if (!is_power_of_2(count))
+		return SDMA_DESCQ_CNT;
+	if (count < 64 || count > 32768)
+		return SDMA_DESCQ_CNT;
+	return count;
+}
 
 /**
- * sdma_engine_get_vl() - वापस vl क्रम a given sdma engine
+ * sdma_engine_get_vl() - return vl for a given sdma engine
  * @sde: sdma engine
  *
- * This function वापसs the vl mapped to a given engine, or an error अगर
- * the mapping can't be found. The mapping fields are रक्षित by RCU.
+ * This function returns the vl mapped to a given engine, or an error if
+ * the mapping can't be found. The mapping fields are protected by RCU.
  */
-पूर्णांक sdma_engine_get_vl(काष्ठा sdma_engine *sde)
-अणु
-	काष्ठा hfi1_devdata *dd = sde->dd;
-	काष्ठा sdma_vl_map *m;
+int sdma_engine_get_vl(struct sdma_engine *sde)
+{
+	struct hfi1_devdata *dd = sde->dd;
+	struct sdma_vl_map *m;
 	u8 vl;
 
-	अगर (sde->this_idx >= TXE_NUM_SDMA_ENGINES)
-		वापस -EINVAL;
+	if (sde->this_idx >= TXE_NUM_SDMA_ENGINES)
+		return -EINVAL;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	m = rcu_dereference(dd->sdma_map);
-	अगर (unlikely(!m)) अणु
-		rcu_पढ़ो_unlock();
-		वापस -EINVAL;
-	पूर्ण
+	if (unlikely(!m)) {
+		rcu_read_unlock();
+		return -EINVAL;
+	}
 	vl = m->engine_to_vl[sde->this_idx];
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस vl;
-पूर्ण
+	return vl;
+}
 
 /**
  * sdma_select_engine_vl() - select sdma engine
  * @dd: devdata
- * @selector: a spपढ़ोing factor
+ * @selector: a spreading factor
  * @vl: this vl
  *
  *
- * This function वापसs an engine based on the selector and a vl.  The
- * mapping fields are रक्षित by RCU.
+ * This function returns an engine based on the selector and a vl.  The
+ * mapping fields are protected by RCU.
  */
-काष्ठा sdma_engine *sdma_select_engine_vl(
-	काष्ठा hfi1_devdata *dd,
+struct sdma_engine *sdma_select_engine_vl(
+	struct hfi1_devdata *dd,
 	u32 selector,
 	u8 vl)
-अणु
-	काष्ठा sdma_vl_map *m;
-	काष्ठा sdma_map_elem *e;
-	काष्ठा sdma_engine *rval;
+{
+	struct sdma_vl_map *m;
+	struct sdma_map_elem *e;
+	struct sdma_engine *rval;
 
-	/* NOTE This should only happen अगर SC->VL changed after the initial
+	/* NOTE This should only happen if SC->VL changed after the initial
 	 *      checks on the QP/AH
-	 *      Default will वापस engine 0 below
+	 *      Default will return engine 0 below
 	 */
-	अगर (vl >= num_vls) अणु
-		rval = शून्य;
-		जाओ करोne;
-	पूर्ण
+	if (vl >= num_vls) {
+		rval = NULL;
+		goto done;
+	}
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	m = rcu_dereference(dd->sdma_map);
-	अगर (unlikely(!m)) अणु
-		rcu_पढ़ो_unlock();
-		वापस &dd->per_sdma[0];
-	पूर्ण
+	if (unlikely(!m)) {
+		rcu_read_unlock();
+		return &dd->per_sdma[0];
+	}
 	e = m->map[vl & m->mask];
 	rval = e->sde[selector & e->mask];
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-करोne:
+done:
 	rval =  !rval ? &dd->per_sdma[0] : rval;
 	trace_hfi1_sdma_engine_select(dd, selector, vl, rval->this_idx);
-	वापस rval;
-पूर्ण
+	return rval;
+}
 
 /**
  * sdma_select_engine_sc() - select sdma engine
  * @dd: devdata
- * @selector: a spपढ़ोing factor
+ * @selector: a spreading factor
  * @sc5: the 5 bit sc
  *
  *
- * This function वापसs an engine based on the selector and an sc.
+ * This function returns an engine based on the selector and an sc.
  */
-काष्ठा sdma_engine *sdma_select_engine_sc(
-	काष्ठा hfi1_devdata *dd,
+struct sdma_engine *sdma_select_engine_sc(
+	struct hfi1_devdata *dd,
 	u32 selector,
 	u8 sc5)
-अणु
+{
 	u8 vl = sc_to_vlt(dd, sc5);
 
-	वापस sdma_select_engine_vl(dd, selector, vl);
-पूर्ण
+	return sdma_select_engine_vl(dd, selector, vl);
+}
 
-काष्ठा sdma_rht_map_elem अणु
+struct sdma_rht_map_elem {
 	u32 mask;
 	u8 ctr;
-	काष्ठा sdma_engine *sde[];
-पूर्ण;
+	struct sdma_engine *sde[];
+};
 
-काष्ठा sdma_rht_node अणु
-	अचिन्हित दीर्घ cpu_id;
-	काष्ठा sdma_rht_map_elem *map[HFI1_MAX_VLS_SUPPORTED];
-	काष्ठा rhash_head node;
-पूर्ण;
+struct sdma_rht_node {
+	unsigned long cpu_id;
+	struct sdma_rht_map_elem *map[HFI1_MAX_VLS_SUPPORTED];
+	struct rhash_head node;
+};
 
-#घोषणा NR_CPUS_HINT 192
+#define NR_CPUS_HINT 192
 
-अटल स्थिर काष्ठा rhashtable_params sdma_rht_params = अणु
-	.nelem_hपूर्णांक = NR_CPUS_HINT,
-	.head_offset = दुरत्व(काष्ठा sdma_rht_node, node),
-	.key_offset = दुरत्व(काष्ठा sdma_rht_node, cpu_id),
-	.key_len = माप_field(काष्ठा sdma_rht_node, cpu_id),
+static const struct rhashtable_params sdma_rht_params = {
+	.nelem_hint = NR_CPUS_HINT,
+	.head_offset = offsetof(struct sdma_rht_node, node),
+	.key_offset = offsetof(struct sdma_rht_node, cpu_id),
+	.key_len = sizeof_field(struct sdma_rht_node, cpu_id),
 	.max_size = NR_CPUS,
 	.min_size = 8,
-	.स्वतःmatic_shrinking = true,
-पूर्ण;
+	.automatic_shrinking = true,
+};
 
 /*
  * sdma_select_user_engine() - select sdma engine based on user setup
  * @dd: devdata
- * @selector: a spपढ़ोing factor
+ * @selector: a spreading factor
  * @vl: this vl
  *
- * This function वापसs an sdma engine क्रम a user sdma request.
+ * This function returns an sdma engine for a user sdma request.
  * User defined sdma engine affinity setting is honored when applicable,
- * otherwise प्रणाली शेष sdma engine mapping is used. To ensure correct
- * ordering, the mapping from <selector, vl> to sde must reमुख्य unchanged.
+ * otherwise system default sdma engine mapping is used. To ensure correct
+ * ordering, the mapping from <selector, vl> to sde must remain unchanged.
  */
-काष्ठा sdma_engine *sdma_select_user_engine(काष्ठा hfi1_devdata *dd,
+struct sdma_engine *sdma_select_user_engine(struct hfi1_devdata *dd,
 					    u32 selector, u8 vl)
-अणु
-	काष्ठा sdma_rht_node *rht_node;
-	काष्ठा sdma_engine *sde = शून्य;
-	अचिन्हित दीर्घ cpu_id;
+{
+	struct sdma_rht_node *rht_node;
+	struct sdma_engine *sde = NULL;
+	unsigned long cpu_id;
 
 	/*
 	 * To ensure that always the same sdma engine(s) will be
 	 * selected make sure the process is pinned to this CPU only.
 	 */
-	अगर (current->nr_cpus_allowed != 1)
-		जाओ out;
+	if (current->nr_cpus_allowed != 1)
+		goto out;
 
 	cpu_id = smp_processor_id();
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	rht_node = rhashtable_lookup(dd->sdma_rht, &cpu_id,
 				     sdma_rht_params);
 
-	अगर (rht_node && rht_node->map[vl]) अणु
-		काष्ठा sdma_rht_map_elem *map = rht_node->map[vl];
+	if (rht_node && rht_node->map[vl]) {
+		struct sdma_rht_map_elem *map = rht_node->map[vl];
 
 		sde = map->sde[selector & map->mask];
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	}
+	rcu_read_unlock();
 
-	अगर (sde)
-		वापस sde;
+	if (sde)
+		return sde;
 
 out:
-	वापस sdma_select_engine_vl(dd, selector, vl);
-पूर्ण
+	return sdma_select_engine_vl(dd, selector, vl);
+}
 
-अटल व्योम sdma_populate_sde_map(काष्ठा sdma_rht_map_elem *map)
-अणु
-	पूर्णांक i;
+static void sdma_populate_sde_map(struct sdma_rht_map_elem *map)
+{
+	int i;
 
-	क्रम (i = 0; i < roundup_घात_of_two(map->ctr ? : 1) - map->ctr; i++)
+	for (i = 0; i < roundup_pow_of_two(map->ctr ? : 1) - map->ctr; i++)
 		map->sde[map->ctr + i] = map->sde[i];
-पूर्ण
+}
 
-अटल व्योम sdma_cleanup_sde_map(काष्ठा sdma_rht_map_elem *map,
-				 काष्ठा sdma_engine *sde)
-अणु
-	अचिन्हित पूर्णांक i, घात;
+static void sdma_cleanup_sde_map(struct sdma_rht_map_elem *map,
+				 struct sdma_engine *sde)
+{
+	unsigned int i, pow;
 
-	/* only need to check the first ctr entries क्रम a match */
-	क्रम (i = 0; i < map->ctr; i++) अणु
-		अगर (map->sde[i] == sde) अणु
-			स_हटाओ(&map->sde[i], &map->sde[i + 1],
-				(map->ctr - i - 1) * माप(map->sde[0]));
+	/* only need to check the first ctr entries for a match */
+	for (i = 0; i < map->ctr; i++) {
+		if (map->sde[i] == sde) {
+			memmove(&map->sde[i], &map->sde[i + 1],
+				(map->ctr - i - 1) * sizeof(map->sde[0]));
 			map->ctr--;
-			घात = roundup_घात_of_two(map->ctr ? : 1);
-			map->mask = घात - 1;
+			pow = roundup_pow_of_two(map->ctr ? : 1);
+			map->mask = pow - 1;
 			sdma_populate_sde_map(map);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		}
+	}
+}
 
 /*
- * Prevents concurrent पढ़ोs and ग_लिखोs of the sdma engine cpu_mask
+ * Prevents concurrent reads and writes of the sdma engine cpu_mask
  */
-अटल DEFINE_MUTEX(process_to_sde_mutex);
+static DEFINE_MUTEX(process_to_sde_mutex);
 
-sमाप_प्रकार sdma_set_cpu_to_sde_map(काष्ठा sdma_engine *sde, स्थिर अक्षर *buf,
-				माप_प्रकार count)
-अणु
-	काष्ठा hfi1_devdata *dd = sde->dd;
+ssize_t sdma_set_cpu_to_sde_map(struct sdma_engine *sde, const char *buf,
+				size_t count)
+{
+	struct hfi1_devdata *dd = sde->dd;
 	cpumask_var_t mask, new_mask;
-	अचिन्हित दीर्घ cpu;
-	पूर्णांक ret, vl, sz;
-	काष्ठा sdma_rht_node *rht_node;
+	unsigned long cpu;
+	int ret, vl, sz;
+	struct sdma_rht_node *rht_node;
 
 	vl = sdma_engine_get_vl(sde);
-	अगर (unlikely(vl < 0 || vl >= ARRAY_SIZE(rht_node->map)))
-		वापस -EINVAL;
+	if (unlikely(vl < 0 || vl >= ARRAY_SIZE(rht_node->map)))
+		return -EINVAL;
 
 	ret = zalloc_cpumask_var(&mask, GFP_KERNEL);
-	अगर (!ret)
-		वापस -ENOMEM;
+	if (!ret)
+		return -ENOMEM;
 
 	ret = zalloc_cpumask_var(&new_mask, GFP_KERNEL);
-	अगर (!ret) अणु
-		मुक्त_cpumask_var(mask);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!ret) {
+		free_cpumask_var(mask);
+		return -ENOMEM;
+	}
 	ret = cpulist_parse(buf, mask);
-	अगर (ret)
-		जाओ out_मुक्त;
+	if (ret)
+		goto out_free;
 
-	अगर (!cpumask_subset(mask, cpu_online_mask)) अणु
+	if (!cpumask_subset(mask, cpu_online_mask)) {
 		dd_dev_warn(sde->dd, "Invalid CPU mask\n");
 		ret = -EINVAL;
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-	sz = माप(काष्ठा sdma_rht_map_elem) +
-			(TXE_NUM_SDMA_ENGINES * माप(काष्ठा sdma_engine *));
+	sz = sizeof(struct sdma_rht_map_elem) +
+			(TXE_NUM_SDMA_ENGINES * sizeof(struct sdma_engine *));
 
 	mutex_lock(&process_to_sde_mutex);
 
-	क्रम_each_cpu(cpu, mask) अणु
-		/* Check अगर we have this alपढ़ोy mapped */
-		अगर (cpumask_test_cpu(cpu, &sde->cpu_mask)) अणु
+	for_each_cpu(cpu, mask) {
+		/* Check if we have this already mapped */
+		if (cpumask_test_cpu(cpu, &sde->cpu_mask)) {
 			cpumask_set_cpu(cpu, new_mask);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		rht_node = rhashtable_lookup_fast(dd->sdma_rht, &cpu,
 						  sdma_rht_params);
-		अगर (!rht_node) अणु
-			rht_node = kzalloc(माप(*rht_node), GFP_KERNEL);
-			अगर (!rht_node) अणु
+		if (!rht_node) {
+			rht_node = kzalloc(sizeof(*rht_node), GFP_KERNEL);
+			if (!rht_node) {
 				ret = -ENOMEM;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
 			rht_node->map[vl] = kzalloc(sz, GFP_KERNEL);
-			अगर (!rht_node->map[vl]) अणु
-				kमुक्त(rht_node);
+			if (!rht_node->map[vl]) {
+				kfree(rht_node);
 				ret = -ENOMEM;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			rht_node->cpu_id = cpu;
 			rht_node->map[vl]->mask = 0;
 			rht_node->map[vl]->ctr = 1;
@@ -999,113 +998,113 @@ sमाप_प्रकार sdma_set_cpu_to_sde_map(काष्ठा sdma_en
 			ret = rhashtable_insert_fast(dd->sdma_rht,
 						     &rht_node->node,
 						     sdma_rht_params);
-			अगर (ret) अणु
-				kमुक्त(rht_node->map[vl]);
-				kमुक्त(rht_node);
+			if (ret) {
+				kfree(rht_node->map[vl]);
+				kfree(rht_node);
 				dd_dev_err(sde->dd, "Failed to set process to sde affinity for cpu %lu\n",
 					   cpu);
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
-		पूर्ण अन्यथा अणु
-			पूर्णांक ctr, घात;
+		} else {
+			int ctr, pow;
 
 			/* Add new user mappings */
-			अगर (!rht_node->map[vl])
+			if (!rht_node->map[vl])
 				rht_node->map[vl] = kzalloc(sz, GFP_KERNEL);
 
-			अगर (!rht_node->map[vl]) अणु
+			if (!rht_node->map[vl]) {
 				ret = -ENOMEM;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
 			rht_node->map[vl]->ctr++;
 			ctr = rht_node->map[vl]->ctr;
 			rht_node->map[vl]->sde[ctr - 1] = sde;
-			घात = roundup_घात_of_two(ctr);
-			rht_node->map[vl]->mask = घात - 1;
+			pow = roundup_pow_of_two(ctr);
+			rht_node->map[vl]->mask = pow - 1;
 
 			/* Populate the sde map table */
 			sdma_populate_sde_map(rht_node->map[vl]);
-		पूर्ण
+		}
 		cpumask_set_cpu(cpu, new_mask);
-	पूर्ण
+	}
 
 	/* Clean up old mappings */
-	क्रम_each_cpu(cpu, cpu_online_mask) अणु
-		काष्ठा sdma_rht_node *rht_node;
+	for_each_cpu(cpu, cpu_online_mask) {
+		struct sdma_rht_node *rht_node;
 
 		/* Don't cleanup sdes that are set in the new mask */
-		अगर (cpumask_test_cpu(cpu, mask))
-			जारी;
+		if (cpumask_test_cpu(cpu, mask))
+			continue;
 
 		rht_node = rhashtable_lookup_fast(dd->sdma_rht, &cpu,
 						  sdma_rht_params);
-		अगर (rht_node) अणु
+		if (rht_node) {
 			bool empty = true;
-			पूर्णांक i;
+			int i;
 
-			/* Remove mappings क्रम old sde */
-			क्रम (i = 0; i < HFI1_MAX_VLS_SUPPORTED; i++)
-				अगर (rht_node->map[i])
+			/* Remove mappings for old sde */
+			for (i = 0; i < HFI1_MAX_VLS_SUPPORTED; i++)
+				if (rht_node->map[i])
 					sdma_cleanup_sde_map(rht_node->map[i],
 							     sde);
 
 			/* Free empty hash table entries */
-			क्रम (i = 0; i < HFI1_MAX_VLS_SUPPORTED; i++) अणु
-				अगर (!rht_node->map[i])
-					जारी;
+			for (i = 0; i < HFI1_MAX_VLS_SUPPORTED; i++) {
+				if (!rht_node->map[i])
+					continue;
 
-				अगर (rht_node->map[i]->ctr) अणु
+				if (rht_node->map[i]->ctr) {
 					empty = false;
-					अवरोध;
-				पूर्ण
-			पूर्ण
+					break;
+				}
+			}
 
-			अगर (empty) अणु
-				ret = rhashtable_हटाओ_fast(dd->sdma_rht,
+			if (empty) {
+				ret = rhashtable_remove_fast(dd->sdma_rht,
 							     &rht_node->node,
 							     sdma_rht_params);
 				WARN_ON(ret);
 
-				क्रम (i = 0; i < HFI1_MAX_VLS_SUPPORTED; i++)
-					kमुक्त(rht_node->map[i]);
+				for (i = 0; i < HFI1_MAX_VLS_SUPPORTED; i++)
+					kfree(rht_node->map[i]);
 
-				kमुक्त(rht_node);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				kfree(rht_node);
+			}
+		}
+	}
 
 	cpumask_copy(&sde->cpu_mask, new_mask);
 out:
 	mutex_unlock(&process_to_sde_mutex);
-out_मुक्त:
-	मुक्त_cpumask_var(mask);
-	मुक्त_cpumask_var(new_mask);
-	वापस ret ? : strnlen(buf, PAGE_SIZE);
-पूर्ण
+out_free:
+	free_cpumask_var(mask);
+	free_cpumask_var(new_mask);
+	return ret ? : strnlen(buf, PAGE_SIZE);
+}
 
-sमाप_प्रकार sdma_get_cpu_to_sde_map(काष्ठा sdma_engine *sde, अक्षर *buf)
-अणु
+ssize_t sdma_get_cpu_to_sde_map(struct sdma_engine *sde, char *buf)
+{
 	mutex_lock(&process_to_sde_mutex);
-	अगर (cpumask_empty(&sde->cpu_mask))
-		snम_लिखो(buf, PAGE_SIZE, "%s\n", "empty");
-	अन्यथा
-		cpumap_prपूर्णांक_to_pagebuf(true, buf, &sde->cpu_mask);
+	if (cpumask_empty(&sde->cpu_mask))
+		snprintf(buf, PAGE_SIZE, "%s\n", "empty");
+	else
+		cpumap_print_to_pagebuf(true, buf, &sde->cpu_mask);
 	mutex_unlock(&process_to_sde_mutex);
-	वापस strnlen(buf, PAGE_SIZE);
-पूर्ण
+	return strnlen(buf, PAGE_SIZE);
+}
 
-अटल व्योम sdma_rht_मुक्त(व्योम *ptr, व्योम *arg)
-अणु
-	काष्ठा sdma_rht_node *rht_node = ptr;
-	पूर्णांक i;
+static void sdma_rht_free(void *ptr, void *arg)
+{
+	struct sdma_rht_node *rht_node = ptr;
+	int i;
 
-	क्रम (i = 0; i < HFI1_MAX_VLS_SUPPORTED; i++)
-		kमुक्त(rht_node->map[i]);
+	for (i = 0; i < HFI1_MAX_VLS_SUPPORTED; i++)
+		kfree(rht_node->map[i]);
 
-	kमुक्त(rht_node);
-पूर्ण
+	kfree(rht_node);
+}
 
 /**
  * sdma_seqfile_dump_cpu_list() - debugfs dump the cpu to sdma mappings
@@ -1115,62 +1114,62 @@ sमाप_प्रकार sdma_get_cpu_to_sde_map(काष्ठा sdma_en
  *
  * This routine dumps the process to sde mappings per cpu
  */
-व्योम sdma_seqfile_dump_cpu_list(काष्ठा seq_file *s,
-				काष्ठा hfi1_devdata *dd,
-				अचिन्हित दीर्घ cpuid)
-अणु
-	काष्ठा sdma_rht_node *rht_node;
-	पूर्णांक i, j;
+void sdma_seqfile_dump_cpu_list(struct seq_file *s,
+				struct hfi1_devdata *dd,
+				unsigned long cpuid)
+{
+	struct sdma_rht_node *rht_node;
+	int i, j;
 
 	rht_node = rhashtable_lookup_fast(dd->sdma_rht, &cpuid,
 					  sdma_rht_params);
-	अगर (!rht_node)
-		वापस;
+	if (!rht_node)
+		return;
 
-	seq_म_लिखो(s, "cpu%3lu: ", cpuid);
-	क्रम (i = 0; i < HFI1_MAX_VLS_SUPPORTED; i++) अणु
-		अगर (!rht_node->map[i] || !rht_node->map[i]->ctr)
-			जारी;
+	seq_printf(s, "cpu%3lu: ", cpuid);
+	for (i = 0; i < HFI1_MAX_VLS_SUPPORTED; i++) {
+		if (!rht_node->map[i] || !rht_node->map[i]->ctr)
+			continue;
 
-		seq_म_लिखो(s, " vl%d: [", i);
+		seq_printf(s, " vl%d: [", i);
 
-		क्रम (j = 0; j < rht_node->map[i]->ctr; j++) अणु
-			अगर (!rht_node->map[i]->sde[j])
-				जारी;
+		for (j = 0; j < rht_node->map[i]->ctr; j++) {
+			if (!rht_node->map[i]->sde[j])
+				continue;
 
-			अगर (j > 0)
-				seq_माला_दो(s, ",");
+			if (j > 0)
+				seq_puts(s, ",");
 
-			seq_म_लिखो(s, " sdma%2d",
+			seq_printf(s, " sdma%2d",
 				   rht_node->map[i]->sde[j]->this_idx);
-		पूर्ण
-		seq_माला_दो(s, " ]");
-	पूर्ण
+		}
+		seq_puts(s, " ]");
+	}
 
-	seq_माला_दो(s, "\n");
-पूर्ण
+	seq_puts(s, "\n");
+}
 
 /*
- * Free the indicated map काष्ठा
+ * Free the indicated map struct
  */
-अटल व्योम sdma_map_मुक्त(काष्ठा sdma_vl_map *m)
-अणु
-	पूर्णांक i;
+static void sdma_map_free(struct sdma_vl_map *m)
+{
+	int i;
 
-	क्रम (i = 0; m && i < m->actual_vls; i++)
-		kमुक्त(m->map[i]);
-	kमुक्त(m);
-पूर्ण
+	for (i = 0; m && i < m->actual_vls; i++)
+		kfree(m->map[i]);
+	kfree(m);
+}
 
 /*
  * Handle RCU callback
  */
-अटल व्योम sdma_map_rcu_callback(काष्ठा rcu_head *list)
-अणु
-	काष्ठा sdma_vl_map *m = container_of(list, काष्ठा sdma_vl_map, list);
+static void sdma_map_rcu_callback(struct rcu_head *list)
+{
+	struct sdma_vl_map *m = container_of(list, struct sdma_vl_map, list);
 
-	sdma_map_मुक्त(m);
-पूर्ण
+	sdma_map_free(m);
+}
 
 /**
  * sdma_map_init - called when # vls change
@@ -1181,170 +1180,170 @@ sमाप_प्रकार sdma_get_cpu_to_sde_map(काष्ठा sdma_en
  *
  * This routine changes the mapping based on the number of vls.
  *
- * vl_engines is used to specअगरy a non-unअगरorm vl/engine loading. शून्य
- * implies स्वतः computing the loading and giving each VLs a unअगरorm
+ * vl_engines is used to specify a non-uniform vl/engine loading. NULL
+ * implies auto computing the loading and giving each VLs a uniform
  * distribution of engines per VL.
  *
- * The स्वतः algorithm computes the sde_per_vl and the number of extra
- * engines.  Any extra engines are added from the last VL on करोwn.
+ * The auto algorithm computes the sde_per_vl and the number of extra
+ * engines.  Any extra engines are added from the last VL on down.
  *
  * rcu locking is used here to control access to the mapping fields.
  *
- * If either the num_vls or num_sdma are non-घातer of 2, the array sizes
- * in the काष्ठा sdma_vl_map and the काष्ठा sdma_map_elem are rounded
- * up to the next highest घातer of 2 and the first entry is reused
+ * If either the num_vls or num_sdma are non-power of 2, the array sizes
+ * in the struct sdma_vl_map and the struct sdma_map_elem are rounded
+ * up to the next highest power of 2 and the first entry is reused
  * in a round robin fashion.
  *
- * If an error occurs the map change is not करोne and the mapping is
+ * If an error occurs the map change is not done and the mapping is
  * not changed.
  *
  */
-पूर्णांक sdma_map_init(काष्ठा hfi1_devdata *dd, u8 port, u8 num_vls, u8 *vl_engines)
-अणु
-	पूर्णांक i, j;
-	पूर्णांक extra, sde_per_vl;
-	पूर्णांक engine = 0;
+int sdma_map_init(struct hfi1_devdata *dd, u8 port, u8 num_vls, u8 *vl_engines)
+{
+	int i, j;
+	int extra, sde_per_vl;
+	int engine = 0;
 	u8 lvl_engines[OPA_MAX_VLS];
-	काष्ठा sdma_vl_map *oldmap, *newmap;
+	struct sdma_vl_map *oldmap, *newmap;
 
-	अगर (!(dd->flags & HFI1_HAS_SEND_DMA))
-		वापस 0;
+	if (!(dd->flags & HFI1_HAS_SEND_DMA))
+		return 0;
 
-	अगर (!vl_engines) अणु
-		/* truncate भागide */
+	if (!vl_engines) {
+		/* truncate divide */
 		sde_per_vl = dd->num_sdma / num_vls;
 		/* extras */
 		extra = dd->num_sdma % num_vls;
 		vl_engines = lvl_engines;
-		/* add extras from last vl करोwn */
-		क्रम (i = num_vls - 1; i >= 0; i--, extra--)
+		/* add extras from last vl down */
+		for (i = num_vls - 1; i >= 0; i--, extra--)
 			vl_engines[i] = sde_per_vl + (extra > 0 ? 1 : 0);
-	पूर्ण
+	}
 	/* build new map */
 	newmap = kzalloc(
-		माप(काष्ठा sdma_vl_map) +
-			roundup_घात_of_two(num_vls) *
-			माप(काष्ठा sdma_map_elem *),
+		sizeof(struct sdma_vl_map) +
+			roundup_pow_of_two(num_vls) *
+			sizeof(struct sdma_map_elem *),
 		GFP_KERNEL);
-	अगर (!newmap)
-		जाओ bail;
+	if (!newmap)
+		goto bail;
 	newmap->actual_vls = num_vls;
-	newmap->vls = roundup_घात_of_two(num_vls);
+	newmap->vls = roundup_pow_of_two(num_vls);
 	newmap->mask = (1 << ilog2(newmap->vls)) - 1;
 	/* initialize back-map */
-	क्रम (i = 0; i < TXE_NUM_SDMA_ENGINES; i++)
+	for (i = 0; i < TXE_NUM_SDMA_ENGINES; i++)
 		newmap->engine_to_vl[i] = -1;
-	क्रम (i = 0; i < newmap->vls; i++) अणु
-		/* save क्रम wrap around */
-		पूर्णांक first_engine = engine;
+	for (i = 0; i < newmap->vls; i++) {
+		/* save for wrap around */
+		int first_engine = engine;
 
-		अगर (i < newmap->actual_vls) अणु
-			पूर्णांक sz = roundup_घात_of_two(vl_engines[i]);
+		if (i < newmap->actual_vls) {
+			int sz = roundup_pow_of_two(vl_engines[i]);
 
 			/* only allocate once */
 			newmap->map[i] = kzalloc(
-				माप(काष्ठा sdma_map_elem) +
-					sz * माप(काष्ठा sdma_engine *),
+				sizeof(struct sdma_map_elem) +
+					sz * sizeof(struct sdma_engine *),
 				GFP_KERNEL);
-			अगर (!newmap->map[i])
-				जाओ bail;
+			if (!newmap->map[i])
+				goto bail;
 			newmap->map[i]->mask = (1 << ilog2(sz)) - 1;
 			/* assign engines */
-			क्रम (j = 0; j < sz; j++) अणु
+			for (j = 0; j < sz; j++) {
 				newmap->map[i]->sde[j] =
 					&dd->per_sdma[engine];
-				अगर (++engine >= first_engine + vl_engines[i])
+				if (++engine >= first_engine + vl_engines[i])
 					/* wrap back to first engine */
 					engine = first_engine;
-			पूर्ण
+			}
 			/* assign back-map */
-			क्रम (j = 0; j < vl_engines[i]; j++)
+			for (j = 0; j < vl_engines[i]; j++)
 				newmap->engine_to_vl[first_engine + j] = i;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* just re-use entry without allocating */
 			newmap->map[i] = newmap->map[i % num_vls];
-		पूर्ण
+		}
 		engine = first_engine + vl_engines[i];
-	पूर्ण
+	}
 	/* newmap in hand, save old map */
 	spin_lock_irq(&dd->sde_map_lock);
-	oldmap = rcu_dereference_रक्षित(dd->sdma_map,
+	oldmap = rcu_dereference_protected(dd->sdma_map,
 					   lockdep_is_held(&dd->sde_map_lock));
 
 	/* publish newmap */
-	rcu_assign_poपूर्णांकer(dd->sdma_map, newmap);
+	rcu_assign_pointer(dd->sdma_map, newmap);
 
 	spin_unlock_irq(&dd->sde_map_lock);
-	/* success, मुक्त any old map after grace period */
-	अगर (oldmap)
+	/* success, free any old map after grace period */
+	if (oldmap)
 		call_rcu(&oldmap->list, sdma_map_rcu_callback);
-	वापस 0;
+	return 0;
 bail:
-	/* मुक्त any partial allocation */
-	sdma_map_मुक्त(newmap);
-	वापस -ENOMEM;
-पूर्ण
+	/* free any partial allocation */
+	sdma_map_free(newmap);
+	return -ENOMEM;
+}
 
 /**
  * sdma_clean - Clean up allocated memory
- * @dd:          काष्ठा hfi1_devdata
+ * @dd:          struct hfi1_devdata
  * @num_engines: num sdma engines
  *
  * This routine can be called regardless of the success of
  * sdma_init()
  */
-व्योम sdma_clean(काष्ठा hfi1_devdata *dd, माप_प्रकार num_engines)
-अणु
-	माप_प्रकार i;
-	काष्ठा sdma_engine *sde;
+void sdma_clean(struct hfi1_devdata *dd, size_t num_engines)
+{
+	size_t i;
+	struct sdma_engine *sde;
 
-	अगर (dd->sdma_pad_dma) अणु
-		dma_मुक्त_coherent(&dd->pcidev->dev, SDMA_PAD,
-				  (व्योम *)dd->sdma_pad_dma,
+	if (dd->sdma_pad_dma) {
+		dma_free_coherent(&dd->pcidev->dev, SDMA_PAD,
+				  (void *)dd->sdma_pad_dma,
 				  dd->sdma_pad_phys);
-		dd->sdma_pad_dma = शून्य;
+		dd->sdma_pad_dma = NULL;
 		dd->sdma_pad_phys = 0;
-	पूर्ण
-	अगर (dd->sdma_heads_dma) अणु
-		dma_मुक्त_coherent(&dd->pcidev->dev, dd->sdma_heads_size,
-				  (व्योम *)dd->sdma_heads_dma,
+	}
+	if (dd->sdma_heads_dma) {
+		dma_free_coherent(&dd->pcidev->dev, dd->sdma_heads_size,
+				  (void *)dd->sdma_heads_dma,
 				  dd->sdma_heads_phys);
-		dd->sdma_heads_dma = शून्य;
+		dd->sdma_heads_dma = NULL;
 		dd->sdma_heads_phys = 0;
-	पूर्ण
-	क्रम (i = 0; dd->per_sdma && i < num_engines; ++i) अणु
+	}
+	for (i = 0; dd->per_sdma && i < num_engines; ++i) {
 		sde = &dd->per_sdma[i];
 
-		sde->head_dma = शून्य;
+		sde->head_dma = NULL;
 		sde->head_phys = 0;
 
-		अगर (sde->descq) अणु
-			dma_मुक्त_coherent(
+		if (sde->descq) {
+			dma_free_coherent(
 				&dd->pcidev->dev,
-				sde->descq_cnt * माप(u64[2]),
+				sde->descq_cnt * sizeof(u64[2]),
 				sde->descq,
 				sde->descq_phys
 			);
-			sde->descq = शून्य;
+			sde->descq = NULL;
 			sde->descq_phys = 0;
-		पूर्ण
-		kvमुक्त(sde->tx_ring);
-		sde->tx_ring = शून्य;
-	पूर्ण
+		}
+		kvfree(sde->tx_ring);
+		sde->tx_ring = NULL;
+	}
 	spin_lock_irq(&dd->sde_map_lock);
-	sdma_map_मुक्त(rcu_access_poपूर्णांकer(dd->sdma_map));
-	RCU_INIT_POINTER(dd->sdma_map, शून्य);
+	sdma_map_free(rcu_access_pointer(dd->sdma_map));
+	RCU_INIT_POINTER(dd->sdma_map, NULL);
 	spin_unlock_irq(&dd->sde_map_lock);
 	synchronize_rcu();
-	kमुक्त(dd->per_sdma);
-	dd->per_sdma = शून्य;
+	kfree(dd->per_sdma);
+	dd->per_sdma = NULL;
 
-	अगर (dd->sdma_rht) अणु
-		rhashtable_मुक्त_and_destroy(dd->sdma_rht, sdma_rht_मुक्त, शून्य);
-		kमुक्त(dd->sdma_rht);
-		dd->sdma_rht = शून्य;
-	पूर्ण
-पूर्ण
+	if (dd->sdma_rht) {
+		rhashtable_free_and_destroy(dd->sdma_rht, sdma_rht_free, NULL);
+		kfree(dd->sdma_rht);
+		dd->sdma_rht = NULL;
+	}
+}
 
 /**
  * sdma_init() - called when device probed
@@ -1355,26 +1354,26 @@ bail:
  * Interrupts are not required to be enabled.
  *
  * Returns:
- * 0 - success, -त्रुटि_सं on failure
+ * 0 - success, -errno on failure
  */
-पूर्णांक sdma_init(काष्ठा hfi1_devdata *dd, u8 port)
-अणु
-	अचिन्हित this_idx;
-	काष्ठा sdma_engine *sde;
-	काष्ठा rhashtable *पंचांगp_sdma_rht;
+int sdma_init(struct hfi1_devdata *dd, u8 port)
+{
+	unsigned this_idx;
+	struct sdma_engine *sde;
+	struct rhashtable *tmp_sdma_rht;
 	u16 descq_cnt;
-	व्योम *curr_head;
-	काष्ठा hfi1_pportdata *ppd = dd->pport + port;
+	void *curr_head;
+	struct hfi1_pportdata *ppd = dd->pport + port;
 	u32 per_sdma_credits;
-	uपूर्णांक idle_cnt = sdma_idle_cnt;
-	माप_प्रकार num_engines = chip_sdma_engines(dd);
-	पूर्णांक ret = -ENOMEM;
+	uint idle_cnt = sdma_idle_cnt;
+	size_t num_engines = chip_sdma_engines(dd);
+	int ret = -ENOMEM;
 
-	अगर (!HFI1_CAP_IS_KSET(SDMA)) अणु
+	if (!HFI1_CAP_IS_KSET(SDMA)) {
 		HFI1_CAP_CLEAR(SDMA_AHG);
-		वापस 0;
-	पूर्ण
-	अगर (mod_num_sdma &&
+		return 0;
+	}
+	if (mod_num_sdma &&
 	    /* can't exceed chip support */
 	    mod_num_sdma <= chip_sdma_engines(dd) &&
 	    /* count must be >= vls */
@@ -1389,69 +1388,69 @@ bail:
 	per_sdma_credits =
 		chip_sdma_mem_size(dd) / (num_engines * SDMA_BLOCK_SIZE);
 
-	/* set up मुक्तze रुकोqueue */
-	init_रुकोqueue_head(&dd->sdma_unमुक्तze_wq);
-	atomic_set(&dd->sdma_unमुक्तze_count, 0);
+	/* set up freeze waitqueue */
+	init_waitqueue_head(&dd->sdma_unfreeze_wq);
+	atomic_set(&dd->sdma_unfreeze_count, 0);
 
 	descq_cnt = sdma_get_descq_cnt();
 	dd_dev_info(dd, "SDMA engines %zu descq_cnt %u\n",
 		    num_engines, descq_cnt);
 
-	/* alloc memory क्रम array of send engines */
-	dd->per_sdma = kसुस्मृति_node(num_engines, माप(*dd->per_sdma),
+	/* alloc memory for array of send engines */
+	dd->per_sdma = kcalloc_node(num_engines, sizeof(*dd->per_sdma),
 				    GFP_KERNEL, dd->node);
-	अगर (!dd->per_sdma)
-		वापस ret;
+	if (!dd->per_sdma)
+		return ret;
 
-	idle_cnt = ns_to_cघड़ी(dd, idle_cnt);
-	अगर (idle_cnt)
-		dd->शेष_desc1 =
+	idle_cnt = ns_to_cclock(dd, idle_cnt);
+	if (idle_cnt)
+		dd->default_desc1 =
 			SDMA_DESC1_HEAD_TO_HOST_FLAG;
-	अन्यथा
-		dd->शेष_desc1 =
+	else
+		dd->default_desc1 =
 			SDMA_DESC1_INT_REQ_FLAG;
 
-	अगर (!sdma_desct_पूर्णांकr)
-		sdma_desct_पूर्णांकr = SDMA_DESC_INTR;
+	if (!sdma_desct_intr)
+		sdma_desct_intr = SDMA_DESC_INTR;
 
-	/* Allocate memory क्रम SendDMA descriptor FIFOs */
-	क्रम (this_idx = 0; this_idx < num_engines; ++this_idx) अणु
+	/* Allocate memory for SendDMA descriptor FIFOs */
+	for (this_idx = 0; this_idx < num_engines; ++this_idx) {
 		sde = &dd->per_sdma[this_idx];
 		sde->dd = dd;
 		sde->ppd = ppd;
 		sde->this_idx = this_idx;
 		sde->descq_cnt = descq_cnt;
-		sde->desc_avail = sdma_descq_मुक्तcnt(sde);
-		sde->sdma_shअगरt = ilog2(descq_cnt);
-		sde->sdma_mask = (1 << sde->sdma_shअगरt) - 1;
+		sde->desc_avail = sdma_descq_freecnt(sde);
+		sde->sdma_shift = ilog2(descq_cnt);
+		sde->sdma_mask = (1 << sde->sdma_shift) - 1;
 
-		/* Create a mask specअगरically क्रम each पूर्णांकerrupt source */
-		sde->पूर्णांक_mask = (u64)1 << (0 * TXE_NUM_SDMA_ENGINES +
+		/* Create a mask specifically for each interrupt source */
+		sde->int_mask = (u64)1 << (0 * TXE_NUM_SDMA_ENGINES +
 					   this_idx);
 		sde->progress_mask = (u64)1 << (1 * TXE_NUM_SDMA_ENGINES +
 						this_idx);
 		sde->idle_mask = (u64)1 << (2 * TXE_NUM_SDMA_ENGINES +
 					    this_idx);
-		/* Create a combined mask to cover all 3 पूर्णांकerrupt sources */
-		sde->imask = sde->पूर्णांक_mask | sde->progress_mask |
+		/* Create a combined mask to cover all 3 interrupt sources */
+		sde->imask = sde->int_mask | sde->progress_mask |
 			     sde->idle_mask;
 
 		spin_lock_init(&sde->tail_lock);
 		seqlock_init(&sde->head_lock);
 		spin_lock_init(&sde->senddmactrl_lock);
 		spin_lock_init(&sde->flushlist_lock);
-		seqlock_init(&sde->रुकोlock);
+		seqlock_init(&sde->waitlock);
 		/* insure there is always a zero bit */
 		sde->ahg_bits = 0xfffffffe00000000ULL;
 
-		sdma_set_state(sde, sdma_state_s00_hw_करोwn);
+		sdma_set_state(sde, sdma_state_s00_hw_down);
 
 		/* set up reference counting */
 		kref_init(&sde->state.kref);
 		init_completion(&sde->state.comp);
 
 		INIT_LIST_HEAD(&sde->flushlist);
-		INIT_LIST_HEAD(&sde->dmaरुको);
+		INIT_LIST_HEAD(&sde->dmawait);
 
 		sde->tail_csr =
 			get_kctxt_csr_addr(dd, this_idx, SD(TAIL));
@@ -1460,88 +1459,88 @@ bail:
 			      sdma_hw_clean_up_task);
 		tasklet_setup(&sde->sdma_sw_clean_up_task,
 			      sdma_sw_clean_up_task);
-		INIT_WORK(&sde->err_halt_worker, sdma_err_halt_रुको);
+		INIT_WORK(&sde->err_halt_worker, sdma_err_halt_wait);
 		INIT_WORK(&sde->flush_worker, sdma_field_flush);
 
 		sde->progress_check_head = 0;
 
-		समयr_setup(&sde->err_progress_check_समयr,
+		timer_setup(&sde->err_progress_check_timer,
 			    sdma_err_progress_check, 0);
 
 		sde->descq = dma_alloc_coherent(&dd->pcidev->dev,
-						descq_cnt * माप(u64[2]),
+						descq_cnt * sizeof(u64[2]),
 						&sde->descq_phys, GFP_KERNEL);
-		अगर (!sde->descq)
-			जाओ bail;
+		if (!sde->descq)
+			goto bail;
 		sde->tx_ring =
 			kvzalloc_node(array_size(descq_cnt,
-						 माप(काष्ठा sdma_txreq *)),
+						 sizeof(struct sdma_txreq *)),
 				      GFP_KERNEL, dd->node);
-		अगर (!sde->tx_ring)
-			जाओ bail;
-	पूर्ण
+		if (!sde->tx_ring)
+			goto bail;
+	}
 
 	dd->sdma_heads_size = L1_CACHE_BYTES * num_engines;
-	/* Allocate memory क्रम DMA of head रेजिस्टरs to memory */
+	/* Allocate memory for DMA of head registers to memory */
 	dd->sdma_heads_dma = dma_alloc_coherent(&dd->pcidev->dev,
 						dd->sdma_heads_size,
 						&dd->sdma_heads_phys,
 						GFP_KERNEL);
-	अगर (!dd->sdma_heads_dma) अणु
+	if (!dd->sdma_heads_dma) {
 		dd_dev_err(dd, "failed to allocate SendDMA head memory\n");
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
-	/* Allocate memory क्रम pad */
+	/* Allocate memory for pad */
 	dd->sdma_pad_dma = dma_alloc_coherent(&dd->pcidev->dev, SDMA_PAD,
 					      &dd->sdma_pad_phys, GFP_KERNEL);
-	अगर (!dd->sdma_pad_dma) अणु
+	if (!dd->sdma_pad_dma) {
 		dd_dev_err(dd, "failed to allocate SendDMA pad memory\n");
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
-	/* assign each engine to dअगरferent cacheline and init रेजिस्टरs */
-	curr_head = (व्योम *)dd->sdma_heads_dma;
-	क्रम (this_idx = 0; this_idx < num_engines; ++this_idx) अणु
-		अचिन्हित दीर्घ phys_offset;
+	/* assign each engine to different cacheline and init registers */
+	curr_head = (void *)dd->sdma_heads_dma;
+	for (this_idx = 0; this_idx < num_engines; ++this_idx) {
+		unsigned long phys_offset;
 
 		sde = &dd->per_sdma[this_idx];
 
 		sde->head_dma = curr_head;
 		curr_head += L1_CACHE_BYTES;
-		phys_offset = (अचिन्हित दीर्घ)sde->head_dma -
-			      (अचिन्हित दीर्घ)dd->sdma_heads_dma;
+		phys_offset = (unsigned long)sde->head_dma -
+			      (unsigned long)dd->sdma_heads_dma;
 		sde->head_phys = dd->sdma_heads_phys + phys_offset;
 		init_sdma_regs(sde, per_sdma_credits, idle_cnt);
-	पूर्ण
+	}
 	dd->flags |= HFI1_HAS_SEND_DMA;
 	dd->flags |= idle_cnt ? HFI1_HAS_SDMA_TIMEOUT : 0;
 	dd->num_sdma = num_engines;
-	ret = sdma_map_init(dd, port, ppd->vls_operational, शून्य);
-	अगर (ret < 0)
-		जाओ bail;
+	ret = sdma_map_init(dd, port, ppd->vls_operational, NULL);
+	if (ret < 0)
+		goto bail;
 
-	पंचांगp_sdma_rht = kzalloc(माप(*पंचांगp_sdma_rht), GFP_KERNEL);
-	अगर (!पंचांगp_sdma_rht) अणु
+	tmp_sdma_rht = kzalloc(sizeof(*tmp_sdma_rht), GFP_KERNEL);
+	if (!tmp_sdma_rht) {
 		ret = -ENOMEM;
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
-	ret = rhashtable_init(पंचांगp_sdma_rht, &sdma_rht_params);
-	अगर (ret < 0) अणु
-		kमुक्त(पंचांगp_sdma_rht);
-		जाओ bail;
-	पूर्ण
+	ret = rhashtable_init(tmp_sdma_rht, &sdma_rht_params);
+	if (ret < 0) {
+		kfree(tmp_sdma_rht);
+		goto bail;
+	}
 
-	dd->sdma_rht = पंचांगp_sdma_rht;
+	dd->sdma_rht = tmp_sdma_rht;
 
 	dd_dev_info(dd, "SDMA num_sdma: %u\n", dd->num_sdma);
-	वापस 0;
+	return 0;
 
 bail:
 	sdma_clean(dd, num_engines);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * sdma_all_running() - called when the link goes up
@@ -1549,213 +1548,213 @@ bail:
  *
  * This routine moves all engines to the running state.
  */
-व्योम sdma_all_running(काष्ठा hfi1_devdata *dd)
-अणु
-	काष्ठा sdma_engine *sde;
-	अचिन्हित पूर्णांक i;
+void sdma_all_running(struct hfi1_devdata *dd)
+{
+	struct sdma_engine *sde;
+	unsigned int i;
 
 	/* move all engines to running */
-	क्रम (i = 0; i < dd->num_sdma; ++i) अणु
+	for (i = 0; i < dd->num_sdma; ++i) {
 		sde = &dd->per_sdma[i];
 		sdma_process_event(sde, sdma_event_e30_go_running);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * sdma_all_idle() - called when the link goes करोwn
+ * sdma_all_idle() - called when the link goes down
  * @dd: hfi1_devdata
  *
  * This routine moves all engines to the idle state.
  */
-व्योम sdma_all_idle(काष्ठा hfi1_devdata *dd)
-अणु
-	काष्ठा sdma_engine *sde;
-	अचिन्हित पूर्णांक i;
+void sdma_all_idle(struct hfi1_devdata *dd)
+{
+	struct sdma_engine *sde;
+	unsigned int i;
 
 	/* idle all engines */
-	क्रम (i = 0; i < dd->num_sdma; ++i) अणु
+	for (i = 0; i < dd->num_sdma; ++i) {
 		sde = &dd->per_sdma[i];
 		sdma_process_event(sde, sdma_event_e70_go_idle);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * sdma_start() - called to kick off state processing क्रम all engines
+ * sdma_start() - called to kick off state processing for all engines
  * @dd: hfi1_devdata
  *
- * This routine is क्रम kicking off the state processing क्रम all required
- * sdma engines.  Interrupts need to be working at this poपूर्णांक.
+ * This routine is for kicking off the state processing for all required
+ * sdma engines.  Interrupts need to be working at this point.
  *
  */
-व्योम sdma_start(काष्ठा hfi1_devdata *dd)
-अणु
-	अचिन्हित i;
-	काष्ठा sdma_engine *sde;
+void sdma_start(struct hfi1_devdata *dd)
+{
+	unsigned i;
+	struct sdma_engine *sde;
 
 	/* kick off the engines state processing */
-	क्रम (i = 0; i < dd->num_sdma; ++i) अणु
+	for (i = 0; i < dd->num_sdma; ++i) {
 		sde = &dd->per_sdma[i];
 		sdma_process_event(sde, sdma_event_e10_go_hw_start);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * sdma_निकास() - used when module is हटाओd
+ * sdma_exit() - used when module is removed
  * @dd: hfi1_devdata
  */
-व्योम sdma_निकास(काष्ठा hfi1_devdata *dd)
-अणु
-	अचिन्हित this_idx;
-	काष्ठा sdma_engine *sde;
+void sdma_exit(struct hfi1_devdata *dd)
+{
+	unsigned this_idx;
+	struct sdma_engine *sde;
 
-	क्रम (this_idx = 0; dd->per_sdma && this_idx < dd->num_sdma;
-			++this_idx) अणु
+	for (this_idx = 0; dd->per_sdma && this_idx < dd->num_sdma;
+			++this_idx) {
 		sde = &dd->per_sdma[this_idx];
-		अगर (!list_empty(&sde->dmaरुको))
+		if (!list_empty(&sde->dmawait))
 			dd_dev_err(dd, "sde %u: dmawait list not empty!\n",
 				   sde->this_idx);
-		sdma_process_event(sde, sdma_event_e00_go_hw_करोwn);
+		sdma_process_event(sde, sdma_event_e00_go_hw_down);
 
-		del_समयr_sync(&sde->err_progress_check_समयr);
+		del_timer_sync(&sde->err_progress_check_timer);
 
 		/*
-		 * This रुकोs क्रम the state machine to निकास so it is not
-		 * necessary to समाप्त the sdma_sw_clean_up_task to make sure
+		 * This waits for the state machine to exit so it is not
+		 * necessary to kill the sdma_sw_clean_up_task to make sure
 		 * it is not running.
 		 */
 		sdma_finalput(&sde->state);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * unmap the indicated descriptor
  */
-अटल अंतरभूत व्योम sdma_unmap_desc(
-	काष्ठा hfi1_devdata *dd,
-	काष्ठा sdma_desc *descp)
-अणु
-	चयन (sdma_mapping_type(descp)) अणु
-	हाल SDMA_MAP_SINGLE:
+static inline void sdma_unmap_desc(
+	struct hfi1_devdata *dd,
+	struct sdma_desc *descp)
+{
+	switch (sdma_mapping_type(descp)) {
+	case SDMA_MAP_SINGLE:
 		dma_unmap_single(
 			&dd->pcidev->dev,
 			sdma_mapping_addr(descp),
 			sdma_mapping_len(descp),
 			DMA_TO_DEVICE);
-		अवरोध;
-	हाल SDMA_MAP_PAGE:
+		break;
+	case SDMA_MAP_PAGE:
 		dma_unmap_page(
 			&dd->pcidev->dev,
 			sdma_mapping_addr(descp),
 			sdma_mapping_len(descp),
 			DMA_TO_DEVICE);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
 /*
- * वापस the mode as indicated by the first
+ * return the mode as indicated by the first
  * descriptor in the tx.
  */
-अटल अंतरभूत u8 ahg_mode(काष्ठा sdma_txreq *tx)
-अणु
-	वापस (tx->descp[0].qw[1] & SDMA_DESC1_HEADER_MODE_SMASK)
+static inline u8 ahg_mode(struct sdma_txreq *tx)
+{
+	return (tx->descp[0].qw[1] & SDMA_DESC1_HEADER_MODE_SMASK)
 		>> SDMA_DESC1_HEADER_MODE_SHIFT;
-पूर्ण
+}
 
 /**
- * __sdma_txclean() - clean tx of mappings, descp *kदो_स्मृति's
- * @dd: hfi1_devdata क्रम unmapping
+ * __sdma_txclean() - clean tx of mappings, descp *kmalloc's
+ * @dd: hfi1_devdata for unmapping
  * @tx: tx request to clean
  *
  * This is used in the progress routine to clean the tx or
  * by the ULP to toss an in-process tx build.
  *
- * The code can be called multiple बार without issue.
+ * The code can be called multiple times without issue.
  *
  */
-व्योम __sdma_txclean(
-	काष्ठा hfi1_devdata *dd,
-	काष्ठा sdma_txreq *tx)
-अणु
+void __sdma_txclean(
+	struct hfi1_devdata *dd,
+	struct sdma_txreq *tx)
+{
 	u16 i;
 
-	अगर (tx->num_desc) अणु
+	if (tx->num_desc) {
 		u8 skip = 0, mode = ahg_mode(tx);
 
 		/* unmap first */
 		sdma_unmap_desc(dd, &tx->descp[0]);
 		/* determine number of AHG descriptors to skip */
-		अगर (mode > SDMA_AHG_APPLY_UPDATE1)
+		if (mode > SDMA_AHG_APPLY_UPDATE1)
 			skip = mode >> 1;
-		क्रम (i = 1 + skip; i < tx->num_desc; i++)
+		for (i = 1 + skip; i < tx->num_desc; i++)
 			sdma_unmap_desc(dd, &tx->descp[i]);
 		tx->num_desc = 0;
-	पूर्ण
-	kमुक्त(tx->coalesce_buf);
-	tx->coalesce_buf = शून्य;
-	/* kदो_स्मृति'ed descp */
-	अगर (unlikely(tx->desc_limit > ARRAY_SIZE(tx->descs))) अणु
+	}
+	kfree(tx->coalesce_buf);
+	tx->coalesce_buf = NULL;
+	/* kmalloc'ed descp */
+	if (unlikely(tx->desc_limit > ARRAY_SIZE(tx->descs))) {
 		tx->desc_limit = ARRAY_SIZE(tx->descs);
-		kमुक्त(tx->descp);
-	पूर्ण
-पूर्ण
+		kfree(tx->descp);
+	}
+}
 
-अटल अंतरभूत u16 sdma_gethead(काष्ठा sdma_engine *sde)
-अणु
-	काष्ठा hfi1_devdata *dd = sde->dd;
-	पूर्णांक use_dmahead;
+static inline u16 sdma_gethead(struct sdma_engine *sde)
+{
+	struct hfi1_devdata *dd = sde->dd;
+	int use_dmahead;
 	u16 hwhead;
 
-#अगर_घोषित CONFIG_SDMA_VERBOSITY
+#ifdef CONFIG_SDMA_VERBOSITY
 	dd_dev_err(sde->dd, "CONFIG SDMA(%u) %s:%d %s()\n",
-		   sde->this_idx, slashstrip(__खाता__), __LINE__, __func__);
-#पूर्ण_अगर
+		   sde->this_idx, slashstrip(__FILE__), __LINE__, __func__);
+#endif
 
 retry:
 	use_dmahead = HFI1_CAP_IS_KSET(USE_SDMA_HEAD) && __sdma_running(sde) &&
 					(dd->flags & HFI1_HAS_SDMA_TIMEOUT);
 	hwhead = use_dmahead ?
 		(u16)le64_to_cpu(*sde->head_dma) :
-		(u16)पढ़ो_sde_csr(sde, SD(HEAD));
+		(u16)read_sde_csr(sde, SD(HEAD));
 
-	अगर (unlikely(HFI1_CAP_IS_KSET(SDMA_HEAD_CHECK))) अणु
+	if (unlikely(HFI1_CAP_IS_KSET(SDMA_HEAD_CHECK))) {
 		u16 cnt;
 		u16 swtail;
 		u16 swhead;
-		पूर्णांक sane;
+		int sane;
 
 		swhead = sde->descq_head & sde->sdma_mask;
-		/* this code is really bad क्रम cache line trading */
+		/* this code is really bad for cache line trading */
 		swtail = READ_ONCE(sde->descq_tail) & sde->sdma_mask;
 		cnt = sde->descq_cnt;
 
-		अगर (swhead < swtail)
+		if (swhead < swtail)
 			/* not wrapped */
 			sane = (hwhead >= swhead) & (hwhead <= swtail);
-		अन्यथा अगर (swhead > swtail)
+		else if (swhead > swtail)
 			/* wrapped around */
 			sane = ((hwhead >= swhead) && (hwhead < cnt)) ||
 				(hwhead <= swtail);
-		अन्यथा
+		else
 			/* empty */
 			sane = (hwhead == swhead);
 
-		अगर (unlikely(!sane)) अणु
+		if (unlikely(!sane)) {
 			dd_dev_err(dd, "SDMA(%u) bad head (%s) hwhd=%u swhd=%u swtl=%u cnt=%u\n",
 				   sde->this_idx,
 				   use_dmahead ? "dma" : "kreg",
 				   hwhead, swhead, swtail, cnt);
-			अगर (use_dmahead) अणु
-				/* try one more समय, using csr */
+			if (use_dmahead) {
+				/* try one more time, using csr */
 				use_dmahead = 0;
-				जाओ retry;
-			पूर्ण
-			/* proceed as अगर no progress */
+				goto retry;
+			}
+			/* proceed as if no progress */
 			hwhead = swhead;
-		पूर्ण
-	पूर्ण
-	वापस hwhead;
-पूर्ण
+		}
+	}
+	return hwhead;
+}
 
 /*
  * This is called when there are send DMA descriptors that might be
@@ -1763,79 +1762,79 @@ retry:
  *
  * This is called with head_lock held.
  */
-अटल व्योम sdma_desc_avail(काष्ठा sdma_engine *sde, uपूर्णांक avail)
-अणु
-	काष्ठा ioरुको *रुको, *nw, *tरुको;
-	काष्ठा ioरुको *रुकोs[SDMA_WAIT_BATCH_SIZE];
-	uपूर्णांक i, n = 0, seq, tidx = 0;
+static void sdma_desc_avail(struct sdma_engine *sde, uint avail)
+{
+	struct iowait *wait, *nw, *twait;
+	struct iowait *waits[SDMA_WAIT_BATCH_SIZE];
+	uint i, n = 0, seq, tidx = 0;
 
-#अगर_घोषित CONFIG_SDMA_VERBOSITY
+#ifdef CONFIG_SDMA_VERBOSITY
 	dd_dev_err(sde->dd, "CONFIG SDMA(%u) %s:%d %s()\n", sde->this_idx,
-		   slashstrip(__खाता__), __LINE__, __func__);
+		   slashstrip(__FILE__), __LINE__, __func__);
 	dd_dev_err(sde->dd, "avail: %u\n", avail);
-#पूर्ण_अगर
+#endif
 
-	करो अणु
-		seq = पढ़ो_seqbegin(&sde->रुकोlock);
-		अगर (!list_empty(&sde->dmaरुको)) अणु
+	do {
+		seq = read_seqbegin(&sde->waitlock);
+		if (!list_empty(&sde->dmawait)) {
 			/* at least one item */
-			ग_लिखो_seqlock(&sde->रुकोlock);
-			/* Harvest रुकोers wanting DMA descriptors */
-			list_क्रम_each_entry_safe(
-					रुको,
+			write_seqlock(&sde->waitlock);
+			/* Harvest waiters wanting DMA descriptors */
+			list_for_each_entry_safe(
+					wait,
 					nw,
-					&sde->dmaरुको,
-					list) अणु
+					&sde->dmawait,
+					list) {
 				u32 num_desc;
 
-				अगर (!रुको->wakeup)
-					जारी;
-				अगर (n == ARRAY_SIZE(रुकोs))
-					अवरोध;
-				ioरुको_init_priority(रुको);
-				num_desc = ioरुको_get_all_desc(रुको);
-				अगर (num_desc > avail)
-					अवरोध;
+				if (!wait->wakeup)
+					continue;
+				if (n == ARRAY_SIZE(waits))
+					break;
+				iowait_init_priority(wait);
+				num_desc = iowait_get_all_desc(wait);
+				if (num_desc > avail)
+					break;
 				avail -= num_desc;
-				/* Find the top-priority रुको memeber */
-				अगर (n) अणु
-					tरुको = रुकोs[tidx];
+				/* Find the top-priority wait memeber */
+				if (n) {
+					twait = waits[tidx];
 					tidx =
-					    ioरुको_priority_update_top(रुको,
-								       tरुको,
+					    iowait_priority_update_top(wait,
+								       twait,
 								       n,
 								       tidx);
-				पूर्ण
-				list_del_init(&रुको->list);
-				रुकोs[n++] = रुको;
-			पूर्ण
-			ग_लिखो_sequnlock(&sde->रुकोlock);
-			अवरोध;
-		पूर्ण
-	पूर्ण जबतक (पढ़ो_seqretry(&sde->रुकोlock, seq));
+				}
+				list_del_init(&wait->list);
+				waits[n++] = wait;
+			}
+			write_sequnlock(&sde->waitlock);
+			break;
+		}
+	} while (read_seqretry(&sde->waitlock, seq));
 
 	/* Schedule the top-priority entry first */
-	अगर (n)
-		रुकोs[tidx]->wakeup(रुकोs[tidx], SDMA_AVAIL_REASON);
+	if (n)
+		waits[tidx]->wakeup(waits[tidx], SDMA_AVAIL_REASON);
 
-	क्रम (i = 0; i < n; i++)
-		अगर (i != tidx)
-			रुकोs[i]->wakeup(रुकोs[i], SDMA_AVAIL_REASON);
-पूर्ण
+	for (i = 0; i < n; i++)
+		if (i != tidx)
+			waits[i]->wakeup(waits[i], SDMA_AVAIL_REASON);
+}
 
 /* head_lock must be held */
-अटल व्योम sdma_make_progress(काष्ठा sdma_engine *sde, u64 status)
-अणु
-	काष्ठा sdma_txreq *txp = शून्य;
-	पूर्णांक progress = 0;
+static void sdma_make_progress(struct sdma_engine *sde, u64 status)
+{
+	struct sdma_txreq *txp = NULL;
+	int progress = 0;
 	u16 hwhead, swhead;
-	पूर्णांक idle_check_करोne = 0;
+	int idle_check_done = 0;
 
 	hwhead = sdma_gethead(sde);
 
-	/* The reason क्रम some of the complनिकासy of this code is that
+	/* The reason for some of the complexity of this code is that
 	 * not all descriptors have corresponding txps.  So, we have to
-	 * be able to skip over descs until we wander पूर्णांकo the range of
+	 * be able to skip over descs until we wander into the range of
 	 * the next txp on the list.
 	 */
 
@@ -1843,130 +1842,130 @@ retry:
 	txp = get_txhead(sde);
 	swhead = sde->descq_head & sde->sdma_mask;
 	trace_hfi1_sdma_progress(sde, hwhead, swhead, txp);
-	जबतक (swhead != hwhead) अणु
-		/* advance head, wrap अगर needed */
+	while (swhead != hwhead) {
+		/* advance head, wrap if needed */
 		swhead = ++sde->descq_head & sde->sdma_mask;
 
-		/* अगर now past this txp's descs, करो the callback */
-		अगर (txp && txp->next_descq_idx == swhead) अणु
-			/* हटाओ from list */
-			sde->tx_ring[sde->tx_head++ & sde->sdma_mask] = शून्य;
+		/* if now past this txp's descs, do the callback */
+		if (txp && txp->next_descq_idx == swhead) {
+			/* remove from list */
+			sde->tx_ring[sde->tx_head++ & sde->sdma_mask] = NULL;
 			complete_tx(sde, txp, SDMA_TXREQ_S_OK);
-			/* see अगर there is another txp */
+			/* see if there is another txp */
 			txp = get_txhead(sde);
-		पूर्ण
+		}
 		trace_hfi1_sdma_progress(sde, hwhead, swhead, txp);
 		progress++;
-	पूर्ण
+	}
 
 	/*
-	 * The SDMA idle पूर्णांकerrupt is not guaranteed to be ordered with respect
+	 * The SDMA idle interrupt is not guaranteed to be ordered with respect
 	 * to updates to the the dma_head location in host memory. The head
-	 * value पढ़ो might not be fully up to date. If there are pending
-	 * descriptors and the SDMA idle पूर्णांकerrupt fired then पढ़ो from the
+	 * value read might not be fully up to date. If there are pending
+	 * descriptors and the SDMA idle interrupt fired then read from the
 	 * CSR SDMA head instead to get the latest value from the hardware.
-	 * The hardware SDMA head should be पढ़ो at most once in this invocation
-	 * of sdma_make_progress(..) which is ensured by idle_check_करोne flag
+	 * The hardware SDMA head should be read at most once in this invocation
+	 * of sdma_make_progress(..) which is ensured by idle_check_done flag
 	 */
-	अगर ((status & sde->idle_mask) && !idle_check_करोne) अणु
+	if ((status & sde->idle_mask) && !idle_check_done) {
 		u16 swtail;
 
 		swtail = READ_ONCE(sde->descq_tail) & sde->sdma_mask;
-		अगर (swtail != hwhead) अणु
-			hwhead = (u16)पढ़ो_sde_csr(sde, SD(HEAD));
-			idle_check_करोne = 1;
-			जाओ retry;
-		पूर्ण
-	पूर्ण
+		if (swtail != hwhead) {
+			hwhead = (u16)read_sde_csr(sde, SD(HEAD));
+			idle_check_done = 1;
+			goto retry;
+		}
+	}
 
 	sde->last_status = status;
-	अगर (progress)
-		sdma_desc_avail(sde, sdma_descq_मुक्तcnt(sde));
-पूर्ण
+	if (progress)
+		sdma_desc_avail(sde, sdma_descq_freecnt(sde));
+}
 
 /*
- * sdma_engine_पूर्णांकerrupt() - पूर्णांकerrupt handler क्रम engine
+ * sdma_engine_interrupt() - interrupt handler for engine
  * @sde: sdma engine
- * @status: sdma पूर्णांकerrupt reason
+ * @status: sdma interrupt reason
  *
- * Status is a mask of the 3 possible पूर्णांकerrupts क्रम this engine.  It will
- * contain bits _only_ क्रम this SDMA engine.  It will contain at least one
+ * Status is a mask of the 3 possible interrupts for this engine.  It will
+ * contain bits _only_ for this SDMA engine.  It will contain at least one
  * bit, it may contain more.
  */
-व्योम sdma_engine_पूर्णांकerrupt(काष्ठा sdma_engine *sde, u64 status)
-अणु
-	trace_hfi1_sdma_engine_पूर्णांकerrupt(sde, status);
-	ग_लिखो_seqlock(&sde->head_lock);
-	sdma_set_desc_cnt(sde, sdma_desct_पूर्णांकr);
-	अगर (status & sde->idle_mask)
-		sde->idle_पूर्णांक_cnt++;
-	अन्यथा अगर (status & sde->progress_mask)
-		sde->progress_पूर्णांक_cnt++;
-	अन्यथा अगर (status & sde->पूर्णांक_mask)
-		sde->sdma_पूर्णांक_cnt++;
+void sdma_engine_interrupt(struct sdma_engine *sde, u64 status)
+{
+	trace_hfi1_sdma_engine_interrupt(sde, status);
+	write_seqlock(&sde->head_lock);
+	sdma_set_desc_cnt(sde, sdma_desct_intr);
+	if (status & sde->idle_mask)
+		sde->idle_int_cnt++;
+	else if (status & sde->progress_mask)
+		sde->progress_int_cnt++;
+	else if (status & sde->int_mask)
+		sde->sdma_int_cnt++;
 	sdma_make_progress(sde, status);
-	ग_लिखो_sequnlock(&sde->head_lock);
-पूर्ण
+	write_sequnlock(&sde->head_lock);
+}
 
 /**
- * sdma_engine_error() - error handler क्रम engine
+ * sdma_engine_error() - error handler for engine
  * @sde: sdma engine
- * @status: sdma पूर्णांकerrupt reason
+ * @status: sdma interrupt reason
  */
-व्योम sdma_engine_error(काष्ठा sdma_engine *sde, u64 status)
-अणु
-	अचिन्हित दीर्घ flags;
+void sdma_engine_error(struct sdma_engine *sde, u64 status)
+{
+	unsigned long flags;
 
-#अगर_घोषित CONFIG_SDMA_VERBOSITY
+#ifdef CONFIG_SDMA_VERBOSITY
 	dd_dev_err(sde->dd, "CONFIG SDMA(%u) error status 0x%llx state %s\n",
 		   sde->this_idx,
-		   (अचिन्हित दीर्घ दीर्घ)status,
+		   (unsigned long long)status,
 		   sdma_state_names[sde->state.current_state]);
-#पूर्ण_अगर
+#endif
 	spin_lock_irqsave(&sde->tail_lock, flags);
-	ग_लिखो_seqlock(&sde->head_lock);
-	अगर (status & ALL_SDMA_ENG_HALT_ERRS)
+	write_seqlock(&sde->head_lock);
+	if (status & ALL_SDMA_ENG_HALT_ERRS)
 		__sdma_process_event(sde, sdma_event_e60_hw_halted);
-	अगर (status & ~SD(ENG_ERR_STATUS_SDMA_HALT_ERR_SMASK)) अणु
+	if (status & ~SD(ENG_ERR_STATUS_SDMA_HALT_ERR_SMASK)) {
 		dd_dev_err(sde->dd,
 			   "SDMA (%u) engine error: 0x%llx state %s\n",
 			   sde->this_idx,
-			   (अचिन्हित दीर्घ दीर्घ)status,
+			   (unsigned long long)status,
 			   sdma_state_names[sde->state.current_state]);
 		dump_sdma_state(sde);
-	पूर्ण
-	ग_लिखो_sequnlock(&sde->head_lock);
+	}
+	write_sequnlock(&sde->head_lock);
 	spin_unlock_irqrestore(&sde->tail_lock, flags);
-पूर्ण
+}
 
-अटल व्योम sdma_sendctrl(काष्ठा sdma_engine *sde, अचिन्हित op)
-अणु
+static void sdma_sendctrl(struct sdma_engine *sde, unsigned op)
+{
 	u64 set_senddmactrl = 0;
 	u64 clr_senddmactrl = 0;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
-#अगर_घोषित CONFIG_SDMA_VERBOSITY
+#ifdef CONFIG_SDMA_VERBOSITY
 	dd_dev_err(sde->dd, "CONFIG SDMA(%u) senddmactrl E=%d I=%d H=%d C=%d\n",
 		   sde->this_idx,
 		   (op & SDMA_SENDCTRL_OP_ENABLE) ? 1 : 0,
 		   (op & SDMA_SENDCTRL_OP_INTENABLE) ? 1 : 0,
 		   (op & SDMA_SENDCTRL_OP_HALT) ? 1 : 0,
 		   (op & SDMA_SENDCTRL_OP_CLEANUP) ? 1 : 0);
-#पूर्ण_अगर
+#endif
 
-	अगर (op & SDMA_SENDCTRL_OP_ENABLE)
+	if (op & SDMA_SENDCTRL_OP_ENABLE)
 		set_senddmactrl |= SD(CTRL_SDMA_ENABLE_SMASK);
-	अन्यथा
+	else
 		clr_senddmactrl |= SD(CTRL_SDMA_ENABLE_SMASK);
 
-	अगर (op & SDMA_SENDCTRL_OP_INTENABLE)
+	if (op & SDMA_SENDCTRL_OP_INTENABLE)
 		set_senddmactrl |= SD(CTRL_SDMA_INT_ENABLE_SMASK);
-	अन्यथा
+	else
 		clr_senddmactrl |= SD(CTRL_SDMA_INT_ENABLE_SMASK);
 
-	अगर (op & SDMA_SENDCTRL_OP_HALT)
+	if (op & SDMA_SENDCTRL_OP_HALT)
 		set_senddmactrl |= SD(CTRL_SDMA_HALT_SMASK);
-	अन्यथा
+	else
 		clr_senddmactrl |= SD(CTRL_SDMA_HALT_SMASK);
 
 	spin_lock_irqsave(&sde->senddmactrl_lock, flags);
@@ -1974,58 +1973,58 @@ retry:
 	sde->p_senddmactrl |= set_senddmactrl;
 	sde->p_senddmactrl &= ~clr_senddmactrl;
 
-	अगर (op & SDMA_SENDCTRL_OP_CLEANUP)
-		ग_लिखो_sde_csr(sde, SD(CTRL),
+	if (op & SDMA_SENDCTRL_OP_CLEANUP)
+		write_sde_csr(sde, SD(CTRL),
 			      sde->p_senddmactrl |
 			      SD(CTRL_SDMA_CLEANUP_SMASK));
-	अन्यथा
-		ग_लिखो_sde_csr(sde, SD(CTRL), sde->p_senddmactrl);
+	else
+		write_sde_csr(sde, SD(CTRL), sde->p_senddmactrl);
 
 	spin_unlock_irqrestore(&sde->senddmactrl_lock, flags);
 
-#अगर_घोषित CONFIG_SDMA_VERBOSITY
+#ifdef CONFIG_SDMA_VERBOSITY
 	sdma_dumpstate(sde);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल व्योम sdma_setlengen(काष्ठा sdma_engine *sde)
-अणु
-#अगर_घोषित CONFIG_SDMA_VERBOSITY
+static void sdma_setlengen(struct sdma_engine *sde)
+{
+#ifdef CONFIG_SDMA_VERBOSITY
 	dd_dev_err(sde->dd, "CONFIG SDMA(%u) %s:%d %s()\n",
-		   sde->this_idx, slashstrip(__खाता__), __LINE__, __func__);
-#पूर्ण_अगर
+		   sde->this_idx, slashstrip(__FILE__), __LINE__, __func__);
+#endif
 
 	/*
 	 * Set SendDmaLenGen and clear-then-set the MSB of the generation
-	 * count to enable generation checking and load the पूर्णांकernal
+	 * count to enable generation checking and load the internal
 	 * generation counter.
 	 */
-	ग_लिखो_sde_csr(sde, SD(LEN_GEN),
+	write_sde_csr(sde, SD(LEN_GEN),
 		      (sde->descq_cnt / 64) << SD(LEN_GEN_LENGTH_SHIFT));
-	ग_लिखो_sde_csr(sde, SD(LEN_GEN),
+	write_sde_csr(sde, SD(LEN_GEN),
 		      ((sde->descq_cnt / 64) << SD(LEN_GEN_LENGTH_SHIFT)) |
 		      (4ULL << SD(LEN_GEN_GENERATION_SHIFT)));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम sdma_update_tail(काष्ठा sdma_engine *sde, u16 tail)
-अणु
-	/* Commit ग_लिखोs to memory and advance the tail on the chip */
+static inline void sdma_update_tail(struct sdma_engine *sde, u16 tail)
+{
+	/* Commit writes to memory and advance the tail on the chip */
 	smp_wmb(); /* see get_txhead() */
-	ग_लिखोq(tail, sde->tail_csr);
-पूर्ण
+	writeq(tail, sde->tail_csr);
+}
 
 /*
- * This is called when changing to state s10_hw_start_up_halt_रुको as
+ * This is called when changing to state s10_hw_start_up_halt_wait as
  * a result of send buffer errors or send DMA descriptor errors.
  */
-अटल व्योम sdma_hw_start_up(काष्ठा sdma_engine *sde)
-अणु
+static void sdma_hw_start_up(struct sdma_engine *sde)
+{
 	u64 reg;
 
-#अगर_घोषित CONFIG_SDMA_VERBOSITY
+#ifdef CONFIG_SDMA_VERBOSITY
 	dd_dev_err(sde->dd, "CONFIG SDMA(%u) %s:%d %s()\n",
-		   sde->this_idx, slashstrip(__खाता__), __LINE__, __func__);
-#पूर्ण_अगर
+		   sde->this_idx, slashstrip(__FILE__), __LINE__, __func__);
+#endif
 
 	sdma_setlengen(sde);
 	sdma_update_tail(sde, 0); /* Set SendDmaTail */
@@ -2033,77 +2032,77 @@ retry:
 
 	reg = SD(ENG_ERR_CLEAR_SDMA_HEADER_REQUEST_FIFO_UNC_ERR_MASK) <<
 	      SD(ENG_ERR_CLEAR_SDMA_HEADER_REQUEST_FIFO_UNC_ERR_SHIFT);
-	ग_लिखो_sde_csr(sde, SD(ENG_ERR_CLEAR), reg);
-पूर्ण
+	write_sde_csr(sde, SD(ENG_ERR_CLEAR), reg);
+}
 
 /*
- * set_sdma_पूर्णांकegrity
+ * set_sdma_integrity
  *
- * Set the SEND_DMA_CHECK_ENABLE रेजिस्टर क्रम send DMA engine 'sde'.
+ * Set the SEND_DMA_CHECK_ENABLE register for send DMA engine 'sde'.
  */
-अटल व्योम set_sdma_पूर्णांकegrity(काष्ठा sdma_engine *sde)
-अणु
-	काष्ठा hfi1_devdata *dd = sde->dd;
+static void set_sdma_integrity(struct sdma_engine *sde)
+{
+	struct hfi1_devdata *dd = sde->dd;
 
-	ग_लिखो_sde_csr(sde, SD(CHECK_ENABLE),
-		      hfi1_pkt_base_sdma_पूर्णांकegrity(dd));
-पूर्ण
+	write_sde_csr(sde, SD(CHECK_ENABLE),
+		      hfi1_pkt_base_sdma_integrity(dd));
+}
 
-अटल व्योम init_sdma_regs(
-	काष्ठा sdma_engine *sde,
+static void init_sdma_regs(
+	struct sdma_engine *sde,
 	u32 credits,
-	uपूर्णांक idle_cnt)
-अणु
+	uint idle_cnt)
+{
 	u8 opval, opmask;
-#अगर_घोषित CONFIG_SDMA_VERBOSITY
-	काष्ठा hfi1_devdata *dd = sde->dd;
+#ifdef CONFIG_SDMA_VERBOSITY
+	struct hfi1_devdata *dd = sde->dd;
 
 	dd_dev_err(dd, "CONFIG SDMA(%u) %s:%d %s()\n",
-		   sde->this_idx, slashstrip(__खाता__), __LINE__, __func__);
-#पूर्ण_अगर
+		   sde->this_idx, slashstrip(__FILE__), __LINE__, __func__);
+#endif
 
-	ग_लिखो_sde_csr(sde, SD(BASE_ADDR), sde->descq_phys);
+	write_sde_csr(sde, SD(BASE_ADDR), sde->descq_phys);
 	sdma_setlengen(sde);
 	sdma_update_tail(sde, 0); /* Set SendDmaTail */
-	ग_लिखो_sde_csr(sde, SD(RELOAD_CNT), idle_cnt);
-	ग_लिखो_sde_csr(sde, SD(DESC_CNT), 0);
-	ग_लिखो_sde_csr(sde, SD(HEAD_ADDR), sde->head_phys);
-	ग_लिखो_sde_csr(sde, SD(MEMORY),
+	write_sde_csr(sde, SD(RELOAD_CNT), idle_cnt);
+	write_sde_csr(sde, SD(DESC_CNT), 0);
+	write_sde_csr(sde, SD(HEAD_ADDR), sde->head_phys);
+	write_sde_csr(sde, SD(MEMORY),
 		      ((u64)credits << SD(MEMORY_SDMA_MEMORY_CNT_SHIFT)) |
 		      ((u64)(credits * sde->this_idx) <<
 		       SD(MEMORY_SDMA_MEMORY_INDEX_SHIFT)));
-	ग_लिखो_sde_csr(sde, SD(ENG_ERR_MASK), ~0ull);
-	set_sdma_पूर्णांकegrity(sde);
+	write_sde_csr(sde, SD(ENG_ERR_MASK), ~0ull);
+	set_sdma_integrity(sde);
 	opmask = OPCODE_CHECK_MASK_DISABLED;
 	opval = OPCODE_CHECK_VAL_DISABLED;
-	ग_लिखो_sde_csr(sde, SD(CHECK_OPCODE),
+	write_sde_csr(sde, SD(CHECK_OPCODE),
 		      (opmask << SEND_CTXT_CHECK_OPCODE_MASK_SHIFT) |
 		      (opval << SEND_CTXT_CHECK_OPCODE_VALUE_SHIFT));
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_SDMA_VERBOSITY
+#ifdef CONFIG_SDMA_VERBOSITY
 
-#घोषणा sdma_dumpstate_helper0(reg) करो अणु \
-		csr = पढ़ो_csr(sde->dd, reg); \
+#define sdma_dumpstate_helper0(reg) do { \
+		csr = read_csr(sde->dd, reg); \
 		dd_dev_err(sde->dd, "%36s     0x%016llx\n", #reg, csr); \
-	पूर्ण जबतक (0)
+	} while (0)
 
-#घोषणा sdma_dumpstate_helper(reg) करो अणु \
-		csr = पढ़ो_sde_csr(sde, reg); \
+#define sdma_dumpstate_helper(reg) do { \
+		csr = read_sde_csr(sde, reg); \
 		dd_dev_err(sde->dd, "%36s[%02u] 0x%016llx\n", \
 			#reg, sde->this_idx, csr); \
-	पूर्ण जबतक (0)
+	} while (0)
 
-#घोषणा sdma_dumpstate_helper2(reg) करो अणु \
-		csr = पढ़ो_csr(sde->dd, reg + (8 * i)); \
+#define sdma_dumpstate_helper2(reg) do { \
+		csr = read_csr(sde->dd, reg + (8 * i)); \
 		dd_dev_err(sde->dd, "%33s_%02u     0x%016llx\n", \
 				#reg, i, csr); \
-	पूर्ण जबतक (0)
+	} while (0)
 
-व्योम sdma_dumpstate(काष्ठा sdma_engine *sde)
-अणु
+void sdma_dumpstate(struct sdma_engine *sde)
+{
 	u64 csr;
-	अचिन्हित i;
+	unsigned i;
 
 	sdma_dumpstate_helper(SD(CTRL));
 	sdma_dumpstate_helper(SD(STATUS));
@@ -2112,11 +2111,11 @@ retry:
 	sdma_dumpstate_helper(SD(ENG_ERR_STATUS));
 	sdma_dumpstate_helper(SD(ENG_ERR_MASK));
 
-	क्रम (i = 0; i < CCE_NUM_INT_CSRS; ++i) अणु
+	for (i = 0; i < CCE_NUM_INT_CSRS; ++i) {
 		sdma_dumpstate_helper2(CCE_INT_STATUS);
 		sdma_dumpstate_helper2(CCE_INT_MASK);
 		sdma_dumpstate_helper2(CCE_INT_BLOCKED);
-	पूर्ण
+	}
 
 	sdma_dumpstate_helper(SD(TAIL));
 	sdma_dumpstate_helper(SD(HEAD));
@@ -2138,12 +2137,12 @@ retry:
 	sdma_dumpstate_helper(SD(CHECK_PARTITION_KEY));
 	sdma_dumpstate_helper(SD(CHECK_SLID));
 	sdma_dumpstate_helper(SD(CHECK_OPCODE));
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-अटल व्योम dump_sdma_state(काष्ठा sdma_engine *sde)
-अणु
-	काष्ठा hw_sdma_desc *descqp;
+static void dump_sdma_state(struct sdma_engine *sde)
+{
+	struct hw_sdma_desc *descqp;
 	u64 desc[2];
 	u64 addr;
 	u8 gen;
@@ -2152,16 +2151,16 @@ retry:
 
 	head = sde->descq_head & sde->sdma_mask;
 	tail = sde->descq_tail & sde->sdma_mask;
-	cnt = sdma_descq_मुक्तcnt(sde);
+	cnt = sdma_descq_freecnt(sde);
 
 	dd_dev_err(sde->dd,
 		   "SDMA (%u) descq_head: %u descq_tail: %u freecnt: %u FLE %d\n",
 		   sde->this_idx, head, tail, cnt,
 		   !list_empty(&sde->flushlist));
 
-	/* prपूर्णांक info क्रम each entry in the descriptor queue */
-	जबतक (head != tail) अणु
-		अक्षर flags[6] = अणु 'x', 'x', 'x', 'x', 0 पूर्ण;
+	/* print info for each entry in the descriptor queue */
+	while (head != tail) {
+		char flags[6] = { 'x', 'x', 'x', 'x', 0 };
 
 		descqp = &sde->descq[head];
 		desc[0] = le64_to_cpu(descqp->qw[0]);
@@ -2183,7 +2182,7 @@ retry:
 		dd_dev_err(sde->dd,
 			   "\tdesc0:0x%016llx desc1 0x%016llx\n",
 			   desc[0], desc[1]);
-		अगर (desc[0] & SDMA_DESC0_FIRST_DESC_FLAG)
+		if (desc[0] & SDMA_DESC0_FIRST_DESC_FLAG)
 			dd_dev_err(sde->dd,
 				   "\taidx: %u amode: %u alen: %u\n",
 				   (u8)((desc[1] &
@@ -2197,10 +2196,10 @@ retry:
 					SDMA_DESC1_HEADER_DWS_SHIFT));
 		head++;
 		head &= sde->sdma_mask;
-	पूर्ण
-पूर्ण
+	}
+}
 
-#घोषणा SDE_FMT \
+#define SDE_FMT \
 	"SDE %u CPU %d STE %s C 0x%llx S 0x%016llx E 0x%llx T(HW) 0x%llx T(SW) 0x%x H(HW) 0x%llx H(SW) 0x%x H(D) 0x%llx DM 0x%llx GL 0x%llx R 0x%llx LIS 0x%llx AHGI 0x%llx TXT %u TXH %u DT %u DH %u FLNE %d DQF %u SLC 0x%llx\n"
 /**
  * sdma_seqfile_dump_sde() - debugfs dump of sde
@@ -2209,10 +2208,10 @@ retry:
  *
  * This routine dumps the sde to the indicated seq file.
  */
-व्योम sdma_seqfile_dump_sde(काष्ठा seq_file *s, काष्ठा sdma_engine *sde)
-अणु
+void sdma_seqfile_dump_sde(struct seq_file *s, struct sdma_engine *sde)
+{
 	u16 head, tail;
-	काष्ठा hw_sdma_desc *descqp;
+	struct hw_sdma_desc *descqp;
 	u64 desc[2];
 	u64 addr;
 	u8 gen;
@@ -2220,31 +2219,31 @@ retry:
 
 	head = sde->descq_head & sde->sdma_mask;
 	tail = READ_ONCE(sde->descq_tail) & sde->sdma_mask;
-	seq_म_लिखो(s, SDE_FMT, sde->this_idx,
+	seq_printf(s, SDE_FMT, sde->this_idx,
 		   sde->cpu,
 		   sdma_state_name(sde->state.current_state),
-		   (अचिन्हित दीर्घ दीर्घ)पढ़ो_sde_csr(sde, SD(CTRL)),
-		   (अचिन्हित दीर्घ दीर्घ)पढ़ो_sde_csr(sde, SD(STATUS)),
-		   (अचिन्हित दीर्घ दीर्घ)पढ़ो_sde_csr(sde, SD(ENG_ERR_STATUS)),
-		   (अचिन्हित दीर्घ दीर्घ)पढ़ो_sde_csr(sde, SD(TAIL)), tail,
-		   (अचिन्हित दीर्घ दीर्घ)पढ़ो_sde_csr(sde, SD(HEAD)), head,
-		   (अचिन्हित दीर्घ दीर्घ)le64_to_cpu(*sde->head_dma),
-		   (अचिन्हित दीर्घ दीर्घ)पढ़ो_sde_csr(sde, SD(MEMORY)),
-		   (अचिन्हित दीर्घ दीर्घ)पढ़ो_sde_csr(sde, SD(LEN_GEN)),
-		   (अचिन्हित दीर्घ दीर्घ)पढ़ो_sde_csr(sde, SD(RELOAD_CNT)),
-		   (अचिन्हित दीर्घ दीर्घ)sde->last_status,
-		   (अचिन्हित दीर्घ दीर्घ)sde->ahg_bits,
+		   (unsigned long long)read_sde_csr(sde, SD(CTRL)),
+		   (unsigned long long)read_sde_csr(sde, SD(STATUS)),
+		   (unsigned long long)read_sde_csr(sde, SD(ENG_ERR_STATUS)),
+		   (unsigned long long)read_sde_csr(sde, SD(TAIL)), tail,
+		   (unsigned long long)read_sde_csr(sde, SD(HEAD)), head,
+		   (unsigned long long)le64_to_cpu(*sde->head_dma),
+		   (unsigned long long)read_sde_csr(sde, SD(MEMORY)),
+		   (unsigned long long)read_sde_csr(sde, SD(LEN_GEN)),
+		   (unsigned long long)read_sde_csr(sde, SD(RELOAD_CNT)),
+		   (unsigned long long)sde->last_status,
+		   (unsigned long long)sde->ahg_bits,
 		   sde->tx_tail,
 		   sde->tx_head,
 		   sde->descq_tail,
 		   sde->descq_head,
 		   !list_empty(&sde->flushlist),
 		   sde->descq_full_count,
-		   (अचिन्हित दीर्घ दीर्घ)पढ़ो_sde_csr(sde, SEND_DMA_CHECK_SLID));
+		   (unsigned long long)read_sde_csr(sde, SEND_DMA_CHECK_SLID));
 
-	/* prपूर्णांक info क्रम each entry in the descriptor queue */
-	जबतक (head != tail) अणु
-		अक्षर flags[6] = अणु 'x', 'x', 'x', 'x', 0 पूर्ण;
+	/* print info for each entry in the descriptor queue */
+	while (head != tail) {
+		char flags[6] = { 'x', 'x', 'x', 'x', 0 };
 
 		descqp = &sde->descq[head];
 		desc[0] = le64_to_cpu(descqp->qw[0]);
@@ -2260,11 +2259,11 @@ retry:
 			& SDMA_DESC1_GENERATION_MASK;
 		len = (desc[0] >> SDMA_DESC0_BYTE_COUNT_SHIFT)
 			& SDMA_DESC0_BYTE_COUNT_MASK;
-		seq_म_लिखो(s,
+		seq_printf(s,
 			   "\tdesc[%u]: flags:%s addr:0x%016llx gen:%u len:%u bytes\n",
 			   head, flags, addr, gen, len);
-		अगर (desc[0] & SDMA_DESC0_FIRST_DESC_FLAG)
-			seq_म_लिखो(s, "\t\tahgidx: %u ahgmode: %u\n",
+		if (desc[0] & SDMA_DESC0_FIRST_DESC_FLAG)
+			seq_printf(s, "\t\tahgidx: %u ahgmode: %u\n",
 				   (u8)((desc[1] &
 					 SDMA_DESC1_HEADER_INDEX_SMASK) >>
 					SDMA_DESC1_HEADER_INDEX_SHIFT),
@@ -2272,44 +2271,44 @@ retry:
 					 SDMA_DESC1_HEADER_MODE_SMASK) >>
 					SDMA_DESC1_HEADER_MODE_SHIFT));
 		head = (head + 1) & sde->sdma_mask;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * add the generation number पूर्णांकo
- * the qw1 and वापस
+ * add the generation number into
+ * the qw1 and return
  */
-अटल अंतरभूत u64 add_gen(काष्ठा sdma_engine *sde, u64 qw1)
-अणु
-	u8 generation = (sde->descq_tail >> sde->sdma_shअगरt) & 3;
+static inline u64 add_gen(struct sdma_engine *sde, u64 qw1)
+{
+	u8 generation = (sde->descq_tail >> sde->sdma_shift) & 3;
 
 	qw1 &= ~SDMA_DESC1_GENERATION_SMASK;
 	qw1 |= ((u64)generation & SDMA_DESC1_GENERATION_MASK)
 			<< SDMA_DESC1_GENERATION_SHIFT;
-	वापस qw1;
-पूर्ण
+	return qw1;
+}
 
 /*
  * This routine submits the indicated tx
  *
- * Space has alपढ़ोy been guaranteed and
+ * Space has already been guaranteed and
  * tail side of ring is locked.
  *
- * The hardware tail update is करोne
+ * The hardware tail update is done
  * in the caller and that is facilitated
- * by वापसing the new tail.
+ * by returning the new tail.
  *
- * There is special हाल logic क्रम ahg
- * to not add the generation number क्रम
+ * There is special case logic for ahg
+ * to not add the generation number for
  * up to 2 descriptors that follow the
  * first descriptor.
  *
  */
-अटल अंतरभूत u16 submit_tx(काष्ठा sdma_engine *sde, काष्ठा sdma_txreq *tx)
-अणु
-	पूर्णांक i;
+static inline u16 submit_tx(struct sdma_engine *sde, struct sdma_txreq *tx)
+{
+	int i;
 	u16 tail;
-	काष्ठा sdma_desc *descp = tx->descp;
+	struct sdma_desc *descp = tx->descp;
 	u8 skip = 0, mode = ahg_mode(tx);
 
 	tail = sde->descq_tail & sde->sdma_mask;
@@ -2319,726 +2318,726 @@ retry:
 				   tail, &sde->descq[tail]);
 	tail = ++sde->descq_tail & sde->sdma_mask;
 	descp++;
-	अगर (mode > SDMA_AHG_APPLY_UPDATE1)
+	if (mode > SDMA_AHG_APPLY_UPDATE1)
 		skip = mode >> 1;
-	क्रम (i = 1; i < tx->num_desc; i++, descp++) अणु
+	for (i = 1; i < tx->num_desc; i++, descp++) {
 		u64 qw1;
 
 		sde->descq[tail].qw[0] = cpu_to_le64(descp->qw[0]);
-		अगर (skip) अणु
-			/* edits करोn't have generation */
+		if (skip) {
+			/* edits don't have generation */
 			qw1 = descp->qw[1];
 			skip--;
-		पूर्ण अन्यथा अणु
-			/* replace generation with real one क्रम non-edits */
+		} else {
+			/* replace generation with real one for non-edits */
 			qw1 = add_gen(sde, descp->qw[1]);
-		पूर्ण
+		}
 		sde->descq[tail].qw[1] = cpu_to_le64(qw1);
 		trace_hfi1_sdma_descriptor(sde, descp->qw[0], qw1,
 					   tail, &sde->descq[tail]);
 		tail = ++sde->descq_tail & sde->sdma_mask;
-	पूर्ण
+	}
 	tx->next_descq_idx = tail;
-#अगर_घोषित CONFIG_HFI1_DEBUG_SDMA_ORDER
+#ifdef CONFIG_HFI1_DEBUG_SDMA_ORDER
 	tx->sn = sde->tail_sn++;
 	trace_hfi1_sdma_in_sn(sde, tx->sn);
 	WARN_ON_ONCE(sde->tx_ring[sde->tx_tail & sde->sdma_mask]);
-#पूर्ण_अगर
+#endif
 	sde->tx_ring[sde->tx_tail++ & sde->sdma_mask] = tx;
 	sde->desc_avail -= tx->num_desc;
-	वापस tail;
-पूर्ण
+	return tail;
+}
 
 /*
- * Check क्रम progress
+ * Check for progress
  */
-अटल पूर्णांक sdma_check_progress(
-	काष्ठा sdma_engine *sde,
-	काष्ठा ioरुको_work *रुको,
-	काष्ठा sdma_txreq *tx,
+static int sdma_check_progress(
+	struct sdma_engine *sde,
+	struct iowait_work *wait,
+	struct sdma_txreq *tx,
 	bool pkts_sent)
-अणु
-	पूर्णांक ret;
+{
+	int ret;
 
-	sde->desc_avail = sdma_descq_मुक्तcnt(sde);
-	अगर (tx->num_desc <= sde->desc_avail)
-		वापस -EAGAIN;
+	sde->desc_avail = sdma_descq_freecnt(sde);
+	if (tx->num_desc <= sde->desc_avail)
+		return -EAGAIN;
 	/* pulse the head_lock */
-	अगर (रुको && ioरुको_ioww_to_iow(रुको)->sleep) अणु
-		अचिन्हित seq;
+	if (wait && iowait_ioww_to_iow(wait)->sleep) {
+		unsigned seq;
 
 		seq = raw_seqcount_begin(
-			(स्थिर seqcount_t *)&sde->head_lock.seqcount);
-		ret = रुको->iow->sleep(sde, रुको, tx, seq, pkts_sent);
-		अगर (ret == -EAGAIN)
-			sde->desc_avail = sdma_descq_मुक्तcnt(sde);
-	पूर्ण अन्यथा अणु
+			(const seqcount_t *)&sde->head_lock.seqcount);
+		ret = wait->iow->sleep(sde, wait, tx, seq, pkts_sent);
+		if (ret == -EAGAIN)
+			sde->desc_avail = sdma_descq_freecnt(sde);
+	} else {
 		ret = -EBUSY;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
 /**
  * sdma_send_txreq() - submit a tx req to ring
  * @sde: sdma engine to use
- * @रुको: SE रुको काष्ठाure to use when full (may be शून्य)
+ * @wait: SE wait structure to use when full (may be NULL)
  * @tx: sdma_txreq to submit
  * @pkts_sent: has any packet been sent yet?
  *
- * The call submits the tx पूर्णांकo the ring.  If a ioरुको काष्ठाure is non-शून्य
- * the packet will be queued to the list in रुको.
+ * The call submits the tx into the ring.  If a iowait structure is non-NULL
+ * the packet will be queued to the list in wait.
  *
  * Return:
  * 0 - Success, -EINVAL - sdma_txreq incomplete, -EBUSY - no space in
- * ring (रुको == शून्य)
- * -EIOCBQUEUED - tx queued to ioरुको, -ECOMM bad sdma state
+ * ring (wait == NULL)
+ * -EIOCBQUEUED - tx queued to iowait, -ECOMM bad sdma state
  */
-पूर्णांक sdma_send_txreq(काष्ठा sdma_engine *sde,
-		    काष्ठा ioरुको_work *रुको,
-		    काष्ठा sdma_txreq *tx,
+int sdma_send_txreq(struct sdma_engine *sde,
+		    struct iowait_work *wait,
+		    struct sdma_txreq *tx,
 		    bool pkts_sent)
-अणु
-	पूर्णांक ret = 0;
+{
+	int ret = 0;
 	u16 tail;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	/* user should have supplied entire packet */
-	अगर (unlikely(tx->tlen))
-		वापस -EINVAL;
-	tx->रुको = ioरुको_ioww_to_iow(रुको);
+	if (unlikely(tx->tlen))
+		return -EINVAL;
+	tx->wait = iowait_ioww_to_iow(wait);
 	spin_lock_irqsave(&sde->tail_lock, flags);
 retry:
-	अगर (unlikely(!__sdma_running(sde)))
-		जाओ unlock_noconn;
-	अगर (unlikely(tx->num_desc > sde->desc_avail))
-		जाओ nodesc;
+	if (unlikely(!__sdma_running(sde)))
+		goto unlock_noconn;
+	if (unlikely(tx->num_desc > sde->desc_avail))
+		goto nodesc;
 	tail = submit_tx(sde, tx);
-	अगर (रुको)
-		ioरुको_sdma_inc(ioरुको_ioww_to_iow(रुको));
+	if (wait)
+		iowait_sdma_inc(iowait_ioww_to_iow(wait));
 	sdma_update_tail(sde, tail);
 unlock:
 	spin_unlock_irqrestore(&sde->tail_lock, flags);
-	वापस ret;
+	return ret;
 unlock_noconn:
-	अगर (रुको)
-		ioरुको_sdma_inc(ioरुको_ioww_to_iow(रुको));
+	if (wait)
+		iowait_sdma_inc(iowait_ioww_to_iow(wait));
 	tx->next_descq_idx = 0;
-#अगर_घोषित CONFIG_HFI1_DEBUG_SDMA_ORDER
+#ifdef CONFIG_HFI1_DEBUG_SDMA_ORDER
 	tx->sn = sde->tail_sn++;
 	trace_hfi1_sdma_in_sn(sde, tx->sn);
-#पूर्ण_अगर
+#endif
 	spin_lock(&sde->flushlist_lock);
 	list_add_tail(&tx->list, &sde->flushlist);
 	spin_unlock(&sde->flushlist_lock);
-	ioरुको_inc_रुको_count(रुको, tx->num_desc);
-	queue_work_on(sde->cpu, प्रणाली_highpri_wq, &sde->flush_worker);
+	iowait_inc_wait_count(wait, tx->num_desc);
+	queue_work_on(sde->cpu, system_highpri_wq, &sde->flush_worker);
 	ret = -ECOMM;
-	जाओ unlock;
+	goto unlock;
 nodesc:
-	ret = sdma_check_progress(sde, रुको, tx, pkts_sent);
-	अगर (ret == -EAGAIN) अणु
+	ret = sdma_check_progress(sde, wait, tx, pkts_sent);
+	if (ret == -EAGAIN) {
 		ret = 0;
-		जाओ retry;
-	पूर्ण
+		goto retry;
+	}
 	sde->descq_full_count++;
-	जाओ unlock;
-पूर्ण
+	goto unlock;
+}
 
 /**
  * sdma_send_txlist() - submit a list of tx req to ring
  * @sde: sdma engine to use
- * @रुको: SE रुको काष्ठाure to use when full (may be शून्य)
+ * @wait: SE wait structure to use when full (may be NULL)
  * @tx_list: list of sdma_txreqs to submit
- * @count_out: poपूर्णांकer to a u16 which, after वापस will contain the total number of
- *             sdma_txreqs हटाओd from the tx_list. This will include sdma_txreqs
+ * @count_out: pointer to a u16 which, after return will contain the total number of
+ *             sdma_txreqs removed from the tx_list. This will include sdma_txreqs
  *             whose SDMA descriptors are submitted to the ring and the sdma_txreqs
- *             which are added to SDMA engine flush list अगर the SDMA engine state is
+ *             which are added to SDMA engine flush list if the SDMA engine state is
  *             not running.
  *
- * The call submits the list पूर्णांकo the ring.
+ * The call submits the list into the ring.
  *
- * If the ioरुको काष्ठाure is non-शून्य and not equal to the ioरुको list
- * the unprocessed part of the list  will be appended to the list in रुको.
+ * If the iowait structure is non-NULL and not equal to the iowait list
+ * the unprocessed part of the list  will be appended to the list in wait.
  *
- * In all हालs, the tx_list will be updated so the head of the tx_list is
+ * In all cases, the tx_list will be updated so the head of the tx_list is
  * the list of descriptors that have yet to be transmitted.
  *
- * The पूर्णांकent of this call is to provide a more efficient
- * way of submitting multiple packets to SDMA जबतक holding the tail
+ * The intent of this call is to provide a more efficient
+ * way of submitting multiple packets to SDMA while holding the tail
  * side locking.
  *
  * Return:
  * 0 - Success,
- * -EINVAL - sdma_txreq incomplete, -EBUSY - no space in ring (रुको == शून्य)
- * -EIOCBQUEUED - tx queued to ioरुको, -ECOMM bad sdma state
+ * -EINVAL - sdma_txreq incomplete, -EBUSY - no space in ring (wait == NULL)
+ * -EIOCBQUEUED - tx queued to iowait, -ECOMM bad sdma state
  */
-पूर्णांक sdma_send_txlist(काष्ठा sdma_engine *sde, काष्ठा ioरुको_work *रुको,
-		     काष्ठा list_head *tx_list, u16 *count_out)
-अणु
-	काष्ठा sdma_txreq *tx, *tx_next;
-	पूर्णांक ret = 0;
-	अचिन्हित दीर्घ flags;
+int sdma_send_txlist(struct sdma_engine *sde, struct iowait_work *wait,
+		     struct list_head *tx_list, u16 *count_out)
+{
+	struct sdma_txreq *tx, *tx_next;
+	int ret = 0;
+	unsigned long flags;
 	u16 tail = INVALID_TAIL;
 	u32 submit_count = 0, flush_count = 0, total_count;
 
 	spin_lock_irqsave(&sde->tail_lock, flags);
 retry:
-	list_क्रम_each_entry_safe(tx, tx_next, tx_list, list) अणु
-		tx->रुको = ioरुको_ioww_to_iow(रुको);
-		अगर (unlikely(!__sdma_running(sde)))
-			जाओ unlock_noconn;
-		अगर (unlikely(tx->num_desc > sde->desc_avail))
-			जाओ nodesc;
-		अगर (unlikely(tx->tlen)) अणु
+	list_for_each_entry_safe(tx, tx_next, tx_list, list) {
+		tx->wait = iowait_ioww_to_iow(wait);
+		if (unlikely(!__sdma_running(sde)))
+			goto unlock_noconn;
+		if (unlikely(tx->num_desc > sde->desc_avail))
+			goto nodesc;
+		if (unlikely(tx->tlen)) {
 			ret = -EINVAL;
-			जाओ update_tail;
-		पूर्ण
+			goto update_tail;
+		}
 		list_del_init(&tx->list);
 		tail = submit_tx(sde, tx);
 		submit_count++;
-		अगर (tail != INVALID_TAIL &&
-		    (submit_count & SDMA_TAIL_UPDATE_THRESH) == 0) अणु
+		if (tail != INVALID_TAIL &&
+		    (submit_count & SDMA_TAIL_UPDATE_THRESH) == 0) {
 			sdma_update_tail(sde, tail);
 			tail = INVALID_TAIL;
-		पूर्ण
-	पूर्ण
+		}
+	}
 update_tail:
 	total_count = submit_count + flush_count;
-	अगर (रुको) अणु
-		ioरुको_sdma_add(ioरुको_ioww_to_iow(रुको), total_count);
-		ioरुको_starve_clear(submit_count > 0,
-				    ioरुको_ioww_to_iow(रुको));
-	पूर्ण
-	अगर (tail != INVALID_TAIL)
+	if (wait) {
+		iowait_sdma_add(iowait_ioww_to_iow(wait), total_count);
+		iowait_starve_clear(submit_count > 0,
+				    iowait_ioww_to_iow(wait));
+	}
+	if (tail != INVALID_TAIL)
 		sdma_update_tail(sde, tail);
 	spin_unlock_irqrestore(&sde->tail_lock, flags);
 	*count_out = total_count;
-	वापस ret;
+	return ret;
 unlock_noconn:
 	spin_lock(&sde->flushlist_lock);
-	list_क्रम_each_entry_safe(tx, tx_next, tx_list, list) अणु
-		tx->रुको = ioरुको_ioww_to_iow(रुको);
+	list_for_each_entry_safe(tx, tx_next, tx_list, list) {
+		tx->wait = iowait_ioww_to_iow(wait);
 		list_del_init(&tx->list);
 		tx->next_descq_idx = 0;
-#अगर_घोषित CONFIG_HFI1_DEBUG_SDMA_ORDER
+#ifdef CONFIG_HFI1_DEBUG_SDMA_ORDER
 		tx->sn = sde->tail_sn++;
 		trace_hfi1_sdma_in_sn(sde, tx->sn);
-#पूर्ण_अगर
+#endif
 		list_add_tail(&tx->list, &sde->flushlist);
 		flush_count++;
-		ioरुको_inc_रुको_count(रुको, tx->num_desc);
-	पूर्ण
+		iowait_inc_wait_count(wait, tx->num_desc);
+	}
 	spin_unlock(&sde->flushlist_lock);
-	queue_work_on(sde->cpu, प्रणाली_highpri_wq, &sde->flush_worker);
+	queue_work_on(sde->cpu, system_highpri_wq, &sde->flush_worker);
 	ret = -ECOMM;
-	जाओ update_tail;
+	goto update_tail;
 nodesc:
-	ret = sdma_check_progress(sde, रुको, tx, submit_count > 0);
-	अगर (ret == -EAGAIN) अणु
+	ret = sdma_check_progress(sde, wait, tx, submit_count > 0);
+	if (ret == -EAGAIN) {
 		ret = 0;
-		जाओ retry;
-	पूर्ण
+		goto retry;
+	}
 	sde->descq_full_count++;
-	जाओ update_tail;
-पूर्ण
+	goto update_tail;
+}
 
-अटल व्योम sdma_process_event(काष्ठा sdma_engine *sde, क्रमागत sdma_events event)
-अणु
-	अचिन्हित दीर्घ flags;
+static void sdma_process_event(struct sdma_engine *sde, enum sdma_events event)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&sde->tail_lock, flags);
-	ग_लिखो_seqlock(&sde->head_lock);
+	write_seqlock(&sde->head_lock);
 
 	__sdma_process_event(sde, event);
 
-	अगर (sde->state.current_state == sdma_state_s99_running)
-		sdma_desc_avail(sde, sdma_descq_मुक्तcnt(sde));
+	if (sde->state.current_state == sdma_state_s99_running)
+		sdma_desc_avail(sde, sdma_descq_freecnt(sde));
 
-	ग_लिखो_sequnlock(&sde->head_lock);
+	write_sequnlock(&sde->head_lock);
 	spin_unlock_irqrestore(&sde->tail_lock, flags);
-पूर्ण
+}
 
-अटल व्योम __sdma_process_event(काष्ठा sdma_engine *sde,
-				 क्रमागत sdma_events event)
-अणु
-	काष्ठा sdma_state *ss = &sde->state;
-	पूर्णांक need_progress = 0;
+static void __sdma_process_event(struct sdma_engine *sde,
+				 enum sdma_events event)
+{
+	struct sdma_state *ss = &sde->state;
+	int need_progress = 0;
 
 	/* CONFIG SDMA temporary */
-#अगर_घोषित CONFIG_SDMA_VERBOSITY
+#ifdef CONFIG_SDMA_VERBOSITY
 	dd_dev_err(sde->dd, "CONFIG SDMA(%u) [%s] %s\n", sde->this_idx,
 		   sdma_state_names[ss->current_state],
 		   sdma_event_names[event]);
-#पूर्ण_अगर
+#endif
 
-	चयन (ss->current_state) अणु
-	हाल sdma_state_s00_hw_करोwn:
-		चयन (event) अणु
-		हाल sdma_event_e00_go_hw_करोwn:
-			अवरोध;
-		हाल sdma_event_e30_go_running:
+	switch (ss->current_state) {
+	case sdma_state_s00_hw_down:
+		switch (event) {
+		case sdma_event_e00_go_hw_down:
+			break;
+		case sdma_event_e30_go_running:
 			/*
-			 * If करोwn, but running requested (usually result
+			 * If down, but running requested (usually result
 			 * of link up, then we need to start up.
-			 * This can happen when hw करोwn is requested जबतक
+			 * This can happen when hw down is requested while
 			 * bringing the link up with traffic active on
 			 * 7220, e.g.
 			 */
 			ss->go_s99_running = 1;
 			fallthrough;	/* and start dma engine */
-		हाल sdma_event_e10_go_hw_start:
+		case sdma_event_e10_go_hw_start:
 			/* This reference means the state machine is started */
 			sdma_get(&sde->state);
 			sdma_set_state(sde,
-				       sdma_state_s10_hw_start_up_halt_रुको);
-			अवरोध;
-		हाल sdma_event_e15_hw_halt_करोne:
-			अवरोध;
-		हाल sdma_event_e25_hw_clean_up_करोne:
-			अवरोध;
-		हाल sdma_event_e40_sw_cleaned:
-			sdma_sw_tear_करोwn(sde);
-			अवरोध;
-		हाल sdma_event_e50_hw_cleaned:
-			अवरोध;
-		हाल sdma_event_e60_hw_halted:
-			अवरोध;
-		हाल sdma_event_e70_go_idle:
-			अवरोध;
-		हाल sdma_event_e80_hw_मुक्तze:
-			अवरोध;
-		हाल sdma_event_e81_hw_frozen:
-			अवरोध;
-		हाल sdma_event_e82_hw_unमुक्तze:
-			अवरोध;
-		हाल sdma_event_e85_link_करोwn:
-			अवरोध;
-		हाल sdma_event_e90_sw_halted:
-			अवरोध;
-		पूर्ण
-		अवरोध;
+				       sdma_state_s10_hw_start_up_halt_wait);
+			break;
+		case sdma_event_e15_hw_halt_done:
+			break;
+		case sdma_event_e25_hw_clean_up_done:
+			break;
+		case sdma_event_e40_sw_cleaned:
+			sdma_sw_tear_down(sde);
+			break;
+		case sdma_event_e50_hw_cleaned:
+			break;
+		case sdma_event_e60_hw_halted:
+			break;
+		case sdma_event_e70_go_idle:
+			break;
+		case sdma_event_e80_hw_freeze:
+			break;
+		case sdma_event_e81_hw_frozen:
+			break;
+		case sdma_event_e82_hw_unfreeze:
+			break;
+		case sdma_event_e85_link_down:
+			break;
+		case sdma_event_e90_sw_halted:
+			break;
+		}
+		break;
 
-	हाल sdma_state_s10_hw_start_up_halt_रुको:
-		चयन (event) अणु
-		हाल sdma_event_e00_go_hw_करोwn:
-			sdma_set_state(sde, sdma_state_s00_hw_करोwn);
-			sdma_sw_tear_करोwn(sde);
-			अवरोध;
-		हाल sdma_event_e10_go_hw_start:
-			अवरोध;
-		हाल sdma_event_e15_hw_halt_करोne:
+	case sdma_state_s10_hw_start_up_halt_wait:
+		switch (event) {
+		case sdma_event_e00_go_hw_down:
+			sdma_set_state(sde, sdma_state_s00_hw_down);
+			sdma_sw_tear_down(sde);
+			break;
+		case sdma_event_e10_go_hw_start:
+			break;
+		case sdma_event_e15_hw_halt_done:
 			sdma_set_state(sde,
-				       sdma_state_s15_hw_start_up_clean_रुको);
+				       sdma_state_s15_hw_start_up_clean_wait);
 			sdma_start_hw_clean_up(sde);
-			अवरोध;
-		हाल sdma_event_e25_hw_clean_up_करोne:
-			अवरोध;
-		हाल sdma_event_e30_go_running:
+			break;
+		case sdma_event_e25_hw_clean_up_done:
+			break;
+		case sdma_event_e30_go_running:
 			ss->go_s99_running = 1;
-			अवरोध;
-		हाल sdma_event_e40_sw_cleaned:
-			अवरोध;
-		हाल sdma_event_e50_hw_cleaned:
-			अवरोध;
-		हाल sdma_event_e60_hw_halted:
+			break;
+		case sdma_event_e40_sw_cleaned:
+			break;
+		case sdma_event_e50_hw_cleaned:
+			break;
+		case sdma_event_e60_hw_halted:
 			schedule_work(&sde->err_halt_worker);
-			अवरोध;
-		हाल sdma_event_e70_go_idle:
+			break;
+		case sdma_event_e70_go_idle:
 			ss->go_s99_running = 0;
-			अवरोध;
-		हाल sdma_event_e80_hw_मुक्तze:
-			अवरोध;
-		हाल sdma_event_e81_hw_frozen:
-			अवरोध;
-		हाल sdma_event_e82_hw_unमुक्तze:
-			अवरोध;
-		हाल sdma_event_e85_link_करोwn:
-			अवरोध;
-		हाल sdma_event_e90_sw_halted:
-			अवरोध;
-		पूर्ण
-		अवरोध;
+			break;
+		case sdma_event_e80_hw_freeze:
+			break;
+		case sdma_event_e81_hw_frozen:
+			break;
+		case sdma_event_e82_hw_unfreeze:
+			break;
+		case sdma_event_e85_link_down:
+			break;
+		case sdma_event_e90_sw_halted:
+			break;
+		}
+		break;
 
-	हाल sdma_state_s15_hw_start_up_clean_रुको:
-		चयन (event) अणु
-		हाल sdma_event_e00_go_hw_करोwn:
-			sdma_set_state(sde, sdma_state_s00_hw_करोwn);
-			sdma_sw_tear_करोwn(sde);
-			अवरोध;
-		हाल sdma_event_e10_go_hw_start:
-			अवरोध;
-		हाल sdma_event_e15_hw_halt_करोne:
-			अवरोध;
-		हाल sdma_event_e25_hw_clean_up_करोne:
+	case sdma_state_s15_hw_start_up_clean_wait:
+		switch (event) {
+		case sdma_event_e00_go_hw_down:
+			sdma_set_state(sde, sdma_state_s00_hw_down);
+			sdma_sw_tear_down(sde);
+			break;
+		case sdma_event_e10_go_hw_start:
+			break;
+		case sdma_event_e15_hw_halt_done:
+			break;
+		case sdma_event_e25_hw_clean_up_done:
 			sdma_hw_start_up(sde);
 			sdma_set_state(sde, ss->go_s99_running ?
 				       sdma_state_s99_running :
 				       sdma_state_s20_idle);
-			अवरोध;
-		हाल sdma_event_e30_go_running:
+			break;
+		case sdma_event_e30_go_running:
 			ss->go_s99_running = 1;
-			अवरोध;
-		हाल sdma_event_e40_sw_cleaned:
-			अवरोध;
-		हाल sdma_event_e50_hw_cleaned:
-			अवरोध;
-		हाल sdma_event_e60_hw_halted:
-			अवरोध;
-		हाल sdma_event_e70_go_idle:
+			break;
+		case sdma_event_e40_sw_cleaned:
+			break;
+		case sdma_event_e50_hw_cleaned:
+			break;
+		case sdma_event_e60_hw_halted:
+			break;
+		case sdma_event_e70_go_idle:
 			ss->go_s99_running = 0;
-			अवरोध;
-		हाल sdma_event_e80_hw_मुक्तze:
-			अवरोध;
-		हाल sdma_event_e81_hw_frozen:
-			अवरोध;
-		हाल sdma_event_e82_hw_unमुक्तze:
-			अवरोध;
-		हाल sdma_event_e85_link_करोwn:
-			अवरोध;
-		हाल sdma_event_e90_sw_halted:
-			अवरोध;
-		पूर्ण
-		अवरोध;
+			break;
+		case sdma_event_e80_hw_freeze:
+			break;
+		case sdma_event_e81_hw_frozen:
+			break;
+		case sdma_event_e82_hw_unfreeze:
+			break;
+		case sdma_event_e85_link_down:
+			break;
+		case sdma_event_e90_sw_halted:
+			break;
+		}
+		break;
 
-	हाल sdma_state_s20_idle:
-		चयन (event) अणु
-		हाल sdma_event_e00_go_hw_करोwn:
-			sdma_set_state(sde, sdma_state_s00_hw_करोwn);
-			sdma_sw_tear_करोwn(sde);
-			अवरोध;
-		हाल sdma_event_e10_go_hw_start:
-			अवरोध;
-		हाल sdma_event_e15_hw_halt_करोne:
-			अवरोध;
-		हाल sdma_event_e25_hw_clean_up_करोne:
-			अवरोध;
-		हाल sdma_event_e30_go_running:
+	case sdma_state_s20_idle:
+		switch (event) {
+		case sdma_event_e00_go_hw_down:
+			sdma_set_state(sde, sdma_state_s00_hw_down);
+			sdma_sw_tear_down(sde);
+			break;
+		case sdma_event_e10_go_hw_start:
+			break;
+		case sdma_event_e15_hw_halt_done:
+			break;
+		case sdma_event_e25_hw_clean_up_done:
+			break;
+		case sdma_event_e30_go_running:
 			sdma_set_state(sde, sdma_state_s99_running);
 			ss->go_s99_running = 1;
-			अवरोध;
-		हाल sdma_event_e40_sw_cleaned:
-			अवरोध;
-		हाल sdma_event_e50_hw_cleaned:
-			अवरोध;
-		हाल sdma_event_e60_hw_halted:
-			sdma_set_state(sde, sdma_state_s50_hw_halt_रुको);
+			break;
+		case sdma_event_e40_sw_cleaned:
+			break;
+		case sdma_event_e50_hw_cleaned:
+			break;
+		case sdma_event_e60_hw_halted:
+			sdma_set_state(sde, sdma_state_s50_hw_halt_wait);
 			schedule_work(&sde->err_halt_worker);
-			अवरोध;
-		हाल sdma_event_e70_go_idle:
-			अवरोध;
-		हाल sdma_event_e85_link_करोwn:
-		हाल sdma_event_e80_hw_मुक्तze:
-			sdma_set_state(sde, sdma_state_s80_hw_मुक्तze);
-			atomic_dec(&sde->dd->sdma_unमुक्तze_count);
-			wake_up_पूर्णांकerruptible(&sde->dd->sdma_unमुक्तze_wq);
-			अवरोध;
-		हाल sdma_event_e81_hw_frozen:
-			अवरोध;
-		हाल sdma_event_e82_hw_unमुक्तze:
-			अवरोध;
-		हाल sdma_event_e90_sw_halted:
-			अवरोध;
-		पूर्ण
-		अवरोध;
+			break;
+		case sdma_event_e70_go_idle:
+			break;
+		case sdma_event_e85_link_down:
+		case sdma_event_e80_hw_freeze:
+			sdma_set_state(sde, sdma_state_s80_hw_freeze);
+			atomic_dec(&sde->dd->sdma_unfreeze_count);
+			wake_up_interruptible(&sde->dd->sdma_unfreeze_wq);
+			break;
+		case sdma_event_e81_hw_frozen:
+			break;
+		case sdma_event_e82_hw_unfreeze:
+			break;
+		case sdma_event_e90_sw_halted:
+			break;
+		}
+		break;
 
-	हाल sdma_state_s30_sw_clean_up_रुको:
-		चयन (event) अणु
-		हाल sdma_event_e00_go_hw_करोwn:
-			sdma_set_state(sde, sdma_state_s00_hw_करोwn);
-			अवरोध;
-		हाल sdma_event_e10_go_hw_start:
-			अवरोध;
-		हाल sdma_event_e15_hw_halt_करोne:
-			अवरोध;
-		हाल sdma_event_e25_hw_clean_up_करोne:
-			अवरोध;
-		हाल sdma_event_e30_go_running:
+	case sdma_state_s30_sw_clean_up_wait:
+		switch (event) {
+		case sdma_event_e00_go_hw_down:
+			sdma_set_state(sde, sdma_state_s00_hw_down);
+			break;
+		case sdma_event_e10_go_hw_start:
+			break;
+		case sdma_event_e15_hw_halt_done:
+			break;
+		case sdma_event_e25_hw_clean_up_done:
+			break;
+		case sdma_event_e30_go_running:
 			ss->go_s99_running = 1;
-			अवरोध;
-		हाल sdma_event_e40_sw_cleaned:
-			sdma_set_state(sde, sdma_state_s40_hw_clean_up_रुको);
+			break;
+		case sdma_event_e40_sw_cleaned:
+			sdma_set_state(sde, sdma_state_s40_hw_clean_up_wait);
 			sdma_start_hw_clean_up(sde);
-			अवरोध;
-		हाल sdma_event_e50_hw_cleaned:
-			अवरोध;
-		हाल sdma_event_e60_hw_halted:
-			अवरोध;
-		हाल sdma_event_e70_go_idle:
+			break;
+		case sdma_event_e50_hw_cleaned:
+			break;
+		case sdma_event_e60_hw_halted:
+			break;
+		case sdma_event_e70_go_idle:
 			ss->go_s99_running = 0;
-			अवरोध;
-		हाल sdma_event_e80_hw_मुक्तze:
-			अवरोध;
-		हाल sdma_event_e81_hw_frozen:
-			अवरोध;
-		हाल sdma_event_e82_hw_unमुक्तze:
-			अवरोध;
-		हाल sdma_event_e85_link_करोwn:
+			break;
+		case sdma_event_e80_hw_freeze:
+			break;
+		case sdma_event_e81_hw_frozen:
+			break;
+		case sdma_event_e82_hw_unfreeze:
+			break;
+		case sdma_event_e85_link_down:
 			ss->go_s99_running = 0;
-			अवरोध;
-		हाल sdma_event_e90_sw_halted:
-			अवरोध;
-		पूर्ण
-		अवरोध;
+			break;
+		case sdma_event_e90_sw_halted:
+			break;
+		}
+		break;
 
-	हाल sdma_state_s40_hw_clean_up_रुको:
-		चयन (event) अणु
-		हाल sdma_event_e00_go_hw_करोwn:
-			sdma_set_state(sde, sdma_state_s00_hw_करोwn);
+	case sdma_state_s40_hw_clean_up_wait:
+		switch (event) {
+		case sdma_event_e00_go_hw_down:
+			sdma_set_state(sde, sdma_state_s00_hw_down);
 			tasklet_hi_schedule(&sde->sdma_sw_clean_up_task);
-			अवरोध;
-		हाल sdma_event_e10_go_hw_start:
-			अवरोध;
-		हाल sdma_event_e15_hw_halt_करोne:
-			अवरोध;
-		हाल sdma_event_e25_hw_clean_up_करोne:
+			break;
+		case sdma_event_e10_go_hw_start:
+			break;
+		case sdma_event_e15_hw_halt_done:
+			break;
+		case sdma_event_e25_hw_clean_up_done:
 			sdma_hw_start_up(sde);
 			sdma_set_state(sde, ss->go_s99_running ?
 				       sdma_state_s99_running :
 				       sdma_state_s20_idle);
-			अवरोध;
-		हाल sdma_event_e30_go_running:
+			break;
+		case sdma_event_e30_go_running:
 			ss->go_s99_running = 1;
-			अवरोध;
-		हाल sdma_event_e40_sw_cleaned:
-			अवरोध;
-		हाल sdma_event_e50_hw_cleaned:
-			अवरोध;
-		हाल sdma_event_e60_hw_halted:
-			अवरोध;
-		हाल sdma_event_e70_go_idle:
+			break;
+		case sdma_event_e40_sw_cleaned:
+			break;
+		case sdma_event_e50_hw_cleaned:
+			break;
+		case sdma_event_e60_hw_halted:
+			break;
+		case sdma_event_e70_go_idle:
 			ss->go_s99_running = 0;
-			अवरोध;
-		हाल sdma_event_e80_hw_मुक्तze:
-			अवरोध;
-		हाल sdma_event_e81_hw_frozen:
-			अवरोध;
-		हाल sdma_event_e82_hw_unमुक्तze:
-			अवरोध;
-		हाल sdma_event_e85_link_करोwn:
+			break;
+		case sdma_event_e80_hw_freeze:
+			break;
+		case sdma_event_e81_hw_frozen:
+			break;
+		case sdma_event_e82_hw_unfreeze:
+			break;
+		case sdma_event_e85_link_down:
 			ss->go_s99_running = 0;
-			अवरोध;
-		हाल sdma_event_e90_sw_halted:
-			अवरोध;
-		पूर्ण
-		अवरोध;
+			break;
+		case sdma_event_e90_sw_halted:
+			break;
+		}
+		break;
 
-	हाल sdma_state_s50_hw_halt_रुको:
-		चयन (event) अणु
-		हाल sdma_event_e00_go_hw_करोwn:
-			sdma_set_state(sde, sdma_state_s00_hw_करोwn);
+	case sdma_state_s50_hw_halt_wait:
+		switch (event) {
+		case sdma_event_e00_go_hw_down:
+			sdma_set_state(sde, sdma_state_s00_hw_down);
 			tasklet_hi_schedule(&sde->sdma_sw_clean_up_task);
-			अवरोध;
-		हाल sdma_event_e10_go_hw_start:
-			अवरोध;
-		हाल sdma_event_e15_hw_halt_करोne:
-			sdma_set_state(sde, sdma_state_s30_sw_clean_up_रुको);
+			break;
+		case sdma_event_e10_go_hw_start:
+			break;
+		case sdma_event_e15_hw_halt_done:
+			sdma_set_state(sde, sdma_state_s30_sw_clean_up_wait);
 			tasklet_hi_schedule(&sde->sdma_sw_clean_up_task);
-			अवरोध;
-		हाल sdma_event_e25_hw_clean_up_करोne:
-			अवरोध;
-		हाल sdma_event_e30_go_running:
+			break;
+		case sdma_event_e25_hw_clean_up_done:
+			break;
+		case sdma_event_e30_go_running:
 			ss->go_s99_running = 1;
-			अवरोध;
-		हाल sdma_event_e40_sw_cleaned:
-			अवरोध;
-		हाल sdma_event_e50_hw_cleaned:
-			अवरोध;
-		हाल sdma_event_e60_hw_halted:
+			break;
+		case sdma_event_e40_sw_cleaned:
+			break;
+		case sdma_event_e50_hw_cleaned:
+			break;
+		case sdma_event_e60_hw_halted:
 			schedule_work(&sde->err_halt_worker);
-			अवरोध;
-		हाल sdma_event_e70_go_idle:
+			break;
+		case sdma_event_e70_go_idle:
 			ss->go_s99_running = 0;
-			अवरोध;
-		हाल sdma_event_e80_hw_मुक्तze:
-			अवरोध;
-		हाल sdma_event_e81_hw_frozen:
-			अवरोध;
-		हाल sdma_event_e82_hw_unमुक्तze:
-			अवरोध;
-		हाल sdma_event_e85_link_करोwn:
+			break;
+		case sdma_event_e80_hw_freeze:
+			break;
+		case sdma_event_e81_hw_frozen:
+			break;
+		case sdma_event_e82_hw_unfreeze:
+			break;
+		case sdma_event_e85_link_down:
 			ss->go_s99_running = 0;
-			अवरोध;
-		हाल sdma_event_e90_sw_halted:
-			अवरोध;
-		पूर्ण
-		अवरोध;
+			break;
+		case sdma_event_e90_sw_halted:
+			break;
+		}
+		break;
 
-	हाल sdma_state_s60_idle_halt_रुको:
-		चयन (event) अणु
-		हाल sdma_event_e00_go_hw_करोwn:
-			sdma_set_state(sde, sdma_state_s00_hw_करोwn);
+	case sdma_state_s60_idle_halt_wait:
+		switch (event) {
+		case sdma_event_e00_go_hw_down:
+			sdma_set_state(sde, sdma_state_s00_hw_down);
 			tasklet_hi_schedule(&sde->sdma_sw_clean_up_task);
-			अवरोध;
-		हाल sdma_event_e10_go_hw_start:
-			अवरोध;
-		हाल sdma_event_e15_hw_halt_करोne:
-			sdma_set_state(sde, sdma_state_s30_sw_clean_up_रुको);
+			break;
+		case sdma_event_e10_go_hw_start:
+			break;
+		case sdma_event_e15_hw_halt_done:
+			sdma_set_state(sde, sdma_state_s30_sw_clean_up_wait);
 			tasklet_hi_schedule(&sde->sdma_sw_clean_up_task);
-			अवरोध;
-		हाल sdma_event_e25_hw_clean_up_करोne:
-			अवरोध;
-		हाल sdma_event_e30_go_running:
+			break;
+		case sdma_event_e25_hw_clean_up_done:
+			break;
+		case sdma_event_e30_go_running:
 			ss->go_s99_running = 1;
-			अवरोध;
-		हाल sdma_event_e40_sw_cleaned:
-			अवरोध;
-		हाल sdma_event_e50_hw_cleaned:
-			अवरोध;
-		हाल sdma_event_e60_hw_halted:
+			break;
+		case sdma_event_e40_sw_cleaned:
+			break;
+		case sdma_event_e50_hw_cleaned:
+			break;
+		case sdma_event_e60_hw_halted:
 			schedule_work(&sde->err_halt_worker);
-			अवरोध;
-		हाल sdma_event_e70_go_idle:
+			break;
+		case sdma_event_e70_go_idle:
 			ss->go_s99_running = 0;
-			अवरोध;
-		हाल sdma_event_e80_hw_मुक्तze:
-			अवरोध;
-		हाल sdma_event_e81_hw_frozen:
-			अवरोध;
-		हाल sdma_event_e82_hw_unमुक्तze:
-			अवरोध;
-		हाल sdma_event_e85_link_करोwn:
-			अवरोध;
-		हाल sdma_event_e90_sw_halted:
-			अवरोध;
-		पूर्ण
-		अवरोध;
+			break;
+		case sdma_event_e80_hw_freeze:
+			break;
+		case sdma_event_e81_hw_frozen:
+			break;
+		case sdma_event_e82_hw_unfreeze:
+			break;
+		case sdma_event_e85_link_down:
+			break;
+		case sdma_event_e90_sw_halted:
+			break;
+		}
+		break;
 
-	हाल sdma_state_s80_hw_मुक्तze:
-		चयन (event) अणु
-		हाल sdma_event_e00_go_hw_करोwn:
-			sdma_set_state(sde, sdma_state_s00_hw_करोwn);
+	case sdma_state_s80_hw_freeze:
+		switch (event) {
+		case sdma_event_e00_go_hw_down:
+			sdma_set_state(sde, sdma_state_s00_hw_down);
 			tasklet_hi_schedule(&sde->sdma_sw_clean_up_task);
-			अवरोध;
-		हाल sdma_event_e10_go_hw_start:
-			अवरोध;
-		हाल sdma_event_e15_hw_halt_करोne:
-			अवरोध;
-		हाल sdma_event_e25_hw_clean_up_करोne:
-			अवरोध;
-		हाल sdma_event_e30_go_running:
+			break;
+		case sdma_event_e10_go_hw_start:
+			break;
+		case sdma_event_e15_hw_halt_done:
+			break;
+		case sdma_event_e25_hw_clean_up_done:
+			break;
+		case sdma_event_e30_go_running:
 			ss->go_s99_running = 1;
-			अवरोध;
-		हाल sdma_event_e40_sw_cleaned:
-			अवरोध;
-		हाल sdma_event_e50_hw_cleaned:
-			अवरोध;
-		हाल sdma_event_e60_hw_halted:
-			अवरोध;
-		हाल sdma_event_e70_go_idle:
+			break;
+		case sdma_event_e40_sw_cleaned:
+			break;
+		case sdma_event_e50_hw_cleaned:
+			break;
+		case sdma_event_e60_hw_halted:
+			break;
+		case sdma_event_e70_go_idle:
 			ss->go_s99_running = 0;
-			अवरोध;
-		हाल sdma_event_e80_hw_मुक्तze:
-			अवरोध;
-		हाल sdma_event_e81_hw_frozen:
-			sdma_set_state(sde, sdma_state_s82_मुक्तze_sw_clean);
+			break;
+		case sdma_event_e80_hw_freeze:
+			break;
+		case sdma_event_e81_hw_frozen:
+			sdma_set_state(sde, sdma_state_s82_freeze_sw_clean);
 			tasklet_hi_schedule(&sde->sdma_sw_clean_up_task);
-			अवरोध;
-		हाल sdma_event_e82_hw_unमुक्तze:
-			अवरोध;
-		हाल sdma_event_e85_link_करोwn:
-			अवरोध;
-		हाल sdma_event_e90_sw_halted:
-			अवरोध;
-		पूर्ण
-		अवरोध;
+			break;
+		case sdma_event_e82_hw_unfreeze:
+			break;
+		case sdma_event_e85_link_down:
+			break;
+		case sdma_event_e90_sw_halted:
+			break;
+		}
+		break;
 
-	हाल sdma_state_s82_मुक्तze_sw_clean:
-		चयन (event) अणु
-		हाल sdma_event_e00_go_hw_करोwn:
-			sdma_set_state(sde, sdma_state_s00_hw_करोwn);
+	case sdma_state_s82_freeze_sw_clean:
+		switch (event) {
+		case sdma_event_e00_go_hw_down:
+			sdma_set_state(sde, sdma_state_s00_hw_down);
 			tasklet_hi_schedule(&sde->sdma_sw_clean_up_task);
-			अवरोध;
-		हाल sdma_event_e10_go_hw_start:
-			अवरोध;
-		हाल sdma_event_e15_hw_halt_करोne:
-			अवरोध;
-		हाल sdma_event_e25_hw_clean_up_करोne:
-			अवरोध;
-		हाल sdma_event_e30_go_running:
+			break;
+		case sdma_event_e10_go_hw_start:
+			break;
+		case sdma_event_e15_hw_halt_done:
+			break;
+		case sdma_event_e25_hw_clean_up_done:
+			break;
+		case sdma_event_e30_go_running:
 			ss->go_s99_running = 1;
-			अवरोध;
-		हाल sdma_event_e40_sw_cleaned:
-			/* notअगरy caller this engine is करोne cleaning */
-			atomic_dec(&sde->dd->sdma_unमुक्तze_count);
-			wake_up_पूर्णांकerruptible(&sde->dd->sdma_unमुक्तze_wq);
-			अवरोध;
-		हाल sdma_event_e50_hw_cleaned:
-			अवरोध;
-		हाल sdma_event_e60_hw_halted:
-			अवरोध;
-		हाल sdma_event_e70_go_idle:
+			break;
+		case sdma_event_e40_sw_cleaned:
+			/* notify caller this engine is done cleaning */
+			atomic_dec(&sde->dd->sdma_unfreeze_count);
+			wake_up_interruptible(&sde->dd->sdma_unfreeze_wq);
+			break;
+		case sdma_event_e50_hw_cleaned:
+			break;
+		case sdma_event_e60_hw_halted:
+			break;
+		case sdma_event_e70_go_idle:
 			ss->go_s99_running = 0;
-			अवरोध;
-		हाल sdma_event_e80_hw_मुक्तze:
-			अवरोध;
-		हाल sdma_event_e81_hw_frozen:
-			अवरोध;
-		हाल sdma_event_e82_hw_unमुक्तze:
+			break;
+		case sdma_event_e80_hw_freeze:
+			break;
+		case sdma_event_e81_hw_frozen:
+			break;
+		case sdma_event_e82_hw_unfreeze:
 			sdma_hw_start_up(sde);
 			sdma_set_state(sde, ss->go_s99_running ?
 				       sdma_state_s99_running :
 				       sdma_state_s20_idle);
-			अवरोध;
-		हाल sdma_event_e85_link_करोwn:
-			अवरोध;
-		हाल sdma_event_e90_sw_halted:
-			अवरोध;
-		पूर्ण
-		अवरोध;
+			break;
+		case sdma_event_e85_link_down:
+			break;
+		case sdma_event_e90_sw_halted:
+			break;
+		}
+		break;
 
-	हाल sdma_state_s99_running:
-		चयन (event) अणु
-		हाल sdma_event_e00_go_hw_करोwn:
-			sdma_set_state(sde, sdma_state_s00_hw_करोwn);
+	case sdma_state_s99_running:
+		switch (event) {
+		case sdma_event_e00_go_hw_down:
+			sdma_set_state(sde, sdma_state_s00_hw_down);
 			tasklet_hi_schedule(&sde->sdma_sw_clean_up_task);
-			अवरोध;
-		हाल sdma_event_e10_go_hw_start:
-			अवरोध;
-		हाल sdma_event_e15_hw_halt_करोne:
-			अवरोध;
-		हाल sdma_event_e25_hw_clean_up_करोne:
-			अवरोध;
-		हाल sdma_event_e30_go_running:
-			अवरोध;
-		हाल sdma_event_e40_sw_cleaned:
-			अवरोध;
-		हाल sdma_event_e50_hw_cleaned:
-			अवरोध;
-		हाल sdma_event_e60_hw_halted:
+			break;
+		case sdma_event_e10_go_hw_start:
+			break;
+		case sdma_event_e15_hw_halt_done:
+			break;
+		case sdma_event_e25_hw_clean_up_done:
+			break;
+		case sdma_event_e30_go_running:
+			break;
+		case sdma_event_e40_sw_cleaned:
+			break;
+		case sdma_event_e50_hw_cleaned:
+			break;
+		case sdma_event_e60_hw_halted:
 			need_progress = 1;
 			sdma_err_progress_check_schedule(sde);
 			fallthrough;
-		हाल sdma_event_e90_sw_halted:
+		case sdma_event_e90_sw_halted:
 			/*
-			* SW initiated halt करोes not perक्रमm engines
+			* SW initiated halt does not perform engines
 			* progress check
 			*/
-			sdma_set_state(sde, sdma_state_s50_hw_halt_रुको);
+			sdma_set_state(sde, sdma_state_s50_hw_halt_wait);
 			schedule_work(&sde->err_halt_worker);
-			अवरोध;
-		हाल sdma_event_e70_go_idle:
-			sdma_set_state(sde, sdma_state_s60_idle_halt_रुको);
-			अवरोध;
-		हाल sdma_event_e85_link_करोwn:
+			break;
+		case sdma_event_e70_go_idle:
+			sdma_set_state(sde, sdma_state_s60_idle_halt_wait);
+			break;
+		case sdma_event_e85_link_down:
 			ss->go_s99_running = 0;
 			fallthrough;
-		हाल sdma_event_e80_hw_मुक्तze:
-			sdma_set_state(sde, sdma_state_s80_hw_मुक्तze);
-			atomic_dec(&sde->dd->sdma_unमुक्तze_count);
-			wake_up_पूर्णांकerruptible(&sde->dd->sdma_unमुक्तze_wq);
-			अवरोध;
-		हाल sdma_event_e81_hw_frozen:
-			अवरोध;
-		हाल sdma_event_e82_hw_unमुक्तze:
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+		case sdma_event_e80_hw_freeze:
+			sdma_set_state(sde, sdma_state_s80_hw_freeze);
+			atomic_dec(&sde->dd->sdma_unfreeze_count);
+			wake_up_interruptible(&sde->dd->sdma_unfreeze_wq);
+			break;
+		case sdma_event_e81_hw_frozen:
+			break;
+		case sdma_event_e82_hw_unfreeze:
+			break;
+		}
+		break;
+	}
 
 	ss->last_event = event;
-	अगर (need_progress)
+	if (need_progress)
 		sdma_make_progress(sde, 0);
-पूर्ण
+}
 
 /*
  * _extend_sdma_tx_descs() - helper to extend txreq
@@ -3047,52 +3046,52 @@ nodesc:
  * of descriptors in the sdma_txreq is exhausted.
  *
  * The code will bump the allocation up to the max
- * of MAX_DESC (64) descriptors. There करोesn't seem
- * much poपूर्णांक in an पूर्णांकerim step. The last descriptor
- * is reserved क्रम coalesce buffer in order to support
- * हालs where input packet has >MAX_DESC iovecs.
+ * of MAX_DESC (64) descriptors. There doesn't seem
+ * much point in an interim step. The last descriptor
+ * is reserved for coalesce buffer in order to support
+ * cases where input packet has >MAX_DESC iovecs.
  *
  */
-अटल पूर्णांक _extend_sdma_tx_descs(काष्ठा hfi1_devdata *dd, काष्ठा sdma_txreq *tx)
-अणु
-	पूर्णांक i;
+static int _extend_sdma_tx_descs(struct hfi1_devdata *dd, struct sdma_txreq *tx)
+{
+	int i;
 
 	/* Handle last descriptor */
-	अगर (unlikely((tx->num_desc == (MAX_DESC - 1)))) अणु
-		/* अगर tlen is 0, it is क्रम padding, release last descriptor */
-		अगर (!tx->tlen) अणु
+	if (unlikely((tx->num_desc == (MAX_DESC - 1)))) {
+		/* if tlen is 0, it is for padding, release last descriptor */
+		if (!tx->tlen) {
 			tx->desc_limit = MAX_DESC;
-		पूर्ण अन्यथा अगर (!tx->coalesce_buf) अणु
-			/* allocate coalesce buffer with space क्रम padding */
-			tx->coalesce_buf = kदो_स्मृति(tx->tlen + माप(u32),
+		} else if (!tx->coalesce_buf) {
+			/* allocate coalesce buffer with space for padding */
+			tx->coalesce_buf = kmalloc(tx->tlen + sizeof(u32),
 						   GFP_ATOMIC);
-			अगर (!tx->coalesce_buf)
-				जाओ enomem;
+			if (!tx->coalesce_buf)
+				goto enomem;
 			tx->coalesce_idx = 0;
-		पूर्ण
-		वापस 0;
-	पूर्ण
+		}
+		return 0;
+	}
 
-	अगर (unlikely(tx->num_desc == MAX_DESC))
-		जाओ enomem;
+	if (unlikely(tx->num_desc == MAX_DESC))
+		goto enomem;
 
-	tx->descp = kदो_स्मृति_array(
+	tx->descp = kmalloc_array(
 			MAX_DESC,
-			माप(काष्ठा sdma_desc),
+			sizeof(struct sdma_desc),
 			GFP_ATOMIC);
-	अगर (!tx->descp)
-		जाओ enomem;
+	if (!tx->descp)
+		goto enomem;
 
-	/* reserve last descriptor क्रम coalescing */
+	/* reserve last descriptor for coalescing */
 	tx->desc_limit = MAX_DESC - 1;
-	/* copy ones alपढ़ोy built */
-	क्रम (i = 0; i < tx->num_desc; i++)
+	/* copy ones already built */
+	for (i = 0; i < tx->num_desc; i++)
 		tx->descp[i] = tx->descs[i];
-	वापस 0;
+	return 0;
 enomem:
 	__sdma_txclean(dd, tx);
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
 /*
  * ext_coal_sdma_tx_descs() - extend or coalesce sdma tx descriptors
@@ -3102,60 +3101,60 @@ enomem:
  *
  * This function calls _extend_sdma_tx_descs to extend or allocate
  * coalesce buffer. If there is a allocated coalesce buffer, it will
- * copy the input packet data पूर्णांकo the coalesce buffer. It also adds
+ * copy the input packet data into the coalesce buffer. It also adds
  * coalesce buffer descriptor once when whole packet is received.
  *
  * Return:
  * <0 - error
- * 0 - coalescing, करोn't populate descriptor
- * 1 - जारी with populating descriptor
+ * 0 - coalescing, don't populate descriptor
+ * 1 - continue with populating descriptor
  */
-पूर्णांक ext_coal_sdma_tx_descs(काष्ठा hfi1_devdata *dd, काष्ठा sdma_txreq *tx,
-			   पूर्णांक type, व्योम *kvaddr, काष्ठा page *page,
-			   अचिन्हित दीर्घ offset, u16 len)
-अणु
-	पूर्णांक pad_len, rval;
+int ext_coal_sdma_tx_descs(struct hfi1_devdata *dd, struct sdma_txreq *tx,
+			   int type, void *kvaddr, struct page *page,
+			   unsigned long offset, u16 len)
+{
+	int pad_len, rval;
 	dma_addr_t addr;
 
 	rval = _extend_sdma_tx_descs(dd, tx);
-	अगर (rval) अणु
+	if (rval) {
 		__sdma_txclean(dd, tx);
-		वापस rval;
-	पूर्ण
+		return rval;
+	}
 
-	/* If coalesce buffer is allocated, copy data पूर्णांकo it */
-	अगर (tx->coalesce_buf) अणु
-		अगर (type == SDMA_MAP_NONE) अणु
+	/* If coalesce buffer is allocated, copy data into it */
+	if (tx->coalesce_buf) {
+		if (type == SDMA_MAP_NONE) {
 			__sdma_txclean(dd, tx);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (type == SDMA_MAP_PAGE) अणु
+		if (type == SDMA_MAP_PAGE) {
 			kvaddr = kmap(page);
 			kvaddr += offset;
-		पूर्ण अन्यथा अगर (WARN_ON(!kvaddr)) अणु
+		} else if (WARN_ON(!kvaddr)) {
 			__sdma_txclean(dd, tx);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		स_नकल(tx->coalesce_buf + tx->coalesce_idx, kvaddr, len);
+		memcpy(tx->coalesce_buf + tx->coalesce_idx, kvaddr, len);
 		tx->coalesce_idx += len;
-		अगर (type == SDMA_MAP_PAGE)
+		if (type == SDMA_MAP_PAGE)
 			kunmap(page);
 
-		/* If there is more data, वापस */
-		अगर (tx->tlen - tx->coalesce_idx)
-			वापस 0;
+		/* If there is more data, return */
+		if (tx->tlen - tx->coalesce_idx)
+			return 0;
 
 		/* Whole packet is received; add any padding */
-		pad_len = tx->packet_len & (माप(u32) - 1);
-		अगर (pad_len) अणु
-			pad_len = माप(u32) - pad_len;
-			स_रखो(tx->coalesce_buf + tx->coalesce_idx, 0, pad_len);
-			/* padding is taken care of क्रम coalescing हाल */
+		pad_len = tx->packet_len & (sizeof(u32) - 1);
+		if (pad_len) {
+			pad_len = sizeof(u32) - pad_len;
+			memset(tx->coalesce_buf + tx->coalesce_idx, 0, pad_len);
+			/* padding is taken care of for coalescing case */
 			tx->packet_len += pad_len;
 			tx->tlen += pad_len;
-		पूर्ण
+		}
 
 		/* dma map the coalesce buffer */
 		addr = dma_map_single(&dd->pcidev->dev,
@@ -3163,25 +3162,25 @@ enomem:
 				      tx->tlen,
 				      DMA_TO_DEVICE);
 
-		अगर (unlikely(dma_mapping_error(&dd->pcidev->dev, addr))) अणु
+		if (unlikely(dma_mapping_error(&dd->pcidev->dev, addr))) {
 			__sdma_txclean(dd, tx);
-			वापस -ENOSPC;
-		पूर्ण
+			return -ENOSPC;
+		}
 
-		/* Add descriptor क्रम coalesce buffer */
+		/* Add descriptor for coalesce buffer */
 		tx->desc_limit = MAX_DESC;
-		वापस _sdma_txadd_daddr(dd, SDMA_MAP_SINGLE, tx,
+		return _sdma_txadd_daddr(dd, SDMA_MAP_SINGLE, tx,
 					 addr, tx->tlen);
-	पूर्ण
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /* Update sdes when the lmc changes */
-व्योम sdma_update_lmc(काष्ठा hfi1_devdata *dd, u64 mask, u32 lid)
-अणु
-	काष्ठा sdma_engine *sde;
-	पूर्णांक i;
+void sdma_update_lmc(struct hfi1_devdata *dd, u64 mask, u32 lid)
+{
+	struct sdma_engine *sde;
+	int i;
 	u64 sreg;
 
 	sreg = ((mask & SD(CHECK_SLID_MASK_MASK)) <<
@@ -3189,36 +3188,36 @@ enomem:
 		(((lid & mask) & SD(CHECK_SLID_VALUE_MASK)) <<
 		SD(CHECK_SLID_VALUE_SHIFT));
 
-	क्रम (i = 0; i < dd->num_sdma; i++) अणु
+	for (i = 0; i < dd->num_sdma; i++) {
 		hfi1_cdbg(LINKVERB, "SendDmaEngine[%d].SLID_CHECK = 0x%x",
 			  i, (u32)sreg);
 		sde = &dd->per_sdma[i];
-		ग_लिखो_sde_csr(sde, SD(CHECK_SLID), sreg);
-	पूर्ण
-पूर्ण
+		write_sde_csr(sde, SD(CHECK_SLID), sreg);
+	}
+}
 
 /* tx not dword sized - pad */
-पूर्णांक _pad_sdma_tx_descs(काष्ठा hfi1_devdata *dd, काष्ठा sdma_txreq *tx)
-अणु
-	पूर्णांक rval = 0;
+int _pad_sdma_tx_descs(struct hfi1_devdata *dd, struct sdma_txreq *tx)
+{
+	int rval = 0;
 
 	tx->num_desc++;
-	अगर ((unlikely(tx->num_desc == tx->desc_limit))) अणु
+	if ((unlikely(tx->num_desc == tx->desc_limit))) {
 		rval = _extend_sdma_tx_descs(dd, tx);
-		अगर (rval) अणु
+		if (rval) {
 			__sdma_txclean(dd, tx);
-			वापस rval;
-		पूर्ण
-	पूर्ण
+			return rval;
+		}
+	}
 	/* finish the one just added */
 	make_tx_sdma_desc(
 		tx,
 		SDMA_MAP_NONE,
 		dd->sdma_pad_phys,
-		माप(u32) - (tx->packet_len & (माप(u32) - 1)));
-	_sdma_बंद_tx(dd, tx);
-	वापस rval;
-पूर्ण
+		sizeof(u32) - (tx->packet_len & (sizeof(u32) - 1)));
+	_sdma_close_tx(dd, tx);
+	return rval;
+}
 
 /*
  * Add ahg to the sdma_txreq
@@ -3227,38 +3226,38 @@ enomem:
  * descriptors at the beginning of
  * sdma_txreq.
  */
-व्योम _sdma_txreq_ahgadd(
-	काष्ठा sdma_txreq *tx,
+void _sdma_txreq_ahgadd(
+	struct sdma_txreq *tx,
 	u8 num_ahg,
 	u8 ahg_entry,
 	u32 *ahg,
 	u8 ahg_hlen)
-अणु
-	u32 i, shअगरt = 0, desc = 0;
+{
+	u32 i, shift = 0, desc = 0;
 	u8 mode;
 
 	WARN_ON_ONCE(num_ahg > 9 || (ahg_hlen & 3) || ahg_hlen == 4);
 	/* compute mode */
-	अगर (num_ahg == 1)
+	if (num_ahg == 1)
 		mode = SDMA_AHG_APPLY_UPDATE1;
-	अन्यथा अगर (num_ahg <= 5)
+	else if (num_ahg <= 5)
 		mode = SDMA_AHG_APPLY_UPDATE2;
-	अन्यथा
+	else
 		mode = SDMA_AHG_APPLY_UPDATE3;
 	tx->num_desc++;
 	/* initialize to consumed descriptors to zero */
-	चयन (mode) अणु
-	हाल SDMA_AHG_APPLY_UPDATE3:
+	switch (mode) {
+	case SDMA_AHG_APPLY_UPDATE3:
 		tx->num_desc++;
 		tx->descs[2].qw[0] = 0;
 		tx->descs[2].qw[1] = 0;
 		fallthrough;
-	हाल SDMA_AHG_APPLY_UPDATE2:
+	case SDMA_AHG_APPLY_UPDATE2:
 		tx->num_desc++;
 		tx->descs[1].qw[0] = 0;
 		tx->descs[1].qw[1] = 0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	ahg_hlen >>= 2;
 	tx->descs[0].qw[1] |=
 		(((u64)ahg_entry & SDMA_DESC1_HEADER_INDEX_MASK)
@@ -3269,155 +3268,155 @@ enomem:
 			<< SDMA_DESC1_HEADER_MODE_SHIFT) |
 		(((u64)ahg[0] & SDMA_DESC1_HEADER_UPDATE1_MASK)
 			<< SDMA_DESC1_HEADER_UPDATE1_SHIFT);
-	क्रम (i = 0; i < (num_ahg - 1); i++) अणु
-		अगर (!shअगरt && !(i & 2))
+	for (i = 0; i < (num_ahg - 1); i++) {
+		if (!shift && !(i & 2))
 			desc++;
 		tx->descs[desc].qw[!!(i & 2)] |=
 			(((u64)ahg[i + 1])
-				<< shअगरt);
-		shअगरt = (shअगरt + 32) & 63;
-	पूर्ण
-पूर्ण
+				<< shift);
+		shift = (shift + 32) & 63;
+	}
+}
 
 /**
  * sdma_ahg_alloc - allocate an AHG entry
  * @sde: engine to allocate from
  *
  * Return:
- * 0-31 when successful, -EOPNOTSUPP अगर AHG is not enabled,
- * -ENOSPC अगर an entry is not available
+ * 0-31 when successful, -EOPNOTSUPP if AHG is not enabled,
+ * -ENOSPC if an entry is not available
  */
-पूर्णांक sdma_ahg_alloc(काष्ठा sdma_engine *sde)
-अणु
-	पूर्णांक nr;
-	पूर्णांक oldbit;
+int sdma_ahg_alloc(struct sdma_engine *sde)
+{
+	int nr;
+	int oldbit;
 
-	अगर (!sde) अणु
+	if (!sde) {
 		trace_hfi1_ahg_allocate(sde, -EINVAL);
-		वापस -EINVAL;
-	पूर्ण
-	जबतक (1) अणु
+		return -EINVAL;
+	}
+	while (1) {
 		nr = ffz(READ_ONCE(sde->ahg_bits));
-		अगर (nr > 31) अणु
+		if (nr > 31) {
 			trace_hfi1_ahg_allocate(sde, -ENOSPC);
-			वापस -ENOSPC;
-		पूर्ण
+			return -ENOSPC;
+		}
 		oldbit = test_and_set_bit(nr, &sde->ahg_bits);
-		अगर (!oldbit)
-			अवरोध;
+		if (!oldbit)
+			break;
 		cpu_relax();
-	पूर्ण
+	}
 	trace_hfi1_ahg_allocate(sde, nr);
-	वापस nr;
-पूर्ण
+	return nr;
+}
 
 /**
- * sdma_ahg_मुक्त - मुक्त an AHG entry
- * @sde: engine to वापस AHG entry
- * @ahg_index: index to मुक्त
+ * sdma_ahg_free - free an AHG entry
+ * @sde: engine to return AHG entry
+ * @ahg_index: index to free
  *
- * This routine मुक्तs the indicate AHG entry.
+ * This routine frees the indicate AHG entry.
  */
-व्योम sdma_ahg_मुक्त(काष्ठा sdma_engine *sde, पूर्णांक ahg_index)
-अणु
-	अगर (!sde)
-		वापस;
+void sdma_ahg_free(struct sdma_engine *sde, int ahg_index)
+{
+	if (!sde)
+		return;
 	trace_hfi1_ahg_deallocate(sde, ahg_index);
-	अगर (ahg_index < 0 || ahg_index > 31)
-		वापस;
+	if (ahg_index < 0 || ahg_index > 31)
+		return;
 	clear_bit(ahg_index, &sde->ahg_bits);
-पूर्ण
+}
 
 /*
- * SPC मुक्तze handling क्रम SDMA engines.  Called when the driver knows
- * the SPC is going पूर्णांकo a मुक्तze but beक्रमe the मुक्तze is fully
- * settled.  Generally an error पूर्णांकerrupt.
+ * SPC freeze handling for SDMA engines.  Called when the driver knows
+ * the SPC is going into a freeze but before the freeze is fully
+ * settled.  Generally an error interrupt.
  *
  * This event will pull the engine out of running so no more entries can be
  * added to the engine's queue.
  */
-व्योम sdma_मुक्तze_notअगरy(काष्ठा hfi1_devdata *dd, पूर्णांक link_करोwn)
-अणु
-	पूर्णांक i;
-	क्रमागत sdma_events event = link_करोwn ? sdma_event_e85_link_करोwn :
-					     sdma_event_e80_hw_मुक्तze;
+void sdma_freeze_notify(struct hfi1_devdata *dd, int link_down)
+{
+	int i;
+	enum sdma_events event = link_down ? sdma_event_e85_link_down :
+					     sdma_event_e80_hw_freeze;
 
-	/* set up the रुको but करो not रुको here */
-	atomic_set(&dd->sdma_unमुक्तze_count, dd->num_sdma);
+	/* set up the wait but do not wait here */
+	atomic_set(&dd->sdma_unfreeze_count, dd->num_sdma);
 
-	/* tell all engines to stop running and रुको */
-	क्रम (i = 0; i < dd->num_sdma; i++)
+	/* tell all engines to stop running and wait */
+	for (i = 0; i < dd->num_sdma; i++)
 		sdma_process_event(&dd->per_sdma[i], event);
 
-	/* sdma_मुक्तze() will रुको क्रम all engines to have stopped */
-पूर्ण
+	/* sdma_freeze() will wait for all engines to have stopped */
+}
 
 /*
- * SPC मुक्तze handling क्रम SDMA engines.  Called when the driver knows
+ * SPC freeze handling for SDMA engines.  Called when the driver knows
  * the SPC is fully frozen.
  */
-व्योम sdma_मुक्तze(काष्ठा hfi1_devdata *dd)
-अणु
-	पूर्णांक i;
-	पूर्णांक ret;
+void sdma_freeze(struct hfi1_devdata *dd)
+{
+	int i;
+	int ret;
 
 	/*
-	 * Make sure all engines have moved out of the running state beक्रमe
+	 * Make sure all engines have moved out of the running state before
 	 * continuing.
 	 */
-	ret = रुको_event_पूर्णांकerruptible(dd->sdma_unमुक्तze_wq,
-				       atomic_पढ़ो(&dd->sdma_unमुक्तze_count) <=
+	ret = wait_event_interruptible(dd->sdma_unfreeze_wq,
+				       atomic_read(&dd->sdma_unfreeze_count) <=
 				       0);
-	/* पूर्णांकerrupted or count is negative, then unloading - just निकास */
-	अगर (ret || atomic_पढ़ो(&dd->sdma_unमुक्तze_count) < 0)
-		वापस;
+	/* interrupted or count is negative, then unloading - just exit */
+	if (ret || atomic_read(&dd->sdma_unfreeze_count) < 0)
+		return;
 
-	/* set up the count क्रम the next रुको */
-	atomic_set(&dd->sdma_unमुक्तze_count, dd->num_sdma);
+	/* set up the count for the next wait */
+	atomic_set(&dd->sdma_unfreeze_count, dd->num_sdma);
 
 	/* tell all engines that the SPC is frozen, they can start cleaning */
-	क्रम (i = 0; i < dd->num_sdma; i++)
+	for (i = 0; i < dd->num_sdma; i++)
 		sdma_process_event(&dd->per_sdma[i], sdma_event_e81_hw_frozen);
 
 	/*
-	 * Wait क्रम everyone to finish software clean beक्रमe निकासing.  The
-	 * software clean will पढ़ो engine CSRs, so must be completed beक्रमe
+	 * Wait for everyone to finish software clean before exiting.  The
+	 * software clean will read engine CSRs, so must be completed before
 	 * the next step, which will clear the engine CSRs.
 	 */
-	(व्योम)रुको_event_पूर्णांकerruptible(dd->sdma_unमुक्तze_wq,
-				atomic_पढ़ो(&dd->sdma_unमुक्तze_count) <= 0);
-	/* no need to check results - करोne no matter what */
-पूर्ण
+	(void)wait_event_interruptible(dd->sdma_unfreeze_wq,
+				atomic_read(&dd->sdma_unfreeze_count) <= 0);
+	/* no need to check results - done no matter what */
+}
 
 /*
- * SPC मुक्तze handling क्रम the SDMA engines.  Called after the SPC is unfrozen.
+ * SPC freeze handling for the SDMA engines.  Called after the SPC is unfrozen.
  *
- * The SPC मुक्तze acts like a SDMA halt and a hardware clean combined.  All
- * that is left is a software clean.  We could करो it after the SPC is fully
- * frozen, but then we'd have to add another state to रुको क्रम the unमुक्तze.
- * Instead, just defer the software clean until the unमुक्तze step.
+ * The SPC freeze acts like a SDMA halt and a hardware clean combined.  All
+ * that is left is a software clean.  We could do it after the SPC is fully
+ * frozen, but then we'd have to add another state to wait for the unfreeze.
+ * Instead, just defer the software clean until the unfreeze step.
  */
-व्योम sdma_unमुक्तze(काष्ठा hfi1_devdata *dd)
-अणु
-	पूर्णांक i;
+void sdma_unfreeze(struct hfi1_devdata *dd)
+{
+	int i;
 
-	/* tell all engines start मुक्तze clean up */
-	क्रम (i = 0; i < dd->num_sdma; i++)
+	/* tell all engines start freeze clean up */
+	for (i = 0; i < dd->num_sdma; i++)
 		sdma_process_event(&dd->per_sdma[i],
-				   sdma_event_e82_hw_unमुक्तze);
-पूर्ण
+				   sdma_event_e82_hw_unfreeze);
+}
 
 /**
  * _sdma_engine_progress_schedule() - schedule progress on engine
  * @sde: sdma_engine to schedule progress
  *
  */
-व्योम _sdma_engine_progress_schedule(
-	काष्ठा sdma_engine *sde)
-अणु
+void _sdma_engine_progress_schedule(
+	struct sdma_engine *sde)
+{
 	trace_hfi1_sdma_engine_progress(sde, sde->progress_mask);
 	/* assume we have selected a good cpu */
-	ग_लिखो_csr(sde->dd,
+	write_csr(sde->dd,
 		  CCE_INT_FORCE + (8 * (IS_SDMA_START / 64)),
 		  sde->progress_mask);
-पूर्ण
+}

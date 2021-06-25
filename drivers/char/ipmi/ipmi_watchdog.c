@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * ipmi_watchकरोg.c
+ * ipmi_watchdog.c
  *
- * A watchकरोg समयr based upon the IPMI पूर्णांकerface.
+ * A watchdog timer based upon the IPMI interface.
  *
  * Author: MontaVista Software, Inc.
  *         Corey Minyard <minyard@mvista.com>
@@ -12,279 +11,279 @@
  * Copyright 2002 MontaVista Software Inc.
  */
 
-#घोषणा pr_fmt(fmt) "IPMI Watchdog: " fmt
+#define pr_fmt(fmt) "IPMI Watchdog: " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/ipmi.h>
-#समावेश <linux/ipmi_smi.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/watchकरोg.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/init.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/kdebug.h>
-#समावेश <linux/rwsem.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/nmi.h>
-#समावेश <linux/reboot.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/delay.h>
-#समावेश <linux/atomic.h>
-#समावेश <linux/sched/संकेत.स>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/ipmi.h>
+#include <linux/ipmi_smi.h>
+#include <linux/mutex.h>
+#include <linux/watchdog.h>
+#include <linux/miscdevice.h>
+#include <linux/init.h>
+#include <linux/completion.h>
+#include <linux/kdebug.h>
+#include <linux/rwsem.h>
+#include <linux/errno.h>
+#include <linux/uaccess.h>
+#include <linux/notifier.h>
+#include <linux/nmi.h>
+#include <linux/reboot.h>
+#include <linux/wait.h>
+#include <linux/poll.h>
+#include <linux/string.h>
+#include <linux/ctype.h>
+#include <linux/delay.h>
+#include <linux/atomic.h>
+#include <linux/sched/signal.h>
 
-#अगर_घोषित CONFIG_X86
+#ifdef CONFIG_X86
 /*
  * This is ugly, but I've determined that x86 is the only architecture
- * that can reasonably support the IPMI NMI watchकरोg समयout at this
- * समय.  If another architecture adds this capability somehow, it
- * will have to be a somewhat dअगरferent mechanism and I have no idea
+ * that can reasonably support the IPMI NMI watchdog timeout at this
+ * time.  If another architecture adds this capability somehow, it
+ * will have to be a somewhat different mechanism and I have no idea
  * how it will work.  So in the unlikely event that another
  * architecture supports this, we can figure out a good generic
- * mechanism क्रम it at that समय.
+ * mechanism for it at that time.
  */
-#समावेश <यंत्र/kdebug.h>
-#समावेश <यंत्र/nmi.h>
-#घोषणा HAVE_DIE_NMI
-#पूर्ण_अगर
+#include <asm/kdebug.h>
+#include <asm/nmi.h>
+#define HAVE_DIE_NMI
+#endif
 
 /*
- * The IPMI command/response inक्रमmation क्रम the watchकरोg समयr.
+ * The IPMI command/response information for the watchdog timer.
  */
 
-/* values क्रम byte 1 of the set command, byte 2 of the get response. */
-#घोषणा WDOG_DONT_LOG		(1 << 7)
-#घोषणा WDOG_DONT_STOP_ON_SET	(1 << 6)
-#घोषणा WDOG_SET_TIMER_USE(byte, use) \
+/* values for byte 1 of the set command, byte 2 of the get response. */
+#define WDOG_DONT_LOG		(1 << 7)
+#define WDOG_DONT_STOP_ON_SET	(1 << 6)
+#define WDOG_SET_TIMER_USE(byte, use) \
 	byte = ((byte) & 0xf8) | ((use) & 0x7)
-#घोषणा WDOG_GET_TIMER_USE(byte) ((byte) & 0x7)
-#घोषणा WDOG_TIMER_USE_BIOS_FRB2	1
-#घोषणा WDOG_TIMER_USE_BIOS_POST	2
-#घोषणा WDOG_TIMER_USE_OS_LOAD		3
-#घोषणा WDOG_TIMER_USE_SMS_OS		4
-#घोषणा WDOG_TIMER_USE_OEM		5
+#define WDOG_GET_TIMER_USE(byte) ((byte) & 0x7)
+#define WDOG_TIMER_USE_BIOS_FRB2	1
+#define WDOG_TIMER_USE_BIOS_POST	2
+#define WDOG_TIMER_USE_OS_LOAD		3
+#define WDOG_TIMER_USE_SMS_OS		4
+#define WDOG_TIMER_USE_OEM		5
 
-/* values क्रम byte 2 of the set command, byte 3 of the get response. */
-#घोषणा WDOG_SET_PRETIMEOUT_ACT(byte, use) \
+/* values for byte 2 of the set command, byte 3 of the get response. */
+#define WDOG_SET_PRETIMEOUT_ACT(byte, use) \
 	byte = ((byte) & 0x8f) | (((use) & 0x7) << 4)
-#घोषणा WDOG_GET_PRETIMEOUT_ACT(byte) (((byte) >> 4) & 0x7)
-#घोषणा WDOG_PRETIMEOUT_NONE		0
-#घोषणा WDOG_PRETIMEOUT_SMI		1
-#घोषणा WDOG_PRETIMEOUT_NMI		2
-#घोषणा WDOG_PRETIMEOUT_MSG_INT		3
+#define WDOG_GET_PRETIMEOUT_ACT(byte) (((byte) >> 4) & 0x7)
+#define WDOG_PRETIMEOUT_NONE		0
+#define WDOG_PRETIMEOUT_SMI		1
+#define WDOG_PRETIMEOUT_NMI		2
+#define WDOG_PRETIMEOUT_MSG_INT		3
 
-/* Operations that can be perक्रमmed on a pretimout. */
-#घोषणा WDOG_PREOP_NONE		0
-#घोषणा WDOG_PREOP_PANIC	1
-/* Cause data to be available to पढ़ो.  Doesn't work in NMI mode. */
-#घोषणा WDOG_PREOP_GIVE_DATA	2
+/* Operations that can be performed on a pretimout. */
+#define WDOG_PREOP_NONE		0
+#define WDOG_PREOP_PANIC	1
+/* Cause data to be available to read.  Doesn't work in NMI mode. */
+#define WDOG_PREOP_GIVE_DATA	2
 
-/* Actions to perक्रमm on a full समयout. */
-#घोषणा WDOG_SET_TIMEOUT_ACT(byte, use) \
+/* Actions to perform on a full timeout. */
+#define WDOG_SET_TIMEOUT_ACT(byte, use) \
 	byte = ((byte) & 0xf8) | ((use) & 0x7)
-#घोषणा WDOG_GET_TIMEOUT_ACT(byte) ((byte) & 0x7)
-#घोषणा WDOG_TIMEOUT_NONE		0
-#घोषणा WDOG_TIMEOUT_RESET		1
-#घोषणा WDOG_TIMEOUT_POWER_DOWN		2
-#घोषणा WDOG_TIMEOUT_POWER_CYCLE	3
+#define WDOG_GET_TIMEOUT_ACT(byte) ((byte) & 0x7)
+#define WDOG_TIMEOUT_NONE		0
+#define WDOG_TIMEOUT_RESET		1
+#define WDOG_TIMEOUT_POWER_DOWN		2
+#define WDOG_TIMEOUT_POWER_CYCLE	3
 
 /*
  * Byte 3 of the get command, byte 4 of the get response is the
- * pre-समयout in seconds.
+ * pre-timeout in seconds.
  */
 
-/* Bits क्रम setting byte 4 of the set command, byte 5 of the get response. */
-#घोषणा WDOG_EXPIRE_CLEAR_BIOS_FRB2	(1 << 1)
-#घोषणा WDOG_EXPIRE_CLEAR_BIOS_POST	(1 << 2)
-#घोषणा WDOG_EXPIRE_CLEAR_OS_LOAD	(1 << 3)
-#घोषणा WDOG_EXPIRE_CLEAR_SMS_OS	(1 << 4)
-#घोषणा WDOG_EXPIRE_CLEAR_OEM		(1 << 5)
+/* Bits for setting byte 4 of the set command, byte 5 of the get response. */
+#define WDOG_EXPIRE_CLEAR_BIOS_FRB2	(1 << 1)
+#define WDOG_EXPIRE_CLEAR_BIOS_POST	(1 << 2)
+#define WDOG_EXPIRE_CLEAR_OS_LOAD	(1 << 3)
+#define WDOG_EXPIRE_CLEAR_SMS_OS	(1 << 4)
+#define WDOG_EXPIRE_CLEAR_OEM		(1 << 5)
 
 /*
- * Setting/getting the watchकरोg समयr value.  This is क्रम bytes 5 and
- * 6 (the समयout समय) of the set command, and bytes 6 and 7 (the
- * समयout समय) and 8 and 9 (the current countकरोwn value) of the
- * response.  The समयout value is given in seconds (in the command it
- * is 100ms पूर्णांकervals).
+ * Setting/getting the watchdog timer value.  This is for bytes 5 and
+ * 6 (the timeout time) of the set command, and bytes 6 and 7 (the
+ * timeout time) and 8 and 9 (the current countdown value) of the
+ * response.  The timeout value is given in seconds (in the command it
+ * is 100ms intervals).
  */
-#घोषणा WDOG_SET_TIMEOUT(byte1, byte2, val) \
+#define WDOG_SET_TIMEOUT(byte1, byte2, val) \
 	(byte1) = (((val) * 10) & 0xff), (byte2) = (((val) * 10) >> 8)
-#घोषणा WDOG_GET_TIMEOUT(byte1, byte2) \
+#define WDOG_GET_TIMEOUT(byte1, byte2) \
 	(((byte1) | ((byte2) << 8)) / 10)
 
-#घोषणा IPMI_WDOG_RESET_TIMER		0x22
-#घोषणा IPMI_WDOG_SET_TIMER		0x24
-#घोषणा IPMI_WDOG_GET_TIMER		0x25
+#define IPMI_WDOG_RESET_TIMER		0x22
+#define IPMI_WDOG_SET_TIMER		0x24
+#define IPMI_WDOG_GET_TIMER		0x25
 
-#घोषणा IPMI_WDOG_TIMER_NOT_INIT_RESP	0x80
+#define IPMI_WDOG_TIMER_NOT_INIT_RESP	0x80
 
-अटल DEFINE_MUTEX(ipmi_watchकरोg_mutex);
-अटल bool nowayout = WATCHDOG_NOWAYOUT;
+static DEFINE_MUTEX(ipmi_watchdog_mutex);
+static bool nowayout = WATCHDOG_NOWAYOUT;
 
-अटल काष्ठा ipmi_user *watchकरोg_user;
-अटल पूर्णांक watchकरोg_अगरnum;
+static struct ipmi_user *watchdog_user;
+static int watchdog_ifnum;
 
-/* Default the समयout to 10 seconds. */
-अटल पूर्णांक समयout = 10;
+/* Default the timeout to 10 seconds. */
+static int timeout = 10;
 
-/* The pre-समयout is disabled by शेष. */
-अटल पूर्णांक preसमयout;
+/* The pre-timeout is disabled by default. */
+static int pretimeout;
 
-/* Default समयout to set on panic */
-अटल पूर्णांक panic_wdt_समयout = 255;
+/* Default timeout to set on panic */
+static int panic_wdt_timeout = 255;
 
-/* Default action is to reset the board on a समयout. */
-अटल अचिन्हित अक्षर action_val = WDOG_TIMEOUT_RESET;
+/* Default action is to reset the board on a timeout. */
+static unsigned char action_val = WDOG_TIMEOUT_RESET;
 
-अटल अक्षर action[16] = "reset";
+static char action[16] = "reset";
 
-अटल अचिन्हित अक्षर preaction_val = WDOG_PRETIMEOUT_NONE;
+static unsigned char preaction_val = WDOG_PRETIMEOUT_NONE;
 
-अटल अक्षर preaction[16] = "pre_none";
+static char preaction[16] = "pre_none";
 
-अटल अचिन्हित अक्षर preop_val = WDOG_PREOP_NONE;
+static unsigned char preop_val = WDOG_PREOP_NONE;
 
-अटल अक्षर preop[16] = "preop_none";
-अटल DEFINE_SPINLOCK(ipmi_पढ़ो_lock);
-अटल अक्षर data_to_पढ़ो;
-अटल DECLARE_WAIT_QUEUE_HEAD(पढ़ो_q);
-अटल काष्ठा fasync_काष्ठा *fasync_q;
-अटल atomic_t preसमयout_since_last_heartbeat;
-अटल अक्षर expect_बंद;
+static char preop[16] = "preop_none";
+static DEFINE_SPINLOCK(ipmi_read_lock);
+static char data_to_read;
+static DECLARE_WAIT_QUEUE_HEAD(read_q);
+static struct fasync_struct *fasync_q;
+static atomic_t pretimeout_since_last_heartbeat;
+static char expect_close;
 
-अटल पूर्णांक अगरnum_to_use = -1;
+static int ifnum_to_use = -1;
 
-/* Parameters to ipmi_set_समयout */
-#घोषणा IPMI_SET_TIMEOUT_NO_HB			0
-#घोषणा IPMI_SET_TIMEOUT_HB_IF_NECESSARY	1
-#घोषणा IPMI_SET_TIMEOUT_FORCE_HB		2
+/* Parameters to ipmi_set_timeout */
+#define IPMI_SET_TIMEOUT_NO_HB			0
+#define IPMI_SET_TIMEOUT_HB_IF_NECESSARY	1
+#define IPMI_SET_TIMEOUT_FORCE_HB		2
 
-अटल पूर्णांक ipmi_set_समयout(पूर्णांक करो_heartbeat);
-अटल व्योम ipmi_रेजिस्टर_watchकरोg(पूर्णांक ipmi_पूर्णांकf);
-अटल व्योम ipmi_unरेजिस्टर_watchकरोg(पूर्णांक ipmi_पूर्णांकf);
+static int ipmi_set_timeout(int do_heartbeat);
+static void ipmi_register_watchdog(int ipmi_intf);
+static void ipmi_unregister_watchdog(int ipmi_intf);
 
 /*
  * If true, the driver will start running as soon as it is configured
- * and पढ़ोy.
+ * and ready.
  */
-अटल पूर्णांक start_now;
+static int start_now;
 
-अटल पूर्णांक set_param_समयout(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp)
-अणु
-	अक्षर *endp;
-	पूर्णांक  l;
-	पूर्णांक  rv = 0;
+static int set_param_timeout(const char *val, const struct kernel_param *kp)
+{
+	char *endp;
+	int  l;
+	int  rv = 0;
 
-	अगर (!val)
-		वापस -EINVAL;
-	l = simple_म_से_अदीर्घ(val, &endp, 0);
-	अगर (endp == val)
-		वापस -EINVAL;
+	if (!val)
+		return -EINVAL;
+	l = simple_strtoul(val, &endp, 0);
+	if (endp == val)
+		return -EINVAL;
 
-	*((पूर्णांक *)kp->arg) = l;
-	अगर (watchकरोg_user)
-		rv = ipmi_set_समयout(IPMI_SET_TIMEOUT_HB_IF_NECESSARY);
+	*((int *)kp->arg) = l;
+	if (watchdog_user)
+		rv = ipmi_set_timeout(IPMI_SET_TIMEOUT_HB_IF_NECESSARY);
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-अटल स्थिर काष्ठा kernel_param_ops param_ops_समयout = अणु
-	.set = set_param_समयout,
-	.get = param_get_पूर्णांक,
-पूर्ण;
-#घोषणा param_check_समयout param_check_पूर्णांक
+static const struct kernel_param_ops param_ops_timeout = {
+	.set = set_param_timeout,
+	.get = param_get_int,
+};
+#define param_check_timeout param_check_int
 
-प्रकार पूर्णांक (*action_fn)(स्थिर अक्षर *पूर्णांकval, अक्षर *outval);
+typedef int (*action_fn)(const char *intval, char *outval);
 
-अटल पूर्णांक action_op(स्थिर अक्षर *inval, अक्षर *outval);
-अटल पूर्णांक preaction_op(स्थिर अक्षर *inval, अक्षर *outval);
-अटल पूर्णांक preop_op(स्थिर अक्षर *inval, अक्षर *outval);
-अटल व्योम check_parms(व्योम);
+static int action_op(const char *inval, char *outval);
+static int preaction_op(const char *inval, char *outval);
+static int preop_op(const char *inval, char *outval);
+static void check_parms(void);
 
-अटल पूर्णांक set_param_str(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp)
-अणु
+static int set_param_str(const char *val, const struct kernel_param *kp)
+{
 	action_fn  fn = (action_fn) kp->arg;
-	पूर्णांक        rv = 0;
-	अक्षर       valcp[16];
-	अक्षर       *s;
+	int        rv = 0;
+	char       valcp[16];
+	char       *s;
 
-	म_नकलन(valcp, val, 15);
+	strncpy(valcp, val, 15);
 	valcp[15] = '\0';
 
-	s = म_मालाip(valcp);
+	s = strstrip(valcp);
 
-	rv = fn(s, शून्य);
-	अगर (rv)
-		जाओ out;
+	rv = fn(s, NULL);
+	if (rv)
+		goto out;
 
 	check_parms();
-	अगर (watchकरोg_user)
-		rv = ipmi_set_समयout(IPMI_SET_TIMEOUT_HB_IF_NECESSARY);
+	if (watchdog_user)
+		rv = ipmi_set_timeout(IPMI_SET_TIMEOUT_HB_IF_NECESSARY);
 
  out:
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-अटल पूर्णांक get_param_str(अक्षर *buffer, स्थिर काष्ठा kernel_param *kp)
-अणु
+static int get_param_str(char *buffer, const struct kernel_param *kp)
+{
 	action_fn fn = (action_fn) kp->arg;
-	पूर्णांक rv, len;
+	int rv, len;
 
-	rv = fn(शून्य, buffer);
-	अगर (rv)
-		वापस rv;
+	rv = fn(NULL, buffer);
+	if (rv)
+		return rv;
 
-	len = म_माप(buffer);
+	len = strlen(buffer);
 	buffer[len++] = '\n';
 	buffer[len] = 0;
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
 
-अटल पूर्णांक set_param_wकरोg_अगरnum(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp)
-अणु
-	पूर्णांक rv = param_set_पूर्णांक(val, kp);
-	अगर (rv)
-		वापस rv;
-	अगर ((अगरnum_to_use < 0) || (अगरnum_to_use == watchकरोg_अगरnum))
-		वापस 0;
+static int set_param_wdog_ifnum(const char *val, const struct kernel_param *kp)
+{
+	int rv = param_set_int(val, kp);
+	if (rv)
+		return rv;
+	if ((ifnum_to_use < 0) || (ifnum_to_use == watchdog_ifnum))
+		return 0;
 
-	ipmi_unरेजिस्टर_watchकरोg(watchकरोg_अगरnum);
-	ipmi_रेजिस्टर_watchकरोg(अगरnum_to_use);
-	वापस 0;
-पूर्ण
+	ipmi_unregister_watchdog(watchdog_ifnum);
+	ipmi_register_watchdog(ifnum_to_use);
+	return 0;
+}
 
-अटल स्थिर काष्ठा kernel_param_ops param_ops_wकरोg_अगरnum = अणु
-	.set = set_param_wकरोg_अगरnum,
-	.get = param_get_पूर्णांक,
-पूर्ण;
+static const struct kernel_param_ops param_ops_wdog_ifnum = {
+	.set = set_param_wdog_ifnum,
+	.get = param_get_int,
+};
 
-#घोषणा param_check_wकरोg_अगरnum param_check_पूर्णांक
+#define param_check_wdog_ifnum param_check_int
 
-अटल स्थिर काष्ठा kernel_param_ops param_ops_str = अणु
+static const struct kernel_param_ops param_ops_str = {
 	.set = set_param_str,
 	.get = get_param_str,
-पूर्ण;
+};
 
-module_param(अगरnum_to_use, wकरोg_अगरnum, 0644);
-MODULE_PARM_DESC(अगरnum_to_use, "The interface number to use for the watchdog "
+module_param(ifnum_to_use, wdog_ifnum, 0644);
+MODULE_PARM_DESC(ifnum_to_use, "The interface number to use for the watchdog "
 		 "timer.  Setting to -1 defaults to the first registered "
 		 "interface");
 
-module_param(समयout, समयout, 0644);
-MODULE_PARM_DESC(समयout, "Timeout value in seconds.");
+module_param(timeout, timeout, 0644);
+MODULE_PARM_DESC(timeout, "Timeout value in seconds.");
 
-module_param(preसमयout, समयout, 0644);
-MODULE_PARM_DESC(preसमयout, "Pretimeout value in seconds.");
+module_param(pretimeout, timeout, 0644);
+MODULE_PARM_DESC(pretimeout, "Pretimeout value in seconds.");
 
-module_param(panic_wdt_समयout, समयout, 0644);
-MODULE_PARM_DESC(panic_wdt_समयout, "Timeout value on kernel panic in seconds.");
+module_param(panic_wdt_timeout, timeout, 0644);
+MODULE_PARM_DESC(panic_wdt_timeout, "Timeout value on kernel panic in seconds.");
 
 module_param_cb(action, &param_ops_str, action_op, 0644);
 MODULE_PARM_DESC(action, "Timeout action. One of: "
@@ -298,7 +297,7 @@ module_param_cb(preop, &param_ops_str, preop_op, 0644);
 MODULE_PARM_DESC(preop, "Pretimeout driver operation.  One of: "
 		 "preop_none, preop_panic, preop_give_data.");
 
-module_param(start_now, पूर्णांक, 0444);
+module_param(start_now, int, 0444);
 MODULE_PARM_DESC(start_now, "Set to 1 to start the watchdog as"
 		 "soon as the driver is loaded.");
 
@@ -306,95 +305,95 @@ module_param(nowayout, bool, 0644);
 MODULE_PARM_DESC(nowayout, "Watchdog cannot be stopped once started "
 		 "(default=CONFIG_WATCHDOG_NOWAYOUT)");
 
-/* Default state of the समयr. */
-अटल अचिन्हित अक्षर ipmi_watchकरोg_state = WDOG_TIMEOUT_NONE;
+/* Default state of the timer. */
+static unsigned char ipmi_watchdog_state = WDOG_TIMEOUT_NONE;
 
-/* Is someone using the watchकरोg?  Only one user is allowed. */
-अटल अचिन्हित दीर्घ ipmi_wकरोg_खोलो;
+/* Is someone using the watchdog?  Only one user is allowed. */
+static unsigned long ipmi_wdog_open;
 
 /*
  * If set to 1, the heartbeat command will set the state to reset and
- * start the समयr.  The समयr करोesn't normally run when the driver is
- * first खोलोed until the heartbeat is set the first समय, this
+ * start the timer.  The timer doesn't normally run when the driver is
+ * first opened until the heartbeat is set the first time, this
  * variable is used to accomplish this.
  */
-अटल पूर्णांक ipmi_start_समयr_on_heartbeat;
+static int ipmi_start_timer_on_heartbeat;
 
 /* IPMI version of the BMC. */
-अटल अचिन्हित अक्षर ipmi_version_major;
-अटल अचिन्हित अक्षर ipmi_version_minor;
+static unsigned char ipmi_version_major;
+static unsigned char ipmi_version_minor;
 
-/* If a preसमयout occurs, this is used to allow only one panic to happen. */
-अटल atomic_t preop_panic_excl = ATOMIC_INIT(-1);
+/* If a pretimeout occurs, this is used to allow only one panic to happen. */
+static atomic_t preop_panic_excl = ATOMIC_INIT(-1);
 
-#अगर_घोषित HAVE_DIE_NMI
-अटल पूर्णांक testing_nmi;
-अटल पूर्णांक nmi_handler_रेजिस्टरed;
-#पूर्ण_अगर
+#ifdef HAVE_DIE_NMI
+static int testing_nmi;
+static int nmi_handler_registered;
+#endif
 
-अटल पूर्णांक __ipmi_heartbeat(व्योम);
+static int __ipmi_heartbeat(void);
 
 /*
  * We use a mutex to make sure that only one thing can send a set a
- * message at one समय.  The mutex is claimed when a message is sent
- * and मुक्तd when both the send and receive messages are मुक्त.
+ * message at one time.  The mutex is claimed when a message is sent
+ * and freed when both the send and receive messages are free.
  */
-अटल atomic_t msg_toमुक्त = ATOMIC_INIT(0);
-अटल DECLARE_COMPLETION(msg_रुको);
-अटल व्योम msg_मुक्त_smi(काष्ठा ipmi_smi_msg *msg)
-अणु
-	अगर (atomic_dec_and_test(&msg_toमुक्त))
-		complete(&msg_रुको);
-पूर्ण
-अटल व्योम msg_मुक्त_recv(काष्ठा ipmi_recv_msg *msg)
-अणु
-	अगर (atomic_dec_and_test(&msg_toमुक्त))
-		complete(&msg_रुको);
-पूर्ण
-अटल काष्ठा ipmi_smi_msg smi_msg = अणु
-	.करोne = msg_मुक्त_smi
-पूर्ण;
-अटल काष्ठा ipmi_recv_msg recv_msg = अणु
-	.करोne = msg_मुक्त_recv
-पूर्ण;
+static atomic_t msg_tofree = ATOMIC_INIT(0);
+static DECLARE_COMPLETION(msg_wait);
+static void msg_free_smi(struct ipmi_smi_msg *msg)
+{
+	if (atomic_dec_and_test(&msg_tofree))
+		complete(&msg_wait);
+}
+static void msg_free_recv(struct ipmi_recv_msg *msg)
+{
+	if (atomic_dec_and_test(&msg_tofree))
+		complete(&msg_wait);
+}
+static struct ipmi_smi_msg smi_msg = {
+	.done = msg_free_smi
+};
+static struct ipmi_recv_msg recv_msg = {
+	.done = msg_free_recv
+};
 
-अटल पूर्णांक __ipmi_set_समयout(काष्ठा ipmi_smi_msg  *smi_msg,
-			      काष्ठा ipmi_recv_msg *recv_msg,
-			      पूर्णांक                  *send_heartbeat_now)
-अणु
-	काष्ठा kernel_ipmi_msg            msg;
-	अचिन्हित अक्षर                     data[6];
-	पूर्णांक                               rv;
-	काष्ठा ipmi_प्रणाली_पूर्णांकerface_addr addr;
-	पूर्णांक                               hbnow = 0;
+static int __ipmi_set_timeout(struct ipmi_smi_msg  *smi_msg,
+			      struct ipmi_recv_msg *recv_msg,
+			      int                  *send_heartbeat_now)
+{
+	struct kernel_ipmi_msg            msg;
+	unsigned char                     data[6];
+	int                               rv;
+	struct ipmi_system_interface_addr addr;
+	int                               hbnow = 0;
 
 
 	data[0] = 0;
 	WDOG_SET_TIMER_USE(data[0], WDOG_TIMER_USE_SMS_OS);
 
-	अगर ((ipmi_version_major > 1)
-	    || ((ipmi_version_major == 1) && (ipmi_version_minor >= 5))) अणु
+	if ((ipmi_version_major > 1)
+	    || ((ipmi_version_major == 1) && (ipmi_version_minor >= 5))) {
 		/* This is an IPMI 1.5-only feature. */
 		data[0] |= WDOG_DONT_STOP_ON_SET;
-	पूर्ण अन्यथा अगर (ipmi_watchकरोg_state != WDOG_TIMEOUT_NONE) अणु
+	} else if (ipmi_watchdog_state != WDOG_TIMEOUT_NONE) {
 		/*
-		 * In ipmi 1.0, setting the समयr stops the watchकरोg, we
+		 * In ipmi 1.0, setting the timer stops the watchdog, we
 		 * need to start it back up again.
 		 */
 		hbnow = 1;
-	पूर्ण
+	}
 
 	data[1] = 0;
-	WDOG_SET_TIMEOUT_ACT(data[1], ipmi_watchकरोg_state);
-	अगर ((preसमयout > 0) && (ipmi_watchकरोg_state != WDOG_TIMEOUT_NONE)) अणु
+	WDOG_SET_TIMEOUT_ACT(data[1], ipmi_watchdog_state);
+	if ((pretimeout > 0) && (ipmi_watchdog_state != WDOG_TIMEOUT_NONE)) {
 	    WDOG_SET_PRETIMEOUT_ACT(data[1], preaction_val);
-	    data[2] = preसमयout;
-	पूर्ण अन्यथा अणु
+	    data[2] = pretimeout;
+	} else {
 	    WDOG_SET_PRETIMEOUT_ACT(data[1], WDOG_PRETIMEOUT_NONE);
-	    data[2] = 0; /* No preसमयout. */
-	पूर्ण
+	    data[2] = 0; /* No pretimeout. */
+	}
 	data[3] = 0;
-	WDOG_SET_TIMEOUT(data[4], data[5], समयout);
+	WDOG_SET_TIMEOUT(data[4], data[5], timeout);
 
 	addr.addr_type = IPMI_SYSTEM_INTERFACE_ADDR_TYPE;
 	addr.channel = IPMI_BMC_CHANNEL;
@@ -403,90 +402,90 @@ MODULE_PARM_DESC(nowayout, "Watchdog cannot be stopped once started "
 	msg.netfn = 0x06;
 	msg.cmd = IPMI_WDOG_SET_TIMER;
 	msg.data = data;
-	msg.data_len = माप(data);
-	rv = ipmi_request_supply_msgs(watchकरोg_user,
-				      (काष्ठा ipmi_addr *) &addr,
+	msg.data_len = sizeof(data);
+	rv = ipmi_request_supply_msgs(watchdog_user,
+				      (struct ipmi_addr *) &addr,
 				      0,
 				      &msg,
-				      शून्य,
+				      NULL,
 				      smi_msg,
 				      recv_msg,
 				      1);
-	अगर (rv)
+	if (rv)
 		pr_warn("set timeout error: %d\n", rv);
-	अन्यथा अगर (send_heartbeat_now)
+	else if (send_heartbeat_now)
 		*send_heartbeat_now = hbnow;
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-अटल पूर्णांक _ipmi_set_समयout(पूर्णांक करो_heartbeat)
-अणु
-	पूर्णांक send_heartbeat_now;
-	पूर्णांक rv;
+static int _ipmi_set_timeout(int do_heartbeat)
+{
+	int send_heartbeat_now;
+	int rv;
 
-	अगर (!watchकरोg_user)
-		वापस -ENODEV;
+	if (!watchdog_user)
+		return -ENODEV;
 
-	atomic_set(&msg_toमुक्त, 2);
+	atomic_set(&msg_tofree, 2);
 
-	rv = __ipmi_set_समयout(&smi_msg,
+	rv = __ipmi_set_timeout(&smi_msg,
 				&recv_msg,
 				&send_heartbeat_now);
-	अगर (rv)
-		वापस rv;
+	if (rv)
+		return rv;
 
-	रुको_क्रम_completion(&msg_रुको);
+	wait_for_completion(&msg_wait);
 
-	अगर ((करो_heartbeat == IPMI_SET_TIMEOUT_FORCE_HB)
+	if ((do_heartbeat == IPMI_SET_TIMEOUT_FORCE_HB)
 		|| ((send_heartbeat_now)
-		    && (करो_heartbeat == IPMI_SET_TIMEOUT_HB_IF_NECESSARY)))
+		    && (do_heartbeat == IPMI_SET_TIMEOUT_HB_IF_NECESSARY)))
 		rv = __ipmi_heartbeat();
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-अटल पूर्णांक ipmi_set_समयout(पूर्णांक करो_heartbeat)
-अणु
-	पूर्णांक rv;
+static int ipmi_set_timeout(int do_heartbeat)
+{
+	int rv;
 
-	mutex_lock(&ipmi_watchकरोg_mutex);
-	rv = _ipmi_set_समयout(करो_heartbeat);
-	mutex_unlock(&ipmi_watchकरोg_mutex);
+	mutex_lock(&ipmi_watchdog_mutex);
+	rv = _ipmi_set_timeout(do_heartbeat);
+	mutex_unlock(&ipmi_watchdog_mutex);
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-अटल atomic_t panic_करोne_count = ATOMIC_INIT(0);
+static atomic_t panic_done_count = ATOMIC_INIT(0);
 
-अटल व्योम panic_smi_मुक्त(काष्ठा ipmi_smi_msg *msg)
-अणु
-	atomic_dec(&panic_करोne_count);
-पूर्ण
-अटल व्योम panic_recv_मुक्त(काष्ठा ipmi_recv_msg *msg)
-अणु
-	atomic_dec(&panic_करोne_count);
-पूर्ण
+static void panic_smi_free(struct ipmi_smi_msg *msg)
+{
+	atomic_dec(&panic_done_count);
+}
+static void panic_recv_free(struct ipmi_recv_msg *msg)
+{
+	atomic_dec(&panic_done_count);
+}
 
-अटल काष्ठा ipmi_smi_msg panic_halt_heartbeat_smi_msg = अणु
-	.करोne = panic_smi_मुक्त
-पूर्ण;
-अटल काष्ठा ipmi_recv_msg panic_halt_heartbeat_recv_msg = अणु
-	.करोne = panic_recv_मुक्त
-पूर्ण;
+static struct ipmi_smi_msg panic_halt_heartbeat_smi_msg = {
+	.done = panic_smi_free
+};
+static struct ipmi_recv_msg panic_halt_heartbeat_recv_msg = {
+	.done = panic_recv_free
+};
 
-अटल व्योम panic_halt_ipmi_heartbeat(व्योम)
-अणु
-	काष्ठा kernel_ipmi_msg             msg;
-	काष्ठा ipmi_प्रणाली_पूर्णांकerface_addr addr;
-	पूर्णांक rv;
+static void panic_halt_ipmi_heartbeat(void)
+{
+	struct kernel_ipmi_msg             msg;
+	struct ipmi_system_interface_addr addr;
+	int rv;
 
 	/*
-	 * Don't reset the समयr अगर we have the समयr turned off, that
-	 * re-enables the watchकरोg.
+	 * Don't reset the timer if we have the timer turned off, that
+	 * re-enables the watchdog.
 	 */
-	अगर (ipmi_watchकरोg_state == WDOG_TIMEOUT_NONE)
-		वापस;
+	if (ipmi_watchdog_state == WDOG_TIMEOUT_NONE)
+		return;
 
 	addr.addr_type = IPMI_SYSTEM_INTERFACE_ADDR_TYPE;
 	addr.channel = IPMI_BMC_CHANNEL;
@@ -494,73 +493,73 @@ MODULE_PARM_DESC(nowayout, "Watchdog cannot be stopped once started "
 
 	msg.netfn = 0x06;
 	msg.cmd = IPMI_WDOG_RESET_TIMER;
-	msg.data = शून्य;
+	msg.data = NULL;
 	msg.data_len = 0;
-	atomic_inc(&panic_करोne_count);
-	rv = ipmi_request_supply_msgs(watchकरोg_user,
-				      (काष्ठा ipmi_addr *) &addr,
+	atomic_inc(&panic_done_count);
+	rv = ipmi_request_supply_msgs(watchdog_user,
+				      (struct ipmi_addr *) &addr,
 				      0,
 				      &msg,
-				      शून्य,
+				      NULL,
 				      &panic_halt_heartbeat_smi_msg,
 				      &panic_halt_heartbeat_recv_msg,
 				      1);
-	अगर (rv)
-		atomic_dec(&panic_करोne_count);
-पूर्ण
+	if (rv)
+		atomic_dec(&panic_done_count);
+}
 
-अटल काष्ठा ipmi_smi_msg panic_halt_smi_msg = अणु
-	.करोne = panic_smi_मुक्त
-पूर्ण;
-अटल काष्ठा ipmi_recv_msg panic_halt_recv_msg = अणु
-	.करोne = panic_recv_मुक्त
-पूर्ण;
+static struct ipmi_smi_msg panic_halt_smi_msg = {
+	.done = panic_smi_free
+};
+static struct ipmi_recv_msg panic_halt_recv_msg = {
+	.done = panic_recv_free
+};
 
 /*
- * Special call, करोesn't claim any locks.  This is only to be called
- * at panic or halt समय, in run-to-completion mode, when the caller
+ * Special call, doesn't claim any locks.  This is only to be called
+ * at panic or halt time, in run-to-completion mode, when the caller
  * is the only CPU and the only thing that will be going is these IPMI
  * calls.
  */
-अटल व्योम panic_halt_ipmi_set_समयout(व्योम)
-अणु
-	पूर्णांक send_heartbeat_now;
-	पूर्णांक rv;
+static void panic_halt_ipmi_set_timeout(void)
+{
+	int send_heartbeat_now;
+	int rv;
 
-	/* Wait क्रम the messages to be मुक्त. */
-	जबतक (atomic_पढ़ो(&panic_करोne_count) != 0)
-		ipmi_poll_पूर्णांकerface(watchकरोg_user);
-	atomic_inc(&panic_करोne_count);
-	rv = __ipmi_set_समयout(&panic_halt_smi_msg,
+	/* Wait for the messages to be free. */
+	while (atomic_read(&panic_done_count) != 0)
+		ipmi_poll_interface(watchdog_user);
+	atomic_inc(&panic_done_count);
+	rv = __ipmi_set_timeout(&panic_halt_smi_msg,
 				&panic_halt_recv_msg,
 				&send_heartbeat_now);
-	अगर (rv) अणु
-		atomic_dec(&panic_करोne_count);
+	if (rv) {
+		atomic_dec(&panic_done_count);
 		pr_warn("Unable to extend the watchdog timeout\n");
-	पूर्ण अन्यथा अणु
-		अगर (send_heartbeat_now)
+	} else {
+		if (send_heartbeat_now)
 			panic_halt_ipmi_heartbeat();
-	पूर्ण
-	जबतक (atomic_पढ़ो(&panic_करोne_count) != 0)
-		ipmi_poll_पूर्णांकerface(watchकरोg_user);
-पूर्ण
+	}
+	while (atomic_read(&panic_done_count) != 0)
+		ipmi_poll_interface(watchdog_user);
+}
 
-अटल पूर्णांक __ipmi_heartbeat(व्योम)
-अणु
-	काष्ठा kernel_ipmi_msg msg;
-	पूर्णांक rv;
-	काष्ठा ipmi_प्रणाली_पूर्णांकerface_addr addr;
-	पूर्णांक समयout_retries = 0;
+static int __ipmi_heartbeat(void)
+{
+	struct kernel_ipmi_msg msg;
+	int rv;
+	struct ipmi_system_interface_addr addr;
+	int timeout_retries = 0;
 
 restart:
 	/*
-	 * Don't reset the समयr अगर we have the समयr turned off, that
-	 * re-enables the watchकरोg.
+	 * Don't reset the timer if we have the timer turned off, that
+	 * re-enables the watchdog.
 	 */
-	अगर (ipmi_watchकरोg_state == WDOG_TIMEOUT_NONE)
-		वापस 0;
+	if (ipmi_watchdog_state == WDOG_TIMEOUT_NONE)
+		return 0;
 
-	atomic_set(&msg_toमुक्त, 2);
+	atomic_set(&msg_tofree, 2);
 
 	addr.addr_type = IPMI_SYSTEM_INTERFACE_ADDR_TYPE;
 	addr.channel = IPMI_BMC_CHANNEL;
@@ -568,542 +567,542 @@ restart:
 
 	msg.netfn = 0x06;
 	msg.cmd = IPMI_WDOG_RESET_TIMER;
-	msg.data = शून्य;
+	msg.data = NULL;
 	msg.data_len = 0;
-	rv = ipmi_request_supply_msgs(watchकरोg_user,
-				      (काष्ठा ipmi_addr *) &addr,
+	rv = ipmi_request_supply_msgs(watchdog_user,
+				      (struct ipmi_addr *) &addr,
 				      0,
 				      &msg,
-				      शून्य,
+				      NULL,
 				      &smi_msg,
 				      &recv_msg,
 				      1);
-	अगर (rv) अणु
+	if (rv) {
 		pr_warn("heartbeat send failure: %d\n", rv);
-		वापस rv;
-	पूर्ण
+		return rv;
+	}
 
-	/* Wait क्रम the heartbeat to be sent. */
-	रुको_क्रम_completion(&msg_रुको);
+	/* Wait for the heartbeat to be sent. */
+	wait_for_completion(&msg_wait);
 
-	अगर (recv_msg.msg.data[0] == IPMI_WDOG_TIMER_NOT_INIT_RESP)  अणु
-		समयout_retries++;
-		अगर (समयout_retries > 3) अणु
+	if (recv_msg.msg.data[0] == IPMI_WDOG_TIMER_NOT_INIT_RESP)  {
+		timeout_retries++;
+		if (timeout_retries > 3) {
 			pr_err("Unable to restore the IPMI watchdog's settings, giving up\n");
 			rv = -EIO;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		/*
-		 * The समयr was not initialized, that means the BMC was
-		 * probably reset and lost the watchकरोg inक्रमmation.  Attempt
-		 * to restore the समयr's info.  Note that we still hold
+		 * The timer was not initialized, that means the BMC was
+		 * probably reset and lost the watchdog information.  Attempt
+		 * to restore the timer's info.  Note that we still hold
 		 * the heartbeat lock, to keep a heartbeat from happening
-		 * in this process, so must say no heartbeat to aव्योम a
+		 * in this process, so must say no heartbeat to avoid a
 		 * deadlock on this mutex
 		 */
-		rv = _ipmi_set_समयout(IPMI_SET_TIMEOUT_NO_HB);
-		अगर (rv) अणु
+		rv = _ipmi_set_timeout(IPMI_SET_TIMEOUT_NO_HB);
+		if (rv) {
 			pr_err("Unable to send the command to set the watchdog's settings, giving up\n");
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		/* Might need a heartbeat send, go ahead and करो it. */
-		जाओ restart;
-	पूर्ण अन्यथा अगर (recv_msg.msg.data[0] != 0) अणु
+		/* Might need a heartbeat send, go ahead and do it. */
+		goto restart;
+	} else if (recv_msg.msg.data[0] != 0) {
 		/*
-		 * Got an error in the heartbeat response.  It was alपढ़ोy
-		 * reported in ipmi_wकरोg_msg_handler, but we should वापस
+		 * Got an error in the heartbeat response.  It was already
+		 * reported in ipmi_wdog_msg_handler, but we should return
 		 * an error here.
 		 */
 		rv = -EINVAL;
-	पूर्ण
+	}
 
 out:
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-अटल पूर्णांक _ipmi_heartbeat(व्योम)
-अणु
-	पूर्णांक rv;
+static int _ipmi_heartbeat(void)
+{
+	int rv;
 
-	अगर (!watchकरोg_user)
-		वापस -ENODEV;
+	if (!watchdog_user)
+		return -ENODEV;
 
-	अगर (ipmi_start_समयr_on_heartbeat) अणु
-		ipmi_start_समयr_on_heartbeat = 0;
-		ipmi_watchकरोg_state = action_val;
-		rv = _ipmi_set_समयout(IPMI_SET_TIMEOUT_FORCE_HB);
-	पूर्ण अन्यथा अगर (atomic_cmpxchg(&preसमयout_since_last_heartbeat, 1, 0)) अणु
+	if (ipmi_start_timer_on_heartbeat) {
+		ipmi_start_timer_on_heartbeat = 0;
+		ipmi_watchdog_state = action_val;
+		rv = _ipmi_set_timeout(IPMI_SET_TIMEOUT_FORCE_HB);
+	} else if (atomic_cmpxchg(&pretimeout_since_last_heartbeat, 1, 0)) {
 		/*
-		 * A preसमयout occurred, make sure we set the समयout.
-		 * We करोn't want to set the action, though, we want to
+		 * A pretimeout occurred, make sure we set the timeout.
+		 * We don't want to set the action, though, we want to
 		 * leave that alone (thus it can't be combined with the
 		 * above operation.
 		 */
-		rv = _ipmi_set_समयout(IPMI_SET_TIMEOUT_HB_IF_NECESSARY);
-	पूर्ण अन्यथा अणु
+		rv = _ipmi_set_timeout(IPMI_SET_TIMEOUT_HB_IF_NECESSARY);
+	} else {
 		rv = __ipmi_heartbeat();
-	पूर्ण
+	}
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-अटल पूर्णांक ipmi_heartbeat(व्योम)
-अणु
-	पूर्णांक rv;
+static int ipmi_heartbeat(void)
+{
+	int rv;
 
-	mutex_lock(&ipmi_watchकरोg_mutex);
+	mutex_lock(&ipmi_watchdog_mutex);
 	rv = _ipmi_heartbeat();
-	mutex_unlock(&ipmi_watchकरोg_mutex);
+	mutex_unlock(&ipmi_watchdog_mutex);
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-अटल काष्ठा watchकरोg_info ident = अणु
+static struct watchdog_info ident = {
 	.options	= 0,	/* WDIOF_SETTIMEOUT, */
 	.firmware_version = 1,
 	.identity	= "IPMI"
-पूर्ण;
+};
 
-अटल पूर्णांक ipmi_ioctl(काष्ठा file *file,
-		      अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	व्योम __user *argp = (व्योम __user *)arg;
-	पूर्णांक i;
-	पूर्णांक val;
+static int ipmi_ioctl(struct file *file,
+		      unsigned int cmd, unsigned long arg)
+{
+	void __user *argp = (void __user *)arg;
+	int i;
+	int val;
 
-	चयन (cmd) अणु
-	हाल WDIOC_GETSUPPORT:
-		i = copy_to_user(argp, &ident, माप(ident));
-		वापस i ? -EFAULT : 0;
+	switch (cmd) {
+	case WDIOC_GETSUPPORT:
+		i = copy_to_user(argp, &ident, sizeof(ident));
+		return i ? -EFAULT : 0;
 
-	हाल WDIOC_SETTIMEOUT:
-		i = copy_from_user(&val, argp, माप(पूर्णांक));
-		अगर (i)
-			वापस -EFAULT;
-		समयout = val;
-		वापस _ipmi_set_समयout(IPMI_SET_TIMEOUT_HB_IF_NECESSARY);
+	case WDIOC_SETTIMEOUT:
+		i = copy_from_user(&val, argp, sizeof(int));
+		if (i)
+			return -EFAULT;
+		timeout = val;
+		return _ipmi_set_timeout(IPMI_SET_TIMEOUT_HB_IF_NECESSARY);
 
-	हाल WDIOC_GETTIMEOUT:
-		i = copy_to_user(argp, &समयout, माप(समयout));
-		अगर (i)
-			वापस -EFAULT;
-		वापस 0;
+	case WDIOC_GETTIMEOUT:
+		i = copy_to_user(argp, &timeout, sizeof(timeout));
+		if (i)
+			return -EFAULT;
+		return 0;
 
-	हाल WDIOC_SETPRETIMEOUT:
-		i = copy_from_user(&val, argp, माप(पूर्णांक));
-		अगर (i)
-			वापस -EFAULT;
-		preसमयout = val;
-		वापस _ipmi_set_समयout(IPMI_SET_TIMEOUT_HB_IF_NECESSARY);
+	case WDIOC_SETPRETIMEOUT:
+		i = copy_from_user(&val, argp, sizeof(int));
+		if (i)
+			return -EFAULT;
+		pretimeout = val;
+		return _ipmi_set_timeout(IPMI_SET_TIMEOUT_HB_IF_NECESSARY);
 
-	हाल WDIOC_GETPRETIMEOUT:
-		i = copy_to_user(argp, &preसमयout, माप(preसमयout));
-		अगर (i)
-			वापस -EFAULT;
-		वापस 0;
+	case WDIOC_GETPRETIMEOUT:
+		i = copy_to_user(argp, &pretimeout, sizeof(pretimeout));
+		if (i)
+			return -EFAULT;
+		return 0;
 
-	हाल WDIOC_KEEPALIVE:
-		वापस _ipmi_heartbeat();
+	case WDIOC_KEEPALIVE:
+		return _ipmi_heartbeat();
 
-	हाल WDIOC_SETOPTIONS:
-		i = copy_from_user(&val, argp, माप(पूर्णांक));
-		अगर (i)
-			वापस -EFAULT;
-		अगर (val & WDIOS_DISABLECARD) अणु
-			ipmi_watchकरोg_state = WDOG_TIMEOUT_NONE;
-			_ipmi_set_समयout(IPMI_SET_TIMEOUT_NO_HB);
-			ipmi_start_समयr_on_heartbeat = 0;
-		पूर्ण
+	case WDIOC_SETOPTIONS:
+		i = copy_from_user(&val, argp, sizeof(int));
+		if (i)
+			return -EFAULT;
+		if (val & WDIOS_DISABLECARD) {
+			ipmi_watchdog_state = WDOG_TIMEOUT_NONE;
+			_ipmi_set_timeout(IPMI_SET_TIMEOUT_NO_HB);
+			ipmi_start_timer_on_heartbeat = 0;
+		}
 
-		अगर (val & WDIOS_ENABLECARD) अणु
-			ipmi_watchकरोg_state = action_val;
-			_ipmi_set_समयout(IPMI_SET_TIMEOUT_FORCE_HB);
-		पूर्ण
-		वापस 0;
+		if (val & WDIOS_ENABLECARD) {
+			ipmi_watchdog_state = action_val;
+			_ipmi_set_timeout(IPMI_SET_TIMEOUT_FORCE_HB);
+		}
+		return 0;
 
-	हाल WDIOC_GETSTATUS:
+	case WDIOC_GETSTATUS:
 		val = 0;
-		i = copy_to_user(argp, &val, माप(val));
-		अगर (i)
-			वापस -EFAULT;
-		वापस 0;
+		i = copy_to_user(argp, &val, sizeof(val));
+		if (i)
+			return -EFAULT;
+		return 0;
 
-	शेष:
-		वापस -ENOIOCTLCMD;
-	पूर्ण
-पूर्ण
+	default:
+		return -ENOIOCTLCMD;
+	}
+}
 
-अटल दीर्घ ipmi_unlocked_ioctl(काष्ठा file *file,
-				अचिन्हित पूर्णांक cmd,
-				अचिन्हित दीर्घ arg)
-अणु
-	पूर्णांक ret;
+static long ipmi_unlocked_ioctl(struct file *file,
+				unsigned int cmd,
+				unsigned long arg)
+{
+	int ret;
 
-	mutex_lock(&ipmi_watchकरोg_mutex);
+	mutex_lock(&ipmi_watchdog_mutex);
 	ret = ipmi_ioctl(file, cmd, arg);
-	mutex_unlock(&ipmi_watchकरोg_mutex);
+	mutex_unlock(&ipmi_watchdog_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार ipmi_ग_लिखो(काष्ठा file *file,
-			  स्थिर अक्षर  __user *buf,
-			  माप_प्रकार      len,
+static ssize_t ipmi_write(struct file *file,
+			  const char  __user *buf,
+			  size_t      len,
 			  loff_t      *ppos)
-अणु
-	पूर्णांक rv;
+{
+	int rv;
 
-	अगर (len) अणु
-		अगर (!nowayout) अणु
-			माप_प्रकार i;
+	if (len) {
+		if (!nowayout) {
+			size_t i;
 
-			/* In हाल it was set दीर्घ ago */
-			expect_बंद = 0;
+			/* In case it was set long ago */
+			expect_close = 0;
 
-			क्रम (i = 0; i != len; i++) अणु
-				अक्षर c;
+			for (i = 0; i != len; i++) {
+				char c;
 
-				अगर (get_user(c, buf + i))
-					वापस -EFAULT;
-				अगर (c == 'V')
-					expect_बंद = 42;
-			पूर्ण
-		पूर्ण
+				if (get_user(c, buf + i))
+					return -EFAULT;
+				if (c == 'V')
+					expect_close = 42;
+			}
+		}
 		rv = ipmi_heartbeat();
-		अगर (rv)
-			वापस rv;
-	पूर्ण
-	वापस len;
-पूर्ण
+		if (rv)
+			return rv;
+	}
+	return len;
+}
 
-अटल sमाप_प्रकार ipmi_पढ़ो(काष्ठा file *file,
-			 अक्षर        __user *buf,
-			 माप_प्रकार      count,
+static ssize_t ipmi_read(struct file *file,
+			 char        __user *buf,
+			 size_t      count,
 			 loff_t      *ppos)
-अणु
-	पूर्णांक          rv = 0;
-	रुको_queue_entry_t रुको;
+{
+	int          rv = 0;
+	wait_queue_entry_t wait;
 
-	अगर (count <= 0)
-		वापस 0;
+	if (count <= 0)
+		return 0;
 
 	/*
-	 * Reading वापसs अगर the preसमयout has gone off, and it only करोes
-	 * it once per preसमयout.
+	 * Reading returns if the pretimeout has gone off, and it only does
+	 * it once per pretimeout.
 	 */
-	spin_lock_irq(&ipmi_पढ़ो_lock);
-	अगर (!data_to_पढ़ो) अणु
-		अगर (file->f_flags & O_NONBLOCK) अणु
+	spin_lock_irq(&ipmi_read_lock);
+	if (!data_to_read) {
+		if (file->f_flags & O_NONBLOCK) {
 			rv = -EAGAIN;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		init_रुकोqueue_entry(&रुको, current);
-		add_रुको_queue(&पढ़ो_q, &रुको);
-		जबतक (!data_to_पढ़ो) अणु
+		init_waitqueue_entry(&wait, current);
+		add_wait_queue(&read_q, &wait);
+		while (!data_to_read) {
 			set_current_state(TASK_INTERRUPTIBLE);
-			spin_unlock_irq(&ipmi_पढ़ो_lock);
+			spin_unlock_irq(&ipmi_read_lock);
 			schedule();
-			spin_lock_irq(&ipmi_पढ़ो_lock);
-		पूर्ण
-		हटाओ_रुको_queue(&पढ़ो_q, &रुको);
+			spin_lock_irq(&ipmi_read_lock);
+		}
+		remove_wait_queue(&read_q, &wait);
 
-		अगर (संकेत_pending(current)) अणु
+		if (signal_pending(current)) {
 			rv = -ERESTARTSYS;
-			जाओ out;
-		पूर्ण
-	पूर्ण
-	data_to_पढ़ो = 0;
+			goto out;
+		}
+	}
+	data_to_read = 0;
 
  out:
-	spin_unlock_irq(&ipmi_पढ़ो_lock);
+	spin_unlock_irq(&ipmi_read_lock);
 
-	अगर (rv == 0) अणु
-		अगर (copy_to_user(buf, &data_to_पढ़ो, 1))
+	if (rv == 0) {
+		if (copy_to_user(buf, &data_to_read, 1))
 			rv = -EFAULT;
-		अन्यथा
+		else
 			rv = 1;
-	पूर्ण
+	}
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-अटल पूर्णांक ipmi_खोलो(काष्ठा inode *ino, काष्ठा file *filep)
-अणु
-	चयन (iminor(ino)) अणु
-	हाल WATCHDOG_MINOR:
-		अगर (test_and_set_bit(0, &ipmi_wकरोg_खोलो))
-			वापस -EBUSY;
+static int ipmi_open(struct inode *ino, struct file *filep)
+{
+	switch (iminor(ino)) {
+	case WATCHDOG_MINOR:
+		if (test_and_set_bit(0, &ipmi_wdog_open))
+			return -EBUSY;
 
 
 		/*
-		 * Don't start the समयr now, let it start on the
+		 * Don't start the timer now, let it start on the
 		 * first heartbeat.
 		 */
-		ipmi_start_समयr_on_heartbeat = 1;
-		वापस stream_खोलो(ino, filep);
+		ipmi_start_timer_on_heartbeat = 1;
+		return stream_open(ino, filep);
 
-	शेष:
-		वापस (-ENODEV);
-	पूर्ण
-पूर्ण
+	default:
+		return (-ENODEV);
+	}
+}
 
-अटल __poll_t ipmi_poll(काष्ठा file *file, poll_table *रुको)
-अणु
+static __poll_t ipmi_poll(struct file *file, poll_table *wait)
+{
 	__poll_t mask = 0;
 
-	poll_रुको(file, &पढ़ो_q, रुको);
+	poll_wait(file, &read_q, wait);
 
-	spin_lock_irq(&ipmi_पढ़ो_lock);
-	अगर (data_to_पढ़ो)
+	spin_lock_irq(&ipmi_read_lock);
+	if (data_to_read)
 		mask |= (EPOLLIN | EPOLLRDNORM);
-	spin_unlock_irq(&ipmi_पढ़ो_lock);
+	spin_unlock_irq(&ipmi_read_lock);
 
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
-अटल पूर्णांक ipmi_fasync(पूर्णांक fd, काष्ठा file *file, पूर्णांक on)
-अणु
-	पूर्णांक result;
+static int ipmi_fasync(int fd, struct file *file, int on)
+{
+	int result;
 
 	result = fasync_helper(fd, file, on, &fasync_q);
 
-	वापस (result);
-पूर्ण
+	return (result);
+}
 
-अटल पूर्णांक ipmi_बंद(काष्ठा inode *ino, काष्ठा file *filep)
-अणु
-	अगर (iminor(ino) == WATCHDOG_MINOR) अणु
-		अगर (expect_बंद == 42) अणु
-			mutex_lock(&ipmi_watchकरोg_mutex);
-			ipmi_watchकरोg_state = WDOG_TIMEOUT_NONE;
-			_ipmi_set_समयout(IPMI_SET_TIMEOUT_NO_HB);
-			mutex_unlock(&ipmi_watchकरोg_mutex);
-		पूर्ण अन्यथा अणु
+static int ipmi_close(struct inode *ino, struct file *filep)
+{
+	if (iminor(ino) == WATCHDOG_MINOR) {
+		if (expect_close == 42) {
+			mutex_lock(&ipmi_watchdog_mutex);
+			ipmi_watchdog_state = WDOG_TIMEOUT_NONE;
+			_ipmi_set_timeout(IPMI_SET_TIMEOUT_NO_HB);
+			mutex_unlock(&ipmi_watchdog_mutex);
+		} else {
 			pr_crit("Unexpected close, not stopping watchdog!\n");
 			ipmi_heartbeat();
-		पूर्ण
-		clear_bit(0, &ipmi_wकरोg_खोलो);
-	पूर्ण
+		}
+		clear_bit(0, &ipmi_wdog_open);
+	}
 
-	expect_बंद = 0;
+	expect_close = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations ipmi_wकरोg_fops = अणु
+static const struct file_operations ipmi_wdog_fops = {
 	.owner   = THIS_MODULE,
-	.पढ़ो    = ipmi_पढ़ो,
+	.read    = ipmi_read,
 	.poll    = ipmi_poll,
-	.ग_लिखो   = ipmi_ग_लिखो,
+	.write   = ipmi_write,
 	.unlocked_ioctl = ipmi_unlocked_ioctl,
 	.compat_ioctl	= compat_ptr_ioctl,
-	.खोलो    = ipmi_खोलो,
-	.release = ipmi_बंद,
+	.open    = ipmi_open,
+	.release = ipmi_close,
 	.fasync  = ipmi_fasync,
 	.llseek  = no_llseek,
-पूर्ण;
+};
 
-अटल काष्ठा miscdevice ipmi_wकरोg_miscdev = अणु
+static struct miscdevice ipmi_wdog_miscdev = {
 	.minor		= WATCHDOG_MINOR,
 	.name		= "watchdog",
-	.fops		= &ipmi_wकरोg_fops
-पूर्ण;
+	.fops		= &ipmi_wdog_fops
+};
 
-अटल व्योम ipmi_wकरोg_msg_handler(काष्ठा ipmi_recv_msg *msg,
-				  व्योम                 *handler_data)
-अणु
-	अगर (msg->msg.cmd == IPMI_WDOG_RESET_TIMER &&
+static void ipmi_wdog_msg_handler(struct ipmi_recv_msg *msg,
+				  void                 *handler_data)
+{
+	if (msg->msg.cmd == IPMI_WDOG_RESET_TIMER &&
 			msg->msg.data[0] == IPMI_WDOG_TIMER_NOT_INIT_RESP)
 		pr_info("response: The IPMI controller appears to have been reset, will attempt to reinitialize the watchdog timer\n");
-	अन्यथा अगर (msg->msg.data[0] != 0)
+	else if (msg->msg.data[0] != 0)
 		pr_err("response: Error %x on cmd %x\n",
 		       msg->msg.data[0],
 		       msg->msg.cmd);
 
-	ipmi_मुक्त_recv_msg(msg);
-पूर्ण
+	ipmi_free_recv_msg(msg);
+}
 
-अटल व्योम ipmi_wकरोg_preसमयout_handler(व्योम *handler_data)
-अणु
-	अगर (preaction_val != WDOG_PRETIMEOUT_NONE) अणु
-		अगर (preop_val == WDOG_PREOP_PANIC) अणु
-			अगर (atomic_inc_and_test(&preop_panic_excl))
+static void ipmi_wdog_pretimeout_handler(void *handler_data)
+{
+	if (preaction_val != WDOG_PRETIMEOUT_NONE) {
+		if (preop_val == WDOG_PREOP_PANIC) {
+			if (atomic_inc_and_test(&preop_panic_excl))
 				panic("Watchdog pre-timeout");
-		पूर्ण अन्यथा अगर (preop_val == WDOG_PREOP_GIVE_DATA) अणु
-			अचिन्हित दीर्घ flags;
+		} else if (preop_val == WDOG_PREOP_GIVE_DATA) {
+			unsigned long flags;
 
-			spin_lock_irqsave(&ipmi_पढ़ो_lock, flags);
-			data_to_पढ़ो = 1;
-			wake_up_पूर्णांकerruptible(&पढ़ो_q);
-			समाप्त_fasync(&fasync_q, SIGIO, POLL_IN);
-			spin_unlock_irqrestore(&ipmi_पढ़ो_lock, flags);
-		पूर्ण
-	पूर्ण
+			spin_lock_irqsave(&ipmi_read_lock, flags);
+			data_to_read = 1;
+			wake_up_interruptible(&read_q);
+			kill_fasync(&fasync_q, SIGIO, POLL_IN);
+			spin_unlock_irqrestore(&ipmi_read_lock, flags);
+		}
+	}
 
 	/*
 	 * On some machines, the heartbeat will give an error and not
-	 * work unless we re-enable the समयr.  So करो so.
+	 * work unless we re-enable the timer.  So do so.
 	 */
-	atomic_set(&preसमयout_since_last_heartbeat, 1);
-पूर्ण
+	atomic_set(&pretimeout_since_last_heartbeat, 1);
+}
 
-अटल व्योम ipmi_wकरोg_panic_handler(व्योम *user_data)
-अणु
-	अटल पूर्णांक panic_event_handled;
+static void ipmi_wdog_panic_handler(void *user_data)
+{
+	static int panic_event_handled;
 
 	/*
-	 * On a panic, अगर we have a panic समयout, make sure to extend
-	 * the watchकरोg समयr to a reasonable value to complete the
-	 * panic, अगर the watchकरोg समयr is running.  Plus the
-	 * preसमयout is meaningless at panic समय.
+	 * On a panic, if we have a panic timeout, make sure to extend
+	 * the watchdog timer to a reasonable value to complete the
+	 * panic, if the watchdog timer is running.  Plus the
+	 * pretimeout is meaningless at panic time.
 	 */
-	अगर (watchकरोg_user && !panic_event_handled &&
-	    ipmi_watchकरोg_state != WDOG_TIMEOUT_NONE) अणु
-		/* Make sure we करो this only once. */
+	if (watchdog_user && !panic_event_handled &&
+	    ipmi_watchdog_state != WDOG_TIMEOUT_NONE) {
+		/* Make sure we do this only once. */
 		panic_event_handled = 1;
 
-		समयout = panic_wdt_समयout;
-		preसमयout = 0;
-		panic_halt_ipmi_set_समयout();
-	पूर्ण
-पूर्ण
+		timeout = panic_wdt_timeout;
+		pretimeout = 0;
+		panic_halt_ipmi_set_timeout();
+	}
+}
 
-अटल स्थिर काष्ठा ipmi_user_hndl ipmi_hndlrs = अणु
-	.ipmi_recv_hndl           = ipmi_wकरोg_msg_handler,
-	.ipmi_watchकरोg_preसमयout = ipmi_wकरोg_preसमयout_handler,
-	.ipmi_panic_handler       = ipmi_wकरोg_panic_handler
-पूर्ण;
+static const struct ipmi_user_hndl ipmi_hndlrs = {
+	.ipmi_recv_hndl           = ipmi_wdog_msg_handler,
+	.ipmi_watchdog_pretimeout = ipmi_wdog_pretimeout_handler,
+	.ipmi_panic_handler       = ipmi_wdog_panic_handler
+};
 
-अटल व्योम ipmi_रेजिस्टर_watchकरोg(पूर्णांक ipmi_पूर्णांकf)
-अणु
-	पूर्णांक rv = -EBUSY;
+static void ipmi_register_watchdog(int ipmi_intf)
+{
+	int rv = -EBUSY;
 
-	अगर (watchकरोg_user)
-		जाओ out;
+	if (watchdog_user)
+		goto out;
 
-	अगर ((अगरnum_to_use >= 0) && (अगरnum_to_use != ipmi_पूर्णांकf))
-		जाओ out;
+	if ((ifnum_to_use >= 0) && (ifnum_to_use != ipmi_intf))
+		goto out;
 
-	watchकरोg_अगरnum = ipmi_पूर्णांकf;
+	watchdog_ifnum = ipmi_intf;
 
-	rv = ipmi_create_user(ipmi_पूर्णांकf, &ipmi_hndlrs, शून्य, &watchकरोg_user);
-	अगर (rv < 0) अणु
+	rv = ipmi_create_user(ipmi_intf, &ipmi_hndlrs, NULL, &watchdog_user);
+	if (rv < 0) {
 		pr_crit("Unable to register with ipmi\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	rv = ipmi_get_version(watchकरोg_user,
+	rv = ipmi_get_version(watchdog_user,
 			      &ipmi_version_major,
 			      &ipmi_version_minor);
-	अगर (rv) अणु
+	if (rv) {
 		pr_warn("Unable to get IPMI version, assuming 1.0\n");
 		ipmi_version_major = 1;
 		ipmi_version_minor = 0;
-	पूर्ण
+	}
 
-	rv = misc_रेजिस्टर(&ipmi_wकरोg_miscdev);
-	अगर (rv < 0) अणु
-		ipmi_destroy_user(watchकरोg_user);
-		watchकरोg_user = शून्य;
+	rv = misc_register(&ipmi_wdog_miscdev);
+	if (rv < 0) {
+		ipmi_destroy_user(watchdog_user);
+		watchdog_user = NULL;
 		pr_crit("Unable to register misc device\n");
-	पूर्ण
+	}
 
-#अगर_घोषित HAVE_DIE_NMI
-	अगर (nmi_handler_रेजिस्टरed) अणु
-		पूर्णांक old_preसमयout = preसमयout;
-		पूर्णांक old_समयout = समयout;
-		पूर्णांक old_preop_val = preop_val;
+#ifdef HAVE_DIE_NMI
+	if (nmi_handler_registered) {
+		int old_pretimeout = pretimeout;
+		int old_timeout = timeout;
+		int old_preop_val = preop_val;
 
 		/*
-		 * Set the preसमयout to go off in a second and give
-		 * ourselves plenty of समय to stop the समयr.
+		 * Set the pretimeout to go off in a second and give
+		 * ourselves plenty of time to stop the timer.
 		 */
-		ipmi_watchकरोg_state = WDOG_TIMEOUT_RESET;
+		ipmi_watchdog_state = WDOG_TIMEOUT_RESET;
 		preop_val = WDOG_PREOP_NONE; /* Make sure nothing happens */
-		preसमयout = 99;
-		समयout = 100;
+		pretimeout = 99;
+		timeout = 100;
 
 		testing_nmi = 1;
 
-		rv = ipmi_set_समयout(IPMI_SET_TIMEOUT_FORCE_HB);
-		अगर (rv) अणु
+		rv = ipmi_set_timeout(IPMI_SET_TIMEOUT_FORCE_HB);
+		if (rv) {
 			pr_warn("Error starting timer to test NMI: 0x%x.  The NMI pretimeout will likely not work\n",
 				rv);
 			rv = 0;
-			जाओ out_restore;
-		पूर्ण
+			goto out_restore;
+		}
 
 		msleep(1500);
 
-		अगर (testing_nmi != 2) अणु
+		if (testing_nmi != 2) {
 			pr_warn("IPMI NMI didn't seem to occur.  The NMI pretimeout will likely not work\n");
-		पूर्ण
+		}
  out_restore:
 		testing_nmi = 0;
 		preop_val = old_preop_val;
-		preसमयout = old_preसमयout;
-		समयout = old_समयout;
-	पूर्ण
-#पूर्ण_अगर
+		pretimeout = old_pretimeout;
+		timeout = old_timeout;
+	}
+#endif
 
  out:
-	अगर ((start_now) && (rv == 0)) अणु
-		/* Run from startup, so start the समयr now. */
+	if ((start_now) && (rv == 0)) {
+		/* Run from startup, so start the timer now. */
 		start_now = 0; /* Disable this function after first startup. */
-		ipmi_watchकरोg_state = action_val;
-		ipmi_set_समयout(IPMI_SET_TIMEOUT_FORCE_HB);
+		ipmi_watchdog_state = action_val;
+		ipmi_set_timeout(IPMI_SET_TIMEOUT_FORCE_HB);
 		pr_info("Starting now!\n");
-	पूर्ण अन्यथा अणु
-		/* Stop the समयr now. */
-		ipmi_watchकरोg_state = WDOG_TIMEOUT_NONE;
-		ipmi_set_समयout(IPMI_SET_TIMEOUT_NO_HB);
-	पूर्ण
-पूर्ण
+	} else {
+		/* Stop the timer now. */
+		ipmi_watchdog_state = WDOG_TIMEOUT_NONE;
+		ipmi_set_timeout(IPMI_SET_TIMEOUT_NO_HB);
+	}
+}
 
-अटल व्योम ipmi_unरेजिस्टर_watchकरोg(पूर्णांक ipmi_पूर्णांकf)
-अणु
-	पूर्णांक rv;
-	काष्ठा ipmi_user *loc_user = watchकरोg_user;
+static void ipmi_unregister_watchdog(int ipmi_intf)
+{
+	int rv;
+	struct ipmi_user *loc_user = watchdog_user;
 
-	अगर (!loc_user)
-		वापस;
+	if (!loc_user)
+		return;
 
-	अगर (watchकरोg_अगरnum != ipmi_पूर्णांकf)
-		वापस;
+	if (watchdog_ifnum != ipmi_intf)
+		return;
 
 	/* Make sure no one can call us any more. */
-	misc_deरेजिस्टर(&ipmi_wकरोg_miscdev);
+	misc_deregister(&ipmi_wdog_miscdev);
 
-	watchकरोg_user = शून्य;
+	watchdog_user = NULL;
 
 	/*
 	 * Wait to make sure the message makes it out.  The lower layer has
-	 * poपूर्णांकers to our buffers, we want to make sure they are करोne beक्रमe
+	 * pointers to our buffers, we want to make sure they are done before
 	 * we release our memory.
 	 */
-	जबतक (atomic_पढ़ो(&msg_toमुक्त))
-		msg_मुक्त_smi(शून्य);
+	while (atomic_read(&msg_tofree))
+		msg_free_smi(NULL);
 
-	mutex_lock(&ipmi_watchकरोg_mutex);
+	mutex_lock(&ipmi_watchdog_mutex);
 
 	/* Disconnect from IPMI. */
 	rv = ipmi_destroy_user(loc_user);
-	अगर (rv)
+	if (rv)
 		pr_warn("error unlinking from IPMI: %d\n",  rv);
 
 	/* If it comes back, restart it properly. */
-	ipmi_start_समयr_on_heartbeat = 1;
+	ipmi_start_timer_on_heartbeat = 1;
 
-	mutex_unlock(&ipmi_watchकरोg_mutex);
-पूर्ण
+	mutex_unlock(&ipmi_watchdog_mutex);
+}
 
-#अगर_घोषित HAVE_DIE_NMI
-अटल पूर्णांक
-ipmi_nmi(अचिन्हित पूर्णांक val, काष्ठा pt_regs *regs)
-अणु
+#ifdef HAVE_DIE_NMI
+static int
+ipmi_nmi(unsigned int val, struct pt_regs *regs)
+{
 	/*
 	 * If we get here, it's an NMI that's not a memory or I/O
 	 * error.  We can't truly tell if it's from IPMI or not
@@ -1111,234 +1110,234 @@ ipmi_nmi(अचिन्हित पूर्णांक val, काष्ठ�
 	 * impossible because of locking.
 	 */
 
-	अगर (testing_nmi) अणु
+	if (testing_nmi) {
 		testing_nmi = 2;
-		वापस NMI_HANDLED;
-	पूर्ण
+		return NMI_HANDLED;
+	}
 
-	/* If we are not expecting a समयout, ignore it. */
-	अगर (ipmi_watchकरोg_state == WDOG_TIMEOUT_NONE)
-		वापस NMI_DONE;
+	/* If we are not expecting a timeout, ignore it. */
+	if (ipmi_watchdog_state == WDOG_TIMEOUT_NONE)
+		return NMI_DONE;
 
-	अगर (preaction_val != WDOG_PRETIMEOUT_NMI)
-		वापस NMI_DONE;
+	if (preaction_val != WDOG_PRETIMEOUT_NMI)
+		return NMI_DONE;
 
 	/*
-	 * If no one अन्यथा handled the NMI, we assume it was the IPMI
-	 * watchकरोg.
+	 * If no one else handled the NMI, we assume it was the IPMI
+	 * watchdog.
 	 */
-	अगर (preop_val == WDOG_PREOP_PANIC) अणु
+	if (preop_val == WDOG_PREOP_PANIC) {
 		/* On some machines, the heartbeat will give
 		   an error and not work unless we re-enable
-		   the समयr.   So करो so. */
-		atomic_set(&preसमयout_since_last_heartbeat, 1);
-		अगर (atomic_inc_and_test(&preop_panic_excl))
+		   the timer.   So do so. */
+		atomic_set(&pretimeout_since_last_heartbeat, 1);
+		if (atomic_inc_and_test(&preop_panic_excl))
 			nmi_panic(regs, "pre-timeout");
-	पूर्ण
+	}
 
-	वापस NMI_HANDLED;
-पूर्ण
-#पूर्ण_अगर
+	return NMI_HANDLED;
+}
+#endif
 
-अटल पूर्णांक wकरोg_reboot_handler(काष्ठा notअगरier_block *this,
-			       अचिन्हित दीर्घ         code,
-			       व्योम                  *unused)
-अणु
-	अटल पूर्णांक reboot_event_handled;
+static int wdog_reboot_handler(struct notifier_block *this,
+			       unsigned long         code,
+			       void                  *unused)
+{
+	static int reboot_event_handled;
 
-	अगर ((watchकरोg_user) && (!reboot_event_handled)) अणु
-		/* Make sure we only करो this once. */
+	if ((watchdog_user) && (!reboot_event_handled)) {
+		/* Make sure we only do this once. */
 		reboot_event_handled = 1;
 
-		अगर (code == SYS_POWER_OFF || code == SYS_HALT) अणु
-			/* Disable the WDT अगर we are shutting करोwn. */
-			ipmi_watchकरोg_state = WDOG_TIMEOUT_NONE;
-			ipmi_set_समयout(IPMI_SET_TIMEOUT_NO_HB);
-		पूर्ण अन्यथा अगर (ipmi_watchकरोg_state != WDOG_TIMEOUT_NONE) अणु
-			/* Set a दीर्घ समयr to let the reboot happen or
-			   reset अगर it hangs, but only अगर the watchकरोg
-			   समयr was alपढ़ोy running. */
-			अगर (समयout < 120)
-				समयout = 120;
-			preसमयout = 0;
-			ipmi_watchकरोg_state = WDOG_TIMEOUT_RESET;
-			ipmi_set_समयout(IPMI_SET_TIMEOUT_NO_HB);
-		पूर्ण
-	पूर्ण
-	वापस NOTIFY_OK;
-पूर्ण
+		if (code == SYS_POWER_OFF || code == SYS_HALT) {
+			/* Disable the WDT if we are shutting down. */
+			ipmi_watchdog_state = WDOG_TIMEOUT_NONE;
+			ipmi_set_timeout(IPMI_SET_TIMEOUT_NO_HB);
+		} else if (ipmi_watchdog_state != WDOG_TIMEOUT_NONE) {
+			/* Set a long timer to let the reboot happen or
+			   reset if it hangs, but only if the watchdog
+			   timer was already running. */
+			if (timeout < 120)
+				timeout = 120;
+			pretimeout = 0;
+			ipmi_watchdog_state = WDOG_TIMEOUT_RESET;
+			ipmi_set_timeout(IPMI_SET_TIMEOUT_NO_HB);
+		}
+	}
+	return NOTIFY_OK;
+}
 
-अटल काष्ठा notअगरier_block wकरोg_reboot_notअगरier = अणु
-	.notअगरier_call	= wकरोg_reboot_handler,
-	.next		= शून्य,
+static struct notifier_block wdog_reboot_notifier = {
+	.notifier_call	= wdog_reboot_handler,
+	.next		= NULL,
 	.priority	= 0
-पूर्ण;
+};
 
-अटल व्योम ipmi_new_smi(पूर्णांक अगर_num, काष्ठा device *device)
-अणु
-	ipmi_रेजिस्टर_watchकरोg(अगर_num);
-पूर्ण
+static void ipmi_new_smi(int if_num, struct device *device)
+{
+	ipmi_register_watchdog(if_num);
+}
 
-अटल व्योम ipmi_smi_gone(पूर्णांक अगर_num)
-अणु
-	ipmi_unरेजिस्टर_watchकरोg(अगर_num);
-पूर्ण
+static void ipmi_smi_gone(int if_num)
+{
+	ipmi_unregister_watchdog(if_num);
+}
 
-अटल काष्ठा ipmi_smi_watcher smi_watcher = अणु
+static struct ipmi_smi_watcher smi_watcher = {
 	.owner    = THIS_MODULE,
 	.new_smi  = ipmi_new_smi,
 	.smi_gone = ipmi_smi_gone
-पूर्ण;
+};
 
-अटल पूर्णांक action_op(स्थिर अक्षर *inval, अक्षर *outval)
-अणु
-	अगर (outval)
-		म_नकल(outval, action);
+static int action_op(const char *inval, char *outval)
+{
+	if (outval)
+		strcpy(outval, action);
 
-	अगर (!inval)
-		वापस 0;
+	if (!inval)
+		return 0;
 
-	अगर (म_भेद(inval, "reset") == 0)
+	if (strcmp(inval, "reset") == 0)
 		action_val = WDOG_TIMEOUT_RESET;
-	अन्यथा अगर (म_भेद(inval, "none") == 0)
+	else if (strcmp(inval, "none") == 0)
 		action_val = WDOG_TIMEOUT_NONE;
-	अन्यथा अगर (म_भेद(inval, "power_cycle") == 0)
+	else if (strcmp(inval, "power_cycle") == 0)
 		action_val = WDOG_TIMEOUT_POWER_CYCLE;
-	अन्यथा अगर (म_भेद(inval, "power_off") == 0)
+	else if (strcmp(inval, "power_off") == 0)
 		action_val = WDOG_TIMEOUT_POWER_DOWN;
-	अन्यथा
-		वापस -EINVAL;
-	म_नकल(action, inval);
-	वापस 0;
-पूर्ण
+	else
+		return -EINVAL;
+	strcpy(action, inval);
+	return 0;
+}
 
-अटल पूर्णांक preaction_op(स्थिर अक्षर *inval, अक्षर *outval)
-अणु
-	अगर (outval)
-		म_नकल(outval, preaction);
+static int preaction_op(const char *inval, char *outval)
+{
+	if (outval)
+		strcpy(outval, preaction);
 
-	अगर (!inval)
-		वापस 0;
+	if (!inval)
+		return 0;
 
-	अगर (म_भेद(inval, "pre_none") == 0)
+	if (strcmp(inval, "pre_none") == 0)
 		preaction_val = WDOG_PRETIMEOUT_NONE;
-	अन्यथा अगर (म_भेद(inval, "pre_smi") == 0)
+	else if (strcmp(inval, "pre_smi") == 0)
 		preaction_val = WDOG_PRETIMEOUT_SMI;
-#अगर_घोषित HAVE_DIE_NMI
-	अन्यथा अगर (म_भेद(inval, "pre_nmi") == 0)
+#ifdef HAVE_DIE_NMI
+	else if (strcmp(inval, "pre_nmi") == 0)
 		preaction_val = WDOG_PRETIMEOUT_NMI;
-#पूर्ण_अगर
-	अन्यथा अगर (म_भेद(inval, "pre_int") == 0)
+#endif
+	else if (strcmp(inval, "pre_int") == 0)
 		preaction_val = WDOG_PRETIMEOUT_MSG_INT;
-	अन्यथा
-		वापस -EINVAL;
-	म_नकल(preaction, inval);
-	वापस 0;
-पूर्ण
+	else
+		return -EINVAL;
+	strcpy(preaction, inval);
+	return 0;
+}
 
-अटल पूर्णांक preop_op(स्थिर अक्षर *inval, अक्षर *outval)
-अणु
-	अगर (outval)
-		म_नकल(outval, preop);
+static int preop_op(const char *inval, char *outval)
+{
+	if (outval)
+		strcpy(outval, preop);
 
-	अगर (!inval)
-		वापस 0;
+	if (!inval)
+		return 0;
 
-	अगर (म_भेद(inval, "preop_none") == 0)
+	if (strcmp(inval, "preop_none") == 0)
 		preop_val = WDOG_PREOP_NONE;
-	अन्यथा अगर (म_भेद(inval, "preop_panic") == 0)
+	else if (strcmp(inval, "preop_panic") == 0)
 		preop_val = WDOG_PREOP_PANIC;
-	अन्यथा अगर (म_भेद(inval, "preop_give_data") == 0)
+	else if (strcmp(inval, "preop_give_data") == 0)
 		preop_val = WDOG_PREOP_GIVE_DATA;
-	अन्यथा
-		वापस -EINVAL;
-	म_नकल(preop, inval);
-	वापस 0;
-पूर्ण
+	else
+		return -EINVAL;
+	strcpy(preop, inval);
+	return 0;
+}
 
-अटल व्योम check_parms(व्योम)
-अणु
-#अगर_घोषित HAVE_DIE_NMI
-	पूर्णांक करो_nmi = 0;
-	पूर्णांक rv;
+static void check_parms(void)
+{
+#ifdef HAVE_DIE_NMI
+	int do_nmi = 0;
+	int rv;
 
-	अगर (preaction_val == WDOG_PRETIMEOUT_NMI) अणु
-		करो_nmi = 1;
-		अगर (preop_val == WDOG_PREOP_GIVE_DATA) अणु
+	if (preaction_val == WDOG_PRETIMEOUT_NMI) {
+		do_nmi = 1;
+		if (preop_val == WDOG_PREOP_GIVE_DATA) {
 			pr_warn("Pretimeout op is to give data but NMI pretimeout is enabled, setting pretimeout op to none\n");
-			preop_op("preop_none", शून्य);
-			करो_nmi = 0;
-		पूर्ण
-	पूर्ण
-	अगर (करो_nmi && !nmi_handler_रेजिस्टरed) अणु
-		rv = रेजिस्टर_nmi_handler(NMI_UNKNOWN, ipmi_nmi, 0,
+			preop_op("preop_none", NULL);
+			do_nmi = 0;
+		}
+	}
+	if (do_nmi && !nmi_handler_registered) {
+		rv = register_nmi_handler(NMI_UNKNOWN, ipmi_nmi, 0,
 						"ipmi");
-		अगर (rv) अणु
+		if (rv) {
 			pr_warn("Can't register nmi handler\n");
-			वापस;
-		पूर्ण अन्यथा
-			nmi_handler_रेजिस्टरed = 1;
-	पूर्ण अन्यथा अगर (!करो_nmi && nmi_handler_रेजिस्टरed) अणु
-		unरेजिस्टर_nmi_handler(NMI_UNKNOWN, "ipmi");
-		nmi_handler_रेजिस्टरed = 0;
-	पूर्ण
-#पूर्ण_अगर
-पूर्ण
+			return;
+		} else
+			nmi_handler_registered = 1;
+	} else if (!do_nmi && nmi_handler_registered) {
+		unregister_nmi_handler(NMI_UNKNOWN, "ipmi");
+		nmi_handler_registered = 0;
+	}
+#endif
+}
 
-अटल पूर्णांक __init ipmi_wकरोg_init(व्योम)
-अणु
-	पूर्णांक rv;
+static int __init ipmi_wdog_init(void)
+{
+	int rv;
 
-	अगर (action_op(action, शून्य)) अणु
-		action_op("reset", शून्य);
+	if (action_op(action, NULL)) {
+		action_op("reset", NULL);
 		pr_info("Unknown action '%s', defaulting to reset\n", action);
-	पूर्ण
+	}
 
-	अगर (preaction_op(preaction, शून्य)) अणु
-		preaction_op("pre_none", शून्य);
+	if (preaction_op(preaction, NULL)) {
+		preaction_op("pre_none", NULL);
 		pr_info("Unknown preaction '%s', defaulting to none\n",
 			preaction);
-	पूर्ण
+	}
 
-	अगर (preop_op(preop, शून्य)) अणु
-		preop_op("preop_none", शून्य);
+	if (preop_op(preop, NULL)) {
+		preop_op("preop_none", NULL);
 		pr_info("Unknown preop '%s', defaulting to none\n", preop);
-	पूर्ण
+	}
 
 	check_parms();
 
-	रेजिस्टर_reboot_notअगरier(&wकरोg_reboot_notअगरier);
+	register_reboot_notifier(&wdog_reboot_notifier);
 
-	rv = ipmi_smi_watcher_रेजिस्टर(&smi_watcher);
-	अगर (rv) अणु
-#अगर_घोषित HAVE_DIE_NMI
-		अगर (nmi_handler_रेजिस्टरed)
-			unरेजिस्टर_nmi_handler(NMI_UNKNOWN, "ipmi");
-#पूर्ण_अगर
-		unरेजिस्टर_reboot_notअगरier(&wकरोg_reboot_notअगरier);
+	rv = ipmi_smi_watcher_register(&smi_watcher);
+	if (rv) {
+#ifdef HAVE_DIE_NMI
+		if (nmi_handler_registered)
+			unregister_nmi_handler(NMI_UNKNOWN, "ipmi");
+#endif
+		unregister_reboot_notifier(&wdog_reboot_notifier);
 		pr_warn("can't register smi watcher\n");
-		वापस rv;
-	पूर्ण
+		return rv;
+	}
 
 	pr_info("driver initialized\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास ipmi_wकरोg_निकास(व्योम)
-अणु
-	ipmi_smi_watcher_unरेजिस्टर(&smi_watcher);
-	ipmi_unरेजिस्टर_watchकरोg(watchकरोg_अगरnum);
+static void __exit ipmi_wdog_exit(void)
+{
+	ipmi_smi_watcher_unregister(&smi_watcher);
+	ipmi_unregister_watchdog(watchdog_ifnum);
 
-#अगर_घोषित HAVE_DIE_NMI
-	अगर (nmi_handler_रेजिस्टरed)
-		unरेजिस्टर_nmi_handler(NMI_UNKNOWN, "ipmi");
-#पूर्ण_अगर
+#ifdef HAVE_DIE_NMI
+	if (nmi_handler_registered)
+		unregister_nmi_handler(NMI_UNKNOWN, "ipmi");
+#endif
 
-	unरेजिस्टर_reboot_notअगरier(&wकरोg_reboot_notअगरier);
-पूर्ण
-module_निकास(ipmi_wकरोg_निकास);
-module_init(ipmi_wकरोg_init);
+	unregister_reboot_notifier(&wdog_reboot_notifier);
+}
+module_exit(ipmi_wdog_exit);
+module_init(ipmi_wdog_init);
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Corey Minyard <minyard@mvista.com>");
 MODULE_DESCRIPTION("watchdog timer based upon the IPMI interface.");

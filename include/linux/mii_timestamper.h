@@ -1,122 +1,121 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Support क्रम generic समय stamping devices on MII buses.
- * Copyright (C) 2018 Riअक्षरd Cochran <riअक्षरdcochran@gmail.com>
+ * Support for generic time stamping devices on MII buses.
+ * Copyright (C) 2018 Richard Cochran <richardcochran@gmail.com>
  */
-#अगर_अघोषित _LINUX_MII_TIMESTAMPER_H
-#घोषणा _LINUX_MII_TIMESTAMPER_H
+#ifndef _LINUX_MII_TIMESTAMPER_H
+#define _LINUX_MII_TIMESTAMPER_H
 
-#समावेश <linux/device.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/skbuff.h>
+#include <linux/device.h>
+#include <linux/ethtool.h>
+#include <linux/skbuff.h>
 
-काष्ठा phy_device;
+struct phy_device;
 
 /**
- * काष्ठा mii_बारtamper - Callback पूर्णांकerface to MII समय stamping devices.
+ * struct mii_timestamper - Callback interface to MII time stamping devices.
  *
- * @rxtstamp:	Requests a Rx बारtamp क्रम 'skb'.  If the skb is accepted,
- *		the MII समय stamping device promises to deliver it using
- *		netअगर_rx() as soon as a बारtamp becomes available. One of
+ * @rxtstamp:	Requests a Rx timestamp for 'skb'.  If the skb is accepted,
+ *		the MII time stamping device promises to deliver it using
+ *		netif_rx() as soon as a timestamp becomes available. One of
  *		the PTP_CLASS_ values is passed in 'type'.  The function
- *		must वापस true अगर the skb is accepted क्रम delivery.
+ *		must return true if the skb is accepted for delivery.
  *
- * @txtstamp:	Requests a Tx बारtamp क्रम 'skb'.  The MII समय stamping
- *		device promises to deliver it using skb_complete_tx_बारtamp()
- *		as soon as a बारtamp becomes available. One of the PTP_CLASS_
+ * @txtstamp:	Requests a Tx timestamp for 'skb'.  The MII time stamping
+ *		device promises to deliver it using skb_complete_tx_timestamp()
+ *		as soon as a timestamp becomes available. One of the PTP_CLASS_
  *		values is passed in 'type'.
  *
- * @hwtstamp:	Handles SIOCSHWTSTAMP ioctl क्रम hardware समय stamping.
+ * @hwtstamp:	Handles SIOCSHWTSTAMP ioctl for hardware time stamping.
  *
  * @link_state: Allows the device to respond to changes in the link
- *		state.  The caller invokes this function जबतक holding
+ *		state.  The caller invokes this function while holding
  *		the phy_device mutex.
  *
- * @ts_info:	Handles ethtool queries क्रम hardware समय stamping.
- * @device:	Remembers the device to which the instance beदीर्घs.
+ * @ts_info:	Handles ethtool queries for hardware time stamping.
+ * @device:	Remembers the device to which the instance belongs.
  *
- * Drivers क्रम PHY समय stamping devices should embed their
- * mii_बारtamper within a निजी काष्ठाure, obtaining a reference
+ * Drivers for PHY time stamping devices should embed their
+ * mii_timestamper within a private structure, obtaining a reference
  * to it using container_of().
  *
- * Drivers क्रम non-PHY समय stamping devices should वापस a poपूर्णांकer
- * to a mii_बारtamper from the probe_channel() callback of their
- * mii_बारtamping_ctrl पूर्णांकerface.
+ * Drivers for non-PHY time stamping devices should return a pointer
+ * to a mii_timestamper from the probe_channel() callback of their
+ * mii_timestamping_ctrl interface.
  */
-काष्ठा mii_बारtamper अणु
-	bool (*rxtstamp)(काष्ठा mii_बारtamper *mii_ts,
-			 काष्ठा sk_buff *skb, पूर्णांक type);
+struct mii_timestamper {
+	bool (*rxtstamp)(struct mii_timestamper *mii_ts,
+			 struct sk_buff *skb, int type);
 
-	व्योम (*txtstamp)(काष्ठा mii_बारtamper *mii_ts,
-			 काष्ठा sk_buff *skb, पूर्णांक type);
+	void (*txtstamp)(struct mii_timestamper *mii_ts,
+			 struct sk_buff *skb, int type);
 
-	पूर्णांक  (*hwtstamp)(काष्ठा mii_बारtamper *mii_ts,
-			 काष्ठा अगरreq *अगरreq);
+	int  (*hwtstamp)(struct mii_timestamper *mii_ts,
+			 struct ifreq *ifreq);
 
-	व्योम (*link_state)(काष्ठा mii_बारtamper *mii_ts,
-			   काष्ठा phy_device *phydev);
+	void (*link_state)(struct mii_timestamper *mii_ts,
+			   struct phy_device *phydev);
 
-	पूर्णांक  (*ts_info)(काष्ठा mii_बारtamper *mii_ts,
-			काष्ठा ethtool_ts_info *ts_info);
+	int  (*ts_info)(struct mii_timestamper *mii_ts,
+			struct ethtool_ts_info *ts_info);
 
-	काष्ठा device *device;
-पूर्ण;
+	struct device *device;
+};
 
 /**
- * काष्ठा mii_बारtamping_ctrl - MII समय stamping controller पूर्णांकerface.
+ * struct mii_timestamping_ctrl - MII time stamping controller interface.
  *
- * @probe_channel:	Callback पूर्णांकo the controller driver announcing the
+ * @probe_channel:	Callback into the controller driver announcing the
  *			presence of the 'port' channel.  The 'device' field
- *			had been passed to रेजिस्टर_mii_tstamp_controller().
- *			The driver must वापस either a poपूर्णांकer to a valid
- *			MII बारtamper instance or PTR_ERR.
+ *			had been passed to register_mii_tstamp_controller().
+ *			The driver must return either a pointer to a valid
+ *			MII timestamper instance or PTR_ERR.
  *
  * @release_channel:	Releases an instance obtained via .probe_channel.
  */
-काष्ठा mii_बारtamping_ctrl अणु
-	काष्ठा mii_बारtamper *(*probe_channel)(काष्ठा device *device,
-						 अचिन्हित पूर्णांक port);
-	व्योम (*release_channel)(काष्ठा device *device,
-				काष्ठा mii_बारtamper *mii_ts);
-पूर्ण;
+struct mii_timestamping_ctrl {
+	struct mii_timestamper *(*probe_channel)(struct device *device,
+						 unsigned int port);
+	void (*release_channel)(struct device *device,
+				struct mii_timestamper *mii_ts);
+};
 
-#अगर_घोषित CONFIG_NETWORK_PHY_TIMESTAMPING
+#ifdef CONFIG_NETWORK_PHY_TIMESTAMPING
 
-पूर्णांक रेजिस्टर_mii_tstamp_controller(काष्ठा device *device,
-				   काष्ठा mii_बारtamping_ctrl *ctrl);
+int register_mii_tstamp_controller(struct device *device,
+				   struct mii_timestamping_ctrl *ctrl);
 
-व्योम unरेजिस्टर_mii_tstamp_controller(काष्ठा device *device);
+void unregister_mii_tstamp_controller(struct device *device);
 
-काष्ठा mii_बारtamper *रेजिस्टर_mii_बारtamper(काष्ठा device_node *node,
-						 अचिन्हित पूर्णांक port);
+struct mii_timestamper *register_mii_timestamper(struct device_node *node,
+						 unsigned int port);
 
-व्योम unरेजिस्टर_mii_बारtamper(काष्ठा mii_बारtamper *mii_ts);
+void unregister_mii_timestamper(struct mii_timestamper *mii_ts);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत
-पूर्णांक रेजिस्टर_mii_tstamp_controller(काष्ठा device *device,
-				   काष्ठा mii_बारtamping_ctrl *ctrl)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+static inline
+int register_mii_tstamp_controller(struct device *device,
+				   struct mii_timestamping_ctrl *ctrl)
+{
+	return -EOPNOTSUPP;
+}
 
-अटल अंतरभूत व्योम unरेजिस्टर_mii_tstamp_controller(काष्ठा device *device)
-अणु
-पूर्ण
+static inline void unregister_mii_tstamp_controller(struct device *device)
+{
+}
 
-अटल अंतरभूत
-काष्ठा mii_बारtamper *रेजिस्टर_mii_बारtamper(काष्ठा device_node *node,
-						 अचिन्हित पूर्णांक port)
-अणु
-	वापस शून्य;
-पूर्ण
+static inline
+struct mii_timestamper *register_mii_timestamper(struct device_node *node,
+						 unsigned int port)
+{
+	return NULL;
+}
 
-अटल अंतरभूत व्योम unरेजिस्टर_mii_बारtamper(काष्ठा mii_बारtamper *mii_ts)
-अणु
-पूर्ण
+static inline void unregister_mii_timestamper(struct mii_timestamper *mii_ts)
+{
+}
 
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर
+#endif

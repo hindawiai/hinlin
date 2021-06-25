@@ -1,42 +1,41 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * Hardware monitoring driver क्रम BEL PFE family घातer supplies.
+ * Hardware monitoring driver for BEL PFE family power supplies.
  *
  * Copyright (c) 2019 Facebook Inc.
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pmbus.h>
+#include <linux/err.h>
+#include <linux/i2c.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/pmbus.h>
 
-#समावेश "pmbus.h"
+#include "pmbus.h"
 
-क्रमागत chips अणुpfe1100, pfe3000पूर्ण;
+enum chips {pfe1100, pfe3000};
 
 /*
- * Disable status check क्रम pfe3000 devices, because some devices report
- * communication error (invalid command) क्रम VOUT_MODE command (0x20)
- * although correct VOUT_MODE (0x16) is वापसed: it leads to incorrect
+ * Disable status check for pfe3000 devices, because some devices report
+ * communication error (invalid command) for VOUT_MODE command (0x20)
+ * although correct VOUT_MODE (0x16) is returned: it leads to incorrect
  * exponent in linear mode.
  */
-अटल काष्ठा pmbus_platक्रमm_data pfe3000_plat_data = अणु
+static struct pmbus_platform_data pfe3000_plat_data = {
 	.flags = PMBUS_SKIP_STATUS_CHECK,
-पूर्ण;
+};
 
-अटल काष्ठा pmbus_driver_info pfe_driver_info[] = अणु
-	[pfe1100] = अणु
+static struct pmbus_driver_info pfe_driver_info[] = {
+	[pfe1100] = {
 		.pages = 1,
-		.क्रमmat[PSC_VOLTAGE_IN] = linear,
-		.क्रमmat[PSC_VOLTAGE_OUT] = linear,
-		.क्रमmat[PSC_CURRENT_IN] = linear,
-		.क्रमmat[PSC_CURRENT_OUT] = linear,
-		.क्रमmat[PSC_POWER] = linear,
-		.क्रमmat[PSC_TEMPERATURE] = linear,
-		.क्रमmat[PSC_FAN] = linear,
+		.format[PSC_VOLTAGE_IN] = linear,
+		.format[PSC_VOLTAGE_OUT] = linear,
+		.format[PSC_CURRENT_IN] = linear,
+		.format[PSC_CURRENT_OUT] = linear,
+		.format[PSC_POWER] = linear,
+		.format[PSC_TEMPERATURE] = linear,
+		.format[PSC_FAN] = linear,
 
 		.func[0] = PMBUS_HAVE_VOUT | PMBUS_HAVE_STATUS_VOUT |
 			   PMBUS_HAVE_IOUT | PMBUS_HAVE_STATUS_IOUT |
@@ -46,17 +45,17 @@
 			   PMBUS_HAVE_TEMP | PMBUS_HAVE_TEMP2 |
 			   PMBUS_HAVE_STATUS_TEMP |
 			   PMBUS_HAVE_FAN12,
-	पूर्ण,
+	},
 
-	[pfe3000] = अणु
+	[pfe3000] = {
 		.pages = 7,
-		.क्रमmat[PSC_VOLTAGE_IN] = linear,
-		.क्रमmat[PSC_VOLTAGE_OUT] = linear,
-		.क्रमmat[PSC_CURRENT_IN] = linear,
-		.क्रमmat[PSC_CURRENT_OUT] = linear,
-		.क्रमmat[PSC_POWER] = linear,
-		.क्रमmat[PSC_TEMPERATURE] = linear,
-		.क्रमmat[PSC_FAN] = linear,
+		.format[PSC_VOLTAGE_IN] = linear,
+		.format[PSC_VOLTAGE_OUT] = linear,
+		.format[PSC_CURRENT_IN] = linear,
+		.format[PSC_CURRENT_OUT] = linear,
+		.format[PSC_POWER] = linear,
+		.format[PSC_TEMPERATURE] = linear,
+		.format[PSC_FAN] = linear,
 
 		/* Page 0: V1. */
 		.func[0] = PMBUS_HAVE_VOUT | PMBUS_HAVE_STATUS_VOUT |
@@ -85,45 +84,45 @@
 		.func[4] = PMBUS_HAVE_VOUT,
 		.func[5] = PMBUS_HAVE_VOUT,
 		.func[6] = PMBUS_HAVE_VOUT,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा i2c_device_id pfe_device_id[];
+static const struct i2c_device_id pfe_device_id[];
 
-अटल पूर्णांक pfe_pmbus_probe(काष्ठा i2c_client *client)
-अणु
-	पूर्णांक model;
+static int pfe_pmbus_probe(struct i2c_client *client)
+{
+	int model;
 
-	model = (पूर्णांक)i2c_match_id(pfe_device_id, client)->driver_data;
+	model = (int)i2c_match_id(pfe_device_id, client)->driver_data;
 
 	/*
 	 * PFE3000-12-069RA devices may not stay in page 0 during device
-	 * probe which leads to probe failure (पढ़ो status word failed).
+	 * probe which leads to probe failure (read status word failed).
 	 * So let's set the device to page 0 at the beginning.
 	 */
-	अगर (model == pfe3000) अणु
-		client->dev.platक्रमm_data = &pfe3000_plat_data;
-		i2c_smbus_ग_लिखो_byte_data(client, PMBUS_PAGE, 0);
-	पूर्ण
+	if (model == pfe3000) {
+		client->dev.platform_data = &pfe3000_plat_data;
+		i2c_smbus_write_byte_data(client, PMBUS_PAGE, 0);
+	}
 
-	वापस pmbus_करो_probe(client, &pfe_driver_info[model]);
-पूर्ण
+	return pmbus_do_probe(client, &pfe_driver_info[model]);
+}
 
-अटल स्थिर काष्ठा i2c_device_id pfe_device_id[] = अणु
-	अणु"pfe1100", pfe1100पूर्ण,
-	अणु"pfe3000", pfe3000पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct i2c_device_id pfe_device_id[] = {
+	{"pfe1100", pfe1100},
+	{"pfe3000", pfe3000},
+	{}
+};
 
 MODULE_DEVICE_TABLE(i2c, pfe_device_id);
 
-अटल काष्ठा i2c_driver pfe_pmbus_driver = अणु
-	.driver = अणु
+static struct i2c_driver pfe_pmbus_driver = {
+	.driver = {
 		   .name = "bel-pfe",
-	पूर्ण,
+	},
 	.probe_new = pfe_pmbus_probe,
 	.id_table = pfe_device_id,
-पूर्ण;
+};
 
 module_i2c_driver(pfe_pmbus_driver);
 

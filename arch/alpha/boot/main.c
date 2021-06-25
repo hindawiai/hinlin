@@ -1,70 +1,69 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * arch/alpha/boot/मुख्य.c
+ * arch/alpha/boot/main.c
  *
  * Copyright (C) 1994, 1995 Linus Torvalds
  *
- * This file is the bootloader क्रम the Linux/AXP kernel
+ * This file is the bootloader for the Linux/AXP kernel
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/माला.स>
-#समावेश <generated/utsrelease.h>
-#समावेश <linux/mm.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/string.h>
+#include <generated/utsrelease.h>
+#include <linux/mm.h>
 
-#समावेश <यंत्र/console.h>
-#समावेश <यंत्र/hwrpb.h>
+#include <asm/console.h>
+#include <asm/hwrpb.h>
 
-#समावेश <मानकतर्क.स>
+#include <stdarg.h>
 
-#समावेश "ksize.h"
+#include "ksize.h"
 
-बाह्य अचिन्हित दीर्घ चयन_to_osf_pal(अचिन्हित दीर्घ nr,
-	काष्ठा pcb_काष्ठा * pcb_va, काष्ठा pcb_काष्ठा * pcb_pa,
-	अचिन्हित दीर्घ *vptb);
-काष्ठा hwrpb_काष्ठा *hwrpb = INIT_HWRPB;
-अटल काष्ठा pcb_काष्ठा pcb_va[1];
+extern unsigned long switch_to_osf_pal(unsigned long nr,
+	struct pcb_struct * pcb_va, struct pcb_struct * pcb_pa,
+	unsigned long *vptb);
+struct hwrpb_struct *hwrpb = INIT_HWRPB;
+static struct pcb_struct pcb_va[1];
 
 /*
- * Find a physical address of a भव object..
+ * Find a physical address of a virtual object..
  *
- * This is easy using the भव page table address.
+ * This is easy using the virtual page table address.
  */
 
-अटल अंतरभूत व्योम *
-find_pa(अचिन्हित दीर्घ *vptb, व्योम *ptr)
-अणु
-	अचिन्हित दीर्घ address = (अचिन्हित दीर्घ) ptr;
-	अचिन्हित दीर्घ result;
+static inline void *
+find_pa(unsigned long *vptb, void *ptr)
+{
+	unsigned long address = (unsigned long) ptr;
+	unsigned long result;
 
 	result = vptb[address >> 13];
 	result >>= 32;
 	result <<= 13;
 	result |= address & 0x1fff;
-	वापस (व्योम *) result;
-पूर्ण	
+	return (void *) result;
+}	
 
 /*
- * This function moves पूर्णांकo OSF/1 pal-code, and has a temporary
- * PCB क्रम that. The kernel proper should replace this PCB with
+ * This function moves into OSF/1 pal-code, and has a temporary
+ * PCB for that. The kernel proper should replace this PCB with
  * the real one as soon as possible.
  *
  * The page table muckery in here depends on the fact that the boot
  * code has the L1 page table identity-map itself in the second PTE
- * in the L1 page table. Thus the L1-page is भवly addressable
- * itself (through three levels) at भव address 0x200802000.
+ * in the L1 page table. Thus the L1-page is virtually addressable
+ * itself (through three levels) at virtual address 0x200802000.
  */
 
-#घोषणा VPTB	((अचिन्हित दीर्घ *) 0x200000000)
-#घोषणा L1	((अचिन्हित दीर्घ *) 0x200802000)
+#define VPTB	((unsigned long *) 0x200000000)
+#define L1	((unsigned long *) 0x200802000)
 
-व्योम
-pal_init(व्योम)
-अणु
-	अचिन्हित दीर्घ i, rev;
-	काष्ठा percpu_काष्ठा * percpu;
-	काष्ठा pcb_काष्ठा * pcb_pa;
+void
+pal_init(void)
+{
+	unsigned long i, rev;
+	struct percpu_struct * percpu;
+	struct pcb_struct * pcb_pa;
 
 	/* Create the dummy PCB.  */
 	pcb_va->ksp = 0;
@@ -80,112 +79,112 @@ pal_init(व्योम)
 
 	/*
 	 * a0 = 2 (OSF)
-	 * a1 = वापस address, but we give the यंत्र the vaddr of the PCB
+	 * a1 = return address, but we give the asm the vaddr of the PCB
 	 * a2 = physical addr of PCB
-	 * a3 = new भव page table poपूर्णांकer
-	 * a4 = KSP (but the यंत्र sets it)
+	 * a3 = new virtual page table pointer
+	 * a4 = KSP (but the asm sets it)
 	 */
-	srm_prपूर्णांकk("Switching to OSF PAL-code .. ");
+	srm_printk("Switching to OSF PAL-code .. ");
 
-	i = चयन_to_osf_pal(2, pcb_va, pcb_pa, VPTB);
-	अगर (i) अणु
-		srm_prपूर्णांकk("failed, code %ld\n", i);
+	i = switch_to_osf_pal(2, pcb_va, pcb_pa, VPTB);
+	if (i) {
+		srm_printk("failed, code %ld\n", i);
 		__halt();
-	पूर्ण
+	}
 
-	percpu = (काष्ठा percpu_काष्ठा *)
-		(INIT_HWRPB->processor_offset + (अचिन्हित दीर्घ) INIT_HWRPB);
+	percpu = (struct percpu_struct *)
+		(INIT_HWRPB->processor_offset + (unsigned long) INIT_HWRPB);
 	rev = percpu->pal_revision = percpu->palcode_avail[2];
 
-	srm_prपूर्णांकk("Ok (rev %lx)\n", rev);
+	srm_printk("Ok (rev %lx)\n", rev);
 
-	tbia(); /* करो it directly in हाल we are SMP */
-पूर्ण
+	tbia(); /* do it directly in case we are SMP */
+}
 
-अटल अंतरभूत दीर्घ खोलोboot(व्योम)
-अणु
-	अक्षर bootdev[256];
-	दीर्घ result;
+static inline long openboot(void)
+{
+	char bootdev[256];
+	long result;
 
-	result = callback_दो_पर्या(ENV_BOOTED_DEV, bootdev, 255);
-	अगर (result < 0)
-		वापस result;
-	वापस callback_खोलो(bootdev, result & 255);
-पूर्ण
+	result = callback_getenv(ENV_BOOTED_DEV, bootdev, 255);
+	if (result < 0)
+		return result;
+	return callback_open(bootdev, result & 255);
+}
 
-अटल अंतरभूत दीर्घ बंद(दीर्घ dev)
-अणु
-	वापस callback_बंद(dev);
-पूर्ण
+static inline long close(long dev)
+{
+	return callback_close(dev);
+}
 
-अटल अंतरभूत दीर्घ load(दीर्घ dev, अचिन्हित दीर्घ addr, अचिन्हित दीर्घ count)
-अणु
-	अक्षर bootfile[256];
-	बाह्य अक्षर _end;
-	दीर्घ result, boot_size = &_end - (अक्षर *) BOOT_ADDR;
+static inline long load(long dev, unsigned long addr, unsigned long count)
+{
+	char bootfile[256];
+	extern char _end;
+	long result, boot_size = &_end - (char *) BOOT_ADDR;
 
-	result = callback_दो_पर्या(ENV_BOOTED_खाता, bootfile, 255);
-	अगर (result < 0)
-		वापस result;
+	result = callback_getenv(ENV_BOOTED_FILE, bootfile, 255);
+	if (result < 0)
+		return result;
 	result &= 255;
 	bootfile[result] = '\0';
-	अगर (result)
-		srm_prपूर्णांकk("Boot file specification (%s) not implemented\n",
+	if (result)
+		srm_printk("Boot file specification (%s) not implemented\n",
 		       bootfile);
-	वापस callback_पढ़ो(dev, count, (व्योम *)addr, boot_size/512 + 1);
-पूर्ण
+	return callback_read(dev, count, (void *)addr, boot_size/512 + 1);
+}
 
 /*
  * Start the kernel.
  */
-अटल व्योम runkernel(व्योम)
-अणु
-	__यंत्र__ __अस्थिर__(
+static void runkernel(void)
+{
+	__asm__ __volatile__(
 		"bis %1,%1,$30\n\t"
 		"bis %0,%0,$26\n\t"
 		"ret ($26)"
-		: /* no outमाला_दो: it करोesn't even वापस */
+		: /* no outputs: it doesn't even return */
 		: "r" (START_ADDR),
 		  "r" (PAGE_SIZE + INIT_STACK));
-पूर्ण
+}
 
-व्योम start_kernel(व्योम)
-अणु
-	दीर्घ i;
-	दीर्घ dev;
-	पूर्णांक nbytes;
-	अक्षर envval[256];
+void start_kernel(void)
+{
+	long i;
+	long dev;
+	int nbytes;
+	char envval[256];
 
-	srm_prपूर्णांकk("Linux/AXP bootloader for Linux " UTS_RELEASE "\n");
-	अगर (INIT_HWRPB->pagesize != 8192) अणु
-		srm_prपूर्णांकk("Expected 8kB pages, got %ldkB\n", INIT_HWRPB->pagesize >> 10);
-		वापस;
-	पूर्ण
+	srm_printk("Linux/AXP bootloader for Linux " UTS_RELEASE "\n");
+	if (INIT_HWRPB->pagesize != 8192) {
+		srm_printk("Expected 8kB pages, got %ldkB\n", INIT_HWRPB->pagesize >> 10);
+		return;
+	}
 	pal_init();
-	dev = खोलोboot();
-	अगर (dev < 0) अणु
-		srm_prपूर्णांकk("Unable to open boot device: %016lx\n", dev);
-		वापस;
-	पूर्ण
+	dev = openboot();
+	if (dev < 0) {
+		srm_printk("Unable to open boot device: %016lx\n", dev);
+		return;
+	}
 	dev &= 0xffffffff;
-	srm_prपूर्णांकk("Loading vmlinux ...");
+	srm_printk("Loading vmlinux ...");
 	i = load(dev, START_ADDR, KERNEL_SIZE);
-	बंद(dev);
-	अगर (i != KERNEL_SIZE) अणु
-		srm_prपूर्णांकk("Failed (%lx)\n", i);
-		वापस;
-	पूर्ण
+	close(dev);
+	if (i != KERNEL_SIZE) {
+		srm_printk("Failed (%lx)\n", i);
+		return;
+	}
 
-	nbytes = callback_दो_पर्या(ENV_BOOTED_OSFLAGS, envval, माप(envval));
-	अगर (nbytes < 0) अणु
+	nbytes = callback_getenv(ENV_BOOTED_OSFLAGS, envval, sizeof(envval));
+	if (nbytes < 0) {
 		nbytes = 0;
-	पूर्ण
+	}
 	envval[nbytes] = '\0';
-	म_नकल((अक्षर*)ZERO_PGE, envval);
+	strcpy((char*)ZERO_PGE, envval);
 
-	srm_prपूर्णांकk(" Ok\nNow booting the kernel\n");
+	srm_printk(" Ok\nNow booting the kernel\n");
 	runkernel();
-	क्रम (i = 0 ; i < 0x100000000 ; i++)
+	for (i = 0 ; i < 0x100000000 ; i++)
 		/* nothing */;
 	__halt();
-पूर्ण
+}

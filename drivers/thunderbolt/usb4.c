@@ -1,326 +1,325 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * USB4 specअगरic functionality
+ * USB4 specific functionality
  *
  * Copyright (C) 2019, Intel Corporation
- * Authors: Mika Westerberg <mika.westerberg@linux.पूर्णांकel.com>
- *	    Rajmohan Mani <rajmohan.mani@पूर्णांकel.com>
+ * Authors: Mika Westerberg <mika.westerberg@linux.intel.com>
+ *	    Rajmohan Mani <rajmohan.mani@intel.com>
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/kसमय.स>
+#include <linux/delay.h>
+#include <linux/ktime.h>
 
-#समावेश "sb_regs.h"
-#समावेश "tb.h"
+#include "sb_regs.h"
+#include "tb.h"
 
-#घोषणा USB4_DATA_DWORDS		16
-#घोषणा USB4_DATA_RETRIES		3
+#define USB4_DATA_DWORDS		16
+#define USB4_DATA_RETRIES		3
 
-क्रमागत usb4_sb_target अणु
+enum usb4_sb_target {
 	USB4_SB_TARGET_ROUTER,
 	USB4_SB_TARGET_PARTNER,
 	USB4_SB_TARGET_RETIMER,
-पूर्ण;
+};
 
-#घोषणा USB4_NVM_READ_OFFSET_MASK	GENMASK(23, 2)
-#घोषणा USB4_NVM_READ_OFFSET_SHIFT	2
-#घोषणा USB4_NVM_READ_LENGTH_MASK	GENMASK(27, 24)
-#घोषणा USB4_NVM_READ_LENGTH_SHIFT	24
+#define USB4_NVM_READ_OFFSET_MASK	GENMASK(23, 2)
+#define USB4_NVM_READ_OFFSET_SHIFT	2
+#define USB4_NVM_READ_LENGTH_MASK	GENMASK(27, 24)
+#define USB4_NVM_READ_LENGTH_SHIFT	24
 
-#घोषणा USB4_NVM_SET_OFFSET_MASK	USB4_NVM_READ_OFFSET_MASK
-#घोषणा USB4_NVM_SET_OFFSET_SHIFT	USB4_NVM_READ_OFFSET_SHIFT
+#define USB4_NVM_SET_OFFSET_MASK	USB4_NVM_READ_OFFSET_MASK
+#define USB4_NVM_SET_OFFSET_SHIFT	USB4_NVM_READ_OFFSET_SHIFT
 
-#घोषणा USB4_DROM_ADDRESS_MASK		GENMASK(14, 2)
-#घोषणा USB4_DROM_ADDRESS_SHIFT		2
-#घोषणा USB4_DROM_SIZE_MASK		GENMASK(19, 15)
-#घोषणा USB4_DROM_SIZE_SHIFT		15
+#define USB4_DROM_ADDRESS_MASK		GENMASK(14, 2)
+#define USB4_DROM_ADDRESS_SHIFT		2
+#define USB4_DROM_SIZE_MASK		GENMASK(19, 15)
+#define USB4_DROM_SIZE_SHIFT		15
 
-#घोषणा USB4_NVM_SECTOR_SIZE_MASK	GENMASK(23, 0)
+#define USB4_NVM_SECTOR_SIZE_MASK	GENMASK(23, 0)
 
-प्रकार पूर्णांक (*पढ़ो_block_fn)(व्योम *, अचिन्हित पूर्णांक, व्योम *, माप_प्रकार);
-प्रकार पूर्णांक (*ग_लिखो_block_fn)(व्योम *, स्थिर व्योम *, माप_प्रकार);
+typedef int (*read_block_fn)(void *, unsigned int, void *, size_t);
+typedef int (*write_block_fn)(void *, const void *, size_t);
 
-अटल पूर्णांक usb4_चयन_रुको_क्रम_bit(काष्ठा tb_चयन *sw, u32 offset, u32 bit,
-				    u32 value, पूर्णांक समयout_msec)
-अणु
-	kसमय_प्रकार समयout = kसमय_add_ms(kसमय_get(), समयout_msec);
+static int usb4_switch_wait_for_bit(struct tb_switch *sw, u32 offset, u32 bit,
+				    u32 value, int timeout_msec)
+{
+	ktime_t timeout = ktime_add_ms(ktime_get(), timeout_msec);
 
-	करो अणु
+	do {
 		u32 val;
-		पूर्णांक ret;
+		int ret;
 
-		ret = tb_sw_पढ़ो(sw, &val, TB_CFG_SWITCH, offset, 1);
-		अगर (ret)
-			वापस ret;
+		ret = tb_sw_read(sw, &val, TB_CFG_SWITCH, offset, 1);
+		if (ret)
+			return ret;
 
-		अगर ((val & bit) == value)
-			वापस 0;
+		if ((val & bit) == value)
+			return 0;
 
 		usleep_range(50, 100);
-	पूर्ण जबतक (kसमय_beक्रमe(kसमय_get(), समयout));
+	} while (ktime_before(ktime_get(), timeout));
 
-	वापस -ETIMEDOUT;
-पूर्ण
+	return -ETIMEDOUT;
+}
 
-अटल पूर्णांक usb4_करो_पढ़ो_data(u16 address, व्योम *buf, माप_प्रकार size,
-			     पढ़ो_block_fn पढ़ो_block, व्योम *पढ़ो_block_data)
-अणु
-	अचिन्हित पूर्णांक retries = USB4_DATA_RETRIES;
-	अचिन्हित पूर्णांक offset;
+static int usb4_do_read_data(u16 address, void *buf, size_t size,
+			     read_block_fn read_block, void *read_block_data)
+{
+	unsigned int retries = USB4_DATA_RETRIES;
+	unsigned int offset;
 
-	करो अणु
-		अचिन्हित पूर्णांक dwaddress, dwords;
+	do {
+		unsigned int dwaddress, dwords;
 		u8 data[USB4_DATA_DWORDS * 4];
-		माप_प्रकार nbytes;
-		पूर्णांक ret;
+		size_t nbytes;
+		int ret;
 
 		offset = address & 3;
-		nbytes = min_t(माप_प्रकार, size + offset, USB4_DATA_DWORDS * 4);
+		nbytes = min_t(size_t, size + offset, USB4_DATA_DWORDS * 4);
 
 		dwaddress = address / 4;
 		dwords = ALIGN(nbytes, 4) / 4;
 
-		ret = पढ़ो_block(पढ़ो_block_data, dwaddress, data, dwords);
-		अगर (ret) अणु
-			अगर (ret != -ENODEV && retries--)
-				जारी;
-			वापस ret;
-		पूर्ण
+		ret = read_block(read_block_data, dwaddress, data, dwords);
+		if (ret) {
+			if (ret != -ENODEV && retries--)
+				continue;
+			return ret;
+		}
 
 		nbytes -= offset;
-		स_नकल(buf, data + offset, nbytes);
+		memcpy(buf, data + offset, nbytes);
 
 		size -= nbytes;
 		address += nbytes;
 		buf += nbytes;
-	पूर्ण जबतक (size > 0);
+	} while (size > 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक usb4_करो_ग_लिखो_data(अचिन्हित पूर्णांक address, स्थिर व्योम *buf, माप_प्रकार size,
-	ग_लिखो_block_fn ग_लिखो_next_block, व्योम *ग_लिखो_block_data)
-अणु
-	अचिन्हित पूर्णांक retries = USB4_DATA_RETRIES;
-	अचिन्हित पूर्णांक offset;
+static int usb4_do_write_data(unsigned int address, const void *buf, size_t size,
+	write_block_fn write_next_block, void *write_block_data)
+{
+	unsigned int retries = USB4_DATA_RETRIES;
+	unsigned int offset;
 
 	offset = address & 3;
 	address = address & ~3;
 
-	करो अणु
+	do {
 		u32 nbytes = min_t(u32, size, USB4_DATA_DWORDS * 4);
 		u8 data[USB4_DATA_DWORDS * 4];
-		पूर्णांक ret;
+		int ret;
 
-		स_नकल(data + offset, buf, nbytes);
+		memcpy(data + offset, buf, nbytes);
 
-		ret = ग_लिखो_next_block(ग_लिखो_block_data, data, nbytes / 4);
-		अगर (ret) अणु
-			अगर (ret == -ETIMEDOUT) अणु
-				अगर (retries--)
-					जारी;
+		ret = write_next_block(write_block_data, data, nbytes / 4);
+		if (ret) {
+			if (ret == -ETIMEDOUT) {
+				if (retries--)
+					continue;
 				ret = -EIO;
-			पूर्ण
-			वापस ret;
-		पूर्ण
+			}
+			return ret;
+		}
 
 		size -= nbytes;
 		address += nbytes;
 		buf += nbytes;
-	पूर्ण जबतक (size > 0);
+	} while (size > 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक usb4_native_चयन_op(काष्ठा tb_चयन *sw, u16 opcode,
+static int usb4_native_switch_op(struct tb_switch *sw, u16 opcode,
 				 u32 *metadata, u8 *status,
-				 स्थिर व्योम *tx_data, माप_प्रकार tx_dwords,
-				 व्योम *rx_data, माप_प्रकार rx_dwords)
-अणु
+				 const void *tx_data, size_t tx_dwords,
+				 void *rx_data, size_t rx_dwords)
+{
 	u32 val;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (metadata) अणु
-		ret = tb_sw_ग_लिखो(sw, metadata, TB_CFG_SWITCH, ROUTER_CS_25, 1);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
-	अगर (tx_dwords) अणु
-		ret = tb_sw_ग_लिखो(sw, tx_data, TB_CFG_SWITCH, ROUTER_CS_9,
+	if (metadata) {
+		ret = tb_sw_write(sw, metadata, TB_CFG_SWITCH, ROUTER_CS_25, 1);
+		if (ret)
+			return ret;
+	}
+	if (tx_dwords) {
+		ret = tb_sw_write(sw, tx_data, TB_CFG_SWITCH, ROUTER_CS_9,
 				  tx_dwords);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	val = opcode | ROUTER_CS_26_OV;
-	ret = tb_sw_ग_लिखो(sw, &val, TB_CFG_SWITCH, ROUTER_CS_26, 1);
-	अगर (ret)
-		वापस ret;
+	ret = tb_sw_write(sw, &val, TB_CFG_SWITCH, ROUTER_CS_26, 1);
+	if (ret)
+		return ret;
 
-	ret = usb4_चयन_रुको_क्रम_bit(sw, ROUTER_CS_26, ROUTER_CS_26_OV, 0, 500);
-	अगर (ret)
-		वापस ret;
+	ret = usb4_switch_wait_for_bit(sw, ROUTER_CS_26, ROUTER_CS_26_OV, 0, 500);
+	if (ret)
+		return ret;
 
-	ret = tb_sw_पढ़ो(sw, &val, TB_CFG_SWITCH, ROUTER_CS_26, 1);
-	अगर (ret)
-		वापस ret;
+	ret = tb_sw_read(sw, &val, TB_CFG_SWITCH, ROUTER_CS_26, 1);
+	if (ret)
+		return ret;
 
-	अगर (val & ROUTER_CS_26_ONS)
-		वापस -EOPNOTSUPP;
+	if (val & ROUTER_CS_26_ONS)
+		return -EOPNOTSUPP;
 
-	अगर (status)
+	if (status)
 		*status = (val & ROUTER_CS_26_STATUS_MASK) >>
 			ROUTER_CS_26_STATUS_SHIFT;
 
-	अगर (metadata) अणु
-		ret = tb_sw_पढ़ो(sw, metadata, TB_CFG_SWITCH, ROUTER_CS_25, 1);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
-	अगर (rx_dwords) अणु
-		ret = tb_sw_पढ़ो(sw, rx_data, TB_CFG_SWITCH, ROUTER_CS_9,
+	if (metadata) {
+		ret = tb_sw_read(sw, metadata, TB_CFG_SWITCH, ROUTER_CS_25, 1);
+		if (ret)
+			return ret;
+	}
+	if (rx_dwords) {
+		ret = tb_sw_read(sw, rx_data, TB_CFG_SWITCH, ROUTER_CS_9,
 				 rx_dwords);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __usb4_चयन_op(काष्ठा tb_चयन *sw, u16 opcode, u32 *metadata,
-			    u8 *status, स्थिर व्योम *tx_data, माप_प्रकार tx_dwords,
-			    व्योम *rx_data, माप_प्रकार rx_dwords)
-अणु
-	स्थिर काष्ठा tb_cm_ops *cm_ops = sw->tb->cm_ops;
+static int __usb4_switch_op(struct tb_switch *sw, u16 opcode, u32 *metadata,
+			    u8 *status, const void *tx_data, size_t tx_dwords,
+			    void *rx_data, size_t rx_dwords)
+{
+	const struct tb_cm_ops *cm_ops = sw->tb->cm_ops;
 
-	अगर (tx_dwords > USB4_DATA_DWORDS || rx_dwords > USB4_DATA_DWORDS)
-		वापस -EINVAL;
+	if (tx_dwords > USB4_DATA_DWORDS || rx_dwords > USB4_DATA_DWORDS)
+		return -EINVAL;
 
 	/*
 	 * If the connection manager implementation provides USB4 router
 	 * operation proxy callback, call it here instead of running the
 	 * operation natively.
 	 */
-	अगर (cm_ops->usb4_चयन_op) अणु
-		पूर्णांक ret;
+	if (cm_ops->usb4_switch_op) {
+		int ret;
 
-		ret = cm_ops->usb4_चयन_op(sw, opcode, metadata, status,
+		ret = cm_ops->usb4_switch_op(sw, opcode, metadata, status,
 					     tx_data, tx_dwords, rx_data,
 					     rx_dwords);
-		अगर (ret != -EOPNOTSUPP)
-			वापस ret;
+		if (ret != -EOPNOTSUPP)
+			return ret;
 
 		/*
 		 * If the proxy was not supported then run the native
 		 * router operation instead.
 		 */
-	पूर्ण
+	}
 
-	वापस usb4_native_चयन_op(sw, opcode, metadata, status, tx_data,
+	return usb4_native_switch_op(sw, opcode, metadata, status, tx_data,
 				     tx_dwords, rx_data, rx_dwords);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक usb4_चयन_op(काष्ठा tb_चयन *sw, u16 opcode,
+static inline int usb4_switch_op(struct tb_switch *sw, u16 opcode,
 				 u32 *metadata, u8 *status)
-अणु
-	वापस __usb4_चयन_op(sw, opcode, metadata, status, शून्य, 0, शून्य, 0);
-पूर्ण
+{
+	return __usb4_switch_op(sw, opcode, metadata, status, NULL, 0, NULL, 0);
+}
 
-अटल अंतरभूत पूर्णांक usb4_चयन_op_data(काष्ठा tb_चयन *sw, u16 opcode,
+static inline int usb4_switch_op_data(struct tb_switch *sw, u16 opcode,
 				      u32 *metadata, u8 *status,
-				      स्थिर व्योम *tx_data, माप_प्रकार tx_dwords,
-				      व्योम *rx_data, माप_प्रकार rx_dwords)
-अणु
-	वापस __usb4_चयन_op(sw, opcode, metadata, status, tx_data,
+				      const void *tx_data, size_t tx_dwords,
+				      void *rx_data, size_t rx_dwords)
+{
+	return __usb4_switch_op(sw, opcode, metadata, status, tx_data,
 				tx_dwords, rx_data, rx_dwords);
-पूर्ण
+}
 
-अटल व्योम usb4_चयन_check_wakes(काष्ठा tb_चयन *sw)
-अणु
-	काष्ठा tb_port *port;
+static void usb4_switch_check_wakes(struct tb_switch *sw)
+{
+	struct tb_port *port;
 	bool wakeup = false;
 	u32 val;
 
-	अगर (!device_may_wakeup(&sw->dev))
-		वापस;
+	if (!device_may_wakeup(&sw->dev))
+		return;
 
-	अगर (tb_route(sw)) अणु
-		अगर (tb_sw_पढ़ो(sw, &val, TB_CFG_SWITCH, ROUTER_CS_6, 1))
-			वापस;
+	if (tb_route(sw)) {
+		if (tb_sw_read(sw, &val, TB_CFG_SWITCH, ROUTER_CS_6, 1))
+			return;
 
 		tb_sw_dbg(sw, "PCIe wake: %s, USB3 wake: %s\n",
 			  (val & ROUTER_CS_6_WOPS) ? "yes" : "no",
 			  (val & ROUTER_CS_6_WOUS) ? "yes" : "no");
 
 		wakeup = val & (ROUTER_CS_6_WOPS | ROUTER_CS_6_WOUS);
-	पूर्ण
+	}
 
-	/* Check क्रम any connected करोwnstream ports क्रम USB4 wake */
-	tb_चयन_क्रम_each_port(sw, port) अणु
-		अगर (!tb_port_has_remote(port))
-			जारी;
+	/* Check for any connected downstream ports for USB4 wake */
+	tb_switch_for_each_port(sw, port) {
+		if (!tb_port_has_remote(port))
+			continue;
 
-		अगर (tb_port_पढ़ो(port, &val, TB_CFG_PORT,
+		if (tb_port_read(port, &val, TB_CFG_PORT,
 				 port->cap_usb4 + PORT_CS_18, 1))
-			अवरोध;
+			break;
 
 		tb_port_dbg(port, "USB4 wake: %s\n",
 			    (val & PORT_CS_18_WOU4S) ? "yes" : "no");
 
-		अगर (val & PORT_CS_18_WOU4S)
+		if (val & PORT_CS_18_WOU4S)
 			wakeup = true;
-	पूर्ण
+	}
 
-	अगर (wakeup)
+	if (wakeup)
 		pm_wakeup_event(&sw->dev, 0);
-पूर्ण
+}
 
-अटल bool link_is_usb4(काष्ठा tb_port *port)
-अणु
+static bool link_is_usb4(struct tb_port *port)
+{
 	u32 val;
 
-	अगर (!port->cap_usb4)
-		वापस false;
+	if (!port->cap_usb4)
+		return false;
 
-	अगर (tb_port_पढ़ो(port, &val, TB_CFG_PORT,
+	if (tb_port_read(port, &val, TB_CFG_PORT,
 			 port->cap_usb4 + PORT_CS_18, 1))
-		वापस false;
+		return false;
 
-	वापस !(val & PORT_CS_18_TCM);
-पूर्ण
+	return !(val & PORT_CS_18_TCM);
+}
 
 /**
- * usb4_चयन_setup() - Additional setup क्रम USB4 device
+ * usb4_switch_setup() - Additional setup for USB4 device
  * @sw: USB4 router to setup
  *
  * USB4 routers need additional settings in order to enable all the
- * tunneling. This function enables USB and PCIe tunneling अगर it can be
- * enabled (e.g the parent चयन also supports them). If USB tunneling
- * is not available क्रम some reason (like that there is Thunderbolt 3
- * चयन upstream) then the पूर्णांकernal xHCI controller is enabled
+ * tunneling. This function enables USB and PCIe tunneling if it can be
+ * enabled (e.g the parent switch also supports them). If USB tunneling
+ * is not available for some reason (like that there is Thunderbolt 3
+ * switch upstream) then the internal xHCI controller is enabled
  * instead.
  */
-पूर्णांक usb4_चयन_setup(काष्ठा tb_चयन *sw)
-अणु
-	काष्ठा tb_port *करोwnstream_port;
-	काष्ठा tb_चयन *parent;
+int usb4_switch_setup(struct tb_switch *sw)
+{
+	struct tb_port *downstream_port;
+	struct tb_switch *parent;
 	bool tbt3, xhci;
 	u32 val = 0;
-	पूर्णांक ret;
+	int ret;
 
-	usb4_चयन_check_wakes(sw);
+	usb4_switch_check_wakes(sw);
 
-	अगर (!tb_route(sw))
-		वापस 0;
+	if (!tb_route(sw))
+		return 0;
 
-	ret = tb_sw_पढ़ो(sw, &val, TB_CFG_SWITCH, ROUTER_CS_6, 1);
-	अगर (ret)
-		वापस ret;
+	ret = tb_sw_read(sw, &val, TB_CFG_SWITCH, ROUTER_CS_6, 1);
+	if (ret)
+		return ret;
 
-	parent = tb_चयन_parent(sw);
-	करोwnstream_port = tb_port_at(tb_route(sw), parent);
-	sw->link_usb4 = link_is_usb4(करोwnstream_port);
+	parent = tb_switch_parent(sw);
+	downstream_port = tb_port_at(tb_route(sw), parent);
+	sw->link_usb4 = link_is_usb4(downstream_port);
 	tb_sw_dbg(sw, "link: %s\n", sw->link_usb4 ? "USB4" : "TBT3");
 
 	xhci = val & ROUTER_CS_6_HCI;
@@ -329,1285 +328,1285 @@
 	tb_sw_dbg(sw, "TBT3 support: %s, xHCI: %s\n",
 		  tbt3 ? "yes" : "no", xhci ? "yes" : "no");
 
-	ret = tb_sw_पढ़ो(sw, &val, TB_CFG_SWITCH, ROUTER_CS_5, 1);
-	अगर (ret)
-		वापस ret;
+	ret = tb_sw_read(sw, &val, TB_CFG_SWITCH, ROUTER_CS_5, 1);
+	if (ret)
+		return ret;
 
-	अगर (tb_acpi_may_tunnel_usb3() && sw->link_usb4 &&
-	    tb_चयन_find_port(parent, TB_TYPE_USB3_DOWN)) अणु
+	if (tb_acpi_may_tunnel_usb3() && sw->link_usb4 &&
+	    tb_switch_find_port(parent, TB_TYPE_USB3_DOWN)) {
 		val |= ROUTER_CS_5_UTO;
 		xhci = false;
-	पूर्ण
+	}
 
 	/*
-	 * Only enable PCIe tunneling अगर the parent router supports it
+	 * Only enable PCIe tunneling if the parent router supports it
 	 * and it is not disabled.
 	 */
-	अगर (tb_acpi_may_tunnel_pcie() &&
-	    tb_चयन_find_port(parent, TB_TYPE_PCIE_DOWN)) अणु
+	if (tb_acpi_may_tunnel_pcie() &&
+	    tb_switch_find_port(parent, TB_TYPE_PCIE_DOWN)) {
 		val |= ROUTER_CS_5_PTO;
 		/*
-		 * xHCI can be enabled अगर PCIe tunneling is supported
-		 * and the parent करोes not have any USB3 करोwstream
-		 * adapters (so we cannot करो USB 3.x tunneling).
+		 * xHCI can be enabled if PCIe tunneling is supported
+		 * and the parent does not have any USB3 dowstream
+		 * adapters (so we cannot do USB 3.x tunneling).
 		 */
-		अगर (xhci)
+		if (xhci)
 			val |= ROUTER_CS_5_HCO;
-	पूर्ण
+	}
 
 	/* TBT3 supported by the CM */
 	val |= ROUTER_CS_5_C3S;
-	/* Tunneling configuration is पढ़ोy now */
+	/* Tunneling configuration is ready now */
 	val |= ROUTER_CS_5_CV;
 
-	ret = tb_sw_ग_लिखो(sw, &val, TB_CFG_SWITCH, ROUTER_CS_5, 1);
-	अगर (ret)
-		वापस ret;
+	ret = tb_sw_write(sw, &val, TB_CFG_SWITCH, ROUTER_CS_5, 1);
+	if (ret)
+		return ret;
 
-	वापस usb4_चयन_रुको_क्रम_bit(sw, ROUTER_CS_6, ROUTER_CS_6_CR,
+	return usb4_switch_wait_for_bit(sw, ROUTER_CS_6, ROUTER_CS_6_CR,
 					ROUTER_CS_6_CR, 50);
-पूर्ण
+}
 
 /**
- * usb4_चयन_पढ़ो_uid() - Read UID from USB4 router
+ * usb4_switch_read_uid() - Read UID from USB4 router
  * @sw: USB4 router
  * @uid: UID is stored here
  *
  * Reads 64-bit UID from USB4 router config space.
  */
-पूर्णांक usb4_चयन_पढ़ो_uid(काष्ठा tb_चयन *sw, u64 *uid)
-अणु
-	वापस tb_sw_पढ़ो(sw, uid, TB_CFG_SWITCH, ROUTER_CS_7, 2);
-पूर्ण
+int usb4_switch_read_uid(struct tb_switch *sw, u64 *uid)
+{
+	return tb_sw_read(sw, uid, TB_CFG_SWITCH, ROUTER_CS_7, 2);
+}
 
-अटल पूर्णांक usb4_चयन_drom_पढ़ो_block(व्योम *data,
-				       अचिन्हित पूर्णांक dwaddress, व्योम *buf,
-				       माप_प्रकार dwords)
-अणु
-	काष्ठा tb_चयन *sw = data;
+static int usb4_switch_drom_read_block(void *data,
+				       unsigned int dwaddress, void *buf,
+				       size_t dwords)
+{
+	struct tb_switch *sw = data;
 	u8 status = 0;
 	u32 metadata;
-	पूर्णांक ret;
+	int ret;
 
 	metadata = (dwords << USB4_DROM_SIZE_SHIFT) & USB4_DROM_SIZE_MASK;
 	metadata |= (dwaddress << USB4_DROM_ADDRESS_SHIFT) &
 		USB4_DROM_ADDRESS_MASK;
 
-	ret = usb4_चयन_op_data(sw, USB4_SWITCH_OP_DROM_READ, &metadata,
-				  &status, शून्य, 0, buf, dwords);
-	अगर (ret)
-		वापस ret;
+	ret = usb4_switch_op_data(sw, USB4_SWITCH_OP_DROM_READ, &metadata,
+				  &status, NULL, 0, buf, dwords);
+	if (ret)
+		return ret;
 
-	वापस status ? -EIO : 0;
-पूर्ण
+	return status ? -EIO : 0;
+}
 
 /**
- * usb4_चयन_drom_पढ़ो() - Read arbitrary bytes from USB4 router DROM
+ * usb4_switch_drom_read() - Read arbitrary bytes from USB4 router DROM
  * @sw: USB4 router
- * @address: Byte address inside DROM to start पढ़ोing
+ * @address: Byte address inside DROM to start reading
  * @buf: Buffer where the DROM content is stored
- * @size: Number of bytes to पढ़ो from DROM
+ * @size: Number of bytes to read from DROM
  *
- * Uses USB4 router operations to पढ़ो router DROM. For devices this
- * should always work but क्रम hosts it may वापस %-EOPNOTSUPP in which
- * हाल the host router करोes not have DROM.
+ * Uses USB4 router operations to read router DROM. For devices this
+ * should always work but for hosts it may return %-EOPNOTSUPP in which
+ * case the host router does not have DROM.
  */
-पूर्णांक usb4_चयन_drom_पढ़ो(काष्ठा tb_चयन *sw, अचिन्हित पूर्णांक address, व्योम *buf,
-			  माप_प्रकार size)
-अणु
-	वापस usb4_करो_पढ़ो_data(address, buf, size,
-				 usb4_चयन_drom_पढ़ो_block, sw);
-पूर्ण
+int usb4_switch_drom_read(struct tb_switch *sw, unsigned int address, void *buf,
+			  size_t size)
+{
+	return usb4_do_read_data(address, buf, size,
+				 usb4_switch_drom_read_block, sw);
+}
 
 /**
- * usb4_चयन_lane_bonding_possible() - Are conditions met क्रम lane bonding
+ * usb4_switch_lane_bonding_possible() - Are conditions met for lane bonding
  * @sw: USB4 router
  *
  * Checks whether conditions are met so that lane bonding can be
- * established with the upstream router. Call only क्रम device routers.
+ * established with the upstream router. Call only for device routers.
  */
-bool usb4_चयन_lane_bonding_possible(काष्ठा tb_चयन *sw)
-अणु
-	काष्ठा tb_port *up;
-	पूर्णांक ret;
+bool usb4_switch_lane_bonding_possible(struct tb_switch *sw)
+{
+	struct tb_port *up;
+	int ret;
 	u32 val;
 
 	up = tb_upstream_port(sw);
-	ret = tb_port_पढ़ो(up, &val, TB_CFG_PORT, up->cap_usb4 + PORT_CS_18, 1);
-	अगर (ret)
-		वापस false;
+	ret = tb_port_read(up, &val, TB_CFG_PORT, up->cap_usb4 + PORT_CS_18, 1);
+	if (ret)
+		return false;
 
-	वापस !!(val & PORT_CS_18_BE);
-पूर्ण
+	return !!(val & PORT_CS_18_BE);
+}
 
 /**
- * usb4_चयन_set_wake() - Enabled/disable wake
+ * usb4_switch_set_wake() - Enabled/disable wake
  * @sw: USB4 router
  * @flags: Wakeup flags (%0 to disable)
  *
  * Enables/disables router to wake up from sleep.
  */
-पूर्णांक usb4_चयन_set_wake(काष्ठा tb_चयन *sw, अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा tb_port *port;
+int usb4_switch_set_wake(struct tb_switch *sw, unsigned int flags)
+{
+	struct tb_port *port;
 	u64 route = tb_route(sw);
 	u32 val;
-	पूर्णांक ret;
+	int ret;
 
 	/*
-	 * Enable wakes coming from all USB4 करोwnstream ports (from
-	 * child routers). For device routers करो this also क्रम the
+	 * Enable wakes coming from all USB4 downstream ports (from
+	 * child routers). For device routers do this also for the
 	 * upstream USB4 port.
 	 */
-	tb_चयन_क्रम_each_port(sw, port) अणु
-		अगर (!tb_port_is_null(port))
-			जारी;
-		अगर (!route && tb_is_upstream_port(port))
-			जारी;
-		अगर (!port->cap_usb4)
-			जारी;
+	tb_switch_for_each_port(sw, port) {
+		if (!tb_port_is_null(port))
+			continue;
+		if (!route && tb_is_upstream_port(port))
+			continue;
+		if (!port->cap_usb4)
+			continue;
 
-		ret = tb_port_पढ़ो(port, &val, TB_CFG_PORT,
+		ret = tb_port_read(port, &val, TB_CFG_PORT,
 				   port->cap_usb4 + PORT_CS_19, 1);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		val &= ~(PORT_CS_19_WOC | PORT_CS_19_WOD | PORT_CS_19_WOU4);
 
-		अगर (flags & TB_WAKE_ON_CONNECT)
+		if (flags & TB_WAKE_ON_CONNECT)
 			val |= PORT_CS_19_WOC;
-		अगर (flags & TB_WAKE_ON_DISCONNECT)
+		if (flags & TB_WAKE_ON_DISCONNECT)
 			val |= PORT_CS_19_WOD;
-		अगर (flags & TB_WAKE_ON_USB4)
+		if (flags & TB_WAKE_ON_USB4)
 			val |= PORT_CS_19_WOU4;
 
-		ret = tb_port_ग_लिखो(port, &val, TB_CFG_PORT,
+		ret = tb_port_write(port, &val, TB_CFG_PORT,
 				    port->cap_usb4 + PORT_CS_19, 1);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	/*
 	 * Enable wakes from PCIe and USB 3.x on this router. Only
-	 * needed क्रम device routers.
+	 * needed for device routers.
 	 */
-	अगर (route) अणु
-		ret = tb_sw_पढ़ो(sw, &val, TB_CFG_SWITCH, ROUTER_CS_5, 1);
-		अगर (ret)
-			वापस ret;
+	if (route) {
+		ret = tb_sw_read(sw, &val, TB_CFG_SWITCH, ROUTER_CS_5, 1);
+		if (ret)
+			return ret;
 
 		val &= ~(ROUTER_CS_5_WOP | ROUTER_CS_5_WOU);
-		अगर (flags & TB_WAKE_ON_USB3)
+		if (flags & TB_WAKE_ON_USB3)
 			val |= ROUTER_CS_5_WOU;
-		अगर (flags & TB_WAKE_ON_PCIE)
+		if (flags & TB_WAKE_ON_PCIE)
 			val |= ROUTER_CS_5_WOP;
 
-		ret = tb_sw_ग_लिखो(sw, &val, TB_CFG_SWITCH, ROUTER_CS_5, 1);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		ret = tb_sw_write(sw, &val, TB_CFG_SWITCH, ROUTER_CS_5, 1);
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * usb4_चयन_set_sleep() - Prepare the router to enter sleep
+ * usb4_switch_set_sleep() - Prepare the router to enter sleep
  * @sw: USB4 router
  *
- * Sets sleep bit क्रम the router. Returns when the router sleep पढ़ोy
- * bit has been निश्चितed.
+ * Sets sleep bit for the router. Returns when the router sleep ready
+ * bit has been asserted.
  */
-पूर्णांक usb4_चयन_set_sleep(काष्ठा tb_चयन *sw)
-अणु
-	पूर्णांक ret;
+int usb4_switch_set_sleep(struct tb_switch *sw)
+{
+	int ret;
 	u32 val;
 
-	/* Set sleep bit and रुको क्रम sleep पढ़ोy to be निश्चितed */
-	ret = tb_sw_पढ़ो(sw, &val, TB_CFG_SWITCH, ROUTER_CS_5, 1);
-	अगर (ret)
-		वापस ret;
+	/* Set sleep bit and wait for sleep ready to be asserted */
+	ret = tb_sw_read(sw, &val, TB_CFG_SWITCH, ROUTER_CS_5, 1);
+	if (ret)
+		return ret;
 
 	val |= ROUTER_CS_5_SLP;
 
-	ret = tb_sw_ग_लिखो(sw, &val, TB_CFG_SWITCH, ROUTER_CS_5, 1);
-	अगर (ret)
-		वापस ret;
+	ret = tb_sw_write(sw, &val, TB_CFG_SWITCH, ROUTER_CS_5, 1);
+	if (ret)
+		return ret;
 
-	वापस usb4_चयन_रुको_क्रम_bit(sw, ROUTER_CS_6, ROUTER_CS_6_SLPR,
+	return usb4_switch_wait_for_bit(sw, ROUTER_CS_6, ROUTER_CS_6_SLPR,
 					ROUTER_CS_6_SLPR, 500);
-पूर्ण
+}
 
 /**
- * usb4_चयन_nvm_sector_size() - Return router NVM sector size
+ * usb4_switch_nvm_sector_size() - Return router NVM sector size
  * @sw: USB4 router
  *
- * If the router supports NVM operations this function वापसs the NVM
- * sector size in bytes. If NVM operations are not supported वापसs
+ * If the router supports NVM operations this function returns the NVM
+ * sector size in bytes. If NVM operations are not supported returns
  * %-EOPNOTSUPP.
  */
-पूर्णांक usb4_चयन_nvm_sector_size(काष्ठा tb_चयन *sw)
-अणु
+int usb4_switch_nvm_sector_size(struct tb_switch *sw)
+{
 	u32 metadata;
 	u8 status;
-	पूर्णांक ret;
+	int ret;
 
-	ret = usb4_चयन_op(sw, USB4_SWITCH_OP_NVM_SECTOR_SIZE, &metadata,
+	ret = usb4_switch_op(sw, USB4_SWITCH_OP_NVM_SECTOR_SIZE, &metadata,
 			     &status);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (status)
-		वापस status == 0x2 ? -EOPNOTSUPP : -EIO;
+	if (status)
+		return status == 0x2 ? -EOPNOTSUPP : -EIO;
 
-	वापस metadata & USB4_NVM_SECTOR_SIZE_MASK;
-पूर्ण
+	return metadata & USB4_NVM_SECTOR_SIZE_MASK;
+}
 
-अटल पूर्णांक usb4_चयन_nvm_पढ़ो_block(व्योम *data,
-	अचिन्हित पूर्णांक dwaddress, व्योम *buf, माप_प्रकार dwords)
-अणु
-	काष्ठा tb_चयन *sw = data;
+static int usb4_switch_nvm_read_block(void *data,
+	unsigned int dwaddress, void *buf, size_t dwords)
+{
+	struct tb_switch *sw = data;
 	u8 status = 0;
 	u32 metadata;
-	पूर्णांक ret;
+	int ret;
 
 	metadata = (dwords << USB4_NVM_READ_LENGTH_SHIFT) &
 		   USB4_NVM_READ_LENGTH_MASK;
 	metadata |= (dwaddress << USB4_NVM_READ_OFFSET_SHIFT) &
 		   USB4_NVM_READ_OFFSET_MASK;
 
-	ret = usb4_चयन_op_data(sw, USB4_SWITCH_OP_NVM_READ, &metadata,
-				  &status, शून्य, 0, buf, dwords);
-	अगर (ret)
-		वापस ret;
+	ret = usb4_switch_op_data(sw, USB4_SWITCH_OP_NVM_READ, &metadata,
+				  &status, NULL, 0, buf, dwords);
+	if (ret)
+		return ret;
 
-	वापस status ? -EIO : 0;
-पूर्ण
+	return status ? -EIO : 0;
+}
 
 /**
- * usb4_चयन_nvm_पढ़ो() - Read arbitrary bytes from router NVM
+ * usb4_switch_nvm_read() - Read arbitrary bytes from router NVM
  * @sw: USB4 router
  * @address: Starting address in bytes
  * @buf: Read data is placed here
- * @size: How many bytes to पढ़ो
+ * @size: How many bytes to read
  *
- * Reads NVM contents of the router. If NVM is not supported वापसs
+ * Reads NVM contents of the router. If NVM is not supported returns
  * %-EOPNOTSUPP.
  */
-पूर्णांक usb4_चयन_nvm_पढ़ो(काष्ठा tb_चयन *sw, अचिन्हित पूर्णांक address, व्योम *buf,
-			 माप_प्रकार size)
-अणु
-	वापस usb4_करो_पढ़ो_data(address, buf, size,
-				 usb4_चयन_nvm_पढ़ो_block, sw);
-पूर्ण
+int usb4_switch_nvm_read(struct tb_switch *sw, unsigned int address, void *buf,
+			 size_t size)
+{
+	return usb4_do_read_data(address, buf, size,
+				 usb4_switch_nvm_read_block, sw);
+}
 
-अटल पूर्णांक usb4_चयन_nvm_set_offset(काष्ठा tb_चयन *sw,
-				      अचिन्हित पूर्णांक address)
-अणु
+static int usb4_switch_nvm_set_offset(struct tb_switch *sw,
+				      unsigned int address)
+{
 	u32 metadata, dwaddress;
 	u8 status = 0;
-	पूर्णांक ret;
+	int ret;
 
 	dwaddress = address / 4;
 	metadata = (dwaddress << USB4_NVM_SET_OFFSET_SHIFT) &
 		   USB4_NVM_SET_OFFSET_MASK;
 
-	ret = usb4_चयन_op(sw, USB4_SWITCH_OP_NVM_SET_OFFSET, &metadata,
+	ret = usb4_switch_op(sw, USB4_SWITCH_OP_NVM_SET_OFFSET, &metadata,
 			     &status);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस status ? -EIO : 0;
-पूर्ण
+	return status ? -EIO : 0;
+}
 
-अटल पूर्णांक usb4_चयन_nvm_ग_लिखो_next_block(व्योम *data, स्थिर व्योम *buf,
-					    माप_प्रकार dwords)
-अणु
-	काष्ठा tb_चयन *sw = data;
+static int usb4_switch_nvm_write_next_block(void *data, const void *buf,
+					    size_t dwords)
+{
+	struct tb_switch *sw = data;
 	u8 status;
-	पूर्णांक ret;
+	int ret;
 
-	ret = usb4_चयन_op_data(sw, USB4_SWITCH_OP_NVM_WRITE, शून्य, &status,
-				  buf, dwords, शून्य, 0);
-	अगर (ret)
-		वापस ret;
+	ret = usb4_switch_op_data(sw, USB4_SWITCH_OP_NVM_WRITE, NULL, &status,
+				  buf, dwords, NULL, 0);
+	if (ret)
+		return ret;
 
-	वापस status ? -EIO : 0;
-पूर्ण
+	return status ? -EIO : 0;
+}
 
 /**
- * usb4_चयन_nvm_ग_लिखो() - Write to the router NVM
+ * usb4_switch_nvm_write() - Write to the router NVM
  * @sw: USB4 router
- * @address: Start address where to ग_लिखो in bytes
- * @buf: Poपूर्णांकer to the data to ग_लिखो
+ * @address: Start address where to write in bytes
+ * @buf: Pointer to the data to write
  * @size: Size of @buf in bytes
  *
  * Writes @buf to the router NVM using USB4 router operations. If NVM
- * ग_लिखो is not supported वापसs %-EOPNOTSUPP.
+ * write is not supported returns %-EOPNOTSUPP.
  */
-पूर्णांक usb4_चयन_nvm_ग_लिखो(काष्ठा tb_चयन *sw, अचिन्हित पूर्णांक address,
-			  स्थिर व्योम *buf, माप_प्रकार size)
-अणु
-	पूर्णांक ret;
+int usb4_switch_nvm_write(struct tb_switch *sw, unsigned int address,
+			  const void *buf, size_t size)
+{
+	int ret;
 
-	ret = usb4_चयन_nvm_set_offset(sw, address);
-	अगर (ret)
-		वापस ret;
+	ret = usb4_switch_nvm_set_offset(sw, address);
+	if (ret)
+		return ret;
 
-	वापस usb4_करो_ग_लिखो_data(address, buf, size,
-				  usb4_चयन_nvm_ग_लिखो_next_block, sw);
-पूर्ण
+	return usb4_do_write_data(address, buf, size,
+				  usb4_switch_nvm_write_next_block, sw);
+}
 
 /**
- * usb4_चयन_nvm_authenticate() - Authenticate new NVM
+ * usb4_switch_nvm_authenticate() - Authenticate new NVM
  * @sw: USB4 router
  *
- * After the new NVM has been written via usb4_चयन_nvm_ग_लिखो(), this
- * function triggers NVM authentication process. The router माला_लो घातer
- * cycled and अगर the authentication is successful the new NVM starts
- * running. In हाल of failure वापसs negative त्रुटि_सं.
+ * After the new NVM has been written via usb4_switch_nvm_write(), this
+ * function triggers NVM authentication process. The router gets power
+ * cycled and if the authentication is successful the new NVM starts
+ * running. In case of failure returns negative errno.
  *
- * The caller should call usb4_चयन_nvm_authenticate_status() to पढ़ो
- * the status of the authentication after घातer cycle. It should be the
- * first router operation to aव्योम the status being lost.
+ * The caller should call usb4_switch_nvm_authenticate_status() to read
+ * the status of the authentication after power cycle. It should be the
+ * first router operation to avoid the status being lost.
  */
-पूर्णांक usb4_चयन_nvm_authenticate(काष्ठा tb_चयन *sw)
-अणु
-	पूर्णांक ret;
+int usb4_switch_nvm_authenticate(struct tb_switch *sw)
+{
+	int ret;
 
-	ret = usb4_चयन_op(sw, USB4_SWITCH_OP_NVM_AUTH, शून्य, शून्य);
-	चयन (ret) अणु
+	ret = usb4_switch_op(sw, USB4_SWITCH_OP_NVM_AUTH, NULL, NULL);
+	switch (ret) {
 	/*
-	 * The router is घातer cycled once NVM_AUTH is started so it is
+	 * The router is power cycled once NVM_AUTH is started so it is
 	 * expected to get any of the following errors back.
 	 */
-	हाल -EACCES:
-	हाल -ENOTCONN:
-	हाल -ETIMEDOUT:
-		वापस 0;
+	case -EACCES:
+	case -ENOTCONN:
+	case -ETIMEDOUT:
+		return 0;
 
-	शेष:
-		वापस ret;
-	पूर्ण
-पूर्ण
+	default:
+		return ret;
+	}
+}
 
 /**
- * usb4_चयन_nvm_authenticate_status() - Read status of last NVM authenticate
+ * usb4_switch_nvm_authenticate_status() - Read status of last NVM authenticate
  * @sw: USB4 router
  * @status: Status code of the operation
  *
- * The function checks अगर there is status available from the last NVM
- * authenticate router operation. If there is status then %0 is वापसed
- * and the status code is placed in @status. Returns negative त्रुटि_सं in हाल
+ * The function checks if there is status available from the last NVM
+ * authenticate router operation. If there is status then %0 is returned
+ * and the status code is placed in @status. Returns negative errno in case
  * of failure.
  *
- * Must be called beक्रमe any other router operation.
+ * Must be called before any other router operation.
  */
-पूर्णांक usb4_चयन_nvm_authenticate_status(काष्ठा tb_चयन *sw, u32 *status)
-अणु
-	स्थिर काष्ठा tb_cm_ops *cm_ops = sw->tb->cm_ops;
+int usb4_switch_nvm_authenticate_status(struct tb_switch *sw, u32 *status)
+{
+	const struct tb_cm_ops *cm_ops = sw->tb->cm_ops;
 	u16 opcode;
 	u32 val;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (cm_ops->usb4_चयन_nvm_authenticate_status) अणु
-		ret = cm_ops->usb4_चयन_nvm_authenticate_status(sw, status);
-		अगर (ret != -EOPNOTSUPP)
-			वापस ret;
-	पूर्ण
+	if (cm_ops->usb4_switch_nvm_authenticate_status) {
+		ret = cm_ops->usb4_switch_nvm_authenticate_status(sw, status);
+		if (ret != -EOPNOTSUPP)
+			return ret;
+	}
 
-	ret = tb_sw_पढ़ो(sw, &val, TB_CFG_SWITCH, ROUTER_CS_26, 1);
-	अगर (ret)
-		वापस ret;
+	ret = tb_sw_read(sw, &val, TB_CFG_SWITCH, ROUTER_CS_26, 1);
+	if (ret)
+		return ret;
 
 	/* Check that the opcode is correct */
 	opcode = val & ROUTER_CS_26_OPCODE_MASK;
-	अगर (opcode == USB4_SWITCH_OP_NVM_AUTH) अणु
-		अगर (val & ROUTER_CS_26_OV)
-			वापस -EBUSY;
-		अगर (val & ROUTER_CS_26_ONS)
-			वापस -EOPNOTSUPP;
+	if (opcode == USB4_SWITCH_OP_NVM_AUTH) {
+		if (val & ROUTER_CS_26_OV)
+			return -EBUSY;
+		if (val & ROUTER_CS_26_ONS)
+			return -EOPNOTSUPP;
 
 		*status = (val & ROUTER_CS_26_STATUS_MASK) >>
 			ROUTER_CS_26_STATUS_SHIFT;
-	पूर्ण अन्यथा अणु
+	} else {
 		*status = 0;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * usb4_चयन_query_dp_resource() - Query availability of DP IN resource
+ * usb4_switch_query_dp_resource() - Query availability of DP IN resource
  * @sw: USB4 router
  * @in: DP IN adapter
  *
  * For DP tunneling this function can be used to query availability of
- * DP IN resource. Returns true अगर the resource is available क्रम DP
+ * DP IN resource. Returns true if the resource is available for DP
  * tunneling, false otherwise.
  */
-bool usb4_चयन_query_dp_resource(काष्ठा tb_चयन *sw, काष्ठा tb_port *in)
-अणु
+bool usb4_switch_query_dp_resource(struct tb_switch *sw, struct tb_port *in)
+{
 	u32 metadata = in->port;
 	u8 status;
-	पूर्णांक ret;
+	int ret;
 
-	ret = usb4_चयन_op(sw, USB4_SWITCH_OP_QUERY_DP_RESOURCE, &metadata,
+	ret = usb4_switch_op(sw, USB4_SWITCH_OP_QUERY_DP_RESOURCE, &metadata,
 			     &status);
 	/*
 	 * If DP resource allocation is not supported assume it is
 	 * always available.
 	 */
-	अगर (ret == -EOPNOTSUPP)
-		वापस true;
-	अन्यथा अगर (ret)
-		वापस false;
+	if (ret == -EOPNOTSUPP)
+		return true;
+	else if (ret)
+		return false;
 
-	वापस !status;
-पूर्ण
+	return !status;
+}
 
 /**
- * usb4_चयन_alloc_dp_resource() - Allocate DP IN resource
+ * usb4_switch_alloc_dp_resource() - Allocate DP IN resource
  * @sw: USB4 router
  * @in: DP IN adapter
  *
- * Allocates DP IN resource क्रम DP tunneling using USB4 router
- * operations. If the resource was allocated वापसs %0. Otherwise
- * वापसs negative त्रुटि_सं, in particular %-EBUSY अगर the resource is
- * alपढ़ोy allocated.
+ * Allocates DP IN resource for DP tunneling using USB4 router
+ * operations. If the resource was allocated returns %0. Otherwise
+ * returns negative errno, in particular %-EBUSY if the resource is
+ * already allocated.
  */
-पूर्णांक usb4_चयन_alloc_dp_resource(काष्ठा tb_चयन *sw, काष्ठा tb_port *in)
-अणु
+int usb4_switch_alloc_dp_resource(struct tb_switch *sw, struct tb_port *in)
+{
 	u32 metadata = in->port;
 	u8 status;
-	पूर्णांक ret;
+	int ret;
 
-	ret = usb4_चयन_op(sw, USB4_SWITCH_OP_ALLOC_DP_RESOURCE, &metadata,
+	ret = usb4_switch_op(sw, USB4_SWITCH_OP_ALLOC_DP_RESOURCE, &metadata,
 			     &status);
-	अगर (ret == -EOPNOTSUPP)
-		वापस 0;
-	अन्यथा अगर (ret)
-		वापस ret;
+	if (ret == -EOPNOTSUPP)
+		return 0;
+	else if (ret)
+		return ret;
 
-	वापस status ? -EBUSY : 0;
-पूर्ण
+	return status ? -EBUSY : 0;
+}
 
 /**
- * usb4_चयन_dealloc_dp_resource() - Releases allocated DP IN resource
+ * usb4_switch_dealloc_dp_resource() - Releases allocated DP IN resource
  * @sw: USB4 router
  * @in: DP IN adapter
  *
  * Releases the previously allocated DP IN resource.
  */
-पूर्णांक usb4_चयन_dealloc_dp_resource(काष्ठा tb_चयन *sw, काष्ठा tb_port *in)
-अणु
+int usb4_switch_dealloc_dp_resource(struct tb_switch *sw, struct tb_port *in)
+{
 	u32 metadata = in->port;
 	u8 status;
-	पूर्णांक ret;
+	int ret;
 
-	ret = usb4_चयन_op(sw, USB4_SWITCH_OP_DEALLOC_DP_RESOURCE, &metadata,
+	ret = usb4_switch_op(sw, USB4_SWITCH_OP_DEALLOC_DP_RESOURCE, &metadata,
 			     &status);
-	अगर (ret == -EOPNOTSUPP)
-		वापस 0;
-	अन्यथा अगर (ret)
-		वापस ret;
+	if (ret == -EOPNOTSUPP)
+		return 0;
+	else if (ret)
+		return ret;
 
-	वापस status ? -EIO : 0;
-पूर्ण
+	return status ? -EIO : 0;
+}
 
-अटल पूर्णांक usb4_port_idx(स्थिर काष्ठा tb_चयन *sw, स्थिर काष्ठा tb_port *port)
-अणु
-	काष्ठा tb_port *p;
-	पूर्णांक usb4_idx = 0;
+static int usb4_port_idx(const struct tb_switch *sw, const struct tb_port *port)
+{
+	struct tb_port *p;
+	int usb4_idx = 0;
 
 	/* Assume port is primary */
-	tb_चयन_क्रम_each_port(sw, p) अणु
-		अगर (!tb_port_is_null(p))
-			जारी;
-		अगर (tb_is_upstream_port(p))
-			जारी;
-		अगर (!p->link_nr) अणु
-			अगर (p == port)
-				अवरोध;
+	tb_switch_for_each_port(sw, p) {
+		if (!tb_port_is_null(p))
+			continue;
+		if (tb_is_upstream_port(p))
+			continue;
+		if (!p->link_nr) {
+			if (p == port)
+				break;
 			usb4_idx++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस usb4_idx;
-पूर्ण
+	return usb4_idx;
+}
 
 /**
- * usb4_चयन_map_pcie_करोwn() - Map USB4 port to a PCIe करोwnstream adapter
+ * usb4_switch_map_pcie_down() - Map USB4 port to a PCIe downstream adapter
  * @sw: USB4 router
  * @port: USB4 port
  *
  * USB4 routers have direct mapping between USB4 ports and PCIe
- * करोwnstream adapters where the PCIe topology is extended. This
- * function वापसs the corresponding करोwnstream PCIe adapter or %शून्य
- * अगर no such mapping was possible.
+ * downstream adapters where the PCIe topology is extended. This
+ * function returns the corresponding downstream PCIe adapter or %NULL
+ * if no such mapping was possible.
  */
-काष्ठा tb_port *usb4_चयन_map_pcie_करोwn(काष्ठा tb_चयन *sw,
-					  स्थिर काष्ठा tb_port *port)
-अणु
-	पूर्णांक usb4_idx = usb4_port_idx(sw, port);
-	काष्ठा tb_port *p;
-	पूर्णांक pcie_idx = 0;
+struct tb_port *usb4_switch_map_pcie_down(struct tb_switch *sw,
+					  const struct tb_port *port)
+{
+	int usb4_idx = usb4_port_idx(sw, port);
+	struct tb_port *p;
+	int pcie_idx = 0;
 
-	/* Find PCIe करोwn port matching usb4_port */
-	tb_चयन_क्रम_each_port(sw, p) अणु
-		अगर (!tb_port_is_pcie_करोwn(p))
-			जारी;
+	/* Find PCIe down port matching usb4_port */
+	tb_switch_for_each_port(sw, p) {
+		if (!tb_port_is_pcie_down(p))
+			continue;
 
-		अगर (pcie_idx == usb4_idx)
-			वापस p;
+		if (pcie_idx == usb4_idx)
+			return p;
 
 		pcie_idx++;
-	पूर्ण
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /**
- * usb4_चयन_map_usb3_करोwn() - Map USB4 port to a USB3 करोwnstream adapter
+ * usb4_switch_map_usb3_down() - Map USB4 port to a USB3 downstream adapter
  * @sw: USB4 router
  * @port: USB4 port
  *
  * USB4 routers have direct mapping between USB4 ports and USB 3.x
- * करोwnstream adapters where the USB 3.x topology is extended. This
- * function वापसs the corresponding करोwnstream USB 3.x adapter or
- * %शून्य अगर no such mapping was possible.
+ * downstream adapters where the USB 3.x topology is extended. This
+ * function returns the corresponding downstream USB 3.x adapter or
+ * %NULL if no such mapping was possible.
  */
-काष्ठा tb_port *usb4_चयन_map_usb3_करोwn(काष्ठा tb_चयन *sw,
-					  स्थिर काष्ठा tb_port *port)
-अणु
-	पूर्णांक usb4_idx = usb4_port_idx(sw, port);
-	काष्ठा tb_port *p;
-	पूर्णांक usb_idx = 0;
+struct tb_port *usb4_switch_map_usb3_down(struct tb_switch *sw,
+					  const struct tb_port *port)
+{
+	int usb4_idx = usb4_port_idx(sw, port);
+	struct tb_port *p;
+	int usb_idx = 0;
 
-	/* Find USB3 करोwn port matching usb4_port */
-	tb_चयन_क्रम_each_port(sw, p) अणु
-		अगर (!tb_port_is_usb3_करोwn(p))
-			जारी;
+	/* Find USB3 down port matching usb4_port */
+	tb_switch_for_each_port(sw, p) {
+		if (!tb_port_is_usb3_down(p))
+			continue;
 
-		अगर (usb_idx == usb4_idx)
-			वापस p;
+		if (usb_idx == usb4_idx)
+			return p;
 
 		usb_idx++;
-	पूर्ण
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /**
- * usb4_port_unlock() - Unlock USB4 करोwnstream port
+ * usb4_port_unlock() - Unlock USB4 downstream port
  * @port: USB4 port to unlock
  *
- * Unlocks USB4 करोwnstream port so that the connection manager can
+ * Unlocks USB4 downstream port so that the connection manager can
  * access the router below this port.
  */
-पूर्णांक usb4_port_unlock(काष्ठा tb_port *port)
-अणु
-	पूर्णांक ret;
+int usb4_port_unlock(struct tb_port *port)
+{
+	int ret;
 	u32 val;
 
-	ret = tb_port_पढ़ो(port, &val, TB_CFG_PORT, ADP_CS_4, 1);
-	अगर (ret)
-		वापस ret;
+	ret = tb_port_read(port, &val, TB_CFG_PORT, ADP_CS_4, 1);
+	if (ret)
+		return ret;
 
 	val &= ~ADP_CS_4_LCK;
-	वापस tb_port_ग_लिखो(port, &val, TB_CFG_PORT, ADP_CS_4, 1);
-पूर्ण
+	return tb_port_write(port, &val, TB_CFG_PORT, ADP_CS_4, 1);
+}
 
-अटल पूर्णांक usb4_port_set_configured(काष्ठा tb_port *port, bool configured)
-अणु
-	पूर्णांक ret;
+static int usb4_port_set_configured(struct tb_port *port, bool configured)
+{
+	int ret;
 	u32 val;
 
-	अगर (!port->cap_usb4)
-		वापस -EINVAL;
+	if (!port->cap_usb4)
+		return -EINVAL;
 
-	ret = tb_port_पढ़ो(port, &val, TB_CFG_PORT,
+	ret = tb_port_read(port, &val, TB_CFG_PORT,
 			   port->cap_usb4 + PORT_CS_19, 1);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (configured)
+	if (configured)
 		val |= PORT_CS_19_PC;
-	अन्यथा
+	else
 		val &= ~PORT_CS_19_PC;
 
-	वापस tb_port_ग_लिखो(port, &val, TB_CFG_PORT,
+	return tb_port_write(port, &val, TB_CFG_PORT,
 			     port->cap_usb4 + PORT_CS_19, 1);
-पूर्ण
+}
 
 /**
  * usb4_port_configure() - Set USB4 port configured
  * @port: USB4 router
  *
- * Sets the USB4 link to be configured क्रम घातer management purposes.
+ * Sets the USB4 link to be configured for power management purposes.
  */
-पूर्णांक usb4_port_configure(काष्ठा tb_port *port)
-अणु
-	वापस usb4_port_set_configured(port, true);
-पूर्ण
+int usb4_port_configure(struct tb_port *port)
+{
+	return usb4_port_set_configured(port, true);
+}
 
 /**
  * usb4_port_unconfigure() - Set USB4 port unconfigured
  * @port: USB4 router
  *
- * Sets the USB4 link to be unconfigured क्रम घातer management purposes.
+ * Sets the USB4 link to be unconfigured for power management purposes.
  */
-व्योम usb4_port_unconfigure(काष्ठा tb_port *port)
-अणु
+void usb4_port_unconfigure(struct tb_port *port)
+{
 	usb4_port_set_configured(port, false);
-पूर्ण
+}
 
-अटल पूर्णांक usb4_set_xकरोमुख्य_configured(काष्ठा tb_port *port, bool configured)
-अणु
-	पूर्णांक ret;
+static int usb4_set_xdomain_configured(struct tb_port *port, bool configured)
+{
+	int ret;
 	u32 val;
 
-	अगर (!port->cap_usb4)
-		वापस -EINVAL;
+	if (!port->cap_usb4)
+		return -EINVAL;
 
-	ret = tb_port_पढ़ो(port, &val, TB_CFG_PORT,
+	ret = tb_port_read(port, &val, TB_CFG_PORT,
 			   port->cap_usb4 + PORT_CS_19, 1);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (configured)
+	if (configured)
 		val |= PORT_CS_19_PID;
-	अन्यथा
+	else
 		val &= ~PORT_CS_19_PID;
 
-	वापस tb_port_ग_लिखो(port, &val, TB_CFG_PORT,
+	return tb_port_write(port, &val, TB_CFG_PORT,
 			     port->cap_usb4 + PORT_CS_19, 1);
-पूर्ण
+}
 
 /**
- * usb4_port_configure_xकरोमुख्य() - Configure port क्रम XDoमुख्य
+ * usb4_port_configure_xdomain() - Configure port for XDomain
  * @port: USB4 port connected to another host
  *
  * Marks the USB4 port as being connected to another host. Returns %0 in
- * success and negative त्रुटि_सं in failure.
+ * success and negative errno in failure.
  */
-पूर्णांक usb4_port_configure_xकरोमुख्य(काष्ठा tb_port *port)
-अणु
-	वापस usb4_set_xकरोमुख्य_configured(port, true);
-पूर्ण
+int usb4_port_configure_xdomain(struct tb_port *port)
+{
+	return usb4_set_xdomain_configured(port, true);
+}
 
 /**
- * usb4_port_unconfigure_xकरोमुख्य() - Unconfigure port क्रम XDoमुख्य
+ * usb4_port_unconfigure_xdomain() - Unconfigure port for XDomain
  * @port: USB4 port that was connected to another host
  *
- * Clears USB4 port from being marked as XDoमुख्य.
+ * Clears USB4 port from being marked as XDomain.
  */
-व्योम usb4_port_unconfigure_xकरोमुख्य(काष्ठा tb_port *port)
-अणु
-	usb4_set_xकरोमुख्य_configured(port, false);
-पूर्ण
+void usb4_port_unconfigure_xdomain(struct tb_port *port)
+{
+	usb4_set_xdomain_configured(port, false);
+}
 
-अटल पूर्णांक usb4_port_रुको_क्रम_bit(काष्ठा tb_port *port, u32 offset, u32 bit,
-				  u32 value, पूर्णांक समयout_msec)
-अणु
-	kसमय_प्रकार समयout = kसमय_add_ms(kसमय_get(), समयout_msec);
+static int usb4_port_wait_for_bit(struct tb_port *port, u32 offset, u32 bit,
+				  u32 value, int timeout_msec)
+{
+	ktime_t timeout = ktime_add_ms(ktime_get(), timeout_msec);
 
-	करो अणु
+	do {
 		u32 val;
-		पूर्णांक ret;
+		int ret;
 
-		ret = tb_port_पढ़ो(port, &val, TB_CFG_PORT, offset, 1);
-		अगर (ret)
-			वापस ret;
+		ret = tb_port_read(port, &val, TB_CFG_PORT, offset, 1);
+		if (ret)
+			return ret;
 
-		अगर ((val & bit) == value)
-			वापस 0;
+		if ((val & bit) == value)
+			return 0;
 
 		usleep_range(50, 100);
-	पूर्ण जबतक (kसमय_beक्रमe(kसमय_get(), समयout));
+	} while (ktime_before(ktime_get(), timeout));
 
-	वापस -ETIMEDOUT;
-पूर्ण
+	return -ETIMEDOUT;
+}
 
-अटल पूर्णांक usb4_port_पढ़ो_data(काष्ठा tb_port *port, व्योम *data, माप_प्रकार dwords)
-अणु
-	अगर (dwords > USB4_DATA_DWORDS)
-		वापस -EINVAL;
+static int usb4_port_read_data(struct tb_port *port, void *data, size_t dwords)
+{
+	if (dwords > USB4_DATA_DWORDS)
+		return -EINVAL;
 
-	वापस tb_port_पढ़ो(port, data, TB_CFG_PORT, port->cap_usb4 + PORT_CS_2,
+	return tb_port_read(port, data, TB_CFG_PORT, port->cap_usb4 + PORT_CS_2,
 			    dwords);
-पूर्ण
+}
 
-अटल पूर्णांक usb4_port_ग_लिखो_data(काष्ठा tb_port *port, स्थिर व्योम *data,
-				माप_प्रकार dwords)
-अणु
-	अगर (dwords > USB4_DATA_DWORDS)
-		वापस -EINVAL;
+static int usb4_port_write_data(struct tb_port *port, const void *data,
+				size_t dwords)
+{
+	if (dwords > USB4_DATA_DWORDS)
+		return -EINVAL;
 
-	वापस tb_port_ग_लिखो(port, data, TB_CFG_PORT, port->cap_usb4 + PORT_CS_2,
+	return tb_port_write(port, data, TB_CFG_PORT, port->cap_usb4 + PORT_CS_2,
 			     dwords);
-पूर्ण
+}
 
-अटल पूर्णांक usb4_port_sb_पढ़ो(काष्ठा tb_port *port, क्रमागत usb4_sb_target target,
-			     u8 index, u8 reg, व्योम *buf, u8 size)
-अणु
-	माप_प्रकार dwords = DIV_ROUND_UP(size, 4);
-	पूर्णांक ret;
+static int usb4_port_sb_read(struct tb_port *port, enum usb4_sb_target target,
+			     u8 index, u8 reg, void *buf, u8 size)
+{
+	size_t dwords = DIV_ROUND_UP(size, 4);
+	int ret;
 	u32 val;
 
-	अगर (!port->cap_usb4)
-		वापस -EINVAL;
+	if (!port->cap_usb4)
+		return -EINVAL;
 
 	val = reg;
 	val |= size << PORT_CS_1_LENGTH_SHIFT;
 	val |= (target << PORT_CS_1_TARGET_SHIFT) & PORT_CS_1_TARGET_MASK;
-	अगर (target == USB4_SB_TARGET_RETIMER)
+	if (target == USB4_SB_TARGET_RETIMER)
 		val |= (index << PORT_CS_1_RETIMER_INDEX_SHIFT);
 	val |= PORT_CS_1_PND;
 
-	ret = tb_port_ग_लिखो(port, &val, TB_CFG_PORT,
+	ret = tb_port_write(port, &val, TB_CFG_PORT,
 			    port->cap_usb4 + PORT_CS_1, 1);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = usb4_port_रुको_क्रम_bit(port, port->cap_usb4 + PORT_CS_1,
+	ret = usb4_port_wait_for_bit(port, port->cap_usb4 + PORT_CS_1,
 				     PORT_CS_1_PND, 0, 500);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = tb_port_पढ़ो(port, &val, TB_CFG_PORT,
+	ret = tb_port_read(port, &val, TB_CFG_PORT,
 			    port->cap_usb4 + PORT_CS_1, 1);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (val & PORT_CS_1_NR)
-		वापस -ENODEV;
-	अगर (val & PORT_CS_1_RC)
-		वापस -EIO;
+	if (val & PORT_CS_1_NR)
+		return -ENODEV;
+	if (val & PORT_CS_1_RC)
+		return -EIO;
 
-	वापस buf ? usb4_port_पढ़ो_data(port, buf, dwords) : 0;
-पूर्ण
+	return buf ? usb4_port_read_data(port, buf, dwords) : 0;
+}
 
-अटल पूर्णांक usb4_port_sb_ग_लिखो(काष्ठा tb_port *port, क्रमागत usb4_sb_target target,
-			      u8 index, u8 reg, स्थिर व्योम *buf, u8 size)
-अणु
-	माप_प्रकार dwords = DIV_ROUND_UP(size, 4);
-	पूर्णांक ret;
+static int usb4_port_sb_write(struct tb_port *port, enum usb4_sb_target target,
+			      u8 index, u8 reg, const void *buf, u8 size)
+{
+	size_t dwords = DIV_ROUND_UP(size, 4);
+	int ret;
 	u32 val;
 
-	अगर (!port->cap_usb4)
-		वापस -EINVAL;
+	if (!port->cap_usb4)
+		return -EINVAL;
 
-	अगर (buf) अणु
-		ret = usb4_port_ग_लिखो_data(port, buf, dwords);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	if (buf) {
+		ret = usb4_port_write_data(port, buf, dwords);
+		if (ret)
+			return ret;
+	}
 
 	val = reg;
 	val |= size << PORT_CS_1_LENGTH_SHIFT;
 	val |= PORT_CS_1_WNR_WRITE;
 	val |= (target << PORT_CS_1_TARGET_SHIFT) & PORT_CS_1_TARGET_MASK;
-	अगर (target == USB4_SB_TARGET_RETIMER)
+	if (target == USB4_SB_TARGET_RETIMER)
 		val |= (index << PORT_CS_1_RETIMER_INDEX_SHIFT);
 	val |= PORT_CS_1_PND;
 
-	ret = tb_port_ग_लिखो(port, &val, TB_CFG_PORT,
+	ret = tb_port_write(port, &val, TB_CFG_PORT,
 			    port->cap_usb4 + PORT_CS_1, 1);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = usb4_port_रुको_क्रम_bit(port, port->cap_usb4 + PORT_CS_1,
+	ret = usb4_port_wait_for_bit(port, port->cap_usb4 + PORT_CS_1,
 				     PORT_CS_1_PND, 0, 500);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = tb_port_पढ़ो(port, &val, TB_CFG_PORT,
+	ret = tb_port_read(port, &val, TB_CFG_PORT,
 			    port->cap_usb4 + PORT_CS_1, 1);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (val & PORT_CS_1_NR)
-		वापस -ENODEV;
-	अगर (val & PORT_CS_1_RC)
-		वापस -EIO;
+	if (val & PORT_CS_1_NR)
+		return -ENODEV;
+	if (val & PORT_CS_1_RC)
+		return -EIO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक usb4_port_sb_op(काष्ठा tb_port *port, क्रमागत usb4_sb_target target,
-			   u8 index, क्रमागत usb4_sb_opcode opcode, पूर्णांक समयout_msec)
-अणु
-	kसमय_प्रकार समयout;
+static int usb4_port_sb_op(struct tb_port *port, enum usb4_sb_target target,
+			   u8 index, enum usb4_sb_opcode opcode, int timeout_msec)
+{
+	ktime_t timeout;
 	u32 val;
-	पूर्णांक ret;
+	int ret;
 
 	val = opcode;
-	ret = usb4_port_sb_ग_लिखो(port, target, index, USB4_SB_OPCODE, &val,
-				 माप(val));
-	अगर (ret)
-		वापस ret;
+	ret = usb4_port_sb_write(port, target, index, USB4_SB_OPCODE, &val,
+				 sizeof(val));
+	if (ret)
+		return ret;
 
-	समयout = kसमय_add_ms(kसमय_get(), समयout_msec);
+	timeout = ktime_add_ms(ktime_get(), timeout_msec);
 
-	करो अणु
+	do {
 		/* Check results */
-		ret = usb4_port_sb_पढ़ो(port, target, index, USB4_SB_OPCODE,
-					&val, माप(val));
-		अगर (ret)
-			वापस ret;
+		ret = usb4_port_sb_read(port, target, index, USB4_SB_OPCODE,
+					&val, sizeof(val));
+		if (ret)
+			return ret;
 
-		चयन (val) अणु
-		हाल 0:
-			वापस 0;
+		switch (val) {
+		case 0:
+			return 0;
 
-		हाल USB4_SB_OPCODE_ERR:
-			वापस -EAGAIN;
+		case USB4_SB_OPCODE_ERR:
+			return -EAGAIN;
 
-		हाल USB4_SB_OPCODE_ONS:
-			वापस -EOPNOTSUPP;
+		case USB4_SB_OPCODE_ONS:
+			return -EOPNOTSUPP;
 
-		शेष:
-			अगर (val != opcode)
-				वापस -EIO;
-			अवरोध;
-		पूर्ण
-	पूर्ण जबतक (kसमय_beक्रमe(kसमय_get(), समयout));
+		default:
+			if (val != opcode)
+				return -EIO;
+			break;
+		}
+	} while (ktime_before(ktime_get(), timeout));
 
-	वापस -ETIMEDOUT;
-पूर्ण
+	return -ETIMEDOUT;
+}
 
 /**
- * usb4_port_क्रमागतerate_reसमयrs() - Send RT broadcast transaction
+ * usb4_port_enumerate_retimers() - Send RT broadcast transaction
  * @port: USB4 port
  *
- * This क्रमces the USB4 port to send broadcast RT transaction which
- * makes the reसमयrs on the link to assign index to themselves. Returns
- * %0 in हाल of success and negative त्रुटि_सं अगर there was an error.
+ * This forces the USB4 port to send broadcast RT transaction which
+ * makes the retimers on the link to assign index to themselves. Returns
+ * %0 in case of success and negative errno if there was an error.
  */
-पूर्णांक usb4_port_क्रमागतerate_reसमयrs(काष्ठा tb_port *port)
-अणु
+int usb4_port_enumerate_retimers(struct tb_port *port)
+{
 	u32 val;
 
 	val = USB4_SB_OPCODE_ENUMERATE_RETIMERS;
-	वापस usb4_port_sb_ग_लिखो(port, USB4_SB_TARGET_ROUTER, 0,
-				  USB4_SB_OPCODE, &val, माप(val));
-पूर्ण
+	return usb4_port_sb_write(port, USB4_SB_TARGET_ROUTER, 0,
+				  USB4_SB_OPCODE, &val, sizeof(val));
+}
 
-अटल अंतरभूत पूर्णांक usb4_port_reसमयr_op(काष्ठा tb_port *port, u8 index,
-				       क्रमागत usb4_sb_opcode opcode,
-				       पूर्णांक समयout_msec)
-अणु
-	वापस usb4_port_sb_op(port, USB4_SB_TARGET_RETIMER, index, opcode,
-			       समयout_msec);
-पूर्ण
+static inline int usb4_port_retimer_op(struct tb_port *port, u8 index,
+				       enum usb4_sb_opcode opcode,
+				       int timeout_msec)
+{
+	return usb4_port_sb_op(port, USB4_SB_TARGET_RETIMER, index, opcode,
+			       timeout_msec);
+}
 
 /**
- * usb4_port_reसमयr_पढ़ो() - Read from reसमयr sideband रेजिस्टरs
+ * usb4_port_retimer_read() - Read from retimer sideband registers
  * @port: USB4 port
- * @index: Reसमयr index
- * @reg: Sideband रेजिस्टर to पढ़ो
+ * @index: Retimer index
+ * @reg: Sideband register to read
  * @buf: Data from @reg is stored here
- * @size: Number of bytes to पढ़ो
+ * @size: Number of bytes to read
  *
- * Function पढ़ोs reसमयr sideband रेजिस्टरs starting from @reg. The
- * reसमयr is connected to @port at @index. Returns %0 in हाल of
- * success, and पढ़ो data is copied to @buf. If there is no reसमयr
- * present at given @index वापसs %-ENODEV. In any other failure
- * वापसs negative त्रुटि_सं.
+ * Function reads retimer sideband registers starting from @reg. The
+ * retimer is connected to @port at @index. Returns %0 in case of
+ * success, and read data is copied to @buf. If there is no retimer
+ * present at given @index returns %-ENODEV. In any other failure
+ * returns negative errno.
  */
-पूर्णांक usb4_port_reसमयr_पढ़ो(काष्ठा tb_port *port, u8 index, u8 reg, व्योम *buf,
+int usb4_port_retimer_read(struct tb_port *port, u8 index, u8 reg, void *buf,
 			   u8 size)
-अणु
-	वापस usb4_port_sb_पढ़ो(port, USB4_SB_TARGET_RETIMER, index, reg, buf,
+{
+	return usb4_port_sb_read(port, USB4_SB_TARGET_RETIMER, index, reg, buf,
 				 size);
-पूर्ण
+}
 
 /**
- * usb4_port_reसमयr_ग_लिखो() - Write to reसमयr sideband रेजिस्टरs
+ * usb4_port_retimer_write() - Write to retimer sideband registers
  * @port: USB4 port
- * @index: Reसमयr index
- * @reg: Sideband रेजिस्टर to ग_लिखो
+ * @index: Retimer index
+ * @reg: Sideband register to write
  * @buf: Data that is written starting from @reg
- * @size: Number of bytes to ग_लिखो
+ * @size: Number of bytes to write
  *
- * Writes reसमयr sideband रेजिस्टरs starting from @reg. The reसमयr is
- * connected to @port at @index. Returns %0 in हाल of success. If there
- * is no reसमयr present at given @index वापसs %-ENODEV. In any other
- * failure वापसs negative त्रुटि_सं.
+ * Writes retimer sideband registers starting from @reg. The retimer is
+ * connected to @port at @index. Returns %0 in case of success. If there
+ * is no retimer present at given @index returns %-ENODEV. In any other
+ * failure returns negative errno.
  */
-पूर्णांक usb4_port_reसमयr_ग_लिखो(काष्ठा tb_port *port, u8 index, u8 reg,
-			    स्थिर व्योम *buf, u8 size)
-अणु
-	वापस usb4_port_sb_ग_लिखो(port, USB4_SB_TARGET_RETIMER, index, reg, buf,
+int usb4_port_retimer_write(struct tb_port *port, u8 index, u8 reg,
+			    const void *buf, u8 size)
+{
+	return usb4_port_sb_write(port, USB4_SB_TARGET_RETIMER, index, reg, buf,
 				  size);
-पूर्ण
+}
 
 /**
- * usb4_port_reसमयr_is_last() - Is the reसमयr last on-board reसमयr
+ * usb4_port_retimer_is_last() - Is the retimer last on-board retimer
  * @port: USB4 port
- * @index: Reसमयr index
+ * @index: Retimer index
  *
- * If the reसमयr at @index is last one (connected directly to the
- * Type-C port) this function वापसs %1. If it is not वापसs %0. If
- * the reसमयr is not present वापसs %-ENODEV. Otherwise वापसs
- * negative त्रुटि_सं.
+ * If the retimer at @index is last one (connected directly to the
+ * Type-C port) this function returns %1. If it is not returns %0. If
+ * the retimer is not present returns %-ENODEV. Otherwise returns
+ * negative errno.
  */
-पूर्णांक usb4_port_reसमयr_is_last(काष्ठा tb_port *port, u8 index)
-अणु
+int usb4_port_retimer_is_last(struct tb_port *port, u8 index)
+{
 	u32 metadata;
-	पूर्णांक ret;
+	int ret;
 
-	ret = usb4_port_reसमयr_op(port, index, USB4_SB_OPCODE_QUERY_LAST_RETIMER,
+	ret = usb4_port_retimer_op(port, index, USB4_SB_OPCODE_QUERY_LAST_RETIMER,
 				   500);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = usb4_port_reसमयr_पढ़ो(port, index, USB4_SB_METADATA, &metadata,
-				     माप(metadata));
-	वापस ret ? ret : metadata & 1;
-पूर्ण
+	ret = usb4_port_retimer_read(port, index, USB4_SB_METADATA, &metadata,
+				     sizeof(metadata));
+	return ret ? ret : metadata & 1;
+}
 
 /**
- * usb4_port_reसमयr_nvm_sector_size() - Read reसमयr NVM sector size
+ * usb4_port_retimer_nvm_sector_size() - Read retimer NVM sector size
  * @port: USB4 port
- * @index: Reसमयr index
+ * @index: Retimer index
  *
- * Reads NVM sector size (in bytes) of a reसमयr at @index. This
- * operation can be used to determine whether the reसमयr supports NVM
- * upgrade क्रम example. Returns sector size in bytes or negative त्रुटि_सं
- * in हाल of error. Specअगरically वापसs %-ENODEV अगर there is no
- * reसमयr at @index.
+ * Reads NVM sector size (in bytes) of a retimer at @index. This
+ * operation can be used to determine whether the retimer supports NVM
+ * upgrade for example. Returns sector size in bytes or negative errno
+ * in case of error. Specifically returns %-ENODEV if there is no
+ * retimer at @index.
  */
-पूर्णांक usb4_port_reसमयr_nvm_sector_size(काष्ठा tb_port *port, u8 index)
-अणु
+int usb4_port_retimer_nvm_sector_size(struct tb_port *port, u8 index)
+{
 	u32 metadata;
-	पूर्णांक ret;
+	int ret;
 
-	ret = usb4_port_reसमयr_op(port, index, USB4_SB_OPCODE_GET_NVM_SECTOR_SIZE,
+	ret = usb4_port_retimer_op(port, index, USB4_SB_OPCODE_GET_NVM_SECTOR_SIZE,
 				   500);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = usb4_port_reसमयr_पढ़ो(port, index, USB4_SB_METADATA, &metadata,
-				     माप(metadata));
-	वापस ret ? ret : metadata & USB4_NVM_SECTOR_SIZE_MASK;
-पूर्ण
+	ret = usb4_port_retimer_read(port, index, USB4_SB_METADATA, &metadata,
+				     sizeof(metadata));
+	return ret ? ret : metadata & USB4_NVM_SECTOR_SIZE_MASK;
+}
 
-अटल पूर्णांक usb4_port_reसमयr_nvm_set_offset(काष्ठा tb_port *port, u8 index,
-					    अचिन्हित पूर्णांक address)
-अणु
+static int usb4_port_retimer_nvm_set_offset(struct tb_port *port, u8 index,
+					    unsigned int address)
+{
 	u32 metadata, dwaddress;
-	पूर्णांक ret;
+	int ret;
 
 	dwaddress = address / 4;
 	metadata = (dwaddress << USB4_NVM_SET_OFFSET_SHIFT) &
 		  USB4_NVM_SET_OFFSET_MASK;
 
-	ret = usb4_port_reसमयr_ग_लिखो(port, index, USB4_SB_METADATA, &metadata,
-				      माप(metadata));
-	अगर (ret)
-		वापस ret;
+	ret = usb4_port_retimer_write(port, index, USB4_SB_METADATA, &metadata,
+				      sizeof(metadata));
+	if (ret)
+		return ret;
 
-	वापस usb4_port_reसमयr_op(port, index, USB4_SB_OPCODE_NVM_SET_OFFSET,
+	return usb4_port_retimer_op(port, index, USB4_SB_OPCODE_NVM_SET_OFFSET,
 				    500);
-पूर्ण
+}
 
-काष्ठा reसमयr_info अणु
-	काष्ठा tb_port *port;
+struct retimer_info {
+	struct tb_port *port;
 	u8 index;
-पूर्ण;
+};
 
-अटल पूर्णांक usb4_port_reसमयr_nvm_ग_लिखो_next_block(व्योम *data, स्थिर व्योम *buf,
-						  माप_प्रकार dwords)
+static int usb4_port_retimer_nvm_write_next_block(void *data, const void *buf,
+						  size_t dwords)
 
-अणु
-	स्थिर काष्ठा reसमयr_info *info = data;
-	काष्ठा tb_port *port = info->port;
+{
+	const struct retimer_info *info = data;
+	struct tb_port *port = info->port;
 	u8 index = info->index;
-	पूर्णांक ret;
+	int ret;
 
-	ret = usb4_port_reसमयr_ग_लिखो(port, index, USB4_SB_DATA,
+	ret = usb4_port_retimer_write(port, index, USB4_SB_DATA,
 				      buf, dwords * 4);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस usb4_port_reसमयr_op(port, index,
+	return usb4_port_retimer_op(port, index,
 			USB4_SB_OPCODE_NVM_BLOCK_WRITE, 1000);
-पूर्ण
+}
 
 /**
- * usb4_port_reसमयr_nvm_ग_लिखो() - Write to reसमयr NVM
+ * usb4_port_retimer_nvm_write() - Write to retimer NVM
  * @port: USB4 port
- * @index: Reसमयr index
- * @address: Byte address where to start the ग_लिखो
- * @buf: Data to ग_लिखो
- * @size: Size in bytes how much to ग_लिखो
+ * @index: Retimer index
+ * @address: Byte address where to start the write
+ * @buf: Data to write
+ * @size: Size in bytes how much to write
  *
- * Writes @size bytes from @buf to the reसमयr NVM. Used क्रम NVM
- * upgrade. Returns %0 अगर the data was written successfully and negative
- * त्रुटि_सं in हाल of failure. Specअगरically वापसs %-ENODEV अगर there is
- * no reसमयr at @index.
+ * Writes @size bytes from @buf to the retimer NVM. Used for NVM
+ * upgrade. Returns %0 if the data was written successfully and negative
+ * errno in case of failure. Specifically returns %-ENODEV if there is
+ * no retimer at @index.
  */
-पूर्णांक usb4_port_reसमयr_nvm_ग_लिखो(काष्ठा tb_port *port, u8 index, अचिन्हित पूर्णांक address,
-				स्थिर व्योम *buf, माप_प्रकार size)
-अणु
-	काष्ठा reसमयr_info info = अणु .port = port, .index = index पूर्ण;
-	पूर्णांक ret;
+int usb4_port_retimer_nvm_write(struct tb_port *port, u8 index, unsigned int address,
+				const void *buf, size_t size)
+{
+	struct retimer_info info = { .port = port, .index = index };
+	int ret;
 
-	ret = usb4_port_reसमयr_nvm_set_offset(port, index, address);
-	अगर (ret)
-		वापस ret;
+	ret = usb4_port_retimer_nvm_set_offset(port, index, address);
+	if (ret)
+		return ret;
 
-	वापस usb4_करो_ग_लिखो_data(address, buf, size,
-			usb4_port_reसमयr_nvm_ग_लिखो_next_block, &info);
-पूर्ण
+	return usb4_do_write_data(address, buf, size,
+			usb4_port_retimer_nvm_write_next_block, &info);
+}
 
 /**
- * usb4_port_reसमयr_nvm_authenticate() - Start reसमयr NVM upgrade
+ * usb4_port_retimer_nvm_authenticate() - Start retimer NVM upgrade
  * @port: USB4 port
- * @index: Reसमयr index
+ * @index: Retimer index
  *
- * After the new NVM image has been written via usb4_port_reसमयr_nvm_ग_लिखो()
+ * After the new NVM image has been written via usb4_port_retimer_nvm_write()
  * this function can be used to trigger the NVM upgrade process. If
- * successful the reसमयr restarts with the new NVM and may not have the
- * index set so one needs to call usb4_port_क्रमागतerate_reसमयrs() to
- * क्रमce index to be asचिन्हित.
+ * successful the retimer restarts with the new NVM and may not have the
+ * index set so one needs to call usb4_port_enumerate_retimers() to
+ * force index to be assigned.
  */
-पूर्णांक usb4_port_reसमयr_nvm_authenticate(काष्ठा tb_port *port, u8 index)
-अणु
+int usb4_port_retimer_nvm_authenticate(struct tb_port *port, u8 index)
+{
 	u32 val;
 
 	/*
 	 * We need to use the raw operation here because once the
-	 * authentication completes the reसमयr index is not set anymore
-	 * so we करो not get back the status now.
+	 * authentication completes the retimer index is not set anymore
+	 * so we do not get back the status now.
 	 */
 	val = USB4_SB_OPCODE_NVM_AUTH_WRITE;
-	वापस usb4_port_sb_ग_लिखो(port, USB4_SB_TARGET_RETIMER, index,
-				  USB4_SB_OPCODE, &val, माप(val));
-पूर्ण
+	return usb4_port_sb_write(port, USB4_SB_TARGET_RETIMER, index,
+				  USB4_SB_OPCODE, &val, sizeof(val));
+}
 
 /**
- * usb4_port_reसमयr_nvm_authenticate_status() - Read status of NVM upgrade
+ * usb4_port_retimer_nvm_authenticate_status() - Read status of NVM upgrade
  * @port: USB4 port
- * @index: Reसमयr index
- * @status: Raw status code पढ़ो from metadata
+ * @index: Retimer index
+ * @status: Raw status code read from metadata
  *
- * This can be called after usb4_port_reसमयr_nvm_authenticate() and
- * usb4_port_क्रमागतerate_reसमयrs() to fetch status of the NVM upgrade.
+ * This can be called after usb4_port_retimer_nvm_authenticate() and
+ * usb4_port_enumerate_retimers() to fetch status of the NVM upgrade.
  *
- * Returns %0 अगर the authentication status was successfully पढ़ो. The
- * completion metadata (the result) is then stored पूर्णांकo @status. If
- * पढ़ोing the status fails, वापसs negative त्रुटि_सं.
+ * Returns %0 if the authentication status was successfully read. The
+ * completion metadata (the result) is then stored into @status. If
+ * reading the status fails, returns negative errno.
  */
-पूर्णांक usb4_port_reसमयr_nvm_authenticate_status(काष्ठा tb_port *port, u8 index,
+int usb4_port_retimer_nvm_authenticate_status(struct tb_port *port, u8 index,
 					      u32 *status)
-अणु
+{
 	u32 metadata, val;
-	पूर्णांक ret;
+	int ret;
 
-	ret = usb4_port_reसमयr_पढ़ो(port, index, USB4_SB_OPCODE, &val,
-				     माप(val));
-	अगर (ret)
-		वापस ret;
+	ret = usb4_port_retimer_read(port, index, USB4_SB_OPCODE, &val,
+				     sizeof(val));
+	if (ret)
+		return ret;
 
-	चयन (val) अणु
-	हाल 0:
+	switch (val) {
+	case 0:
 		*status = 0;
-		वापस 0;
+		return 0;
 
-	हाल USB4_SB_OPCODE_ERR:
-		ret = usb4_port_reसमयr_पढ़ो(port, index, USB4_SB_METADATA,
-					     &metadata, माप(metadata));
-		अगर (ret)
-			वापस ret;
+	case USB4_SB_OPCODE_ERR:
+		ret = usb4_port_retimer_read(port, index, USB4_SB_METADATA,
+					     &metadata, sizeof(metadata));
+		if (ret)
+			return ret;
 
 		*status = metadata & USB4_SB_METADATA_NVM_AUTH_WRITE_MASK;
-		वापस 0;
+		return 0;
 
-	हाल USB4_SB_OPCODE_ONS:
-		वापस -EOPNOTSUPP;
+	case USB4_SB_OPCODE_ONS:
+		return -EOPNOTSUPP;
 
-	शेष:
-		वापस -EIO;
-	पूर्ण
-पूर्ण
+	default:
+		return -EIO;
+	}
+}
 
-अटल पूर्णांक usb4_port_reसमयr_nvm_पढ़ो_block(व्योम *data, अचिन्हित पूर्णांक dwaddress,
-					    व्योम *buf, माप_प्रकार dwords)
-अणु
-	स्थिर काष्ठा reसमयr_info *info = data;
-	काष्ठा tb_port *port = info->port;
+static int usb4_port_retimer_nvm_read_block(void *data, unsigned int dwaddress,
+					    void *buf, size_t dwords)
+{
+	const struct retimer_info *info = data;
+	struct tb_port *port = info->port;
 	u8 index = info->index;
 	u32 metadata;
-	पूर्णांक ret;
+	int ret;
 
 	metadata = dwaddress << USB4_NVM_READ_OFFSET_SHIFT;
-	अगर (dwords < USB4_DATA_DWORDS)
+	if (dwords < USB4_DATA_DWORDS)
 		metadata |= dwords << USB4_NVM_READ_LENGTH_SHIFT;
 
-	ret = usb4_port_reसमयr_ग_लिखो(port, index, USB4_SB_METADATA, &metadata,
-				      माप(metadata));
-	अगर (ret)
-		वापस ret;
+	ret = usb4_port_retimer_write(port, index, USB4_SB_METADATA, &metadata,
+				      sizeof(metadata));
+	if (ret)
+		return ret;
 
-	ret = usb4_port_reसमयr_op(port, index, USB4_SB_OPCODE_NVM_READ, 500);
-	अगर (ret)
-		वापस ret;
+	ret = usb4_port_retimer_op(port, index, USB4_SB_OPCODE_NVM_READ, 500);
+	if (ret)
+		return ret;
 
-	वापस usb4_port_reसमयr_पढ़ो(port, index, USB4_SB_DATA, buf,
+	return usb4_port_retimer_read(port, index, USB4_SB_DATA, buf,
 				      dwords * 4);
-पूर्ण
+}
 
 /**
- * usb4_port_reसमयr_nvm_पढ़ो() - Read contents of reसमयr NVM
+ * usb4_port_retimer_nvm_read() - Read contents of retimer NVM
  * @port: USB4 port
- * @index: Reसमयr index
- * @address: NVM address (in bytes) to start पढ़ोing
- * @buf: Data पढ़ो from NVM is stored here
- * @size: Number of bytes to पढ़ो
+ * @index: Retimer index
+ * @address: NVM address (in bytes) to start reading
+ * @buf: Data read from NVM is stored here
+ * @size: Number of bytes to read
  *
- * Reads reसमयr NVM and copies the contents to @buf. Returns %0 अगर the
- * पढ़ो was successful and negative त्रुटि_सं in हाल of failure.
- * Specअगरically वापसs %-ENODEV अगर there is no reसमयr at @index.
+ * Reads retimer NVM and copies the contents to @buf. Returns %0 if the
+ * read was successful and negative errno in case of failure.
+ * Specifically returns %-ENODEV if there is no retimer at @index.
  */
-पूर्णांक usb4_port_reसमयr_nvm_पढ़ो(काष्ठा tb_port *port, u8 index,
-			       अचिन्हित पूर्णांक address, व्योम *buf, माप_प्रकार size)
-अणु
-	काष्ठा reसमयr_info info = अणु .port = port, .index = index पूर्ण;
+int usb4_port_retimer_nvm_read(struct tb_port *port, u8 index,
+			       unsigned int address, void *buf, size_t size)
+{
+	struct retimer_info info = { .port = port, .index = index };
 
-	वापस usb4_करो_पढ़ो_data(address, buf, size,
-			usb4_port_reसमयr_nvm_पढ़ो_block, &info);
-पूर्ण
+	return usb4_do_read_data(address, buf, size,
+			usb4_port_retimer_nvm_read_block, &info);
+}
 
 /**
  * usb4_usb3_port_max_link_rate() - Maximum support USB3 link rate
  * @port: USB3 adapter port
  *
  * Return maximum supported link rate of a USB3 adapter in Mb/s.
- * Negative त्रुटि_सं in हाल of error.
+ * Negative errno in case of error.
  */
-पूर्णांक usb4_usb3_port_max_link_rate(काष्ठा tb_port *port)
-अणु
-	पूर्णांक ret, lr;
+int usb4_usb3_port_max_link_rate(struct tb_port *port)
+{
+	int ret, lr;
 	u32 val;
 
-	अगर (!tb_port_is_usb3_करोwn(port) && !tb_port_is_usb3_up(port))
-		वापस -EINVAL;
+	if (!tb_port_is_usb3_down(port) && !tb_port_is_usb3_up(port))
+		return -EINVAL;
 
-	ret = tb_port_पढ़ो(port, &val, TB_CFG_PORT,
+	ret = tb_port_read(port, &val, TB_CFG_PORT,
 			   port->cap_adap + ADP_USB3_CS_4, 1);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	lr = (val & ADP_USB3_CS_4_MSLR_MASK) >> ADP_USB3_CS_4_MSLR_SHIFT;
-	वापस lr == ADP_USB3_CS_4_MSLR_20G ? 20000 : 10000;
-पूर्ण
+	return lr == ADP_USB3_CS_4_MSLR_20G ? 20000 : 10000;
+}
 
 /**
  * usb4_usb3_port_actual_link_rate() - Established USB3 link rate
  * @port: USB3 adapter port
  *
  * Return actual established link rate of a USB3 adapter in Mb/s. If the
- * link is not up वापसs %0 and negative त्रुटि_सं in हाल of failure.
+ * link is not up returns %0 and negative errno in case of failure.
  */
-पूर्णांक usb4_usb3_port_actual_link_rate(काष्ठा tb_port *port)
-अणु
-	पूर्णांक ret, lr;
+int usb4_usb3_port_actual_link_rate(struct tb_port *port)
+{
+	int ret, lr;
 	u32 val;
 
-	अगर (!tb_port_is_usb3_करोwn(port) && !tb_port_is_usb3_up(port))
-		वापस -EINVAL;
+	if (!tb_port_is_usb3_down(port) && !tb_port_is_usb3_up(port))
+		return -EINVAL;
 
-	ret = tb_port_पढ़ो(port, &val, TB_CFG_PORT,
+	ret = tb_port_read(port, &val, TB_CFG_PORT,
 			   port->cap_adap + ADP_USB3_CS_4, 1);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (!(val & ADP_USB3_CS_4_ULV))
-		वापस 0;
+	if (!(val & ADP_USB3_CS_4_ULV))
+		return 0;
 
 	lr = val & ADP_USB3_CS_4_ALR_MASK;
-	वापस lr == ADP_USB3_CS_4_ALR_20G ? 20000 : 10000;
-पूर्ण
+	return lr == ADP_USB3_CS_4_ALR_20G ? 20000 : 10000;
+}
 
-अटल पूर्णांक usb4_usb3_port_cm_request(काष्ठा tb_port *port, bool request)
-अणु
-	पूर्णांक ret;
+static int usb4_usb3_port_cm_request(struct tb_port *port, bool request)
+{
+	int ret;
 	u32 val;
 
-	अगर (!tb_port_is_usb3_करोwn(port))
-		वापस -EINVAL;
-	अगर (tb_route(port->sw))
-		वापस -EINVAL;
+	if (!tb_port_is_usb3_down(port))
+		return -EINVAL;
+	if (tb_route(port->sw))
+		return -EINVAL;
 
-	ret = tb_port_पढ़ो(port, &val, TB_CFG_PORT,
+	ret = tb_port_read(port, &val, TB_CFG_PORT,
 			   port->cap_adap + ADP_USB3_CS_2, 1);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (request)
+	if (request)
 		val |= ADP_USB3_CS_2_CMR;
-	अन्यथा
+	else
 		val &= ~ADP_USB3_CS_2_CMR;
 
-	ret = tb_port_ग_लिखो(port, &val, TB_CFG_PORT,
+	ret = tb_port_write(port, &val, TB_CFG_PORT,
 			    port->cap_adap + ADP_USB3_CS_2, 1);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/*
 	 * We can use val here directly as the CMR bit is in the same place
 	 * as HCA. Just mask out others.
 	 */
 	val &= ADP_USB3_CS_2_CMR;
-	वापस usb4_port_रुको_क्रम_bit(port, port->cap_adap + ADP_USB3_CS_1,
+	return usb4_port_wait_for_bit(port, port->cap_adap + ADP_USB3_CS_1,
 				      ADP_USB3_CS_1_HCA, val, 1500);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक usb4_usb3_port_set_cm_request(काष्ठा tb_port *port)
-अणु
-	वापस usb4_usb3_port_cm_request(port, true);
-पूर्ण
+static inline int usb4_usb3_port_set_cm_request(struct tb_port *port)
+{
+	return usb4_usb3_port_cm_request(port, true);
+}
 
-अटल अंतरभूत पूर्णांक usb4_usb3_port_clear_cm_request(काष्ठा tb_port *port)
-अणु
-	वापस usb4_usb3_port_cm_request(port, false);
-पूर्ण
+static inline int usb4_usb3_port_clear_cm_request(struct tb_port *port)
+{
+	return usb4_usb3_port_cm_request(port, false);
+}
 
-अटल अचिन्हित पूर्णांक usb3_bw_to_mbps(u32 bw, u8 scale)
-अणु
-	अचिन्हित दीर्घ uframes;
+static unsigned int usb3_bw_to_mbps(u32 bw, u8 scale)
+{
+	unsigned long uframes;
 
 	uframes = bw * 512UL << scale;
-	वापस DIV_ROUND_CLOSEST(uframes * 8000, 1000 * 1000);
-पूर्ण
+	return DIV_ROUND_CLOSEST(uframes * 8000, 1000 * 1000);
+}
 
-अटल u32 mbps_to_usb3_bw(अचिन्हित पूर्णांक mbps, u8 scale)
-अणु
-	अचिन्हित दीर्घ uframes;
+static u32 mbps_to_usb3_bw(unsigned int mbps, u8 scale)
+{
+	unsigned long uframes;
 
 	/* 1 uframe is 1/8 ms (125 us) -> 1 / 8000 s */
-	uframes = ((अचिन्हित दीर्घ)mbps * 1000 *  1000) / 8000;
-	वापस DIV_ROUND_UP(uframes, 512UL << scale);
-पूर्ण
+	uframes = ((unsigned long)mbps * 1000 *  1000) / 8000;
+	return DIV_ROUND_UP(uframes, 512UL << scale);
+}
 
-अटल पूर्णांक usb4_usb3_port_पढ़ो_allocated_bandwidth(काष्ठा tb_port *port,
-						   पूर्णांक *upstream_bw,
-						   पूर्णांक *करोwnstream_bw)
-अणु
+static int usb4_usb3_port_read_allocated_bandwidth(struct tb_port *port,
+						   int *upstream_bw,
+						   int *downstream_bw)
+{
 	u32 val, bw, scale;
-	पूर्णांक ret;
+	int ret;
 
-	ret = tb_port_पढ़ो(port, &val, TB_CFG_PORT,
+	ret = tb_port_read(port, &val, TB_CFG_PORT,
 			   port->cap_adap + ADP_USB3_CS_2, 1);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = tb_port_पढ़ो(port, &scale, TB_CFG_PORT,
+	ret = tb_port_read(port, &scale, TB_CFG_PORT,
 			   port->cap_adap + ADP_USB3_CS_3, 1);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	scale &= ADP_USB3_CS_3_SCALE_MASK;
 
@@ -1615,53 +1614,53 @@ bool usb4_चयन_query_dp_resource(काष्ठा tb_चयन *sw, क�
 	*upstream_bw = usb3_bw_to_mbps(bw, scale);
 
 	bw = (val & ADP_USB3_CS_2_ADBW_MASK) >> ADP_USB3_CS_2_ADBW_SHIFT;
-	*करोwnstream_bw = usb3_bw_to_mbps(bw, scale);
+	*downstream_bw = usb3_bw_to_mbps(bw, scale);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * usb4_usb3_port_allocated_bandwidth() - Bandwidth allocated क्रम USB3
+ * usb4_usb3_port_allocated_bandwidth() - Bandwidth allocated for USB3
  * @port: USB3 adapter port
  * @upstream_bw: Allocated upstream bandwidth is stored here
- * @करोwnstream_bw: Allocated करोwnstream bandwidth is stored here
+ * @downstream_bw: Allocated downstream bandwidth is stored here
  *
- * Stores currently allocated USB3 bandwidth पूर्णांकo @upstream_bw and
- * @करोwnstream_bw in Mb/s. Returns %0 in हाल of success and negative
- * त्रुटि_सं in failure.
+ * Stores currently allocated USB3 bandwidth into @upstream_bw and
+ * @downstream_bw in Mb/s. Returns %0 in case of success and negative
+ * errno in failure.
  */
-पूर्णांक usb4_usb3_port_allocated_bandwidth(काष्ठा tb_port *port, पूर्णांक *upstream_bw,
-				       पूर्णांक *करोwnstream_bw)
-अणु
-	पूर्णांक ret;
+int usb4_usb3_port_allocated_bandwidth(struct tb_port *port, int *upstream_bw,
+				       int *downstream_bw)
+{
+	int ret;
 
 	ret = usb4_usb3_port_set_cm_request(port);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = usb4_usb3_port_पढ़ो_allocated_bandwidth(port, upstream_bw,
-						      करोwnstream_bw);
+	ret = usb4_usb3_port_read_allocated_bandwidth(port, upstream_bw,
+						      downstream_bw);
 	usb4_usb3_port_clear_cm_request(port);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक usb4_usb3_port_पढ़ो_consumed_bandwidth(काष्ठा tb_port *port,
-						  पूर्णांक *upstream_bw,
-						  पूर्णांक *करोwnstream_bw)
-अणु
+static int usb4_usb3_port_read_consumed_bandwidth(struct tb_port *port,
+						  int *upstream_bw,
+						  int *downstream_bw)
+{
 	u32 val, bw, scale;
-	पूर्णांक ret;
+	int ret;
 
-	ret = tb_port_पढ़ो(port, &val, TB_CFG_PORT,
+	ret = tb_port_read(port, &val, TB_CFG_PORT,
 			   port->cap_adap + ADP_USB3_CS_1, 1);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = tb_port_पढ़ो(port, &scale, TB_CFG_PORT,
+	ret = tb_port_read(port, &scale, TB_CFG_PORT,
 			   port->cap_adap + ADP_USB3_CS_3, 1);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	scale &= ADP_USB3_CS_3_SCALE_MASK;
 
@@ -1669,132 +1668,132 @@ bool usb4_चयन_query_dp_resource(काष्ठा tb_चयन *sw, क�
 	*upstream_bw = usb3_bw_to_mbps(bw, scale);
 
 	bw = (val & ADP_USB3_CS_1_CDBW_MASK) >> ADP_USB3_CS_1_CDBW_SHIFT;
-	*करोwnstream_bw = usb3_bw_to_mbps(bw, scale);
+	*downstream_bw = usb3_bw_to_mbps(bw, scale);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक usb4_usb3_port_ग_लिखो_allocated_bandwidth(काष्ठा tb_port *port,
-						    पूर्णांक upstream_bw,
-						    पूर्णांक करोwnstream_bw)
-अणु
+static int usb4_usb3_port_write_allocated_bandwidth(struct tb_port *port,
+						    int upstream_bw,
+						    int downstream_bw)
+{
 	u32 val, ubw, dbw, scale;
-	पूर्णांक ret;
+	int ret;
 
-	/* Read the used scale, hardware शेष is 0 */
-	ret = tb_port_पढ़ो(port, &scale, TB_CFG_PORT,
+	/* Read the used scale, hardware default is 0 */
+	ret = tb_port_read(port, &scale, TB_CFG_PORT,
 			   port->cap_adap + ADP_USB3_CS_3, 1);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	scale &= ADP_USB3_CS_3_SCALE_MASK;
 	ubw = mbps_to_usb3_bw(upstream_bw, scale);
-	dbw = mbps_to_usb3_bw(करोwnstream_bw, scale);
+	dbw = mbps_to_usb3_bw(downstream_bw, scale);
 
-	ret = tb_port_पढ़ो(port, &val, TB_CFG_PORT,
+	ret = tb_port_read(port, &val, TB_CFG_PORT,
 			   port->cap_adap + ADP_USB3_CS_2, 1);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	val &= ~(ADP_USB3_CS_2_AUBW_MASK | ADP_USB3_CS_2_ADBW_MASK);
 	val |= dbw << ADP_USB3_CS_2_ADBW_SHIFT;
 	val |= ubw;
 
-	वापस tb_port_ग_लिखो(port, &val, TB_CFG_PORT,
+	return tb_port_write(port, &val, TB_CFG_PORT,
 			     port->cap_adap + ADP_USB3_CS_2, 1);
-पूर्ण
+}
 
 /**
- * usb4_usb3_port_allocate_bandwidth() - Allocate bandwidth क्रम USB3
+ * usb4_usb3_port_allocate_bandwidth() - Allocate bandwidth for USB3
  * @port: USB3 adapter port
  * @upstream_bw: New upstream bandwidth
- * @करोwnstream_bw: New करोwnstream bandwidth
+ * @downstream_bw: New downstream bandwidth
  *
- * This can be used to set how much bandwidth is allocated क्रम the USB3
- * tunneled isochronous traffic. @upstream_bw and @करोwnstream_bw are the
- * new values programmed to the USB3 adapter allocation रेजिस्टरs. If
+ * This can be used to set how much bandwidth is allocated for the USB3
+ * tunneled isochronous traffic. @upstream_bw and @downstream_bw are the
+ * new values programmed to the USB3 adapter allocation registers. If
  * the values are lower than what is currently consumed the allocation
  * is set to what is currently consumed instead (consumed bandwidth
- * cannot be taken away by CM). The actual new values are वापसed in
- * @upstream_bw and @करोwnstream_bw.
+ * cannot be taken away by CM). The actual new values are returned in
+ * @upstream_bw and @downstream_bw.
  *
- * Returns %0 in हाल of success and negative त्रुटि_सं अगर there was a
+ * Returns %0 in case of success and negative errno if there was a
  * failure.
  */
-पूर्णांक usb4_usb3_port_allocate_bandwidth(काष्ठा tb_port *port, पूर्णांक *upstream_bw,
-				      पूर्णांक *करोwnstream_bw)
-अणु
-	पूर्णांक ret, consumed_up, consumed_करोwn, allocate_up, allocate_करोwn;
+int usb4_usb3_port_allocate_bandwidth(struct tb_port *port, int *upstream_bw,
+				      int *downstream_bw)
+{
+	int ret, consumed_up, consumed_down, allocate_up, allocate_down;
 
 	ret = usb4_usb3_port_set_cm_request(port);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = usb4_usb3_port_पढ़ो_consumed_bandwidth(port, &consumed_up,
-						     &consumed_करोwn);
-	अगर (ret)
-		जाओ err_request;
+	ret = usb4_usb3_port_read_consumed_bandwidth(port, &consumed_up,
+						     &consumed_down);
+	if (ret)
+		goto err_request;
 
 	/* Don't allow it go lower than what is consumed */
 	allocate_up = max(*upstream_bw, consumed_up);
-	allocate_करोwn = max(*करोwnstream_bw, consumed_करोwn);
+	allocate_down = max(*downstream_bw, consumed_down);
 
-	ret = usb4_usb3_port_ग_लिखो_allocated_bandwidth(port, allocate_up,
-						       allocate_करोwn);
-	अगर (ret)
-		जाओ err_request;
+	ret = usb4_usb3_port_write_allocated_bandwidth(port, allocate_up,
+						       allocate_down);
+	if (ret)
+		goto err_request;
 
 	*upstream_bw = allocate_up;
-	*करोwnstream_bw = allocate_करोwn;
+	*downstream_bw = allocate_down;
 
 err_request:
 	usb4_usb3_port_clear_cm_request(port);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * usb4_usb3_port_release_bandwidth() - Release allocated USB3 bandwidth
  * @port: USB3 adapter port
  * @upstream_bw: New allocated upstream bandwidth
- * @करोwnstream_bw: New allocated करोwnstream bandwidth
+ * @downstream_bw: New allocated downstream bandwidth
  *
- * Releases USB3 allocated bandwidth करोwn to what is actually consumed.
- * The new bandwidth is वापसed in @upstream_bw and @करोwnstream_bw.
+ * Releases USB3 allocated bandwidth down to what is actually consumed.
+ * The new bandwidth is returned in @upstream_bw and @downstream_bw.
  *
- * Returns 0% in success and negative त्रुटि_सं in हाल of failure.
+ * Returns 0% in success and negative errno in case of failure.
  */
-पूर्णांक usb4_usb3_port_release_bandwidth(काष्ठा tb_port *port, पूर्णांक *upstream_bw,
-				     पूर्णांक *करोwnstream_bw)
-अणु
-	पूर्णांक ret, consumed_up, consumed_करोwn;
+int usb4_usb3_port_release_bandwidth(struct tb_port *port, int *upstream_bw,
+				     int *downstream_bw)
+{
+	int ret, consumed_up, consumed_down;
 
 	ret = usb4_usb3_port_set_cm_request(port);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = usb4_usb3_port_पढ़ो_consumed_bandwidth(port, &consumed_up,
-						     &consumed_करोwn);
-	अगर (ret)
-		जाओ err_request;
+	ret = usb4_usb3_port_read_consumed_bandwidth(port, &consumed_up,
+						     &consumed_down);
+	if (ret)
+		goto err_request;
 
 	/*
 	 * Always keep 1000 Mb/s to make sure xHCI has at least some
-	 * bandwidth available क्रम isochronous traffic.
+	 * bandwidth available for isochronous traffic.
 	 */
-	अगर (consumed_up < 1000)
+	if (consumed_up < 1000)
 		consumed_up = 1000;
-	अगर (consumed_करोwn < 1000)
-		consumed_करोwn = 1000;
+	if (consumed_down < 1000)
+		consumed_down = 1000;
 
-	ret = usb4_usb3_port_ग_लिखो_allocated_bandwidth(port, consumed_up,
-						       consumed_करोwn);
-	अगर (ret)
-		जाओ err_request;
+	ret = usb4_usb3_port_write_allocated_bandwidth(port, consumed_up,
+						       consumed_down);
+	if (ret)
+		goto err_request;
 
 	*upstream_bw = consumed_up;
-	*करोwnstream_bw = consumed_करोwn;
+	*downstream_bw = consumed_down;
 
 err_request:
 	usb4_usb3_port_clear_cm_request(port);
-	वापस ret;
-पूर्ण
+	return ret;
+}

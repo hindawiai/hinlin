@@ -1,18 +1,17 @@
-<शैली गुरु>
 /*
  * AGPGART driver backend routines.
  * Copyright (C) 2004 Silicon Graphics, Inc.
  * Copyright (C) 2002-2003 Dave Jones.
- * Copyright (C) 1999 Jeff Harपंचांगann.
+ * Copyright (C) 1999 Jeff Hartmann.
  * Copyright (C) 1999 Precision Insight, Inc.
  * Copyright (C) 1999 Xi Graphics, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
@@ -26,36 +25,36 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * TODO:
- * - Allocate more than order 0 pages to aव्योम too much linear map splitting.
+ * - Allocate more than order 0 pages to avoid too much linear map splitting.
  */
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/agp_backend.h>
-#समावेश <linux/agpgart.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <यंत्र/पन.स>
-#समावेश "agp.h"
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/pagemap.h>
+#include <linux/miscdevice.h>
+#include <linux/pm.h>
+#include <linux/agp_backend.h>
+#include <linux/agpgart.h>
+#include <linux/vmalloc.h>
+#include <asm/io.h>
+#include "agp.h"
 
 /* Due to XFree86 brain-damage, we can't go to 1.0 until they
  * fix some real stupidity. It's only by chance we can bump
  * past 0.99 at all due to some boolean logic error. */
-#घोषणा AGPGART_VERSION_MAJOR 0
-#घोषणा AGPGART_VERSION_MINOR 103
-अटल स्थिर काष्ठा agp_version agp_current_version =
-अणु
+#define AGPGART_VERSION_MAJOR 0
+#define AGPGART_VERSION_MINOR 103
+static const struct agp_version agp_current_version =
+{
 	.major = AGPGART_VERSION_MAJOR,
 	.minor = AGPGART_VERSION_MINOR,
-पूर्ण;
+};
 
-काष्ठा agp_bridge_data *(*agp_find_bridge)(काष्ठा pci_dev *) =
+struct agp_bridge_data *(*agp_find_bridge)(struct pci_dev *) =
 	&agp_generic_find_bridge;
 
-काष्ठा agp_bridge_data *agp_bridge;
+struct agp_bridge_data *agp_bridge;
 LIST_HEAD(agp_bridges);
 EXPORT_SYMBOL(agp_bridge);
 EXPORT_SYMBOL(agp_bridges);
@@ -65,20 +64,20 @@ EXPORT_SYMBOL(agp_find_bridge);
  *	agp_backend_acquire  -  attempt to acquire an agp backend.
  *
  */
-काष्ठा agp_bridge_data *agp_backend_acquire(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा agp_bridge_data *bridge;
+struct agp_bridge_data *agp_backend_acquire(struct pci_dev *pdev)
+{
+	struct agp_bridge_data *bridge;
 
 	bridge = agp_find_bridge(pdev);
 
-	अगर (!bridge)
-		वापस शून्य;
+	if (!bridge)
+		return NULL;
 
-	अगर (atomic_पढ़ो(&bridge->agp_in_use))
-		वापस शून्य;
+	if (atomic_read(&bridge->agp_in_use))
+		return NULL;
 	atomic_inc(&bridge->agp_in_use);
-	वापस bridge;
-पूर्ण
+	return bridge;
+}
 EXPORT_SYMBOL(agp_backend_acquire);
 
 
@@ -86,43 +85,43 @@ EXPORT_SYMBOL(agp_backend_acquire);
  *	agp_backend_release  -  release the lock on the agp backend.
  *
  *	The caller must insure that the graphics aperture translation table
- *	is पढ़ो क्रम use by another entity.
+ *	is read for use by another entity.
  *
  *	(Ensure that all memory it bound is unbound.)
  */
-व्योम agp_backend_release(काष्ठा agp_bridge_data *bridge)
-अणु
+void agp_backend_release(struct agp_bridge_data *bridge)
+{
 
-	अगर (bridge)
+	if (bridge)
 		atomic_dec(&bridge->agp_in_use);
-पूर्ण
+}
 EXPORT_SYMBOL(agp_backend_release);
 
 
-अटल स्थिर काष्ठा अणु पूर्णांक mem, agp; पूर्ण maxes_table[] = अणु
-	अणु0, 0पूर्ण,
-	अणु32, 4पूर्ण,
-	अणु64, 28पूर्ण,
-	अणु128, 96पूर्ण,
-	अणु256, 204पूर्ण,
-	अणु512, 440पूर्ण,
-	अणु1024, 942पूर्ण,
-	अणु2048, 1920पूर्ण,
-	अणु4096, 3932पूर्ण
-पूर्ण;
+static const struct { int mem, agp; } maxes_table[] = {
+	{0, 0},
+	{32, 4},
+	{64, 28},
+	{128, 96},
+	{256, 204},
+	{512, 440},
+	{1024, 942},
+	{2048, 1920},
+	{4096, 3932}
+};
 
-अटल पूर्णांक agp_find_max(व्योम)
-अणु
-	दीर्घ memory, index, result;
+static int agp_find_max(void)
+{
+	long memory, index, result;
 
-#अगर PAGE_SHIFT < 20
+#if PAGE_SHIFT < 20
 	memory = totalram_pages() >> (20 - PAGE_SHIFT);
-#अन्यथा
+#else
 	memory = totalram_pages() << (PAGE_SHIFT - 20);
-#पूर्ण_अगर
+#endif
 	index = 1;
 
-	जबतक ((memory > maxes_table[index].mem) && (index < 8))
+	while ((memory > maxes_table[index].mem) && (index < 8))
 		index++;
 
 	result = maxes_table[index - 1].agp +
@@ -131,181 +130,181 @@ EXPORT_SYMBOL(agp_backend_release);
 	   (maxes_table[index].mem - maxes_table[index - 1].mem);
 
 	result = result << (20 - PAGE_SHIFT);
-	वापस result;
-पूर्ण
+	return result;
+}
 
 
-अटल पूर्णांक agp_backend_initialize(काष्ठा agp_bridge_data *bridge)
-अणु
-	पूर्णांक size_value, rc, got_gatt=0, got_keylist=0;
+static int agp_backend_initialize(struct agp_bridge_data *bridge)
+{
+	int size_value, rc, got_gatt=0, got_keylist=0;
 
 	bridge->max_memory_agp = agp_find_max();
 	bridge->version = &agp_current_version;
 
-	अगर (bridge->driver->needs_scratch_page) अणु
-		काष्ठा page *page = bridge->driver->agp_alloc_page(bridge);
+	if (bridge->driver->needs_scratch_page) {
+		struct page *page = bridge->driver->agp_alloc_page(bridge);
 
-		अगर (!page) अणु
+		if (!page) {
 			dev_err(&bridge->dev->dev,
 				"can't get memory for scratch page\n");
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 
 		bridge->scratch_page_page = page;
 		bridge->scratch_page_dma = page_to_phys(page);
 
 		bridge->scratch_page = bridge->driver->mask_memory(bridge,
 						   bridge->scratch_page_dma, 0);
-	पूर्ण
+	}
 
 	size_value = bridge->driver->fetch_size();
-	अगर (size_value == 0) अणु
+	if (size_value == 0) {
 		dev_err(&bridge->dev->dev, "can't determine aperture size\n");
 		rc = -EINVAL;
-		जाओ err_out;
-	पूर्ण
-	अगर (bridge->driver->create_gatt_table(bridge)) अणु
+		goto err_out;
+	}
+	if (bridge->driver->create_gatt_table(bridge)) {
 		dev_err(&bridge->dev->dev,
 			"can't get memory for graphics translation table\n");
 		rc = -ENOMEM;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 	got_gatt = 1;
 
 	bridge->key_list = vzalloc(PAGE_SIZE * 4);
-	अगर (bridge->key_list == शून्य) अणु
+	if (bridge->key_list == NULL) {
 		dev_err(&bridge->dev->dev,
 			"can't allocate memory for key lists\n");
 		rc = -ENOMEM;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 	got_keylist = 1;
 
-	/* FIXME vदो_स्मृति'd memory not guaranteed contiguous */
+	/* FIXME vmalloc'd memory not guaranteed contiguous */
 
-	अगर (bridge->driver->configure()) अणु
+	if (bridge->driver->configure()) {
 		dev_err(&bridge->dev->dev, "error configuring host chipset\n");
 		rc = -EINVAL;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 	INIT_LIST_HEAD(&bridge->mapped_list);
 	spin_lock_init(&bridge->mapped_lock);
 
-	वापस 0;
+	return 0;
 
 err_out:
-	अगर (bridge->driver->needs_scratch_page) अणु
-		काष्ठा page *page = bridge->scratch_page_page;
+	if (bridge->driver->needs_scratch_page) {
+		struct page *page = bridge->scratch_page_page;
 
 		bridge->driver->agp_destroy_page(page, AGP_PAGE_DESTROY_UNMAP);
 		bridge->driver->agp_destroy_page(page, AGP_PAGE_DESTROY_FREE);
-	पूर्ण
-	अगर (got_gatt)
-		bridge->driver->मुक्त_gatt_table(bridge);
-	अगर (got_keylist) अणु
-		vमुक्त(bridge->key_list);
-		bridge->key_list = शून्य;
-	पूर्ण
-	वापस rc;
-पूर्ण
+	}
+	if (got_gatt)
+		bridge->driver->free_gatt_table(bridge);
+	if (got_keylist) {
+		vfree(bridge->key_list);
+		bridge->key_list = NULL;
+	}
+	return rc;
+}
 
-/* cannot be __निकास b/c as it could be called from __init code */
-अटल व्योम agp_backend_cleanup(काष्ठा agp_bridge_data *bridge)
-अणु
-	अगर (bridge->driver->cleanup)
+/* cannot be __exit b/c as it could be called from __init code */
+static void agp_backend_cleanup(struct agp_bridge_data *bridge)
+{
+	if (bridge->driver->cleanup)
 		bridge->driver->cleanup();
-	अगर (bridge->driver->मुक्त_gatt_table)
-		bridge->driver->मुक्त_gatt_table(bridge);
+	if (bridge->driver->free_gatt_table)
+		bridge->driver->free_gatt_table(bridge);
 
-	vमुक्त(bridge->key_list);
-	bridge->key_list = शून्य;
+	vfree(bridge->key_list);
+	bridge->key_list = NULL;
 
-	अगर (bridge->driver->agp_destroy_page &&
-	    bridge->driver->needs_scratch_page) अणु
-		काष्ठा page *page = bridge->scratch_page_page;
+	if (bridge->driver->agp_destroy_page &&
+	    bridge->driver->needs_scratch_page) {
+		struct page *page = bridge->scratch_page_page;
 
 		bridge->driver->agp_destroy_page(page, AGP_PAGE_DESTROY_UNMAP);
 		bridge->driver->agp_destroy_page(page, AGP_PAGE_DESTROY_FREE);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* When we हटाओ the global variable agp_bridge from all drivers
+/* When we remove the global variable agp_bridge from all drivers
  * then agp_alloc_bridge and agp_generic_find_bridge need to be updated
  */
 
-काष्ठा agp_bridge_data *agp_alloc_bridge(व्योम)
-अणु
-	काष्ठा agp_bridge_data *bridge;
+struct agp_bridge_data *agp_alloc_bridge(void)
+{
+	struct agp_bridge_data *bridge;
 
-	bridge = kzalloc(माप(*bridge), GFP_KERNEL);
-	अगर (!bridge)
-		वापस शून्य;
+	bridge = kzalloc(sizeof(*bridge), GFP_KERNEL);
+	if (!bridge)
+		return NULL;
 
 	atomic_set(&bridge->agp_in_use, 0);
 	atomic_set(&bridge->current_memory_agp, 0);
 
-	अगर (list_empty(&agp_bridges))
+	if (list_empty(&agp_bridges))
 		agp_bridge = bridge;
 
-	वापस bridge;
-पूर्ण
+	return bridge;
+}
 EXPORT_SYMBOL(agp_alloc_bridge);
 
 
-व्योम agp_put_bridge(काष्ठा agp_bridge_data *bridge)
-अणु
-        kमुक्त(bridge);
+void agp_put_bridge(struct agp_bridge_data *bridge)
+{
+        kfree(bridge);
 
-        अगर (list_empty(&agp_bridges))
-                agp_bridge = शून्य;
-पूर्ण
+        if (list_empty(&agp_bridges))
+                agp_bridge = NULL;
+}
 EXPORT_SYMBOL(agp_put_bridge);
 
 
-पूर्णांक agp_add_bridge(काष्ठा agp_bridge_data *bridge)
-अणु
-	पूर्णांक error;
+int agp_add_bridge(struct agp_bridge_data *bridge)
+{
+	int error;
 
-	अगर (agp_off) अणु
+	if (agp_off) {
 		error = -ENODEV;
-		जाओ err_put_bridge;
-	पूर्ण
+		goto err_put_bridge;
+	}
 
-	अगर (!bridge->dev) अणु
-		prपूर्णांकk (KERN_DEBUG PFX "Erk, registering with no pci_dev!\n");
+	if (!bridge->dev) {
+		printk (KERN_DEBUG PFX "Erk, registering with no pci_dev!\n");
 		error = -EINVAL;
-		जाओ err_put_bridge;
-	पूर्ण
+		goto err_put_bridge;
+	}
 
 	/* Grab reference on the chipset driver. */
-	अगर (!try_module_get(bridge->driver->owner)) अणु
+	if (!try_module_get(bridge->driver->owner)) {
 		dev_info(&bridge->dev->dev, "can't lock chipset driver\n");
 		error = -EINVAL;
-		जाओ err_put_bridge;
-	पूर्ण
+		goto err_put_bridge;
+	}
 
 	error = agp_backend_initialize(bridge);
-	अगर (error) अणु
+	if (error) {
 		dev_info(&bridge->dev->dev,
 			 "agp_backend_initialize() failed\n");
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
-	अगर (list_empty(&agp_bridges)) अणु
+	if (list_empty(&agp_bridges)) {
 		error = agp_frontend_initialize();
-		अगर (error) अणु
+		if (error) {
 			dev_info(&bridge->dev->dev,
 				 "agp_frontend_initialize() failed\n");
-			जाओ frontend_err;
-		पूर्ण
+			goto frontend_err;
+		}
 
 		dev_info(&bridge->dev->dev, "AGP aperture is %dM @ 0x%lx\n",
 			 bridge->driver->fetch_size(), bridge->gart_bus_addr);
 
-	पूर्ण
+	}
 
 	list_add(&bridge->list, &agp_bridges);
-	वापस 0;
+	return 0;
 
 frontend_err:
 	agp_backend_cleanup(bridge);
@@ -313,49 +312,49 @@ err_out:
 	module_put(bridge->driver->owner);
 err_put_bridge:
 	agp_put_bridge(bridge);
-	वापस error;
-पूर्ण
+	return error;
+}
 EXPORT_SYMBOL_GPL(agp_add_bridge);
 
 
-व्योम agp_हटाओ_bridge(काष्ठा agp_bridge_data *bridge)
-अणु
+void agp_remove_bridge(struct agp_bridge_data *bridge)
+{
 	agp_backend_cleanup(bridge);
 	list_del(&bridge->list);
-	अगर (list_empty(&agp_bridges))
+	if (list_empty(&agp_bridges))
 		agp_frontend_cleanup();
 	module_put(bridge->driver->owner);
-पूर्ण
-EXPORT_SYMBOL_GPL(agp_हटाओ_bridge);
+}
+EXPORT_SYMBOL_GPL(agp_remove_bridge);
 
-पूर्णांक agp_off;
-पूर्णांक agp_try_unsupported_boot;
+int agp_off;
+int agp_try_unsupported_boot;
 EXPORT_SYMBOL(agp_off);
 EXPORT_SYMBOL(agp_try_unsupported_boot);
 
-अटल पूर्णांक __init agp_init(व्योम)
-अणु
-	अगर (!agp_off)
-		prपूर्णांकk(KERN_INFO "Linux agpgart interface v%d.%d\n",
+static int __init agp_init(void)
+{
+	if (!agp_off)
+		printk(KERN_INFO "Linux agpgart interface v%d.%d\n",
 			AGPGART_VERSION_MAJOR, AGPGART_VERSION_MINOR);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास agp_निकास(व्योम)
-अणु
-पूर्ण
+static void __exit agp_exit(void)
+{
+}
 
-#अगर_अघोषित MODULE
-अटल __init पूर्णांक agp_setup(अक्षर *s)
-अणु
-	अगर (!म_भेद(s,"off"))
+#ifndef MODULE
+static __init int agp_setup(char *s)
+{
+	if (!strcmp(s,"off"))
 		agp_off = 1;
-	अगर (!म_भेद(s,"try_unsupported"))
+	if (!strcmp(s,"try_unsupported"))
 		agp_try_unsupported_boot = 1;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 __setup("agp=", agp_setup);
-#पूर्ण_अगर
+#endif
 
 MODULE_AUTHOR("Dave Jones, Jeff Hartmann");
 MODULE_DESCRIPTION("AGP GART driver");
@@ -363,5 +362,5 @@ MODULE_LICENSE("GPL and additional rights");
 MODULE_ALIAS_MISCDEV(AGPGART_MINOR);
 
 module_init(agp_init);
-module_निकास(agp_निकास);
+module_exit(agp_exit);
 

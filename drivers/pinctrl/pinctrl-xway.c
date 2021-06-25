@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  linux/drivers/pinctrl/pinmux-xway.c
  *  based on linux/drivers/pinctrl/pinmux-pxa910.c
@@ -8,78 +7,78 @@
  *  Copyright (C) 2015 Martin Schiller <mschiller@tdt.de>
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_gpपन.स>
-#समावेश <linux/ioport.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/device.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/err.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <linux/of_platform.h>
+#include <linux/of_address.h>
+#include <linux/of_gpio.h>
+#include <linux/ioport.h>
+#include <linux/io.h>
+#include <linux/device.h>
+#include <linux/platform_device.h>
 
-#समावेश "pinctrl-lantiq.h"
+#include "pinctrl-lantiq.h"
 
-#समावेश <lantiq_soc.h>
+#include <lantiq_soc.h>
 
 /* we have up to 4 banks of 16 bit each */
-#घोषणा PINS			16
-#घोषणा PORT3			3
-#घोषणा PORT(x)			(x / PINS)
-#घोषणा PORT_PIN(x)		(x % PINS)
+#define PINS			16
+#define PORT3			3
+#define PORT(x)			(x / PINS)
+#define PORT_PIN(x)		(x % PINS)
 
-/* we have 2 mux bits that can be set क्रम each pin */
-#घोषणा MUX_ALT0	0x1
-#घोषणा MUX_ALT1	0x2
+/* we have 2 mux bits that can be set for each pin */
+#define MUX_ALT0	0x1
+#define MUX_ALT1	0x2
 
 /*
- * each bank has this offset apart from the 4th bank that is mixed पूर्णांकo the
+ * each bank has this offset apart from the 4th bank that is mixed into the
  * other 3 ranges
  */
-#घोषणा REG_OFF			0x30
+#define REG_OFF			0x30
 
-/* these are the offsets to our रेजिस्टरs */
-#घोषणा GPIO_BASE(p)		(REG_OFF * PORT(p))
-#घोषणा GPIO_OUT(p)		GPIO_BASE(p)
-#घोषणा GPIO_IN(p)		(GPIO_BASE(p) + 0x04)
-#घोषणा GPIO_सूची(p)		(GPIO_BASE(p) + 0x08)
-#घोषणा GPIO_ALT0(p)		(GPIO_BASE(p) + 0x0C)
-#घोषणा GPIO_ALT1(p)		(GPIO_BASE(p) + 0x10)
-#घोषणा GPIO_OD(p)		(GPIO_BASE(p) + 0x14)
-#घोषणा GPIO_PUDSEL(p)		(GPIO_BASE(p) + 0x1c)
-#घोषणा GPIO_PUDEN(p)		(GPIO_BASE(p) + 0x20)
+/* these are the offsets to our registers */
+#define GPIO_BASE(p)		(REG_OFF * PORT(p))
+#define GPIO_OUT(p)		GPIO_BASE(p)
+#define GPIO_IN(p)		(GPIO_BASE(p) + 0x04)
+#define GPIO_DIR(p)		(GPIO_BASE(p) + 0x08)
+#define GPIO_ALT0(p)		(GPIO_BASE(p) + 0x0C)
+#define GPIO_ALT1(p)		(GPIO_BASE(p) + 0x10)
+#define GPIO_OD(p)		(GPIO_BASE(p) + 0x14)
+#define GPIO_PUDSEL(p)		(GPIO_BASE(p) + 0x1c)
+#define GPIO_PUDEN(p)		(GPIO_BASE(p) + 0x20)
 
-/* the 4th port needs special offsets क्रम some रेजिस्टरs */
-#घोषणा GPIO3_OD		(GPIO_BASE(0) + 0x24)
-#घोषणा GPIO3_PUDSEL		(GPIO_BASE(0) + 0x28)
-#घोषणा GPIO3_PUDEN		(GPIO_BASE(0) + 0x2C)
-#घोषणा GPIO3_ALT1		(GPIO_BASE(PINS) + 0x24)
+/* the 4th port needs special offsets for some registers */
+#define GPIO3_OD		(GPIO_BASE(0) + 0x24)
+#define GPIO3_PUDSEL		(GPIO_BASE(0) + 0x28)
+#define GPIO3_PUDEN		(GPIO_BASE(0) + 0x2C)
+#define GPIO3_ALT1		(GPIO_BASE(PINS) + 0x24)
 
-/* macros to help us access the रेजिस्टरs */
-#घोषणा gpio_getbit(m, r, p)	(!!(ltq_r32(m + r) & BIT(p)))
-#घोषणा gpio_setbit(m, r, p)	ltq_w32_mask(0, BIT(p), m + r)
-#घोषणा gpio_clearbit(m, r, p)	ltq_w32_mask(BIT(p), 0, m + r)
+/* macros to help us access the registers */
+#define gpio_getbit(m, r, p)	(!!(ltq_r32(m + r) & BIT(p)))
+#define gpio_setbit(m, r, p)	ltq_w32_mask(0, BIT(p), m + r)
+#define gpio_clearbit(m, r, p)	ltq_w32_mask(BIT(p), 0, m + r)
 
-#घोषणा MFP_XWAY(a, f0, f1, f2, f3)	\
-	अणु				\
+#define MFP_XWAY(a, f0, f1, f2, f3)	\
+	{				\
 		.name = #a,		\
 		.pin = a,		\
-		.func = अणु		\
+		.func = {		\
 			XWAY_MUX_##f0,	\
 			XWAY_MUX_##f1,	\
 			XWAY_MUX_##f2,	\
 			XWAY_MUX_##f3,	\
-		पूर्ण,			\
-	पूर्ण
+		},			\
+	}
 
-#घोषणा GRP_MUX(a, m, p)		\
-	अणु .name = a, .mux = XWAY_MUX_##m, .pins = p, .npins = ARRAY_SIZE(p), पूर्ण
+#define GRP_MUX(a, m, p)		\
+	{ .name = a, .mux = XWAY_MUX_##m, .pins = p, .npins = ARRAY_SIZE(p), }
 
-#घोषणा FUNC_MUX(f, m)		\
-	अणु .func = f, .mux = XWAY_MUX_##m, पूर्ण
+#define FUNC_MUX(f, m)		\
+	{ .func = f, .mux = XWAY_MUX_##m, }
 
-क्रमागत xway_mux अणु
+enum xway_mux {
 	XWAY_MUX_GPIO = 0,
 	XWAY_MUX_SPI,
 	XWAY_MUX_ASC,
@@ -106,13 +105,13 @@
 	XWAY_MUX_SSI,
 	XWAY_MUX_WIFI,
 	XWAY_MUX_NONE = 0xffff,
-पूर्ण;
+};
 
 /* ---------  DEPRECATED: xr9 related code --------- */
 /* ----------  use xrx100/xrx200 instead  ---------- */
-#घोषणा XR9_MAX_PIN		56
+#define XR9_MAX_PIN		56
 
-अटल स्थिर काष्ठा ltq_mfp_pin xway_mfp[] = अणु
+static const struct ltq_mfp_pin xway_mfp[] = {
 	/*       pin    f0	f1	f2	f3   */
 	MFP_XWAY(GPIO0, GPIO,	EXIN,	NONE,	TDM),
 	MFP_XWAY(GPIO1, GPIO,	EXIN,	NONE,	NONE),
@@ -170,73 +169,73 @@
 	MFP_XWAY(GPIO53, GPIO,	NONE,	NONE,	NONE),
 	MFP_XWAY(GPIO54, GPIO,	NONE,	NONE,	NONE),
 	MFP_XWAY(GPIO55, GPIO,	NONE,	NONE,	NONE),
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित pins_jtag[] = अणुGPIO15, GPIO16, GPIO17, GPIO19, GPIO35पूर्ण;
-अटल स्थिर अचिन्हित pins_asc0[] = अणुGPIO11, GPIO12पूर्ण;
-अटल स्थिर अचिन्हित pins_asc0_cts_rts[] = अणुGPIO9, GPIO10पूर्ण;
-अटल स्थिर अचिन्हित pins_stp[] = अणुGPIO4, GPIO5, GPIO6पूर्ण;
-अटल स्थिर अचिन्हित pins_nmi[] = अणुGPIO8पूर्ण;
-अटल स्थिर अचिन्हित pins_mdio[] = अणुGPIO42, GPIO43पूर्ण;
+static const unsigned pins_jtag[] = {GPIO15, GPIO16, GPIO17, GPIO19, GPIO35};
+static const unsigned pins_asc0[] = {GPIO11, GPIO12};
+static const unsigned pins_asc0_cts_rts[] = {GPIO9, GPIO10};
+static const unsigned pins_stp[] = {GPIO4, GPIO5, GPIO6};
+static const unsigned pins_nmi[] = {GPIO8};
+static const unsigned pins_mdio[] = {GPIO42, GPIO43};
 
-अटल स्थिर अचिन्हित pins_gphy0_led0[] = अणुGPIO5पूर्ण;
-अटल स्थिर अचिन्हित pins_gphy0_led1[] = अणुGPIO7पूर्ण;
-अटल स्थिर अचिन्हित pins_gphy0_led2[] = अणुGPIO2पूर्ण;
-अटल स्थिर अचिन्हित pins_gphy1_led0[] = अणुGPIO44पूर्ण;
-अटल स्थिर अचिन्हित pins_gphy1_led1[] = अणुGPIO45पूर्ण;
-अटल स्थिर अचिन्हित pins_gphy1_led2[] = अणुGPIO47पूर्ण;
+static const unsigned pins_gphy0_led0[] = {GPIO5};
+static const unsigned pins_gphy0_led1[] = {GPIO7};
+static const unsigned pins_gphy0_led2[] = {GPIO2};
+static const unsigned pins_gphy1_led0[] = {GPIO44};
+static const unsigned pins_gphy1_led1[] = {GPIO45};
+static const unsigned pins_gphy1_led2[] = {GPIO47};
 
-अटल स्थिर अचिन्हित pins_ebu_a24[] = अणुGPIO13पूर्ण;
-अटल स्थिर अचिन्हित pins_ebu_clk[] = अणुGPIO21पूर्ण;
-अटल स्थिर अचिन्हित pins_ebu_cs1[] = अणुGPIO23पूर्ण;
-अटल स्थिर अचिन्हित pins_ebu_a23[] = अणुGPIO24पूर्ण;
-अटल स्थिर अचिन्हित pins_ebu_रुको[] = अणुGPIO26पूर्ण;
-अटल स्थिर अचिन्हित pins_ebu_a25[] = अणुGPIO31पूर्ण;
-अटल स्थिर अचिन्हित pins_ebu_rdy[] = अणुGPIO48पूर्ण;
-अटल स्थिर अचिन्हित pins_ebu_rd[] = अणुGPIO49पूर्ण;
+static const unsigned pins_ebu_a24[] = {GPIO13};
+static const unsigned pins_ebu_clk[] = {GPIO21};
+static const unsigned pins_ebu_cs1[] = {GPIO23};
+static const unsigned pins_ebu_a23[] = {GPIO24};
+static const unsigned pins_ebu_wait[] = {GPIO26};
+static const unsigned pins_ebu_a25[] = {GPIO31};
+static const unsigned pins_ebu_rdy[] = {GPIO48};
+static const unsigned pins_ebu_rd[] = {GPIO49};
 
-अटल स्थिर अचिन्हित pins_nand_ale[] = अणुGPIO13पूर्ण;
-अटल स्थिर अचिन्हित pins_nand_cs1[] = अणुGPIO23पूर्ण;
-अटल स्थिर अचिन्हित pins_nand_cle[] = अणुGPIO24पूर्ण;
-अटल स्थिर अचिन्हित pins_nand_rdy[] = अणुGPIO48पूर्ण;
-अटल स्थिर अचिन्हित pins_nand_rd[] = अणुGPIO49पूर्ण;
+static const unsigned pins_nand_ale[] = {GPIO13};
+static const unsigned pins_nand_cs1[] = {GPIO23};
+static const unsigned pins_nand_cle[] = {GPIO24};
+static const unsigned pins_nand_rdy[] = {GPIO48};
+static const unsigned pins_nand_rd[] = {GPIO49};
 
-अटल स्थिर अचिन्हित xway_exin_pin_map[] = अणुGPIO0, GPIO1, GPIO2, GPIO39, GPIO46, GPIO9पूर्ण;
+static const unsigned xway_exin_pin_map[] = {GPIO0, GPIO1, GPIO2, GPIO39, GPIO46, GPIO9};
 
-अटल स्थिर अचिन्हित pins_exin0[] = अणुGPIO0पूर्ण;
-अटल स्थिर अचिन्हित pins_exin1[] = अणुGPIO1पूर्ण;
-अटल स्थिर अचिन्हित pins_exin2[] = अणुGPIO2पूर्ण;
-अटल स्थिर अचिन्हित pins_exin3[] = अणुGPIO39पूर्ण;
-अटल स्थिर अचिन्हित pins_exin4[] = अणुGPIO46पूर्ण;
-अटल स्थिर अचिन्हित pins_exin5[] = अणुGPIO9पूर्ण;
+static const unsigned pins_exin0[] = {GPIO0};
+static const unsigned pins_exin1[] = {GPIO1};
+static const unsigned pins_exin2[] = {GPIO2};
+static const unsigned pins_exin3[] = {GPIO39};
+static const unsigned pins_exin4[] = {GPIO46};
+static const unsigned pins_exin5[] = {GPIO9};
 
-अटल स्थिर अचिन्हित pins_spi[] = अणुGPIO16, GPIO17, GPIO18पूर्ण;
-अटल स्थिर अचिन्हित pins_spi_cs1[] = अणुGPIO15पूर्ण;
-अटल स्थिर अचिन्हित pins_spi_cs2[] = अणुGPIO22पूर्ण;
-अटल स्थिर अचिन्हित pins_spi_cs3[] = अणुGPIO13पूर्ण;
-अटल स्थिर अचिन्हित pins_spi_cs4[] = अणुGPIO10पूर्ण;
-अटल स्थिर अचिन्हित pins_spi_cs5[] = अणुGPIO9पूर्ण;
-अटल स्थिर अचिन्हित pins_spi_cs6[] = अणुGPIO11पूर्ण;
+static const unsigned pins_spi[] = {GPIO16, GPIO17, GPIO18};
+static const unsigned pins_spi_cs1[] = {GPIO15};
+static const unsigned pins_spi_cs2[] = {GPIO22};
+static const unsigned pins_spi_cs3[] = {GPIO13};
+static const unsigned pins_spi_cs4[] = {GPIO10};
+static const unsigned pins_spi_cs5[] = {GPIO9};
+static const unsigned pins_spi_cs6[] = {GPIO11};
 
-अटल स्थिर अचिन्हित pins_gpt1[] = अणुGPIO28पूर्ण;
-अटल स्थिर अचिन्हित pins_gpt2[] = अणुGPIO21पूर्ण;
-अटल स्थिर अचिन्हित pins_gpt3[] = अणुGPIO6पूर्ण;
+static const unsigned pins_gpt1[] = {GPIO28};
+static const unsigned pins_gpt2[] = {GPIO21};
+static const unsigned pins_gpt3[] = {GPIO6};
 
-अटल स्थिर अचिन्हित pins_clkout0[] = अणुGPIO8पूर्ण;
-अटल स्थिर अचिन्हित pins_clkout1[] = अणुGPIO7पूर्ण;
-अटल स्थिर अचिन्हित pins_clkout2[] = अणुGPIO3पूर्ण;
-अटल स्थिर अचिन्हित pins_clkout3[] = अणुGPIO2पूर्ण;
+static const unsigned pins_clkout0[] = {GPIO8};
+static const unsigned pins_clkout1[] = {GPIO7};
+static const unsigned pins_clkout2[] = {GPIO3};
+static const unsigned pins_clkout3[] = {GPIO2};
 
-अटल स्थिर अचिन्हित pins_pci_gnt1[] = अणुGPIO30पूर्ण;
-अटल स्थिर अचिन्हित pins_pci_gnt2[] = अणुGPIO23पूर्ण;
-अटल स्थिर अचिन्हित pins_pci_gnt3[] = अणुGPIO19पूर्ण;
-अटल स्थिर अचिन्हित pins_pci_gnt4[] = अणुGPIO38पूर्ण;
-अटल स्थिर अचिन्हित pins_pci_req1[] = अणुGPIO29पूर्ण;
-अटल स्थिर अचिन्हित pins_pci_req2[] = अणुGPIO31पूर्ण;
-अटल स्थिर अचिन्हित pins_pci_req3[] = अणुGPIO3पूर्ण;
-अटल स्थिर अचिन्हित pins_pci_req4[] = अणुGPIO37पूर्ण;
+static const unsigned pins_pci_gnt1[] = {GPIO30};
+static const unsigned pins_pci_gnt2[] = {GPIO23};
+static const unsigned pins_pci_gnt3[] = {GPIO19};
+static const unsigned pins_pci_gnt4[] = {GPIO38};
+static const unsigned pins_pci_req1[] = {GPIO29};
+static const unsigned pins_pci_req2[] = {GPIO31};
+static const unsigned pins_pci_req3[] = {GPIO3};
+static const unsigned pins_pci_req4[] = {GPIO37};
 
-अटल स्थिर काष्ठा ltq_pin_group xway_grps[] = अणु
+static const struct ltq_pin_group xway_grps[] = {
 	GRP_MUX("exin0", EXIN, pins_exin0),
 	GRP_MUX("exin1", EXIN, pins_exin1),
 	GRP_MUX("exin2", EXIN, pins_exin2),
@@ -246,7 +245,7 @@
 	GRP_MUX("ebu a25", EBU, pins_ebu_a25),
 	GRP_MUX("ebu clk", EBU, pins_ebu_clk),
 	GRP_MUX("ebu cs1", EBU, pins_ebu_cs1),
-	GRP_MUX("ebu wait", EBU, pins_ebu_रुको),
+	GRP_MUX("ebu wait", EBU, pins_ebu_wait),
 	GRP_MUX("nand ale", EBU, pins_nand_ale),
 	GRP_MUX("nand cs1", EBU, pins_nand_cs1),
 	GRP_MUX("nand cle", EBU, pins_nand_cle),
@@ -289,66 +288,66 @@
 	GRP_MUX("gphy1 led0", GPHY, pins_gphy1_led0),
 	GRP_MUX("gphy1 led1", GPHY, pins_gphy1_led1),
 	GRP_MUX("gphy1 led2", GPHY, pins_gphy1_led2),
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर xway_pci_grps[] = अणु"gnt1", "gnt2",
+static const char * const xway_pci_grps[] = {"gnt1", "gnt2",
 						"gnt3", "req1",
-						"req2", "req3"पूर्ण;
-अटल स्थिर अक्षर * स्थिर xway_spi_grps[] = अणु"spi", "spi_cs1",
+						"req2", "req3"};
+static const char * const xway_spi_grps[] = {"spi", "spi_cs1",
 						"spi_cs2", "spi_cs3",
 						"spi_cs4", "spi_cs5",
-						"spi_cs6"पूर्ण;
-अटल स्थिर अक्षर * स्थिर xway_cgu_grps[] = अणु"clkout0", "clkout1",
-						"clkout2", "clkout3"पूर्ण;
-अटल स्थिर अक्षर * स्थिर xway_ebu_grps[] = अणु"ebu a23", "ebu a24",
+						"spi_cs6"};
+static const char * const xway_cgu_grps[] = {"clkout0", "clkout1",
+						"clkout2", "clkout3"};
+static const char * const xway_ebu_grps[] = {"ebu a23", "ebu a24",
 						"ebu a25", "ebu cs1",
 						"ebu wait", "ebu clk",
 						"nand ale", "nand cs1",
-						"nand cle"पूर्ण;
-अटल स्थिर अक्षर * स्थिर xway_exin_grps[] = अणु"exin0", "exin1", "exin2"पूर्ण;
-अटल स्थिर अक्षर * स्थिर xway_gpt_grps[] = अणु"gpt1", "gpt2", "gpt3"पूर्ण;
-अटल स्थिर अक्षर * स्थिर xway_asc_grps[] = अणु"asc0", "asc0 cts rts"पूर्ण;
-अटल स्थिर अक्षर * स्थिर xway_jtag_grps[] = अणु"jtag"पूर्ण;
-अटल स्थिर अक्षर * स्थिर xway_stp_grps[] = अणु"stp"पूर्ण;
-अटल स्थिर अक्षर * स्थिर xway_nmi_grps[] = अणु"nmi"पूर्ण;
+						"nand cle"};
+static const char * const xway_exin_grps[] = {"exin0", "exin1", "exin2"};
+static const char * const xway_gpt_grps[] = {"gpt1", "gpt2", "gpt3"};
+static const char * const xway_asc_grps[] = {"asc0", "asc0 cts rts"};
+static const char * const xway_jtag_grps[] = {"jtag"};
+static const char * const xway_stp_grps[] = {"stp"};
+static const char * const xway_nmi_grps[] = {"nmi"};
 
 /* ar9/vr9/gr9 */
-अटल स्थिर अक्षर * स्थिर xrx_mdio_grps[] = अणु"mdio"पूर्ण;
-अटल स्थिर अक्षर * स्थिर xrx_gphy_grps[] = अणु"gphy0 led0", "gphy0 led1",
+static const char * const xrx_mdio_grps[] = {"mdio"};
+static const char * const xrx_gphy_grps[] = {"gphy0 led0", "gphy0 led1",
 						"gphy0 led2", "gphy1 led0",
-						"gphy1 led1", "gphy1 led2"पूर्ण;
-अटल स्थिर अक्षर * स्थिर xrx_ebu_grps[] = अणु"ebu a23", "ebu a24",
+						"gphy1 led1", "gphy1 led2"};
+static const char * const xrx_ebu_grps[] = {"ebu a23", "ebu a24",
 						"ebu a25", "ebu cs1",
 						"ebu wait", "ebu clk",
 						"nand ale", "nand cs1",
 						"nand cle", "nand rdy",
-						"nand rd"पूर्ण;
-अटल स्थिर अक्षर * स्थिर xrx_exin_grps[] = अणु"exin0", "exin1", "exin2",
-						"exin3", "exin4", "exin5"पूर्ण;
-अटल स्थिर अक्षर * स्थिर xrx_pci_grps[] = अणु"gnt1", "gnt2",
+						"nand rd"};
+static const char * const xrx_exin_grps[] = {"exin0", "exin1", "exin2",
+						"exin3", "exin4", "exin5"};
+static const char * const xrx_pci_grps[] = {"gnt1", "gnt2",
 						"gnt3", "gnt4",
 						"req1", "req2",
-						"req3", "req4"पूर्ण;
+						"req3", "req4"};
 
-अटल स्थिर काष्ठा ltq_pmx_func xrx_funcs[] = अणु
-	अणु"spi",		ARRAY_AND_SIZE(xway_spi_grps)पूर्ण,
-	अणु"asc",		ARRAY_AND_SIZE(xway_asc_grps)पूर्ण,
-	अणु"cgu",		ARRAY_AND_SIZE(xway_cgu_grps)पूर्ण,
-	अणु"jtag",	ARRAY_AND_SIZE(xway_jtag_grps)पूर्ण,
-	अणु"exin",	ARRAY_AND_SIZE(xrx_exin_grps)पूर्ण,
-	अणु"stp",		ARRAY_AND_SIZE(xway_stp_grps)पूर्ण,
-	अणु"gpt",		ARRAY_AND_SIZE(xway_gpt_grps)पूर्ण,
-	अणु"nmi",		ARRAY_AND_SIZE(xway_nmi_grps)पूर्ण,
-	अणु"pci",		ARRAY_AND_SIZE(xrx_pci_grps)पूर्ण,
-	अणु"ebu",		ARRAY_AND_SIZE(xrx_ebu_grps)पूर्ण,
-	अणु"mdio",	ARRAY_AND_SIZE(xrx_mdio_grps)पूर्ण,
-	अणु"gphy",	ARRAY_AND_SIZE(xrx_gphy_grps)पूर्ण,
-पूर्ण;
+static const struct ltq_pmx_func xrx_funcs[] = {
+	{"spi",		ARRAY_AND_SIZE(xway_spi_grps)},
+	{"asc",		ARRAY_AND_SIZE(xway_asc_grps)},
+	{"cgu",		ARRAY_AND_SIZE(xway_cgu_grps)},
+	{"jtag",	ARRAY_AND_SIZE(xway_jtag_grps)},
+	{"exin",	ARRAY_AND_SIZE(xrx_exin_grps)},
+	{"stp",		ARRAY_AND_SIZE(xway_stp_grps)},
+	{"gpt",		ARRAY_AND_SIZE(xway_gpt_grps)},
+	{"nmi",		ARRAY_AND_SIZE(xway_nmi_grps)},
+	{"pci",		ARRAY_AND_SIZE(xrx_pci_grps)},
+	{"ebu",		ARRAY_AND_SIZE(xrx_ebu_grps)},
+	{"mdio",	ARRAY_AND_SIZE(xrx_mdio_grps)},
+	{"gphy",	ARRAY_AND_SIZE(xrx_gphy_grps)},
+};
 
 /* ---------  ase related code --------- */
-#घोषणा ASE_MAX_PIN		32
+#define ASE_MAX_PIN		32
 
-अटल स्थिर काष्ठा ltq_mfp_pin ase_mfp[] = अणु
+static const struct ltq_mfp_pin ase_mfp[] = {
 	/*       pin    f0	f1	f2	f3   */
 	MFP_XWAY(GPIO0, GPIO,	EXIN,	MII,	TDM),
 	MFP_XWAY(GPIO1, GPIO,	STP,	DFE,	EBU),
@@ -382,48 +381,48 @@
 	MFP_XWAY(GPIO29, GPIO,	EBU,	MII,	EXIN),
 	MFP_XWAY(GPIO30, GPIO,	NONE,	NONE,	NONE),
 	MFP_XWAY(GPIO31, GPIO,	NONE,	NONE,	NONE),
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित ase_exin_pin_map[] = अणुGPIO6, GPIO29, GPIO0पूर्ण;
+static const unsigned ase_exin_pin_map[] = {GPIO6, GPIO29, GPIO0};
 
-अटल स्थिर अचिन्हित ase_pins_exin0[] = अणुGPIO6पूर्ण;
-अटल स्थिर अचिन्हित ase_pins_exin1[] = अणुGPIO29पूर्ण;
-अटल स्थिर अचिन्हित ase_pins_exin2[] = अणुGPIO0पूर्ण;
+static const unsigned ase_pins_exin0[] = {GPIO6};
+static const unsigned ase_pins_exin1[] = {GPIO29};
+static const unsigned ase_pins_exin2[] = {GPIO0};
 
-अटल स्थिर अचिन्हित ase_pins_jtag[] = अणुGPIO7, GPIO8, GPIO9, GPIO10, GPIO11पूर्ण;
-अटल स्थिर अचिन्हित ase_pins_asc[] = अणुGPIO5, GPIO6पूर्ण;
-अटल स्थिर अचिन्हित ase_pins_stp[] = अणुGPIO1, GPIO2, GPIO3पूर्ण;
-अटल स्थिर अचिन्हित ase_pins_mdio[] = अणुGPIO24, GPIO27पूर्ण;
-अटल स्थिर अचिन्हित ase_pins_ephy_led0[] = अणुGPIO2पूर्ण;
-अटल स्थिर अचिन्हित ase_pins_ephy_led1[] = अणुGPIO3पूर्ण;
-अटल स्थिर अचिन्हित ase_pins_ephy_led2[] = अणुGPIO4पूर्ण;
-अटल स्थिर अचिन्हित ase_pins_dfe_led0[] = अणुGPIO1पूर्ण;
-अटल स्थिर अचिन्हित ase_pins_dfe_led1[] = अणुGPIO2पूर्ण;
+static const unsigned ase_pins_jtag[] = {GPIO7, GPIO8, GPIO9, GPIO10, GPIO11};
+static const unsigned ase_pins_asc[] = {GPIO5, GPIO6};
+static const unsigned ase_pins_stp[] = {GPIO1, GPIO2, GPIO3};
+static const unsigned ase_pins_mdio[] = {GPIO24, GPIO27};
+static const unsigned ase_pins_ephy_led0[] = {GPIO2};
+static const unsigned ase_pins_ephy_led1[] = {GPIO3};
+static const unsigned ase_pins_ephy_led2[] = {GPIO4};
+static const unsigned ase_pins_dfe_led0[] = {GPIO1};
+static const unsigned ase_pins_dfe_led1[] = {GPIO2};
 
-अटल स्थिर अचिन्हित ase_pins_spi[] = अणुGPIO8, GPIO9, GPIO10पूर्ण; /* DEPRECATED */
-अटल स्थिर अचिन्हित ase_pins_spi_di[] = अणुGPIO8पूर्ण;
-अटल स्थिर अचिन्हित ase_pins_spi_करो[] = अणुGPIO9पूर्ण;
-अटल स्थिर अचिन्हित ase_pins_spi_clk[] = अणुGPIO10पूर्ण;
-अटल स्थिर अचिन्हित ase_pins_spi_cs1[] = अणुGPIO7पूर्ण;
-अटल स्थिर अचिन्हित ase_pins_spi_cs2[] = अणुGPIO15पूर्ण;
-अटल स्थिर अचिन्हित ase_pins_spi_cs3[] = अणुGPIO14पूर्ण;
+static const unsigned ase_pins_spi[] = {GPIO8, GPIO9, GPIO10}; /* DEPRECATED */
+static const unsigned ase_pins_spi_di[] = {GPIO8};
+static const unsigned ase_pins_spi_do[] = {GPIO9};
+static const unsigned ase_pins_spi_clk[] = {GPIO10};
+static const unsigned ase_pins_spi_cs1[] = {GPIO7};
+static const unsigned ase_pins_spi_cs2[] = {GPIO15};
+static const unsigned ase_pins_spi_cs3[] = {GPIO14};
 
-अटल स्थिर अचिन्हित ase_pins_gpt1[] = अणुGPIO5पूर्ण;
-अटल स्थिर अचिन्हित ase_pins_gpt2[] = अणुGPIO4पूर्ण;
-अटल स्थिर अचिन्हित ase_pins_gpt3[] = अणुGPIO25पूर्ण;
+static const unsigned ase_pins_gpt1[] = {GPIO5};
+static const unsigned ase_pins_gpt2[] = {GPIO4};
+static const unsigned ase_pins_gpt3[] = {GPIO25};
 
-अटल स्थिर अचिन्हित ase_pins_clkout0[] = अणुGPIO23पूर्ण;
-अटल स्थिर अचिन्हित ase_pins_clkout1[] = अणुGPIO22पूर्ण;
-अटल स्थिर अचिन्हित ase_pins_clkout2[] = अणुGPIO14पूर्ण;
+static const unsigned ase_pins_clkout0[] = {GPIO23};
+static const unsigned ase_pins_clkout1[] = {GPIO22};
+static const unsigned ase_pins_clkout2[] = {GPIO14};
 
-अटल स्थिर काष्ठा ltq_pin_group ase_grps[] = अणु
+static const struct ltq_pin_group ase_grps[] = {
 	GRP_MUX("exin0", EXIN, ase_pins_exin0),
 	GRP_MUX("exin1", EXIN, ase_pins_exin1),
 	GRP_MUX("exin2", EXIN, ase_pins_exin2),
 	GRP_MUX("jtag", JTAG, ase_pins_jtag),
 	GRP_MUX("spi", SPI, ase_pins_spi), /* DEPRECATED */
 	GRP_MUX("spi_di", SPI, ase_pins_spi_di),
-	GRP_MUX("spi_do", SPI, ase_pins_spi_करो),
+	GRP_MUX("spi_do", SPI, ase_pins_spi_do),
 	GRP_MUX("spi_clk", SPI, ase_pins_spi_clk),
 	GRP_MUX("spi_cs1", SPI, ase_pins_spi_cs1),
 	GRP_MUX("spi_cs2", SPI, ase_pins_spi_cs2),
@@ -442,41 +441,41 @@
 	GRP_MUX("ephy led0", EPHY, ase_pins_ephy_led0),
 	GRP_MUX("ephy led1", EPHY, ase_pins_ephy_led1),
 	GRP_MUX("ephy led2", EPHY, ase_pins_ephy_led2),
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर ase_exin_grps[] = अणु"exin0", "exin1", "exin2"पूर्ण;
-अटल स्थिर अक्षर * स्थिर ase_gpt_grps[] = अणु"gpt1", "gpt2", "gpt3"पूर्ण;
-अटल स्थिर अक्षर * स्थिर ase_cgu_grps[] = अणु"clkout0", "clkout1",
-						"clkout2"पूर्ण;
-अटल स्थिर अक्षर * स्थिर ase_mdio_grps[] = अणु"mdio"पूर्ण;
-अटल स्थिर अक्षर * स्थिर ase_dfe_grps[] = अणु"dfe led0", "dfe led1"पूर्ण;
-अटल स्थिर अक्षर * स्थिर ase_ephy_grps[] = अणु"ephy led0", "ephy led1",
-						"ephy led2"पूर्ण;
-अटल स्थिर अक्षर * स्थिर ase_asc_grps[] = अणु"asc"पूर्ण;
-अटल स्थिर अक्षर * स्थिर ase_jtag_grps[] = अणु"jtag"पूर्ण;
-अटल स्थिर अक्षर * स्थिर ase_stp_grps[] = अणु"stp"पूर्ण;
-अटल स्थिर अक्षर * स्थिर ase_spi_grps[] = अणु"spi",  /* DEPRECATED */
+static const char * const ase_exin_grps[] = {"exin0", "exin1", "exin2"};
+static const char * const ase_gpt_grps[] = {"gpt1", "gpt2", "gpt3"};
+static const char * const ase_cgu_grps[] = {"clkout0", "clkout1",
+						"clkout2"};
+static const char * const ase_mdio_grps[] = {"mdio"};
+static const char * const ase_dfe_grps[] = {"dfe led0", "dfe led1"};
+static const char * const ase_ephy_grps[] = {"ephy led0", "ephy led1",
+						"ephy led2"};
+static const char * const ase_asc_grps[] = {"asc"};
+static const char * const ase_jtag_grps[] = {"jtag"};
+static const char * const ase_stp_grps[] = {"stp"};
+static const char * const ase_spi_grps[] = {"spi",  /* DEPRECATED */
 						"spi_di", "spi_do",
 						"spi_clk", "spi_cs1",
-						"spi_cs2", "spi_cs3"पूर्ण;
+						"spi_cs2", "spi_cs3"};
 
-अटल स्थिर काष्ठा ltq_pmx_func ase_funcs[] = अणु
-	अणु"spi",		ARRAY_AND_SIZE(ase_spi_grps)पूर्ण,
-	अणु"asc",		ARRAY_AND_SIZE(ase_asc_grps)पूर्ण,
-	अणु"cgu",		ARRAY_AND_SIZE(ase_cgu_grps)पूर्ण,
-	अणु"jtag",	ARRAY_AND_SIZE(ase_jtag_grps)पूर्ण,
-	अणु"exin",	ARRAY_AND_SIZE(ase_exin_grps)पूर्ण,
-	अणु"stp",		ARRAY_AND_SIZE(ase_stp_grps)पूर्ण,
-	अणु"gpt",		ARRAY_AND_SIZE(ase_gpt_grps)पूर्ण,
-	अणु"mdio",	ARRAY_AND_SIZE(ase_mdio_grps)पूर्ण,
-	अणु"ephy",	ARRAY_AND_SIZE(ase_ephy_grps)पूर्ण,
-	अणु"dfe",		ARRAY_AND_SIZE(ase_dfe_grps)पूर्ण,
-पूर्ण;
+static const struct ltq_pmx_func ase_funcs[] = {
+	{"spi",		ARRAY_AND_SIZE(ase_spi_grps)},
+	{"asc",		ARRAY_AND_SIZE(ase_asc_grps)},
+	{"cgu",		ARRAY_AND_SIZE(ase_cgu_grps)},
+	{"jtag",	ARRAY_AND_SIZE(ase_jtag_grps)},
+	{"exin",	ARRAY_AND_SIZE(ase_exin_grps)},
+	{"stp",		ARRAY_AND_SIZE(ase_stp_grps)},
+	{"gpt",		ARRAY_AND_SIZE(ase_gpt_grps)},
+	{"mdio",	ARRAY_AND_SIZE(ase_mdio_grps)},
+	{"ephy",	ARRAY_AND_SIZE(ase_ephy_grps)},
+	{"dfe",		ARRAY_AND_SIZE(ase_dfe_grps)},
+};
 
 /* ---------  danube related code --------- */
-#घोषणा DANUBE_MAX_PIN		32
+#define DANUBE_MAX_PIN		32
 
-अटल स्थिर काष्ठा ltq_mfp_pin danube_mfp[] = अणु
+static const struct ltq_mfp_pin danube_mfp[] = {
 	/*       pin    f0	f1	f2	f3   */
 	MFP_XWAY(GPIO0, GPIO,	EXIN,	SDIO,	TDM),
 	MFP_XWAY(GPIO1, GPIO,	EXIN,	CBUS,	MII),
@@ -510,62 +509,62 @@
 	MFP_XWAY(GPIO29, GPIO,	PCI,	CBUS,	MII),
 	MFP_XWAY(GPIO30, GPIO,	PCI,	CBUS,	MII),
 	MFP_XWAY(GPIO31, GPIO,	EBU,	PCI,	MII),
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित danube_exin_pin_map[] = अणुGPIO0, GPIO1, GPIO2पूर्ण;
+static const unsigned danube_exin_pin_map[] = {GPIO0, GPIO1, GPIO2};
 
-अटल स्थिर अचिन्हित danube_pins_exin0[] = अणुGPIO0पूर्ण;
-अटल स्थिर अचिन्हित danube_pins_exin1[] = अणुGPIO1पूर्ण;
-अटल स्थिर अचिन्हित danube_pins_exin2[] = अणुGPIO2पूर्ण;
+static const unsigned danube_pins_exin0[] = {GPIO0};
+static const unsigned danube_pins_exin1[] = {GPIO1};
+static const unsigned danube_pins_exin2[] = {GPIO2};
 
-अटल स्थिर अचिन्हित danube_pins_jtag[] = अणुGPIO15, GPIO16, GPIO17, GPIO18, GPIO20पूर्ण;
-अटल स्थिर अचिन्हित danube_pins_asc0[] = अणुGPIO11, GPIO12पूर्ण;
-अटल स्थिर अचिन्हित danube_pins_asc0_cts_rts[] = अणुGPIO9, GPIO10पूर्ण;
-अटल स्थिर अचिन्हित danube_pins_stp[] = अणुGPIO4, GPIO5, GPIO6पूर्ण;
-अटल स्थिर अचिन्हित danube_pins_nmi[] = अणुGPIO8पूर्ण;
+static const unsigned danube_pins_jtag[] = {GPIO15, GPIO16, GPIO17, GPIO18, GPIO20};
+static const unsigned danube_pins_asc0[] = {GPIO11, GPIO12};
+static const unsigned danube_pins_asc0_cts_rts[] = {GPIO9, GPIO10};
+static const unsigned danube_pins_stp[] = {GPIO4, GPIO5, GPIO6};
+static const unsigned danube_pins_nmi[] = {GPIO8};
 
-अटल स्थिर अचिन्हित danube_pins_dfe_led0[] = अणुGPIO4पूर्ण;
-अटल स्थिर अचिन्हित danube_pins_dfe_led1[] = अणुGPIO5पूर्ण;
+static const unsigned danube_pins_dfe_led0[] = {GPIO4};
+static const unsigned danube_pins_dfe_led1[] = {GPIO5};
 
-अटल स्थिर अचिन्हित danube_pins_ebu_a24[] = अणुGPIO13पूर्ण;
-अटल स्थिर अचिन्हित danube_pins_ebu_clk[] = अणुGPIO21पूर्ण;
-अटल स्थिर अचिन्हित danube_pins_ebu_cs1[] = अणुGPIO23पूर्ण;
-अटल स्थिर अचिन्हित danube_pins_ebu_a23[] = अणुGPIO24पूर्ण;
-अटल स्थिर अचिन्हित danube_pins_ebu_रुको[] = अणुGPIO26पूर्ण;
-अटल स्थिर अचिन्हित danube_pins_ebu_a25[] = अणुGPIO31पूर्ण;
+static const unsigned danube_pins_ebu_a24[] = {GPIO13};
+static const unsigned danube_pins_ebu_clk[] = {GPIO21};
+static const unsigned danube_pins_ebu_cs1[] = {GPIO23};
+static const unsigned danube_pins_ebu_a23[] = {GPIO24};
+static const unsigned danube_pins_ebu_wait[] = {GPIO26};
+static const unsigned danube_pins_ebu_a25[] = {GPIO31};
 
-अटल स्थिर अचिन्हित danube_pins_nand_ale[] = अणुGPIO13पूर्ण;
-अटल स्थिर अचिन्हित danube_pins_nand_cs1[] = अणुGPIO23पूर्ण;
-अटल स्थिर अचिन्हित danube_pins_nand_cle[] = अणुGPIO24पूर्ण;
+static const unsigned danube_pins_nand_ale[] = {GPIO13};
+static const unsigned danube_pins_nand_cs1[] = {GPIO23};
+static const unsigned danube_pins_nand_cle[] = {GPIO24};
 
-अटल स्थिर अचिन्हित danube_pins_spi[] = अणुGPIO16, GPIO17, GPIO18पूर्ण; /* DEPRECATED */
-अटल स्थिर अचिन्हित danube_pins_spi_di[] = अणुGPIO16पूर्ण;
-अटल स्थिर अचिन्हित danube_pins_spi_करो[] = अणुGPIO17पूर्ण;
-अटल स्थिर अचिन्हित danube_pins_spi_clk[] = अणुGPIO18पूर्ण;
-अटल स्थिर अचिन्हित danube_pins_spi_cs1[] = अणुGPIO15पूर्ण;
-अटल स्थिर अचिन्हित danube_pins_spi_cs2[] = अणुGPIO21पूर्ण;
-अटल स्थिर अचिन्हित danube_pins_spi_cs3[] = अणुGPIO13पूर्ण;
-अटल स्थिर अचिन्हित danube_pins_spi_cs4[] = अणुGPIO10पूर्ण;
-अटल स्थिर अचिन्हित danube_pins_spi_cs5[] = अणुGPIO9पूर्ण;
-अटल स्थिर अचिन्हित danube_pins_spi_cs6[] = अणुGPIO11पूर्ण;
+static const unsigned danube_pins_spi[] = {GPIO16, GPIO17, GPIO18}; /* DEPRECATED */
+static const unsigned danube_pins_spi_di[] = {GPIO16};
+static const unsigned danube_pins_spi_do[] = {GPIO17};
+static const unsigned danube_pins_spi_clk[] = {GPIO18};
+static const unsigned danube_pins_spi_cs1[] = {GPIO15};
+static const unsigned danube_pins_spi_cs2[] = {GPIO21};
+static const unsigned danube_pins_spi_cs3[] = {GPIO13};
+static const unsigned danube_pins_spi_cs4[] = {GPIO10};
+static const unsigned danube_pins_spi_cs5[] = {GPIO9};
+static const unsigned danube_pins_spi_cs6[] = {GPIO11};
 
-अटल स्थिर अचिन्हित danube_pins_gpt1[] = अणुGPIO28पूर्ण;
-अटल स्थिर अचिन्हित danube_pins_gpt2[] = अणुGPIO21पूर्ण;
-अटल स्थिर अचिन्हित danube_pins_gpt3[] = अणुGPIO6पूर्ण;
+static const unsigned danube_pins_gpt1[] = {GPIO28};
+static const unsigned danube_pins_gpt2[] = {GPIO21};
+static const unsigned danube_pins_gpt3[] = {GPIO6};
 
-अटल स्थिर अचिन्हित danube_pins_clkout0[] = अणुGPIO8पूर्ण;
-अटल स्थिर अचिन्हित danube_pins_clkout1[] = अणुGPIO7पूर्ण;
-अटल स्थिर अचिन्हित danube_pins_clkout2[] = अणुGPIO3पूर्ण;
-अटल स्थिर अचिन्हित danube_pins_clkout3[] = अणुGPIO2पूर्ण;
+static const unsigned danube_pins_clkout0[] = {GPIO8};
+static const unsigned danube_pins_clkout1[] = {GPIO7};
+static const unsigned danube_pins_clkout2[] = {GPIO3};
+static const unsigned danube_pins_clkout3[] = {GPIO2};
 
-अटल स्थिर अचिन्हित danube_pins_pci_gnt1[] = अणुGPIO30पूर्ण;
-अटल स्थिर अचिन्हित danube_pins_pci_gnt2[] = अणुGPIO23पूर्ण;
-अटल स्थिर अचिन्हित danube_pins_pci_gnt3[] = अणुGPIO19पूर्ण;
-अटल स्थिर अचिन्हित danube_pins_pci_req1[] = अणुGPIO29पूर्ण;
-अटल स्थिर अचिन्हित danube_pins_pci_req2[] = अणुGPIO31पूर्ण;
-अटल स्थिर अचिन्हित danube_pins_pci_req3[] = अणुGPIO3पूर्ण;
+static const unsigned danube_pins_pci_gnt1[] = {GPIO30};
+static const unsigned danube_pins_pci_gnt2[] = {GPIO23};
+static const unsigned danube_pins_pci_gnt3[] = {GPIO19};
+static const unsigned danube_pins_pci_req1[] = {GPIO29};
+static const unsigned danube_pins_pci_req2[] = {GPIO31};
+static const unsigned danube_pins_pci_req3[] = {GPIO3};
 
-अटल स्थिर काष्ठा ltq_pin_group danube_grps[] = अणु
+static const struct ltq_pin_group danube_grps[] = {
 	GRP_MUX("exin0", EXIN, danube_pins_exin0),
 	GRP_MUX("exin1", EXIN, danube_pins_exin1),
 	GRP_MUX("exin2", EXIN, danube_pins_exin2),
@@ -575,13 +574,13 @@
 	GRP_MUX("ebu a25", EBU, danube_pins_ebu_a25),
 	GRP_MUX("ebu clk", EBU, danube_pins_ebu_clk),
 	GRP_MUX("ebu cs1", EBU, danube_pins_ebu_cs1),
-	GRP_MUX("ebu wait", EBU, danube_pins_ebu_रुको),
+	GRP_MUX("ebu wait", EBU, danube_pins_ebu_wait),
 	GRP_MUX("nand ale", EBU, danube_pins_nand_ale),
 	GRP_MUX("nand cs1", EBU, danube_pins_nand_cs1),
 	GRP_MUX("nand cle", EBU, danube_pins_nand_cle),
 	GRP_MUX("spi", SPI, danube_pins_spi), /* DEPRECATED */
 	GRP_MUX("spi_di", SPI, danube_pins_spi_di),
-	GRP_MUX("spi_do", SPI, danube_pins_spi_करो),
+	GRP_MUX("spi_do", SPI, danube_pins_spi_do),
 	GRP_MUX("spi_clk", SPI, danube_pins_spi_clk),
 	GRP_MUX("spi_cs1", SPI, danube_pins_spi_cs1),
 	GRP_MUX("spi_cs2", SPI, danube_pins_spi_cs2),
@@ -608,50 +607,50 @@
 	GRP_MUX("req3", PCI, danube_pins_pci_req3),
 	GRP_MUX("dfe led0", DFE, danube_pins_dfe_led0),
 	GRP_MUX("dfe led1", DFE, danube_pins_dfe_led1),
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर danube_pci_grps[] = अणु"gnt1", "gnt2",
+static const char * const danube_pci_grps[] = {"gnt1", "gnt2",
 						"gnt3", "req1",
-						"req2", "req3"पूर्ण;
-अटल स्थिर अक्षर * स्थिर danube_spi_grps[] = अणु"spi", /* DEPRECATED */
+						"req2", "req3"};
+static const char * const danube_spi_grps[] = {"spi", /* DEPRECATED */
 						"spi_di", "spi_do",
 						"spi_clk", "spi_cs1",
 						"spi_cs2", "spi_cs3",
 						"spi_cs4", "spi_cs5",
-						"spi_cs6"पूर्ण;
-अटल स्थिर अक्षर * स्थिर danube_cgu_grps[] = अणु"clkout0", "clkout1",
-						"clkout2", "clkout3"पूर्ण;
-अटल स्थिर अक्षर * स्थिर danube_ebu_grps[] = अणु"ebu a23", "ebu a24",
+						"spi_cs6"};
+static const char * const danube_cgu_grps[] = {"clkout0", "clkout1",
+						"clkout2", "clkout3"};
+static const char * const danube_ebu_grps[] = {"ebu a23", "ebu a24",
 						"ebu a25", "ebu cs1",
 						"ebu wait", "ebu clk",
 						"nand ale", "nand cs1",
-						"nand cle"पूर्ण;
-अटल स्थिर अक्षर * स्थिर danube_dfe_grps[] = अणु"dfe led0", "dfe led1"पूर्ण;
-अटल स्थिर अक्षर * स्थिर danube_exin_grps[] = अणु"exin0", "exin1", "exin2"पूर्ण;
-अटल स्थिर अक्षर * स्थिर danube_gpt_grps[] = अणु"gpt1", "gpt2", "gpt3"पूर्ण;
-अटल स्थिर अक्षर * स्थिर danube_asc_grps[] = अणु"asc0", "asc0 cts rts"पूर्ण;
-अटल स्थिर अक्षर * स्थिर danube_jtag_grps[] = अणु"jtag"पूर्ण;
-अटल स्थिर अक्षर * स्थिर danube_stp_grps[] = अणु"stp"पूर्ण;
-अटल स्थिर अक्षर * स्थिर danube_nmi_grps[] = अणु"nmi"पूर्ण;
+						"nand cle"};
+static const char * const danube_dfe_grps[] = {"dfe led0", "dfe led1"};
+static const char * const danube_exin_grps[] = {"exin0", "exin1", "exin2"};
+static const char * const danube_gpt_grps[] = {"gpt1", "gpt2", "gpt3"};
+static const char * const danube_asc_grps[] = {"asc0", "asc0 cts rts"};
+static const char * const danube_jtag_grps[] = {"jtag"};
+static const char * const danube_stp_grps[] = {"stp"};
+static const char * const danube_nmi_grps[] = {"nmi"};
 
-अटल स्थिर काष्ठा ltq_pmx_func danube_funcs[] = अणु
-	अणु"spi",		ARRAY_AND_SIZE(danube_spi_grps)पूर्ण,
-	अणु"asc",		ARRAY_AND_SIZE(danube_asc_grps)पूर्ण,
-	अणु"cgu",		ARRAY_AND_SIZE(danube_cgu_grps)पूर्ण,
-	अणु"jtag",	ARRAY_AND_SIZE(danube_jtag_grps)पूर्ण,
-	अणु"exin",	ARRAY_AND_SIZE(danube_exin_grps)पूर्ण,
-	अणु"stp",		ARRAY_AND_SIZE(danube_stp_grps)पूर्ण,
-	अणु"gpt",		ARRAY_AND_SIZE(danube_gpt_grps)पूर्ण,
-	अणु"nmi",		ARRAY_AND_SIZE(danube_nmi_grps)पूर्ण,
-	अणु"pci",		ARRAY_AND_SIZE(danube_pci_grps)पूर्ण,
-	अणु"ebu",		ARRAY_AND_SIZE(danube_ebu_grps)पूर्ण,
-	अणु"dfe",		ARRAY_AND_SIZE(danube_dfe_grps)पूर्ण,
-पूर्ण;
+static const struct ltq_pmx_func danube_funcs[] = {
+	{"spi",		ARRAY_AND_SIZE(danube_spi_grps)},
+	{"asc",		ARRAY_AND_SIZE(danube_asc_grps)},
+	{"cgu",		ARRAY_AND_SIZE(danube_cgu_grps)},
+	{"jtag",	ARRAY_AND_SIZE(danube_jtag_grps)},
+	{"exin",	ARRAY_AND_SIZE(danube_exin_grps)},
+	{"stp",		ARRAY_AND_SIZE(danube_stp_grps)},
+	{"gpt",		ARRAY_AND_SIZE(danube_gpt_grps)},
+	{"nmi",		ARRAY_AND_SIZE(danube_nmi_grps)},
+	{"pci",		ARRAY_AND_SIZE(danube_pci_grps)},
+	{"ebu",		ARRAY_AND_SIZE(danube_ebu_grps)},
+	{"dfe",		ARRAY_AND_SIZE(danube_dfe_grps)},
+};
 
 /* ---------  xrx100 related code --------- */
-#घोषणा XRX100_MAX_PIN		56
+#define XRX100_MAX_PIN		56
 
-अटल स्थिर काष्ठा ltq_mfp_pin xrx100_mfp[] = अणु
+static const struct ltq_mfp_pin xrx100_mfp[] = {
 	/*       pin    f0	f1	f2	f3   */
 	MFP_XWAY(GPIO0, GPIO,	EXIN,	SDIO,	TDM),
 	MFP_XWAY(GPIO1, GPIO,	EXIN,	CBUS,	SIN),
@@ -709,68 +708,68 @@
 	MFP_XWAY(GPIO53, GPIO,	NONE,	NONE,	NONE),
 	MFP_XWAY(GPIO54, GPIO,	NONE,	NONE,	NONE),
 	MFP_XWAY(GPIO55, GPIO,	NONE,	NONE,	NONE),
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित xrx100_exin_pin_map[] = अणुGPIO0, GPIO1, GPIO2, GPIO39, GPIO10, GPIO9पूर्ण;
+static const unsigned xrx100_exin_pin_map[] = {GPIO0, GPIO1, GPIO2, GPIO39, GPIO10, GPIO9};
 
-अटल स्थिर अचिन्हित xrx100_pins_exin0[] = अणुGPIO0पूर्ण;
-अटल स्थिर अचिन्हित xrx100_pins_exin1[] = अणुGPIO1पूर्ण;
-अटल स्थिर अचिन्हित xrx100_pins_exin2[] = अणुGPIO2पूर्ण;
-अटल स्थिर अचिन्हित xrx100_pins_exin3[] = अणुGPIO39पूर्ण;
-अटल स्थिर अचिन्हित xrx100_pins_exin4[] = अणुGPIO10पूर्ण;
-अटल स्थिर अचिन्हित xrx100_pins_exin5[] = अणुGPIO9पूर्ण;
+static const unsigned xrx100_pins_exin0[] = {GPIO0};
+static const unsigned xrx100_pins_exin1[] = {GPIO1};
+static const unsigned xrx100_pins_exin2[] = {GPIO2};
+static const unsigned xrx100_pins_exin3[] = {GPIO39};
+static const unsigned xrx100_pins_exin4[] = {GPIO10};
+static const unsigned xrx100_pins_exin5[] = {GPIO9};
 
-अटल स्थिर अचिन्हित xrx100_pins_asc0[] = अणुGPIO11, GPIO12पूर्ण;
-अटल स्थिर अचिन्हित xrx100_pins_asc0_cts_rts[] = अणुGPIO9, GPIO10पूर्ण;
-अटल स्थिर अचिन्हित xrx100_pins_stp[] = अणुGPIO4, GPIO5, GPIO6पूर्ण;
-अटल स्थिर अचिन्हित xrx100_pins_nmi[] = अणुGPIO8पूर्ण;
-अटल स्थिर अचिन्हित xrx100_pins_mdio[] = अणुGPIO42, GPIO43पूर्ण;
+static const unsigned xrx100_pins_asc0[] = {GPIO11, GPIO12};
+static const unsigned xrx100_pins_asc0_cts_rts[] = {GPIO9, GPIO10};
+static const unsigned xrx100_pins_stp[] = {GPIO4, GPIO5, GPIO6};
+static const unsigned xrx100_pins_nmi[] = {GPIO8};
+static const unsigned xrx100_pins_mdio[] = {GPIO42, GPIO43};
 
-अटल स्थिर अचिन्हित xrx100_pins_dfe_led0[] = अणुGPIO4पूर्ण;
-अटल स्थिर अचिन्हित xrx100_pins_dfe_led1[] = अणुGPIO5पूर्ण;
+static const unsigned xrx100_pins_dfe_led0[] = {GPIO4};
+static const unsigned xrx100_pins_dfe_led1[] = {GPIO5};
 
-अटल स्थिर अचिन्हित xrx100_pins_ebu_a24[] = अणुGPIO13पूर्ण;
-अटल स्थिर अचिन्हित xrx100_pins_ebu_clk[] = अणुGPIO21पूर्ण;
-अटल स्थिर अचिन्हित xrx100_pins_ebu_cs1[] = अणुGPIO23पूर्ण;
-अटल स्थिर अचिन्हित xrx100_pins_ebu_a23[] = अणुGPIO24पूर्ण;
-अटल स्थिर अचिन्हित xrx100_pins_ebu_रुको[] = अणुGPIO26पूर्ण;
-अटल स्थिर अचिन्हित xrx100_pins_ebu_a25[] = अणुGPIO31पूर्ण;
+static const unsigned xrx100_pins_ebu_a24[] = {GPIO13};
+static const unsigned xrx100_pins_ebu_clk[] = {GPIO21};
+static const unsigned xrx100_pins_ebu_cs1[] = {GPIO23};
+static const unsigned xrx100_pins_ebu_a23[] = {GPIO24};
+static const unsigned xrx100_pins_ebu_wait[] = {GPIO26};
+static const unsigned xrx100_pins_ebu_a25[] = {GPIO31};
 
-अटल स्थिर अचिन्हित xrx100_pins_nand_ale[] = अणुGPIO13पूर्ण;
-अटल स्थिर अचिन्हित xrx100_pins_nand_cs1[] = अणुGPIO23पूर्ण;
-अटल स्थिर अचिन्हित xrx100_pins_nand_cle[] = अणुGPIO24पूर्ण;
-अटल स्थिर अचिन्हित xrx100_pins_nand_rdy[] = अणुGPIO48पूर्ण;
-अटल स्थिर अचिन्हित xrx100_pins_nand_rd[] = अणुGPIO49पूर्ण;
+static const unsigned xrx100_pins_nand_ale[] = {GPIO13};
+static const unsigned xrx100_pins_nand_cs1[] = {GPIO23};
+static const unsigned xrx100_pins_nand_cle[] = {GPIO24};
+static const unsigned xrx100_pins_nand_rdy[] = {GPIO48};
+static const unsigned xrx100_pins_nand_rd[] = {GPIO49};
 
-अटल स्थिर अचिन्हित xrx100_pins_spi_di[] = अणुGPIO16पूर्ण;
-अटल स्थिर अचिन्हित xrx100_pins_spi_करो[] = अणुGPIO17पूर्ण;
-अटल स्थिर अचिन्हित xrx100_pins_spi_clk[] = अणुGPIO18पूर्ण;
-अटल स्थिर अचिन्हित xrx100_pins_spi_cs1[] = अणुGPIO15पूर्ण;
-अटल स्थिर अचिन्हित xrx100_pins_spi_cs2[] = अणुGPIO22पूर्ण;
-अटल स्थिर अचिन्हित xrx100_pins_spi_cs3[] = अणुGPIO13पूर्ण;
-अटल स्थिर अचिन्हित xrx100_pins_spi_cs4[] = अणुGPIO10पूर्ण;
-अटल स्थिर अचिन्हित xrx100_pins_spi_cs5[] = अणुGPIO9पूर्ण;
-अटल स्थिर अचिन्हित xrx100_pins_spi_cs6[] = अणुGPIO11पूर्ण;
+static const unsigned xrx100_pins_spi_di[] = {GPIO16};
+static const unsigned xrx100_pins_spi_do[] = {GPIO17};
+static const unsigned xrx100_pins_spi_clk[] = {GPIO18};
+static const unsigned xrx100_pins_spi_cs1[] = {GPIO15};
+static const unsigned xrx100_pins_spi_cs2[] = {GPIO22};
+static const unsigned xrx100_pins_spi_cs3[] = {GPIO13};
+static const unsigned xrx100_pins_spi_cs4[] = {GPIO10};
+static const unsigned xrx100_pins_spi_cs5[] = {GPIO9};
+static const unsigned xrx100_pins_spi_cs6[] = {GPIO11};
 
-अटल स्थिर अचिन्हित xrx100_pins_gpt1[] = अणुGPIO28पूर्ण;
-अटल स्थिर अचिन्हित xrx100_pins_gpt2[] = अणुGPIO21पूर्ण;
-अटल स्थिर अचिन्हित xrx100_pins_gpt3[] = अणुGPIO6पूर्ण;
+static const unsigned xrx100_pins_gpt1[] = {GPIO28};
+static const unsigned xrx100_pins_gpt2[] = {GPIO21};
+static const unsigned xrx100_pins_gpt3[] = {GPIO6};
 
-अटल स्थिर अचिन्हित xrx100_pins_clkout0[] = अणुGPIO8पूर्ण;
-अटल स्थिर अचिन्हित xrx100_pins_clkout1[] = अणुGPIO7पूर्ण;
-अटल स्थिर अचिन्हित xrx100_pins_clkout2[] = अणुGPIO3पूर्ण;
-अटल स्थिर अचिन्हित xrx100_pins_clkout3[] = अणुGPIO2पूर्ण;
+static const unsigned xrx100_pins_clkout0[] = {GPIO8};
+static const unsigned xrx100_pins_clkout1[] = {GPIO7};
+static const unsigned xrx100_pins_clkout2[] = {GPIO3};
+static const unsigned xrx100_pins_clkout3[] = {GPIO2};
 
-अटल स्थिर अचिन्हित xrx100_pins_pci_gnt1[] = अणुGPIO30पूर्ण;
-अटल स्थिर अचिन्हित xrx100_pins_pci_gnt2[] = अणुGPIO23पूर्ण;
-अटल स्थिर अचिन्हित xrx100_pins_pci_gnt3[] = अणुGPIO19पूर्ण;
-अटल स्थिर अचिन्हित xrx100_pins_pci_gnt4[] = अणुGPIO38पूर्ण;
-अटल स्थिर अचिन्हित xrx100_pins_pci_req1[] = अणुGPIO29पूर्ण;
-अटल स्थिर अचिन्हित xrx100_pins_pci_req2[] = अणुGPIO31पूर्ण;
-अटल स्थिर अचिन्हित xrx100_pins_pci_req3[] = अणुGPIO3पूर्ण;
-अटल स्थिर अचिन्हित xrx100_pins_pci_req4[] = अणुGPIO37पूर्ण;
+static const unsigned xrx100_pins_pci_gnt1[] = {GPIO30};
+static const unsigned xrx100_pins_pci_gnt2[] = {GPIO23};
+static const unsigned xrx100_pins_pci_gnt3[] = {GPIO19};
+static const unsigned xrx100_pins_pci_gnt4[] = {GPIO38};
+static const unsigned xrx100_pins_pci_req1[] = {GPIO29};
+static const unsigned xrx100_pins_pci_req2[] = {GPIO31};
+static const unsigned xrx100_pins_pci_req3[] = {GPIO3};
+static const unsigned xrx100_pins_pci_req4[] = {GPIO37};
 
-अटल स्थिर काष्ठा ltq_pin_group xrx100_grps[] = अणु
+static const struct ltq_pin_group xrx100_grps[] = {
 	GRP_MUX("exin0", EXIN, xrx100_pins_exin0),
 	GRP_MUX("exin1", EXIN, xrx100_pins_exin1),
 	GRP_MUX("exin2", EXIN, xrx100_pins_exin2),
@@ -782,14 +781,14 @@
 	GRP_MUX("ebu a25", EBU, xrx100_pins_ebu_a25),
 	GRP_MUX("ebu clk", EBU, xrx100_pins_ebu_clk),
 	GRP_MUX("ebu cs1", EBU, xrx100_pins_ebu_cs1),
-	GRP_MUX("ebu wait", EBU, xrx100_pins_ebu_रुको),
+	GRP_MUX("ebu wait", EBU, xrx100_pins_ebu_wait),
 	GRP_MUX("nand ale", EBU, xrx100_pins_nand_ale),
 	GRP_MUX("nand cs1", EBU, xrx100_pins_nand_cs1),
 	GRP_MUX("nand cle", EBU, xrx100_pins_nand_cle),
 	GRP_MUX("nand rdy", EBU, xrx100_pins_nand_rdy),
 	GRP_MUX("nand rd", EBU, xrx100_pins_nand_rd),
 	GRP_MUX("spi_di", SPI, xrx100_pins_spi_di),
-	GRP_MUX("spi_do", SPI, xrx100_pins_spi_करो),
+	GRP_MUX("spi_do", SPI, xrx100_pins_spi_do),
 	GRP_MUX("spi_clk", SPI, xrx100_pins_spi_clk),
 	GRP_MUX("spi_cs1", SPI, xrx100_pins_spi_cs1),
 	GRP_MUX("spi_cs2", SPI, xrx100_pins_spi_cs2),
@@ -819,52 +818,52 @@
 	GRP_MUX("mdio", MDIO, xrx100_pins_mdio),
 	GRP_MUX("dfe led0", DFE, xrx100_pins_dfe_led0),
 	GRP_MUX("dfe led1", DFE, xrx100_pins_dfe_led1),
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर xrx100_pci_grps[] = अणु"gnt1", "gnt2",
+static const char * const xrx100_pci_grps[] = {"gnt1", "gnt2",
 						"gnt3", "gnt4",
 						"req1", "req2",
-						"req3", "req4"पूर्ण;
-अटल स्थिर अक्षर * स्थिर xrx100_spi_grps[] = अणु"spi_di", "spi_do",
+						"req3", "req4"};
+static const char * const xrx100_spi_grps[] = {"spi_di", "spi_do",
 						"spi_clk", "spi_cs1",
 						"spi_cs2", "spi_cs3",
 						"spi_cs4", "spi_cs5",
-						"spi_cs6"पूर्ण;
-अटल स्थिर अक्षर * स्थिर xrx100_cgu_grps[] = अणु"clkout0", "clkout1",
-						"clkout2", "clkout3"पूर्ण;
-अटल स्थिर अक्षर * स्थिर xrx100_ebu_grps[] = अणु"ebu a23", "ebu a24",
+						"spi_cs6"};
+static const char * const xrx100_cgu_grps[] = {"clkout0", "clkout1",
+						"clkout2", "clkout3"};
+static const char * const xrx100_ebu_grps[] = {"ebu a23", "ebu a24",
 						"ebu a25", "ebu cs1",
 						"ebu wait", "ebu clk",
 						"nand ale", "nand cs1",
 						"nand cle", "nand rdy",
-						"nand rd"पूर्ण;
-अटल स्थिर अक्षर * स्थिर xrx100_exin_grps[] = अणु"exin0", "exin1", "exin2",
-						"exin3", "exin4", "exin5"पूर्ण;
-अटल स्थिर अक्षर * स्थिर xrx100_gpt_grps[] = अणु"gpt1", "gpt2", "gpt3"पूर्ण;
-अटल स्थिर अक्षर * स्थिर xrx100_asc_grps[] = अणु"asc0", "asc0 cts rts"पूर्ण;
-अटल स्थिर अक्षर * स्थिर xrx100_stp_grps[] = अणु"stp"पूर्ण;
-अटल स्थिर अक्षर * स्थिर xrx100_nmi_grps[] = अणु"nmi"पूर्ण;
-अटल स्थिर अक्षर * स्थिर xrx100_mdio_grps[] = अणु"mdio"पूर्ण;
-अटल स्थिर अक्षर * स्थिर xrx100_dfe_grps[] = अणु"dfe led0", "dfe led1"पूर्ण;
+						"nand rd"};
+static const char * const xrx100_exin_grps[] = {"exin0", "exin1", "exin2",
+						"exin3", "exin4", "exin5"};
+static const char * const xrx100_gpt_grps[] = {"gpt1", "gpt2", "gpt3"};
+static const char * const xrx100_asc_grps[] = {"asc0", "asc0 cts rts"};
+static const char * const xrx100_stp_grps[] = {"stp"};
+static const char * const xrx100_nmi_grps[] = {"nmi"};
+static const char * const xrx100_mdio_grps[] = {"mdio"};
+static const char * const xrx100_dfe_grps[] = {"dfe led0", "dfe led1"};
 
-अटल स्थिर काष्ठा ltq_pmx_func xrx100_funcs[] = अणु
-	अणु"spi",		ARRAY_AND_SIZE(xrx100_spi_grps)पूर्ण,
-	अणु"asc",		ARRAY_AND_SIZE(xrx100_asc_grps)पूर्ण,
-	अणु"cgu",		ARRAY_AND_SIZE(xrx100_cgu_grps)पूर्ण,
-	अणु"exin",	ARRAY_AND_SIZE(xrx100_exin_grps)पूर्ण,
-	अणु"stp",		ARRAY_AND_SIZE(xrx100_stp_grps)पूर्ण,
-	अणु"gpt",		ARRAY_AND_SIZE(xrx100_gpt_grps)पूर्ण,
-	अणु"nmi",		ARRAY_AND_SIZE(xrx100_nmi_grps)पूर्ण,
-	अणु"pci",		ARRAY_AND_SIZE(xrx100_pci_grps)पूर्ण,
-	अणु"ebu",		ARRAY_AND_SIZE(xrx100_ebu_grps)पूर्ण,
-	अणु"mdio",	ARRAY_AND_SIZE(xrx100_mdio_grps)पूर्ण,
-	अणु"dfe",		ARRAY_AND_SIZE(xrx100_dfe_grps)पूर्ण,
-पूर्ण;
+static const struct ltq_pmx_func xrx100_funcs[] = {
+	{"spi",		ARRAY_AND_SIZE(xrx100_spi_grps)},
+	{"asc",		ARRAY_AND_SIZE(xrx100_asc_grps)},
+	{"cgu",		ARRAY_AND_SIZE(xrx100_cgu_grps)},
+	{"exin",	ARRAY_AND_SIZE(xrx100_exin_grps)},
+	{"stp",		ARRAY_AND_SIZE(xrx100_stp_grps)},
+	{"gpt",		ARRAY_AND_SIZE(xrx100_gpt_grps)},
+	{"nmi",		ARRAY_AND_SIZE(xrx100_nmi_grps)},
+	{"pci",		ARRAY_AND_SIZE(xrx100_pci_grps)},
+	{"ebu",		ARRAY_AND_SIZE(xrx100_ebu_grps)},
+	{"mdio",	ARRAY_AND_SIZE(xrx100_mdio_grps)},
+	{"dfe",		ARRAY_AND_SIZE(xrx100_dfe_grps)},
+};
 
 /* ---------  xrx200 related code --------- */
-#घोषणा XRX200_MAX_PIN		50
+#define XRX200_MAX_PIN		50
 
-अटल स्थिर काष्ठा ltq_mfp_pin xrx200_mfp[] = अणु
+static const struct ltq_mfp_pin xrx200_mfp[] = {
 	/*       pin    f0	f1	f2	f3   */
 	MFP_XWAY(GPIO0, GPIO,	EXIN,	SDIO,	TDM),
 	MFP_XWAY(GPIO1, GPIO,	EXIN,	CBUS,	SIN),
@@ -916,89 +915,89 @@
 	MFP_XWAY(GPIO47, GPIO,	MII,	GPHY,	SIN),
 	MFP_XWAY(GPIO48, GPIO,	EBU,	NONE,	NONE),
 	MFP_XWAY(GPIO49, GPIO,	EBU,	NONE,	NONE),
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित xrx200_exin_pin_map[] = अणुGPIO0, GPIO1, GPIO2, GPIO39, GPIO10, GPIO9पूर्ण;
+static const unsigned xrx200_exin_pin_map[] = {GPIO0, GPIO1, GPIO2, GPIO39, GPIO10, GPIO9};
 
-अटल स्थिर अचिन्हित xrx200_pins_exin0[] = अणुGPIO0पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_exin1[] = अणुGPIO1पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_exin2[] = अणुGPIO2पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_exin3[] = अणुGPIO39पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_exin4[] = अणुGPIO10पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_exin5[] = अणुGPIO9पूर्ण;
+static const unsigned xrx200_pins_exin0[] = {GPIO0};
+static const unsigned xrx200_pins_exin1[] = {GPIO1};
+static const unsigned xrx200_pins_exin2[] = {GPIO2};
+static const unsigned xrx200_pins_exin3[] = {GPIO39};
+static const unsigned xrx200_pins_exin4[] = {GPIO10};
+static const unsigned xrx200_pins_exin5[] = {GPIO9};
 
-अटल स्थिर अचिन्हित xrx200_pins_usअगर_uart_rx[] = अणुGPIO11पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_usअगर_uart_tx[] = अणुGPIO12पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_usअगर_uart_rts[] = अणुGPIO9पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_usअगर_uart_cts[] = अणुGPIO10पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_usअगर_uart_dtr[] = अणुGPIO4पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_usअगर_uart_dsr[] = अणुGPIO6पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_usअगर_uart_dcd[] = अणुGPIO25पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_usअगर_uart_ri[] = अणुGPIO27पूर्ण;
+static const unsigned xrx200_pins_usif_uart_rx[] = {GPIO11};
+static const unsigned xrx200_pins_usif_uart_tx[] = {GPIO12};
+static const unsigned xrx200_pins_usif_uart_rts[] = {GPIO9};
+static const unsigned xrx200_pins_usif_uart_cts[] = {GPIO10};
+static const unsigned xrx200_pins_usif_uart_dtr[] = {GPIO4};
+static const unsigned xrx200_pins_usif_uart_dsr[] = {GPIO6};
+static const unsigned xrx200_pins_usif_uart_dcd[] = {GPIO25};
+static const unsigned xrx200_pins_usif_uart_ri[] = {GPIO27};
 
-अटल स्थिर अचिन्हित xrx200_pins_usअगर_spi_di[] = अणुGPIO11पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_usअगर_spi_करो[] = अणुGPIO12पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_usअगर_spi_clk[] = अणुGPIO38पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_usअगर_spi_cs0[] = अणुGPIO37पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_usअगर_spi_cs1[] = अणुGPIO39पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_usअगर_spi_cs2[] = अणुGPIO14पूर्ण;
+static const unsigned xrx200_pins_usif_spi_di[] = {GPIO11};
+static const unsigned xrx200_pins_usif_spi_do[] = {GPIO12};
+static const unsigned xrx200_pins_usif_spi_clk[] = {GPIO38};
+static const unsigned xrx200_pins_usif_spi_cs0[] = {GPIO37};
+static const unsigned xrx200_pins_usif_spi_cs1[] = {GPIO39};
+static const unsigned xrx200_pins_usif_spi_cs2[] = {GPIO14};
 
-अटल स्थिर अचिन्हित xrx200_pins_stp[] = अणुGPIO4, GPIO5, GPIO6पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_nmi[] = अणुGPIO8पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_mdio[] = अणुGPIO42, GPIO43पूर्ण;
+static const unsigned xrx200_pins_stp[] = {GPIO4, GPIO5, GPIO6};
+static const unsigned xrx200_pins_nmi[] = {GPIO8};
+static const unsigned xrx200_pins_mdio[] = {GPIO42, GPIO43};
 
-अटल स्थिर अचिन्हित xrx200_pins_dfe_led0[] = अणुGPIO4पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_dfe_led1[] = अणुGPIO5पूर्ण;
+static const unsigned xrx200_pins_dfe_led0[] = {GPIO4};
+static const unsigned xrx200_pins_dfe_led1[] = {GPIO5};
 
-अटल स्थिर अचिन्हित xrx200_pins_gphy0_led0[] = अणुGPIO5पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_gphy0_led1[] = अणुGPIO7पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_gphy0_led2[] = अणुGPIO2पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_gphy1_led0[] = अणुGPIO44पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_gphy1_led1[] = अणुGPIO45पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_gphy1_led2[] = अणुGPIO47पूर्ण;
+static const unsigned xrx200_pins_gphy0_led0[] = {GPIO5};
+static const unsigned xrx200_pins_gphy0_led1[] = {GPIO7};
+static const unsigned xrx200_pins_gphy0_led2[] = {GPIO2};
+static const unsigned xrx200_pins_gphy1_led0[] = {GPIO44};
+static const unsigned xrx200_pins_gphy1_led1[] = {GPIO45};
+static const unsigned xrx200_pins_gphy1_led2[] = {GPIO47};
 
-अटल स्थिर अचिन्हित xrx200_pins_ebu_a24[] = अणुGPIO13पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_ebu_clk[] = अणुGPIO21पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_ebu_cs1[] = अणुGPIO23पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_ebu_a23[] = अणुGPIO24पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_ebu_रुको[] = अणुGPIO26पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_ebu_a25[] = अणुGPIO31पूर्ण;
+static const unsigned xrx200_pins_ebu_a24[] = {GPIO13};
+static const unsigned xrx200_pins_ebu_clk[] = {GPIO21};
+static const unsigned xrx200_pins_ebu_cs1[] = {GPIO23};
+static const unsigned xrx200_pins_ebu_a23[] = {GPIO24};
+static const unsigned xrx200_pins_ebu_wait[] = {GPIO26};
+static const unsigned xrx200_pins_ebu_a25[] = {GPIO31};
 
-अटल स्थिर अचिन्हित xrx200_pins_nand_ale[] = अणुGPIO13पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_nand_cs1[] = अणुGPIO23पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_nand_cle[] = अणुGPIO24पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_nand_rdy[] = अणुGPIO48पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_nand_rd[] = अणुGPIO49पूर्ण;
+static const unsigned xrx200_pins_nand_ale[] = {GPIO13};
+static const unsigned xrx200_pins_nand_cs1[] = {GPIO23};
+static const unsigned xrx200_pins_nand_cle[] = {GPIO24};
+static const unsigned xrx200_pins_nand_rdy[] = {GPIO48};
+static const unsigned xrx200_pins_nand_rd[] = {GPIO49};
 
-अटल स्थिर अचिन्हित xrx200_pins_spi_di[] = अणुGPIO16पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_spi_करो[] = अणुGPIO17पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_spi_clk[] = अणुGPIO18पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_spi_cs1[] = अणुGPIO15पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_spi_cs2[] = अणुGPIO22पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_spi_cs3[] = अणुGPIO13पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_spi_cs4[] = अणुGPIO10पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_spi_cs5[] = अणुGPIO9पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_spi_cs6[] = अणुGPIO11पूर्ण;
+static const unsigned xrx200_pins_spi_di[] = {GPIO16};
+static const unsigned xrx200_pins_spi_do[] = {GPIO17};
+static const unsigned xrx200_pins_spi_clk[] = {GPIO18};
+static const unsigned xrx200_pins_spi_cs1[] = {GPIO15};
+static const unsigned xrx200_pins_spi_cs2[] = {GPIO22};
+static const unsigned xrx200_pins_spi_cs3[] = {GPIO13};
+static const unsigned xrx200_pins_spi_cs4[] = {GPIO10};
+static const unsigned xrx200_pins_spi_cs5[] = {GPIO9};
+static const unsigned xrx200_pins_spi_cs6[] = {GPIO11};
 
-अटल स्थिर अचिन्हित xrx200_pins_gpt1[] = अणुGPIO28पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_gpt2[] = अणुGPIO21पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_gpt3[] = अणुGPIO6पूर्ण;
+static const unsigned xrx200_pins_gpt1[] = {GPIO28};
+static const unsigned xrx200_pins_gpt2[] = {GPIO21};
+static const unsigned xrx200_pins_gpt3[] = {GPIO6};
 
-अटल स्थिर अचिन्हित xrx200_pins_clkout0[] = अणुGPIO8पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_clkout1[] = अणुGPIO7पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_clkout2[] = अणुGPIO3पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_clkout3[] = अणुGPIO2पूर्ण;
+static const unsigned xrx200_pins_clkout0[] = {GPIO8};
+static const unsigned xrx200_pins_clkout1[] = {GPIO7};
+static const unsigned xrx200_pins_clkout2[] = {GPIO3};
+static const unsigned xrx200_pins_clkout3[] = {GPIO2};
 
-अटल स्थिर अचिन्हित xrx200_pins_pci_gnt1[] = अणुGPIO28पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_pci_gnt2[] = अणुGPIO23पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_pci_gnt3[] = अणुGPIO19पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_pci_gnt4[] = अणुGPIO38पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_pci_req1[] = अणुGPIO29पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_pci_req2[] = अणुGPIO31पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_pci_req3[] = अणुGPIO3पूर्ण;
-अटल स्थिर अचिन्हित xrx200_pins_pci_req4[] = अणुGPIO37पूर्ण;
+static const unsigned xrx200_pins_pci_gnt1[] = {GPIO28};
+static const unsigned xrx200_pins_pci_gnt2[] = {GPIO23};
+static const unsigned xrx200_pins_pci_gnt3[] = {GPIO19};
+static const unsigned xrx200_pins_pci_gnt4[] = {GPIO38};
+static const unsigned xrx200_pins_pci_req1[] = {GPIO29};
+static const unsigned xrx200_pins_pci_req2[] = {GPIO31};
+static const unsigned xrx200_pins_pci_req3[] = {GPIO3};
+static const unsigned xrx200_pins_pci_req4[] = {GPIO37};
 
-अटल स्थिर काष्ठा ltq_pin_group xrx200_grps[] = अणु
+static const struct ltq_pin_group xrx200_grps[] = {
 	GRP_MUX("exin0", EXIN, xrx200_pins_exin0),
 	GRP_MUX("exin1", EXIN, xrx200_pins_exin1),
 	GRP_MUX("exin2", EXIN, xrx200_pins_exin2),
@@ -1010,14 +1009,14 @@
 	GRP_MUX("ebu a25", EBU, xrx200_pins_ebu_a25),
 	GRP_MUX("ebu clk", EBU, xrx200_pins_ebu_clk),
 	GRP_MUX("ebu cs1", EBU, xrx200_pins_ebu_cs1),
-	GRP_MUX("ebu wait", EBU, xrx200_pins_ebu_रुको),
+	GRP_MUX("ebu wait", EBU, xrx200_pins_ebu_wait),
 	GRP_MUX("nand ale", EBU, xrx200_pins_nand_ale),
 	GRP_MUX("nand cs1", EBU, xrx200_pins_nand_cs1),
 	GRP_MUX("nand cle", EBU, xrx200_pins_nand_cle),
 	GRP_MUX("nand rdy", EBU, xrx200_pins_nand_rdy),
 	GRP_MUX("nand rd", EBU, xrx200_pins_nand_rd),
 	GRP_MUX("spi_di", SPI, xrx200_pins_spi_di),
-	GRP_MUX("spi_do", SPI, xrx200_pins_spi_करो),
+	GRP_MUX("spi_do", SPI, xrx200_pins_spi_do),
 	GRP_MUX("spi_clk", SPI, xrx200_pins_spi_clk),
 	GRP_MUX("spi_cs1", SPI, xrx200_pins_spi_cs1),
 	GRP_MUX("spi_cs2", SPI, xrx200_pins_spi_cs2),
@@ -1025,20 +1024,20 @@
 	GRP_MUX("spi_cs4", SPI, xrx200_pins_spi_cs4),
 	GRP_MUX("spi_cs5", SPI, xrx200_pins_spi_cs5),
 	GRP_MUX("spi_cs6", SPI, xrx200_pins_spi_cs6),
-	GRP_MUX("usif uart_rx", USIF, xrx200_pins_usअगर_uart_rx),
-	GRP_MUX("usif uart_tx", USIF, xrx200_pins_usअगर_uart_tx),
-	GRP_MUX("usif uart_rts", USIF, xrx200_pins_usअगर_uart_rts),
-	GRP_MUX("usif uart_cts", USIF, xrx200_pins_usअगर_uart_cts),
-	GRP_MUX("usif uart_dtr", USIF, xrx200_pins_usअगर_uart_dtr),
-	GRP_MUX("usif uart_dsr", USIF, xrx200_pins_usअगर_uart_dsr),
-	GRP_MUX("usif uart_dcd", USIF, xrx200_pins_usअगर_uart_dcd),
-	GRP_MUX("usif uart_ri", USIF, xrx200_pins_usअगर_uart_ri),
-	GRP_MUX("usif spi_di", USIF, xrx200_pins_usअगर_spi_di),
-	GRP_MUX("usif spi_do", USIF, xrx200_pins_usअगर_spi_करो),
-	GRP_MUX("usif spi_clk", USIF, xrx200_pins_usअगर_spi_clk),
-	GRP_MUX("usif spi_cs0", USIF, xrx200_pins_usअगर_spi_cs0),
-	GRP_MUX("usif spi_cs1", USIF, xrx200_pins_usअगर_spi_cs1),
-	GRP_MUX("usif spi_cs2", USIF, xrx200_pins_usअगर_spi_cs2),
+	GRP_MUX("usif uart_rx", USIF, xrx200_pins_usif_uart_rx),
+	GRP_MUX("usif uart_tx", USIF, xrx200_pins_usif_uart_tx),
+	GRP_MUX("usif uart_rts", USIF, xrx200_pins_usif_uart_rts),
+	GRP_MUX("usif uart_cts", USIF, xrx200_pins_usif_uart_cts),
+	GRP_MUX("usif uart_dtr", USIF, xrx200_pins_usif_uart_dtr),
+	GRP_MUX("usif uart_dsr", USIF, xrx200_pins_usif_uart_dsr),
+	GRP_MUX("usif uart_dcd", USIF, xrx200_pins_usif_uart_dcd),
+	GRP_MUX("usif uart_ri", USIF, xrx200_pins_usif_uart_ri),
+	GRP_MUX("usif spi_di", USIF, xrx200_pins_usif_spi_di),
+	GRP_MUX("usif spi_do", USIF, xrx200_pins_usif_spi_do),
+	GRP_MUX("usif spi_clk", USIF, xrx200_pins_usif_spi_clk),
+	GRP_MUX("usif spi_cs0", USIF, xrx200_pins_usif_spi_cs0),
+	GRP_MUX("usif spi_cs1", USIF, xrx200_pins_usif_spi_cs1),
+	GRP_MUX("usif spi_cs2", USIF, xrx200_pins_usif_spi_cs2),
 	GRP_MUX("stp", STP, xrx200_pins_stp),
 	GRP_MUX("nmi", NMI, xrx200_pins_nmi),
 	GRP_MUX("gpt1", GPT, xrx200_pins_gpt1),
@@ -1065,62 +1064,62 @@
 	GRP_MUX("gphy1 led0", GPHY, xrx200_pins_gphy1_led0),
 	GRP_MUX("gphy1 led1", GPHY, xrx200_pins_gphy1_led1),
 	GRP_MUX("gphy1 led2", GPHY, xrx200_pins_gphy1_led2),
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर xrx200_pci_grps[] = अणु"gnt1", "gnt2",
+static const char * const xrx200_pci_grps[] = {"gnt1", "gnt2",
 						"gnt3", "gnt4",
 						"req1", "req2",
-						"req3", "req4"पूर्ण;
-अटल स्थिर अक्षर * स्थिर xrx200_spi_grps[] = अणु"spi_di", "spi_do",
+						"req3", "req4"};
+static const char * const xrx200_spi_grps[] = {"spi_di", "spi_do",
 						"spi_clk", "spi_cs1",
 						"spi_cs2", "spi_cs3",
 						"spi_cs4", "spi_cs5",
-						"spi_cs6"पूर्ण;
-अटल स्थिर अक्षर * स्थिर xrx200_cgu_grps[] = अणु"clkout0", "clkout1",
-						"clkout2", "clkout3"पूर्ण;
-अटल स्थिर अक्षर * स्थिर xrx200_ebu_grps[] = अणु"ebu a23", "ebu a24",
+						"spi_cs6"};
+static const char * const xrx200_cgu_grps[] = {"clkout0", "clkout1",
+						"clkout2", "clkout3"};
+static const char * const xrx200_ebu_grps[] = {"ebu a23", "ebu a24",
 						"ebu a25", "ebu cs1",
 						"ebu wait", "ebu clk",
 						"nand ale", "nand cs1",
 						"nand cle", "nand rdy",
-						"nand rd"पूर्ण;
-अटल स्थिर अक्षर * स्थिर xrx200_exin_grps[] = अणु"exin0", "exin1", "exin2",
-						"exin3", "exin4", "exin5"पूर्ण;
-अटल स्थिर अक्षर * स्थिर xrx200_gpt_grps[] = अणु"gpt1", "gpt2", "gpt3"पूर्ण;
-अटल स्थिर अक्षर * स्थिर xrx200_usअगर_grps[] = अणु"usif uart_rx", "usif uart_tx",
+						"nand rd"};
+static const char * const xrx200_exin_grps[] = {"exin0", "exin1", "exin2",
+						"exin3", "exin4", "exin5"};
+static const char * const xrx200_gpt_grps[] = {"gpt1", "gpt2", "gpt3"};
+static const char * const xrx200_usif_grps[] = {"usif uart_rx", "usif uart_tx",
 						"usif uart_rts", "usif uart_cts",
 						"usif uart_dtr", "usif uart_dsr",
 						"usif uart_dcd", "usif uart_ri",
 						"usif spi_di", "usif spi_do",
 						"usif spi_clk", "usif spi_cs0",
-						"usif spi_cs1", "usif spi_cs2"पूर्ण;
-अटल स्थिर अक्षर * स्थिर xrx200_stp_grps[] = अणु"stp"पूर्ण;
-अटल स्थिर अक्षर * स्थिर xrx200_nmi_grps[] = अणु"nmi"पूर्ण;
-अटल स्थिर अक्षर * स्थिर xrx200_mdio_grps[] = अणु"mdio"पूर्ण;
-अटल स्थिर अक्षर * स्थिर xrx200_dfe_grps[] = अणु"dfe led0", "dfe led1"पूर्ण;
-अटल स्थिर अक्षर * स्थिर xrx200_gphy_grps[] = अणु"gphy0 led0", "gphy0 led1",
+						"usif spi_cs1", "usif spi_cs2"};
+static const char * const xrx200_stp_grps[] = {"stp"};
+static const char * const xrx200_nmi_grps[] = {"nmi"};
+static const char * const xrx200_mdio_grps[] = {"mdio"};
+static const char * const xrx200_dfe_grps[] = {"dfe led0", "dfe led1"};
+static const char * const xrx200_gphy_grps[] = {"gphy0 led0", "gphy0 led1",
 						"gphy0 led2", "gphy1 led0",
-						"gphy1 led1", "gphy1 led2"पूर्ण;
+						"gphy1 led1", "gphy1 led2"};
 
-अटल स्थिर काष्ठा ltq_pmx_func xrx200_funcs[] = अणु
-	अणु"spi",		ARRAY_AND_SIZE(xrx200_spi_grps)पूर्ण,
-	अणु"usif",	ARRAY_AND_SIZE(xrx200_usअगर_grps)पूर्ण,
-	अणु"cgu",		ARRAY_AND_SIZE(xrx200_cgu_grps)पूर्ण,
-	अणु"exin",	ARRAY_AND_SIZE(xrx200_exin_grps)पूर्ण,
-	अणु"stp",		ARRAY_AND_SIZE(xrx200_stp_grps)पूर्ण,
-	अणु"gpt",		ARRAY_AND_SIZE(xrx200_gpt_grps)पूर्ण,
-	अणु"nmi",		ARRAY_AND_SIZE(xrx200_nmi_grps)पूर्ण,
-	अणु"pci",		ARRAY_AND_SIZE(xrx200_pci_grps)पूर्ण,
-	अणु"ebu",		ARRAY_AND_SIZE(xrx200_ebu_grps)पूर्ण,
-	अणु"mdio",	ARRAY_AND_SIZE(xrx200_mdio_grps)पूर्ण,
-	अणु"dfe",		ARRAY_AND_SIZE(xrx200_dfe_grps)पूर्ण,
-	अणु"gphy",	ARRAY_AND_SIZE(xrx200_gphy_grps)पूर्ण,
-पूर्ण;
+static const struct ltq_pmx_func xrx200_funcs[] = {
+	{"spi",		ARRAY_AND_SIZE(xrx200_spi_grps)},
+	{"usif",	ARRAY_AND_SIZE(xrx200_usif_grps)},
+	{"cgu",		ARRAY_AND_SIZE(xrx200_cgu_grps)},
+	{"exin",	ARRAY_AND_SIZE(xrx200_exin_grps)},
+	{"stp",		ARRAY_AND_SIZE(xrx200_stp_grps)},
+	{"gpt",		ARRAY_AND_SIZE(xrx200_gpt_grps)},
+	{"nmi",		ARRAY_AND_SIZE(xrx200_nmi_grps)},
+	{"pci",		ARRAY_AND_SIZE(xrx200_pci_grps)},
+	{"ebu",		ARRAY_AND_SIZE(xrx200_ebu_grps)},
+	{"mdio",	ARRAY_AND_SIZE(xrx200_mdio_grps)},
+	{"dfe",		ARRAY_AND_SIZE(xrx200_dfe_grps)},
+	{"gphy",	ARRAY_AND_SIZE(xrx200_gphy_grps)},
+};
 
 /* ---------  xrx300 related code --------- */
-#घोषणा XRX300_MAX_PIN		64
+#define XRX300_MAX_PIN		64
 
-अटल स्थिर काष्ठा ltq_mfp_pin xrx300_mfp[] = अणु
+static const struct ltq_mfp_pin xrx300_mfp[] = {
 	/*       pin    f0	f1	f2	f3   */
 	MFP_XWAY(GPIO0, GPIO,	EXIN,	EPHY,	NONE),
 	MFP_XWAY(GPIO1, GPIO,	NONE,	EXIN,	NONE),
@@ -1186,69 +1185,69 @@
 	MFP_XWAY(GPIO61, GPIO,	EBU,	NONE,	NONE),
 	MFP_XWAY(GPIO62, NONE,	NONE,	NONE,	NONE),
 	MFP_XWAY(GPIO63, NONE,	NONE,	NONE,	NONE),
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित xrx300_exin_pin_map[] = अणुGPIO0, GPIO1, GPIO16, GPIO10, GPIO9पूर्ण;
+static const unsigned xrx300_exin_pin_map[] = {GPIO0, GPIO1, GPIO16, GPIO10, GPIO9};
 
-अटल स्थिर अचिन्हित xrx300_pins_exin0[] = अणुGPIO0पूर्ण;
-अटल स्थिर अचिन्हित xrx300_pins_exin1[] = अणुGPIO1पूर्ण;
-अटल स्थिर अचिन्हित xrx300_pins_exin2[] = अणुGPIO16पूर्ण;
+static const unsigned xrx300_pins_exin0[] = {GPIO0};
+static const unsigned xrx300_pins_exin1[] = {GPIO1};
+static const unsigned xrx300_pins_exin2[] = {GPIO16};
 /* EXIN3 is not available on xrX300 */
-अटल स्थिर अचिन्हित xrx300_pins_exin4[] = अणुGPIO10पूर्ण;
-अटल स्थिर अचिन्हित xrx300_pins_exin5[] = अणुGPIO9पूर्ण;
+static const unsigned xrx300_pins_exin4[] = {GPIO10};
+static const unsigned xrx300_pins_exin5[] = {GPIO9};
 
-अटल स्थिर अचिन्हित xrx300_pins_usअगर_uart_rx[] = अणुGPIO11पूर्ण;
-अटल स्थिर अचिन्हित xrx300_pins_usअगर_uart_tx[] = अणुGPIO10पूर्ण;
+static const unsigned xrx300_pins_usif_uart_rx[] = {GPIO11};
+static const unsigned xrx300_pins_usif_uart_tx[] = {GPIO10};
 
-अटल स्थिर अचिन्हित xrx300_pins_usअगर_spi_di[] = अणुGPIO11पूर्ण;
-अटल स्थिर अचिन्हित xrx300_pins_usअगर_spi_करो[] = अणुGPIO10पूर्ण;
-अटल स्थिर अचिन्हित xrx300_pins_usअगर_spi_clk[] = अणुGPIO19पूर्ण;
-अटल स्थिर अचिन्हित xrx300_pins_usअगर_spi_cs0[] = अणुGPIO14पूर्ण;
+static const unsigned xrx300_pins_usif_spi_di[] = {GPIO11};
+static const unsigned xrx300_pins_usif_spi_do[] = {GPIO10};
+static const unsigned xrx300_pins_usif_spi_clk[] = {GPIO19};
+static const unsigned xrx300_pins_usif_spi_cs0[] = {GPIO14};
 
-अटल स्थिर अचिन्हित xrx300_pins_stp[] = अणुGPIO4, GPIO5, GPIO6पूर्ण;
-अटल स्थिर अचिन्हित xrx300_pins_mdio[] = अणुGPIO42, GPIO43पूर्ण;
+static const unsigned xrx300_pins_stp[] = {GPIO4, GPIO5, GPIO6};
+static const unsigned xrx300_pins_mdio[] = {GPIO42, GPIO43};
 
-अटल स्थिर अचिन्हित xrx300_pins_dfe_led0[] = अणुGPIO4पूर्ण;
-अटल स्थिर अचिन्हित xrx300_pins_dfe_led1[] = अणुGPIO5पूर्ण;
+static const unsigned xrx300_pins_dfe_led0[] = {GPIO4};
+static const unsigned xrx300_pins_dfe_led1[] = {GPIO5};
 
-अटल स्थिर अचिन्हित xrx300_pins_ephy0_led0[] = अणुGPIO5पूर्ण;
-अटल स्थिर अचिन्हित xrx300_pins_ephy0_led1[] = अणुGPIO8पूर्ण;
-अटल स्थिर अचिन्हित xrx300_pins_ephy1_led0[] = अणुGPIO14पूर्ण;
-अटल स्थिर अचिन्हित xrx300_pins_ephy1_led1[] = अणुGPIO19पूर्ण;
+static const unsigned xrx300_pins_ephy0_led0[] = {GPIO5};
+static const unsigned xrx300_pins_ephy0_led1[] = {GPIO8};
+static const unsigned xrx300_pins_ephy1_led0[] = {GPIO14};
+static const unsigned xrx300_pins_ephy1_led1[] = {GPIO19};
 
-अटल स्थिर अचिन्हित xrx300_pins_nand_ale[] = अणुGPIO13पूर्ण;
-अटल स्थिर अचिन्हित xrx300_pins_nand_cs1[] = अणुGPIO23पूर्ण;
-अटल स्थिर अचिन्हित xrx300_pins_nand_cle[] = अणुGPIO24पूर्ण;
-अटल स्थिर अचिन्हित xrx300_pins_nand_rdy[] = अणुGPIO48पूर्ण;
-अटल स्थिर अचिन्हित xrx300_pins_nand_rd[] = अणुGPIO49पूर्ण;
-अटल स्थिर अचिन्हित xrx300_pins_nand_d1[] = अणुGPIO50पूर्ण;
-अटल स्थिर अचिन्हित xrx300_pins_nand_d0[] = अणुGPIO51पूर्ण;
-अटल स्थिर अचिन्हित xrx300_pins_nand_d2[] = अणुGPIO52पूर्ण;
-अटल स्थिर अचिन्हित xrx300_pins_nand_d7[] = अणुGPIO53पूर्ण;
-अटल स्थिर अचिन्हित xrx300_pins_nand_d6[] = अणुGPIO54पूर्ण;
-अटल स्थिर अचिन्हित xrx300_pins_nand_d5[] = अणुGPIO55पूर्ण;
-अटल स्थिर अचिन्हित xrx300_pins_nand_d4[] = अणुGPIO56पूर्ण;
-अटल स्थिर अचिन्हित xrx300_pins_nand_d3[] = अणुGPIO57पूर्ण;
-अटल स्थिर अचिन्हित xrx300_pins_nand_cs0[] = अणुGPIO58पूर्ण;
-अटल स्थिर अचिन्हित xrx300_pins_nand_wr[] = अणुGPIO59पूर्ण;
-अटल स्थिर अचिन्हित xrx300_pins_nand_wp[] = अणुGPIO60पूर्ण;
-अटल स्थिर अचिन्हित xrx300_pins_nand_se[] = अणुGPIO61पूर्ण;
+static const unsigned xrx300_pins_nand_ale[] = {GPIO13};
+static const unsigned xrx300_pins_nand_cs1[] = {GPIO23};
+static const unsigned xrx300_pins_nand_cle[] = {GPIO24};
+static const unsigned xrx300_pins_nand_rdy[] = {GPIO48};
+static const unsigned xrx300_pins_nand_rd[] = {GPIO49};
+static const unsigned xrx300_pins_nand_d1[] = {GPIO50};
+static const unsigned xrx300_pins_nand_d0[] = {GPIO51};
+static const unsigned xrx300_pins_nand_d2[] = {GPIO52};
+static const unsigned xrx300_pins_nand_d7[] = {GPIO53};
+static const unsigned xrx300_pins_nand_d6[] = {GPIO54};
+static const unsigned xrx300_pins_nand_d5[] = {GPIO55};
+static const unsigned xrx300_pins_nand_d4[] = {GPIO56};
+static const unsigned xrx300_pins_nand_d3[] = {GPIO57};
+static const unsigned xrx300_pins_nand_cs0[] = {GPIO58};
+static const unsigned xrx300_pins_nand_wr[] = {GPIO59};
+static const unsigned xrx300_pins_nand_wp[] = {GPIO60};
+static const unsigned xrx300_pins_nand_se[] = {GPIO61};
 
-अटल स्थिर अचिन्हित xrx300_pins_spi_di[] = अणुGPIO16पूर्ण;
-अटल स्थिर अचिन्हित xrx300_pins_spi_करो[] = अणुGPIO17पूर्ण;
-अटल स्थिर अचिन्हित xrx300_pins_spi_clk[] = अणुGPIO18पूर्ण;
-अटल स्थिर अचिन्हित xrx300_pins_spi_cs1[] = अणुGPIO15पूर्ण;
+static const unsigned xrx300_pins_spi_di[] = {GPIO16};
+static const unsigned xrx300_pins_spi_do[] = {GPIO17};
+static const unsigned xrx300_pins_spi_clk[] = {GPIO18};
+static const unsigned xrx300_pins_spi_cs1[] = {GPIO15};
 /* SPI_CS2 is not available on xrX300 */
 /* SPI_CS3 is not available on xrX300 */
-अटल स्थिर अचिन्हित xrx300_pins_spi_cs4[] = अणुGPIO10पूर्ण;
+static const unsigned xrx300_pins_spi_cs4[] = {GPIO10};
 /* SPI_CS5 is not available on xrX300 */
-अटल स्थिर अचिन्हित xrx300_pins_spi_cs6[] = अणुGPIO11पूर्ण;
+static const unsigned xrx300_pins_spi_cs6[] = {GPIO11};
 
 /* CLKOUT0 is not available on xrX300 */
 /* CLKOUT1 is not available on xrX300 */
-अटल स्थिर अचिन्हित xrx300_pins_clkout2[] = अणुGPIO3पूर्ण;
+static const unsigned xrx300_pins_clkout2[] = {GPIO3};
 
-अटल स्थिर काष्ठा ltq_pin_group xrx300_grps[] = अणु
+static const struct ltq_pin_group xrx300_grps[] = {
 	GRP_MUX("exin0", EXIN, xrx300_pins_exin0),
 	GRP_MUX("exin1", EXIN, xrx300_pins_exin1),
 	GRP_MUX("exin2", EXIN, xrx300_pins_exin2),
@@ -1272,17 +1271,17 @@
 	GRP_MUX("nand wp", EBU, xrx300_pins_nand_wp),
 	GRP_MUX("nand se", EBU, xrx300_pins_nand_se),
 	GRP_MUX("spi_di", SPI, xrx300_pins_spi_di),
-	GRP_MUX("spi_do", SPI, xrx300_pins_spi_करो),
+	GRP_MUX("spi_do", SPI, xrx300_pins_spi_do),
 	GRP_MUX("spi_clk", SPI, xrx300_pins_spi_clk),
 	GRP_MUX("spi_cs1", SPI, xrx300_pins_spi_cs1),
 	GRP_MUX("spi_cs4", SPI, xrx300_pins_spi_cs4),
 	GRP_MUX("spi_cs6", SPI, xrx300_pins_spi_cs6),
-	GRP_MUX("usif uart_rx", USIF, xrx300_pins_usअगर_uart_rx),
-	GRP_MUX("usif uart_tx", USIF, xrx300_pins_usअगर_uart_tx),
-	GRP_MUX("usif spi_di", USIF, xrx300_pins_usअगर_spi_di),
-	GRP_MUX("usif spi_do", USIF, xrx300_pins_usअगर_spi_करो),
-	GRP_MUX("usif spi_clk", USIF, xrx300_pins_usअगर_spi_clk),
-	GRP_MUX("usif spi_cs0", USIF, xrx300_pins_usअगर_spi_cs0),
+	GRP_MUX("usif uart_rx", USIF, xrx300_pins_usif_uart_rx),
+	GRP_MUX("usif uart_tx", USIF, xrx300_pins_usif_uart_tx),
+	GRP_MUX("usif spi_di", USIF, xrx300_pins_usif_spi_di),
+	GRP_MUX("usif spi_do", USIF, xrx300_pins_usif_spi_do),
+	GRP_MUX("usif spi_clk", USIF, xrx300_pins_usif_spi_clk),
+	GRP_MUX("usif spi_cs0", USIF, xrx300_pins_usif_spi_cs0),
 	GRP_MUX("stp", STP, xrx300_pins_stp),
 	GRP_MUX("clkout2", CGU, xrx300_pins_clkout2),
 	GRP_MUX("mdio", MDIO, xrx300_pins_mdio),
@@ -1292,13 +1291,13 @@
 	GRP_MUX("ephy0 led1", GPHY, xrx300_pins_ephy0_led1),
 	GRP_MUX("ephy1 led0", GPHY, xrx300_pins_ephy1_led0),
 	GRP_MUX("ephy1 led1", GPHY, xrx300_pins_ephy1_led1),
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर xrx300_spi_grps[] = अणु"spi_di", "spi_do",
+static const char * const xrx300_spi_grps[] = {"spi_di", "spi_do",
 						"spi_clk", "spi_cs1",
-						"spi_cs4", "spi_cs6"पूर्ण;
-अटल स्थिर अक्षर * स्थिर xrx300_cgu_grps[] = अणु"clkout2"पूर्ण;
-अटल स्थिर अक्षर * स्थिर xrx300_ebu_grps[] = अणु"nand ale", "nand cs1",
+						"spi_cs4", "spi_cs6"};
+static const char * const xrx300_cgu_grps[] = {"clkout2"};
+static const char * const xrx300_ebu_grps[] = {"nand ale", "nand cs1",
 						"nand cle", "nand rdy",
 						"nand rd", "nand d1",
 						"nand d0", "nand d2",
@@ -1306,314 +1305,314 @@
 						"nand d5", "nand d4",
 						"nand d3", "nand cs0",
 						"nand wr", "nand wp",
-						"nand se"पूर्ण;
-अटल स्थिर अक्षर * स्थिर xrx300_exin_grps[] = अणु"exin0", "exin1", "exin2",
-						"exin4", "exin5"पूर्ण;
-अटल स्थिर अक्षर * स्थिर xrx300_usअगर_grps[] = अणु"usif uart_rx", "usif uart_tx",
+						"nand se"};
+static const char * const xrx300_exin_grps[] = {"exin0", "exin1", "exin2",
+						"exin4", "exin5"};
+static const char * const xrx300_usif_grps[] = {"usif uart_rx", "usif uart_tx",
 						"usif spi_di", "usif spi_do",
-						"usif spi_clk", "usif spi_cs0"पूर्ण;
-अटल स्थिर अक्षर * स्थिर xrx300_stp_grps[] = अणु"stp"पूर्ण;
-अटल स्थिर अक्षर * स्थिर xrx300_mdio_grps[] = अणु"mdio"पूर्ण;
-अटल स्थिर अक्षर * स्थिर xrx300_dfe_grps[] = अणु"dfe led0", "dfe led1"पूर्ण;
-अटल स्थिर अक्षर * स्थिर xrx300_gphy_grps[] = अणु"ephy0 led0", "ephy0 led1",
-						"ephy1 led0", "ephy1 led1"पूर्ण;
+						"usif spi_clk", "usif spi_cs0"};
+static const char * const xrx300_stp_grps[] = {"stp"};
+static const char * const xrx300_mdio_grps[] = {"mdio"};
+static const char * const xrx300_dfe_grps[] = {"dfe led0", "dfe led1"};
+static const char * const xrx300_gphy_grps[] = {"ephy0 led0", "ephy0 led1",
+						"ephy1 led0", "ephy1 led1"};
 
-अटल स्थिर काष्ठा ltq_pmx_func xrx300_funcs[] = अणु
-	अणु"spi",		ARRAY_AND_SIZE(xrx300_spi_grps)पूर्ण,
-	अणु"usif",	ARRAY_AND_SIZE(xrx300_usअगर_grps)पूर्ण,
-	अणु"cgu",		ARRAY_AND_SIZE(xrx300_cgu_grps)पूर्ण,
-	अणु"exin",	ARRAY_AND_SIZE(xrx300_exin_grps)पूर्ण,
-	अणु"stp",		ARRAY_AND_SIZE(xrx300_stp_grps)पूर्ण,
-	अणु"ebu",		ARRAY_AND_SIZE(xrx300_ebu_grps)पूर्ण,
-	अणु"mdio",	ARRAY_AND_SIZE(xrx300_mdio_grps)पूर्ण,
-	अणु"dfe",		ARRAY_AND_SIZE(xrx300_dfe_grps)पूर्ण,
-	अणु"ephy",	ARRAY_AND_SIZE(xrx300_gphy_grps)पूर्ण,
-पूर्ण;
+static const struct ltq_pmx_func xrx300_funcs[] = {
+	{"spi",		ARRAY_AND_SIZE(xrx300_spi_grps)},
+	{"usif",	ARRAY_AND_SIZE(xrx300_usif_grps)},
+	{"cgu",		ARRAY_AND_SIZE(xrx300_cgu_grps)},
+	{"exin",	ARRAY_AND_SIZE(xrx300_exin_grps)},
+	{"stp",		ARRAY_AND_SIZE(xrx300_stp_grps)},
+	{"ebu",		ARRAY_AND_SIZE(xrx300_ebu_grps)},
+	{"mdio",	ARRAY_AND_SIZE(xrx300_mdio_grps)},
+	{"dfe",		ARRAY_AND_SIZE(xrx300_dfe_grps)},
+	{"ephy",	ARRAY_AND_SIZE(xrx300_gphy_grps)},
+};
 
 /* ---------  pinconf related code --------- */
-अटल पूर्णांक xway_pinconf_get(काष्ठा pinctrl_dev *pctldev,
-				अचिन्हित pin,
-				अचिन्हित दीर्घ *config)
-अणु
-	काष्ठा ltq_pinmux_info *info = pinctrl_dev_get_drvdata(pctldev);
-	क्रमागत ltq_pinconf_param param = LTQ_PINCONF_UNPACK_PARAM(*config);
-	पूर्णांक port = PORT(pin);
+static int xway_pinconf_get(struct pinctrl_dev *pctldev,
+				unsigned pin,
+				unsigned long *config)
+{
+	struct ltq_pinmux_info *info = pinctrl_dev_get_drvdata(pctldev);
+	enum ltq_pinconf_param param = LTQ_PINCONF_UNPACK_PARAM(*config);
+	int port = PORT(pin);
 	u32 reg;
 
-	चयन (param) अणु
-	हाल LTQ_PINCONF_PARAM_OPEN_DRAIN:
-		अगर (port == PORT3)
+	switch (param) {
+	case LTQ_PINCONF_PARAM_OPEN_DRAIN:
+		if (port == PORT3)
 			reg = GPIO3_OD;
-		अन्यथा
+		else
 			reg = GPIO_OD(pin);
 		*config = LTQ_PINCONF_PACK(param,
 			!gpio_getbit(info->membase[0], reg, PORT_PIN(pin)));
-		अवरोध;
+		break;
 
-	हाल LTQ_PINCONF_PARAM_PULL:
-		अगर (port == PORT3)
+	case LTQ_PINCONF_PARAM_PULL:
+		if (port == PORT3)
 			reg = GPIO3_PUDEN;
-		अन्यथा
+		else
 			reg = GPIO_PUDEN(pin);
-		अगर (!gpio_getbit(info->membase[0], reg, PORT_PIN(pin))) अणु
+		if (!gpio_getbit(info->membase[0], reg, PORT_PIN(pin))) {
 			*config = LTQ_PINCONF_PACK(param, 0);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (port == PORT3)
+		if (port == PORT3)
 			reg = GPIO3_PUDSEL;
-		अन्यथा
+		else
 			reg = GPIO_PUDSEL(pin);
-		अगर (!gpio_getbit(info->membase[0], reg, PORT_PIN(pin)))
+		if (!gpio_getbit(info->membase[0], reg, PORT_PIN(pin)))
 			*config = LTQ_PINCONF_PACK(param, 2);
-		अन्यथा
+		else
 			*config = LTQ_PINCONF_PACK(param, 1);
-		अवरोध;
+		break;
 
-	हाल LTQ_PINCONF_PARAM_OUTPUT:
-		reg = GPIO_सूची(pin);
+	case LTQ_PINCONF_PARAM_OUTPUT:
+		reg = GPIO_DIR(pin);
 		*config = LTQ_PINCONF_PACK(param,
 			gpio_getbit(info->membase[0], reg, PORT_PIN(pin)));
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(pctldev->dev, "Invalid config param %04x\n", param);
-		वापस -ENOTSUPP;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -ENOTSUPP;
+	}
+	return 0;
+}
 
-अटल पूर्णांक xway_pinconf_set(काष्ठा pinctrl_dev *pctldev,
-				अचिन्हित pin,
-				अचिन्हित दीर्घ *configs,
-				अचिन्हित num_configs)
-अणु
-	काष्ठा ltq_pinmux_info *info = pinctrl_dev_get_drvdata(pctldev);
-	क्रमागत ltq_pinconf_param param;
-	पूर्णांक arg;
-	पूर्णांक port = PORT(pin);
+static int xway_pinconf_set(struct pinctrl_dev *pctldev,
+				unsigned pin,
+				unsigned long *configs,
+				unsigned num_configs)
+{
+	struct ltq_pinmux_info *info = pinctrl_dev_get_drvdata(pctldev);
+	enum ltq_pinconf_param param;
+	int arg;
+	int port = PORT(pin);
 	u32 reg;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < num_configs; i++) अणु
+	for (i = 0; i < num_configs; i++) {
 		param = LTQ_PINCONF_UNPACK_PARAM(configs[i]);
 		arg = LTQ_PINCONF_UNPACK_ARG(configs[i]);
 
-		चयन (param) अणु
-		हाल LTQ_PINCONF_PARAM_OPEN_DRAIN:
-			अगर (port == PORT3)
+		switch (param) {
+		case LTQ_PINCONF_PARAM_OPEN_DRAIN:
+			if (port == PORT3)
 				reg = GPIO3_OD;
-			अन्यथा
+			else
 				reg = GPIO_OD(pin);
-			अगर (arg == 0)
+			if (arg == 0)
 				gpio_setbit(info->membase[0],
 					reg,
 					PORT_PIN(pin));
-			अन्यथा
+			else
 				gpio_clearbit(info->membase[0],
 					reg,
 					PORT_PIN(pin));
-			अवरोध;
+			break;
 
-		हाल LTQ_PINCONF_PARAM_PULL:
-			अगर (port == PORT3)
+		case LTQ_PINCONF_PARAM_PULL:
+			if (port == PORT3)
 				reg = GPIO3_PUDEN;
-			अन्यथा
+			else
 				reg = GPIO_PUDEN(pin);
-			अगर (arg == 0) अणु
+			if (arg == 0) {
 				gpio_clearbit(info->membase[0],
 					reg,
 					PORT_PIN(pin));
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			gpio_setbit(info->membase[0], reg, PORT_PIN(pin));
 
-			अगर (port == PORT3)
+			if (port == PORT3)
 				reg = GPIO3_PUDSEL;
-			अन्यथा
+			else
 				reg = GPIO_PUDSEL(pin);
-			अगर (arg == 1)
+			if (arg == 1)
 				gpio_clearbit(info->membase[0],
 					reg,
 					PORT_PIN(pin));
-			अन्यथा अगर (arg == 2)
+			else if (arg == 2)
 				gpio_setbit(info->membase[0],
 					reg,
 					PORT_PIN(pin));
-			अन्यथा
+			else
 				dev_err(pctldev->dev,
 					"Invalid pull value %d\n", arg);
-			अवरोध;
+			break;
 
-		हाल LTQ_PINCONF_PARAM_OUTPUT:
-			reg = GPIO_सूची(pin);
-			अगर (arg == 0)
+		case LTQ_PINCONF_PARAM_OUTPUT:
+			reg = GPIO_DIR(pin);
+			if (arg == 0)
 				gpio_clearbit(info->membase[0],
 					reg,
 					PORT_PIN(pin));
-			अन्यथा
+			else
 				gpio_setbit(info->membase[0],
 					reg,
 					PORT_PIN(pin));
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 			dev_err(pctldev->dev,
 				"Invalid config param %04x\n", param);
-			वापस -ENOTSUPP;
-		पूर्ण
-	पूर्ण /* क्रम each config */
+			return -ENOTSUPP;
+		}
+	} /* for each config */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक xway_pinconf_group_set(काष्ठा pinctrl_dev *pctldev,
-			अचिन्हित selector,
-			अचिन्हित दीर्घ *configs,
-			अचिन्हित num_configs)
-अणु
-	काष्ठा ltq_pinmux_info *info = pinctrl_dev_get_drvdata(pctldev);
-	पूर्णांक i, ret = 0;
+int xway_pinconf_group_set(struct pinctrl_dev *pctldev,
+			unsigned selector,
+			unsigned long *configs,
+			unsigned num_configs)
+{
+	struct ltq_pinmux_info *info = pinctrl_dev_get_drvdata(pctldev);
+	int i, ret = 0;
 
-	क्रम (i = 0; i < info->grps[selector].npins && !ret; i++)
+	for (i = 0; i < info->grps[selector].npins && !ret; i++)
 		ret = xway_pinconf_set(pctldev,
 				info->grps[selector].pins[i],
 				configs,
 				num_configs);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा pinconf_ops xway_pinconf_ops = अणु
+static const struct pinconf_ops xway_pinconf_ops = {
 	.pin_config_get	= xway_pinconf_get,
 	.pin_config_set	= xway_pinconf_set,
 	.pin_config_group_set = xway_pinconf_group_set,
-पूर्ण;
+};
 
-अटल काष्ठा pinctrl_desc xway_pctrl_desc = अणु
+static struct pinctrl_desc xway_pctrl_desc = {
 	.owner		= THIS_MODULE,
 	.confops	= &xway_pinconf_ops,
-पूर्ण;
+};
 
-अटल अंतरभूत पूर्णांक xway_mux_apply(काष्ठा pinctrl_dev *pctrldev,
-				पूर्णांक pin, पूर्णांक mux)
-अणु
-	काष्ठा ltq_pinmux_info *info = pinctrl_dev_get_drvdata(pctrldev);
-	पूर्णांक port = PORT(pin);
+static inline int xway_mux_apply(struct pinctrl_dev *pctrldev,
+				int pin, int mux)
+{
+	struct ltq_pinmux_info *info = pinctrl_dev_get_drvdata(pctrldev);
+	int port = PORT(pin);
 	u32 alt1_reg = GPIO_ALT1(pin);
 
-	अगर (port == PORT3)
+	if (port == PORT3)
 		alt1_reg = GPIO3_ALT1;
 
-	अगर (mux & MUX_ALT0)
+	if (mux & MUX_ALT0)
 		gpio_setbit(info->membase[0], GPIO_ALT0(pin), PORT_PIN(pin));
-	अन्यथा
+	else
 		gpio_clearbit(info->membase[0], GPIO_ALT0(pin), PORT_PIN(pin));
 
-	अगर (mux & MUX_ALT1)
+	if (mux & MUX_ALT1)
 		gpio_setbit(info->membase[0], alt1_reg, PORT_PIN(pin));
-	अन्यथा
+	else
 		gpio_clearbit(info->membase[0], alt1_reg, PORT_PIN(pin));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा ltq_cfg_param xway_cfg_params[] = अणु
-	अणु"lantiq,pull",		LTQ_PINCONF_PARAM_PULLपूर्ण,
-	अणु"lantiq,open-drain",	LTQ_PINCONF_PARAM_OPEN_DRAINपूर्ण,
-	अणु"lantiq,output",	LTQ_PINCONF_PARAM_OUTPUTपूर्ण,
-पूर्ण;
+static const struct ltq_cfg_param xway_cfg_params[] = {
+	{"lantiq,pull",		LTQ_PINCONF_PARAM_PULL},
+	{"lantiq,open-drain",	LTQ_PINCONF_PARAM_OPEN_DRAIN},
+	{"lantiq,output",	LTQ_PINCONF_PARAM_OUTPUT},
+};
 
-अटल काष्ठा ltq_pinmux_info xway_info = अणु
+static struct ltq_pinmux_info xway_info = {
 	.desc		= &xway_pctrl_desc,
 	.apply_mux	= xway_mux_apply,
 	.params		= xway_cfg_params,
 	.num_params	= ARRAY_SIZE(xway_cfg_params),
-पूर्ण;
+};
 
 /* ---------  gpio_chip related code --------- */
-अटल व्योम xway_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक pin, पूर्णांक val)
-अणु
-	काष्ठा ltq_pinmux_info *info = dev_get_drvdata(chip->parent);
+static void xway_gpio_set(struct gpio_chip *chip, unsigned int pin, int val)
+{
+	struct ltq_pinmux_info *info = dev_get_drvdata(chip->parent);
 
-	अगर (val)
+	if (val)
 		gpio_setbit(info->membase[0], GPIO_OUT(pin), PORT_PIN(pin));
-	अन्यथा
+	else
 		gpio_clearbit(info->membase[0], GPIO_OUT(pin), PORT_PIN(pin));
-पूर्ण
+}
 
-अटल पूर्णांक xway_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक pin)
-अणु
-	काष्ठा ltq_pinmux_info *info = dev_get_drvdata(chip->parent);
+static int xway_gpio_get(struct gpio_chip *chip, unsigned int pin)
+{
+	struct ltq_pinmux_info *info = dev_get_drvdata(chip->parent);
 
-	वापस !!gpio_getbit(info->membase[0], GPIO_IN(pin), PORT_PIN(pin));
-पूर्ण
+	return !!gpio_getbit(info->membase[0], GPIO_IN(pin), PORT_PIN(pin));
+}
 
-अटल पूर्णांक xway_gpio_dir_in(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक pin)
-अणु
-	काष्ठा ltq_pinmux_info *info = dev_get_drvdata(chip->parent);
+static int xway_gpio_dir_in(struct gpio_chip *chip, unsigned int pin)
+{
+	struct ltq_pinmux_info *info = dev_get_drvdata(chip->parent);
 
-	gpio_clearbit(info->membase[0], GPIO_सूची(pin), PORT_PIN(pin));
+	gpio_clearbit(info->membase[0], GPIO_DIR(pin), PORT_PIN(pin));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xway_gpio_dir_out(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक pin, पूर्णांक val)
-अणु
-	काष्ठा ltq_pinmux_info *info = dev_get_drvdata(chip->parent);
+static int xway_gpio_dir_out(struct gpio_chip *chip, unsigned int pin, int val)
+{
+	struct ltq_pinmux_info *info = dev_get_drvdata(chip->parent);
 
-	अगर (PORT(pin) == PORT3)
+	if (PORT(pin) == PORT3)
 		gpio_setbit(info->membase[0], GPIO3_OD, PORT_PIN(pin));
-	अन्यथा
+	else
 		gpio_setbit(info->membase[0], GPIO_OD(pin), PORT_PIN(pin));
-	gpio_setbit(info->membase[0], GPIO_सूची(pin), PORT_PIN(pin));
+	gpio_setbit(info->membase[0], GPIO_DIR(pin), PORT_PIN(pin));
 	xway_gpio_set(chip, pin, val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * gpiolib gpiod_to_irq callback function.
- * Returns the mapped IRQ (बाह्यal पूर्णांकerrupt) number क्रम a given GPIO pin.
+ * Returns the mapped IRQ (external interrupt) number for a given GPIO pin.
  */
-अटल पूर्णांक xway_gpio_to_irq(काष्ठा gpio_chip *chip, अचिन्हित offset)
-अणु
-	काष्ठा ltq_pinmux_info *info = dev_get_drvdata(chip->parent);
-	पूर्णांक i;
+static int xway_gpio_to_irq(struct gpio_chip *chip, unsigned offset)
+{
+	struct ltq_pinmux_info *info = dev_get_drvdata(chip->parent);
+	int i;
 
-	क्रम (i = 0; i < info->num_exin; i++)
-		अगर (info->exin[i] == offset)
-			वापस ltq_eiu_get_irq(i);
+	for (i = 0; i < info->num_exin; i++)
+		if (info->exin[i] == offset)
+			return ltq_eiu_get_irq(i);
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल काष्ठा gpio_chip xway_chip = अणु
+static struct gpio_chip xway_chip = {
 	.label = "gpio-xway",
 	.direction_input = xway_gpio_dir_in,
 	.direction_output = xway_gpio_dir_out,
 	.get = xway_gpio_get,
 	.set = xway_gpio_set,
 	.request = gpiochip_generic_request,
-	.मुक्त = gpiochip_generic_मुक्त,
+	.free = gpiochip_generic_free,
 	.to_irq = xway_gpio_to_irq,
 	.base = -1,
-पूर्ण;
+};
 
 
-/* --------- रेजिस्टर the pinctrl layer --------- */
-काष्ठा pinctrl_xway_soc अणु
-	पूर्णांक pin_count;
-	स्थिर काष्ठा ltq_mfp_pin *mfp;
-	स्थिर काष्ठा ltq_pin_group *grps;
-	अचिन्हित पूर्णांक num_grps;
-	स्थिर काष्ठा ltq_pmx_func *funcs;
-	अचिन्हित पूर्णांक num_funcs;
-	स्थिर अचिन्हित *exin;
-	अचिन्हित पूर्णांक num_exin;
-पूर्ण;
+/* --------- register the pinctrl layer --------- */
+struct pinctrl_xway_soc {
+	int pin_count;
+	const struct ltq_mfp_pin *mfp;
+	const struct ltq_pin_group *grps;
+	unsigned int num_grps;
+	const struct ltq_pmx_func *funcs;
+	unsigned int num_funcs;
+	const unsigned *exin;
+	unsigned int num_exin;
+};
 
 /* xway xr9 series (DEPRECATED: Use XWAY xRX100/xRX200 Family) */
-अटल काष्ठा pinctrl_xway_soc xr9_pinctrl = अणु
+static struct pinctrl_xway_soc xr9_pinctrl = {
 	.pin_count = XR9_MAX_PIN,
 	.mfp = xway_mfp,
 	.grps = xway_grps,
@@ -1622,10 +1621,10 @@
 	.num_funcs = ARRAY_SIZE(xrx_funcs),
 	.exin = xway_exin_pin_map,
 	.num_exin = 6
-पूर्ण;
+};
 
 /* XWAY AMAZON Family */
-अटल काष्ठा pinctrl_xway_soc ase_pinctrl = अणु
+static struct pinctrl_xway_soc ase_pinctrl = {
 	.pin_count = ASE_MAX_PIN,
 	.mfp = ase_mfp,
 	.grps = ase_grps,
@@ -1634,10 +1633,10 @@
 	.num_funcs = ARRAY_SIZE(ase_funcs),
 	.exin = ase_exin_pin_map,
 	.num_exin = 3
-पूर्ण;
+};
 
 /* XWAY DANUBE Family */
-अटल काष्ठा pinctrl_xway_soc danube_pinctrl = अणु
+static struct pinctrl_xway_soc danube_pinctrl = {
 	.pin_count = DANUBE_MAX_PIN,
 	.mfp = danube_mfp,
 	.grps = danube_grps,
@@ -1646,10 +1645,10 @@
 	.num_funcs = ARRAY_SIZE(danube_funcs),
 	.exin = danube_exin_pin_map,
 	.num_exin = 3
-पूर्ण;
+};
 
 /* XWAY xRX100 Family */
-अटल काष्ठा pinctrl_xway_soc xrx100_pinctrl = अणु
+static struct pinctrl_xway_soc xrx100_pinctrl = {
 	.pin_count = XRX100_MAX_PIN,
 	.mfp = xrx100_mfp,
 	.grps = xrx100_grps,
@@ -1658,10 +1657,10 @@
 	.num_funcs = ARRAY_SIZE(xrx100_funcs),
 	.exin = xrx100_exin_pin_map,
 	.num_exin = 6
-पूर्ण;
+};
 
 /* XWAY xRX200 Family */
-अटल काष्ठा pinctrl_xway_soc xrx200_pinctrl = अणु
+static struct pinctrl_xway_soc xrx200_pinctrl = {
 	.pin_count = XRX200_MAX_PIN,
 	.mfp = xrx200_mfp,
 	.grps = xrx200_grps,
@@ -1670,10 +1669,10 @@
 	.num_funcs = ARRAY_SIZE(xrx200_funcs),
 	.exin = xrx200_exin_pin_map,
 	.num_exin = 6
-पूर्ण;
+};
 
 /* XWAY xRX300 Family */
-अटल काष्ठा pinctrl_xway_soc xrx300_pinctrl = अणु
+static struct pinctrl_xway_soc xrx300_pinctrl = {
 	.pin_count = XRX300_MAX_PIN,
 	.mfp = xrx300_mfp,
 	.grps = xrx300_grps,
@@ -1682,62 +1681,62 @@
 	.num_funcs = ARRAY_SIZE(xrx300_funcs),
 	.exin = xrx300_exin_pin_map,
 	.num_exin = 5
-पूर्ण;
+};
 
-अटल काष्ठा pinctrl_gpio_range xway_gpio_range = अणु
+static struct pinctrl_gpio_range xway_gpio_range = {
 	.name	= "XWAY GPIO",
 	.gc	= &xway_chip,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id xway_match[] = अणु
-	अणु .compatible = "lantiq,pinctrl-xway", .data = &danube_pinctrlपूर्ण, /*DEPRECATED*/
-	अणु .compatible = "lantiq,pinctrl-xr9", .data = &xr9_pinctrlपूर्ण, /*DEPRECATED*/
-	अणु .compatible = "lantiq,pinctrl-ase", .data = &ase_pinctrlपूर्ण, /*DEPRECATED*/
-	अणु .compatible = "lantiq,ase-pinctrl", .data = &ase_pinctrlपूर्ण,
-	अणु .compatible = "lantiq,danube-pinctrl", .data = &danube_pinctrlपूर्ण,
-	अणु .compatible = "lantiq,xrx100-pinctrl", .data = &xrx100_pinctrlपूर्ण,
-	अणु .compatible = "lantiq,xrx200-pinctrl", .data = &xrx200_pinctrlपूर्ण,
-	अणु .compatible = "lantiq,xrx300-pinctrl", .data = &xrx300_pinctrlपूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id xway_match[] = {
+	{ .compatible = "lantiq,pinctrl-xway", .data = &danube_pinctrl}, /*DEPRECATED*/
+	{ .compatible = "lantiq,pinctrl-xr9", .data = &xr9_pinctrl}, /*DEPRECATED*/
+	{ .compatible = "lantiq,pinctrl-ase", .data = &ase_pinctrl}, /*DEPRECATED*/
+	{ .compatible = "lantiq,ase-pinctrl", .data = &ase_pinctrl},
+	{ .compatible = "lantiq,danube-pinctrl", .data = &danube_pinctrl},
+	{ .compatible = "lantiq,xrx100-pinctrl", .data = &xrx100_pinctrl},
+	{ .compatible = "lantiq,xrx200-pinctrl", .data = &xrx200_pinctrl},
+	{ .compatible = "lantiq,xrx300-pinctrl", .data = &xrx300_pinctrl},
+	{},
+};
 MODULE_DEVICE_TABLE(of, xway_match);
 
-अटल पूर्णांक pinmux_xway_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	स्थिर काष्ठा of_device_id *match;
-	स्थिर काष्ठा pinctrl_xway_soc *xway_soc;
-	पूर्णांक ret, i;
+static int pinmux_xway_probe(struct platform_device *pdev)
+{
+	const struct of_device_id *match;
+	const struct pinctrl_xway_soc *xway_soc;
+	int ret, i;
 
-	/* get and remap our रेजिस्टर range */
-	xway_info.membase[0] = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(xway_info.membase[0]))
-		वापस PTR_ERR(xway_info.membase[0]);
+	/* get and remap our register range */
+	xway_info.membase[0] = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(xway_info.membase[0]))
+		return PTR_ERR(xway_info.membase[0]);
 
 	match = of_match_device(xway_match, &pdev->dev);
-	अगर (match)
-		xway_soc = (स्थिर काष्ठा pinctrl_xway_soc *) match->data;
-	अन्यथा
+	if (match)
+		xway_soc = (const struct pinctrl_xway_soc *) match->data;
+	else
 		xway_soc = &danube_pinctrl;
 
 	/* find out how many pads we have */
 	xway_chip.ngpio = xway_soc->pin_count;
 
 	/* load our pad descriptors */
-	xway_info.pads = devm_kसुस्मृति(&pdev->dev,
-			xway_chip.ngpio, माप(काष्ठा pinctrl_pin_desc),
+	xway_info.pads = devm_kcalloc(&pdev->dev,
+			xway_chip.ngpio, sizeof(struct pinctrl_pin_desc),
 			GFP_KERNEL);
-	अगर (!xway_info.pads)
-		वापस -ENOMEM;
+	if (!xway_info.pads)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < xway_chip.ngpio; i++) अणु
-		अक्षर *name = devm_kaप्र_लिखो(&pdev->dev, GFP_KERNEL, "io%d", i);
+	for (i = 0; i < xway_chip.ngpio; i++) {
+		char *name = devm_kasprintf(&pdev->dev, GFP_KERNEL, "io%d", i);
 
-		अगर (!name)
-			वापस -ENOMEM;
+		if (!name)
+			return -ENOMEM;
 
 		xway_info.pads[i].number = GPIO0 + i;
 		xway_info.pads[i].name = name;
-	पूर्ण
+	}
 	xway_pctrl_desc.pins = xway_info.pads;
 
 	/* setup the data needed by pinctrl */
@@ -1754,55 +1753,55 @@ MODULE_DEVICE_TABLE(of, xway_match);
 	xway_info.exin		= xway_soc->exin;
 	xway_info.num_exin	= xway_soc->num_exin;
 
-	/* रेजिस्टर with the generic lantiq layer */
-	ret = ltq_pinctrl_रेजिस्टर(pdev, &xway_info);
-	अगर (ret) अणु
+	/* register with the generic lantiq layer */
+	ret = ltq_pinctrl_register(pdev, &xway_info);
+	if (ret) {
 		dev_err(&pdev->dev, "Failed to register pinctrl driver\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* रेजिस्टर the gpio chip */
+	/* register the gpio chip */
 	xway_chip.parent = &pdev->dev;
 	xway_chip.owner = THIS_MODULE;
 	xway_chip.of_node = pdev->dev.of_node;
-	ret = devm_gpiochip_add_data(&pdev->dev, &xway_chip, शून्य);
-	अगर (ret) अणु
+	ret = devm_gpiochip_add_data(&pdev->dev, &xway_chip, NULL);
+	if (ret) {
 		dev_err(&pdev->dev, "Failed to register gpio chip\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/*
-	 * For DeviceTree-supported प्रणालीs, the gpio core checks the
-	 * pinctrl's device node क्रम the "gpio-ranges" property.
+	 * For DeviceTree-supported systems, the gpio core checks the
+	 * pinctrl's device node for the "gpio-ranges" property.
 	 * If it is present, it takes care of adding the pin ranges
-	 * क्रम the driver. In this हाल the driver can skip ahead.
+	 * for the driver. In this case the driver can skip ahead.
 	 *
-	 * In order to reमुख्य compatible with older, existing DeviceTree
-	 * files which करोn't set the "gpio-ranges" property or प्रणालीs that
+	 * In order to remain compatible with older, existing DeviceTree
+	 * files which don't set the "gpio-ranges" property or systems that
 	 * utilize ACPI the driver has to call gpiochip_add_pin_range().
 	 */
-	अगर (!of_property_पढ़ो_bool(pdev->dev.of_node, "gpio-ranges")) अणु
-		/* finish with रेजिस्टरing the gpio range in pinctrl */
+	if (!of_property_read_bool(pdev->dev.of_node, "gpio-ranges")) {
+		/* finish with registering the gpio range in pinctrl */
 		xway_gpio_range.npins = xway_chip.ngpio;
 		xway_gpio_range.base = xway_chip.base;
 		pinctrl_add_gpio_range(xway_info.pctrl, &xway_gpio_range);
-	पूर्ण
+	}
 
 	dev_info(&pdev->dev, "Init done\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver pinmux_xway_driver = अणु
+static struct platform_driver pinmux_xway_driver = {
 	.probe	= pinmux_xway_probe,
-	.driver = अणु
+	.driver = {
 		.name	= "pinctrl-xway",
 		.of_match_table = xway_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init pinmux_xway_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&pinmux_xway_driver);
-पूर्ण
+static int __init pinmux_xway_init(void)
+{
+	return platform_driver_register(&pinmux_xway_driver);
+}
 
 core_initcall_sync(pinmux_xway_init);

@@ -1,17 +1,16 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 //
 // Freescale i.MX28 pinctrl driver
 //
 // Author: Shawn Guo <shawn.guo@linaro.org>
 // Copyright 2012 Freescale Semiconductor, Inc.
 
-#समावेश <linux/init.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/pinctrl/pinctrl.h>
-#समावेश "pinctrl-mxs.h"
+#include <linux/init.h>
+#include <linux/of_device.h>
+#include <linux/pinctrl/pinctrl.h>
+#include "pinctrl-mxs.h"
 
-क्रमागत imx28_pin_क्रमागत अणु
+enum imx28_pin_enum {
 	GPMI_D00	= PINID(0, 0),
 	GPMI_D01	= PINID(0, 1),
 	GPMI_D02	= PINID(0, 2),
@@ -187,9 +186,9 @@
 	EMI_CE0N	= PINID(6, 22),
 	EMI_CE1N	= PINID(6, 23),
 	EMI_CKE		= PINID(6, 24),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा pinctrl_pin_desc imx28_pins[] = अणु
+static const struct pinctrl_pin_desc imx28_pins[] = {
 	MXS_PINCTRL_PIN(GPMI_D00),
 	MXS_PINCTRL_PIN(GPMI_D01),
 	MXS_PINCTRL_PIN(GPMI_D02),
@@ -365,41 +364,41 @@
 	MXS_PINCTRL_PIN(EMI_CE0N),
 	MXS_PINCTRL_PIN(EMI_CE1N),
 	MXS_PINCTRL_PIN(EMI_CKE),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mxs_regs imx28_regs = अणु
+static const struct mxs_regs imx28_regs = {
 	.muxsel = 0x100,
 	.drive = 0x300,
 	.pull = 0x600,
-पूर्ण;
+};
 
-अटल काष्ठा mxs_pinctrl_soc_data imx28_pinctrl_data = अणु
+static struct mxs_pinctrl_soc_data imx28_pinctrl_data = {
 	.regs = &imx28_regs,
 	.pins = imx28_pins,
 	.npins = ARRAY_SIZE(imx28_pins),
-पूर्ण;
+};
 
-अटल पूर्णांक imx28_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस mxs_pinctrl_probe(pdev, &imx28_pinctrl_data);
-पूर्ण
+static int imx28_pinctrl_probe(struct platform_device *pdev)
+{
+	return mxs_pinctrl_probe(pdev, &imx28_pinctrl_data);
+}
 
-अटल स्थिर काष्ठा of_device_id imx28_pinctrl_of_match[] = अणु
-	अणु .compatible = "fsl,imx28-pinctrl", पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id imx28_pinctrl_of_match[] = {
+	{ .compatible = "fsl,imx28-pinctrl", },
+	{ /* sentinel */ }
+};
 
-अटल काष्ठा platक्रमm_driver imx28_pinctrl_driver = अणु
-	.driver = अणु
+static struct platform_driver imx28_pinctrl_driver = {
+	.driver = {
 		.name = "imx28-pinctrl",
 		.suppress_bind_attrs = true,
 		.of_match_table = imx28_pinctrl_of_match,
-	पूर्ण,
+	},
 	.probe = imx28_pinctrl_probe,
-पूर्ण;
+};
 
-अटल पूर्णांक __init imx28_pinctrl_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&imx28_pinctrl_driver);
-पूर्ण
+static int __init imx28_pinctrl_init(void)
+{
+	return platform_driver_register(&imx28_pinctrl_driver);
+}
 postcore_initcall(imx28_pinctrl_init);

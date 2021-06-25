@@ -1,8 +1,7 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _COMMON_H
-#घोषणा _COMMON_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _COMMON_H
+#define _COMMON_H
 
-bool syscall_user_dispatch(काष्ठा pt_regs *regs);
+bool syscall_user_dispatch(struct pt_regs *regs);
 
-#पूर्ण_अगर
+#endif

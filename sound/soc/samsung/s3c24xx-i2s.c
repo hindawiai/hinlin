@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 //
 // s3c24xx-i2s.c  --  ALSA Soc Audio Layer
 //
@@ -10,66 +9,66 @@
 //	http://armlinux.simtec.co.uk/
 //	Ben Dooks <ben@simtec.co.uk>
 
-#समावेश <linux/delay.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/module.h>
+#include <linux/delay.h>
+#include <linux/clk.h>
+#include <linux/io.h>
+#include <linux/gpio.h>
+#include <linux/module.h>
 
-#समावेश <sound/soc.h>
-#समावेश <sound/pcm_params.h>
+#include <sound/soc.h>
+#include <sound/pcm_params.h>
 
-#समावेश "regs-iis.h"
-#समावेश "dma.h"
-#समावेश "s3c24xx-i2s.h"
+#include "regs-iis.h"
+#include "dma.h"
+#include "s3c24xx-i2s.h"
 
-अटल काष्ठा snd_dmaengine_dai_dma_data s3c24xx_i2s_pcm_stereo_out = अणु
+static struct snd_dmaengine_dai_dma_data s3c24xx_i2s_pcm_stereo_out = {
 	.chan_name	= "tx",
 	.addr_width	= 2,
-पूर्ण;
+};
 
-अटल काष्ठा snd_dmaengine_dai_dma_data s3c24xx_i2s_pcm_stereo_in = अणु
+static struct snd_dmaengine_dai_dma_data s3c24xx_i2s_pcm_stereo_in = {
 	.chan_name	= "rx",
 	.addr_width	= 2,
-पूर्ण;
+};
 
-काष्ठा s3c24xx_i2s_info अणु
-	व्योम __iomem	*regs;
-	काष्ठा clk	*iis_clk;
+struct s3c24xx_i2s_info {
+	void __iomem	*regs;
+	struct clk	*iis_clk;
 	u32		iiscon;
 	u32		iismod;
 	u32		iisfcon;
 	u32		iispsr;
-पूर्ण;
-अटल काष्ठा s3c24xx_i2s_info s3c24xx_i2s;
+};
+static struct s3c24xx_i2s_info s3c24xx_i2s;
 
-अटल व्योम s3c24xx_snd_txctrl(पूर्णांक on)
-अणु
+static void s3c24xx_snd_txctrl(int on)
+{
 	u32 iisfcon;
 	u32 iiscon;
 	u32 iismod;
 
-	iisfcon = पढ़ोl(s3c24xx_i2s.regs + S3C2410_IISFCON);
-	iiscon  = पढ़ोl(s3c24xx_i2s.regs + S3C2410_IISCON);
-	iismod  = पढ़ोl(s3c24xx_i2s.regs + S3C2410_IISMOD);
+	iisfcon = readl(s3c24xx_i2s.regs + S3C2410_IISFCON);
+	iiscon  = readl(s3c24xx_i2s.regs + S3C2410_IISCON);
+	iismod  = readl(s3c24xx_i2s.regs + S3C2410_IISMOD);
 
 	pr_debug("r: IISCON: %x IISMOD: %x IISFCON: %x\n", iiscon, iismod, iisfcon);
 
-	अगर (on) अणु
+	if (on) {
 		iisfcon |= S3C2410_IISFCON_TXDMA | S3C2410_IISFCON_TXENABLE;
 		iiscon  |= S3C2410_IISCON_TXDMAEN | S3C2410_IISCON_IISEN;
 		iiscon  &= ~S3C2410_IISCON_TXIDLE;
 		iismod  |= S3C2410_IISMOD_TXMODE;
 
-		ग_लिखोl(iismod,  s3c24xx_i2s.regs + S3C2410_IISMOD);
-		ग_लिखोl(iisfcon, s3c24xx_i2s.regs + S3C2410_IISFCON);
-		ग_लिखोl(iiscon,  s3c24xx_i2s.regs + S3C2410_IISCON);
-	पूर्ण अन्यथा अणु
+		writel(iismod,  s3c24xx_i2s.regs + S3C2410_IISMOD);
+		writel(iisfcon, s3c24xx_i2s.regs + S3C2410_IISFCON);
+		writel(iiscon,  s3c24xx_i2s.regs + S3C2410_IISCON);
+	} else {
 		/* note, we have to disable the FIFOs otherwise bad things
 		 * seem to happen when the DMA stops. According to the
 		 * Samsung supplied kernel, this should allow the DMA
 		 * engine and FIFOs to reset. If this isn't allowed, the
-		 * DMA engine will simply मुक्तze अक्रमomly.
+		 * DMA engine will simply freeze randomly.
 		 */
 
 		iisfcon &= ~S3C2410_IISFCON_TXENABLE;
@@ -78,41 +77,41 @@
 		iiscon  &= ~S3C2410_IISCON_TXDMAEN;
 		iismod  &= ~S3C2410_IISMOD_TXMODE;
 
-		ग_लिखोl(iiscon,  s3c24xx_i2s.regs + S3C2410_IISCON);
-		ग_लिखोl(iisfcon, s3c24xx_i2s.regs + S3C2410_IISFCON);
-		ग_लिखोl(iismod,  s3c24xx_i2s.regs + S3C2410_IISMOD);
-	पूर्ण
+		writel(iiscon,  s3c24xx_i2s.regs + S3C2410_IISCON);
+		writel(iisfcon, s3c24xx_i2s.regs + S3C2410_IISFCON);
+		writel(iismod,  s3c24xx_i2s.regs + S3C2410_IISMOD);
+	}
 
 	pr_debug("w: IISCON: %x IISMOD: %x IISFCON: %x\n", iiscon, iismod, iisfcon);
-पूर्ण
+}
 
-अटल व्योम s3c24xx_snd_rxctrl(पूर्णांक on)
-अणु
+static void s3c24xx_snd_rxctrl(int on)
+{
 	u32 iisfcon;
 	u32 iiscon;
 	u32 iismod;
 
-	iisfcon = पढ़ोl(s3c24xx_i2s.regs + S3C2410_IISFCON);
-	iiscon  = पढ़ोl(s3c24xx_i2s.regs + S3C2410_IISCON);
-	iismod  = पढ़ोl(s3c24xx_i2s.regs + S3C2410_IISMOD);
+	iisfcon = readl(s3c24xx_i2s.regs + S3C2410_IISFCON);
+	iiscon  = readl(s3c24xx_i2s.regs + S3C2410_IISCON);
+	iismod  = readl(s3c24xx_i2s.regs + S3C2410_IISMOD);
 
 	pr_debug("r: IISCON: %x IISMOD: %x IISFCON: %x\n", iiscon, iismod, iisfcon);
 
-	अगर (on) अणु
+	if (on) {
 		iisfcon |= S3C2410_IISFCON_RXDMA | S3C2410_IISFCON_RXENABLE;
 		iiscon  |= S3C2410_IISCON_RXDMAEN | S3C2410_IISCON_IISEN;
 		iiscon  &= ~S3C2410_IISCON_RXIDLE;
 		iismod  |= S3C2410_IISMOD_RXMODE;
 
-		ग_लिखोl(iismod,  s3c24xx_i2s.regs + S3C2410_IISMOD);
-		ग_लिखोl(iisfcon, s3c24xx_i2s.regs + S3C2410_IISFCON);
-		ग_लिखोl(iiscon,  s3c24xx_i2s.regs + S3C2410_IISCON);
-	पूर्ण अन्यथा अणु
+		writel(iismod,  s3c24xx_i2s.regs + S3C2410_IISMOD);
+		writel(iisfcon, s3c24xx_i2s.regs + S3C2410_IISFCON);
+		writel(iiscon,  s3c24xx_i2s.regs + S3C2410_IISCON);
+	} else {
 		/* note, we have to disable the FIFOs otherwise bad things
 		 * seem to happen when the DMA stops. According to the
 		 * Samsung supplied kernel, this should allow the DMA
 		 * engine and FIFOs to reset. If this isn't allowed, the
-		 * DMA engine will simply मुक्तze अक्रमomly.
+		 * DMA engine will simply freeze randomly.
 		 */
 
 		iisfcon &= ~S3C2410_IISFCON_RXENABLE;
@@ -121,344 +120,344 @@
 		iiscon  &= ~S3C2410_IISCON_RXDMAEN;
 		iismod  &= ~S3C2410_IISMOD_RXMODE;
 
-		ग_लिखोl(iisfcon, s3c24xx_i2s.regs + S3C2410_IISFCON);
-		ग_लिखोl(iiscon,  s3c24xx_i2s.regs + S3C2410_IISCON);
-		ग_लिखोl(iismod,  s3c24xx_i2s.regs + S3C2410_IISMOD);
-	पूर्ण
+		writel(iisfcon, s3c24xx_i2s.regs + S3C2410_IISFCON);
+		writel(iiscon,  s3c24xx_i2s.regs + S3C2410_IISCON);
+		writel(iismod,  s3c24xx_i2s.regs + S3C2410_IISMOD);
+	}
 
 	pr_debug("w: IISCON: %x IISMOD: %x IISFCON: %x\n", iiscon, iismod, iisfcon);
-पूर्ण
+}
 
 /*
- * Wait क्रम the LR संकेत to allow synchronisation to the L/R घड़ी
- * from the codec. May only be needed क्रम slave mode.
+ * Wait for the LR signal to allow synchronisation to the L/R clock
+ * from the codec. May only be needed for slave mode.
  */
-अटल पूर्णांक s3c24xx_snd_lrsync(व्योम)
-अणु
+static int s3c24xx_snd_lrsync(void)
+{
 	u32 iiscon;
-	पूर्णांक समयout = 50; /* 5ms */
+	int timeout = 50; /* 5ms */
 
-	जबतक (1) अणु
-		iiscon = पढ़ोl(s3c24xx_i2s.regs + S3C2410_IISCON);
-		अगर (iiscon & S3C2410_IISCON_LRINDEX)
-			अवरोध;
+	while (1) {
+		iiscon = readl(s3c24xx_i2s.regs + S3C2410_IISCON);
+		if (iiscon & S3C2410_IISCON_LRINDEX)
+			break;
 
-		अगर (!समयout--)
-			वापस -ETIMEDOUT;
+		if (!timeout--)
+			return -ETIMEDOUT;
 		udelay(100);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Check whether CPU is the master or slave
  */
-अटल अंतरभूत पूर्णांक s3c24xx_snd_is_clkmaster(व्योम)
-अणु
-	वापस (पढ़ोl(s3c24xx_i2s.regs + S3C2410_IISMOD) & S3C2410_IISMOD_SLAVE) ? 0:1;
-पूर्ण
+static inline int s3c24xx_snd_is_clkmaster(void)
+{
+	return (readl(s3c24xx_i2s.regs + S3C2410_IISMOD) & S3C2410_IISMOD_SLAVE) ? 0:1;
+}
 
 /*
- * Set S3C24xx I2S DAI क्रमmat
+ * Set S3C24xx I2S DAI format
  */
-अटल पूर्णांक s3c24xx_i2s_set_fmt(काष्ठा snd_soc_dai *cpu_dai,
-		अचिन्हित पूर्णांक fmt)
-अणु
+static int s3c24xx_i2s_set_fmt(struct snd_soc_dai *cpu_dai,
+		unsigned int fmt)
+{
 	u32 iismod;
 
-	iismod = पढ़ोl(s3c24xx_i2s.regs + S3C2410_IISMOD);
+	iismod = readl(s3c24xx_i2s.regs + S3C2410_IISMOD);
 	pr_debug("hw_params r: IISMOD: %x \n", iismod);
 
-	चयन (fmt & SND_SOC_DAIFMT_MASTER_MASK) अणु
-	हाल SND_SOC_DAIFMT_CBM_CFM:
+	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
+	case SND_SOC_DAIFMT_CBM_CFM:
 		iismod |= S3C2410_IISMOD_SLAVE;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_CBS_CFS:
+		break;
+	case SND_SOC_DAIFMT_CBS_CFS:
 		iismod &= ~S3C2410_IISMOD_SLAVE;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	चयन (fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
-	हाल SND_SOC_DAIFMT_LEFT_J:
+	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
+	case SND_SOC_DAIFMT_LEFT_J:
 		iismod |= S3C2410_IISMOD_MSB;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_I2S:
+		break;
+	case SND_SOC_DAIFMT_I2S:
 		iismod &= ~S3C2410_IISMOD_MSB;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	ग_लिखोl(iismod, s3c24xx_i2s.regs + S3C2410_IISMOD);
+	writel(iismod, s3c24xx_i2s.regs + S3C2410_IISMOD);
 	pr_debug("hw_params w: IISMOD: %x \n", iismod);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक s3c24xx_i2s_hw_params(काष्ठा snd_pcm_substream *substream,
-				 काष्ठा snd_pcm_hw_params *params,
-				 काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा snd_dmaengine_dai_dma_data *dma_data;
+static int s3c24xx_i2s_hw_params(struct snd_pcm_substream *substream,
+				 struct snd_pcm_hw_params *params,
+				 struct snd_soc_dai *dai)
+{
+	struct snd_dmaengine_dai_dma_data *dma_data;
 	u32 iismod;
 
 	dma_data = snd_soc_dai_get_dma_data(dai, substream);
 
-	/* Working copies of रेजिस्टर */
-	iismod = पढ़ोl(s3c24xx_i2s.regs + S3C2410_IISMOD);
+	/* Working copies of register */
+	iismod = readl(s3c24xx_i2s.regs + S3C2410_IISMOD);
 	pr_debug("hw_params r: IISMOD: %x\n", iismod);
 
-	चयन (params_width(params)) अणु
-	हाल 8:
+	switch (params_width(params)) {
+	case 8:
 		iismod &= ~S3C2410_IISMOD_16BIT;
 		dma_data->addr_width = 1;
-		अवरोध;
-	हाल 16:
+		break;
+	case 16:
 		iismod |= S3C2410_IISMOD_16BIT;
 		dma_data->addr_width = 2;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	ग_लिखोl(iismod, s3c24xx_i2s.regs + S3C2410_IISMOD);
+	writel(iismod, s3c24xx_i2s.regs + S3C2410_IISMOD);
 	pr_debug("hw_params w: IISMOD: %x\n", iismod);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक s3c24xx_i2s_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd,
-			       काष्ठा snd_soc_dai *dai)
-अणु
-	पूर्णांक ret = 0;
+static int s3c24xx_i2s_trigger(struct snd_pcm_substream *substream, int cmd,
+			       struct snd_soc_dai *dai)
+{
+	int ret = 0;
 
-	चयन (cmd) अणु
-	हाल SNDRV_PCM_TRIGGER_START:
-	हाल SNDRV_PCM_TRIGGER_RESUME:
-	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-		अगर (!s3c24xx_snd_is_clkmaster()) अणु
+	switch (cmd) {
+	case SNDRV_PCM_TRIGGER_START:
+	case SNDRV_PCM_TRIGGER_RESUME:
+	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+		if (!s3c24xx_snd_is_clkmaster()) {
 			ret = s3c24xx_snd_lrsync();
-			अगर (ret)
-				जाओ निकास_err;
-		पूर्ण
+			if (ret)
+				goto exit_err;
+		}
 
-		अगर (substream->stream == SNDRV_PCM_STREAM_CAPTURE)
+		if (substream->stream == SNDRV_PCM_STREAM_CAPTURE)
 			s3c24xx_snd_rxctrl(1);
-		अन्यथा
+		else
 			s3c24xx_snd_txctrl(1);
 
-		अवरोध;
-	हाल SNDRV_PCM_TRIGGER_STOP:
-	हाल SNDRV_PCM_TRIGGER_SUSPEND:
-	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
-		अगर (substream->stream == SNDRV_PCM_STREAM_CAPTURE)
+		break;
+	case SNDRV_PCM_TRIGGER_STOP:
+	case SNDRV_PCM_TRIGGER_SUSPEND:
+	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+		if (substream->stream == SNDRV_PCM_STREAM_CAPTURE)
 			s3c24xx_snd_rxctrl(0);
-		अन्यथा
+		else
 			s3c24xx_snd_txctrl(0);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-निकास_err:
-	वापस ret;
-पूर्ण
+exit_err:
+	return ret;
+}
 
 /*
  * Set S3C24xx Clock source
  */
-अटल पूर्णांक s3c24xx_i2s_set_sysclk(काष्ठा snd_soc_dai *cpu_dai,
-	पूर्णांक clk_id, अचिन्हित पूर्णांक freq, पूर्णांक dir)
-अणु
-	u32 iismod = पढ़ोl(s3c24xx_i2s.regs + S3C2410_IISMOD);
+static int s3c24xx_i2s_set_sysclk(struct snd_soc_dai *cpu_dai,
+	int clk_id, unsigned int freq, int dir)
+{
+	u32 iismod = readl(s3c24xx_i2s.regs + S3C2410_IISMOD);
 
 	iismod &= ~S3C2440_IISMOD_MPLL;
 
-	चयन (clk_id) अणु
-	हाल S3C24XX_CLKSRC_PCLK:
-		अवरोध;
-	हाल S3C24XX_CLKSRC_MPLL:
+	switch (clk_id) {
+	case S3C24XX_CLKSRC_PCLK:
+		break;
+	case S3C24XX_CLKSRC_MPLL:
 		iismod |= S3C2440_IISMOD_MPLL;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	ग_लिखोl(iismod, s3c24xx_i2s.regs + S3C2410_IISMOD);
-	वापस 0;
-पूर्ण
+	writel(iismod, s3c24xx_i2s.regs + S3C2410_IISMOD);
+	return 0;
+}
 
 /*
- * Set S3C24xx Clock भागiders
+ * Set S3C24xx Clock dividers
  */
-अटल पूर्णांक s3c24xx_i2s_set_clkभाग(काष्ठा snd_soc_dai *cpu_dai,
-	पूर्णांक भाग_id, पूर्णांक भाग)
-अणु
+static int s3c24xx_i2s_set_clkdiv(struct snd_soc_dai *cpu_dai,
+	int div_id, int div)
+{
 	u32 reg;
 
-	चयन (भाग_id) अणु
-	हाल S3C24XX_DIV_BCLK:
-		reg = पढ़ोl(s3c24xx_i2s.regs + S3C2410_IISMOD) & ~S3C2410_IISMOD_FS_MASK;
-		ग_लिखोl(reg | भाग, s3c24xx_i2s.regs + S3C2410_IISMOD);
-		अवरोध;
-	हाल S3C24XX_DIV_MCLK:
-		reg = पढ़ोl(s3c24xx_i2s.regs + S3C2410_IISMOD) & ~(S3C2410_IISMOD_384FS);
-		ग_लिखोl(reg | भाग, s3c24xx_i2s.regs + S3C2410_IISMOD);
-		अवरोध;
-	हाल S3C24XX_DIV_PRESCALER:
-		ग_लिखोl(भाग, s3c24xx_i2s.regs + S3C2410_IISPSR);
-		reg = पढ़ोl(s3c24xx_i2s.regs + S3C2410_IISCON);
-		ग_लिखोl(reg | S3C2410_IISCON_PSCEN, s3c24xx_i2s.regs + S3C2410_IISCON);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (div_id) {
+	case S3C24XX_DIV_BCLK:
+		reg = readl(s3c24xx_i2s.regs + S3C2410_IISMOD) & ~S3C2410_IISMOD_FS_MASK;
+		writel(reg | div, s3c24xx_i2s.regs + S3C2410_IISMOD);
+		break;
+	case S3C24XX_DIV_MCLK:
+		reg = readl(s3c24xx_i2s.regs + S3C2410_IISMOD) & ~(S3C2410_IISMOD_384FS);
+		writel(reg | div, s3c24xx_i2s.regs + S3C2410_IISMOD);
+		break;
+	case S3C24XX_DIV_PRESCALER:
+		writel(div, s3c24xx_i2s.regs + S3C2410_IISPSR);
+		reg = readl(s3c24xx_i2s.regs + S3C2410_IISCON);
+		writel(reg | S3C2410_IISCON_PSCEN, s3c24xx_i2s.regs + S3C2410_IISCON);
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * To aव्योम duplicating घड़ी code, allow machine driver to
- * get the घड़ीrate from here.
+ * To avoid duplicating clock code, allow machine driver to
+ * get the clockrate from here.
  */
-u32 s3c24xx_i2s_get_घड़ीrate(व्योम)
-अणु
-	वापस clk_get_rate(s3c24xx_i2s.iis_clk);
-पूर्ण
-EXPORT_SYMBOL_GPL(s3c24xx_i2s_get_घड़ीrate);
+u32 s3c24xx_i2s_get_clockrate(void)
+{
+	return clk_get_rate(s3c24xx_i2s.iis_clk);
+}
+EXPORT_SYMBOL_GPL(s3c24xx_i2s_get_clockrate);
 
-अटल पूर्णांक s3c24xx_i2s_probe(काष्ठा snd_soc_dai *dai)
-अणु
-	पूर्णांक ret;
+static int s3c24xx_i2s_probe(struct snd_soc_dai *dai)
+{
+	int ret;
 	snd_soc_dai_init_dma_data(dai, &s3c24xx_i2s_pcm_stereo_out,
 					&s3c24xx_i2s_pcm_stereo_in);
 
 	s3c24xx_i2s.iis_clk = devm_clk_get(dai->dev, "iis");
-	अगर (IS_ERR(s3c24xx_i2s.iis_clk)) अणु
+	if (IS_ERR(s3c24xx_i2s.iis_clk)) {
 		pr_err("failed to get iis_clock\n");
-		वापस PTR_ERR(s3c24xx_i2s.iis_clk);
-	पूर्ण
+		return PTR_ERR(s3c24xx_i2s.iis_clk);
+	}
 	ret = clk_prepare_enable(s3c24xx_i2s.iis_clk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ग_लिखोl(S3C2410_IISCON_IISEN, s3c24xx_i2s.regs + S3C2410_IISCON);
+	writel(S3C2410_IISCON_IISEN, s3c24xx_i2s.regs + S3C2410_IISCON);
 
 	s3c24xx_snd_txctrl(0);
 	s3c24xx_snd_rxctrl(0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक s3c24xx_i2s_suspend(काष्ठा snd_soc_component *component)
-अणु
-	s3c24xx_i2s.iiscon = पढ़ोl(s3c24xx_i2s.regs + S3C2410_IISCON);
-	s3c24xx_i2s.iismod = पढ़ोl(s3c24xx_i2s.regs + S3C2410_IISMOD);
-	s3c24xx_i2s.iisfcon = पढ़ोl(s3c24xx_i2s.regs + S3C2410_IISFCON);
-	s3c24xx_i2s.iispsr = पढ़ोl(s3c24xx_i2s.regs + S3C2410_IISPSR);
+#ifdef CONFIG_PM
+static int s3c24xx_i2s_suspend(struct snd_soc_component *component)
+{
+	s3c24xx_i2s.iiscon = readl(s3c24xx_i2s.regs + S3C2410_IISCON);
+	s3c24xx_i2s.iismod = readl(s3c24xx_i2s.regs + S3C2410_IISMOD);
+	s3c24xx_i2s.iisfcon = readl(s3c24xx_i2s.regs + S3C2410_IISFCON);
+	s3c24xx_i2s.iispsr = readl(s3c24xx_i2s.regs + S3C2410_IISPSR);
 
 	clk_disable_unprepare(s3c24xx_i2s.iis_clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक s3c24xx_i2s_resume(काष्ठा snd_soc_component *component)
-अणु
-	पूर्णांक ret;
+static int s3c24xx_i2s_resume(struct snd_soc_component *component)
+{
+	int ret;
 
 	ret = clk_prepare_enable(s3c24xx_i2s.iis_clk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ग_लिखोl(s3c24xx_i2s.iiscon, s3c24xx_i2s.regs + S3C2410_IISCON);
-	ग_लिखोl(s3c24xx_i2s.iismod, s3c24xx_i2s.regs + S3C2410_IISMOD);
-	ग_लिखोl(s3c24xx_i2s.iisfcon, s3c24xx_i2s.regs + S3C2410_IISFCON);
-	ग_लिखोl(s3c24xx_i2s.iispsr, s3c24xx_i2s.regs + S3C2410_IISPSR);
+	writel(s3c24xx_i2s.iiscon, s3c24xx_i2s.regs + S3C2410_IISCON);
+	writel(s3c24xx_i2s.iismod, s3c24xx_i2s.regs + S3C2410_IISMOD);
+	writel(s3c24xx_i2s.iisfcon, s3c24xx_i2s.regs + S3C2410_IISFCON);
+	writel(s3c24xx_i2s.iispsr, s3c24xx_i2s.regs + S3C2410_IISPSR);
 
-	वापस 0;
-पूर्ण
-#अन्यथा
-#घोषणा s3c24xx_i2s_suspend शून्य
-#घोषणा s3c24xx_i2s_resume शून्य
-#पूर्ण_अगर
+	return 0;
+}
+#else
+#define s3c24xx_i2s_suspend NULL
+#define s3c24xx_i2s_resume NULL
+#endif
 
-#घोषणा S3C24XX_I2S_RATES \
+#define S3C24XX_I2S_RATES \
 	(SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_11025 | SNDRV_PCM_RATE_16000 | \
 	SNDRV_PCM_RATE_22050 | SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_44100 | \
 	SNDRV_PCM_RATE_48000 | SNDRV_PCM_RATE_88200 | SNDRV_PCM_RATE_96000)
 
-अटल स्थिर काष्ठा snd_soc_dai_ops s3c24xx_i2s_dai_ops = अणु
+static const struct snd_soc_dai_ops s3c24xx_i2s_dai_ops = {
 	.trigger	= s3c24xx_i2s_trigger,
 	.hw_params	= s3c24xx_i2s_hw_params,
 	.set_fmt	= s3c24xx_i2s_set_fmt,
-	.set_clkभाग	= s3c24xx_i2s_set_clkभाग,
+	.set_clkdiv	= s3c24xx_i2s_set_clkdiv,
 	.set_sysclk	= s3c24xx_i2s_set_sysclk,
-पूर्ण;
+};
 
-अटल काष्ठा snd_soc_dai_driver s3c24xx_i2s_dai = अणु
+static struct snd_soc_dai_driver s3c24xx_i2s_dai = {
 	.probe = s3c24xx_i2s_probe,
-	.playback = अणु
+	.playback = {
 		.channels_min = 2,
 		.channels_max = 2,
 		.rates = S3C24XX_I2S_RATES,
-		.क्रमmats = SNDRV_PCM_FMTBIT_S8 | SNDRV_PCM_FMTBIT_S16_LE,पूर्ण,
-	.capture = अणु
+		.formats = SNDRV_PCM_FMTBIT_S8 | SNDRV_PCM_FMTBIT_S16_LE,},
+	.capture = {
 		.channels_min = 2,
 		.channels_max = 2,
 		.rates = S3C24XX_I2S_RATES,
-		.क्रमmats = SNDRV_PCM_FMTBIT_S8 | SNDRV_PCM_FMTBIT_S16_LE,पूर्ण,
+		.formats = SNDRV_PCM_FMTBIT_S8 | SNDRV_PCM_FMTBIT_S16_LE,},
 	.ops = &s3c24xx_i2s_dai_ops,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_component_driver s3c24xx_i2s_component = अणु
+static const struct snd_soc_component_driver s3c24xx_i2s_component = {
 	.name		= "s3c24xx-i2s",
 	.suspend	= s3c24xx_i2s_suspend,
 	.resume		= s3c24xx_i2s_resume,
-पूर्ण;
+};
 
-अटल पूर्णांक s3c24xx_iis_dev_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा resource *res;
-	पूर्णांक ret;
+static int s3c24xx_iis_dev_probe(struct platform_device *pdev)
+{
+	struct resource *res;
+	int ret;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	s3c24xx_i2s.regs = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(s3c24xx_i2s.regs))
-		वापस PTR_ERR(s3c24xx_i2s.regs);
+	if (IS_ERR(s3c24xx_i2s.regs))
+		return PTR_ERR(s3c24xx_i2s.regs);
 
 	s3c24xx_i2s_pcm_stereo_out.addr = res->start + S3C2410_IISFIFO;
 	s3c24xx_i2s_pcm_stereo_in.addr = res->start + S3C2410_IISFIFO;
 
-	ret = samsung_asoc_dma_platक्रमm_रेजिस्टर(&pdev->dev, शून्य,
-						 "tx", "rx", शून्य);
-	अगर (ret) अणु
+	ret = samsung_asoc_dma_platform_register(&pdev->dev, NULL,
+						 "tx", "rx", NULL);
+	if (ret) {
 		dev_err(&pdev->dev, "Failed to register the DMA: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = devm_snd_soc_रेजिस्टर_component(&pdev->dev,
+	ret = devm_snd_soc_register_component(&pdev->dev,
 			&s3c24xx_i2s_component, &s3c24xx_i2s_dai, 1);
-	अगर (ret)
+	if (ret)
 		dev_err(&pdev->dev, "Failed to register the DAI\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा platक्रमm_driver s3c24xx_iis_driver = अणु
+static struct platform_driver s3c24xx_iis_driver = {
 	.probe  = s3c24xx_iis_dev_probe,
-	.driver = अणु
+	.driver = {
 		.name = "s3c24xx-iis",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(s3c24xx_iis_driver);
+module_platform_driver(s3c24xx_iis_driver);
 
-/* Module inक्रमmation */
+/* Module information */
 MODULE_AUTHOR("Ben Dooks, <ben@simtec.co.uk>");
 MODULE_DESCRIPTION("s3c24xx I2S SoC Interface");
 MODULE_LICENSE("GPL");

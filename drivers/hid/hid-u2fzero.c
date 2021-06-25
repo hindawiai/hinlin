@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * U2F Zero LED and RNG driver
  *
@@ -7,343 +6,343 @@
  * Loosely based on drivers/hid/hid-led.c
  *              and drivers/usb/misc/chaoskey.c
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of the GNU General Public License as
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, version 2.
  */
 
-#समावेश <linux/hid.h>
-#समावेश <linux/hidraw.h>
-#समावेश <linux/hw_अक्रमom.h>
-#समावेश <linux/leds.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/usb.h>
+#include <linux/hid.h>
+#include <linux/hidraw.h>
+#include <linux/hw_random.h>
+#include <linux/leds.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/usb.h>
 
-#समावेश "usbhid/usbhid.h"
-#समावेश "hid-ids.h"
+#include "usbhid/usbhid.h"
+#include "hid-ids.h"
 
-#घोषणा DRIVER_SHORT		"u2fzero"
+#define DRIVER_SHORT		"u2fzero"
 
-#घोषणा HID_REPORT_SIZE		64
+#define HID_REPORT_SIZE		64
 
 /* We only use broadcast (CID-less) messages */
-#घोषणा CID_BROADCAST		0xffffffff
+#define CID_BROADCAST		0xffffffff
 
-काष्ठा u2f_hid_msg अणु
+struct u2f_hid_msg {
 	u32 cid;
-	जोड़ अणु
-		काष्ठा अणु
+	union {
+		struct {
 			u8 cmd;
 			u8 bcnth;
 			u8 bcntl;
 			u8 data[HID_REPORT_SIZE - 7];
-		पूर्ण init;
-		काष्ठा अणु
+		} init;
+		struct {
 			u8 seq;
 			u8 data[HID_REPORT_SIZE - 5];
-		पूर्ण cont;
-	पूर्ण;
-पूर्ण __packed;
+		} cont;
+	};
+} __packed;
 
-काष्ठा u2f_hid_report अणु
+struct u2f_hid_report {
 	u8 report_type;
-	काष्ठा u2f_hid_msg msg;
-पूर्ण __packed;
+	struct u2f_hid_msg msg;
+} __packed;
 
-#घोषणा U2F_HID_MSG_LEN(f)	(माप_प्रकार)(((f).init.bcnth << 8) + (f).init.bcntl)
+#define U2F_HID_MSG_LEN(f)	(size_t)(((f).init.bcnth << 8) + (f).init.bcntl)
 
 /* Custom extensions to the U2FHID protocol */
-#घोषणा U2F_CUSTOM_GET_RNG	0x21
-#घोषणा U2F_CUSTOM_WINK		0x24
+#define U2F_CUSTOM_GET_RNG	0x21
+#define U2F_CUSTOM_WINK		0x24
 
-काष्ठा u2fzero_device अणु
-	काष्ठा hid_device	*hdev;
-	काष्ठा urb		*urb;	    /* URB क्रम the RNG data */
-	काष्ठा led_classdev	ldev;	    /* Embedded काष्ठा क्रम led */
-	काष्ठा hwrng		hwrng;	    /* Embedded काष्ठा क्रम hwrng */
-	अक्षर			*led_name;
-	अक्षर			*rng_name;
+struct u2fzero_device {
+	struct hid_device	*hdev;
+	struct urb		*urb;	    /* URB for the RNG data */
+	struct led_classdev	ldev;	    /* Embedded struct for led */
+	struct hwrng		hwrng;	    /* Embedded struct for hwrng */
+	char			*led_name;
+	char			*rng_name;
 	u8			*buf_out;
 	u8			*buf_in;
-	काष्ठा mutex		lock;
+	struct mutex		lock;
 	bool			present;
-पूर्ण;
+};
 
-अटल पूर्णांक u2fzero_send(काष्ठा u2fzero_device *dev, काष्ठा u2f_hid_report *req)
-अणु
-	पूर्णांक ret;
+static int u2fzero_send(struct u2fzero_device *dev, struct u2f_hid_report *req)
+{
+	int ret;
 
 	mutex_lock(&dev->lock);
 
-	स_नकल(dev->buf_out, req, माप(काष्ठा u2f_hid_report));
+	memcpy(dev->buf_out, req, sizeof(struct u2f_hid_report));
 
 	ret = hid_hw_output_report(dev->hdev, dev->buf_out,
-				   माप(काष्ठा u2f_hid_msg));
+				   sizeof(struct u2f_hid_msg));
 
 	mutex_unlock(&dev->lock);
 
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस ret == माप(काष्ठा u2f_hid_msg) ? 0 : -EMSGSIZE;
-पूर्ण
+	return ret == sizeof(struct u2f_hid_msg) ? 0 : -EMSGSIZE;
+}
 
-काष्ठा u2fzero_transfer_context अणु
-	काष्ठा completion करोne;
-	पूर्णांक status;
-पूर्ण;
+struct u2fzero_transfer_context {
+	struct completion done;
+	int status;
+};
 
-अटल व्योम u2fzero_पढ़ो_callback(काष्ठा urb *urb)
-अणु
-	काष्ठा u2fzero_transfer_context *ctx = urb->context;
+static void u2fzero_read_callback(struct urb *urb)
+{
+	struct u2fzero_transfer_context *ctx = urb->context;
 
 	ctx->status = urb->status;
-	complete(&ctx->करोne);
-पूर्ण
+	complete(&ctx->done);
+}
 
-अटल पूर्णांक u2fzero_recv(काष्ठा u2fzero_device *dev,
-			काष्ठा u2f_hid_report *req,
-			काष्ठा u2f_hid_msg *resp)
-अणु
-	पूर्णांक ret;
-	काष्ठा hid_device *hdev = dev->hdev;
-	काष्ठा u2fzero_transfer_context ctx;
+static int u2fzero_recv(struct u2fzero_device *dev,
+			struct u2f_hid_report *req,
+			struct u2f_hid_msg *resp)
+{
+	int ret;
+	struct hid_device *hdev = dev->hdev;
+	struct u2fzero_transfer_context ctx;
 
 	mutex_lock(&dev->lock);
 
-	स_नकल(dev->buf_out, req, माप(काष्ठा u2f_hid_report));
+	memcpy(dev->buf_out, req, sizeof(struct u2f_hid_report));
 
 	dev->urb->context = &ctx;
-	init_completion(&ctx.करोne);
+	init_completion(&ctx.done);
 
 	ret = usb_submit_urb(dev->urb, GFP_NOIO);
-	अगर (unlikely(ret)) अणु
+	if (unlikely(ret)) {
 		hid_err(hdev, "usb_submit_urb failed: %d", ret);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	ret = hid_hw_output_report(dev->hdev, dev->buf_out,
-				   माप(काष्ठा u2f_hid_msg));
+				   sizeof(struct u2f_hid_msg));
 
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		hid_err(hdev, "hid_hw_output_report failed: %d", ret);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	ret = (रुको_क्रम_completion_समयout(
-		&ctx.करोne, msecs_to_jअगरfies(USB_CTRL_SET_TIMEOUT)));
-	अगर (ret < 0) अणु
-		usb_समाप्त_urb(dev->urb);
+	ret = (wait_for_completion_timeout(
+		&ctx.done, msecs_to_jiffies(USB_CTRL_SET_TIMEOUT)));
+	if (ret < 0) {
+		usb_kill_urb(dev->urb);
 		hid_err(hdev, "urb submission timed out");
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = dev->urb->actual_length;
-		स_नकल(resp, dev->buf_in, ret);
-	पूर्ण
+		memcpy(resp, dev->buf_in, ret);
+	}
 
 err:
 	mutex_unlock(&dev->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक u2fzero_blink(काष्ठा led_classdev *ldev)
-अणु
-	काष्ठा u2fzero_device *dev = container_of(ldev,
-		काष्ठा u2fzero_device, ldev);
-	काष्ठा u2f_hid_report req = अणु
+static int u2fzero_blink(struct led_classdev *ldev)
+{
+	struct u2fzero_device *dev = container_of(ldev,
+		struct u2fzero_device, ldev);
+	struct u2f_hid_report req = {
 		.report_type = 0,
 		.msg.cid = CID_BROADCAST,
-		.msg.init = अणु
+		.msg.init = {
 			.cmd = U2F_CUSTOM_WINK,
 			.bcnth = 0,
 			.bcntl = 0,
-			.data  = अणु0पूर्ण,
-		पूर्ण
-	पूर्ण;
-	वापस u2fzero_send(dev, &req);
-पूर्ण
+			.data  = {0},
+		}
+	};
+	return u2fzero_send(dev, &req);
+}
 
-अटल पूर्णांक u2fzero_brightness_set(काष्ठा led_classdev *ldev,
-				  क्रमागत led_brightness brightness)
-अणु
+static int u2fzero_brightness_set(struct led_classdev *ldev,
+				  enum led_brightness brightness)
+{
 	ldev->brightness = LED_OFF;
-	अगर (brightness)
-		वापस u2fzero_blink(ldev);
-	अन्यथा
-		वापस 0;
-पूर्ण
+	if (brightness)
+		return u2fzero_blink(ldev);
+	else
+		return 0;
+}
 
-अटल पूर्णांक u2fzero_rng_पढ़ो(काष्ठा hwrng *rng, व्योम *data,
-			    माप_प्रकार max, bool रुको)
-अणु
-	काष्ठा u2fzero_device *dev = container_of(rng,
-		काष्ठा u2fzero_device, hwrng);
-	काष्ठा u2f_hid_report req = अणु
+static int u2fzero_rng_read(struct hwrng *rng, void *data,
+			    size_t max, bool wait)
+{
+	struct u2fzero_device *dev = container_of(rng,
+		struct u2fzero_device, hwrng);
+	struct u2f_hid_report req = {
 		.report_type = 0,
 		.msg.cid = CID_BROADCAST,
-		.msg.init = अणु
+		.msg.init = {
 			.cmd = U2F_CUSTOM_GET_RNG,
 			.bcnth = 0,
 			.bcntl = 0,
-			.data  = अणु0पूर्ण,
-		पूर्ण
-	पूर्ण;
-	काष्ठा u2f_hid_msg resp;
-	पूर्णांक ret;
-	माप_प्रकार actual_length;
+			.data  = {0},
+		}
+	};
+	struct u2f_hid_msg resp;
+	int ret;
+	size_t actual_length;
 
-	अगर (!dev->present) अणु
+	if (!dev->present) {
 		hid_dbg(dev->hdev, "device not present");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	ret = u2fzero_recv(dev, &req, &resp);
-	अगर (ret < 0)
-		वापस 0;
+	if (ret < 0)
+		return 0;
 
 	/* only take the minimum amount of data it is safe to take */
-	actual_length = min3((माप_प्रकार)ret - दुरत्व(काष्ठा u2f_hid_msg,
+	actual_length = min3((size_t)ret - offsetof(struct u2f_hid_msg,
 		init.data), U2F_HID_MSG_LEN(resp), max);
 
-	स_नकल(data, resp.init.data, actual_length);
+	memcpy(data, resp.init.data, actual_length);
 
-	वापस actual_length;
-पूर्ण
+	return actual_length;
+}
 
-अटल पूर्णांक u2fzero_init_led(काष्ठा u2fzero_device *dev,
-			    अचिन्हित पूर्णांक minor)
-अणु
-	dev->led_name = devm_kaप्र_लिखो(&dev->hdev->dev, GFP_KERNEL,
+static int u2fzero_init_led(struct u2fzero_device *dev,
+			    unsigned int minor)
+{
+	dev->led_name = devm_kasprintf(&dev->hdev->dev, GFP_KERNEL,
 		"%s%u", DRIVER_SHORT, minor);
-	अगर (dev->led_name == शून्य)
-		वापस -ENOMEM;
+	if (dev->led_name == NULL)
+		return -ENOMEM;
 
 	dev->ldev.name = dev->led_name;
 	dev->ldev.max_brightness = LED_ON;
 	dev->ldev.flags = LED_HW_PLUGGABLE;
 	dev->ldev.brightness_set_blocking = u2fzero_brightness_set;
 
-	वापस devm_led_classdev_रेजिस्टर(&dev->hdev->dev, &dev->ldev);
-पूर्ण
+	return devm_led_classdev_register(&dev->hdev->dev, &dev->ldev);
+}
 
-अटल पूर्णांक u2fzero_init_hwrng(काष्ठा u2fzero_device *dev,
-			      अचिन्हित पूर्णांक minor)
-अणु
-	dev->rng_name = devm_kaप्र_लिखो(&dev->hdev->dev, GFP_KERNEL,
+static int u2fzero_init_hwrng(struct u2fzero_device *dev,
+			      unsigned int minor)
+{
+	dev->rng_name = devm_kasprintf(&dev->hdev->dev, GFP_KERNEL,
 		"%s-rng%u", DRIVER_SHORT, minor);
-	अगर (dev->rng_name == शून्य)
-		वापस -ENOMEM;
+	if (dev->rng_name == NULL)
+		return -ENOMEM;
 
 	dev->hwrng.name = dev->rng_name;
-	dev->hwrng.पढ़ो = u2fzero_rng_पढ़ो;
+	dev->hwrng.read = u2fzero_rng_read;
 	dev->hwrng.quality = 1;
 
-	वापस devm_hwrng_रेजिस्टर(&dev->hdev->dev, &dev->hwrng);
-पूर्ण
+	return devm_hwrng_register(&dev->hdev->dev, &dev->hwrng);
+}
 
-अटल पूर्णांक u2fzero_fill_in_urb(काष्ठा u2fzero_device *dev)
-अणु
-	काष्ठा hid_device *hdev = dev->hdev;
-	काष्ठा usb_device *udev;
-	काष्ठा usbhid_device *usbhid = hdev->driver_data;
-	अचिन्हित पूर्णांक pipe_in;
-	काष्ठा usb_host_endpoपूर्णांक *ep;
+static int u2fzero_fill_in_urb(struct u2fzero_device *dev)
+{
+	struct hid_device *hdev = dev->hdev;
+	struct usb_device *udev;
+	struct usbhid_device *usbhid = hdev->driver_data;
+	unsigned int pipe_in;
+	struct usb_host_endpoint *ep;
 
-	अगर (dev->hdev->bus != BUS_USB)
-		वापस -EINVAL;
+	if (dev->hdev->bus != BUS_USB)
+		return -EINVAL;
 
 	udev = hid_to_usb_dev(hdev);
 
-	अगर (!usbhid->urbout || !usbhid->urbin)
-		वापस -ENODEV;
+	if (!usbhid->urbout || !usbhid->urbin)
+		return -ENODEV;
 
-	ep = usb_pipe_endpoपूर्णांक(udev, usbhid->urbin->pipe);
-	अगर (!ep)
-		वापस -ENODEV;
+	ep = usb_pipe_endpoint(udev, usbhid->urbin->pipe);
+	if (!ep)
+		return -ENODEV;
 
 	dev->urb = usb_alloc_urb(0, GFP_KERNEL);
-	अगर (!dev->urb)
-		वापस -ENOMEM;
+	if (!dev->urb)
+		return -ENOMEM;
 
 	pipe_in = (usbhid->urbin->pipe & ~(3 << 30)) | (PIPE_INTERRUPT << 30);
 
-	usb_fill_पूर्णांक_urb(dev->urb,
+	usb_fill_int_urb(dev->urb,
 		udev,
 		pipe_in,
 		dev->buf_in,
 		HID_REPORT_SIZE,
-		u2fzero_पढ़ो_callback,
-		शून्य,
+		u2fzero_read_callback,
+		NULL,
 		ep->desc.bInterval);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक u2fzero_probe(काष्ठा hid_device *hdev,
-			 स्थिर काष्ठा hid_device_id *id)
-अणु
-	काष्ठा u2fzero_device *dev;
-	अचिन्हित पूर्णांक minor;
-	पूर्णांक ret;
+static int u2fzero_probe(struct hid_device *hdev,
+			 const struct hid_device_id *id)
+{
+	struct u2fzero_device *dev;
+	unsigned int minor;
+	int ret;
 
-	अगर (!hid_is_using_ll_driver(hdev, &usb_hid_driver))
-		वापस -EINVAL;
+	if (!hid_is_using_ll_driver(hdev, &usb_hid_driver))
+		return -EINVAL;
 
-	dev = devm_kzalloc(&hdev->dev, माप(*dev), GFP_KERNEL);
-	अगर (dev == शून्य)
-		वापस -ENOMEM;
+	dev = devm_kzalloc(&hdev->dev, sizeof(*dev), GFP_KERNEL);
+	if (dev == NULL)
+		return -ENOMEM;
 
-	dev->buf_out = devm_kदो_स्मृति(&hdev->dev,
-		माप(काष्ठा u2f_hid_report), GFP_KERNEL);
-	अगर (dev->buf_out == शून्य)
-		वापस -ENOMEM;
+	dev->buf_out = devm_kmalloc(&hdev->dev,
+		sizeof(struct u2f_hid_report), GFP_KERNEL);
+	if (dev->buf_out == NULL)
+		return -ENOMEM;
 
-	dev->buf_in = devm_kदो_स्मृति(&hdev->dev,
-		माप(काष्ठा u2f_hid_msg), GFP_KERNEL);
-	अगर (dev->buf_in == शून्य)
-		वापस -ENOMEM;
+	dev->buf_in = devm_kmalloc(&hdev->dev,
+		sizeof(struct u2f_hid_msg), GFP_KERNEL);
+	if (dev->buf_in == NULL)
+		return -ENOMEM;
 
 	ret = hid_parse(hdev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	dev->hdev = hdev;
 	hid_set_drvdata(hdev, dev);
 	mutex_init(&dev->lock);
 
 	ret = hid_hw_start(hdev, HID_CONNECT_HIDRAW);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	u2fzero_fill_in_urb(dev);
 
 	dev->present = true;
 
-	minor = ((काष्ठा hidraw *) hdev->hidraw)->minor;
+	minor = ((struct hidraw *) hdev->hidraw)->minor;
 
 	ret = u2fzero_init_led(dev, minor);
-	अगर (ret) अणु
+	if (ret) {
 		hid_hw_stop(hdev);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	hid_info(hdev, "U2F Zero LED initialised\n");
 
 	ret = u2fzero_init_hwrng(dev, minor);
-	अगर (ret) अणु
+	if (ret) {
 		hid_hw_stop(hdev);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	hid_info(hdev, "U2F Zero RNG initialised\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम u2fzero_हटाओ(काष्ठा hid_device *hdev)
-अणु
-	काष्ठा u2fzero_device *dev = hid_get_drvdata(hdev);
+static void u2fzero_remove(struct hid_device *hdev)
+{
+	struct u2fzero_device *dev = hid_get_drvdata(hdev);
 
 	mutex_lock(&dev->lock);
 	dev->present = false;
@@ -351,22 +350,22 @@ err:
 
 	hid_hw_stop(hdev);
 	usb_poison_urb(dev->urb);
-	usb_मुक्त_urb(dev->urb);
-पूर्ण
+	usb_free_urb(dev->urb);
+}
 
-अटल स्थिर काष्ठा hid_device_id u2fzero_table[] = अणु
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_CYGNAL,
-	  USB_DEVICE_ID_U2F_ZERO) पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct hid_device_id u2fzero_table[] = {
+	{ HID_USB_DEVICE(USB_VENDOR_ID_CYGNAL,
+	  USB_DEVICE_ID_U2F_ZERO) },
+	{ }
+};
 MODULE_DEVICE_TABLE(hid, u2fzero_table);
 
-अटल काष्ठा hid_driver u2fzero_driver = अणु
+static struct hid_driver u2fzero_driver = {
 	.name = "hid-" DRIVER_SHORT,
 	.probe = u2fzero_probe,
-	.हटाओ = u2fzero_हटाओ,
+	.remove = u2fzero_remove,
 	.id_table = u2fzero_table,
-पूर्ण;
+};
 
 module_hid_driver(u2fzero_driver);
 

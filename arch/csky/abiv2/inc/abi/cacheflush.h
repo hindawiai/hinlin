@@ -1,56 +1,55 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
-#अगर_अघोषित __ABI_CSKY_CACHEFLUSH_H
-#घोषणा __ABI_CSKY_CACHEFLUSH_H
+#ifndef __ABI_CSKY_CACHEFLUSH_H
+#define __ABI_CSKY_CACHEFLUSH_H
 
 /* Keep includes the same across arches.  */
-#समावेश <linux/mm.h>
+#include <linux/mm.h>
 
 /*
- * The cache करोesn't need to be flushed when TLB entries change when
- * the cache is mapped to physical memory, not भव memory
+ * The cache doesn't need to be flushed when TLB entries change when
+ * the cache is mapped to physical memory, not virtual memory
  */
-#घोषणा flush_cache_all()			करो अणु पूर्ण जबतक (0)
-#घोषणा flush_cache_mm(mm)			करो अणु पूर्ण जबतक (0)
-#घोषणा flush_cache_dup_mm(mm)			करो अणु पूर्ण जबतक (0)
-#घोषणा flush_cache_range(vma, start, end)	करो अणु पूर्ण जबतक (0)
-#घोषणा flush_cache_page(vma, vmaddr, pfn)	करो अणु पूर्ण जबतक (0)
+#define flush_cache_all()			do { } while (0)
+#define flush_cache_mm(mm)			do { } while (0)
+#define flush_cache_dup_mm(mm)			do { } while (0)
+#define flush_cache_range(vma, start, end)	do { } while (0)
+#define flush_cache_page(vma, vmaddr, pfn)	do { } while (0)
 
-#घोषणा PG_dcache_clean		PG_arch_1
+#define PG_dcache_clean		PG_arch_1
 
-#घोषणा ARCH_IMPLEMENTS_FLUSH_DCACHE_PAGE 1
-अटल अंतरभूत व्योम flush_dcache_page(काष्ठा page *page)
-अणु
-	अगर (test_bit(PG_dcache_clean, &page->flags))
+#define ARCH_IMPLEMENTS_FLUSH_DCACHE_PAGE 1
+static inline void flush_dcache_page(struct page *page)
+{
+	if (test_bit(PG_dcache_clean, &page->flags))
 		clear_bit(PG_dcache_clean, &page->flags);
-पूर्ण
+}
 
-#घोषणा flush_dcache_mmap_lock(mapping)		करो अणु पूर्ण जबतक (0)
-#घोषणा flush_dcache_mmap_unlock(mapping)	करो अणु पूर्ण जबतक (0)
-#घोषणा flush_icache_page(vma, page)		करो अणु पूर्ण जबतक (0)
+#define flush_dcache_mmap_lock(mapping)		do { } while (0)
+#define flush_dcache_mmap_unlock(mapping)	do { } while (0)
+#define flush_icache_page(vma, page)		do { } while (0)
 
-#घोषणा flush_icache_range(start, end)		cache_wbinv_range(start, end)
+#define flush_icache_range(start, end)		cache_wbinv_range(start, end)
 
-व्योम flush_icache_mm_range(काष्ठा mm_काष्ठा *mm,
-			अचिन्हित दीर्घ start, अचिन्हित दीर्घ end);
-व्योम flush_icache_deferred(काष्ठा mm_काष्ठा *mm);
+void flush_icache_mm_range(struct mm_struct *mm,
+			unsigned long start, unsigned long end);
+void flush_icache_deferred(struct mm_struct *mm);
 
-#घोषणा flush_cache_vmap(start, end)		करो अणु पूर्ण जबतक (0)
-#घोषणा flush_cache_vunmap(start, end)		करो अणु पूर्ण जबतक (0)
+#define flush_cache_vmap(start, end)		do { } while (0)
+#define flush_cache_vunmap(start, end)		do { } while (0)
 
-#घोषणा copy_to_user_page(vma, page, vaddr, dst, src, len) \
-करो अणु \
-	स_नकल(dst, src, len); \
-	अगर (vma->vm_flags & VM_EXEC) अणु \
-		dcache_wb_range((अचिन्हित दीर्घ)dst, \
-				(अचिन्हित दीर्घ)dst + len); \
+#define copy_to_user_page(vma, page, vaddr, dst, src, len) \
+do { \
+	memcpy(dst, src, len); \
+	if (vma->vm_flags & VM_EXEC) { \
+		dcache_wb_range((unsigned long)dst, \
+				(unsigned long)dst + len); \
 		flush_icache_mm_range(current->mm, \
-				(अचिन्हित दीर्घ)dst, \
-				(अचिन्हित दीर्घ)dst + len); \
-		पूर्ण \
-पूर्ण जबतक (0)
-#घोषणा copy_from_user_page(vma, page, vaddr, dst, src, len) \
-	स_नकल(dst, src, len)
+				(unsigned long)dst, \
+				(unsigned long)dst + len); \
+		} \
+} while (0)
+#define copy_from_user_page(vma, page, vaddr, dst, src, len) \
+	memcpy(dst, src, len)
 
-#पूर्ण_अगर /* __ABI_CSKY_CACHEFLUSH_H */
+#endif /* __ABI_CSKY_CACHEFLUSH_H */

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
 * Filename: cregs.c
 *
@@ -9,166 +8,166 @@
 * (C) Copyright 2013 IBM Corporation
 */
 
-#समावेश <linux/completion.h>
-#समावेश <linux/slab.h>
+#include <linux/completion.h>
+#include <linux/slab.h>
 
-#समावेश "rsxx_priv.h"
+#include "rsxx_priv.h"
 
-#घोषणा CREG_TIMEOUT_MSEC	10000
+#define CREG_TIMEOUT_MSEC	10000
 
-प्रकार व्योम (*creg_cmd_cb)(काष्ठा rsxx_cardinfo *card,
-			    काष्ठा creg_cmd *cmd,
-			    पूर्णांक st);
+typedef void (*creg_cmd_cb)(struct rsxx_cardinfo *card,
+			    struct creg_cmd *cmd,
+			    int st);
 
-काष्ठा creg_cmd अणु
-	काष्ठा list_head list;
+struct creg_cmd {
+	struct list_head list;
 	creg_cmd_cb cb;
-	व्योम *cb_निजी;
-	अचिन्हित पूर्णांक op;
-	अचिन्हित पूर्णांक addr;
-	पूर्णांक cnt8;
-	व्योम *buf;
-	अचिन्हित पूर्णांक stream;
-	अचिन्हित पूर्णांक status;
-पूर्ण;
+	void *cb_private;
+	unsigned int op;
+	unsigned int addr;
+	int cnt8;
+	void *buf;
+	unsigned int stream;
+	unsigned int status;
+};
 
-अटल काष्ठा kmem_cache *creg_cmd_pool;
+static struct kmem_cache *creg_cmd_pool;
 
 
 /*------------ Private Functions --------------*/
 
-#अगर defined(__LITTLE_ENDIAN)
-#घोषणा LITTLE_ENDIAN 1
-#या_अगर defined(__BIG_ENDIAN)
-#घोषणा LITTLE_ENDIAN 0
-#अन्यथा
-#त्रुटि Unknown endianess!!! Aborting...
-#पूर्ण_अगर
+#if defined(__LITTLE_ENDIAN)
+#define LITTLE_ENDIAN 1
+#elif defined(__BIG_ENDIAN)
+#define LITTLE_ENDIAN 0
+#else
+#error Unknown endianess!!! Aborting...
+#endif
 
-अटल पूर्णांक copy_to_creg_data(काष्ठा rsxx_cardinfo *card,
-			      पूर्णांक cnt8,
-			      व्योम *buf,
-			      अचिन्हित पूर्णांक stream)
-अणु
-	पूर्णांक i = 0;
+static int copy_to_creg_data(struct rsxx_cardinfo *card,
+			      int cnt8,
+			      void *buf,
+			      unsigned int stream)
+{
+	int i = 0;
 	u32 *data = buf;
 
-	अगर (unlikely(card->eeh_state))
-		वापस -EIO;
+	if (unlikely(card->eeh_state))
+		return -EIO;
 
-	क्रम (i = 0; cnt8 > 0; i++, cnt8 -= 4) अणु
+	for (i = 0; cnt8 > 0; i++, cnt8 -= 4) {
 		/*
 		 * Firmware implementation makes it necessary to byte swap on
 		 * little endian processors.
 		 */
-		अगर (LITTLE_ENDIAN && stream)
-			ioग_लिखो32be(data[i], card->regmap + CREG_DATA(i));
-		अन्यथा
-			ioग_लिखो32(data[i], card->regmap + CREG_DATA(i));
-	पूर्ण
+		if (LITTLE_ENDIAN && stream)
+			iowrite32be(data[i], card->regmap + CREG_DATA(i));
+		else
+			iowrite32(data[i], card->regmap + CREG_DATA(i));
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक copy_from_creg_data(काष्ठा rsxx_cardinfo *card,
-				पूर्णांक cnt8,
-				व्योम *buf,
-				अचिन्हित पूर्णांक stream)
-अणु
-	पूर्णांक i = 0;
+static int copy_from_creg_data(struct rsxx_cardinfo *card,
+				int cnt8,
+				void *buf,
+				unsigned int stream)
+{
+	int i = 0;
 	u32 *data = buf;
 
-	अगर (unlikely(card->eeh_state))
-		वापस -EIO;
+	if (unlikely(card->eeh_state))
+		return -EIO;
 
-	क्रम (i = 0; cnt8 > 0; i++, cnt8 -= 4) अणु
+	for (i = 0; cnt8 > 0; i++, cnt8 -= 4) {
 		/*
 		 * Firmware implementation makes it necessary to byte swap on
 		 * little endian processors.
 		 */
-		अगर (LITTLE_ENDIAN && stream)
-			data[i] = ioपढ़ो32be(card->regmap + CREG_DATA(i));
-		अन्यथा
-			data[i] = ioपढ़ो32(card->regmap + CREG_DATA(i));
-	पूर्ण
+		if (LITTLE_ENDIAN && stream)
+			data[i] = ioread32be(card->regmap + CREG_DATA(i));
+		else
+			data[i] = ioread32(card->regmap + CREG_DATA(i));
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम creg_issue_cmd(काष्ठा rsxx_cardinfo *card, काष्ठा creg_cmd *cmd)
-अणु
-	पूर्णांक st;
+static void creg_issue_cmd(struct rsxx_cardinfo *card, struct creg_cmd *cmd)
+{
+	int st;
 
-	अगर (unlikely(card->eeh_state))
-		वापस;
+	if (unlikely(card->eeh_state))
+		return;
 
-	ioग_लिखो32(cmd->addr, card->regmap + CREG_ADD);
-	ioग_लिखो32(cmd->cnt8, card->regmap + CREG_CNT);
+	iowrite32(cmd->addr, card->regmap + CREG_ADD);
+	iowrite32(cmd->cnt8, card->regmap + CREG_CNT);
 
-	अगर (cmd->op == CREG_OP_WRITE) अणु
-		अगर (cmd->buf) अणु
+	if (cmd->op == CREG_OP_WRITE) {
+		if (cmd->buf) {
 			st = copy_to_creg_data(card, cmd->cnt8,
 					       cmd->buf, cmd->stream);
-			अगर (st)
-				वापस;
-		पूर्ण
-	पूर्ण
+			if (st)
+				return;
+		}
+	}
 
-	अगर (unlikely(card->eeh_state))
-		वापस;
+	if (unlikely(card->eeh_state))
+		return;
 
 	/* Setting the valid bit will kick off the command. */
-	ioग_लिखो32(cmd->op, card->regmap + CREG_CMD);
-पूर्ण
+	iowrite32(cmd->op, card->regmap + CREG_CMD);
+}
 
-अटल व्योम creg_kick_queue(काष्ठा rsxx_cardinfo *card)
-अणु
-	अगर (card->creg_ctrl.active || list_empty(&card->creg_ctrl.queue))
-		वापस;
+static void creg_kick_queue(struct rsxx_cardinfo *card)
+{
+	if (card->creg_ctrl.active || list_empty(&card->creg_ctrl.queue))
+		return;
 
 	card->creg_ctrl.active = 1;
 	card->creg_ctrl.active_cmd = list_first_entry(&card->creg_ctrl.queue,
-						      काष्ठा creg_cmd, list);
+						      struct creg_cmd, list);
 	list_del(&card->creg_ctrl.active_cmd->list);
 	card->creg_ctrl.q_depth--;
 
 	/*
-	 * We have to set the समयr beक्रमe we push the new command. Otherwise,
-	 * we could create a race condition that would occur अगर the समयr
+	 * We have to set the timer before we push the new command. Otherwise,
+	 * we could create a race condition that would occur if the timer
 	 * was not canceled, and expired after the new command was pushed,
-	 * but beक्रमe the command was issued to hardware.
+	 * but before the command was issued to hardware.
 	 */
-	mod_समयr(&card->creg_ctrl.cmd_समयr,
-				jअगरfies + msecs_to_jअगरfies(CREG_TIMEOUT_MSEC));
+	mod_timer(&card->creg_ctrl.cmd_timer,
+				jiffies + msecs_to_jiffies(CREG_TIMEOUT_MSEC));
 
 	creg_issue_cmd(card, card->creg_ctrl.active_cmd);
-पूर्ण
+}
 
-अटल पूर्णांक creg_queue_cmd(काष्ठा rsxx_cardinfo *card,
-			  अचिन्हित पूर्णांक op,
-			  अचिन्हित पूर्णांक addr,
-			  अचिन्हित पूर्णांक cnt8,
-			  व्योम *buf,
-			  पूर्णांक stream,
+static int creg_queue_cmd(struct rsxx_cardinfo *card,
+			  unsigned int op,
+			  unsigned int addr,
+			  unsigned int cnt8,
+			  void *buf,
+			  int stream,
 			  creg_cmd_cb callback,
-			  व्योम *cb_निजी)
-अणु
-	काष्ठा creg_cmd *cmd;
+			  void *cb_private)
+{
+	struct creg_cmd *cmd;
 
 	/* Don't queue stuff up if we're halted. */
-	अगर (unlikely(card->halt))
-		वापस -EINVAL;
+	if (unlikely(card->halt))
+		return -EINVAL;
 
-	अगर (card->creg_ctrl.reset)
-		वापस -EAGAIN;
+	if (card->creg_ctrl.reset)
+		return -EAGAIN;
 
-	अगर (cnt8 > MAX_CREG_DATA8)
-		वापस -EINVAL;
+	if (cnt8 > MAX_CREG_DATA8)
+		return -EINVAL;
 
 	cmd = kmem_cache_alloc(creg_cmd_pool, GFP_KERNEL);
-	अगर (!cmd)
-		वापस -ENOMEM;
+	if (!cmd)
+		return -ENOMEM;
 
 	INIT_LIST_HEAD(&cmd->list);
 
@@ -178,7 +177,7 @@
 	cmd->buf	= buf;
 	cmd->stream	= stream;
 	cmd->cb		= callback;
-	cmd->cb_निजी = cb_निजी;
+	cmd->cb_private = cb_private;
 	cmd->status	= 0;
 
 	spin_lock_bh(&card->creg_ctrl.lock);
@@ -187,126 +186,126 @@
 	creg_kick_queue(card);
 	spin_unlock_bh(&card->creg_ctrl.lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम creg_cmd_समयd_out(काष्ठा समयr_list *t)
-अणु
-	काष्ठा rsxx_cardinfo *card = from_समयr(card, t, creg_ctrl.cmd_समयr);
-	काष्ठा creg_cmd *cmd;
+static void creg_cmd_timed_out(struct timer_list *t)
+{
+	struct rsxx_cardinfo *card = from_timer(card, t, creg_ctrl.cmd_timer);
+	struct creg_cmd *cmd;
 
 	spin_lock(&card->creg_ctrl.lock);
 	cmd = card->creg_ctrl.active_cmd;
-	card->creg_ctrl.active_cmd = शून्य;
+	card->creg_ctrl.active_cmd = NULL;
 	spin_unlock(&card->creg_ctrl.lock);
 
-	अगर (cmd == शून्य) अणु
-		card->creg_ctrl.creg_stats.creg_समयout++;
+	if (cmd == NULL) {
+		card->creg_ctrl.creg_stats.creg_timeout++;
 		dev_warn(CARD_TO_DEV(card),
 			"No active command associated with timeout!\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (cmd->cb)
+	if (cmd->cb)
 		cmd->cb(card, cmd, -ETIMEDOUT);
 
-	kmem_cache_मुक्त(creg_cmd_pool, cmd);
+	kmem_cache_free(creg_cmd_pool, cmd);
 
 
 	spin_lock(&card->creg_ctrl.lock);
 	card->creg_ctrl.active = 0;
 	creg_kick_queue(card);
 	spin_unlock(&card->creg_ctrl.lock);
-पूर्ण
+}
 
 
-अटल व्योम creg_cmd_करोne(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा rsxx_cardinfo *card;
-	काष्ठा creg_cmd *cmd;
-	पूर्णांक st = 0;
+static void creg_cmd_done(struct work_struct *work)
+{
+	struct rsxx_cardinfo *card;
+	struct creg_cmd *cmd;
+	int st = 0;
 
-	card = container_of(work, काष्ठा rsxx_cardinfo,
-			    creg_ctrl.करोne_work);
+	card = container_of(work, struct rsxx_cardinfo,
+			    creg_ctrl.done_work);
 
 	/*
-	 * The समयr could not be cancelled क्रम some reason,
+	 * The timer could not be cancelled for some reason,
 	 * race to pop the active command.
 	 */
-	अगर (del_समयr_sync(&card->creg_ctrl.cmd_समयr) == 0)
-		card->creg_ctrl.creg_stats.failed_cancel_समयr++;
+	if (del_timer_sync(&card->creg_ctrl.cmd_timer) == 0)
+		card->creg_ctrl.creg_stats.failed_cancel_timer++;
 
 	spin_lock_bh(&card->creg_ctrl.lock);
 	cmd = card->creg_ctrl.active_cmd;
-	card->creg_ctrl.active_cmd = शून्य;
+	card->creg_ctrl.active_cmd = NULL;
 	spin_unlock_bh(&card->creg_ctrl.lock);
 
-	अगर (cmd == शून्य) अणु
+	if (cmd == NULL) {
 		dev_err(CARD_TO_DEV(card),
 			"Spurious creg interrupt!\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	card->creg_ctrl.creg_stats.stat = ioपढ़ो32(card->regmap + CREG_STAT);
+	card->creg_ctrl.creg_stats.stat = ioread32(card->regmap + CREG_STAT);
 	cmd->status = card->creg_ctrl.creg_stats.stat;
-	अगर ((cmd->status & CREG_STAT_STATUS_MASK) == 0) अणु
+	if ((cmd->status & CREG_STAT_STATUS_MASK) == 0) {
 		dev_err(CARD_TO_DEV(card),
 			"Invalid status on creg command\n");
 		/*
-		 * At this poपूर्णांक we're probably reading garbage from HW. Don't
-		 * करो anything अन्यथा that could mess up the प्रणाली and let
-		 * the sync function वापस an error.
+		 * At this point we're probably reading garbage from HW. Don't
+		 * do anything else that could mess up the system and let
+		 * the sync function return an error.
 		 */
 		st = -EIO;
-		जाओ creg_करोne;
-	पूर्ण अन्यथा अगर (cmd->status & CREG_STAT_ERROR) अणु
+		goto creg_done;
+	} else if (cmd->status & CREG_STAT_ERROR) {
 		st = -EIO;
-	पूर्ण
+	}
 
-	अगर (cmd->op == CREG_OP_READ) अणु
-		अचिन्हित पूर्णांक cnt8 = ioपढ़ो32(card->regmap + CREG_CNT);
+	if (cmd->op == CREG_OP_READ) {
+		unsigned int cnt8 = ioread32(card->regmap + CREG_CNT);
 
 		/* Paranoid Sanity Checks */
-		अगर (!cmd->buf) अणु
+		if (!cmd->buf) {
 			dev_err(CARD_TO_DEV(card),
 				"Buffer not given for read.\n");
 			st = -EIO;
-			जाओ creg_करोne;
-		पूर्ण
-		अगर (cnt8 != cmd->cnt8) अणु
+			goto creg_done;
+		}
+		if (cnt8 != cmd->cnt8) {
 			dev_err(CARD_TO_DEV(card),
 				"count mismatch\n");
 			st = -EIO;
-			जाओ creg_करोne;
-		पूर्ण
+			goto creg_done;
+		}
 
 		st = copy_from_creg_data(card, cnt8, cmd->buf, cmd->stream);
-	पूर्ण
+	}
 
-creg_करोne:
-	अगर (cmd->cb)
+creg_done:
+	if (cmd->cb)
 		cmd->cb(card, cmd, st);
 
-	kmem_cache_मुक्त(creg_cmd_pool, cmd);
+	kmem_cache_free(creg_cmd_pool, cmd);
 
 	spin_lock_bh(&card->creg_ctrl.lock);
 	card->creg_ctrl.active = 0;
 	creg_kick_queue(card);
 	spin_unlock_bh(&card->creg_ctrl.lock);
-पूर्ण
+}
 
-अटल व्योम creg_reset(काष्ठा rsxx_cardinfo *card)
-अणु
-	काष्ठा creg_cmd *cmd = शून्य;
-	काष्ठा creg_cmd *पंचांगp;
-	अचिन्हित दीर्घ flags;
+static void creg_reset(struct rsxx_cardinfo *card)
+{
+	struct creg_cmd *cmd = NULL;
+	struct creg_cmd *tmp;
+	unsigned long flags;
 
 	/*
-	 * mutex_trylock is used here because अगर reset_lock is taken then a
-	 * reset is alपढ़ोy happening. So, we can just go ahead and वापस.
+	 * mutex_trylock is used here because if reset_lock is taken then a
+	 * reset is already happening. So, we can just go ahead and return.
 	 */
-	अगर (!mutex_trylock(&card->creg_ctrl.reset_lock))
-		वापस;
+	if (!mutex_trylock(&card->creg_ctrl.reset_lock))
+		return;
 
 	card->creg_ctrl.reset = 1;
 	spin_lock_irqsave(&card->irq_lock, flags);
@@ -318,26 +317,26 @@ creg_करोne:
 
 	/* Cancel outstanding commands */
 	spin_lock_bh(&card->creg_ctrl.lock);
-	list_क्रम_each_entry_safe(cmd, पंचांगp, &card->creg_ctrl.queue, list) अणु
+	list_for_each_entry_safe(cmd, tmp, &card->creg_ctrl.queue, list) {
 		list_del(&cmd->list);
 		card->creg_ctrl.q_depth--;
-		अगर (cmd->cb)
+		if (cmd->cb)
 			cmd->cb(card, cmd, -ECANCELED);
-		kmem_cache_मुक्त(creg_cmd_pool, cmd);
-	पूर्ण
+		kmem_cache_free(creg_cmd_pool, cmd);
+	}
 
 	cmd = card->creg_ctrl.active_cmd;
-	card->creg_ctrl.active_cmd = शून्य;
-	अगर (cmd) अणु
-		अगर (समयr_pending(&card->creg_ctrl.cmd_समयr))
-			del_समयr_sync(&card->creg_ctrl.cmd_समयr);
+	card->creg_ctrl.active_cmd = NULL;
+	if (cmd) {
+		if (timer_pending(&card->creg_ctrl.cmd_timer))
+			del_timer_sync(&card->creg_ctrl.cmd_timer);
 
-		अगर (cmd->cb)
+		if (cmd->cb)
 			cmd->cb(card, cmd, -ECANCELED);
-		kmem_cache_मुक्त(creg_cmd_pool, cmd);
+		kmem_cache_free(creg_cmd_pool, cmd);
 
 		card->creg_ctrl.active = 0;
-	पूर्ण
+	}
 	spin_unlock_bh(&card->creg_ctrl.lock);
 
 	card->creg_ctrl.reset = 0;
@@ -346,445 +345,445 @@ creg_करोne:
 	spin_unlock_irqrestore(&card->irq_lock, flags);
 
 	mutex_unlock(&card->creg_ctrl.reset_lock);
-पूर्ण
+}
 
-/* Used क्रम synchronous accesses */
-काष्ठा creg_completion अणु
-	काष्ठा completion	*cmd_करोne;
-	पूर्णांक			st;
+/* Used for synchronous accesses */
+struct creg_completion {
+	struct completion	*cmd_done;
+	int			st;
 	u32			creg_status;
-पूर्ण;
+};
 
-अटल व्योम creg_cmd_करोne_cb(काष्ठा rsxx_cardinfo *card,
-			     काष्ठा creg_cmd *cmd,
-			     पूर्णांक st)
-अणु
-	काष्ठा creg_completion *cmd_completion;
+static void creg_cmd_done_cb(struct rsxx_cardinfo *card,
+			     struct creg_cmd *cmd,
+			     int st)
+{
+	struct creg_completion *cmd_completion;
 
-	cmd_completion = cmd->cb_निजी;
+	cmd_completion = cmd->cb_private;
 	BUG_ON(!cmd_completion);
 
 	cmd_completion->st = st;
 	cmd_completion->creg_status = cmd->status;
-	complete(cmd_completion->cmd_करोne);
-पूर्ण
+	complete(cmd_completion->cmd_done);
+}
 
-अटल पूर्णांक __issue_creg_rw(काष्ठा rsxx_cardinfo *card,
-			   अचिन्हित पूर्णांक op,
-			   अचिन्हित पूर्णांक addr,
-			   अचिन्हित पूर्णांक cnt8,
-			   व्योम *buf,
-			   पूर्णांक stream,
-			   अचिन्हित पूर्णांक *hw_stat)
-अणु
-	DECLARE_COMPLETION_ONSTACK(cmd_करोne);
-	काष्ठा creg_completion completion;
-	अचिन्हित दीर्घ समयout;
-	पूर्णांक st;
+static int __issue_creg_rw(struct rsxx_cardinfo *card,
+			   unsigned int op,
+			   unsigned int addr,
+			   unsigned int cnt8,
+			   void *buf,
+			   int stream,
+			   unsigned int *hw_stat)
+{
+	DECLARE_COMPLETION_ONSTACK(cmd_done);
+	struct creg_completion completion;
+	unsigned long timeout;
+	int st;
 
-	completion.cmd_करोne = &cmd_करोne;
+	completion.cmd_done = &cmd_done;
 	completion.st = 0;
 	completion.creg_status = 0;
 
-	st = creg_queue_cmd(card, op, addr, cnt8, buf, stream, creg_cmd_करोne_cb,
+	st = creg_queue_cmd(card, op, addr, cnt8, buf, stream, creg_cmd_done_cb,
 			    &completion);
-	अगर (st)
-		वापस st;
+	if (st)
+		return st;
 
 	/*
-	 * This समयout is necessary क्रम unresponsive hardware. The additional
-	 * 20 seconds to used to guarantee that each cregs requests has समय to
+	 * This timeout is necessary for unresponsive hardware. The additional
+	 * 20 seconds to used to guarantee that each cregs requests has time to
 	 * complete.
 	 */
-	समयout = msecs_to_jअगरfies(CREG_TIMEOUT_MSEC *
+	timeout = msecs_to_jiffies(CREG_TIMEOUT_MSEC *
 				   card->creg_ctrl.q_depth + 20000);
 
 	/*
-	 * The creg पूर्णांकerface is guaranteed to complete. It has a समयout
-	 * mechanism that will kick in अगर hardware करोes not respond.
+	 * The creg interface is guaranteed to complete. It has a timeout
+	 * mechanism that will kick in if hardware does not respond.
 	 */
-	st = रुको_क्रम_completion_समयout(completion.cmd_करोne, समयout);
-	अगर (st == 0) अणु
+	st = wait_for_completion_timeout(completion.cmd_done, timeout);
+	if (st == 0) {
 		/*
-		 * This is really bad, because the kernel समयr did not
-		 * expire and notअगरy us of a समयout!
+		 * This is really bad, because the kernel timer did not
+		 * expire and notify us of a timeout!
 		 */
 		dev_crit(CARD_TO_DEV(card),
 			"cregs timer failed\n");
 		creg_reset(card);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	*hw_stat = completion.creg_status;
 
-	अगर (completion.st) अणु
+	if (completion.st) {
 		/*
-		* This पढ़ो is needed to verअगरy that there has not been any
+		* This read is needed to verify that there has not been any
 		* extreme errors that might have occurred, i.e. EEH. The
-		* function ioग_लिखो32 will not detect EEH errors, so it is
-		* necessary that we recover अगर such an error is the reason
-		* क्रम the समयout. This is a dummy पढ़ो.
+		* function iowrite32 will not detect EEH errors, so it is
+		* necessary that we recover if such an error is the reason
+		* for the timeout. This is a dummy read.
 		*/
-		ioपढ़ो32(card->regmap + SCRATCH);
+		ioread32(card->regmap + SCRATCH);
 
 		dev_warn(CARD_TO_DEV(card),
 			"creg command failed(%d x%08x)\n",
 			completion.st, addr);
-		वापस completion.st;
-	पूर्ण
+		return completion.st;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक issue_creg_rw(काष्ठा rsxx_cardinfo *card,
+static int issue_creg_rw(struct rsxx_cardinfo *card,
 			 u32 addr,
-			 अचिन्हित पूर्णांक size8,
-			 व्योम *data,
-			 पूर्णांक stream,
-			 पूर्णांक पढ़ो)
-अणु
-	अचिन्हित पूर्णांक hw_stat;
-	अचिन्हित पूर्णांक xfer;
-	अचिन्हित पूर्णांक op;
-	पूर्णांक st;
+			 unsigned int size8,
+			 void *data,
+			 int stream,
+			 int read)
+{
+	unsigned int hw_stat;
+	unsigned int xfer;
+	unsigned int op;
+	int st;
 
-	op = पढ़ो ? CREG_OP_READ : CREG_OP_WRITE;
+	op = read ? CREG_OP_READ : CREG_OP_WRITE;
 
-	करो अणु
-		xfer = min_t(अचिन्हित पूर्णांक, size8, MAX_CREG_DATA8);
+	do {
+		xfer = min_t(unsigned int, size8, MAX_CREG_DATA8);
 
 		st = __issue_creg_rw(card, op, addr, xfer,
 				     data, stream, &hw_stat);
-		अगर (st)
-			वापस st;
+		if (st)
+			return st;
 
-		data   = (अक्षर *)data + xfer;
+		data   = (char *)data + xfer;
 		addr  += xfer;
 		size8 -= xfer;
-	पूर्ण जबतक (size8);
+	} while (size8);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* ---------------------------- Public API ---------------------------------- */
-पूर्णांक rsxx_creg_ग_लिखो(काष्ठा rsxx_cardinfo *card,
+int rsxx_creg_write(struct rsxx_cardinfo *card,
 			u32 addr,
-			अचिन्हित पूर्णांक size8,
-			व्योम *data,
-			पूर्णांक byte_stream)
-अणु
-	वापस issue_creg_rw(card, addr, size8, data, byte_stream, 0);
-पूर्ण
+			unsigned int size8,
+			void *data,
+			int byte_stream)
+{
+	return issue_creg_rw(card, addr, size8, data, byte_stream, 0);
+}
 
-पूर्णांक rsxx_creg_पढ़ो(काष्ठा rsxx_cardinfo *card,
+int rsxx_creg_read(struct rsxx_cardinfo *card,
 		       u32 addr,
-		       अचिन्हित पूर्णांक size8,
-		       व्योम *data,
-		       पूर्णांक byte_stream)
-अणु
-	वापस issue_creg_rw(card, addr, size8, data, byte_stream, 1);
-पूर्ण
+		       unsigned int size8,
+		       void *data,
+		       int byte_stream)
+{
+	return issue_creg_rw(card, addr, size8, data, byte_stream, 1);
+}
 
-पूर्णांक rsxx_get_card_state(काष्ठा rsxx_cardinfo *card, अचिन्हित पूर्णांक *state)
-अणु
-	वापस rsxx_creg_पढ़ो(card, CREG_ADD_CARD_STATE,
-				  माप(*state), state, 0);
-पूर्ण
+int rsxx_get_card_state(struct rsxx_cardinfo *card, unsigned int *state)
+{
+	return rsxx_creg_read(card, CREG_ADD_CARD_STATE,
+				  sizeof(*state), state, 0);
+}
 
-पूर्णांक rsxx_get_card_size8(काष्ठा rsxx_cardinfo *card, u64 *size8)
-अणु
-	अचिन्हित पूर्णांक size;
-	पूर्णांक st;
+int rsxx_get_card_size8(struct rsxx_cardinfo *card, u64 *size8)
+{
+	unsigned int size;
+	int st;
 
-	st = rsxx_creg_पढ़ो(card, CREG_ADD_CARD_SIZE,
-				माप(size), &size, 0);
-	अगर (st)
-		वापस st;
+	st = rsxx_creg_read(card, CREG_ADD_CARD_SIZE,
+				sizeof(size), &size, 0);
+	if (st)
+		return st;
 
 	*size8 = (u64)size * RSXX_HW_BLK_SIZE;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक rsxx_get_num_tarमाला_लो(काष्ठा rsxx_cardinfo *card,
-			     अचिन्हित पूर्णांक *n_tarमाला_लो)
-अणु
-	वापस rsxx_creg_पढ़ो(card, CREG_ADD_NUM_TARGETS,
-				  माप(*n_tarमाला_लो), n_tarमाला_लो, 0);
-पूर्ण
+int rsxx_get_num_targets(struct rsxx_cardinfo *card,
+			     unsigned int *n_targets)
+{
+	return rsxx_creg_read(card, CREG_ADD_NUM_TARGETS,
+				  sizeof(*n_targets), n_targets, 0);
+}
 
-पूर्णांक rsxx_get_card_capabilities(काष्ठा rsxx_cardinfo *card,
+int rsxx_get_card_capabilities(struct rsxx_cardinfo *card,
 				   u32 *capabilities)
-अणु
-	वापस rsxx_creg_पढ़ो(card, CREG_ADD_CAPABILITIES,
-				  माप(*capabilities), capabilities, 0);
-पूर्ण
+{
+	return rsxx_creg_read(card, CREG_ADD_CAPABILITIES,
+				  sizeof(*capabilities), capabilities, 0);
+}
 
-पूर्णांक rsxx_issue_card_cmd(काष्ठा rsxx_cardinfo *card, u32 cmd)
-अणु
-	वापस rsxx_creg_ग_लिखो(card, CREG_ADD_CARD_CMD,
-				   माप(cmd), &cmd, 0);
-पूर्ण
+int rsxx_issue_card_cmd(struct rsxx_cardinfo *card, u32 cmd)
+{
+	return rsxx_creg_write(card, CREG_ADD_CARD_CMD,
+				   sizeof(cmd), &cmd, 0);
+}
 
 
 /*----------------- HW Log Functions -------------------*/
-अटल व्योम hw_log_msg(काष्ठा rsxx_cardinfo *card, स्थिर अक्षर *str, पूर्णांक len)
-अणु
-	अटल अक्षर level;
+static void hw_log_msg(struct rsxx_cardinfo *card, const char *str, int len)
+{
+	static char level;
 
 	/*
 	 * New messages start with "<#>", where # is the log level. Messages
 	 * that extend past the log buffer will use the previous level
 	 */
-	अगर ((len > 3) && (str[0] == '<') && (str[2] == '>')) अणु
+	if ((len > 3) && (str[0] == '<') && (str[2] == '>')) {
 		level = str[1];
 		str += 3; /* Skip past the log level. */
 		len -= 3;
-	पूर्ण
+	}
 
-	चयन (level) अणु
-	हाल '0':
+	switch (level) {
+	case '0':
 		dev_emerg(CARD_TO_DEV(card), "HW: %.*s", len, str);
-		अवरोध;
-	हाल '1':
+		break;
+	case '1':
 		dev_alert(CARD_TO_DEV(card), "HW: %.*s", len, str);
-		अवरोध;
-	हाल '2':
+		break;
+	case '2':
 		dev_crit(CARD_TO_DEV(card), "HW: %.*s", len, str);
-		अवरोध;
-	हाल '3':
+		break;
+	case '3':
 		dev_err(CARD_TO_DEV(card), "HW: %.*s", len, str);
-		अवरोध;
-	हाल '4':
+		break;
+	case '4':
 		dev_warn(CARD_TO_DEV(card), "HW: %.*s", len, str);
-		अवरोध;
-	हाल '5':
+		break;
+	case '5':
 		dev_notice(CARD_TO_DEV(card), "HW: %.*s", len, str);
-		अवरोध;
-	हाल '6':
+		break;
+	case '6':
 		dev_info(CARD_TO_DEV(card), "HW: %.*s", len, str);
-		अवरोध;
-	हाल '7':
+		break;
+	case '7':
 		dev_dbg(CARD_TO_DEV(card), "HW: %.*s", len, str);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_info(CARD_TO_DEV(card), "HW: %.*s", len, str);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
 /*
- * The subम_नकलन function copies the src string (which includes the
- * terminating '\0' अक्षरacter), up to the count पूर्णांकo the dest poपूर्णांकer.
+ * The substrncpy function copies the src string (which includes the
+ * terminating '\0' character), up to the count into the dest pointer.
  * Returns the number of bytes copied to dest.
  */
-अटल पूर्णांक subम_नकलन(अक्षर *dest, स्थिर अक्षर *src, पूर्णांक count)
-अणु
-	पूर्णांक max_cnt = count;
+static int substrncpy(char *dest, const char *src, int count)
+{
+	int max_cnt = count;
 
-	जबतक (count) अणु
+	while (count) {
 		count--;
 		*dest = *src;
-		अगर (*dest == '\0')
-			अवरोध;
+		if (*dest == '\0')
+			break;
 		src++;
 		dest++;
-	पूर्ण
-	वापस max_cnt - count;
-पूर्ण
+	}
+	return max_cnt - count;
+}
 
 
-अटल व्योम पढ़ो_hw_log_करोne(काष्ठा rsxx_cardinfo *card,
-			     काष्ठा creg_cmd *cmd,
-			     पूर्णांक st)
-अणु
-	अक्षर *buf;
-	अक्षर *log_str;
-	पूर्णांक cnt;
-	पूर्णांक len;
-	पूर्णांक off;
+static void read_hw_log_done(struct rsxx_cardinfo *card,
+			     struct creg_cmd *cmd,
+			     int st)
+{
+	char *buf;
+	char *log_str;
+	int cnt;
+	int len;
+	int off;
 
 	buf = cmd->buf;
 	off = 0;
 
 	/* Failed getting the log message */
-	अगर (st)
-		वापस;
+	if (st)
+		return;
 
-	जबतक (off < cmd->cnt8) अणु
+	while (off < cmd->cnt8) {
 		log_str = &card->log.buf[card->log.buf_len];
 		cnt = min(cmd->cnt8 - off, LOG_BUF_SIZE8 - card->log.buf_len);
-		len = subम_नकलन(log_str, &buf[off], cnt);
+		len = substrncpy(log_str, &buf[off], cnt);
 
 		off += len;
 		card->log.buf_len += len;
 
 		/*
-		 * Flush the log अगर we've hit the end of a message or if we've
+		 * Flush the log if we've hit the end of a message or if we've
 		 * run out of buffer space.
 		 */
-		अगर ((log_str[len - 1] == '\0')  ||
-		    (card->log.buf_len == LOG_BUF_SIZE8)) अणु
-			अगर (card->log.buf_len != 1) /* Don't log blank lines. */
+		if ((log_str[len - 1] == '\0')  ||
+		    (card->log.buf_len == LOG_BUF_SIZE8)) {
+			if (card->log.buf_len != 1) /* Don't log blank lines. */
 				hw_log_msg(card, card->log.buf,
 					   card->log.buf_len);
 			card->log.buf_len = 0;
-		पूर्ण
+		}
 
-	पूर्ण
+	}
 
-	अगर (cmd->status & CREG_STAT_LOG_PENDING)
-		rsxx_पढ़ो_hw_log(card);
-पूर्ण
+	if (cmd->status & CREG_STAT_LOG_PENDING)
+		rsxx_read_hw_log(card);
+}
 
-पूर्णांक rsxx_पढ़ो_hw_log(काष्ठा rsxx_cardinfo *card)
-अणु
-	पूर्णांक st;
+int rsxx_read_hw_log(struct rsxx_cardinfo *card)
+{
+	int st;
 
 	st = creg_queue_cmd(card, CREG_OP_READ, CREG_ADD_LOG,
-			    माप(card->log.पंचांगp), card->log.पंचांगp,
-			    1, पढ़ो_hw_log_करोne, शून्य);
-	अगर (st)
+			    sizeof(card->log.tmp), card->log.tmp,
+			    1, read_hw_log_done, NULL);
+	if (st)
 		dev_err(CARD_TO_DEV(card),
 			"Failed getting log text\n");
 
-	वापस st;
-पूर्ण
+	return st;
+}
 
 /*-------------- IOCTL REG Access ------------------*/
-अटल पूर्णांक issue_reg_cmd(काष्ठा rsxx_cardinfo *card,
-			 काष्ठा rsxx_reg_access *cmd,
-			 पूर्णांक पढ़ो)
-अणु
-	अचिन्हित पूर्णांक op = पढ़ो ? CREG_OP_READ : CREG_OP_WRITE;
+static int issue_reg_cmd(struct rsxx_cardinfo *card,
+			 struct rsxx_reg_access *cmd,
+			 int read)
+{
+	unsigned int op = read ? CREG_OP_READ : CREG_OP_WRITE;
 
-	वापस __issue_creg_rw(card, op, cmd->addr, cmd->cnt, cmd->data,
+	return __issue_creg_rw(card, op, cmd->addr, cmd->cnt, cmd->data,
 			       cmd->stream, &cmd->stat);
-पूर्ण
+}
 
-पूर्णांक rsxx_reg_access(काष्ठा rsxx_cardinfo *card,
-			काष्ठा rsxx_reg_access __user *ucmd,
-			पूर्णांक पढ़ो)
-अणु
-	काष्ठा rsxx_reg_access cmd;
-	पूर्णांक st;
+int rsxx_reg_access(struct rsxx_cardinfo *card,
+			struct rsxx_reg_access __user *ucmd,
+			int read)
+{
+	struct rsxx_reg_access cmd;
+	int st;
 
-	st = copy_from_user(&cmd, ucmd, माप(cmd));
-	अगर (st)
-		वापस -EFAULT;
+	st = copy_from_user(&cmd, ucmd, sizeof(cmd));
+	if (st)
+		return -EFAULT;
 
-	अगर (cmd.cnt > RSXX_MAX_REG_CNT)
-		वापस -EFAULT;
+	if (cmd.cnt > RSXX_MAX_REG_CNT)
+		return -EFAULT;
 
-	st = issue_reg_cmd(card, &cmd, पढ़ो);
-	अगर (st)
-		वापस st;
+	st = issue_reg_cmd(card, &cmd, read);
+	if (st)
+		return st;
 
 	st = put_user(cmd.stat, &ucmd->stat);
-	अगर (st)
-		वापस -EFAULT;
+	if (st)
+		return -EFAULT;
 
-	अगर (पढ़ो) अणु
+	if (read) {
 		st = copy_to_user(ucmd->data, cmd.data, cmd.cnt);
-		अगर (st)
-			वापस -EFAULT;
-	पूर्ण
+		if (st)
+			return -EFAULT;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम rsxx_eeh_save_issued_creg(काष्ठा rsxx_cardinfo *card)
-अणु
-	काष्ठा creg_cmd *cmd = शून्य;
+void rsxx_eeh_save_issued_creg(struct rsxx_cardinfo *card)
+{
+	struct creg_cmd *cmd = NULL;
 
 	cmd = card->creg_ctrl.active_cmd;
-	card->creg_ctrl.active_cmd = शून्य;
+	card->creg_ctrl.active_cmd = NULL;
 
-	अगर (cmd) अणु
-		del_समयr_sync(&card->creg_ctrl.cmd_समयr);
+	if (cmd) {
+		del_timer_sync(&card->creg_ctrl.cmd_timer);
 
 		spin_lock_bh(&card->creg_ctrl.lock);
 		list_add(&cmd->list, &card->creg_ctrl.queue);
 		card->creg_ctrl.q_depth++;
 		card->creg_ctrl.active = 0;
 		spin_unlock_bh(&card->creg_ctrl.lock);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम rsxx_kick_creg_queue(काष्ठा rsxx_cardinfo *card)
-अणु
+void rsxx_kick_creg_queue(struct rsxx_cardinfo *card)
+{
 	spin_lock_bh(&card->creg_ctrl.lock);
-	अगर (!list_empty(&card->creg_ctrl.queue))
+	if (!list_empty(&card->creg_ctrl.queue))
 		creg_kick_queue(card);
 	spin_unlock_bh(&card->creg_ctrl.lock);
-पूर्ण
+}
 
 /*------------ Initialization & Setup --------------*/
-पूर्णांक rsxx_creg_setup(काष्ठा rsxx_cardinfo *card)
-अणु
-	card->creg_ctrl.active_cmd = शून्य;
+int rsxx_creg_setup(struct rsxx_cardinfo *card)
+{
+	card->creg_ctrl.active_cmd = NULL;
 
 	card->creg_ctrl.creg_wq =
-			create_singlethपढ़ो_workqueue(DRIVER_NAME"_creg");
-	अगर (!card->creg_ctrl.creg_wq)
-		वापस -ENOMEM;
+			create_singlethread_workqueue(DRIVER_NAME"_creg");
+	if (!card->creg_ctrl.creg_wq)
+		return -ENOMEM;
 
-	INIT_WORK(&card->creg_ctrl.करोne_work, creg_cmd_करोne);
+	INIT_WORK(&card->creg_ctrl.done_work, creg_cmd_done);
 	mutex_init(&card->creg_ctrl.reset_lock);
 	INIT_LIST_HEAD(&card->creg_ctrl.queue);
 	spin_lock_init(&card->creg_ctrl.lock);
-	समयr_setup(&card->creg_ctrl.cmd_समयr, creg_cmd_समयd_out, 0);
+	timer_setup(&card->creg_ctrl.cmd_timer, creg_cmd_timed_out, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम rsxx_creg_destroy(काष्ठा rsxx_cardinfo *card)
-अणु
-	काष्ठा creg_cmd *cmd;
-	काष्ठा creg_cmd *पंचांगp;
-	पूर्णांक cnt = 0;
+void rsxx_creg_destroy(struct rsxx_cardinfo *card)
+{
+	struct creg_cmd *cmd;
+	struct creg_cmd *tmp;
+	int cnt = 0;
 
 	/* Cancel outstanding commands */
 	spin_lock_bh(&card->creg_ctrl.lock);
-	list_क्रम_each_entry_safe(cmd, पंचांगp, &card->creg_ctrl.queue, list) अणु
+	list_for_each_entry_safe(cmd, tmp, &card->creg_ctrl.queue, list) {
 		list_del(&cmd->list);
-		अगर (cmd->cb)
+		if (cmd->cb)
 			cmd->cb(card, cmd, -ECANCELED);
-		kmem_cache_मुक्त(creg_cmd_pool, cmd);
+		kmem_cache_free(creg_cmd_pool, cmd);
 		cnt++;
-	पूर्ण
+	}
 
-	अगर (cnt)
+	if (cnt)
 		dev_info(CARD_TO_DEV(card),
 			"Canceled %d queue creg commands\n", cnt);
 
 	cmd = card->creg_ctrl.active_cmd;
-	card->creg_ctrl.active_cmd = शून्य;
-	अगर (cmd) अणु
-		अगर (समयr_pending(&card->creg_ctrl.cmd_समयr))
-			del_समयr_sync(&card->creg_ctrl.cmd_समयr);
+	card->creg_ctrl.active_cmd = NULL;
+	if (cmd) {
+		if (timer_pending(&card->creg_ctrl.cmd_timer))
+			del_timer_sync(&card->creg_ctrl.cmd_timer);
 
-		अगर (cmd->cb)
+		if (cmd->cb)
 			cmd->cb(card, cmd, -ECANCELED);
 		dev_info(CARD_TO_DEV(card),
 			"Canceled active creg command\n");
-		kmem_cache_मुक्त(creg_cmd_pool, cmd);
-	पूर्ण
+		kmem_cache_free(creg_cmd_pool, cmd);
+	}
 	spin_unlock_bh(&card->creg_ctrl.lock);
 
-	cancel_work_sync(&card->creg_ctrl.करोne_work);
-पूर्ण
+	cancel_work_sync(&card->creg_ctrl.done_work);
+}
 
 
-पूर्णांक rsxx_creg_init(व्योम)
-अणु
+int rsxx_creg_init(void)
+{
 	creg_cmd_pool = KMEM_CACHE(creg_cmd, SLAB_HWCACHE_ALIGN);
-	अगर (!creg_cmd_pool)
-		वापस -ENOMEM;
+	if (!creg_cmd_pool)
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम rsxx_creg_cleanup(व्योम)
-अणु
+void rsxx_creg_cleanup(void)
+{
 	kmem_cache_destroy(creg_cmd_pool);
-पूर्ण
+}

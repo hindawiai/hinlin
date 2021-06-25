@@ -1,18 +1,17 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित LINUX_BCMA_SOC_H_
-#घोषणा LINUX_BCMA_SOC_H_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef LINUX_BCMA_SOC_H_
+#define LINUX_BCMA_SOC_H_
 
-#समावेश <linux/bcma/bcma.h>
+#include <linux/bcma/bcma.h>
 
-काष्ठा bcma_soc अणु
-	काष्ठा bcma_bus bus;
-	काष्ठा device *dev;
-पूर्ण;
+struct bcma_soc {
+	struct bcma_bus bus;
+	struct device *dev;
+};
 
-पूर्णांक __init bcma_host_soc_रेजिस्टर(काष्ठा bcma_soc *soc);
-पूर्णांक __init bcma_host_soc_init(काष्ठा bcma_soc *soc);
+int __init bcma_host_soc_register(struct bcma_soc *soc);
+int __init bcma_host_soc_init(struct bcma_soc *soc);
 
-पूर्णांक bcma_bus_रेजिस्टर(काष्ठा bcma_bus *bus);
+int bcma_bus_register(struct bcma_bus *bus);
 
-#पूर्ण_अगर /* LINUX_BCMA_SOC_H_ */
+#endif /* LINUX_BCMA_SOC_H_ */

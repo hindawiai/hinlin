@@ -1,101 +1,100 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
-#अगर_अघोषित __NOUVEAU_FENCE_H__
-#घोषणा __NOUVEAU_FENCE_H__
+/* SPDX-License-Identifier: MIT */
+#ifndef __NOUVEAU_FENCE_H__
+#define __NOUVEAU_FENCE_H__
 
-#समावेश <linux/dma-fence.h>
-#समावेश <nvअगर/notअगरy.h>
+#include <linux/dma-fence.h>
+#include <nvif/notify.h>
 
-काष्ठा nouveau_drm;
-काष्ठा nouveau_bo;
+struct nouveau_drm;
+struct nouveau_bo;
 
-काष्ठा nouveau_fence अणु
-	काष्ठा dma_fence base;
+struct nouveau_fence {
+	struct dma_fence base;
 
-	काष्ठा list_head head;
+	struct list_head head;
 
-	काष्ठा nouveau_channel __rcu *channel;
-	अचिन्हित दीर्घ समयout;
-पूर्ण;
+	struct nouveau_channel __rcu *channel;
+	unsigned long timeout;
+};
 
-पूर्णांक  nouveau_fence_new(काष्ठा nouveau_channel *, bool sysmem,
-		       काष्ठा nouveau_fence **);
-व्योम nouveau_fence_unref(काष्ठा nouveau_fence **);
+int  nouveau_fence_new(struct nouveau_channel *, bool sysmem,
+		       struct nouveau_fence **);
+void nouveau_fence_unref(struct nouveau_fence **);
 
-पूर्णांक  nouveau_fence_emit(काष्ठा nouveau_fence *, काष्ठा nouveau_channel *);
-bool nouveau_fence_करोne(काष्ठा nouveau_fence *);
-पूर्णांक  nouveau_fence_रुको(काष्ठा nouveau_fence *, bool lazy, bool पूर्णांकr);
-पूर्णांक  nouveau_fence_sync(काष्ठा nouveau_bo *, काष्ठा nouveau_channel *, bool exclusive, bool पूर्णांकr);
+int  nouveau_fence_emit(struct nouveau_fence *, struct nouveau_channel *);
+bool nouveau_fence_done(struct nouveau_fence *);
+int  nouveau_fence_wait(struct nouveau_fence *, bool lazy, bool intr);
+int  nouveau_fence_sync(struct nouveau_bo *, struct nouveau_channel *, bool exclusive, bool intr);
 
-काष्ठा nouveau_fence_chan अणु
+struct nouveau_fence_chan {
 	spinlock_t lock;
-	काष्ठा kref fence_ref;
+	struct kref fence_ref;
 
-	काष्ठा list_head pending;
-	काष्ठा list_head flip;
+	struct list_head pending;
+	struct list_head flip;
 
-	पूर्णांक  (*emit)(काष्ठा nouveau_fence *);
-	पूर्णांक  (*sync)(काष्ठा nouveau_fence *, काष्ठा nouveau_channel *,
-		     काष्ठा nouveau_channel *);
-	u32  (*पढ़ो)(काष्ठा nouveau_channel *);
-	पूर्णांक  (*emit32)(काष्ठा nouveau_channel *, u64, u32);
-	पूर्णांक  (*sync32)(काष्ठा nouveau_channel *, u64, u32);
+	int  (*emit)(struct nouveau_fence *);
+	int  (*sync)(struct nouveau_fence *, struct nouveau_channel *,
+		     struct nouveau_channel *);
+	u32  (*read)(struct nouveau_channel *);
+	int  (*emit32)(struct nouveau_channel *, u64, u32);
+	int  (*sync32)(struct nouveau_channel *, u64, u32);
 
 	u32 sequence;
 	u32 context;
-	अक्षर name[32];
+	char name[32];
 
-	काष्ठा nvअगर_notअगरy notअगरy;
-	पूर्णांक notअगरy_ref, dead;
-पूर्ण;
+	struct nvif_notify notify;
+	int notify_ref, dead;
+};
 
-काष्ठा nouveau_fence_priv अणु
-	व्योम (*dtor)(काष्ठा nouveau_drm *);
-	bool (*suspend)(काष्ठा nouveau_drm *);
-	व्योम (*resume)(काष्ठा nouveau_drm *);
-	पूर्णांक  (*context_new)(काष्ठा nouveau_channel *);
-	व्योम (*context_del)(काष्ठा nouveau_channel *);
+struct nouveau_fence_priv {
+	void (*dtor)(struct nouveau_drm *);
+	bool (*suspend)(struct nouveau_drm *);
+	void (*resume)(struct nouveau_drm *);
+	int  (*context_new)(struct nouveau_channel *);
+	void (*context_del)(struct nouveau_channel *);
 
 	bool uevent;
-पूर्ण;
+};
 
-#घोषणा nouveau_fence(drm) ((काष्ठा nouveau_fence_priv *)(drm)->fence)
+#define nouveau_fence(drm) ((struct nouveau_fence_priv *)(drm)->fence)
 
-व्योम nouveau_fence_context_new(काष्ठा nouveau_channel *, काष्ठा nouveau_fence_chan *);
-व्योम nouveau_fence_context_del(काष्ठा nouveau_fence_chan *);
-व्योम nouveau_fence_context_मुक्त(काष्ठा nouveau_fence_chan *);
-व्योम nouveau_fence_context_समाप्त(काष्ठा nouveau_fence_chan *, पूर्णांक error);
+void nouveau_fence_context_new(struct nouveau_channel *, struct nouveau_fence_chan *);
+void nouveau_fence_context_del(struct nouveau_fence_chan *);
+void nouveau_fence_context_free(struct nouveau_fence_chan *);
+void nouveau_fence_context_kill(struct nouveau_fence_chan *, int error);
 
-पूर्णांक nv04_fence_create(काष्ठा nouveau_drm *);
-पूर्णांक nv04_fence_mthd(काष्ठा nouveau_channel *, u32, u32, u32);
+int nv04_fence_create(struct nouveau_drm *);
+int nv04_fence_mthd(struct nouveau_channel *, u32, u32, u32);
 
-पूर्णांक  nv10_fence_emit(काष्ठा nouveau_fence *);
-पूर्णांक  nv17_fence_sync(काष्ठा nouveau_fence *, काष्ठा nouveau_channel *,
-		     काष्ठा nouveau_channel *);
-u32  nv10_fence_पढ़ो(काष्ठा nouveau_channel *);
-व्योम nv10_fence_context_del(काष्ठा nouveau_channel *);
-व्योम nv10_fence_destroy(काष्ठा nouveau_drm *);
-पूर्णांक  nv10_fence_create(काष्ठा nouveau_drm *);
+int  nv10_fence_emit(struct nouveau_fence *);
+int  nv17_fence_sync(struct nouveau_fence *, struct nouveau_channel *,
+		     struct nouveau_channel *);
+u32  nv10_fence_read(struct nouveau_channel *);
+void nv10_fence_context_del(struct nouveau_channel *);
+void nv10_fence_destroy(struct nouveau_drm *);
+int  nv10_fence_create(struct nouveau_drm *);
 
-पूर्णांक  nv17_fence_create(काष्ठा nouveau_drm *);
-व्योम nv17_fence_resume(काष्ठा nouveau_drm *drm);
+int  nv17_fence_create(struct nouveau_drm *);
+void nv17_fence_resume(struct nouveau_drm *drm);
 
-पूर्णांक nv50_fence_create(काष्ठा nouveau_drm *);
-पूर्णांक nv84_fence_create(काष्ठा nouveau_drm *);
-पूर्णांक nvc0_fence_create(काष्ठा nouveau_drm *);
+int nv50_fence_create(struct nouveau_drm *);
+int nv84_fence_create(struct nouveau_drm *);
+int nvc0_fence_create(struct nouveau_drm *);
 
-काष्ठा nv84_fence_chan अणु
-	काष्ठा nouveau_fence_chan base;
-	काष्ठा nouveau_vma *vma;
-पूर्ण;
+struct nv84_fence_chan {
+	struct nouveau_fence_chan base;
+	struct nouveau_vma *vma;
+};
 
-काष्ठा nv84_fence_priv अणु
-	काष्ठा nouveau_fence_priv base;
-	काष्ठा nouveau_bo *bo;
+struct nv84_fence_priv {
+	struct nouveau_fence_priv base;
+	struct nouveau_bo *bo;
 	u32 *suspend;
-	काष्ठा mutex mutex;
-पूर्ण;
+	struct mutex mutex;
+};
 
-पूर्णांक  nv84_fence_context_new(काष्ठा nouveau_channel *);
+int  nv84_fence_context_new(struct nouveau_channel *);
 
-#पूर्ण_अगर
+#endif

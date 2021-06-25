@@ -1,200 +1,199 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_SLUB_DEF_H
-#घोषणा _LINUX_SLUB_DEF_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_SLUB_DEF_H
+#define _LINUX_SLUB_DEF_H
 
 /*
  * SLUB : A Slab allocator without object queues.
  *
  * (C) 2007 SGI, Christoph Lameter
  */
-#समावेश <linux/kfence.h>
-#समावेश <linux/kobject.h>
-#समावेश <linux/reciprocal_भाग.h>
+#include <linux/kfence.h>
+#include <linux/kobject.h>
+#include <linux/reciprocal_div.h>
 
-क्रमागत stat_item अणु
+enum stat_item {
 	ALLOC_FASTPATH,		/* Allocation from cpu slab */
 	ALLOC_SLOWPATH,		/* Allocation by getting a new cpu slab */
 	FREE_FASTPATH,		/* Free to cpu slab */
 	FREE_SLOWPATH,		/* Freeing not to cpu slab */
 	FREE_FROZEN,		/* Freeing to frozen slab */
 	FREE_ADD_PARTIAL,	/* Freeing moves slab to partial list */
-	FREE_REMOVE_PARTIAL,	/* Freeing हटाओs last object */
+	FREE_REMOVE_PARTIAL,	/* Freeing removes last object */
 	ALLOC_FROM_PARTIAL,	/* Cpu slab acquired from node partial list */
 	ALLOC_SLAB,		/* Cpu slab acquired from page allocator */
-	ALLOC_REFILL,		/* Refill cpu slab from slab मुक्तlist */
+	ALLOC_REFILL,		/* Refill cpu slab from slab freelist */
 	ALLOC_NODE_MISMATCH,	/* Switching cpu slab */
-	FREE_SLAB,		/* Slab मुक्तd to the page allocator */
-	CPUSLAB_FLUSH,		/* Abanकरोning of the cpu slab */
+	FREE_SLAB,		/* Slab freed to the page allocator */
+	CPUSLAB_FLUSH,		/* Abandoning of the cpu slab */
 	DEACTIVATE_FULL,	/* Cpu slab was full when deactivated */
 	DEACTIVATE_EMPTY,	/* Cpu slab was empty when deactivated */
 	DEACTIVATE_TO_HEAD,	/* Cpu slab was moved to the head of partials */
 	DEACTIVATE_TO_TAIL,	/* Cpu slab was moved to the tail of partials */
-	DEACTIVATE_REMOTE_FREES,/* Slab contained remotely मुक्तd objects */
+	DEACTIVATE_REMOTE_FREES,/* Slab contained remotely freed objects */
 	DEACTIVATE_BYPASS,	/* Implicit deactivation */
-	ORDER_FALLBACK,		/* Number of बार fallback was necessary */
-	CMPXCHG_DOUBLE_CPU_FAIL,/* Failure of this_cpu_cmpxchg_द्विगुन */
-	CMPXCHG_DOUBLE_FAIL,	/* Number of बार that cmpxchg द्विगुन did not match */
+	ORDER_FALLBACK,		/* Number of times fallback was necessary */
+	CMPXCHG_DOUBLE_CPU_FAIL,/* Failure of this_cpu_cmpxchg_double */
+	CMPXCHG_DOUBLE_FAIL,	/* Number of times that cmpxchg double did not match */
 	CPU_PARTIAL_ALLOC,	/* Used cpu partial on alloc */
-	CPU_PARTIAL_FREE,	/* Refill cpu partial on मुक्त */
+	CPU_PARTIAL_FREE,	/* Refill cpu partial on free */
 	CPU_PARTIAL_NODE,	/* Refill cpu partial from node partial */
 	CPU_PARTIAL_DRAIN,	/* Drain cpu partial to node partial */
-	NR_SLUB_STAT_ITEMS पूर्ण;
+	NR_SLUB_STAT_ITEMS };
 
-काष्ठा kmem_cache_cpu अणु
-	व्योम **मुक्तlist;	/* Poपूर्णांकer to next available object */
-	अचिन्हित दीर्घ tid;	/* Globally unique transaction id */
-	काष्ठा page *page;	/* The slab from which we are allocating */
-#अगर_घोषित CONFIG_SLUB_CPU_PARTIAL
-	काष्ठा page *partial;	/* Partially allocated frozen sद_असल */
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_SLUB_STATS
-	अचिन्हित stat[NR_SLUB_STAT_ITEMS];
-#पूर्ण_अगर
-पूर्ण;
+struct kmem_cache_cpu {
+	void **freelist;	/* Pointer to next available object */
+	unsigned long tid;	/* Globally unique transaction id */
+	struct page *page;	/* The slab from which we are allocating */
+#ifdef CONFIG_SLUB_CPU_PARTIAL
+	struct page *partial;	/* Partially allocated frozen slabs */
+#endif
+#ifdef CONFIG_SLUB_STATS
+	unsigned stat[NR_SLUB_STAT_ITEMS];
+#endif
+};
 
-#अगर_घोषित CONFIG_SLUB_CPU_PARTIAL
-#घोषणा slub_percpu_partial(c)		((c)->partial)
+#ifdef CONFIG_SLUB_CPU_PARTIAL
+#define slub_percpu_partial(c)		((c)->partial)
 
-#घोषणा slub_set_percpu_partial(c, p)		\
-(अणु						\
+#define slub_set_percpu_partial(c, p)		\
+({						\
 	slub_percpu_partial(c) = (p)->next;	\
-पूर्ण)
+})
 
-#घोषणा slub_percpu_partial_पढ़ो_once(c)     READ_ONCE(slub_percpu_partial(c))
-#अन्यथा
-#घोषणा slub_percpu_partial(c)			शून्य
+#define slub_percpu_partial_read_once(c)     READ_ONCE(slub_percpu_partial(c))
+#else
+#define slub_percpu_partial(c)			NULL
 
-#घोषणा slub_set_percpu_partial(c, p)
+#define slub_set_percpu_partial(c, p)
 
-#घोषणा slub_percpu_partial_पढ़ो_once(c)	शून्य
-#पूर्ण_अगर // CONFIG_SLUB_CPU_PARTIAL
+#define slub_percpu_partial_read_once(c)	NULL
+#endif // CONFIG_SLUB_CPU_PARTIAL
 
 /*
- * Word size काष्ठाure that can be atomically updated or पढ़ो and that
+ * Word size structure that can be atomically updated or read and that
  * contains both the order and the number of objects that a slab of the
  * given order would contain.
  */
-काष्ठा kmem_cache_order_objects अणु
-	अचिन्हित पूर्णांक x;
-पूर्ण;
+struct kmem_cache_order_objects {
+	unsigned int x;
+};
 
 /*
  * Slab cache management.
  */
-काष्ठा kmem_cache अणु
-	काष्ठा kmem_cache_cpu __percpu *cpu_slab;
-	/* Used क्रम retrieving partial sद_असल, etc. */
+struct kmem_cache {
+	struct kmem_cache_cpu __percpu *cpu_slab;
+	/* Used for retrieving partial slabs, etc. */
 	slab_flags_t flags;
-	अचिन्हित दीर्घ min_partial;
-	अचिन्हित पूर्णांक size;	/* The size of an object including metadata */
-	अचिन्हित पूर्णांक object_size;/* The size of an object without metadata */
-	काष्ठा reciprocal_value reciprocal_size;
-	अचिन्हित पूर्णांक offset;	/* Free poपूर्णांकer offset */
-#अगर_घोषित CONFIG_SLUB_CPU_PARTIAL
+	unsigned long min_partial;
+	unsigned int size;	/* The size of an object including metadata */
+	unsigned int object_size;/* The size of an object without metadata */
+	struct reciprocal_value reciprocal_size;
+	unsigned int offset;	/* Free pointer offset */
+#ifdef CONFIG_SLUB_CPU_PARTIAL
 	/* Number of per cpu partial objects to keep around */
-	अचिन्हित पूर्णांक cpu_partial;
-#पूर्ण_अगर
-	काष्ठा kmem_cache_order_objects oo;
+	unsigned int cpu_partial;
+#endif
+	struct kmem_cache_order_objects oo;
 
-	/* Allocation and मुक्तing of sद_असल */
-	काष्ठा kmem_cache_order_objects max;
-	काष्ठा kmem_cache_order_objects min;
+	/* Allocation and freeing of slabs */
+	struct kmem_cache_order_objects max;
+	struct kmem_cache_order_objects min;
 	gfp_t allocflags;	/* gfp flags to use on each alloc */
-	पूर्णांक refcount;		/* Refcount क्रम slab cache destroy */
-	व्योम (*ctor)(व्योम *);
-	अचिन्हित पूर्णांक inuse;		/* Offset to metadata */
-	अचिन्हित पूर्णांक align;		/* Alignment */
-	अचिन्हित पूर्णांक red_left_pad;	/* Left redzone padding size */
-	स्थिर अक्षर *name;	/* Name (only क्रम display!) */
-	काष्ठा list_head list;	/* List of slab caches */
-#अगर_घोषित CONFIG_SYSFS
-	काष्ठा kobject kobj;	/* For sysfs */
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_SLAB_FREELIST_HARDENED
-	अचिन्हित दीर्घ अक्रमom;
-#पूर्ण_अगर
+	int refcount;		/* Refcount for slab cache destroy */
+	void (*ctor)(void *);
+	unsigned int inuse;		/* Offset to metadata */
+	unsigned int align;		/* Alignment */
+	unsigned int red_left_pad;	/* Left redzone padding size */
+	const char *name;	/* Name (only for display!) */
+	struct list_head list;	/* List of slab caches */
+#ifdef CONFIG_SYSFS
+	struct kobject kobj;	/* For sysfs */
+#endif
+#ifdef CONFIG_SLAB_FREELIST_HARDENED
+	unsigned long random;
+#endif
 
-#अगर_घोषित CONFIG_NUMA
+#ifdef CONFIG_NUMA
 	/*
 	 * Defragmentation by allocating from a remote node.
 	 */
-	अचिन्हित पूर्णांक remote_node_defrag_ratio;
-#पूर्ण_अगर
+	unsigned int remote_node_defrag_ratio;
+#endif
 
-#अगर_घोषित CONFIG_SLAB_FREELIST_RANDOM
-	अचिन्हित पूर्णांक *अक्रमom_seq;
-#पूर्ण_अगर
+#ifdef CONFIG_SLAB_FREELIST_RANDOM
+	unsigned int *random_seq;
+#endif
 
-#अगर_घोषित CONFIG_KASAN
-	काष्ठा kasan_cache kasan_info;
-#पूर्ण_अगर
+#ifdef CONFIG_KASAN
+	struct kasan_cache kasan_info;
+#endif
 
-	अचिन्हित पूर्णांक useroffset;	/* Usercopy region offset */
-	अचिन्हित पूर्णांक usersize;		/* Usercopy region size */
+	unsigned int useroffset;	/* Usercopy region offset */
+	unsigned int usersize;		/* Usercopy region size */
 
-	काष्ठा kmem_cache_node *node[MAX_NUMNODES];
-पूर्ण;
+	struct kmem_cache_node *node[MAX_NUMNODES];
+};
 
-#अगर_घोषित CONFIG_SLUB_CPU_PARTIAL
-#घोषणा slub_cpu_partial(s)		((s)->cpu_partial)
-#घोषणा slub_set_cpu_partial(s, n)		\
-(अणु						\
+#ifdef CONFIG_SLUB_CPU_PARTIAL
+#define slub_cpu_partial(s)		((s)->cpu_partial)
+#define slub_set_cpu_partial(s, n)		\
+({						\
 	slub_cpu_partial(s) = (n);		\
-पूर्ण)
-#अन्यथा
-#घोषणा slub_cpu_partial(s)		(0)
-#घोषणा slub_set_cpu_partial(s, n)
-#पूर्ण_अगर /* CONFIG_SLUB_CPU_PARTIAL */
+})
+#else
+#define slub_cpu_partial(s)		(0)
+#define slub_set_cpu_partial(s, n)
+#endif /* CONFIG_SLUB_CPU_PARTIAL */
 
-#अगर_घोषित CONFIG_SYSFS
-#घोषणा SLAB_SUPPORTS_SYSFS
-व्योम sysfs_slab_unlink(काष्ठा kmem_cache *);
-व्योम sysfs_slab_release(काष्ठा kmem_cache *);
-#अन्यथा
-अटल अंतरभूत व्योम sysfs_slab_unlink(काष्ठा kmem_cache *s)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम sysfs_slab_release(काष्ठा kmem_cache *s)
-अणु
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_SYSFS
+#define SLAB_SUPPORTS_SYSFS
+void sysfs_slab_unlink(struct kmem_cache *);
+void sysfs_slab_release(struct kmem_cache *);
+#else
+static inline void sysfs_slab_unlink(struct kmem_cache *s)
+{
+}
+static inline void sysfs_slab_release(struct kmem_cache *s)
+{
+}
+#endif
 
-व्योम object_err(काष्ठा kmem_cache *s, काष्ठा page *page,
-		u8 *object, अक्षर *reason);
+void object_err(struct kmem_cache *s, struct page *page,
+		u8 *object, char *reason);
 
-व्योम *fixup_red_left(काष्ठा kmem_cache *s, व्योम *p);
+void *fixup_red_left(struct kmem_cache *s, void *p);
 
-अटल अंतरभूत व्योम *nearest_obj(काष्ठा kmem_cache *cache, काष्ठा page *page,
-				व्योम *x) अणु
-	व्योम *object = x - (x - page_address(page)) % cache->size;
-	व्योम *last_object = page_address(page) +
+static inline void *nearest_obj(struct kmem_cache *cache, struct page *page,
+				void *x) {
+	void *object = x - (x - page_address(page)) % cache->size;
+	void *last_object = page_address(page) +
 		(page->objects - 1) * cache->size;
-	व्योम *result = (unlikely(object > last_object)) ? last_object : object;
+	void *result = (unlikely(object > last_object)) ? last_object : object;
 
 	result = fixup_red_left(cache, result);
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /* Determine object index from a given position */
-अटल अंतरभूत अचिन्हित पूर्णांक __obj_to_index(स्थिर काष्ठा kmem_cache *cache,
-					  व्योम *addr, व्योम *obj)
-अणु
-	वापस reciprocal_भागide(kasan_reset_tag(obj) - addr,
+static inline unsigned int __obj_to_index(const struct kmem_cache *cache,
+					  void *addr, void *obj)
+{
+	return reciprocal_divide(kasan_reset_tag(obj) - addr,
 				 cache->reciprocal_size);
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक obj_to_index(स्थिर काष्ठा kmem_cache *cache,
-					स्थिर काष्ठा page *page, व्योम *obj)
-अणु
-	अगर (is_kfence_address(obj))
-		वापस 0;
-	वापस __obj_to_index(cache, page_address(page), obj);
-पूर्ण
+static inline unsigned int obj_to_index(const struct kmem_cache *cache,
+					const struct page *page, void *obj)
+{
+	if (is_kfence_address(obj))
+		return 0;
+	return __obj_to_index(cache, page_address(page), obj);
+}
 
-अटल अंतरभूत पूर्णांक objs_per_slab_page(स्थिर काष्ठा kmem_cache *cache,
-				     स्थिर काष्ठा page *page)
-अणु
-	वापस page->objects;
-पूर्ण
-#पूर्ण_अगर /* _LINUX_SLUB_DEF_H */
+static inline int objs_per_slab_page(const struct kmem_cache *cache,
+				     const struct page *page)
+{
+	return page->objects;
+}
+#endif /* _LINUX_SLUB_DEF_H */

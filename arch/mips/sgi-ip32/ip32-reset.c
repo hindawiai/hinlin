@@ -1,153 +1,152 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 2001 Keith M Wesolowski
  * Copyright (C) 2001 Paul Mundt
- * Copyright (C) 2003 Guiकरो Guenther <agx@sigxcpu.org>
+ * Copyright (C) 2003 Guido Guenther <agx@sigxcpu.org>
  */
 
-#समावेश <linux/compiler.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/rtc/ds1685.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/pm.h>
+#include <linux/compiler.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/sched.h>
+#include <linux/sched/signal.h>
+#include <linux/notifier.h>
+#include <linux/delay.h>
+#include <linux/rtc/ds1685.h>
+#include <linux/interrupt.h>
+#include <linux/pm.h>
 
-#समावेश <यंत्र/addrspace.h>
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/reboot.h>
-#समावेश <यंत्र/wbflush.h>
-#समावेश <यंत्र/ip32/mace.h>
-#समावेश <यंत्र/ip32/crime.h>
-#समावेश <यंत्र/ip32/ip32_पूर्णांकs.h>
+#include <asm/addrspace.h>
+#include <asm/irq.h>
+#include <asm/reboot.h>
+#include <asm/wbflush.h>
+#include <asm/ip32/mace.h>
+#include <asm/ip32/crime.h>
+#include <asm/ip32/ip32_ints.h>
 
-#घोषणा POWERDOWN_TIMEOUT	120
+#define POWERDOWN_TIMEOUT	120
 /*
  * Blink frequency during reboot grace period and when panicked.
  */
-#घोषणा POWERDOWN_FREQ		(HZ / 4)
-#घोषणा PANIC_FREQ		(HZ / 8)
+#define POWERDOWN_FREQ		(HZ / 4)
+#define PANIC_FREQ		(HZ / 8)
 
-बाह्य काष्ठा platक्रमm_device ip32_rtc_device;
+extern struct platform_device ip32_rtc_device;
 
-अटल काष्ठा समयr_list घातer_समयr, blink_समयr;
-अटल अचिन्हित दीर्घ blink_समयr_समयout;
-अटल पूर्णांक has_panicked, shutting_करोwn;
+static struct timer_list power_timer, blink_timer;
+static unsigned long blink_timer_timeout;
+static int has_panicked, shutting_down;
 
-अटल __noवापस व्योम ip32_घातeroff(व्योम *data)
-अणु
-	व्योम (*घातeroff_func)(काष्ठा platक्रमm_device *) =
-		symbol_get(ds1685_rtc_घातeroff);
+static __noreturn void ip32_poweroff(void *data)
+{
+	void (*poweroff_func)(struct platform_device *) =
+		symbol_get(ds1685_rtc_poweroff);
 
-#अगर_घोषित CONFIG_MODULES
+#ifdef CONFIG_MODULES
 	/* If the first __symbol_get failed, our module wasn't loaded. */
-	अगर (!घातeroff_func) अणु
+	if (!poweroff_func) {
 		request_module("rtc-ds1685");
-		घातeroff_func = symbol_get(ds1685_rtc_घातeroff);
-	पूर्ण
-#पूर्ण_अगर
+		poweroff_func = symbol_get(ds1685_rtc_poweroff);
+	}
+#endif
 
-	अगर (!घातeroff_func)
+	if (!poweroff_func)
 		pr_emerg("RTC not available for power-off.  Spinning forever ...\n");
-	अन्यथा अणु
-		(*घातeroff_func)((काष्ठा platक्रमm_device *)data);
-		symbol_put(ds1685_rtc_घातeroff);
-	पूर्ण
+	else {
+		(*poweroff_func)((struct platform_device *)data);
+		symbol_put(ds1685_rtc_poweroff);
+	}
 
 	unreachable();
-पूर्ण
+}
 
-अटल व्योम ip32_machine_restart(अक्षर *cmd) __noवापस;
-अटल व्योम ip32_machine_restart(अक्षर *cmd)
-अणु
+static void ip32_machine_restart(char *cmd) __noreturn;
+static void ip32_machine_restart(char *cmd)
+{
 	msleep(20);
 	crime->control = CRIME_CONTROL_HARD_RESET;
 	unreachable();
-पूर्ण
+}
 
-अटल व्योम blink_समयout(काष्ठा समयr_list *unused)
-अणु
-	अचिन्हित दीर्घ led = mace->perअगर.ctrl.misc ^ MACEISA_LED_RED;
-	mace->perअगर.ctrl.misc = led;
-	mod_समयr(&blink_समयr, jअगरfies + blink_समयr_समयout);
-पूर्ण
+static void blink_timeout(struct timer_list *unused)
+{
+	unsigned long led = mace->perif.ctrl.misc ^ MACEISA_LED_RED;
+	mace->perif.ctrl.misc = led;
+	mod_timer(&blink_timer, jiffies + blink_timer_timeout);
+}
 
-अटल व्योम ip32_machine_halt(व्योम)
-अणु
-	ip32_घातeroff(&ip32_rtc_device);
-पूर्ण
+static void ip32_machine_halt(void)
+{
+	ip32_poweroff(&ip32_rtc_device);
+}
 
-अटल व्योम घातer_समयout(काष्ठा समयr_list *unused)
-अणु
-	ip32_घातeroff(&ip32_rtc_device);
-पूर्ण
+static void power_timeout(struct timer_list *unused)
+{
+	ip32_poweroff(&ip32_rtc_device);
+}
 
-व्योम ip32_prepare_घातeroff(व्योम)
-अणु
-	अगर (has_panicked)
-		वापस;
+void ip32_prepare_poweroff(void)
+{
+	if (has_panicked)
+		return;
 
-	अगर (shutting_करोwn || समाप्त_cad_pid(संक_विघ्न, 1)) अणु
+	if (shutting_down || kill_cad_pid(SIGINT, 1)) {
 		/* No init process or button pressed twice.  */
-		ip32_घातeroff(&ip32_rtc_device);
-	पूर्ण
+		ip32_poweroff(&ip32_rtc_device);
+	}
 
-	shutting_करोwn = 1;
-	blink_समयr_समयout = POWERDOWN_FREQ;
-	blink_समयout(&blink_समयr);
+	shutting_down = 1;
+	blink_timer_timeout = POWERDOWN_FREQ;
+	blink_timeout(&blink_timer);
 
-	समयr_setup(&घातer_समयr, घातer_समयout, 0);
-	घातer_समयr.expires = jअगरfies + POWERDOWN_TIMEOUT * HZ;
-	add_समयr(&घातer_समयr);
-पूर्ण
+	timer_setup(&power_timer, power_timeout, 0);
+	power_timer.expires = jiffies + POWERDOWN_TIMEOUT * HZ;
+	add_timer(&power_timer);
+}
 
-अटल पूर्णांक panic_event(काष्ठा notअगरier_block *this, अचिन्हित दीर्घ event,
-		       व्योम *ptr)
-अणु
-	अचिन्हित दीर्घ led;
+static int panic_event(struct notifier_block *this, unsigned long event,
+		       void *ptr)
+{
+	unsigned long led;
 
-	अगर (has_panicked)
-		वापस NOTIFY_DONE;
+	if (has_panicked)
+		return NOTIFY_DONE;
 	has_panicked = 1;
 
 	/* turn off the green LED */
-	led = mace->perअगर.ctrl.misc | MACEISA_LED_GREEN;
-	mace->perअगर.ctrl.misc = led;
+	led = mace->perif.ctrl.misc | MACEISA_LED_GREEN;
+	mace->perif.ctrl.misc = led;
 
-	blink_समयr_समयout = PANIC_FREQ;
-	blink_समयout(&blink_समयr);
+	blink_timer_timeout = PANIC_FREQ;
+	blink_timeout(&blink_timer);
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल काष्ठा notअगरier_block panic_block = अणु
-	.notअगरier_call = panic_event,
-पूर्ण;
+static struct notifier_block panic_block = {
+	.notifier_call = panic_event,
+};
 
-अटल __init पूर्णांक ip32_reboot_setup(व्योम)
-अणु
+static __init int ip32_reboot_setup(void)
+{
 	/* turn on the green led only */
-	अचिन्हित दीर्घ led = mace->perअगर.ctrl.misc;
+	unsigned long led = mace->perif.ctrl.misc;
 	led |= MACEISA_LED_RED;
 	led &= ~MACEISA_LED_GREEN;
-	mace->perअगर.ctrl.misc = led;
+	mace->perif.ctrl.misc = led;
 
 	_machine_restart = ip32_machine_restart;
 	_machine_halt = ip32_machine_halt;
-	pm_घातer_off = ip32_machine_halt;
+	pm_power_off = ip32_machine_halt;
 
-	समयr_setup(&blink_समयr, blink_समयout, 0);
-	atomic_notअगरier_chain_रेजिस्टर(&panic_notअगरier_list, &panic_block);
+	timer_setup(&blink_timer, blink_timeout, 0);
+	atomic_notifier_chain_register(&panic_notifier_list, &panic_block);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 subsys_initcall(ip32_reboot_setup);

@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,207 +21,207 @@
  *
  * Authors: Ben Skeggs
  */
-#समावेश "priv.h"
+#include "priv.h"
 
-#समावेश <core/option.h>
-#समावेश <subdev/top.h>
+#include <core/option.h>
+#include <subdev/top.h>
 
-व्योम
-nvkm_mc_unk260(काष्ठा nvkm_device *device, u32 data)
-अणु
-	काष्ठा nvkm_mc *mc = device->mc;
-	अगर (likely(mc) && mc->func->unk260)
+void
+nvkm_mc_unk260(struct nvkm_device *device, u32 data)
+{
+	struct nvkm_mc *mc = device->mc;
+	if (likely(mc) && mc->func->unk260)
 		mc->func->unk260(mc, data);
-पूर्ण
+}
 
-व्योम
-nvkm_mc_पूर्णांकr_mask(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst, bool en)
-अणु
-	काष्ठा nvkm_mc *mc = device->mc;
-	स्थिर काष्ठा nvkm_mc_map *map;
-	अगर (likely(mc) && mc->func->पूर्णांकr_mask) अणु
-		u32 mask = nvkm_top_पूर्णांकr_mask(device, type, inst);
-		क्रम (map = mc->func->पूर्णांकr; !mask && map->stat; map++) अणु
-			अगर (map->type == type && map->inst == inst)
+void
+nvkm_mc_intr_mask(struct nvkm_device *device, enum nvkm_subdev_type type, int inst, bool en)
+{
+	struct nvkm_mc *mc = device->mc;
+	const struct nvkm_mc_map *map;
+	if (likely(mc) && mc->func->intr_mask) {
+		u32 mask = nvkm_top_intr_mask(device, type, inst);
+		for (map = mc->func->intr; !mask && map->stat; map++) {
+			if (map->type == type && map->inst == inst)
 				mask = map->stat;
-		पूर्ण
-		mc->func->पूर्णांकr_mask(mc, mask, en ? mask : 0);
-	पूर्ण
-पूर्ण
+		}
+		mc->func->intr_mask(mc, mask, en ? mask : 0);
+	}
+}
 
-व्योम
-nvkm_mc_पूर्णांकr_unarm(काष्ठा nvkm_device *device)
-अणु
-	काष्ठा nvkm_mc *mc = device->mc;
-	अगर (likely(mc))
-		mc->func->पूर्णांकr_unarm(mc);
-पूर्ण
+void
+nvkm_mc_intr_unarm(struct nvkm_device *device)
+{
+	struct nvkm_mc *mc = device->mc;
+	if (likely(mc))
+		mc->func->intr_unarm(mc);
+}
 
-व्योम
-nvkm_mc_पूर्णांकr_rearm(काष्ठा nvkm_device *device)
-अणु
-	काष्ठा nvkm_mc *mc = device->mc;
-	अगर (likely(mc))
-		mc->func->पूर्णांकr_rearm(mc);
-पूर्ण
+void
+nvkm_mc_intr_rearm(struct nvkm_device *device)
+{
+	struct nvkm_mc *mc = device->mc;
+	if (likely(mc))
+		mc->func->intr_rearm(mc);
+}
 
-अटल u32
-nvkm_mc_पूर्णांकr_stat(काष्ठा nvkm_mc *mc)
-अणु
-	u32 पूर्णांकr = mc->func->पूर्णांकr_stat(mc);
-	अगर (WARN_ON_ONCE(पूर्णांकr == 0xffffffff))
-		पूर्णांकr = 0; /* likely fallen off the bus */
-	वापस पूर्णांकr;
-पूर्ण
+static u32
+nvkm_mc_intr_stat(struct nvkm_mc *mc)
+{
+	u32 intr = mc->func->intr_stat(mc);
+	if (WARN_ON_ONCE(intr == 0xffffffff))
+		intr = 0; /* likely fallen off the bus */
+	return intr;
+}
 
-व्योम
-nvkm_mc_पूर्णांकr(काष्ठा nvkm_device *device, bool *handled)
-अणु
-	काष्ठा nvkm_mc *mc = device->mc;
-	काष्ठा nvkm_top *top = device->top;
-	काष्ठा nvkm_top_device *tdev;
-	काष्ठा nvkm_subdev *subdev;
-	स्थिर काष्ठा nvkm_mc_map *map;
-	u32 stat, पूर्णांकr;
+void
+nvkm_mc_intr(struct nvkm_device *device, bool *handled)
+{
+	struct nvkm_mc *mc = device->mc;
+	struct nvkm_top *top = device->top;
+	struct nvkm_top_device *tdev;
+	struct nvkm_subdev *subdev;
+	const struct nvkm_mc_map *map;
+	u32 stat, intr;
 
-	अगर (unlikely(!mc))
-		वापस;
+	if (unlikely(!mc))
+		return;
 
-	stat = पूर्णांकr = nvkm_mc_पूर्णांकr_stat(mc);
+	stat = intr = nvkm_mc_intr_stat(mc);
 
-	अगर (top) अणु
-		list_क्रम_each_entry(tdev, &top->device, head) अणु
-			अगर (tdev->पूर्णांकr >= 0 && (stat & BIT(tdev->पूर्णांकr))) अणु
+	if (top) {
+		list_for_each_entry(tdev, &top->device, head) {
+			if (tdev->intr >= 0 && (stat & BIT(tdev->intr))) {
 				subdev = nvkm_device_subdev(device, tdev->type, tdev->inst);
-				अगर (subdev) अणु
-					nvkm_subdev_पूर्णांकr(subdev);
-					stat &= ~BIT(tdev->पूर्णांकr);
-					अगर (!stat)
-						अवरोध;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				if (subdev) {
+					nvkm_subdev_intr(subdev);
+					stat &= ~BIT(tdev->intr);
+					if (!stat)
+						break;
+				}
+			}
+		}
+	}
 
-	क्रम (map = mc->func->पूर्णांकr; map->stat; map++) अणु
-		अगर (पूर्णांकr & map->stat) अणु
+	for (map = mc->func->intr; map->stat; map++) {
+		if (intr & map->stat) {
 			subdev = nvkm_device_subdev(device, map->type, map->inst);
-			अगर (subdev)
-				nvkm_subdev_पूर्णांकr(subdev);
+			if (subdev)
+				nvkm_subdev_intr(subdev);
 			stat &= ~map->stat;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (stat)
+	if (stat)
 		nvkm_error(&mc->subdev, "intr %08x\n", stat);
-	*handled = पूर्णांकr != 0;
-पूर्ण
+	*handled = intr != 0;
+}
 
-अटल u32
-nvkm_mc_reset_mask(काष्ठा nvkm_device *device, bool isस्वतः, क्रमागत nvkm_subdev_type type, पूर्णांक inst)
-अणु
-	काष्ठा nvkm_mc *mc = device->mc;
-	स्थिर काष्ठा nvkm_mc_map *map;
+static u32
+nvkm_mc_reset_mask(struct nvkm_device *device, bool isauto, enum nvkm_subdev_type type, int inst)
+{
+	struct nvkm_mc *mc = device->mc;
+	const struct nvkm_mc_map *map;
 	u64 pmc_enable = 0;
-	अगर (likely(mc)) अणु
-		अगर (!(pmc_enable = nvkm_top_reset(device, type, inst))) अणु
-			क्रम (map = mc->func->reset; map && map->stat; map++) अणु
-				अगर (!isस्वतः || !map->noस्वतः) अणु
-					अगर (map->type == type && map->inst == inst) अणु
+	if (likely(mc)) {
+		if (!(pmc_enable = nvkm_top_reset(device, type, inst))) {
+			for (map = mc->func->reset; map && map->stat; map++) {
+				if (!isauto || !map->noauto) {
+					if (map->type == type && map->inst == inst) {
 						pmc_enable = map->stat;
-						अवरोध;
-					पूर्ण
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस pmc_enable;
-पूर्ण
+						break;
+					}
+				}
+			}
+		}
+	}
+	return pmc_enable;
+}
 
-व्योम
-nvkm_mc_reset(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst)
-अणु
+void
+nvkm_mc_reset(struct nvkm_device *device, enum nvkm_subdev_type type, int inst)
+{
 	u64 pmc_enable = nvkm_mc_reset_mask(device, true, type, inst);
-	अगर (pmc_enable) अणु
+	if (pmc_enable) {
 		nvkm_mask(device, 0x000200, pmc_enable, 0x00000000);
 		nvkm_mask(device, 0x000200, pmc_enable, pmc_enable);
 		nvkm_rd32(device, 0x000200);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम
-nvkm_mc_disable(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst)
-अणु
+void
+nvkm_mc_disable(struct nvkm_device *device, enum nvkm_subdev_type type, int inst)
+{
 	u64 pmc_enable = nvkm_mc_reset_mask(device, false, type, inst);
-	अगर (pmc_enable)
+	if (pmc_enable)
 		nvkm_mask(device, 0x000200, pmc_enable, 0x00000000);
-पूर्ण
+}
 
-व्योम
-nvkm_mc_enable(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst)
-अणु
+void
+nvkm_mc_enable(struct nvkm_device *device, enum nvkm_subdev_type type, int inst)
+{
 	u64 pmc_enable = nvkm_mc_reset_mask(device, false, type, inst);
-	अगर (pmc_enable) अणु
+	if (pmc_enable) {
 		nvkm_mask(device, 0x000200, pmc_enable, pmc_enable);
 		nvkm_rd32(device, 0x000200);
-	पूर्ण
-पूर्ण
+	}
+}
 
 bool
-nvkm_mc_enabled(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst)
-अणु
+nvkm_mc_enabled(struct nvkm_device *device, enum nvkm_subdev_type type, int inst)
+{
 	u64 pmc_enable = nvkm_mc_reset_mask(device, false, type, inst);
 
-	वापस (pmc_enable != 0) &&
+	return (pmc_enable != 0) &&
 	       ((nvkm_rd32(device, 0x000200) & pmc_enable) == pmc_enable);
-पूर्ण
+}
 
 
-अटल पूर्णांक
-nvkm_mc_fini(काष्ठा nvkm_subdev *subdev, bool suspend)
-अणु
-	nvkm_mc_पूर्णांकr_unarm(subdev->device);
-	वापस 0;
-पूर्ण
+static int
+nvkm_mc_fini(struct nvkm_subdev *subdev, bool suspend)
+{
+	nvkm_mc_intr_unarm(subdev->device);
+	return 0;
+}
 
-अटल पूर्णांक
-nvkm_mc_init(काष्ठा nvkm_subdev *subdev)
-अणु
-	काष्ठा nvkm_mc *mc = nvkm_mc(subdev);
-	अगर (mc->func->init)
+static int
+nvkm_mc_init(struct nvkm_subdev *subdev)
+{
+	struct nvkm_mc *mc = nvkm_mc(subdev);
+	if (mc->func->init)
 		mc->func->init(mc);
-	nvkm_mc_पूर्णांकr_rearm(subdev->device);
-	वापस 0;
-पूर्ण
+	nvkm_mc_intr_rearm(subdev->device);
+	return 0;
+}
 
-अटल व्योम *
-nvkm_mc_dtor(काष्ठा nvkm_subdev *subdev)
-अणु
-	वापस nvkm_mc(subdev);
-पूर्ण
+static void *
+nvkm_mc_dtor(struct nvkm_subdev *subdev)
+{
+	return nvkm_mc(subdev);
+}
 
-अटल स्थिर काष्ठा nvkm_subdev_func
-nvkm_mc = अणु
+static const struct nvkm_subdev_func
+nvkm_mc = {
 	.dtor = nvkm_mc_dtor,
 	.init = nvkm_mc_init,
 	.fini = nvkm_mc_fini,
-पूर्ण;
+};
 
-व्योम
-nvkm_mc_ctor(स्थिर काष्ठा nvkm_mc_func *func, काष्ठा nvkm_device *device,
-	     क्रमागत nvkm_subdev_type type, पूर्णांक inst, काष्ठा nvkm_mc *mc)
-अणु
+void
+nvkm_mc_ctor(const struct nvkm_mc_func *func, struct nvkm_device *device,
+	     enum nvkm_subdev_type type, int inst, struct nvkm_mc *mc)
+{
 	nvkm_subdev_ctor(&nvkm_mc, device, type, inst, &mc->subdev);
 	mc->func = func;
-पूर्ण
+}
 
-पूर्णांक
-nvkm_mc_new_(स्थिर काष्ठा nvkm_mc_func *func, काष्ठा nvkm_device *device,
-	     क्रमागत nvkm_subdev_type type, पूर्णांक inst, काष्ठा nvkm_mc **pmc)
-अणु
-	काष्ठा nvkm_mc *mc;
-	अगर (!(mc = *pmc = kzalloc(माप(*mc), GFP_KERNEL)))
-		वापस -ENOMEM;
+int
+nvkm_mc_new_(const struct nvkm_mc_func *func, struct nvkm_device *device,
+	     enum nvkm_subdev_type type, int inst, struct nvkm_mc **pmc)
+{
+	struct nvkm_mc *mc;
+	if (!(mc = *pmc = kzalloc(sizeof(*mc), GFP_KERNEL)))
+		return -ENOMEM;
 	nvkm_mc_ctor(func, device, type, inst, *pmc);
-	वापस 0;
-पूर्ण
+	return 0;
+}

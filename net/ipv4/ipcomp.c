@@ -1,198 +1,197 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * IP Payload Compression Protocol (IPComp) - RFC3173.
  *
- * Copyright (c) 2003 James Morris <jmorris@पूर्णांकercode.com.au>
+ * Copyright (c) 2003 James Morris <jmorris@intercode.com.au>
  *
- * Toकरो:
+ * Todo:
  *   - Tunable compression parameters.
  *   - Compression stats.
  *   - Adaptive compression.
  */
-#समावेश <linux/module.h>
-#समावेश <linux/err.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश <net/ip.h>
-#समावेश <net/xfrm.h>
-#समावेश <net/icmp.h>
-#समावेश <net/ipcomp.h>
-#समावेश <net/protocol.h>
-#समावेश <net/sock.h>
+#include <linux/module.h>
+#include <linux/err.h>
+#include <linux/rtnetlink.h>
+#include <net/ip.h>
+#include <net/xfrm.h>
+#include <net/icmp.h>
+#include <net/ipcomp.h>
+#include <net/protocol.h>
+#include <net/sock.h>
 
-अटल पूर्णांक ipcomp4_err(काष्ठा sk_buff *skb, u32 info)
-अणु
-	काष्ठा net *net = dev_net(skb->dev);
+static int ipcomp4_err(struct sk_buff *skb, u32 info)
+{
+	struct net *net = dev_net(skb->dev);
 	__be32 spi;
-	स्थिर काष्ठा iphdr *iph = (स्थिर काष्ठा iphdr *)skb->data;
-	काष्ठा ip_comp_hdr *ipch = (काष्ठा ip_comp_hdr *)(skb->data+(iph->ihl<<2));
-	काष्ठा xfrm_state *x;
+	const struct iphdr *iph = (const struct iphdr *)skb->data;
+	struct ip_comp_hdr *ipch = (struct ip_comp_hdr *)(skb->data+(iph->ihl<<2));
+	struct xfrm_state *x;
 
-	चयन (icmp_hdr(skb)->type) अणु
-	हाल ICMP_DEST_UNREACH:
-		अगर (icmp_hdr(skb)->code != ICMP_FRAG_NEEDED)
-			वापस 0;
-	हाल ICMP_REसूचीECT:
-		अवरोध;
-	शेष:
-		वापस 0;
-	पूर्ण
+	switch (icmp_hdr(skb)->type) {
+	case ICMP_DEST_UNREACH:
+		if (icmp_hdr(skb)->code != ICMP_FRAG_NEEDED)
+			return 0;
+	case ICMP_REDIRECT:
+		break;
+	default:
+		return 0;
+	}
 
 	spi = htonl(ntohs(ipch->cpi));
-	x = xfrm_state_lookup(net, skb->mark, (स्थिर xfrm_address_t *)&iph->daddr,
+	x = xfrm_state_lookup(net, skb->mark, (const xfrm_address_t *)&iph->daddr,
 			      spi, IPPROTO_COMP, AF_INET);
-	अगर (!x)
-		वापस 0;
+	if (!x)
+		return 0;
 
-	अगर (icmp_hdr(skb)->type == ICMP_DEST_UNREACH)
+	if (icmp_hdr(skb)->type == ICMP_DEST_UNREACH)
 		ipv4_update_pmtu(skb, net, info, 0, IPPROTO_COMP);
-	अन्यथा
+	else
 		ipv4_redirect(skb, net, 0, IPPROTO_COMP);
 	xfrm_state_put(x);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* We always hold one tunnel user reference to indicate a tunnel */
-अटल काष्ठा xfrm_state *ipcomp_tunnel_create(काष्ठा xfrm_state *x)
-अणु
-	काष्ठा net *net = xs_net(x);
-	काष्ठा xfrm_state *t;
+static struct xfrm_state *ipcomp_tunnel_create(struct xfrm_state *x)
+{
+	struct net *net = xs_net(x);
+	struct xfrm_state *t;
 
 	t = xfrm_state_alloc(net);
-	अगर (!t)
-		जाओ out;
+	if (!t)
+		goto out;
 
 	t->id.proto = IPPROTO_IPIP;
 	t->id.spi = x->props.saddr.a4;
 	t->id.daddr.a4 = x->id.daddr.a4;
-	स_नकल(&t->sel, &x->sel, माप(t->sel));
+	memcpy(&t->sel, &x->sel, sizeof(t->sel));
 	t->props.family = AF_INET;
 	t->props.mode = x->props.mode;
 	t->props.saddr.a4 = x->props.saddr.a4;
 	t->props.flags = x->props.flags;
 	t->props.extra_flags = x->props.extra_flags;
-	स_नकल(&t->mark, &x->mark, माप(t->mark));
-	t->अगर_id = x->अगर_id;
+	memcpy(&t->mark, &x->mark, sizeof(t->mark));
+	t->if_id = x->if_id;
 
-	अगर (xfrm_init_state(t))
-		जाओ error;
+	if (xfrm_init_state(t))
+		goto error;
 
 	atomic_set(&t->tunnel_users, 1);
 out:
-	वापस t;
+	return t;
 
 error:
 	t->km.state = XFRM_STATE_DEAD;
 	xfrm_state_put(t);
-	t = शून्य;
-	जाओ out;
-पूर्ण
+	t = NULL;
+	goto out;
+}
 
 /*
- * Must be रक्षित by xfrm_cfg_mutex.  State and tunnel user references are
+ * Must be protected by xfrm_cfg_mutex.  State and tunnel user references are
  * always incremented on success.
  */
-अटल पूर्णांक ipcomp_tunnel_attach(काष्ठा xfrm_state *x)
-अणु
-	काष्ठा net *net = xs_net(x);
-	पूर्णांक err = 0;
-	काष्ठा xfrm_state *t;
+static int ipcomp_tunnel_attach(struct xfrm_state *x)
+{
+	struct net *net = xs_net(x);
+	int err = 0;
+	struct xfrm_state *t;
 	u32 mark = x->mark.v & x->mark.m;
 
 	t = xfrm_state_lookup(net, mark, (xfrm_address_t *)&x->id.daddr.a4,
 			      x->props.saddr.a4, IPPROTO_IPIP, AF_INET);
-	अगर (!t) अणु
+	if (!t) {
 		t = ipcomp_tunnel_create(x);
-		अगर (!t) अणु
+		if (!t) {
 			err = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		xfrm_state_insert(t);
 		xfrm_state_hold(t);
-	पूर्ण
+	}
 	x->tunnel = t;
 	atomic_inc(&t->tunnel_users);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक ipcomp4_init_state(काष्ठा xfrm_state *x)
-अणु
-	पूर्णांक err = -EINVAL;
+static int ipcomp4_init_state(struct xfrm_state *x)
+{
+	int err = -EINVAL;
 
 	x->props.header_len = 0;
-	चयन (x->props.mode) अणु
-	हाल XFRM_MODE_TRANSPORT:
-		अवरोध;
-	हाल XFRM_MODE_TUNNEL:
-		x->props.header_len += माप(काष्ठा iphdr);
-		अवरोध;
-	शेष:
-		जाओ out;
-	पूर्ण
+	switch (x->props.mode) {
+	case XFRM_MODE_TRANSPORT:
+		break;
+	case XFRM_MODE_TUNNEL:
+		x->props.header_len += sizeof(struct iphdr);
+		break;
+	default:
+		goto out;
+	}
 
 	err = ipcomp_init_state(x);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
-	अगर (x->props.mode == XFRM_MODE_TUNNEL) अणु
+	if (x->props.mode == XFRM_MODE_TUNNEL) {
 		err = ipcomp_tunnel_attach(x);
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		if (err)
+			goto out;
+	}
 
 	err = 0;
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक ipcomp4_rcv_cb(काष्ठा sk_buff *skb, पूर्णांक err)
-अणु
-	वापस 0;
-पूर्ण
+static int ipcomp4_rcv_cb(struct sk_buff *skb, int err)
+{
+	return 0;
+}
 
-अटल स्थिर काष्ठा xfrm_type ipcomp_type = अणु
+static const struct xfrm_type ipcomp_type = {
 	.description	= "IPCOMP4",
 	.owner		= THIS_MODULE,
 	.proto	     	= IPPROTO_COMP,
 	.init_state	= ipcomp4_init_state,
-	.deकाष्ठाor	= ipcomp_destroy,
+	.destructor	= ipcomp_destroy,
 	.input		= ipcomp_input,
 	.output		= ipcomp_output
-पूर्ण;
+};
 
-अटल काष्ठा xfrm4_protocol ipcomp4_protocol = अणु
+static struct xfrm4_protocol ipcomp4_protocol = {
 	.handler	=	xfrm4_rcv,
 	.input_handler	=	xfrm_input,
 	.cb_handler	=	ipcomp4_rcv_cb,
 	.err_handler	=	ipcomp4_err,
 	.priority	=	0,
-पूर्ण;
+};
 
-अटल पूर्णांक __init ipcomp4_init(व्योम)
-अणु
-	अगर (xfrm_रेजिस्टर_type(&ipcomp_type, AF_INET) < 0) अणु
+static int __init ipcomp4_init(void)
+{
+	if (xfrm_register_type(&ipcomp_type, AF_INET) < 0) {
 		pr_info("%s: can't add xfrm type\n", __func__);
-		वापस -EAGAIN;
-	पूर्ण
-	अगर (xfrm4_protocol_रेजिस्टर(&ipcomp4_protocol, IPPROTO_COMP) < 0) अणु
+		return -EAGAIN;
+	}
+	if (xfrm4_protocol_register(&ipcomp4_protocol, IPPROTO_COMP) < 0) {
 		pr_info("%s: can't add protocol\n", __func__);
-		xfrm_unरेजिस्टर_type(&ipcomp_type, AF_INET);
-		वापस -EAGAIN;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		xfrm_unregister_type(&ipcomp_type, AF_INET);
+		return -EAGAIN;
+	}
+	return 0;
+}
 
-अटल व्योम __निकास ipcomp4_fini(व्योम)
-अणु
-	अगर (xfrm4_protocol_deरेजिस्टर(&ipcomp4_protocol, IPPROTO_COMP) < 0)
+static void __exit ipcomp4_fini(void)
+{
+	if (xfrm4_protocol_deregister(&ipcomp4_protocol, IPPROTO_COMP) < 0)
 		pr_info("%s: can't remove protocol\n", __func__);
-	xfrm_unरेजिस्टर_type(&ipcomp_type, AF_INET);
-पूर्ण
+	xfrm_unregister_type(&ipcomp_type, AF_INET);
+}
 
 module_init(ipcomp4_init);
-module_निकास(ipcomp4_fini);
+module_exit(ipcomp4_fini);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("IP Payload Compression Protocol (IPComp/IPv4) - RFC3173");

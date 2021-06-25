@@ -1,219 +1,218 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
  /* Copyright (C) 2004-2006, Advanced Micro Devices, Inc.
   */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/pci_ids.h>
-#समावेश <linux/crypto.h>
-#समावेश <linux/spinlock.h>
-#समावेश <crypto/algapi.h>
-#समावेश <crypto/aes.h>
-#समावेश <crypto/पूर्णांकernal/cipher.h>
-#समावेश <crypto/पूर्णांकernal/skcipher.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/pci.h>
+#include <linux/pci_ids.h>
+#include <linux/crypto.h>
+#include <linux/spinlock.h>
+#include <crypto/algapi.h>
+#include <crypto/aes.h>
+#include <crypto/internal/cipher.h>
+#include <crypto/internal/skcipher.h>
 
-#समावेश <linux/पन.स>
-#समावेश <linux/delay.h>
+#include <linux/io.h>
+#include <linux/delay.h>
 
-#समावेश "geode-aes.h"
+#include "geode-aes.h"
 
-/* Static काष्ठाures */
+/* Static structures */
 
-अटल व्योम __iomem *_iobase;
-अटल DEFINE_SPINLOCK(lock);
+static void __iomem *_iobase;
+static DEFINE_SPINLOCK(lock);
 
 /* Write a 128 bit field (either a writable key or IV) */
-अटल अंतरभूत व्योम
-_ग_लिखोfield(u32 offset, स्थिर व्योम *value)
-अणु
-	पूर्णांक i;
+static inline void
+_writefield(u32 offset, const void *value)
+{
+	int i;
 
-	क्रम (i = 0; i < 4; i++)
-		ioग_लिखो32(((स्थिर u32 *) value)[i], _iobase + offset + (i * 4));
-पूर्ण
+	for (i = 0; i < 4; i++)
+		iowrite32(((const u32 *) value)[i], _iobase + offset + (i * 4));
+}
 
 /* Read a 128 bit field (either a writable key or IV) */
-अटल अंतरभूत व्योम
-_पढ़ोfield(u32 offset, व्योम *value)
-अणु
-	पूर्णांक i;
+static inline void
+_readfield(u32 offset, void *value)
+{
+	int i;
 
-	क्रम (i = 0; i < 4; i++)
-		((u32 *) value)[i] = ioपढ़ो32(_iobase + offset + (i * 4));
-पूर्ण
+	for (i = 0; i < 4; i++)
+		((u32 *) value)[i] = ioread32(_iobase + offset + (i * 4));
+}
 
-अटल पूर्णांक
-करो_crypt(स्थिर व्योम *src, व्योम *dst, u32 len, u32 flags)
-अणु
+static int
+do_crypt(const void *src, void *dst, u32 len, u32 flags)
+{
 	u32 status;
 	u32 counter = AES_OP_TIMEOUT;
 
-	ioग_लिखो32(virt_to_phys((व्योम *)src), _iobase + AES_SOURCEA_REG);
-	ioग_लिखो32(virt_to_phys(dst), _iobase + AES_DSTA_REG);
-	ioग_लिखो32(len,  _iobase + AES_LENA_REG);
+	iowrite32(virt_to_phys((void *)src), _iobase + AES_SOURCEA_REG);
+	iowrite32(virt_to_phys(dst), _iobase + AES_DSTA_REG);
+	iowrite32(len,  _iobase + AES_LENA_REG);
 
 	/* Start the operation */
-	ioग_लिखो32(AES_CTRL_START | flags, _iobase + AES_CTRLA_REG);
+	iowrite32(AES_CTRL_START | flags, _iobase + AES_CTRLA_REG);
 
-	करो अणु
-		status = ioपढ़ो32(_iobase + AES_INTR_REG);
+	do {
+		status = ioread32(_iobase + AES_INTR_REG);
 		cpu_relax();
-	पूर्ण जबतक (!(status & AES_INTRA_PENDING) && --counter);
+	} while (!(status & AES_INTRA_PENDING) && --counter);
 
 	/* Clear the event */
-	ioग_लिखो32((status & 0xFF) | AES_INTRA_PENDING, _iobase + AES_INTR_REG);
-	वापस counter ? 0 : 1;
-पूर्ण
+	iowrite32((status & 0xFF) | AES_INTRA_PENDING, _iobase + AES_INTR_REG);
+	return counter ? 0 : 1;
+}
 
-अटल व्योम
-geode_aes_crypt(स्थिर काष्ठा geode_aes_tfm_ctx *tctx, स्थिर व्योम *src,
-		व्योम *dst, u32 len, u8 *iv, पूर्णांक mode, पूर्णांक dir)
-अणु
+static void
+geode_aes_crypt(const struct geode_aes_tfm_ctx *tctx, const void *src,
+		void *dst, u32 len, u8 *iv, int mode, int dir)
+{
 	u32 flags = 0;
-	अचिन्हित दीर्घ अगरlags;
-	पूर्णांक ret;
+	unsigned long iflags;
+	int ret;
 
 	/* If the source and destination is the same, then
 	 * we need to turn on the coherent flags, otherwise
-	 * we करोn't need to worry
+	 * we don't need to worry
 	 */
 
 	flags |= (AES_CTRL_DCA | AES_CTRL_SCA);
 
-	अगर (dir == AES_सूची_ENCRYPT)
+	if (dir == AES_DIR_ENCRYPT)
 		flags |= AES_CTRL_ENCRYPT;
 
 	/* Start the critical section */
 
-	spin_lock_irqsave(&lock, अगरlags);
+	spin_lock_irqsave(&lock, iflags);
 
-	अगर (mode == AES_MODE_CBC) अणु
+	if (mode == AES_MODE_CBC) {
 		flags |= AES_CTRL_CBC;
-		_ग_लिखोfield(AES_WRITEIV0_REG, iv);
-	पूर्ण
+		_writefield(AES_WRITEIV0_REG, iv);
+	}
 
 	flags |= AES_CTRL_WRKEY;
-	_ग_लिखोfield(AES_WRITEKEY0_REG, tctx->key);
+	_writefield(AES_WRITEKEY0_REG, tctx->key);
 
-	ret = करो_crypt(src, dst, len, flags);
+	ret = do_crypt(src, dst, len, flags);
 	BUG_ON(ret);
 
-	अगर (mode == AES_MODE_CBC)
-		_पढ़ोfield(AES_WRITEIV0_REG, iv);
+	if (mode == AES_MODE_CBC)
+		_readfield(AES_WRITEIV0_REG, iv);
 
-	spin_unlock_irqrestore(&lock, अगरlags);
-पूर्ण
+	spin_unlock_irqrestore(&lock, iflags);
+}
 
 /* CRYPTO-API Functions */
 
-अटल पूर्णांक geode_setkey_cip(काष्ठा crypto_tfm *tfm, स्थिर u8 *key,
-		अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा geode_aes_tfm_ctx *tctx = crypto_tfm_ctx(tfm);
+static int geode_setkey_cip(struct crypto_tfm *tfm, const u8 *key,
+		unsigned int len)
+{
+	struct geode_aes_tfm_ctx *tctx = crypto_tfm_ctx(tfm);
 
 	tctx->keylen = len;
 
-	अगर (len == AES_KEYSIZE_128) अणु
-		स_नकल(tctx->key, key, len);
-		वापस 0;
-	पूर्ण
+	if (len == AES_KEYSIZE_128) {
+		memcpy(tctx->key, key, len);
+		return 0;
+	}
 
-	अगर (len != AES_KEYSIZE_192 && len != AES_KEYSIZE_256)
+	if (len != AES_KEYSIZE_192 && len != AES_KEYSIZE_256)
 		/* not supported at all */
-		वापस -EINVAL;
+		return -EINVAL;
 
 	/*
-	 * The requested key size is not supported by HW, करो a fallback
+	 * The requested key size is not supported by HW, do a fallback
 	 */
 	tctx->fallback.cip->base.crt_flags &= ~CRYPTO_TFM_REQ_MASK;
 	tctx->fallback.cip->base.crt_flags |=
 		(tfm->crt_flags & CRYPTO_TFM_REQ_MASK);
 
-	वापस crypto_cipher_setkey(tctx->fallback.cip, key, len);
-पूर्ण
+	return crypto_cipher_setkey(tctx->fallback.cip, key, len);
+}
 
-अटल पूर्णांक geode_setkey_skcipher(काष्ठा crypto_skcipher *tfm, स्थिर u8 *key,
-				 अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा geode_aes_tfm_ctx *tctx = crypto_skcipher_ctx(tfm);
+static int geode_setkey_skcipher(struct crypto_skcipher *tfm, const u8 *key,
+				 unsigned int len)
+{
+	struct geode_aes_tfm_ctx *tctx = crypto_skcipher_ctx(tfm);
 
 	tctx->keylen = len;
 
-	अगर (len == AES_KEYSIZE_128) अणु
-		स_नकल(tctx->key, key, len);
-		वापस 0;
-	पूर्ण
+	if (len == AES_KEYSIZE_128) {
+		memcpy(tctx->key, key, len);
+		return 0;
+	}
 
-	अगर (len != AES_KEYSIZE_192 && len != AES_KEYSIZE_256)
+	if (len != AES_KEYSIZE_192 && len != AES_KEYSIZE_256)
 		/* not supported at all */
-		वापस -EINVAL;
+		return -EINVAL;
 
 	/*
-	 * The requested key size is not supported by HW, करो a fallback
+	 * The requested key size is not supported by HW, do a fallback
 	 */
 	crypto_skcipher_clear_flags(tctx->fallback.skcipher,
 				    CRYPTO_TFM_REQ_MASK);
 	crypto_skcipher_set_flags(tctx->fallback.skcipher,
 				  crypto_skcipher_get_flags(tfm) &
 				  CRYPTO_TFM_REQ_MASK);
-	वापस crypto_skcipher_setkey(tctx->fallback.skcipher, key, len);
-पूर्ण
+	return crypto_skcipher_setkey(tctx->fallback.skcipher, key, len);
+}
 
-अटल व्योम
-geode_encrypt(काष्ठा crypto_tfm *tfm, u8 *out, स्थिर u8 *in)
-अणु
-	स्थिर काष्ठा geode_aes_tfm_ctx *tctx = crypto_tfm_ctx(tfm);
+static void
+geode_encrypt(struct crypto_tfm *tfm, u8 *out, const u8 *in)
+{
+	const struct geode_aes_tfm_ctx *tctx = crypto_tfm_ctx(tfm);
 
-	अगर (unlikely(tctx->keylen != AES_KEYSIZE_128)) अणु
+	if (unlikely(tctx->keylen != AES_KEYSIZE_128)) {
 		crypto_cipher_encrypt_one(tctx->fallback.cip, out, in);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	geode_aes_crypt(tctx, in, out, AES_BLOCK_SIZE, शून्य,
-			AES_MODE_ECB, AES_सूची_ENCRYPT);
-पूर्ण
+	geode_aes_crypt(tctx, in, out, AES_BLOCK_SIZE, NULL,
+			AES_MODE_ECB, AES_DIR_ENCRYPT);
+}
 
 
-अटल व्योम
-geode_decrypt(काष्ठा crypto_tfm *tfm, u8 *out, स्थिर u8 *in)
-अणु
-	स्थिर काष्ठा geode_aes_tfm_ctx *tctx = crypto_tfm_ctx(tfm);
+static void
+geode_decrypt(struct crypto_tfm *tfm, u8 *out, const u8 *in)
+{
+	const struct geode_aes_tfm_ctx *tctx = crypto_tfm_ctx(tfm);
 
-	अगर (unlikely(tctx->keylen != AES_KEYSIZE_128)) अणु
+	if (unlikely(tctx->keylen != AES_KEYSIZE_128)) {
 		crypto_cipher_decrypt_one(tctx->fallback.cip, out, in);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	geode_aes_crypt(tctx, in, out, AES_BLOCK_SIZE, शून्य,
-			AES_MODE_ECB, AES_सूची_DECRYPT);
-पूर्ण
+	geode_aes_crypt(tctx, in, out, AES_BLOCK_SIZE, NULL,
+			AES_MODE_ECB, AES_DIR_DECRYPT);
+}
 
-अटल पूर्णांक fallback_init_cip(काष्ठा crypto_tfm *tfm)
-अणु
-	स्थिर अक्षर *name = crypto_tfm_alg_name(tfm);
-	काष्ठा geode_aes_tfm_ctx *tctx = crypto_tfm_ctx(tfm);
+static int fallback_init_cip(struct crypto_tfm *tfm)
+{
+	const char *name = crypto_tfm_alg_name(tfm);
+	struct geode_aes_tfm_ctx *tctx = crypto_tfm_ctx(tfm);
 
 	tctx->fallback.cip = crypto_alloc_cipher(name, 0,
 						 CRYPTO_ALG_NEED_FALLBACK);
 
-	अगर (IS_ERR(tctx->fallback.cip)) अणु
-		prपूर्णांकk(KERN_ERR "Error allocating fallback algo %s\n", name);
-		वापस PTR_ERR(tctx->fallback.cip);
-	पूर्ण
+	if (IS_ERR(tctx->fallback.cip)) {
+		printk(KERN_ERR "Error allocating fallback algo %s\n", name);
+		return PTR_ERR(tctx->fallback.cip);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम fallback_निकास_cip(काष्ठा crypto_tfm *tfm)
-अणु
-	काष्ठा geode_aes_tfm_ctx *tctx = crypto_tfm_ctx(tfm);
+static void fallback_exit_cip(struct crypto_tfm *tfm)
+{
+	struct geode_aes_tfm_ctx *tctx = crypto_tfm_ctx(tfm);
 
-	crypto_मुक्त_cipher(tctx->fallback.cip);
-पूर्ण
+	crypto_free_cipher(tctx->fallback.cip);
+}
 
-अटल काष्ठा crypto_alg geode_alg = अणु
+static struct crypto_alg geode_alg = {
 	.cra_name			=	"aes",
 	.cra_driver_name	=	"geode-aes",
 	.cra_priority		=	300,
@@ -221,186 +220,186 @@ geode_decrypt(काष्ठा crypto_tfm *tfm, u8 *out, स्थिर u8 *i
 	.cra_flags			=	CRYPTO_ALG_TYPE_CIPHER |
 							CRYPTO_ALG_NEED_FALLBACK,
 	.cra_init			=	fallback_init_cip,
-	.cra_निकास			=	fallback_निकास_cip,
+	.cra_exit			=	fallback_exit_cip,
 	.cra_blocksize		=	AES_BLOCK_SIZE,
-	.cra_ctxsize		=	माप(काष्ठा geode_aes_tfm_ctx),
+	.cra_ctxsize		=	sizeof(struct geode_aes_tfm_ctx),
 	.cra_module			=	THIS_MODULE,
-	.cra_u				=	अणु
-		.cipher	=	अणु
+	.cra_u				=	{
+		.cipher	=	{
 			.cia_min_keysize	=	AES_MIN_KEY_SIZE,
 			.cia_max_keysize	=	AES_MAX_KEY_SIZE,
 			.cia_setkey			=	geode_setkey_cip,
 			.cia_encrypt		=	geode_encrypt,
 			.cia_decrypt		=	geode_decrypt
-		पूर्ण
-	पूर्ण
-पूर्ण;
+		}
+	}
+};
 
-अटल पूर्णांक geode_init_skcipher(काष्ठा crypto_skcipher *tfm)
-अणु
-	स्थिर अक्षर *name = crypto_tfm_alg_name(&tfm->base);
-	काष्ठा geode_aes_tfm_ctx *tctx = crypto_skcipher_ctx(tfm);
+static int geode_init_skcipher(struct crypto_skcipher *tfm)
+{
+	const char *name = crypto_tfm_alg_name(&tfm->base);
+	struct geode_aes_tfm_ctx *tctx = crypto_skcipher_ctx(tfm);
 
 	tctx->fallback.skcipher =
 		crypto_alloc_skcipher(name, 0, CRYPTO_ALG_NEED_FALLBACK |
 				      CRYPTO_ALG_ASYNC);
-	अगर (IS_ERR(tctx->fallback.skcipher)) अणु
-		prपूर्णांकk(KERN_ERR "Error allocating fallback algo %s\n", name);
-		वापस PTR_ERR(tctx->fallback.skcipher);
-	पूर्ण
+	if (IS_ERR(tctx->fallback.skcipher)) {
+		printk(KERN_ERR "Error allocating fallback algo %s\n", name);
+		return PTR_ERR(tctx->fallback.skcipher);
+	}
 
-	crypto_skcipher_set_reqsize(tfm, माप(काष्ठा skcipher_request) +
+	crypto_skcipher_set_reqsize(tfm, sizeof(struct skcipher_request) +
 				    crypto_skcipher_reqsize(tctx->fallback.skcipher));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम geode_निकास_skcipher(काष्ठा crypto_skcipher *tfm)
-अणु
-	काष्ठा geode_aes_tfm_ctx *tctx = crypto_skcipher_ctx(tfm);
+static void geode_exit_skcipher(struct crypto_skcipher *tfm)
+{
+	struct geode_aes_tfm_ctx *tctx = crypto_skcipher_ctx(tfm);
 
-	crypto_मुक्त_skcipher(tctx->fallback.skcipher);
-पूर्ण
+	crypto_free_skcipher(tctx->fallback.skcipher);
+}
 
-अटल पूर्णांक geode_skcipher_crypt(काष्ठा skcipher_request *req, पूर्णांक mode, पूर्णांक dir)
-अणु
-	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-	स्थिर काष्ठा geode_aes_tfm_ctx *tctx = crypto_skcipher_ctx(tfm);
-	काष्ठा skcipher_walk walk;
-	अचिन्हित पूर्णांक nbytes;
-	पूर्णांक err;
+static int geode_skcipher_crypt(struct skcipher_request *req, int mode, int dir)
+{
+	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+	const struct geode_aes_tfm_ctx *tctx = crypto_skcipher_ctx(tfm);
+	struct skcipher_walk walk;
+	unsigned int nbytes;
+	int err;
 
-	अगर (unlikely(tctx->keylen != AES_KEYSIZE_128)) अणु
-		काष्ठा skcipher_request *subreq = skcipher_request_ctx(req);
+	if (unlikely(tctx->keylen != AES_KEYSIZE_128)) {
+		struct skcipher_request *subreq = skcipher_request_ctx(req);
 
 		*subreq = *req;
 		skcipher_request_set_tfm(subreq, tctx->fallback.skcipher);
-		अगर (dir == AES_सूची_DECRYPT)
-			वापस crypto_skcipher_decrypt(subreq);
-		अन्यथा
-			वापस crypto_skcipher_encrypt(subreq);
-	पूर्ण
+		if (dir == AES_DIR_DECRYPT)
+			return crypto_skcipher_decrypt(subreq);
+		else
+			return crypto_skcipher_encrypt(subreq);
+	}
 
 	err = skcipher_walk_virt(&walk, req, false);
 
-	जबतक ((nbytes = walk.nbytes) != 0) अणु
+	while ((nbytes = walk.nbytes) != 0) {
 		geode_aes_crypt(tctx, walk.src.virt.addr, walk.dst.virt.addr,
-				round_करोwn(nbytes, AES_BLOCK_SIZE),
+				round_down(nbytes, AES_BLOCK_SIZE),
 				walk.iv, mode, dir);
-		err = skcipher_walk_करोne(&walk, nbytes % AES_BLOCK_SIZE);
-	पूर्ण
+		err = skcipher_walk_done(&walk, nbytes % AES_BLOCK_SIZE);
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक geode_cbc_encrypt(काष्ठा skcipher_request *req)
-अणु
-	वापस geode_skcipher_crypt(req, AES_MODE_CBC, AES_सूची_ENCRYPT);
-पूर्ण
+static int geode_cbc_encrypt(struct skcipher_request *req)
+{
+	return geode_skcipher_crypt(req, AES_MODE_CBC, AES_DIR_ENCRYPT);
+}
 
-अटल पूर्णांक geode_cbc_decrypt(काष्ठा skcipher_request *req)
-अणु
-	वापस geode_skcipher_crypt(req, AES_MODE_CBC, AES_सूची_DECRYPT);
-पूर्ण
+static int geode_cbc_decrypt(struct skcipher_request *req)
+{
+	return geode_skcipher_crypt(req, AES_MODE_CBC, AES_DIR_DECRYPT);
+}
 
-अटल पूर्णांक geode_ecb_encrypt(काष्ठा skcipher_request *req)
-अणु
-	वापस geode_skcipher_crypt(req, AES_MODE_ECB, AES_सूची_ENCRYPT);
-पूर्ण
+static int geode_ecb_encrypt(struct skcipher_request *req)
+{
+	return geode_skcipher_crypt(req, AES_MODE_ECB, AES_DIR_ENCRYPT);
+}
 
-अटल पूर्णांक geode_ecb_decrypt(काष्ठा skcipher_request *req)
-अणु
-	वापस geode_skcipher_crypt(req, AES_MODE_ECB, AES_सूची_DECRYPT);
-पूर्ण
+static int geode_ecb_decrypt(struct skcipher_request *req)
+{
+	return geode_skcipher_crypt(req, AES_MODE_ECB, AES_DIR_DECRYPT);
+}
 
-अटल काष्ठा skcipher_alg geode_skcipher_algs[] = अणु
-	अणु
+static struct skcipher_alg geode_skcipher_algs[] = {
+	{
 		.base.cra_name		= "cbc(aes)",
 		.base.cra_driver_name	= "cbc-aes-geode",
 		.base.cra_priority	= 400,
 		.base.cra_flags		= CRYPTO_ALG_KERN_DRIVER_ONLY |
 					  CRYPTO_ALG_NEED_FALLBACK,
 		.base.cra_blocksize	= AES_BLOCK_SIZE,
-		.base.cra_ctxsize	= माप(काष्ठा geode_aes_tfm_ctx),
+		.base.cra_ctxsize	= sizeof(struct geode_aes_tfm_ctx),
 		.base.cra_alignmask	= 15,
 		.base.cra_module	= THIS_MODULE,
 		.init			= geode_init_skcipher,
-		.निकास			= geode_निकास_skcipher,
+		.exit			= geode_exit_skcipher,
 		.setkey			= geode_setkey_skcipher,
 		.encrypt		= geode_cbc_encrypt,
 		.decrypt		= geode_cbc_decrypt,
 		.min_keysize		= AES_MIN_KEY_SIZE,
 		.max_keysize		= AES_MAX_KEY_SIZE,
 		.ivsize			= AES_BLOCK_SIZE,
-	पूर्ण, अणु
+	}, {
 		.base.cra_name		= "ecb(aes)",
 		.base.cra_driver_name	= "ecb-aes-geode",
 		.base.cra_priority	= 400,
 		.base.cra_flags		= CRYPTO_ALG_KERN_DRIVER_ONLY |
 					  CRYPTO_ALG_NEED_FALLBACK,
 		.base.cra_blocksize	= AES_BLOCK_SIZE,
-		.base.cra_ctxsize	= माप(काष्ठा geode_aes_tfm_ctx),
+		.base.cra_ctxsize	= sizeof(struct geode_aes_tfm_ctx),
 		.base.cra_alignmask	= 15,
 		.base.cra_module	= THIS_MODULE,
 		.init			= geode_init_skcipher,
-		.निकास			= geode_निकास_skcipher,
+		.exit			= geode_exit_skcipher,
 		.setkey			= geode_setkey_skcipher,
 		.encrypt		= geode_ecb_encrypt,
 		.decrypt		= geode_ecb_decrypt,
 		.min_keysize		= AES_MIN_KEY_SIZE,
 		.max_keysize		= AES_MAX_KEY_SIZE,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल व्योम geode_aes_हटाओ(काष्ठा pci_dev *dev)
-अणु
-	crypto_unरेजिस्टर_alg(&geode_alg);
-	crypto_unरेजिस्टर_skciphers(geode_skcipher_algs,
+static void geode_aes_remove(struct pci_dev *dev)
+{
+	crypto_unregister_alg(&geode_alg);
+	crypto_unregister_skciphers(geode_skcipher_algs,
 				    ARRAY_SIZE(geode_skcipher_algs));
 
 	pci_iounmap(dev, _iobase);
-	_iobase = शून्य;
+	_iobase = NULL;
 
 	pci_release_regions(dev);
 	pci_disable_device(dev);
-पूर्ण
+}
 
 
-अटल पूर्णांक geode_aes_probe(काष्ठा pci_dev *dev, स्थिर काष्ठा pci_device_id *id)
-अणु
-	पूर्णांक ret;
+static int geode_aes_probe(struct pci_dev *dev, const struct pci_device_id *id)
+{
+	int ret;
 
 	ret = pci_enable_device(dev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = pci_request_regions(dev, "geode-aes");
-	अगर (ret)
-		जाओ eenable;
+	if (ret)
+		goto eenable;
 
 	_iobase = pci_iomap(dev, 0, 0);
 
-	अगर (_iobase == शून्य) अणु
+	if (_iobase == NULL) {
 		ret = -ENOMEM;
-		जाओ erequest;
-	पूर्ण
+		goto erequest;
+	}
 
 	/* Clear any pending activity */
-	ioग_लिखो32(AES_INTR_PENDING | AES_INTR_MASK, _iobase + AES_INTR_REG);
+	iowrite32(AES_INTR_PENDING | AES_INTR_MASK, _iobase + AES_INTR_REG);
 
-	ret = crypto_रेजिस्टर_alg(&geode_alg);
-	अगर (ret)
-		जाओ eiomap;
+	ret = crypto_register_alg(&geode_alg);
+	if (ret)
+		goto eiomap;
 
-	ret = crypto_रेजिस्टर_skciphers(geode_skcipher_algs,
+	ret = crypto_register_skciphers(geode_skcipher_algs,
 					ARRAY_SIZE(geode_skcipher_algs));
-	अगर (ret)
-		जाओ ealg;
+	if (ret)
+		goto ealg;
 
 	dev_notice(&dev->dev, "GEODE AES engine enabled.\n");
-	वापस 0;
+	return 0;
 
  ealg:
-	crypto_unरेजिस्टर_alg(&geode_alg);
+	crypto_unregister_alg(&geode_alg);
 
  eiomap:
 	pci_iounmap(dev, _iobase);
@@ -412,22 +411,22 @@ geode_decrypt(काष्ठा crypto_tfm *tfm, u8 *out, स्थिर u8 *i
 	pci_disable_device(dev);
 
 	dev_err(&dev->dev, "GEODE AES initialization failed.\n");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा pci_device_id geode_aes_tbl[] = अणु
-	अणु PCI_VDEVICE(AMD, PCI_DEVICE_ID_AMD_LX_AES), पूर्ण,
-	अणु 0, पूर्ण
-पूर्ण;
+static struct pci_device_id geode_aes_tbl[] = {
+	{ PCI_VDEVICE(AMD, PCI_DEVICE_ID_AMD_LX_AES), },
+	{ 0, }
+};
 
 MODULE_DEVICE_TABLE(pci, geode_aes_tbl);
 
-अटल काष्ठा pci_driver geode_aes_driver = अणु
+static struct pci_driver geode_aes_driver = {
 	.name = "Geode LX AES",
 	.id_table = geode_aes_tbl,
 	.probe = geode_aes_probe,
-	.हटाओ = geode_aes_हटाओ,
-पूर्ण;
+	.remove = geode_aes_remove,
+};
 
 module_pci_driver(geode_aes_driver);
 

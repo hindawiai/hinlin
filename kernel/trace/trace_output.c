@@ -1,464 +1,463 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * trace_output.c
  *
  * Copyright (C) 2008 Red Hat Inc, Steven Rostedt <srostedt@redhat.com>
  *
  */
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/ftrace.h>
-#समावेश <linux/sched/घड़ी.h>
-#समावेश <linux/sched/mm.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/ftrace.h>
+#include <linux/sched/clock.h>
+#include <linux/sched/mm.h>
 
-#समावेश "trace_output.h"
+#include "trace_output.h"
 
-/* must be a घातer of 2 */
-#घोषणा EVENT_HASHSIZE	128
+/* must be a power of 2 */
+#define EVENT_HASHSIZE	128
 
 DECLARE_RWSEM(trace_event_sem);
 
-अटल काष्ठा hlist_head event_hash[EVENT_HASHSIZE] __पढ़ो_mostly;
+static struct hlist_head event_hash[EVENT_HASHSIZE] __read_mostly;
 
-अटल पूर्णांक next_event_type = __TRACE_LAST_TYPE;
+static int next_event_type = __TRACE_LAST_TYPE;
 
-क्रमागत prपूर्णांक_line_t trace_prपूर्णांक_bमाला_दो_msg_only(काष्ठा trace_iterator *iter)
-अणु
-	काष्ठा trace_seq *s = &iter->seq;
-	काष्ठा trace_entry *entry = iter->ent;
-	काष्ठा bमाला_दो_entry *field;
-
-	trace_assign_type(field, entry);
-
-	trace_seq_माला_दो(s, field->str);
-
-	वापस trace_handle_वापस(s);
-पूर्ण
-
-क्रमागत prपूर्णांक_line_t trace_prपूर्णांक_bprपूर्णांकk_msg_only(काष्ठा trace_iterator *iter)
-अणु
-	काष्ठा trace_seq *s = &iter->seq;
-	काष्ठा trace_entry *entry = iter->ent;
-	काष्ठा bprपूर्णांक_entry *field;
+enum print_line_t trace_print_bputs_msg_only(struct trace_iterator *iter)
+{
+	struct trace_seq *s = &iter->seq;
+	struct trace_entry *entry = iter->ent;
+	struct bputs_entry *field;
 
 	trace_assign_type(field, entry);
 
-	trace_seq_bम_लिखो(s, field->fmt, field->buf);
+	trace_seq_puts(s, field->str);
 
-	वापस trace_handle_वापस(s);
-पूर्ण
+	return trace_handle_return(s);
+}
 
-क्रमागत prपूर्णांक_line_t trace_prपूर्णांक_prपूर्णांकk_msg_only(काष्ठा trace_iterator *iter)
-अणु
-	काष्ठा trace_seq *s = &iter->seq;
-	काष्ठा trace_entry *entry = iter->ent;
-	काष्ठा prपूर्णांक_entry *field;
+enum print_line_t trace_print_bprintk_msg_only(struct trace_iterator *iter)
+{
+	struct trace_seq *s = &iter->seq;
+	struct trace_entry *entry = iter->ent;
+	struct bprint_entry *field;
 
 	trace_assign_type(field, entry);
 
-	trace_seq_माला_दो(s, field->buf);
+	trace_seq_bprintf(s, field->fmt, field->buf);
 
-	वापस trace_handle_वापस(s);
-पूर्ण
+	return trace_handle_return(s);
+}
 
-स्थिर अक्षर *
-trace_prपूर्णांक_flags_seq(काष्ठा trace_seq *p, स्थिर अक्षर *delim,
-		      अचिन्हित दीर्घ flags,
-		      स्थिर काष्ठा trace_prपूर्णांक_flags *flag_array)
-अणु
-	अचिन्हित दीर्घ mask;
-	स्थिर अक्षर *str;
-	स्थिर अक्षर *ret = trace_seq_buffer_ptr(p);
-	पूर्णांक i, first = 1;
+enum print_line_t trace_print_printk_msg_only(struct trace_iterator *iter)
+{
+	struct trace_seq *s = &iter->seq;
+	struct trace_entry *entry = iter->ent;
+	struct print_entry *field;
 
-	क्रम (i = 0;  flag_array[i].name && flags; i++) अणु
+	trace_assign_type(field, entry);
+
+	trace_seq_puts(s, field->buf);
+
+	return trace_handle_return(s);
+}
+
+const char *
+trace_print_flags_seq(struct trace_seq *p, const char *delim,
+		      unsigned long flags,
+		      const struct trace_print_flags *flag_array)
+{
+	unsigned long mask;
+	const char *str;
+	const char *ret = trace_seq_buffer_ptr(p);
+	int i, first = 1;
+
+	for (i = 0;  flag_array[i].name && flags; i++) {
 
 		mask = flag_array[i].mask;
-		अगर ((flags & mask) != mask)
-			जारी;
+		if ((flags & mask) != mask)
+			continue;
 
 		str = flag_array[i].name;
 		flags &= ~mask;
-		अगर (!first && delim)
-			trace_seq_माला_दो(p, delim);
-		अन्यथा
+		if (!first && delim)
+			trace_seq_puts(p, delim);
+		else
 			first = 0;
-		trace_seq_माला_दो(p, str);
-	पूर्ण
+		trace_seq_puts(p, str);
+	}
 
-	/* check क्रम left over flags */
-	अगर (flags) अणु
-		अगर (!first && delim)
-			trace_seq_माला_दो(p, delim);
-		trace_seq_म_लिखो(p, "0x%lx", flags);
-	पूर्ण
+	/* check for left over flags */
+	if (flags) {
+		if (!first && delim)
+			trace_seq_puts(p, delim);
+		trace_seq_printf(p, "0x%lx", flags);
+	}
 
-	trace_seq_अ_दो(p, 0);
+	trace_seq_putc(p, 0);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(trace_prपूर्णांक_flags_seq);
+	return ret;
+}
+EXPORT_SYMBOL(trace_print_flags_seq);
 
-स्थिर अक्षर *
-trace_prपूर्णांक_symbols_seq(काष्ठा trace_seq *p, अचिन्हित दीर्घ val,
-			स्थिर काष्ठा trace_prपूर्णांक_flags *symbol_array)
-अणु
-	पूर्णांक i;
-	स्थिर अक्षर *ret = trace_seq_buffer_ptr(p);
+const char *
+trace_print_symbols_seq(struct trace_seq *p, unsigned long val,
+			const struct trace_print_flags *symbol_array)
+{
+	int i;
+	const char *ret = trace_seq_buffer_ptr(p);
 
-	क्रम (i = 0;  symbol_array[i].name; i++) अणु
+	for (i = 0;  symbol_array[i].name; i++) {
 
-		अगर (val != symbol_array[i].mask)
-			जारी;
+		if (val != symbol_array[i].mask)
+			continue;
 
-		trace_seq_माला_दो(p, symbol_array[i].name);
-		अवरोध;
-	पूर्ण
+		trace_seq_puts(p, symbol_array[i].name);
+		break;
+	}
 
-	अगर (ret == (स्थिर अक्षर *)(trace_seq_buffer_ptr(p)))
-		trace_seq_म_लिखो(p, "0x%lx", val);
+	if (ret == (const char *)(trace_seq_buffer_ptr(p)))
+		trace_seq_printf(p, "0x%lx", val);
 
-	trace_seq_अ_दो(p, 0);
+	trace_seq_putc(p, 0);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(trace_prपूर्णांक_symbols_seq);
+	return ret;
+}
+EXPORT_SYMBOL(trace_print_symbols_seq);
 
-#अगर BITS_PER_LONG == 32
-स्थिर अक्षर *
-trace_prपूर्णांक_flags_seq_u64(काष्ठा trace_seq *p, स्थिर अक्षर *delim,
-		      अचिन्हित दीर्घ दीर्घ flags,
-		      स्थिर काष्ठा trace_prपूर्णांक_flags_u64 *flag_array)
-अणु
-	अचिन्हित दीर्घ दीर्घ mask;
-	स्थिर अक्षर *str;
-	स्थिर अक्षर *ret = trace_seq_buffer_ptr(p);
-	पूर्णांक i, first = 1;
+#if BITS_PER_LONG == 32
+const char *
+trace_print_flags_seq_u64(struct trace_seq *p, const char *delim,
+		      unsigned long long flags,
+		      const struct trace_print_flags_u64 *flag_array)
+{
+	unsigned long long mask;
+	const char *str;
+	const char *ret = trace_seq_buffer_ptr(p);
+	int i, first = 1;
 
-	क्रम (i = 0;  flag_array[i].name && flags; i++) अणु
+	for (i = 0;  flag_array[i].name && flags; i++) {
 
 		mask = flag_array[i].mask;
-		अगर ((flags & mask) != mask)
-			जारी;
+		if ((flags & mask) != mask)
+			continue;
 
 		str = flag_array[i].name;
 		flags &= ~mask;
-		अगर (!first && delim)
-			trace_seq_माला_दो(p, delim);
-		अन्यथा
+		if (!first && delim)
+			trace_seq_puts(p, delim);
+		else
 			first = 0;
-		trace_seq_माला_दो(p, str);
-	पूर्ण
+		trace_seq_puts(p, str);
+	}
 
-	/* check क्रम left over flags */
-	अगर (flags) अणु
-		अगर (!first && delim)
-			trace_seq_माला_दो(p, delim);
-		trace_seq_म_लिखो(p, "0x%llx", flags);
-	पूर्ण
+	/* check for left over flags */
+	if (flags) {
+		if (!first && delim)
+			trace_seq_puts(p, delim);
+		trace_seq_printf(p, "0x%llx", flags);
+	}
 
-	trace_seq_अ_दो(p, 0);
+	trace_seq_putc(p, 0);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(trace_prपूर्णांक_flags_seq_u64);
+	return ret;
+}
+EXPORT_SYMBOL(trace_print_flags_seq_u64);
 
-स्थिर अक्षर *
-trace_prपूर्णांक_symbols_seq_u64(काष्ठा trace_seq *p, अचिन्हित दीर्घ दीर्घ val,
-			 स्थिर काष्ठा trace_prपूर्णांक_flags_u64 *symbol_array)
-अणु
-	पूर्णांक i;
-	स्थिर अक्षर *ret = trace_seq_buffer_ptr(p);
+const char *
+trace_print_symbols_seq_u64(struct trace_seq *p, unsigned long long val,
+			 const struct trace_print_flags_u64 *symbol_array)
+{
+	int i;
+	const char *ret = trace_seq_buffer_ptr(p);
 
-	क्रम (i = 0;  symbol_array[i].name; i++) अणु
+	for (i = 0;  symbol_array[i].name; i++) {
 
-		अगर (val != symbol_array[i].mask)
-			जारी;
+		if (val != symbol_array[i].mask)
+			continue;
 
-		trace_seq_माला_दो(p, symbol_array[i].name);
-		अवरोध;
-	पूर्ण
+		trace_seq_puts(p, symbol_array[i].name);
+		break;
+	}
 
-	अगर (ret == (स्थिर अक्षर *)(trace_seq_buffer_ptr(p)))
-		trace_seq_म_लिखो(p, "0x%llx", val);
+	if (ret == (const char *)(trace_seq_buffer_ptr(p)))
+		trace_seq_printf(p, "0x%llx", val);
 
-	trace_seq_अ_दो(p, 0);
+	trace_seq_putc(p, 0);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(trace_prपूर्णांक_symbols_seq_u64);
-#पूर्ण_अगर
+	return ret;
+}
+EXPORT_SYMBOL(trace_print_symbols_seq_u64);
+#endif
 
-स्थिर अक्षर *
-trace_prपूर्णांक_biपंचांगask_seq(काष्ठा trace_seq *p, व्योम *biपंचांगask_ptr,
-			अचिन्हित पूर्णांक biपंचांगask_size)
-अणु
-	स्थिर अक्षर *ret = trace_seq_buffer_ptr(p);
+const char *
+trace_print_bitmask_seq(struct trace_seq *p, void *bitmask_ptr,
+			unsigned int bitmask_size)
+{
+	const char *ret = trace_seq_buffer_ptr(p);
 
-	trace_seq_biपंचांगask(p, biपंचांगask_ptr, biपंचांगask_size * 8);
-	trace_seq_अ_दो(p, 0);
+	trace_seq_bitmask(p, bitmask_ptr, bitmask_size * 8);
+	trace_seq_putc(p, 0);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(trace_prपूर्णांक_biपंचांगask_seq);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(trace_print_bitmask_seq);
 
 /**
- * trace_prपूर्णांक_hex_seq - prपूर्णांक buffer as hex sequence
- * @p: trace seq काष्ठा to ग_लिखो to
- * @buf: The buffer to prपूर्णांक
+ * trace_print_hex_seq - print buffer as hex sequence
+ * @p: trace seq struct to write to
+ * @buf: The buffer to print
  * @buf_len: Length of @buf in bytes
- * @concatenate: Prपूर्णांक @buf as single hex string or with spacing
+ * @concatenate: Print @buf as single hex string or with spacing
  *
- * Prपूर्णांकs the passed buffer as a hex sequence either as a whole,
- * single hex string अगर @concatenate is true or with spacing after
- * each byte in हाल @concatenate is false.
+ * Prints the passed buffer as a hex sequence either as a whole,
+ * single hex string if @concatenate is true or with spacing after
+ * each byte in case @concatenate is false.
  */
-स्थिर अक्षर *
-trace_prपूर्णांक_hex_seq(काष्ठा trace_seq *p, स्थिर अचिन्हित अक्षर *buf, पूर्णांक buf_len,
+const char *
+trace_print_hex_seq(struct trace_seq *p, const unsigned char *buf, int buf_len,
 		    bool concatenate)
-अणु
-	पूर्णांक i;
-	स्थिर अक्षर *ret = trace_seq_buffer_ptr(p);
-	स्थिर अक्षर *fmt = concatenate ? "%*phN" : "%*ph";
+{
+	int i;
+	const char *ret = trace_seq_buffer_ptr(p);
+	const char *fmt = concatenate ? "%*phN" : "%*ph";
 
-	क्रम (i = 0; i < buf_len; i += 16)
-		trace_seq_म_लिखो(p, fmt, min(buf_len - i, 16), &buf[i]);
-	trace_seq_अ_दो(p, 0);
+	for (i = 0; i < buf_len; i += 16)
+		trace_seq_printf(p, fmt, min(buf_len - i, 16), &buf[i]);
+	trace_seq_putc(p, 0);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(trace_prपूर्णांक_hex_seq);
+	return ret;
+}
+EXPORT_SYMBOL(trace_print_hex_seq);
 
-स्थिर अक्षर *
-trace_prपूर्णांक_array_seq(काष्ठा trace_seq *p, स्थिर व्योम *buf, पूर्णांक count,
-		      माप_प्रकार el_size)
-अणु
-	स्थिर अक्षर *ret = trace_seq_buffer_ptr(p);
-	स्थिर अक्षर *prefix = "";
-	व्योम *ptr = (व्योम *)buf;
-	माप_प्रकार buf_len = count * el_size;
+const char *
+trace_print_array_seq(struct trace_seq *p, const void *buf, int count,
+		      size_t el_size)
+{
+	const char *ret = trace_seq_buffer_ptr(p);
+	const char *prefix = "";
+	void *ptr = (void *)buf;
+	size_t buf_len = count * el_size;
 
-	trace_seq_अ_दो(p, '{');
+	trace_seq_putc(p, '{');
 
-	जबतक (ptr < buf + buf_len) अणु
-		चयन (el_size) अणु
-		हाल 1:
-			trace_seq_म_लिखो(p, "%s0x%x", prefix,
+	while (ptr < buf + buf_len) {
+		switch (el_size) {
+		case 1:
+			trace_seq_printf(p, "%s0x%x", prefix,
 					 *(u8 *)ptr);
-			अवरोध;
-		हाल 2:
-			trace_seq_म_लिखो(p, "%s0x%x", prefix,
+			break;
+		case 2:
+			trace_seq_printf(p, "%s0x%x", prefix,
 					 *(u16 *)ptr);
-			अवरोध;
-		हाल 4:
-			trace_seq_म_लिखो(p, "%s0x%x", prefix,
+			break;
+		case 4:
+			trace_seq_printf(p, "%s0x%x", prefix,
 					 *(u32 *)ptr);
-			अवरोध;
-		हाल 8:
-			trace_seq_म_लिखो(p, "%s0x%llx", prefix,
+			break;
+		case 8:
+			trace_seq_printf(p, "%s0x%llx", prefix,
 					 *(u64 *)ptr);
-			अवरोध;
-		शेष:
-			trace_seq_म_लिखो(p, "BAD SIZE:%zu 0x%x", el_size,
+			break;
+		default:
+			trace_seq_printf(p, "BAD SIZE:%zu 0x%x", el_size,
 					 *(u8 *)ptr);
 			el_size = 1;
-		पूर्ण
+		}
 		prefix = ",";
 		ptr += el_size;
-	पूर्ण
+	}
 
-	trace_seq_अ_दो(p, '}');
-	trace_seq_अ_दो(p, 0);
+	trace_seq_putc(p, '}');
+	trace_seq_putc(p, 0);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(trace_prपूर्णांक_array_seq);
+	return ret;
+}
+EXPORT_SYMBOL(trace_print_array_seq);
 
-स्थिर अक्षर *
-trace_prपूर्णांक_hex_dump_seq(काष्ठा trace_seq *p, स्थिर अक्षर *prefix_str,
-			 पूर्णांक prefix_type, पूर्णांक rowsize, पूर्णांक groupsize,
-			 स्थिर व्योम *buf, माप_प्रकार len, bool ascii)
-अणु
-	स्थिर अक्षर *ret = trace_seq_buffer_ptr(p);
+const char *
+trace_print_hex_dump_seq(struct trace_seq *p, const char *prefix_str,
+			 int prefix_type, int rowsize, int groupsize,
+			 const void *buf, size_t len, bool ascii)
+{
+	const char *ret = trace_seq_buffer_ptr(p);
 
-	trace_seq_अ_दो(p, '\n');
+	trace_seq_putc(p, '\n');
 	trace_seq_hex_dump(p, prefix_str, prefix_type,
 			   rowsize, groupsize, buf, len, ascii);
-	trace_seq_अ_दो(p, 0);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(trace_prपूर्णांक_hex_dump_seq);
+	trace_seq_putc(p, 0);
+	return ret;
+}
+EXPORT_SYMBOL(trace_print_hex_dump_seq);
 
-पूर्णांक trace_raw_output_prep(काष्ठा trace_iterator *iter,
-			  काष्ठा trace_event *trace_event)
-अणु
-	काष्ठा trace_event_call *event;
-	काष्ठा trace_seq *s = &iter->seq;
-	काष्ठा trace_seq *p = &iter->पंचांगp_seq;
-	काष्ठा trace_entry *entry;
+int trace_raw_output_prep(struct trace_iterator *iter,
+			  struct trace_event *trace_event)
+{
+	struct trace_event_call *event;
+	struct trace_seq *s = &iter->seq;
+	struct trace_seq *p = &iter->tmp_seq;
+	struct trace_entry *entry;
 
-	event = container_of(trace_event, काष्ठा trace_event_call, event);
+	event = container_of(trace_event, struct trace_event_call, event);
 	entry = iter->ent;
 
-	अगर (entry->type != event->event.type) अणु
+	if (entry->type != event->event.type) {
 		WARN_ON_ONCE(1);
-		वापस TRACE_TYPE_UNHANDLED;
-	पूर्ण
+		return TRACE_TYPE_UNHANDLED;
+	}
 
 	trace_seq_init(p);
-	trace_seq_म_लिखो(s, "%s: ", trace_event_name(event));
+	trace_seq_printf(s, "%s: ", trace_event_name(event));
 
-	वापस trace_handle_वापस(s);
-पूर्ण
+	return trace_handle_return(s);
+}
 EXPORT_SYMBOL(trace_raw_output_prep);
 
-व्योम trace_event_म_लिखो(काष्ठा trace_iterator *iter, स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची ap;
+void trace_event_printf(struct trace_iterator *iter, const char *fmt, ...)
+{
+	va_list ap;
 
-	बहु_शुरू(ap, fmt);
-	trace_check_भ_लिखो(iter, trace_event_क्रमmat(iter, fmt), ap);
-	बहु_पूर्ण(ap);
-पूर्ण
-EXPORT_SYMBOL(trace_event_म_लिखो);
+	va_start(ap, fmt);
+	trace_check_vprintf(iter, trace_event_format(iter, fmt), ap);
+	va_end(ap);
+}
+EXPORT_SYMBOL(trace_event_printf);
 
-अटल पूर्णांक trace_output_raw(काष्ठा trace_iterator *iter, अक्षर *name,
-			    अक्षर *fmt, बहु_सूची ap)
-अणु
-	काष्ठा trace_seq *s = &iter->seq;
+static int trace_output_raw(struct trace_iterator *iter, char *name,
+			    char *fmt, va_list ap)
+{
+	struct trace_seq *s = &iter->seq;
 
-	trace_seq_म_लिखो(s, "%s: ", name);
-	trace_seq_भ_लिखो(s, trace_event_क्रमmat(iter, fmt), ap);
+	trace_seq_printf(s, "%s: ", name);
+	trace_seq_vprintf(s, trace_event_format(iter, fmt), ap);
 
-	वापस trace_handle_वापस(s);
-पूर्ण
+	return trace_handle_return(s);
+}
 
-पूर्णांक trace_output_call(काष्ठा trace_iterator *iter, अक्षर *name, अक्षर *fmt, ...)
-अणु
-	बहु_सूची ap;
-	पूर्णांक ret;
+int trace_output_call(struct trace_iterator *iter, char *name, char *fmt, ...)
+{
+	va_list ap;
+	int ret;
 
-	बहु_शुरू(ap, fmt);
+	va_start(ap, fmt);
 	ret = trace_output_raw(iter, name, fmt, ap);
-	बहु_पूर्ण(ap);
+	va_end(ap);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(trace_output_call);
 
-#अगर_घोषित CONFIG_KRETPROBES
-अटल अंतरभूत स्थिर अक्षर *kretprobed(स्थिर अक्षर *name)
-अणु
-	अटल स्थिर अक्षर tramp_name[] = "kretprobe_trampoline";
-	पूर्णांक size = माप(tramp_name);
+#ifdef CONFIG_KRETPROBES
+static inline const char *kretprobed(const char *name)
+{
+	static const char tramp_name[] = "kretprobe_trampoline";
+	int size = sizeof(tramp_name);
 
-	अगर (म_भेदन(tramp_name, name, size) == 0)
-		वापस "[unknown/kretprobe'd]";
-	वापस name;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत स्थिर अक्षर *kretprobed(स्थिर अक्षर *name)
-अणु
-	वापस name;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_KRETPROBES */
+	if (strncmp(tramp_name, name, size) == 0)
+		return "[unknown/kretprobe'd]";
+	return name;
+}
+#else
+static inline const char *kretprobed(const char *name)
+{
+	return name;
+}
+#endif /* CONFIG_KRETPROBES */
 
-व्योम
-trace_seq_prपूर्णांक_sym(काष्ठा trace_seq *s, अचिन्हित दीर्घ address, bool offset)
-अणु
-#अगर_घोषित CONFIG_KALLSYMS
-	अक्षर str[KSYM_SYMBOL_LEN];
-	स्थिर अक्षर *name;
+void
+trace_seq_print_sym(struct trace_seq *s, unsigned long address, bool offset)
+{
+#ifdef CONFIG_KALLSYMS
+	char str[KSYM_SYMBOL_LEN];
+	const char *name;
 
-	अगर (offset)
-		sprपूर्णांक_symbol(str, address);
-	अन्यथा
-		kallsyms_lookup(address, शून्य, शून्य, शून्य, str);
+	if (offset)
+		sprint_symbol(str, address);
+	else
+		kallsyms_lookup(address, NULL, NULL, NULL, str);
 	name = kretprobed(str);
 
-	अगर (name && म_माप(name)) अणु
-		trace_seq_माला_दो(s, name);
-		वापस;
-	पूर्ण
-#पूर्ण_अगर
-	trace_seq_म_लिखो(s, "0x%08lx", address);
-पूर्ण
+	if (name && strlen(name)) {
+		trace_seq_puts(s, name);
+		return;
+	}
+#endif
+	trace_seq_printf(s, "0x%08lx", address);
+}
 
-#अगर_अघोषित CONFIG_64BIT
+#ifndef CONFIG_64BIT
 # define IP_FMT "%08lx"
-#अन्यथा
+#else
 # define IP_FMT "%016lx"
-#पूर्ण_अगर
+#endif
 
-अटल पूर्णांक seq_prपूर्णांक_user_ip(काष्ठा trace_seq *s, काष्ठा mm_काष्ठा *mm,
-			     अचिन्हित दीर्घ ip, अचिन्हित दीर्घ sym_flags)
-अणु
-	काष्ठा file *file = शून्य;
-	अचिन्हित दीर्घ vmstart = 0;
-	पूर्णांक ret = 1;
+static int seq_print_user_ip(struct trace_seq *s, struct mm_struct *mm,
+			     unsigned long ip, unsigned long sym_flags)
+{
+	struct file *file = NULL;
+	unsigned long vmstart = 0;
+	int ret = 1;
 
-	अगर (s->full)
-		वापस 0;
+	if (s->full)
+		return 0;
 
-	अगर (mm) अणु
-		स्थिर काष्ठा vm_area_काष्ठा *vma;
+	if (mm) {
+		const struct vm_area_struct *vma;
 
-		mmap_पढ़ो_lock(mm);
+		mmap_read_lock(mm);
 		vma = find_vma(mm, ip);
-		अगर (vma) अणु
+		if (vma) {
 			file = vma->vm_file;
 			vmstart = vma->vm_start;
-		पूर्ण
-		अगर (file) अणु
+		}
+		if (file) {
 			ret = trace_seq_path(s, &file->f_path);
-			अगर (ret)
-				trace_seq_म_लिखो(s, "[+0x%lx]",
+			if (ret)
+				trace_seq_printf(s, "[+0x%lx]",
 						 ip - vmstart);
-		पूर्ण
-		mmap_पढ़ो_unlock(mm);
-	पूर्ण
-	अगर (ret && ((sym_flags & TRACE_ITER_SYM_ADDR) || !file))
-		trace_seq_म_लिखो(s, " <" IP_FMT ">", ip);
-	वापस !trace_seq_has_overflowed(s);
-पूर्ण
+		}
+		mmap_read_unlock(mm);
+	}
+	if (ret && ((sym_flags & TRACE_ITER_SYM_ADDR) || !file))
+		trace_seq_printf(s, " <" IP_FMT ">", ip);
+	return !trace_seq_has_overflowed(s);
+}
 
-पूर्णांक
-seq_prपूर्णांक_ip_sym(काष्ठा trace_seq *s, अचिन्हित दीर्घ ip, अचिन्हित दीर्घ sym_flags)
-अणु
-	अगर (!ip) अणु
-		trace_seq_अ_दो(s, '0');
-		जाओ out;
-	पूर्ण
+int
+seq_print_ip_sym(struct trace_seq *s, unsigned long ip, unsigned long sym_flags)
+{
+	if (!ip) {
+		trace_seq_putc(s, '0');
+		goto out;
+	}
 
-	trace_seq_prपूर्णांक_sym(s, ip, sym_flags & TRACE_ITER_SYM_OFFSET);
+	trace_seq_print_sym(s, ip, sym_flags & TRACE_ITER_SYM_OFFSET);
 
-	अगर (sym_flags & TRACE_ITER_SYM_ADDR)
-		trace_seq_म_लिखो(s, " <" IP_FMT ">", ip);
+	if (sym_flags & TRACE_ITER_SYM_ADDR)
+		trace_seq_printf(s, " <" IP_FMT ">", ip);
 
  out:
-	वापस !trace_seq_has_overflowed(s);
-पूर्ण
+	return !trace_seq_has_overflowed(s);
+}
 
 /**
- * trace_prपूर्णांक_lat_fmt - prपूर्णांक the irq, preempt and lockdep fields
- * @s: trace seq काष्ठा to ग_लिखो to
+ * trace_print_lat_fmt - print the irq, preempt and lockdep fields
+ * @s: trace seq struct to write to
  * @entry: The trace entry field from the ring buffer
  *
- * Prपूर्णांकs the generic fields of irqs off, in hard or softirq, preempt
+ * Prints the generic fields of irqs off, in hard or softirq, preempt
  * count.
  */
-पूर्णांक trace_prपूर्णांक_lat_fmt(काष्ठा trace_seq *s, काष्ठा trace_entry *entry)
-अणु
-	अक्षर hardsoft_irq;
-	अक्षर need_resched;
-	अक्षर irqs_off;
-	पूर्णांक hardirq;
-	पूर्णांक softirq;
-	पूर्णांक nmi;
+int trace_print_lat_fmt(struct trace_seq *s, struct trace_entry *entry)
+{
+	char hardsoft_irq;
+	char need_resched;
+	char irqs_off;
+	int hardirq;
+	int softirq;
+	int nmi;
 
 	nmi = entry->flags & TRACE_FLAG_NMI;
-	hardirq = entry->flags & TRACE_FLAG_HARसूचीQ;
+	hardirq = entry->flags & TRACE_FLAG_HARDIRQ;
 	softirq = entry->flags & TRACE_FLAG_SOFTIRQ;
 
 	irqs_off =
@@ -466,21 +465,21 @@ seq_prपूर्णांक_ip_sym(काष्ठा trace_seq *s, अचि
 		(entry->flags & TRACE_FLAG_IRQS_NOSUPPORT) ? 'X' :
 		'.';
 
-	चयन (entry->flags & (TRACE_FLAG_NEED_RESCHED |
-				TRACE_FLAG_PREEMPT_RESCHED)) अणु
-	हाल TRACE_FLAG_NEED_RESCHED | TRACE_FLAG_PREEMPT_RESCHED:
+	switch (entry->flags & (TRACE_FLAG_NEED_RESCHED |
+				TRACE_FLAG_PREEMPT_RESCHED)) {
+	case TRACE_FLAG_NEED_RESCHED | TRACE_FLAG_PREEMPT_RESCHED:
 		need_resched = 'N';
-		अवरोध;
-	हाल TRACE_FLAG_NEED_RESCHED:
+		break;
+	case TRACE_FLAG_NEED_RESCHED:
 		need_resched = 'n';
-		अवरोध;
-	हाल TRACE_FLAG_PREEMPT_RESCHED:
+		break;
+	case TRACE_FLAG_PREEMPT_RESCHED:
 		need_resched = 'p';
-		अवरोध;
-	शेष:
+		break;
+	default:
 		need_resched = '.';
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	hardsoft_irq =
 		(nmi && hardirq)     ? 'Z' :
@@ -490,313 +489,313 @@ seq_prपूर्णांक_ip_sym(काष्ठा trace_seq *s, अचि
 		softirq              ? 's' :
 		                       '.' ;
 
-	trace_seq_म_लिखो(s, "%c%c%c",
+	trace_seq_printf(s, "%c%c%c",
 			 irqs_off, need_resched, hardsoft_irq);
 
-	अगर (entry->preempt_count)
-		trace_seq_म_लिखो(s, "%x", entry->preempt_count);
-	अन्यथा
-		trace_seq_अ_दो(s, '.');
+	if (entry->preempt_count)
+		trace_seq_printf(s, "%x", entry->preempt_count);
+	else
+		trace_seq_putc(s, '.');
 
-	वापस !trace_seq_has_overflowed(s);
-पूर्ण
+	return !trace_seq_has_overflowed(s);
+}
 
-अटल पूर्णांक
-lat_prपूर्णांक_generic(काष्ठा trace_seq *s, काष्ठा trace_entry *entry, पूर्णांक cpu)
-अणु
-	अक्षर comm[TASK_COMM_LEN];
+static int
+lat_print_generic(struct trace_seq *s, struct trace_entry *entry, int cpu)
+{
+	char comm[TASK_COMM_LEN];
 
 	trace_find_cmdline(entry->pid, comm);
 
-	trace_seq_म_लिखो(s, "%8.8s-%-7d %3d",
+	trace_seq_printf(s, "%8.8s-%-7d %3d",
 			 comm, entry->pid, cpu);
 
-	वापस trace_prपूर्णांक_lat_fmt(s, entry);
-पूर्ण
+	return trace_print_lat_fmt(s, entry);
+}
 
-#अघोषित MARK
-#घोषणा MARK(v, s) अणु.val = v, .sym = sपूर्ण
+#undef MARK
+#define MARK(v, s) {.val = v, .sym = s}
 /* trace overhead mark */
-अटल स्थिर काष्ठा trace_mark अणु
-	अचिन्हित दीर्घ दीर्घ	val; /* unit: nsec */
-	अक्षर			sym;
-पूर्ण mark[] = अणु
+static const struct trace_mark {
+	unsigned long long	val; /* unit: nsec */
+	char			sym;
+} mark[] = {
 	MARK(1000000000ULL	, '$'), /* 1 sec */
 	MARK(100000000ULL	, '@'), /* 100 msec */
 	MARK(10000000ULL	, '*'), /* 10 msec */
 	MARK(1000000ULL		, '#'), /* 1000 usecs */
 	MARK(100000ULL		, '!'), /* 100 usecs */
 	MARK(10000ULL		, '+'), /* 10 usecs */
-पूर्ण;
-#अघोषित MARK
+};
+#undef MARK
 
-अक्षर trace_find_mark(अचिन्हित दीर्घ दीर्घ d)
-अणु
-	पूर्णांक i;
-	पूर्णांक size = ARRAY_SIZE(mark);
+char trace_find_mark(unsigned long long d)
+{
+	int i;
+	int size = ARRAY_SIZE(mark);
 
-	क्रम (i = 0; i < size; i++) अणु
-		अगर (d > mark[i].val)
-			अवरोध;
-	पूर्ण
+	for (i = 0; i < size; i++) {
+		if (d > mark[i].val)
+			break;
+	}
 
-	वापस (i == size) ? ' ' : mark[i].sym;
-पूर्ण
+	return (i == size) ? ' ' : mark[i].sym;
+}
 
-अटल पूर्णांक
-lat_prपूर्णांक_बारtamp(काष्ठा trace_iterator *iter, u64 next_ts)
-अणु
-	काष्ठा trace_array *tr = iter->tr;
-	अचिन्हित दीर्घ verbose = tr->trace_flags & TRACE_ITER_VERBOSE;
-	अचिन्हित दीर्घ in_ns = iter->iter_flags & TRACE_खाता_TIME_IN_NS;
-	अचिन्हित दीर्घ दीर्घ असल_ts = iter->ts - iter->array_buffer->समय_start;
-	अचिन्हित दीर्घ दीर्घ rel_ts = next_ts - iter->ts;
-	काष्ठा trace_seq *s = &iter->seq;
+static int
+lat_print_timestamp(struct trace_iterator *iter, u64 next_ts)
+{
+	struct trace_array *tr = iter->tr;
+	unsigned long verbose = tr->trace_flags & TRACE_ITER_VERBOSE;
+	unsigned long in_ns = iter->iter_flags & TRACE_FILE_TIME_IN_NS;
+	unsigned long long abs_ts = iter->ts - iter->array_buffer->time_start;
+	unsigned long long rel_ts = next_ts - iter->ts;
+	struct trace_seq *s = &iter->seq;
 
-	अगर (in_ns) अणु
-		असल_ts = ns2usecs(असल_ts);
+	if (in_ns) {
+		abs_ts = ns2usecs(abs_ts);
 		rel_ts = ns2usecs(rel_ts);
-	पूर्ण
+	}
 
-	अगर (verbose && in_ns) अणु
-		अचिन्हित दीर्घ असल_usec = करो_भाग(असल_ts, USEC_PER_MSEC);
-		अचिन्हित दीर्घ असल_msec = (अचिन्हित दीर्घ)असल_ts;
-		अचिन्हित दीर्घ rel_usec = करो_भाग(rel_ts, USEC_PER_MSEC);
-		अचिन्हित दीर्घ rel_msec = (अचिन्हित दीर्घ)rel_ts;
+	if (verbose && in_ns) {
+		unsigned long abs_usec = do_div(abs_ts, USEC_PER_MSEC);
+		unsigned long abs_msec = (unsigned long)abs_ts;
+		unsigned long rel_usec = do_div(rel_ts, USEC_PER_MSEC);
+		unsigned long rel_msec = (unsigned long)rel_ts;
 
-		trace_seq_म_लिखो(
+		trace_seq_printf(
 			s, "[%08llx] %ld.%03ldms (+%ld.%03ldms): ",
 			ns2usecs(iter->ts),
-			असल_msec, असल_usec,
+			abs_msec, abs_usec,
 			rel_msec, rel_usec);
 
-	पूर्ण अन्यथा अगर (verbose && !in_ns) अणु
-		trace_seq_म_लिखो(
+	} else if (verbose && !in_ns) {
+		trace_seq_printf(
 			s, "[%016llx] %lld (+%lld): ",
-			iter->ts, असल_ts, rel_ts);
+			iter->ts, abs_ts, rel_ts);
 
-	पूर्ण अन्यथा अगर (!verbose && in_ns) अणु
-		trace_seq_म_लिखो(
+	} else if (!verbose && in_ns) {
+		trace_seq_printf(
 			s, " %4lldus%c: ",
-			असल_ts,
+			abs_ts,
 			trace_find_mark(rel_ts * NSEC_PER_USEC));
 
-	पूर्ण अन्यथा अणु /* !verbose && !in_ns */
-		trace_seq_म_लिखो(s, " %4lld: ", असल_ts);
-	पूर्ण
+	} else { /* !verbose && !in_ns */
+		trace_seq_printf(s, " %4lld: ", abs_ts);
+	}
 
-	वापस !trace_seq_has_overflowed(s);
-पूर्ण
+	return !trace_seq_has_overflowed(s);
+}
 
-अटल व्योम trace_prपूर्णांक_समय(काष्ठा trace_seq *s, काष्ठा trace_iterator *iter,
-			     अचिन्हित दीर्घ दीर्घ ts)
-अणु
-	अचिन्हित दीर्घ secs, usec_rem;
-	अचिन्हित दीर्घ दीर्घ t;
+static void trace_print_time(struct trace_seq *s, struct trace_iterator *iter,
+			     unsigned long long ts)
+{
+	unsigned long secs, usec_rem;
+	unsigned long long t;
 
-	अगर (iter->iter_flags & TRACE_खाता_TIME_IN_NS) अणु
+	if (iter->iter_flags & TRACE_FILE_TIME_IN_NS) {
 		t = ns2usecs(ts);
-		usec_rem = करो_भाग(t, USEC_PER_SEC);
-		secs = (अचिन्हित दीर्घ)t;
-		trace_seq_म_लिखो(s, " %5lu.%06lu", secs, usec_rem);
-	पूर्ण अन्यथा
-		trace_seq_म_लिखो(s, " %12llu", ts);
-पूर्ण
+		usec_rem = do_div(t, USEC_PER_SEC);
+		secs = (unsigned long)t;
+		trace_seq_printf(s, " %5lu.%06lu", secs, usec_rem);
+	} else
+		trace_seq_printf(s, " %12llu", ts);
+}
 
-पूर्णांक trace_prपूर्णांक_context(काष्ठा trace_iterator *iter)
-अणु
-	काष्ठा trace_array *tr = iter->tr;
-	काष्ठा trace_seq *s = &iter->seq;
-	काष्ठा trace_entry *entry = iter->ent;
-	अक्षर comm[TASK_COMM_LEN];
+int trace_print_context(struct trace_iterator *iter)
+{
+	struct trace_array *tr = iter->tr;
+	struct trace_seq *s = &iter->seq;
+	struct trace_entry *entry = iter->ent;
+	char comm[TASK_COMM_LEN];
 
 	trace_find_cmdline(entry->pid, comm);
 
-	trace_seq_म_लिखो(s, "%16s-%-7d ", comm, entry->pid);
+	trace_seq_printf(s, "%16s-%-7d ", comm, entry->pid);
 
-	अगर (tr->trace_flags & TRACE_ITER_RECORD_TGID) अणु
-		अचिन्हित पूर्णांक tgid = trace_find_tgid(entry->pid);
+	if (tr->trace_flags & TRACE_ITER_RECORD_TGID) {
+		unsigned int tgid = trace_find_tgid(entry->pid);
 
-		अगर (!tgid)
-			trace_seq_म_लिखो(s, "(-------) ");
-		अन्यथा
-			trace_seq_म_लिखो(s, "(%7d) ", tgid);
-	पूर्ण
+		if (!tgid)
+			trace_seq_printf(s, "(-------) ");
+		else
+			trace_seq_printf(s, "(%7d) ", tgid);
+	}
 
-	trace_seq_म_लिखो(s, "[%03d] ", iter->cpu);
+	trace_seq_printf(s, "[%03d] ", iter->cpu);
 
-	अगर (tr->trace_flags & TRACE_ITER_IRQ_INFO)
-		trace_prपूर्णांक_lat_fmt(s, entry);
+	if (tr->trace_flags & TRACE_ITER_IRQ_INFO)
+		trace_print_lat_fmt(s, entry);
 
-	trace_prपूर्णांक_समय(s, iter, iter->ts);
-	trace_seq_माला_दो(s, ": ");
+	trace_print_time(s, iter, iter->ts);
+	trace_seq_puts(s, ": ");
 
-	वापस !trace_seq_has_overflowed(s);
-पूर्ण
+	return !trace_seq_has_overflowed(s);
+}
 
-पूर्णांक trace_prपूर्णांक_lat_context(काष्ठा trace_iterator *iter)
-अणु
-	काष्ठा trace_entry *entry, *next_entry;
-	काष्ठा trace_array *tr = iter->tr;
-	काष्ठा trace_seq *s = &iter->seq;
-	अचिन्हित दीर्घ verbose = (tr->trace_flags & TRACE_ITER_VERBOSE);
+int trace_print_lat_context(struct trace_iterator *iter)
+{
+	struct trace_entry *entry, *next_entry;
+	struct trace_array *tr = iter->tr;
+	struct trace_seq *s = &iter->seq;
+	unsigned long verbose = (tr->trace_flags & TRACE_ITER_VERBOSE);
 	u64 next_ts;
 
-	next_entry = trace_find_next_entry(iter, शून्य, &next_ts);
-	अगर (!next_entry)
+	next_entry = trace_find_next_entry(iter, NULL, &next_ts);
+	if (!next_entry)
 		next_ts = iter->ts;
 
 	/* trace_find_next_entry() may change iter->ent */
 	entry = iter->ent;
 
-	अगर (verbose) अणु
-		अक्षर comm[TASK_COMM_LEN];
+	if (verbose) {
+		char comm[TASK_COMM_LEN];
 
 		trace_find_cmdline(entry->pid, comm);
 
-		trace_seq_म_लिखो(
+		trace_seq_printf(
 			s, "%16s %7d %3d %d %08x %08lx ",
 			comm, entry->pid, iter->cpu, entry->flags,
 			entry->preempt_count, iter->idx);
-	पूर्ण अन्यथा अणु
-		lat_prपूर्णांक_generic(s, entry, iter->cpu);
-	पूर्ण
+	} else {
+		lat_print_generic(s, entry, iter->cpu);
+	}
 
-	lat_prपूर्णांक_बारtamp(iter, next_ts);
+	lat_print_timestamp(iter, next_ts);
 
-	वापस !trace_seq_has_overflowed(s);
-पूर्ण
+	return !trace_seq_has_overflowed(s);
+}
 
 /**
- * ftrace_find_event - find a रेजिस्टरed event
- * @type: the type of event to look क्रम
+ * ftrace_find_event - find a registered event
+ * @type: the type of event to look for
  *
- * Returns an event of type @type otherwise शून्य
- * Called with trace_event_पढ़ो_lock() held.
+ * Returns an event of type @type otherwise NULL
+ * Called with trace_event_read_lock() held.
  */
-काष्ठा trace_event *ftrace_find_event(पूर्णांक type)
-अणु
-	काष्ठा trace_event *event;
-	अचिन्हित key;
+struct trace_event *ftrace_find_event(int type)
+{
+	struct trace_event *event;
+	unsigned key;
 
 	key = type & (EVENT_HASHSIZE - 1);
 
-	hlist_क्रम_each_entry(event, &event_hash[key], node) अणु
-		अगर (event->type == type)
-			वापस event;
-	पूर्ण
+	hlist_for_each_entry(event, &event_hash[key], node) {
+		if (event->type == type)
+			return event;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल LIST_HEAD(ftrace_event_list);
+static LIST_HEAD(ftrace_event_list);
 
-अटल पूर्णांक trace_search_list(काष्ठा list_head **list)
-अणु
-	काष्ठा trace_event *e;
-	पूर्णांक next = __TRACE_LAST_TYPE;
+static int trace_search_list(struct list_head **list)
+{
+	struct trace_event *e;
+	int next = __TRACE_LAST_TYPE;
 
-	अगर (list_empty(&ftrace_event_list)) अणु
+	if (list_empty(&ftrace_event_list)) {
 		*list = &ftrace_event_list;
-		वापस next;
-	पूर्ण
+		return next;
+	}
 
 	/*
 	 * We used up all possible max events,
-	 * lets see अगर somebody मुक्तd one.
+	 * lets see if somebody freed one.
 	 */
-	list_क्रम_each_entry(e, &ftrace_event_list, list) अणु
-		अगर (e->type != next)
-			अवरोध;
+	list_for_each_entry(e, &ftrace_event_list, list) {
+		if (e->type != next)
+			break;
 		next++;
-	पूर्ण
+	}
 
 	/* Did we used up all 65 thousand events??? */
-	अगर (next > TRACE_EVENT_TYPE_MAX)
-		वापस 0;
+	if (next > TRACE_EVENT_TYPE_MAX)
+		return 0;
 
 	*list = &e->list;
-	वापस next;
-पूर्ण
+	return next;
+}
 
-व्योम trace_event_पढ़ो_lock(व्योम)
-अणु
-	करोwn_पढ़ो(&trace_event_sem);
-पूर्ण
+void trace_event_read_lock(void)
+{
+	down_read(&trace_event_sem);
+}
 
-व्योम trace_event_पढ़ो_unlock(व्योम)
-अणु
-	up_पढ़ो(&trace_event_sem);
-पूर्ण
+void trace_event_read_unlock(void)
+{
+	up_read(&trace_event_sem);
+}
 
 /**
- * रेजिस्टर_trace_event - रेजिस्टर output क्रम an event type
- * @event: the event type to रेजिस्टर
+ * register_trace_event - register output for an event type
+ * @event: the event type to register
  *
  * Event types are stored in a hash and this hash is used to
- * find a way to prपूर्णांक an event. If the @event->type is set
+ * find a way to print an event. If the @event->type is set
  * then it will use that type, otherwise it will assign a
  * type to use.
  *
  * If you assign your own type, please make sure it is added
- * to the trace_type क्रमागत in trace.h, to aव्योम collisions
+ * to the trace_type enum in trace.h, to avoid collisions
  * with the dynamic types.
  *
  * Returns the event type number or zero on error.
  */
-पूर्णांक रेजिस्टर_trace_event(काष्ठा trace_event *event)
-अणु
-	अचिन्हित key;
-	पूर्णांक ret = 0;
+int register_trace_event(struct trace_event *event)
+{
+	unsigned key;
+	int ret = 0;
 
-	करोwn_ग_लिखो(&trace_event_sem);
+	down_write(&trace_event_sem);
 
-	अगर (WARN_ON(!event))
-		जाओ out;
+	if (WARN_ON(!event))
+		goto out;
 
-	अगर (WARN_ON(!event->funcs))
-		जाओ out;
+	if (WARN_ON(!event->funcs))
+		goto out;
 
 	INIT_LIST_HEAD(&event->list);
 
-	अगर (!event->type) अणु
-		काष्ठा list_head *list = शून्य;
+	if (!event->type) {
+		struct list_head *list = NULL;
 
-		अगर (next_event_type > TRACE_EVENT_TYPE_MAX) अणु
+		if (next_event_type > TRACE_EVENT_TYPE_MAX) {
 
 			event->type = trace_search_list(&list);
-			अगर (!event->type)
-				जाओ out;
+			if (!event->type)
+				goto out;
 
-		पूर्ण अन्यथा अणु
+		} else {
 
 			event->type = next_event_type++;
 			list = &ftrace_event_list;
-		पूर्ण
+		}
 
-		अगर (WARN_ON(ftrace_find_event(event->type)))
-			जाओ out;
+		if (WARN_ON(ftrace_find_event(event->type)))
+			goto out;
 
 		list_add_tail(&event->list, list);
 
-	पूर्ण अन्यथा अगर (event->type > __TRACE_LAST_TYPE) अणु
-		prपूर्णांकk(KERN_WARNING "Need to add type to trace.h\n");
+	} else if (event->type > __TRACE_LAST_TYPE) {
+		printk(KERN_WARNING "Need to add type to trace.h\n");
 		WARN_ON(1);
-		जाओ out;
-	पूर्ण अन्यथा अणु
-		/* Is this event alपढ़ोy used */
-		अगर (ftrace_find_event(event->type))
-			जाओ out;
-	पूर्ण
+		goto out;
+	} else {
+		/* Is this event already used */
+		if (ftrace_find_event(event->type))
+			goto out;
+	}
 
-	अगर (event->funcs->trace == शून्य)
-		event->funcs->trace = trace_nop_prपूर्णांक;
-	अगर (event->funcs->raw == शून्य)
-		event->funcs->raw = trace_nop_prपूर्णांक;
-	अगर (event->funcs->hex == शून्य)
-		event->funcs->hex = trace_nop_prपूर्णांक;
-	अगर (event->funcs->binary == शून्य)
-		event->funcs->binary = trace_nop_prपूर्णांक;
+	if (event->funcs->trace == NULL)
+		event->funcs->trace = trace_nop_print;
+	if (event->funcs->raw == NULL)
+		event->funcs->raw = trace_nop_print;
+	if (event->funcs->hex == NULL)
+		event->funcs->hex = trace_nop_print;
+	if (event->funcs->binary == NULL)
+		event->funcs->binary = trace_nop_print;
 
 	key = event->type & (EVENT_HASHSIZE - 1);
 
@@ -804,143 +803,143 @@ lat_prपूर्णांक_बारtamp(काष्ठा trace_iterator *
 
 	ret = event->type;
  out:
-	up_ग_लिखो(&trace_event_sem);
+	up_write(&trace_event_sem);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(रेजिस्टर_trace_event);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(register_trace_event);
 
 /*
- * Used by module code with the trace_event_sem held क्रम ग_लिखो.
+ * Used by module code with the trace_event_sem held for write.
  */
-पूर्णांक __unरेजिस्टर_trace_event(काष्ठा trace_event *event)
-अणु
+int __unregister_trace_event(struct trace_event *event)
+{
 	hlist_del(&event->node);
 	list_del(&event->list);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * unरेजिस्टर_trace_event - हटाओ a no दीर्घer used event
- * @event: the event to हटाओ
+ * unregister_trace_event - remove a no longer used event
+ * @event: the event to remove
  */
-पूर्णांक unरेजिस्टर_trace_event(काष्ठा trace_event *event)
-अणु
-	करोwn_ग_लिखो(&trace_event_sem);
-	__unरेजिस्टर_trace_event(event);
-	up_ग_लिखो(&trace_event_sem);
+int unregister_trace_event(struct trace_event *event)
+{
+	down_write(&trace_event_sem);
+	__unregister_trace_event(event);
+	up_write(&trace_event_sem);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(unरेजिस्टर_trace_event);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(unregister_trace_event);
 
 /*
  * Standard events
  */
 
-क्रमागत prपूर्णांक_line_t trace_nop_prपूर्णांक(काष्ठा trace_iterator *iter, पूर्णांक flags,
-				  काष्ठा trace_event *event)
-अणु
-	trace_seq_म_लिखो(&iter->seq, "type: %d\n", iter->ent->type);
+enum print_line_t trace_nop_print(struct trace_iterator *iter, int flags,
+				  struct trace_event *event)
+{
+	trace_seq_printf(&iter->seq, "type: %d\n", iter->ent->type);
 
-	वापस trace_handle_वापस(&iter->seq);
-पूर्ण
+	return trace_handle_return(&iter->seq);
+}
 
-अटल व्योम prपूर्णांक_fn_trace(काष्ठा trace_seq *s, अचिन्हित दीर्घ ip,
-			   अचिन्हित दीर्घ parent_ip, पूर्णांक flags)
-अणु
-	seq_prपूर्णांक_ip_sym(s, ip, flags);
+static void print_fn_trace(struct trace_seq *s, unsigned long ip,
+			   unsigned long parent_ip, int flags)
+{
+	seq_print_ip_sym(s, ip, flags);
 
-	अगर ((flags & TRACE_ITER_PRINT_PARENT) && parent_ip) अणु
-		trace_seq_माला_दो(s, " <-");
-		seq_prपूर्णांक_ip_sym(s, parent_ip, flags);
-	पूर्ण
-पूर्ण
+	if ((flags & TRACE_ITER_PRINT_PARENT) && parent_ip) {
+		trace_seq_puts(s, " <-");
+		seq_print_ip_sym(s, parent_ip, flags);
+	}
+}
 
 /* TRACE_FN */
-अटल क्रमागत prपूर्णांक_line_t trace_fn_trace(काष्ठा trace_iterator *iter, पूर्णांक flags,
-					काष्ठा trace_event *event)
-अणु
-	काष्ठा ftrace_entry *field;
-	काष्ठा trace_seq *s = &iter->seq;
+static enum print_line_t trace_fn_trace(struct trace_iterator *iter, int flags,
+					struct trace_event *event)
+{
+	struct ftrace_entry *field;
+	struct trace_seq *s = &iter->seq;
 
 	trace_assign_type(field, iter->ent);
 
-	prपूर्णांक_fn_trace(s, field->ip, field->parent_ip, flags);
-	trace_seq_अ_दो(s, '\n');
+	print_fn_trace(s, field->ip, field->parent_ip, flags);
+	trace_seq_putc(s, '\n');
 
-	वापस trace_handle_वापस(s);
-पूर्ण
+	return trace_handle_return(s);
+}
 
-अटल क्रमागत prपूर्णांक_line_t trace_fn_raw(काष्ठा trace_iterator *iter, पूर्णांक flags,
-				      काष्ठा trace_event *event)
-अणु
-	काष्ठा ftrace_entry *field;
+static enum print_line_t trace_fn_raw(struct trace_iterator *iter, int flags,
+				      struct trace_event *event)
+{
+	struct ftrace_entry *field;
 
 	trace_assign_type(field, iter->ent);
 
-	trace_seq_म_लिखो(&iter->seq, "%lx %lx\n",
+	trace_seq_printf(&iter->seq, "%lx %lx\n",
 			 field->ip,
 			 field->parent_ip);
 
-	वापस trace_handle_वापस(&iter->seq);
-पूर्ण
+	return trace_handle_return(&iter->seq);
+}
 
-अटल क्रमागत prपूर्णांक_line_t trace_fn_hex(काष्ठा trace_iterator *iter, पूर्णांक flags,
-				      काष्ठा trace_event *event)
-अणु
-	काष्ठा ftrace_entry *field;
-	काष्ठा trace_seq *s = &iter->seq;
+static enum print_line_t trace_fn_hex(struct trace_iterator *iter, int flags,
+				      struct trace_event *event)
+{
+	struct ftrace_entry *field;
+	struct trace_seq *s = &iter->seq;
 
 	trace_assign_type(field, iter->ent);
 
 	SEQ_PUT_HEX_FIELD(s, field->ip);
 	SEQ_PUT_HEX_FIELD(s, field->parent_ip);
 
-	वापस trace_handle_वापस(s);
-पूर्ण
+	return trace_handle_return(s);
+}
 
-अटल क्रमागत prपूर्णांक_line_t trace_fn_bin(काष्ठा trace_iterator *iter, पूर्णांक flags,
-				      काष्ठा trace_event *event)
-अणु
-	काष्ठा ftrace_entry *field;
-	काष्ठा trace_seq *s = &iter->seq;
+static enum print_line_t trace_fn_bin(struct trace_iterator *iter, int flags,
+				      struct trace_event *event)
+{
+	struct ftrace_entry *field;
+	struct trace_seq *s = &iter->seq;
 
 	trace_assign_type(field, iter->ent);
 
 	SEQ_PUT_FIELD(s, field->ip);
 	SEQ_PUT_FIELD(s, field->parent_ip);
 
-	वापस trace_handle_वापस(s);
-पूर्ण
+	return trace_handle_return(s);
+}
 
-अटल काष्ठा trace_event_functions trace_fn_funcs = अणु
+static struct trace_event_functions trace_fn_funcs = {
 	.trace		= trace_fn_trace,
 	.raw		= trace_fn_raw,
 	.hex		= trace_fn_hex,
 	.binary		= trace_fn_bin,
-पूर्ण;
+};
 
-अटल काष्ठा trace_event trace_fn_event = अणु
+static struct trace_event trace_fn_event = {
 	.type		= TRACE_FN,
 	.funcs		= &trace_fn_funcs,
-पूर्ण;
+};
 
 /* TRACE_CTX an TRACE_WAKE */
-अटल क्रमागत prपूर्णांक_line_t trace_ctxwake_prपूर्णांक(काष्ठा trace_iterator *iter,
-					     अक्षर *delim)
-अणु
-	काष्ठा ctx_चयन_entry *field;
-	अक्षर comm[TASK_COMM_LEN];
-	पूर्णांक S, T;
+static enum print_line_t trace_ctxwake_print(struct trace_iterator *iter,
+					     char *delim)
+{
+	struct ctx_switch_entry *field;
+	char comm[TASK_COMM_LEN];
+	int S, T;
 
 
 	trace_assign_type(field, iter->ent);
 
-	T = task_index_to_अक्षर(field->next_state);
-	S = task_index_to_अक्षर(field->prev_state);
+	T = task_index_to_char(field->next_state);
+	S = task_index_to_char(field->prev_state);
 	trace_find_cmdline(field->next_pid, comm);
-	trace_seq_म_लिखो(&iter->seq,
+	trace_seq_printf(&iter->seq,
 			 " %7d:%3d:%c %s [%03d] %7d:%3d:%c %s\n",
 			 field->prev_pid,
 			 field->prev_prio,
@@ -950,32 +949,32 @@ EXPORT_SYMBOL_GPL(unरेजिस्टर_trace_event);
 			 field->next_prio,
 			 T, comm);
 
-	वापस trace_handle_वापस(&iter->seq);
-पूर्ण
+	return trace_handle_return(&iter->seq);
+}
 
-अटल क्रमागत prपूर्णांक_line_t trace_ctx_prपूर्णांक(काष्ठा trace_iterator *iter, पूर्णांक flags,
-					 काष्ठा trace_event *event)
-अणु
-	वापस trace_ctxwake_prपूर्णांक(iter, "==>");
-पूर्ण
+static enum print_line_t trace_ctx_print(struct trace_iterator *iter, int flags,
+					 struct trace_event *event)
+{
+	return trace_ctxwake_print(iter, "==>");
+}
 
-अटल क्रमागत prपूर्णांक_line_t trace_wake_prपूर्णांक(काष्ठा trace_iterator *iter,
-					  पूर्णांक flags, काष्ठा trace_event *event)
-अणु
-	वापस trace_ctxwake_prपूर्णांक(iter, "  +");
-पूर्ण
+static enum print_line_t trace_wake_print(struct trace_iterator *iter,
+					  int flags, struct trace_event *event)
+{
+	return trace_ctxwake_print(iter, "  +");
+}
 
-अटल पूर्णांक trace_ctxwake_raw(काष्ठा trace_iterator *iter, अक्षर S)
-अणु
-	काष्ठा ctx_चयन_entry *field;
-	पूर्णांक T;
+static int trace_ctxwake_raw(struct trace_iterator *iter, char S)
+{
+	struct ctx_switch_entry *field;
+	int T;
 
 	trace_assign_type(field, iter->ent);
 
-	अगर (!S)
-		S = task_index_to_अक्षर(field->prev_state);
-	T = task_index_to_अक्षर(field->next_state);
-	trace_seq_म_लिखो(&iter->seq, "%d %d %c %d %d %d %c\n",
+	if (!S)
+		S = task_index_to_char(field->prev_state);
+	T = task_index_to_char(field->next_state);
+	trace_seq_printf(&iter->seq, "%d %d %c %d %d %d %c\n",
 			 field->prev_pid,
 			 field->prev_prio,
 			 S,
@@ -984,33 +983,33 @@ EXPORT_SYMBOL_GPL(unरेजिस्टर_trace_event);
 			 field->next_prio,
 			 T);
 
-	वापस trace_handle_वापस(&iter->seq);
-पूर्ण
+	return trace_handle_return(&iter->seq);
+}
 
-अटल क्रमागत prपूर्णांक_line_t trace_ctx_raw(काष्ठा trace_iterator *iter, पूर्णांक flags,
-				       काष्ठा trace_event *event)
-अणु
-	वापस trace_ctxwake_raw(iter, 0);
-पूर्ण
+static enum print_line_t trace_ctx_raw(struct trace_iterator *iter, int flags,
+				       struct trace_event *event)
+{
+	return trace_ctxwake_raw(iter, 0);
+}
 
-अटल क्रमागत prपूर्णांक_line_t trace_wake_raw(काष्ठा trace_iterator *iter, पूर्णांक flags,
-					काष्ठा trace_event *event)
-अणु
-	वापस trace_ctxwake_raw(iter, '+');
-पूर्ण
+static enum print_line_t trace_wake_raw(struct trace_iterator *iter, int flags,
+					struct trace_event *event)
+{
+	return trace_ctxwake_raw(iter, '+');
+}
 
 
-अटल पूर्णांक trace_ctxwake_hex(काष्ठा trace_iterator *iter, अक्षर S)
-अणु
-	काष्ठा ctx_चयन_entry *field;
-	काष्ठा trace_seq *s = &iter->seq;
-	पूर्णांक T;
+static int trace_ctxwake_hex(struct trace_iterator *iter, char S)
+{
+	struct ctx_switch_entry *field;
+	struct trace_seq *s = &iter->seq;
+	int T;
 
 	trace_assign_type(field, iter->ent);
 
-	अगर (!S)
-		S = task_index_to_अक्षर(field->prev_state);
-	T = task_index_to_अक्षर(field->next_state);
+	if (!S)
+		S = task_index_to_char(field->prev_state);
+	T = task_index_to_char(field->next_state);
 
 	SEQ_PUT_HEX_FIELD(s, field->prev_pid);
 	SEQ_PUT_HEX_FIELD(s, field->prev_prio);
@@ -1020,26 +1019,26 @@ EXPORT_SYMBOL_GPL(unरेजिस्टर_trace_event);
 	SEQ_PUT_HEX_FIELD(s, field->next_prio);
 	SEQ_PUT_HEX_FIELD(s, T);
 
-	वापस trace_handle_वापस(s);
-पूर्ण
+	return trace_handle_return(s);
+}
 
-अटल क्रमागत prपूर्णांक_line_t trace_ctx_hex(काष्ठा trace_iterator *iter, पूर्णांक flags,
-				       काष्ठा trace_event *event)
-अणु
-	वापस trace_ctxwake_hex(iter, 0);
-पूर्ण
+static enum print_line_t trace_ctx_hex(struct trace_iterator *iter, int flags,
+				       struct trace_event *event)
+{
+	return trace_ctxwake_hex(iter, 0);
+}
 
-अटल क्रमागत prपूर्णांक_line_t trace_wake_hex(काष्ठा trace_iterator *iter, पूर्णांक flags,
-					काष्ठा trace_event *event)
-अणु
-	वापस trace_ctxwake_hex(iter, '+');
-पूर्ण
+static enum print_line_t trace_wake_hex(struct trace_iterator *iter, int flags,
+					struct trace_event *event)
+{
+	return trace_ctxwake_hex(iter, '+');
+}
 
-अटल क्रमागत prपूर्णांक_line_t trace_ctxwake_bin(काष्ठा trace_iterator *iter,
-					   पूर्णांक flags, काष्ठा trace_event *event)
-अणु
-	काष्ठा ctx_चयन_entry *field;
-	काष्ठा trace_seq *s = &iter->seq;
+static enum print_line_t trace_ctxwake_bin(struct trace_iterator *iter,
+					   int flags, struct trace_event *event)
+{
+	struct ctx_switch_entry *field;
+	struct trace_seq *s = &iter->seq;
 
 	trace_assign_type(field, iter->ent);
 
@@ -1051,419 +1050,419 @@ EXPORT_SYMBOL_GPL(unरेजिस्टर_trace_event);
 	SEQ_PUT_FIELD(s, field->next_prio);
 	SEQ_PUT_FIELD(s, field->next_state);
 
-	वापस trace_handle_वापस(s);
-पूर्ण
+	return trace_handle_return(s);
+}
 
-अटल काष्ठा trace_event_functions trace_ctx_funcs = अणु
-	.trace		= trace_ctx_prपूर्णांक,
+static struct trace_event_functions trace_ctx_funcs = {
+	.trace		= trace_ctx_print,
 	.raw		= trace_ctx_raw,
 	.hex		= trace_ctx_hex,
 	.binary		= trace_ctxwake_bin,
-पूर्ण;
+};
 
-अटल काष्ठा trace_event trace_ctx_event = अणु
+static struct trace_event trace_ctx_event = {
 	.type		= TRACE_CTX,
 	.funcs		= &trace_ctx_funcs,
-पूर्ण;
+};
 
-अटल काष्ठा trace_event_functions trace_wake_funcs = अणु
-	.trace		= trace_wake_prपूर्णांक,
+static struct trace_event_functions trace_wake_funcs = {
+	.trace		= trace_wake_print,
 	.raw		= trace_wake_raw,
 	.hex		= trace_wake_hex,
 	.binary		= trace_ctxwake_bin,
-पूर्ण;
+};
 
-अटल काष्ठा trace_event trace_wake_event = अणु
+static struct trace_event trace_wake_event = {
 	.type		= TRACE_WAKE,
 	.funcs		= &trace_wake_funcs,
-पूर्ण;
+};
 
 /* TRACE_STACK */
 
-अटल क्रमागत prपूर्णांक_line_t trace_stack_prपूर्णांक(काष्ठा trace_iterator *iter,
-					   पूर्णांक flags, काष्ठा trace_event *event)
-अणु
-	काष्ठा stack_entry *field;
-	काष्ठा trace_seq *s = &iter->seq;
-	अचिन्हित दीर्घ *p;
-	अचिन्हित दीर्घ *end;
+static enum print_line_t trace_stack_print(struct trace_iterator *iter,
+					   int flags, struct trace_event *event)
+{
+	struct stack_entry *field;
+	struct trace_seq *s = &iter->seq;
+	unsigned long *p;
+	unsigned long *end;
 
 	trace_assign_type(field, iter->ent);
-	end = (अचिन्हित दीर्घ *)((दीर्घ)iter->ent + iter->ent_size);
+	end = (unsigned long *)((long)iter->ent + iter->ent_size);
 
-	trace_seq_माला_दो(s, "<stack trace>\n");
+	trace_seq_puts(s, "<stack trace>\n");
 
-	क्रम (p = field->caller; p && p < end && *p != अच_दीर्घ_उच्च; p++) अणु
+	for (p = field->caller; p && p < end && *p != ULONG_MAX; p++) {
 
-		अगर (trace_seq_has_overflowed(s))
-			अवरोध;
+		if (trace_seq_has_overflowed(s))
+			break;
 
-		trace_seq_माला_दो(s, " => ");
-		seq_prपूर्णांक_ip_sym(s, *p, flags);
-		trace_seq_अ_दो(s, '\n');
-	पूर्ण
+		trace_seq_puts(s, " => ");
+		seq_print_ip_sym(s, *p, flags);
+		trace_seq_putc(s, '\n');
+	}
 
-	वापस trace_handle_वापस(s);
-पूर्ण
+	return trace_handle_return(s);
+}
 
-अटल काष्ठा trace_event_functions trace_stack_funcs = अणु
-	.trace		= trace_stack_prपूर्णांक,
-पूर्ण;
+static struct trace_event_functions trace_stack_funcs = {
+	.trace		= trace_stack_print,
+};
 
-अटल काष्ठा trace_event trace_stack_event = अणु
+static struct trace_event trace_stack_event = {
 	.type		= TRACE_STACK,
 	.funcs		= &trace_stack_funcs,
-पूर्ण;
+};
 
 /* TRACE_USER_STACK */
-अटल क्रमागत prपूर्णांक_line_t trace_user_stack_prपूर्णांक(काष्ठा trace_iterator *iter,
-						पूर्णांक flags, काष्ठा trace_event *event)
-अणु
-	काष्ठा trace_array *tr = iter->tr;
-	काष्ठा userstack_entry *field;
-	काष्ठा trace_seq *s = &iter->seq;
-	काष्ठा mm_काष्ठा *mm = शून्य;
-	अचिन्हित पूर्णांक i;
+static enum print_line_t trace_user_stack_print(struct trace_iterator *iter,
+						int flags, struct trace_event *event)
+{
+	struct trace_array *tr = iter->tr;
+	struct userstack_entry *field;
+	struct trace_seq *s = &iter->seq;
+	struct mm_struct *mm = NULL;
+	unsigned int i;
 
 	trace_assign_type(field, iter->ent);
 
-	trace_seq_माला_दो(s, "<user stack trace>\n");
+	trace_seq_puts(s, "<user stack trace>\n");
 
-	अगर (tr->trace_flags & TRACE_ITER_SYM_USEROBJ) अणु
-		काष्ठा task_काष्ठा *task;
+	if (tr->trace_flags & TRACE_ITER_SYM_USEROBJ) {
+		struct task_struct *task;
 		/*
-		 * we करो the lookup on the thपढ़ो group leader,
-		 * since inभागidual thपढ़ोs might have alपढ़ोy quit!
+		 * we do the lookup on the thread group leader,
+		 * since individual threads might have already quit!
 		 */
-		rcu_पढ़ो_lock();
+		rcu_read_lock();
 		task = find_task_by_vpid(field->tgid);
-		अगर (task)
+		if (task)
 			mm = get_task_mm(task);
-		rcu_पढ़ो_unlock();
-	पूर्ण
+		rcu_read_unlock();
+	}
 
-	क्रम (i = 0; i < FTRACE_STACK_ENTRIES; i++) अणु
-		अचिन्हित दीर्घ ip = field->caller[i];
+	for (i = 0; i < FTRACE_STACK_ENTRIES; i++) {
+		unsigned long ip = field->caller[i];
 
-		अगर (!ip || trace_seq_has_overflowed(s))
-			अवरोध;
+		if (!ip || trace_seq_has_overflowed(s))
+			break;
 
-		trace_seq_माला_दो(s, " => ");
-		seq_prपूर्णांक_user_ip(s, mm, ip, flags);
-		trace_seq_अ_दो(s, '\n');
-	पूर्ण
+		trace_seq_puts(s, " => ");
+		seq_print_user_ip(s, mm, ip, flags);
+		trace_seq_putc(s, '\n');
+	}
 
-	अगर (mm)
+	if (mm)
 		mmput(mm);
 
-	वापस trace_handle_वापस(s);
-पूर्ण
+	return trace_handle_return(s);
+}
 
-अटल काष्ठा trace_event_functions trace_user_stack_funcs = अणु
-	.trace		= trace_user_stack_prपूर्णांक,
-पूर्ण;
+static struct trace_event_functions trace_user_stack_funcs = {
+	.trace		= trace_user_stack_print,
+};
 
-अटल काष्ठा trace_event trace_user_stack_event = अणु
+static struct trace_event trace_user_stack_event = {
 	.type		= TRACE_USER_STACK,
 	.funcs		= &trace_user_stack_funcs,
-पूर्ण;
+};
 
 /* TRACE_HWLAT */
-अटल क्रमागत prपूर्णांक_line_t
-trace_hwlat_prपूर्णांक(काष्ठा trace_iterator *iter, पूर्णांक flags,
-		  काष्ठा trace_event *event)
-अणु
-	काष्ठा trace_entry *entry = iter->ent;
-	काष्ठा trace_seq *s = &iter->seq;
-	काष्ठा hwlat_entry *field;
+static enum print_line_t
+trace_hwlat_print(struct trace_iterator *iter, int flags,
+		  struct trace_event *event)
+{
+	struct trace_entry *entry = iter->ent;
+	struct trace_seq *s = &iter->seq;
+	struct hwlat_entry *field;
 
 	trace_assign_type(field, entry);
 
-	trace_seq_म_लिखो(s, "#%-5u inner/outer(us): %4llu/%-5llu ts:%lld.%09ld count:%d",
+	trace_seq_printf(s, "#%-5u inner/outer(us): %4llu/%-5llu ts:%lld.%09ld count:%d",
 			 field->seqnum,
 			 field->duration,
 			 field->outer_duration,
-			 (दीर्घ दीर्घ)field->बारtamp.tv_sec,
-			 field->बारtamp.tv_nsec, field->count);
+			 (long long)field->timestamp.tv_sec,
+			 field->timestamp.tv_nsec, field->count);
 
-	अगर (field->nmi_count) अणु
+	if (field->nmi_count) {
 		/*
-		 * The generic sched_घड़ी() is not NMI safe, thus
-		 * we only record the count and not the समय.
+		 * The generic sched_clock() is not NMI safe, thus
+		 * we only record the count and not the time.
 		 */
-		अगर (!IS_ENABLED(CONFIG_GENERIC_SCHED_CLOCK))
-			trace_seq_म_लिखो(s, " nmi-total:%llu",
+		if (!IS_ENABLED(CONFIG_GENERIC_SCHED_CLOCK))
+			trace_seq_printf(s, " nmi-total:%llu",
 					 field->nmi_total_ts);
-		trace_seq_म_लिखो(s, " nmi-count:%u",
+		trace_seq_printf(s, " nmi-count:%u",
 				 field->nmi_count);
-	पूर्ण
+	}
 
-	trace_seq_अ_दो(s, '\n');
+	trace_seq_putc(s, '\n');
 
-	वापस trace_handle_वापस(s);
-पूर्ण
+	return trace_handle_return(s);
+}
 
 
-अटल क्रमागत prपूर्णांक_line_t
-trace_hwlat_raw(काष्ठा trace_iterator *iter, पूर्णांक flags,
-		काष्ठा trace_event *event)
-अणु
-	काष्ठा hwlat_entry *field;
-	काष्ठा trace_seq *s = &iter->seq;
+static enum print_line_t
+trace_hwlat_raw(struct trace_iterator *iter, int flags,
+		struct trace_event *event)
+{
+	struct hwlat_entry *field;
+	struct trace_seq *s = &iter->seq;
 
 	trace_assign_type(field, iter->ent);
 
-	trace_seq_म_लिखो(s, "%llu %lld %lld %09ld %u\n",
+	trace_seq_printf(s, "%llu %lld %lld %09ld %u\n",
 			 field->duration,
 			 field->outer_duration,
-			 (दीर्घ दीर्घ)field->बारtamp.tv_sec,
-			 field->बारtamp.tv_nsec,
+			 (long long)field->timestamp.tv_sec,
+			 field->timestamp.tv_nsec,
 			 field->seqnum);
 
-	वापस trace_handle_वापस(s);
-पूर्ण
+	return trace_handle_return(s);
+}
 
-अटल काष्ठा trace_event_functions trace_hwlat_funcs = अणु
-	.trace		= trace_hwlat_prपूर्णांक,
+static struct trace_event_functions trace_hwlat_funcs = {
+	.trace		= trace_hwlat_print,
 	.raw		= trace_hwlat_raw,
-पूर्ण;
+};
 
-अटल काष्ठा trace_event trace_hwlat_event = अणु
+static struct trace_event trace_hwlat_event = {
 	.type		= TRACE_HWLAT,
 	.funcs		= &trace_hwlat_funcs,
-पूर्ण;
+};
 
 /* TRACE_BPUTS */
-अटल क्रमागत prपूर्णांक_line_t
-trace_bमाला_दो_prपूर्णांक(काष्ठा trace_iterator *iter, पूर्णांक flags,
-		   काष्ठा trace_event *event)
-अणु
-	काष्ठा trace_entry *entry = iter->ent;
-	काष्ठा trace_seq *s = &iter->seq;
-	काष्ठा bमाला_दो_entry *field;
+static enum print_line_t
+trace_bputs_print(struct trace_iterator *iter, int flags,
+		   struct trace_event *event)
+{
+	struct trace_entry *entry = iter->ent;
+	struct trace_seq *s = &iter->seq;
+	struct bputs_entry *field;
 
 	trace_assign_type(field, entry);
 
-	seq_prपूर्णांक_ip_sym(s, field->ip, flags);
-	trace_seq_माला_दो(s, ": ");
-	trace_seq_माला_दो(s, field->str);
+	seq_print_ip_sym(s, field->ip, flags);
+	trace_seq_puts(s, ": ");
+	trace_seq_puts(s, field->str);
 
-	वापस trace_handle_वापस(s);
-पूर्ण
+	return trace_handle_return(s);
+}
 
 
-अटल क्रमागत prपूर्णांक_line_t
-trace_bमाला_दो_raw(काष्ठा trace_iterator *iter, पूर्णांक flags,
-		काष्ठा trace_event *event)
-अणु
-	काष्ठा bमाला_दो_entry *field;
-	काष्ठा trace_seq *s = &iter->seq;
+static enum print_line_t
+trace_bputs_raw(struct trace_iterator *iter, int flags,
+		struct trace_event *event)
+{
+	struct bputs_entry *field;
+	struct trace_seq *s = &iter->seq;
 
 	trace_assign_type(field, iter->ent);
 
-	trace_seq_म_लिखो(s, ": %lx : ", field->ip);
-	trace_seq_माला_दो(s, field->str);
+	trace_seq_printf(s, ": %lx : ", field->ip);
+	trace_seq_puts(s, field->str);
 
-	वापस trace_handle_वापस(s);
-पूर्ण
+	return trace_handle_return(s);
+}
 
-अटल काष्ठा trace_event_functions trace_bमाला_दो_funcs = अणु
-	.trace		= trace_bमाला_दो_prपूर्णांक,
-	.raw		= trace_bमाला_दो_raw,
-पूर्ण;
+static struct trace_event_functions trace_bputs_funcs = {
+	.trace		= trace_bputs_print,
+	.raw		= trace_bputs_raw,
+};
 
-अटल काष्ठा trace_event trace_bमाला_दो_event = अणु
+static struct trace_event trace_bputs_event = {
 	.type		= TRACE_BPUTS,
-	.funcs		= &trace_bमाला_दो_funcs,
-पूर्ण;
+	.funcs		= &trace_bputs_funcs,
+};
 
 /* TRACE_BPRINT */
-अटल क्रमागत prपूर्णांक_line_t
-trace_bprपूर्णांक_prपूर्णांक(काष्ठा trace_iterator *iter, पूर्णांक flags,
-		   काष्ठा trace_event *event)
-अणु
-	काष्ठा trace_entry *entry = iter->ent;
-	काष्ठा trace_seq *s = &iter->seq;
-	काष्ठा bprपूर्णांक_entry *field;
+static enum print_line_t
+trace_bprint_print(struct trace_iterator *iter, int flags,
+		   struct trace_event *event)
+{
+	struct trace_entry *entry = iter->ent;
+	struct trace_seq *s = &iter->seq;
+	struct bprint_entry *field;
 
 	trace_assign_type(field, entry);
 
-	seq_prपूर्णांक_ip_sym(s, field->ip, flags);
-	trace_seq_माला_दो(s, ": ");
-	trace_seq_bम_लिखो(s, field->fmt, field->buf);
+	seq_print_ip_sym(s, field->ip, flags);
+	trace_seq_puts(s, ": ");
+	trace_seq_bprintf(s, field->fmt, field->buf);
 
-	वापस trace_handle_वापस(s);
-पूर्ण
+	return trace_handle_return(s);
+}
 
 
-अटल क्रमागत prपूर्णांक_line_t
-trace_bprपूर्णांक_raw(काष्ठा trace_iterator *iter, पूर्णांक flags,
-		 काष्ठा trace_event *event)
-अणु
-	काष्ठा bprपूर्णांक_entry *field;
-	काष्ठा trace_seq *s = &iter->seq;
+static enum print_line_t
+trace_bprint_raw(struct trace_iterator *iter, int flags,
+		 struct trace_event *event)
+{
+	struct bprint_entry *field;
+	struct trace_seq *s = &iter->seq;
 
 	trace_assign_type(field, iter->ent);
 
-	trace_seq_म_लिखो(s, ": %lx : ", field->ip);
-	trace_seq_bम_लिखो(s, field->fmt, field->buf);
+	trace_seq_printf(s, ": %lx : ", field->ip);
+	trace_seq_bprintf(s, field->fmt, field->buf);
 
-	वापस trace_handle_वापस(s);
-पूर्ण
+	return trace_handle_return(s);
+}
 
-अटल काष्ठा trace_event_functions trace_bprपूर्णांक_funcs = अणु
-	.trace		= trace_bprपूर्णांक_prपूर्णांक,
-	.raw		= trace_bprपूर्णांक_raw,
-पूर्ण;
+static struct trace_event_functions trace_bprint_funcs = {
+	.trace		= trace_bprint_print,
+	.raw		= trace_bprint_raw,
+};
 
-अटल काष्ठा trace_event trace_bprपूर्णांक_event = अणु
+static struct trace_event trace_bprint_event = {
 	.type		= TRACE_BPRINT,
-	.funcs		= &trace_bprपूर्णांक_funcs,
-पूर्ण;
+	.funcs		= &trace_bprint_funcs,
+};
 
 /* TRACE_PRINT */
-अटल क्रमागत prपूर्णांक_line_t trace_prपूर्णांक_prपूर्णांक(काष्ठा trace_iterator *iter,
-					   पूर्णांक flags, काष्ठा trace_event *event)
-अणु
-	काष्ठा prपूर्णांक_entry *field;
-	काष्ठा trace_seq *s = &iter->seq;
+static enum print_line_t trace_print_print(struct trace_iterator *iter,
+					   int flags, struct trace_event *event)
+{
+	struct print_entry *field;
+	struct trace_seq *s = &iter->seq;
 
 	trace_assign_type(field, iter->ent);
 
-	seq_prपूर्णांक_ip_sym(s, field->ip, flags);
-	trace_seq_म_लिखो(s, ": %s", field->buf);
+	seq_print_ip_sym(s, field->ip, flags);
+	trace_seq_printf(s, ": %s", field->buf);
 
-	वापस trace_handle_वापस(s);
-पूर्ण
+	return trace_handle_return(s);
+}
 
-अटल क्रमागत prपूर्णांक_line_t trace_prपूर्णांक_raw(काष्ठा trace_iterator *iter, पूर्णांक flags,
-					 काष्ठा trace_event *event)
-अणु
-	काष्ठा prपूर्णांक_entry *field;
+static enum print_line_t trace_print_raw(struct trace_iterator *iter, int flags,
+					 struct trace_event *event)
+{
+	struct print_entry *field;
 
 	trace_assign_type(field, iter->ent);
 
-	trace_seq_म_लिखो(&iter->seq, "# %lx %s", field->ip, field->buf);
+	trace_seq_printf(&iter->seq, "# %lx %s", field->ip, field->buf);
 
-	वापस trace_handle_वापस(&iter->seq);
-पूर्ण
+	return trace_handle_return(&iter->seq);
+}
 
-अटल काष्ठा trace_event_functions trace_prपूर्णांक_funcs = अणु
-	.trace		= trace_prपूर्णांक_prपूर्णांक,
-	.raw		= trace_prपूर्णांक_raw,
-पूर्ण;
+static struct trace_event_functions trace_print_funcs = {
+	.trace		= trace_print_print,
+	.raw		= trace_print_raw,
+};
 
-अटल काष्ठा trace_event trace_prपूर्णांक_event = अणु
+static struct trace_event trace_print_event = {
 	.type	 	= TRACE_PRINT,
-	.funcs		= &trace_prपूर्णांक_funcs,
-पूर्ण;
+	.funcs		= &trace_print_funcs,
+};
 
-अटल क्रमागत prपूर्णांक_line_t trace_raw_data(काष्ठा trace_iterator *iter, पूर्णांक flags,
-					 काष्ठा trace_event *event)
-अणु
-	काष्ठा raw_data_entry *field;
-	पूर्णांक i;
+static enum print_line_t trace_raw_data(struct trace_iterator *iter, int flags,
+					 struct trace_event *event)
+{
+	struct raw_data_entry *field;
+	int i;
 
 	trace_assign_type(field, iter->ent);
 
-	trace_seq_म_लिखो(&iter->seq, "# %x buf:", field->id);
+	trace_seq_printf(&iter->seq, "# %x buf:", field->id);
 
-	क्रम (i = 0; i < iter->ent_size - दुरत्व(काष्ठा raw_data_entry, buf); i++)
-		trace_seq_म_लिखो(&iter->seq, " %02x",
-				 (अचिन्हित अक्षर)field->buf[i]);
+	for (i = 0; i < iter->ent_size - offsetof(struct raw_data_entry, buf); i++)
+		trace_seq_printf(&iter->seq, " %02x",
+				 (unsigned char)field->buf[i]);
 
-	trace_seq_अ_दो(&iter->seq, '\n');
+	trace_seq_putc(&iter->seq, '\n');
 
-	वापस trace_handle_वापस(&iter->seq);
-पूर्ण
+	return trace_handle_return(&iter->seq);
+}
 
-अटल काष्ठा trace_event_functions trace_raw_data_funcs = अणु
+static struct trace_event_functions trace_raw_data_funcs = {
 	.trace		= trace_raw_data,
 	.raw		= trace_raw_data,
-पूर्ण;
+};
 
-अटल काष्ठा trace_event trace_raw_data_event = अणु
+static struct trace_event trace_raw_data_event = {
 	.type	 	= TRACE_RAW_DATA,
 	.funcs		= &trace_raw_data_funcs,
-पूर्ण;
+};
 
-अटल क्रमागत prपूर्णांक_line_t
-trace_func_repeats_raw(काष्ठा trace_iterator *iter, पूर्णांक flags,
-			 काष्ठा trace_event *event)
-अणु
-	काष्ठा func_repeats_entry *field;
-	काष्ठा trace_seq *s = &iter->seq;
+static enum print_line_t
+trace_func_repeats_raw(struct trace_iterator *iter, int flags,
+			 struct trace_event *event)
+{
+	struct func_repeats_entry *field;
+	struct trace_seq *s = &iter->seq;
 
 	trace_assign_type(field, iter->ent);
 
-	trace_seq_म_लिखो(s, "%lu %lu %u %llu\n",
+	trace_seq_printf(s, "%lu %lu %u %llu\n",
 			 field->ip,
 			 field->parent_ip,
 			 field->count,
 			 FUNC_REPEATS_GET_DELTA_TS(field));
 
-	वापस trace_handle_वापस(s);
-पूर्ण
+	return trace_handle_return(s);
+}
 
-अटल क्रमागत prपूर्णांक_line_t
-trace_func_repeats_prपूर्णांक(काष्ठा trace_iterator *iter, पूर्णांक flags,
-			 काष्ठा trace_event *event)
-अणु
-	काष्ठा func_repeats_entry *field;
-	काष्ठा trace_seq *s = &iter->seq;
+static enum print_line_t
+trace_func_repeats_print(struct trace_iterator *iter, int flags,
+			 struct trace_event *event)
+{
+	struct func_repeats_entry *field;
+	struct trace_seq *s = &iter->seq;
 
 	trace_assign_type(field, iter->ent);
 
-	prपूर्णांक_fn_trace(s, field->ip, field->parent_ip, flags);
-	trace_seq_म_लिखो(s, " (repeats: %u, last_ts:", field->count);
-	trace_prपूर्णांक_समय(s, iter,
+	print_fn_trace(s, field->ip, field->parent_ip, flags);
+	trace_seq_printf(s, " (repeats: %u, last_ts:", field->count);
+	trace_print_time(s, iter,
 			 iter->ts - FUNC_REPEATS_GET_DELTA_TS(field));
-	trace_seq_माला_दो(s, ")\n");
+	trace_seq_puts(s, ")\n");
 
-	वापस trace_handle_वापस(s);
-पूर्ण
+	return trace_handle_return(s);
+}
 
-अटल काष्ठा trace_event_functions trace_func_repeats_funcs = अणु
-	.trace		= trace_func_repeats_prपूर्णांक,
+static struct trace_event_functions trace_func_repeats_funcs = {
+	.trace		= trace_func_repeats_print,
 	.raw		= trace_func_repeats_raw,
-पूर्ण;
+};
 
-अटल काष्ठा trace_event trace_func_repeats_event = अणु
+static struct trace_event trace_func_repeats_event = {
 	.type	 	= TRACE_FUNC_REPEATS,
 	.funcs		= &trace_func_repeats_funcs,
-पूर्ण;
+};
 
-अटल काष्ठा trace_event *events[] __initdata = अणु
+static struct trace_event *events[] __initdata = {
 	&trace_fn_event,
 	&trace_ctx_event,
 	&trace_wake_event,
 	&trace_stack_event,
 	&trace_user_stack_event,
-	&trace_bमाला_दो_event,
-	&trace_bprपूर्णांक_event,
-	&trace_prपूर्णांक_event,
+	&trace_bputs_event,
+	&trace_bprint_event,
+	&trace_print_event,
 	&trace_hwlat_event,
 	&trace_raw_data_event,
 	&trace_func_repeats_event,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-__init अटल पूर्णांक init_events(व्योम)
-अणु
-	काष्ठा trace_event *event;
-	पूर्णांक i, ret;
+__init static int init_events(void)
+{
+	struct trace_event *event;
+	int i, ret;
 
-	क्रम (i = 0; events[i]; i++) अणु
+	for (i = 0; events[i]; i++) {
 		event = events[i];
 
-		ret = रेजिस्टर_trace_event(event);
-		अगर (!ret) अणु
-			prपूर्णांकk(KERN_WARNING "event %d failed to register\n",
+		ret = register_trace_event(event);
+		if (!ret) {
+			printk(KERN_WARNING "event %d failed to register\n",
 			       event->type);
 			WARN_ON_ONCE(1);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 early_initcall(init_events);

@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2008
  * Guennadi Liakhovetski, DENX Software Engineering, <lg@denx.de>
@@ -7,14 +6,14 @@
  * Copyright (C) 2005-2007 Freescale Semiconductor, Inc.
  */
 
-#अगर_अघोषित __LINUX_DMA_IPU_DMA_H
-#घोषणा __LINUX_DMA_IPU_DMA_H
+#ifndef __LINUX_DMA_IPU_DMA_H
+#define __LINUX_DMA_IPU_DMA_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/dmaengine.h>
+#include <linux/types.h>
+#include <linux/dmaengine.h>
 
 /* IPU DMA Controller channel definitions. */
-क्रमागत ipu_channel अणु
+enum ipu_channel {
 	IDMAC_IC_0 = 0,		/* IC (encoding task) to memory */
 	IDMAC_IC_1 = 1,		/* IC (viewfinder task) to memory */
 	IDMAC_ADC_0 = 1,
@@ -49,19 +48,19 @@
 	IDMAC_PF_5 = 29,
 	IDMAC_PF_6 = 30,
 	IDMAC_PF_7 = 31,
-पूर्ण;
+};
 
-/* Order signअगरicant! */
-क्रमागत ipu_channel_status अणु
+/* Order significant! */
+enum ipu_channel_status {
 	IPU_CHANNEL_FREE,
 	IPU_CHANNEL_INITIALIZED,
 	IPU_CHANNEL_READY,
 	IPU_CHANNEL_ENABLED,
-पूर्ण;
+};
 
-#घोषणा IPU_CHANNELS_NUM 32
+#define IPU_CHANNELS_NUM 32
 
-क्रमागत pixel_fmt अणु
+enum pixel_fmt {
 	/* 1 byte */
 	IPU_PIX_FMT_GENERIC,
 	IPU_PIX_FMT_RGB332,
@@ -85,19 +84,19 @@
 	IPU_PIX_FMT_ABGR32,
 	IPU_PIX_FMT_BGRA32,
 	IPU_PIX_FMT_RGBA32,
-पूर्ण;
+};
 
-क्रमागत ipu_color_space अणु
+enum ipu_color_space {
 	IPU_COLORSPACE_RGB,
 	IPU_COLORSPACE_YCBCR,
 	IPU_COLORSPACE_YUV
-पूर्ण;
+};
 
 /*
  * Enumeration of IPU rotation modes
  */
-क्रमागत ipu_rotate_mode अणु
-	/* Note the क्रमागत values correspond to BAM value */
+enum ipu_rotate_mode {
+	/* Note the enum values correspond to BAM value */
 	IPU_ROTATE_NONE = 0,
 	IPU_ROTATE_VERT_FLIP = 1,
 	IPU_ROTATE_HORIZ_FLIP = 2,
@@ -106,70 +105,70 @@
 	IPU_ROTATE_90_RIGHT_VFLIP = 5,
 	IPU_ROTATE_90_RIGHT_HFLIP = 6,
 	IPU_ROTATE_90_LEFT = 7,
-पूर्ण;
+};
 
 /*
- * Enumeration of DI ports क्रम ADC.
+ * Enumeration of DI ports for ADC.
  */
-क्रमागत display_port अणु
+enum display_port {
 	DISP0,
 	DISP1,
 	DISP2,
 	DISP3
-पूर्ण;
+};
 
-काष्ठा idmac_video_param अणु
-	अचिन्हित लघु		in_width;
-	अचिन्हित लघु		in_height;
-	uपूर्णांक32_t		in_pixel_fmt;
-	अचिन्हित लघु		out_width;
-	अचिन्हित लघु		out_height;
-	uपूर्णांक32_t		out_pixel_fmt;
-	अचिन्हित लघु		out_stride;
+struct idmac_video_param {
+	unsigned short		in_width;
+	unsigned short		in_height;
+	uint32_t		in_pixel_fmt;
+	unsigned short		out_width;
+	unsigned short		out_height;
+	uint32_t		out_pixel_fmt;
+	unsigned short		out_stride;
 	bool			graphics_combine_en;
 	bool			global_alpha_en;
 	bool			key_color_en;
-	क्रमागत display_port	disp;
-	अचिन्हित लघु		out_left;
-	अचिन्हित लघु		out_top;
-पूर्ण;
+	enum display_port	disp;
+	unsigned short		out_left;
+	unsigned short		out_top;
+};
 
 /*
- * Union of initialization parameters क्रम a logical channel. So far only video
+ * Union of initialization parameters for a logical channel. So far only video
  * parameters are used.
  */
-जोड़ ipu_channel_param अणु
-	काष्ठा idmac_video_param video;
-पूर्ण;
+union ipu_channel_param {
+	struct idmac_video_param video;
+};
 
-काष्ठा idmac_tx_desc अणु
-	काष्ठा dma_async_tx_descriptor	txd;
-	काष्ठा scatterlist		*sg;	/* scatterlist क्रम this */
-	अचिन्हित पूर्णांक			sg_len;	/* tx-descriptor. */
-	काष्ठा list_head		list;
-पूर्ण;
+struct idmac_tx_desc {
+	struct dma_async_tx_descriptor	txd;
+	struct scatterlist		*sg;	/* scatterlist for this */
+	unsigned int			sg_len;	/* tx-descriptor. */
+	struct list_head		list;
+};
 
-काष्ठा idmac_channel अणु
-	काष्ठा dma_chan		dma_chan;
+struct idmac_channel {
+	struct dma_chan		dma_chan;
 	dma_cookie_t		completed;	/* last completed cookie	   */
-	जोड़ ipu_channel_param	params;
-	क्रमागत ipu_channel	link;	/* input channel, linked to the output	   */
-	क्रमागत ipu_channel_status	status;
-	व्योम			*client;	/* Only one client per channel	   */
-	अचिन्हित पूर्णांक		n_tx_desc;
-	काष्ठा idmac_tx_desc	*desc;		/* allocated tx-descriptors	   */
-	काष्ठा scatterlist	*sg[2];	/* scatterlist elements in buffer-0 and -1 */
-	काष्ठा list_head	मुक्त_list;	/* मुक्त tx-descriptors		   */
-	काष्ठा list_head	queue;		/* queued tx-descriptors	   */
+	union ipu_channel_param	params;
+	enum ipu_channel	link;	/* input channel, linked to the output	   */
+	enum ipu_channel_status	status;
+	void			*client;	/* Only one client per channel	   */
+	unsigned int		n_tx_desc;
+	struct idmac_tx_desc	*desc;		/* allocated tx-descriptors	   */
+	struct scatterlist	*sg[2];	/* scatterlist elements in buffer-0 and -1 */
+	struct list_head	free_list;	/* free tx-descriptors		   */
+	struct list_head	queue;		/* queued tx-descriptors	   */
 	spinlock_t		lock;		/* protects sg[0,1], queue	   */
-	काष्ठा mutex		chan_mutex; /* protects status, cookie, मुक्त_list  */
+	struct mutex		chan_mutex; /* protects status, cookie, free_list  */
 	bool			sec_chan_en;
-	पूर्णांक			active_buffer;
-	अचिन्हित पूर्णांक		eof_irq;
-	अक्षर			eof_name[16];	/* खातापूर्ण IRQ name क्रम request_irq()  */
-पूर्ण;
+	int			active_buffer;
+	unsigned int		eof_irq;
+	char			eof_name[16];	/* EOF IRQ name for request_irq()  */
+};
 
-#घोषणा to_tx_desc(tx) container_of(tx, काष्ठा idmac_tx_desc, txd)
-#घोषणा to_idmac_chan(c) container_of(c, काष्ठा idmac_channel, dma_chan)
+#define to_tx_desc(tx) container_of(tx, struct idmac_tx_desc, txd)
+#define to_idmac_chan(c) container_of(c, struct idmac_channel, dma_chan)
 
-#पूर्ण_अगर /* __LINUX_DMA_IPU_DMA_H */
+#endif /* __LINUX_DMA_IPU_DMA_H */

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2018-2019, Bridge Systems BV
  * Copyright (C) 2018-2019, Bootlin
@@ -8,88 +7,88 @@
  * This file based on panel-ilitek-ili9881c.c
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/fb.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/media-bus-क्रमmat.h>
-#समावेश <linux/module.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/err.h>
+#include <linux/errno.h>
+#include <linux/fb.h>
+#include <linux/kernel.h>
+#include <linux/media-bus-format.h>
+#include <linux/module.h>
 
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/regulator/consumer.h>
+#include <linux/gpio/consumer.h>
+#include <linux/regulator/consumer.h>
 
-#समावेश <drm/drm_connector.h>
-#समावेश <drm/drm_mipi_dsi.h>
-#समावेश <drm/drm_modes.h>
-#समावेश <drm/drm_panel.h>
+#include <drm/drm_connector.h>
+#include <drm/drm_mipi_dsi.h>
+#include <drm/drm_modes.h>
+#include <drm/drm_panel.h>
 
-काष्ठा rb070d30_panel अणु
-	काष्ठा drm_panel panel;
-	काष्ठा mipi_dsi_device *dsi;
-	काष्ठा regulator *supply;
+struct rb070d30_panel {
+	struct drm_panel panel;
+	struct mipi_dsi_device *dsi;
+	struct regulator *supply;
 
-	काष्ठा अणु
-		काष्ठा gpio_desc *घातer;
-		काष्ठा gpio_desc *reset;
-		काष्ठा gpio_desc *updn;
-		काष्ठा gpio_desc *shlr;
-	पूर्ण gpios;
-पूर्ण;
+	struct {
+		struct gpio_desc *power;
+		struct gpio_desc *reset;
+		struct gpio_desc *updn;
+		struct gpio_desc *shlr;
+	} gpios;
+};
 
-अटल अंतरभूत काष्ठा rb070d30_panel *panel_to_rb070d30_panel(काष्ठा drm_panel *panel)
-अणु
-	वापस container_of(panel, काष्ठा rb070d30_panel, panel);
-पूर्ण
+static inline struct rb070d30_panel *panel_to_rb070d30_panel(struct drm_panel *panel)
+{
+	return container_of(panel, struct rb070d30_panel, panel);
+}
 
-अटल पूर्णांक rb070d30_panel_prepare(काष्ठा drm_panel *panel)
-अणु
-	काष्ठा rb070d30_panel *ctx = panel_to_rb070d30_panel(panel);
-	पूर्णांक ret;
+static int rb070d30_panel_prepare(struct drm_panel *panel)
+{
+	struct rb070d30_panel *ctx = panel_to_rb070d30_panel(panel);
+	int ret;
 
 	ret = regulator_enable(ctx->supply);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&ctx->dsi->dev, "Failed to enable supply: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	msleep(20);
-	gpiod_set_value(ctx->gpios.घातer, 1);
+	gpiod_set_value(ctx->gpios.power, 1);
 	msleep(20);
 	gpiod_set_value(ctx->gpios.reset, 1);
 	msleep(20);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rb070d30_panel_unprepare(काष्ठा drm_panel *panel)
-अणु
-	काष्ठा rb070d30_panel *ctx = panel_to_rb070d30_panel(panel);
+static int rb070d30_panel_unprepare(struct drm_panel *panel)
+{
+	struct rb070d30_panel *ctx = panel_to_rb070d30_panel(panel);
 
 	gpiod_set_value(ctx->gpios.reset, 0);
-	gpiod_set_value(ctx->gpios.घातer, 0);
+	gpiod_set_value(ctx->gpios.power, 0);
 	regulator_disable(ctx->supply);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rb070d30_panel_enable(काष्ठा drm_panel *panel)
-अणु
-	काष्ठा rb070d30_panel *ctx = panel_to_rb070d30_panel(panel);
+static int rb070d30_panel_enable(struct drm_panel *panel)
+{
+	struct rb070d30_panel *ctx = panel_to_rb070d30_panel(panel);
 
-	वापस mipi_dsi_dcs_निकास_sleep_mode(ctx->dsi);
-पूर्ण
+	return mipi_dsi_dcs_exit_sleep_mode(ctx->dsi);
+}
 
-अटल पूर्णांक rb070d30_panel_disable(काष्ठा drm_panel *panel)
-अणु
-	काष्ठा rb070d30_panel *ctx = panel_to_rb070d30_panel(panel);
+static int rb070d30_panel_disable(struct drm_panel *panel)
+{
+	struct rb070d30_panel *ctx = panel_to_rb070d30_panel(panel);
 
-	वापस mipi_dsi_dcs_enter_sleep_mode(ctx->dsi);
-पूर्ण
+	return mipi_dsi_dcs_enter_sleep_mode(ctx->dsi);
+}
 
 /* Default timings */
-अटल स्थिर काष्ठा drm_display_mode शेष_mode = अणु
-	.घड़ी		= 51206,
+static const struct drm_display_mode default_mode = {
+	.clock		= 51206,
 	.hdisplay	= 1024,
 	.hsync_start	= 1024 + 160,
 	.hsync_end	= 1024 + 160 + 80,
@@ -101,21 +100,21 @@
 
 	.width_mm	= 154,
 	.height_mm	= 85,
-पूर्ण;
+};
 
-अटल पूर्णांक rb070d30_panel_get_modes(काष्ठा drm_panel *panel,
-				    काष्ठा drm_connector *connector)
-अणु
-	काष्ठा rb070d30_panel *ctx = panel_to_rb070d30_panel(panel);
-	काष्ठा drm_display_mode *mode;
-	अटल स्थिर u32 bus_क्रमmat = MEDIA_BUS_FMT_RGB888_1X24;
+static int rb070d30_panel_get_modes(struct drm_panel *panel,
+				    struct drm_connector *connector)
+{
+	struct rb070d30_panel *ctx = panel_to_rb070d30_panel(panel);
+	struct drm_display_mode *mode;
+	static const u32 bus_format = MEDIA_BUS_FMT_RGB888_1X24;
 
-	mode = drm_mode_duplicate(connector->dev, &शेष_mode);
-	अगर (!mode) अणु
+	mode = drm_mode_duplicate(connector->dev, &default_mode);
+	if (!mode) {
 		dev_err(&ctx->dsi->dev, "Failed to add mode " DRM_MODE_FMT "\n",
-			DRM_MODE_ARG(&शेष_mode));
-		वापस -EINVAL;
-	पूर्ण
+			DRM_MODE_ARG(&default_mode));
+		return -EINVAL;
+	}
 
 	drm_mode_set_name(mode);
 
@@ -125,32 +124,32 @@
 	connector->display_info.bpc = 8;
 	connector->display_info.width_mm = mode->width_mm;
 	connector->display_info.height_mm = mode->height_mm;
-	drm_display_info_set_bus_क्रमmats(&connector->display_info,
-					 &bus_क्रमmat, 1);
+	drm_display_info_set_bus_formats(&connector->display_info,
+					 &bus_format, 1);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल स्थिर काष्ठा drm_panel_funcs rb070d30_panel_funcs = अणु
+static const struct drm_panel_funcs rb070d30_panel_funcs = {
 	.get_modes	= rb070d30_panel_get_modes,
 	.prepare	= rb070d30_panel_prepare,
 	.enable		= rb070d30_panel_enable,
 	.disable	= rb070d30_panel_disable,
 	.unprepare	= rb070d30_panel_unprepare,
-पूर्ण;
+};
 
-अटल पूर्णांक rb070d30_panel_dsi_probe(काष्ठा mipi_dsi_device *dsi)
-अणु
-	काष्ठा rb070d30_panel *ctx;
-	पूर्णांक ret;
+static int rb070d30_panel_dsi_probe(struct mipi_dsi_device *dsi)
+{
+	struct rb070d30_panel *ctx;
+	int ret;
 
-	ctx = devm_kzalloc(&dsi->dev, माप(*ctx), GFP_KERNEL);
-	अगर (!ctx)
-		वापस -ENOMEM;
+	ctx = devm_kzalloc(&dsi->dev, sizeof(*ctx), GFP_KERNEL);
+	if (!ctx)
+		return -ENOMEM;
 
 	ctx->supply = devm_regulator_get(&dsi->dev, "vcc-lcd");
-	अगर (IS_ERR(ctx->supply))
-		वापस PTR_ERR(ctx->supply);
+	if (IS_ERR(ctx->supply))
+		return PTR_ERR(ctx->supply);
 
 	mipi_dsi_set_drvdata(dsi, ctx);
 	ctx->dsi = dsi;
@@ -159,74 +158,74 @@
 		       DRM_MODE_CONNECTOR_DSI);
 
 	ctx->gpios.reset = devm_gpiod_get(&dsi->dev, "reset", GPIOD_OUT_LOW);
-	अगर (IS_ERR(ctx->gpios.reset)) अणु
+	if (IS_ERR(ctx->gpios.reset)) {
 		dev_err(&dsi->dev, "Couldn't get our reset GPIO\n");
-		वापस PTR_ERR(ctx->gpios.reset);
-	पूर्ण
+		return PTR_ERR(ctx->gpios.reset);
+	}
 
-	ctx->gpios.घातer = devm_gpiod_get(&dsi->dev, "power", GPIOD_OUT_LOW);
-	अगर (IS_ERR(ctx->gpios.घातer)) अणु
+	ctx->gpios.power = devm_gpiod_get(&dsi->dev, "power", GPIOD_OUT_LOW);
+	if (IS_ERR(ctx->gpios.power)) {
 		dev_err(&dsi->dev, "Couldn't get our power GPIO\n");
-		वापस PTR_ERR(ctx->gpios.घातer);
-	पूर्ण
+		return PTR_ERR(ctx->gpios.power);
+	}
 
 	/*
-	 * We करोn't change the state of that GPIO later on but we need
-	 * to क्रमce it पूर्णांकo a low state.
+	 * We don't change the state of that GPIO later on but we need
+	 * to force it into a low state.
 	 */
 	ctx->gpios.updn = devm_gpiod_get(&dsi->dev, "updn", GPIOD_OUT_LOW);
-	अगर (IS_ERR(ctx->gpios.updn)) अणु
+	if (IS_ERR(ctx->gpios.updn)) {
 		dev_err(&dsi->dev, "Couldn't get our updn GPIO\n");
-		वापस PTR_ERR(ctx->gpios.updn);
-	पूर्ण
+		return PTR_ERR(ctx->gpios.updn);
+	}
 
 	/*
-	 * We करोn't change the state of that GPIO later on but we need
-	 * to क्रमce it पूर्णांकo a low state.
+	 * We don't change the state of that GPIO later on but we need
+	 * to force it into a low state.
 	 */
 	ctx->gpios.shlr = devm_gpiod_get(&dsi->dev, "shlr", GPIOD_OUT_LOW);
-	अगर (IS_ERR(ctx->gpios.shlr)) अणु
+	if (IS_ERR(ctx->gpios.shlr)) {
 		dev_err(&dsi->dev, "Couldn't get our shlr GPIO\n");
-		वापस PTR_ERR(ctx->gpios.shlr);
-	पूर्ण
+		return PTR_ERR(ctx->gpios.shlr);
+	}
 
 	ret = drm_panel_of_backlight(&ctx->panel);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	drm_panel_add(&ctx->panel);
 
 	dsi->mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_BURST | MIPI_DSI_MODE_LPM;
-	dsi->क्रमmat = MIPI_DSI_FMT_RGB888;
+	dsi->format = MIPI_DSI_FMT_RGB888;
 	dsi->lanes = 4;
 
-	वापस mipi_dsi_attach(dsi);
-पूर्ण
+	return mipi_dsi_attach(dsi);
+}
 
-अटल पूर्णांक rb070d30_panel_dsi_हटाओ(काष्ठा mipi_dsi_device *dsi)
-अणु
-	काष्ठा rb070d30_panel *ctx = mipi_dsi_get_drvdata(dsi);
+static int rb070d30_panel_dsi_remove(struct mipi_dsi_device *dsi)
+{
+	struct rb070d30_panel *ctx = mipi_dsi_get_drvdata(dsi);
 
 	mipi_dsi_detach(dsi);
-	drm_panel_हटाओ(&ctx->panel);
+	drm_panel_remove(&ctx->panel);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id rb070d30_panel_of_match[] = अणु
-	अणु .compatible = "ronbo,rb070d30" पूर्ण,
-	अणु /* sentinel */ पूर्ण,
-पूर्ण;
+static const struct of_device_id rb070d30_panel_of_match[] = {
+	{ .compatible = "ronbo,rb070d30" },
+	{ /* sentinel */ },
+};
 MODULE_DEVICE_TABLE(of, rb070d30_panel_of_match);
 
-अटल काष्ठा mipi_dsi_driver rb070d30_panel_driver = अणु
+static struct mipi_dsi_driver rb070d30_panel_driver = {
 	.probe = rb070d30_panel_dsi_probe,
-	.हटाओ = rb070d30_panel_dsi_हटाओ,
-	.driver = अणु
+	.remove = rb070d30_panel_dsi_remove,
+	.driver = {
 		.name = "panel-ronbo-rb070d30",
 		.of_match_table	= rb070d30_panel_of_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 module_mipi_dsi_driver(rb070d30_panel_driver);
 
 MODULE_AUTHOR("Boris Brezillon <boris.brezillon@bootlin.com>");

@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,156 +23,156 @@
  *
  */
 
-#समावेश <linux/delay.h>
-#समावेश "dm_services.h"
-#समावेश "basics/dc_common.h"
-#समावेश "core_types.h"
-#समावेश "resource.h"
-#समावेश "custom_float.h"
-#समावेश "dcn10_hw_sequencer.h"
-#समावेश "dcn10_hw_sequencer_debug.h"
-#समावेश "dce/dce_hwseq.h"
-#समावेश "abm.h"
-#समावेश "dmcu.h"
-#समावेश "dcn10_optc.h"
-#समावेश "dcn10_dpp.h"
-#समावेश "dcn10_mpc.h"
-#समावेश "timing_generator.h"
-#समावेश "opp.h"
-#समावेश "ipp.h"
-#समावेश "mpc.h"
-#समावेश "reg_helper.h"
-#समावेश "dcn10_hubp.h"
-#समावेश "dcn10_hubbub.h"
-#समावेश "dcn10_cm_common.h"
-#समावेश "dc_link_dp.h"
-#समावेश "dccg.h"
-#समावेश "clk_mgr.h"
-#समावेश "link_hwss.h"
-#समावेश "dpcd_defs.h"
-#समावेश "dsc.h"
-#समावेश "dce/dmub_hw_lock_mgr.h"
-#समावेश "dc_trace.h"
-#समावेश "dce/dmub_outbox.h"
+#include <linux/delay.h>
+#include "dm_services.h"
+#include "basics/dc_common.h"
+#include "core_types.h"
+#include "resource.h"
+#include "custom_float.h"
+#include "dcn10_hw_sequencer.h"
+#include "dcn10_hw_sequencer_debug.h"
+#include "dce/dce_hwseq.h"
+#include "abm.h"
+#include "dmcu.h"
+#include "dcn10_optc.h"
+#include "dcn10_dpp.h"
+#include "dcn10_mpc.h"
+#include "timing_generator.h"
+#include "opp.h"
+#include "ipp.h"
+#include "mpc.h"
+#include "reg_helper.h"
+#include "dcn10_hubp.h"
+#include "dcn10_hubbub.h"
+#include "dcn10_cm_common.h"
+#include "dc_link_dp.h"
+#include "dccg.h"
+#include "clk_mgr.h"
+#include "link_hwss.h"
+#include "dpcd_defs.h"
+#include "dsc.h"
+#include "dce/dmub_hw_lock_mgr.h"
+#include "dc_trace.h"
+#include "dce/dmub_outbox.h"
 
-#घोषणा DC_LOGGER_INIT(logger)
+#define DC_LOGGER_INIT(logger)
 
-#घोषणा CTX \
+#define CTX \
 	hws->ctx
-#घोषणा REG(reg)\
+#define REG(reg)\
 	hws->regs->reg
 
-#अघोषित FN
-#घोषणा FN(reg_name, field_name) \
-	hws->shअगरts->field_name, hws->masks->field_name
+#undef FN
+#define FN(reg_name, field_name) \
+	hws->shifts->field_name, hws->masks->field_name
 
-/*prपूर्णांक is 17 wide, first two अक्षरacters are spaces*/
-#घोषणा DTN_INFO_MICRO_SEC(ref_cycle) \
-	prपूर्णांक_microsec(dc_ctx, log_ctx, ref_cycle)
+/*print is 17 wide, first two characters are spaces*/
+#define DTN_INFO_MICRO_SEC(ref_cycle) \
+	print_microsec(dc_ctx, log_ctx, ref_cycle)
 
-#घोषणा GAMMA_HW_POINTS_NUM 256
+#define GAMMA_HW_POINTS_NUM 256
 
-व्योम prपूर्णांक_microsec(काष्ठा dc_context *dc_ctx,
-	काष्ठा dc_log_buffer_ctx *log_ctx,
-	uपूर्णांक32_t ref_cycle)
-अणु
-	स्थिर uपूर्णांक32_t ref_clk_mhz = dc_ctx->dc->res_pool->ref_घड़ीs.dchub_ref_घड़ी_inKhz / 1000;
-	अटल स्थिर अचिन्हित पूर्णांक frac = 1000;
-	uपूर्णांक32_t us_x10 = (ref_cycle * frac) / ref_clk_mhz;
+void print_microsec(struct dc_context *dc_ctx,
+	struct dc_log_buffer_ctx *log_ctx,
+	uint32_t ref_cycle)
+{
+	const uint32_t ref_clk_mhz = dc_ctx->dc->res_pool->ref_clocks.dchub_ref_clock_inKhz / 1000;
+	static const unsigned int frac = 1000;
+	uint32_t us_x10 = (ref_cycle * frac) / ref_clk_mhz;
 
 	DTN_INFO("  %11d.%03d",
 			us_x10 / frac,
 			us_x10 % frac);
-पूर्ण
+}
 
-व्योम dcn10_lock_all_pipes(काष्ठा dc *dc,
-	काष्ठा dc_state *context,
+void dcn10_lock_all_pipes(struct dc *dc,
+	struct dc_state *context,
 	bool lock)
-अणु
-	काष्ठा pipe_ctx *pipe_ctx;
-	काष्ठा timing_generator *tg;
-	पूर्णांक i;
+{
+	struct pipe_ctx *pipe_ctx;
+	struct timing_generator *tg;
+	int i;
 
-	क्रम (i = 0; i < dc->res_pool->pipe_count; i++) अणु
+	for (i = 0; i < dc->res_pool->pipe_count; i++) {
 		pipe_ctx = &context->res_ctx.pipe_ctx[i];
 		tg = pipe_ctx->stream_res.tg;
 
 		/*
 		 * Only lock the top pipe's tg to prevent redundant
-		 * (un)locking. Also skip अगर pipe is disabled.
+		 * (un)locking. Also skip if pipe is disabled.
 		 */
-		अगर (pipe_ctx->top_pipe ||
+		if (pipe_ctx->top_pipe ||
 		    !pipe_ctx->stream || !pipe_ctx->plane_state ||
 		    !tg->funcs->is_tg_enabled(tg))
-			जारी;
+			continue;
 
-		अगर (lock)
+		if (lock)
 			dc->hwss.pipe_control_lock(dc, pipe_ctx, true);
-		अन्यथा
+		else
 			dc->hwss.pipe_control_lock(dc, pipe_ctx, false);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम log_mpc_crc(काष्ठा dc *dc,
-	काष्ठा dc_log_buffer_ctx *log_ctx)
-अणु
-	काष्ठा dc_context *dc_ctx = dc->ctx;
-	काष्ठा dce_hwseq *hws = dc->hwseq;
+static void log_mpc_crc(struct dc *dc,
+	struct dc_log_buffer_ctx *log_ctx)
+{
+	struct dc_context *dc_ctx = dc->ctx;
+	struct dce_hwseq *hws = dc->hwseq;
 
-	अगर (REG(MPC_CRC_RESULT_GB))
+	if (REG(MPC_CRC_RESULT_GB))
 		DTN_INFO("MPC_CRC_RESULT_GB:%d MPC_CRC_RESULT_C:%d MPC_CRC_RESULT_AR:%d\n",
 		REG_READ(MPC_CRC_RESULT_GB), REG_READ(MPC_CRC_RESULT_C), REG_READ(MPC_CRC_RESULT_AR));
-	अगर (REG(DPP_TOP0_DPP_CRC_VAL_B_A))
+	if (REG(DPP_TOP0_DPP_CRC_VAL_B_A))
 		DTN_INFO("DPP_TOP0_DPP_CRC_VAL_B_A:%d DPP_TOP0_DPP_CRC_VAL_R_G:%d\n",
 		REG_READ(DPP_TOP0_DPP_CRC_VAL_B_A), REG_READ(DPP_TOP0_DPP_CRC_VAL_R_G));
-पूर्ण
+}
 
-व्योम dcn10_log_hubbub_state(काष्ठा dc *dc, काष्ठा dc_log_buffer_ctx *log_ctx)
-अणु
-	काष्ठा dc_context *dc_ctx = dc->ctx;
-	काष्ठा dcn_hubbub_wm wm;
-	पूर्णांक i;
+void dcn10_log_hubbub_state(struct dc *dc, struct dc_log_buffer_ctx *log_ctx)
+{
+	struct dc_context *dc_ctx = dc->ctx;
+	struct dcn_hubbub_wm wm;
+	int i;
 
-	स_रखो(&wm, 0, माप(काष्ठा dcn_hubbub_wm));
-	dc->res_pool->hubbub->funcs->wm_पढ़ो_state(dc->res_pool->hubbub, &wm);
+	memset(&wm, 0, sizeof(struct dcn_hubbub_wm));
+	dc->res_pool->hubbub->funcs->wm_read_state(dc->res_pool->hubbub, &wm);
 
 	DTN_INFO("HUBBUB WM:      data_urgent  pte_meta_urgent"
 			"         sr_enter          sr_exit  dram_clk_change\n");
 
-	क्रम (i = 0; i < 4; i++) अणु
-		काष्ठा dcn_hubbub_wm_set *s;
+	for (i = 0; i < 4; i++) {
+		struct dcn_hubbub_wm_set *s;
 
 		s = &wm.sets[i];
 		DTN_INFO("WM_Set[%d]:", s->wm_set);
 		DTN_INFO_MICRO_SEC(s->data_urgent);
 		DTN_INFO_MICRO_SEC(s->pte_meta_urgent);
 		DTN_INFO_MICRO_SEC(s->sr_enter);
-		DTN_INFO_MICRO_SEC(s->sr_निकास);
+		DTN_INFO_MICRO_SEC(s->sr_exit);
 		DTN_INFO_MICRO_SEC(s->dram_clk_chanage);
 		DTN_INFO("\n");
-	पूर्ण
+	}
 
 	DTN_INFO("\n");
-पूर्ण
+}
 
-अटल व्योम dcn10_log_hubp_states(काष्ठा dc *dc, व्योम *log_ctx)
-अणु
-	काष्ठा dc_context *dc_ctx = dc->ctx;
-	काष्ठा resource_pool *pool = dc->res_pool;
-	पूर्णांक i;
+static void dcn10_log_hubp_states(struct dc *dc, void *log_ctx)
+{
+	struct dc_context *dc_ctx = dc->ctx;
+	struct resource_pool *pool = dc->res_pool;
+	int i;
 
 	DTN_INFO(
 		"HUBP:  format  addr_hi  width  height  rot  mir  sw_mode  dcc_en  blank_en  clock_en  ttu_dis  underflow   min_ttu_vblank       qos_low_wm      qos_high_wm\n");
-	क्रम (i = 0; i < pool->pipe_count; i++) अणु
-		काष्ठा hubp *hubp = pool->hubps[i];
-		काष्ठा dcn_hubp_state *s = &(TO_DCN10_HUBP(hubp)->state);
+	for (i = 0; i < pool->pipe_count; i++) {
+		struct hubp *hubp = pool->hubps[i];
+		struct dcn_hubp_state *s = &(TO_DCN10_HUBP(hubp)->state);
 
-		hubp->funcs->hubp_पढ़ो_state(hubp);
+		hubp->funcs->hubp_read_state(hubp);
 
-		अगर (!s->blank_en) अणु
+		if (!s->blank_en) {
 			DTN_INFO("[%2d]:  %5xh  %6xh  %5d  %6d  %2xh  %2xh  %6xh  %6d  %8d  %8d  %7d  %8xh",
 					hubp->inst,
-					s->pixel_क्रमmat,
+					s->pixel_format,
 					s->inuse_addr_hi,
 					s->viewport_width,
 					s->viewport_height,
@@ -182,25 +181,25 @@
 					s->sw_mode,
 					s->dcc_en,
 					s->blank_en,
-					s->घड़ी_en,
+					s->clock_en,
 					s->ttu_disable,
 					s->underflow_status);
 			DTN_INFO_MICRO_SEC(s->min_ttu_vblank);
 			DTN_INFO_MICRO_SEC(s->qos_level_low_wm);
 			DTN_INFO_MICRO_SEC(s->qos_level_high_wm);
 			DTN_INFO("\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	DTN_INFO("\n=========RQ========\n");
 	DTN_INFO("HUBP:  drq_exp_m  prq_exp_m  mrq_exp_m  crq_exp_m  plane1_ba  L:chunk_s  min_chu_s  meta_ch_s"
 		"  min_m_c_s  dpte_gr_s  mpte_gr_s  swath_hei  pte_row_h  C:chunk_s  min_chu_s  meta_ch_s"
 		"  min_m_c_s  dpte_gr_s  mpte_gr_s  swath_hei  pte_row_h\n");
-	क्रम (i = 0; i < pool->pipe_count; i++) अणु
-		काष्ठा dcn_hubp_state *s = &(TO_DCN10_HUBP(pool->hubps[i])->state);
-		काष्ठा _vcs_dpi_display_rq_regs_st *rq_regs = &s->rq_regs;
+	for (i = 0; i < pool->pipe_count; i++) {
+		struct dcn_hubp_state *s = &(TO_DCN10_HUBP(pool->hubps[i])->state);
+		struct _vcs_dpi_display_rq_regs_st *rq_regs = &s->rq_regs;
 
-		अगर (!s->blank_en)
+		if (!s->blank_en)
 			DTN_INFO("[%2d]:  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh\n",
 				pool->hubps[i]->inst, rq_regs->drq_expansion_mode, rq_regs->prq_expansion_mode, rq_regs->mrq_expansion_mode,
 				rq_regs->crq_expansion_mode, rq_regs->plane1_base_address, rq_regs->rq_regs_l.chunk_size,
@@ -211,7 +210,7 @@
 				rq_regs->rq_regs_c.meta_chunk_size, rq_regs->rq_regs_c.min_meta_chunk_size,
 				rq_regs->rq_regs_c.dpte_group_size, rq_regs->rq_regs_c.mpte_group_size,
 				rq_regs->rq_regs_c.swath_height, rq_regs->rq_regs_c.pte_row_height_linear);
-	पूर्ण
+	}
 
 	DTN_INFO("========DLG========\n");
 	DTN_INFO("HUBP:  rc_hbe     dlg_vbe    min_d_y_n  rc_per_ht  rc_x_a_s "
@@ -221,11 +220,11 @@
 			"  mr_nom_l   mr_nom_c   rc_mc_nl   rc_mc_nc   rc_ld_pl   rc_ld_pc   rc_ld_l  "
 			"  rc_ld_c    cha_cur0   ofst_cur1  cha_cur1   vr_af_vc0  ddrq_limt  x_rt_dlay"
 			"  x_rp_dlay  x_rr_sfl\n");
-	क्रम (i = 0; i < pool->pipe_count; i++) अणु
-		काष्ठा dcn_hubp_state *s = &(TO_DCN10_HUBP(pool->hubps[i])->state);
-		काष्ठा _vcs_dpi_display_dlg_regs_st *dlg_regs = &s->dlg_attr;
+	for (i = 0; i < pool->pipe_count; i++) {
+		struct dcn_hubp_state *s = &(TO_DCN10_HUBP(pool->hubps[i])->state);
+		struct _vcs_dpi_display_dlg_regs_st *dlg_regs = &s->dlg_attr;
 
-		अगर (!s->blank_en)
+		if (!s->blank_en)
 			DTN_INFO("[%2d]:  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh"
 				"%  8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh"
 				"  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh\n",
@@ -244,20 +243,20 @@
 				dlg_regs->refcyc_per_meta_chunk_nom_c, dlg_regs->refcyc_per_line_delivery_pre_l,
 				dlg_regs->refcyc_per_line_delivery_pre_c, dlg_regs->refcyc_per_line_delivery_l,
 				dlg_regs->refcyc_per_line_delivery_c, dlg_regs->chunk_hdl_adjust_cur0, dlg_regs->dst_y_offset_cur1,
-				dlg_regs->chunk_hdl_adjust_cur1, dlg_regs->vपढ़ोy_after_vcount0, dlg_regs->dst_y_delta_drq_limit,
-				dlg_regs->xfc_reg_transfer_delay, dlg_regs->xfc_reg_preअक्षरge_delay,
+				dlg_regs->chunk_hdl_adjust_cur1, dlg_regs->vready_after_vcount0, dlg_regs->dst_y_delta_drq_limit,
+				dlg_regs->xfc_reg_transfer_delay, dlg_regs->xfc_reg_precharge_delay,
 				dlg_regs->xfc_reg_remote_surface_flip_latency);
-	पूर्ण
+	}
 
 	DTN_INFO("========TTU========\n");
 	DTN_INFO("HUBP:  qos_ll_wm  qos_lh_wm  mn_ttu_vb  qos_l_flp  rc_rd_p_l  rc_rd_l    rc_rd_p_c"
 			"  rc_rd_c    rc_rd_c0   rc_rd_pc0  rc_rd_c1   rc_rd_pc1  qos_lf_l   qos_rds_l"
 			"  qos_lf_c   qos_rds_c  qos_lf_c0  qos_rds_c0 qos_lf_c1  qos_rds_c1\n");
-	क्रम (i = 0; i < pool->pipe_count; i++) अणु
-		काष्ठा dcn_hubp_state *s = &(TO_DCN10_HUBP(pool->hubps[i])->state);
-		काष्ठा _vcs_dpi_display_ttu_regs_st *ttu_regs = &s->ttu_attr;
+	for (i = 0; i < pool->pipe_count; i++) {
+		struct dcn_hubp_state *s = &(TO_DCN10_HUBP(pool->hubps[i])->state);
+		struct _vcs_dpi_display_ttu_regs_st *ttu_regs = &s->ttu_attr;
 
-		अगर (!s->blank_en)
+		if (!s->blank_en)
 			DTN_INFO("[%2d]:  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh  %8xh\n",
 				pool->hubps[i]->inst, ttu_regs->qos_level_low_wm, ttu_regs->qos_level_high_wm, ttu_regs->min_ttu_vblank,
 				ttu_regs->qos_level_flip, ttu_regs->refcyc_per_req_delivery_pre_l, ttu_regs->refcyc_per_req_delivery_l,
@@ -266,16 +265,16 @@
 				ttu_regs->refcyc_per_req_delivery_pre_cur1, ttu_regs->qos_level_fixed_l, ttu_regs->qos_ramp_disable_l,
 				ttu_regs->qos_level_fixed_c, ttu_regs->qos_ramp_disable_c, ttu_regs->qos_level_fixed_cur0,
 				ttu_regs->qos_ramp_disable_cur0, ttu_regs->qos_level_fixed_cur1, ttu_regs->qos_ramp_disable_cur1);
-	पूर्ण
+	}
 	DTN_INFO("\n");
-पूर्ण
+}
 
-व्योम dcn10_log_hw_state(काष्ठा dc *dc,
-	काष्ठा dc_log_buffer_ctx *log_ctx)
-अणु
-	काष्ठा dc_context *dc_ctx = dc->ctx;
-	काष्ठा resource_pool *pool = dc->res_pool;
-	पूर्णांक i;
+void dcn10_log_hw_state(struct dc *dc,
+	struct dc_log_buffer_ctx *log_ctx)
+{
+	struct dc_context *dc_ctx = dc->ctx;
+	struct resource_pool *pool = dc->res_pool;
+	int i;
 
 	DTN_INFO_BEGIN();
 
@@ -286,19 +285,19 @@
 	DTN_INFO("DPP:    IGAM format  IGAM mode    DGAM mode    RGAM mode"
 			"  GAMUT mode  C11 C12   C13 C14   C21 C22   C23 C24   "
 			"C31 C32   C33 C34\n");
-	क्रम (i = 0; i < pool->pipe_count; i++) अणु
-		काष्ठा dpp *dpp = pool->dpps[i];
-		काष्ठा dcn_dpp_state s = अणु0पूर्ण;
+	for (i = 0; i < pool->pipe_count; i++) {
+		struct dpp *dpp = pool->dpps[i];
+		struct dcn_dpp_state s = {0};
 
-		dpp->funcs->dpp_पढ़ो_state(dpp, &s);
+		dpp->funcs->dpp_read_state(dpp, &s);
 
-		अगर (!s.is_enabled)
-			जारी;
+		if (!s.is_enabled)
+			continue;
 
 		DTN_INFO("[%2d]:  %11xh  %-11s  %-11s  %-11s"
 				"%8x    %08xh %08xh %08xh %08xh %08xh %08xh",
 				dpp->inst,
-				s.igam_input_क्रमmat,
+				s.igam_input_format,
 				(s.igam_lut_mode == 0) ? "BypassFixed" :
 					((s.igam_lut_mode == 1) ? "BypassFloat" :
 					((s.igam_lut_mode == 2) ? "RAM" :
@@ -324,45 +323,45 @@
 				s.gamut_remap_c31_c32,
 				s.gamut_remap_c33_c34);
 		DTN_INFO("\n");
-	पूर्ण
+	}
 	DTN_INFO("\n");
 
 	DTN_INFO("MPCC:  OPP  DPP  MPCCBOT  MODE  ALPHA_MODE  PREMULT  OVERLAP_ONLY  IDLE\n");
-	क्रम (i = 0; i < pool->pipe_count; i++) अणु
-		काष्ठा mpcc_state s = अणु0पूर्ण;
+	for (i = 0; i < pool->pipe_count; i++) {
+		struct mpcc_state s = {0};
 
-		pool->mpc->funcs->पढ़ो_mpcc_state(pool->mpc, i, &s);
-		अगर (s.opp_id != 0xf)
+		pool->mpc->funcs->read_mpcc_state(pool->mpc, i, &s);
+		if (s.opp_id != 0xf)
 			DTN_INFO("[%2d]:  %2xh  %2xh  %6xh  %4d  %10d  %7d  %12d  %4d\n",
 				i, s.opp_id, s.dpp_id, s.bot_mpcc_id,
 				s.mode, s.alpha_mode, s.pre_multiplied_alpha, s.overlap_only,
 				s.idle);
-	पूर्ण
+	}
 	DTN_INFO("\n");
 
 	DTN_INFO("OTG:  v_bs  v_be  v_ss  v_se  vpol  vmax  vmin  vmax_sel  vmin_sel  h_bs  h_be  h_ss  h_se  hpol  htot  vtot  underflow blank_en\n");
 
-	क्रम (i = 0; i < pool->timing_generator_count; i++) अणु
-		काष्ठा timing_generator *tg = pool->timing_generators[i];
-		काष्ठा dcn_otg_state s = अणु0पूर्ण;
-		/* Read shared OTG state रेजिस्टरs क्रम all DCNx */
-		optc1_पढ़ो_otg_state(DCN10TG_FROM_TG(tg), &s);
+	for (i = 0; i < pool->timing_generator_count; i++) {
+		struct timing_generator *tg = pool->timing_generators[i];
+		struct dcn_otg_state s = {0};
+		/* Read shared OTG state registers for all DCNx */
+		optc1_read_otg_state(DCN10TG_FROM_TG(tg), &s);
 
 		/*
-		 * For DCN2 and greater, a रेजिस्टर on the OPP is used to
-		 * determine अगर the CRTC is blanked instead of the OTG. So use
-		 * dpg_is_blanked() अगर exists, otherwise fallback on otg.
+		 * For DCN2 and greater, a register on the OPP is used to
+		 * determine if the CRTC is blanked instead of the OTG. So use
+		 * dpg_is_blanked() if exists, otherwise fallback on otg.
 		 *
-		 * TODO: Implement DCN-specअगरic पढ़ो_otg_state hooks.
+		 * TODO: Implement DCN-specific read_otg_state hooks.
 		 */
-		अगर (pool->opps[i]->funcs->dpg_is_blanked)
+		if (pool->opps[i]->funcs->dpg_is_blanked)
 			s.blank_enabled = pool->opps[i]->funcs->dpg_is_blanked(pool->opps[i]);
-		अन्यथा
+		else
 			s.blank_enabled = tg->funcs->is_blanked(tg);
 
-		//only prपूर्णांक अगर OTG master is enabled
-		अगर ((s.otg_enabled & 1) == 0)
-			जारी;
+		//only print if OTG master is enabled
+		if ((s.otg_enabled & 1) == 0)
+			continue;
 
 		DTN_INFO("[%d]: %5d %5d %5d %5d %5d %5d %5d %9d %9d %5d %5d %5d %5d %5d %5d %5d  %9d %8d\n",
 				tg->inst,
@@ -385,39 +384,39 @@
 				s.underflow_occurred_status,
 				s.blank_enabled);
 
-		// Clear underflow क्रम debug purposes
-		// We want to keep underflow sticky bit on क्रम the दीर्घevity tests outside of test environment.
-		// This function is called only from Winकरोws or Diags test environment, hence it's safe to clear
-		// it from here without affecting the original पूर्णांकent.
+		// Clear underflow for debug purposes
+		// We want to keep underflow sticky bit on for the longevity tests outside of test environment.
+		// This function is called only from Windows or Diags test environment, hence it's safe to clear
+		// it from here without affecting the original intent.
 		tg->funcs->clear_optc_underflow(tg);
-	पूर्ण
+	}
 	DTN_INFO("\n");
 
-	// dcn_dsc_state काष्ठा field bytes_per_pixel was नामd to bits_per_pixel
+	// dcn_dsc_state struct field bytes_per_pixel was renamed to bits_per_pixel
 	// TODO: Update golden log header to reflect this name change
 	DTN_INFO("DSC: CLOCK_EN  SLICE_WIDTH  Bytes_pp\n");
-	क्रम (i = 0; i < pool->res_cap->num_dsc; i++) अणु
-		काष्ठा display_stream_compressor *dsc = pool->dscs[i];
-		काष्ठा dcn_dsc_state s = अणु0पूर्ण;
+	for (i = 0; i < pool->res_cap->num_dsc; i++) {
+		struct display_stream_compressor *dsc = pool->dscs[i];
+		struct dcn_dsc_state s = {0};
 
-		dsc->funcs->dsc_पढ़ो_state(dsc, &s);
+		dsc->funcs->dsc_read_state(dsc, &s);
 		DTN_INFO("[%d]: %-9d %-12d %-10d\n",
 		dsc->inst,
-			s.dsc_घड़ी_en,
+			s.dsc_clock_en,
 			s.dsc_slice_width,
 			s.dsc_bits_per_pixel);
 		DTN_INFO("\n");
-	पूर्ण
+	}
 	DTN_INFO("\n");
 
 	DTN_INFO("S_ENC: DSC_MODE  SEC_GSP7_LINE_NUM"
 			"  VBID6_LINE_REFERENCE  VBID6_LINE_NUM  SEC_GSP7_ENABLE  SEC_STREAM_ENABLE\n");
-	क्रम (i = 0; i < pool->stream_enc_count; i++) अणु
-		काष्ठा stream_encoder *enc = pool->stream_enc[i];
-		काष्ठा enc_state s = अणु0पूर्ण;
+	for (i = 0; i < pool->stream_enc_count; i++) {
+		struct stream_encoder *enc = pool->stream_enc[i];
+		struct enc_state s = {0};
 
-		अगर (enc->funcs->enc_पढ़ो_state) अणु
-			enc->funcs->enc_पढ़ो_state(enc, &s);
+		if (enc->funcs->enc_read_state) {
+			enc->funcs->enc_read_state(enc, &s);
 			DTN_INFO("[%-3d]: %-9d %-18d %-21d %-15d %-16d %-17d\n",
 				enc->id,
 				s.dsc_mode,
@@ -427,27 +426,27 @@
 				s.sec_gsp_pps_enable,
 				s.sec_stream_enable);
 			DTN_INFO("\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 	DTN_INFO("\n");
 
 	DTN_INFO("L_ENC: DPHY_FEC_EN  DPHY_FEC_READY_SHADOW  DPHY_FEC_ACTIVE_STATUS  DP_LINK_TRAINING_COMPLETE\n");
-	क्रम (i = 0; i < dc->link_count; i++) अणु
-		काष्ठा link_encoder *lenc = dc->links[i]->link_enc;
+	for (i = 0; i < dc->link_count; i++) {
+		struct link_encoder *lenc = dc->links[i]->link_enc;
 
-		काष्ठा link_enc_state s = अणु0पूर्ण;
+		struct link_enc_state s = {0};
 
-		अगर (lenc->funcs->पढ़ो_state) अणु
-			lenc->funcs->पढ़ो_state(lenc, &s);
+		if (lenc->funcs->read_state) {
+			lenc->funcs->read_state(lenc, &s);
 			DTN_INFO("[%-3d]: %-12d %-22d %-22d %-25d\n",
 				i,
 				s.dphy_fec_en,
-				s.dphy_fec_पढ़ोy_shaकरोw,
+				s.dphy_fec_ready_shadow,
 				s.dphy_fec_active_status,
 				s.dp_link_training_complete);
 			DTN_INFO("\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 	DTN_INFO("\n");
 
 	DTN_INFO("\nCALCULATED Clocks: dcfclk_khz:%d  dcfclk_deep_sleep_khz:%d  dispclk_khz:%d\n"
@@ -463,63 +462,63 @@
 	log_mpc_crc(dc, log_ctx);
 
 	DTN_INFO_END();
-पूर्ण
+}
 
-bool dcn10_did_underflow_occur(काष्ठा dc *dc, काष्ठा pipe_ctx *pipe_ctx)
-अणु
-	काष्ठा hubp *hubp = pipe_ctx->plane_res.hubp;
-	काष्ठा timing_generator *tg = pipe_ctx->stream_res.tg;
+bool dcn10_did_underflow_occur(struct dc *dc, struct pipe_ctx *pipe_ctx)
+{
+	struct hubp *hubp = pipe_ctx->plane_res.hubp;
+	struct timing_generator *tg = pipe_ctx->stream_res.tg;
 
-	अगर (tg->funcs->is_optc_underflow_occurred(tg)) अणु
+	if (tg->funcs->is_optc_underflow_occurred(tg)) {
 		tg->funcs->clear_optc_underflow(tg);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	अगर (hubp->funcs->hubp_get_underflow_status(hubp)) अणु
+	if (hubp->funcs->hubp_get_underflow_status(hubp)) {
 		hubp->funcs->hubp_clear_underflow(hubp);
-		वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+		return true;
+	}
+	return false;
+}
 
-व्योम dcn10_enable_घातer_gating_plane(
-	काष्ठा dce_hwseq *hws,
+void dcn10_enable_power_gating_plane(
+	struct dce_hwseq *hws,
 	bool enable)
-अणु
-	bool क्रमce_on = true; /* disable घातer gating */
+{
+	bool force_on = true; /* disable power gating */
 
-	अगर (enable)
-		क्रमce_on = false;
+	if (enable)
+		force_on = false;
 
 	/* DCHUBP0/1/2/3 */
-	REG_UPDATE(DOMAIN0_PG_CONFIG, DOMAIN0_POWER_FORCEON, क्रमce_on);
-	REG_UPDATE(DOMAIN2_PG_CONFIG, DOMAIN2_POWER_FORCEON, क्रमce_on);
-	REG_UPDATE(DOMAIN4_PG_CONFIG, DOMAIN4_POWER_FORCEON, क्रमce_on);
-	REG_UPDATE(DOMAIN6_PG_CONFIG, DOMAIN6_POWER_FORCEON, क्रमce_on);
+	REG_UPDATE(DOMAIN0_PG_CONFIG, DOMAIN0_POWER_FORCEON, force_on);
+	REG_UPDATE(DOMAIN2_PG_CONFIG, DOMAIN2_POWER_FORCEON, force_on);
+	REG_UPDATE(DOMAIN4_PG_CONFIG, DOMAIN4_POWER_FORCEON, force_on);
+	REG_UPDATE(DOMAIN6_PG_CONFIG, DOMAIN6_POWER_FORCEON, force_on);
 
 	/* DPP0/1/2/3 */
-	REG_UPDATE(DOMAIN1_PG_CONFIG, DOMAIN1_POWER_FORCEON, क्रमce_on);
-	REG_UPDATE(DOMAIN3_PG_CONFIG, DOMAIN3_POWER_FORCEON, क्रमce_on);
-	REG_UPDATE(DOMAIN5_PG_CONFIG, DOMAIN5_POWER_FORCEON, क्रमce_on);
-	REG_UPDATE(DOMAIN7_PG_CONFIG, DOMAIN7_POWER_FORCEON, क्रमce_on);
-पूर्ण
+	REG_UPDATE(DOMAIN1_PG_CONFIG, DOMAIN1_POWER_FORCEON, force_on);
+	REG_UPDATE(DOMAIN3_PG_CONFIG, DOMAIN3_POWER_FORCEON, force_on);
+	REG_UPDATE(DOMAIN5_PG_CONFIG, DOMAIN5_POWER_FORCEON, force_on);
+	REG_UPDATE(DOMAIN7_PG_CONFIG, DOMAIN7_POWER_FORCEON, force_on);
+}
 
-व्योम dcn10_disable_vga(
-	काष्ठा dce_hwseq *hws)
-अणु
-	अचिन्हित पूर्णांक in_vga1_mode = 0;
-	अचिन्हित पूर्णांक in_vga2_mode = 0;
-	अचिन्हित पूर्णांक in_vga3_mode = 0;
-	अचिन्हित पूर्णांक in_vga4_mode = 0;
+void dcn10_disable_vga(
+	struct dce_hwseq *hws)
+{
+	unsigned int in_vga1_mode = 0;
+	unsigned int in_vga2_mode = 0;
+	unsigned int in_vga3_mode = 0;
+	unsigned int in_vga4_mode = 0;
 
 	REG_GET(D1VGA_CONTROL, D1VGA_MODE_ENABLE, &in_vga1_mode);
 	REG_GET(D2VGA_CONTROL, D2VGA_MODE_ENABLE, &in_vga2_mode);
 	REG_GET(D3VGA_CONTROL, D3VGA_MODE_ENABLE, &in_vga3_mode);
 	REG_GET(D4VGA_CONTROL, D4VGA_MODE_ENABLE, &in_vga4_mode);
 
-	अगर (in_vga1_mode == 0 && in_vga2_mode == 0 &&
+	if (in_vga1_mode == 0 && in_vga2_mode == 0 &&
 			in_vga3_mode == 0 && in_vga4_mode == 0)
-		वापस;
+		return;
 
 	REG_WRITE(D1VGA_CONTROL, 0);
 	REG_WRITE(D2VGA_CONTROL, 0);
@@ -527,149 +526,149 @@ bool dcn10_did_underflow_occur(काष्ठा dc *dc, काष्ठा pip
 	REG_WRITE(D4VGA_CONTROL, 0);
 
 	/* HW Engineer's Notes:
-	 *  During चयन from vga->extended, अगर we set the VGA_TEST_ENABLE and
-	 *  then hit the VGA_TEST_RENDER_START, then the DCHUBP timing माला_लो updated correctly.
+	 *  During switch from vga->extended, if we set the VGA_TEST_ENABLE and
+	 *  then hit the VGA_TEST_RENDER_START, then the DCHUBP timing gets updated correctly.
 	 *
-	 *  Then vBIOS will have it poll क्रम the VGA_TEST_RENDER_DONE and unset
-	 *  VGA_TEST_ENABLE, to leave it in the same state as beक्रमe.
+	 *  Then vBIOS will have it poll for the VGA_TEST_RENDER_DONE and unset
+	 *  VGA_TEST_ENABLE, to leave it in the same state as before.
 	 */
 	REG_UPDATE(VGA_TEST_CONTROL, VGA_TEST_ENABLE, 1);
 	REG_UPDATE(VGA_TEST_CONTROL, VGA_TEST_RENDER_START, 1);
-पूर्ण
+}
 
-व्योम dcn10_dpp_pg_control(
-		काष्ठा dce_hwseq *hws,
-		अचिन्हित पूर्णांक dpp_inst,
-		bool घातer_on)
-अणु
-	uपूर्णांक32_t घातer_gate = घातer_on ? 0 : 1;
-	uपूर्णांक32_t pwr_status = घातer_on ? 0 : 2;
+void dcn10_dpp_pg_control(
+		struct dce_hwseq *hws,
+		unsigned int dpp_inst,
+		bool power_on)
+{
+	uint32_t power_gate = power_on ? 0 : 1;
+	uint32_t pwr_status = power_on ? 0 : 2;
 
-	अगर (hws->ctx->dc->debug.disable_dpp_घातer_gate)
-		वापस;
-	अगर (REG(DOMAIN1_PG_CONFIG) == 0)
-		वापस;
+	if (hws->ctx->dc->debug.disable_dpp_power_gate)
+		return;
+	if (REG(DOMAIN1_PG_CONFIG) == 0)
+		return;
 
-	चयन (dpp_inst) अणु
-	हाल 0: /* DPP0 */
+	switch (dpp_inst) {
+	case 0: /* DPP0 */
 		REG_UPDATE(DOMAIN1_PG_CONFIG,
-				DOMAIN1_POWER_GATE, घातer_gate);
+				DOMAIN1_POWER_GATE, power_gate);
 
 		REG_WAIT(DOMAIN1_PG_STATUS,
 				DOMAIN1_PGFSM_PWR_STATUS, pwr_status,
 				1, 1000);
-		अवरोध;
-	हाल 1: /* DPP1 */
+		break;
+	case 1: /* DPP1 */
 		REG_UPDATE(DOMAIN3_PG_CONFIG,
-				DOMAIN3_POWER_GATE, घातer_gate);
+				DOMAIN3_POWER_GATE, power_gate);
 
 		REG_WAIT(DOMAIN3_PG_STATUS,
 				DOMAIN3_PGFSM_PWR_STATUS, pwr_status,
 				1, 1000);
-		अवरोध;
-	हाल 2: /* DPP2 */
+		break;
+	case 2: /* DPP2 */
 		REG_UPDATE(DOMAIN5_PG_CONFIG,
-				DOMAIN5_POWER_GATE, घातer_gate);
+				DOMAIN5_POWER_GATE, power_gate);
 
 		REG_WAIT(DOMAIN5_PG_STATUS,
 				DOMAIN5_PGFSM_PWR_STATUS, pwr_status,
 				1, 1000);
-		अवरोध;
-	हाल 3: /* DPP3 */
+		break;
+	case 3: /* DPP3 */
 		REG_UPDATE(DOMAIN7_PG_CONFIG,
-				DOMAIN7_POWER_GATE, घातer_gate);
+				DOMAIN7_POWER_GATE, power_gate);
 
 		REG_WAIT(DOMAIN7_PG_STATUS,
 				DOMAIN7_PGFSM_PWR_STATUS, pwr_status,
 				1, 1000);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		BREAK_TO_DEBUGGER();
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-व्योम dcn10_hubp_pg_control(
-		काष्ठा dce_hwseq *hws,
-		अचिन्हित पूर्णांक hubp_inst,
-		bool घातer_on)
-अणु
-	uपूर्णांक32_t घातer_gate = घातer_on ? 0 : 1;
-	uपूर्णांक32_t pwr_status = घातer_on ? 0 : 2;
+void dcn10_hubp_pg_control(
+		struct dce_hwseq *hws,
+		unsigned int hubp_inst,
+		bool power_on)
+{
+	uint32_t power_gate = power_on ? 0 : 1;
+	uint32_t pwr_status = power_on ? 0 : 2;
 
-	अगर (hws->ctx->dc->debug.disable_hubp_घातer_gate)
-		वापस;
-	अगर (REG(DOMAIN0_PG_CONFIG) == 0)
-		वापस;
+	if (hws->ctx->dc->debug.disable_hubp_power_gate)
+		return;
+	if (REG(DOMAIN0_PG_CONFIG) == 0)
+		return;
 
-	चयन (hubp_inst) अणु
-	हाल 0: /* DCHUBP0 */
+	switch (hubp_inst) {
+	case 0: /* DCHUBP0 */
 		REG_UPDATE(DOMAIN0_PG_CONFIG,
-				DOMAIN0_POWER_GATE, घातer_gate);
+				DOMAIN0_POWER_GATE, power_gate);
 
 		REG_WAIT(DOMAIN0_PG_STATUS,
 				DOMAIN0_PGFSM_PWR_STATUS, pwr_status,
 				1, 1000);
-		अवरोध;
-	हाल 1: /* DCHUBP1 */
+		break;
+	case 1: /* DCHUBP1 */
 		REG_UPDATE(DOMAIN2_PG_CONFIG,
-				DOMAIN2_POWER_GATE, घातer_gate);
+				DOMAIN2_POWER_GATE, power_gate);
 
 		REG_WAIT(DOMAIN2_PG_STATUS,
 				DOMAIN2_PGFSM_PWR_STATUS, pwr_status,
 				1, 1000);
-		अवरोध;
-	हाल 2: /* DCHUBP2 */
+		break;
+	case 2: /* DCHUBP2 */
 		REG_UPDATE(DOMAIN4_PG_CONFIG,
-				DOMAIN4_POWER_GATE, घातer_gate);
+				DOMAIN4_POWER_GATE, power_gate);
 
 		REG_WAIT(DOMAIN4_PG_STATUS,
 				DOMAIN4_PGFSM_PWR_STATUS, pwr_status,
 				1, 1000);
-		अवरोध;
-	हाल 3: /* DCHUBP3 */
+		break;
+	case 3: /* DCHUBP3 */
 		REG_UPDATE(DOMAIN6_PG_CONFIG,
-				DOMAIN6_POWER_GATE, घातer_gate);
+				DOMAIN6_POWER_GATE, power_gate);
 
 		REG_WAIT(DOMAIN6_PG_STATUS,
 				DOMAIN6_PGFSM_PWR_STATUS, pwr_status,
 				1, 1000);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		BREAK_TO_DEBUGGER();
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम घातer_on_plane(
-	काष्ठा dce_hwseq *hws,
-	पूर्णांक plane_id)
-अणु
+static void power_on_plane(
+	struct dce_hwseq *hws,
+	int plane_id)
+{
 	DC_LOGGER_INIT(hws->ctx->logger);
-	अगर (REG(DC_IP_REQUEST_CNTL)) अणु
+	if (REG(DC_IP_REQUEST_CNTL)) {
 		REG_SET(DC_IP_REQUEST_CNTL, 0,
 				IP_REQUEST_EN, 1);
 
-		अगर (hws->funcs.dpp_pg_control)
+		if (hws->funcs.dpp_pg_control)
 			hws->funcs.dpp_pg_control(hws, plane_id, true);
 
-		अगर (hws->funcs.hubp_pg_control)
+		if (hws->funcs.hubp_pg_control)
 			hws->funcs.hubp_pg_control(hws, plane_id, true);
 
 		REG_SET(DC_IP_REQUEST_CNTL, 0,
 				IP_REQUEST_EN, 0);
 		DC_LOG_DEBUG(
 				"Un-gated front end for pipe %d\n", plane_id);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम unकरो_DEGVIDCN10_253_wa(काष्ठा dc *dc)
-अणु
-	काष्ठा dce_hwseq *hws = dc->hwseq;
-	काष्ठा hubp *hubp = dc->res_pool->hubps[0];
+static void undo_DEGVIDCN10_253_wa(struct dc *dc)
+{
+	struct dce_hwseq *hws = dc->hwseq;
+	struct hubp *hubp = dc->res_pool->hubps[0];
 
-	अगर (!hws->wa_state.DEGVIDCN10_253_applied)
-		वापस;
+	if (!hws->wa_state.DEGVIDCN10_253_applied)
+		return;
 
 	hubp->funcs->set_blank(hubp, true);
 
@@ -681,26 +680,26 @@ bool dcn10_did_underflow_occur(काष्ठा dc *dc, काष्ठा pip
 			IP_REQUEST_EN, 0);
 
 	hws->wa_state.DEGVIDCN10_253_applied = false;
-पूर्ण
+}
 
-अटल व्योम apply_DEGVIDCN10_253_wa(काष्ठा dc *dc)
-अणु
-	काष्ठा dce_hwseq *hws = dc->hwseq;
-	काष्ठा hubp *hubp = dc->res_pool->hubps[0];
-	पूर्णांक i;
+static void apply_DEGVIDCN10_253_wa(struct dc *dc)
+{
+	struct dce_hwseq *hws = dc->hwseq;
+	struct hubp *hubp = dc->res_pool->hubps[0];
+	int i;
 
-	अगर (dc->debug.disable_stutter)
-		वापस;
+	if (dc->debug.disable_stutter)
+		return;
 
-	अगर (!hws->wa.DEGVIDCN10_253)
-		वापस;
+	if (!hws->wa.DEGVIDCN10_253)
+		return;
 
-	क्रम (i = 0; i < dc->res_pool->pipe_count; i++) अणु
-		अगर (!dc->res_pool->hubps[i]->घातer_gated)
-			वापस;
-	पूर्ण
+	for (i = 0; i < dc->res_pool->pipe_count; i++) {
+		if (!dc->res_pool->hubps[i]->power_gated)
+			return;
+	}
 
-	/* all pipe घातer gated, apply work around to enable stutter. */
+	/* all pipe power gated, apply work around to enable stutter. */
 
 	REG_SET(DC_IP_REQUEST_CNTL, 0,
 			IP_REQUEST_EN, 1);
@@ -711,120 +710,120 @@ bool dcn10_did_underflow_occur(काष्ठा dc *dc, काष्ठा pip
 
 	hubp->funcs->set_hubp_blank_en(hubp, false);
 	hws->wa_state.DEGVIDCN10_253_applied = true;
-पूर्ण
+}
 
-व्योम dcn10_bios_golden_init(काष्ठा dc *dc)
-अणु
-	काष्ठा dce_hwseq *hws = dc->hwseq;
-	काष्ठा dc_bios *bp = dc->ctx->dc_bios;
-	पूर्णांक i;
-	bool allow_self_fresh_क्रमce_enable = true;
+void dcn10_bios_golden_init(struct dc *dc)
+{
+	struct dce_hwseq *hws = dc->hwseq;
+	struct dc_bios *bp = dc->ctx->dc_bios;
+	int i;
+	bool allow_self_fresh_force_enable = true;
 
-	अगर (hws->funcs.s0i3_golden_init_wa && hws->funcs.s0i3_golden_init_wa(dc))
-		वापस;
+	if (hws->funcs.s0i3_golden_init_wa && hws->funcs.s0i3_golden_init_wa(dc))
+		return;
 
-	अगर (dc->res_pool->hubbub->funcs->is_allow_self_refresh_enabled)
-		allow_self_fresh_क्रमce_enable =
+	if (dc->res_pool->hubbub->funcs->is_allow_self_refresh_enabled)
+		allow_self_fresh_force_enable =
 				dc->res_pool->hubbub->funcs->is_allow_self_refresh_enabled(dc->res_pool->hubbub);
 
 
-	/* WA क्रम making DF sleep when idle after resume from S0i3.
+	/* WA for making DF sleep when idle after resume from S0i3.
 	 * DCHUBBUB_ARB_ALLOW_SELF_REFRESH_FORCE_ENABLE is set to 1 by
-	 * command table, अगर DCHUBBUB_ARB_ALLOW_SELF_REFRESH_FORCE_ENABLE = 0
-	 * beक्रमe calling command table and it changed to 1 after,
+	 * command table, if DCHUBBUB_ARB_ALLOW_SELF_REFRESH_FORCE_ENABLE = 0
+	 * before calling command table and it changed to 1 after,
 	 * it should be set back to 0.
 	 */
 
 	/* initialize dcn global */
-	bp->funcs->enable_disp_घातer_gating(bp,
+	bp->funcs->enable_disp_power_gating(bp,
 			CONTROLLER_ID_D0, ASIC_PIPE_INIT);
 
-	क्रम (i = 0; i < dc->res_pool->pipe_count; i++) अणु
+	for (i = 0; i < dc->res_pool->pipe_count; i++) {
 		/* initialize dcn per pipe */
-		bp->funcs->enable_disp_घातer_gating(bp,
+		bp->funcs->enable_disp_power_gating(bp,
 				CONTROLLER_ID_D0 + i, ASIC_PIPE_DISABLE);
-	पूर्ण
+	}
 
-	अगर (dc->res_pool->hubbub->funcs->allow_self_refresh_control)
-		अगर (allow_self_fresh_क्रमce_enable == false &&
+	if (dc->res_pool->hubbub->funcs->allow_self_refresh_control)
+		if (allow_self_fresh_force_enable == false &&
 				dc->res_pool->hubbub->funcs->is_allow_self_refresh_enabled(dc->res_pool->hubbub))
 			dc->res_pool->hubbub->funcs->allow_self_refresh_control(dc->res_pool->hubbub,
 										!dc->res_pool->hubbub->ctx->dc->debug.disable_stutter);
 
-पूर्ण
+}
 
-अटल व्योम false_optc_underflow_wa(
-		काष्ठा dc *dc,
-		स्थिर काष्ठा dc_stream_state *stream,
-		काष्ठा timing_generator *tg)
-अणु
-	पूर्णांक i;
+static void false_optc_underflow_wa(
+		struct dc *dc,
+		const struct dc_stream_state *stream,
+		struct timing_generator *tg)
+{
+	int i;
 	bool underflow;
 
-	अगर (!dc->hwseq->wa.false_optc_underflow)
-		वापस;
+	if (!dc->hwseq->wa.false_optc_underflow)
+		return;
 
 	underflow = tg->funcs->is_optc_underflow_occurred(tg);
 
-	क्रम (i = 0; i < dc->res_pool->pipe_count; i++) अणु
-		काष्ठा pipe_ctx *old_pipe_ctx = &dc->current_state->res_ctx.pipe_ctx[i];
+	for (i = 0; i < dc->res_pool->pipe_count; i++) {
+		struct pipe_ctx *old_pipe_ctx = &dc->current_state->res_ctx.pipe_ctx[i];
 
-		अगर (old_pipe_ctx->stream != stream)
-			जारी;
+		if (old_pipe_ctx->stream != stream)
+			continue;
 
-		dc->hwss.रुको_क्रम_mpcc_disconnect(dc, dc->res_pool, old_pipe_ctx);
-	पूर्ण
+		dc->hwss.wait_for_mpcc_disconnect(dc, dc->res_pool, old_pipe_ctx);
+	}
 
-	अगर (tg->funcs->set_blank_data_द्विगुन_buffer)
-		tg->funcs->set_blank_data_द्विगुन_buffer(tg, true);
+	if (tg->funcs->set_blank_data_double_buffer)
+		tg->funcs->set_blank_data_double_buffer(tg, true);
 
-	अगर (tg->funcs->is_optc_underflow_occurred(tg) && !underflow)
+	if (tg->funcs->is_optc_underflow_occurred(tg) && !underflow)
 		tg->funcs->clear_optc_underflow(tg);
-पूर्ण
+}
 
-क्रमागत dc_status dcn10_enable_stream_timing(
-		काष्ठा pipe_ctx *pipe_ctx,
-		काष्ठा dc_state *context,
-		काष्ठा dc *dc)
-अणु
-	काष्ठा dc_stream_state *stream = pipe_ctx->stream;
-	क्रमागत dc_color_space color_space;
-	काष्ठा tg_color black_color = अणु0पूर्ण;
+enum dc_status dcn10_enable_stream_timing(
+		struct pipe_ctx *pipe_ctx,
+		struct dc_state *context,
+		struct dc *dc)
+{
+	struct dc_stream_state *stream = pipe_ctx->stream;
+	enum dc_color_space color_space;
+	struct tg_color black_color = {0};
 
 	/* by upper caller loop, pipe0 is parent pipe and be called first.
-	 * back end is set up by क्रम pipe0. Other children pipe share back end
+	 * back end is set up by for pipe0. Other children pipe share back end
 	 * with pipe 0. No program is needed.
 	 */
-	अगर (pipe_ctx->top_pipe != शून्य)
-		वापस DC_OK;
+	if (pipe_ctx->top_pipe != NULL)
+		return DC_OK;
 
-	/* TODO check अगर timing_changed, disable stream अगर timing changed */
+	/* TODO check if timing_changed, disable stream if timing changed */
 
-	/* HW program guide assume display alपढ़ोy disable
+	/* HW program guide assume display already disable
 	 * by unplug sequence. OTG assume stop.
 	 */
-	pipe_ctx->stream_res.tg->funcs->enable_optc_घड़ी(pipe_ctx->stream_res.tg, true);
+	pipe_ctx->stream_res.tg->funcs->enable_optc_clock(pipe_ctx->stream_res.tg, true);
 
-	अगर (false == pipe_ctx->घड़ी_source->funcs->program_pix_clk(
-			pipe_ctx->घड़ी_source,
+	if (false == pipe_ctx->clock_source->funcs->program_pix_clk(
+			pipe_ctx->clock_source,
 			&pipe_ctx->stream_res.pix_clk_params,
-			&pipe_ctx->pll_settings)) अणु
+			&pipe_ctx->pll_settings)) {
 		BREAK_TO_DEBUGGER();
-		वापस DC_ERROR_UNEXPECTED;
-	पूर्ण
+		return DC_ERROR_UNEXPECTED;
+	}
 
 	pipe_ctx->stream_res.tg->funcs->program_timing(
 			pipe_ctx->stream_res.tg,
 			&stream->timing,
-			pipe_ctx->pipe_dlg_param.vपढ़ोy_offset,
+			pipe_ctx->pipe_dlg_param.vready_offset,
 			pipe_ctx->pipe_dlg_param.vstartup_start,
 			pipe_ctx->pipe_dlg_param.vupdate_offset,
 			pipe_ctx->pipe_dlg_param.vupdate_width,
-			pipe_ctx->stream->संकेत,
+			pipe_ctx->stream->signal,
 			true);
 
-#अगर 0 /* move to after enable_crtc */
-	/* TODO: OPP FMT, ABM. etc. should be करोne here. */
+#if 0 /* move to after enable_crtc */
+	/* TODO: OPP FMT, ABM. etc. should be done here. */
 	/* or FPGA now. instance 0 only. TODO: move to opp.c */
 
 	inst_offset = reg_offsets[pipe_ctx->stream_res.tg->inst].fmt;
@@ -833,7 +832,7 @@ bool dcn10_did_underflow_occur(काष्ठा dc *dc, काष्ठा pip
 				pipe_ctx->stream_res.opp,
 				&stream->bit_depth_params,
 				&stream->clamping);
-#पूर्ण_अगर
+#endif
 	/* program otg blank color */
 	color_space = stream->output_color_space;
 	color_space_to_black_color(dc, color_space, &black_color);
@@ -841,134 +840,134 @@ bool dcn10_did_underflow_occur(काष्ठा dc *dc, काष्ठा pip
 	/*
 	 * The way 420 is packed, 2 channels carry Y component, 1 channel
 	 * alternate between Cb and Cr, so both channels need the pixel
-	 * value क्रम Y
+	 * value for Y
 	 */
-	अगर (stream->timing.pixel_encoding == PIXEL_ENCODING_YCBCR420)
+	if (stream->timing.pixel_encoding == PIXEL_ENCODING_YCBCR420)
 		black_color.color_r_cr = black_color.color_g_y;
 
-	अगर (pipe_ctx->stream_res.tg->funcs->set_blank_color)
+	if (pipe_ctx->stream_res.tg->funcs->set_blank_color)
 		pipe_ctx->stream_res.tg->funcs->set_blank_color(
 				pipe_ctx->stream_res.tg,
 				&black_color);
 
-	अगर (pipe_ctx->stream_res.tg->funcs->is_blanked &&
-			!pipe_ctx->stream_res.tg->funcs->is_blanked(pipe_ctx->stream_res.tg)) अणु
+	if (pipe_ctx->stream_res.tg->funcs->is_blanked &&
+			!pipe_ctx->stream_res.tg->funcs->is_blanked(pipe_ctx->stream_res.tg)) {
 		pipe_ctx->stream_res.tg->funcs->set_blank(pipe_ctx->stream_res.tg, true);
-		hwss_रुको_क्रम_blank_complete(pipe_ctx->stream_res.tg);
+		hwss_wait_for_blank_complete(pipe_ctx->stream_res.tg);
 		false_optc_underflow_wa(dc, pipe_ctx->stream, pipe_ctx->stream_res.tg);
-	पूर्ण
+	}
 
 	/* VTG is  within DCHUB command block. DCFCLK is always on */
-	अगर (false == pipe_ctx->stream_res.tg->funcs->enable_crtc(pipe_ctx->stream_res.tg)) अणु
+	if (false == pipe_ctx->stream_res.tg->funcs->enable_crtc(pipe_ctx->stream_res.tg)) {
 		BREAK_TO_DEBUGGER();
-		वापस DC_ERROR_UNEXPECTED;
-	पूर्ण
+		return DC_ERROR_UNEXPECTED;
+	}
 
-	/* TODO program crtc source select क्रम non-भव संकेत*/
+	/* TODO program crtc source select for non-virtual signal*/
 	/* TODO program FMT */
 	/* TODO setup link_enc */
 	/* TODO set stream attributes */
 	/* TODO program audio */
-	/* TODO enable stream अगर timing changed */
-	/* TODO unblank stream अगर DP */
+	/* TODO enable stream if timing changed */
+	/* TODO unblank stream if DP */
 
-	वापस DC_OK;
-पूर्ण
+	return DC_OK;
+}
 
-अटल व्योम dcn10_reset_back_end_क्रम_pipe(
-		काष्ठा dc *dc,
-		काष्ठा pipe_ctx *pipe_ctx,
-		काष्ठा dc_state *context)
-अणु
-	पूर्णांक i;
-	काष्ठा dc_link *link;
+static void dcn10_reset_back_end_for_pipe(
+		struct dc *dc,
+		struct pipe_ctx *pipe_ctx,
+		struct dc_state *context)
+{
+	int i;
+	struct dc_link *link;
 	DC_LOGGER_INIT(dc->ctx->logger);
-	अगर (pipe_ctx->stream_res.stream_enc == शून्य) अणु
-		pipe_ctx->stream = शून्य;
-		वापस;
-	पूर्ण
+	if (pipe_ctx->stream_res.stream_enc == NULL) {
+		pipe_ctx->stream = NULL;
+		return;
+	}
 
-	अगर (!IS_FPGA_MAXIMUS_DC(dc->ctx->dce_environment)) अणु
+	if (!IS_FPGA_MAXIMUS_DC(dc->ctx->dce_environment)) {
 		link = pipe_ctx->stream->link;
-		/* DPMS may alपढ़ोy disable or */
+		/* DPMS may already disable or */
 		/* dpms_off status is incorrect due to fastboot
-		 * feature. When प्रणाली resume from S4 with second
+		 * feature. When system resume from S4 with second
 		 * screen only, the dpms_off would be true but
 		 * VBIOS lit up eDP, so check link status too.
 		 */
-		अगर (!pipe_ctx->stream->dpms_off || link->link_status.link_active)
+		if (!pipe_ctx->stream->dpms_off || link->link_status.link_active)
 			core_link_disable_stream(pipe_ctx);
-		अन्यथा अगर (pipe_ctx->stream_res.audio)
+		else if (pipe_ctx->stream_res.audio)
 			dc->hwss.disable_audio_stream(pipe_ctx);
 
-		अगर (pipe_ctx->stream_res.audio) अणु
-			/*disable az_endpoपूर्णांक*/
+		if (pipe_ctx->stream_res.audio) {
+			/*disable az_endpoint*/
 			pipe_ctx->stream_res.audio->funcs->az_disable(pipe_ctx->stream_res.audio);
 
-			/*मुक्त audio*/
-			अगर (dc->caps.dynamic_audio == true) अणु
-				/*we have to dynamic arbitrate the audio endpoपूर्णांकs*/
-				/*we मुक्त the resource, need reset is_audio_acquired*/
+			/*free audio*/
+			if (dc->caps.dynamic_audio == true) {
+				/*we have to dynamic arbitrate the audio endpoints*/
+				/*we free the resource, need reset is_audio_acquired*/
 				update_audio_usage(&dc->current_state->res_ctx, dc->res_pool,
 						pipe_ctx->stream_res.audio, false);
-				pipe_ctx->stream_res.audio = शून्य;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				pipe_ctx->stream_res.audio = NULL;
+			}
+		}
+	}
 
 	/* by upper caller loop, parent pipe: pipe0, will be reset last.
 	 * back end share by all pipes and will be disable only when disable
 	 * parent pipe.
 	 */
-	अगर (pipe_ctx->top_pipe == शून्य) अणु
+	if (pipe_ctx->top_pipe == NULL) {
 
-		अगर (pipe_ctx->stream_res.abm)
+		if (pipe_ctx->stream_res.abm)
 			dc->hwss.set_abm_immediate_disable(pipe_ctx);
 
 		pipe_ctx->stream_res.tg->funcs->disable_crtc(pipe_ctx->stream_res.tg);
 
-		pipe_ctx->stream_res.tg->funcs->enable_optc_घड़ी(pipe_ctx->stream_res.tg, false);
-		अगर (pipe_ctx->stream_res.tg->funcs->set_drr)
+		pipe_ctx->stream_res.tg->funcs->enable_optc_clock(pipe_ctx->stream_res.tg, false);
+		if (pipe_ctx->stream_res.tg->funcs->set_drr)
 			pipe_ctx->stream_res.tg->funcs->set_drr(
-					pipe_ctx->stream_res.tg, शून्य);
-	पूर्ण
+					pipe_ctx->stream_res.tg, NULL);
+	}
 
-	क्रम (i = 0; i < dc->res_pool->pipe_count; i++)
-		अगर (&dc->current_state->res_ctx.pipe_ctx[i] == pipe_ctx)
-			अवरोध;
+	for (i = 0; i < dc->res_pool->pipe_count; i++)
+		if (&dc->current_state->res_ctx.pipe_ctx[i] == pipe_ctx)
+			break;
 
-	अगर (i == dc->res_pool->pipe_count)
-		वापस;
+	if (i == dc->res_pool->pipe_count)
+		return;
 
-	pipe_ctx->stream = शून्य;
+	pipe_ctx->stream = NULL;
 	DC_LOG_DEBUG("Reset back end for pipe %d, tg:%d\n",
 					pipe_ctx->pipe_idx, pipe_ctx->stream_res.tg->inst);
-पूर्ण
+}
 
-अटल bool dcn10_hw_wa_क्रमce_recovery(काष्ठा dc *dc)
-अणु
-	काष्ठा hubp *hubp ;
-	अचिन्हित पूर्णांक i;
+static bool dcn10_hw_wa_force_recovery(struct dc *dc)
+{
+	struct hubp *hubp ;
+	unsigned int i;
 	bool need_recover = true;
 
-	अगर (!dc->debug.recovery_enabled)
-		वापस false;
+	if (!dc->debug.recovery_enabled)
+		return false;
 
-	क्रम (i = 0; i < dc->res_pool->pipe_count; i++) अणु
-		काष्ठा pipe_ctx *pipe_ctx =
+	for (i = 0; i < dc->res_pool->pipe_count; i++) {
+		struct pipe_ctx *pipe_ctx =
 			&dc->current_state->res_ctx.pipe_ctx[i];
-		अगर (pipe_ctx != शून्य) अणु
+		if (pipe_ctx != NULL) {
 			hubp = pipe_ctx->plane_res.hubp;
-			अगर (hubp != शून्य && hubp->funcs->hubp_get_underflow_status) अणु
-				अगर (hubp->funcs->hubp_get_underflow_status(hubp) != 0) अणु
+			if (hubp != NULL && hubp->funcs->hubp_get_underflow_status) {
+				if (hubp->funcs->hubp_get_underflow_status(hubp) != 0) {
 					/* one pipe underflow, we will reset all the pipes*/
 					need_recover = true;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	अगर (!need_recover)
-		वापस false;
+				}
+			}
+		}
+	}
+	if (!need_recover)
+		return false;
 	/*
 	DCHUBP_CNTL:HUBP_BLANK_EN=1
 	DCHUBBUB_SOFT_RESET:DCHUBBUB_GLOBAL_SOFT_RESET=1
@@ -979,121 +978,121 @@ bool dcn10_did_underflow_occur(काष्ठा dc *dc, काष्ठा pip
 	DCHUBP_CNTL:HUBP_BLANK_EN=0
 	*/
 
-	क्रम (i = 0; i < dc->res_pool->pipe_count; i++) अणु
-		काष्ठा pipe_ctx *pipe_ctx =
+	for (i = 0; i < dc->res_pool->pipe_count; i++) {
+		struct pipe_ctx *pipe_ctx =
 			&dc->current_state->res_ctx.pipe_ctx[i];
-		अगर (pipe_ctx != शून्य) अणु
+		if (pipe_ctx != NULL) {
 			hubp = pipe_ctx->plane_res.hubp;
 			/*DCHUBP_CNTL:HUBP_BLANK_EN=1*/
-			अगर (hubp != शून्य && hubp->funcs->set_hubp_blank_en)
+			if (hubp != NULL && hubp->funcs->set_hubp_blank_en)
 				hubp->funcs->set_hubp_blank_en(hubp, true);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	/*DCHUBBUB_SOFT_RESET:DCHUBBUB_GLOBAL_SOFT_RESET=1*/
 	hubbub1_soft_reset(dc->res_pool->hubbub, true);
 
-	क्रम (i = 0; i < dc->res_pool->pipe_count; i++) अणु
-		काष्ठा pipe_ctx *pipe_ctx =
+	for (i = 0; i < dc->res_pool->pipe_count; i++) {
+		struct pipe_ctx *pipe_ctx =
 			&dc->current_state->res_ctx.pipe_ctx[i];
-		अगर (pipe_ctx != शून्य) अणु
+		if (pipe_ctx != NULL) {
 			hubp = pipe_ctx->plane_res.hubp;
 			/*DCHUBP_CNTL:HUBP_DISABLE=1*/
-			अगर (hubp != शून्य && hubp->funcs->hubp_disable_control)
+			if (hubp != NULL && hubp->funcs->hubp_disable_control)
 				hubp->funcs->hubp_disable_control(hubp, true);
-		पूर्ण
-	पूर्ण
-	क्रम (i = 0; i < dc->res_pool->pipe_count; i++) अणु
-		काष्ठा pipe_ctx *pipe_ctx =
+		}
+	}
+	for (i = 0; i < dc->res_pool->pipe_count; i++) {
+		struct pipe_ctx *pipe_ctx =
 			&dc->current_state->res_ctx.pipe_ctx[i];
-		अगर (pipe_ctx != शून्य) अणु
+		if (pipe_ctx != NULL) {
 			hubp = pipe_ctx->plane_res.hubp;
 			/*DCHUBP_CNTL:HUBP_DISABLE=0*/
-			अगर (hubp != शून्य && hubp->funcs->hubp_disable_control)
+			if (hubp != NULL && hubp->funcs->hubp_disable_control)
 				hubp->funcs->hubp_disable_control(hubp, true);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	/*DCHUBBUB_SOFT_RESET:DCHUBBUB_GLOBAL_SOFT_RESET=0*/
 	hubbub1_soft_reset(dc->res_pool->hubbub, false);
-	क्रम (i = 0; i < dc->res_pool->pipe_count; i++) अणु
-		काष्ठा pipe_ctx *pipe_ctx =
+	for (i = 0; i < dc->res_pool->pipe_count; i++) {
+		struct pipe_ctx *pipe_ctx =
 			&dc->current_state->res_ctx.pipe_ctx[i];
-		अगर (pipe_ctx != शून्य) अणु
+		if (pipe_ctx != NULL) {
 			hubp = pipe_ctx->plane_res.hubp;
 			/*DCHUBP_CNTL:HUBP_BLANK_EN=0*/
-			अगर (hubp != शून्य && hubp->funcs->set_hubp_blank_en)
+			if (hubp != NULL && hubp->funcs->set_hubp_blank_en)
 				hubp->funcs->set_hubp_blank_en(hubp, true);
-		पूर्ण
-	पूर्ण
-	वापस true;
+		}
+	}
+	return true;
 
-पूर्ण
+}
 
-व्योम dcn10_verअगरy_allow_pstate_change_high(काष्ठा dc *dc)
-अणु
-	अटल bool should_log_hw_state; /* prevent hw state log by शेष */
+void dcn10_verify_allow_pstate_change_high(struct dc *dc)
+{
+	static bool should_log_hw_state; /* prevent hw state log by default */
 
-	अगर (!hubbub1_verअगरy_allow_pstate_change_high(dc->res_pool->hubbub)) अणु
-		पूर्णांक i = 0;
+	if (!hubbub1_verify_allow_pstate_change_high(dc->res_pool->hubbub)) {
+		int i = 0;
 
-		अगर (should_log_hw_state)
-			dcn10_log_hw_state(dc, शून्य);
+		if (should_log_hw_state)
+			dcn10_log_hw_state(dc, NULL);
 
 		TRACE_DC_PIPE_STATE(pipe_ctx, i, MAX_PIPES);
 		BREAK_TO_DEBUGGER();
-		अगर (dcn10_hw_wa_क्रमce_recovery(dc)) अणु
+		if (dcn10_hw_wa_force_recovery(dc)) {
 		/*check again*/
-			अगर (!hubbub1_verअगरy_allow_pstate_change_high(dc->res_pool->hubbub))
+			if (!hubbub1_verify_allow_pstate_change_high(dc->res_pool->hubbub))
 				BREAK_TO_DEBUGGER();
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /* trigger HW to start disconnect plane from stream on the next vsync */
-व्योम dcn10_plane_atomic_disconnect(काष्ठा dc *dc, काष्ठा pipe_ctx *pipe_ctx)
-अणु
-	काष्ठा dce_hwseq *hws = dc->hwseq;
-	काष्ठा hubp *hubp = pipe_ctx->plane_res.hubp;
-	पूर्णांक dpp_id = pipe_ctx->plane_res.dpp->inst;
-	काष्ठा mpc *mpc = dc->res_pool->mpc;
-	काष्ठा mpc_tree *mpc_tree_params;
-	काष्ठा mpcc *mpcc_to_हटाओ = शून्य;
-	काष्ठा output_pixel_processor *opp = pipe_ctx->stream_res.opp;
+void dcn10_plane_atomic_disconnect(struct dc *dc, struct pipe_ctx *pipe_ctx)
+{
+	struct dce_hwseq *hws = dc->hwseq;
+	struct hubp *hubp = pipe_ctx->plane_res.hubp;
+	int dpp_id = pipe_ctx->plane_res.dpp->inst;
+	struct mpc *mpc = dc->res_pool->mpc;
+	struct mpc_tree *mpc_tree_params;
+	struct mpcc *mpcc_to_remove = NULL;
+	struct output_pixel_processor *opp = pipe_ctx->stream_res.opp;
 
 	mpc_tree_params = &(opp->mpc_tree_params);
-	mpcc_to_हटाओ = mpc->funcs->get_mpcc_क्रम_dpp(mpc_tree_params, dpp_id);
+	mpcc_to_remove = mpc->funcs->get_mpcc_for_dpp(mpc_tree_params, dpp_id);
 
-	/*Alपढ़ोy reset*/
-	अगर (mpcc_to_हटाओ == शून्य)
-		वापस;
+	/*Already reset*/
+	if (mpcc_to_remove == NULL)
+		return;
 
-	mpc->funcs->हटाओ_mpcc(mpc, mpc_tree_params, mpcc_to_हटाओ);
-	अगर (opp != शून्य)
+	mpc->funcs->remove_mpcc(mpc, mpc_tree_params, mpcc_to_remove);
+	if (opp != NULL)
 		opp->mpcc_disconnect_pending[pipe_ctx->plane_res.mpcc_inst] = true;
 
 	dc->optimized_required = true;
 
-	अगर (hubp->funcs->hubp_disconnect)
+	if (hubp->funcs->hubp_disconnect)
 		hubp->funcs->hubp_disconnect(hubp);
 
-	अगर (dc->debug.sanity_checks)
-		hws->funcs.verअगरy_allow_pstate_change_high(dc);
-पूर्ण
+	if (dc->debug.sanity_checks)
+		hws->funcs.verify_allow_pstate_change_high(dc);
+}
 
-व्योम dcn10_plane_atomic_घातer_करोwn(काष्ठा dc *dc,
-		काष्ठा dpp *dpp,
-		काष्ठा hubp *hubp)
-अणु
-	काष्ठा dce_hwseq *hws = dc->hwseq;
+void dcn10_plane_atomic_power_down(struct dc *dc,
+		struct dpp *dpp,
+		struct hubp *hubp)
+{
+	struct dce_hwseq *hws = dc->hwseq;
 	DC_LOGGER_INIT(dc->ctx->logger);
 
-	अगर (REG(DC_IP_REQUEST_CNTL)) अणु
+	if (REG(DC_IP_REQUEST_CNTL)) {
 		REG_SET(DC_IP_REQUEST_CNTL, 0,
 				IP_REQUEST_EN, 1);
 
-		अगर (hws->funcs.dpp_pg_control)
+		if (hws->funcs.dpp_pg_control)
 			hws->funcs.dpp_pg_control(hws, dpp->inst, false);
 
-		अगर (hws->funcs.hubp_pg_control)
+		if (hws->funcs.hubp_pg_control)
 			hws->funcs.hubp_pg_control(hws, hubp->inst, false);
 
 		dpp->funcs->dpp_reset(dpp);
@@ -1101,52 +1100,52 @@ bool dcn10_did_underflow_occur(काष्ठा dc *dc, काष्ठा pip
 				IP_REQUEST_EN, 0);
 		DC_LOG_DEBUG(
 				"Power gated front end %d\n", hubp->inst);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* disable HW used by plane.
  * note:  cannot disable until disconnect is complete
  */
-व्योम dcn10_plane_atomic_disable(काष्ठा dc *dc, काष्ठा pipe_ctx *pipe_ctx)
-अणु
-	काष्ठा dce_hwseq *hws = dc->hwseq;
-	काष्ठा hubp *hubp = pipe_ctx->plane_res.hubp;
-	काष्ठा dpp *dpp = pipe_ctx->plane_res.dpp;
-	पूर्णांक opp_id = hubp->opp_id;
+void dcn10_plane_atomic_disable(struct dc *dc, struct pipe_ctx *pipe_ctx)
+{
+	struct dce_hwseq *hws = dc->hwseq;
+	struct hubp *hubp = pipe_ctx->plane_res.hubp;
+	struct dpp *dpp = pipe_ctx->plane_res.dpp;
+	int opp_id = hubp->opp_id;
 
-	dc->hwss.रुको_क्रम_mpcc_disconnect(dc, dc->res_pool, pipe_ctx);
+	dc->hwss.wait_for_mpcc_disconnect(dc, dc->res_pool, pipe_ctx);
 
 	hubp->funcs->hubp_clk_cntl(hubp, false);
 
 	dpp->funcs->dpp_dppclk_control(dpp, false, false);
 
-	अगर (opp_id != 0xf && pipe_ctx->stream_res.opp->mpc_tree_params.opp_list == शून्य)
-		pipe_ctx->stream_res.opp->funcs->opp_pipe_घड़ी_control(
+	if (opp_id != 0xf && pipe_ctx->stream_res.opp->mpc_tree_params.opp_list == NULL)
+		pipe_ctx->stream_res.opp->funcs->opp_pipe_clock_control(
 				pipe_ctx->stream_res.opp,
 				false);
 
-	hubp->घातer_gated = true;
-	dc->optimized_required = false; /* We're घातering off, no need to optimize */
+	hubp->power_gated = true;
+	dc->optimized_required = false; /* We're powering off, no need to optimize */
 
-	hws->funcs.plane_atomic_घातer_करोwn(dc,
+	hws->funcs.plane_atomic_power_down(dc,
 			pipe_ctx->plane_res.dpp,
 			pipe_ctx->plane_res.hubp);
 
-	pipe_ctx->stream = शून्य;
-	स_रखो(&pipe_ctx->stream_res, 0, माप(pipe_ctx->stream_res));
-	स_रखो(&pipe_ctx->plane_res, 0, माप(pipe_ctx->plane_res));
-	pipe_ctx->top_pipe = शून्य;
-	pipe_ctx->bottom_pipe = शून्य;
-	pipe_ctx->plane_state = शून्य;
-पूर्ण
+	pipe_ctx->stream = NULL;
+	memset(&pipe_ctx->stream_res, 0, sizeof(pipe_ctx->stream_res));
+	memset(&pipe_ctx->plane_res, 0, sizeof(pipe_ctx->plane_res));
+	pipe_ctx->top_pipe = NULL;
+	pipe_ctx->bottom_pipe = NULL;
+	pipe_ctx->plane_state = NULL;
+}
 
-व्योम dcn10_disable_plane(काष्ठा dc *dc, काष्ठा pipe_ctx *pipe_ctx)
-अणु
-	काष्ठा dce_hwseq *hws = dc->hwseq;
+void dcn10_disable_plane(struct dc *dc, struct pipe_ctx *pipe_ctx)
+{
+	struct dce_hwseq *hws = dc->hwseq;
 	DC_LOGGER_INIT(dc->ctx->logger);
 
-	अगर (!pipe_ctx->plane_res.hubp || pipe_ctx->plane_res.hubp->घातer_gated)
-		वापस;
+	if (!pipe_ctx->plane_res.hubp || pipe_ctx->plane_res.hubp->power_gated)
+		return;
 
 	hws->funcs.plane_atomic_disable(dc, pipe_ctx);
 
@@ -1154,81 +1153,81 @@ bool dcn10_did_underflow_occur(काष्ठा dc *dc, काष्ठा pip
 
 	DC_LOG_DC("Power down front end %d\n",
 					pipe_ctx->pipe_idx);
-पूर्ण
+}
 
-व्योम dcn10_init_pipes(काष्ठा dc *dc, काष्ठा dc_state *context)
-अणु
-	पूर्णांक i;
-	काष्ठा dce_hwseq *hws = dc->hwseq;
+void dcn10_init_pipes(struct dc *dc, struct dc_state *context)
+{
+	int i;
+	struct dce_hwseq *hws = dc->hwseq;
 	bool can_apply_seamless_boot = false;
 
-	क्रम (i = 0; i < context->stream_count; i++) अणु
-		अगर (context->streams[i]->apply_seamless_boot_optimization) अणु
+	for (i = 0; i < context->stream_count; i++) {
+		if (context->streams[i]->apply_seamless_boot_optimization) {
 			can_apply_seamless_boot = true;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	क्रम (i = 0; i < dc->res_pool->pipe_count; i++) अणु
-		काष्ठा timing_generator *tg = dc->res_pool->timing_generators[i];
-		काष्ठा pipe_ctx *pipe_ctx = &context->res_ctx.pipe_ctx[i];
+	for (i = 0; i < dc->res_pool->pipe_count; i++) {
+		struct timing_generator *tg = dc->res_pool->timing_generators[i];
+		struct pipe_ctx *pipe_ctx = &context->res_ctx.pipe_ctx[i];
 
 		/* There is assumption that pipe_ctx is not mapping irregularly
-		 * to non-preferred front end. If pipe_ctx->stream is not शून्य,
-		 * we will use the pipe, so करोn't disable
+		 * to non-preferred front end. If pipe_ctx->stream is not NULL,
+		 * we will use the pipe, so don't disable
 		 */
-		अगर (pipe_ctx->stream != शून्य && can_apply_seamless_boot)
-			जारी;
+		if (pipe_ctx->stream != NULL && can_apply_seamless_boot)
+			continue;
 
 		/* Blank controller using driver code instead of
 		 * command table.
 		 */
-		अगर (tg->funcs->is_tg_enabled(tg)) अणु
-			अगर (hws->funcs.init_blank != शून्य) अणु
+		if (tg->funcs->is_tg_enabled(tg)) {
+			if (hws->funcs.init_blank != NULL) {
 				hws->funcs.init_blank(dc, tg);
 				tg->funcs->lock(tg);
-			पूर्ण अन्यथा अणु
+			} else {
 				tg->funcs->lock(tg);
 				tg->funcs->set_blank(tg, true);
-				hwss_रुको_क्रम_blank_complete(tg);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				hwss_wait_for_blank_complete(tg);
+			}
+		}
+	}
 
 	/* num_opp will be equal to number of mpcc */
-	क्रम (i = 0; i < dc->res_pool->res_cap->num_opp; i++) अणु
-		काष्ठा pipe_ctx *pipe_ctx = &context->res_ctx.pipe_ctx[i];
+	for (i = 0; i < dc->res_pool->res_cap->num_opp; i++) {
+		struct pipe_ctx *pipe_ctx = &context->res_ctx.pipe_ctx[i];
 
-		/* Cannot reset the MPC mux अगर seamless boot */
-		अगर (pipe_ctx->stream != शून्य && can_apply_seamless_boot)
-			जारी;
+		/* Cannot reset the MPC mux if seamless boot */
+		if (pipe_ctx->stream != NULL && can_apply_seamless_boot)
+			continue;
 
 		dc->res_pool->mpc->funcs->mpc_init_single_inst(
 				dc->res_pool->mpc, i);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < dc->res_pool->pipe_count; i++) अणु
-		काष्ठा timing_generator *tg = dc->res_pool->timing_generators[i];
-		काष्ठा hubp *hubp = dc->res_pool->hubps[i];
-		काष्ठा dpp *dpp = dc->res_pool->dpps[i];
-		काष्ठा pipe_ctx *pipe_ctx = &context->res_ctx.pipe_ctx[i];
+	for (i = 0; i < dc->res_pool->pipe_count; i++) {
+		struct timing_generator *tg = dc->res_pool->timing_generators[i];
+		struct hubp *hubp = dc->res_pool->hubps[i];
+		struct dpp *dpp = dc->res_pool->dpps[i];
+		struct pipe_ctx *pipe_ctx = &context->res_ctx.pipe_ctx[i];
 
 		/* There is assumption that pipe_ctx is not mapping irregularly
-		 * to non-preferred front end. If pipe_ctx->stream is not शून्य,
-		 * we will use the pipe, so करोn't disable
+		 * to non-preferred front end. If pipe_ctx->stream is not NULL,
+		 * we will use the pipe, so don't disable
 		 */
-		अगर (can_apply_seamless_boot &&
-			pipe_ctx->stream != शून्य &&
+		if (can_apply_seamless_boot &&
+			pipe_ctx->stream != NULL &&
 			pipe_ctx->stream_res.tg->funcs->is_tg_enabled(
-				pipe_ctx->stream_res.tg)) अणु
-			// Enable द्विगुन buffering क्रम OTG_BLANK no matter अगर
+				pipe_ctx->stream_res.tg)) {
+			// Enable double buffering for OTG_BLANK no matter if
 			// seamless boot is enabled or not to suppress global sync
-			// संकेतs when OTG blanked. This is to prevent pipe from
-			// requesting data जबतक in PSR.
+			// signals when OTG blanked. This is to prevent pipe from
+			// requesting data while in PSR.
 			tg->funcs->tg_init(tg);
-			hubp->घातer_gated = true;
-			जारी;
-		पूर्ण
+			hubp->power_gated = true;
+			continue;
+		}
 
 		/* Disable on the current state so the new one isn't cleared. */
 		pipe_ctx = &dc->current_state->res_ctx.pipe_ctx[i];
@@ -1243,339 +1242,339 @@ bool dcn10_did_underflow_occur(काष्ठा dc *dc, काष्ठा pip
 		pipe_ctx->plane_res.mpcc_inst = dpp->inst;
 		hubp->mpcc_id = dpp->inst;
 		hubp->opp_id = OPP_ID_INVALID;
-		hubp->घातer_gated = false;
+		hubp->power_gated = false;
 
 		dc->res_pool->opps[i]->mpc_tree_params.opp_id = dc->res_pool->opps[i]->inst;
-		dc->res_pool->opps[i]->mpc_tree_params.opp_list = शून्य;
+		dc->res_pool->opps[i]->mpc_tree_params.opp_list = NULL;
 		dc->res_pool->opps[i]->mpcc_disconnect_pending[pipe_ctx->plane_res.mpcc_inst] = true;
 		pipe_ctx->stream_res.opp = dc->res_pool->opps[i];
 
 		hws->funcs.plane_atomic_disconnect(dc, pipe_ctx);
 
-		अगर (tg->funcs->is_tg_enabled(tg))
+		if (tg->funcs->is_tg_enabled(tg))
 			tg->funcs->unlock(tg);
 
 		dc->hwss.disable_plane(dc, pipe_ctx);
 
-		pipe_ctx->stream_res.tg = शून्य;
-		pipe_ctx->plane_res.hubp = शून्य;
+		pipe_ctx->stream_res.tg = NULL;
+		pipe_ctx->plane_res.hubp = NULL;
 
 		tg->funcs->tg_init(tg);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम dcn10_init_hw(काष्ठा dc *dc)
-अणु
-	पूर्णांक i, j;
-	काष्ठा abm *abm = dc->res_pool->abm;
-	काष्ठा dmcu *dmcu = dc->res_pool->dmcu;
-	काष्ठा dce_hwseq *hws = dc->hwseq;
-	काष्ठा dc_bios *dcb = dc->ctx->dc_bios;
-	काष्ठा resource_pool *res_pool = dc->res_pool;
-	uपूर्णांक32_t backlight = MAX_BACKLIGHT_LEVEL;
-	bool   is_optimized_init_करोne = false;
+void dcn10_init_hw(struct dc *dc)
+{
+	int i, j;
+	struct abm *abm = dc->res_pool->abm;
+	struct dmcu *dmcu = dc->res_pool->dmcu;
+	struct dce_hwseq *hws = dc->hwseq;
+	struct dc_bios *dcb = dc->ctx->dc_bios;
+	struct resource_pool *res_pool = dc->res_pool;
+	uint32_t backlight = MAX_BACKLIGHT_LEVEL;
+	bool   is_optimized_init_done = false;
 
-	अगर (dc->clk_mgr && dc->clk_mgr->funcs->init_घड़ीs)
-		dc->clk_mgr->funcs->init_घड़ीs(dc->clk_mgr);
+	if (dc->clk_mgr && dc->clk_mgr->funcs->init_clocks)
+		dc->clk_mgr->funcs->init_clocks(dc->clk_mgr);
 
 	// Initialize the dccg
-	अगर (dc->res_pool->dccg && dc->res_pool->dccg->funcs->dccg_init)
+	if (dc->res_pool->dccg && dc->res_pool->dccg->funcs->dccg_init)
 		dc->res_pool->dccg->funcs->dccg_init(res_pool->dccg);
 
-	अगर (IS_FPGA_MAXIMUS_DC(dc->ctx->dce_environment)) अणु
+	if (IS_FPGA_MAXIMUS_DC(dc->ctx->dce_environment)) {
 
 		REG_WRITE(REFCLK_CNTL, 0);
 		REG_UPDATE(DCHUBBUB_GLOBAL_TIMER_CNTL, DCHUBBUB_GLOBAL_TIMER_ENABLE, 1);
 		REG_WRITE(DIO_MEM_PWR_CTRL, 0);
 
-		अगर (!dc->debug.disable_घड़ी_gate) अणु
-			/* enable all DCN घड़ी gating */
+		if (!dc->debug.disable_clock_gate) {
+			/* enable all DCN clock gating */
 			REG_WRITE(DCCG_GATE_DISABLE_CNTL, 0);
 
 			REG_WRITE(DCCG_GATE_DISABLE_CNTL2, 0);
 
 			REG_UPDATE(DCFCLK_CNTL, DCFCLK_GATE_DIS, 0);
-		पूर्ण
+		}
 
-		//Enable ability to घातer gate / करोn't क्रमce घातer on permanently
-		अगर (hws->funcs.enable_घातer_gating_plane)
-			hws->funcs.enable_घातer_gating_plane(hws, true);
+		//Enable ability to power gate / don't force power on permanently
+		if (hws->funcs.enable_power_gating_plane)
+			hws->funcs.enable_power_gating_plane(hws, true);
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!dcb->funcs->is_accelerated_mode(dcb))
+	if (!dcb->funcs->is_accelerated_mode(dcb))
 		hws->funcs.disable_vga(dc->hwseq);
 
 	hws->funcs.bios_golden_init(dc);
 
-	अगर (dc->ctx->dc_bios->fw_info_valid) अणु
-		res_pool->ref_घड़ीs.xtalin_घड़ी_inKhz =
+	if (dc->ctx->dc_bios->fw_info_valid) {
+		res_pool->ref_clocks.xtalin_clock_inKhz =
 				dc->ctx->dc_bios->fw_info.pll_info.crystal_frequency;
 
-		अगर (!IS_FPGA_MAXIMUS_DC(dc->ctx->dce_environment)) अणु
-			अगर (res_pool->dccg && res_pool->hubbub) अणु
+		if (!IS_FPGA_MAXIMUS_DC(dc->ctx->dce_environment)) {
+			if (res_pool->dccg && res_pool->hubbub) {
 
 				(res_pool->dccg->funcs->get_dccg_ref_freq)(res_pool->dccg,
 						dc->ctx->dc_bios->fw_info.pll_info.crystal_frequency,
-						&res_pool->ref_घड़ीs.dccg_ref_घड़ी_inKhz);
+						&res_pool->ref_clocks.dccg_ref_clock_inKhz);
 
 				(res_pool->hubbub->funcs->get_dchub_ref_freq)(res_pool->hubbub,
-						res_pool->ref_घड़ीs.dccg_ref_घड़ी_inKhz,
-						&res_pool->ref_घड़ीs.dchub_ref_घड़ी_inKhz);
-			पूर्ण अन्यथा अणु
+						res_pool->ref_clocks.dccg_ref_clock_inKhz,
+						&res_pool->ref_clocks.dchub_ref_clock_inKhz);
+			} else {
 				// Not all ASICs have DCCG sw component
-				res_pool->ref_घड़ीs.dccg_ref_घड़ी_inKhz =
-						res_pool->ref_घड़ीs.xtalin_घड़ी_inKhz;
-				res_pool->ref_घड़ीs.dchub_ref_घड़ी_inKhz =
-						res_pool->ref_घड़ीs.xtalin_घड़ी_inKhz;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा
+				res_pool->ref_clocks.dccg_ref_clock_inKhz =
+						res_pool->ref_clocks.xtalin_clock_inKhz;
+				res_pool->ref_clocks.dchub_ref_clock_inKhz =
+						res_pool->ref_clocks.xtalin_clock_inKhz;
+			}
+		}
+	} else
 		ASSERT_CRITICAL(false);
 
-	क्रम (i = 0; i < dc->link_count; i++) अणु
+	for (i = 0; i < dc->link_count; i++) {
 		/* Power up AND update implementation according to the
-		 * required संकेत (which may be dअगरferent from the
-		 * शेष संकेत on connector).
+		 * required signal (which may be different from the
+		 * default signal on connector).
 		 */
-		काष्ठा dc_link *link = dc->links[i];
+		struct dc_link *link = dc->links[i];
 
-		अगर (!is_optimized_init_करोne)
+		if (!is_optimized_init_done)
 			link->link_enc->funcs->hw_init(link->link_enc);
 
-		/* Check क्रम enabled DIG to identअगरy enabled display */
-		अगर (link->link_enc->funcs->is_dig_enabled &&
+		/* Check for enabled DIG to identify enabled display */
+		if (link->link_enc->funcs->is_dig_enabled &&
 			link->link_enc->funcs->is_dig_enabled(link->link_enc))
 			link->link_status.link_active = true;
-	पूर्ण
+	}
 
 	/* Power gate DSCs */
-	अगर (!is_optimized_init_करोne) अणु
-		क्रम (i = 0; i < res_pool->res_cap->num_dsc; i++)
-			अगर (hws->funcs.dsc_pg_control != शून्य)
+	if (!is_optimized_init_done) {
+		for (i = 0; i < res_pool->res_cap->num_dsc; i++)
+			if (hws->funcs.dsc_pg_control != NULL)
 				hws->funcs.dsc_pg_control(hws, res_pool->dscs[i]->inst, false);
-	पूर्ण
+	}
 
-	/* Enable outbox notअगरication feature of dmub */
-	अगर (dc->debug.enable_dmub_aux_क्रम_legacy_ddc)
-		dmub_enable_outbox_notअगरication(dc);
+	/* Enable outbox notification feature of dmub */
+	if (dc->debug.enable_dmub_aux_for_legacy_ddc)
+		dmub_enable_outbox_notification(dc);
 
-	/* we want to turn off all dp displays beक्रमe करोing detection */
-	अगर (dc->config.घातer_करोwn_display_on_boot) अणु
-		uपूर्णांक8_t dpcd_घातer_state = '\0';
-		क्रमागत dc_status status = DC_ERROR_UNEXPECTED;
+	/* we want to turn off all dp displays before doing detection */
+	if (dc->config.power_down_display_on_boot) {
+		uint8_t dpcd_power_state = '\0';
+		enum dc_status status = DC_ERROR_UNEXPECTED;
 
-		क्रम (i = 0; i < dc->link_count; i++) अणु
-			अगर (dc->links[i]->connector_संकेत != SIGNAL_TYPE_DISPLAY_PORT)
-				जारी;
+		for (i = 0; i < dc->link_count; i++) {
+			if (dc->links[i]->connector_signal != SIGNAL_TYPE_DISPLAY_PORT)
+				continue;
 
 			/*
 			 * If any of the displays are lit up turn them off.
 			 * The reason is that some MST hubs cannot be turned off
-			 * completely until we tell them to करो so.
+			 * completely until we tell them to do so.
 			 * If not turned off, then displays connected to MST hub
 			 * won't light up.
 			 */
-			status = core_link_पढ़ो_dpcd(dc->links[i], DP_SET_POWER,
-							&dpcd_घातer_state, माप(dpcd_घातer_state));
-			अगर (status == DC_OK && dpcd_घातer_state == DP_POWER_STATE_D0) अणु
-				/* blank dp stream beक्रमe घातer off receiver*/
-				अगर (dc->links[i]->link_enc->funcs->get_dig_frontend) अणु
-					अचिन्हित पूर्णांक fe = dc->links[i]->link_enc->funcs->get_dig_frontend(dc->links[i]->link_enc);
+			status = core_link_read_dpcd(dc->links[i], DP_SET_POWER,
+							&dpcd_power_state, sizeof(dpcd_power_state));
+			if (status == DC_OK && dpcd_power_state == DP_POWER_STATE_D0) {
+				/* blank dp stream before power off receiver*/
+				if (dc->links[i]->link_enc->funcs->get_dig_frontend) {
+					unsigned int fe = dc->links[i]->link_enc->funcs->get_dig_frontend(dc->links[i]->link_enc);
 
-					क्रम (j = 0; j < dc->res_pool->stream_enc_count; j++) अणु
-						अगर (fe == dc->res_pool->stream_enc[j]->id) अणु
+					for (j = 0; j < dc->res_pool->stream_enc_count; j++) {
+						if (fe == dc->res_pool->stream_enc[j]->id) {
 							dc->res_pool->stream_enc[j]->funcs->dp_blank(
 										dc->res_pool->stream_enc[j]);
-							अवरोध;
-						पूर्ण
-					पूर्ण
-				पूर्ण
-				dp_receiver_घातer_ctrl(dc->links[i], false);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+							break;
+						}
+					}
+				}
+				dp_receiver_power_ctrl(dc->links[i], false);
+			}
+		}
+	}
 
 	/* If taking control over from VBIOS, we may want to optimize our first
-	 * mode set, so we need to skip घातering करोwn pipes until we know which
+	 * mode set, so we need to skip powering down pipes until we know which
 	 * pipes we want to use.
-	 * Otherwise, अगर taking control is not possible, we need to घातer
-	 * everything करोwn.
+	 * Otherwise, if taking control is not possible, we need to power
+	 * everything down.
 	 */
-	अगर (dcb->funcs->is_accelerated_mode(dcb) || dc->config.घातer_करोwn_display_on_boot) अणु
-		अगर (!is_optimized_init_करोne) अणु
+	if (dcb->funcs->is_accelerated_mode(dcb) || dc->config.power_down_display_on_boot) {
+		if (!is_optimized_init_done) {
 			hws->funcs.init_pipes(dc, dc->current_state);
-			अगर (dc->res_pool->hubbub->funcs->allow_self_refresh_control)
+			if (dc->res_pool->hubbub->funcs->allow_self_refresh_control)
 				dc->res_pool->hubbub->funcs->allow_self_refresh_control(dc->res_pool->hubbub,
 						!dc->res_pool->hubbub->ctx->dc->debug.disable_stutter);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!is_optimized_init_करोne) अणु
+	if (!is_optimized_init_done) {
 
-		क्रम (i = 0; i < res_pool->audio_count; i++) अणु
-			काष्ठा audio *audio = res_pool->audios[i];
+		for (i = 0; i < res_pool->audio_count; i++) {
+			struct audio *audio = res_pool->audios[i];
 
 			audio->funcs->hw_init(audio);
-		पूर्ण
+		}
 
-		क्रम (i = 0; i < dc->link_count; i++) अणु
-			काष्ठा dc_link *link = dc->links[i];
+		for (i = 0; i < dc->link_count; i++) {
+			struct dc_link *link = dc->links[i];
 
-			अगर (link->panel_cntl)
+			if (link->panel_cntl)
 				backlight = link->panel_cntl->funcs->hw_init(link->panel_cntl);
-		पूर्ण
+		}
 
-		अगर (abm != शून्य)
+		if (abm != NULL)
 			abm->funcs->abm_init(abm, backlight);
 
-		अगर (dmcu != शून्य && !dmcu->स्वतः_load_dmcu)
+		if (dmcu != NULL && !dmcu->auto_load_dmcu)
 			dmcu->funcs->dmcu_init(dmcu);
-	पूर्ण
+	}
 
-	अगर (abm != शून्य && dmcu != शून्य)
+	if (abm != NULL && dmcu != NULL)
 		abm->dmcu_is_running = dmcu->funcs->is_dmcu_initialized(dmcu);
 
-	/* घातer AFMT HDMI memory TODO: may move to dis/en output save घातer*/
-	अगर (!is_optimized_init_करोne)
+	/* power AFMT HDMI memory TODO: may move to dis/en output save power*/
+	if (!is_optimized_init_done)
 		REG_WRITE(DIO_MEM_PWR_CTRL, 0);
 
-	अगर (!dc->debug.disable_घड़ी_gate) अणु
-		/* enable all DCN घड़ी gating */
+	if (!dc->debug.disable_clock_gate) {
+		/* enable all DCN clock gating */
 		REG_WRITE(DCCG_GATE_DISABLE_CNTL, 0);
 
 		REG_WRITE(DCCG_GATE_DISABLE_CNTL2, 0);
 
 		REG_UPDATE(DCFCLK_CNTL, DCFCLK_GATE_DIS, 0);
-	पूर्ण
-	अगर (hws->funcs.enable_घातer_gating_plane)
-		hws->funcs.enable_घातer_gating_plane(dc->hwseq, true);
+	}
+	if (hws->funcs.enable_power_gating_plane)
+		hws->funcs.enable_power_gating_plane(dc->hwseq, true);
 
-	अगर (dc->clk_mgr->funcs->notअगरy_wm_ranges)
-		dc->clk_mgr->funcs->notअगरy_wm_ranges(dc->clk_mgr);
-पूर्ण
+	if (dc->clk_mgr->funcs->notify_wm_ranges)
+		dc->clk_mgr->funcs->notify_wm_ranges(dc->clk_mgr);
+}
 
-/* In headless boot हालs, DIG may be turned
+/* In headless boot cases, DIG may be turned
  * on which causes HW/SW discrepancies.
- * To aव्योम this, घातer करोwn hardware on boot
- * अगर DIG is turned on
+ * To avoid this, power down hardware on boot
+ * if DIG is turned on
  */
-व्योम dcn10_घातer_करोwn_on_boot(काष्ठा dc *dc)
-अणु
-	काष्ठा dc_link *edp_links[MAX_NUM_EDP];
-	काष्ठा dc_link *edp_link;
-	पूर्णांक edp_num;
-	पूर्णांक i = 0;
+void dcn10_power_down_on_boot(struct dc *dc)
+{
+	struct dc_link *edp_links[MAX_NUM_EDP];
+	struct dc_link *edp_link;
+	int edp_num;
+	int i = 0;
 
 	get_edp_links(dc, edp_links, &edp_num);
 
-	अगर (edp_num) अणु
-		क्रम (i = 0; i < edp_num; i++) अणु
+	if (edp_num) {
+		for (i = 0; i < edp_num; i++) {
 			edp_link = edp_links[i];
-			अगर (edp_link->link_enc->funcs->is_dig_enabled &&
+			if (edp_link->link_enc->funcs->is_dig_enabled &&
 					edp_link->link_enc->funcs->is_dig_enabled(edp_link->link_enc) &&
 					dc->hwseq->funcs.edp_backlight_control &&
-					dc->hwss.घातer_करोwn &&
-					dc->hwss.edp_घातer_control) अणु
+					dc->hwss.power_down &&
+					dc->hwss.edp_power_control) {
 				dc->hwseq->funcs.edp_backlight_control(edp_link, false);
-				dc->hwss.घातer_करोwn(dc);
-				dc->hwss.edp_घातer_control(edp_link, false);
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		क्रम (i = 0; i < dc->link_count; i++) अणु
-			काष्ठा dc_link *link = dc->links[i];
+				dc->hwss.power_down(dc);
+				dc->hwss.edp_power_control(edp_link, false);
+			}
+		}
+	} else {
+		for (i = 0; i < dc->link_count; i++) {
+			struct dc_link *link = dc->links[i];
 
-			अगर (link->link_enc->funcs->is_dig_enabled &&
+			if (link->link_enc->funcs->is_dig_enabled &&
 					link->link_enc->funcs->is_dig_enabled(link->link_enc) &&
-					dc->hwss.घातer_करोwn) अणु
-				dc->hwss.घातer_करोwn(dc);
-				अवरोध;
-			पूर्ण
+					dc->hwss.power_down) {
+				dc->hwss.power_down(dc);
+				break;
+			}
 
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*
-	 * Call update_घड़ीs with empty context
+	 * Call update_clocks with empty context
 	 * to send DISPLAY_OFF
-	 * Otherwise DISPLAY_OFF may not be निश्चितed
+	 * Otherwise DISPLAY_OFF may not be asserted
 	 */
-	अगर (dc->clk_mgr->funcs->set_low_घातer_state)
-		dc->clk_mgr->funcs->set_low_घातer_state(dc->clk_mgr);
-पूर्ण
+	if (dc->clk_mgr->funcs->set_low_power_state)
+		dc->clk_mgr->funcs->set_low_power_state(dc->clk_mgr);
+}
 
-व्योम dcn10_reset_hw_ctx_wrap(
-		काष्ठा dc *dc,
-		काष्ठा dc_state *context)
-अणु
-	पूर्णांक i;
-	काष्ठा dce_hwseq *hws = dc->hwseq;
+void dcn10_reset_hw_ctx_wrap(
+		struct dc *dc,
+		struct dc_state *context)
+{
+	int i;
+	struct dce_hwseq *hws = dc->hwseq;
 
 	/* Reset Back End*/
-	क्रम (i = dc->res_pool->pipe_count - 1; i >= 0 ; i--) अणु
-		काष्ठा pipe_ctx *pipe_ctx_old =
+	for (i = dc->res_pool->pipe_count - 1; i >= 0 ; i--) {
+		struct pipe_ctx *pipe_ctx_old =
 			&dc->current_state->res_ctx.pipe_ctx[i];
-		काष्ठा pipe_ctx *pipe_ctx = &context->res_ctx.pipe_ctx[i];
+		struct pipe_ctx *pipe_ctx = &context->res_ctx.pipe_ctx[i];
 
-		अगर (!pipe_ctx_old->stream)
-			जारी;
+		if (!pipe_ctx_old->stream)
+			continue;
 
-		अगर (pipe_ctx_old->top_pipe)
-			जारी;
+		if (pipe_ctx_old->top_pipe)
+			continue;
 
-		अगर (!pipe_ctx->stream ||
-				pipe_need_reprogram(pipe_ctx_old, pipe_ctx)) अणु
-			काष्ठा घड़ी_source *old_clk = pipe_ctx_old->घड़ी_source;
+		if (!pipe_ctx->stream ||
+				pipe_need_reprogram(pipe_ctx_old, pipe_ctx)) {
+			struct clock_source *old_clk = pipe_ctx_old->clock_source;
 
-			dcn10_reset_back_end_क्रम_pipe(dc, pipe_ctx_old, dc->current_state);
-			अगर (hws->funcs.enable_stream_gating)
+			dcn10_reset_back_end_for_pipe(dc, pipe_ctx_old, dc->current_state);
+			if (hws->funcs.enable_stream_gating)
 				hws->funcs.enable_stream_gating(dc, pipe_ctx);
-			अगर (old_clk)
-				old_clk->funcs->cs_घातer_करोwn(old_clk);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			if (old_clk)
+				old_clk->funcs->cs_power_down(old_clk);
+		}
+	}
+}
 
-अटल bool patch_address_क्रम_sbs_tb_stereo(
-		काष्ठा pipe_ctx *pipe_ctx, PHYSICAL_ADDRESS_LOC *addr)
-अणु
-	काष्ठा dc_plane_state *plane_state = pipe_ctx->plane_state;
+static bool patch_address_for_sbs_tb_stereo(
+		struct pipe_ctx *pipe_ctx, PHYSICAL_ADDRESS_LOC *addr)
+{
+	struct dc_plane_state *plane_state = pipe_ctx->plane_state;
 	bool sec_split = pipe_ctx->top_pipe &&
 			pipe_ctx->top_pipe->plane_state == pipe_ctx->plane_state;
-	अगर (sec_split && plane_state->address.type == PLN_ADDR_TYPE_GRPH_STEREO &&
-		(pipe_ctx->stream->timing.timing_3d_क्रमmat ==
+	if (sec_split && plane_state->address.type == PLN_ADDR_TYPE_GRPH_STEREO &&
+		(pipe_ctx->stream->timing.timing_3d_format ==
 		 TIMING_3D_FORMAT_SIDE_BY_SIDE ||
-		 pipe_ctx->stream->timing.timing_3d_क्रमmat ==
-		 TIMING_3D_FORMAT_TOP_AND_BOTTOM)) अणु
+		 pipe_ctx->stream->timing.timing_3d_format ==
+		 TIMING_3D_FORMAT_TOP_AND_BOTTOM)) {
 		*addr = plane_state->address.grph_stereo.left_addr;
 		plane_state->address.grph_stereo.left_addr =
 		plane_state->address.grph_stereo.right_addr;
-		वापस true;
-	पूर्ण अन्यथा अणु
-		अगर (pipe_ctx->stream->view_क्रमmat != VIEW_3D_FORMAT_NONE &&
-			plane_state->address.type != PLN_ADDR_TYPE_GRPH_STEREO) अणु
+		return true;
+	} else {
+		if (pipe_ctx->stream->view_format != VIEW_3D_FORMAT_NONE &&
+			plane_state->address.type != PLN_ADDR_TYPE_GRPH_STEREO) {
 			plane_state->address.type = PLN_ADDR_TYPE_GRPH_STEREO;
 			plane_state->address.grph_stereo.right_addr =
 			plane_state->address.grph_stereo.left_addr;
 			plane_state->address.grph_stereo.right_meta_addr =
 			plane_state->address.grph_stereo.left_meta_addr;
-		पूर्ण
-	पूर्ण
-	वापस false;
-पूर्ण
+		}
+	}
+	return false;
+}
 
-व्योम dcn10_update_plane_addr(स्थिर काष्ठा dc *dc, काष्ठा pipe_ctx *pipe_ctx)
-अणु
+void dcn10_update_plane_addr(const struct dc *dc, struct pipe_ctx *pipe_ctx)
+{
 	bool addr_patched = false;
 	PHYSICAL_ADDRESS_LOC addr;
-	काष्ठा dc_plane_state *plane_state = pipe_ctx->plane_state;
+	struct dc_plane_state *plane_state = pipe_ctx->plane_state;
 
-	अगर (plane_state == शून्य)
-		वापस;
+	if (plane_state == NULL)
+		return;
 
-	addr_patched = patch_address_क्रम_sbs_tb_stereo(pipe_ctx, &addr);
+	addr_patched = patch_address_for_sbs_tb_stereo(pipe_ctx, &addr);
 
 	pipe_ctx->plane_res.hubp->funcs->hubp_program_surface_flip_and_addr(
 			pipe_ctx->plane_res.hubp,
@@ -1584,184 +1583,184 @@ bool dcn10_did_underflow_occur(काष्ठा dc *dc, काष्ठा pip
 
 	plane_state->status.requested_address = plane_state->address;
 
-	अगर (plane_state->flip_immediate)
+	if (plane_state->flip_immediate)
 		plane_state->status.current_address = plane_state->address;
 
-	अगर (addr_patched)
+	if (addr_patched)
 		pipe_ctx->plane_state->address.grph_stereo.left_addr = addr;
-पूर्ण
+}
 
-bool dcn10_set_input_transfer_func(काष्ठा dc *dc, काष्ठा pipe_ctx *pipe_ctx,
-			स्थिर काष्ठा dc_plane_state *plane_state)
-अणु
-	काष्ठा dpp *dpp_base = pipe_ctx->plane_res.dpp;
-	स्थिर काष्ठा dc_transfer_func *tf = शून्य;
+bool dcn10_set_input_transfer_func(struct dc *dc, struct pipe_ctx *pipe_ctx,
+			const struct dc_plane_state *plane_state)
+{
+	struct dpp *dpp_base = pipe_ctx->plane_res.dpp;
+	const struct dc_transfer_func *tf = NULL;
 	bool result = true;
 
-	अगर (dpp_base == शून्य)
-		वापस false;
+	if (dpp_base == NULL)
+		return false;
 
-	अगर (plane_state->in_transfer_func)
+	if (plane_state->in_transfer_func)
 		tf = plane_state->in_transfer_func;
 
-	अगर (plane_state->gamma_correction &&
+	if (plane_state->gamma_correction &&
 		!dpp_base->ctx->dc->debug.always_use_regamma
 		&& !plane_state->gamma_correction->is_identity
-			&& dce_use_lut(plane_state->क्रमmat))
+			&& dce_use_lut(plane_state->format))
 		dpp_base->funcs->dpp_program_input_lut(dpp_base, plane_state->gamma_correction);
 
-	अगर (tf == शून्य)
+	if (tf == NULL)
 		dpp_base->funcs->dpp_set_degamma(dpp_base, IPP_DEGAMMA_MODE_BYPASS);
-	अन्यथा अगर (tf->type == TF_TYPE_PREDEFINED) अणु
-		चयन (tf->tf) अणु
-		हाल TRANSFER_FUNCTION_SRGB:
+	else if (tf->type == TF_TYPE_PREDEFINED) {
+		switch (tf->tf) {
+		case TRANSFER_FUNCTION_SRGB:
 			dpp_base->funcs->dpp_set_degamma(dpp_base, IPP_DEGAMMA_MODE_HW_sRGB);
-			अवरोध;
-		हाल TRANSFER_FUNCTION_BT709:
+			break;
+		case TRANSFER_FUNCTION_BT709:
 			dpp_base->funcs->dpp_set_degamma(dpp_base, IPP_DEGAMMA_MODE_HW_xvYCC);
-			अवरोध;
-		हाल TRANSFER_FUNCTION_LINEAR:
+			break;
+		case TRANSFER_FUNCTION_LINEAR:
 			dpp_base->funcs->dpp_set_degamma(dpp_base, IPP_DEGAMMA_MODE_BYPASS);
-			अवरोध;
-		हाल TRANSFER_FUNCTION_PQ:
+			break;
+		case TRANSFER_FUNCTION_PQ:
 			dpp_base->funcs->dpp_set_degamma(dpp_base, IPP_DEGAMMA_MODE_USER_PWL);
-			cm_helper_translate_curve_to_degamma_hw_क्रमmat(tf, &dpp_base->degamma_params);
+			cm_helper_translate_curve_to_degamma_hw_format(tf, &dpp_base->degamma_params);
 			dpp_base->funcs->dpp_program_degamma_pwl(dpp_base, &dpp_base->degamma_params);
 			result = true;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			result = false;
-			अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अगर (tf->type == TF_TYPE_BYPASS) अणु
+			break;
+		}
+	} else if (tf->type == TF_TYPE_BYPASS) {
 		dpp_base->funcs->dpp_set_degamma(dpp_base, IPP_DEGAMMA_MODE_BYPASS);
-	पूर्ण अन्यथा अणु
-		cm_helper_translate_curve_to_degamma_hw_क्रमmat(tf,
+	} else {
+		cm_helper_translate_curve_to_degamma_hw_format(tf,
 					&dpp_base->degamma_params);
 		dpp_base->funcs->dpp_program_degamma_pwl(dpp_base,
 				&dpp_base->degamma_params);
 		result = true;
-	पूर्ण
+	}
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-#घोषणा MAX_NUM_HW_POINTS 0x200
+#define MAX_NUM_HW_POINTS 0x200
 
-अटल व्योम log_tf(काष्ठा dc_context *ctx,
-				काष्ठा dc_transfer_func *tf, uपूर्णांक32_t hw_poपूर्णांकs_num)
-अणु
-	// DC_LOG_GAMMA is शेष logging of all hw poपूर्णांकs
-	// DC_LOG_ALL_GAMMA logs all poपूर्णांकs, not only hw poपूर्णांकs
+static void log_tf(struct dc_context *ctx,
+				struct dc_transfer_func *tf, uint32_t hw_points_num)
+{
+	// DC_LOG_GAMMA is default logging of all hw points
+	// DC_LOG_ALL_GAMMA logs all points, not only hw points
 	// DC_LOG_ALL_TF_POINTS logs all channels of the tf
-	पूर्णांक i = 0;
+	int i = 0;
 
 	DC_LOGGER_INIT(ctx->logger);
 	DC_LOG_GAMMA("Gamma Correction TF");
 	DC_LOG_ALL_GAMMA("Logging all tf points...");
 	DC_LOG_ALL_TF_CHANNELS("Logging all channels...");
 
-	क्रम (i = 0; i < hw_poपूर्णांकs_num; i++) अणु
+	for (i = 0; i < hw_points_num; i++) {
 		DC_LOG_GAMMA("R\t%d\t%llu", i, tf->tf_pts.red[i].value);
 		DC_LOG_ALL_TF_CHANNELS("G\t%d\t%llu", i, tf->tf_pts.green[i].value);
 		DC_LOG_ALL_TF_CHANNELS("B\t%d\t%llu", i, tf->tf_pts.blue[i].value);
-	पूर्ण
+	}
 
-	क्रम (i = hw_poपूर्णांकs_num; i < MAX_NUM_HW_POINTS; i++) अणु
+	for (i = hw_points_num; i < MAX_NUM_HW_POINTS; i++) {
 		DC_LOG_ALL_GAMMA("R\t%d\t%llu", i, tf->tf_pts.red[i].value);
 		DC_LOG_ALL_TF_CHANNELS("G\t%d\t%llu", i, tf->tf_pts.green[i].value);
 		DC_LOG_ALL_TF_CHANNELS("B\t%d\t%llu", i, tf->tf_pts.blue[i].value);
-	पूर्ण
-पूर्ण
+	}
+}
 
-bool dcn10_set_output_transfer_func(काष्ठा dc *dc, काष्ठा pipe_ctx *pipe_ctx,
-				स्थिर काष्ठा dc_stream_state *stream)
-अणु
-	काष्ठा dpp *dpp = pipe_ctx->plane_res.dpp;
+bool dcn10_set_output_transfer_func(struct dc *dc, struct pipe_ctx *pipe_ctx,
+				const struct dc_stream_state *stream)
+{
+	struct dpp *dpp = pipe_ctx->plane_res.dpp;
 
-	अगर (dpp == शून्य)
-		वापस false;
+	if (dpp == NULL)
+		return false;
 
-	dpp->regamma_params.hw_poपूर्णांकs_num = GAMMA_HW_POINTS_NUM;
+	dpp->regamma_params.hw_points_num = GAMMA_HW_POINTS_NUM;
 
-	अगर (stream->out_transfer_func &&
+	if (stream->out_transfer_func &&
 	    stream->out_transfer_func->type == TF_TYPE_PREDEFINED &&
 	    stream->out_transfer_func->tf == TRANSFER_FUNCTION_SRGB)
-		dpp->funcs->dpp_program_regamma_pwl(dpp, शून्य, OPP_REGAMMA_SRGB);
+		dpp->funcs->dpp_program_regamma_pwl(dpp, NULL, OPP_REGAMMA_SRGB);
 
-	/* dcn10_translate_regamma_to_hw_क्रमmat takes 750us, only करो it when full
+	/* dcn10_translate_regamma_to_hw_format takes 750us, only do it when full
 	 * update.
 	 */
-	अन्यथा अगर (cm_helper_translate_curve_to_hw_क्रमmat(
+	else if (cm_helper_translate_curve_to_hw_format(
 			stream->out_transfer_func,
-			&dpp->regamma_params, false)) अणु
+			&dpp->regamma_params, false)) {
 		dpp->funcs->dpp_program_regamma_pwl(
 				dpp,
 				&dpp->regamma_params, OPP_REGAMMA_USER);
-	पूर्ण अन्यथा
-		dpp->funcs->dpp_program_regamma_pwl(dpp, शून्य, OPP_REGAMMA_BYPASS);
+	} else
+		dpp->funcs->dpp_program_regamma_pwl(dpp, NULL, OPP_REGAMMA_BYPASS);
 
-	अगर (stream != शून्य && stream->ctx != शून्य &&
-			stream->out_transfer_func != शून्य) अणु
+	if (stream != NULL && stream->ctx != NULL &&
+			stream->out_transfer_func != NULL) {
 		log_tf(stream->ctx,
 				stream->out_transfer_func,
-				dpp->regamma_params.hw_poपूर्णांकs_num);
-	पूर्ण
+				dpp->regamma_params.hw_points_num);
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-व्योम dcn10_pipe_control_lock(
-	काष्ठा dc *dc,
-	काष्ठा pipe_ctx *pipe,
+void dcn10_pipe_control_lock(
+	struct dc *dc,
+	struct pipe_ctx *pipe,
 	bool lock)
-अणु
-	काष्ठा dce_hwseq *hws = dc->hwseq;
+{
+	struct dce_hwseq *hws = dc->hwseq;
 
 	/* use TG master update lock to lock everything on the TG
-	 * thereक्रमe only top pipe need to lock
+	 * therefore only top pipe need to lock
 	 */
-	अगर (!pipe || pipe->top_pipe)
-		वापस;
+	if (!pipe || pipe->top_pipe)
+		return;
 
-	अगर (dc->debug.sanity_checks)
-		hws->funcs.verअगरy_allow_pstate_change_high(dc);
+	if (dc->debug.sanity_checks)
+		hws->funcs.verify_allow_pstate_change_high(dc);
 
-	अगर (lock)
+	if (lock)
 		pipe->stream_res.tg->funcs->lock(pipe->stream_res.tg);
-	अन्यथा
+	else
 		pipe->stream_res.tg->funcs->unlock(pipe->stream_res.tg);
 
-	अगर (dc->debug.sanity_checks)
-		hws->funcs.verअगरy_allow_pstate_change_high(dc);
-पूर्ण
+	if (dc->debug.sanity_checks)
+		hws->funcs.verify_allow_pstate_change_high(dc);
+}
 
 /**
- * delay_cursor_until_vupdate() - Delay cursor update अगर too बंद to VUPDATE.
+ * delay_cursor_until_vupdate() - Delay cursor update if too close to VUPDATE.
  *
  * Software keepout workaround to prevent cursor update locking from stalling
  * out cursor updates indefinitely or from old values from being retained in
- * the हाल where the viewport changes in the same frame as the cursor.
+ * the case where the viewport changes in the same frame as the cursor.
  *
- * The idea is to calculate the reमुख्यing समय from VPOS to VUPDATE. If it's
- * too बंद to VUPDATE, then stall out until VUPDATE finishes.
+ * The idea is to calculate the remaining time from VPOS to VUPDATE. If it's
+ * too close to VUPDATE, then stall out until VUPDATE finishes.
  *
- * TODO: Optimize cursor programming to be once per frame beक्रमe VUPDATE
- *       to aव्योम the need क्रम this workaround.
+ * TODO: Optimize cursor programming to be once per frame before VUPDATE
+ *       to avoid the need for this workaround.
  */
-अटल व्योम delay_cursor_until_vupdate(काष्ठा dc *dc, काष्ठा pipe_ctx *pipe_ctx)
-अणु
-	काष्ठा dc_stream_state *stream = pipe_ctx->stream;
-	काष्ठा crtc_position position;
-	uपूर्णांक32_t vupdate_start, vupdate_end;
-	अचिन्हित पूर्णांक lines_to_vupdate, us_to_vupdate, vpos;
-	अचिन्हित पूर्णांक us_per_line, us_vupdate;
+static void delay_cursor_until_vupdate(struct dc *dc, struct pipe_ctx *pipe_ctx)
+{
+	struct dc_stream_state *stream = pipe_ctx->stream;
+	struct crtc_position position;
+	uint32_t vupdate_start, vupdate_end;
+	unsigned int lines_to_vupdate, us_to_vupdate, vpos;
+	unsigned int us_per_line, us_vupdate;
 
-	अगर (!dc->hwss.calc_vupdate_position || !dc->hwss.get_position)
-		वापस;
+	if (!dc->hwss.calc_vupdate_position || !dc->hwss.get_position)
+		return;
 
-	अगर (!pipe_ctx->stream_res.stream_enc || !pipe_ctx->stream_res.tg)
-		वापस;
+	if (!pipe_ctx->stream_res.stream_enc || !pipe_ctx->stream_res.tg)
+		return;
 
 	dc->hwss.calc_vupdate_position(dc, pipe_ctx, &vupdate_start,
 				       &vupdate_end);
@@ -1769,51 +1768,51 @@ bool dcn10_set_output_transfer_func(काष्ठा dc *dc, काष्ठ�
 	dc->hwss.get_position(&pipe_ctx, 1, &position);
 	vpos = position.vertical_count;
 
-	/* Aव्योम wraparound calculation issues */
+	/* Avoid wraparound calculation issues */
 	vupdate_start += stream->timing.v_total;
 	vupdate_end += stream->timing.v_total;
 	vpos += stream->timing.v_total;
 
-	अगर (vpos <= vupdate_start) अणु
+	if (vpos <= vupdate_start) {
 		/* VPOS is in VACTIVE or back porch. */
 		lines_to_vupdate = vupdate_start - vpos;
-	पूर्ण अन्यथा अगर (vpos > vupdate_end) अणु
+	} else if (vpos > vupdate_end) {
 		/* VPOS is in the front porch. */
-		वापस;
-	पूर्ण अन्यथा अणु
+		return;
+	} else {
 		/* VPOS is in VUPDATE. */
 		lines_to_vupdate = 0;
-	पूर्ण
+	}
 
-	/* Calculate समय until VUPDATE in microseconds. */
+	/* Calculate time until VUPDATE in microseconds. */
 	us_per_line =
 		stream->timing.h_total * 10000u / stream->timing.pix_clk_100hz;
 	us_to_vupdate = lines_to_vupdate * us_per_line;
 
-	/* 70 us is a conservative estimate of cursor update समय*/
-	अगर (us_to_vupdate > 70)
-		वापस;
+	/* 70 us is a conservative estimate of cursor update time*/
+	if (us_to_vupdate > 70)
+		return;
 
 	/* Stall out until the cursor update completes. */
-	अगर (vupdate_end < vupdate_start)
+	if (vupdate_end < vupdate_start)
 		vupdate_end += stream->timing.v_total;
 	us_vupdate = (vupdate_end - vupdate_start + 1) * us_per_line;
 	udelay(us_to_vupdate + us_vupdate);
-पूर्ण
+}
 
-व्योम dcn10_cursor_lock(काष्ठा dc *dc, काष्ठा pipe_ctx *pipe, bool lock)
-अणु
+void dcn10_cursor_lock(struct dc *dc, struct pipe_ctx *pipe, bool lock)
+{
 	/* cursor lock is per MPCC tree, so only need to lock one pipe per stream */
-	अगर (!pipe || pipe->top_pipe)
-		वापस;
+	if (!pipe || pipe->top_pipe)
+		return;
 
 	/* Prevent cursor lock from stalling out cursor updates. */
-	अगर (lock)
+	if (lock)
 		delay_cursor_until_vupdate(dc, pipe);
 
-	अगर (pipe->stream && should_use_dmub_lock(pipe->stream->link)) अणु
-		जोड़ dmub_hw_lock_flags hw_locks = अणु 0 पूर्ण;
-		काष्ठा dmub_hw_lock_inst_flags inst_flags = अणु 0 पूर्ण;
+	if (pipe->stream && should_use_dmub_lock(pipe->stream->link)) {
+		union dmub_hw_lock_flags hw_locks = { 0 };
+		struct dmub_hw_lock_inst_flags inst_flags = { 0 };
 
 		hw_locks.bits.lock_cursor = 1;
 		inst_flags.opp_inst = pipe->stream_res.opp->inst;
@@ -1822,58 +1821,58 @@ bool dcn10_set_output_transfer_func(काष्ठा dc *dc, काष्ठ�
 					lock,
 					&hw_locks,
 					&inst_flags);
-	पूर्ण अन्यथा
+	} else
 		dc->res_pool->mpc->funcs->cursor_lock(dc->res_pool->mpc,
 				pipe->stream_res.opp->inst, lock);
-पूर्ण
+}
 
-अटल bool रुको_क्रम_reset_trigger_to_occur(
-	काष्ठा dc_context *dc_ctx,
-	काष्ठा timing_generator *tg)
-अणु
+static bool wait_for_reset_trigger_to_occur(
+	struct dc_context *dc_ctx,
+	struct timing_generator *tg)
+{
 	bool rc = false;
 
-	/* To aव्योम endless loop we रुको at most
-	 * frames_to_रुको_on_triggered_reset frames क्रम the reset to occur. */
-	स्थिर uपूर्णांक32_t frames_to_रुको_on_triggered_reset = 10;
-	पूर्णांक i;
+	/* To avoid endless loop we wait at most
+	 * frames_to_wait_on_triggered_reset frames for the reset to occur. */
+	const uint32_t frames_to_wait_on_triggered_reset = 10;
+	int i;
 
-	क्रम (i = 0; i < frames_to_रुको_on_triggered_reset; i++) अणु
+	for (i = 0; i < frames_to_wait_on_triggered_reset; i++) {
 
-		अगर (!tg->funcs->is_counter_moving(tg)) अणु
+		if (!tg->funcs->is_counter_moving(tg)) {
 			DC_ERROR("TG counter is not moving!\n");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (tg->funcs->did_triggered_reset_occur(tg)) अणु
+		if (tg->funcs->did_triggered_reset_occur(tg)) {
 			rc = true;
 			/* usually occurs at i=1 */
 			DC_SYNC_INFO("GSL: reset occurred at wait count: %d\n",
 					i);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		/* Wait क्रम one frame. */
-		tg->funcs->रुको_क्रम_state(tg, CRTC_STATE_VACTIVE);
-		tg->funcs->रुको_क्रम_state(tg, CRTC_STATE_VBLANK);
-	पूर्ण
+		/* Wait for one frame. */
+		tg->funcs->wait_for_state(tg, CRTC_STATE_VACTIVE);
+		tg->funcs->wait_for_state(tg, CRTC_STATE_VBLANK);
+	}
 
-	अगर (false == rc)
+	if (false == rc)
 		DC_ERROR("GSL: Timeout on reset trigger!\n");
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-uपूर्णांक64_t reduceSizeAndFraction(
-	uपूर्णांक64_t *numerator,
-	uपूर्णांक64_t *denominator,
-	bool checkUपूर्णांक32Bounary)
-अणु
-	पूर्णांक i;
-	bool ret = checkUपूर्णांक32Bounary == false;
-	uपूर्णांक64_t max_पूर्णांक32 = 0xffffffff;
-	uपूर्णांक64_t num, denom;
-	अटल स्थिर uपूर्णांक16_t prime_numbers[] = अणु
+uint64_t reduceSizeAndFraction(
+	uint64_t *numerator,
+	uint64_t *denominator,
+	bool checkUint32Bounary)
+{
+	int i;
+	bool ret = checkUint32Bounary == false;
+	uint64_t max_int32 = 0xffffffff;
+	uint64_t num, denom;
+	static const uint16_t prime_numbers[] = {
 		2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43,
 		47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103,
 		107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163,
@@ -1888,84 +1887,84 @@ uपूर्णांक64_t reduceSizeAndFraction(
 		709, 719, 727, 733, 739, 743, 751, 757, 761, 769, 773,
 		787, 797, 809, 811, 821, 823, 827, 829, 839, 853, 857,
 		859, 863, 877, 881, 883, 887, 907, 911, 919, 929, 937,
-		941, 947, 953, 967, 971, 977, 983, 991, 997पूर्ण;
-	पूर्णांक count = ARRAY_SIZE(prime_numbers);
+		941, 947, 953, 967, 971, 977, 983, 991, 997};
+	int count = ARRAY_SIZE(prime_numbers);
 
 	num = *numerator;
 	denom = *denominator;
-	क्रम (i = 0; i < count; i++) अणु
-		uपूर्णांक32_t num_reमुख्यder, denom_reमुख्यder;
-		uपूर्णांक64_t num_result, denom_result;
-		अगर (checkUपूर्णांक32Bounary &&
-			num <= max_पूर्णांक32 && denom <= max_पूर्णांक32) अणु
+	for (i = 0; i < count; i++) {
+		uint32_t num_remainder, denom_remainder;
+		uint64_t num_result, denom_result;
+		if (checkUint32Bounary &&
+			num <= max_int32 && denom <= max_int32) {
 			ret = true;
-			अवरोध;
-		पूर्ण
-		करो अणु
-			num_result = भाग_u64_rem(num, prime_numbers[i], &num_reमुख्यder);
-			denom_result = भाग_u64_rem(denom, prime_numbers[i], &denom_reमुख्यder);
-			अगर (num_reमुख्यder == 0 && denom_reमुख्यder == 0) अणु
+			break;
+		}
+		do {
+			num_result = div_u64_rem(num, prime_numbers[i], &num_remainder);
+			denom_result = div_u64_rem(denom, prime_numbers[i], &denom_remainder);
+			if (num_remainder == 0 && denom_remainder == 0) {
 				num = num_result;
 				denom = denom_result;
-			पूर्ण
-		पूर्ण जबतक (num_reमुख्यder == 0 && denom_reमुख्यder == 0);
-	पूर्ण
+			}
+		} while (num_remainder == 0 && denom_remainder == 0);
+	}
 	*numerator = num;
 	*denominator = denom;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-bool is_low_refresh_rate(काष्ठा pipe_ctx *pipe)
-अणु
-	uपूर्णांक32_t master_pipe_refresh_rate =
+bool is_low_refresh_rate(struct pipe_ctx *pipe)
+{
+	uint32_t master_pipe_refresh_rate =
 		pipe->stream->timing.pix_clk_100hz * 100 /
 		pipe->stream->timing.h_total /
 		pipe->stream->timing.v_total;
-	वापस master_pipe_refresh_rate <= 30;
-पूर्ण
+	return master_pipe_refresh_rate <= 30;
+}
 
-uपूर्णांक8_t get_घड़ी_भागider(काष्ठा pipe_ctx *pipe, bool account_low_refresh_rate)
-अणु
-	uपूर्णांक32_t घड़ी_भागider = 1;
-	uपूर्णांक32_t numpipes = 1;
+uint8_t get_clock_divider(struct pipe_ctx *pipe, bool account_low_refresh_rate)
+{
+	uint32_t clock_divider = 1;
+	uint32_t numpipes = 1;
 
-	अगर (account_low_refresh_rate && is_low_refresh_rate(pipe))
-		घड़ी_भागider *= 2;
+	if (account_low_refresh_rate && is_low_refresh_rate(pipe))
+		clock_divider *= 2;
 
-	अगर (pipe->stream_res.pix_clk_params.pixel_encoding == PIXEL_ENCODING_YCBCR420)
-		घड़ी_भागider *= 2;
+	if (pipe->stream_res.pix_clk_params.pixel_encoding == PIXEL_ENCODING_YCBCR420)
+		clock_divider *= 2;
 
-	जबतक (pipe->next_odm_pipe) अणु
+	while (pipe->next_odm_pipe) {
 		pipe = pipe->next_odm_pipe;
 		numpipes++;
-	पूर्ण
-	घड़ी_भागider *= numpipes;
+	}
+	clock_divider *= numpipes;
 
-	वापस घड़ी_भागider;
-पूर्ण
+	return clock_divider;
+}
 
-पूर्णांक dcn10_align_pixel_घड़ीs(
-	काष्ठा dc *dc,
-	पूर्णांक group_size,
-	काष्ठा pipe_ctx *grouped_pipes[])
-अणु
-	काष्ठा dc_context *dc_ctx = dc->ctx;
-	पूर्णांक i, master = -1, embedded = -1;
-	काष्ठा dc_crtc_timing hw_crtc_timing[MAX_PIPES] = अणु0पूर्ण;
-	uपूर्णांक64_t phase[MAX_PIPES];
-	uपूर्णांक64_t modulo[MAX_PIPES];
-	अचिन्हित पूर्णांक pclk;
+int dcn10_align_pixel_clocks(
+	struct dc *dc,
+	int group_size,
+	struct pipe_ctx *grouped_pipes[])
+{
+	struct dc_context *dc_ctx = dc->ctx;
+	int i, master = -1, embedded = -1;
+	struct dc_crtc_timing hw_crtc_timing[MAX_PIPES] = {0};
+	uint64_t phase[MAX_PIPES];
+	uint64_t modulo[MAX_PIPES];
+	unsigned int pclk;
 
-	uपूर्णांक32_t embedded_pix_clk_100hz;
-	uपूर्णांक16_t embedded_h_total;
-	uपूर्णांक16_t embedded_v_total;
-	bool clamshell_बंदd = false;
-	uपूर्णांक32_t dp_ref_clk_100hz =
-		dc->res_pool->dp_घड़ी_source->ctx->dc->clk_mgr->dprefclk_khz*10;
+	uint32_t embedded_pix_clk_100hz;
+	uint16_t embedded_h_total;
+	uint16_t embedded_v_total;
+	bool clamshell_closed = false;
+	uint32_t dp_ref_clk_100hz =
+		dc->res_pool->dp_clock_source->ctx->dc->clk_mgr->dprefclk_khz*10;
 
-	अगर (dc->config.vblank_alignment_dto_params &&
-		dc->res_pool->dp_घड़ी_source->funcs->override_dp_pix_clk) अणु
-		clamshell_बंदd =
+	if (dc->config.vblank_alignment_dto_params &&
+		dc->res_pool->dp_clock_source->funcs->override_dp_pix_clk) {
+		clamshell_closed =
 			(dc->config.vblank_alignment_dto_params >> 63);
 		embedded_h_total =
 			(dc->config.vblank_alignment_dto_params >> 32) & 0x7FFF;
@@ -1974,185 +1973,185 @@ uपूर्णांक8_t get_घड़ी_भागider(काष्ठा p
 		embedded_pix_clk_100hz =
 			dc->config.vblank_alignment_dto_params & 0xFFFFFFFF;
 
-		क्रम (i = 0; i < group_size; i++) अणु
+		for (i = 0; i < group_size; i++) {
 			grouped_pipes[i]->stream_res.tg->funcs->get_hw_timing(
 					grouped_pipes[i]->stream_res.tg,
 					&hw_crtc_timing[i]);
-			dc->res_pool->dp_घड़ी_source->funcs->get_pixel_clk_frequency_100hz(
-				dc->res_pool->dp_घड़ी_source,
+			dc->res_pool->dp_clock_source->funcs->get_pixel_clk_frequency_100hz(
+				dc->res_pool->dp_clock_source,
 				grouped_pipes[i]->stream_res.tg->inst,
 				&pclk);
 			hw_crtc_timing[i].pix_clk_100hz = pclk;
-			अगर (dc_is_embedded_संकेत(
-					grouped_pipes[i]->stream->संकेत)) अणु
+			if (dc_is_embedded_signal(
+					grouped_pipes[i]->stream->signal)) {
 				embedded = i;
 				master = i;
 				phase[i] = embedded_pix_clk_100hz*100;
 				modulo[i] = dp_ref_clk_100hz*100;
-			पूर्ण अन्यथा अणु
+			} else {
 
-				phase[i] = (uपूर्णांक64_t)embedded_pix_clk_100hz*
+				phase[i] = (uint64_t)embedded_pix_clk_100hz*
 					hw_crtc_timing[i].h_total*
 					hw_crtc_timing[i].v_total;
-				phase[i] = भाग_u64(phase[i], get_घड़ी_भागider(grouped_pipes[i], true));
-				modulo[i] = (uपूर्णांक64_t)dp_ref_clk_100hz*
+				phase[i] = div_u64(phase[i], get_clock_divider(grouped_pipes[i], true));
+				modulo[i] = (uint64_t)dp_ref_clk_100hz*
 					embedded_h_total*
 					embedded_v_total;
 
-				अगर (reduceSizeAndFraction(&phase[i],
-						&modulo[i], true) == false) अणु
+				if (reduceSizeAndFraction(&phase[i],
+						&modulo[i], true) == false) {
 					/*
 					 * this will help to stop reporting
 					 * this timing synchronizable
 					 */
 					DC_SYNC_INFO("Failed to reduce DTO parameters\n");
 					grouped_pipes[i]->stream->has_non_synchronizable_pclk = true;
-				पूर्ण
-			पूर्ण
-		पूर्ण
+				}
+			}
+		}
 
-		क्रम (i = 0; i < group_size; i++) अणु
-			अगर (i != embedded && !grouped_pipes[i]->stream->has_non_synchronizable_pclk) अणु
-				dc->res_pool->dp_घड़ी_source->funcs->override_dp_pix_clk(
-					dc->res_pool->dp_घड़ी_source,
+		for (i = 0; i < group_size; i++) {
+			if (i != embedded && !grouped_pipes[i]->stream->has_non_synchronizable_pclk) {
+				dc->res_pool->dp_clock_source->funcs->override_dp_pix_clk(
+					dc->res_pool->dp_clock_source,
 					grouped_pipes[i]->stream_res.tg->inst,
 					phase[i], modulo[i]);
-				dc->res_pool->dp_घड़ी_source->funcs->get_pixel_clk_frequency_100hz(
-					dc->res_pool->dp_घड़ी_source,
+				dc->res_pool->dp_clock_source->funcs->get_pixel_clk_frequency_100hz(
+					dc->res_pool->dp_clock_source,
 					grouped_pipes[i]->stream_res.tg->inst, &pclk);
 					grouped_pipes[i]->stream->timing.pix_clk_100hz =
-						pclk*get_घड़ी_भागider(grouped_pipes[i], false);
-				अगर (master == -1)
+						pclk*get_clock_divider(grouped_pipes[i], false);
+				if (master == -1)
 					master = i;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-	पूर्ण
-	वापस master;
-पूर्ण
+	}
+	return master;
+}
 
-व्योम dcn10_enable_vblanks_synchronization(
-	काष्ठा dc *dc,
-	पूर्णांक group_index,
-	पूर्णांक group_size,
-	काष्ठा pipe_ctx *grouped_pipes[])
-अणु
-	काष्ठा dc_context *dc_ctx = dc->ctx;
-	काष्ठा output_pixel_processor *opp;
-	काष्ठा timing_generator *tg;
-	पूर्णांक i, width, height, master;
+void dcn10_enable_vblanks_synchronization(
+	struct dc *dc,
+	int group_index,
+	int group_size,
+	struct pipe_ctx *grouped_pipes[])
+{
+	struct dc_context *dc_ctx = dc->ctx;
+	struct output_pixel_processor *opp;
+	struct timing_generator *tg;
+	int i, width, height, master;
 
-	क्रम (i = 1; i < group_size; i++) अणु
+	for (i = 1; i < group_size; i++) {
 		opp = grouped_pipes[i]->stream_res.opp;
 		tg = grouped_pipes[i]->stream_res.tg;
 		tg->funcs->get_otg_active_size(tg, &width, &height);
-		अगर (opp->funcs->opp_program_dpg_dimensions)
+		if (opp->funcs->opp_program_dpg_dimensions)
 			opp->funcs->opp_program_dpg_dimensions(opp, width, 2*(height) + 1);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < group_size; i++) अणु
-		अगर (grouped_pipes[i]->stream == शून्य)
-			जारी;
+	for (i = 0; i < group_size; i++) {
+		if (grouped_pipes[i]->stream == NULL)
+			continue;
 		grouped_pipes[i]->stream->vblank_synchronized = false;
 		grouped_pipes[i]->stream->has_non_synchronizable_pclk = false;
-	पूर्ण
+	}
 
 	DC_SYNC_INFO("Aligning DP DTOs\n");
 
-	master = dcn10_align_pixel_घड़ीs(dc, group_size, grouped_pipes);
+	master = dcn10_align_pixel_clocks(dc, group_size, grouped_pipes);
 
 	DC_SYNC_INFO("Synchronizing VBlanks\n");
 
-	अगर (master >= 0) अणु
-		क्रम (i = 0; i < group_size; i++) अणु
-			अगर (i != master && !grouped_pipes[i]->stream->has_non_synchronizable_pclk)
+	if (master >= 0) {
+		for (i = 0; i < group_size; i++) {
+			if (i != master && !grouped_pipes[i]->stream->has_non_synchronizable_pclk)
 			grouped_pipes[i]->stream_res.tg->funcs->align_vblanks(
 				grouped_pipes[master]->stream_res.tg,
 				grouped_pipes[i]->stream_res.tg,
 				grouped_pipes[master]->stream->timing.pix_clk_100hz,
 				grouped_pipes[i]->stream->timing.pix_clk_100hz,
-				get_घड़ी_भागider(grouped_pipes[master], false),
-				get_घड़ी_भागider(grouped_pipes[i], false));
+				get_clock_divider(grouped_pipes[master], false),
+				get_clock_divider(grouped_pipes[i], false));
 				grouped_pipes[i]->stream->vblank_synchronized = true;
-		पूर्ण
+		}
 		grouped_pipes[master]->stream->vblank_synchronized = true;
 		DC_SYNC_INFO("Sync complete\n");
-	पूर्ण
+	}
 
-	क्रम (i = 1; i < group_size; i++) अणु
+	for (i = 1; i < group_size; i++) {
 		opp = grouped_pipes[i]->stream_res.opp;
 		tg = grouped_pipes[i]->stream_res.tg;
 		tg->funcs->get_otg_active_size(tg, &width, &height);
-		अगर (opp->funcs->opp_program_dpg_dimensions)
+		if (opp->funcs->opp_program_dpg_dimensions)
 			opp->funcs->opp_program_dpg_dimensions(opp, width, height);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम dcn10_enable_timing_synchronization(
-	काष्ठा dc *dc,
-	पूर्णांक group_index,
-	पूर्णांक group_size,
-	काष्ठा pipe_ctx *grouped_pipes[])
-अणु
-	काष्ठा dc_context *dc_ctx = dc->ctx;
-	काष्ठा output_pixel_processor *opp;
-	काष्ठा timing_generator *tg;
-	पूर्णांक i, width, height;
+void dcn10_enable_timing_synchronization(
+	struct dc *dc,
+	int group_index,
+	int group_size,
+	struct pipe_ctx *grouped_pipes[])
+{
+	struct dc_context *dc_ctx = dc->ctx;
+	struct output_pixel_processor *opp;
+	struct timing_generator *tg;
+	int i, width, height;
 
 	DC_SYNC_INFO("Setting up OTG reset trigger\n");
 
-	क्रम (i = 1; i < group_size; i++) अणु
+	for (i = 1; i < group_size; i++) {
 		opp = grouped_pipes[i]->stream_res.opp;
 		tg = grouped_pipes[i]->stream_res.tg;
 		tg->funcs->get_otg_active_size(tg, &width, &height);
-		अगर (opp->funcs->opp_program_dpg_dimensions)
+		if (opp->funcs->opp_program_dpg_dimensions)
 			opp->funcs->opp_program_dpg_dimensions(opp, width, 2*(height) + 1);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < group_size; i++) अणु
-		अगर (grouped_pipes[i]->stream == शून्य)
-			जारी;
+	for (i = 0; i < group_size; i++) {
+		if (grouped_pipes[i]->stream == NULL)
+			continue;
 		grouped_pipes[i]->stream->vblank_synchronized = false;
-	पूर्ण
+	}
 
-	क्रम (i = 1; i < group_size; i++)
+	for (i = 1; i < group_size; i++)
 		grouped_pipes[i]->stream_res.tg->funcs->enable_reset_trigger(
 				grouped_pipes[i]->stream_res.tg,
 				grouped_pipes[0]->stream_res.tg->inst);
 
 	DC_SYNC_INFO("Waiting for trigger\n");
 
-	/* Need to get only check 1 pipe क्रम having reset as all the others are
+	/* Need to get only check 1 pipe for having reset as all the others are
 	 * synchronized. Look at last pipe programmed to reset.
 	 */
 
-	रुको_क्रम_reset_trigger_to_occur(dc_ctx, grouped_pipes[1]->stream_res.tg);
-	क्रम (i = 1; i < group_size; i++)
+	wait_for_reset_trigger_to_occur(dc_ctx, grouped_pipes[1]->stream_res.tg);
+	for (i = 1; i < group_size; i++)
 		grouped_pipes[i]->stream_res.tg->funcs->disable_reset_trigger(
 				grouped_pipes[i]->stream_res.tg);
 
-	क्रम (i = 1; i < group_size; i++) अणु
+	for (i = 1; i < group_size; i++) {
 		opp = grouped_pipes[i]->stream_res.opp;
 		tg = grouped_pipes[i]->stream_res.tg;
 		tg->funcs->get_otg_active_size(tg, &width, &height);
-		अगर (opp->funcs->opp_program_dpg_dimensions)
+		if (opp->funcs->opp_program_dpg_dimensions)
 			opp->funcs->opp_program_dpg_dimensions(opp, width, height);
-	पूर्ण
+	}
 
 	DC_SYNC_INFO("Sync complete\n");
-पूर्ण
+}
 
-व्योम dcn10_enable_per_frame_crtc_position_reset(
-	काष्ठा dc *dc,
-	पूर्णांक group_size,
-	काष्ठा pipe_ctx *grouped_pipes[])
-अणु
-	काष्ठा dc_context *dc_ctx = dc->ctx;
-	पूर्णांक i;
+void dcn10_enable_per_frame_crtc_position_reset(
+	struct dc *dc,
+	int group_size,
+	struct pipe_ctx *grouped_pipes[])
+{
+	struct dc_context *dc_ctx = dc->ctx;
+	int i;
 
 	DC_SYNC_INFO("Setting up\n");
-	क्रम (i = 0; i < group_size; i++)
-		अगर (grouped_pipes[i]->stream_res.tg->funcs->enable_crtc_reset)
+	for (i = 0; i < group_size; i++)
+		if (grouped_pipes[i]->stream_res.tg->funcs->enable_crtc_reset)
 			grouped_pipes[i]->stream_res.tg->funcs->enable_crtc_reset(
 					grouped_pipes[i]->stream_res.tg,
 					0,
@@ -2160,16 +2159,16 @@ uपूर्णांक8_t get_घड़ी_भागider(काष्ठा p
 
 	DC_SYNC_INFO("Waiting for trigger\n");
 
-	क्रम (i = 0; i < group_size; i++)
-		रुको_क्रम_reset_trigger_to_occur(dc_ctx, grouped_pipes[i]->stream_res.tg);
+	for (i = 0; i < group_size; i++)
+		wait_for_reset_trigger_to_occur(dc_ctx, grouped_pipes[i]->stream_res.tg);
 
 	DC_SYNC_INFO("Multi-display sync is complete\n");
-पूर्ण
+}
 
-/*अटल व्योम prपूर्णांक_rq_dlg_ttu(
-		काष्ठा dc *dc,
-		काष्ठा pipe_ctx *pipe_ctx)
-अणु
+/*static void print_rq_dlg_ttu(
+		struct dc *dc,
+		struct pipe_ctx *pipe_ctx)
+{
 	DC_LOG_BANDWIDTH_CALCS(dc->ctx->logger,
 			"\n============== DML TTU Output parameters [%d] ==============\n"
 			"qos_level_low_wm: %d, \n"
@@ -2286,16 +2285,16 @@ uपूर्णांक8_t get_घड़ी_भागider(काष्ठा p
 			pipe_ctx->rq_regs.rq_regs_l.swath_height,
 			pipe_ctx->rq_regs.rq_regs_l.pte_row_height_linear
 			);
-पूर्ण
+}
 */
 
-अटल व्योम mmhub_पढ़ो_vm_प्रणाली_aperture_settings(काष्ठा dcn10_hubp *hubp1,
-		काष्ठा vm_प्रणाली_aperture_param *apt,
-		काष्ठा dce_hwseq *hws)
-अणु
+static void mmhub_read_vm_system_aperture_settings(struct dcn10_hubp *hubp1,
+		struct vm_system_aperture_param *apt,
+		struct dce_hwseq *hws)
+{
 	PHYSICAL_ADDRESS_LOC physical_page_number;
-	uपूर्णांक32_t logical_addr_low;
-	uपूर्णांक32_t logical_addr_high;
+	uint32_t logical_addr_low;
+	uint32_t logical_addr_high;
 
 	REG_GET(MC_VM_SYSTEM_APERTURE_DEFAULT_ADDR_MSB,
 			PHYSICAL_PAGE_NUMBER_MSB, &physical_page_number.high_part);
@@ -2308,28 +2307,28 @@ uपूर्णांक8_t get_घड़ी_भागider(काष्ठा p
 	REG_GET(MC_VM_SYSTEM_APERTURE_HIGH_ADDR,
 			LOGICAL_ADDR, &logical_addr_high);
 
-	apt->sys_शेष.quad_part =  physical_page_number.quad_part << 12;
-	apt->sys_low.quad_part =  (पूर्णांक64_t)logical_addr_low << 18;
-	apt->sys_high.quad_part =  (पूर्णांक64_t)logical_addr_high << 18;
-पूर्ण
+	apt->sys_default.quad_part =  physical_page_number.quad_part << 12;
+	apt->sys_low.quad_part =  (int64_t)logical_addr_low << 18;
+	apt->sys_high.quad_part =  (int64_t)logical_addr_high << 18;
+}
 
-/* Temporary पढ़ो settings, future will get values from kmd directly */
-अटल व्योम mmhub_पढ़ो_vm_context0_settings(काष्ठा dcn10_hubp *hubp1,
-		काष्ठा vm_context0_param *vm0,
-		काष्ठा dce_hwseq *hws)
-अणु
+/* Temporary read settings, future will get values from kmd directly */
+static void mmhub_read_vm_context0_settings(struct dcn10_hubp *hubp1,
+		struct vm_context0_param *vm0,
+		struct dce_hwseq *hws)
+{
 	PHYSICAL_ADDRESS_LOC fb_base;
 	PHYSICAL_ADDRESS_LOC fb_offset;
-	uपूर्णांक32_t fb_base_value;
-	uपूर्णांक32_t fb_offset_value;
+	uint32_t fb_base_value;
+	uint32_t fb_offset_value;
 
 	REG_GET(DCHUBBUB_SDPIF_FB_BASE, SDPIF_FB_BASE, &fb_base_value);
 	REG_GET(DCHUBBUB_SDPIF_FB_OFFSET, SDPIF_FB_OFFSET, &fb_offset_value);
 
 	REG_GET(VM_CONTEXT0_PAGE_TABLE_BASE_ADDR_HI32,
-			PAGE_सूचीECTORY_ENTRY_HI32, &vm0->pte_base.high_part);
+			PAGE_DIRECTORY_ENTRY_HI32, &vm0->pte_base.high_part);
 	REG_GET(VM_CONTEXT0_PAGE_TABLE_BASE_ADDR_LO32,
-			PAGE_सूचीECTORY_ENTRY_LO32, &vm0->pte_base.low_part);
+			PAGE_DIRECTORY_ENTRY_LO32, &vm0->pte_base.low_part);
 
 	REG_GET(VM_CONTEXT0_PAGE_TABLE_START_ADDR_HI32,
 			LOGICAL_PAGE_NUMBER_HI4, &vm0->pte_start.high_part);
@@ -2342,62 +2341,62 @@ uपूर्णांक8_t get_घड़ी_भागider(काष्ठा p
 			LOGICAL_PAGE_NUMBER_LO32, &vm0->pte_end.low_part);
 
 	REG_GET(VM_L2_PROTECTION_FAULT_DEFAULT_ADDR_HI32,
-			PHYSICAL_PAGE_ADDR_HI4, &vm0->fault_शेष.high_part);
+			PHYSICAL_PAGE_ADDR_HI4, &vm0->fault_default.high_part);
 	REG_GET(VM_L2_PROTECTION_FAULT_DEFAULT_ADDR_LO32,
-			PHYSICAL_PAGE_ADDR_LO32, &vm0->fault_शेष.low_part);
+			PHYSICAL_PAGE_ADDR_LO32, &vm0->fault_default.low_part);
 
 	/*
 	 * The values in VM_CONTEXT0_PAGE_TABLE_BASE_ADDR is in UMA space.
-	 * Thereक्रमe we need to करो
+	 * Therefore we need to do
 	 * DCN_VM_CONTEXT0_PAGE_TABLE_BASE_ADDR = VM_CONTEXT0_PAGE_TABLE_BASE_ADDR
 	 * - DCHUBBUB_SDPIF_FB_OFFSET + DCHUBBUB_SDPIF_FB_BASE
 	 */
-	fb_base.quad_part = (uपूर्णांक64_t)fb_base_value << 24;
-	fb_offset.quad_part = (uपूर्णांक64_t)fb_offset_value << 24;
+	fb_base.quad_part = (uint64_t)fb_base_value << 24;
+	fb_offset.quad_part = (uint64_t)fb_offset_value << 24;
 	vm0->pte_base.quad_part += fb_base.quad_part;
 	vm0->pte_base.quad_part -= fb_offset.quad_part;
-पूर्ण
+}
 
 
-व्योम dcn10_program_pte_vm(काष्ठा dce_hwseq *hws, काष्ठा hubp *hubp)
-अणु
-	काष्ठा dcn10_hubp *hubp1 = TO_DCN10_HUBP(hubp);
-	काष्ठा vm_प्रणाली_aperture_param apt = अणु अणुअणु 0 पूर्ण पूर्ण पूर्ण;
-	काष्ठा vm_context0_param vm0 = अणु अणु अणु 0 पूर्ण पूर्ण पूर्ण;
+void dcn10_program_pte_vm(struct dce_hwseq *hws, struct hubp *hubp)
+{
+	struct dcn10_hubp *hubp1 = TO_DCN10_HUBP(hubp);
+	struct vm_system_aperture_param apt = { {{ 0 } } };
+	struct vm_context0_param vm0 = { { { 0 } } };
 
-	mmhub_पढ़ो_vm_प्रणाली_aperture_settings(hubp1, &apt, hws);
-	mmhub_पढ़ो_vm_context0_settings(hubp1, &vm0, hws);
+	mmhub_read_vm_system_aperture_settings(hubp1, &apt, hws);
+	mmhub_read_vm_context0_settings(hubp1, &vm0, hws);
 
-	hubp->funcs->hubp_set_vm_प्रणाली_aperture_settings(hubp, &apt);
+	hubp->funcs->hubp_set_vm_system_aperture_settings(hubp, &apt);
 	hubp->funcs->hubp_set_vm_context0_settings(hubp, &vm0);
-पूर्ण
+}
 
-अटल व्योम dcn10_enable_plane(
-	काष्ठा dc *dc,
-	काष्ठा pipe_ctx *pipe_ctx,
-	काष्ठा dc_state *context)
-अणु
-	काष्ठा dce_hwseq *hws = dc->hwseq;
+static void dcn10_enable_plane(
+	struct dc *dc,
+	struct pipe_ctx *pipe_ctx,
+	struct dc_state *context)
+{
+	struct dce_hwseq *hws = dc->hwseq;
 
-	अगर (dc->debug.sanity_checks) अणु
-		hws->funcs.verअगरy_allow_pstate_change_high(dc);
-	पूर्ण
+	if (dc->debug.sanity_checks) {
+		hws->funcs.verify_allow_pstate_change_high(dc);
+	}
 
-	unकरो_DEGVIDCN10_253_wa(dc);
+	undo_DEGVIDCN10_253_wa(dc);
 
-	घातer_on_plane(dc->hwseq,
+	power_on_plane(dc->hwseq,
 		pipe_ctx->plane_res.hubp->inst);
 
 	/* enable DCFCLK current DCHUB */
 	pipe_ctx->plane_res.hubp->funcs->hubp_clk_cntl(pipe_ctx->plane_res.hubp, true);
 
 	/* make sure OPP_PIPE_CLOCK_EN = 1 */
-	pipe_ctx->stream_res.opp->funcs->opp_pipe_घड़ी_control(
+	pipe_ctx->stream_res.opp->funcs->opp_pipe_clock_control(
 			pipe_ctx->stream_res.opp,
 			true);
 
 /* TODO: enable/disable in dm as per update type.
-	अगर (plane_state) अणु
+	if (plane_state) {
 		DC_LOG_DC(dc->ctx->logger,
 				"Pipe:%d 0x%x: addr hi:0x%x, "
 				"addr low:0x%x, "
@@ -2421,7 +2420,7 @@ uपूर्णांक8_t get_घड़ी_भागider(काष्ठा p
 				"viewport:%d, %d, %d, %d\n"
 				"recout:  %d, %d, %d, %d\n",
 				pipe_ctx->pipe_idx,
-				plane_state->क्रमmat,
+				plane_state->format,
 				pipe_ctx->plane_res.scl_data.viewport.width,
 				pipe_ctx->plane_res.scl_data.viewport.height,
 				pipe_ctx->plane_res.scl_data.viewport.x,
@@ -2430,242 +2429,242 @@ uपूर्णांक8_t get_घड़ी_भागider(काष्ठा p
 				pipe_ctx->plane_res.scl_data.recout.height,
 				pipe_ctx->plane_res.scl_data.recout.x,
 				pipe_ctx->plane_res.scl_data.recout.y);
-		prपूर्णांक_rq_dlg_ttu(dc, pipe_ctx);
-	पूर्ण
+		print_rq_dlg_ttu(dc, pipe_ctx);
+	}
 */
-	अगर (dc->config.gpu_vm_support)
+	if (dc->config.gpu_vm_support)
 		dcn10_program_pte_vm(hws, pipe_ctx->plane_res.hubp);
 
-	अगर (dc->debug.sanity_checks) अणु
-		hws->funcs.verअगरy_allow_pstate_change_high(dc);
-	पूर्ण
+	if (dc->debug.sanity_checks) {
+		hws->funcs.verify_allow_pstate_change_high(dc);
+	}
 
-	अगर (!pipe_ctx->top_pipe
+	if (!pipe_ctx->top_pipe
 		&& pipe_ctx->plane_state
-		&& pipe_ctx->plane_state->flip_पूर्णांक_enabled
-		&& pipe_ctx->plane_res.hubp->funcs->hubp_set_flip_पूर्णांक)
-			pipe_ctx->plane_res.hubp->funcs->hubp_set_flip_पूर्णांक(pipe_ctx->plane_res.hubp);
+		&& pipe_ctx->plane_state->flip_int_enabled
+		&& pipe_ctx->plane_res.hubp->funcs->hubp_set_flip_int)
+			pipe_ctx->plane_res.hubp->funcs->hubp_set_flip_int(pipe_ctx->plane_res.hubp);
 
-पूर्ण
+}
 
-व्योम dcn10_program_gamut_remap(काष्ठा pipe_ctx *pipe_ctx)
-अणु
-	पूर्णांक i = 0;
-	काष्ठा dpp_grph_csc_adjusपंचांगent adjust;
-	स_रखो(&adjust, 0, माप(adjust));
+void dcn10_program_gamut_remap(struct pipe_ctx *pipe_ctx)
+{
+	int i = 0;
+	struct dpp_grph_csc_adjustment adjust;
+	memset(&adjust, 0, sizeof(adjust));
 	adjust.gamut_adjust_type = GRAPHICS_GAMUT_ADJUST_TYPE_BYPASS;
 
 
-	अगर (pipe_ctx->stream->gamut_remap_matrix.enable_remap == true) अणु
+	if (pipe_ctx->stream->gamut_remap_matrix.enable_remap == true) {
 		adjust.gamut_adjust_type = GRAPHICS_GAMUT_ADJUST_TYPE_SW;
-		क्रम (i = 0; i < CSC_TEMPERATURE_MATRIX_SIZE; i++)
+		for (i = 0; i < CSC_TEMPERATURE_MATRIX_SIZE; i++)
 			adjust.temperature_matrix[i] =
 				pipe_ctx->stream->gamut_remap_matrix.matrix[i];
-	पूर्ण अन्यथा अगर (pipe_ctx->plane_state &&
-		   pipe_ctx->plane_state->gamut_remap_matrix.enable_remap == true) अणु
+	} else if (pipe_ctx->plane_state &&
+		   pipe_ctx->plane_state->gamut_remap_matrix.enable_remap == true) {
 		adjust.gamut_adjust_type = GRAPHICS_GAMUT_ADJUST_TYPE_SW;
-		क्रम (i = 0; i < CSC_TEMPERATURE_MATRIX_SIZE; i++)
+		for (i = 0; i < CSC_TEMPERATURE_MATRIX_SIZE; i++)
 			adjust.temperature_matrix[i] =
 				pipe_ctx->plane_state->gamut_remap_matrix.matrix[i];
-	पूर्ण
+	}
 
 	pipe_ctx->plane_res.dpp->funcs->dpp_set_gamut_remap(pipe_ctx->plane_res.dpp, &adjust);
-पूर्ण
+}
 
 
-अटल bool dcn10_is_rear_mpo_fix_required(काष्ठा pipe_ctx *pipe_ctx, क्रमागत dc_color_space colorspace)
-अणु
-	अगर (pipe_ctx->plane_state && pipe_ctx->plane_state->layer_index > 0 && is_rgb_cspace(colorspace)) अणु
-		अगर (pipe_ctx->top_pipe) अणु
-			काष्ठा pipe_ctx *top = pipe_ctx->top_pipe;
+static bool dcn10_is_rear_mpo_fix_required(struct pipe_ctx *pipe_ctx, enum dc_color_space colorspace)
+{
+	if (pipe_ctx->plane_state && pipe_ctx->plane_state->layer_index > 0 && is_rgb_cspace(colorspace)) {
+		if (pipe_ctx->top_pipe) {
+			struct pipe_ctx *top = pipe_ctx->top_pipe;
 
-			जबतक (top->top_pipe)
+			while (top->top_pipe)
 				top = top->top_pipe; // Traverse to top pipe_ctx
-			अगर (top->plane_state && top->plane_state->layer_index == 0)
-				वापस true; // Front MPO plane not hidden
-		पूर्ण
-	पूर्ण
-	वापस false;
-पूर्ण
+			if (top->plane_state && top->plane_state->layer_index == 0)
+				return true; // Front MPO plane not hidden
+		}
+	}
+	return false;
+}
 
-अटल व्योम dcn10_set_csc_adjusपंचांगent_rgb_mpo_fix(काष्ठा pipe_ctx *pipe_ctx, uपूर्णांक16_t *matrix)
-अणु
+static void dcn10_set_csc_adjustment_rgb_mpo_fix(struct pipe_ctx *pipe_ctx, uint16_t *matrix)
+{
 	// Override rear plane RGB bias to fix MPO brightness
-	uपूर्णांक16_t rgb_bias = matrix[3];
+	uint16_t rgb_bias = matrix[3];
 
 	matrix[3] = 0;
 	matrix[7] = 0;
 	matrix[11] = 0;
-	pipe_ctx->plane_res.dpp->funcs->dpp_set_csc_adjusपंचांगent(pipe_ctx->plane_res.dpp, matrix);
+	pipe_ctx->plane_res.dpp->funcs->dpp_set_csc_adjustment(pipe_ctx->plane_res.dpp, matrix);
 	matrix[3] = rgb_bias;
 	matrix[7] = rgb_bias;
 	matrix[11] = rgb_bias;
-पूर्ण
+}
 
-व्योम dcn10_program_output_csc(काष्ठा dc *dc,
-		काष्ठा pipe_ctx *pipe_ctx,
-		क्रमागत dc_color_space colorspace,
-		uपूर्णांक16_t *matrix,
-		पूर्णांक opp_id)
-अणु
-	अगर (pipe_ctx->stream->csc_color_matrix.enable_adjusपंचांगent == true) अणु
-		अगर (pipe_ctx->plane_res.dpp->funcs->dpp_set_csc_adjusपंचांगent != शून्य) अणु
+void dcn10_program_output_csc(struct dc *dc,
+		struct pipe_ctx *pipe_ctx,
+		enum dc_color_space colorspace,
+		uint16_t *matrix,
+		int opp_id)
+{
+	if (pipe_ctx->stream->csc_color_matrix.enable_adjustment == true) {
+		if (pipe_ctx->plane_res.dpp->funcs->dpp_set_csc_adjustment != NULL) {
 
 			/* MPO is broken with RGB colorspaces when OCSC matrix
-			 * brightness offset >= 0 on DCN1 due to OCSC beक्रमe MPC
+			 * brightness offset >= 0 on DCN1 due to OCSC before MPC
 			 * Blending adds offsets from front + rear to rear plane
 			 *
 			 * Fix is to set RGB bias to 0 on rear plane, top plane
 			 * black value pixels add offset instead of rear + front
 			 */
 
-			पूर्णांक16_t rgb_bias = matrix[3];
+			int16_t rgb_bias = matrix[3];
 			// matrix[3/7/11] are all the same offset value
 
-			अगर (rgb_bias > 0 && dcn10_is_rear_mpo_fix_required(pipe_ctx, colorspace)) अणु
-				dcn10_set_csc_adjusपंचांगent_rgb_mpo_fix(pipe_ctx, matrix);
-			पूर्ण अन्यथा अणु
-				pipe_ctx->plane_res.dpp->funcs->dpp_set_csc_adjusपंचांगent(pipe_ctx->plane_res.dpp, matrix);
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (pipe_ctx->plane_res.dpp->funcs->dpp_set_csc_शेष != शून्य)
-			pipe_ctx->plane_res.dpp->funcs->dpp_set_csc_शेष(pipe_ctx->plane_res.dpp, colorspace);
-	पूर्ण
-पूर्ण
+			if (rgb_bias > 0 && dcn10_is_rear_mpo_fix_required(pipe_ctx, colorspace)) {
+				dcn10_set_csc_adjustment_rgb_mpo_fix(pipe_ctx, matrix);
+			} else {
+				pipe_ctx->plane_res.dpp->funcs->dpp_set_csc_adjustment(pipe_ctx->plane_res.dpp, matrix);
+			}
+		}
+	} else {
+		if (pipe_ctx->plane_res.dpp->funcs->dpp_set_csc_default != NULL)
+			pipe_ctx->plane_res.dpp->funcs->dpp_set_csc_default(pipe_ctx->plane_res.dpp, colorspace);
+	}
+}
 
-व्योम dcn10_get_surface_visual_confirm_color(
-		स्थिर काष्ठा pipe_ctx *pipe_ctx,
-		काष्ठा tg_color *color)
-अणु
-	uपूर्णांक32_t color_value = MAX_TG_COLOR_VALUE;
+void dcn10_get_surface_visual_confirm_color(
+		const struct pipe_ctx *pipe_ctx,
+		struct tg_color *color)
+{
+	uint32_t color_value = MAX_TG_COLOR_VALUE;
 
-	चयन (pipe_ctx->plane_res.scl_data.क्रमmat) अणु
-	हाल PIXEL_FORMAT_ARGB8888:
+	switch (pipe_ctx->plane_res.scl_data.format) {
+	case PIXEL_FORMAT_ARGB8888:
 		/* set border color to red */
 		color->color_r_cr = color_value;
-		अवरोध;
+		break;
 
-	हाल PIXEL_FORMAT_ARGB2101010:
+	case PIXEL_FORMAT_ARGB2101010:
 		/* set border color to blue */
 		color->color_b_cb = color_value;
-		अवरोध;
-	हाल PIXEL_FORMAT_420BPP8:
+		break;
+	case PIXEL_FORMAT_420BPP8:
 		/* set border color to green */
 		color->color_g_y = color_value;
-		अवरोध;
-	हाल PIXEL_FORMAT_420BPP10:
+		break;
+	case PIXEL_FORMAT_420BPP10:
 		/* set border color to yellow */
 		color->color_g_y = color_value;
 		color->color_r_cr = color_value;
-		अवरोध;
-	हाल PIXEL_FORMAT_FP16:
+		break;
+	case PIXEL_FORMAT_FP16:
 		/* set border color to white */
 		color->color_r_cr = color_value;
 		color->color_b_cb = color_value;
 		color->color_g_y = color_value;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-व्योम dcn10_get_hdr_visual_confirm_color(
-		काष्ठा pipe_ctx *pipe_ctx,
-		काष्ठा tg_color *color)
-अणु
-	uपूर्णांक32_t color_value = MAX_TG_COLOR_VALUE;
+void dcn10_get_hdr_visual_confirm_color(
+		struct pipe_ctx *pipe_ctx,
+		struct tg_color *color)
+{
+	uint32_t color_value = MAX_TG_COLOR_VALUE;
 
 	// Determine the overscan color based on the top-most (desktop) plane's context
-	काष्ठा pipe_ctx *top_pipe_ctx  = pipe_ctx;
+	struct pipe_ctx *top_pipe_ctx  = pipe_ctx;
 
-	जबतक (top_pipe_ctx->top_pipe != शून्य)
+	while (top_pipe_ctx->top_pipe != NULL)
 		top_pipe_ctx = top_pipe_ctx->top_pipe;
 
-	चयन (top_pipe_ctx->plane_res.scl_data.क्रमmat) अणु
-	हाल PIXEL_FORMAT_ARGB2101010:
-		अगर (top_pipe_ctx->stream->out_transfer_func->tf == TRANSFER_FUNCTION_PQ) अणु
+	switch (top_pipe_ctx->plane_res.scl_data.format) {
+	case PIXEL_FORMAT_ARGB2101010:
+		if (top_pipe_ctx->stream->out_transfer_func->tf == TRANSFER_FUNCTION_PQ) {
 			/* HDR10, ARGB2101010 - set border color to red */
 			color->color_r_cr = color_value;
-		पूर्ण अन्यथा अगर (top_pipe_ctx->stream->out_transfer_func->tf == TRANSFER_FUNCTION_GAMMA22) अणु
+		} else if (top_pipe_ctx->stream->out_transfer_func->tf == TRANSFER_FUNCTION_GAMMA22) {
 			/* FreeSync 2 ARGB2101010 - set border color to pink */
 			color->color_r_cr = color_value;
 			color->color_b_cb = color_value;
-		पूर्ण
-		अवरोध;
-	हाल PIXEL_FORMAT_FP16:
-		अगर (top_pipe_ctx->stream->out_transfer_func->tf == TRANSFER_FUNCTION_PQ) अणु
+		}
+		break;
+	case PIXEL_FORMAT_FP16:
+		if (top_pipe_ctx->stream->out_transfer_func->tf == TRANSFER_FUNCTION_PQ) {
 			/* HDR10, FP16 - set border color to blue */
 			color->color_b_cb = color_value;
-		पूर्ण अन्यथा अगर (top_pipe_ctx->stream->out_transfer_func->tf == TRANSFER_FUNCTION_GAMMA22) अणु
+		} else if (top_pipe_ctx->stream->out_transfer_func->tf == TRANSFER_FUNCTION_GAMMA22) {
 			/* FreeSync 2 HDR - set border color to green */
 			color->color_g_y = color_value;
-		पूर्ण
-		अवरोध;
-	शेष:
+		}
+		break;
+	default:
 		/* SDR - set border color to Gray */
 		color->color_r_cr = color_value/2;
 		color->color_b_cb = color_value/2;
 		color->color_g_y = color_value/2;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम dcn10_update_dpp(काष्ठा dpp *dpp, काष्ठा dc_plane_state *plane_state)
-अणु
-	काष्ठा dc_bias_and_scale bns_params = अणु0पूर्ण;
+static void dcn10_update_dpp(struct dpp *dpp, struct dc_plane_state *plane_state)
+{
+	struct dc_bias_and_scale bns_params = {0};
 
 	// program the input csc
 	dpp->funcs->dpp_setup(dpp,
-			plane_state->क्रमmat,
+			plane_state->format,
 			EXPANSION_MODE_ZERO,
 			plane_state->input_csc_color_matrix,
 			plane_state->color_space,
-			शून्य);
+			NULL);
 
-	//set scale and bias रेजिस्टरs
+	//set scale and bias registers
 	build_prescale_params(&bns_params, plane_state);
-	अगर (dpp->funcs->dpp_program_bias_and_scale)
+	if (dpp->funcs->dpp_program_bias_and_scale)
 		dpp->funcs->dpp_program_bias_and_scale(dpp, &bns_params);
-पूर्ण
+}
 
-व्योम dcn10_update_mpcc(काष्ठा dc *dc, काष्ठा pipe_ctx *pipe_ctx)
-अणु
-	काष्ठा dce_hwseq *hws = dc->hwseq;
-	काष्ठा hubp *hubp = pipe_ctx->plane_res.hubp;
-	काष्ठा mpcc_blnd_cfg blnd_cfg = अणुअणु0पूर्णपूर्ण;
+void dcn10_update_mpcc(struct dc *dc, struct pipe_ctx *pipe_ctx)
+{
+	struct dce_hwseq *hws = dc->hwseq;
+	struct hubp *hubp = pipe_ctx->plane_res.hubp;
+	struct mpcc_blnd_cfg blnd_cfg = {{0}};
 	bool per_pixel_alpha = pipe_ctx->plane_state->per_pixel_alpha && pipe_ctx->bottom_pipe;
-	पूर्णांक mpcc_id;
-	काष्ठा mpcc *new_mpcc;
-	काष्ठा mpc *mpc = dc->res_pool->mpc;
-	काष्ठा mpc_tree *mpc_tree_params = &(pipe_ctx->stream_res.opp->mpc_tree_params);
+	int mpcc_id;
+	struct mpcc *new_mpcc;
+	struct mpc *mpc = dc->res_pool->mpc;
+	struct mpc_tree *mpc_tree_params = &(pipe_ctx->stream_res.opp->mpc_tree_params);
 
-	अगर (dc->debug.visual_confirm == VISUAL_CONFIRM_HDR) अणु
+	if (dc->debug.visual_confirm == VISUAL_CONFIRM_HDR) {
 		hws->funcs.get_hdr_visual_confirm_color(
 				pipe_ctx, &blnd_cfg.black_color);
-	पूर्ण अन्यथा अगर (dc->debug.visual_confirm == VISUAL_CONFIRM_SURFACE) अणु
+	} else if (dc->debug.visual_confirm == VISUAL_CONFIRM_SURFACE) {
 		hws->funcs.get_surface_visual_confirm_color(
 				pipe_ctx, &blnd_cfg.black_color);
-	पूर्ण अन्यथा अणु
+	} else {
 		color_space_to_black_color(
 				dc, pipe_ctx->stream->output_color_space,
 				&blnd_cfg.black_color);
-	पूर्ण
+	}
 
-	अगर (per_pixel_alpha)
+	if (per_pixel_alpha)
 		blnd_cfg.alpha_mode = MPCC_ALPHA_BLEND_MODE_PER_PIXEL_ALPHA;
-	अन्यथा
+	else
 		blnd_cfg.alpha_mode = MPCC_ALPHA_BLEND_MODE_GLOBAL_ALPHA;
 
 	blnd_cfg.overlap_only = false;
 	blnd_cfg.global_gain = 0xff;
 
-	अगर (pipe_ctx->plane_state->global_alpha)
+	if (pipe_ctx->plane_state->global_alpha)
 		blnd_cfg.global_alpha = pipe_ctx->plane_state->global_alpha_value;
-	अन्यथा
+	else
 		blnd_cfg.global_alpha = 0xff;
 
-	/* DCN1.0 has output CM beक्रमe MPC which seems to screw with
+	/* DCN1.0 has output CM before MPC which seems to screw with
 	 * pre-multiplied alpha.
 	 */
 	blnd_cfg.pre_multiplied_alpha = is_rgb_cspace(
@@ -2674,48 +2673,48 @@ uपूर्णांक8_t get_घड़ी_भागider(काष्ठा p
 
 
 	/*
-	 * TODO: हटाओ hack
+	 * TODO: remove hack
 	 * Note: currently there is a bug in init_hw such that
 	 * on resume from hibernate, BIOS sets up MPCC0, and
-	 * we करो mpcc_हटाओ but the mpcc cannot go to idle
-	 * after हटाओ. This cause us to pick mpcc1 here,
-	 * which causes a pstate hang क्रम yet unknown reason.
+	 * we do mpcc_remove but the mpcc cannot go to idle
+	 * after remove. This cause us to pick mpcc1 here,
+	 * which causes a pstate hang for yet unknown reason.
 	 */
 	mpcc_id = hubp->inst;
 
-	/* If there is no full update, करोn't need to touch MPC tree*/
-	अगर (!pipe_ctx->plane_state->update_flags.bits.full_update) अणु
+	/* If there is no full update, don't need to touch MPC tree*/
+	if (!pipe_ctx->plane_state->update_flags.bits.full_update) {
 		mpc->funcs->update_blending(mpc, &blnd_cfg, mpcc_id);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* check अगर this MPCC is alपढ़ोy being used */
-	new_mpcc = mpc->funcs->get_mpcc_क्रम_dpp(mpc_tree_params, mpcc_id);
-	/* हटाओ MPCC अगर being used */
-	अगर (new_mpcc != शून्य)
-		mpc->funcs->हटाओ_mpcc(mpc, mpc_tree_params, new_mpcc);
-	अन्यथा
-		अगर (dc->debug.sanity_checks)
-			mpc->funcs->निश्चित_mpcc_idle_beक्रमe_connect(
+	/* check if this MPCC is already being used */
+	new_mpcc = mpc->funcs->get_mpcc_for_dpp(mpc_tree_params, mpcc_id);
+	/* remove MPCC if being used */
+	if (new_mpcc != NULL)
+		mpc->funcs->remove_mpcc(mpc, mpc_tree_params, new_mpcc);
+	else
+		if (dc->debug.sanity_checks)
+			mpc->funcs->assert_mpcc_idle_before_connect(
 					dc->res_pool->mpc, mpcc_id);
 
 	/* Call MPC to insert new plane */
 	new_mpcc = mpc->funcs->insert_plane(dc->res_pool->mpc,
 			mpc_tree_params,
 			&blnd_cfg,
-			शून्य,
-			शून्य,
+			NULL,
+			NULL,
 			hubp->inst,
 			mpcc_id);
 
-	ASSERT(new_mpcc != शून्य);
+	ASSERT(new_mpcc != NULL);
 
 	hubp->opp_id = pipe_ctx->stream_res.opp->inst;
 	hubp->mpcc_id = mpcc_id;
-पूर्ण
+}
 
-अटल व्योम update_scaler(काष्ठा pipe_ctx *pipe_ctx)
-अणु
+static void update_scaler(struct pipe_ctx *pipe_ctx)
+{
 	bool per_pixel_alpha =
 			pipe_ctx->plane_state->per_pixel_alpha && pipe_ctx->bottom_pipe;
 
@@ -2724,26 +2723,26 @@ uपूर्णांक8_t get_घड़ी_भागider(काष्ठा p
 	/* scaler configuration */
 	pipe_ctx->plane_res.dpp->funcs->dpp_set_scaler(
 			pipe_ctx->plane_res.dpp, &pipe_ctx->plane_res.scl_data);
-पूर्ण
+}
 
-अटल व्योम dcn10_update_dchubp_dpp(
-	काष्ठा dc *dc,
-	काष्ठा pipe_ctx *pipe_ctx,
-	काष्ठा dc_state *context)
-अणु
-	काष्ठा dce_hwseq *hws = dc->hwseq;
-	काष्ठा hubp *hubp = pipe_ctx->plane_res.hubp;
-	काष्ठा dpp *dpp = pipe_ctx->plane_res.dpp;
-	काष्ठा dc_plane_state *plane_state = pipe_ctx->plane_state;
-	काष्ठा plane_size size = plane_state->plane_size;
-	अचिन्हित पूर्णांक compat_level = 0;
-	bool should_भागided_by_2 = false;
+static void dcn10_update_dchubp_dpp(
+	struct dc *dc,
+	struct pipe_ctx *pipe_ctx,
+	struct dc_state *context)
+{
+	struct dce_hwseq *hws = dc->hwseq;
+	struct hubp *hubp = pipe_ctx->plane_res.hubp;
+	struct dpp *dpp = pipe_ctx->plane_res.dpp;
+	struct dc_plane_state *plane_state = pipe_ctx->plane_state;
+	struct plane_size size = plane_state->plane_size;
+	unsigned int compat_level = 0;
+	bool should_divided_by_2 = false;
 
-	/* depends on DML calculation, DPP घड़ी value may change dynamically */
+	/* depends on DML calculation, DPP clock value may change dynamically */
 	/* If request max dpp clk is lower than current dispclk, no need to
-	 * भागided by 2
+	 * divided by 2
 	 */
-	अगर (plane_state->update_flags.bits.full_update) अणु
+	if (plane_state->update_flags.bits.full_update) {
 
 		/* new calculated dispclk, dppclk are stored in
 		 * context->bw_ctx.bw.dcn.clk.dispclk_khz / dppclk_khz. current
@@ -2751,54 +2750,54 @@ uपूर्णांक8_t get_घड़ी_भागider(काष्ठा p
 		 * dcn_validate_bandwidth compute new dispclk, dppclk.
 		 * dispclk will put in use after optimize_bandwidth when
 		 * ramp_up_dispclk_with_dpp is called.
-		 * there are two places क्रम dppclk be put in use. One location
+		 * there are two places for dppclk be put in use. One location
 		 * is the same as the location as dispclk. Another is within
 		 * update_dchubp_dpp which happens between pre_bandwidth and
 		 * optimize_bandwidth.
 		 * dppclk updated within update_dchubp_dpp will cause new
-		 * घड़ी values of dispclk and dppclk not be in use at the same
-		 * समय. when घड़ीs are decreased, this may cause dppclk is
+		 * clock values of dispclk and dppclk not be in use at the same
+		 * time. when clocks are decreased, this may cause dppclk is
 		 * lower than previous configuration and let pipe stuck.
-		 * क्रम example, eDP + बाह्यal dp,  change resolution of DP from
+		 * for example, eDP + external dp,  change resolution of DP from
 		 * 1920x1080x144hz to 1280x960x60hz.
-		 * beक्रमe change: dispclk = 337889 dppclk = 337889
+		 * before change: dispclk = 337889 dppclk = 337889
 		 * change mode, dcn_validate_bandwidth calculate
 		 *                dispclk = 143122 dppclk = 143122
-		 * update_dchubp_dpp be executed beक्रमe dispclk be updated,
+		 * update_dchubp_dpp be executed before dispclk be updated,
 		 * dispclk = 337889, but dppclk use new value dispclk /2 =
 		 * 168944. this will cause pipe pstate warning issue.
-		 * solution: between pre_bandwidth and optimize_bandwidth, जबतक
+		 * solution: between pre_bandwidth and optimize_bandwidth, while
 		 * dispclk is going to be decreased, keep dppclk = dispclk
 		 **/
-		अगर (context->bw_ctx.bw.dcn.clk.dispclk_khz <
+		if (context->bw_ctx.bw.dcn.clk.dispclk_khz <
 				dc->clk_mgr->clks.dispclk_khz)
-			should_भागided_by_2 = false;
-		अन्यथा
-			should_भागided_by_2 =
+			should_divided_by_2 = false;
+		else
+			should_divided_by_2 =
 					context->bw_ctx.bw.dcn.clk.dppclk_khz <=
 					dc->clk_mgr->clks.dispclk_khz / 2;
 
 		dpp->funcs->dpp_dppclk_control(
 				dpp,
-				should_भागided_by_2,
+				should_divided_by_2,
 				true);
 
-		अगर (dc->res_pool->dccg)
+		if (dc->res_pool->dccg)
 			dc->res_pool->dccg->funcs->update_dpp_dto(
 					dc->res_pool->dccg,
 					dpp->inst,
 					pipe_ctx->plane_res.bw.dppclk_khz);
-		अन्यथा
-			dc->clk_mgr->clks.dppclk_khz = should_भागided_by_2 ?
+		else
+			dc->clk_mgr->clks.dppclk_khz = should_divided_by_2 ?
 						dc->clk_mgr->clks.dispclk_khz / 2 :
 							dc->clk_mgr->clks.dispclk_khz;
-	पूर्ण
+	}
 
 	/* TODO: Need input parameter to tell current DCHUB pipe tie to which OTG
 	 * VTG is within DCHUBBUB which is commond block share by each pipe HUBP.
 	 * VTG is 1:1 mapping with OTG. Each pipe HUBP will select which VTG
 	 */
-	अगर (plane_state->update_flags.bits.full_update) अणु
+	if (plane_state->update_flags.bits.full_update) {
 		hubp->funcs->hubp_vtg_sel(hubp, pipe_ctx->stream_res.tg->inst);
 
 		hubp->funcs->hubp_setup(
@@ -2807,49 +2806,49 @@ uपूर्णांक8_t get_घड़ी_भागider(काष्ठा p
 			&pipe_ctx->ttu_regs,
 			&pipe_ctx->rq_regs,
 			&pipe_ctx->pipe_dlg_param);
-		hubp->funcs->hubp_setup_पूर्णांकerdependent(
+		hubp->funcs->hubp_setup_interdependent(
 			hubp,
 			&pipe_ctx->dlg_regs,
 			&pipe_ctx->ttu_regs);
-	पूर्ण
+	}
 
 	size.surface_size = pipe_ctx->plane_res.scl_data.viewport;
 
-	अगर (plane_state->update_flags.bits.full_update ||
+	if (plane_state->update_flags.bits.full_update ||
 		plane_state->update_flags.bits.bpp_change)
 		dcn10_update_dpp(dpp, plane_state);
 
-	अगर (plane_state->update_flags.bits.full_update ||
+	if (plane_state->update_flags.bits.full_update ||
 		plane_state->update_flags.bits.per_pixel_alpha_change ||
 		plane_state->update_flags.bits.global_alpha_change)
 		hws->funcs.update_mpcc(dc, pipe_ctx);
 
-	अगर (plane_state->update_flags.bits.full_update ||
+	if (plane_state->update_flags.bits.full_update ||
 		plane_state->update_flags.bits.per_pixel_alpha_change ||
 		plane_state->update_flags.bits.global_alpha_change ||
 		plane_state->update_flags.bits.scaling_change ||
-		plane_state->update_flags.bits.position_change) अणु
+		plane_state->update_flags.bits.position_change) {
 		update_scaler(pipe_ctx);
-	पूर्ण
+	}
 
-	अगर (plane_state->update_flags.bits.full_update ||
+	if (plane_state->update_flags.bits.full_update ||
 		plane_state->update_flags.bits.scaling_change ||
-		plane_state->update_flags.bits.position_change) अणु
+		plane_state->update_flags.bits.position_change) {
 		hubp->funcs->mem_program_viewport(
 			hubp,
 			&pipe_ctx->plane_res.scl_data.viewport,
 			&pipe_ctx->plane_res.scl_data.viewport_c);
-	पूर्ण
+	}
 
-	अगर (pipe_ctx->stream->cursor_attributes.address.quad_part != 0) अणु
+	if (pipe_ctx->stream->cursor_attributes.address.quad_part != 0) {
 		dc->hwss.set_cursor_position(pipe_ctx);
 		dc->hwss.set_cursor_attribute(pipe_ctx);
 
-		अगर (dc->hwss.set_cursor_sdr_white_level)
+		if (dc->hwss.set_cursor_sdr_white_level)
 			dc->hwss.set_cursor_sdr_white_level(pipe_ctx);
-	पूर्ण
+	}
 
-	अगर (plane_state->update_flags.bits.full_update) अणु
+	if (plane_state->update_flags.bits.full_update) {
 		/*gamut remap*/
 		dc->hwss.program_gamut_remap(pipe_ctx);
 
@@ -2858,45 +2857,45 @@ uपूर्णांक8_t get_घड़ी_भागider(काष्ठा p
 				pipe_ctx->stream->output_color_space,
 				pipe_ctx->stream->csc_color_matrix.matrix,
 				pipe_ctx->stream_res.opp->inst);
-	पूर्ण
+	}
 
-	अगर (plane_state->update_flags.bits.full_update ||
-		plane_state->update_flags.bits.pixel_क्रमmat_change ||
+	if (plane_state->update_flags.bits.full_update ||
+		plane_state->update_flags.bits.pixel_format_change ||
 		plane_state->update_flags.bits.horizontal_mirror_change ||
 		plane_state->update_flags.bits.rotation_change ||
 		plane_state->update_flags.bits.swizzle_change ||
 		plane_state->update_flags.bits.dcc_change ||
 		plane_state->update_flags.bits.bpp_change ||
 		plane_state->update_flags.bits.scaling_change ||
-		plane_state->update_flags.bits.plane_size_change) अणु
+		plane_state->update_flags.bits.plane_size_change) {
 		hubp->funcs->hubp_program_surface_config(
 			hubp,
-			plane_state->क्रमmat,
+			plane_state->format,
 			&plane_state->tiling_info,
 			&size,
 			plane_state->rotation,
 			&plane_state->dcc,
 			plane_state->horizontal_mirror,
 			compat_level);
-	पूर्ण
+	}
 
-	hubp->घातer_gated = false;
+	hubp->power_gated = false;
 
 	hws->funcs.update_plane_addr(dc, pipe_ctx);
 
-	अगर (is_pipe_tree_visible(pipe_ctx))
+	if (is_pipe_tree_visible(pipe_ctx))
 		hubp->funcs->set_blank(hubp, false);
-पूर्ण
+}
 
-व्योम dcn10_blank_pixel_data(
-		काष्ठा dc *dc,
-		काष्ठा pipe_ctx *pipe_ctx,
+void dcn10_blank_pixel_data(
+		struct dc *dc,
+		struct pipe_ctx *pipe_ctx,
 		bool blank)
-अणु
-	क्रमागत dc_color_space color_space;
-	काष्ठा tg_color black_color = अणु0पूर्ण;
-	काष्ठा stream_resource *stream_res = &pipe_ctx->stream_res;
-	काष्ठा dc_stream_state *stream = pipe_ctx->stream;
+{
+	enum dc_color_space color_space;
+	struct tg_color black_color = {0};
+	struct stream_resource *stream_res = &pipe_ctx->stream_res;
+	struct dc_stream_state *stream = pipe_ctx->stream;
 
 	/* program otg blank color */
 	color_space = stream->output_color_space;
@@ -2905,93 +2904,93 @@ uपूर्णांक8_t get_घड़ी_भागider(काष्ठा p
 	/*
 	 * The way 420 is packed, 2 channels carry Y component, 1 channel
 	 * alternate between Cb and Cr, so both channels need the pixel
-	 * value क्रम Y
+	 * value for Y
 	 */
-	अगर (stream->timing.pixel_encoding == PIXEL_ENCODING_YCBCR420)
+	if (stream->timing.pixel_encoding == PIXEL_ENCODING_YCBCR420)
 		black_color.color_r_cr = black_color.color_g_y;
 
 
-	अगर (stream_res->tg->funcs->set_blank_color)
+	if (stream_res->tg->funcs->set_blank_color)
 		stream_res->tg->funcs->set_blank_color(
 				stream_res->tg,
 				&black_color);
 
-	अगर (!blank) अणु
-		अगर (stream_res->tg->funcs->set_blank)
+	if (!blank) {
+		if (stream_res->tg->funcs->set_blank)
 			stream_res->tg->funcs->set_blank(stream_res->tg, blank);
-		अगर (stream_res->abm) अणु
+		if (stream_res->abm) {
 			dc->hwss.set_pipe(pipe_ctx);
 			stream_res->abm->funcs->set_abm_level(stream_res->abm, stream->abm_level);
-		पूर्ण
-	पूर्ण अन्यथा अगर (blank) अणु
+		}
+	} else if (blank) {
 		dc->hwss.set_abm_immediate_disable(pipe_ctx);
-		अगर (stream_res->tg->funcs->set_blank) अणु
-			stream_res->tg->funcs->रुको_क्रम_state(stream_res->tg, CRTC_STATE_VBLANK);
+		if (stream_res->tg->funcs->set_blank) {
+			stream_res->tg->funcs->wait_for_state(stream_res->tg, CRTC_STATE_VBLANK);
 			stream_res->tg->funcs->set_blank(stream_res->tg, blank);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-व्योम dcn10_set_hdr_multiplier(काष्ठा pipe_ctx *pipe_ctx)
-अणु
-	काष्ठा fixed31_32 multiplier = pipe_ctx->plane_state->hdr_mult;
-	uपूर्णांक32_t hw_mult = 0x1f000; // 1.0 शेष multiplier
-	काष्ठा custom_भग्न_क्रमmat fmt;
+void dcn10_set_hdr_multiplier(struct pipe_ctx *pipe_ctx)
+{
+	struct fixed31_32 multiplier = pipe_ctx->plane_state->hdr_mult;
+	uint32_t hw_mult = 0x1f000; // 1.0 default multiplier
+	struct custom_float_format fmt;
 
 	fmt.exponenta_bits = 6;
 	fmt.mantissa_bits = 12;
 	fmt.sign = true;
 
 
-	अगर (!dc_fixpt_eq(multiplier, dc_fixpt_from_पूर्णांक(0))) // check != 0
-		convert_to_custom_भग्न_क्रमmat(multiplier, &fmt, &hw_mult);
+	if (!dc_fixpt_eq(multiplier, dc_fixpt_from_int(0))) // check != 0
+		convert_to_custom_float_format(multiplier, &fmt, &hw_mult);
 
 	pipe_ctx->plane_res.dpp->funcs->dpp_set_hdr_multiplier(
 			pipe_ctx->plane_res.dpp, hw_mult);
-पूर्ण
+}
 
-व्योम dcn10_program_pipe(
-		काष्ठा dc *dc,
-		काष्ठा pipe_ctx *pipe_ctx,
-		काष्ठा dc_state *context)
-अणु
-	काष्ठा dce_hwseq *hws = dc->hwseq;
+void dcn10_program_pipe(
+		struct dc *dc,
+		struct pipe_ctx *pipe_ctx,
+		struct dc_state *context)
+{
+	struct dce_hwseq *hws = dc->hwseq;
 
-	अगर (pipe_ctx->plane_state->update_flags.bits.full_update)
+	if (pipe_ctx->plane_state->update_flags.bits.full_update)
 		dcn10_enable_plane(dc, pipe_ctx, context);
 
 	dcn10_update_dchubp_dpp(dc, pipe_ctx, context);
 
 	hws->funcs.set_hdr_multiplier(pipe_ctx);
 
-	अगर (pipe_ctx->plane_state->update_flags.bits.full_update ||
+	if (pipe_ctx->plane_state->update_flags.bits.full_update ||
 			pipe_ctx->plane_state->update_flags.bits.in_transfer_func_change ||
 			pipe_ctx->plane_state->update_flags.bits.gamma_change)
 		hws->funcs.set_input_transfer_func(dc, pipe_ctx, pipe_ctx->plane_state);
 
-	/* dcn10_translate_regamma_to_hw_क्रमmat takes 750us to finish
-	 * only करो gamma programming क्रम full update.
+	/* dcn10_translate_regamma_to_hw_format takes 750us to finish
+	 * only do gamma programming for full update.
 	 * TODO: This can be further optimized/cleaned up
-	 * Always call this क्रम now since it करोes स_भेद inside beक्रमe
-	 * करोing heavy calculation and programming
+	 * Always call this for now since it does memcmp inside before
+	 * doing heavy calculation and programming
 	 */
-	अगर (pipe_ctx->plane_state->update_flags.bits.full_update)
+	if (pipe_ctx->plane_state->update_flags.bits.full_update)
 		hws->funcs.set_output_transfer_func(dc, pipe_ctx, pipe_ctx->stream);
-पूर्ण
+}
 
-अटल व्योम dcn10_program_all_pipe_in_tree(
-		काष्ठा dc *dc,
-		काष्ठा pipe_ctx *pipe_ctx,
-		काष्ठा dc_state *context)
-अणु
-	काष्ठा dce_hwseq *hws = dc->hwseq;
+static void dcn10_program_all_pipe_in_tree(
+		struct dc *dc,
+		struct pipe_ctx *pipe_ctx,
+		struct dc_state *context)
+{
+	struct dce_hwseq *hws = dc->hwseq;
 
-	अगर (pipe_ctx->top_pipe == शून्य) अणु
+	if (pipe_ctx->top_pipe == NULL) {
 		bool blank = !is_pipe_tree_visible(pipe_ctx);
 
 		pipe_ctx->stream_res.tg->funcs->program_global_sync(
 				pipe_ctx->stream_res.tg,
-				pipe_ctx->pipe_dlg_param.vपढ़ोy_offset,
+				pipe_ctx->pipe_dlg_param.vready_offset,
 				pipe_ctx->pipe_dlg_param.vstartup_start,
 				pipe_ctx->pipe_dlg_param.vupdate_offset,
 				pipe_ctx->pipe_dlg_param.vupdate_width);
@@ -2999,387 +2998,387 @@ uपूर्णांक8_t get_घड़ी_भागider(काष्ठा p
 		pipe_ctx->stream_res.tg->funcs->set_vtg_params(
 				pipe_ctx->stream_res.tg, &pipe_ctx->stream->timing, true);
 
-		अगर (hws->funcs.setup_vupdate_पूर्णांकerrupt)
-			hws->funcs.setup_vupdate_पूर्णांकerrupt(dc, pipe_ctx);
+		if (hws->funcs.setup_vupdate_interrupt)
+			hws->funcs.setup_vupdate_interrupt(dc, pipe_ctx);
 
 		hws->funcs.blank_pixel_data(dc, pipe_ctx, blank);
-	पूर्ण
+	}
 
-	अगर (pipe_ctx->plane_state != शून्य)
+	if (pipe_ctx->plane_state != NULL)
 		hws->funcs.program_pipe(dc, pipe_ctx, context);
 
-	अगर (pipe_ctx->bottom_pipe != शून्य && pipe_ctx->bottom_pipe != pipe_ctx)
+	if (pipe_ctx->bottom_pipe != NULL && pipe_ctx->bottom_pipe != pipe_ctx)
 		dcn10_program_all_pipe_in_tree(dc, pipe_ctx->bottom_pipe, context);
-पूर्ण
+}
 
-अटल काष्ठा pipe_ctx *dcn10_find_top_pipe_क्रम_stream(
-		काष्ठा dc *dc,
-		काष्ठा dc_state *context,
-		स्थिर काष्ठा dc_stream_state *stream)
-अणु
-	पूर्णांक i;
+static struct pipe_ctx *dcn10_find_top_pipe_for_stream(
+		struct dc *dc,
+		struct dc_state *context,
+		const struct dc_stream_state *stream)
+{
+	int i;
 
-	क्रम (i = 0; i < dc->res_pool->pipe_count; i++) अणु
-		काष्ठा pipe_ctx *pipe_ctx = &context->res_ctx.pipe_ctx[i];
-		काष्ठा pipe_ctx *old_pipe_ctx =
+	for (i = 0; i < dc->res_pool->pipe_count; i++) {
+		struct pipe_ctx *pipe_ctx = &context->res_ctx.pipe_ctx[i];
+		struct pipe_ctx *old_pipe_ctx =
 				&dc->current_state->res_ctx.pipe_ctx[i];
 
-		अगर (!pipe_ctx->plane_state && !old_pipe_ctx->plane_state)
-			जारी;
+		if (!pipe_ctx->plane_state && !old_pipe_ctx->plane_state)
+			continue;
 
-		अगर (pipe_ctx->stream != stream)
-			जारी;
+		if (pipe_ctx->stream != stream)
+			continue;
 
-		अगर (!pipe_ctx->top_pipe && !pipe_ctx->prev_odm_pipe)
-			वापस pipe_ctx;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		if (!pipe_ctx->top_pipe && !pipe_ctx->prev_odm_pipe)
+			return pipe_ctx;
+	}
+	return NULL;
+}
 
-व्योम dcn10_रुको_क्रम_pending_cleared(काष्ठा dc *dc,
-		काष्ठा dc_state *context)
-अणु
-		काष्ठा pipe_ctx *pipe_ctx;
-		काष्ठा timing_generator *tg;
-		पूर्णांक i;
+void dcn10_wait_for_pending_cleared(struct dc *dc,
+		struct dc_state *context)
+{
+		struct pipe_ctx *pipe_ctx;
+		struct timing_generator *tg;
+		int i;
 
-		क्रम (i = 0; i < dc->res_pool->pipe_count; i++) अणु
+		for (i = 0; i < dc->res_pool->pipe_count; i++) {
 			pipe_ctx = &context->res_ctx.pipe_ctx[i];
 			tg = pipe_ctx->stream_res.tg;
 
 			/*
-			 * Only रुको क्रम top pipe's tg penindg bit
-			 * Also skip अगर pipe is disabled.
+			 * Only wait for top pipe's tg penindg bit
+			 * Also skip if pipe is disabled.
 			 */
-			अगर (pipe_ctx->top_pipe ||
+			if (pipe_ctx->top_pipe ||
 			    !pipe_ctx->stream || !pipe_ctx->plane_state ||
 			    !tg->funcs->is_tg_enabled(tg))
-				जारी;
+				continue;
 
 			/*
-			 * Wait क्रम VBLANK then VACTIVE to ensure we get VUPDATE.
-			 * For some reason रुकोing क्रम OTG_UPDATE_PENDING cleared
-			 * seems to not trigger the update right away, and अगर we
-			 * lock again beक्रमe VUPDATE then we करोn't get a separated
+			 * Wait for VBLANK then VACTIVE to ensure we get VUPDATE.
+			 * For some reason waiting for OTG_UPDATE_PENDING cleared
+			 * seems to not trigger the update right away, and if we
+			 * lock again before VUPDATE then we don't get a separated
 			 * operation.
 			 */
-			pipe_ctx->stream_res.tg->funcs->रुको_क्रम_state(pipe_ctx->stream_res.tg, CRTC_STATE_VBLANK);
-			pipe_ctx->stream_res.tg->funcs->रुको_क्रम_state(pipe_ctx->stream_res.tg, CRTC_STATE_VACTIVE);
-		पूर्ण
-पूर्ण
+			pipe_ctx->stream_res.tg->funcs->wait_for_state(pipe_ctx->stream_res.tg, CRTC_STATE_VBLANK);
+			pipe_ctx->stream_res.tg->funcs->wait_for_state(pipe_ctx->stream_res.tg, CRTC_STATE_VACTIVE);
+		}
+}
 
-व्योम dcn10_apply_ctx_क्रम_surface(
-		काष्ठा dc *dc,
-		स्थिर काष्ठा dc_stream_state *stream,
-		पूर्णांक num_planes,
-		काष्ठा dc_state *context)
-अणु
-	काष्ठा dce_hwseq *hws = dc->hwseq;
-	पूर्णांक i;
-	काष्ठा timing_generator *tg;
-	uपूर्णांक32_t underflow_check_delay_us;
-	bool पूर्णांकerdependent_update = false;
-	काष्ठा pipe_ctx *top_pipe_to_program =
-			dcn10_find_top_pipe_क्रम_stream(dc, context, stream);
+void dcn10_apply_ctx_for_surface(
+		struct dc *dc,
+		const struct dc_stream_state *stream,
+		int num_planes,
+		struct dc_state *context)
+{
+	struct dce_hwseq *hws = dc->hwseq;
+	int i;
+	struct timing_generator *tg;
+	uint32_t underflow_check_delay_us;
+	bool interdependent_update = false;
+	struct pipe_ctx *top_pipe_to_program =
+			dcn10_find_top_pipe_for_stream(dc, context, stream);
 	DC_LOGGER_INIT(dc->ctx->logger);
 
 	// Clear pipe_ctx flag
-	क्रम (i = 0; i < dc->res_pool->pipe_count; i++) अणु
-		काष्ठा pipe_ctx *pipe_ctx = &context->res_ctx.pipe_ctx[i];
+	for (i = 0; i < dc->res_pool->pipe_count; i++) {
+		struct pipe_ctx *pipe_ctx = &context->res_ctx.pipe_ctx[i];
 		pipe_ctx->update_flags.raw = 0;
-	पूर्ण
+	}
 
-	अगर (!top_pipe_to_program)
-		वापस;
+	if (!top_pipe_to_program)
+		return;
 
 	tg = top_pipe_to_program->stream_res.tg;
 
-	पूर्णांकerdependent_update = top_pipe_to_program->plane_state &&
+	interdependent_update = top_pipe_to_program->plane_state &&
 		top_pipe_to_program->plane_state->update_flags.bits.full_update;
 
-	underflow_check_delay_us = dc->debug.underflow_निश्चित_delay_us;
+	underflow_check_delay_us = dc->debug.underflow_assert_delay_us;
 
-	अगर (underflow_check_delay_us != 0xFFFFFFFF && hws->funcs.did_underflow_occur)
+	if (underflow_check_delay_us != 0xFFFFFFFF && hws->funcs.did_underflow_occur)
 		ASSERT(hws->funcs.did_underflow_occur(dc, top_pipe_to_program));
 
-	अगर (underflow_check_delay_us != 0xFFFFFFFF)
+	if (underflow_check_delay_us != 0xFFFFFFFF)
 		udelay(underflow_check_delay_us);
 
-	अगर (underflow_check_delay_us != 0xFFFFFFFF && hws->funcs.did_underflow_occur)
+	if (underflow_check_delay_us != 0xFFFFFFFF && hws->funcs.did_underflow_occur)
 		ASSERT(hws->funcs.did_underflow_occur(dc, top_pipe_to_program));
 
-	अगर (num_planes == 0) अणु
-		/* OTG blank beक्रमe हटाओ all front end */
+	if (num_planes == 0) {
+		/* OTG blank before remove all front end */
 		hws->funcs.blank_pixel_data(dc, top_pipe_to_program, true);
-	पूर्ण
+	}
 
 	/* Disconnect unused mpcc */
-	क्रम (i = 0; i < dc->res_pool->pipe_count; i++) अणु
-		काष्ठा pipe_ctx *pipe_ctx = &context->res_ctx.pipe_ctx[i];
-		काष्ठा pipe_ctx *old_pipe_ctx =
+	for (i = 0; i < dc->res_pool->pipe_count; i++) {
+		struct pipe_ctx *pipe_ctx = &context->res_ctx.pipe_ctx[i];
+		struct pipe_ctx *old_pipe_ctx =
 				&dc->current_state->res_ctx.pipe_ctx[i];
 
-		अगर ((!pipe_ctx->plane_state ||
+		if ((!pipe_ctx->plane_state ||
 		     pipe_ctx->stream_res.tg != old_pipe_ctx->stream_res.tg) &&
 		    old_pipe_ctx->plane_state &&
-		    old_pipe_ctx->stream_res.tg == tg) अणु
+		    old_pipe_ctx->stream_res.tg == tg) {
 
 			hws->funcs.plane_atomic_disconnect(dc, old_pipe_ctx);
 			pipe_ctx->update_flags.bits.disable = 1;
 
 			DC_LOG_DC("Reset mpcc for pipe %d\n",
 					old_pipe_ctx->pipe_idx);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (num_planes > 0)
+	if (num_planes > 0)
 		dcn10_program_all_pipe_in_tree(dc, top_pipe_to_program, context);
 
-	/* Program secondary blending tree and ग_लिखोback pipes */
-	अगर ((stream->num_wb_info > 0) && (hws->funcs.program_all_ग_लिखोback_pipes_in_tree))
-		hws->funcs.program_all_ग_लिखोback_pipes_in_tree(dc, stream, context);
-	अगर (पूर्णांकerdependent_update)
-		क्रम (i = 0; i < dc->res_pool->pipe_count; i++) अणु
-			काष्ठा pipe_ctx *pipe_ctx = &context->res_ctx.pipe_ctx[i];
-			/* Skip inactive pipes and ones alपढ़ोy updated */
-			अगर (!pipe_ctx->stream || pipe_ctx->stream == stream ||
+	/* Program secondary blending tree and writeback pipes */
+	if ((stream->num_wb_info > 0) && (hws->funcs.program_all_writeback_pipes_in_tree))
+		hws->funcs.program_all_writeback_pipes_in_tree(dc, stream, context);
+	if (interdependent_update)
+		for (i = 0; i < dc->res_pool->pipe_count; i++) {
+			struct pipe_ctx *pipe_ctx = &context->res_ctx.pipe_ctx[i];
+			/* Skip inactive pipes and ones already updated */
+			if (!pipe_ctx->stream || pipe_ctx->stream == stream ||
 			    !pipe_ctx->plane_state || !tg->funcs->is_tg_enabled(tg))
-				जारी;
+				continue;
 
-			pipe_ctx->plane_res.hubp->funcs->hubp_setup_पूर्णांकerdependent(
+			pipe_ctx->plane_res.hubp->funcs->hubp_setup_interdependent(
 				pipe_ctx->plane_res.hubp,
 				&pipe_ctx->dlg_regs,
 				&pipe_ctx->ttu_regs);
-		पूर्ण
-पूर्ण
+		}
+}
 
-व्योम dcn10_post_unlock_program_front_end(
-		काष्ठा dc *dc,
-		काष्ठा dc_state *context)
-अणु
-	पूर्णांक i;
+void dcn10_post_unlock_program_front_end(
+		struct dc *dc,
+		struct dc_state *context)
+{
+	int i;
 
 	DC_LOGGER_INIT(dc->ctx->logger);
 
-	क्रम (i = 0; i < dc->res_pool->pipe_count; i++) अणु
-		काष्ठा pipe_ctx *pipe_ctx = &context->res_ctx.pipe_ctx[i];
+	for (i = 0; i < dc->res_pool->pipe_count; i++) {
+		struct pipe_ctx *pipe_ctx = &context->res_ctx.pipe_ctx[i];
 
-		अगर (!pipe_ctx->top_pipe &&
+		if (!pipe_ctx->top_pipe &&
 			!pipe_ctx->prev_odm_pipe &&
-			pipe_ctx->stream) अणु
-			काष्ठा timing_generator *tg = pipe_ctx->stream_res.tg;
+			pipe_ctx->stream) {
+			struct timing_generator *tg = pipe_ctx->stream_res.tg;
 
-			अगर (context->stream_status[i].plane_count == 0)
+			if (context->stream_status[i].plane_count == 0)
 				false_optc_underflow_wa(dc, pipe_ctx->stream, tg);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्रम (i = 0; i < dc->res_pool->pipe_count; i++)
-		अगर (context->res_ctx.pipe_ctx[i].update_flags.bits.disable)
+	for (i = 0; i < dc->res_pool->pipe_count; i++)
+		if (context->res_ctx.pipe_ctx[i].update_flags.bits.disable)
 			dc->hwss.disable_plane(dc, &dc->current_state->res_ctx.pipe_ctx[i]);
 
-	क्रम (i = 0; i < dc->res_pool->pipe_count; i++)
-		अगर (context->res_ctx.pipe_ctx[i].update_flags.bits.disable) अणु
+	for (i = 0; i < dc->res_pool->pipe_count; i++)
+		if (context->res_ctx.pipe_ctx[i].update_flags.bits.disable) {
 			dc->hwss.optimize_bandwidth(dc, context);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-	अगर (dc->hwseq->wa.DEGVIDCN10_254)
+	if (dc->hwseq->wa.DEGVIDCN10_254)
 		hubbub1_wm_change_req_wa(dc->res_pool->hubbub);
-पूर्ण
+}
 
-अटल व्योम dcn10_stereo_hw_frame_pack_wa(काष्ठा dc *dc, काष्ठा dc_state *context)
-अणु
-	uपूर्णांक8_t i;
+static void dcn10_stereo_hw_frame_pack_wa(struct dc *dc, struct dc_state *context)
+{
+	uint8_t i;
 
-	क्रम (i = 0; i < context->stream_count; i++) अणु
-		अगर (context->streams[i]->timing.timing_3d_क्रमmat
-				== TIMING_3D_FORMAT_HW_FRAME_PACKING) अणु
+	for (i = 0; i < context->stream_count; i++) {
+		if (context->streams[i]->timing.timing_3d_format
+				== TIMING_3D_FORMAT_HW_FRAME_PACKING) {
 			/*
 			 * Disable stutter
 			 */
 			hubbub1_allow_self_refresh_control(dc->res_pool->hubbub, false);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		}
+	}
+}
 
-व्योम dcn10_prepare_bandwidth(
-		काष्ठा dc *dc,
-		काष्ठा dc_state *context)
-अणु
-	काष्ठा dce_hwseq *hws = dc->hwseq;
-	काष्ठा hubbub *hubbub = dc->res_pool->hubbub;
+void dcn10_prepare_bandwidth(
+		struct dc *dc,
+		struct dc_state *context)
+{
+	struct dce_hwseq *hws = dc->hwseq;
+	struct hubbub *hubbub = dc->res_pool->hubbub;
 
-	अगर (dc->debug.sanity_checks)
-		hws->funcs.verअगरy_allow_pstate_change_high(dc);
+	if (dc->debug.sanity_checks)
+		hws->funcs.verify_allow_pstate_change_high(dc);
 
-	अगर (!IS_FPGA_MAXIMUS_DC(dc->ctx->dce_environment)) अणु
-		अगर (context->stream_count == 0)
+	if (!IS_FPGA_MAXIMUS_DC(dc->ctx->dce_environment)) {
+		if (context->stream_count == 0)
 			context->bw_ctx.bw.dcn.clk.phyclk_khz = 0;
 
-		dc->clk_mgr->funcs->update_घड़ीs(
+		dc->clk_mgr->funcs->update_clocks(
 				dc->clk_mgr,
 				context,
 				false);
-	पूर्ण
+	}
 
 	dc->wm_optimized_required = hubbub->funcs->program_watermarks(hubbub,
 			&context->bw_ctx.bw.dcn.watermarks,
-			dc->res_pool->ref_घड़ीs.dchub_ref_घड़ी_inKhz / 1000,
+			dc->res_pool->ref_clocks.dchub_ref_clock_inKhz / 1000,
 			true);
 	dcn10_stereo_hw_frame_pack_wa(dc, context);
 
-	अगर (dc->debug.pplib_wm_report_mode == WM_REPORT_OVERRIDE)
-		dcn_bw_notअगरy_pplib_of_wm_ranges(dc);
+	if (dc->debug.pplib_wm_report_mode == WM_REPORT_OVERRIDE)
+		dcn_bw_notify_pplib_of_wm_ranges(dc);
 
-	अगर (dc->debug.sanity_checks)
-		hws->funcs.verअगरy_allow_pstate_change_high(dc);
-पूर्ण
+	if (dc->debug.sanity_checks)
+		hws->funcs.verify_allow_pstate_change_high(dc);
+}
 
-व्योम dcn10_optimize_bandwidth(
-		काष्ठा dc *dc,
-		काष्ठा dc_state *context)
-अणु
-	काष्ठा dce_hwseq *hws = dc->hwseq;
-	काष्ठा hubbub *hubbub = dc->res_pool->hubbub;
+void dcn10_optimize_bandwidth(
+		struct dc *dc,
+		struct dc_state *context)
+{
+	struct dce_hwseq *hws = dc->hwseq;
+	struct hubbub *hubbub = dc->res_pool->hubbub;
 
-	अगर (dc->debug.sanity_checks)
-		hws->funcs.verअगरy_allow_pstate_change_high(dc);
+	if (dc->debug.sanity_checks)
+		hws->funcs.verify_allow_pstate_change_high(dc);
 
-	अगर (!IS_FPGA_MAXIMUS_DC(dc->ctx->dce_environment)) अणु
-		अगर (context->stream_count == 0)
+	if (!IS_FPGA_MAXIMUS_DC(dc->ctx->dce_environment)) {
+		if (context->stream_count == 0)
 			context->bw_ctx.bw.dcn.clk.phyclk_khz = 0;
 
-		dc->clk_mgr->funcs->update_घड़ीs(
+		dc->clk_mgr->funcs->update_clocks(
 				dc->clk_mgr,
 				context,
 				true);
-	पूर्ण
+	}
 
 	hubbub->funcs->program_watermarks(hubbub,
 			&context->bw_ctx.bw.dcn.watermarks,
-			dc->res_pool->ref_घड़ीs.dchub_ref_घड़ी_inKhz / 1000,
+			dc->res_pool->ref_clocks.dchub_ref_clock_inKhz / 1000,
 			true);
 
 	dcn10_stereo_hw_frame_pack_wa(dc, context);
 
-	अगर (dc->debug.pplib_wm_report_mode == WM_REPORT_OVERRIDE)
-		dcn_bw_notअगरy_pplib_of_wm_ranges(dc);
+	if (dc->debug.pplib_wm_report_mode == WM_REPORT_OVERRIDE)
+		dcn_bw_notify_pplib_of_wm_ranges(dc);
 
-	अगर (dc->debug.sanity_checks)
-		hws->funcs.verअगरy_allow_pstate_change_high(dc);
-पूर्ण
+	if (dc->debug.sanity_checks)
+		hws->funcs.verify_allow_pstate_change_high(dc);
+}
 
-व्योम dcn10_set_drr(काष्ठा pipe_ctx **pipe_ctx,
-		पूर्णांक num_pipes, काष्ठा dc_crtc_timing_adjust adjust)
-अणु
-	पूर्णांक i = 0;
-	काष्ठा drr_params params = अणु0पूर्ण;
-	// DRR set trigger event mapped to OTG_TRIG_A (bit 11) क्रम manual control flow
-	अचिन्हित पूर्णांक event_triggers = 0x800;
+void dcn10_set_drr(struct pipe_ctx **pipe_ctx,
+		int num_pipes, struct dc_crtc_timing_adjust adjust)
+{
+	int i = 0;
+	struct drr_params params = {0};
+	// DRR set trigger event mapped to OTG_TRIG_A (bit 11) for manual control flow
+	unsigned int event_triggers = 0x800;
 	// Note DRR trigger events are generated regardless of whether num frames met.
-	अचिन्हित पूर्णांक num_frames = 2;
+	unsigned int num_frames = 2;
 
 	params.vertical_total_max = adjust.v_total_max;
 	params.vertical_total_min = adjust.v_total_min;
 	params.vertical_total_mid = adjust.v_total_mid;
 	params.vertical_total_mid_frame_num = adjust.v_total_mid_frame_num;
 	/* TODO: If multiple pipes are to be supported, you need
-	 * some GSL stuff. Static screen triggers may be programmed dअगरferently
+	 * some GSL stuff. Static screen triggers may be programmed differently
 	 * as well.
 	 */
-	क्रम (i = 0; i < num_pipes; i++) अणु
+	for (i = 0; i < num_pipes; i++) {
 		pipe_ctx[i]->stream_res.tg->funcs->set_drr(
 			pipe_ctx[i]->stream_res.tg, &params);
-		अगर (adjust.v_total_max != 0 && adjust.v_total_min != 0)
-			pipe_ctx[i]->stream_res.tg->funcs->set_अटल_screen_control(
+		if (adjust.v_total_max != 0 && adjust.v_total_min != 0)
+			pipe_ctx[i]->stream_res.tg->funcs->set_static_screen_control(
 					pipe_ctx[i]->stream_res.tg,
 					event_triggers, num_frames);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम dcn10_get_position(काष्ठा pipe_ctx **pipe_ctx,
-		पूर्णांक num_pipes,
-		काष्ठा crtc_position *position)
-अणु
-	पूर्णांक i = 0;
+void dcn10_get_position(struct pipe_ctx **pipe_ctx,
+		int num_pipes,
+		struct crtc_position *position)
+{
+	int i = 0;
 
 	/* TODO: handle pipes > 1
 	 */
-	क्रम (i = 0; i < num_pipes; i++)
+	for (i = 0; i < num_pipes; i++)
 		pipe_ctx[i]->stream_res.tg->funcs->get_position(pipe_ctx[i]->stream_res.tg, position);
-पूर्ण
+}
 
-व्योम dcn10_set_अटल_screen_control(काष्ठा pipe_ctx **pipe_ctx,
-		पूर्णांक num_pipes, स्थिर काष्ठा dc_अटल_screen_params *params)
-अणु
-	अचिन्हित पूर्णांक i;
-	अचिन्हित पूर्णांक triggers = 0;
+void dcn10_set_static_screen_control(struct pipe_ctx **pipe_ctx,
+		int num_pipes, const struct dc_static_screen_params *params)
+{
+	unsigned int i;
+	unsigned int triggers = 0;
 
-	अगर (params->triggers.surface_update)
+	if (params->triggers.surface_update)
 		triggers |= 0x80;
-	अगर (params->triggers.cursor_update)
+	if (params->triggers.cursor_update)
 		triggers |= 0x2;
-	अगर (params->triggers.क्रमce_trigger)
+	if (params->triggers.force_trigger)
 		triggers |= 0x1;
 
-	क्रम (i = 0; i < num_pipes; i++)
+	for (i = 0; i < num_pipes; i++)
 		pipe_ctx[i]->stream_res.tg->funcs->
-			set_अटल_screen_control(pipe_ctx[i]->stream_res.tg,
+			set_static_screen_control(pipe_ctx[i]->stream_res.tg,
 					triggers, params->num_frames);
-पूर्ण
+}
 
-अटल व्योम dcn10_config_stereo_parameters(
-		काष्ठा dc_stream_state *stream, काष्ठा crtc_stereo_flags *flags)
-अणु
-	क्रमागत view_3d_क्रमmat view_क्रमmat = stream->view_क्रमmat;
-	क्रमागत dc_timing_3d_क्रमmat timing_3d_क्रमmat =\
-			stream->timing.timing_3d_क्रमmat;
+static void dcn10_config_stereo_parameters(
+		struct dc_stream_state *stream, struct crtc_stereo_flags *flags)
+{
+	enum view_3d_format view_format = stream->view_format;
+	enum dc_timing_3d_format timing_3d_format =\
+			stream->timing.timing_3d_format;
 	bool non_stereo_timing = false;
 
-	अगर (timing_3d_क्रमmat == TIMING_3D_FORMAT_NONE ||
-		timing_3d_क्रमmat == TIMING_3D_FORMAT_SIDE_BY_SIDE ||
-		timing_3d_क्रमmat == TIMING_3D_FORMAT_TOP_AND_BOTTOM)
+	if (timing_3d_format == TIMING_3D_FORMAT_NONE ||
+		timing_3d_format == TIMING_3D_FORMAT_SIDE_BY_SIDE ||
+		timing_3d_format == TIMING_3D_FORMAT_TOP_AND_BOTTOM)
 		non_stereo_timing = true;
 
-	अगर (non_stereo_timing == false &&
-		view_क्रमmat == VIEW_3D_FORMAT_FRAME_SEQUENTIAL) अणु
+	if (non_stereo_timing == false &&
+		view_format == VIEW_3D_FORMAT_FRAME_SEQUENTIAL) {
 
 		flags->PROGRAM_STEREO         = 1;
 		flags->PROGRAM_POLARITY       = 1;
-		अगर (timing_3d_क्रमmat == TIMING_3D_FORMAT_INBAND_FA ||
-			timing_3d_क्रमmat == TIMING_3D_FORMAT_DP_HDMI_INBAND_FA ||
-			timing_3d_क्रमmat == TIMING_3D_FORMAT_SIDEBAND_FA) अणु
-			क्रमागत display_करोngle_type करोngle = \
-					stream->link->ddc->करोngle_type;
-			अगर (करोngle == DISPLAY_DONGLE_DP_VGA_CONVERTER ||
-				करोngle == DISPLAY_DONGLE_DP_DVI_CONVERTER ||
-				करोngle == DISPLAY_DONGLE_DP_HDMI_CONVERTER)
+		if (timing_3d_format == TIMING_3D_FORMAT_INBAND_FA ||
+			timing_3d_format == TIMING_3D_FORMAT_DP_HDMI_INBAND_FA ||
+			timing_3d_format == TIMING_3D_FORMAT_SIDEBAND_FA) {
+			enum display_dongle_type dongle = \
+					stream->link->ddc->dongle_type;
+			if (dongle == DISPLAY_DONGLE_DP_VGA_CONVERTER ||
+				dongle == DISPLAY_DONGLE_DP_DVI_CONVERTER ||
+				dongle == DISPLAY_DONGLE_DP_HDMI_CONVERTER)
 				flags->DISABLE_STEREO_DP_SYNC = 1;
-		पूर्ण
+		}
 		flags->RIGHT_EYE_POLARITY =\
 				stream->timing.flags.RIGHT_EYE_3D_POLARITY;
-		अगर (timing_3d_क्रमmat == TIMING_3D_FORMAT_HW_FRAME_PACKING)
+		if (timing_3d_format == TIMING_3D_FORMAT_HW_FRAME_PACKING)
 			flags->FRAME_PACKED = 1;
-	पूर्ण
+	}
 
-	वापस;
-पूर्ण
+	return;
+}
 
-व्योम dcn10_setup_stereo(काष्ठा pipe_ctx *pipe_ctx, काष्ठा dc *dc)
-अणु
-	काष्ठा crtc_stereo_flags flags = अणु 0 पूर्ण;
-	काष्ठा dc_stream_state *stream = pipe_ctx->stream;
+void dcn10_setup_stereo(struct pipe_ctx *pipe_ctx, struct dc *dc)
+{
+	struct crtc_stereo_flags flags = { 0 };
+	struct dc_stream_state *stream = pipe_ctx->stream;
 
 	dcn10_config_stereo_parameters(stream, &flags);
 
-	अगर (stream->timing.timing_3d_क्रमmat == TIMING_3D_FORMAT_SIDEBAND_FA) अणु
-		अगर (!dc_set_generic_gpio_क्रम_stereo(true, dc->ctx->gpio_service))
-			dc_set_generic_gpio_क्रम_stereo(false, dc->ctx->gpio_service);
-	पूर्ण अन्यथा अणु
-		dc_set_generic_gpio_क्रम_stereo(false, dc->ctx->gpio_service);
-	पूर्ण
+	if (stream->timing.timing_3d_format == TIMING_3D_FORMAT_SIDEBAND_FA) {
+		if (!dc_set_generic_gpio_for_stereo(true, dc->ctx->gpio_service))
+			dc_set_generic_gpio_for_stereo(false, dc->ctx->gpio_service);
+	} else {
+		dc_set_generic_gpio_for_stereo(false, dc->ctx->gpio_service);
+	}
 
 	pipe_ctx->stream_res.opp->funcs->opp_program_stereo(
 		pipe_ctx->stream_res.opp,
@@ -3391,164 +3390,164 @@ uपूर्णांक8_t get_घड़ी_भागider(काष्ठा p
 		&stream->timing,
 		&flags);
 
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल काष्ठा hubp *get_hubp_by_inst(काष्ठा resource_pool *res_pool, पूर्णांक mpcc_inst)
-अणु
-	पूर्णांक i;
+static struct hubp *get_hubp_by_inst(struct resource_pool *res_pool, int mpcc_inst)
+{
+	int i;
 
-	क्रम (i = 0; i < res_pool->pipe_count; i++) अणु
-		अगर (res_pool->hubps[i]->inst == mpcc_inst)
-			वापस res_pool->hubps[i];
-	पूर्ण
+	for (i = 0; i < res_pool->pipe_count; i++) {
+		if (res_pool->hubps[i]->inst == mpcc_inst)
+			return res_pool->hubps[i];
+	}
 	ASSERT(false);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-व्योम dcn10_रुको_क्रम_mpcc_disconnect(
-		काष्ठा dc *dc,
-		काष्ठा resource_pool *res_pool,
-		काष्ठा pipe_ctx *pipe_ctx)
-अणु
-	काष्ठा dce_hwseq *hws = dc->hwseq;
-	पूर्णांक mpcc_inst;
+void dcn10_wait_for_mpcc_disconnect(
+		struct dc *dc,
+		struct resource_pool *res_pool,
+		struct pipe_ctx *pipe_ctx)
+{
+	struct dce_hwseq *hws = dc->hwseq;
+	int mpcc_inst;
 
-	अगर (dc->debug.sanity_checks) अणु
-		hws->funcs.verअगरy_allow_pstate_change_high(dc);
-	पूर्ण
+	if (dc->debug.sanity_checks) {
+		hws->funcs.verify_allow_pstate_change_high(dc);
+	}
 
-	अगर (!pipe_ctx->stream_res.opp)
-		वापस;
+	if (!pipe_ctx->stream_res.opp)
+		return;
 
-	क्रम (mpcc_inst = 0; mpcc_inst < MAX_PIPES; mpcc_inst++) अणु
-		अगर (pipe_ctx->stream_res.opp->mpcc_disconnect_pending[mpcc_inst]) अणु
-			काष्ठा hubp *hubp = get_hubp_by_inst(res_pool, mpcc_inst);
+	for (mpcc_inst = 0; mpcc_inst < MAX_PIPES; mpcc_inst++) {
+		if (pipe_ctx->stream_res.opp->mpcc_disconnect_pending[mpcc_inst]) {
+			struct hubp *hubp = get_hubp_by_inst(res_pool, mpcc_inst);
 
-			res_pool->mpc->funcs->रुको_क्रम_idle(res_pool->mpc, mpcc_inst);
+			res_pool->mpc->funcs->wait_for_idle(res_pool->mpc, mpcc_inst);
 			pipe_ctx->stream_res.opp->mpcc_disconnect_pending[mpcc_inst] = false;
 			hubp->funcs->set_blank(hubp, true);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (dc->debug.sanity_checks) अणु
-		hws->funcs.verअगरy_allow_pstate_change_high(dc);
-	पूर्ण
+	if (dc->debug.sanity_checks) {
+		hws->funcs.verify_allow_pstate_change_high(dc);
+	}
 
-पूर्ण
+}
 
-bool dcn10_dummy_display_घातer_gating(
-	काष्ठा dc *dc,
-	uपूर्णांक8_t controller_id,
-	काष्ठा dc_bios *dcb,
-	क्रमागत pipe_gating_control घातer_gating)
-अणु
-	वापस true;
-पूर्ण
+bool dcn10_dummy_display_power_gating(
+	struct dc *dc,
+	uint8_t controller_id,
+	struct dc_bios *dcb,
+	enum pipe_gating_control power_gating)
+{
+	return true;
+}
 
-व्योम dcn10_update_pending_status(काष्ठा pipe_ctx *pipe_ctx)
-अणु
-	काष्ठा dc_plane_state *plane_state = pipe_ctx->plane_state;
-	काष्ठा timing_generator *tg = pipe_ctx->stream_res.tg;
+void dcn10_update_pending_status(struct pipe_ctx *pipe_ctx)
+{
+	struct dc_plane_state *plane_state = pipe_ctx->plane_state;
+	struct timing_generator *tg = pipe_ctx->stream_res.tg;
 	bool flip_pending;
-	काष्ठा dc *dc = plane_state->ctx->dc;
+	struct dc *dc = plane_state->ctx->dc;
 
-	अगर (plane_state == शून्य)
-		वापस;
+	if (plane_state == NULL)
+		return;
 
 	flip_pending = pipe_ctx->plane_res.hubp->funcs->hubp_is_flip_pending(
 					pipe_ctx->plane_res.hubp);
 
 	plane_state->status.is_flip_pending = plane_state->status.is_flip_pending || flip_pending;
 
-	अगर (!flip_pending)
+	if (!flip_pending)
 		plane_state->status.current_address = plane_state->status.requested_address;
 
-	अगर (plane_state->status.current_address.type == PLN_ADDR_TYPE_GRPH_STEREO &&
-			tg->funcs->is_stereo_left_eye) अणु
+	if (plane_state->status.current_address.type == PLN_ADDR_TYPE_GRPH_STEREO &&
+			tg->funcs->is_stereo_left_eye) {
 		plane_state->status.is_right_eye =
 				!tg->funcs->is_stereo_left_eye(pipe_ctx->stream_res.tg);
-	पूर्ण
+	}
 
-	अगर (dc->hwseq->wa_state.disallow_self_refresh_during_multi_plane_transition_applied) अणु
-		काष्ठा dce_hwseq *hwseq = dc->hwseq;
-		काष्ठा timing_generator *tg = dc->res_pool->timing_generators[0];
-		अचिन्हित पूर्णांक cur_frame = tg->funcs->get_frame_count(tg);
+	if (dc->hwseq->wa_state.disallow_self_refresh_during_multi_plane_transition_applied) {
+		struct dce_hwseq *hwseq = dc->hwseq;
+		struct timing_generator *tg = dc->res_pool->timing_generators[0];
+		unsigned int cur_frame = tg->funcs->get_frame_count(tg);
 
-		अगर (cur_frame != hwseq->wa_state.disallow_self_refresh_during_multi_plane_transition_applied_on_frame) अणु
-			काष्ठा hubbub *hubbub = dc->res_pool->hubbub;
+		if (cur_frame != hwseq->wa_state.disallow_self_refresh_during_multi_plane_transition_applied_on_frame) {
+			struct hubbub *hubbub = dc->res_pool->hubbub;
 
 			hubbub->funcs->allow_self_refresh_control(hubbub, !dc->debug.disable_stutter);
 			hwseq->wa_state.disallow_self_refresh_during_multi_plane_transition_applied = false;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-व्योम dcn10_update_dchub(काष्ठा dce_hwseq *hws, काष्ठा dchub_init_data *dh_data)
-अणु
-	काष्ठा hubbub *hubbub = hws->ctx->dc->res_pool->hubbub;
+void dcn10_update_dchub(struct dce_hwseq *hws, struct dchub_init_data *dh_data)
+{
+	struct hubbub *hubbub = hws->ctx->dc->res_pool->hubbub;
 
 	/* In DCN, this programming sequence is owned by the hubbub */
 	hubbub->funcs->update_dchub(hubbub, dh_data);
-पूर्ण
+}
 
-अटल bool dcn10_can_pipe_disable_cursor(काष्ठा pipe_ctx *pipe_ctx)
-अणु
-	काष्ठा pipe_ctx *test_pipe;
-	स्थिर काष्ठा rect *r1 = &pipe_ctx->plane_res.scl_data.recout, *r2;
-	पूर्णांक r1_r = r1->x + r1->width, r1_b = r1->y + r1->height, r2_r, r2_b;
+static bool dcn10_can_pipe_disable_cursor(struct pipe_ctx *pipe_ctx)
+{
+	struct pipe_ctx *test_pipe;
+	const struct rect *r1 = &pipe_ctx->plane_res.scl_data.recout, *r2;
+	int r1_r = r1->x + r1->width, r1_b = r1->y + r1->height, r2_r, r2_b;
 
 	/**
-	 * Disable the cursor अगर there's another pipe above this with a
-	 * plane that contains this pipe's viewport to prevent द्विगुन cursor
-	 * and incorrect scaling artअगरacts.
+	 * Disable the cursor if there's another pipe above this with a
+	 * plane that contains this pipe's viewport to prevent double cursor
+	 * and incorrect scaling artifacts.
 	 */
-	क्रम (test_pipe = pipe_ctx->top_pipe; test_pipe;
-	     test_pipe = test_pipe->top_pipe) अणु
-		अगर (!test_pipe->plane_state->visible)
-			जारी;
+	for (test_pipe = pipe_ctx->top_pipe; test_pipe;
+	     test_pipe = test_pipe->top_pipe) {
+		if (!test_pipe->plane_state->visible)
+			continue;
 
 		r2 = &test_pipe->plane_res.scl_data.recout;
 		r2_r = r2->x + r2->width;
 		r2_b = r2->y + r2->height;
 
-		अगर (r1->x >= r2->x && r1->y >= r2->y && r1_r <= r2_r && r1_b <= r2_b)
-			वापस true;
-	पूर्ण
+		if (r1->x >= r2->x && r1->y >= r2->y && r1_r <= r2_r && r1_b <= r2_b)
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-व्योम dcn10_set_cursor_position(काष्ठा pipe_ctx *pipe_ctx)
-अणु
-	काष्ठा dc_cursor_position pos_cpy = pipe_ctx->stream->cursor_position;
-	काष्ठा hubp *hubp = pipe_ctx->plane_res.hubp;
-	काष्ठा dpp *dpp = pipe_ctx->plane_res.dpp;
-	काष्ठा dc_cursor_mi_param param = अणु
+void dcn10_set_cursor_position(struct pipe_ctx *pipe_ctx)
+{
+	struct dc_cursor_position pos_cpy = pipe_ctx->stream->cursor_position;
+	struct hubp *hubp = pipe_ctx->plane_res.hubp;
+	struct dpp *dpp = pipe_ctx->plane_res.dpp;
+	struct dc_cursor_mi_param param = {
 		.pixel_clk_khz = pipe_ctx->stream->timing.pix_clk_100hz / 10,
-		.ref_clk_khz = pipe_ctx->stream->ctx->dc->res_pool->ref_घड़ीs.dchub_ref_घड़ी_inKhz,
+		.ref_clk_khz = pipe_ctx->stream->ctx->dc->res_pool->ref_clocks.dchub_ref_clock_inKhz,
 		.viewport = pipe_ctx->plane_res.scl_data.viewport,
 		.h_scale_ratio = pipe_ctx->plane_res.scl_data.ratios.horz,
 		.v_scale_ratio = pipe_ctx->plane_res.scl_data.ratios.vert,
 		.rotation = pipe_ctx->plane_state->rotation,
 		.mirror = pipe_ctx->plane_state->horizontal_mirror
-	पूर्ण;
-	bool pipe_split_on = (pipe_ctx->top_pipe != शून्य) ||
-		(pipe_ctx->bottom_pipe != शून्य);
-	bool odm_combine_on = (pipe_ctx->next_odm_pipe != शून्य) ||
-		(pipe_ctx->prev_odm_pipe != शून्य);
+	};
+	bool pipe_split_on = (pipe_ctx->top_pipe != NULL) ||
+		(pipe_ctx->bottom_pipe != NULL);
+	bool odm_combine_on = (pipe_ctx->next_odm_pipe != NULL) ||
+		(pipe_ctx->prev_odm_pipe != NULL);
 
-	पूर्णांक x_plane = pipe_ctx->plane_state->dst_rect.x;
-	पूर्णांक y_plane = pipe_ctx->plane_state->dst_rect.y;
-	पूर्णांक x_pos = pos_cpy.x;
-	पूर्णांक y_pos = pos_cpy.y;
+	int x_plane = pipe_ctx->plane_state->dst_rect.x;
+	int y_plane = pipe_ctx->plane_state->dst_rect.y;
+	int x_pos = pos_cpy.x;
+	int y_pos = pos_cpy.y;
 
 	/**
 	 * DC cursor is stream space, HW cursor is plane space and drawn
 	 * as part of the framebuffer.
 	 *
 	 * Cursor position can't be negative, but hotspot can be used to
-	 * shअगरt cursor out of the plane bounds. Hotspot must be smaller
+	 * shift cursor out of the plane bounds. Hotspot must be smaller
 	 * than the cursor size.
 	 */
 
@@ -3556,7 +3555,7 @@ bool dcn10_dummy_display_घातer_gating(
 	 * Translate cursor from stream space to plane space.
 	 *
 	 * If the cursor is scaled then we need to scale the position
-	 * to be in the approximately correct place. We can't करो anything
+	 * to be in the approximately correct place. We can't do anything
 	 * about the actual size being incorrect, that's a limitation of
 	 * the hardware.
 	 */
@@ -3571,217 +3570,217 @@ bool dcn10_dummy_display_घातer_gating(
 	 * the screen.
 	 *
 	 * This translation isn't affected by scaling so it needs to be
-	 * करोne *after* we adjust the position क्रम the scale factor.
+	 * done *after* we adjust the position for the scale factor.
 	 *
-	 * This is only करोne by opt-in क्रम now since there are still
-	 * some useहालs like tiled display that might enable the
-	 * cursor on both streams जबतक expecting dc to clip it.
+	 * This is only done by opt-in for now since there are still
+	 * some usecases like tiled display that might enable the
+	 * cursor on both streams while expecting dc to clip it.
 	 */
-	अगर (pos_cpy.translate_by_source) अणु
+	if (pos_cpy.translate_by_source) {
 		x_pos += pipe_ctx->plane_state->src_rect.x;
 		y_pos += pipe_ctx->plane_state->src_rect.y;
-	पूर्ण
+	}
 
 	/**
 	 * If the position is negative then we need to add to the hotspot
-	 * to shअगरt the cursor outside the plane.
+	 * to shift the cursor outside the plane.
 	 */
 
-	अगर (x_pos < 0) अणु
+	if (x_pos < 0) {
 		pos_cpy.x_hotspot -= x_pos;
 		x_pos = 0;
-	पूर्ण
+	}
 
-	अगर (y_pos < 0) अणु
+	if (y_pos < 0) {
 		pos_cpy.y_hotspot -= y_pos;
 		y_pos = 0;
-	पूर्ण
+	}
 
-	pos_cpy.x = (uपूर्णांक32_t)x_pos;
-	pos_cpy.y = (uपूर्णांक32_t)y_pos;
+	pos_cpy.x = (uint32_t)x_pos;
+	pos_cpy.y = (uint32_t)y_pos;
 
-	अगर (pipe_ctx->plane_state->address.type
+	if (pipe_ctx->plane_state->address.type
 			== PLN_ADDR_TYPE_VIDEO_PROGRESSIVE)
 		pos_cpy.enable = false;
 
-	अगर (pos_cpy.enable && dcn10_can_pipe_disable_cursor(pipe_ctx))
+	if (pos_cpy.enable && dcn10_can_pipe_disable_cursor(pipe_ctx))
 		pos_cpy.enable = false;
 
 	// Swap axis and mirror horizontally
-	अगर (param.rotation == ROTATION_ANGLE_90) अणु
-		uपूर्णांक32_t temp_x = pos_cpy.x;
+	if (param.rotation == ROTATION_ANGLE_90) {
+		uint32_t temp_x = pos_cpy.x;
 
 		pos_cpy.x = pipe_ctx->plane_res.scl_data.viewport.width -
 				(pos_cpy.y - pipe_ctx->plane_res.scl_data.viewport.x) + pipe_ctx->plane_res.scl_data.viewport.x;
 		pos_cpy.y = temp_x;
-	पूर्ण
+	}
 	// Swap axis and mirror vertically
-	अन्यथा अगर (param.rotation == ROTATION_ANGLE_270) अणु
-		uपूर्णांक32_t temp_y = pos_cpy.y;
-		पूर्णांक viewport_height =
+	else if (param.rotation == ROTATION_ANGLE_270) {
+		uint32_t temp_y = pos_cpy.y;
+		int viewport_height =
 			pipe_ctx->plane_res.scl_data.viewport.height;
-		पूर्णांक viewport_y =
+		int viewport_y =
 			pipe_ctx->plane_res.scl_data.viewport.y;
 
 		/**
 		 * Display groups that are 1xnY, have pos_cpy.x > 2 * viewport.height
-		 * For pipe split हालs:
+		 * For pipe split cases:
 		 * - apply offset of viewport.y to normalize pos_cpy.x
-		 * - calculate the pos_cpy.y as beक्रमe
-		 * - shअगरt pos_cpy.y back by same offset to get final value
+		 * - calculate the pos_cpy.y as before
+		 * - shift pos_cpy.y back by same offset to get final value
 		 * - since we iterate through both pipes, use the lower
-		 *   viewport.y क्रम offset
-		 * For non pipe split हालs, use the same calculation क्रम
-		 *  pos_cpy.y as the 180 degree rotation हाल below,
+		 *   viewport.y for offset
+		 * For non pipe split cases, use the same calculation for
+		 *  pos_cpy.y as the 180 degree rotation case below,
 		 *  but use pos_cpy.x as our input because we are rotating
 		 *  270 degrees
 		 */
-		अगर (pipe_split_on || odm_combine_on) अणु
-			पूर्णांक pos_cpy_x_offset;
-			पूर्णांक other_pipe_viewport_y;
+		if (pipe_split_on || odm_combine_on) {
+			int pos_cpy_x_offset;
+			int other_pipe_viewport_y;
 
-			अगर (pipe_split_on) अणु
-				अगर (pipe_ctx->bottom_pipe) अणु
+			if (pipe_split_on) {
+				if (pipe_ctx->bottom_pipe) {
 					other_pipe_viewport_y =
 						pipe_ctx->bottom_pipe->plane_res.scl_data.viewport.y;
-				पूर्ण अन्यथा अणु
+				} else {
 					other_pipe_viewport_y =
 						pipe_ctx->top_pipe->plane_res.scl_data.viewport.y;
-				पूर्ण
-			पूर्ण अन्यथा अणु
-				अगर (pipe_ctx->next_odm_pipe) अणु
+				}
+			} else {
+				if (pipe_ctx->next_odm_pipe) {
 					other_pipe_viewport_y =
 						pipe_ctx->next_odm_pipe->plane_res.scl_data.viewport.y;
-				पूर्ण अन्यथा अणु
+				} else {
 					other_pipe_viewport_y =
 						pipe_ctx->prev_odm_pipe->plane_res.scl_data.viewport.y;
-				पूर्ण
-			पूर्ण
+				}
+			}
 			pos_cpy_x_offset = (viewport_y > other_pipe_viewport_y) ?
 				other_pipe_viewport_y : viewport_y;
 			pos_cpy.x -= pos_cpy_x_offset;
-			अगर (pos_cpy.x > viewport_height) अणु
+			if (pos_cpy.x > viewport_height) {
 				pos_cpy.x = pos_cpy.x - viewport_height;
 				pos_cpy.y = viewport_height - pos_cpy.x;
-			पूर्ण अन्यथा अणु
+			} else {
 				pos_cpy.y = 2 * viewport_height - pos_cpy.x;
-			पूर्ण
+			}
 			pos_cpy.y += pos_cpy_x_offset;
-		पूर्ण अन्यथा अणु
+		} else {
 			pos_cpy.y = (2 * viewport_y) + viewport_height - pos_cpy.x;
-		पूर्ण
+		}
 		pos_cpy.x = temp_y;
-	पूर्ण
+	}
 	// Mirror horizontally and vertically
-	अन्यथा अगर (param.rotation == ROTATION_ANGLE_180) अणु
-		पूर्णांक viewport_width =
+	else if (param.rotation == ROTATION_ANGLE_180) {
+		int viewport_width =
 			pipe_ctx->plane_res.scl_data.viewport.width;
-		पूर्णांक viewport_x =
+		int viewport_x =
 			pipe_ctx->plane_res.scl_data.viewport.x;
 
-		अगर (pipe_split_on || odm_combine_on) अणु
-			अगर (pos_cpy.x >= viewport_width + viewport_x) अणु
+		if (pipe_split_on || odm_combine_on) {
+			if (pos_cpy.x >= viewport_width + viewport_x) {
 				pos_cpy.x = 2 * viewport_width
 						- pos_cpy.x + 2 * viewport_x;
-			पूर्ण अन्यथा अणु
-				uपूर्णांक32_t temp_x = pos_cpy.x;
+			} else {
+				uint32_t temp_x = pos_cpy.x;
 
 				pos_cpy.x = 2 * viewport_x - pos_cpy.x;
-				अगर (temp_x >= viewport_x +
-					(पूर्णांक)hubp->curs_attr.width || pos_cpy.x
-					<= (पूर्णांक)hubp->curs_attr.width +
-					pipe_ctx->plane_state->src_rect.x) अणु
+				if (temp_x >= viewport_x +
+					(int)hubp->curs_attr.width || pos_cpy.x
+					<= (int)hubp->curs_attr.width +
+					pipe_ctx->plane_state->src_rect.x) {
 					pos_cpy.x = temp_x + viewport_width;
-				पूर्ण
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				}
+			}
+		} else {
 			pos_cpy.x = viewport_width - pos_cpy.x + 2 * viewport_x;
-		पूर्ण
+		}
 
 		/**
 		 * Display groups that are 1xnY, have pos_cpy.y > viewport.height
 		 * Calculation:
 		 *   delta_from_bottom = viewport.y + viewport.height - pos_cpy.y
 		 *   pos_cpy.y_new = viewport.y + delta_from_bottom
-		 * Simplअगरy it as:
+		 * Simplify it as:
 		 *   pos_cpy.y = viewport.y * 2 + viewport.height - pos_cpy.y
 		 */
 		pos_cpy.y = (2 * pipe_ctx->plane_res.scl_data.viewport.y) +
 			pipe_ctx->plane_res.scl_data.viewport.height - pos_cpy.y;
-	पूर्ण
+	}
 
 	hubp->funcs->set_cursor_position(hubp, &pos_cpy, &param);
 	dpp->funcs->set_cursor_position(dpp, &pos_cpy, &param, hubp->curs_attr.width, hubp->curs_attr.height);
-पूर्ण
+}
 
-व्योम dcn10_set_cursor_attribute(काष्ठा pipe_ctx *pipe_ctx)
-अणु
-	काष्ठा dc_cursor_attributes *attributes = &pipe_ctx->stream->cursor_attributes;
+void dcn10_set_cursor_attribute(struct pipe_ctx *pipe_ctx)
+{
+	struct dc_cursor_attributes *attributes = &pipe_ctx->stream->cursor_attributes;
 
 	pipe_ctx->plane_res.hubp->funcs->set_cursor_attributes(
 			pipe_ctx->plane_res.hubp, attributes);
 	pipe_ctx->plane_res.dpp->funcs->set_cursor_attributes(
 		pipe_ctx->plane_res.dpp, attributes);
-पूर्ण
+}
 
-व्योम dcn10_set_cursor_sdr_white_level(काष्ठा pipe_ctx *pipe_ctx)
-अणु
-	uपूर्णांक32_t sdr_white_level = pipe_ctx->stream->cursor_attributes.sdr_white_level;
-	काष्ठा fixed31_32 multiplier;
-	काष्ठा dpp_cursor_attributes opt_attr = अणु 0 पूर्ण;
-	uपूर्णांक32_t hw_scale = 0x3c00; // 1.0 शेष multiplier
-	काष्ठा custom_भग्न_क्रमmat fmt;
+void dcn10_set_cursor_sdr_white_level(struct pipe_ctx *pipe_ctx)
+{
+	uint32_t sdr_white_level = pipe_ctx->stream->cursor_attributes.sdr_white_level;
+	struct fixed31_32 multiplier;
+	struct dpp_cursor_attributes opt_attr = { 0 };
+	uint32_t hw_scale = 0x3c00; // 1.0 default multiplier
+	struct custom_float_format fmt;
 
-	अगर (!pipe_ctx->plane_res.dpp->funcs->set_optional_cursor_attributes)
-		वापस;
+	if (!pipe_ctx->plane_res.dpp->funcs->set_optional_cursor_attributes)
+		return;
 
 	fmt.exponenta_bits = 5;
 	fmt.mantissa_bits = 10;
 	fmt.sign = true;
 
-	अगर (sdr_white_level > 80) अणु
+	if (sdr_white_level > 80) {
 		multiplier = dc_fixpt_from_fraction(sdr_white_level, 80);
-		convert_to_custom_भग्न_क्रमmat(multiplier, &fmt, &hw_scale);
-	पूर्ण
+		convert_to_custom_float_format(multiplier, &fmt, &hw_scale);
+	}
 
 	opt_attr.scale = hw_scale;
 	opt_attr.bias = 0;
 
 	pipe_ctx->plane_res.dpp->funcs->set_optional_cursor_attributes(
 			pipe_ctx->plane_res.dpp, &opt_attr);
-पूर्ण
+}
 
 /*
  * apply_front_porch_workaround  TODO FPGA still need?
  *
- * This is a workaround क्रम a bug that has existed since R5xx and has not been
- * fixed keep Front porch at minimum 2 क्रम Interlaced mode or 1 क्रम progressive.
+ * This is a workaround for a bug that has existed since R5xx and has not been
+ * fixed keep Front porch at minimum 2 for Interlaced mode or 1 for progressive.
  */
-अटल व्योम apply_front_porch_workaround(
-	काष्ठा dc_crtc_timing *timing)
-अणु
-	अगर (timing->flags.INTERLACE == 1) अणु
-		अगर (timing->v_front_porch < 2)
+static void apply_front_porch_workaround(
+	struct dc_crtc_timing *timing)
+{
+	if (timing->flags.INTERLACE == 1) {
+		if (timing->v_front_porch < 2)
 			timing->v_front_porch = 2;
-	पूर्ण अन्यथा अणु
-		अगर (timing->v_front_porch < 1)
+	} else {
+		if (timing->v_front_porch < 1)
 			timing->v_front_porch = 1;
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक dcn10_get_vupdate_offset_from_vsync(काष्ठा pipe_ctx *pipe_ctx)
-अणु
-	स्थिर काष्ठा dc_crtc_timing *dc_crtc_timing = &pipe_ctx->stream->timing;
-	काष्ठा dc_crtc_timing patched_crtc_timing;
-	पूर्णांक vesa_sync_start;
-	पूर्णांक asic_blank_end;
-	पूर्णांक पूर्णांकerlace_factor;
-	पूर्णांक vertical_line_start;
+int dcn10_get_vupdate_offset_from_vsync(struct pipe_ctx *pipe_ctx)
+{
+	const struct dc_crtc_timing *dc_crtc_timing = &pipe_ctx->stream->timing;
+	struct dc_crtc_timing patched_crtc_timing;
+	int vesa_sync_start;
+	int asic_blank_end;
+	int interlace_factor;
+	int vertical_line_start;
 
 	patched_crtc_timing = *dc_crtc_timing;
 	apply_front_porch_workaround(&patched_crtc_timing);
 
-	पूर्णांकerlace_factor = patched_crtc_timing.flags.INTERLACE ? 2 : 1;
+	interlace_factor = patched_crtc_timing.flags.INTERLACE ? 2 : 1;
 
 	vesa_sync_start = patched_crtc_timing.v_addressable +
 			patched_crtc_timing.v_border_bottom +
@@ -3790,209 +3789,209 @@ bool dcn10_dummy_display_घातer_gating(
 	asic_blank_end = (patched_crtc_timing.v_total -
 			vesa_sync_start -
 			patched_crtc_timing.v_border_top)
-			* पूर्णांकerlace_factor;
+			* interlace_factor;
 
 	vertical_line_start = asic_blank_end -
 			pipe_ctx->pipe_dlg_param.vstartup_start + 1;
 
-	वापस vertical_line_start;
-पूर्ण
+	return vertical_line_start;
+}
 
-व्योम dcn10_calc_vupdate_position(
-		काष्ठा dc *dc,
-		काष्ठा pipe_ctx *pipe_ctx,
-		uपूर्णांक32_t *start_line,
-		uपूर्णांक32_t *end_line)
-अणु
-	स्थिर काष्ठा dc_crtc_timing *dc_crtc_timing = &pipe_ctx->stream->timing;
-	पूर्णांक vline_पूर्णांक_offset_from_vupdate =
-			pipe_ctx->stream->periodic_पूर्णांकerrupt0.lines_offset;
-	पूर्णांक vupdate_offset_from_vsync = dc->hwss.get_vupdate_offset_from_vsync(pipe_ctx);
-	पूर्णांक start_position;
+void dcn10_calc_vupdate_position(
+		struct dc *dc,
+		struct pipe_ctx *pipe_ctx,
+		uint32_t *start_line,
+		uint32_t *end_line)
+{
+	const struct dc_crtc_timing *dc_crtc_timing = &pipe_ctx->stream->timing;
+	int vline_int_offset_from_vupdate =
+			pipe_ctx->stream->periodic_interrupt0.lines_offset;
+	int vupdate_offset_from_vsync = dc->hwss.get_vupdate_offset_from_vsync(pipe_ctx);
+	int start_position;
 
-	अगर (vline_पूर्णांक_offset_from_vupdate > 0)
-		vline_पूर्णांक_offset_from_vupdate--;
-	अन्यथा अगर (vline_पूर्णांक_offset_from_vupdate < 0)
-		vline_पूर्णांक_offset_from_vupdate++;
+	if (vline_int_offset_from_vupdate > 0)
+		vline_int_offset_from_vupdate--;
+	else if (vline_int_offset_from_vupdate < 0)
+		vline_int_offset_from_vupdate++;
 
-	start_position = vline_पूर्णांक_offset_from_vupdate + vupdate_offset_from_vsync;
+	start_position = vline_int_offset_from_vupdate + vupdate_offset_from_vsync;
 
-	अगर (start_position >= 0)
+	if (start_position >= 0)
 		*start_line = start_position;
-	अन्यथा
+	else
 		*start_line = dc_crtc_timing->v_total + start_position - 1;
 
 	*end_line = *start_line + 2;
 
-	अगर (*end_line >= dc_crtc_timing->v_total)
+	if (*end_line >= dc_crtc_timing->v_total)
 		*end_line = 2;
-पूर्ण
+}
 
-अटल व्योम dcn10_cal_vline_position(
-		काष्ठा dc *dc,
-		काष्ठा pipe_ctx *pipe_ctx,
-		क्रमागत vline_select vline,
-		uपूर्णांक32_t *start_line,
-		uपूर्णांक32_t *end_line)
-अणु
-	क्रमागत vertical_पूर्णांकerrupt_ref_poपूर्णांक ref_poपूर्णांक = INVALID_POINT;
+static void dcn10_cal_vline_position(
+		struct dc *dc,
+		struct pipe_ctx *pipe_ctx,
+		enum vline_select vline,
+		uint32_t *start_line,
+		uint32_t *end_line)
+{
+	enum vertical_interrupt_ref_point ref_point = INVALID_POINT;
 
-	अगर (vline == VLINE0)
-		ref_poपूर्णांक = pipe_ctx->stream->periodic_पूर्णांकerrupt0.ref_poपूर्णांक;
-	अन्यथा अगर (vline == VLINE1)
-		ref_poपूर्णांक = pipe_ctx->stream->periodic_पूर्णांकerrupt1.ref_poपूर्णांक;
+	if (vline == VLINE0)
+		ref_point = pipe_ctx->stream->periodic_interrupt0.ref_point;
+	else if (vline == VLINE1)
+		ref_point = pipe_ctx->stream->periodic_interrupt1.ref_point;
 
-	चयन (ref_poपूर्णांक) अणु
-	हाल START_V_UPDATE:
+	switch (ref_point) {
+	case START_V_UPDATE:
 		dcn10_calc_vupdate_position(
 				dc,
 				pipe_ctx,
 				start_line,
 				end_line);
-		अवरोध;
-	हाल START_V_SYNC:
-		// Suppose to करो nothing because vsync is 0;
-		अवरोध;
-	शेष:
+		break;
+	case START_V_SYNC:
+		// Suppose to do nothing because vsync is 0;
+		break;
+	default:
 		ASSERT(0);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-व्योम dcn10_setup_periodic_पूर्णांकerrupt(
-		काष्ठा dc *dc,
-		काष्ठा pipe_ctx *pipe_ctx,
-		क्रमागत vline_select vline)
-अणु
-	काष्ठा timing_generator *tg = pipe_ctx->stream_res.tg;
+void dcn10_setup_periodic_interrupt(
+		struct dc *dc,
+		struct pipe_ctx *pipe_ctx,
+		enum vline_select vline)
+{
+	struct timing_generator *tg = pipe_ctx->stream_res.tg;
 
-	अगर (vline == VLINE0) अणु
-		uपूर्णांक32_t start_line = 0;
-		uपूर्णांक32_t end_line = 0;
+	if (vline == VLINE0) {
+		uint32_t start_line = 0;
+		uint32_t end_line = 0;
 
 		dcn10_cal_vline_position(dc, pipe_ctx, vline, &start_line, &end_line);
 
-		tg->funcs->setup_vertical_पूर्णांकerrupt0(tg, start_line, end_line);
+		tg->funcs->setup_vertical_interrupt0(tg, start_line, end_line);
 
-	पूर्ण अन्यथा अगर (vline == VLINE1) अणु
-		pipe_ctx->stream_res.tg->funcs->setup_vertical_पूर्णांकerrupt1(
+	} else if (vline == VLINE1) {
+		pipe_ctx->stream_res.tg->funcs->setup_vertical_interrupt1(
 				tg,
-				pipe_ctx->stream->periodic_पूर्णांकerrupt1.lines_offset);
-	पूर्ण
-पूर्ण
+				pipe_ctx->stream->periodic_interrupt1.lines_offset);
+	}
+}
 
-व्योम dcn10_setup_vupdate_पूर्णांकerrupt(काष्ठा dc *dc, काष्ठा pipe_ctx *pipe_ctx)
-अणु
-	काष्ठा timing_generator *tg = pipe_ctx->stream_res.tg;
-	पूर्णांक start_line = dc->hwss.get_vupdate_offset_from_vsync(pipe_ctx);
+void dcn10_setup_vupdate_interrupt(struct dc *dc, struct pipe_ctx *pipe_ctx)
+{
+	struct timing_generator *tg = pipe_ctx->stream_res.tg;
+	int start_line = dc->hwss.get_vupdate_offset_from_vsync(pipe_ctx);
 
-	अगर (start_line < 0) अणु
+	if (start_line < 0) {
 		ASSERT(0);
 		start_line = 0;
-	पूर्ण
+	}
 
-	अगर (tg->funcs->setup_vertical_पूर्णांकerrupt2)
-		tg->funcs->setup_vertical_पूर्णांकerrupt2(tg, start_line);
-पूर्ण
+	if (tg->funcs->setup_vertical_interrupt2)
+		tg->funcs->setup_vertical_interrupt2(tg, start_line);
+}
 
-व्योम dcn10_unblank_stream(काष्ठा pipe_ctx *pipe_ctx,
-		काष्ठा dc_link_settings *link_settings)
-अणु
-	काष्ठा encoder_unblank_param params = अणु अणु 0 पूर्ण पूर्ण;
-	काष्ठा dc_stream_state *stream = pipe_ctx->stream;
-	काष्ठा dc_link *link = stream->link;
-	काष्ठा dce_hwseq *hws = link->dc->hwseq;
+void dcn10_unblank_stream(struct pipe_ctx *pipe_ctx,
+		struct dc_link_settings *link_settings)
+{
+	struct encoder_unblank_param params = { { 0 } };
+	struct dc_stream_state *stream = pipe_ctx->stream;
+	struct dc_link *link = stream->link;
+	struct dce_hwseq *hws = link->dc->hwseq;
 
 	/* only 3 items below are used by unblank */
 	params.timing = pipe_ctx->stream->timing;
 
 	params.link_settings.link_rate = link_settings->link_rate;
 
-	अगर (dc_is_dp_संकेत(pipe_ctx->stream->संकेत)) अणु
-		अगर (params.timing.pixel_encoding == PIXEL_ENCODING_YCBCR420)
+	if (dc_is_dp_signal(pipe_ctx->stream->signal)) {
+		if (params.timing.pixel_encoding == PIXEL_ENCODING_YCBCR420)
 			params.timing.pix_clk_100hz /= 2;
 		pipe_ctx->stream_res.stream_enc->funcs->dp_unblank(pipe_ctx->stream_res.stream_enc, &params);
-	पूर्ण
+	}
 
-	अगर (link->local_sink && link->local_sink->sink_संकेत == SIGNAL_TYPE_EDP) अणु
+	if (link->local_sink && link->local_sink->sink_signal == SIGNAL_TYPE_EDP) {
 		hws->funcs.edp_backlight_control(link, true);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम dcn10_send_immediate_sdp_message(काष्ठा pipe_ctx *pipe_ctx,
-				स्थिर uपूर्णांक8_t *custom_sdp_message,
-				अचिन्हित पूर्णांक sdp_message_size)
-अणु
-	अगर (dc_is_dp_संकेत(pipe_ctx->stream->संकेत)) अणु
+void dcn10_send_immediate_sdp_message(struct pipe_ctx *pipe_ctx,
+				const uint8_t *custom_sdp_message,
+				unsigned int sdp_message_size)
+{
+	if (dc_is_dp_signal(pipe_ctx->stream->signal)) {
 		pipe_ctx->stream_res.stream_enc->funcs->send_immediate_sdp_message(
 				pipe_ctx->stream_res.stream_enc,
 				custom_sdp_message,
 				sdp_message_size);
-	पूर्ण
-पूर्ण
-क्रमागत dc_status dcn10_set_घड़ी(काष्ठा dc *dc,
-			क्रमागत dc_घड़ी_प्रकारype घड़ी_प्रकारype,
-			uपूर्णांक32_t clk_khz,
-			uपूर्णांक32_t stepping)
-अणु
-	काष्ठा dc_state *context = dc->current_state;
-	काष्ठा dc_घड़ी_config घड़ी_cfg = अणु0पूर्ण;
-	काष्ठा dc_घड़ीs *current_घड़ीs = &context->bw_ctx.bw.dcn.clk;
+	}
+}
+enum dc_status dcn10_set_clock(struct dc *dc,
+			enum dc_clock_type clock_type,
+			uint32_t clk_khz,
+			uint32_t stepping)
+{
+	struct dc_state *context = dc->current_state;
+	struct dc_clock_config clock_cfg = {0};
+	struct dc_clocks *current_clocks = &context->bw_ctx.bw.dcn.clk;
 
-	अगर (dc->clk_mgr && dc->clk_mgr->funcs->get_घड़ी)
-				dc->clk_mgr->funcs->get_घड़ी(dc->clk_mgr,
-						context, घड़ी_प्रकारype, &घड़ी_cfg);
+	if (dc->clk_mgr && dc->clk_mgr->funcs->get_clock)
+				dc->clk_mgr->funcs->get_clock(dc->clk_mgr,
+						context, clock_type, &clock_cfg);
 
-	अगर (!dc->clk_mgr->funcs->get_घड़ी)
-		वापस DC_FAIL_UNSUPPORTED_1;
+	if (!dc->clk_mgr->funcs->get_clock)
+		return DC_FAIL_UNSUPPORTED_1;
 
-	अगर (clk_khz > घड़ी_cfg.max_घड़ी_khz)
-		वापस DC_FAIL_CLK_EXCEED_MAX;
+	if (clk_khz > clock_cfg.max_clock_khz)
+		return DC_FAIL_CLK_EXCEED_MAX;
 
-	अगर (clk_khz < घड़ी_cfg.min_घड़ी_khz)
-		वापस DC_FAIL_CLK_BELOW_MIN;
+	if (clk_khz < clock_cfg.min_clock_khz)
+		return DC_FAIL_CLK_BELOW_MIN;
 
-	अगर (clk_khz < घड़ी_cfg.bw_requirequired_घड़ी_khz)
-		वापस DC_FAIL_CLK_BELOW_CFG_REQUIRED;
+	if (clk_khz < clock_cfg.bw_requirequired_clock_khz)
+		return DC_FAIL_CLK_BELOW_CFG_REQUIRED;
 
-	/*update पूर्णांकernal request घड़ी क्रम update घड़ी use*/
-	अगर (घड़ी_प्रकारype == DC_CLOCK_TYPE_DISPCLK)
-		current_घड़ीs->dispclk_khz = clk_khz;
-	अन्यथा अगर (घड़ी_प्रकारype == DC_CLOCK_TYPE_DPPCLK)
-		current_घड़ीs->dppclk_khz = clk_khz;
-	अन्यथा
-		वापस DC_ERROR_UNEXPECTED;
+	/*update internal request clock for update clock use*/
+	if (clock_type == DC_CLOCK_TYPE_DISPCLK)
+		current_clocks->dispclk_khz = clk_khz;
+	else if (clock_type == DC_CLOCK_TYPE_DPPCLK)
+		current_clocks->dppclk_khz = clk_khz;
+	else
+		return DC_ERROR_UNEXPECTED;
 
-	अगर (dc->clk_mgr && dc->clk_mgr->funcs->update_घड़ीs)
-				dc->clk_mgr->funcs->update_घड़ीs(dc->clk_mgr,
+	if (dc->clk_mgr && dc->clk_mgr->funcs->update_clocks)
+				dc->clk_mgr->funcs->update_clocks(dc->clk_mgr,
 				context, true);
-	वापस DC_OK;
+	return DC_OK;
 
-पूर्ण
+}
 
-व्योम dcn10_get_घड़ी(काष्ठा dc *dc,
-			क्रमागत dc_घड़ी_प्रकारype घड़ी_प्रकारype,
-			काष्ठा dc_घड़ी_config *घड़ी_cfg)
-अणु
-	काष्ठा dc_state *context = dc->current_state;
+void dcn10_get_clock(struct dc *dc,
+			enum dc_clock_type clock_type,
+			struct dc_clock_config *clock_cfg)
+{
+	struct dc_state *context = dc->current_state;
 
-	अगर (dc->clk_mgr && dc->clk_mgr->funcs->get_घड़ी)
-				dc->clk_mgr->funcs->get_घड़ी(dc->clk_mgr, context, घड़ी_प्रकारype, घड़ी_cfg);
+	if (dc->clk_mgr && dc->clk_mgr->funcs->get_clock)
+				dc->clk_mgr->funcs->get_clock(dc->clk_mgr, context, clock_type, clock_cfg);
 
-पूर्ण
+}
 
-व्योम dcn10_get_dcc_en_bits(काष्ठा dc *dc, पूर्णांक *dcc_en_bits)
-अणु
-	काष्ठा resource_pool *pool = dc->res_pool;
-	पूर्णांक i;
+void dcn10_get_dcc_en_bits(struct dc *dc, int *dcc_en_bits)
+{
+	struct resource_pool *pool = dc->res_pool;
+	int i;
 
-	क्रम (i = 0; i < pool->pipe_count; i++) अणु
-		काष्ठा hubp *hubp = pool->hubps[i];
-		काष्ठा dcn_hubp_state *s = &(TO_DCN10_HUBP(hubp)->state);
+	for (i = 0; i < pool->pipe_count; i++) {
+		struct hubp *hubp = pool->hubps[i];
+		struct dcn_hubp_state *s = &(TO_DCN10_HUBP(hubp)->state);
 
-		hubp->funcs->hubp_पढ़ो_state(hubp);
+		hubp->funcs->hubp_read_state(hubp);
 
-		अगर (!s->blank_en)
+		if (!s->blank_en)
 			dcc_en_bits[i] = s->dcc_en ? 1 : 0;
-	पूर्ण
-पूर्ण
+	}
+}

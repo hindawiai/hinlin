@@ -1,78 +1,77 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * legacy.c - traditional, old school PCI bus probing
  */
-#समावेश <linux/init.h>
-#समावेश <linux/export.h>
-#समावेश <linux/pci.h>
-#समावेश <यंत्र/jailhouse_para.h>
-#समावेश <यंत्र/pci_x86.h>
+#include <linux/init.h>
+#include <linux/export.h>
+#include <linux/pci.h>
+#include <asm/jailhouse_para.h>
+#include <asm/pci_x86.h>
 
 /*
- * Discover reमुख्यing PCI buses in हाल there are peer host bridges.
+ * Discover remaining PCI buses in case there are peer host bridges.
  * We use the number of last PCI bus provided by the PCI BIOS.
  */
-अटल व्योम pcibios_fixup_peer_bridges(व्योम)
-अणु
-	पूर्णांक n;
+static void pcibios_fixup_peer_bridges(void)
+{
+	int n;
 
-	अगर (pcibios_last_bus <= 0 || pcibios_last_bus > 0xff)
-		वापस;
+	if (pcibios_last_bus <= 0 || pcibios_last_bus > 0xff)
+		return;
 	DBG("PCI: Peer bridge fixup\n");
 
-	क्रम (n=0; n <= pcibios_last_bus; n++)
-		pcibios_scan_specअगरic_bus(n);
-पूर्ण
+	for (n=0; n <= pcibios_last_bus; n++)
+		pcibios_scan_specific_bus(n);
+}
 
-पूर्णांक __init pci_legacy_init(व्योम)
-अणु
-	अगर (!raw_pci_ops)
-		वापस 1;
+int __init pci_legacy_init(void)
+{
+	if (!raw_pci_ops)
+		return 1;
 
 	pr_info("PCI: Probing PCI hardware\n");
 	pcibios_scan_root(0);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम pcibios_scan_specअगरic_bus(पूर्णांक busn)
-अणु
-	पूर्णांक stride = jailhouse_paravirt() ? 1 : 8;
-	पूर्णांक devfn;
+void pcibios_scan_specific_bus(int busn)
+{
+	int stride = jailhouse_paravirt() ? 1 : 8;
+	int devfn;
 	u32 l;
 
-	अगर (pci_find_bus(0, busn))
-		वापस;
+	if (pci_find_bus(0, busn))
+		return;
 
-	क्रम (devfn = 0; devfn < 256; devfn += stride) अणु
-		अगर (!raw_pci_पढ़ो(0, busn, devfn, PCI_VENDOR_ID, 2, &l) &&
-		    l != 0x0000 && l != 0xffff) अणु
+	for (devfn = 0; devfn < 256; devfn += stride) {
+		if (!raw_pci_read(0, busn, devfn, PCI_VENDOR_ID, 2, &l) &&
+		    l != 0x0000 && l != 0xffff) {
 			DBG("Found device at %02x:%02x [%04x]\n", busn, devfn, l);
 			pr_info("PCI: Discovered peer bus %02x\n", busn);
 			pcibios_scan_root(busn);
-			वापस;
-		पूर्ण
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(pcibios_scan_specअगरic_bus);
+			return;
+		}
+	}
+}
+EXPORT_SYMBOL_GPL(pcibios_scan_specific_bus);
 
-अटल पूर्णांक __init pci_subsys_init(व्योम)
-अणु
+static int __init pci_subsys_init(void)
+{
 	/*
-	 * The init function वापसs an non zero value when
+	 * The init function returns an non zero value when
 	 * pci_legacy_init should be invoked.
 	 */
-	अगर (x86_init.pci.init()) अणु
-		अगर (pci_legacy_init()) अणु
+	if (x86_init.pci.init()) {
+		if (pci_legacy_init()) {
 			pr_info("PCI: System does not support PCI\n");
-			वापस -ENODEV;
-		पूर्ण
-	पूर्ण
+			return -ENODEV;
+		}
+	}
 
 	pcibios_fixup_peer_bridges();
 	x86_init.pci.init_irq();
 	pcibios_init();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 subsys_initcall(pci_subsys_init);

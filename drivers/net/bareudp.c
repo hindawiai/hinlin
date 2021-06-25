@@ -1,308 +1,307 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-/* Bareudp: UDP  tunnel encasulation क्रम dअगरferent Payload types like
+// SPDX-License-Identifier: GPL-2.0
+/* Bareudp: UDP  tunnel encasulation for different Payload types like
  * MPLS, NSH, IP, etc.
  * Copyright (c) 2019 Nokia, Inc.
  * Authors:  Martin Varghese, <martin.varghese@nokia.com>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/hash.h>
-#समावेश <net/dst_metadata.h>
-#समावेश <net/gro_cells.h>
-#समावेश <net/rtnetlink.h>
-#समावेश <net/protocol.h>
-#समावेश <net/ip6_tunnel.h>
-#समावेश <net/ip_tunnels.h>
-#समावेश <net/udp_tunnel.h>
-#समावेश <net/bareudp.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/etherdevice.h>
+#include <linux/hash.h>
+#include <net/dst_metadata.h>
+#include <net/gro_cells.h>
+#include <net/rtnetlink.h>
+#include <net/protocol.h>
+#include <net/ip6_tunnel.h>
+#include <net/ip_tunnels.h>
+#include <net/udp_tunnel.h>
+#include <net/bareudp.h>
 
-#घोषणा BAREUDP_BASE_HLEN माप(काष्ठा udphdr)
-#घोषणा BAREUDP_IPV4_HLEN (माप(काष्ठा iphdr) + \
-			   माप(काष्ठा udphdr))
-#घोषणा BAREUDP_IPV6_HLEN (माप(काष्ठा ipv6hdr) + \
-			   माप(काष्ठा udphdr))
+#define BAREUDP_BASE_HLEN sizeof(struct udphdr)
+#define BAREUDP_IPV4_HLEN (sizeof(struct iphdr) + \
+			   sizeof(struct udphdr))
+#define BAREUDP_IPV6_HLEN (sizeof(struct ipv6hdr) + \
+			   sizeof(struct udphdr))
 
-अटल bool log_ecn_error = true;
+static bool log_ecn_error = true;
 module_param(log_ecn_error, bool, 0644);
 MODULE_PARM_DESC(log_ecn_error, "Log packets received with corrupted ECN");
 
-/* per-network namespace निजी data क्रम this module */
+/* per-network namespace private data for this module */
 
-अटल अचिन्हित पूर्णांक bareudp_net_id;
+static unsigned int bareudp_net_id;
 
-काष्ठा bareudp_net अणु
-	काष्ठा list_head        bareudp_list;
-पूर्ण;
+struct bareudp_net {
+	struct list_head        bareudp_list;
+};
 
-/* Pseuकरो network device */
-काष्ठा bareudp_dev अणु
-	काष्ठा net         *net;        /* netns क्रम packet i/o */
-	काष्ठा net_device  *dev;        /* netdev क्रम bareudp tunnel */
+/* Pseudo network device */
+struct bareudp_dev {
+	struct net         *net;        /* netns for packet i/o */
+	struct net_device  *dev;        /* netdev for bareudp tunnel */
 	__be16		   ethertype;
 	__be16             port;
 	u16	           sport_min;
 	bool               multi_proto_mode;
-	काष्ठा socket      __rcu *sock;
-	काष्ठा list_head   next;        /* bareudp node  on namespace list */
-	काष्ठा gro_cells   gro_cells;
-पूर्ण;
+	struct socket      __rcu *sock;
+	struct list_head   next;        /* bareudp node  on namespace list */
+	struct gro_cells   gro_cells;
+};
 
-अटल पूर्णांक bareudp_udp_encap_recv(काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा metadata_dst *tun_dst = शून्य;
-	काष्ठा bareudp_dev *bareudp;
-	अचिन्हित लघु family;
-	अचिन्हित पूर्णांक len;
+static int bareudp_udp_encap_recv(struct sock *sk, struct sk_buff *skb)
+{
+	struct metadata_dst *tun_dst = NULL;
+	struct bareudp_dev *bareudp;
+	unsigned short family;
+	unsigned int len;
 	__be16 proto;
-	व्योम *oiph;
-	पूर्णांक err;
+	void *oiph;
+	int err;
 
 	bareudp = rcu_dereference_sk_user_data(sk);
-	अगर (!bareudp)
-		जाओ drop;
+	if (!bareudp)
+		goto drop;
 
-	अगर (skb->protocol ==  htons(ETH_P_IP))
+	if (skb->protocol ==  htons(ETH_P_IP))
 		family = AF_INET;
-	अन्यथा
+	else
 		family = AF_INET6;
 
-	अगर (bareudp->ethertype == htons(ETH_P_IP)) अणु
-		काष्ठा iphdr *iphdr;
+	if (bareudp->ethertype == htons(ETH_P_IP)) {
+		struct iphdr *iphdr;
 
-		iphdr = (काष्ठा iphdr *)(skb->data + BAREUDP_BASE_HLEN);
-		अगर (iphdr->version == 4) अणु
+		iphdr = (struct iphdr *)(skb->data + BAREUDP_BASE_HLEN);
+		if (iphdr->version == 4) {
 			proto = bareudp->ethertype;
-		पूर्ण अन्यथा अगर (bareudp->multi_proto_mode && (iphdr->version == 6)) अणु
+		} else if (bareudp->multi_proto_mode && (iphdr->version == 6)) {
 			proto = htons(ETH_P_IPV6);
-		पूर्ण अन्यथा अणु
+		} else {
 			bareudp->dev->stats.rx_dropped++;
-			जाओ drop;
-		पूर्ण
-	पूर्ण अन्यथा अगर (bareudp->ethertype == htons(ETH_P_MPLS_UC)) अणु
-		काष्ठा iphdr *tunnel_hdr;
+			goto drop;
+		}
+	} else if (bareudp->ethertype == htons(ETH_P_MPLS_UC)) {
+		struct iphdr *tunnel_hdr;
 
-		tunnel_hdr = (काष्ठा iphdr *)skb_network_header(skb);
-		अगर (tunnel_hdr->version == 4) अणु
-			अगर (!ipv4_is_multicast(tunnel_hdr->daddr)) अणु
+		tunnel_hdr = (struct iphdr *)skb_network_header(skb);
+		if (tunnel_hdr->version == 4) {
+			if (!ipv4_is_multicast(tunnel_hdr->daddr)) {
 				proto = bareudp->ethertype;
-			पूर्ण अन्यथा अगर (bareudp->multi_proto_mode &&
-				   ipv4_is_multicast(tunnel_hdr->daddr)) अणु
+			} else if (bareudp->multi_proto_mode &&
+				   ipv4_is_multicast(tunnel_hdr->daddr)) {
 				proto = htons(ETH_P_MPLS_MC);
-			पूर्ण अन्यथा अणु
+			} else {
 				bareudp->dev->stats.rx_dropped++;
-				जाओ drop;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			पूर्णांक addr_type;
-			काष्ठा ipv6hdr *tunnel_hdr_v6;
+				goto drop;
+			}
+		} else {
+			int addr_type;
+			struct ipv6hdr *tunnel_hdr_v6;
 
-			tunnel_hdr_v6 = (काष्ठा ipv6hdr *)skb_network_header(skb);
+			tunnel_hdr_v6 = (struct ipv6hdr *)skb_network_header(skb);
 			addr_type =
-			ipv6_addr_type((काष्ठा in6_addr *)&tunnel_hdr_v6->daddr);
-			अगर (!(addr_type & IPV6_ADDR_MULTICAST)) अणु
+			ipv6_addr_type((struct in6_addr *)&tunnel_hdr_v6->daddr);
+			if (!(addr_type & IPV6_ADDR_MULTICAST)) {
 				proto = bareudp->ethertype;
-			पूर्ण अन्यथा अगर (bareudp->multi_proto_mode &&
-				   (addr_type & IPV6_ADDR_MULTICAST)) अणु
+			} else if (bareudp->multi_proto_mode &&
+				   (addr_type & IPV6_ADDR_MULTICAST)) {
 				proto = htons(ETH_P_MPLS_MC);
-			पूर्ण अन्यथा अणु
+			} else {
 				bareudp->dev->stats.rx_dropped++;
-				जाओ drop;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
+				goto drop;
+			}
+		}
+	} else {
 		proto = bareudp->ethertype;
-	पूर्ण
+	}
 
-	अगर (iptunnel_pull_header(skb, BAREUDP_BASE_HLEN,
+	if (iptunnel_pull_header(skb, BAREUDP_BASE_HLEN,
 				 proto,
 				 !net_eq(bareudp->net,
-				 dev_net(bareudp->dev)))) अणु
+				 dev_net(bareudp->dev)))) {
 		bareudp->dev->stats.rx_dropped++;
-		जाओ drop;
-	पूर्ण
+		goto drop;
+	}
 	tun_dst = udp_tun_rx_dst(skb, family, TUNNEL_KEY, 0, 0);
-	अगर (!tun_dst) अणु
+	if (!tun_dst) {
 		bareudp->dev->stats.rx_dropped++;
-		जाओ drop;
-	पूर्ण
+		goto drop;
+	}
 	skb_dst_set(skb, &tun_dst->dst);
 	skb->dev = bareudp->dev;
 	oiph = skb_network_header(skb);
 	skb_reset_network_header(skb);
 
-	अगर (!IS_ENABLED(CONFIG_IPV6) || family == AF_INET)
+	if (!IS_ENABLED(CONFIG_IPV6) || family == AF_INET)
 		err = IP_ECN_decapsulate(oiph, skb);
-	अन्यथा
+	else
 		err = IP6_ECN_decapsulate(oiph, skb);
 
-	अगर (unlikely(err)) अणु
-		अगर (log_ecn_error) अणु
-			अगर  (!IS_ENABLED(CONFIG_IPV6) || family == AF_INET)
+	if (unlikely(err)) {
+		if (log_ecn_error) {
+			if  (!IS_ENABLED(CONFIG_IPV6) || family == AF_INET)
 				net_info_ratelimited("non-ECT from %pI4 "
 						     "with TOS=%#x\n",
-						     &((काष्ठा iphdr *)oiph)->saddr,
-						     ((काष्ठा iphdr *)oiph)->tos);
-			अन्यथा
+						     &((struct iphdr *)oiph)->saddr,
+						     ((struct iphdr *)oiph)->tos);
+			else
 				net_info_ratelimited("non-ECT from %pI6\n",
-						     &((काष्ठा ipv6hdr *)oiph)->saddr);
-		पूर्ण
-		अगर (err > 1) अणु
+						     &((struct ipv6hdr *)oiph)->saddr);
+		}
+		if (err > 1) {
 			++bareudp->dev->stats.rx_frame_errors;
 			++bareudp->dev->stats.rx_errors;
-			जाओ drop;
-		पूर्ण
-	पूर्ण
+			goto drop;
+		}
+	}
 
 	len = skb->len;
 	err = gro_cells_receive(&bareudp->gro_cells, skb);
-	अगर (likely(err == NET_RX_SUCCESS))
+	if (likely(err == NET_RX_SUCCESS))
 		dev_sw_netstats_rx_add(bareudp->dev, len);
 
-	वापस 0;
+	return 0;
 drop:
 	/* Consume bad packet */
-	kमुक्त_skb(skb);
+	kfree_skb(skb);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bareudp_err_lookup(काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
-	वापस 0;
-पूर्ण
+static int bareudp_err_lookup(struct sock *sk, struct sk_buff *skb)
+{
+	return 0;
+}
 
-अटल पूर्णांक bareudp_init(काष्ठा net_device *dev)
-अणु
-	काष्ठा bareudp_dev *bareudp = netdev_priv(dev);
-	पूर्णांक err;
+static int bareudp_init(struct net_device *dev)
+{
+	struct bareudp_dev *bareudp = netdev_priv(dev);
+	int err;
 
-	dev->tstats = netdev_alloc_pcpu_stats(काष्ठा pcpu_sw_netstats);
-	अगर (!dev->tstats)
-		वापस -ENOMEM;
+	dev->tstats = netdev_alloc_pcpu_stats(struct pcpu_sw_netstats);
+	if (!dev->tstats)
+		return -ENOMEM;
 
 	err = gro_cells_init(&bareudp->gro_cells, dev);
-	अगर (err) अणु
-		मुक्त_percpu(dev->tstats);
-		वापस err;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	if (err) {
+		free_percpu(dev->tstats);
+		return err;
+	}
+	return 0;
+}
 
-अटल व्योम bareudp_uninit(काष्ठा net_device *dev)
-अणु
-	काष्ठा bareudp_dev *bareudp = netdev_priv(dev);
+static void bareudp_uninit(struct net_device *dev)
+{
+	struct bareudp_dev *bareudp = netdev_priv(dev);
 
 	gro_cells_destroy(&bareudp->gro_cells);
-	मुक्त_percpu(dev->tstats);
-पूर्ण
+	free_percpu(dev->tstats);
+}
 
-अटल काष्ठा socket *bareudp_create_sock(काष्ठा net *net, __be16 port)
-अणु
-	काष्ठा udp_port_cfg udp_conf;
-	काष्ठा socket *sock;
-	पूर्णांक err;
+static struct socket *bareudp_create_sock(struct net *net, __be16 port)
+{
+	struct udp_port_cfg udp_conf;
+	struct socket *sock;
+	int err;
 
-	स_रखो(&udp_conf, 0, माप(udp_conf));
-#अगर IS_ENABLED(CONFIG_IPV6)
+	memset(&udp_conf, 0, sizeof(udp_conf));
+#if IS_ENABLED(CONFIG_IPV6)
 	udp_conf.family = AF_INET6;
-#अन्यथा
+#else
 	udp_conf.family = AF_INET;
-#पूर्ण_अगर
+#endif
 	udp_conf.local_udp_port = port;
 	/* Open UDP socket */
 	err = udp_sock_create(net, &udp_conf, &sock);
-	अगर (err < 0)
-		वापस ERR_PTR(err);
+	if (err < 0)
+		return ERR_PTR(err);
 
 	udp_allow_gso(sock->sk);
-	वापस sock;
-पूर्ण
+	return sock;
+}
 
-/* Create new listen socket अगर needed */
-अटल पूर्णांक bareudp_socket_create(काष्ठा bareudp_dev *bareudp, __be16 port)
-अणु
-	काष्ठा udp_tunnel_sock_cfg tunnel_cfg;
-	काष्ठा socket *sock;
+/* Create new listen socket if needed */
+static int bareudp_socket_create(struct bareudp_dev *bareudp, __be16 port)
+{
+	struct udp_tunnel_sock_cfg tunnel_cfg;
+	struct socket *sock;
 
 	sock = bareudp_create_sock(bareudp->net, port);
-	अगर (IS_ERR(sock))
-		वापस PTR_ERR(sock);
+	if (IS_ERR(sock))
+		return PTR_ERR(sock);
 
 	/* Mark socket as an encapsulation socket */
-	स_रखो(&tunnel_cfg, 0, माप(tunnel_cfg));
+	memset(&tunnel_cfg, 0, sizeof(tunnel_cfg));
 	tunnel_cfg.sk_user_data = bareudp;
 	tunnel_cfg.encap_type = 1;
 	tunnel_cfg.encap_rcv = bareudp_udp_encap_recv;
 	tunnel_cfg.encap_err_lookup = bareudp_err_lookup;
-	tunnel_cfg.encap_destroy = शून्य;
+	tunnel_cfg.encap_destroy = NULL;
 	setup_udp_tunnel_sock(bareudp->net, sock, &tunnel_cfg);
 
-	rcu_assign_poपूर्णांकer(bareudp->sock, sock);
-	वापस 0;
-पूर्ण
+	rcu_assign_pointer(bareudp->sock, sock);
+	return 0;
+}
 
-अटल पूर्णांक bareudp_खोलो(काष्ठा net_device *dev)
-अणु
-	काष्ठा bareudp_dev *bareudp = netdev_priv(dev);
-	पूर्णांक ret = 0;
+static int bareudp_open(struct net_device *dev)
+{
+	struct bareudp_dev *bareudp = netdev_priv(dev);
+	int ret = 0;
 
 	ret =  bareudp_socket_create(bareudp, bareudp->port);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम bareudp_sock_release(काष्ठा bareudp_dev *bareudp)
-अणु
-	काष्ठा socket *sock;
+static void bareudp_sock_release(struct bareudp_dev *bareudp)
+{
+	struct socket *sock;
 
 	sock = bareudp->sock;
-	rcu_assign_poपूर्णांकer(bareudp->sock, शून्य);
+	rcu_assign_pointer(bareudp->sock, NULL);
 	synchronize_net();
 	udp_tunnel_sock_release(sock);
-पूर्ण
+}
 
-अटल पूर्णांक bareudp_stop(काष्ठा net_device *dev)
-अणु
-	काष्ठा bareudp_dev *bareudp = netdev_priv(dev);
+static int bareudp_stop(struct net_device *dev)
+{
+	struct bareudp_dev *bareudp = netdev_priv(dev);
 
 	bareudp_sock_release(bareudp);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bareudp_xmit_skb(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
-			    काष्ठा bareudp_dev *bareudp,
-			    स्थिर काष्ठा ip_tunnel_info *info)
-अणु
+static int bareudp_xmit_skb(struct sk_buff *skb, struct net_device *dev,
+			    struct bareudp_dev *bareudp,
+			    const struct ip_tunnel_info *info)
+{
 	bool xnet = !net_eq(bareudp->net, dev_net(bareudp->dev));
 	bool use_cache = ip_tunnel_dst_cache_usable(skb, info);
-	काष्ठा socket *sock = rcu_dereference(bareudp->sock);
+	struct socket *sock = rcu_dereference(bareudp->sock);
 	bool udp_sum = !!(info->key.tun_flags & TUNNEL_CSUM);
-	स्थिर काष्ठा ip_tunnel_key *key = &info->key;
-	काष्ठा rtable *rt;
+	const struct ip_tunnel_key *key = &info->key;
+	struct rtable *rt;
 	__be16 sport, df;
-	पूर्णांक min_headroom;
+	int min_headroom;
 	__u8 tos, ttl;
 	__be32 saddr;
-	पूर्णांक err;
+	int err;
 
-	अगर (!sock)
-		वापस -ESHUTDOWN;
+	if (!sock)
+		return -ESHUTDOWN;
 
 	rt = ip_route_output_tunnel(skb, dev, bareudp->net, &saddr, info,
 				    IPPROTO_UDP, use_cache);
 
-	अगर (IS_ERR(rt))
-		वापस PTR_ERR(rt);
+	if (IS_ERR(rt))
+		return PTR_ERR(rt);
 
 	skb_tunnel_check_pmtu(skb, &rt->dst,
 			      BAREUDP_IPV4_HLEN + info->options_len, false);
 
 	sport = udp_flow_src_port(bareudp->net, skb,
-				  bareudp->sport_min, अच_लघु_उच्च,
+				  bareudp->sport_min, USHRT_MAX,
 				  true);
 	tos = ip_tunnel_ecn_encap(key->tos, ip_hdr(skb), skb);
 	ttl = key->ttl;
@@ -310,61 +309,61 @@ drop:
 	skb_scrub_packet(skb, xnet);
 
 	err = -ENOSPC;
-	अगर (!skb_pull(skb, skb_network_offset(skb)))
-		जाओ मुक्त_dst;
+	if (!skb_pull(skb, skb_network_offset(skb)))
+		goto free_dst;
 
 	min_headroom = LL_RESERVED_SPACE(rt->dst.dev) + rt->dst.header_len +
-		BAREUDP_BASE_HLEN + info->options_len + माप(काष्ठा iphdr);
+		BAREUDP_BASE_HLEN + info->options_len + sizeof(struct iphdr);
 
 	err = skb_cow_head(skb, min_headroom);
-	अगर (unlikely(err))
-		जाओ मुक्त_dst;
+	if (unlikely(err))
+		goto free_dst;
 
 	err = udp_tunnel_handle_offloads(skb, udp_sum);
-	अगर (err)
-		जाओ मुक्त_dst;
+	if (err)
+		goto free_dst;
 
 	skb_set_inner_protocol(skb, bareudp->ethertype);
 	udp_tunnel_xmit_skb(rt, sock->sk, skb, saddr, info->key.u.ipv4.dst,
 			    tos, ttl, df, sport, bareudp->port,
 			    !net_eq(bareudp->net, dev_net(bareudp->dev)),
 			    !(info->key.tun_flags & TUNNEL_CSUM));
-	वापस 0;
+	return 0;
 
-मुक्त_dst:
+free_dst:
 	dst_release(&rt->dst);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक bareudp6_xmit_skb(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
-			     काष्ठा bareudp_dev *bareudp,
-			     स्थिर काष्ठा ip_tunnel_info *info)
-अणु
+static int bareudp6_xmit_skb(struct sk_buff *skb, struct net_device *dev,
+			     struct bareudp_dev *bareudp,
+			     const struct ip_tunnel_info *info)
+{
 	bool xnet = !net_eq(bareudp->net, dev_net(bareudp->dev));
 	bool use_cache = ip_tunnel_dst_cache_usable(skb, info);
-	काष्ठा socket *sock  = rcu_dereference(bareudp->sock);
+	struct socket *sock  = rcu_dereference(bareudp->sock);
 	bool udp_sum = !!(info->key.tun_flags & TUNNEL_CSUM);
-	स्थिर काष्ठा ip_tunnel_key *key = &info->key;
-	काष्ठा dst_entry *dst = शून्य;
-	काष्ठा in6_addr saddr, daddr;
-	पूर्णांक min_headroom;
+	const struct ip_tunnel_key *key = &info->key;
+	struct dst_entry *dst = NULL;
+	struct in6_addr saddr, daddr;
+	int min_headroom;
 	__u8 prio, ttl;
 	__be16 sport;
-	पूर्णांक err;
+	int err;
 
-	अगर (!sock)
-		वापस -ESHUTDOWN;
+	if (!sock)
+		return -ESHUTDOWN;
 
 	dst = ip6_dst_lookup_tunnel(skb, dev, bareudp->net, sock, &saddr, info,
 				    IPPROTO_UDP, use_cache);
-	अगर (IS_ERR(dst))
-		वापस PTR_ERR(dst);
+	if (IS_ERR(dst))
+		return PTR_ERR(dst);
 
 	skb_tunnel_check_pmtu(skb, dst, BAREUDP_IPV6_HLEN + info->options_len,
 			      false);
 
 	sport = udp_flow_src_port(bareudp->net, skb,
-				  bareudp->sport_min, अच_लघु_उच्च,
+				  bareudp->sport_min, USHRT_MAX,
 				  true);
 	prio = ip_tunnel_ecn_encap(key->tos, ip_hdr(skb), skb);
 	ttl = key->ttl;
@@ -372,161 +371,161 @@ drop:
 	skb_scrub_packet(skb, xnet);
 
 	err = -ENOSPC;
-	अगर (!skb_pull(skb, skb_network_offset(skb)))
-		जाओ मुक्त_dst;
+	if (!skb_pull(skb, skb_network_offset(skb)))
+		goto free_dst;
 
 	min_headroom = LL_RESERVED_SPACE(dst->dev) + dst->header_len +
-		BAREUDP_BASE_HLEN + info->options_len + माप(काष्ठा ipv6hdr);
+		BAREUDP_BASE_HLEN + info->options_len + sizeof(struct ipv6hdr);
 
 	err = skb_cow_head(skb, min_headroom);
-	अगर (unlikely(err))
-		जाओ मुक्त_dst;
+	if (unlikely(err))
+		goto free_dst;
 
 	err = udp_tunnel_handle_offloads(skb, udp_sum);
-	अगर (err)
-		जाओ मुक्त_dst;
+	if (err)
+		goto free_dst;
 
 	daddr = info->key.u.ipv6.dst;
 	udp_tunnel6_xmit_skb(dst, sock->sk, skb, dev,
 			     &saddr, &daddr, prio, ttl,
 			     info->key.label, sport, bareudp->port,
 			     !(info->key.tun_flags & TUNNEL_CSUM));
-	वापस 0;
+	return 0;
 
-मुक्त_dst:
+free_dst:
 	dst_release(dst);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल bool bareudp_proto_valid(काष्ठा bareudp_dev *bareudp, __be16 proto)
-अणु
-	अगर (bareudp->ethertype == proto)
-		वापस true;
+static bool bareudp_proto_valid(struct bareudp_dev *bareudp, __be16 proto)
+{
+	if (bareudp->ethertype == proto)
+		return true;
 
-	अगर (!bareudp->multi_proto_mode)
-		वापस false;
+	if (!bareudp->multi_proto_mode)
+		return false;
 
-	अगर (bareudp->ethertype == htons(ETH_P_MPLS_UC) &&
+	if (bareudp->ethertype == htons(ETH_P_MPLS_UC) &&
 	    proto == htons(ETH_P_MPLS_MC))
-		वापस true;
+		return true;
 
-	अगर (bareudp->ethertype == htons(ETH_P_IP) &&
+	if (bareudp->ethertype == htons(ETH_P_IP) &&
 	    proto == htons(ETH_P_IPV6))
-		वापस true;
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल netdev_tx_t bareudp_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
-	काष्ठा bareudp_dev *bareudp = netdev_priv(dev);
-	काष्ठा ip_tunnel_info *info = शून्य;
-	पूर्णांक err;
+static netdev_tx_t bareudp_xmit(struct sk_buff *skb, struct net_device *dev)
+{
+	struct bareudp_dev *bareudp = netdev_priv(dev);
+	struct ip_tunnel_info *info = NULL;
+	int err;
 
-	अगर (!bareudp_proto_valid(bareudp, skb->protocol)) अणु
+	if (!bareudp_proto_valid(bareudp, skb->protocol)) {
 		err = -EINVAL;
-		जाओ tx_error;
-	पूर्ण
+		goto tx_error;
+	}
 
 	info = skb_tunnel_info(skb);
-	अगर (unlikely(!info || !(info->mode & IP_TUNNEL_INFO_TX))) अणु
+	if (unlikely(!info || !(info->mode & IP_TUNNEL_INFO_TX))) {
 		err = -EINVAL;
-		जाओ tx_error;
-	पूर्ण
+		goto tx_error;
+	}
 
-	rcu_पढ़ो_lock();
-	अगर (IS_ENABLED(CONFIG_IPV6) && info->mode & IP_TUNNEL_INFO_IPV6)
+	rcu_read_lock();
+	if (IS_ENABLED(CONFIG_IPV6) && info->mode & IP_TUNNEL_INFO_IPV6)
 		err = bareudp6_xmit_skb(skb, dev, bareudp, info);
-	अन्यथा
+	else
 		err = bareudp_xmit_skb(skb, dev, bareudp, info);
 
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	अगर (likely(!err))
-		वापस NETDEV_TX_OK;
+	if (likely(!err))
+		return NETDEV_TX_OK;
 tx_error:
-	dev_kमुक्त_skb(skb);
+	dev_kfree_skb(skb);
 
-	अगर (err == -ELOOP)
+	if (err == -ELOOP)
 		dev->stats.collisions++;
-	अन्यथा अगर (err == -ENETUNREACH)
+	else if (err == -ENETUNREACH)
 		dev->stats.tx_carrier_errors++;
 
 	dev->stats.tx_errors++;
-	वापस NETDEV_TX_OK;
-पूर्ण
+	return NETDEV_TX_OK;
+}
 
-अटल पूर्णांक bareudp_fill_metadata_dst(काष्ठा net_device *dev,
-				     काष्ठा sk_buff *skb)
-अणु
-	काष्ठा ip_tunnel_info *info = skb_tunnel_info(skb);
-	काष्ठा bareudp_dev *bareudp = netdev_priv(dev);
+static int bareudp_fill_metadata_dst(struct net_device *dev,
+				     struct sk_buff *skb)
+{
+	struct ip_tunnel_info *info = skb_tunnel_info(skb);
+	struct bareudp_dev *bareudp = netdev_priv(dev);
 	bool use_cache;
 
 	use_cache = ip_tunnel_dst_cache_usable(skb, info);
 
-	अगर (!IS_ENABLED(CONFIG_IPV6) || ip_tunnel_info_af(info) == AF_INET) अणु
-		काष्ठा rtable *rt;
+	if (!IS_ENABLED(CONFIG_IPV6) || ip_tunnel_info_af(info) == AF_INET) {
+		struct rtable *rt;
 		__be32 saddr;
 
 		rt = ip_route_output_tunnel(skb, dev, bareudp->net, &saddr,
 					    info, IPPROTO_UDP, use_cache);
-		अगर (IS_ERR(rt))
-			वापस PTR_ERR(rt);
+		if (IS_ERR(rt))
+			return PTR_ERR(rt);
 
 		ip_rt_put(rt);
 		info->key.u.ipv4.src = saddr;
-	पूर्ण अन्यथा अगर (ip_tunnel_info_af(info) == AF_INET6) अणु
-		काष्ठा dst_entry *dst;
-		काष्ठा in6_addr saddr;
-		काष्ठा socket *sock = rcu_dereference(bareudp->sock);
+	} else if (ip_tunnel_info_af(info) == AF_INET6) {
+		struct dst_entry *dst;
+		struct in6_addr saddr;
+		struct socket *sock = rcu_dereference(bareudp->sock);
 
 		dst = ip6_dst_lookup_tunnel(skb, dev, bareudp->net, sock,
 					    &saddr, info, IPPROTO_UDP,
 					    use_cache);
-		अगर (IS_ERR(dst))
-			वापस PTR_ERR(dst);
+		if (IS_ERR(dst))
+			return PTR_ERR(dst);
 
 		dst_release(dst);
 		info->key.u.ipv6.src = saddr;
-	पूर्ण अन्यथा अणु
-		वापस -EINVAL;
-	पूर्ण
+	} else {
+		return -EINVAL;
+	}
 
 	info->key.tp_src = udp_flow_src_port(bareudp->net, skb,
 					     bareudp->sport_min,
-			अच_लघु_उच्च, true);
+			USHRT_MAX, true);
 	info->key.tp_dst = bareudp->port;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा net_device_ops bareudp_netdev_ops = अणु
-	.nकरो_init               = bareudp_init,
-	.nकरो_uninit             = bareudp_uninit,
-	.nकरो_खोलो               = bareudp_खोलो,
-	.nकरो_stop               = bareudp_stop,
-	.nकरो_start_xmit         = bareudp_xmit,
-	.nकरो_get_stats64        = dev_get_tstats64,
-	.nकरो_fill_metadata_dst  = bareudp_fill_metadata_dst,
-पूर्ण;
+static const struct net_device_ops bareudp_netdev_ops = {
+	.ndo_init               = bareudp_init,
+	.ndo_uninit             = bareudp_uninit,
+	.ndo_open               = bareudp_open,
+	.ndo_stop               = bareudp_stop,
+	.ndo_start_xmit         = bareudp_xmit,
+	.ndo_get_stats64        = dev_get_tstats64,
+	.ndo_fill_metadata_dst  = bareudp_fill_metadata_dst,
+};
 
-अटल स्थिर काष्ठा nla_policy bareudp_policy[IFLA_BAREUDP_MAX + 1] = अणु
-	[IFLA_BAREUDP_PORT]                = अणु .type = NLA_U16 पूर्ण,
-	[IFLA_BAREUDP_ETHERTYPE]	   = अणु .type = NLA_U16 पूर्ण,
-	[IFLA_BAREUDP_SRCPORT_MIN]         = अणु .type = NLA_U16 पूर्ण,
-	[IFLA_BAREUDP_MULTIPROTO_MODE]     = अणु .type = NLA_FLAG पूर्ण,
-पूर्ण;
+static const struct nla_policy bareudp_policy[IFLA_BAREUDP_MAX + 1] = {
+	[IFLA_BAREUDP_PORT]                = { .type = NLA_U16 },
+	[IFLA_BAREUDP_ETHERTYPE]	   = { .type = NLA_U16 },
+	[IFLA_BAREUDP_SRCPORT_MIN]         = { .type = NLA_U16 },
+	[IFLA_BAREUDP_MULTIPROTO_MODE]     = { .type = NLA_FLAG },
+};
 
-/* Info क्रम udev, that this is a भव tunnel endpoपूर्णांक */
-अटल स्थिर काष्ठा device_type bareudp_type = अणु
+/* Info for udev, that this is a virtual tunnel endpoint */
+static const struct device_type bareudp_type = {
 	.name = "bareudp",
-पूर्ण;
+};
 
-/* Initialize the device काष्ठाure. */
-अटल व्योम bareudp_setup(काष्ठा net_device *dev)
-अणु
+/* Initialize the device structure. */
+static void bareudp_setup(struct net_device *dev)
+{
 	dev->netdev_ops = &bareudp_netdev_ops;
-	dev->needs_मुक्त_netdev = true;
+	dev->needs_free_netdev = true;
 	SET_NETDEV_DEVTYPE(dev, &bareudp_type);
 	dev->features    |= NETIF_F_SG | NETIF_F_HW_CSUM | NETIF_F_FRAGLIST;
 	dev->features    |= NETIF_F_RXCSUM;
@@ -541,281 +540,281 @@ tx_error:
 	dev->min_mtu = IPV4_MIN_MTU;
 	dev->max_mtu = IP_MAX_MTU - BAREUDP_BASE_HLEN;
 	dev->type = ARPHRD_NONE;
-	netअगर_keep_dst(dev);
+	netif_keep_dst(dev);
 	dev->priv_flags |= IFF_NO_QUEUE;
 	dev->flags = IFF_POINTOPOINT | IFF_NOARP | IFF_MULTICAST;
-पूर्ण
+}
 
-अटल पूर्णांक bareudp_validate(काष्ठा nlattr *tb[], काष्ठा nlattr *data[],
-			    काष्ठा netlink_ext_ack *extack)
-अणु
-	अगर (!data) अणु
+static int bareudp_validate(struct nlattr *tb[], struct nlattr *data[],
+			    struct netlink_ext_ack *extack)
+{
+	if (!data) {
 		NL_SET_ERR_MSG(extack,
 			       "Not enough attributes provided to perform the operation");
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल पूर्णांक bareudp2info(काष्ठा nlattr *data[], काष्ठा bareudp_conf *conf,
-			काष्ठा netlink_ext_ack *extack)
-अणु
-	स_रखो(conf, 0, माप(*conf));
+static int bareudp2info(struct nlattr *data[], struct bareudp_conf *conf,
+			struct netlink_ext_ack *extack)
+{
+	memset(conf, 0, sizeof(*conf));
 
-	अगर (!data[IFLA_BAREUDP_PORT]) अणु
+	if (!data[IFLA_BAREUDP_PORT]) {
 		NL_SET_ERR_MSG(extack, "port not specified");
-		वापस -EINVAL;
-	पूर्ण
-	अगर (!data[IFLA_BAREUDP_ETHERTYPE]) अणु
+		return -EINVAL;
+	}
+	if (!data[IFLA_BAREUDP_ETHERTYPE]) {
 		NL_SET_ERR_MSG(extack, "ethertype not specified");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (data[IFLA_BAREUDP_PORT])
+	if (data[IFLA_BAREUDP_PORT])
 		conf->port =  nla_get_u16(data[IFLA_BAREUDP_PORT]);
 
-	अगर (data[IFLA_BAREUDP_ETHERTYPE])
+	if (data[IFLA_BAREUDP_ETHERTYPE])
 		conf->ethertype =  nla_get_u16(data[IFLA_BAREUDP_ETHERTYPE]);
 
-	अगर (data[IFLA_BAREUDP_SRCPORT_MIN])
+	if (data[IFLA_BAREUDP_SRCPORT_MIN])
 		conf->sport_min =  nla_get_u16(data[IFLA_BAREUDP_SRCPORT_MIN]);
 
-	अगर (data[IFLA_BAREUDP_MULTIPROTO_MODE])
+	if (data[IFLA_BAREUDP_MULTIPROTO_MODE])
 		conf->multi_proto_mode = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा bareudp_dev *bareudp_find_dev(काष्ठा bareudp_net *bn,
-					    स्थिर काष्ठा bareudp_conf *conf)
-अणु
-	काष्ठा bareudp_dev *bareudp, *t = शून्य;
+static struct bareudp_dev *bareudp_find_dev(struct bareudp_net *bn,
+					    const struct bareudp_conf *conf)
+{
+	struct bareudp_dev *bareudp, *t = NULL;
 
-	list_क्रम_each_entry(bareudp, &bn->bareudp_list, next) अणु
-		अगर (conf->port == bareudp->port)
+	list_for_each_entry(bareudp, &bn->bareudp_list, next) {
+		if (conf->port == bareudp->port)
 			t = bareudp;
-	पूर्ण
-	वापस t;
-पूर्ण
+	}
+	return t;
+}
 
-अटल पूर्णांक bareudp_configure(काष्ठा net *net, काष्ठा net_device *dev,
-			     काष्ठा bareudp_conf *conf)
-अणु
-	काष्ठा bareudp_net *bn = net_generic(net, bareudp_net_id);
-	काष्ठा bareudp_dev *t, *bareudp = netdev_priv(dev);
-	पूर्णांक err;
+static int bareudp_configure(struct net *net, struct net_device *dev,
+			     struct bareudp_conf *conf)
+{
+	struct bareudp_net *bn = net_generic(net, bareudp_net_id);
+	struct bareudp_dev *t, *bareudp = netdev_priv(dev);
+	int err;
 
 	bareudp->net = net;
 	bareudp->dev = dev;
 	t = bareudp_find_dev(bn, conf);
-	अगर (t)
-		वापस -EBUSY;
+	if (t)
+		return -EBUSY;
 
-	अगर (conf->multi_proto_mode &&
+	if (conf->multi_proto_mode &&
 	    (conf->ethertype != htons(ETH_P_MPLS_UC) &&
 	     conf->ethertype != htons(ETH_P_IP)))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	bareudp->port = conf->port;
 	bareudp->ethertype = conf->ethertype;
 	bareudp->sport_min = conf->sport_min;
 	bareudp->multi_proto_mode = conf->multi_proto_mode;
 
-	err = रेजिस्टर_netdevice(dev);
-	अगर (err)
-		वापस err;
+	err = register_netdevice(dev);
+	if (err)
+		return err;
 
 	list_add(&bareudp->next, &bn->bareudp_list);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bareudp_link_config(काष्ठा net_device *dev,
-			       काष्ठा nlattr *tb[])
-अणु
-	पूर्णांक err;
+static int bareudp_link_config(struct net_device *dev,
+			       struct nlattr *tb[])
+{
+	int err;
 
-	अगर (tb[IFLA_MTU]) अणु
+	if (tb[IFLA_MTU]) {
 		err = dev_set_mtu(dev, nla_get_u32(tb[IFLA_MTU]));
-		अगर (err)
-			वापस err;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (err)
+			return err;
+	}
+	return 0;
+}
 
-अटल व्योम bareudp_dellink(काष्ठा net_device *dev, काष्ठा list_head *head)
-अणु
-	काष्ठा bareudp_dev *bareudp = netdev_priv(dev);
+static void bareudp_dellink(struct net_device *dev, struct list_head *head)
+{
+	struct bareudp_dev *bareudp = netdev_priv(dev);
 
 	list_del(&bareudp->next);
-	unरेजिस्टर_netdevice_queue(dev, head);
-पूर्ण
+	unregister_netdevice_queue(dev, head);
+}
 
-अटल पूर्णांक bareudp_newlink(काष्ठा net *net, काष्ठा net_device *dev,
-			   काष्ठा nlattr *tb[], काष्ठा nlattr *data[],
-			   काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा bareudp_conf conf;
-	पूर्णांक err;
+static int bareudp_newlink(struct net *net, struct net_device *dev,
+			   struct nlattr *tb[], struct nlattr *data[],
+			   struct netlink_ext_ack *extack)
+{
+	struct bareudp_conf conf;
+	int err;
 
 	err = bareudp2info(data, &conf, extack);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = bareudp_configure(net, dev, &conf);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = bareudp_link_config(dev, tb);
-	अगर (err)
-		जाओ err_unconfig;
+	if (err)
+		goto err_unconfig;
 
-	वापस 0;
+	return 0;
 
 err_unconfig:
-	bareudp_dellink(dev, शून्य);
-	वापस err;
-पूर्ण
+	bareudp_dellink(dev, NULL);
+	return err;
+}
 
-अटल माप_प्रकार bareudp_get_size(स्थिर काष्ठा net_device *dev)
-अणु
-	वापस  nla_total_size(माप(__be16)) +  /* IFLA_BAREUDP_PORT */
-		nla_total_size(माप(__be16)) +  /* IFLA_BAREUDP_ETHERTYPE */
-		nla_total_size(माप(__u16))  +  /* IFLA_BAREUDP_SRCPORT_MIN */
+static size_t bareudp_get_size(const struct net_device *dev)
+{
+	return  nla_total_size(sizeof(__be16)) +  /* IFLA_BAREUDP_PORT */
+		nla_total_size(sizeof(__be16)) +  /* IFLA_BAREUDP_ETHERTYPE */
+		nla_total_size(sizeof(__u16))  +  /* IFLA_BAREUDP_SRCPORT_MIN */
 		nla_total_size(0)              +  /* IFLA_BAREUDP_MULTIPROTO_MODE */
 		0;
-पूर्ण
+}
 
-अटल पूर्णांक bareudp_fill_info(काष्ठा sk_buff *skb, स्थिर काष्ठा net_device *dev)
-अणु
-	काष्ठा bareudp_dev *bareudp = netdev_priv(dev);
+static int bareudp_fill_info(struct sk_buff *skb, const struct net_device *dev)
+{
+	struct bareudp_dev *bareudp = netdev_priv(dev);
 
-	अगर (nla_put_be16(skb, IFLA_BAREUDP_PORT, bareudp->port))
-		जाओ nla_put_failure;
-	अगर (nla_put_be16(skb, IFLA_BAREUDP_ETHERTYPE, bareudp->ethertype))
-		जाओ nla_put_failure;
-	अगर (nla_put_u16(skb, IFLA_BAREUDP_SRCPORT_MIN, bareudp->sport_min))
-		जाओ nla_put_failure;
-	अगर (bareudp->multi_proto_mode &&
+	if (nla_put_be16(skb, IFLA_BAREUDP_PORT, bareudp->port))
+		goto nla_put_failure;
+	if (nla_put_be16(skb, IFLA_BAREUDP_ETHERTYPE, bareudp->ethertype))
+		goto nla_put_failure;
+	if (nla_put_u16(skb, IFLA_BAREUDP_SRCPORT_MIN, bareudp->sport_min))
+		goto nla_put_failure;
+	if (bareudp->multi_proto_mode &&
 	    nla_put_flag(skb, IFLA_BAREUDP_MULTIPROTO_MODE))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
-	वापस 0;
+	return 0;
 
 nla_put_failure:
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल काष्ठा rtnl_link_ops bareudp_link_ops __पढ़ो_mostly = अणु
+static struct rtnl_link_ops bareudp_link_ops __read_mostly = {
 	.kind           = "bareudp",
 	.maxtype        = IFLA_BAREUDP_MAX,
 	.policy         = bareudp_policy,
-	.priv_size      = माप(काष्ठा bareudp_dev),
+	.priv_size      = sizeof(struct bareudp_dev),
 	.setup          = bareudp_setup,
 	.validate       = bareudp_validate,
 	.newlink        = bareudp_newlink,
 	.dellink        = bareudp_dellink,
 	.get_size       = bareudp_get_size,
 	.fill_info      = bareudp_fill_info,
-पूर्ण;
+};
 
-काष्ठा net_device *bareudp_dev_create(काष्ठा net *net, स्थिर अक्षर *name,
+struct net_device *bareudp_dev_create(struct net *net, const char *name,
 				      u8 name_assign_type,
-				      काष्ठा bareudp_conf *conf)
-अणु
-	काष्ठा nlattr *tb[IFLA_MAX + 1];
-	काष्ठा net_device *dev;
-	पूर्णांक err;
+				      struct bareudp_conf *conf)
+{
+	struct nlattr *tb[IFLA_MAX + 1];
+	struct net_device *dev;
+	int err;
 
-	स_रखो(tb, 0, माप(tb));
+	memset(tb, 0, sizeof(tb));
 	dev = rtnl_create_link(net, name, name_assign_type,
-			       &bareudp_link_ops, tb, शून्य);
-	अगर (IS_ERR(dev))
-		वापस dev;
+			       &bareudp_link_ops, tb, NULL);
+	if (IS_ERR(dev))
+		return dev;
 
 	err = bareudp_configure(net, dev, conf);
-	अगर (err) अणु
-		मुक्त_netdev(dev);
-		वापस ERR_PTR(err);
-	पूर्ण
+	if (err) {
+		free_netdev(dev);
+		return ERR_PTR(err);
+	}
 	err = dev_set_mtu(dev, IP_MAX_MTU - BAREUDP_BASE_HLEN);
-	अगर (err)
-		जाओ err;
+	if (err)
+		goto err;
 
-	err = rtnl_configure_link(dev, शून्य);
-	अगर (err < 0)
-		जाओ err;
+	err = rtnl_configure_link(dev, NULL);
+	if (err < 0)
+		goto err;
 
-	वापस dev;
+	return dev;
 err:
-	bareudp_dellink(dev, शून्य);
-	वापस ERR_PTR(err);
-पूर्ण
+	bareudp_dellink(dev, NULL);
+	return ERR_PTR(err);
+}
 EXPORT_SYMBOL_GPL(bareudp_dev_create);
 
-अटल __net_init पूर्णांक bareudp_init_net(काष्ठा net *net)
-अणु
-	काष्ठा bareudp_net *bn = net_generic(net, bareudp_net_id);
+static __net_init int bareudp_init_net(struct net *net)
+{
+	struct bareudp_net *bn = net_generic(net, bareudp_net_id);
 
 	INIT_LIST_HEAD(&bn->bareudp_list);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम bareudp_destroy_tunnels(काष्ठा net *net, काष्ठा list_head *head)
-अणु
-	काष्ठा bareudp_net *bn = net_generic(net, bareudp_net_id);
-	काष्ठा bareudp_dev *bareudp, *next;
+static void bareudp_destroy_tunnels(struct net *net, struct list_head *head)
+{
+	struct bareudp_net *bn = net_generic(net, bareudp_net_id);
+	struct bareudp_dev *bareudp, *next;
 
-	list_क्रम_each_entry_safe(bareudp, next, &bn->bareudp_list, next)
-		unरेजिस्टर_netdevice_queue(bareudp->dev, head);
-पूर्ण
+	list_for_each_entry_safe(bareudp, next, &bn->bareudp_list, next)
+		unregister_netdevice_queue(bareudp->dev, head);
+}
 
-अटल व्योम __net_निकास bareudp_निकास_batch_net(काष्ठा list_head *net_list)
-अणु
-	काष्ठा net *net;
+static void __net_exit bareudp_exit_batch_net(struct list_head *net_list)
+{
+	struct net *net;
 	LIST_HEAD(list);
 
 	rtnl_lock();
-	list_क्रम_each_entry(net, net_list, निकास_list)
+	list_for_each_entry(net, net_list, exit_list)
 		bareudp_destroy_tunnels(net, &list);
 
-	/* unरेजिस्टर the devices gathered above */
-	unरेजिस्टर_netdevice_many(&list);
+	/* unregister the devices gathered above */
+	unregister_netdevice_many(&list);
 	rtnl_unlock();
-पूर्ण
+}
 
-अटल काष्ठा pernet_operations bareudp_net_ops = अणु
+static struct pernet_operations bareudp_net_ops = {
 	.init = bareudp_init_net,
-	.निकास_batch = bareudp_निकास_batch_net,
+	.exit_batch = bareudp_exit_batch_net,
 	.id   = &bareudp_net_id,
-	.size = माप(काष्ठा bareudp_net),
-पूर्ण;
+	.size = sizeof(struct bareudp_net),
+};
 
-अटल पूर्णांक __init bareudp_init_module(व्योम)
-अणु
-	पूर्णांक rc;
+static int __init bareudp_init_module(void)
+{
+	int rc;
 
-	rc = रेजिस्टर_pernet_subsys(&bareudp_net_ops);
-	अगर (rc)
-		जाओ out1;
+	rc = register_pernet_subsys(&bareudp_net_ops);
+	if (rc)
+		goto out1;
 
-	rc = rtnl_link_रेजिस्टर(&bareudp_link_ops);
-	अगर (rc)
-		जाओ out2;
+	rc = rtnl_link_register(&bareudp_link_ops);
+	if (rc)
+		goto out2;
 
-	वापस 0;
+	return 0;
 out2:
-	unरेजिस्टर_pernet_subsys(&bareudp_net_ops);
+	unregister_pernet_subsys(&bareudp_net_ops);
 out1:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 late_initcall(bareudp_init_module);
 
-अटल व्योम __निकास bareudp_cleanup_module(व्योम)
-अणु
-	rtnl_link_unरेजिस्टर(&bareudp_link_ops);
-	unरेजिस्टर_pernet_subsys(&bareudp_net_ops);
-पूर्ण
-module_निकास(bareudp_cleanup_module);
+static void __exit bareudp_cleanup_module(void)
+{
+	rtnl_link_unregister(&bareudp_link_ops);
+	unregister_pernet_subsys(&bareudp_net_ops);
+}
+module_exit(bareudp_cleanup_module);
 
 MODULE_ALIAS_RTNL_LINK("bareudp");
 MODULE_LICENSE("GPL");

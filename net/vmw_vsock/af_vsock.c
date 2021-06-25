@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * VMware vSockets Driver
  *
@@ -11,21 +10,21 @@
  * - There are two kinds of sockets: those created by user action (such as
  * calling socket(2)) and those created by incoming connection request packets.
  *
- * - There are two "global" tables, one क्रम bound sockets (sockets that have
- * specअगरied an address that they are responsible क्रम) and one क्रम connected
+ * - There are two "global" tables, one for bound sockets (sockets that have
+ * specified an address that they are responsible for) and one for connected
  * sockets (sockets that have established a connection with another socket).
- * These tables are "global" in that all sockets on the प्रणाली are placed
+ * These tables are "global" in that all sockets on the system are placed
  * within them. - Note, though, that the bound table contains an extra entry
- * क्रम a list of unbound sockets and SOCK_DGRAM sockets will always reमुख्य in
- * that list. The bound table is used solely क्रम lookup of sockets when packets
- * are received and that's not necessary क्रम SOCK_DGRAM sockets since we create
- * a datagram handle क्रम each and need not perक्रमm a lookup.  Keeping SOCK_DGRAM
+ * for a list of unbound sockets and SOCK_DGRAM sockets will always remain in
+ * that list. The bound table is used solely for lookup of sockets when packets
+ * are received and that's not necessary for SOCK_DGRAM sockets since we create
+ * a datagram handle for each and need not perform a lookup.  Keeping SOCK_DGRAM
  * sockets out of the bound hash buckets will reduce the chance of collisions
- * when looking क्रम SOCK_STREAM sockets and prevents us from having to check the
+ * when looking for SOCK_STREAM sockets and prevents us from having to check the
  * socket type in the hash table lookups.
  *
  * - Sockets created by user action will either be "client" sockets that
- * initiate a connection or "server" sockets that listen क्रम connections; we करो
+ * initiate a connection or "server" sockets that listen for connections; we do
  * not support simultaneous connects (two "client" sockets connecting).
  *
  * - "Server" sockets are referred to as listener sockets throughout this
@@ -33,50 +32,50 @@
  * connection request is received (the second kind of socket mentioned above),
  * we create a new socket and refer to it as a pending socket.  These pending
  * sockets are placed on the pending connection list of the listener socket.
- * When future packets are received क्रम the address the listener socket is
- * bound to, we check अगर the source of the packet is from one that has an
- * existing pending connection.  If it करोes, we process the packet क्रम the
- * pending socket.  When that socket reaches the connected state, it is हटाओd
+ * When future packets are received for the address the listener socket is
+ * bound to, we check if the source of the packet is from one that has an
+ * existing pending connection.  If it does, we process the packet for the
+ * pending socket.  When that socket reaches the connected state, it is removed
  * from the listener socket's pending list and enqueued in the listener
  * socket's accept queue.  Callers of accept(2) will accept connected sockets
  * from the listener socket's accept queue.  If the socket cannot be accepted
- * क्रम some reason then it is marked rejected.  Once the connection is
- * accepted, it is owned by the user process and the responsibility क्रम cleanup
+ * for some reason then it is marked rejected.  Once the connection is
+ * accepted, it is owned by the user process and the responsibility for cleanup
  * falls with that user process.
  *
  * - It is possible that these pending sockets will never reach the connected
  * state; in fact, we may never receive another packet after the connection
  * request.  Because of this, we must schedule a cleanup function to run in the
- * future, after some amount of समय passes where a connection should have been
+ * future, after some amount of time passes where a connection should have been
  * established.  This function ensures that the socket is off all lists so it
  * cannot be retrieved, then drops all references to the socket so it is cleaned
- * up (sock_put() -> sk_मुक्त() -> our sk_deकाष्ठा implementation).  Note this
+ * up (sock_put() -> sk_free() -> our sk_destruct implementation).  Note this
  * function will also cleanup rejected sockets, those that reach the connected
- * state but leave it beक्रमe they have been accepted.
+ * state but leave it before they have been accepted.
  *
- * - Lock ordering क्रम pending or accept queue sockets is:
+ * - Lock ordering for pending or accept queue sockets is:
  *
  *     lock_sock(listener);
  *     lock_sock_nested(pending, SINGLE_DEPTH_NESTING);
  *
  * Using explicit nested locking keeps lockdep happy since normally only one
- * lock of a given class may be taken at a समय.
+ * lock of a given class may be taken at a time.
  *
  * - Sockets created by user action will be cleaned up when the user process
- * calls बंद(2), causing our release implementation to be called. Our release
- * implementation will perक्रमm some cleanup then drop the last reference so our
- * sk_deकाष्ठा implementation is invoked.  Our sk_deकाष्ठा implementation will
- * perक्रमm additional cleanup that's common क्रम both types of sockets.
+ * calls close(2), causing our release implementation to be called. Our release
+ * implementation will perform some cleanup then drop the last reference so our
+ * sk_destruct implementation is invoked.  Our sk_destruct implementation will
+ * perform additional cleanup that's common for both types of sockets.
  *
  * - A socket's reference count is what ensures that the structure won't be
- * मुक्तd.  Each entry in a list (such as the "global" bound and connected tables
+ * freed.  Each entry in a list (such as the "global" bound and connected tables
  * and the listener socket's pending list and connected queue) ensures a
  * reference.  When we defer work until process context and pass a socket as our
  * argument, we must ensure the reference count is increased to ensure the
- * socket isn't मुक्तd beक्रमe the function is run; the deferred function will
+ * socket isn't freed before the function is run; the deferred function will
  * then drop the reference.
  *
- * - sk->sk_state uses the TCP state स्थिरants because they are widely used by
+ * - sk->sk_state uses the TCP state constants because they are widely used by
  * other address families and exposed to userspace tools like ss(8):
  *
  *   TCP_CLOSE - unconnected
@@ -86,60 +85,60 @@
  *   TCP_LISTEN - listening
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/cred.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/kmod.h>
-#समावेश <linux/list.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/net.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/socket.h>
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/unistd.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/workqueue.h>
-#समावेश <net/sock.h>
-#समावेश <net/af_vsock.h>
+#include <linux/types.h>
+#include <linux/bitops.h>
+#include <linux/cred.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/sched/signal.h>
+#include <linux/kmod.h>
+#include <linux/list.h>
+#include <linux/miscdevice.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/net.h>
+#include <linux/poll.h>
+#include <linux/random.h>
+#include <linux/skbuff.h>
+#include <linux/smp.h>
+#include <linux/socket.h>
+#include <linux/stddef.h>
+#include <linux/unistd.h>
+#include <linux/wait.h>
+#include <linux/workqueue.h>
+#include <net/sock.h>
+#include <net/af_vsock.h>
 
-अटल पूर्णांक __vsock_bind(काष्ठा sock *sk, काष्ठा sockaddr_vm *addr);
-अटल व्योम vsock_sk_deकाष्ठा(काष्ठा sock *sk);
-अटल पूर्णांक vsock_queue_rcv_skb(काष्ठा sock *sk, काष्ठा sk_buff *skb);
+static int __vsock_bind(struct sock *sk, struct sockaddr_vm *addr);
+static void vsock_sk_destruct(struct sock *sk);
+static int vsock_queue_rcv_skb(struct sock *sk, struct sk_buff *skb);
 
 /* Protocol family. */
-अटल काष्ठा proto vsock_proto = अणु
+static struct proto vsock_proto = {
 	.name = "AF_VSOCK",
 	.owner = THIS_MODULE,
-	.obj_size = माप(काष्ठा vsock_sock),
-पूर्ण;
+	.obj_size = sizeof(struct vsock_sock),
+};
 
-/* The शेष peer समयout indicates how दीर्घ we will रुको क्रम a peer response
+/* The default peer timeout indicates how long we will wait for a peer response
  * to a control message.
  */
-#घोषणा VSOCK_DEFAULT_CONNECT_TIMEOUT (2 * HZ)
+#define VSOCK_DEFAULT_CONNECT_TIMEOUT (2 * HZ)
 
-#घोषणा VSOCK_DEFAULT_BUFFER_SIZE     (1024 * 256)
-#घोषणा VSOCK_DEFAULT_BUFFER_MAX_SIZE (1024 * 256)
-#घोषणा VSOCK_DEFAULT_BUFFER_MIN_SIZE 128
+#define VSOCK_DEFAULT_BUFFER_SIZE     (1024 * 256)
+#define VSOCK_DEFAULT_BUFFER_MAX_SIZE (1024 * 256)
+#define VSOCK_DEFAULT_BUFFER_MIN_SIZE 128
 
-/* Transport used क्रम host->guest communication */
-अटल स्थिर काष्ठा vsock_transport *transport_h2g;
-/* Transport used क्रम guest->host communication */
-अटल स्थिर काष्ठा vsock_transport *transport_g2h;
-/* Transport used क्रम DGRAM communication */
-अटल स्थिर काष्ठा vsock_transport *transport_dgram;
-/* Transport used क्रम local communication */
-अटल स्थिर काष्ठा vsock_transport *transport_local;
-अटल DEFINE_MUTEX(vsock_रेजिस्टर_mutex);
+/* Transport used for host->guest communication */
+static const struct vsock_transport *transport_h2g;
+/* Transport used for guest->host communication */
+static const struct vsock_transport *transport_g2h;
+/* Transport used for DGRAM communication */
+static const struct vsock_transport *transport_dgram;
+/* Transport used for local communication */
+static const struct vsock_transport *transport_local;
+static DEFINE_MUTEX(vsock_register_mutex);
 
 /**** UTILS ****/
 
@@ -151,210 +150,210 @@
  * the bucket that their local address hashes to (vsock_bound_sockets(addr)
  * represents the list that addr hashes to).
  *
- * Specअगरically, we initialize the vsock_bind_table array to a size of
+ * Specifically, we initialize the vsock_bind_table array to a size of
  * VSOCK_HASH_SIZE + 1 so that vsock_bind_table[0] through
- * vsock_bind_table[VSOCK_HASH_SIZE - 1] are क्रम bound sockets and
- * vsock_bind_table[VSOCK_HASH_SIZE] is क्रम unbound sockets.  The hash function
+ * vsock_bind_table[VSOCK_HASH_SIZE - 1] are for bound sockets and
+ * vsock_bind_table[VSOCK_HASH_SIZE] is for unbound sockets.  The hash function
  * mods with VSOCK_HASH_SIZE to ensure this.
  */
-#घोषणा MAX_PORT_RETRIES        24
+#define MAX_PORT_RETRIES        24
 
-#घोषणा VSOCK_HASH(addr)        ((addr)->svm_port % VSOCK_HASH_SIZE)
-#घोषणा vsock_bound_sockets(addr) (&vsock_bind_table[VSOCK_HASH(addr)])
-#घोषणा vsock_unbound_sockets     (&vsock_bind_table[VSOCK_HASH_SIZE])
+#define VSOCK_HASH(addr)        ((addr)->svm_port % VSOCK_HASH_SIZE)
+#define vsock_bound_sockets(addr) (&vsock_bind_table[VSOCK_HASH(addr)])
+#define vsock_unbound_sockets     (&vsock_bind_table[VSOCK_HASH_SIZE])
 
 /* XXX This can probably be implemented in a better way. */
-#घोषणा VSOCK_CONN_HASH(src, dst)				\
+#define VSOCK_CONN_HASH(src, dst)				\
 	(((src)->svm_cid ^ (dst)->svm_port) % VSOCK_HASH_SIZE)
-#घोषणा vsock_connected_sockets(src, dst)		\
+#define vsock_connected_sockets(src, dst)		\
 	(&vsock_connected_table[VSOCK_CONN_HASH(src, dst)])
-#घोषणा vsock_connected_sockets_vsk(vsk)				\
+#define vsock_connected_sockets_vsk(vsk)				\
 	vsock_connected_sockets(&(vsk)->remote_addr, &(vsk)->local_addr)
 
-काष्ठा list_head vsock_bind_table[VSOCK_HASH_SIZE + 1];
+struct list_head vsock_bind_table[VSOCK_HASH_SIZE + 1];
 EXPORT_SYMBOL_GPL(vsock_bind_table);
-काष्ठा list_head vsock_connected_table[VSOCK_HASH_SIZE];
+struct list_head vsock_connected_table[VSOCK_HASH_SIZE];
 EXPORT_SYMBOL_GPL(vsock_connected_table);
 DEFINE_SPINLOCK(vsock_table_lock);
 EXPORT_SYMBOL_GPL(vsock_table_lock);
 
-/* Autobind this socket to the local address अगर necessary. */
-अटल पूर्णांक vsock_स्वतः_bind(काष्ठा vsock_sock *vsk)
-अणु
-	काष्ठा sock *sk = sk_vsock(vsk);
-	काष्ठा sockaddr_vm local_addr;
+/* Autobind this socket to the local address if necessary. */
+static int vsock_auto_bind(struct vsock_sock *vsk)
+{
+	struct sock *sk = sk_vsock(vsk);
+	struct sockaddr_vm local_addr;
 
-	अगर (vsock_addr_bound(&vsk->local_addr))
-		वापस 0;
+	if (vsock_addr_bound(&vsk->local_addr))
+		return 0;
 	vsock_addr_init(&local_addr, VMADDR_CID_ANY, VMADDR_PORT_ANY);
-	वापस __vsock_bind(sk, &local_addr);
-पूर्ण
+	return __vsock_bind(sk, &local_addr);
+}
 
-अटल व्योम vsock_init_tables(व्योम)
-अणु
-	पूर्णांक i;
+static void vsock_init_tables(void)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(vsock_bind_table); i++)
+	for (i = 0; i < ARRAY_SIZE(vsock_bind_table); i++)
 		INIT_LIST_HEAD(&vsock_bind_table[i]);
 
-	क्रम (i = 0; i < ARRAY_SIZE(vsock_connected_table); i++)
+	for (i = 0; i < ARRAY_SIZE(vsock_connected_table); i++)
 		INIT_LIST_HEAD(&vsock_connected_table[i]);
-पूर्ण
+}
 
-अटल व्योम __vsock_insert_bound(काष्ठा list_head *list,
-				 काष्ठा vsock_sock *vsk)
-अणु
+static void __vsock_insert_bound(struct list_head *list,
+				 struct vsock_sock *vsk)
+{
 	sock_hold(&vsk->sk);
 	list_add(&vsk->bound_table, list);
-पूर्ण
+}
 
-अटल व्योम __vsock_insert_connected(काष्ठा list_head *list,
-				     काष्ठा vsock_sock *vsk)
-अणु
+static void __vsock_insert_connected(struct list_head *list,
+				     struct vsock_sock *vsk)
+{
 	sock_hold(&vsk->sk);
 	list_add(&vsk->connected_table, list);
-पूर्ण
+}
 
-अटल व्योम __vsock_हटाओ_bound(काष्ठा vsock_sock *vsk)
-अणु
+static void __vsock_remove_bound(struct vsock_sock *vsk)
+{
 	list_del_init(&vsk->bound_table);
 	sock_put(&vsk->sk);
-पूर्ण
+}
 
-अटल व्योम __vsock_हटाओ_connected(काष्ठा vsock_sock *vsk)
-अणु
+static void __vsock_remove_connected(struct vsock_sock *vsk)
+{
 	list_del_init(&vsk->connected_table);
 	sock_put(&vsk->sk);
-पूर्ण
+}
 
-अटल काष्ठा sock *__vsock_find_bound_socket(काष्ठा sockaddr_vm *addr)
-अणु
-	काष्ठा vsock_sock *vsk;
+static struct sock *__vsock_find_bound_socket(struct sockaddr_vm *addr)
+{
+	struct vsock_sock *vsk;
 
-	list_क्रम_each_entry(vsk, vsock_bound_sockets(addr), bound_table) अणु
-		अगर (vsock_addr_equals_addr(addr, &vsk->local_addr))
-			वापस sk_vsock(vsk);
+	list_for_each_entry(vsk, vsock_bound_sockets(addr), bound_table) {
+		if (vsock_addr_equals_addr(addr, &vsk->local_addr))
+			return sk_vsock(vsk);
 
-		अगर (addr->svm_port == vsk->local_addr.svm_port &&
+		if (addr->svm_port == vsk->local_addr.svm_port &&
 		    (vsk->local_addr.svm_cid == VMADDR_CID_ANY ||
 		     addr->svm_cid == VMADDR_CID_ANY))
-			वापस sk_vsock(vsk);
-	पूर्ण
+			return sk_vsock(vsk);
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा sock *__vsock_find_connected_socket(काष्ठा sockaddr_vm *src,
-						  काष्ठा sockaddr_vm *dst)
-अणु
-	काष्ठा vsock_sock *vsk;
+static struct sock *__vsock_find_connected_socket(struct sockaddr_vm *src,
+						  struct sockaddr_vm *dst)
+{
+	struct vsock_sock *vsk;
 
-	list_क्रम_each_entry(vsk, vsock_connected_sockets(src, dst),
-			    connected_table) अणु
-		अगर (vsock_addr_equals_addr(src, &vsk->remote_addr) &&
-		    dst->svm_port == vsk->local_addr.svm_port) अणु
-			वापस sk_vsock(vsk);
-		पूर्ण
-	पूर्ण
+	list_for_each_entry(vsk, vsock_connected_sockets(src, dst),
+			    connected_table) {
+		if (vsock_addr_equals_addr(src, &vsk->remote_addr) &&
+		    dst->svm_port == vsk->local_addr.svm_port) {
+			return sk_vsock(vsk);
+		}
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम vsock_insert_unbound(काष्ठा vsock_sock *vsk)
-अणु
+static void vsock_insert_unbound(struct vsock_sock *vsk)
+{
 	spin_lock_bh(&vsock_table_lock);
 	__vsock_insert_bound(vsock_unbound_sockets, vsk);
 	spin_unlock_bh(&vsock_table_lock);
-पूर्ण
+}
 
-व्योम vsock_insert_connected(काष्ठा vsock_sock *vsk)
-अणु
-	काष्ठा list_head *list = vsock_connected_sockets(
+void vsock_insert_connected(struct vsock_sock *vsk)
+{
+	struct list_head *list = vsock_connected_sockets(
 		&vsk->remote_addr, &vsk->local_addr);
 
 	spin_lock_bh(&vsock_table_lock);
 	__vsock_insert_connected(list, vsk);
 	spin_unlock_bh(&vsock_table_lock);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(vsock_insert_connected);
 
-व्योम vsock_हटाओ_bound(काष्ठा vsock_sock *vsk)
-अणु
+void vsock_remove_bound(struct vsock_sock *vsk)
+{
 	spin_lock_bh(&vsock_table_lock);
-	अगर (__vsock_in_bound_table(vsk))
-		__vsock_हटाओ_bound(vsk);
+	if (__vsock_in_bound_table(vsk))
+		__vsock_remove_bound(vsk);
 	spin_unlock_bh(&vsock_table_lock);
-पूर्ण
-EXPORT_SYMBOL_GPL(vsock_हटाओ_bound);
+}
+EXPORT_SYMBOL_GPL(vsock_remove_bound);
 
-व्योम vsock_हटाओ_connected(काष्ठा vsock_sock *vsk)
-अणु
+void vsock_remove_connected(struct vsock_sock *vsk)
+{
 	spin_lock_bh(&vsock_table_lock);
-	अगर (__vsock_in_connected_table(vsk))
-		__vsock_हटाओ_connected(vsk);
+	if (__vsock_in_connected_table(vsk))
+		__vsock_remove_connected(vsk);
 	spin_unlock_bh(&vsock_table_lock);
-पूर्ण
-EXPORT_SYMBOL_GPL(vsock_हटाओ_connected);
+}
+EXPORT_SYMBOL_GPL(vsock_remove_connected);
 
-काष्ठा sock *vsock_find_bound_socket(काष्ठा sockaddr_vm *addr)
-अणु
-	काष्ठा sock *sk;
+struct sock *vsock_find_bound_socket(struct sockaddr_vm *addr)
+{
+	struct sock *sk;
 
 	spin_lock_bh(&vsock_table_lock);
 	sk = __vsock_find_bound_socket(addr);
-	अगर (sk)
+	if (sk)
 		sock_hold(sk);
 
 	spin_unlock_bh(&vsock_table_lock);
 
-	वापस sk;
-पूर्ण
+	return sk;
+}
 EXPORT_SYMBOL_GPL(vsock_find_bound_socket);
 
-काष्ठा sock *vsock_find_connected_socket(काष्ठा sockaddr_vm *src,
-					 काष्ठा sockaddr_vm *dst)
-अणु
-	काष्ठा sock *sk;
+struct sock *vsock_find_connected_socket(struct sockaddr_vm *src,
+					 struct sockaddr_vm *dst)
+{
+	struct sock *sk;
 
 	spin_lock_bh(&vsock_table_lock);
 	sk = __vsock_find_connected_socket(src, dst);
-	अगर (sk)
+	if (sk)
 		sock_hold(sk);
 
 	spin_unlock_bh(&vsock_table_lock);
 
-	वापस sk;
-पूर्ण
+	return sk;
+}
 EXPORT_SYMBOL_GPL(vsock_find_connected_socket);
 
-व्योम vsock_हटाओ_sock(काष्ठा vsock_sock *vsk)
-अणु
-	vsock_हटाओ_bound(vsk);
-	vsock_हटाओ_connected(vsk);
-पूर्ण
-EXPORT_SYMBOL_GPL(vsock_हटाओ_sock);
+void vsock_remove_sock(struct vsock_sock *vsk)
+{
+	vsock_remove_bound(vsk);
+	vsock_remove_connected(vsk);
+}
+EXPORT_SYMBOL_GPL(vsock_remove_sock);
 
-व्योम vsock_क्रम_each_connected_socket(व्योम (*fn)(काष्ठा sock *sk))
-अणु
-	पूर्णांक i;
+void vsock_for_each_connected_socket(void (*fn)(struct sock *sk))
+{
+	int i;
 
 	spin_lock_bh(&vsock_table_lock);
 
-	क्रम (i = 0; i < ARRAY_SIZE(vsock_connected_table); i++) अणु
-		काष्ठा vsock_sock *vsk;
-		list_क्रम_each_entry(vsk, &vsock_connected_table[i],
+	for (i = 0; i < ARRAY_SIZE(vsock_connected_table); i++) {
+		struct vsock_sock *vsk;
+		list_for_each_entry(vsk, &vsock_connected_table[i],
 				    connected_table)
 			fn(sk_vsock(vsk));
-	पूर्ण
+	}
 
 	spin_unlock_bh(&vsock_table_lock);
-पूर्ण
-EXPORT_SYMBOL_GPL(vsock_क्रम_each_connected_socket);
+}
+EXPORT_SYMBOL_GPL(vsock_for_each_connected_socket);
 
-व्योम vsock_add_pending(काष्ठा sock *listener, काष्ठा sock *pending)
-अणु
-	काष्ठा vsock_sock *vlistener;
-	काष्ठा vsock_sock *vpending;
+void vsock_add_pending(struct sock *listener, struct sock *pending)
+{
+	struct vsock_sock *vlistener;
+	struct vsock_sock *vpending;
 
 	vlistener = vsock_sk(listener);
 	vpending = vsock_sk(pending);
@@ -362,23 +361,23 @@ EXPORT_SYMBOL_GPL(vsock_क्रम_each_connected_socket);
 	sock_hold(pending);
 	sock_hold(listener);
 	list_add_tail(&vpending->pending_links, &vlistener->pending_links);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(vsock_add_pending);
 
-व्योम vsock_हटाओ_pending(काष्ठा sock *listener, काष्ठा sock *pending)
-अणु
-	काष्ठा vsock_sock *vpending = vsock_sk(pending);
+void vsock_remove_pending(struct sock *listener, struct sock *pending)
+{
+	struct vsock_sock *vpending = vsock_sk(pending);
 
 	list_del_init(&vpending->pending_links);
 	sock_put(listener);
 	sock_put(pending);
-पूर्ण
-EXPORT_SYMBOL_GPL(vsock_हटाओ_pending);
+}
+EXPORT_SYMBOL_GPL(vsock_remove_pending);
 
-व्योम vsock_enqueue_accept(काष्ठा sock *listener, काष्ठा sock *connected)
-अणु
-	काष्ठा vsock_sock *vlistener;
-	काष्ठा vsock_sock *vconnected;
+void vsock_enqueue_accept(struct sock *listener, struct sock *connected)
+{
+	struct vsock_sock *vlistener;
+	struct vsock_sock *vconnected;
 
 	vlistener = vsock_sk(listener);
 	vconnected = vsock_sk(connected);
@@ -386,144 +385,144 @@ EXPORT_SYMBOL_GPL(vsock_हटाओ_pending);
 	sock_hold(connected);
 	sock_hold(listener);
 	list_add_tail(&vconnected->accept_queue, &vlistener->accept_queue);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(vsock_enqueue_accept);
 
-अटल bool vsock_use_local_transport(अचिन्हित पूर्णांक remote_cid)
-अणु
-	अगर (!transport_local)
-		वापस false;
+static bool vsock_use_local_transport(unsigned int remote_cid)
+{
+	if (!transport_local)
+		return false;
 
-	अगर (remote_cid == VMADDR_CID_LOCAL)
-		वापस true;
+	if (remote_cid == VMADDR_CID_LOCAL)
+		return true;
 
-	अगर (transport_g2h) अणु
-		वापस remote_cid == transport_g2h->get_local_cid();
-	पूर्ण अन्यथा अणु
-		वापस remote_cid == VMADDR_CID_HOST;
-	पूर्ण
-पूर्ण
+	if (transport_g2h) {
+		return remote_cid == transport_g2h->get_local_cid();
+	} else {
+		return remote_cid == VMADDR_CID_HOST;
+	}
+}
 
-अटल व्योम vsock_deassign_transport(काष्ठा vsock_sock *vsk)
-अणु
-	अगर (!vsk->transport)
-		वापस;
+static void vsock_deassign_transport(struct vsock_sock *vsk)
+{
+	if (!vsk->transport)
+		return;
 
-	vsk->transport->deकाष्ठा(vsk);
+	vsk->transport->destruct(vsk);
 	module_put(vsk->transport->module);
-	vsk->transport = शून्य;
-पूर्ण
+	vsk->transport = NULL;
+}
 
 /* Assign a transport to a socket and call the .init transport callback.
  *
- * Note: क्रम stream socket this must be called when vsk->remote_addr is set
+ * Note: for stream socket this must be called when vsk->remote_addr is set
  * (e.g. during the connect() or when a connection request on a listener
  * socket is received).
  * The vsk->remote_addr is used to decide which transport to use:
- *  - remote CID == VMADDR_CID_LOCAL or g2h->local_cid or VMADDR_CID_HOST अगर
+ *  - remote CID == VMADDR_CID_LOCAL or g2h->local_cid or VMADDR_CID_HOST if
  *    g2h is not loaded, will use local transport;
  *  - remote CID <= VMADDR_CID_HOST or h2g is not loaded or remote flags field
  *    includes VMADDR_FLAG_TO_HOST flag value, will use guest->host transport;
  *  - remote CID > VMADDR_CID_HOST will use host->guest transport;
  */
-पूर्णांक vsock_assign_transport(काष्ठा vsock_sock *vsk, काष्ठा vsock_sock *psk)
-अणु
-	स्थिर काष्ठा vsock_transport *new_transport;
-	काष्ठा sock *sk = sk_vsock(vsk);
-	अचिन्हित पूर्णांक remote_cid = vsk->remote_addr.svm_cid;
+int vsock_assign_transport(struct vsock_sock *vsk, struct vsock_sock *psk)
+{
+	const struct vsock_transport *new_transport;
+	struct sock *sk = sk_vsock(vsk);
+	unsigned int remote_cid = vsk->remote_addr.svm_cid;
 	__u8 remote_flags;
-	पूर्णांक ret;
+	int ret;
 
 	/* If the packet is coming with the source and destination CIDs higher
 	 * than VMADDR_CID_HOST, then a vsock channel where all the packets are
-	 * क्रमwarded to the host should be established. Then the host will
-	 * need to क्रमward the packets to the guest.
+	 * forwarded to the host should be established. Then the host will
+	 * need to forward the packets to the guest.
 	 *
-	 * The flag is set on the (listen) receive path (psk is not शून्य). On
+	 * The flag is set on the (listen) receive path (psk is not NULL). On
 	 * the connect path the flag can be set by the user space application.
 	 */
-	अगर (psk && vsk->local_addr.svm_cid > VMADDR_CID_HOST &&
+	if (psk && vsk->local_addr.svm_cid > VMADDR_CID_HOST &&
 	    vsk->remote_addr.svm_cid > VMADDR_CID_HOST)
 		vsk->remote_addr.svm_flags |= VMADDR_FLAG_TO_HOST;
 
 	remote_flags = vsk->remote_addr.svm_flags;
 
-	चयन (sk->sk_type) अणु
-	हाल SOCK_DGRAM:
+	switch (sk->sk_type) {
+	case SOCK_DGRAM:
 		new_transport = transport_dgram;
-		अवरोध;
-	हाल SOCK_STREAM:
-		अगर (vsock_use_local_transport(remote_cid))
+		break;
+	case SOCK_STREAM:
+		if (vsock_use_local_transport(remote_cid))
 			new_transport = transport_local;
-		अन्यथा अगर (remote_cid <= VMADDR_CID_HOST || !transport_h2g ||
+		else if (remote_cid <= VMADDR_CID_HOST || !transport_h2g ||
 			 (remote_flags & VMADDR_FLAG_TO_HOST))
 			new_transport = transport_g2h;
-		अन्यथा
+		else
 			new_transport = transport_h2g;
-		अवरोध;
-	शेष:
-		वापस -ESOCKTNOSUPPORT;
-	पूर्ण
+		break;
+	default:
+		return -ESOCKTNOSUPPORT;
+	}
 
-	अगर (vsk->transport) अणु
-		अगर (vsk->transport == new_transport)
-			वापस 0;
+	if (vsk->transport) {
+		if (vsk->transport == new_transport)
+			return 0;
 
 		/* transport->release() must be called with sock lock acquired.
 		 * This path can only be taken during vsock_stream_connect(),
-		 * where we have alपढ़ोy held the sock lock.
-		 * In the other हालs, this function is called on a new socket
-		 * which is not asचिन्हित to any transport.
+		 * where we have already held the sock lock.
+		 * In the other cases, this function is called on a new socket
+		 * which is not assigned to any transport.
 		 */
 		vsk->transport->release(vsk);
 		vsock_deassign_transport(vsk);
-	पूर्ण
+	}
 
 	/* We increase the module refcnt to prevent the transport unloading
-	 * जबतक there are खोलो sockets asचिन्हित to it.
+	 * while there are open sockets assigned to it.
 	 */
-	अगर (!new_transport || !try_module_get(new_transport->module))
-		वापस -ENODEV;
+	if (!new_transport || !try_module_get(new_transport->module))
+		return -ENODEV;
 
 	ret = new_transport->init(vsk, psk);
-	अगर (ret) अणु
+	if (ret) {
 		module_put(new_transport->module);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	vsk->transport = new_transport;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(vsock_assign_transport);
 
-bool vsock_find_cid(अचिन्हित पूर्णांक cid)
-अणु
-	अगर (transport_g2h && cid == transport_g2h->get_local_cid())
-		वापस true;
+bool vsock_find_cid(unsigned int cid)
+{
+	if (transport_g2h && cid == transport_g2h->get_local_cid())
+		return true;
 
-	अगर (transport_h2g && cid == VMADDR_CID_HOST)
-		वापस true;
+	if (transport_h2g && cid == VMADDR_CID_HOST)
+		return true;
 
-	अगर (transport_local && cid == VMADDR_CID_LOCAL)
-		वापस true;
+	if (transport_local && cid == VMADDR_CID_LOCAL)
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 EXPORT_SYMBOL_GPL(vsock_find_cid);
 
-अटल काष्ठा sock *vsock_dequeue_accept(काष्ठा sock *listener)
-अणु
-	काष्ठा vsock_sock *vlistener;
-	काष्ठा vsock_sock *vconnected;
+static struct sock *vsock_dequeue_accept(struct sock *listener)
+{
+	struct vsock_sock *vlistener;
+	struct vsock_sock *vconnected;
 
 	vlistener = vsock_sk(listener);
 
-	अगर (list_empty(&vlistener->accept_queue))
-		वापस शून्य;
+	if (list_empty(&vlistener->accept_queue))
+		return NULL;
 
 	vconnected = list_entry(vlistener->accept_queue.next,
-				काष्ठा vsock_sock, accept_queue);
+				struct vsock_sock, accept_queue);
 
 	list_del_init(&vconnected->accept_queue);
 	sock_put(listener);
@@ -531,39 +530,39 @@ EXPORT_SYMBOL_GPL(vsock_find_cid);
 	 * it call sock_put().
 	 */
 
-	वापस sk_vsock(vconnected);
-पूर्ण
+	return sk_vsock(vconnected);
+}
 
-अटल bool vsock_is_accept_queue_empty(काष्ठा sock *sk)
-अणु
-	काष्ठा vsock_sock *vsk = vsock_sk(sk);
-	वापस list_empty(&vsk->accept_queue);
-पूर्ण
+static bool vsock_is_accept_queue_empty(struct sock *sk)
+{
+	struct vsock_sock *vsk = vsock_sk(sk);
+	return list_empty(&vsk->accept_queue);
+}
 
-अटल bool vsock_is_pending(काष्ठा sock *sk)
-अणु
-	काष्ठा vsock_sock *vsk = vsock_sk(sk);
-	वापस !list_empty(&vsk->pending_links);
-पूर्ण
+static bool vsock_is_pending(struct sock *sk)
+{
+	struct vsock_sock *vsk = vsock_sk(sk);
+	return !list_empty(&vsk->pending_links);
+}
 
-अटल पूर्णांक vsock_send_shutकरोwn(काष्ठा sock *sk, पूर्णांक mode)
-अणु
-	काष्ठा vsock_sock *vsk = vsock_sk(sk);
+static int vsock_send_shutdown(struct sock *sk, int mode)
+{
+	struct vsock_sock *vsk = vsock_sk(sk);
 
-	अगर (!vsk->transport)
-		वापस -ENODEV;
+	if (!vsk->transport)
+		return -ENODEV;
 
-	वापस vsk->transport->shutकरोwn(vsk, mode);
-पूर्ण
+	return vsk->transport->shutdown(vsk, mode);
+}
 
-अटल व्योम vsock_pending_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा sock *sk;
-	काष्ठा sock *listener;
-	काष्ठा vsock_sock *vsk;
+static void vsock_pending_work(struct work_struct *work)
+{
+	struct sock *sk;
+	struct sock *listener;
+	struct vsock_sock *vsk;
 	bool cleanup;
 
-	vsk = container_of(work, काष्ठा vsock_sock, pending_work.work);
+	vsk = container_of(work, struct vsock_sock, pending_work.work);
 	sk = sk_vsock(vsk);
 	listener = vsk->listener;
 	cleanup = true;
@@ -571,321 +570,321 @@ EXPORT_SYMBOL_GPL(vsock_find_cid);
 	lock_sock(listener);
 	lock_sock_nested(sk, SINGLE_DEPTH_NESTING);
 
-	अगर (vsock_is_pending(sk)) अणु
-		vsock_हटाओ_pending(listener, sk);
+	if (vsock_is_pending(sk)) {
+		vsock_remove_pending(listener, sk);
 
-		sk_acceptq_हटाओd(listener);
-	पूर्ण अन्यथा अगर (!vsk->rejected) अणु
+		sk_acceptq_removed(listener);
+	} else if (!vsk->rejected) {
 		/* We are not on the pending list and accept() did not reject
 		 * us, so we must have been accepted by our user process.  We
 		 * just need to drop our references to the sockets and be on
 		 * our way.
 		 */
 		cleanup = false;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* We need to हटाओ ourself from the global connected sockets list so
+	/* We need to remove ourself from the global connected sockets list so
 	 * incoming packets can't find this socket, and to reduce the reference
 	 * count.
 	 */
-	vsock_हटाओ_connected(vsk);
+	vsock_remove_connected(vsk);
 
 	sk->sk_state = TCP_CLOSE;
 
 out:
 	release_sock(sk);
 	release_sock(listener);
-	अगर (cleanup)
+	if (cleanup)
 		sock_put(sk);
 
 	sock_put(sk);
 	sock_put(listener);
-पूर्ण
+}
 
 /**** SOCKET OPERATIONS ****/
 
-अटल पूर्णांक __vsock_bind_stream(काष्ठा vsock_sock *vsk,
-			       काष्ठा sockaddr_vm *addr)
-अणु
-	अटल u32 port;
-	काष्ठा sockaddr_vm new_addr;
+static int __vsock_bind_stream(struct vsock_sock *vsk,
+			       struct sockaddr_vm *addr)
+{
+	static u32 port;
+	struct sockaddr_vm new_addr;
 
-	अगर (!port)
+	if (!port)
 		port = LAST_RESERVED_PORT + 1 +
-			pअक्रमom_u32_max(U32_MAX - LAST_RESERVED_PORT);
+			prandom_u32_max(U32_MAX - LAST_RESERVED_PORT);
 
 	vsock_addr_init(&new_addr, addr->svm_cid, addr->svm_port);
 
-	अगर (addr->svm_port == VMADDR_PORT_ANY) अणु
+	if (addr->svm_port == VMADDR_PORT_ANY) {
 		bool found = false;
-		अचिन्हित पूर्णांक i;
+		unsigned int i;
 
-		क्रम (i = 0; i < MAX_PORT_RETRIES; i++) अणु
-			अगर (port <= LAST_RESERVED_PORT)
+		for (i = 0; i < MAX_PORT_RETRIES; i++) {
+			if (port <= LAST_RESERVED_PORT)
 				port = LAST_RESERVED_PORT + 1;
 
 			new_addr.svm_port = port++;
 
-			अगर (!__vsock_find_bound_socket(&new_addr)) अणु
+			if (!__vsock_find_bound_socket(&new_addr)) {
 				found = true;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
-		अगर (!found)
-			वापस -EADDRNOTAVAIL;
-	पूर्ण अन्यथा अणु
+		if (!found)
+			return -EADDRNOTAVAIL;
+	} else {
 		/* If port is in reserved range, ensure caller
 		 * has necessary privileges.
 		 */
-		अगर (addr->svm_port <= LAST_RESERVED_PORT &&
-		    !capable(CAP_NET_BIND_SERVICE)) अणु
-			वापस -EACCES;
-		पूर्ण
+		if (addr->svm_port <= LAST_RESERVED_PORT &&
+		    !capable(CAP_NET_BIND_SERVICE)) {
+			return -EACCES;
+		}
 
-		अगर (__vsock_find_bound_socket(&new_addr))
-			वापस -EADDRINUSE;
-	पूर्ण
+		if (__vsock_find_bound_socket(&new_addr))
+			return -EADDRINUSE;
+	}
 
 	vsock_addr_init(&vsk->local_addr, new_addr.svm_cid, new_addr.svm_port);
 
 	/* Remove stream sockets from the unbound list and add them to the hash
-	 * table क्रम easy lookup by its address.  The unbound list is simply an
+	 * table for easy lookup by its address.  The unbound list is simply an
 	 * extra entry at the end of the hash table, a trick used by AF_UNIX.
 	 */
-	__vsock_हटाओ_bound(vsk);
+	__vsock_remove_bound(vsk);
 	__vsock_insert_bound(vsock_bound_sockets(&vsk->local_addr), vsk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __vsock_bind_dgram(काष्ठा vsock_sock *vsk,
-			      काष्ठा sockaddr_vm *addr)
-अणु
-	वापस vsk->transport->dgram_bind(vsk, addr);
-पूर्ण
+static int __vsock_bind_dgram(struct vsock_sock *vsk,
+			      struct sockaddr_vm *addr)
+{
+	return vsk->transport->dgram_bind(vsk, addr);
+}
 
-अटल पूर्णांक __vsock_bind(काष्ठा sock *sk, काष्ठा sockaddr_vm *addr)
-अणु
-	काष्ठा vsock_sock *vsk = vsock_sk(sk);
-	पूर्णांक retval;
+static int __vsock_bind(struct sock *sk, struct sockaddr_vm *addr)
+{
+	struct vsock_sock *vsk = vsock_sk(sk);
+	int retval;
 
-	/* First ensure this socket isn't alपढ़ोy bound. */
-	अगर (vsock_addr_bound(&vsk->local_addr))
-		वापस -EINVAL;
+	/* First ensure this socket isn't already bound. */
+	if (vsock_addr_bound(&vsk->local_addr))
+		return -EINVAL;
 
-	/* Now bind to the provided address or select appropriate values अगर
+	/* Now bind to the provided address or select appropriate values if
 	 * none are provided (VMADDR_CID_ANY and VMADDR_PORT_ANY).  Note that
 	 * like AF_INET prevents binding to a non-local IP address (in most
-	 * हालs), we only allow binding to a local CID.
+	 * cases), we only allow binding to a local CID.
 	 */
-	अगर (addr->svm_cid != VMADDR_CID_ANY && !vsock_find_cid(addr->svm_cid))
-		वापस -EADDRNOTAVAIL;
+	if (addr->svm_cid != VMADDR_CID_ANY && !vsock_find_cid(addr->svm_cid))
+		return -EADDRNOTAVAIL;
 
-	चयन (sk->sk_socket->type) अणु
-	हाल SOCK_STREAM:
+	switch (sk->sk_socket->type) {
+	case SOCK_STREAM:
 		spin_lock_bh(&vsock_table_lock);
 		retval = __vsock_bind_stream(vsk, addr);
 		spin_unlock_bh(&vsock_table_lock);
-		अवरोध;
+		break;
 
-	हाल SOCK_DGRAM:
+	case SOCK_DGRAM:
 		retval = __vsock_bind_dgram(vsk, addr);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		retval = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल व्योम vsock_connect_समयout(काष्ठा work_काष्ठा *work);
+static void vsock_connect_timeout(struct work_struct *work);
 
-अटल काष्ठा sock *__vsock_create(काष्ठा net *net,
-				   काष्ठा socket *sock,
-				   काष्ठा sock *parent,
+static struct sock *__vsock_create(struct net *net,
+				   struct socket *sock,
+				   struct sock *parent,
 				   gfp_t priority,
-				   अचिन्हित लघु type,
-				   पूर्णांक kern)
-अणु
-	काष्ठा sock *sk;
-	काष्ठा vsock_sock *psk;
-	काष्ठा vsock_sock *vsk;
+				   unsigned short type,
+				   int kern)
+{
+	struct sock *sk;
+	struct vsock_sock *psk;
+	struct vsock_sock *vsk;
 
 	sk = sk_alloc(net, AF_VSOCK, priority, &vsock_proto, kern);
-	अगर (!sk)
-		वापस शून्य;
+	if (!sk)
+		return NULL;
 
 	sock_init_data(sock, sk);
 
-	/* sk->sk_type is normally set in sock_init_data, but only अगर sock is
-	 * non-शून्य. We make sure that our sockets always have a type by
-	 * setting it here अगर needed.
+	/* sk->sk_type is normally set in sock_init_data, but only if sock is
+	 * non-NULL. We make sure that our sockets always have a type by
+	 * setting it here if needed.
 	 */
-	अगर (!sock)
+	if (!sock)
 		sk->sk_type = type;
 
 	vsk = vsock_sk(sk);
 	vsock_addr_init(&vsk->local_addr, VMADDR_CID_ANY, VMADDR_PORT_ANY);
 	vsock_addr_init(&vsk->remote_addr, VMADDR_CID_ANY, VMADDR_PORT_ANY);
 
-	sk->sk_deकाष्ठा = vsock_sk_deकाष्ठा;
+	sk->sk_destruct = vsock_sk_destruct;
 	sk->sk_backlog_rcv = vsock_queue_rcv_skb;
 	sock_reset_flag(sk, SOCK_DONE);
 
 	INIT_LIST_HEAD(&vsk->bound_table);
 	INIT_LIST_HEAD(&vsk->connected_table);
-	vsk->listener = शून्य;
+	vsk->listener = NULL;
 	INIT_LIST_HEAD(&vsk->pending_links);
 	INIT_LIST_HEAD(&vsk->accept_queue);
 	vsk->rejected = false;
 	vsk->sent_request = false;
 	vsk->ignore_connecting_rst = false;
-	vsk->peer_shutकरोwn = 0;
-	INIT_DELAYED_WORK(&vsk->connect_work, vsock_connect_समयout);
+	vsk->peer_shutdown = 0;
+	INIT_DELAYED_WORK(&vsk->connect_work, vsock_connect_timeout);
 	INIT_DELAYED_WORK(&vsk->pending_work, vsock_pending_work);
 
-	psk = parent ? vsock_sk(parent) : शून्य;
-	अगर (parent) अणु
+	psk = parent ? vsock_sk(parent) : NULL;
+	if (parent) {
 		vsk->trusted = psk->trusted;
 		vsk->owner = get_cred(psk->owner);
-		vsk->connect_समयout = psk->connect_समयout;
+		vsk->connect_timeout = psk->connect_timeout;
 		vsk->buffer_size = psk->buffer_size;
 		vsk->buffer_min_size = psk->buffer_min_size;
 		vsk->buffer_max_size = psk->buffer_max_size;
 		security_sk_clone(parent, sk);
-	पूर्ण अन्यथा अणु
+	} else {
 		vsk->trusted = ns_capable_noaudit(&init_user_ns, CAP_NET_ADMIN);
 		vsk->owner = get_current_cred();
-		vsk->connect_समयout = VSOCK_DEFAULT_CONNECT_TIMEOUT;
+		vsk->connect_timeout = VSOCK_DEFAULT_CONNECT_TIMEOUT;
 		vsk->buffer_size = VSOCK_DEFAULT_BUFFER_SIZE;
 		vsk->buffer_min_size = VSOCK_DEFAULT_BUFFER_MIN_SIZE;
 		vsk->buffer_max_size = VSOCK_DEFAULT_BUFFER_MAX_SIZE;
-	पूर्ण
+	}
 
-	वापस sk;
-पूर्ण
+	return sk;
+}
 
-अटल व्योम __vsock_release(काष्ठा sock *sk, पूर्णांक level)
-अणु
-	अगर (sk) अणु
-		काष्ठा sock *pending;
-		काष्ठा vsock_sock *vsk;
+static void __vsock_release(struct sock *sk, int level)
+{
+	if (sk) {
+		struct sock *pending;
+		struct vsock_sock *vsk;
 
 		vsk = vsock_sk(sk);
-		pending = शून्य;	/* Compiler warning. */
+		pending = NULL;	/* Compiler warning. */
 
 		/* When "level" is SINGLE_DEPTH_NESTING, use the nested
-		 * version to aव्योम the warning "possible recursive locking
+		 * version to avoid the warning "possible recursive locking
 		 * detected". When "level" is 0, lock_sock_nested(sk, level)
 		 * is the same as lock_sock(sk).
 		 */
 		lock_sock_nested(sk, level);
 
-		अगर (vsk->transport)
+		if (vsk->transport)
 			vsk->transport->release(vsk);
-		अन्यथा अगर (sk->sk_type == SOCK_STREAM)
-			vsock_हटाओ_sock(vsk);
+		else if (sk->sk_type == SOCK_STREAM)
+			vsock_remove_sock(vsk);
 
 		sock_orphan(sk);
-		sk->sk_shutकरोwn = SHUTDOWN_MASK;
+		sk->sk_shutdown = SHUTDOWN_MASK;
 
 		skb_queue_purge(&sk->sk_receive_queue);
 
 		/* Clean up any sockets that never were accepted. */
-		जबतक ((pending = vsock_dequeue_accept(sk)) != शून्य) अणु
+		while ((pending = vsock_dequeue_accept(sk)) != NULL) {
 			__vsock_release(pending, SINGLE_DEPTH_NESTING);
 			sock_put(pending);
-		पूर्ण
+		}
 
 		release_sock(sk);
 		sock_put(sk);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम vsock_sk_deकाष्ठा(काष्ठा sock *sk)
-अणु
-	काष्ठा vsock_sock *vsk = vsock_sk(sk);
+static void vsock_sk_destruct(struct sock *sk)
+{
+	struct vsock_sock *vsk = vsock_sk(sk);
 
 	vsock_deassign_transport(vsk);
 
 	/* When clearing these addresses, there's no need to set the family and
-	 * possibly रेजिस्टर the address family with the kernel.
+	 * possibly register the address family with the kernel.
 	 */
 	vsock_addr_init(&vsk->local_addr, VMADDR_CID_ANY, VMADDR_PORT_ANY);
 	vsock_addr_init(&vsk->remote_addr, VMADDR_CID_ANY, VMADDR_PORT_ANY);
 
 	put_cred(vsk->owner);
-पूर्ण
+}
 
-अटल पूर्णांक vsock_queue_rcv_skb(काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
-	पूर्णांक err;
+static int vsock_queue_rcv_skb(struct sock *sk, struct sk_buff *skb)
+{
+	int err;
 
 	err = sock_queue_rcv_skb(sk, skb);
-	अगर (err)
-		kमुक्त_skb(skb);
+	if (err)
+		kfree_skb(skb);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-काष्ठा sock *vsock_create_connected(काष्ठा sock *parent)
-अणु
-	वापस __vsock_create(sock_net(parent), शून्य, parent, GFP_KERNEL,
+struct sock *vsock_create_connected(struct sock *parent)
+{
+	return __vsock_create(sock_net(parent), NULL, parent, GFP_KERNEL,
 			      parent->sk_type, 0);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(vsock_create_connected);
 
-s64 vsock_stream_has_data(काष्ठा vsock_sock *vsk)
-अणु
-	वापस vsk->transport->stream_has_data(vsk);
-पूर्ण
+s64 vsock_stream_has_data(struct vsock_sock *vsk)
+{
+	return vsk->transport->stream_has_data(vsk);
+}
 EXPORT_SYMBOL_GPL(vsock_stream_has_data);
 
-s64 vsock_stream_has_space(काष्ठा vsock_sock *vsk)
-अणु
-	वापस vsk->transport->stream_has_space(vsk);
-पूर्ण
+s64 vsock_stream_has_space(struct vsock_sock *vsk)
+{
+	return vsk->transport->stream_has_space(vsk);
+}
 EXPORT_SYMBOL_GPL(vsock_stream_has_space);
 
-अटल पूर्णांक vsock_release(काष्ठा socket *sock)
-अणु
+static int vsock_release(struct socket *sock)
+{
 	__vsock_release(sock->sk, 0);
-	sock->sk = शून्य;
+	sock->sk = NULL;
 	sock->state = SS_FREE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-vsock_bind(काष्ठा socket *sock, काष्ठा sockaddr *addr, पूर्णांक addr_len)
-अणु
-	पूर्णांक err;
-	काष्ठा sock *sk;
-	काष्ठा sockaddr_vm *vm_addr;
+static int
+vsock_bind(struct socket *sock, struct sockaddr *addr, int addr_len)
+{
+	int err;
+	struct sock *sk;
+	struct sockaddr_vm *vm_addr;
 
 	sk = sock->sk;
 
-	अगर (vsock_addr_cast(addr, addr_len, &vm_addr) != 0)
-		वापस -EINVAL;
+	if (vsock_addr_cast(addr, addr_len, &vm_addr) != 0)
+		return -EINVAL;
 
 	lock_sock(sk);
 	err = __vsock_bind(sk, vm_addr);
 	release_sock(sk);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक vsock_getname(काष्ठा socket *sock,
-			 काष्ठा sockaddr *addr, पूर्णांक peer)
-अणु
-	पूर्णांक err;
-	काष्ठा sock *sk;
-	काष्ठा vsock_sock *vsk;
-	काष्ठा sockaddr_vm *vm_addr;
+static int vsock_getname(struct socket *sock,
+			 struct sockaddr *addr, int peer)
+{
+	int err;
+	struct sock *sk;
+	struct vsock_sock *vsk;
+	struct sockaddr_vm *vm_addr;
 
 	sk = sock->sk;
 	vsk = vsock_sk(sk);
@@ -893,214 +892,214 @@ vsock_bind(काष्ठा socket *sock, काष्ठा sockaddr *addr, �
 
 	lock_sock(sk);
 
-	अगर (peer) अणु
-		अगर (sock->state != SS_CONNECTED) अणु
+	if (peer) {
+		if (sock->state != SS_CONNECTED) {
 			err = -ENOTCONN;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		vm_addr = &vsk->remote_addr;
-	पूर्ण अन्यथा अणु
+	} else {
 		vm_addr = &vsk->local_addr;
-	पूर्ण
+	}
 
-	अगर (!vm_addr) अणु
+	if (!vm_addr) {
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* sys_माला_लोockname() and sys_getpeername() pass us a
-	 * MAX_SOCK_ADDR-sized buffer and करोn't set addr_len.  Unक्रमtunately
+	/* sys_getsockname() and sys_getpeername() pass us a
+	 * MAX_SOCK_ADDR-sized buffer and don't set addr_len.  Unfortunately
 	 * that macro is defined in socket.c instead of .h, so we hardcode its
 	 * value here.
 	 */
-	BUILD_BUG_ON(माप(*vm_addr) > 128);
-	स_नकल(addr, vm_addr, माप(*vm_addr));
-	err = माप(*vm_addr);
+	BUILD_BUG_ON(sizeof(*vm_addr) > 128);
+	memcpy(addr, vm_addr, sizeof(*vm_addr));
+	err = sizeof(*vm_addr);
 
 out:
 	release_sock(sk);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक vsock_shutकरोwn(काष्ठा socket *sock, पूर्णांक mode)
-अणु
-	पूर्णांक err;
-	काष्ठा sock *sk;
+static int vsock_shutdown(struct socket *sock, int mode)
+{
+	int err;
+	struct sock *sk;
 
 	/* User level uses SHUT_RD (0) and SHUT_WR (1), but the kernel uses
 	 * RCV_SHUTDOWN (1) and SEND_SHUTDOWN (2), so we must increment mode
-	 * here like the other address families करो.  Note also that the
-	 * increment makes SHUT_RDWR (2) पूर्णांकo RCV_SHUTDOWN | SEND_SHUTDOWN (3),
+	 * here like the other address families do.  Note also that the
+	 * increment makes SHUT_RDWR (2) into RCV_SHUTDOWN | SEND_SHUTDOWN (3),
 	 * which is what we want.
 	 */
 	mode++;
 
-	अगर ((mode & ~SHUTDOWN_MASK) || !mode)
-		वापस -EINVAL;
+	if ((mode & ~SHUTDOWN_MASK) || !mode)
+		return -EINVAL;
 
 	/* If this is a STREAM socket and it is not connected then bail out
 	 * immediately.  If it is a DGRAM socket then we must first kick the
-	 * socket so that it wakes up from any sleeping calls, क्रम example
-	 * recv(), and then afterwards वापस the error.
+	 * socket so that it wakes up from any sleeping calls, for example
+	 * recv(), and then afterwards return the error.
 	 */
 
 	sk = sock->sk;
 
 	lock_sock(sk);
-	अगर (sock->state == SS_UNCONNECTED) अणु
+	if (sock->state == SS_UNCONNECTED) {
 		err = -ENOTCONN;
-		अगर (sk->sk_type == SOCK_STREAM)
-			जाओ out;
-	पूर्ण अन्यथा अणु
+		if (sk->sk_type == SOCK_STREAM)
+			goto out;
+	} else {
 		sock->state = SS_DISCONNECTING;
 		err = 0;
-	पूर्ण
+	}
 
-	/* Receive and send shutकरोwns are treated alike. */
+	/* Receive and send shutdowns are treated alike. */
 	mode = mode & (RCV_SHUTDOWN | SEND_SHUTDOWN);
-	अगर (mode) अणु
-		sk->sk_shutकरोwn |= mode;
+	if (mode) {
+		sk->sk_shutdown |= mode;
 		sk->sk_state_change(sk);
 
-		अगर (sk->sk_type == SOCK_STREAM) अणु
+		if (sk->sk_type == SOCK_STREAM) {
 			sock_reset_flag(sk, SOCK_DONE);
-			vsock_send_shutकरोwn(sk, mode);
-		पूर्ण
-	पूर्ण
+			vsock_send_shutdown(sk, mode);
+		}
+	}
 
 out:
 	release_sock(sk);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल __poll_t vsock_poll(काष्ठा file *file, काष्ठा socket *sock,
-			       poll_table *रुको)
-अणु
-	काष्ठा sock *sk;
+static __poll_t vsock_poll(struct file *file, struct socket *sock,
+			       poll_table *wait)
+{
+	struct sock *sk;
 	__poll_t mask;
-	काष्ठा vsock_sock *vsk;
+	struct vsock_sock *vsk;
 
 	sk = sock->sk;
 	vsk = vsock_sk(sk);
 
-	poll_रुको(file, sk_sleep(sk), रुको);
+	poll_wait(file, sk_sleep(sk), wait);
 	mask = 0;
 
-	अगर (sk->sk_err)
-		/* Signअगरy that there has been an error on this socket. */
+	if (sk->sk_err)
+		/* Signify that there has been an error on this socket. */
 		mask |= EPOLLERR;
 
-	/* INET sockets treat local ग_लिखो shutकरोwn and peer ग_लिखो shutकरोwn as a
-	 * हाल of EPOLLHUP set.
+	/* INET sockets treat local write shutdown and peer write shutdown as a
+	 * case of EPOLLHUP set.
 	 */
-	अगर ((sk->sk_shutकरोwn == SHUTDOWN_MASK) ||
-	    ((sk->sk_shutकरोwn & SEND_SHUTDOWN) &&
-	     (vsk->peer_shutकरोwn & SEND_SHUTDOWN))) अणु
+	if ((sk->sk_shutdown == SHUTDOWN_MASK) ||
+	    ((sk->sk_shutdown & SEND_SHUTDOWN) &&
+	     (vsk->peer_shutdown & SEND_SHUTDOWN))) {
 		mask |= EPOLLHUP;
-	पूर्ण
+	}
 
-	अगर (sk->sk_shutकरोwn & RCV_SHUTDOWN ||
-	    vsk->peer_shutकरोwn & SEND_SHUTDOWN) अणु
+	if (sk->sk_shutdown & RCV_SHUTDOWN ||
+	    vsk->peer_shutdown & SEND_SHUTDOWN) {
 		mask |= EPOLLRDHUP;
-	पूर्ण
+	}
 
-	अगर (sock->type == SOCK_DGRAM) अणु
-		/* For datagram sockets we can पढ़ो अगर there is something in
-		 * the queue and ग_लिखो as दीर्घ as the socket isn't shutकरोwn क्रम
+	if (sock->type == SOCK_DGRAM) {
+		/* For datagram sockets we can read if there is something in
+		 * the queue and write as long as the socket isn't shutdown for
 		 * sending.
 		 */
-		अगर (!skb_queue_empty_lockless(&sk->sk_receive_queue) ||
-		    (sk->sk_shutकरोwn & RCV_SHUTDOWN)) अणु
+		if (!skb_queue_empty_lockless(&sk->sk_receive_queue) ||
+		    (sk->sk_shutdown & RCV_SHUTDOWN)) {
 			mask |= EPOLLIN | EPOLLRDNORM;
-		पूर्ण
+		}
 
-		अगर (!(sk->sk_shutकरोwn & SEND_SHUTDOWN))
+		if (!(sk->sk_shutdown & SEND_SHUTDOWN))
 			mask |= EPOLLOUT | EPOLLWRNORM | EPOLLWRBAND;
 
-	पूर्ण अन्यथा अगर (sock->type == SOCK_STREAM) अणु
-		स्थिर काष्ठा vsock_transport *transport;
+	} else if (sock->type == SOCK_STREAM) {
+		const struct vsock_transport *transport;
 
 		lock_sock(sk);
 
 		transport = vsk->transport;
 
 		/* Listening sockets that have connections in their accept
-		 * queue can be पढ़ो.
+		 * queue can be read.
 		 */
-		अगर (sk->sk_state == TCP_LISTEN
+		if (sk->sk_state == TCP_LISTEN
 		    && !vsock_is_accept_queue_empty(sk))
 			mask |= EPOLLIN | EPOLLRDNORM;
 
-		/* If there is something in the queue then we can पढ़ो. */
-		अगर (transport && transport->stream_is_active(vsk) &&
-		    !(sk->sk_shutकरोwn & RCV_SHUTDOWN)) अणु
-			bool data_पढ़ोy_now = false;
-			पूर्णांक ret = transport->notअगरy_poll_in(
-					vsk, 1, &data_पढ़ोy_now);
-			अगर (ret < 0) अणु
+		/* If there is something in the queue then we can read. */
+		if (transport && transport->stream_is_active(vsk) &&
+		    !(sk->sk_shutdown & RCV_SHUTDOWN)) {
+			bool data_ready_now = false;
+			int ret = transport->notify_poll_in(
+					vsk, 1, &data_ready_now);
+			if (ret < 0) {
 				mask |= EPOLLERR;
-			पूर्ण अन्यथा अणु
-				अगर (data_पढ़ोy_now)
+			} else {
+				if (data_ready_now)
 					mask |= EPOLLIN | EPOLLRDNORM;
 
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		/* Sockets whose connections have been बंदd, reset, or
-		 * terminated should also be considered पढ़ो, and we check the
-		 * shutकरोwn flag क्रम that.
+		/* Sockets whose connections have been closed, reset, or
+		 * terminated should also be considered read, and we check the
+		 * shutdown flag for that.
 		 */
-		अगर (sk->sk_shutकरोwn & RCV_SHUTDOWN ||
-		    vsk->peer_shutकरोwn & SEND_SHUTDOWN) अणु
+		if (sk->sk_shutdown & RCV_SHUTDOWN ||
+		    vsk->peer_shutdown & SEND_SHUTDOWN) {
 			mask |= EPOLLIN | EPOLLRDNORM;
-		पूर्ण
+		}
 
 		/* Connected sockets that can produce data can be written. */
-		अगर (transport && sk->sk_state == TCP_ESTABLISHED) अणु
-			अगर (!(sk->sk_shutकरोwn & SEND_SHUTDOWN)) अणु
+		if (transport && sk->sk_state == TCP_ESTABLISHED) {
+			if (!(sk->sk_shutdown & SEND_SHUTDOWN)) {
 				bool space_avail_now = false;
-				पूर्णांक ret = transport->notअगरy_poll_out(
+				int ret = transport->notify_poll_out(
 						vsk, 1, &space_avail_now);
-				अगर (ret < 0) अणु
+				if (ret < 0) {
 					mask |= EPOLLERR;
-				पूर्ण अन्यथा अणु
-					अगर (space_avail_now)
+				} else {
+					if (space_avail_now)
 						/* Remove EPOLLWRBAND since INET
 						 * sockets are not setting it.
 						 */
 						mask |= EPOLLOUT | EPOLLWRNORM;
 
-				पूर्ण
-			पूर्ण
-		पूर्ण
+				}
+			}
+		}
 
 		/* Simulate INET socket poll behaviors, which sets
-		 * EPOLLOUT|EPOLLWRNORM when peer is बंदd and nothing to पढ़ो,
-		 * but local send is not shutकरोwn.
+		 * EPOLLOUT|EPOLLWRNORM when peer is closed and nothing to read,
+		 * but local send is not shutdown.
 		 */
-		अगर (sk->sk_state == TCP_CLOSE || sk->sk_state == TCP_CLOSING) अणु
-			अगर (!(sk->sk_shutकरोwn & SEND_SHUTDOWN))
+		if (sk->sk_state == TCP_CLOSE || sk->sk_state == TCP_CLOSING) {
+			if (!(sk->sk_shutdown & SEND_SHUTDOWN))
 				mask |= EPOLLOUT | EPOLLWRNORM;
 
-		पूर्ण
+		}
 
 		release_sock(sk);
-	पूर्ण
+	}
 
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
-अटल पूर्णांक vsock_dgram_sendmsg(काष्ठा socket *sock, काष्ठा msghdr *msg,
-			       माप_प्रकार len)
-अणु
-	पूर्णांक err;
-	काष्ठा sock *sk;
-	काष्ठा vsock_sock *vsk;
-	काष्ठा sockaddr_vm *remote_addr;
-	स्थिर काष्ठा vsock_transport *transport;
+static int vsock_dgram_sendmsg(struct socket *sock, struct msghdr *msg,
+			       size_t len)
+{
+	int err;
+	struct sock *sk;
+	struct vsock_sock *vsk;
+	struct sockaddr_vm *remote_addr;
+	const struct vsock_transport *transport;
 
-	अगर (msg->msg_flags & MSG_OOB)
-		वापस -EOPNOTSUPP;
+	if (msg->msg_flags & MSG_OOB)
+		return -EOPNOTSUPP;
 
 	/* For now, MSG_DONTWAIT is always assumed... */
 	err = 0;
@@ -1111,110 +1110,110 @@ out:
 
 	transport = vsk->transport;
 
-	err = vsock_स्वतः_bind(vsk);
-	अगर (err)
-		जाओ out;
+	err = vsock_auto_bind(vsk);
+	if (err)
+		goto out;
 
 
 	/* If the provided message contains an address, use that.  Otherwise
-	 * fall back on the socket's remote handle (अगर it has been connected).
+	 * fall back on the socket's remote handle (if it has been connected).
 	 */
-	अगर (msg->msg_name &&
+	if (msg->msg_name &&
 	    vsock_addr_cast(msg->msg_name, msg->msg_namelen,
-			    &remote_addr) == 0) अणु
+			    &remote_addr) == 0) {
 		/* Ensure this address is of the right type and is a valid
 		 * destination.
 		 */
 
-		अगर (remote_addr->svm_cid == VMADDR_CID_ANY)
+		if (remote_addr->svm_cid == VMADDR_CID_ANY)
 			remote_addr->svm_cid = transport->get_local_cid();
 
-		अगर (!vsock_addr_bound(remote_addr)) अणु
+		if (!vsock_addr_bound(remote_addr)) {
 			err = -EINVAL;
-			जाओ out;
-		पूर्ण
-	पूर्ण अन्यथा अगर (sock->state == SS_CONNECTED) अणु
+			goto out;
+		}
+	} else if (sock->state == SS_CONNECTED) {
 		remote_addr = &vsk->remote_addr;
 
-		अगर (remote_addr->svm_cid == VMADDR_CID_ANY)
+		if (remote_addr->svm_cid == VMADDR_CID_ANY)
 			remote_addr->svm_cid = transport->get_local_cid();
 
 		/* XXX Should connect() or this function ensure remote_addr is
 		 * bound?
 		 */
-		अगर (!vsock_addr_bound(&vsk->remote_addr)) अणु
+		if (!vsock_addr_bound(&vsk->remote_addr)) {
 			err = -EINVAL;
-			जाओ out;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			goto out;
+		}
+	} else {
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!transport->dgram_allow(remote_addr->svm_cid,
-				    remote_addr->svm_port)) अणु
+	if (!transport->dgram_allow(remote_addr->svm_cid,
+				    remote_addr->svm_port)) {
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	err = transport->dgram_enqueue(vsk, remote_addr, msg, len);
 
 out:
 	release_sock(sk);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक vsock_dgram_connect(काष्ठा socket *sock,
-			       काष्ठा sockaddr *addr, पूर्णांक addr_len, पूर्णांक flags)
-अणु
-	पूर्णांक err;
-	काष्ठा sock *sk;
-	काष्ठा vsock_sock *vsk;
-	काष्ठा sockaddr_vm *remote_addr;
+static int vsock_dgram_connect(struct socket *sock,
+			       struct sockaddr *addr, int addr_len, int flags)
+{
+	int err;
+	struct sock *sk;
+	struct vsock_sock *vsk;
+	struct sockaddr_vm *remote_addr;
 
 	sk = sock->sk;
 	vsk = vsock_sk(sk);
 
 	err = vsock_addr_cast(addr, addr_len, &remote_addr);
-	अगर (err == -EAFNOSUPPORT && remote_addr->svm_family == AF_UNSPEC) अणु
+	if (err == -EAFNOSUPPORT && remote_addr->svm_family == AF_UNSPEC) {
 		lock_sock(sk);
 		vsock_addr_init(&vsk->remote_addr, VMADDR_CID_ANY,
 				VMADDR_PORT_ANY);
 		sock->state = SS_UNCONNECTED;
 		release_sock(sk);
-		वापस 0;
-	पूर्ण अन्यथा अगर (err != 0)
-		वापस -EINVAL;
+		return 0;
+	} else if (err != 0)
+		return -EINVAL;
 
 	lock_sock(sk);
 
-	err = vsock_स्वतः_bind(vsk);
-	अगर (err)
-		जाओ out;
+	err = vsock_auto_bind(vsk);
+	if (err)
+		goto out;
 
-	अगर (!vsk->transport->dgram_allow(remote_addr->svm_cid,
-					 remote_addr->svm_port)) अणु
+	if (!vsk->transport->dgram_allow(remote_addr->svm_cid,
+					 remote_addr->svm_port)) {
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	स_नकल(&vsk->remote_addr, remote_addr, माप(vsk->remote_addr));
+	memcpy(&vsk->remote_addr, remote_addr, sizeof(vsk->remote_addr));
 	sock->state = SS_CONNECTED;
 
 out:
 	release_sock(sk);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक vsock_dgram_recvmsg(काष्ठा socket *sock, काष्ठा msghdr *msg,
-			       माप_प्रकार len, पूर्णांक flags)
-अणु
-	काष्ठा vsock_sock *vsk = vsock_sk(sock->sk);
+static int vsock_dgram_recvmsg(struct socket *sock, struct msghdr *msg,
+			       size_t len, int flags)
+{
+	struct vsock_sock *vsk = vsock_sk(sock->sk);
 
-	वापस vsk->transport->dgram_dequeue(vsk, msg, len, flags);
-पूर्ण
+	return vsk->transport->dgram_dequeue(vsk, msg, len, flags);
+}
 
-अटल स्थिर काष्ठा proto_ops vsock_dgram_ops = अणु
+static const struct proto_ops vsock_dgram_ops = {
 	.family = PF_VSOCK,
 	.owner = THIS_MODULE,
 	.release = vsock_release,
@@ -1226,54 +1225,54 @@ out:
 	.poll = vsock_poll,
 	.ioctl = sock_no_ioctl,
 	.listen = sock_no_listen,
-	.shutकरोwn = vsock_shutकरोwn,
+	.shutdown = vsock_shutdown,
 	.sendmsg = vsock_dgram_sendmsg,
 	.recvmsg = vsock_dgram_recvmsg,
 	.mmap = sock_no_mmap,
 	.sendpage = sock_no_sendpage,
-पूर्ण;
+};
 
-अटल पूर्णांक vsock_transport_cancel_pkt(काष्ठा vsock_sock *vsk)
-अणु
-	स्थिर काष्ठा vsock_transport *transport = vsk->transport;
+static int vsock_transport_cancel_pkt(struct vsock_sock *vsk)
+{
+	const struct vsock_transport *transport = vsk->transport;
 
-	अगर (!transport || !transport->cancel_pkt)
-		वापस -EOPNOTSUPP;
+	if (!transport || !transport->cancel_pkt)
+		return -EOPNOTSUPP;
 
-	वापस transport->cancel_pkt(vsk);
-पूर्ण
+	return transport->cancel_pkt(vsk);
+}
 
-अटल व्योम vsock_connect_समयout(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा sock *sk;
-	काष्ठा vsock_sock *vsk;
+static void vsock_connect_timeout(struct work_struct *work)
+{
+	struct sock *sk;
+	struct vsock_sock *vsk;
 
-	vsk = container_of(work, काष्ठा vsock_sock, connect_work.work);
+	vsk = container_of(work, struct vsock_sock, connect_work.work);
 	sk = sk_vsock(vsk);
 
 	lock_sock(sk);
-	अगर (sk->sk_state == TCP_SYN_SENT &&
-	    (sk->sk_shutकरोwn != SHUTDOWN_MASK)) अणु
+	if (sk->sk_state == TCP_SYN_SENT &&
+	    (sk->sk_shutdown != SHUTDOWN_MASK)) {
 		sk->sk_state = TCP_CLOSE;
 		sk->sk_err = ETIMEDOUT;
 		sk->sk_error_report(sk);
 		vsock_transport_cancel_pkt(vsk);
-	पूर्ण
+	}
 	release_sock(sk);
 
 	sock_put(sk);
-पूर्ण
+}
 
-अटल पूर्णांक vsock_stream_connect(काष्ठा socket *sock, काष्ठा sockaddr *addr,
-				पूर्णांक addr_len, पूर्णांक flags)
-अणु
-	पूर्णांक err;
-	काष्ठा sock *sk;
-	काष्ठा vsock_sock *vsk;
-	स्थिर काष्ठा vsock_transport *transport;
-	काष्ठा sockaddr_vm *remote_addr;
-	दीर्घ समयout;
-	DEFINE_WAIT(रुको);
+static int vsock_stream_connect(struct socket *sock, struct sockaddr *addr,
+				int addr_len, int flags)
+{
+	int err;
+	struct sock *sk;
+	struct vsock_sock *vsk;
+	const struct vsock_transport *transport;
+	struct sockaddr_vm *remote_addr;
+	long timeout;
+	DEFINE_WAIT(wait);
 
 	err = 0;
 	sk = sock->sk;
@@ -1282,232 +1281,232 @@ out:
 	lock_sock(sk);
 
 	/* XXX AF_UNSPEC should make us disconnect like AF_INET. */
-	चयन (sock->state) अणु
-	हाल SS_CONNECTED:
+	switch (sock->state) {
+	case SS_CONNECTED:
 		err = -EISCONN;
-		जाओ out;
-	हाल SS_DISCONNECTING:
+		goto out;
+	case SS_DISCONNECTING:
 		err = -EINVAL;
-		जाओ out;
-	हाल SS_CONNECTING:
-		/* This जारीs on so we can move sock पूर्णांकo the SS_CONNECTED
-		 * state once the connection has completed (at which poपूर्णांक err
-		 * will be set to zero also).  Otherwise, we will either रुको
-		 * क्रम the connection or वापस -EALREADY should this be a
+		goto out;
+	case SS_CONNECTING:
+		/* This continues on so we can move sock into the SS_CONNECTED
+		 * state once the connection has completed (at which point err
+		 * will be set to zero also).  Otherwise, we will either wait
+		 * for the connection or return -EALREADY should this be a
 		 * non-blocking call.
 		 */
 		err = -EALREADY;
-		अवरोध;
-	शेष:
-		अगर ((sk->sk_state == TCP_LISTEN) ||
-		    vsock_addr_cast(addr, addr_len, &remote_addr) != 0) अणु
+		break;
+	default:
+		if ((sk->sk_state == TCP_LISTEN) ||
+		    vsock_addr_cast(addr, addr_len, &remote_addr) != 0) {
 			err = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		/* Set the remote address that we are connecting to. */
-		स_नकल(&vsk->remote_addr, remote_addr,
-		       माप(vsk->remote_addr));
+		memcpy(&vsk->remote_addr, remote_addr,
+		       sizeof(vsk->remote_addr));
 
-		err = vsock_assign_transport(vsk, शून्य);
-		अगर (err)
-			जाओ out;
+		err = vsock_assign_transport(vsk, NULL);
+		if (err)
+			goto out;
 
 		transport = vsk->transport;
 
-		/* The hypervisor and well-known contexts करो not have socket
-		 * endpoपूर्णांकs.
+		/* The hypervisor and well-known contexts do not have socket
+		 * endpoints.
 		 */
-		अगर (!transport ||
+		if (!transport ||
 		    !transport->stream_allow(remote_addr->svm_cid,
-					     remote_addr->svm_port)) अणु
+					     remote_addr->svm_port)) {
 			err = -ENETUNREACH;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		err = vsock_स्वतः_bind(vsk);
-		अगर (err)
-			जाओ out;
+		err = vsock_auto_bind(vsk);
+		if (err)
+			goto out;
 
 		sk->sk_state = TCP_SYN_SENT;
 
 		err = transport->connect(vsk);
-		अगर (err < 0)
-			जाओ out;
+		if (err < 0)
+			goto out;
 
 		/* Mark sock as connecting and set the error code to in
-		 * progress in हाल this is a non-blocking connect.
+		 * progress in case this is a non-blocking connect.
 		 */
 		sock->state = SS_CONNECTING;
 		err = -EINPROGRESS;
-	पूर्ण
+	}
 
 	/* The receive path will handle all communication until we are able to
-	 * enter the connected state.  Here we रुको क्रम the connection to be
-	 * completed or a notअगरication of an error.
+	 * enter the connected state.  Here we wait for the connection to be
+	 * completed or a notification of an error.
 	 */
-	समयout = vsk->connect_समयout;
-	prepare_to_रुको(sk_sleep(sk), &रुको, TASK_INTERRUPTIBLE);
+	timeout = vsk->connect_timeout;
+	prepare_to_wait(sk_sleep(sk), &wait, TASK_INTERRUPTIBLE);
 
-	जबतक (sk->sk_state != TCP_ESTABLISHED && sk->sk_err == 0) अणु
-		अगर (flags & O_NONBLOCK) अणु
-			/* If we're not going to block, we schedule a समयout
-			 * function to generate a समयout on the connection
-			 * attempt, in हाल the peer करोesn't respond in a
-			 * समयly manner. We hold on to the socket until the
-			 * समयout fires.
+	while (sk->sk_state != TCP_ESTABLISHED && sk->sk_err == 0) {
+		if (flags & O_NONBLOCK) {
+			/* If we're not going to block, we schedule a timeout
+			 * function to generate a timeout on the connection
+			 * attempt, in case the peer doesn't respond in a
+			 * timely manner. We hold on to the socket until the
+			 * timeout fires.
 			 */
 			sock_hold(sk);
-			schedule_delayed_work(&vsk->connect_work, समयout);
+			schedule_delayed_work(&vsk->connect_work, timeout);
 
 			/* Skip ahead to preserve error code set above. */
-			जाओ out_रुको;
-		पूर्ण
+			goto out_wait;
+		}
 
 		release_sock(sk);
-		समयout = schedule_समयout(समयout);
+		timeout = schedule_timeout(timeout);
 		lock_sock(sk);
 
-		अगर (संकेत_pending(current)) अणु
-			err = sock_पूर्णांकr_त्रुटि_सं(समयout);
+		if (signal_pending(current)) {
+			err = sock_intr_errno(timeout);
 			sk->sk_state = TCP_CLOSE;
 			sock->state = SS_UNCONNECTED;
 			vsock_transport_cancel_pkt(vsk);
-			जाओ out_रुको;
-		पूर्ण अन्यथा अगर (समयout == 0) अणु
+			goto out_wait;
+		} else if (timeout == 0) {
 			err = -ETIMEDOUT;
 			sk->sk_state = TCP_CLOSE;
 			sock->state = SS_UNCONNECTED;
 			vsock_transport_cancel_pkt(vsk);
-			जाओ out_रुको;
-		पूर्ण
+			goto out_wait;
+		}
 
-		prepare_to_रुको(sk_sleep(sk), &रुको, TASK_INTERRUPTIBLE);
-	पूर्ण
+		prepare_to_wait(sk_sleep(sk), &wait, TASK_INTERRUPTIBLE);
+	}
 
-	अगर (sk->sk_err) अणु
+	if (sk->sk_err) {
 		err = -sk->sk_err;
 		sk->sk_state = TCP_CLOSE;
 		sock->state = SS_UNCONNECTED;
-	पूर्ण अन्यथा अणु
+	} else {
 		err = 0;
-	पूर्ण
+	}
 
-out_रुको:
-	finish_रुको(sk_sleep(sk), &रुको);
+out_wait:
+	finish_wait(sk_sleep(sk), &wait);
 out:
 	release_sock(sk);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक vsock_accept(काष्ठा socket *sock, काष्ठा socket *newsock, पूर्णांक flags,
+static int vsock_accept(struct socket *sock, struct socket *newsock, int flags,
 			bool kern)
-अणु
-	काष्ठा sock *listener;
-	पूर्णांक err;
-	काष्ठा sock *connected;
-	काष्ठा vsock_sock *vconnected;
-	दीर्घ समयout;
-	DEFINE_WAIT(रुको);
+{
+	struct sock *listener;
+	int err;
+	struct sock *connected;
+	struct vsock_sock *vconnected;
+	long timeout;
+	DEFINE_WAIT(wait);
 
 	err = 0;
 	listener = sock->sk;
 
 	lock_sock(listener);
 
-	अगर (sock->type != SOCK_STREAM) अणु
+	if (sock->type != SOCK_STREAM) {
 		err = -EOPNOTSUPP;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (listener->sk_state != TCP_LISTEN) अणु
+	if (listener->sk_state != TCP_LISTEN) {
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Wait क्रम children sockets to appear; these are the new sockets
+	/* Wait for children sockets to appear; these are the new sockets
 	 * created upon connection establishment.
 	 */
-	समयout = sock_rcvसमयo(listener, flags & O_NONBLOCK);
-	prepare_to_रुको(sk_sleep(listener), &रुको, TASK_INTERRUPTIBLE);
+	timeout = sock_rcvtimeo(listener, flags & O_NONBLOCK);
+	prepare_to_wait(sk_sleep(listener), &wait, TASK_INTERRUPTIBLE);
 
-	जबतक ((connected = vsock_dequeue_accept(listener)) == शून्य &&
-	       listener->sk_err == 0) अणु
+	while ((connected = vsock_dequeue_accept(listener)) == NULL &&
+	       listener->sk_err == 0) {
 		release_sock(listener);
-		समयout = schedule_समयout(समयout);
-		finish_रुको(sk_sleep(listener), &रुको);
+		timeout = schedule_timeout(timeout);
+		finish_wait(sk_sleep(listener), &wait);
 		lock_sock(listener);
 
-		अगर (संकेत_pending(current)) अणु
-			err = sock_पूर्णांकr_त्रुटि_सं(समयout);
-			जाओ out;
-		पूर्ण अन्यथा अगर (समयout == 0) अणु
+		if (signal_pending(current)) {
+			err = sock_intr_errno(timeout);
+			goto out;
+		} else if (timeout == 0) {
 			err = -EAGAIN;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		prepare_to_रुको(sk_sleep(listener), &रुको, TASK_INTERRUPTIBLE);
-	पूर्ण
-	finish_रुको(sk_sleep(listener), &रुको);
+		prepare_to_wait(sk_sleep(listener), &wait, TASK_INTERRUPTIBLE);
+	}
+	finish_wait(sk_sleep(listener), &wait);
 
-	अगर (listener->sk_err)
+	if (listener->sk_err)
 		err = -listener->sk_err;
 
-	अगर (connected) अणु
-		sk_acceptq_हटाओd(listener);
+	if (connected) {
+		sk_acceptq_removed(listener);
 
 		lock_sock_nested(connected, SINGLE_DEPTH_NESTING);
 		vconnected = vsock_sk(connected);
 
 		/* If the listener socket has received an error, then we should
-		 * reject this socket and वापस.  Note that we simply mark the
+		 * reject this socket and return.  Note that we simply mark the
 		 * socket rejected, drop our reference, and let the cleanup
 		 * function handle the cleanup; the fact that we found it in
 		 * the listener's accept queue guarantees that the cleanup
 		 * function hasn't run yet.
 		 */
-		अगर (err) अणु
+		if (err) {
 			vconnected->rejected = true;
-		पूर्ण अन्यथा अणु
+		} else {
 			newsock->state = SS_CONNECTED;
 			sock_graft(connected, newsock);
-		पूर्ण
+		}
 
 		release_sock(connected);
 		sock_put(connected);
-	पूर्ण
+	}
 
 out:
 	release_sock(listener);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक vsock_listen(काष्ठा socket *sock, पूर्णांक backlog)
-अणु
-	पूर्णांक err;
-	काष्ठा sock *sk;
-	काष्ठा vsock_sock *vsk;
+static int vsock_listen(struct socket *sock, int backlog)
+{
+	int err;
+	struct sock *sk;
+	struct vsock_sock *vsk;
 
 	sk = sock->sk;
 
 	lock_sock(sk);
 
-	अगर (sock->type != SOCK_STREAM) अणु
+	if (sock->type != SOCK_STREAM) {
 		err = -EOPNOTSUPP;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (sock->state != SS_UNCONNECTED) अणु
+	if (sock->state != SS_UNCONNECTED) {
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	vsk = vsock_sk(sk);
 
-	अगर (!vsock_addr_bound(&vsk->local_addr)) अणु
+	if (!vsock_addr_bound(&vsk->local_addr)) {
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	sk->sk_max_ack_backlog = backlog;
 	sk->sk_state = TCP_LISTEN;
@@ -1516,52 +1515,52 @@ out:
 
 out:
 	release_sock(sk);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम vsock_update_buffer_size(काष्ठा vsock_sock *vsk,
-				     स्थिर काष्ठा vsock_transport *transport,
+static void vsock_update_buffer_size(struct vsock_sock *vsk,
+				     const struct vsock_transport *transport,
 				     u64 val)
-अणु
-	अगर (val > vsk->buffer_max_size)
+{
+	if (val > vsk->buffer_max_size)
 		val = vsk->buffer_max_size;
 
-	अगर (val < vsk->buffer_min_size)
+	if (val < vsk->buffer_min_size)
 		val = vsk->buffer_min_size;
 
-	अगर (val != vsk->buffer_size &&
-	    transport && transport->notअगरy_buffer_size)
-		transport->notअगरy_buffer_size(vsk, &val);
+	if (val != vsk->buffer_size &&
+	    transport && transport->notify_buffer_size)
+		transport->notify_buffer_size(vsk, &val);
 
 	vsk->buffer_size = val;
-पूर्ण
+}
 
-अटल पूर्णांक vsock_stream_setsockopt(काष्ठा socket *sock,
-				   पूर्णांक level,
-				   पूर्णांक optname,
+static int vsock_stream_setsockopt(struct socket *sock,
+				   int level,
+				   int optname,
 				   sockptr_t optval,
-				   अचिन्हित पूर्णांक optlen)
-अणु
-	पूर्णांक err;
-	काष्ठा sock *sk;
-	काष्ठा vsock_sock *vsk;
-	स्थिर काष्ठा vsock_transport *transport;
+				   unsigned int optlen)
+{
+	int err;
+	struct sock *sk;
+	struct vsock_sock *vsk;
+	const struct vsock_transport *transport;
 	u64 val;
 
-	अगर (level != AF_VSOCK)
-		वापस -ENOPROTOOPT;
+	if (level != AF_VSOCK)
+		return -ENOPROTOOPT;
 
-#घोषणा COPY_IN(_v)                                       \
-	करो अणु						  \
-		अगर (optlen < माप(_v)) अणु		  \
+#define COPY_IN(_v)                                       \
+	do {						  \
+		if (optlen < sizeof(_v)) {		  \
 			err = -EINVAL;			  \
-			जाओ निकास;			  \
-		पूर्ण					  \
-		अगर (copy_from_sockptr(&_v, optval, माप(_v)) != 0) अणु	\
+			goto exit;			  \
+		}					  \
+		if (copy_from_sockptr(&_v, optval, sizeof(_v)) != 0) {	\
 			err = -EFAULT;					\
-			जाओ निकास;					\
-		पूर्ण							\
-	पूर्ण जबतक (0)
+			goto exit;					\
+		}							\
+	} while (0)
 
 	err = 0;
 	sk = sock->sk;
@@ -1571,235 +1570,235 @@ out:
 
 	transport = vsk->transport;
 
-	चयन (optname) अणु
-	हाल SO_VM_SOCKETS_BUFFER_SIZE:
+	switch (optname) {
+	case SO_VM_SOCKETS_BUFFER_SIZE:
 		COPY_IN(val);
 		vsock_update_buffer_size(vsk, transport, val);
-		अवरोध;
+		break;
 
-	हाल SO_VM_SOCKETS_BUFFER_MAX_SIZE:
+	case SO_VM_SOCKETS_BUFFER_MAX_SIZE:
 		COPY_IN(val);
 		vsk->buffer_max_size = val;
 		vsock_update_buffer_size(vsk, transport, vsk->buffer_size);
-		अवरोध;
+		break;
 
-	हाल SO_VM_SOCKETS_BUFFER_MIN_SIZE:
+	case SO_VM_SOCKETS_BUFFER_MIN_SIZE:
 		COPY_IN(val);
 		vsk->buffer_min_size = val;
 		vsock_update_buffer_size(vsk, transport, vsk->buffer_size);
-		अवरोध;
+		break;
 
-	हाल SO_VM_SOCKETS_CONNECT_TIMEOUT: अणु
-		काष्ठा __kernel_old_समयval tv;
+	case SO_VM_SOCKETS_CONNECT_TIMEOUT: {
+		struct __kernel_old_timeval tv;
 		COPY_IN(tv);
-		अगर (tv.tv_sec >= 0 && tv.tv_usec < USEC_PER_SEC &&
-		    tv.tv_sec < (MAX_SCHEDULE_TIMEOUT / HZ - 1)) अणु
-			vsk->connect_समयout = tv.tv_sec * HZ +
+		if (tv.tv_sec >= 0 && tv.tv_usec < USEC_PER_SEC &&
+		    tv.tv_sec < (MAX_SCHEDULE_TIMEOUT / HZ - 1)) {
+			vsk->connect_timeout = tv.tv_sec * HZ +
 			    DIV_ROUND_UP(tv.tv_usec, (1000000 / HZ));
-			अगर (vsk->connect_समयout == 0)
-				vsk->connect_समयout =
+			if (vsk->connect_timeout == 0)
+				vsk->connect_timeout =
 				    VSOCK_DEFAULT_CONNECT_TIMEOUT;
 
-		पूर्ण अन्यथा अणु
-			err = -दुस्फल;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+		} else {
+			err = -ERANGE;
+		}
+		break;
+	}
 
-	शेष:
+	default:
 		err = -ENOPROTOOPT;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-#अघोषित COPY_IN
+#undef COPY_IN
 
-निकास:
+exit:
 	release_sock(sk);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक vsock_stream_माला_लोockopt(काष्ठा socket *sock,
-				   पूर्णांक level, पूर्णांक optname,
-				   अक्षर __user *optval,
-				   पूर्णांक __user *optlen)
-अणु
-	पूर्णांक err;
-	पूर्णांक len;
-	काष्ठा sock *sk;
-	काष्ठा vsock_sock *vsk;
+static int vsock_stream_getsockopt(struct socket *sock,
+				   int level, int optname,
+				   char __user *optval,
+				   int __user *optlen)
+{
+	int err;
+	int len;
+	struct sock *sk;
+	struct vsock_sock *vsk;
 	u64 val;
 
-	अगर (level != AF_VSOCK)
-		वापस -ENOPROTOOPT;
+	if (level != AF_VSOCK)
+		return -ENOPROTOOPT;
 
 	err = get_user(len, optlen);
-	अगर (err != 0)
-		वापस err;
+	if (err != 0)
+		return err;
 
-#घोषणा COPY_OUT(_v)                            \
-	करो अणु					\
-		अगर (len < माप(_v))		\
-			वापस -EINVAL;		\
+#define COPY_OUT(_v)                            \
+	do {					\
+		if (len < sizeof(_v))		\
+			return -EINVAL;		\
 						\
-		len = माप(_v);		\
-		अगर (copy_to_user(optval, &_v, len) != 0)	\
-			वापस -EFAULT;				\
+		len = sizeof(_v);		\
+		if (copy_to_user(optval, &_v, len) != 0)	\
+			return -EFAULT;				\
 								\
-	पूर्ण जबतक (0)
+	} while (0)
 
 	err = 0;
 	sk = sock->sk;
 	vsk = vsock_sk(sk);
 
-	चयन (optname) अणु
-	हाल SO_VM_SOCKETS_BUFFER_SIZE:
+	switch (optname) {
+	case SO_VM_SOCKETS_BUFFER_SIZE:
 		val = vsk->buffer_size;
 		COPY_OUT(val);
-		अवरोध;
+		break;
 
-	हाल SO_VM_SOCKETS_BUFFER_MAX_SIZE:
+	case SO_VM_SOCKETS_BUFFER_MAX_SIZE:
 		val = vsk->buffer_max_size;
 		COPY_OUT(val);
-		अवरोध;
+		break;
 
-	हाल SO_VM_SOCKETS_BUFFER_MIN_SIZE:
+	case SO_VM_SOCKETS_BUFFER_MIN_SIZE:
 		val = vsk->buffer_min_size;
 		COPY_OUT(val);
-		अवरोध;
+		break;
 
-	हाल SO_VM_SOCKETS_CONNECT_TIMEOUT: अणु
-		काष्ठा __kernel_old_समयval tv;
-		tv.tv_sec = vsk->connect_समयout / HZ;
+	case SO_VM_SOCKETS_CONNECT_TIMEOUT: {
+		struct __kernel_old_timeval tv;
+		tv.tv_sec = vsk->connect_timeout / HZ;
 		tv.tv_usec =
-		    (vsk->connect_समयout -
+		    (vsk->connect_timeout -
 		     tv.tv_sec * HZ) * (1000000 / HZ);
 		COPY_OUT(tv);
-		अवरोध;
-	पूर्ण
-	शेष:
-		वापस -ENOPROTOOPT;
-	पूर्ण
+		break;
+	}
+	default:
+		return -ENOPROTOOPT;
+	}
 
 	err = put_user(len, optlen);
-	अगर (err != 0)
-		वापस -EFAULT;
+	if (err != 0)
+		return -EFAULT;
 
-#अघोषित COPY_OUT
+#undef COPY_OUT
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vsock_stream_sendmsg(काष्ठा socket *sock, काष्ठा msghdr *msg,
-				माप_प्रकार len)
-अणु
-	काष्ठा sock *sk;
-	काष्ठा vsock_sock *vsk;
-	स्थिर काष्ठा vsock_transport *transport;
-	sमाप_प्रकार total_written;
-	दीर्घ समयout;
-	पूर्णांक err;
-	काष्ठा vsock_transport_send_notअगरy_data send_data;
-	DEFINE_WAIT_FUNC(रुको, woken_wake_function);
+static int vsock_stream_sendmsg(struct socket *sock, struct msghdr *msg,
+				size_t len)
+{
+	struct sock *sk;
+	struct vsock_sock *vsk;
+	const struct vsock_transport *transport;
+	ssize_t total_written;
+	long timeout;
+	int err;
+	struct vsock_transport_send_notify_data send_data;
+	DEFINE_WAIT_FUNC(wait, woken_wake_function);
 
 	sk = sock->sk;
 	vsk = vsock_sk(sk);
 	total_written = 0;
 	err = 0;
 
-	अगर (msg->msg_flags & MSG_OOB)
-		वापस -EOPNOTSUPP;
+	if (msg->msg_flags & MSG_OOB)
+		return -EOPNOTSUPP;
 
 	lock_sock(sk);
 
 	transport = vsk->transport;
 
 	/* Callers should not provide a destination with stream sockets. */
-	अगर (msg->msg_namelen) अणु
+	if (msg->msg_namelen) {
 		err = sk->sk_state == TCP_ESTABLISHED ? -EISCONN : -EOPNOTSUPP;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Send data only अगर both sides are not shutकरोwn in the direction. */
-	अगर (sk->sk_shutकरोwn & SEND_SHUTDOWN ||
-	    vsk->peer_shutकरोwn & RCV_SHUTDOWN) अणु
+	/* Send data only if both sides are not shutdown in the direction. */
+	if (sk->sk_shutdown & SEND_SHUTDOWN ||
+	    vsk->peer_shutdown & RCV_SHUTDOWN) {
 		err = -EPIPE;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!transport || sk->sk_state != TCP_ESTABLISHED ||
-	    !vsock_addr_bound(&vsk->local_addr)) अणु
+	if (!transport || sk->sk_state != TCP_ESTABLISHED ||
+	    !vsock_addr_bound(&vsk->local_addr)) {
 		err = -ENOTCONN;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!vsock_addr_bound(&vsk->remote_addr)) अणु
+	if (!vsock_addr_bound(&vsk->remote_addr)) {
 		err = -EDESTADDRREQ;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Wait क्रम room in the produce queue to enqueue our user's data. */
-	समयout = sock_sndसमयo(sk, msg->msg_flags & MSG_DONTWAIT);
+	/* Wait for room in the produce queue to enqueue our user's data. */
+	timeout = sock_sndtimeo(sk, msg->msg_flags & MSG_DONTWAIT);
 
-	err = transport->notअगरy_send_init(vsk, &send_data);
-	अगर (err < 0)
-		जाओ out;
+	err = transport->notify_send_init(vsk, &send_data);
+	if (err < 0)
+		goto out;
 
-	जबतक (total_written < len) अणु
-		sमाप_प्रकार written;
+	while (total_written < len) {
+		ssize_t written;
 
-		add_रुको_queue(sk_sleep(sk), &रुको);
-		जबतक (vsock_stream_has_space(vsk) == 0 &&
+		add_wait_queue(sk_sleep(sk), &wait);
+		while (vsock_stream_has_space(vsk) == 0 &&
 		       sk->sk_err == 0 &&
-		       !(sk->sk_shutकरोwn & SEND_SHUTDOWN) &&
-		       !(vsk->peer_shutकरोwn & RCV_SHUTDOWN)) अणु
+		       !(sk->sk_shutdown & SEND_SHUTDOWN) &&
+		       !(vsk->peer_shutdown & RCV_SHUTDOWN)) {
 
-			/* Don't रुको क्रम non-blocking sockets. */
-			अगर (समयout == 0) अणु
+			/* Don't wait for non-blocking sockets. */
+			if (timeout == 0) {
 				err = -EAGAIN;
-				हटाओ_रुको_queue(sk_sleep(sk), &रुको);
-				जाओ out_err;
-			पूर्ण
+				remove_wait_queue(sk_sleep(sk), &wait);
+				goto out_err;
+			}
 
-			err = transport->notअगरy_send_pre_block(vsk, &send_data);
-			अगर (err < 0) अणु
-				हटाओ_रुको_queue(sk_sleep(sk), &रुको);
-				जाओ out_err;
-			पूर्ण
+			err = transport->notify_send_pre_block(vsk, &send_data);
+			if (err < 0) {
+				remove_wait_queue(sk_sleep(sk), &wait);
+				goto out_err;
+			}
 
 			release_sock(sk);
-			समयout = रुको_woken(&रुको, TASK_INTERRUPTIBLE, समयout);
+			timeout = wait_woken(&wait, TASK_INTERRUPTIBLE, timeout);
 			lock_sock(sk);
-			अगर (संकेत_pending(current)) अणु
-				err = sock_पूर्णांकr_त्रुटि_सं(समयout);
-				हटाओ_रुको_queue(sk_sleep(sk), &रुको);
-				जाओ out_err;
-			पूर्ण अन्यथा अगर (समयout == 0) अणु
+			if (signal_pending(current)) {
+				err = sock_intr_errno(timeout);
+				remove_wait_queue(sk_sleep(sk), &wait);
+				goto out_err;
+			} else if (timeout == 0) {
 				err = -EAGAIN;
-				हटाओ_रुको_queue(sk_sleep(sk), &रुको);
-				जाओ out_err;
-			पूर्ण
-		पूर्ण
-		हटाओ_रुको_queue(sk_sleep(sk), &रुको);
+				remove_wait_queue(sk_sleep(sk), &wait);
+				goto out_err;
+			}
+		}
+		remove_wait_queue(sk_sleep(sk), &wait);
 
 		/* These checks occur both as part of and after the loop
-		 * conditional since we need to check beक्रमe and after
+		 * conditional since we need to check before and after
 		 * sleeping.
 		 */
-		अगर (sk->sk_err) अणु
+		if (sk->sk_err) {
 			err = -sk->sk_err;
-			जाओ out_err;
-		पूर्ण अन्यथा अगर ((sk->sk_shutकरोwn & SEND_SHUTDOWN) ||
-			   (vsk->peer_shutकरोwn & RCV_SHUTDOWN)) अणु
+			goto out_err;
+		} else if ((sk->sk_shutdown & SEND_SHUTDOWN) ||
+			   (vsk->peer_shutdown & RCV_SHUTDOWN)) {
 			err = -EPIPE;
-			जाओ out_err;
-		पूर्ण
+			goto out_err;
+		}
 
-		err = transport->notअगरy_send_pre_enqueue(vsk, &send_data);
-		अगर (err < 0)
-			जाओ out_err;
+		err = transport->notify_send_pre_enqueue(vsk, &send_data);
+		if (err < 0)
+			goto out_err;
 
-		/* Note that enqueue will only ग_लिखो as many bytes as are मुक्त
-		 * in the produce queue, so we करोn't need to ensure len is
+		/* Note that enqueue will only write as many bytes as are free
+		 * in the produce queue, so we don't need to ensure len is
 		 * smaller than the queue size.  It is the caller's
 		 * responsibility to check how many bytes we were able to send.
 		 */
@@ -1807,43 +1806,43 @@ out:
 		written = transport->stream_enqueue(
 				vsk, msg,
 				len - total_written);
-		अगर (written < 0) अणु
+		if (written < 0) {
 			err = -ENOMEM;
-			जाओ out_err;
-		पूर्ण
+			goto out_err;
+		}
 
 		total_written += written;
 
-		err = transport->notअगरy_send_post_enqueue(
+		err = transport->notify_send_post_enqueue(
 				vsk, written, &send_data);
-		अगर (err < 0)
-			जाओ out_err;
+		if (err < 0)
+			goto out_err;
 
-	पूर्ण
+	}
 
 out_err:
-	अगर (total_written > 0)
+	if (total_written > 0)
 		err = total_written;
 out:
 	release_sock(sk);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 
-अटल पूर्णांक
-vsock_stream_recvmsg(काष्ठा socket *sock, काष्ठा msghdr *msg, माप_प्रकार len,
-		     पूर्णांक flags)
-अणु
-	काष्ठा sock *sk;
-	काष्ठा vsock_sock *vsk;
-	स्थिर काष्ठा vsock_transport *transport;
-	पूर्णांक err;
-	माप_प्रकार target;
-	sमाप_प्रकार copied;
-	दीर्घ समयout;
-	काष्ठा vsock_transport_recv_notअगरy_data recv_data;
+static int
+vsock_stream_recvmsg(struct socket *sock, struct msghdr *msg, size_t len,
+		     int flags)
+{
+	struct sock *sk;
+	struct vsock_sock *vsk;
+	const struct vsock_transport *transport;
+	int err;
+	size_t target;
+	ssize_t copied;
+	long timeout;
+	struct vsock_transport_recv_notify_data recv_data;
 
-	DEFINE_WAIT(रुको);
+	DEFINE_WAIT(wait);
 
 	sk = sock->sk;
 	vsk = vsock_sk(sk);
@@ -1853,157 +1852,157 @@ vsock_stream_recvmsg(काष्ठा socket *sock, काष्ठा msghdr 
 
 	transport = vsk->transport;
 
-	अगर (!transport || sk->sk_state != TCP_ESTABLISHED) अणु
-		/* Recvmsg is supposed to वापस 0 अगर a peer perक्रमms an
-		 * orderly shutकरोwn. Dअगरferentiate between that हाल and when a
-		 * peer has not connected or a local shutकरोwn occurred with the
+	if (!transport || sk->sk_state != TCP_ESTABLISHED) {
+		/* Recvmsg is supposed to return 0 if a peer performs an
+		 * orderly shutdown. Differentiate between that case and when a
+		 * peer has not connected or a local shutdown occurred with the
 		 * SOCK_DONE flag.
 		 */
-		अगर (sock_flag(sk, SOCK_DONE))
+		if (sock_flag(sk, SOCK_DONE))
 			err = 0;
-		अन्यथा
+		else
 			err = -ENOTCONN;
 
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (flags & MSG_OOB) अणु
+	if (flags & MSG_OOB) {
 		err = -EOPNOTSUPP;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* We करोn't check peer_shutकरोwn flag here since peer may actually shut
-	 * करोwn, but there can be data in the queue that a local socket can
+	/* We don't check peer_shutdown flag here since peer may actually shut
+	 * down, but there can be data in the queue that a local socket can
 	 * receive.
 	 */
-	अगर (sk->sk_shutकरोwn & RCV_SHUTDOWN) अणु
+	if (sk->sk_shutdown & RCV_SHUTDOWN) {
 		err = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* It is valid on Linux to pass in a zero-length receive buffer.  This
 	 * is not an error.  We may as well bail out now.
 	 */
-	अगर (!len) अणु
+	if (!len) {
 		err = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* We must not copy less than target bytes पूर्णांकo the user's buffer
-	 * beक्रमe वापसing successfully, so we रुको क्रम the consume queue to
-	 * have that much data to consume beक्रमe dequeueing.  Note that this
-	 * makes it impossible to handle हालs where target is greater than the
+	/* We must not copy less than target bytes into the user's buffer
+	 * before returning successfully, so we wait for the consume queue to
+	 * have that much data to consume before dequeueing.  Note that this
+	 * makes it impossible to handle cases where target is greater than the
 	 * queue size.
 	 */
 	target = sock_rcvlowat(sk, flags & MSG_WAITALL, len);
-	अगर (target >= transport->stream_rcvhiwat(vsk)) अणु
+	if (target >= transport->stream_rcvhiwat(vsk)) {
 		err = -ENOMEM;
-		जाओ out;
-	पूर्ण
-	समयout = sock_rcvसमयo(sk, flags & MSG_DONTWAIT);
+		goto out;
+	}
+	timeout = sock_rcvtimeo(sk, flags & MSG_DONTWAIT);
 	copied = 0;
 
-	err = transport->notअगरy_recv_init(vsk, target, &recv_data);
-	अगर (err < 0)
-		जाओ out;
+	err = transport->notify_recv_init(vsk, target, &recv_data);
+	if (err < 0)
+		goto out;
 
 
-	जबतक (1) अणु
-		s64 पढ़ोy;
+	while (1) {
+		s64 ready;
 
-		prepare_to_रुको(sk_sleep(sk), &रुको, TASK_INTERRUPTIBLE);
-		पढ़ोy = vsock_stream_has_data(vsk);
+		prepare_to_wait(sk_sleep(sk), &wait, TASK_INTERRUPTIBLE);
+		ready = vsock_stream_has_data(vsk);
 
-		अगर (पढ़ोy == 0) अणु
-			अगर (sk->sk_err != 0 ||
-			    (sk->sk_shutकरोwn & RCV_SHUTDOWN) ||
-			    (vsk->peer_shutकरोwn & SEND_SHUTDOWN)) अणु
-				finish_रुको(sk_sleep(sk), &रुको);
-				अवरोध;
-			पूर्ण
-			/* Don't रुको क्रम non-blocking sockets. */
-			अगर (समयout == 0) अणु
+		if (ready == 0) {
+			if (sk->sk_err != 0 ||
+			    (sk->sk_shutdown & RCV_SHUTDOWN) ||
+			    (vsk->peer_shutdown & SEND_SHUTDOWN)) {
+				finish_wait(sk_sleep(sk), &wait);
+				break;
+			}
+			/* Don't wait for non-blocking sockets. */
+			if (timeout == 0) {
 				err = -EAGAIN;
-				finish_रुको(sk_sleep(sk), &रुको);
-				अवरोध;
-			पूर्ण
+				finish_wait(sk_sleep(sk), &wait);
+				break;
+			}
 
-			err = transport->notअगरy_recv_pre_block(
+			err = transport->notify_recv_pre_block(
 					vsk, target, &recv_data);
-			अगर (err < 0) अणु
-				finish_रुको(sk_sleep(sk), &रुको);
-				अवरोध;
-			पूर्ण
+			if (err < 0) {
+				finish_wait(sk_sleep(sk), &wait);
+				break;
+			}
 			release_sock(sk);
-			समयout = schedule_समयout(समयout);
+			timeout = schedule_timeout(timeout);
 			lock_sock(sk);
 
-			अगर (संकेत_pending(current)) अणु
-				err = sock_पूर्णांकr_त्रुटि_सं(समयout);
-				finish_रुको(sk_sleep(sk), &रुको);
-				अवरोध;
-			पूर्ण अन्यथा अगर (समयout == 0) अणु
+			if (signal_pending(current)) {
+				err = sock_intr_errno(timeout);
+				finish_wait(sk_sleep(sk), &wait);
+				break;
+			} else if (timeout == 0) {
 				err = -EAGAIN;
-				finish_रुको(sk_sleep(sk), &रुको);
-				अवरोध;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			sमाप_प्रकार पढ़ो;
+				finish_wait(sk_sleep(sk), &wait);
+				break;
+			}
+		} else {
+			ssize_t read;
 
-			finish_रुको(sk_sleep(sk), &रुको);
+			finish_wait(sk_sleep(sk), &wait);
 
-			अगर (पढ़ोy < 0) अणु
+			if (ready < 0) {
 				/* Invalid queue pair content. XXX This should
 				* be changed to a connection reset in a later
 				* change.
 				*/
 
 				err = -ENOMEM;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
-			err = transport->notअगरy_recv_pre_dequeue(
+			err = transport->notify_recv_pre_dequeue(
 					vsk, target, &recv_data);
-			अगर (err < 0)
-				अवरोध;
+			if (err < 0)
+				break;
 
-			पढ़ो = transport->stream_dequeue(
+			read = transport->stream_dequeue(
 					vsk, msg,
 					len - copied, flags);
-			अगर (पढ़ो < 0) अणु
+			if (read < 0) {
 				err = -ENOMEM;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			copied += पढ़ो;
+			copied += read;
 
-			err = transport->notअगरy_recv_post_dequeue(
-					vsk, target, पढ़ो,
+			err = transport->notify_recv_post_dequeue(
+					vsk, target, read,
 					!(flags & MSG_PEEK), &recv_data);
-			अगर (err < 0)
-				जाओ out;
+			if (err < 0)
+				goto out;
 
-			अगर (पढ़ो >= target || flags & MSG_PEEK)
-				अवरोध;
+			if (read >= target || flags & MSG_PEEK)
+				break;
 
-			target -= पढ़ो;
-		पूर्ण
-	पूर्ण
+			target -= read;
+		}
+	}
 
-	अगर (sk->sk_err)
+	if (sk->sk_err)
 		err = -sk->sk_err;
-	अन्यथा अगर (sk->sk_shutकरोwn & RCV_SHUTDOWN)
+	else if (sk->sk_shutdown & RCV_SHUTDOWN)
 		err = 0;
 
-	अगर (copied > 0)
+	if (copied > 0)
 		err = copied;
 
 out:
 	release_sock(sk);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल स्थिर काष्ठा proto_ops vsock_stream_ops = अणु
+static const struct proto_ops vsock_stream_ops = {
 	.family = PF_VSOCK,
 	.owner = THIS_MODULE,
 	.release = vsock_release,
@@ -2015,216 +2014,216 @@ out:
 	.poll = vsock_poll,
 	.ioctl = sock_no_ioctl,
 	.listen = vsock_listen,
-	.shutकरोwn = vsock_shutकरोwn,
+	.shutdown = vsock_shutdown,
 	.setsockopt = vsock_stream_setsockopt,
-	.माला_लोockopt = vsock_stream_माला_लोockopt,
+	.getsockopt = vsock_stream_getsockopt,
 	.sendmsg = vsock_stream_sendmsg,
 	.recvmsg = vsock_stream_recvmsg,
 	.mmap = sock_no_mmap,
 	.sendpage = sock_no_sendpage,
-पूर्ण;
+};
 
-अटल पूर्णांक vsock_create(काष्ठा net *net, काष्ठा socket *sock,
-			पूर्णांक protocol, पूर्णांक kern)
-अणु
-	काष्ठा vsock_sock *vsk;
-	काष्ठा sock *sk;
-	पूर्णांक ret;
+static int vsock_create(struct net *net, struct socket *sock,
+			int protocol, int kern)
+{
+	struct vsock_sock *vsk;
+	struct sock *sk;
+	int ret;
 
-	अगर (!sock)
-		वापस -EINVAL;
+	if (!sock)
+		return -EINVAL;
 
-	अगर (protocol && protocol != PF_VSOCK)
-		वापस -EPROTONOSUPPORT;
+	if (protocol && protocol != PF_VSOCK)
+		return -EPROTONOSUPPORT;
 
-	चयन (sock->type) अणु
-	हाल SOCK_DGRAM:
+	switch (sock->type) {
+	case SOCK_DGRAM:
 		sock->ops = &vsock_dgram_ops;
-		अवरोध;
-	हाल SOCK_STREAM:
+		break;
+	case SOCK_STREAM:
 		sock->ops = &vsock_stream_ops;
-		अवरोध;
-	शेष:
-		वापस -ESOCKTNOSUPPORT;
-	पूर्ण
+		break;
+	default:
+		return -ESOCKTNOSUPPORT;
+	}
 
 	sock->state = SS_UNCONNECTED;
 
-	sk = __vsock_create(net, sock, शून्य, GFP_KERNEL, 0, kern);
-	अगर (!sk)
-		वापस -ENOMEM;
+	sk = __vsock_create(net, sock, NULL, GFP_KERNEL, 0, kern);
+	if (!sk)
+		return -ENOMEM;
 
 	vsk = vsock_sk(sk);
 
-	अगर (sock->type == SOCK_DGRAM) अणु
-		ret = vsock_assign_transport(vsk, शून्य);
-		अगर (ret < 0) अणु
+	if (sock->type == SOCK_DGRAM) {
+		ret = vsock_assign_transport(vsk, NULL);
+		if (ret < 0) {
 			sock_put(sk);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
 	vsock_insert_unbound(vsk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा net_proto_family vsock_family_ops = अणु
+static const struct net_proto_family vsock_family_ops = {
 	.family = AF_VSOCK,
 	.create = vsock_create,
 	.owner = THIS_MODULE,
-पूर्ण;
+};
 
-अटल दीर्घ vsock_dev_करो_ioctl(काष्ठा file *filp,
-			       अचिन्हित पूर्णांक cmd, व्योम __user *ptr)
-अणु
+static long vsock_dev_do_ioctl(struct file *filp,
+			       unsigned int cmd, void __user *ptr)
+{
 	u32 __user *p = ptr;
 	u32 cid = VMADDR_CID_ANY;
-	पूर्णांक retval = 0;
+	int retval = 0;
 
-	चयन (cmd) अणु
-	हाल IOCTL_VM_SOCKETS_GET_LOCAL_CID:
+	switch (cmd) {
+	case IOCTL_VM_SOCKETS_GET_LOCAL_CID:
 		/* To be compatible with the VMCI behavior, we prioritize the
 		 * guest CID instead of well-know host CID (VMADDR_CID_HOST).
 		 */
-		अगर (transport_g2h)
+		if (transport_g2h)
 			cid = transport_g2h->get_local_cid();
-		अन्यथा अगर (transport_h2g)
+		else if (transport_h2g)
 			cid = transport_h2g->get_local_cid();
 
-		अगर (put_user(cid, p) != 0)
+		if (put_user(cid, p) != 0)
 			retval = -EFAULT;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		retval = -ENOIOCTLCMD;
-	पूर्ण
+	}
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल दीर्घ vsock_dev_ioctl(काष्ठा file *filp,
-			    अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	वापस vsock_dev_करो_ioctl(filp, cmd, (व्योम __user *)arg);
-पूर्ण
+static long vsock_dev_ioctl(struct file *filp,
+			    unsigned int cmd, unsigned long arg)
+{
+	return vsock_dev_do_ioctl(filp, cmd, (void __user *)arg);
+}
 
-#अगर_घोषित CONFIG_COMPAT
-अटल दीर्घ vsock_dev_compat_ioctl(काष्ठा file *filp,
-				   अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	वापस vsock_dev_करो_ioctl(filp, cmd, compat_ptr(arg));
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_COMPAT
+static long vsock_dev_compat_ioctl(struct file *filp,
+				   unsigned int cmd, unsigned long arg)
+{
+	return vsock_dev_do_ioctl(filp, cmd, compat_ptr(arg));
+}
+#endif
 
-अटल स्थिर काष्ठा file_operations vsock_device_ops = अणु
+static const struct file_operations vsock_device_ops = {
 	.owner		= THIS_MODULE,
 	.unlocked_ioctl	= vsock_dev_ioctl,
-#अगर_घोषित CONFIG_COMPAT
+#ifdef CONFIG_COMPAT
 	.compat_ioctl	= vsock_dev_compat_ioctl,
-#पूर्ण_अगर
-	.खोलो		= nonseekable_खोलो,
-पूर्ण;
+#endif
+	.open		= nonseekable_open,
+};
 
-अटल काष्ठा miscdevice vsock_device = अणु
+static struct miscdevice vsock_device = {
 	.name		= "vsock",
 	.fops		= &vsock_device_ops,
-पूर्ण;
+};
 
-अटल पूर्णांक __init vsock_init(व्योम)
-अणु
-	पूर्णांक err = 0;
+static int __init vsock_init(void)
+{
+	int err = 0;
 
 	vsock_init_tables();
 
 	vsock_proto.owner = THIS_MODULE;
 	vsock_device.minor = MISC_DYNAMIC_MINOR;
-	err = misc_रेजिस्टर(&vsock_device);
-	अगर (err) अणु
+	err = misc_register(&vsock_device);
+	if (err) {
 		pr_err("Failed to register misc device\n");
-		जाओ err_reset_transport;
-	पूर्ण
+		goto err_reset_transport;
+	}
 
-	err = proto_रेजिस्टर(&vsock_proto, 1);	/* we want our slab */
-	अगर (err) अणु
+	err = proto_register(&vsock_proto, 1);	/* we want our slab */
+	if (err) {
 		pr_err("Cannot register vsock protocol\n");
-		जाओ err_deरेजिस्टर_misc;
-	पूर्ण
+		goto err_deregister_misc;
+	}
 
-	err = sock_रेजिस्टर(&vsock_family_ops);
-	अगर (err) अणु
+	err = sock_register(&vsock_family_ops);
+	if (err) {
 		pr_err("could not register af_vsock (%d) address family: %d\n",
 		       AF_VSOCK, err);
-		जाओ err_unरेजिस्टर_proto;
-	पूर्ण
+		goto err_unregister_proto;
+	}
 
-	वापस 0;
+	return 0;
 
-err_unरेजिस्टर_proto:
-	proto_unरेजिस्टर(&vsock_proto);
-err_deरेजिस्टर_misc:
-	misc_deरेजिस्टर(&vsock_device);
+err_unregister_proto:
+	proto_unregister(&vsock_proto);
+err_deregister_misc:
+	misc_deregister(&vsock_device);
 err_reset_transport:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम __निकास vsock_निकास(व्योम)
-अणु
-	misc_deरेजिस्टर(&vsock_device);
-	sock_unरेजिस्टर(AF_VSOCK);
-	proto_unरेजिस्टर(&vsock_proto);
-पूर्ण
+static void __exit vsock_exit(void)
+{
+	misc_deregister(&vsock_device);
+	sock_unregister(AF_VSOCK);
+	proto_unregister(&vsock_proto);
+}
 
-स्थिर काष्ठा vsock_transport *vsock_core_get_transport(काष्ठा vsock_sock *vsk)
-अणु
-	वापस vsk->transport;
-पूर्ण
+const struct vsock_transport *vsock_core_get_transport(struct vsock_sock *vsk)
+{
+	return vsk->transport;
+}
 EXPORT_SYMBOL_GPL(vsock_core_get_transport);
 
-पूर्णांक vsock_core_रेजिस्टर(स्थिर काष्ठा vsock_transport *t, पूर्णांक features)
-अणु
-	स्थिर काष्ठा vsock_transport *t_h2g, *t_g2h, *t_dgram, *t_local;
-	पूर्णांक err = mutex_lock_पूर्णांकerruptible(&vsock_रेजिस्टर_mutex);
+int vsock_core_register(const struct vsock_transport *t, int features)
+{
+	const struct vsock_transport *t_h2g, *t_g2h, *t_dgram, *t_local;
+	int err = mutex_lock_interruptible(&vsock_register_mutex);
 
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	t_h2g = transport_h2g;
 	t_g2h = transport_g2h;
 	t_dgram = transport_dgram;
 	t_local = transport_local;
 
-	अगर (features & VSOCK_TRANSPORT_F_H2G) अणु
-		अगर (t_h2g) अणु
+	if (features & VSOCK_TRANSPORT_F_H2G) {
+		if (t_h2g) {
 			err = -EBUSY;
-			जाओ err_busy;
-		पूर्ण
+			goto err_busy;
+		}
 		t_h2g = t;
-	पूर्ण
+	}
 
-	अगर (features & VSOCK_TRANSPORT_F_G2H) अणु
-		अगर (t_g2h) अणु
+	if (features & VSOCK_TRANSPORT_F_G2H) {
+		if (t_g2h) {
 			err = -EBUSY;
-			जाओ err_busy;
-		पूर्ण
+			goto err_busy;
+		}
 		t_g2h = t;
-	पूर्ण
+	}
 
-	अगर (features & VSOCK_TRANSPORT_F_DGRAM) अणु
-		अगर (t_dgram) अणु
+	if (features & VSOCK_TRANSPORT_F_DGRAM) {
+		if (t_dgram) {
 			err = -EBUSY;
-			जाओ err_busy;
-		पूर्ण
+			goto err_busy;
+		}
 		t_dgram = t;
-	पूर्ण
+	}
 
-	अगर (features & VSOCK_TRANSPORT_F_LOCAL) अणु
-		अगर (t_local) अणु
+	if (features & VSOCK_TRANSPORT_F_LOCAL) {
+		if (t_local) {
 			err = -EBUSY;
-			जाओ err_busy;
-		पूर्ण
+			goto err_busy;
+		}
 		t_local = t;
-	पूर्ण
+	}
 
 	transport_h2g = t_h2g;
 	transport_g2h = t_g2h;
@@ -2232,33 +2231,33 @@ EXPORT_SYMBOL_GPL(vsock_core_get_transport);
 	transport_local = t_local;
 
 err_busy:
-	mutex_unlock(&vsock_रेजिस्टर_mutex);
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL_GPL(vsock_core_रेजिस्टर);
+	mutex_unlock(&vsock_register_mutex);
+	return err;
+}
+EXPORT_SYMBOL_GPL(vsock_core_register);
 
-व्योम vsock_core_unरेजिस्टर(स्थिर काष्ठा vsock_transport *t)
-अणु
-	mutex_lock(&vsock_रेजिस्टर_mutex);
+void vsock_core_unregister(const struct vsock_transport *t)
+{
+	mutex_lock(&vsock_register_mutex);
 
-	अगर (transport_h2g == t)
-		transport_h2g = शून्य;
+	if (transport_h2g == t)
+		transport_h2g = NULL;
 
-	अगर (transport_g2h == t)
-		transport_g2h = शून्य;
+	if (transport_g2h == t)
+		transport_g2h = NULL;
 
-	अगर (transport_dgram == t)
-		transport_dgram = शून्य;
+	if (transport_dgram == t)
+		transport_dgram = NULL;
 
-	अगर (transport_local == t)
-		transport_local = शून्य;
+	if (transport_local == t)
+		transport_local = NULL;
 
-	mutex_unlock(&vsock_रेजिस्टर_mutex);
-पूर्ण
-EXPORT_SYMBOL_GPL(vsock_core_unरेजिस्टर);
+	mutex_unlock(&vsock_register_mutex);
+}
+EXPORT_SYMBOL_GPL(vsock_core_unregister);
 
 module_init(vsock_init);
-module_निकास(vsock_निकास);
+module_exit(vsock_exit);
 
 MODULE_AUTHOR("VMware, Inc.");
 MODULE_DESCRIPTION("VMware Virtual Socket Family");

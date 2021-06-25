@@ -1,159 +1,158 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2020 Facebook */
 
-#समावेश "vmlinux.h"
-#समावेश <bpf/bpf_helpers.h>
-#समावेश <bpf/bpf_tracing.h>
-#समावेश <bpf/bpf_core_पढ़ो.h>
+#include "vmlinux.h"
+#include <bpf/bpf_helpers.h>
+#include <bpf/bpf_tracing.h>
+#include <bpf/bpf_core_read.h>
 
-#घोषणा MAX_LEN 256
+#define MAX_LEN 256
 
-अक्षर buf_in1[MAX_LEN] = अणुपूर्ण;
-अक्षर buf_in2[MAX_LEN] = अणुपूर्ण;
+char buf_in1[MAX_LEN] = {};
+char buf_in2[MAX_LEN] = {};
 
-पूर्णांक test_pid = 0;
+int test_pid = 0;
 bool capture = false;
 
 /* .bss */
 __u64 payload1_len1 = 0;
 __u64 payload1_len2 = 0;
 __u64 total1 = 0;
-अक्षर payload1[MAX_LEN + MAX_LEN] = अणुपूर्ण;
+char payload1[MAX_LEN + MAX_LEN] = {};
 
 /* .data */
-पूर्णांक payload2_len1 = -1;
-पूर्णांक payload2_len2 = -1;
-पूर्णांक total2 = -1;
-अक्षर payload2[MAX_LEN + MAX_LEN] = अणु 1 पूर्ण;
+int payload2_len1 = -1;
+int payload2_len2 = -1;
+int total2 = -1;
+char payload2[MAX_LEN + MAX_LEN] = { 1 };
 
-पूर्णांक payload3_len1 = -1;
-पूर्णांक payload3_len2 = -1;
-पूर्णांक total3= -1;
-अक्षर payload3[MAX_LEN + MAX_LEN] = अणु 1 पूर्ण;
+int payload3_len1 = -1;
+int payload3_len2 = -1;
+int total3= -1;
+char payload3[MAX_LEN + MAX_LEN] = { 1 };
 
-पूर्णांक payload4_len1 = -1;
-पूर्णांक payload4_len2 = -1;
-पूर्णांक total4= -1;
-अक्षर payload4[MAX_LEN + MAX_LEN] = अणु 1 पूर्ण;
+int payload4_len1 = -1;
+int payload4_len2 = -1;
+int total4= -1;
+char payload4[MAX_LEN + MAX_LEN] = { 1 };
 
 SEC("raw_tp/sys_enter")
-पूर्णांक handler64_अचिन्हित(व्योम *regs)
-अणु
-	पूर्णांक pid = bpf_get_current_pid_tgid() >> 32;
-	व्योम *payload = payload1;
+int handler64_unsigned(void *regs)
+{
+	int pid = bpf_get_current_pid_tgid() >> 32;
+	void *payload = payload1;
 	u64 len;
 
 	/* ignore irrelevant invocations */
-	अगर (test_pid != pid || !capture)
-		वापस 0;
+	if (test_pid != pid || !capture)
+		return 0;
 
-	len = bpf_probe_पढ़ो_kernel_str(payload, MAX_LEN, &buf_in1[0]);
-	अगर (len <= MAX_LEN) अणु
+	len = bpf_probe_read_kernel_str(payload, MAX_LEN, &buf_in1[0]);
+	if (len <= MAX_LEN) {
 		payload += len;
 		payload1_len1 = len;
-	पूर्ण
+	}
 
-	len = bpf_probe_पढ़ो_kernel_str(payload, MAX_LEN, &buf_in2[0]);
-	अगर (len <= MAX_LEN) अणु
+	len = bpf_probe_read_kernel_str(payload, MAX_LEN, &buf_in2[0]);
+	if (len <= MAX_LEN) {
 		payload += len;
 		payload1_len2 = len;
-	पूर्ण
+	}
 
-	total1 = payload - (व्योम *)payload1;
+	total1 = payload - (void *)payload1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 SEC("raw_tp/sys_exit")
-पूर्णांक handler64_चिन्हित(व्योम *regs)
-अणु
-	पूर्णांक pid = bpf_get_current_pid_tgid() >> 32;
-	व्योम *payload = payload3;
-	दीर्घ len;
+int handler64_signed(void *regs)
+{
+	int pid = bpf_get_current_pid_tgid() >> 32;
+	void *payload = payload3;
+	long len;
 
 	/* ignore irrelevant invocations */
-	अगर (test_pid != pid || !capture)
-		वापस 0;
+	if (test_pid != pid || !capture)
+		return 0;
 
-	len = bpf_probe_पढ़ो_kernel_str(payload, MAX_LEN, &buf_in1[0]);
-	अगर (len >= 0) अणु
+	len = bpf_probe_read_kernel_str(payload, MAX_LEN, &buf_in1[0]);
+	if (len >= 0) {
 		payload += len;
 		payload3_len1 = len;
-	पूर्ण
-	len = bpf_probe_पढ़ो_kernel_str(payload, MAX_LEN, &buf_in2[0]);
-	अगर (len >= 0) अणु
+	}
+	len = bpf_probe_read_kernel_str(payload, MAX_LEN, &buf_in2[0]);
+	if (len >= 0) {
 		payload += len;
 		payload3_len2 = len;
-	पूर्ण
-	total3 = payload - (व्योम *)payload3;
+	}
+	total3 = payload - (void *)payload3;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 SEC("tp/raw_syscalls/sys_enter")
-पूर्णांक handler32_अचिन्हित(व्योम *regs)
-अणु
-	पूर्णांक pid = bpf_get_current_pid_tgid() >> 32;
-	व्योम *payload = payload2;
+int handler32_unsigned(void *regs)
+{
+	int pid = bpf_get_current_pid_tgid() >> 32;
+	void *payload = payload2;
 	u32 len;
 
 	/* ignore irrelevant invocations */
-	अगर (test_pid != pid || !capture)
-		वापस 0;
+	if (test_pid != pid || !capture)
+		return 0;
 
-	len = bpf_probe_पढ़ो_kernel_str(payload, MAX_LEN, &buf_in1[0]);
-	अगर (len <= MAX_LEN) अणु
+	len = bpf_probe_read_kernel_str(payload, MAX_LEN, &buf_in1[0]);
+	if (len <= MAX_LEN) {
 		payload += len;
 		payload2_len1 = len;
-	पूर्ण
+	}
 
-	len = bpf_probe_पढ़ो_kernel_str(payload, MAX_LEN, &buf_in2[0]);
-	अगर (len <= MAX_LEN) अणु
+	len = bpf_probe_read_kernel_str(payload, MAX_LEN, &buf_in2[0]);
+	if (len <= MAX_LEN) {
 		payload += len;
 		payload2_len2 = len;
-	पूर्ण
+	}
 
-	total2 = payload - (व्योम *)payload2;
+	total2 = payload - (void *)payload2;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 SEC("tp/raw_syscalls/sys_exit")
-पूर्णांक handler32_चिन्हित(व्योम *regs)
-अणु
-	पूर्णांक pid = bpf_get_current_pid_tgid() >> 32;
-	व्योम *payload = payload4;
-	पूर्णांक len;
+int handler32_signed(void *regs)
+{
+	int pid = bpf_get_current_pid_tgid() >> 32;
+	void *payload = payload4;
+	int len;
 
 	/* ignore irrelevant invocations */
-	अगर (test_pid != pid || !capture)
-		वापस 0;
+	if (test_pid != pid || !capture)
+		return 0;
 
-	len = bpf_probe_पढ़ो_kernel_str(payload, MAX_LEN, &buf_in1[0]);
-	अगर (len >= 0) अणु
+	len = bpf_probe_read_kernel_str(payload, MAX_LEN, &buf_in1[0]);
+	if (len >= 0) {
 		payload += len;
 		payload4_len1 = len;
-	पूर्ण
-	len = bpf_probe_पढ़ो_kernel_str(payload, MAX_LEN, &buf_in2[0]);
-	अगर (len >= 0) अणु
+	}
+	len = bpf_probe_read_kernel_str(payload, MAX_LEN, &buf_in2[0]);
+	if (len >= 0) {
 		payload += len;
 		payload4_len2 = len;
-	पूर्ण
-	total4 = payload - (व्योम *)payload4;
+	}
+	total4 = payload - (void *)payload4;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 SEC("tp/syscalls/sys_exit_getpid")
-पूर्णांक handler_निकास(व्योम *regs)
-अणु
-	दीर्घ bla;
+int handler_exit(void *regs)
+{
+	long bla;
 
-	अगर (bpf_probe_पढ़ो_kernel(&bla, माप(bla), 0))
-		वापस 1;
-	अन्यथा
-		वापस 0;
-पूर्ण
+	if (bpf_probe_read_kernel(&bla, sizeof(bla), 0))
+		return 1;
+	else
+		return 0;
+}
 
-अक्षर LICENSE[] SEC("license") = "GPL";
+char LICENSE[] SEC("license") = "GPL";

@@ -1,73 +1,72 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
+/* SPDX-License-Identifier: MIT */
 /*
- * Copyright तऊ 2019 Intel Corporation
+ * Copyright © 2019 Intel Corporation
  */
 
-#अगर_अघोषित __INTEL_DE_H__
-#घोषणा __INTEL_DE_H__
+#ifndef __INTEL_DE_H__
+#define __INTEL_DE_H__
 
-#समावेश "i915_drv.h"
-#समावेश "i915_reg.h"
-#समावेश "intel_uncore.h"
+#include "i915_drv.h"
+#include "i915_reg.h"
+#include "intel_uncore.h"
 
-अटल अंतरभूत u32
-पूर्णांकel_de_पढ़ो(काष्ठा drm_i915_निजी *i915, i915_reg_t reg)
-अणु
-	वापस पूर्णांकel_uncore_पढ़ो(&i915->uncore, reg);
-पूर्ण
+static inline u32
+intel_de_read(struct drm_i915_private *i915, i915_reg_t reg)
+{
+	return intel_uncore_read(&i915->uncore, reg);
+}
 
-अटल अंतरभूत व्योम
-पूर्णांकel_de_posting_पढ़ो(काष्ठा drm_i915_निजी *i915, i915_reg_t reg)
-अणु
-	पूर्णांकel_uncore_posting_पढ़ो(&i915->uncore, reg);
-पूर्ण
+static inline void
+intel_de_posting_read(struct drm_i915_private *i915, i915_reg_t reg)
+{
+	intel_uncore_posting_read(&i915->uncore, reg);
+}
 
-/* Note: पढ़ो the warnings क्रम पूर्णांकel_uncore_*_fw() functions! */
-अटल अंतरभूत u32
-पूर्णांकel_de_पढ़ो_fw(काष्ठा drm_i915_निजी *i915, i915_reg_t reg)
-अणु
-	वापस पूर्णांकel_uncore_पढ़ो_fw(&i915->uncore, reg);
-पूर्ण
+/* Note: read the warnings for intel_uncore_*_fw() functions! */
+static inline u32
+intel_de_read_fw(struct drm_i915_private *i915, i915_reg_t reg)
+{
+	return intel_uncore_read_fw(&i915->uncore, reg);
+}
 
-अटल अंतरभूत व्योम
-पूर्णांकel_de_ग_लिखो(काष्ठा drm_i915_निजी *i915, i915_reg_t reg, u32 val)
-अणु
-	पूर्णांकel_uncore_ग_लिखो(&i915->uncore, reg, val);
-पूर्ण
+static inline void
+intel_de_write(struct drm_i915_private *i915, i915_reg_t reg, u32 val)
+{
+	intel_uncore_write(&i915->uncore, reg, val);
+}
 
-/* Note: पढ़ो the warnings क्रम पूर्णांकel_uncore_*_fw() functions! */
-अटल अंतरभूत व्योम
-पूर्णांकel_de_ग_लिखो_fw(काष्ठा drm_i915_निजी *i915, i915_reg_t reg, u32 val)
-अणु
-	पूर्णांकel_uncore_ग_लिखो_fw(&i915->uncore, reg, val);
-पूर्ण
+/* Note: read the warnings for intel_uncore_*_fw() functions! */
+static inline void
+intel_de_write_fw(struct drm_i915_private *i915, i915_reg_t reg, u32 val)
+{
+	intel_uncore_write_fw(&i915->uncore, reg, val);
+}
 
-अटल अंतरभूत व्योम
-पूर्णांकel_de_rmw(काष्ठा drm_i915_निजी *i915, i915_reg_t reg, u32 clear, u32 set)
-अणु
-	पूर्णांकel_uncore_rmw(&i915->uncore, reg, clear, set);
-पूर्ण
+static inline void
+intel_de_rmw(struct drm_i915_private *i915, i915_reg_t reg, u32 clear, u32 set)
+{
+	intel_uncore_rmw(&i915->uncore, reg, clear, set);
+}
 
-अटल अंतरभूत पूर्णांक
-पूर्णांकel_de_रुको_क्रम_रेजिस्टर(काष्ठा drm_i915_निजी *i915, i915_reg_t reg,
-			   u32 mask, u32 value, अचिन्हित पूर्णांक समयout)
-अणु
-	वापस पूर्णांकel_रुको_क्रम_रेजिस्टर(&i915->uncore, reg, mask, value, समयout);
-पूर्ण
+static inline int
+intel_de_wait_for_register(struct drm_i915_private *i915, i915_reg_t reg,
+			   u32 mask, u32 value, unsigned int timeout)
+{
+	return intel_wait_for_register(&i915->uncore, reg, mask, value, timeout);
+}
 
-अटल अंतरभूत पूर्णांक
-पूर्णांकel_de_रुको_क्रम_set(काष्ठा drm_i915_निजी *i915, i915_reg_t reg,
-		      u32 mask, अचिन्हित पूर्णांक समयout)
-अणु
-	वापस पूर्णांकel_de_रुको_क्रम_रेजिस्टर(i915, reg, mask, mask, समयout);
-पूर्ण
+static inline int
+intel_de_wait_for_set(struct drm_i915_private *i915, i915_reg_t reg,
+		      u32 mask, unsigned int timeout)
+{
+	return intel_de_wait_for_register(i915, reg, mask, mask, timeout);
+}
 
-अटल अंतरभूत पूर्णांक
-पूर्णांकel_de_रुको_क्रम_clear(काष्ठा drm_i915_निजी *i915, i915_reg_t reg,
-			u32 mask, अचिन्हित पूर्णांक समयout)
-अणु
-	वापस पूर्णांकel_de_रुको_क्रम_रेजिस्टर(i915, reg, mask, 0, समयout);
-पूर्ण
+static inline int
+intel_de_wait_for_clear(struct drm_i915_private *i915, i915_reg_t reg,
+			u32 mask, unsigned int timeout)
+{
+	return intel_de_wait_for_register(i915, reg, mask, 0, timeout);
+}
 
-#पूर्ण_अगर /* __INTEL_DE_H__ */
+#endif /* __INTEL_DE_H__ */

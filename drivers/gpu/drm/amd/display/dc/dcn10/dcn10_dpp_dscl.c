@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,59 +23,59 @@
  *
  */
 
-#समावेश "dm_services.h"
+#include "dm_services.h"
 
-#समावेश "core_types.h"
+#include "core_types.h"
 
-#समावेश "reg_helper.h"
-#समावेश "dcn10_dpp.h"
-#समावेश "basics/conversion.h"
+#include "reg_helper.h"
+#include "dcn10_dpp.h"
+#include "basics/conversion.h"
 
 
-#घोषणा NUM_PHASES    64
-#घोषणा HORZ_MAX_TAPS 8
-#घोषणा VERT_MAX_TAPS 8
+#define NUM_PHASES    64
+#define HORZ_MAX_TAPS 8
+#define VERT_MAX_TAPS 8
 
-#घोषणा BLACK_OFFSET_RGB_Y 0x0
-#घोषणा BLACK_OFFSET_CBCR  0x8000
+#define BLACK_OFFSET_RGB_Y 0x0
+#define BLACK_OFFSET_CBCR  0x8000
 
-#घोषणा REG(reg)\
+#define REG(reg)\
 	dpp->tf_regs->reg
 
-#घोषणा CTX \
+#define CTX \
 	dpp->base.ctx
 
-#अघोषित FN
-#घोषणा FN(reg_name, field_name) \
-	dpp->tf_shअगरt->field_name, dpp->tf_mask->field_name
+#undef FN
+#define FN(reg_name, field_name) \
+	dpp->tf_shift->field_name, dpp->tf_mask->field_name
 
-क्रमागत dcn10_coef_filter_type_sel अणु
+enum dcn10_coef_filter_type_sel {
 	SCL_COEF_LUMA_VERT_FILTER = 0,
 	SCL_COEF_LUMA_HORZ_FILTER = 1,
 	SCL_COEF_CHROMA_VERT_FILTER = 2,
 	SCL_COEF_CHROMA_HORZ_FILTER = 3,
 	SCL_COEF_ALPHA_VERT_FILTER = 4,
 	SCL_COEF_ALPHA_HORZ_FILTER = 5
-पूर्ण;
+};
 
-क्रमागत dscl_स्वतःcal_mode अणु
+enum dscl_autocal_mode {
 	AUTOCAL_MODE_OFF = 0,
 
 	/* Autocal calculate the scaling ratio and initial phase and the
 	 * DSCL_MODE_SEL must be set to 1
 	 */
 	AUTOCAL_MODE_AUTOSCALE = 1,
-	/* Autocal perक्रमm स्वतः centering without replication and the
+	/* Autocal perform auto centering without replication and the
 	 * DSCL_MODE_SEL must be set to 0
 	 */
 	AUTOCAL_MODE_AUTOCENTER = 2,
-	/* Autocal perक्रमm स्वतः centering and स्वतः replication and the
+	/* Autocal perform auto centering and auto replication and the
 	 * DSCL_MODE_SEL must be set to 0
 	 */
 	AUTOCAL_MODE_AUTOREPLICATE = 3
-पूर्ण;
+};
 
-क्रमागत dscl_mode_sel अणु
+enum dscl_mode_sel {
 	DSCL_MODE_SCALING_444_BYPASS = 0,
 	DSCL_MODE_SCALING_444_RGB_ENABLE = 1,
 	DSCL_MODE_SCALING_444_YCBCR_ENABLE = 2,
@@ -84,26 +83,26 @@
 	DSCL_MODE_SCALING_420_LUMA_BYPASS = 4,
 	DSCL_MODE_SCALING_420_CHROMA_BYPASS = 5,
 	DSCL_MODE_DSCL_BYPASS = 6
-पूर्ण;
+};
 
-अटल व्योम dpp1_dscl_set_overscan(
-	काष्ठा dcn10_dpp *dpp,
-	स्थिर काष्ठा scaler_data *data)
-अणु
-	uपूर्णांक32_t left = data->recout.x;
-	uपूर्णांक32_t top = data->recout.y;
+static void dpp1_dscl_set_overscan(
+	struct dcn10_dpp *dpp,
+	const struct scaler_data *data)
+{
+	uint32_t left = data->recout.x;
+	uint32_t top = data->recout.y;
 
-	पूर्णांक right = data->h_active - data->recout.x - data->recout.width;
-	पूर्णांक bottom = data->v_active - data->recout.y - data->recout.height;
+	int right = data->h_active - data->recout.x - data->recout.width;
+	int bottom = data->v_active - data->recout.y - data->recout.height;
 
-	अगर (right < 0) अणु
+	if (right < 0) {
 		BREAK_TO_DEBUGGER();
 		right = 0;
-	पूर्ण
-	अगर (bottom < 0) अणु
+	}
+	if (bottom < 0) {
 		BREAK_TO_DEBUGGER();
 		bottom = 0;
-	पूर्ण
+	}
 
 	REG_SET_2(DSCL_EXT_OVERSCAN_LEFT_RIGHT, 0,
 		EXT_OVERSCAN_LEFT, left,
@@ -112,15 +111,15 @@
 	REG_SET_2(DSCL_EXT_OVERSCAN_TOP_BOTTOM, 0,
 		EXT_OVERSCAN_BOTTOM, bottom,
 		EXT_OVERSCAN_TOP, top);
-पूर्ण
+}
 
-अटल व्योम dpp1_dscl_set_otg_blank(
-		काष्ठा dcn10_dpp *dpp, स्थिर काष्ठा scaler_data *data)
-अणु
-	uपूर्णांक32_t h_blank_start = data->h_active;
-	uपूर्णांक32_t h_blank_end = 0;
-	uपूर्णांक32_t v_blank_start = data->v_active;
-	uपूर्णांक32_t v_blank_end = 0;
+static void dpp1_dscl_set_otg_blank(
+		struct dcn10_dpp *dpp, const struct scaler_data *data)
+{
+	uint32_t h_blank_start = data->h_active;
+	uint32_t h_blank_end = 0;
+	uint32_t v_blank_start = data->v_active;
+	uint32_t v_blank_end = 0;
 
 	REG_SET_2(OTG_H_BLANK, 0,
 			OTG_H_BLANK_START, h_blank_start,
@@ -129,100 +128,100 @@
 	REG_SET_2(OTG_V_BLANK, 0,
 			OTG_V_BLANK_START, v_blank_start,
 			OTG_V_BLANK_END, v_blank_end);
-पूर्ण
+}
 
-अटल पूर्णांक dpp1_dscl_get_pixel_depth_val(क्रमागत lb_pixel_depth depth)
-अणु
-	अगर (depth == LB_PIXEL_DEPTH_30BPP)
-		वापस 0; /* 10 bpc */
-	अन्यथा अगर (depth == LB_PIXEL_DEPTH_24BPP)
-		वापस 1; /* 8 bpc */
-	अन्यथा अगर (depth == LB_PIXEL_DEPTH_18BPP)
-		वापस 2; /* 6 bpc */
-	अन्यथा अगर (depth == LB_PIXEL_DEPTH_36BPP)
-		वापस 3; /* 12 bpc */
-	अन्यथा अणु
+static int dpp1_dscl_get_pixel_depth_val(enum lb_pixel_depth depth)
+{
+	if (depth == LB_PIXEL_DEPTH_30BPP)
+		return 0; /* 10 bpc */
+	else if (depth == LB_PIXEL_DEPTH_24BPP)
+		return 1; /* 8 bpc */
+	else if (depth == LB_PIXEL_DEPTH_18BPP)
+		return 2; /* 6 bpc */
+	else if (depth == LB_PIXEL_DEPTH_36BPP)
+		return 3; /* 12 bpc */
+	else {
 		ASSERT(0);
-		वापस -1; /* Unsupported */
-	पूर्ण
-पूर्ण
+		return -1; /* Unsupported */
+	}
+}
 
-अटल bool dpp1_dscl_is_video_क्रमmat(क्रमागत pixel_क्रमmat क्रमmat)
-अणु
-	अगर (क्रमmat >= PIXEL_FORMAT_VIDEO_BEGIN
-			&& क्रमmat <= PIXEL_FORMAT_VIDEO_END)
-		वापस true;
-	अन्यथा
-		वापस false;
-पूर्ण
+static bool dpp1_dscl_is_video_format(enum pixel_format format)
+{
+	if (format >= PIXEL_FORMAT_VIDEO_BEGIN
+			&& format <= PIXEL_FORMAT_VIDEO_END)
+		return true;
+	else
+		return false;
+}
 
-अटल bool dpp1_dscl_is_420_क्रमmat(क्रमागत pixel_क्रमmat क्रमmat)
-अणु
-	अगर (क्रमmat == PIXEL_FORMAT_420BPP8 ||
-			क्रमmat == PIXEL_FORMAT_420BPP10)
-		वापस true;
-	अन्यथा
-		वापस false;
-पूर्ण
+static bool dpp1_dscl_is_420_format(enum pixel_format format)
+{
+	if (format == PIXEL_FORMAT_420BPP8 ||
+			format == PIXEL_FORMAT_420BPP10)
+		return true;
+	else
+		return false;
+}
 
-अटल क्रमागत dscl_mode_sel dpp1_dscl_get_dscl_mode(
-		काष्ठा dpp *dpp_base,
-		स्थिर काष्ठा scaler_data *data,
+static enum dscl_mode_sel dpp1_dscl_get_dscl_mode(
+		struct dpp *dpp_base,
+		const struct scaler_data *data,
 		bool dbg_always_scale)
-अणु
-	स्थिर दीर्घ दीर्घ one = dc_fixpt_one.value;
+{
+	const long long one = dc_fixpt_one.value;
 
-	अगर (dpp_base->caps->dscl_data_proc_क्रमmat == DSCL_DATA_PRCESSING_FIXED_FORMAT) अणु
-		/* DSCL is processing data in fixed क्रमmat */
-		अगर (data->क्रमmat == PIXEL_FORMAT_FP16)
-			वापस DSCL_MODE_DSCL_BYPASS;
-	पूर्ण
+	if (dpp_base->caps->dscl_data_proc_format == DSCL_DATA_PRCESSING_FIXED_FORMAT) {
+		/* DSCL is processing data in fixed format */
+		if (data->format == PIXEL_FORMAT_FP16)
+			return DSCL_MODE_DSCL_BYPASS;
+	}
 
-	अगर (data->ratios.horz.value == one
+	if (data->ratios.horz.value == one
 			&& data->ratios.vert.value == one
 			&& data->ratios.horz_c.value == one
 			&& data->ratios.vert_c.value == one
 			&& !dbg_always_scale)
-		वापस DSCL_MODE_SCALING_444_BYPASS;
+		return DSCL_MODE_SCALING_444_BYPASS;
 
-	अगर (!dpp1_dscl_is_420_क्रमmat(data->क्रमmat)) अणु
-		अगर (dpp1_dscl_is_video_क्रमmat(data->क्रमmat))
-			वापस DSCL_MODE_SCALING_444_YCBCR_ENABLE;
-		अन्यथा
-			वापस DSCL_MODE_SCALING_444_RGB_ENABLE;
-	पूर्ण
-	अगर (data->ratios.horz.value == one && data->ratios.vert.value == one)
-		वापस DSCL_MODE_SCALING_420_LUMA_BYPASS;
-	अगर (data->ratios.horz_c.value == one && data->ratios.vert_c.value == one)
-		वापस DSCL_MODE_SCALING_420_CHROMA_BYPASS;
+	if (!dpp1_dscl_is_420_format(data->format)) {
+		if (dpp1_dscl_is_video_format(data->format))
+			return DSCL_MODE_SCALING_444_YCBCR_ENABLE;
+		else
+			return DSCL_MODE_SCALING_444_RGB_ENABLE;
+	}
+	if (data->ratios.horz.value == one && data->ratios.vert.value == one)
+		return DSCL_MODE_SCALING_420_LUMA_BYPASS;
+	if (data->ratios.horz_c.value == one && data->ratios.vert_c.value == one)
+		return DSCL_MODE_SCALING_420_CHROMA_BYPASS;
 
-	वापस DSCL_MODE_SCALING_420_YCBCR_ENABLE;
-पूर्ण
+	return DSCL_MODE_SCALING_420_YCBCR_ENABLE;
+}
 
-अटल व्योम dpp1_घातer_on_dscl(
-	काष्ठा dpp *dpp_base,
-	bool घातer_on)
-अणु
-	काष्ठा dcn10_dpp *dpp = TO_DCN10_DPP(dpp_base);
+static void dpp1_power_on_dscl(
+	struct dpp *dpp_base,
+	bool power_on)
+{
+	struct dcn10_dpp *dpp = TO_DCN10_DPP(dpp_base);
 
-	अगर (dpp->tf_regs->DSCL_MEM_PWR_CTRL) अणु
-		REG_UPDATE(DSCL_MEM_PWR_CTRL, LUT_MEM_PWR_FORCE, घातer_on ? 0 : 3);
-		अगर (घातer_on)
+	if (dpp->tf_regs->DSCL_MEM_PWR_CTRL) {
+		REG_UPDATE(DSCL_MEM_PWR_CTRL, LUT_MEM_PWR_FORCE, power_on ? 0 : 3);
+		if (power_on)
 			REG_WAIT(DSCL_MEM_PWR_STATUS, LUT_MEM_PWR_STATE, 0, 1, 5);
-	पूर्ण
-पूर्ण
+	}
+}
 
 
-अटल व्योम dpp1_dscl_set_lb(
-	काष्ठा dcn10_dpp *dpp,
-	स्थिर काष्ठा line_buffer_params *lb_params,
-	क्रमागत lb_memory_config mem_size_config)
-अणु
+static void dpp1_dscl_set_lb(
+	struct dcn10_dpp *dpp,
+	const struct line_buffer_params *lb_params,
+	enum lb_memory_config mem_size_config)
+{
 	/* LB */
-	अगर (dpp->base.caps->dscl_data_proc_क्रमmat == DSCL_DATA_PRCESSING_FIXED_FORMAT) अणु
-		/* DSCL caps: pixel data processed in fixed क्रमmat */
-		uपूर्णांक32_t pixel_depth = dpp1_dscl_get_pixel_depth_val(lb_params->depth);
-		uपूर्णांक32_t dyn_pix_depth = lb_params->dynamic_pixel_depth;
+	if (dpp->base.caps->dscl_data_proc_format == DSCL_DATA_PRCESSING_FIXED_FORMAT) {
+		/* DSCL caps: pixel data processed in fixed format */
+		uint32_t pixel_depth = dpp1_dscl_get_pixel_depth_val(lb_params->depth);
+		uint32_t dyn_pix_depth = lb_params->dynamic_pixel_depth;
 
 		REG_SET_7(LB_DATA_FORMAT, 0,
 			PIXEL_DEPTH, pixel_depth, /* Pixel depth stored in LB */
@@ -230,100 +229,100 @@
 			PIXEL_REDUCE_MODE, 1, /* Pixel reduction mode: Rounding */
 			DYNAMIC_PIXEL_DEPTH, dyn_pix_depth, /* Dynamic expansion pixel depth */
 			DITHER_EN, 0, /* Dithering enable: Disabled */
-			INTERLEAVE_EN, lb_params->पूर्णांकerleave_en, /* Interleave source enable */
+			INTERLEAVE_EN, lb_params->interleave_en, /* Interleave source enable */
 			LB_DATA_FORMAT__ALPHA_EN, lb_params->alpha_en); /* Alpha enable */
-	पूर्ण
-	अन्यथा अणु
-		/* DSCL caps: pixel data processed in भग्न क्रमmat */
+	}
+	else {
+		/* DSCL caps: pixel data processed in float format */
 		REG_SET_2(LB_DATA_FORMAT, 0,
-			INTERLEAVE_EN, lb_params->पूर्णांकerleave_en, /* Interleave source enable */
+			INTERLEAVE_EN, lb_params->interleave_en, /* Interleave source enable */
 			LB_DATA_FORMAT__ALPHA_EN, lb_params->alpha_en); /* Alpha enable */
-	पूर्ण
+	}
 
 	REG_SET_2(LB_MEMORY_CTRL, 0,
 		MEMORY_CONFIG, mem_size_config,
 		LB_MAX_PARTITIONS, 63);
-पूर्ण
+}
 
-अटल स्थिर uपूर्णांक16_t *dpp1_dscl_get_filter_coeffs_64p(पूर्णांक taps, काष्ठा fixed31_32 ratio)
-अणु
-	अगर (taps == 8)
-		वापस get_filter_8tap_64p(ratio);
-	अन्यथा अगर (taps == 7)
-		वापस get_filter_7tap_64p(ratio);
-	अन्यथा अगर (taps == 6)
-		वापस get_filter_6tap_64p(ratio);
-	अन्यथा अगर (taps == 5)
-		वापस get_filter_5tap_64p(ratio);
-	अन्यथा अगर (taps == 4)
-		वापस get_filter_4tap_64p(ratio);
-	अन्यथा अगर (taps == 3)
-		वापस get_filter_3tap_64p(ratio);
-	अन्यथा अगर (taps == 2)
-		वापस get_filter_2tap_64p();
-	अन्यथा अगर (taps == 1)
-		वापस शून्य;
-	अन्यथा अणु
+static const uint16_t *dpp1_dscl_get_filter_coeffs_64p(int taps, struct fixed31_32 ratio)
+{
+	if (taps == 8)
+		return get_filter_8tap_64p(ratio);
+	else if (taps == 7)
+		return get_filter_7tap_64p(ratio);
+	else if (taps == 6)
+		return get_filter_6tap_64p(ratio);
+	else if (taps == 5)
+		return get_filter_5tap_64p(ratio);
+	else if (taps == 4)
+		return get_filter_4tap_64p(ratio);
+	else if (taps == 3)
+		return get_filter_3tap_64p(ratio);
+	else if (taps == 2)
+		return get_filter_2tap_64p();
+	else if (taps == 1)
+		return NULL;
+	else {
 		/* should never happen, bug */
 		BREAK_TO_DEBUGGER();
-		वापस शून्य;
-	पूर्ण
-पूर्ण
+		return NULL;
+	}
+}
 
-अटल व्योम dpp1_dscl_set_scaler_filter(
-		काष्ठा dcn10_dpp *dpp,
-		uपूर्णांक32_t taps,
-		क्रमागत dcn10_coef_filter_type_sel filter_type,
-		स्थिर uपूर्णांक16_t *filter)
-अणु
-	स्थिर पूर्णांक tap_pairs = (taps + 1) / 2;
-	पूर्णांक phase;
-	पूर्णांक pair;
-	uपूर्णांक16_t odd_coef, even_coef;
+static void dpp1_dscl_set_scaler_filter(
+		struct dcn10_dpp *dpp,
+		uint32_t taps,
+		enum dcn10_coef_filter_type_sel filter_type,
+		const uint16_t *filter)
+{
+	const int tap_pairs = (taps + 1) / 2;
+	int phase;
+	int pair;
+	uint16_t odd_coef, even_coef;
 
 	REG_SET_3(SCL_COEF_RAM_TAP_SELECT, 0,
 		SCL_COEF_RAM_TAP_PAIR_IDX, 0,
 		SCL_COEF_RAM_PHASE, 0,
 		SCL_COEF_RAM_FILTER_TYPE, filter_type);
 
-	क्रम (phase = 0; phase < (NUM_PHASES / 2 + 1); phase++) अणु
-		क्रम (pair = 0; pair < tap_pairs; pair++) अणु
+	for (phase = 0; phase < (NUM_PHASES / 2 + 1); phase++) {
+		for (pair = 0; pair < tap_pairs; pair++) {
 			even_coef = filter[phase * taps + 2 * pair];
-			अगर ((pair * 2 + 1) < taps)
+			if ((pair * 2 + 1) < taps)
 				odd_coef = filter[phase * taps + 2 * pair + 1];
-			अन्यथा
+			else
 				odd_coef = 0;
 
 			REG_SET_4(SCL_COEF_RAM_TAP_DATA, 0,
 				/* Even tap coefficient (bits 1:0 fixed to 0) */
 				SCL_COEF_RAM_EVEN_TAP_COEF, even_coef,
-				/* Write/पढ़ो control क्रम even coefficient */
+				/* Write/read control for even coefficient */
 				SCL_COEF_RAM_EVEN_TAP_COEF_EN, 1,
 				/* Odd tap coefficient (bits 1:0 fixed to 0) */
 				SCL_COEF_RAM_ODD_TAP_COEF, odd_coef,
-				/* Write/पढ़ो control क्रम odd coefficient */
+				/* Write/read control for odd coefficient */
 				SCL_COEF_RAM_ODD_TAP_COEF_EN, 1);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-पूर्ण
+}
 
-अटल व्योम dpp1_dscl_set_scl_filter(
-		काष्ठा dcn10_dpp *dpp,
-		स्थिर काष्ठा scaler_data *scl_data,
+static void dpp1_dscl_set_scl_filter(
+		struct dcn10_dpp *dpp,
+		const struct scaler_data *scl_data,
 		bool chroma_coef_mode)
-अणु
+{
 	bool h_2tap_hardcode_coef_en = false;
 	bool v_2tap_hardcode_coef_en = false;
 	bool h_2tap_sharp_en = false;
 	bool v_2tap_sharp_en = false;
-	uपूर्णांक32_t h_2tap_sharp_factor = scl_data->sharpness.horz;
-	uपूर्णांक32_t v_2tap_sharp_factor = scl_data->sharpness.vert;
+	uint32_t h_2tap_sharp_factor = scl_data->sharpness.horz;
+	uint32_t v_2tap_sharp_factor = scl_data->sharpness.vert;
 	bool coef_ram_current;
-	स्थिर uपूर्णांक16_t *filter_h = शून्य;
-	स्थिर uपूर्णांक16_t *filter_v = शून्य;
-	स्थिर uपूर्णांक16_t *filter_h_c = शून्य;
-	स्थिर uपूर्णांक16_t *filter_v_c = शून्य;
+	const uint16_t *filter_h = NULL;
+	const uint16_t *filter_v = NULL;
+	const uint16_t *filter_h_c = NULL;
+	const uint16_t *filter_v_c = NULL;
 
 	h_2tap_hardcode_coef_en = scl_data->taps.h_taps < 3
 					&& scl_data->taps.h_taps_c < 3
@@ -343,7 +342,7 @@
 		SCL_V_2TAP_SHARP_EN, v_2tap_sharp_en,
 		SCL_V_2TAP_SHARP_FACTOR, v_2tap_sharp_factor);
 
-	अगर (!v_2tap_hardcode_coef_en || !h_2tap_hardcode_coef_en) अणु
+	if (!v_2tap_hardcode_coef_en || !h_2tap_hardcode_coef_en) {
 		bool filter_updated = false;
 
 		filter_h = dpp1_dscl_get_filter_coeffs_64p(
@@ -354,198 +353,198 @@
 		filter_updated = (filter_h && (filter_h != dpp->filter_h))
 				|| (filter_v && (filter_v != dpp->filter_v));
 
-		अगर (chroma_coef_mode) अणु
+		if (chroma_coef_mode) {
 			filter_h_c = dpp1_dscl_get_filter_coeffs_64p(
 					scl_data->taps.h_taps_c, scl_data->ratios.horz_c);
 			filter_v_c = dpp1_dscl_get_filter_coeffs_64p(
 					scl_data->taps.v_taps_c, scl_data->ratios.vert_c);
 			filter_updated = filter_updated || (filter_h_c && (filter_h_c != dpp->filter_h_c))
 							|| (filter_v_c && (filter_v_c != dpp->filter_v_c));
-		पूर्ण
+		}
 
-		अगर (filter_updated) अणु
-			uपूर्णांक32_t scl_mode = REG_READ(SCL_MODE);
+		if (filter_updated) {
+			uint32_t scl_mode = REG_READ(SCL_MODE);
 
-			अगर (!h_2tap_hardcode_coef_en && filter_h) अणु
+			if (!h_2tap_hardcode_coef_en && filter_h) {
 				dpp1_dscl_set_scaler_filter(
 					dpp, scl_data->taps.h_taps,
 					SCL_COEF_LUMA_HORZ_FILTER, filter_h);
-			पूर्ण
+			}
 			dpp->filter_h = filter_h;
-			अगर (!v_2tap_hardcode_coef_en && filter_v) अणु
+			if (!v_2tap_hardcode_coef_en && filter_v) {
 				dpp1_dscl_set_scaler_filter(
 					dpp, scl_data->taps.v_taps,
 					SCL_COEF_LUMA_VERT_FILTER, filter_v);
-			पूर्ण
+			}
 			dpp->filter_v = filter_v;
-			अगर (chroma_coef_mode) अणु
-				अगर (!h_2tap_hardcode_coef_en && filter_h_c) अणु
+			if (chroma_coef_mode) {
+				if (!h_2tap_hardcode_coef_en && filter_h_c) {
 					dpp1_dscl_set_scaler_filter(
 						dpp, scl_data->taps.h_taps_c,
 						SCL_COEF_CHROMA_HORZ_FILTER, filter_h_c);
-				पूर्ण
-				अगर (!v_2tap_hardcode_coef_en && filter_v_c) अणु
+				}
+				if (!v_2tap_hardcode_coef_en && filter_v_c) {
 					dpp1_dscl_set_scaler_filter(
 						dpp, scl_data->taps.v_taps_c,
 						SCL_COEF_CHROMA_VERT_FILTER, filter_v_c);
-				पूर्ण
-			पूर्ण
+				}
+			}
 			dpp->filter_h_c = filter_h_c;
 			dpp->filter_v_c = filter_v_c;
 
 			coef_ram_current = get_reg_field_value_ex(
 				scl_mode, dpp->tf_mask->SCL_COEF_RAM_SELECT_CURRENT,
-				dpp->tf_shअगरt->SCL_COEF_RAM_SELECT_CURRENT);
+				dpp->tf_shift->SCL_COEF_RAM_SELECT_CURRENT);
 
 			/* Swap coefficient RAM and set chroma coefficient mode */
 			REG_SET_2(SCL_MODE, scl_mode,
 					SCL_COEF_RAM_SELECT, !coef_ram_current,
 					SCL_CHROMA_COEF_MODE, chroma_coef_mode);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक dpp1_dscl_get_lb_depth_bpc(क्रमागत lb_pixel_depth depth)
-अणु
-	अगर (depth == LB_PIXEL_DEPTH_30BPP)
-		वापस 10;
-	अन्यथा अगर (depth == LB_PIXEL_DEPTH_24BPP)
-		वापस 8;
-	अन्यथा अगर (depth == LB_PIXEL_DEPTH_18BPP)
-		वापस 6;
-	अन्यथा अगर (depth == LB_PIXEL_DEPTH_36BPP)
-		वापस 12;
-	अन्यथा अणु
+static int dpp1_dscl_get_lb_depth_bpc(enum lb_pixel_depth depth)
+{
+	if (depth == LB_PIXEL_DEPTH_30BPP)
+		return 10;
+	else if (depth == LB_PIXEL_DEPTH_24BPP)
+		return 8;
+	else if (depth == LB_PIXEL_DEPTH_18BPP)
+		return 6;
+	else if (depth == LB_PIXEL_DEPTH_36BPP)
+		return 12;
+	else {
 		BREAK_TO_DEBUGGER();
-		वापस -1; /* Unsupported */
-	पूर्ण
-पूर्ण
+		return -1; /* Unsupported */
+	}
+}
 
-व्योम dpp1_dscl_calc_lb_num_partitions(
-		स्थिर काष्ठा scaler_data *scl_data,
-		क्रमागत lb_memory_config lb_config,
-		पूर्णांक *num_part_y,
-		पूर्णांक *num_part_c)
-अणु
-	पूर्णांक lb_memory_size, lb_memory_size_c, lb_memory_size_a, num_partitions_a,
+void dpp1_dscl_calc_lb_num_partitions(
+		const struct scaler_data *scl_data,
+		enum lb_memory_config lb_config,
+		int *num_part_y,
+		int *num_part_c)
+{
+	int lb_memory_size, lb_memory_size_c, lb_memory_size_a, num_partitions_a,
 	lb_bpc, memory_line_size_y, memory_line_size_c, memory_line_size_a;
 
-	पूर्णांक line_size = scl_data->viewport.width < scl_data->recout.width ?
+	int line_size = scl_data->viewport.width < scl_data->recout.width ?
 			scl_data->viewport.width : scl_data->recout.width;
-	पूर्णांक line_size_c = scl_data->viewport_c.width < scl_data->recout.width ?
+	int line_size_c = scl_data->viewport_c.width < scl_data->recout.width ?
 			scl_data->viewport_c.width : scl_data->recout.width;
 
-	अगर (line_size == 0)
+	if (line_size == 0)
 		line_size = 1;
 
-	अगर (line_size_c == 0)
+	if (line_size_c == 0)
 		line_size_c = 1;
 
 
 	lb_bpc = dpp1_dscl_get_lb_depth_bpc(scl_data->lb_params.depth);
-	memory_line_size_y = (line_size * lb_bpc + 71) / 72; /* +71 to उच्चमान */
-	memory_line_size_c = (line_size_c * lb_bpc + 71) / 72; /* +71 to उच्चमान */
-	memory_line_size_a = (line_size + 5) / 6; /* +5 to उच्चमान */
+	memory_line_size_y = (line_size * lb_bpc + 71) / 72; /* +71 to ceil */
+	memory_line_size_c = (line_size_c * lb_bpc + 71) / 72; /* +71 to ceil */
+	memory_line_size_a = (line_size + 5) / 6; /* +5 to ceil */
 
-	अगर (lb_config == LB_MEMORY_CONFIG_1) अणु
+	if (lb_config == LB_MEMORY_CONFIG_1) {
 		lb_memory_size = 816;
 		lb_memory_size_c = 816;
 		lb_memory_size_a = 984;
-	पूर्ण अन्यथा अगर (lb_config == LB_MEMORY_CONFIG_2) अणु
+	} else if (lb_config == LB_MEMORY_CONFIG_2) {
 		lb_memory_size = 1088;
 		lb_memory_size_c = 1088;
 		lb_memory_size_a = 1312;
-	पूर्ण अन्यथा अगर (lb_config == LB_MEMORY_CONFIG_3) अणु
+	} else if (lb_config == LB_MEMORY_CONFIG_3) {
 		/* 420 mode: using 3rd mem from Y, Cr and Cb */
 		lb_memory_size = 816 + 1088 + 848 + 848 + 848;
 		lb_memory_size_c = 816 + 1088;
 		lb_memory_size_a = 984 + 1312 + 456;
-	पूर्ण अन्यथा अणु
+	} else {
 		lb_memory_size = 816 + 1088 + 848;
 		lb_memory_size_c = 816 + 1088 + 848;
 		lb_memory_size_a = 984 + 1312 + 456;
-	पूर्ण
+	}
 	*num_part_y = lb_memory_size / memory_line_size_y;
 	*num_part_c = lb_memory_size_c / memory_line_size_c;
 	num_partitions_a = lb_memory_size_a / memory_line_size_a;
 
-	अगर (scl_data->lb_params.alpha_en
+	if (scl_data->lb_params.alpha_en
 			&& (num_partitions_a < *num_part_y))
 		*num_part_y = num_partitions_a;
 
-	अगर (*num_part_y > 64)
+	if (*num_part_y > 64)
 		*num_part_y = 64;
-	अगर (*num_part_c > 64)
+	if (*num_part_c > 64)
 		*num_part_c = 64;
 
-पूर्ण
+}
 
-bool dpp1_dscl_is_lb_conf_valid(पूर्णांक उच्चमान_vratio, पूर्णांक num_partitions, पूर्णांक vtaps)
-अणु
-	अगर (उच्चमान_vratio > 2)
-		वापस vtaps <= (num_partitions - उच्चमान_vratio + 2);
-	अन्यथा
-		वापस vtaps <= num_partitions;
-पूर्ण
+bool dpp1_dscl_is_lb_conf_valid(int ceil_vratio, int num_partitions, int vtaps)
+{
+	if (ceil_vratio > 2)
+		return vtaps <= (num_partitions - ceil_vratio + 2);
+	else
+		return vtaps <= num_partitions;
+}
 
 /*find first match configuration which meets the min required lb size*/
-अटल क्रमागत lb_memory_config dpp1_dscl_find_lb_memory_config(काष्ठा dcn10_dpp *dpp,
-		स्थिर काष्ठा scaler_data *scl_data)
-अणु
-	पूर्णांक num_part_y, num_part_c;
-	पूर्णांक vtaps = scl_data->taps.v_taps;
-	पूर्णांक vtaps_c = scl_data->taps.v_taps_c;
-	पूर्णांक उच्चमान_vratio = dc_fixpt_उच्चमान(scl_data->ratios.vert);
-	पूर्णांक उच्चमान_vratio_c = dc_fixpt_उच्चमान(scl_data->ratios.vert_c);
-	क्रमागत lb_memory_config mem_cfg = LB_MEMORY_CONFIG_0;
+static enum lb_memory_config dpp1_dscl_find_lb_memory_config(struct dcn10_dpp *dpp,
+		const struct scaler_data *scl_data)
+{
+	int num_part_y, num_part_c;
+	int vtaps = scl_data->taps.v_taps;
+	int vtaps_c = scl_data->taps.v_taps_c;
+	int ceil_vratio = dc_fixpt_ceil(scl_data->ratios.vert);
+	int ceil_vratio_c = dc_fixpt_ceil(scl_data->ratios.vert_c);
+	enum lb_memory_config mem_cfg = LB_MEMORY_CONFIG_0;
 
-	अगर (dpp->base.ctx->dc->debug.use_max_lb)
-		वापस mem_cfg;
+	if (dpp->base.ctx->dc->debug.use_max_lb)
+		return mem_cfg;
 
 	dpp->base.caps->dscl_calc_lb_num_partitions(
 			scl_data, LB_MEMORY_CONFIG_1, &num_part_y, &num_part_c);
 
-	अगर (dpp1_dscl_is_lb_conf_valid(उच्चमान_vratio, num_part_y, vtaps)
-			&& dpp1_dscl_is_lb_conf_valid(उच्चमान_vratio_c, num_part_c, vtaps_c))
-		वापस LB_MEMORY_CONFIG_1;
+	if (dpp1_dscl_is_lb_conf_valid(ceil_vratio, num_part_y, vtaps)
+			&& dpp1_dscl_is_lb_conf_valid(ceil_vratio_c, num_part_c, vtaps_c))
+		return LB_MEMORY_CONFIG_1;
 
 	dpp->base.caps->dscl_calc_lb_num_partitions(
 			scl_data, LB_MEMORY_CONFIG_2, &num_part_y, &num_part_c);
 
-	अगर (dpp1_dscl_is_lb_conf_valid(उच्चमान_vratio, num_part_y, vtaps)
-			&& dpp1_dscl_is_lb_conf_valid(उच्चमान_vratio_c, num_part_c, vtaps_c))
-		वापस LB_MEMORY_CONFIG_2;
+	if (dpp1_dscl_is_lb_conf_valid(ceil_vratio, num_part_y, vtaps)
+			&& dpp1_dscl_is_lb_conf_valid(ceil_vratio_c, num_part_c, vtaps_c))
+		return LB_MEMORY_CONFIG_2;
 
-	अगर (scl_data->क्रमmat == PIXEL_FORMAT_420BPP8
-			|| scl_data->क्रमmat == PIXEL_FORMAT_420BPP10) अणु
+	if (scl_data->format == PIXEL_FORMAT_420BPP8
+			|| scl_data->format == PIXEL_FORMAT_420BPP10) {
 		dpp->base.caps->dscl_calc_lb_num_partitions(
 				scl_data, LB_MEMORY_CONFIG_3, &num_part_y, &num_part_c);
 
-		अगर (dpp1_dscl_is_lb_conf_valid(उच्चमान_vratio, num_part_y, vtaps)
-				&& dpp1_dscl_is_lb_conf_valid(उच्चमान_vratio_c, num_part_c, vtaps_c))
-			वापस LB_MEMORY_CONFIG_3;
-	पूर्ण
+		if (dpp1_dscl_is_lb_conf_valid(ceil_vratio, num_part_y, vtaps)
+				&& dpp1_dscl_is_lb_conf_valid(ceil_vratio_c, num_part_c, vtaps_c))
+			return LB_MEMORY_CONFIG_3;
+	}
 
 	dpp->base.caps->dscl_calc_lb_num_partitions(
 			scl_data, LB_MEMORY_CONFIG_0, &num_part_y, &num_part_c);
 
 	/*Ensure we can support the requested number of vtaps*/
-	ASSERT(dpp1_dscl_is_lb_conf_valid(उच्चमान_vratio, num_part_y, vtaps)
-			&& dpp1_dscl_is_lb_conf_valid(उच्चमान_vratio_c, num_part_c, vtaps_c));
+	ASSERT(dpp1_dscl_is_lb_conf_valid(ceil_vratio, num_part_y, vtaps)
+			&& dpp1_dscl_is_lb_conf_valid(ceil_vratio_c, num_part_c, vtaps_c));
 
-	वापस LB_MEMORY_CONFIG_0;
-पूर्ण
+	return LB_MEMORY_CONFIG_0;
+}
 
-व्योम dpp1_dscl_set_scaler_स्वतः_scale(
-	काष्ठा dpp *dpp_base,
-	स्थिर काष्ठा scaler_data *scl_data)
-अणु
-	क्रमागत lb_memory_config lb_config;
-	काष्ठा dcn10_dpp *dpp = TO_DCN10_DPP(dpp_base);
-	क्रमागत dscl_mode_sel dscl_mode = dpp1_dscl_get_dscl_mode(
+void dpp1_dscl_set_scaler_auto_scale(
+	struct dpp *dpp_base,
+	const struct scaler_data *scl_data)
+{
+	enum lb_memory_config lb_config;
+	struct dcn10_dpp *dpp = TO_DCN10_DPP(dpp_base);
+	enum dscl_mode_sel dscl_mode = dpp1_dscl_get_dscl_mode(
 			dpp_base, scl_data, dpp_base->ctx->dc->debug.always_scale);
-	bool ycbcr = scl_data->क्रमmat >= PIXEL_FORMAT_VIDEO_BEGIN
-				&& scl_data->क्रमmat <= PIXEL_FORMAT_VIDEO_END;
+	bool ycbcr = scl_data->format >= PIXEL_FORMAT_VIDEO_BEGIN
+				&& scl_data->format <= PIXEL_FORMAT_VIDEO_END;
 
 	dpp1_dscl_set_overscan(dpp, scl_data);
 
@@ -553,14 +552,14 @@ bool dpp1_dscl_is_lb_conf_valid(पूर्णांक उच्चमान_v
 
 	REG_UPDATE(SCL_MODE, DSCL_MODE, dscl_mode);
 
-	अगर (dscl_mode == DSCL_MODE_DSCL_BYPASS)
-		वापस;
+	if (dscl_mode == DSCL_MODE_DSCL_BYPASS)
+		return;
 
 	lb_config =  dpp1_dscl_find_lb_memory_config(dpp, scl_data);
 	dpp1_dscl_set_lb(dpp, &scl_data->lb_params, lb_config);
 
-	अगर (dscl_mode == DSCL_MODE_SCALING_444_BYPASS)
-		वापस;
+	if (dscl_mode == DSCL_MODE_SCALING_444_BYPASS)
+		return;
 
 	/* TODO: v_min */
 	REG_SET_3(DSCL_AUTOCAL, 0,
@@ -569,11 +568,11 @@ bool dpp1_dscl_is_lb_conf_valid(पूर्णांक उच्चमान_v
 		AUTOCAL_PIPE_ID, 0);
 
 	/* Black offsets */
-	अगर (ycbcr)
+	if (ycbcr)
 		REG_SET_2(SCL_BLACK_OFFSET, 0,
 				SCL_BLACK_OFFSET_RGB_Y, BLACK_OFFSET_RGB_Y,
 				SCL_BLACK_OFFSET_CBCR, BLACK_OFFSET_CBCR);
-	अन्यथा
+	else
 
 		REG_SET_2(SCL_BLACK_OFFSET, 0,
 				SCL_BLACK_OFFSET_RGB_Y, BLACK_OFFSET_RGB_Y,
@@ -586,14 +585,14 @@ bool dpp1_dscl_is_lb_conf_valid(पूर्णांक उच्चमान_v
 		SCL_H_NUM_TAPS_C, scl_data->taps.h_taps_c - 1);
 
 	dpp1_dscl_set_scl_filter(dpp, scl_data, ycbcr);
-पूर्ण
+}
 
 
-अटल व्योम dpp1_dscl_set_manual_ratio_init(
-		काष्ठा dcn10_dpp *dpp, स्थिर काष्ठा scaler_data *data)
-अणु
-	uपूर्णांक32_t init_frac = 0;
-	uपूर्णांक32_t init_पूर्णांक = 0;
+static void dpp1_dscl_set_manual_ratio_init(
+		struct dcn10_dpp *dpp, const struct scaler_data *data)
+{
+	uint32_t init_frac = 0;
+	uint32_t init_int = 0;
 
 	REG_SET(SCL_HORZ_FILTER_SCALE_RATIO, 0,
 			SCL_H_SCALE_RATIO, dc_fixpt_u3d19(data->ratios.horz) << 5);
@@ -608,56 +607,56 @@ bool dpp1_dscl_is_lb_conf_valid(पूर्णांक उच्चमान_v
 			SCL_V_SCALE_RATIO_C, dc_fixpt_u3d19(data->ratios.vert_c) << 5);
 
 	/*
-	 * 0.24 क्रमmat क्रम fraction, first five bits zeroed
+	 * 0.24 format for fraction, first five bits zeroed
 	 */
 	init_frac = dc_fixpt_u0d19(data->inits.h) << 5;
-	init_पूर्णांक = dc_fixpt_न्यूनमान(data->inits.h);
+	init_int = dc_fixpt_floor(data->inits.h);
 	REG_SET_2(SCL_HORZ_FILTER_INIT, 0,
 		SCL_H_INIT_FRAC, init_frac,
-		SCL_H_INIT_INT, init_पूर्णांक);
+		SCL_H_INIT_INT, init_int);
 
 	init_frac = dc_fixpt_u0d19(data->inits.h_c) << 5;
-	init_पूर्णांक = dc_fixpt_न्यूनमान(data->inits.h_c);
+	init_int = dc_fixpt_floor(data->inits.h_c);
 	REG_SET_2(SCL_HORZ_FILTER_INIT_C, 0,
 		SCL_H_INIT_FRAC_C, init_frac,
-		SCL_H_INIT_INT_C, init_पूर्णांक);
+		SCL_H_INIT_INT_C, init_int);
 
 	init_frac = dc_fixpt_u0d19(data->inits.v) << 5;
-	init_पूर्णांक = dc_fixpt_न्यूनमान(data->inits.v);
+	init_int = dc_fixpt_floor(data->inits.v);
 	REG_SET_2(SCL_VERT_FILTER_INIT, 0,
 		SCL_V_INIT_FRAC, init_frac,
-		SCL_V_INIT_INT, init_पूर्णांक);
+		SCL_V_INIT_INT, init_int);
 
-	अगर (REG(SCL_VERT_FILTER_INIT_BOT)) अणु
+	if (REG(SCL_VERT_FILTER_INIT_BOT)) {
 		init_frac = dc_fixpt_u0d19(data->inits.v_bot) << 5;
-		init_पूर्णांक = dc_fixpt_न्यूनमान(data->inits.v_bot);
+		init_int = dc_fixpt_floor(data->inits.v_bot);
 		REG_SET_2(SCL_VERT_FILTER_INIT_BOT, 0,
 			SCL_V_INIT_FRAC_BOT, init_frac,
-			SCL_V_INIT_INT_BOT, init_पूर्णांक);
-	पूर्ण
+			SCL_V_INIT_INT_BOT, init_int);
+	}
 
 	init_frac = dc_fixpt_u0d19(data->inits.v_c) << 5;
-	init_पूर्णांक = dc_fixpt_न्यूनमान(data->inits.v_c);
+	init_int = dc_fixpt_floor(data->inits.v_c);
 	REG_SET_2(SCL_VERT_FILTER_INIT_C, 0,
 		SCL_V_INIT_FRAC_C, init_frac,
-		SCL_V_INIT_INT_C, init_पूर्णांक);
+		SCL_V_INIT_INT_C, init_int);
 
-	अगर (REG(SCL_VERT_FILTER_INIT_BOT_C)) अणु
+	if (REG(SCL_VERT_FILTER_INIT_BOT_C)) {
 		init_frac = dc_fixpt_u0d19(data->inits.v_c_bot) << 5;
-		init_पूर्णांक = dc_fixpt_न्यूनमान(data->inits.v_c_bot);
+		init_int = dc_fixpt_floor(data->inits.v_c_bot);
 		REG_SET_2(SCL_VERT_FILTER_INIT_BOT_C, 0,
 			SCL_V_INIT_FRAC_BOT_C, init_frac,
-			SCL_V_INIT_INT_BOT_C, init_पूर्णांक);
-	पूर्ण
-पूर्ण
+			SCL_V_INIT_INT_BOT_C, init_int);
+	}
+}
 
 
 
-अटल व्योम dpp1_dscl_set_recout(
-			काष्ठा dcn10_dpp *dpp, स्थिर काष्ठा rect *recout)
-अणु
-	पूर्णांक visual_confirm_on = 0;
-	अगर (dpp->base.ctx->dc->debug.visual_confirm != VISUAL_CONFIRM_DISABLE)
+static void dpp1_dscl_set_recout(
+			struct dcn10_dpp *dpp, const struct rect *recout)
+{
+	int visual_confirm_on = 0;
+	if (dpp->base.ctx->dc->debug.visual_confirm != VISUAL_CONFIRM_DISABLE)
 		visual_confirm_on = 1;
 
 	REG_SET_2(RECOUT_START, 0,
@@ -672,31 +671,31 @@ bool dpp1_dscl_is_lb_conf_valid(पूर्णांक उच्चमान_v
 		/* Number of RECOUT vertical lines */
 			 RECOUT_HEIGHT, recout->height
 			 - visual_confirm_on * 2 * (dpp->base.inst + 1));
-पूर्ण
+}
 
 /* Main function to program scaler and line buffer in manual scaling mode */
-व्योम dpp1_dscl_set_scaler_manual_scale(
-	काष्ठा dpp *dpp_base,
-	स्थिर काष्ठा scaler_data *scl_data)
-अणु
-	क्रमागत lb_memory_config lb_config;
-	काष्ठा dcn10_dpp *dpp = TO_DCN10_DPP(dpp_base);
-	क्रमागत dscl_mode_sel dscl_mode = dpp1_dscl_get_dscl_mode(
+void dpp1_dscl_set_scaler_manual_scale(
+	struct dpp *dpp_base,
+	const struct scaler_data *scl_data)
+{
+	enum lb_memory_config lb_config;
+	struct dcn10_dpp *dpp = TO_DCN10_DPP(dpp_base);
+	enum dscl_mode_sel dscl_mode = dpp1_dscl_get_dscl_mode(
 			dpp_base, scl_data, dpp_base->ctx->dc->debug.always_scale);
-	bool ycbcr = scl_data->क्रमmat >= PIXEL_FORMAT_VIDEO_BEGIN
-				&& scl_data->क्रमmat <= PIXEL_FORMAT_VIDEO_END;
+	bool ycbcr = scl_data->format >= PIXEL_FORMAT_VIDEO_BEGIN
+				&& scl_data->format <= PIXEL_FORMAT_VIDEO_END;
 
-	अगर (स_भेद(&dpp->scl_data, scl_data, माप(*scl_data)) == 0)
-		वापस;
+	if (memcmp(&dpp->scl_data, scl_data, sizeof(*scl_data)) == 0)
+		return;
 
 	PERF_TRACE();
 
 	dpp->scl_data = *scl_data;
 
-	अगर (dpp_base->ctx->dc->debug.enable_mem_low_घातer.bits.dscl) अणु
-		अगर (dscl_mode != DSCL_MODE_DSCL_BYPASS)
-			dpp1_घातer_on_dscl(dpp_base, true);
-	पूर्ण
+	if (dpp_base->ctx->dc->debug.enable_mem_low_power.bits.dscl) {
+		if (dscl_mode != DSCL_MODE_DSCL_BYPASS)
+			dpp1_power_on_dscl(dpp_base, true);
+	}
 
 	/* Autocal off */
 	REG_SET_3(DSCL_AUTOCAL, 0,
@@ -717,31 +716,31 @@ bool dpp1_dscl_is_lb_conf_valid(पूर्णांक उच्चमान_v
 	/* SCL mode */
 	REG_UPDATE(SCL_MODE, DSCL_MODE, dscl_mode);
 
-	अगर (dscl_mode == DSCL_MODE_DSCL_BYPASS) अणु
-		अगर (dpp_base->ctx->dc->debug.enable_mem_low_घातer.bits.dscl)
-			dpp1_घातer_on_dscl(dpp_base, false);
-		वापस;
-	पूर्ण
+	if (dscl_mode == DSCL_MODE_DSCL_BYPASS) {
+		if (dpp_base->ctx->dc->debug.enable_mem_low_power.bits.dscl)
+			dpp1_power_on_dscl(dpp_base, false);
+		return;
+	}
 
 	/* LB */
 	lb_config =  dpp1_dscl_find_lb_memory_config(dpp, scl_data);
 	dpp1_dscl_set_lb(dpp, &scl_data->lb_params, lb_config);
 
-	अगर (dscl_mode == DSCL_MODE_SCALING_444_BYPASS)
-		वापस;
+	if (dscl_mode == DSCL_MODE_SCALING_444_BYPASS)
+		return;
 
 	/* Black offsets */
-	अगर (REG(SCL_BLACK_OFFSET)) अणु
-		अगर (ycbcr)
+	if (REG(SCL_BLACK_OFFSET)) {
+		if (ycbcr)
 			REG_SET_2(SCL_BLACK_OFFSET, 0,
 					SCL_BLACK_OFFSET_RGB_Y, BLACK_OFFSET_RGB_Y,
 					SCL_BLACK_OFFSET_CBCR, BLACK_OFFSET_CBCR);
-		अन्यथा
+		else
 
 			REG_SET_2(SCL_BLACK_OFFSET, 0,
 					SCL_BLACK_OFFSET_RGB_Y, BLACK_OFFSET_RGB_Y,
 					SCL_BLACK_OFFSET_CBCR, BLACK_OFFSET_RGB_Y);
-	पूर्ण
+	}
 
 	/* Manually calculate scale ratio and init values */
 	dpp1_dscl_set_manual_ratio_init(dpp, scl_data);
@@ -755,4 +754,4 @@ bool dpp1_dscl_is_lb_conf_valid(पूर्णांक उच्चमान_v
 
 	dpp1_dscl_set_scl_filter(dpp, scl_data, ycbcr);
 	PERF_TRACE();
-पूर्ण
+}

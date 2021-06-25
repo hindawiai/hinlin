@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- *  sw_sync असलtraction
+ *  sw_sync abstraction
  *
  *  Copyright 2015-2016 Collabora Ltd.
  *
@@ -8,12 +7,12 @@
  *
  *  Copyright 2013 Google, Inc
  *
- *  Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- *  copy of this software and associated करोcumentation files (the "Software"),
+ *  Permission is hereby granted, free of charge, to any person obtaining a
+ *  copy of this software and associated documentation files (the "Software"),
  *  to deal in the Software without restriction, including without limitation
- *  the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ *  the rights to use, copy, modify, merge, publish, distribute, sublicense,
  *  and/or sell copies of the Software, and to permit persons to whom the
- *  Software is furnished to करो so, subject to the following conditions:
+ *  Software is furnished to do so, subject to the following conditions:
  *
  *  The above copyright notice and this permission notice shall be included in
  *  all copies or substantial portions of the Software.
@@ -27,21 +26,21 @@
  *  OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#अगर_अघोषित SELFTESTS_SW_SYNC_H
-#घोषणा SELFTESTS_SW_SYNC_H
+#ifndef SELFTESTS_SW_SYNC_H
+#define SELFTESTS_SW_SYNC_H
 
 /*
- * sw_sync is मुख्यly पूर्णांकended क्रम testing and should not be compiled पूर्णांकo
+ * sw_sync is mainly intended for testing and should not be compiled into
  * production kernels
  */
 
-पूर्णांक sw_sync_समयline_create(व्योम);
-पूर्णांक sw_sync_समयline_is_valid(पूर्णांक fd);
-पूर्णांक sw_sync_समयline_inc(पूर्णांक fd, अचिन्हित पूर्णांक count);
-व्योम sw_sync_समयline_destroy(पूर्णांक fd);
+int sw_sync_timeline_create(void);
+int sw_sync_timeline_is_valid(int fd);
+int sw_sync_timeline_inc(int fd, unsigned int count);
+void sw_sync_timeline_destroy(int fd);
 
-पूर्णांक sw_sync_fence_create(पूर्णांक fd, स्थिर अक्षर *name, अचिन्हित पूर्णांक value);
-पूर्णांक sw_sync_fence_is_valid(पूर्णांक fd);
-व्योम sw_sync_fence_destroy(पूर्णांक fd);
+int sw_sync_fence_create(int fd, const char *name, unsigned int value);
+int sw_sync_fence_is_valid(int fd);
+void sw_sync_fence_destroy(int fd);
 
-#पूर्ण_अगर
+#endif

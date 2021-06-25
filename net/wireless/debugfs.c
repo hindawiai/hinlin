@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * cfg80211 debugfs
  *
@@ -7,50 +6,50 @@
  * Copyright 2007	Johannes Berg <johannes@sipsolutions.net>
  */
 
-#समावेश <linux/slab.h>
-#समावेश "core.h"
-#समावेश "debugfs.h"
+#include <linux/slab.h>
+#include "core.h"
+#include "debugfs.h"
 
-#घोषणा DEBUGFS_READONLY_खाता(name, buflen, fmt, value...)		\
-अटल sमाप_प्रकार name## _पढ़ो(काष्ठा file *file, अक्षर __user *userbuf,	\
-			    माप_प्रकार count, loff_t *ppos)			\
-अणु									\
-	काष्ठा wiphy *wiphy = file->निजी_data;			\
-	अक्षर buf[buflen];						\
-	पूर्णांक res;							\
+#define DEBUGFS_READONLY_FILE(name, buflen, fmt, value...)		\
+static ssize_t name## _read(struct file *file, char __user *userbuf,	\
+			    size_t count, loff_t *ppos)			\
+{									\
+	struct wiphy *wiphy = file->private_data;			\
+	char buf[buflen];						\
+	int res;							\
 									\
-	res = scnम_लिखो(buf, buflen, fmt "\n", ##value);		\
-	वापस simple_पढ़ो_from_buffer(userbuf, count, ppos, buf, res);	\
-पूर्ण									\
+	res = scnprintf(buf, buflen, fmt "\n", ##value);		\
+	return simple_read_from_buffer(userbuf, count, ppos, buf, res);	\
+}									\
 									\
-अटल स्थिर काष्ठा file_operations name## _ops = अणु			\
-	.पढ़ो = name## _पढ़ो,						\
-	.खोलो = simple_खोलो,						\
+static const struct file_operations name## _ops = {			\
+	.read = name## _read,						\
+	.open = simple_open,						\
 	.llseek = generic_file_llseek,					\
-पूर्ण
+}
 
-DEBUGFS_READONLY_खाता(rts_threshold, 20, "%d",
+DEBUGFS_READONLY_FILE(rts_threshold, 20, "%d",
 		      wiphy->rts_threshold);
-DEBUGFS_READONLY_खाता(fragmentation_threshold, 20, "%d",
+DEBUGFS_READONLY_FILE(fragmentation_threshold, 20, "%d",
 		      wiphy->frag_threshold);
-DEBUGFS_READONLY_खाता(लघु_retry_limit, 20, "%d",
-		      wiphy->retry_लघु);
-DEBUGFS_READONLY_खाता(दीर्घ_retry_limit, 20, "%d",
-		      wiphy->retry_दीर्घ);
+DEBUGFS_READONLY_FILE(short_retry_limit, 20, "%d",
+		      wiphy->retry_short);
+DEBUGFS_READONLY_FILE(long_retry_limit, 20, "%d",
+		      wiphy->retry_long);
 
-अटल पूर्णांक ht_prपूर्णांक_chan(काष्ठा ieee80211_channel *chan,
-			 अक्षर *buf, पूर्णांक buf_size, पूर्णांक offset)
-अणु
-	अगर (WARN_ON(offset > buf_size))
-		वापस 0;
+static int ht_print_chan(struct ieee80211_channel *chan,
+			 char *buf, int buf_size, int offset)
+{
+	if (WARN_ON(offset > buf_size))
+		return 0;
 
-	अगर (chan->flags & IEEE80211_CHAN_DISABLED)
-		वापस scnम_लिखो(buf + offset,
+	if (chan->flags & IEEE80211_CHAN_DISABLED)
+		return scnprintf(buf + offset,
 				 buf_size - offset,
 				 "%d Disabled\n",
 				 chan->center_freq);
 
-	वापस scnम_लिखो(buf + offset,
+	return scnprintf(buf + offset,
 			 buf_size - offset,
 			 "%d HT40 %c%c\n",
 			 chan->center_freq,
@@ -58,54 +57,54 @@ DEBUGFS_READONLY_खाता(दीर्घ_retry_limit, 20, "%d",
 				' ' : '-',
 			 (chan->flags & IEEE80211_CHAN_NO_HT40PLUS) ?
 				' ' : '+');
-पूर्ण
+}
 
-अटल sमाप_प्रकार ht40allow_map_पढ़ो(काष्ठा file *file,
-				  अक्षर __user *user_buf,
-				  माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा wiphy *wiphy = file->निजी_data;
-	अक्षर *buf;
-	अचिन्हित पूर्णांक offset = 0, buf_size = PAGE_SIZE, i, r;
-	क्रमागत nl80211_band band;
-	काष्ठा ieee80211_supported_band *sband;
+static ssize_t ht40allow_map_read(struct file *file,
+				  char __user *user_buf,
+				  size_t count, loff_t *ppos)
+{
+	struct wiphy *wiphy = file->private_data;
+	char *buf;
+	unsigned int offset = 0, buf_size = PAGE_SIZE, i, r;
+	enum nl80211_band band;
+	struct ieee80211_supported_band *sband;
 
 	buf = kzalloc(buf_size, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	if (!buf)
+		return -ENOMEM;
 
-	क्रम (band = 0; band < NUM_NL80211_BANDS; band++) अणु
+	for (band = 0; band < NUM_NL80211_BANDS; band++) {
 		sband = wiphy->bands[band];
-		अगर (!sband)
-			जारी;
-		क्रम (i = 0; i < sband->n_channels; i++)
-			offset += ht_prपूर्णांक_chan(&sband->channels[i],
+		if (!sband)
+			continue;
+		for (i = 0; i < sband->n_channels; i++)
+			offset += ht_print_chan(&sband->channels[i],
 						buf, buf_size, offset);
-	पूर्ण
+	}
 
-	r = simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, offset);
+	r = simple_read_from_buffer(user_buf, count, ppos, buf, offset);
 
-	kमुक्त(buf);
+	kfree(buf);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल स्थिर काष्ठा file_operations ht40allow_map_ops = अणु
-	.पढ़ो = ht40allow_map_पढ़ो,
-	.खोलो = simple_खोलो,
-	.llseek = शेष_llseek,
-पूर्ण;
+static const struct file_operations ht40allow_map_ops = {
+	.read = ht40allow_map_read,
+	.open = simple_open,
+	.llseek = default_llseek,
+};
 
-#घोषणा DEBUGFS_ADD(name)						\
+#define DEBUGFS_ADD(name)						\
 	debugfs_create_file(#name, 0444, phyd, &rdev->wiphy, &name## _ops)
 
-व्योम cfg80211_debugfs_rdev_add(काष्ठा cfg80211_रेजिस्टरed_device *rdev)
-अणु
-	काष्ठा dentry *phyd = rdev->wiphy.debugfsdir;
+void cfg80211_debugfs_rdev_add(struct cfg80211_registered_device *rdev)
+{
+	struct dentry *phyd = rdev->wiphy.debugfsdir;
 
 	DEBUGFS_ADD(rts_threshold);
 	DEBUGFS_ADD(fragmentation_threshold);
-	DEBUGFS_ADD(लघु_retry_limit);
-	DEBUGFS_ADD(दीर्घ_retry_limit);
+	DEBUGFS_ADD(short_retry_limit);
+	DEBUGFS_ADD(long_retry_limit);
 	DEBUGFS_ADD(ht40allow_map);
-पूर्ण
+}

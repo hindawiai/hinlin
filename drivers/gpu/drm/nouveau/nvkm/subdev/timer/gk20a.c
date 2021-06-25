@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,20 +21,20 @@
  *
  * Authors: Ben Skeggs
  */
-#समावेश "priv.h"
+#include "priv.h"
 
-अटल स्थिर काष्ठा nvkm_समयr_func
-gk20a_समयr = अणु
-	.पूर्णांकr = nv04_समयr_पूर्णांकr,
-	.पढ़ो = nv04_समयr_पढ़ो,
-	.समय = nv04_समयr_समय,
-	.alarm_init = nv04_समयr_alarm_init,
-	.alarm_fini = nv04_समयr_alarm_fini,
-पूर्ण;
+static const struct nvkm_timer_func
+gk20a_timer = {
+	.intr = nv04_timer_intr,
+	.read = nv04_timer_read,
+	.time = nv04_timer_time,
+	.alarm_init = nv04_timer_alarm_init,
+	.alarm_fini = nv04_timer_alarm_fini,
+};
 
-पूर्णांक
-gk20a_समयr_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
-		काष्ठा nvkm_समयr **pपंचांगr)
-अणु
-	वापस nvkm_समयr_new_(&gk20a_समयr, device, type, inst, pपंचांगr);
-पूर्ण
+int
+gk20a_timer_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
+		struct nvkm_timer **ptmr)
+{
+	return nvkm_timer_new_(&gk20a_timer, device, type, inst, ptmr);
+}

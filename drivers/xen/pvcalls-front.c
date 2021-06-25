@@ -1,197 +1,196 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * (c) 2017 Stefano Stabellini <stefano@aporeto.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/net.h>
-#समावेश <linux/socket.h>
+#include <linux/module.h>
+#include <linux/net.h>
+#include <linux/socket.h>
 
-#समावेश <net/sock.h>
+#include <net/sock.h>
 
-#समावेश <xen/events.h>
-#समावेश <xen/grant_table.h>
-#समावेश <xen/xen.h>
-#समावेश <xen/xenbus.h>
-#समावेश <xen/पूर्णांकerface/io/pvcalls.h>
+#include <xen/events.h>
+#include <xen/grant_table.h>
+#include <xen/xen.h>
+#include <xen/xenbus.h>
+#include <xen/interface/io/pvcalls.h>
 
-#समावेश "pvcalls-front.h"
+#include "pvcalls-front.h"
 
-#घोषणा PVCALLS_INVALID_ID अच_पूर्णांक_उच्च
-#घोषणा PVCALLS_RING_ORDER XENBUS_MAX_RING_GRANT_ORDER
-#घोषणा PVCALLS_NR_RSP_PER_RING __CONST_RING_SIZE(xen_pvcalls, XEN_PAGE_SIZE)
-#घोषणा PVCALLS_FRONT_MAX_SPIN 5000
+#define PVCALLS_INVALID_ID UINT_MAX
+#define PVCALLS_RING_ORDER XENBUS_MAX_RING_GRANT_ORDER
+#define PVCALLS_NR_RSP_PER_RING __CONST_RING_SIZE(xen_pvcalls, XEN_PAGE_SIZE)
+#define PVCALLS_FRONT_MAX_SPIN 5000
 
-अटल काष्ठा proto pvcalls_proto = अणु
+static struct proto pvcalls_proto = {
 	.name	= "PVCalls",
 	.owner	= THIS_MODULE,
-	.obj_size = माप(काष्ठा sock),
-पूर्ण;
+	.obj_size = sizeof(struct sock),
+};
 
-काष्ठा pvcalls_bedata अणु
-	काष्ठा xen_pvcalls_front_ring ring;
+struct pvcalls_bedata {
+	struct xen_pvcalls_front_ring ring;
 	grant_ref_t ref;
-	पूर्णांक irq;
+	int irq;
 
-	काष्ठा list_head socket_mappings;
+	struct list_head socket_mappings;
 	spinlock_t socket_lock;
 
-	रुको_queue_head_t inflight_req;
-	काष्ठा xen_pvcalls_response rsp[PVCALLS_NR_RSP_PER_RING];
-पूर्ण;
+	wait_queue_head_t inflight_req;
+	struct xen_pvcalls_response rsp[PVCALLS_NR_RSP_PER_RING];
+};
 /* Only one front/back connection supported. */
-अटल काष्ठा xenbus_device *pvcalls_front_dev;
-अटल atomic_t pvcalls_refcount;
+static struct xenbus_device *pvcalls_front_dev;
+static atomic_t pvcalls_refcount;
 
 /* first increment refcount, then proceed */
-#घोषणा pvcalls_enter() अणु               \
+#define pvcalls_enter() {               \
 	atomic_inc(&pvcalls_refcount);      \
-पूर्ण
+}
 
 /* first complete other operations, then decrement refcount */
-#घोषणा pvcalls_निकास() अणु                \
+#define pvcalls_exit() {                \
 	atomic_dec(&pvcalls_refcount);      \
-पूर्ण
+}
 
-काष्ठा sock_mapping अणु
+struct sock_mapping {
 	bool active_socket;
-	काष्ठा list_head list;
-	काष्ठा socket *sock;
+	struct list_head list;
+	struct socket *sock;
 	atomic_t refcount;
-	जोड़ अणु
-		काष्ठा अणु
-			पूर्णांक irq;
+	union {
+		struct {
+			int irq;
 			grant_ref_t ref;
-			काष्ठा pvcalls_data_पूर्णांकf *ring;
-			काष्ठा pvcalls_data data;
-			काष्ठा mutex in_mutex;
-			काष्ठा mutex out_mutex;
+			struct pvcalls_data_intf *ring;
+			struct pvcalls_data data;
+			struct mutex in_mutex;
+			struct mutex out_mutex;
 
-			रुको_queue_head_t inflight_conn_req;
-		पूर्ण active;
-		काष्ठा अणु
+			wait_queue_head_t inflight_conn_req;
+		} active;
+		struct {
 		/*
 		 * Socket status, needs to be 64-bit aligned due to the
 		 * test_and_* functions which have this requirement on arm64.
 		 */
-#घोषणा PVCALLS_STATUS_UNINITALIZED  0
-#घोषणा PVCALLS_STATUS_BIND          1
-#घोषणा PVCALLS_STATUS_LISTEN        2
-			uपूर्णांक8_t status __attribute__((aligned(8)));
+#define PVCALLS_STATUS_UNINITALIZED  0
+#define PVCALLS_STATUS_BIND          1
+#define PVCALLS_STATUS_LISTEN        2
+			uint8_t status __attribute__((aligned(8)));
 		/*
 		 * Internal state-machine flags.
-		 * Only one accept operation can be inflight क्रम a socket.
-		 * Only one poll operation can be inflight क्रम a given socket.
+		 * Only one accept operation can be inflight for a socket.
+		 * Only one poll operation can be inflight for a given socket.
 		 * flags needs to be 64-bit aligned due to the test_and_*
 		 * functions which have this requirement on arm64.
 		 */
-#घोषणा PVCALLS_FLAG_ACCEPT_INFLIGHT 0
-#घोषणा PVCALLS_FLAG_POLL_INFLIGHT   1
-#घोषणा PVCALLS_FLAG_POLL_RET        2
-			uपूर्णांक8_t flags __attribute__((aligned(8)));
-			uपूर्णांक32_t inflight_req_id;
-			काष्ठा sock_mapping *accept_map;
-			रुको_queue_head_t inflight_accept_req;
-		पूर्ण passive;
-	पूर्ण;
-पूर्ण;
+#define PVCALLS_FLAG_ACCEPT_INFLIGHT 0
+#define PVCALLS_FLAG_POLL_INFLIGHT   1
+#define PVCALLS_FLAG_POLL_RET        2
+			uint8_t flags __attribute__((aligned(8)));
+			uint32_t inflight_req_id;
+			struct sock_mapping *accept_map;
+			wait_queue_head_t inflight_accept_req;
+		} passive;
+	};
+};
 
-अटल अंतरभूत काष्ठा sock_mapping *pvcalls_enter_sock(काष्ठा socket *sock)
-अणु
-	काष्ठा sock_mapping *map;
+static inline struct sock_mapping *pvcalls_enter_sock(struct socket *sock)
+{
+	struct sock_mapping *map;
 
-	अगर (!pvcalls_front_dev ||
-		dev_get_drvdata(&pvcalls_front_dev->dev) == शून्य)
-		वापस ERR_PTR(-ENOTCONN);
+	if (!pvcalls_front_dev ||
+		dev_get_drvdata(&pvcalls_front_dev->dev) == NULL)
+		return ERR_PTR(-ENOTCONN);
 
-	map = (काष्ठा sock_mapping *)sock->sk->sk_send_head;
-	अगर (map == शून्य)
-		वापस ERR_PTR(-ENOTSOCK);
+	map = (struct sock_mapping *)sock->sk->sk_send_head;
+	if (map == NULL)
+		return ERR_PTR(-ENOTSOCK);
 
 	pvcalls_enter();
 	atomic_inc(&map->refcount);
-	वापस map;
-पूर्ण
+	return map;
+}
 
-अटल अंतरभूत व्योम pvcalls_निकास_sock(काष्ठा socket *sock)
-अणु
-	काष्ठा sock_mapping *map;
+static inline void pvcalls_exit_sock(struct socket *sock)
+{
+	struct sock_mapping *map;
 
-	map = (काष्ठा sock_mapping *)sock->sk->sk_send_head;
+	map = (struct sock_mapping *)sock->sk->sk_send_head;
 	atomic_dec(&map->refcount);
-	pvcalls_निकास();
-पूर्ण
+	pvcalls_exit();
+}
 
-अटल अंतरभूत पूर्णांक get_request(काष्ठा pvcalls_bedata *bedata, पूर्णांक *req_id)
-अणु
+static inline int get_request(struct pvcalls_bedata *bedata, int *req_id)
+{
 	*req_id = bedata->ring.req_prod_pvt & (RING_SIZE(&bedata->ring) - 1);
-	अगर (RING_FULL(&bedata->ring) ||
+	if (RING_FULL(&bedata->ring) ||
 	    bedata->rsp[*req_id].req_id != PVCALLS_INVALID_ID)
-		वापस -EAGAIN;
-	वापस 0;
-पूर्ण
+		return -EAGAIN;
+	return 0;
+}
 
-अटल bool pvcalls_front_ग_लिखो_toकरो(काष्ठा sock_mapping *map)
-अणु
-	काष्ठा pvcalls_data_पूर्णांकf *पूर्णांकf = map->active.ring;
+static bool pvcalls_front_write_todo(struct sock_mapping *map)
+{
+	struct pvcalls_data_intf *intf = map->active.ring;
 	RING_IDX cons, prod, size = XEN_FLEX_RING_SIZE(PVCALLS_RING_ORDER);
-	पूर्णांक32_t error;
+	int32_t error;
 
-	error = पूर्णांकf->out_error;
-	अगर (error == -ENOTCONN)
-		वापस false;
-	अगर (error != 0)
-		वापस true;
+	error = intf->out_error;
+	if (error == -ENOTCONN)
+		return false;
+	if (error != 0)
+		return true;
 
-	cons = पूर्णांकf->out_cons;
-	prod = पूर्णांकf->out_prod;
-	वापस !!(size - pvcalls_queued(prod, cons, size));
-पूर्ण
+	cons = intf->out_cons;
+	prod = intf->out_prod;
+	return !!(size - pvcalls_queued(prod, cons, size));
+}
 
-अटल bool pvcalls_front_पढ़ो_toकरो(काष्ठा sock_mapping *map)
-अणु
-	काष्ठा pvcalls_data_पूर्णांकf *पूर्णांकf = map->active.ring;
+static bool pvcalls_front_read_todo(struct sock_mapping *map)
+{
+	struct pvcalls_data_intf *intf = map->active.ring;
 	RING_IDX cons, prod;
-	पूर्णांक32_t error;
+	int32_t error;
 
-	cons = पूर्णांकf->in_cons;
-	prod = पूर्णांकf->in_prod;
-	error = पूर्णांकf->in_error;
-	वापस (error != 0 ||
+	cons = intf->in_cons;
+	prod = intf->in_prod;
+	error = intf->in_error;
+	return (error != 0 ||
 		pvcalls_queued(prod, cons,
 			       XEN_FLEX_RING_SIZE(PVCALLS_RING_ORDER)) != 0);
-पूर्ण
+}
 
-अटल irqवापस_t pvcalls_front_event_handler(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा xenbus_device *dev = dev_id;
-	काष्ठा pvcalls_bedata *bedata;
-	काष्ठा xen_pvcalls_response *rsp;
-	uपूर्णांक8_t *src, *dst;
-	पूर्णांक req_id = 0, more = 0, करोne = 0;
+static irqreturn_t pvcalls_front_event_handler(int irq, void *dev_id)
+{
+	struct xenbus_device *dev = dev_id;
+	struct pvcalls_bedata *bedata;
+	struct xen_pvcalls_response *rsp;
+	uint8_t *src, *dst;
+	int req_id = 0, more = 0, done = 0;
 
-	अगर (dev == शून्य)
-		वापस IRQ_HANDLED;
+	if (dev == NULL)
+		return IRQ_HANDLED;
 
 	pvcalls_enter();
 	bedata = dev_get_drvdata(&dev->dev);
-	अगर (bedata == शून्य) अणु
-		pvcalls_निकास();
-		वापस IRQ_HANDLED;
-	पूर्ण
+	if (bedata == NULL) {
+		pvcalls_exit();
+		return IRQ_HANDLED;
+	}
 
 again:
-	जबतक (RING_HAS_UNCONSUMED_RESPONSES(&bedata->ring)) अणु
+	while (RING_HAS_UNCONSUMED_RESPONSES(&bedata->ring)) {
 		rsp = RING_GET_RESPONSE(&bedata->ring, bedata->ring.rsp_cons);
 
 		req_id = rsp->req_id;
-		अगर (rsp->cmd == PVCALLS_POLL) अणु
-			काष्ठा sock_mapping *map = (काष्ठा sock_mapping *)(uपूर्णांकptr_t)
+		if (rsp->cmd == PVCALLS_POLL) {
+			struct sock_mapping *map = (struct sock_mapping *)(uintptr_t)
 						   rsp->u.poll.id;
 
 			clear_bit(PVCALLS_FLAG_POLL_INFLIGHT,
-				  (व्योम *)&map->passive.flags);
+				  (void *)&map->passive.flags);
 			/*
 			 * clear INFLIGHT, then set RET. It pairs with
 			 * the checks at the beginning of
@@ -199,1094 +198,1094 @@ again:
 			 */
 			smp_wmb();
 			set_bit(PVCALLS_FLAG_POLL_RET,
-				(व्योम *)&map->passive.flags);
-		पूर्ण अन्यथा अणु
-			dst = (uपूर्णांक8_t *)&bedata->rsp[req_id] +
-			      माप(rsp->req_id);
-			src = (uपूर्णांक8_t *)rsp + माप(rsp->req_id);
-			स_नकल(dst, src, माप(*rsp) - माप(rsp->req_id));
+				(void *)&map->passive.flags);
+		} else {
+			dst = (uint8_t *)&bedata->rsp[req_id] +
+			      sizeof(rsp->req_id);
+			src = (uint8_t *)rsp + sizeof(rsp->req_id);
+			memcpy(dst, src, sizeof(*rsp) - sizeof(rsp->req_id));
 			/*
 			 * First copy the rest of the data, then req_id. It is
 			 * paired with the barrier when accessing bedata->rsp.
 			 */
 			smp_wmb();
 			bedata->rsp[req_id].req_id = req_id;
-		पूर्ण
+		}
 
-		करोne = 1;
+		done = 1;
 		bedata->ring.rsp_cons++;
-	पूर्ण
+	}
 
 	RING_FINAL_CHECK_FOR_RESPONSES(&bedata->ring, more);
-	अगर (more)
-		जाओ again;
-	अगर (करोne)
+	if (more)
+		goto again;
+	if (done)
 		wake_up(&bedata->inflight_req);
-	pvcalls_निकास();
-	वापस IRQ_HANDLED;
-पूर्ण
+	pvcalls_exit();
+	return IRQ_HANDLED;
+}
 
-अटल व्योम pvcalls_front_मुक्त_map(काष्ठा pvcalls_bedata *bedata,
-				   काष्ठा sock_mapping *map)
-अणु
-	पूर्णांक i;
+static void pvcalls_front_free_map(struct pvcalls_bedata *bedata,
+				   struct sock_mapping *map)
+{
+	int i;
 
 	unbind_from_irqhandler(map->active.irq, map);
 
 	spin_lock(&bedata->socket_lock);
-	अगर (!list_empty(&map->list))
+	if (!list_empty(&map->list))
 		list_del_init(&map->list);
 	spin_unlock(&bedata->socket_lock);
 
-	क्रम (i = 0; i < (1 << PVCALLS_RING_ORDER); i++)
-		gnttab_end_क्रमeign_access(map->active.ring->ref[i], 0, 0);
-	gnttab_end_क्रमeign_access(map->active.ref, 0, 0);
-	मुक्त_page((अचिन्हित दीर्घ)map->active.ring);
+	for (i = 0; i < (1 << PVCALLS_RING_ORDER); i++)
+		gnttab_end_foreign_access(map->active.ring->ref[i], 0, 0);
+	gnttab_end_foreign_access(map->active.ref, 0, 0);
+	free_page((unsigned long)map->active.ring);
 
-	kमुक्त(map);
-पूर्ण
+	kfree(map);
+}
 
-अटल irqवापस_t pvcalls_front_conn_handler(पूर्णांक irq, व्योम *sock_map)
-अणु
-	काष्ठा sock_mapping *map = sock_map;
+static irqreturn_t pvcalls_front_conn_handler(int irq, void *sock_map)
+{
+	struct sock_mapping *map = sock_map;
 
-	अगर (map == शून्य)
-		वापस IRQ_HANDLED;
+	if (map == NULL)
+		return IRQ_HANDLED;
 
-	wake_up_पूर्णांकerruptible(&map->active.inflight_conn_req);
+	wake_up_interruptible(&map->active.inflight_conn_req);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-पूर्णांक pvcalls_front_socket(काष्ठा socket *sock)
-अणु
-	काष्ठा pvcalls_bedata *bedata;
-	काष्ठा sock_mapping *map = शून्य;
-	काष्ठा xen_pvcalls_request *req;
-	पूर्णांक notअगरy, req_id, ret;
+int pvcalls_front_socket(struct socket *sock)
+{
+	struct pvcalls_bedata *bedata;
+	struct sock_mapping *map = NULL;
+	struct xen_pvcalls_request *req;
+	int notify, req_id, ret;
 
 	/*
-	 * PVCalls only supports करोमुख्य AF_INET,
-	 * type SOCK_STREAM and protocol 0 sockets क्रम now.
+	 * PVCalls only supports domain AF_INET,
+	 * type SOCK_STREAM and protocol 0 sockets for now.
 	 *
-	 * Check socket type here, AF_INET and protocol checks are करोne
+	 * Check socket type here, AF_INET and protocol checks are done
 	 * by the caller.
 	 */
-	अगर (sock->type != SOCK_STREAM)
-		वापस -EOPNOTSUPP;
+	if (sock->type != SOCK_STREAM)
+		return -EOPNOTSUPP;
 
 	pvcalls_enter();
-	अगर (!pvcalls_front_dev) अणु
-		pvcalls_निकास();
-		वापस -EACCES;
-	पूर्ण
+	if (!pvcalls_front_dev) {
+		pvcalls_exit();
+		return -EACCES;
+	}
 	bedata = dev_get_drvdata(&pvcalls_front_dev->dev);
 
-	map = kzalloc(माप(*map), GFP_KERNEL);
-	अगर (map == शून्य) अणु
-		pvcalls_निकास();
-		वापस -ENOMEM;
-	पूर्ण
+	map = kzalloc(sizeof(*map), GFP_KERNEL);
+	if (map == NULL) {
+		pvcalls_exit();
+		return -ENOMEM;
+	}
 
 	spin_lock(&bedata->socket_lock);
 
 	ret = get_request(bedata, &req_id);
-	अगर (ret < 0) अणु
-		kमुक्त(map);
+	if (ret < 0) {
+		kfree(map);
 		spin_unlock(&bedata->socket_lock);
-		pvcalls_निकास();
-		वापस ret;
-	पूर्ण
+		pvcalls_exit();
+		return ret;
+	}
 
 	/*
-	 * sock->sk->sk_send_head is not used क्रम ip sockets: reuse the
-	 * field to store a poपूर्णांकer to the काष्ठा sock_mapping
+	 * sock->sk->sk_send_head is not used for ip sockets: reuse the
+	 * field to store a pointer to the struct sock_mapping
 	 * corresponding to the socket. This way, we can easily get the
-	 * काष्ठा sock_mapping from the काष्ठा socket.
+	 * struct sock_mapping from the struct socket.
 	 */
-	sock->sk->sk_send_head = (व्योम *)map;
+	sock->sk->sk_send_head = (void *)map;
 	list_add_tail(&map->list, &bedata->socket_mappings);
 
 	req = RING_GET_REQUEST(&bedata->ring, req_id);
 	req->req_id = req_id;
 	req->cmd = PVCALLS_SOCKET;
-	req->u.socket.id = (uपूर्णांकptr_t) map;
-	req->u.socket.करोमुख्य = AF_INET;
+	req->u.socket.id = (uintptr_t) map;
+	req->u.socket.domain = AF_INET;
 	req->u.socket.type = SOCK_STREAM;
 	req->u.socket.protocol = IPPROTO_IP;
 
 	bedata->ring.req_prod_pvt++;
-	RING_PUSH_REQUESTS_AND_CHECK_NOTIFY(&bedata->ring, notअगरy);
+	RING_PUSH_REQUESTS_AND_CHECK_NOTIFY(&bedata->ring, notify);
 	spin_unlock(&bedata->socket_lock);
-	अगर (notअगरy)
-		notअगरy_remote_via_irq(bedata->irq);
+	if (notify)
+		notify_remote_via_irq(bedata->irq);
 
-	रुको_event(bedata->inflight_req,
+	wait_event(bedata->inflight_req,
 		   READ_ONCE(bedata->rsp[req_id].req_id) == req_id);
 
-	/* पढ़ो req_id, then the content */
+	/* read req_id, then the content */
 	smp_rmb();
 	ret = bedata->rsp[req_id].ret;
 	bedata->rsp[req_id].req_id = PVCALLS_INVALID_ID;
 
-	pvcalls_निकास();
-	वापस ret;
-पूर्ण
+	pvcalls_exit();
+	return ret;
+}
 
-अटल व्योम मुक्त_active_ring(काष्ठा sock_mapping *map)
-अणु
-	अगर (!map->active.ring)
-		वापस;
+static void free_active_ring(struct sock_mapping *map)
+{
+	if (!map->active.ring)
+		return;
 
-	मुक्त_pages((अचिन्हित दीर्घ)map->active.data.in,
+	free_pages((unsigned long)map->active.data.in,
 			map->active.ring->ring_order);
-	मुक्त_page((अचिन्हित दीर्घ)map->active.ring);
-पूर्ण
+	free_page((unsigned long)map->active.ring);
+}
 
-अटल पूर्णांक alloc_active_ring(काष्ठा sock_mapping *map)
-अणु
-	व्योम *bytes;
+static int alloc_active_ring(struct sock_mapping *map)
+{
+	void *bytes;
 
-	map->active.ring = (काष्ठा pvcalls_data_पूर्णांकf *)
+	map->active.ring = (struct pvcalls_data_intf *)
 		get_zeroed_page(GFP_KERNEL);
-	अगर (!map->active.ring)
-		जाओ out;
+	if (!map->active.ring)
+		goto out;
 
 	map->active.ring->ring_order = PVCALLS_RING_ORDER;
-	bytes = (व्योम *)__get_मुक्त_pages(GFP_KERNEL | __GFP_ZERO,
+	bytes = (void *)__get_free_pages(GFP_KERNEL | __GFP_ZERO,
 					PVCALLS_RING_ORDER);
-	अगर (!bytes)
-		जाओ out;
+	if (!bytes)
+		goto out;
 
 	map->active.data.in = bytes;
 	map->active.data.out = bytes +
 		XEN_FLEX_RING_SIZE(PVCALLS_RING_ORDER);
 
-	वापस 0;
+	return 0;
 
 out:
-	मुक्त_active_ring(map);
-	वापस -ENOMEM;
-पूर्ण
+	free_active_ring(map);
+	return -ENOMEM;
+}
 
-अटल पूर्णांक create_active(काष्ठा sock_mapping *map, evtchn_port_t *evtchn)
-अणु
-	व्योम *bytes;
-	पूर्णांक ret, irq = -1, i;
+static int create_active(struct sock_mapping *map, evtchn_port_t *evtchn)
+{
+	void *bytes;
+	int ret, irq = -1, i;
 
 	*evtchn = 0;
-	init_रुकोqueue_head(&map->active.inflight_conn_req);
+	init_waitqueue_head(&map->active.inflight_conn_req);
 
 	bytes = map->active.data.in;
-	क्रम (i = 0; i < (1 << PVCALLS_RING_ORDER); i++)
-		map->active.ring->ref[i] = gnttab_grant_क्रमeign_access(
+	for (i = 0; i < (1 << PVCALLS_RING_ORDER); i++)
+		map->active.ring->ref[i] = gnttab_grant_foreign_access(
 			pvcalls_front_dev->otherend_id,
 			pfn_to_gfn(virt_to_pfn(bytes) + i), 0);
 
-	map->active.ref = gnttab_grant_क्रमeign_access(
+	map->active.ref = gnttab_grant_foreign_access(
 		pvcalls_front_dev->otherend_id,
-		pfn_to_gfn(virt_to_pfn((व्योम *)map->active.ring)), 0);
+		pfn_to_gfn(virt_to_pfn((void *)map->active.ring)), 0);
 
 	ret = xenbus_alloc_evtchn(pvcalls_front_dev, evtchn);
-	अगर (ret)
-		जाओ out_error;
+	if (ret)
+		goto out_error;
 	irq = bind_evtchn_to_irqhandler(*evtchn, pvcalls_front_conn_handler,
 					0, "pvcalls-frontend", map);
-	अगर (irq < 0) अणु
+	if (irq < 0) {
 		ret = irq;
-		जाओ out_error;
-	पूर्ण
+		goto out_error;
+	}
 
 	map->active.irq = irq;
 	map->active_socket = true;
 	mutex_init(&map->active.in_mutex);
 	mutex_init(&map->active.out_mutex);
 
-	वापस 0;
+	return 0;
 
 out_error:
-	अगर (*evtchn > 0)
-		xenbus_मुक्त_evtchn(pvcalls_front_dev, *evtchn);
-	वापस ret;
-पूर्ण
+	if (*evtchn > 0)
+		xenbus_free_evtchn(pvcalls_front_dev, *evtchn);
+	return ret;
+}
 
-पूर्णांक pvcalls_front_connect(काष्ठा socket *sock, काष्ठा sockaddr *addr,
-				पूर्णांक addr_len, पूर्णांक flags)
-अणु
-	काष्ठा pvcalls_bedata *bedata;
-	काष्ठा sock_mapping *map = शून्य;
-	काष्ठा xen_pvcalls_request *req;
-	पूर्णांक notअगरy, req_id, ret;
+int pvcalls_front_connect(struct socket *sock, struct sockaddr *addr,
+				int addr_len, int flags)
+{
+	struct pvcalls_bedata *bedata;
+	struct sock_mapping *map = NULL;
+	struct xen_pvcalls_request *req;
+	int notify, req_id, ret;
 	evtchn_port_t evtchn;
 
-	अगर (addr->sa_family != AF_INET || sock->type != SOCK_STREAM)
-		वापस -EOPNOTSUPP;
+	if (addr->sa_family != AF_INET || sock->type != SOCK_STREAM)
+		return -EOPNOTSUPP;
 
 	map = pvcalls_enter_sock(sock);
-	अगर (IS_ERR(map))
-		वापस PTR_ERR(map);
+	if (IS_ERR(map))
+		return PTR_ERR(map);
 
 	bedata = dev_get_drvdata(&pvcalls_front_dev->dev);
 	ret = alloc_active_ring(map);
-	अगर (ret < 0) अणु
-		pvcalls_निकास_sock(sock);
-		वापस ret;
-	पूर्ण
+	if (ret < 0) {
+		pvcalls_exit_sock(sock);
+		return ret;
+	}
 
 	spin_lock(&bedata->socket_lock);
 	ret = get_request(bedata, &req_id);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		spin_unlock(&bedata->socket_lock);
-		मुक्त_active_ring(map);
-		pvcalls_निकास_sock(sock);
-		वापस ret;
-	पूर्ण
+		free_active_ring(map);
+		pvcalls_exit_sock(sock);
+		return ret;
+	}
 	ret = create_active(map, &evtchn);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		spin_unlock(&bedata->socket_lock);
-		मुक्त_active_ring(map);
-		pvcalls_निकास_sock(sock);
-		वापस ret;
-	पूर्ण
+		free_active_ring(map);
+		pvcalls_exit_sock(sock);
+		return ret;
+	}
 
 	req = RING_GET_REQUEST(&bedata->ring, req_id);
 	req->req_id = req_id;
 	req->cmd = PVCALLS_CONNECT;
-	req->u.connect.id = (uपूर्णांकptr_t)map;
+	req->u.connect.id = (uintptr_t)map;
 	req->u.connect.len = addr_len;
 	req->u.connect.flags = flags;
 	req->u.connect.ref = map->active.ref;
 	req->u.connect.evtchn = evtchn;
-	स_नकल(req->u.connect.addr, addr, माप(*addr));
+	memcpy(req->u.connect.addr, addr, sizeof(*addr));
 
 	map->sock = sock;
 
 	bedata->ring.req_prod_pvt++;
-	RING_PUSH_REQUESTS_AND_CHECK_NOTIFY(&bedata->ring, notअगरy);
+	RING_PUSH_REQUESTS_AND_CHECK_NOTIFY(&bedata->ring, notify);
 	spin_unlock(&bedata->socket_lock);
 
-	अगर (notअगरy)
-		notअगरy_remote_via_irq(bedata->irq);
+	if (notify)
+		notify_remote_via_irq(bedata->irq);
 
-	रुको_event(bedata->inflight_req,
+	wait_event(bedata->inflight_req,
 		   READ_ONCE(bedata->rsp[req_id].req_id) == req_id);
 
-	/* पढ़ो req_id, then the content */
+	/* read req_id, then the content */
 	smp_rmb();
 	ret = bedata->rsp[req_id].ret;
 	bedata->rsp[req_id].req_id = PVCALLS_INVALID_ID;
-	pvcalls_निकास_sock(sock);
-	वापस ret;
-पूर्ण
+	pvcalls_exit_sock(sock);
+	return ret;
+}
 
-अटल पूर्णांक __ग_लिखो_ring(काष्ठा pvcalls_data_पूर्णांकf *पूर्णांकf,
-			काष्ठा pvcalls_data *data,
-			काष्ठा iov_iter *msg_iter,
-			पूर्णांक len)
-अणु
+static int __write_ring(struct pvcalls_data_intf *intf,
+			struct pvcalls_data *data,
+			struct iov_iter *msg_iter,
+			int len)
+{
 	RING_IDX cons, prod, size, masked_prod, masked_cons;
 	RING_IDX array_size = XEN_FLEX_RING_SIZE(PVCALLS_RING_ORDER);
-	पूर्णांक32_t error;
+	int32_t error;
 
-	error = पूर्णांकf->out_error;
-	अगर (error < 0)
-		वापस error;
-	cons = पूर्णांकf->out_cons;
-	prod = पूर्णांकf->out_prod;
-	/* पढ़ो indexes beक्रमe continuing */
+	error = intf->out_error;
+	if (error < 0)
+		return error;
+	cons = intf->out_cons;
+	prod = intf->out_prod;
+	/* read indexes before continuing */
 	virt_mb();
 
 	size = pvcalls_queued(prod, cons, array_size);
-	अगर (size > array_size)
-		वापस -EINVAL;
-	अगर (size == array_size)
-		वापस 0;
-	अगर (len > array_size - size)
+	if (size > array_size)
+		return -EINVAL;
+	if (size == array_size)
+		return 0;
+	if (len > array_size - size)
 		len = array_size - size;
 
 	masked_prod = pvcalls_mask(prod, array_size);
 	masked_cons = pvcalls_mask(cons, array_size);
 
-	अगर (masked_prod < masked_cons) अणु
+	if (masked_prod < masked_cons) {
 		len = copy_from_iter(data->out + masked_prod, len, msg_iter);
-	पूर्ण अन्यथा अणु
-		अगर (len > array_size - masked_prod) अणु
-			पूर्णांक ret = copy_from_iter(data->out + masked_prod,
+	} else {
+		if (len > array_size - masked_prod) {
+			int ret = copy_from_iter(data->out + masked_prod,
 				       array_size - masked_prod, msg_iter);
-			अगर (ret != array_size - masked_prod) अणु
+			if (ret != array_size - masked_prod) {
 				len = ret;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			len = ret + copy_from_iter(data->out, len - ret, msg_iter);
-		पूर्ण अन्यथा अणु
+		} else {
 			len = copy_from_iter(data->out + masked_prod, len, msg_iter);
-		पूर्ण
-	पूर्ण
+		}
+	}
 out:
-	/* ग_लिखो to ring beक्रमe updating poपूर्णांकer */
+	/* write to ring before updating pointer */
 	virt_wmb();
-	पूर्णांकf->out_prod += len;
+	intf->out_prod += len;
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-पूर्णांक pvcalls_front_sendmsg(काष्ठा socket *sock, काष्ठा msghdr *msg,
-			  माप_प्रकार len)
-अणु
-	काष्ठा sock_mapping *map;
-	पूर्णांक sent, tot_sent = 0;
-	पूर्णांक count = 0, flags;
+int pvcalls_front_sendmsg(struct socket *sock, struct msghdr *msg,
+			  size_t len)
+{
+	struct sock_mapping *map;
+	int sent, tot_sent = 0;
+	int count = 0, flags;
 
 	flags = msg->msg_flags;
-	अगर (flags & (MSG_CONFIRM|MSG_DONTROUTE|MSG_EOR|MSG_OOB))
-		वापस -EOPNOTSUPP;
+	if (flags & (MSG_CONFIRM|MSG_DONTROUTE|MSG_EOR|MSG_OOB))
+		return -EOPNOTSUPP;
 
 	map = pvcalls_enter_sock(sock);
-	अगर (IS_ERR(map))
-		वापस PTR_ERR(map);
+	if (IS_ERR(map))
+		return PTR_ERR(map);
 
 	mutex_lock(&map->active.out_mutex);
-	अगर ((flags & MSG_DONTWAIT) && !pvcalls_front_ग_लिखो_toकरो(map)) अणु
+	if ((flags & MSG_DONTWAIT) && !pvcalls_front_write_todo(map)) {
 		mutex_unlock(&map->active.out_mutex);
-		pvcalls_निकास_sock(sock);
-		वापस -EAGAIN;
-	पूर्ण
-	अगर (len > पूर्णांक_उच्च)
-		len = पूर्णांक_उच्च;
+		pvcalls_exit_sock(sock);
+		return -EAGAIN;
+	}
+	if (len > INT_MAX)
+		len = INT_MAX;
 
 again:
 	count++;
-	sent = __ग_लिखो_ring(map->active.ring,
+	sent = __write_ring(map->active.ring,
 			    &map->active.data, &msg->msg_iter,
 			    len);
-	अगर (sent > 0) अणु
+	if (sent > 0) {
 		len -= sent;
 		tot_sent += sent;
-		notअगरy_remote_via_irq(map->active.irq);
-	पूर्ण
-	अगर (sent >= 0 && len > 0 && count < PVCALLS_FRONT_MAX_SPIN)
-		जाओ again;
-	अगर (sent < 0)
+		notify_remote_via_irq(map->active.irq);
+	}
+	if (sent >= 0 && len > 0 && count < PVCALLS_FRONT_MAX_SPIN)
+		goto again;
+	if (sent < 0)
 		tot_sent = sent;
 
 	mutex_unlock(&map->active.out_mutex);
-	pvcalls_निकास_sock(sock);
-	वापस tot_sent;
-पूर्ण
+	pvcalls_exit_sock(sock);
+	return tot_sent;
+}
 
-अटल पूर्णांक __पढ़ो_ring(काष्ठा pvcalls_data_पूर्णांकf *पूर्णांकf,
-		       काष्ठा pvcalls_data *data,
-		       काष्ठा iov_iter *msg_iter,
-		       माप_प्रकार len, पूर्णांक flags)
-अणु
+static int __read_ring(struct pvcalls_data_intf *intf,
+		       struct pvcalls_data *data,
+		       struct iov_iter *msg_iter,
+		       size_t len, int flags)
+{
 	RING_IDX cons, prod, size, masked_prod, masked_cons;
 	RING_IDX array_size = XEN_FLEX_RING_SIZE(PVCALLS_RING_ORDER);
-	पूर्णांक32_t error;
+	int32_t error;
 
-	cons = पूर्णांकf->in_cons;
-	prod = पूर्णांकf->in_prod;
-	error = पूर्णांकf->in_error;
-	/* get poपूर्णांकers beक्रमe पढ़ोing from the ring */
+	cons = intf->in_cons;
+	prod = intf->in_prod;
+	error = intf->in_error;
+	/* get pointers before reading from the ring */
 	virt_rmb();
 
 	size = pvcalls_queued(prod, cons, array_size);
 	masked_prod = pvcalls_mask(prod, array_size);
 	masked_cons = pvcalls_mask(cons, array_size);
 
-	अगर (size == 0)
-		वापस error ?: size;
+	if (size == 0)
+		return error ?: size;
 
-	अगर (len > size)
+	if (len > size)
 		len = size;
 
-	अगर (masked_prod > masked_cons) अणु
+	if (masked_prod > masked_cons) {
 		len = copy_to_iter(data->in + masked_cons, len, msg_iter);
-	पूर्ण अन्यथा अणु
-		अगर (len > (array_size - masked_cons)) अणु
-			पूर्णांक ret = copy_to_iter(data->in + masked_cons,
+	} else {
+		if (len > (array_size - masked_cons)) {
+			int ret = copy_to_iter(data->in + masked_cons,
 				     array_size - masked_cons, msg_iter);
-			अगर (ret != array_size - masked_cons) अणु
+			if (ret != array_size - masked_cons) {
 				len = ret;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			len = ret + copy_to_iter(data->in, len - ret, msg_iter);
-		पूर्ण अन्यथा अणु
+		} else {
 			len = copy_to_iter(data->in + masked_cons, len, msg_iter);
-		पूर्ण
-	पूर्ण
+		}
+	}
 out:
-	/* पढ़ो data from the ring beक्रमe increasing the index */
+	/* read data from the ring before increasing the index */
 	virt_mb();
-	अगर (!(flags & MSG_PEEK))
-		पूर्णांकf->in_cons += len;
+	if (!(flags & MSG_PEEK))
+		intf->in_cons += len;
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-पूर्णांक pvcalls_front_recvmsg(काष्ठा socket *sock, काष्ठा msghdr *msg, माप_प्रकार len,
-		     पूर्णांक flags)
-अणु
-	पूर्णांक ret;
-	काष्ठा sock_mapping *map;
+int pvcalls_front_recvmsg(struct socket *sock, struct msghdr *msg, size_t len,
+		     int flags)
+{
+	int ret;
+	struct sock_mapping *map;
 
-	अगर (flags & (MSG_CMSG_CLOEXEC|MSG_ERRQUEUE|MSG_OOB|MSG_TRUNC))
-		वापस -EOPNOTSUPP;
+	if (flags & (MSG_CMSG_CLOEXEC|MSG_ERRQUEUE|MSG_OOB|MSG_TRUNC))
+		return -EOPNOTSUPP;
 
 	map = pvcalls_enter_sock(sock);
-	अगर (IS_ERR(map))
-		वापस PTR_ERR(map);
+	if (IS_ERR(map))
+		return PTR_ERR(map);
 
 	mutex_lock(&map->active.in_mutex);
-	अगर (len > XEN_FLEX_RING_SIZE(PVCALLS_RING_ORDER))
+	if (len > XEN_FLEX_RING_SIZE(PVCALLS_RING_ORDER))
 		len = XEN_FLEX_RING_SIZE(PVCALLS_RING_ORDER);
 
-	जबतक (!(flags & MSG_DONTWAIT) && !pvcalls_front_पढ़ो_toकरो(map)) अणु
-		रुको_event_पूर्णांकerruptible(map->active.inflight_conn_req,
-					 pvcalls_front_पढ़ो_toकरो(map));
-	पूर्ण
-	ret = __पढ़ो_ring(map->active.ring, &map->active.data,
+	while (!(flags & MSG_DONTWAIT) && !pvcalls_front_read_todo(map)) {
+		wait_event_interruptible(map->active.inflight_conn_req,
+					 pvcalls_front_read_todo(map));
+	}
+	ret = __read_ring(map->active.ring, &map->active.data,
 			  &msg->msg_iter, len, flags);
 
-	अगर (ret > 0)
-		notअगरy_remote_via_irq(map->active.irq);
-	अगर (ret == 0)
+	if (ret > 0)
+		notify_remote_via_irq(map->active.irq);
+	if (ret == 0)
 		ret = (flags & MSG_DONTWAIT) ? -EAGAIN : 0;
-	अगर (ret == -ENOTCONN)
+	if (ret == -ENOTCONN)
 		ret = 0;
 
 	mutex_unlock(&map->active.in_mutex);
-	pvcalls_निकास_sock(sock);
-	वापस ret;
-पूर्ण
+	pvcalls_exit_sock(sock);
+	return ret;
+}
 
-पूर्णांक pvcalls_front_bind(काष्ठा socket *sock, काष्ठा sockaddr *addr, पूर्णांक addr_len)
-अणु
-	काष्ठा pvcalls_bedata *bedata;
-	काष्ठा sock_mapping *map = शून्य;
-	काष्ठा xen_pvcalls_request *req;
-	पूर्णांक notअगरy, req_id, ret;
+int pvcalls_front_bind(struct socket *sock, struct sockaddr *addr, int addr_len)
+{
+	struct pvcalls_bedata *bedata;
+	struct sock_mapping *map = NULL;
+	struct xen_pvcalls_request *req;
+	int notify, req_id, ret;
 
-	अगर (addr->sa_family != AF_INET || sock->type != SOCK_STREAM)
-		वापस -EOPNOTSUPP;
+	if (addr->sa_family != AF_INET || sock->type != SOCK_STREAM)
+		return -EOPNOTSUPP;
 
 	map = pvcalls_enter_sock(sock);
-	अगर (IS_ERR(map))
-		वापस PTR_ERR(map);
+	if (IS_ERR(map))
+		return PTR_ERR(map);
 	bedata = dev_get_drvdata(&pvcalls_front_dev->dev);
 
 	spin_lock(&bedata->socket_lock);
 	ret = get_request(bedata, &req_id);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		spin_unlock(&bedata->socket_lock);
-		pvcalls_निकास_sock(sock);
-		वापस ret;
-	पूर्ण
+		pvcalls_exit_sock(sock);
+		return ret;
+	}
 	req = RING_GET_REQUEST(&bedata->ring, req_id);
 	req->req_id = req_id;
 	map->sock = sock;
 	req->cmd = PVCALLS_BIND;
-	req->u.bind.id = (uपूर्णांकptr_t)map;
-	स_नकल(req->u.bind.addr, addr, माप(*addr));
+	req->u.bind.id = (uintptr_t)map;
+	memcpy(req->u.bind.addr, addr, sizeof(*addr));
 	req->u.bind.len = addr_len;
 
-	init_रुकोqueue_head(&map->passive.inflight_accept_req);
+	init_waitqueue_head(&map->passive.inflight_accept_req);
 
 	map->active_socket = false;
 
 	bedata->ring.req_prod_pvt++;
-	RING_PUSH_REQUESTS_AND_CHECK_NOTIFY(&bedata->ring, notअगरy);
+	RING_PUSH_REQUESTS_AND_CHECK_NOTIFY(&bedata->ring, notify);
 	spin_unlock(&bedata->socket_lock);
-	अगर (notअगरy)
-		notअगरy_remote_via_irq(bedata->irq);
+	if (notify)
+		notify_remote_via_irq(bedata->irq);
 
-	रुको_event(bedata->inflight_req,
+	wait_event(bedata->inflight_req,
 		   READ_ONCE(bedata->rsp[req_id].req_id) == req_id);
 
-	/* पढ़ो req_id, then the content */
+	/* read req_id, then the content */
 	smp_rmb();
 	ret = bedata->rsp[req_id].ret;
 	bedata->rsp[req_id].req_id = PVCALLS_INVALID_ID;
 
 	map->passive.status = PVCALLS_STATUS_BIND;
-	pvcalls_निकास_sock(sock);
-	वापस 0;
-पूर्ण
+	pvcalls_exit_sock(sock);
+	return 0;
+}
 
-पूर्णांक pvcalls_front_listen(काष्ठा socket *sock, पूर्णांक backlog)
-अणु
-	काष्ठा pvcalls_bedata *bedata;
-	काष्ठा sock_mapping *map;
-	काष्ठा xen_pvcalls_request *req;
-	पूर्णांक notअगरy, req_id, ret;
+int pvcalls_front_listen(struct socket *sock, int backlog)
+{
+	struct pvcalls_bedata *bedata;
+	struct sock_mapping *map;
+	struct xen_pvcalls_request *req;
+	int notify, req_id, ret;
 
 	map = pvcalls_enter_sock(sock);
-	अगर (IS_ERR(map))
-		वापस PTR_ERR(map);
+	if (IS_ERR(map))
+		return PTR_ERR(map);
 	bedata = dev_get_drvdata(&pvcalls_front_dev->dev);
 
-	अगर (map->passive.status != PVCALLS_STATUS_BIND) अणु
-		pvcalls_निकास_sock(sock);
-		वापस -EOPNOTSUPP;
-	पूर्ण
+	if (map->passive.status != PVCALLS_STATUS_BIND) {
+		pvcalls_exit_sock(sock);
+		return -EOPNOTSUPP;
+	}
 
 	spin_lock(&bedata->socket_lock);
 	ret = get_request(bedata, &req_id);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		spin_unlock(&bedata->socket_lock);
-		pvcalls_निकास_sock(sock);
-		वापस ret;
-	पूर्ण
+		pvcalls_exit_sock(sock);
+		return ret;
+	}
 	req = RING_GET_REQUEST(&bedata->ring, req_id);
 	req->req_id = req_id;
 	req->cmd = PVCALLS_LISTEN;
-	req->u.listen.id = (uपूर्णांकptr_t) map;
+	req->u.listen.id = (uintptr_t) map;
 	req->u.listen.backlog = backlog;
 
 	bedata->ring.req_prod_pvt++;
-	RING_PUSH_REQUESTS_AND_CHECK_NOTIFY(&bedata->ring, notअगरy);
+	RING_PUSH_REQUESTS_AND_CHECK_NOTIFY(&bedata->ring, notify);
 	spin_unlock(&bedata->socket_lock);
-	अगर (notअगरy)
-		notअगरy_remote_via_irq(bedata->irq);
+	if (notify)
+		notify_remote_via_irq(bedata->irq);
 
-	रुको_event(bedata->inflight_req,
+	wait_event(bedata->inflight_req,
 		   READ_ONCE(bedata->rsp[req_id].req_id) == req_id);
 
-	/* पढ़ो req_id, then the content */
+	/* read req_id, then the content */
 	smp_rmb();
 	ret = bedata->rsp[req_id].ret;
 	bedata->rsp[req_id].req_id = PVCALLS_INVALID_ID;
 
 	map->passive.status = PVCALLS_STATUS_LISTEN;
-	pvcalls_निकास_sock(sock);
-	वापस ret;
-पूर्ण
+	pvcalls_exit_sock(sock);
+	return ret;
+}
 
-पूर्णांक pvcalls_front_accept(काष्ठा socket *sock, काष्ठा socket *newsock, पूर्णांक flags)
-अणु
-	काष्ठा pvcalls_bedata *bedata;
-	काष्ठा sock_mapping *map;
-	काष्ठा sock_mapping *map2 = शून्य;
-	काष्ठा xen_pvcalls_request *req;
-	पूर्णांक notअगरy, req_id, ret, nonblock;
+int pvcalls_front_accept(struct socket *sock, struct socket *newsock, int flags)
+{
+	struct pvcalls_bedata *bedata;
+	struct sock_mapping *map;
+	struct sock_mapping *map2 = NULL;
+	struct xen_pvcalls_request *req;
+	int notify, req_id, ret, nonblock;
 	evtchn_port_t evtchn;
 
 	map = pvcalls_enter_sock(sock);
-	अगर (IS_ERR(map))
-		वापस PTR_ERR(map);
+	if (IS_ERR(map))
+		return PTR_ERR(map);
 	bedata = dev_get_drvdata(&pvcalls_front_dev->dev);
 
-	अगर (map->passive.status != PVCALLS_STATUS_LISTEN) अणु
-		pvcalls_निकास_sock(sock);
-		वापस -EINVAL;
-	पूर्ण
+	if (map->passive.status != PVCALLS_STATUS_LISTEN) {
+		pvcalls_exit_sock(sock);
+		return -EINVAL;
+	}
 
 	nonblock = flags & SOCK_NONBLOCK;
 	/*
-	 * Backend only supports 1 inflight accept request, will वापस
-	 * errors क्रम the others
+	 * Backend only supports 1 inflight accept request, will return
+	 * errors for the others
 	 */
-	अगर (test_and_set_bit(PVCALLS_FLAG_ACCEPT_INFLIGHT,
-			     (व्योम *)&map->passive.flags)) अणु
+	if (test_and_set_bit(PVCALLS_FLAG_ACCEPT_INFLIGHT,
+			     (void *)&map->passive.flags)) {
 		req_id = READ_ONCE(map->passive.inflight_req_id);
-		अगर (req_id != PVCALLS_INVALID_ID &&
-		    READ_ONCE(bedata->rsp[req_id].req_id) == req_id) अणु
+		if (req_id != PVCALLS_INVALID_ID &&
+		    READ_ONCE(bedata->rsp[req_id].req_id) == req_id) {
 			map2 = map->passive.accept_map;
-			जाओ received;
-		पूर्ण
-		अगर (nonblock) अणु
-			pvcalls_निकास_sock(sock);
-			वापस -EAGAIN;
-		पूर्ण
-		अगर (रुको_event_पूर्णांकerruptible(map->passive.inflight_accept_req,
+			goto received;
+		}
+		if (nonblock) {
+			pvcalls_exit_sock(sock);
+			return -EAGAIN;
+		}
+		if (wait_event_interruptible(map->passive.inflight_accept_req,
 			!test_and_set_bit(PVCALLS_FLAG_ACCEPT_INFLIGHT,
-					  (व्योम *)&map->passive.flags))) अणु
-			pvcalls_निकास_sock(sock);
-			वापस -EINTR;
-		पूर्ण
-	पूर्ण
+					  (void *)&map->passive.flags))) {
+			pvcalls_exit_sock(sock);
+			return -EINTR;
+		}
+	}
 
-	map2 = kzalloc(माप(*map2), GFP_KERNEL);
-	अगर (map2 == शून्य) अणु
+	map2 = kzalloc(sizeof(*map2), GFP_KERNEL);
+	if (map2 == NULL) {
 		clear_bit(PVCALLS_FLAG_ACCEPT_INFLIGHT,
-			  (व्योम *)&map->passive.flags);
-		pvcalls_निकास_sock(sock);
-		वापस -ENOMEM;
-	पूर्ण
+			  (void *)&map->passive.flags);
+		pvcalls_exit_sock(sock);
+		return -ENOMEM;
+	}
 	ret = alloc_active_ring(map2);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		clear_bit(PVCALLS_FLAG_ACCEPT_INFLIGHT,
-				(व्योम *)&map->passive.flags);
-		kमुक्त(map2);
-		pvcalls_निकास_sock(sock);
-		वापस ret;
-	पूर्ण
+				(void *)&map->passive.flags);
+		kfree(map2);
+		pvcalls_exit_sock(sock);
+		return ret;
+	}
 	spin_lock(&bedata->socket_lock);
 	ret = get_request(bedata, &req_id);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		clear_bit(PVCALLS_FLAG_ACCEPT_INFLIGHT,
-			  (व्योम *)&map->passive.flags);
+			  (void *)&map->passive.flags);
 		spin_unlock(&bedata->socket_lock);
-		मुक्त_active_ring(map2);
-		kमुक्त(map2);
-		pvcalls_निकास_sock(sock);
-		वापस ret;
-	पूर्ण
+		free_active_ring(map2);
+		kfree(map2);
+		pvcalls_exit_sock(sock);
+		return ret;
+	}
 
 	ret = create_active(map2, &evtchn);
-	अगर (ret < 0) अणु
-		मुक्त_active_ring(map2);
-		kमुक्त(map2);
+	if (ret < 0) {
+		free_active_ring(map2);
+		kfree(map2);
 		clear_bit(PVCALLS_FLAG_ACCEPT_INFLIGHT,
-			  (व्योम *)&map->passive.flags);
+			  (void *)&map->passive.flags);
 		spin_unlock(&bedata->socket_lock);
-		pvcalls_निकास_sock(sock);
-		वापस ret;
-	पूर्ण
+		pvcalls_exit_sock(sock);
+		return ret;
+	}
 	list_add_tail(&map2->list, &bedata->socket_mappings);
 
 	req = RING_GET_REQUEST(&bedata->ring, req_id);
 	req->req_id = req_id;
 	req->cmd = PVCALLS_ACCEPT;
-	req->u.accept.id = (uपूर्णांकptr_t) map;
+	req->u.accept.id = (uintptr_t) map;
 	req->u.accept.ref = map2->active.ref;
-	req->u.accept.id_new = (uपूर्णांकptr_t) map2;
+	req->u.accept.id_new = (uintptr_t) map2;
 	req->u.accept.evtchn = evtchn;
 	map->passive.accept_map = map2;
 
 	bedata->ring.req_prod_pvt++;
-	RING_PUSH_REQUESTS_AND_CHECK_NOTIFY(&bedata->ring, notअगरy);
+	RING_PUSH_REQUESTS_AND_CHECK_NOTIFY(&bedata->ring, notify);
 	spin_unlock(&bedata->socket_lock);
-	अगर (notअगरy)
-		notअगरy_remote_via_irq(bedata->irq);
-	/* We could check अगर we have received a response beक्रमe वापसing. */
-	अगर (nonblock) अणु
+	if (notify)
+		notify_remote_via_irq(bedata->irq);
+	/* We could check if we have received a response before returning. */
+	if (nonblock) {
 		WRITE_ONCE(map->passive.inflight_req_id, req_id);
-		pvcalls_निकास_sock(sock);
-		वापस -EAGAIN;
-	पूर्ण
+		pvcalls_exit_sock(sock);
+		return -EAGAIN;
+	}
 
-	अगर (रुको_event_पूर्णांकerruptible(bedata->inflight_req,
-		READ_ONCE(bedata->rsp[req_id].req_id) == req_id)) अणु
-		pvcalls_निकास_sock(sock);
-		वापस -EINTR;
-	पूर्ण
-	/* पढ़ो req_id, then the content */
+	if (wait_event_interruptible(bedata->inflight_req,
+		READ_ONCE(bedata->rsp[req_id].req_id) == req_id)) {
+		pvcalls_exit_sock(sock);
+		return -EINTR;
+	}
+	/* read req_id, then the content */
 	smp_rmb();
 
 received:
 	map2->sock = newsock;
 	newsock->sk = sk_alloc(sock_net(sock->sk), PF_INET, GFP_KERNEL, &pvcalls_proto, false);
-	अगर (!newsock->sk) अणु
+	if (!newsock->sk) {
 		bedata->rsp[req_id].req_id = PVCALLS_INVALID_ID;
 		map->passive.inflight_req_id = PVCALLS_INVALID_ID;
 		clear_bit(PVCALLS_FLAG_ACCEPT_INFLIGHT,
-			  (व्योम *)&map->passive.flags);
-		pvcalls_front_मुक्त_map(bedata, map2);
-		pvcalls_निकास_sock(sock);
-		वापस -ENOMEM;
-	पूर्ण
-	newsock->sk->sk_send_head = (व्योम *)map2;
+			  (void *)&map->passive.flags);
+		pvcalls_front_free_map(bedata, map2);
+		pvcalls_exit_sock(sock);
+		return -ENOMEM;
+	}
+	newsock->sk->sk_send_head = (void *)map2;
 
 	ret = bedata->rsp[req_id].ret;
 	bedata->rsp[req_id].req_id = PVCALLS_INVALID_ID;
 	map->passive.inflight_req_id = PVCALLS_INVALID_ID;
 
-	clear_bit(PVCALLS_FLAG_ACCEPT_INFLIGHT, (व्योम *)&map->passive.flags);
+	clear_bit(PVCALLS_FLAG_ACCEPT_INFLIGHT, (void *)&map->passive.flags);
 	wake_up(&map->passive.inflight_accept_req);
 
-	pvcalls_निकास_sock(sock);
-	वापस ret;
-पूर्ण
+	pvcalls_exit_sock(sock);
+	return ret;
+}
 
-अटल __poll_t pvcalls_front_poll_passive(काष्ठा file *file,
-					       काष्ठा pvcalls_bedata *bedata,
-					       काष्ठा sock_mapping *map,
-					       poll_table *रुको)
-अणु
-	पूर्णांक notअगरy, req_id, ret;
-	काष्ठा xen_pvcalls_request *req;
+static __poll_t pvcalls_front_poll_passive(struct file *file,
+					       struct pvcalls_bedata *bedata,
+					       struct sock_mapping *map,
+					       poll_table *wait)
+{
+	int notify, req_id, ret;
+	struct xen_pvcalls_request *req;
 
-	अगर (test_bit(PVCALLS_FLAG_ACCEPT_INFLIGHT,
-		     (व्योम *)&map->passive.flags)) अणु
-		uपूर्णांक32_t req_id = READ_ONCE(map->passive.inflight_req_id);
+	if (test_bit(PVCALLS_FLAG_ACCEPT_INFLIGHT,
+		     (void *)&map->passive.flags)) {
+		uint32_t req_id = READ_ONCE(map->passive.inflight_req_id);
 
-		अगर (req_id != PVCALLS_INVALID_ID &&
+		if (req_id != PVCALLS_INVALID_ID &&
 		    READ_ONCE(bedata->rsp[req_id].req_id) == req_id)
-			वापस EPOLLIN | EPOLLRDNORM;
+			return EPOLLIN | EPOLLRDNORM;
 
-		poll_रुको(file, &map->passive.inflight_accept_req, रुको);
-		वापस 0;
-	पूर्ण
+		poll_wait(file, &map->passive.inflight_accept_req, wait);
+		return 0;
+	}
 
-	अगर (test_and_clear_bit(PVCALLS_FLAG_POLL_RET,
-			       (व्योम *)&map->passive.flags))
-		वापस EPOLLIN | EPOLLRDNORM;
+	if (test_and_clear_bit(PVCALLS_FLAG_POLL_RET,
+			       (void *)&map->passive.flags))
+		return EPOLLIN | EPOLLRDNORM;
 
 	/*
 	 * First check RET, then INFLIGHT. No barriers necessary to
 	 * ensure execution ordering because of the conditional
-	 * inकाष्ठाions creating control dependencies.
+	 * instructions creating control dependencies.
 	 */
 
-	अगर (test_and_set_bit(PVCALLS_FLAG_POLL_INFLIGHT,
-			     (व्योम *)&map->passive.flags)) अणु
-		poll_रुको(file, &bedata->inflight_req, रुको);
-		वापस 0;
-	पूर्ण
+	if (test_and_set_bit(PVCALLS_FLAG_POLL_INFLIGHT,
+			     (void *)&map->passive.flags)) {
+		poll_wait(file, &bedata->inflight_req, wait);
+		return 0;
+	}
 
 	spin_lock(&bedata->socket_lock);
 	ret = get_request(bedata, &req_id);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		spin_unlock(&bedata->socket_lock);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	req = RING_GET_REQUEST(&bedata->ring, req_id);
 	req->req_id = req_id;
 	req->cmd = PVCALLS_POLL;
-	req->u.poll.id = (uपूर्णांकptr_t) map;
+	req->u.poll.id = (uintptr_t) map;
 
 	bedata->ring.req_prod_pvt++;
-	RING_PUSH_REQUESTS_AND_CHECK_NOTIFY(&bedata->ring, notअगरy);
+	RING_PUSH_REQUESTS_AND_CHECK_NOTIFY(&bedata->ring, notify);
 	spin_unlock(&bedata->socket_lock);
-	अगर (notअगरy)
-		notअगरy_remote_via_irq(bedata->irq);
+	if (notify)
+		notify_remote_via_irq(bedata->irq);
 
-	poll_रुको(file, &bedata->inflight_req, रुको);
-	वापस 0;
-पूर्ण
+	poll_wait(file, &bedata->inflight_req, wait);
+	return 0;
+}
 
-अटल __poll_t pvcalls_front_poll_active(काष्ठा file *file,
-					      काष्ठा pvcalls_bedata *bedata,
-					      काष्ठा sock_mapping *map,
-					      poll_table *रुको)
-अणु
+static __poll_t pvcalls_front_poll_active(struct file *file,
+					      struct pvcalls_bedata *bedata,
+					      struct sock_mapping *map,
+					      poll_table *wait)
+{
 	__poll_t mask = 0;
-	पूर्णांक32_t in_error, out_error;
-	काष्ठा pvcalls_data_पूर्णांकf *पूर्णांकf = map->active.ring;
+	int32_t in_error, out_error;
+	struct pvcalls_data_intf *intf = map->active.ring;
 
-	out_error = पूर्णांकf->out_error;
-	in_error = पूर्णांकf->in_error;
+	out_error = intf->out_error;
+	in_error = intf->in_error;
 
-	poll_रुको(file, &map->active.inflight_conn_req, रुको);
-	अगर (pvcalls_front_ग_लिखो_toकरो(map))
+	poll_wait(file, &map->active.inflight_conn_req, wait);
+	if (pvcalls_front_write_todo(map))
 		mask |= EPOLLOUT | EPOLLWRNORM;
-	अगर (pvcalls_front_पढ़ो_toकरो(map))
+	if (pvcalls_front_read_todo(map))
 		mask |= EPOLLIN | EPOLLRDNORM;
-	अगर (in_error != 0 || out_error != 0)
+	if (in_error != 0 || out_error != 0)
 		mask |= EPOLLERR;
 
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
-__poll_t pvcalls_front_poll(काष्ठा file *file, काष्ठा socket *sock,
-			       poll_table *रुको)
-अणु
-	काष्ठा pvcalls_bedata *bedata;
-	काष्ठा sock_mapping *map;
+__poll_t pvcalls_front_poll(struct file *file, struct socket *sock,
+			       poll_table *wait)
+{
+	struct pvcalls_bedata *bedata;
+	struct sock_mapping *map;
 	__poll_t ret;
 
 	map = pvcalls_enter_sock(sock);
-	अगर (IS_ERR(map))
-		वापस EPOLLNVAL;
+	if (IS_ERR(map))
+		return EPOLLNVAL;
 	bedata = dev_get_drvdata(&pvcalls_front_dev->dev);
 
-	अगर (map->active_socket)
-		ret = pvcalls_front_poll_active(file, bedata, map, रुको);
-	अन्यथा
-		ret = pvcalls_front_poll_passive(file, bedata, map, रुको);
-	pvcalls_निकास_sock(sock);
-	वापस ret;
-पूर्ण
+	if (map->active_socket)
+		ret = pvcalls_front_poll_active(file, bedata, map, wait);
+	else
+		ret = pvcalls_front_poll_passive(file, bedata, map, wait);
+	pvcalls_exit_sock(sock);
+	return ret;
+}
 
-पूर्णांक pvcalls_front_release(काष्ठा socket *sock)
-अणु
-	काष्ठा pvcalls_bedata *bedata;
-	काष्ठा sock_mapping *map;
-	पूर्णांक req_id, notअगरy, ret;
-	काष्ठा xen_pvcalls_request *req;
+int pvcalls_front_release(struct socket *sock)
+{
+	struct pvcalls_bedata *bedata;
+	struct sock_mapping *map;
+	int req_id, notify, ret;
+	struct xen_pvcalls_request *req;
 
-	अगर (sock->sk == शून्य)
-		वापस 0;
+	if (sock->sk == NULL)
+		return 0;
 
 	map = pvcalls_enter_sock(sock);
-	अगर (IS_ERR(map)) अणु
-		अगर (PTR_ERR(map) == -ENOTCONN)
-			वापस -EIO;
-		अन्यथा
-			वापस 0;
-	पूर्ण
+	if (IS_ERR(map)) {
+		if (PTR_ERR(map) == -ENOTCONN)
+			return -EIO;
+		else
+			return 0;
+	}
 	bedata = dev_get_drvdata(&pvcalls_front_dev->dev);
 
 	spin_lock(&bedata->socket_lock);
 	ret = get_request(bedata, &req_id);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		spin_unlock(&bedata->socket_lock);
-		pvcalls_निकास_sock(sock);
-		वापस ret;
-	पूर्ण
-	sock->sk->sk_send_head = शून्य;
+		pvcalls_exit_sock(sock);
+		return ret;
+	}
+	sock->sk->sk_send_head = NULL;
 
 	req = RING_GET_REQUEST(&bedata->ring, req_id);
 	req->req_id = req_id;
 	req->cmd = PVCALLS_RELEASE;
-	req->u.release.id = (uपूर्णांकptr_t)map;
+	req->u.release.id = (uintptr_t)map;
 
 	bedata->ring.req_prod_pvt++;
-	RING_PUSH_REQUESTS_AND_CHECK_NOTIFY(&bedata->ring, notअगरy);
+	RING_PUSH_REQUESTS_AND_CHECK_NOTIFY(&bedata->ring, notify);
 	spin_unlock(&bedata->socket_lock);
-	अगर (notअगरy)
-		notअगरy_remote_via_irq(bedata->irq);
+	if (notify)
+		notify_remote_via_irq(bedata->irq);
 
-	रुको_event(bedata->inflight_req,
+	wait_event(bedata->inflight_req,
 		   READ_ONCE(bedata->rsp[req_id].req_id) == req_id);
 
-	अगर (map->active_socket) अणु
+	if (map->active_socket) {
 		/*
-		 * Set in_error and wake up inflight_conn_req to क्रमce
-		 * recvmsg रुकोers to निकास.
+		 * Set in_error and wake up inflight_conn_req to force
+		 * recvmsg waiters to exit.
 		 */
 		map->active.ring->in_error = -EBADF;
-		wake_up_पूर्णांकerruptible(&map->active.inflight_conn_req);
+		wake_up_interruptible(&map->active.inflight_conn_req);
 
 		/*
 		 * We need to make sure that sendmsg/recvmsg on this socket have
-		 * not started beक्रमe we've cleared sk_send_head here. The
+		 * not started before we've cleared sk_send_head here. The
 		 * easiest way to guarantee this is to see that no pvcalls
 		 * (other than us) is in progress on this socket.
 		 */
-		जबतक (atomic_पढ़ो(&map->refcount) > 1)
+		while (atomic_read(&map->refcount) > 1)
 			cpu_relax();
 
-		pvcalls_front_मुक्त_map(bedata, map);
-	पूर्ण अन्यथा अणु
+		pvcalls_front_free_map(bedata, map);
+	} else {
 		wake_up(&bedata->inflight_req);
 		wake_up(&map->passive.inflight_accept_req);
 
-		जबतक (atomic_पढ़ो(&map->refcount) > 1)
+		while (atomic_read(&map->refcount) > 1)
 			cpu_relax();
 
 		spin_lock(&bedata->socket_lock);
 		list_del(&map->list);
 		spin_unlock(&bedata->socket_lock);
-		अगर (READ_ONCE(map->passive.inflight_req_id) != PVCALLS_INVALID_ID &&
-			READ_ONCE(map->passive.inflight_req_id) != 0) अणु
-			pvcalls_front_मुक्त_map(bedata,
+		if (READ_ONCE(map->passive.inflight_req_id) != PVCALLS_INVALID_ID &&
+			READ_ONCE(map->passive.inflight_req_id) != 0) {
+			pvcalls_front_free_map(bedata,
 					       map->passive.accept_map);
-		पूर्ण
-		kमुक्त(map);
-	पूर्ण
+		}
+		kfree(map);
+	}
 	WRITE_ONCE(bedata->rsp[req_id].req_id, PVCALLS_INVALID_ID);
 
-	pvcalls_निकास();
-	वापस 0;
-पूर्ण
+	pvcalls_exit();
+	return 0;
+}
 
-अटल स्थिर काष्ठा xenbus_device_id pvcalls_front_ids[] = अणु
-	अणु "pvcalls" पूर्ण,
-	अणु "" पूर्ण
-पूर्ण;
+static const struct xenbus_device_id pvcalls_front_ids[] = {
+	{ "pvcalls" },
+	{ "" }
+};
 
-अटल पूर्णांक pvcalls_front_हटाओ(काष्ठा xenbus_device *dev)
-अणु
-	काष्ठा pvcalls_bedata *bedata;
-	काष्ठा sock_mapping *map = शून्य, *n;
+static int pvcalls_front_remove(struct xenbus_device *dev)
+{
+	struct pvcalls_bedata *bedata;
+	struct sock_mapping *map = NULL, *n;
 
 	bedata = dev_get_drvdata(&pvcalls_front_dev->dev);
-	dev_set_drvdata(&dev->dev, शून्य);
-	pvcalls_front_dev = शून्य;
-	अगर (bedata->irq >= 0)
+	dev_set_drvdata(&dev->dev, NULL);
+	pvcalls_front_dev = NULL;
+	if (bedata->irq >= 0)
 		unbind_from_irqhandler(bedata->irq, dev);
 
-	list_क्रम_each_entry_safe(map, n, &bedata->socket_mappings, list) अणु
-		map->sock->sk->sk_send_head = शून्य;
-		अगर (map->active_socket) अणु
+	list_for_each_entry_safe(map, n, &bedata->socket_mappings, list) {
+		map->sock->sk->sk_send_head = NULL;
+		if (map->active_socket) {
 			map->active.ring->in_error = -EBADF;
-			wake_up_पूर्णांकerruptible(&map->active.inflight_conn_req);
-		पूर्ण
-	पूर्ण
+			wake_up_interruptible(&map->active.inflight_conn_req);
+		}
+	}
 
 	smp_mb();
-	जबतक (atomic_पढ़ो(&pvcalls_refcount) > 0)
+	while (atomic_read(&pvcalls_refcount) > 0)
 		cpu_relax();
-	list_क्रम_each_entry_safe(map, n, &bedata->socket_mappings, list) अणु
-		अगर (map->active_socket) अणु
+	list_for_each_entry_safe(map, n, &bedata->socket_mappings, list) {
+		if (map->active_socket) {
 			/* No need to lock, refcount is 0 */
-			pvcalls_front_मुक्त_map(bedata, map);
-		पूर्ण अन्यथा अणु
+			pvcalls_front_free_map(bedata, map);
+		} else {
 			list_del(&map->list);
-			kमुक्त(map);
-		पूर्ण
-	पूर्ण
-	अगर (bedata->ref != -1)
-		gnttab_end_क्रमeign_access(bedata->ref, 0, 0);
-	kमुक्त(bedata->ring.sring);
-	kमुक्त(bedata);
-	xenbus_चयन_state(dev, XenbusStateClosed);
-	वापस 0;
-पूर्ण
+			kfree(map);
+		}
+	}
+	if (bedata->ref != -1)
+		gnttab_end_foreign_access(bedata->ref, 0, 0);
+	kfree(bedata->ring.sring);
+	kfree(bedata);
+	xenbus_switch_state(dev, XenbusStateClosed);
+	return 0;
+}
 
-अटल पूर्णांक pvcalls_front_probe(काष्ठा xenbus_device *dev,
-			  स्थिर काष्ठा xenbus_device_id *id)
-अणु
-	पूर्णांक ret = -ENOMEM, i;
+static int pvcalls_front_probe(struct xenbus_device *dev,
+			  const struct xenbus_device_id *id)
+{
+	int ret = -ENOMEM, i;
 	evtchn_port_t evtchn;
-	अचिन्हित पूर्णांक max_page_order, function_calls, len;
-	अक्षर *versions;
+	unsigned int max_page_order, function_calls, len;
+	char *versions;
 	grant_ref_t gref_head = 0;
-	काष्ठा xenbus_transaction xbt;
-	काष्ठा pvcalls_bedata *bedata = शून्य;
-	काष्ठा xen_pvcalls_sring *sring;
+	struct xenbus_transaction xbt;
+	struct pvcalls_bedata *bedata = NULL;
+	struct xen_pvcalls_sring *sring;
 
-	अगर (pvcalls_front_dev != शून्य) अणु
+	if (pvcalls_front_dev != NULL) {
 		dev_err(&dev->dev, "only one PV Calls connection supported\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	versions = xenbus_पढ़ो(XBT_NIL, dev->otherend, "versions", &len);
-	अगर (IS_ERR(versions))
-		वापस PTR_ERR(versions);
-	अगर (!len)
-		वापस -EINVAL;
-	अगर (म_भेद(versions, "1")) अणु
-		kमुक्त(versions);
-		वापस -EINVAL;
-	पूर्ण
-	kमुक्त(versions);
-	max_page_order = xenbus_पढ़ो_अचिन्हित(dev->otherend,
+	versions = xenbus_read(XBT_NIL, dev->otherend, "versions", &len);
+	if (IS_ERR(versions))
+		return PTR_ERR(versions);
+	if (!len)
+		return -EINVAL;
+	if (strcmp(versions, "1")) {
+		kfree(versions);
+		return -EINVAL;
+	}
+	kfree(versions);
+	max_page_order = xenbus_read_unsigned(dev->otherend,
 					      "max-page-order", 0);
-	अगर (max_page_order < PVCALLS_RING_ORDER)
-		वापस -ENODEV;
-	function_calls = xenbus_पढ़ो_अचिन्हित(dev->otherend,
+	if (max_page_order < PVCALLS_RING_ORDER)
+		return -ENODEV;
+	function_calls = xenbus_read_unsigned(dev->otherend,
 					      "function-calls", 0);
 	/* See XENBUS_FUNCTIONS_CALLS in pvcalls.h */
-	अगर (function_calls != 1)
-		वापस -ENODEV;
+	if (function_calls != 1)
+		return -ENODEV;
 	pr_info("%s max-page-order is %u\n", __func__, max_page_order);
 
-	bedata = kzalloc(माप(काष्ठा pvcalls_bedata), GFP_KERNEL);
-	अगर (!bedata)
-		वापस -ENOMEM;
+	bedata = kzalloc(sizeof(struct pvcalls_bedata), GFP_KERNEL);
+	if (!bedata)
+		return -ENOMEM;
 
 	dev_set_drvdata(&dev->dev, bedata);
 	pvcalls_front_dev = dev;
-	init_रुकोqueue_head(&bedata->inflight_req);
+	init_waitqueue_head(&bedata->inflight_req);
 	INIT_LIST_HEAD(&bedata->socket_mappings);
 	spin_lock_init(&bedata->socket_lock);
 	bedata->irq = -1;
 	bedata->ref = -1;
 
-	क्रम (i = 0; i < PVCALLS_NR_RSP_PER_RING; i++)
+	for (i = 0; i < PVCALLS_NR_RSP_PER_RING; i++)
 		bedata->rsp[i].req_id = PVCALLS_INVALID_ID;
 
-	sring = (काष्ठा xen_pvcalls_sring *) __get_मुक्त_page(GFP_KERNEL |
+	sring = (struct xen_pvcalls_sring *) __get_free_page(GFP_KERNEL |
 							     __GFP_ZERO);
-	अगर (!sring)
-		जाओ error;
+	if (!sring)
+		goto error;
 	SHARED_RING_INIT(sring);
 	FRONT_RING_INIT(&bedata->ring, sring, XEN_PAGE_SIZE);
 
 	ret = xenbus_alloc_evtchn(dev, &evtchn);
-	अगर (ret)
-		जाओ error;
+	if (ret)
+		goto error;
 
 	bedata->irq = bind_evtchn_to_irqhandler(evtchn,
 						pvcalls_front_event_handler,
 						0, "pvcalls-frontend", dev);
-	अगर (bedata->irq < 0) अणु
+	if (bedata->irq < 0) {
 		ret = bedata->irq;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	ret = gnttab_alloc_grant_references(1, &gref_head);
-	अगर (ret < 0)
-		जाओ error;
+	if (ret < 0)
+		goto error;
 	ret = gnttab_claim_grant_reference(&gref_head);
-	अगर (ret < 0)
-		जाओ error;
+	if (ret < 0)
+		goto error;
 	bedata->ref = ret;
-	gnttab_grant_क्रमeign_access_ref(bedata->ref, dev->otherend_id,
-					virt_to_gfn((व्योम *)sring), 0);
+	gnttab_grant_foreign_access_ref(bedata->ref, dev->otherend_id,
+					virt_to_gfn((void *)sring), 0);
 
  again:
 	ret = xenbus_transaction_start(&xbt);
-	अगर (ret) अणु
+	if (ret) {
 		xenbus_dev_fatal(dev, ret, "starting transaction");
-		जाओ error;
-	पूर्ण
-	ret = xenbus_म_लिखो(xbt, dev->nodename, "version", "%u", 1);
-	अगर (ret)
-		जाओ error_xenbus;
-	ret = xenbus_म_लिखो(xbt, dev->nodename, "ring-ref", "%d", bedata->ref);
-	अगर (ret)
-		जाओ error_xenbus;
-	ret = xenbus_म_लिखो(xbt, dev->nodename, "port", "%u",
+		goto error;
+	}
+	ret = xenbus_printf(xbt, dev->nodename, "version", "%u", 1);
+	if (ret)
+		goto error_xenbus;
+	ret = xenbus_printf(xbt, dev->nodename, "ring-ref", "%d", bedata->ref);
+	if (ret)
+		goto error_xenbus;
+	ret = xenbus_printf(xbt, dev->nodename, "port", "%u",
 			    evtchn);
-	अगर (ret)
-		जाओ error_xenbus;
+	if (ret)
+		goto error_xenbus;
 	ret = xenbus_transaction_end(xbt, 0);
-	अगर (ret) अणु
-		अगर (ret == -EAGAIN)
-			जाओ again;
+	if (ret) {
+		if (ret == -EAGAIN)
+			goto again;
 		xenbus_dev_fatal(dev, ret, "completing transaction");
-		जाओ error;
-	पूर्ण
-	xenbus_चयन_state(dev, XenbusStateInitialised);
+		goto error;
+	}
+	xenbus_switch_state(dev, XenbusStateInitialised);
 
-	वापस 0;
+	return 0;
 
  error_xenbus:
 	xenbus_transaction_end(xbt, 1);
 	xenbus_dev_fatal(dev, ret, "writing xenstore");
  error:
-	pvcalls_front_हटाओ(dev);
-	वापस ret;
-पूर्ण
+	pvcalls_front_remove(dev);
+	return ret;
+}
 
-अटल व्योम pvcalls_front_changed(काष्ठा xenbus_device *dev,
-			    क्रमागत xenbus_state backend_state)
-अणु
-	चयन (backend_state) अणु
-	हाल XenbusStateReconfiguring:
-	हाल XenbusStateReconfigured:
-	हाल XenbusStateInitialising:
-	हाल XenbusStateInitialised:
-	हाल XenbusStateUnknown:
-		अवरोध;
+static void pvcalls_front_changed(struct xenbus_device *dev,
+			    enum xenbus_state backend_state)
+{
+	switch (backend_state) {
+	case XenbusStateReconfiguring:
+	case XenbusStateReconfigured:
+	case XenbusStateInitialising:
+	case XenbusStateInitialised:
+	case XenbusStateUnknown:
+		break;
 
-	हाल XenbusStateInitWait:
-		अवरोध;
+	case XenbusStateInitWait:
+		break;
 
-	हाल XenbusStateConnected:
-		xenbus_चयन_state(dev, XenbusStateConnected);
-		अवरोध;
+	case XenbusStateConnected:
+		xenbus_switch_state(dev, XenbusStateConnected);
+		break;
 
-	हाल XenbusStateClosed:
-		अगर (dev->state == XenbusStateClosed)
-			अवरोध;
+	case XenbusStateClosed:
+		if (dev->state == XenbusStateClosed)
+			break;
 		/* Missed the backend's CLOSING state */
 		fallthrough;
-	हाल XenbusStateClosing:
-		xenbus_frontend_बंदd(dev);
-		अवरोध;
-	पूर्ण
-पूर्ण
+	case XenbusStateClosing:
+		xenbus_frontend_closed(dev);
+		break;
+	}
+}
 
-अटल काष्ठा xenbus_driver pvcalls_front_driver = अणु
+static struct xenbus_driver pvcalls_front_driver = {
 	.ids = pvcalls_front_ids,
 	.probe = pvcalls_front_probe,
-	.हटाओ = pvcalls_front_हटाओ,
+	.remove = pvcalls_front_remove,
 	.otherend_changed = pvcalls_front_changed,
-पूर्ण;
+};
 
-अटल पूर्णांक __init pvcalls_frontend_init(व्योम)
-अणु
-	अगर (!xen_करोमुख्य())
-		वापस -ENODEV;
+static int __init pvcalls_frontend_init(void)
+{
+	if (!xen_domain())
+		return -ENODEV;
 
 	pr_info("Initialising Xen pvcalls frontend driver\n");
 
-	वापस xenbus_रेजिस्टर_frontend(&pvcalls_front_driver);
-पूर्ण
+	return xenbus_register_frontend(&pvcalls_front_driver);
+}
 
 module_init(pvcalls_frontend_init);
 

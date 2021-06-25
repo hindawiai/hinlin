@@ -1,8 +1,7 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#समावेश <linux/netdevice.h>
+/* SPDX-License-Identifier: GPL-2.0 */
+#include <linux/netdevice.h>
 
-#समावेश "hyperv_net.h"
+#include "hyperv_net.h"
 
-#घोषणा CREATE_TRACE_POINTS
-#समावेश "netvsc_trace.h"
+#define CREATE_TRACE_POINTS
+#include "netvsc_trace.h"

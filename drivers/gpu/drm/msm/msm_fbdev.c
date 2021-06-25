@@ -1,78 +1,77 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
-#समावेश <drm/drm_crtc.h>
-#समावेश <drm/drm_fb_helper.h>
-#समावेश <drm/drm_fourcc.h>
+#include <drm/drm_crtc.h>
+#include <drm/drm_fb_helper.h>
+#include <drm/drm_fourcc.h>
 
-#समावेश "msm_drv.h"
-#समावेश "msm_gem.h"
-#समावेश "msm_kms.h"
+#include "msm_drv.h"
+#include "msm_gem.h"
+#include "msm_kms.h"
 
-बाह्य पूर्णांक msm_gem_mmap_obj(काष्ठा drm_gem_object *obj,
-					काष्ठा vm_area_काष्ठा *vma);
-अटल पूर्णांक msm_fbdev_mmap(काष्ठा fb_info *info, काष्ठा vm_area_काष्ठा *vma);
+extern int msm_gem_mmap_obj(struct drm_gem_object *obj,
+					struct vm_area_struct *vma);
+static int msm_fbdev_mmap(struct fb_info *info, struct vm_area_struct *vma);
 
 /*
- * fbdev funcs, to implement legacy fbdev पूर्णांकerface on top of drm driver
+ * fbdev funcs, to implement legacy fbdev interface on top of drm driver
  */
 
-#घोषणा to_msm_fbdev(x) container_of(x, काष्ठा msm_fbdev, base)
+#define to_msm_fbdev(x) container_of(x, struct msm_fbdev, base)
 
-काष्ठा msm_fbdev अणु
-	काष्ठा drm_fb_helper base;
-	काष्ठा drm_framebuffer *fb;
-पूर्ण;
+struct msm_fbdev {
+	struct drm_fb_helper base;
+	struct drm_framebuffer *fb;
+};
 
-अटल स्थिर काष्ठा fb_ops msm_fb_ops = अणु
+static const struct fb_ops msm_fb_ops = {
 	.owner = THIS_MODULE,
 	DRM_FB_HELPER_DEFAULT_OPS,
 
 	/* Note: to properly handle manual update displays, we wrap the
-	 * basic fbdev ops which ग_लिखो to the framebuffer
+	 * basic fbdev ops which write to the framebuffer
 	 */
-	.fb_पढ़ो = drm_fb_helper_sys_पढ़ो,
-	.fb_ग_लिखो = drm_fb_helper_sys_ग_लिखो,
+	.fb_read = drm_fb_helper_sys_read,
+	.fb_write = drm_fb_helper_sys_write,
 	.fb_fillrect = drm_fb_helper_sys_fillrect,
 	.fb_copyarea = drm_fb_helper_sys_copyarea,
 	.fb_imageblit = drm_fb_helper_sys_imageblit,
 	.fb_mmap = msm_fbdev_mmap,
-पूर्ण;
+};
 
-अटल पूर्णांक msm_fbdev_mmap(काष्ठा fb_info *info, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा drm_fb_helper *helper = (काष्ठा drm_fb_helper *)info->par;
-	काष्ठा msm_fbdev *fbdev = to_msm_fbdev(helper);
-	काष्ठा drm_gem_object *bo = msm_framebuffer_bo(fbdev->fb, 0);
-	पूर्णांक ret = 0;
+static int msm_fbdev_mmap(struct fb_info *info, struct vm_area_struct *vma)
+{
+	struct drm_fb_helper *helper = (struct drm_fb_helper *)info->par;
+	struct msm_fbdev *fbdev = to_msm_fbdev(helper);
+	struct drm_gem_object *bo = msm_framebuffer_bo(fbdev->fb, 0);
+	int ret = 0;
 
 	ret = drm_gem_mmap_obj(bo, bo->size, vma);
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("%s:drm_gem_mmap_obj fail\n", __func__);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस msm_gem_mmap_obj(bo, vma);
-पूर्ण
+	return msm_gem_mmap_obj(bo, vma);
+}
 
-अटल पूर्णांक msm_fbdev_create(काष्ठा drm_fb_helper *helper,
-		काष्ठा drm_fb_helper_surface_size *sizes)
-अणु
-	काष्ठा msm_fbdev *fbdev = to_msm_fbdev(helper);
-	काष्ठा drm_device *dev = helper->dev;
-	काष्ठा msm_drm_निजी *priv = dev->dev_निजी;
-	काष्ठा drm_framebuffer *fb = शून्य;
-	काष्ठा drm_gem_object *bo;
-	काष्ठा fb_info *fbi = शून्य;
-	uपूर्णांक64_t paddr;
-	uपूर्णांक32_t क्रमmat;
-	पूर्णांक ret, pitch;
+static int msm_fbdev_create(struct drm_fb_helper *helper,
+		struct drm_fb_helper_surface_size *sizes)
+{
+	struct msm_fbdev *fbdev = to_msm_fbdev(helper);
+	struct drm_device *dev = helper->dev;
+	struct msm_drm_private *priv = dev->dev_private;
+	struct drm_framebuffer *fb = NULL;
+	struct drm_gem_object *bo;
+	struct fb_info *fbi = NULL;
+	uint64_t paddr;
+	uint32_t format;
+	int ret, pitch;
 
-	क्रमmat = drm_mode_legacy_fb_क्रमmat(sizes->surface_bpp, sizes->surface_depth);
+	format = drm_mode_legacy_fb_format(sizes->surface_bpp, sizes->surface_depth);
 
 	DBG("create fbdev: %dx%d@%d (%dx%d)", sizes->surface_width,
 			sizes->surface_height, sizes->surface_bpp,
@@ -80,34 +79,34 @@
 
 	pitch = align_pitch(sizes->surface_width, sizes->surface_bpp);
 	fb = msm_alloc_stolen_fb(dev, sizes->surface_width,
-			sizes->surface_height, pitch, क्रमmat);
+			sizes->surface_height, pitch, format);
 
-	अगर (IS_ERR(fb)) अणु
+	if (IS_ERR(fb)) {
 		DRM_DEV_ERROR(dev->dev, "failed to allocate fb\n");
-		वापस PTR_ERR(fb);
-	पूर्ण
+		return PTR_ERR(fb);
+	}
 
 	bo = msm_framebuffer_bo(fb, 0);
 
-	mutex_lock(&dev->काष्ठा_mutex);
+	mutex_lock(&dev->struct_mutex);
 
 	/*
-	 * NOTE: अगर we can be guaranteed to be able to map buffer
-	 * in panic (ie. lock-safe, etc) we could aव्योम pinning the
+	 * NOTE: if we can be guaranteed to be able to map buffer
+	 * in panic (ie. lock-safe, etc) we could avoid pinning the
 	 * buffer now:
 	 */
 	ret = msm_gem_get_and_pin_iova(bo, priv->kms->aspace, &paddr);
-	अगर (ret) अणु
+	if (ret) {
 		DRM_DEV_ERROR(dev->dev, "failed to get buffer obj iova: %d\n", ret);
-		जाओ fail_unlock;
-	पूर्ण
+		goto fail_unlock;
+	}
 
 	fbi = drm_fb_helper_alloc_fbi(helper);
-	अगर (IS_ERR(fbi)) अणु
+	if (IS_ERR(fbi)) {
 		DRM_DEV_ERROR(dev->dev, "failed to allocate fb info\n");
 		ret = PTR_ERR(fbi);
-		जाओ fail_unlock;
-	पूर्ण
+		goto fail_unlock;
+	}
 
 	DBG("fbi=%p, dev=%p", fbi, dev);
 
@@ -121,10 +120,10 @@
 	dev->mode_config.fb_base = paddr;
 
 	fbi->screen_base = msm_gem_get_vaddr(bo);
-	अगर (IS_ERR(fbi->screen_base)) अणु
+	if (IS_ERR(fbi->screen_base)) {
 		ret = PTR_ERR(fbi->screen_base);
-		जाओ fail_unlock;
-	पूर्ण
+		goto fail_unlock;
+	}
 	fbi->screen_size = bo->size;
 	fbi->fix.smem_start = paddr;
 	fbi->fix.smem_len = bo->size;
@@ -132,83 +131,83 @@
 	DBG("par=%p, %dx%d", fbi->par, fbi->var.xres, fbi->var.yres);
 	DBG("allocated %dx%d fb", fbdev->fb->width, fbdev->fb->height);
 
-	mutex_unlock(&dev->काष्ठा_mutex);
+	mutex_unlock(&dev->struct_mutex);
 
-	वापस 0;
+	return 0;
 
 fail_unlock:
-	mutex_unlock(&dev->काष्ठा_mutex);
-	drm_framebuffer_हटाओ(fb);
-	वापस ret;
-पूर्ण
+	mutex_unlock(&dev->struct_mutex);
+	drm_framebuffer_remove(fb);
+	return ret;
+}
 
-अटल स्थिर काष्ठा drm_fb_helper_funcs msm_fb_helper_funcs = अणु
+static const struct drm_fb_helper_funcs msm_fb_helper_funcs = {
 	.fb_probe = msm_fbdev_create,
-पूर्ण;
+};
 
 /* initialize fbdev helper */
-काष्ठा drm_fb_helper *msm_fbdev_init(काष्ठा drm_device *dev)
-अणु
-	काष्ठा msm_drm_निजी *priv = dev->dev_निजी;
-	काष्ठा msm_fbdev *fbdev = शून्य;
-	काष्ठा drm_fb_helper *helper;
-	पूर्णांक ret;
+struct drm_fb_helper *msm_fbdev_init(struct drm_device *dev)
+{
+	struct msm_drm_private *priv = dev->dev_private;
+	struct msm_fbdev *fbdev = NULL;
+	struct drm_fb_helper *helper;
+	int ret;
 
-	fbdev = kzalloc(माप(*fbdev), GFP_KERNEL);
-	अगर (!fbdev)
-		जाओ fail;
+	fbdev = kzalloc(sizeof(*fbdev), GFP_KERNEL);
+	if (!fbdev)
+		goto fail;
 
 	helper = &fbdev->base;
 
 	drm_fb_helper_prepare(dev, helper, &msm_fb_helper_funcs);
 
 	ret = drm_fb_helper_init(dev, helper);
-	अगर (ret) अणु
+	if (ret) {
 		DRM_DEV_ERROR(dev->dev, "could not init fbdev: ret=%d\n", ret);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	/* the fw fb could be anywhere in memory */
-	drm_fb_helper_हटाओ_conflicting_framebuffers(शून्य, "msm", false);
+	drm_fb_helper_remove_conflicting_framebuffers(NULL, "msm", false);
 
 	ret = drm_fb_helper_initial_config(helper, 32);
-	अगर (ret)
-		जाओ fini;
+	if (ret)
+		goto fini;
 
 	priv->fbdev = helper;
 
-	वापस helper;
+	return helper;
 
 fini:
 	drm_fb_helper_fini(helper);
 fail:
-	kमुक्त(fbdev);
-	वापस शून्य;
-पूर्ण
+	kfree(fbdev);
+	return NULL;
+}
 
-व्योम msm_fbdev_मुक्त(काष्ठा drm_device *dev)
-अणु
-	काष्ठा msm_drm_निजी *priv = dev->dev_निजी;
-	काष्ठा drm_fb_helper *helper = priv->fbdev;
-	काष्ठा msm_fbdev *fbdev;
+void msm_fbdev_free(struct drm_device *dev)
+{
+	struct msm_drm_private *priv = dev->dev_private;
+	struct drm_fb_helper *helper = priv->fbdev;
+	struct msm_fbdev *fbdev;
 
 	DBG();
 
-	drm_fb_helper_unरेजिस्टर_fbi(helper);
+	drm_fb_helper_unregister_fbi(helper);
 
 	drm_fb_helper_fini(helper);
 
 	fbdev = to_msm_fbdev(priv->fbdev);
 
-	/* this will मुक्त the backing object */
-	अगर (fbdev->fb) अणु
-		काष्ठा drm_gem_object *bo =
+	/* this will free the backing object */
+	if (fbdev->fb) {
+		struct drm_gem_object *bo =
 			msm_framebuffer_bo(fbdev->fb, 0);
 		msm_gem_put_vaddr(bo);
-		drm_framebuffer_हटाओ(fbdev->fb);
-	पूर्ण
+		drm_framebuffer_remove(fbdev->fb);
+	}
 
-	kमुक्त(fbdev);
+	kfree(fbdev);
 
-	priv->fbdev = शून्य;
-पूर्ण
+	priv->fbdev = NULL;
+}

@@ -1,1476 +1,1475 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/fanotअगरy.h>
-#समावेश <linux/fcntl.h>
-#समावेश <linux/file.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/anon_inodes.h>
-#समावेश <linux/fsnotअगरy_backend.h>
-#समावेश <linux/init.h>
-#समावेश <linux/mount.h>
-#समावेश <linux/namei.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/security.h>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/types.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/compat.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/memcontrol.h>
-#समावेश <linux/statfs.h>
-#समावेश <linux/exportfs.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/fanotify.h>
+#include <linux/fcntl.h>
+#include <linux/file.h>
+#include <linux/fs.h>
+#include <linux/anon_inodes.h>
+#include <linux/fsnotify_backend.h>
+#include <linux/init.h>
+#include <linux/mount.h>
+#include <linux/namei.h>
+#include <linux/poll.h>
+#include <linux/security.h>
+#include <linux/syscalls.h>
+#include <linux/slab.h>
+#include <linux/types.h>
+#include <linux/uaccess.h>
+#include <linux/compat.h>
+#include <linux/sched/signal.h>
+#include <linux/memcontrol.h>
+#include <linux/statfs.h>
+#include <linux/exportfs.h>
 
-#समावेश <यंत्र/ioctls.h>
+#include <asm/ioctls.h>
 
-#समावेश "../../mount.h"
-#समावेश "../fdinfo.h"
-#समावेश "fanotify.h"
+#include "../../mount.h"
+#include "../fdinfo.h"
+#include "fanotify.h"
 
-#घोषणा FANOTIFY_DEFAULT_MAX_EVENTS	16384
-#घोषणा FANOTIFY_OLD_DEFAULT_MAX_MARKS	8192
-#घोषणा FANOTIFY_DEFAULT_MAX_GROUPS	128
+#define FANOTIFY_DEFAULT_MAX_EVENTS	16384
+#define FANOTIFY_OLD_DEFAULT_MAX_MARKS	8192
+#define FANOTIFY_DEFAULT_MAX_GROUPS	128
 
 /*
- * Legacy fanotअगरy marks limits (8192) is per group and we पूर्णांकroduced a tunable
- * limit of marks per user, similar to inotअगरy.  Effectively, the legacy limit
- * of fanotअगरy marks per user is <max marks per group> * <max groups per user>.
- * This शेष limit (1M) also happens to match the increased limit of inotअगरy
+ * Legacy fanotify marks limits (8192) is per group and we introduced a tunable
+ * limit of marks per user, similar to inotify.  Effectively, the legacy limit
+ * of fanotify marks per user is <max marks per group> * <max groups per user>.
+ * This default limit (1M) also happens to match the increased limit of inotify
  * max_user_watches since v5.10.
  */
-#घोषणा FANOTIFY_DEFAULT_MAX_USER_MARKS	\
+#define FANOTIFY_DEFAULT_MAX_USER_MARKS	\
 	(FANOTIFY_OLD_DEFAULT_MAX_MARKS * FANOTIFY_DEFAULT_MAX_GROUPS)
 
 /*
  * Most of the memory cost of adding an inode mark is pinning the marked inode.
- * The size of the fileप्रणाली inode काष्ठा is not unअगरorm across fileप्रणालीs,
- * so द्विगुन the size of a VFS inode is used as a conservative approximation.
+ * The size of the filesystem inode struct is not uniform across filesystems,
+ * so double the size of a VFS inode is used as a conservative approximation.
  */
-#घोषणा INODE_MARK_COST	(2 * माप(काष्ठा inode))
+#define INODE_MARK_COST	(2 * sizeof(struct inode))
 
-/* configurable via /proc/sys/fs/fanotअगरy/ */
-अटल पूर्णांक fanotअगरy_max_queued_events __पढ़ो_mostly;
+/* configurable via /proc/sys/fs/fanotify/ */
+static int fanotify_max_queued_events __read_mostly;
 
-#अगर_घोषित CONFIG_SYSCTL
+#ifdef CONFIG_SYSCTL
 
-#समावेश <linux/sysctl.h>
+#include <linux/sysctl.h>
 
-काष्ठा ctl_table fanotअगरy_table[] = अणु
-	अणु
+struct ctl_table fanotify_table[] = {
+	{
 		.procname	= "max_user_groups",
 		.data	= &init_user_ns.ucount_max[UCOUNT_FANOTIFY_GROUPS],
-		.maxlen		= माप(पूर्णांक),
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec_minmax,
+		.proc_handler	= proc_dointvec_minmax,
 		.extra1		= SYSCTL_ZERO,
-	पूर्ण,
-	अणु
+	},
+	{
 		.procname	= "max_user_marks",
 		.data	= &init_user_ns.ucount_max[UCOUNT_FANOTIFY_MARKS],
-		.maxlen		= माप(पूर्णांक),
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec_minmax,
+		.proc_handler	= proc_dointvec_minmax,
 		.extra1		= SYSCTL_ZERO,
-	पूर्ण,
-	अणु
+	},
+	{
 		.procname	= "max_queued_events",
-		.data		= &fanotअगरy_max_queued_events,
-		.maxlen		= माप(पूर्णांक),
+		.data		= &fanotify_max_queued_events,
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= proc_करोपूर्णांकvec_minmax,
+		.proc_handler	= proc_dointvec_minmax,
 		.extra1		= SYSCTL_ZERO
-	पूर्ण,
-	अणु पूर्ण
-पूर्ण;
-#पूर्ण_अगर /* CONFIG_SYSCTL */
+	},
+	{ }
+};
+#endif /* CONFIG_SYSCTL */
 
 /*
- * All flags that may be specअगरied in parameter event_f_flags of fanotअगरy_init.
+ * All flags that may be specified in parameter event_f_flags of fanotify_init.
  *
- * Internal and बाह्यal खोलो flags are stored together in field f_flags of
- * काष्ठा file. Only बाह्यal खोलो flags shall be allowed in event_f_flags.
+ * Internal and external open flags are stored together in field f_flags of
+ * struct file. Only external open flags shall be allowed in event_f_flags.
  * Internal flags like FMODE_NONOTIFY, FMODE_EXEC, FMODE_NOCMTIME shall be
  * excluded.
  */
-#घोषणा	FANOTIFY_INIT_ALL_EVENT_F_BITS				( \
+#define	FANOTIFY_INIT_ALL_EVENT_F_BITS				( \
 		O_ACCMODE	| O_APPEND	| O_NONBLOCK	| \
 		__O_SYNC	| O_DSYNC	| O_CLOEXEC     | \
-		O_LARGEखाता	| O_NOATIME	)
+		O_LARGEFILE	| O_NOATIME	)
 
-बाह्य स्थिर काष्ठा fsnotअगरy_ops fanotअगरy_fsnotअगरy_ops;
+extern const struct fsnotify_ops fanotify_fsnotify_ops;
 
-काष्ठा kmem_cache *fanotअगरy_mark_cache __पढ़ो_mostly;
-काष्ठा kmem_cache *fanotअगरy_fid_event_cachep __पढ़ो_mostly;
-काष्ठा kmem_cache *fanotअगरy_path_event_cachep __पढ़ो_mostly;
-काष्ठा kmem_cache *fanotअगरy_perm_event_cachep __पढ़ो_mostly;
+struct kmem_cache *fanotify_mark_cache __read_mostly;
+struct kmem_cache *fanotify_fid_event_cachep __read_mostly;
+struct kmem_cache *fanotify_path_event_cachep __read_mostly;
+struct kmem_cache *fanotify_perm_event_cachep __read_mostly;
 
-#घोषणा FANOTIFY_EVENT_ALIGN 4
-#घोषणा FANOTIFY_INFO_HDR_LEN \
-	(माप(काष्ठा fanotअगरy_event_info_fid) + माप(काष्ठा file_handle))
+#define FANOTIFY_EVENT_ALIGN 4
+#define FANOTIFY_INFO_HDR_LEN \
+	(sizeof(struct fanotify_event_info_fid) + sizeof(struct file_handle))
 
-अटल पूर्णांक fanotअगरy_fid_info_len(पूर्णांक fh_len, पूर्णांक name_len)
-अणु
-	पूर्णांक info_len = fh_len;
+static int fanotify_fid_info_len(int fh_len, int name_len)
+{
+	int info_len = fh_len;
 
-	अगर (name_len)
+	if (name_len)
 		info_len += name_len + 1;
 
-	वापस roundup(FANOTIFY_INFO_HDR_LEN + info_len, FANOTIFY_EVENT_ALIGN);
-पूर्ण
+	return roundup(FANOTIFY_INFO_HDR_LEN + info_len, FANOTIFY_EVENT_ALIGN);
+}
 
-अटल पूर्णांक fanotअगरy_event_info_len(अचिन्हित पूर्णांक fid_mode,
-				   काष्ठा fanotअगरy_event *event)
-अणु
-	काष्ठा fanotअगरy_info *info = fanotअगरy_event_info(event);
-	पूर्णांक dir_fh_len = fanotअगरy_event_dir_fh_len(event);
-	पूर्णांक fh_len = fanotअगरy_event_object_fh_len(event);
-	पूर्णांक info_len = 0;
-	पूर्णांक करोt_len = 0;
+static int fanotify_event_info_len(unsigned int fid_mode,
+				   struct fanotify_event *event)
+{
+	struct fanotify_info *info = fanotify_event_info(event);
+	int dir_fh_len = fanotify_event_dir_fh_len(event);
+	int fh_len = fanotify_event_object_fh_len(event);
+	int info_len = 0;
+	int dot_len = 0;
 
-	अगर (dir_fh_len) अणु
-		info_len += fanotअगरy_fid_info_len(dir_fh_len, info->name_len);
-	पूर्ण अन्यथा अगर ((fid_mode & FAN_REPORT_NAME) && (event->mask & FAN_ONसूची)) अणु
+	if (dir_fh_len) {
+		info_len += fanotify_fid_info_len(dir_fh_len, info->name_len);
+	} else if ((fid_mode & FAN_REPORT_NAME) && (event->mask & FAN_ONDIR)) {
 		/*
-		 * With group flag FAN_REPORT_NAME, अगर name was not recorded in
+		 * With group flag FAN_REPORT_NAME, if name was not recorded in
 		 * event on a directory, we will report the name ".".
 		 */
-		करोt_len = 1;
-	पूर्ण
+		dot_len = 1;
+	}
 
-	अगर (fh_len)
-		info_len += fanotअगरy_fid_info_len(fh_len, करोt_len);
+	if (fh_len)
+		info_len += fanotify_fid_info_len(fh_len, dot_len);
 
-	वापस info_len;
-पूर्ण
+	return info_len;
+}
 
 /*
  * Remove an hashed event from merge hash table.
  */
-अटल व्योम fanotअगरy_unhash_event(काष्ठा fsnotअगरy_group *group,
-				  काष्ठा fanotअगरy_event *event)
-अणु
-	निश्चित_spin_locked(&group->notअगरication_lock);
+static void fanotify_unhash_event(struct fsnotify_group *group,
+				  struct fanotify_event *event)
+{
+	assert_spin_locked(&group->notification_lock);
 
 	pr_debug("%s: group=%p event=%p bucket=%u\n", __func__,
-		 group, event, fanotअगरy_event_hash_bucket(group, event));
+		 group, event, fanotify_event_hash_bucket(group, event));
 
-	अगर (WARN_ON_ONCE(hlist_unhashed(&event->merge_list)))
-		वापस;
+	if (WARN_ON_ONCE(hlist_unhashed(&event->merge_list)))
+		return;
 
 	hlist_del_init(&event->merge_list);
-पूर्ण
+}
 
 /*
- * Get an fanotअगरy notअगरication event अगर one exists and is small
- * enough to fit in "count". Return an error poपूर्णांकer अगर the count
+ * Get an fanotify notification event if one exists and is small
+ * enough to fit in "count". Return an error pointer if the count
  * is not large enough. When permission event is dequeued, its state is
  * updated accordingly.
  */
-अटल काष्ठा fanotअगरy_event *get_one_event(काष्ठा fsnotअगरy_group *group,
-					    माप_प्रकार count)
-अणु
-	माप_प्रकार event_size = FAN_EVENT_METADATA_LEN;
-	काष्ठा fanotअगरy_event *event = शून्य;
-	काष्ठा fsnotअगरy_event *fsn_event;
-	अचिन्हित पूर्णांक fid_mode = FAN_GROUP_FLAG(group, FANOTIFY_FID_BITS);
+static struct fanotify_event *get_one_event(struct fsnotify_group *group,
+					    size_t count)
+{
+	size_t event_size = FAN_EVENT_METADATA_LEN;
+	struct fanotify_event *event = NULL;
+	struct fsnotify_event *fsn_event;
+	unsigned int fid_mode = FAN_GROUP_FLAG(group, FANOTIFY_FID_BITS);
 
 	pr_debug("%s: group=%p count=%zd\n", __func__, group, count);
 
-	spin_lock(&group->notअगरication_lock);
-	fsn_event = fsnotअगरy_peek_first_event(group);
-	अगर (!fsn_event)
-		जाओ out;
+	spin_lock(&group->notification_lock);
+	fsn_event = fsnotify_peek_first_event(group);
+	if (!fsn_event)
+		goto out;
 
 	event = FANOTIFY_E(fsn_event);
-	अगर (fid_mode)
-		event_size += fanotअगरy_event_info_len(fid_mode, event);
+	if (fid_mode)
+		event_size += fanotify_event_info_len(fid_mode, event);
 
-	अगर (event_size > count) अणु
+	if (event_size > count) {
 		event = ERR_PTR(-EINVAL);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
-	 * Held the notअगरication_lock the whole समय, so this is the
+	 * Held the notification_lock the whole time, so this is the
 	 * same event we peeked above.
 	 */
-	fsnotअगरy_हटाओ_first_event(group);
-	अगर (fanotअगरy_is_perm_event(event->mask))
+	fsnotify_remove_first_event(group);
+	if (fanotify_is_perm_event(event->mask))
 		FANOTIFY_PERM(event)->state = FAN_EVENT_REPORTED;
-	अगर (fanotअगरy_is_hashed_event(event->mask))
-		fanotअगरy_unhash_event(group, event);
+	if (fanotify_is_hashed_event(event->mask))
+		fanotify_unhash_event(group, event);
 out:
-	spin_unlock(&group->notअगरication_lock);
-	वापस event;
-पूर्ण
+	spin_unlock(&group->notification_lock);
+	return event;
+}
 
-अटल पूर्णांक create_fd(काष्ठा fsnotअगरy_group *group, काष्ठा path *path,
-		     काष्ठा file **file)
-अणु
-	पूर्णांक client_fd;
-	काष्ठा file *new_file;
+static int create_fd(struct fsnotify_group *group, struct path *path,
+		     struct file **file)
+{
+	int client_fd;
+	struct file *new_file;
 
-	client_fd = get_unused_fd_flags(group->fanotअगरy_data.f_flags);
-	अगर (client_fd < 0)
-		वापस client_fd;
+	client_fd = get_unused_fd_flags(group->fanotify_data.f_flags);
+	if (client_fd < 0)
+		return client_fd;
 
 	/*
-	 * we need a new file handle क्रम the userspace program so it can पढ़ो even अगर it was
-	 * originally खोलोed O_WRONLY.
+	 * we need a new file handle for the userspace program so it can read even if it was
+	 * originally opened O_WRONLY.
 	 */
-	new_file = dentry_खोलो(path,
-			       group->fanotअगरy_data.f_flags | FMODE_NONOTIFY,
+	new_file = dentry_open(path,
+			       group->fanotify_data.f_flags | FMODE_NONOTIFY,
 			       current_cred());
-	अगर (IS_ERR(new_file)) अणु
+	if (IS_ERR(new_file)) {
 		/*
-		 * we still send an event even अगर we can't खोलो the file.  this
-		 * can happen when say tasks are gone and we try to खोलो their
-		 * /proc files or we try to खोलो a WRONLY file like in sysfs
-		 * we just send the त्रुटि_सं to userspace since there isn't much
-		 * अन्यथा we can करो.
+		 * we still send an event even if we can't open the file.  this
+		 * can happen when say tasks are gone and we try to open their
+		 * /proc files or we try to open a WRONLY file like in sysfs
+		 * we just send the errno to userspace since there isn't much
+		 * else we can do.
 		 */
 		put_unused_fd(client_fd);
 		client_fd = PTR_ERR(new_file);
-	पूर्ण अन्यथा अणु
+	} else {
 		*file = new_file;
-	पूर्ण
+	}
 
-	वापस client_fd;
-पूर्ण
+	return client_fd;
+}
 
 /*
  * Finish processing of permission event by setting it to ANSWERED state and
- * drop group->notअगरication_lock.
+ * drop group->notification_lock.
  */
-अटल व्योम finish_permission_event(काष्ठा fsnotअगरy_group *group,
-				    काष्ठा fanotअगरy_perm_event *event,
-				    अचिन्हित पूर्णांक response)
-				    __releases(&group->notअगरication_lock)
-अणु
+static void finish_permission_event(struct fsnotify_group *group,
+				    struct fanotify_perm_event *event,
+				    unsigned int response)
+				    __releases(&group->notification_lock)
+{
 	bool destroy = false;
 
-	निश्चित_spin_locked(&group->notअगरication_lock);
+	assert_spin_locked(&group->notification_lock);
 	event->response = response;
-	अगर (event->state == FAN_EVENT_CANCELED)
+	if (event->state == FAN_EVENT_CANCELED)
 		destroy = true;
-	अन्यथा
+	else
 		event->state = FAN_EVENT_ANSWERED;
-	spin_unlock(&group->notअगरication_lock);
-	अगर (destroy)
-		fsnotअगरy_destroy_event(group, &event->fae.fse);
-पूर्ण
+	spin_unlock(&group->notification_lock);
+	if (destroy)
+		fsnotify_destroy_event(group, &event->fae.fse);
+}
 
-अटल पूर्णांक process_access_response(काष्ठा fsnotअगरy_group *group,
-				   काष्ठा fanotअगरy_response *response_काष्ठा)
-अणु
-	काष्ठा fanotअगरy_perm_event *event;
-	पूर्णांक fd = response_काष्ठा->fd;
-	पूर्णांक response = response_काष्ठा->response;
+static int process_access_response(struct fsnotify_group *group,
+				   struct fanotify_response *response_struct)
+{
+	struct fanotify_perm_event *event;
+	int fd = response_struct->fd;
+	int response = response_struct->response;
 
 	pr_debug("%s: group=%p fd=%d response=%d\n", __func__, group,
 		 fd, response);
 	/*
-	 * make sure the response is valid, अगर invalid we करो nothing and either
+	 * make sure the response is valid, if invalid we do nothing and either
 	 * userspace can send a valid response or we will clean it up after the
-	 * समयout
+	 * timeout
 	 */
-	चयन (response & ~FAN_AUDIT) अणु
-	हाल FAN_ALLOW:
-	हाल FAN_DENY:
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (response & ~FAN_AUDIT) {
+	case FAN_ALLOW:
+	case FAN_DENY:
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	अगर (fd < 0)
-		वापस -EINVAL;
+	if (fd < 0)
+		return -EINVAL;
 
-	अगर ((response & FAN_AUDIT) && !FAN_GROUP_FLAG(group, FAN_ENABLE_AUDIT))
-		वापस -EINVAL;
+	if ((response & FAN_AUDIT) && !FAN_GROUP_FLAG(group, FAN_ENABLE_AUDIT))
+		return -EINVAL;
 
-	spin_lock(&group->notअगरication_lock);
-	list_क्रम_each_entry(event, &group->fanotअगरy_data.access_list,
-			    fae.fse.list) अणु
-		अगर (event->fd != fd)
-			जारी;
+	spin_lock(&group->notification_lock);
+	list_for_each_entry(event, &group->fanotify_data.access_list,
+			    fae.fse.list) {
+		if (event->fd != fd)
+			continue;
 
 		list_del_init(&event->fae.fse.list);
 		finish_permission_event(group, event, response);
-		wake_up(&group->fanotअगरy_data.access_रुकोq);
-		वापस 0;
-	पूर्ण
-	spin_unlock(&group->notअगरication_lock);
+		wake_up(&group->fanotify_data.access_waitq);
+		return 0;
+	}
+	spin_unlock(&group->notification_lock);
 
-	वापस -ENOENT;
-पूर्ण
+	return -ENOENT;
+}
 
-अटल पूर्णांक copy_info_to_user(__kernel_fsid_t *fsid, काष्ठा fanotअगरy_fh *fh,
-			     पूर्णांक info_type, स्थिर अक्षर *name, माप_प्रकार name_len,
-			     अक्षर __user *buf, माप_प्रकार count)
-अणु
-	काष्ठा fanotअगरy_event_info_fid info = अणु पूर्ण;
-	काष्ठा file_handle handle = अणु पूर्ण;
-	अचिन्हित अक्षर bounce[FANOTIFY_INLINE_FH_LEN], *fh_buf;
-	माप_प्रकार fh_len = fh ? fh->len : 0;
-	माप_प्रकार info_len = fanotअगरy_fid_info_len(fh_len, name_len);
-	माप_प्रकार len = info_len;
+static int copy_info_to_user(__kernel_fsid_t *fsid, struct fanotify_fh *fh,
+			     int info_type, const char *name, size_t name_len,
+			     char __user *buf, size_t count)
+{
+	struct fanotify_event_info_fid info = { };
+	struct file_handle handle = { };
+	unsigned char bounce[FANOTIFY_INLINE_FH_LEN], *fh_buf;
+	size_t fh_len = fh ? fh->len : 0;
+	size_t info_len = fanotify_fid_info_len(fh_len, name_len);
+	size_t len = info_len;
 
 	pr_debug("%s: fh_len=%zu name_len=%zu, info_len=%zu, count=%zu\n",
 		 __func__, fh_len, name_len, info_len, count);
 
-	अगर (!fh_len)
-		वापस 0;
+	if (!fh_len)
+		return 0;
 
-	अगर (WARN_ON_ONCE(len < माप(info) || len > count))
-		वापस -EFAULT;
+	if (WARN_ON_ONCE(len < sizeof(info) || len > count))
+		return -EFAULT;
 
 	/*
 	 * Copy event info fid header followed by variable sized file handle
 	 * and optionally followed by variable sized filename.
 	 */
-	चयन (info_type) अणु
-	हाल FAN_EVENT_INFO_TYPE_FID:
-	हाल FAN_EVENT_INFO_TYPE_DFID:
-		अगर (WARN_ON_ONCE(name_len))
-			वापस -EFAULT;
-		अवरोध;
-	हाल FAN_EVENT_INFO_TYPE_DFID_NAME:
-		अगर (WARN_ON_ONCE(!name || !name_len))
-			वापस -EFAULT;
-		अवरोध;
-	शेष:
-		वापस -EFAULT;
-	पूर्ण
+	switch (info_type) {
+	case FAN_EVENT_INFO_TYPE_FID:
+	case FAN_EVENT_INFO_TYPE_DFID:
+		if (WARN_ON_ONCE(name_len))
+			return -EFAULT;
+		break;
+	case FAN_EVENT_INFO_TYPE_DFID_NAME:
+		if (WARN_ON_ONCE(!name || !name_len))
+			return -EFAULT;
+		break;
+	default:
+		return -EFAULT;
+	}
 
 	info.hdr.info_type = info_type;
 	info.hdr.len = len;
 	info.fsid = *fsid;
-	अगर (copy_to_user(buf, &info, माप(info)))
-		वापस -EFAULT;
+	if (copy_to_user(buf, &info, sizeof(info)))
+		return -EFAULT;
 
-	buf += माप(info);
-	len -= माप(info);
-	अगर (WARN_ON_ONCE(len < माप(handle)))
-		वापस -EFAULT;
+	buf += sizeof(info);
+	len -= sizeof(info);
+	if (WARN_ON_ONCE(len < sizeof(handle)))
+		return -EFAULT;
 
 	handle.handle_type = fh->type;
 	handle.handle_bytes = fh_len;
-	अगर (copy_to_user(buf, &handle, माप(handle)))
-		वापस -EFAULT;
+	if (copy_to_user(buf, &handle, sizeof(handle)))
+		return -EFAULT;
 
-	buf += माप(handle);
-	len -= माप(handle);
-	अगर (WARN_ON_ONCE(len < fh_len))
-		वापस -EFAULT;
+	buf += sizeof(handle);
+	len -= sizeof(handle);
+	if (WARN_ON_ONCE(len < fh_len))
+		return -EFAULT;
 
 	/*
-	 * For an अंतरभूत fh and अंतरभूत file name, copy through stack to exclude
+	 * For an inline fh and inline file name, copy through stack to exclude
 	 * the copy from usercopy hardening protections.
 	 */
-	fh_buf = fanotअगरy_fh_buf(fh);
-	अगर (fh_len <= FANOTIFY_INLINE_FH_LEN) अणु
-		स_नकल(bounce, fh_buf, fh_len);
+	fh_buf = fanotify_fh_buf(fh);
+	if (fh_len <= FANOTIFY_INLINE_FH_LEN) {
+		memcpy(bounce, fh_buf, fh_len);
 		fh_buf = bounce;
-	पूर्ण
-	अगर (copy_to_user(buf, fh_buf, fh_len))
-		वापस -EFAULT;
+	}
+	if (copy_to_user(buf, fh_buf, fh_len))
+		return -EFAULT;
 
 	buf += fh_len;
 	len -= fh_len;
 
-	अगर (name_len) अणु
+	if (name_len) {
 		/* Copy the filename with terminating null */
 		name_len++;
-		अगर (WARN_ON_ONCE(len < name_len))
-			वापस -EFAULT;
+		if (WARN_ON_ONCE(len < name_len))
+			return -EFAULT;
 
-		अगर (copy_to_user(buf, name, name_len))
-			वापस -EFAULT;
+		if (copy_to_user(buf, name, name_len))
+			return -EFAULT;
 
 		buf += name_len;
 		len -= name_len;
-	पूर्ण
+	}
 
 	/* Pad with 0's */
 	WARN_ON_ONCE(len < 0 || len >= FANOTIFY_EVENT_ALIGN);
-	अगर (len > 0 && clear_user(buf, len))
-		वापस -EFAULT;
+	if (len > 0 && clear_user(buf, len))
+		return -EFAULT;
 
-	वापस info_len;
-पूर्ण
+	return info_len;
+}
 
-अटल sमाप_प्रकार copy_event_to_user(काष्ठा fsnotअगरy_group *group,
-				  काष्ठा fanotअगरy_event *event,
-				  अक्षर __user *buf, माप_प्रकार count)
-अणु
-	काष्ठा fanotअगरy_event_metadata metadata;
-	काष्ठा path *path = fanotअगरy_event_path(event);
-	काष्ठा fanotअगरy_info *info = fanotअगरy_event_info(event);
-	अचिन्हित पूर्णांक fid_mode = FAN_GROUP_FLAG(group, FANOTIFY_FID_BITS);
-	काष्ठा file *f = शून्य;
-	पूर्णांक ret, fd = FAN_NOFD;
-	पूर्णांक info_type = 0;
+static ssize_t copy_event_to_user(struct fsnotify_group *group,
+				  struct fanotify_event *event,
+				  char __user *buf, size_t count)
+{
+	struct fanotify_event_metadata metadata;
+	struct path *path = fanotify_event_path(event);
+	struct fanotify_info *info = fanotify_event_info(event);
+	unsigned int fid_mode = FAN_GROUP_FLAG(group, FANOTIFY_FID_BITS);
+	struct file *f = NULL;
+	int ret, fd = FAN_NOFD;
+	int info_type = 0;
 
 	pr_debug("%s: group=%p event=%p\n", __func__, group, event);
 
 	metadata.event_len = FAN_EVENT_METADATA_LEN +
-				fanotअगरy_event_info_len(fid_mode, event);
+				fanotify_event_info_len(fid_mode, event);
 	metadata.metadata_len = FAN_EVENT_METADATA_LEN;
 	metadata.vers = FANOTIFY_METADATA_VERSION;
 	metadata.reserved = 0;
 	metadata.mask = event->mask & FANOTIFY_OUTGOING_EVENTS;
 	metadata.pid = pid_vnr(event->pid);
 	/*
-	 * For an unprivileged listener, event->pid can be used to identअगरy the
+	 * For an unprivileged listener, event->pid can be used to identify the
 	 * events generated by the listener process itself, without disclosing
 	 * the pids of other processes.
 	 */
-	अगर (FAN_GROUP_FLAG(group, FANOTIFY_UNPRIV) &&
+	if (FAN_GROUP_FLAG(group, FANOTIFY_UNPRIV) &&
 	    task_tgid(current) != event->pid)
 		metadata.pid = 0;
 
 	/*
-	 * For now, fid mode is required क्रम an unprivileged listener and
-	 * fid mode करोes not report fd in events.  Keep this check anyway
-	 * क्रम safety in हाल fid mode requirement is relaxed in the future
+	 * For now, fid mode is required for an unprivileged listener and
+	 * fid mode does not report fd in events.  Keep this check anyway
+	 * for safety in case fid mode requirement is relaxed in the future
 	 * to allow unprivileged listener to get events with no fd and no fid.
 	 */
-	अगर (!FAN_GROUP_FLAG(group, FANOTIFY_UNPRIV) &&
-	    path && path->mnt && path->dentry) अणु
+	if (!FAN_GROUP_FLAG(group, FANOTIFY_UNPRIV) &&
+	    path && path->mnt && path->dentry) {
 		fd = create_fd(group, path, &f);
-		अगर (fd < 0)
-			वापस fd;
-	पूर्ण
+		if (fd < 0)
+			return fd;
+	}
 	metadata.fd = fd;
 
 	ret = -EFAULT;
 	/*
-	 * Sanity check copy size in हाल get_one_event() and
+	 * Sanity check copy size in case get_one_event() and
 	 * event_len sizes ever get out of sync.
 	 */
-	अगर (WARN_ON_ONCE(metadata.event_len > count))
-		जाओ out_बंद_fd;
+	if (WARN_ON_ONCE(metadata.event_len > count))
+		goto out_close_fd;
 
-	अगर (copy_to_user(buf, &metadata, FAN_EVENT_METADATA_LEN))
-		जाओ out_बंद_fd;
+	if (copy_to_user(buf, &metadata, FAN_EVENT_METADATA_LEN))
+		goto out_close_fd;
 
 	buf += FAN_EVENT_METADATA_LEN;
 	count -= FAN_EVENT_METADATA_LEN;
 
-	अगर (fanotअगरy_is_perm_event(event->mask))
+	if (fanotify_is_perm_event(event->mask))
 		FANOTIFY_PERM(event)->fd = fd;
 
-	अगर (f)
+	if (f)
 		fd_install(fd, f);
 
 	/* Event info records order is: dir fid + name, child fid */
-	अगर (fanotअगरy_event_dir_fh_len(event)) अणु
+	if (fanotify_event_dir_fh_len(event)) {
 		info_type = info->name_len ? FAN_EVENT_INFO_TYPE_DFID_NAME :
 					     FAN_EVENT_INFO_TYPE_DFID;
-		ret = copy_info_to_user(fanotअगरy_event_fsid(event),
-					fanotअगरy_info_dir_fh(info),
-					info_type, fanotअगरy_info_name(info),
+		ret = copy_info_to_user(fanotify_event_fsid(event),
+					fanotify_info_dir_fh(info),
+					info_type, fanotify_info_name(info),
 					info->name_len, buf, count);
-		अगर (ret < 0)
-			जाओ out_बंद_fd;
+		if (ret < 0)
+			goto out_close_fd;
 
 		buf += ret;
 		count -= ret;
-	पूर्ण
+	}
 
-	अगर (fanotअगरy_event_object_fh_len(event)) अणु
-		स्थिर अक्षर *करोt = शून्य;
-		पूर्णांक करोt_len = 0;
+	if (fanotify_event_object_fh_len(event)) {
+		const char *dot = NULL;
+		int dot_len = 0;
 
-		अगर (fid_mode == FAN_REPORT_FID || info_type) अणु
+		if (fid_mode == FAN_REPORT_FID || info_type) {
 			/*
 			 * With only group flag FAN_REPORT_FID only type FID is
 			 * reported. Second info record type is always FID.
 			 */
 			info_type = FAN_EVENT_INFO_TYPE_FID;
-		पूर्ण अन्यथा अगर ((fid_mode & FAN_REPORT_NAME) &&
-			   (event->mask & FAN_ONसूची)) अणु
+		} else if ((fid_mode & FAN_REPORT_NAME) &&
+			   (event->mask & FAN_ONDIR)) {
 			/*
-			 * With group flag FAN_REPORT_NAME, अगर name was not
+			 * With group flag FAN_REPORT_NAME, if name was not
 			 * recorded in an event on a directory, report the
 			 * name "." with info type DFID_NAME.
 			 */
 			info_type = FAN_EVENT_INFO_TYPE_DFID_NAME;
-			करोt = ".";
-			करोt_len = 1;
-		पूर्ण अन्यथा अगर ((event->mask & ALL_FSNOTIFY_सूचीENT_EVENTS) ||
-			   (event->mask & FAN_ONसूची)) अणु
+			dot = ".";
+			dot_len = 1;
+		} else if ((event->mask & ALL_FSNOTIFY_DIRENT_EVENTS) ||
+			   (event->mask & FAN_ONDIR)) {
 			/*
-			 * With group flag FAN_REPORT_सूची_FID, a single info
-			 * record has type DFID क्रम directory entry modअगरication
-			 * event and क्रम event on a directory.
+			 * With group flag FAN_REPORT_DIR_FID, a single info
+			 * record has type DFID for directory entry modification
+			 * event and for event on a directory.
 			 */
 			info_type = FAN_EVENT_INFO_TYPE_DFID;
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
-			 * With group flags FAN_REPORT_सूची_FID|FAN_REPORT_FID,
-			 * a single info record has type FID क्रम event on a
+			 * With group flags FAN_REPORT_DIR_FID|FAN_REPORT_FID,
+			 * a single info record has type FID for event on a
 			 * non-directory, when there is no directory to report.
 			 * For example, on FAN_DELETE_SELF event.
 			 */
 			info_type = FAN_EVENT_INFO_TYPE_FID;
-		पूर्ण
+		}
 
-		ret = copy_info_to_user(fanotअगरy_event_fsid(event),
-					fanotअगरy_event_object_fh(event),
-					info_type, करोt, करोt_len, buf, count);
-		अगर (ret < 0)
-			जाओ out_बंद_fd;
+		ret = copy_info_to_user(fanotify_event_fsid(event),
+					fanotify_event_object_fh(event),
+					info_type, dot, dot_len, buf, count);
+		if (ret < 0)
+			goto out_close_fd;
 
 		buf += ret;
 		count -= ret;
-	पूर्ण
+	}
 
-	वापस metadata.event_len;
+	return metadata.event_len;
 
-out_बंद_fd:
-	अगर (fd != FAN_NOFD) अणु
+out_close_fd:
+	if (fd != FAN_NOFD) {
 		put_unused_fd(fd);
 		fput(f);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-/* पूर्णांकofiy userspace file descriptor functions */
-अटल __poll_t fanotअगरy_poll(काष्ठा file *file, poll_table *रुको)
-अणु
-	काष्ठा fsnotअगरy_group *group = file->निजी_data;
+/* intofiy userspace file descriptor functions */
+static __poll_t fanotify_poll(struct file *file, poll_table *wait)
+{
+	struct fsnotify_group *group = file->private_data;
 	__poll_t ret = 0;
 
-	poll_रुको(file, &group->notअगरication_रुकोq, रुको);
-	spin_lock(&group->notअगरication_lock);
-	अगर (!fsnotअगरy_notअगरy_queue_is_empty(group))
+	poll_wait(file, &group->notification_waitq, wait);
+	spin_lock(&group->notification_lock);
+	if (!fsnotify_notify_queue_is_empty(group))
 		ret = EPOLLIN | EPOLLRDNORM;
-	spin_unlock(&group->notअगरication_lock);
+	spin_unlock(&group->notification_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार fanotअगरy_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
-			     माप_प्रकार count, loff_t *pos)
-अणु
-	काष्ठा fsnotअगरy_group *group;
-	काष्ठा fanotअगरy_event *event;
-	अक्षर __user *start;
-	पूर्णांक ret;
-	DEFINE_WAIT_FUNC(रुको, woken_wake_function);
+static ssize_t fanotify_read(struct file *file, char __user *buf,
+			     size_t count, loff_t *pos)
+{
+	struct fsnotify_group *group;
+	struct fanotify_event *event;
+	char __user *start;
+	int ret;
+	DEFINE_WAIT_FUNC(wait, woken_wake_function);
 
 	start = buf;
-	group = file->निजी_data;
+	group = file->private_data;
 
 	pr_debug("%s: group=%p\n", __func__, group);
 
-	add_रुको_queue(&group->notअगरication_रुकोq, &रुको);
-	जबतक (1) अणु
+	add_wait_queue(&group->notification_waitq, &wait);
+	while (1) {
 		/*
-		 * User can supply arbitrarily large buffer. Aव्योम softlockups
-		 * in हाल there are lots of available events.
+		 * User can supply arbitrarily large buffer. Avoid softlockups
+		 * in case there are lots of available events.
 		 */
 		cond_resched();
 		event = get_one_event(group, count);
-		अगर (IS_ERR(event)) अणु
+		if (IS_ERR(event)) {
 			ret = PTR_ERR(event);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (!event) अणु
+		if (!event) {
 			ret = -EAGAIN;
-			अगर (file->f_flags & O_NONBLOCK)
-				अवरोध;
+			if (file->f_flags & O_NONBLOCK)
+				break;
 
 			ret = -ERESTARTSYS;
-			अगर (संकेत_pending(current))
-				अवरोध;
+			if (signal_pending(current))
+				break;
 
-			अगर (start != buf)
-				अवरोध;
+			if (start != buf)
+				break;
 
-			रुको_woken(&रुको, TASK_INTERRUPTIBLE, MAX_SCHEDULE_TIMEOUT);
-			जारी;
-		पूर्ण
+			wait_woken(&wait, TASK_INTERRUPTIBLE, MAX_SCHEDULE_TIMEOUT);
+			continue;
+		}
 
 		ret = copy_event_to_user(group, event, buf, count);
-		अगर (unlikely(ret == -EOPENSTALE)) अणु
+		if (unlikely(ret == -EOPENSTALE)) {
 			/*
 			 * We cannot report events with stale fd so drop it.
-			 * Setting ret to 0 will जारी the event loop and
-			 * करो the right thing अगर there are no more events to
-			 * पढ़ो (i.e. वापस bytes पढ़ो, -EAGAIN or रुको).
+			 * Setting ret to 0 will continue the event loop and
+			 * do the right thing if there are no more events to
+			 * read (i.e. return bytes read, -EAGAIN or wait).
 			 */
 			ret = 0;
-		पूर्ण
+		}
 
 		/*
-		 * Permission events get queued to रुको क्रम response.  Other
+		 * Permission events get queued to wait for response.  Other
 		 * events can be destroyed now.
 		 */
-		अगर (!fanotअगरy_is_perm_event(event->mask)) अणु
-			fsnotअगरy_destroy_event(group, &event->fse);
-		पूर्ण अन्यथा अणु
-			अगर (ret <= 0) अणु
-				spin_lock(&group->notअगरication_lock);
+		if (!fanotify_is_perm_event(event->mask)) {
+			fsnotify_destroy_event(group, &event->fse);
+		} else {
+			if (ret <= 0) {
+				spin_lock(&group->notification_lock);
 				finish_permission_event(group,
 					FANOTIFY_PERM(event), FAN_DENY);
-				wake_up(&group->fanotअगरy_data.access_रुकोq);
-			पूर्ण अन्यथा अणु
-				spin_lock(&group->notअगरication_lock);
+				wake_up(&group->fanotify_data.access_waitq);
+			} else {
+				spin_lock(&group->notification_lock);
 				list_add_tail(&event->fse.list,
-					&group->fanotअगरy_data.access_list);
-				spin_unlock(&group->notअगरication_lock);
-			पूर्ण
-		पूर्ण
-		अगर (ret < 0)
-			अवरोध;
+					&group->fanotify_data.access_list);
+				spin_unlock(&group->notification_lock);
+			}
+		}
+		if (ret < 0)
+			break;
 		buf += ret;
 		count -= ret;
-	पूर्ण
-	हटाओ_रुको_queue(&group->notअगरication_रुकोq, &रुको);
+	}
+	remove_wait_queue(&group->notification_waitq, &wait);
 
-	अगर (start != buf && ret != -EFAULT)
+	if (start != buf && ret != -EFAULT)
 		ret = buf - start;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार fanotअगरy_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf, माप_प्रकार count, loff_t *pos)
-अणु
-	काष्ठा fanotअगरy_response response = अणु .fd = -1, .response = -1 पूर्ण;
-	काष्ठा fsnotअगरy_group *group;
-	पूर्णांक ret;
+static ssize_t fanotify_write(struct file *file, const char __user *buf, size_t count, loff_t *pos)
+{
+	struct fanotify_response response = { .fd = -1, .response = -1 };
+	struct fsnotify_group *group;
+	int ret;
 
-	अगर (!IS_ENABLED(CONFIG_FANOTIFY_ACCESS_PERMISSIONS))
-		वापस -EINVAL;
+	if (!IS_ENABLED(CONFIG_FANOTIFY_ACCESS_PERMISSIONS))
+		return -EINVAL;
 
-	group = file->निजी_data;
+	group = file->private_data;
 
-	अगर (count < माप(response))
-		वापस -EINVAL;
+	if (count < sizeof(response))
+		return -EINVAL;
 
-	count = माप(response);
+	count = sizeof(response);
 
 	pr_debug("%s: group=%p count=%zu\n", __func__, group, count);
 
-	अगर (copy_from_user(&response, buf, count))
-		वापस -EFAULT;
+	if (copy_from_user(&response, buf, count))
+		return -EFAULT;
 
 	ret = process_access_response(group, &response);
-	अगर (ret < 0)
+	if (ret < 0)
 		count = ret;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल पूर्णांक fanotअगरy_release(काष्ठा inode *ignored, काष्ठा file *file)
-अणु
-	काष्ठा fsnotअगरy_group *group = file->निजी_data;
-	काष्ठा fsnotअगरy_event *fsn_event;
+static int fanotify_release(struct inode *ignored, struct file *file)
+{
+	struct fsnotify_group *group = file->private_data;
+	struct fsnotify_event *fsn_event;
 
 	/*
-	 * Stop new events from arriving in the notअगरication queue. since
-	 * userspace cannot use fanotअगरy fd anymore, no event can enter or
+	 * Stop new events from arriving in the notification queue. since
+	 * userspace cannot use fanotify fd anymore, no event can enter or
 	 * leave access_list by now either.
 	 */
-	fsnotअगरy_group_stop_queueing(group);
+	fsnotify_group_stop_queueing(group);
 
 	/*
-	 * Process all permission events on access_list and notअगरication queue
+	 * Process all permission events on access_list and notification queue
 	 * and simulate reply from userspace.
 	 */
-	spin_lock(&group->notअगरication_lock);
-	जबतक (!list_empty(&group->fanotअगरy_data.access_list)) अणु
-		काष्ठा fanotअगरy_perm_event *event;
+	spin_lock(&group->notification_lock);
+	while (!list_empty(&group->fanotify_data.access_list)) {
+		struct fanotify_perm_event *event;
 
-		event = list_first_entry(&group->fanotअगरy_data.access_list,
-				काष्ठा fanotअगरy_perm_event, fae.fse.list);
+		event = list_first_entry(&group->fanotify_data.access_list,
+				struct fanotify_perm_event, fae.fse.list);
 		list_del_init(&event->fae.fse.list);
 		finish_permission_event(group, event, FAN_ALLOW);
-		spin_lock(&group->notअगरication_lock);
-	पूर्ण
+		spin_lock(&group->notification_lock);
+	}
 
 	/*
 	 * Destroy all non-permission events. For permission events just
-	 * dequeue them and set the response. They will be मुक्तd once the
-	 * response is consumed and fanotअगरy_get_response() वापसs.
+	 * dequeue them and set the response. They will be freed once the
+	 * response is consumed and fanotify_get_response() returns.
 	 */
-	जबतक ((fsn_event = fsnotअगरy_हटाओ_first_event(group))) अणु
-		काष्ठा fanotअगरy_event *event = FANOTIFY_E(fsn_event);
+	while ((fsn_event = fsnotify_remove_first_event(group))) {
+		struct fanotify_event *event = FANOTIFY_E(fsn_event);
 
-		अगर (!(event->mask & FANOTIFY_PERM_EVENTS)) अणु
-			spin_unlock(&group->notअगरication_lock);
-			fsnotअगरy_destroy_event(group, fsn_event);
-		पूर्ण अन्यथा अणु
+		if (!(event->mask & FANOTIFY_PERM_EVENTS)) {
+			spin_unlock(&group->notification_lock);
+			fsnotify_destroy_event(group, fsn_event);
+		} else {
 			finish_permission_event(group, FANOTIFY_PERM(event),
 						FAN_ALLOW);
-		पूर्ण
-		spin_lock(&group->notअगरication_lock);
-	पूर्ण
-	spin_unlock(&group->notअगरication_lock);
+		}
+		spin_lock(&group->notification_lock);
+	}
+	spin_unlock(&group->notification_lock);
 
-	/* Response क्रम all permission events it set, wakeup रुकोers */
-	wake_up(&group->fanotअगरy_data.access_रुकोq);
+	/* Response for all permission events it set, wakeup waiters */
+	wake_up(&group->fanotify_data.access_waitq);
 
-	/* matches the fanotअगरy_init->fsnotअगरy_alloc_group */
-	fsnotअगरy_destroy_group(group);
+	/* matches the fanotify_init->fsnotify_alloc_group */
+	fsnotify_destroy_group(group);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल दीर्घ fanotअगरy_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा fsnotअगरy_group *group;
-	काष्ठा fsnotअगरy_event *fsn_event;
-	व्योम __user *p;
-	पूर्णांक ret = -ENOTTY;
-	माप_प्रकार send_len = 0;
+static long fanotify_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+	struct fsnotify_group *group;
+	struct fsnotify_event *fsn_event;
+	void __user *p;
+	int ret = -ENOTTY;
+	size_t send_len = 0;
 
-	group = file->निजी_data;
+	group = file->private_data;
 
-	p = (व्योम __user *) arg;
+	p = (void __user *) arg;
 
-	चयन (cmd) अणु
-	हाल FIONREAD:
-		spin_lock(&group->notअगरication_lock);
-		list_क्रम_each_entry(fsn_event, &group->notअगरication_list, list)
+	switch (cmd) {
+	case FIONREAD:
+		spin_lock(&group->notification_lock);
+		list_for_each_entry(fsn_event, &group->notification_list, list)
 			send_len += FAN_EVENT_METADATA_LEN;
-		spin_unlock(&group->notअगरication_lock);
-		ret = put_user(send_len, (पूर्णांक __user *) p);
-		अवरोध;
-	पूर्ण
+		spin_unlock(&group->notification_lock);
+		ret = put_user(send_len, (int __user *) p);
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा file_operations fanotअगरy_fops = अणु
-	.show_fdinfo	= fanotअगरy_show_fdinfo,
-	.poll		= fanotअगरy_poll,
-	.पढ़ो		= fanotअगरy_पढ़ो,
-	.ग_लिखो		= fanotअगरy_ग_लिखो,
-	.fasync		= शून्य,
-	.release	= fanotअगरy_release,
-	.unlocked_ioctl	= fanotअगरy_ioctl,
+static const struct file_operations fanotify_fops = {
+	.show_fdinfo	= fanotify_show_fdinfo,
+	.poll		= fanotify_poll,
+	.read		= fanotify_read,
+	.write		= fanotify_write,
+	.fasync		= NULL,
+	.release	= fanotify_release,
+	.unlocked_ioctl	= fanotify_ioctl,
 	.compat_ioctl	= compat_ptr_ioctl,
 	.llseek		= noop_llseek,
-पूर्ण;
+};
 
-अटल पूर्णांक fanotअगरy_find_path(पूर्णांक dfd, स्थिर अक्षर __user *filename,
-			      काष्ठा path *path, अचिन्हित पूर्णांक flags, __u64 mask,
-			      अचिन्हित पूर्णांक obj_type)
-अणु
-	पूर्णांक ret;
+static int fanotify_find_path(int dfd, const char __user *filename,
+			      struct path *path, unsigned int flags, __u64 mask,
+			      unsigned int obj_type)
+{
+	int ret;
 
 	pr_debug("%s: dfd=%d filename=%p flags=%x\n", __func__,
 		 dfd, filename, flags);
 
-	अगर (filename == शून्य) अणु
-		काष्ठा fd f = fdget(dfd);
+	if (filename == NULL) {
+		struct fd f = fdget(dfd);
 
 		ret = -EBADF;
-		अगर (!f.file)
-			जाओ out;
+		if (!f.file)
+			goto out;
 
-		ret = -ENOTसूची;
-		अगर ((flags & FAN_MARK_ONLYसूची) &&
-		    !(S_ISसूची(file_inode(f.file)->i_mode))) अणु
+		ret = -ENOTDIR;
+		if ((flags & FAN_MARK_ONLYDIR) &&
+		    !(S_ISDIR(file_inode(f.file)->i_mode))) {
 			fdput(f);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		*path = f.file->f_path;
 		path_get(path);
 		fdput(f);
-	पूर्ण अन्यथा अणु
-		अचिन्हित पूर्णांक lookup_flags = 0;
+	} else {
+		unsigned int lookup_flags = 0;
 
-		अगर (!(flags & FAN_MARK_DONT_FOLLOW))
+		if (!(flags & FAN_MARK_DONT_FOLLOW))
 			lookup_flags |= LOOKUP_FOLLOW;
-		अगर (flags & FAN_MARK_ONLYसूची)
-			lookup_flags |= LOOKUP_सूचीECTORY;
+		if (flags & FAN_MARK_ONLYDIR)
+			lookup_flags |= LOOKUP_DIRECTORY;
 
 		ret = user_path_at(dfd, filename, lookup_flags, path);
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+		if (ret)
+			goto out;
+	}
 
-	/* you can only watch an inode अगर you have पढ़ो permissions on it */
+	/* you can only watch an inode if you have read permissions on it */
 	ret = path_permission(path, MAY_READ);
-	अगर (ret) अणु
+	if (ret) {
 		path_put(path);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = security_path_notअगरy(path, mask, obj_type);
-	अगर (ret)
+	ret = security_path_notify(path, mask, obj_type);
+	if (ret)
 		path_put(path);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल __u32 fanotअगरy_mark_हटाओ_from_mask(काष्ठा fsnotअगरy_mark *fsn_mark,
-					    __u32 mask, अचिन्हित पूर्णांक flags,
-					    __u32 umask, पूर्णांक *destroy)
-अणु
+static __u32 fanotify_mark_remove_from_mask(struct fsnotify_mark *fsn_mark,
+					    __u32 mask, unsigned int flags,
+					    __u32 umask, int *destroy)
+{
 	__u32 oldmask = 0;
 
-	/* umask bits cannot be हटाओd by user */
+	/* umask bits cannot be removed by user */
 	mask &= ~umask;
 	spin_lock(&fsn_mark->lock);
-	अगर (!(flags & FAN_MARK_IGNORED_MASK)) अणु
+	if (!(flags & FAN_MARK_IGNORED_MASK)) {
 		oldmask = fsn_mark->mask;
 		fsn_mark->mask &= ~mask;
-	पूर्ण अन्यथा अणु
+	} else {
 		fsn_mark->ignored_mask &= ~mask;
-	पूर्ण
+	}
 	/*
-	 * We need to keep the mark around even अगर reमुख्यing mask cannot
-	 * result in any events (e.g. mask == FAN_ONसूची) to support incremenal
+	 * We need to keep the mark around even if remaining mask cannot
+	 * result in any events (e.g. mask == FAN_ONDIR) to support incremenal
 	 * changes to the mask.
-	 * Destroy mark when only umask bits reमुख्य.
+	 * Destroy mark when only umask bits remain.
 	 */
 	*destroy = !((fsn_mark->mask | fsn_mark->ignored_mask) & ~umask);
 	spin_unlock(&fsn_mark->lock);
 
-	वापस mask & oldmask;
-पूर्ण
+	return mask & oldmask;
+}
 
-अटल पूर्णांक fanotअगरy_हटाओ_mark(काष्ठा fsnotअगरy_group *group,
-				fsnotअगरy_connp_t *connp, __u32 mask,
-				अचिन्हित पूर्णांक flags, __u32 umask)
-अणु
-	काष्ठा fsnotअगरy_mark *fsn_mark = शून्य;
-	__u32 हटाओd;
-	पूर्णांक destroy_mark;
+static int fanotify_remove_mark(struct fsnotify_group *group,
+				fsnotify_connp_t *connp, __u32 mask,
+				unsigned int flags, __u32 umask)
+{
+	struct fsnotify_mark *fsn_mark = NULL;
+	__u32 removed;
+	int destroy_mark;
 
 	mutex_lock(&group->mark_mutex);
-	fsn_mark = fsnotअगरy_find_mark(connp, group);
-	अगर (!fsn_mark) अणु
+	fsn_mark = fsnotify_find_mark(connp, group);
+	if (!fsn_mark) {
 		mutex_unlock(&group->mark_mutex);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
-	हटाओd = fanotअगरy_mark_हटाओ_from_mask(fsn_mark, mask, flags,
+	removed = fanotify_mark_remove_from_mask(fsn_mark, mask, flags,
 						 umask, &destroy_mark);
-	अगर (हटाओd & fsnotअगरy_conn_mask(fsn_mark->connector))
-		fsnotअगरy_recalc_mask(fsn_mark->connector);
-	अगर (destroy_mark)
-		fsnotअगरy_detach_mark(fsn_mark);
+	if (removed & fsnotify_conn_mask(fsn_mark->connector))
+		fsnotify_recalc_mask(fsn_mark->connector);
+	if (destroy_mark)
+		fsnotify_detach_mark(fsn_mark);
 	mutex_unlock(&group->mark_mutex);
-	अगर (destroy_mark)
-		fsnotअगरy_मुक्त_mark(fsn_mark);
+	if (destroy_mark)
+		fsnotify_free_mark(fsn_mark);
 
-	/* matches the fsnotअगरy_find_mark() */
-	fsnotअगरy_put_mark(fsn_mark);
-	वापस 0;
-पूर्ण
+	/* matches the fsnotify_find_mark() */
+	fsnotify_put_mark(fsn_mark);
+	return 0;
+}
 
-अटल पूर्णांक fanotअगरy_हटाओ_vfsmount_mark(काष्ठा fsnotअगरy_group *group,
-					 काष्ठा vfsmount *mnt, __u32 mask,
-					 अचिन्हित पूर्णांक flags, __u32 umask)
-अणु
-	वापस fanotअगरy_हटाओ_mark(group, &real_mount(mnt)->mnt_fsnotअगरy_marks,
+static int fanotify_remove_vfsmount_mark(struct fsnotify_group *group,
+					 struct vfsmount *mnt, __u32 mask,
+					 unsigned int flags, __u32 umask)
+{
+	return fanotify_remove_mark(group, &real_mount(mnt)->mnt_fsnotify_marks,
 				    mask, flags, umask);
-पूर्ण
+}
 
-अटल पूर्णांक fanotअगरy_हटाओ_sb_mark(काष्ठा fsnotअगरy_group *group,
-				   काष्ठा super_block *sb, __u32 mask,
-				   अचिन्हित पूर्णांक flags, __u32 umask)
-अणु
-	वापस fanotअगरy_हटाओ_mark(group, &sb->s_fsnotअगरy_marks, mask,
+static int fanotify_remove_sb_mark(struct fsnotify_group *group,
+				   struct super_block *sb, __u32 mask,
+				   unsigned int flags, __u32 umask)
+{
+	return fanotify_remove_mark(group, &sb->s_fsnotify_marks, mask,
 				    flags, umask);
-पूर्ण
+}
 
-अटल पूर्णांक fanotअगरy_हटाओ_inode_mark(काष्ठा fsnotअगरy_group *group,
-				      काष्ठा inode *inode, __u32 mask,
-				      अचिन्हित पूर्णांक flags, __u32 umask)
-अणु
-	वापस fanotअगरy_हटाओ_mark(group, &inode->i_fsnotअगरy_marks, mask,
+static int fanotify_remove_inode_mark(struct fsnotify_group *group,
+				      struct inode *inode, __u32 mask,
+				      unsigned int flags, __u32 umask)
+{
+	return fanotify_remove_mark(group, &inode->i_fsnotify_marks, mask,
 				    flags, umask);
-पूर्ण
+}
 
-अटल __u32 fanotअगरy_mark_add_to_mask(काष्ठा fsnotअगरy_mark *fsn_mark,
+static __u32 fanotify_mark_add_to_mask(struct fsnotify_mark *fsn_mark,
 				       __u32 mask,
-				       अचिन्हित पूर्णांक flags)
-अणु
+				       unsigned int flags)
+{
 	__u32 oldmask = -1;
 
 	spin_lock(&fsn_mark->lock);
-	अगर (!(flags & FAN_MARK_IGNORED_MASK)) अणु
+	if (!(flags & FAN_MARK_IGNORED_MASK)) {
 		oldmask = fsn_mark->mask;
 		fsn_mark->mask |= mask;
-	पूर्ण अन्यथा अणु
+	} else {
 		fsn_mark->ignored_mask |= mask;
-		अगर (flags & FAN_MARK_IGNORED_SURV_MODIFY)
+		if (flags & FAN_MARK_IGNORED_SURV_MODIFY)
 			fsn_mark->flags |= FSNOTIFY_MARK_FLAG_IGNORED_SURV_MODIFY;
-	पूर्ण
+	}
 	spin_unlock(&fsn_mark->lock);
 
-	वापस mask & ~oldmask;
-पूर्ण
+	return mask & ~oldmask;
+}
 
-अटल काष्ठा fsnotअगरy_mark *fanotअगरy_add_new_mark(काष्ठा fsnotअगरy_group *group,
-						   fsnotअगरy_connp_t *connp,
-						   अचिन्हित पूर्णांक type,
+static struct fsnotify_mark *fanotify_add_new_mark(struct fsnotify_group *group,
+						   fsnotify_connp_t *connp,
+						   unsigned int type,
 						   __kernel_fsid_t *fsid)
-अणु
-	काष्ठा ucounts *ucounts = group->fanotअगरy_data.ucounts;
-	काष्ठा fsnotअगरy_mark *mark;
-	पूर्णांक ret;
+{
+	struct ucounts *ucounts = group->fanotify_data.ucounts;
+	struct fsnotify_mark *mark;
+	int ret;
 
 	/*
-	 * Enक्रमce per user marks limits per user in all containing user ns.
-	 * A group with FAN_UNLIMITED_MARKS करोes not contribute to mark count
+	 * Enforce per user marks limits per user in all containing user ns.
+	 * A group with FAN_UNLIMITED_MARKS does not contribute to mark count
 	 * in the limited groups account.
 	 */
-	अगर (!FAN_GROUP_FLAG(group, FAN_UNLIMITED_MARKS) &&
+	if (!FAN_GROUP_FLAG(group, FAN_UNLIMITED_MARKS) &&
 	    !inc_ucount(ucounts->ns, ucounts->uid, UCOUNT_FANOTIFY_MARKS))
-		वापस ERR_PTR(-ENOSPC);
+		return ERR_PTR(-ENOSPC);
 
-	mark = kmem_cache_alloc(fanotअगरy_mark_cache, GFP_KERNEL);
-	अगर (!mark) अणु
+	mark = kmem_cache_alloc(fanotify_mark_cache, GFP_KERNEL);
+	if (!mark) {
 		ret = -ENOMEM;
-		जाओ out_dec_ucounts;
-	पूर्ण
+		goto out_dec_ucounts;
+	}
 
-	fsnotअगरy_init_mark(mark, group);
-	ret = fsnotअगरy_add_mark_locked(mark, connp, type, 0, fsid);
-	अगर (ret) अणु
-		fsnotअगरy_put_mark(mark);
-		जाओ out_dec_ucounts;
-	पूर्ण
+	fsnotify_init_mark(mark, group);
+	ret = fsnotify_add_mark_locked(mark, connp, type, 0, fsid);
+	if (ret) {
+		fsnotify_put_mark(mark);
+		goto out_dec_ucounts;
+	}
 
-	वापस mark;
+	return mark;
 
 out_dec_ucounts:
-	अगर (!FAN_GROUP_FLAG(group, FAN_UNLIMITED_MARKS))
+	if (!FAN_GROUP_FLAG(group, FAN_UNLIMITED_MARKS))
 		dec_ucount(ucounts, UCOUNT_FANOTIFY_MARKS);
-	वापस ERR_PTR(ret);
-पूर्ण
+	return ERR_PTR(ret);
+}
 
 
-अटल पूर्णांक fanotअगरy_add_mark(काष्ठा fsnotअगरy_group *group,
-			     fsnotअगरy_connp_t *connp, अचिन्हित पूर्णांक type,
-			     __u32 mask, अचिन्हित पूर्णांक flags,
+static int fanotify_add_mark(struct fsnotify_group *group,
+			     fsnotify_connp_t *connp, unsigned int type,
+			     __u32 mask, unsigned int flags,
 			     __kernel_fsid_t *fsid)
-अणु
-	काष्ठा fsnotअगरy_mark *fsn_mark;
+{
+	struct fsnotify_mark *fsn_mark;
 	__u32 added;
 
 	mutex_lock(&group->mark_mutex);
-	fsn_mark = fsnotअगरy_find_mark(connp, group);
-	अगर (!fsn_mark) अणु
-		fsn_mark = fanotअगरy_add_new_mark(group, connp, type, fsid);
-		अगर (IS_ERR(fsn_mark)) अणु
+	fsn_mark = fsnotify_find_mark(connp, group);
+	if (!fsn_mark) {
+		fsn_mark = fanotify_add_new_mark(group, connp, type, fsid);
+		if (IS_ERR(fsn_mark)) {
 			mutex_unlock(&group->mark_mutex);
-			वापस PTR_ERR(fsn_mark);
-		पूर्ण
-	पूर्ण
-	added = fanotअगरy_mark_add_to_mask(fsn_mark, mask, flags);
-	अगर (added & ~fsnotअगरy_conn_mask(fsn_mark->connector))
-		fsnotअगरy_recalc_mask(fsn_mark->connector);
+			return PTR_ERR(fsn_mark);
+		}
+	}
+	added = fanotify_mark_add_to_mask(fsn_mark, mask, flags);
+	if (added & ~fsnotify_conn_mask(fsn_mark->connector))
+		fsnotify_recalc_mask(fsn_mark->connector);
 	mutex_unlock(&group->mark_mutex);
 
-	fsnotअगरy_put_mark(fsn_mark);
-	वापस 0;
-पूर्ण
+	fsnotify_put_mark(fsn_mark);
+	return 0;
+}
 
-अटल पूर्णांक fanotअगरy_add_vfsmount_mark(काष्ठा fsnotअगरy_group *group,
-				      काष्ठा vfsmount *mnt, __u32 mask,
-				      अचिन्हित पूर्णांक flags, __kernel_fsid_t *fsid)
-अणु
-	वापस fanotअगरy_add_mark(group, &real_mount(mnt)->mnt_fsnotअगरy_marks,
+static int fanotify_add_vfsmount_mark(struct fsnotify_group *group,
+				      struct vfsmount *mnt, __u32 mask,
+				      unsigned int flags, __kernel_fsid_t *fsid)
+{
+	return fanotify_add_mark(group, &real_mount(mnt)->mnt_fsnotify_marks,
 				 FSNOTIFY_OBJ_TYPE_VFSMOUNT, mask, flags, fsid);
-पूर्ण
+}
 
-अटल पूर्णांक fanotअगरy_add_sb_mark(काष्ठा fsnotअगरy_group *group,
-				काष्ठा super_block *sb, __u32 mask,
-				अचिन्हित पूर्णांक flags, __kernel_fsid_t *fsid)
-अणु
-	वापस fanotअगरy_add_mark(group, &sb->s_fsnotअगरy_marks,
+static int fanotify_add_sb_mark(struct fsnotify_group *group,
+				struct super_block *sb, __u32 mask,
+				unsigned int flags, __kernel_fsid_t *fsid)
+{
+	return fanotify_add_mark(group, &sb->s_fsnotify_marks,
 				 FSNOTIFY_OBJ_TYPE_SB, mask, flags, fsid);
-पूर्ण
+}
 
-अटल पूर्णांक fanotअगरy_add_inode_mark(काष्ठा fsnotअगरy_group *group,
-				   काष्ठा inode *inode, __u32 mask,
-				   अचिन्हित पूर्णांक flags, __kernel_fsid_t *fsid)
-अणु
+static int fanotify_add_inode_mark(struct fsnotify_group *group,
+				   struct inode *inode, __u32 mask,
+				   unsigned int flags, __kernel_fsid_t *fsid)
+{
 	pr_debug("%s: group=%p inode=%p\n", __func__, group, inode);
 
 	/*
-	 * If some other task has this inode खोलो क्रम ग_लिखो we should not add
+	 * If some other task has this inode open for write we should not add
 	 * an ignored mark, unless that ignored mark is supposed to survive
-	 * modअगरication changes anyway.
+	 * modification changes anyway.
 	 */
-	अगर ((flags & FAN_MARK_IGNORED_MASK) &&
+	if ((flags & FAN_MARK_IGNORED_MASK) &&
 	    !(flags & FAN_MARK_IGNORED_SURV_MODIFY) &&
-	    inode_is_खोलो_क्रम_ग_लिखो(inode))
-		वापस 0;
+	    inode_is_open_for_write(inode))
+		return 0;
 
-	वापस fanotअगरy_add_mark(group, &inode->i_fsnotअगरy_marks,
+	return fanotify_add_mark(group, &inode->i_fsnotify_marks,
 				 FSNOTIFY_OBJ_TYPE_INODE, mask, flags, fsid);
-पूर्ण
+}
 
-अटल काष्ठा fsnotअगरy_event *fanotअगरy_alloc_overflow_event(व्योम)
-अणु
-	काष्ठा fanotअगरy_event *oevent;
+static struct fsnotify_event *fanotify_alloc_overflow_event(void)
+{
+	struct fanotify_event *oevent;
 
-	oevent = kदो_स्मृति(माप(*oevent), GFP_KERNEL_ACCOUNT);
-	अगर (!oevent)
-		वापस शून्य;
+	oevent = kmalloc(sizeof(*oevent), GFP_KERNEL_ACCOUNT);
+	if (!oevent)
+		return NULL;
 
-	fanotअगरy_init_event(oevent, 0, FS_Q_OVERFLOW);
+	fanotify_init_event(oevent, 0, FS_Q_OVERFLOW);
 	oevent->type = FANOTIFY_EVENT_TYPE_OVERFLOW;
 
-	वापस &oevent->fse;
-पूर्ण
+	return &oevent->fse;
+}
 
-अटल काष्ठा hlist_head *fanotअगरy_alloc_merge_hash(व्योम)
-अणु
-	काष्ठा hlist_head *hash;
+static struct hlist_head *fanotify_alloc_merge_hash(void)
+{
+	struct hlist_head *hash;
 
-	hash = kदो_स्मृति(माप(काष्ठा hlist_head) << FANOTIFY_HTABLE_BITS,
+	hash = kmalloc(sizeof(struct hlist_head) << FANOTIFY_HTABLE_BITS,
 		       GFP_KERNEL_ACCOUNT);
-	अगर (!hash)
-		वापस शून्य;
+	if (!hash)
+		return NULL;
 
 	__hash_init(hash, FANOTIFY_HTABLE_SIZE);
 
-	वापस hash;
-पूर्ण
+	return hash;
+}
 
-/* fanotअगरy syscalls */
-SYSCALL_DEFINE2(fanotअगरy_init, अचिन्हित पूर्णांक, flags, अचिन्हित पूर्णांक, event_f_flags)
-अणु
-	काष्ठा fsnotअगरy_group *group;
-	पूर्णांक f_flags, fd;
-	अचिन्हित पूर्णांक fid_mode = flags & FANOTIFY_FID_BITS;
-	अचिन्हित पूर्णांक class = flags & FANOTIFY_CLASS_BITS;
-	अचिन्हित पूर्णांक पूर्णांकernal_flags = 0;
+/* fanotify syscalls */
+SYSCALL_DEFINE2(fanotify_init, unsigned int, flags, unsigned int, event_f_flags)
+{
+	struct fsnotify_group *group;
+	int f_flags, fd;
+	unsigned int fid_mode = flags & FANOTIFY_FID_BITS;
+	unsigned int class = flags & FANOTIFY_CLASS_BITS;
+	unsigned int internal_flags = 0;
 
 	pr_debug("%s: flags=%x event_f_flags=%x\n",
 		 __func__, flags, event_f_flags);
 
-	अगर (!capable(CAP_SYS_ADMIN)) अणु
+	if (!capable(CAP_SYS_ADMIN)) {
 		/*
-		 * An unprivileged user can setup an fanotअगरy group with
+		 * An unprivileged user can setup an fanotify group with
 		 * limited functionality - an unprivileged group is limited to
-		 * notअगरication events with file handles and it cannot use
+		 * notification events with file handles and it cannot use
 		 * unlimited queue/marks.
 		 */
-		अगर ((flags & FANOTIFY_ADMIN_INIT_FLAGS) || !fid_mode)
-			वापस -EPERM;
+		if ((flags & FANOTIFY_ADMIN_INIT_FLAGS) || !fid_mode)
+			return -EPERM;
 
 		/*
-		 * Setting the पूर्णांकernal flag FANOTIFY_UNPRIV on the group
-		 * prevents setting mount/fileप्रणाली marks on this group and
-		 * prevents reporting pid and खोलो fd in events.
+		 * Setting the internal flag FANOTIFY_UNPRIV on the group
+		 * prevents setting mount/filesystem marks on this group and
+		 * prevents reporting pid and open fd in events.
 		 */
-		पूर्णांकernal_flags |= FANOTIFY_UNPRIV;
-	पूर्ण
+		internal_flags |= FANOTIFY_UNPRIV;
+	}
 
-#अगर_घोषित CONFIG_AUDITSYSCALL
-	अगर (flags & ~(FANOTIFY_INIT_FLAGS | FAN_ENABLE_AUDIT))
-#अन्यथा
-	अगर (flags & ~FANOTIFY_INIT_FLAGS)
-#पूर्ण_अगर
-		वापस -EINVAL;
+#ifdef CONFIG_AUDITSYSCALL
+	if (flags & ~(FANOTIFY_INIT_FLAGS | FAN_ENABLE_AUDIT))
+#else
+	if (flags & ~FANOTIFY_INIT_FLAGS)
+#endif
+		return -EINVAL;
 
-	अगर (event_f_flags & ~FANOTIFY_INIT_ALL_EVENT_F_BITS)
-		वापस -EINVAL;
+	if (event_f_flags & ~FANOTIFY_INIT_ALL_EVENT_F_BITS)
+		return -EINVAL;
 
-	चयन (event_f_flags & O_ACCMODE) अणु
-	हाल O_RDONLY:
-	हाल O_RDWR:
-	हाल O_WRONLY:
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (event_f_flags & O_ACCMODE) {
+	case O_RDONLY:
+	case O_RDWR:
+	case O_WRONLY:
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	अगर (fid_mode && class != FAN_CLASS_NOTIF)
-		वापस -EINVAL;
+	if (fid_mode && class != FAN_CLASS_NOTIF)
+		return -EINVAL;
 
 	/*
 	 * Child name is reported with parent fid so requires dir fid.
 	 * We can report both child fid and dir fid with or without name.
 	 */
-	अगर ((fid_mode & FAN_REPORT_NAME) && !(fid_mode & FAN_REPORT_सूची_FID))
-		वापस -EINVAL;
+	if ((fid_mode & FAN_REPORT_NAME) && !(fid_mode & FAN_REPORT_DIR_FID))
+		return -EINVAL;
 
 	f_flags = O_RDWR | FMODE_NONOTIFY;
-	अगर (flags & FAN_CLOEXEC)
+	if (flags & FAN_CLOEXEC)
 		f_flags |= O_CLOEXEC;
-	अगर (flags & FAN_NONBLOCK)
+	if (flags & FAN_NONBLOCK)
 		f_flags |= O_NONBLOCK;
 
-	/* fsnotअगरy_alloc_group takes a ref.  Dropped in fanotअगरy_release */
-	group = fsnotअगरy_alloc_user_group(&fanotअगरy_fsnotअगरy_ops);
-	अगर (IS_ERR(group)) अणु
-		वापस PTR_ERR(group);
-	पूर्ण
+	/* fsnotify_alloc_group takes a ref.  Dropped in fanotify_release */
+	group = fsnotify_alloc_user_group(&fanotify_fsnotify_ops);
+	if (IS_ERR(group)) {
+		return PTR_ERR(group);
+	}
 
-	/* Enक्रमce groups limits per user in all containing user ns */
-	group->fanotअगरy_data.ucounts = inc_ucount(current_user_ns(),
+	/* Enforce groups limits per user in all containing user ns */
+	group->fanotify_data.ucounts = inc_ucount(current_user_ns(),
 						  current_euid(),
 						  UCOUNT_FANOTIFY_GROUPS);
-	अगर (!group->fanotअगरy_data.ucounts) अणु
-		fd = -EMखाता;
-		जाओ out_destroy_group;
-	पूर्ण
+	if (!group->fanotify_data.ucounts) {
+		fd = -EMFILE;
+		goto out_destroy_group;
+	}
 
-	group->fanotअगरy_data.flags = flags | पूर्णांकernal_flags;
+	group->fanotify_data.flags = flags | internal_flags;
 	group->memcg = get_mem_cgroup_from_mm(current->mm);
 
-	group->fanotअगरy_data.merge_hash = fanotअगरy_alloc_merge_hash();
-	अगर (!group->fanotअगरy_data.merge_hash) अणु
+	group->fanotify_data.merge_hash = fanotify_alloc_merge_hash();
+	if (!group->fanotify_data.merge_hash) {
 		fd = -ENOMEM;
-		जाओ out_destroy_group;
-	पूर्ण
+		goto out_destroy_group;
+	}
 
-	group->overflow_event = fanotअगरy_alloc_overflow_event();
-	अगर (unlikely(!group->overflow_event)) अणु
+	group->overflow_event = fanotify_alloc_overflow_event();
+	if (unlikely(!group->overflow_event)) {
 		fd = -ENOMEM;
-		जाओ out_destroy_group;
-	पूर्ण
+		goto out_destroy_group;
+	}
 
-	अगर (क्रमce_o_largefile())
-		event_f_flags |= O_LARGEखाता;
-	group->fanotअगरy_data.f_flags = event_f_flags;
-	init_रुकोqueue_head(&group->fanotअगरy_data.access_रुकोq);
-	INIT_LIST_HEAD(&group->fanotअगरy_data.access_list);
-	चयन (class) अणु
-	हाल FAN_CLASS_NOTIF:
+	if (force_o_largefile())
+		event_f_flags |= O_LARGEFILE;
+	group->fanotify_data.f_flags = event_f_flags;
+	init_waitqueue_head(&group->fanotify_data.access_waitq);
+	INIT_LIST_HEAD(&group->fanotify_data.access_list);
+	switch (class) {
+	case FAN_CLASS_NOTIF:
 		group->priority = FS_PRIO_0;
-		अवरोध;
-	हाल FAN_CLASS_CONTENT:
+		break;
+	case FAN_CLASS_CONTENT:
 		group->priority = FS_PRIO_1;
-		अवरोध;
-	हाल FAN_CLASS_PRE_CONTENT:
+		break;
+	case FAN_CLASS_PRE_CONTENT:
 		group->priority = FS_PRIO_2;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		fd = -EINVAL;
-		जाओ out_destroy_group;
-	पूर्ण
+		goto out_destroy_group;
+	}
 
-	अगर (flags & FAN_UNLIMITED_QUEUE) अणु
+	if (flags & FAN_UNLIMITED_QUEUE) {
 		fd = -EPERM;
-		अगर (!capable(CAP_SYS_ADMIN))
-			जाओ out_destroy_group;
-		group->max_events = अच_पूर्णांक_उच्च;
-	पूर्ण अन्यथा अणु
-		group->max_events = fanotअगरy_max_queued_events;
-	पूर्ण
+		if (!capable(CAP_SYS_ADMIN))
+			goto out_destroy_group;
+		group->max_events = UINT_MAX;
+	} else {
+		group->max_events = fanotify_max_queued_events;
+	}
 
-	अगर (flags & FAN_UNLIMITED_MARKS) अणु
+	if (flags & FAN_UNLIMITED_MARKS) {
 		fd = -EPERM;
-		अगर (!capable(CAP_SYS_ADMIN))
-			जाओ out_destroy_group;
-	पूर्ण
+		if (!capable(CAP_SYS_ADMIN))
+			goto out_destroy_group;
+	}
 
-	अगर (flags & FAN_ENABLE_AUDIT) अणु
+	if (flags & FAN_ENABLE_AUDIT) {
 		fd = -EPERM;
-		अगर (!capable(CAP_AUDIT_WRITE))
-			जाओ out_destroy_group;
-	पूर्ण
+		if (!capable(CAP_AUDIT_WRITE))
+			goto out_destroy_group;
+	}
 
-	fd = anon_inode_getfd("[fanotify]", &fanotअगरy_fops, group, f_flags);
-	अगर (fd < 0)
-		जाओ out_destroy_group;
+	fd = anon_inode_getfd("[fanotify]", &fanotify_fops, group, f_flags);
+	if (fd < 0)
+		goto out_destroy_group;
 
-	वापस fd;
+	return fd;
 
 out_destroy_group:
-	fsnotअगरy_destroy_group(group);
-	वापस fd;
-पूर्ण
+	fsnotify_destroy_group(group);
+	return fd;
+}
 
-/* Check अगर fileप्रणाली can encode a unique fid */
-अटल पूर्णांक fanotअगरy_test_fid(काष्ठा path *path, __kernel_fsid_t *fsid)
-अणु
+/* Check if filesystem can encode a unique fid */
+static int fanotify_test_fid(struct path *path, __kernel_fsid_t *fsid)
+{
 	__kernel_fsid_t root_fsid;
-	पूर्णांक err;
+	int err;
 
 	/*
-	 * Make sure path is not in fileप्रणाली with zero fsid (e.g. पंचांगpfs).
+	 * Make sure path is not in filesystem with zero fsid (e.g. tmpfs).
 	 */
 	err = vfs_get_fsid(path->dentry, fsid);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (!fsid->val[0] && !fsid->val[1])
-		वापस -ENODEV;
+	if (!fsid->val[0] && !fsid->val[1])
+		return -ENODEV;
 
 	/*
-	 * Make sure path is not inside a fileप्रणाली subvolume (e.g. btrfs)
-	 * which uses a dअगरferent fsid than sb root.
+	 * Make sure path is not inside a filesystem subvolume (e.g. btrfs)
+	 * which uses a different fsid than sb root.
 	 */
 	err = vfs_get_fsid(path->dentry->d_sb->s_root, &root_fsid);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (root_fsid.val[0] != fsid->val[0] ||
+	if (root_fsid.val[0] != fsid->val[0] ||
 	    root_fsid.val[1] != fsid->val[1])
-		वापस -EXDEV;
+		return -EXDEV;
 
 	/*
-	 * We need to make sure that the file प्रणाली supports at least
+	 * We need to make sure that the file system supports at least
 	 * encoding a file handle so user can use name_to_handle_at() to
-	 * compare fid वापसed with event to the file handle of watched
+	 * compare fid returned with event to the file handle of watched
 	 * objects. However, name_to_handle_at() requires that the
-	 * fileप्रणाली also supports decoding file handles.
+	 * filesystem also supports decoding file handles.
 	 */
-	अगर (!path->dentry->d_sb->s_export_op ||
+	if (!path->dentry->d_sb->s_export_op ||
 	    !path->dentry->d_sb->s_export_op->fh_to_dentry)
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fanotअगरy_events_supported(काष्ठा path *path, __u64 mask)
-अणु
+static int fanotify_events_supported(struct path *path, __u64 mask)
+{
 	/*
-	 * Some fileप्रणालीs such as 'proc' acquire unusual locks when खोलोing
-	 * files. For them fanotअगरy permission events have high chances of
-	 * deadlocking the प्रणाली - खोलो करोne when reporting fanotअगरy event
-	 * blocks on this "unusual" lock जबतक another process holding the lock
-	 * रुकोs क्रम fanotअगरy permission event to be answered. Just disallow
-	 * permission events क्रम such fileप्रणालीs.
+	 * Some filesystems such as 'proc' acquire unusual locks when opening
+	 * files. For them fanotify permission events have high chances of
+	 * deadlocking the system - open done when reporting fanotify event
+	 * blocks on this "unusual" lock while another process holding the lock
+	 * waits for fanotify permission event to be answered. Just disallow
+	 * permission events for such filesystems.
 	 */
-	अगर (mask & FANOTIFY_PERM_EVENTS &&
+	if (mask & FANOTIFY_PERM_EVENTS &&
 	    path->mnt->mnt_sb->s_type->fs_flags & FS_DISALLOW_NOTIFY_PERM)
-		वापस -EINVAL;
-	वापस 0;
-पूर्ण
+		return -EINVAL;
+	return 0;
+}
 
-अटल पूर्णांक करो_fanotअगरy_mark(पूर्णांक fanotअगरy_fd, अचिन्हित पूर्णांक flags, __u64 mask,
-			    पूर्णांक dfd, स्थिर अक्षर  __user *pathname)
-अणु
-	काष्ठा inode *inode = शून्य;
-	काष्ठा vfsmount *mnt = शून्य;
-	काष्ठा fsnotअगरy_group *group;
-	काष्ठा fd f;
-	काष्ठा path path;
-	__kernel_fsid_t __fsid, *fsid = शून्य;
+static int do_fanotify_mark(int fanotify_fd, unsigned int flags, __u64 mask,
+			    int dfd, const char  __user *pathname)
+{
+	struct inode *inode = NULL;
+	struct vfsmount *mnt = NULL;
+	struct fsnotify_group *group;
+	struct fd f;
+	struct path path;
+	__kernel_fsid_t __fsid, *fsid = NULL;
 	u32 valid_mask = FANOTIFY_EVENTS | FANOTIFY_EVENT_FLAGS;
-	अचिन्हित पूर्णांक mark_type = flags & FANOTIFY_MARK_TYPE_BITS;
+	unsigned int mark_type = flags & FANOTIFY_MARK_TYPE_BITS;
 	bool ignored = flags & FAN_MARK_IGNORED_MASK;
-	अचिन्हित पूर्णांक obj_type, fid_mode;
+	unsigned int obj_type, fid_mode;
 	u32 umask = 0;
-	पूर्णांक ret;
+	int ret;
 
 	pr_debug("%s: fanotify_fd=%d flags=%x dfd=%d pathname=%p mask=%llx\n",
-		 __func__, fanotअगरy_fd, flags, dfd, pathname, mask);
+		 __func__, fanotify_fd, flags, dfd, pathname, mask);
 
 	/* we only use the lower 32 bits as of right now. */
-	अगर (upper_32_bits(mask))
-		वापस -EINVAL;
+	if (upper_32_bits(mask))
+		return -EINVAL;
 
-	अगर (flags & ~FANOTIFY_MARK_FLAGS)
-		वापस -EINVAL;
+	if (flags & ~FANOTIFY_MARK_FLAGS)
+		return -EINVAL;
 
-	चयन (mark_type) अणु
-	हाल FAN_MARK_INODE:
+	switch (mark_type) {
+	case FAN_MARK_INODE:
 		obj_type = FSNOTIFY_OBJ_TYPE_INODE;
-		अवरोध;
-	हाल FAN_MARK_MOUNT:
+		break;
+	case FAN_MARK_MOUNT:
 		obj_type = FSNOTIFY_OBJ_TYPE_VFSMOUNT;
-		अवरोध;
-	हाल FAN_MARK_खाताSYSTEM:
+		break;
+	case FAN_MARK_FILESYSTEM:
 		obj_type = FSNOTIFY_OBJ_TYPE_SB;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	चयन (flags & (FAN_MARK_ADD | FAN_MARK_REMOVE | FAN_MARK_FLUSH)) अणु
-	हाल FAN_MARK_ADD:
-	हाल FAN_MARK_REMOVE:
-		अगर (!mask)
-			वापस -EINVAL;
-		अवरोध;
-	हाल FAN_MARK_FLUSH:
-		अगर (flags & ~(FANOTIFY_MARK_TYPE_BITS | FAN_MARK_FLUSH))
-			वापस -EINVAL;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (flags & (FAN_MARK_ADD | FAN_MARK_REMOVE | FAN_MARK_FLUSH)) {
+	case FAN_MARK_ADD:
+	case FAN_MARK_REMOVE:
+		if (!mask)
+			return -EINVAL;
+		break;
+	case FAN_MARK_FLUSH:
+		if (flags & ~(FANOTIFY_MARK_TYPE_BITS | FAN_MARK_FLUSH))
+			return -EINVAL;
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	अगर (IS_ENABLED(CONFIG_FANOTIFY_ACCESS_PERMISSIONS))
+	if (IS_ENABLED(CONFIG_FANOTIFY_ACCESS_PERMISSIONS))
 		valid_mask |= FANOTIFY_PERM_EVENTS;
 
-	अगर (mask & ~valid_mask)
-		वापस -EINVAL;
+	if (mask & ~valid_mask)
+		return -EINVAL;
 
-	/* Event flags (ONसूची, ON_CHILD) are meaningless in ignored mask */
-	अगर (ignored)
+	/* Event flags (ONDIR, ON_CHILD) are meaningless in ignored mask */
+	if (ignored)
 		mask &= ~FANOTIFY_EVENT_FLAGS;
 
-	f = fdget(fanotअगरy_fd);
-	अगर (unlikely(!f.file))
-		वापस -EBADF;
+	f = fdget(fanotify_fd);
+	if (unlikely(!f.file))
+		return -EBADF;
 
-	/* verअगरy that this is indeed an fanotअगरy instance */
+	/* verify that this is indeed an fanotify instance */
 	ret = -EINVAL;
-	अगर (unlikely(f.file->f_op != &fanotअगरy_fops))
-		जाओ fput_and_out;
-	group = f.file->निजी_data;
+	if (unlikely(f.file->f_op != &fanotify_fops))
+		goto fput_and_out;
+	group = f.file->private_data;
 
 	/*
-	 * An unprivileged user is not allowed to setup mount nor fileप्रणाली
+	 * An unprivileged user is not allowed to setup mount nor filesystem
 	 * marks.  This also includes setting up such marks by a group that
 	 * was initialized by an unprivileged user.
 	 */
 	ret = -EPERM;
-	अगर ((!capable(CAP_SYS_ADMIN) ||
+	if ((!capable(CAP_SYS_ADMIN) ||
 	     FAN_GROUP_FLAG(group, FANOTIFY_UNPRIV)) &&
 	    mark_type != FAN_MARK_INODE)
-		जाओ fput_and_out;
+		goto fput_and_out;
 
 	/*
 	 * group->priority == FS_PRIO_0 == FAN_CLASS_NOTIF.  These are not
 	 * allowed to set permissions events.
 	 */
 	ret = -EINVAL;
-	अगर (mask & FANOTIFY_PERM_EVENTS &&
+	if (mask & FANOTIFY_PERM_EVENTS &&
 	    group->priority == FS_PRIO_0)
-		जाओ fput_and_out;
+		goto fput_and_out;
 
 	/*
-	 * Events with data type inode करो not carry enough inक्रमmation to report
-	 * event->fd, so we करो not allow setting a mask क्रम inode events unless
+	 * Events with data type inode do not carry enough information to report
+	 * event->fd, so we do not allow setting a mask for inode events unless
 	 * group supports reporting fid.
-	 * inode events are not supported on a mount mark, because they करो not
-	 * carry enough inक्रमmation (i.e. path) to be filtered by mount poपूर्णांक.
+	 * inode events are not supported on a mount mark, because they do not
+	 * carry enough information (i.e. path) to be filtered by mount point.
 	 */
 	fid_mode = FAN_GROUP_FLAG(group, FANOTIFY_FID_BITS);
-	अगर (mask & FANOTIFY_INODE_EVENTS &&
+	if (mask & FANOTIFY_INODE_EVENTS &&
 	    (!fid_mode || mark_type == FAN_MARK_MOUNT))
-		जाओ fput_and_out;
+		goto fput_and_out;
 
-	अगर (flags & FAN_MARK_FLUSH) अणु
+	if (flags & FAN_MARK_FLUSH) {
 		ret = 0;
-		अगर (mark_type == FAN_MARK_MOUNT)
-			fsnotअगरy_clear_vfsmount_marks_by_group(group);
-		अन्यथा अगर (mark_type == FAN_MARK_खाताSYSTEM)
-			fsnotअगरy_clear_sb_marks_by_group(group);
-		अन्यथा
-			fsnotअगरy_clear_inode_marks_by_group(group);
-		जाओ fput_and_out;
-	पूर्ण
+		if (mark_type == FAN_MARK_MOUNT)
+			fsnotify_clear_vfsmount_marks_by_group(group);
+		else if (mark_type == FAN_MARK_FILESYSTEM)
+			fsnotify_clear_sb_marks_by_group(group);
+		else
+			fsnotify_clear_inode_marks_by_group(group);
+		goto fput_and_out;
+	}
 
-	ret = fanotअगरy_find_path(dfd, pathname, &path, flags,
+	ret = fanotify_find_path(dfd, pathname, &path, flags,
 			(mask & ALL_FSNOTIFY_EVENTS), obj_type);
-	अगर (ret)
-		जाओ fput_and_out;
+	if (ret)
+		goto fput_and_out;
 
-	अगर (flags & FAN_MARK_ADD) अणु
-		ret = fanotअगरy_events_supported(&path, mask);
-		अगर (ret)
-			जाओ path_put_and_out;
-	पूर्ण
+	if (flags & FAN_MARK_ADD) {
+		ret = fanotify_events_supported(&path, mask);
+		if (ret)
+			goto path_put_and_out;
+	}
 
-	अगर (fid_mode) अणु
-		ret = fanotअगरy_test_fid(&path, &__fsid);
-		अगर (ret)
-			जाओ path_put_and_out;
+	if (fid_mode) {
+		ret = fanotify_test_fid(&path, &__fsid);
+		if (ret)
+			goto path_put_and_out;
 
 		fsid = &__fsid;
-	पूर्ण
+	}
 
 	/* inode held in place by reference to path; group by fget on fd */
-	अगर (mark_type == FAN_MARK_INODE)
+	if (mark_type == FAN_MARK_INODE)
 		inode = path.dentry->d_inode;
-	अन्यथा
+	else
 		mnt = path.mnt;
 
-	/* Mask out FAN_EVENT_ON_CHILD flag क्रम sb/mount/non-dir marks */
-	अगर (mnt || !S_ISसूची(inode->i_mode)) अणु
+	/* Mask out FAN_EVENT_ON_CHILD flag for sb/mount/non-dir marks */
+	if (mnt || !S_ISDIR(inode->i_mode)) {
 		mask &= ~FAN_EVENT_ON_CHILD;
 		umask = FAN_EVENT_ON_CHILD;
 		/*
-		 * If group needs to report parent fid, रेजिस्टर क्रम getting
-		 * events with parent/name info क्रम non-directory.
+		 * If group needs to report parent fid, register for getting
+		 * events with parent/name info for non-directory.
 		 */
-		अगर ((fid_mode & FAN_REPORT_सूची_FID) &&
+		if ((fid_mode & FAN_REPORT_DIR_FID) &&
 		    (flags & FAN_MARK_ADD) && !ignored)
 			mask |= FAN_EVENT_ON_CHILD;
-	पूर्ण
+	}
 
 	/* create/update an inode mark */
-	चयन (flags & (FAN_MARK_ADD | FAN_MARK_REMOVE)) अणु
-	हाल FAN_MARK_ADD:
-		अगर (mark_type == FAN_MARK_MOUNT)
-			ret = fanotअगरy_add_vfsmount_mark(group, mnt, mask,
+	switch (flags & (FAN_MARK_ADD | FAN_MARK_REMOVE)) {
+	case FAN_MARK_ADD:
+		if (mark_type == FAN_MARK_MOUNT)
+			ret = fanotify_add_vfsmount_mark(group, mnt, mask,
 							 flags, fsid);
-		अन्यथा अगर (mark_type == FAN_MARK_खाताSYSTEM)
-			ret = fanotअगरy_add_sb_mark(group, mnt->mnt_sb, mask,
+		else if (mark_type == FAN_MARK_FILESYSTEM)
+			ret = fanotify_add_sb_mark(group, mnt->mnt_sb, mask,
 						   flags, fsid);
-		अन्यथा
-			ret = fanotअगरy_add_inode_mark(group, inode, mask,
+		else
+			ret = fanotify_add_inode_mark(group, inode, mask,
 						      flags, fsid);
-		अवरोध;
-	हाल FAN_MARK_REMOVE:
-		अगर (mark_type == FAN_MARK_MOUNT)
-			ret = fanotअगरy_हटाओ_vfsmount_mark(group, mnt, mask,
+		break;
+	case FAN_MARK_REMOVE:
+		if (mark_type == FAN_MARK_MOUNT)
+			ret = fanotify_remove_vfsmount_mark(group, mnt, mask,
 							    flags, umask);
-		अन्यथा अगर (mark_type == FAN_MARK_खाताSYSTEM)
-			ret = fanotअगरy_हटाओ_sb_mark(group, mnt->mnt_sb, mask,
+		else if (mark_type == FAN_MARK_FILESYSTEM)
+			ret = fanotify_remove_sb_mark(group, mnt->mnt_sb, mask,
 						      flags, umask);
-		अन्यथा
-			ret = fanotअगरy_हटाओ_inode_mark(group, inode, mask,
+		else
+			ret = fanotify_remove_inode_mark(group, inode, mask,
 							 flags, umask);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EINVAL;
-	पूर्ण
+	}
 
 path_put_and_out:
 	path_put(&path);
 fput_and_out:
 	fdput(f);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर_अघोषित CONFIG_ARCH_SPLIT_ARG64
-SYSCALL_DEFINE5(fanotअगरy_mark, पूर्णांक, fanotअगरy_fd, अचिन्हित पूर्णांक, flags,
-			      __u64, mask, पूर्णांक, dfd,
-			      स्थिर अक्षर  __user *, pathname)
-अणु
-	वापस करो_fanotअगरy_mark(fanotअगरy_fd, flags, mask, dfd, pathname);
-पूर्ण
-#पूर्ण_अगर
+#ifndef CONFIG_ARCH_SPLIT_ARG64
+SYSCALL_DEFINE5(fanotify_mark, int, fanotify_fd, unsigned int, flags,
+			      __u64, mask, int, dfd,
+			      const char  __user *, pathname)
+{
+	return do_fanotify_mark(fanotify_fd, flags, mask, dfd, pathname);
+}
+#endif
 
-#अगर defined(CONFIG_ARCH_SPLIT_ARG64) || defined(CONFIG_COMPAT)
-SYSCALL32_DEFINE6(fanotअगरy_mark,
-				पूर्णांक, fanotअगरy_fd, अचिन्हित पूर्णांक, flags,
-				SC_ARG64(mask), पूर्णांक, dfd,
-				स्थिर अक्षर  __user *, pathname)
-अणु
-	वापस करो_fanotअगरy_mark(fanotअगरy_fd, flags, SC_VAL64(__u64, mask),
+#if defined(CONFIG_ARCH_SPLIT_ARG64) || defined(CONFIG_COMPAT)
+SYSCALL32_DEFINE6(fanotify_mark,
+				int, fanotify_fd, unsigned int, flags,
+				SC_ARG64(mask), int, dfd,
+				const char  __user *, pathname)
+{
+	return do_fanotify_mark(fanotify_fd, flags, SC_VAL64(__u64, mask),
 				dfd, pathname);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
 /*
- * fanotअगरy_user_setup - Our initialization function.  Note that we cannot वापस
+ * fanotify_user_setup - Our initialization function.  Note that we cannot return
  * error because we have compiled-in VFS hooks.  So an (unlikely) failure here
  * must result in panic().
  */
-अटल पूर्णांक __init fanotअगरy_user_setup(व्योम)
-अणु
-	काष्ठा sysinfo si;
-	पूर्णांक max_marks;
+static int __init fanotify_user_setup(void)
+{
+	struct sysinfo si;
+	int max_marks;
 
 	si_meminfo(&si);
 	/*
-	 * Allow up to 1% of addressable memory to be accounted क्रम per user
+	 * Allow up to 1% of addressable memory to be accounted for per user
 	 * marks limited to the range [8192, 1048576]. mount and sb marks are
-	 * a lot cheaper than inode marks, but there is no reason क्रम a user
+	 * a lot cheaper than inode marks, but there is no reason for a user
 	 * to have many of those, so calculate by the cost of inode marks.
 	 */
 	max_marks = (((si.totalram - si.totalhigh) / 100) << PAGE_SHIFT) /
@@ -1482,22 +1481,22 @@ SYSCALL32_DEFINE6(fanotअगरy_mark,
 	BUILD_BUG_ON(HWEIGHT32(FANOTIFY_INIT_FLAGS) != 10);
 	BUILD_BUG_ON(HWEIGHT32(FANOTIFY_MARK_FLAGS) != 9);
 
-	fanotअगरy_mark_cache = KMEM_CACHE(fsnotअगरy_mark,
+	fanotify_mark_cache = KMEM_CACHE(fsnotify_mark,
 					 SLAB_PANIC|SLAB_ACCOUNT);
-	fanotअगरy_fid_event_cachep = KMEM_CACHE(fanotअगरy_fid_event,
+	fanotify_fid_event_cachep = KMEM_CACHE(fanotify_fid_event,
 					       SLAB_PANIC);
-	fanotअगरy_path_event_cachep = KMEM_CACHE(fanotअगरy_path_event,
+	fanotify_path_event_cachep = KMEM_CACHE(fanotify_path_event,
 						SLAB_PANIC);
-	अगर (IS_ENABLED(CONFIG_FANOTIFY_ACCESS_PERMISSIONS)) अणु
-		fanotअगरy_perm_event_cachep =
-			KMEM_CACHE(fanotअगरy_perm_event, SLAB_PANIC);
-	पूर्ण
+	if (IS_ENABLED(CONFIG_FANOTIFY_ACCESS_PERMISSIONS)) {
+		fanotify_perm_event_cachep =
+			KMEM_CACHE(fanotify_perm_event, SLAB_PANIC);
+	}
 
-	fanotअगरy_max_queued_events = FANOTIFY_DEFAULT_MAX_EVENTS;
+	fanotify_max_queued_events = FANOTIFY_DEFAULT_MAX_EVENTS;
 	init_user_ns.ucount_max[UCOUNT_FANOTIFY_GROUPS] =
 					FANOTIFY_DEFAULT_MAX_GROUPS;
 	init_user_ns.ucount_max[UCOUNT_FANOTIFY_MARKS] = max_marks;
 
-	वापस 0;
-पूर्ण
-device_initcall(fanotअगरy_user_setup);
+	return 0;
+}
+device_initcall(fanotify_user_setup);

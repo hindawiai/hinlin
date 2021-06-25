@@ -1,111 +1,110 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2012 ARM Ltd.
  */
-#अगर_अघोषित __CLKSOURCE_ARM_ARCH_TIMER_H
-#घोषणा __CLKSOURCE_ARM_ARCH_TIMER_H
+#ifndef __CLKSOURCE_ARM_ARCH_TIMER_H
+#define __CLKSOURCE_ARM_ARCH_TIMER_H
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/समयcounter.h>
-#समावेश <linux/types.h>
+#include <linux/bitops.h>
+#include <linux/timecounter.h>
+#include <linux/types.h>
 
-#घोषणा ARCH_TIMER_TYPE_CP15		BIT(0)
-#घोषणा ARCH_TIMER_TYPE_MEM		BIT(1)
+#define ARCH_TIMER_TYPE_CP15		BIT(0)
+#define ARCH_TIMER_TYPE_MEM		BIT(1)
 
-#घोषणा ARCH_TIMER_CTRL_ENABLE		(1 << 0)
-#घोषणा ARCH_TIMER_CTRL_IT_MASK		(1 << 1)
-#घोषणा ARCH_TIMER_CTRL_IT_STAT		(1 << 2)
+#define ARCH_TIMER_CTRL_ENABLE		(1 << 0)
+#define ARCH_TIMER_CTRL_IT_MASK		(1 << 1)
+#define ARCH_TIMER_CTRL_IT_STAT		(1 << 2)
 
-#घोषणा CNTHCTL_EL1PCTEN		(1 << 0)
-#घोषणा CNTHCTL_EL1PCEN			(1 << 1)
-#घोषणा CNTHCTL_EVNTEN			(1 << 2)
-#घोषणा CNTHCTL_EVNTसूची			(1 << 3)
-#घोषणा CNTHCTL_EVNTI			(0xF << 4)
+#define CNTHCTL_EL1PCTEN		(1 << 0)
+#define CNTHCTL_EL1PCEN			(1 << 1)
+#define CNTHCTL_EVNTEN			(1 << 2)
+#define CNTHCTL_EVNTDIR			(1 << 3)
+#define CNTHCTL_EVNTI			(0xF << 4)
 
-क्रमागत arch_समयr_reg अणु
+enum arch_timer_reg {
 	ARCH_TIMER_REG_CTRL,
 	ARCH_TIMER_REG_TVAL,
-पूर्ण;
+};
 
-क्रमागत arch_समयr_ppi_nr अणु
+enum arch_timer_ppi_nr {
 	ARCH_TIMER_PHYS_SECURE_PPI,
 	ARCH_TIMER_PHYS_NONSECURE_PPI,
 	ARCH_TIMER_VIRT_PPI,
 	ARCH_TIMER_HYP_PPI,
 	ARCH_TIMER_HYP_VIRT_PPI,
 	ARCH_TIMER_MAX_TIMER_PPI
-पूर्ण;
+};
 
-क्रमागत arch_समयr_spi_nr अणु
+enum arch_timer_spi_nr {
 	ARCH_TIMER_PHYS_SPI,
 	ARCH_TIMER_VIRT_SPI,
 	ARCH_TIMER_MAX_TIMER_SPI
-पूर्ण;
+};
 
-#घोषणा ARCH_TIMER_PHYS_ACCESS		0
-#घोषणा ARCH_TIMER_VIRT_ACCESS		1
-#घोषणा ARCH_TIMER_MEM_PHYS_ACCESS	2
-#घोषणा ARCH_TIMER_MEM_VIRT_ACCESS	3
+#define ARCH_TIMER_PHYS_ACCESS		0
+#define ARCH_TIMER_VIRT_ACCESS		1
+#define ARCH_TIMER_MEM_PHYS_ACCESS	2
+#define ARCH_TIMER_MEM_VIRT_ACCESS	3
 
-#घोषणा ARCH_TIMER_MEM_MAX_FRAMES	8
+#define ARCH_TIMER_MEM_MAX_FRAMES	8
 
-#घोषणा ARCH_TIMER_USR_PCT_ACCESS_EN	(1 << 0) /* physical counter */
-#घोषणा ARCH_TIMER_USR_VCT_ACCESS_EN	(1 << 1) /* भव counter */
-#घोषणा ARCH_TIMER_VIRT_EVT_EN		(1 << 2)
-#घोषणा ARCH_TIMER_EVT_TRIGGER_SHIFT	(4)
-#घोषणा ARCH_TIMER_EVT_TRIGGER_MASK	(0xF << ARCH_TIMER_EVT_TRIGGER_SHIFT)
-#घोषणा ARCH_TIMER_USR_VT_ACCESS_EN	(1 << 8) /* भव समयr रेजिस्टरs */
-#घोषणा ARCH_TIMER_USR_PT_ACCESS_EN	(1 << 9) /* physical समयr रेजिस्टरs */
+#define ARCH_TIMER_USR_PCT_ACCESS_EN	(1 << 0) /* physical counter */
+#define ARCH_TIMER_USR_VCT_ACCESS_EN	(1 << 1) /* virtual counter */
+#define ARCH_TIMER_VIRT_EVT_EN		(1 << 2)
+#define ARCH_TIMER_EVT_TRIGGER_SHIFT	(4)
+#define ARCH_TIMER_EVT_TRIGGER_MASK	(0xF << ARCH_TIMER_EVT_TRIGGER_SHIFT)
+#define ARCH_TIMER_USR_VT_ACCESS_EN	(1 << 8) /* virtual timer registers */
+#define ARCH_TIMER_USR_PT_ACCESS_EN	(1 << 9) /* physical timer registers */
 
-#घोषणा ARCH_TIMER_EVT_STREAM_PERIOD_US	100
-#घोषणा ARCH_TIMER_EVT_STREAM_FREQ				\
+#define ARCH_TIMER_EVT_STREAM_PERIOD_US	100
+#define ARCH_TIMER_EVT_STREAM_FREQ				\
 	(USEC_PER_SEC / ARCH_TIMER_EVT_STREAM_PERIOD_US)
 
-काष्ठा arch_समयr_kvm_info अणु
-	काष्ठा समयcounter समयcounter;
-	पूर्णांक भव_irq;
-	पूर्णांक physical_irq;
-पूर्ण;
+struct arch_timer_kvm_info {
+	struct timecounter timecounter;
+	int virtual_irq;
+	int physical_irq;
+};
 
-काष्ठा arch_समयr_mem_frame अणु
+struct arch_timer_mem_frame {
 	bool valid;
 	phys_addr_t cntbase;
-	माप_प्रकार size;
-	पूर्णांक phys_irq;
-	पूर्णांक virt_irq;
-पूर्ण;
+	size_t size;
+	int phys_irq;
+	int virt_irq;
+};
 
-काष्ठा arch_समयr_mem अणु
+struct arch_timer_mem {
 	phys_addr_t cntctlbase;
-	माप_प्रकार size;
-	काष्ठा arch_समयr_mem_frame frame[ARCH_TIMER_MEM_MAX_FRAMES];
-पूर्ण;
+	size_t size;
+	struct arch_timer_mem_frame frame[ARCH_TIMER_MEM_MAX_FRAMES];
+};
 
-#अगर_घोषित CONFIG_ARM_ARCH_TIMER
+#ifdef CONFIG_ARM_ARCH_TIMER
 
-बाह्य u32 arch_समयr_get_rate(व्योम);
-बाह्य u64 (*arch_समयr_पढ़ो_counter)(व्योम);
-बाह्य काष्ठा arch_समयr_kvm_info *arch_समयr_get_kvm_info(व्योम);
-बाह्य bool arch_समयr_evtstrm_available(व्योम);
+extern u32 arch_timer_get_rate(void);
+extern u64 (*arch_timer_read_counter)(void);
+extern struct arch_timer_kvm_info *arch_timer_get_kvm_info(void);
+extern bool arch_timer_evtstrm_available(void);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत u32 arch_समयr_get_rate(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+static inline u32 arch_timer_get_rate(void)
+{
+	return 0;
+}
 
-अटल अंतरभूत u64 arch_समयr_पढ़ो_counter(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+static inline u64 arch_timer_read_counter(void)
+{
+	return 0;
+}
 
-अटल अंतरभूत bool arch_समयr_evtstrm_available(व्योम)
-अणु
-	वापस false;
-पूर्ण
+static inline bool arch_timer_evtstrm_available(void)
+{
+	return false;
+}
 
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर
+#endif

@@ -1,37 +1,36 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
 /* Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
  * Copyright (C) 2018-2021 Linaro Ltd.
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/atomic.h>
-#समावेश <linux/bitfield.h>
-#समावेश <linux/device.h>
-#समावेश <linux/bug.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/firmware.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/qcom_scm.h>
-#समावेश <linux/soc/qcom/mdt_loader.h>
+#include <linux/types.h>
+#include <linux/atomic.h>
+#include <linux/bitfield.h>
+#include <linux/device.h>
+#include <linux/bug.h>
+#include <linux/io.h>
+#include <linux/firmware.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/of_address.h>
+#include <linux/qcom_scm.h>
+#include <linux/soc/qcom/mdt_loader.h>
 
-#समावेश "ipa.h"
-#समावेश "ipa_clock.h"
-#समावेश "ipa_data.h"
-#समावेश "ipa_endpoint.h"
-#समावेश "ipa_resource.h"
-#समावेश "ipa_cmd.h"
-#समावेश "ipa_reg.h"
-#समावेश "ipa_mem.h"
-#समावेश "ipa_table.h"
-#समावेश "ipa_modem.h"
-#समावेश "ipa_uc.h"
-#समावेश "ipa_interrupt.h"
-#समावेश "gsi_trans.h"
+#include "ipa.h"
+#include "ipa_clock.h"
+#include "ipa_data.h"
+#include "ipa_endpoint.h"
+#include "ipa_resource.h"
+#include "ipa_cmd.h"
+#include "ipa_reg.h"
+#include "ipa_mem.h"
+#include "ipa_table.h"
+#include "ipa_modem.h"
+#include "ipa_uc.h"
+#include "ipa_interrupt.h"
+#include "gsi_trans.h"
 
 /**
  * DOC: The IP Accelerator
@@ -42,8 +41,8 @@
  * controlled by) other "execution environments" (EEs), such as a modem.
  *
  * The IPA is the conduit between the AP and the modem that carries network
- * traffic.  This driver presents a network पूर्णांकerface representing the
- * connection of the modem to बाह्यal (e.g. LTE) networks.
+ * traffic.  This driver presents a network interface representing the
+ * connection of the modem to external (e.g. LTE) networks.
  *
  * The IPA provides protocol checksum calculation, offloading this work
  * from the AP.  The IPA offers additional functionality, including routing,
@@ -54,569 +53,569 @@
  *
  * There are two distinct layers that implement the IPA hardware, and this
  * is reflected in the organization of the driver.  The generic software
- * पूर्णांकerface (GSI) is an पूर्णांकegral component of the IPA, providing a
- * well-defined communication layer between the AP subप्रणाली and the IPA
- * core.  The GSI implements a set of "channels" used क्रम communication
+ * interface (GSI) is an integral component of the IPA, providing a
+ * well-defined communication layer between the AP subsystem and the IPA
+ * core.  The GSI implements a set of "channels" used for communication
  * between the AP and the IPA.
  *
- * The IPA layer uses GSI channels to implement its "endpoints".  And जबतक
+ * The IPA layer uses GSI channels to implement its "endpoints".  And while
  * a GSI channel carries data between the AP and the IPA, a pair of IPA
- * endpoपूर्णांकs is used to carry traffic between two EEs.  Specअगरically, the मुख्य
- * modem network पूर्णांकerface is implemented by two pairs of endpoपूर्णांकs:  a TX
- * endpoपूर्णांक on the AP coupled with an RX endpoपूर्णांक on the modem; and another
- * RX endpoपूर्णांक on the AP receiving data from a TX endpoपूर्णांक on the modem.
+ * endpoints is used to carry traffic between two EEs.  Specifically, the main
+ * modem network interface is implemented by two pairs of endpoints:  a TX
+ * endpoint on the AP coupled with an RX endpoint on the modem; and another
+ * RX endpoint on the AP receiving data from a TX endpoint on the modem.
  */
 
 /* The name of the GSI firmware file relative to /lib/firmware */
-#घोषणा IPA_FW_PATH_DEFAULT	"ipa_fws.mdt"
-#घोषणा IPA_PAS_ID		15
+#define IPA_FW_PATH_DEFAULT	"ipa_fws.mdt"
+#define IPA_PAS_ID		15
 
-/* Shअगरt of 19.2 MHz बारtamp to achieve lower resolution बारtamps */
-#घोषणा DPL_TIMESTAMP_SHIFT	14	/* ~1.172 kHz, ~853 usec per tick */
-#घोषणा TAG_TIMESTAMP_SHIFT	14
-#घोषणा NAT_TIMESTAMP_SHIFT	24	/* ~1.144 Hz, ~874 msec per tick */
+/* Shift of 19.2 MHz timestamp to achieve lower resolution timestamps */
+#define DPL_TIMESTAMP_SHIFT	14	/* ~1.172 kHz, ~853 usec per tick */
+#define TAG_TIMESTAMP_SHIFT	14
+#define NAT_TIMESTAMP_SHIFT	24	/* ~1.144 Hz, ~874 msec per tick */
 
-/* Divider क्रम 19.2 MHz crystal oscillator घड़ी to get common समयr घड़ी */
-#घोषणा IPA_XO_CLOCK_DIVIDER	192	/* 1 is subtracted where used */
+/* Divider for 19.2 MHz crystal oscillator clock to get common timer clock */
+#define IPA_XO_CLOCK_DIVIDER	192	/* 1 is subtracted where used */
 
 /**
- * ipa_suspend_handler() - Handle the suspend IPA पूर्णांकerrupt
- * @ipa:	IPA poपूर्णांकer
- * @irq_id:	IPA पूर्णांकerrupt type (unused)
+ * ipa_suspend_handler() - Handle the suspend IPA interrupt
+ * @ipa:	IPA pointer
+ * @irq_id:	IPA interrupt type (unused)
  *
- * If an RX endpoपूर्णांक is in suspend state, and the IPA has a packet
- * destined क्रम that endpoपूर्णांक, the IPA generates a SUSPEND पूर्णांकerrupt
- * to inक्रमm the AP that it should resume the endpoपूर्णांक.  If we get
- * one of these पूर्णांकerrupts we just resume everything.
+ * If an RX endpoint is in suspend state, and the IPA has a packet
+ * destined for that endpoint, the IPA generates a SUSPEND interrupt
+ * to inform the AP that it should resume the endpoint.  If we get
+ * one of these interrupts we just resume everything.
  */
-अटल व्योम ipa_suspend_handler(काष्ठा ipa *ipa, क्रमागत ipa_irq_id irq_id)
-अणु
-	/* Just report the event, and let प्रणाली resume handle the rest.
-	 * More than one endpoपूर्णांक could संकेत this; अगर so, ignore
+static void ipa_suspend_handler(struct ipa *ipa, enum ipa_irq_id irq_id)
+{
+	/* Just report the event, and let system resume handle the rest.
+	 * More than one endpoint could signal this; if so, ignore
 	 * all but the first.
 	 */
-	अगर (!test_and_set_bit(IPA_FLAG_RESUMED, ipa->flags))
+	if (!test_and_set_bit(IPA_FLAG_RESUMED, ipa->flags))
 		pm_wakeup_dev_event(&ipa->pdev->dev, 0, true);
 
-	/* Acknowledge/clear the suspend पूर्णांकerrupt on all endpoपूर्णांकs */
-	ipa_पूर्णांकerrupt_suspend_clear_all(ipa->पूर्णांकerrupt);
-पूर्ण
+	/* Acknowledge/clear the suspend interrupt on all endpoints */
+	ipa_interrupt_suspend_clear_all(ipa->interrupt);
+}
 
 /**
  * ipa_setup() - Set up IPA hardware
- * @ipa:	IPA poपूर्णांकer
+ * @ipa:	IPA pointer
  *
- * Perक्रमm initialization that requires issuing immediate commands on
- * the command TX endpoपूर्णांक.  If the modem is करोing GSI firmware load
+ * Perform initialization that requires issuing immediate commands on
+ * the command TX endpoint.  If the modem is doing GSI firmware load
  * and initialization, this function will be called when an SMP2P
- * पूर्णांकerrupt has been संकेतed by the modem.  Otherwise it will be
+ * interrupt has been signaled by the modem.  Otherwise it will be
  * called from ipa_probe() after GSI firmware has been successfully
  * loaded, authenticated, and started by Trust Zone.
  */
-पूर्णांक ipa_setup(काष्ठा ipa *ipa)
-अणु
-	काष्ठा ipa_endpoपूर्णांक *exception_endpoपूर्णांक;
-	काष्ठा ipa_endpoपूर्णांक *command_endpoपूर्णांक;
-	काष्ठा device *dev = &ipa->pdev->dev;
-	पूर्णांक ret;
+int ipa_setup(struct ipa *ipa)
+{
+	struct ipa_endpoint *exception_endpoint;
+	struct ipa_endpoint *command_endpoint;
+	struct device *dev = &ipa->pdev->dev;
+	int ret;
 
 	ret = gsi_setup(&ipa->gsi);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ipa->पूर्णांकerrupt = ipa_पूर्णांकerrupt_setup(ipa);
-	अगर (IS_ERR(ipa->पूर्णांकerrupt)) अणु
-		ret = PTR_ERR(ipa->पूर्णांकerrupt);
-		जाओ err_gsi_tearकरोwn;
-	पूर्ण
-	ipa_पूर्णांकerrupt_add(ipa->पूर्णांकerrupt, IPA_IRQ_TX_SUSPEND,
+	ipa->interrupt = ipa_interrupt_setup(ipa);
+	if (IS_ERR(ipa->interrupt)) {
+		ret = PTR_ERR(ipa->interrupt);
+		goto err_gsi_teardown;
+	}
+	ipa_interrupt_add(ipa->interrupt, IPA_IRQ_TX_SUSPEND,
 			  ipa_suspend_handler);
 
 	ipa_uc_setup(ipa);
 
 	ret = device_init_wakeup(dev, true);
-	अगर (ret)
-		जाओ err_uc_tearकरोwn;
+	if (ret)
+		goto err_uc_teardown;
 
-	ipa_endpoपूर्णांक_setup(ipa);
+	ipa_endpoint_setup(ipa);
 
-	/* We need to use the AP command TX endpoपूर्णांक to perक्रमm other
+	/* We need to use the AP command TX endpoint to perform other
 	 * initialization, so we enable first.
 	 */
-	command_endpoपूर्णांक = ipa->name_map[IPA_ENDPOINT_AP_COMMAND_TX];
-	ret = ipa_endpoपूर्णांक_enable_one(command_endpoपूर्णांक);
-	अगर (ret)
-		जाओ err_endpoपूर्णांक_tearकरोwn;
+	command_endpoint = ipa->name_map[IPA_ENDPOINT_AP_COMMAND_TX];
+	ret = ipa_endpoint_enable_one(command_endpoint);
+	if (ret)
+		goto err_endpoint_teardown;
 
-	ret = ipa_mem_setup(ipa);	/* No matching tearकरोwn required */
-	अगर (ret)
-		जाओ err_command_disable;
+	ret = ipa_mem_setup(ipa);	/* No matching teardown required */
+	if (ret)
+		goto err_command_disable;
 
-	ret = ipa_table_setup(ipa);	/* No matching tearकरोwn required */
-	अगर (ret)
-		जाओ err_command_disable;
+	ret = ipa_table_setup(ipa);	/* No matching teardown required */
+	if (ret)
+		goto err_command_disable;
 
-	/* Enable the exception handling endpoपूर्णांक, and tell the hardware
-	 * to use it by शेष.
+	/* Enable the exception handling endpoint, and tell the hardware
+	 * to use it by default.
 	 */
-	exception_endpoपूर्णांक = ipa->name_map[IPA_ENDPOINT_AP_LAN_RX];
-	ret = ipa_endpoपूर्णांक_enable_one(exception_endpoपूर्णांक);
-	अगर (ret)
-		जाओ err_command_disable;
+	exception_endpoint = ipa->name_map[IPA_ENDPOINT_AP_LAN_RX];
+	ret = ipa_endpoint_enable_one(exception_endpoint);
+	if (ret)
+		goto err_command_disable;
 
-	ipa_endpoपूर्णांक_शेष_route_set(ipa, exception_endpoपूर्णांक->endpoपूर्णांक_id);
+	ipa_endpoint_default_route_set(ipa, exception_endpoint->endpoint_id);
 
-	/* We're all set.  Now prepare क्रम communication with the modem */
+	/* We're all set.  Now prepare for communication with the modem */
 	ret = ipa_modem_setup(ipa);
-	अगर (ret)
-		जाओ err_शेष_route_clear;
+	if (ret)
+		goto err_default_route_clear;
 
 	ipa->setup_complete = true;
 
 	dev_info(dev, "IPA driver setup completed successfully\n");
 
-	वापस 0;
+	return 0;
 
-err_शेष_route_clear:
-	ipa_endpoपूर्णांक_शेष_route_clear(ipa);
-	ipa_endpoपूर्णांक_disable_one(exception_endpoपूर्णांक);
+err_default_route_clear:
+	ipa_endpoint_default_route_clear(ipa);
+	ipa_endpoint_disable_one(exception_endpoint);
 err_command_disable:
-	ipa_endpoपूर्णांक_disable_one(command_endpoपूर्णांक);
-err_endpoपूर्णांक_tearकरोwn:
-	ipa_endpoपूर्णांक_tearकरोwn(ipa);
-	(व्योम)device_init_wakeup(dev, false);
-err_uc_tearकरोwn:
-	ipa_uc_tearकरोwn(ipa);
-	ipa_पूर्णांकerrupt_हटाओ(ipa->पूर्णांकerrupt, IPA_IRQ_TX_SUSPEND);
-	ipa_पूर्णांकerrupt_tearकरोwn(ipa->पूर्णांकerrupt);
-err_gsi_tearकरोwn:
-	gsi_tearकरोwn(&ipa->gsi);
+	ipa_endpoint_disable_one(command_endpoint);
+err_endpoint_teardown:
+	ipa_endpoint_teardown(ipa);
+	(void)device_init_wakeup(dev, false);
+err_uc_teardown:
+	ipa_uc_teardown(ipa);
+	ipa_interrupt_remove(ipa->interrupt, IPA_IRQ_TX_SUSPEND);
+	ipa_interrupt_teardown(ipa->interrupt);
+err_gsi_teardown:
+	gsi_teardown(&ipa->gsi);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * ipa_tearकरोwn() - Inverse of ipa_setup()
- * @ipa:	IPA poपूर्णांकer
+ * ipa_teardown() - Inverse of ipa_setup()
+ * @ipa:	IPA pointer
  */
-अटल व्योम ipa_tearकरोwn(काष्ठा ipa *ipa)
-अणु
-	काष्ठा ipa_endpoपूर्णांक *exception_endpoपूर्णांक;
-	काष्ठा ipa_endpoपूर्णांक *command_endpoपूर्णांक;
+static void ipa_teardown(struct ipa *ipa)
+{
+	struct ipa_endpoint *exception_endpoint;
+	struct ipa_endpoint *command_endpoint;
 
-	ipa_modem_tearकरोwn(ipa);
-	ipa_endpoपूर्णांक_शेष_route_clear(ipa);
-	exception_endpoपूर्णांक = ipa->name_map[IPA_ENDPOINT_AP_LAN_RX];
-	ipa_endpoपूर्णांक_disable_one(exception_endpoपूर्णांक);
-	command_endpoपूर्णांक = ipa->name_map[IPA_ENDPOINT_AP_COMMAND_TX];
-	ipa_endpoपूर्णांक_disable_one(command_endpoपूर्णांक);
-	ipa_endpoपूर्णांक_tearकरोwn(ipa);
-	(व्योम)device_init_wakeup(&ipa->pdev->dev, false);
-	ipa_uc_tearकरोwn(ipa);
-	ipa_पूर्णांकerrupt_हटाओ(ipa->पूर्णांकerrupt, IPA_IRQ_TX_SUSPEND);
-	ipa_पूर्णांकerrupt_tearकरोwn(ipa->पूर्णांकerrupt);
-	gsi_tearकरोwn(&ipa->gsi);
-पूर्ण
+	ipa_modem_teardown(ipa);
+	ipa_endpoint_default_route_clear(ipa);
+	exception_endpoint = ipa->name_map[IPA_ENDPOINT_AP_LAN_RX];
+	ipa_endpoint_disable_one(exception_endpoint);
+	command_endpoint = ipa->name_map[IPA_ENDPOINT_AP_COMMAND_TX];
+	ipa_endpoint_disable_one(command_endpoint);
+	ipa_endpoint_teardown(ipa);
+	(void)device_init_wakeup(&ipa->pdev->dev, false);
+	ipa_uc_teardown(ipa);
+	ipa_interrupt_remove(ipa->interrupt, IPA_IRQ_TX_SUSPEND);
+	ipa_interrupt_teardown(ipa->interrupt);
+	gsi_teardown(&ipa->gsi);
+}
 
-/* Configure bus access behavior क्रम IPA components */
-अटल व्योम ipa_hardware_config_comp(काष्ठा ipa *ipa)
-अणु
+/* Configure bus access behavior for IPA components */
+static void ipa_hardware_config_comp(struct ipa *ipa)
+{
 	u32 val;
 
 	/* Nothing to configure prior to IPA v4.0 */
-	अगर (ipa->version < IPA_VERSION_4_0)
-		वापस;
+	if (ipa->version < IPA_VERSION_4_0)
+		return;
 
-	val = ioपढ़ो32(ipa->reg_virt + IPA_REG_COMP_CFG_OFFSET);
+	val = ioread32(ipa->reg_virt + IPA_REG_COMP_CFG_OFFSET);
 
-	अगर (ipa->version == IPA_VERSION_4_0) अणु
+	if (ipa->version == IPA_VERSION_4_0) {
 		val &= ~IPA_QMB_SELECT_CONS_EN_FMASK;
 		val &= ~IPA_QMB_SELECT_PROD_EN_FMASK;
 		val &= ~IPA_QMB_SELECT_GLOBAL_EN_FMASK;
-	पूर्ण अन्यथा अगर (ipa->version < IPA_VERSION_4_5) अणु
+	} else if (ipa->version < IPA_VERSION_4_5) {
 		val |= GSI_MULTI_AXI_MASTERS_DIS_FMASK;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* For IPA v4.5 IPA_FULL_FLUSH_WAIT_RSC_CLOSE_EN is 0 */
-	पूर्ण
+	}
 
 	val |= GSI_MULTI_INORDER_RD_DIS_FMASK;
 	val |= GSI_MULTI_INORDER_WR_DIS_FMASK;
 
-	ioग_लिखो32(val, ipa->reg_virt + IPA_REG_COMP_CFG_OFFSET);
-पूर्ण
+	iowrite32(val, ipa->reg_virt + IPA_REG_COMP_CFG_OFFSET);
+}
 
-/* Configure DDR and (possibly) PCIe max पढ़ो/ग_लिखो QSB values */
-अटल व्योम
-ipa_hardware_config_qsb(काष्ठा ipa *ipa, स्थिर काष्ठा ipa_data *data)
-अणु
-	स्थिर काष्ठा ipa_qsb_data *data0;
-	स्थिर काष्ठा ipa_qsb_data *data1;
+/* Configure DDR and (possibly) PCIe max read/write QSB values */
+static void
+ipa_hardware_config_qsb(struct ipa *ipa, const struct ipa_data *data)
+{
+	const struct ipa_qsb_data *data0;
+	const struct ipa_qsb_data *data1;
 	u32 val;
 
-	/* निश्चित(data->qsb_count > 0); */
-	/* निश्चित(data->qsb_count < 3); */
+	/* assert(data->qsb_count > 0); */
+	/* assert(data->qsb_count < 3); */
 
-	/* QMB 0 represents DDR; QMB 1 (अगर present) represents PCIe */
+	/* QMB 0 represents DDR; QMB 1 (if present) represents PCIe */
 	data0 = &data->qsb_data[IPA_QSB_MASTER_DDR];
-	अगर (data->qsb_count > 1)
+	if (data->qsb_count > 1)
 		data1 = &data->qsb_data[IPA_QSB_MASTER_PCIE];
 
-	/* Max outstanding ग_लिखो accesses क्रम QSB masters */
-	val = u32_encode_bits(data0->max_ग_लिखोs, GEN_QMB_0_MAX_WRITES_FMASK);
-	अगर (data->qsb_count > 1)
-		val |= u32_encode_bits(data1->max_ग_लिखोs,
+	/* Max outstanding write accesses for QSB masters */
+	val = u32_encode_bits(data0->max_writes, GEN_QMB_0_MAX_WRITES_FMASK);
+	if (data->qsb_count > 1)
+		val |= u32_encode_bits(data1->max_writes,
 				       GEN_QMB_1_MAX_WRITES_FMASK);
-	ioग_लिखो32(val, ipa->reg_virt + IPA_REG_QSB_MAX_WRITES_OFFSET);
+	iowrite32(val, ipa->reg_virt + IPA_REG_QSB_MAX_WRITES_OFFSET);
 
-	/* Max outstanding पढ़ो accesses क्रम QSB masters */
-	val = u32_encode_bits(data0->max_पढ़ोs, GEN_QMB_0_MAX_READS_FMASK);
-	अगर (ipa->version >= IPA_VERSION_4_0)
-		val |= u32_encode_bits(data0->max_पढ़ोs_beats,
+	/* Max outstanding read accesses for QSB masters */
+	val = u32_encode_bits(data0->max_reads, GEN_QMB_0_MAX_READS_FMASK);
+	if (ipa->version >= IPA_VERSION_4_0)
+		val |= u32_encode_bits(data0->max_reads_beats,
 				       GEN_QMB_0_MAX_READS_BEATS_FMASK);
-	अगर (data->qsb_count > 1) अणु
-		val |= u32_encode_bits(data1->max_पढ़ोs,
+	if (data->qsb_count > 1) {
+		val |= u32_encode_bits(data1->max_reads,
 				       GEN_QMB_1_MAX_READS_FMASK);
-		अगर (ipa->version >= IPA_VERSION_4_0)
-			val |= u32_encode_bits(data1->max_पढ़ोs_beats,
+		if (ipa->version >= IPA_VERSION_4_0)
+			val |= u32_encode_bits(data1->max_reads_beats,
 					       GEN_QMB_1_MAX_READS_BEATS_FMASK);
-	पूर्ण
-	ioग_लिखो32(val, ipa->reg_virt + IPA_REG_QSB_MAX_READS_OFFSET);
-पूर्ण
+	}
+	iowrite32(val, ipa->reg_virt + IPA_REG_QSB_MAX_READS_OFFSET);
+}
 
-/* The पूर्णांकernal inactivity समयr घड़ी is used क्रम the aggregation समयr */
-#घोषणा TIMER_FREQUENCY	32000		/* 32 KHz inactivity समयr घड़ी */
+/* The internal inactivity timer clock is used for the aggregation timer */
+#define TIMER_FREQUENCY	32000		/* 32 KHz inactivity timer clock */
 
-/* Compute the value to use in the COUNTER_CFG रेजिस्टर AGGR_GRANULARITY
+/* Compute the value to use in the COUNTER_CFG register AGGR_GRANULARITY
  * field to represent the given number of microseconds.  The value is one
- * less than the number of समयr ticks in the requested period.  0 is not
+ * less than the number of timer ticks in the requested period.  0 is not
  * a valid granularity value.
  */
-अटल u32 ipa_aggr_granularity_val(u32 usec)
-अणु
-	/* निश्चित(usec != 0); */
+static u32 ipa_aggr_granularity_val(u32 usec)
+{
+	/* assert(usec != 0); */
 
-	वापस DIV_ROUND_CLOSEST(usec * TIMER_FREQUENCY, USEC_PER_SEC) - 1;
-पूर्ण
+	return DIV_ROUND_CLOSEST(usec * TIMER_FREQUENCY, USEC_PER_SEC) - 1;
+}
 
-/* IPA uses unअगरied Qसमय starting at IPA v4.5, implementing various
- * बारtamps and समयrs independent of the IPA core घड़ी rate.  The
- * Qसमयr is based on a 56-bit बारtamp incremented at each tick of
- * a 19.2 MHz SoC crystal oscillator (XO घड़ी).
+/* IPA uses unified Qtime starting at IPA v4.5, implementing various
+ * timestamps and timers independent of the IPA core clock rate.  The
+ * Qtimer is based on a 56-bit timestamp incremented at each tick of
+ * a 19.2 MHz SoC crystal oscillator (XO clock).
  *
- * For IPA बारtamps (tag, NAT, data path logging) a lower resolution
- * बारtamp is achieved by shअगरting the Qसमयr बारtamp value right
+ * For IPA timestamps (tag, NAT, data path logging) a lower resolution
+ * timestamp is achieved by shifting the Qtimer timestamp value right
  * some number of bits to produce the low-order bits of the coarser
- * granularity बारtamp.
+ * granularity timestamp.
  *
- * For समयrs, a common समयr घड़ी is derived from the XO घड़ी using
- * a भागider (we use 192, to produce a 100kHz समयr घड़ी).  From
- * this common घड़ी, three "pulse generators" are used to produce
- * समयr ticks at a configurable frequency.  IPA समयrs (such as
- * those used क्रम aggregation or head-of-line block handling) now
+ * For timers, a common timer clock is derived from the XO clock using
+ * a divider (we use 192, to produce a 100kHz timer clock).  From
+ * this common clock, three "pulse generators" are used to produce
+ * timer ticks at a configurable frequency.  IPA timers (such as
+ * those used for aggregation or head-of-line block handling) now
  * define their period based on one of these pulse generators.
  */
-अटल व्योम ipa_qसमय_config(काष्ठा ipa *ipa)
-अणु
+static void ipa_qtime_config(struct ipa *ipa)
+{
 	u32 val;
 
-	/* Timer घड़ी भागider must be disabled when we change the rate */
-	ioग_लिखो32(0, ipa->reg_virt + IPA_REG_TIMERS_XO_CLK_DIV_CFG_OFFSET);
+	/* Timer clock divider must be disabled when we change the rate */
+	iowrite32(0, ipa->reg_virt + IPA_REG_TIMERS_XO_CLK_DIV_CFG_OFFSET);
 
-	/* Set DPL समय stamp resolution to use Qसमय (instead of 1 msec) */
+	/* Set DPL time stamp resolution to use Qtime (instead of 1 msec) */
 	val = u32_encode_bits(DPL_TIMESTAMP_SHIFT, DPL_TIMESTAMP_LSB_FMASK);
 	val |= u32_encode_bits(1, DPL_TIMESTAMP_SEL_FMASK);
-	/* Configure tag and NAT Qसमय बारtamp resolution as well */
+	/* Configure tag and NAT Qtime timestamp resolution as well */
 	val |= u32_encode_bits(TAG_TIMESTAMP_SHIFT, TAG_TIMESTAMP_LSB_FMASK);
 	val |= u32_encode_bits(NAT_TIMESTAMP_SHIFT, NAT_TIMESTAMP_LSB_FMASK);
-	ioग_लिखो32(val, ipa->reg_virt + IPA_REG_QTIME_TIMESTAMP_CFG_OFFSET);
+	iowrite32(val, ipa->reg_virt + IPA_REG_QTIME_TIMESTAMP_CFG_OFFSET);
 
-	/* Set granularity of pulse generators used क्रम other समयrs */
+	/* Set granularity of pulse generators used for other timers */
 	val = u32_encode_bits(IPA_GRAN_100_US, GRAN_0_FMASK);
 	val |= u32_encode_bits(IPA_GRAN_1_MS, GRAN_1_FMASK);
 	val |= u32_encode_bits(IPA_GRAN_1_MS, GRAN_2_FMASK);
-	ioग_लिखो32(val, ipa->reg_virt + IPA_REG_TIMERS_PULSE_GRAN_CFG_OFFSET);
+	iowrite32(val, ipa->reg_virt + IPA_REG_TIMERS_PULSE_GRAN_CFG_OFFSET);
 
-	/* Actual भागider is 1 more than value supplied here */
+	/* Actual divider is 1 more than value supplied here */
 	val = u32_encode_bits(IPA_XO_CLOCK_DIVIDER - 1, DIV_VALUE_FMASK);
-	ioग_लिखो32(val, ipa->reg_virt + IPA_REG_TIMERS_XO_CLK_DIV_CFG_OFFSET);
+	iowrite32(val, ipa->reg_virt + IPA_REG_TIMERS_XO_CLK_DIV_CFG_OFFSET);
 
-	/* Divider value is set; re-enable the common समयr घड़ी भागider */
+	/* Divider value is set; re-enable the common timer clock divider */
 	val |= u32_encode_bits(1, DIV_ENABLE_FMASK);
-	ioग_लिखो32(val, ipa->reg_virt + IPA_REG_TIMERS_XO_CLK_DIV_CFG_OFFSET);
-पूर्ण
+	iowrite32(val, ipa->reg_virt + IPA_REG_TIMERS_XO_CLK_DIV_CFG_OFFSET);
+}
 
-अटल व्योम ipa_idle_indication_cfg(काष्ठा ipa *ipa,
+static void ipa_idle_indication_cfg(struct ipa *ipa,
 				    u32 enter_idle_debounce_thresh,
-				    bool स्थिर_non_idle_enable)
-अणु
+				    bool const_non_idle_enable)
+{
 	u32 offset;
 	u32 val;
 
 	val = u32_encode_bits(enter_idle_debounce_thresh,
 			      ENTER_IDLE_DEBOUNCE_THRESH_FMASK);
-	अगर (स्थिर_non_idle_enable)
+	if (const_non_idle_enable)
 		val |= CONST_NON_IDLE_ENABLE_FMASK;
 
 	offset = ipa_reg_idle_indication_cfg_offset(ipa->version);
-	ioग_लिखो32(val, ipa->reg_virt + offset);
-पूर्ण
+	iowrite32(val, ipa->reg_virt + offset);
+}
 
 /**
- * ipa_hardware_dcd_config() - Enable dynamic घड़ी भागision on IPA
- * @ipa:	IPA poपूर्णांकer
+ * ipa_hardware_dcd_config() - Enable dynamic clock division on IPA
+ * @ipa:	IPA pointer
  *
- * Configures when the IPA संकेतs it is idle to the global घड़ी
- * controller, which can respond by scalling करोwn the घड़ी to
- * save घातer.
+ * Configures when the IPA signals it is idle to the global clock
+ * controller, which can respond by scalling down the clock to
+ * save power.
  */
-अटल व्योम ipa_hardware_dcd_config(काष्ठा ipa *ipa)
-अणु
-	/* Recommended values क्रम IPA 3.5 and later according to IPA HPG */
+static void ipa_hardware_dcd_config(struct ipa *ipa)
+{
+	/* Recommended values for IPA 3.5 and later according to IPA HPG */
 	ipa_idle_indication_cfg(ipa, 256, false);
-पूर्ण
+}
 
-अटल व्योम ipa_hardware_dcd_deconfig(काष्ठा ipa *ipa)
-अणु
+static void ipa_hardware_dcd_deconfig(struct ipa *ipa)
+{
 	/* Power-on reset values */
 	ipa_idle_indication_cfg(ipa, 0, true);
-पूर्ण
+}
 
 /**
  * ipa_hardware_config() - Primitive hardware initialization
- * @ipa:	IPA poपूर्णांकer
+ * @ipa:	IPA pointer
  * @data:	IPA configuration data
  */
-अटल व्योम ipa_hardware_config(काष्ठा ipa *ipa, स्थिर काष्ठा ipa_data *data)
-अणु
-	क्रमागत ipa_version version = ipa->version;
+static void ipa_hardware_config(struct ipa *ipa, const struct ipa_data *data)
+{
+	enum ipa_version version = ipa->version;
 	u32 granularity;
 	u32 val;
 
-	/* IPA v4.5+ has no backward compatibility रेजिस्टर */
-	अगर (version < IPA_VERSION_4_5) अणु
+	/* IPA v4.5+ has no backward compatibility register */
+	if (version < IPA_VERSION_4_5) {
 		val = data->backward_compat;
-		ioग_लिखो32(val, ipa->reg_virt + IPA_REG_BCR_OFFSET);
-	पूर्ण
+		iowrite32(val, ipa->reg_virt + IPA_REG_BCR_OFFSET);
+	}
 
 	/* Implement some hardware workarounds */
-	अगर (version >= IPA_VERSION_4_0 && version < IPA_VERSION_4_5) अणु
-		/* Enable खोलो global घड़ीs (not needed क्रम IPA v4.5) */
+	if (version >= IPA_VERSION_4_0 && version < IPA_VERSION_4_5) {
+		/* Enable open global clocks (not needed for IPA v4.5) */
 		val = GLOBAL_FMASK;
 		val |= GLOBAL_2X_CLK_FMASK;
-		ioग_लिखो32(val, ipa->reg_virt + IPA_REG_CLKON_CFG_OFFSET);
+		iowrite32(val, ipa->reg_virt + IPA_REG_CLKON_CFG_OFFSET);
 
 		/* Disable PA mask to allow HOLB drop */
-		val = ioपढ़ो32(ipa->reg_virt + IPA_REG_TX_CFG_OFFSET);
+		val = ioread32(ipa->reg_virt + IPA_REG_TX_CFG_OFFSET);
 		val &= ~PA_MASK_EN_FMASK;
-		ioग_लिखो32(val, ipa->reg_virt + IPA_REG_TX_CFG_OFFSET);
-	पूर्ण
+		iowrite32(val, ipa->reg_virt + IPA_REG_TX_CFG_OFFSET);
+	}
 
 	ipa_hardware_config_comp(ipa);
 
-	/* Configure प्रणाली bus limits */
+	/* Configure system bus limits */
 	ipa_hardware_config_qsb(ipa, data);
 
-	अगर (version < IPA_VERSION_4_5) अणु
-		/* Configure aggregation समयr granularity */
+	if (version < IPA_VERSION_4_5) {
+		/* Configure aggregation timer granularity */
 		granularity = ipa_aggr_granularity_val(IPA_AGGR_GRANULARITY);
 		val = u32_encode_bits(granularity, AGGR_GRANULARITY_FMASK);
-		ioग_लिखो32(val, ipa->reg_virt + IPA_REG_COUNTER_CFG_OFFSET);
-	पूर्ण अन्यथा अणु
-		ipa_qसमय_config(ipa);
-	पूर्ण
+		iowrite32(val, ipa->reg_virt + IPA_REG_COUNTER_CFG_OFFSET);
+	} else {
+		ipa_qtime_config(ipa);
+	}
 
-	/* IPA v4.2 करोes not support hashed tables, so disable them */
-	अगर (version == IPA_VERSION_4_2) अणु
+	/* IPA v4.2 does not support hashed tables, so disable them */
+	if (version == IPA_VERSION_4_2) {
 		u32 offset = ipa_reg_filt_rout_hash_en_offset(version);
 
-		ioग_लिखो32(0, ipa->reg_virt + offset);
-	पूर्ण
+		iowrite32(0, ipa->reg_virt + offset);
+	}
 
-	/* Enable dynamic घड़ी भागision */
+	/* Enable dynamic clock division */
 	ipa_hardware_dcd_config(ipa);
-पूर्ण
+}
 
 /**
  * ipa_hardware_deconfig() - Inverse of ipa_hardware_config()
- * @ipa:	IPA poपूर्णांकer
+ * @ipa:	IPA pointer
  *
- * This restores the घातer-on reset values (even अगर they aren't dअगरferent)
+ * This restores the power-on reset values (even if they aren't different)
  */
-अटल व्योम ipa_hardware_deconfig(काष्ठा ipa *ipa)
-अणु
+static void ipa_hardware_deconfig(struct ipa *ipa)
+{
 	/* Mostly we just leave things as we set them. */
 	ipa_hardware_dcd_deconfig(ipa);
-पूर्ण
+}
 
 /**
  * ipa_config() - Configure IPA hardware
- * @ipa:	IPA poपूर्णांकer
+ * @ipa:	IPA pointer
  * @data:	IPA configuration data
  *
- * Perक्रमm initialization requiring IPA घड़ी to be enabled.
+ * Perform initialization requiring IPA clock to be enabled.
  */
-अटल पूर्णांक ipa_config(काष्ठा ipa *ipa, स्थिर काष्ठा ipa_data *data)
-अणु
-	पूर्णांक ret;
+static int ipa_config(struct ipa *ipa, const struct ipa_data *data)
+{
+	int ret;
 
-	/* Get a घड़ी reference to allow initialization.  This reference
+	/* Get a clock reference to allow initialization.  This reference
 	 * is held after initialization completes, and won't get dropped
-	 * unless/until a प्रणाली suspend request arrives.
+	 * unless/until a system suspend request arrives.
 	 */
-	ipa_घड़ी_get(ipa);
+	ipa_clock_get(ipa);
 
 	ipa_hardware_config(ipa, data);
 
-	ret = ipa_endpoपूर्णांक_config(ipa);
-	अगर (ret)
-		जाओ err_hardware_deconfig;
+	ret = ipa_endpoint_config(ipa);
+	if (ret)
+		goto err_hardware_deconfig;
 
 	ret = ipa_mem_config(ipa);
-	अगर (ret)
-		जाओ err_endpoपूर्णांक_deconfig;
+	if (ret)
+		goto err_endpoint_deconfig;
 
 	ipa_table_config(ipa);		/* No deconfig required */
 
 	/* Assign resource limitation to each group; no deconfig required */
 	ret = ipa_resource_config(ipa, data->resource_data);
-	अगर (ret)
-		जाओ err_mem_deconfig;
+	if (ret)
+		goto err_mem_deconfig;
 
 	ret = ipa_modem_config(ipa);
-	अगर (ret)
-		जाओ err_mem_deconfig;
+	if (ret)
+		goto err_mem_deconfig;
 
-	वापस 0;
+	return 0;
 
 err_mem_deconfig:
 	ipa_mem_deconfig(ipa);
-err_endpoपूर्णांक_deconfig:
-	ipa_endpoपूर्णांक_deconfig(ipa);
+err_endpoint_deconfig:
+	ipa_endpoint_deconfig(ipa);
 err_hardware_deconfig:
 	ipa_hardware_deconfig(ipa);
-	ipa_घड़ी_put(ipa);
+	ipa_clock_put(ipa);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * ipa_deconfig() - Inverse of ipa_config()
- * @ipa:	IPA poपूर्णांकer
+ * @ipa:	IPA pointer
  */
-अटल व्योम ipa_deconfig(काष्ठा ipa *ipa)
-अणु
+static void ipa_deconfig(struct ipa *ipa)
+{
 	ipa_modem_deconfig(ipa);
 	ipa_mem_deconfig(ipa);
-	ipa_endpoपूर्णांक_deconfig(ipa);
+	ipa_endpoint_deconfig(ipa);
 	ipa_hardware_deconfig(ipa);
-	ipa_घड़ी_put(ipa);
-पूर्ण
+	ipa_clock_put(ipa);
+}
 
-अटल पूर्णांक ipa_firmware_load(काष्ठा device *dev)
-अणु
-	स्थिर काष्ठा firmware *fw;
-	काष्ठा device_node *node;
-	काष्ठा resource res;
+static int ipa_firmware_load(struct device *dev)
+{
+	const struct firmware *fw;
+	struct device_node *node;
+	struct resource res;
 	phys_addr_t phys;
-	स्थिर अक्षर *path;
-	sमाप_प्रकार size;
-	व्योम *virt;
-	पूर्णांक ret;
+	const char *path;
+	ssize_t size;
+	void *virt;
+	int ret;
 
 	node = of_parse_phandle(dev->of_node, "memory-region", 0);
-	अगर (!node) अणु
+	if (!node) {
 		dev_err(dev, "DT error getting \"memory-region\" property\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ret = of_address_to_resource(node, 0, &res);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "error %d getting \"memory-region\" resource\n",
 			ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* Use name from DTB अगर specअगरied; use शेष क्रम *any* error */
-	ret = of_property_पढ़ो_string(dev->of_node, "firmware-name", &path);
-	अगर (ret) अणु
+	/* Use name from DTB if specified; use default for *any* error */
+	ret = of_property_read_string(dev->of_node, "firmware-name", &path);
+	if (ret) {
 		dev_dbg(dev, "error %d getting \"firmware-name\" resource\n",
 			ret);
 		path = IPA_FW_PATH_DEFAULT;
-	पूर्ण
+	}
 
 	ret = request_firmware(&fw, path, dev);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "error %d requesting \"%s\"\n", ret, path);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	phys = res.start;
-	size = (माप_प्रकार)resource_size(&res);
+	size = (size_t)resource_size(&res);
 	virt = memremap(phys, size, MEMREMAP_WC);
-	अगर (!virt) अणु
+	if (!virt) {
 		dev_err(dev, "unable to remap firmware memory\n");
 		ret = -ENOMEM;
-		जाओ out_release_firmware;
-	पूर्ण
+		goto out_release_firmware;
+	}
 
-	ret = qcom_mdt_load(dev, fw, path, IPA_PAS_ID, virt, phys, size, शून्य);
-	अगर (ret)
+	ret = qcom_mdt_load(dev, fw, path, IPA_PAS_ID, virt, phys, size, NULL);
+	if (ret)
 		dev_err(dev, "error %d loading \"%s\"\n", ret, path);
-	अन्यथा अगर ((ret = qcom_scm_pas_auth_and_reset(IPA_PAS_ID)))
+	else if ((ret = qcom_scm_pas_auth_and_reset(IPA_PAS_ID)))
 		dev_err(dev, "error %d authenticating \"%s\"\n", ret, path);
 
 	memunmap(virt);
 out_release_firmware:
 	release_firmware(fw);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा of_device_id ipa_match[] = अणु
-	अणु
+static const struct of_device_id ipa_match[] = {
+	{
 		.compatible	= "qcom,sdm845-ipa",
 		.data		= &ipa_data_v3_5_1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible	= "qcom,sc7180-ipa",
 		.data		= &ipa_data_v4_2,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible	= "qcom,sdx55-ipa",
 		.data		= &ipa_data_v4_5,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible	= "qcom,sm8350-ipa",
 		.data		= &ipa_data_v4_9,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible	= "qcom,sc7280-ipa",
 		.data		= &ipa_data_v4_11,
-	पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+	},
+	{ },
+};
 MODULE_DEVICE_TABLE(of, ipa_match);
 
-/* Check things that can be validated at build समय.  This just
- * groups these things BUILD_BUG_ON() calls करोn't clutter the rest
+/* Check things that can be validated at build time.  This just
+ * groups these things BUILD_BUG_ON() calls don't clutter the rest
  * of the code.
  * */
-अटल व्योम ipa_validate_build(व्योम)
-अणु
-#अगर_घोषित IPA_VALIDATE
-	/* At one समय we assumed a 64-bit build, allowing some करो_भाग()
-	 * calls to be replaced by simple भागision or modulo operations.
-	 * We currently only perक्रमm भागide and modulo operations on u32,
-	 * u16, or माप_प्रकार objects, and of those only माप_प्रकार has any chance
+static void ipa_validate_build(void)
+{
+#ifdef IPA_VALIDATE
+	/* At one time we assumed a 64-bit build, allowing some do_div()
+	 * calls to be replaced by simple division or modulo operations.
+	 * We currently only perform divide and modulo operations on u32,
+	 * u16, or size_t objects, and of those only size_t has any chance
 	 * of being a 64-bit value.  (It should be guaranteed 32 bits wide
-	 * on a 32-bit build, but there is no harm in verअगरying that.)
+	 * on a 32-bit build, but there is no harm in verifying that.)
 	 */
-	BUILD_BUG_ON(!IS_ENABLED(CONFIG_64BIT) && माप(माप_प्रकार) != 4);
+	BUILD_BUG_ON(!IS_ENABLED(CONFIG_64BIT) && sizeof(size_t) != 4);
 
-	/* Code assumes the EE ID क्रम the AP is 0 (zeroed काष्ठाure field) */
+	/* Code assumes the EE ID for the AP is 0 (zeroed structure field) */
 	BUILD_BUG_ON(GSI_EE_AP != 0);
 
-	/* There's no poपूर्णांक अगर we have no channels or event rings */
+	/* There's no point if we have no channels or event rings */
 	BUILD_BUG_ON(!GSI_CHANNEL_COUNT_MAX);
 	BUILD_BUG_ON(!GSI_EVT_RING_COUNT_MAX);
 
@@ -625,275 +624,275 @@ MODULE_DEVICE_TABLE(of, ipa_match);
 	BUILD_BUG_ON(GSI_EVT_RING_COUNT_MAX > 31);
 
 	/* The number of TREs in a transaction is limited by the channel's
-	 * TLV FIFO size.  A transaction काष्ठाure uses 8-bit fields
+	 * TLV FIFO size.  A transaction structure uses 8-bit fields
 	 * to represents the number of TREs it has allocated and used.
 	 */
 	BUILD_BUG_ON(GSI_TLV_MAX > U8_MAX);
 
-	/* This is used as a भागisor */
+	/* This is used as a divisor */
 	BUILD_BUG_ON(!IPA_AGGR_GRANULARITY);
 
 	/* Aggregation granularity value can't be 0, and must fit */
 	BUILD_BUG_ON(!ipa_aggr_granularity_val(IPA_AGGR_GRANULARITY));
 	BUILD_BUG_ON(ipa_aggr_granularity_val(IPA_AGGR_GRANULARITY) >
 			field_max(AGGR_GRANULARITY_FMASK));
-#पूर्ण_अगर /* IPA_VALIDATE */
-पूर्ण
+#endif /* IPA_VALIDATE */
+}
 
 /**
- * ipa_probe() - IPA platक्रमm driver probe function
- * @pdev:	Platक्रमm device poपूर्णांकer
+ * ipa_probe() - IPA platform driver probe function
+ * @pdev:	Platform device pointer
  *
- * Return:	0 अगर successful, or a negative error code (possibly
+ * Return:	0 if successful, or a negative error code (possibly
  *		EPROBE_DEFER)
  *
- * This is the मुख्य entry poपूर्णांक क्रम the IPA driver.  Initialization proceeds
+ * This is the main entry point for the IPA driver.  Initialization proceeds
  * in several stages:
  *   - The "init" stage involves activities that can be initialized without
  *     access to the IPA hardware.
- *   - The "config" stage requires the IPA घड़ी to be active so IPA रेजिस्टरs
- *     can be accessed, but करोes not require the use of IPA immediate commands.
+ *   - The "config" stage requires the IPA clock to be active so IPA registers
+ *     can be accessed, but does not require the use of IPA immediate commands.
  *   - The "setup" stage uses IPA immediate commands, and so requires the GSI
  *     layer to be initialized.
  *
  * A Boolean Device Tree "modem-init" property determines whether GSI
- * initialization will be perक्रमmed by the AP (Trust Zone) or the modem.
- * If the AP करोes GSI initialization, the setup phase is entered after
+ * initialization will be performed by the AP (Trust Zone) or the modem.
+ * If the AP does GSI initialization, the setup phase is entered after
  * this has completed successfully.  Otherwise the modem initializes
- * the GSI layer and संकेतs it has finished by sending an SMP2P पूर्णांकerrupt
- * to the AP; this triggers the start अगर IPA setup.
+ * the GSI layer and signals it has finished by sending an SMP2P interrupt
+ * to the AP; this triggers the start if IPA setup.
  */
-अटल पूर्णांक ipa_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	स्थिर काष्ठा ipa_data *data;
-	काष्ठा ipa_घड़ी *घड़ी;
+static int ipa_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	const struct ipa_data *data;
+	struct ipa_clock *clock;
 	bool modem_init;
-	काष्ठा ipa *ipa;
-	पूर्णांक ret;
+	struct ipa *ipa;
+	int ret;
 
 	ipa_validate_build();
 
-	/* Get configuration data early; needed क्रम घड़ी initialization */
+	/* Get configuration data early; needed for clock initialization */
 	data = of_device_get_match_data(dev);
-	अगर (!data) अणु
+	if (!data) {
 		/* This is really IPA_VALIDATE (should never happen) */
 		dev_err(dev, "matched hardware not supported\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	/* If we need Trust Zone, make sure it's available */
-	modem_init = of_property_पढ़ो_bool(dev->of_node, "modem-init");
-	अगर (!modem_init)
-		अगर (!qcom_scm_is_available())
-			वापस -EPROBE_DEFER;
+	modem_init = of_property_read_bool(dev->of_node, "modem-init");
+	if (!modem_init)
+		if (!qcom_scm_is_available())
+			return -EPROBE_DEFER;
 
-	/* The घड़ी and पूर्णांकerconnects might not be पढ़ोy when we're
-	 * probed, so might वापस -EPROBE_DEFER.
+	/* The clock and interconnects might not be ready when we're
+	 * probed, so might return -EPROBE_DEFER.
 	 */
-	घड़ी = ipa_घड़ी_init(dev, data->घड़ी_data);
-	अगर (IS_ERR(घड़ी))
-		वापस PTR_ERR(घड़ी);
+	clock = ipa_clock_init(dev, data->clock_data);
+	if (IS_ERR(clock))
+		return PTR_ERR(clock);
 
-	/* No more EPROBE_DEFER.  Allocate and initialize the IPA काष्ठाure */
-	ipa = kzalloc(माप(*ipa), GFP_KERNEL);
-	अगर (!ipa) अणु
+	/* No more EPROBE_DEFER.  Allocate and initialize the IPA structure */
+	ipa = kzalloc(sizeof(*ipa), GFP_KERNEL);
+	if (!ipa) {
 		ret = -ENOMEM;
-		जाओ err_घड़ी_निकास;
-	पूर्ण
+		goto err_clock_exit;
+	}
 
 	ipa->pdev = pdev;
 	dev_set_drvdata(dev, ipa);
-	ipa->घड़ी = घड़ी;
+	ipa->clock = clock;
 	ipa->version = data->version;
 	init_completion(&ipa->completion);
 
 	ret = ipa_reg_init(ipa);
-	अगर (ret)
-		जाओ err_kमुक्त_ipa;
+	if (ret)
+		goto err_kfree_ipa;
 
 	ret = ipa_mem_init(ipa, data->mem_data);
-	अगर (ret)
-		जाओ err_reg_निकास;
+	if (ret)
+		goto err_reg_exit;
 
-	ret = gsi_init(&ipa->gsi, pdev, ipa->version, data->endpoपूर्णांक_count,
-		       data->endpoपूर्णांक_data);
-	अगर (ret)
-		जाओ err_mem_निकास;
+	ret = gsi_init(&ipa->gsi, pdev, ipa->version, data->endpoint_count,
+		       data->endpoint_data);
+	if (ret)
+		goto err_mem_exit;
 
-	/* Result is a non-zero mask of endpoपूर्णांकs that support filtering */
-	ipa->filter_map = ipa_endpoपूर्णांक_init(ipa, data->endpoपूर्णांक_count,
-					    data->endpoपूर्णांक_data);
-	अगर (!ipa->filter_map) अणु
+	/* Result is a non-zero mask of endpoints that support filtering */
+	ipa->filter_map = ipa_endpoint_init(ipa, data->endpoint_count,
+					    data->endpoint_data);
+	if (!ipa->filter_map) {
 		ret = -EINVAL;
-		जाओ err_gsi_निकास;
-	पूर्ण
+		goto err_gsi_exit;
+	}
 
 	ret = ipa_table_init(ipa);
-	अगर (ret)
-		जाओ err_endpoपूर्णांक_निकास;
+	if (ret)
+		goto err_endpoint_exit;
 
 	ret = ipa_modem_init(ipa, modem_init);
-	अगर (ret)
-		जाओ err_table_निकास;
+	if (ret)
+		goto err_table_exit;
 
 	ret = ipa_config(ipa, data);
-	अगर (ret)
-		जाओ err_modem_निकास;
+	if (ret)
+		goto err_modem_exit;
 
 	dev_info(dev, "IPA driver initialized");
 
-	/* If the modem is करोing early initialization, it will trigger a
-	 * call to ipa_setup() call when it has finished.  In that हाल
-	 * we're करोne here.
+	/* If the modem is doing early initialization, it will trigger a
+	 * call to ipa_setup() call when it has finished.  In that case
+	 * we're done here.
 	 */
-	अगर (modem_init)
-		वापस 0;
+	if (modem_init)
+		return 0;
 
 	/* Otherwise we need to load the firmware and have Trust Zone validate
 	 * and install it.  If that succeeds we can proceed with setup.
 	 */
 	ret = ipa_firmware_load(dev);
-	अगर (ret)
-		जाओ err_deconfig;
+	if (ret)
+		goto err_deconfig;
 
 	ret = ipa_setup(ipa);
-	अगर (ret)
-		जाओ err_deconfig;
+	if (ret)
+		goto err_deconfig;
 
-	वापस 0;
+	return 0;
 
 err_deconfig:
 	ipa_deconfig(ipa);
-err_modem_निकास:
-	ipa_modem_निकास(ipa);
-err_table_निकास:
-	ipa_table_निकास(ipa);
-err_endpoपूर्णांक_निकास:
-	ipa_endpoपूर्णांक_निकास(ipa);
-err_gsi_निकास:
-	gsi_निकास(&ipa->gsi);
-err_mem_निकास:
-	ipa_mem_निकास(ipa);
-err_reg_निकास:
-	ipa_reg_निकास(ipa);
-err_kमुक्त_ipa:
-	kमुक्त(ipa);
-err_घड़ी_निकास:
-	ipa_घड़ी_निकास(घड़ी);
+err_modem_exit:
+	ipa_modem_exit(ipa);
+err_table_exit:
+	ipa_table_exit(ipa);
+err_endpoint_exit:
+	ipa_endpoint_exit(ipa);
+err_gsi_exit:
+	gsi_exit(&ipa->gsi);
+err_mem_exit:
+	ipa_mem_exit(ipa);
+err_reg_exit:
+	ipa_reg_exit(ipa);
+err_kfree_ipa:
+	kfree(ipa);
+err_clock_exit:
+	ipa_clock_exit(clock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ipa_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा ipa *ipa = dev_get_drvdata(&pdev->dev);
-	काष्ठा ipa_घड़ी *घड़ी = ipa->घड़ी;
-	पूर्णांक ret;
+static int ipa_remove(struct platform_device *pdev)
+{
+	struct ipa *ipa = dev_get_drvdata(&pdev->dev);
+	struct ipa_clock *clock = ipa->clock;
+	int ret;
 
-	अगर (ipa->setup_complete) अणु
+	if (ipa->setup_complete) {
 		ret = ipa_modem_stop(ipa);
 		/* If starting or stopping is in progress, try once more */
-		अगर (ret == -EBUSY) अणु
+		if (ret == -EBUSY) {
 			usleep_range(USEC_PER_MSEC, 2 * USEC_PER_MSEC);
 			ret = ipa_modem_stop(ipa);
-		पूर्ण
-		अगर (ret)
-			वापस ret;
+		}
+		if (ret)
+			return ret;
 
-		ipa_tearकरोwn(ipa);
-	पूर्ण
+		ipa_teardown(ipa);
+	}
 
 	ipa_deconfig(ipa);
-	ipa_modem_निकास(ipa);
-	ipa_table_निकास(ipa);
-	ipa_endpoपूर्णांक_निकास(ipa);
-	gsi_निकास(&ipa->gsi);
-	ipa_mem_निकास(ipa);
-	ipa_reg_निकास(ipa);
-	kमुक्त(ipa);
-	ipa_घड़ी_निकास(घड़ी);
+	ipa_modem_exit(ipa);
+	ipa_table_exit(ipa);
+	ipa_endpoint_exit(ipa);
+	gsi_exit(&ipa->gsi);
+	ipa_mem_exit(ipa);
+	ipa_reg_exit(ipa);
+	kfree(ipa);
+	ipa_clock_exit(clock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ipa_shutकरोwn(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक ret;
+static void ipa_shutdown(struct platform_device *pdev)
+{
+	int ret;
 
-	ret = ipa_हटाओ(pdev);
-	अगर (ret)
+	ret = ipa_remove(pdev);
+	if (ret)
 		dev_err(&pdev->dev, "shutdown: remove returned %d\n", ret);
-पूर्ण
+}
 
 /**
- * ipa_suspend() - Power management प्रणाली suspend callback
- * @dev:	IPA device काष्ठाure
+ * ipa_suspend() - Power management system suspend callback
+ * @dev:	IPA device structure
  *
- * Return:	Always वापसs zero
+ * Return:	Always returns zero
  *
- * Called by the PM framework when a प्रणाली suspend operation is invoked.
- * Suspends endpoपूर्णांकs and releases the घड़ी reference held to keep
- * the IPA घड़ी running until this poपूर्णांक.
+ * Called by the PM framework when a system suspend operation is invoked.
+ * Suspends endpoints and releases the clock reference held to keep
+ * the IPA clock running until this point.
  */
-अटल पूर्णांक ipa_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा ipa *ipa = dev_get_drvdata(dev);
+static int ipa_suspend(struct device *dev)
+{
+	struct ipa *ipa = dev_get_drvdata(dev);
 
-	/* When a suspended RX endpoपूर्णांक has a packet पढ़ोy to receive, we
-	 * get an IPA SUSPEND पूर्णांकerrupt.  We trigger a प्रणाली resume in
-	 * that हाल, but only on the first such पूर्णांकerrupt since suspend.
+	/* When a suspended RX endpoint has a packet ready to receive, we
+	 * get an IPA SUSPEND interrupt.  We trigger a system resume in
+	 * that case, but only on the first such interrupt since suspend.
 	 */
 	__clear_bit(IPA_FLAG_RESUMED, ipa->flags);
 
-	ipa_endpoपूर्णांक_suspend(ipa);
+	ipa_endpoint_suspend(ipa);
 
-	ipa_घड़ी_put(ipa);
+	ipa_clock_put(ipa);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * ipa_resume() - Power management प्रणाली resume callback
- * @dev:	IPA device काष्ठाure
+ * ipa_resume() - Power management system resume callback
+ * @dev:	IPA device structure
  *
- * Return:	Always वापसs 0
+ * Return:	Always returns 0
  *
- * Called by the PM framework when a प्रणाली resume operation is invoked.
- * Takes an IPA घड़ी reference to keep the घड़ी running until suspend,
- * and resumes endpoपूर्णांकs.
+ * Called by the PM framework when a system resume operation is invoked.
+ * Takes an IPA clock reference to keep the clock running until suspend,
+ * and resumes endpoints.
  */
-अटल पूर्णांक ipa_resume(काष्ठा device *dev)
-अणु
-	काष्ठा ipa *ipa = dev_get_drvdata(dev);
+static int ipa_resume(struct device *dev)
+{
+	struct ipa *ipa = dev_get_drvdata(dev);
 
-	/* This घड़ी reference will keep the IPA out of suspend
-	 * until we get a घातer management suspend request.
+	/* This clock reference will keep the IPA out of suspend
+	 * until we get a power management suspend request.
 	 */
-	ipa_घड़ी_get(ipa);
+	ipa_clock_get(ipa);
 
-	ipa_endpoपूर्णांक_resume(ipa);
+	ipa_endpoint_resume(ipa);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops ipa_pm_ops = अणु
+static const struct dev_pm_ops ipa_pm_ops = {
 	.suspend	= ipa_suspend,
 	.resume		= ipa_resume,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_driver ipa_driver = अणु
+static struct platform_driver ipa_driver = {
 	.probe		= ipa_probe,
-	.हटाओ		= ipa_हटाओ,
-	.shutकरोwn	= ipa_shutकरोwn,
-	.driver	= अणु
+	.remove		= ipa_remove,
+	.shutdown	= ipa_shutdown,
+	.driver	= {
 		.name		= "ipa",
 		.pm		= &ipa_pm_ops,
 		.of_match_table	= ipa_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(ipa_driver);
+module_platform_driver(ipa_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("Qualcomm IP Accelerator device driver");

@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- * Amiga Linux/68k 8390 based PCMCIA Ethernet Driver क्रम the Amiga 1200
+ * Amiga Linux/68k 8390 based PCMCIA Ethernet Driver for the Amiga 1200
  *
  * (C) Copyright 1997 Alain Malek
  *                    (Alain.Malek@cryogen.com)
@@ -9,302 +8,302 @@
  *
  * This program is based on
  *
- * ne.c:       A general non-shared-memory NS8390 ethernet driver क्रम linux
+ * ne.c:       A general non-shared-memory NS8390 ethernet driver for linux
  *             Written 1992-94 by Donald Becker.
  *
- * 8390.c:     A general NS8390 ethernet driver core क्रम linux.
+ * 8390.c:     A general NS8390 ethernet driver core for linux.
  *             Written 1992-94 by Donald Becker.
  *
- * cnetdevice: A Sana-II ethernet driver क्रम AmigaOS
+ * cnetdevice: A Sana-II ethernet driver for AmigaOS
  *             Written by Bruce Abbott (bhabbott@inhb.co.nz)
  *
  * ----------------------------------------------------------------------------
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the मुख्य directory of the Linux
- * distribution क्रम more details.
+ * License.  See the file COPYING in the main directory of the Linux
+ * distribution for more details.
  *
  * ----------------------------------------------------------------------------
  *
  */
 
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/pci.h>
-#समावेश <linux/init.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/jअगरfies.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/pci.h>
+#include <linux/init.h>
+#include <linux/delay.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/interrupt.h>
+#include <linux/jiffies.h>
 
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/setup.h>
-#समावेश <यंत्र/amigaपूर्णांकs.h>
-#समावेश <यंत्र/amigahw.h>
-#समावेश <यंत्र/amigayle.h>
-#समावेश <यंत्र/amipcmcia.h>
+#include <asm/io.h>
+#include <asm/setup.h>
+#include <asm/amigaints.h>
+#include <asm/amigahw.h>
+#include <asm/amigayle.h>
+#include <asm/amipcmcia.h>
 
-#समावेश "8390.h"
+#include "8390.h"
 
 /* ---- No user-serviceable parts below ---- */
 
-#घोषणा DRV_NAME "apne"
+#define DRV_NAME "apne"
 
-#घोषणा NE_BASE	 (dev->base_addr)
-#घोषणा NE_CMD	 		0x00
-#घोषणा NE_DATAPORT		0x10            /* NatSemi-defined port winकरोw offset. */
-#घोषणा NE_RESET		0x1f            /* Issue a पढ़ो to reset, a ग_लिखो to clear. */
-#घोषणा NE_IO_EXTENT	        0x20
+#define NE_BASE	 (dev->base_addr)
+#define NE_CMD	 		0x00
+#define NE_DATAPORT		0x10            /* NatSemi-defined port window offset. */
+#define NE_RESET		0x1f            /* Issue a read to reset, a write to clear. */
+#define NE_IO_EXTENT	        0x20
 
-#घोषणा NE_EN0_ISR		0x07
-#घोषणा NE_EN0_DCFG		0x0e
+#define NE_EN0_ISR		0x07
+#define NE_EN0_DCFG		0x0e
 
-#घोषणा NE_EN0_RSARLO	        0x08
-#घोषणा NE_EN0_RSARHI	        0x09
-#घोषणा NE_EN0_RCNTLO	        0x0a
-#घोषणा NE_EN0_RXCR		0x0c
-#घोषणा NE_EN0_TXCR		0x0d
-#घोषणा NE_EN0_RCNTHI	        0x0b
-#घोषणा NE_EN0_IMR		0x0f
+#define NE_EN0_RSARLO	        0x08
+#define NE_EN0_RSARHI	        0x09
+#define NE_EN0_RCNTLO	        0x0a
+#define NE_EN0_RXCR		0x0c
+#define NE_EN0_TXCR		0x0d
+#define NE_EN0_RCNTHI	        0x0b
+#define NE_EN0_IMR		0x0f
 
-#घोषणा NE1SM_START_PG	0x20	/* First page of TX buffer */
-#घोषणा NE1SM_STOP_PG 	0x40	/* Last page +1 of RX ring */
-#घोषणा NESM_START_PG	0x40	/* First page of TX buffer */
-#घोषणा NESM_STOP_PG	0x80	/* Last page +1 of RX ring */
+#define NE1SM_START_PG	0x20	/* First page of TX buffer */
+#define NE1SM_STOP_PG 	0x40	/* Last page +1 of RX ring */
+#define NESM_START_PG	0x40	/* First page of TX buffer */
+#define NESM_STOP_PG	0x80	/* Last page +1 of RX ring */
 
 
-काष्ठा net_device * __init apne_probe(पूर्णांक unit);
-अटल पूर्णांक apne_probe1(काष्ठा net_device *dev, पूर्णांक ioaddr);
+struct net_device * __init apne_probe(int unit);
+static int apne_probe1(struct net_device *dev, int ioaddr);
 
-अटल व्योम apne_reset_8390(काष्ठा net_device *dev);
-अटल व्योम apne_get_8390_hdr(काष्ठा net_device *dev, काष्ठा e8390_pkt_hdr *hdr,
-			  पूर्णांक ring_page);
-अटल व्योम apne_block_input(काष्ठा net_device *dev, पूर्णांक count,
-								काष्ठा sk_buff *skb, पूर्णांक ring_offset);
-अटल व्योम apne_block_output(काष्ठा net_device *dev, स्थिर पूर्णांक count,
-							स्थिर अचिन्हित अक्षर *buf, स्थिर पूर्णांक start_page);
-अटल irqवापस_t apne_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id);
+static void apne_reset_8390(struct net_device *dev);
+static void apne_get_8390_hdr(struct net_device *dev, struct e8390_pkt_hdr *hdr,
+			  int ring_page);
+static void apne_block_input(struct net_device *dev, int count,
+								struct sk_buff *skb, int ring_offset);
+static void apne_block_output(struct net_device *dev, const int count,
+							const unsigned char *buf, const int start_page);
+static irqreturn_t apne_interrupt(int irq, void *dev_id);
 
-अटल पूर्णांक init_pcmcia(व्योम);
+static int init_pcmcia(void);
 
-/* IO base address used क्रम nic */
+/* IO base address used for nic */
 
-#घोषणा IOBASE 0x300
+#define IOBASE 0x300
 
 /*
-   use MANUAL_CONFIG and MANUAL_OFFSET क्रम enabling IO by hand
+   use MANUAL_CONFIG and MANUAL_OFFSET for enabling IO by hand
    you can find the values to use by looking at the cnet.device
-   config file example (the शेष values are क्रम the CNET40BC card)
+   config file example (the default values are for the CNET40BC card)
 */
 
 /*
-#घोषणा MANUAL_CONFIG 0x20
-#घोषणा MANUAL_OFFSET 0x3f8
+#define MANUAL_CONFIG 0x20
+#define MANUAL_OFFSET 0x3f8
 
-#घोषणा MANUAL_HWADDR0 0x00
-#घोषणा MANUAL_HWADDR1 0x12
-#घोषणा MANUAL_HWADDR2 0x34
-#घोषणा MANUAL_HWADDR3 0x56
-#घोषणा MANUAL_HWADDR4 0x78
-#घोषणा MANUAL_HWADDR5 0x9a
+#define MANUAL_HWADDR0 0x00
+#define MANUAL_HWADDR1 0x12
+#define MANUAL_HWADDR2 0x34
+#define MANUAL_HWADDR3 0x56
+#define MANUAL_HWADDR4 0x78
+#define MANUAL_HWADDR5 0x9a
 */
 
-अटल स्थिर अक्षर version[] =
+static const char version[] =
     "apne.c:v1.1 7/10/98 Alain Malek (Alain.Malek@cryogen.ch)\n";
 
-अटल पूर्णांक apne_owned;	/* संकेत अगर card alपढ़ोy owned */
+static int apne_owned;	/* signal if card already owned */
 
-अटल u32 apne_msg_enable;
-module_param_named(msg_enable, apne_msg_enable, uपूर्णांक, 0444);
+static u32 apne_msg_enable;
+module_param_named(msg_enable, apne_msg_enable, uint, 0444);
 MODULE_PARM_DESC(msg_enable, "Debug message level (see linux/netdevice.h for bitmap)");
 
-काष्ठा net_device * __init apne_probe(पूर्णांक unit)
-अणु
-	काष्ठा net_device *dev;
-	काष्ठा ei_device *ei_local;
+struct net_device * __init apne_probe(int unit)
+{
+	struct net_device *dev;
+	struct ei_device *ei_local;
 
-#अगर_अघोषित MANUAL_CONFIG
-	अक्षर tuple[8];
-#पूर्ण_अगर
-	पूर्णांक err;
+#ifndef MANUAL_CONFIG
+	char tuple[8];
+#endif
+	int err;
 
-	अगर (!MACH_IS_AMIGA)
-		वापस ERR_PTR(-ENODEV);
+	if (!MACH_IS_AMIGA)
+		return ERR_PTR(-ENODEV);
 
-	अगर (apne_owned)
-		वापस ERR_PTR(-ENODEV);
+	if (apne_owned)
+		return ERR_PTR(-ENODEV);
 
-	अगर ( !(AMIGAHW_PRESENT(PCMCIA)) )
-		वापस ERR_PTR(-ENODEV);
+	if ( !(AMIGAHW_PRESENT(PCMCIA)) )
+		return ERR_PTR(-ENODEV);
 
 	pr_info("Looking for PCMCIA ethernet card : ");
 
-	/* check अगर a card is inserted */
-	अगर (!(PCMCIA_INSERTED)) अणु
+	/* check if a card is inserted */
+	if (!(PCMCIA_INSERTED)) {
 		pr_cont("NO PCMCIA card inserted\n");
-		वापस ERR_PTR(-ENODEV);
-	पूर्ण
+		return ERR_PTR(-ENODEV);
+	}
 
 	dev = alloc_ei_netdev();
-	अगर (!dev)
-		वापस ERR_PTR(-ENOMEM);
-	अगर (unit >= 0) अणु
-		प्र_लिखो(dev->name, "eth%d", unit);
+	if (!dev)
+		return ERR_PTR(-ENOMEM);
+	if (unit >= 0) {
+		sprintf(dev->name, "eth%d", unit);
 		netdev_boot_setup_check(dev);
-	पूर्ण
+	}
 	ei_local = netdev_priv(dev);
 	ei_local->msg_enable = apne_msg_enable;
 
-	/* disable pcmcia irq क्रम पढ़ोtuple */
+	/* disable pcmcia irq for readtuple */
 	pcmcia_disable_irq();
 
-#अगर_अघोषित MANUAL_CONFIG
-	अगर ((pcmcia_copy_tuple(CISTPL_FUNCID, tuple, 8) < 3) ||
-		(tuple[2] != CISTPL_FUNCID_NETWORK)) अणु
+#ifndef MANUAL_CONFIG
+	if ((pcmcia_copy_tuple(CISTPL_FUNCID, tuple, 8) < 3) ||
+		(tuple[2] != CISTPL_FUNCID_NETWORK)) {
 		pr_cont("not an ethernet card\n");
 		/* XXX: shouldn't we re-enable irq here? */
-		मुक्त_netdev(dev);
-		वापस ERR_PTR(-ENODEV);
-	पूर्ण
-#पूर्ण_अगर
+		free_netdev(dev);
+		return ERR_PTR(-ENODEV);
+	}
+#endif
 
 	pr_cont("ethernet PCMCIA card inserted\n");
 
-	अगर (!init_pcmcia()) अणु
+	if (!init_pcmcia()) {
 		/* XXX: shouldn't we re-enable irq here? */
-		मुक्त_netdev(dev);
-		वापस ERR_PTR(-ENODEV);
-	पूर्ण
+		free_netdev(dev);
+		return ERR_PTR(-ENODEV);
+	}
 
-	अगर (!request_region(IOBASE, 0x20, DRV_NAME)) अणु
-		मुक्त_netdev(dev);
-		वापस ERR_PTR(-EBUSY);
-	पूर्ण
+	if (!request_region(IOBASE, 0x20, DRV_NAME)) {
+		free_netdev(dev);
+		return ERR_PTR(-EBUSY);
+	}
 
 	err = apne_probe1(dev, IOBASE);
-	अगर (err) अणु
+	if (err) {
 		release_region(IOBASE, 0x20);
-		मुक्त_netdev(dev);
-		वापस ERR_PTR(err);
-	पूर्ण
-	err = रेजिस्टर_netdev(dev);
-	अगर (!err)
-		वापस dev;
+		free_netdev(dev);
+		return ERR_PTR(err);
+	}
+	err = register_netdev(dev);
+	if (!err)
+		return dev;
 
 	pcmcia_disable_irq();
-	मुक्त_irq(IRQ_AMIGA_PORTS, dev);
+	free_irq(IRQ_AMIGA_PORTS, dev);
 	pcmcia_reset();
 	release_region(IOBASE, 0x20);
-	मुक्त_netdev(dev);
-	वापस ERR_PTR(err);
-पूर्ण
+	free_netdev(dev);
+	return ERR_PTR(err);
+}
 
-अटल पूर्णांक __init apne_probe1(काष्ठा net_device *dev, पूर्णांक ioaddr)
-अणु
-    पूर्णांक i;
-    अचिन्हित अक्षर SA_prom[32];
-    पूर्णांक wordlength = 2;
-    स्थिर अक्षर *name = शून्य;
-    पूर्णांक start_page, stop_page;
-#अगर_अघोषित MANUAL_HWADDR0
-    पूर्णांक neX000, ctron;
-#पूर्ण_अगर
-    अटल अचिन्हित version_prपूर्णांकed;
+static int __init apne_probe1(struct net_device *dev, int ioaddr)
+{
+    int i;
+    unsigned char SA_prom[32];
+    int wordlength = 2;
+    const char *name = NULL;
+    int start_page, stop_page;
+#ifndef MANUAL_HWADDR0
+    int neX000, ctron;
+#endif
+    static unsigned version_printed;
 
-    अगर ((apne_msg_enable & NETIF_MSG_DRV) && (version_prपूर्णांकed++ == 0))
+    if ((apne_msg_enable & NETIF_MSG_DRV) && (version_printed++ == 0))
 		netdev_info(dev, version);
 
     netdev_info(dev, "PCMCIA NE*000 ethercard probe");
 
     /* Reset card. Who knows what dain-bramaged state it was left in. */
-    अणु	अचिन्हित दीर्घ reset_start_समय = jअगरfies;
+    {	unsigned long reset_start_time = jiffies;
 
 	outb(inb(ioaddr + NE_RESET), ioaddr + NE_RESET);
 
-	जबतक ((inb(ioaddr + NE_EN0_ISR) & ENISR_RESET) == 0)
-		अगर (समय_after(jअगरfies, reset_start_समय + 2*HZ/100)) अणु
+	while ((inb(ioaddr + NE_EN0_ISR) & ENISR_RESET) == 0)
+		if (time_after(jiffies, reset_start_time + 2*HZ/100)) {
 			pr_cont(" not found (no reset ack).\n");
-			वापस -ENODEV;
-		पूर्ण
+			return -ENODEV;
+		}
 
-	outb(0xff, ioaddr + NE_EN0_ISR);		/* Ack all पूर्णांकr. */
-    पूर्ण
+	outb(0xff, ioaddr + NE_EN0_ISR);		/* Ack all intr. */
+    }
 
-#अगर_अघोषित MANUAL_HWADDR0
+#ifndef MANUAL_HWADDR0
 
     /* Read the 16 bytes of station address PROM.
-       We must first initialize रेजिस्टरs, similar to NS8390_init(eअगरdev, 0).
-       We can't reliably पढ़ो the SAPROM address without this.
+       We must first initialize registers, similar to NS8390_init(eifdev, 0).
+       We can't reliably read the SAPROM address without this.
        (I learned the hard way!). */
-    अणु
-	काष्ठा अणुअचिन्हित दीर्घ value, offset; पूर्ण program_seq[] = अणु
-	    अणुE8390_NODMA+E8390_PAGE0+E8390_STOP, NE_CMDपूर्ण, /* Select page 0*/
-	    अणु0x48,	NE_EN0_DCFGपूर्ण,	/* Set byte-wide (0x48) access. */
-	    अणु0x00,	NE_EN0_RCNTLOपूर्ण,	/* Clear the count regs. */
-	    अणु0x00,	NE_EN0_RCNTHIपूर्ण,
-	    अणु0x00,	NE_EN0_IMRपूर्ण,	/* Mask completion irq. */
-	    अणु0xFF,	NE_EN0_ISRपूर्ण,
-	    अणुE8390_RXOFF, NE_EN0_RXCRपूर्ण,	/* 0x20  Set to monitor */
-	    अणुE8390_TXOFF, NE_EN0_TXCRपूर्ण,	/* 0x02  and loopback mode. */
-	    अणु32,	NE_EN0_RCNTLOपूर्ण,
-	    अणु0x00,	NE_EN0_RCNTHIपूर्ण,
-	    अणु0x00,	NE_EN0_RSARLOपूर्ण,	/* DMA starting at 0x0000. */
-	    अणु0x00,	NE_EN0_RSARHIपूर्ण,
-	    अणुE8390_RREAD+E8390_START, NE_CMDपूर्ण,
-	पूर्ण;
-	क्रम (i = 0; i < ARRAY_SIZE(program_seq); i++) अणु
+    {
+	struct {unsigned long value, offset; } program_seq[] = {
+	    {E8390_NODMA+E8390_PAGE0+E8390_STOP, NE_CMD}, /* Select page 0*/
+	    {0x48,	NE_EN0_DCFG},	/* Set byte-wide (0x48) access. */
+	    {0x00,	NE_EN0_RCNTLO},	/* Clear the count regs. */
+	    {0x00,	NE_EN0_RCNTHI},
+	    {0x00,	NE_EN0_IMR},	/* Mask completion irq. */
+	    {0xFF,	NE_EN0_ISR},
+	    {E8390_RXOFF, NE_EN0_RXCR},	/* 0x20  Set to monitor */
+	    {E8390_TXOFF, NE_EN0_TXCR},	/* 0x02  and loopback mode. */
+	    {32,	NE_EN0_RCNTLO},
+	    {0x00,	NE_EN0_RCNTHI},
+	    {0x00,	NE_EN0_RSARLO},	/* DMA starting at 0x0000. */
+	    {0x00,	NE_EN0_RSARHI},
+	    {E8390_RREAD+E8390_START, NE_CMD},
+	};
+	for (i = 0; i < ARRAY_SIZE(program_seq); i++) {
 	    outb(program_seq[i].value, ioaddr + program_seq[i].offset);
-	पूर्ण
+	}
 
-    पूर्ण
-    क्रम(i = 0; i < 32 /*माप(SA_prom)*/; i+=2) अणु
+    }
+    for(i = 0; i < 32 /*sizeof(SA_prom)*/; i+=2) {
 	SA_prom[i] = inb(ioaddr + NE_DATAPORT);
 	SA_prom[i+1] = inb(ioaddr + NE_DATAPORT);
-	अगर (SA_prom[i] != SA_prom[i+1])
+	if (SA_prom[i] != SA_prom[i+1])
 	    wordlength = 1;
-    पूर्ण
+    }
 
-    /*	At this poपूर्णांक, wordlength *only* tells us अगर the SA_prom is द्विगुनd
-	up or not because some broken PCI cards करोn't respect the byte-wide
-	request in program_seq above, and hence करोn't have द्विगुनd up values.
+    /*	At this point, wordlength *only* tells us if the SA_prom is doubled
+	up or not because some broken PCI cards don't respect the byte-wide
+	request in program_seq above, and hence don't have doubled up values.
 	These broken cards would otherwise be detected as an ne1000.  */
 
-    अगर (wordlength == 2)
-	क्रम (i = 0; i < 16; i++)
+    if (wordlength == 2)
+	for (i = 0; i < 16; i++)
 		SA_prom[i] = SA_prom[i+i];
 
-    अगर (wordlength == 2) अणु
-	/* We must set the 8390 क्रम word mode. */
+    if (wordlength == 2) {
+	/* We must set the 8390 for word mode. */
 	outb(0x49, ioaddr + NE_EN0_DCFG);
 	start_page = NESM_START_PG;
 	stop_page = NESM_STOP_PG;
-    पूर्ण अन्यथा अणु
+    } else {
 	start_page = NE1SM_START_PG;
 	stop_page = NE1SM_STOP_PG;
-    पूर्ण
+    }
 
     neX000 = (SA_prom[14] == 0x57  &&  SA_prom[15] == 0x57);
     ctron =  (SA_prom[0] == 0x00 && SA_prom[1] == 0x00 && SA_prom[2] == 0x1d);
 
     /* Set up the rest of the parameters. */
-    अगर (neX000) अणु
+    if (neX000) {
 	name = (wordlength == 2) ? "NE2000" : "NE1000";
-    पूर्ण अन्यथा अगर (ctron) अणु
+    } else if (ctron) {
 	name = (wordlength == 2) ? "Ctron-8" : "Ctron-16";
 	start_page = 0x01;
 	stop_page = (wordlength == 2) ? 0x40 : 0x20;
-    पूर्ण अन्यथा अणु
+    } else {
 	pr_cont(" not found.\n");
-	वापस -ENXIO;
+	return -ENXIO;
 
-    पूर्ण
+    }
 
-#अन्यथा
+#else
     wordlength = 2;
-    /* We must set the 8390 क्रम word mode. */
+    /* We must set the 8390 for word mode. */
     outb(0x49, ioaddr + NE_EN0_DCFG);
     start_page = NESM_START_PG;
     stop_page = NESM_STOP_PG;
@@ -316,17 +315,17 @@ MODULE_PARM_DESC(msg_enable, "Debug message level (see linux/netdevice.h for bit
     SA_prom[4] = MANUAL_HWADDR4;
     SA_prom[5] = MANUAL_HWADDR5;
     name = "NE2000";
-#पूर्ण_अगर
+#endif
 
     dev->base_addr = ioaddr;
     dev->irq = IRQ_AMIGA_PORTS;
     dev->netdev_ops = &ei_netdev_ops;
 
     /* Install the Interrupt handler */
-    i = request_irq(dev->irq, apne_पूर्णांकerrupt, IRQF_SHARED, DRV_NAME, dev);
-    अगर (i) वापस i;
+    i = request_irq(dev->irq, apne_interrupt, IRQF_SHARED, DRV_NAME, dev);
+    if (i) return i;
 
-    क्रम (i = 0; i < ETH_ALEN; i++)
+    for (i = 0; i < ETH_ALEN; i++)
 	dev->dev_addr[i] = SA_prom[i];
 
     pr_cont(" %pM\n", dev->dev_addr);
@@ -347,108 +346,108 @@ MODULE_PARM_DESC(msg_enable, "Debug message level (see linux/netdevice.h for bit
 
     NS8390_init(dev, 0);
 
-    pcmcia_ack_पूर्णांक(pcmcia_get_पूर्णांकreq());		/* ack PCMCIA पूर्णांक req */
+    pcmcia_ack_int(pcmcia_get_intreq());		/* ack PCMCIA int req */
     pcmcia_enable_irq();
 
     apne_owned = 1;
 
-    वापस 0;
-पूर्ण
+    return 0;
+}
 
-/* Hard reset the card.  This used to छोड़ो क्रम the same period that a
+/* Hard reset the card.  This used to pause for the same period that a
    8390 reset command required, but that shouldn't be necessary. */
-अटल व्योम
-apne_reset_8390(काष्ठा net_device *dev)
-अणु
-    अचिन्हित दीर्घ reset_start_समय = jअगरfies;
-    काष्ठा ei_device *ei_local = netdev_priv(dev);
+static void
+apne_reset_8390(struct net_device *dev)
+{
+    unsigned long reset_start_time = jiffies;
+    struct ei_device *ei_local = netdev_priv(dev);
 
     init_pcmcia();
 
-    netअगर_dbg(ei_local, hw, dev, "resetting the 8390 t=%ld...\n", jअगरfies);
+    netif_dbg(ei_local, hw, dev, "resetting the 8390 t=%ld...\n", jiffies);
 
     outb(inb(NE_BASE + NE_RESET), NE_BASE + NE_RESET);
 
     ei_status.txing = 0;
-    ei_status.dमुख्यg = 0;
+    ei_status.dmaing = 0;
 
     /* This check _should_not_ be necessary, omit eventually. */
-    जबतक ((inb(NE_BASE+NE_EN0_ISR) & ENISR_RESET) == 0)
-	अगर (समय_after(jअगरfies, reset_start_समय + 2*HZ/100)) अणु
+    while ((inb(NE_BASE+NE_EN0_ISR) & ENISR_RESET) == 0)
+	if (time_after(jiffies, reset_start_time + 2*HZ/100)) {
 		netdev_err(dev, "ne_reset_8390() did not complete.\n");
-		अवरोध;
-	पूर्ण
-    outb(ENISR_RESET, NE_BASE + NE_EN0_ISR);	/* Ack पूर्णांकr. */
-पूर्ण
+		break;
+	}
+    outb(ENISR_RESET, NE_BASE + NE_EN0_ISR);	/* Ack intr. */
+}
 
-/* Grab the 8390 specअगरic header. Similar to the block_input routine, but
-   we करोn't need to be concerned with ring wrap as the header will be at
+/* Grab the 8390 specific header. Similar to the block_input routine, but
+   we don't need to be concerned with ring wrap as the header will be at
    the start of a page, so we optimize accordingly. */
 
-अटल व्योम
-apne_get_8390_hdr(काष्ठा net_device *dev, काष्ठा e8390_pkt_hdr *hdr, पूर्णांक ring_page)
-अणु
+static void
+apne_get_8390_hdr(struct net_device *dev, struct e8390_pkt_hdr *hdr, int ring_page)
+{
 
-    पूर्णांक nic_base = dev->base_addr;
-    पूर्णांक cnt;
-    अक्षर *ptrc;
-    लघु *ptrs;
+    int nic_base = dev->base_addr;
+    int cnt;
+    char *ptrc;
+    short *ptrs;
 
     /* This *shouldn't* happen. If it does, it's the last thing you'll see */
-    अगर (ei_status.dमुख्यg) अणु
+    if (ei_status.dmaing) {
 	netdev_err(dev, "DMAing conflict in ne_get_8390_hdr "
 		   "[DMAstat:%d][irqlock:%d][intr:%d].\n",
-		   ei_status.dमुख्यg, ei_status.irqlock, dev->irq);
-	वापस;
-    पूर्ण
+		   ei_status.dmaing, ei_status.irqlock, dev->irq);
+	return;
+    }
 
-    ei_status.dमुख्यg |= 0x01;
+    ei_status.dmaing |= 0x01;
     outb(E8390_NODMA+E8390_PAGE0+E8390_START, nic_base+ NE_CMD);
     outb(ENISR_RDC, nic_base + NE_EN0_ISR);
-    outb(माप(काष्ठा e8390_pkt_hdr), nic_base + NE_EN0_RCNTLO);
+    outb(sizeof(struct e8390_pkt_hdr), nic_base + NE_EN0_RCNTLO);
     outb(0, nic_base + NE_EN0_RCNTHI);
     outb(0, nic_base + NE_EN0_RSARLO);		/* On page boundary */
     outb(ring_page, nic_base + NE_EN0_RSARHI);
     outb(E8390_RREAD+E8390_START, nic_base + NE_CMD);
 
-    अगर (ei_status.word16) अणु
-        ptrs = (लघु*)hdr;
-        क्रम(cnt = 0; cnt < (माप(काष्ठा e8390_pkt_hdr)>>1); cnt++)
+    if (ei_status.word16) {
+        ptrs = (short*)hdr;
+        for(cnt = 0; cnt < (sizeof(struct e8390_pkt_hdr)>>1); cnt++)
             *ptrs++ = inw(NE_BASE + NE_DATAPORT);
-    पूर्ण अन्यथा अणु
-        ptrc = (अक्षर*)hdr;
-        क्रम(cnt = 0; cnt < माप(काष्ठा e8390_pkt_hdr); cnt++)
+    } else {
+        ptrc = (char*)hdr;
+        for(cnt = 0; cnt < sizeof(struct e8390_pkt_hdr); cnt++)
             *ptrc++ = inb(NE_BASE + NE_DATAPORT);
-    पूर्ण
+    }
 
-    outb(ENISR_RDC, nic_base + NE_EN0_ISR);	/* Ack पूर्णांकr. */
-    ei_status.dमुख्यg &= ~0x01;
+    outb(ENISR_RDC, nic_base + NE_EN0_ISR);	/* Ack intr. */
+    ei_status.dmaing &= ~0x01;
 
     le16_to_cpus(&hdr->count);
-पूर्ण
+}
 
 /* Block input and output, similar to the Crynwr packet driver.  If you
-   are porting to a new ethercard, look at the packet driver source क्रम hपूर्णांकs.
-   The NEx000 करोesn't share the on-board packet memory -- you have to put
+   are porting to a new ethercard, look at the packet driver source for hints.
+   The NEx000 doesn't share the on-board packet memory -- you have to put
    the packet out through the "remote DMA" dataport using outb. */
 
-अटल व्योम
-apne_block_input(काष्ठा net_device *dev, पूर्णांक count, काष्ठा sk_buff *skb, पूर्णांक ring_offset)
-अणु
-    पूर्णांक nic_base = dev->base_addr;
-    अक्षर *buf = skb->data;
-    अक्षर *ptrc;
-    लघु *ptrs;
-    पूर्णांक cnt;
+static void
+apne_block_input(struct net_device *dev, int count, struct sk_buff *skb, int ring_offset)
+{
+    int nic_base = dev->base_addr;
+    char *buf = skb->data;
+    char *ptrc;
+    short *ptrs;
+    int cnt;
 
     /* This *shouldn't* happen. If it does, it's the last thing you'll see */
-    अगर (ei_status.dमुख्यg) अणु
+    if (ei_status.dmaing) {
 		netdev_err(dev, "DMAing conflict in ne_block_input "
 			   "[DMAstat:%d][irqlock:%d][intr:%d].\n",
-			   ei_status.dमुख्यg, ei_status.irqlock, dev->irq);
-	वापस;
-    पूर्ण
-    ei_status.dमुख्यg |= 0x01;
+			   ei_status.dmaing, ei_status.irqlock, dev->irq);
+	return;
+    }
+    ei_status.dmaing |= 0x01;
     outb(E8390_NODMA+E8390_PAGE0+E8390_START, nic_base+ NE_CMD);
     outb(ENISR_RDC, nic_base + NE_EN0_ISR);
     outb(count & 0xff, nic_base + NE_EN0_RCNTLO);
@@ -456,48 +455,48 @@ apne_block_input(काष्ठा net_device *dev, पूर्णांक co
     outb(ring_offset & 0xff, nic_base + NE_EN0_RSARLO);
     outb(ring_offset >> 8, nic_base + NE_EN0_RSARHI);
     outb(E8390_RREAD+E8390_START, nic_base + NE_CMD);
-    अगर (ei_status.word16) अणु
-      ptrs = (लघु*)buf;
-      क्रम (cnt = 0; cnt < (count>>1); cnt++)
+    if (ei_status.word16) {
+      ptrs = (short*)buf;
+      for (cnt = 0; cnt < (count>>1); cnt++)
         *ptrs++ = inw(NE_BASE + NE_DATAPORT);
-      अगर (count & 0x01) अणु
+      if (count & 0x01) {
 	buf[count-1] = inb(NE_BASE + NE_DATAPORT);
-      पूर्ण
-    पूर्ण अन्यथा अणु
+      }
+    } else {
       ptrc = buf;
-      क्रम (cnt = 0; cnt < count; cnt++)
+      for (cnt = 0; cnt < count; cnt++)
         *ptrc++ = inb(NE_BASE + NE_DATAPORT);
-    पूर्ण
+    }
 
-    outb(ENISR_RDC, nic_base + NE_EN0_ISR);	/* Ack पूर्णांकr. */
-    ei_status.dमुख्यg &= ~0x01;
-पूर्ण
+    outb(ENISR_RDC, nic_base + NE_EN0_ISR);	/* Ack intr. */
+    ei_status.dmaing &= ~0x01;
+}
 
-अटल व्योम
-apne_block_output(काष्ठा net_device *dev, पूर्णांक count,
-		स्थिर अचिन्हित अक्षर *buf, स्थिर पूर्णांक start_page)
-अणु
-    पूर्णांक nic_base = NE_BASE;
-    अचिन्हित दीर्घ dma_start;
-    अक्षर *ptrc;
-    लघु *ptrs;
-    पूर्णांक cnt;
+static void
+apne_block_output(struct net_device *dev, int count,
+		const unsigned char *buf, const int start_page)
+{
+    int nic_base = NE_BASE;
+    unsigned long dma_start;
+    char *ptrc;
+    short *ptrs;
+    int cnt;
 
-    /* Round the count up क्रम word ग_लिखोs.  Do we need to करो this?
+    /* Round the count up for word writes.  Do we need to do this?
        What effect will an odd byte count have on the 8390?
        I should check someday. */
-    अगर (ei_status.word16 && (count & 0x01))
+    if (ei_status.word16 && (count & 0x01))
       count++;
 
     /* This *shouldn't* happen. If it does, it's the last thing you'll see */
-    अगर (ei_status.dमुख्यg) अणु
+    if (ei_status.dmaing) {
 		netdev_err(dev, "DMAing conflict in ne_block_output."
 			   "[DMAstat:%d][irqlock:%d][intr:%d]\n",
-			   ei_status.dमुख्यg, ei_status.irqlock, dev->irq);
-	वापस;
-    पूर्ण
-    ei_status.dमुख्यg |= 0x01;
-    /* We should alपढ़ोy be in page 0, but to be safe... */
+			   ei_status.dmaing, ei_status.irqlock, dev->irq);
+	return;
+    }
+    ei_status.dmaing |= 0x01;
+    /* We should already be in page 0, but to be safe... */
     outb(E8390_PAGE0+E8390_START+E8390_NODMA, nic_base + NE_CMD);
 
     outb(ENISR_RDC, nic_base + NE_EN0_ISR);
@@ -509,119 +508,119 @@ apne_block_output(काष्ठा net_device *dev, पूर्णांक c
     outb(start_page, nic_base + NE_EN0_RSARHI);
 
     outb(E8390_RWRITE+E8390_START, nic_base + NE_CMD);
-    अगर (ei_status.word16) अणु
-        ptrs = (लघु*)buf;
-        क्रम (cnt = 0; cnt < count>>1; cnt++)
+    if (ei_status.word16) {
+        ptrs = (short*)buf;
+        for (cnt = 0; cnt < count>>1; cnt++)
             outw(*ptrs++, NE_BASE+NE_DATAPORT);
-    पूर्ण अन्यथा अणु
-        ptrc = (अक्षर*)buf;
-        क्रम (cnt = 0; cnt < count; cnt++)
+    } else {
+        ptrc = (char*)buf;
+        for (cnt = 0; cnt < count; cnt++)
 	    outb(*ptrc++, NE_BASE + NE_DATAPORT);
-    पूर्ण
+    }
 
-    dma_start = jअगरfies;
+    dma_start = jiffies;
 
-    जबतक ((inb(NE_BASE + NE_EN0_ISR) & ENISR_RDC) == 0)
-	अगर (समय_after(jअगरfies, dma_start + 2*HZ/100)) अणु	/* 20ms */
+    while ((inb(NE_BASE + NE_EN0_ISR) & ENISR_RDC) == 0)
+	if (time_after(jiffies, dma_start + 2*HZ/100)) {	/* 20ms */
 		netdev_warn(dev, "timeout waiting for Tx RDC.\n");
 		apne_reset_8390(dev);
 		NS8390_init(dev,1);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-    outb(ENISR_RDC, nic_base + NE_EN0_ISR);	/* Ack पूर्णांकr. */
-    ei_status.dमुख्यg &= ~0x01;
-पूर्ण
+    outb(ENISR_RDC, nic_base + NE_EN0_ISR);	/* Ack intr. */
+    ei_status.dmaing &= ~0x01;
+}
 
-अटल irqवापस_t apne_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-    अचिन्हित अक्षर pcmcia_पूर्णांकreq;
+static irqreturn_t apne_interrupt(int irq, void *dev_id)
+{
+    unsigned char pcmcia_intreq;
 
-    अगर (!(gayle.पूर्णांकen & GAYLE_IRQ_IRQ))
-        वापस IRQ_NONE;
+    if (!(gayle.inten & GAYLE_IRQ_IRQ))
+        return IRQ_NONE;
 
-    pcmcia_पूर्णांकreq = pcmcia_get_पूर्णांकreq();
+    pcmcia_intreq = pcmcia_get_intreq();
 
-    अगर (!(pcmcia_पूर्णांकreq & GAYLE_IRQ_IRQ)) अणु
-        pcmcia_ack_पूर्णांक(pcmcia_पूर्णांकreq);
-        वापस IRQ_NONE;
-    पूर्ण
-    अगर (apne_msg_enable & NETIF_MSG_INTR)
-	pr_debug("pcmcia intreq = %x\n", pcmcia_पूर्णांकreq);
-    pcmcia_disable_irq();			/* to get rid of the sti() within ei_पूर्णांकerrupt */
-    ei_पूर्णांकerrupt(irq, dev_id);
-    pcmcia_ack_पूर्णांक(pcmcia_get_पूर्णांकreq());
+    if (!(pcmcia_intreq & GAYLE_IRQ_IRQ)) {
+        pcmcia_ack_int(pcmcia_intreq);
+        return IRQ_NONE;
+    }
+    if (apne_msg_enable & NETIF_MSG_INTR)
+	pr_debug("pcmcia intreq = %x\n", pcmcia_intreq);
+    pcmcia_disable_irq();			/* to get rid of the sti() within ei_interrupt */
+    ei_interrupt(irq, dev_id);
+    pcmcia_ack_int(pcmcia_get_intreq());
     pcmcia_enable_irq();
-    वापस IRQ_HANDLED;
-पूर्ण
+    return IRQ_HANDLED;
+}
 
-#अगर_घोषित MODULE
-अटल काष्ठा net_device *apne_dev;
+#ifdef MODULE
+static struct net_device *apne_dev;
 
-अटल पूर्णांक __init apne_module_init(व्योम)
-अणु
+static int __init apne_module_init(void)
+{
 	apne_dev = apne_probe(-1);
-	वापस PTR_ERR_OR_ZERO(apne_dev);
-पूर्ण
+	return PTR_ERR_OR_ZERO(apne_dev);
+}
 
-अटल व्योम __निकास apne_module_निकास(व्योम)
-अणु
-	unरेजिस्टर_netdev(apne_dev);
+static void __exit apne_module_exit(void)
+{
+	unregister_netdev(apne_dev);
 
 	pcmcia_disable_irq();
 
-	मुक्त_irq(IRQ_AMIGA_PORTS, apne_dev);
+	free_irq(IRQ_AMIGA_PORTS, apne_dev);
 
 	pcmcia_reset();
 
 	release_region(IOBASE, 0x20);
 
-	मुक्त_netdev(apne_dev);
-पूर्ण
+	free_netdev(apne_dev);
+}
 module_init(apne_module_init);
-module_निकास(apne_module_निकास);
-#पूर्ण_अगर
+module_exit(apne_module_exit);
+#endif
 
-अटल पूर्णांक init_pcmcia(व्योम)
-अणु
-	u_अक्षर config;
-#अगर_अघोषित MANUAL_CONFIG
-	u_अक्षर tuple[32];
-	पूर्णांक offset_len;
-#पूर्ण_अगर
-	u_दीर्घ offset;
+static int init_pcmcia(void)
+{
+	u_char config;
+#ifndef MANUAL_CONFIG
+	u_char tuple[32];
+	int offset_len;
+#endif
+	u_long offset;
 
 	pcmcia_reset();
 	pcmcia_program_voltage(PCMCIA_0V);
 	pcmcia_access_speed(PCMCIA_SPEED_250NS);
-	pcmcia_ग_लिखो_enable();
+	pcmcia_write_enable();
 
-#अगर_घोषित MANUAL_CONFIG
+#ifdef MANUAL_CONFIG
 	config = MANUAL_CONFIG;
-#अन्यथा
-	/* get and ग_लिखो config byte to enable IO port */
+#else
+	/* get and write config byte to enable IO port */
 
-	अगर (pcmcia_copy_tuple(CISTPL_CFTABLE_ENTRY, tuple, 32) < 3)
-		वापस 0;
+	if (pcmcia_copy_tuple(CISTPL_CFTABLE_ENTRY, tuple, 32) < 3)
+		return 0;
 
 	config = tuple[2] & 0x3f;
-#पूर्ण_अगर
-#अगर_घोषित MANUAL_OFFSET
+#endif
+#ifdef MANUAL_OFFSET
 	offset = MANUAL_OFFSET;
-#अन्यथा
-	अगर (pcmcia_copy_tuple(CISTPL_CONFIG, tuple, 32) < 6)
-		वापस 0;
+#else
+	if (pcmcia_copy_tuple(CISTPL_CONFIG, tuple, 32) < 6)
+		return 0;
 
 	offset_len = (tuple[2] & 0x3) + 1;
 	offset = 0;
-	जबतक(offset_len--) अणु
+	while(offset_len--) {
 		offset = (offset << 8) | tuple[4+offset_len];
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
 	out_8(GAYLE_ATTRIBUTE+offset, config);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 MODULE_LICENSE("GPL");

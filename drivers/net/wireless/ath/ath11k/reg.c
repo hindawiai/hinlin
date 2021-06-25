@@ -1,144 +1,143 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause-Clear
+// SPDX-License-Identifier: BSD-3-Clause-Clear
 /*
  * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  */
-#समावेश "core.h"
-#समावेश "debug.h"
+#include "core.h"
+#include "debug.h"
 
-/* World regकरोm to be used in हाल शेष regd from fw is unavailable */
-#घोषणा ATH11K_2GHZ_CH01_11      REG_RULE(2412 - 10, 2462 + 10, 40, 0, 20, 0)
-#घोषणा ATH11K_5GHZ_5150_5350    REG_RULE(5150 - 10, 5350 + 10, 80, 0, 30,\
+/* World regdom to be used in case default regd from fw is unavailable */
+#define ATH11K_2GHZ_CH01_11      REG_RULE(2412 - 10, 2462 + 10, 40, 0, 20, 0)
+#define ATH11K_5GHZ_5150_5350    REG_RULE(5150 - 10, 5350 + 10, 80, 0, 30,\
 					  NL80211_RRF_NO_IR)
-#घोषणा ATH11K_5GHZ_5725_5850    REG_RULE(5725 - 10, 5850 + 10, 80, 0, 30,\
+#define ATH11K_5GHZ_5725_5850    REG_RULE(5725 - 10, 5850 + 10, 80, 0, 30,\
 					  NL80211_RRF_NO_IR)
 
-#घोषणा ETSI_WEATHER_RADAR_BAND_LOW		5590
-#घोषणा ETSI_WEATHER_RADAR_BAND_HIGH		5650
-#घोषणा ETSI_WEATHER_RADAR_BAND_CAC_TIMEOUT	600000
+#define ETSI_WEATHER_RADAR_BAND_LOW		5590
+#define ETSI_WEATHER_RADAR_BAND_HIGH		5650
+#define ETSI_WEATHER_RADAR_BAND_CAC_TIMEOUT	600000
 
-अटल स्थिर काष्ठा ieee80211_regकरोमुख्य ath11k_world_regd = अणु
+static const struct ieee80211_regdomain ath11k_world_regd = {
 	.n_reg_rules = 3,
 	.alpha2 =  "00",
-	.reg_rules = अणु
+	.reg_rules = {
 		ATH11K_2GHZ_CH01_11,
 		ATH11K_5GHZ_5150_5350,
 		ATH11K_5GHZ_5725_5850,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल bool ath11k_regकरोm_changes(काष्ठा ath11k *ar, अक्षर *alpha2)
-अणु
-	स्थिर काष्ठा ieee80211_regकरोमुख्य *regd;
+static bool ath11k_regdom_changes(struct ath11k *ar, char *alpha2)
+{
+	const struct ieee80211_regdomain *regd;
 
 	regd = rcu_dereference_rtnl(ar->hw->wiphy->regd);
 	/* This can happen during wiphy registration where the previous
-	 * user request is received beक्रमe we update the regd received
+	 * user request is received before we update the regd received
 	 * from firmware.
 	 */
-	अगर (!regd)
-		वापस true;
+	if (!regd)
+		return true;
 
-	वापस स_भेद(regd->alpha2, alpha2, 2) != 0;
-पूर्ण
+	return memcmp(regd->alpha2, alpha2, 2) != 0;
+}
 
-अटल व्योम
-ath11k_reg_notअगरier(काष्ठा wiphy *wiphy, काष्ठा regulatory_request *request)
-अणु
-	काष्ठा ieee80211_hw *hw = wiphy_to_ieee80211_hw(wiphy);
-	काष्ठा wmi_init_country_params init_country_param;
-	काष्ठा ath11k *ar = hw->priv;
-	पूर्णांक ret;
+static void
+ath11k_reg_notifier(struct wiphy *wiphy, struct regulatory_request *request)
+{
+	struct ieee80211_hw *hw = wiphy_to_ieee80211_hw(wiphy);
+	struct wmi_init_country_params init_country_param;
+	struct ath11k *ar = hw->priv;
+	int ret;
 
 	ath11k_dbg(ar->ab, ATH11K_DBG_REG,
 		   "Regulatory Notification received for %s\n", wiphy_name(wiphy));
 
-	/* Currently supporting only General User Hपूर्णांकs. Cell base user
-	 * hपूर्णांकs to be handled later.
-	 * Hपूर्णांकs from other sources like Core, Beacons are not expected क्रम
+	/* Currently supporting only General User Hints. Cell base user
+	 * hints to be handled later.
+	 * Hints from other sources like Core, Beacons are not expected for
 	 * self managed wiphy's
 	 */
-	अगर (!(request->initiator == NL80211_REGDOM_SET_BY_USER &&
-	      request->user_reg_hपूर्णांक_type == NL80211_USER_REG_HINT_USER)) अणु
+	if (!(request->initiator == NL80211_REGDOM_SET_BY_USER &&
+	      request->user_reg_hint_type == NL80211_USER_REG_HINT_USER)) {
 		ath11k_warn(ar->ab, "Unexpected Regulatory event for this wiphy\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!IS_ENABLED(CONFIG_ATH_REG_DYNAMIC_USER_REG_HINTS)) अणु
+	if (!IS_ENABLED(CONFIG_ATH_REG_DYNAMIC_USER_REG_HINTS)) {
 		ath11k_dbg(ar->ab, ATH11K_DBG_REG,
 			   "Country Setting is not allowed\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!ath11k_regकरोm_changes(ar, request->alpha2)) अणु
+	if (!ath11k_regdom_changes(ar, request->alpha2)) {
 		ath11k_dbg(ar->ab, ATH11K_DBG_REG, "Country is already set\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* Set the country code to the firmware and रुको क्रम
-	 * the WMI_REG_CHAN_LIST_CC EVENT क्रम updating the
+	/* Set the country code to the firmware and wait for
+	 * the WMI_REG_CHAN_LIST_CC EVENT for updating the
 	 * reg info
 	 */
 	init_country_param.flags = ALPHA_IS_SET;
-	स_नकल(&init_country_param.cc_info.alpha2, request->alpha2, 2);
+	memcpy(&init_country_param.cc_info.alpha2, request->alpha2, 2);
 	init_country_param.cc_info.alpha2[2] = 0;
 
 	ret = ath11k_wmi_send_init_country_cmd(ar, init_country_param);
-	अगर (ret)
+	if (ret)
 		ath11k_warn(ar->ab,
 			    "INIT Country code set to fw failed : %d\n", ret);
-पूर्ण
+}
 
-पूर्णांक ath11k_reg_update_chan_list(काष्ठा ath11k *ar)
-अणु
-	काष्ठा ieee80211_supported_band **bands;
-	काष्ठा scan_chan_list_params *params;
-	काष्ठा ieee80211_channel *channel;
-	काष्ठा ieee80211_hw *hw = ar->hw;
-	काष्ठा channel_param *ch;
-	क्रमागत nl80211_band band;
-	पूर्णांक num_channels = 0;
-	पूर्णांक params_len;
-	पूर्णांक i, ret;
+int ath11k_reg_update_chan_list(struct ath11k *ar)
+{
+	struct ieee80211_supported_band **bands;
+	struct scan_chan_list_params *params;
+	struct ieee80211_channel *channel;
+	struct ieee80211_hw *hw = ar->hw;
+	struct channel_param *ch;
+	enum nl80211_band band;
+	int num_channels = 0;
+	int params_len;
+	int i, ret;
 
 	bands = hw->wiphy->bands;
-	क्रम (band = 0; band < NUM_NL80211_BANDS; band++) अणु
-		अगर (!bands[band])
-			जारी;
+	for (band = 0; band < NUM_NL80211_BANDS; band++) {
+		if (!bands[band])
+			continue;
 
-		क्रम (i = 0; i < bands[band]->n_channels; i++) अणु
-			अगर (bands[band]->channels[i].flags &
+		for (i = 0; i < bands[band]->n_channels; i++) {
+			if (bands[band]->channels[i].flags &
 			    IEEE80211_CHAN_DISABLED)
-				जारी;
+				continue;
 
 			num_channels++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (WARN_ON(!num_channels))
-		वापस -EINVAL;
+	if (WARN_ON(!num_channels))
+		return -EINVAL;
 
-	params_len = माप(काष्ठा scan_chan_list_params) +
-			num_channels * माप(काष्ठा channel_param);
+	params_len = sizeof(struct scan_chan_list_params) +
+			num_channels * sizeof(struct channel_param);
 	params = kzalloc(params_len, GFP_KERNEL);
 
-	अगर (!params)
-		वापस -ENOMEM;
+	if (!params)
+		return -ENOMEM;
 
 	params->pdev_id = ar->pdev->pdev_id;
 	params->nallchans = num_channels;
 
 	ch = params->ch_param;
 
-	क्रम (band = 0; band < NUM_NL80211_BANDS; band++) अणु
-		अगर (!bands[band])
-			जारी;
+	for (band = 0; band < NUM_NL80211_BANDS; band++) {
+		if (!bands[band])
+			continue;
 
-		क्रम (i = 0; i < bands[band]->n_channels; i++) अणु
+		for (i = 0; i < bands[band]->n_channels; i++) {
 			channel = &bands[band]->channels[i];
 
-			अगर (channel->flags & IEEE80211_CHAN_DISABLED)
-				जारी;
+			if (channel->flags & IEEE80211_CHAN_DISABLED)
+				continue;
 
 			/* TODO: Set to true/false based on some condition? */
 			ch->allow_ht = true;
@@ -152,100 +151,100 @@ ath11k_reg_notअगरier(काष्ठा wiphy *wiphy, काष्ठा r
 			ch->is_chan_passive |= ch->dfs_set;
 			ch->mhz = channel->center_freq;
 			ch->cfreq1 = channel->center_freq;
-			ch->minघातer = 0;
-			ch->maxघातer = channel->max_घातer * 2;
-			ch->maxregघातer = channel->max_reg_घातer * 2;
+			ch->minpower = 0;
+			ch->maxpower = channel->max_power * 2;
+			ch->maxregpower = channel->max_reg_power * 2;
 			ch->antennamax = channel->max_antenna_gain * 2;
 
 			/* TODO: Use appropriate phymodes */
-			अगर (channel->band == NL80211_BAND_2GHZ)
+			if (channel->band == NL80211_BAND_2GHZ)
 				ch->phy_mode = MODE_11G;
-			अन्यथा
+			else
 				ch->phy_mode = MODE_11A;
 
-			अगर (channel->band == NL80211_BAND_6GHZ &&
+			if (channel->band == NL80211_BAND_6GHZ &&
 			    cfg80211_channel_is_psc(channel))
 				ch->psc_channel = true;
 
 			ath11k_dbg(ar->ab, ATH11K_DBG_WMI,
 				   "mac channel [%d/%d] freq %d maxpower %d regpower %d antenna %d mode %d\n",
 				   i, params->nallchans,
-				   ch->mhz, ch->maxघातer, ch->maxregघातer,
+				   ch->mhz, ch->maxpower, ch->maxregpower,
 				   ch->antennamax, ch->phy_mode);
 
 			ch++;
 			/* TODO: use quarrter/half rate, cfreq12, dfs_cfreq2
 			 * set_agile, reg_class_idx
 			 */
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	ret = ath11k_wmi_send_scan_chan_list_cmd(ar, params);
-	kमुक्त(params);
+	kfree(params);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ath11k_copy_regd(काष्ठा ieee80211_regकरोमुख्य *regd_orig,
-			     काष्ठा ieee80211_regकरोमुख्य *regd_copy)
-अणु
+static void ath11k_copy_regd(struct ieee80211_regdomain *regd_orig,
+			     struct ieee80211_regdomain *regd_copy)
+{
 	u8 i;
 
 	/* The caller should have checked error conditions */
-	स_नकल(regd_copy, regd_orig, माप(*regd_orig));
+	memcpy(regd_copy, regd_orig, sizeof(*regd_orig));
 
-	क्रम (i = 0; i < regd_orig->n_reg_rules; i++)
-		स_नकल(&regd_copy->reg_rules[i], &regd_orig->reg_rules[i],
-		       माप(काष्ठा ieee80211_reg_rule));
-पूर्ण
+	for (i = 0; i < regd_orig->n_reg_rules; i++)
+		memcpy(&regd_copy->reg_rules[i], &regd_orig->reg_rules[i],
+		       sizeof(struct ieee80211_reg_rule));
+}
 
-पूर्णांक ath11k_regd_update(काष्ठा ath11k *ar, bool init)
-अणु
-	काष्ठा ieee80211_regकरोमुख्य *regd, *regd_copy = शून्य;
-	पूर्णांक ret, regd_len, pdev_id;
-	काष्ठा ath11k_base *ab;
+int ath11k_regd_update(struct ath11k *ar, bool init)
+{
+	struct ieee80211_regdomain *regd, *regd_copy = NULL;
+	int ret, regd_len, pdev_id;
+	struct ath11k_base *ab;
 
 	ab = ar->ab;
 	pdev_id = ar->pdev_idx;
 
 	spin_lock_bh(&ab->base_lock);
 
-	अगर (init) अणु
+	if (init) {
 		/* Apply the regd received during init through
-		 * WMI_REG_CHAN_LIST_CC event. In हाल of failure to
-		 * receive the regd, initialize with a शेष world
+		 * WMI_REG_CHAN_LIST_CC event. In case of failure to
+		 * receive the regd, initialize with a default world
 		 * regulatory.
 		 */
-		अगर (ab->शेष_regd[pdev_id]) अणु
-			regd = ab->शेष_regd[pdev_id];
-		पूर्ण अन्यथा अणु
+		if (ab->default_regd[pdev_id]) {
+			regd = ab->default_regd[pdev_id];
+		} else {
 			ath11k_warn(ab,
 				    "failed to receive default regd during init\n");
-			regd = (काष्ठा ieee80211_regकरोमुख्य *)&ath11k_world_regd;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			regd = (struct ieee80211_regdomain *)&ath11k_world_regd;
+		}
+	} else {
 		regd = ab->new_regd[pdev_id];
-	पूर्ण
+	}
 
-	अगर (!regd) अणु
+	if (!regd) {
 		ret = -EINVAL;
 		spin_unlock_bh(&ab->base_lock);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	regd_len = माप(*regd) + (regd->n_reg_rules *
-		माप(काष्ठा ieee80211_reg_rule));
+	regd_len = sizeof(*regd) + (regd->n_reg_rules *
+		sizeof(struct ieee80211_reg_rule));
 
 	regd_copy = kzalloc(regd_len, GFP_ATOMIC);
-	अगर (regd_copy)
+	if (regd_copy)
 		ath11k_copy_regd(regd, regd_copy);
 
 	spin_unlock_bh(&ab->base_lock);
 
-	अगर (!regd_copy) अणु
+	if (!regd_copy) {
 		ret = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	rtnl_lock();
 	wiphy_lock(ar->hw->wiphy);
@@ -253,73 +252,73 @@ ath11k_reg_notअगरier(काष्ठा wiphy *wiphy, काष्ठा r
 	wiphy_unlock(ar->hw->wiphy);
 	rtnl_unlock();
 
-	kमुक्त(regd_copy);
+	kfree(regd_copy);
 
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
-	अगर (ar->state == ATH11K_STATE_ON) अणु
+	if (ar->state == ATH11K_STATE_ON) {
 		ret = ath11k_reg_update_chan_list(ar);
-		अगर (ret)
-			जाओ err;
-	पूर्ण
+		if (ret)
+			goto err;
+	}
 
-	वापस 0;
+	return 0;
 err:
 	ath11k_warn(ab, "failed to perform regd update : %d\n", ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल क्रमागत nl80211_dfs_regions
-ath11k_map_fw_dfs_region(क्रमागत ath11k_dfs_region dfs_region)
-अणु
-	चयन (dfs_region) अणु
-	हाल ATH11K_DFS_REG_FCC:
-	हाल ATH11K_DFS_REG_CN:
-		वापस NL80211_DFS_FCC;
-	हाल ATH11K_DFS_REG_ETSI:
-	हाल ATH11K_DFS_REG_KR:
-		वापस NL80211_DFS_ETSI;
-	हाल ATH11K_DFS_REG_MKK:
-	हाल ATH11K_DFS_REG_MKK_N:
-		वापस NL80211_DFS_JP;
-	शेष:
-		वापस NL80211_DFS_UNSET;
-	पूर्ण
-पूर्ण
+static enum nl80211_dfs_regions
+ath11k_map_fw_dfs_region(enum ath11k_dfs_region dfs_region)
+{
+	switch (dfs_region) {
+	case ATH11K_DFS_REG_FCC:
+	case ATH11K_DFS_REG_CN:
+		return NL80211_DFS_FCC;
+	case ATH11K_DFS_REG_ETSI:
+	case ATH11K_DFS_REG_KR:
+		return NL80211_DFS_ETSI;
+	case ATH11K_DFS_REG_MKK:
+	case ATH11K_DFS_REG_MKK_N:
+		return NL80211_DFS_JP;
+	default:
+		return NL80211_DFS_UNSET;
+	}
+}
 
-अटल u32 ath11k_map_fw_reg_flags(u16 reg_flags)
-अणु
+static u32 ath11k_map_fw_reg_flags(u16 reg_flags)
+{
 	u32 flags = 0;
 
-	अगर (reg_flags & REGULATORY_CHAN_NO_IR)
+	if (reg_flags & REGULATORY_CHAN_NO_IR)
 		flags = NL80211_RRF_NO_IR;
 
-	अगर (reg_flags & REGULATORY_CHAN_RADAR)
+	if (reg_flags & REGULATORY_CHAN_RADAR)
 		flags |= NL80211_RRF_DFS;
 
-	अगर (reg_flags & REGULATORY_CHAN_NO_OFDM)
+	if (reg_flags & REGULATORY_CHAN_NO_OFDM)
 		flags |= NL80211_RRF_NO_OFDM;
 
-	अगर (reg_flags & REGULATORY_CHAN_INDOOR_ONLY)
+	if (reg_flags & REGULATORY_CHAN_INDOOR_ONLY)
 		flags |= NL80211_RRF_NO_OUTDOOR;
 
-	अगर (reg_flags & REGULATORY_CHAN_NO_HT40)
+	if (reg_flags & REGULATORY_CHAN_NO_HT40)
 		flags |= NL80211_RRF_NO_HT40;
 
-	अगर (reg_flags & REGULATORY_CHAN_NO_80MHZ)
+	if (reg_flags & REGULATORY_CHAN_NO_80MHZ)
 		flags |= NL80211_RRF_NO_80MHZ;
 
-	अगर (reg_flags & REGULATORY_CHAN_NO_160MHZ)
+	if (reg_flags & REGULATORY_CHAN_NO_160MHZ)
 		flags |= NL80211_RRF_NO_160MHZ;
 
-	वापस flags;
-पूर्ण
+	return flags;
+}
 
-अटल bool
-ath11k_reg_can_पूर्णांकersect(काष्ठा ieee80211_reg_rule *rule1,
-			 काष्ठा ieee80211_reg_rule *rule2)
-अणु
+static bool
+ath11k_reg_can_intersect(struct ieee80211_reg_rule *rule1,
+			 struct ieee80211_reg_rule *rule2)
+{
 	u32 start_freq1, end_freq1;
 	u32 start_freq2, end_freq2;
 
@@ -329,28 +328,28 @@ ath11k_reg_can_पूर्णांकersect(काष्ठा ieee80211_reg_r
 	end_freq1 = rule1->freq_range.end_freq_khz;
 	end_freq2 = rule2->freq_range.end_freq_khz;
 
-	अगर ((start_freq1 >= start_freq2 &&
+	if ((start_freq1 >= start_freq2 &&
 	     start_freq1 < end_freq2) ||
 	    (start_freq2 > start_freq1 &&
 	     start_freq2 < end_freq1))
-		वापस true;
+		return true;
 
-	/* TODO: Should we restrict पूर्णांकersection feasibility
-	 *  based on min bandwidth of the पूर्णांकersected region also,
-	 *  say the पूर्णांकersected rule should have a  min bandwidth
+	/* TODO: Should we restrict intersection feasibility
+	 *  based on min bandwidth of the intersected region also,
+	 *  say the intersected rule should have a  min bandwidth
 	 * of 20MHz?
 	 */
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल व्योम ath11k_reg_पूर्णांकersect_rules(काष्ठा ieee80211_reg_rule *rule1,
-				       काष्ठा ieee80211_reg_rule *rule2,
-				       काष्ठा ieee80211_reg_rule *new_rule)
-अणु
+static void ath11k_reg_intersect_rules(struct ieee80211_reg_rule *rule1,
+				       struct ieee80211_reg_rule *rule2,
+				       struct ieee80211_reg_rule *new_rule)
+{
 	u32 start_freq1, end_freq1;
 	u32 start_freq2, end_freq2;
-	u32 freq_dअगरf, max_bw;
+	u32 freq_diff, max_bw;
 
 	start_freq1 = rule1->freq_range.start_freq_khz;
 	start_freq2 = rule2->freq_range.start_freq_khz;
@@ -362,135 +361,135 @@ ath11k_reg_can_पूर्णांकersect(काष्ठा ieee80211_reg_r
 						    start_freq2);
 	new_rule->freq_range.end_freq_khz = min_t(u32, end_freq1, end_freq2);
 
-	freq_dअगरf = new_rule->freq_range.end_freq_khz -
+	freq_diff = new_rule->freq_range.end_freq_khz -
 			new_rule->freq_range.start_freq_khz;
 	max_bw = min_t(u32, rule1->freq_range.max_bandwidth_khz,
 		       rule2->freq_range.max_bandwidth_khz);
-	new_rule->freq_range.max_bandwidth_khz = min_t(u32, max_bw, freq_dअगरf);
+	new_rule->freq_range.max_bandwidth_khz = min_t(u32, max_bw, freq_diff);
 
-	new_rule->घातer_rule.max_antenna_gain =
-		min_t(u32, rule1->घातer_rule.max_antenna_gain,
-		      rule2->घातer_rule.max_antenna_gain);
+	new_rule->power_rule.max_antenna_gain =
+		min_t(u32, rule1->power_rule.max_antenna_gain,
+		      rule2->power_rule.max_antenna_gain);
 
-	new_rule->घातer_rule.max_eirp = min_t(u32, rule1->घातer_rule.max_eirp,
-					      rule2->घातer_rule.max_eirp);
+	new_rule->power_rule.max_eirp = min_t(u32, rule1->power_rule.max_eirp,
+					      rule2->power_rule.max_eirp);
 
 	/* Use the flags of both the rules */
 	new_rule->flags = rule1->flags | rule2->flags;
 
-	/* To be safe, lts use the max cac समयout of both rules */
+	/* To be safe, lts use the max cac timeout of both rules */
 	new_rule->dfs_cac_ms = max_t(u32, rule1->dfs_cac_ms,
 				     rule2->dfs_cac_ms);
-पूर्ण
+}
 
-अटल काष्ठा ieee80211_regकरोमुख्य *
-ath11k_regd_पूर्णांकersect(काष्ठा ieee80211_regकरोमुख्य *शेष_regd,
-		      काष्ठा ieee80211_regकरोमुख्य *curr_regd)
-अणु
+static struct ieee80211_regdomain *
+ath11k_regd_intersect(struct ieee80211_regdomain *default_regd,
+		      struct ieee80211_regdomain *curr_regd)
+{
 	u8 num_old_regd_rules, num_curr_regd_rules, num_new_regd_rules;
-	काष्ठा ieee80211_reg_rule *old_rule, *curr_rule, *new_rule;
-	काष्ठा ieee80211_regकरोमुख्य *new_regd = शून्य;
+	struct ieee80211_reg_rule *old_rule, *curr_rule, *new_rule;
+	struct ieee80211_regdomain *new_regd = NULL;
 	u8 i, j, k;
 
-	num_old_regd_rules = शेष_regd->n_reg_rules;
+	num_old_regd_rules = default_regd->n_reg_rules;
 	num_curr_regd_rules = curr_regd->n_reg_rules;
 	num_new_regd_rules = 0;
 
-	/* Find the number of पूर्णांकersecting rules to allocate new regd memory */
-	क्रम (i = 0; i < num_old_regd_rules; i++) अणु
-		old_rule = शेष_regd->reg_rules + i;
-		क्रम (j = 0; j < num_curr_regd_rules; j++) अणु
+	/* Find the number of intersecting rules to allocate new regd memory */
+	for (i = 0; i < num_old_regd_rules; i++) {
+		old_rule = default_regd->reg_rules + i;
+		for (j = 0; j < num_curr_regd_rules; j++) {
 			curr_rule = curr_regd->reg_rules + j;
 
-			अगर (ath11k_reg_can_पूर्णांकersect(old_rule, curr_rule))
+			if (ath11k_reg_can_intersect(old_rule, curr_rule))
 				num_new_regd_rules++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!num_new_regd_rules)
-		वापस शून्य;
+	if (!num_new_regd_rules)
+		return NULL;
 
-	new_regd = kzalloc(माप(*new_regd) + (num_new_regd_rules *
-			माप(काष्ठा ieee80211_reg_rule)),
+	new_regd = kzalloc(sizeof(*new_regd) + (num_new_regd_rules *
+			sizeof(struct ieee80211_reg_rule)),
 			GFP_ATOMIC);
 
-	अगर (!new_regd)
-		वापस शून्य;
+	if (!new_regd)
+		return NULL;
 
 	/* We set the new country and dfs region directly and only trim
-	 * the freq, घातer, antenna gain by पूर्णांकersecting with the
-	 * शेष regकरोमुख्य. Also MAX of the dfs cac समयout is selected.
+	 * the freq, power, antenna gain by intersecting with the
+	 * default regdomain. Also MAX of the dfs cac timeout is selected.
 	 */
 	new_regd->n_reg_rules = num_new_regd_rules;
-	स_नकल(new_regd->alpha2, curr_regd->alpha2, माप(new_regd->alpha2));
+	memcpy(new_regd->alpha2, curr_regd->alpha2, sizeof(new_regd->alpha2));
 	new_regd->dfs_region = curr_regd->dfs_region;
 	new_rule = new_regd->reg_rules;
 
-	क्रम (i = 0, k = 0; i < num_old_regd_rules; i++) अणु
-		old_rule = शेष_regd->reg_rules + i;
-		क्रम (j = 0; j < num_curr_regd_rules; j++) अणु
+	for (i = 0, k = 0; i < num_old_regd_rules; i++) {
+		old_rule = default_regd->reg_rules + i;
+		for (j = 0; j < num_curr_regd_rules; j++) {
 			curr_rule = curr_regd->reg_rules + j;
 
-			अगर (ath11k_reg_can_पूर्णांकersect(old_rule, curr_rule))
-				ath11k_reg_पूर्णांकersect_rules(old_rule, curr_rule,
+			if (ath11k_reg_can_intersect(old_rule, curr_rule))
+				ath11k_reg_intersect_rules(old_rule, curr_rule,
 							   (new_rule + k++));
-		पूर्ण
-	पूर्ण
-	वापस new_regd;
-पूर्ण
+		}
+	}
+	return new_regd;
+}
 
-अटल स्थिर अक्षर *
-ath11k_reg_get_regकरोm_str(क्रमागत nl80211_dfs_regions dfs_region)
-अणु
-	चयन (dfs_region) अणु
-	हाल NL80211_DFS_FCC:
-		वापस "FCC";
-	हाल NL80211_DFS_ETSI:
-		वापस "ETSI";
-	हाल NL80211_DFS_JP:
-		वापस "JP";
-	शेष:
-		वापस "UNSET";
-	पूर्ण
-पूर्ण
+static const char *
+ath11k_reg_get_regdom_str(enum nl80211_dfs_regions dfs_region)
+{
+	switch (dfs_region) {
+	case NL80211_DFS_FCC:
+		return "FCC";
+	case NL80211_DFS_ETSI:
+		return "ETSI";
+	case NL80211_DFS_JP:
+		return "JP";
+	default:
+		return "UNSET";
+	}
+}
 
-अटल u16
+static u16
 ath11k_reg_adjust_bw(u16 start_freq, u16 end_freq, u16 max_bw)
-अणु
+{
 	u16 bw;
 
 	bw = end_freq - start_freq;
 	bw = min_t(u16, bw, max_bw);
 
-	अगर (bw >= 80 && bw < 160)
+	if (bw >= 80 && bw < 160)
 		bw = 80;
-	अन्यथा अगर (bw >= 40 && bw < 80)
+	else if (bw >= 40 && bw < 80)
 		bw = 40;
-	अन्यथा अगर (bw < 40)
+	else if (bw < 40)
 		bw = 20;
 
-	वापस bw;
-पूर्ण
+	return bw;
+}
 
-अटल व्योम
-ath11k_reg_update_rule(काष्ठा ieee80211_reg_rule *reg_rule, u32 start_freq,
+static void
+ath11k_reg_update_rule(struct ieee80211_reg_rule *reg_rule, u32 start_freq,
 		       u32 end_freq, u32 bw, u32 ant_gain, u32 reg_pwr,
 		       u32 reg_flags)
-अणु
+{
 	reg_rule->freq_range.start_freq_khz = MHZ_TO_KHZ(start_freq);
 	reg_rule->freq_range.end_freq_khz = MHZ_TO_KHZ(end_freq);
 	reg_rule->freq_range.max_bandwidth_khz = MHZ_TO_KHZ(bw);
-	reg_rule->घातer_rule.max_antenna_gain = DBI_TO_MBI(ant_gain);
-	reg_rule->घातer_rule.max_eirp = DBM_TO_MBM(reg_pwr);
+	reg_rule->power_rule.max_antenna_gain = DBI_TO_MBI(ant_gain);
+	reg_rule->power_rule.max_eirp = DBM_TO_MBM(reg_pwr);
 	reg_rule->flags = reg_flags;
-पूर्ण
+}
 
-अटल व्योम
-ath11k_reg_update_weather_radar_band(काष्ठा ath11k_base *ab,
-				     काष्ठा ieee80211_regकरोमुख्य *regd,
-				     काष्ठा cur_reg_rule *reg_rule,
+static void
+ath11k_reg_update_weather_radar_band(struct ath11k_base *ab,
+				     struct ieee80211_regdomain *regd,
+				     struct cur_reg_rule *reg_rule,
 				     u8 *rule_idx, u32 flags, u16 max_bw)
-अणु
+{
 	u32 end_freq;
 	u16 bw;
 	u8 i;
@@ -502,19 +501,19 @@ ath11k_reg_update_weather_radar_band(काष्ठा ath11k_base *ab,
 
 	ath11k_reg_update_rule(regd->reg_rules + i, reg_rule->start_freq,
 			       ETSI_WEATHER_RADAR_BAND_LOW, bw,
-			       reg_rule->ant_gain, reg_rule->reg_घातer,
+			       reg_rule->ant_gain, reg_rule->reg_power,
 			       flags);
 
 	ath11k_dbg(ab, ATH11K_DBG_REG,
 		   "\t%d. (%d - %d @ %d) (%d, %d) (%d ms) (FLAGS %d)\n",
 		   i + 1, reg_rule->start_freq, ETSI_WEATHER_RADAR_BAND_LOW,
-		   bw, reg_rule->ant_gain, reg_rule->reg_घातer,
+		   bw, reg_rule->ant_gain, reg_rule->reg_power,
 		   regd->reg_rules[i].dfs_cac_ms,
 		   flags);
 
-	अगर (reg_rule->end_freq > ETSI_WEATHER_RADAR_BAND_HIGH)
+	if (reg_rule->end_freq > ETSI_WEATHER_RADAR_BAND_HIGH)
 		end_freq = ETSI_WEATHER_RADAR_BAND_HIGH;
-	अन्यथा
+	else
 		end_freq = reg_rule->end_freq;
 
 	bw = ath11k_reg_adjust_bw(ETSI_WEATHER_RADAR_BAND_LOW, end_freq,
@@ -524,7 +523,7 @@ ath11k_reg_update_weather_radar_band(काष्ठा ath11k_base *ab,
 
 	ath11k_reg_update_rule(regd->reg_rules + i,
 			       ETSI_WEATHER_RADAR_BAND_LOW, end_freq, bw,
-			       reg_rule->ant_gain, reg_rule->reg_घातer,
+			       reg_rule->ant_gain, reg_rule->reg_power,
 			       flags);
 
 	regd->reg_rules[i].dfs_cac_ms = ETSI_WEATHER_RADAR_BAND_CAC_TIMEOUT;
@@ -532,15 +531,15 @@ ath11k_reg_update_weather_radar_band(काष्ठा ath11k_base *ab,
 	ath11k_dbg(ab, ATH11K_DBG_REG,
 		   "\t%d. (%d - %d @ %d) (%d, %d) (%d ms) (FLAGS %d)\n",
 		   i + 1, ETSI_WEATHER_RADAR_BAND_LOW, end_freq,
-		   bw, reg_rule->ant_gain, reg_rule->reg_घातer,
+		   bw, reg_rule->ant_gain, reg_rule->reg_power,
 		   regd->reg_rules[i].dfs_cac_ms,
 		   flags);
 
-	अगर (end_freq == reg_rule->end_freq) अणु
+	if (end_freq == reg_rule->end_freq) {
 		regd->n_reg_rules--;
 		*rule_idx = i;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	bw = ath11k_reg_adjust_bw(ETSI_WEATHER_RADAR_BAND_HIGH,
 				  reg_rule->end_freq, max_bw);
@@ -549,164 +548,164 @@ ath11k_reg_update_weather_radar_band(काष्ठा ath11k_base *ab,
 
 	ath11k_reg_update_rule(regd->reg_rules + i, ETSI_WEATHER_RADAR_BAND_HIGH,
 			       reg_rule->end_freq, bw,
-			       reg_rule->ant_gain, reg_rule->reg_घातer,
+			       reg_rule->ant_gain, reg_rule->reg_power,
 			       flags);
 
 	ath11k_dbg(ab, ATH11K_DBG_REG,
 		   "\t%d. (%d - %d @ %d) (%d, %d) (%d ms) (FLAGS %d)\n",
 		   i + 1, ETSI_WEATHER_RADAR_BAND_HIGH, reg_rule->end_freq,
-		   bw, reg_rule->ant_gain, reg_rule->reg_घातer,
+		   bw, reg_rule->ant_gain, reg_rule->reg_power,
 		   regd->reg_rules[i].dfs_cac_ms,
 		   flags);
 
 	*rule_idx = i;
-पूर्ण
+}
 
-काष्ठा ieee80211_regकरोमुख्य *
-ath11k_reg_build_regd(काष्ठा ath11k_base *ab,
-		      काष्ठा cur_regulatory_info *reg_info, bool पूर्णांकersect)
-अणु
-	काष्ठा ieee80211_regकरोमुख्य *पंचांगp_regd, *शेष_regd, *new_regd = शून्य;
-	काष्ठा cur_reg_rule *reg_rule;
+struct ieee80211_regdomain *
+ath11k_reg_build_regd(struct ath11k_base *ab,
+		      struct cur_regulatory_info *reg_info, bool intersect)
+{
+	struct ieee80211_regdomain *tmp_regd, *default_regd, *new_regd = NULL;
+	struct cur_reg_rule *reg_rule;
 	u8 i = 0, j = 0;
 	u8 num_rules;
 	u16 max_bw;
 	u32 flags;
-	अक्षर alpha2[3];
+	char alpha2[3];
 
 	num_rules = reg_info->num_5g_reg_rules + reg_info->num_2g_reg_rules;
 
-	अगर (!num_rules)
-		जाओ ret;
+	if (!num_rules)
+		goto ret;
 
 	/* Add max additional rules to accommodate weather radar band */
-	अगर (reg_info->dfs_region == ATH11K_DFS_REG_ETSI)
+	if (reg_info->dfs_region == ATH11K_DFS_REG_ETSI)
 		num_rules += 2;
 
-	पंचांगp_regd =  kzalloc(माप(*पंचांगp_regd) +
-			(num_rules * माप(काष्ठा ieee80211_reg_rule)),
+	tmp_regd =  kzalloc(sizeof(*tmp_regd) +
+			(num_rules * sizeof(struct ieee80211_reg_rule)),
 			GFP_ATOMIC);
-	अगर (!पंचांगp_regd)
-		जाओ ret;
+	if (!tmp_regd)
+		goto ret;
 
-	स_नकल(पंचांगp_regd->alpha2, reg_info->alpha2, REG_ALPHA2_LEN + 1);
-	स_नकल(alpha2, reg_info->alpha2, REG_ALPHA2_LEN + 1);
+	memcpy(tmp_regd->alpha2, reg_info->alpha2, REG_ALPHA2_LEN + 1);
+	memcpy(alpha2, reg_info->alpha2, REG_ALPHA2_LEN + 1);
 	alpha2[2] = '\0';
-	पंचांगp_regd->dfs_region = ath11k_map_fw_dfs_region(reg_info->dfs_region);
+	tmp_regd->dfs_region = ath11k_map_fw_dfs_region(reg_info->dfs_region);
 
 	ath11k_dbg(ab, ATH11K_DBG_REG,
 		   "\r\nCountry %s, CFG Regdomain %s FW Regdomain %d, num_reg_rules %d\n",
-		   alpha2, ath11k_reg_get_regकरोm_str(पंचांगp_regd->dfs_region),
+		   alpha2, ath11k_reg_get_regdom_str(tmp_regd->dfs_region),
 		   reg_info->dfs_region, num_rules);
 	/* Update reg_rules[] below. Firmware is expected to
 	 * send these rules in order(2G rules first and then 5G)
 	 */
-	क्रम (; i < num_rules; i++) अणु
-		अगर (reg_info->num_2g_reg_rules &&
-		    (i < reg_info->num_2g_reg_rules)) अणु
+	for (; i < num_rules; i++) {
+		if (reg_info->num_2g_reg_rules &&
+		    (i < reg_info->num_2g_reg_rules)) {
 			reg_rule = reg_info->reg_rules_2g_ptr + i;
 			max_bw = min_t(u16, reg_rule->max_bw,
 				       reg_info->max_bw_2g);
 			flags = 0;
-		पूर्ण अन्यथा अगर (reg_info->num_5g_reg_rules &&
-			   (j < reg_info->num_5g_reg_rules)) अणु
+		} else if (reg_info->num_5g_reg_rules &&
+			   (j < reg_info->num_5g_reg_rules)) {
 			reg_rule = reg_info->reg_rules_5g_ptr + j++;
 			max_bw = min_t(u16, reg_rule->max_bw,
 				       reg_info->max_bw_5g);
 
-			/* FW करोesn't pass NL80211_RRF_AUTO_BW flag क्रम
-			 * BW Auto correction, we can enable this by शेष
-			 * क्रम all 5G rules here. The regulatory core perक्रमms
-			 * BW correction अगर required and applies flags as
+			/* FW doesn't pass NL80211_RRF_AUTO_BW flag for
+			 * BW Auto correction, we can enable this by default
+			 * for all 5G rules here. The regulatory core performs
+			 * BW correction if required and applies flags as
 			 * per other BW rule flags we pass from here
 			 */
 			flags = NL80211_RRF_AUTO_BW;
-		पूर्ण अन्यथा अणु
-			अवरोध;
-		पूर्ण
+		} else {
+			break;
+		}
 
 		flags |= ath11k_map_fw_reg_flags(reg_rule->flags);
 
-		ath11k_reg_update_rule(पंचांगp_regd->reg_rules + i,
+		ath11k_reg_update_rule(tmp_regd->reg_rules + i,
 				       reg_rule->start_freq,
 				       reg_rule->end_freq, max_bw,
-				       reg_rule->ant_gain, reg_rule->reg_घातer,
+				       reg_rule->ant_gain, reg_rule->reg_power,
 				       flags);
 
-		/* Update dfs cac समयout अगर the dfs करोमुख्य is ETSI and the
+		/* Update dfs cac timeout if the dfs domain is ETSI and the
 		 * new rule covers weather radar band.
-		 * Default value of '0' corresponds to 60s समयout, so no
-		 * need to update that क्रम other rules.
+		 * Default value of '0' corresponds to 60s timeout, so no
+		 * need to update that for other rules.
 		 */
-		अगर (flags & NL80211_RRF_DFS &&
+		if (flags & NL80211_RRF_DFS &&
 		    reg_info->dfs_region == ATH11K_DFS_REG_ETSI &&
 		    (reg_rule->end_freq > ETSI_WEATHER_RADAR_BAND_LOW &&
-		    reg_rule->start_freq < ETSI_WEATHER_RADAR_BAND_HIGH))अणु
-			ath11k_reg_update_weather_radar_band(ab, पंचांगp_regd,
+		    reg_rule->start_freq < ETSI_WEATHER_RADAR_BAND_HIGH)){
+			ath11k_reg_update_weather_radar_band(ab, tmp_regd,
 							     reg_rule, &i,
 							     flags, max_bw);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		ath11k_dbg(ab, ATH11K_DBG_REG,
 			   "\t%d. (%d - %d @ %d) (%d, %d) (%d ms) (FLAGS %d)\n",
 			   i + 1, reg_rule->start_freq, reg_rule->end_freq,
-			   max_bw, reg_rule->ant_gain, reg_rule->reg_घातer,
-			   पंचांगp_regd->reg_rules[i].dfs_cac_ms,
+			   max_bw, reg_rule->ant_gain, reg_rule->reg_power,
+			   tmp_regd->reg_rules[i].dfs_cac_ms,
 			   flags);
-	पूर्ण
+	}
 
-	पंचांगp_regd->n_reg_rules = i;
+	tmp_regd->n_reg_rules = i;
 
-	अगर (पूर्णांकersect) अणु
-		शेष_regd = ab->शेष_regd[reg_info->phy_id];
+	if (intersect) {
+		default_regd = ab->default_regd[reg_info->phy_id];
 
-		/* Get a new regd by पूर्णांकersecting the received regd with
-		 * our शेष regd.
+		/* Get a new regd by intersecting the received regd with
+		 * our default regd.
 		 */
-		new_regd = ath11k_regd_पूर्णांकersect(शेष_regd, पंचांगp_regd);
-		kमुक्त(पंचांगp_regd);
-		अगर (!new_regd) अणु
+		new_regd = ath11k_regd_intersect(default_regd, tmp_regd);
+		kfree(tmp_regd);
+		if (!new_regd) {
 			ath11k_warn(ab, "Unable to create intersected regdomain\n");
-			जाओ ret;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		new_regd = पंचांगp_regd;
-	पूर्ण
+			goto ret;
+		}
+	} else {
+		new_regd = tmp_regd;
+	}
 
 ret:
-	वापस new_regd;
-पूर्ण
+	return new_regd;
+}
 
-व्योम ath11k_regd_update_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ath11k *ar = container_of(work, काष्ठा ath11k,
+void ath11k_regd_update_work(struct work_struct *work)
+{
+	struct ath11k *ar = container_of(work, struct ath11k,
 					 regd_update_work);
-	पूर्णांक ret;
+	int ret;
 
 	ret = ath11k_regd_update(ar, false);
-	अगर (ret) अणु
-		/* Firmware has alपढ़ोy moved to the new regd. We need
-		 * to मुख्यtain channel consistency across FW, Host driver
+	if (ret) {
+		/* Firmware has already moved to the new regd. We need
+		 * to maintain channel consistency across FW, Host driver
 		 * and userspace. Hence as a fallback mechanism we can set
-		 * the prev or शेष country code to the firmware.
+		 * the prev or default country code to the firmware.
 		 */
 		/* TODO: Implement Fallback Mechanism */
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम ath11k_reg_init(काष्ठा ath11k *ar)
-अणु
+void ath11k_reg_init(struct ath11k *ar)
+{
 	ar->hw->wiphy->regulatory_flags = REGULATORY_WIPHY_SELF_MANAGED;
-	ar->hw->wiphy->reg_notअगरier = ath11k_reg_notअगरier;
-पूर्ण
+	ar->hw->wiphy->reg_notifier = ath11k_reg_notifier;
+}
 
-व्योम ath11k_reg_मुक्त(काष्ठा ath11k_base *ab)
-अणु
-	पूर्णांक i;
+void ath11k_reg_free(struct ath11k_base *ab)
+{
+	int i;
 
-	क्रम (i = 0; i < ab->hw_params.max_radios; i++) अणु
-		kमुक्त(ab->शेष_regd[i]);
-		kमुक्त(ab->new_regd[i]);
-	पूर्ण
-पूर्ण
+	for (i = 0; i < ab->hw_params.max_radios; i++) {
+		kfree(ab->default_regd[i]);
+		kfree(ab->new_regd[i]);
+	}
+}

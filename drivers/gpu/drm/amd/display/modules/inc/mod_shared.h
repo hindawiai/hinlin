@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,10 +23,10 @@
  *
  */
 
-#अगर_अघोषित MOD_SHARED_H_
-#घोषणा MOD_SHARED_H_
+#ifndef MOD_SHARED_H_
+#define MOD_SHARED_H_
 
-क्रमागत color_transfer_func अणु
+enum color_transfer_func {
 	TRANSFER_FUNC_UNKNOWN,
 	TRANSFER_FUNC_SRGB,
 	TRANSFER_FUNC_BT709,
@@ -37,73 +36,73 @@
 	TRANSFER_FUNC_LINEAR_0_125,
 	TRANSFER_FUNC_GAMMA_22,
 	TRANSFER_FUNC_GAMMA_26
-पूर्ण;
+};
 
-क्रमागत vrr_packet_type अणु
+enum vrr_packet_type {
 	PACKET_TYPE_VRR,
 	PACKET_TYPE_FS_V1,
 	PACKET_TYPE_FS_V2,
 	PACKET_TYPE_FS_V3,
 	PACKET_TYPE_VTEM
-पूर्ण;
+};
 
-जोड़ lut3d_control_flags अणु
-	अचिन्हित पूर्णांक raw;
-	काष्ठा अणु
-		अचिन्हित पूर्णांक करो_chroma_scale				:1;
-		अचिन्हित पूर्णांक spec_version				:3;
-		अचिन्हित पूर्णांक use_zero_display_black			:1;
-		अचिन्हित पूर्णांक use_zero_source_black			:1;
-		अचिन्हित पूर्णांक क्रमce_display_black			:6;
-		अचिन्हित पूर्णांक apply_display_gamma			:1;
-		अचिन्हित पूर्णांक exp_shaper_max				:6;
-		अचिन्हित पूर्णांक unity_3dlut				:1;
-		अचिन्हित पूर्णांक bypass_3dlut				:1;
-		अचिन्हित पूर्णांक use_3dlut					:1;
-		अचिन्हित पूर्णांक less_than_dcip3				:1;
-		अचिन्हित पूर्णांक override_lum				:1;
-		अचिन्हित पूर्णांक use_gamut_map_lib					:1;
-		अचिन्हित पूर्णांक chromatic_adaptation_src				:1;
-		अचिन्हित पूर्णांक chromatic_adaptation_dst				:1;
-		अचिन्हित पूर्णांक करो_blender_lut_degamma		:1;
-		अचिन्हित पूर्णांक reseved					:4;
-	पूर्ण bits;
-पूर्ण;
+union lut3d_control_flags {
+	unsigned int raw;
+	struct {
+		unsigned int do_chroma_scale				:1;
+		unsigned int spec_version				:3;
+		unsigned int use_zero_display_black			:1;
+		unsigned int use_zero_source_black			:1;
+		unsigned int force_display_black			:6;
+		unsigned int apply_display_gamma			:1;
+		unsigned int exp_shaper_max				:6;
+		unsigned int unity_3dlut				:1;
+		unsigned int bypass_3dlut				:1;
+		unsigned int use_3dlut					:1;
+		unsigned int less_than_dcip3				:1;
+		unsigned int override_lum				:1;
+		unsigned int use_gamut_map_lib					:1;
+		unsigned int chromatic_adaptation_src				:1;
+		unsigned int chromatic_adaptation_dst				:1;
+		unsigned int do_blender_lut_degamma		:1;
+		unsigned int reseved					:4;
+	} bits;
+};
 
-क्रमागत पंचांग_show_option_पूर्णांकernal अणु
-	पंचांग_show_option_पूर्णांकernal_single_file		= 0,/*flags2 not in use*/
-	पंचांग_show_option_पूर्णांकernal_duplicate_file,		/*use flags2*/
-	पंचांग_show_option_पूर्णांकernal_duplicate_sidebyside/*use flags2*/
-पूर्ण;
+enum tm_show_option_internal {
+	tm_show_option_internal_single_file		= 0,/*flags2 not in use*/
+	tm_show_option_internal_duplicate_file,		/*use flags2*/
+	tm_show_option_internal_duplicate_sidebyside/*use flags2*/
+};
 
-क्रमागत lut3d_control_gamut_map अणु
+enum lut3d_control_gamut_map {
 	lut3d_control_gamut_map_none = 0,
 	lut3d_control_gamut_map_tonemap,
 	lut3d_control_gamut_map_chto,
 	lut3d_control_gamut_map_chso,
 	lut3d_control_gamut_map_chci
-पूर्ण;
+};
 
-क्रमागत lut3d_control_rotation_mode अणु
+enum lut3d_control_rotation_mode {
 	lut3d_control_rotation_mode_none = 0,
 	lut3d_control_rotation_mode_hue,
 	lut3d_control_rotation_mode_cc,
 	lut3d_control_rotation_mode_hue_cc
-पूर्ण;
+};
 
-काष्ठा lut3d_settings अणु
-	अचिन्हित अक्षर version;
-	जोड़ lut3d_control_flags flags;
-	जोड़ lut3d_control_flags flags2;
-	क्रमागत पंचांग_show_option_पूर्णांकernal option;
-	अचिन्हित पूर्णांक min_lum;/*multiplied by 100*/
-	अचिन्हित पूर्णांक max_lum;
-	अचिन्हित पूर्णांक min_lum2;
-	अचिन्हित पूर्णांक max_lum2;
-	क्रमागत lut3d_control_gamut_map map;
-	क्रमागत lut3d_control_rotation_mode rotation;
-	क्रमागत lut3d_control_gamut_map map2;
-	क्रमागत lut3d_control_rotation_mode rotation2;
-पूर्ण;
+struct lut3d_settings {
+	unsigned char version;
+	union lut3d_control_flags flags;
+	union lut3d_control_flags flags2;
+	enum tm_show_option_internal option;
+	unsigned int min_lum;/*multiplied by 100*/
+	unsigned int max_lum;
+	unsigned int min_lum2;
+	unsigned int max_lum2;
+	enum lut3d_control_gamut_map map;
+	enum lut3d_control_rotation_mode rotation;
+	enum lut3d_control_gamut_map map2;
+	enum lut3d_control_rotation_mode rotation2;
+};
 
-#पूर्ण_अगर /* MOD_SHARED_H_ */
+#endif /* MOD_SHARED_H_ */

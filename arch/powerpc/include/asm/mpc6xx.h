@@ -1,8 +1,7 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_POWERPC_MPC6xx_H
-#घोषणा __ASM_POWERPC_MPC6xx_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_POWERPC_MPC6xx_H
+#define __ASM_POWERPC_MPC6xx_H
 
-व्योम mpc6xx_enter_standby(व्योम);
+void mpc6xx_enter_standby(void);
 
-#पूर्ण_अगर
+#endif

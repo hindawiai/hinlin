@@ -1,26 +1,25 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#समावेश "../../../util/cpumap.h"
-#समावेश "../../../util/pmu.h"
+#include "../../../util/cpumap.h"
+#include "../../../util/pmu.h"
 
-काष्ठा pmu_events_map *pmu_events_map__find(व्योम)
-अणु
-	काष्ठा perf_pmu *pmu = शून्य;
+struct pmu_events_map *pmu_events_map__find(void)
+{
+	struct perf_pmu *pmu = NULL;
 
-	जबतक ((pmu = perf_pmu__scan(pmu))) अणु
-		अगर (!is_pmu_core(pmu->name))
-			जारी;
+	while ((pmu = perf_pmu__scan(pmu))) {
+		if (!is_pmu_core(pmu->name))
+			continue;
 
 		/*
 		 * The cpumap should cover all CPUs. Otherwise, some CPUs may
-		 * not support some events or have dअगरferent event IDs.
+		 * not support some events or have different event IDs.
 		 */
-		अगर (pmu->cpus->nr != cpu__max_cpu())
-			वापस शून्य;
+		if (pmu->cpus->nr != cpu__max_cpu())
+			return NULL;
 
-		वापस perf_pmu__find_map(pmu);
-	पूर्ण
+		return perf_pmu__find_map(pmu);
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}

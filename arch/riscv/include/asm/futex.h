@@ -1,29 +1,28 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (c) 2006  Ralf Baechle (ralf@linux-mips.org)
- * Copyright (c) 2018  Jim Wilson (jimw@sअगरive.com)
+ * Copyright (c) 2018  Jim Wilson (jimw@sifive.com)
  */
 
-#अगर_अघोषित _ASM_RISCV_FUTEX_H
-#घोषणा _ASM_RISCV_FUTEX_H
+#ifndef _ASM_RISCV_FUTEX_H
+#define _ASM_RISCV_FUTEX_H
 
-#समावेश <linux/futex.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <यंत्र/यंत्र.h>
+#include <linux/futex.h>
+#include <linux/uaccess.h>
+#include <linux/errno.h>
+#include <asm/asm.h>
 
-/* We करोn't even really need the extable code, but क्रम now keep it simple */
-#अगर_अघोषित CONFIG_MMU
-#घोषणा __enable_user_access()		करो अणु पूर्ण जबतक (0)
-#घोषणा __disable_user_access()		करो अणु पूर्ण जबतक (0)
-#पूर्ण_अगर
+/* We don't even really need the extable code, but for now keep it simple */
+#ifndef CONFIG_MMU
+#define __enable_user_access()		do { } while (0)
+#define __disable_user_access()		do { } while (0)
+#endif
 
-#घोषणा __futex_atomic_op(insn, ret, oldval, uaddr, oparg)	\
-अणु								\
-	uपूर्णांकptr_t पंचांगp;						\
+#define __futex_atomic_op(insn, ret, oldval, uaddr, oparg)	\
+{								\
+	uintptr_t tmp;						\
 	__enable_user_access();					\
-	__यंत्र__ __अस्थिर__ (					\
+	__asm__ __volatile__ (					\
 	"1:	" insn "				\n"	\
 	"2:						\n"	\
 	"	.section .fixup,\"ax\"			\n"	\
@@ -36,64 +35,64 @@
 	"	" RISCV_PTR " 1b, 3b			\n"	\
 	"	.previous				\n"	\
 	: [r] "+r" (ret), [ov] "=&r" (oldval),			\
-	  [u] "+m" (*uaddr), [t] "=&r" (पंचांगp)			\
+	  [u] "+m" (*uaddr), [t] "=&r" (tmp)			\
 	: [op] "Jr" (oparg), [e] "i" (-EFAULT)			\
 	: "memory");						\
 	__disable_user_access();				\
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक
-arch_futex_atomic_op_inuser(पूर्णांक op, पूर्णांक oparg, पूर्णांक *oval, u32 __user *uaddr)
-अणु
-	पूर्णांक oldval = 0, ret = 0;
+static inline int
+arch_futex_atomic_op_inuser(int op, int oparg, int *oval, u32 __user *uaddr)
+{
+	int oldval = 0, ret = 0;
 
-	अगर (!access_ok(uaddr, माप(u32)))
-		वापस -EFAULT;
+	if (!access_ok(uaddr, sizeof(u32)))
+		return -EFAULT;
 
-	चयन (op) अणु
-	हाल FUTEX_OP_SET:
+	switch (op) {
+	case FUTEX_OP_SET:
 		__futex_atomic_op("amoswap.w.aqrl %[ov],%z[op],%[u]",
 				  ret, oldval, uaddr, oparg);
-		अवरोध;
-	हाल FUTEX_OP_ADD:
+		break;
+	case FUTEX_OP_ADD:
 		__futex_atomic_op("amoadd.w.aqrl %[ov],%z[op],%[u]",
 				  ret, oldval, uaddr, oparg);
-		अवरोध;
-	हाल FUTEX_OP_OR:
+		break;
+	case FUTEX_OP_OR:
 		__futex_atomic_op("amoor.w.aqrl %[ov],%z[op],%[u]",
 				  ret, oldval, uaddr, oparg);
-		अवरोध;
-	हाल FUTEX_OP_ANDN:
+		break;
+	case FUTEX_OP_ANDN:
 		__futex_atomic_op("amoand.w.aqrl %[ov],%z[op],%[u]",
 				  ret, oldval, uaddr, ~oparg);
-		अवरोध;
-	हाल FUTEX_OP_XOR:
+		break;
+	case FUTEX_OP_XOR:
 		__futex_atomic_op("amoxor.w.aqrl %[ov],%z[op],%[u]",
 				  ret, oldval, uaddr, oparg);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -ENOSYS;
-	पूर्ण
+	}
 
-	अगर (!ret)
+	if (!ret)
 		*oval = oldval;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत पूर्णांक
+static inline int
 futex_atomic_cmpxchg_inatomic(u32 *uval, u32 __user *uaddr,
 			      u32 oldval, u32 newval)
-अणु
-	पूर्णांक ret = 0;
+{
+	int ret = 0;
 	u32 val;
-	uपूर्णांकptr_t पंचांगp;
+	uintptr_t tmp;
 
-	अगर (!access_ok(uaddr, माप(u32)))
-		वापस -EFAULT;
+	if (!access_ok(uaddr, sizeof(u32)))
+		return -EFAULT;
 
 	__enable_user_access();
-	__यंत्र__ __अस्थिर__ (
+	__asm__ __volatile__ (
 	"1:	lr.w.aqrl %[v],%[u]			\n"
 	"	bne %[v],%z[ov],3f			\n"
 	"2:	sc.w.aqrl %[t],%z[nv],%[u]		\n"
@@ -109,13 +108,13 @@ futex_atomic_cmpxchg_inatomic(u32 *uval, u32 __user *uaddr,
 	"	" RISCV_PTR " 1b, 4b			\n"
 	"	" RISCV_PTR " 2b, 4b			\n"
 	"	.previous				\n"
-	: [r] "+r" (ret), [v] "=&r" (val), [u] "+m" (*uaddr), [t] "=&r" (पंचांगp)
+	: [r] "+r" (ret), [v] "=&r" (val), [u] "+m" (*uaddr), [t] "=&r" (tmp)
 	: [ov] "Jr" (oldval), [nv] "Jr" (newval), [e] "i" (-EFAULT)
 	: "memory");
 	__disable_user_access();
 
 	*uval = val;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#पूर्ण_अगर /* _ASM_RISCV_FUTEX_H */
+#endif /* _ASM_RISCV_FUTEX_H */

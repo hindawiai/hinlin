@@ -1,17 +1,16 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
-#अगर_अघोषित __ABI_CSKY_PTRACE_H
-#घोषणा __ABI_CSKY_PTRACE_H
+#ifndef __ABI_CSKY_PTRACE_H
+#define __ABI_CSKY_PTRACE_H
 
-काष्ठा चयन_stack अणु
-	अचिन्हित दीर्घ r8;
-	अचिन्हित दीर्घ r9;
-	अचिन्हित दीर्घ r10;
-	अचिन्हित दीर्घ r11;
-	अचिन्हित दीर्घ r12;
-	अचिन्हित दीर्घ r13;
-	अचिन्हित दीर्घ r14;
-	अचिन्हित दीर्घ r15;
-पूर्ण;
-#पूर्ण_अगर /* __ABI_CSKY_PTRACE_H */
+struct switch_stack {
+	unsigned long r8;
+	unsigned long r9;
+	unsigned long r10;
+	unsigned long r11;
+	unsigned long r12;
+	unsigned long r13;
+	unsigned long r14;
+	unsigned long r15;
+};
+#endif /* __ABI_CSKY_PTRACE_H */

@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * C-Media CMI8788 driver क्रम C-Media's reference design and similar models
+ * C-Media CMI8788 driver for C-Media's reference design and similar models
  *
  * Copyright (c) Clemens Ladisch <clemens@ladisch.de>
  */
@@ -24,7 +23,7 @@
  *
  * Claro models:
  *   GPIO 6 -> S/PDIF from optical (0) or coaxial (1) input
- *   GPIO 8 -> enable headphone amplअगरier
+ *   GPIO 8 -> enable headphone amplifier
  *
  * CM9780:
  *
@@ -37,39 +36,39 @@
  *   GPO 0 -> route line-in (0) or AC97 output (1) to ADC input
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/module.h>
-#समावेश <sound/ac97_codec.h>
-#समावेश <sound/control.h>
-#समावेश <sound/core.h>
-#समावेश <sound/info.h>
-#समावेश <sound/initval.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/pcm_params.h>
-#समावेश <sound/tlv.h>
-#समावेश "oxygen.h"
-#समावेश "xonar_dg.h"
-#समावेश "ak4396.h"
-#समावेश "wm8785.h"
+#include <linux/delay.h>
+#include <linux/mutex.h>
+#include <linux/pci.h>
+#include <linux/module.h>
+#include <sound/ac97_codec.h>
+#include <sound/control.h>
+#include <sound/core.h>
+#include <sound/info.h>
+#include <sound/initval.h>
+#include <sound/pcm.h>
+#include <sound/pcm_params.h>
+#include <sound/tlv.h>
+#include "oxygen.h"
+#include "xonar_dg.h"
+#include "ak4396.h"
+#include "wm8785.h"
 
 MODULE_AUTHOR("Clemens Ladisch <clemens@ladisch.de>");
 MODULE_DESCRIPTION("C-Media CMI8788 driver");
 MODULE_LICENSE("GPL v2");
 
-अटल पूर्णांक index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;
-अटल अक्षर *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;
-अटल bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_PNP;
+static int index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;
+static char *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;
+static bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_PNP;
 
-module_param_array(index, पूर्णांक, शून्य, 0444);
+module_param_array(index, int, NULL, 0444);
 MODULE_PARM_DESC(index, "card index");
-module_param_array(id, अक्षरp, शून्य, 0444);
+module_param_array(id, charp, NULL, 0444);
 MODULE_PARM_DESC(id, "ID string");
-module_param_array(enable, bool, शून्य, 0444);
+module_param_array(enable, bool, NULL, 0444);
 MODULE_PARM_DESC(enable, "enable card");
 
-क्रमागत अणु
+enum {
 	MODEL_CMEDIA_REF,
 	MODEL_MERIDIAN,
 	MODEL_MERIDIAN_2G,
@@ -81,636 +80,636 @@ MODULE_PARM_DESC(enable, "enable card");
 	MODEL_HG2PCI,
 	MODEL_XONAR_DG,
 	MODEL_XONAR_DGX,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा pci_device_id oxygen_ids[] = अणु
+static const struct pci_device_id oxygen_ids[] = {
 	/* C-Media's reference design */
-	अणु OXYGEN_PCI_SUBID(0x10b0, 0x0216), .driver_data = MODEL_CMEDIA_REF पूर्ण,
-	अणु OXYGEN_PCI_SUBID(0x10b0, 0x0217), .driver_data = MODEL_CMEDIA_REF पूर्ण,
-	अणु OXYGEN_PCI_SUBID(0x10b0, 0x0218), .driver_data = MODEL_CMEDIA_REF पूर्ण,
-	अणु OXYGEN_PCI_SUBID(0x10b0, 0x0219), .driver_data = MODEL_CMEDIA_REF पूर्ण,
-	अणु OXYGEN_PCI_SUBID(0x13f6, 0x0001), .driver_data = MODEL_CMEDIA_REF पूर्ण,
-	अणु OXYGEN_PCI_SUBID(0x13f6, 0x0010), .driver_data = MODEL_CMEDIA_REF पूर्ण,
-	अणु OXYGEN_PCI_SUBID(0x13f6, 0x8788), .driver_data = MODEL_CMEDIA_REF पूर्ण,
-	अणु OXYGEN_PCI_SUBID(0x147a, 0xa017), .driver_data = MODEL_CMEDIA_REF पूर्ण,
-	अणु OXYGEN_PCI_SUBID(0x1a58, 0x0910), .driver_data = MODEL_CMEDIA_REF पूर्ण,
+	{ OXYGEN_PCI_SUBID(0x10b0, 0x0216), .driver_data = MODEL_CMEDIA_REF },
+	{ OXYGEN_PCI_SUBID(0x10b0, 0x0217), .driver_data = MODEL_CMEDIA_REF },
+	{ OXYGEN_PCI_SUBID(0x10b0, 0x0218), .driver_data = MODEL_CMEDIA_REF },
+	{ OXYGEN_PCI_SUBID(0x10b0, 0x0219), .driver_data = MODEL_CMEDIA_REF },
+	{ OXYGEN_PCI_SUBID(0x13f6, 0x0001), .driver_data = MODEL_CMEDIA_REF },
+	{ OXYGEN_PCI_SUBID(0x13f6, 0x0010), .driver_data = MODEL_CMEDIA_REF },
+	{ OXYGEN_PCI_SUBID(0x13f6, 0x8788), .driver_data = MODEL_CMEDIA_REF },
+	{ OXYGEN_PCI_SUBID(0x147a, 0xa017), .driver_data = MODEL_CMEDIA_REF },
+	{ OXYGEN_PCI_SUBID(0x1a58, 0x0910), .driver_data = MODEL_CMEDIA_REF },
 	/* Asus Xonar DG */
-	अणु OXYGEN_PCI_SUBID(0x1043, 0x8467), .driver_data = MODEL_XONAR_DG पूर्ण,
+	{ OXYGEN_PCI_SUBID(0x1043, 0x8467), .driver_data = MODEL_XONAR_DG },
 	/* Asus Xonar DGX */
-	अणु OXYGEN_PCI_SUBID(0x1043, 0x8521), .driver_data = MODEL_XONAR_DGX पूर्ण,
+	{ OXYGEN_PCI_SUBID(0x1043, 0x8521), .driver_data = MODEL_XONAR_DGX },
 	/* PCI 2.0 HD Audio */
-	अणु OXYGEN_PCI_SUBID(0x13f6, 0x8782), .driver_data = MODEL_2CH_OUTPUT पूर्ण,
+	{ OXYGEN_PCI_SUBID(0x13f6, 0x8782), .driver_data = MODEL_2CH_OUTPUT },
 	/* Kuroutoshikou CMI8787-HG2PCI */
-	अणु OXYGEN_PCI_SUBID(0x13f6, 0xffff), .driver_data = MODEL_HG2PCI पूर्ण,
+	{ OXYGEN_PCI_SUBID(0x13f6, 0xffff), .driver_data = MODEL_HG2PCI },
 	/* TempoTec HiFier Fantasia */
-	अणु OXYGEN_PCI_SUBID(0x14c3, 0x1710), .driver_data = MODEL_FANTASIA पूर्ण,
+	{ OXYGEN_PCI_SUBID(0x14c3, 0x1710), .driver_data = MODEL_FANTASIA },
 	/* TempoTec HiFier Serenade */
-	अणु OXYGEN_PCI_SUBID(0x14c3, 0x1711), .driver_data = MODEL_SERENADE पूर्ण,
+	{ OXYGEN_PCI_SUBID(0x14c3, 0x1711), .driver_data = MODEL_SERENADE },
 	/* AuzenTech X-Meridian */
-	अणु OXYGEN_PCI_SUBID(0x415a, 0x5431), .driver_data = MODEL_MERIDIAN पूर्ण,
+	{ OXYGEN_PCI_SUBID(0x415a, 0x5431), .driver_data = MODEL_MERIDIAN },
 	/* AuzenTech X-Meridian 2G */
-	अणु OXYGEN_PCI_SUBID(0x5431, 0x017a), .driver_data = MODEL_MERIDIAN_2G पूर्ण,
+	{ OXYGEN_PCI_SUBID(0x5431, 0x017a), .driver_data = MODEL_MERIDIAN_2G },
 	/* HT-Omega Claro */
-	अणु OXYGEN_PCI_SUBID(0x7284, 0x9761), .driver_data = MODEL_CLARO पूर्ण,
+	{ OXYGEN_PCI_SUBID(0x7284, 0x9761), .driver_data = MODEL_CLARO },
 	/* HT-Omega Claro halo */
-	अणु OXYGEN_PCI_SUBID(0x7284, 0x9781), .driver_data = MODEL_CLARO_HALO पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+	{ OXYGEN_PCI_SUBID(0x7284, 0x9781), .driver_data = MODEL_CLARO_HALO },
+	{ }
+};
 MODULE_DEVICE_TABLE(pci, oxygen_ids);
 
 
-#घोषणा GPIO_AK5385_DFS_MASK	0x0003
-#घोषणा GPIO_AK5385_DFS_NORMAL	0x0000
-#घोषणा GPIO_AK5385_DFS_DOUBLE	0x0001
-#घोषणा GPIO_AK5385_DFS_QUAD	0x0002
+#define GPIO_AK5385_DFS_MASK	0x0003
+#define GPIO_AK5385_DFS_NORMAL	0x0000
+#define GPIO_AK5385_DFS_DOUBLE	0x0001
+#define GPIO_AK5385_DFS_QUAD	0x0002
 
-#घोषणा GPIO_MERIDIAN_DIG_MASK	0x0050
-#घोषणा GPIO_MERIDIAN_DIG_EXT	0x0010
-#घोषणा GPIO_MERIDIAN_DIG_BOARD	0x0040
+#define GPIO_MERIDIAN_DIG_MASK	0x0050
+#define GPIO_MERIDIAN_DIG_EXT	0x0010
+#define GPIO_MERIDIAN_DIG_BOARD	0x0040
 
-#घोषणा GPIO_CLARO_DIG_COAX	0x0040
-#घोषणा GPIO_CLARO_HP		0x0100
+#define GPIO_CLARO_DIG_COAX	0x0040
+#define GPIO_CLARO_HP		0x0100
 
-काष्ठा generic_data अणु
-	अचिन्हित पूर्णांक dacs;
+struct generic_data {
+	unsigned int dacs;
 	u8 ak4396_regs[4][5];
 	u16 wm8785_regs[3];
-पूर्ण;
+};
 
-अटल व्योम ak4396_ग_लिखो(काष्ठा oxygen *chip, अचिन्हित पूर्णांक codec,
+static void ak4396_write(struct oxygen *chip, unsigned int codec,
 			 u8 reg, u8 value)
-अणु
+{
 	/* maps ALSA channel pair number to SPI output */
-	अटल स्थिर u8 codec_spi_map[4] = अणु
+	static const u8 codec_spi_map[4] = {
 		0, 1, 2, 4
-	पूर्ण;
-	काष्ठा generic_data *data = chip->model_data;
+	};
+	struct generic_data *data = chip->model_data;
 
-	oxygen_ग_लिखो_spi(chip, OXYGEN_SPI_TRIGGER |
+	oxygen_write_spi(chip, OXYGEN_SPI_TRIGGER |
 			 OXYGEN_SPI_DATA_LENGTH_2 |
 			 OXYGEN_SPI_CLOCK_160 |
 			 (codec_spi_map[codec] << OXYGEN_SPI_CODEC_SHIFT) |
 			 OXYGEN_SPI_CEN_LATCH_CLOCK_HI,
 			 AK4396_WRITE | (reg << 8) | value);
 	data->ak4396_regs[codec][reg] = value;
-पूर्ण
+}
 
-अटल व्योम ak4396_ग_लिखो_cached(काष्ठा oxygen *chip, अचिन्हित पूर्णांक codec,
+static void ak4396_write_cached(struct oxygen *chip, unsigned int codec,
 				u8 reg, u8 value)
-अणु
-	काष्ठा generic_data *data = chip->model_data;
+{
+	struct generic_data *data = chip->model_data;
 
-	अगर (value != data->ak4396_regs[codec][reg])
-		ak4396_ग_लिखो(chip, codec, reg, value);
-पूर्ण
+	if (value != data->ak4396_regs[codec][reg])
+		ak4396_write(chip, codec, reg, value);
+}
 
-अटल व्योम wm8785_ग_लिखो(काष्ठा oxygen *chip, u8 reg, अचिन्हित पूर्णांक value)
-अणु
-	काष्ठा generic_data *data = chip->model_data;
+static void wm8785_write(struct oxygen *chip, u8 reg, unsigned int value)
+{
+	struct generic_data *data = chip->model_data;
 
-	oxygen_ग_लिखो_spi(chip, OXYGEN_SPI_TRIGGER |
+	oxygen_write_spi(chip, OXYGEN_SPI_TRIGGER |
 			 OXYGEN_SPI_DATA_LENGTH_2 |
 			 OXYGEN_SPI_CLOCK_160 |
 			 (3 << OXYGEN_SPI_CODEC_SHIFT) |
 			 OXYGEN_SPI_CEN_LATCH_CLOCK_LO,
 			 (reg << 9) | value);
-	अगर (reg < ARRAY_SIZE(data->wm8785_regs))
+	if (reg < ARRAY_SIZE(data->wm8785_regs))
 		data->wm8785_regs[reg] = value;
-पूर्ण
+}
 
-अटल व्योम ak4396_रेजिस्टरs_init(काष्ठा oxygen *chip)
-अणु
-	काष्ठा generic_data *data = chip->model_data;
-	अचिन्हित पूर्णांक i;
+static void ak4396_registers_init(struct oxygen *chip)
+{
+	struct generic_data *data = chip->model_data;
+	unsigned int i;
 
-	क्रम (i = 0; i < data->dacs; ++i) अणु
-		ak4396_ग_लिखो(chip, i, AK4396_CONTROL_1,
+	for (i = 0; i < data->dacs; ++i) {
+		ak4396_write(chip, i, AK4396_CONTROL_1,
 			     AK4396_DIF_24_MSB | AK4396_RSTN);
-		ak4396_ग_लिखो(chip, i, AK4396_CONTROL_2,
+		ak4396_write(chip, i, AK4396_CONTROL_2,
 			     data->ak4396_regs[0][AK4396_CONTROL_2]);
-		ak4396_ग_लिखो(chip, i, AK4396_CONTROL_3,
+		ak4396_write(chip, i, AK4396_CONTROL_3,
 			     AK4396_PCM);
-		ak4396_ग_लिखो(chip, i, AK4396_LCH_ATT,
+		ak4396_write(chip, i, AK4396_LCH_ATT,
 			     chip->dac_volume[i * 2]);
-		ak4396_ग_लिखो(chip, i, AK4396_RCH_ATT,
+		ak4396_write(chip, i, AK4396_RCH_ATT,
 			     chip->dac_volume[i * 2 + 1]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम ak4396_init(काष्ठा oxygen *chip)
-अणु
-	काष्ठा generic_data *data = chip->model_data;
+static void ak4396_init(struct oxygen *chip)
+{
+	struct generic_data *data = chip->model_data;
 
 	data->dacs = chip->model.dac_channels_pcm / 2;
 	data->ak4396_regs[0][AK4396_CONTROL_2] =
 		AK4396_SMUTE | AK4396_DEM_OFF | AK4396_DFS_NORMAL;
-	ak4396_रेजिस्टरs_init(chip);
+	ak4396_registers_init(chip);
 	snd_component_add(chip->card, "AK4396");
-पूर्ण
+}
 
-अटल व्योम ak5385_init(काष्ठा oxygen *chip)
-अणु
+static void ak5385_init(struct oxygen *chip)
+{
 	oxygen_set_bits16(chip, OXYGEN_GPIO_CONTROL, GPIO_AK5385_DFS_MASK);
 	oxygen_clear_bits16(chip, OXYGEN_GPIO_DATA, GPIO_AK5385_DFS_MASK);
 	snd_component_add(chip->card, "AK5385");
-पूर्ण
+}
 
-अटल व्योम wm8785_रेजिस्टरs_init(काष्ठा oxygen *chip)
-अणु
-	काष्ठा generic_data *data = chip->model_data;
+static void wm8785_registers_init(struct oxygen *chip)
+{
+	struct generic_data *data = chip->model_data;
 
-	wm8785_ग_लिखो(chip, WM8785_R7, 0);
-	wm8785_ग_लिखो(chip, WM8785_R0, data->wm8785_regs[0]);
-	wm8785_ग_लिखो(chip, WM8785_R2, data->wm8785_regs[2]);
-पूर्ण
+	wm8785_write(chip, WM8785_R7, 0);
+	wm8785_write(chip, WM8785_R0, data->wm8785_regs[0]);
+	wm8785_write(chip, WM8785_R2, data->wm8785_regs[2]);
+}
 
-अटल व्योम wm8785_init(काष्ठा oxygen *chip)
-अणु
-	काष्ठा generic_data *data = chip->model_data;
+static void wm8785_init(struct oxygen *chip)
+{
+	struct generic_data *data = chip->model_data;
 
 	data->wm8785_regs[0] =
 		WM8785_MCR_SLAVE | WM8785_OSR_SINGLE | WM8785_FORMAT_LJUST;
 	data->wm8785_regs[2] = WM8785_HPFR | WM8785_HPFL;
-	wm8785_रेजिस्टरs_init(chip);
+	wm8785_registers_init(chip);
 	snd_component_add(chip->card, "WM8785");
-पूर्ण
+}
 
-अटल व्योम generic_init(काष्ठा oxygen *chip)
-अणु
+static void generic_init(struct oxygen *chip)
+{
 	ak4396_init(chip);
 	wm8785_init(chip);
-पूर्ण
+}
 
-अटल व्योम meridian_init(काष्ठा oxygen *chip)
-अणु
+static void meridian_init(struct oxygen *chip)
+{
 	oxygen_set_bits16(chip, OXYGEN_GPIO_CONTROL,
 			  GPIO_MERIDIAN_DIG_MASK);
-	oxygen_ग_लिखो16_masked(chip, OXYGEN_GPIO_DATA,
+	oxygen_write16_masked(chip, OXYGEN_GPIO_DATA,
 			      GPIO_MERIDIAN_DIG_BOARD, GPIO_MERIDIAN_DIG_MASK);
 	ak4396_init(chip);
 	ak5385_init(chip);
-पूर्ण
+}
 
-अटल व्योम claro_enable_hp(काष्ठा oxygen *chip)
-अणु
+static void claro_enable_hp(struct oxygen *chip)
+{
 	msleep(300);
 	oxygen_set_bits16(chip, OXYGEN_GPIO_CONTROL, GPIO_CLARO_HP);
 	oxygen_set_bits16(chip, OXYGEN_GPIO_DATA, GPIO_CLARO_HP);
-पूर्ण
+}
 
-अटल व्योम claro_init(काष्ठा oxygen *chip)
-अणु
+static void claro_init(struct oxygen *chip)
+{
 	oxygen_set_bits16(chip, OXYGEN_GPIO_CONTROL, GPIO_CLARO_DIG_COAX);
 	oxygen_clear_bits16(chip, OXYGEN_GPIO_DATA, GPIO_CLARO_DIG_COAX);
 	ak4396_init(chip);
 	wm8785_init(chip);
 	claro_enable_hp(chip);
-पूर्ण
+}
 
-अटल व्योम claro_halo_init(काष्ठा oxygen *chip)
-अणु
+static void claro_halo_init(struct oxygen *chip)
+{
 	oxygen_set_bits16(chip, OXYGEN_GPIO_CONTROL, GPIO_CLARO_DIG_COAX);
 	oxygen_clear_bits16(chip, OXYGEN_GPIO_DATA, GPIO_CLARO_DIG_COAX);
 	ak4396_init(chip);
 	ak5385_init(chip);
 	claro_enable_hp(chip);
-पूर्ण
+}
 
-अटल व्योम fantasia_init(काष्ठा oxygen *chip)
-अणु
+static void fantasia_init(struct oxygen *chip)
+{
 	ak4396_init(chip);
 	snd_component_add(chip->card, "CS5340");
-पूर्ण
+}
 
-अटल व्योम stereo_output_init(काष्ठा oxygen *chip)
-अणु
+static void stereo_output_init(struct oxygen *chip)
+{
 	ak4396_init(chip);
-पूर्ण
+}
 
-अटल व्योम generic_cleanup(काष्ठा oxygen *chip)
-अणु
-पूर्ण
+static void generic_cleanup(struct oxygen *chip)
+{
+}
 
-अटल व्योम claro_disable_hp(काष्ठा oxygen *chip)
-अणु
+static void claro_disable_hp(struct oxygen *chip)
+{
 	oxygen_clear_bits16(chip, OXYGEN_GPIO_DATA, GPIO_CLARO_HP);
-पूर्ण
+}
 
-अटल व्योम claro_cleanup(काष्ठा oxygen *chip)
-अणु
+static void claro_cleanup(struct oxygen *chip)
+{
 	claro_disable_hp(chip);
-पूर्ण
+}
 
-अटल व्योम claro_suspend(काष्ठा oxygen *chip)
-अणु
+static void claro_suspend(struct oxygen *chip)
+{
 	claro_disable_hp(chip);
-पूर्ण
+}
 
-अटल व्योम generic_resume(काष्ठा oxygen *chip)
-अणु
-	ak4396_रेजिस्टरs_init(chip);
-	wm8785_रेजिस्टरs_init(chip);
-पूर्ण
+static void generic_resume(struct oxygen *chip)
+{
+	ak4396_registers_init(chip);
+	wm8785_registers_init(chip);
+}
 
-अटल व्योम meridian_resume(काष्ठा oxygen *chip)
-अणु
-	ak4396_रेजिस्टरs_init(chip);
-पूर्ण
+static void meridian_resume(struct oxygen *chip)
+{
+	ak4396_registers_init(chip);
+}
 
-अटल व्योम claro_resume(काष्ठा oxygen *chip)
-अणु
-	ak4396_रेजिस्टरs_init(chip);
+static void claro_resume(struct oxygen *chip)
+{
+	ak4396_registers_init(chip);
 	claro_enable_hp(chip);
-पूर्ण
+}
 
-अटल व्योम stereo_resume(काष्ठा oxygen *chip)
-अणु
-	ak4396_रेजिस्टरs_init(chip);
-पूर्ण
+static void stereo_resume(struct oxygen *chip)
+{
+	ak4396_registers_init(chip);
+}
 
-अटल व्योम set_ak4396_params(काष्ठा oxygen *chip,
-			      काष्ठा snd_pcm_hw_params *params)
-अणु
-	काष्ठा generic_data *data = chip->model_data;
-	अचिन्हित पूर्णांक i;
+static void set_ak4396_params(struct oxygen *chip,
+			      struct snd_pcm_hw_params *params)
+{
+	struct generic_data *data = chip->model_data;
+	unsigned int i;
 	u8 value;
 
 	value = data->ak4396_regs[0][AK4396_CONTROL_2] & ~AK4396_DFS_MASK;
-	अगर (params_rate(params) <= 54000)
+	if (params_rate(params) <= 54000)
 		value |= AK4396_DFS_NORMAL;
-	अन्यथा अगर (params_rate(params) <= 108000)
+	else if (params_rate(params) <= 108000)
 		value |= AK4396_DFS_DOUBLE;
-	अन्यथा
+	else
 		value |= AK4396_DFS_QUAD;
 
-	msleep(1); /* रुको क्रम the new MCLK to become stable */
+	msleep(1); /* wait for the new MCLK to become stable */
 
-	अगर (value != data->ak4396_regs[0][AK4396_CONTROL_2]) अणु
-		क्रम (i = 0; i < data->dacs; ++i) अणु
-			ak4396_ग_लिखो(chip, i, AK4396_CONTROL_1,
+	if (value != data->ak4396_regs[0][AK4396_CONTROL_2]) {
+		for (i = 0; i < data->dacs; ++i) {
+			ak4396_write(chip, i, AK4396_CONTROL_1,
 				     AK4396_DIF_24_MSB);
-			ak4396_ग_लिखो(chip, i, AK4396_CONTROL_2, value);
-			ak4396_ग_लिखो(chip, i, AK4396_CONTROL_1,
+			ak4396_write(chip, i, AK4396_CONTROL_2, value);
+			ak4396_write(chip, i, AK4396_CONTROL_1,
 				     AK4396_DIF_24_MSB | AK4396_RSTN);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम update_ak4396_volume(काष्ठा oxygen *chip)
-अणु
-	काष्ठा generic_data *data = chip->model_data;
-	अचिन्हित पूर्णांक i;
+static void update_ak4396_volume(struct oxygen *chip)
+{
+	struct generic_data *data = chip->model_data;
+	unsigned int i;
 
-	क्रम (i = 0; i < data->dacs; ++i) अणु
-		ak4396_ग_लिखो_cached(chip, i, AK4396_LCH_ATT,
+	for (i = 0; i < data->dacs; ++i) {
+		ak4396_write_cached(chip, i, AK4396_LCH_ATT,
 				    chip->dac_volume[i * 2]);
-		ak4396_ग_लिखो_cached(chip, i, AK4396_RCH_ATT,
+		ak4396_write_cached(chip, i, AK4396_RCH_ATT,
 				    chip->dac_volume[i * 2 + 1]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम update_ak4396_mute(काष्ठा oxygen *chip)
-अणु
-	काष्ठा generic_data *data = chip->model_data;
-	अचिन्हित पूर्णांक i;
+static void update_ak4396_mute(struct oxygen *chip)
+{
+	struct generic_data *data = chip->model_data;
+	unsigned int i;
 	u8 value;
 
 	value = data->ak4396_regs[0][AK4396_CONTROL_2] & ~AK4396_SMUTE;
-	अगर (chip->dac_mute)
+	if (chip->dac_mute)
 		value |= AK4396_SMUTE;
-	क्रम (i = 0; i < data->dacs; ++i)
-		ak4396_ग_लिखो_cached(chip, i, AK4396_CONTROL_2, value);
-पूर्ण
+	for (i = 0; i < data->dacs; ++i)
+		ak4396_write_cached(chip, i, AK4396_CONTROL_2, value);
+}
 
-अटल व्योम set_wm8785_params(काष्ठा oxygen *chip,
-			      काष्ठा snd_pcm_hw_params *params)
-अणु
-	काष्ठा generic_data *data = chip->model_data;
-	अचिन्हित पूर्णांक value;
+static void set_wm8785_params(struct oxygen *chip,
+			      struct snd_pcm_hw_params *params)
+{
+	struct generic_data *data = chip->model_data;
+	unsigned int value;
 
 	value = WM8785_MCR_SLAVE | WM8785_FORMAT_LJUST;
-	अगर (params_rate(params) <= 48000)
+	if (params_rate(params) <= 48000)
 		value |= WM8785_OSR_SINGLE;
-	अन्यथा अगर (params_rate(params) <= 96000)
+	else if (params_rate(params) <= 96000)
 		value |= WM8785_OSR_DOUBLE;
-	अन्यथा
+	else
 		value |= WM8785_OSR_QUAD;
-	अगर (value != data->wm8785_regs[0]) अणु
-		wm8785_ग_लिखो(chip, WM8785_R7, 0);
-		wm8785_ग_लिखो(chip, WM8785_R0, value);
-		wm8785_ग_लिखो(chip, WM8785_R2, data->wm8785_regs[2]);
-	पूर्ण
-पूर्ण
+	if (value != data->wm8785_regs[0]) {
+		wm8785_write(chip, WM8785_R7, 0);
+		wm8785_write(chip, WM8785_R0, value);
+		wm8785_write(chip, WM8785_R2, data->wm8785_regs[2]);
+	}
+}
 
-अटल व्योम set_ak5385_params(काष्ठा oxygen *chip,
-			      काष्ठा snd_pcm_hw_params *params)
-अणु
-	अचिन्हित पूर्णांक value;
+static void set_ak5385_params(struct oxygen *chip,
+			      struct snd_pcm_hw_params *params)
+{
+	unsigned int value;
 
-	अगर (params_rate(params) <= 54000)
+	if (params_rate(params) <= 54000)
 		value = GPIO_AK5385_DFS_NORMAL;
-	अन्यथा अगर (params_rate(params) <= 108000)
+	else if (params_rate(params) <= 108000)
 		value = GPIO_AK5385_DFS_DOUBLE;
-	अन्यथा
+	else
 		value = GPIO_AK5385_DFS_QUAD;
-	oxygen_ग_लिखो16_masked(chip, OXYGEN_GPIO_DATA,
+	oxygen_write16_masked(chip, OXYGEN_GPIO_DATA,
 			      value, GPIO_AK5385_DFS_MASK);
-पूर्ण
+}
 
-अटल व्योम set_no_params(काष्ठा oxygen *chip, काष्ठा snd_pcm_hw_params *params)
-अणु
-पूर्ण
+static void set_no_params(struct oxygen *chip, struct snd_pcm_hw_params *params)
+{
+}
 
-अटल पूर्णांक rolloff_info(काष्ठा snd_kcontrol *ctl,
-			काष्ठा snd_ctl_elem_info *info)
-अणु
-	अटल स्थिर अक्षर *स्थिर names[2] = अणु
+static int rolloff_info(struct snd_kcontrol *ctl,
+			struct snd_ctl_elem_info *info)
+{
+	static const char *const names[2] = {
 		"Sharp Roll-off", "Slow Roll-off"
-	पूर्ण;
+	};
 
-	वापस snd_ctl_क्रमागत_info(info, 1, 2, names);
-पूर्ण
+	return snd_ctl_enum_info(info, 1, 2, names);
+}
 
-अटल पूर्णांक rolloff_get(काष्ठा snd_kcontrol *ctl,
-		       काष्ठा snd_ctl_elem_value *value)
-अणु
-	काष्ठा oxygen *chip = ctl->निजी_data;
-	काष्ठा generic_data *data = chip->model_data;
+static int rolloff_get(struct snd_kcontrol *ctl,
+		       struct snd_ctl_elem_value *value)
+{
+	struct oxygen *chip = ctl->private_data;
+	struct generic_data *data = chip->model_data;
 
-	value->value.क्रमागतerated.item[0] =
+	value->value.enumerated.item[0] =
 		(data->ak4396_regs[0][AK4396_CONTROL_2] & AK4396_SLOW) != 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rolloff_put(काष्ठा snd_kcontrol *ctl,
-		       काष्ठा snd_ctl_elem_value *value)
-अणु
-	काष्ठा oxygen *chip = ctl->निजी_data;
-	काष्ठा generic_data *data = chip->model_data;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक changed;
+static int rolloff_put(struct snd_kcontrol *ctl,
+		       struct snd_ctl_elem_value *value)
+{
+	struct oxygen *chip = ctl->private_data;
+	struct generic_data *data = chip->model_data;
+	unsigned int i;
+	int changed;
 	u8 reg;
 
 	mutex_lock(&chip->mutex);
 	reg = data->ak4396_regs[0][AK4396_CONTROL_2];
-	अगर (value->value.क्रमागतerated.item[0])
+	if (value->value.enumerated.item[0])
 		reg |= AK4396_SLOW;
-	अन्यथा
+	else
 		reg &= ~AK4396_SLOW;
 	changed = reg != data->ak4396_regs[0][AK4396_CONTROL_2];
-	अगर (changed) अणु
-		क्रम (i = 0; i < data->dacs; ++i)
-			ak4396_ग_लिखो(chip, i, AK4396_CONTROL_2, reg);
-	पूर्ण
+	if (changed) {
+		for (i = 0; i < data->dacs; ++i)
+			ak4396_write(chip, i, AK4396_CONTROL_2, reg);
+	}
 	mutex_unlock(&chip->mutex);
-	वापस changed;
-पूर्ण
+	return changed;
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new rolloff_control = अणु
-	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+static const struct snd_kcontrol_new rolloff_control = {
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name = "DAC Filter Playback Enum",
 	.info = rolloff_info,
 	.get = rolloff_get,
 	.put = rolloff_put,
-पूर्ण;
+};
 
-अटल पूर्णांक hpf_info(काष्ठा snd_kcontrol *ctl, काष्ठा snd_ctl_elem_info *info)
-अणु
-	अटल स्थिर अक्षर *स्थिर names[2] = अणु
+static int hpf_info(struct snd_kcontrol *ctl, struct snd_ctl_elem_info *info)
+{
+	static const char *const names[2] = {
 		"None", "High-pass Filter"
-	पूर्ण;
+	};
 
-	वापस snd_ctl_क्रमागत_info(info, 1, 2, names);
-पूर्ण
+	return snd_ctl_enum_info(info, 1, 2, names);
+}
 
-अटल पूर्णांक hpf_get(काष्ठा snd_kcontrol *ctl, काष्ठा snd_ctl_elem_value *value)
-अणु
-	काष्ठा oxygen *chip = ctl->निजी_data;
-	काष्ठा generic_data *data = chip->model_data;
+static int hpf_get(struct snd_kcontrol *ctl, struct snd_ctl_elem_value *value)
+{
+	struct oxygen *chip = ctl->private_data;
+	struct generic_data *data = chip->model_data;
 
-	value->value.क्रमागतerated.item[0] =
+	value->value.enumerated.item[0] =
 		(data->wm8785_regs[WM8785_R2] & WM8785_HPFR) != 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hpf_put(काष्ठा snd_kcontrol *ctl, काष्ठा snd_ctl_elem_value *value)
-अणु
-	काष्ठा oxygen *chip = ctl->निजी_data;
-	काष्ठा generic_data *data = chip->model_data;
-	अचिन्हित पूर्णांक reg;
-	पूर्णांक changed;
+static int hpf_put(struct snd_kcontrol *ctl, struct snd_ctl_elem_value *value)
+{
+	struct oxygen *chip = ctl->private_data;
+	struct generic_data *data = chip->model_data;
+	unsigned int reg;
+	int changed;
 
 	mutex_lock(&chip->mutex);
 	reg = data->wm8785_regs[WM8785_R2] & ~(WM8785_HPFR | WM8785_HPFL);
-	अगर (value->value.क्रमागतerated.item[0])
+	if (value->value.enumerated.item[0])
 		reg |= WM8785_HPFR | WM8785_HPFL;
 	changed = reg != data->wm8785_regs[WM8785_R2];
-	अगर (changed)
-		wm8785_ग_लिखो(chip, WM8785_R2, reg);
+	if (changed)
+		wm8785_write(chip, WM8785_R2, reg);
 	mutex_unlock(&chip->mutex);
-	वापस changed;
-पूर्ण
+	return changed;
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new hpf_control = अणु
-	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+static const struct snd_kcontrol_new hpf_control = {
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name = "ADC Filter Capture Enum",
 	.info = hpf_info,
 	.get = hpf_get,
 	.put = hpf_put,
-पूर्ण;
+};
 
-अटल पूर्णांक meridian_dig_source_info(काष्ठा snd_kcontrol *ctl,
-				    काष्ठा snd_ctl_elem_info *info)
-अणु
-	अटल स्थिर अक्षर *स्थिर names[2] = अणु "On-board", "Extension" पूर्ण;
+static int meridian_dig_source_info(struct snd_kcontrol *ctl,
+				    struct snd_ctl_elem_info *info)
+{
+	static const char *const names[2] = { "On-board", "Extension" };
 
-	वापस snd_ctl_क्रमागत_info(info, 1, 2, names);
-पूर्ण
+	return snd_ctl_enum_info(info, 1, 2, names);
+}
 
-अटल पूर्णांक claro_dig_source_info(काष्ठा snd_kcontrol *ctl,
-				 काष्ठा snd_ctl_elem_info *info)
-अणु
-	अटल स्थिर अक्षर *स्थिर names[2] = अणु "Optical", "Coaxial" पूर्ण;
+static int claro_dig_source_info(struct snd_kcontrol *ctl,
+				 struct snd_ctl_elem_info *info)
+{
+	static const char *const names[2] = { "Optical", "Coaxial" };
 
-	वापस snd_ctl_क्रमागत_info(info, 1, 2, names);
-पूर्ण
+	return snd_ctl_enum_info(info, 1, 2, names);
+}
 
-अटल पूर्णांक meridian_dig_source_get(काष्ठा snd_kcontrol *ctl,
-				   काष्ठा snd_ctl_elem_value *value)
-अणु
-	काष्ठा oxygen *chip = ctl->निजी_data;
+static int meridian_dig_source_get(struct snd_kcontrol *ctl,
+				   struct snd_ctl_elem_value *value)
+{
+	struct oxygen *chip = ctl->private_data;
 
-	value->value.क्रमागतerated.item[0] =
-		!!(oxygen_पढ़ो16(chip, OXYGEN_GPIO_DATA) &
+	value->value.enumerated.item[0] =
+		!!(oxygen_read16(chip, OXYGEN_GPIO_DATA) &
 		   GPIO_MERIDIAN_DIG_EXT);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक claro_dig_source_get(काष्ठा snd_kcontrol *ctl,
-				काष्ठा snd_ctl_elem_value *value)
-अणु
-	काष्ठा oxygen *chip = ctl->निजी_data;
+static int claro_dig_source_get(struct snd_kcontrol *ctl,
+				struct snd_ctl_elem_value *value)
+{
+	struct oxygen *chip = ctl->private_data;
 
-	value->value.क्रमागतerated.item[0] =
-		!!(oxygen_पढ़ो16(chip, OXYGEN_GPIO_DATA) &
+	value->value.enumerated.item[0] =
+		!!(oxygen_read16(chip, OXYGEN_GPIO_DATA) &
 		   GPIO_CLARO_DIG_COAX);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक meridian_dig_source_put(काष्ठा snd_kcontrol *ctl,
-				   काष्ठा snd_ctl_elem_value *value)
-अणु
-	काष्ठा oxygen *chip = ctl->निजी_data;
+static int meridian_dig_source_put(struct snd_kcontrol *ctl,
+				   struct snd_ctl_elem_value *value)
+{
+	struct oxygen *chip = ctl->private_data;
 	u16 old_reg, new_reg;
-	पूर्णांक changed;
+	int changed;
 
 	mutex_lock(&chip->mutex);
-	old_reg = oxygen_पढ़ो16(chip, OXYGEN_GPIO_DATA);
+	old_reg = oxygen_read16(chip, OXYGEN_GPIO_DATA);
 	new_reg = old_reg & ~GPIO_MERIDIAN_DIG_MASK;
-	अगर (value->value.क्रमागतerated.item[0] == 0)
+	if (value->value.enumerated.item[0] == 0)
 		new_reg |= GPIO_MERIDIAN_DIG_BOARD;
-	अन्यथा
+	else
 		new_reg |= GPIO_MERIDIAN_DIG_EXT;
 	changed = new_reg != old_reg;
-	अगर (changed)
-		oxygen_ग_लिखो16(chip, OXYGEN_GPIO_DATA, new_reg);
+	if (changed)
+		oxygen_write16(chip, OXYGEN_GPIO_DATA, new_reg);
 	mutex_unlock(&chip->mutex);
-	वापस changed;
-पूर्ण
+	return changed;
+}
 
-अटल पूर्णांक claro_dig_source_put(काष्ठा snd_kcontrol *ctl,
-				काष्ठा snd_ctl_elem_value *value)
-अणु
-	काष्ठा oxygen *chip = ctl->निजी_data;
+static int claro_dig_source_put(struct snd_kcontrol *ctl,
+				struct snd_ctl_elem_value *value)
+{
+	struct oxygen *chip = ctl->private_data;
 	u16 old_reg, new_reg;
-	पूर्णांक changed;
+	int changed;
 
 	mutex_lock(&chip->mutex);
-	old_reg = oxygen_पढ़ो16(chip, OXYGEN_GPIO_DATA);
+	old_reg = oxygen_read16(chip, OXYGEN_GPIO_DATA);
 	new_reg = old_reg & ~GPIO_CLARO_DIG_COAX;
-	अगर (value->value.क्रमागतerated.item[0])
+	if (value->value.enumerated.item[0])
 		new_reg |= GPIO_CLARO_DIG_COAX;
 	changed = new_reg != old_reg;
-	अगर (changed)
-		oxygen_ग_लिखो16(chip, OXYGEN_GPIO_DATA, new_reg);
+	if (changed)
+		oxygen_write16(chip, OXYGEN_GPIO_DATA, new_reg);
 	mutex_unlock(&chip->mutex);
-	वापस changed;
-पूर्ण
+	return changed;
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new meridian_dig_source_control = अणु
-	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+static const struct snd_kcontrol_new meridian_dig_source_control = {
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name = "IEC958 Source Capture Enum",
 	.info = meridian_dig_source_info,
 	.get = meridian_dig_source_get,
 	.put = meridian_dig_source_put,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new claro_dig_source_control = अणु
-	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+static const struct snd_kcontrol_new claro_dig_source_control = {
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name = "IEC958 Source Capture Enum",
 	.info = claro_dig_source_info,
 	.get = claro_dig_source_get,
 	.put = claro_dig_source_put,
-पूर्ण;
+};
 
-अटल पूर्णांक generic_mixer_init(काष्ठा oxygen *chip)
-अणु
-	वापस snd_ctl_add(chip->card, snd_ctl_new1(&rolloff_control, chip));
-पूर्ण
+static int generic_mixer_init(struct oxygen *chip)
+{
+	return snd_ctl_add(chip->card, snd_ctl_new1(&rolloff_control, chip));
+}
 
-अटल पूर्णांक generic_wm8785_mixer_init(काष्ठा oxygen *chip)
-अणु
-	पूर्णांक err;
+static int generic_wm8785_mixer_init(struct oxygen *chip)
+{
+	int err;
 
 	err = generic_mixer_init(chip);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 	err = snd_ctl_add(chip->card, snd_ctl_new1(&hpf_control, chip));
-	अगर (err < 0)
-		वापस err;
-	वापस 0;
-पूर्ण
+	if (err < 0)
+		return err;
+	return 0;
+}
 
-अटल पूर्णांक meridian_mixer_init(काष्ठा oxygen *chip)
-अणु
-	पूर्णांक err;
+static int meridian_mixer_init(struct oxygen *chip)
+{
+	int err;
 
 	err = generic_mixer_init(chip);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 	err = snd_ctl_add(chip->card,
 			  snd_ctl_new1(&meridian_dig_source_control, chip));
-	अगर (err < 0)
-		वापस err;
-	वापस 0;
-पूर्ण
+	if (err < 0)
+		return err;
+	return 0;
+}
 
-अटल पूर्णांक claro_mixer_init(काष्ठा oxygen *chip)
-अणु
-	पूर्णांक err;
+static int claro_mixer_init(struct oxygen *chip)
+{
+	int err;
 
 	err = generic_wm8785_mixer_init(chip);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 	err = snd_ctl_add(chip->card,
 			  snd_ctl_new1(&claro_dig_source_control, chip));
-	अगर (err < 0)
-		वापस err;
-	वापस 0;
-पूर्ण
+	if (err < 0)
+		return err;
+	return 0;
+}
 
-अटल पूर्णांक claro_halo_mixer_init(काष्ठा oxygen *chip)
-अणु
-	पूर्णांक err;
+static int claro_halo_mixer_init(struct oxygen *chip)
+{
+	int err;
 
 	err = generic_mixer_init(chip);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 	err = snd_ctl_add(chip->card,
 			  snd_ctl_new1(&claro_dig_source_control, chip));
-	अगर (err < 0)
-		वापस err;
-	वापस 0;
-पूर्ण
+	if (err < 0)
+		return err;
+	return 0;
+}
 
-अटल व्योम dump_ak4396_रेजिस्टरs(काष्ठा oxygen *chip,
-				  काष्ठा snd_info_buffer *buffer)
-अणु
-	काष्ठा generic_data *data = chip->model_data;
-	अचिन्हित पूर्णांक dac, i;
+static void dump_ak4396_registers(struct oxygen *chip,
+				  struct snd_info_buffer *buffer)
+{
+	struct generic_data *data = chip->model_data;
+	unsigned int dac, i;
 
-	क्रम (dac = 0; dac < data->dacs; ++dac) अणु
-		snd_iम_लिखो(buffer, "\nAK4396 %u:", dac + 1);
-		क्रम (i = 0; i < 5; ++i)
-			snd_iम_लिखो(buffer, " %02x", data->ak4396_regs[dac][i]);
-	पूर्ण
-	snd_iम_लिखो(buffer, "\n");
-पूर्ण
+	for (dac = 0; dac < data->dacs; ++dac) {
+		snd_iprintf(buffer, "\nAK4396 %u:", dac + 1);
+		for (i = 0; i < 5; ++i)
+			snd_iprintf(buffer, " %02x", data->ak4396_regs[dac][i]);
+	}
+	snd_iprintf(buffer, "\n");
+}
 
-अटल व्योम dump_wm8785_रेजिस्टरs(काष्ठा oxygen *chip,
-				  काष्ठा snd_info_buffer *buffer)
-अणु
-	काष्ठा generic_data *data = chip->model_data;
-	अचिन्हित पूर्णांक i;
+static void dump_wm8785_registers(struct oxygen *chip,
+				  struct snd_info_buffer *buffer)
+{
+	struct generic_data *data = chip->model_data;
+	unsigned int i;
 
-	snd_iम_लिखो(buffer, "\nWM8785:");
-	क्रम (i = 0; i < 3; ++i)
-		snd_iम_लिखो(buffer, " %03x", data->wm8785_regs[i]);
-	snd_iम_लिखो(buffer, "\n");
-पूर्ण
+	snd_iprintf(buffer, "\nWM8785:");
+	for (i = 0; i < 3; ++i)
+		snd_iprintf(buffer, " %03x", data->wm8785_regs[i]);
+	snd_iprintf(buffer, "\n");
+}
 
-अटल व्योम dump_oxygen_रेजिस्टरs(काष्ठा oxygen *chip,
-				  काष्ठा snd_info_buffer *buffer)
-अणु
-	dump_ak4396_रेजिस्टरs(chip, buffer);
-	dump_wm8785_रेजिस्टरs(chip, buffer);
-पूर्ण
+static void dump_oxygen_registers(struct oxygen *chip,
+				  struct snd_info_buffer *buffer)
+{
+	dump_ak4396_registers(chip, buffer);
+	dump_wm8785_registers(chip, buffer);
+}
 
-अटल स्थिर DECLARE_TLV_DB_LINEAR(ak4396_db_scale, TLV_DB_GAIN_MUTE, 0);
+static const DECLARE_TLV_DB_LINEAR(ak4396_db_scale, TLV_DB_GAIN_MUTE, 0);
 
-अटल स्थिर काष्ठा oxygen_model model_generic = अणु
-	.लघुname = "C-Media CMI8788",
-	.दीर्घname = "C-Media Oxygen HD Audio",
+static const struct oxygen_model model_generic = {
+	.shortname = "C-Media CMI8788",
+	.longname = "C-Media Oxygen HD Audio",
 	.chip = "CMI8788",
 	.init = generic_init,
 	.mixer_init = generic_wm8785_mixer_init,
@@ -720,9 +719,9 @@ MODULE_DEVICE_TABLE(pci, oxygen_ids);
 	.set_adc_params = set_wm8785_params,
 	.update_dac_volume = update_ak4396_volume,
 	.update_dac_mute = update_ak4396_mute,
-	.dump_रेजिस्टरs = dump_oxygen_रेजिस्टरs,
+	.dump_registers = dump_oxygen_registers,
 	.dac_tlv = ak4396_db_scale,
-	.model_data_size = माप(काष्ठा generic_data),
+	.model_data_size = sizeof(struct generic_data),
 	.device_config = PLAYBACK_0_TO_I2S |
 			 PLAYBACK_1_TO_SPDIF |
 			 PLAYBACK_2_TO_AC97_1 |
@@ -738,14 +737,14 @@ MODULE_DEVICE_TABLE(pci, oxygen_ids);
 			  OXYGEN_FUNCTION_ENABLE_SPI_4_5,
 	.dac_mclks = OXYGEN_MCLKS(256, 128, 128),
 	.adc_mclks = OXYGEN_MCLKS(256, 256, 128),
-	.dac_i2s_क्रमmat = OXYGEN_I2S_FORMAT_LJUST,
-	.adc_i2s_क्रमmat = OXYGEN_I2S_FORMAT_LJUST,
-पूर्ण;
+	.dac_i2s_format = OXYGEN_I2S_FORMAT_LJUST,
+	.adc_i2s_format = OXYGEN_I2S_FORMAT_LJUST,
+};
 
-अटल पूर्णांक get_oxygen_model(काष्ठा oxygen *chip,
-			    स्थिर काष्ठा pci_device_id *id)
-अणु
-	अटल स्थिर अक्षर *स्थिर names[] = अणु
+static int get_oxygen_model(struct oxygen *chip,
+			    const struct pci_device_id *id)
+{
+	static const char *const names[] = {
 		[MODEL_MERIDIAN]	= "AuzenTech X-Meridian",
 		[MODEL_MERIDIAN_2G]	= "AuzenTech X-Meridian 2G",
 		[MODEL_CLARO]		= "HT-Omega Claro",
@@ -755,112 +754,112 @@ MODULE_DEVICE_TABLE(pci, oxygen_ids);
 		[MODEL_HG2PCI]		= "CMI8787-HG2PCI",
 		[MODEL_XONAR_DG]        = "Xonar DG",
 		[MODEL_XONAR_DGX]       = "Xonar DGX",
-	पूर्ण;
+	};
 
 	chip->model = model_generic;
-	चयन (id->driver_data) अणु
-	हाल MODEL_MERIDIAN:
-	हाल MODEL_MERIDIAN_2G:
+	switch (id->driver_data) {
+	case MODEL_MERIDIAN:
+	case MODEL_MERIDIAN_2G:
 		chip->model.init = meridian_init;
 		chip->model.mixer_init = meridian_mixer_init;
 		chip->model.resume = meridian_resume;
 		chip->model.set_adc_params = set_ak5385_params;
-		chip->model.dump_रेजिस्टरs = dump_ak4396_रेजिस्टरs;
+		chip->model.dump_registers = dump_ak4396_registers;
 		chip->model.device_config = PLAYBACK_0_TO_I2S |
 					    PLAYBACK_1_TO_SPDIF |
 					    CAPTURE_0_FROM_I2S_2 |
 					    CAPTURE_1_FROM_SPDIF;
-		अगर (id->driver_data == MODEL_MERIDIAN)
+		if (id->driver_data == MODEL_MERIDIAN)
 			chip->model.device_config |= AC97_CD_INPUT;
-		अवरोध;
-	हाल MODEL_CLARO:
+		break;
+	case MODEL_CLARO:
 		chip->model.init = claro_init;
 		chip->model.mixer_init = claro_mixer_init;
 		chip->model.cleanup = claro_cleanup;
 		chip->model.suspend = claro_suspend;
 		chip->model.resume = claro_resume;
-		अवरोध;
-	हाल MODEL_CLARO_HALO:
+		break;
+	case MODEL_CLARO_HALO:
 		chip->model.init = claro_halo_init;
 		chip->model.mixer_init = claro_halo_mixer_init;
 		chip->model.cleanup = claro_cleanup;
 		chip->model.suspend = claro_suspend;
 		chip->model.resume = claro_resume;
 		chip->model.set_adc_params = set_ak5385_params;
-		chip->model.dump_रेजिस्टरs = dump_ak4396_रेजिस्टरs;
+		chip->model.dump_registers = dump_ak4396_registers;
 		chip->model.device_config = PLAYBACK_0_TO_I2S |
 					    PLAYBACK_1_TO_SPDIF |
 					    CAPTURE_0_FROM_I2S_2 |
 					    CAPTURE_1_FROM_SPDIF;
-		अवरोध;
-	हाल MODEL_FANTASIA:
-	हाल MODEL_SERENADE:
-	हाल MODEL_2CH_OUTPUT:
-	हाल MODEL_HG2PCI:
-		chip->model.लघुname = "C-Media CMI8787";
+		break;
+	case MODEL_FANTASIA:
+	case MODEL_SERENADE:
+	case MODEL_2CH_OUTPUT:
+	case MODEL_HG2PCI:
+		chip->model.shortname = "C-Media CMI8787";
 		chip->model.chip = "CMI8787";
-		अगर (id->driver_data == MODEL_FANTASIA)
+		if (id->driver_data == MODEL_FANTASIA)
 			chip->model.init = fantasia_init;
-		अन्यथा
+		else
 			chip->model.init = stereo_output_init;
 		chip->model.resume = stereo_resume;
 		chip->model.mixer_init = generic_mixer_init;
 		chip->model.set_adc_params = set_no_params;
-		chip->model.dump_रेजिस्टरs = dump_ak4396_रेजिस्टरs;
+		chip->model.dump_registers = dump_ak4396_registers;
 		chip->model.device_config = PLAYBACK_0_TO_I2S |
 					    PLAYBACK_1_TO_SPDIF;
-		अगर (id->driver_data == MODEL_FANTASIA) अणु
+		if (id->driver_data == MODEL_FANTASIA) {
 			chip->model.device_config |= CAPTURE_0_FROM_I2S_1;
 			chip->model.adc_mclks = OXYGEN_MCLKS(256, 128, 128);
-		पूर्ण
+		}
 		chip->model.dac_channels_pcm = 2;
 		chip->model.dac_channels_mixer = 2;
-		अवरोध;
-	हाल MODEL_XONAR_DG:
-	हाल MODEL_XONAR_DGX:
+		break;
+	case MODEL_XONAR_DG:
+	case MODEL_XONAR_DGX:
 		chip->model = model_xonar_dg;
-		अवरोध;
-	पूर्ण
-	अगर (id->driver_data == MODEL_MERIDIAN ||
+		break;
+	}
+	if (id->driver_data == MODEL_MERIDIAN ||
 	    id->driver_data == MODEL_MERIDIAN_2G ||
-	    id->driver_data == MODEL_CLARO_HALO) अणु
+	    id->driver_data == MODEL_CLARO_HALO) {
 		chip->model.misc_flags = OXYGEN_MISC_MIDI;
 		chip->model.device_config |= MIDI_OUTPUT | MIDI_INPUT;
-	पूर्ण
-	अगर (id->driver_data < ARRAY_SIZE(names) && names[id->driver_data])
-		chip->model.लघुname = names[id->driver_data];
-	वापस 0;
-पूर्ण
+	}
+	if (id->driver_data < ARRAY_SIZE(names) && names[id->driver_data])
+		chip->model.shortname = names[id->driver_data];
+	return 0;
+}
 
-अटल पूर्णांक generic_oxygen_probe(काष्ठा pci_dev *pci,
-				स्थिर काष्ठा pci_device_id *pci_id)
-अणु
-	अटल पूर्णांक dev;
-	पूर्णांक err;
+static int generic_oxygen_probe(struct pci_dev *pci,
+				const struct pci_device_id *pci_id)
+{
+	static int dev;
+	int err;
 
-	अगर (dev >= SNDRV_CARDS)
-		वापस -ENODEV;
-	अगर (!enable[dev]) अणु
+	if (dev >= SNDRV_CARDS)
+		return -ENODEV;
+	if (!enable[dev]) {
 		++dev;
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 	err = oxygen_pci_probe(pci, index[dev], id[dev], THIS_MODULE,
 			       oxygen_ids, get_oxygen_model);
-	अगर (err >= 0)
+	if (err >= 0)
 		++dev;
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल काष्ठा pci_driver oxygen_driver = अणु
+static struct pci_driver oxygen_driver = {
 	.name = KBUILD_MODNAME,
 	.id_table = oxygen_ids,
 	.probe = generic_oxygen_probe,
-	.हटाओ = oxygen_pci_हटाओ,
-#अगर_घोषित CONFIG_PM_SLEEP
-	.driver = अणु
+	.remove = oxygen_pci_remove,
+#ifdef CONFIG_PM_SLEEP
+	.driver = {
 		.pm = &oxygen_pci_pm,
-	पूर्ण,
-#पूर्ण_अगर
-पूर्ण;
+	},
+#endif
+};
 
 module_pci_driver(oxygen_driver);

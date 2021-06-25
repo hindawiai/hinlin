@@ -1,25 +1,24 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: LGPL-2.1
+// SPDX-License-Identifier: LGPL-2.1
 /*
  * trace/beauty/move_mount.c
  *
- *  Copyright (C) 2019, Red Hat Inc, Arnalकरो Carvalho de Melo <acme@redhat.com>
+ *  Copyright (C) 2019, Red Hat Inc, Arnaldo Carvalho de Melo <acme@redhat.com>
  */
 
-#समावेश "trace/beauty/beauty.h"
-#समावेश <linux/log2.h>
+#include "trace/beauty/beauty.h"
+#include <linux/log2.h>
 
-अटल माप_प्रकार move_mount__scnम_लिखो_flags(अचिन्हित दीर्घ flags, अक्षर *bf, माप_प्रकार size, bool show_prefix)
-अणु
-#समावेश "trace/beauty/generated/move_mount_flags_array.c"
-       अटल DEFINE_STRARRAY(move_mount_flags, "MOVE_MOUNT_");
+static size_t move_mount__scnprintf_flags(unsigned long flags, char *bf, size_t size, bool show_prefix)
+{
+#include "trace/beauty/generated/move_mount_flags_array.c"
+       static DEFINE_STRARRAY(move_mount_flags, "MOVE_MOUNT_");
 
-       वापस strarray__scnम_लिखो_flags(&strarray__move_mount_flags, bf, size, show_prefix, flags);
-पूर्ण
+       return strarray__scnprintf_flags(&strarray__move_mount_flags, bf, size, show_prefix, flags);
+}
 
-माप_प्रकार syscall_arg__scnम_लिखो_move_mount_flags(अक्षर *bf, माप_प्रकार size, काष्ठा syscall_arg *arg)
-अणु
-	अचिन्हित दीर्घ flags = arg->val;
+size_t syscall_arg__scnprintf_move_mount_flags(char *bf, size_t size, struct syscall_arg *arg)
+{
+	unsigned long flags = arg->val;
 
-	वापस move_mount__scnम_लिखो_flags(flags, bf, size, arg->show_string_prefix);
-पूर्ण
+	return move_mount__scnprintf_flags(flags, bf, size, arg->show_string_prefix);
+}

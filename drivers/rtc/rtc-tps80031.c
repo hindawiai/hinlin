@@ -1,336 +1,335 @@
-<शैली गुरु>
 /*
  * rtc-tps80031.c -- TI TPS80031/TPS80032 RTC driver
  *
- * RTC driver क्रम TI TPS80031/TPS80032 Fully Integrated
+ * RTC driver for TI TPS80031/TPS80032 Fully Integrated
  * Power Management with Power Path and Battery Charger
  *
  * Copyright (c) 2012, NVIDIA Corporation.
  *
  * Author: Laxman Dewangan <ldewangan@nvidia.com>
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of the GNU General Public License as
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
  * published by the Free Software Foundation version 2.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any kind,
  * whether express or implied; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License क्रम more details.
+ * General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307, USA
  */
 
-#समावेश <linux/bcd.h>
-#समावेश <linux/device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mfd/tps80031.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/rtc.h>
-#समावेश <linux/slab.h>
+#include <linux/bcd.h>
+#include <linux/device.h>
+#include <linux/err.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/mfd/tps80031.h>
+#include <linux/platform_device.h>
+#include <linux/pm.h>
+#include <linux/rtc.h>
+#include <linux/slab.h>
 
-#घोषणा ENABLE_ALARM_INT			0x08
-#घोषणा ALARM_INT_STATUS			0x40
+#define ENABLE_ALARM_INT			0x08
+#define ALARM_INT_STATUS			0x40
 
 /**
  * Setting bit to 1 in STOP_RTC will run the RTC and
- * setting this bit to 0 will मुक्तze RTC.
+ * setting this bit to 0 will freeze RTC.
  */
-#घोषणा STOP_RTC				0x1
+#define STOP_RTC				0x1
 
-/* Power on reset Values of RTC रेजिस्टरs */
-#घोषणा TPS80031_RTC_POR_YEAR			0
-#घोषणा TPS80031_RTC_POR_MONTH			1
-#घोषणा TPS80031_RTC_POR_DAY			1
+/* Power on reset Values of RTC registers */
+#define TPS80031_RTC_POR_YEAR			0
+#define TPS80031_RTC_POR_MONTH			1
+#define TPS80031_RTC_POR_DAY			1
 
-/* Numbers of रेजिस्टरs क्रम समय and alarms */
-#घोषणा TPS80031_RTC_TIME_NUM_REGS		7
-#घोषणा TPS80031_RTC_ALARM_NUM_REGS		6
+/* Numbers of registers for time and alarms */
+#define TPS80031_RTC_TIME_NUM_REGS		7
+#define TPS80031_RTC_ALARM_NUM_REGS		6
 
 /**
- * PMU RTC have only 2 nibbles to store year inक्रमmation, so using an
- * offset of 100 to set the base year as 2000 क्रम our driver.
+ * PMU RTC have only 2 nibbles to store year information, so using an
+ * offset of 100 to set the base year as 2000 for our driver.
  */
-#घोषणा RTC_YEAR_OFFSET 100
+#define RTC_YEAR_OFFSET 100
 
-काष्ठा tps80031_rtc अणु
-	काष्ठा rtc_device	*rtc;
-	पूर्णांक			irq;
-पूर्ण;
+struct tps80031_rtc {
+	struct rtc_device	*rtc;
+	int			irq;
+};
 
-अटल पूर्णांक tps80031_rtc_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
+static int tps80031_rtc_read_time(struct device *dev, struct rtc_time *tm)
+{
 	u8 buff[TPS80031_RTC_TIME_NUM_REGS];
-	पूर्णांक ret;
+	int ret;
 
-	ret = tps80031_पढ़ोs(dev->parent, TPS80031_SLAVE_ID1,
+	ret = tps80031_reads(dev->parent, TPS80031_SLAVE_ID1,
 			TPS80031_SECONDS_REG, TPS80031_RTC_TIME_NUM_REGS, buff);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "reading RTC_SECONDS_REG failed, err = %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	पंचांग->पंचांग_sec = bcd2bin(buff[0]);
-	पंचांग->पंचांग_min = bcd2bin(buff[1]);
-	पंचांग->पंचांग_hour = bcd2bin(buff[2]);
-	पंचांग->पंचांग_mday = bcd2bin(buff[3]);
-	पंचांग->पंचांग_mon = bcd2bin(buff[4]) - 1;
-	पंचांग->पंचांग_year = bcd2bin(buff[5]) + RTC_YEAR_OFFSET;
-	पंचांग->पंचांग_wday = bcd2bin(buff[6]);
-	वापस 0;
-पूर्ण
+	tm->tm_sec = bcd2bin(buff[0]);
+	tm->tm_min = bcd2bin(buff[1]);
+	tm->tm_hour = bcd2bin(buff[2]);
+	tm->tm_mday = bcd2bin(buff[3]);
+	tm->tm_mon = bcd2bin(buff[4]) - 1;
+	tm->tm_year = bcd2bin(buff[5]) + RTC_YEAR_OFFSET;
+	tm->tm_wday = bcd2bin(buff[6]);
+	return 0;
+}
 
-अटल पूर्णांक tps80031_rtc_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
+static int tps80031_rtc_set_time(struct device *dev, struct rtc_time *tm)
+{
 	u8 buff[7];
-	पूर्णांक ret;
+	int ret;
 
-	buff[0] = bin2bcd(पंचांग->पंचांग_sec);
-	buff[1] = bin2bcd(पंचांग->पंचांग_min);
-	buff[2] = bin2bcd(पंचांग->पंचांग_hour);
-	buff[3] = bin2bcd(पंचांग->पंचांग_mday);
-	buff[4] = bin2bcd(पंचांग->पंचांग_mon + 1);
-	buff[5] = bin2bcd(पंचांग->पंचांग_year % RTC_YEAR_OFFSET);
-	buff[6] = bin2bcd(पंचांग->पंचांग_wday);
+	buff[0] = bin2bcd(tm->tm_sec);
+	buff[1] = bin2bcd(tm->tm_min);
+	buff[2] = bin2bcd(tm->tm_hour);
+	buff[3] = bin2bcd(tm->tm_mday);
+	buff[4] = bin2bcd(tm->tm_mon + 1);
+	buff[5] = bin2bcd(tm->tm_year % RTC_YEAR_OFFSET);
+	buff[6] = bin2bcd(tm->tm_wday);
 
-	/* Stop RTC जबतक updating the RTC समय रेजिस्टरs */
+	/* Stop RTC while updating the RTC time registers */
 	ret = tps80031_clr_bits(dev->parent, TPS80031_SLAVE_ID1,
 				TPS80031_RTC_CTRL_REG, STOP_RTC);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev->parent, "Stop RTC failed, err = %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = tps80031_ग_लिखोs(dev->parent, TPS80031_SLAVE_ID1,
+	ret = tps80031_writes(dev->parent, TPS80031_SLAVE_ID1,
 			TPS80031_SECONDS_REG,
 			TPS80031_RTC_TIME_NUM_REGS, buff);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "writing RTC_SECONDS_REG failed, err %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = tps80031_set_bits(dev->parent, TPS80031_SLAVE_ID1,
 				TPS80031_RTC_CTRL_REG, STOP_RTC);
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_err(dev->parent, "Start RTC failed, err = %d\n", ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक tps80031_rtc_alarm_irq_enable(काष्ठा device *dev,
-					 अचिन्हित पूर्णांक enable)
-अणु
-	पूर्णांक ret;
+static int tps80031_rtc_alarm_irq_enable(struct device *dev,
+					 unsigned int enable)
+{
+	int ret;
 
-	अगर (enable)
+	if (enable)
 		ret = tps80031_set_bits(dev->parent, TPS80031_SLAVE_ID1,
 				TPS80031_RTC_INTERRUPTS_REG, ENABLE_ALARM_INT);
-	अन्यथा
+	else
 		ret = tps80031_clr_bits(dev->parent, TPS80031_SLAVE_ID1,
 				TPS80031_RTC_INTERRUPTS_REG, ENABLE_ALARM_INT);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "Update on RTC_INT failed, err = %d\n", ret);
-		वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return ret;
+	}
+	return 0;
+}
 
-अटल पूर्णांक tps80031_rtc_set_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
-अणु
+static int tps80031_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alrm)
+{
 	u8 buff[TPS80031_RTC_ALARM_NUM_REGS];
-	पूर्णांक ret;
+	int ret;
 
-	buff[0] = bin2bcd(alrm->समय.पंचांग_sec);
-	buff[1] = bin2bcd(alrm->समय.पंचांग_min);
-	buff[2] = bin2bcd(alrm->समय.पंचांग_hour);
-	buff[3] = bin2bcd(alrm->समय.पंचांग_mday);
-	buff[4] = bin2bcd(alrm->समय.पंचांग_mon + 1);
-	buff[5] = bin2bcd(alrm->समय.पंचांग_year % RTC_YEAR_OFFSET);
-	ret = tps80031_ग_लिखोs(dev->parent, TPS80031_SLAVE_ID1,
+	buff[0] = bin2bcd(alrm->time.tm_sec);
+	buff[1] = bin2bcd(alrm->time.tm_min);
+	buff[2] = bin2bcd(alrm->time.tm_hour);
+	buff[3] = bin2bcd(alrm->time.tm_mday);
+	buff[4] = bin2bcd(alrm->time.tm_mon + 1);
+	buff[5] = bin2bcd(alrm->time.tm_year % RTC_YEAR_OFFSET);
+	ret = tps80031_writes(dev->parent, TPS80031_SLAVE_ID1,
 			TPS80031_ALARM_SECONDS_REG,
 			TPS80031_RTC_ALARM_NUM_REGS, buff);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "Writing RTC_ALARM failed, err %d\n", ret);
-		वापस ret;
-	पूर्ण
-	वापस tps80031_rtc_alarm_irq_enable(dev, alrm->enabled);
-पूर्ण
+		return ret;
+	}
+	return tps80031_rtc_alarm_irq_enable(dev, alrm->enabled);
+}
 
-अटल पूर्णांक tps80031_rtc_पढ़ो_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
-अणु
+static int tps80031_rtc_read_alarm(struct device *dev, struct rtc_wkalrm *alrm)
+{
 	u8 buff[6];
-	पूर्णांक ret;
+	int ret;
 
-	ret = tps80031_पढ़ोs(dev->parent, TPS80031_SLAVE_ID1,
+	ret = tps80031_reads(dev->parent, TPS80031_SLAVE_ID1,
 			TPS80031_ALARM_SECONDS_REG,
 			TPS80031_RTC_ALARM_NUM_REGS, buff);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev->parent,
 			"reading RTC_ALARM failed, err = %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	alrm->समय.पंचांग_sec = bcd2bin(buff[0]);
-	alrm->समय.पंचांग_min = bcd2bin(buff[1]);
-	alrm->समय.पंचांग_hour = bcd2bin(buff[2]);
-	alrm->समय.पंचांग_mday = bcd2bin(buff[3]);
-	alrm->समय.पंचांग_mon = bcd2bin(buff[4]) - 1;
-	alrm->समय.पंचांग_year = bcd2bin(buff[5]) + RTC_YEAR_OFFSET;
-	वापस 0;
-पूर्ण
+	alrm->time.tm_sec = bcd2bin(buff[0]);
+	alrm->time.tm_min = bcd2bin(buff[1]);
+	alrm->time.tm_hour = bcd2bin(buff[2]);
+	alrm->time.tm_mday = bcd2bin(buff[3]);
+	alrm->time.tm_mon = bcd2bin(buff[4]) - 1;
+	alrm->time.tm_year = bcd2bin(buff[5]) + RTC_YEAR_OFFSET;
+	return 0;
+}
 
-अटल पूर्णांक clear_alarm_पूर्णांक_status(काष्ठा device *dev, काष्ठा tps80031_rtc *rtc)
-अणु
-	पूर्णांक ret;
+static int clear_alarm_int_status(struct device *dev, struct tps80031_rtc *rtc)
+{
+	int ret;
 	u8 buf;
 
 	/**
-	 * As per datasheet, A dummy पढ़ो of this  RTC_STATUS_REG रेजिस्टर
-	 * is necessary beक्रमe each I2C पढ़ो in order to update the status
-	 * रेजिस्टर value.
+	 * As per datasheet, A dummy read of this  RTC_STATUS_REG register
+	 * is necessary before each I2C read in order to update the status
+	 * register value.
 	 */
-	ret = tps80031_पढ़ो(dev->parent, TPS80031_SLAVE_ID1,
+	ret = tps80031_read(dev->parent, TPS80031_SLAVE_ID1,
 				TPS80031_RTC_STATUS_REG, &buf);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "reading RTC_STATUS failed. err = %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* clear Alarm status bits.*/
 	ret = tps80031_set_bits(dev->parent, TPS80031_SLAVE_ID1,
 			TPS80031_RTC_STATUS_REG, ALARM_INT_STATUS);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "clear Alarm INT failed, err = %d\n", ret);
-		वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return ret;
+	}
+	return 0;
+}
 
-अटल irqवापस_t tps80031_rtc_irq(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा device *dev = data;
-	काष्ठा tps80031_rtc *rtc = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static irqreturn_t tps80031_rtc_irq(int irq, void *data)
+{
+	struct device *dev = data;
+	struct tps80031_rtc *rtc = dev_get_drvdata(dev);
+	int ret;
 
-	ret = clear_alarm_पूर्णांक_status(dev, rtc);
-	अगर (ret < 0)
-		वापस ret;
+	ret = clear_alarm_int_status(dev, rtc);
+	if (ret < 0)
+		return ret;
 
 	rtc_update_irq(rtc->rtc, 1, RTC_IRQF | RTC_AF);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल स्थिर काष्ठा rtc_class_ops tps80031_rtc_ops = अणु
-	.पढ़ो_समय = tps80031_rtc_पढ़ो_समय,
-	.set_समय = tps80031_rtc_set_समय,
+static const struct rtc_class_ops tps80031_rtc_ops = {
+	.read_time = tps80031_rtc_read_time,
+	.set_time = tps80031_rtc_set_time,
 	.set_alarm = tps80031_rtc_set_alarm,
-	.पढ़ो_alarm = tps80031_rtc_पढ़ो_alarm,
+	.read_alarm = tps80031_rtc_read_alarm,
 	.alarm_irq_enable = tps80031_rtc_alarm_irq_enable,
-पूर्ण;
+};
 
-अटल पूर्णांक tps80031_rtc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा tps80031_rtc *rtc;
-	काष्ठा rtc_समय पंचांग;
-	पूर्णांक ret;
+static int tps80031_rtc_probe(struct platform_device *pdev)
+{
+	struct tps80031_rtc *rtc;
+	struct rtc_time tm;
+	int ret;
 
-	rtc = devm_kzalloc(&pdev->dev, माप(*rtc), GFP_KERNEL);
-	अगर (!rtc)
-		वापस -ENOMEM;
+	rtc = devm_kzalloc(&pdev->dev, sizeof(*rtc), GFP_KERNEL);
+	if (!rtc)
+		return -ENOMEM;
 
-	rtc->irq = platक्रमm_get_irq(pdev, 0);
-	platक्रमm_set_drvdata(pdev, rtc);
+	rtc->irq = platform_get_irq(pdev, 0);
+	platform_set_drvdata(pdev, rtc);
 
 	/* Start RTC */
 	ret = tps80031_set_bits(pdev->dev.parent, TPS80031_SLAVE_ID1,
 			TPS80031_RTC_CTRL_REG, STOP_RTC);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&pdev->dev, "failed to start RTC. err = %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* If RTC have POR values, set समय 01:01:2000 */
-	tps80031_rtc_पढ़ो_समय(&pdev->dev, &पंचांग);
-	अगर ((पंचांग.पंचांग_year == RTC_YEAR_OFFSET + TPS80031_RTC_POR_YEAR) &&
-		(पंचांग.पंचांग_mon == (TPS80031_RTC_POR_MONTH - 1)) &&
-		(पंचांग.पंचांग_mday == TPS80031_RTC_POR_DAY)) अणु
-		पंचांग.पंचांग_year = 2000;
-		पंचांग.पंचांग_mday = 1;
-		पंचांग.पंचांग_mon = 1;
-		ret = tps80031_rtc_set_समय(&pdev->dev, &पंचांग);
-		अगर (ret < 0) अणु
+	/* If RTC have POR values, set time 01:01:2000 */
+	tps80031_rtc_read_time(&pdev->dev, &tm);
+	if ((tm.tm_year == RTC_YEAR_OFFSET + TPS80031_RTC_POR_YEAR) &&
+		(tm.tm_mon == (TPS80031_RTC_POR_MONTH - 1)) &&
+		(tm.tm_mday == TPS80031_RTC_POR_DAY)) {
+		tm.tm_year = 2000;
+		tm.tm_mday = 1;
+		tm.tm_mon = 1;
+		ret = tps80031_rtc_set_time(&pdev->dev, &tm);
+		if (ret < 0) {
 			dev_err(&pdev->dev,
 				"RTC set time failed, err = %d\n", ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	/* Clear alarm पूर्णांकretupt status अगर it is there */
-	ret = clear_alarm_पूर्णांक_status(&pdev->dev, rtc);
-	अगर (ret < 0) अणु
+	/* Clear alarm intretupt status if it is there */
+	ret = clear_alarm_int_status(&pdev->dev, rtc);
+	if (ret < 0) {
 		dev_err(&pdev->dev, "Clear alarm int failed, err = %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	rtc->rtc = devm_rtc_device_रेजिस्टर(&pdev->dev, pdev->name,
+	rtc->rtc = devm_rtc_device_register(&pdev->dev, pdev->name,
 			       &tps80031_rtc_ops, THIS_MODULE);
-	अगर (IS_ERR(rtc->rtc)) अणु
+	if (IS_ERR(rtc->rtc)) {
 		ret = PTR_ERR(rtc->rtc);
 		dev_err(&pdev->dev, "RTC registration failed, err %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = devm_request_thपढ़ोed_irq(&pdev->dev, rtc->irq, शून्य,
+	ret = devm_request_threaded_irq(&pdev->dev, rtc->irq, NULL,
 			tps80031_rtc_irq,
 			IRQF_ONESHOT,
 			dev_name(&pdev->dev), rtc);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&pdev->dev, "request IRQ:%d failed, err = %d\n",
 			 rtc->irq, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	device_set_wakeup_capable(&pdev->dev, 1);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक tps80031_rtc_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा tps80031_rtc *rtc = dev_get_drvdata(dev);
+#ifdef CONFIG_PM_SLEEP
+static int tps80031_rtc_suspend(struct device *dev)
+{
+	struct tps80031_rtc *rtc = dev_get_drvdata(dev);
 
-	अगर (device_may_wakeup(dev))
+	if (device_may_wakeup(dev))
 		enable_irq_wake(rtc->irq);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tps80031_rtc_resume(काष्ठा device *dev)
-अणु
-	काष्ठा tps80031_rtc *rtc = dev_get_drvdata(dev);
+static int tps80031_rtc_resume(struct device *dev)
+{
+	struct tps80031_rtc *rtc = dev_get_drvdata(dev);
 
-	अगर (device_may_wakeup(dev))
+	if (device_may_wakeup(dev))
 		disable_irq_wake(rtc->irq);
-	वापस 0;
-पूर्ण;
-#पूर्ण_अगर
+	return 0;
+};
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(tps80031_pm_ops, tps80031_rtc_suspend,
+static SIMPLE_DEV_PM_OPS(tps80031_pm_ops, tps80031_rtc_suspend,
 			tps80031_rtc_resume);
 
-अटल काष्ठा platक्रमm_driver tps80031_rtc_driver = अणु
-	.driver	= अणु
+static struct platform_driver tps80031_rtc_driver = {
+	.driver	= {
 		.name	= "tps80031-rtc",
 		.pm	= &tps80031_pm_ops,
-	पूर्ण,
+	},
 	.probe	= tps80031_rtc_probe,
-पूर्ण;
+};
 
-module_platक्रमm_driver(tps80031_rtc_driver);
+module_platform_driver(tps80031_rtc_driver);
 
 MODULE_ALIAS("platform:tps80031-rtc");
 MODULE_DESCRIPTION("TI TPS80031/TPS80032 RTC driver");

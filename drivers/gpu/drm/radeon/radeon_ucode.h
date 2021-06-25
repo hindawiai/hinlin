@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,208 +20,208 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#अगर_अघोषित __RADEON_UCODE_H__
-#घोषणा __RADEON_UCODE_H__
+#ifndef __RADEON_UCODE_H__
+#define __RADEON_UCODE_H__
 
 /* CP */
-#घोषणा R600_PFP_UCODE_SIZE          576
-#घोषणा R600_PM4_UCODE_SIZE          1792
-#घोषणा R700_PFP_UCODE_SIZE          848
-#घोषणा R700_PM4_UCODE_SIZE          1360
-#घोषणा EVERGREEN_PFP_UCODE_SIZE     1120
-#घोषणा EVERGREEN_PM4_UCODE_SIZE     1376
-#घोषणा CAYMAN_PFP_UCODE_SIZE        2176
-#घोषणा CAYMAN_PM4_UCODE_SIZE        2176
-#घोषणा SI_PFP_UCODE_SIZE            2144
-#घोषणा SI_PM4_UCODE_SIZE            2144
-#घोषणा SI_CE_UCODE_SIZE             2144
-#घोषणा CIK_PFP_UCODE_SIZE           2144
-#घोषणा CIK_ME_UCODE_SIZE            2144
-#घोषणा CIK_CE_UCODE_SIZE            2144
+#define R600_PFP_UCODE_SIZE          576
+#define R600_PM4_UCODE_SIZE          1792
+#define R700_PFP_UCODE_SIZE          848
+#define R700_PM4_UCODE_SIZE          1360
+#define EVERGREEN_PFP_UCODE_SIZE     1120
+#define EVERGREEN_PM4_UCODE_SIZE     1376
+#define CAYMAN_PFP_UCODE_SIZE        2176
+#define CAYMAN_PM4_UCODE_SIZE        2176
+#define SI_PFP_UCODE_SIZE            2144
+#define SI_PM4_UCODE_SIZE            2144
+#define SI_CE_UCODE_SIZE             2144
+#define CIK_PFP_UCODE_SIZE           2144
+#define CIK_ME_UCODE_SIZE            2144
+#define CIK_CE_UCODE_SIZE            2144
 
 /* MEC */
-#घोषणा CIK_MEC_UCODE_SIZE           4192
+#define CIK_MEC_UCODE_SIZE           4192
 
 /* RLC */
-#घोषणा R600_RLC_UCODE_SIZE          768
-#घोषणा R700_RLC_UCODE_SIZE          1024
-#घोषणा EVERGREEN_RLC_UCODE_SIZE     768
-#घोषणा CAYMAN_RLC_UCODE_SIZE        1024
-#घोषणा ARUBA_RLC_UCODE_SIZE         1536
-#घोषणा SI_RLC_UCODE_SIZE            2048
-#घोषणा BONAIRE_RLC_UCODE_SIZE       2048
-#घोषणा KB_RLC_UCODE_SIZE            2560
-#घोषणा KV_RLC_UCODE_SIZE            2560
-#घोषणा ML_RLC_UCODE_SIZE            2560
+#define R600_RLC_UCODE_SIZE          768
+#define R700_RLC_UCODE_SIZE          1024
+#define EVERGREEN_RLC_UCODE_SIZE     768
+#define CAYMAN_RLC_UCODE_SIZE        1024
+#define ARUBA_RLC_UCODE_SIZE         1536
+#define SI_RLC_UCODE_SIZE            2048
+#define BONAIRE_RLC_UCODE_SIZE       2048
+#define KB_RLC_UCODE_SIZE            2560
+#define KV_RLC_UCODE_SIZE            2560
+#define ML_RLC_UCODE_SIZE            2560
 
 /* MC */
-#घोषणा BTC_MC_UCODE_SIZE            6024
-#घोषणा CAYMAN_MC_UCODE_SIZE         6037
-#घोषणा SI_MC_UCODE_SIZE             7769
-#घोषणा TAHITI_MC_UCODE_SIZE         7808
-#घोषणा PITCAIRN_MC_UCODE_SIZE       7775
-#घोषणा VERDE_MC_UCODE_SIZE          7875
-#घोषणा OLAND_MC_UCODE_SIZE          7863
-#घोषणा BONAIRE_MC_UCODE_SIZE        7866
-#घोषणा BONAIRE_MC2_UCODE_SIZE       7948
-#घोषणा HAWAII_MC_UCODE_SIZE         7933
-#घोषणा HAWAII_MC2_UCODE_SIZE        8091
+#define BTC_MC_UCODE_SIZE            6024
+#define CAYMAN_MC_UCODE_SIZE         6037
+#define SI_MC_UCODE_SIZE             7769
+#define TAHITI_MC_UCODE_SIZE         7808
+#define PITCAIRN_MC_UCODE_SIZE       7775
+#define VERDE_MC_UCODE_SIZE          7875
+#define OLAND_MC_UCODE_SIZE          7863
+#define BONAIRE_MC_UCODE_SIZE        7866
+#define BONAIRE_MC2_UCODE_SIZE       7948
+#define HAWAII_MC_UCODE_SIZE         7933
+#define HAWAII_MC2_UCODE_SIZE        8091
 
 /* SDMA */
-#घोषणा CIK_SDMA_UCODE_SIZE          1050
-#घोषणा CIK_SDMA_UCODE_VERSION       64
+#define CIK_SDMA_UCODE_SIZE          1050
+#define CIK_SDMA_UCODE_VERSION       64
 
 /* SMC */
-#घोषणा RV770_SMC_UCODE_START        0x0100
-#घोषणा RV770_SMC_UCODE_SIZE         0x410d
-#घोषणा RV770_SMC_INT_VECTOR_START   0xffc0
-#घोषणा RV770_SMC_INT_VECTOR_SIZE    0x0040
+#define RV770_SMC_UCODE_START        0x0100
+#define RV770_SMC_UCODE_SIZE         0x410d
+#define RV770_SMC_INT_VECTOR_START   0xffc0
+#define RV770_SMC_INT_VECTOR_SIZE    0x0040
 
-#घोषणा RV730_SMC_UCODE_START        0x0100
-#घोषणा RV730_SMC_UCODE_SIZE         0x412c
-#घोषणा RV730_SMC_INT_VECTOR_START   0xffc0
-#घोषणा RV730_SMC_INT_VECTOR_SIZE    0x0040
+#define RV730_SMC_UCODE_START        0x0100
+#define RV730_SMC_UCODE_SIZE         0x412c
+#define RV730_SMC_INT_VECTOR_START   0xffc0
+#define RV730_SMC_INT_VECTOR_SIZE    0x0040
 
-#घोषणा RV710_SMC_UCODE_START        0x0100
-#घोषणा RV710_SMC_UCODE_SIZE         0x3f1f
-#घोषणा RV710_SMC_INT_VECTOR_START   0xffc0
-#घोषणा RV710_SMC_INT_VECTOR_SIZE    0x0040
+#define RV710_SMC_UCODE_START        0x0100
+#define RV710_SMC_UCODE_SIZE         0x3f1f
+#define RV710_SMC_INT_VECTOR_START   0xffc0
+#define RV710_SMC_INT_VECTOR_SIZE    0x0040
 
-#घोषणा RV740_SMC_UCODE_START        0x0100
-#घोषणा RV740_SMC_UCODE_SIZE         0x41c5
-#घोषणा RV740_SMC_INT_VECTOR_START   0xffc0
-#घोषणा RV740_SMC_INT_VECTOR_SIZE    0x0040
+#define RV740_SMC_UCODE_START        0x0100
+#define RV740_SMC_UCODE_SIZE         0x41c5
+#define RV740_SMC_INT_VECTOR_START   0xffc0
+#define RV740_SMC_INT_VECTOR_SIZE    0x0040
 
-#घोषणा CEDAR_SMC_UCODE_START        0x0100
-#घोषणा CEDAR_SMC_UCODE_SIZE         0x5d50
-#घोषणा CEDAR_SMC_INT_VECTOR_START   0xffc0
-#घोषणा CEDAR_SMC_INT_VECTOR_SIZE    0x0040
+#define CEDAR_SMC_UCODE_START        0x0100
+#define CEDAR_SMC_UCODE_SIZE         0x5d50
+#define CEDAR_SMC_INT_VECTOR_START   0xffc0
+#define CEDAR_SMC_INT_VECTOR_SIZE    0x0040
 
-#घोषणा REDWOOD_SMC_UCODE_START      0x0100
-#घोषणा REDWOOD_SMC_UCODE_SIZE       0x5f0a
-#घोषणा REDWOOD_SMC_INT_VECTOR_START 0xffc0
-#घोषणा REDWOOD_SMC_INT_VECTOR_SIZE  0x0040
+#define REDWOOD_SMC_UCODE_START      0x0100
+#define REDWOOD_SMC_UCODE_SIZE       0x5f0a
+#define REDWOOD_SMC_INT_VECTOR_START 0xffc0
+#define REDWOOD_SMC_INT_VECTOR_SIZE  0x0040
 
-#घोषणा JUNIPER_SMC_UCODE_START      0x0100
-#घोषणा JUNIPER_SMC_UCODE_SIZE       0x5f1f
-#घोषणा JUNIPER_SMC_INT_VECTOR_START 0xffc0
-#घोषणा JUNIPER_SMC_INT_VECTOR_SIZE  0x0040
+#define JUNIPER_SMC_UCODE_START      0x0100
+#define JUNIPER_SMC_UCODE_SIZE       0x5f1f
+#define JUNIPER_SMC_INT_VECTOR_START 0xffc0
+#define JUNIPER_SMC_INT_VECTOR_SIZE  0x0040
 
-#घोषणा CYPRESS_SMC_UCODE_START      0x0100
-#घोषणा CYPRESS_SMC_UCODE_SIZE       0x61f7
-#घोषणा CYPRESS_SMC_INT_VECTOR_START 0xffc0
-#घोषणा CYPRESS_SMC_INT_VECTOR_SIZE  0x0040
+#define CYPRESS_SMC_UCODE_START      0x0100
+#define CYPRESS_SMC_UCODE_SIZE       0x61f7
+#define CYPRESS_SMC_INT_VECTOR_START 0xffc0
+#define CYPRESS_SMC_INT_VECTOR_SIZE  0x0040
 
-#घोषणा BARTS_SMC_UCODE_START        0x0100
-#घोषणा BARTS_SMC_UCODE_SIZE         0x6107
-#घोषणा BARTS_SMC_INT_VECTOR_START   0xffc0
-#घोषणा BARTS_SMC_INT_VECTOR_SIZE    0x0040
+#define BARTS_SMC_UCODE_START        0x0100
+#define BARTS_SMC_UCODE_SIZE         0x6107
+#define BARTS_SMC_INT_VECTOR_START   0xffc0
+#define BARTS_SMC_INT_VECTOR_SIZE    0x0040
 
-#घोषणा TURKS_SMC_UCODE_START        0x0100
-#घोषणा TURKS_SMC_UCODE_SIZE         0x605b
-#घोषणा TURKS_SMC_INT_VECTOR_START   0xffc0
-#घोषणा TURKS_SMC_INT_VECTOR_SIZE    0x0040
+#define TURKS_SMC_UCODE_START        0x0100
+#define TURKS_SMC_UCODE_SIZE         0x605b
+#define TURKS_SMC_INT_VECTOR_START   0xffc0
+#define TURKS_SMC_INT_VECTOR_SIZE    0x0040
 
-#घोषणा CAICOS_SMC_UCODE_START       0x0100
-#घोषणा CAICOS_SMC_UCODE_SIZE        0x5fbd
-#घोषणा CAICOS_SMC_INT_VECTOR_START  0xffc0
-#घोषणा CAICOS_SMC_INT_VECTOR_SIZE   0x0040
+#define CAICOS_SMC_UCODE_START       0x0100
+#define CAICOS_SMC_UCODE_SIZE        0x5fbd
+#define CAICOS_SMC_INT_VECTOR_START  0xffc0
+#define CAICOS_SMC_INT_VECTOR_SIZE   0x0040
 
-#घोषणा CAYMAN_SMC_UCODE_START       0x0100
-#घोषणा CAYMAN_SMC_UCODE_SIZE        0x79ec
-#घोषणा CAYMAN_SMC_INT_VECTOR_START  0xffc0
-#घोषणा CAYMAN_SMC_INT_VECTOR_SIZE   0x0040
+#define CAYMAN_SMC_UCODE_START       0x0100
+#define CAYMAN_SMC_UCODE_SIZE        0x79ec
+#define CAYMAN_SMC_INT_VECTOR_START  0xffc0
+#define CAYMAN_SMC_INT_VECTOR_SIZE   0x0040
 
-#घोषणा TAHITI_SMC_UCODE_START       0x10000
-#घोषणा TAHITI_SMC_UCODE_SIZE        0xf458
+#define TAHITI_SMC_UCODE_START       0x10000
+#define TAHITI_SMC_UCODE_SIZE        0xf458
 
-#घोषणा PITCAIRN_SMC_UCODE_START     0x10000
-#घोषणा PITCAIRN_SMC_UCODE_SIZE      0xe9f4
+#define PITCAIRN_SMC_UCODE_START     0x10000
+#define PITCAIRN_SMC_UCODE_SIZE      0xe9f4
 
-#घोषणा VERDE_SMC_UCODE_START        0x10000
-#घोषणा VERDE_SMC_UCODE_SIZE         0xebe4
+#define VERDE_SMC_UCODE_START        0x10000
+#define VERDE_SMC_UCODE_SIZE         0xebe4
 
-#घोषणा OLAND_SMC_UCODE_START        0x10000
-#घोषणा OLAND_SMC_UCODE_SIZE         0xe7b4
+#define OLAND_SMC_UCODE_START        0x10000
+#define OLAND_SMC_UCODE_SIZE         0xe7b4
 
-#घोषणा HAIन_अंक_SMC_UCODE_START       0x10000
-#घोषणा HAIन_अंक_SMC_UCODE_SIZE        0xe67C
+#define HAINAN_SMC_UCODE_START       0x10000
+#define HAINAN_SMC_UCODE_SIZE        0xe67C
 
-#घोषणा BONAIRE_SMC_UCODE_START      0x20000
-#घोषणा BONAIRE_SMC_UCODE_SIZE       0x1FDEC
+#define BONAIRE_SMC_UCODE_START      0x20000
+#define BONAIRE_SMC_UCODE_SIZE       0x1FDEC
 
-#घोषणा HAWAII_SMC_UCODE_START       0x20000
-#घोषणा HAWAII_SMC_UCODE_SIZE        0x1FDEC
+#define HAWAII_SMC_UCODE_START       0x20000
+#define HAWAII_SMC_UCODE_SIZE        0x1FDEC
 
-काष्ठा common_firmware_header अणु
-	uपूर्णांक32_t size_bytes; /* size of the entire header+image(s) in bytes */
-	uपूर्णांक32_t header_size_bytes; /* size of just the header in bytes */
-	uपूर्णांक16_t header_version_major; /* header version */
-	uपूर्णांक16_t header_version_minor; /* header version */
-	uपूर्णांक16_t ip_version_major; /* IP version */
-	uपूर्णांक16_t ip_version_minor; /* IP version */
-	uपूर्णांक32_t ucode_version;
-	uपूर्णांक32_t ucode_size_bytes; /* size of ucode in bytes */
-	uपूर्णांक32_t ucode_array_offset_bytes; /* payload offset from the start of the header */
-	uपूर्णांक32_t crc32;  /* crc32 checksum of the payload */
-पूर्ण;
-
-/* version_major=1, version_minor=0 */
-काष्ठा mc_firmware_header_v1_0 अणु
-	काष्ठा common_firmware_header header;
-	uपूर्णांक32_t io_debug_size_bytes; /* size of debug array in dwords */
-	uपूर्णांक32_t io_debug_array_offset_bytes; /* payload offset from the start of the header */
-पूर्ण;
+struct common_firmware_header {
+	uint32_t size_bytes; /* size of the entire header+image(s) in bytes */
+	uint32_t header_size_bytes; /* size of just the header in bytes */
+	uint16_t header_version_major; /* header version */
+	uint16_t header_version_minor; /* header version */
+	uint16_t ip_version_major; /* IP version */
+	uint16_t ip_version_minor; /* IP version */
+	uint32_t ucode_version;
+	uint32_t ucode_size_bytes; /* size of ucode in bytes */
+	uint32_t ucode_array_offset_bytes; /* payload offset from the start of the header */
+	uint32_t crc32;  /* crc32 checksum of the payload */
+};
 
 /* version_major=1, version_minor=0 */
-काष्ठा smc_firmware_header_v1_0 अणु
-	काष्ठा common_firmware_header header;
-	uपूर्णांक32_t ucode_start_addr;
-पूर्ण;
+struct mc_firmware_header_v1_0 {
+	struct common_firmware_header header;
+	uint32_t io_debug_size_bytes; /* size of debug array in dwords */
+	uint32_t io_debug_array_offset_bytes; /* payload offset from the start of the header */
+};
 
 /* version_major=1, version_minor=0 */
-काष्ठा gfx_firmware_header_v1_0 अणु
-	काष्ठा common_firmware_header header;
-	uपूर्णांक32_t ucode_feature_version;
-	uपूर्णांक32_t jt_offset; /* jt location */
-	uपूर्णांक32_t jt_size;  /* size of jt */
-पूर्ण;
+struct smc_firmware_header_v1_0 {
+	struct common_firmware_header header;
+	uint32_t ucode_start_addr;
+};
 
 /* version_major=1, version_minor=0 */
-काष्ठा rlc_firmware_header_v1_0 अणु
-	काष्ठा common_firmware_header header;
-	uपूर्णांक32_t ucode_feature_version;
-	uपूर्णांक32_t save_and_restore_offset;
-	uपूर्णांक32_t clear_state_descriptor_offset;
-	uपूर्णांक32_t avail_scratch_ram_locations;
-	uपूर्णांक32_t master_pkt_description_offset;
-पूर्ण;
+struct gfx_firmware_header_v1_0 {
+	struct common_firmware_header header;
+	uint32_t ucode_feature_version;
+	uint32_t jt_offset; /* jt location */
+	uint32_t jt_size;  /* size of jt */
+};
 
 /* version_major=1, version_minor=0 */
-काष्ठा sdma_firmware_header_v1_0 अणु
-	काष्ठा common_firmware_header header;
-	uपूर्णांक32_t ucode_feature_version;
-	uपूर्णांक32_t ucode_change_version;
-	uपूर्णांक32_t jt_offset; /* jt location */
-	uपूर्णांक32_t jt_size; /* size of jt */
-पूर्ण;
+struct rlc_firmware_header_v1_0 {
+	struct common_firmware_header header;
+	uint32_t ucode_feature_version;
+	uint32_t save_and_restore_offset;
+	uint32_t clear_state_descriptor_offset;
+	uint32_t avail_scratch_ram_locations;
+	uint32_t master_pkt_description_offset;
+};
+
+/* version_major=1, version_minor=0 */
+struct sdma_firmware_header_v1_0 {
+	struct common_firmware_header header;
+	uint32_t ucode_feature_version;
+	uint32_t ucode_change_version;
+	uint32_t jt_offset; /* jt location */
+	uint32_t jt_size; /* size of jt */
+};
 
 /* header is fixed size */
-जोड़ radeon_firmware_header अणु
-	काष्ठा common_firmware_header common;
-	काष्ठा mc_firmware_header_v1_0 mc;
-	काष्ठा smc_firmware_header_v1_0 smc;
-	काष्ठा gfx_firmware_header_v1_0 gfx;
-	काष्ठा rlc_firmware_header_v1_0 rlc;
-	काष्ठा sdma_firmware_header_v1_0 sdma;
-	uपूर्णांक8_t raw[0x100];
-पूर्ण;
+union radeon_firmware_header {
+	struct common_firmware_header common;
+	struct mc_firmware_header_v1_0 mc;
+	struct smc_firmware_header_v1_0 smc;
+	struct gfx_firmware_header_v1_0 gfx;
+	struct rlc_firmware_header_v1_0 rlc;
+	struct sdma_firmware_header_v1_0 sdma;
+	uint8_t raw[0x100];
+};
 
-व्योम radeon_ucode_prपूर्णांक_mc_hdr(स्थिर काष्ठा common_firmware_header *hdr);
-व्योम radeon_ucode_prपूर्णांक_smc_hdr(स्थिर काष्ठा common_firmware_header *hdr);
-व्योम radeon_ucode_prपूर्णांक_gfx_hdr(स्थिर काष्ठा common_firmware_header *hdr);
-व्योम radeon_ucode_prपूर्णांक_rlc_hdr(स्थिर काष्ठा common_firmware_header *hdr);
-व्योम radeon_ucode_prपूर्णांक_sdma_hdr(स्थिर काष्ठा common_firmware_header *hdr);
-पूर्णांक radeon_ucode_validate(स्थिर काष्ठा firmware *fw);
+void radeon_ucode_print_mc_hdr(const struct common_firmware_header *hdr);
+void radeon_ucode_print_smc_hdr(const struct common_firmware_header *hdr);
+void radeon_ucode_print_gfx_hdr(const struct common_firmware_header *hdr);
+void radeon_ucode_print_rlc_hdr(const struct common_firmware_header *hdr);
+void radeon_ucode_print_sdma_hdr(const struct common_firmware_header *hdr);
+int radeon_ucode_validate(const struct firmware *fw);
 
-#पूर्ण_अगर
+#endif

@@ -1,347 +1,346 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 //
 // Register cache access API
 //
 // Copyright 2011 Wolfson Microelectronics plc
 //
-// Author: Dimitris Papastamos <dp@खोलोsource.wolfsonmicro.com>
+// Author: Dimitris Papastamos <dp@opensource.wolfsonmicro.com>
 
-#समावेश <linux/द्वा_खोज.h>
-#समावेश <linux/device.h>
-#समावेश <linux/export.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sort.h>
+#include <linux/bsearch.h>
+#include <linux/device.h>
+#include <linux/export.h>
+#include <linux/slab.h>
+#include <linux/sort.h>
 
-#समावेश "trace.h"
-#समावेश "internal.h"
+#include "trace.h"
+#include "internal.h"
 
-अटल स्थिर काष्ठा regcache_ops *cache_types[] = अणु
+static const struct regcache_ops *cache_types[] = {
 	&regcache_rbtree_ops,
-#अगर IS_ENABLED(CONFIG_REGCACHE_COMPRESSED)
+#if IS_ENABLED(CONFIG_REGCACHE_COMPRESSED)
 	&regcache_lzo_ops,
-#पूर्ण_अगर
+#endif
 	&regcache_flat_ops,
-पूर्ण;
+};
 
-अटल पूर्णांक regcache_hw_init(काष्ठा regmap *map)
-अणु
-	पूर्णांक i, j;
-	पूर्णांक ret;
-	पूर्णांक count;
-	अचिन्हित पूर्णांक reg, val;
-	व्योम *पंचांगp_buf;
+static int regcache_hw_init(struct regmap *map)
+{
+	int i, j;
+	int ret;
+	int count;
+	unsigned int reg, val;
+	void *tmp_buf;
 
-	अगर (!map->num_reg_शेषs_raw)
-		वापस -EINVAL;
+	if (!map->num_reg_defaults_raw)
+		return -EINVAL;
 
-	/* calculate the size of reg_शेषs */
-	क्रम (count = 0, i = 0; i < map->num_reg_शेषs_raw; i++)
-		अगर (regmap_पढ़ोable(map, i * map->reg_stride) &&
-		    !regmap_अस्थिर(map, i * map->reg_stride))
+	/* calculate the size of reg_defaults */
+	for (count = 0, i = 0; i < map->num_reg_defaults_raw; i++)
+		if (regmap_readable(map, i * map->reg_stride) &&
+		    !regmap_volatile(map, i * map->reg_stride))
 			count++;
 
-	/* all रेजिस्टरs are unपढ़ोable or अस्थिर, so just bypass */
-	अगर (!count) अणु
+	/* all registers are unreadable or volatile, so just bypass */
+	if (!count) {
 		map->cache_bypass = true;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	map->num_reg_शेषs = count;
-	map->reg_शेषs = kदो_स्मृति_array(count, माप(काष्ठा reg_शेष),
+	map->num_reg_defaults = count;
+	map->reg_defaults = kmalloc_array(count, sizeof(struct reg_default),
 					  GFP_KERNEL);
-	अगर (!map->reg_शेषs)
-		वापस -ENOMEM;
+	if (!map->reg_defaults)
+		return -ENOMEM;
 
-	अगर (!map->reg_शेषs_raw) अणु
+	if (!map->reg_defaults_raw) {
 		bool cache_bypass = map->cache_bypass;
 		dev_warn(map->dev, "No cache defaults, reading back from HW\n");
 
-		/* Bypass the cache access till data पढ़ो from HW */
+		/* Bypass the cache access till data read from HW */
 		map->cache_bypass = true;
-		पंचांगp_buf = kदो_स्मृति(map->cache_size_raw, GFP_KERNEL);
-		अगर (!पंचांगp_buf) अणु
+		tmp_buf = kmalloc(map->cache_size_raw, GFP_KERNEL);
+		if (!tmp_buf) {
 			ret = -ENOMEM;
-			जाओ err_मुक्त;
-		पूर्ण
-		ret = regmap_raw_पढ़ो(map, 0, पंचांगp_buf,
+			goto err_free;
+		}
+		ret = regmap_raw_read(map, 0, tmp_buf,
 				      map->cache_size_raw);
 		map->cache_bypass = cache_bypass;
-		अगर (ret == 0) अणु
-			map->reg_शेषs_raw = पंचांगp_buf;
-			map->cache_मुक्त = true;
-		पूर्ण अन्यथा अणु
-			kमुक्त(पंचांगp_buf);
-		पूर्ण
-	पूर्ण
+		if (ret == 0) {
+			map->reg_defaults_raw = tmp_buf;
+			map->cache_free = true;
+		} else {
+			kfree(tmp_buf);
+		}
+	}
 
-	/* fill the reg_शेषs */
-	क्रम (i = 0, j = 0; i < map->num_reg_शेषs_raw; i++) अणु
+	/* fill the reg_defaults */
+	for (i = 0, j = 0; i < map->num_reg_defaults_raw; i++) {
 		reg = i * map->reg_stride;
 
-		अगर (!regmap_पढ़ोable(map, reg))
-			जारी;
+		if (!regmap_readable(map, reg))
+			continue;
 
-		अगर (regmap_अस्थिर(map, reg))
-			जारी;
+		if (regmap_volatile(map, reg))
+			continue;
 
-		अगर (map->reg_शेषs_raw) अणु
-			val = regcache_get_val(map, map->reg_शेषs_raw, i);
-		पूर्ण अन्यथा अणु
+		if (map->reg_defaults_raw) {
+			val = regcache_get_val(map, map->reg_defaults_raw, i);
+		} else {
 			bool cache_bypass = map->cache_bypass;
 
 			map->cache_bypass = true;
-			ret = regmap_पढ़ो(map, reg, &val);
+			ret = regmap_read(map, reg, &val);
 			map->cache_bypass = cache_bypass;
-			अगर (ret != 0) अणु
+			if (ret != 0) {
 				dev_err(map->dev, "Failed to read %d: %d\n",
 					reg, ret);
-				जाओ err_मुक्त;
-			पूर्ण
-		पूर्ण
+				goto err_free;
+			}
+		}
 
-		map->reg_शेषs[j].reg = reg;
-		map->reg_शेषs[j].def = val;
+		map->reg_defaults[j].reg = reg;
+		map->reg_defaults[j].def = val;
 		j++;
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
-err_मुक्त:
-	kमुक्त(map->reg_शेषs);
+err_free:
+	kfree(map->reg_defaults);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक regcache_init(काष्ठा regmap *map, स्थिर काष्ठा regmap_config *config)
-अणु
-	पूर्णांक ret;
-	पूर्णांक i;
-	व्योम *पंचांगp_buf;
+int regcache_init(struct regmap *map, const struct regmap_config *config)
+{
+	int ret;
+	int i;
+	void *tmp_buf;
 
-	अगर (map->cache_type == REGCACHE_NONE) अणु
-		अगर (config->reg_शेषs || config->num_reg_शेषs_raw)
+	if (map->cache_type == REGCACHE_NONE) {
+		if (config->reg_defaults || config->num_reg_defaults_raw)
 			dev_warn(map->dev,
 				 "No cache used with register defaults set!\n");
 
 		map->cache_bypass = true;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (config->reg_शेषs && !config->num_reg_शेषs) अणु
+	if (config->reg_defaults && !config->num_reg_defaults) {
 		dev_err(map->dev,
 			 "Register defaults are set without the number!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	क्रम (i = 0; i < config->num_reg_शेषs; i++)
-		अगर (config->reg_शेषs[i].reg % map->reg_stride)
-			वापस -EINVAL;
+	for (i = 0; i < config->num_reg_defaults; i++)
+		if (config->reg_defaults[i].reg % map->reg_stride)
+			return -EINVAL;
 
-	क्रम (i = 0; i < ARRAY_SIZE(cache_types); i++)
-		अगर (cache_types[i]->type == map->cache_type)
-			अवरोध;
+	for (i = 0; i < ARRAY_SIZE(cache_types); i++)
+		if (cache_types[i]->type == map->cache_type)
+			break;
 
-	अगर (i == ARRAY_SIZE(cache_types)) अणु
+	if (i == ARRAY_SIZE(cache_types)) {
 		dev_err(map->dev, "Could not match compress type: %d\n",
 			map->cache_type);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	map->num_reg_शेषs = config->num_reg_शेषs;
-	map->num_reg_शेषs_raw = config->num_reg_शेषs_raw;
-	map->reg_शेषs_raw = config->reg_शेषs_raw;
+	map->num_reg_defaults = config->num_reg_defaults;
+	map->num_reg_defaults_raw = config->num_reg_defaults_raw;
+	map->reg_defaults_raw = config->reg_defaults_raw;
 	map->cache_word_size = DIV_ROUND_UP(config->val_bits, 8);
-	map->cache_size_raw = map->cache_word_size * config->num_reg_शेषs_raw;
+	map->cache_size_raw = map->cache_word_size * config->num_reg_defaults_raw;
 
-	map->cache = शून्य;
+	map->cache = NULL;
 	map->cache_ops = cache_types[i];
 
-	अगर (!map->cache_ops->पढ़ो ||
-	    !map->cache_ops->ग_लिखो ||
+	if (!map->cache_ops->read ||
+	    !map->cache_ops->write ||
 	    !map->cache_ops->name)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	/* We still need to ensure that the reg_शेषs
+	/* We still need to ensure that the reg_defaults
 	 * won't vanish from under us.  We'll need to make
 	 * a copy of it.
 	 */
-	अगर (config->reg_शेषs) अणु
-		पंचांगp_buf = kmemdup(config->reg_शेषs, map->num_reg_शेषs *
-				  माप(काष्ठा reg_शेष), GFP_KERNEL);
-		अगर (!पंचांगp_buf)
-			वापस -ENOMEM;
-		map->reg_शेषs = पंचांगp_buf;
-	पूर्ण अन्यथा अगर (map->num_reg_शेषs_raw) अणु
-		/* Some devices such as PMICs करोn't have cache शेषs,
-		 * we cope with this by पढ़ोing back the HW रेजिस्टरs and
-		 * crafting the cache शेषs by hand.
+	if (config->reg_defaults) {
+		tmp_buf = kmemdup(config->reg_defaults, map->num_reg_defaults *
+				  sizeof(struct reg_default), GFP_KERNEL);
+		if (!tmp_buf)
+			return -ENOMEM;
+		map->reg_defaults = tmp_buf;
+	} else if (map->num_reg_defaults_raw) {
+		/* Some devices such as PMICs don't have cache defaults,
+		 * we cope with this by reading back the HW registers and
+		 * crafting the cache defaults by hand.
 		 */
 		ret = regcache_hw_init(map);
-		अगर (ret < 0)
-			वापस ret;
-		अगर (map->cache_bypass)
-			वापस 0;
-	पूर्ण
+		if (ret < 0)
+			return ret;
+		if (map->cache_bypass)
+			return 0;
+	}
 
-	अगर (!map->max_रेजिस्टर)
-		map->max_रेजिस्टर = map->num_reg_शेषs_raw;
+	if (!map->max_register)
+		map->max_register = map->num_reg_defaults_raw;
 
-	अगर (map->cache_ops->init) अणु
+	if (map->cache_ops->init) {
 		dev_dbg(map->dev, "Initializing %s cache\n",
 			map->cache_ops->name);
 		ret = map->cache_ops->init(map);
-		अगर (ret)
-			जाओ err_मुक्त;
-	पूर्ण
-	वापस 0;
+		if (ret)
+			goto err_free;
+	}
+	return 0;
 
-err_मुक्त:
-	kमुक्त(map->reg_शेषs);
-	अगर (map->cache_मुक्त)
-		kमुक्त(map->reg_शेषs_raw);
+err_free:
+	kfree(map->reg_defaults);
+	if (map->cache_free)
+		kfree(map->reg_defaults_raw);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम regcache_निकास(काष्ठा regmap *map)
-अणु
-	अगर (map->cache_type == REGCACHE_NONE)
-		वापस;
+void regcache_exit(struct regmap *map)
+{
+	if (map->cache_type == REGCACHE_NONE)
+		return;
 
 	BUG_ON(!map->cache_ops);
 
-	kमुक्त(map->reg_शेषs);
-	अगर (map->cache_मुक्त)
-		kमुक्त(map->reg_शेषs_raw);
+	kfree(map->reg_defaults);
+	if (map->cache_free)
+		kfree(map->reg_defaults_raw);
 
-	अगर (map->cache_ops->निकास) अणु
+	if (map->cache_ops->exit) {
 		dev_dbg(map->dev, "Destroying %s cache\n",
 			map->cache_ops->name);
-		map->cache_ops->निकास(map);
-	पूर्ण
-पूर्ण
+		map->cache_ops->exit(map);
+	}
+}
 
 /**
- * regcache_पढ़ो - Fetch the value of a given रेजिस्टर from the cache.
+ * regcache_read - Fetch the value of a given register from the cache.
  *
  * @map: map to configure.
- * @reg: The रेजिस्टर index.
- * @value: The value to be वापसed.
+ * @reg: The register index.
+ * @value: The value to be returned.
  *
  * Return a negative value on failure, 0 on success.
  */
-पूर्णांक regcache_पढ़ो(काष्ठा regmap *map,
-		  अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक *value)
-अणु
-	पूर्णांक ret;
+int regcache_read(struct regmap *map,
+		  unsigned int reg, unsigned int *value)
+{
+	int ret;
 
-	अगर (map->cache_type == REGCACHE_NONE)
-		वापस -ENOSYS;
+	if (map->cache_type == REGCACHE_NONE)
+		return -ENOSYS;
 
 	BUG_ON(!map->cache_ops);
 
-	अगर (!regmap_अस्थिर(map, reg)) अणु
-		ret = map->cache_ops->पढ़ो(map, reg, value);
+	if (!regmap_volatile(map, reg)) {
+		ret = map->cache_ops->read(map, reg, value);
 
-		अगर (ret == 0)
-			trace_regmap_reg_पढ़ो_cache(map, reg, *value);
+		if (ret == 0)
+			trace_regmap_reg_read_cache(map, reg, *value);
 
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 /**
- * regcache_ग_लिखो - Set the value of a given रेजिस्टर in the cache.
+ * regcache_write - Set the value of a given register in the cache.
  *
  * @map: map to configure.
- * @reg: The रेजिस्टर index.
- * @value: The new रेजिस्टर value.
+ * @reg: The register index.
+ * @value: The new register value.
  *
  * Return a negative value on failure, 0 on success.
  */
-पूर्णांक regcache_ग_लिखो(काष्ठा regmap *map,
-		   अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक value)
-अणु
-	अगर (map->cache_type == REGCACHE_NONE)
-		वापस 0;
+int regcache_write(struct regmap *map,
+		   unsigned int reg, unsigned int value)
+{
+	if (map->cache_type == REGCACHE_NONE)
+		return 0;
 
 	BUG_ON(!map->cache_ops);
 
-	अगर (!regmap_अस्थिर(map, reg))
-		वापस map->cache_ops->ग_लिखो(map, reg, value);
+	if (!regmap_volatile(map, reg))
+		return map->cache_ops->write(map, reg, value);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool regcache_reg_needs_sync(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
-				    अचिन्हित पूर्णांक val)
-अणु
-	पूर्णांक ret;
+static bool regcache_reg_needs_sync(struct regmap *map, unsigned int reg,
+				    unsigned int val)
+{
+	int ret;
 
-	/* If we करोn't know the chip just got reset, then sync everything. */
-	अगर (!map->no_sync_शेषs)
-		वापस true;
+	/* If we don't know the chip just got reset, then sync everything. */
+	if (!map->no_sync_defaults)
+		return true;
 
-	/* Is this the hardware शेष?  If so skip. */
+	/* Is this the hardware default?  If so skip. */
 	ret = regcache_lookup_reg(map, reg);
-	अगर (ret >= 0 && val == map->reg_शेषs[ret].def)
-		वापस false;
-	वापस true;
-पूर्ण
+	if (ret >= 0 && val == map->reg_defaults[ret].def)
+		return false;
+	return true;
+}
 
-अटल पूर्णांक regcache_शेष_sync(काष्ठा regmap *map, अचिन्हित पूर्णांक min,
-				 अचिन्हित पूर्णांक max)
-अणु
-	अचिन्हित पूर्णांक reg;
+static int regcache_default_sync(struct regmap *map, unsigned int min,
+				 unsigned int max)
+{
+	unsigned int reg;
 
-	क्रम (reg = min; reg <= max; reg += map->reg_stride) अणु
-		अचिन्हित पूर्णांक val;
-		पूर्णांक ret;
+	for (reg = min; reg <= max; reg += map->reg_stride) {
+		unsigned int val;
+		int ret;
 
-		अगर (regmap_अस्थिर(map, reg) ||
-		    !regmap_ग_लिखोable(map, reg))
-			जारी;
+		if (regmap_volatile(map, reg) ||
+		    !regmap_writeable(map, reg))
+			continue;
 
-		ret = regcache_पढ़ो(map, reg, &val);
-		अगर (ret)
-			वापस ret;
+		ret = regcache_read(map, reg, &val);
+		if (ret)
+			return ret;
 
-		अगर (!regcache_reg_needs_sync(map, reg, val))
-			जारी;
+		if (!regcache_reg_needs_sync(map, reg, val))
+			continue;
 
 		map->cache_bypass = true;
-		ret = _regmap_ग_लिखो(map, reg, val);
+		ret = _regmap_write(map, reg, val);
 		map->cache_bypass = false;
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(map->dev, "Unable to sync register %#x. %d\n",
 				reg, ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		dev_dbg(map->dev, "Synced register %#x, value %#x\n", reg, val);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * regcache_sync - Sync the रेजिस्टर cache with the hardware.
+ * regcache_sync - Sync the register cache with the hardware.
  *
  * @map: map to configure.
  *
- * Any रेजिस्टरs that should not be synced should be marked as
- * अस्थिर.  In general drivers can choose not to use the provided
- * syncing functionality अगर they so require.
+ * Any registers that should not be synced should be marked as
+ * volatile.  In general drivers can choose not to use the provided
+ * syncing functionality if they so require.
  *
  * Return a negative value on failure, 0 on success.
  */
-पूर्णांक regcache_sync(काष्ठा regmap *map)
-अणु
-	पूर्णांक ret = 0;
-	अचिन्हित पूर्णांक i;
-	स्थिर अक्षर *name;
+int regcache_sync(struct regmap *map)
+{
+	int ret = 0;
+	unsigned int i;
+	const char *name;
 	bool bypass;
 
 	BUG_ON(!map->cache_ops);
@@ -354,63 +353,63 @@ err_मुक्त:
 	name = map->cache_ops->name;
 	trace_regcache_sync(map, name, "start");
 
-	अगर (!map->cache_dirty)
-		जाओ out;
+	if (!map->cache_dirty)
+		goto out;
 
 	map->async = true;
 
 	/* Apply any patch first */
 	map->cache_bypass = true;
-	क्रम (i = 0; i < map->patch_regs; i++) अणु
-		ret = _regmap_ग_लिखो(map, map->patch[i].reg, map->patch[i].def);
-		अगर (ret != 0) अणु
+	for (i = 0; i < map->patch_regs; i++) {
+		ret = _regmap_write(map, map->patch[i].reg, map->patch[i].def);
+		if (ret != 0) {
 			dev_err(map->dev, "Failed to write %x = %x: %d\n",
 				map->patch[i].reg, map->patch[i].def, ret);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 	map->cache_bypass = false;
 
-	अगर (map->cache_ops->sync)
-		ret = map->cache_ops->sync(map, 0, map->max_रेजिस्टर);
-	अन्यथा
-		ret = regcache_शेष_sync(map, 0, map->max_रेजिस्टर);
+	if (map->cache_ops->sync)
+		ret = map->cache_ops->sync(map, 0, map->max_register);
+	else
+		ret = regcache_default_sync(map, 0, map->max_register);
 
-	अगर (ret == 0)
+	if (ret == 0)
 		map->cache_dirty = false;
 
 out:
 	/* Restore the bypass state */
 	map->async = false;
 	map->cache_bypass = bypass;
-	map->no_sync_शेषs = false;
+	map->no_sync_defaults = false;
 	map->unlock(map->lock_arg);
 
 	regmap_async_complete(map);
 
 	trace_regcache_sync(map, name, "stop");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(regcache_sync);
 
 /**
- * regcache_sync_region - Sync part  of the रेजिस्टर cache with the hardware.
+ * regcache_sync_region - Sync part  of the register cache with the hardware.
  *
  * @map: map to sync.
- * @min: first रेजिस्टर to sync
- * @max: last रेजिस्टर to sync
+ * @min: first register to sync
+ * @max: last register to sync
  *
- * Write all non-शेष रेजिस्टर values in the specअगरied region to
+ * Write all non-default register values in the specified region to
  * the hardware.
  *
  * Return a negative value on failure, 0 on success.
  */
-पूर्णांक regcache_sync_region(काष्ठा regmap *map, अचिन्हित पूर्णांक min,
-			 अचिन्हित पूर्णांक max)
-अणु
-	पूर्णांक ret = 0;
-	स्थिर अक्षर *name;
+int regcache_sync_region(struct regmap *map, unsigned int min,
+			 unsigned int max)
+{
+	int ret = 0;
+	const char *name;
 	bool bypass;
 
 	BUG_ON(!map->cache_ops);
@@ -425,49 +424,49 @@ EXPORT_SYMBOL_GPL(regcache_sync);
 
 	trace_regcache_sync(map, name, "start region");
 
-	अगर (!map->cache_dirty)
-		जाओ out;
+	if (!map->cache_dirty)
+		goto out;
 
 	map->async = true;
 
-	अगर (map->cache_ops->sync)
+	if (map->cache_ops->sync)
 		ret = map->cache_ops->sync(map, min, max);
-	अन्यथा
-		ret = regcache_शेष_sync(map, min, max);
+	else
+		ret = regcache_default_sync(map, min, max);
 
 out:
 	/* Restore the bypass state */
 	map->cache_bypass = bypass;
 	map->async = false;
-	map->no_sync_शेषs = false;
+	map->no_sync_defaults = false;
 	map->unlock(map->lock_arg);
 
 	regmap_async_complete(map);
 
 	trace_regcache_sync(map, name, "stop region");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(regcache_sync_region);
 
 /**
- * regcache_drop_region - Discard part of the रेजिस्टर cache
+ * regcache_drop_region - Discard part of the register cache
  *
  * @map: map to operate on
- * @min: first रेजिस्टर to discard
- * @max: last रेजिस्टर to discard
+ * @min: first register to discard
+ * @max: last register to discard
  *
- * Discard part of the रेजिस्टर cache.
+ * Discard part of the register cache.
  *
  * Return a negative value on failure, 0 on success.
  */
-पूर्णांक regcache_drop_region(काष्ठा regmap *map, अचिन्हित पूर्णांक min,
-			 अचिन्हित पूर्णांक max)
-अणु
-	पूर्णांक ret = 0;
+int regcache_drop_region(struct regmap *map, unsigned int min,
+			 unsigned int max)
+{
+	int ret = 0;
 
-	अगर (!map->cache_ops || !map->cache_ops->drop)
-		वापस -EINVAL;
+	if (!map->cache_ops || !map->cache_ops->drop)
+		return -EINVAL;
 
 	map->lock(map->lock_arg);
 
@@ -477,239 +476,239 @@ EXPORT_SYMBOL_GPL(regcache_sync_region);
 
 	map->unlock(map->lock_arg);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(regcache_drop_region);
 
 /**
- * regcache_cache_only - Put a रेजिस्टर map पूर्णांकo cache only mode
+ * regcache_cache_only - Put a register map into cache only mode
  *
  * @map: map to configure
- * @enable: flag अगर changes should be written to the hardware
+ * @enable: flag if changes should be written to the hardware
  *
- * When a रेजिस्टर map is marked as cache only ग_लिखोs to the रेजिस्टर
- * map API will only update the रेजिस्टर cache, they will not cause
- * any hardware changes.  This is useful क्रम allowing portions of
+ * When a register map is marked as cache only writes to the register
+ * map API will only update the register cache, they will not cause
+ * any hardware changes.  This is useful for allowing portions of
  * drivers to act as though the device were functioning as normal when
- * it is disabled क्रम घातer saving reasons.
+ * it is disabled for power saving reasons.
  */
-व्योम regcache_cache_only(काष्ठा regmap *map, bool enable)
-अणु
+void regcache_cache_only(struct regmap *map, bool enable)
+{
 	map->lock(map->lock_arg);
 	WARN_ON(map->cache_bypass && enable);
 	map->cache_only = enable;
 	trace_regmap_cache_only(map, enable);
 	map->unlock(map->lock_arg);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(regcache_cache_only);
 
 /**
- * regcache_mark_dirty - Indicate that HW रेजिस्टरs were reset to शेष values
+ * regcache_mark_dirty - Indicate that HW registers were reset to default values
  *
  * @map: map to mark
  *
- * Inक्रमm regcache that the device has been घातered करोwn or reset, so that
- * on resume, regcache_sync() knows to ग_लिखो out all non-शेष values
+ * Inform regcache that the device has been powered down or reset, so that
+ * on resume, regcache_sync() knows to write out all non-default values
  * stored in the cache.
  *
  * If this function is not called, regcache_sync() will assume that
- * the hardware state still matches the cache state, modulo any ग_लिखोs that
+ * the hardware state still matches the cache state, modulo any writes that
  * happened when cache_only was true.
  */
-व्योम regcache_mark_dirty(काष्ठा regmap *map)
-अणु
+void regcache_mark_dirty(struct regmap *map)
+{
 	map->lock(map->lock_arg);
 	map->cache_dirty = true;
-	map->no_sync_शेषs = true;
+	map->no_sync_defaults = true;
 	map->unlock(map->lock_arg);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(regcache_mark_dirty);
 
 /**
- * regcache_cache_bypass - Put a रेजिस्टर map पूर्णांकo cache bypass mode
+ * regcache_cache_bypass - Put a register map into cache bypass mode
  *
  * @map: map to configure
- * @enable: flag अगर changes should not be written to the cache
+ * @enable: flag if changes should not be written to the cache
  *
- * When a रेजिस्टर map is marked with the cache bypass option, ग_लिखोs
- * to the रेजिस्टर map API will only update the hardware and not the
+ * When a register map is marked with the cache bypass option, writes
+ * to the register map API will only update the hardware and not the
  * the cache directly.  This is useful when syncing the cache back to
  * the hardware.
  */
-व्योम regcache_cache_bypass(काष्ठा regmap *map, bool enable)
-अणु
+void regcache_cache_bypass(struct regmap *map, bool enable)
+{
 	map->lock(map->lock_arg);
 	WARN_ON(map->cache_only && enable);
 	map->cache_bypass = enable;
 	trace_regmap_cache_bypass(map, enable);
 	map->unlock(map->lock_arg);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(regcache_cache_bypass);
 
-bool regcache_set_val(काष्ठा regmap *map, व्योम *base, अचिन्हित पूर्णांक idx,
-		      अचिन्हित पूर्णांक val)
-अणु
-	अगर (regcache_get_val(map, base, idx) == val)
-		वापस true;
+bool regcache_set_val(struct regmap *map, void *base, unsigned int idx,
+		      unsigned int val)
+{
+	if (regcache_get_val(map, base, idx) == val)
+		return true;
 
-	/* Use device native क्रमmat अगर possible */
-	अगर (map->क्रमmat.क्रमmat_val) अणु
-		map->क्रमmat.क्रमmat_val(base + (map->cache_word_size * idx),
+	/* Use device native format if possible */
+	if (map->format.format_val) {
+		map->format.format_val(base + (map->cache_word_size * idx),
 				       val, 0);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	चयन (map->cache_word_size) अणु
-	हाल 1: अणु
+	switch (map->cache_word_size) {
+	case 1: {
 		u8 *cache = base;
 
 		cache[idx] = val;
-		अवरोध;
-	पूर्ण
-	हाल 2: अणु
+		break;
+	}
+	case 2: {
 		u16 *cache = base;
 
 		cache[idx] = val;
-		अवरोध;
-	पूर्ण
-	हाल 4: अणु
+		break;
+	}
+	case 4: {
 		u32 *cache = base;
 
 		cache[idx] = val;
-		अवरोध;
-	पूर्ण
-#अगर_घोषित CONFIG_64BIT
-	हाल 8: अणु
+		break;
+	}
+#ifdef CONFIG_64BIT
+	case 8: {
 		u64 *cache = base;
 
 		cache[idx] = val;
-		अवरोध;
-	पूर्ण
-#पूर्ण_अगर
-	शेष:
+		break;
+	}
+#endif
+	default:
 		BUG();
-	पूर्ण
-	वापस false;
-पूर्ण
+	}
+	return false;
+}
 
-अचिन्हित पूर्णांक regcache_get_val(काष्ठा regmap *map, स्थिर व्योम *base,
-			      अचिन्हित पूर्णांक idx)
-अणु
-	अगर (!base)
-		वापस -EINVAL;
+unsigned int regcache_get_val(struct regmap *map, const void *base,
+			      unsigned int idx)
+{
+	if (!base)
+		return -EINVAL;
 
-	/* Use device native क्रमmat अगर possible */
-	अगर (map->क्रमmat.parse_val)
-		वापस map->क्रमmat.parse_val(regcache_get_val_addr(map, base,
+	/* Use device native format if possible */
+	if (map->format.parse_val)
+		return map->format.parse_val(regcache_get_val_addr(map, base,
 								   idx));
 
-	चयन (map->cache_word_size) अणु
-	हाल 1: अणु
-		स्थिर u8 *cache = base;
+	switch (map->cache_word_size) {
+	case 1: {
+		const u8 *cache = base;
 
-		वापस cache[idx];
-	पूर्ण
-	हाल 2: अणु
-		स्थिर u16 *cache = base;
+		return cache[idx];
+	}
+	case 2: {
+		const u16 *cache = base;
 
-		वापस cache[idx];
-	पूर्ण
-	हाल 4: अणु
-		स्थिर u32 *cache = base;
+		return cache[idx];
+	}
+	case 4: {
+		const u32 *cache = base;
 
-		वापस cache[idx];
-	पूर्ण
-#अगर_घोषित CONFIG_64BIT
-	हाल 8: अणु
-		स्थिर u64 *cache = base;
+		return cache[idx];
+	}
+#ifdef CONFIG_64BIT
+	case 8: {
+		const u64 *cache = base;
 
-		वापस cache[idx];
-	पूर्ण
-#पूर्ण_अगर
-	शेष:
+		return cache[idx];
+	}
+#endif
+	default:
 		BUG();
-	पूर्ण
+	}
 	/* unreachable */
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल पूर्णांक regcache_शेष_cmp(स्थिर व्योम *a, स्थिर व्योम *b)
-अणु
-	स्थिर काष्ठा reg_शेष *_a = a;
-	स्थिर काष्ठा reg_शेष *_b = b;
+static int regcache_default_cmp(const void *a, const void *b)
+{
+	const struct reg_default *_a = a;
+	const struct reg_default *_b = b;
 
-	वापस _a->reg - _b->reg;
-पूर्ण
+	return _a->reg - _b->reg;
+}
 
-पूर्णांक regcache_lookup_reg(काष्ठा regmap *map, अचिन्हित पूर्णांक reg)
-अणु
-	काष्ठा reg_शेष key;
-	काष्ठा reg_शेष *r;
+int regcache_lookup_reg(struct regmap *map, unsigned int reg)
+{
+	struct reg_default key;
+	struct reg_default *r;
 
 	key.reg = reg;
 	key.def = 0;
 
-	r = द्वा_खोज(&key, map->reg_शेषs, map->num_reg_शेषs,
-		    माप(काष्ठा reg_शेष), regcache_शेष_cmp);
+	r = bsearch(&key, map->reg_defaults, map->num_reg_defaults,
+		    sizeof(struct reg_default), regcache_default_cmp);
 
-	अगर (r)
-		वापस r - map->reg_शेषs;
-	अन्यथा
-		वापस -ENOENT;
-पूर्ण
+	if (r)
+		return r - map->reg_defaults;
+	else
+		return -ENOENT;
+}
 
-अटल bool regcache_reg_present(अचिन्हित दीर्घ *cache_present, अचिन्हित पूर्णांक idx)
-अणु
-	अगर (!cache_present)
-		वापस true;
+static bool regcache_reg_present(unsigned long *cache_present, unsigned int idx)
+{
+	if (!cache_present)
+		return true;
 
-	वापस test_bit(idx, cache_present);
-पूर्ण
+	return test_bit(idx, cache_present);
+}
 
-अटल पूर्णांक regcache_sync_block_single(काष्ठा regmap *map, व्योम *block,
-				      अचिन्हित दीर्घ *cache_present,
-				      अचिन्हित पूर्णांक block_base,
-				      अचिन्हित पूर्णांक start, अचिन्हित पूर्णांक end)
-अणु
-	अचिन्हित पूर्णांक i, regपंचांगp, val;
-	पूर्णांक ret;
+static int regcache_sync_block_single(struct regmap *map, void *block,
+				      unsigned long *cache_present,
+				      unsigned int block_base,
+				      unsigned int start, unsigned int end)
+{
+	unsigned int i, regtmp, val;
+	int ret;
 
-	क्रम (i = start; i < end; i++) अणु
-		regपंचांगp = block_base + (i * map->reg_stride);
+	for (i = start; i < end; i++) {
+		regtmp = block_base + (i * map->reg_stride);
 
-		अगर (!regcache_reg_present(cache_present, i) ||
-		    !regmap_ग_लिखोable(map, regपंचांगp))
-			जारी;
+		if (!regcache_reg_present(cache_present, i) ||
+		    !regmap_writeable(map, regtmp))
+			continue;
 
 		val = regcache_get_val(map, block, i);
-		अगर (!regcache_reg_needs_sync(map, regपंचांगp, val))
-			जारी;
+		if (!regcache_reg_needs_sync(map, regtmp, val))
+			continue;
 
 		map->cache_bypass = true;
 
-		ret = _regmap_ग_लिखो(map, regपंचांगp, val);
+		ret = _regmap_write(map, regtmp, val);
 
 		map->cache_bypass = false;
-		अगर (ret != 0) अणु
+		if (ret != 0) {
 			dev_err(map->dev, "Unable to sync register %#x. %d\n",
-				regपंचांगp, ret);
-			वापस ret;
-		पूर्ण
+				regtmp, ret);
+			return ret;
+		}
 		dev_dbg(map->dev, "Synced register %#x, value %#x\n",
-			regपंचांगp, val);
-	पूर्ण
+			regtmp, val);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक regcache_sync_block_raw_flush(काष्ठा regmap *map, स्थिर व्योम **data,
-					 अचिन्हित पूर्णांक base, अचिन्हित पूर्णांक cur)
-अणु
-	माप_प्रकार val_bytes = map->क्रमmat.val_bytes;
-	पूर्णांक ret, count;
+static int regcache_sync_block_raw_flush(struct regmap *map, const void **data,
+					 unsigned int base, unsigned int cur)
+{
+	size_t val_bytes = map->format.val_bytes;
+	int ret, count;
 
-	अगर (*data == शून्य)
-		वापस 0;
+	if (*data == NULL)
+		return 0;
 
 	count = (cur - base) / map->reg_stride;
 
@@ -718,69 +717,69 @@ bool regcache_set_val(काष्ठा regmap *map, व्योम *base, अ
 
 	map->cache_bypass = true;
 
-	ret = _regmap_raw_ग_लिखो(map, base, *data, count * val_bytes, false);
-	अगर (ret)
+	ret = _regmap_raw_write(map, base, *data, count * val_bytes, false);
+	if (ret)
 		dev_err(map->dev, "Unable to sync registers %#x-%#x. %d\n",
 			base, cur - map->reg_stride, ret);
 
 	map->cache_bypass = false;
 
-	*data = शून्य;
+	*data = NULL;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक regcache_sync_block_raw(काष्ठा regmap *map, व्योम *block,
-			    अचिन्हित दीर्घ *cache_present,
-			    अचिन्हित पूर्णांक block_base, अचिन्हित पूर्णांक start,
-			    अचिन्हित पूर्णांक end)
-अणु
-	अचिन्हित पूर्णांक i, val;
-	अचिन्हित पूर्णांक regपंचांगp = 0;
-	अचिन्हित पूर्णांक base = 0;
-	स्थिर व्योम *data = शून्य;
-	पूर्णांक ret;
+static int regcache_sync_block_raw(struct regmap *map, void *block,
+			    unsigned long *cache_present,
+			    unsigned int block_base, unsigned int start,
+			    unsigned int end)
+{
+	unsigned int i, val;
+	unsigned int regtmp = 0;
+	unsigned int base = 0;
+	const void *data = NULL;
+	int ret;
 
-	क्रम (i = start; i < end; i++) अणु
-		regपंचांगp = block_base + (i * map->reg_stride);
+	for (i = start; i < end; i++) {
+		regtmp = block_base + (i * map->reg_stride);
 
-		अगर (!regcache_reg_present(cache_present, i) ||
-		    !regmap_ग_लिखोable(map, regपंचांगp)) अणु
+		if (!regcache_reg_present(cache_present, i) ||
+		    !regmap_writeable(map, regtmp)) {
 			ret = regcache_sync_block_raw_flush(map, &data,
-							    base, regपंचांगp);
-			अगर (ret != 0)
-				वापस ret;
-			जारी;
-		पूर्ण
+							    base, regtmp);
+			if (ret != 0)
+				return ret;
+			continue;
+		}
 
 		val = regcache_get_val(map, block, i);
-		अगर (!regcache_reg_needs_sync(map, regपंचांगp, val)) अणु
+		if (!regcache_reg_needs_sync(map, regtmp, val)) {
 			ret = regcache_sync_block_raw_flush(map, &data,
-							    base, regपंचांगp);
-			अगर (ret != 0)
-				वापस ret;
-			जारी;
-		पूर्ण
+							    base, regtmp);
+			if (ret != 0)
+				return ret;
+			continue;
+		}
 
-		अगर (!data) अणु
+		if (!data) {
 			data = regcache_get_val_addr(map, block, i);
-			base = regपंचांगp;
-		पूर्ण
-	पूर्ण
+			base = regtmp;
+		}
+	}
 
-	वापस regcache_sync_block_raw_flush(map, &data, base, regपंचांगp +
+	return regcache_sync_block_raw_flush(map, &data, base, regtmp +
 			map->reg_stride);
-पूर्ण
+}
 
-पूर्णांक regcache_sync_block(काष्ठा regmap *map, व्योम *block,
-			अचिन्हित दीर्घ *cache_present,
-			अचिन्हित पूर्णांक block_base, अचिन्हित पूर्णांक start,
-			अचिन्हित पूर्णांक end)
-अणु
-	अगर (regmap_can_raw_ग_लिखो(map) && !map->use_single_ग_लिखो)
-		वापस regcache_sync_block_raw(map, block, cache_present,
+int regcache_sync_block(struct regmap *map, void *block,
+			unsigned long *cache_present,
+			unsigned int block_base, unsigned int start,
+			unsigned int end)
+{
+	if (regmap_can_raw_write(map) && !map->use_single_write)
+		return regcache_sync_block_raw(map, block, cache_present,
 					       block_base, start, end);
-	अन्यथा
-		वापस regcache_sync_block_single(map, block, cache_present,
+	else
+		return regcache_sync_block_single(map, block, cache_present,
 						  block_base, start, end);
-पूर्ण
+}

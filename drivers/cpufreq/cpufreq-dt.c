@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2012 Freescale Semiconductor, Inc.
  *
@@ -7,124 +6,124 @@
  * Viresh Kumar <viresh.kumar@linaro.org>
  */
 
-#घोषणा pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/clk.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/cpufreq.h>
-#समावेश <linux/cpumask.h>
-#समावेश <linux/err.h>
-#समावेश <linux/list.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/pm_opp.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/thermal.h>
+#include <linux/clk.h>
+#include <linux/cpu.h>
+#include <linux/cpufreq.h>
+#include <linux/cpumask.h>
+#include <linux/err.h>
+#include <linux/list.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/pm_opp.h>
+#include <linux/platform_device.h>
+#include <linux/regulator/consumer.h>
+#include <linux/slab.h>
+#include <linux/thermal.h>
 
-#समावेश "cpufreq-dt.h"
+#include "cpufreq-dt.h"
 
-काष्ठा निजी_data अणु
-	काष्ठा list_head node;
+struct private_data {
+	struct list_head node;
 
 	cpumask_var_t cpus;
-	काष्ठा device *cpu_dev;
-	काष्ठा opp_table *opp_table;
-	काष्ठा cpufreq_frequency_table *freq_table;
-	bool have_अटल_opps;
-पूर्ण;
+	struct device *cpu_dev;
+	struct opp_table *opp_table;
+	struct cpufreq_frequency_table *freq_table;
+	bool have_static_opps;
+};
 
-अटल LIST_HEAD(priv_list);
+static LIST_HEAD(priv_list);
 
-अटल काष्ठा freq_attr *cpufreq_dt_attr[] = अणु
+static struct freq_attr *cpufreq_dt_attr[] = {
 	&cpufreq_freq_attr_scaling_available_freqs,
-	शून्य,   /* Extra space क्रम boost-attr अगर required */
-	शून्य,
-पूर्ण;
+	NULL,   /* Extra space for boost-attr if required */
+	NULL,
+};
 
-अटल काष्ठा निजी_data *cpufreq_dt_find_data(पूर्णांक cpu)
-अणु
-	काष्ठा निजी_data *priv;
+static struct private_data *cpufreq_dt_find_data(int cpu)
+{
+	struct private_data *priv;
 
-	list_क्रम_each_entry(priv, &priv_list, node) अणु
-		अगर (cpumask_test_cpu(cpu, priv->cpus))
-			वापस priv;
-	पूर्ण
+	list_for_each_entry(priv, &priv_list, node) {
+		if (cpumask_test_cpu(cpu, priv->cpus))
+			return priv;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक set_target(काष्ठा cpufreq_policy *policy, अचिन्हित पूर्णांक index)
-अणु
-	काष्ठा निजी_data *priv = policy->driver_data;
-	अचिन्हित दीर्घ freq = policy->freq_table[index].frequency;
+static int set_target(struct cpufreq_policy *policy, unsigned int index)
+{
+	struct private_data *priv = policy->driver_data;
+	unsigned long freq = policy->freq_table[index].frequency;
 
-	वापस dev_pm_opp_set_rate(priv->cpu_dev, freq * 1000);
-पूर्ण
+	return dev_pm_opp_set_rate(priv->cpu_dev, freq * 1000);
+}
 
 /*
  * An earlier version of opp-v1 bindings used to name the regulator
- * "cpu0-supply", we still need to handle that क्रम backwards compatibility.
+ * "cpu0-supply", we still need to handle that for backwards compatibility.
  */
-अटल स्थिर अक्षर *find_supply_name(काष्ठा device *dev)
-अणु
-	काष्ठा device_node *np;
-	काष्ठा property *pp;
-	पूर्णांक cpu = dev->id;
-	स्थिर अक्षर *name = शून्य;
+static const char *find_supply_name(struct device *dev)
+{
+	struct device_node *np;
+	struct property *pp;
+	int cpu = dev->id;
+	const char *name = NULL;
 
 	np = of_node_get(dev->of_node);
 
-	/* This must be valid क्रम sure */
-	अगर (WARN_ON(!np))
-		वापस शून्य;
+	/* This must be valid for sure */
+	if (WARN_ON(!np))
+		return NULL;
 
-	/* Try "cpu0" क्रम older DTs */
-	अगर (!cpu) अणु
-		pp = of_find_property(np, "cpu0-supply", शून्य);
-		अगर (pp) अणु
+	/* Try "cpu0" for older DTs */
+	if (!cpu) {
+		pp = of_find_property(np, "cpu0-supply", NULL);
+		if (pp) {
 			name = "cpu0";
-			जाओ node_put;
-		पूर्ण
-	पूर्ण
+			goto node_put;
+		}
+	}
 
-	pp = of_find_property(np, "cpu-supply", शून्य);
-	अगर (pp) अणु
+	pp = of_find_property(np, "cpu-supply", NULL);
+	if (pp) {
 		name = "cpu";
-		जाओ node_put;
-	पूर्ण
+		goto node_put;
+	}
 
 	dev_dbg(dev, "no regulator for cpu%d\n", cpu);
 node_put:
 	of_node_put(np);
-	वापस name;
-पूर्ण
+	return name;
+}
 
-अटल पूर्णांक cpufreq_init(काष्ठा cpufreq_policy *policy)
-अणु
-	काष्ठा निजी_data *priv;
-	काष्ठा device *cpu_dev;
-	काष्ठा clk *cpu_clk;
-	अचिन्हित पूर्णांक transition_latency;
-	पूर्णांक ret;
+static int cpufreq_init(struct cpufreq_policy *policy)
+{
+	struct private_data *priv;
+	struct device *cpu_dev;
+	struct clk *cpu_clk;
+	unsigned int transition_latency;
+	int ret;
 
 	priv = cpufreq_dt_find_data(policy->cpu);
-	अगर (!priv) अणु
+	if (!priv) {
 		pr_err("failed to find data for cpu%d\n", policy->cpu);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	cpu_dev = priv->cpu_dev;
 
-	cpu_clk = clk_get(cpu_dev, शून्य);
-	अगर (IS_ERR(cpu_clk)) अणु
+	cpu_clk = clk_get(cpu_dev, NULL);
+	if (IS_ERR(cpu_clk)) {
 		ret = PTR_ERR(cpu_clk);
 		dev_err(cpu_dev, "%s: failed to get clk: %d\n", __func__, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	transition_latency = dev_pm_opp_get_max_transition_latency(cpu_dev);
-	अगर (!transition_latency)
+	if (!transition_latency)
 		transition_latency = CPUFREQ_ETERNAL;
 
 	cpumask_copy(policy->cpus, priv->cpus);
@@ -136,82 +135,82 @@ node_put:
 	policy->dvfs_possible_from_any_cpu = true;
 
 	/* Support turbo/boost mode */
-	अगर (policy_has_boost_freq(policy)) अणु
-		/* This माला_लो disabled by core on driver unरेजिस्टर */
+	if (policy_has_boost_freq(policy)) {
+		/* This gets disabled by core on driver unregister */
 		ret = cpufreq_enable_boost_support();
-		अगर (ret)
-			जाओ out_clk_put;
+		if (ret)
+			goto out_clk_put;
 		cpufreq_dt_attr[1] = &cpufreq_freq_attr_scaling_boost_freqs;
-	पूर्ण
+	}
 
-	dev_pm_opp_of_रेजिस्टर_em(cpu_dev, policy->cpus);
+	dev_pm_opp_of_register_em(cpu_dev, policy->cpus);
 
-	वापस 0;
+	return 0;
 
 out_clk_put:
 	clk_put(cpu_clk);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cpufreq_online(काष्ठा cpufreq_policy *policy)
-अणु
-	/* We did light-weight tear करोwn earlier, nothing to करो here */
-	वापस 0;
-पूर्ण
+static int cpufreq_online(struct cpufreq_policy *policy)
+{
+	/* We did light-weight tear down earlier, nothing to do here */
+	return 0;
+}
 
-अटल पूर्णांक cpufreq_offline(काष्ठा cpufreq_policy *policy)
-अणु
+static int cpufreq_offline(struct cpufreq_policy *policy)
+{
 	/*
-	 * Preserve policy->driver_data and करोn't मुक्त resources on light-weight
-	 * tear करोwn.
+	 * Preserve policy->driver_data and don't free resources on light-weight
+	 * tear down.
 	 */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cpufreq_निकास(काष्ठा cpufreq_policy *policy)
-अणु
+static int cpufreq_exit(struct cpufreq_policy *policy)
+{
 	clk_put(policy->clk);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा cpufreq_driver dt_cpufreq_driver = अणु
+static struct cpufreq_driver dt_cpufreq_driver = {
 	.flags = CPUFREQ_NEED_INITIAL_FREQ_CHECK |
 		 CPUFREQ_IS_COOLING_DEV,
-	.verअगरy = cpufreq_generic_frequency_table_verअगरy,
+	.verify = cpufreq_generic_frequency_table_verify,
 	.target_index = set_target,
 	.get = cpufreq_generic_get,
 	.init = cpufreq_init,
-	.निकास = cpufreq_निकास,
+	.exit = cpufreq_exit,
 	.online = cpufreq_online,
 	.offline = cpufreq_offline,
 	.name = "cpufreq-dt",
 	.attr = cpufreq_dt_attr,
 	.suspend = cpufreq_generic_suspend,
-पूर्ण;
+};
 
-अटल पूर्णांक dt_cpufreq_early_init(काष्ठा device *dev, पूर्णांक cpu)
-अणु
-	काष्ठा निजी_data *priv;
-	काष्ठा device *cpu_dev;
+static int dt_cpufreq_early_init(struct device *dev, int cpu)
+{
+	struct private_data *priv;
+	struct device *cpu_dev;
 	bool fallback = false;
-	स्थिर अक्षर *reg_name;
-	पूर्णांक ret;
+	const char *reg_name;
+	int ret;
 
-	/* Check अगर this CPU is alपढ़ोy covered by some other policy */
-	अगर (cpufreq_dt_find_data(cpu))
-		वापस 0;
+	/* Check if this CPU is already covered by some other policy */
+	if (cpufreq_dt_find_data(cpu))
+		return 0;
 
 	cpu_dev = get_cpu_device(cpu);
-	अगर (!cpu_dev)
-		वापस -EPROBE_DEFER;
+	if (!cpu_dev)
+		return -EPROBE_DEFER;
 
-	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
-	अगर (!alloc_cpumask_var(&priv->cpus, GFP_KERNEL))
-		वापस -ENOMEM;
+	if (!alloc_cpumask_var(&priv->cpus, GFP_KERNEL))
+		return -ENOMEM;
 
 	cpumask_set_cpu(cpu, priv->cpus);
 	priv->cpu_dev = cpu_dev;
@@ -221,154 +220,154 @@ out_clk_put:
 	 * the name of the regulator first.
 	 */
 	reg_name = find_supply_name(cpu_dev);
-	अगर (reg_name) अणु
+	if (reg_name) {
 		priv->opp_table = dev_pm_opp_set_regulators(cpu_dev, &reg_name,
 							    1);
-		अगर (IS_ERR(priv->opp_table)) अणु
+		if (IS_ERR(priv->opp_table)) {
 			ret = PTR_ERR(priv->opp_table);
-			अगर (ret != -EPROBE_DEFER)
+			if (ret != -EPROBE_DEFER)
 				dev_err(cpu_dev, "failed to set regulators: %d\n",
 					ret);
-			जाओ मुक्त_cpumask;
-		पूर्ण
-	पूर्ण
+			goto free_cpumask;
+		}
+	}
 
-	/* Get OPP-sharing inक्रमmation from "operating-points-v2" bindings */
+	/* Get OPP-sharing information from "operating-points-v2" bindings */
 	ret = dev_pm_opp_of_get_sharing_cpus(cpu_dev, priv->cpus);
-	अगर (ret) अणु
-		अगर (ret != -ENOENT)
-			जाओ out;
+	if (ret) {
+		if (ret != -ENOENT)
+			goto out;
 
 		/*
-		 * operating-poपूर्णांकs-v2 not supported, fallback to all CPUs share
-		 * OPP क्रम backward compatibility अगर the platक्रमm hasn't set
+		 * operating-points-v2 not supported, fallback to all CPUs share
+		 * OPP for backward compatibility if the platform hasn't set
 		 * sharing CPUs.
 		 */
-		अगर (dev_pm_opp_get_sharing_cpus(cpu_dev, priv->cpus))
+		if (dev_pm_opp_get_sharing_cpus(cpu_dev, priv->cpus))
 			fallback = true;
-	पूर्ण
+	}
 
 	/*
-	 * Initialize OPP tables क्रम all priv->cpus. They will be shared by
+	 * Initialize OPP tables for all priv->cpus. They will be shared by
 	 * all CPUs which have marked their CPUs shared with OPP bindings.
 	 *
-	 * For platक्रमms not using operating-poपूर्णांकs-v2 bindings, we करो this
-	 * beक्रमe updating priv->cpus. Otherwise, we will end up creating
-	 * duplicate OPPs क्रम the CPUs.
+	 * For platforms not using operating-points-v2 bindings, we do this
+	 * before updating priv->cpus. Otherwise, we will end up creating
+	 * duplicate OPPs for the CPUs.
 	 *
-	 * OPPs might be populated at runसमय, करोn't fail क्रम error here unless
+	 * OPPs might be populated at runtime, don't fail for error here unless
 	 * it is -EPROBE_DEFER.
 	 */
 	ret = dev_pm_opp_of_cpumask_add_table(priv->cpus);
-	अगर (!ret) अणु
-		priv->have_अटल_opps = true;
-	पूर्ण अन्यथा अगर (ret == -EPROBE_DEFER) अणु
-		जाओ out;
-	पूर्ण
+	if (!ret) {
+		priv->have_static_opps = true;
+	} else if (ret == -EPROBE_DEFER) {
+		goto out;
+	}
 
 	/*
-	 * The OPP table must be initialized, अटलally or dynamically, by this
-	 * poपूर्णांक.
+	 * The OPP table must be initialized, statically or dynamically, by this
+	 * point.
 	 */
 	ret = dev_pm_opp_get_opp_count(cpu_dev);
-	अगर (ret <= 0) अणु
+	if (ret <= 0) {
 		dev_err(cpu_dev, "OPP table can't be empty\n");
 		ret = -ENODEV;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (fallback) अणु
+	if (fallback) {
 		cpumask_setall(priv->cpus);
 		ret = dev_pm_opp_set_sharing_cpus(cpu_dev, priv->cpus);
-		अगर (ret)
+		if (ret)
 			dev_err(cpu_dev, "%s: failed to mark OPPs as shared: %d\n",
 				__func__, ret);
-	पूर्ण
+	}
 
 	ret = dev_pm_opp_init_cpufreq_table(cpu_dev, &priv->freq_table);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(cpu_dev, "failed to init cpufreq table: %d\n", ret);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	list_add(&priv->node, &priv_list);
-	वापस 0;
+	return 0;
 
 out:
-	अगर (priv->have_अटल_opps)
-		dev_pm_opp_of_cpumask_हटाओ_table(priv->cpus);
+	if (priv->have_static_opps)
+		dev_pm_opp_of_cpumask_remove_table(priv->cpus);
 	dev_pm_opp_put_regulators(priv->opp_table);
-मुक्त_cpumask:
-	मुक्त_cpumask_var(priv->cpus);
-	वापस ret;
-पूर्ण
+free_cpumask:
+	free_cpumask_var(priv->cpus);
+	return ret;
+}
 
-अटल व्योम dt_cpufreq_release(व्योम)
-अणु
-	काष्ठा निजी_data *priv, *पंचांगp;
+static void dt_cpufreq_release(void)
+{
+	struct private_data *priv, *tmp;
 
-	list_क्रम_each_entry_safe(priv, पंचांगp, &priv_list, node) अणु
-		dev_pm_opp_मुक्त_cpufreq_table(priv->cpu_dev, &priv->freq_table);
-		अगर (priv->have_अटल_opps)
-			dev_pm_opp_of_cpumask_हटाओ_table(priv->cpus);
+	list_for_each_entry_safe(priv, tmp, &priv_list, node) {
+		dev_pm_opp_free_cpufreq_table(priv->cpu_dev, &priv->freq_table);
+		if (priv->have_static_opps)
+			dev_pm_opp_of_cpumask_remove_table(priv->cpus);
 		dev_pm_opp_put_regulators(priv->opp_table);
-		मुक्त_cpumask_var(priv->cpus);
+		free_cpumask_var(priv->cpus);
 		list_del(&priv->node);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक dt_cpufreq_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा cpufreq_dt_platक्रमm_data *data = dev_get_platdata(&pdev->dev);
-	पूर्णांक ret, cpu;
+static int dt_cpufreq_probe(struct platform_device *pdev)
+{
+	struct cpufreq_dt_platform_data *data = dev_get_platdata(&pdev->dev);
+	int ret, cpu;
 
-	/* Request resources early so we can वापस in हाल of -EPROBE_DEFER */
-	क्रम_each_possible_cpu(cpu) अणु
+	/* Request resources early so we can return in case of -EPROBE_DEFER */
+	for_each_possible_cpu(cpu) {
 		ret = dt_cpufreq_early_init(&pdev->dev, cpu);
-		अगर (ret)
-			जाओ err;
-	पूर्ण
+		if (ret)
+			goto err;
+	}
 
-	अगर (data) अणु
-		अगर (data->have_governor_per_policy)
+	if (data) {
+		if (data->have_governor_per_policy)
 			dt_cpufreq_driver.flags |= CPUFREQ_HAVE_GOVERNOR_PER_POLICY;
 
 		dt_cpufreq_driver.resume = data->resume;
-		अगर (data->suspend)
+		if (data->suspend)
 			dt_cpufreq_driver.suspend = data->suspend;
-		अगर (data->get_पूर्णांकermediate) अणु
-			dt_cpufreq_driver.target_पूर्णांकermediate = data->target_पूर्णांकermediate;
-			dt_cpufreq_driver.get_पूर्णांकermediate = data->get_पूर्णांकermediate;
-		पूर्ण
-	पूर्ण
+		if (data->get_intermediate) {
+			dt_cpufreq_driver.target_intermediate = data->target_intermediate;
+			dt_cpufreq_driver.get_intermediate = data->get_intermediate;
+		}
+	}
 
-	ret = cpufreq_रेजिस्टर_driver(&dt_cpufreq_driver);
-	अगर (ret) अणु
+	ret = cpufreq_register_driver(&dt_cpufreq_driver);
+	if (ret) {
 		dev_err(&pdev->dev, "failed register driver: %d\n", ret);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	वापस 0;
+	return 0;
 err:
 	dt_cpufreq_release();
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक dt_cpufreq_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	cpufreq_unरेजिस्टर_driver(&dt_cpufreq_driver);
+static int dt_cpufreq_remove(struct platform_device *pdev)
+{
+	cpufreq_unregister_driver(&dt_cpufreq_driver);
 	dt_cpufreq_release();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver dt_cpufreq_platdrv = अणु
-	.driver = अणु
+static struct platform_driver dt_cpufreq_platdrv = {
+	.driver = {
 		.name	= "cpufreq-dt",
-	पूर्ण,
+	},
 	.probe		= dt_cpufreq_probe,
-	.हटाओ		= dt_cpufreq_हटाओ,
-पूर्ण;
-module_platक्रमm_driver(dt_cpufreq_platdrv);
+	.remove		= dt_cpufreq_remove,
+};
+module_platform_driver(dt_cpufreq_platdrv);
 
 MODULE_ALIAS("platform:cpufreq-dt");
 MODULE_AUTHOR("Viresh Kumar <viresh.kumar@linaro.org>");

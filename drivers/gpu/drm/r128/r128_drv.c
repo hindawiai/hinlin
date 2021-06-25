@@ -1,17 +1,16 @@
-<शैली गुरु>
 /* r128_drv.c -- ATI Rage 128 driver -*- linux-c -*-
  * Created: Mon Dec 13 09:47:27 1999 by faith@precisioninsight.com
  *
  * Copyright 1999 Precision Insight, Inc., Cedar Park, Texas.
- * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, Calअगरornia.
+ * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, California.
  * All Rights Reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -30,42 +29,42 @@
  *    Gareth Hughes <gareth@valinux.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
+#include <linux/module.h>
+#include <linux/pci.h>
 
-#समावेश <drm/drm_drv.h>
-#समावेश <drm/drm_file.h>
-#समावेश <drm/drm_pciids.h>
-#समावेश <drm/drm_vblank.h>
-#समावेश <drm/r128_drm.h>
+#include <drm/drm_drv.h>
+#include <drm/drm_file.h>
+#include <drm/drm_pciids.h>
+#include <drm/drm_vblank.h>
+#include <drm/r128_drm.h>
 
-#समावेश "r128_drv.h"
+#include "r128_drv.h"
 
-अटल काष्ठा pci_device_id pciidlist[] = अणु
+static struct pci_device_id pciidlist[] = {
 	r128_PCI_IDS
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा file_operations r128_driver_fops = अणु
+static const struct file_operations r128_driver_fops = {
 	.owner = THIS_MODULE,
-	.खोलो = drm_खोलो,
+	.open = drm_open,
 	.release = drm_release,
 	.unlocked_ioctl = drm_ioctl,
 	.mmap = drm_legacy_mmap,
 	.poll = drm_poll,
-#अगर_घोषित CONFIG_COMPAT
+#ifdef CONFIG_COMPAT
 	.compat_ioctl = r128_compat_ioctl,
-#पूर्ण_अगर
+#endif
 	.llseek = noop_llseek,
-पूर्ण;
+};
 
-अटल काष्ठा drm_driver driver = अणु
+static struct drm_driver driver = {
 	.driver_features =
 	    DRIVER_USE_AGP | DRIVER_PCI_DMA | DRIVER_SG | DRIVER_LEGACY |
 	    DRIVER_HAVE_DMA | DRIVER_HAVE_IRQ,
-	.dev_priv_size = माप(drm_r128_buf_priv_t),
+	.dev_priv_size = sizeof(drm_r128_buf_priv_t),
 	.load = r128_driver_load,
-	.preबंद = r128_driver_preबंद,
-	.lastबंद = r128_driver_lastबंद,
+	.preclose = r128_driver_preclose,
+	.lastclose = r128_driver_lastclose,
 	.get_vblank_counter = r128_get_vblank_counter,
 	.enable_vblank = r128_enable_vblank,
 	.disable_vblank = r128_disable_vblank,
@@ -82,33 +81,33 @@
 	.major = DRIVER_MAJOR,
 	.minor = DRIVER_MINOR,
 	.patchlevel = DRIVER_PATCHLEVEL,
-पूर्ण;
+};
 
-पूर्णांक r128_driver_load(काष्ठा drm_device *dev, अचिन्हित दीर्घ flags)
-अणु
+int r128_driver_load(struct drm_device *dev, unsigned long flags)
+{
 	pci_set_master(dev->pdev);
-	वापस drm_vblank_init(dev, 1);
-पूर्ण
+	return drm_vblank_init(dev, 1);
+}
 
-अटल काष्ठा pci_driver r128_pci_driver = अणु
+static struct pci_driver r128_pci_driver = {
 	.name = DRIVER_NAME,
 	.id_table = pciidlist,
-पूर्ण;
+};
 
-अटल पूर्णांक __init r128_init(व्योम)
-अणु
+static int __init r128_init(void)
+{
 	driver.num_ioctls = r128_max_ioctl;
 
-	वापस drm_legacy_pci_init(&driver, &r128_pci_driver);
-पूर्ण
+	return drm_legacy_pci_init(&driver, &r128_pci_driver);
+}
 
-अटल व्योम __निकास r128_निकास(व्योम)
-अणु
-	drm_legacy_pci_निकास(&driver, &r128_pci_driver);
-पूर्ण
+static void __exit r128_exit(void)
+{
+	drm_legacy_pci_exit(&driver, &r128_pci_driver);
+}
 
 module_init(r128_init);
-module_निकास(r128_निकास);
+module_exit(r128_exit);
 
 MODULE_AUTHOR(DRIVER_AUTHOR);
 MODULE_DESCRIPTION(DRIVER_DESC);

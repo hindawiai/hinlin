@@ -1,454 +1,453 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * SMBus 2.0 driver क्रम AMD-8111 IO-Hub.
+ * SMBus 2.0 driver for AMD-8111 IO-Hub.
  *
  * Copyright (c) 2002 Vojtech Pavlik
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/ioport.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/acpi.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/पन.स>
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/kernel.h>
+#include <linux/stddef.h>
+#include <linux/ioport.h>
+#include <linux/i2c.h>
+#include <linux/delay.h>
+#include <linux/acpi.h>
+#include <linux/slab.h>
+#include <linux/io.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR ("Vojtech Pavlik <vojtech@suse.cz>");
 MODULE_DESCRIPTION("AMD8111 SMBus 2.0 driver");
 
-काष्ठा amd_smbus अणु
-	काष्ठा pci_dev *dev;
-	काष्ठा i2c_adapter adapter;
-	पूर्णांक base;
-	पूर्णांक size;
-पूर्ण;
+struct amd_smbus {
+	struct pci_dev *dev;
+	struct i2c_adapter adapter;
+	int base;
+	int size;
+};
 
-अटल काष्ठा pci_driver amd8111_driver;
-
-/*
- * AMD PCI control रेजिस्टरs definitions.
- */
-
-#घोषणा AMD_PCI_MISC	0x48
-
-#घोषणा AMD_PCI_MISC_SCI	0x04	/* deliver SCI */
-#घोषणा AMD_PCI_MISC_INT	0x02	/* deliver PCI IRQ */
-#घोषणा AMD_PCI_MISC_SPEEDUP	0x01	/* 16x घड़ी speedup */
+static struct pci_driver amd8111_driver;
 
 /*
- * ACPI 2.0 chapter 13 PCI पूर्णांकerface definitions.
+ * AMD PCI control registers definitions.
  */
 
-#घोषणा AMD_EC_DATA	0x00	/* data रेजिस्टर */
-#घोषणा AMD_EC_SC	0x04	/* status of controller */
-#घोषणा AMD_EC_CMD	0x04	/* command रेजिस्टर */
-#घोषणा AMD_EC_ICR	0x08	/* पूर्णांकerrupt control रेजिस्टर */
+#define AMD_PCI_MISC	0x48
 
-#घोषणा AMD_EC_SC_SMI	0x04	/* smi event pending */
-#घोषणा AMD_EC_SC_SCI	0x02	/* sci event pending */
-#घोषणा AMD_EC_SC_BURST	0x01	/* burst mode enabled */
-#घोषणा AMD_EC_SC_CMD	0x08	/* byte in data reg is command */
-#घोषणा AMD_EC_SC_IBF	0x02	/* data पढ़ोy क्रम embedded controller */
-#घोषणा AMD_EC_SC_OBF	0x01	/* data पढ़ोy क्रम host */
-
-#घोषणा AMD_EC_CMD_RD	0x80	/* पढ़ो EC */
-#घोषणा AMD_EC_CMD_WR	0x81	/* ग_लिखो EC */
-#घोषणा AMD_EC_CMD_BE	0x82	/* enable burst mode */
-#घोषणा AMD_EC_CMD_BD	0x83	/* disable burst mode */
-#घोषणा AMD_EC_CMD_QR	0x84	/* query EC */
+#define AMD_PCI_MISC_SCI	0x04	/* deliver SCI */
+#define AMD_PCI_MISC_INT	0x02	/* deliver PCI IRQ */
+#define AMD_PCI_MISC_SPEEDUP	0x01	/* 16x clock speedup */
 
 /*
- * ACPI 2.0 chapter 13 access of रेजिस्टरs of the EC
+ * ACPI 2.0 chapter 13 PCI interface definitions.
  */
 
-अटल पूर्णांक amd_ec_रुको_ग_लिखो(काष्ठा amd_smbus *smbus)
-अणु
-	पूर्णांक समयout = 500;
+#define AMD_EC_DATA	0x00	/* data register */
+#define AMD_EC_SC	0x04	/* status of controller */
+#define AMD_EC_CMD	0x04	/* command register */
+#define AMD_EC_ICR	0x08	/* interrupt control register */
 
-	जबतक ((inb(smbus->base + AMD_EC_SC) & AMD_EC_SC_IBF) && --समयout)
+#define AMD_EC_SC_SMI	0x04	/* smi event pending */
+#define AMD_EC_SC_SCI	0x02	/* sci event pending */
+#define AMD_EC_SC_BURST	0x01	/* burst mode enabled */
+#define AMD_EC_SC_CMD	0x08	/* byte in data reg is command */
+#define AMD_EC_SC_IBF	0x02	/* data ready for embedded controller */
+#define AMD_EC_SC_OBF	0x01	/* data ready for host */
+
+#define AMD_EC_CMD_RD	0x80	/* read EC */
+#define AMD_EC_CMD_WR	0x81	/* write EC */
+#define AMD_EC_CMD_BE	0x82	/* enable burst mode */
+#define AMD_EC_CMD_BD	0x83	/* disable burst mode */
+#define AMD_EC_CMD_QR	0x84	/* query EC */
+
+/*
+ * ACPI 2.0 chapter 13 access of registers of the EC
+ */
+
+static int amd_ec_wait_write(struct amd_smbus *smbus)
+{
+	int timeout = 500;
+
+	while ((inb(smbus->base + AMD_EC_SC) & AMD_EC_SC_IBF) && --timeout)
 		udelay(1);
 
-	अगर (!समयout) अणु
+	if (!timeout) {
 		dev_warn(&smbus->dev->dev,
 			 "Timeout while waiting for IBF to clear\n");
-		वापस -ETIMEDOUT;
-	पूर्ण
+		return -ETIMEDOUT;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक amd_ec_रुको_पढ़ो(काष्ठा amd_smbus *smbus)
-अणु
-	पूर्णांक समयout = 500;
+static int amd_ec_wait_read(struct amd_smbus *smbus)
+{
+	int timeout = 500;
 
-	जबतक ((~inb(smbus->base + AMD_EC_SC) & AMD_EC_SC_OBF) && --समयout)
+	while ((~inb(smbus->base + AMD_EC_SC) & AMD_EC_SC_OBF) && --timeout)
 		udelay(1);
 
-	अगर (!समयout) अणु
+	if (!timeout) {
 		dev_warn(&smbus->dev->dev,
 			 "Timeout while waiting for OBF to set\n");
-		वापस -ETIMEDOUT;
-	पूर्ण
+		return -ETIMEDOUT;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक amd_ec_पढ़ो(काष्ठा amd_smbus *smbus, अचिन्हित अक्षर address,
-		अचिन्हित अक्षर *data)
-अणु
-	पूर्णांक status;
+static int amd_ec_read(struct amd_smbus *smbus, unsigned char address,
+		unsigned char *data)
+{
+	int status;
 
-	status = amd_ec_रुको_ग_लिखो(smbus);
-	अगर (status)
-		वापस status;
+	status = amd_ec_wait_write(smbus);
+	if (status)
+		return status;
 	outb(AMD_EC_CMD_RD, smbus->base + AMD_EC_CMD);
 
-	status = amd_ec_रुको_ग_लिखो(smbus);
-	अगर (status)
-		वापस status;
+	status = amd_ec_wait_write(smbus);
+	if (status)
+		return status;
 	outb(address, smbus->base + AMD_EC_DATA);
 
-	status = amd_ec_रुको_पढ़ो(smbus);
-	अगर (status)
-		वापस status;
+	status = amd_ec_wait_read(smbus);
+	if (status)
+		return status;
 	*data = inb(smbus->base + AMD_EC_DATA);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक amd_ec_ग_लिखो(काष्ठा amd_smbus *smbus, अचिन्हित अक्षर address,
-		अचिन्हित अक्षर data)
-अणु
-	पूर्णांक status;
+static int amd_ec_write(struct amd_smbus *smbus, unsigned char address,
+		unsigned char data)
+{
+	int status;
 
-	status = amd_ec_रुको_ग_लिखो(smbus);
-	अगर (status)
-		वापस status;
+	status = amd_ec_wait_write(smbus);
+	if (status)
+		return status;
 	outb(AMD_EC_CMD_WR, smbus->base + AMD_EC_CMD);
 
-	status = amd_ec_रुको_ग_लिखो(smbus);
-	अगर (status)
-		वापस status;
+	status = amd_ec_wait_write(smbus);
+	if (status)
+		return status;
 	outb(address, smbus->base + AMD_EC_DATA);
 
-	status = amd_ec_रुको_ग_लिखो(smbus);
-	अगर (status)
-		वापस status;
+	status = amd_ec_wait_write(smbus);
+	if (status)
+		return status;
 	outb(data, smbus->base + AMD_EC_DATA);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * ACPI 2.0 chapter 13 SMBus 2.0 EC रेजिस्टर model
+ * ACPI 2.0 chapter 13 SMBus 2.0 EC register model
  */
 
-#घोषणा AMD_SMB_PRTCL	0x00	/* protocol, PEC */
-#घोषणा AMD_SMB_STS	0x01	/* status */
-#घोषणा AMD_SMB_ADDR	0x02	/* address */
-#घोषणा AMD_SMB_CMD	0x03	/* command */
-#घोषणा AMD_SMB_DATA	0x04	/* 32 data रेजिस्टरs */
-#घोषणा AMD_SMB_BCNT	0x24	/* number of data bytes */
-#घोषणा AMD_SMB_ALRM_A	0x25	/* alarm address */
-#घोषणा AMD_SMB_ALRM_D	0x26	/* 2 bytes alarm data */
+#define AMD_SMB_PRTCL	0x00	/* protocol, PEC */
+#define AMD_SMB_STS	0x01	/* status */
+#define AMD_SMB_ADDR	0x02	/* address */
+#define AMD_SMB_CMD	0x03	/* command */
+#define AMD_SMB_DATA	0x04	/* 32 data registers */
+#define AMD_SMB_BCNT	0x24	/* number of data bytes */
+#define AMD_SMB_ALRM_A	0x25	/* alarm address */
+#define AMD_SMB_ALRM_D	0x26	/* 2 bytes alarm data */
 
-#घोषणा AMD_SMB_STS_DONE	0x80
-#घोषणा AMD_SMB_STS_ALRM	0x40
-#घोषणा AMD_SMB_STS_RES		0x20
-#घोषणा AMD_SMB_STS_STATUS	0x1f
+#define AMD_SMB_STS_DONE	0x80
+#define AMD_SMB_STS_ALRM	0x40
+#define AMD_SMB_STS_RES		0x20
+#define AMD_SMB_STS_STATUS	0x1f
 
-#घोषणा AMD_SMB_STATUS_OK	0x00
-#घोषणा AMD_SMB_STATUS_FAIL	0x07
-#घोषणा AMD_SMB_STATUS_DNAK	0x10
-#घोषणा AMD_SMB_STATUS_DERR	0x11
-#घोषणा AMD_SMB_STATUS_CMD_DENY	0x12
-#घोषणा AMD_SMB_STATUS_UNKNOWN	0x13
-#घोषणा AMD_SMB_STATUS_ACC_DENY	0x17
-#घोषणा AMD_SMB_STATUS_TIMEOUT	0x18
-#घोषणा AMD_SMB_STATUS_NOTSUP	0x19
-#घोषणा AMD_SMB_STATUS_BUSY	0x1A
-#घोषणा AMD_SMB_STATUS_PEC	0x1F
+#define AMD_SMB_STATUS_OK	0x00
+#define AMD_SMB_STATUS_FAIL	0x07
+#define AMD_SMB_STATUS_DNAK	0x10
+#define AMD_SMB_STATUS_DERR	0x11
+#define AMD_SMB_STATUS_CMD_DENY	0x12
+#define AMD_SMB_STATUS_UNKNOWN	0x13
+#define AMD_SMB_STATUS_ACC_DENY	0x17
+#define AMD_SMB_STATUS_TIMEOUT	0x18
+#define AMD_SMB_STATUS_NOTSUP	0x19
+#define AMD_SMB_STATUS_BUSY	0x1A
+#define AMD_SMB_STATUS_PEC	0x1F
 
-#घोषणा AMD_SMB_PRTCL_WRITE		0x00
-#घोषणा AMD_SMB_PRTCL_READ		0x01
-#घोषणा AMD_SMB_PRTCL_QUICK		0x02
-#घोषणा AMD_SMB_PRTCL_BYTE		0x04
-#घोषणा AMD_SMB_PRTCL_BYTE_DATA		0x06
-#घोषणा AMD_SMB_PRTCL_WORD_DATA		0x08
-#घोषणा AMD_SMB_PRTCL_BLOCK_DATA	0x0a
-#घोषणा AMD_SMB_PRTCL_PROC_CALL		0x0c
-#घोषणा AMD_SMB_PRTCL_BLOCK_PROC_CALL	0x0d
-#घोषणा AMD_SMB_PRTCL_I2C_BLOCK_DATA	0x4a
-#घोषणा AMD_SMB_PRTCL_PEC		0x80
+#define AMD_SMB_PRTCL_WRITE		0x00
+#define AMD_SMB_PRTCL_READ		0x01
+#define AMD_SMB_PRTCL_QUICK		0x02
+#define AMD_SMB_PRTCL_BYTE		0x04
+#define AMD_SMB_PRTCL_BYTE_DATA		0x06
+#define AMD_SMB_PRTCL_WORD_DATA		0x08
+#define AMD_SMB_PRTCL_BLOCK_DATA	0x0a
+#define AMD_SMB_PRTCL_PROC_CALL		0x0c
+#define AMD_SMB_PRTCL_BLOCK_PROC_CALL	0x0d
+#define AMD_SMB_PRTCL_I2C_BLOCK_DATA	0x4a
+#define AMD_SMB_PRTCL_PEC		0x80
 
 
-अटल s32 amd8111_access(काष्ठा i2c_adapter *adap, u16 addr,
-		अचिन्हित लघु flags, अक्षर पढ़ो_ग_लिखो, u8 command, पूर्णांक size,
-		जोड़ i2c_smbus_data *data)
-अणु
-	काष्ठा amd_smbus *smbus = adap->algo_data;
-	अचिन्हित अक्षर protocol, len, pec, temp[2];
-	पूर्णांक i, status;
+static s32 amd8111_access(struct i2c_adapter *adap, u16 addr,
+		unsigned short flags, char read_write, u8 command, int size,
+		union i2c_smbus_data *data)
+{
+	struct amd_smbus *smbus = adap->algo_data;
+	unsigned char protocol, len, pec, temp[2];
+	int i, status;
 
-	protocol = (पढ़ो_ग_लिखो == I2C_SMBUS_READ) ? AMD_SMB_PRTCL_READ
+	protocol = (read_write == I2C_SMBUS_READ) ? AMD_SMB_PRTCL_READ
 						  : AMD_SMB_PRTCL_WRITE;
 	pec = (flags & I2C_CLIENT_PEC) ? AMD_SMB_PRTCL_PEC : 0;
 
-	चयन (size) अणु
-	हाल I2C_SMBUS_QUICK:
+	switch (size) {
+	case I2C_SMBUS_QUICK:
 		protocol |= AMD_SMB_PRTCL_QUICK;
-		पढ़ो_ग_लिखो = I2C_SMBUS_WRITE;
-		अवरोध;
+		read_write = I2C_SMBUS_WRITE;
+		break;
 
-	हाल I2C_SMBUS_BYTE:
-		अगर (पढ़ो_ग_लिखो == I2C_SMBUS_WRITE) अणु
-			status = amd_ec_ग_लिखो(smbus, AMD_SMB_CMD,
+	case I2C_SMBUS_BYTE:
+		if (read_write == I2C_SMBUS_WRITE) {
+			status = amd_ec_write(smbus, AMD_SMB_CMD,
 						command);
-			अगर (status)
-				वापस status;
-		पूर्ण
+			if (status)
+				return status;
+		}
 		protocol |= AMD_SMB_PRTCL_BYTE;
-		अवरोध;
+		break;
 
-	हाल I2C_SMBUS_BYTE_DATA:
-		status = amd_ec_ग_लिखो(smbus, AMD_SMB_CMD, command);
-		अगर (status)
-			वापस status;
-		अगर (पढ़ो_ग_लिखो == I2C_SMBUS_WRITE) अणु
-			status = amd_ec_ग_लिखो(smbus, AMD_SMB_DATA,
+	case I2C_SMBUS_BYTE_DATA:
+		status = amd_ec_write(smbus, AMD_SMB_CMD, command);
+		if (status)
+			return status;
+		if (read_write == I2C_SMBUS_WRITE) {
+			status = amd_ec_write(smbus, AMD_SMB_DATA,
 						data->byte);
-			अगर (status)
-				वापस status;
-		पूर्ण
+			if (status)
+				return status;
+		}
 		protocol |= AMD_SMB_PRTCL_BYTE_DATA;
-		अवरोध;
+		break;
 
-	हाल I2C_SMBUS_WORD_DATA:
-		status = amd_ec_ग_लिखो(smbus, AMD_SMB_CMD, command);
-		अगर (status)
-			वापस status;
-		अगर (पढ़ो_ग_लिखो == I2C_SMBUS_WRITE) अणु
-			status = amd_ec_ग_लिखो(smbus, AMD_SMB_DATA,
+	case I2C_SMBUS_WORD_DATA:
+		status = amd_ec_write(smbus, AMD_SMB_CMD, command);
+		if (status)
+			return status;
+		if (read_write == I2C_SMBUS_WRITE) {
+			status = amd_ec_write(smbus, AMD_SMB_DATA,
 						data->word & 0xff);
-			अगर (status)
-				वापस status;
-			status = amd_ec_ग_लिखो(smbus, AMD_SMB_DATA + 1,
+			if (status)
+				return status;
+			status = amd_ec_write(smbus, AMD_SMB_DATA + 1,
 						data->word >> 8);
-			अगर (status)
-				वापस status;
-		पूर्ण
+			if (status)
+				return status;
+		}
 		protocol |= AMD_SMB_PRTCL_WORD_DATA | pec;
-		अवरोध;
+		break;
 
-	हाल I2C_SMBUS_BLOCK_DATA:
-		status = amd_ec_ग_लिखो(smbus, AMD_SMB_CMD, command);
-		अगर (status)
-			वापस status;
-		अगर (पढ़ो_ग_लिखो == I2C_SMBUS_WRITE) अणु
+	case I2C_SMBUS_BLOCK_DATA:
+		status = amd_ec_write(smbus, AMD_SMB_CMD, command);
+		if (status)
+			return status;
+		if (read_write == I2C_SMBUS_WRITE) {
 			len = min_t(u8, data->block[0],
 					I2C_SMBUS_BLOCK_MAX);
-			status = amd_ec_ग_लिखो(smbus, AMD_SMB_BCNT, len);
-			अगर (status)
-				वापस status;
-			क्रम (i = 0; i < len; i++) अणु
+			status = amd_ec_write(smbus, AMD_SMB_BCNT, len);
+			if (status)
+				return status;
+			for (i = 0; i < len; i++) {
 				status =
-					amd_ec_ग_लिखो(smbus, AMD_SMB_DATA + i,
+					amd_ec_write(smbus, AMD_SMB_DATA + i,
 						data->block[i + 1]);
-				अगर (status)
-					वापस status;
-			पूर्ण
-		पूर्ण
+				if (status)
+					return status;
+			}
+		}
 		protocol |= AMD_SMB_PRTCL_BLOCK_DATA | pec;
-		अवरोध;
+		break;
 
-	हाल I2C_SMBUS_I2C_BLOCK_DATA:
+	case I2C_SMBUS_I2C_BLOCK_DATA:
 		len = min_t(u8, data->block[0],
 				I2C_SMBUS_BLOCK_MAX);
-		status = amd_ec_ग_लिखो(smbus, AMD_SMB_CMD, command);
-		अगर (status)
-			वापस status;
-		status = amd_ec_ग_लिखो(smbus, AMD_SMB_BCNT, len);
-		अगर (status)
-			वापस status;
-		अगर (पढ़ो_ग_लिखो == I2C_SMBUS_WRITE)
-			क्रम (i = 0; i < len; i++) अणु
+		status = amd_ec_write(smbus, AMD_SMB_CMD, command);
+		if (status)
+			return status;
+		status = amd_ec_write(smbus, AMD_SMB_BCNT, len);
+		if (status)
+			return status;
+		if (read_write == I2C_SMBUS_WRITE)
+			for (i = 0; i < len; i++) {
 				status =
-					amd_ec_ग_लिखो(smbus, AMD_SMB_DATA + i,
+					amd_ec_write(smbus, AMD_SMB_DATA + i,
 						data->block[i + 1]);
-				अगर (status)
-					वापस status;
-			पूर्ण
+				if (status)
+					return status;
+			}
 		protocol |= AMD_SMB_PRTCL_I2C_BLOCK_DATA;
-		अवरोध;
+		break;
 
-	हाल I2C_SMBUS_PROC_CALL:
-		status = amd_ec_ग_लिखो(smbus, AMD_SMB_CMD, command);
-		अगर (status)
-			वापस status;
-		status = amd_ec_ग_लिखो(smbus, AMD_SMB_DATA,
+	case I2C_SMBUS_PROC_CALL:
+		status = amd_ec_write(smbus, AMD_SMB_CMD, command);
+		if (status)
+			return status;
+		status = amd_ec_write(smbus, AMD_SMB_DATA,
 					data->word & 0xff);
-		अगर (status)
-			वापस status;
-		status = amd_ec_ग_लिखो(smbus, AMD_SMB_DATA + 1,
+		if (status)
+			return status;
+		status = amd_ec_write(smbus, AMD_SMB_DATA + 1,
 					data->word >> 8);
-		अगर (status)
-			वापस status;
+		if (status)
+			return status;
 		protocol = AMD_SMB_PRTCL_PROC_CALL | pec;
-		पढ़ो_ग_लिखो = I2C_SMBUS_READ;
-		अवरोध;
+		read_write = I2C_SMBUS_READ;
+		break;
 
-	हाल I2C_SMBUS_BLOCK_PROC_CALL:
+	case I2C_SMBUS_BLOCK_PROC_CALL:
 		len = min_t(u8, data->block[0],
 				I2C_SMBUS_BLOCK_MAX - 1);
-		status = amd_ec_ग_लिखो(smbus, AMD_SMB_CMD, command);
-		अगर (status)
-			वापस status;
-		status = amd_ec_ग_लिखो(smbus, AMD_SMB_BCNT, len);
-		अगर (status)
-			वापस status;
-		क्रम (i = 0; i < len; i++) अणु
-			status = amd_ec_ग_लिखो(smbus, AMD_SMB_DATA + i,
+		status = amd_ec_write(smbus, AMD_SMB_CMD, command);
+		if (status)
+			return status;
+		status = amd_ec_write(smbus, AMD_SMB_BCNT, len);
+		if (status)
+			return status;
+		for (i = 0; i < len; i++) {
+			status = amd_ec_write(smbus, AMD_SMB_DATA + i,
 						data->block[i + 1]);
-			अगर (status)
-				वापस status;
-		पूर्ण
+			if (status)
+				return status;
+		}
 		protocol = AMD_SMB_PRTCL_BLOCK_PROC_CALL | pec;
-		पढ़ो_ग_लिखो = I2C_SMBUS_READ;
-		अवरोध;
+		read_write = I2C_SMBUS_READ;
+		break;
 
-	शेष:
+	default:
 		dev_warn(&adap->dev, "Unsupported transaction %d\n", size);
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	status = amd_ec_ग_लिखो(smbus, AMD_SMB_ADDR, addr << 1);
-	अगर (status)
-		वापस status;
-	status = amd_ec_ग_लिखो(smbus, AMD_SMB_PRTCL, protocol);
-	अगर (status)
-		वापस status;
+	status = amd_ec_write(smbus, AMD_SMB_ADDR, addr << 1);
+	if (status)
+		return status;
+	status = amd_ec_write(smbus, AMD_SMB_PRTCL, protocol);
+	if (status)
+		return status;
 
-	status = amd_ec_पढ़ो(smbus, AMD_SMB_STS, temp + 0);
-	अगर (status)
-		वापस status;
+	status = amd_ec_read(smbus, AMD_SMB_STS, temp + 0);
+	if (status)
+		return status;
 
-	अगर (~temp[0] & AMD_SMB_STS_DONE) अणु
+	if (~temp[0] & AMD_SMB_STS_DONE) {
 		udelay(500);
-		status = amd_ec_पढ़ो(smbus, AMD_SMB_STS, temp + 0);
-		अगर (status)
-			वापस status;
-	पूर्ण
+		status = amd_ec_read(smbus, AMD_SMB_STS, temp + 0);
+		if (status)
+			return status;
+	}
 
-	अगर (~temp[0] & AMD_SMB_STS_DONE) अणु
+	if (~temp[0] & AMD_SMB_STS_DONE) {
 		msleep(1);
-		status = amd_ec_पढ़ो(smbus, AMD_SMB_STS, temp + 0);
-		अगर (status)
-			वापस status;
-	पूर्ण
+		status = amd_ec_read(smbus, AMD_SMB_STS, temp + 0);
+		if (status)
+			return status;
+	}
 
-	अगर ((~temp[0] & AMD_SMB_STS_DONE) || (temp[0] & AMD_SMB_STS_STATUS))
-		वापस -EIO;
+	if ((~temp[0] & AMD_SMB_STS_DONE) || (temp[0] & AMD_SMB_STS_STATUS))
+		return -EIO;
 
-	अगर (पढ़ो_ग_लिखो == I2C_SMBUS_WRITE)
-		वापस 0;
+	if (read_write == I2C_SMBUS_WRITE)
+		return 0;
 
-	चयन (size) अणु
-	हाल I2C_SMBUS_BYTE:
-	हाल I2C_SMBUS_BYTE_DATA:
-		status = amd_ec_पढ़ो(smbus, AMD_SMB_DATA, &data->byte);
-		अगर (status)
-			वापस status;
-		अवरोध;
+	switch (size) {
+	case I2C_SMBUS_BYTE:
+	case I2C_SMBUS_BYTE_DATA:
+		status = amd_ec_read(smbus, AMD_SMB_DATA, &data->byte);
+		if (status)
+			return status;
+		break;
 
-	हाल I2C_SMBUS_WORD_DATA:
-	हाल I2C_SMBUS_PROC_CALL:
-		status = amd_ec_पढ़ो(smbus, AMD_SMB_DATA, temp + 0);
-		अगर (status)
-			वापस status;
-		status = amd_ec_पढ़ो(smbus, AMD_SMB_DATA + 1, temp + 1);
-		अगर (status)
-			वापस status;
+	case I2C_SMBUS_WORD_DATA:
+	case I2C_SMBUS_PROC_CALL:
+		status = amd_ec_read(smbus, AMD_SMB_DATA, temp + 0);
+		if (status)
+			return status;
+		status = amd_ec_read(smbus, AMD_SMB_DATA + 1, temp + 1);
+		if (status)
+			return status;
 		data->word = (temp[1] << 8) | temp[0];
-		अवरोध;
+		break;
 
-	हाल I2C_SMBUS_BLOCK_DATA:
-	हाल I2C_SMBUS_BLOCK_PROC_CALL:
-		status = amd_ec_पढ़ो(smbus, AMD_SMB_BCNT, &len);
-		अगर (status)
-			वापस status;
+	case I2C_SMBUS_BLOCK_DATA:
+	case I2C_SMBUS_BLOCK_PROC_CALL:
+		status = amd_ec_read(smbus, AMD_SMB_BCNT, &len);
+		if (status)
+			return status;
 		len = min_t(u8, len, I2C_SMBUS_BLOCK_MAX);
 		fallthrough;
-	हाल I2C_SMBUS_I2C_BLOCK_DATA:
-		क्रम (i = 0; i < len; i++) अणु
-			status = amd_ec_पढ़ो(smbus, AMD_SMB_DATA + i,
+	case I2C_SMBUS_I2C_BLOCK_DATA:
+		for (i = 0; i < len; i++) {
+			status = amd_ec_read(smbus, AMD_SMB_DATA + i,
 						data->block + i + 1);
-			अगर (status)
-				वापस status;
-		पूर्ण
+			if (status)
+				return status;
+		}
 		data->block[0] = len;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल u32 amd8111_func(काष्ठा i2c_adapter *adapter)
-अणु
-	वापस	I2C_FUNC_SMBUS_QUICK | I2C_FUNC_SMBUS_BYTE |
+static u32 amd8111_func(struct i2c_adapter *adapter)
+{
+	return	I2C_FUNC_SMBUS_QUICK | I2C_FUNC_SMBUS_BYTE |
 		I2C_FUNC_SMBUS_BYTE_DATA |
 		I2C_FUNC_SMBUS_WORD_DATA | I2C_FUNC_SMBUS_BLOCK_DATA |
 		I2C_FUNC_SMBUS_PROC_CALL | I2C_FUNC_SMBUS_BLOCK_PROC_CALL |
 		I2C_FUNC_SMBUS_I2C_BLOCK | I2C_FUNC_SMBUS_PEC;
-पूर्ण
+}
 
-अटल स्थिर काष्ठा i2c_algorithm smbus_algorithm = अणु
+static const struct i2c_algorithm smbus_algorithm = {
 	.smbus_xfer = amd8111_access,
 	.functionality = amd8111_func,
-पूर्ण;
+};
 
 
-अटल स्थिर काष्ठा pci_device_id amd8111_ids[] = अणु
-	अणु PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_8111_SMBUS2) पूर्ण,
-	अणु 0, पूर्ण
-पूर्ण;
+static const struct pci_device_id amd8111_ids[] = {
+	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_8111_SMBUS2) },
+	{ 0, }
+};
 
 MODULE_DEVICE_TABLE (pci, amd8111_ids);
 
-अटल पूर्णांक amd8111_probe(काष्ठा pci_dev *dev, स्थिर काष्ठा pci_device_id *id)
-अणु
-	काष्ठा amd_smbus *smbus;
-	पूर्णांक error;
+static int amd8111_probe(struct pci_dev *dev, const struct pci_device_id *id)
+{
+	struct amd_smbus *smbus;
+	int error;
 
-	अगर (!(pci_resource_flags(dev, 0) & IORESOURCE_IO))
-		वापस -ENODEV;
+	if (!(pci_resource_flags(dev, 0) & IORESOURCE_IO))
+		return -ENODEV;
 
-	smbus = kzalloc(माप(काष्ठा amd_smbus), GFP_KERNEL);
-	अगर (!smbus)
-		वापस -ENOMEM;
+	smbus = kzalloc(sizeof(struct amd_smbus), GFP_KERNEL);
+	if (!smbus)
+		return -ENOMEM;
 
 	smbus->dev = dev;
 	smbus->base = pci_resource_start(dev, 0);
 	smbus->size = pci_resource_len(dev, 0);
 
 	error = acpi_check_resource_conflict(&dev->resource[0]);
-	अगर (error) अणु
+	if (error) {
 		error = -ENODEV;
-		जाओ out_kमुक्त;
-	पूर्ण
+		goto out_kfree;
+	}
 
-	अगर (!request_region(smbus->base, smbus->size, amd8111_driver.name)) अणु
+	if (!request_region(smbus->base, smbus->size, amd8111_driver.name)) {
 		error = -EBUSY;
-		जाओ out_kमुक्त;
-	पूर्ण
+		goto out_kfree;
+	}
 
 	smbus->adapter.owner = THIS_MODULE;
-	snम_लिखो(smbus->adapter.name, माप(smbus->adapter.name),
+	snprintf(smbus->adapter.name, sizeof(smbus->adapter.name),
 		"SMBus2 AMD8111 adapter at %04x", smbus->base);
 	smbus->adapter.class = I2C_CLASS_HWMON | I2C_CLASS_SPD;
 	smbus->adapter.algo = &smbus_algorithm;
@@ -457,35 +456,35 @@ MODULE_DEVICE_TABLE (pci, amd8111_ids);
 	/* set up the sysfs linkage to our parent device */
 	smbus->adapter.dev.parent = &dev->dev;
 
-	pci_ग_लिखो_config_dword(smbus->dev, AMD_PCI_MISC, 0);
+	pci_write_config_dword(smbus->dev, AMD_PCI_MISC, 0);
 	error = i2c_add_adapter(&smbus->adapter);
-	अगर (error)
-		जाओ out_release_region;
+	if (error)
+		goto out_release_region;
 
 	pci_set_drvdata(dev, smbus);
-	वापस 0;
+	return 0;
 
  out_release_region:
 	release_region(smbus->base, smbus->size);
- out_kमुक्त:
-	kमुक्त(smbus);
-	वापस error;
-पूर्ण
+ out_kfree:
+	kfree(smbus);
+	return error;
+}
 
-अटल व्योम amd8111_हटाओ(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा amd_smbus *smbus = pci_get_drvdata(dev);
+static void amd8111_remove(struct pci_dev *dev)
+{
+	struct amd_smbus *smbus = pci_get_drvdata(dev);
 
 	i2c_del_adapter(&smbus->adapter);
 	release_region(smbus->base, smbus->size);
-	kमुक्त(smbus);
-पूर्ण
+	kfree(smbus);
+}
 
-अटल काष्ठा pci_driver amd8111_driver = अणु
+static struct pci_driver amd8111_driver = {
 	.name		= "amd8111_smbus2",
 	.id_table	= amd8111_ids,
 	.probe		= amd8111_probe,
-	.हटाओ		= amd8111_हटाओ,
-पूर्ण;
+	.remove		= amd8111_remove,
+};
 
 module_pci_driver(amd8111_driver);

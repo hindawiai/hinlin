@@ -1,212 +1,211 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (C) 2015 IT University of Cखोलोhagen. All rights reserved.
+ * Copyright (C) 2015 IT University of Copenhagen. All rights reserved.
  * Initial release: Matias Bjorling <m@bjorling.me>
  */
 
-#घोषणा pr_fmt(fmt) "nvm: " fmt
+#define pr_fmt(fmt) "nvm: " fmt
 
-#समावेश <linux/list.h>
-#समावेश <linux/types.h>
-#समावेश <linux/sem.h>
-#समावेश <linux/biपंचांगap.h>
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/lightnvm.h>
-#समावेश <linux/sched/sysctl.h>
+#include <linux/list.h>
+#include <linux/types.h>
+#include <linux/sem.h>
+#include <linux/bitmap.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/miscdevice.h>
+#include <linux/lightnvm.h>
+#include <linux/sched/sysctl.h>
 
-अटल LIST_HEAD(nvm_tgt_types);
-अटल DECLARE_RWSEM(nvm_tgtt_lock);
-अटल LIST_HEAD(nvm_devices);
-अटल DECLARE_RWSEM(nvm_lock);
+static LIST_HEAD(nvm_tgt_types);
+static DECLARE_RWSEM(nvm_tgtt_lock);
+static LIST_HEAD(nvm_devices);
+static DECLARE_RWSEM(nvm_lock);
 
-/* Map between भव and physical channel and lun */
-काष्ठा nvm_ch_map अणु
-	पूर्णांक ch_off;
-	पूर्णांक num_lun;
-	पूर्णांक *lun_offs;
-पूर्ण;
+/* Map between virtual and physical channel and lun */
+struct nvm_ch_map {
+	int ch_off;
+	int num_lun;
+	int *lun_offs;
+};
 
-काष्ठा nvm_dev_map अणु
-	काष्ठा nvm_ch_map *chnls;
-	पूर्णांक num_ch;
-पूर्ण;
+struct nvm_dev_map {
+	struct nvm_ch_map *chnls;
+	int num_ch;
+};
 
-अटल व्योम nvm_मुक्त(काष्ठा kref *ref);
+static void nvm_free(struct kref *ref);
 
-अटल काष्ठा nvm_target *nvm_find_target(काष्ठा nvm_dev *dev, स्थिर अक्षर *name)
-अणु
-	काष्ठा nvm_target *tgt;
+static struct nvm_target *nvm_find_target(struct nvm_dev *dev, const char *name)
+{
+	struct nvm_target *tgt;
 
-	list_क्रम_each_entry(tgt, &dev->tarमाला_लो, list)
-		अगर (!म_भेद(name, tgt->disk->disk_name))
-			वापस tgt;
+	list_for_each_entry(tgt, &dev->targets, list)
+		if (!strcmp(name, tgt->disk->disk_name))
+			return tgt;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल bool nvm_target_exists(स्थिर अक्षर *name)
-अणु
-	काष्ठा nvm_dev *dev;
-	काष्ठा nvm_target *tgt;
+static bool nvm_target_exists(const char *name)
+{
+	struct nvm_dev *dev;
+	struct nvm_target *tgt;
 	bool ret = false;
 
-	करोwn_ग_लिखो(&nvm_lock);
-	list_क्रम_each_entry(dev, &nvm_devices, devices) अणु
+	down_write(&nvm_lock);
+	list_for_each_entry(dev, &nvm_devices, devices) {
 		mutex_lock(&dev->mlock);
-		list_क्रम_each_entry(tgt, &dev->tarमाला_लो, list) अणु
-			अगर (!म_भेद(name, tgt->disk->disk_name)) अणु
+		list_for_each_entry(tgt, &dev->targets, list) {
+			if (!strcmp(name, tgt->disk->disk_name)) {
 				ret = true;
 				mutex_unlock(&dev->mlock);
-				जाओ out;
-			पूर्ण
-		पूर्ण
+				goto out;
+			}
+		}
 		mutex_unlock(&dev->mlock);
-	पूर्ण
+	}
 
 out:
-	up_ग_लिखो(&nvm_lock);
-	वापस ret;
-पूर्ण
+	up_write(&nvm_lock);
+	return ret;
+}
 
-अटल पूर्णांक nvm_reserve_luns(काष्ठा nvm_dev *dev, पूर्णांक lun_begin, पूर्णांक lun_end)
-अणु
-	पूर्णांक i;
+static int nvm_reserve_luns(struct nvm_dev *dev, int lun_begin, int lun_end)
+{
+	int i;
 
-	क्रम (i = lun_begin; i <= lun_end; i++) अणु
-		अगर (test_and_set_bit(i, dev->lun_map)) अणु
+	for (i = lun_begin; i <= lun_end; i++) {
+		if (test_and_set_bit(i, dev->lun_map)) {
 			pr_err("lun %d already allocated\n", i);
-			जाओ err;
-		पूर्ण
-	पूर्ण
+			goto err;
+		}
+	}
 
-	वापस 0;
+	return 0;
 err:
-	जबतक (--i >= lun_begin)
+	while (--i >= lun_begin)
 		clear_bit(i, dev->lun_map);
 
-	वापस -EBUSY;
-पूर्ण
+	return -EBUSY;
+}
 
-अटल व्योम nvm_release_luns_err(काष्ठा nvm_dev *dev, पूर्णांक lun_begin,
-				 पूर्णांक lun_end)
-अणु
-	पूर्णांक i;
+static void nvm_release_luns_err(struct nvm_dev *dev, int lun_begin,
+				 int lun_end)
+{
+	int i;
 
-	क्रम (i = lun_begin; i <= lun_end; i++)
+	for (i = lun_begin; i <= lun_end; i++)
 		WARN_ON(!test_and_clear_bit(i, dev->lun_map));
-पूर्ण
+}
 
-अटल व्योम nvm_हटाओ_tgt_dev(काष्ठा nvm_tgt_dev *tgt_dev, पूर्णांक clear)
-अणु
-	काष्ठा nvm_dev *dev = tgt_dev->parent;
-	काष्ठा nvm_dev_map *dev_map = tgt_dev->map;
-	पूर्णांक i, j;
+static void nvm_remove_tgt_dev(struct nvm_tgt_dev *tgt_dev, int clear)
+{
+	struct nvm_dev *dev = tgt_dev->parent;
+	struct nvm_dev_map *dev_map = tgt_dev->map;
+	int i, j;
 
-	क्रम (i = 0; i < dev_map->num_ch; i++) अणु
-		काष्ठा nvm_ch_map *ch_map = &dev_map->chnls[i];
-		पूर्णांक *lun_offs = ch_map->lun_offs;
-		पूर्णांक ch = i + ch_map->ch_off;
+	for (i = 0; i < dev_map->num_ch; i++) {
+		struct nvm_ch_map *ch_map = &dev_map->chnls[i];
+		int *lun_offs = ch_map->lun_offs;
+		int ch = i + ch_map->ch_off;
 
-		अगर (clear) अणु
-			क्रम (j = 0; j < ch_map->num_lun; j++) अणु
-				पूर्णांक lun = j + lun_offs[j];
-				पूर्णांक lunid = (ch * dev->geo.num_lun) + lun;
+		if (clear) {
+			for (j = 0; j < ch_map->num_lun; j++) {
+				int lun = j + lun_offs[j];
+				int lunid = (ch * dev->geo.num_lun) + lun;
 
 				WARN_ON(!test_and_clear_bit(lunid,
 							dev->lun_map));
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		kमुक्त(ch_map->lun_offs);
-	पूर्ण
+		kfree(ch_map->lun_offs);
+	}
 
-	kमुक्त(dev_map->chnls);
-	kमुक्त(dev_map);
+	kfree(dev_map->chnls);
+	kfree(dev_map);
 
-	kमुक्त(tgt_dev->luns);
-	kमुक्त(tgt_dev);
-पूर्ण
+	kfree(tgt_dev->luns);
+	kfree(tgt_dev);
+}
 
-अटल काष्ठा nvm_tgt_dev *nvm_create_tgt_dev(काष्ठा nvm_dev *dev,
+static struct nvm_tgt_dev *nvm_create_tgt_dev(struct nvm_dev *dev,
 					      u16 lun_begin, u16 lun_end,
 					      u16 op)
-अणु
-	काष्ठा nvm_tgt_dev *tgt_dev = शून्य;
-	काष्ठा nvm_dev_map *dev_rmap = dev->rmap;
-	काष्ठा nvm_dev_map *dev_map;
-	काष्ठा ppa_addr *luns;
-	पूर्णांक num_lun = lun_end - lun_begin + 1;
-	पूर्णांक luns_left = num_lun;
-	पूर्णांक num_ch = num_lun / dev->geo.num_lun;
-	पूर्णांक num_ch_mod = num_lun % dev->geo.num_lun;
-	पूर्णांक bch = lun_begin / dev->geo.num_lun;
-	पूर्णांक blun = lun_begin % dev->geo.num_lun;
-	पूर्णांक lunid = 0;
-	पूर्णांक lun_balanced = 1;
-	पूर्णांक sec_per_lun, prev_num_lun;
-	पूर्णांक i, j;
+{
+	struct nvm_tgt_dev *tgt_dev = NULL;
+	struct nvm_dev_map *dev_rmap = dev->rmap;
+	struct nvm_dev_map *dev_map;
+	struct ppa_addr *luns;
+	int num_lun = lun_end - lun_begin + 1;
+	int luns_left = num_lun;
+	int num_ch = num_lun / dev->geo.num_lun;
+	int num_ch_mod = num_lun % dev->geo.num_lun;
+	int bch = lun_begin / dev->geo.num_lun;
+	int blun = lun_begin % dev->geo.num_lun;
+	int lunid = 0;
+	int lun_balanced = 1;
+	int sec_per_lun, prev_num_lun;
+	int i, j;
 
 	num_ch = (num_ch_mod == 0) ? num_ch : num_ch + 1;
 
-	dev_map = kदो_स्मृति(माप(काष्ठा nvm_dev_map), GFP_KERNEL);
-	अगर (!dev_map)
-		जाओ err_dev;
+	dev_map = kmalloc(sizeof(struct nvm_dev_map), GFP_KERNEL);
+	if (!dev_map)
+		goto err_dev;
 
-	dev_map->chnls = kसुस्मृति(num_ch, माप(काष्ठा nvm_ch_map), GFP_KERNEL);
-	अगर (!dev_map->chnls)
-		जाओ err_chnls;
+	dev_map->chnls = kcalloc(num_ch, sizeof(struct nvm_ch_map), GFP_KERNEL);
+	if (!dev_map->chnls)
+		goto err_chnls;
 
-	luns = kसुस्मृति(num_lun, माप(काष्ठा ppa_addr), GFP_KERNEL);
-	अगर (!luns)
-		जाओ err_luns;
+	luns = kcalloc(num_lun, sizeof(struct ppa_addr), GFP_KERNEL);
+	if (!luns)
+		goto err_luns;
 
 	prev_num_lun = (luns_left > dev->geo.num_lun) ?
 					dev->geo.num_lun : luns_left;
-	क्रम (i = 0; i < num_ch; i++) अणु
-		काष्ठा nvm_ch_map *ch_rmap = &dev_rmap->chnls[i + bch];
-		पूर्णांक *lun_roffs = ch_rmap->lun_offs;
-		काष्ठा nvm_ch_map *ch_map = &dev_map->chnls[i];
-		पूर्णांक *lun_offs;
-		पूर्णांक luns_in_chnl = (luns_left > dev->geo.num_lun) ?
+	for (i = 0; i < num_ch; i++) {
+		struct nvm_ch_map *ch_rmap = &dev_rmap->chnls[i + bch];
+		int *lun_roffs = ch_rmap->lun_offs;
+		struct nvm_ch_map *ch_map = &dev_map->chnls[i];
+		int *lun_offs;
+		int luns_in_chnl = (luns_left > dev->geo.num_lun) ?
 					dev->geo.num_lun : luns_left;
 
-		अगर (lun_balanced && prev_num_lun != luns_in_chnl)
+		if (lun_balanced && prev_num_lun != luns_in_chnl)
 			lun_balanced = 0;
 
 		ch_map->ch_off = ch_rmap->ch_off = bch;
 		ch_map->num_lun = luns_in_chnl;
 
-		lun_offs = kसुस्मृति(luns_in_chnl, माप(पूर्णांक), GFP_KERNEL);
-		अगर (!lun_offs)
-			जाओ err_ch;
+		lun_offs = kcalloc(luns_in_chnl, sizeof(int), GFP_KERNEL);
+		if (!lun_offs)
+			goto err_ch;
 
-		क्रम (j = 0; j < luns_in_chnl; j++) अणु
+		for (j = 0; j < luns_in_chnl; j++) {
 			luns[lunid].ppa = 0;
 			luns[lunid].a.ch = i;
 			luns[lunid++].a.lun = j;
 
 			lun_offs[j] = blun;
 			lun_roffs[j + blun] = blun;
-		पूर्ण
+		}
 
 		ch_map->lun_offs = lun_offs;
 
 		/* when starting a new channel, lun offset is reset */
 		blun = 0;
 		luns_left -= luns_in_chnl;
-	पूर्ण
+	}
 
 	dev_map->num_ch = num_ch;
 
-	tgt_dev = kदो_स्मृति(माप(काष्ठा nvm_tgt_dev), GFP_KERNEL);
-	अगर (!tgt_dev)
-		जाओ err_ch;
+	tgt_dev = kmalloc(sizeof(struct nvm_tgt_dev), GFP_KERNEL);
+	if (!tgt_dev)
+		goto err_ch;
 
 	/* Inherit device geometry from parent */
-	स_नकल(&tgt_dev->geo, &dev->geo, माप(काष्ठा nvm_geo));
+	memcpy(&tgt_dev->geo, &dev->geo, sizeof(struct nvm_geo));
 
 	/* Target device only owns a portion of the physical device */
 	tgt_dev->geo.num_ch = num_ch;
@@ -224,166 +223,166 @@ err:
 	tgt_dev->luns = luns;
 	tgt_dev->parent = dev;
 
-	वापस tgt_dev;
+	return tgt_dev;
 err_ch:
-	जबतक (--i >= 0)
-		kमुक्त(dev_map->chnls[i].lun_offs);
-	kमुक्त(luns);
+	while (--i >= 0)
+		kfree(dev_map->chnls[i].lun_offs);
+	kfree(luns);
 err_luns:
-	kमुक्त(dev_map->chnls);
+	kfree(dev_map->chnls);
 err_chnls:
-	kमुक्त(dev_map);
+	kfree(dev_map);
 err_dev:
-	वापस tgt_dev;
-पूर्ण
+	return tgt_dev;
+}
 
-अटल काष्ठा nvm_tgt_type *__nvm_find_target_type(स्थिर अक्षर *name)
-अणु
-	काष्ठा nvm_tgt_type *tt;
+static struct nvm_tgt_type *__nvm_find_target_type(const char *name)
+{
+	struct nvm_tgt_type *tt;
 
-	list_क्रम_each_entry(tt, &nvm_tgt_types, list)
-		अगर (!म_भेद(name, tt->name))
-			वापस tt;
+	list_for_each_entry(tt, &nvm_tgt_types, list)
+		if (!strcmp(name, tt->name))
+			return tt;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा nvm_tgt_type *nvm_find_target_type(स्थिर अक्षर *name)
-अणु
-	काष्ठा nvm_tgt_type *tt;
+static struct nvm_tgt_type *nvm_find_target_type(const char *name)
+{
+	struct nvm_tgt_type *tt;
 
-	करोwn_ग_लिखो(&nvm_tgtt_lock);
+	down_write(&nvm_tgtt_lock);
 	tt = __nvm_find_target_type(name);
-	up_ग_लिखो(&nvm_tgtt_lock);
+	up_write(&nvm_tgtt_lock);
 
-	वापस tt;
-पूर्ण
+	return tt;
+}
 
-अटल पूर्णांक nvm_config_check_luns(काष्ठा nvm_geo *geo, पूर्णांक lun_begin,
-				 पूर्णांक lun_end)
-अणु
-	अगर (lun_begin > lun_end || lun_end >= geo->all_luns) अणु
+static int nvm_config_check_luns(struct nvm_geo *geo, int lun_begin,
+				 int lun_end)
+{
+	if (lun_begin > lun_end || lun_end >= geo->all_luns) {
 		pr_err("lun out of bound (%u:%u > %u)\n",
 			lun_begin, lun_end, geo->all_luns - 1);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __nvm_config_simple(काष्ठा nvm_dev *dev,
-			       काष्ठा nvm_ioctl_create_simple *s)
-अणु
-	काष्ठा nvm_geo *geo = &dev->geo;
+static int __nvm_config_simple(struct nvm_dev *dev,
+			       struct nvm_ioctl_create_simple *s)
+{
+	struct nvm_geo *geo = &dev->geo;
 
-	अगर (s->lun_begin == -1 && s->lun_end == -1) अणु
+	if (s->lun_begin == -1 && s->lun_end == -1) {
 		s->lun_begin = 0;
 		s->lun_end = geo->all_luns - 1;
-	पूर्ण
+	}
 
-	वापस nvm_config_check_luns(geo, s->lun_begin, s->lun_end);
-पूर्ण
+	return nvm_config_check_luns(geo, s->lun_begin, s->lun_end);
+}
 
-अटल पूर्णांक __nvm_config_extended(काष्ठा nvm_dev *dev,
-				 काष्ठा nvm_ioctl_create_extended *e)
-अणु
-	अगर (e->lun_begin == 0xFFFF && e->lun_end == 0xFFFF) अणु
+static int __nvm_config_extended(struct nvm_dev *dev,
+				 struct nvm_ioctl_create_extended *e)
+{
+	if (e->lun_begin == 0xFFFF && e->lun_end == 0xFFFF) {
 		e->lun_begin = 0;
 		e->lun_end = dev->geo.all_luns - 1;
-	पूर्ण
+	}
 
-	/* op not set falls पूर्णांकo target's शेष */
-	अगर (e->op == 0xFFFF) अणु
+	/* op not set falls into target's default */
+	if (e->op == 0xFFFF) {
 		e->op = NVM_TARGET_DEFAULT_OP;
-	पूर्ण अन्यथा अगर (e->op < NVM_TARGET_MIN_OP || e->op > NVM_TARGET_MAX_OP) अणु
+	} else if (e->op < NVM_TARGET_MIN_OP || e->op > NVM_TARGET_MAX_OP) {
 		pr_err("invalid over provisioning value\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस nvm_config_check_luns(&dev->geo, e->lun_begin, e->lun_end);
-पूर्ण
+	return nvm_config_check_luns(&dev->geo, e->lun_begin, e->lun_end);
+}
 
-अटल पूर्णांक nvm_create_tgt(काष्ठा nvm_dev *dev, काष्ठा nvm_ioctl_create *create)
-अणु
-	काष्ठा nvm_ioctl_create_extended e;
-	काष्ठा request_queue *tqueue;
-	काष्ठा gendisk *tdisk;
-	काष्ठा nvm_tgt_type *tt;
-	काष्ठा nvm_target *t;
-	काष्ठा nvm_tgt_dev *tgt_dev;
-	व्योम *targetdata;
-	अचिन्हित पूर्णांक mdts;
-	पूर्णांक ret;
+static int nvm_create_tgt(struct nvm_dev *dev, struct nvm_ioctl_create *create)
+{
+	struct nvm_ioctl_create_extended e;
+	struct request_queue *tqueue;
+	struct gendisk *tdisk;
+	struct nvm_tgt_type *tt;
+	struct nvm_target *t;
+	struct nvm_tgt_dev *tgt_dev;
+	void *targetdata;
+	unsigned int mdts;
+	int ret;
 
-	चयन (create->conf.type) अणु
-	हाल NVM_CONFIG_TYPE_SIMPLE:
+	switch (create->conf.type) {
+	case NVM_CONFIG_TYPE_SIMPLE:
 		ret = __nvm_config_simple(dev, &create->conf.s);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		e.lun_begin = create->conf.s.lun_begin;
 		e.lun_end = create->conf.s.lun_end;
 		e.op = NVM_TARGET_DEFAULT_OP;
-		अवरोध;
-	हाल NVM_CONFIG_TYPE_EXTENDED:
+		break;
+	case NVM_CONFIG_TYPE_EXTENDED:
 		ret = __nvm_config_extended(dev, &create->conf.e);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		e = create->conf.e;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		pr_err("config type not valid\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	tt = nvm_find_target_type(create->tgttype);
-	अगर (!tt) अणु
+	if (!tt) {
 		pr_err("target type %s not found\n", create->tgttype);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर ((tt->flags & NVM_TGT_F_HOST_L2P) != (dev->geo.करोm & NVM_RSP_L2P)) अणु
+	if ((tt->flags & NVM_TGT_F_HOST_L2P) != (dev->geo.dom & NVM_RSP_L2P)) {
 		pr_err("device is incompatible with target L2P type.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (nvm_target_exists(create->tgtname)) अणु
+	if (nvm_target_exists(create->tgtname)) {
 		pr_err("target name already exists (%s)\n",
 							create->tgtname);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ret = nvm_reserve_luns(dev, e.lun_begin, e.lun_end);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	t = kदो_स्मृति(माप(काष्ठा nvm_target), GFP_KERNEL);
-	अगर (!t) अणु
+	t = kmalloc(sizeof(struct nvm_target), GFP_KERNEL);
+	if (!t) {
 		ret = -ENOMEM;
-		जाओ err_reserve;
-	पूर्ण
+		goto err_reserve;
+	}
 
 	tgt_dev = nvm_create_tgt_dev(dev, e.lun_begin, e.lun_end, e.op);
-	अगर (!tgt_dev) अणु
+	if (!tgt_dev) {
 		pr_err("could not create target device\n");
 		ret = -ENOMEM;
-		जाओ err_t;
-	पूर्ण
+		goto err_t;
+	}
 
 	tdisk = alloc_disk(0);
-	अगर (!tdisk) अणु
+	if (!tdisk) {
 		ret = -ENOMEM;
-		जाओ err_dev;
-	पूर्ण
+		goto err_dev;
+	}
 
 	tqueue = blk_alloc_queue(dev->q->node);
-	अगर (!tqueue) अणु
+	if (!tqueue) {
 		ret = -ENOMEM;
-		जाओ err_disk;
-	पूर्ण
+		goto err_disk;
+	}
 
-	strlcpy(tdisk->disk_name, create->tgtname, माप(tdisk->disk_name));
+	strlcpy(tdisk->disk_name, create->tgtname, sizeof(tdisk->disk_name));
 	tdisk->flags = GENHD_FL_EXT_DEVT;
 	tdisk->major = 0;
 	tdisk->first_minor = 0;
@@ -391,448 +390,448 @@ err_dev:
 	tdisk->queue = tqueue;
 
 	targetdata = tt->init(tgt_dev, tdisk, create->flags);
-	अगर (IS_ERR(targetdata)) अणु
+	if (IS_ERR(targetdata)) {
 		ret = PTR_ERR(targetdata);
-		जाओ err_init;
-	पूर्ण
+		goto err_init;
+	}
 
-	tdisk->निजी_data = targetdata;
+	tdisk->private_data = targetdata;
 	tqueue->queuedata = targetdata;
 
 	mdts = (dev->geo.csecs >> 9) * NVM_MAX_VLBA;
-	अगर (dev->geo.mdts) अणु
+	if (dev->geo.mdts) {
 		mdts = min_t(u32, dev->geo.mdts,
 				(dev->geo.csecs >> 9) * NVM_MAX_VLBA);
-	पूर्ण
+	}
 	blk_queue_max_hw_sectors(tqueue, mdts);
 
 	set_capacity(tdisk, tt->capacity(targetdata));
 	add_disk(tdisk);
 
-	अगर (tt->sysfs_init && tt->sysfs_init(tdisk)) अणु
+	if (tt->sysfs_init && tt->sysfs_init(tdisk)) {
 		ret = -ENOMEM;
-		जाओ err_sysfs;
-	पूर्ण
+		goto err_sysfs;
+	}
 
 	t->type = tt;
 	t->disk = tdisk;
 	t->dev = tgt_dev;
 
 	mutex_lock(&dev->mlock);
-	list_add_tail(&t->list, &dev->tarमाला_लो);
+	list_add_tail(&t->list, &dev->targets);
 	mutex_unlock(&dev->mlock);
 
 	__module_get(tt->owner);
 
-	वापस 0;
+	return 0;
 err_sysfs:
-	अगर (tt->निकास)
-		tt->निकास(targetdata, true);
+	if (tt->exit)
+		tt->exit(targetdata, true);
 err_init:
 	blk_cleanup_queue(tqueue);
-	tdisk->queue = शून्य;
+	tdisk->queue = NULL;
 err_disk:
 	put_disk(tdisk);
 err_dev:
-	nvm_हटाओ_tgt_dev(tgt_dev, 0);
+	nvm_remove_tgt_dev(tgt_dev, 0);
 err_t:
-	kमुक्त(t);
+	kfree(t);
 err_reserve:
 	nvm_release_luns_err(dev, e.lun_begin, e.lun_end);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम __nvm_हटाओ_target(काष्ठा nvm_target *t, bool graceful)
-अणु
-	काष्ठा nvm_tgt_type *tt = t->type;
-	काष्ठा gendisk *tdisk = t->disk;
-	काष्ठा request_queue *q = tdisk->queue;
+static void __nvm_remove_target(struct nvm_target *t, bool graceful)
+{
+	struct nvm_tgt_type *tt = t->type;
+	struct gendisk *tdisk = t->disk;
+	struct request_queue *q = tdisk->queue;
 
 	del_gendisk(tdisk);
 	blk_cleanup_queue(q);
 
-	अगर (tt->sysfs_निकास)
-		tt->sysfs_निकास(tdisk);
+	if (tt->sysfs_exit)
+		tt->sysfs_exit(tdisk);
 
-	अगर (tt->निकास)
-		tt->निकास(tdisk->निजी_data, graceful);
+	if (tt->exit)
+		tt->exit(tdisk->private_data, graceful);
 
-	nvm_हटाओ_tgt_dev(t->dev, 1);
+	nvm_remove_tgt_dev(t->dev, 1);
 	put_disk(tdisk);
 	module_put(t->type->owner);
 
 	list_del(&t->list);
-	kमुक्त(t);
-पूर्ण
+	kfree(t);
+}
 
 /**
- * nvm_हटाओ_tgt - Removes a target from the media manager
- * @हटाओ:	ioctl काष्ठाure with target name to हटाओ.
+ * nvm_remove_tgt - Removes a target from the media manager
+ * @remove:	ioctl structure with target name to remove.
  *
  * Returns:
  * 0: on success
  * 1: on not found
  * <0: on error
  */
-अटल पूर्णांक nvm_हटाओ_tgt(काष्ठा nvm_ioctl_हटाओ *हटाओ)
-अणु
-	काष्ठा nvm_target *t = शून्य;
-	काष्ठा nvm_dev *dev;
+static int nvm_remove_tgt(struct nvm_ioctl_remove *remove)
+{
+	struct nvm_target *t = NULL;
+	struct nvm_dev *dev;
 
-	करोwn_पढ़ो(&nvm_lock);
-	list_क्रम_each_entry(dev, &nvm_devices, devices) अणु
+	down_read(&nvm_lock);
+	list_for_each_entry(dev, &nvm_devices, devices) {
 		mutex_lock(&dev->mlock);
-		t = nvm_find_target(dev, हटाओ->tgtname);
-		अगर (t) अणु
+		t = nvm_find_target(dev, remove->tgtname);
+		if (t) {
 			mutex_unlock(&dev->mlock);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		mutex_unlock(&dev->mlock);
-	पूर्ण
-	up_पढ़ो(&nvm_lock);
+	}
+	up_read(&nvm_lock);
 
-	अगर (!t) अणु
+	if (!t) {
 		pr_err("failed to remove target %s\n",
-				हटाओ->tgtname);
-		वापस 1;
-	पूर्ण
+				remove->tgtname);
+		return 1;
+	}
 
-	__nvm_हटाओ_target(t, true);
-	kref_put(&dev->ref, nvm_मुक्त);
+	__nvm_remove_target(t, true);
+	kref_put(&dev->ref, nvm_free);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nvm_रेजिस्टर_map(काष्ठा nvm_dev *dev)
-अणु
-	काष्ठा nvm_dev_map *rmap;
-	पूर्णांक i, j;
+static int nvm_register_map(struct nvm_dev *dev)
+{
+	struct nvm_dev_map *rmap;
+	int i, j;
 
-	rmap = kदो_स्मृति(माप(काष्ठा nvm_dev_map), GFP_KERNEL);
-	अगर (!rmap)
-		जाओ err_rmap;
+	rmap = kmalloc(sizeof(struct nvm_dev_map), GFP_KERNEL);
+	if (!rmap)
+		goto err_rmap;
 
-	rmap->chnls = kसुस्मृति(dev->geo.num_ch, माप(काष्ठा nvm_ch_map),
+	rmap->chnls = kcalloc(dev->geo.num_ch, sizeof(struct nvm_ch_map),
 								GFP_KERNEL);
-	अगर (!rmap->chnls)
-		जाओ err_chnls;
+	if (!rmap->chnls)
+		goto err_chnls;
 
-	क्रम (i = 0; i < dev->geo.num_ch; i++) अणु
-		काष्ठा nvm_ch_map *ch_rmap;
-		पूर्णांक *lun_roffs;
-		पूर्णांक luns_in_chnl = dev->geo.num_lun;
+	for (i = 0; i < dev->geo.num_ch; i++) {
+		struct nvm_ch_map *ch_rmap;
+		int *lun_roffs;
+		int luns_in_chnl = dev->geo.num_lun;
 
 		ch_rmap = &rmap->chnls[i];
 
 		ch_rmap->ch_off = -1;
 		ch_rmap->num_lun = luns_in_chnl;
 
-		lun_roffs = kसुस्मृति(luns_in_chnl, माप(पूर्णांक), GFP_KERNEL);
-		अगर (!lun_roffs)
-			जाओ err_ch;
+		lun_roffs = kcalloc(luns_in_chnl, sizeof(int), GFP_KERNEL);
+		if (!lun_roffs)
+			goto err_ch;
 
-		क्रम (j = 0; j < luns_in_chnl; j++)
+		for (j = 0; j < luns_in_chnl; j++)
 			lun_roffs[j] = -1;
 
 		ch_rmap->lun_offs = lun_roffs;
-	पूर्ण
+	}
 
 	dev->rmap = rmap;
 
-	वापस 0;
+	return 0;
 err_ch:
-	जबतक (--i >= 0)
-		kमुक्त(rmap->chnls[i].lun_offs);
+	while (--i >= 0)
+		kfree(rmap->chnls[i].lun_offs);
 err_chnls:
-	kमुक्त(rmap);
+	kfree(rmap);
 err_rmap:
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल व्योम nvm_unरेजिस्टर_map(काष्ठा nvm_dev *dev)
-अणु
-	काष्ठा nvm_dev_map *rmap = dev->rmap;
-	पूर्णांक i;
+static void nvm_unregister_map(struct nvm_dev *dev)
+{
+	struct nvm_dev_map *rmap = dev->rmap;
+	int i;
 
-	क्रम (i = 0; i < dev->geo.num_ch; i++)
-		kमुक्त(rmap->chnls[i].lun_offs);
+	for (i = 0; i < dev->geo.num_ch; i++)
+		kfree(rmap->chnls[i].lun_offs);
 
-	kमुक्त(rmap->chnls);
-	kमुक्त(rmap);
-पूर्ण
+	kfree(rmap->chnls);
+	kfree(rmap);
+}
 
-अटल व्योम nvm_map_to_dev(काष्ठा nvm_tgt_dev *tgt_dev, काष्ठा ppa_addr *p)
-अणु
-	काष्ठा nvm_dev_map *dev_map = tgt_dev->map;
-	काष्ठा nvm_ch_map *ch_map = &dev_map->chnls[p->a.ch];
-	पूर्णांक lun_off = ch_map->lun_offs[p->a.lun];
+static void nvm_map_to_dev(struct nvm_tgt_dev *tgt_dev, struct ppa_addr *p)
+{
+	struct nvm_dev_map *dev_map = tgt_dev->map;
+	struct nvm_ch_map *ch_map = &dev_map->chnls[p->a.ch];
+	int lun_off = ch_map->lun_offs[p->a.lun];
 
 	p->a.ch += ch_map->ch_off;
 	p->a.lun += lun_off;
-पूर्ण
+}
 
-अटल व्योम nvm_map_to_tgt(काष्ठा nvm_tgt_dev *tgt_dev, काष्ठा ppa_addr *p)
-अणु
-	काष्ठा nvm_dev *dev = tgt_dev->parent;
-	काष्ठा nvm_dev_map *dev_rmap = dev->rmap;
-	काष्ठा nvm_ch_map *ch_rmap = &dev_rmap->chnls[p->a.ch];
-	पूर्णांक lun_roff = ch_rmap->lun_offs[p->a.lun];
+static void nvm_map_to_tgt(struct nvm_tgt_dev *tgt_dev, struct ppa_addr *p)
+{
+	struct nvm_dev *dev = tgt_dev->parent;
+	struct nvm_dev_map *dev_rmap = dev->rmap;
+	struct nvm_ch_map *ch_rmap = &dev_rmap->chnls[p->a.ch];
+	int lun_roff = ch_rmap->lun_offs[p->a.lun];
 
 	p->a.ch -= ch_rmap->ch_off;
 	p->a.lun -= lun_roff;
-पूर्ण
+}
 
-अटल व्योम nvm_ppa_tgt_to_dev(काष्ठा nvm_tgt_dev *tgt_dev,
-				काष्ठा ppa_addr *ppa_list, पूर्णांक nr_ppas)
-अणु
-	पूर्णांक i;
+static void nvm_ppa_tgt_to_dev(struct nvm_tgt_dev *tgt_dev,
+				struct ppa_addr *ppa_list, int nr_ppas)
+{
+	int i;
 
-	क्रम (i = 0; i < nr_ppas; i++) अणु
+	for (i = 0; i < nr_ppas; i++) {
 		nvm_map_to_dev(tgt_dev, &ppa_list[i]);
 		ppa_list[i] = generic_to_dev_addr(tgt_dev->parent, ppa_list[i]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम nvm_ppa_dev_to_tgt(काष्ठा nvm_tgt_dev *tgt_dev,
-				काष्ठा ppa_addr *ppa_list, पूर्णांक nr_ppas)
-अणु
-	पूर्णांक i;
+static void nvm_ppa_dev_to_tgt(struct nvm_tgt_dev *tgt_dev,
+				struct ppa_addr *ppa_list, int nr_ppas)
+{
+	int i;
 
-	क्रम (i = 0; i < nr_ppas; i++) अणु
+	for (i = 0; i < nr_ppas; i++) {
 		ppa_list[i] = dev_to_generic_addr(tgt_dev->parent, ppa_list[i]);
 		nvm_map_to_tgt(tgt_dev, &ppa_list[i]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम nvm_rq_tgt_to_dev(काष्ठा nvm_tgt_dev *tgt_dev, काष्ठा nvm_rq *rqd)
-अणु
-	काष्ठा ppa_addr *ppa_list = nvm_rq_to_ppa_list(rqd);
+static void nvm_rq_tgt_to_dev(struct nvm_tgt_dev *tgt_dev, struct nvm_rq *rqd)
+{
+	struct ppa_addr *ppa_list = nvm_rq_to_ppa_list(rqd);
 
 	nvm_ppa_tgt_to_dev(tgt_dev, ppa_list, rqd->nr_ppas);
-पूर्ण
+}
 
-अटल व्योम nvm_rq_dev_to_tgt(काष्ठा nvm_tgt_dev *tgt_dev, काष्ठा nvm_rq *rqd)
-अणु
-	काष्ठा ppa_addr *ppa_list = nvm_rq_to_ppa_list(rqd);
+static void nvm_rq_dev_to_tgt(struct nvm_tgt_dev *tgt_dev, struct nvm_rq *rqd)
+{
+	struct ppa_addr *ppa_list = nvm_rq_to_ppa_list(rqd);
 
 	nvm_ppa_dev_to_tgt(tgt_dev, ppa_list, rqd->nr_ppas);
-पूर्ण
+}
 
-पूर्णांक nvm_रेजिस्टर_tgt_type(काष्ठा nvm_tgt_type *tt)
-अणु
-	पूर्णांक ret = 0;
+int nvm_register_tgt_type(struct nvm_tgt_type *tt)
+{
+	int ret = 0;
 
-	करोwn_ग_लिखो(&nvm_tgtt_lock);
-	अगर (__nvm_find_target_type(tt->name))
+	down_write(&nvm_tgtt_lock);
+	if (__nvm_find_target_type(tt->name))
 		ret = -EEXIST;
-	अन्यथा
+	else
 		list_add(&tt->list, &nvm_tgt_types);
-	up_ग_लिखो(&nvm_tgtt_lock);
+	up_write(&nvm_tgtt_lock);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(nvm_रेजिस्टर_tgt_type);
+	return ret;
+}
+EXPORT_SYMBOL(nvm_register_tgt_type);
 
-व्योम nvm_unरेजिस्टर_tgt_type(काष्ठा nvm_tgt_type *tt)
-अणु
-	अगर (!tt)
-		वापस;
+void nvm_unregister_tgt_type(struct nvm_tgt_type *tt)
+{
+	if (!tt)
+		return;
 
-	करोwn_ग_लिखो(&nvm_tgtt_lock);
+	down_write(&nvm_tgtt_lock);
 	list_del(&tt->list);
-	up_ग_लिखो(&nvm_tgtt_lock);
-पूर्ण
-EXPORT_SYMBOL(nvm_unरेजिस्टर_tgt_type);
+	up_write(&nvm_tgtt_lock);
+}
+EXPORT_SYMBOL(nvm_unregister_tgt_type);
 
-व्योम *nvm_dev_dma_alloc(काष्ठा nvm_dev *dev, gfp_t mem_flags,
+void *nvm_dev_dma_alloc(struct nvm_dev *dev, gfp_t mem_flags,
 							dma_addr_t *dma_handler)
-अणु
-	वापस dev->ops->dev_dma_alloc(dev, dev->dma_pool, mem_flags,
+{
+	return dev->ops->dev_dma_alloc(dev, dev->dma_pool, mem_flags,
 								dma_handler);
-पूर्ण
+}
 EXPORT_SYMBOL(nvm_dev_dma_alloc);
 
-व्योम nvm_dev_dma_मुक्त(काष्ठा nvm_dev *dev, व्योम *addr, dma_addr_t dma_handler)
-अणु
-	dev->ops->dev_dma_मुक्त(dev->dma_pool, addr, dma_handler);
-पूर्ण
-EXPORT_SYMBOL(nvm_dev_dma_मुक्त);
+void nvm_dev_dma_free(struct nvm_dev *dev, void *addr, dma_addr_t dma_handler)
+{
+	dev->ops->dev_dma_free(dev->dma_pool, addr, dma_handler);
+}
+EXPORT_SYMBOL(nvm_dev_dma_free);
 
-अटल काष्ठा nvm_dev *nvm_find_nvm_dev(स्थिर अक्षर *name)
-अणु
-	काष्ठा nvm_dev *dev;
+static struct nvm_dev *nvm_find_nvm_dev(const char *name)
+{
+	struct nvm_dev *dev;
 
-	list_क्रम_each_entry(dev, &nvm_devices, devices)
-		अगर (!म_भेद(name, dev->name))
-			वापस dev;
+	list_for_each_entry(dev, &nvm_devices, devices)
+		if (!strcmp(name, dev->name))
+			return dev;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक nvm_set_rqd_ppalist(काष्ठा nvm_tgt_dev *tgt_dev, काष्ठा nvm_rq *rqd,
-			स्थिर काष्ठा ppa_addr *ppas, पूर्णांक nr_ppas)
-अणु
-	काष्ठा nvm_dev *dev = tgt_dev->parent;
-	काष्ठा nvm_geo *geo = &tgt_dev->geo;
-	पूर्णांक i, plane_cnt, pl_idx;
-	काष्ठा ppa_addr ppa;
+static int nvm_set_rqd_ppalist(struct nvm_tgt_dev *tgt_dev, struct nvm_rq *rqd,
+			const struct ppa_addr *ppas, int nr_ppas)
+{
+	struct nvm_dev *dev = tgt_dev->parent;
+	struct nvm_geo *geo = &tgt_dev->geo;
+	int i, plane_cnt, pl_idx;
+	struct ppa_addr ppa;
 
-	अगर (geo->pln_mode == NVM_PLANE_SINGLE && nr_ppas == 1) अणु
+	if (geo->pln_mode == NVM_PLANE_SINGLE && nr_ppas == 1) {
 		rqd->nr_ppas = nr_ppas;
 		rqd->ppa_addr = ppas[0];
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	rqd->nr_ppas = nr_ppas;
 	rqd->ppa_list = nvm_dev_dma_alloc(dev, GFP_KERNEL, &rqd->dma_ppa_list);
-	अगर (!rqd->ppa_list) अणु
+	if (!rqd->ppa_list) {
 		pr_err("failed to allocate dma memory\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	plane_cnt = geo->pln_mode;
 	rqd->nr_ppas *= plane_cnt;
 
-	क्रम (i = 0; i < nr_ppas; i++) अणु
-		क्रम (pl_idx = 0; pl_idx < plane_cnt; pl_idx++) अणु
+	for (i = 0; i < nr_ppas; i++) {
+		for (pl_idx = 0; pl_idx < plane_cnt; pl_idx++) {
 			ppa = ppas[i];
 			ppa.g.pl = pl_idx;
 			rqd->ppa_list[(pl_idx * nr_ppas) + i] = ppa;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम nvm_मुक्त_rqd_ppalist(काष्ठा nvm_tgt_dev *tgt_dev,
-			काष्ठा nvm_rq *rqd)
-अणु
-	अगर (!rqd->ppa_list)
-		वापस;
+static void nvm_free_rqd_ppalist(struct nvm_tgt_dev *tgt_dev,
+			struct nvm_rq *rqd)
+{
+	if (!rqd->ppa_list)
+		return;
 
-	nvm_dev_dma_मुक्त(tgt_dev->parent, rqd->ppa_list, rqd->dma_ppa_list);
-पूर्ण
+	nvm_dev_dma_free(tgt_dev->parent, rqd->ppa_list, rqd->dma_ppa_list);
+}
 
-अटल पूर्णांक nvm_set_flags(काष्ठा nvm_geo *geo, काष्ठा nvm_rq *rqd)
-अणु
-	पूर्णांक flags = 0;
+static int nvm_set_flags(struct nvm_geo *geo, struct nvm_rq *rqd)
+{
+	int flags = 0;
 
-	अगर (geo->version == NVM_OCSSD_SPEC_20)
-		वापस 0;
+	if (geo->version == NVM_OCSSD_SPEC_20)
+		return 0;
 
-	अगर (rqd->is_seq)
+	if (rqd->is_seq)
 		flags |= geo->pln_mode >> 1;
 
-	अगर (rqd->opcode == NVM_OP_PREAD)
+	if (rqd->opcode == NVM_OP_PREAD)
 		flags |= (NVM_IO_SCRAMBLE_ENABLE | NVM_IO_SUSPEND);
-	अन्यथा अगर (rqd->opcode == NVM_OP_PWRITE)
+	else if (rqd->opcode == NVM_OP_PWRITE)
 		flags |= NVM_IO_SCRAMBLE_ENABLE;
 
-	वापस flags;
-पूर्ण
+	return flags;
+}
 
-पूर्णांक nvm_submit_io(काष्ठा nvm_tgt_dev *tgt_dev, काष्ठा nvm_rq *rqd, व्योम *buf)
-अणु
-	काष्ठा nvm_dev *dev = tgt_dev->parent;
-	पूर्णांक ret;
+int nvm_submit_io(struct nvm_tgt_dev *tgt_dev, struct nvm_rq *rqd, void *buf)
+{
+	struct nvm_dev *dev = tgt_dev->parent;
+	int ret;
 
-	अगर (!dev->ops->submit_io)
-		वापस -ENODEV;
+	if (!dev->ops->submit_io)
+		return -ENODEV;
 
 	nvm_rq_tgt_to_dev(tgt_dev, rqd);
 
 	rqd->dev = tgt_dev;
 	rqd->flags = nvm_set_flags(&tgt_dev->geo, rqd);
 
-	/* In हाल of error, fail with right address क्रमmat */
+	/* In case of error, fail with right address format */
 	ret = dev->ops->submit_io(dev, rqd, buf);
-	अगर (ret)
+	if (ret)
 		nvm_rq_dev_to_tgt(tgt_dev, rqd);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(nvm_submit_io);
 
-अटल व्योम nvm_sync_end_io(काष्ठा nvm_rq *rqd)
-अणु
-	काष्ठा completion *रुकोing = rqd->निजी;
+static void nvm_sync_end_io(struct nvm_rq *rqd)
+{
+	struct completion *waiting = rqd->private;
 
-	complete(रुकोing);
-पूर्ण
+	complete(waiting);
+}
 
-अटल पूर्णांक nvm_submit_io_रुको(काष्ठा nvm_dev *dev, काष्ठा nvm_rq *rqd,
-			      व्योम *buf)
-अणु
-	DECLARE_COMPLETION_ONSTACK(रुको);
-	पूर्णांक ret = 0;
+static int nvm_submit_io_wait(struct nvm_dev *dev, struct nvm_rq *rqd,
+			      void *buf)
+{
+	DECLARE_COMPLETION_ONSTACK(wait);
+	int ret = 0;
 
 	rqd->end_io = nvm_sync_end_io;
-	rqd->निजी = &रुको;
+	rqd->private = &wait;
 
 	ret = dev->ops->submit_io(dev, rqd, buf);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	रुको_क्रम_completion_io(&रुको);
+	wait_for_completion_io(&wait);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक nvm_submit_io_sync(काष्ठा nvm_tgt_dev *tgt_dev, काष्ठा nvm_rq *rqd,
-		       व्योम *buf)
-अणु
-	काष्ठा nvm_dev *dev = tgt_dev->parent;
-	पूर्णांक ret;
+int nvm_submit_io_sync(struct nvm_tgt_dev *tgt_dev, struct nvm_rq *rqd,
+		       void *buf)
+{
+	struct nvm_dev *dev = tgt_dev->parent;
+	int ret;
 
-	अगर (!dev->ops->submit_io)
-		वापस -ENODEV;
+	if (!dev->ops->submit_io)
+		return -ENODEV;
 
 	nvm_rq_tgt_to_dev(tgt_dev, rqd);
 
 	rqd->dev = tgt_dev;
 	rqd->flags = nvm_set_flags(&tgt_dev->geo, rqd);
 
-	ret = nvm_submit_io_रुको(dev, rqd, buf);
+	ret = nvm_submit_io_wait(dev, rqd, buf);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(nvm_submit_io_sync);
 
-व्योम nvm_end_io(काष्ठा nvm_rq *rqd)
-अणु
-	काष्ठा nvm_tgt_dev *tgt_dev = rqd->dev;
+void nvm_end_io(struct nvm_rq *rqd)
+{
+	struct nvm_tgt_dev *tgt_dev = rqd->dev;
 
 	/* Convert address space */
-	अगर (tgt_dev)
+	if (tgt_dev)
 		nvm_rq_dev_to_tgt(tgt_dev, rqd);
 
-	अगर (rqd->end_io)
+	if (rqd->end_io)
 		rqd->end_io(rqd);
-पूर्ण
+}
 EXPORT_SYMBOL(nvm_end_io);
 
-अटल पूर्णांक nvm_submit_io_sync_raw(काष्ठा nvm_dev *dev, काष्ठा nvm_rq *rqd)
-अणु
-	अगर (!dev->ops->submit_io)
-		वापस -ENODEV;
+static int nvm_submit_io_sync_raw(struct nvm_dev *dev, struct nvm_rq *rqd)
+{
+	if (!dev->ops->submit_io)
+		return -ENODEV;
 
-	rqd->dev = शून्य;
+	rqd->dev = NULL;
 	rqd->flags = nvm_set_flags(&dev->geo, rqd);
 
-	वापस nvm_submit_io_रुको(dev, rqd, शून्य);
-पूर्ण
+	return nvm_submit_io_wait(dev, rqd, NULL);
+}
 
-अटल पूर्णांक nvm_bb_chunk_sense(काष्ठा nvm_dev *dev, काष्ठा ppa_addr ppa)
-अणु
-	काष्ठा nvm_rq rqd = अणु शून्य पूर्ण;
-	काष्ठा bio bio;
-	काष्ठा bio_vec bio_vec;
-	काष्ठा page *page;
-	पूर्णांक ret;
+static int nvm_bb_chunk_sense(struct nvm_dev *dev, struct ppa_addr ppa)
+{
+	struct nvm_rq rqd = { NULL };
+	struct bio bio;
+	struct bio_vec bio_vec;
+	struct page *page;
+	int ret;
 
 	page = alloc_page(GFP_KERNEL);
-	अगर (!page)
-		वापस -ENOMEM;
+	if (!page)
+		return -ENOMEM;
 
 	bio_init(&bio, &bio_vec, 1);
 	bio_add_page(&bio, page, PAGE_SIZE, 0);
@@ -845,107 +844,107 @@ EXPORT_SYMBOL(nvm_end_io);
 	rqd.ppa_addr = generic_to_dev_addr(dev, ppa);
 
 	ret = nvm_submit_io_sync_raw(dev, &rqd);
-	__मुक्त_page(page);
-	अगर (ret)
-		वापस ret;
+	__free_page(page);
+	if (ret)
+		return ret;
 
-	वापस rqd.error;
-पूर्ण
+	return rqd.error;
+}
 
 /*
- * Scans a 1.2 chunk first and last page to determine अगर its state.
- * If the chunk is found to be खोलो, also scan it to update the ग_लिखो
- * poपूर्णांकer.
+ * Scans a 1.2 chunk first and last page to determine if its state.
+ * If the chunk is found to be open, also scan it to update the write
+ * pointer.
  */
-अटल पूर्णांक nvm_bb_chunk_scan(काष्ठा nvm_dev *dev, काष्ठा ppa_addr ppa,
-			     काष्ठा nvm_chk_meta *meta)
-अणु
-	काष्ठा nvm_geo *geo = &dev->geo;
-	पूर्णांक ret, pg, pl;
+static int nvm_bb_chunk_scan(struct nvm_dev *dev, struct ppa_addr ppa,
+			     struct nvm_chk_meta *meta)
+{
+	struct nvm_geo *geo = &dev->geo;
+	int ret, pg, pl;
 
 	/* sense first page */
 	ret = nvm_bb_chunk_sense(dev, ppa);
-	अगर (ret < 0) /* io error */
-		वापस ret;
-	अन्यथा अगर (ret == 0) /* valid data */
+	if (ret < 0) /* io error */
+		return ret;
+	else if (ret == 0) /* valid data */
 		meta->state = NVM_CHK_ST_OPEN;
-	अन्यथा अगर (ret > 0) अणु
+	else if (ret > 0) {
 		/*
-		 * If empty page, the chunk is मुक्त, अन्यथा it is an
-		 * actual io error. In that हाल, mark it offline.
+		 * If empty page, the chunk is free, else it is an
+		 * actual io error. In that case, mark it offline.
 		 */
-		चयन (ret) अणु
-		हाल NVM_RSP_ERR_EMPTYPAGE:
+		switch (ret) {
+		case NVM_RSP_ERR_EMPTYPAGE:
 			meta->state = NVM_CHK_ST_FREE;
-			वापस 0;
-		हाल NVM_RSP_ERR_FAILCRC:
-		हाल NVM_RSP_ERR_FAILECC:
-		हाल NVM_RSP_WARN_HIGHECC:
+			return 0;
+		case NVM_RSP_ERR_FAILCRC:
+		case NVM_RSP_ERR_FAILECC:
+		case NVM_RSP_WARN_HIGHECC:
 			meta->state = NVM_CHK_ST_OPEN;
-			जाओ scan;
-		शेष:
-			वापस -ret; /* other io error */
-		पूर्ण
-	पूर्ण
+			goto scan;
+		default:
+			return -ret; /* other io error */
+		}
+	}
 
 	/* sense last page */
 	ppa.g.pg = geo->num_pg - 1;
 	ppa.g.pl = geo->num_pln - 1;
 
 	ret = nvm_bb_chunk_sense(dev, ppa);
-	अगर (ret < 0) /* io error */
-		वापस ret;
-	अन्यथा अगर (ret == 0) अणु /* Chunk fully written */
+	if (ret < 0) /* io error */
+		return ret;
+	else if (ret == 0) { /* Chunk fully written */
 		meta->state = NVM_CHK_ST_CLOSED;
 		meta->wp = geo->clba;
-		वापस 0;
-	पूर्ण अन्यथा अगर (ret > 0) अणु
-		चयन (ret) अणु
-		हाल NVM_RSP_ERR_EMPTYPAGE:
-		हाल NVM_RSP_ERR_FAILCRC:
-		हाल NVM_RSP_ERR_FAILECC:
-		हाल NVM_RSP_WARN_HIGHECC:
+		return 0;
+	} else if (ret > 0) {
+		switch (ret) {
+		case NVM_RSP_ERR_EMPTYPAGE:
+		case NVM_RSP_ERR_FAILCRC:
+		case NVM_RSP_ERR_FAILECC:
+		case NVM_RSP_WARN_HIGHECC:
 			meta->state = NVM_CHK_ST_OPEN;
-			अवरोध;
-		शेष:
-			वापस -ret; /* other io error */
-		पूर्ण
-	पूर्ण
+			break;
+		default:
+			return -ret; /* other io error */
+		}
+	}
 
 scan:
 	/*
-	 * chunk is खोलो, we scan sequentially to update the ग_लिखो poपूर्णांकer.
-	 * We make the assumption that tarमाला_लो ग_लिखो data across all planes
-	 * beक्रमe moving to the next page.
+	 * chunk is open, we scan sequentially to update the write pointer.
+	 * We make the assumption that targets write data across all planes
+	 * before moving to the next page.
 	 */
-	क्रम (pg = 0; pg < geo->num_pg; pg++) अणु
-		क्रम (pl = 0; pl < geo->num_pln; pl++) अणु
+	for (pg = 0; pg < geo->num_pg; pg++) {
+		for (pl = 0; pl < geo->num_pln; pl++) {
 			ppa.g.pg = pg;
 			ppa.g.pl = pl;
 
 			ret = nvm_bb_chunk_sense(dev, ppa);
-			अगर (ret < 0) /* io error */
-				वापस ret;
-			अन्यथा अगर (ret == 0) अणु
+			if (ret < 0) /* io error */
+				return ret;
+			else if (ret == 0) {
 				meta->wp += geo->ws_min;
-			पूर्ण अन्यथा अगर (ret > 0) अणु
-				चयन (ret) अणु
-				हाल NVM_RSP_ERR_EMPTYPAGE:
-					वापस 0;
-				हाल NVM_RSP_ERR_FAILCRC:
-				हाल NVM_RSP_ERR_FAILECC:
-				हाल NVM_RSP_WARN_HIGHECC:
+			} else if (ret > 0) {
+				switch (ret) {
+				case NVM_RSP_ERR_EMPTYPAGE:
+					return 0;
+				case NVM_RSP_ERR_FAILCRC:
+				case NVM_RSP_ERR_FAILECC:
+				case NVM_RSP_WARN_HIGHECC:
 					meta->wp += geo->ws_min;
-					अवरोध;
-				शेष:
-					वापस -ret; /* other io error */
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+					break;
+				default:
+					return -ret; /* other io error */
+				}
+			}
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * folds a bad block list from its plane representation to its
@@ -954,23 +953,23 @@ scan:
  * If any of the planes status are bad or grown bad, the chunk is marked
  * offline. If not bad, the first plane state acts as the chunk state.
  */
-अटल पूर्णांक nvm_bb_to_chunk(काष्ठा nvm_dev *dev, काष्ठा ppa_addr ppa,
-			   u8 *blks, पूर्णांक nr_blks, काष्ठा nvm_chk_meta *meta)
-अणु
-	काष्ठा nvm_geo *geo = &dev->geo;
-	पूर्णांक ret, blk, pl, offset, blktype;
+static int nvm_bb_to_chunk(struct nvm_dev *dev, struct ppa_addr ppa,
+			   u8 *blks, int nr_blks, struct nvm_chk_meta *meta)
+{
+	struct nvm_geo *geo = &dev->geo;
+	int ret, blk, pl, offset, blktype;
 
-	क्रम (blk = 0; blk < geo->num_chk; blk++) अणु
+	for (blk = 0; blk < geo->num_chk; blk++) {
 		offset = blk * geo->pln_mode;
 		blktype = blks[offset];
 
-		क्रम (pl = 0; pl < geo->pln_mode; pl++) अणु
-			अगर (blks[offset + pl] &
-					(NVM_BLK_T_BAD|NVM_BLK_T_GRWN_BAD)) अणु
+		for (pl = 0; pl < geo->pln_mode; pl++) {
+			if (blks[offset + pl] &
+					(NVM_BLK_T_BAD|NVM_BLK_T_GRWN_BAD)) {
 				blktype = blks[offset + pl];
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
 		ppa.g.blk = blk;
 
@@ -980,50 +979,50 @@ scan:
 		meta->slba = generic_to_dev_addr(dev, ppa).ppa;
 		meta->cnlb = dev->geo.clba;
 
-		अगर (blktype == NVM_BLK_T_FREE) अणु
+		if (blktype == NVM_BLK_T_FREE) {
 			ret = nvm_bb_chunk_scan(dev, ppa, meta);
-			अगर (ret)
-				वापस ret;
-		पूर्ण अन्यथा अणु
+			if (ret)
+				return ret;
+		} else {
 			meta->state = NVM_CHK_ST_OFFLINE;
-		पूर्ण
+		}
 
 		meta++;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nvm_get_bb_meta(काष्ठा nvm_dev *dev, sector_t slba,
-			   पूर्णांक nchks, काष्ठा nvm_chk_meta *meta)
-अणु
-	काष्ठा nvm_geo *geo = &dev->geo;
-	काष्ठा ppa_addr ppa;
+static int nvm_get_bb_meta(struct nvm_dev *dev, sector_t slba,
+			   int nchks, struct nvm_chk_meta *meta)
+{
+	struct nvm_geo *geo = &dev->geo;
+	struct ppa_addr ppa;
 	u8 *blks;
-	पूर्णांक ch, lun, nr_blks;
-	पूर्णांक ret = 0;
+	int ch, lun, nr_blks;
+	int ret = 0;
 
 	ppa.ppa = slba;
 	ppa = dev_to_generic_addr(dev, ppa);
 
-	अगर (ppa.g.blk != 0)
-		वापस -EINVAL;
+	if (ppa.g.blk != 0)
+		return -EINVAL;
 
-	अगर ((nchks % geo->num_chk) != 0)
-		वापस -EINVAL;
+	if ((nchks % geo->num_chk) != 0)
+		return -EINVAL;
 
 	nr_blks = geo->num_chk * geo->pln_mode;
 
-	blks = kदो_स्मृति(nr_blks, GFP_KERNEL);
-	अगर (!blks)
-		वापस -ENOMEM;
+	blks = kmalloc(nr_blks, GFP_KERNEL);
+	if (!blks)
+		return -ENOMEM;
 
-	क्रम (ch = ppa.g.ch; ch < geo->num_ch; ch++) अणु
-		क्रम (lun = ppa.g.lun; lun < geo->num_lun; lun++) अणु
-			काष्ठा ppa_addr ppa_gen, ppa_dev;
+	for (ch = ppa.g.ch; ch < geo->num_ch; ch++) {
+		for (lun = ppa.g.lun; lun < geo->num_lun; lun++) {
+			struct ppa_addr ppa_gen, ppa_dev;
 
-			अगर (!nchks)
-				जाओ करोne;
+			if (!nchks)
+				goto done;
 
 			ppa_gen.ppa = 0;
 			ppa_gen.g.ch = ch;
@@ -1031,425 +1030,425 @@ scan:
 			ppa_dev = generic_to_dev_addr(dev, ppa_gen);
 
 			ret = dev->ops->get_bb_tbl(dev, ppa_dev, blks);
-			अगर (ret)
-				जाओ करोne;
+			if (ret)
+				goto done;
 
 			ret = nvm_bb_to_chunk(dev, ppa_gen, blks, nr_blks,
 									meta);
-			अगर (ret)
-				जाओ करोne;
+			if (ret)
+				goto done;
 
 			meta += geo->num_chk;
 			nchks -= geo->num_chk;
-		पूर्ण
-	पूर्ण
-करोne:
-	kमुक्त(blks);
-	वापस ret;
-पूर्ण
+		}
+	}
+done:
+	kfree(blks);
+	return ret;
+}
 
-पूर्णांक nvm_get_chunk_meta(काष्ठा nvm_tgt_dev *tgt_dev, काष्ठा ppa_addr ppa,
-		       पूर्णांक nchks, काष्ठा nvm_chk_meta *meta)
-अणु
-	काष्ठा nvm_dev *dev = tgt_dev->parent;
+int nvm_get_chunk_meta(struct nvm_tgt_dev *tgt_dev, struct ppa_addr ppa,
+		       int nchks, struct nvm_chk_meta *meta)
+{
+	struct nvm_dev *dev = tgt_dev->parent;
 
 	nvm_ppa_tgt_to_dev(tgt_dev, &ppa, 1);
 
-	अगर (dev->geo.version == NVM_OCSSD_SPEC_12)
-		वापस nvm_get_bb_meta(dev, (sector_t)ppa.ppa, nchks, meta);
+	if (dev->geo.version == NVM_OCSSD_SPEC_12)
+		return nvm_get_bb_meta(dev, (sector_t)ppa.ppa, nchks, meta);
 
-	वापस dev->ops->get_chk_meta(dev, (sector_t)ppa.ppa, nchks, meta);
-पूर्ण
+	return dev->ops->get_chk_meta(dev, (sector_t)ppa.ppa, nchks, meta);
+}
 EXPORT_SYMBOL_GPL(nvm_get_chunk_meta);
 
-पूर्णांक nvm_set_chunk_meta(काष्ठा nvm_tgt_dev *tgt_dev, काष्ठा ppa_addr *ppas,
-		       पूर्णांक nr_ppas, पूर्णांक type)
-अणु
-	काष्ठा nvm_dev *dev = tgt_dev->parent;
-	काष्ठा nvm_rq rqd;
-	पूर्णांक ret;
+int nvm_set_chunk_meta(struct nvm_tgt_dev *tgt_dev, struct ppa_addr *ppas,
+		       int nr_ppas, int type)
+{
+	struct nvm_dev *dev = tgt_dev->parent;
+	struct nvm_rq rqd;
+	int ret;
 
-	अगर (dev->geo.version == NVM_OCSSD_SPEC_20)
-		वापस 0;
+	if (dev->geo.version == NVM_OCSSD_SPEC_20)
+		return 0;
 
-	अगर (nr_ppas > NVM_MAX_VLBA) अणु
+	if (nr_ppas > NVM_MAX_VLBA) {
 		pr_err("unable to update all blocks atomically\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	स_रखो(&rqd, 0, माप(काष्ठा nvm_rq));
+	memset(&rqd, 0, sizeof(struct nvm_rq));
 
 	nvm_set_rqd_ppalist(tgt_dev, &rqd, ppas, nr_ppas);
 	nvm_rq_tgt_to_dev(tgt_dev, &rqd);
 
 	ret = dev->ops->set_bb_tbl(dev, &rqd.ppa_addr, rqd.nr_ppas, type);
-	nvm_मुक्त_rqd_ppalist(tgt_dev, &rqd);
-	अगर (ret)
-		वापस -EINVAL;
+	nvm_free_rqd_ppalist(tgt_dev, &rqd);
+	if (ret)
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(nvm_set_chunk_meta);
 
-अटल पूर्णांक nvm_core_init(काष्ठा nvm_dev *dev)
-अणु
-	काष्ठा nvm_geo *geo = &dev->geo;
-	पूर्णांक ret;
+static int nvm_core_init(struct nvm_dev *dev)
+{
+	struct nvm_geo *geo = &dev->geo;
+	int ret;
 
-	dev->lun_map = kसुस्मृति(BITS_TO_LONGS(geo->all_luns),
-					माप(अचिन्हित दीर्घ), GFP_KERNEL);
-	अगर (!dev->lun_map)
-		वापस -ENOMEM;
+	dev->lun_map = kcalloc(BITS_TO_LONGS(geo->all_luns),
+					sizeof(unsigned long), GFP_KERNEL);
+	if (!dev->lun_map)
+		return -ENOMEM;
 
 	INIT_LIST_HEAD(&dev->area_list);
-	INIT_LIST_HEAD(&dev->tarमाला_लो);
+	INIT_LIST_HEAD(&dev->targets);
 	mutex_init(&dev->mlock);
 	spin_lock_init(&dev->lock);
 
-	ret = nvm_रेजिस्टर_map(dev);
-	अगर (ret)
-		जाओ err_fmtype;
+	ret = nvm_register_map(dev);
+	if (ret)
+		goto err_fmtype;
 
-	वापस 0;
+	return 0;
 err_fmtype:
-	kमुक्त(dev->lun_map);
-	वापस ret;
-पूर्ण
+	kfree(dev->lun_map);
+	return ret;
+}
 
-अटल व्योम nvm_मुक्त(काष्ठा kref *ref)
-अणु
-	काष्ठा nvm_dev *dev = container_of(ref, काष्ठा nvm_dev, ref);
+static void nvm_free(struct kref *ref)
+{
+	struct nvm_dev *dev = container_of(ref, struct nvm_dev, ref);
 
-	अगर (dev->dma_pool)
+	if (dev->dma_pool)
 		dev->ops->destroy_dma_pool(dev->dma_pool);
 
-	अगर (dev->rmap)
-		nvm_unरेजिस्टर_map(dev);
+	if (dev->rmap)
+		nvm_unregister_map(dev);
 
-	kमुक्त(dev->lun_map);
-	kमुक्त(dev);
-पूर्ण
+	kfree(dev->lun_map);
+	kfree(dev);
+}
 
-अटल पूर्णांक nvm_init(काष्ठा nvm_dev *dev)
-अणु
-	काष्ठा nvm_geo *geo = &dev->geo;
-	पूर्णांक ret = -EINVAL;
+static int nvm_init(struct nvm_dev *dev)
+{
+	struct nvm_geo *geo = &dev->geo;
+	int ret = -EINVAL;
 
-	अगर (dev->ops->identity(dev)) अणु
+	if (dev->ops->identity(dev)) {
 		pr_err("device could not be identified\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	pr_debug("ver:%u.%u nvm_vendor:%x\n", geo->major_ver_id,
 			geo->minor_ver_id, geo->vmnt);
 
 	ret = nvm_core_init(dev);
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("could not initialize core structures.\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	pr_info("registered %s [%u/%u/%u/%u/%u]\n",
 			dev->name, dev->geo.ws_min, dev->geo.ws_opt,
 			dev->geo.num_chk, dev->geo.all_luns,
 			dev->geo.num_ch);
-	वापस 0;
+	return 0;
 err:
 	pr_err("failed to initialize nvm\n");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-काष्ठा nvm_dev *nvm_alloc_dev(पूर्णांक node)
-अणु
-	काष्ठा nvm_dev *dev;
+struct nvm_dev *nvm_alloc_dev(int node)
+{
+	struct nvm_dev *dev;
 
-	dev = kzalloc_node(माप(काष्ठा nvm_dev), GFP_KERNEL, node);
-	अगर (dev)
+	dev = kzalloc_node(sizeof(struct nvm_dev), GFP_KERNEL, node);
+	if (dev)
 		kref_init(&dev->ref);
 
-	वापस dev;
-पूर्ण
+	return dev;
+}
 EXPORT_SYMBOL(nvm_alloc_dev);
 
-पूर्णांक nvm_रेजिस्टर(काष्ठा nvm_dev *dev)
-अणु
-	पूर्णांक ret, exp_pool_size;
+int nvm_register(struct nvm_dev *dev)
+{
+	int ret, exp_pool_size;
 
 	pr_warn_once("lightnvm support is deprecated and will be removed in Linux 5.15.\n");
 
-	अगर (!dev->q || !dev->ops) अणु
-		kref_put(&dev->ref, nvm_मुक्त);
-		वापस -EINVAL;
-	पूर्ण
+	if (!dev->q || !dev->ops) {
+		kref_put(&dev->ref, nvm_free);
+		return -EINVAL;
+	}
 
 	ret = nvm_init(dev);
-	अगर (ret) अणु
-		kref_put(&dev->ref, nvm_मुक्त);
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		kref_put(&dev->ref, nvm_free);
+		return ret;
+	}
 
-	exp_pool_size = max_t(पूर्णांक, PAGE_SIZE,
-			      (NVM_MAX_VLBA * (माप(u64) + dev->geo.sos)));
+	exp_pool_size = max_t(int, PAGE_SIZE,
+			      (NVM_MAX_VLBA * (sizeof(u64) + dev->geo.sos)));
 	exp_pool_size = round_up(exp_pool_size, PAGE_SIZE);
 
 	dev->dma_pool = dev->ops->create_dma_pool(dev, "ppalist",
 						  exp_pool_size);
-	अगर (!dev->dma_pool) अणु
+	if (!dev->dma_pool) {
 		pr_err("could not create dma pool\n");
-		kref_put(&dev->ref, nvm_मुक्त);
-		वापस -ENOMEM;
-	पूर्ण
+		kref_put(&dev->ref, nvm_free);
+		return -ENOMEM;
+	}
 
-	/* रेजिस्टर device with a supported media manager */
-	करोwn_ग_लिखो(&nvm_lock);
+	/* register device with a supported media manager */
+	down_write(&nvm_lock);
 	list_add(&dev->devices, &nvm_devices);
-	up_ग_लिखो(&nvm_lock);
+	up_write(&nvm_lock);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(nvm_रेजिस्टर);
+	return 0;
+}
+EXPORT_SYMBOL(nvm_register);
 
-व्योम nvm_unरेजिस्टर(काष्ठा nvm_dev *dev)
-अणु
-	काष्ठा nvm_target *t, *पंचांगp;
+void nvm_unregister(struct nvm_dev *dev)
+{
+	struct nvm_target *t, *tmp;
 
 	mutex_lock(&dev->mlock);
-	list_क्रम_each_entry_safe(t, पंचांगp, &dev->tarमाला_लो, list) अणु
-		अगर (t->dev->parent != dev)
-			जारी;
-		__nvm_हटाओ_target(t, false);
-		kref_put(&dev->ref, nvm_मुक्त);
-	पूर्ण
+	list_for_each_entry_safe(t, tmp, &dev->targets, list) {
+		if (t->dev->parent != dev)
+			continue;
+		__nvm_remove_target(t, false);
+		kref_put(&dev->ref, nvm_free);
+	}
 	mutex_unlock(&dev->mlock);
 
-	करोwn_ग_लिखो(&nvm_lock);
+	down_write(&nvm_lock);
 	list_del(&dev->devices);
-	up_ग_लिखो(&nvm_lock);
+	up_write(&nvm_lock);
 
-	kref_put(&dev->ref, nvm_मुक्त);
-पूर्ण
-EXPORT_SYMBOL(nvm_unरेजिस्टर);
+	kref_put(&dev->ref, nvm_free);
+}
+EXPORT_SYMBOL(nvm_unregister);
 
-अटल पूर्णांक __nvm_configure_create(काष्ठा nvm_ioctl_create *create)
-अणु
-	काष्ठा nvm_dev *dev;
-	पूर्णांक ret;
+static int __nvm_configure_create(struct nvm_ioctl_create *create)
+{
+	struct nvm_dev *dev;
+	int ret;
 
-	करोwn_ग_लिखो(&nvm_lock);
+	down_write(&nvm_lock);
 	dev = nvm_find_nvm_dev(create->dev);
-	up_ग_लिखो(&nvm_lock);
+	up_write(&nvm_lock);
 
-	अगर (!dev) अणु
+	if (!dev) {
 		pr_err("device not found\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	kref_get(&dev->ref);
 	ret = nvm_create_tgt(dev, create);
-	अगर (ret)
-		kref_put(&dev->ref, nvm_मुक्त);
+	if (ret)
+		kref_put(&dev->ref, nvm_free);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल दीर्घ nvm_ioctl_info(काष्ठा file *file, व्योम __user *arg)
-अणु
-	काष्ठा nvm_ioctl_info *info;
-	काष्ठा nvm_tgt_type *tt;
-	पूर्णांक tgt_iter = 0;
+static long nvm_ioctl_info(struct file *file, void __user *arg)
+{
+	struct nvm_ioctl_info *info;
+	struct nvm_tgt_type *tt;
+	int tgt_iter = 0;
 
-	info = memdup_user(arg, माप(काष्ठा nvm_ioctl_info));
-	अगर (IS_ERR(info))
-		वापस PTR_ERR(info);
+	info = memdup_user(arg, sizeof(struct nvm_ioctl_info));
+	if (IS_ERR(info))
+		return PTR_ERR(info);
 
 	info->version[0] = NVM_VERSION_MAJOR;
 	info->version[1] = NVM_VERSION_MINOR;
 	info->version[2] = NVM_VERSION_PATCH;
 
-	करोwn_ग_लिखो(&nvm_tgtt_lock);
-	list_क्रम_each_entry(tt, &nvm_tgt_types, list) अणु
-		काष्ठा nvm_ioctl_info_tgt *tgt = &info->tgts[tgt_iter];
+	down_write(&nvm_tgtt_lock);
+	list_for_each_entry(tt, &nvm_tgt_types, list) {
+		struct nvm_ioctl_info_tgt *tgt = &info->tgts[tgt_iter];
 
 		tgt->version[0] = tt->version[0];
 		tgt->version[1] = tt->version[1];
 		tgt->version[2] = tt->version[2];
-		म_नकलन(tgt->tgtname, tt->name, NVM_TTYPE_NAME_MAX);
+		strncpy(tgt->tgtname, tt->name, NVM_TTYPE_NAME_MAX);
 
 		tgt_iter++;
-	पूर्ण
+	}
 
 	info->tgtsize = tgt_iter;
-	up_ग_लिखो(&nvm_tgtt_lock);
+	up_write(&nvm_tgtt_lock);
 
-	अगर (copy_to_user(arg, info, माप(काष्ठा nvm_ioctl_info))) अणु
-		kमुक्त(info);
-		वापस -EFAULT;
-	पूर्ण
+	if (copy_to_user(arg, info, sizeof(struct nvm_ioctl_info))) {
+		kfree(info);
+		return -EFAULT;
+	}
 
-	kमुक्त(info);
-	वापस 0;
-पूर्ण
+	kfree(info);
+	return 0;
+}
 
-अटल दीर्घ nvm_ioctl_get_devices(काष्ठा file *file, व्योम __user *arg)
-अणु
-	काष्ठा nvm_ioctl_get_devices *devices;
-	काष्ठा nvm_dev *dev;
-	पूर्णांक i = 0;
+static long nvm_ioctl_get_devices(struct file *file, void __user *arg)
+{
+	struct nvm_ioctl_get_devices *devices;
+	struct nvm_dev *dev;
+	int i = 0;
 
-	devices = kzalloc(माप(काष्ठा nvm_ioctl_get_devices), GFP_KERNEL);
-	अगर (!devices)
-		वापस -ENOMEM;
+	devices = kzalloc(sizeof(struct nvm_ioctl_get_devices), GFP_KERNEL);
+	if (!devices)
+		return -ENOMEM;
 
-	करोwn_ग_लिखो(&nvm_lock);
-	list_क्रम_each_entry(dev, &nvm_devices, devices) अणु
-		काष्ठा nvm_ioctl_device_info *info = &devices->info[i];
+	down_write(&nvm_lock);
+	list_for_each_entry(dev, &nvm_devices, devices) {
+		struct nvm_ioctl_device_info *info = &devices->info[i];
 
-		strlcpy(info->devname, dev->name, माप(info->devname));
+		strlcpy(info->devname, dev->name, sizeof(info->devname));
 
-		/* kept क्रम compatibility */
+		/* kept for compatibility */
 		info->bmversion[0] = 1;
 		info->bmversion[1] = 0;
 		info->bmversion[2] = 0;
-		strlcpy(info->bmname, "gennvm", माप(info->bmname));
+		strlcpy(info->bmname, "gennvm", sizeof(info->bmname));
 		i++;
 
-		अगर (i >= ARRAY_SIZE(devices->info)) अणु
+		if (i >= ARRAY_SIZE(devices->info)) {
 			pr_err("max %zd devices can be reported.\n",
 			       ARRAY_SIZE(devices->info));
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	up_ग_लिखो(&nvm_lock);
+			break;
+		}
+	}
+	up_write(&nvm_lock);
 
 	devices->nr_devices = i;
 
-	अगर (copy_to_user(arg, devices,
-			 माप(काष्ठा nvm_ioctl_get_devices))) अणु
-		kमुक्त(devices);
-		वापस -EFAULT;
-	पूर्ण
+	if (copy_to_user(arg, devices,
+			 sizeof(struct nvm_ioctl_get_devices))) {
+		kfree(devices);
+		return -EFAULT;
+	}
 
-	kमुक्त(devices);
-	वापस 0;
-पूर्ण
+	kfree(devices);
+	return 0;
+}
 
-अटल दीर्घ nvm_ioctl_dev_create(काष्ठा file *file, व्योम __user *arg)
-अणु
-	काष्ठा nvm_ioctl_create create;
+static long nvm_ioctl_dev_create(struct file *file, void __user *arg)
+{
+	struct nvm_ioctl_create create;
 
-	अगर (copy_from_user(&create, arg, माप(काष्ठा nvm_ioctl_create)))
-		वापस -EFAULT;
+	if (copy_from_user(&create, arg, sizeof(struct nvm_ioctl_create)))
+		return -EFAULT;
 
-	अगर (create.conf.type == NVM_CONFIG_TYPE_EXTENDED &&
-	    create.conf.e.rsv != 0) अणु
+	if (create.conf.type == NVM_CONFIG_TYPE_EXTENDED &&
+	    create.conf.e.rsv != 0) {
 		pr_err("reserved config field in use\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	create.dev[DISK_NAME_LEN - 1] = '\0';
 	create.tgttype[NVM_TTYPE_NAME_MAX - 1] = '\0';
 	create.tgtname[DISK_NAME_LEN - 1] = '\0';
 
-	अगर (create.flags != 0) अणु
+	if (create.flags != 0) {
 		__u32 flags = create.flags;
 
-		/* Check क्रम valid flags */
-		अगर (flags & NVM_TARGET_FACTORY)
+		/* Check for valid flags */
+		if (flags & NVM_TARGET_FACTORY)
 			flags &= ~NVM_TARGET_FACTORY;
 
-		अगर (flags) अणु
+		if (flags) {
 			pr_err("flag not supported\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	वापस __nvm_configure_create(&create);
-पूर्ण
+	return __nvm_configure_create(&create);
+}
 
-अटल दीर्घ nvm_ioctl_dev_हटाओ(काष्ठा file *file, व्योम __user *arg)
-अणु
-	काष्ठा nvm_ioctl_हटाओ हटाओ;
+static long nvm_ioctl_dev_remove(struct file *file, void __user *arg)
+{
+	struct nvm_ioctl_remove remove;
 
-	अगर (copy_from_user(&हटाओ, arg, माप(काष्ठा nvm_ioctl_हटाओ)))
-		वापस -EFAULT;
+	if (copy_from_user(&remove, arg, sizeof(struct nvm_ioctl_remove)))
+		return -EFAULT;
 
-	हटाओ.tgtname[DISK_NAME_LEN - 1] = '\0';
+	remove.tgtname[DISK_NAME_LEN - 1] = '\0';
 
-	अगर (हटाओ.flags != 0) अणु
+	if (remove.flags != 0) {
 		pr_err("no flags supported\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस nvm_हटाओ_tgt(&हटाओ);
-पूर्ण
+	return nvm_remove_tgt(&remove);
+}
 
-/* kept क्रम compatibility reasons */
-अटल दीर्घ nvm_ioctl_dev_init(काष्ठा file *file, व्योम __user *arg)
-अणु
-	काष्ठा nvm_ioctl_dev_init init;
+/* kept for compatibility reasons */
+static long nvm_ioctl_dev_init(struct file *file, void __user *arg)
+{
+	struct nvm_ioctl_dev_init init;
 
-	अगर (copy_from_user(&init, arg, माप(काष्ठा nvm_ioctl_dev_init)))
-		वापस -EFAULT;
+	if (copy_from_user(&init, arg, sizeof(struct nvm_ioctl_dev_init)))
+		return -EFAULT;
 
-	अगर (init.flags != 0) अणु
+	if (init.flags != 0) {
 		pr_err("no flags supported\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Kept क्रम compatibility reasons */
-अटल दीर्घ nvm_ioctl_dev_factory(काष्ठा file *file, व्योम __user *arg)
-अणु
-	काष्ठा nvm_ioctl_dev_factory fact;
+/* Kept for compatibility reasons */
+static long nvm_ioctl_dev_factory(struct file *file, void __user *arg)
+{
+	struct nvm_ioctl_dev_factory fact;
 
-	अगर (copy_from_user(&fact, arg, माप(काष्ठा nvm_ioctl_dev_factory)))
-		वापस -EFAULT;
+	if (copy_from_user(&fact, arg, sizeof(struct nvm_ioctl_dev_factory)))
+		return -EFAULT;
 
 	fact.dev[DISK_NAME_LEN - 1] = '\0';
 
-	अगर (fact.flags & ~(NVM_FACTORY_NR_BITS - 1))
-		वापस -EINVAL;
+	if (fact.flags & ~(NVM_FACTORY_NR_BITS - 1))
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल दीर्घ nvm_ctl_ioctl(काष्ठा file *file, uपूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	व्योम __user *argp = (व्योम __user *)arg;
+static long nvm_ctl_ioctl(struct file *file, uint cmd, unsigned long arg)
+{
+	void __user *argp = (void __user *)arg;
 
-	अगर (!capable(CAP_SYS_ADMIN))
-		वापस -EPERM;
+	if (!capable(CAP_SYS_ADMIN))
+		return -EPERM;
 
-	चयन (cmd) अणु
-	हाल NVM_INFO:
-		वापस nvm_ioctl_info(file, argp);
-	हाल NVM_GET_DEVICES:
-		वापस nvm_ioctl_get_devices(file, argp);
-	हाल NVM_DEV_CREATE:
-		वापस nvm_ioctl_dev_create(file, argp);
-	हाल NVM_DEV_REMOVE:
-		वापस nvm_ioctl_dev_हटाओ(file, argp);
-	हाल NVM_DEV_INIT:
-		वापस nvm_ioctl_dev_init(file, argp);
-	हाल NVM_DEV_FACTORY:
-		वापस nvm_ioctl_dev_factory(file, argp);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	switch (cmd) {
+	case NVM_INFO:
+		return nvm_ioctl_info(file, argp);
+	case NVM_GET_DEVICES:
+		return nvm_ioctl_get_devices(file, argp);
+	case NVM_DEV_CREATE:
+		return nvm_ioctl_dev_create(file, argp);
+	case NVM_DEV_REMOVE:
+		return nvm_ioctl_dev_remove(file, argp);
+	case NVM_DEV_INIT:
+		return nvm_ioctl_dev_init(file, argp);
+	case NVM_DEV_FACTORY:
+		return nvm_ioctl_dev_factory(file, argp);
+	}
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations _ctl_fops = अणु
-	.खोलो = nonseekable_खोलो,
+static const struct file_operations _ctl_fops = {
+	.open = nonseekable_open,
 	.unlocked_ioctl = nvm_ctl_ioctl,
 	.owner = THIS_MODULE,
 	.llseek  = noop_llseek,
-पूर्ण;
+};
 
-अटल काष्ठा miscdevice _nvm_misc = अणु
+static struct miscdevice _nvm_misc = {
 	.minor		= MISC_DYNAMIC_MINOR,
 	.name		= "lightnvm",
 	.nodename	= "lightnvm/control",
 	.fops		= &_ctl_fops,
-पूर्ण;
+};
 builtin_misc_device(_nvm_misc);

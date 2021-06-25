@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * SH7269 Pinmux
  *
@@ -7,13 +6,13 @@
  * Copyright (C) 2012  Phil Edworthy
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/gpपन.स>
-#समावेश <cpu/sh7269.h>
+#include <linux/kernel.h>
+#include <linux/gpio.h>
+#include <cpu/sh7269.h>
 
-#समावेश "sh_pfc.h"
+#include "sh_pfc.h"
 
-क्रमागत अणु
+enum {
 	PINMUX_RESERVED = 0,
 
 	PINMUX_DATA_BEGIN,
@@ -54,7 +53,7 @@
 	PG7_DATA, PG6_DATA, PG5_DATA, PG4_DATA,
 	PG3_DATA, PG2_DATA, PG1_DATA, PG0_DATA,
 	/* Port H */
-	/* NOTE - Port H करोes not have a Data Register, but PH Data is
+	/* NOTE - Port H does not have a Data Register, but PH Data is
 	   connected to PH Port Register */
 	PH7_DATA, PH6_DATA, PH5_DATA, PH4_DATA,
 	PH3_DATA, PH2_DATA, PH1_DATA, PH0_DATA,
@@ -108,7 +107,7 @@
 	PG11_IN, PG10_IN, PG9_IN, PG8_IN,
 	PG7_IN, PG6_IN, PG5_IN, PG4_IN,
 	PG3_IN, PG2_IN, PG1_IN, PG0_IN,
-	/* Port H - Port H करोes not have a Data Register */
+	/* Port H - Port H does not have a Data Register */
 	/* Port I - not on device */
 	/* Port J */
 	PJ31_IN, PJ30_IN, PJ29_IN, PJ28_IN,
@@ -159,7 +158,7 @@
 	PG11_OUT, PG10_OUT, PG9_OUT, PG8_OUT,
 	PG7_OUT, PG6_OUT, PG5_OUT, PG4_OUT,
 	PG3_OUT, PG2_OUT, PG1_OUT, PG0_OUT,
-	/* Port H - Port H करोes not have a Data Register */
+	/* Port H - Port H does not have a Data Register */
 	/* Port I - not on device */
 	/* Port J */
 	PJ31_OUT, PJ30_OUT, PJ29_OUT, PJ28_OUT,
@@ -730,7 +729,7 @@
 	SPDIF_IN_MARK, SPDIF_OUT_MARK,
 	SPDIF_IN_PJ24_MARK, SPDIF_OUT_PJ25_MARK,
 
-	/* न_अंकDFMC */ /* NOTE Controller is not available in boot mode 0 */
+	/* NANDFMC */ /* NOTE Controller is not available in boot mode 0 */
 	FCE_MARK,
 	FRB_MARK,
 
@@ -776,9 +775,9 @@
 	LCD_TCON3_MARK, LCD_TCON2_MARK, LCD_TCON1_MARK, LCD_TCON0_MARK,
 	LCD_M_DISP_MARK,
 	PINMUX_MARK_END,
-पूर्ण;
+};
 
-अटल स्थिर u16 pinmux_data[] = अणु
+static const u16 pinmux_data[] = {
 	/* Port A */
 	PINMUX_DATA(PA1_DATA, PA1_IN),
 	PINMUX_DATA(PA0_DATA, PA0_IN),
@@ -1450,9 +1449,9 @@
 	PINMUX_DATA(LCD_DATA0_PJ0_MARK, PJ0MD_010),
 	PINMUX_DATA(SD_CD_MARK, PJ0MD_011),
 	PINMUX_DATA(PWM1A_MARK, PJ0MD_100),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा sh_pfc_pin pinmux_pins[] = अणु
+static const struct sh_pfc_pin pinmux_pins[] = {
 	/* Port A */
 	PINMUX_GPIO(PA1),
 	PINMUX_GPIO(PA0),
@@ -1576,7 +1575,7 @@
 	PINMUX_GPIO(PG1),
 	PINMUX_GPIO(PG0),
 
-	/* Port H - Port H करोes not have a Data Register */
+	/* Port H - Port H does not have a Data Register */
 
 	/* Port I - not on device */
 
@@ -1613,11 +1612,11 @@
 	PINMUX_GPIO(PJ2),
 	PINMUX_GPIO(PJ1),
 	PINMUX_GPIO(PJ0),
-पूर्ण;
+};
 
-#घोषणा PINMUX_FN_BASE	ARRAY_SIZE(pinmux_pins)
+#define PINMUX_FN_BASE	ARRAY_SIZE(pinmux_pins)
 
-अटल स्थिर काष्ठा pinmux_func pinmux_func_gpios[] = अणु
+static const struct pinmux_func pinmux_func_gpios[] = {
 	/* INTC */
 	GPIO_FN(IRQ7_PG),
 	GPIO_FN(IRQ6_PG),
@@ -1868,7 +1867,7 @@
 	GPIO_FN(SPDIF_IN),
 	GPIO_FN(SPDIF_OUT),
 
-	/* न_अंकDFMC */ /* NOTE Controller is not available in boot mode 0 */
+	/* NANDFMC */ /* NOTE Controller is not available in boot mode 0 */
 	GPIO_FN(FCE),
 	GPIO_FN(FRB),
 
@@ -1959,22 +1958,22 @@
 	GPIO_FN(LCD_DATA0_PJ0),
 
 	GPIO_FN(LCD_M_DISP),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा pinmux_cfg_reg pinmux_config_regs[] = अणु
-	/* "name" addr रेजिस्टर_size Field_Width */
+static const struct pinmux_cfg_reg pinmux_config_regs[] = {
+	/* "name" addr register_size Field_Width */
 
-	/* where Field_Width is 1 क्रम single mode रेजिस्टरs or 4 क्रम up to 16
-	 * mode रेजिस्टरs and modes are described in assending order [0..15]
+	/* where Field_Width is 1 for single mode registers or 4 for up to 16
+	 * mode registers and modes are described in assending order [0..15]
 	 */
 
-	अणु PINMUX_CFG_REG("PAIOR0", 0xfffe3812, 16, 1, GROUP(
+	{ PINMUX_CFG_REG("PAIOR0", 0xfffe3812, 16, 1, GROUP(
 		0, 0, 0, 0, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, PA1_IN, PA1_OUT,
 		0, 0, 0, 0, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, PA0_IN, PA0_OUT ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG("PBCR5", 0xfffe3824, 16, 4, GROUP(
+	},
+	{ PINMUX_CFG_REG("PBCR5", 0xfffe3824, 16, 4, GROUP(
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 
 		PB22MD_000, PB22MD_001, PB22MD_010, PB22MD_011,
@@ -1987,8 +1986,8 @@
 		PB20MD_000, PB20MD_001, PB20MD_010, PB20MD_011,
 		PB20MD_100, PB20MD_101, PB20MD_110, PB20MD_111,
 		0, 0, 0, 0, 0, 0, 0, 0 ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG("PBCR4", 0xfffe3826, 16, 4, GROUP(
+	},
+	{ PINMUX_CFG_REG("PBCR4", 0xfffe3826, 16, 4, GROUP(
 		PB19MD_000, PB19MD_001, PB19MD_010, PB19MD_011,
 		PB19MD_100, PB19MD_101, PB19MD_110, PB19MD_111,
 		0, 0, 0, 0, 0, 0, 0, 0,
@@ -2004,8 +2003,8 @@
 		PB16MD_000, PB16MD_001, PB16MD_010, PB16MD_011,
 		PB16MD_100, PB16MD_101, PB16MD_110, PB16MD_111,
 		0, 0, 0, 0, 0, 0, 0, 0 ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG("PBCR3", 0xfffe3828, 16, 4, GROUP(
+	},
+	{ PINMUX_CFG_REG("PBCR3", 0xfffe3828, 16, 4, GROUP(
 		PB15MD_000, PB15MD_001, PB15MD_010, PB15MD_011,
 		PB15MD_100, PB15MD_101, PB15MD_110, PB15MD_111,
 		0, 0, 0, 0, 0, 0, 0, 0,
@@ -2020,8 +2019,8 @@
 
 		PB12MD_00, PB12MD_01, PB12MD_10, PB12MD_11, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0 ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG("PBCR2", 0xfffe382a, 16, 4, GROUP(
+	},
+	{ PINMUX_CFG_REG("PBCR2", 0xfffe382a, 16, 4, GROUP(
 		PB11MD_00, PB11MD_01, PB11MD_10, PB11MD_11, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0,
 
@@ -2033,8 +2032,8 @@
 
 		PB8MD_00, PB8MD_01, PB8MD_10, PB8MD_11, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0 ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG("PBCR1", 0xfffe382c, 16, 4, GROUP(
+	},
+	{ PINMUX_CFG_REG("PBCR1", 0xfffe382c, 16, 4, GROUP(
 		PB7MD_00, PB7MD_01, PB7MD_10, PB7MD_11, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0,
 
@@ -2046,8 +2045,8 @@
 
 		PB4MD_00, PB4MD_01, PB4MD_10, PB4MD_11, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0 ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG("PBCR0", 0xfffe382e, 16, 4, GROUP(
+	},
+	{ PINMUX_CFG_REG("PBCR0", 0xfffe382e, 16, 4, GROUP(
 		PB3MD_00, PB3MD_01, PB3MD_10, PB3MD_11, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0,
 
@@ -2058,9 +2057,9 @@
 		0, 0, 0, 0, 0, 0, 0, 0,
 
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ))
-	पूर्ण,
+	},
 
-	अणु PINMUX_CFG_REG("PBIOR1", 0xfffe3830, 16, 1, GROUP(
+	{ PINMUX_CFG_REG("PBIOR1", 0xfffe3830, 16, 1, GROUP(
 		0, 0, 0, 0, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0,
 		0, 0,
@@ -2071,8 +2070,8 @@
 		PB18_IN, PB18_OUT,
 		PB17_IN, PB17_OUT,
 		PB16_IN, PB16_OUT ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG("PBIOR0", 0xfffe3832, 16, 1, GROUP(
+	},
+	{ PINMUX_CFG_REG("PBIOR0", 0xfffe3832, 16, 1, GROUP(
 		PB15_IN, PB15_OUT,
 		PB14_IN, PB14_OUT,
 		PB13_IN, PB13_OUT,
@@ -2089,9 +2088,9 @@
 		PB2_IN, PB2_OUT,
 		PB1_IN, PB1_OUT,
 		0, 0 ))
-	पूर्ण,
+	},
 
-	अणु PINMUX_CFG_REG("PCCR2", 0xfffe384a, 16, 4, GROUP(
+	{ PINMUX_CFG_REG("PCCR2", 0xfffe384a, 16, 4, GROUP(
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -2101,8 +2100,8 @@
 		PC8MD_000, PC8MD_001, PC8MD_010, PC8MD_011,
 		PC8MD_100, PC8MD_101, PC8MD_110, PC8MD_111,
 		0, 0, 0, 0, 0, 0, 0, 0 ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG("PCCR1", 0xfffe384c, 16, 4, GROUP(
+	},
+	{ PINMUX_CFG_REG("PCCR1", 0xfffe384c, 16, 4, GROUP(
 		PC7MD_000, PC7MD_001, PC7MD_010, PC7MD_011,
 		PC7MD_100, PC7MD_101, PC7MD_110, PC7MD_111,
 		0, 0, 0, 0, 0, 0, 0, 0,
@@ -2117,8 +2116,8 @@
 
 		PC4MD_00, PC4MD_01, PC4MD_10, PC4MD_11, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0 ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG("PCCR0", 0xfffe384e, 16, 4, GROUP(
+	},
+	{ PINMUX_CFG_REG("PCCR0", 0xfffe384e, 16, 4, GROUP(
 		PC3MD_00, PC3MD_01, PC3MD_10, PC3MD_11, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0,
 
@@ -2130,9 +2129,9 @@
 
 		PC0MD_0, PC0MD_1, 0, 0, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0 ))
-	पूर्ण,
+	},
 
-	अणु PINMUX_CFG_REG("PCIOR0", 0xfffe3852, 16, 1, GROUP(
+	{ PINMUX_CFG_REG("PCIOR0", 0xfffe3852, 16, 1, GROUP(
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		PC8_IN, PC8_OUT,
 		PC7_IN, PC7_OUT,
@@ -2143,9 +2142,9 @@
 		PC2_IN, PC2_OUT,
 		PC1_IN, PC1_OUT,
 		PC0_IN, PC0_OUT ))
-	पूर्ण,
+	},
 
-	अणु PINMUX_CFG_REG("PDCR3", 0xfffe3868, 16, 4, GROUP(
+	{ PINMUX_CFG_REG("PDCR3", 0xfffe3868, 16, 4, GROUP(
 		PD15MD_00, PD15MD_01, PD15MD_10, PD15MD_11, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0,
 
@@ -2157,8 +2156,8 @@
 
 		PD12MD_00, PD12MD_01, PD12MD_10, PD12MD_11, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0 ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG("PDCR2", 0xfffe386a, 16, 4, GROUP(
+	},
+	{ PINMUX_CFG_REG("PDCR2", 0xfffe386a, 16, 4, GROUP(
 		PD11MD_00, PD11MD_01, PD11MD_10, PD11MD_11, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0,
 
@@ -2170,8 +2169,8 @@
 
 		PD8MD_00, PD8MD_01, PD8MD_10, PD8MD_11, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0 ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG("PDCR1", 0xfffe386c, 16, 4, GROUP(
+	},
+	{ PINMUX_CFG_REG("PDCR1", 0xfffe386c, 16, 4, GROUP(
 		PD7MD_00, PD7MD_01, PD7MD_10, PD7MD_11, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0,
 
@@ -2183,8 +2182,8 @@
 
 		PD4MD_00, PD4MD_01, PD4MD_10, PD4MD_11, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0 ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG("PDCR0", 0xfffe386e, 16, 4, GROUP(
+	},
+	{ PINMUX_CFG_REG("PDCR0", 0xfffe386e, 16, 4, GROUP(
 		PD3MD_00, PD3MD_01, PD3MD_10, PD3MD_11, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0,
 
@@ -2196,9 +2195,9 @@
 
 		PD0MD_00, PD0MD_01, PD0MD_10, PD0MD_11, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0 ))
-	पूर्ण,
+	},
 
-	अणु PINMUX_CFG_REG("PDIOR0", 0xfffe3872, 16, 1, GROUP(
+	{ PINMUX_CFG_REG("PDIOR0", 0xfffe3872, 16, 1, GROUP(
 		PD15_IN, PD15_OUT,
 		PD14_IN, PD14_OUT,
 		PD13_IN, PD13_OUT,
@@ -2215,9 +2214,9 @@
 		PD2_IN, PD2_OUT,
 		PD1_IN, PD1_OUT,
 		PD0_IN, PD0_OUT ))
-	पूर्ण,
+	},
 
-	अणु PINMUX_CFG_REG("PECR1", 0xfffe388c, 16, 4, GROUP(
+	{ PINMUX_CFG_REG("PECR1", 0xfffe388c, 16, 4, GROUP(
 		PE7MD_00, PE7MD_01, PE7MD_10, PE7MD_11, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0,
 
@@ -2229,8 +2228,8 @@
 
 		PE4MD_00, PE4MD_01, PE4MD_10, PE4MD_11, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0 ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG("PECR0", 0xfffe388e, 16, 4, GROUP(
+	},
+	{ PINMUX_CFG_REG("PECR0", 0xfffe388e, 16, 4, GROUP(
 		PE3MD_000, PE3MD_001, PE3MD_010, PE3MD_011,
 		PE3MD_100, PE3MD_101, PE3MD_110, PE3MD_111,
 		0, 0, 0, 0, 0, 0, 0, 0,
@@ -2245,8 +2244,8 @@
 
 		PE0MD_00, PE0MD_01, PE0MD_10, PE0MD_11, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0 ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG("PEIOR0", 0xfffe3892, 16, 1, GROUP(
+	},
+	{ PINMUX_CFG_REG("PEIOR0", 0xfffe3892, 16, 1, GROUP(
 		0, 0, 0, 0, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0,
 		PE7_IN, PE7_OUT,
@@ -2257,9 +2256,9 @@
 		PE2_IN, PE2_OUT,
 		PE1_IN, PE1_OUT,
 		PE0_IN, PE0_OUT ))
-	पूर्ण,
+	},
 
-	अणु PINMUX_CFG_REG("PFCR6", 0xfffe38a2, 16, 4, GROUP(
+	{ PINMUX_CFG_REG("PFCR6", 0xfffe38a2, 16, 4, GROUP(
 		PF23MD_000, PF23MD_001, PF23MD_010, PF23MD_011,
 		PF23MD_100, PF23MD_101, PF23MD_110, PF23MD_111,
 		0, 0, 0, 0, 0, 0, 0, 0,
@@ -2275,8 +2274,8 @@
 		PF20MD_000, PF20MD_001, PF20MD_010, PF20MD_011,
 		PF20MD_100, PF20MD_101, PF20MD_110, PF20MD_111,
 		0, 0, 0, 0, 0, 0, 0, 0 ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG("PFCR5", 0xfffe38a4, 16, 4, GROUP(
+	},
+	{ PINMUX_CFG_REG("PFCR5", 0xfffe38a4, 16, 4, GROUP(
 		PF19MD_000, PF19MD_001, PF19MD_010, PF19MD_011,
 		PF19MD_100, PF19MD_101, PF19MD_110, PF19MD_111,
 		0, 0, 0, 0, 0, 0, 0, 0,
@@ -2292,8 +2291,8 @@
 		PF16MD_000, PF16MD_001, PF16MD_010, PF16MD_011,
 		PF16MD_100, PF16MD_101, PF16MD_110, PF16MD_111,
 		0, 0, 0, 0, 0, 0, 0, 0 ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG("PFCR4", 0xfffe38a6, 16, 4, GROUP(
+	},
+	{ PINMUX_CFG_REG("PFCR4", 0xfffe38a6, 16, 4, GROUP(
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -2303,8 +2302,8 @@
 		PF15MD_000, PF15MD_001, PF15MD_010, PF15MD_011,
 		PF15MD_100, PF15MD_101, PF15MD_110, PF15MD_111,
 		0, 0, 0, 0, 0, 0, 0, 0 ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG("PFCR3", 0xfffe38a8, 16, 4, GROUP(
+	},
+	{ PINMUX_CFG_REG("PFCR3", 0xfffe38a8, 16, 4, GROUP(
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 
 		PF14MD_000, PF14MD_001, PF14MD_010, PF14MD_011,
@@ -2318,8 +2317,8 @@
 		PF12MD_000, PF12MD_001, PF12MD_010, PF12MD_011,
 		PF12MD_100, PF12MD_101, PF12MD_110, PF12MD_111,
 		0, 0, 0, 0, 0, 0, 0, 0 ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG("PFCR2", 0xfffe38aa, 16, 4, GROUP(
+	},
+	{ PINMUX_CFG_REG("PFCR2", 0xfffe38aa, 16, 4, GROUP(
 		PF11MD_000, PF11MD_001, PF11MD_010, PF11MD_011,
 		PF11MD_100, PF11MD_101, PF11MD_110, PF11MD_111,
 		0, 0, 0, 0, 0, 0, 0, 0,
@@ -2335,8 +2334,8 @@
 		PF8MD_000, PF8MD_001, PF8MD_010, PF8MD_011,
 		PF8MD_100, PF8MD_101, PF8MD_110, PF8MD_111,
 		0, 0, 0, 0, 0, 0, 0, 0 ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG("PFCR1", 0xfffe38ac, 16, 4, GROUP(
+	},
+	{ PINMUX_CFG_REG("PFCR1", 0xfffe38ac, 16, 4, GROUP(
 		PF7MD_000, PF7MD_001, PF7MD_010, PF7MD_011,
 		PF7MD_100, PF7MD_101, PF7MD_110, PF7MD_111,
 		0, 0, 0, 0, 0, 0, 0, 0,
@@ -2352,8 +2351,8 @@
 		PF4MD_000, PF4MD_001, PF4MD_010, PF4MD_011,
 		PF4MD_100, PF4MD_101, PF4MD_110, PF4MD_111,
 		0, 0, 0, 0, 0, 0, 0, 0 ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG("PFCR0", 0xfffe38ae, 16, 4, GROUP(
+	},
+	{ PINMUX_CFG_REG("PFCR0", 0xfffe38ae, 16, 4, GROUP(
 		PF3MD_000, PF3MD_001, PF3MD_010, PF3MD_011,
 		PF3MD_100, PF3MD_101, PF3MD_110, PF3MD_111,
 		0, 0, 0, 0, 0, 0, 0, 0,
@@ -2369,9 +2368,9 @@
 		PF0MD_000, PF0MD_001, PF0MD_010, PF0MD_011,
 		PF0MD_100, PF0MD_101, PF0MD_110, PF0MD_111,
 		0, 0, 0, 0, 0, 0, 0, 0 ))
-	पूर्ण,
+	},
 
-	अणु PINMUX_CFG_REG("PFIOR1", 0xfffe38b0, 16, 1, GROUP(
+	{ PINMUX_CFG_REG("PFIOR1", 0xfffe38b0, 16, 1, GROUP(
 		0, 0, 0, 0, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0,
 		PF23_IN, PF23_OUT,
@@ -2382,8 +2381,8 @@
 		PF18_IN, PF18_OUT,
 		PF17_IN, PF17_OUT,
 		PF16_IN, PF16_OUT ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG("PFIOR0", 0xfffe38b2, 16, 1, GROUP(
+	},
+	{ PINMUX_CFG_REG("PFIOR0", 0xfffe38b2, 16, 1, GROUP(
 		PF15_IN, PF15_OUT,
 		PF14_IN, PF14_OUT,
 		PF13_IN, PF13_OUT,
@@ -2400,9 +2399,9 @@
 		PF2_IN, PF2_OUT,
 		PF1_IN, PF1_OUT,
 		PF0_IN, PF0_OUT ))
-	पूर्ण,
+	},
 
-	अणु PINMUX_CFG_REG("PGCR6", 0xfffe38c2, 16, 4, GROUP(
+	{ PINMUX_CFG_REG("PGCR6", 0xfffe38c2, 16, 4, GROUP(
 		PG27MD_00, PG27MD_01, PG27MD_10, PG27MD_11, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0,
 
@@ -2414,8 +2413,8 @@
 
 		PG24MD_00, PG24MD_01, PG24MD_10, PG24MD_11, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0 ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG("PGCR5", 0xfffe38c4, 16, 4, GROUP(
+	},
+	{ PINMUX_CFG_REG("PGCR5", 0xfffe38c4, 16, 4, GROUP(
 		PG23MD_000, PG23MD_001, PG23MD_010, PG23MD_011,
 		PG23MD_100, PG23MD_101, PG23MD_110, PG23MD_111,
 		0, 0, 0, 0, 0, 0, 0, 0,
@@ -2431,8 +2430,8 @@
 		PG20MD_000, PG20MD_001, PG20MD_010, PG20MD_011,
 		PG20MD_100, PG20MD_101, PG20MD_110, PG20MD_111,
 		0, 0, 0, 0, 0, 0, 0, 0 ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG("PGCR4", 0xfffe38c6, 16, 4, GROUP(
+	},
+	{ PINMUX_CFG_REG("PGCR4", 0xfffe38c6, 16, 4, GROUP(
 		PG19MD_000, PG19MD_001, PG19MD_010, PG19MD_011,
 		PG19MD_100, PG19MD_101, PG19MD_110, PG19MD_111,
 		0, 0, 0, 0, 0, 0, 0, 0,
@@ -2446,8 +2445,8 @@
 
 		PG16MD_00, PG16MD_01, PG16MD_10, PG16MD_11, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0 ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG("PGCR3", 0xfffe38c8, 16, 4, GROUP(
+	},
+	{ PINMUX_CFG_REG("PGCR3", 0xfffe38c8, 16, 4, GROUP(
 		PG15MD_00, PG15MD_01, PG15MD_10, PG15MD_11, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0,
 
@@ -2459,8 +2458,8 @@
 
 		PG12MD_00, PG12MD_01, PG12MD_10, PG12MD_11, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0 ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG("PGCR2", 0xfffe38ca, 16, 4, GROUP(
+	},
+	{ PINMUX_CFG_REG("PGCR2", 0xfffe38ca, 16, 4, GROUP(
 		PG11MD_000, PG11MD_001, PG11MD_010, PG11MD_011,
 		PG11MD_100, PG11MD_101, PG11MD_110, PG11MD_111,
 		0, 0, 0, 0, 0, 0, 0, 0,
@@ -2476,9 +2475,9 @@
 		PG8MD_000, PG8MD_001, PG8MD_010, PG8MD_011,
 		PG8MD_100, PG8MD_101, PG8MD_110, PG8MD_111,
 		0, 0, 0, 0, 0, 0, 0, 0 ))
-	पूर्ण,
+	},
 
-	अणु PINMUX_CFG_REG("PGCR1", 0xfffe38cc, 16, 4, GROUP(
+	{ PINMUX_CFG_REG("PGCR1", 0xfffe38cc, 16, 4, GROUP(
 		PG7MD_000, PG7MD_001, PG7MD_010, PG7MD_011,
 		PG7MD_100, PG7MD_101, PG7MD_110, PG7MD_111,
 		0, 0, 0, 0, 0, 0, 0, 0,
@@ -2494,8 +2493,8 @@
 		PG4MD_000, PG4MD_001, PG4MD_010, PG4MD_011,
 		PG4MD_100, PG4MD_101, PG4MD_110, PG4MD_111,
 		0, 0, 0, 0, 0, 0, 0, 0 ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG("PGCR0", 0xfffe38ce, 16, 4, GROUP(
+	},
+	{ PINMUX_CFG_REG("PGCR0", 0xfffe38ce, 16, 4, GROUP(
 		PG3MD_000, PG3MD_001, PG3MD_010, PG3MD_011,
 		PG3MD_100, PG3MD_101, PG3MD_110, PG3MD_111,
 		0, 0, 0, 0, 0, 0, 0, 0,
@@ -2511,9 +2510,9 @@
 		PG0MD_000, PG0MD_001, PG0MD_010, PG0MD_011,
 		PG0MD_100, PG0MD_101, PG0MD_110, PG0MD_111,
 		0, 0, 0, 0, 0, 0, 0, 0 ))
-	पूर्ण,
+	},
 
-	अणु PINMUX_CFG_REG("PGIOR1", 0xfffe38d0, 16, 1, GROUP(
+	{ PINMUX_CFG_REG("PGIOR1", 0xfffe38d0, 16, 1, GROUP(
 		0, 0, 0, 0, 0, 0, 0, 0,
 		PG27_IN, PG27_OUT,
 		PG26_IN, PG26_OUT,
@@ -2527,8 +2526,8 @@
 		PG18_IN, PG18_OUT,
 		PG17_IN, PG17_OUT,
 		PG16_IN, PG16_OUT ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG("PGIOR0", 0xfffe38d2, 16, 1, GROUP(
+	},
+	{ PINMUX_CFG_REG("PGIOR0", 0xfffe38d2, 16, 1, GROUP(
 		PG15_IN, PG15_OUT,
 		PG14_IN, PG14_OUT,
 		PG13_IN, PG13_OUT,
@@ -2545,9 +2544,9 @@
 		PG2_IN, PG2_OUT,
 		PG1_IN, PG1_OUT,
 		PG0_IN, PG0_OUT ))
-	पूर्ण,
+	},
 
-	अणु PINMUX_CFG_REG("PHCR1", 0xfffe38ec, 16, 4, GROUP(
+	{ PINMUX_CFG_REG("PHCR1", 0xfffe38ec, 16, 4, GROUP(
 		PH7MD_00, PH7MD_01, PH7MD_10, PH7MD_11, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0,
 
@@ -2559,9 +2558,9 @@
 
 		PH4MD_00, PH4MD_01, PH4MD_10, PH4MD_11, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0 ))
-	पूर्ण,
+	},
 
-	अणु PINMUX_CFG_REG("PHCR0", 0xfffe38ee, 16, 4, GROUP(
+	{ PINMUX_CFG_REG("PHCR0", 0xfffe38ee, 16, 4, GROUP(
 		PH3MD_00, PH3MD_01, PH3MD_10, PH3MD_11, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0,
 
@@ -2573,9 +2572,9 @@
 
 		PH0MD_00, PH0MD_01, PH0MD_10, PH0MD_11, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0 ))
-	पूर्ण,
+	},
 
-	अणु PINMUX_CFG_REG("PJCR7", 0xfffe3900, 16, 4, GROUP(
+	{ PINMUX_CFG_REG("PJCR7", 0xfffe3900, 16, 4, GROUP(
 		PJ31MD_0, PJ31MD_1, 0, 0, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0,
 
@@ -2590,8 +2589,8 @@
 		PJ28MD_000, PJ28MD_001, PJ28MD_010, PJ28MD_011,
 		PJ28MD_100, PJ28MD_101, PJ28MD_110, PJ28MD_111,
 		0, 0, 0, 0, 0, 0, 0, 0 ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG("PJCR6", 0xfffe3902, 16, 4, GROUP(
+	},
+	{ PINMUX_CFG_REG("PJCR6", 0xfffe3902, 16, 4, GROUP(
 		PJ27MD_000, PJ27MD_001, PJ27MD_010, PJ27MD_011,
 		PJ27MD_100, PJ27MD_101, PJ27MD_110, PJ27MD_111,
 		0, 0, 0, 0, 0, 0, 0, 0,
@@ -2607,8 +2606,8 @@
 		PJ24MD_000, PJ24MD_001, PJ24MD_010, PJ24MD_011,
 		PJ24MD_100, PJ24MD_101, PJ24MD_110, PJ24MD_111,
 		0, 0, 0, 0, 0, 0, 0, 0 ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG("PJCR5", 0xfffe3904, 16, 4, GROUP(
+	},
+	{ PINMUX_CFG_REG("PJCR5", 0xfffe3904, 16, 4, GROUP(
 		PJ23MD_000, PJ23MD_001, PJ23MD_010, PJ23MD_011,
 		PJ23MD_100, PJ23MD_101, PJ23MD_110, PJ23MD_111,
 		0, 0, 0, 0, 0, 0, 0, 0,
@@ -2624,8 +2623,8 @@
 		PJ20MD_000, PJ20MD_001, PJ20MD_010, PJ20MD_011,
 		PJ20MD_100, PJ20MD_101, PJ20MD_110, PJ20MD_111,
 		0, 0, 0, 0, 0, 0, 0, 0 ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG("PJCR4", 0xfffe3906, 16, 4, GROUP(
+	},
+	{ PINMUX_CFG_REG("PJCR4", 0xfffe3906, 16, 4, GROUP(
 		PJ19MD_000, PJ19MD_001, PJ19MD_010, PJ19MD_011,
 		PJ19MD_100, PJ19MD_101, PJ19MD_110, PJ19MD_111,
 		0, 0, 0, 0, 0, 0, 0, 0,
@@ -2641,8 +2640,8 @@
 		PJ16MD_000, PJ16MD_001, PJ16MD_010, PJ16MD_011,
 		PJ16MD_100, PJ16MD_101, PJ16MD_110, PJ16MD_111,
 		0, 0, 0, 0, 0, 0, 0, 0 ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG("PJCR3", 0xfffe3908, 16, 4, GROUP(
+	},
+	{ PINMUX_CFG_REG("PJCR3", 0xfffe3908, 16, 4, GROUP(
 		PJ15MD_000, PJ15MD_001, PJ15MD_010, PJ15MD_011,
 		PJ15MD_100, PJ15MD_101, PJ15MD_110, PJ15MD_111,
 		0, 0, 0, 0, 0, 0, 0, 0,
@@ -2658,8 +2657,8 @@
 		PJ12MD_000, PJ12MD_001, PJ12MD_010, PJ12MD_011,
 		PJ12MD_100, PJ12MD_101, PJ12MD_110, PJ12MD_111,
 		0, 0, 0, 0, 0, 0, 0, 0 ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG("PJCR2", 0xfffe390a, 16, 4, GROUP(
+	},
+	{ PINMUX_CFG_REG("PJCR2", 0xfffe390a, 16, 4, GROUP(
 		PJ11MD_000, PJ11MD_001, PJ11MD_010, PJ11MD_011,
 		PJ11MD_100, PJ11MD_101, PJ11MD_110, PJ11MD_111,
 		0, 0, 0, 0, 0, 0, 0, 0,
@@ -2675,8 +2674,8 @@
 		PJ8MD_000, PJ8MD_001, PJ8MD_010, PJ8MD_011,
 		PJ8MD_100, PJ8MD_101, PJ8MD_110, PJ8MD_111,
 		0, 0, 0, 0, 0, 0, 0, 0 ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG("PJCR1", 0xfffe390c, 16, 4, GROUP(
+	},
+	{ PINMUX_CFG_REG("PJCR1", 0xfffe390c, 16, 4, GROUP(
 		PJ7MD_000, PJ7MD_001, PJ7MD_010, PJ7MD_011,
 		PJ7MD_100, PJ7MD_101, PJ7MD_110, PJ7MD_111,
 		0, 0, 0, 0, 0, 0, 0, 0,
@@ -2692,8 +2691,8 @@
 		PJ4MD_000, PJ4MD_001, PJ4MD_010, PJ4MD_011,
 		PJ4MD_100, PJ4MD_101, PJ4MD_110, PJ4MD_111,
 		0, 0, 0, 0, 0, 0, 0, 0 ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG("PJCR0", 0xfffe390e, 16, 4, GROUP(
+	},
+	{ PINMUX_CFG_REG("PJCR0", 0xfffe390e, 16, 4, GROUP(
 		PJ3MD_000, PJ3MD_001, PJ3MD_010, PJ3MD_011,
 		PJ3MD_100, PJ3MD_101, PJ3MD_110, PJ3MD_111,
 		0, 0, 0, 0, 0, 0, 0, 0,
@@ -2709,9 +2708,9 @@
 		PJ0MD_000, PJ0MD_001, PJ0MD_010, PJ0MD_011,
 		PJ0MD_100, PJ0MD_101, PJ0MD_110, PJ0MD_111,
 		0, 0, 0, 0, 0, 0, 0, 0 ))
-	पूर्ण,
+	},
 
-	अणु PINMUX_CFG_REG("PJIOR1", 0xfffe3910, 16, 1, GROUP(
+	{ PINMUX_CFG_REG("PJIOR1", 0xfffe3910, 16, 1, GROUP(
 		PJ31_IN, PJ31_OUT,
 		PJ30_IN, PJ30_OUT,
 		PJ29_IN, PJ29_OUT,
@@ -2728,8 +2727,8 @@
 		PJ18_IN, PJ18_OUT,
 		PJ17_IN, PJ17_OUT,
 		PJ16_IN, PJ16_OUT ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG("PJIOR0", 0xfffe3912, 16, 1, GROUP(
+	},
+	{ PINMUX_CFG_REG("PJIOR0", 0xfffe3912, 16, 1, GROUP(
 		PJ15_IN, PJ15_OUT,
 		PJ14_IN, PJ14_OUT,
 		PJ13_IN, PJ13_OUT,
@@ -2746,95 +2745,95 @@
 		PJ2_IN, PJ2_OUT,
 		PJ1_IN, PJ1_OUT,
 		PJ0_IN, PJ0_OUT ))
-	पूर्ण,
+	},
 
-	अणुपूर्ण
-पूर्ण;
+	{}
+};
 
-अटल स्थिर काष्ठा pinmux_data_reg pinmux_data_regs[] = अणु
-	अणु PINMUX_DATA_REG("PADR0", 0xfffe3816, 16, GROUP(
+static const struct pinmux_data_reg pinmux_data_regs[] = {
+	{ PINMUX_DATA_REG("PADR0", 0xfffe3816, 16, GROUP(
 		0, 0, 0, 0, 0, 0, 0, PA1_DATA,
 		0, 0, 0, 0, 0, 0, 0, PA0_DATA ))
-	पूर्ण,
+	},
 
-	अणु PINMUX_DATA_REG("PBDR1", 0xfffe3834, 16, GROUP(
+	{ PINMUX_DATA_REG("PBDR1", 0xfffe3834, 16, GROUP(
 		0, 0, 0, 0, 0, 0, 0, 0,
 		0, PB22_DATA, PB21_DATA, PB20_DATA,
 		PB19_DATA, PB18_DATA, PB17_DATA, PB16_DATA ))
-	पूर्ण,
-	अणु PINMUX_DATA_REG("PBDR0", 0xfffe3836, 16, GROUP(
+	},
+	{ PINMUX_DATA_REG("PBDR0", 0xfffe3836, 16, GROUP(
 		PB15_DATA, PB14_DATA, PB13_DATA, PB12_DATA,
 		PB11_DATA, PB10_DATA, PB9_DATA, PB8_DATA,
 		PB7_DATA, PB6_DATA, PB5_DATA, PB4_DATA,
 		PB3_DATA, PB2_DATA, PB1_DATA, 0 ))
-	पूर्ण,
+	},
 
-	अणु PINMUX_DATA_REG("PCDR0", 0xfffe3856, 16, GROUP(
+	{ PINMUX_DATA_REG("PCDR0", 0xfffe3856, 16, GROUP(
 		0, 0, 0, 0,
 		0, 0, 0, PC8_DATA,
 		PC7_DATA, PC6_DATA, PC5_DATA, PC4_DATA,
 		PC3_DATA, PC2_DATA, PC1_DATA, PC0_DATA ))
-	पूर्ण,
+	},
 
-	अणु PINMUX_DATA_REG("PDDR0", 0xfffe3876, 16, GROUP(
+	{ PINMUX_DATA_REG("PDDR0", 0xfffe3876, 16, GROUP(
 		PD15_DATA, PD14_DATA, PD13_DATA, PD12_DATA,
 		PD11_DATA, PD10_DATA, PD9_DATA, PD8_DATA,
 		PD7_DATA, PD6_DATA, PD5_DATA, PD4_DATA,
 		PD3_DATA, PD2_DATA, PD1_DATA, PD0_DATA ))
-	पूर्ण,
+	},
 
-	अणु PINMUX_DATA_REG("PEDR0", 0xfffe3896, 16, GROUP(
+	{ PINMUX_DATA_REG("PEDR0", 0xfffe3896, 16, GROUP(
 		0, 0, 0, 0, 0, 0, 0, 0,
 		PE7_DATA, PE6_DATA, PE5_DATA, PE4_DATA,
 		PE3_DATA, PE2_DATA, PE1_DATA, PE0_DATA ))
-	पूर्ण,
+	},
 
-	अणु PINMUX_DATA_REG("PFDR1", 0xfffe38b4, 16, GROUP(
+	{ PINMUX_DATA_REG("PFDR1", 0xfffe38b4, 16, GROUP(
 		0, 0, 0, 0, 0, 0, 0, 0,
 		PF23_DATA, PF22_DATA, PF21_DATA, PF20_DATA,
 		PF19_DATA, PF18_DATA, PF17_DATA, PF16_DATA ))
-	पूर्ण,
-	अणु PINMUX_DATA_REG("PFDR0", 0xfffe38b6, 16, GROUP(
+	},
+	{ PINMUX_DATA_REG("PFDR0", 0xfffe38b6, 16, GROUP(
 		PF15_DATA, PF14_DATA, PF13_DATA, PF12_DATA,
 		PF11_DATA, PF10_DATA, PF9_DATA, PF8_DATA,
 		PF7_DATA, PF6_DATA, PF5_DATA, PF4_DATA,
 		PF3_DATA, PF2_DATA, PF1_DATA, PF0_DATA ))
-	पूर्ण,
+	},
 
-	अणु PINMUX_DATA_REG("PGDR1", 0xfffe38d4, 16, GROUP(
+	{ PINMUX_DATA_REG("PGDR1", 0xfffe38d4, 16, GROUP(
 		0, 0, 0, 0,
 		PG27_DATA, PG26_DATA, PG25_DATA, PG24_DATA,
 		PG23_DATA, PG22_DATA, PG21_DATA, PG20_DATA,
 		PG19_DATA, PG18_DATA, PG17_DATA, PG16_DATA ))
-	पूर्ण,
-	अणु PINMUX_DATA_REG("PGDR0", 0xfffe38d6, 16, GROUP(
+	},
+	{ PINMUX_DATA_REG("PGDR0", 0xfffe38d6, 16, GROUP(
 		PG15_DATA, PG14_DATA, PG13_DATA, PG12_DATA,
 		PG11_DATA, PG10_DATA, PG9_DATA, PG8_DATA,
 		PG7_DATA, PG6_DATA, PG5_DATA, PG4_DATA,
 		PG3_DATA, PG2_DATA, PG1_DATA, PG0_DATA ))
-	पूर्ण,
+	},
 
-	अणु PINMUX_DATA_REG("PJDR1", 0xfffe3914, 16, GROUP(
+	{ PINMUX_DATA_REG("PJDR1", 0xfffe3914, 16, GROUP(
 		PJ31_DATA, PJ30_DATA, PJ29_DATA, PJ28_DATA,
 		PJ27_DATA, PJ26_DATA, PJ25_DATA, PJ24_DATA,
 		PJ23_DATA, PJ22_DATA, PJ21_DATA, PJ20_DATA,
 		PJ19_DATA, PJ18_DATA, PJ17_DATA, PJ16_DATA ))
-	पूर्ण,
-	अणु PINMUX_DATA_REG("PJDR0", 0xfffe3916, 16, GROUP(
+	},
+	{ PINMUX_DATA_REG("PJDR0", 0xfffe3916, 16, GROUP(
 		PJ15_DATA, PJ14_DATA, PJ13_DATA, PJ12_DATA,
 		PJ11_DATA, PJ10_DATA, PJ9_DATA, PJ8_DATA,
 		PJ7_DATA, PJ6_DATA, PJ5_DATA, PJ4_DATA,
 		PJ3_DATA, PJ2_DATA, PJ1_DATA, PJ0_DATA ))
-	पूर्ण,
+	},
 
-	अणु पूर्ण
-पूर्ण;
+	{ }
+};
 
-स्थिर काष्ठा sh_pfc_soc_info sh7269_pinmux_info = अणु
+const struct sh_pfc_soc_info sh7269_pinmux_info = {
 	.name = "sh7269_pfc",
-	.input = अणु PINMUX_INPUT_BEGIN, PINMUX_INPUT_END, FORCE_IN पूर्ण,
-	.output = अणु PINMUX_OUTPUT_BEGIN, PINMUX_OUTPUT_END, FORCE_OUT पूर्ण,
-	.function = अणु PINMUX_FUNCTION_BEGIN, PINMUX_FUNCTION_END पूर्ण,
+	.input = { PINMUX_INPUT_BEGIN, PINMUX_INPUT_END, FORCE_IN },
+	.output = { PINMUX_OUTPUT_BEGIN, PINMUX_OUTPUT_END, FORCE_OUT },
+	.function = { PINMUX_FUNCTION_BEGIN, PINMUX_FUNCTION_END },
 
 	.pins = pinmux_pins,
 	.nr_pins = ARRAY_SIZE(pinmux_pins),
@@ -2846,4 +2845,4 @@
 
 	.pinmux_data = pinmux_data,
 	.pinmux_data_size = ARRAY_SIZE(pinmux_data),
-पूर्ण;
+};

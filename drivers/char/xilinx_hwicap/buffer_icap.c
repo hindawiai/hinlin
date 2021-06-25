@@ -1,9 +1,8 @@
-<शैली गुरु>
 /*****************************************************************************
  *
  *     Author: Xilinx, Inc.
  *
- *     This program is मुक्त software; you can redistribute it and/or modअगरy it
+ *     This program is free software; you can redistribute it and/or modify it
  *     under the terms of the GNU General Public License as published by the
  *     Free Software Foundation; either version 2 of the License, or (at your
  *     option) any later version.
@@ -25,143 +24,143 @@
  *     (c) Copyright 2003-2008 Xilinx Inc.
  *     All rights reserved.
  *
- *     You should have received a copy of the GNU General Public License aदीर्घ
- *     with this program; अगर not, ग_लिखो to the Free Software Foundation, Inc.,
+ *     You should have received a copy of the GNU General Public License along
+ *     with this program; if not, write to the Free Software Foundation, Inc.,
  *     675 Mass Ave, Cambridge, MA 02139, USA.
  *
  *****************************************************************************/
 
-#समावेश "buffer_icap.h"
+#include "buffer_icap.h"
 
 /* Indicates how many bytes will fit in a buffer. (1 BRAM) */
-#घोषणा XHI_MAX_BUFFER_BYTES        2048
-#घोषणा XHI_MAX_BUFFER_INTS         (XHI_MAX_BUFFER_BYTES >> 2)
+#define XHI_MAX_BUFFER_BYTES        2048
+#define XHI_MAX_BUFFER_INTS         (XHI_MAX_BUFFER_BYTES >> 2)
 
-/* File access and error स्थिरants */
-#घोषणा XHI_DEVICE_READ_ERROR       -1
-#घोषणा XHI_DEVICE_WRITE_ERROR      -2
-#घोषणा XHI_BUFFER_OVERFLOW_ERROR   -3
+/* File access and error constants */
+#define XHI_DEVICE_READ_ERROR       -1
+#define XHI_DEVICE_WRITE_ERROR      -2
+#define XHI_BUFFER_OVERFLOW_ERROR   -3
 
-#घोषणा XHI_DEVICE_READ             0x1
-#घोषणा XHI_DEVICE_WRITE            0x0
+#define XHI_DEVICE_READ             0x1
+#define XHI_DEVICE_WRITE            0x0
 
-/* Constants क्रम checking transfer status */
-#घोषणा XHI_CYCLE_DONE              0
-#घोषणा XHI_CYCLE_EXECUTING         1
+/* Constants for checking transfer status */
+#define XHI_CYCLE_DONE              0
+#define XHI_CYCLE_EXECUTING         1
 
-/* buffer_icap रेजिस्टर offsets */
+/* buffer_icap register offsets */
 
-/* Size of transfer, पढ़ो & ग_लिखो */
-#घोषणा XHI_SIZE_REG_OFFSET        0x800L
-/* offset पूर्णांकo bram, पढ़ो & ग_लिखो */
-#घोषणा XHI_BRAM_OFFSET_REG_OFFSET 0x804L
+/* Size of transfer, read & write */
+#define XHI_SIZE_REG_OFFSET        0x800L
+/* offset into bram, read & write */
+#define XHI_BRAM_OFFSET_REG_OFFSET 0x804L
 /* Read not Configure, direction of transfer.  Write only */
-#घोषणा XHI_RNC_REG_OFFSET         0x808L
+#define XHI_RNC_REG_OFFSET         0x808L
 /* Indicates transfer complete. Read only */
-#घोषणा XHI_STATUS_REG_OFFSET      0x80CL
+#define XHI_STATUS_REG_OFFSET      0x80CL
 
-/* Constants क्रम setting the RNC रेजिस्टर */
-#घोषणा XHI_CONFIGURE              0x0UL
-#घोषणा XHI_READBACK               0x1UL
+/* Constants for setting the RNC register */
+#define XHI_CONFIGURE              0x0UL
+#define XHI_READBACK               0x1UL
 
-/* Constants क्रम the Done रेजिस्टर */
-#घोषणा XHI_NOT_FINISHED           0x0UL
-#घोषणा XHI_FINISHED               0x1UL
+/* Constants for the Done register */
+#define XHI_NOT_FINISHED           0x0UL
+#define XHI_FINISHED               0x1UL
 
-#घोषणा XHI_BUFFER_START 0
+#define XHI_BUFFER_START 0
 
 /**
- * buffer_icap_get_status - Get the contents of the status रेजिस्टर.
- * @drvdata: a poपूर्णांकer to the drvdata.
+ * buffer_icap_get_status - Get the contents of the status register.
+ * @drvdata: a pointer to the drvdata.
  *
- * The status रेजिस्टर contains the ICAP status and the करोne bit.
+ * The status register contains the ICAP status and the done bit.
  *
  * D8 - cfgerr
  * D7 - dalign
  * D6 - rip
- * D5 - in_पात_l
+ * D5 - in_abort_l
  * D4 - Always 1
  * D3 - Always 1
  * D2 - Always 1
  * D1 - Always 1
  * D0 - Done bit
  **/
-u32 buffer_icap_get_status(काष्ठा hwicap_drvdata *drvdata)
-अणु
-	वापस in_be32(drvdata->base_address + XHI_STATUS_REG_OFFSET);
-पूर्ण
+u32 buffer_icap_get_status(struct hwicap_drvdata *drvdata)
+{
+	return in_be32(drvdata->base_address + XHI_STATUS_REG_OFFSET);
+}
 
 /**
  * buffer_icap_get_bram - Reads data from the storage buffer bram.
  * @base_address: contains the base address of the component.
- * @offset: The word offset from which the data should be पढ़ो.
+ * @offset: The word offset from which the data should be read.
  *
  * A bram is used as a configuration memory cache.  One frame of data can
  * be stored in this "storage buffer".
  **/
-अटल अंतरभूत u32 buffer_icap_get_bram(व्योम __iomem *base_address,
+static inline u32 buffer_icap_get_bram(void __iomem *base_address,
 		u32 offset)
-अणु
-	वापस in_be32(base_address + (offset << 2));
-पूर्ण
+{
+	return in_be32(base_address + (offset << 2));
+}
 
 /**
- * buffer_icap_busy - Return true अगर the icap device is busy
+ * buffer_icap_busy - Return true if the icap device is busy
  * @base_address: is the base address of the device
  *
- * The queries the low order bit of the status रेजिस्टर, which
- * indicates whether the current configuration or पढ़ोback operation
+ * The queries the low order bit of the status register, which
+ * indicates whether the current configuration or readback operation
  * has completed.
  **/
-अटल अंतरभूत bool buffer_icap_busy(व्योम __iomem *base_address)
-अणु
+static inline bool buffer_icap_busy(void __iomem *base_address)
+{
 	u32 status = in_be32(base_address + XHI_STATUS_REG_OFFSET);
-	वापस (status & 1) == XHI_NOT_FINISHED;
-पूर्ण
+	return (status & 1) == XHI_NOT_FINISHED;
+}
 
 /**
- * buffer_icap_set_size - Set the size रेजिस्टर.
+ * buffer_icap_set_size - Set the size register.
  * @base_address: is the base address of the device
  * @data: The size in bytes.
  *
- * The size रेजिस्टर holds the number of 8 bit bytes to transfer between
+ * The size register holds the number of 8 bit bytes to transfer between
  * bram and the icap (or icap to bram).
  **/
-अटल अंतरभूत व्योम buffer_icap_set_size(व्योम __iomem *base_address,
+static inline void buffer_icap_set_size(void __iomem *base_address,
 		u32 data)
-अणु
+{
 	out_be32(base_address + XHI_SIZE_REG_OFFSET, data);
-पूर्ण
+}
 
 /**
- * buffer_icap_set_offset - Set the bram offset रेजिस्टर.
+ * buffer_icap_set_offset - Set the bram offset register.
  * @base_address: contains the base address of the device.
- * @data: is the value to be written to the data रेजिस्टर.
+ * @data: is the value to be written to the data register.
  *
- * The bram offset रेजिस्टर holds the starting bram address to transfer
- * data from during configuration or ग_लिखो data to during पढ़ोback.
+ * The bram offset register holds the starting bram address to transfer
+ * data from during configuration or write data to during readback.
  **/
-अटल अंतरभूत व्योम buffer_icap_set_offset(व्योम __iomem *base_address,
+static inline void buffer_icap_set_offset(void __iomem *base_address,
 		u32 data)
-अणु
+{
 	out_be32(base_address + XHI_BRAM_OFFSET_REG_OFFSET, data);
-पूर्ण
+}
 
 /**
- * buffer_icap_set_rnc - Set the RNC (Readback not Configure) रेजिस्टर.
+ * buffer_icap_set_rnc - Set the RNC (Readback not Configure) register.
  * @base_address: contains the base address of the device.
- * @data: is the value to be written to the data रेजिस्टर.
+ * @data: is the value to be written to the data register.
  *
- * The RNC रेजिस्टर determines the direction of the data transfer.  It
- * controls whether a configuration or पढ़ोback take place.  Writing to
- * this रेजिस्टर initiates the transfer.  A value of 1 initiates a
- * पढ़ोback जबतक writing a value of 0 initiates a configuration.
+ * The RNC register determines the direction of the data transfer.  It
+ * controls whether a configuration or readback take place.  Writing to
+ * this register initiates the transfer.  A value of 1 initiates a
+ * readback while writing a value of 0 initiates a configuration.
  **/
-अटल अंतरभूत व्योम buffer_icap_set_rnc(व्योम __iomem *base_address,
+static inline void buffer_icap_set_rnc(void __iomem *base_address,
 		u32 data)
-अणु
+{
 	out_be32(base_address + XHI_RNC_REG_OFFSET, data);
-पूर्ण
+}
 
 /**
  * buffer_icap_set_bram - Write data to the storage buffer bram.
@@ -172,191 +171,191 @@ u32 buffer_icap_get_status(काष्ठा hwicap_drvdata *drvdata)
  * A bram is used as a configuration memory cache.  One frame of data can
  * be stored in this "storage buffer".
  **/
-अटल अंतरभूत व्योम buffer_icap_set_bram(व्योम __iomem *base_address,
+static inline void buffer_icap_set_bram(void __iomem *base_address,
 		u32 offset, u32 data)
-अणु
+{
 	out_be32(base_address + (offset << 2), data);
-पूर्ण
+}
 
 /**
- * buffer_icap_device_पढ़ो - Transfer bytes from ICAP to the storage buffer.
- * @drvdata: a poपूर्णांकer to the drvdata.
+ * buffer_icap_device_read - Transfer bytes from ICAP to the storage buffer.
+ * @drvdata: a pointer to the drvdata.
  * @offset: The storage buffer start address.
- * @count: The number of words (32 bit) to पढ़ो from the
+ * @count: The number of words (32 bit) to read from the
  *           device (ICAP).
  **/
-अटल पूर्णांक buffer_icap_device_पढ़ो(काष्ठा hwicap_drvdata *drvdata,
+static int buffer_icap_device_read(struct hwicap_drvdata *drvdata,
 		u32 offset, u32 count)
-अणु
+{
 
 	s32 retries = 0;
-	व्योम __iomem *base_address = drvdata->base_address;
+	void __iomem *base_address = drvdata->base_address;
 
-	अगर (buffer_icap_busy(base_address))
-		वापस -EBUSY;
+	if (buffer_icap_busy(base_address))
+		return -EBUSY;
 
-	अगर ((offset + count) > XHI_MAX_BUFFER_INTS)
-		वापस -EINVAL;
+	if ((offset + count) > XHI_MAX_BUFFER_INTS)
+		return -EINVAL;
 
 	/* setSize count*4 to get bytes. */
 	buffer_icap_set_size(base_address, (count << 2));
 	buffer_icap_set_offset(base_address, offset);
 	buffer_icap_set_rnc(base_address, XHI_READBACK);
 
-	जबतक (buffer_icap_busy(base_address)) अणु
+	while (buffer_icap_busy(base_address)) {
 		retries++;
-		अगर (retries > XHI_MAX_RETRIES)
-			वापस -EBUSY;
-	पूर्ण
-	वापस 0;
+		if (retries > XHI_MAX_RETRIES)
+			return -EBUSY;
+	}
+	return 0;
 
-पूर्ण;
+};
 
 /**
- * buffer_icap_device_ग_लिखो - Transfer bytes from ICAP to the storage buffer.
- * @drvdata: a poपूर्णांकer to the drvdata.
+ * buffer_icap_device_write - Transfer bytes from ICAP to the storage buffer.
+ * @drvdata: a pointer to the drvdata.
  * @offset: The storage buffer start address.
- * @count: The number of words (32 bit) to पढ़ो from the
+ * @count: The number of words (32 bit) to read from the
  *           device (ICAP).
  **/
-अटल पूर्णांक buffer_icap_device_ग_लिखो(काष्ठा hwicap_drvdata *drvdata,
+static int buffer_icap_device_write(struct hwicap_drvdata *drvdata,
 		u32 offset, u32 count)
-अणु
+{
 
 	s32 retries = 0;
-	व्योम __iomem *base_address = drvdata->base_address;
+	void __iomem *base_address = drvdata->base_address;
 
-	अगर (buffer_icap_busy(base_address))
-		वापस -EBUSY;
+	if (buffer_icap_busy(base_address))
+		return -EBUSY;
 
-	अगर ((offset + count) > XHI_MAX_BUFFER_INTS)
-		वापस -EINVAL;
+	if ((offset + count) > XHI_MAX_BUFFER_INTS)
+		return -EINVAL;
 
 	/* setSize count*4 to get bytes. */
 	buffer_icap_set_size(base_address, count << 2);
 	buffer_icap_set_offset(base_address, offset);
 	buffer_icap_set_rnc(base_address, XHI_CONFIGURE);
 
-	जबतक (buffer_icap_busy(base_address)) अणु
+	while (buffer_icap_busy(base_address)) {
 		retries++;
-		अगर (retries > XHI_MAX_RETRIES)
-			वापस -EBUSY;
-	पूर्ण
-	वापस 0;
+		if (retries > XHI_MAX_RETRIES)
+			return -EBUSY;
+	}
+	return 0;
 
-पूर्ण;
+};
 
 /**
  * buffer_icap_reset - Reset the logic of the icap device.
- * @drvdata: a poपूर्णांकer to the drvdata.
+ * @drvdata: a pointer to the drvdata.
  *
- * Writing to the status रेजिस्टर resets the ICAP logic in an पूर्णांकernal
+ * Writing to the status register resets the ICAP logic in an internal
  * version of the core.  For the version of the core published in EDK,
  * this is a noop.
  **/
-व्योम buffer_icap_reset(काष्ठा hwicap_drvdata *drvdata)
-अणु
+void buffer_icap_reset(struct hwicap_drvdata *drvdata)
+{
     out_be32(drvdata->base_address + XHI_STATUS_REG_OFFSET, 0xFEFE);
-पूर्ण
+}
 
 /**
- * buffer_icap_set_configuration - Load a partial bitstream from प्रणाली memory.
- * @drvdata: a poपूर्णांकer to the drvdata.
+ * buffer_icap_set_configuration - Load a partial bitstream from system memory.
+ * @drvdata: a pointer to the drvdata.
  * @data: Kernel address of the partial bitstream.
  * @size: the size of the partial bitstream in 32 bit words.
  **/
-पूर्णांक buffer_icap_set_configuration(काष्ठा hwicap_drvdata *drvdata, u32 *data,
+int buffer_icap_set_configuration(struct hwicap_drvdata *drvdata, u32 *data,
 			     u32 size)
-अणु
-	पूर्णांक status;
+{
+	int status;
 	s32 buffer_count = 0;
 	bool dirty = false;
 	u32 i;
-	व्योम __iomem *base_address = drvdata->base_address;
+	void __iomem *base_address = drvdata->base_address;
 
 	/* Loop through all the data */
-	क्रम (i = 0, buffer_count = 0; i < size; i++) अणु
+	for (i = 0, buffer_count = 0; i < size; i++) {
 
 		/* Copy data to bram */
 		buffer_icap_set_bram(base_address, buffer_count, data[i]);
 		dirty = true;
 
-		अगर (buffer_count < XHI_MAX_BUFFER_INTS - 1) अणु
+		if (buffer_count < XHI_MAX_BUFFER_INTS - 1) {
 			buffer_count++;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/* Write data to ICAP */
-		status = buffer_icap_device_ग_लिखो(
+		status = buffer_icap_device_write(
 				drvdata,
 				XHI_BUFFER_START,
 				XHI_MAX_BUFFER_INTS);
-		अगर (status != 0) अणु
-			/* पात. */
+		if (status != 0) {
+			/* abort. */
 			buffer_icap_reset(drvdata);
-			वापस status;
-		पूर्ण
+			return status;
+		}
 
 		buffer_count = 0;
 		dirty = false;
-	पूर्ण
+	}
 
 	/* Write unwritten data to ICAP */
-	अगर (dirty) अणु
+	if (dirty) {
 		/* Write data to ICAP */
-		status = buffer_icap_device_ग_लिखो(drvdata, XHI_BUFFER_START,
+		status = buffer_icap_device_write(drvdata, XHI_BUFFER_START,
 					     buffer_count);
-		अगर (status != 0) अणु
-			/* पात. */
+		if (status != 0) {
+			/* abort. */
 			buffer_icap_reset(drvdata);
-		पूर्ण
-		वापस status;
-	पूर्ण
+		}
+		return status;
+	}
 
-	वापस 0;
-पूर्ण;
+	return 0;
+};
 
 /**
  * buffer_icap_get_configuration - Read configuration data from the device.
- * @drvdata: a poपूर्णांकer to the drvdata.
+ * @drvdata: a pointer to the drvdata.
  * @data: Address of the data representing the partial bitstream
  * @size: the size of the partial bitstream in 32 bit words.
  **/
-पूर्णांक buffer_icap_get_configuration(काष्ठा hwicap_drvdata *drvdata, u32 *data,
+int buffer_icap_get_configuration(struct hwicap_drvdata *drvdata, u32 *data,
 			     u32 size)
-अणु
-	पूर्णांक status;
+{
+	int status;
 	s32 buffer_count = 0;
 	u32 i;
-	व्योम __iomem *base_address = drvdata->base_address;
+	void __iomem *base_address = drvdata->base_address;
 
 	/* Loop through all the data */
-	क्रम (i = 0, buffer_count = XHI_MAX_BUFFER_INTS; i < size; i++) अणु
-		अगर (buffer_count == XHI_MAX_BUFFER_INTS) अणु
-			u32 words_reमुख्यing = size - i;
-			u32 words_to_पढ़ो =
-				words_reमुख्यing <
-				XHI_MAX_BUFFER_INTS ? words_reमुख्यing :
+	for (i = 0, buffer_count = XHI_MAX_BUFFER_INTS; i < size; i++) {
+		if (buffer_count == XHI_MAX_BUFFER_INTS) {
+			u32 words_remaining = size - i;
+			u32 words_to_read =
+				words_remaining <
+				XHI_MAX_BUFFER_INTS ? words_remaining :
 				XHI_MAX_BUFFER_INTS;
 
 			/* Read data from ICAP */
-			status = buffer_icap_device_पढ़ो(
+			status = buffer_icap_device_read(
 					drvdata,
 					XHI_BUFFER_START,
-					words_to_पढ़ो);
-			अगर (status != 0) अणु
-				/* पात. */
+					words_to_read);
+			if (status != 0) {
+				/* abort. */
 				buffer_icap_reset(drvdata);
-				वापस status;
-			पूर्ण
+				return status;
+			}
 
 			buffer_count = 0;
-		पूर्ण
+		}
 
 		/* Copy data from bram */
 		data[i] = buffer_icap_get_bram(base_address, buffer_count);
 		buffer_count++;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण;
+	return 0;
+};

@@ -1,33 +1,32 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2012 Rabin Vincent <rabin at rab.in>
  */
 
-#अगर_अघोषित __ARM_KERNEL_UPROBES_H
-#घोषणा __ARM_KERNEL_UPROBES_H
+#ifndef __ARM_KERNEL_UPROBES_H
+#define __ARM_KERNEL_UPROBES_H
 
-क्रमागत probes_insn uprobe_decode_ldmsपंचांग(probes_opcode_t insn,
-				      काष्ठा arch_probes_insn *asi,
-				      स्थिर काष्ठा decode_header *d);
+enum probes_insn uprobe_decode_ldmstm(probes_opcode_t insn,
+				      struct arch_probes_insn *asi,
+				      const struct decode_header *d);
 
-क्रमागत probes_insn decode_ldr(probes_opcode_t insn,
-			    काष्ठा arch_probes_insn *asi,
-			    स्थिर काष्ठा decode_header *d);
+enum probes_insn decode_ldr(probes_opcode_t insn,
+			    struct arch_probes_insn *asi,
+			    const struct decode_header *d);
 
-क्रमागत probes_insn
+enum probes_insn
 decode_rd12rn16rm0rs8_rwflags(probes_opcode_t insn,
-			      काष्ठा arch_probes_insn *asi,
-			      स्थिर काष्ठा decode_header *d);
+			      struct arch_probes_insn *asi,
+			      const struct decode_header *d);
 
-क्रमागत probes_insn
-decode_wb_pc(probes_opcode_t insn, काष्ठा arch_probes_insn *asi,
-	     स्थिर काष्ठा decode_header *d, bool alu);
+enum probes_insn
+decode_wb_pc(probes_opcode_t insn, struct arch_probes_insn *asi,
+	     const struct decode_header *d, bool alu);
 
-क्रमागत probes_insn
-decode_pc_ro(probes_opcode_t insn, काष्ठा arch_probes_insn *asi,
-	     स्थिर काष्ठा decode_header *d);
+enum probes_insn
+decode_pc_ro(probes_opcode_t insn, struct arch_probes_insn *asi,
+	     const struct decode_header *d);
 
-बाह्य स्थिर जोड़ decode_action uprobes_probes_actions[];
+extern const union decode_action uprobes_probes_actions[];
 
-#पूर्ण_अगर
+#endif

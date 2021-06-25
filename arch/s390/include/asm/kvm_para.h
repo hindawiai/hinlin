@@ -1,207 +1,206 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * definition क्रम paraभव devices on s390
+ * definition for paravirtual devices on s390
  *
  * Copyright IBM Corp. 2008
  *
  *    Author(s): Christian Borntraeger <borntraeger@de.ibm.com>
  */
 /*
- * Hypercalls क्रम KVM on s390. The calling convention is similar to the
- * s390 ABI, so we use R2-R6 क्रम parameters 1-5. In addition we use R1
- * as hypercall number and R7 as parameter 6. The वापस value is
- * written to R2. We use the diagnose inकाष्ठाion as hypercall. To aव्योम
- * conflicts with existing diagnoses क्रम LPAR and z/VM, we करो not use
- * the inकाष्ठाion encoded number, but specअगरy the number in R1 and
+ * Hypercalls for KVM on s390. The calling convention is similar to the
+ * s390 ABI, so we use R2-R6 for parameters 1-5. In addition we use R1
+ * as hypercall number and R7 as parameter 6. The return value is
+ * written to R2. We use the diagnose instruction as hypercall. To avoid
+ * conflicts with existing diagnoses for LPAR and z/VM, we do not use
+ * the instruction encoded number, but specify the number in R1 and
  * use 0x500 as KVM hypercall
  *
  * Copyright IBM Corp. 2007,2008
  * Author(s): Christian Borntraeger <borntraeger@de.ibm.com>
  */
-#अगर_अघोषित __S390_KVM_PARA_H
-#घोषणा __S390_KVM_PARA_H
+#ifndef __S390_KVM_PARA_H
+#define __S390_KVM_PARA_H
 
-#समावेश <uapi/यंत्र/kvm_para.h>
-#समावेश <यंत्र/diag.h>
+#include <uapi/asm/kvm_para.h>
+#include <asm/diag.h>
 
-अटल अंतरभूत दीर्घ __kvm_hypercall0(अचिन्हित दीर्घ nr)
-अणु
-	रेजिस्टर अचिन्हित दीर्घ __nr यंत्र("1") = nr;
-	रेजिस्टर दीर्घ __rc यंत्र("2");
+static inline long __kvm_hypercall0(unsigned long nr)
+{
+	register unsigned long __nr asm("1") = nr;
+	register long __rc asm("2");
 
-	यंत्र अस्थिर ("diag 2,4,0x500\n"
+	asm volatile ("diag 2,4,0x500\n"
 		      : "=d" (__rc) : "d" (__nr): "memory", "cc");
-	वापस __rc;
-पूर्ण
+	return __rc;
+}
 
-अटल अंतरभूत दीर्घ kvm_hypercall0(अचिन्हित दीर्घ nr)
-अणु
+static inline long kvm_hypercall0(unsigned long nr)
+{
 	diag_stat_inc(DIAG_STAT_X500);
-	वापस __kvm_hypercall0(nr);
-पूर्ण
+	return __kvm_hypercall0(nr);
+}
 
-अटल अंतरभूत दीर्घ __kvm_hypercall1(अचिन्हित दीर्घ nr, अचिन्हित दीर्घ p1)
-अणु
-	रेजिस्टर अचिन्हित दीर्घ __nr यंत्र("1") = nr;
-	रेजिस्टर अचिन्हित दीर्घ __p1 यंत्र("2") = p1;
-	रेजिस्टर दीर्घ __rc यंत्र("2");
+static inline long __kvm_hypercall1(unsigned long nr, unsigned long p1)
+{
+	register unsigned long __nr asm("1") = nr;
+	register unsigned long __p1 asm("2") = p1;
+	register long __rc asm("2");
 
-	यंत्र अस्थिर ("diag 2,4,0x500\n"
+	asm volatile ("diag 2,4,0x500\n"
 		      : "=d" (__rc) : "d" (__nr), "0" (__p1) : "memory", "cc");
-	वापस __rc;
-पूर्ण
+	return __rc;
+}
 
-अटल अंतरभूत दीर्घ kvm_hypercall1(अचिन्हित दीर्घ nr, अचिन्हित दीर्घ p1)
-अणु
+static inline long kvm_hypercall1(unsigned long nr, unsigned long p1)
+{
 	diag_stat_inc(DIAG_STAT_X500);
-	वापस __kvm_hypercall1(nr, p1);
-पूर्ण
+	return __kvm_hypercall1(nr, p1);
+}
 
-अटल अंतरभूत दीर्घ __kvm_hypercall2(अचिन्हित दीर्घ nr, अचिन्हित दीर्घ p1,
-			       अचिन्हित दीर्घ p2)
-अणु
-	रेजिस्टर अचिन्हित दीर्घ __nr यंत्र("1") = nr;
-	रेजिस्टर अचिन्हित दीर्घ __p1 यंत्र("2") = p1;
-	रेजिस्टर अचिन्हित दीर्घ __p2 यंत्र("3") = p2;
-	रेजिस्टर दीर्घ __rc यंत्र("2");
+static inline long __kvm_hypercall2(unsigned long nr, unsigned long p1,
+			       unsigned long p2)
+{
+	register unsigned long __nr asm("1") = nr;
+	register unsigned long __p1 asm("2") = p1;
+	register unsigned long __p2 asm("3") = p2;
+	register long __rc asm("2");
 
-	यंत्र अस्थिर ("diag 2,4,0x500\n"
+	asm volatile ("diag 2,4,0x500\n"
 		      : "=d" (__rc) : "d" (__nr), "0" (__p1), "d" (__p2)
 		      : "memory", "cc");
-	वापस __rc;
-पूर्ण
+	return __rc;
+}
 
-अटल अंतरभूत दीर्घ kvm_hypercall2(अचिन्हित दीर्घ nr, अचिन्हित दीर्घ p1,
-			       अचिन्हित दीर्घ p2)
-अणु
+static inline long kvm_hypercall2(unsigned long nr, unsigned long p1,
+			       unsigned long p2)
+{
 	diag_stat_inc(DIAG_STAT_X500);
-	वापस __kvm_hypercall2(nr, p1, p2);
-पूर्ण
+	return __kvm_hypercall2(nr, p1, p2);
+}
 
-अटल अंतरभूत दीर्घ __kvm_hypercall3(अचिन्हित दीर्घ nr, अचिन्हित दीर्घ p1,
-			       अचिन्हित दीर्घ p2, अचिन्हित दीर्घ p3)
-अणु
-	रेजिस्टर अचिन्हित दीर्घ __nr यंत्र("1") = nr;
-	रेजिस्टर अचिन्हित दीर्घ __p1 यंत्र("2") = p1;
-	रेजिस्टर अचिन्हित दीर्घ __p2 यंत्र("3") = p2;
-	रेजिस्टर अचिन्हित दीर्घ __p3 यंत्र("4") = p3;
-	रेजिस्टर दीर्घ __rc यंत्र("2");
+static inline long __kvm_hypercall3(unsigned long nr, unsigned long p1,
+			       unsigned long p2, unsigned long p3)
+{
+	register unsigned long __nr asm("1") = nr;
+	register unsigned long __p1 asm("2") = p1;
+	register unsigned long __p2 asm("3") = p2;
+	register unsigned long __p3 asm("4") = p3;
+	register long __rc asm("2");
 
-	यंत्र अस्थिर ("diag 2,4,0x500\n"
+	asm volatile ("diag 2,4,0x500\n"
 		      : "=d" (__rc) : "d" (__nr), "0" (__p1), "d" (__p2),
 			"d" (__p3) : "memory", "cc");
-	वापस __rc;
-पूर्ण
+	return __rc;
+}
 
-अटल अंतरभूत दीर्घ kvm_hypercall3(अचिन्हित दीर्घ nr, अचिन्हित दीर्घ p1,
-			       अचिन्हित दीर्घ p2, अचिन्हित दीर्घ p3)
-अणु
+static inline long kvm_hypercall3(unsigned long nr, unsigned long p1,
+			       unsigned long p2, unsigned long p3)
+{
 	diag_stat_inc(DIAG_STAT_X500);
-	वापस __kvm_hypercall3(nr, p1, p2, p3);
-पूर्ण
+	return __kvm_hypercall3(nr, p1, p2, p3);
+}
 
-अटल अंतरभूत दीर्घ __kvm_hypercall4(अचिन्हित दीर्घ nr, अचिन्हित दीर्घ p1,
-			       अचिन्हित दीर्घ p2, अचिन्हित दीर्घ p3,
-			       अचिन्हित दीर्घ p4)
-अणु
-	रेजिस्टर अचिन्हित दीर्घ __nr यंत्र("1") = nr;
-	रेजिस्टर अचिन्हित दीर्घ __p1 यंत्र("2") = p1;
-	रेजिस्टर अचिन्हित दीर्घ __p2 यंत्र("3") = p2;
-	रेजिस्टर अचिन्हित दीर्घ __p3 यंत्र("4") = p3;
-	रेजिस्टर अचिन्हित दीर्घ __p4 यंत्र("5") = p4;
-	रेजिस्टर दीर्घ __rc यंत्र("2");
+static inline long __kvm_hypercall4(unsigned long nr, unsigned long p1,
+			       unsigned long p2, unsigned long p3,
+			       unsigned long p4)
+{
+	register unsigned long __nr asm("1") = nr;
+	register unsigned long __p1 asm("2") = p1;
+	register unsigned long __p2 asm("3") = p2;
+	register unsigned long __p3 asm("4") = p3;
+	register unsigned long __p4 asm("5") = p4;
+	register long __rc asm("2");
 
-	यंत्र अस्थिर ("diag 2,4,0x500\n"
+	asm volatile ("diag 2,4,0x500\n"
 		      : "=d" (__rc) : "d" (__nr), "0" (__p1), "d" (__p2),
 			"d" (__p3), "d" (__p4) : "memory", "cc");
-	वापस __rc;
-पूर्ण
+	return __rc;
+}
 
-अटल अंतरभूत दीर्घ kvm_hypercall4(अचिन्हित दीर्घ nr, अचिन्हित दीर्घ p1,
-			       अचिन्हित दीर्घ p2, अचिन्हित दीर्घ p3,
-			       अचिन्हित दीर्घ p4)
-अणु
+static inline long kvm_hypercall4(unsigned long nr, unsigned long p1,
+			       unsigned long p2, unsigned long p3,
+			       unsigned long p4)
+{
 	diag_stat_inc(DIAG_STAT_X500);
-	वापस __kvm_hypercall4(nr, p1, p2, p3, p4);
-पूर्ण
+	return __kvm_hypercall4(nr, p1, p2, p3, p4);
+}
 
-अटल अंतरभूत दीर्घ __kvm_hypercall5(अचिन्हित दीर्घ nr, अचिन्हित दीर्घ p1,
-			       अचिन्हित दीर्घ p2, अचिन्हित दीर्घ p3,
-			       अचिन्हित दीर्घ p4, अचिन्हित दीर्घ p5)
-अणु
-	रेजिस्टर अचिन्हित दीर्घ __nr यंत्र("1") = nr;
-	रेजिस्टर अचिन्हित दीर्घ __p1 यंत्र("2") = p1;
-	रेजिस्टर अचिन्हित दीर्घ __p2 यंत्र("3") = p2;
-	रेजिस्टर अचिन्हित दीर्घ __p3 यंत्र("4") = p3;
-	रेजिस्टर अचिन्हित दीर्घ __p4 यंत्र("5") = p4;
-	रेजिस्टर अचिन्हित दीर्घ __p5 यंत्र("6") = p5;
-	रेजिस्टर दीर्घ __rc यंत्र("2");
+static inline long __kvm_hypercall5(unsigned long nr, unsigned long p1,
+			       unsigned long p2, unsigned long p3,
+			       unsigned long p4, unsigned long p5)
+{
+	register unsigned long __nr asm("1") = nr;
+	register unsigned long __p1 asm("2") = p1;
+	register unsigned long __p2 asm("3") = p2;
+	register unsigned long __p3 asm("4") = p3;
+	register unsigned long __p4 asm("5") = p4;
+	register unsigned long __p5 asm("6") = p5;
+	register long __rc asm("2");
 
-	यंत्र अस्थिर ("diag 2,4,0x500\n"
+	asm volatile ("diag 2,4,0x500\n"
 		      : "=d" (__rc) : "d" (__nr), "0" (__p1), "d" (__p2),
 			"d" (__p3), "d" (__p4), "d" (__p5)  : "memory", "cc");
-	वापस __rc;
-पूर्ण
+	return __rc;
+}
 
-अटल अंतरभूत दीर्घ kvm_hypercall5(अचिन्हित दीर्घ nr, अचिन्हित दीर्घ p1,
-			       अचिन्हित दीर्घ p2, अचिन्हित दीर्घ p3,
-			       अचिन्हित दीर्घ p4, अचिन्हित दीर्घ p5)
-अणु
+static inline long kvm_hypercall5(unsigned long nr, unsigned long p1,
+			       unsigned long p2, unsigned long p3,
+			       unsigned long p4, unsigned long p5)
+{
 	diag_stat_inc(DIAG_STAT_X500);
-	वापस __kvm_hypercall5(nr, p1, p2, p3, p4, p5);
-पूर्ण
+	return __kvm_hypercall5(nr, p1, p2, p3, p4, p5);
+}
 
-अटल अंतरभूत दीर्घ __kvm_hypercall6(अचिन्हित दीर्घ nr, अचिन्हित दीर्घ p1,
-			       अचिन्हित दीर्घ p2, अचिन्हित दीर्घ p3,
-			       अचिन्हित दीर्घ p4, अचिन्हित दीर्घ p5,
-			       अचिन्हित दीर्घ p6)
-अणु
-	रेजिस्टर अचिन्हित दीर्घ __nr यंत्र("1") = nr;
-	रेजिस्टर अचिन्हित दीर्घ __p1 यंत्र("2") = p1;
-	रेजिस्टर अचिन्हित दीर्घ __p2 यंत्र("3") = p2;
-	रेजिस्टर अचिन्हित दीर्घ __p3 यंत्र("4") = p3;
-	रेजिस्टर अचिन्हित दीर्घ __p4 यंत्र("5") = p4;
-	रेजिस्टर अचिन्हित दीर्घ __p5 यंत्र("6") = p5;
-	रेजिस्टर अचिन्हित दीर्घ __p6 यंत्र("7") = p6;
-	रेजिस्टर दीर्घ __rc यंत्र("2");
+static inline long __kvm_hypercall6(unsigned long nr, unsigned long p1,
+			       unsigned long p2, unsigned long p3,
+			       unsigned long p4, unsigned long p5,
+			       unsigned long p6)
+{
+	register unsigned long __nr asm("1") = nr;
+	register unsigned long __p1 asm("2") = p1;
+	register unsigned long __p2 asm("3") = p2;
+	register unsigned long __p3 asm("4") = p3;
+	register unsigned long __p4 asm("5") = p4;
+	register unsigned long __p5 asm("6") = p5;
+	register unsigned long __p6 asm("7") = p6;
+	register long __rc asm("2");
 
-	यंत्र अस्थिर ("diag 2,4,0x500\n"
+	asm volatile ("diag 2,4,0x500\n"
 		      : "=d" (__rc) : "d" (__nr), "0" (__p1), "d" (__p2),
 			"d" (__p3), "d" (__p4), "d" (__p5), "d" (__p6)
 		      : "memory", "cc");
-	वापस __rc;
-पूर्ण
+	return __rc;
+}
 
-अटल अंतरभूत दीर्घ kvm_hypercall6(अचिन्हित दीर्घ nr, अचिन्हित दीर्घ p1,
-			       अचिन्हित दीर्घ p2, अचिन्हित दीर्घ p3,
-			       अचिन्हित दीर्घ p4, अचिन्हित दीर्घ p5,
-			       अचिन्हित दीर्घ p6)
-अणु
+static inline long kvm_hypercall6(unsigned long nr, unsigned long p1,
+			       unsigned long p2, unsigned long p3,
+			       unsigned long p4, unsigned long p5,
+			       unsigned long p6)
+{
 	diag_stat_inc(DIAG_STAT_X500);
-	वापस __kvm_hypercall6(nr, p1, p2, p3, p4, p5, p6);
-पूर्ण
+	return __kvm_hypercall6(nr, p1, p2, p3, p4, p5, p6);
+}
 
-/* kvm on s390 is always paraभवization enabled */
-अटल अंतरभूत पूर्णांक kvm_para_available(व्योम)
-अणु
-	वापस 1;
-पूर्ण
+/* kvm on s390 is always paravirtualization enabled */
+static inline int kvm_para_available(void)
+{
+	return 1;
+}
 
-/* No feature bits are currently asचिन्हित क्रम kvm on s390 */
-अटल अंतरभूत अचिन्हित पूर्णांक kvm_arch_para_features(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+/* No feature bits are currently assigned for kvm on s390 */
+static inline unsigned int kvm_arch_para_features(void)
+{
+	return 0;
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक kvm_arch_para_hपूर्णांकs(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+static inline unsigned int kvm_arch_para_hints(void)
+{
+	return 0;
+}
 
-अटल अंतरभूत bool kvm_check_and_clear_guest_छोड़ोd(व्योम)
-अणु
-	वापस false;
-पूर्ण
+static inline bool kvm_check_and_clear_guest_paused(void)
+{
+	return false;
+}
 
-#पूर्ण_अगर /* __S390_KVM_PARA_H */
+#endif /* __S390_KVM_PARA_H */

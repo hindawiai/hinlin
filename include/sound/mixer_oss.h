@@ -1,67 +1,66 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
-#अगर_अघोषित __SOUND_MIXER_OSS_H
-#घोषणा __SOUND_MIXER_OSS_H
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+#ifndef __SOUND_MIXER_OSS_H
+#define __SOUND_MIXER_OSS_H
 
 /*
  *  OSS MIXER API
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  */
 
-#अगर IS_ENABLED(CONFIG_SND_MIXER_OSS)
+#if IS_ENABLED(CONFIG_SND_MIXER_OSS)
 
-#घोषणा SNDRV_OSS_MAX_MIXERS	32
+#define SNDRV_OSS_MAX_MIXERS	32
 
-काष्ठा snd_mixer_oss_file;
+struct snd_mixer_oss_file;
 
-काष्ठा snd_mixer_oss_slot अणु
-	पूर्णांक number;
-	अचिन्हित पूर्णांक stereo: 1;
-	पूर्णांक (*get_volume)(काष्ठा snd_mixer_oss_file *fmixer,
-			  काष्ठा snd_mixer_oss_slot *chn,
-			  पूर्णांक *left, पूर्णांक *right);
-	पूर्णांक (*put_volume)(काष्ठा snd_mixer_oss_file *fmixer,
-			  काष्ठा snd_mixer_oss_slot *chn,
-			  पूर्णांक left, पूर्णांक right);
-	पूर्णांक (*get_recsrc)(काष्ठा snd_mixer_oss_file *fmixer,
-			  काष्ठा snd_mixer_oss_slot *chn,
-			  पूर्णांक *active);
-	पूर्णांक (*put_recsrc)(काष्ठा snd_mixer_oss_file *fmixer,
-			  काष्ठा snd_mixer_oss_slot *chn,
-			  पूर्णांक active);
-	अचिन्हित दीर्घ निजी_value;
-	व्योम *निजी_data;
-	व्योम (*निजी_मुक्त)(काष्ठा snd_mixer_oss_slot *slot);
-	पूर्णांक volume[2];
-पूर्ण;
+struct snd_mixer_oss_slot {
+	int number;
+	unsigned int stereo: 1;
+	int (*get_volume)(struct snd_mixer_oss_file *fmixer,
+			  struct snd_mixer_oss_slot *chn,
+			  int *left, int *right);
+	int (*put_volume)(struct snd_mixer_oss_file *fmixer,
+			  struct snd_mixer_oss_slot *chn,
+			  int left, int right);
+	int (*get_recsrc)(struct snd_mixer_oss_file *fmixer,
+			  struct snd_mixer_oss_slot *chn,
+			  int *active);
+	int (*put_recsrc)(struct snd_mixer_oss_file *fmixer,
+			  struct snd_mixer_oss_slot *chn,
+			  int active);
+	unsigned long private_value;
+	void *private_data;
+	void (*private_free)(struct snd_mixer_oss_slot *slot);
+	int volume[2];
+};
 
-काष्ठा snd_mixer_oss अणु
-	काष्ठा snd_card *card;
-	अक्षर id[16];
-	अक्षर name[32];
-	काष्ठा snd_mixer_oss_slot slots[SNDRV_OSS_MAX_MIXERS]; /* OSS mixer slots */
-	अचिन्हित पूर्णांक mask_recsrc;		/* exclusive recsrc mask */
-	पूर्णांक (*get_recsrc)(काष्ठा snd_mixer_oss_file *fmixer,
-			  अचिन्हित पूर्णांक *active_index);
-	पूर्णांक (*put_recsrc)(काष्ठा snd_mixer_oss_file *fmixer,
-			  अचिन्हित पूर्णांक active_index);
-	व्योम *निजी_data_recsrc;
-	व्योम (*निजी_मुक्त_recsrc)(काष्ठा snd_mixer_oss *mixer);
-	काष्ठा mutex reg_mutex;
-	काष्ठा snd_info_entry *proc_entry;
-	पूर्णांक oss_dev_alloc;
+struct snd_mixer_oss {
+	struct snd_card *card;
+	char id[16];
+	char name[32];
+	struct snd_mixer_oss_slot slots[SNDRV_OSS_MAX_MIXERS]; /* OSS mixer slots */
+	unsigned int mask_recsrc;		/* exclusive recsrc mask */
+	int (*get_recsrc)(struct snd_mixer_oss_file *fmixer,
+			  unsigned int *active_index);
+	int (*put_recsrc)(struct snd_mixer_oss_file *fmixer,
+			  unsigned int active_index);
+	void *private_data_recsrc;
+	void (*private_free_recsrc)(struct snd_mixer_oss *mixer);
+	struct mutex reg_mutex;
+	struct snd_info_entry *proc_entry;
+	int oss_dev_alloc;
 	/* --- */
-	पूर्णांक oss_recsrc;
-पूर्ण;
+	int oss_recsrc;
+};
 
-काष्ठा snd_mixer_oss_file अणु
-	काष्ठा snd_card *card;
-	काष्ठा snd_mixer_oss *mixer;
-पूर्ण;
+struct snd_mixer_oss_file {
+	struct snd_card *card;
+	struct snd_mixer_oss *mixer;
+};
 
-पूर्णांक snd_mixer_oss_ioctl_card(काष्ठा snd_card *card,
-			     अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg);
+int snd_mixer_oss_ioctl_card(struct snd_card *card,
+			     unsigned int cmd, unsigned long arg);
 
-#पूर्ण_अगर /* CONFIG_SND_MIXER_OSS */
+#endif /* CONFIG_SND_MIXER_OSS */
 
-#पूर्ण_अगर /* __SOUND_MIXER_OSS_H */
+#endif /* __SOUND_MIXER_OSS_H */

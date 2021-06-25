@@ -1,520 +1,519 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * arch/arm/kernel/unwind.c
  *
  * Copyright (C) 2008 ARM Limited
  *
- * Stack unwinding support क्रम ARM
+ * Stack unwinding support for ARM
  *
  * An ARM EABI version of gcc is required to generate the unwind
- * tables. For inक्रमmation about the काष्ठाure of the unwind tables,
+ * tables. For information about the structure of the unwind tables,
  * see "Exception Handling ABI for the ARM Architecture" at:
  *
- * http://infocenter.arm.com/help/topic/com.arm.करोc.subset.swdev.abi/index.hपंचांगl
+ * http://infocenter.arm.com/help/topic/com.arm.doc.subset.swdev.abi/index.html
  */
 
-#अगर_अघोषित __CHECKER__
-#अगर !defined (__ARM_EABI__)
-#warning Your compiler करोes not have EABI support.
+#ifndef __CHECKER__
+#if !defined (__ARM_EABI__)
+#warning Your compiler does not have EABI support.
 #warning    ARM unwind is known to compile only with EABI compilers.
 #warning    Change compiler or disable ARM_UNWIND option.
-#पूर्ण_अगर
-#पूर्ण_अगर /* __CHECKER__ */
+#endif
+#endif /* __CHECKER__ */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/export.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/list.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/export.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/list.h>
 
-#समावेश <यंत्र/stacktrace.h>
-#समावेश <यंत्र/traps.h>
-#समावेश <यंत्र/unwind.h>
+#include <asm/stacktrace.h>
+#include <asm/traps.h>
+#include <asm/unwind.h>
 
-/* Dummy functions to aव्योम linker complaपूर्णांकs */
-व्योम __aeabi_unwind_cpp_pr0(व्योम)
-अणु
-पूर्ण;
+/* Dummy functions to avoid linker complaints */
+void __aeabi_unwind_cpp_pr0(void)
+{
+};
 EXPORT_SYMBOL(__aeabi_unwind_cpp_pr0);
 
-व्योम __aeabi_unwind_cpp_pr1(व्योम)
-अणु
-पूर्ण;
+void __aeabi_unwind_cpp_pr1(void)
+{
+};
 EXPORT_SYMBOL(__aeabi_unwind_cpp_pr1);
 
-व्योम __aeabi_unwind_cpp_pr2(व्योम)
-अणु
-पूर्ण;
+void __aeabi_unwind_cpp_pr2(void)
+{
+};
 EXPORT_SYMBOL(__aeabi_unwind_cpp_pr2);
 
-काष्ठा unwind_ctrl_block अणु
-	अचिन्हित दीर्घ vrs[16];		/* भव रेजिस्टर set */
-	स्थिर अचिन्हित दीर्घ *insn;	/* poपूर्णांकer to the current inकाष्ठाions word */
-	अचिन्हित दीर्घ sp_high;		/* highest value of sp allowed */
+struct unwind_ctrl_block {
+	unsigned long vrs[16];		/* virtual register set */
+	const unsigned long *insn;	/* pointer to the current instructions word */
+	unsigned long sp_high;		/* highest value of sp allowed */
 	/*
-	 * 1 : check क्रम stack overflow क्रम each रेजिस्टर pop.
-	 * 0 : save overhead अगर there is plenty of stack reमुख्यing.
+	 * 1 : check for stack overflow for each register pop.
+	 * 0 : save overhead if there is plenty of stack remaining.
 	 */
-	पूर्णांक check_each_pop;
-	पूर्णांक entries;			/* number of entries left to पूर्णांकerpret */
-	पूर्णांक byte;			/* current byte number in the inकाष्ठाions word */
-पूर्ण;
+	int check_each_pop;
+	int entries;			/* number of entries left to interpret */
+	int byte;			/* current byte number in the instructions word */
+};
 
-क्रमागत regs अणु
-#अगर_घोषित CONFIG_THUMB2_KERNEL
+enum regs {
+#ifdef CONFIG_THUMB2_KERNEL
 	FP = 7,
-#अन्यथा
+#else
 	FP = 11,
-#पूर्ण_अगर
+#endif
 	SP = 13,
 	LR = 14,
 	PC = 15
-पूर्ण;
+};
 
-बाह्य स्थिर काष्ठा unwind_idx __start_unwind_idx[];
-अटल स्थिर काष्ठा unwind_idx *__origin_unwind_idx;
-बाह्य स्थिर काष्ठा unwind_idx __stop_unwind_idx[];
+extern const struct unwind_idx __start_unwind_idx[];
+static const struct unwind_idx *__origin_unwind_idx;
+extern const struct unwind_idx __stop_unwind_idx[];
 
-अटल DEFINE_RAW_SPINLOCK(unwind_lock);
-अटल LIST_HEAD(unwind_tables);
+static DEFINE_RAW_SPINLOCK(unwind_lock);
+static LIST_HEAD(unwind_tables);
 
-/* Convert a prel31 symbol to an असलolute address */
-#घोषणा prel31_to_addr(ptr)				\
-(अणु							\
+/* Convert a prel31 symbol to an absolute address */
+#define prel31_to_addr(ptr)				\
+({							\
 	/* sign-extend to 32 bits */			\
-	दीर्घ offset = (((दीर्घ)*(ptr)) << 1) >> 1;	\
-	(अचिन्हित दीर्घ)(ptr) + offset;			\
-पूर्ण)
+	long offset = (((long)*(ptr)) << 1) >> 1;	\
+	(unsigned long)(ptr) + offset;			\
+})
 
 /*
  * Binary search in the unwind index. The entries are
  * guaranteed to be sorted in ascending order by the linker.
  *
  * start = first entry
- * origin = first entry with positive offset (or stop अगर there is no such entry)
+ * origin = first entry with positive offset (or stop if there is no such entry)
  * stop - 1 = last entry
  */
-अटल स्थिर काष्ठा unwind_idx *search_index(अचिन्हित दीर्घ addr,
-				       स्थिर काष्ठा unwind_idx *start,
-				       स्थिर काष्ठा unwind_idx *origin,
-				       स्थिर काष्ठा unwind_idx *stop)
-अणु
-	अचिन्हित दीर्घ addr_prel31;
+static const struct unwind_idx *search_index(unsigned long addr,
+				       const struct unwind_idx *start,
+				       const struct unwind_idx *origin,
+				       const struct unwind_idx *stop)
+{
+	unsigned long addr_prel31;
 
 	pr_debug("%s(%08lx, %p, %p, %p)\n",
 			__func__, addr, start, origin, stop);
 
 	/*
 	 * only search in the section with the matching sign. This way the
-	 * prel31 numbers can be compared as अचिन्हित दीर्घs.
+	 * prel31 numbers can be compared as unsigned longs.
 	 */
-	अगर (addr < (अचिन्हित दीर्घ)start)
+	if (addr < (unsigned long)start)
 		/* negative offsets: [start; origin) */
 		stop = origin;
-	अन्यथा
+	else
 		/* positive offsets: [origin; stop) */
 		start = origin;
 
-	/* prel31 क्रम address relavive to start */
-	addr_prel31 = (addr - (अचिन्हित दीर्घ)start) & 0x7fffffff;
+	/* prel31 for address relavive to start */
+	addr_prel31 = (addr - (unsigned long)start) & 0x7fffffff;
 
-	जबतक (start < stop - 1) अणु
-		स्थिर काष्ठा unwind_idx *mid = start + ((stop - start) >> 1);
+	while (start < stop - 1) {
+		const struct unwind_idx *mid = start + ((stop - start) >> 1);
 
 		/*
 		 * As addr_prel31 is relative to start an offset is needed to
 		 * make it relative to mid.
 		 */
-		अगर (addr_prel31 - ((अचिन्हित दीर्घ)mid - (अचिन्हित दीर्घ)start) <
+		if (addr_prel31 - ((unsigned long)mid - (unsigned long)start) <
 				mid->addr_offset)
 			stop = mid;
-		अन्यथा अणु
+		else {
 			/* keep addr_prel31 relative to start */
-			addr_prel31 -= ((अचिन्हित दीर्घ)mid -
-					(अचिन्हित दीर्घ)start);
+			addr_prel31 -= ((unsigned long)mid -
+					(unsigned long)start);
 			start = mid;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (likely(start->addr_offset <= addr_prel31))
-		वापस start;
-	अन्यथा अणु
+	if (likely(start->addr_offset <= addr_prel31))
+		return start;
+	else {
 		pr_warn("unwind: Unknown symbol address %08lx\n", addr);
-		वापस शून्य;
-	पूर्ण
-पूर्ण
+		return NULL;
+	}
+}
 
-अटल स्थिर काष्ठा unwind_idx *unwind_find_origin(
-		स्थिर काष्ठा unwind_idx *start, स्थिर काष्ठा unwind_idx *stop)
-अणु
+static const struct unwind_idx *unwind_find_origin(
+		const struct unwind_idx *start, const struct unwind_idx *stop)
+{
 	pr_debug("%s(%p, %p)\n", __func__, start, stop);
-	जबतक (start < stop) अणु
-		स्थिर काष्ठा unwind_idx *mid = start + ((stop - start) >> 1);
+	while (start < stop) {
+		const struct unwind_idx *mid = start + ((stop - start) >> 1);
 
-		अगर (mid->addr_offset >= 0x40000000)
+		if (mid->addr_offset >= 0x40000000)
 			/* negative offset */
 			start = mid + 1;
-		अन्यथा
+		else
 			/* positive offset */
 			stop = mid;
-	पूर्ण
+	}
 	pr_debug("%s -> %p\n", __func__, stop);
-	वापस stop;
-पूर्ण
+	return stop;
+}
 
-अटल स्थिर काष्ठा unwind_idx *unwind_find_idx(अचिन्हित दीर्घ addr)
-अणु
-	स्थिर काष्ठा unwind_idx *idx = शून्य;
-	अचिन्हित दीर्घ flags;
+static const struct unwind_idx *unwind_find_idx(unsigned long addr)
+{
+	const struct unwind_idx *idx = NULL;
+	unsigned long flags;
 
 	pr_debug("%s(%08lx)\n", __func__, addr);
 
-	अगर (core_kernel_text(addr)) अणु
-		अगर (unlikely(!__origin_unwind_idx))
+	if (core_kernel_text(addr)) {
+		if (unlikely(!__origin_unwind_idx))
 			__origin_unwind_idx =
 				unwind_find_origin(__start_unwind_idx,
 						__stop_unwind_idx);
 
-		/* मुख्य unwind table */
+		/* main unwind table */
 		idx = search_index(addr, __start_unwind_idx,
 				   __origin_unwind_idx,
 				   __stop_unwind_idx);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* module unwind tables */
-		काष्ठा unwind_table *table;
+		struct unwind_table *table;
 
 		raw_spin_lock_irqsave(&unwind_lock, flags);
-		list_क्रम_each_entry(table, &unwind_tables, list) अणु
-			अगर (addr >= table->begin_addr &&
-			    addr < table->end_addr) अणु
+		list_for_each_entry(table, &unwind_tables, list) {
+			if (addr >= table->begin_addr &&
+			    addr < table->end_addr) {
 				idx = search_index(addr, table->start,
 						   table->origin,
 						   table->stop);
 				/* Move-to-front to exploit common traces */
 				list_move(&table->list, &unwind_tables);
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 		raw_spin_unlock_irqrestore(&unwind_lock, flags);
-	पूर्ण
+	}
 
 	pr_debug("%s: idx = %p\n", __func__, idx);
-	वापस idx;
-पूर्ण
+	return idx;
+}
 
-अटल अचिन्हित दीर्घ unwind_get_byte(काष्ठा unwind_ctrl_block *ctrl)
-अणु
-	अचिन्हित दीर्घ ret;
+static unsigned long unwind_get_byte(struct unwind_ctrl_block *ctrl)
+{
+	unsigned long ret;
 
-	अगर (ctrl->entries <= 0) अणु
+	if (ctrl->entries <= 0) {
 		pr_warn("unwind: Corrupt unwind table\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	ret = (*ctrl->insn >> (ctrl->byte * 8)) & 0xff;
 
-	अगर (ctrl->byte == 0) अणु
+	if (ctrl->byte == 0) {
 		ctrl->insn++;
 		ctrl->entries--;
 		ctrl->byte = 3;
-	पूर्ण अन्यथा
+	} else
 		ctrl->byte--;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Beक्रमe poping a रेजिस्टर check whether it is feasible or not */
-अटल पूर्णांक unwind_pop_रेजिस्टर(काष्ठा unwind_ctrl_block *ctrl,
-				अचिन्हित दीर्घ **vsp, अचिन्हित पूर्णांक reg)
-अणु
-	अगर (unlikely(ctrl->check_each_pop))
-		अगर (*vsp >= (अचिन्हित दीर्घ *)ctrl->sp_high)
-			वापस -URC_FAILURE;
+/* Before poping a register check whether it is feasible or not */
+static int unwind_pop_register(struct unwind_ctrl_block *ctrl,
+				unsigned long **vsp, unsigned int reg)
+{
+	if (unlikely(ctrl->check_each_pop))
+		if (*vsp >= (unsigned long *)ctrl->sp_high)
+			return -URC_FAILURE;
 
-	/* Use READ_ONCE_NOCHECK here to aव्योम this memory access
+	/* Use READ_ONCE_NOCHECK here to avoid this memory access
 	 * from being tracked by KASAN.
 	 */
 	ctrl->vrs[reg] = READ_ONCE_NOCHECK(*(*vsp));
 	(*vsp)++;
-	वापस URC_OK;
-पूर्ण
+	return URC_OK;
+}
 
-/* Helper functions to execute the inकाष्ठाions */
-अटल पूर्णांक unwind_exec_pop_subset_r4_to_r13(काष्ठा unwind_ctrl_block *ctrl,
-						अचिन्हित दीर्घ mask)
-अणु
-	अचिन्हित दीर्घ *vsp = (अचिन्हित दीर्घ *)ctrl->vrs[SP];
-	पूर्णांक load_sp, reg = 4;
+/* Helper functions to execute the instructions */
+static int unwind_exec_pop_subset_r4_to_r13(struct unwind_ctrl_block *ctrl,
+						unsigned long mask)
+{
+	unsigned long *vsp = (unsigned long *)ctrl->vrs[SP];
+	int load_sp, reg = 4;
 
 	load_sp = mask & (1 << (13 - 4));
-	जबतक (mask) अणु
-		अगर (mask & 1)
-			अगर (unwind_pop_रेजिस्टर(ctrl, &vsp, reg))
-				वापस -URC_FAILURE;
+	while (mask) {
+		if (mask & 1)
+			if (unwind_pop_register(ctrl, &vsp, reg))
+				return -URC_FAILURE;
 		mask >>= 1;
 		reg++;
-	पूर्ण
-	अगर (!load_sp)
-		ctrl->vrs[SP] = (अचिन्हित दीर्घ)vsp;
+	}
+	if (!load_sp)
+		ctrl->vrs[SP] = (unsigned long)vsp;
 
-	वापस URC_OK;
-पूर्ण
+	return URC_OK;
+}
 
-अटल पूर्णांक unwind_exec_pop_r4_to_rN(काष्ठा unwind_ctrl_block *ctrl,
-					अचिन्हित दीर्घ insn)
-अणु
-	अचिन्हित दीर्घ *vsp = (अचिन्हित दीर्घ *)ctrl->vrs[SP];
-	पूर्णांक reg;
+static int unwind_exec_pop_r4_to_rN(struct unwind_ctrl_block *ctrl,
+					unsigned long insn)
+{
+	unsigned long *vsp = (unsigned long *)ctrl->vrs[SP];
+	int reg;
 
 	/* pop R4-R[4+bbb] */
-	क्रम (reg = 4; reg <= 4 + (insn & 7); reg++)
-		अगर (unwind_pop_रेजिस्टर(ctrl, &vsp, reg))
-				वापस -URC_FAILURE;
+	for (reg = 4; reg <= 4 + (insn & 7); reg++)
+		if (unwind_pop_register(ctrl, &vsp, reg))
+				return -URC_FAILURE;
 
-	अगर (insn & 0x8)
-		अगर (unwind_pop_रेजिस्टर(ctrl, &vsp, 14))
-				वापस -URC_FAILURE;
+	if (insn & 0x8)
+		if (unwind_pop_register(ctrl, &vsp, 14))
+				return -URC_FAILURE;
 
-	ctrl->vrs[SP] = (अचिन्हित दीर्घ)vsp;
+	ctrl->vrs[SP] = (unsigned long)vsp;
 
-	वापस URC_OK;
-पूर्ण
+	return URC_OK;
+}
 
-अटल पूर्णांक unwind_exec_pop_subset_r0_to_r3(काष्ठा unwind_ctrl_block *ctrl,
-						अचिन्हित दीर्घ mask)
-अणु
-	अचिन्हित दीर्घ *vsp = (अचिन्हित दीर्घ *)ctrl->vrs[SP];
-	पूर्णांक reg = 0;
+static int unwind_exec_pop_subset_r0_to_r3(struct unwind_ctrl_block *ctrl,
+						unsigned long mask)
+{
+	unsigned long *vsp = (unsigned long *)ctrl->vrs[SP];
+	int reg = 0;
 
 	/* pop R0-R3 according to mask */
-	जबतक (mask) अणु
-		अगर (mask & 1)
-			अगर (unwind_pop_रेजिस्टर(ctrl, &vsp, reg))
-				वापस -URC_FAILURE;
+	while (mask) {
+		if (mask & 1)
+			if (unwind_pop_register(ctrl, &vsp, reg))
+				return -URC_FAILURE;
 		mask >>= 1;
 		reg++;
-	पूर्ण
-	ctrl->vrs[SP] = (अचिन्हित दीर्घ)vsp;
+	}
+	ctrl->vrs[SP] = (unsigned long)vsp;
 
-	वापस URC_OK;
-पूर्ण
+	return URC_OK;
+}
 
 /*
- * Execute the current unwind inकाष्ठाion.
+ * Execute the current unwind instruction.
  */
-अटल पूर्णांक unwind_exec_insn(काष्ठा unwind_ctrl_block *ctrl)
-अणु
-	अचिन्हित दीर्घ insn = unwind_get_byte(ctrl);
-	पूर्णांक ret = URC_OK;
+static int unwind_exec_insn(struct unwind_ctrl_block *ctrl)
+{
+	unsigned long insn = unwind_get_byte(ctrl);
+	int ret = URC_OK;
 
 	pr_debug("%s: insn = %08lx\n", __func__, insn);
 
-	अगर ((insn & 0xc0) == 0x00)
+	if ((insn & 0xc0) == 0x00)
 		ctrl->vrs[SP] += ((insn & 0x3f) << 2) + 4;
-	अन्यथा अगर ((insn & 0xc0) == 0x40)
+	else if ((insn & 0xc0) == 0x40)
 		ctrl->vrs[SP] -= ((insn & 0x3f) << 2) + 4;
-	अन्यथा अगर ((insn & 0xf0) == 0x80) अणु
-		अचिन्हित दीर्घ mask;
+	else if ((insn & 0xf0) == 0x80) {
+		unsigned long mask;
 
 		insn = (insn << 8) | unwind_get_byte(ctrl);
 		mask = insn & 0x0fff;
-		अगर (mask == 0) अणु
+		if (mask == 0) {
 			pr_warn("unwind: 'Refuse to unwind' instruction %04lx\n",
 				insn);
-			वापस -URC_FAILURE;
-		पूर्ण
+			return -URC_FAILURE;
+		}
 
 		ret = unwind_exec_pop_subset_r4_to_r13(ctrl, mask);
-		अगर (ret)
-			जाओ error;
-	पूर्ण अन्यथा अगर ((insn & 0xf0) == 0x90 &&
+		if (ret)
+			goto error;
+	} else if ((insn & 0xf0) == 0x90 &&
 		   (insn & 0x0d) != 0x0d)
 		ctrl->vrs[SP] = ctrl->vrs[insn & 0x0f];
-	अन्यथा अगर ((insn & 0xf0) == 0xa0) अणु
+	else if ((insn & 0xf0) == 0xa0) {
 		ret = unwind_exec_pop_r4_to_rN(ctrl, insn);
-		अगर (ret)
-			जाओ error;
-	पूर्ण अन्यथा अगर (insn == 0xb0) अणु
-		अगर (ctrl->vrs[PC] == 0)
+		if (ret)
+			goto error;
+	} else if (insn == 0xb0) {
+		if (ctrl->vrs[PC] == 0)
 			ctrl->vrs[PC] = ctrl->vrs[LR];
 		/* no further processing */
 		ctrl->entries = 0;
-	पूर्ण अन्यथा अगर (insn == 0xb1) अणु
-		अचिन्हित दीर्घ mask = unwind_get_byte(ctrl);
+	} else if (insn == 0xb1) {
+		unsigned long mask = unwind_get_byte(ctrl);
 
-		अगर (mask == 0 || mask & 0xf0) अणु
+		if (mask == 0 || mask & 0xf0) {
 			pr_warn("unwind: Spare encoding %04lx\n",
 				(insn << 8) | mask);
-			वापस -URC_FAILURE;
-		पूर्ण
+			return -URC_FAILURE;
+		}
 
 		ret = unwind_exec_pop_subset_r0_to_r3(ctrl, mask);
-		अगर (ret)
-			जाओ error;
-	पूर्ण अन्यथा अगर (insn == 0xb2) अणु
-		अचिन्हित दीर्घ uleb128 = unwind_get_byte(ctrl);
+		if (ret)
+			goto error;
+	} else if (insn == 0xb2) {
+		unsigned long uleb128 = unwind_get_byte(ctrl);
 
 		ctrl->vrs[SP] += 0x204 + (uleb128 << 2);
-	पूर्ण अन्यथा अणु
+	} else {
 		pr_warn("unwind: Unhandled instruction %02lx\n", insn);
-		वापस -URC_FAILURE;
-	पूर्ण
+		return -URC_FAILURE;
+	}
 
 	pr_debug("%s: fp = %08lx sp = %08lx lr = %08lx pc = %08lx\n", __func__,
 		 ctrl->vrs[FP], ctrl->vrs[SP], ctrl->vrs[LR], ctrl->vrs[PC]);
 
 error:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Unwind a single frame starting with *sp क्रम the symbol at *pc. It
+ * Unwind a single frame starting with *sp for the symbol at *pc. It
  * updates the *pc and *sp with the new values.
  */
-पूर्णांक unwind_frame(काष्ठा stackframe *frame)
-अणु
-	अचिन्हित दीर्घ low;
-	स्थिर काष्ठा unwind_idx *idx;
-	काष्ठा unwind_ctrl_block ctrl;
+int unwind_frame(struct stackframe *frame)
+{
+	unsigned long low;
+	const struct unwind_idx *idx;
+	struct unwind_ctrl_block ctrl;
 
-	/* store the highest address on the stack to aव्योम crossing it*/
+	/* store the highest address on the stack to avoid crossing it*/
 	low = frame->sp;
 	ctrl.sp_high = ALIGN(low, THREAD_SIZE);
 
 	pr_debug("%s(pc = %08lx lr = %08lx sp = %08lx)\n", __func__,
 		 frame->pc, frame->lr, frame->sp);
 
-	अगर (!kernel_text_address(frame->pc))
-		वापस -URC_FAILURE;
+	if (!kernel_text_address(frame->pc))
+		return -URC_FAILURE;
 
 	idx = unwind_find_idx(frame->pc);
-	अगर (!idx) अणु
+	if (!idx) {
 		pr_warn("unwind: Index not found %08lx\n", frame->pc);
-		वापस -URC_FAILURE;
-	पूर्ण
+		return -URC_FAILURE;
+	}
 
 	ctrl.vrs[FP] = frame->fp;
 	ctrl.vrs[SP] = frame->sp;
 	ctrl.vrs[LR] = frame->lr;
 	ctrl.vrs[PC] = 0;
 
-	अगर (idx->insn == 1)
+	if (idx->insn == 1)
 		/* can't unwind */
-		वापस -URC_FAILURE;
-	अन्यथा अगर ((idx->insn & 0x80000000) == 0)
+		return -URC_FAILURE;
+	else if ((idx->insn & 0x80000000) == 0)
 		/* prel31 to the unwind table */
-		ctrl.insn = (अचिन्हित दीर्घ *)prel31_to_addr(&idx->insn);
-	अन्यथा अगर ((idx->insn & 0xff000000) == 0x80000000)
+		ctrl.insn = (unsigned long *)prel31_to_addr(&idx->insn);
+	else if ((idx->insn & 0xff000000) == 0x80000000)
 		/* only personality routine 0 supported in the index */
 		ctrl.insn = &idx->insn;
-	अन्यथा अणु
+	else {
 		pr_warn("unwind: Unsupported personality routine %08lx in the index at %p\n",
 			idx->insn, idx);
-		वापस -URC_FAILURE;
-	पूर्ण
+		return -URC_FAILURE;
+	}
 
 	/* check the personality routine */
-	अगर ((*ctrl.insn & 0xff000000) == 0x80000000) अणु
+	if ((*ctrl.insn & 0xff000000) == 0x80000000) {
 		ctrl.byte = 2;
 		ctrl.entries = 1;
-	पूर्ण अन्यथा अगर ((*ctrl.insn & 0xff000000) == 0x81000000) अणु
+	} else if ((*ctrl.insn & 0xff000000) == 0x81000000) {
 		ctrl.byte = 1;
 		ctrl.entries = 1 + ((*ctrl.insn & 0x00ff0000) >> 16);
-	पूर्ण अन्यथा अणु
+	} else {
 		pr_warn("unwind: Unsupported personality routine %08lx at %p\n",
 			*ctrl.insn, ctrl.insn);
-		वापस -URC_FAILURE;
-	पूर्ण
+		return -URC_FAILURE;
+	}
 
 	ctrl.check_each_pop = 0;
 
-	जबतक (ctrl.entries > 0) अणु
-		पूर्णांक urc;
-		अगर ((ctrl.sp_high - ctrl.vrs[SP]) < माप(ctrl.vrs))
+	while (ctrl.entries > 0) {
+		int urc;
+		if ((ctrl.sp_high - ctrl.vrs[SP]) < sizeof(ctrl.vrs))
 			ctrl.check_each_pop = 1;
 		urc = unwind_exec_insn(&ctrl);
-		अगर (urc < 0)
-			वापस urc;
-		अगर (ctrl.vrs[SP] < low || ctrl.vrs[SP] >= ctrl.sp_high)
-			वापस -URC_FAILURE;
-	पूर्ण
+		if (urc < 0)
+			return urc;
+		if (ctrl.vrs[SP] < low || ctrl.vrs[SP] >= ctrl.sp_high)
+			return -URC_FAILURE;
+	}
 
-	अगर (ctrl.vrs[PC] == 0)
+	if (ctrl.vrs[PC] == 0)
 		ctrl.vrs[PC] = ctrl.vrs[LR];
 
-	/* check क्रम infinite loop */
-	अगर (frame->pc == ctrl.vrs[PC] && frame->sp == ctrl.vrs[SP])
-		वापस -URC_FAILURE;
+	/* check for infinite loop */
+	if (frame->pc == ctrl.vrs[PC] && frame->sp == ctrl.vrs[SP])
+		return -URC_FAILURE;
 
 	frame->fp = ctrl.vrs[FP];
 	frame->sp = ctrl.vrs[SP];
 	frame->lr = ctrl.vrs[LR];
 	frame->pc = ctrl.vrs[PC];
 
-	वापस URC_OK;
-पूर्ण
+	return URC_OK;
+}
 
-व्योम unwind_backtrace(काष्ठा pt_regs *regs, काष्ठा task_काष्ठा *tsk,
-		      स्थिर अक्षर *loglvl)
-अणु
-	काष्ठा stackframe frame;
+void unwind_backtrace(struct pt_regs *regs, struct task_struct *tsk,
+		      const char *loglvl)
+{
+	struct stackframe frame;
 
 	pr_debug("%s(regs = %p tsk = %p)\n", __func__, regs, tsk);
 
-	अगर (!tsk)
+	if (!tsk)
 		tsk = current;
 
-	अगर (regs) अणु
+	if (regs) {
 		arm_get_current_stackframe(regs, &frame);
-		/* PC might be corrupted, use LR in that हाल. */
-		अगर (!kernel_text_address(regs->ARM_pc))
+		/* PC might be corrupted, use LR in that case. */
+		if (!kernel_text_address(regs->ARM_pc))
 			frame.pc = regs->ARM_lr;
-	पूर्ण अन्यथा अगर (tsk == current) अणु
-		frame.fp = (अचिन्हित दीर्घ)__builtin_frame_address(0);
-		frame.sp = current_stack_poपूर्णांकer;
-		frame.lr = (अचिन्हित दीर्घ)__builtin_वापस_address(0);
-		frame.pc = (अचिन्हित दीर्घ)unwind_backtrace;
-	पूर्ण अन्यथा अणु
-		/* task blocked in __चयन_to */
-		frame.fp = thपढ़ो_saved_fp(tsk);
-		frame.sp = thपढ़ो_saved_sp(tsk);
+	} else if (tsk == current) {
+		frame.fp = (unsigned long)__builtin_frame_address(0);
+		frame.sp = current_stack_pointer;
+		frame.lr = (unsigned long)__builtin_return_address(0);
+		frame.pc = (unsigned long)unwind_backtrace;
+	} else {
+		/* task blocked in __switch_to */
+		frame.fp = thread_saved_fp(tsk);
+		frame.sp = thread_saved_sp(tsk);
 		/*
-		 * The function calling __चयन_to cannot be a leaf function
+		 * The function calling __switch_to cannot be a leaf function
 		 * so LR is recovered from the stack.
 		 */
 		frame.lr = 0;
-		frame.pc = thपढ़ो_saved_pc(tsk);
-	पूर्ण
+		frame.pc = thread_saved_pc(tsk);
+	}
 
-	जबतक (1) अणु
-		पूर्णांक urc;
-		अचिन्हित दीर्घ where = frame.pc;
+	while (1) {
+		int urc;
+		unsigned long where = frame.pc;
 
 		urc = unwind_frame(&frame);
-		अगर (urc < 0)
-			अवरोध;
+		if (urc < 0)
+			break;
 		dump_backtrace_entry(where, frame.pc, frame.sp - 4, loglvl);
-	पूर्ण
-पूर्ण
+	}
+}
 
-काष्ठा unwind_table *unwind_table_add(अचिन्हित दीर्घ start, अचिन्हित दीर्घ size,
-				      अचिन्हित दीर्घ text_addr,
-				      अचिन्हित दीर्घ text_size)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा unwind_table *tab = kदो_स्मृति(माप(*tab), GFP_KERNEL);
+struct unwind_table *unwind_table_add(unsigned long start, unsigned long size,
+				      unsigned long text_addr,
+				      unsigned long text_size)
+{
+	unsigned long flags;
+	struct unwind_table *tab = kmalloc(sizeof(*tab), GFP_KERNEL);
 
 	pr_debug("%s(%08lx, %08lx, %08lx, %08lx)\n", __func__, start, size,
 		 text_addr, text_size);
 
-	अगर (!tab)
-		वापस tab;
+	if (!tab)
+		return tab;
 
-	tab->start = (स्थिर काष्ठा unwind_idx *)start;
-	tab->stop = (स्थिर काष्ठा unwind_idx *)(start + size);
+	tab->start = (const struct unwind_idx *)start;
+	tab->stop = (const struct unwind_idx *)(start + size);
 	tab->origin = unwind_find_origin(tab->start, tab->stop);
 	tab->begin_addr = text_addr;
 	tab->end_addr = text_addr + text_size;
@@ -523,19 +522,19 @@ error:
 	list_add_tail(&tab->list, &unwind_tables);
 	raw_spin_unlock_irqrestore(&unwind_lock, flags);
 
-	वापस tab;
-पूर्ण
+	return tab;
+}
 
-व्योम unwind_table_del(काष्ठा unwind_table *tab)
-अणु
-	अचिन्हित दीर्घ flags;
+void unwind_table_del(struct unwind_table *tab)
+{
+	unsigned long flags;
 
-	अगर (!tab)
-		वापस;
+	if (!tab)
+		return;
 
 	raw_spin_lock_irqsave(&unwind_lock, flags);
 	list_del(&tab->list);
 	raw_spin_unlock_irqrestore(&unwind_lock, flags);
 
-	kमुक्त(tab);
-पूर्ण
+	kfree(tab);
+}

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  Copyright (c) 1991,1992,1995  Linus Torvalds
  *  Copyright (c) 1994  Alan Modra
@@ -11,120 +10,120 @@
  *
  */
 
-#समावेश <linux/घड़ीsource.h>
-#समावेश <linux/घड़ीchips.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/i8253.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/export.h>
+#include <linux/clocksource.h>
+#include <linux/clockchips.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/i8253.h>
+#include <linux/time.h>
+#include <linux/export.h>
 
-#समावेश <यंत्र/vsyscall.h>
-#समावेश <यंत्र/x86_init.h>
-#समावेश <यंत्र/i8259.h>
-#समावेश <यंत्र/समयr.h>
-#समावेश <यंत्र/hpet.h>
-#समावेश <यंत्र/समय.स>
+#include <asm/vsyscall.h>
+#include <asm/x86_init.h>
+#include <asm/i8259.h>
+#include <asm/timer.h>
+#include <asm/hpet.h>
+#include <asm/time.h>
 
-अचिन्हित दीर्घ profile_pc(काष्ठा pt_regs *regs)
-अणु
-	अचिन्हित दीर्घ pc = inकाष्ठाion_poपूर्णांकer(regs);
+unsigned long profile_pc(struct pt_regs *regs)
+{
+	unsigned long pc = instruction_pointer(regs);
 
-	अगर (!user_mode(regs) && in_lock_functions(pc)) अणु
-#अगर_घोषित CONFIG_FRAME_POINTER
-		वापस *(अचिन्हित दीर्घ *)(regs->bp + माप(दीर्घ));
-#अन्यथा
-		अचिन्हित दीर्घ *sp = (अचिन्हित दीर्घ *)regs->sp;
+	if (!user_mode(regs) && in_lock_functions(pc)) {
+#ifdef CONFIG_FRAME_POINTER
+		return *(unsigned long *)(regs->bp + sizeof(long));
+#else
+		unsigned long *sp = (unsigned long *)regs->sp;
 		/*
-		 * Return address is either directly at stack poपूर्णांकer
+		 * Return address is either directly at stack pointer
 		 * or above a saved flags. Eflags has bits 22-31 zero,
-		 * kernel addresses करोn't.
+		 * kernel addresses don't.
 		 */
-		अगर (sp[0] >> 22)
-			वापस sp[0];
-		अगर (sp[1] >> 22)
-			वापस sp[1];
-#पूर्ण_अगर
-	पूर्ण
-	वापस pc;
-पूर्ण
+		if (sp[0] >> 22)
+			return sp[0];
+		if (sp[1] >> 22)
+			return sp[1];
+#endif
+	}
+	return pc;
+}
 EXPORT_SYMBOL(profile_pc);
 
 /*
- * Default समयr पूर्णांकerrupt handler क्रम PIT/HPET
+ * Default timer interrupt handler for PIT/HPET
  */
-अटल irqवापस_t समयr_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	global_घड़ी_event->event_handler(global_घड़ी_event);
-	वापस IRQ_HANDLED;
-पूर्ण
+static irqreturn_t timer_interrupt(int irq, void *dev_id)
+{
+	global_clock_event->event_handler(global_clock_event);
+	return IRQ_HANDLED;
+}
 
-अटल व्योम __init setup_शेष_समयr_irq(व्योम)
-अणु
-	अचिन्हित दीर्घ flags = IRQF_NOBALANCING | IRQF_IRQPOLL | IRQF_TIMER;
+static void __init setup_default_timer_irq(void)
+{
+	unsigned long flags = IRQF_NOBALANCING | IRQF_IRQPOLL | IRQF_TIMER;
 
 	/*
-	 * Unconditionally रेजिस्टर the legacy समयr पूर्णांकerrupt; even
-	 * without legacy PIC/PIT we need this क्रम the HPET0 in legacy
+	 * Unconditionally register the legacy timer interrupt; even
+	 * without legacy PIC/PIT we need this for the HPET0 in legacy
 	 * replacement mode.
 	 */
-	अगर (request_irq(0, समयr_पूर्णांकerrupt, flags, "timer", शून्य))
+	if (request_irq(0, timer_interrupt, flags, "timer", NULL))
 		pr_info("Failed to register legacy timer interrupt\n");
-पूर्ण
+}
 
-/* Default समयr init function */
-व्योम __init hpet_समय_init(व्योम)
-अणु
-	अगर (!hpet_enable()) अणु
-		अगर (!pit_समयr_init())
-			वापस;
-	पूर्ण
+/* Default timer init function */
+void __init hpet_time_init(void)
+{
+	if (!hpet_enable()) {
+		if (!pit_timer_init())
+			return;
+	}
 
-	setup_शेष_समयr_irq();
-पूर्ण
+	setup_default_timer_irq();
+}
 
-अटल __init व्योम x86_late_समय_init(व्योम)
-अणु
+static __init void x86_late_time_init(void)
+{
 	/*
-	 * Beक्रमe PIT/HPET init, select the पूर्णांकerrupt mode. This is required
+	 * Before PIT/HPET init, select the interrupt mode. This is required
 	 * to make the decision whether PIT should be initialized correct.
 	 */
-	x86_init.irqs.पूर्णांकr_mode_select();
+	x86_init.irqs.intr_mode_select();
 
-	/* Setup the legacy समयrs */
-	x86_init.समयrs.समयr_init();
+	/* Setup the legacy timers */
+	x86_init.timers.timer_init();
 
 	/*
-	 * After PIT/HPET समयrs init, set up the final पूर्णांकerrupt mode क्रम
+	 * After PIT/HPET timers init, set up the final interrupt mode for
 	 * delivering IRQs.
 	 */
-	x86_init.irqs.पूर्णांकr_mode_init();
+	x86_init.irqs.intr_mode_init();
 	tsc_init();
 
-	अगर (अटल_cpu_has(X86_FEATURE_WAITPKG))
-		use_tछोड़ो_delay();
-पूर्ण
+	if (static_cpu_has(X86_FEATURE_WAITPKG))
+		use_tpause_delay();
+}
 
 /*
- * Initialize TSC and delay the periodic समयr init to
- * late x86_late_समय_init() so ioremap works.
+ * Initialize TSC and delay the periodic timer init to
+ * late x86_late_time_init() so ioremap works.
  */
-व्योम __init समय_init(व्योम)
-अणु
-	late_समय_init = x86_late_समय_init;
-पूर्ण
+void __init time_init(void)
+{
+	late_time_init = x86_late_time_init;
+}
 
 /*
  * Sanity check the vdso related archdata content.
  */
-व्योम घड़ीsource_arch_init(काष्ठा घड़ीsource *cs)
-अणु
-	अगर (cs->vdso_घड़ी_mode == VDSO_CLOCKMODE_NONE)
-		वापस;
+void clocksource_arch_init(struct clocksource *cs)
+{
+	if (cs->vdso_clock_mode == VDSO_CLOCKMODE_NONE)
+		return;
 
-	अगर (cs->mask != CLOCKSOURCE_MASK(64)) अणु
+	if (cs->mask != CLOCKSOURCE_MASK(64)) {
 		pr_warn("clocksource %s registered with invalid mask %016llx for VDSO. Disabling VDSO support.\n",
 			cs->name, cs->mask);
-		cs->vdso_घड़ी_mode = VDSO_CLOCKMODE_NONE;
-	पूर्ण
-पूर्ण
+		cs->vdso_clock_mode = VDSO_CLOCKMODE_NONE;
+	}
+}

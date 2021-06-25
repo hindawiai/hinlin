@@ -1,98 +1,97 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * MC33880 high-side/low-side चयन GPIO driver
+ * MC33880 high-side/low-side switch GPIO driver
  * Copyright (c) 2009 Intel Corporation
  */
 
 /* Supports:
- * Freescale MC33880 high-side/low-side चयन
+ * Freescale MC33880 high-side/low-side switch
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/spi/spi.h>
-#समावेश <linux/spi/mc33880.h>
-#समावेश <linux/gpio/driver.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
+#include <linux/init.h>
+#include <linux/mutex.h>
+#include <linux/spi/spi.h>
+#include <linux/spi/mc33880.h>
+#include <linux/gpio/driver.h>
+#include <linux/slab.h>
+#include <linux/module.h>
 
-#घोषणा DRIVER_NAME "mc33880"
+#define DRIVER_NAME "mc33880"
 
 /*
  * Pin configurations, see MAX7301 datasheet page 6
  */
-#घोषणा PIN_CONFIG_MASK 0x03
-#घोषणा PIN_CONFIG_IN_PULLUP 0x03
-#घोषणा PIN_CONFIG_IN_WO_PULLUP 0x02
-#घोषणा PIN_CONFIG_OUT 0x01
+#define PIN_CONFIG_MASK 0x03
+#define PIN_CONFIG_IN_PULLUP 0x03
+#define PIN_CONFIG_IN_WO_PULLUP 0x02
+#define PIN_CONFIG_OUT 0x01
 
-#घोषणा PIN_NUMBER 8
+#define PIN_NUMBER 8
 
 
 /*
- * Some रेजिस्टरs must be पढ़ो back to modअगरy.
- * To save समय we cache them here in memory
+ * Some registers must be read back to modify.
+ * To save time we cache them here in memory
  */
-काष्ठा mc33880 अणु
-	काष्ठा mutex	lock;	/* protect from simultaneous accesses */
+struct mc33880 {
+	struct mutex	lock;	/* protect from simultaneous accesses */
 	u8		port_config;
-	काष्ठा gpio_chip chip;
-	काष्ठा spi_device *spi;
-पूर्ण;
+	struct gpio_chip chip;
+	struct spi_device *spi;
+};
 
-अटल पूर्णांक mc33880_ग_लिखो_config(काष्ठा mc33880 *mc)
-अणु
-	वापस spi_ग_लिखो(mc->spi, &mc->port_config, माप(mc->port_config));
-पूर्ण
+static int mc33880_write_config(struct mc33880 *mc)
+{
+	return spi_write(mc->spi, &mc->port_config, sizeof(mc->port_config));
+}
 
 
-अटल पूर्णांक __mc33880_set(काष्ठा mc33880 *mc, अचिन्हित offset, पूर्णांक value)
-अणु
-	अगर (value)
+static int __mc33880_set(struct mc33880 *mc, unsigned offset, int value)
+{
+	if (value)
 		mc->port_config |= 1 << offset;
-	अन्यथा
+	else
 		mc->port_config &= ~(1 << offset);
 
-	वापस mc33880_ग_लिखो_config(mc);
-पूर्ण
+	return mc33880_write_config(mc);
+}
 
 
-अटल व्योम mc33880_set(काष्ठा gpio_chip *chip, अचिन्हित offset, पूर्णांक value)
-अणु
-	काष्ठा mc33880 *mc = gpiochip_get_data(chip);
+static void mc33880_set(struct gpio_chip *chip, unsigned offset, int value)
+{
+	struct mc33880 *mc = gpiochip_get_data(chip);
 
 	mutex_lock(&mc->lock);
 
 	__mc33880_set(mc, offset, value);
 
 	mutex_unlock(&mc->lock);
-पूर्ण
+}
 
-अटल पूर्णांक mc33880_probe(काष्ठा spi_device *spi)
-अणु
-	काष्ठा mc33880 *mc;
-	काष्ठा mc33880_platक्रमm_data *pdata;
-	पूर्णांक ret;
+static int mc33880_probe(struct spi_device *spi)
+{
+	struct mc33880 *mc;
+	struct mc33880_platform_data *pdata;
+	int ret;
 
 	pdata = dev_get_platdata(&spi->dev);
-	अगर (!pdata || !pdata->base) अणु
+	if (!pdata || !pdata->base) {
 		dev_dbg(&spi->dev, "incorrect or missing platform data\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
-	 * bits_per_word cannot be configured in platक्रमm data
+	 * bits_per_word cannot be configured in platform data
 	 */
 	spi->bits_per_word = 8;
 
 	ret = spi_setup(spi);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	mc = devm_kzalloc(&spi->dev, माप(काष्ठा mc33880), GFP_KERNEL);
-	अगर (!mc)
-		वापस -ENOMEM;
+	mc = devm_kzalloc(&spi->dev, sizeof(struct mc33880), GFP_KERNEL);
+	if (!mc)
+		return -ENOMEM;
 
 	mutex_init(&mc->lock);
 
@@ -109,68 +108,68 @@
 	mc->chip.owner = THIS_MODULE;
 
 	mc->port_config = 0x00;
-	/* ग_लिखो twice, because during initialisation the first setting
-	 * is just क्रम testing SPI communication, and the second is the
+	/* write twice, because during initialisation the first setting
+	 * is just for testing SPI communication, and the second is the
 	 * "real" configuration
 	 */
-	ret = mc33880_ग_लिखो_config(mc);
+	ret = mc33880_write_config(mc);
 	mc->port_config = 0x00;
-	अगर (!ret)
-		ret = mc33880_ग_लिखो_config(mc);
+	if (!ret)
+		ret = mc33880_write_config(mc);
 
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&spi->dev, "Failed writing to " DRIVER_NAME ": %d\n",
 			ret);
-		जाओ निकास_destroy;
-	पूर्ण
+		goto exit_destroy;
+	}
 
 	ret = gpiochip_add_data(&mc->chip, mc);
-	अगर (ret)
-		जाओ निकास_destroy;
+	if (ret)
+		goto exit_destroy;
 
-	वापस ret;
+	return ret;
 
-निकास_destroy:
+exit_destroy:
 	mutex_destroy(&mc->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mc33880_हटाओ(काष्ठा spi_device *spi)
-अणु
-	काष्ठा mc33880 *mc;
+static int mc33880_remove(struct spi_device *spi)
+{
+	struct mc33880 *mc;
 
 	mc = spi_get_drvdata(spi);
-	अगर (!mc)
-		वापस -ENODEV;
+	if (!mc)
+		return -ENODEV;
 
-	gpiochip_हटाओ(&mc->chip);
+	gpiochip_remove(&mc->chip);
 	mutex_destroy(&mc->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा spi_driver mc33880_driver = अणु
-	.driver = अणु
+static struct spi_driver mc33880_driver = {
+	.driver = {
 		.name		= DRIVER_NAME,
-	पूर्ण,
+	},
 	.probe		= mc33880_probe,
-	.हटाओ		= mc33880_हटाओ,
-पूर्ण;
+	.remove		= mc33880_remove,
+};
 
-अटल पूर्णांक __init mc33880_init(व्योम)
-अणु
-	वापस spi_रेजिस्टर_driver(&mc33880_driver);
-पूर्ण
-/* रेजिस्टर after spi postcore initcall and beक्रमe
+static int __init mc33880_init(void)
+{
+	return spi_register_driver(&mc33880_driver);
+}
+/* register after spi postcore initcall and before
  * subsys initcalls that may rely on these GPIOs
  */
 subsys_initcall(mc33880_init);
 
-अटल व्योम __निकास mc33880_निकास(व्योम)
-अणु
-	spi_unरेजिस्टर_driver(&mc33880_driver);
-पूर्ण
-module_निकास(mc33880_निकास);
+static void __exit mc33880_exit(void)
+{
+	spi_unregister_driver(&mc33880_driver);
+}
+module_exit(mc33880_exit);
 
 MODULE_AUTHOR("Mocean Laboratories <info@mocean-labs.com>");
 MODULE_LICENSE("GPL v2");

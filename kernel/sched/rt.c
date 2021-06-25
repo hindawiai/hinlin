@@ -1,166 +1,165 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Real-Time Scheduling Class (mapped to the SCHED_FIFO and SCHED_RR
  * policies)
  */
-#समावेश "sched.h"
+#include "sched.h"
 
-#समावेश "pelt.h"
+#include "pelt.h"
 
-पूर्णांक sched_rr_बारlice = RR_TIMESLICE;
-पूर्णांक sysctl_sched_rr_बारlice = (MSEC_PER_SEC / HZ) * RR_TIMESLICE;
-/* More than 4 hours अगर BW_SHIFT equals 20. */
-अटल स्थिर u64 max_rt_runसमय = MAX_BW;
+int sched_rr_timeslice = RR_TIMESLICE;
+int sysctl_sched_rr_timeslice = (MSEC_PER_SEC / HZ) * RR_TIMESLICE;
+/* More than 4 hours if BW_SHIFT equals 20. */
+static const u64 max_rt_runtime = MAX_BW;
 
-अटल पूर्णांक करो_sched_rt_period_समयr(काष्ठा rt_bandwidth *rt_b, पूर्णांक overrun);
+static int do_sched_rt_period_timer(struct rt_bandwidth *rt_b, int overrun);
 
-काष्ठा rt_bandwidth def_rt_bandwidth;
+struct rt_bandwidth def_rt_bandwidth;
 
-अटल क्रमागत hrसमयr_restart sched_rt_period_समयr(काष्ठा hrसमयr *समयr)
-अणु
-	काष्ठा rt_bandwidth *rt_b =
-		container_of(समयr, काष्ठा rt_bandwidth, rt_period_समयr);
-	पूर्णांक idle = 0;
-	पूर्णांक overrun;
+static enum hrtimer_restart sched_rt_period_timer(struct hrtimer *timer)
+{
+	struct rt_bandwidth *rt_b =
+		container_of(timer, struct rt_bandwidth, rt_period_timer);
+	int idle = 0;
+	int overrun;
 
-	raw_spin_lock(&rt_b->rt_runसमय_lock);
-	क्रम (;;) अणु
-		overrun = hrसमयr_क्रमward_now(समयr, rt_b->rt_period);
-		अगर (!overrun)
-			अवरोध;
+	raw_spin_lock(&rt_b->rt_runtime_lock);
+	for (;;) {
+		overrun = hrtimer_forward_now(timer, rt_b->rt_period);
+		if (!overrun)
+			break;
 
-		raw_spin_unlock(&rt_b->rt_runसमय_lock);
-		idle = करो_sched_rt_period_समयr(rt_b, overrun);
-		raw_spin_lock(&rt_b->rt_runसमय_lock);
-	पूर्ण
-	अगर (idle)
+		raw_spin_unlock(&rt_b->rt_runtime_lock);
+		idle = do_sched_rt_period_timer(rt_b, overrun);
+		raw_spin_lock(&rt_b->rt_runtime_lock);
+	}
+	if (idle)
 		rt_b->rt_period_active = 0;
-	raw_spin_unlock(&rt_b->rt_runसमय_lock);
+	raw_spin_unlock(&rt_b->rt_runtime_lock);
 
-	वापस idle ? HRTIMER_NORESTART : HRTIMER_RESTART;
-पूर्ण
+	return idle ? HRTIMER_NORESTART : HRTIMER_RESTART;
+}
 
-व्योम init_rt_bandwidth(काष्ठा rt_bandwidth *rt_b, u64 period, u64 runसमय)
-अणु
-	rt_b->rt_period = ns_to_kसमय(period);
-	rt_b->rt_runसमय = runसमय;
+void init_rt_bandwidth(struct rt_bandwidth *rt_b, u64 period, u64 runtime)
+{
+	rt_b->rt_period = ns_to_ktime(period);
+	rt_b->rt_runtime = runtime;
 
-	raw_spin_lock_init(&rt_b->rt_runसमय_lock);
+	raw_spin_lock_init(&rt_b->rt_runtime_lock);
 
-	hrसमयr_init(&rt_b->rt_period_समयr, CLOCK_MONOTONIC,
+	hrtimer_init(&rt_b->rt_period_timer, CLOCK_MONOTONIC,
 		     HRTIMER_MODE_REL_HARD);
-	rt_b->rt_period_समयr.function = sched_rt_period_समयr;
-पूर्ण
+	rt_b->rt_period_timer.function = sched_rt_period_timer;
+}
 
-अटल व्योम start_rt_bandwidth(काष्ठा rt_bandwidth *rt_b)
-अणु
-	अगर (!rt_bandwidth_enabled() || rt_b->rt_runसमय == RUNTIME_INF)
-		वापस;
+static void start_rt_bandwidth(struct rt_bandwidth *rt_b)
+{
+	if (!rt_bandwidth_enabled() || rt_b->rt_runtime == RUNTIME_INF)
+		return;
 
-	raw_spin_lock(&rt_b->rt_runसमय_lock);
-	अगर (!rt_b->rt_period_active) अणु
+	raw_spin_lock(&rt_b->rt_runtime_lock);
+	if (!rt_b->rt_period_active) {
 		rt_b->rt_period_active = 1;
 		/*
 		 * SCHED_DEADLINE updates the bandwidth, as a run away
-		 * RT task with a DL task could hog a CPU. But DL करोes
+		 * RT task with a DL task could hog a CPU. But DL does
 		 * not reset the period. If a deadline task was running
 		 * without an RT task running, it can cause RT tasks to
-		 * throttle when they start up. Kick the समयr right away
+		 * throttle when they start up. Kick the timer right away
 		 * to update the period.
 		 */
-		hrसमयr_क्रमward_now(&rt_b->rt_period_समयr, ns_to_kसमय(0));
-		hrसमयr_start_expires(&rt_b->rt_period_समयr,
+		hrtimer_forward_now(&rt_b->rt_period_timer, ns_to_ktime(0));
+		hrtimer_start_expires(&rt_b->rt_period_timer,
 				      HRTIMER_MODE_ABS_PINNED_HARD);
-	पूर्ण
-	raw_spin_unlock(&rt_b->rt_runसमय_lock);
-पूर्ण
+	}
+	raw_spin_unlock(&rt_b->rt_runtime_lock);
+}
 
-व्योम init_rt_rq(काष्ठा rt_rq *rt_rq)
-अणु
-	काष्ठा rt_prio_array *array;
-	पूर्णांक i;
+void init_rt_rq(struct rt_rq *rt_rq)
+{
+	struct rt_prio_array *array;
+	int i;
 
 	array = &rt_rq->active;
-	क्रम (i = 0; i < MAX_RT_PRIO; i++) अणु
+	for (i = 0; i < MAX_RT_PRIO; i++) {
 		INIT_LIST_HEAD(array->queue + i);
-		__clear_bit(i, array->biपंचांगap);
-	पूर्ण
-	/* delimiter क्रम bitsearch: */
-	__set_bit(MAX_RT_PRIO, array->biपंचांगap);
+		__clear_bit(i, array->bitmap);
+	}
+	/* delimiter for bitsearch: */
+	__set_bit(MAX_RT_PRIO, array->bitmap);
 
-#अगर defined CONFIG_SMP
+#if defined CONFIG_SMP
 	rt_rq->highest_prio.curr = MAX_RT_PRIO-1;
 	rt_rq->highest_prio.next = MAX_RT_PRIO-1;
 	rt_rq->rt_nr_migratory = 0;
 	rt_rq->overloaded = 0;
 	plist_head_init(&rt_rq->pushable_tasks);
-#पूर्ण_अगर /* CONFIG_SMP */
+#endif /* CONFIG_SMP */
 	/* We start is dequeued state, because no RT tasks are queued */
 	rt_rq->rt_queued = 0;
 
-	rt_rq->rt_समय = 0;
+	rt_rq->rt_time = 0;
 	rt_rq->rt_throttled = 0;
-	rt_rq->rt_runसमय = 0;
-	raw_spin_lock_init(&rt_rq->rt_runसमय_lock);
-पूर्ण
+	rt_rq->rt_runtime = 0;
+	raw_spin_lock_init(&rt_rq->rt_runtime_lock);
+}
 
-#अगर_घोषित CONFIG_RT_GROUP_SCHED
-अटल व्योम destroy_rt_bandwidth(काष्ठा rt_bandwidth *rt_b)
-अणु
-	hrसमयr_cancel(&rt_b->rt_period_समयr);
-पूर्ण
+#ifdef CONFIG_RT_GROUP_SCHED
+static void destroy_rt_bandwidth(struct rt_bandwidth *rt_b)
+{
+	hrtimer_cancel(&rt_b->rt_period_timer);
+}
 
-#घोषणा rt_entity_is_task(rt_se) (!(rt_se)->my_q)
+#define rt_entity_is_task(rt_se) (!(rt_se)->my_q)
 
-अटल अंतरभूत काष्ठा task_काष्ठा *rt_task_of(काष्ठा sched_rt_entity *rt_se)
-अणु
-#अगर_घोषित CONFIG_SCHED_DEBUG
+static inline struct task_struct *rt_task_of(struct sched_rt_entity *rt_se)
+{
+#ifdef CONFIG_SCHED_DEBUG
 	WARN_ON_ONCE(!rt_entity_is_task(rt_se));
-#पूर्ण_अगर
-	वापस container_of(rt_se, काष्ठा task_काष्ठा, rt);
-पूर्ण
+#endif
+	return container_of(rt_se, struct task_struct, rt);
+}
 
-अटल अंतरभूत काष्ठा rq *rq_of_rt_rq(काष्ठा rt_rq *rt_rq)
-अणु
-	वापस rt_rq->rq;
-पूर्ण
+static inline struct rq *rq_of_rt_rq(struct rt_rq *rt_rq)
+{
+	return rt_rq->rq;
+}
 
-अटल अंतरभूत काष्ठा rt_rq *rt_rq_of_se(काष्ठा sched_rt_entity *rt_se)
-अणु
-	वापस rt_se->rt_rq;
-पूर्ण
+static inline struct rt_rq *rt_rq_of_se(struct sched_rt_entity *rt_se)
+{
+	return rt_se->rt_rq;
+}
 
-अटल अंतरभूत काष्ठा rq *rq_of_rt_se(काष्ठा sched_rt_entity *rt_se)
-अणु
-	काष्ठा rt_rq *rt_rq = rt_se->rt_rq;
+static inline struct rq *rq_of_rt_se(struct sched_rt_entity *rt_se)
+{
+	struct rt_rq *rt_rq = rt_se->rt_rq;
 
-	वापस rt_rq->rq;
-पूर्ण
+	return rt_rq->rq;
+}
 
-व्योम मुक्त_rt_sched_group(काष्ठा task_group *tg)
-अणु
-	पूर्णांक i;
+void free_rt_sched_group(struct task_group *tg)
+{
+	int i;
 
-	अगर (tg->rt_se)
+	if (tg->rt_se)
 		destroy_rt_bandwidth(&tg->rt_bandwidth);
 
-	क्रम_each_possible_cpu(i) अणु
-		अगर (tg->rt_rq)
-			kमुक्त(tg->rt_rq[i]);
-		अगर (tg->rt_se)
-			kमुक्त(tg->rt_se[i]);
-	पूर्ण
+	for_each_possible_cpu(i) {
+		if (tg->rt_rq)
+			kfree(tg->rt_rq[i]);
+		if (tg->rt_se)
+			kfree(tg->rt_se[i]);
+	}
 
-	kमुक्त(tg->rt_rq);
-	kमुक्त(tg->rt_se);
-पूर्ण
+	kfree(tg->rt_rq);
+	kfree(tg->rt_se);
+}
 
-व्योम init_tg_rt_entry(काष्ठा task_group *tg, काष्ठा rt_rq *rt_rq,
-		काष्ठा sched_rt_entity *rt_se, पूर्णांक cpu,
-		काष्ठा sched_rt_entity *parent)
-अणु
-	काष्ठा rq *rq = cpu_rq(cpu);
+void init_tg_rt_entry(struct task_group *tg, struct rt_rq *rt_rq,
+		struct sched_rt_entity *rt_se, int cpu,
+		struct sched_rt_entity *parent)
+{
+	struct rq *rq = cpu_rq(cpu);
 
 	rt_rq->highest_prio.curr = MAX_RT_PRIO-1;
 	rt_rq->rt_nr_boosted = 0;
@@ -170,1062 +169,1062 @@
 	tg->rt_rq[cpu] = rt_rq;
 	tg->rt_se[cpu] = rt_se;
 
-	अगर (!rt_se)
-		वापस;
+	if (!rt_se)
+		return;
 
-	अगर (!parent)
+	if (!parent)
 		rt_se->rt_rq = &rq->rt;
-	अन्यथा
+	else
 		rt_se->rt_rq = parent->my_q;
 
 	rt_se->my_q = rt_rq;
 	rt_se->parent = parent;
 	INIT_LIST_HEAD(&rt_se->run_list);
-पूर्ण
+}
 
-पूर्णांक alloc_rt_sched_group(काष्ठा task_group *tg, काष्ठा task_group *parent)
-अणु
-	काष्ठा rt_rq *rt_rq;
-	काष्ठा sched_rt_entity *rt_se;
-	पूर्णांक i;
+int alloc_rt_sched_group(struct task_group *tg, struct task_group *parent)
+{
+	struct rt_rq *rt_rq;
+	struct sched_rt_entity *rt_se;
+	int i;
 
-	tg->rt_rq = kसुस्मृति(nr_cpu_ids, माप(rt_rq), GFP_KERNEL);
-	अगर (!tg->rt_rq)
-		जाओ err;
-	tg->rt_se = kसुस्मृति(nr_cpu_ids, माप(rt_se), GFP_KERNEL);
-	अगर (!tg->rt_se)
-		जाओ err;
+	tg->rt_rq = kcalloc(nr_cpu_ids, sizeof(rt_rq), GFP_KERNEL);
+	if (!tg->rt_rq)
+		goto err;
+	tg->rt_se = kcalloc(nr_cpu_ids, sizeof(rt_se), GFP_KERNEL);
+	if (!tg->rt_se)
+		goto err;
 
 	init_rt_bandwidth(&tg->rt_bandwidth,
-			kसमय_प्रकारo_ns(def_rt_bandwidth.rt_period), 0);
+			ktime_to_ns(def_rt_bandwidth.rt_period), 0);
 
-	क्रम_each_possible_cpu(i) अणु
-		rt_rq = kzalloc_node(माप(काष्ठा rt_rq),
+	for_each_possible_cpu(i) {
+		rt_rq = kzalloc_node(sizeof(struct rt_rq),
 				     GFP_KERNEL, cpu_to_node(i));
-		अगर (!rt_rq)
-			जाओ err;
+		if (!rt_rq)
+			goto err;
 
-		rt_se = kzalloc_node(माप(काष्ठा sched_rt_entity),
+		rt_se = kzalloc_node(sizeof(struct sched_rt_entity),
 				     GFP_KERNEL, cpu_to_node(i));
-		अगर (!rt_se)
-			जाओ err_मुक्त_rq;
+		if (!rt_se)
+			goto err_free_rq;
 
 		init_rt_rq(rt_rq);
-		rt_rq->rt_runसमय = tg->rt_bandwidth.rt_runसमय;
+		rt_rq->rt_runtime = tg->rt_bandwidth.rt_runtime;
 		init_tg_rt_entry(tg, rt_rq, rt_se, i, parent->rt_se[i]);
-	पूर्ण
+	}
 
-	वापस 1;
+	return 1;
 
-err_मुक्त_rq:
-	kमुक्त(rt_rq);
+err_free_rq:
+	kfree(rt_rq);
 err:
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अन्यथा /* CONFIG_RT_GROUP_SCHED */
+#else /* CONFIG_RT_GROUP_SCHED */
 
-#घोषणा rt_entity_is_task(rt_se) (1)
+#define rt_entity_is_task(rt_se) (1)
 
-अटल अंतरभूत काष्ठा task_काष्ठा *rt_task_of(काष्ठा sched_rt_entity *rt_se)
-अणु
-	वापस container_of(rt_se, काष्ठा task_काष्ठा, rt);
-पूर्ण
+static inline struct task_struct *rt_task_of(struct sched_rt_entity *rt_se)
+{
+	return container_of(rt_se, struct task_struct, rt);
+}
 
-अटल अंतरभूत काष्ठा rq *rq_of_rt_rq(काष्ठा rt_rq *rt_rq)
-अणु
-	वापस container_of(rt_rq, काष्ठा rq, rt);
-पूर्ण
+static inline struct rq *rq_of_rt_rq(struct rt_rq *rt_rq)
+{
+	return container_of(rt_rq, struct rq, rt);
+}
 
-अटल अंतरभूत काष्ठा rq *rq_of_rt_se(काष्ठा sched_rt_entity *rt_se)
-अणु
-	काष्ठा task_काष्ठा *p = rt_task_of(rt_se);
+static inline struct rq *rq_of_rt_se(struct sched_rt_entity *rt_se)
+{
+	struct task_struct *p = rt_task_of(rt_se);
 
-	वापस task_rq(p);
-पूर्ण
+	return task_rq(p);
+}
 
-अटल अंतरभूत काष्ठा rt_rq *rt_rq_of_se(काष्ठा sched_rt_entity *rt_se)
-अणु
-	काष्ठा rq *rq = rq_of_rt_se(rt_se);
+static inline struct rt_rq *rt_rq_of_se(struct sched_rt_entity *rt_se)
+{
+	struct rq *rq = rq_of_rt_se(rt_se);
 
-	वापस &rq->rt;
-पूर्ण
+	return &rq->rt;
+}
 
-व्योम मुक्त_rt_sched_group(काष्ठा task_group *tg) अणु पूर्ण
+void free_rt_sched_group(struct task_group *tg) { }
 
-पूर्णांक alloc_rt_sched_group(काष्ठा task_group *tg, काष्ठा task_group *parent)
-अणु
-	वापस 1;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_RT_GROUP_SCHED */
+int alloc_rt_sched_group(struct task_group *tg, struct task_group *parent)
+{
+	return 1;
+}
+#endif /* CONFIG_RT_GROUP_SCHED */
 
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 
-अटल व्योम pull_rt_task(काष्ठा rq *this_rq);
+static void pull_rt_task(struct rq *this_rq);
 
-अटल अंतरभूत bool need_pull_rt_task(काष्ठा rq *rq, काष्ठा task_काष्ठा *prev)
-अणु
-	/* Try to pull RT tasks here अगर we lower this rq's prio */
-	वापस rq->online && rq->rt.highest_prio.curr > prev->prio;
-पूर्ण
+static inline bool need_pull_rt_task(struct rq *rq, struct task_struct *prev)
+{
+	/* Try to pull RT tasks here if we lower this rq's prio */
+	return rq->online && rq->rt.highest_prio.curr > prev->prio;
+}
 
-अटल अंतरभूत पूर्णांक rt_overloaded(काष्ठा rq *rq)
-अणु
-	वापस atomic_पढ़ो(&rq->rd->rto_count);
-पूर्ण
+static inline int rt_overloaded(struct rq *rq)
+{
+	return atomic_read(&rq->rd->rto_count);
+}
 
-अटल अंतरभूत व्योम rt_set_overload(काष्ठा rq *rq)
-अणु
-	अगर (!rq->online)
-		वापस;
+static inline void rt_set_overload(struct rq *rq)
+{
+	if (!rq->online)
+		return;
 
 	cpumask_set_cpu(rq->cpu, rq->rd->rto_mask);
 	/*
-	 * Make sure the mask is visible beक्रमe we set
+	 * Make sure the mask is visible before we set
 	 * the overload count. That is checked to determine
-	 * अगर we should look at the mask. It would be a shame
-	 * अगर we looked at the mask, but the mask was not
+	 * if we should look at the mask. It would be a shame
+	 * if we looked at the mask, but the mask was not
 	 * updated yet.
 	 *
 	 * Matched by the barrier in pull_rt_task().
 	 */
 	smp_wmb();
 	atomic_inc(&rq->rd->rto_count);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम rt_clear_overload(काष्ठा rq *rq)
-अणु
-	अगर (!rq->online)
-		वापस;
+static inline void rt_clear_overload(struct rq *rq)
+{
+	if (!rq->online)
+		return;
 
-	/* the order here really करोesn't matter */
+	/* the order here really doesn't matter */
 	atomic_dec(&rq->rd->rto_count);
 	cpumask_clear_cpu(rq->cpu, rq->rd->rto_mask);
-पूर्ण
+}
 
-अटल व्योम update_rt_migration(काष्ठा rt_rq *rt_rq)
-अणु
-	अगर (rt_rq->rt_nr_migratory && rt_rq->rt_nr_total > 1) अणु
-		अगर (!rt_rq->overloaded) अणु
+static void update_rt_migration(struct rt_rq *rt_rq)
+{
+	if (rt_rq->rt_nr_migratory && rt_rq->rt_nr_total > 1) {
+		if (!rt_rq->overloaded) {
 			rt_set_overload(rq_of_rt_rq(rt_rq));
 			rt_rq->overloaded = 1;
-		पूर्ण
-	पूर्ण अन्यथा अगर (rt_rq->overloaded) अणु
+		}
+	} else if (rt_rq->overloaded) {
 		rt_clear_overload(rq_of_rt_rq(rt_rq));
 		rt_rq->overloaded = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम inc_rt_migration(काष्ठा sched_rt_entity *rt_se, काष्ठा rt_rq *rt_rq)
-अणु
-	काष्ठा task_काष्ठा *p;
+static void inc_rt_migration(struct sched_rt_entity *rt_se, struct rt_rq *rt_rq)
+{
+	struct task_struct *p;
 
-	अगर (!rt_entity_is_task(rt_se))
-		वापस;
+	if (!rt_entity_is_task(rt_se))
+		return;
 
 	p = rt_task_of(rt_se);
 	rt_rq = &rq_of_rt_rq(rt_rq)->rt;
 
 	rt_rq->rt_nr_total++;
-	अगर (p->nr_cpus_allowed > 1)
+	if (p->nr_cpus_allowed > 1)
 		rt_rq->rt_nr_migratory++;
 
 	update_rt_migration(rt_rq);
-पूर्ण
+}
 
-अटल व्योम dec_rt_migration(काष्ठा sched_rt_entity *rt_se, काष्ठा rt_rq *rt_rq)
-अणु
-	काष्ठा task_काष्ठा *p;
+static void dec_rt_migration(struct sched_rt_entity *rt_se, struct rt_rq *rt_rq)
+{
+	struct task_struct *p;
 
-	अगर (!rt_entity_is_task(rt_se))
-		वापस;
+	if (!rt_entity_is_task(rt_se))
+		return;
 
 	p = rt_task_of(rt_se);
 	rt_rq = &rq_of_rt_rq(rt_rq)->rt;
 
 	rt_rq->rt_nr_total--;
-	अगर (p->nr_cpus_allowed > 1)
+	if (p->nr_cpus_allowed > 1)
 		rt_rq->rt_nr_migratory--;
 
 	update_rt_migration(rt_rq);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक has_pushable_tasks(काष्ठा rq *rq)
-अणु
-	वापस !plist_head_empty(&rq->rt.pushable_tasks);
-पूर्ण
+static inline int has_pushable_tasks(struct rq *rq)
+{
+	return !plist_head_empty(&rq->rt.pushable_tasks);
+}
 
-अटल DEFINE_PER_CPU(काष्ठा callback_head, rt_push_head);
-अटल DEFINE_PER_CPU(काष्ठा callback_head, rt_pull_head);
+static DEFINE_PER_CPU(struct callback_head, rt_push_head);
+static DEFINE_PER_CPU(struct callback_head, rt_pull_head);
 
-अटल व्योम push_rt_tasks(काष्ठा rq *);
-अटल व्योम pull_rt_task(काष्ठा rq *);
+static void push_rt_tasks(struct rq *);
+static void pull_rt_task(struct rq *);
 
-अटल अंतरभूत व्योम rt_queue_push_tasks(काष्ठा rq *rq)
-अणु
-	अगर (!has_pushable_tasks(rq))
-		वापस;
+static inline void rt_queue_push_tasks(struct rq *rq)
+{
+	if (!has_pushable_tasks(rq))
+		return;
 
 	queue_balance_callback(rq, &per_cpu(rt_push_head, rq->cpu), push_rt_tasks);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम rt_queue_pull_task(काष्ठा rq *rq)
-अणु
+static inline void rt_queue_pull_task(struct rq *rq)
+{
 	queue_balance_callback(rq, &per_cpu(rt_pull_head, rq->cpu), pull_rt_task);
-पूर्ण
+}
 
-अटल व्योम enqueue_pushable_task(काष्ठा rq *rq, काष्ठा task_काष्ठा *p)
-अणु
+static void enqueue_pushable_task(struct rq *rq, struct task_struct *p)
+{
 	plist_del(&p->pushable_tasks, &rq->rt.pushable_tasks);
 	plist_node_init(&p->pushable_tasks, p->prio);
 	plist_add(&p->pushable_tasks, &rq->rt.pushable_tasks);
 
 	/* Update the highest prio pushable task */
-	अगर (p->prio < rq->rt.highest_prio.next)
+	if (p->prio < rq->rt.highest_prio.next)
 		rq->rt.highest_prio.next = p->prio;
-पूर्ण
+}
 
-अटल व्योम dequeue_pushable_task(काष्ठा rq *rq, काष्ठा task_काष्ठा *p)
-अणु
+static void dequeue_pushable_task(struct rq *rq, struct task_struct *p)
+{
 	plist_del(&p->pushable_tasks, &rq->rt.pushable_tasks);
 
 	/* Update the new highest prio pushable task */
-	अगर (has_pushable_tasks(rq)) अणु
+	if (has_pushable_tasks(rq)) {
 		p = plist_first_entry(&rq->rt.pushable_tasks,
-				      काष्ठा task_काष्ठा, pushable_tasks);
+				      struct task_struct, pushable_tasks);
 		rq->rt.highest_prio.next = p->prio;
-	पूर्ण अन्यथा अणु
+	} else {
 		rq->rt.highest_prio.next = MAX_RT_PRIO-1;
-	पूर्ण
-पूर्ण
+	}
+}
 
-#अन्यथा
+#else
 
-अटल अंतरभूत व्योम enqueue_pushable_task(काष्ठा rq *rq, काष्ठा task_काष्ठा *p)
-अणु
-पूर्ण
+static inline void enqueue_pushable_task(struct rq *rq, struct task_struct *p)
+{
+}
 
-अटल अंतरभूत व्योम dequeue_pushable_task(काष्ठा rq *rq, काष्ठा task_काष्ठा *p)
-अणु
-पूर्ण
+static inline void dequeue_pushable_task(struct rq *rq, struct task_struct *p)
+{
+}
 
-अटल अंतरभूत
-व्योम inc_rt_migration(काष्ठा sched_rt_entity *rt_se, काष्ठा rt_rq *rt_rq)
-अणु
-पूर्ण
+static inline
+void inc_rt_migration(struct sched_rt_entity *rt_se, struct rt_rq *rt_rq)
+{
+}
 
-अटल अंतरभूत
-व्योम dec_rt_migration(काष्ठा sched_rt_entity *rt_se, काष्ठा rt_rq *rt_rq)
-अणु
-पूर्ण
+static inline
+void dec_rt_migration(struct sched_rt_entity *rt_se, struct rt_rq *rt_rq)
+{
+}
 
-अटल अंतरभूत bool need_pull_rt_task(काष्ठा rq *rq, काष्ठा task_काष्ठा *prev)
-अणु
-	वापस false;
-पूर्ण
+static inline bool need_pull_rt_task(struct rq *rq, struct task_struct *prev)
+{
+	return false;
+}
 
-अटल अंतरभूत व्योम pull_rt_task(काष्ठा rq *this_rq)
-अणु
-पूर्ण
+static inline void pull_rt_task(struct rq *this_rq)
+{
+}
 
-अटल अंतरभूत व्योम rt_queue_push_tasks(काष्ठा rq *rq)
-अणु
-पूर्ण
-#पूर्ण_अगर /* CONFIG_SMP */
+static inline void rt_queue_push_tasks(struct rq *rq)
+{
+}
+#endif /* CONFIG_SMP */
 
-अटल व्योम enqueue_top_rt_rq(काष्ठा rt_rq *rt_rq);
-अटल व्योम dequeue_top_rt_rq(काष्ठा rt_rq *rt_rq);
+static void enqueue_top_rt_rq(struct rt_rq *rt_rq);
+static void dequeue_top_rt_rq(struct rt_rq *rt_rq);
 
-अटल अंतरभूत पूर्णांक on_rt_rq(काष्ठा sched_rt_entity *rt_se)
-अणु
-	वापस rt_se->on_rq;
-पूर्ण
+static inline int on_rt_rq(struct sched_rt_entity *rt_se)
+{
+	return rt_se->on_rq;
+}
 
-#अगर_घोषित CONFIG_UCLAMP_TASK
+#ifdef CONFIG_UCLAMP_TASK
 /*
- * Verअगरy the fitness of task @p to run on @cpu taking पूर्णांकo account the uclamp
+ * Verify the fitness of task @p to run on @cpu taking into account the uclamp
  * settings.
  *
- * This check is only important क्रम heterogeneous प्रणालीs where uclamp_min value
- * is higher than the capacity of a @cpu. For non-heterogeneous प्रणाली this
- * function will always वापस true.
+ * This check is only important for heterogeneous systems where uclamp_min value
+ * is higher than the capacity of a @cpu. For non-heterogeneous system this
+ * function will always return true.
  *
- * The function will वापस true अगर the capacity of the @cpu is >= the
+ * The function will return true if the capacity of the @cpu is >= the
  * uclamp_min and false otherwise.
  *
- * Note that uclamp_min will be clamped to uclamp_max अगर uclamp_min
+ * Note that uclamp_min will be clamped to uclamp_max if uclamp_min
  * > uclamp_max.
  */
-अटल अंतरभूत bool rt_task_fits_capacity(काष्ठा task_काष्ठा *p, पूर्णांक cpu)
-अणु
-	अचिन्हित पूर्णांक min_cap;
-	अचिन्हित पूर्णांक max_cap;
-	अचिन्हित पूर्णांक cpu_cap;
+static inline bool rt_task_fits_capacity(struct task_struct *p, int cpu)
+{
+	unsigned int min_cap;
+	unsigned int max_cap;
+	unsigned int cpu_cap;
 
-	/* Only heterogeneous प्रणालीs can benefit from this check */
-	अगर (!अटल_branch_unlikely(&sched_asym_cpucapacity))
-		वापस true;
+	/* Only heterogeneous systems can benefit from this check */
+	if (!static_branch_unlikely(&sched_asym_cpucapacity))
+		return true;
 
 	min_cap = uclamp_eff_value(p, UCLAMP_MIN);
 	max_cap = uclamp_eff_value(p, UCLAMP_MAX);
 
 	cpu_cap = capacity_orig_of(cpu);
 
-	वापस cpu_cap >= min(min_cap, max_cap);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत bool rt_task_fits_capacity(काष्ठा task_काष्ठा *p, पूर्णांक cpu)
-अणु
-	वापस true;
-पूर्ण
-#पूर्ण_अगर
+	return cpu_cap >= min(min_cap, max_cap);
+}
+#else
+static inline bool rt_task_fits_capacity(struct task_struct *p, int cpu)
+{
+	return true;
+}
+#endif
 
-#अगर_घोषित CONFIG_RT_GROUP_SCHED
+#ifdef CONFIG_RT_GROUP_SCHED
 
-अटल अंतरभूत u64 sched_rt_runसमय(काष्ठा rt_rq *rt_rq)
-अणु
-	अगर (!rt_rq->tg)
-		वापस RUNTIME_INF;
+static inline u64 sched_rt_runtime(struct rt_rq *rt_rq)
+{
+	if (!rt_rq->tg)
+		return RUNTIME_INF;
 
-	वापस rt_rq->rt_runसमय;
-पूर्ण
+	return rt_rq->rt_runtime;
+}
 
-अटल अंतरभूत u64 sched_rt_period(काष्ठा rt_rq *rt_rq)
-अणु
-	वापस kसमय_प्रकारo_ns(rt_rq->tg->rt_bandwidth.rt_period);
-पूर्ण
+static inline u64 sched_rt_period(struct rt_rq *rt_rq)
+{
+	return ktime_to_ns(rt_rq->tg->rt_bandwidth.rt_period);
+}
 
-प्रकार काष्ठा task_group *rt_rq_iter_t;
+typedef struct task_group *rt_rq_iter_t;
 
-अटल अंतरभूत काष्ठा task_group *next_task_group(काष्ठा task_group *tg)
-अणु
-	करो अणु
+static inline struct task_group *next_task_group(struct task_group *tg)
+{
+	do {
 		tg = list_entry_rcu(tg->list.next,
-			typeof(काष्ठा task_group), list);
-	पूर्ण जबतक (&tg->list != &task_groups && task_group_is_स्वतःgroup(tg));
+			typeof(struct task_group), list);
+	} while (&tg->list != &task_groups && task_group_is_autogroup(tg));
 
-	अगर (&tg->list == &task_groups)
-		tg = शून्य;
+	if (&tg->list == &task_groups)
+		tg = NULL;
 
-	वापस tg;
-पूर्ण
+	return tg;
+}
 
-#घोषणा क्रम_each_rt_rq(rt_rq, iter, rq)					\
-	क्रम (iter = container_of(&task_groups, typeof(*iter), list);	\
+#define for_each_rt_rq(rt_rq, iter, rq)					\
+	for (iter = container_of(&task_groups, typeof(*iter), list);	\
 		(iter = next_task_group(iter)) &&			\
 		(rt_rq = iter->rt_rq[cpu_of(rq)]);)
 
-#घोषणा क्रम_each_sched_rt_entity(rt_se) \
-	क्रम (; rt_se; rt_se = rt_se->parent)
+#define for_each_sched_rt_entity(rt_se) \
+	for (; rt_se; rt_se = rt_se->parent)
 
-अटल अंतरभूत काष्ठा rt_rq *group_rt_rq(काष्ठा sched_rt_entity *rt_se)
-अणु
-	वापस rt_se->my_q;
-पूर्ण
+static inline struct rt_rq *group_rt_rq(struct sched_rt_entity *rt_se)
+{
+	return rt_se->my_q;
+}
 
-अटल व्योम enqueue_rt_entity(काष्ठा sched_rt_entity *rt_se, अचिन्हित पूर्णांक flags);
-अटल व्योम dequeue_rt_entity(काष्ठा sched_rt_entity *rt_se, अचिन्हित पूर्णांक flags);
+static void enqueue_rt_entity(struct sched_rt_entity *rt_se, unsigned int flags);
+static void dequeue_rt_entity(struct sched_rt_entity *rt_se, unsigned int flags);
 
-अटल व्योम sched_rt_rq_enqueue(काष्ठा rt_rq *rt_rq)
-अणु
-	काष्ठा task_काष्ठा *curr = rq_of_rt_rq(rt_rq)->curr;
-	काष्ठा rq *rq = rq_of_rt_rq(rt_rq);
-	काष्ठा sched_rt_entity *rt_se;
+static void sched_rt_rq_enqueue(struct rt_rq *rt_rq)
+{
+	struct task_struct *curr = rq_of_rt_rq(rt_rq)->curr;
+	struct rq *rq = rq_of_rt_rq(rt_rq);
+	struct sched_rt_entity *rt_se;
 
-	पूर्णांक cpu = cpu_of(rq);
+	int cpu = cpu_of(rq);
 
 	rt_se = rt_rq->tg->rt_se[cpu];
 
-	अगर (rt_rq->rt_nr_running) अणु
-		अगर (!rt_se)
+	if (rt_rq->rt_nr_running) {
+		if (!rt_se)
 			enqueue_top_rt_rq(rt_rq);
-		अन्यथा अगर (!on_rt_rq(rt_se))
+		else if (!on_rt_rq(rt_se))
 			enqueue_rt_entity(rt_se, 0);
 
-		अगर (rt_rq->highest_prio.curr < curr->prio)
+		if (rt_rq->highest_prio.curr < curr->prio)
 			resched_curr(rq);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम sched_rt_rq_dequeue(काष्ठा rt_rq *rt_rq)
-अणु
-	काष्ठा sched_rt_entity *rt_se;
-	पूर्णांक cpu = cpu_of(rq_of_rt_rq(rt_rq));
+static void sched_rt_rq_dequeue(struct rt_rq *rt_rq)
+{
+	struct sched_rt_entity *rt_se;
+	int cpu = cpu_of(rq_of_rt_rq(rt_rq));
 
 	rt_se = rt_rq->tg->rt_se[cpu];
 
-	अगर (!rt_se) अणु
+	if (!rt_se) {
 		dequeue_top_rt_rq(rt_rq);
 		/* Kick cpufreq (see the comment in kernel/sched/sched.h). */
 		cpufreq_update_util(rq_of_rt_rq(rt_rq), 0);
-	पूर्ण
-	अन्यथा अगर (on_rt_rq(rt_se))
+	}
+	else if (on_rt_rq(rt_se))
 		dequeue_rt_entity(rt_se, 0);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक rt_rq_throttled(काष्ठा rt_rq *rt_rq)
-अणु
-	वापस rt_rq->rt_throttled && !rt_rq->rt_nr_boosted;
-पूर्ण
+static inline int rt_rq_throttled(struct rt_rq *rt_rq)
+{
+	return rt_rq->rt_throttled && !rt_rq->rt_nr_boosted;
+}
 
-अटल पूर्णांक rt_se_boosted(काष्ठा sched_rt_entity *rt_se)
-अणु
-	काष्ठा rt_rq *rt_rq = group_rt_rq(rt_se);
-	काष्ठा task_काष्ठा *p;
+static int rt_se_boosted(struct sched_rt_entity *rt_se)
+{
+	struct rt_rq *rt_rq = group_rt_rq(rt_se);
+	struct task_struct *p;
 
-	अगर (rt_rq)
-		वापस !!rt_rq->rt_nr_boosted;
+	if (rt_rq)
+		return !!rt_rq->rt_nr_boosted;
 
 	p = rt_task_of(rt_se);
-	वापस p->prio != p->normal_prio;
-पूर्ण
+	return p->prio != p->normal_prio;
+}
 
-#अगर_घोषित CONFIG_SMP
-अटल अंतरभूत स्थिर काष्ठा cpumask *sched_rt_period_mask(व्योम)
-अणु
-	वापस this_rq()->rd->span;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत स्थिर काष्ठा cpumask *sched_rt_period_mask(व्योम)
-अणु
-	वापस cpu_online_mask;
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_SMP
+static inline const struct cpumask *sched_rt_period_mask(void)
+{
+	return this_rq()->rd->span;
+}
+#else
+static inline const struct cpumask *sched_rt_period_mask(void)
+{
+	return cpu_online_mask;
+}
+#endif
 
-अटल अंतरभूत
-काष्ठा rt_rq *sched_rt_period_rt_rq(काष्ठा rt_bandwidth *rt_b, पूर्णांक cpu)
-अणु
-	वापस container_of(rt_b, काष्ठा task_group, rt_bandwidth)->rt_rq[cpu];
-पूर्ण
+static inline
+struct rt_rq *sched_rt_period_rt_rq(struct rt_bandwidth *rt_b, int cpu)
+{
+	return container_of(rt_b, struct task_group, rt_bandwidth)->rt_rq[cpu];
+}
 
-अटल अंतरभूत काष्ठा rt_bandwidth *sched_rt_bandwidth(काष्ठा rt_rq *rt_rq)
-अणु
-	वापस &rt_rq->tg->rt_bandwidth;
-पूर्ण
+static inline struct rt_bandwidth *sched_rt_bandwidth(struct rt_rq *rt_rq)
+{
+	return &rt_rq->tg->rt_bandwidth;
+}
 
-#अन्यथा /* !CONFIG_RT_GROUP_SCHED */
+#else /* !CONFIG_RT_GROUP_SCHED */
 
-अटल अंतरभूत u64 sched_rt_runसमय(काष्ठा rt_rq *rt_rq)
-अणु
-	वापस rt_rq->rt_runसमय;
-पूर्ण
+static inline u64 sched_rt_runtime(struct rt_rq *rt_rq)
+{
+	return rt_rq->rt_runtime;
+}
 
-अटल अंतरभूत u64 sched_rt_period(काष्ठा rt_rq *rt_rq)
-अणु
-	वापस kसमय_प्रकारo_ns(def_rt_bandwidth.rt_period);
-पूर्ण
+static inline u64 sched_rt_period(struct rt_rq *rt_rq)
+{
+	return ktime_to_ns(def_rt_bandwidth.rt_period);
+}
 
-प्रकार काष्ठा rt_rq *rt_rq_iter_t;
+typedef struct rt_rq *rt_rq_iter_t;
 
-#घोषणा क्रम_each_rt_rq(rt_rq, iter, rq) \
-	क्रम ((व्योम) iter, rt_rq = &rq->rt; rt_rq; rt_rq = शून्य)
+#define for_each_rt_rq(rt_rq, iter, rq) \
+	for ((void) iter, rt_rq = &rq->rt; rt_rq; rt_rq = NULL)
 
-#घोषणा क्रम_each_sched_rt_entity(rt_se) \
-	क्रम (; rt_se; rt_se = शून्य)
+#define for_each_sched_rt_entity(rt_se) \
+	for (; rt_se; rt_se = NULL)
 
-अटल अंतरभूत काष्ठा rt_rq *group_rt_rq(काष्ठा sched_rt_entity *rt_se)
-अणु
-	वापस शून्य;
-पूर्ण
+static inline struct rt_rq *group_rt_rq(struct sched_rt_entity *rt_se)
+{
+	return NULL;
+}
 
-अटल अंतरभूत व्योम sched_rt_rq_enqueue(काष्ठा rt_rq *rt_rq)
-अणु
-	काष्ठा rq *rq = rq_of_rt_rq(rt_rq);
+static inline void sched_rt_rq_enqueue(struct rt_rq *rt_rq)
+{
+	struct rq *rq = rq_of_rt_rq(rt_rq);
 
-	अगर (!rt_rq->rt_nr_running)
-		वापस;
+	if (!rt_rq->rt_nr_running)
+		return;
 
 	enqueue_top_rt_rq(rt_rq);
 	resched_curr(rq);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम sched_rt_rq_dequeue(काष्ठा rt_rq *rt_rq)
-अणु
+static inline void sched_rt_rq_dequeue(struct rt_rq *rt_rq)
+{
 	dequeue_top_rt_rq(rt_rq);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक rt_rq_throttled(काष्ठा rt_rq *rt_rq)
-अणु
-	वापस rt_rq->rt_throttled;
-पूर्ण
+static inline int rt_rq_throttled(struct rt_rq *rt_rq)
+{
+	return rt_rq->rt_throttled;
+}
 
-अटल अंतरभूत स्थिर काष्ठा cpumask *sched_rt_period_mask(व्योम)
-अणु
-	वापस cpu_online_mask;
-पूर्ण
+static inline const struct cpumask *sched_rt_period_mask(void)
+{
+	return cpu_online_mask;
+}
 
-अटल अंतरभूत
-काष्ठा rt_rq *sched_rt_period_rt_rq(काष्ठा rt_bandwidth *rt_b, पूर्णांक cpu)
-अणु
-	वापस &cpu_rq(cpu)->rt;
-पूर्ण
+static inline
+struct rt_rq *sched_rt_period_rt_rq(struct rt_bandwidth *rt_b, int cpu)
+{
+	return &cpu_rq(cpu)->rt;
+}
 
-अटल अंतरभूत काष्ठा rt_bandwidth *sched_rt_bandwidth(काष्ठा rt_rq *rt_rq)
-अणु
-	वापस &def_rt_bandwidth;
-पूर्ण
+static inline struct rt_bandwidth *sched_rt_bandwidth(struct rt_rq *rt_rq)
+{
+	return &def_rt_bandwidth;
+}
 
-#पूर्ण_अगर /* CONFIG_RT_GROUP_SCHED */
+#endif /* CONFIG_RT_GROUP_SCHED */
 
-bool sched_rt_bandwidth_account(काष्ठा rt_rq *rt_rq)
-अणु
-	काष्ठा rt_bandwidth *rt_b = sched_rt_bandwidth(rt_rq);
+bool sched_rt_bandwidth_account(struct rt_rq *rt_rq)
+{
+	struct rt_bandwidth *rt_b = sched_rt_bandwidth(rt_rq);
 
-	वापस (hrसमयr_active(&rt_b->rt_period_समयr) ||
-		rt_rq->rt_समय < rt_b->rt_runसमय);
-पूर्ण
+	return (hrtimer_active(&rt_b->rt_period_timer) ||
+		rt_rq->rt_time < rt_b->rt_runtime);
+}
 
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 /*
- * We ran out of runसमय, see अगर we can borrow some from our neighbours.
+ * We ran out of runtime, see if we can borrow some from our neighbours.
  */
-अटल व्योम करो_balance_runसमय(काष्ठा rt_rq *rt_rq)
-अणु
-	काष्ठा rt_bandwidth *rt_b = sched_rt_bandwidth(rt_rq);
-	काष्ठा root_करोमुख्य *rd = rq_of_rt_rq(rt_rq)->rd;
-	पूर्णांक i, weight;
+static void do_balance_runtime(struct rt_rq *rt_rq)
+{
+	struct rt_bandwidth *rt_b = sched_rt_bandwidth(rt_rq);
+	struct root_domain *rd = rq_of_rt_rq(rt_rq)->rd;
+	int i, weight;
 	u64 rt_period;
 
 	weight = cpumask_weight(rd->span);
 
-	raw_spin_lock(&rt_b->rt_runसमय_lock);
-	rt_period = kसमय_प्रकारo_ns(rt_b->rt_period);
-	क्रम_each_cpu(i, rd->span) अणु
-		काष्ठा rt_rq *iter = sched_rt_period_rt_rq(rt_b, i);
-		s64 dअगरf;
+	raw_spin_lock(&rt_b->rt_runtime_lock);
+	rt_period = ktime_to_ns(rt_b->rt_period);
+	for_each_cpu(i, rd->span) {
+		struct rt_rq *iter = sched_rt_period_rt_rq(rt_b, i);
+		s64 diff;
 
-		अगर (iter == rt_rq)
-			जारी;
+		if (iter == rt_rq)
+			continue;
 
-		raw_spin_lock(&iter->rt_runसमय_lock);
+		raw_spin_lock(&iter->rt_runtime_lock);
 		/*
-		 * Either all rqs have inf runसमय and there's nothing to steal
-		 * or __disable_runसमय() below sets a specअगरic rq to inf to
+		 * Either all rqs have inf runtime and there's nothing to steal
+		 * or __disable_runtime() below sets a specific rq to inf to
 		 * indicate its been disabled and disallow stealing.
 		 */
-		अगर (iter->rt_runसमय == RUNTIME_INF)
-			जाओ next;
+		if (iter->rt_runtime == RUNTIME_INF)
+			goto next;
 
 		/*
-		 * From runqueues with spare समय, take 1/n part of their
-		 * spare समय, but no more than our period.
+		 * From runqueues with spare time, take 1/n part of their
+		 * spare time, but no more than our period.
 		 */
-		dअगरf = iter->rt_runसमय - iter->rt_समय;
-		अगर (dअगरf > 0) अणु
-			dअगरf = भाग_u64((u64)dअगरf, weight);
-			अगर (rt_rq->rt_runसमय + dअगरf > rt_period)
-				dअगरf = rt_period - rt_rq->rt_runसमय;
-			iter->rt_runसमय -= dअगरf;
-			rt_rq->rt_runसमय += dअगरf;
-			अगर (rt_rq->rt_runसमय == rt_period) अणु
-				raw_spin_unlock(&iter->rt_runसमय_lock);
-				अवरोध;
-			पूर्ण
-		पूर्ण
+		diff = iter->rt_runtime - iter->rt_time;
+		if (diff > 0) {
+			diff = div_u64((u64)diff, weight);
+			if (rt_rq->rt_runtime + diff > rt_period)
+				diff = rt_period - rt_rq->rt_runtime;
+			iter->rt_runtime -= diff;
+			rt_rq->rt_runtime += diff;
+			if (rt_rq->rt_runtime == rt_period) {
+				raw_spin_unlock(&iter->rt_runtime_lock);
+				break;
+			}
+		}
 next:
-		raw_spin_unlock(&iter->rt_runसमय_lock);
-	पूर्ण
-	raw_spin_unlock(&rt_b->rt_runसमय_lock);
-पूर्ण
+		raw_spin_unlock(&iter->rt_runtime_lock);
+	}
+	raw_spin_unlock(&rt_b->rt_runtime_lock);
+}
 
 /*
- * Ensure this RQ takes back all the runसमय it lend to its neighbours.
+ * Ensure this RQ takes back all the runtime it lend to its neighbours.
  */
-अटल व्योम __disable_runसमय(काष्ठा rq *rq)
-अणु
-	काष्ठा root_करोमुख्य *rd = rq->rd;
+static void __disable_runtime(struct rq *rq)
+{
+	struct root_domain *rd = rq->rd;
 	rt_rq_iter_t iter;
-	काष्ठा rt_rq *rt_rq;
+	struct rt_rq *rt_rq;
 
-	अगर (unlikely(!scheduler_running))
-		वापस;
+	if (unlikely(!scheduler_running))
+		return;
 
-	क्रम_each_rt_rq(rt_rq, iter, rq) अणु
-		काष्ठा rt_bandwidth *rt_b = sched_rt_bandwidth(rt_rq);
+	for_each_rt_rq(rt_rq, iter, rq) {
+		struct rt_bandwidth *rt_b = sched_rt_bandwidth(rt_rq);
 		s64 want;
-		पूर्णांक i;
+		int i;
 
-		raw_spin_lock(&rt_b->rt_runसमय_lock);
-		raw_spin_lock(&rt_rq->rt_runसमय_lock);
+		raw_spin_lock(&rt_b->rt_runtime_lock);
+		raw_spin_lock(&rt_rq->rt_runtime_lock);
 		/*
 		 * Either we're all inf and nobody needs to borrow, or we're
-		 * alपढ़ोy disabled and thus have nothing to करो, or we have
-		 * exactly the right amount of runसमय to take out.
+		 * already disabled and thus have nothing to do, or we have
+		 * exactly the right amount of runtime to take out.
 		 */
-		अगर (rt_rq->rt_runसमय == RUNTIME_INF ||
-				rt_rq->rt_runसमय == rt_b->rt_runसमय)
-			जाओ balanced;
-		raw_spin_unlock(&rt_rq->rt_runसमय_lock);
+		if (rt_rq->rt_runtime == RUNTIME_INF ||
+				rt_rq->rt_runtime == rt_b->rt_runtime)
+			goto balanced;
+		raw_spin_unlock(&rt_rq->rt_runtime_lock);
 
 		/*
-		 * Calculate the dअगरference between what we started out with
-		 * and what we current have, that's the amount of runसमय
+		 * Calculate the difference between what we started out with
+		 * and what we current have, that's the amount of runtime
 		 * we lend and now have to reclaim.
 		 */
-		want = rt_b->rt_runसमय - rt_rq->rt_runसमय;
+		want = rt_b->rt_runtime - rt_rq->rt_runtime;
 
 		/*
 		 * Greedy reclaim, take back as much as we can.
 		 */
-		क्रम_each_cpu(i, rd->span) अणु
-			काष्ठा rt_rq *iter = sched_rt_period_rt_rq(rt_b, i);
-			s64 dअगरf;
+		for_each_cpu(i, rd->span) {
+			struct rt_rq *iter = sched_rt_period_rt_rq(rt_b, i);
+			s64 diff;
 
 			/*
 			 * Can't reclaim from ourselves or disabled runqueues.
 			 */
-			अगर (iter == rt_rq || iter->rt_runसमय == RUNTIME_INF)
-				जारी;
+			if (iter == rt_rq || iter->rt_runtime == RUNTIME_INF)
+				continue;
 
-			raw_spin_lock(&iter->rt_runसमय_lock);
-			अगर (want > 0) अणु
-				dअगरf = min_t(s64, iter->rt_runसमय, want);
-				iter->rt_runसमय -= dअगरf;
-				want -= dअगरf;
-			पूर्ण अन्यथा अणु
-				iter->rt_runसमय -= want;
+			raw_spin_lock(&iter->rt_runtime_lock);
+			if (want > 0) {
+				diff = min_t(s64, iter->rt_runtime, want);
+				iter->rt_runtime -= diff;
+				want -= diff;
+			} else {
+				iter->rt_runtime -= want;
 				want -= want;
-			पूर्ण
-			raw_spin_unlock(&iter->rt_runसमय_lock);
+			}
+			raw_spin_unlock(&iter->rt_runtime_lock);
 
-			अगर (!want)
-				अवरोध;
-		पूर्ण
+			if (!want)
+				break;
+		}
 
-		raw_spin_lock(&rt_rq->rt_runसमय_lock);
+		raw_spin_lock(&rt_rq->rt_runtime_lock);
 		/*
-		 * We cannot be left wanting - that would mean some runसमय
-		 * leaked out of the प्रणाली.
+		 * We cannot be left wanting - that would mean some runtime
+		 * leaked out of the system.
 		 */
 		BUG_ON(want);
 balanced:
 		/*
 		 * Disable all the borrow logic by pretending we have inf
-		 * runसमय - in which हाल borrowing करोesn't make sense.
+		 * runtime - in which case borrowing doesn't make sense.
 		 */
-		rt_rq->rt_runसमय = RUNTIME_INF;
+		rt_rq->rt_runtime = RUNTIME_INF;
 		rt_rq->rt_throttled = 0;
-		raw_spin_unlock(&rt_rq->rt_runसमय_lock);
-		raw_spin_unlock(&rt_b->rt_runसमय_lock);
+		raw_spin_unlock(&rt_rq->rt_runtime_lock);
+		raw_spin_unlock(&rt_b->rt_runtime_lock);
 
-		/* Make rt_rq available क्रम pick_next_task() */
+		/* Make rt_rq available for pick_next_task() */
 		sched_rt_rq_enqueue(rt_rq);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम __enable_runसमय(काष्ठा rq *rq)
-अणु
+static void __enable_runtime(struct rq *rq)
+{
 	rt_rq_iter_t iter;
-	काष्ठा rt_rq *rt_rq;
+	struct rt_rq *rt_rq;
 
-	अगर (unlikely(!scheduler_running))
-		वापस;
+	if (unlikely(!scheduler_running))
+		return;
 
 	/*
 	 * Reset each runqueue's bandwidth settings
 	 */
-	क्रम_each_rt_rq(rt_rq, iter, rq) अणु
-		काष्ठा rt_bandwidth *rt_b = sched_rt_bandwidth(rt_rq);
+	for_each_rt_rq(rt_rq, iter, rq) {
+		struct rt_bandwidth *rt_b = sched_rt_bandwidth(rt_rq);
 
-		raw_spin_lock(&rt_b->rt_runसमय_lock);
-		raw_spin_lock(&rt_rq->rt_runसमय_lock);
-		rt_rq->rt_runसमय = rt_b->rt_runसमय;
-		rt_rq->rt_समय = 0;
+		raw_spin_lock(&rt_b->rt_runtime_lock);
+		raw_spin_lock(&rt_rq->rt_runtime_lock);
+		rt_rq->rt_runtime = rt_b->rt_runtime;
+		rt_rq->rt_time = 0;
 		rt_rq->rt_throttled = 0;
-		raw_spin_unlock(&rt_rq->rt_runसमय_lock);
-		raw_spin_unlock(&rt_b->rt_runसमय_lock);
-	पूर्ण
-पूर्ण
+		raw_spin_unlock(&rt_rq->rt_runtime_lock);
+		raw_spin_unlock(&rt_b->rt_runtime_lock);
+	}
+}
 
-अटल व्योम balance_runसमय(काष्ठा rt_rq *rt_rq)
-अणु
-	अगर (!sched_feat(RT_RUNTIME_SHARE))
-		वापस;
+static void balance_runtime(struct rt_rq *rt_rq)
+{
+	if (!sched_feat(RT_RUNTIME_SHARE))
+		return;
 
-	अगर (rt_rq->rt_समय > rt_rq->rt_runसमय) अणु
-		raw_spin_unlock(&rt_rq->rt_runसमय_lock);
-		करो_balance_runसमय(rt_rq);
-		raw_spin_lock(&rt_rq->rt_runसमय_lock);
-	पूर्ण
-पूर्ण
-#अन्यथा /* !CONFIG_SMP */
-अटल अंतरभूत व्योम balance_runसमय(काष्ठा rt_rq *rt_rq) अणुपूर्ण
-#पूर्ण_अगर /* CONFIG_SMP */
+	if (rt_rq->rt_time > rt_rq->rt_runtime) {
+		raw_spin_unlock(&rt_rq->rt_runtime_lock);
+		do_balance_runtime(rt_rq);
+		raw_spin_lock(&rt_rq->rt_runtime_lock);
+	}
+}
+#else /* !CONFIG_SMP */
+static inline void balance_runtime(struct rt_rq *rt_rq) {}
+#endif /* CONFIG_SMP */
 
-अटल पूर्णांक करो_sched_rt_period_समयr(काष्ठा rt_bandwidth *rt_b, पूर्णांक overrun)
-अणु
-	पूर्णांक i, idle = 1, throttled = 0;
-	स्थिर काष्ठा cpumask *span;
+static int do_sched_rt_period_timer(struct rt_bandwidth *rt_b, int overrun)
+{
+	int i, idle = 1, throttled = 0;
+	const struct cpumask *span;
 
 	span = sched_rt_period_mask();
-#अगर_घोषित CONFIG_RT_GROUP_SCHED
+#ifdef CONFIG_RT_GROUP_SCHED
 	/*
 	 * FIXME: isolated CPUs should really leave the root task group,
 	 * whether they are isolcpus or were isolated via cpusets, lest
-	 * the समयr run on a CPU which करोes not service all runqueues,
+	 * the timer run on a CPU which does not service all runqueues,
 	 * potentially leaving other CPUs indefinitely throttled.  If
 	 * isolation is really required, the user will turn the throttle
-	 * off to समाप्त the perturbations it causes anyway.  Meanजबतक,
-	 * this मुख्यtains functionality क्रम boot and/or troubleshooting.
+	 * off to kill the perturbations it causes anyway.  Meanwhile,
+	 * this maintains functionality for boot and/or troubleshooting.
 	 */
-	अगर (rt_b == &root_task_group.rt_bandwidth)
+	if (rt_b == &root_task_group.rt_bandwidth)
 		span = cpu_online_mask;
-#पूर्ण_अगर
-	क्रम_each_cpu(i, span) अणु
-		पूर्णांक enqueue = 0;
-		काष्ठा rt_rq *rt_rq = sched_rt_period_rt_rq(rt_b, i);
-		काष्ठा rq *rq = rq_of_rt_rq(rt_rq);
-		पूर्णांक skip;
+#endif
+	for_each_cpu(i, span) {
+		int enqueue = 0;
+		struct rt_rq *rt_rq = sched_rt_period_rt_rq(rt_b, i);
+		struct rq *rq = rq_of_rt_rq(rt_rq);
+		int skip;
 
 		/*
 		 * When span == cpu_online_mask, taking each rq->lock
-		 * can be समय-consuming. Try to aव्योम it when possible.
+		 * can be time-consuming. Try to avoid it when possible.
 		 */
-		raw_spin_lock(&rt_rq->rt_runसमय_lock);
-		अगर (!sched_feat(RT_RUNTIME_SHARE) && rt_rq->rt_runसमय != RUNTIME_INF)
-			rt_rq->rt_runसमय = rt_b->rt_runसमय;
-		skip = !rt_rq->rt_समय && !rt_rq->rt_nr_running;
-		raw_spin_unlock(&rt_rq->rt_runसमय_lock);
-		अगर (skip)
-			जारी;
+		raw_spin_lock(&rt_rq->rt_runtime_lock);
+		if (!sched_feat(RT_RUNTIME_SHARE) && rt_rq->rt_runtime != RUNTIME_INF)
+			rt_rq->rt_runtime = rt_b->rt_runtime;
+		skip = !rt_rq->rt_time && !rt_rq->rt_nr_running;
+		raw_spin_unlock(&rt_rq->rt_runtime_lock);
+		if (skip)
+			continue;
 
 		raw_spin_lock(&rq->lock);
-		update_rq_घड़ी(rq);
+		update_rq_clock(rq);
 
-		अगर (rt_rq->rt_समय) अणु
-			u64 runसमय;
+		if (rt_rq->rt_time) {
+			u64 runtime;
 
-			raw_spin_lock(&rt_rq->rt_runसमय_lock);
-			अगर (rt_rq->rt_throttled)
-				balance_runसमय(rt_rq);
-			runसमय = rt_rq->rt_runसमय;
-			rt_rq->rt_समय -= min(rt_rq->rt_समय, overrun*runसमय);
-			अगर (rt_rq->rt_throttled && rt_rq->rt_समय < runसमय) अणु
+			raw_spin_lock(&rt_rq->rt_runtime_lock);
+			if (rt_rq->rt_throttled)
+				balance_runtime(rt_rq);
+			runtime = rt_rq->rt_runtime;
+			rt_rq->rt_time -= min(rt_rq->rt_time, overrun*runtime);
+			if (rt_rq->rt_throttled && rt_rq->rt_time < runtime) {
 				rt_rq->rt_throttled = 0;
 				enqueue = 1;
 
 				/*
 				 * When we're idle and a woken (rt) task is
 				 * throttled check_preempt_curr() will set
-				 * skip_update and the समय between the wakeup
+				 * skip_update and the time between the wakeup
 				 * and this unthrottle will get accounted as
 				 * 'runtime'.
 				 */
-				अगर (rt_rq->rt_nr_running && rq->curr == rq->idle)
-					rq_घड़ी_cancel_skipupdate(rq);
-			पूर्ण
-			अगर (rt_rq->rt_समय || rt_rq->rt_nr_running)
+				if (rt_rq->rt_nr_running && rq->curr == rq->idle)
+					rq_clock_cancel_skipupdate(rq);
+			}
+			if (rt_rq->rt_time || rt_rq->rt_nr_running)
 				idle = 0;
-			raw_spin_unlock(&rt_rq->rt_runसमय_lock);
-		पूर्ण अन्यथा अगर (rt_rq->rt_nr_running) अणु
+			raw_spin_unlock(&rt_rq->rt_runtime_lock);
+		} else if (rt_rq->rt_nr_running) {
 			idle = 0;
-			अगर (!rt_rq_throttled(rt_rq))
+			if (!rt_rq_throttled(rt_rq))
 				enqueue = 1;
-		पूर्ण
-		अगर (rt_rq->rt_throttled)
+		}
+		if (rt_rq->rt_throttled)
 			throttled = 1;
 
-		अगर (enqueue)
+		if (enqueue)
 			sched_rt_rq_enqueue(rt_rq);
 		raw_spin_unlock(&rq->lock);
-	पूर्ण
+	}
 
-	अगर (!throttled && (!rt_bandwidth_enabled() || rt_b->rt_runसमय == RUNTIME_INF))
-		वापस 1;
+	if (!throttled && (!rt_bandwidth_enabled() || rt_b->rt_runtime == RUNTIME_INF))
+		return 1;
 
-	वापस idle;
-पूर्ण
+	return idle;
+}
 
-अटल अंतरभूत पूर्णांक rt_se_prio(काष्ठा sched_rt_entity *rt_se)
-अणु
-#अगर_घोषित CONFIG_RT_GROUP_SCHED
-	काष्ठा rt_rq *rt_rq = group_rt_rq(rt_se);
+static inline int rt_se_prio(struct sched_rt_entity *rt_se)
+{
+#ifdef CONFIG_RT_GROUP_SCHED
+	struct rt_rq *rt_rq = group_rt_rq(rt_se);
 
-	अगर (rt_rq)
-		वापस rt_rq->highest_prio.curr;
-#पूर्ण_अगर
+	if (rt_rq)
+		return rt_rq->highest_prio.curr;
+#endif
 
-	वापस rt_task_of(rt_se)->prio;
-पूर्ण
+	return rt_task_of(rt_se)->prio;
+}
 
-अटल पूर्णांक sched_rt_runसमय_exceeded(काष्ठा rt_rq *rt_rq)
-अणु
-	u64 runसमय = sched_rt_runसमय(rt_rq);
+static int sched_rt_runtime_exceeded(struct rt_rq *rt_rq)
+{
+	u64 runtime = sched_rt_runtime(rt_rq);
 
-	अगर (rt_rq->rt_throttled)
-		वापस rt_rq_throttled(rt_rq);
+	if (rt_rq->rt_throttled)
+		return rt_rq_throttled(rt_rq);
 
-	अगर (runसमय >= sched_rt_period(rt_rq))
-		वापस 0;
+	if (runtime >= sched_rt_period(rt_rq))
+		return 0;
 
-	balance_runसमय(rt_rq);
-	runसमय = sched_rt_runसमय(rt_rq);
-	अगर (runसमय == RUNTIME_INF)
-		वापस 0;
+	balance_runtime(rt_rq);
+	runtime = sched_rt_runtime(rt_rq);
+	if (runtime == RUNTIME_INF)
+		return 0;
 
-	अगर (rt_rq->rt_समय > runसमय) अणु
-		काष्ठा rt_bandwidth *rt_b = sched_rt_bandwidth(rt_rq);
+	if (rt_rq->rt_time > runtime) {
+		struct rt_bandwidth *rt_b = sched_rt_bandwidth(rt_rq);
 
 		/*
-		 * Don't actually throttle groups that have no runसमय asचिन्हित
-		 * but accrue some समय due to boosting.
+		 * Don't actually throttle groups that have no runtime assigned
+		 * but accrue some time due to boosting.
 		 */
-		अगर (likely(rt_b->rt_runसमय)) अणु
+		if (likely(rt_b->rt_runtime)) {
 			rt_rq->rt_throttled = 1;
-			prपूर्णांकk_deferred_once("sched: RT throttling activated\n");
-		पूर्ण अन्यथा अणु
+			printk_deferred_once("sched: RT throttling activated\n");
+		} else {
 			/*
-			 * In हाल we did anyway, make it go away,
+			 * In case we did anyway, make it go away,
 			 * replenishment is a joke, since it will replenish us
 			 * with exactly 0 ns.
 			 */
-			rt_rq->rt_समय = 0;
-		पूर्ण
+			rt_rq->rt_time = 0;
+		}
 
-		अगर (rt_rq_throttled(rt_rq)) अणु
+		if (rt_rq_throttled(rt_rq)) {
 			sched_rt_rq_dequeue(rt_rq);
-			वापस 1;
-		पूर्ण
-	पूर्ण
+			return 1;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Update the current task's runसमय statistics. Skip current tasks that
+ * Update the current task's runtime statistics. Skip current tasks that
  * are not in our scheduling class.
  */
-अटल व्योम update_curr_rt(काष्ठा rq *rq)
-अणु
-	काष्ठा task_काष्ठा *curr = rq->curr;
-	काष्ठा sched_rt_entity *rt_se = &curr->rt;
+static void update_curr_rt(struct rq *rq)
+{
+	struct task_struct *curr = rq->curr;
+	struct sched_rt_entity *rt_se = &curr->rt;
 	u64 delta_exec;
 	u64 now;
 
-	अगर (curr->sched_class != &rt_sched_class)
-		वापस;
+	if (curr->sched_class != &rt_sched_class)
+		return;
 
-	now = rq_घड़ी_प्रकारask(rq);
+	now = rq_clock_task(rq);
 	delta_exec = now - curr->se.exec_start;
-	अगर (unlikely((s64)delta_exec <= 0))
-		वापस;
+	if (unlikely((s64)delta_exec <= 0))
+		return;
 
 	schedstat_set(curr->se.statistics.exec_max,
 		      max(curr->se.statistics.exec_max, delta_exec));
 
-	curr->se.sum_exec_runसमय += delta_exec;
-	account_group_exec_runसमय(curr, delta_exec);
+	curr->se.sum_exec_runtime += delta_exec;
+	account_group_exec_runtime(curr, delta_exec);
 
 	curr->se.exec_start = now;
-	cgroup_account_cpuसमय(curr, delta_exec);
+	cgroup_account_cputime(curr, delta_exec);
 
-	अगर (!rt_bandwidth_enabled())
-		वापस;
+	if (!rt_bandwidth_enabled())
+		return;
 
-	क्रम_each_sched_rt_entity(rt_se) अणु
-		काष्ठा rt_rq *rt_rq = rt_rq_of_se(rt_se);
+	for_each_sched_rt_entity(rt_se) {
+		struct rt_rq *rt_rq = rt_rq_of_se(rt_se);
 
-		अगर (sched_rt_runसमय(rt_rq) != RUNTIME_INF) अणु
-			raw_spin_lock(&rt_rq->rt_runसमय_lock);
-			rt_rq->rt_समय += delta_exec;
-			अगर (sched_rt_runसमय_exceeded(rt_rq))
+		if (sched_rt_runtime(rt_rq) != RUNTIME_INF) {
+			raw_spin_lock(&rt_rq->rt_runtime_lock);
+			rt_rq->rt_time += delta_exec;
+			if (sched_rt_runtime_exceeded(rt_rq))
 				resched_curr(rq);
-			raw_spin_unlock(&rt_rq->rt_runसमय_lock);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			raw_spin_unlock(&rt_rq->rt_runtime_lock);
+		}
+	}
+}
 
-अटल व्योम
-dequeue_top_rt_rq(काष्ठा rt_rq *rt_rq)
-अणु
-	काष्ठा rq *rq = rq_of_rt_rq(rt_rq);
+static void
+dequeue_top_rt_rq(struct rt_rq *rt_rq)
+{
+	struct rq *rq = rq_of_rt_rq(rt_rq);
 
 	BUG_ON(&rq->rt != rt_rq);
 
-	अगर (!rt_rq->rt_queued)
-		वापस;
+	if (!rt_rq->rt_queued)
+		return;
 
 	BUG_ON(!rq->nr_running);
 
 	sub_nr_running(rq, rt_rq->rt_nr_running);
 	rt_rq->rt_queued = 0;
 
-पूर्ण
+}
 
-अटल व्योम
-enqueue_top_rt_rq(काष्ठा rt_rq *rt_rq)
-अणु
-	काष्ठा rq *rq = rq_of_rt_rq(rt_rq);
+static void
+enqueue_top_rt_rq(struct rt_rq *rt_rq)
+{
+	struct rq *rq = rq_of_rt_rq(rt_rq);
 
 	BUG_ON(&rq->rt != rt_rq);
 
-	अगर (rt_rq->rt_queued)
-		वापस;
+	if (rt_rq->rt_queued)
+		return;
 
-	अगर (rt_rq_throttled(rt_rq))
-		वापस;
+	if (rt_rq_throttled(rt_rq))
+		return;
 
-	अगर (rt_rq->rt_nr_running) अणु
+	if (rt_rq->rt_nr_running) {
 		add_nr_running(rq, rt_rq->rt_nr_running);
 		rt_rq->rt_queued = 1;
-	पूर्ण
+	}
 
 	/* Kick cpufreq (see the comment in kernel/sched/sched.h). */
 	cpufreq_update_util(rq, 0);
-पूर्ण
+}
 
-#अगर defined CONFIG_SMP
+#if defined CONFIG_SMP
 
-अटल व्योम
-inc_rt_prio_smp(काष्ठा rt_rq *rt_rq, पूर्णांक prio, पूर्णांक prev_prio)
-अणु
-	काष्ठा rq *rq = rq_of_rt_rq(rt_rq);
+static void
+inc_rt_prio_smp(struct rt_rq *rt_rq, int prio, int prev_prio)
+{
+	struct rq *rq = rq_of_rt_rq(rt_rq);
 
-#अगर_घोषित CONFIG_RT_GROUP_SCHED
+#ifdef CONFIG_RT_GROUP_SCHED
 	/*
-	 * Change rq's cpupri only अगर rt_rq is the top queue.
+	 * Change rq's cpupri only if rt_rq is the top queue.
 	 */
-	अगर (&rq->rt != rt_rq)
-		वापस;
-#पूर्ण_अगर
-	अगर (rq->online && prio < prev_prio)
+	if (&rq->rt != rt_rq)
+		return;
+#endif
+	if (rq->online && prio < prev_prio)
 		cpupri_set(&rq->rd->cpupri, rq->cpu, prio);
-पूर्ण
+}
 
-अटल व्योम
-dec_rt_prio_smp(काष्ठा rt_rq *rt_rq, पूर्णांक prio, पूर्णांक prev_prio)
-अणु
-	काष्ठा rq *rq = rq_of_rt_rq(rt_rq);
+static void
+dec_rt_prio_smp(struct rt_rq *rt_rq, int prio, int prev_prio)
+{
+	struct rq *rq = rq_of_rt_rq(rt_rq);
 
-#अगर_घोषित CONFIG_RT_GROUP_SCHED
+#ifdef CONFIG_RT_GROUP_SCHED
 	/*
-	 * Change rq's cpupri only अगर rt_rq is the top queue.
+	 * Change rq's cpupri only if rt_rq is the top queue.
 	 */
-	अगर (&rq->rt != rt_rq)
-		वापस;
-#पूर्ण_अगर
-	अगर (rq->online && rt_rq->highest_prio.curr != prev_prio)
+	if (&rq->rt != rt_rq)
+		return;
+#endif
+	if (rq->online && rt_rq->highest_prio.curr != prev_prio)
 		cpupri_set(&rq->rd->cpupri, rq->cpu, rt_rq->highest_prio.curr);
-पूर्ण
+}
 
-#अन्यथा /* CONFIG_SMP */
+#else /* CONFIG_SMP */
 
-अटल अंतरभूत
-व्योम inc_rt_prio_smp(काष्ठा rt_rq *rt_rq, पूर्णांक prio, पूर्णांक prev_prio) अणुपूर्ण
-अटल अंतरभूत
-व्योम dec_rt_prio_smp(काष्ठा rt_rq *rt_rq, पूर्णांक prio, पूर्णांक prev_prio) अणुपूर्ण
+static inline
+void inc_rt_prio_smp(struct rt_rq *rt_rq, int prio, int prev_prio) {}
+static inline
+void dec_rt_prio_smp(struct rt_rq *rt_rq, int prio, int prev_prio) {}
 
-#पूर्ण_अगर /* CONFIG_SMP */
+#endif /* CONFIG_SMP */
 
-#अगर defined CONFIG_SMP || defined CONFIG_RT_GROUP_SCHED
-अटल व्योम
-inc_rt_prio(काष्ठा rt_rq *rt_rq, पूर्णांक prio)
-अणु
-	पूर्णांक prev_prio = rt_rq->highest_prio.curr;
+#if defined CONFIG_SMP || defined CONFIG_RT_GROUP_SCHED
+static void
+inc_rt_prio(struct rt_rq *rt_rq, int prio)
+{
+	int prev_prio = rt_rq->highest_prio.curr;
 
-	अगर (prio < prev_prio)
+	if (prio < prev_prio)
 		rt_rq->highest_prio.curr = prio;
 
 	inc_rt_prio_smp(rt_rq, prio, prev_prio);
-पूर्ण
+}
 
-अटल व्योम
-dec_rt_prio(काष्ठा rt_rq *rt_rq, पूर्णांक prio)
-अणु
-	पूर्णांक prev_prio = rt_rq->highest_prio.curr;
+static void
+dec_rt_prio(struct rt_rq *rt_rq, int prio)
+{
+	int prev_prio = rt_rq->highest_prio.curr;
 
-	अगर (rt_rq->rt_nr_running) अणु
+	if (rt_rq->rt_nr_running) {
 
 		WARN_ON(prio < prev_prio);
 
 		/*
-		 * This may have been our highest task, and thereक्रमe
-		 * we may have some recomputation to करो
+		 * This may have been our highest task, and therefore
+		 * we may have some recomputation to do
 		 */
-		अगर (prio == prev_prio) अणु
-			काष्ठा rt_prio_array *array = &rt_rq->active;
+		if (prio == prev_prio) {
+			struct rt_prio_array *array = &rt_rq->active;
 
 			rt_rq->highest_prio.curr =
-				sched_find_first_bit(array->biपंचांगap);
-		पूर्ण
+				sched_find_first_bit(array->bitmap);
+		}
 
-	पूर्ण अन्यथा अणु
+	} else {
 		rt_rq->highest_prio.curr = MAX_RT_PRIO-1;
-	पूर्ण
+	}
 
 	dec_rt_prio_smp(rt_rq, prio, prev_prio);
-पूर्ण
+}
 
-#अन्यथा
+#else
 
-अटल अंतरभूत व्योम inc_rt_prio(काष्ठा rt_rq *rt_rq, पूर्णांक prio) अणुपूर्ण
-अटल अंतरभूत व्योम dec_rt_prio(काष्ठा rt_rq *rt_rq, पूर्णांक prio) अणुपूर्ण
+static inline void inc_rt_prio(struct rt_rq *rt_rq, int prio) {}
+static inline void dec_rt_prio(struct rt_rq *rt_rq, int prio) {}
 
-#पूर्ण_अगर /* CONFIG_SMP || CONFIG_RT_GROUP_SCHED */
+#endif /* CONFIG_SMP || CONFIG_RT_GROUP_SCHED */
 
-#अगर_घोषित CONFIG_RT_GROUP_SCHED
+#ifdef CONFIG_RT_GROUP_SCHED
 
-अटल व्योम
-inc_rt_group(काष्ठा sched_rt_entity *rt_se, काष्ठा rt_rq *rt_rq)
-अणु
-	अगर (rt_se_boosted(rt_se))
+static void
+inc_rt_group(struct sched_rt_entity *rt_se, struct rt_rq *rt_rq)
+{
+	if (rt_se_boosted(rt_se))
 		rt_rq->rt_nr_boosted++;
 
-	अगर (rt_rq->tg)
+	if (rt_rq->tg)
 		start_rt_bandwidth(&rt_rq->tg->rt_bandwidth);
-पूर्ण
+}
 
-अटल व्योम
-dec_rt_group(काष्ठा sched_rt_entity *rt_se, काष्ठा rt_rq *rt_rq)
-अणु
-	अगर (rt_se_boosted(rt_se))
+static void
+dec_rt_group(struct sched_rt_entity *rt_se, struct rt_rq *rt_rq)
+{
+	if (rt_se_boosted(rt_se))
 		rt_rq->rt_nr_boosted--;
 
 	WARN_ON(!rt_rq->rt_nr_running && rt_rq->rt_nr_boosted);
-पूर्ण
+}
 
-#अन्यथा /* CONFIG_RT_GROUP_SCHED */
+#else /* CONFIG_RT_GROUP_SCHED */
 
-अटल व्योम
-inc_rt_group(काष्ठा sched_rt_entity *rt_se, काष्ठा rt_rq *rt_rq)
-अणु
+static void
+inc_rt_group(struct sched_rt_entity *rt_se, struct rt_rq *rt_rq)
+{
 	start_rt_bandwidth(&def_rt_bandwidth);
-पूर्ण
+}
 
-अटल अंतरभूत
-व्योम dec_rt_group(काष्ठा sched_rt_entity *rt_se, काष्ठा rt_rq *rt_rq) अणुपूर्ण
+static inline
+void dec_rt_group(struct sched_rt_entity *rt_se, struct rt_rq *rt_rq) {}
 
-#पूर्ण_अगर /* CONFIG_RT_GROUP_SCHED */
+#endif /* CONFIG_RT_GROUP_SCHED */
 
-अटल अंतरभूत
-अचिन्हित पूर्णांक rt_se_nr_running(काष्ठा sched_rt_entity *rt_se)
-अणु
-	काष्ठा rt_rq *group_rq = group_rt_rq(rt_se);
+static inline
+unsigned int rt_se_nr_running(struct sched_rt_entity *rt_se)
+{
+	struct rt_rq *group_rq = group_rt_rq(rt_se);
 
-	अगर (group_rq)
-		वापस group_rq->rt_nr_running;
-	अन्यथा
-		वापस 1;
-पूर्ण
+	if (group_rq)
+		return group_rq->rt_nr_running;
+	else
+		return 1;
+}
 
-अटल अंतरभूत
-अचिन्हित पूर्णांक rt_se_rr_nr_running(काष्ठा sched_rt_entity *rt_se)
-अणु
-	काष्ठा rt_rq *group_rq = group_rt_rq(rt_se);
-	काष्ठा task_काष्ठा *tsk;
+static inline
+unsigned int rt_se_rr_nr_running(struct sched_rt_entity *rt_se)
+{
+	struct rt_rq *group_rq = group_rt_rq(rt_se);
+	struct task_struct *tsk;
 
-	अगर (group_rq)
-		वापस group_rq->rr_nr_running;
+	if (group_rq)
+		return group_rq->rr_nr_running;
 
 	tsk = rt_task_of(rt_se);
 
-	वापस (tsk->policy == SCHED_RR) ? 1 : 0;
-पूर्ण
+	return (tsk->policy == SCHED_RR) ? 1 : 0;
+}
 
-अटल अंतरभूत
-व्योम inc_rt_tasks(काष्ठा sched_rt_entity *rt_se, काष्ठा rt_rq *rt_rq)
-अणु
-	पूर्णांक prio = rt_se_prio(rt_se);
+static inline
+void inc_rt_tasks(struct sched_rt_entity *rt_se, struct rt_rq *rt_rq)
+{
+	int prio = rt_se_prio(rt_se);
 
 	WARN_ON(!rt_prio(prio));
 	rt_rq->rt_nr_running += rt_se_nr_running(rt_se);
@@ -1234,11 +1233,11 @@ inc_rt_group(काष्ठा sched_rt_entity *rt_se, काष्ठा rt_rq
 	inc_rt_prio(rt_rq, prio);
 	inc_rt_migration(rt_se, rt_rq);
 	inc_rt_group(rt_se, rt_rq);
-पूर्ण
+}
 
-अटल अंतरभूत
-व्योम dec_rt_tasks(काष्ठा sched_rt_entity *rt_se, काष्ठा rt_rq *rt_rq)
-अणु
+static inline
+void dec_rt_tasks(struct sched_rt_entity *rt_se, struct rt_rq *rt_rq)
+{
 	WARN_ON(!rt_prio(rt_se_prio(rt_se)));
 	WARN_ON(!rt_rq->rt_nr_running);
 	rt_rq->rt_nr_running -= rt_se_nr_running(rt_se);
@@ -1247,217 +1246,217 @@ inc_rt_group(काष्ठा sched_rt_entity *rt_se, काष्ठा rt_rq
 	dec_rt_prio(rt_rq, rt_se_prio(rt_se));
 	dec_rt_migration(rt_se, rt_rq);
 	dec_rt_group(rt_se, rt_rq);
-पूर्ण
+}
 
 /*
  * Change rt_se->run_list location unless SAVE && !MOVE
  *
  * assumes ENQUEUE/DEQUEUE flags match
  */
-अटल अंतरभूत bool move_entity(अचिन्हित पूर्णांक flags)
-अणु
-	अगर ((flags & (DEQUEUE_SAVE | DEQUEUE_MOVE)) == DEQUEUE_SAVE)
-		वापस false;
+static inline bool move_entity(unsigned int flags)
+{
+	if ((flags & (DEQUEUE_SAVE | DEQUEUE_MOVE)) == DEQUEUE_SAVE)
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम __delist_rt_entity(काष्ठा sched_rt_entity *rt_se, काष्ठा rt_prio_array *array)
-अणु
+static void __delist_rt_entity(struct sched_rt_entity *rt_se, struct rt_prio_array *array)
+{
 	list_del_init(&rt_se->run_list);
 
-	अगर (list_empty(array->queue + rt_se_prio(rt_se)))
-		__clear_bit(rt_se_prio(rt_se), array->biपंचांगap);
+	if (list_empty(array->queue + rt_se_prio(rt_se)))
+		__clear_bit(rt_se_prio(rt_se), array->bitmap);
 
 	rt_se->on_list = 0;
-पूर्ण
+}
 
-अटल व्योम __enqueue_rt_entity(काष्ठा sched_rt_entity *rt_se, अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा rt_rq *rt_rq = rt_rq_of_se(rt_se);
-	काष्ठा rt_prio_array *array = &rt_rq->active;
-	काष्ठा rt_rq *group_rq = group_rt_rq(rt_se);
-	काष्ठा list_head *queue = array->queue + rt_se_prio(rt_se);
+static void __enqueue_rt_entity(struct sched_rt_entity *rt_se, unsigned int flags)
+{
+	struct rt_rq *rt_rq = rt_rq_of_se(rt_se);
+	struct rt_prio_array *array = &rt_rq->active;
+	struct rt_rq *group_rq = group_rt_rq(rt_se);
+	struct list_head *queue = array->queue + rt_se_prio(rt_se);
 
 	/*
-	 * Don't enqueue the group अगर its throttled, or when empty.
-	 * The latter is a consequence of the क्रमmer when a child group
-	 * get throttled and the current group करोesn't have any other
+	 * Don't enqueue the group if its throttled, or when empty.
+	 * The latter is a consequence of the former when a child group
+	 * get throttled and the current group doesn't have any other
 	 * active members.
 	 */
-	अगर (group_rq && (rt_rq_throttled(group_rq) || !group_rq->rt_nr_running)) अणु
-		अगर (rt_se->on_list)
+	if (group_rq && (rt_rq_throttled(group_rq) || !group_rq->rt_nr_running)) {
+		if (rt_se->on_list)
 			__delist_rt_entity(rt_se, array);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (move_entity(flags)) अणु
+	if (move_entity(flags)) {
 		WARN_ON_ONCE(rt_se->on_list);
-		अगर (flags & ENQUEUE_HEAD)
+		if (flags & ENQUEUE_HEAD)
 			list_add(&rt_se->run_list, queue);
-		अन्यथा
+		else
 			list_add_tail(&rt_se->run_list, queue);
 
-		__set_bit(rt_se_prio(rt_se), array->biपंचांगap);
+		__set_bit(rt_se_prio(rt_se), array->bitmap);
 		rt_se->on_list = 1;
-	पूर्ण
+	}
 	rt_se->on_rq = 1;
 
 	inc_rt_tasks(rt_se, rt_rq);
-पूर्ण
+}
 
-अटल व्योम __dequeue_rt_entity(काष्ठा sched_rt_entity *rt_se, अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा rt_rq *rt_rq = rt_rq_of_se(rt_se);
-	काष्ठा rt_prio_array *array = &rt_rq->active;
+static void __dequeue_rt_entity(struct sched_rt_entity *rt_se, unsigned int flags)
+{
+	struct rt_rq *rt_rq = rt_rq_of_se(rt_se);
+	struct rt_prio_array *array = &rt_rq->active;
 
-	अगर (move_entity(flags)) अणु
+	if (move_entity(flags)) {
 		WARN_ON_ONCE(!rt_se->on_list);
 		__delist_rt_entity(rt_se, array);
-	पूर्ण
+	}
 	rt_se->on_rq = 0;
 
 	dec_rt_tasks(rt_se, rt_rq);
-पूर्ण
+}
 
 /*
  * Because the prio of an upper entry depends on the lower
- * entries, we must हटाओ entries top - करोwn.
+ * entries, we must remove entries top - down.
  */
-अटल व्योम dequeue_rt_stack(काष्ठा sched_rt_entity *rt_se, अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा sched_rt_entity *back = शून्य;
+static void dequeue_rt_stack(struct sched_rt_entity *rt_se, unsigned int flags)
+{
+	struct sched_rt_entity *back = NULL;
 
-	क्रम_each_sched_rt_entity(rt_se) अणु
+	for_each_sched_rt_entity(rt_se) {
 		rt_se->back = back;
 		back = rt_se;
-	पूर्ण
+	}
 
 	dequeue_top_rt_rq(rt_rq_of_se(back));
 
-	क्रम (rt_se = back; rt_se; rt_se = rt_se->back) अणु
-		अगर (on_rt_rq(rt_se))
+	for (rt_se = back; rt_se; rt_se = rt_se->back) {
+		if (on_rt_rq(rt_se))
 			__dequeue_rt_entity(rt_se, flags);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम enqueue_rt_entity(काष्ठा sched_rt_entity *rt_se, अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा rq *rq = rq_of_rt_se(rt_se);
+static void enqueue_rt_entity(struct sched_rt_entity *rt_se, unsigned int flags)
+{
+	struct rq *rq = rq_of_rt_se(rt_se);
 
 	dequeue_rt_stack(rt_se, flags);
-	क्रम_each_sched_rt_entity(rt_se)
+	for_each_sched_rt_entity(rt_se)
 		__enqueue_rt_entity(rt_se, flags);
 	enqueue_top_rt_rq(&rq->rt);
-पूर्ण
+}
 
-अटल व्योम dequeue_rt_entity(काष्ठा sched_rt_entity *rt_se, अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा rq *rq = rq_of_rt_se(rt_se);
+static void dequeue_rt_entity(struct sched_rt_entity *rt_se, unsigned int flags)
+{
+	struct rq *rq = rq_of_rt_se(rt_se);
 
 	dequeue_rt_stack(rt_se, flags);
 
-	क्रम_each_sched_rt_entity(rt_se) अणु
-		काष्ठा rt_rq *rt_rq = group_rt_rq(rt_se);
+	for_each_sched_rt_entity(rt_se) {
+		struct rt_rq *rt_rq = group_rt_rq(rt_se);
 
-		अगर (rt_rq && rt_rq->rt_nr_running)
+		if (rt_rq && rt_rq->rt_nr_running)
 			__enqueue_rt_entity(rt_se, flags);
-	पूर्ण
+	}
 	enqueue_top_rt_rq(&rq->rt);
-पूर्ण
+}
 
 /*
  * Adding/removing a task to/from a priority array:
  */
-अटल व्योम
-enqueue_task_rt(काष्ठा rq *rq, काष्ठा task_काष्ठा *p, पूर्णांक flags)
-अणु
-	काष्ठा sched_rt_entity *rt_se = &p->rt;
+static void
+enqueue_task_rt(struct rq *rq, struct task_struct *p, int flags)
+{
+	struct sched_rt_entity *rt_se = &p->rt;
 
-	अगर (flags & ENQUEUE_WAKEUP)
-		rt_se->समयout = 0;
+	if (flags & ENQUEUE_WAKEUP)
+		rt_se->timeout = 0;
 
 	enqueue_rt_entity(rt_se, flags);
 
-	अगर (!task_current(rq, p) && p->nr_cpus_allowed > 1)
+	if (!task_current(rq, p) && p->nr_cpus_allowed > 1)
 		enqueue_pushable_task(rq, p);
-पूर्ण
+}
 
-अटल व्योम dequeue_task_rt(काष्ठा rq *rq, काष्ठा task_काष्ठा *p, पूर्णांक flags)
-अणु
-	काष्ठा sched_rt_entity *rt_se = &p->rt;
+static void dequeue_task_rt(struct rq *rq, struct task_struct *p, int flags)
+{
+	struct sched_rt_entity *rt_se = &p->rt;
 
 	update_curr_rt(rq);
 	dequeue_rt_entity(rt_se, flags);
 
 	dequeue_pushable_task(rq, p);
-पूर्ण
+}
 
 /*
  * Put task to the head or the end of the run list without the overhead of
  * dequeue followed by enqueue.
  */
-अटल व्योम
-requeue_rt_entity(काष्ठा rt_rq *rt_rq, काष्ठा sched_rt_entity *rt_se, पूर्णांक head)
-अणु
-	अगर (on_rt_rq(rt_se)) अणु
-		काष्ठा rt_prio_array *array = &rt_rq->active;
-		काष्ठा list_head *queue = array->queue + rt_se_prio(rt_se);
+static void
+requeue_rt_entity(struct rt_rq *rt_rq, struct sched_rt_entity *rt_se, int head)
+{
+	if (on_rt_rq(rt_se)) {
+		struct rt_prio_array *array = &rt_rq->active;
+		struct list_head *queue = array->queue + rt_se_prio(rt_se);
 
-		अगर (head)
+		if (head)
 			list_move(&rt_se->run_list, queue);
-		अन्यथा
+		else
 			list_move_tail(&rt_se->run_list, queue);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम requeue_task_rt(काष्ठा rq *rq, काष्ठा task_काष्ठा *p, पूर्णांक head)
-अणु
-	काष्ठा sched_rt_entity *rt_se = &p->rt;
-	काष्ठा rt_rq *rt_rq;
+static void requeue_task_rt(struct rq *rq, struct task_struct *p, int head)
+{
+	struct sched_rt_entity *rt_se = &p->rt;
+	struct rt_rq *rt_rq;
 
-	क्रम_each_sched_rt_entity(rt_se) अणु
+	for_each_sched_rt_entity(rt_se) {
 		rt_rq = rt_rq_of_se(rt_se);
 		requeue_rt_entity(rt_rq, rt_se, head);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम yield_task_rt(काष्ठा rq *rq)
-अणु
+static void yield_task_rt(struct rq *rq)
+{
 	requeue_task_rt(rq, rq->curr, 0);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_SMP
-अटल पूर्णांक find_lowest_rq(काष्ठा task_काष्ठा *task);
+#ifdef CONFIG_SMP
+static int find_lowest_rq(struct task_struct *task);
 
-अटल पूर्णांक
-select_task_rq_rt(काष्ठा task_काष्ठा *p, पूर्णांक cpu, पूर्णांक flags)
-अणु
-	काष्ठा task_काष्ठा *curr;
-	काष्ठा rq *rq;
+static int
+select_task_rq_rt(struct task_struct *p, int cpu, int flags)
+{
+	struct task_struct *curr;
+	struct rq *rq;
 	bool test;
 
-	/* For anything but wake ups, just वापस the task_cpu */
-	अगर (!(flags & (WF_TTWU | WF_FORK)))
-		जाओ out;
+	/* For anything but wake ups, just return the task_cpu */
+	if (!(flags & (WF_TTWU | WF_FORK)))
+		goto out;
 
 	rq = cpu_rq(cpu);
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	curr = READ_ONCE(rq->curr); /* unlocked access */
 
 	/*
 	 * If the current task on @p's runqueue is an RT task, then
-	 * try to see अगर we can wake this RT task up on another
+	 * try to see if we can wake this RT task up on another
 	 * runqueue. Otherwise simply start this RT task
 	 * on its current runqueue.
 	 *
-	 * We want to aव्योम overloading runqueues. If the woken
+	 * We want to avoid overloading runqueues. If the woken
 	 * task is a higher priority, then it will stay on this CPU
 	 * and the lower prio task should be moved to another CPU.
 	 * Even though this will probably make the lower prio task
-	 * lose its cache, we करो not want to bounce a higher task
-	 * around just because it gave up its CPU, perhaps क्रम a
+	 * lose its cache, we do not want to bounce a higher task
+	 * around just because it gave up its CPU, perhaps for a
 	 * lock?
 	 *
 	 * For equal prio tasks, we just let the scheduler sort it out.
@@ -1465,60 +1464,60 @@ select_task_rq_rt(काष्ठा task_काष्ठा *p, पूर्ण
 	 * Otherwise, just let it ride on the affined RQ and the
 	 * post-schedule router will push the preempted task away
 	 *
-	 * This test is optimistic, अगर we get it wrong the load-balancer
+	 * This test is optimistic, if we get it wrong the load-balancer
 	 * will have to sort it out.
 	 *
-	 * We take पूर्णांकo account the capacity of the CPU to ensure it fits the
+	 * We take into account the capacity of the CPU to ensure it fits the
 	 * requirement of the task - which is only important on heterogeneous
-	 * प्रणालीs like big.LITTLE.
+	 * systems like big.LITTLE.
 	 */
 	test = curr &&
 	       unlikely(rt_task(curr)) &&
 	       (curr->nr_cpus_allowed < 2 || curr->prio <= p->prio);
 
-	अगर (test || !rt_task_fits_capacity(p, cpu)) अणु
-		पूर्णांक target = find_lowest_rq(p);
+	if (test || !rt_task_fits_capacity(p, cpu)) {
+		int target = find_lowest_rq(p);
 
 		/*
-		 * Bail out अगर we were क्रमcing a migration to find a better
+		 * Bail out if we were forcing a migration to find a better
 		 * fitting CPU but our search failed.
 		 */
-		अगर (!test && target != -1 && !rt_task_fits_capacity(p, target))
-			जाओ out_unlock;
+		if (!test && target != -1 && !rt_task_fits_capacity(p, target))
+			goto out_unlock;
 
 		/*
-		 * Don't bother moving it अगर the destination CPU is
+		 * Don't bother moving it if the destination CPU is
 		 * not running a lower priority task.
 		 */
-		अगर (target != -1 &&
+		if (target != -1 &&
 		    p->prio < cpu_rq(target)->rt.highest_prio.curr)
 			cpu = target;
-	पूर्ण
+	}
 
 out_unlock:
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
 out:
-	वापस cpu;
-पूर्ण
+	return cpu;
+}
 
-अटल व्योम check_preempt_equal_prio(काष्ठा rq *rq, काष्ठा task_काष्ठा *p)
-अणु
+static void check_preempt_equal_prio(struct rq *rq, struct task_struct *p)
+{
 	/*
 	 * Current can't be migrated, useless to reschedule,
 	 * let's hope p can move out.
 	 */
-	अगर (rq->curr->nr_cpus_allowed == 1 ||
-	    !cpupri_find(&rq->rd->cpupri, rq->curr, शून्य))
-		वापस;
+	if (rq->curr->nr_cpus_allowed == 1 ||
+	    !cpupri_find(&rq->rd->cpupri, rq->curr, NULL))
+		return;
 
 	/*
 	 * p is migratable, so let's not schedule it and
-	 * see अगर it is pushed or pulled somewhere अन्यथा.
+	 * see if it is pushed or pulled somewhere else.
 	 */
-	अगर (p->nr_cpus_allowed != 1 &&
-	    cpupri_find(&rq->rd->cpupri, p, शून्य))
-		वापस;
+	if (p->nr_cpus_allowed != 1 &&
+	    cpupri_find(&rq->rd->cpupri, p, NULL))
+		return;
 
 	/*
 	 * There appear to be other CPUs that can accept
@@ -1527,325 +1526,325 @@ out:
 	 */
 	requeue_task_rt(rq, p, 1);
 	resched_curr(rq);
-पूर्ण
+}
 
-अटल पूर्णांक balance_rt(काष्ठा rq *rq, काष्ठा task_काष्ठा *p, काष्ठा rq_flags *rf)
-अणु
-	अगर (!on_rt_rq(&p->rt) && need_pull_rt_task(rq, p)) अणु
+static int balance_rt(struct rq *rq, struct task_struct *p, struct rq_flags *rf)
+{
+	if (!on_rt_rq(&p->rt) && need_pull_rt_task(rq, p)) {
 		/*
-		 * This is OK, because current is on_cpu, which aव्योमs it being
-		 * picked क्रम load-balance and preemption/IRQs are still
-		 * disabled aव्योमing further scheduler activity on it and we've
+		 * This is OK, because current is on_cpu, which avoids it being
+		 * picked for load-balance and preemption/IRQs are still
+		 * disabled avoiding further scheduler activity on it and we've
 		 * not yet started the picking loop.
 		 */
 		rq_unpin_lock(rq, rf);
 		pull_rt_task(rq);
 		rq_repin_lock(rq, rf);
-	पूर्ण
+	}
 
-	वापस sched_stop_runnable(rq) || sched_dl_runnable(rq) || sched_rt_runnable(rq);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_SMP */
+	return sched_stop_runnable(rq) || sched_dl_runnable(rq) || sched_rt_runnable(rq);
+}
+#endif /* CONFIG_SMP */
 
 /*
- * Preempt the current task with a newly woken task अगर needed:
+ * Preempt the current task with a newly woken task if needed:
  */
-अटल व्योम check_preempt_curr_rt(काष्ठा rq *rq, काष्ठा task_काष्ठा *p, पूर्णांक flags)
-अणु
-	अगर (p->prio < rq->curr->prio) अणु
+static void check_preempt_curr_rt(struct rq *rq, struct task_struct *p, int flags)
+{
+	if (p->prio < rq->curr->prio) {
 		resched_curr(rq);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 	/*
 	 * If:
 	 *
 	 * - the newly woken task is of equal priority to the current task
-	 * - the newly woken task is non-migratable जबतक current is migratable
+	 * - the newly woken task is non-migratable while current is migratable
 	 * - current will be preempted on the next reschedule
 	 *
-	 * we should check to see अगर current can पढ़ोily move to a dअगरferent
+	 * we should check to see if current can readily move to a different
 	 * cpu.  If so, we will reschedule to allow the push logic to try
-	 * to move current somewhere अन्यथा, making room क्रम our non-migratable
+	 * to move current somewhere else, making room for our non-migratable
 	 * task.
 	 */
-	अगर (p->prio == rq->curr->prio && !test_tsk_need_resched(rq->curr))
+	if (p->prio == rq->curr->prio && !test_tsk_need_resched(rq->curr))
 		check_preempt_equal_prio(rq, p);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल अंतरभूत व्योम set_next_task_rt(काष्ठा rq *rq, काष्ठा task_काष्ठा *p, bool first)
-अणु
-	p->se.exec_start = rq_घड़ी_प्रकारask(rq);
+static inline void set_next_task_rt(struct rq *rq, struct task_struct *p, bool first)
+{
+	p->se.exec_start = rq_clock_task(rq);
 
-	/* The running task is never eligible क्रम pushing */
+	/* The running task is never eligible for pushing */
 	dequeue_pushable_task(rq, p);
 
-	अगर (!first)
-		वापस;
+	if (!first)
+		return;
 
 	/*
-	 * If prev task was rt, put_prev_task() has alपढ़ोy updated the
-	 * utilization. We only care of the हाल where we start to schedule a
+	 * If prev task was rt, put_prev_task() has already updated the
+	 * utilization. We only care of the case where we start to schedule a
 	 * rt task
 	 */
-	अगर (rq->curr->sched_class != &rt_sched_class)
-		update_rt_rq_load_avg(rq_घड़ी_pelt(rq), rq, 0);
+	if (rq->curr->sched_class != &rt_sched_class)
+		update_rt_rq_load_avg(rq_clock_pelt(rq), rq, 0);
 
 	rt_queue_push_tasks(rq);
-पूर्ण
+}
 
-अटल काष्ठा sched_rt_entity *pick_next_rt_entity(काष्ठा rq *rq,
-						   काष्ठा rt_rq *rt_rq)
-अणु
-	काष्ठा rt_prio_array *array = &rt_rq->active;
-	काष्ठा sched_rt_entity *next = शून्य;
-	काष्ठा list_head *queue;
-	पूर्णांक idx;
+static struct sched_rt_entity *pick_next_rt_entity(struct rq *rq,
+						   struct rt_rq *rt_rq)
+{
+	struct rt_prio_array *array = &rt_rq->active;
+	struct sched_rt_entity *next = NULL;
+	struct list_head *queue;
+	int idx;
 
-	idx = sched_find_first_bit(array->biपंचांगap);
+	idx = sched_find_first_bit(array->bitmap);
 	BUG_ON(idx >= MAX_RT_PRIO);
 
 	queue = array->queue + idx;
-	next = list_entry(queue->next, काष्ठा sched_rt_entity, run_list);
+	next = list_entry(queue->next, struct sched_rt_entity, run_list);
 
-	वापस next;
-पूर्ण
+	return next;
+}
 
-अटल काष्ठा task_काष्ठा *_pick_next_task_rt(काष्ठा rq *rq)
-अणु
-	काष्ठा sched_rt_entity *rt_se;
-	काष्ठा rt_rq *rt_rq  = &rq->rt;
+static struct task_struct *_pick_next_task_rt(struct rq *rq)
+{
+	struct sched_rt_entity *rt_se;
+	struct rt_rq *rt_rq  = &rq->rt;
 
-	करो अणु
+	do {
 		rt_se = pick_next_rt_entity(rq, rt_rq);
 		BUG_ON(!rt_se);
 		rt_rq = group_rt_rq(rt_se);
-	पूर्ण जबतक (rt_rq);
+	} while (rt_rq);
 
-	वापस rt_task_of(rt_se);
-पूर्ण
+	return rt_task_of(rt_se);
+}
 
-अटल काष्ठा task_काष्ठा *pick_next_task_rt(काष्ठा rq *rq)
-अणु
-	काष्ठा task_काष्ठा *p;
+static struct task_struct *pick_next_task_rt(struct rq *rq)
+{
+	struct task_struct *p;
 
-	अगर (!sched_rt_runnable(rq))
-		वापस शून्य;
+	if (!sched_rt_runnable(rq))
+		return NULL;
 
 	p = _pick_next_task_rt(rq);
 	set_next_task_rt(rq, p, true);
-	वापस p;
-पूर्ण
+	return p;
+}
 
-अटल व्योम put_prev_task_rt(काष्ठा rq *rq, काष्ठा task_काष्ठा *p)
-अणु
+static void put_prev_task_rt(struct rq *rq, struct task_struct *p)
+{
 	update_curr_rt(rq);
 
-	update_rt_rq_load_avg(rq_घड़ी_pelt(rq), rq, 1);
+	update_rt_rq_load_avg(rq_clock_pelt(rq), rq, 1);
 
 	/*
-	 * The previous task needs to be made eligible क्रम pushing
-	 * अगर it is still active
+	 * The previous task needs to be made eligible for pushing
+	 * if it is still active
 	 */
-	अगर (on_rt_rq(&p->rt) && p->nr_cpus_allowed > 1)
+	if (on_rt_rq(&p->rt) && p->nr_cpus_allowed > 1)
 		enqueue_pushable_task(rq, p);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 
-/* Only try algorithms three बार */
-#घोषणा RT_MAX_TRIES 3
+/* Only try algorithms three times */
+#define RT_MAX_TRIES 3
 
-अटल पूर्णांक pick_rt_task(काष्ठा rq *rq, काष्ठा task_काष्ठा *p, पूर्णांक cpu)
-अणु
-	अगर (!task_running(rq, p) &&
+static int pick_rt_task(struct rq *rq, struct task_struct *p, int cpu)
+{
+	if (!task_running(rq, p) &&
 	    cpumask_test_cpu(cpu, &p->cpus_mask))
-		वापस 1;
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Return the highest pushable rq's task, which is suitable to be executed
- * on the CPU, शून्य otherwise
+ * on the CPU, NULL otherwise
  */
-अटल काष्ठा task_काष्ठा *pick_highest_pushable_task(काष्ठा rq *rq, पूर्णांक cpu)
-अणु
-	काष्ठा plist_head *head = &rq->rt.pushable_tasks;
-	काष्ठा task_काष्ठा *p;
+static struct task_struct *pick_highest_pushable_task(struct rq *rq, int cpu)
+{
+	struct plist_head *head = &rq->rt.pushable_tasks;
+	struct task_struct *p;
 
-	अगर (!has_pushable_tasks(rq))
-		वापस शून्य;
+	if (!has_pushable_tasks(rq))
+		return NULL;
 
-	plist_क्रम_each_entry(p, head, pushable_tasks) अणु
-		अगर (pick_rt_task(rq, p, cpu))
-			वापस p;
-	पूर्ण
+	plist_for_each_entry(p, head, pushable_tasks) {
+		if (pick_rt_task(rq, p, cpu))
+			return p;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल DEFINE_PER_CPU(cpumask_var_t, local_cpu_mask);
+static DEFINE_PER_CPU(cpumask_var_t, local_cpu_mask);
 
-अटल पूर्णांक find_lowest_rq(काष्ठा task_काष्ठा *task)
-अणु
-	काष्ठा sched_करोमुख्य *sd;
-	काष्ठा cpumask *lowest_mask = this_cpu_cpumask_var_ptr(local_cpu_mask);
-	पूर्णांक this_cpu = smp_processor_id();
-	पूर्णांक cpu      = task_cpu(task);
-	पूर्णांक ret;
+static int find_lowest_rq(struct task_struct *task)
+{
+	struct sched_domain *sd;
+	struct cpumask *lowest_mask = this_cpu_cpumask_var_ptr(local_cpu_mask);
+	int this_cpu = smp_processor_id();
+	int cpu      = task_cpu(task);
+	int ret;
 
 	/* Make sure the mask is initialized first */
-	अगर (unlikely(!lowest_mask))
-		वापस -1;
+	if (unlikely(!lowest_mask))
+		return -1;
 
-	अगर (task->nr_cpus_allowed == 1)
-		वापस -1; /* No other tarमाला_लो possible */
+	if (task->nr_cpus_allowed == 1)
+		return -1; /* No other targets possible */
 
 	/*
-	 * If we're on asym प्रणाली ensure we consider the dअगरferent capacities
-	 * of the CPUs when searching क्रम the lowest_mask.
+	 * If we're on asym system ensure we consider the different capacities
+	 * of the CPUs when searching for the lowest_mask.
 	 */
-	अगर (अटल_branch_unlikely(&sched_asym_cpucapacity)) अणु
+	if (static_branch_unlikely(&sched_asym_cpucapacity)) {
 
 		ret = cpupri_find_fitness(&task_rq(task)->rd->cpupri,
 					  task, lowest_mask,
 					  rt_task_fits_capacity);
-	पूर्ण अन्यथा अणु
+	} else {
 
 		ret = cpupri_find(&task_rq(task)->rd->cpupri,
 				  task, lowest_mask);
-	पूर्ण
+	}
 
-	अगर (!ret)
-		वापस -1; /* No tarमाला_लो found */
+	if (!ret)
+		return -1; /* No targets found */
 
 	/*
-	 * At this poपूर्णांक we have built a mask of CPUs representing the
-	 * lowest priority tasks in the प्रणाली.  Now we want to elect
+	 * At this point we have built a mask of CPUs representing the
+	 * lowest priority tasks in the system.  Now we want to elect
 	 * the best one based on our affinity and topology.
 	 *
 	 * We prioritize the last CPU that the task executed on since
 	 * it is most likely cache-hot in that location.
 	 */
-	अगर (cpumask_test_cpu(cpu, lowest_mask))
-		वापस cpu;
+	if (cpumask_test_cpu(cpu, lowest_mask))
+		return cpu;
 
 	/*
-	 * Otherwise, we consult the sched_करोमुख्यs span maps to figure
-	 * out which CPU is logically बंदst to our hot cache data.
+	 * Otherwise, we consult the sched_domains span maps to figure
+	 * out which CPU is logically closest to our hot cache data.
 	 */
-	अगर (!cpumask_test_cpu(this_cpu, lowest_mask))
-		this_cpu = -1; /* Skip this_cpu opt अगर not among lowest */
+	if (!cpumask_test_cpu(this_cpu, lowest_mask))
+		this_cpu = -1; /* Skip this_cpu opt if not among lowest */
 
-	rcu_पढ़ो_lock();
-	क्रम_each_करोमुख्य(cpu, sd) अणु
-		अगर (sd->flags & SD_WAKE_AFFINE) अणु
-			पूर्णांक best_cpu;
+	rcu_read_lock();
+	for_each_domain(cpu, sd) {
+		if (sd->flags & SD_WAKE_AFFINE) {
+			int best_cpu;
 
 			/*
 			 * "this_cpu" is cheaper to preempt than a
 			 * remote processor.
 			 */
-			अगर (this_cpu != -1 &&
-			    cpumask_test_cpu(this_cpu, sched_करोमुख्य_span(sd))) अणु
-				rcu_पढ़ो_unlock();
-				वापस this_cpu;
-			पूर्ण
+			if (this_cpu != -1 &&
+			    cpumask_test_cpu(this_cpu, sched_domain_span(sd))) {
+				rcu_read_unlock();
+				return this_cpu;
+			}
 
 			best_cpu = cpumask_any_and_distribute(lowest_mask,
-							      sched_करोमुख्य_span(sd));
-			अगर (best_cpu < nr_cpu_ids) अणु
-				rcu_पढ़ो_unlock();
-				वापस best_cpu;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	rcu_पढ़ो_unlock();
+							      sched_domain_span(sd));
+			if (best_cpu < nr_cpu_ids) {
+				rcu_read_unlock();
+				return best_cpu;
+			}
+		}
+	}
+	rcu_read_unlock();
 
 	/*
-	 * And finally, अगर there were no matches within the करोमुख्यs
+	 * And finally, if there were no matches within the domains
 	 * just give the caller *something* to work with from the compatible
 	 * locations.
 	 */
-	अगर (this_cpu != -1)
-		वापस this_cpu;
+	if (this_cpu != -1)
+		return this_cpu;
 
 	cpu = cpumask_any_distribute(lowest_mask);
-	अगर (cpu < nr_cpu_ids)
-		वापस cpu;
+	if (cpu < nr_cpu_ids)
+		return cpu;
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
 /* Will lock the rq it finds */
-अटल काष्ठा rq *find_lock_lowest_rq(काष्ठा task_काष्ठा *task, काष्ठा rq *rq)
-अणु
-	काष्ठा rq *lowest_rq = शून्य;
-	पूर्णांक tries;
-	पूर्णांक cpu;
+static struct rq *find_lock_lowest_rq(struct task_struct *task, struct rq *rq)
+{
+	struct rq *lowest_rq = NULL;
+	int tries;
+	int cpu;
 
-	क्रम (tries = 0; tries < RT_MAX_TRIES; tries++) अणु
+	for (tries = 0; tries < RT_MAX_TRIES; tries++) {
 		cpu = find_lowest_rq(task);
 
-		अगर ((cpu == -1) || (cpu == rq->cpu))
-			अवरोध;
+		if ((cpu == -1) || (cpu == rq->cpu))
+			break;
 
 		lowest_rq = cpu_rq(cpu);
 
-		अगर (lowest_rq->rt.highest_prio.curr <= task->prio) अणु
+		if (lowest_rq->rt.highest_prio.curr <= task->prio) {
 			/*
 			 * Target rq has tasks of equal or higher priority,
-			 * retrying करोes not release any lock and is unlikely
-			 * to yield a dअगरferent result.
+			 * retrying does not release any lock and is unlikely
+			 * to yield a different result.
 			 */
-			lowest_rq = शून्य;
-			अवरोध;
-		पूर्ण
+			lowest_rq = NULL;
+			break;
+		}
 
-		/* अगर the prio of this runqueue changed, try again */
-		अगर (द्विगुन_lock_balance(rq, lowest_rq)) अणु
+		/* if the prio of this runqueue changed, try again */
+		if (double_lock_balance(rq, lowest_rq)) {
 			/*
 			 * We had to unlock the run queue. In
-			 * the mean समय, task could have
-			 * migrated alपढ़ोy or had its affinity changed.
+			 * the mean time, task could have
+			 * migrated already or had its affinity changed.
 			 * Also make sure that it wasn't scheduled on its rq.
 			 */
-			अगर (unlikely(task_rq(task) != rq ||
+			if (unlikely(task_rq(task) != rq ||
 				     !cpumask_test_cpu(lowest_rq->cpu, &task->cpus_mask) ||
 				     task_running(rq, task) ||
 				     !rt_task(task) ||
-				     !task_on_rq_queued(task))) अणु
+				     !task_on_rq_queued(task))) {
 
-				द्विगुन_unlock_balance(rq, lowest_rq);
-				lowest_rq = शून्य;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				double_unlock_balance(rq, lowest_rq);
+				lowest_rq = NULL;
+				break;
+			}
+		}
 
 		/* If this rq is still suitable use it. */
-		अगर (lowest_rq->rt.highest_prio.curr > task->prio)
-			अवरोध;
+		if (lowest_rq->rt.highest_prio.curr > task->prio)
+			break;
 
 		/* try again */
-		द्विगुन_unlock_balance(rq, lowest_rq);
-		lowest_rq = शून्य;
-	पूर्ण
+		double_unlock_balance(rq, lowest_rq);
+		lowest_rq = NULL;
+	}
 
-	वापस lowest_rq;
-पूर्ण
+	return lowest_rq;
+}
 
-अटल काष्ठा task_काष्ठा *pick_next_pushable_task(काष्ठा rq *rq)
-अणु
-	काष्ठा task_काष्ठा *p;
+static struct task_struct *pick_next_pushable_task(struct rq *rq)
+{
+	struct task_struct *p;
 
-	अगर (!has_pushable_tasks(rq))
-		वापस शून्य;
+	if (!has_pushable_tasks(rq))
+		return NULL;
 
 	p = plist_first_entry(&rq->rt.pushable_tasks,
-			      काष्ठा task_काष्ठा, pushable_tasks);
+			      struct task_struct, pushable_tasks);
 
 	BUG_ON(rq->cpu != task_cpu(p));
 	BUG_ON(task_current(rq, p));
@@ -1854,106 +1853,106 @@ out:
 	BUG_ON(!task_on_rq_queued(p));
 	BUG_ON(!rt_task(p));
 
-	वापस p;
-पूर्ण
+	return p;
+}
 
 /*
- * If the current CPU has more than one RT task, see अगर the non
+ * If the current CPU has more than one RT task, see if the non
  * running task can migrate over to a CPU that is running a task
  * of lesser priority.
  */
-अटल पूर्णांक push_rt_task(काष्ठा rq *rq, bool pull)
-अणु
-	काष्ठा task_काष्ठा *next_task;
-	काष्ठा rq *lowest_rq;
-	पूर्णांक ret = 0;
+static int push_rt_task(struct rq *rq, bool pull)
+{
+	struct task_struct *next_task;
+	struct rq *lowest_rq;
+	int ret = 0;
 
-	अगर (!rq->rt.overloaded)
-		वापस 0;
+	if (!rq->rt.overloaded)
+		return 0;
 
 	next_task = pick_next_pushable_task(rq);
-	अगर (!next_task)
-		वापस 0;
+	if (!next_task)
+		return 0;
 
 retry:
-	अगर (is_migration_disabled(next_task)) अणु
-		काष्ठा task_काष्ठा *push_task = शून्य;
-		पूर्णांक cpu;
+	if (is_migration_disabled(next_task)) {
+		struct task_struct *push_task = NULL;
+		int cpu;
 
-		अगर (!pull || rq->push_busy)
-			वापस 0;
+		if (!pull || rq->push_busy)
+			return 0;
 
 		cpu = find_lowest_rq(rq->curr);
-		अगर (cpu == -1 || cpu == rq->cpu)
-			वापस 0;
+		if (cpu == -1 || cpu == rq->cpu)
+			return 0;
 
 		/*
 		 * Given we found a CPU with lower priority than @next_task,
-		 * thereक्रमe it should be running. However we cannot migrate it
+		 * therefore it should be running. However we cannot migrate it
 		 * to this other CPU, instead attempt to push the current
 		 * running task on this CPU away.
 		 */
 		push_task = get_push_task(rq);
-		अगर (push_task) अणु
+		if (push_task) {
 			raw_spin_unlock(&rq->lock);
-			stop_one_cpu_noरुको(rq->cpu, push_cpu_stop,
+			stop_one_cpu_nowait(rq->cpu, push_cpu_stop,
 					    push_task, &rq->push_work);
 			raw_spin_lock(&rq->lock);
-		पूर्ण
+		}
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (WARN_ON(next_task == rq->curr))
-		वापस 0;
+	if (WARN_ON(next_task == rq->curr))
+		return 0;
 
 	/*
 	 * It's possible that the next_task slipped in of
-	 * higher priority than current. If that's the हाल
+	 * higher priority than current. If that's the case
 	 * just reschedule current.
 	 */
-	अगर (unlikely(next_task->prio < rq->curr->prio)) अणु
+	if (unlikely(next_task->prio < rq->curr->prio)) {
 		resched_curr(rq);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* We might release rq lock */
-	get_task_काष्ठा(next_task);
+	get_task_struct(next_task);
 
-	/* find_lock_lowest_rq locks the rq अगर found */
+	/* find_lock_lowest_rq locks the rq if found */
 	lowest_rq = find_lock_lowest_rq(next_task, rq);
-	अगर (!lowest_rq) अणु
-		काष्ठा task_काष्ठा *task;
+	if (!lowest_rq) {
+		struct task_struct *task;
 		/*
 		 * find_lock_lowest_rq releases rq->lock
 		 * so it is possible that next_task has migrated.
 		 *
 		 * We need to make sure that the task is still on the same
-		 * run-queue and is also still the next task eligible क्रम
+		 * run-queue and is also still the next task eligible for
 		 * pushing.
 		 */
 		task = pick_next_pushable_task(rq);
-		अगर (task == next_task) अणु
+		if (task == next_task) {
 			/*
 			 * The task hasn't migrated, and is still the next
 			 * eligible task, but we failed to find a run-queue
-			 * to push it to.  Do not retry in this हाल, since
-			 * other CPUs will pull from us when पढ़ोy.
+			 * to push it to.  Do not retry in this case, since
+			 * other CPUs will pull from us when ready.
 			 */
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अगर (!task)
-			/* No more tasks, just निकास */
-			जाओ out;
+		if (!task)
+			/* No more tasks, just exit */
+			goto out;
 
 		/*
-		 * Something has shअगरted, try again.
+		 * Something has shifted, try again.
 		 */
-		put_task_काष्ठा(next_task);
+		put_task_struct(next_task);
 		next_task = task;
-		जाओ retry;
-	पूर्ण
+		goto retry;
+	}
 
 	deactivate_task(rq, next_task, 0);
 	set_task_cpu(next_task, lowest_rq->cpu);
@@ -1961,52 +1960,52 @@ retry:
 	resched_curr(lowest_rq);
 	ret = 1;
 
-	द्विगुन_unlock_balance(rq, lowest_rq);
+	double_unlock_balance(rq, lowest_rq);
 out:
-	put_task_काष्ठा(next_task);
+	put_task_struct(next_task);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम push_rt_tasks(काष्ठा rq *rq)
-अणु
-	/* push_rt_task will वापस true अगर it moved an RT */
-	जबतक (push_rt_task(rq, false))
+static void push_rt_tasks(struct rq *rq)
+{
+	/* push_rt_task will return true if it moved an RT */
+	while (push_rt_task(rq, false))
 		;
-पूर्ण
+}
 
-#अगर_घोषित HAVE_RT_PUSH_IPI
+#ifdef HAVE_RT_PUSH_IPI
 
 /*
  * When a high priority task schedules out from a CPU and a lower priority
- * task is scheduled in, a check is made to see अगर there's any RT tasks
- * on other CPUs that are रुकोing to run because a higher priority RT task
- * is currently running on its CPU. In this हाल, the CPU with multiple RT
- * tasks queued on it (overloaded) needs to be notअगरied that a CPU has खोलोed
+ * task is scheduled in, a check is made to see if there's any RT tasks
+ * on other CPUs that are waiting to run because a higher priority RT task
+ * is currently running on its CPU. In this case, the CPU with multiple RT
+ * tasks queued on it (overloaded) needs to be notified that a CPU has opened
  * up that may be able to run one of its non-running queued RT tasks.
  *
- * All CPUs with overloaded RT tasks need to be notअगरied as there is currently
- * no way to know which of these CPUs have the highest priority task रुकोing
+ * All CPUs with overloaded RT tasks need to be notified as there is currently
+ * no way to know which of these CPUs have the highest priority task waiting
  * to run. Instead of trying to take a spinlock on each of these CPUs,
- * which has shown to cause large latency when करोne on machines with many
+ * which has shown to cause large latency when done on machines with many
  * CPUs, sending an IPI to the CPUs to have them push off the overloaded
- * RT tasks रुकोing to run.
+ * RT tasks waiting to run.
  *
  * Just sending an IPI to each of the CPUs is also an issue, as on large
  * count CPU machines, this can cause an IPI storm on a CPU, especially
- * अगर its the only CPU with multiple RT tasks queued, and a large number
- * of CPUs scheduling a lower priority task at the same समय.
+ * if its the only CPU with multiple RT tasks queued, and a large number
+ * of CPUs scheduling a lower priority task at the same time.
  *
- * Each root करोमुख्य has its own irq work function that can iterate over
+ * Each root domain has its own irq work function that can iterate over
  * all CPUs with RT overloaded tasks. Since all CPUs with overloaded RT
- * task must be checked अगर there's one or many CPUs that are lowering
+ * task must be checked if there's one or many CPUs that are lowering
  * their priority, there's a single irq work iterator that will try to
- * push off RT tasks that are रुकोing to run.
+ * push off RT tasks that are waiting to run.
  *
  * When a CPU schedules a lower priority task, it will kick off the
  * irq work iterator that will jump to each CPU with overloaded RT tasks.
  * As it only takes the first CPU that schedules a lower priority task
- * to start the process, the rto_start variable is incremented and अगर
+ * to start the process, the rto_start variable is incremented and if
  * the atomic result is one, then that CPU will try to take the rto_lock.
  * This prevents high contention on the lock as the process handles all
  * CPUs scheduling lower priority tasks.
@@ -2014,37 +2013,37 @@ out:
  * All CPUs that are scheduling a lower priority task will increment the
  * rt_loop_next variable. This will make sure that the irq work iterator
  * checks all RT overloaded CPUs whenever a CPU schedules a new lower
- * priority task, even अगर the iterator is in the middle of a scan. Incrementing
- * the rt_loop_next will cause the iterator to perक्रमm another scan.
+ * priority task, even if the iterator is in the middle of a scan. Incrementing
+ * the rt_loop_next will cause the iterator to perform another scan.
  *
  */
-अटल पूर्णांक rto_next_cpu(काष्ठा root_करोमुख्य *rd)
-अणु
-	पूर्णांक next;
-	पूर्णांक cpu;
+static int rto_next_cpu(struct root_domain *rd)
+{
+	int next;
+	int cpu;
 
 	/*
 	 * When starting the IPI RT pushing, the rto_cpu is set to -1,
-	 * rt_next_cpu() will simply वापस the first CPU found in
+	 * rt_next_cpu() will simply return the first CPU found in
 	 * the rto_mask.
 	 *
 	 * If rto_next_cpu() is called with rto_cpu is a valid CPU, it
-	 * will वापस the next CPU found in the rto_mask.
+	 * will return the next CPU found in the rto_mask.
 	 *
 	 * If there are no more CPUs left in the rto_mask, then a check is made
 	 * against rto_loop and rto_loop_next. rto_loop is only updated with
 	 * the rto_lock held, but any CPU may increment the rto_loop_next
 	 * without any locking.
 	 */
-	क्रम (;;) अणु
+	for (;;) {
 
 		/* When rto_cpu is -1 this acts like cpumask_first() */
 		cpu = cpumask_next(rd->rto_cpu, rd->rto_mask);
 
 		rd->rto_cpu = cpu;
 
-		अगर (cpu < nr_cpu_ids)
-			वापस cpu;
+		if (cpu < nr_cpu_ids)
+			return cpu;
 
 		rd->rto_cpu = -1;
 
@@ -2054,80 +2053,80 @@ out:
 		 *
 		 * Matches WMB in rt_set_overload().
 		 */
-		next = atomic_पढ़ो_acquire(&rd->rto_loop_next);
+		next = atomic_read_acquire(&rd->rto_loop_next);
 
-		अगर (rd->rto_loop == next)
-			अवरोध;
+		if (rd->rto_loop == next)
+			break;
 
 		rd->rto_loop = next;
-	पूर्ण
+	}
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल अंतरभूत bool rto_start_trylock(atomic_t *v)
-अणु
-	वापस !atomic_cmpxchg_acquire(v, 0, 1);
-पूर्ण
+static inline bool rto_start_trylock(atomic_t *v)
+{
+	return !atomic_cmpxchg_acquire(v, 0, 1);
+}
 
-अटल अंतरभूत व्योम rto_start_unlock(atomic_t *v)
-अणु
+static inline void rto_start_unlock(atomic_t *v)
+{
 	atomic_set_release(v, 0);
-पूर्ण
+}
 
-अटल व्योम tell_cpu_to_push(काष्ठा rq *rq)
-अणु
-	पूर्णांक cpu = -1;
+static void tell_cpu_to_push(struct rq *rq)
+{
+	int cpu = -1;
 
-	/* Keep the loop going अगर the IPI is currently active */
+	/* Keep the loop going if the IPI is currently active */
 	atomic_inc(&rq->rd->rto_loop_next);
 
-	/* Only one CPU can initiate a loop at a समय */
-	अगर (!rto_start_trylock(&rq->rd->rto_loop_start))
-		वापस;
+	/* Only one CPU can initiate a loop at a time */
+	if (!rto_start_trylock(&rq->rd->rto_loop_start))
+		return;
 
 	raw_spin_lock(&rq->rd->rto_lock);
 
 	/*
-	 * The rto_cpu is updated under the lock, अगर it has a valid CPU
-	 * then the IPI is still running and will जारी due to the
-	 * update to loop_next, and nothing needs to be करोne here.
+	 * The rto_cpu is updated under the lock, if it has a valid CPU
+	 * then the IPI is still running and will continue due to the
+	 * update to loop_next, and nothing needs to be done here.
 	 * Otherwise it is finishing up and an ipi needs to be sent.
 	 */
-	अगर (rq->rd->rto_cpu < 0)
+	if (rq->rd->rto_cpu < 0)
 		cpu = rto_next_cpu(rq->rd);
 
 	raw_spin_unlock(&rq->rd->rto_lock);
 
 	rto_start_unlock(&rq->rd->rto_loop_start);
 
-	अगर (cpu >= 0) अणु
-		/* Make sure the rd करोes not get मुक्तd जबतक pushing */
+	if (cpu >= 0) {
+		/* Make sure the rd does not get freed while pushing */
 		sched_get_rd(rq->rd);
 		irq_work_queue_on(&rq->rd->rto_push_work, cpu);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* Called from hardirq context */
-व्योम rto_push_irq_work_func(काष्ठा irq_work *work)
-अणु
-	काष्ठा root_करोमुख्य *rd =
-		container_of(work, काष्ठा root_करोमुख्य, rto_push_work);
-	काष्ठा rq *rq;
-	पूर्णांक cpu;
+void rto_push_irq_work_func(struct irq_work *work)
+{
+	struct root_domain *rd =
+		container_of(work, struct root_domain, rto_push_work);
+	struct rq *rq;
+	int cpu;
 
 	rq = this_rq();
 
 	/*
-	 * We करो not need to grab the lock to check क्रम has_pushable_tasks.
-	 * When it माला_लो updated, a check is made अगर a push is possible.
+	 * We do not need to grab the lock to check for has_pushable_tasks.
+	 * When it gets updated, a check is made if a push is possible.
 	 */
-	अगर (has_pushable_tasks(rq)) अणु
+	if (has_pushable_tasks(rq)) {
 		raw_spin_lock(&rq->lock);
-		जबतक (push_rt_task(rq, true))
+		while (push_rt_task(rq, true))
 			;
 		raw_spin_unlock(&rq->lock);
-	पूर्ण
+	}
 
 	raw_spin_lock(&rd->rto_lock);
 
@@ -2136,69 +2135,69 @@ out:
 
 	raw_spin_unlock(&rd->rto_lock);
 
-	अगर (cpu < 0) अणु
+	if (cpu < 0) {
 		sched_put_rd(rd);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Try the next RT overloaded CPU */
 	irq_work_queue_on(&rd->rto_push_work, cpu);
-पूर्ण
-#पूर्ण_अगर /* HAVE_RT_PUSH_IPI */
+}
+#endif /* HAVE_RT_PUSH_IPI */
 
-अटल व्योम pull_rt_task(काष्ठा rq *this_rq)
-अणु
-	पूर्णांक this_cpu = this_rq->cpu, cpu;
+static void pull_rt_task(struct rq *this_rq)
+{
+	int this_cpu = this_rq->cpu, cpu;
 	bool resched = false;
-	काष्ठा task_काष्ठा *p, *push_task;
-	काष्ठा rq *src_rq;
-	पूर्णांक rt_overload_count = rt_overloaded(this_rq);
+	struct task_struct *p, *push_task;
+	struct rq *src_rq;
+	int rt_overload_count = rt_overloaded(this_rq);
 
-	अगर (likely(!rt_overload_count))
-		वापस;
+	if (likely(!rt_overload_count))
+		return;
 
 	/*
-	 * Match the barrier from rt_set_overloaded; this guarantees that अगर we
+	 * Match the barrier from rt_set_overloaded; this guarantees that if we
 	 * see overloaded we must also see the rto_mask bit.
 	 */
 	smp_rmb();
 
-	/* If we are the only overloaded CPU करो nothing */
-	अगर (rt_overload_count == 1 &&
+	/* If we are the only overloaded CPU do nothing */
+	if (rt_overload_count == 1 &&
 	    cpumask_test_cpu(this_rq->cpu, this_rq->rd->rto_mask))
-		वापस;
+		return;
 
-#अगर_घोषित HAVE_RT_PUSH_IPI
-	अगर (sched_feat(RT_PUSH_IPI)) अणु
+#ifdef HAVE_RT_PUSH_IPI
+	if (sched_feat(RT_PUSH_IPI)) {
 		tell_cpu_to_push(this_rq);
-		वापस;
-	पूर्ण
-#पूर्ण_अगर
+		return;
+	}
+#endif
 
-	क्रम_each_cpu(cpu, this_rq->rd->rto_mask) अणु
-		अगर (this_cpu == cpu)
-			जारी;
+	for_each_cpu(cpu, this_rq->rd->rto_mask) {
+		if (this_cpu == cpu)
+			continue;
 
 		src_rq = cpu_rq(cpu);
 
 		/*
-		 * Don't bother taking the src_rq->lock अगर the next highest
+		 * Don't bother taking the src_rq->lock if the next highest
 		 * task is known to be lower-priority than our current task.
-		 * This may look racy, but अगर this value is about to go
+		 * This may look racy, but if this value is about to go
 		 * logically higher, the src_rq will push this task away.
-		 * And अगर its going logically lower, we करो not care
+		 * And if its going logically lower, we do not care
 		 */
-		अगर (src_rq->rt.highest_prio.next >=
+		if (src_rq->rt.highest_prio.next >=
 		    this_rq->rt.highest_prio.curr)
-			जारी;
+			continue;
 
 		/*
 		 * We can potentially drop this_rq's lock in
-		 * द्विगुन_lock_balance, and another CPU could
+		 * double_lock_balance, and another CPU could
 		 * alter this_rq
 		 */
-		push_task = शून्य;
-		द्विगुन_lock_balance(this_rq, src_rq);
+		push_task = NULL;
+		double_lock_balance(this_rq, src_rq);
 
 		/*
 		 * We can pull only a task, which is pushable
@@ -2210,7 +2209,7 @@ out:
 		 * Do we have an RT task that preempts
 		 * the to-be-scheduled task?
 		 */
-		अगर (p && (p->prio < this_rq->rt.highest_prio.curr)) अणु
+		if (p && (p->prio < this_rq->rt.highest_prio.curr)) {
 			WARN_ON(p == src_rq->curr);
 			WARN_ON(!task_on_rq_queued(p));
 
@@ -2219,48 +2218,48 @@ out:
 			 * than what's currently running on its CPU.
 			 * This is just that p is waking up and hasn't
 			 * had a chance to schedule. We only pull
-			 * p अगर it is lower in priority than the
+			 * p if it is lower in priority than the
 			 * current task on the run queue
 			 */
-			अगर (p->prio < src_rq->curr->prio)
-				जाओ skip;
+			if (p->prio < src_rq->curr->prio)
+				goto skip;
 
-			अगर (is_migration_disabled(p)) अणु
+			if (is_migration_disabled(p)) {
 				push_task = get_push_task(src_rq);
-			पूर्ण अन्यथा अणु
+			} else {
 				deactivate_task(src_rq, p, 0);
 				set_task_cpu(p, this_cpu);
 				activate_task(this_rq, p, 0);
 				resched = true;
-			पूर्ण
+			}
 			/*
-			 * We जारी with the search, just in
-			 * हाल there's an even higher prio task
+			 * We continue with the search, just in
+			 * case there's an even higher prio task
 			 * in another runqueue. (low likelihood
 			 * but possible)
 			 */
-		पूर्ण
+		}
 skip:
-		द्विगुन_unlock_balance(this_rq, src_rq);
+		double_unlock_balance(this_rq, src_rq);
 
-		अगर (push_task) अणु
+		if (push_task) {
 			raw_spin_unlock(&this_rq->lock);
-			stop_one_cpu_noरुको(src_rq->cpu, push_cpu_stop,
+			stop_one_cpu_nowait(src_rq->cpu, push_cpu_stop,
 					    push_task, &src_rq->push_work);
 			raw_spin_lock(&this_rq->lock);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (resched)
+	if (resched)
 		resched_curr(this_rq);
-पूर्ण
+}
 
 /*
  * If we are not running and we are not going to reschedule soon, we should
  * try to push tasks away now
  */
-अटल व्योम task_woken_rt(काष्ठा rq *rq, काष्ठा task_काष्ठा *p)
-अणु
+static void task_woken_rt(struct rq *rq, struct task_struct *p)
+{
 	bool need_to_push = !task_running(rq, p) &&
 			    !test_tsk_need_resched(rq->curr) &&
 			    p->nr_cpus_allowed > 1 &&
@@ -2268,209 +2267,209 @@ skip:
 			    (rq->curr->nr_cpus_allowed < 2 ||
 			     rq->curr->prio <= p->prio);
 
-	अगर (need_to_push)
+	if (need_to_push)
 		push_rt_tasks(rq);
-पूर्ण
+}
 
 /* Assumes rq->lock is held */
-अटल व्योम rq_online_rt(काष्ठा rq *rq)
-अणु
-	अगर (rq->rt.overloaded)
+static void rq_online_rt(struct rq *rq)
+{
+	if (rq->rt.overloaded)
 		rt_set_overload(rq);
 
-	__enable_runसमय(rq);
+	__enable_runtime(rq);
 
 	cpupri_set(&rq->rd->cpupri, rq->cpu, rq->rt.highest_prio.curr);
-पूर्ण
+}
 
 /* Assumes rq->lock is held */
-अटल व्योम rq_offline_rt(काष्ठा rq *rq)
-अणु
-	अगर (rq->rt.overloaded)
+static void rq_offline_rt(struct rq *rq)
+{
+	if (rq->rt.overloaded)
 		rt_clear_overload(rq);
 
-	__disable_runसमय(rq);
+	__disable_runtime(rq);
 
 	cpupri_set(&rq->rd->cpupri, rq->cpu, CPUPRI_INVALID);
-पूर्ण
+}
 
 /*
- * When चयन from the rt queue, we bring ourselves to a position
+ * When switch from the rt queue, we bring ourselves to a position
  * that we might want to pull RT tasks from other runqueues.
  */
-अटल व्योम चयनed_from_rt(काष्ठा rq *rq, काष्ठा task_काष्ठा *p)
-अणु
+static void switched_from_rt(struct rq *rq, struct task_struct *p)
+{
 	/*
 	 * If there are other RT tasks then we will reschedule
 	 * and the scheduling of the other RT tasks will handle
-	 * the balancing. But अगर we are the last RT task
+	 * the balancing. But if we are the last RT task
 	 * we may need to handle the pulling of RT tasks
 	 * now.
 	 */
-	अगर (!task_on_rq_queued(p) || rq->rt.rt_nr_running)
-		वापस;
+	if (!task_on_rq_queued(p) || rq->rt.rt_nr_running)
+		return;
 
 	rt_queue_pull_task(rq);
-पूर्ण
+}
 
-व्योम __init init_sched_rt_class(व्योम)
-अणु
-	अचिन्हित पूर्णांक i;
+void __init init_sched_rt_class(void)
+{
+	unsigned int i;
 
-	क्रम_each_possible_cpu(i) अणु
+	for_each_possible_cpu(i) {
 		zalloc_cpumask_var_node(&per_cpu(local_cpu_mask, i),
 					GFP_KERNEL, cpu_to_node(i));
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर /* CONFIG_SMP */
+	}
+}
+#endif /* CONFIG_SMP */
 
 /*
- * When चयनing a task to RT, we may overload the runqueue
- * with RT tasks. In this हाल we try to push them off to
+ * When switching a task to RT, we may overload the runqueue
+ * with RT tasks. In this case we try to push them off to
  * other runqueues.
  */
-अटल व्योम चयनed_to_rt(काष्ठा rq *rq, काष्ठा task_काष्ठा *p)
-अणु
+static void switched_to_rt(struct rq *rq, struct task_struct *p)
+{
 	/*
-	 * If we are alपढ़ोy running, then there's nothing
-	 * that needs to be करोne. But अगर we are not running
+	 * If we are already running, then there's nothing
+	 * that needs to be done. But if we are not running
 	 * we may need to preempt the current running task.
 	 * If that current running task is also an RT task
-	 * then see अगर we can move to another run queue.
+	 * then see if we can move to another run queue.
 	 */
-	अगर (task_on_rq_queued(p) && rq->curr != p) अणु
-#अगर_घोषित CONFIG_SMP
-		अगर (p->nr_cpus_allowed > 1 && rq->rt.overloaded)
+	if (task_on_rq_queued(p) && rq->curr != p) {
+#ifdef CONFIG_SMP
+		if (p->nr_cpus_allowed > 1 && rq->rt.overloaded)
 			rt_queue_push_tasks(rq);
-#पूर्ण_अगर /* CONFIG_SMP */
-		अगर (p->prio < rq->curr->prio && cpu_online(cpu_of(rq)))
+#endif /* CONFIG_SMP */
+		if (p->prio < rq->curr->prio && cpu_online(cpu_of(rq)))
 			resched_curr(rq);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Priority of the task has changed. This may cause
  * us to initiate a push or pull.
  */
-अटल व्योम
-prio_changed_rt(काष्ठा rq *rq, काष्ठा task_काष्ठा *p, पूर्णांक oldprio)
-अणु
-	अगर (!task_on_rq_queued(p))
-		वापस;
+static void
+prio_changed_rt(struct rq *rq, struct task_struct *p, int oldprio)
+{
+	if (!task_on_rq_queued(p))
+		return;
 
-	अगर (task_current(rq, p)) अणु
-#अगर_घोषित CONFIG_SMP
+	if (task_current(rq, p)) {
+#ifdef CONFIG_SMP
 		/*
-		 * If our priority decreases जबतक running, we
+		 * If our priority decreases while running, we
 		 * may need to pull tasks to this runqueue.
 		 */
-		अगर (oldprio < p->prio)
+		if (oldprio < p->prio)
 			rt_queue_pull_task(rq);
 
 		/*
-		 * If there's a higher priority task रुकोing to run
+		 * If there's a higher priority task waiting to run
 		 * then reschedule.
 		 */
-		अगर (p->prio > rq->rt.highest_prio.curr)
+		if (p->prio > rq->rt.highest_prio.curr)
 			resched_curr(rq);
-#अन्यथा
+#else
 		/* For UP simply resched on drop of prio */
-		अगर (oldprio < p->prio)
+		if (oldprio < p->prio)
 			resched_curr(rq);
-#पूर्ण_अगर /* CONFIG_SMP */
-	पूर्ण अन्यथा अणु
+#endif /* CONFIG_SMP */
+	} else {
 		/*
-		 * This task is not running, but अगर it is
+		 * This task is not running, but if it is
 		 * greater than the current running task
 		 * then reschedule.
 		 */
-		अगर (p->prio < rq->curr->prio)
+		if (p->prio < rq->curr->prio)
 			resched_curr(rq);
-	पूर्ण
-पूर्ण
+	}
+}
 
-#अगर_घोषित CONFIG_POSIX_TIMERS
-अटल व्योम watchकरोg(काष्ठा rq *rq, काष्ठा task_काष्ठा *p)
-अणु
-	अचिन्हित दीर्घ soft, hard;
+#ifdef CONFIG_POSIX_TIMERS
+static void watchdog(struct rq *rq, struct task_struct *p)
+{
+	unsigned long soft, hard;
 
-	/* max may change after cur was पढ़ो, this will be fixed next tick */
+	/* max may change after cur was read, this will be fixed next tick */
 	soft = task_rlimit(p, RLIMIT_RTTIME);
 	hard = task_rlimit_max(p, RLIMIT_RTTIME);
 
-	अगर (soft != RLIM_अनन्त) अणु
-		अचिन्हित दीर्घ next;
+	if (soft != RLIM_INFINITY) {
+		unsigned long next;
 
-		अगर (p->rt.watchकरोg_stamp != jअगरfies) अणु
-			p->rt.समयout++;
-			p->rt.watchकरोg_stamp = jअगरfies;
-		पूर्ण
+		if (p->rt.watchdog_stamp != jiffies) {
+			p->rt.timeout++;
+			p->rt.watchdog_stamp = jiffies;
+		}
 
 		next = DIV_ROUND_UP(min(soft, hard), USEC_PER_SEC/HZ);
-		अगर (p->rt.समयout > next) अणु
-			posix_cpuसमयrs_rt_watchकरोg(&p->posix_cpuसमयrs,
-						    p->se.sum_exec_runसमय);
-		पूर्ण
-	पूर्ण
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम watchकरोg(काष्ठा rq *rq, काष्ठा task_काष्ठा *p) अणु पूर्ण
-#पूर्ण_अगर
+		if (p->rt.timeout > next) {
+			posix_cputimers_rt_watchdog(&p->posix_cputimers,
+						    p->se.sum_exec_runtime);
+		}
+	}
+}
+#else
+static inline void watchdog(struct rq *rq, struct task_struct *p) { }
+#endif
 
 /*
  * scheduler tick hitting a task of our scheduling class.
  *
  * NOTE: This function can be called remotely by the tick offload that
- * goes aदीर्घ full dynticks. Thereक्रमe no local assumption can be made
+ * goes along full dynticks. Therefore no local assumption can be made
  * and everything must be accessed through the @rq and @curr passed in
  * parameters.
  */
-अटल व्योम task_tick_rt(काष्ठा rq *rq, काष्ठा task_काष्ठा *p, पूर्णांक queued)
-अणु
-	काष्ठा sched_rt_entity *rt_se = &p->rt;
+static void task_tick_rt(struct rq *rq, struct task_struct *p, int queued)
+{
+	struct sched_rt_entity *rt_se = &p->rt;
 
 	update_curr_rt(rq);
-	update_rt_rq_load_avg(rq_घड़ी_pelt(rq), rq, 1);
+	update_rt_rq_load_avg(rq_clock_pelt(rq), rq, 1);
 
-	watchकरोg(rq, p);
+	watchdog(rq, p);
 
 	/*
-	 * RR tasks need a special क्रमm of बारlice management.
-	 * FIFO tasks have no बारlices.
+	 * RR tasks need a special form of timeslice management.
+	 * FIFO tasks have no timeslices.
 	 */
-	अगर (p->policy != SCHED_RR)
-		वापस;
+	if (p->policy != SCHED_RR)
+		return;
 
-	अगर (--p->rt.समय_slice)
-		वापस;
+	if (--p->rt.time_slice)
+		return;
 
-	p->rt.समय_slice = sched_rr_बारlice;
+	p->rt.time_slice = sched_rr_timeslice;
 
 	/*
-	 * Requeue to the end of queue अगर we (and all of our ancestors) are not
+	 * Requeue to the end of queue if we (and all of our ancestors) are not
 	 * the only element on the queue
 	 */
-	क्रम_each_sched_rt_entity(rt_se) अणु
-		अगर (rt_se->run_list.prev != rt_se->run_list.next) अणु
+	for_each_sched_rt_entity(rt_se) {
+		if (rt_se->run_list.prev != rt_se->run_list.next) {
 			requeue_task_rt(rq, p, 0);
 			resched_curr(rq);
-			वापस;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			return;
+		}
+	}
+}
 
-अटल अचिन्हित पूर्णांक get_rr_पूर्णांकerval_rt(काष्ठा rq *rq, काष्ठा task_काष्ठा *task)
-अणु
+static unsigned int get_rr_interval_rt(struct rq *rq, struct task_struct *task)
+{
 	/*
-	 * Time slice is 0 क्रम SCHED_FIFO tasks
+	 * Time slice is 0 for SCHED_FIFO tasks
 	 */
-	अगर (task->policy == SCHED_RR)
-		वापस sched_rr_बारlice;
-	अन्यथा
-		वापस 0;
-पूर्ण
+	if (task->policy == SCHED_RR)
+		return sched_rr_timeslice;
+	else
+		return 0;
+}
 
-DEFINE_SCHED_CLASS(rt) = अणु
+DEFINE_SCHED_CLASS(rt) = {
 
 	.enqueue_task		= enqueue_task_rt,
 	.dequeue_task		= dequeue_task_rt,
@@ -2482,360 +2481,360 @@ DEFINE_SCHED_CLASS(rt) = अणु
 	.put_prev_task		= put_prev_task_rt,
 	.set_next_task          = set_next_task_rt,
 
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 	.balance		= balance_rt,
 	.select_task_rq		= select_task_rq_rt,
 	.set_cpus_allowed       = set_cpus_allowed_common,
 	.rq_online              = rq_online_rt,
 	.rq_offline             = rq_offline_rt,
 	.task_woken		= task_woken_rt,
-	.चयनed_from		= चयनed_from_rt,
+	.switched_from		= switched_from_rt,
 	.find_lock_rq		= find_lock_lowest_rq,
-#पूर्ण_अगर
+#endif
 
 	.task_tick		= task_tick_rt,
 
-	.get_rr_पूर्णांकerval	= get_rr_पूर्णांकerval_rt,
+	.get_rr_interval	= get_rr_interval_rt,
 
 	.prio_changed		= prio_changed_rt,
-	.चयनed_to		= चयनed_to_rt,
+	.switched_to		= switched_to_rt,
 
 	.update_curr		= update_curr_rt,
 
-#अगर_घोषित CONFIG_UCLAMP_TASK
+#ifdef CONFIG_UCLAMP_TASK
 	.uclamp_enabled		= 1,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-#अगर_घोषित CONFIG_RT_GROUP_SCHED
+#ifdef CONFIG_RT_GROUP_SCHED
 /*
- * Ensure that the real समय स्थिरraपूर्णांकs are schedulable.
+ * Ensure that the real time constraints are schedulable.
  */
-अटल DEFINE_MUTEX(rt_स्थिरraपूर्णांकs_mutex);
+static DEFINE_MUTEX(rt_constraints_mutex);
 
-अटल अंतरभूत पूर्णांक tg_has_rt_tasks(काष्ठा task_group *tg)
-अणु
-	काष्ठा task_काष्ठा *task;
-	काष्ठा css_task_iter it;
-	पूर्णांक ret = 0;
+static inline int tg_has_rt_tasks(struct task_group *tg)
+{
+	struct task_struct *task;
+	struct css_task_iter it;
+	int ret = 0;
 
 	/*
-	 * Autogroups करो not have RT tasks; see स्वतःgroup_create().
+	 * Autogroups do not have RT tasks; see autogroup_create().
 	 */
-	अगर (task_group_is_स्वतःgroup(tg))
-		वापस 0;
+	if (task_group_is_autogroup(tg))
+		return 0;
 
 	css_task_iter_start(&tg->css, 0, &it);
-	जबतक (!ret && (task = css_task_iter_next(&it)))
+	while (!ret && (task = css_task_iter_next(&it)))
 		ret |= rt_task(task);
 	css_task_iter_end(&it);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-काष्ठा rt_schedulable_data अणु
-	काष्ठा task_group *tg;
+struct rt_schedulable_data {
+	struct task_group *tg;
 	u64 rt_period;
-	u64 rt_runसमय;
-पूर्ण;
+	u64 rt_runtime;
+};
 
-अटल पूर्णांक tg_rt_schedulable(काष्ठा task_group *tg, व्योम *data)
-अणु
-	काष्ठा rt_schedulable_data *d = data;
-	काष्ठा task_group *child;
-	अचिन्हित दीर्घ total, sum = 0;
-	u64 period, runसमय;
+static int tg_rt_schedulable(struct task_group *tg, void *data)
+{
+	struct rt_schedulable_data *d = data;
+	struct task_group *child;
+	unsigned long total, sum = 0;
+	u64 period, runtime;
 
-	period = kसमय_प्रकारo_ns(tg->rt_bandwidth.rt_period);
-	runसमय = tg->rt_bandwidth.rt_runसमय;
+	period = ktime_to_ns(tg->rt_bandwidth.rt_period);
+	runtime = tg->rt_bandwidth.rt_runtime;
 
-	अगर (tg == d->tg) अणु
+	if (tg == d->tg) {
 		period = d->rt_period;
-		runसमय = d->rt_runसमय;
-	पूर्ण
+		runtime = d->rt_runtime;
+	}
 
 	/*
-	 * Cannot have more runसमय than the period.
+	 * Cannot have more runtime than the period.
 	 */
-	अगर (runसमय > period && runसमय != RUNTIME_INF)
-		वापस -EINVAL;
+	if (runtime > period && runtime != RUNTIME_INF)
+		return -EINVAL;
 
 	/*
-	 * Ensure we करोn't starve existing RT tasks अगर runसमय turns zero.
+	 * Ensure we don't starve existing RT tasks if runtime turns zero.
 	 */
-	अगर (rt_bandwidth_enabled() && !runसमय &&
-	    tg->rt_bandwidth.rt_runसमय && tg_has_rt_tasks(tg))
-		वापस -EBUSY;
+	if (rt_bandwidth_enabled() && !runtime &&
+	    tg->rt_bandwidth.rt_runtime && tg_has_rt_tasks(tg))
+		return -EBUSY;
 
-	total = to_ratio(period, runसमय);
+	total = to_ratio(period, runtime);
 
 	/*
 	 * Nobody can have more than the global setting allows.
 	 */
-	अगर (total > to_ratio(global_rt_period(), global_rt_runसमय()))
-		वापस -EINVAL;
+	if (total > to_ratio(global_rt_period(), global_rt_runtime()))
+		return -EINVAL;
 
 	/*
-	 * The sum of our children's runसमय should not exceed our own.
+	 * The sum of our children's runtime should not exceed our own.
 	 */
-	list_क्रम_each_entry_rcu(child, &tg->children, siblings) अणु
-		period = kसमय_प्रकारo_ns(child->rt_bandwidth.rt_period);
-		runसमय = child->rt_bandwidth.rt_runसमय;
+	list_for_each_entry_rcu(child, &tg->children, siblings) {
+		period = ktime_to_ns(child->rt_bandwidth.rt_period);
+		runtime = child->rt_bandwidth.rt_runtime;
 
-		अगर (child == d->tg) अणु
+		if (child == d->tg) {
 			period = d->rt_period;
-			runसमय = d->rt_runसमय;
-		पूर्ण
+			runtime = d->rt_runtime;
+		}
 
-		sum += to_ratio(period, runसमय);
-	पूर्ण
+		sum += to_ratio(period, runtime);
+	}
 
-	अगर (sum > total)
-		वापस -EINVAL;
+	if (sum > total)
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __rt_schedulable(काष्ठा task_group *tg, u64 period, u64 runसमय)
-अणु
-	पूर्णांक ret;
+static int __rt_schedulable(struct task_group *tg, u64 period, u64 runtime)
+{
+	int ret;
 
-	काष्ठा rt_schedulable_data data = अणु
+	struct rt_schedulable_data data = {
 		.tg = tg,
 		.rt_period = period,
-		.rt_runसमय = runसमय,
-	पूर्ण;
+		.rt_runtime = runtime,
+	};
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	ret = walk_tg_tree(tg_rt_schedulable, tg_nop, &data);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक tg_set_rt_bandwidth(काष्ठा task_group *tg,
-		u64 rt_period, u64 rt_runसमय)
-अणु
-	पूर्णांक i, err = 0;
-
-	/*
-	 * Disallowing the root group RT runसमय is BAD, it would disallow the
-	 * kernel creating (and or operating) RT thपढ़ोs.
-	 */
-	अगर (tg == &root_task_group && rt_runसमय == 0)
-		वापस -EINVAL;
-
-	/* No period करोesn't make any sense. */
-	अगर (rt_period == 0)
-		वापस -EINVAL;
+static int tg_set_rt_bandwidth(struct task_group *tg,
+		u64 rt_period, u64 rt_runtime)
+{
+	int i, err = 0;
 
 	/*
-	 * Bound quota to defend quota against overflow during bandwidth shअगरt.
+	 * Disallowing the root group RT runtime is BAD, it would disallow the
+	 * kernel creating (and or operating) RT threads.
 	 */
-	अगर (rt_runसमय != RUNTIME_INF && rt_runसमय > max_rt_runसमय)
-		वापस -EINVAL;
+	if (tg == &root_task_group && rt_runtime == 0)
+		return -EINVAL;
 
-	mutex_lock(&rt_स्थिरraपूर्णांकs_mutex);
-	err = __rt_schedulable(tg, rt_period, rt_runसमय);
-	अगर (err)
-		जाओ unlock;
+	/* No period doesn't make any sense. */
+	if (rt_period == 0)
+		return -EINVAL;
 
-	raw_spin_lock_irq(&tg->rt_bandwidth.rt_runसमय_lock);
-	tg->rt_bandwidth.rt_period = ns_to_kसमय(rt_period);
-	tg->rt_bandwidth.rt_runसमय = rt_runसमय;
+	/*
+	 * Bound quota to defend quota against overflow during bandwidth shift.
+	 */
+	if (rt_runtime != RUNTIME_INF && rt_runtime > max_rt_runtime)
+		return -EINVAL;
 
-	क्रम_each_possible_cpu(i) अणु
-		काष्ठा rt_rq *rt_rq = tg->rt_rq[i];
+	mutex_lock(&rt_constraints_mutex);
+	err = __rt_schedulable(tg, rt_period, rt_runtime);
+	if (err)
+		goto unlock;
 
-		raw_spin_lock(&rt_rq->rt_runसमय_lock);
-		rt_rq->rt_runसमय = rt_runसमय;
-		raw_spin_unlock(&rt_rq->rt_runसमय_lock);
-	पूर्ण
-	raw_spin_unlock_irq(&tg->rt_bandwidth.rt_runसमय_lock);
+	raw_spin_lock_irq(&tg->rt_bandwidth.rt_runtime_lock);
+	tg->rt_bandwidth.rt_period = ns_to_ktime(rt_period);
+	tg->rt_bandwidth.rt_runtime = rt_runtime;
+
+	for_each_possible_cpu(i) {
+		struct rt_rq *rt_rq = tg->rt_rq[i];
+
+		raw_spin_lock(&rt_rq->rt_runtime_lock);
+		rt_rq->rt_runtime = rt_runtime;
+		raw_spin_unlock(&rt_rq->rt_runtime_lock);
+	}
+	raw_spin_unlock_irq(&tg->rt_bandwidth.rt_runtime_lock);
 unlock:
-	mutex_unlock(&rt_स्थिरraपूर्णांकs_mutex);
+	mutex_unlock(&rt_constraints_mutex);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक sched_group_set_rt_runसमय(काष्ठा task_group *tg, दीर्घ rt_runसमय_us)
-अणु
-	u64 rt_runसमय, rt_period;
+int sched_group_set_rt_runtime(struct task_group *tg, long rt_runtime_us)
+{
+	u64 rt_runtime, rt_period;
 
-	rt_period = kसमय_प्रकारo_ns(tg->rt_bandwidth.rt_period);
-	rt_runसमय = (u64)rt_runसमय_us * NSEC_PER_USEC;
-	अगर (rt_runसमय_us < 0)
-		rt_runसमय = RUNTIME_INF;
-	अन्यथा अगर ((u64)rt_runसमय_us > U64_MAX / NSEC_PER_USEC)
-		वापस -EINVAL;
+	rt_period = ktime_to_ns(tg->rt_bandwidth.rt_period);
+	rt_runtime = (u64)rt_runtime_us * NSEC_PER_USEC;
+	if (rt_runtime_us < 0)
+		rt_runtime = RUNTIME_INF;
+	else if ((u64)rt_runtime_us > U64_MAX / NSEC_PER_USEC)
+		return -EINVAL;
 
-	वापस tg_set_rt_bandwidth(tg, rt_period, rt_runसमय);
-पूर्ण
+	return tg_set_rt_bandwidth(tg, rt_period, rt_runtime);
+}
 
-दीर्घ sched_group_rt_runसमय(काष्ठा task_group *tg)
-अणु
-	u64 rt_runसमय_us;
+long sched_group_rt_runtime(struct task_group *tg)
+{
+	u64 rt_runtime_us;
 
-	अगर (tg->rt_bandwidth.rt_runसमय == RUNTIME_INF)
-		वापस -1;
+	if (tg->rt_bandwidth.rt_runtime == RUNTIME_INF)
+		return -1;
 
-	rt_runसमय_us = tg->rt_bandwidth.rt_runसमय;
-	करो_भाग(rt_runसमय_us, NSEC_PER_USEC);
-	वापस rt_runसमय_us;
-पूर्ण
+	rt_runtime_us = tg->rt_bandwidth.rt_runtime;
+	do_div(rt_runtime_us, NSEC_PER_USEC);
+	return rt_runtime_us;
+}
 
-पूर्णांक sched_group_set_rt_period(काष्ठा task_group *tg, u64 rt_period_us)
-अणु
-	u64 rt_runसमय, rt_period;
+int sched_group_set_rt_period(struct task_group *tg, u64 rt_period_us)
+{
+	u64 rt_runtime, rt_period;
 
-	अगर (rt_period_us > U64_MAX / NSEC_PER_USEC)
-		वापस -EINVAL;
+	if (rt_period_us > U64_MAX / NSEC_PER_USEC)
+		return -EINVAL;
 
 	rt_period = rt_period_us * NSEC_PER_USEC;
-	rt_runसमय = tg->rt_bandwidth.rt_runसमय;
+	rt_runtime = tg->rt_bandwidth.rt_runtime;
 
-	वापस tg_set_rt_bandwidth(tg, rt_period, rt_runसमय);
-पूर्ण
+	return tg_set_rt_bandwidth(tg, rt_period, rt_runtime);
+}
 
-दीर्घ sched_group_rt_period(काष्ठा task_group *tg)
-अणु
+long sched_group_rt_period(struct task_group *tg)
+{
 	u64 rt_period_us;
 
-	rt_period_us = kसमय_प्रकारo_ns(tg->rt_bandwidth.rt_period);
-	करो_भाग(rt_period_us, NSEC_PER_USEC);
-	वापस rt_period_us;
-पूर्ण
+	rt_period_us = ktime_to_ns(tg->rt_bandwidth.rt_period);
+	do_div(rt_period_us, NSEC_PER_USEC);
+	return rt_period_us;
+}
 
-अटल पूर्णांक sched_rt_global_स्थिरraपूर्णांकs(व्योम)
-अणु
-	पूर्णांक ret = 0;
+static int sched_rt_global_constraints(void)
+{
+	int ret = 0;
 
-	mutex_lock(&rt_स्थिरraपूर्णांकs_mutex);
-	ret = __rt_schedulable(शून्य, 0, 0);
-	mutex_unlock(&rt_स्थिरraपूर्णांकs_mutex);
+	mutex_lock(&rt_constraints_mutex);
+	ret = __rt_schedulable(NULL, 0, 0);
+	mutex_unlock(&rt_constraints_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक sched_rt_can_attach(काष्ठा task_group *tg, काष्ठा task_काष्ठा *tsk)
-अणु
-	/* Don't accept realसमय tasks when there is no way क्रम them to run */
-	अगर (rt_task(tsk) && tg->rt_bandwidth.rt_runसमय == 0)
-		वापस 0;
+int sched_rt_can_attach(struct task_group *tg, struct task_struct *tsk)
+{
+	/* Don't accept realtime tasks when there is no way for them to run */
+	if (rt_task(tsk) && tg->rt_bandwidth.rt_runtime == 0)
+		return 0;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-#अन्यथा /* !CONFIG_RT_GROUP_SCHED */
-अटल पूर्णांक sched_rt_global_स्थिरraपूर्णांकs(व्योम)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक i;
+#else /* !CONFIG_RT_GROUP_SCHED */
+static int sched_rt_global_constraints(void)
+{
+	unsigned long flags;
+	int i;
 
-	raw_spin_lock_irqsave(&def_rt_bandwidth.rt_runसमय_lock, flags);
-	क्रम_each_possible_cpu(i) अणु
-		काष्ठा rt_rq *rt_rq = &cpu_rq(i)->rt;
+	raw_spin_lock_irqsave(&def_rt_bandwidth.rt_runtime_lock, flags);
+	for_each_possible_cpu(i) {
+		struct rt_rq *rt_rq = &cpu_rq(i)->rt;
 
-		raw_spin_lock(&rt_rq->rt_runसमय_lock);
-		rt_rq->rt_runसमय = global_rt_runसमय();
-		raw_spin_unlock(&rt_rq->rt_runसमय_lock);
-	पूर्ण
-	raw_spin_unlock_irqrestore(&def_rt_bandwidth.rt_runसमय_lock, flags);
+		raw_spin_lock(&rt_rq->rt_runtime_lock);
+		rt_rq->rt_runtime = global_rt_runtime();
+		raw_spin_unlock(&rt_rq->rt_runtime_lock);
+	}
+	raw_spin_unlock_irqrestore(&def_rt_bandwidth.rt_runtime_lock, flags);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_RT_GROUP_SCHED */
+	return 0;
+}
+#endif /* CONFIG_RT_GROUP_SCHED */
 
-अटल पूर्णांक sched_rt_global_validate(व्योम)
-अणु
-	अगर (sysctl_sched_rt_period <= 0)
-		वापस -EINVAL;
+static int sched_rt_global_validate(void)
+{
+	if (sysctl_sched_rt_period <= 0)
+		return -EINVAL;
 
-	अगर ((sysctl_sched_rt_runसमय != RUNTIME_INF) &&
-		((sysctl_sched_rt_runसमय > sysctl_sched_rt_period) ||
-		 ((u64)sysctl_sched_rt_runसमय *
-			NSEC_PER_USEC > max_rt_runसमय)))
-		वापस -EINVAL;
+	if ((sysctl_sched_rt_runtime != RUNTIME_INF) &&
+		((sysctl_sched_rt_runtime > sysctl_sched_rt_period) ||
+		 ((u64)sysctl_sched_rt_runtime *
+			NSEC_PER_USEC > max_rt_runtime)))
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sched_rt_करो_global(व्योम)
-अणु
-	def_rt_bandwidth.rt_runसमय = global_rt_runसमय();
-	def_rt_bandwidth.rt_period = ns_to_kसमय(global_rt_period());
-पूर्ण
+static void sched_rt_do_global(void)
+{
+	def_rt_bandwidth.rt_runtime = global_rt_runtime();
+	def_rt_bandwidth.rt_period = ns_to_ktime(global_rt_period());
+}
 
-पूर्णांक sched_rt_handler(काष्ठा ctl_table *table, पूर्णांक ग_लिखो, व्योम *buffer,
-		माप_प्रकार *lenp, loff_t *ppos)
-अणु
-	पूर्णांक old_period, old_runसमय;
-	अटल DEFINE_MUTEX(mutex);
-	पूर्णांक ret;
+int sched_rt_handler(struct ctl_table *table, int write, void *buffer,
+		size_t *lenp, loff_t *ppos)
+{
+	int old_period, old_runtime;
+	static DEFINE_MUTEX(mutex);
+	int ret;
 
 	mutex_lock(&mutex);
 	old_period = sysctl_sched_rt_period;
-	old_runसमय = sysctl_sched_rt_runसमय;
+	old_runtime = sysctl_sched_rt_runtime;
 
-	ret = proc_करोपूर्णांकvec(table, ग_लिखो, buffer, lenp, ppos);
+	ret = proc_dointvec(table, write, buffer, lenp, ppos);
 
-	अगर (!ret && ग_लिखो) अणु
+	if (!ret && write) {
 		ret = sched_rt_global_validate();
-		अगर (ret)
-			जाओ unकरो;
+		if (ret)
+			goto undo;
 
 		ret = sched_dl_global_validate();
-		अगर (ret)
-			जाओ unकरो;
+		if (ret)
+			goto undo;
 
-		ret = sched_rt_global_स्थिरraपूर्णांकs();
-		अगर (ret)
-			जाओ unकरो;
+		ret = sched_rt_global_constraints();
+		if (ret)
+			goto undo;
 
-		sched_rt_करो_global();
-		sched_dl_करो_global();
-	पूर्ण
-	अगर (0) अणु
-unकरो:
+		sched_rt_do_global();
+		sched_dl_do_global();
+	}
+	if (0) {
+undo:
 		sysctl_sched_rt_period = old_period;
-		sysctl_sched_rt_runसमय = old_runसमय;
-	पूर्ण
+		sysctl_sched_rt_runtime = old_runtime;
+	}
 	mutex_unlock(&mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक sched_rr_handler(काष्ठा ctl_table *table, पूर्णांक ग_लिखो, व्योम *buffer,
-		माप_प्रकार *lenp, loff_t *ppos)
-अणु
-	पूर्णांक ret;
-	अटल DEFINE_MUTEX(mutex);
+int sched_rr_handler(struct ctl_table *table, int write, void *buffer,
+		size_t *lenp, loff_t *ppos)
+{
+	int ret;
+	static DEFINE_MUTEX(mutex);
 
 	mutex_lock(&mutex);
-	ret = proc_करोपूर्णांकvec(table, ग_लिखो, buffer, lenp, ppos);
+	ret = proc_dointvec(table, write, buffer, lenp, ppos);
 	/*
-	 * Make sure that पूर्णांकernally we keep jअगरfies.
-	 * Also, writing zero resets the बारlice to शेष:
+	 * Make sure that internally we keep jiffies.
+	 * Also, writing zero resets the timeslice to default:
 	 */
-	अगर (!ret && ग_लिखो) अणु
-		sched_rr_बारlice =
-			sysctl_sched_rr_बारlice <= 0 ? RR_TIMESLICE :
-			msecs_to_jअगरfies(sysctl_sched_rr_बारlice);
-	पूर्ण
+	if (!ret && write) {
+		sched_rr_timeslice =
+			sysctl_sched_rr_timeslice <= 0 ? RR_TIMESLICE :
+			msecs_to_jiffies(sysctl_sched_rr_timeslice);
+	}
 	mutex_unlock(&mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर_घोषित CONFIG_SCHED_DEBUG
-व्योम prपूर्णांक_rt_stats(काष्ठा seq_file *m, पूर्णांक cpu)
-अणु
+#ifdef CONFIG_SCHED_DEBUG
+void print_rt_stats(struct seq_file *m, int cpu)
+{
 	rt_rq_iter_t iter;
-	काष्ठा rt_rq *rt_rq;
+	struct rt_rq *rt_rq;
 
-	rcu_पढ़ो_lock();
-	क्रम_each_rt_rq(rt_rq, iter, cpu_rq(cpu))
-		prपूर्णांक_rt_rq(m, cpu, rt_rq);
-	rcu_पढ़ो_unlock();
-पूर्ण
-#पूर्ण_अगर /* CONFIG_SCHED_DEBUG */
+	rcu_read_lock();
+	for_each_rt_rq(rt_rq, iter, cpu_rq(cpu))
+		print_rt_rq(m, cpu, rt_rq);
+	rcu_read_unlock();
+}
+#endif /* CONFIG_SCHED_DEBUG */

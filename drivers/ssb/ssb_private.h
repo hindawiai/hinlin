@@ -1,267 +1,266 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित LINUX_SSB_PRIVATE_H_
-#घोषणा LINUX_SSB_PRIVATE_H_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef LINUX_SSB_PRIVATE_H_
+#define LINUX_SSB_PRIVATE_H_
 
-#घोषणा PFX		"ssb: "
-#घोषणा pr_fmt(fmt)	PFX fmt
+#define PFX		"ssb: "
+#define pr_fmt(fmt)	PFX fmt
 
-#समावेश <linux/ssb/ssb.h>
-#समावेश <linux/types.h>
-#समावेश <linux/bcm47xx_wdt.h>
+#include <linux/ssb/ssb.h>
+#include <linux/types.h>
+#include <linux/bcm47xx_wdt.h>
 
 
 /* pci.c */
-#अगर_घोषित CONFIG_SSB_PCIHOST
-बाह्य पूर्णांक ssb_pci_चयन_core(काष्ठा ssb_bus *bus,
-			       काष्ठा ssb_device *dev);
-बाह्य पूर्णांक ssb_pci_चयन_coreidx(काष्ठा ssb_bus *bus,
+#ifdef CONFIG_SSB_PCIHOST
+extern int ssb_pci_switch_core(struct ssb_bus *bus,
+			       struct ssb_device *dev);
+extern int ssb_pci_switch_coreidx(struct ssb_bus *bus,
 				  u8 coreidx);
-बाह्य पूर्णांक ssb_pci_xtal(काष्ठा ssb_bus *bus, u32 what,
-			पूर्णांक turn_on);
-बाह्य पूर्णांक ssb_pci_get_invariants(काष्ठा ssb_bus *bus,
-				  काष्ठा ssb_init_invariants *iv);
-बाह्य व्योम ssb_pci_निकास(काष्ठा ssb_bus *bus);
-बाह्य पूर्णांक ssb_pci_init(काष्ठा ssb_bus *bus);
-बाह्य स्थिर काष्ठा ssb_bus_ops ssb_pci_ops;
+extern int ssb_pci_xtal(struct ssb_bus *bus, u32 what,
+			int turn_on);
+extern int ssb_pci_get_invariants(struct ssb_bus *bus,
+				  struct ssb_init_invariants *iv);
+extern void ssb_pci_exit(struct ssb_bus *bus);
+extern int ssb_pci_init(struct ssb_bus *bus);
+extern const struct ssb_bus_ops ssb_pci_ops;
 
-#अन्यथा /* CONFIG_SSB_PCIHOST */
+#else /* CONFIG_SSB_PCIHOST */
 
-अटल अंतरभूत पूर्णांक ssb_pci_चयन_core(काष्ठा ssb_bus *bus,
-				      काष्ठा ssb_device *dev)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत पूर्णांक ssb_pci_चयन_coreidx(काष्ठा ssb_bus *bus,
+static inline int ssb_pci_switch_core(struct ssb_bus *bus,
+				      struct ssb_device *dev)
+{
+	return 0;
+}
+static inline int ssb_pci_switch_coreidx(struct ssb_bus *bus,
 					 u8 coreidx)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत पूर्णांक ssb_pci_xtal(काष्ठा ssb_bus *bus, u32 what,
-			       पूर्णांक turn_on)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत व्योम ssb_pci_निकास(काष्ठा ssb_bus *bus)
-अणु
-पूर्ण
-अटल अंतरभूत पूर्णांक ssb_pci_init(काष्ठा ssb_bus *bus)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_SSB_PCIHOST */
+{
+	return 0;
+}
+static inline int ssb_pci_xtal(struct ssb_bus *bus, u32 what,
+			       int turn_on)
+{
+	return 0;
+}
+static inline void ssb_pci_exit(struct ssb_bus *bus)
+{
+}
+static inline int ssb_pci_init(struct ssb_bus *bus)
+{
+	return 0;
+}
+#endif /* CONFIG_SSB_PCIHOST */
 
 
 /* pcmcia.c */
-#अगर_घोषित CONFIG_SSB_PCMCIAHOST
-बाह्य पूर्णांक ssb_pcmcia_चयन_coreidx(काष्ठा ssb_bus *bus,
+#ifdef CONFIG_SSB_PCMCIAHOST
+extern int ssb_pcmcia_switch_coreidx(struct ssb_bus *bus,
 				     u8 coreidx);
-बाह्य पूर्णांक ssb_pcmcia_चयन_segment(काष्ठा ssb_bus *bus,
+extern int ssb_pcmcia_switch_segment(struct ssb_bus *bus,
 				     u8 seg);
-बाह्य पूर्णांक ssb_pcmcia_get_invariants(काष्ठा ssb_bus *bus,
-				     काष्ठा ssb_init_invariants *iv);
-बाह्य पूर्णांक ssb_pcmcia_hardware_setup(काष्ठा ssb_bus *bus);
-बाह्य व्योम ssb_pcmcia_निकास(काष्ठा ssb_bus *bus);
-बाह्य पूर्णांक ssb_pcmcia_init(काष्ठा ssb_bus *bus);
-बाह्य पूर्णांक ssb_host_pcmcia_init(व्योम);
-बाह्य व्योम ssb_host_pcmcia_निकास(व्योम);
-बाह्य स्थिर काष्ठा ssb_bus_ops ssb_pcmcia_ops;
-#अन्यथा /* CONFIG_SSB_PCMCIAHOST */
-अटल अंतरभूत पूर्णांक ssb_pcmcia_चयन_coreidx(काष्ठा ssb_bus *bus,
+extern int ssb_pcmcia_get_invariants(struct ssb_bus *bus,
+				     struct ssb_init_invariants *iv);
+extern int ssb_pcmcia_hardware_setup(struct ssb_bus *bus);
+extern void ssb_pcmcia_exit(struct ssb_bus *bus);
+extern int ssb_pcmcia_init(struct ssb_bus *bus);
+extern int ssb_host_pcmcia_init(void);
+extern void ssb_host_pcmcia_exit(void);
+extern const struct ssb_bus_ops ssb_pcmcia_ops;
+#else /* CONFIG_SSB_PCMCIAHOST */
+static inline int ssb_pcmcia_switch_coreidx(struct ssb_bus *bus,
 					    u8 coreidx)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत पूर्णांक ssb_pcmcia_चयन_segment(काष्ठा ssb_bus *bus,
+{
+	return 0;
+}
+static inline int ssb_pcmcia_switch_segment(struct ssb_bus *bus,
 					    u8 seg)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत पूर्णांक ssb_pcmcia_hardware_setup(काष्ठा ssb_bus *bus)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत व्योम ssb_pcmcia_निकास(काष्ठा ssb_bus *bus)
-अणु
-पूर्ण
-अटल अंतरभूत पूर्णांक ssb_pcmcia_init(काष्ठा ssb_bus *bus)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत पूर्णांक ssb_host_pcmcia_init(व्योम)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत व्योम ssb_host_pcmcia_निकास(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर /* CONFIG_SSB_PCMCIAHOST */
+{
+	return 0;
+}
+static inline int ssb_pcmcia_hardware_setup(struct ssb_bus *bus)
+{
+	return 0;
+}
+static inline void ssb_pcmcia_exit(struct ssb_bus *bus)
+{
+}
+static inline int ssb_pcmcia_init(struct ssb_bus *bus)
+{
+	return 0;
+}
+static inline int ssb_host_pcmcia_init(void)
+{
+	return 0;
+}
+static inline void ssb_host_pcmcia_exit(void)
+{
+}
+#endif /* CONFIG_SSB_PCMCIAHOST */
 
 /* sdio.c */
-#अगर_घोषित CONFIG_SSB_SDIOHOST
-बाह्य पूर्णांक ssb_sdio_get_invariants(काष्ठा ssb_bus *bus,
-				     काष्ठा ssb_init_invariants *iv);
+#ifdef CONFIG_SSB_SDIOHOST
+extern int ssb_sdio_get_invariants(struct ssb_bus *bus,
+				     struct ssb_init_invariants *iv);
 
-बाह्य u32 ssb_sdio_scan_पढ़ो32(काष्ठा ssb_bus *bus, u16 offset);
-बाह्य पूर्णांक ssb_sdio_scan_चयन_coreidx(काष्ठा ssb_bus *bus, u8 coreidx);
-बाह्य व्योम ssb_sdio_निकास(काष्ठा ssb_bus *bus);
-बाह्य पूर्णांक ssb_sdio_init(काष्ठा ssb_bus *bus);
+extern u32 ssb_sdio_scan_read32(struct ssb_bus *bus, u16 offset);
+extern int ssb_sdio_scan_switch_coreidx(struct ssb_bus *bus, u8 coreidx);
+extern void ssb_sdio_exit(struct ssb_bus *bus);
+extern int ssb_sdio_init(struct ssb_bus *bus);
 
-बाह्य स्थिर काष्ठा ssb_bus_ops ssb_sdio_ops;
-#अन्यथा /* CONFIG_SSB_SDIOHOST */
-अटल अंतरभूत u32 ssb_sdio_scan_पढ़ो32(काष्ठा ssb_bus *bus, u16 offset)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत पूर्णांक ssb_sdio_scan_चयन_coreidx(काष्ठा ssb_bus *bus, u8 coreidx)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत व्योम ssb_sdio_निकास(काष्ठा ssb_bus *bus)
-अणु
-पूर्ण
-अटल अंतरभूत पूर्णांक ssb_sdio_init(काष्ठा ssb_bus *bus)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_SSB_SDIOHOST */
+extern const struct ssb_bus_ops ssb_sdio_ops;
+#else /* CONFIG_SSB_SDIOHOST */
+static inline u32 ssb_sdio_scan_read32(struct ssb_bus *bus, u16 offset)
+{
+	return 0;
+}
+static inline int ssb_sdio_scan_switch_coreidx(struct ssb_bus *bus, u8 coreidx)
+{
+	return 0;
+}
+static inline void ssb_sdio_exit(struct ssb_bus *bus)
+{
+}
+static inline int ssb_sdio_init(struct ssb_bus *bus)
+{
+	return 0;
+}
+#endif /* CONFIG_SSB_SDIOHOST */
 
 /**************************************************
  * host_soc.c
  **************************************************/
 
-#अगर_घोषित CONFIG_SSB_HOST_SOC
-बाह्य स्थिर काष्ठा ssb_bus_ops ssb_host_soc_ops;
+#ifdef CONFIG_SSB_HOST_SOC
+extern const struct ssb_bus_ops ssb_host_soc_ops;
 
-बाह्य पूर्णांक ssb_host_soc_get_invariants(काष्ठा ssb_bus *bus,
-				       काष्ठा ssb_init_invariants *iv);
-#पूर्ण_अगर
+extern int ssb_host_soc_get_invariants(struct ssb_bus *bus,
+				       struct ssb_init_invariants *iv);
+#endif
 
 /* scan.c */
-बाह्य स्थिर अक्षर *ssb_core_name(u16 coreid);
-बाह्य पूर्णांक ssb_bus_scan(काष्ठा ssb_bus *bus,
-			अचिन्हित दीर्घ baseaddr);
-बाह्य व्योम ssb_iounmap(काष्ठा ssb_bus *ssb);
+extern const char *ssb_core_name(u16 coreid);
+extern int ssb_bus_scan(struct ssb_bus *bus,
+			unsigned long baseaddr);
+extern void ssb_iounmap(struct ssb_bus *ssb);
 
 
 /* sprom.c */
-बाह्य
-sमाप_प्रकार ssb_attr_sprom_show(काष्ठा ssb_bus *bus, अक्षर *buf,
-			    पूर्णांक (*sprom_पढ़ो)(काष्ठा ssb_bus *bus, u16 *sprom));
-बाह्य
-sमाप_प्रकार ssb_attr_sprom_store(काष्ठा ssb_bus *bus,
-			     स्थिर अक्षर *buf, माप_प्रकार count,
-			     पूर्णांक (*sprom_check_crc)(स्थिर u16 *sprom, माप_प्रकार size),
-			     पूर्णांक (*sprom_ग_लिखो)(काष्ठा ssb_bus *bus, स्थिर u16 *sprom));
-बाह्य पूर्णांक ssb_fill_sprom_with_fallback(काष्ठा ssb_bus *bus,
-					काष्ठा ssb_sprom *out);
+extern
+ssize_t ssb_attr_sprom_show(struct ssb_bus *bus, char *buf,
+			    int (*sprom_read)(struct ssb_bus *bus, u16 *sprom));
+extern
+ssize_t ssb_attr_sprom_store(struct ssb_bus *bus,
+			     const char *buf, size_t count,
+			     int (*sprom_check_crc)(const u16 *sprom, size_t size),
+			     int (*sprom_write)(struct ssb_bus *bus, const u16 *sprom));
+extern int ssb_fill_sprom_with_fallback(struct ssb_bus *bus,
+					struct ssb_sprom *out);
 
 
 /* core.c */
-बाह्य u32 ssb_calc_घड़ी_rate(u32 plltype, u32 n, u32 m);
-बाह्य काष्ठा ssb_bus *ssb_pci_dev_to_bus(काष्ठा pci_dev *pdev);
-पूर्णांक ssb_क्रम_each_bus_call(अचिन्हित दीर्घ data,
-			  पूर्णांक (*func)(काष्ठा ssb_bus *bus, अचिन्हित दीर्घ data));
-बाह्य काष्ठा ssb_bus *ssb_pcmcia_dev_to_bus(काष्ठा pcmcia_device *pdev);
+extern u32 ssb_calc_clock_rate(u32 plltype, u32 n, u32 m);
+extern struct ssb_bus *ssb_pci_dev_to_bus(struct pci_dev *pdev);
+int ssb_for_each_bus_call(unsigned long data,
+			  int (*func)(struct ssb_bus *bus, unsigned long data));
+extern struct ssb_bus *ssb_pcmcia_dev_to_bus(struct pcmcia_device *pdev);
 
-काष्ठा ssb_मुक्तze_context अणु
-	/* Poपूर्णांकer to the bus */
-	काष्ठा ssb_bus *bus;
+struct ssb_freeze_context {
+	/* Pointer to the bus */
+	struct ssb_bus *bus;
 	/* Boolean list to indicate whether a device is frozen on this bus. */
 	bool device_frozen[SSB_MAX_NR_CORES];
-पूर्ण;
-बाह्य पूर्णांक ssb_devices_मुक्तze(काष्ठा ssb_bus *bus, काष्ठा ssb_मुक्तze_context *ctx);
-बाह्य पूर्णांक ssb_devices_thaw(काष्ठा ssb_मुक्तze_context *ctx);
+};
+extern int ssb_devices_freeze(struct ssb_bus *bus, struct ssb_freeze_context *ctx);
+extern int ssb_devices_thaw(struct ssb_freeze_context *ctx);
 
 
 
 /* b43_pci_bridge.c */
-#अगर_घोषित CONFIG_SSB_B43_PCI_BRIDGE
-बाह्य पूर्णांक __init b43_pci_ssb_bridge_init(व्योम);
-बाह्य व्योम __निकास b43_pci_ssb_bridge_निकास(व्योम);
-#अन्यथा /* CONFIG_SSB_B43_PCI_BRIDGE */
-अटल अंतरभूत पूर्णांक b43_pci_ssb_bridge_init(व्योम)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत व्योम b43_pci_ssb_bridge_निकास(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर /* CONFIG_SSB_B43_PCI_BRIDGE */
+#ifdef CONFIG_SSB_B43_PCI_BRIDGE
+extern int __init b43_pci_ssb_bridge_init(void);
+extern void __exit b43_pci_ssb_bridge_exit(void);
+#else /* CONFIG_SSB_B43_PCI_BRIDGE */
+static inline int b43_pci_ssb_bridge_init(void)
+{
+	return 0;
+}
+static inline void b43_pci_ssb_bridge_exit(void)
+{
+}
+#endif /* CONFIG_SSB_B43_PCI_BRIDGE */
 
 /* driver_chipcommon_pmu.c */
-बाह्य u32 ssb_pmu_get_cpu_घड़ी(काष्ठा ssb_chipcommon *cc);
-बाह्य u32 ssb_pmu_get_controlघड़ी(काष्ठा ssb_chipcommon *cc);
-बाह्य u32 ssb_pmu_get_alp_घड़ी(काष्ठा ssb_chipcommon *cc);
+extern u32 ssb_pmu_get_cpu_clock(struct ssb_chipcommon *cc);
+extern u32 ssb_pmu_get_controlclock(struct ssb_chipcommon *cc);
+extern u32 ssb_pmu_get_alp_clock(struct ssb_chipcommon *cc);
 
-बाह्य u32 ssb_chipco_watchकरोg_समयr_set_wdt(काष्ठा bcm47xx_wdt *wdt,
+extern u32 ssb_chipco_watchdog_timer_set_wdt(struct bcm47xx_wdt *wdt,
 					     u32 ticks);
-बाह्य u32 ssb_chipco_watchकरोg_समयr_set_ms(काष्ठा bcm47xx_wdt *wdt, u32 ms);
+extern u32 ssb_chipco_watchdog_timer_set_ms(struct bcm47xx_wdt *wdt, u32 ms);
 
 /* driver_chipcommon_sflash.c */
-#अगर_घोषित CONFIG_SSB_SFLASH
-पूर्णांक ssb_sflash_init(काष्ठा ssb_chipcommon *cc);
-#अन्यथा
-अटल अंतरभूत पूर्णांक ssb_sflash_init(काष्ठा ssb_chipcommon *cc)
-अणु
+#ifdef CONFIG_SSB_SFLASH
+int ssb_sflash_init(struct ssb_chipcommon *cc);
+#else
+static inline int ssb_sflash_init(struct ssb_chipcommon *cc)
+{
 	pr_err("Serial flash not supported\n");
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_SSB_SFLASH */
+	return 0;
+}
+#endif /* CONFIG_SSB_SFLASH */
 
-#अगर_घोषित CONFIG_SSB_DRIVER_MIPS
-बाह्य काष्ठा platक्रमm_device ssb_pflash_dev;
-#पूर्ण_अगर
+#ifdef CONFIG_SSB_DRIVER_MIPS
+extern struct platform_device ssb_pflash_dev;
+#endif
 
-#अगर_घोषित CONFIG_SSB_SFLASH
-बाह्य काष्ठा platक्रमm_device ssb_sflash_dev;
-#पूर्ण_अगर
+#ifdef CONFIG_SSB_SFLASH
+extern struct platform_device ssb_sflash_dev;
+#endif
 
-#अगर_घोषित CONFIG_SSB_DRIVER_EXTIF
-बाह्य u32 ssb_extअगर_watchकरोg_समयr_set_wdt(काष्ठा bcm47xx_wdt *wdt, u32 ticks);
-बाह्य u32 ssb_extअगर_watchकरोg_समयr_set_ms(काष्ठा bcm47xx_wdt *wdt, u32 ms);
-#अन्यथा
-अटल अंतरभूत u32 ssb_extअगर_watchकरोg_समयr_set_wdt(काष्ठा bcm47xx_wdt *wdt,
+#ifdef CONFIG_SSB_DRIVER_EXTIF
+extern u32 ssb_extif_watchdog_timer_set_wdt(struct bcm47xx_wdt *wdt, u32 ticks);
+extern u32 ssb_extif_watchdog_timer_set_ms(struct bcm47xx_wdt *wdt, u32 ms);
+#else
+static inline u32 ssb_extif_watchdog_timer_set_wdt(struct bcm47xx_wdt *wdt,
 						   u32 ticks)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत u32 ssb_extअगर_watchकरोg_समयr_set_ms(काष्ठा bcm47xx_wdt *wdt,
+{
+	return 0;
+}
+static inline u32 ssb_extif_watchdog_timer_set_ms(struct bcm47xx_wdt *wdt,
 						  u32 ms)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+{
+	return 0;
+}
+#endif
 
-#अगर_घोषित CONFIG_SSB_EMBEDDED
-बाह्य पूर्णांक ssb_watchकरोg_रेजिस्टर(काष्ठा ssb_bus *bus);
-#अन्यथा /* CONFIG_SSB_EMBEDDED */
-अटल अंतरभूत पूर्णांक ssb_watchकरोg_रेजिस्टर(काष्ठा ssb_bus *bus)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_SSB_EMBEDDED */
+#ifdef CONFIG_SSB_EMBEDDED
+extern int ssb_watchdog_register(struct ssb_bus *bus);
+#else /* CONFIG_SSB_EMBEDDED */
+static inline int ssb_watchdog_register(struct ssb_bus *bus)
+{
+	return 0;
+}
+#endif /* CONFIG_SSB_EMBEDDED */
 
-#अगर_घोषित CONFIG_SSB_DRIVER_EXTIF
-बाह्य व्योम ssb_extअगर_init(काष्ठा ssb_extअगर *extअगर);
-#अन्यथा
-अटल अंतरभूत व्योम ssb_extअगर_init(काष्ठा ssb_extअगर *extअगर)
-अणु
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_SSB_DRIVER_EXTIF
+extern void ssb_extif_init(struct ssb_extif *extif);
+#else
+static inline void ssb_extif_init(struct ssb_extif *extif)
+{
+}
+#endif
 
-#अगर_घोषित CONFIG_SSB_DRIVER_GPIO
-बाह्य पूर्णांक ssb_gpio_init(काष्ठा ssb_bus *bus);
-बाह्य पूर्णांक ssb_gpio_unरेजिस्टर(काष्ठा ssb_bus *bus);
-#अन्यथा /* CONFIG_SSB_DRIVER_GPIO */
-अटल अंतरभूत पूर्णांक ssb_gpio_init(काष्ठा ssb_bus *bus)
-अणु
-	वापस -ENOTSUPP;
-पूर्ण
-अटल अंतरभूत पूर्णांक ssb_gpio_unरेजिस्टर(काष्ठा ssb_bus *bus)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_SSB_DRIVER_GPIO */
+#ifdef CONFIG_SSB_DRIVER_GPIO
+extern int ssb_gpio_init(struct ssb_bus *bus);
+extern int ssb_gpio_unregister(struct ssb_bus *bus);
+#else /* CONFIG_SSB_DRIVER_GPIO */
+static inline int ssb_gpio_init(struct ssb_bus *bus)
+{
+	return -ENOTSUPP;
+}
+static inline int ssb_gpio_unregister(struct ssb_bus *bus)
+{
+	return 0;
+}
+#endif /* CONFIG_SSB_DRIVER_GPIO */
 
-#पूर्ण_अगर /* LINUX_SSB_PRIVATE_H_ */
+#endif /* LINUX_SSB_PRIVATE_H_ */

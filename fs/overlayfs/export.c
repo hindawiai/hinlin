@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Overlayfs NFS export support.
  *
@@ -8,41 +7,41 @@
  * Copyright (C) 2017-2018 CTERA Networks. All Rights Reserved.
  */
 
-#समावेश <linux/fs.h>
-#समावेश <linux/cred.h>
-#समावेश <linux/mount.h>
-#समावेश <linux/namei.h>
-#समावेश <linux/xattr.h>
-#समावेश <linux/exportfs.h>
-#समावेश <linux/ratelimit.h>
-#समावेश "overlayfs.h"
+#include <linux/fs.h>
+#include <linux/cred.h>
+#include <linux/mount.h>
+#include <linux/namei.h>
+#include <linux/xattr.h>
+#include <linux/exportfs.h>
+#include <linux/ratelimit.h>
+#include "overlayfs.h"
 
-अटल पूर्णांक ovl_encode_maybe_copy_up(काष्ठा dentry *dentry)
-अणु
-	पूर्णांक err;
+static int ovl_encode_maybe_copy_up(struct dentry *dentry)
+{
+	int err;
 
-	अगर (ovl_dentry_upper(dentry))
-		वापस 0;
+	if (ovl_dentry_upper(dentry))
+		return 0;
 
-	err = ovl_want_ग_लिखो(dentry);
-	अगर (!err) अणु
+	err = ovl_want_write(dentry);
+	if (!err) {
 		err = ovl_copy_up(dentry);
-		ovl_drop_ग_लिखो(dentry);
-	पूर्ण
+		ovl_drop_write(dentry);
+	}
 
-	अगर (err) अणु
+	if (err) {
 		pr_warn_ratelimited("failed to copy up on encode (%pd2, err=%i)\n",
 				    dentry, err);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- * Beक्रमe encoding a non-upper directory file handle from real layer N, we need
- * to check अगर it will be possible to reconnect an overlay dentry from the real
- * lower decoded dentry. This is करोne by following the overlay ancestry up to a
- * "layer N connected" ancestor and verअगरying that all parents aदीर्घ the way are
+ * Before encoding a non-upper directory file handle from real layer N, we need
+ * to check if it will be possible to reconnect an overlay dentry from the real
+ * lower decoded dentry. This is done by following the overlay ancestry up to a
+ * "layer N connected" ancestor and verifying that all parents along the way are
  * "layer N connectable". If an ancestor that is NOT "layer N connectable" is
  * found, we need to copy up an ancestor, which is "layer N connectable", thus
  * making that ancestor "layer N connected". For example:
@@ -50,119 +49,119 @@
  * layer 1: /a
  * layer 2: /a/b/c
  *
- * The overlay dentry /a is NOT "layer 2 connectable", because अगर dir /a is
- * copied up and नामd, upper dir /a will be indexed by lower dir /a from
+ * The overlay dentry /a is NOT "layer 2 connectable", because if dir /a is
+ * copied up and renamed, upper dir /a will be indexed by lower dir /a from
  * layer 1. The dir /a from layer 2 will never be indexed, so the algorithm (*)
  * in ovl_lookup_real_ancestor() will not be able to lookup a connected overlay
  * dentry from the connected lower dentry /a/b/c.
  *
- * To aव्योम this problem on decode समय, we need to copy up an ancestor of
- * /a/b/c, which is "layer 2 connectable", on encode समय. That ancestor is
+ * To avoid this problem on decode time, we need to copy up an ancestor of
+ * /a/b/c, which is "layer 2 connectable", on encode time. That ancestor is
  * /a/b. After copy up (and index) of /a/b, it will become "layer 2 connected"
- * and when the समय comes to decode the file handle from lower dentry /a/b/c,
+ * and when the time comes to decode the file handle from lower dentry /a/b/c,
  * ovl_lookup_real_ancestor() will find the indexed ancestor /a/b and decoding
  * a connected overlay dentry will be accomplished.
  *
  * (*) the algorithm in ovl_lookup_real_ancestor() can be improved to lookup an
  * entry /a in the lower layers above layer N and find the indexed dir /a from
- * layer 1. If that improvement is made, then the check क्रम "layer N connected"
- * will need to verअगरy there are no redirects in lower layers above N. In the
- * example above, /a will be "layer 2 connectable". However, अगर layer 2 dir /a
+ * layer 1. If that improvement is made, then the check for "layer N connected"
+ * will need to verify there are no redirects in lower layers above N. In the
+ * example above, /a will be "layer 2 connectable". However, if layer 2 dir /a
  * is a target of a layer 1 redirect, then /a will NOT be "layer 2 connectable":
  *
  * layer 1: /A (redirect = /a)
  * layer 2: /a/b/c
  */
 
-/* Return the lowest layer क्रम encoding a connectable file handle */
-अटल पूर्णांक ovl_connectable_layer(काष्ठा dentry *dentry)
-अणु
-	काष्ठा ovl_entry *oe = OVL_E(dentry);
+/* Return the lowest layer for encoding a connectable file handle */
+static int ovl_connectable_layer(struct dentry *dentry)
+{
+	struct ovl_entry *oe = OVL_E(dentry);
 
 	/* We can get overlay root from root of any layer */
-	अगर (dentry == dentry->d_sb->s_root)
-		वापस oe->numlower;
+	if (dentry == dentry->d_sb->s_root)
+		return oe->numlower;
 
 	/*
 	 * If it's an unindexed merge dir, then it's not connectable with any
 	 * lower layer
 	 */
-	अगर (ovl_dentry_upper(dentry) &&
+	if (ovl_dentry_upper(dentry) &&
 	    !ovl_test_flag(OVL_INDEX, d_inode(dentry)))
-		वापस 0;
+		return 0;
 
 	/* We can get upper/overlay path from indexed/lower dentry */
-	वापस oe->lowerstack[0].layer->idx;
-पूर्ण
+	return oe->lowerstack[0].layer->idx;
+}
 
 /*
- * @dentry is "connected" अगर all ancestors up to root or a "connected" ancestor
+ * @dentry is "connected" if all ancestors up to root or a "connected" ancestor
  * have the same uppermost lower layer as the origin's layer. We may need to
  * copy up a "connectable" ancestor to make it "connected". A "connected" dentry
  * cannot become non "connected", so cache positive result in dentry flags.
  *
  * Return the connected origin layer or < 0 on error.
  */
-अटल पूर्णांक ovl_connect_layer(काष्ठा dentry *dentry)
-अणु
-	काष्ठा dentry *next, *parent = शून्य;
-	पूर्णांक origin_layer;
-	पूर्णांक err = 0;
+static int ovl_connect_layer(struct dentry *dentry)
+{
+	struct dentry *next, *parent = NULL;
+	int origin_layer;
+	int err = 0;
 
-	अगर (WARN_ON(dentry == dentry->d_sb->s_root) ||
+	if (WARN_ON(dentry == dentry->d_sb->s_root) ||
 	    WARN_ON(!ovl_dentry_lower(dentry)))
-		वापस -EIO;
+		return -EIO;
 
 	origin_layer = OVL_E(dentry)->lowerstack[0].layer->idx;
-	अगर (ovl_dentry_test_flag(OVL_E_CONNECTED, dentry))
-		वापस origin_layer;
+	if (ovl_dentry_test_flag(OVL_E_CONNECTED, dentry))
+		return origin_layer;
 
 	/* Find the topmost origin layer connectable ancestor of @dentry */
 	next = dget(dentry);
-	क्रम (;;) अणु
+	for (;;) {
 		parent = dget_parent(next);
-		अगर (WARN_ON(parent == next)) अणु
+		if (WARN_ON(parent == next)) {
 			err = -EIO;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/*
 		 * If @parent is not origin layer connectable, then copy up
-		 * @next which is origin layer connectable and we are करोne.
+		 * @next which is origin layer connectable and we are done.
 		 */
-		अगर (ovl_connectable_layer(parent) < origin_layer) अणु
+		if (ovl_connectable_layer(parent) < origin_layer) {
 			err = ovl_encode_maybe_copy_up(next);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		/* If @parent is connected or indexed we are करोne */
-		अगर (ovl_dentry_test_flag(OVL_E_CONNECTED, parent) ||
+		/* If @parent is connected or indexed we are done */
+		if (ovl_dentry_test_flag(OVL_E_CONNECTED, parent) ||
 		    ovl_test_flag(OVL_INDEX, d_inode(parent)))
-			अवरोध;
+			break;
 
 		dput(next);
 		next = parent;
-	पूर्ण
+	}
 
 	dput(parent);
 	dput(next);
 
-	अगर (!err)
+	if (!err)
 		ovl_dentry_set_flag(OVL_E_CONNECTED, dentry);
 
-	वापस err ?: origin_layer;
-पूर्ण
+	return err ?: origin_layer;
+}
 
 /*
- * We only need to encode origin अगर there is a chance that the same object was
+ * We only need to encode origin if there is a chance that the same object was
  * encoded pre copy up and then we need to stay consistent with the same
  * encoding also after copy up. If non-pure upper is not indexed, then it was
- * copied up beक्रमe NFS export was enabled. In that हाल we करोn't need to worry
+ * copied up before NFS export was enabled. In that case we don't need to worry
  * about staying consistent with pre copy up encoding and we encode an upper
- * file handle. Overlay root dentry is a निजी हाल of non-indexed upper.
+ * file handle. Overlay root dentry is a private case of non-indexed upper.
  *
- * The following table summarizes the dअगरferent file handle encodings used क्रम
- * dअगरferent overlay object types:
+ * The following table summarizes the different file handle encodings used for
+ * different overlay object types:
  *
  *  Object type		| Encoding
  * --------------------------------
@@ -176,28 +175,28 @@
  *
  * (*) Connecting an overlay dir from real lower dentry is not always
  * possible when there are redirects in lower layers and non-indexed merge dirs.
- * To mitigate those हाल, we may copy up the lower dir ancestor beक्रमe encode
+ * To mitigate those case, we may copy up the lower dir ancestor before encode
  * a lower dir file handle.
  *
- * Return 0 क्रम upper file handle, > 0 क्रम lower file handle or < 0 on error.
+ * Return 0 for upper file handle, > 0 for lower file handle or < 0 on error.
  */
-अटल पूर्णांक ovl_check_encode_origin(काष्ठा dentry *dentry)
-अणु
-	काष्ठा ovl_fs *ofs = dentry->d_sb->s_fs_info;
+static int ovl_check_encode_origin(struct dentry *dentry)
+{
+	struct ovl_fs *ofs = dentry->d_sb->s_fs_info;
 
-	/* Upper file handle क्रम pure upper */
-	अगर (!ovl_dentry_lower(dentry))
-		वापस 0;
+	/* Upper file handle for pure upper */
+	if (!ovl_dentry_lower(dentry))
+		return 0;
 
 	/*
-	 * Upper file handle क्रम non-indexed upper.
+	 * Upper file handle for non-indexed upper.
 	 *
-	 * Root is never indexed, so अगर there's an upper layer, encode upper क्रम
+	 * Root is never indexed, so if there's an upper layer, encode upper for
 	 * root.
 	 */
-	अगर (ovl_dentry_upper(dentry) &&
+	if (ovl_dentry_upper(dentry) &&
 	    !ovl_test_flag(OVL_INDEX, d_inode(dentry)))
-		वापस 0;
+		return 0;
 
 	/*
 	 * Decoding a merge dir, whose origin's ancestor is under a redirected
@@ -205,265 +204,265 @@
 	 * ovl_connect_layer() will try to make origin's layer "connected" by
 	 * copying up a "connectable" ancestor.
 	 */
-	अगर (d_is_dir(dentry) && ovl_upper_mnt(ofs))
-		वापस ovl_connect_layer(dentry);
+	if (d_is_dir(dentry) && ovl_upper_mnt(ofs))
+		return ovl_connect_layer(dentry);
 
-	/* Lower file handle क्रम indexed and non-upper dir/non-dir */
-	वापस 1;
-पूर्ण
+	/* Lower file handle for indexed and non-upper dir/non-dir */
+	return 1;
+}
 
-अटल पूर्णांक ovl_dentry_to_fid(काष्ठा ovl_fs *ofs, काष्ठा dentry *dentry,
-			     u32 *fid, पूर्णांक buflen)
-अणु
-	काष्ठा ovl_fh *fh = शून्य;
-	पूर्णांक err, enc_lower;
-	पूर्णांक len;
+static int ovl_dentry_to_fid(struct ovl_fs *ofs, struct dentry *dentry,
+			     u32 *fid, int buflen)
+{
+	struct ovl_fh *fh = NULL;
+	int err, enc_lower;
+	int len;
 
 	/*
-	 * Check अगर we should encode a lower or upper file handle and maybe
+	 * Check if we should encode a lower or upper file handle and maybe
 	 * copy up an ancestor to make lower file handle connectable.
 	 */
 	err = enc_lower = ovl_check_encode_origin(dentry);
-	अगर (enc_lower < 0)
-		जाओ fail;
+	if (enc_lower < 0)
+		goto fail;
 
 	/* Encode an upper or lower file handle */
 	fh = ovl_encode_real_fh(ofs, enc_lower ? ovl_dentry_lower(dentry) :
 				ovl_dentry_upper(dentry), !enc_lower);
-	अगर (IS_ERR(fh))
-		वापस PTR_ERR(fh);
+	if (IS_ERR(fh))
+		return PTR_ERR(fh);
 
 	len = OVL_FH_LEN(fh);
-	अगर (len <= buflen)
-		स_नकल(fid, fh, len);
+	if (len <= buflen)
+		memcpy(fid, fh, len);
 	err = len;
 
 out:
-	kमुक्त(fh);
-	वापस err;
+	kfree(fh);
+	return err;
 
 fail:
 	pr_warn_ratelimited("failed to encode file handle (%pd2, err=%i)\n",
 			    dentry, err);
-	जाओ out;
-पूर्ण
+	goto out;
+}
 
-अटल पूर्णांक ovl_encode_fh(काष्ठा inode *inode, u32 *fid, पूर्णांक *max_len,
-			 काष्ठा inode *parent)
-अणु
-	काष्ठा ovl_fs *ofs = OVL_FS(inode->i_sb);
-	काष्ठा dentry *dentry;
-	पूर्णांक bytes, buflen = *max_len << 2;
+static int ovl_encode_fh(struct inode *inode, u32 *fid, int *max_len,
+			 struct inode *parent)
+{
+	struct ovl_fs *ofs = OVL_FS(inode->i_sb);
+	struct dentry *dentry;
+	int bytes, buflen = *max_len << 2;
 
 	/* TODO: encode connectable file handles */
-	अगर (parent)
-		वापस खाताID_INVALID;
+	if (parent)
+		return FILEID_INVALID;
 
 	dentry = d_find_any_alias(inode);
-	अगर (WARN_ON(!dentry))
-		वापस खाताID_INVALID;
+	if (WARN_ON(!dentry))
+		return FILEID_INVALID;
 
 	bytes = ovl_dentry_to_fid(ofs, dentry, fid, buflen);
 	dput(dentry);
-	अगर (bytes <= 0)
-		वापस खाताID_INVALID;
+	if (bytes <= 0)
+		return FILEID_INVALID;
 
 	*max_len = bytes >> 2;
-	अगर (bytes > buflen)
-		वापस खाताID_INVALID;
+	if (bytes > buflen)
+		return FILEID_INVALID;
 
-	वापस OVL_खाताID_V1;
-पूर्ण
+	return OVL_FILEID_V1;
+}
 
 /*
  * Find or instantiate an overlay dentry from real dentries and index.
  */
-अटल काष्ठा dentry *ovl_obtain_alias(काष्ठा super_block *sb,
-				       काष्ठा dentry *upper_alias,
-				       काष्ठा ovl_path *lowerpath,
-				       काष्ठा dentry *index)
-अणु
-	काष्ठा dentry *lower = lowerpath ? lowerpath->dentry : शून्य;
-	काष्ठा dentry *upper = upper_alias ?: index;
-	काष्ठा dentry *dentry;
-	काष्ठा inode *inode;
-	काष्ठा ovl_entry *oe;
-	काष्ठा ovl_inode_params oip = अणु
+static struct dentry *ovl_obtain_alias(struct super_block *sb,
+				       struct dentry *upper_alias,
+				       struct ovl_path *lowerpath,
+				       struct dentry *index)
+{
+	struct dentry *lower = lowerpath ? lowerpath->dentry : NULL;
+	struct dentry *upper = upper_alias ?: index;
+	struct dentry *dentry;
+	struct inode *inode;
+	struct ovl_entry *oe;
+	struct ovl_inode_params oip = {
 		.lowerpath = lowerpath,
 		.index = index,
 		.numlower = !!lower
-	पूर्ण;
+	};
 
 	/* We get overlay directory dentries with ovl_lookup_real() */
-	अगर (d_is_dir(upper ?: lower))
-		वापस ERR_PTR(-EIO);
+	if (d_is_dir(upper ?: lower))
+		return ERR_PTR(-EIO);
 
 	oip.upperdentry = dget(upper);
 	inode = ovl_get_inode(sb, &oip);
-	अगर (IS_ERR(inode)) अणु
+	if (IS_ERR(inode)) {
 		dput(upper);
-		वापस ERR_CAST(inode);
-	पूर्ण
+		return ERR_CAST(inode);
+	}
 
-	अगर (upper)
+	if (upper)
 		ovl_set_flag(OVL_UPPERDATA, inode);
 
 	dentry = d_find_any_alias(inode);
-	अगर (dentry)
-		जाओ out_iput;
+	if (dentry)
+		goto out_iput;
 
 	dentry = d_alloc_anon(inode->i_sb);
-	अगर (unlikely(!dentry))
-		जाओ nomem;
+	if (unlikely(!dentry))
+		goto nomem;
 	oe = ovl_alloc_entry(lower ? 1 : 0);
-	अगर (!oe)
-		जाओ nomem;
+	if (!oe)
+		goto nomem;
 
-	अगर (lower) अणु
+	if (lower) {
 		oe->lowerstack->dentry = dget(lower);
 		oe->lowerstack->layer = lowerpath->layer;
-	पूर्ण
+	}
 	dentry->d_fsdata = oe;
-	अगर (upper_alias)
+	if (upper_alias)
 		ovl_dentry_set_upper_alias(dentry);
 
 	ovl_dentry_update_reval(dentry, upper,
 			DCACHE_OP_REVALIDATE | DCACHE_OP_WEAK_REVALIDATE);
 
-	वापस d_instantiate_anon(dentry, inode);
+	return d_instantiate_anon(dentry, inode);
 
 nomem:
 	dput(dentry);
 	dentry = ERR_PTR(-ENOMEM);
 out_iput:
 	iput(inode);
-	वापस dentry;
-पूर्ण
+	return dentry;
+}
 
 /* Get the upper or lower dentry in stach whose on layer @idx */
-अटल काष्ठा dentry *ovl_dentry_real_at(काष्ठा dentry *dentry, पूर्णांक idx)
-अणु
-	काष्ठा ovl_entry *oe = dentry->d_fsdata;
-	पूर्णांक i;
+static struct dentry *ovl_dentry_real_at(struct dentry *dentry, int idx)
+{
+	struct ovl_entry *oe = dentry->d_fsdata;
+	int i;
 
-	अगर (!idx)
-		वापस ovl_dentry_upper(dentry);
+	if (!idx)
+		return ovl_dentry_upper(dentry);
 
-	क्रम (i = 0; i < oe->numlower; i++) अणु
-		अगर (oe->lowerstack[i].layer->idx == idx)
-			वापस oe->lowerstack[i].dentry;
-	पूर्ण
+	for (i = 0; i < oe->numlower; i++) {
+		if (oe->lowerstack[i].layer->idx == idx)
+			return oe->lowerstack[i].dentry;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /*
  * Lookup a child overlay dentry to get a connected overlay dentry whose real
  * dentry is @real. If @real is on upper layer, we lookup a child overlay
  * dentry with the same name as the real dentry. Otherwise, we need to consult
- * index क्रम lookup.
+ * index for lookup.
  */
-अटल काष्ठा dentry *ovl_lookup_real_one(काष्ठा dentry *connected,
-					  काष्ठा dentry *real,
-					  स्थिर काष्ठा ovl_layer *layer)
-अणु
-	काष्ठा inode *dir = d_inode(connected);
-	काष्ठा dentry *this, *parent = शून्य;
-	काष्ठा name_snapshot name;
-	पूर्णांक err;
+static struct dentry *ovl_lookup_real_one(struct dentry *connected,
+					  struct dentry *real,
+					  const struct ovl_layer *layer)
+{
+	struct inode *dir = d_inode(connected);
+	struct dentry *this, *parent = NULL;
+	struct name_snapshot name;
+	int err;
 
 	/*
 	 * Lookup child overlay dentry by real name. The dir mutex protects us
-	 * from racing with overlay नाम. If the overlay dentry that is above
-	 * real has alपढ़ोy been moved to a parent that is not under the
-	 * connected overlay dir, we वापस -ECHILD and restart the lookup of
+	 * from racing with overlay rename. If the overlay dentry that is above
+	 * real has already been moved to a parent that is not under the
+	 * connected overlay dir, we return -ECHILD and restart the lookup of
 	 * connected real path from the top.
 	 */
 	inode_lock_nested(dir, I_MUTEX_PARENT);
 	err = -ECHILD;
 	parent = dget_parent(real);
-	अगर (ovl_dentry_real_at(connected, layer->idx) != parent)
-		जाओ fail;
+	if (ovl_dentry_real_at(connected, layer->idx) != parent)
+		goto fail;
 
 	/*
 	 * We also need to take a snapshot of real dentry name to protect us
-	 * from racing with underlying layer नाम. In this हाल, we करोn't
-	 * care about वापसing ESTALE, only from dereferencing a मुक्त name
-	 * poपूर्णांकer because we hold no lock on the real dentry.
+	 * from racing with underlying layer rename. In this case, we don't
+	 * care about returning ESTALE, only from dereferencing a free name
+	 * pointer because we hold no lock on the real dentry.
 	 */
 	take_dentry_name_snapshot(&name, real);
 	this = lookup_one_len(name.name.name, connected, name.name.len);
 	err = PTR_ERR(this);
-	अगर (IS_ERR(this)) अणु
-		जाओ fail;
-	पूर्ण अन्यथा अगर (!this || !this->d_inode) अणु
+	if (IS_ERR(this)) {
+		goto fail;
+	} else if (!this || !this->d_inode) {
 		dput(this);
 		err = -ENOENT;
-		जाओ fail;
-	पूर्ण अन्यथा अगर (ovl_dentry_real_at(this, layer->idx) != real) अणु
+		goto fail;
+	} else if (ovl_dentry_real_at(this, layer->idx) != real) {
 		dput(this);
 		err = -ESTALE;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 out:
 	release_dentry_name_snapshot(&name);
 	dput(parent);
 	inode_unlock(dir);
-	वापस this;
+	return this;
 
 fail:
 	pr_warn_ratelimited("failed to lookup one by real (%pd2, layer=%d, connected=%pd2, err=%i)\n",
 			    real, layer->idx, connected, err);
 	this = ERR_PTR(err);
-	जाओ out;
-पूर्ण
+	goto out;
+}
 
-अटल काष्ठा dentry *ovl_lookup_real(काष्ठा super_block *sb,
-				      काष्ठा dentry *real,
-				      स्थिर काष्ठा ovl_layer *layer);
+static struct dentry *ovl_lookup_real(struct super_block *sb,
+				      struct dentry *real,
+				      const struct ovl_layer *layer);
 
 /*
  * Lookup an indexed or hashed overlay dentry by real inode.
  */
-अटल काष्ठा dentry *ovl_lookup_real_inode(काष्ठा super_block *sb,
-					    काष्ठा dentry *real,
-					    स्थिर काष्ठा ovl_layer *layer)
-अणु
-	काष्ठा ovl_fs *ofs = sb->s_fs_info;
-	काष्ठा dentry *index = शून्य;
-	काष्ठा dentry *this = शून्य;
-	काष्ठा inode *inode;
+static struct dentry *ovl_lookup_real_inode(struct super_block *sb,
+					    struct dentry *real,
+					    const struct ovl_layer *layer)
+{
+	struct ovl_fs *ofs = sb->s_fs_info;
+	struct dentry *index = NULL;
+	struct dentry *this = NULL;
+	struct inode *inode;
 
 	/*
 	 * Decoding upper dir from index is expensive, so first try to lookup
 	 * overlay dentry in inode/dcache.
 	 */
 	inode = ovl_lookup_inode(sb, real, !layer->idx);
-	अगर (IS_ERR(inode))
-		वापस ERR_CAST(inode);
-	अगर (inode) अणु
+	if (IS_ERR(inode))
+		return ERR_CAST(inode);
+	if (inode) {
 		this = d_find_any_alias(inode);
 		iput(inode);
-	पूर्ण
+	}
 
 	/*
 	 * For decoded lower dir file handle, lookup index by origin to check
-	 * अगर lower dir was copied up and and/or हटाओd.
+	 * if lower dir was copied up and and/or removed.
 	 */
-	अगर (!this && layer->idx && ofs->indexdir && !WARN_ON(!d_is_dir(real))) अणु
-		index = ovl_lookup_index(ofs, शून्य, real, false);
-		अगर (IS_ERR(index))
-			वापस index;
-	पूर्ण
+	if (!this && layer->idx && ofs->indexdir && !WARN_ON(!d_is_dir(real))) {
+		index = ovl_lookup_index(ofs, NULL, real, false);
+		if (IS_ERR(index))
+			return index;
+	}
 
 	/* Get connected upper overlay dir from index */
-	अगर (index) अणु
-		काष्ठा dentry *upper = ovl_index_upper(ofs, index);
+	if (index) {
+		struct dentry *upper = ovl_index_upper(ofs, index);
 
 		dput(index);
-		अगर (IS_ERR_OR_शून्य(upper))
-			वापस upper;
+		if (IS_ERR_OR_NULL(upper))
+			return upper;
 
 		/*
 		 * ovl_lookup_real() in lower layer may call recursively once to
@@ -474,36 +473,36 @@ fail:
 		 */
 		this = ovl_lookup_real(sb, upper, &ofs->layers[0]);
 		dput(upper);
-	पूर्ण
+	}
 
-	अगर (IS_ERR_OR_शून्य(this))
-		वापस this;
+	if (IS_ERR_OR_NULL(this))
+		return this;
 
-	अगर (ovl_dentry_real_at(this, layer->idx) != real) अणु
+	if (ovl_dentry_real_at(this, layer->idx) != real) {
 		dput(this);
 		this = ERR_PTR(-EIO);
-	पूर्ण
+	}
 
-	वापस this;
-पूर्ण
+	return this;
+}
 
 /*
  * Lookup an indexed or hashed overlay dentry, whose real dentry is an
  * ancestor of @real.
  */
-अटल काष्ठा dentry *ovl_lookup_real_ancestor(काष्ठा super_block *sb,
-					       काष्ठा dentry *real,
-					       स्थिर काष्ठा ovl_layer *layer)
-अणु
-	काष्ठा dentry *next, *parent = शून्य;
-	काष्ठा dentry *ancestor = ERR_PTR(-EIO);
+static struct dentry *ovl_lookup_real_ancestor(struct super_block *sb,
+					       struct dentry *real,
+					       const struct ovl_layer *layer)
+{
+	struct dentry *next, *parent = NULL;
+	struct dentry *ancestor = ERR_PTR(-EIO);
 
-	अगर (real == layer->mnt->mnt_root)
-		वापस dget(sb->s_root);
+	if (real == layer->mnt->mnt_root)
+		return dget(sb->s_root);
 
 	/* Find the topmost indexed or hashed ancestor */
 	next = dget(real);
-	क्रम (;;) अणु
+	for (;;) {
 		parent = dget_parent(next);
 
 		/*
@@ -511,363 +510,363 @@ fail:
 		 * cache or in index by real inode.
 		 */
 		ancestor = ovl_lookup_real_inode(sb, next, layer);
-		अगर (ancestor)
-			अवरोध;
+		if (ancestor)
+			break;
 
-		अगर (parent == layer->mnt->mnt_root) अणु
+		if (parent == layer->mnt->mnt_root) {
 			ancestor = dget(sb->s_root);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/*
 		 * If @real has been moved out of the layer root directory,
 		 * we will eventully hit the real fs root. This cannot happen
-		 * by legit overlay नाम, so we वापस error in that हाल.
+		 * by legit overlay rename, so we return error in that case.
 		 */
-		अगर (parent == next) अणु
+		if (parent == next) {
 			ancestor = ERR_PTR(-EXDEV);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		dput(next);
 		next = parent;
-	पूर्ण
+	}
 
 	dput(parent);
 	dput(next);
 
-	वापस ancestor;
-पूर्ण
+	return ancestor;
+}
 
 /*
  * Lookup a connected overlay dentry whose real dentry is @real.
  * If @real is on upper layer, we lookup a child overlay dentry with the same
- * path the real dentry. Otherwise, we need to consult index क्रम lookup.
+ * path the real dentry. Otherwise, we need to consult index for lookup.
  */
-अटल काष्ठा dentry *ovl_lookup_real(काष्ठा super_block *sb,
-				      काष्ठा dentry *real,
-				      स्थिर काष्ठा ovl_layer *layer)
-अणु
-	काष्ठा dentry *connected;
-	पूर्णांक err = 0;
+static struct dentry *ovl_lookup_real(struct super_block *sb,
+				      struct dentry *real,
+				      const struct ovl_layer *layer)
+{
+	struct dentry *connected;
+	int err = 0;
 
 	connected = ovl_lookup_real_ancestor(sb, real, layer);
-	अगर (IS_ERR(connected))
-		वापस connected;
+	if (IS_ERR(connected))
+		return connected;
 
-	जबतक (!err) अणु
-		काष्ठा dentry *next, *this;
-		काष्ठा dentry *parent = शून्य;
-		काष्ठा dentry *real_connected = ovl_dentry_real_at(connected,
+	while (!err) {
+		struct dentry *next, *this;
+		struct dentry *parent = NULL;
+		struct dentry *real_connected = ovl_dentry_real_at(connected,
 								   layer->idx);
 
-		अगर (real_connected == real)
-			अवरोध;
+		if (real_connected == real)
+			break;
 
 		/* Find the topmost dentry not yet connected */
 		next = dget(real);
-		क्रम (;;) अणु
+		for (;;) {
 			parent = dget_parent(next);
 
-			अगर (parent == real_connected)
-				अवरोध;
+			if (parent == real_connected)
+				break;
 
 			/*
 			 * If real has been moved out of 'real_connected',
 			 * we will not find 'real_connected' and hit the layer
-			 * root. In that हाल, we need to restart connecting.
-			 * This game can go on क्रमever in the worst हाल. We
-			 * may want to consider taking s_vfs_नाम_mutex अगर
+			 * root. In that case, we need to restart connecting.
+			 * This game can go on forever in the worst case. We
+			 * may want to consider taking s_vfs_rename_mutex if
 			 * this happens more than once.
 			 */
-			अगर (parent == layer->mnt->mnt_root) अणु
+			if (parent == layer->mnt->mnt_root) {
 				dput(connected);
 				connected = dget(sb->s_root);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 			/*
 			 * If real file has been moved out of the layer root
 			 * directory, we will eventully hit the real fs root.
-			 * This cannot happen by legit overlay नाम, so we
-			 * वापस error in that हाल.
+			 * This cannot happen by legit overlay rename, so we
+			 * return error in that case.
 			 */
-			अगर (parent == next) अणु
+			if (parent == next) {
 				err = -EXDEV;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 			dput(next);
 			next = parent;
-		पूर्ण
+		}
 
-		अगर (!err) अणु
+		if (!err) {
 			this = ovl_lookup_real_one(connected, next, layer);
-			अगर (IS_ERR(this))
+			if (IS_ERR(this))
 				err = PTR_ERR(this);
 
 			/*
 			 * Lookup of child in overlay can fail when racing with
-			 * overlay नाम of child away from 'connected' parent.
-			 * In this हाल, we need to restart the lookup from the
+			 * overlay rename of child away from 'connected' parent.
+			 * In this case, we need to restart the lookup from the
 			 * top, because we cannot trust that 'real_connected' is
 			 * still an ancestor of 'real'. There is a good chance
-			 * that the नामd overlay ancestor is now in cache, so
+			 * that the renamed overlay ancestor is now in cache, so
 			 * ovl_lookup_real_ancestor() will find it and we can
-			 * जारी to connect exactly from where lookup failed.
+			 * continue to connect exactly from where lookup failed.
 			 */
-			अगर (err == -ECHILD) अणु
+			if (err == -ECHILD) {
 				this = ovl_lookup_real_ancestor(sb, real,
 								layer);
 				err = PTR_ERR_OR_ZERO(this);
-			पूर्ण
-			अगर (!err) अणु
+			}
+			if (!err) {
 				dput(connected);
 				connected = this;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		dput(parent);
 		dput(next);
-	पूर्ण
+	}
 
-	अगर (err)
-		जाओ fail;
+	if (err)
+		goto fail;
 
-	वापस connected;
+	return connected;
 
 fail:
 	pr_warn_ratelimited("failed to lookup by real (%pd2, layer=%d, connected=%pd2, err=%i)\n",
 			    real, layer->idx, connected, err);
 	dput(connected);
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 
 /*
  * Get an overlay dentry from upper/lower real dentries and index.
  */
-अटल काष्ठा dentry *ovl_get_dentry(काष्ठा super_block *sb,
-				     काष्ठा dentry *upper,
-				     काष्ठा ovl_path *lowerpath,
-				     काष्ठा dentry *index)
-अणु
-	काष्ठा ovl_fs *ofs = sb->s_fs_info;
-	स्थिर काष्ठा ovl_layer *layer = upper ? &ofs->layers[0] : lowerpath->layer;
-	काष्ठा dentry *real = upper ?: (index ?: lowerpath->dentry);
+static struct dentry *ovl_get_dentry(struct super_block *sb,
+				     struct dentry *upper,
+				     struct ovl_path *lowerpath,
+				     struct dentry *index)
+{
+	struct ovl_fs *ofs = sb->s_fs_info;
+	const struct ovl_layer *layer = upper ? &ofs->layers[0] : lowerpath->layer;
+	struct dentry *real = upper ?: (index ?: lowerpath->dentry);
 
 	/*
 	 * Obtain a disconnected overlay dentry from a non-dir real dentry
 	 * and index.
 	 */
-	अगर (!d_is_dir(real))
-		वापस ovl_obtain_alias(sb, upper, lowerpath, index);
+	if (!d_is_dir(real))
+		return ovl_obtain_alias(sb, upper, lowerpath, index);
 
 	/* Removed empty directory? */
-	अगर ((real->d_flags & DCACHE_DISCONNECTED) || d_unhashed(real))
-		वापस ERR_PTR(-ENOENT);
+	if ((real->d_flags & DCACHE_DISCONNECTED) || d_unhashed(real))
+		return ERR_PTR(-ENOENT);
 
 	/*
 	 * If real dentry is connected and hashed, get a connected overlay
 	 * dentry whose real dentry is @real.
 	 */
-	वापस ovl_lookup_real(sb, real, layer);
-पूर्ण
+	return ovl_lookup_real(sb, real, layer);
+}
 
-अटल काष्ठा dentry *ovl_upper_fh_to_d(काष्ठा super_block *sb,
-					काष्ठा ovl_fh *fh)
-अणु
-	काष्ठा ovl_fs *ofs = sb->s_fs_info;
-	काष्ठा dentry *dentry;
-	काष्ठा dentry *upper;
+static struct dentry *ovl_upper_fh_to_d(struct super_block *sb,
+					struct ovl_fh *fh)
+{
+	struct ovl_fs *ofs = sb->s_fs_info;
+	struct dentry *dentry;
+	struct dentry *upper;
 
-	अगर (!ovl_upper_mnt(ofs))
-		वापस ERR_PTR(-EACCES);
+	if (!ovl_upper_mnt(ofs))
+		return ERR_PTR(-EACCES);
 
 	upper = ovl_decode_real_fh(ofs, fh, ovl_upper_mnt(ofs), true);
-	अगर (IS_ERR_OR_शून्य(upper))
-		वापस upper;
+	if (IS_ERR_OR_NULL(upper))
+		return upper;
 
-	dentry = ovl_get_dentry(sb, upper, शून्य, शून्य);
+	dentry = ovl_get_dentry(sb, upper, NULL, NULL);
 	dput(upper);
 
-	वापस dentry;
-पूर्ण
+	return dentry;
+}
 
-अटल काष्ठा dentry *ovl_lower_fh_to_d(काष्ठा super_block *sb,
-					काष्ठा ovl_fh *fh)
-अणु
-	काष्ठा ovl_fs *ofs = sb->s_fs_info;
-	काष्ठा ovl_path origin = अणु पूर्ण;
-	काष्ठा ovl_path *stack = &origin;
-	काष्ठा dentry *dentry = शून्य;
-	काष्ठा dentry *index = शून्य;
-	काष्ठा inode *inode;
-	पूर्णांक err;
+static struct dentry *ovl_lower_fh_to_d(struct super_block *sb,
+					struct ovl_fh *fh)
+{
+	struct ovl_fs *ofs = sb->s_fs_info;
+	struct ovl_path origin = { };
+	struct ovl_path *stack = &origin;
+	struct dentry *dentry = NULL;
+	struct dentry *index = NULL;
+	struct inode *inode;
+	int err;
 
 	/* First lookup overlay inode in inode cache by origin fh */
-	err = ovl_check_origin_fh(ofs, fh, false, शून्य, &stack);
-	अगर (err)
-		वापस ERR_PTR(err);
+	err = ovl_check_origin_fh(ofs, fh, false, NULL, &stack);
+	if (err)
+		return ERR_PTR(err);
 
-	अगर (!d_is_dir(origin.dentry) ||
-	    !(origin.dentry->d_flags & DCACHE_DISCONNECTED)) अणु
+	if (!d_is_dir(origin.dentry) ||
+	    !(origin.dentry->d_flags & DCACHE_DISCONNECTED)) {
 		inode = ovl_lookup_inode(sb, origin.dentry, false);
 		err = PTR_ERR(inode);
-		अगर (IS_ERR(inode))
-			जाओ out_err;
-		अगर (inode) अणु
+		if (IS_ERR(inode))
+			goto out_err;
+		if (inode) {
 			dentry = d_find_any_alias(inode);
 			iput(inode);
-			अगर (dentry)
-				जाओ out;
-		पूर्ण
-	पूर्ण
+			if (dentry)
+				goto out;
+		}
+	}
 
 	/* Then lookup indexed upper/whiteout by origin fh */
-	अगर (ofs->indexdir) अणु
+	if (ofs->indexdir) {
 		index = ovl_get_index_fh(ofs, fh);
 		err = PTR_ERR(index);
-		अगर (IS_ERR(index)) अणु
-			index = शून्य;
-			जाओ out_err;
-		पूर्ण
-	पूर्ण
+		if (IS_ERR(index)) {
+			index = NULL;
+			goto out_err;
+		}
+	}
 
 	/* Then try to get a connected upper dir by index */
-	अगर (index && d_is_dir(index)) अणु
-		काष्ठा dentry *upper = ovl_index_upper(ofs, index);
+	if (index && d_is_dir(index)) {
+		struct dentry *upper = ovl_index_upper(ofs, index);
 
 		err = PTR_ERR(upper);
-		अगर (IS_ERR_OR_शून्य(upper))
-			जाओ out_err;
+		if (IS_ERR_OR_NULL(upper))
+			goto out_err;
 
-		dentry = ovl_get_dentry(sb, upper, शून्य, शून्य);
+		dentry = ovl_get_dentry(sb, upper, NULL, NULL);
 		dput(upper);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* Find origin.dentry again with ovl_acceptable() layer check */
-	अगर (d_is_dir(origin.dentry)) अणु
+	if (d_is_dir(origin.dentry)) {
 		dput(origin.dentry);
-		origin.dentry = शून्य;
-		err = ovl_check_origin_fh(ofs, fh, true, शून्य, &stack);
-		अगर (err)
-			जाओ out_err;
-	पूर्ण
-	अगर (index) अणु
-		err = ovl_verअगरy_origin(ofs, index, origin.dentry, false);
-		अगर (err)
-			जाओ out_err;
-	पूर्ण
+		origin.dentry = NULL;
+		err = ovl_check_origin_fh(ofs, fh, true, NULL, &stack);
+		if (err)
+			goto out_err;
+	}
+	if (index) {
+		err = ovl_verify_origin(ofs, index, origin.dentry, false);
+		if (err)
+			goto out_err;
+	}
 
 	/* Get a connected non-upper dir or disconnected non-dir */
-	dentry = ovl_get_dentry(sb, शून्य, &origin, index);
+	dentry = ovl_get_dentry(sb, NULL, &origin, index);
 
 out:
 	dput(origin.dentry);
 	dput(index);
-	वापस dentry;
+	return dentry;
 
 out_err:
 	dentry = ERR_PTR(err);
-	जाओ out;
-पूर्ण
+	goto out;
+}
 
-अटल काष्ठा ovl_fh *ovl_fid_to_fh(काष्ठा fid *fid, पूर्णांक buflen, पूर्णांक fh_type)
-अणु
-	काष्ठा ovl_fh *fh;
+static struct ovl_fh *ovl_fid_to_fh(struct fid *fid, int buflen, int fh_type)
+{
+	struct ovl_fh *fh;
 
-	/* If on-wire inner fid is aligned - nothing to करो */
-	अगर (fh_type == OVL_खाताID_V1)
-		वापस (काष्ठा ovl_fh *)fid;
+	/* If on-wire inner fid is aligned - nothing to do */
+	if (fh_type == OVL_FILEID_V1)
+		return (struct ovl_fh *)fid;
 
-	अगर (fh_type != OVL_खाताID_V0)
-		वापस ERR_PTR(-EINVAL);
+	if (fh_type != OVL_FILEID_V0)
+		return ERR_PTR(-EINVAL);
 
-	अगर (buflen <= OVL_FH_WIRE_OFFSET)
-		वापस ERR_PTR(-EINVAL);
+	if (buflen <= OVL_FH_WIRE_OFFSET)
+		return ERR_PTR(-EINVAL);
 
 	fh = kzalloc(buflen, GFP_KERNEL);
-	अगर (!fh)
-		वापस ERR_PTR(-ENOMEM);
+	if (!fh)
+		return ERR_PTR(-ENOMEM);
 
-	/* Copy unaligned inner fh पूर्णांकo aligned buffer */
-	स_नकल(&fh->fb, fid, buflen - OVL_FH_WIRE_OFFSET);
-	वापस fh;
-पूर्ण
+	/* Copy unaligned inner fh into aligned buffer */
+	memcpy(&fh->fb, fid, buflen - OVL_FH_WIRE_OFFSET);
+	return fh;
+}
 
-अटल काष्ठा dentry *ovl_fh_to_dentry(काष्ठा super_block *sb, काष्ठा fid *fid,
-				       पूर्णांक fh_len, पूर्णांक fh_type)
-अणु
-	काष्ठा dentry *dentry = शून्य;
-	काष्ठा ovl_fh *fh = शून्य;
-	पूर्णांक len = fh_len << 2;
-	अचिन्हित पूर्णांक flags = 0;
-	पूर्णांक err;
+static struct dentry *ovl_fh_to_dentry(struct super_block *sb, struct fid *fid,
+				       int fh_len, int fh_type)
+{
+	struct dentry *dentry = NULL;
+	struct ovl_fh *fh = NULL;
+	int len = fh_len << 2;
+	unsigned int flags = 0;
+	int err;
 
 	fh = ovl_fid_to_fh(fid, len, fh_type);
 	err = PTR_ERR(fh);
-	अगर (IS_ERR(fh))
-		जाओ out_err;
+	if (IS_ERR(fh))
+		goto out_err;
 
 	err = ovl_check_fh_len(fh, len);
-	अगर (err)
-		जाओ out_err;
+	if (err)
+		goto out_err;
 
 	flags = fh->fb.flags;
 	dentry = (flags & OVL_FH_FLAG_PATH_UPPER) ?
 		 ovl_upper_fh_to_d(sb, fh) :
 		 ovl_lower_fh_to_d(sb, fh);
 	err = PTR_ERR(dentry);
-	अगर (IS_ERR(dentry) && err != -ESTALE)
-		जाओ out_err;
+	if (IS_ERR(dentry) && err != -ESTALE)
+		goto out_err;
 
 out:
-	/* We may have needed to re-align OVL_खाताID_V0 */
-	अगर (!IS_ERR_OR_शून्य(fh) && fh != (व्योम *)fid)
-		kमुक्त(fh);
+	/* We may have needed to re-align OVL_FILEID_V0 */
+	if (!IS_ERR_OR_NULL(fh) && fh != (void *)fid)
+		kfree(fh);
 
-	वापस dentry;
+	return dentry;
 
 out_err:
 	pr_warn_ratelimited("failed to decode file handle (len=%d, type=%d, flags=%x, err=%i)\n",
 			    fh_len, fh_type, flags, err);
 	dentry = ERR_PTR(err);
-	जाओ out;
-पूर्ण
+	goto out;
+}
 
-अटल काष्ठा dentry *ovl_fh_to_parent(काष्ठा super_block *sb, काष्ठा fid *fid,
-				       पूर्णांक fh_len, पूर्णांक fh_type)
-अणु
+static struct dentry *ovl_fh_to_parent(struct super_block *sb, struct fid *fid,
+				       int fh_len, int fh_type)
+{
 	pr_warn_ratelimited("connectable file handles not supported; use 'no_subtree_check' exportfs option.\n");
-	वापस ERR_PTR(-EACCES);
-पूर्ण
+	return ERR_PTR(-EACCES);
+}
 
-अटल पूर्णांक ovl_get_name(काष्ठा dentry *parent, अक्षर *name,
-			काष्ठा dentry *child)
-अणु
+static int ovl_get_name(struct dentry *parent, char *name,
+			struct dentry *child)
+{
 	/*
-	 * ovl_fh_to_dentry() वापसs connected dir overlay dentries and
+	 * ovl_fh_to_dentry() returns connected dir overlay dentries and
 	 * ovl_fh_to_parent() is not implemented, so we should not get here.
 	 */
 	WARN_ON_ONCE(1);
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
-अटल काष्ठा dentry *ovl_get_parent(काष्ठा dentry *dentry)
-अणु
+static struct dentry *ovl_get_parent(struct dentry *dentry)
+{
 	/*
-	 * ovl_fh_to_dentry() वापसs connected dir overlay dentries, so we
+	 * ovl_fh_to_dentry() returns connected dir overlay dentries, so we
 	 * should not get here.
 	 */
 	WARN_ON_ONCE(1);
-	वापस ERR_PTR(-EIO);
-पूर्ण
+	return ERR_PTR(-EIO);
+}
 
-स्थिर काष्ठा export_operations ovl_export_operations = अणु
+const struct export_operations ovl_export_operations = {
 	.encode_fh	= ovl_encode_fh,
 	.fh_to_dentry	= ovl_fh_to_dentry,
 	.fh_to_parent	= ovl_fh_to_parent,
 	.get_name	= ovl_get_name,
 	.get_parent	= ovl_get_parent,
-पूर्ण;
+};

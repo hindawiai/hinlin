@@ -1,39 +1,38 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  *  linux/drivers/mmc/sdio_ops.c
  *
  *  Copyright 2006-2007 Pierre Ossman
  */
 
-#अगर_अघोषित _MMC_SDIO_OPS_H
-#घोषणा _MMC_SDIO_OPS_H
+#ifndef _MMC_SDIO_OPS_H
+#define _MMC_SDIO_OPS_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/mmc/sdपन.स>
+#include <linux/types.h>
+#include <linux/mmc/sdio.h>
 
-काष्ठा mmc_host;
-काष्ठा mmc_card;
-काष्ठा work_काष्ठा;
+struct mmc_host;
+struct mmc_card;
+struct work_struct;
 
-पूर्णांक mmc_send_io_op_cond(काष्ठा mmc_host *host, u32 ocr, u32 *rocr);
-पूर्णांक mmc_io_rw_direct(काष्ठा mmc_card *card, पूर्णांक ग_लिखो, अचिन्हित fn,
-	अचिन्हित addr, u8 in, u8* out);
-पूर्णांक mmc_io_rw_extended(काष्ठा mmc_card *card, पूर्णांक ग_लिखो, अचिन्हित fn,
-	अचिन्हित addr, पूर्णांक incr_addr, u8 *buf, अचिन्हित blocks, अचिन्हित blksz);
-पूर्णांक sdio_reset(काष्ठा mmc_host *host);
-व्योम sdio_irq_work(काष्ठा work_काष्ठा *work);
+int mmc_send_io_op_cond(struct mmc_host *host, u32 ocr, u32 *rocr);
+int mmc_io_rw_direct(struct mmc_card *card, int write, unsigned fn,
+	unsigned addr, u8 in, u8* out);
+int mmc_io_rw_extended(struct mmc_card *card, int write, unsigned fn,
+	unsigned addr, int incr_addr, u8 *buf, unsigned blocks, unsigned blksz);
+int sdio_reset(struct mmc_host *host);
+void sdio_irq_work(struct work_struct *work);
 
-अटल अंतरभूत bool sdio_is_io_busy(u32 opcode, u32 arg)
-अणु
+static inline bool sdio_is_io_busy(u32 opcode, u32 arg)
+{
 	u32 addr;
 
 	addr = (arg >> 9) & 0x1FFFF;
 
-	वापस (opcode == SD_IO_RW_EXTENDED ||
-		(opcode == SD_IO_RW_सूचीECT &&
+	return (opcode == SD_IO_RW_EXTENDED ||
+		(opcode == SD_IO_RW_DIRECT &&
 		!(addr == SDIO_CCCR_ABORT || addr == SDIO_CCCR_SUSPEND)));
-पूर्ण
+}
 
-#पूर्ण_अगर
+#endif
 

@@ -1,35 +1,34 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-/* Copyright(c) 2017 - 2019 Pensanकरो Systems, Inc */
+/* SPDX-License-Identifier: GPL-2.0 */
+/* Copyright(c) 2017 - 2019 Pensando Systems, Inc */
 
-#अगर_अघोषित _IONIC_DEBUGFS_H_
-#घोषणा _IONIC_DEBUGFS_H_
+#ifndef _IONIC_DEBUGFS_H_
+#define _IONIC_DEBUGFS_H_
 
-#समावेश <linux/debugfs.h>
+#include <linux/debugfs.h>
 
-#अगर_घोषित CONFIG_DEBUG_FS
+#ifdef CONFIG_DEBUG_FS
 
-व्योम ionic_debugfs_create(व्योम);
-व्योम ionic_debugfs_destroy(व्योम);
-व्योम ionic_debugfs_add_dev(काष्ठा ionic *ionic);
-व्योम ionic_debugfs_del_dev(काष्ठा ionic *ionic);
-व्योम ionic_debugfs_add_ident(काष्ठा ionic *ionic);
-व्योम ionic_debugfs_add_sizes(काष्ठा ionic *ionic);
-व्योम ionic_debugfs_add_lअगर(काष्ठा ionic_lअगर *lअगर);
-व्योम ionic_debugfs_add_qcq(काष्ठा ionic_lअगर *lअगर, काष्ठा ionic_qcq *qcq);
-व्योम ionic_debugfs_del_lअगर(काष्ठा ionic_lअगर *lअगर);
-व्योम ionic_debugfs_del_qcq(काष्ठा ionic_qcq *qcq);
-#अन्यथा
-अटल अंतरभूत व्योम ionic_debugfs_create(व्योम) अणु पूर्ण
-अटल अंतरभूत व्योम ionic_debugfs_destroy(व्योम) अणु पूर्ण
-अटल अंतरभूत व्योम ionic_debugfs_add_dev(काष्ठा ionic *ionic) अणु पूर्ण
-अटल अंतरभूत व्योम ionic_debugfs_del_dev(काष्ठा ionic *ionic) अणु पूर्ण
-अटल अंतरभूत व्योम ionic_debugfs_add_ident(काष्ठा ionic *ionic) अणु पूर्ण
-अटल अंतरभूत व्योम ionic_debugfs_add_sizes(काष्ठा ionic *ionic) अणु पूर्ण
-अटल अंतरभूत व्योम ionic_debugfs_add_lअगर(काष्ठा ionic_lअगर *lअगर) अणु पूर्ण
-अटल अंतरभूत व्योम ionic_debugfs_add_qcq(काष्ठा ionic_lअगर *lअगर, काष्ठा ionic_qcq *qcq) अणु पूर्ण
-अटल अंतरभूत व्योम ionic_debugfs_del_lअगर(काष्ठा ionic_lअगर *lअगर) अणु पूर्ण
-अटल अंतरभूत व्योम ionic_debugfs_del_qcq(काष्ठा ionic_qcq *qcq) अणु पूर्ण
-#पूर्ण_अगर
+void ionic_debugfs_create(void);
+void ionic_debugfs_destroy(void);
+void ionic_debugfs_add_dev(struct ionic *ionic);
+void ionic_debugfs_del_dev(struct ionic *ionic);
+void ionic_debugfs_add_ident(struct ionic *ionic);
+void ionic_debugfs_add_sizes(struct ionic *ionic);
+void ionic_debugfs_add_lif(struct ionic_lif *lif);
+void ionic_debugfs_add_qcq(struct ionic_lif *lif, struct ionic_qcq *qcq);
+void ionic_debugfs_del_lif(struct ionic_lif *lif);
+void ionic_debugfs_del_qcq(struct ionic_qcq *qcq);
+#else
+static inline void ionic_debugfs_create(void) { }
+static inline void ionic_debugfs_destroy(void) { }
+static inline void ionic_debugfs_add_dev(struct ionic *ionic) { }
+static inline void ionic_debugfs_del_dev(struct ionic *ionic) { }
+static inline void ionic_debugfs_add_ident(struct ionic *ionic) { }
+static inline void ionic_debugfs_add_sizes(struct ionic *ionic) { }
+static inline void ionic_debugfs_add_lif(struct ionic_lif *lif) { }
+static inline void ionic_debugfs_add_qcq(struct ionic_lif *lif, struct ionic_qcq *qcq) { }
+static inline void ionic_debugfs_del_lif(struct ionic_lif *lif) { }
+static inline void ionic_debugfs_del_qcq(struct ionic_qcq *qcq) { }
+#endif
 
-#पूर्ण_अगर /* _IONIC_DEBUGFS_H_ */
+#endif /* _IONIC_DEBUGFS_H_ */

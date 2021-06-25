@@ -1,839 +1,838 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * GSS Proxy upcall module
  *
  *  Copyright (C) 2012 Simo Sorce <simo@redhat.com>
  */
 
-#समावेश <linux/sunrpc/svcauth.h>
-#समावेश "gss_rpc_xdr.h"
+#include <linux/sunrpc/svcauth.h>
+#include "gss_rpc_xdr.h"
 
-अटल पूर्णांक gssx_enc_bool(काष्ठा xdr_stream *xdr, पूर्णांक v)
-अणु
+static int gssx_enc_bool(struct xdr_stream *xdr, int v)
+{
 	__be32 *p;
 
 	p = xdr_reserve_space(xdr, 4);
-	अगर (unlikely(p == शून्य))
-		वापस -ENOSPC;
+	if (unlikely(p == NULL))
+		return -ENOSPC;
 	*p = v ? xdr_one : xdr_zero;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gssx_dec_bool(काष्ठा xdr_stream *xdr, u32 *v)
-अणु
+static int gssx_dec_bool(struct xdr_stream *xdr, u32 *v)
+{
 	__be32 *p;
 
-	p = xdr_अंतरभूत_decode(xdr, 4);
-	अगर (unlikely(p == शून्य))
-		वापस -ENOSPC;
+	p = xdr_inline_decode(xdr, 4);
+	if (unlikely(p == NULL))
+		return -ENOSPC;
 	*v = be32_to_cpu(*p);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gssx_enc_buffer(काष्ठा xdr_stream *xdr,
-			   स्थिर gssx_buffer *buf)
-अणु
+static int gssx_enc_buffer(struct xdr_stream *xdr,
+			   const gssx_buffer *buf)
+{
 	__be32 *p;
 
-	p = xdr_reserve_space(xdr, माप(u32) + buf->len);
-	अगर (!p)
-		वापस -ENOSPC;
+	p = xdr_reserve_space(xdr, sizeof(u32) + buf->len);
+	if (!p)
+		return -ENOSPC;
 	xdr_encode_opaque(p, buf->data, buf->len);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gssx_enc_in_token(काष्ठा xdr_stream *xdr,
-			     स्थिर काष्ठा gssp_in_token *in)
-अणु
+static int gssx_enc_in_token(struct xdr_stream *xdr,
+			     const struct gssp_in_token *in)
+{
 	__be32 *p;
 
 	p = xdr_reserve_space(xdr, 4);
-	अगर (!p)
-		वापस -ENOSPC;
+	if (!p)
+		return -ENOSPC;
 	*p = cpu_to_be32(in->page_len);
 
-	/* all we need to करो is to ग_लिखो pages */
-	xdr_ग_लिखो_pages(xdr, in->pages, in->page_base, in->page_len);
+	/* all we need to do is to write pages */
+	xdr_write_pages(xdr, in->pages, in->page_base, in->page_len);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक gssx_dec_buffer(काष्ठा xdr_stream *xdr,
+static int gssx_dec_buffer(struct xdr_stream *xdr,
 			   gssx_buffer *buf)
-अणु
+{
 	u32 length;
 	__be32 *p;
 
-	p = xdr_अंतरभूत_decode(xdr, 4);
-	अगर (unlikely(p == शून्य))
-		वापस -ENOSPC;
+	p = xdr_inline_decode(xdr, 4);
+	if (unlikely(p == NULL))
+		return -ENOSPC;
 
 	length = be32_to_cpup(p);
-	p = xdr_अंतरभूत_decode(xdr, length);
-	अगर (unlikely(p == शून्य))
-		वापस -ENOSPC;
+	p = xdr_inline_decode(xdr, length);
+	if (unlikely(p == NULL))
+		return -ENOSPC;
 
-	अगर (buf->len == 0) अणु
-		/* we पूर्णांकentionally are not पूर्णांकerested in this buffer */
-		वापस 0;
-	पूर्ण
-	अगर (length > buf->len)
-		वापस -ENOSPC;
+	if (buf->len == 0) {
+		/* we intentionally are not interested in this buffer */
+		return 0;
+	}
+	if (length > buf->len)
+		return -ENOSPC;
 
-	अगर (!buf->data) अणु
+	if (!buf->data) {
 		buf->data = kmemdup(p, length, GFP_KERNEL);
-		अगर (!buf->data)
-			वापस -ENOMEM;
-	पूर्ण अन्यथा अणु
-		स_नकल(buf->data, p, length);
-	पूर्ण
+		if (!buf->data)
+			return -ENOMEM;
+	} else {
+		memcpy(buf->data, p, length);
+	}
 	buf->len = length;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gssx_enc_option(काष्ठा xdr_stream *xdr,
-			   काष्ठा gssx_option *opt)
-अणु
-	पूर्णांक err;
+static int gssx_enc_option(struct xdr_stream *xdr,
+			   struct gssx_option *opt)
+{
+	int err;
 
 	err = gssx_enc_buffer(xdr, &opt->option);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 	err = gssx_enc_buffer(xdr, &opt->value);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक gssx_dec_option(काष्ठा xdr_stream *xdr,
-			   काष्ठा gssx_option *opt)
-अणु
-	पूर्णांक err;
+static int gssx_dec_option(struct xdr_stream *xdr,
+			   struct gssx_option *opt)
+{
+	int err;
 
 	err = gssx_dec_buffer(xdr, &opt->option);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 	err = gssx_dec_buffer(xdr, &opt->value);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक dummy_enc_opt_array(काष्ठा xdr_stream *xdr,
-				स्थिर काष्ठा gssx_option_array *oa)
-अणु
+static int dummy_enc_opt_array(struct xdr_stream *xdr,
+				const struct gssx_option_array *oa)
+{
 	__be32 *p;
 
-	अगर (oa->count != 0)
-		वापस -EINVAL;
+	if (oa->count != 0)
+		return -EINVAL;
 
 	p = xdr_reserve_space(xdr, 4);
-	अगर (!p)
-		वापस -ENOSPC;
+	if (!p)
+		return -ENOSPC;
 	*p = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dummy_dec_opt_array(काष्ठा xdr_stream *xdr,
-				काष्ठा gssx_option_array *oa)
-अणु
-	काष्ठा gssx_option dummy;
+static int dummy_dec_opt_array(struct xdr_stream *xdr,
+				struct gssx_option_array *oa)
+{
+	struct gssx_option dummy;
 	u32 count, i;
 	__be32 *p;
 
-	p = xdr_अंतरभूत_decode(xdr, 4);
-	अगर (unlikely(p == शून्य))
-		वापस -ENOSPC;
+	p = xdr_inline_decode(xdr, 4);
+	if (unlikely(p == NULL))
+		return -ENOSPC;
 	count = be32_to_cpup(p++);
-	स_रखो(&dummy, 0, माप(dummy));
-	क्रम (i = 0; i < count; i++) अणु
+	memset(&dummy, 0, sizeof(dummy));
+	for (i = 0; i < count; i++) {
 		gssx_dec_option(xdr, &dummy);
-	पूर्ण
+	}
 
 	oa->count = 0;
-	oa->data = शून्य;
-	वापस 0;
-पूर्ण
+	oa->data = NULL;
+	return 0;
+}
 
-अटल पूर्णांक get_host_u32(काष्ठा xdr_stream *xdr, u32 *res)
-अणु
+static int get_host_u32(struct xdr_stream *xdr, u32 *res)
+{
 	__be32 *p;
 
-	p = xdr_अंतरभूत_decode(xdr, 4);
-	अगर (!p)
-		वापस -EINVAL;
+	p = xdr_inline_decode(xdr, 4);
+	if (!p)
+		return -EINVAL;
 	/* Contents of linux creds are all host-endian: */
-	स_नकल(res, p, माप(u32));
-	वापस 0;
-पूर्ण
+	memcpy(res, p, sizeof(u32));
+	return 0;
+}
 
-अटल पूर्णांक gssx_dec_linux_creds(काष्ठा xdr_stream *xdr,
-				काष्ठा svc_cred *creds)
-अणु
+static int gssx_dec_linux_creds(struct xdr_stream *xdr,
+				struct svc_cred *creds)
+{
 	u32 length;
 	__be32 *p;
-	u32 पंचांगp;
+	u32 tmp;
 	u32 N;
-	पूर्णांक i, err;
+	int i, err;
 
-	p = xdr_अंतरभूत_decode(xdr, 4);
-	अगर (unlikely(p == शून्य))
-		वापस -ENOSPC;
+	p = xdr_inline_decode(xdr, 4);
+	if (unlikely(p == NULL))
+		return -ENOSPC;
 
 	length = be32_to_cpup(p);
 
-	अगर (length > (3 + NGROUPS_MAX) * माप(u32))
-		वापस -ENOSPC;
+	if (length > (3 + NGROUPS_MAX) * sizeof(u32))
+		return -ENOSPC;
 
 	/* uid */
-	err = get_host_u32(xdr, &पंचांगp);
-	अगर (err)
-		वापस err;
-	creds->cr_uid = make_kuid(&init_user_ns, पंचांगp);
+	err = get_host_u32(xdr, &tmp);
+	if (err)
+		return err;
+	creds->cr_uid = make_kuid(&init_user_ns, tmp);
 
 	/* gid */
-	err = get_host_u32(xdr, &पंचांगp);
-	अगर (err)
-		वापस err;
-	creds->cr_gid = make_kgid(&init_user_ns, पंचांगp);
+	err = get_host_u32(xdr, &tmp);
+	if (err)
+		return err;
+	creds->cr_gid = make_kgid(&init_user_ns, tmp);
 
 	/* number of additional gid's */
-	err = get_host_u32(xdr, &पंचांगp);
-	अगर (err)
-		वापस err;
-	N = पंचांगp;
-	अगर ((3 + N) * माप(u32) != length)
-		वापस -EINVAL;
+	err = get_host_u32(xdr, &tmp);
+	if (err)
+		return err;
+	N = tmp;
+	if ((3 + N) * sizeof(u32) != length)
+		return -EINVAL;
 	creds->cr_group_info = groups_alloc(N);
-	अगर (creds->cr_group_info == शून्य)
-		वापस -ENOMEM;
+	if (creds->cr_group_info == NULL)
+		return -ENOMEM;
 
 	/* gid's */
-	क्रम (i = 0; i < N; i++) अणु
+	for (i = 0; i < N; i++) {
 		kgid_t kgid;
-		err = get_host_u32(xdr, &पंचांगp);
-		अगर (err)
-			जाओ out_मुक्त_groups;
+		err = get_host_u32(xdr, &tmp);
+		if (err)
+			goto out_free_groups;
 		err = -EINVAL;
-		kgid = make_kgid(&init_user_ns, पंचांगp);
-		अगर (!gid_valid(kgid))
-			जाओ out_मुक्त_groups;
+		kgid = make_kgid(&init_user_ns, tmp);
+		if (!gid_valid(kgid))
+			goto out_free_groups;
 		creds->cr_group_info->gid[i] = kgid;
-	पूर्ण
+	}
 	groups_sort(creds->cr_group_info);
 
-	वापस 0;
-out_मुक्त_groups:
-	groups_मुक्त(creds->cr_group_info);
-	वापस err;
-पूर्ण
+	return 0;
+out_free_groups:
+	groups_free(creds->cr_group_info);
+	return err;
+}
 
-अटल पूर्णांक gssx_dec_option_array(काष्ठा xdr_stream *xdr,
-				 काष्ठा gssx_option_array *oa)
-अणु
-	काष्ठा svc_cred *creds;
+static int gssx_dec_option_array(struct xdr_stream *xdr,
+				 struct gssx_option_array *oa)
+{
+	struct svc_cred *creds;
 	u32 count, i;
 	__be32 *p;
-	पूर्णांक err;
+	int err;
 
-	p = xdr_अंतरभूत_decode(xdr, 4);
-	अगर (unlikely(p == शून्य))
-		वापस -ENOSPC;
+	p = xdr_inline_decode(xdr, 4);
+	if (unlikely(p == NULL))
+		return -ENOSPC;
 	count = be32_to_cpup(p++);
-	अगर (!count)
-		वापस 0;
+	if (!count)
+		return 0;
 
 	/* we recognize only 1 currently: CREDS_VALUE */
 	oa->count = 1;
 
-	oa->data = kदो_स्मृति(माप(काष्ठा gssx_option), GFP_KERNEL);
-	अगर (!oa->data)
-		वापस -ENOMEM;
+	oa->data = kmalloc(sizeof(struct gssx_option), GFP_KERNEL);
+	if (!oa->data)
+		return -ENOMEM;
 
-	creds = kzalloc(माप(काष्ठा svc_cred), GFP_KERNEL);
-	अगर (!creds) अणु
-		kमुक्त(oa->data);
-		वापस -ENOMEM;
-	पूर्ण
+	creds = kzalloc(sizeof(struct svc_cred), GFP_KERNEL);
+	if (!creds) {
+		kfree(oa->data);
+		return -ENOMEM;
+	}
 
 	oa->data[0].option.data = CREDS_VALUE;
-	oa->data[0].option.len = माप(CREDS_VALUE);
-	oa->data[0].value.data = (व्योम *)creds;
+	oa->data[0].option.len = sizeof(CREDS_VALUE);
+	oa->data[0].value.data = (void *)creds;
 	oa->data[0].value.len = 0;
 
-	क्रम (i = 0; i < count; i++) अणु
-		gssx_buffer dummy = अणु 0, शून्य पूर्ण;
+	for (i = 0; i < count; i++) {
+		gssx_buffer dummy = { 0, NULL };
 		u32 length;
 
 		/* option buffer */
-		p = xdr_अंतरभूत_decode(xdr, 4);
-		अगर (unlikely(p == शून्य))
-			वापस -ENOSPC;
+		p = xdr_inline_decode(xdr, 4);
+		if (unlikely(p == NULL))
+			return -ENOSPC;
 
 		length = be32_to_cpup(p);
-		p = xdr_अंतरभूत_decode(xdr, length);
-		अगर (unlikely(p == शून्य))
-			वापस -ENOSPC;
+		p = xdr_inline_decode(xdr, length);
+		if (unlikely(p == NULL))
+			return -ENOSPC;
 
-		अगर (length == माप(CREDS_VALUE) &&
-		    स_भेद(p, CREDS_VALUE, माप(CREDS_VALUE)) == 0) अणु
+		if (length == sizeof(CREDS_VALUE) &&
+		    memcmp(p, CREDS_VALUE, sizeof(CREDS_VALUE)) == 0) {
 			/* We have creds here. parse them */
 			err = gssx_dec_linux_creds(xdr, creds);
-			अगर (err)
-				वापस err;
+			if (err)
+				return err;
 			oa->data[0].value.len = 1; /* presence */
-		पूर्ण अन्यथा अणु
-			/* consume unपूर्णांकeresting buffer */
+		} else {
+			/* consume uninteresting buffer */
 			err = gssx_dec_buffer(xdr, &dummy);
-			अगर (err)
-				वापस err;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			if (err)
+				return err;
+		}
+	}
+	return 0;
+}
 
-अटल पूर्णांक gssx_dec_status(काष्ठा xdr_stream *xdr,
-			   काष्ठा gssx_status *status)
-अणु
+static int gssx_dec_status(struct xdr_stream *xdr,
+			   struct gssx_status *status)
+{
 	__be32 *p;
-	पूर्णांक err;
+	int err;
 
 	/* status->major_status */
-	p = xdr_अंतरभूत_decode(xdr, 8);
-	अगर (unlikely(p == शून्य))
-		वापस -ENOSPC;
+	p = xdr_inline_decode(xdr, 8);
+	if (unlikely(p == NULL))
+		return -ENOSPC;
 	p = xdr_decode_hyper(p, &status->major_status);
 
 	/* status->mech */
 	err = gssx_dec_buffer(xdr, &status->mech);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* status->minor_status */
-	p = xdr_अंतरभूत_decode(xdr, 8);
-	अगर (unlikely(p == शून्य))
-		वापस -ENOSPC;
+	p = xdr_inline_decode(xdr, 8);
+	if (unlikely(p == NULL))
+		return -ENOSPC;
 	p = xdr_decode_hyper(p, &status->minor_status);
 
 	/* status->major_status_string */
 	err = gssx_dec_buffer(xdr, &status->major_status_string);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* status->minor_status_string */
 	err = gssx_dec_buffer(xdr, &status->minor_status_string);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* status->server_ctx */
 	err = gssx_dec_buffer(xdr, &status->server_ctx);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	/* we assume we have no options क्रम now, so simply consume them */
+	/* we assume we have no options for now, so simply consume them */
 	/* status->options */
 	err = dummy_dec_opt_array(xdr, &status->options);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक gssx_enc_call_ctx(काष्ठा xdr_stream *xdr,
-			     स्थिर काष्ठा gssx_call_ctx *ctx)
-अणु
-	काष्ठा gssx_option opt;
+static int gssx_enc_call_ctx(struct xdr_stream *xdr,
+			     const struct gssx_call_ctx *ctx)
+{
+	struct gssx_option opt;
 	__be32 *p;
-	पूर्णांक err;
+	int err;
 
 	/* ctx->locale */
 	err = gssx_enc_buffer(xdr, &ctx->locale);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* ctx->server_ctx */
 	err = gssx_enc_buffer(xdr, &ctx->server_ctx);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	/* we always want to ask क्रम lucid contexts */
+	/* we always want to ask for lucid contexts */
 	/* ctx->options */
 	p = xdr_reserve_space(xdr, 4);
 	*p = cpu_to_be32(2);
 
 	/* we want a lucid_v1 context */
 	opt.option.data = LUCID_OPTION;
-	opt.option.len = माप(LUCID_OPTION);
+	opt.option.len = sizeof(LUCID_OPTION);
 	opt.value.data = LUCID_VALUE;
-	opt.value.len = माप(LUCID_VALUE);
+	opt.value.len = sizeof(LUCID_VALUE);
 	err = gssx_enc_option(xdr, &opt);
 
 	/* ..and user creds */
 	opt.option.data = CREDS_OPTION;
-	opt.option.len = माप(CREDS_OPTION);
+	opt.option.len = sizeof(CREDS_OPTION);
 	opt.value.data = CREDS_VALUE;
-	opt.value.len = माप(CREDS_VALUE);
+	opt.value.len = sizeof(CREDS_VALUE);
 	err = gssx_enc_option(xdr, &opt);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक gssx_dec_name_attr(काष्ठा xdr_stream *xdr,
-			     काष्ठा gssx_name_attr *attr)
-अणु
-	पूर्णांक err;
+static int gssx_dec_name_attr(struct xdr_stream *xdr,
+			     struct gssx_name_attr *attr)
+{
+	int err;
 
 	/* attr->attr */
 	err = gssx_dec_buffer(xdr, &attr->attr);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* attr->value */
 	err = gssx_dec_buffer(xdr, &attr->value);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* attr->extensions */
 	err = dummy_dec_opt_array(xdr, &attr->extensions);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक dummy_enc_nameattr_array(काष्ठा xdr_stream *xdr,
-				    काष्ठा gssx_name_attr_array *naa)
-अणु
+static int dummy_enc_nameattr_array(struct xdr_stream *xdr,
+				    struct gssx_name_attr_array *naa)
+{
 	__be32 *p;
 
-	अगर (naa->count != 0)
-		वापस -EINVAL;
+	if (naa->count != 0)
+		return -EINVAL;
 
 	p = xdr_reserve_space(xdr, 4);
-	अगर (!p)
-		वापस -ENOSPC;
+	if (!p)
+		return -ENOSPC;
 	*p = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dummy_dec_nameattr_array(काष्ठा xdr_stream *xdr,
-				    काष्ठा gssx_name_attr_array *naa)
-अणु
-	काष्ठा gssx_name_attr dummy = अणु .attr = अणु.len = 0पूर्ण पूर्ण;
+static int dummy_dec_nameattr_array(struct xdr_stream *xdr,
+				    struct gssx_name_attr_array *naa)
+{
+	struct gssx_name_attr dummy = { .attr = {.len = 0} };
 	u32 count, i;
 	__be32 *p;
 
-	p = xdr_अंतरभूत_decode(xdr, 4);
-	अगर (unlikely(p == शून्य))
-		वापस -ENOSPC;
+	p = xdr_inline_decode(xdr, 4);
+	if (unlikely(p == NULL))
+		return -ENOSPC;
 	count = be32_to_cpup(p++);
-	क्रम (i = 0; i < count; i++) अणु
+	for (i = 0; i < count; i++) {
 		gssx_dec_name_attr(xdr, &dummy);
-	पूर्ण
+	}
 
 	naa->count = 0;
-	naa->data = शून्य;
-	वापस 0;
-पूर्ण
+	naa->data = NULL;
+	return 0;
+}
 
-अटल काष्ठा xdr_netobj zero_netobj = अणुपूर्ण;
+static struct xdr_netobj zero_netobj = {};
 
-अटल काष्ठा gssx_name_attr_array zero_name_attr_array = अणुपूर्ण;
+static struct gssx_name_attr_array zero_name_attr_array = {};
 
-अटल काष्ठा gssx_option_array zero_option_array = अणुपूर्ण;
+static struct gssx_option_array zero_option_array = {};
 
-अटल पूर्णांक gssx_enc_name(काष्ठा xdr_stream *xdr,
-			 काष्ठा gssx_name *name)
-अणु
-	पूर्णांक err;
+static int gssx_enc_name(struct xdr_stream *xdr,
+			 struct gssx_name *name)
+{
+	int err;
 
 	/* name->display_name */
 	err = gssx_enc_buffer(xdr, &name->display_name);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* name->name_type */
 	err = gssx_enc_buffer(xdr, &zero_netobj);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* name->exported_name */
 	err = gssx_enc_buffer(xdr, &zero_netobj);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* name->exported_composite_name */
 	err = gssx_enc_buffer(xdr, &zero_netobj);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	/* leave name_attributes empty क्रम now, will add once we have any
+	/* leave name_attributes empty for now, will add once we have any
 	 * to pass up at all */
 	/* name->name_attributes */
 	err = dummy_enc_nameattr_array(xdr, &zero_name_attr_array);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	/* leave options empty क्रम now, will add once we have any options
+	/* leave options empty for now, will add once we have any options
 	 * to pass up at all */
 	/* name->extensions */
 	err = dummy_enc_opt_array(xdr, &zero_option_array);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 
-अटल पूर्णांक gssx_dec_name(काष्ठा xdr_stream *xdr,
-			 काष्ठा gssx_name *name)
-अणु
-	काष्ठा xdr_netobj dummy_netobj = अणु .len = 0 पूर्ण;
-	काष्ठा gssx_name_attr_array dummy_name_attr_array = अणु .count = 0 पूर्ण;
-	काष्ठा gssx_option_array dummy_option_array = अणु .count = 0 पूर्ण;
-	पूर्णांक err;
+static int gssx_dec_name(struct xdr_stream *xdr,
+			 struct gssx_name *name)
+{
+	struct xdr_netobj dummy_netobj = { .len = 0 };
+	struct gssx_name_attr_array dummy_name_attr_array = { .count = 0 };
+	struct gssx_option_array dummy_option_array = { .count = 0 };
+	int err;
 
 	/* name->display_name */
 	err = gssx_dec_buffer(xdr, &name->display_name);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* name->name_type */
 	err = gssx_dec_buffer(xdr, &dummy_netobj);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* name->exported_name */
 	err = gssx_dec_buffer(xdr, &dummy_netobj);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* name->exported_composite_name */
 	err = gssx_dec_buffer(xdr, &dummy_netobj);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	/* we assume we have no attributes क्रम now, so simply consume them */
+	/* we assume we have no attributes for now, so simply consume them */
 	/* name->name_attributes */
 	err = dummy_dec_nameattr_array(xdr, &dummy_name_attr_array);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	/* we assume we have no options क्रम now, so simply consume them */
+	/* we assume we have no options for now, so simply consume them */
 	/* name->extensions */
 	err = dummy_dec_opt_array(xdr, &dummy_option_array);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक dummy_enc_credel_array(काष्ठा xdr_stream *xdr,
-				  काष्ठा gssx_cred_element_array *cea)
-अणु
+static int dummy_enc_credel_array(struct xdr_stream *xdr,
+				  struct gssx_cred_element_array *cea)
+{
 	__be32 *p;
 
-	अगर (cea->count != 0)
-		वापस -EINVAL;
+	if (cea->count != 0)
+		return -EINVAL;
 
 	p = xdr_reserve_space(xdr, 4);
-	अगर (!p)
-		वापस -ENOSPC;
+	if (!p)
+		return -ENOSPC;
 	*p = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gssx_enc_cred(काष्ठा xdr_stream *xdr,
-			 काष्ठा gssx_cred *cred)
-अणु
-	पूर्णांक err;
+static int gssx_enc_cred(struct xdr_stream *xdr,
+			 struct gssx_cred *cred)
+{
+	int err;
 
 	/* cred->desired_name */
 	err = gssx_enc_name(xdr, &cred->desired_name);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* cred->elements */
 	err = dummy_enc_credel_array(xdr, &cred->elements);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* cred->cred_handle_reference */
 	err = gssx_enc_buffer(xdr, &cred->cred_handle_reference);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* cred->needs_release */
 	err = gssx_enc_bool(xdr, cred->needs_release);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक gssx_enc_ctx(काष्ठा xdr_stream *xdr,
-			काष्ठा gssx_ctx *ctx)
-अणु
+static int gssx_enc_ctx(struct xdr_stream *xdr,
+			struct gssx_ctx *ctx)
+{
 	__be32 *p;
-	पूर्णांक err;
+	int err;
 
 	/* ctx->exported_context_token */
 	err = gssx_enc_buffer(xdr, &ctx->exported_context_token);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* ctx->state */
 	err = gssx_enc_buffer(xdr, &ctx->state);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* ctx->need_release */
 	err = gssx_enc_bool(xdr, ctx->need_release);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* ctx->mech */
 	err = gssx_enc_buffer(xdr, &ctx->mech);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* ctx->src_name */
 	err = gssx_enc_name(xdr, &ctx->src_name);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* ctx->targ_name */
 	err = gssx_enc_name(xdr, &ctx->targ_name);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	/* ctx->lअगरeसमय */
+	/* ctx->lifetime */
 	p = xdr_reserve_space(xdr, 8+8);
-	अगर (!p)
-		वापस -ENOSPC;
-	p = xdr_encode_hyper(p, ctx->lअगरeसमय);
+	if (!p)
+		return -ENOSPC;
+	p = xdr_encode_hyper(p, ctx->lifetime);
 
 	/* ctx->ctx_flags */
 	p = xdr_encode_hyper(p, ctx->ctx_flags);
 
 	/* ctx->locally_initiated */
 	err = gssx_enc_bool(xdr, ctx->locally_initiated);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	/* ctx->खोलो */
-	err = gssx_enc_bool(xdr, ctx->खोलो);
-	अगर (err)
-		वापस err;
+	/* ctx->open */
+	err = gssx_enc_bool(xdr, ctx->open);
+	if (err)
+		return err;
 
-	/* leave options empty क्रम now, will add once we have any options
+	/* leave options empty for now, will add once we have any options
 	 * to pass up at all */
 	/* ctx->options */
 	err = dummy_enc_opt_array(xdr, &ctx->options);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक gssx_dec_ctx(काष्ठा xdr_stream *xdr,
-			काष्ठा gssx_ctx *ctx)
-अणु
+static int gssx_dec_ctx(struct xdr_stream *xdr,
+			struct gssx_ctx *ctx)
+{
 	__be32 *p;
-	पूर्णांक err;
+	int err;
 
 	/* ctx->exported_context_token */
 	err = gssx_dec_buffer(xdr, &ctx->exported_context_token);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* ctx->state */
 	err = gssx_dec_buffer(xdr, &ctx->state);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* ctx->need_release */
 	err = gssx_dec_bool(xdr, &ctx->need_release);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* ctx->mech */
 	err = gssx_dec_buffer(xdr, &ctx->mech);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* ctx->src_name */
 	err = gssx_dec_name(xdr, &ctx->src_name);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* ctx->targ_name */
 	err = gssx_dec_name(xdr, &ctx->targ_name);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	/* ctx->lअगरeसमय */
-	p = xdr_अंतरभूत_decode(xdr, 8+8);
-	अगर (unlikely(p == शून्य))
-		वापस -ENOSPC;
-	p = xdr_decode_hyper(p, &ctx->lअगरeसमय);
+	/* ctx->lifetime */
+	p = xdr_inline_decode(xdr, 8+8);
+	if (unlikely(p == NULL))
+		return -ENOSPC;
+	p = xdr_decode_hyper(p, &ctx->lifetime);
 
 	/* ctx->ctx_flags */
 	p = xdr_decode_hyper(p, &ctx->ctx_flags);
 
 	/* ctx->locally_initiated */
 	err = gssx_dec_bool(xdr, &ctx->locally_initiated);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	/* ctx->खोलो */
-	err = gssx_dec_bool(xdr, &ctx->खोलो);
-	अगर (err)
-		वापस err;
+	/* ctx->open */
+	err = gssx_dec_bool(xdr, &ctx->open);
+	if (err)
+		return err;
 
-	/* we assume we have no options क्रम now, so simply consume them */
+	/* we assume we have no options for now, so simply consume them */
 	/* ctx->options */
 	err = dummy_dec_opt_array(xdr, &ctx->options);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक gssx_enc_cb(काष्ठा xdr_stream *xdr, काष्ठा gssx_cb *cb)
-अणु
+static int gssx_enc_cb(struct xdr_stream *xdr, struct gssx_cb *cb)
+{
 	__be32 *p;
-	पूर्णांक err;
+	int err;
 
 	/* cb->initiator_addrtype */
 	p = xdr_reserve_space(xdr, 8);
-	अगर (!p)
-		वापस -ENOSPC;
+	if (!p)
+		return -ENOSPC;
 	p = xdr_encode_hyper(p, cb->initiator_addrtype);
 
 	/* cb->initiator_address */
 	err = gssx_enc_buffer(xdr, &cb->initiator_address);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* cb->acceptor_addrtype */
 	p = xdr_reserve_space(xdr, 8);
-	अगर (!p)
-		वापस -ENOSPC;
+	if (!p)
+		return -ENOSPC;
 	p = xdr_encode_hyper(p, cb->acceptor_addrtype);
 
 	/* cb->acceptor_address */
 	err = gssx_enc_buffer(xdr, &cb->acceptor_address);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* cb->application_data */
 	err = gssx_enc_buffer(xdr, &cb->application_data);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम gssx_enc_accept_sec_context(काष्ठा rpc_rqst *req,
-				 काष्ठा xdr_stream *xdr,
-				 स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा gssx_arg_accept_sec_context *arg = data;
-	पूर्णांक err;
+void gssx_enc_accept_sec_context(struct rpc_rqst *req,
+				 struct xdr_stream *xdr,
+				 const void *data)
+{
+	const struct gssx_arg_accept_sec_context *arg = data;
+	int err;
 
 	err = gssx_enc_call_ctx(xdr, &arg->call_ctx);
-	अगर (err)
-		जाओ करोne;
+	if (err)
+		goto done;
 
 	/* arg->context_handle */
-	अगर (arg->context_handle)
+	if (arg->context_handle)
 		err = gssx_enc_ctx(xdr, arg->context_handle);
-	अन्यथा
+	else
 		err = gssx_enc_bool(xdr, 0);
-	अगर (err)
-		जाओ करोne;
+	if (err)
+		goto done;
 
 	/* arg->cred_handle */
-	अगर (arg->cred_handle)
+	if (arg->cred_handle)
 		err = gssx_enc_cred(xdr, arg->cred_handle);
-	अन्यथा
+	else
 		err = gssx_enc_bool(xdr, 0);
-	अगर (err)
-		जाओ करोne;
+	if (err)
+		goto done;
 
 	/* arg->input_token */
 	err = gssx_enc_in_token(xdr, &arg->input_token);
-	अगर (err)
-		जाओ करोne;
+	if (err)
+		goto done;
 
 	/* arg->input_cb */
-	अगर (arg->input_cb)
+	if (arg->input_cb)
 		err = gssx_enc_cb(xdr, arg->input_cb);
-	अन्यथा
+	else
 		err = gssx_enc_bool(xdr, 0);
-	अगर (err)
-		जाओ करोne;
+	if (err)
+		goto done;
 
 	err = gssx_enc_bool(xdr, arg->ret_deleg_cred);
-	अगर (err)
-		जाओ करोne;
+	if (err)
+		goto done;
 
-	/* leave options empty क्रम now, will add once we have any options
+	/* leave options empty for now, will add once we have any options
 	 * to pass up at all */
 	/* arg->options */
 	err = dummy_enc_opt_array(xdr, &arg->options);
 
-	xdr_अंतरभूत_pages(&req->rq_rcv_buf,
+	xdr_inline_pages(&req->rq_rcv_buf,
 		PAGE_SIZE/2 /* pretty arbitrary */,
 		arg->pages, 0 /* page base */, arg->npages * PAGE_SIZE);
-करोne:
-	अगर (err)
-		dprपूर्णांकk("RPC:       gssx_enc_accept_sec_context: %d\n", err);
-पूर्ण
+done:
+	if (err)
+		dprintk("RPC:       gssx_enc_accept_sec_context: %d\n", err);
+}
 
-पूर्णांक gssx_dec_accept_sec_context(काष्ठा rpc_rqst *rqstp,
-				काष्ठा xdr_stream *xdr,
-				व्योम *data)
-अणु
-	काष्ठा gssx_res_accept_sec_context *res = data;
+int gssx_dec_accept_sec_context(struct rpc_rqst *rqstp,
+				struct xdr_stream *xdr,
+				void *data)
+{
+	struct gssx_res_accept_sec_context *res = data;
 	u32 value_follows;
-	पूर्णांक err;
-	काष्ठा page *scratch;
+	int err;
+	struct page *scratch;
 
 	scratch = alloc_page(GFP_KERNEL);
-	अगर (!scratch)
-		वापस -ENOMEM;
+	if (!scratch)
+		return -ENOMEM;
 	xdr_set_scratch_page(xdr, scratch);
 
 	/* res->status */
 	err = gssx_dec_status(xdr, &res->status);
-	अगर (err)
-		जाओ out_मुक्त;
+	if (err)
+		goto out_free;
 
 	/* res->context_handle */
 	err = gssx_dec_bool(xdr, &value_follows);
-	अगर (err)
-		जाओ out_मुक्त;
-	अगर (value_follows) अणु
+	if (err)
+		goto out_free;
+	if (value_follows) {
 		err = gssx_dec_ctx(xdr, res->context_handle);
-		अगर (err)
-			जाओ out_मुक्त;
-	पूर्ण अन्यथा अणु
-		res->context_handle = शून्य;
-	पूर्ण
+		if (err)
+			goto out_free;
+	} else {
+		res->context_handle = NULL;
+	}
 
 	/* res->output_token */
 	err = gssx_dec_bool(xdr, &value_follows);
-	अगर (err)
-		जाओ out_मुक्त;
-	अगर (value_follows) अणु
+	if (err)
+		goto out_free;
+	if (value_follows) {
 		err = gssx_dec_buffer(xdr, res->output_token);
-		अगर (err)
-			जाओ out_मुक्त;
-	पूर्ण अन्यथा अणु
-		res->output_token = शून्य;
-	पूर्ण
+		if (err)
+			goto out_free;
+	} else {
+		res->output_token = NULL;
+	}
 
 	/* res->delegated_cred_handle */
 	err = gssx_dec_bool(xdr, &value_follows);
-	अगर (err)
-		जाओ out_मुक्त;
-	अगर (value_follows) अणु
-		/* we करो not support upcall servers sending this data. */
+	if (err)
+		goto out_free;
+	if (value_follows) {
+		/* we do not support upcall servers sending this data. */
 		err = -EINVAL;
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
 	/* res->options */
 	err = gssx_dec_option_array(xdr, &res->options);
 
-out_मुक्त:
-	__मुक्त_page(scratch);
-	वापस err;
-पूर्ण
+out_free:
+	__free_page(scratch);
+	return err;
+}

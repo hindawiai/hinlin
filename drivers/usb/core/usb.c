@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * drivers/usb/core/usb.c
  *
@@ -12,7 +11,7 @@
  * (C) Copyright David Brownell 2000-2004
  * (C) Copyright Yggdrasil Computing, Inc. 2000
  *     (usb_device_id matching changes by Adam J. Richter)
- * (C) Copyright Greg Kroah-Harपंचांगan 2002-2003
+ * (C) Copyright Greg Kroah-Hartman 2002-2003
  *
  * Released under the GPLv2 only.
  *
@@ -20,442 +19,442 @@
  * just a collection of helper routines that implement the
  * generic USB things that the real drivers can use..
  *
- * Think of this as a "USB library" rather than anything अन्यथा,
+ * Think of this as a "USB library" rather than anything else,
  * with no callbacks.  Callbacks are evil.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/bitops.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/kmod.h>
-#समावेश <linux/init.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/usb.h>
-#समावेश <linux/usb/hcd.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/usb/of.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/string.h>
+#include <linux/bitops.h>
+#include <linux/slab.h>
+#include <linux/kmod.h>
+#include <linux/init.h>
+#include <linux/spinlock.h>
+#include <linux/errno.h>
+#include <linux/usb.h>
+#include <linux/usb/hcd.h>
+#include <linux/mutex.h>
+#include <linux/workqueue.h>
+#include <linux/debugfs.h>
+#include <linux/usb/of.h>
 
-#समावेश <यंत्र/पन.स>
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/dma-mapping.h>
+#include <asm/io.h>
+#include <linux/scatterlist.h>
+#include <linux/mm.h>
+#include <linux/dma-mapping.h>
 
-#समावेश "hub.h"
+#include "hub.h"
 
-स्थिर अक्षर *usbcore_name = "usbcore";
+const char *usbcore_name = "usbcore";
 
-अटल bool nousb;	/* Disable USB when built पूर्णांकo kernel image */
+static bool nousb;	/* Disable USB when built into kernel image */
 
 module_param(nousb, bool, 0444);
 
 /*
- * क्रम बाह्यal पढ़ो access to <nousb>
+ * for external read access to <nousb>
  */
-पूर्णांक usb_disabled(व्योम)
-अणु
-	वापस nousb;
-पूर्ण
+int usb_disabled(void)
+{
+	return nousb;
+}
 EXPORT_SYMBOL_GPL(usb_disabled);
 
-#अगर_घोषित	CONFIG_PM
+#ifdef	CONFIG_PM
 /* Default delay value, in seconds */
-अटल पूर्णांक usb_स्वतःsuspend_delay = CONFIG_USB_AUTOSUSPEND_DELAY;
-module_param_named(स्वतःsuspend, usb_स्वतःsuspend_delay, पूर्णांक, 0644);
-MODULE_PARM_DESC(स्वतःsuspend, "default autosuspend delay");
+static int usb_autosuspend_delay = CONFIG_USB_AUTOSUSPEND_DELAY;
+module_param_named(autosuspend, usb_autosuspend_delay, int, 0644);
+MODULE_PARM_DESC(autosuspend, "default autosuspend delay");
 
-#अन्यथा
-#घोषणा usb_स्वतःsuspend_delay		0
-#पूर्ण_अगर
+#else
+#define usb_autosuspend_delay		0
+#endif
 
-अटल bool match_endpoपूर्णांक(काष्ठा usb_endpoपूर्णांक_descriptor *epd,
-		काष्ठा usb_endpoपूर्णांक_descriptor **bulk_in,
-		काष्ठा usb_endpoपूर्णांक_descriptor **bulk_out,
-		काष्ठा usb_endpoपूर्णांक_descriptor **पूर्णांक_in,
-		काष्ठा usb_endpoपूर्णांक_descriptor **पूर्णांक_out)
-अणु
-	चयन (usb_endpoपूर्णांक_type(epd)) अणु
-	हाल USB_ENDPOINT_XFER_BULK:
-		अगर (usb_endpoपूर्णांक_dir_in(epd)) अणु
-			अगर (bulk_in && !*bulk_in) अणु
+static bool match_endpoint(struct usb_endpoint_descriptor *epd,
+		struct usb_endpoint_descriptor **bulk_in,
+		struct usb_endpoint_descriptor **bulk_out,
+		struct usb_endpoint_descriptor **int_in,
+		struct usb_endpoint_descriptor **int_out)
+{
+	switch (usb_endpoint_type(epd)) {
+	case USB_ENDPOINT_XFER_BULK:
+		if (usb_endpoint_dir_in(epd)) {
+			if (bulk_in && !*bulk_in) {
 				*bulk_in = epd;
-				अवरोध;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (bulk_out && !*bulk_out) अणु
+				break;
+			}
+		} else {
+			if (bulk_out && !*bulk_out) {
 				*bulk_out = epd;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
-		वापस false;
-	हाल USB_ENDPOINT_XFER_INT:
-		अगर (usb_endpoपूर्णांक_dir_in(epd)) अणु
-			अगर (पूर्णांक_in && !*पूर्णांक_in) अणु
-				*पूर्णांक_in = epd;
-				अवरोध;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (पूर्णांक_out && !*पूर्णांक_out) अणु
-				*पूर्णांक_out = epd;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+		return false;
+	case USB_ENDPOINT_XFER_INT:
+		if (usb_endpoint_dir_in(epd)) {
+			if (int_in && !*int_in) {
+				*int_in = epd;
+				break;
+			}
+		} else {
+			if (int_out && !*int_out) {
+				*int_out = epd;
+				break;
+			}
+		}
 
-		वापस false;
-	शेष:
-		वापस false;
-	पूर्ण
+		return false;
+	default:
+		return false;
+	}
 
-	वापस (!bulk_in || *bulk_in) && (!bulk_out || *bulk_out) &&
-			(!पूर्णांक_in || *पूर्णांक_in) && (!पूर्णांक_out || *पूर्णांक_out);
-पूर्ण
-
-/**
- * usb_find_common_endpoपूर्णांकs() -- look up common endpoपूर्णांक descriptors
- * @alt:	alternate setting to search
- * @bulk_in:	poपूर्णांकer to descriptor poपूर्णांकer, or शून्य
- * @bulk_out:	poपूर्णांकer to descriptor poपूर्णांकer, or शून्य
- * @पूर्णांक_in:	poपूर्णांकer to descriptor poपूर्णांकer, or शून्य
- * @पूर्णांक_out:	poपूर्णांकer to descriptor poपूर्णांकer, or शून्य
- *
- * Search the alternate setting's endpoपूर्णांक descriptors क्रम the first bulk-in,
- * bulk-out, पूर्णांकerrupt-in and पूर्णांकerrupt-out endpoपूर्णांकs and वापस them in the
- * provided poपूर्णांकers (unless they are शून्य).
- *
- * If a requested endpoपूर्णांक is not found, the corresponding poपूर्णांकer is set to
- * शून्य.
- *
- * Return: Zero अगर all requested descriptors were found, or -ENXIO otherwise.
- */
-पूर्णांक usb_find_common_endpoपूर्णांकs(काष्ठा usb_host_पूर्णांकerface *alt,
-		काष्ठा usb_endpoपूर्णांक_descriptor **bulk_in,
-		काष्ठा usb_endpoपूर्णांक_descriptor **bulk_out,
-		काष्ठा usb_endpoपूर्णांक_descriptor **पूर्णांक_in,
-		काष्ठा usb_endpoपूर्णांक_descriptor **पूर्णांक_out)
-अणु
-	काष्ठा usb_endpoपूर्णांक_descriptor *epd;
-	पूर्णांक i;
-
-	अगर (bulk_in)
-		*bulk_in = शून्य;
-	अगर (bulk_out)
-		*bulk_out = शून्य;
-	अगर (पूर्णांक_in)
-		*पूर्णांक_in = शून्य;
-	अगर (पूर्णांक_out)
-		*पूर्णांक_out = शून्य;
-
-	क्रम (i = 0; i < alt->desc.bNumEndpoपूर्णांकs; ++i) अणु
-		epd = &alt->endpoपूर्णांक[i].desc;
-
-		अगर (match_endpoपूर्णांक(epd, bulk_in, bulk_out, पूर्णांक_in, पूर्णांक_out))
-			वापस 0;
-	पूर्ण
-
-	वापस -ENXIO;
-पूर्ण
-EXPORT_SYMBOL_GPL(usb_find_common_endpoपूर्णांकs);
+	return (!bulk_in || *bulk_in) && (!bulk_out || *bulk_out) &&
+			(!int_in || *int_in) && (!int_out || *int_out);
+}
 
 /**
- * usb_find_common_endpoपूर्णांकs_reverse() -- look up common endpoपूर्णांक descriptors
+ * usb_find_common_endpoints() -- look up common endpoint descriptors
  * @alt:	alternate setting to search
- * @bulk_in:	poपूर्णांकer to descriptor poपूर्णांकer, or शून्य
- * @bulk_out:	poपूर्णांकer to descriptor poपूर्णांकer, or शून्य
- * @पूर्णांक_in:	poपूर्णांकer to descriptor poपूर्णांकer, or शून्य
- * @पूर्णांक_out:	poपूर्णांकer to descriptor poपूर्णांकer, or शून्य
+ * @bulk_in:	pointer to descriptor pointer, or NULL
+ * @bulk_out:	pointer to descriptor pointer, or NULL
+ * @int_in:	pointer to descriptor pointer, or NULL
+ * @int_out:	pointer to descriptor pointer, or NULL
  *
- * Search the alternate setting's endpoपूर्णांक descriptors क्रम the last bulk-in,
- * bulk-out, पूर्णांकerrupt-in and पूर्णांकerrupt-out endpoपूर्णांकs and वापस them in the
- * provided poपूर्णांकers (unless they are शून्य).
+ * Search the alternate setting's endpoint descriptors for the first bulk-in,
+ * bulk-out, interrupt-in and interrupt-out endpoints and return them in the
+ * provided pointers (unless they are NULL).
  *
- * If a requested endpoपूर्णांक is not found, the corresponding poपूर्णांकer is set to
- * शून्य.
+ * If a requested endpoint is not found, the corresponding pointer is set to
+ * NULL.
  *
- * Return: Zero अगर all requested descriptors were found, or -ENXIO otherwise.
+ * Return: Zero if all requested descriptors were found, or -ENXIO otherwise.
  */
-पूर्णांक usb_find_common_endpoपूर्णांकs_reverse(काष्ठा usb_host_पूर्णांकerface *alt,
-		काष्ठा usb_endpoपूर्णांक_descriptor **bulk_in,
-		काष्ठा usb_endpoपूर्णांक_descriptor **bulk_out,
-		काष्ठा usb_endpoपूर्णांक_descriptor **पूर्णांक_in,
-		काष्ठा usb_endpoपूर्णांक_descriptor **पूर्णांक_out)
-अणु
-	काष्ठा usb_endpoपूर्णांक_descriptor *epd;
-	पूर्णांक i;
+int usb_find_common_endpoints(struct usb_host_interface *alt,
+		struct usb_endpoint_descriptor **bulk_in,
+		struct usb_endpoint_descriptor **bulk_out,
+		struct usb_endpoint_descriptor **int_in,
+		struct usb_endpoint_descriptor **int_out)
+{
+	struct usb_endpoint_descriptor *epd;
+	int i;
 
-	अगर (bulk_in)
-		*bulk_in = शून्य;
-	अगर (bulk_out)
-		*bulk_out = शून्य;
-	अगर (पूर्णांक_in)
-		*पूर्णांक_in = शून्य;
-	अगर (पूर्णांक_out)
-		*पूर्णांक_out = शून्य;
+	if (bulk_in)
+		*bulk_in = NULL;
+	if (bulk_out)
+		*bulk_out = NULL;
+	if (int_in)
+		*int_in = NULL;
+	if (int_out)
+		*int_out = NULL;
 
-	क्रम (i = alt->desc.bNumEndpoपूर्णांकs - 1; i >= 0; --i) अणु
-		epd = &alt->endpoपूर्णांक[i].desc;
+	for (i = 0; i < alt->desc.bNumEndpoints; ++i) {
+		epd = &alt->endpoint[i].desc;
 
-		अगर (match_endpoपूर्णांक(epd, bulk_in, bulk_out, पूर्णांक_in, पूर्णांक_out))
-			वापस 0;
-	पूर्ण
+		if (match_endpoint(epd, bulk_in, bulk_out, int_in, int_out))
+			return 0;
+	}
 
-	वापस -ENXIO;
-पूर्ण
-EXPORT_SYMBOL_GPL(usb_find_common_endpoपूर्णांकs_reverse);
+	return -ENXIO;
+}
+EXPORT_SYMBOL_GPL(usb_find_common_endpoints);
+
+/**
+ * usb_find_common_endpoints_reverse() -- look up common endpoint descriptors
+ * @alt:	alternate setting to search
+ * @bulk_in:	pointer to descriptor pointer, or NULL
+ * @bulk_out:	pointer to descriptor pointer, or NULL
+ * @int_in:	pointer to descriptor pointer, or NULL
+ * @int_out:	pointer to descriptor pointer, or NULL
+ *
+ * Search the alternate setting's endpoint descriptors for the last bulk-in,
+ * bulk-out, interrupt-in and interrupt-out endpoints and return them in the
+ * provided pointers (unless they are NULL).
+ *
+ * If a requested endpoint is not found, the corresponding pointer is set to
+ * NULL.
+ *
+ * Return: Zero if all requested descriptors were found, or -ENXIO otherwise.
+ */
+int usb_find_common_endpoints_reverse(struct usb_host_interface *alt,
+		struct usb_endpoint_descriptor **bulk_in,
+		struct usb_endpoint_descriptor **bulk_out,
+		struct usb_endpoint_descriptor **int_in,
+		struct usb_endpoint_descriptor **int_out)
+{
+	struct usb_endpoint_descriptor *epd;
+	int i;
+
+	if (bulk_in)
+		*bulk_in = NULL;
+	if (bulk_out)
+		*bulk_out = NULL;
+	if (int_in)
+		*int_in = NULL;
+	if (int_out)
+		*int_out = NULL;
+
+	for (i = alt->desc.bNumEndpoints - 1; i >= 0; --i) {
+		epd = &alt->endpoint[i].desc;
+
+		if (match_endpoint(epd, bulk_in, bulk_out, int_in, int_out))
+			return 0;
+	}
+
+	return -ENXIO;
+}
+EXPORT_SYMBOL_GPL(usb_find_common_endpoints_reverse);
 
 /**
  * usb_find_alt_setting() - Given a configuration, find the alternate setting
- * क्रम the given पूर्णांकerface.
+ * for the given interface.
  * @config: the configuration to search (not necessarily the current config).
- * @अगरace_num: पूर्णांकerface number to search in
- * @alt_num: alternate पूर्णांकerface setting number to search क्रम.
+ * @iface_num: interface number to search in
+ * @alt_num: alternate interface setting number to search for.
  *
- * Search the configuration's पूर्णांकerface cache क्रम the given alt setting.
+ * Search the configuration's interface cache for the given alt setting.
  *
- * Return: The alternate setting, अगर found. %शून्य otherwise.
+ * Return: The alternate setting, if found. %NULL otherwise.
  */
-काष्ठा usb_host_पूर्णांकerface *usb_find_alt_setting(
-		काष्ठा usb_host_config *config,
-		अचिन्हित पूर्णांक अगरace_num,
-		अचिन्हित पूर्णांक alt_num)
-अणु
-	काष्ठा usb_पूर्णांकerface_cache *पूर्णांकf_cache = शून्य;
-	पूर्णांक i;
+struct usb_host_interface *usb_find_alt_setting(
+		struct usb_host_config *config,
+		unsigned int iface_num,
+		unsigned int alt_num)
+{
+	struct usb_interface_cache *intf_cache = NULL;
+	int i;
 
-	अगर (!config)
-		वापस शून्य;
-	क्रम (i = 0; i < config->desc.bNumInterfaces; i++) अणु
-		अगर (config->पूर्णांकf_cache[i]->altsetting[0].desc.bInterfaceNumber
-				== अगरace_num) अणु
-			पूर्णांकf_cache = config->पूर्णांकf_cache[i];
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (!पूर्णांकf_cache)
-		वापस शून्य;
-	क्रम (i = 0; i < पूर्णांकf_cache->num_altsetting; i++)
-		अगर (पूर्णांकf_cache->altsetting[i].desc.bAlternateSetting == alt_num)
-			वापस &पूर्णांकf_cache->altsetting[i];
+	if (!config)
+		return NULL;
+	for (i = 0; i < config->desc.bNumInterfaces; i++) {
+		if (config->intf_cache[i]->altsetting[0].desc.bInterfaceNumber
+				== iface_num) {
+			intf_cache = config->intf_cache[i];
+			break;
+		}
+	}
+	if (!intf_cache)
+		return NULL;
+	for (i = 0; i < intf_cache->num_altsetting; i++)
+		if (intf_cache->altsetting[i].desc.bAlternateSetting == alt_num)
+			return &intf_cache->altsetting[i];
 
-	prपूर्णांकk(KERN_DEBUG "Did not find alt setting %u for intf %u, "
-			"config %u\n", alt_num, अगरace_num,
+	printk(KERN_DEBUG "Did not find alt setting %u for intf %u, "
+			"config %u\n", alt_num, iface_num,
 			config->desc.bConfigurationValue);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(usb_find_alt_setting);
 
 /**
- * usb_अगरnum_to_अगर - get the पूर्णांकerface object with a given पूर्णांकerface number
+ * usb_ifnum_to_if - get the interface object with a given interface number
  * @dev: the device whose current configuration is considered
- * @अगरnum: the desired पूर्णांकerface
+ * @ifnum: the desired interface
  *
- * This walks the device descriptor क्रम the currently active configuration
- * to find the पूर्णांकerface object with the particular पूर्णांकerface number.
+ * This walks the device descriptor for the currently active configuration
+ * to find the interface object with the particular interface number.
  *
- * Note that configuration descriptors are not required to assign पूर्णांकerface
+ * Note that configuration descriptors are not required to assign interface
  * numbers sequentially, so that it would be incorrect to assume that
- * the first पूर्णांकerface in that descriptor corresponds to पूर्णांकerface zero.
- * This routine helps device drivers aव्योम such mistakes.
- * However, you should make sure that you करो the right thing with any
- * alternate settings available क्रम this पूर्णांकerfaces.
+ * the first interface in that descriptor corresponds to interface zero.
+ * This routine helps device drivers avoid such mistakes.
+ * However, you should make sure that you do the right thing with any
+ * alternate settings available for this interfaces.
  *
- * Don't call this function unless you are bound to one of the पूर्णांकerfaces
+ * Don't call this function unless you are bound to one of the interfaces
  * on this device or you have locked the device!
  *
- * Return: A poपूर्णांकer to the पूर्णांकerface that has @अगरnum as पूर्णांकerface number,
- * अगर found. %शून्य otherwise.
+ * Return: A pointer to the interface that has @ifnum as interface number,
+ * if found. %NULL otherwise.
  */
-काष्ठा usb_पूर्णांकerface *usb_अगरnum_to_अगर(स्थिर काष्ठा usb_device *dev,
-				      अचिन्हित अगरnum)
-अणु
-	काष्ठा usb_host_config *config = dev->actconfig;
-	पूर्णांक i;
+struct usb_interface *usb_ifnum_to_if(const struct usb_device *dev,
+				      unsigned ifnum)
+{
+	struct usb_host_config *config = dev->actconfig;
+	int i;
 
-	अगर (!config)
-		वापस शून्य;
-	क्रम (i = 0; i < config->desc.bNumInterfaces; i++)
-		अगर (config->पूर्णांकerface[i]->altsetting[0]
-				.desc.bInterfaceNumber == अगरnum)
-			वापस config->पूर्णांकerface[i];
+	if (!config)
+		return NULL;
+	for (i = 0; i < config->desc.bNumInterfaces; i++)
+		if (config->interface[i]->altsetting[0]
+				.desc.bInterfaceNumber == ifnum)
+			return config->interface[i];
 
-	वापस शून्य;
-पूर्ण
-EXPORT_SYMBOL_GPL(usb_अगरnum_to_अगर);
+	return NULL;
+}
+EXPORT_SYMBOL_GPL(usb_ifnum_to_if);
 
 /**
- * usb_altnum_to_altsetting - get the altsetting काष्ठाure with a given alternate setting number.
- * @पूर्णांकf: the पूर्णांकerface containing the altsetting in question
+ * usb_altnum_to_altsetting - get the altsetting structure with a given alternate setting number.
+ * @intf: the interface containing the altsetting in question
  * @altnum: the desired alternate setting number
  *
- * This searches the altsetting array of the specअगरied पूर्णांकerface क्रम
+ * This searches the altsetting array of the specified interface for
  * an entry with the correct bAlternateSetting value.
  *
  * Note that altsettings need not be stored sequentially by number, so
  * it would be incorrect to assume that the first altsetting entry in
  * the array corresponds to altsetting zero.  This routine helps device
- * drivers aव्योम such mistakes.
+ * drivers avoid such mistakes.
  *
- * Don't call this function unless you are bound to the पूर्णांकf पूर्णांकerface
+ * Don't call this function unless you are bound to the intf interface
  * or you have locked the device!
  *
- * Return: A poपूर्णांकer to the entry of the altsetting array of @पूर्णांकf that
- * has @altnum as the alternate setting number. %शून्य अगर not found.
+ * Return: A pointer to the entry of the altsetting array of @intf that
+ * has @altnum as the alternate setting number. %NULL if not found.
  */
-काष्ठा usb_host_पूर्णांकerface *usb_altnum_to_altsetting(
-					स्थिर काष्ठा usb_पूर्णांकerface *पूर्णांकf,
-					अचिन्हित पूर्णांक altnum)
-अणु
-	पूर्णांक i;
+struct usb_host_interface *usb_altnum_to_altsetting(
+					const struct usb_interface *intf,
+					unsigned int altnum)
+{
+	int i;
 
-	क्रम (i = 0; i < पूर्णांकf->num_altsetting; i++) अणु
-		अगर (पूर्णांकf->altsetting[i].desc.bAlternateSetting == altnum)
-			वापस &पूर्णांकf->altsetting[i];
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	for (i = 0; i < intf->num_altsetting; i++) {
+		if (intf->altsetting[i].desc.bAlternateSetting == altnum)
+			return &intf->altsetting[i];
+	}
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(usb_altnum_to_altsetting);
 
-काष्ठा find_पूर्णांकerface_arg अणु
-	पूर्णांक minor;
-	काष्ठा device_driver *drv;
-पूर्ण;
+struct find_interface_arg {
+	int minor;
+	struct device_driver *drv;
+};
 
-अटल पूर्णांक __find_पूर्णांकerface(काष्ठा device *dev, स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा find_पूर्णांकerface_arg *arg = data;
-	काष्ठा usb_पूर्णांकerface *पूर्णांकf;
+static int __find_interface(struct device *dev, const void *data)
+{
+	const struct find_interface_arg *arg = data;
+	struct usb_interface *intf;
 
-	अगर (!is_usb_पूर्णांकerface(dev))
-		वापस 0;
+	if (!is_usb_interface(dev))
+		return 0;
 
-	अगर (dev->driver != arg->drv)
-		वापस 0;
-	पूर्णांकf = to_usb_पूर्णांकerface(dev);
-	वापस पूर्णांकf->minor == arg->minor;
-पूर्ण
+	if (dev->driver != arg->drv)
+		return 0;
+	intf = to_usb_interface(dev);
+	return intf->minor == arg->minor;
+}
 
 /**
- * usb_find_पूर्णांकerface - find usb_पूर्णांकerface poपूर्णांकer क्रम driver and device
+ * usb_find_interface - find usb_interface pointer for driver and device
  * @drv: the driver whose current configuration is considered
  * @minor: the minor number of the desired device
  *
- * This walks the bus device list and वापसs a poपूर्णांकer to the पूर्णांकerface
- * with the matching minor and driver.  Note, this only works क्रम devices
+ * This walks the bus device list and returns a pointer to the interface
+ * with the matching minor and driver.  Note, this only works for devices
  * that share the USB major number.
  *
- * Return: A poपूर्णांकer to the पूर्णांकerface with the matching major and @minor.
+ * Return: A pointer to the interface with the matching major and @minor.
  */
-काष्ठा usb_पूर्णांकerface *usb_find_पूर्णांकerface(काष्ठा usb_driver *drv, पूर्णांक minor)
-अणु
-	काष्ठा find_पूर्णांकerface_arg argb;
-	काष्ठा device *dev;
+struct usb_interface *usb_find_interface(struct usb_driver *drv, int minor)
+{
+	struct find_interface_arg argb;
+	struct device *dev;
 
 	argb.minor = minor;
 	argb.drv = &drv->drvwrap.driver;
 
-	dev = bus_find_device(&usb_bus_type, शून्य, &argb, __find_पूर्णांकerface);
+	dev = bus_find_device(&usb_bus_type, NULL, &argb, __find_interface);
 
 	/* Drop reference count from bus_find_device */
 	put_device(dev);
 
-	वापस dev ? to_usb_पूर्णांकerface(dev) : शून्य;
-पूर्ण
-EXPORT_SYMBOL_GPL(usb_find_पूर्णांकerface);
+	return dev ? to_usb_interface(dev) : NULL;
+}
+EXPORT_SYMBOL_GPL(usb_find_interface);
 
-काष्ठा each_dev_arg अणु
-	व्योम *data;
-	पूर्णांक (*fn)(काष्ठा usb_device *, व्योम *);
-पूर्ण;
+struct each_dev_arg {
+	void *data;
+	int (*fn)(struct usb_device *, void *);
+};
 
-अटल पूर्णांक __each_dev(काष्ठा device *dev, व्योम *data)
-अणु
-	काष्ठा each_dev_arg *arg = (काष्ठा each_dev_arg *)data;
+static int __each_dev(struct device *dev, void *data)
+{
+	struct each_dev_arg *arg = (struct each_dev_arg *)data;
 
-	/* There are काष्ठा usb_पूर्णांकerface on the same bus, filter them out */
-	अगर (!is_usb_device(dev))
-		वापस 0;
+	/* There are struct usb_interface on the same bus, filter them out */
+	if (!is_usb_device(dev))
+		return 0;
 
-	वापस arg->fn(to_usb_device(dev), arg->data);
-पूर्ण
+	return arg->fn(to_usb_device(dev), arg->data);
+}
 
 /**
- * usb_क्रम_each_dev - iterate over all USB devices in the प्रणाली
- * @data: data poपूर्णांकer that will be handed to the callback function
- * @fn: callback function to be called क्रम each USB device
+ * usb_for_each_dev - iterate over all USB devices in the system
+ * @data: data pointer that will be handed to the callback function
+ * @fn: callback function to be called for each USB device
  *
- * Iterate over all USB devices and call @fn क्रम each, passing it @data. If it
- * वापसs anything other than 0, we अवरोध the iteration prematurely and वापस
+ * Iterate over all USB devices and call @fn for each, passing it @data. If it
+ * returns anything other than 0, we break the iteration prematurely and return
  * that value.
  */
-पूर्णांक usb_क्रम_each_dev(व्योम *data, पूर्णांक (*fn)(काष्ठा usb_device *, व्योम *))
-अणु
-	काष्ठा each_dev_arg arg = अणुdata, fnपूर्ण;
+int usb_for_each_dev(void *data, int (*fn)(struct usb_device *, void *))
+{
+	struct each_dev_arg arg = {data, fn};
 
-	वापस bus_क्रम_each_dev(&usb_bus_type, शून्य, &arg, __each_dev);
-पूर्ण
-EXPORT_SYMBOL_GPL(usb_क्रम_each_dev);
+	return bus_for_each_dev(&usb_bus_type, NULL, &arg, __each_dev);
+}
+EXPORT_SYMBOL_GPL(usb_for_each_dev);
 
-काष्ठा each_hub_arg अणु
-	व्योम *data;
-	पूर्णांक (*fn)(काष्ठा device *, व्योम *);
-पूर्ण;
+struct each_hub_arg {
+	void *data;
+	int (*fn)(struct device *, void *);
+};
 
-अटल पूर्णांक __each_hub(काष्ठा usb_device *hdev, व्योम *data)
-अणु
-	काष्ठा each_hub_arg *arg = (काष्ठा each_hub_arg *)data;
-	काष्ठा usb_hub *hub;
-	पूर्णांक ret = 0;
-	पूर्णांक i;
+static int __each_hub(struct usb_device *hdev, void *data)
+{
+	struct each_hub_arg *arg = (struct each_hub_arg *)data;
+	struct usb_hub *hub;
+	int ret = 0;
+	int i;
 
-	hub = usb_hub_to_काष्ठा_hub(hdev);
-	अगर (!hub)
-		वापस 0;
+	hub = usb_hub_to_struct_hub(hdev);
+	if (!hub)
+		return 0;
 
 	mutex_lock(&usb_port_peer_mutex);
 
-	क्रम (i = 0; i < hdev->maxchild; i++) अणु
+	for (i = 0; i < hdev->maxchild; i++) {
 		ret = arg->fn(&hub->ports[i]->dev, arg->data);
-		अगर (ret)
-			अवरोध;
-	पूर्ण
+		if (ret)
+			break;
+	}
 
 	mutex_unlock(&usb_port_peer_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * usb_क्रम_each_port - पूर्णांकerate over all USB ports in the प्रणाली
- * @data: data poपूर्णांकer that will be handed to the callback function
- * @fn: callback function to be called क्रम each USB port
+ * usb_for_each_port - interate over all USB ports in the system
+ * @data: data pointer that will be handed to the callback function
+ * @fn: callback function to be called for each USB port
  *
- * Iterate over all USB ports and call @fn क्रम each, passing it @data. If it
- * वापसs anything other than 0, we अवरोध the iteration prematurely and वापस
+ * Iterate over all USB ports and call @fn for each, passing it @data. If it
+ * returns anything other than 0, we break the iteration prematurely and return
  * that value.
  */
-पूर्णांक usb_क्रम_each_port(व्योम *data, पूर्णांक (*fn)(काष्ठा device *, व्योम *))
-अणु
-	काष्ठा each_hub_arg arg = अणुdata, fnपूर्ण;
+int usb_for_each_port(void *data, int (*fn)(struct device *, void *))
+{
+	struct each_hub_arg arg = {data, fn};
 
-	वापस usb_क्रम_each_dev(&arg, __each_hub);
-पूर्ण
-EXPORT_SYMBOL_GPL(usb_क्रम_each_port);
+	return usb_for_each_dev(&arg, __each_hub);
+}
+EXPORT_SYMBOL_GPL(usb_for_each_port);
 
 /**
- * usb_release_dev - मुक्त a usb device काष्ठाure when all users of it are finished.
+ * usb_release_dev - free a usb device structure when all users of it are finished.
  * @dev: device that's been disconnected
  *
  * Will be called only by the device core when all users of this usb device are
- * करोne.
+ * done.
  */
-अटल व्योम usb_release_dev(काष्ठा device *dev)
-अणु
-	काष्ठा usb_device *udev;
-	काष्ठा usb_hcd *hcd;
+static void usb_release_dev(struct device *dev)
+{
+	struct usb_device *udev;
+	struct usb_hcd *hcd;
 
 	udev = to_usb_device(dev);
 	hcd = bus_to_hcd(udev->bus);
@@ -464,183 +463,183 @@ EXPORT_SYMBOL_GPL(usb_क्रम_each_port);
 	usb_release_bos_descriptor(udev);
 	of_node_put(dev->of_node);
 	usb_put_hcd(hcd);
-	kमुक्त(udev->product);
-	kमुक्त(udev->manufacturer);
-	kमुक्त(udev->serial);
-	kमुक्त(udev);
-पूर्ण
+	kfree(udev->product);
+	kfree(udev->manufacturer);
+	kfree(udev->serial);
+	kfree(udev);
+}
 
-अटल पूर्णांक usb_dev_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
-अणु
-	काष्ठा usb_device *usb_dev;
+static int usb_dev_uevent(struct device *dev, struct kobj_uevent_env *env)
+{
+	struct usb_device *usb_dev;
 
 	usb_dev = to_usb_device(dev);
 
-	अगर (add_uevent_var(env, "BUSNUM=%03d", usb_dev->bus->busnum))
-		वापस -ENOMEM;
+	if (add_uevent_var(env, "BUSNUM=%03d", usb_dev->bus->busnum))
+		return -ENOMEM;
 
-	अगर (add_uevent_var(env, "DEVNUM=%03d", usb_dev->devnum))
-		वापस -ENOMEM;
+	if (add_uevent_var(env, "DEVNUM=%03d", usb_dev->devnum))
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित	CONFIG_PM
+#ifdef	CONFIG_PM
 
 /* USB device Power-Management thunks.
  * There's no need to distinguish here between quiescing a USB device
- * and घातering it करोwn; the generic_suspend() routine takes care of
- * it by skipping the usb_port_suspend() call क्रम a quiesce.  And क्रम
- * USB पूर्णांकerfaces there's no dअगरference at all.
+ * and powering it down; the generic_suspend() routine takes care of
+ * it by skipping the usb_port_suspend() call for a quiesce.  And for
+ * USB interfaces there's no difference at all.
  */
 
-अटल पूर्णांक usb_dev_prepare(काष्ठा device *dev)
-अणु
-	वापस 0;		/* Implement eventually? */
-पूर्ण
+static int usb_dev_prepare(struct device *dev)
+{
+	return 0;		/* Implement eventually? */
+}
 
-अटल व्योम usb_dev_complete(काष्ठा device *dev)
-अणु
-	/* Currently used only क्रम rebinding पूर्णांकerfaces */
+static void usb_dev_complete(struct device *dev)
+{
+	/* Currently used only for rebinding interfaces */
 	usb_resume_complete(dev);
-पूर्ण
+}
 
-अटल पूर्णांक usb_dev_suspend(काष्ठा device *dev)
-अणु
-	वापस usb_suspend(dev, PMSG_SUSPEND);
-पूर्ण
+static int usb_dev_suspend(struct device *dev)
+{
+	return usb_suspend(dev, PMSG_SUSPEND);
+}
 
-अटल पूर्णांक usb_dev_resume(काष्ठा device *dev)
-अणु
-	वापस usb_resume(dev, PMSG_RESUME);
-पूर्ण
+static int usb_dev_resume(struct device *dev)
+{
+	return usb_resume(dev, PMSG_RESUME);
+}
 
-अटल पूर्णांक usb_dev_मुक्तze(काष्ठा device *dev)
-अणु
-	वापस usb_suspend(dev, PMSG_FREEZE);
-पूर्ण
+static int usb_dev_freeze(struct device *dev)
+{
+	return usb_suspend(dev, PMSG_FREEZE);
+}
 
-अटल पूर्णांक usb_dev_thaw(काष्ठा device *dev)
-अणु
-	वापस usb_resume(dev, PMSG_THAW);
-पूर्ण
+static int usb_dev_thaw(struct device *dev)
+{
+	return usb_resume(dev, PMSG_THAW);
+}
 
-अटल पूर्णांक usb_dev_घातeroff(काष्ठा device *dev)
-अणु
-	वापस usb_suspend(dev, PMSG_HIBERNATE);
-पूर्ण
+static int usb_dev_poweroff(struct device *dev)
+{
+	return usb_suspend(dev, PMSG_HIBERNATE);
+}
 
-अटल पूर्णांक usb_dev_restore(काष्ठा device *dev)
-अणु
-	वापस usb_resume(dev, PMSG_RESTORE);
-पूर्ण
+static int usb_dev_restore(struct device *dev)
+{
+	return usb_resume(dev, PMSG_RESTORE);
+}
 
-अटल स्थिर काष्ठा dev_pm_ops usb_device_pm_ops = अणु
+static const struct dev_pm_ops usb_device_pm_ops = {
 	.prepare =	usb_dev_prepare,
 	.complete =	usb_dev_complete,
 	.suspend =	usb_dev_suspend,
 	.resume =	usb_dev_resume,
-	.मुक्तze =	usb_dev_मुक्तze,
+	.freeze =	usb_dev_freeze,
 	.thaw =		usb_dev_thaw,
-	.घातeroff =	usb_dev_घातeroff,
+	.poweroff =	usb_dev_poweroff,
 	.restore =	usb_dev_restore,
-	.runसमय_suspend =	usb_runसमय_suspend,
-	.runसमय_resume =	usb_runसमय_resume,
-	.runसमय_idle =		usb_runसमय_idle,
-पूर्ण;
+	.runtime_suspend =	usb_runtime_suspend,
+	.runtime_resume =	usb_runtime_resume,
+	.runtime_idle =		usb_runtime_idle,
+};
 
-#पूर्ण_अगर	/* CONFIG_PM */
+#endif	/* CONFIG_PM */
 
 
-अटल अक्षर *usb_devnode(काष्ठा device *dev,
+static char *usb_devnode(struct device *dev,
 			 umode_t *mode, kuid_t *uid, kgid_t *gid)
-अणु
-	काष्ठा usb_device *usb_dev;
+{
+	struct usb_device *usb_dev;
 
 	usb_dev = to_usb_device(dev);
-	वापस kaप्र_लिखो(GFP_KERNEL, "bus/usb/%03d/%03d",
+	return kasprintf(GFP_KERNEL, "bus/usb/%03d/%03d",
 			 usb_dev->bus->busnum, usb_dev->devnum);
-पूर्ण
+}
 
-काष्ठा device_type usb_device_type = अणु
+struct device_type usb_device_type = {
 	.name =		"usb_device",
 	.release =	usb_release_dev,
 	.uevent =	usb_dev_uevent,
 	.devnode = 	usb_devnode,
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 	.pm =		&usb_device_pm_ops,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
 
-/* Returns 1 अगर @usb_bus is WUSB, 0 otherwise */
-अटल अचिन्हित usb_bus_is_wusb(काष्ठा usb_bus *bus)
-अणु
-	काष्ठा usb_hcd *hcd = bus_to_hcd(bus);
-	वापस hcd->wireless;
-पूर्ण
+/* Returns 1 if @usb_bus is WUSB, 0 otherwise */
+static unsigned usb_bus_is_wusb(struct usb_bus *bus)
+{
+	struct usb_hcd *hcd = bus_to_hcd(bus);
+	return hcd->wireless;
+}
 
-अटल bool usb_dev_authorized(काष्ठा usb_device *dev, काष्ठा usb_hcd *hcd)
-अणु
-	काष्ठा usb_hub *hub;
+static bool usb_dev_authorized(struct usb_device *dev, struct usb_hcd *hcd)
+{
+	struct usb_hub *hub;
 
-	अगर (!dev->parent)
-		वापस true; /* Root hub always ok [and always wired] */
+	if (!dev->parent)
+		return true; /* Root hub always ok [and always wired] */
 
-	चयन (hcd->dev_policy) अणु
-	हाल USB_DEVICE_AUTHORIZE_NONE:
-	शेष:
-		वापस false;
+	switch (hcd->dev_policy) {
+	case USB_DEVICE_AUTHORIZE_NONE:
+	default:
+		return false;
 
-	हाल USB_DEVICE_AUTHORIZE_ALL:
-		वापस true;
+	case USB_DEVICE_AUTHORIZE_ALL:
+		return true;
 
-	हाल USB_DEVICE_AUTHORIZE_INTERNAL:
-		hub = usb_hub_to_काष्ठा_hub(dev->parent);
-		वापस hub->ports[dev->portnum - 1]->connect_type ==
+	case USB_DEVICE_AUTHORIZE_INTERNAL:
+		hub = usb_hub_to_struct_hub(dev->parent);
+		return hub->ports[dev->portnum - 1]->connect_type ==
 				USB_PORT_CONNECT_TYPE_HARD_WIRED;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * usb_alloc_dev - usb device स्थिरructor (usbcore-पूर्णांकernal)
+ * usb_alloc_dev - usb device constructor (usbcore-internal)
  * @parent: hub to which device is connected; null to allocate a root hub
  * @bus: bus used to access the device
- * @port1: one-based index of port; ignored क्रम root hubs
+ * @port1: one-based index of port; ignored for root hubs
  *
  * Context: task context, might sleep.
  *
- * Only hub drivers (including भव root hub drivers क्रम host
+ * Only hub drivers (including virtual root hub drivers for host
  * controllers) should ever call this.
  *
  * This call may not be used in a non-sleeping context.
  *
- * Return: On success, a poपूर्णांकer to the allocated usb device. %शून्य on
+ * Return: On success, a pointer to the allocated usb device. %NULL on
  * failure.
  */
-काष्ठा usb_device *usb_alloc_dev(काष्ठा usb_device *parent,
-				 काष्ठा usb_bus *bus, अचिन्हित port1)
-अणु
-	काष्ठा usb_device *dev;
-	काष्ठा usb_hcd *usb_hcd = bus_to_hcd(bus);
-	अचिन्हित root_hub = 0;
-	अचिन्हित raw_port = port1;
+struct usb_device *usb_alloc_dev(struct usb_device *parent,
+				 struct usb_bus *bus, unsigned port1)
+{
+	struct usb_device *dev;
+	struct usb_hcd *usb_hcd = bus_to_hcd(bus);
+	unsigned root_hub = 0;
+	unsigned raw_port = port1;
 
-	dev = kzalloc(माप(*dev), GFP_KERNEL);
-	अगर (!dev)
-		वापस शून्य;
+	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
+	if (!dev)
+		return NULL;
 
-	अगर (!usb_get_hcd(usb_hcd)) अणु
-		kमुक्त(dev);
-		वापस शून्य;
-	पूर्ण
+	if (!usb_get_hcd(usb_hcd)) {
+		kfree(dev);
+		return NULL;
+	}
 	/* Root hubs aren't true devices, so don't allocate HCD resources */
-	अगर (usb_hcd->driver->alloc_dev && parent &&
-		!usb_hcd->driver->alloc_dev(usb_hcd, dev)) अणु
+	if (usb_hcd->driver->alloc_dev && parent &&
+		!usb_hcd->driver->alloc_dev(usb_hcd, dev)) {
 		usb_put_hcd(bus_to_hcd(bus));
-		kमुक्त(dev);
-		वापस शून्य;
-	पूर्ण
+		kfree(dev);
+		return NULL;
+	}
 
 	device_initialize(&dev->dev);
 	dev->dev.bus = &usb_bus_type;
@@ -655,18 +654,18 @@ EXPORT_SYMBOL_GPL(usb_क्रम_each_port);
 	dev->ep0.desc.bLength = USB_DT_ENDPOINT_SIZE;
 	dev->ep0.desc.bDescriptorType = USB_DT_ENDPOINT;
 	/* ep0 maxpacket comes later, from device descriptor */
-	usb_enable_endpoपूर्णांक(dev, &dev->ep0, false);
+	usb_enable_endpoint(dev, &dev->ep0, false);
 	dev->can_submit = 1;
 
-	/* Save पढ़ोable and stable topology id, distinguishing devices
-	 * by location क्रम diagnostics, tools, driver model, etc.  The
-	 * string is a path aदीर्घ hub ports, from the root.  Each device's
+	/* Save readable and stable topology id, distinguishing devices
+	 * by location for diagnostics, tools, driver model, etc.  The
+	 * string is a path along hub ports, from the root.  Each device's
 	 * dev->devpath will be stable until USB is re-cabled, and hubs
 	 * are often labeled with these port numbers.  The name isn't
 	 * as stable:  bus->busnum changes easily from modprobe order,
 	 * cardbus or pci hotplugging, and so on.
 	 */
-	अगर (unlikely(!parent)) अणु
+	if (unlikely(!parent)) {
 		dev->devpath[0] = '0';
 		dev->route = 0;
 
@@ -674,169 +673,169 @@ EXPORT_SYMBOL_GPL(usb_क्रम_each_port);
 		device_set_of_node_from_dev(&dev->dev, bus->sysdev);
 		dev_set_name(&dev->dev, "usb%d", bus->busnum);
 		root_hub = 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* match any labeling on the hubs; it's one-based */
-		अगर (parent->devpath[0] == '0') अणु
-			snम_लिखो(dev->devpath, माप dev->devpath,
+		if (parent->devpath[0] == '0') {
+			snprintf(dev->devpath, sizeof dev->devpath,
 				"%d", port1);
 			/* Root ports are not counted in route string */
 			dev->route = 0;
-		पूर्ण अन्यथा अणु
-			snम_लिखो(dev->devpath, माप dev->devpath,
+		} else {
+			snprintf(dev->devpath, sizeof dev->devpath,
 				"%s.%d", parent->devpath, port1);
 			/* Route string assumes hubs have less than 16 ports */
-			अगर (port1 < 15)
+			if (port1 < 15)
 				dev->route = parent->route +
 					(port1 << ((parent->level - 1)*4));
-			अन्यथा
+			else
 				dev->route = parent->route +
 					(15 << ((parent->level - 1)*4));
-		पूर्ण
+		}
 
 		dev->dev.parent = &parent->dev;
 		dev_set_name(&dev->dev, "%d-%s", bus->busnum, dev->devpath);
 
-		अगर (!parent->parent) अणु
+		if (!parent->parent) {
 			/* device under root hub's port */
 			raw_port = usb_hcd_find_raw_port_number(usb_hcd,
 				port1);
-		पूर्ण
+		}
 		dev->dev.of_node = usb_of_get_device_node(parent, raw_port);
 
 		/* hub driver sets up TT records */
-	पूर्ण
+	}
 
 	dev->portnum = port1;
 	dev->bus = bus;
 	dev->parent = parent;
 	INIT_LIST_HEAD(&dev->filelist);
 
-#अगर_घोषित	CONFIG_PM
-	pm_runसमय_set_स्वतःsuspend_delay(&dev->dev,
-			usb_स्वतःsuspend_delay * 1000);
-	dev->connect_समय = jअगरfies;
-	dev->active_duration = -jअगरfies;
-#पूर्ण_अगर
+#ifdef	CONFIG_PM
+	pm_runtime_set_autosuspend_delay(&dev->dev,
+			usb_autosuspend_delay * 1000);
+	dev->connect_time = jiffies;
+	dev->active_duration = -jiffies;
+#endif
 
 	dev->authorized = usb_dev_authorized(dev, usb_hcd);
-	अगर (!root_hub)
+	if (!root_hub)
 		dev->wusb = usb_bus_is_wusb(bus) ? 1 : 0;
 
-	वापस dev;
-पूर्ण
+	return dev;
+}
 EXPORT_SYMBOL_GPL(usb_alloc_dev);
 
 /**
- * usb_get_dev - increments the reference count of the usb device काष्ठाure
+ * usb_get_dev - increments the reference count of the usb device structure
  * @dev: the device being referenced
  *
  * Each live reference to a device should be refcounted.
  *
- * Drivers क्रम USB पूर्णांकerfaces should normally record such references in
- * their probe() methods, when they bind to an पूर्णांकerface, and release
+ * Drivers for USB interfaces should normally record such references in
+ * their probe() methods, when they bind to an interface, and release
  * them by calling usb_put_dev(), in their disconnect() methods.
  *
- * Return: A poपूर्णांकer to the device with the incremented reference counter.
+ * Return: A pointer to the device with the incremented reference counter.
  */
-काष्ठा usb_device *usb_get_dev(काष्ठा usb_device *dev)
-अणु
-	अगर (dev)
+struct usb_device *usb_get_dev(struct usb_device *dev)
+{
+	if (dev)
 		get_device(&dev->dev);
-	वापस dev;
-पूर्ण
+	return dev;
+}
 EXPORT_SYMBOL_GPL(usb_get_dev);
 
 /**
- * usb_put_dev - release a use of the usb device काष्ठाure
+ * usb_put_dev - release a use of the usb device structure
  * @dev: device that's been disconnected
  *
  * Must be called when a user of a device is finished with it.  When the last
- * user of the device calls this function, the memory of the device is मुक्तd.
+ * user of the device calls this function, the memory of the device is freed.
  */
-व्योम usb_put_dev(काष्ठा usb_device *dev)
-अणु
-	अगर (dev)
+void usb_put_dev(struct usb_device *dev)
+{
+	if (dev)
 		put_device(&dev->dev);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(usb_put_dev);
 
 /**
- * usb_get_पूर्णांकf - increments the reference count of the usb पूर्णांकerface काष्ठाure
- * @पूर्णांकf: the पूर्णांकerface being referenced
+ * usb_get_intf - increments the reference count of the usb interface structure
+ * @intf: the interface being referenced
  *
- * Each live reference to a पूर्णांकerface must be refcounted.
+ * Each live reference to a interface must be refcounted.
  *
- * Drivers क्रम USB पूर्णांकerfaces should normally record such references in
- * their probe() methods, when they bind to an पूर्णांकerface, and release
- * them by calling usb_put_पूर्णांकf(), in their disconnect() methods.
+ * Drivers for USB interfaces should normally record such references in
+ * their probe() methods, when they bind to an interface, and release
+ * them by calling usb_put_intf(), in their disconnect() methods.
  *
- * Return: A poपूर्णांकer to the पूर्णांकerface with the incremented reference counter.
+ * Return: A pointer to the interface with the incremented reference counter.
  */
-काष्ठा usb_पूर्णांकerface *usb_get_पूर्णांकf(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	अगर (पूर्णांकf)
-		get_device(&पूर्णांकf->dev);
-	वापस पूर्णांकf;
-पूर्ण
-EXPORT_SYMBOL_GPL(usb_get_पूर्णांकf);
+struct usb_interface *usb_get_intf(struct usb_interface *intf)
+{
+	if (intf)
+		get_device(&intf->dev);
+	return intf;
+}
+EXPORT_SYMBOL_GPL(usb_get_intf);
 
 /**
- * usb_put_पूर्णांकf - release a use of the usb पूर्णांकerface काष्ठाure
- * @पूर्णांकf: पूर्णांकerface that's been decremented
+ * usb_put_intf - release a use of the usb interface structure
+ * @intf: interface that's been decremented
  *
- * Must be called when a user of an पूर्णांकerface is finished with it.  When the
- * last user of the पूर्णांकerface calls this function, the memory of the पूर्णांकerface
- * is मुक्तd.
+ * Must be called when a user of an interface is finished with it.  When the
+ * last user of the interface calls this function, the memory of the interface
+ * is freed.
  */
-व्योम usb_put_पूर्णांकf(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	अगर (पूर्णांकf)
-		put_device(&पूर्णांकf->dev);
-पूर्ण
-EXPORT_SYMBOL_GPL(usb_put_पूर्णांकf);
+void usb_put_intf(struct usb_interface *intf)
+{
+	if (intf)
+		put_device(&intf->dev);
+}
+EXPORT_SYMBOL_GPL(usb_put_intf);
 
 /**
- * usb_पूर्णांकf_get_dma_device - acquire a reference on the usb पूर्णांकerface's DMA endpoपूर्णांक
- * @पूर्णांकf: the usb पूर्णांकerface
+ * usb_intf_get_dma_device - acquire a reference on the usb interface's DMA endpoint
+ * @intf: the usb interface
  *
- * While a USB device cannot perक्रमm DMA operations by itself, many USB
- * controllers can. A call to usb_पूर्णांकf_get_dma_device() वापसs the DMA endpoपूर्णांक
- * क्रम the given USB पूर्णांकerface, अगर any. The वापसed device काष्ठाure must be
+ * While a USB device cannot perform DMA operations by itself, many USB
+ * controllers can. A call to usb_intf_get_dma_device() returns the DMA endpoint
+ * for the given USB interface, if any. The returned device structure must be
  * released with put_device().
  *
  * See also usb_get_dma_device().
  *
- * Returns: A reference to the usb पूर्णांकerface's DMA endpoपूर्णांक; or शून्य अगर none
+ * Returns: A reference to the usb interface's DMA endpoint; or NULL if none
  *          exists.
  */
-काष्ठा device *usb_पूर्णांकf_get_dma_device(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	काष्ठा usb_device *udev = पूर्णांकerface_to_usbdev(पूर्णांकf);
-	काष्ठा device *dmadev;
+struct device *usb_intf_get_dma_device(struct usb_interface *intf)
+{
+	struct usb_device *udev = interface_to_usbdev(intf);
+	struct device *dmadev;
 
-	अगर (!udev->bus)
-		वापस शून्य;
+	if (!udev->bus)
+		return NULL;
 
 	dmadev = get_device(udev->bus->sysdev);
-	अगर (!dmadev || !dmadev->dma_mask) अणु
+	if (!dmadev || !dmadev->dma_mask) {
 		put_device(dmadev);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	वापस dmadev;
-पूर्ण
-EXPORT_SYMBOL_GPL(usb_पूर्णांकf_get_dma_device);
+	return dmadev;
+}
+EXPORT_SYMBOL_GPL(usb_intf_get_dma_device);
 
 /*			USB device locking
  *
- * USB devices and पूर्णांकerfaces are locked using the semaphore in their
- * embedded काष्ठा device.  The hub driver guarantees that whenever a
+ * USB devices and interfaces are locked using the semaphore in their
+ * embedded struct device.  The hub driver guarantees that whenever a
  * device is connected or disconnected, drivers are called with the
- * USB device locked as well as their particular पूर्णांकerface.
+ * USB device locked as well as their particular interface.
  *
  * Complications arise when several devices are to be locked at the same
- * समय.  Only hub-aware drivers that are part of usbcore ever have to
- * करो this; nobody अन्यथा needs to worry about it.  The rule क्रम locking
+ * time.  Only hub-aware drivers that are part of usbcore ever have to
+ * do this; nobody else needs to worry about it.  The rule for locking
  * is simple:
  *
  *	When locking both a device and its parent, always lock the
@@ -844,141 +843,141 @@ EXPORT_SYMBOL_GPL(usb_पूर्णांकf_get_dma_device);
  */
 
 /**
- * usb_lock_device_क्रम_reset - cautiously acquire the lock क्रम a usb device काष्ठाure
+ * usb_lock_device_for_reset - cautiously acquire the lock for a usb device structure
  * @udev: device that's being locked
- * @अगरace: पूर्णांकerface bound to the driver making the request (optional)
+ * @iface: interface bound to the driver making the request (optional)
  *
- * Attempts to acquire the device lock, but fails अगर the device is
- * NOTATTACHED or SUSPENDED, or अगर अगरace is specअगरied and the पूर्णांकerface
- * is neither BINDING nor BOUND.  Rather than sleeping to रुको क्रम the
+ * Attempts to acquire the device lock, but fails if the device is
+ * NOTATTACHED or SUSPENDED, or if iface is specified and the interface
+ * is neither BINDING nor BOUND.  Rather than sleeping to wait for the
  * lock, the routine polls repeatedly.  This is to prevent deadlock with
  * disconnect; in some drivers (such as usb-storage) the disconnect()
- * or suspend() method will block रुकोing क्रम a device reset to complete.
+ * or suspend() method will block waiting for a device reset to complete.
  *
- * Return: A negative error code क्रम failure, otherwise 0.
+ * Return: A negative error code for failure, otherwise 0.
  */
-पूर्णांक usb_lock_device_क्रम_reset(काष्ठा usb_device *udev,
-			      स्थिर काष्ठा usb_पूर्णांकerface *अगरace)
-अणु
-	अचिन्हित दीर्घ jअगरfies_expire = jअगरfies + HZ;
+int usb_lock_device_for_reset(struct usb_device *udev,
+			      const struct usb_interface *iface)
+{
+	unsigned long jiffies_expire = jiffies + HZ;
 
-	अगर (udev->state == USB_STATE_NOTATTACHED)
-		वापस -ENODEV;
-	अगर (udev->state == USB_STATE_SUSPENDED)
-		वापस -EHOSTUNREACH;
-	अगर (अगरace && (अगरace->condition == USB_INTERFACE_UNBINDING ||
-			अगरace->condition == USB_INTERFACE_UNBOUND))
-		वापस -EINTR;
+	if (udev->state == USB_STATE_NOTATTACHED)
+		return -ENODEV;
+	if (udev->state == USB_STATE_SUSPENDED)
+		return -EHOSTUNREACH;
+	if (iface && (iface->condition == USB_INTERFACE_UNBINDING ||
+			iface->condition == USB_INTERFACE_UNBOUND))
+		return -EINTR;
 
-	जबतक (!usb_trylock_device(udev)) अणु
+	while (!usb_trylock_device(udev)) {
 
-		/* If we can't acquire the lock after रुकोing one second,
+		/* If we can't acquire the lock after waiting one second,
 		 * we're probably deadlocked */
-		अगर (समय_after(jअगरfies, jअगरfies_expire))
-			वापस -EBUSY;
+		if (time_after(jiffies, jiffies_expire))
+			return -EBUSY;
 
 		msleep(15);
-		अगर (udev->state == USB_STATE_NOTATTACHED)
-			वापस -ENODEV;
-		अगर (udev->state == USB_STATE_SUSPENDED)
-			वापस -EHOSTUNREACH;
-		अगर (अगरace && (अगरace->condition == USB_INTERFACE_UNBINDING ||
-				अगरace->condition == USB_INTERFACE_UNBOUND))
-			वापस -EINTR;
-	पूर्ण
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(usb_lock_device_क्रम_reset);
+		if (udev->state == USB_STATE_NOTATTACHED)
+			return -ENODEV;
+		if (udev->state == USB_STATE_SUSPENDED)
+			return -EHOSTUNREACH;
+		if (iface && (iface->condition == USB_INTERFACE_UNBINDING ||
+				iface->condition == USB_INTERFACE_UNBOUND))
+			return -EINTR;
+	}
+	return 0;
+}
+EXPORT_SYMBOL_GPL(usb_lock_device_for_reset);
 
 /**
- * usb_get_current_frame_number - वापस current bus frame number
+ * usb_get_current_frame_number - return current bus frame number
  * @dev: the device whose bus is being queried
  *
- * Return: The current frame number क्रम the USB host controller used
+ * Return: The current frame number for the USB host controller used
  * with the given USB device. This can be used when scheduling
  * isochronous requests.
  *
- * Note: Dअगरferent kinds of host controller have dअगरferent "scheduling
+ * Note: Different kinds of host controller have different "scheduling
  * horizons". While one type might support scheduling only 32 frames
- * पूर्णांकo the future, others could support scheduling up to 1024 frames
- * पूर्णांकo the future.
+ * into the future, others could support scheduling up to 1024 frames
+ * into the future.
  *
  */
-पूर्णांक usb_get_current_frame_number(काष्ठा usb_device *dev)
-अणु
-	वापस usb_hcd_get_frame_number(dev);
-पूर्ण
+int usb_get_current_frame_number(struct usb_device *dev)
+{
+	return usb_hcd_get_frame_number(dev);
+}
 EXPORT_SYMBOL_GPL(usb_get_current_frame_number);
 
 /*-------------------------------------------------------------------*/
 /*
- * __usb_get_extra_descriptor() finds a descriptor of specअगरic type in the
- * extra field of the पूर्णांकerface and endpoपूर्णांक descriptor काष्ठाs.
+ * __usb_get_extra_descriptor() finds a descriptor of specific type in the
+ * extra field of the interface and endpoint descriptor structs.
  */
 
-पूर्णांक __usb_get_extra_descriptor(अक्षर *buffer, अचिन्हित size,
-			       अचिन्हित अक्षर type, व्योम **ptr, माप_प्रकार minsize)
-अणु
-	काष्ठा usb_descriptor_header *header;
+int __usb_get_extra_descriptor(char *buffer, unsigned size,
+			       unsigned char type, void **ptr, size_t minsize)
+{
+	struct usb_descriptor_header *header;
 
-	जबतक (size >= माप(काष्ठा usb_descriptor_header)) अणु
-		header = (काष्ठा usb_descriptor_header *)buffer;
+	while (size >= sizeof(struct usb_descriptor_header)) {
+		header = (struct usb_descriptor_header *)buffer;
 
-		अगर (header->bLength < 2 || header->bLength > size) अणु
-			prपूर्णांकk(KERN_ERR
+		if (header->bLength < 2 || header->bLength > size) {
+			printk(KERN_ERR
 				"%s: bogus descriptor, type %d length %d\n",
 				usbcore_name,
 				header->bDescriptorType,
 				header->bLength);
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 
-		अगर (header->bDescriptorType == type && header->bLength >= minsize) अणु
+		if (header->bDescriptorType == type && header->bLength >= minsize) {
 			*ptr = header;
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
 		buffer += header->bLength;
 		size -= header->bLength;
-	पूर्ण
-	वापस -1;
-पूर्ण
+	}
+	return -1;
+}
 EXPORT_SYMBOL_GPL(__usb_get_extra_descriptor);
 
 /**
- * usb_alloc_coherent - allocate dma-consistent buffer क्रम URB_NO_xxx_DMA_MAP
+ * usb_alloc_coherent - allocate dma-consistent buffer for URB_NO_xxx_DMA_MAP
  * @dev: device the buffer will be used with
  * @size: requested buffer size
  * @mem_flags: affect whether allocation may block
- * @dma: used to वापस DMA address of buffer
+ * @dma: used to return DMA address of buffer
  *
  * Return: Either null (indicating no buffer could be allocated), or the
- * cpu-space poपूर्णांकer to a buffer that may be used to perक्रमm DMA to the
- * specअगरied device.  Such cpu-space buffers are वापसed aदीर्घ with the DMA
- * address (through the poपूर्णांकer provided).
+ * cpu-space pointer to a buffer that may be used to perform DMA to the
+ * specified device.  Such cpu-space buffers are returned along with the DMA
+ * address (through the pointer provided).
  *
  * Note:
  * These buffers are used with URB_NO_xxx_DMA_MAP set in urb->transfer_flags
- * to aव्योम behaviors like using "DMA bounce buffers", or thrashing IOMMU
+ * to avoid behaviors like using "DMA bounce buffers", or thrashing IOMMU
  * hardware during URB completion/resubmit.  The implementation varies between
- * platक्रमms, depending on details of how DMA will work to this device.
+ * platforms, depending on details of how DMA will work to this device.
  * Using these buffers also eliminates cacheline sharing problems on
- * architectures where CPU caches are not DMA-coherent.  On प्रणालीs without
+ * architectures where CPU caches are not DMA-coherent.  On systems without
  * bus-snooping caches, these buffers are uncached.
  *
- * When the buffer is no दीर्घer used, मुक्त it with usb_मुक्त_coherent().
+ * When the buffer is no longer used, free it with usb_free_coherent().
  */
-व्योम *usb_alloc_coherent(काष्ठा usb_device *dev, माप_प्रकार size, gfp_t mem_flags,
+void *usb_alloc_coherent(struct usb_device *dev, size_t size, gfp_t mem_flags,
 			 dma_addr_t *dma)
-अणु
-	अगर (!dev || !dev->bus)
-		वापस शून्य;
-	वापस hcd_buffer_alloc(dev->bus, size, mem_flags, dma);
-पूर्ण
+{
+	if (!dev || !dev->bus)
+		return NULL;
+	return hcd_buffer_alloc(dev->bus, size, mem_flags, dma);
+}
 EXPORT_SYMBOL_GPL(usb_alloc_coherent);
 
 /**
- * usb_मुक्त_coherent - मुक्त memory allocated with usb_alloc_coherent()
+ * usb_free_coherent - free memory allocated with usb_alloc_coherent()
  * @dev: device the buffer was used with
  * @size: requested buffer size
  * @addr: CPU address of buffer
@@ -988,135 +987,135 @@ EXPORT_SYMBOL_GPL(usb_alloc_coherent);
  * been allocated using usb_alloc_coherent(), and the parameters must match
  * those provided in that allocation request.
  */
-व्योम usb_मुक्त_coherent(काष्ठा usb_device *dev, माप_प्रकार size, व्योम *addr,
+void usb_free_coherent(struct usb_device *dev, size_t size, void *addr,
 		       dma_addr_t dma)
-अणु
-	अगर (!dev || !dev->bus)
-		वापस;
-	अगर (!addr)
-		वापस;
-	hcd_buffer_मुक्त(dev->bus, size, addr, dma);
-पूर्ण
-EXPORT_SYMBOL_GPL(usb_मुक्त_coherent);
+{
+	if (!dev || !dev->bus)
+		return;
+	if (!addr)
+		return;
+	hcd_buffer_free(dev->bus, size, addr, dma);
+}
+EXPORT_SYMBOL_GPL(usb_free_coherent);
 
 /*
- * Notअगरications of device and पूर्णांकerface registration
+ * Notifications of device and interface registration
  */
-अटल पूर्णांक usb_bus_notअगरy(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ action,
-		व्योम *data)
-अणु
-	काष्ठा device *dev = data;
+static int usb_bus_notify(struct notifier_block *nb, unsigned long action,
+		void *data)
+{
+	struct device *dev = data;
 
-	चयन (action) अणु
-	हाल BUS_NOTIFY_ADD_DEVICE:
-		अगर (dev->type == &usb_device_type)
-			(व्योम) usb_create_sysfs_dev_files(to_usb_device(dev));
-		अन्यथा अगर (dev->type == &usb_अगर_device_type)
-			usb_create_sysfs_पूर्णांकf_files(to_usb_पूर्णांकerface(dev));
-		अवरोध;
+	switch (action) {
+	case BUS_NOTIFY_ADD_DEVICE:
+		if (dev->type == &usb_device_type)
+			(void) usb_create_sysfs_dev_files(to_usb_device(dev));
+		else if (dev->type == &usb_if_device_type)
+			usb_create_sysfs_intf_files(to_usb_interface(dev));
+		break;
 
-	हाल BUS_NOTIFY_DEL_DEVICE:
-		अगर (dev->type == &usb_device_type)
-			usb_हटाओ_sysfs_dev_files(to_usb_device(dev));
-		अन्यथा अगर (dev->type == &usb_अगर_device_type)
-			usb_हटाओ_sysfs_पूर्णांकf_files(to_usb_पूर्णांकerface(dev));
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	case BUS_NOTIFY_DEL_DEVICE:
+		if (dev->type == &usb_device_type)
+			usb_remove_sysfs_dev_files(to_usb_device(dev));
+		else if (dev->type == &usb_if_device_type)
+			usb_remove_sysfs_intf_files(to_usb_interface(dev));
+		break;
+	}
+	return 0;
+}
 
-अटल काष्ठा notअगरier_block usb_bus_nb = अणु
-	.notअगरier_call = usb_bus_notअगरy,
-पूर्ण;
+static struct notifier_block usb_bus_nb = {
+	.notifier_call = usb_bus_notify,
+};
 
-अटल व्योम usb_debugfs_init(व्योम)
-अणु
-	debugfs_create_file("devices", 0444, usb_debug_root, शून्य,
+static void usb_debugfs_init(void)
+{
+	debugfs_create_file("devices", 0444, usb_debug_root, NULL,
 			    &usbfs_devices_fops);
-पूर्ण
+}
 
-अटल व्योम usb_debugfs_cleanup(व्योम)
-अणु
-	debugfs_हटाओ(debugfs_lookup("devices", usb_debug_root));
-पूर्ण
+static void usb_debugfs_cleanup(void)
+{
+	debugfs_remove(debugfs_lookup("devices", usb_debug_root));
+}
 
 /*
  * Init
  */
-अटल पूर्णांक __init usb_init(व्योम)
-अणु
-	पूर्णांक retval;
-	अगर (usb_disabled()) अणु
+static int __init usb_init(void)
+{
+	int retval;
+	if (usb_disabled()) {
 		pr_info("%s: USB support disabled\n", usbcore_name);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	usb_init_pool_max();
 
 	usb_debugfs_init();
 
-	usb_acpi_रेजिस्टर();
-	retval = bus_रेजिस्टर(&usb_bus_type);
-	अगर (retval)
-		जाओ bus_रेजिस्टर_failed;
-	retval = bus_रेजिस्टर_notअगरier(&usb_bus_type, &usb_bus_nb);
-	अगर (retval)
-		जाओ bus_notअगरier_failed;
+	usb_acpi_register();
+	retval = bus_register(&usb_bus_type);
+	if (retval)
+		goto bus_register_failed;
+	retval = bus_register_notifier(&usb_bus_type, &usb_bus_nb);
+	if (retval)
+		goto bus_notifier_failed;
 	retval = usb_major_init();
-	अगर (retval)
-		जाओ major_init_failed;
-	retval = usb_रेजिस्टर(&usbfs_driver);
-	अगर (retval)
-		जाओ driver_रेजिस्टर_failed;
+	if (retval)
+		goto major_init_failed;
+	retval = usb_register(&usbfs_driver);
+	if (retval)
+		goto driver_register_failed;
 	retval = usb_devio_init();
-	अगर (retval)
-		जाओ usb_devio_init_failed;
+	if (retval)
+		goto usb_devio_init_failed;
 	retval = usb_hub_init();
-	अगर (retval)
-		जाओ hub_init_failed;
-	retval = usb_रेजिस्टर_device_driver(&usb_generic_driver, THIS_MODULE);
-	अगर (!retval)
-		जाओ out;
+	if (retval)
+		goto hub_init_failed;
+	retval = usb_register_device_driver(&usb_generic_driver, THIS_MODULE);
+	if (!retval)
+		goto out;
 
 	usb_hub_cleanup();
 hub_init_failed:
 	usb_devio_cleanup();
 usb_devio_init_failed:
-	usb_deरेजिस्टर(&usbfs_driver);
-driver_रेजिस्टर_failed:
+	usb_deregister(&usbfs_driver);
+driver_register_failed:
 	usb_major_cleanup();
 major_init_failed:
-	bus_unरेजिस्टर_notअगरier(&usb_bus_type, &usb_bus_nb);
-bus_notअगरier_failed:
-	bus_unरेजिस्टर(&usb_bus_type);
-bus_रेजिस्टर_failed:
-	usb_acpi_unरेजिस्टर();
+	bus_unregister_notifier(&usb_bus_type, &usb_bus_nb);
+bus_notifier_failed:
+	bus_unregister(&usb_bus_type);
+bus_register_failed:
+	usb_acpi_unregister();
 	usb_debugfs_cleanup();
 out:
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 /*
  * Cleanup
  */
-अटल व्योम __निकास usb_निकास(व्योम)
-अणु
-	/* This will matter अगर shutकरोwn/reboot करोes निकासcalls. */
-	अगर (usb_disabled())
-		वापस;
+static void __exit usb_exit(void)
+{
+	/* This will matter if shutdown/reboot does exitcalls. */
+	if (usb_disabled())
+		return;
 
 	usb_release_quirk_list();
-	usb_deरेजिस्टर_device_driver(&usb_generic_driver);
+	usb_deregister_device_driver(&usb_generic_driver);
 	usb_major_cleanup();
-	usb_deरेजिस्टर(&usbfs_driver);
+	usb_deregister(&usbfs_driver);
 	usb_devio_cleanup();
 	usb_hub_cleanup();
-	bus_unरेजिस्टर_notअगरier(&usb_bus_type, &usb_bus_nb);
-	bus_unरेजिस्टर(&usb_bus_type);
-	usb_acpi_unरेजिस्टर();
+	bus_unregister_notifier(&usb_bus_type, &usb_bus_nb);
+	bus_unregister(&usb_bus_type);
+	usb_acpi_unregister();
 	usb_debugfs_cleanup();
 	idr_destroy(&usb_bus_idr);
-पूर्ण
+}
 
 subsys_initcall(usb_init);
-module_निकास(usb_निकास);
+module_exit(usb_exit);
 MODULE_LICENSE("GPL");

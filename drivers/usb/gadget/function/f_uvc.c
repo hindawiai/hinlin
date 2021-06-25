@@ -1,72 +1,71 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  *	uvc_gadget.c  --  USB Video Class Gadget driver
  *
  *	Copyright (C) 2009-2010
- *	    Laurent Pinअक्षरt (laurent.pinअक्षरt@ideasonboard.com)
+ *	    Laurent Pinchart (laurent.pinchart@ideasonboard.com)
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/fs.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/list.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/usb/ch9.h>
-#समावेश <linux/usb/gadget.h>
-#समावेश <linux/usb/g_uvc.h>
-#समावेश <linux/usb/video.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/रुको.h>
+#include <linux/device.h>
+#include <linux/errno.h>
+#include <linux/fs.h>
+#include <linux/kernel.h>
+#include <linux/list.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/string.h>
+#include <linux/usb/ch9.h>
+#include <linux/usb/gadget.h>
+#include <linux/usb/g_uvc.h>
+#include <linux/usb/video.h>
+#include <linux/vmalloc.h>
+#include <linux/wait.h>
 
-#समावेश <media/v4l2-dev.h>
-#समावेश <media/v4l2-event.h>
+#include <media/v4l2-dev.h>
+#include <media/v4l2-event.h>
 
-#समावेश "u_uvc.h"
-#समावेश "uvc.h"
-#समावेश "uvc_configfs.h"
-#समावेश "uvc_v4l2.h"
-#समावेश "uvc_video.h"
+#include "u_uvc.h"
+#include "uvc.h"
+#include "uvc_configfs.h"
+#include "uvc_v4l2.h"
+#include "uvc_video.h"
 
-अचिन्हित पूर्णांक uvc_gadget_trace_param;
-module_param_named(trace, uvc_gadget_trace_param, uपूर्णांक, 0644);
+unsigned int uvc_gadget_trace_param;
+module_param_named(trace, uvc_gadget_trace_param, uint, 0644);
 MODULE_PARM_DESC(trace, "Trace level bitmask");
 
 /* --------------------------------------------------------------------------
  * Function descriptors
  */
 
-/* string IDs are asचिन्हित dynamically */
+/* string IDs are assigned dynamically */
 
-#घोषणा UVC_STRING_CONTROL_IDX			0
-#घोषणा UVC_STRING_STREAMING_IDX		1
+#define UVC_STRING_CONTROL_IDX			0
+#define UVC_STRING_STREAMING_IDX		1
 
-अटल काष्ठा usb_string uvc_en_us_strings[] = अणु
+static struct usb_string uvc_en_us_strings[] = {
 	[UVC_STRING_CONTROL_IDX].s = "UVC Camera",
 	[UVC_STRING_STREAMING_IDX].s = "Video Streaming",
-	अणु  पूर्ण
-पूर्ण;
+	{  }
+};
 
-अटल काष्ठा usb_gadget_strings uvc_stringtab = अणु
+static struct usb_gadget_strings uvc_stringtab = {
 	.language = 0x0409,	/* en-us */
 	.strings = uvc_en_us_strings,
-पूर्ण;
+};
 
-अटल काष्ठा usb_gadget_strings *uvc_function_strings[] = अणु
+static struct usb_gadget_strings *uvc_function_strings[] = {
 	&uvc_stringtab,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-#घोषणा UVC_INTF_VIDEO_CONTROL			0
-#घोषणा UVC_INTF_VIDEO_STREAMING		1
+#define UVC_INTF_VIDEO_CONTROL			0
+#define UVC_INTF_VIDEO_STREAMING		1
 
-#घोषणा UVC_STATUS_MAX_PACKET_SIZE		16	/* 16 bytes status */
+#define UVC_STATUS_MAX_PACKET_SIZE		16	/* 16 bytes status */
 
-अटल काष्ठा usb_पूर्णांकerface_assoc_descriptor uvc_iad = अणु
-	.bLength		= माप(uvc_iad),
+static struct usb_interface_assoc_descriptor uvc_iad = {
+	.bLength		= sizeof(uvc_iad),
 	.bDescriptorType	= USB_DT_INTERFACE_ASSOCIATION,
 	.bFirstInterface	= 0,
 	.bInterfaceCount	= 2,
@@ -74,298 +73,298 @@ MODULE_PARM_DESC(trace, "Trace level bitmask");
 	.bFunctionSubClass	= UVC_SC_VIDEO_INTERFACE_COLLECTION,
 	.bFunctionProtocol	= 0x00,
 	.iFunction		= 0,
-पूर्ण;
+};
 
-अटल काष्ठा usb_पूर्णांकerface_descriptor uvc_control_पूर्णांकf = अणु
+static struct usb_interface_descriptor uvc_control_intf = {
 	.bLength		= USB_DT_INTERFACE_SIZE,
 	.bDescriptorType	= USB_DT_INTERFACE,
 	.bInterfaceNumber	= UVC_INTF_VIDEO_CONTROL,
 	.bAlternateSetting	= 0,
-	.bNumEndpoपूर्णांकs		= 1,
+	.bNumEndpoints		= 1,
 	.bInterfaceClass	= USB_CLASS_VIDEO,
 	.bInterfaceSubClass	= UVC_SC_VIDEOCONTROL,
 	.bInterfaceProtocol	= 0x00,
 	.iInterface		= 0,
-पूर्ण;
+};
 
-अटल काष्ठा usb_endpoपूर्णांक_descriptor uvc_control_ep = अणु
+static struct usb_endpoint_descriptor uvc_control_ep = {
 	.bLength		= USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType	= USB_DT_ENDPOINT,
-	.bEndpoपूर्णांकAddress	= USB_सूची_IN,
+	.bEndpointAddress	= USB_DIR_IN,
 	.bmAttributes		= USB_ENDPOINT_XFER_INT,
 	.wMaxPacketSize		= cpu_to_le16(UVC_STATUS_MAX_PACKET_SIZE),
 	.bInterval		= 8,
-पूर्ण;
+};
 
-अटल काष्ठा usb_ss_ep_comp_descriptor uvc_ss_control_comp = अणु
-	.bLength		= माप(uvc_ss_control_comp),
+static struct usb_ss_ep_comp_descriptor uvc_ss_control_comp = {
+	.bLength		= sizeof(uvc_ss_control_comp),
 	.bDescriptorType	= USB_DT_SS_ENDPOINT_COMP,
-	/* The following 3 values can be tweaked अगर necessary. */
+	/* The following 3 values can be tweaked if necessary. */
 	.bMaxBurst		= 0,
 	.bmAttributes		= 0,
 	.wBytesPerInterval	= cpu_to_le16(UVC_STATUS_MAX_PACKET_SIZE),
-पूर्ण;
+};
 
-अटल काष्ठा uvc_control_endpoपूर्णांक_descriptor uvc_control_cs_ep = अणु
+static struct uvc_control_endpoint_descriptor uvc_control_cs_ep = {
 	.bLength		= UVC_DT_CONTROL_ENDPOINT_SIZE,
 	.bDescriptorType	= USB_DT_CS_ENDPOINT,
 	.bDescriptorSubType	= UVC_EP_INTERRUPT,
 	.wMaxTransferSize	= cpu_to_le16(UVC_STATUS_MAX_PACKET_SIZE),
-पूर्ण;
+};
 
-अटल काष्ठा usb_पूर्णांकerface_descriptor uvc_streaming_पूर्णांकf_alt0 = अणु
+static struct usb_interface_descriptor uvc_streaming_intf_alt0 = {
 	.bLength		= USB_DT_INTERFACE_SIZE,
 	.bDescriptorType	= USB_DT_INTERFACE,
 	.bInterfaceNumber	= UVC_INTF_VIDEO_STREAMING,
 	.bAlternateSetting	= 0,
-	.bNumEndpoपूर्णांकs		= 0,
+	.bNumEndpoints		= 0,
 	.bInterfaceClass	= USB_CLASS_VIDEO,
 	.bInterfaceSubClass	= UVC_SC_VIDEOSTREAMING,
 	.bInterfaceProtocol	= 0x00,
 	.iInterface		= 0,
-पूर्ण;
+};
 
-अटल काष्ठा usb_पूर्णांकerface_descriptor uvc_streaming_पूर्णांकf_alt1 = अणु
+static struct usb_interface_descriptor uvc_streaming_intf_alt1 = {
 	.bLength		= USB_DT_INTERFACE_SIZE,
 	.bDescriptorType	= USB_DT_INTERFACE,
 	.bInterfaceNumber	= UVC_INTF_VIDEO_STREAMING,
 	.bAlternateSetting	= 1,
-	.bNumEndpoपूर्णांकs		= 1,
+	.bNumEndpoints		= 1,
 	.bInterfaceClass	= USB_CLASS_VIDEO,
 	.bInterfaceSubClass	= UVC_SC_VIDEOSTREAMING,
 	.bInterfaceProtocol	= 0x00,
 	.iInterface		= 0,
-पूर्ण;
+};
 
-अटल काष्ठा usb_endpoपूर्णांक_descriptor uvc_fs_streaming_ep = अणु
+static struct usb_endpoint_descriptor uvc_fs_streaming_ep = {
 	.bLength		= USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType	= USB_DT_ENDPOINT,
-	.bEndpoपूर्णांकAddress	= USB_सूची_IN,
+	.bEndpointAddress	= USB_DIR_IN,
 	.bmAttributes		= USB_ENDPOINT_SYNC_ASYNC
 				| USB_ENDPOINT_XFER_ISOC,
 	/* The wMaxPacketSize and bInterval values will be initialized from
 	 * module parameters.
 	 */
-पूर्ण;
+};
 
-अटल काष्ठा usb_endpoपूर्णांक_descriptor uvc_hs_streaming_ep = अणु
+static struct usb_endpoint_descriptor uvc_hs_streaming_ep = {
 	.bLength		= USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType	= USB_DT_ENDPOINT,
-	.bEndpoपूर्णांकAddress	= USB_सूची_IN,
+	.bEndpointAddress	= USB_DIR_IN,
 	.bmAttributes		= USB_ENDPOINT_SYNC_ASYNC
 				| USB_ENDPOINT_XFER_ISOC,
 	/* The wMaxPacketSize and bInterval values will be initialized from
 	 * module parameters.
 	 */
-पूर्ण;
+};
 
-अटल काष्ठा usb_endpoपूर्णांक_descriptor uvc_ss_streaming_ep = अणु
+static struct usb_endpoint_descriptor uvc_ss_streaming_ep = {
 	.bLength		= USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType	= USB_DT_ENDPOINT,
 
-	.bEndpoपूर्णांकAddress	= USB_सूची_IN,
+	.bEndpointAddress	= USB_DIR_IN,
 	.bmAttributes		= USB_ENDPOINT_SYNC_ASYNC
 				| USB_ENDPOINT_XFER_ISOC,
 	/* The wMaxPacketSize and bInterval values will be initialized from
 	 * module parameters.
 	 */
-पूर्ण;
+};
 
-अटल काष्ठा usb_ss_ep_comp_descriptor uvc_ss_streaming_comp = अणु
-	.bLength		= माप(uvc_ss_streaming_comp),
+static struct usb_ss_ep_comp_descriptor uvc_ss_streaming_comp = {
+	.bLength		= sizeof(uvc_ss_streaming_comp),
 	.bDescriptorType	= USB_DT_SS_ENDPOINT_COMP,
 	/* The bMaxBurst, bmAttributes and wBytesPerInterval values will be
 	 * initialized from module parameters.
 	 */
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा usb_descriptor_header * स्थिर uvc_fs_streaming[] = अणु
-	(काष्ठा usb_descriptor_header *) &uvc_streaming_पूर्णांकf_alt1,
-	(काष्ठा usb_descriptor_header *) &uvc_fs_streaming_ep,
-	शून्य,
-पूर्ण;
+static const struct usb_descriptor_header * const uvc_fs_streaming[] = {
+	(struct usb_descriptor_header *) &uvc_streaming_intf_alt1,
+	(struct usb_descriptor_header *) &uvc_fs_streaming_ep,
+	NULL,
+};
 
-अटल स्थिर काष्ठा usb_descriptor_header * स्थिर uvc_hs_streaming[] = अणु
-	(काष्ठा usb_descriptor_header *) &uvc_streaming_पूर्णांकf_alt1,
-	(काष्ठा usb_descriptor_header *) &uvc_hs_streaming_ep,
-	शून्य,
-पूर्ण;
+static const struct usb_descriptor_header * const uvc_hs_streaming[] = {
+	(struct usb_descriptor_header *) &uvc_streaming_intf_alt1,
+	(struct usb_descriptor_header *) &uvc_hs_streaming_ep,
+	NULL,
+};
 
-अटल स्थिर काष्ठा usb_descriptor_header * स्थिर uvc_ss_streaming[] = अणु
-	(काष्ठा usb_descriptor_header *) &uvc_streaming_पूर्णांकf_alt1,
-	(काष्ठा usb_descriptor_header *) &uvc_ss_streaming_ep,
-	(काष्ठा usb_descriptor_header *) &uvc_ss_streaming_comp,
-	शून्य,
-पूर्ण;
+static const struct usb_descriptor_header * const uvc_ss_streaming[] = {
+	(struct usb_descriptor_header *) &uvc_streaming_intf_alt1,
+	(struct usb_descriptor_header *) &uvc_ss_streaming_ep,
+	(struct usb_descriptor_header *) &uvc_ss_streaming_comp,
+	NULL,
+};
 
 /* --------------------------------------------------------------------------
  * Control requests
  */
 
-अटल व्योम
-uvc_function_ep0_complete(काष्ठा usb_ep *ep, काष्ठा usb_request *req)
-अणु
-	काष्ठा uvc_device *uvc = req->context;
-	काष्ठा v4l2_event v4l2_event;
-	काष्ठा uvc_event *uvc_event = (व्योम *)&v4l2_event.u.data;
+static void
+uvc_function_ep0_complete(struct usb_ep *ep, struct usb_request *req)
+{
+	struct uvc_device *uvc = req->context;
+	struct v4l2_event v4l2_event;
+	struct uvc_event *uvc_event = (void *)&v4l2_event.u.data;
 
-	अगर (uvc->event_setup_out) अणु
+	if (uvc->event_setup_out) {
 		uvc->event_setup_out = 0;
 
-		स_रखो(&v4l2_event, 0, माप(v4l2_event));
+		memset(&v4l2_event, 0, sizeof(v4l2_event));
 		v4l2_event.type = UVC_EVENT_DATA;
 		uvc_event->data.length = req->actual;
-		स_नकल(&uvc_event->data.data, req->buf, req->actual);
+		memcpy(&uvc_event->data.data, req->buf, req->actual);
 		v4l2_event_queue(&uvc->vdev, &v4l2_event);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक
-uvc_function_setup(काष्ठा usb_function *f, स्थिर काष्ठा usb_ctrlrequest *ctrl)
-अणु
-	काष्ठा uvc_device *uvc = to_uvc(f);
-	काष्ठा v4l2_event v4l2_event;
-	काष्ठा uvc_event *uvc_event = (व्योम *)&v4l2_event.u.data;
+static int
+uvc_function_setup(struct usb_function *f, const struct usb_ctrlrequest *ctrl)
+{
+	struct uvc_device *uvc = to_uvc(f);
+	struct v4l2_event v4l2_event;
+	struct uvc_event *uvc_event = (void *)&v4l2_event.u.data;
 
-	अगर ((ctrl->bRequestType & USB_TYPE_MASK) != USB_TYPE_CLASS) अणु
+	if ((ctrl->bRequestType & USB_TYPE_MASK) != USB_TYPE_CLASS) {
 		uvcg_info(f, "invalid request type\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Stall too big requests. */
-	अगर (le16_to_cpu(ctrl->wLength) > UVC_MAX_REQUEST_SIZE)
-		वापस -EINVAL;
+	if (le16_to_cpu(ctrl->wLength) > UVC_MAX_REQUEST_SIZE)
+		return -EINVAL;
 
-	/* Tell the complete callback to generate an event क्रम the next request
+	/* Tell the complete callback to generate an event for the next request
 	 * that will be enqueued by UVCIOC_SEND_RESPONSE.
 	 */
-	uvc->event_setup_out = !(ctrl->bRequestType & USB_सूची_IN);
+	uvc->event_setup_out = !(ctrl->bRequestType & USB_DIR_IN);
 	uvc->event_length = le16_to_cpu(ctrl->wLength);
 
-	स_रखो(&v4l2_event, 0, माप(v4l2_event));
+	memset(&v4l2_event, 0, sizeof(v4l2_event));
 	v4l2_event.type = UVC_EVENT_SETUP;
-	स_नकल(&uvc_event->req, ctrl, माप(uvc_event->req));
+	memcpy(&uvc_event->req, ctrl, sizeof(uvc_event->req));
 	v4l2_event_queue(&uvc->vdev, &v4l2_event);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम uvc_function_setup_जारी(काष्ठा uvc_device *uvc)
-अणु
-	काष्ठा usb_composite_dev *cdev = uvc->func.config->cdev;
+void uvc_function_setup_continue(struct uvc_device *uvc)
+{
+	struct usb_composite_dev *cdev = uvc->func.config->cdev;
 
-	usb_composite_setup_जारी(cdev);
-पूर्ण
+	usb_composite_setup_continue(cdev);
+}
 
-अटल पूर्णांक
-uvc_function_get_alt(काष्ठा usb_function *f, अचिन्हित पूर्णांकerface)
-अणु
-	काष्ठा uvc_device *uvc = to_uvc(f);
+static int
+uvc_function_get_alt(struct usb_function *f, unsigned interface)
+{
+	struct uvc_device *uvc = to_uvc(f);
 
-	uvcg_info(f, "%s(%u)\n", __func__, पूर्णांकerface);
+	uvcg_info(f, "%s(%u)\n", __func__, interface);
 
-	अगर (पूर्णांकerface == uvc->control_पूर्णांकf)
-		वापस 0;
-	अन्यथा अगर (पूर्णांकerface != uvc->streaming_पूर्णांकf)
-		वापस -EINVAL;
-	अन्यथा
-		वापस uvc->video.ep->enabled ? 1 : 0;
-पूर्ण
+	if (interface == uvc->control_intf)
+		return 0;
+	else if (interface != uvc->streaming_intf)
+		return -EINVAL;
+	else
+		return uvc->video.ep->enabled ? 1 : 0;
+}
 
-अटल पूर्णांक
-uvc_function_set_alt(काष्ठा usb_function *f, अचिन्हित पूर्णांकerface, अचिन्हित alt)
-अणु
-	काष्ठा uvc_device *uvc = to_uvc(f);
-	काष्ठा usb_composite_dev *cdev = f->config->cdev;
-	काष्ठा v4l2_event v4l2_event;
-	काष्ठा uvc_event *uvc_event = (व्योम *)&v4l2_event.u.data;
-	पूर्णांक ret;
+static int
+uvc_function_set_alt(struct usb_function *f, unsigned interface, unsigned alt)
+{
+	struct uvc_device *uvc = to_uvc(f);
+	struct usb_composite_dev *cdev = f->config->cdev;
+	struct v4l2_event v4l2_event;
+	struct uvc_event *uvc_event = (void *)&v4l2_event.u.data;
+	int ret;
 
-	uvcg_info(f, "%s(%u, %u)\n", __func__, पूर्णांकerface, alt);
+	uvcg_info(f, "%s(%u, %u)\n", __func__, interface, alt);
 
-	अगर (पूर्णांकerface == uvc->control_पूर्णांकf) अणु
-		अगर (alt)
-			वापस -EINVAL;
+	if (interface == uvc->control_intf) {
+		if (alt)
+			return -EINVAL;
 
 		uvcg_info(f, "reset UVC Control\n");
 		usb_ep_disable(uvc->control_ep);
 
-		अगर (!uvc->control_ep->desc)
-			अगर (config_ep_by_speed(cdev->gadget, f, uvc->control_ep))
-				वापस -EINVAL;
+		if (!uvc->control_ep->desc)
+			if (config_ep_by_speed(cdev->gadget, f, uvc->control_ep))
+				return -EINVAL;
 
 		usb_ep_enable(uvc->control_ep);
 
-		अगर (uvc->state == UVC_STATE_DISCONNECTED) अणु
-			स_रखो(&v4l2_event, 0, माप(v4l2_event));
+		if (uvc->state == UVC_STATE_DISCONNECTED) {
+			memset(&v4l2_event, 0, sizeof(v4l2_event));
 			v4l2_event.type = UVC_EVENT_CONNECT;
 			uvc_event->speed = cdev->gadget->speed;
 			v4l2_event_queue(&uvc->vdev, &v4l2_event);
 
 			uvc->state = UVC_STATE_CONNECTED;
-		पूर्ण
+		}
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (पूर्णांकerface != uvc->streaming_पूर्णांकf)
-		वापस -EINVAL;
+	if (interface != uvc->streaming_intf)
+		return -EINVAL;
 
 	/* TODO
-	अगर (usb_endpoपूर्णांक_xfer_bulk(&uvc->desc.vs_ep))
-		वापस alt ? -EINVAL : 0;
+	if (usb_endpoint_xfer_bulk(&uvc->desc.vs_ep))
+		return alt ? -EINVAL : 0;
 	*/
 
-	चयन (alt) अणु
-	हाल 0:
-		अगर (uvc->state != UVC_STATE_STREAMING)
-			वापस 0;
+	switch (alt) {
+	case 0:
+		if (uvc->state != UVC_STATE_STREAMING)
+			return 0;
 
-		अगर (uvc->video.ep)
+		if (uvc->video.ep)
 			usb_ep_disable(uvc->video.ep);
 
-		स_रखो(&v4l2_event, 0, माप(v4l2_event));
+		memset(&v4l2_event, 0, sizeof(v4l2_event));
 		v4l2_event.type = UVC_EVENT_STREAMOFF;
 		v4l2_event_queue(&uvc->vdev, &v4l2_event);
 
 		uvc->state = UVC_STATE_CONNECTED;
-		वापस 0;
+		return 0;
 
-	हाल 1:
-		अगर (uvc->state != UVC_STATE_CONNECTED)
-			वापस 0;
+	case 1:
+		if (uvc->state != UVC_STATE_CONNECTED)
+			return 0;
 
-		अगर (!uvc->video.ep)
-			वापस -EINVAL;
+		if (!uvc->video.ep)
+			return -EINVAL;
 
 		uvcg_info(f, "reset UVC\n");
 		usb_ep_disable(uvc->video.ep);
 
 		ret = config_ep_by_speed(f->config->cdev->gadget,
 				&(uvc->func), uvc->video.ep);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 		usb_ep_enable(uvc->video.ep);
 
-		स_रखो(&v4l2_event, 0, माप(v4l2_event));
+		memset(&v4l2_event, 0, sizeof(v4l2_event));
 		v4l2_event.type = UVC_EVENT_STREAMON;
 		v4l2_event_queue(&uvc->vdev, &v4l2_event);
-		वापस USB_GADGET_DELAYED_STATUS;
+		return USB_GADGET_DELAYED_STATUS;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल व्योम
-uvc_function_disable(काष्ठा usb_function *f)
-अणु
-	काष्ठा uvc_device *uvc = to_uvc(f);
-	काष्ठा v4l2_event v4l2_event;
+static void
+uvc_function_disable(struct usb_function *f)
+{
+	struct uvc_device *uvc = to_uvc(f);
+	struct v4l2_event v4l2_event;
 
 	uvcg_info(f, "%s()\n", __func__);
 
-	स_रखो(&v4l2_event, 0, माप(v4l2_event));
+	memset(&v4l2_event, 0, sizeof(v4l2_event));
 	v4l2_event.type = UVC_EVENT_DISCONNECT;
 	v4l2_event_queue(&uvc->vdev, &v4l2_event);
 
@@ -373,427 +372,427 @@ uvc_function_disable(काष्ठा usb_function *f)
 
 	usb_ep_disable(uvc->video.ep);
 	usb_ep_disable(uvc->control_ep);
-पूर्ण
+}
 
 /* --------------------------------------------------------------------------
  * Connection / disconnection
  */
 
-व्योम
-uvc_function_connect(काष्ठा uvc_device *uvc)
-अणु
-	पूर्णांक ret;
+void
+uvc_function_connect(struct uvc_device *uvc)
+{
+	int ret;
 
-	अगर ((ret = usb_function_activate(&uvc->func)) < 0)
+	if ((ret = usb_function_activate(&uvc->func)) < 0)
 		uvcg_info(&uvc->func, "UVC connect failed with %d\n", ret);
-पूर्ण
+}
 
-व्योम
-uvc_function_disconnect(काष्ठा uvc_device *uvc)
-अणु
-	पूर्णांक ret;
+void
+uvc_function_disconnect(struct uvc_device *uvc)
+{
+	int ret;
 
-	अगर ((ret = usb_function_deactivate(&uvc->func)) < 0)
+	if ((ret = usb_function_deactivate(&uvc->func)) < 0)
 		uvcg_info(&uvc->func, "UVC disconnect failed with %d\n", ret);
-पूर्ण
+}
 
 /* --------------------------------------------------------------------------
  * USB probe and disconnect
  */
 
-अटल sमाप_प्रकार function_name_show(काष्ठा device *dev,
-				  काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा uvc_device *uvc = dev_get_drvdata(dev);
+static ssize_t function_name_show(struct device *dev,
+				  struct device_attribute *attr, char *buf)
+{
+	struct uvc_device *uvc = dev_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%s\n", uvc->func.fi->group.cg_item.ci_name);
-पूर्ण
+	return sprintf(buf, "%s\n", uvc->func.fi->group.cg_item.ci_name);
+}
 
-अटल DEVICE_ATTR_RO(function_name);
+static DEVICE_ATTR_RO(function_name);
 
-अटल पूर्णांक
-uvc_रेजिस्टर_video(काष्ठा uvc_device *uvc)
-अणु
-	काष्ठा usb_composite_dev *cdev = uvc->func.config->cdev;
-	पूर्णांक ret;
+static int
+uvc_register_video(struct uvc_device *uvc)
+{
+	struct usb_composite_dev *cdev = uvc->func.config->cdev;
+	int ret;
 
 	/* TODO reference counting. */
 	uvc->vdev.v4l2_dev = &uvc->v4l2_dev;
 	uvc->vdev.fops = &uvc_v4l2_fops;
 	uvc->vdev.ioctl_ops = &uvc_v4l2_ioctl_ops;
 	uvc->vdev.release = video_device_release_empty;
-	uvc->vdev.vfl_dir = VFL_सूची_TX;
+	uvc->vdev.vfl_dir = VFL_DIR_TX;
 	uvc->vdev.lock = &uvc->video.mutex;
 	uvc->vdev.device_caps = V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_STREAMING;
-	strlcpy(uvc->vdev.name, cdev->gadget->name, माप(uvc->vdev.name));
+	strlcpy(uvc->vdev.name, cdev->gadget->name, sizeof(uvc->vdev.name));
 
 	video_set_drvdata(&uvc->vdev, uvc);
 
-	ret = video_रेजिस्टर_device(&uvc->vdev, VFL_TYPE_VIDEO, -1);
-	अगर (ret < 0)
-		वापस ret;
+	ret = video_register_device(&uvc->vdev, VFL_TYPE_VIDEO, -1);
+	if (ret < 0)
+		return ret;
 
 	ret = device_create_file(&uvc->vdev.dev, &dev_attr_function_name);
-	अगर (ret < 0) अणु
-		video_unरेजिस्टर_device(&uvc->vdev);
-		वापस ret;
-	पूर्ण
+	if (ret < 0) {
+		video_unregister_device(&uvc->vdev);
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा UVC_COPY_DESCRIPTOR(mem, dst, desc) \
-	करो अणु \
-		स_नकल(mem, desc, (desc)->bLength); \
+#define UVC_COPY_DESCRIPTOR(mem, dst, desc) \
+	do { \
+		memcpy(mem, desc, (desc)->bLength); \
 		*(dst)++ = mem; \
 		mem += (desc)->bLength; \
-	पूर्ण जबतक (0);
+	} while (0);
 
-#घोषणा UVC_COPY_DESCRIPTORS(mem, dst, src) \
-	करो अणु \
-		स्थिर काष्ठा usb_descriptor_header * स्थिर *__src; \
-		क्रम (__src = src; *__src; ++__src) अणु \
-			स_नकल(mem, *__src, (*__src)->bLength); \
+#define UVC_COPY_DESCRIPTORS(mem, dst, src) \
+	do { \
+		const struct usb_descriptor_header * const *__src; \
+		for (__src = src; *__src; ++__src) { \
+			memcpy(mem, *__src, (*__src)->bLength); \
 			*dst++ = mem; \
 			mem += (*__src)->bLength; \
-		पूर्ण \
-	पूर्ण जबतक (0)
+		} \
+	} while (0)
 
-अटल काष्ठा usb_descriptor_header **
-uvc_copy_descriptors(काष्ठा uvc_device *uvc, क्रमागत usb_device_speed speed)
-अणु
-	काष्ठा uvc_input_header_descriptor *uvc_streaming_header;
-	काष्ठा uvc_header_descriptor *uvc_control_header;
-	स्थिर काष्ठा uvc_descriptor_header * स्थिर *uvc_control_desc;
-	स्थिर काष्ठा uvc_descriptor_header * स्थिर *uvc_streaming_cls;
-	स्थिर काष्ठा usb_descriptor_header * स्थिर *uvc_streaming_std;
-	स्थिर काष्ठा usb_descriptor_header * स्थिर *src;
-	काष्ठा usb_descriptor_header **dst;
-	काष्ठा usb_descriptor_header **hdr;
-	अचिन्हित पूर्णांक control_size;
-	अचिन्हित पूर्णांक streaming_size;
-	अचिन्हित पूर्णांक n_desc;
-	अचिन्हित पूर्णांक bytes;
-	व्योम *mem;
+static struct usb_descriptor_header **
+uvc_copy_descriptors(struct uvc_device *uvc, enum usb_device_speed speed)
+{
+	struct uvc_input_header_descriptor *uvc_streaming_header;
+	struct uvc_header_descriptor *uvc_control_header;
+	const struct uvc_descriptor_header * const *uvc_control_desc;
+	const struct uvc_descriptor_header * const *uvc_streaming_cls;
+	const struct usb_descriptor_header * const *uvc_streaming_std;
+	const struct usb_descriptor_header * const *src;
+	struct usb_descriptor_header **dst;
+	struct usb_descriptor_header **hdr;
+	unsigned int control_size;
+	unsigned int streaming_size;
+	unsigned int n_desc;
+	unsigned int bytes;
+	void *mem;
 
-	चयन (speed) अणु
-	हाल USB_SPEED_SUPER:
+	switch (speed) {
+	case USB_SPEED_SUPER:
 		uvc_control_desc = uvc->desc.ss_control;
 		uvc_streaming_cls = uvc->desc.ss_streaming;
 		uvc_streaming_std = uvc_ss_streaming;
-		अवरोध;
+		break;
 
-	हाल USB_SPEED_HIGH:
+	case USB_SPEED_HIGH:
 		uvc_control_desc = uvc->desc.fs_control;
 		uvc_streaming_cls = uvc->desc.hs_streaming;
 		uvc_streaming_std = uvc_hs_streaming;
-		अवरोध;
+		break;
 
-	हाल USB_SPEED_FULL:
-	शेष:
+	case USB_SPEED_FULL:
+	default:
 		uvc_control_desc = uvc->desc.fs_control;
 		uvc_streaming_cls = uvc->desc.fs_streaming;
 		uvc_streaming_std = uvc_fs_streaming;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (!uvc_control_desc || !uvc_streaming_cls)
-		वापस ERR_PTR(-ENODEV);
+	if (!uvc_control_desc || !uvc_streaming_cls)
+		return ERR_PTR(-ENODEV);
 
 	/* Descriptors layout
 	 *
 	 * uvc_iad
-	 * uvc_control_पूर्णांकf
-	 * Class-specअगरic UVC control descriptors
+	 * uvc_control_intf
+	 * Class-specific UVC control descriptors
 	 * uvc_control_ep
 	 * uvc_control_cs_ep
-	 * uvc_ss_control_comp (क्रम SS only)
-	 * uvc_streaming_पूर्णांकf_alt0
-	 * Class-specअगरic UVC streaming descriptors
-	 * uvc_अणुfs|hsपूर्ण_streaming
+	 * uvc_ss_control_comp (for SS only)
+	 * uvc_streaming_intf_alt0
+	 * Class-specific UVC streaming descriptors
+	 * uvc_{fs|hs}_streaming
 	 */
 
 	/* Count descriptors and compute their size. */
 	control_size = 0;
 	streaming_size = 0;
-	bytes = uvc_iad.bLength + uvc_control_पूर्णांकf.bLength
+	bytes = uvc_iad.bLength + uvc_control_intf.bLength
 	      + uvc_control_ep.bLength + uvc_control_cs_ep.bLength
-	      + uvc_streaming_पूर्णांकf_alt0.bLength;
+	      + uvc_streaming_intf_alt0.bLength;
 
-	अगर (speed == USB_SPEED_SUPER) अणु
+	if (speed == USB_SPEED_SUPER) {
 		bytes += uvc_ss_control_comp.bLength;
 		n_desc = 6;
-	पूर्ण अन्यथा अणु
+	} else {
 		n_desc = 5;
-	पूर्ण
+	}
 
-	क्रम (src = (स्थिर काष्ठा usb_descriptor_header **)uvc_control_desc;
-	     *src; ++src) अणु
+	for (src = (const struct usb_descriptor_header **)uvc_control_desc;
+	     *src; ++src) {
 		control_size += (*src)->bLength;
 		bytes += (*src)->bLength;
 		n_desc++;
-	पूर्ण
-	क्रम (src = (स्थिर काष्ठा usb_descriptor_header **)uvc_streaming_cls;
-	     *src; ++src) अणु
+	}
+	for (src = (const struct usb_descriptor_header **)uvc_streaming_cls;
+	     *src; ++src) {
 		streaming_size += (*src)->bLength;
 		bytes += (*src)->bLength;
 		n_desc++;
-	पूर्ण
-	क्रम (src = uvc_streaming_std; *src; ++src) अणु
+	}
+	for (src = uvc_streaming_std; *src; ++src) {
 		bytes += (*src)->bLength;
 		n_desc++;
-	पूर्ण
+	}
 
-	mem = kदो_स्मृति((n_desc + 1) * माप(*src) + bytes, GFP_KERNEL);
-	अगर (mem == शून्य)
-		वापस शून्य;
+	mem = kmalloc((n_desc + 1) * sizeof(*src) + bytes, GFP_KERNEL);
+	if (mem == NULL)
+		return NULL;
 
 	hdr = mem;
 	dst = mem;
-	mem += (n_desc + 1) * माप(*src);
+	mem += (n_desc + 1) * sizeof(*src);
 
 	/* Copy the descriptors. */
 	UVC_COPY_DESCRIPTOR(mem, dst, &uvc_iad);
-	UVC_COPY_DESCRIPTOR(mem, dst, &uvc_control_पूर्णांकf);
+	UVC_COPY_DESCRIPTOR(mem, dst, &uvc_control_intf);
 
 	uvc_control_header = mem;
 	UVC_COPY_DESCRIPTORS(mem, dst,
-		(स्थिर काष्ठा usb_descriptor_header **)uvc_control_desc);
+		(const struct usb_descriptor_header **)uvc_control_desc);
 	uvc_control_header->wTotalLength = cpu_to_le16(control_size);
 	uvc_control_header->bInCollection = 1;
-	uvc_control_header->baInterfaceNr[0] = uvc->streaming_पूर्णांकf;
+	uvc_control_header->baInterfaceNr[0] = uvc->streaming_intf;
 
 	UVC_COPY_DESCRIPTOR(mem, dst, &uvc_control_ep);
-	अगर (speed == USB_SPEED_SUPER)
+	if (speed == USB_SPEED_SUPER)
 		UVC_COPY_DESCRIPTOR(mem, dst, &uvc_ss_control_comp);
 
 	UVC_COPY_DESCRIPTOR(mem, dst, &uvc_control_cs_ep);
-	UVC_COPY_DESCRIPTOR(mem, dst, &uvc_streaming_पूर्णांकf_alt0);
+	UVC_COPY_DESCRIPTOR(mem, dst, &uvc_streaming_intf_alt0);
 
 	uvc_streaming_header = mem;
 	UVC_COPY_DESCRIPTORS(mem, dst,
-		(स्थिर काष्ठा usb_descriptor_header**)uvc_streaming_cls);
+		(const struct usb_descriptor_header**)uvc_streaming_cls);
 	uvc_streaming_header->wTotalLength = cpu_to_le16(streaming_size);
-	uvc_streaming_header->bEndpoपूर्णांकAddress = uvc->video.ep->address;
+	uvc_streaming_header->bEndpointAddress = uvc->video.ep->address;
 
 	UVC_COPY_DESCRIPTORS(mem, dst, uvc_streaming_std);
 
-	*dst = शून्य;
-	वापस hdr;
-पूर्ण
+	*dst = NULL;
+	return hdr;
+}
 
-अटल पूर्णांक
-uvc_function_bind(काष्ठा usb_configuration *c, काष्ठा usb_function *f)
-अणु
-	काष्ठा usb_composite_dev *cdev = c->cdev;
-	काष्ठा uvc_device *uvc = to_uvc(f);
-	काष्ठा usb_string *us;
-	अचिन्हित पूर्णांक max_packet_mult;
-	अचिन्हित पूर्णांक max_packet_size;
-	काष्ठा usb_ep *ep;
-	काष्ठा f_uvc_opts *opts;
-	पूर्णांक ret = -EINVAL;
+static int
+uvc_function_bind(struct usb_configuration *c, struct usb_function *f)
+{
+	struct usb_composite_dev *cdev = c->cdev;
+	struct uvc_device *uvc = to_uvc(f);
+	struct usb_string *us;
+	unsigned int max_packet_mult;
+	unsigned int max_packet_size;
+	struct usb_ep *ep;
+	struct f_uvc_opts *opts;
+	int ret = -EINVAL;
 
 	uvcg_info(f, "%s()\n", __func__);
 
 	opts = fi_to_f_uvc_opts(f->fi);
-	/* Sanity check the streaming endpoपूर्णांक module parameters.
+	/* Sanity check the streaming endpoint module parameters.
 	 */
-	opts->streaming_पूर्णांकerval = clamp(opts->streaming_पूर्णांकerval, 1U, 16U);
+	opts->streaming_interval = clamp(opts->streaming_interval, 1U, 16U);
 	opts->streaming_maxpacket = clamp(opts->streaming_maxpacket, 1U, 3072U);
 	opts->streaming_maxburst = min(opts->streaming_maxburst, 15U);
 
-	/* For SS, wMaxPacketSize has to be 1024 अगर bMaxBurst is not 0 */
-	अगर (opts->streaming_maxburst &&
-	    (opts->streaming_maxpacket % 1024) != 0) अणु
+	/* For SS, wMaxPacketSize has to be 1024 if bMaxBurst is not 0 */
+	if (opts->streaming_maxburst &&
+	    (opts->streaming_maxpacket % 1024) != 0) {
 		opts->streaming_maxpacket = roundup(opts->streaming_maxpacket, 1024);
 		uvcg_info(f, "overriding streaming_maxpacket to %d\n",
 			  opts->streaming_maxpacket);
-	पूर्ण
+	}
 
-	/* Fill in the FS/HS/SS Video Streaming specअगरic descriptors from the
+	/* Fill in the FS/HS/SS Video Streaming specific descriptors from the
 	 * module parameters.
 	 *
-	 * NOTE: We assume that the user knows what they are करोing and won't
-	 * give parameters that their UDC करोesn't support.
+	 * NOTE: We assume that the user knows what they are doing and won't
+	 * give parameters that their UDC doesn't support.
 	 */
-	अगर (opts->streaming_maxpacket <= 1024) अणु
+	if (opts->streaming_maxpacket <= 1024) {
 		max_packet_mult = 1;
 		max_packet_size = opts->streaming_maxpacket;
-	पूर्ण अन्यथा अगर (opts->streaming_maxpacket <= 2048) अणु
+	} else if (opts->streaming_maxpacket <= 2048) {
 		max_packet_mult = 2;
 		max_packet_size = opts->streaming_maxpacket / 2;
-	पूर्ण अन्यथा अणु
+	} else {
 		max_packet_mult = 3;
 		max_packet_size = opts->streaming_maxpacket / 3;
-	पूर्ण
+	}
 
 	uvc_fs_streaming_ep.wMaxPacketSize =
 		cpu_to_le16(min(opts->streaming_maxpacket, 1023U));
-	uvc_fs_streaming_ep.bInterval = opts->streaming_पूर्णांकerval;
+	uvc_fs_streaming_ep.bInterval = opts->streaming_interval;
 
 	uvc_hs_streaming_ep.wMaxPacketSize =
 		cpu_to_le16(max_packet_size | ((max_packet_mult - 1) << 11));
 
-	/* A high-bandwidth endpoपूर्णांक must specअगरy a bInterval value of 1 */
-	अगर (max_packet_mult > 1)
+	/* A high-bandwidth endpoint must specify a bInterval value of 1 */
+	if (max_packet_mult > 1)
 		uvc_hs_streaming_ep.bInterval = 1;
-	अन्यथा
-		uvc_hs_streaming_ep.bInterval = opts->streaming_पूर्णांकerval;
+	else
+		uvc_hs_streaming_ep.bInterval = opts->streaming_interval;
 
 	uvc_ss_streaming_ep.wMaxPacketSize = cpu_to_le16(max_packet_size);
-	uvc_ss_streaming_ep.bInterval = opts->streaming_पूर्णांकerval;
+	uvc_ss_streaming_ep.bInterval = opts->streaming_interval;
 	uvc_ss_streaming_comp.bmAttributes = max_packet_mult - 1;
 	uvc_ss_streaming_comp.bMaxBurst = opts->streaming_maxburst;
 	uvc_ss_streaming_comp.wBytesPerInterval =
 		cpu_to_le16(max_packet_size * max_packet_mult *
 			    (opts->streaming_maxburst + 1));
 
-	/* Allocate endpoपूर्णांकs. */
-	ep = usb_ep_स्वतःconfig(cdev->gadget, &uvc_control_ep);
-	अगर (!ep) अणु
+	/* Allocate endpoints. */
+	ep = usb_ep_autoconfig(cdev->gadget, &uvc_control_ep);
+	if (!ep) {
 		uvcg_info(f, "Unable to allocate control EP\n");
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 	uvc->control_ep = ep;
 
-	अगर (gadget_is_superspeed(c->cdev->gadget))
-		ep = usb_ep_स्वतःconfig_ss(cdev->gadget, &uvc_ss_streaming_ep,
+	if (gadget_is_superspeed(c->cdev->gadget))
+		ep = usb_ep_autoconfig_ss(cdev->gadget, &uvc_ss_streaming_ep,
 					  &uvc_ss_streaming_comp);
-	अन्यथा अगर (gadget_is_dualspeed(cdev->gadget))
-		ep = usb_ep_स्वतःconfig(cdev->gadget, &uvc_hs_streaming_ep);
-	अन्यथा
-		ep = usb_ep_स्वतःconfig(cdev->gadget, &uvc_fs_streaming_ep);
+	else if (gadget_is_dualspeed(cdev->gadget))
+		ep = usb_ep_autoconfig(cdev->gadget, &uvc_hs_streaming_ep);
+	else
+		ep = usb_ep_autoconfig(cdev->gadget, &uvc_fs_streaming_ep);
 
-	अगर (!ep) अणु
+	if (!ep) {
 		uvcg_info(f, "Unable to allocate streaming EP\n");
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 	uvc->video.ep = ep;
 
-	uvc_fs_streaming_ep.bEndpoपूर्णांकAddress = uvc->video.ep->address;
-	uvc_hs_streaming_ep.bEndpoपूर्णांकAddress = uvc->video.ep->address;
-	uvc_ss_streaming_ep.bEndpoपूर्णांकAddress = uvc->video.ep->address;
+	uvc_fs_streaming_ep.bEndpointAddress = uvc->video.ep->address;
+	uvc_hs_streaming_ep.bEndpointAddress = uvc->video.ep->address;
+	uvc_ss_streaming_ep.bEndpointAddress = uvc->video.ep->address;
 
 	us = usb_gstrings_attach(cdev, uvc_function_strings,
 				 ARRAY_SIZE(uvc_en_us_strings));
-	अगर (IS_ERR(us)) अणु
+	if (IS_ERR(us)) {
 		ret = PTR_ERR(us);
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 	uvc_iad.iFunction = us[UVC_STRING_CONTROL_IDX].id;
-	uvc_control_पूर्णांकf.iInterface = us[UVC_STRING_CONTROL_IDX].id;
+	uvc_control_intf.iInterface = us[UVC_STRING_CONTROL_IDX].id;
 	ret = us[UVC_STRING_STREAMING_IDX].id;
-	uvc_streaming_पूर्णांकf_alt0.iInterface = ret;
-	uvc_streaming_पूर्णांकf_alt1.iInterface = ret;
+	uvc_streaming_intf_alt0.iInterface = ret;
+	uvc_streaming_intf_alt1.iInterface = ret;
 
-	/* Allocate पूर्णांकerface IDs. */
-	अगर ((ret = usb_पूर्णांकerface_id(c, f)) < 0)
-		जाओ error;
+	/* Allocate interface IDs. */
+	if ((ret = usb_interface_id(c, f)) < 0)
+		goto error;
 	uvc_iad.bFirstInterface = ret;
-	uvc_control_पूर्णांकf.bInterfaceNumber = ret;
-	uvc->control_पूर्णांकf = ret;
-	opts->control_पूर्णांकerface = ret;
+	uvc_control_intf.bInterfaceNumber = ret;
+	uvc->control_intf = ret;
+	opts->control_interface = ret;
 
-	अगर ((ret = usb_पूर्णांकerface_id(c, f)) < 0)
-		जाओ error;
-	uvc_streaming_पूर्णांकf_alt0.bInterfaceNumber = ret;
-	uvc_streaming_पूर्णांकf_alt1.bInterfaceNumber = ret;
-	uvc->streaming_पूर्णांकf = ret;
-	opts->streaming_पूर्णांकerface = ret;
+	if ((ret = usb_interface_id(c, f)) < 0)
+		goto error;
+	uvc_streaming_intf_alt0.bInterfaceNumber = ret;
+	uvc_streaming_intf_alt1.bInterfaceNumber = ret;
+	uvc->streaming_intf = ret;
+	opts->streaming_interface = ret;
 
 	/* Copy descriptors */
 	f->fs_descriptors = uvc_copy_descriptors(uvc, USB_SPEED_FULL);
-	अगर (IS_ERR(f->fs_descriptors)) अणु
+	if (IS_ERR(f->fs_descriptors)) {
 		ret = PTR_ERR(f->fs_descriptors);
-		f->fs_descriptors = शून्य;
-		जाओ error;
-	पूर्ण
-	अगर (gadget_is_dualspeed(cdev->gadget)) अणु
+		f->fs_descriptors = NULL;
+		goto error;
+	}
+	if (gadget_is_dualspeed(cdev->gadget)) {
 		f->hs_descriptors = uvc_copy_descriptors(uvc, USB_SPEED_HIGH);
-		अगर (IS_ERR(f->hs_descriptors)) अणु
+		if (IS_ERR(f->hs_descriptors)) {
 			ret = PTR_ERR(f->hs_descriptors);
-			f->hs_descriptors = शून्य;
-			जाओ error;
-		पूर्ण
-	पूर्ण
-	अगर (gadget_is_superspeed(c->cdev->gadget)) अणु
+			f->hs_descriptors = NULL;
+			goto error;
+		}
+	}
+	if (gadget_is_superspeed(c->cdev->gadget)) {
 		f->ss_descriptors = uvc_copy_descriptors(uvc, USB_SPEED_SUPER);
-		अगर (IS_ERR(f->ss_descriptors)) अणु
+		if (IS_ERR(f->ss_descriptors)) {
 			ret = PTR_ERR(f->ss_descriptors);
-			f->ss_descriptors = शून्य;
-			जाओ error;
-		पूर्ण
-	पूर्ण
+			f->ss_descriptors = NULL;
+			goto error;
+		}
+	}
 
-	/* Pपुनः_स्मृतिate control endpoपूर्णांक request. */
+	/* Preallocate control endpoint request. */
 	uvc->control_req = usb_ep_alloc_request(cdev->gadget->ep0, GFP_KERNEL);
-	uvc->control_buf = kदो_स्मृति(UVC_MAX_REQUEST_SIZE, GFP_KERNEL);
-	अगर (uvc->control_req == शून्य || uvc->control_buf == शून्य) अणु
+	uvc->control_buf = kmalloc(UVC_MAX_REQUEST_SIZE, GFP_KERNEL);
+	if (uvc->control_req == NULL || uvc->control_buf == NULL) {
 		ret = -ENOMEM;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	uvc->control_req->buf = uvc->control_buf;
 	uvc->control_req->complete = uvc_function_ep0_complete;
 	uvc->control_req->context = uvc;
 
-	अगर (v4l2_device_रेजिस्टर(&cdev->gadget->dev, &uvc->v4l2_dev)) अणु
+	if (v4l2_device_register(&cdev->gadget->dev, &uvc->v4l2_dev)) {
 		uvcg_err(f, "failed to register V4L2 device\n");
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	/* Initialise video. */
 	ret = uvcg_video_init(&uvc->video, uvc);
-	अगर (ret < 0)
-		जाओ v4l2_error;
+	if (ret < 0)
+		goto v4l2_error;
 
 	/* Register a V4L2 device. */
-	ret = uvc_रेजिस्टर_video(uvc);
-	अगर (ret < 0) अणु
+	ret = uvc_register_video(uvc);
+	if (ret < 0) {
 		uvcg_err(f, "failed to register video device\n");
-		जाओ v4l2_error;
-	पूर्ण
+		goto v4l2_error;
+	}
 
-	वापस 0;
+	return 0;
 
 v4l2_error:
-	v4l2_device_unरेजिस्टर(&uvc->v4l2_dev);
+	v4l2_device_unregister(&uvc->v4l2_dev);
 error:
-	अगर (uvc->control_req)
-		usb_ep_मुक्त_request(cdev->gadget->ep0, uvc->control_req);
-	kमुक्त(uvc->control_buf);
+	if (uvc->control_req)
+		usb_ep_free_request(cdev->gadget->ep0, uvc->control_req);
+	kfree(uvc->control_buf);
 
-	usb_मुक्त_all_descriptors(f);
-	वापस ret;
-पूर्ण
+	usb_free_all_descriptors(f);
+	return ret;
+}
 
 /* --------------------------------------------------------------------------
  * USB gadget function
  */
 
-अटल व्योम uvc_मुक्त_inst(काष्ठा usb_function_instance *f)
-अणु
-	काष्ठा f_uvc_opts *opts = fi_to_f_uvc_opts(f);
+static void uvc_free_inst(struct usb_function_instance *f)
+{
+	struct f_uvc_opts *opts = fi_to_f_uvc_opts(f);
 
 	mutex_destroy(&opts->lock);
-	kमुक्त(opts);
-पूर्ण
+	kfree(opts);
+}
 
-अटल काष्ठा usb_function_instance *uvc_alloc_inst(व्योम)
-अणु
-	काष्ठा f_uvc_opts *opts;
-	काष्ठा uvc_camera_terminal_descriptor *cd;
-	काष्ठा uvc_processing_unit_descriptor *pd;
-	काष्ठा uvc_output_terminal_descriptor *od;
-	काष्ठा uvc_color_matching_descriptor *md;
-	काष्ठा uvc_descriptor_header **ctl_cls;
-	पूर्णांक ret;
+static struct usb_function_instance *uvc_alloc_inst(void)
+{
+	struct f_uvc_opts *opts;
+	struct uvc_camera_terminal_descriptor *cd;
+	struct uvc_processing_unit_descriptor *pd;
+	struct uvc_output_terminal_descriptor *od;
+	struct uvc_color_matching_descriptor *md;
+	struct uvc_descriptor_header **ctl_cls;
+	int ret;
 
-	opts = kzalloc(माप(*opts), GFP_KERNEL);
-	अगर (!opts)
-		वापस ERR_PTR(-ENOMEM);
-	opts->func_inst.मुक्त_func_inst = uvc_मुक्त_inst;
+	opts = kzalloc(sizeof(*opts), GFP_KERNEL);
+	if (!opts)
+		return ERR_PTR(-ENOMEM);
+	opts->func_inst.free_func_inst = uvc_free_inst;
 	mutex_init(&opts->lock);
 
 	cd = &opts->uvc_camera_terminal;
@@ -843,94 +842,94 @@ error:
 	md->bTransferCharacteristics	= 1;
 	md->bMatrixCoefficients		= 4;
 
-	/* Prepare fs control class descriptors क्रम configfs-based gadमाला_लो */
+	/* Prepare fs control class descriptors for configfs-based gadgets */
 	ctl_cls = opts->uvc_fs_control_cls;
-	ctl_cls[0] = शून्य;	/* asचिन्हित अन्यथाwhere by configfs */
-	ctl_cls[1] = (काष्ठा uvc_descriptor_header *)cd;
-	ctl_cls[2] = (काष्ठा uvc_descriptor_header *)pd;
-	ctl_cls[3] = (काष्ठा uvc_descriptor_header *)od;
-	ctl_cls[4] = शून्य;	/* शून्य-terminate */
+	ctl_cls[0] = NULL;	/* assigned elsewhere by configfs */
+	ctl_cls[1] = (struct uvc_descriptor_header *)cd;
+	ctl_cls[2] = (struct uvc_descriptor_header *)pd;
+	ctl_cls[3] = (struct uvc_descriptor_header *)od;
+	ctl_cls[4] = NULL;	/* NULL-terminate */
 	opts->fs_control =
-		(स्थिर काष्ठा uvc_descriptor_header * स्थिर *)ctl_cls;
+		(const struct uvc_descriptor_header * const *)ctl_cls;
 
-	/* Prepare hs control class descriptors क्रम configfs-based gadमाला_लो */
+	/* Prepare hs control class descriptors for configfs-based gadgets */
 	ctl_cls = opts->uvc_ss_control_cls;
-	ctl_cls[0] = शून्य;	/* asचिन्हित अन्यथाwhere by configfs */
-	ctl_cls[1] = (काष्ठा uvc_descriptor_header *)cd;
-	ctl_cls[2] = (काष्ठा uvc_descriptor_header *)pd;
-	ctl_cls[3] = (काष्ठा uvc_descriptor_header *)od;
-	ctl_cls[4] = शून्य;	/* शून्य-terminate */
+	ctl_cls[0] = NULL;	/* assigned elsewhere by configfs */
+	ctl_cls[1] = (struct uvc_descriptor_header *)cd;
+	ctl_cls[2] = (struct uvc_descriptor_header *)pd;
+	ctl_cls[3] = (struct uvc_descriptor_header *)od;
+	ctl_cls[4] = NULL;	/* NULL-terminate */
 	opts->ss_control =
-		(स्थिर काष्ठा uvc_descriptor_header * स्थिर *)ctl_cls;
+		(const struct uvc_descriptor_header * const *)ctl_cls;
 
-	opts->streaming_पूर्णांकerval = 1;
+	opts->streaming_interval = 1;
 	opts->streaming_maxpacket = 1024;
 
 	ret = uvcg_attach_configfs(opts);
-	अगर (ret < 0) अणु
-		kमुक्त(opts);
-		वापस ERR_PTR(ret);
-	पूर्ण
+	if (ret < 0) {
+		kfree(opts);
+		return ERR_PTR(ret);
+	}
 
-	वापस &opts->func_inst;
-पूर्ण
+	return &opts->func_inst;
+}
 
-अटल व्योम uvc_मुक्त(काष्ठा usb_function *f)
-अणु
-	काष्ठा uvc_device *uvc = to_uvc(f);
-	काष्ठा f_uvc_opts *opts = container_of(f->fi, काष्ठा f_uvc_opts,
+static void uvc_free(struct usb_function *f)
+{
+	struct uvc_device *uvc = to_uvc(f);
+	struct f_uvc_opts *opts = container_of(f->fi, struct f_uvc_opts,
 					       func_inst);
 	--opts->refcnt;
-	kमुक्त(uvc);
-पूर्ण
+	kfree(uvc);
+}
 
-अटल व्योम uvc_unbind(काष्ठा usb_configuration *c, काष्ठा usb_function *f)
-अणु
-	काष्ठा usb_composite_dev *cdev = c->cdev;
-	काष्ठा uvc_device *uvc = to_uvc(f);
+static void uvc_unbind(struct usb_configuration *c, struct usb_function *f)
+{
+	struct usb_composite_dev *cdev = c->cdev;
+	struct uvc_device *uvc = to_uvc(f);
 
 	uvcg_info(f, "%s\n", __func__);
 
-	device_हटाओ_file(&uvc->vdev.dev, &dev_attr_function_name);
-	video_unरेजिस्टर_device(&uvc->vdev);
-	v4l2_device_unरेजिस्टर(&uvc->v4l2_dev);
+	device_remove_file(&uvc->vdev.dev, &dev_attr_function_name);
+	video_unregister_device(&uvc->vdev);
+	v4l2_device_unregister(&uvc->v4l2_dev);
 
-	usb_ep_मुक्त_request(cdev->gadget->ep0, uvc->control_req);
-	kमुक्त(uvc->control_buf);
+	usb_ep_free_request(cdev->gadget->ep0, uvc->control_req);
+	kfree(uvc->control_buf);
 
-	usb_मुक्त_all_descriptors(f);
-पूर्ण
+	usb_free_all_descriptors(f);
+}
 
-अटल काष्ठा usb_function *uvc_alloc(काष्ठा usb_function_instance *fi)
-अणु
-	काष्ठा uvc_device *uvc;
-	काष्ठा f_uvc_opts *opts;
-	काष्ठा uvc_descriptor_header **strm_cls;
+static struct usb_function *uvc_alloc(struct usb_function_instance *fi)
+{
+	struct uvc_device *uvc;
+	struct f_uvc_opts *opts;
+	struct uvc_descriptor_header **strm_cls;
 
-	uvc = kzalloc(माप(*uvc), GFP_KERNEL);
-	अगर (uvc == शून्य)
-		वापस ERR_PTR(-ENOMEM);
+	uvc = kzalloc(sizeof(*uvc), GFP_KERNEL);
+	if (uvc == NULL)
+		return ERR_PTR(-ENOMEM);
 
 	mutex_init(&uvc->video.mutex);
 	uvc->state = UVC_STATE_DISCONNECTED;
 	opts = fi_to_f_uvc_opts(fi);
 
 	mutex_lock(&opts->lock);
-	अगर (opts->uvc_fs_streaming_cls) अणु
+	if (opts->uvc_fs_streaming_cls) {
 		strm_cls = opts->uvc_fs_streaming_cls;
 		opts->fs_streaming =
-			(स्थिर काष्ठा uvc_descriptor_header * स्थिर *)strm_cls;
-	पूर्ण
-	अगर (opts->uvc_hs_streaming_cls) अणु
+			(const struct uvc_descriptor_header * const *)strm_cls;
+	}
+	if (opts->uvc_hs_streaming_cls) {
 		strm_cls = opts->uvc_hs_streaming_cls;
 		opts->hs_streaming =
-			(स्थिर काष्ठा uvc_descriptor_header * स्थिर *)strm_cls;
-	पूर्ण
-	अगर (opts->uvc_ss_streaming_cls) अणु
+			(const struct uvc_descriptor_header * const *)strm_cls;
+	}
+	if (opts->uvc_ss_streaming_cls) {
 		strm_cls = opts->uvc_ss_streaming_cls;
 		opts->ss_streaming =
-			(स्थिर काष्ठा uvc_descriptor_header * स्थिर *)strm_cls;
-	पूर्ण
+			(const struct uvc_descriptor_header * const *)strm_cls;
+	}
 
 	uvc->desc.fs_control = opts->fs_control;
 	uvc->desc.ss_control = opts->ss_control;
@@ -948,11 +947,11 @@ error:
 	uvc->func.set_alt = uvc_function_set_alt;
 	uvc->func.disable = uvc_function_disable;
 	uvc->func.setup = uvc_function_setup;
-	uvc->func.मुक्त_func = uvc_मुक्त;
+	uvc->func.free_func = uvc_free;
 	uvc->func.bind_deactivated = true;
 
-	वापस &uvc->func;
-पूर्ण
+	return &uvc->func;
+}
 
 DECLARE_USB_FUNCTION_INIT(uvc, uvc_alloc_inst, uvc_alloc);
 MODULE_LICENSE("GPL");

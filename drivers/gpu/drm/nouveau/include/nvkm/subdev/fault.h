@@ -1,27 +1,26 @@
-<शैली गुरु>
-#अगर_अघोषित __NVKM_FAULT_H__
-#घोषणा __NVKM_FAULT_H__
-#समावेश <core/subdev.h>
-#समावेश <core/notअगरy.h>
+#ifndef __NVKM_FAULT_H__
+#define __NVKM_FAULT_H__
+#include <core/subdev.h>
+#include <core/notify.h>
 
-काष्ठा nvkm_fault अणु
-	स्थिर काष्ठा nvkm_fault_func *func;
-	काष्ठा nvkm_subdev subdev;
+struct nvkm_fault {
+	const struct nvkm_fault_func *func;
+	struct nvkm_subdev subdev;
 
-	काष्ठा nvkm_fault_buffer *buffer[2];
-	पूर्णांक buffer_nr;
+	struct nvkm_fault_buffer *buffer[2];
+	int buffer_nr;
 
-	काष्ठा nvkm_event event;
+	struct nvkm_event event;
 
-	काष्ठा nvkm_notअगरy nrpfb;
+	struct nvkm_notify nrpfb;
 
-	काष्ठा nvkm_device_oclass user;
-पूर्ण;
+	struct nvkm_device_oclass user;
+};
 
-काष्ठा nvkm_fault_data अणु
+struct nvkm_fault_data {
 	u64  addr;
 	u64  inst;
-	u64  समय;
+	u64  time;
 	u8 engine;
 	u8  valid;
 	u8    gpc;
@@ -29,10 +28,10 @@
 	u8 access;
 	u8 client;
 	u8 reason;
-पूर्ण;
+};
 
-पूर्णांक gp100_fault_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fault **);
-पूर्णांक gp10b_fault_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fault **);
-पूर्णांक gv100_fault_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fault **);
-पूर्णांक tu102_fault_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_fault **);
-#पूर्ण_अगर
+int gp100_fault_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fault **);
+int gp10b_fault_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fault **);
+int gv100_fault_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fault **);
+int tu102_fault_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_fault **);
+#endif

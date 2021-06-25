@@ -1,12 +1,11 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 // Copyright (C) 2005-2017 Andes Technology Corporation
 
-#अगर_अघोषित _ASM_HIGHMEM_H
-#घोषणा _ASM_HIGHMEM_H
+#ifndef _ASM_HIGHMEM_H
+#define _ASM_HIGHMEM_H
 
-#समावेश <यंत्र/proc-fns.h>
-#समावेश <यंत्र/fixmap.h>
+#include <asm/proc-fns.h>
+#include <asm/fixmap.h>
 
 /*
  * Right now we initialize only a single pte table. It can be extended
@@ -22,45 +21,45 @@
  *			fixed_addresses
  * FIXADDR_START
  * FIXADDR_TOP
- *			Vदो_स्मृति area
+ *			Vmalloc area
  * VMALLOC_START
  * VMALLOC_END
  */
-#घोषणा PKMAP_BASE		((FIXADDR_START - PGसूची_SIZE) & (PGसूची_MASK))
-#घोषणा LAST_PKMAP		PTRS_PER_PTE
-#घोषणा LAST_PKMAP_MASK		(LAST_PKMAP - 1)
-#घोषणा PKMAP_NR(virt)		(((virt) - (PKMAP_BASE)) >> PAGE_SHIFT)
-#घोषणा PKMAP_ADDR(nr)		(PKMAP_BASE + ((nr) << PAGE_SHIFT))
+#define PKMAP_BASE		((FIXADDR_START - PGDIR_SIZE) & (PGDIR_MASK))
+#define LAST_PKMAP		PTRS_PER_PTE
+#define LAST_PKMAP_MASK		(LAST_PKMAP - 1)
+#define PKMAP_NR(virt)		(((virt) - (PKMAP_BASE)) >> PAGE_SHIFT)
+#define PKMAP_ADDR(nr)		(PKMAP_BASE + ((nr) << PAGE_SHIFT))
 
-अटल अंतरभूत व्योम flush_cache_kmaps(व्योम)
-अणु
+static inline void flush_cache_kmaps(void)
+{
 	cpu_dcache_wbinval_all();
-पूर्ण
+}
 
-/* declarations क्रम highmem.c */
-बाह्य अचिन्हित दीर्घ highstart_pfn, highend_pfn;
+/* declarations for highmem.c */
+extern unsigned long highstart_pfn, highend_pfn;
 
-बाह्य pte_t *pkmap_page_table;
+extern pte_t *pkmap_page_table;
 
-बाह्य व्योम kmap_init(व्योम);
+extern void kmap_init(void);
 
 /*
  * FIXME: The below looks broken vs. a kmap_atomic() in task context which
- * is पूर्णांकerupted and another kmap_atomic() happens in पूर्णांकerrupt context.
- * But what करो I know about nds32. -- tglx
+ * is interupted and another kmap_atomic() happens in interrupt context.
+ * But what do I know about nds32. -- tglx
  */
-#घोषणा arch_kmap_local_post_map(vaddr, pteval)			\
-	करो अणु							\
+#define arch_kmap_local_post_map(vaddr, pteval)			\
+	do {							\
 		__nds32__tlbop_inv(vaddr);			\
 		__nds32__mtsr_dsb(vaddr, NDS32_SR_TLB_VPN);	\
 		__nds32__tlbop_rwr(pteval);			\
 		__nds32__isb();					\
-	पूर्ण जबतक (0)
+	} while (0)
 
-#घोषणा arch_kmap_local_pre_unmap(vaddr)			\
-	करो अणु							\
+#define arch_kmap_local_pre_unmap(vaddr)			\
+	do {							\
 		__nds32__tlbop_inv(vaddr);			\
 		__nds32__isb();					\
-	पूर्ण जबतक (0)
+	} while (0)
 
-#पूर्ण_अगर
+#endif

@@ -1,32 +1,31 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Support क्रम Intel Camera Imaging ISP subप्रणाली.
+ * Support for Intel Camera Imaging ISP subsystem.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
 
-#समावेश <linux/माला.स> /* क्रम स_नकल() */
+#include <linux/string.h> /* for memcpy() */
 
-#समावेश <type_support.h>
-#समावेश "system_global.h"
-#समावेश "vamem.h"
-#समावेश "ia_css_types.h"
-#समावेश "ia_css_ctc_table.host.h"
+#include <type_support.h>
+#include "system_global.h"
+#include "vamem.h"
+#include "ia_css_types.h"
+#include "ia_css_ctc_table.host.h"
 
-काष्ठा ia_css_ctc_table       शेष_ctc_table;
+struct ia_css_ctc_table       default_ctc_table;
 
 
-अटल स्थिर uपूर्णांक16_t
-शेष_ctc_table_data[IA_CSS_VAMEM_2_CTC_TABLE_SIZE] = अणु
+static const uint16_t
+default_ctc_table_data[IA_CSS_VAMEM_2_CTC_TABLE_SIZE] = {
 	0,  384,  837,  957, 1011, 1062, 1083, 1080,
 	1078, 1077, 1053, 1039, 1012,  992,  969,  951,
 	929,  906,  886,  866,  845,  823,  809,  790,
@@ -60,13 +59,13 @@
 	41,   40,   39,   39,   34,   33,   34,   32,
 	25,   23,   24,   20,   13,    9,   12,    0,
 	0
-पूर्ण;
+};
 
 
-व्योम
-ia_css_config_ctc_table(व्योम)
-अणु
-	स_नकल(शेष_ctc_table.data.vamem_2, शेष_ctc_table_data,
-	       माप(शेष_ctc_table_data));
-	शेष_ctc_table.vamem_type     = IA_CSS_VAMEM_TYPE_2;
-पूर्ण
+void
+ia_css_config_ctc_table(void)
+{
+	memcpy(default_ctc_table.data.vamem_2, default_ctc_table_data,
+	       sizeof(default_ctc_table_data));
+	default_ctc_table.vamem_type     = IA_CSS_VAMEM_TYPE_2;
+}

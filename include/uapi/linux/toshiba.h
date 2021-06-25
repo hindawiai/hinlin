@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ WITH Linux-syscall-note */
-/* toshiba.h -- Linux driver क्रम accessing the SMM on Toshiba laptops 
+/* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
+/* toshiba.h -- Linux driver for accessing the SMM on Toshiba laptops 
  *
  * Copyright (c) 1996-2000  Jonathan A. Buzzard (jonathan@buzzard.org.uk)
  * Copyright (c) 2015  Azael Avalos <coproscefalo@gmail.com>
  *
- * Thanks to Juergen Heinzl <juergen@monocerus.demon.co.uk> क्रम the poपूर्णांकers
- * on making sure the काष्ठाure is aligned and packed.
+ * Thanks to Juergen Heinzl <juergen@monocerus.demon.co.uk> for the pointers
+ * on making sure the structure is aligned and packed.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2, or (at your option) any
  * later version.
@@ -16,50 +15,50 @@
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License क्रम more details.
+ * General Public License for more details.
  *
  */
 
-#अगर_अघोषित _UAPI_LINUX_TOSHIBA_H
-#घोषणा _UAPI_LINUX_TOSHIBA_H
+#ifndef _UAPI_LINUX_TOSHIBA_H
+#define _UAPI_LINUX_TOSHIBA_H
 
 /*
  * Toshiba modules paths
  */
 
-#घोषणा TOSH_PROC		"/proc/toshiba"
-#घोषणा TOSH_DEVICE		"/dev/toshiba"
-#घोषणा TOSHIBA_ACPI_PROC	"/proc/acpi/toshiba"
-#घोषणा TOSHIBA_ACPI_DEVICE	"/dev/toshiba_acpi"
+#define TOSH_PROC		"/proc/toshiba"
+#define TOSH_DEVICE		"/dev/toshiba"
+#define TOSHIBA_ACPI_PROC	"/proc/acpi/toshiba"
+#define TOSHIBA_ACPI_DEVICE	"/dev/toshiba_acpi"
 
 /*
- * Toshiba SMM काष्ठाure
+ * Toshiba SMM structure
  */
 
-प्रकार काष्ठा अणु
-	अचिन्हित पूर्णांक eax;
-	अचिन्हित पूर्णांक ebx __attribute__ ((packed));
-	अचिन्हित पूर्णांक ecx __attribute__ ((packed));
-	अचिन्हित पूर्णांक edx __attribute__ ((packed));
-	अचिन्हित पूर्णांक esi __attribute__ ((packed));
-	अचिन्हित पूर्णांक edi __attribute__ ((packed));
-पूर्ण SMMRegisters;
+typedef struct {
+	unsigned int eax;
+	unsigned int ebx __attribute__ ((packed));
+	unsigned int ecx __attribute__ ((packed));
+	unsigned int edx __attribute__ ((packed));
+	unsigned int esi __attribute__ ((packed));
+	unsigned int edi __attribute__ ((packed));
+} SMMRegisters;
 
 /*
  * IOCTLs (0x90 - 0x91)
  */
 
-#घोषणा TOSH_SMM		_IOWR('t', 0x90, SMMRegisters)
+#define TOSH_SMM		_IOWR('t', 0x90, SMMRegisters)
 /*
  * Convenience toshiba_acpi command.
  *
- * The System Configuration Interface (SCI) is खोलोed/बंदd पूर्णांकernally
- * to aव्योम userspace of buggy BIOSes.
+ * The System Configuration Interface (SCI) is opened/closed internally
+ * to avoid userspace of buggy BIOSes.
  *
- * The toshiba_acpi module checks whether the eax रेजिस्टर is set with
- * SCI_GET (0xf300) or SCI_SET (0xf400), वापसing -EINVAL अगर not.
+ * The toshiba_acpi module checks whether the eax register is set with
+ * SCI_GET (0xf300) or SCI_SET (0xf400), returning -EINVAL if not.
  */
-#घोषणा TOSHIBA_ACPI_SCI	_IOWR('t', 0x91, SMMRegisters)
+#define TOSHIBA_ACPI_SCI	_IOWR('t', 0x91, SMMRegisters)
 
 
-#पूर्ण_अगर /* _UAPI_LINUX_TOSHIBA_H */
+#endif /* _UAPI_LINUX_TOSHIBA_H */

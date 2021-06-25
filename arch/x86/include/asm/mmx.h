@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_X86_MMX_H
-#घोषणा _ASM_X86_MMX_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_X86_MMX_H
+#define _ASM_X86_MMX_H
 
 /*
  *	MMX 3Dnow! helper operations
  */
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-बाह्य व्योम *_mmx_स_नकल(व्योम *to, स्थिर व्योम *from, माप_प्रकार size);
-बाह्य व्योम mmx_clear_page(व्योम *page);
-बाह्य व्योम mmx_copy_page(व्योम *to, व्योम *from);
+extern void *_mmx_memcpy(void *to, const void *from, size_t size);
+extern void mmx_clear_page(void *page);
+extern void mmx_copy_page(void *to, void *from);
 
-#पूर्ण_अगर /* _ASM_X86_MMX_H */
+#endif /* _ASM_X86_MMX_H */

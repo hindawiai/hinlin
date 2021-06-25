@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  *  S390 version
  *    Copyright IBM Corp. 1999, 2000
@@ -9,21 +8,21 @@
  *  Derived from "include/asm-i386/hardirq.h"
  */
 
-#अगर_अघोषित __ASM_HARसूचीQ_H
-#घोषणा __ASM_HARसूचीQ_H
+#ifndef __ASM_HARDIRQ_H
+#define __ASM_HARDIRQ_H
 
-#समावेश <यंत्र/lowcore.h>
+#include <asm/lowcore.h>
 
-#घोषणा local_softirq_pending() (S390_lowcore.softirq_pending)
-#घोषणा set_softirq_pending(x) (S390_lowcore.softirq_pending = (x))
-#घोषणा or_softirq_pending(x)  (S390_lowcore.softirq_pending |= (x))
+#define local_softirq_pending() (S390_lowcore.softirq_pending)
+#define set_softirq_pending(x) (S390_lowcore.softirq_pending = (x))
+#define or_softirq_pending(x)  (S390_lowcore.softirq_pending |= (x))
 
-#घोषणा __ARCH_IRQ_STAT
-#घोषणा __ARCH_IRQ_EXIT_IRQS_DISABLED
+#define __ARCH_IRQ_STAT
+#define __ARCH_IRQ_EXIT_IRQS_DISABLED
 
-अटल अंतरभूत व्योम ack_bad_irq(अचिन्हित पूर्णांक irq)
-अणु
-	prपूर्णांकk(KERN_CRIT "unexpected IRQ trap at vector %02x\n", irq);
-पूर्ण
+static inline void ack_bad_irq(unsigned int irq)
+{
+	printk(KERN_CRIT "unexpected IRQ trap at vector %02x\n", irq);
+}
 
-#पूर्ण_अगर /* __ASM_HARसूचीQ_H */
+#endif /* __ASM_HARDIRQ_H */

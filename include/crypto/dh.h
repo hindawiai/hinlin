@@ -1,87 +1,86 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * Dअगरfie-Hellman secret to be used with kpp API aदीर्घ with helper functions
+ * Diffie-Hellman secret to be used with kpp API along with helper functions
  *
  * Copyright (c) 2016, Intel Corporation
- * Authors: Salvatore Benedetto <salvatore.benedetto@पूर्णांकel.com>
+ * Authors: Salvatore Benedetto <salvatore.benedetto@intel.com>
  */
-#अगर_अघोषित _CRYPTO_DH_
-#घोषणा _CRYPTO_DH_
+#ifndef _CRYPTO_DH_
+#define _CRYPTO_DH_
 
 /**
  * DOC: DH Helper Functions
  *
- * To use DH with the KPP cipher API, the following data काष्ठाure and
+ * To use DH with the KPP cipher API, the following data structure and
  * functions should be used.
  *
  * To use DH with KPP, the following functions should be used to operate on
- * a DH निजी key. The packet निजी key that can be set with
+ * a DH private key. The packet private key that can be set with
  * the KPP API function call of crypto_kpp_set_secret.
  */
 
 /**
- * काष्ठा dh - define a DH निजी key
+ * struct dh - define a DH private key
  *
  * @key:	Private DH key
- * @p:		Dअगरfie-Hellman parameter P
- * @q:		Dअगरfie-Hellman parameter Q
- * @g:		Dअगरfie-Hellman generator G
- * @key_size:	Size of the निजी DH key
+ * @p:		Diffie-Hellman parameter P
+ * @q:		Diffie-Hellman parameter Q
+ * @g:		Diffie-Hellman generator G
+ * @key_size:	Size of the private DH key
  * @p_size:	Size of DH parameter P
  * @q_size:	Size of DH parameter Q
  * @g_size:	Size of DH generator G
  */
-काष्ठा dh अणु
-	व्योम *key;
-	व्योम *p;
-	व्योम *q;
-	व्योम *g;
-	अचिन्हित पूर्णांक key_size;
-	अचिन्हित पूर्णांक p_size;
-	अचिन्हित पूर्णांक q_size;
-	अचिन्हित पूर्णांक g_size;
-पूर्ण;
+struct dh {
+	void *key;
+	void *p;
+	void *q;
+	void *g;
+	unsigned int key_size;
+	unsigned int p_size;
+	unsigned int q_size;
+	unsigned int g_size;
+};
 
 /**
- * crypto_dh_key_len() - Obtain the size of the निजी DH key
- * @params:	निजी DH key
+ * crypto_dh_key_len() - Obtain the size of the private DH key
+ * @params:	private DH key
  *
- * This function वापसs the packet DH key size. A caller can use that
- * with the provided DH निजी key reference to obtain the required
+ * This function returns the packet DH key size. A caller can use that
+ * with the provided DH private key reference to obtain the required
  * memory size to hold a packet key.
  *
  * Return: size of the key in bytes
  */
-अचिन्हित पूर्णांक crypto_dh_key_len(स्थिर काष्ठा dh *params);
+unsigned int crypto_dh_key_len(const struct dh *params);
 
 /**
- * crypto_dh_encode_key() - encode the निजी key
+ * crypto_dh_encode_key() - encode the private key
  * @buf:	Buffer allocated by the caller to hold the packet DH
- *		निजी key. The buffer should be at least crypto_dh_key_len
+ *		private key. The buffer should be at least crypto_dh_key_len
  *		bytes in size.
- * @len:	Length of the packet निजी key buffer
- * @params:	Buffer with the caller-specअगरied निजी key
+ * @len:	Length of the packet private key buffer
+ * @params:	Buffer with the caller-specified private key
  *
- * The DH implementations operate on a packet representation of the निजी
+ * The DH implementations operate on a packet representation of the private
  * key.
  *
- * Return:	-EINVAL अगर buffer has insufficient size, 0 on success
+ * Return:	-EINVAL if buffer has insufficient size, 0 on success
  */
-पूर्णांक crypto_dh_encode_key(अक्षर *buf, अचिन्हित पूर्णांक len, स्थिर काष्ठा dh *params);
+int crypto_dh_encode_key(char *buf, unsigned int len, const struct dh *params);
 
 /**
- * crypto_dh_decode_key() - decode a निजी key
+ * crypto_dh_decode_key() - decode a private key
  * @buf:	Buffer holding a packet key that should be decoded
- * @len:	Length of the packet निजी key buffer
+ * @len:	Length of the packet private key buffer
  * @params:	Buffer allocated by the caller that is filled with the
- *		unpacked DH निजी key.
+ *		unpacked DH private key.
  *
- * The unpacking obtains the निजी key by poपूर्णांकing @p to the correct location
- * in @buf. Thus, both poपूर्णांकers refer to the same memory.
+ * The unpacking obtains the private key by pointing @p to the correct location
+ * in @buf. Thus, both pointers refer to the same memory.
  *
- * Return:	-EINVAL अगर buffer has insufficient size, 0 on success
+ * Return:	-EINVAL if buffer has insufficient size, 0 on success
  */
-पूर्णांक crypto_dh_decode_key(स्थिर अक्षर *buf, अचिन्हित पूर्णांक len, काष्ठा dh *params);
+int crypto_dh_decode_key(const char *buf, unsigned int len, struct dh *params);
 
-#पूर्ण_अगर
+#endif

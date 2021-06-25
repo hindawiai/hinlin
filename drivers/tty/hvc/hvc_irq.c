@@ -1,56 +1,55 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright IBM Corp. 2001,2008
  *
- * This file contains the IRQ specअगरic code क्रम hvc_console
+ * This file contains the IRQ specific code for hvc_console
  *
  */
 
-#समावेश <linux/पूर्णांकerrupt.h>
+#include <linux/interrupt.h>
 
-#समावेश "hvc_console.h"
+#include "hvc_console.h"
 
-अटल irqवापस_t hvc_handle_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_instance)
-अणु
-	/* अगर hvc_poll request a repoll, then kick the hvcd thपढ़ो */
-	अगर (hvc_poll(dev_instance))
+static irqreturn_t hvc_handle_interrupt(int irq, void *dev_instance)
+{
+	/* if hvc_poll request a repoll, then kick the hvcd thread */
+	if (hvc_poll(dev_instance))
 		hvc_kick();
 
 	/*
-	 * We're safe to always वापस IRQ_HANDLED as the hvcd thपढ़ो will
-	 * iterate through each hvc_काष्ठा.
+	 * We're safe to always return IRQ_HANDLED as the hvcd thread will
+	 * iterate through each hvc_struct.
 	 */
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /*
- * For IRQ based प्रणालीs these callbacks can be used
+ * For IRQ based systems these callbacks can be used
  */
-पूर्णांक notअगरier_add_irq(काष्ठा hvc_काष्ठा *hp, पूर्णांक irq)
-अणु
-	पूर्णांक rc;
+int notifier_add_irq(struct hvc_struct *hp, int irq)
+{
+	int rc;
 
-	अगर (!irq) अणु
+	if (!irq) {
 		hp->irq_requested = 0;
-		वापस 0;
-	पूर्ण
-	rc = request_irq(irq, hvc_handle_पूर्णांकerrupt, hp->flags,
+		return 0;
+	}
+	rc = request_irq(irq, hvc_handle_interrupt, hp->flags,
 			"hvc_console", hp);
-	अगर (!rc)
+	if (!rc)
 		hp->irq_requested = 1;
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-व्योम notअगरier_del_irq(काष्ठा hvc_काष्ठा *hp, पूर्णांक irq)
-अणु
-	अगर (!hp->irq_requested)
-		वापस;
-	मुक्त_irq(irq, hp);
+void notifier_del_irq(struct hvc_struct *hp, int irq)
+{
+	if (!hp->irq_requested)
+		return;
+	free_irq(irq, hp);
 	hp->irq_requested = 0;
-पूर्ण
+}
 
-व्योम notअगरier_hangup_irq(काष्ठा hvc_काष्ठा *hp, पूर्णांक irq)
-अणु
-	notअगरier_del_irq(hp, irq);
-पूर्ण
+void notifier_hangup_irq(struct hvc_struct *hp, int irq)
+{
+	notifier_del_irq(hp, irq);
+}

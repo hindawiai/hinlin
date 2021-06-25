@@ -1,35 +1,34 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2019 Linaro Ltd.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/tee_drv.h>
-#समावेश <linux/uuid.h>
-#समावेश "optee_private.h"
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/tee_drv.h>
+#include <linux/uuid.h>
+#include "optee_private.h"
 
-अटल पूर्णांक optee_ctx_match(काष्ठा tee_ioctl_version_data *ver, स्थिर व्योम *data)
-अणु
-	अगर (ver->impl_id == TEE_IMPL_ID_OPTEE)
-		वापस 1;
-	अन्यथा
-		वापस 0;
-पूर्ण
+static int optee_ctx_match(struct tee_ioctl_version_data *ver, const void *data)
+{
+	if (ver->impl_id == TEE_IMPL_ID_OPTEE)
+		return 1;
+	else
+		return 0;
+}
 
-अटल पूर्णांक get_devices(काष्ठा tee_context *ctx, u32 session,
-		       काष्ठा tee_shm *device_shm, u32 *shm_size,
+static int get_devices(struct tee_context *ctx, u32 session,
+		       struct tee_shm *device_shm, u32 *shm_size,
 		       u32 func)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा tee_ioctl_invoke_arg inv_arg;
-	काष्ठा tee_param param[4];
+{
+	int ret = 0;
+	struct tee_ioctl_invoke_arg inv_arg;
+	struct tee_param param[4];
 
-	स_रखो(&inv_arg, 0, माप(inv_arg));
-	स_रखो(&param, 0, माप(param));
+	memset(&inv_arg, 0, sizeof(inv_arg));
+	memset(&param, 0, sizeof(param));
 
 	inv_arg.func = func;
 	inv_arg.session = session;
@@ -42,116 +41,116 @@
 	param[0].u.memref.shm_offs = 0;
 
 	ret = tee_client_invoke_func(ctx, &inv_arg, param);
-	अगर ((ret < 0) || ((inv_arg.ret != TEEC_SUCCESS) &&
-			  (inv_arg.ret != TEEC_ERROR_SHORT_BUFFER))) अणु
+	if ((ret < 0) || ((inv_arg.ret != TEEC_SUCCESS) &&
+			  (inv_arg.ret != TEEC_ERROR_SHORT_BUFFER))) {
 		pr_err("PTA_CMD_GET_DEVICES invoke function err: %x\n",
 		       inv_arg.ret);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	*shm_size = param[0].u.memref.size;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक optee_रेजिस्टर_device(स्थिर uuid_t *device_uuid)
-अणु
-	काष्ठा tee_client_device *optee_device = शून्य;
-	पूर्णांक rc;
+static int optee_register_device(const uuid_t *device_uuid)
+{
+	struct tee_client_device *optee_device = NULL;
+	int rc;
 
-	optee_device = kzalloc(माप(*optee_device), GFP_KERNEL);
-	अगर (!optee_device)
-		वापस -ENOMEM;
+	optee_device = kzalloc(sizeof(*optee_device), GFP_KERNEL);
+	if (!optee_device)
+		return -ENOMEM;
 
 	optee_device->dev.bus = &tee_bus_type;
-	अगर (dev_set_name(&optee_device->dev, "optee-ta-%pUb", device_uuid)) अणु
-		kमुक्त(optee_device);
-		वापस -ENOMEM;
-	पूर्ण
+	if (dev_set_name(&optee_device->dev, "optee-ta-%pUb", device_uuid)) {
+		kfree(optee_device);
+		return -ENOMEM;
+	}
 	uuid_copy(&optee_device->id.uuid, device_uuid);
 
-	rc = device_रेजिस्टर(&optee_device->dev);
-	अगर (rc) अणु
+	rc = device_register(&optee_device->dev);
+	if (rc) {
 		pr_err("device registration failed, err: %d\n", rc);
-		kमुक्त(optee_device);
-	पूर्ण
+		kfree(optee_device);
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक __optee_क्रमागतerate_devices(u32 func)
-अणु
-	स्थिर uuid_t pta_uuid =
+static int __optee_enumerate_devices(u32 func)
+{
+	const uuid_t pta_uuid =
 		UUID_INIT(0x7011a688, 0xddde, 0x4053,
 			  0xa5, 0xa9, 0x7b, 0x3c, 0x4d, 0xdf, 0x13, 0xb8);
-	काष्ठा tee_ioctl_खोलो_session_arg sess_arg;
-	काष्ठा tee_shm *device_shm = शून्य;
-	स्थिर uuid_t *device_uuid = शून्य;
-	काष्ठा tee_context *ctx = शून्य;
+	struct tee_ioctl_open_session_arg sess_arg;
+	struct tee_shm *device_shm = NULL;
+	const uuid_t *device_uuid = NULL;
+	struct tee_context *ctx = NULL;
 	u32 shm_size = 0, idx, num_devices = 0;
-	पूर्णांक rc;
+	int rc;
 
-	स_रखो(&sess_arg, 0, माप(sess_arg));
+	memset(&sess_arg, 0, sizeof(sess_arg));
 
 	/* Open context with OP-TEE driver */
-	ctx = tee_client_खोलो_context(शून्य, optee_ctx_match, शून्य, शून्य);
-	अगर (IS_ERR(ctx))
-		वापस -ENODEV;
+	ctx = tee_client_open_context(NULL, optee_ctx_match, NULL, NULL);
+	if (IS_ERR(ctx))
+		return -ENODEV;
 
-	/* Open session with device क्रमागतeration pseuकरो TA */
+	/* Open session with device enumeration pseudo TA */
 	export_uuid(sess_arg.uuid, &pta_uuid);
 	sess_arg.clnt_login = TEE_IOCTL_LOGIN_PUBLIC;
 	sess_arg.num_params = 0;
 
-	rc = tee_client_खोलो_session(ctx, &sess_arg, शून्य);
-	अगर ((rc < 0) || (sess_arg.ret != TEEC_SUCCESS)) अणु
-		/* Device क्रमागतeration pseuकरो TA not found */
+	rc = tee_client_open_session(ctx, &sess_arg, NULL);
+	if ((rc < 0) || (sess_arg.ret != TEEC_SUCCESS)) {
+		/* Device enumeration pseudo TA not found */
 		rc = 0;
-		जाओ out_ctx;
-	पूर्ण
+		goto out_ctx;
+	}
 
-	rc = get_devices(ctx, sess_arg.session, शून्य, &shm_size, func);
-	अगर (rc < 0 || !shm_size)
-		जाओ out_sess;
+	rc = get_devices(ctx, sess_arg.session, NULL, &shm_size, func);
+	if (rc < 0 || !shm_size)
+		goto out_sess;
 
 	device_shm = tee_shm_alloc(ctx, shm_size,
 				   TEE_SHM_MAPPED | TEE_SHM_DMA_BUF);
-	अगर (IS_ERR(device_shm)) अणु
+	if (IS_ERR(device_shm)) {
 		pr_err("tee_shm_alloc failed\n");
 		rc = PTR_ERR(device_shm);
-		जाओ out_sess;
-	पूर्ण
+		goto out_sess;
+	}
 
 	rc = get_devices(ctx, sess_arg.session, device_shm, &shm_size, func);
-	अगर (rc < 0)
-		जाओ out_shm;
+	if (rc < 0)
+		goto out_shm;
 
 	device_uuid = tee_shm_get_va(device_shm, 0);
-	अगर (IS_ERR(device_uuid)) अणु
+	if (IS_ERR(device_uuid)) {
 		pr_err("tee_shm_get_va failed\n");
 		rc = PTR_ERR(device_uuid);
-		जाओ out_shm;
-	पूर्ण
+		goto out_shm;
+	}
 
-	num_devices = shm_size / माप(uuid_t);
+	num_devices = shm_size / sizeof(uuid_t);
 
-	क्रम (idx = 0; idx < num_devices; idx++) अणु
-		rc = optee_रेजिस्टर_device(&device_uuid[idx]);
-		अगर (rc)
-			जाओ out_shm;
-	पूर्ण
+	for (idx = 0; idx < num_devices; idx++) {
+		rc = optee_register_device(&device_uuid[idx]);
+		if (rc)
+			goto out_shm;
+	}
 
 out_shm:
-	tee_shm_मुक्त(device_shm);
+	tee_shm_free(device_shm);
 out_sess:
-	tee_client_बंद_session(ctx, sess_arg.session);
+	tee_client_close_session(ctx, sess_arg.session);
 out_ctx:
-	tee_client_बंद_context(ctx);
+	tee_client_close_context(ctx);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक optee_क्रमागतerate_devices(u32 func)
-अणु
-	वापस  __optee_क्रमागतerate_devices(func);
-पूर्ण
+int optee_enumerate_devices(u32 func)
+{
+	return  __optee_enumerate_devices(func);
+}

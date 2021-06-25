@@ -1,47 +1,46 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * ci.h - common काष्ठाures, functions, and macros of the ChipIdea driver
+ * ci.h - common structures, functions, and macros of the ChipIdea driver
  *
  * Copyright (C) 2008 Chipidea - MIPS Technologies, Inc. All rights reserved.
  *
  * Author: David Lopo
  */
 
-#अगर_अघोषित __DRIVERS_USB_CHIPIDEA_CI_H
-#घोषणा __DRIVERS_USB_CHIPIDEA_CI_H
+#ifndef __DRIVERS_USB_CHIPIDEA_CI_H
+#define __DRIVERS_USB_CHIPIDEA_CI_H
 
-#समावेश <linux/list.h>
-#समावेश <linux/irqवापस.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/usb/gadget.h>
-#समावेश <linux/usb/otg-fsm.h>
-#समावेश <linux/usb/otg.h>
-#समावेश <linux/usb/role.h>
-#समावेश <linux/ulpi/पूर्णांकerface.h>
+#include <linux/list.h>
+#include <linux/irqreturn.h>
+#include <linux/usb.h>
+#include <linux/usb/gadget.h>
+#include <linux/usb/otg-fsm.h>
+#include <linux/usb/otg.h>
+#include <linux/usb/role.h>
+#include <linux/ulpi/interface.h>
 
 /******************************************************************************
  * DEFINE
  *****************************************************************************/
-#घोषणा TD_PAGE_COUNT      5
-#घोषणा CI_HDRC_PAGE_SIZE  4096ul /* page size क्रम TD's */
-#घोषणा ENDPT_MAX          32
-#घोषणा CI_MAX_BUF_SIZE	(TD_PAGE_COUNT * CI_HDRC_PAGE_SIZE)
+#define TD_PAGE_COUNT      5
+#define CI_HDRC_PAGE_SIZE  4096ul /* page size for TD's */
+#define ENDPT_MAX          32
+#define CI_MAX_BUF_SIZE	(TD_PAGE_COUNT * CI_HDRC_PAGE_SIZE)
 
 /******************************************************************************
  * REGISTERS
  *****************************************************************************/
-/* Identअगरication Registers */
-#घोषणा ID_ID				0x0
-#घोषणा ID_HWGENERAL			0x4
-#घोषणा ID_HWHOST			0x8
-#घोषणा ID_HWDEVICE			0xc
-#घोषणा ID_HWTXBUF			0x10
-#घोषणा ID_HWRXBUF			0x14
-#घोषणा ID_SBUSCFG			0x90
+/* Identification Registers */
+#define ID_ID				0x0
+#define ID_HWGENERAL			0x4
+#define ID_HWHOST			0x8
+#define ID_HWDEVICE			0xc
+#define ID_HWTXBUF			0x10
+#define ID_HWRXBUF			0x14
+#define ID_SBUSCFG			0x90
 
-/* रेजिस्टर indices */
-क्रमागत ci_hw_regs अणु
+/* register indices */
+enum ci_hw_regs {
 	CAP_CAPLENGTH,
 	CAP_HCCPARAMS,
 	CAP_DCCPARAMS,
@@ -67,51 +66,51 @@
 	OP_ENDPTCTRL,
 	/* endptctrl1..15 follow */
 	OP_LAST = OP_ENDPTCTRL + ENDPT_MAX / 2,
-पूर्ण;
+};
 
 /******************************************************************************
  * STRUCTURES
  *****************************************************************************/
 /**
- * काष्ठा ci_hw_ep - endpoपूर्णांक representation
- * @ep: endpoपूर्णांक काष्ठाure क्रम gadget drivers
- * @dir: endpoपूर्णांक direction (TX/RX)
- * @num: endpoपूर्णांक number
- * @type: endpoपूर्णांक type
- * @name: string description of the endpoपूर्णांक
- * @qh: queue head क्रम this endpoपूर्णांक
- * @wedge: is the endpoपूर्णांक wedged
- * @ci: poपूर्णांकer to the controller
- * @lock: poपूर्णांकer to controller's spinlock
- * @td_pool: poपूर्णांकer to controller's TD pool
+ * struct ci_hw_ep - endpoint representation
+ * @ep: endpoint structure for gadget drivers
+ * @dir: endpoint direction (TX/RX)
+ * @num: endpoint number
+ * @type: endpoint type
+ * @name: string description of the endpoint
+ * @qh: queue head for this endpoint
+ * @wedge: is the endpoint wedged
+ * @ci: pointer to the controller
+ * @lock: pointer to controller's spinlock
+ * @td_pool: pointer to controller's TD pool
  */
-काष्ठा ci_hw_ep अणु
-	काष्ठा usb_ep				ep;
+struct ci_hw_ep {
+	struct usb_ep				ep;
 	u8					dir;
 	u8					num;
 	u8					type;
-	अक्षर					name[16];
-	काष्ठा अणु
-		काष्ठा list_head	queue;
-		काष्ठा ci_hw_qh		*ptr;
+	char					name[16];
+	struct {
+		struct list_head	queue;
+		struct ci_hw_qh		*ptr;
 		dma_addr_t		dma;
-	पूर्ण					qh;
-	पूर्णांक					wedge;
+	}					qh;
+	int					wedge;
 
 	/* global resources */
-	काष्ठा ci_hdrc				*ci;
+	struct ci_hdrc				*ci;
 	spinlock_t				*lock;
-	काष्ठा dma_pool				*td_pool;
-	काष्ठा td_node				*pending_td;
-पूर्ण;
+	struct dma_pool				*td_pool;
+	struct td_node				*pending_td;
+};
 
-क्रमागत ci_role अणु
+enum ci_role {
 	CI_ROLE_HOST = 0,
 	CI_ROLE_GADGET,
 	CI_ROLE_END,
-पूर्ण;
+};
 
-क्रमागत ci_revision अणु
+enum ci_revision {
 	CI_REVISION_1X = 10,	/* Revision 1.x */
 	CI_REVISION_20 = 20, /* Revision 2.0 */
 	CI_REVISION_21, /* Revision 2.1 */
@@ -121,352 +120,352 @@
 	CI_REVISION_25, /* Revision 2.5 */
 	CI_REVISION_25_PLUS, /* Revision above than 2.5 */
 	CI_REVISION_UNKNOWN = 99, /* Unknown Revision */
-पूर्ण;
+};
 
 /**
- * काष्ठा ci_role_driver - host/gadget role driver
+ * struct ci_role_driver - host/gadget role driver
  * @start: start this role
  * @stop: stop this role
- * @irq: irq handler क्रम this role
+ * @irq: irq handler for this role
  * @name: role name string (host/gadget)
  */
-काष्ठा ci_role_driver अणु
-	पूर्णांक		(*start)(काष्ठा ci_hdrc *);
-	व्योम		(*stop)(काष्ठा ci_hdrc *);
-	irqवापस_t	(*irq)(काष्ठा ci_hdrc *);
-	स्थिर अक्षर	*name;
-पूर्ण;
+struct ci_role_driver {
+	int		(*start)(struct ci_hdrc *);
+	void		(*stop)(struct ci_hdrc *);
+	irqreturn_t	(*irq)(struct ci_hdrc *);
+	const char	*name;
+};
 
 /**
- * काष्ठा hw_bank - hardware रेजिस्टर mapping representation
- * @lpm: set अगर the device is LPM capable
- * @phys: physical address of the controller's रेजिस्टरs
- * @असल: असलolute address of the beginning of रेजिस्टर winकरोw
- * @cap: capability रेजिस्टरs
- * @op: operational रेजिस्टरs
- * @size: size of the रेजिस्टर winकरोw
- * @regmap: रेजिस्टर lookup table
+ * struct hw_bank - hardware register mapping representation
+ * @lpm: set if the device is LPM capable
+ * @phys: physical address of the controller's registers
+ * @abs: absolute address of the beginning of register window
+ * @cap: capability registers
+ * @op: operational registers
+ * @size: size of the register window
+ * @regmap: register lookup table
  */
-काष्ठा hw_bank अणु
-	अचिन्हित	lpm;
-	resource_माप_प्रकार	phys;
-	व्योम __iomem	*असल;
-	व्योम __iomem	*cap;
-	व्योम __iomem	*op;
-	माप_प्रकार		size;
-	व्योम __iomem	*regmap[OP_LAST + 1];
-पूर्ण;
+struct hw_bank {
+	unsigned	lpm;
+	resource_size_t	phys;
+	void __iomem	*abs;
+	void __iomem	*cap;
+	void __iomem	*op;
+	size_t		size;
+	void __iomem	*regmap[OP_LAST + 1];
+};
 
 /**
- * काष्ठा ci_hdrc - chipidea device representation
- * @dev: poपूर्णांकer to parent device
+ * struct ci_hdrc - chipidea device representation
+ * @dev: pointer to parent device
  * @lock: access synchronization
- * @hw_bank: hardware रेजिस्टर mapping
+ * @hw_bank: hardware register mapping
  * @irq: IRQ number
- * @roles: array of supported roles क्रम this controller
+ * @roles: array of supported roles for this controller
  * @role: current role
- * @is_otg: अगर the device is otg-capable
+ * @is_otg: if the device is otg-capable
  * @fsm: otg finite state machine
- * @otg_fsm_hrसमयr: hrसमयr क्रम otg fsm समयrs
- * @hr_समयouts: समय out list क्रम active otg fsm समयrs
- * @enabled_otg_समयr_bits: bits of enabled otg समयrs
- * @next_otg_समयr: next nearest enabled समयr to be expired
- * @work: work क्रम role changing
- * @wq: workqueue thपढ़ो
- * @qh_pool: allocation pool क्रम queue heads
- * @td_pool: allocation pool क्रम transfer descriptors
- * @gadget: device side representation क्रम peripheral controller
+ * @otg_fsm_hrtimer: hrtimer for otg fsm timers
+ * @hr_timeouts: time out list for active otg fsm timers
+ * @enabled_otg_timer_bits: bits of enabled otg timers
+ * @next_otg_timer: next nearest enabled timer to be expired
+ * @work: work for role changing
+ * @wq: workqueue thread
+ * @qh_pool: allocation pool for queue heads
+ * @td_pool: allocation pool for transfer descriptors
+ * @gadget: device side representation for peripheral controller
  * @driver: gadget driver
  * @resume_state: save the state of gadget suspend from
- * @hw_ep_max: total number of endpoपूर्णांकs supported by hardware
- * @ci_hw_ep: array of endpoपूर्णांकs
+ * @hw_ep_max: total number of endpoints supported by hardware
+ * @ci_hw_ep: array of endpoints
  * @ep0_dir: ep0 direction
- * @ep0out: poपूर्णांकer to ep0 OUT endpoपूर्णांक
- * @ep0in: poपूर्णांकer to ep0 IN endpoपूर्णांक
+ * @ep0out: pointer to ep0 OUT endpoint
+ * @ep0in: pointer to ep0 IN endpoint
  * @status: ep0 status request
- * @setaddr: अगर we should set the address on status completion
+ * @setaddr: if we should set the address on status completion
  * @address: usb address received from the host
  * @remote_wakeup: host-enabled remote wakeup
  * @suspended: suspended by host
  * @test_mode: the selected test mode
- * @platdata: platक्रमm specअगरic inक्रमmation supplied by parent device
+ * @platdata: platform specific information supplied by parent device
  * @vbus_active: is VBUS active
- * @ulpi: poपूर्णांकer to ULPI device, अगर any
- * @ulpi_ops: ULPI पढ़ो/ग_लिखो ops क्रम this device
- * @phy: poपूर्णांकer to PHY, अगर any
- * @usb_phy: poपूर्णांकer to USB PHY, अगर any and अगर using the USB PHY framework
- * @hcd: poपूर्णांकer to usb_hcd क्रम ehci host driver
- * @debugfs: root dentry क्रम this controller in debugfs
+ * @ulpi: pointer to ULPI device, if any
+ * @ulpi_ops: ULPI read/write ops for this device
+ * @phy: pointer to PHY, if any
+ * @usb_phy: pointer to USB PHY, if any and if using the USB PHY framework
+ * @hcd: pointer to usb_hcd for ehci host driver
+ * @debugfs: root dentry for this controller in debugfs
  * @id_event: indicates there is an id event, and handled at ci_otg_work
  * @b_sess_valid_event: indicates there is a vbus event, and handled
  * at ci_otg_work
- * @imx28_ग_लिखो_fix: Freescale imx28 needs swp inकाष्ठाion क्रम writing
- * @supports_runसमय_pm: अगर runसमय pm is supported
- * @in_lpm: अगर the core in low घातer mode
- * @wakeup_पूर्णांक: अगर wakeup पूर्णांकerrupt occur
- * @rev: The revision number क्रम controller
+ * @imx28_write_fix: Freescale imx28 needs swp instruction for writing
+ * @supports_runtime_pm: if runtime pm is supported
+ * @in_lpm: if the core in low power mode
+ * @wakeup_int: if wakeup interrupt occur
+ * @rev: The revision number for controller
  */
-काष्ठा ci_hdrc अणु
-	काष्ठा device			*dev;
+struct ci_hdrc {
+	struct device			*dev;
 	spinlock_t			lock;
-	काष्ठा hw_bank			hw_bank;
-	पूर्णांक				irq;
-	काष्ठा ci_role_driver		*roles[CI_ROLE_END];
-	क्रमागत ci_role			role;
+	struct hw_bank			hw_bank;
+	int				irq;
+	struct ci_role_driver		*roles[CI_ROLE_END];
+	enum ci_role			role;
 	bool				is_otg;
-	काष्ठा usb_otg			otg;
-	काष्ठा otg_fsm			fsm;
-	काष्ठा hrसमयr			otg_fsm_hrसमयr;
-	kसमय_प्रकार				hr_समयouts[NUM_OTG_FSM_TIMERS];
-	अचिन्हित			enabled_otg_समयr_bits;
-	क्रमागत otg_fsm_समयr		next_otg_समयr;
-	काष्ठा usb_role_चयन		*role_चयन;
-	काष्ठा work_काष्ठा		work;
-	काष्ठा workqueue_काष्ठा		*wq;
+	struct usb_otg			otg;
+	struct otg_fsm			fsm;
+	struct hrtimer			otg_fsm_hrtimer;
+	ktime_t				hr_timeouts[NUM_OTG_FSM_TIMERS];
+	unsigned			enabled_otg_timer_bits;
+	enum otg_fsm_timer		next_otg_timer;
+	struct usb_role_switch		*role_switch;
+	struct work_struct		work;
+	struct workqueue_struct		*wq;
 
-	काष्ठा dma_pool			*qh_pool;
-	काष्ठा dma_pool			*td_pool;
+	struct dma_pool			*qh_pool;
+	struct dma_pool			*td_pool;
 
-	काष्ठा usb_gadget		gadget;
-	काष्ठा usb_gadget_driver	*driver;
-	क्रमागत usb_device_state		resume_state;
-	अचिन्हित			hw_ep_max;
-	काष्ठा ci_hw_ep			ci_hw_ep[ENDPT_MAX];
+	struct usb_gadget		gadget;
+	struct usb_gadget_driver	*driver;
+	enum usb_device_state		resume_state;
+	unsigned			hw_ep_max;
+	struct ci_hw_ep			ci_hw_ep[ENDPT_MAX];
 	u32				ep0_dir;
-	काष्ठा ci_hw_ep			*ep0out, *ep0in;
+	struct ci_hw_ep			*ep0out, *ep0in;
 
-	काष्ठा usb_request		*status;
+	struct usb_request		*status;
 	bool				setaddr;
 	u8				address;
 	u8				remote_wakeup;
 	u8				suspended;
 	u8				test_mode;
 
-	काष्ठा ci_hdrc_platक्रमm_data	*platdata;
-	पूर्णांक				vbus_active;
-	काष्ठा ulpi			*ulpi;
-	काष्ठा ulpi_ops 		ulpi_ops;
-	काष्ठा phy			*phy;
-	/* old usb_phy पूर्णांकerface */
-	काष्ठा usb_phy			*usb_phy;
-	काष्ठा usb_hcd			*hcd;
-	काष्ठा dentry			*debugfs;
+	struct ci_hdrc_platform_data	*platdata;
+	int				vbus_active;
+	struct ulpi			*ulpi;
+	struct ulpi_ops 		ulpi_ops;
+	struct phy			*phy;
+	/* old usb_phy interface */
+	struct usb_phy			*usb_phy;
+	struct usb_hcd			*hcd;
+	struct dentry			*debugfs;
 	bool				id_event;
 	bool				b_sess_valid_event;
-	bool				imx28_ग_लिखो_fix;
-	bool				supports_runसमय_pm;
+	bool				imx28_write_fix;
+	bool				supports_runtime_pm;
 	bool				in_lpm;
-	bool				wakeup_पूर्णांक;
-	क्रमागत ci_revision		rev;
-पूर्ण;
+	bool				wakeup_int;
+	enum ci_revision		rev;
+};
 
-अटल अंतरभूत काष्ठा ci_role_driver *ci_role(काष्ठा ci_hdrc *ci)
-अणु
+static inline struct ci_role_driver *ci_role(struct ci_hdrc *ci)
+{
 	BUG_ON(ci->role >= CI_ROLE_END || !ci->roles[ci->role]);
-	वापस ci->roles[ci->role];
-पूर्ण
+	return ci->roles[ci->role];
+}
 
-अटल अंतरभूत पूर्णांक ci_role_start(काष्ठा ci_hdrc *ci, क्रमागत ci_role role)
-अणु
-	पूर्णांक ret;
+static inline int ci_role_start(struct ci_hdrc *ci, enum ci_role role)
+{
+	int ret;
 
-	अगर (role >= CI_ROLE_END)
-		वापस -EINVAL;
+	if (role >= CI_ROLE_END)
+		return -EINVAL;
 
-	अगर (!ci->roles[role])
-		वापस -ENXIO;
+	if (!ci->roles[role])
+		return -ENXIO;
 
 	ret = ci->roles[role]->start(ci);
-	अगर (!ret)
+	if (!ret)
 		ci->role = role;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत व्योम ci_role_stop(काष्ठा ci_hdrc *ci)
-अणु
-	क्रमागत ci_role role = ci->role;
+static inline void ci_role_stop(struct ci_hdrc *ci)
+{
+	enum ci_role role = ci->role;
 
-	अगर (role == CI_ROLE_END)
-		वापस;
+	if (role == CI_ROLE_END)
+		return;
 
 	ci->role = CI_ROLE_END;
 
 	ci->roles[role]->stop(ci);
-पूर्ण
+}
 
-अटल अंतरभूत क्रमागत usb_role ci_role_to_usb_role(काष्ठा ci_hdrc *ci)
-अणु
-	अगर (ci->role == CI_ROLE_HOST)
-		वापस USB_ROLE_HOST;
-	अन्यथा अगर (ci->role == CI_ROLE_GADGET && ci->vbus_active)
-		वापस USB_ROLE_DEVICE;
-	अन्यथा
-		वापस USB_ROLE_NONE;
-पूर्ण
+static inline enum usb_role ci_role_to_usb_role(struct ci_hdrc *ci)
+{
+	if (ci->role == CI_ROLE_HOST)
+		return USB_ROLE_HOST;
+	else if (ci->role == CI_ROLE_GADGET && ci->vbus_active)
+		return USB_ROLE_DEVICE;
+	else
+		return USB_ROLE_NONE;
+}
 
-अटल अंतरभूत क्रमागत ci_role usb_role_to_ci_role(क्रमागत usb_role role)
-अणु
-	अगर (role == USB_ROLE_HOST)
-		वापस CI_ROLE_HOST;
-	अन्यथा अगर (role == USB_ROLE_DEVICE)
-		वापस CI_ROLE_GADGET;
-	अन्यथा
-		वापस CI_ROLE_END;
-पूर्ण
+static inline enum ci_role usb_role_to_ci_role(enum usb_role role)
+{
+	if (role == USB_ROLE_HOST)
+		return CI_ROLE_HOST;
+	else if (role == USB_ROLE_DEVICE)
+		return CI_ROLE_GADGET;
+	else
+		return CI_ROLE_END;
+}
 
 /**
- * hw_पढ़ो_id_reg: पढ़ोs from a identअगरication रेजिस्टर
+ * hw_read_id_reg: reads from a identification register
  * @ci: the controller
- * @offset: offset from the beginning of identअगरication रेजिस्टरs region
+ * @offset: offset from the beginning of identification registers region
  * @mask: bitfield mask
  *
- * This function वापसs रेजिस्टर contents
+ * This function returns register contents
  */
-अटल अंतरभूत u32 hw_पढ़ो_id_reg(काष्ठा ci_hdrc *ci, u32 offset, u32 mask)
-अणु
-	वापस ioपढ़ो32(ci->hw_bank.असल + offset) & mask;
-पूर्ण
+static inline u32 hw_read_id_reg(struct ci_hdrc *ci, u32 offset, u32 mask)
+{
+	return ioread32(ci->hw_bank.abs + offset) & mask;
+}
 
 /**
- * hw_ग_लिखो_id_reg: ग_लिखोs to a identअगरication रेजिस्टर
+ * hw_write_id_reg: writes to a identification register
  * @ci: the controller
- * @offset: offset from the beginning of identअगरication रेजिस्टरs region
+ * @offset: offset from the beginning of identification registers region
  * @mask: bitfield mask
  * @data: new value
  */
-अटल अंतरभूत व्योम hw_ग_लिखो_id_reg(काष्ठा ci_hdrc *ci, u32 offset,
+static inline void hw_write_id_reg(struct ci_hdrc *ci, u32 offset,
 			    u32 mask, u32 data)
-अणु
-	अगर (~mask)
-		data = (ioपढ़ो32(ci->hw_bank.असल + offset) & ~mask)
+{
+	if (~mask)
+		data = (ioread32(ci->hw_bank.abs + offset) & ~mask)
 			| (data & mask);
 
-	ioग_लिखो32(data, ci->hw_bank.असल + offset);
-पूर्ण
+	iowrite32(data, ci->hw_bank.abs + offset);
+}
 
 /**
- * hw_पढ़ो: पढ़ोs from a hw रेजिस्टर
+ * hw_read: reads from a hw register
  * @ci: the controller
- * @reg:  रेजिस्टर index
+ * @reg:  register index
  * @mask: bitfield mask
  *
- * This function वापसs रेजिस्टर contents
+ * This function returns register contents
  */
-अटल अंतरभूत u32 hw_पढ़ो(काष्ठा ci_hdrc *ci, क्रमागत ci_hw_regs reg, u32 mask)
-अणु
-	वापस ioपढ़ो32(ci->hw_bank.regmap[reg]) & mask;
-पूर्ण
+static inline u32 hw_read(struct ci_hdrc *ci, enum ci_hw_regs reg, u32 mask)
+{
+	return ioread32(ci->hw_bank.regmap[reg]) & mask;
+}
 
-#अगर_घोषित CONFIG_SOC_IMX28
-अटल अंतरभूत व्योम imx28_ci_ग_लिखोl(u32 val, अस्थिर व्योम __iomem *addr)
-अणु
-	__यंत्र__ ("swp %0, %0, [%1]" : : "r"(val), "r"(addr));
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम imx28_ci_ग_लिखोl(u32 val, अस्थिर व्योम __iomem *addr)
-अणु
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_SOC_IMX28
+static inline void imx28_ci_writel(u32 val, volatile void __iomem *addr)
+{
+	__asm__ ("swp %0, %0, [%1]" : : "r"(val), "r"(addr));
+}
+#else
+static inline void imx28_ci_writel(u32 val, volatile void __iomem *addr)
+{
+}
+#endif
 
-अटल अंतरभूत व्योम __hw_ग_लिखो(काष्ठा ci_hdrc *ci, u32 val,
-		व्योम __iomem *addr)
-अणु
-	अगर (ci->imx28_ग_लिखो_fix)
-		imx28_ci_ग_लिखोl(val, addr);
-	अन्यथा
-		ioग_लिखो32(val, addr);
-पूर्ण
+static inline void __hw_write(struct ci_hdrc *ci, u32 val,
+		void __iomem *addr)
+{
+	if (ci->imx28_write_fix)
+		imx28_ci_writel(val, addr);
+	else
+		iowrite32(val, addr);
+}
 
 /**
- * hw_ग_लिखो: ग_लिखोs to a hw रेजिस्टर
+ * hw_write: writes to a hw register
  * @ci: the controller
- * @reg:  रेजिस्टर index
+ * @reg:  register index
  * @mask: bitfield mask
  * @data: new value
  */
-अटल अंतरभूत व्योम hw_ग_लिखो(काष्ठा ci_hdrc *ci, क्रमागत ci_hw_regs reg,
+static inline void hw_write(struct ci_hdrc *ci, enum ci_hw_regs reg,
 			    u32 mask, u32 data)
-अणु
-	अगर (~mask)
-		data = (ioपढ़ो32(ci->hw_bank.regmap[reg]) & ~mask)
+{
+	if (~mask)
+		data = (ioread32(ci->hw_bank.regmap[reg]) & ~mask)
 			| (data & mask);
 
-	__hw_ग_लिखो(ci, data, ci->hw_bank.regmap[reg]);
-पूर्ण
+	__hw_write(ci, data, ci->hw_bank.regmap[reg]);
+}
 
 /**
- * hw_test_and_clear: tests & clears a hw रेजिस्टर
+ * hw_test_and_clear: tests & clears a hw register
  * @ci: the controller
- * @reg:  रेजिस्टर index
+ * @reg:  register index
  * @mask: bitfield mask
  *
- * This function वापसs रेजिस्टर contents
+ * This function returns register contents
  */
-अटल अंतरभूत u32 hw_test_and_clear(काष्ठा ci_hdrc *ci, क्रमागत ci_hw_regs reg,
+static inline u32 hw_test_and_clear(struct ci_hdrc *ci, enum ci_hw_regs reg,
 				    u32 mask)
-अणु
-	u32 val = ioपढ़ो32(ci->hw_bank.regmap[reg]) & mask;
+{
+	u32 val = ioread32(ci->hw_bank.regmap[reg]) & mask;
 
-	__hw_ग_लिखो(ci, val, ci->hw_bank.regmap[reg]);
-	वापस val;
-पूर्ण
+	__hw_write(ci, val, ci->hw_bank.regmap[reg]);
+	return val;
+}
 
 /**
- * hw_test_and_ग_लिखो: tests & ग_लिखोs a hw रेजिस्टर
+ * hw_test_and_write: tests & writes a hw register
  * @ci: the controller
- * @reg:  रेजिस्टर index
+ * @reg:  register index
  * @mask: bitfield mask
  * @data: new value
  *
- * This function वापसs रेजिस्टर contents
+ * This function returns register contents
  */
-अटल अंतरभूत u32 hw_test_and_ग_लिखो(काष्ठा ci_hdrc *ci, क्रमागत ci_hw_regs reg,
+static inline u32 hw_test_and_write(struct ci_hdrc *ci, enum ci_hw_regs reg,
 				    u32 mask, u32 data)
-अणु
-	u32 val = hw_पढ़ो(ci, reg, ~0);
+{
+	u32 val = hw_read(ci, reg, ~0);
 
-	hw_ग_लिखो(ci, reg, mask, data);
-	वापस (val & mask) >> __ffs(mask);
-पूर्ण
+	hw_write(ci, reg, mask, data);
+	return (val & mask) >> __ffs(mask);
+}
 
 /**
- * ci_otg_is_fsm_mode: runसमय check अगर otg controller
+ * ci_otg_is_fsm_mode: runtime check if otg controller
  * is in otg fsm mode.
  *
  * @ci: chipidea device
  */
-अटल अंतरभूत bool ci_otg_is_fsm_mode(काष्ठा ci_hdrc *ci)
-अणु
-#अगर_घोषित CONFIG_USB_OTG_FSM
-	काष्ठा usb_otg_caps *otg_caps = &ci->platdata->ci_otg_caps;
+static inline bool ci_otg_is_fsm_mode(struct ci_hdrc *ci)
+{
+#ifdef CONFIG_USB_OTG_FSM
+	struct usb_otg_caps *otg_caps = &ci->platdata->ci_otg_caps;
 
-	वापस ci->is_otg && ci->roles[CI_ROLE_HOST] &&
+	return ci->is_otg && ci->roles[CI_ROLE_HOST] &&
 		ci->roles[CI_ROLE_GADGET] && (otg_caps->srp_support ||
 		otg_caps->hnp_support || otg_caps->adp_support);
-#अन्यथा
-	वापस false;
-#पूर्ण_अगर
-पूर्ण
+#else
+	return false;
+#endif
+}
 
-पूर्णांक ci_ulpi_init(काष्ठा ci_hdrc *ci);
-व्योम ci_ulpi_निकास(काष्ठा ci_hdrc *ci);
-पूर्णांक ci_ulpi_resume(काष्ठा ci_hdrc *ci);
+int ci_ulpi_init(struct ci_hdrc *ci);
+void ci_ulpi_exit(struct ci_hdrc *ci);
+int ci_ulpi_resume(struct ci_hdrc *ci);
 
-u32 hw_पढ़ो_पूर्णांकr_enable(काष्ठा ci_hdrc *ci);
+u32 hw_read_intr_enable(struct ci_hdrc *ci);
 
-u32 hw_पढ़ो_पूर्णांकr_status(काष्ठा ci_hdrc *ci);
+u32 hw_read_intr_status(struct ci_hdrc *ci);
 
-पूर्णांक hw_device_reset(काष्ठा ci_hdrc *ci);
+int hw_device_reset(struct ci_hdrc *ci);
 
-पूर्णांक hw_port_test_set(काष्ठा ci_hdrc *ci, u8 mode);
+int hw_port_test_set(struct ci_hdrc *ci, u8 mode);
 
-u8 hw_port_test_get(काष्ठा ci_hdrc *ci);
+u8 hw_port_test_get(struct ci_hdrc *ci);
 
-व्योम hw_phymode_configure(काष्ठा ci_hdrc *ci);
+void hw_phymode_configure(struct ci_hdrc *ci);
 
-व्योम ci_platक्रमm_configure(काष्ठा ci_hdrc *ci);
+void ci_platform_configure(struct ci_hdrc *ci);
 
-व्योम dbg_create_files(काष्ठा ci_hdrc *ci);
+void dbg_create_files(struct ci_hdrc *ci);
 
-व्योम dbg_हटाओ_files(काष्ठा ci_hdrc *ci);
-#पूर्ण_अगर	/* __DRIVERS_USB_CHIPIDEA_CI_H */
+void dbg_remove_files(struct ci_hdrc *ci);
+#endif	/* __DRIVERS_USB_CHIPIDEA_CI_H */

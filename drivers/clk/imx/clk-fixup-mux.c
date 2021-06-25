@@ -1,85 +1,84 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2013 Freescale Semiconductor, Inc.
  */
 
-#समावेश <linux/bits.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/slab.h>
-#समावेश "clk.h"
+#include <linux/bits.h>
+#include <linux/clk-provider.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/slab.h>
+#include "clk.h"
 
 /**
- * काष्ठा clk_fixup_mux - imx पूर्णांकeger fixup multiplexer घड़ी
+ * struct clk_fixup_mux - imx integer fixup multiplexer clock
  * @mux: the parent class
- * @ops: poपूर्णांकer to clk_ops of parent class
- * @fixup: a hook to fixup the ग_लिखो value
+ * @ops: pointer to clk_ops of parent class
+ * @fixup: a hook to fixup the write value
  *
- * The imx fixup multiplexer घड़ी is a subclass of basic clk_mux
+ * The imx fixup multiplexer clock is a subclass of basic clk_mux
  * with an addtional fixup hook.
  */
-काष्ठा clk_fixup_mux अणु
-	काष्ठा clk_mux mux;
-	स्थिर काष्ठा clk_ops *ops;
-	व्योम (*fixup)(u32 *val);
-पूर्ण;
+struct clk_fixup_mux {
+	struct clk_mux mux;
+	const struct clk_ops *ops;
+	void (*fixup)(u32 *val);
+};
 
-अटल अंतरभूत काष्ठा clk_fixup_mux *to_clk_fixup_mux(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_mux *mux = to_clk_mux(hw);
+static inline struct clk_fixup_mux *to_clk_fixup_mux(struct clk_hw *hw)
+{
+	struct clk_mux *mux = to_clk_mux(hw);
 
-	वापस container_of(mux, काष्ठा clk_fixup_mux, mux);
-पूर्ण
+	return container_of(mux, struct clk_fixup_mux, mux);
+}
 
-अटल u8 clk_fixup_mux_get_parent(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_fixup_mux *fixup_mux = to_clk_fixup_mux(hw);
+static u8 clk_fixup_mux_get_parent(struct clk_hw *hw)
+{
+	struct clk_fixup_mux *fixup_mux = to_clk_fixup_mux(hw);
 
-	वापस fixup_mux->ops->get_parent(&fixup_mux->mux.hw);
-पूर्ण
+	return fixup_mux->ops->get_parent(&fixup_mux->mux.hw);
+}
 
-अटल पूर्णांक clk_fixup_mux_set_parent(काष्ठा clk_hw *hw, u8 index)
-अणु
-	काष्ठा clk_fixup_mux *fixup_mux = to_clk_fixup_mux(hw);
-	काष्ठा clk_mux *mux = to_clk_mux(hw);
-	अचिन्हित दीर्घ flags;
+static int clk_fixup_mux_set_parent(struct clk_hw *hw, u8 index)
+{
+	struct clk_fixup_mux *fixup_mux = to_clk_fixup_mux(hw);
+	struct clk_mux *mux = to_clk_mux(hw);
+	unsigned long flags;
 	u32 val;
 
 	spin_lock_irqsave(mux->lock, flags);
 
-	val = पढ़ोl(mux->reg);
-	val &= ~(mux->mask << mux->shअगरt);
-	val |= index << mux->shअगरt;
+	val = readl(mux->reg);
+	val &= ~(mux->mask << mux->shift);
+	val |= index << mux->shift;
 	fixup_mux->fixup(&val);
-	ग_लिखोl(val, mux->reg);
+	writel(val, mux->reg);
 
 	spin_unlock_irqrestore(mux->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा clk_ops clk_fixup_mux_ops = अणु
+static const struct clk_ops clk_fixup_mux_ops = {
 	.get_parent = clk_fixup_mux_get_parent,
 	.set_parent = clk_fixup_mux_set_parent,
-पूर्ण;
+};
 
-काष्ठा clk_hw *imx_clk_hw_fixup_mux(स्थिर अक्षर *name, व्योम __iomem *reg,
-			      u8 shअगरt, u8 width, स्थिर अक्षर * स्थिर *parents,
-			      पूर्णांक num_parents, व्योम (*fixup)(u32 *val))
-अणु
-	काष्ठा clk_fixup_mux *fixup_mux;
-	काष्ठा clk_hw *hw;
-	काष्ठा clk_init_data init;
-	पूर्णांक ret;
+struct clk_hw *imx_clk_hw_fixup_mux(const char *name, void __iomem *reg,
+			      u8 shift, u8 width, const char * const *parents,
+			      int num_parents, void (*fixup)(u32 *val))
+{
+	struct clk_fixup_mux *fixup_mux;
+	struct clk_hw *hw;
+	struct clk_init_data init;
+	int ret;
 
-	अगर (!fixup)
-		वापस ERR_PTR(-EINVAL);
+	if (!fixup)
+		return ERR_PTR(-EINVAL);
 
-	fixup_mux = kzalloc(माप(*fixup_mux), GFP_KERNEL);
-	अगर (!fixup_mux)
-		वापस ERR_PTR(-ENOMEM);
+	fixup_mux = kzalloc(sizeof(*fixup_mux), GFP_KERNEL);
+	if (!fixup_mux)
+		return ERR_PTR(-ENOMEM);
 
 	init.name = name;
 	init.ops = &clk_fixup_mux_ops;
@@ -88,7 +87,7 @@
 	init.flags = 0;
 
 	fixup_mux->mux.reg = reg;
-	fixup_mux->mux.shअगरt = shअगरt;
+	fixup_mux->mux.shift = shift;
 	fixup_mux->mux.mask = BIT(width) - 1;
 	fixup_mux->mux.lock = &imx_ccm_lock;
 	fixup_mux->mux.hw.init = &init;
@@ -97,11 +96,11 @@
 
 	hw = &fixup_mux->mux.hw;
 
-	ret = clk_hw_रेजिस्टर(शून्य, hw);
-	अगर (ret) अणु
-		kमुक्त(fixup_mux);
-		वापस ERR_PTR(ret);
-	पूर्ण
+	ret = clk_hw_register(NULL, hw);
+	if (ret) {
+		kfree(fixup_mux);
+		return ERR_PTR(ret);
+	}
 
-	वापस hw;
-पूर्ण
+	return hw;
+}

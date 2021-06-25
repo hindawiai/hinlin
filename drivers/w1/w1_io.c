@@ -1,24 +1,23 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (c) 2004 Evgeniy Polyakov <zbr@ioremap.net>
  */
 
-#समावेश <यंत्र/पन.स>
+#include <asm/io.h>
 
-#समावेश <linux/delay.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/module.h>
+#include <linux/delay.h>
+#include <linux/moduleparam.h>
+#include <linux/module.h>
 
-#समावेश "w1_internal.h"
+#include "w1_internal.h"
 
-अटल पूर्णांक w1_delay_parm = 1;
-module_param_named(delay_coef, w1_delay_parm, पूर्णांक, 0);
+static int w1_delay_parm = 1;
+module_param_named(delay_coef, w1_delay_parm, int, 0);
 
-अटल पूर्णांक w1_disable_irqs = 0;
-module_param_named(disable_irqs, w1_disable_irqs, पूर्णांक, 0);
+static int w1_disable_irqs = 0;
+module_param_named(disable_irqs, w1_disable_irqs, int, 0);
 
-अटल u8 w1_crc8_table[] = अणु
+static u8 w1_crc8_table[] = {
 	0, 94, 188, 226, 97, 63, 221, 131, 194, 156, 126, 32, 163, 253, 31, 65,
 	157, 195, 33, 127, 252, 162, 64, 30, 95, 1, 227, 189, 62, 96, 130, 220,
 	35, 125, 159, 193, 66, 28, 254, 160, 225, 191, 93, 3, 128, 222, 60, 98,
@@ -35,152 +34,152 @@ module_param_named(disable_irqs, w1_disable_irqs, पूर्णांक, 0);
 	87, 9, 235, 181, 54, 104, 138, 212, 149, 203, 41, 119, 244, 170, 72, 22,
 	233, 183, 85, 11, 136, 214, 52, 106, 43, 117, 151, 201, 74, 20, 246, 168,
 	116, 42, 200, 150, 21, 75, 169, 247, 182, 232, 10, 84, 215, 137, 107, 53
-पूर्ण;
+};
 
-अटल व्योम w1_delay(अचिन्हित दीर्घ पंचांग)
-अणु
-	udelay(पंचांग * w1_delay_parm);
-पूर्ण
+static void w1_delay(unsigned long tm)
+{
+	udelay(tm * w1_delay_parm);
+}
 
-अटल व्योम w1_ग_लिखो_bit(काष्ठा w1_master *dev, पूर्णांक bit);
-अटल u8 w1_पढ़ो_bit(काष्ठा w1_master *dev);
+static void w1_write_bit(struct w1_master *dev, int bit);
+static u8 w1_read_bit(struct w1_master *dev);
 
 /**
- * w1_touch_bit() - Generates a ग_लिखो-0 or ग_लिखो-1 cycle and samples the level.
+ * w1_touch_bit() - Generates a write-0 or write-1 cycle and samples the level.
  * @dev:	the master device
- * @bit:	0 - ग_लिखो a 0, 1 - ग_लिखो a 0 पढ़ो the level
+ * @bit:	0 - write a 0, 1 - write a 0 read the level
  */
-u8 w1_touch_bit(काष्ठा w1_master *dev, पूर्णांक bit)
-अणु
-	अगर (dev->bus_master->touch_bit)
-		वापस dev->bus_master->touch_bit(dev->bus_master->data, bit);
-	अन्यथा अगर (bit)
-		वापस w1_पढ़ो_bit(dev);
-	अन्यथा अणु
-		w1_ग_लिखो_bit(dev, 0);
-		वापस 0;
-	पूर्ण
-पूर्ण
+u8 w1_touch_bit(struct w1_master *dev, int bit)
+{
+	if (dev->bus_master->touch_bit)
+		return dev->bus_master->touch_bit(dev->bus_master->data, bit);
+	else if (bit)
+		return w1_read_bit(dev);
+	else {
+		w1_write_bit(dev, 0);
+		return 0;
+	}
+}
 EXPORT_SYMBOL_GPL(w1_touch_bit);
 
 /**
- * w1_ग_लिखो_bit() - Generates a ग_लिखो-0 or ग_लिखो-1 cycle.
+ * w1_write_bit() - Generates a write-0 or write-1 cycle.
  * @dev:	the master device
- * @bit:	bit to ग_लिखो
+ * @bit:	bit to write
  *
- * Only call अगर dev->bus_master->touch_bit is शून्य
+ * Only call if dev->bus_master->touch_bit is NULL
  */
-अटल व्योम w1_ग_लिखो_bit(काष्ठा w1_master *dev, पूर्णांक bit)
-अणु
-	अचिन्हित दीर्घ flags = 0;
+static void w1_write_bit(struct w1_master *dev, int bit)
+{
+	unsigned long flags = 0;
 
-	अगर(w1_disable_irqs) local_irq_save(flags);
+	if(w1_disable_irqs) local_irq_save(flags);
 
-	अगर (bit) अणु
-		dev->bus_master->ग_लिखो_bit(dev->bus_master->data, 0);
+	if (bit) {
+		dev->bus_master->write_bit(dev->bus_master->data, 0);
 		w1_delay(6);
-		dev->bus_master->ग_लिखो_bit(dev->bus_master->data, 1);
+		dev->bus_master->write_bit(dev->bus_master->data, 1);
 		w1_delay(64);
-	पूर्ण अन्यथा अणु
-		dev->bus_master->ग_लिखो_bit(dev->bus_master->data, 0);
+	} else {
+		dev->bus_master->write_bit(dev->bus_master->data, 0);
 		w1_delay(60);
-		dev->bus_master->ग_लिखो_bit(dev->bus_master->data, 1);
+		dev->bus_master->write_bit(dev->bus_master->data, 1);
 		w1_delay(10);
-	पूर्ण
+	}
 
-	अगर(w1_disable_irqs) local_irq_restore(flags);
-पूर्ण
+	if(w1_disable_irqs) local_irq_restore(flags);
+}
 
 /**
- * w1_pre_ग_लिखो() - pre-ग_लिखो operations
+ * w1_pre_write() - pre-write operations
  * @dev:	the master device
  *
- * Pre-ग_लिखो operation, currently only supporting strong pullups.
- * Program the hardware क्रम a strong pullup, अगर one has been requested and
+ * Pre-write operation, currently only supporting strong pullups.
+ * Program the hardware for a strong pullup, if one has been requested and
  * the hardware supports it.
  */
-अटल व्योम w1_pre_ग_लिखो(काष्ठा w1_master *dev)
-अणु
-	अगर (dev->pullup_duration &&
-		dev->enable_pullup && dev->bus_master->set_pullup) अणु
+static void w1_pre_write(struct w1_master *dev)
+{
+	if (dev->pullup_duration &&
+		dev->enable_pullup && dev->bus_master->set_pullup) {
 		dev->bus_master->set_pullup(dev->bus_master->data,
 			dev->pullup_duration);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * w1_post_ग_लिखो() - post-ग_लिखो options
+ * w1_post_write() - post-write options
  * @dev:	the master device
  *
- * Post-ग_लिखो operation, currently only supporting strong pullups.
- * If a strong pullup was requested, clear it अगर the hardware supports
- * them, or execute the delay otherwise, in either हाल clear the request.
+ * Post-write operation, currently only supporting strong pullups.
+ * If a strong pullup was requested, clear it if the hardware supports
+ * them, or execute the delay otherwise, in either case clear the request.
  */
-अटल व्योम w1_post_ग_लिखो(काष्ठा w1_master *dev)
-अणु
-	अगर (dev->pullup_duration) अणु
-		अगर (dev->enable_pullup && dev->bus_master->set_pullup)
+static void w1_post_write(struct w1_master *dev)
+{
+	if (dev->pullup_duration) {
+		if (dev->enable_pullup && dev->bus_master->set_pullup)
 			dev->bus_master->set_pullup(dev->bus_master->data, 0);
-		अन्यथा
+		else
 			msleep(dev->pullup_duration);
 		dev->pullup_duration = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * w1_ग_लिखो_8() - Writes 8 bits.
+ * w1_write_8() - Writes 8 bits.
  * @dev:	the master device
- * @byte:	the byte to ग_लिखो
+ * @byte:	the byte to write
  */
-व्योम w1_ग_लिखो_8(काष्ठा w1_master *dev, u8 byte)
-अणु
-	पूर्णांक i;
+void w1_write_8(struct w1_master *dev, u8 byte)
+{
+	int i;
 
-	अगर (dev->bus_master->ग_लिखो_byte) अणु
-		w1_pre_ग_लिखो(dev);
-		dev->bus_master->ग_लिखो_byte(dev->bus_master->data, byte);
-	पूर्ण
-	अन्यथा
-		क्रम (i = 0; i < 8; ++i) अणु
-			अगर (i == 7)
-				w1_pre_ग_लिखो(dev);
+	if (dev->bus_master->write_byte) {
+		w1_pre_write(dev);
+		dev->bus_master->write_byte(dev->bus_master->data, byte);
+	}
+	else
+		for (i = 0; i < 8; ++i) {
+			if (i == 7)
+				w1_pre_write(dev);
 			w1_touch_bit(dev, (byte >> i) & 0x1);
-		पूर्ण
-	w1_post_ग_लिखो(dev);
-पूर्ण
-EXPORT_SYMBOL_GPL(w1_ग_लिखो_8);
+		}
+	w1_post_write(dev);
+}
+EXPORT_SYMBOL_GPL(w1_write_8);
 
 
 /**
- * w1_पढ़ो_bit() - Generates a ग_लिखो-1 cycle and samples the level.
+ * w1_read_bit() - Generates a write-1 cycle and samples the level.
  * @dev:	the master device
  *
- * Only call अगर dev->bus_master->touch_bit is शून्य
+ * Only call if dev->bus_master->touch_bit is NULL
  */
-अटल u8 w1_पढ़ो_bit(काष्ठा w1_master *dev)
-अणु
-	पूर्णांक result;
-	अचिन्हित दीर्घ flags = 0;
+static u8 w1_read_bit(struct w1_master *dev)
+{
+	int result;
+	unsigned long flags = 0;
 
 	/* sample timing is critical here */
 	local_irq_save(flags);
-	dev->bus_master->ग_लिखो_bit(dev->bus_master->data, 0);
+	dev->bus_master->write_bit(dev->bus_master->data, 0);
 	w1_delay(6);
-	dev->bus_master->ग_लिखो_bit(dev->bus_master->data, 1);
+	dev->bus_master->write_bit(dev->bus_master->data, 1);
 	w1_delay(9);
 
-	result = dev->bus_master->पढ़ो_bit(dev->bus_master->data);
+	result = dev->bus_master->read_bit(dev->bus_master->data);
 	local_irq_restore(flags);
 
 	w1_delay(55);
 
-	वापस result & 0x1;
-पूर्ण
+	return result & 0x1;
+}
 
 /**
- * w1_triplet() - * Does a triplet - used क्रम searching ROM addresses.
+ * w1_triplet() - * Does a triplet - used for searching ROM addresses.
  * @dev:	the master device
- * @bdir:	the bit to ग_लिखो अगर both id_bit and comp_bit are 0
+ * @bdir:	the bit to write if both id_bit and comp_bit are 0
  *
  * Return bits:
  *  bit 0 = id_bit
@@ -191,216 +190,216 @@ EXPORT_SYMBOL_GPL(w1_ग_लिखो_8);
  *
  * Return:        bit fields - see above
  */
-u8 w1_triplet(काष्ठा w1_master *dev, पूर्णांक bdir)
-अणु
-	अगर (dev->bus_master->triplet)
-		वापस dev->bus_master->triplet(dev->bus_master->data, bdir);
-	अन्यथा अणु
+u8 w1_triplet(struct w1_master *dev, int bdir)
+{
+	if (dev->bus_master->triplet)
+		return dev->bus_master->triplet(dev->bus_master->data, bdir);
+	else {
 		u8 id_bit   = w1_touch_bit(dev, 1);
 		u8 comp_bit = w1_touch_bit(dev, 1);
 		u8 retval;
 
-		अगर (id_bit && comp_bit)
-			वापस 0x03;  /* error */
+		if (id_bit && comp_bit)
+			return 0x03;  /* error */
 
-		अगर (!id_bit && !comp_bit) अणु
+		if (!id_bit && !comp_bit) {
 			/* Both bits are valid, take the direction given */
 			retval = bdir ? 0x04 : 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Only one bit is valid, take that direction */
 			bdir = id_bit;
 			retval = id_bit ? 0x05 : 0x02;
-		पूर्ण
+		}
 
-		अगर (dev->bus_master->touch_bit)
+		if (dev->bus_master->touch_bit)
 			w1_touch_bit(dev, bdir);
-		अन्यथा
-			w1_ग_लिखो_bit(dev, bdir);
-		वापस retval;
-	पूर्ण
-पूर्ण
+		else
+			w1_write_bit(dev, bdir);
+		return retval;
+	}
+}
 EXPORT_SYMBOL_GPL(w1_triplet);
 
 /**
- * w1_पढ़ो_8() - Reads 8 bits.
+ * w1_read_8() - Reads 8 bits.
  * @dev:	the master device
  *
- * Return:        the byte पढ़ो
+ * Return:        the byte read
  */
-u8 w1_पढ़ो_8(काष्ठा w1_master *dev)
-अणु
-	पूर्णांक i;
+u8 w1_read_8(struct w1_master *dev)
+{
+	int i;
 	u8 res = 0;
 
-	अगर (dev->bus_master->पढ़ो_byte)
-		res = dev->bus_master->पढ़ो_byte(dev->bus_master->data);
-	अन्यथा
-		क्रम (i = 0; i < 8; ++i)
+	if (dev->bus_master->read_byte)
+		res = dev->bus_master->read_byte(dev->bus_master->data);
+	else
+		for (i = 0; i < 8; ++i)
 			res |= (w1_touch_bit(dev,1) << i);
 
-	वापस res;
-पूर्ण
-EXPORT_SYMBOL_GPL(w1_पढ़ो_8);
+	return res;
+}
+EXPORT_SYMBOL_GPL(w1_read_8);
 
 /**
- * w1_ग_लिखो_block() - Writes a series of bytes.
+ * w1_write_block() - Writes a series of bytes.
  * @dev:	the master device
- * @buf:	poपूर्णांकer to the data to ग_लिखो
- * @len:	the number of bytes to ग_लिखो
+ * @buf:	pointer to the data to write
+ * @len:	the number of bytes to write
  */
-व्योम w1_ग_लिखो_block(काष्ठा w1_master *dev, स्थिर u8 *buf, पूर्णांक len)
-अणु
-	पूर्णांक i;
+void w1_write_block(struct w1_master *dev, const u8 *buf, int len)
+{
+	int i;
 
-	अगर (dev->bus_master->ग_लिखो_block) अणु
-		w1_pre_ग_लिखो(dev);
-		dev->bus_master->ग_लिखो_block(dev->bus_master->data, buf, len);
-	पूर्ण
-	अन्यथा
-		क्रम (i = 0; i < len; ++i)
-			w1_ग_लिखो_8(dev, buf[i]); /* calls w1_pre_ग_लिखो */
-	w1_post_ग_लिखो(dev);
-पूर्ण
-EXPORT_SYMBOL_GPL(w1_ग_लिखो_block);
+	if (dev->bus_master->write_block) {
+		w1_pre_write(dev);
+		dev->bus_master->write_block(dev->bus_master->data, buf, len);
+	}
+	else
+		for (i = 0; i < len; ++i)
+			w1_write_8(dev, buf[i]); /* calls w1_pre_write */
+	w1_post_write(dev);
+}
+EXPORT_SYMBOL_GPL(w1_write_block);
 
 /**
  * w1_touch_block() - Touches a series of bytes.
  * @dev:	the master device
- * @buf:	poपूर्णांकer to the data to ग_लिखो
- * @len:	the number of bytes to ग_लिखो
+ * @buf:	pointer to the data to write
+ * @len:	the number of bytes to write
  */
-व्योम w1_touch_block(काष्ठा w1_master *dev, u8 *buf, पूर्णांक len)
-अणु
-	पूर्णांक i, j;
-	u8 पंचांगp;
+void w1_touch_block(struct w1_master *dev, u8 *buf, int len)
+{
+	int i, j;
+	u8 tmp;
 
-	क्रम (i = 0; i < len; ++i) अणु
-		पंचांगp = 0;
-		क्रम (j = 0; j < 8; ++j) अणु
-			अगर (j == 7)
-				w1_pre_ग_लिखो(dev);
-			पंचांगp |= w1_touch_bit(dev, (buf[i] >> j) & 0x1) << j;
-		पूर्ण
+	for (i = 0; i < len; ++i) {
+		tmp = 0;
+		for (j = 0; j < 8; ++j) {
+			if (j == 7)
+				w1_pre_write(dev);
+			tmp |= w1_touch_bit(dev, (buf[i] >> j) & 0x1) << j;
+		}
 
-		buf[i] = पंचांगp;
-	पूर्ण
-पूर्ण
+		buf[i] = tmp;
+	}
+}
 EXPORT_SYMBOL_GPL(w1_touch_block);
 
 /**
- * w1_पढ़ो_block() - Reads a series of bytes.
+ * w1_read_block() - Reads a series of bytes.
  * @dev:	the master device
- * @buf:	poपूर्णांकer to the buffer to fill
- * @len:	the number of bytes to पढ़ो
- * Return:	the number of bytes पढ़ो
+ * @buf:	pointer to the buffer to fill
+ * @len:	the number of bytes to read
+ * Return:	the number of bytes read
  */
-u8 w1_पढ़ो_block(काष्ठा w1_master *dev, u8 *buf, पूर्णांक len)
-अणु
-	पूर्णांक i;
+u8 w1_read_block(struct w1_master *dev, u8 *buf, int len)
+{
+	int i;
 	u8 ret;
 
-	अगर (dev->bus_master->पढ़ो_block)
-		ret = dev->bus_master->पढ़ो_block(dev->bus_master->data, buf, len);
-	अन्यथा अणु
-		क्रम (i = 0; i < len; ++i)
-			buf[i] = w1_पढ़ो_8(dev);
+	if (dev->bus_master->read_block)
+		ret = dev->bus_master->read_block(dev->bus_master->data, buf, len);
+	else {
+		for (i = 0; i < len; ++i)
+			buf[i] = w1_read_8(dev);
 		ret = len;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(w1_पढ़ो_block);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(w1_read_block);
 
 /**
  * w1_reset_bus() - Issues a reset bus sequence.
  * @dev:	the master device
  * Return:	0=Device present, 1=No device present or error
  */
-पूर्णांक w1_reset_bus(काष्ठा w1_master *dev)
-अणु
-	पूर्णांक result;
-	अचिन्हित दीर्घ flags = 0;
+int w1_reset_bus(struct w1_master *dev)
+{
+	int result;
+	unsigned long flags = 0;
 
-	अगर(w1_disable_irqs) local_irq_save(flags);
+	if(w1_disable_irqs) local_irq_save(flags);
 
-	अगर (dev->bus_master->reset_bus)
+	if (dev->bus_master->reset_bus)
 		result = dev->bus_master->reset_bus(dev->bus_master->data) & 0x1;
-	अन्यथा अणु
-		dev->bus_master->ग_लिखो_bit(dev->bus_master->data, 0);
+	else {
+		dev->bus_master->write_bit(dev->bus_master->data, 0);
 		/* minimum 480, max ? us
 		 * be nice and sleep, except 18b20 spec lists 960us maximum,
 		 * so until we can sleep with microsecond accuracy, spin.
-		 * Feel मुक्त to come up with some other way to give up the
-		 * cpu क्रम such a लघु amount of समय AND get it back in
-		 * the maximum amount of समय.
+		 * Feel free to come up with some other way to give up the
+		 * cpu for such a short amount of time AND get it back in
+		 * the maximum amount of time.
 		 */
 		w1_delay(500);
-		dev->bus_master->ग_लिखो_bit(dev->bus_master->data, 1);
+		dev->bus_master->write_bit(dev->bus_master->data, 1);
 		w1_delay(70);
 
-		result = dev->bus_master->पढ़ो_bit(dev->bus_master->data) & 0x1;
+		result = dev->bus_master->read_bit(dev->bus_master->data) & 0x1;
 		/* minimum 70 (above) + 430 = 500 us
 		 * There aren't any timing requirements between a reset and
 		 * the following transactions.  Sleeping is safe here.
 		 */
-		/* w1_delay(430); min required समय */
+		/* w1_delay(430); min required time */
 		msleep(1);
-	पूर्ण
+	}
 
-	अगर(w1_disable_irqs) local_irq_restore(flags);
+	if(w1_disable_irqs) local_irq_restore(flags);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 EXPORT_SYMBOL_GPL(w1_reset_bus);
 
-u8 w1_calc_crc8(u8 * data, पूर्णांक len)
-अणु
+u8 w1_calc_crc8(u8 * data, int len)
+{
 	u8 crc = 0;
 
-	जबतक (len--)
+	while (len--)
 		crc = w1_crc8_table[crc ^ *data++];
 
-	वापस crc;
-पूर्ण
+	return crc;
+}
 EXPORT_SYMBOL_GPL(w1_calc_crc8);
 
-व्योम w1_search_devices(काष्ठा w1_master *dev, u8 search_type, w1_slave_found_callback cb)
-अणु
+void w1_search_devices(struct w1_master *dev, u8 search_type, w1_slave_found_callback cb)
+{
 	dev->attempts++;
-	अगर (dev->bus_master->search)
+	if (dev->bus_master->search)
 		dev->bus_master->search(dev->bus_master->data, dev,
 			search_type, cb);
-	अन्यथा
+	else
 		w1_search(dev, search_type, cb);
-पूर्ण
+}
 
 /**
  * w1_reset_select_slave() - reset and select a slave
  * @sl:		the slave to select
  *
  * Resets the bus and then selects the slave by sending either a skip rom
- * or a rom match.  A skip rom is issued अगर there is only one device
- * रेजिस्टरed on the bus.
+ * or a rom match.  A skip rom is issued if there is only one device
+ * registered on the bus.
  * The w1 master lock must be held.
  *
- * Return:	0=success, anything अन्यथा=error
+ * Return:	0=success, anything else=error
  */
-पूर्णांक w1_reset_select_slave(काष्ठा w1_slave *sl)
-अणु
-	अगर (w1_reset_bus(sl->master))
-		वापस -1;
+int w1_reset_select_slave(struct w1_slave *sl)
+{
+	if (w1_reset_bus(sl->master))
+		return -1;
 
-	अगर (sl->master->slave_count == 1)
-		w1_ग_लिखो_8(sl->master, W1_SKIP_ROM);
-	अन्यथा अणु
-		u8 match[9] = अणुW1_MATCH_ROM, पूर्ण;
+	if (sl->master->slave_count == 1)
+		w1_write_8(sl->master, W1_SKIP_ROM);
+	else {
+		u8 match[9] = {W1_MATCH_ROM, };
 		u64 rn = le64_to_cpu(*((u64*)&sl->reg_num));
 
-		स_नकल(&match[1], &rn, 8);
-		w1_ग_लिखो_block(sl->master, match, 9);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		memcpy(&match[1], &rn, 8);
+		w1_write_block(sl->master, match, 9);
+	}
+	return 0;
+}
 EXPORT_SYMBOL_GPL(w1_reset_select_slave);
 
 /**
@@ -409,42 +408,42 @@ EXPORT_SYMBOL_GPL(w1_reset_select_slave);
  *
  * When the workflow with a slave amongst many requires several
  * successive commands a reset between each, this function is similar
- * to करोing a reset then a match ROM क्रम the last matched ROM. The
+ * to doing a reset then a match ROM for the last matched ROM. The
  * advantage being that the matched ROM step is skipped in favor of the
  * resume command. The slave must support the command of course.
  *
  * If the bus has only one slave, traditionnaly the match ROM is skipped
- * and a "SKIP ROM" is करोne क्रम efficiency. On multi-slave busses, this
- * करोesn't work of course, but the resume command is the next best thing.
+ * and a "SKIP ROM" is done for efficiency. On multi-slave busses, this
+ * doesn't work of course, but the resume command is the next best thing.
  *
  * The w1 master lock must be held.
  */
-पूर्णांक w1_reset_resume_command(काष्ठा w1_master *dev)
-अणु
-	अगर (w1_reset_bus(dev))
-		वापस -1;
+int w1_reset_resume_command(struct w1_master *dev)
+{
+	if (w1_reset_bus(dev))
+		return -1;
 
-	w1_ग_लिखो_8(dev, dev->slave_count > 1 ? W1_RESUME_CMD : W1_SKIP_ROM);
-	वापस 0;
-पूर्ण
+	w1_write_8(dev, dev->slave_count > 1 ? W1_RESUME_CMD : W1_SKIP_ROM);
+	return 0;
+}
 EXPORT_SYMBOL_GPL(w1_reset_resume_command);
 
 /**
- * w1_next_pullup() - रेजिस्टर क्रम a strong pullup
+ * w1_next_pullup() - register for a strong pullup
  * @dev:	the master device
- * @delay:	समय in milliseconds
+ * @delay:	time in milliseconds
  *
- * Put out a strong pull-up of the specअगरied duration after the next ग_लिखो
+ * Put out a strong pull-up of the specified duration after the next write
  * operation.  Not all hardware supports strong pullups.  Hardware that
- * करोesn't support strong pullups will sleep क्रम the given समय after the
- * ग_लिखो operation without a strong pullup.  This is a one shot request क्रम
- * the next ग_लिखो, specअगरying zero will clear a previous request.
+ * doesn't support strong pullups will sleep for the given time after the
+ * write operation without a strong pullup.  This is a one shot request for
+ * the next write, specifying zero will clear a previous request.
  * The w1 master lock must be held.
  *
- * Return:	0=success, anything अन्यथा=error
+ * Return:	0=success, anything else=error
  */
-व्योम w1_next_pullup(काष्ठा w1_master *dev, पूर्णांक delay)
-अणु
+void w1_next_pullup(struct w1_master *dev, int delay)
+{
 	dev->pullup_duration = delay;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(w1_next_pullup);

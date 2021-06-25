@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- *    DIAGNOSE X'2C4' inकाष्ठाion based SE/HMC FTP Services, useable on z/VM
+ *    DIAGNOSE X'2C4' instruction based SE/HMC FTP Services, useable on z/VM
  *
  *    Notice that all functions exported here are not reentrant.
  *    So usage should be exclusive, ensured by the caller (e.g. using a
@@ -11,13 +10,13 @@
  *    Author(s): Ralf Hoppe (rhoppe@de.ibm.com)
  */
 
-#अगर_अघोषित __DIAG_FTP_H__
-#घोषणा __DIAG_FTP_H__
+#ifndef __DIAG_FTP_H__
+#define __DIAG_FTP_H__
 
-#समावेश "hmcdrv_ftp.h"
+#include "hmcdrv_ftp.h"
 
-पूर्णांक diag_ftp_startup(व्योम);
-व्योम diag_ftp_shutकरोwn(व्योम);
-sमाप_प्रकार diag_ftp_cmd(स्थिर काष्ठा hmcdrv_ftp_cmdspec *ftp, माप_प्रकार *fsize);
+int diag_ftp_startup(void);
+void diag_ftp_shutdown(void);
+ssize_t diag_ftp_cmd(const struct hmcdrv_ftp_cmdspec *ftp, size_t *fsize);
 
-#पूर्ण_अगर	 /* __DIAG_FTP_H__ */
+#endif	 /* __DIAG_FTP_H__ */

@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2020 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,19 +21,19 @@
  *
  */
 
-#समावेश "amdgpu_dm_trace.h"
+#include "amdgpu_dm_trace.h"
 
-#घोषणा TRACE_DC_PIPE_STATE(pipe_ctx, index, max_pipes) \
-	क्रम (index = 0; index < max_pipes; ++index) अणु \
-		काष्ठा pipe_ctx *pipe_ctx = &dc->current_state->res_ctx.pipe_ctx[index]; \
-		अगर (pipe_ctx->plane_state) \
+#define TRACE_DC_PIPE_STATE(pipe_ctx, index, max_pipes) \
+	for (index = 0; index < max_pipes; ++index) { \
+		struct pipe_ctx *pipe_ctx = &dc->current_state->res_ctx.pipe_ctx[index]; \
+		if (pipe_ctx->plane_state) \
 			trace_amdgpu_dm_dc_pipe_state(pipe_ctx->pipe_idx, pipe_ctx->plane_state, \
 						      pipe_ctx->stream, &pipe_ctx->plane_res, \
 						      pipe_ctx->update_flags.raw); \
-	पूर्ण
+	}
 
-#घोषणा TRACE_DCE_CLOCK_STATE(dce_घड़ीs) \
-	trace_amdgpu_dm_dce_घड़ीs_state(dce_घड़ीs)
+#define TRACE_DCE_CLOCK_STATE(dce_clocks) \
+	trace_amdgpu_dm_dce_clocks_state(dce_clocks)
 
-#घोषणा TRACE_DCN_CLOCK_STATE(dcn_घड़ीs) \
-	trace_amdgpu_dm_dc_घड़ीs_state(dcn_घड़ीs)
+#define TRACE_DCN_CLOCK_STATE(dcn_clocks) \
+	trace_amdgpu_dm_dc_clocks_state(dcn_clocks)

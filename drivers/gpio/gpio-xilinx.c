@@ -1,625 +1,624 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Xilinx gpio driver क्रम xps/axi_gpio IP.
+ * Xilinx gpio driver for xps/axi_gpio IP.
  *
  * Copyright 2008 - 2013 Xilinx, Inc.
  */
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/gpio/driver.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/irq.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/slab.h>
+#include <linux/bitops.h>
+#include <linux/clk.h>
+#include <linux/errno.h>
+#include <linux/gpio/driver.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/irq.h>
+#include <linux/module.h>
+#include <linux/of_device.h>
+#include <linux/of_platform.h>
+#include <linux/pm_runtime.h>
+#include <linux/slab.h>
 
 /* Register Offset Definitions */
-#घोषणा XGPIO_DATA_OFFSET   (0x0)	/* Data रेजिस्टर  */
-#घोषणा XGPIO_TRI_OFFSET    (0x4)	/* I/O direction रेजिस्टर  */
+#define XGPIO_DATA_OFFSET   (0x0)	/* Data register  */
+#define XGPIO_TRI_OFFSET    (0x4)	/* I/O direction register  */
 
-#घोषणा XGPIO_CHANNEL_OFFSET	0x8
+#define XGPIO_CHANNEL_OFFSET	0x8
 
-#घोषणा XGPIO_GIER_OFFSET	0x11c /* Global Interrupt Enable */
-#घोषणा XGPIO_GIER_IE		BIT(31)
-#घोषणा XGPIO_IPISR_OFFSET	0x120 /* IP Interrupt Status */
-#घोषणा XGPIO_IPIER_OFFSET	0x128 /* IP Interrupt Enable */
+#define XGPIO_GIER_OFFSET	0x11c /* Global Interrupt Enable */
+#define XGPIO_GIER_IE		BIT(31)
+#define XGPIO_IPISR_OFFSET	0x120 /* IP Interrupt Status */
+#define XGPIO_IPIER_OFFSET	0x128 /* IP Interrupt Enable */
 
-/* Read/Write access to the GPIO रेजिस्टरs */
-#अगर defined(CONFIG_ARCH_ZYNQ) || defined(CONFIG_X86)
-# define xgpio_पढ़ोreg(offset)		पढ़ोl(offset)
-# define xgpio_ग_लिखोreg(offset, val)	ग_लिखोl(val, offset)
-#अन्यथा
-# define xgpio_पढ़ोreg(offset)		__raw_पढ़ोl(offset)
-# define xgpio_ग_लिखोreg(offset, val)	__raw_ग_लिखोl(val, offset)
-#पूर्ण_अगर
+/* Read/Write access to the GPIO registers */
+#if defined(CONFIG_ARCH_ZYNQ) || defined(CONFIG_X86)
+# define xgpio_readreg(offset)		readl(offset)
+# define xgpio_writereg(offset, val)	writel(val, offset)
+#else
+# define xgpio_readreg(offset)		__raw_readl(offset)
+# define xgpio_writereg(offset, val)	__raw_writel(val, offset)
+#endif
 
 /**
- * काष्ठा xgpio_instance - Stores inक्रमmation about GPIO device
+ * struct xgpio_instance - Stores information about GPIO device
  * @gc: GPIO chip
- * @regs: रेजिस्टर block
- * @gpio_width: GPIO width क्रम every channel
- * @gpio_state: GPIO ग_लिखो state shaकरोw रेजिस्टर
- * @gpio_last_irq_पढ़ो: GPIO पढ़ो state रेजिस्टर from last पूर्णांकerrupt
- * @gpio_dir: GPIO direction shaकरोw रेजिस्टर
- * @gpio_lock: Lock used क्रम synchronization
+ * @regs: register block
+ * @gpio_width: GPIO width for every channel
+ * @gpio_state: GPIO write state shadow register
+ * @gpio_last_irq_read: GPIO read state register from last interrupt
+ * @gpio_dir: GPIO direction shadow register
+ * @gpio_lock: Lock used for synchronization
  * @irq: IRQ used by GPIO device
  * @irqchip: IRQ chip
  * @irq_enable: GPIO IRQ enable/disable bitfield
  * @irq_rising_edge: GPIO IRQ rising edge enable/disable bitfield
  * @irq_falling_edge: GPIO IRQ falling edge enable/disable bitfield
- * @clk: घड़ी resource क्रम this driver
+ * @clk: clock resource for this driver
  */
-काष्ठा xgpio_instance अणु
-	काष्ठा gpio_chip gc;
-	व्योम __iomem *regs;
-	अचिन्हित पूर्णांक gpio_width[2];
+struct xgpio_instance {
+	struct gpio_chip gc;
+	void __iomem *regs;
+	unsigned int gpio_width[2];
 	u32 gpio_state[2];
-	u32 gpio_last_irq_पढ़ो[2];
+	u32 gpio_last_irq_read[2];
 	u32 gpio_dir[2];
 	spinlock_t gpio_lock;	/* For serializing operations */
-	पूर्णांक irq;
-	काष्ठा irq_chip irqchip;
+	int irq;
+	struct irq_chip irqchip;
 	u32 irq_enable[2];
 	u32 irq_rising_edge[2];
 	u32 irq_falling_edge[2];
-	काष्ठा clk *clk;
-पूर्ण;
+	struct clk *clk;
+};
 
-अटल अंतरभूत पूर्णांक xgpio_index(काष्ठा xgpio_instance *chip, पूर्णांक gpio)
-अणु
-	अगर (gpio >= chip->gpio_width[0])
-		वापस 1;
+static inline int xgpio_index(struct xgpio_instance *chip, int gpio)
+{
+	if (gpio >= chip->gpio_width[0])
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक xgpio_regoffset(काष्ठा xgpio_instance *chip, पूर्णांक gpio)
-अणु
-	अगर (xgpio_index(chip, gpio))
-		वापस XGPIO_CHANNEL_OFFSET;
+static inline int xgpio_regoffset(struct xgpio_instance *chip, int gpio)
+{
+	if (xgpio_index(chip, gpio))
+		return XGPIO_CHANNEL_OFFSET;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक xgpio_offset(काष्ठा xgpio_instance *chip, पूर्णांक gpio)
-अणु
-	अगर (xgpio_index(chip, gpio))
-		वापस gpio - chip->gpio_width[0];
+static inline int xgpio_offset(struct xgpio_instance *chip, int gpio)
+{
+	if (xgpio_index(chip, gpio))
+		return gpio - chip->gpio_width[0];
 
-	वापस gpio;
-पूर्ण
+	return gpio;
+}
 
 /**
- * xgpio_get - Read the specअगरied संकेत of the GPIO device.
- * @gc:     Poपूर्णांकer to gpio_chip device काष्ठाure.
- * @gpio:   GPIO संकेत number.
+ * xgpio_get - Read the specified signal of the GPIO device.
+ * @gc:     Pointer to gpio_chip device structure.
+ * @gpio:   GPIO signal number.
  *
- * This function पढ़ोs the specअगरied संकेत of the GPIO device.
+ * This function reads the specified signal of the GPIO device.
  *
  * Return:
- * 0 अगर direction of GPIO संकेतs is set as input otherwise it
- * वापसs negative error value.
+ * 0 if direction of GPIO signals is set as input otherwise it
+ * returns negative error value.
  */
-अटल पूर्णांक xgpio_get(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio)
-अणु
-	काष्ठा xgpio_instance *chip = gpiochip_get_data(gc);
+static int xgpio_get(struct gpio_chip *gc, unsigned int gpio)
+{
+	struct xgpio_instance *chip = gpiochip_get_data(gc);
 	u32 val;
 
-	val = xgpio_पढ़ोreg(chip->regs + XGPIO_DATA_OFFSET +
+	val = xgpio_readreg(chip->regs + XGPIO_DATA_OFFSET +
 			    xgpio_regoffset(chip, gpio));
 
-	वापस !!(val & BIT(xgpio_offset(chip, gpio)));
-पूर्ण
+	return !!(val & BIT(xgpio_offset(chip, gpio)));
+}
 
 /**
- * xgpio_set - Write the specअगरied संकेत of the GPIO device.
- * @gc:     Poपूर्णांकer to gpio_chip device काष्ठाure.
- * @gpio:   GPIO संकेत number.
- * @val:    Value to be written to specअगरied संकेत.
+ * xgpio_set - Write the specified signal of the GPIO device.
+ * @gc:     Pointer to gpio_chip device structure.
+ * @gpio:   GPIO signal number.
+ * @val:    Value to be written to specified signal.
  *
- * This function ग_लिखोs the specअगरied value in to the specअगरied संकेत of the
+ * This function writes the specified value in to the specified signal of the
  * GPIO device.
  */
-अटल व्योम xgpio_set(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio, पूर्णांक val)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा xgpio_instance *chip = gpiochip_get_data(gc);
-	पूर्णांक index =  xgpio_index(chip, gpio);
-	पूर्णांक offset =  xgpio_offset(chip, gpio);
+static void xgpio_set(struct gpio_chip *gc, unsigned int gpio, int val)
+{
+	unsigned long flags;
+	struct xgpio_instance *chip = gpiochip_get_data(gc);
+	int index =  xgpio_index(chip, gpio);
+	int offset =  xgpio_offset(chip, gpio);
 
 	spin_lock_irqsave(&chip->gpio_lock, flags);
 
-	/* Write to GPIO संकेत and set its direction to output */
-	अगर (val)
+	/* Write to GPIO signal and set its direction to output */
+	if (val)
 		chip->gpio_state[index] |= BIT(offset);
-	अन्यथा
+	else
 		chip->gpio_state[index] &= ~BIT(offset);
 
-	xgpio_ग_लिखोreg(chip->regs + XGPIO_DATA_OFFSET +
+	xgpio_writereg(chip->regs + XGPIO_DATA_OFFSET +
 		       xgpio_regoffset(chip, gpio), chip->gpio_state[index]);
 
 	spin_unlock_irqrestore(&chip->gpio_lock, flags);
-पूर्ण
+}
 
 /**
- * xgpio_set_multiple - Write the specअगरied संकेतs of the GPIO device.
- * @gc:     Poपूर्णांकer to gpio_chip device काष्ठाure.
- * @mask:   Mask of the GPIOS to modअगरy.
+ * xgpio_set_multiple - Write the specified signals of the GPIO device.
+ * @gc:     Pointer to gpio_chip device structure.
+ * @mask:   Mask of the GPIOS to modify.
  * @bits:   Value to be wrote on each GPIO
  *
- * This function ग_लिखोs the specअगरied values पूर्णांकo the specअगरied संकेतs of the
+ * This function writes the specified values into the specified signals of the
  * GPIO devices.
  */
-अटल व्योम xgpio_set_multiple(काष्ठा gpio_chip *gc, अचिन्हित दीर्घ *mask,
-			       अचिन्हित दीर्घ *bits)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा xgpio_instance *chip = gpiochip_get_data(gc);
-	पूर्णांक index = xgpio_index(chip, 0);
-	पूर्णांक offset, i;
+static void xgpio_set_multiple(struct gpio_chip *gc, unsigned long *mask,
+			       unsigned long *bits)
+{
+	unsigned long flags;
+	struct xgpio_instance *chip = gpiochip_get_data(gc);
+	int index = xgpio_index(chip, 0);
+	int offset, i;
 
 	spin_lock_irqsave(&chip->gpio_lock, flags);
 
-	/* Write to GPIO संकेतs */
-	क्रम (i = 0; i < gc->ngpio; i++) अणु
-		अगर (*mask == 0)
-			अवरोध;
-		/* Once finished with an index ग_लिखो it out to the रेजिस्टर */
-		अगर (index !=  xgpio_index(chip, i)) अणु
-			xgpio_ग_लिखोreg(chip->regs + XGPIO_DATA_OFFSET +
+	/* Write to GPIO signals */
+	for (i = 0; i < gc->ngpio; i++) {
+		if (*mask == 0)
+			break;
+		/* Once finished with an index write it out to the register */
+		if (index !=  xgpio_index(chip, i)) {
+			xgpio_writereg(chip->regs + XGPIO_DATA_OFFSET +
 				       index * XGPIO_CHANNEL_OFFSET,
 				       chip->gpio_state[index]);
 			spin_unlock_irqrestore(&chip->gpio_lock, flags);
 			index =  xgpio_index(chip, i);
 			spin_lock_irqsave(&chip->gpio_lock, flags);
-		पूर्ण
-		अगर (__test_and_clear_bit(i, mask)) अणु
+		}
+		if (__test_and_clear_bit(i, mask)) {
 			offset =  xgpio_offset(chip, i);
-			अगर (test_bit(i, bits))
+			if (test_bit(i, bits))
 				chip->gpio_state[index] |= BIT(offset);
-			अन्यथा
+			else
 				chip->gpio_state[index] &= ~BIT(offset);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	xgpio_ग_लिखोreg(chip->regs + XGPIO_DATA_OFFSET +
+	xgpio_writereg(chip->regs + XGPIO_DATA_OFFSET +
 		       index * XGPIO_CHANNEL_OFFSET, chip->gpio_state[index]);
 
 	spin_unlock_irqrestore(&chip->gpio_lock, flags);
-पूर्ण
+}
 
 /**
- * xgpio_dir_in - Set the direction of the specअगरied GPIO संकेत as input.
- * @gc:     Poपूर्णांकer to gpio_chip device काष्ठाure.
- * @gpio:   GPIO संकेत number.
+ * xgpio_dir_in - Set the direction of the specified GPIO signal as input.
+ * @gc:     Pointer to gpio_chip device structure.
+ * @gpio:   GPIO signal number.
  *
  * Return:
- * 0 - अगर direction of GPIO संकेतs is set as input
- * otherwise it वापसs negative error value.
+ * 0 - if direction of GPIO signals is set as input
+ * otherwise it returns negative error value.
  */
-अटल पूर्णांक xgpio_dir_in(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा xgpio_instance *chip = gpiochip_get_data(gc);
-	पूर्णांक index =  xgpio_index(chip, gpio);
-	पूर्णांक offset =  xgpio_offset(chip, gpio);
+static int xgpio_dir_in(struct gpio_chip *gc, unsigned int gpio)
+{
+	unsigned long flags;
+	struct xgpio_instance *chip = gpiochip_get_data(gc);
+	int index =  xgpio_index(chip, gpio);
+	int offset =  xgpio_offset(chip, gpio);
 
 	spin_lock_irqsave(&chip->gpio_lock, flags);
 
-	/* Set the GPIO bit in shaकरोw रेजिस्टर and set direction as input */
+	/* Set the GPIO bit in shadow register and set direction as input */
 	chip->gpio_dir[index] |= BIT(offset);
-	xgpio_ग_लिखोreg(chip->regs + XGPIO_TRI_OFFSET +
+	xgpio_writereg(chip->regs + XGPIO_TRI_OFFSET +
 		       xgpio_regoffset(chip, gpio), chip->gpio_dir[index]);
 
 	spin_unlock_irqrestore(&chip->gpio_lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * xgpio_dir_out - Set the direction of the specअगरied GPIO संकेत as output.
- * @gc:     Poपूर्णांकer to gpio_chip device काष्ठाure.
- * @gpio:   GPIO संकेत number.
- * @val:    Value to be written to specअगरied संकेत.
+ * xgpio_dir_out - Set the direction of the specified GPIO signal as output.
+ * @gc:     Pointer to gpio_chip device structure.
+ * @gpio:   GPIO signal number.
+ * @val:    Value to be written to specified signal.
  *
- * This function sets the direction of specअगरied GPIO संकेत as output.
+ * This function sets the direction of specified GPIO signal as output.
  *
  * Return:
- * If all GPIO संकेतs of GPIO chip is configured as input then it वापसs
- * error otherwise it वापसs 0.
+ * If all GPIO signals of GPIO chip is configured as input then it returns
+ * error otherwise it returns 0.
  */
-अटल पूर्णांक xgpio_dir_out(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio, पूर्णांक val)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा xgpio_instance *chip = gpiochip_get_data(gc);
-	पूर्णांक index =  xgpio_index(chip, gpio);
-	पूर्णांक offset =  xgpio_offset(chip, gpio);
+static int xgpio_dir_out(struct gpio_chip *gc, unsigned int gpio, int val)
+{
+	unsigned long flags;
+	struct xgpio_instance *chip = gpiochip_get_data(gc);
+	int index =  xgpio_index(chip, gpio);
+	int offset =  xgpio_offset(chip, gpio);
 
 	spin_lock_irqsave(&chip->gpio_lock, flags);
 
-	/* Write state of GPIO संकेत */
-	अगर (val)
+	/* Write state of GPIO signal */
+	if (val)
 		chip->gpio_state[index] |= BIT(offset);
-	अन्यथा
+	else
 		chip->gpio_state[index] &= ~BIT(offset);
-	xgpio_ग_लिखोreg(chip->regs + XGPIO_DATA_OFFSET +
+	xgpio_writereg(chip->regs + XGPIO_DATA_OFFSET +
 			xgpio_regoffset(chip, gpio), chip->gpio_state[index]);
 
-	/* Clear the GPIO bit in shaकरोw रेजिस्टर and set direction as output */
+	/* Clear the GPIO bit in shadow register and set direction as output */
 	chip->gpio_dir[index] &= ~BIT(offset);
-	xgpio_ग_लिखोreg(chip->regs + XGPIO_TRI_OFFSET +
+	xgpio_writereg(chip->regs + XGPIO_TRI_OFFSET +
 			xgpio_regoffset(chip, gpio), chip->gpio_dir[index]);
 
 	spin_unlock_irqrestore(&chip->gpio_lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * xgpio_save_regs - Set initial values of GPIO pins
- * @chip: Poपूर्णांकer to GPIO instance
+ * @chip: Pointer to GPIO instance
  */
-अटल व्योम xgpio_save_regs(काष्ठा xgpio_instance *chip)
-अणु
-	xgpio_ग_लिखोreg(chip->regs + XGPIO_DATA_OFFSET,	chip->gpio_state[0]);
-	xgpio_ग_लिखोreg(chip->regs + XGPIO_TRI_OFFSET, chip->gpio_dir[0]);
+static void xgpio_save_regs(struct xgpio_instance *chip)
+{
+	xgpio_writereg(chip->regs + XGPIO_DATA_OFFSET,	chip->gpio_state[0]);
+	xgpio_writereg(chip->regs + XGPIO_TRI_OFFSET, chip->gpio_dir[0]);
 
-	अगर (!chip->gpio_width[1])
-		वापस;
+	if (!chip->gpio_width[1])
+		return;
 
-	xgpio_ग_लिखोreg(chip->regs + XGPIO_DATA_OFFSET + XGPIO_CHANNEL_OFFSET,
+	xgpio_writereg(chip->regs + XGPIO_DATA_OFFSET + XGPIO_CHANNEL_OFFSET,
 		       chip->gpio_state[1]);
-	xgpio_ग_लिखोreg(chip->regs + XGPIO_TRI_OFFSET + XGPIO_CHANNEL_OFFSET,
+	xgpio_writereg(chip->regs + XGPIO_TRI_OFFSET + XGPIO_CHANNEL_OFFSET,
 		       chip->gpio_dir[1]);
-पूर्ण
+}
 
-अटल पूर्णांक xgpio_request(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
-अणु
-	पूर्णांक ret;
+static int xgpio_request(struct gpio_chip *chip, unsigned int offset)
+{
+	int ret;
 
-	ret = pm_runसमय_get_sync(chip->parent);
+	ret = pm_runtime_get_sync(chip->parent);
 	/*
-	 * If the device is alपढ़ोy active pm_runसमय_get() will वापस 1 on
-	 * success, but gpio_request still needs to वापस 0.
+	 * If the device is already active pm_runtime_get() will return 1 on
+	 * success, but gpio_request still needs to return 0.
 	 */
-	वापस ret < 0 ? ret : 0;
-पूर्ण
+	return ret < 0 ? ret : 0;
+}
 
-अटल व्योम xgpio_मुक्त(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
-अणु
-	pm_runसमय_put(chip->parent);
-पूर्ण
+static void xgpio_free(struct gpio_chip *chip, unsigned int offset)
+{
+	pm_runtime_put(chip->parent);
+}
 
-अटल पूर्णांक __maybe_unused xgpio_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा xgpio_instance *gpio = dev_get_drvdata(dev);
-	काष्ठा irq_data *data = irq_get_irq_data(gpio->irq);
+static int __maybe_unused xgpio_suspend(struct device *dev)
+{
+	struct xgpio_instance *gpio = dev_get_drvdata(dev);
+	struct irq_data *data = irq_get_irq_data(gpio->irq);
 
-	अगर (!data) अणु
+	if (!data) {
 		dev_err(dev, "irq_get_irq_data() failed\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!irqd_is_wakeup_set(data))
-		वापस pm_runसमय_क्रमce_suspend(dev);
+	if (!irqd_is_wakeup_set(data))
+		return pm_runtime_force_suspend(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * xgpio_हटाओ - Remove method क्रम the GPIO device.
- * @pdev: poपूर्णांकer to the platक्रमm device
+ * xgpio_remove - Remove method for the GPIO device.
+ * @pdev: pointer to the platform device
  *
- * This function हटाओ gpiochips and मुक्तs all the allocated resources.
+ * This function remove gpiochips and frees all the allocated resources.
  *
  * Return: 0 always
  */
-अटल पूर्णांक xgpio_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा xgpio_instance *gpio = platक्रमm_get_drvdata(pdev);
+static int xgpio_remove(struct platform_device *pdev)
+{
+	struct xgpio_instance *gpio = platform_get_drvdata(pdev);
 
-	pm_runसमय_get_sync(&pdev->dev);
-	pm_runसमय_put_noidle(&pdev->dev);
-	pm_runसमय_disable(&pdev->dev);
+	pm_runtime_get_sync(&pdev->dev);
+	pm_runtime_put_noidle(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
 	clk_disable_unprepare(gpio->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * xgpio_irq_ack - Acknowledge a child GPIO पूर्णांकerrupt.
- * @irq_data: per IRQ and chip data passed करोwn to chip functions
- * This currently करोes nothing, but irq_ack is unconditionally called by
- * handle_edge_irq and thereक्रमe must be defined.
+ * xgpio_irq_ack - Acknowledge a child GPIO interrupt.
+ * @irq_data: per IRQ and chip data passed down to chip functions
+ * This currently does nothing, but irq_ack is unconditionally called by
+ * handle_edge_irq and therefore must be defined.
  */
-अटल व्योम xgpio_irq_ack(काष्ठा irq_data *irq_data)
-अणु
-पूर्ण
+static void xgpio_irq_ack(struct irq_data *irq_data)
+{
+}
 
-अटल पूर्णांक __maybe_unused xgpio_resume(काष्ठा device *dev)
-अणु
-	काष्ठा xgpio_instance *gpio = dev_get_drvdata(dev);
-	काष्ठा irq_data *data = irq_get_irq_data(gpio->irq);
+static int __maybe_unused xgpio_resume(struct device *dev)
+{
+	struct xgpio_instance *gpio = dev_get_drvdata(dev);
+	struct irq_data *data = irq_get_irq_data(gpio->irq);
 
-	अगर (!data) अणु
+	if (!data) {
 		dev_err(dev, "irq_get_irq_data() failed\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!irqd_is_wakeup_set(data))
-		वापस pm_runसमय_क्रमce_resume(dev);
+	if (!irqd_is_wakeup_set(data))
+		return pm_runtime_force_resume(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused xgpio_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	काष्ठा xgpio_instance *gpio = platक्रमm_get_drvdata(pdev);
+static int __maybe_unused xgpio_runtime_suspend(struct device *dev)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct xgpio_instance *gpio = platform_get_drvdata(pdev);
 
 	clk_disable(gpio->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused xgpio_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	काष्ठा xgpio_instance *gpio = platक्रमm_get_drvdata(pdev);
+static int __maybe_unused xgpio_runtime_resume(struct device *dev)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct xgpio_instance *gpio = platform_get_drvdata(pdev);
 
-	वापस clk_enable(gpio->clk);
-पूर्ण
+	return clk_enable(gpio->clk);
+}
 
-अटल स्थिर काष्ठा dev_pm_ops xgpio_dev_pm_ops = अणु
+static const struct dev_pm_ops xgpio_dev_pm_ops = {
 	SET_SYSTEM_SLEEP_PM_OPS(xgpio_suspend, xgpio_resume)
-	SET_RUNTIME_PM_OPS(xgpio_runसमय_suspend,
-			   xgpio_runसमय_resume, शून्य)
-पूर्ण;
+	SET_RUNTIME_PM_OPS(xgpio_runtime_suspend,
+			   xgpio_runtime_resume, NULL)
+};
 
 /**
- * xgpio_irq_mask - Write the specअगरied संकेत of the GPIO device.
- * @irq_data: per IRQ and chip data passed करोwn to chip functions
+ * xgpio_irq_mask - Write the specified signal of the GPIO device.
+ * @irq_data: per IRQ and chip data passed down to chip functions
  */
-अटल व्योम xgpio_irq_mask(काष्ठा irq_data *irq_data)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा xgpio_instance *chip = irq_data_get_irq_chip_data(irq_data);
-	पूर्णांक irq_offset = irqd_to_hwirq(irq_data);
-	पूर्णांक index = xgpio_index(chip, irq_offset);
-	पूर्णांक offset = xgpio_offset(chip, irq_offset);
+static void xgpio_irq_mask(struct irq_data *irq_data)
+{
+	unsigned long flags;
+	struct xgpio_instance *chip = irq_data_get_irq_chip_data(irq_data);
+	int irq_offset = irqd_to_hwirq(irq_data);
+	int index = xgpio_index(chip, irq_offset);
+	int offset = xgpio_offset(chip, irq_offset);
 
 	spin_lock_irqsave(&chip->gpio_lock, flags);
 
 	chip->irq_enable[index] &= ~BIT(offset);
 
-	अगर (!chip->irq_enable[index]) अणु
-		/* Disable per channel पूर्णांकerrupt */
-		u32 temp = xgpio_पढ़ोreg(chip->regs + XGPIO_IPIER_OFFSET);
+	if (!chip->irq_enable[index]) {
+		/* Disable per channel interrupt */
+		u32 temp = xgpio_readreg(chip->regs + XGPIO_IPIER_OFFSET);
 
 		temp &= ~BIT(index);
-		xgpio_ग_लिखोreg(chip->regs + XGPIO_IPIER_OFFSET, temp);
-	पूर्ण
+		xgpio_writereg(chip->regs + XGPIO_IPIER_OFFSET, temp);
+	}
 	spin_unlock_irqrestore(&chip->gpio_lock, flags);
-पूर्ण
+}
 
 /**
- * xgpio_irq_unmask - Write the specअगरied संकेत of the GPIO device.
- * @irq_data: per IRQ and chip data passed करोwn to chip functions
+ * xgpio_irq_unmask - Write the specified signal of the GPIO device.
+ * @irq_data: per IRQ and chip data passed down to chip functions
  */
-अटल व्योम xgpio_irq_unmask(काष्ठा irq_data *irq_data)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा xgpio_instance *chip = irq_data_get_irq_chip_data(irq_data);
-	पूर्णांक irq_offset = irqd_to_hwirq(irq_data);
-	पूर्णांक index = xgpio_index(chip, irq_offset);
-	पूर्णांक offset = xgpio_offset(chip, irq_offset);
+static void xgpio_irq_unmask(struct irq_data *irq_data)
+{
+	unsigned long flags;
+	struct xgpio_instance *chip = irq_data_get_irq_chip_data(irq_data);
+	int irq_offset = irqd_to_hwirq(irq_data);
+	int index = xgpio_index(chip, irq_offset);
+	int offset = xgpio_offset(chip, irq_offset);
 	u32 old_enable = chip->irq_enable[index];
 
 	spin_lock_irqsave(&chip->gpio_lock, flags);
 
 	chip->irq_enable[index] |= BIT(offset);
 
-	अगर (!old_enable) अणु
-		/* Clear any existing per-channel पूर्णांकerrupts */
-		u32 val = xgpio_पढ़ोreg(chip->regs + XGPIO_IPISR_OFFSET) &
+	if (!old_enable) {
+		/* Clear any existing per-channel interrupts */
+		u32 val = xgpio_readreg(chip->regs + XGPIO_IPISR_OFFSET) &
 			BIT(index);
 
-		अगर (val)
-			xgpio_ग_लिखोreg(chip->regs + XGPIO_IPISR_OFFSET, val);
+		if (val)
+			xgpio_writereg(chip->regs + XGPIO_IPISR_OFFSET, val);
 
-		/* Update GPIO IRQ पढ़ो data beक्रमe enabling पूर्णांकerrupt*/
-		val = xgpio_पढ़ोreg(chip->regs + XGPIO_DATA_OFFSET +
+		/* Update GPIO IRQ read data before enabling interrupt*/
+		val = xgpio_readreg(chip->regs + XGPIO_DATA_OFFSET +
 				    index * XGPIO_CHANNEL_OFFSET);
-		chip->gpio_last_irq_पढ़ो[index] = val;
+		chip->gpio_last_irq_read[index] = val;
 
-		/* Enable per channel पूर्णांकerrupt */
-		val = xgpio_पढ़ोreg(chip->regs + XGPIO_IPIER_OFFSET);
+		/* Enable per channel interrupt */
+		val = xgpio_readreg(chip->regs + XGPIO_IPIER_OFFSET);
 		val |= BIT(index);
-		xgpio_ग_लिखोreg(chip->regs + XGPIO_IPIER_OFFSET, val);
-	पूर्ण
+		xgpio_writereg(chip->regs + XGPIO_IPIER_OFFSET, val);
+	}
 
 	spin_unlock_irqrestore(&chip->gpio_lock, flags);
-पूर्ण
+}
 
 /**
- * xgpio_set_irq_type - Write the specअगरied संकेत of the GPIO device.
- * @irq_data: Per IRQ and chip data passed करोwn to chip functions
- * @type: Interrupt type that is to be set क्रम the gpio pin
+ * xgpio_set_irq_type - Write the specified signal of the GPIO device.
+ * @irq_data: Per IRQ and chip data passed down to chip functions
+ * @type: Interrupt type that is to be set for the gpio pin
  *
  * Return:
- * 0 अगर पूर्णांकerrupt type is supported otherwise -EINVAL
+ * 0 if interrupt type is supported otherwise -EINVAL
  */
-अटल पूर्णांक xgpio_set_irq_type(काष्ठा irq_data *irq_data, अचिन्हित पूर्णांक type)
-अणु
-	काष्ठा xgpio_instance *chip = irq_data_get_irq_chip_data(irq_data);
-	पूर्णांक irq_offset = irqd_to_hwirq(irq_data);
-	पूर्णांक index = xgpio_index(chip, irq_offset);
-	पूर्णांक offset = xgpio_offset(chip, irq_offset);
+static int xgpio_set_irq_type(struct irq_data *irq_data, unsigned int type)
+{
+	struct xgpio_instance *chip = irq_data_get_irq_chip_data(irq_data);
+	int irq_offset = irqd_to_hwirq(irq_data);
+	int index = xgpio_index(chip, irq_offset);
+	int offset = xgpio_offset(chip, irq_offset);
 
 	/*
-	 * The Xilinx GPIO hardware provides a single पूर्णांकerrupt status
-	 * indication क्रम any state change in a given GPIO channel (bank).
-	 * Thereक्रमe, only rising edge or falling edge triggers are
+	 * The Xilinx GPIO hardware provides a single interrupt status
+	 * indication for any state change in a given GPIO channel (bank).
+	 * Therefore, only rising edge or falling edge triggers are
 	 * supported.
 	 */
-	चयन (type & IRQ_TYPE_SENSE_MASK) अणु
-	हाल IRQ_TYPE_EDGE_BOTH:
+	switch (type & IRQ_TYPE_SENSE_MASK) {
+	case IRQ_TYPE_EDGE_BOTH:
 		chip->irq_rising_edge[index] |= BIT(offset);
 		chip->irq_falling_edge[index] |= BIT(offset);
-		अवरोध;
-	हाल IRQ_TYPE_EDGE_RISING:
+		break;
+	case IRQ_TYPE_EDGE_RISING:
 		chip->irq_rising_edge[index] |= BIT(offset);
 		chip->irq_falling_edge[index] &= ~BIT(offset);
-		अवरोध;
-	हाल IRQ_TYPE_EDGE_FALLING:
+		break;
+	case IRQ_TYPE_EDGE_FALLING:
 		chip->irq_rising_edge[index] &= ~BIT(offset);
 		chip->irq_falling_edge[index] |= BIT(offset);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	irq_set_handler_locked(irq_data, handle_edge_irq);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * xgpio_irqhandler - Gpio पूर्णांकerrupt service routine
- * @desc: Poपूर्णांकer to पूर्णांकerrupt description
+ * xgpio_irqhandler - Gpio interrupt service routine
+ * @desc: Pointer to interrupt description
  */
-अटल व्योम xgpio_irqhandler(काष्ठा irq_desc *desc)
-अणु
-	काष्ठा xgpio_instance *chip = irq_desc_get_handler_data(desc);
-	काष्ठा irq_chip *irqchip = irq_desc_get_chip(desc);
+static void xgpio_irqhandler(struct irq_desc *desc)
+{
+	struct xgpio_instance *chip = irq_desc_get_handler_data(desc);
+	struct irq_chip *irqchip = irq_desc_get_chip(desc);
 	u32 num_channels = chip->gpio_width[1] ? 2 : 1;
 	u32 offset = 0, index;
-	u32 status = xgpio_पढ़ोreg(chip->regs + XGPIO_IPISR_OFFSET);
+	u32 status = xgpio_readreg(chip->regs + XGPIO_IPISR_OFFSET);
 
-	xgpio_ग_लिखोreg(chip->regs + XGPIO_IPISR_OFFSET, status);
+	xgpio_writereg(chip->regs + XGPIO_IPISR_OFFSET, status);
 
 	chained_irq_enter(irqchip, desc);
-	क्रम (index = 0; index < num_channels; index++) अणु
-		अगर ((status & BIT(index))) अणु
-			अचिन्हित दीर्घ rising_events, falling_events, all_events;
-			अचिन्हित दीर्घ flags;
+	for (index = 0; index < num_channels; index++) {
+		if ((status & BIT(index))) {
+			unsigned long rising_events, falling_events, all_events;
+			unsigned long flags;
 			u32 data, bit;
-			अचिन्हित पूर्णांक irq;
+			unsigned int irq;
 
 			spin_lock_irqsave(&chip->gpio_lock, flags);
-			data = xgpio_पढ़ोreg(chip->regs + XGPIO_DATA_OFFSET +
+			data = xgpio_readreg(chip->regs + XGPIO_DATA_OFFSET +
 					     index * XGPIO_CHANNEL_OFFSET);
 			rising_events = data &
-					~chip->gpio_last_irq_पढ़ो[index] &
+					~chip->gpio_last_irq_read[index] &
 					chip->irq_enable[index] &
 					chip->irq_rising_edge[index];
 			falling_events = ~data &
-					 chip->gpio_last_irq_पढ़ो[index] &
+					 chip->gpio_last_irq_read[index] &
 					 chip->irq_enable[index] &
 					 chip->irq_falling_edge[index];
 			dev_dbg(chip->gc.parent,
 				"IRQ chan %u rising 0x%lx falling 0x%lx\n",
 				index, rising_events, falling_events);
 			all_events = rising_events | falling_events;
-			chip->gpio_last_irq_पढ़ो[index] = data;
+			chip->gpio_last_irq_read[index] = data;
 			spin_unlock_irqrestore(&chip->gpio_lock, flags);
 
-			क्रम_each_set_bit(bit, &all_events, 32) अणु
-				irq = irq_find_mapping(chip->gc.irq.करोमुख्य,
+			for_each_set_bit(bit, &all_events, 32) {
+				irq = irq_find_mapping(chip->gc.irq.domain,
 						       offset + bit);
 				generic_handle_irq(irq);
-			पूर्ण
-		पूर्ण
+			}
+		}
 		offset += chip->gpio_width[index];
-	पूर्ण
+	}
 
-	chained_irq_निकास(irqchip, desc);
-पूर्ण
+	chained_irq_exit(irqchip, desc);
+}
 
 /**
- * xgpio_probe - Probe method क्रम the GPIO device.
- * @pdev: poपूर्णांकer to the platक्रमm device
+ * xgpio_probe - Probe method for the GPIO device.
+ * @pdev: pointer to the platform device
  *
  * Return:
- * It वापसs 0, अगर the driver is bound to the GPIO device, or
- * a negative value अगर there is an error.
+ * It returns 0, if the driver is bound to the GPIO device, or
+ * a negative value if there is an error.
  */
-अटल पूर्णांक xgpio_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा xgpio_instance *chip;
-	पूर्णांक status = 0;
-	काष्ठा device_node *np = pdev->dev.of_node;
+static int xgpio_probe(struct platform_device *pdev)
+{
+	struct xgpio_instance *chip;
+	int status = 0;
+	struct device_node *np = pdev->dev.of_node;
 	u32 is_dual = 0;
 	u32 cells = 2;
-	काष्ठा gpio_irq_chip *girq;
+	struct gpio_irq_chip *girq;
 	u32 temp;
 
-	chip = devm_kzalloc(&pdev->dev, माप(*chip), GFP_KERNEL);
-	अगर (!chip)
-		वापस -ENOMEM;
+	chip = devm_kzalloc(&pdev->dev, sizeof(*chip), GFP_KERNEL);
+	if (!chip)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, chip);
+	platform_set_drvdata(pdev, chip);
 
-	/* Update GPIO state shaकरोw रेजिस्टर with शेष value */
-	अगर (of_property_पढ़ो_u32(np, "xlnx,dout-default", &chip->gpio_state[0]))
+	/* Update GPIO state shadow register with default value */
+	if (of_property_read_u32(np, "xlnx,dout-default", &chip->gpio_state[0]))
 		chip->gpio_state[0] = 0x0;
 
-	/* Update GPIO direction shaकरोw रेजिस्टर with शेष value */
-	अगर (of_property_पढ़ो_u32(np, "xlnx,tri-default", &chip->gpio_dir[0]))
+	/* Update GPIO direction shadow register with default value */
+	if (of_property_read_u32(np, "xlnx,tri-default", &chip->gpio_dir[0]))
 		chip->gpio_dir[0] = 0xFFFFFFFF;
 
 	/* Update cells with gpio-cells value */
-	अगर (of_property_पढ़ो_u32(np, "#gpio-cells", &cells))
+	if (of_property_read_u32(np, "#gpio-cells", &cells))
 		dev_dbg(&pdev->dev, "Missing gpio-cells property\n");
 
-	अगर (cells != 2) अणु
+	if (cells != 2) {
 		dev_err(&pdev->dev, "#gpio-cells mismatch\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
-	 * Check device node and parent device node क्रम device width
-	 * and assume शेष width of 32
+	 * Check device node and parent device node for device width
+	 * and assume default width of 32
 	 */
-	अगर (of_property_पढ़ो_u32(np, "xlnx,gpio-width", &chip->gpio_width[0]))
+	if (of_property_read_u32(np, "xlnx,gpio-width", &chip->gpio_width[0]))
 		chip->gpio_width[0] = 32;
 
-	अगर (chip->gpio_width[0] > 32)
-		वापस -EINVAL;
+	if (chip->gpio_width[0] > 32)
+		return -EINVAL;
 
 	spin_lock_init(&chip->gpio_lock);
 
-	अगर (of_property_पढ़ो_u32(np, "xlnx,is-dual", &is_dual))
+	if (of_property_read_u32(np, "xlnx,is-dual", &is_dual))
 		is_dual = 0;
 
-	अगर (is_dual) अणु
-		/* Update GPIO state shaकरोw रेजिस्टर with शेष value */
-		अगर (of_property_पढ़ो_u32(np, "xlnx,dout-default-2",
+	if (is_dual) {
+		/* Update GPIO state shadow register with default value */
+		if (of_property_read_u32(np, "xlnx,dout-default-2",
 					 &chip->gpio_state[1]))
 			chip->gpio_state[1] = 0x0;
 
-		/* Update GPIO direction shaकरोw रेजिस्टर with शेष value */
-		अगर (of_property_पढ़ो_u32(np, "xlnx,tri-default-2",
+		/* Update GPIO direction shadow register with default value */
+		if (of_property_read_u32(np, "xlnx,tri-default-2",
 					 &chip->gpio_dir[1]))
 			chip->gpio_dir[1] = 0xFFFFFFFF;
 
 		/*
-		 * Check device node and parent device node क्रम device width
-		 * and assume शेष width of 32
+		 * Check device node and parent device node for device width
+		 * and assume default width of 32
 		 */
-		अगर (of_property_पढ़ो_u32(np, "xlnx,gpio2-width",
+		if (of_property_read_u32(np, "xlnx,gpio2-width",
 					 &chip->gpio_width[1]))
 			chip->gpio_width[1] = 32;
 
-		अगर (chip->gpio_width[1] > 32)
-			वापस -EINVAL;
-	पूर्ण
+		if (chip->gpio_width[1] > 32)
+			return -EINVAL;
+	}
 
 	chip->gc.base = -1;
 	chip->gc.ngpio = chip->gpio_width[0] + chip->gpio_width[1];
@@ -630,35 +629,35 @@
 	chip->gc.get = xgpio_get;
 	chip->gc.set = xgpio_set;
 	chip->gc.request = xgpio_request;
-	chip->gc.मुक्त = xgpio_मुक्त;
+	chip->gc.free = xgpio_free;
 	chip->gc.set_multiple = xgpio_set_multiple;
 
 	chip->gc.label = dev_name(&pdev->dev);
 
-	chip->regs = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(chip->regs)) अणु
+	chip->regs = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(chip->regs)) {
 		dev_err(&pdev->dev, "failed to ioremap memory resource\n");
-		वापस PTR_ERR(chip->regs);
-	पूर्ण
+		return PTR_ERR(chip->regs);
+	}
 
-	chip->clk = devm_clk_get_optional(&pdev->dev, शून्य);
-	अगर (IS_ERR(chip->clk))
-		वापस dev_err_probe(&pdev->dev, PTR_ERR(chip->clk), "input clock not found.\n");
+	chip->clk = devm_clk_get_optional(&pdev->dev, NULL);
+	if (IS_ERR(chip->clk))
+		return dev_err_probe(&pdev->dev, PTR_ERR(chip->clk), "input clock not found.\n");
 
 	status = clk_prepare_enable(chip->clk);
-	अगर (status < 0) अणु
+	if (status < 0) {
 		dev_err(&pdev->dev, "Failed to prepare clk\n");
-		वापस status;
-	पूर्ण
-	pm_runसमय_get_noresume(&pdev->dev);
-	pm_runसमय_set_active(&pdev->dev);
-	pm_runसमय_enable(&pdev->dev);
+		return status;
+	}
+	pm_runtime_get_noresume(&pdev->dev);
+	pm_runtime_set_active(&pdev->dev);
+	pm_runtime_enable(&pdev->dev);
 
 	xgpio_save_regs(chip);
 
-	chip->irq = platक्रमm_get_irq_optional(pdev, 0);
-	अगर (chip->irq <= 0)
-		जाओ skip_irq;
+	chip->irq = platform_get_irq_optional(pdev, 0);
+	if (chip->irq <= 0)
+		goto skip_irq;
 
 	chip->irqchip.name = "gpio-xilinx";
 	chip->irqchip.irq_ack = xgpio_irq_ack;
@@ -666,75 +665,75 @@
 	chip->irqchip.irq_unmask = xgpio_irq_unmask;
 	chip->irqchip.irq_set_type = xgpio_set_irq_type;
 
-	/* Disable per-channel पूर्णांकerrupts */
-	xgpio_ग_लिखोreg(chip->regs + XGPIO_IPIER_OFFSET, 0);
-	/* Clear any existing per-channel पूर्णांकerrupts */
-	temp = xgpio_पढ़ोreg(chip->regs + XGPIO_IPISR_OFFSET);
-	xgpio_ग_लिखोreg(chip->regs + XGPIO_IPISR_OFFSET, temp);
-	/* Enable global पूर्णांकerrupts */
-	xgpio_ग_लिखोreg(chip->regs + XGPIO_GIER_OFFSET, XGPIO_GIER_IE);
+	/* Disable per-channel interrupts */
+	xgpio_writereg(chip->regs + XGPIO_IPIER_OFFSET, 0);
+	/* Clear any existing per-channel interrupts */
+	temp = xgpio_readreg(chip->regs + XGPIO_IPISR_OFFSET);
+	xgpio_writereg(chip->regs + XGPIO_IPISR_OFFSET, temp);
+	/* Enable global interrupts */
+	xgpio_writereg(chip->regs + XGPIO_GIER_OFFSET, XGPIO_GIER_IE);
 
 	girq = &chip->gc.irq;
 	girq->chip = &chip->irqchip;
 	girq->parent_handler = xgpio_irqhandler;
 	girq->num_parents = 1;
-	girq->parents = devm_kसुस्मृति(&pdev->dev, 1,
-				     माप(*girq->parents),
+	girq->parents = devm_kcalloc(&pdev->dev, 1,
+				     sizeof(*girq->parents),
 				     GFP_KERNEL);
-	अगर (!girq->parents) अणु
+	if (!girq->parents) {
 		status = -ENOMEM;
-		जाओ err_pm_put;
-	पूर्ण
+		goto err_pm_put;
+	}
 	girq->parents[0] = chip->irq;
-	girq->शेष_type = IRQ_TYPE_NONE;
+	girq->default_type = IRQ_TYPE_NONE;
 	girq->handler = handle_bad_irq;
 
 skip_irq:
 	status = devm_gpiochip_add_data(&pdev->dev, &chip->gc, chip);
-	अगर (status) अणु
+	if (status) {
 		dev_err(&pdev->dev, "failed to add GPIO chip\n");
-		जाओ err_pm_put;
-	पूर्ण
+		goto err_pm_put;
+	}
 
-	pm_runसमय_put(&pdev->dev);
-	वापस 0;
+	pm_runtime_put(&pdev->dev);
+	return 0;
 
 err_pm_put:
-	pm_runसमय_disable(&pdev->dev);
-	pm_runसमय_put_noidle(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
+	pm_runtime_put_noidle(&pdev->dev);
 	clk_disable_unprepare(chip->clk);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल स्थिर काष्ठा of_device_id xgpio_of_match[] = अणु
-	अणु .compatible = "xlnx,xps-gpio-1.00.a", पूर्ण,
-	अणु /* end of list */ पूर्ण,
-पूर्ण;
+static const struct of_device_id xgpio_of_match[] = {
+	{ .compatible = "xlnx,xps-gpio-1.00.a", },
+	{ /* end of list */ },
+};
 
 MODULE_DEVICE_TABLE(of, xgpio_of_match);
 
-अटल काष्ठा platक्रमm_driver xgpio_plat_driver = अणु
+static struct platform_driver xgpio_plat_driver = {
 	.probe		= xgpio_probe,
-	.हटाओ		= xgpio_हटाओ,
-	.driver		= अणु
+	.remove		= xgpio_remove,
+	.driver		= {
 			.name = "gpio-xilinx",
 			.of_match_table	= xgpio_of_match,
 			.pm = &xgpio_dev_pm_ops,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init xgpio_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&xgpio_plat_driver);
-पूर्ण
+static int __init xgpio_init(void)
+{
+	return platform_driver_register(&xgpio_plat_driver);
+}
 
 subsys_initcall(xgpio_init);
 
-अटल व्योम __निकास xgpio_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&xgpio_plat_driver);
-पूर्ण
-module_निकास(xgpio_निकास);
+static void __exit xgpio_exit(void)
+{
+	platform_driver_unregister(&xgpio_plat_driver);
+}
+module_exit(xgpio_exit);
 
 MODULE_AUTHOR("Xilinx, Inc.");
 MODULE_DESCRIPTION("Xilinx GPIO driver");

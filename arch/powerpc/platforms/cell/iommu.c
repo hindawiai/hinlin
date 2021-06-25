@@ -1,142 +1,141 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * IOMMU implementation क्रम Cell Broadband Processor Architecture
+ * IOMMU implementation for Cell Broadband Processor Architecture
  *
  * (C) Copyright IBM Corporation 2006-2008
  *
- * Author: Jeremy Kerr <jk@ozद_असल.org>
+ * Author: Jeremy Kerr <jk@ozlabs.org>
  */
 
-#अघोषित DEBUG
+#undef DEBUG
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/memblock.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/notifier.h>
+#include <linux/of.h>
+#include <linux/of_platform.h>
+#include <linux/slab.h>
+#include <linux/memblock.h>
 
-#समावेश <यंत्र/prom.h>
-#समावेश <यंत्र/iommu.h>
-#समावेश <यंत्र/machdep.h>
-#समावेश <यंत्र/pci-bridge.h>
-#समावेश <यंत्र/udbg.h>
-#समावेश <यंत्र/firmware.h>
-#समावेश <यंत्र/cell-regs.h>
+#include <asm/prom.h>
+#include <asm/iommu.h>
+#include <asm/machdep.h>
+#include <asm/pci-bridge.h>
+#include <asm/udbg.h>
+#include <asm/firmware.h>
+#include <asm/cell-regs.h>
 
-#समावेश "cell.h"
-#समावेश "interrupt.h"
+#include "cell.h"
+#include "interrupt.h"
 
 /* Define CELL_IOMMU_REAL_UNMAP to actually unmap non-used pages
  * instead of leaving them mapped to some dummy page. This can be
- * enabled once the appropriate workarounds क्रम spider bugs have
+ * enabled once the appropriate workarounds for spider bugs have
  * been enabled
  */
-#घोषणा CELL_IOMMU_REAL_UNMAP
+#define CELL_IOMMU_REAL_UNMAP
 
-/* Define CELL_IOMMU_STRICT_PROTECTION to enक्रमce protection of
+/* Define CELL_IOMMU_STRICT_PROTECTION to enforce protection of
  * IO PTEs based on the transfer direction. That can be enabled
  * once spider-net has been fixed to pass the correct direction
  * to the DMA mapping functions
  */
-#घोषणा CELL_IOMMU_STRICT_PROTECTION
+#define CELL_IOMMU_STRICT_PROTECTION
 
 
-#घोषणा NR_IOMMUS			2
+#define NR_IOMMUS			2
 
-/* IOC mmap रेजिस्टरs */
-#घोषणा IOC_Reg_Size			0x2000
+/* IOC mmap registers */
+#define IOC_Reg_Size			0x2000
 
-#घोषणा IOC_IOPT_CacheInvd		0x908
-#घोषणा IOC_IOPT_CacheInvd_NE_Mask	0xffe0000000000000ul
-#घोषणा IOC_IOPT_CacheInvd_IOPTE_Mask	0x000003fffffffff8ul
-#घोषणा IOC_IOPT_CacheInvd_Busy		0x0000000000000001ul
+#define IOC_IOPT_CacheInvd		0x908
+#define IOC_IOPT_CacheInvd_NE_Mask	0xffe0000000000000ul
+#define IOC_IOPT_CacheInvd_IOPTE_Mask	0x000003fffffffff8ul
+#define IOC_IOPT_CacheInvd_Busy		0x0000000000000001ul
 
-#घोषणा IOC_IOST_Origin			0x918
-#घोषणा IOC_IOST_Origin_E		0x8000000000000000ul
-#घोषणा IOC_IOST_Origin_HW		0x0000000000000800ul
-#घोषणा IOC_IOST_Origin_HL		0x0000000000000400ul
+#define IOC_IOST_Origin			0x918
+#define IOC_IOST_Origin_E		0x8000000000000000ul
+#define IOC_IOST_Origin_HW		0x0000000000000800ul
+#define IOC_IOST_Origin_HL		0x0000000000000400ul
 
-#घोषणा IOC_IO_ExcpStat			0x920
-#घोषणा IOC_IO_ExcpStat_V		0x8000000000000000ul
-#घोषणा IOC_IO_ExcpStat_SPF_Mask	0x6000000000000000ul
-#घोषणा IOC_IO_ExcpStat_SPF_S		0x6000000000000000ul
-#घोषणा IOC_IO_ExcpStat_SPF_P		0x2000000000000000ul
-#घोषणा IOC_IO_ExcpStat_ADDR_Mask	0x00000007fffff000ul
-#घोषणा IOC_IO_ExcpStat_RW_Mask		0x0000000000000800ul
-#घोषणा IOC_IO_ExcpStat_IOID_Mask	0x00000000000007fful
+#define IOC_IO_ExcpStat			0x920
+#define IOC_IO_ExcpStat_V		0x8000000000000000ul
+#define IOC_IO_ExcpStat_SPF_Mask	0x6000000000000000ul
+#define IOC_IO_ExcpStat_SPF_S		0x6000000000000000ul
+#define IOC_IO_ExcpStat_SPF_P		0x2000000000000000ul
+#define IOC_IO_ExcpStat_ADDR_Mask	0x00000007fffff000ul
+#define IOC_IO_ExcpStat_RW_Mask		0x0000000000000800ul
+#define IOC_IO_ExcpStat_IOID_Mask	0x00000000000007fful
 
-#घोषणा IOC_IO_ExcpMask			0x928
-#घोषणा IOC_IO_ExcpMask_SFE		0x4000000000000000ul
-#घोषणा IOC_IO_ExcpMask_PFE		0x2000000000000000ul
+#define IOC_IO_ExcpMask			0x928
+#define IOC_IO_ExcpMask_SFE		0x4000000000000000ul
+#define IOC_IO_ExcpMask_PFE		0x2000000000000000ul
 
-#घोषणा IOC_IOCmd_Offset		0x1000
+#define IOC_IOCmd_Offset		0x1000
 
-#घोषणा IOC_IOCmd_Cfg			0xc00
-#घोषणा IOC_IOCmd_Cfg_TE		0x0000800000000000ul
+#define IOC_IOCmd_Cfg			0xc00
+#define IOC_IOCmd_Cfg_TE		0x0000800000000000ul
 
 
 /* Segment table entries */
-#घोषणा IOSTE_V			0x8000000000000000ul /* valid */
-#घोषणा IOSTE_H			0x4000000000000000ul /* cache hपूर्णांक */
-#घोषणा IOSTE_PT_Base_RPN_Mask  0x3ffffffffffff000ul /* base RPN of IOPT */
-#घोषणा IOSTE_NPPT_Mask		0x0000000000000fe0ul /* no. pages in IOPT */
-#घोषणा IOSTE_PS_Mask		0x0000000000000007ul /* page size */
-#घोषणा IOSTE_PS_4K		0x0000000000000001ul /*   - 4kB  */
-#घोषणा IOSTE_PS_64K		0x0000000000000003ul /*   - 64kB */
-#घोषणा IOSTE_PS_1M		0x0000000000000005ul /*   - 1MB  */
-#घोषणा IOSTE_PS_16M		0x0000000000000007ul /*   - 16MB */
+#define IOSTE_V			0x8000000000000000ul /* valid */
+#define IOSTE_H			0x4000000000000000ul /* cache hint */
+#define IOSTE_PT_Base_RPN_Mask  0x3ffffffffffff000ul /* base RPN of IOPT */
+#define IOSTE_NPPT_Mask		0x0000000000000fe0ul /* no. pages in IOPT */
+#define IOSTE_PS_Mask		0x0000000000000007ul /* page size */
+#define IOSTE_PS_4K		0x0000000000000001ul /*   - 4kB  */
+#define IOSTE_PS_64K		0x0000000000000003ul /*   - 64kB */
+#define IOSTE_PS_1M		0x0000000000000005ul /*   - 1MB  */
+#define IOSTE_PS_16M		0x0000000000000007ul /*   - 16MB */
 
 
 /* IOMMU sizing */
-#घोषणा IO_SEGMENT_SHIFT	28
-#घोषणा IO_PAGENO_BITS(shअगरt)	(IO_SEGMENT_SHIFT - (shअगरt))
+#define IO_SEGMENT_SHIFT	28
+#define IO_PAGENO_BITS(shift)	(IO_SEGMENT_SHIFT - (shift))
 
 /* The high bit needs to be set on every DMA address */
-#घोषणा SPIDER_DMA_OFFSET	0x80000000ul
+#define SPIDER_DMA_OFFSET	0x80000000ul
 
-काष्ठा iommu_winकरोw अणु
-	काष्ठा list_head list;
-	काष्ठा cbe_iommu *iommu;
-	अचिन्हित दीर्घ offset;
-	अचिन्हित दीर्घ size;
-	अचिन्हित पूर्णांक ioid;
-	काष्ठा iommu_table table;
-पूर्ण;
+struct iommu_window {
+	struct list_head list;
+	struct cbe_iommu *iommu;
+	unsigned long offset;
+	unsigned long size;
+	unsigned int ioid;
+	struct iommu_table table;
+};
 
-#घोषणा NAMESIZE 8
-काष्ठा cbe_iommu अणु
-	पूर्णांक nid;
-	अक्षर name[NAMESIZE];
-	व्योम __iomem *xlate_regs;
-	व्योम __iomem *cmd_regs;
-	अचिन्हित दीर्घ *stab;
-	अचिन्हित दीर्घ *ptab;
-	व्योम *pad_page;
-	काष्ठा list_head winकरोws;
-पूर्ण;
+#define NAMESIZE 8
+struct cbe_iommu {
+	int nid;
+	char name[NAMESIZE];
+	void __iomem *xlate_regs;
+	void __iomem *cmd_regs;
+	unsigned long *stab;
+	unsigned long *ptab;
+	void *pad_page;
+	struct list_head windows;
+};
 
 /* Static array of iommus, one per node
- *   each contains a list of winकरोws, keyed from dma_winकरोw property
- *   - on bus setup, look क्रम a matching winकरोw, or create one
+ *   each contains a list of windows, keyed from dma_window property
+ *   - on bus setup, look for a matching window, or create one
  *   - on dev setup, assign iommu_table ptr
  */
-अटल काष्ठा cbe_iommu iommus[NR_IOMMUS];
-अटल पूर्णांक cbe_nr_iommus;
+static struct cbe_iommu iommus[NR_IOMMUS];
+static int cbe_nr_iommus;
 
-अटल व्योम invalidate_tce_cache(काष्ठा cbe_iommu *iommu, अचिन्हित दीर्घ *pte,
-		दीर्घ n_ptes)
-अणु
+static void invalidate_tce_cache(struct cbe_iommu *iommu, unsigned long *pte,
+		long n_ptes)
+{
 	u64 __iomem *reg;
 	u64 val;
-	दीर्घ n;
+	long n;
 
 	reg = iommu->xlate_regs + IOC_IOPT_CacheInvd;
 
-	जबतक (n_ptes > 0) अणु
+	while (n_ptes > 0) {
 		/* we can invalidate up to 1 << 11 PTEs at once */
 		n = min(n_ptes, 1l << 11);
 		val = (((n /*- 1*/) << 53) & IOC_IOPT_CacheInvd_NE_Mask)
@@ -144,162 +143,162 @@
 		        | IOC_IOPT_CacheInvd_Busy;
 
 		out_be64(reg, val);
-		जबतक (in_be64(reg) & IOC_IOPT_CacheInvd_Busy)
+		while (in_be64(reg) & IOC_IOPT_CacheInvd_Busy)
 			;
 
 		n_ptes -= n;
 		pte += n;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक tce_build_cell(काष्ठा iommu_table *tbl, दीर्घ index, दीर्घ npages,
-		अचिन्हित दीर्घ uaddr, क्रमागत dma_data_direction direction,
-		अचिन्हित दीर्घ attrs)
-अणु
-	पूर्णांक i;
-	अचिन्हित दीर्घ *io_pte, base_pte;
-	काष्ठा iommu_winकरोw *winकरोw =
-		container_of(tbl, काष्ठा iommu_winकरोw, table);
+static int tce_build_cell(struct iommu_table *tbl, long index, long npages,
+		unsigned long uaddr, enum dma_data_direction direction,
+		unsigned long attrs)
+{
+	int i;
+	unsigned long *io_pte, base_pte;
+	struct iommu_window *window =
+		container_of(tbl, struct iommu_window, table);
 
 	/* implementing proper protection causes problems with the spidernet
-	 * driver - check mapping directions later, but allow पढ़ो & ग_लिखो by
-	 * शेष क्रम now.*/
-#अगर_घोषित CELL_IOMMU_STRICT_PROTECTION
-	/* to aव्योम referencing a global, we use a trick here to setup the
+	 * driver - check mapping directions later, but allow read & write by
+	 * default for now.*/
+#ifdef CELL_IOMMU_STRICT_PROTECTION
+	/* to avoid referencing a global, we use a trick here to setup the
 	 * protection bit. "prot" is setup to be 3 fields of 4 bits appended
-	 * together क्रम each of the 3 supported direction values. It is then
-	 * shअगरted left so that the fields matching the desired direction
+	 * together for each of the 3 supported direction values. It is then
+	 * shifted left so that the fields matching the desired direction
 	 * lands on the appropriate bits, and other bits are masked out.
 	 */
-	स्थिर अचिन्हित दीर्घ prot = 0xc48;
+	const unsigned long prot = 0xc48;
 	base_pte =
 		((prot << (52 + 4 * direction)) &
 		 (CBE_IOPTE_PP_W | CBE_IOPTE_PP_R)) |
 		CBE_IOPTE_M | CBE_IOPTE_SO_RW |
-		(winकरोw->ioid & CBE_IOPTE_IOID_Mask);
-#अन्यथा
+		(window->ioid & CBE_IOPTE_IOID_Mask);
+#else
 	base_pte = CBE_IOPTE_PP_W | CBE_IOPTE_PP_R | CBE_IOPTE_M |
-		CBE_IOPTE_SO_RW | (winकरोw->ioid & CBE_IOPTE_IOID_Mask);
-#पूर्ण_अगर
-	अगर (unlikely(attrs & DMA_ATTR_WEAK_ORDERING))
+		CBE_IOPTE_SO_RW | (window->ioid & CBE_IOPTE_IOID_Mask);
+#endif
+	if (unlikely(attrs & DMA_ATTR_WEAK_ORDERING))
 		base_pte &= ~CBE_IOPTE_SO_RW;
 
-	io_pte = (अचिन्हित दीर्घ *)tbl->it_base + (index - tbl->it_offset);
+	io_pte = (unsigned long *)tbl->it_base + (index - tbl->it_offset);
 
-	क्रम (i = 0; i < npages; i++, uaddr += (1 << tbl->it_page_shअगरt))
+	for (i = 0; i < npages; i++, uaddr += (1 << tbl->it_page_shift))
 		io_pte[i] = base_pte | (__pa(uaddr) & CBE_IOPTE_RPN_Mask);
 
 	mb();
 
-	invalidate_tce_cache(winकरोw->iommu, io_pte, npages);
+	invalidate_tce_cache(window->iommu, io_pte, npages);
 
 	pr_debug("tce_build_cell(index=%lx,n=%lx,dir=%d,base_pte=%lx)\n",
 		 index, npages, direction, base_pte);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tce_मुक्त_cell(काष्ठा iommu_table *tbl, दीर्घ index, दीर्घ npages)
-अणु
+static void tce_free_cell(struct iommu_table *tbl, long index, long npages)
+{
 
-	पूर्णांक i;
-	अचिन्हित दीर्घ *io_pte, pte;
-	काष्ठा iommu_winकरोw *winकरोw =
-		container_of(tbl, काष्ठा iommu_winकरोw, table);
+	int i;
+	unsigned long *io_pte, pte;
+	struct iommu_window *window =
+		container_of(tbl, struct iommu_window, table);
 
 	pr_debug("tce_free_cell(index=%lx,n=%lx)\n", index, npages);
 
-#अगर_घोषित CELL_IOMMU_REAL_UNMAP
+#ifdef CELL_IOMMU_REAL_UNMAP
 	pte = 0;
-#अन्यथा
-	/* spider bridge करोes PCI पढ़ोs after मुक्तing - insert a mapping
+#else
+	/* spider bridge does PCI reads after freeing - insert a mapping
 	 * to a scratch page instead of an invalid entry */
 	pte = CBE_IOPTE_PP_R | CBE_IOPTE_M | CBE_IOPTE_SO_RW |
-		__pa(winकरोw->iommu->pad_page) |
-		(winकरोw->ioid & CBE_IOPTE_IOID_Mask);
-#पूर्ण_अगर
+		__pa(window->iommu->pad_page) |
+		(window->ioid & CBE_IOPTE_IOID_Mask);
+#endif
 
-	io_pte = (अचिन्हित दीर्घ *)tbl->it_base + (index - tbl->it_offset);
+	io_pte = (unsigned long *)tbl->it_base + (index - tbl->it_offset);
 
-	क्रम (i = 0; i < npages; i++)
+	for (i = 0; i < npages; i++)
 		io_pte[i] = pte;
 
 	mb();
 
-	invalidate_tce_cache(winकरोw->iommu, io_pte, npages);
-पूर्ण
+	invalidate_tce_cache(window->iommu, io_pte, npages);
+}
 
-अटल irqवापस_t ioc_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
-अणु
-	अचिन्हित दीर्घ stat, spf;
-	काष्ठा cbe_iommu *iommu = data;
+static irqreturn_t ioc_interrupt(int irq, void *data)
+{
+	unsigned long stat, spf;
+	struct cbe_iommu *iommu = data;
 
 	stat = in_be64(iommu->xlate_regs + IOC_IO_ExcpStat);
 	spf = stat & IOC_IO_ExcpStat_SPF_Mask;
 
 	/* Might want to rate limit it */
-	prपूर्णांकk(KERN_ERR "iommu: DMA exception 0x%016lx\n", stat);
-	prपूर्णांकk(KERN_ERR "  V=%d, SPF=[%c%c], RW=%s, IOID=0x%04x\n",
+	printk(KERN_ERR "iommu: DMA exception 0x%016lx\n", stat);
+	printk(KERN_ERR "  V=%d, SPF=[%c%c], RW=%s, IOID=0x%04x\n",
 	       !!(stat & IOC_IO_ExcpStat_V),
 	       (spf == IOC_IO_ExcpStat_SPF_S) ? 'S' : ' ',
 	       (spf == IOC_IO_ExcpStat_SPF_P) ? 'P' : ' ',
 	       (stat & IOC_IO_ExcpStat_RW_Mask) ? "Read" : "Write",
-	       (अचिन्हित पूर्णांक)(stat & IOC_IO_ExcpStat_IOID_Mask));
-	prपूर्णांकk(KERN_ERR "  page=0x%016lx\n",
+	       (unsigned int)(stat & IOC_IO_ExcpStat_IOID_Mask));
+	printk(KERN_ERR "  page=0x%016lx\n",
 	       stat & IOC_IO_ExcpStat_ADDR_Mask);
 
-	/* clear पूर्णांकerrupt */
+	/* clear interrupt */
 	stat &= ~IOC_IO_ExcpStat_V;
 	out_be64(iommu->xlate_regs + IOC_IO_ExcpStat, stat);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक cell_iommu_find_ioc(पूर्णांक nid, अचिन्हित दीर्घ *base)
-अणु
-	काष्ठा device_node *np;
-	काष्ठा resource r;
+static int cell_iommu_find_ioc(int nid, unsigned long *base)
+{
+	struct device_node *np;
+	struct resource r;
 
 	*base = 0;
 
-	/* First look क्रम new style /be nodes */
-	क्रम_each_node_by_name(np, "ioc") अणु
-		अगर (of_node_to_nid(np) != nid)
-			जारी;
-		अगर (of_address_to_resource(np, 0, &r)) अणु
-			prपूर्णांकk(KERN_ERR "iommu: can't get address for %pOF\n",
+	/* First look for new style /be nodes */
+	for_each_node_by_name(np, "ioc") {
+		if (of_node_to_nid(np) != nid)
+			continue;
+		if (of_address_to_resource(np, 0, &r)) {
+			printk(KERN_ERR "iommu: can't get address for %pOF\n",
 			       np);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		*base = r.start;
 		of_node_put(np);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* Ok, let's try the old way */
-	क्रम_each_node_by_type(np, "cpu") अणु
-		स्थिर अचिन्हित पूर्णांक *nidp;
-		स्थिर अचिन्हित दीर्घ *पंचांगp;
+	for_each_node_by_type(np, "cpu") {
+		const unsigned int *nidp;
+		const unsigned long *tmp;
 
-		nidp = of_get_property(np, "node-id", शून्य);
-		अगर (nidp && *nidp == nid) अणु
-			पंचांगp = of_get_property(np, "ioc-translation", शून्य);
-			अगर (पंचांगp) अणु
-				*base = *पंचांगp;
+		nidp = of_get_property(np, "node-id", NULL);
+		if (nidp && *nidp == nid) {
+			tmp = of_get_property(np, "ioc-translation", NULL);
+			if (tmp) {
+				*base = *tmp;
 				of_node_put(np);
-				वापस 0;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return 0;
+			}
+		}
+	}
 
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}
 
-अटल व्योम cell_iommu_setup_stab(काष्ठा cbe_iommu *iommu,
-				अचिन्हित दीर्घ dbase, अचिन्हित दीर्घ dsize,
-				अचिन्हित दीर्घ fbase, अचिन्हित दीर्घ fsize)
-अणु
-	काष्ठा page *page;
-	अचिन्हित दीर्घ segments, stab_size;
+static void cell_iommu_setup_stab(struct cbe_iommu *iommu,
+				unsigned long dbase, unsigned long dsize,
+				unsigned long fbase, unsigned long fsize)
+{
+	struct page *page;
+	unsigned long segments, stab_size;
 
 	segments = max(dbase + dsize, fbase + fsize) >> IO_SEGMENT_SHIFT;
 
@@ -307,40 +306,40 @@
 			__func__, iommu->nid, segments);
 
 	/* set up the segment table */
-	stab_size = segments * माप(अचिन्हित दीर्घ);
+	stab_size = segments * sizeof(unsigned long);
 	page = alloc_pages_node(iommu->nid, GFP_KERNEL, get_order(stab_size));
 	BUG_ON(!page);
 	iommu->stab = page_address(page);
-	स_रखो(iommu->stab, 0, stab_size);
-पूर्ण
+	memset(iommu->stab, 0, stab_size);
+}
 
-अटल अचिन्हित दीर्घ *cell_iommu_alloc_ptab(काष्ठा cbe_iommu *iommu,
-		अचिन्हित दीर्घ base, अचिन्हित दीर्घ size, अचिन्हित दीर्घ gap_base,
-		अचिन्हित दीर्घ gap_size, अचिन्हित दीर्घ page_shअगरt)
-अणु
-	काष्ठा page *page;
-	पूर्णांक i;
-	अचिन्हित दीर्घ reg, segments, pages_per_segment, ptab_size,
+static unsigned long *cell_iommu_alloc_ptab(struct cbe_iommu *iommu,
+		unsigned long base, unsigned long size, unsigned long gap_base,
+		unsigned long gap_size, unsigned long page_shift)
+{
+	struct page *page;
+	int i;
+	unsigned long reg, segments, pages_per_segment, ptab_size,
 		      n_pte_pages, start_seg, *ptab;
 
 	start_seg = base >> IO_SEGMENT_SHIFT;
 	segments  = size >> IO_SEGMENT_SHIFT;
-	pages_per_segment = 1ull << IO_PAGENO_BITS(page_shअगरt);
-	/* PTEs क्रम each segment must start on a 4K boundary */
+	pages_per_segment = 1ull << IO_PAGENO_BITS(page_shift);
+	/* PTEs for each segment must start on a 4K boundary */
 	pages_per_segment = max(pages_per_segment,
-				(1 << 12) / माप(अचिन्हित दीर्घ));
+				(1 << 12) / sizeof(unsigned long));
 
-	ptab_size = segments * pages_per_segment * माप(अचिन्हित दीर्घ);
+	ptab_size = segments * pages_per_segment * sizeof(unsigned long);
 	pr_debug("%s: iommu[%d]: ptab_size: %lu, order: %d\n", __func__,
 			iommu->nid, ptab_size, get_order(ptab_size));
 	page = alloc_pages_node(iommu->nid, GFP_KERNEL, get_order(ptab_size));
 	BUG_ON(!page);
 
 	ptab = page_address(page);
-	स_रखो(ptab, 0, ptab_size);
+	memset(ptab, 0, ptab_size);
 
-	/* number of 4K pages needed क्रम a page table */
-	n_pte_pages = (pages_per_segment * माप(अचिन्हित दीर्घ)) >> 12;
+	/* number of 4K pages needed for a page table */
+	n_pte_pages = (pages_per_segment * sizeof(unsigned long)) >> 12;
 
 	pr_debug("%s: iommu[%d]: stab at %p, ptab at %p, n_pte_pages: %lu\n",
 			__func__, iommu->nid, iommu->stab, ptab,
@@ -349,38 +348,38 @@
 	/* initialise the STEs */
 	reg = IOSTE_V | ((n_pte_pages - 1) << 5);
 
-	चयन (page_shअगरt) अणु
-	हाल 12: reg |= IOSTE_PS_4K;  अवरोध;
-	हाल 16: reg |= IOSTE_PS_64K; अवरोध;
-	हाल 20: reg |= IOSTE_PS_1M;  अवरोध;
-	हाल 24: reg |= IOSTE_PS_16M; अवरोध;
-	शेष: BUG();
-	पूर्ण
+	switch (page_shift) {
+	case 12: reg |= IOSTE_PS_4K;  break;
+	case 16: reg |= IOSTE_PS_64K; break;
+	case 20: reg |= IOSTE_PS_1M;  break;
+	case 24: reg |= IOSTE_PS_16M; break;
+	default: BUG();
+	}
 
 	gap_base = gap_base >> IO_SEGMENT_SHIFT;
 	gap_size = gap_size >> IO_SEGMENT_SHIFT;
 
 	pr_debug("Setting up IOMMU stab:\n");
-	क्रम (i = start_seg; i < (start_seg + segments); i++) अणु
-		अगर (i >= gap_base && i < (gap_base + gap_size)) अणु
+	for (i = start_seg; i < (start_seg + segments); i++) {
+		if (i >= gap_base && i < (gap_base + gap_size)) {
 			pr_debug("\toverlap at %d, skipping\n", i);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		iommu->stab[i] = reg | (__pa(ptab) + (n_pte_pages << 12) *
 					(i - start_seg));
 		pr_debug("\t[%d] 0x%016lx\n", i, iommu->stab[i]);
-	पूर्ण
+	}
 
-	वापस ptab;
-पूर्ण
+	return ptab;
+}
 
-अटल व्योम cell_iommu_enable_hardware(काष्ठा cbe_iommu *iommu)
-अणु
-	पूर्णांक ret;
-	अचिन्हित दीर्घ reg, xlate_base;
-	अचिन्हित पूर्णांक virq;
+static void cell_iommu_enable_hardware(struct cbe_iommu *iommu)
+{
+	int ret;
+	unsigned long reg, xlate_base;
+	unsigned int virq;
 
-	अगर (cell_iommu_find_ioc(iommu->nid, &xlate_base))
+	if (cell_iommu_find_ioc(iommu->nid, &xlate_base))
 		panic("%s: missing IOC register mappings for node %d\n",
 		      __func__, iommu->nid);
 
@@ -390,21 +389,21 @@
 	/* ensure that the STEs have updated */
 	mb();
 
-	/* setup पूर्णांकerrupts क्रम the iommu. */
+	/* setup interrupts for the iommu. */
 	reg = in_be64(iommu->xlate_regs + IOC_IO_ExcpStat);
 	out_be64(iommu->xlate_regs + IOC_IO_ExcpStat,
 			reg & ~IOC_IO_ExcpStat_V);
 	out_be64(iommu->xlate_regs + IOC_IO_ExcpMask,
 			IOC_IO_ExcpMask_PFE | IOC_IO_ExcpMask_SFE);
 
-	virq = irq_create_mapping(शून्य,
+	virq = irq_create_mapping(NULL,
 			IIC_IRQ_IOEX_ATI | (iommu->nid << IIC_IRQ_NODE_SHIFT));
 	BUG_ON(!virq);
 
-	ret = request_irq(virq, ioc_पूर्णांकerrupt, 0, iommu->name, iommu);
+	ret = request_irq(virq, ioc_interrupt, 0, iommu->name, iommu);
 	BUG_ON(ret);
 
-	/* set the IOC segment table origin रेजिस्टर (and turn on the iommu) */
+	/* set the IOC segment table origin register (and turn on the iommu) */
 	reg = IOC_IOST_Origin_E | __pa(iommu->stab) | IOC_IOST_Origin_HW;
 	out_be64(iommu->xlate_regs + IOC_IOST_Origin, reg);
 	in_be64(iommu->xlate_regs + IOC_IOST_Origin);
@@ -412,262 +411,262 @@
 	/* turn on IO translation */
 	reg = in_be64(iommu->cmd_regs + IOC_IOCmd_Cfg) | IOC_IOCmd_Cfg_TE;
 	out_be64(iommu->cmd_regs + IOC_IOCmd_Cfg, reg);
-पूर्ण
+}
 
-अटल व्योम cell_iommu_setup_hardware(काष्ठा cbe_iommu *iommu,
-	अचिन्हित दीर्घ base, अचिन्हित दीर्घ size)
-अणु
+static void cell_iommu_setup_hardware(struct cbe_iommu *iommu,
+	unsigned long base, unsigned long size)
+{
 	cell_iommu_setup_stab(iommu, base, size, 0, 0);
 	iommu->ptab = cell_iommu_alloc_ptab(iommu, base, size, 0, 0,
 					    IOMMU_PAGE_SHIFT_4K);
 	cell_iommu_enable_hardware(iommu);
-पूर्ण
+}
 
-#अगर 0/* Unused क्रम now */
-अटल काष्ठा iommu_winकरोw *find_winकरोw(काष्ठा cbe_iommu *iommu,
-		अचिन्हित दीर्घ offset, अचिन्हित दीर्घ size)
-अणु
-	काष्ठा iommu_winकरोw *winकरोw;
+#if 0/* Unused for now */
+static struct iommu_window *find_window(struct cbe_iommu *iommu,
+		unsigned long offset, unsigned long size)
+{
+	struct iommu_window *window;
 
-	/* toकरो: check क्रम overlapping (but not equal) winकरोws) */
+	/* todo: check for overlapping (but not equal) windows) */
 
-	list_क्रम_each_entry(winकरोw, &(iommu->winकरोws), list) अणु
-		अगर (winकरोw->offset == offset && winकरोw->size == size)
-			वापस winकरोw;
-	पूर्ण
+	list_for_each_entry(window, &(iommu->windows), list) {
+		if (window->offset == offset && window->size == size)
+			return window;
+	}
 
-	वापस शून्य;
-पूर्ण
-#पूर्ण_अगर
+	return NULL;
+}
+#endif
 
-अटल अंतरभूत u32 cell_iommu_get_ioid(काष्ठा device_node *np)
-अणु
-	स्थिर u32 *ioid;
+static inline u32 cell_iommu_get_ioid(struct device_node *np)
+{
+	const u32 *ioid;
 
-	ioid = of_get_property(np, "ioid", शून्य);
-	अगर (ioid == शून्य) अणु
-		prपूर्णांकk(KERN_WARNING "iommu: missing ioid for %pOF using 0\n",
+	ioid = of_get_property(np, "ioid", NULL);
+	if (ioid == NULL) {
+		printk(KERN_WARNING "iommu: missing ioid for %pOF using 0\n",
 		       np);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस *ioid;
-पूर्ण
+	return *ioid;
+}
 
-अटल काष्ठा iommu_table_ops cell_iommu_ops = अणु
+static struct iommu_table_ops cell_iommu_ops = {
 	.set = tce_build_cell,
-	.clear = tce_मुक्त_cell
-पूर्ण;
+	.clear = tce_free_cell
+};
 
-अटल काष्ठा iommu_winकरोw * __init
-cell_iommu_setup_winकरोw(काष्ठा cbe_iommu *iommu, काष्ठा device_node *np,
-			अचिन्हित दीर्घ offset, अचिन्हित दीर्घ size,
-			अचिन्हित दीर्घ pte_offset)
-अणु
-	काष्ठा iommu_winकरोw *winकरोw;
-	काष्ठा page *page;
+static struct iommu_window * __init
+cell_iommu_setup_window(struct cbe_iommu *iommu, struct device_node *np,
+			unsigned long offset, unsigned long size,
+			unsigned long pte_offset)
+{
+	struct iommu_window *window;
+	struct page *page;
 	u32 ioid;
 
 	ioid = cell_iommu_get_ioid(np);
 
-	winकरोw = kzalloc_node(माप(*winकरोw), GFP_KERNEL, iommu->nid);
-	BUG_ON(winकरोw == शून्य);
+	window = kzalloc_node(sizeof(*window), GFP_KERNEL, iommu->nid);
+	BUG_ON(window == NULL);
 
-	winकरोw->offset = offset;
-	winकरोw->size = size;
-	winकरोw->ioid = ioid;
-	winकरोw->iommu = iommu;
+	window->offset = offset;
+	window->size = size;
+	window->ioid = ioid;
+	window->iommu = iommu;
 
-	winकरोw->table.it_blocksize = 16;
-	winकरोw->table.it_base = (अचिन्हित दीर्घ)iommu->ptab;
-	winकरोw->table.it_index = iommu->nid;
-	winकरोw->table.it_page_shअगरt = IOMMU_PAGE_SHIFT_4K;
-	winकरोw->table.it_offset =
-		(offset >> winकरोw->table.it_page_shअगरt) + pte_offset;
-	winकरोw->table.it_size = size >> winकरोw->table.it_page_shअगरt;
-	winकरोw->table.it_ops = &cell_iommu_ops;
+	window->table.it_blocksize = 16;
+	window->table.it_base = (unsigned long)iommu->ptab;
+	window->table.it_index = iommu->nid;
+	window->table.it_page_shift = IOMMU_PAGE_SHIFT_4K;
+	window->table.it_offset =
+		(offset >> window->table.it_page_shift) + pte_offset;
+	window->table.it_size = size >> window->table.it_page_shift;
+	window->table.it_ops = &cell_iommu_ops;
 
-	अगर (!iommu_init_table(&winकरोw->table, iommu->nid, 0, 0))
+	if (!iommu_init_table(&window->table, iommu->nid, 0, 0))
 		panic("Failed to initialize iommu table");
 
-	pr_debug("\tioid      %d\n", winकरोw->ioid);
-	pr_debug("\tblocksize %ld\n", winकरोw->table.it_blocksize);
-	pr_debug("\tbase      0x%016lx\n", winकरोw->table.it_base);
-	pr_debug("\toffset    0x%lx\n", winकरोw->table.it_offset);
-	pr_debug("\tsize      %ld\n", winकरोw->table.it_size);
+	pr_debug("\tioid      %d\n", window->ioid);
+	pr_debug("\tblocksize %ld\n", window->table.it_blocksize);
+	pr_debug("\tbase      0x%016lx\n", window->table.it_base);
+	pr_debug("\toffset    0x%lx\n", window->table.it_offset);
+	pr_debug("\tsize      %ld\n", window->table.it_size);
 
-	list_add(&winकरोw->list, &iommu->winकरोws);
+	list_add(&window->list, &iommu->windows);
 
-	अगर (offset != 0)
-		वापस winकरोw;
+	if (offset != 0)
+		return window;
 
 	/* We need to map and reserve the first IOMMU page since it's used
-	 * by the spider workaround. In theory, we only need to करो that when
-	 * running on spider but it करोesn't really matter.
+	 * by the spider workaround. In theory, we only need to do that when
+	 * running on spider but it doesn't really matter.
 	 *
-	 * This code also assumes that we have a winकरोw that starts at 0,
-	 * which is the हाल on all spider based blades.
+	 * This code also assumes that we have a window that starts at 0,
+	 * which is the case on all spider based blades.
 	 */
 	page = alloc_pages_node(iommu->nid, GFP_KERNEL, 0);
 	BUG_ON(!page);
 	iommu->pad_page = page_address(page);
 	clear_page(iommu->pad_page);
 
-	__set_bit(0, winकरोw->table.it_map);
-	tce_build_cell(&winकरोw->table, winकरोw->table.it_offset, 1,
-		       (अचिन्हित दीर्घ)iommu->pad_page, DMA_TO_DEVICE, 0);
+	__set_bit(0, window->table.it_map);
+	tce_build_cell(&window->table, window->table.it_offset, 1,
+		       (unsigned long)iommu->pad_page, DMA_TO_DEVICE, 0);
 
-	वापस winकरोw;
-पूर्ण
+	return window;
+}
 
-अटल काष्ठा cbe_iommu *cell_iommu_क्रम_node(पूर्णांक nid)
-अणु
-	पूर्णांक i;
+static struct cbe_iommu *cell_iommu_for_node(int nid)
+{
+	int i;
 
-	क्रम (i = 0; i < cbe_nr_iommus; i++)
-		अगर (iommus[i].nid == nid)
-			वापस &iommus[i];
-	वापस शून्य;
-पूर्ण
+	for (i = 0; i < cbe_nr_iommus; i++)
+		if (iommus[i].nid == nid)
+			return &iommus[i];
+	return NULL;
+}
 
-अटल अचिन्हित दीर्घ cell_dma_nommu_offset;
+static unsigned long cell_dma_nommu_offset;
 
-अटल अचिन्हित दीर्घ dma_iommu_fixed_base;
-अटल bool cell_iommu_enabled;
+static unsigned long dma_iommu_fixed_base;
+static bool cell_iommu_enabled;
 
-/* iommu_fixed_is_weak is set अगर booted with iommu_fixed=weak */
+/* iommu_fixed_is_weak is set if booted with iommu_fixed=weak */
 bool iommu_fixed_is_weak;
 
-अटल काष्ठा iommu_table *cell_get_iommu_table(काष्ठा device *dev)
-अणु
-	काष्ठा iommu_winकरोw *winकरोw;
-	काष्ठा cbe_iommu *iommu;
+static struct iommu_table *cell_get_iommu_table(struct device *dev)
+{
+	struct iommu_window *window;
+	struct cbe_iommu *iommu;
 
-	/* Current implementation uses the first winकरोw available in that
-	 * node's iommu. We -might- करो something smarter later though it may
+	/* Current implementation uses the first window available in that
+	 * node's iommu. We -might- do something smarter later though it may
 	 * never be necessary
 	 */
-	iommu = cell_iommu_क्रम_node(dev_to_node(dev));
-	अगर (iommu == शून्य || list_empty(&iommu->winकरोws)) अणु
+	iommu = cell_iommu_for_node(dev_to_node(dev));
+	if (iommu == NULL || list_empty(&iommu->windows)) {
 		dev_err(dev, "iommu: missing iommu for %pOF (node %d)\n",
 		       dev->of_node, dev_to_node(dev));
-		वापस शून्य;
-	पूर्ण
-	winकरोw = list_entry(iommu->winकरोws.next, काष्ठा iommu_winकरोw, list);
+		return NULL;
+	}
+	window = list_entry(iommu->windows.next, struct iommu_window, list);
 
-	वापस &winकरोw->table;
-पूर्ण
+	return &window->table;
+}
 
-अटल u64 cell_iommu_get_fixed_address(काष्ठा device *dev);
+static u64 cell_iommu_get_fixed_address(struct device *dev);
 
-अटल व्योम cell_dma_dev_setup(काष्ठा device *dev)
-अणु
-	अगर (cell_iommu_enabled) अणु
+static void cell_dma_dev_setup(struct device *dev)
+{
+	if (cell_iommu_enabled) {
 		u64 addr = cell_iommu_get_fixed_address(dev);
 
-		अगर (addr != OF_BAD_ADDR)
+		if (addr != OF_BAD_ADDR)
 			dev->archdata.dma_offset = addr + dma_iommu_fixed_base;
 		set_iommu_table_base(dev, cell_get_iommu_table(dev));
-	पूर्ण अन्यथा अणु
+	} else {
 		dev->archdata.dma_offset = cell_dma_nommu_offset;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम cell_pci_dma_dev_setup(काष्ठा pci_dev *dev)
-अणु
+static void cell_pci_dma_dev_setup(struct pci_dev *dev)
+{
 	cell_dma_dev_setup(&dev->dev);
-पूर्ण
+}
 
-अटल पूर्णांक cell_of_bus_notअगरy(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ action,
-			      व्योम *data)
-अणु
-	काष्ठा device *dev = data;
+static int cell_of_bus_notify(struct notifier_block *nb, unsigned long action,
+			      void *data)
+{
+	struct device *dev = data;
 
-	/* We are only पूर्णांकereted in device addition */
-	अगर (action != BUS_NOTIFY_ADD_DEVICE)
-		वापस 0;
+	/* We are only intereted in device addition */
+	if (action != BUS_NOTIFY_ADD_DEVICE)
+		return 0;
 
-	अगर (cell_iommu_enabled)
+	if (cell_iommu_enabled)
 		dev->dma_ops = &dma_iommu_ops;
 	cell_dma_dev_setup(dev);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा notअगरier_block cell_of_bus_notअगरier = अणु
-	.notअगरier_call = cell_of_bus_notअगरy
-पूर्ण;
+static struct notifier_block cell_of_bus_notifier = {
+	.notifier_call = cell_of_bus_notify
+};
 
-अटल पूर्णांक __init cell_iommu_get_winकरोw(काष्ठा device_node *np,
-					 अचिन्हित दीर्घ *base,
-					 अचिन्हित दीर्घ *size)
-अणु
-	स्थिर __be32 *dma_winकरोw;
-	अचिन्हित दीर्घ index;
+static int __init cell_iommu_get_window(struct device_node *np,
+					 unsigned long *base,
+					 unsigned long *size)
+{
+	const __be32 *dma_window;
+	unsigned long index;
 
-	/* Use ibm,dma-winकरोw अगर available, अन्यथा, hard code ! */
-	dma_winकरोw = of_get_property(np, "ibm,dma-window", शून्य);
-	अगर (dma_winकरोw == शून्य) अणु
+	/* Use ibm,dma-window if available, else, hard code ! */
+	dma_window = of_get_property(np, "ibm,dma-window", NULL);
+	if (dma_window == NULL) {
 		*base = 0;
 		*size = 0x80000000u;
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	of_parse_dma_winकरोw(np, dma_winकरोw, &index, base, size);
-	वापस 0;
-पूर्ण
+	of_parse_dma_window(np, dma_window, &index, base, size);
+	return 0;
+}
 
-अटल काष्ठा cbe_iommu * __init cell_iommu_alloc(काष्ठा device_node *np)
-अणु
-	काष्ठा cbe_iommu *iommu;
-	पूर्णांक nid, i;
+static struct cbe_iommu * __init cell_iommu_alloc(struct device_node *np)
+{
+	struct cbe_iommu *iommu;
+	int nid, i;
 
 	/* Get node ID */
 	nid = of_node_to_nid(np);
-	अगर (nid < 0) अणु
-		prपूर्णांकk(KERN_ERR "iommu: failed to get node for %pOF\n",
+	if (nid < 0) {
+		printk(KERN_ERR "iommu: failed to get node for %pOF\n",
 		       np);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 	pr_debug("iommu: setting up iommu for node %d (%pOF)\n",
 		 nid, np);
 
-	/* XXX toकरो: If we can have multiple winकरोws on the same IOMMU, which
-	 * isn't the हाल today, we probably want here to check whether the
-	 * iommu क्रम that node is alपढ़ोy setup.
+	/* XXX todo: If we can have multiple windows on the same IOMMU, which
+	 * isn't the case today, we probably want here to check whether the
+	 * iommu for that node is already setup.
 	 * However, there might be issue with getting the size right so let's
-	 * ignore that क्रम now. We might want to completely get rid of the
-	 * multiple winकरोw support since the cell iommu supports per-page ioids
+	 * ignore that for now. We might want to completely get rid of the
+	 * multiple window support since the cell iommu supports per-page ioids
 	 */
 
-	अगर (cbe_nr_iommus >= NR_IOMMUS) अणु
-		prपूर्णांकk(KERN_ERR "iommu: too many IOMMUs detected ! (%pOF)\n",
+	if (cbe_nr_iommus >= NR_IOMMUS) {
+		printk(KERN_ERR "iommu: too many IOMMUs detected ! (%pOF)\n",
 		       np);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	/* Init base fields */
 	i = cbe_nr_iommus++;
 	iommu = &iommus[i];
-	iommu->stab = शून्य;
+	iommu->stab = NULL;
 	iommu->nid = nid;
-	snम_लिखो(iommu->name, माप(iommu->name), "iommu%d", i);
-	INIT_LIST_HEAD(&iommu->winकरोws);
+	snprintf(iommu->name, sizeof(iommu->name), "iommu%d", i);
+	INIT_LIST_HEAD(&iommu->windows);
 
-	वापस iommu;
-पूर्ण
+	return iommu;
+}
 
-अटल व्योम __init cell_iommu_init_one(काष्ठा device_node *np,
-				       अचिन्हित दीर्घ offset)
-अणु
-	काष्ठा cbe_iommu *iommu;
-	अचिन्हित दीर्घ base, size;
+static void __init cell_iommu_init_one(struct device_node *np,
+				       unsigned long offset)
+{
+	struct cbe_iommu *iommu;
+	unsigned long base, size;
 
 	iommu = cell_iommu_alloc(np);
-	अगर (!iommu)
-		वापस;
+	if (!iommu)
+		return;
 
-	/* Obtain a winकरोw क्रम it */
-	cell_iommu_get_winकरोw(np, &base, &size);
+	/* Obtain a window for it */
+	cell_iommu_get_window(np, &base, &size);
 
 	pr_debug("\ttranslating window 0x%lx...0x%lx\n",
 		 base, base + size - 1);
@@ -676,42 +675,42 @@ bool iommu_fixed_is_weak;
 	cell_iommu_setup_hardware(iommu, base, size);
 
 	/* Setup the iommu_table */
-	cell_iommu_setup_winकरोw(iommu, np, base, size,
+	cell_iommu_setup_window(iommu, np, base, size,
 				offset >> IOMMU_PAGE_SHIFT_4K);
-पूर्ण
+}
 
-अटल व्योम __init cell_disable_iommus(व्योम)
-अणु
-	पूर्णांक node;
-	अचिन्हित दीर्घ base, val;
-	व्योम __iomem *xregs, *cregs;
+static void __init cell_disable_iommus(void)
+{
+	int node;
+	unsigned long base, val;
+	void __iomem *xregs, *cregs;
 
 	/* Make sure IOC translation is disabled on all nodes */
-	क्रम_each_online_node(node) अणु
-		अगर (cell_iommu_find_ioc(node, &base))
-			जारी;
+	for_each_online_node(node) {
+		if (cell_iommu_find_ioc(node, &base))
+			continue;
 		xregs = ioremap(base, IOC_Reg_Size);
-		अगर (xregs == शून्य)
-			जारी;
+		if (xregs == NULL)
+			continue;
 		cregs = xregs + IOC_IOCmd_Offset;
 
 		pr_debug("iommu: cleaning up iommu on node %d\n", node);
 
 		out_be64(xregs + IOC_IOST_Origin, 0);
-		(व्योम)in_be64(xregs + IOC_IOST_Origin);
+		(void)in_be64(xregs + IOC_IOST_Origin);
 		val = in_be64(cregs + IOC_IOCmd_Cfg);
 		val &= ~IOC_IOCmd_Cfg_TE;
 		out_be64(cregs + IOC_IOCmd_Cfg, val);
-		(व्योम)in_be64(cregs + IOC_IOCmd_Cfg);
+		(void)in_be64(cregs + IOC_IOCmd_Cfg);
 
 		iounmap(xregs);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक __init cell_iommu_init_disabled(व्योम)
-अणु
-	काष्ठा device_node *np = शून्य;
-	अचिन्हित दीर्घ base = 0, size;
+static int __init cell_iommu_init_disabled(void)
+{
+	struct device_node *np = NULL;
+	unsigned long base = 0, size;
 
 	/* When no iommu is present, we use direct DMA ops */
 
@@ -719,166 +718,166 @@ bool iommu_fixed_is_weak;
 	cell_disable_iommus();
 
 	/* If we have no Axon, we set up the spider DMA magic offset */
-	अगर (of_find_node_by_name(शून्य, "axon") == शून्य)
+	if (of_find_node_by_name(NULL, "axon") == NULL)
 		cell_dma_nommu_offset = SPIDER_DMA_OFFSET;
 
 	/* Now we need to check to see where the memory is mapped
 	 * in PCI space. We assume that all busses use the same dma
-	 * winकरोw which is always the हाल so far on Cell, thus we
-	 * pick up the first pci-पूर्णांकernal node we can find and check
-	 * the DMA winकरोw from there.
+	 * window which is always the case so far on Cell, thus we
+	 * pick up the first pci-internal node we can find and check
+	 * the DMA window from there.
 	 */
-	क्रम_each_node_by_name(np, "axon") अणु
-		अगर (np->parent == शून्य || np->parent->parent != शून्य)
-			जारी;
-		अगर (cell_iommu_get_winकरोw(np, &base, &size) == 0)
-			अवरोध;
-	पूर्ण
-	अगर (np == शून्य) अणु
-		क्रम_each_node_by_name(np, "pci-internal") अणु
-			अगर (np->parent == शून्य || np->parent->parent != शून्य)
-				जारी;
-			अगर (cell_iommu_get_winकरोw(np, &base, &size) == 0)
-				अवरोध;
-		पूर्ण
-	पूर्ण
+	for_each_node_by_name(np, "axon") {
+		if (np->parent == NULL || np->parent->parent != NULL)
+			continue;
+		if (cell_iommu_get_window(np, &base, &size) == 0)
+			break;
+	}
+	if (np == NULL) {
+		for_each_node_by_name(np, "pci-internal") {
+			if (np->parent == NULL || np->parent->parent != NULL)
+				continue;
+			if (cell_iommu_get_window(np, &base, &size) == 0)
+				break;
+		}
+	}
 	of_node_put(np);
 
-	/* If we found a DMA winकरोw, we check अगर it's big enough to enबंद
-	 * all of physical memory. If not, we क्रमce enable IOMMU
+	/* If we found a DMA window, we check if it's big enough to enclose
+	 * all of physical memory. If not, we force enable IOMMU
 	 */
-	अगर (np && size < memblock_end_of_DRAM()) अणु
-		prपूर्णांकk(KERN_WARNING "iommu: force-enabled, dma window"
+	if (np && size < memblock_end_of_DRAM()) {
+		printk(KERN_WARNING "iommu: force-enabled, dma window"
 		       " (%ldMB) smaller than total memory (%lldMB)\n",
 		       size >> 20, memblock_end_of_DRAM() >> 20);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	cell_dma_nommu_offset += base;
 
-	अगर (cell_dma_nommu_offset != 0)
+	if (cell_dma_nommu_offset != 0)
 		cell_pci_controller_ops.dma_dev_setup = cell_pci_dma_dev_setup;
 
-	prपूर्णांकk("iommu: disabled, direct DMA offset is 0x%lx\n",
+	printk("iommu: disabled, direct DMA offset is 0x%lx\n",
 	       cell_dma_nommu_offset);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  *  Fixed IOMMU mapping support
  *
- *  This code adds support क्रम setting up a fixed IOMMU mapping on certain
- *  cell machines. For 64-bit devices this aव्योमs the perक्रमmance overhead of
- *  mapping and unmapping pages at runसमय. 32-bit devices are unable to use
+ *  This code adds support for setting up a fixed IOMMU mapping on certain
+ *  cell machines. For 64-bit devices this avoids the performance overhead of
+ *  mapping and unmapping pages at runtime. 32-bit devices are unable to use
  *  the fixed mapping.
  *
  *  The fixed mapping is established at boot, and maps all of physical memory
- *  1:1 पूर्णांकo device space at some offset. On machines with < 30 GB of memory
- *  we setup the fixed mapping immediately above the normal IOMMU winकरोw.
+ *  1:1 into device space at some offset. On machines with < 30 GB of memory
+ *  we setup the fixed mapping immediately above the normal IOMMU window.
  *
  *  For example a machine with 4GB of memory would end up with the normal
- *  IOMMU winकरोw from 0-2GB and the fixed mapping winकरोw from 2GB to 6GB. In
- *  this हाल a 64-bit device wishing to DMA to 1GB would be told to DMA to
+ *  IOMMU window from 0-2GB and the fixed mapping window from 2GB to 6GB. In
+ *  this case a 64-bit device wishing to DMA to 1GB would be told to DMA to
  *  3GB, plus any offset required by firmware. The firmware offset is encoded
  *  in the "dma-ranges" property.
  *
  *  On machines with 30GB or more of memory, we are unable to place the fixed
- *  mapping above the normal IOMMU winकरोw as we would run out of address space.
- *  Instead we move the normal IOMMU winकरोw to coincide with the hash page
- *  table, this region करोes not need to be part of the fixed mapping as no
+ *  mapping above the normal IOMMU window as we would run out of address space.
+ *  Instead we move the normal IOMMU window to coincide with the hash page
+ *  table, this region does not need to be part of the fixed mapping as no
  *  device should ever be DMA'ing to it. We then setup the fixed mapping
  *  from 0 to 32GB.
  */
 
-अटल u64 cell_iommu_get_fixed_address(काष्ठा device *dev)
-अणु
+static u64 cell_iommu_get_fixed_address(struct device *dev)
+{
 	u64 cpu_addr, size, best_size, dev_addr = OF_BAD_ADDR;
-	काष्ठा device_node *np;
-	स्थिर u32 *ranges = शून्य;
-	पूर्णांक i, len, best, naddr, nsize, pna, range_size;
+	struct device_node *np;
+	const u32 *ranges = NULL;
+	int i, len, best, naddr, nsize, pna, range_size;
 
-	/* We can be called क्रम platक्रमm devices that have no of_node */
+	/* We can be called for platform devices that have no of_node */
 	np = of_node_get(dev->of_node);
-	अगर (!np)
-		जाओ out;
+	if (!np)
+		goto out;
 
-	जबतक (1) अणु
+	while (1) {
 		naddr = of_n_addr_cells(np);
 		nsize = of_n_size_cells(np);
 		np = of_get_next_parent(np);
-		अगर (!np)
-			अवरोध;
+		if (!np)
+			break;
 
 		ranges = of_get_property(np, "dma-ranges", &len);
 
 		/* Ignore empty ranges, they imply no translation required */
-		अगर (ranges && len > 0)
-			अवरोध;
-	पूर्ण
+		if (ranges && len > 0)
+			break;
+	}
 
-	अगर (!ranges) अणु
+	if (!ranges) {
 		dev_dbg(dev, "iommu: no dma-ranges found\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	len /= माप(u32);
+	len /= sizeof(u32);
 
 	pna = of_n_addr_cells(np);
 	range_size = naddr + nsize + pna;
 
-	/* dma-ranges क्रमmat:
+	/* dma-ranges format:
 	 * child addr	: naddr cells
 	 * parent addr	: pna cells
 	 * size		: nsize cells
 	 */
-	क्रम (i = 0, best = -1, best_size = 0; i < len; i += range_size) अणु
+	for (i = 0, best = -1, best_size = 0; i < len; i += range_size) {
 		cpu_addr = of_translate_dma_address(np, ranges + i + naddr);
-		size = of_पढ़ो_number(ranges + i + naddr + pna, nsize);
+		size = of_read_number(ranges + i + naddr + pna, nsize);
 
-		अगर (cpu_addr == 0 && size > best_size) अणु
+		if (cpu_addr == 0 && size > best_size) {
 			best = i;
 			best_size = size;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (best >= 0) अणु
-		dev_addr = of_पढ़ो_number(ranges + best, naddr);
-	पूर्ण अन्यथा
+	if (best >= 0) {
+		dev_addr = of_read_number(ranges + best, naddr);
+	} else
 		dev_dbg(dev, "iommu: no suitable range found!\n");
 
 out:
 	of_node_put(np);
 
-	वापस dev_addr;
-पूर्ण
+	return dev_addr;
+}
 
-अटल bool cell_pci_iommu_bypass_supported(काष्ठा pci_dev *pdev, u64 mask)
-अणु
-	वापस mask == DMA_BIT_MASK(64) &&
+static bool cell_pci_iommu_bypass_supported(struct pci_dev *pdev, u64 mask)
+{
+	return mask == DMA_BIT_MASK(64) &&
 		cell_iommu_get_fixed_address(&pdev->dev) != OF_BAD_ADDR;
-पूर्ण
+}
 
-अटल व्योम insert_16M_pte(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ *ptab,
-			   अचिन्हित दीर्घ base_pte)
-अणु
-	अचिन्हित दीर्घ segment, offset;
+static void insert_16M_pte(unsigned long addr, unsigned long *ptab,
+			   unsigned long base_pte)
+{
+	unsigned long segment, offset;
 
 	segment = addr >> IO_SEGMENT_SHIFT;
 	offset = (addr >> 24) - (segment << IO_PAGENO_BITS(24));
-	ptab = ptab + (segment * (1 << 12) / माप(अचिन्हित दीर्घ));
+	ptab = ptab + (segment * (1 << 12) / sizeof(unsigned long));
 
 	pr_debug("iommu: addr %lx ptab %p segment %lx offset %lx\n",
 		  addr, ptab, segment, offset);
 
 	ptab[offset] = base_pte | (__pa(addr) & CBE_IOPTE_RPN_Mask);
-पूर्ण
+}
 
-अटल व्योम cell_iommu_setup_fixed_ptab(काष्ठा cbe_iommu *iommu,
-	काष्ठा device_node *np, अचिन्हित दीर्घ dbase, अचिन्हित दीर्घ dsize,
-	अचिन्हित दीर्घ fbase, अचिन्हित दीर्घ fsize)
-अणु
-	अचिन्हित दीर्घ base_pte, uaddr, ioaddr, *ptab;
+static void cell_iommu_setup_fixed_ptab(struct cbe_iommu *iommu,
+	struct device_node *np, unsigned long dbase, unsigned long dsize,
+	unsigned long fbase, unsigned long fsize)
+{
+	unsigned long base_pte, uaddr, ioaddr, *ptab;
 
 	ptab = cell_iommu_alloc_ptab(iommu, fbase, fsize, dbase, dsize, 24);
 
@@ -889,115 +888,115 @@ out:
 	base_pte = CBE_IOPTE_PP_W | CBE_IOPTE_PP_R | CBE_IOPTE_M |
 		(cell_iommu_get_ioid(np) & CBE_IOPTE_IOID_Mask);
 
-	अगर (iommu_fixed_is_weak)
+	if (iommu_fixed_is_weak)
 		pr_info("IOMMU: Using weak ordering for fixed mapping\n");
-	अन्यथा अणु
+	else {
 		pr_info("IOMMU: Using strong ordering for fixed mapping\n");
 		base_pte |= CBE_IOPTE_SO_RW;
-	पूर्ण
+	}
 
-	क्रम (uaddr = 0; uaddr < fsize; uaddr += (1 << 24)) अणु
+	for (uaddr = 0; uaddr < fsize; uaddr += (1 << 24)) {
 		/* Don't touch the dynamic region */
 		ioaddr = uaddr + fbase;
-		अगर (ioaddr >= dbase && ioaddr < (dbase + dsize)) अणु
+		if (ioaddr >= dbase && ioaddr < (dbase + dsize)) {
 			pr_debug("iommu: fixed/dynamic overlap, skipping\n");
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		insert_16M_pte(uaddr, ptab, base_pte);
-	पूर्ण
+	}
 
 	mb();
-पूर्ण
+}
 
-अटल पूर्णांक __init cell_iommu_fixed_mapping_init(व्योम)
-अणु
-	अचिन्हित दीर्घ dbase, dsize, fbase, fsize, hbase, hend;
-	काष्ठा cbe_iommu *iommu;
-	काष्ठा device_node *np;
+static int __init cell_iommu_fixed_mapping_init(void)
+{
+	unsigned long dbase, dsize, fbase, fsize, hbase, hend;
+	struct cbe_iommu *iommu;
+	struct device_node *np;
 
 	/* The fixed mapping is only supported on axon machines */
-	np = of_find_node_by_name(शून्य, "axon");
+	np = of_find_node_by_name(NULL, "axon");
 	of_node_put(np);
 
-	अगर (!np) अणु
+	if (!np) {
 		pr_debug("iommu: fixed mapping disabled, no axons found\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	/* We must have dma-ranges properties क्रम fixed mapping to work */
-	np = of_find_node_with_property(शून्य, "dma-ranges");
+	/* We must have dma-ranges properties for fixed mapping to work */
+	np = of_find_node_with_property(NULL, "dma-ranges");
 	of_node_put(np);
 
-	अगर (!np) अणु
+	if (!np) {
 		pr_debug("iommu: no dma-ranges found, no fixed mapping\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	/* The शेष setup is to have the fixed mapping sit after the
-	 * dynamic region, so find the top of the largest IOMMU winकरोw
+	/* The default setup is to have the fixed mapping sit after the
+	 * dynamic region, so find the top of the largest IOMMU window
 	 * on any axon, then add the size of RAM and that's our max value.
-	 * If that is > 32GB we have to करो other shennanigans.
+	 * If that is > 32GB we have to do other shennanigans.
 	 */
 	fbase = 0;
-	क्रम_each_node_by_name(np, "axon") अणु
-		cell_iommu_get_winकरोw(np, &dbase, &dsize);
+	for_each_node_by_name(np, "axon") {
+		cell_iommu_get_window(np, &dbase, &dsize);
 		fbase = max(fbase, dbase + dsize);
-	पूर्ण
+	}
 
 	fbase = ALIGN(fbase, 1 << IO_SEGMENT_SHIFT);
 	fsize = memblock_phys_mem_size();
 
-	अगर ((fbase + fsize) <= 0x800000000ul)
-		hbase = 0; /* use the device tree winकरोw */
-	अन्यथा अणु
+	if ((fbase + fsize) <= 0x800000000ul)
+		hbase = 0; /* use the device tree window */
+	else {
 		/* If we're over 32 GB we need to cheat. We can't map all of
 		 * RAM with the fixed mapping, and also fit the dynamic
 		 * region. So try to place the dynamic region where the hash
-		 * table sits, drivers never need to DMA to it, we करोn't
-		 * need a fixed mapping क्रम that area.
+		 * table sits, drivers never need to DMA to it, we don't
+		 * need a fixed mapping for that area.
 		 */
-		अगर (!htab_address) अणु
+		if (!htab_address) {
 			pr_debug("iommu: htab is NULL, on LPAR? Huh?\n");
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 		hbase = __pa(htab_address);
 		hend  = hbase + htab_size_bytes;
 
-		/* The winकरोw must start and end on a segment boundary */
-		अगर ((hbase != ALIGN(hbase, 1 << IO_SEGMENT_SHIFT)) ||
-		    (hend != ALIGN(hend, 1 << IO_SEGMENT_SHIFT))) अणु
+		/* The window must start and end on a segment boundary */
+		if ((hbase != ALIGN(hbase, 1 << IO_SEGMENT_SHIFT)) ||
+		    (hend != ALIGN(hend, 1 << IO_SEGMENT_SHIFT))) {
 			pr_debug("iommu: hash window not segment aligned\n");
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 
-		/* Check the hash winकरोw fits inside the real DMA winकरोw */
-		क्रम_each_node_by_name(np, "axon") अणु
-			cell_iommu_get_winकरोw(np, &dbase, &dsize);
+		/* Check the hash window fits inside the real DMA window */
+		for_each_node_by_name(np, "axon") {
+			cell_iommu_get_window(np, &dbase, &dsize);
 
-			अगर (hbase < dbase || (hend > (dbase + dsize))) अणु
+			if (hbase < dbase || (hend > (dbase + dsize))) {
 				pr_debug("iommu: hash window doesn't fit in"
 					 "real DMA window\n");
-				वापस -1;
-			पूर्ण
-		पूर्ण
+				return -1;
+			}
+		}
 
 		fbase = 0;
-	पूर्ण
+	}
 
 	/* Setup the dynamic regions */
-	क्रम_each_node_by_name(np, "axon") अणु
+	for_each_node_by_name(np, "axon") {
 		iommu = cell_iommu_alloc(np);
 		BUG_ON(!iommu);
 
-		अगर (hbase == 0)
-			cell_iommu_get_winकरोw(np, &dbase, &dsize);
-		अन्यथा अणु
+		if (hbase == 0)
+			cell_iommu_get_window(np, &dbase, &dsize);
+		else {
 			dbase = hbase;
 			dsize = htab_size_bytes;
-		पूर्ण
+		}
 
-		prपूर्णांकk(KERN_DEBUG "iommu: node %d, dynamic window 0x%lx-0x%lx "
+		printk(KERN_DEBUG "iommu: node %d, dynamic window 0x%lx-0x%lx "
 			"fixed window 0x%lx-0x%lx\n", iommu->nid, dbase,
 			 dbase + dsize, fbase, fbase + fsize);
 
@@ -1007,84 +1006,84 @@ out:
 		cell_iommu_setup_fixed_ptab(iommu, np, dbase, dsize,
 					     fbase, fsize);
 		cell_iommu_enable_hardware(iommu);
-		cell_iommu_setup_winकरोw(iommu, np, dbase, dsize, 0);
-	पूर्ण
+		cell_iommu_setup_window(iommu, np, dbase, dsize, 0);
+	}
 
 	cell_pci_controller_ops.iommu_bypass_supported =
 		cell_pci_iommu_bypass_supported;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक iommu_fixed_disabled;
+static int iommu_fixed_disabled;
 
-अटल पूर्णांक __init setup_iommu_fixed(अक्षर *str)
-अणु
-	काष्ठा device_node *pciep;
+static int __init setup_iommu_fixed(char *str)
+{
+	struct device_node *pciep;
 
-	अगर (म_भेद(str, "off") == 0)
+	if (strcmp(str, "off") == 0)
 		iommu_fixed_disabled = 1;
 
-	/* If we can find a pcie-endpoपूर्णांक in the device tree assume that
-	 * we're on a triblade or a CAB so by शेष the fixed mapping
-	 * should be set to be weakly ordered; but only अगर the boot
-	 * option WASN'T set क्रम strong ordering
+	/* If we can find a pcie-endpoint in the device tree assume that
+	 * we're on a triblade or a CAB so by default the fixed mapping
+	 * should be set to be weakly ordered; but only if the boot
+	 * option WASN'T set for strong ordering
 	 */
-	pciep = of_find_node_by_type(शून्य, "pcie-endpoint");
+	pciep = of_find_node_by_type(NULL, "pcie-endpoint");
 
-	अगर (म_भेद(str, "weak") == 0 || (pciep && म_भेद(str, "strong") != 0))
+	if (strcmp(str, "weak") == 0 || (pciep && strcmp(str, "strong") != 0))
 		iommu_fixed_is_weak = true;
 
 	of_node_put(pciep);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 __setup("iommu_fixed=", setup_iommu_fixed);
 
-अटल पूर्णांक __init cell_iommu_init(व्योम)
-अणु
-	काष्ठा device_node *np;
+static int __init cell_iommu_init(void)
+{
+	struct device_node *np;
 
 	/* If IOMMU is disabled or we have little enough RAM to not need
 	 * to enable it, we setup a direct mapping.
 	 *
 	 * Note: should we make sure we have the IOMMU actually disabled ?
 	 */
-	अगर (iommu_is_off ||
-	    (!iommu_क्रमce_on && memblock_end_of_DRAM() <= 0x80000000ull))
-		अगर (cell_iommu_init_disabled() == 0)
-			जाओ bail;
+	if (iommu_is_off ||
+	    (!iommu_force_on && memblock_end_of_DRAM() <= 0x80000000ull))
+		if (cell_iommu_init_disabled() == 0)
+			goto bail;
 
 	/* Setup various callbacks */
 	cell_pci_controller_ops.dma_dev_setup = cell_pci_dma_dev_setup;
 
-	अगर (!iommu_fixed_disabled && cell_iommu_fixed_mapping_init() == 0)
-		जाओ करोne;
+	if (!iommu_fixed_disabled && cell_iommu_fixed_mapping_init() == 0)
+		goto done;
 
-	/* Create an iommu क्रम each /axon node.  */
-	क्रम_each_node_by_name(np, "axon") अणु
-		अगर (np->parent == शून्य || np->parent->parent != शून्य)
-			जारी;
+	/* Create an iommu for each /axon node.  */
+	for_each_node_by_name(np, "axon") {
+		if (np->parent == NULL || np->parent->parent != NULL)
+			continue;
 		cell_iommu_init_one(np, 0);
-	पूर्ण
+	}
 
-	/* Create an iommu क्रम each toplevel /pci-पूर्णांकernal node क्रम
+	/* Create an iommu for each toplevel /pci-internal node for
 	 * old hardware/firmware
 	 */
-	क्रम_each_node_by_name(np, "pci-internal") अणु
-		अगर (np->parent == शून्य || np->parent->parent != शून्य)
-			जारी;
+	for_each_node_by_name(np, "pci-internal") {
+		if (np->parent == NULL || np->parent->parent != NULL)
+			continue;
 		cell_iommu_init_one(np, SPIDER_DMA_OFFSET);
-	पूर्ण
- करोne:
-	/* Setup शेष PCI iommu ops */
+	}
+ done:
+	/* Setup default PCI iommu ops */
 	set_pci_dma_ops(&dma_iommu_ops);
 	cell_iommu_enabled = true;
  bail:
-	/* Register callbacks on OF platक्रमm device addition/removal
+	/* Register callbacks on OF platform device addition/removal
 	 * to handle linking them to the right DMA operations
 	 */
-	bus_रेजिस्टर_notअगरier(&platक्रमm_bus_type, &cell_of_bus_notअगरier);
+	bus_register_notifier(&platform_bus_type, &cell_of_bus_notifier);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 machine_arch_initcall(cell, cell_iommu_init);

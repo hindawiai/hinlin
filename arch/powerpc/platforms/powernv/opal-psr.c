@@ -1,172 +1,171 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * PowerNV OPAL Power-Shअगरt-Ratio पूर्णांकerface
+ * PowerNV OPAL Power-Shift-Ratio interface
  *
  * Copyright 2017 IBM Corp.
  */
 
-#घोषणा pr_fmt(fmt)     "opal-psr: " fmt
+#define pr_fmt(fmt)     "opal-psr: " fmt
 
-#समावेश <linux/of.h>
-#समावेश <linux/kobject.h>
-#समावेश <linux/slab.h>
+#include <linux/of.h>
+#include <linux/kobject.h>
+#include <linux/slab.h>
 
-#समावेश <यंत्र/opal.h>
+#include <asm/opal.h>
 
-अटल DEFINE_MUTEX(psr_mutex);
+static DEFINE_MUTEX(psr_mutex);
 
-अटल काष्ठा kobject *psr_kobj;
+static struct kobject *psr_kobj;
 
-अटल काष्ठा psr_attr अणु
+static struct psr_attr {
 	u32 handle;
-	काष्ठा kobj_attribute attr;
-पूर्ण *psr_attrs;
+	struct kobj_attribute attr;
+} *psr_attrs;
 
-अटल sमाप_प्रकार psr_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
-			अक्षर *buf)
-अणु
-	काष्ठा psr_attr *psr_attr = container_of(attr, काष्ठा psr_attr, attr);
-	काष्ठा opal_msg msg;
-	पूर्णांक psr, ret, token;
+static ssize_t psr_show(struct kobject *kobj, struct kobj_attribute *attr,
+			char *buf)
+{
+	struct psr_attr *psr_attr = container_of(attr, struct psr_attr, attr);
+	struct opal_msg msg;
+	int psr, ret, token;
 
-	token = opal_async_get_token_पूर्णांकerruptible();
-	अगर (token < 0) अणु
+	token = opal_async_get_token_interruptible();
+	if (token < 0) {
 		pr_devel("Failed to get token\n");
-		वापस token;
-	पूर्ण
+		return token;
+	}
 
-	ret = mutex_lock_पूर्णांकerruptible(&psr_mutex);
-	अगर (ret)
-		जाओ out_token;
+	ret = mutex_lock_interruptible(&psr_mutex);
+	if (ret)
+		goto out_token;
 
-	ret = opal_get_घातer_shअगरt_ratio(psr_attr->handle, token,
+	ret = opal_get_power_shift_ratio(psr_attr->handle, token,
 					    (u32 *)__pa(&psr));
-	चयन (ret) अणु
-	हाल OPAL_ASYNC_COMPLETION:
-		ret = opal_async_रुको_response(token, &msg);
-		अगर (ret) अणु
+	switch (ret) {
+	case OPAL_ASYNC_COMPLETION:
+		ret = opal_async_wait_response(token, &msg);
+		if (ret) {
 			pr_devel("Failed to wait for the async response\n");
 			ret = -EIO;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		ret = opal_error_code(opal_get_async_rc(msg));
-		अगर (!ret) अणु
-			ret = प्र_लिखो(buf, "%u\n", be32_to_cpu(psr));
-			अगर (ret < 0)
+		if (!ret) {
+			ret = sprintf(buf, "%u\n", be32_to_cpu(psr));
+			if (ret < 0)
 				ret = -EIO;
-		पूर्ण
-		अवरोध;
-	हाल OPAL_SUCCESS:
-		ret = प्र_लिखो(buf, "%u\n", be32_to_cpu(psr));
-		अगर (ret < 0)
+		}
+		break;
+	case OPAL_SUCCESS:
+		ret = sprintf(buf, "%u\n", be32_to_cpu(psr));
+		if (ret < 0)
 			ret = -EIO;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = opal_error_code(ret);
-	पूर्ण
+	}
 
 out:
 	mutex_unlock(&psr_mutex);
 out_token:
 	opal_async_release_token(token);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार psr_store(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
-			 स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा psr_attr *psr_attr = container_of(attr, काष्ठा psr_attr, attr);
-	काष्ठा opal_msg msg;
-	पूर्णांक psr, ret, token;
+static ssize_t psr_store(struct kobject *kobj, struct kobj_attribute *attr,
+			 const char *buf, size_t count)
+{
+	struct psr_attr *psr_attr = container_of(attr, struct psr_attr, attr);
+	struct opal_msg msg;
+	int psr, ret, token;
 
-	ret = kstrtoपूर्णांक(buf, 0, &psr);
-	अगर (ret)
-		वापस ret;
+	ret = kstrtoint(buf, 0, &psr);
+	if (ret)
+		return ret;
 
-	token = opal_async_get_token_पूर्णांकerruptible();
-	अगर (token < 0) अणु
+	token = opal_async_get_token_interruptible();
+	if (token < 0) {
 		pr_devel("Failed to get token\n");
-		वापस token;
-	पूर्ण
+		return token;
+	}
 
-	ret = mutex_lock_पूर्णांकerruptible(&psr_mutex);
-	अगर (ret)
-		जाओ out_token;
+	ret = mutex_lock_interruptible(&psr_mutex);
+	if (ret)
+		goto out_token;
 
-	ret = opal_set_घातer_shअगरt_ratio(psr_attr->handle, token, psr);
-	चयन (ret) अणु
-	हाल OPAL_ASYNC_COMPLETION:
-		ret = opal_async_रुको_response(token, &msg);
-		अगर (ret) अणु
+	ret = opal_set_power_shift_ratio(psr_attr->handle, token, psr);
+	switch (ret) {
+	case OPAL_ASYNC_COMPLETION:
+		ret = opal_async_wait_response(token, &msg);
+		if (ret) {
 			pr_devel("Failed to wait for the async response\n");
 			ret = -EIO;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		ret = opal_error_code(opal_get_async_rc(msg));
-		अगर (!ret)
+		if (!ret)
 			ret = count;
-		अवरोध;
-	हाल OPAL_SUCCESS:
+		break;
+	case OPAL_SUCCESS:
 		ret = count;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = opal_error_code(ret);
-	पूर्ण
+	}
 
 out:
 	mutex_unlock(&psr_mutex);
 out_token:
 	opal_async_release_token(token);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम __init opal_psr_init(व्योम)
-अणु
-	काष्ठा device_node *psr, *node;
-	पूर्णांक i = 0;
+void __init opal_psr_init(void)
+{
+	struct device_node *psr, *node;
+	int i = 0;
 
-	psr = of_find_compatible_node(शून्य, शून्य,
+	psr = of_find_compatible_node(NULL, NULL,
 				      "ibm,opal-power-shift-ratio");
-	अगर (!psr) अणु
+	if (!psr) {
 		pr_devel("Power-shift-ratio node not found\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	psr_attrs = kसुस्मृति(of_get_child_count(psr), माप(*psr_attrs),
+	psr_attrs = kcalloc(of_get_child_count(psr), sizeof(*psr_attrs),
 			    GFP_KERNEL);
-	अगर (!psr_attrs)
-		वापस;
+	if (!psr_attrs)
+		return;
 
 	psr_kobj = kobject_create_and_add("psr", opal_kobj);
-	अगर (!psr_kobj) अणु
+	if (!psr_kobj) {
 		pr_warn("Failed to create psr kobject\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	क्रम_each_child_of_node(psr, node) अणु
-		अगर (of_property_पढ़ो_u32(node, "handle",
+	for_each_child_of_node(psr, node) {
+		if (of_property_read_u32(node, "handle",
 					 &psr_attrs[i].handle))
-			जाओ out_kobj;
+			goto out_kobj;
 
 		sysfs_attr_init(&psr_attrs[i].attr.attr);
-		अगर (of_property_पढ़ो_string(node, "label",
+		if (of_property_read_string(node, "label",
 					    &psr_attrs[i].attr.attr.name))
-			जाओ out_kobj;
+			goto out_kobj;
 		psr_attrs[i].attr.attr.mode = 0664;
 		psr_attrs[i].attr.show = psr_show;
 		psr_attrs[i].attr.store = psr_store;
-		अगर (sysfs_create_file(psr_kobj, &psr_attrs[i].attr.attr)) अणु
+		if (sysfs_create_file(psr_kobj, &psr_attrs[i].attr.attr)) {
 			pr_devel("Failed to create psr sysfs file %s\n",
 				 psr_attrs[i].attr.attr.name);
-			जाओ out_kobj;
-		पूर्ण
+			goto out_kobj;
+		}
 		i++;
-	पूर्ण
+	}
 
-	वापस;
+	return;
 out_kobj:
 	kobject_put(psr_kobj);
 out:
-	kमुक्त(psr_attrs);
-पूर्ण
+	kfree(psr_attrs);
+}

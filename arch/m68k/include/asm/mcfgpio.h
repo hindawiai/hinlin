@@ -1,100 +1,99 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Coldfire generic GPIO support.
  *
  * (C) Copyright 2009, Steven King <sfking@fdwdc.com>
  */
 
-#अगर_अघोषित mcfgpio_h
-#घोषणा mcfgpio_h
+#ifndef mcfgpio_h
+#define mcfgpio_h
 
-#अगर_घोषित CONFIG_GPIOLIB
-#समावेश <यंत्र-generic/gpपन.स>
-#अन्यथा
+#ifdef CONFIG_GPIOLIB
+#include <asm-generic/gpio.h>
+#else
 
-पूर्णांक __mcfgpio_get_value(अचिन्हित gpio);
-व्योम __mcfgpio_set_value(अचिन्हित gpio, पूर्णांक value);
-पूर्णांक __mcfgpio_direction_input(अचिन्हित gpio);
-पूर्णांक __mcfgpio_direction_output(अचिन्हित gpio, पूर्णांक value);
-पूर्णांक __mcfgpio_request(अचिन्हित gpio);
-व्योम __mcfgpio_मुक्त(अचिन्हित gpio);
+int __mcfgpio_get_value(unsigned gpio);
+void __mcfgpio_set_value(unsigned gpio, int value);
+int __mcfgpio_direction_input(unsigned gpio);
+int __mcfgpio_direction_output(unsigned gpio, int value);
+int __mcfgpio_request(unsigned gpio);
+void __mcfgpio_free(unsigned gpio);
 
 /* our alternate 'gpiolib' functions */
-अटल अंतरभूत पूर्णांक __gpio_get_value(अचिन्हित gpio)
-अणु
-	अगर (gpio < MCFGPIO_PIN_MAX)
-		वापस __mcfgpio_get_value(gpio);
-	अन्यथा
-		वापस -EINVAL;
-पूर्ण
+static inline int __gpio_get_value(unsigned gpio)
+{
+	if (gpio < MCFGPIO_PIN_MAX)
+		return __mcfgpio_get_value(gpio);
+	else
+		return -EINVAL;
+}
 
-अटल अंतरभूत व्योम __gpio_set_value(अचिन्हित gpio, पूर्णांक value)
-अणु
-	अगर (gpio < MCFGPIO_PIN_MAX)
+static inline void __gpio_set_value(unsigned gpio, int value)
+{
+	if (gpio < MCFGPIO_PIN_MAX)
 		__mcfgpio_set_value(gpio, value);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक __gpio_cansleep(अचिन्हित gpio)
-अणु
-	अगर (gpio < MCFGPIO_PIN_MAX)
-		वापस 0;
-	अन्यथा
-		वापस -EINVAL;
-पूर्ण
+static inline int __gpio_cansleep(unsigned gpio)
+{
+	if (gpio < MCFGPIO_PIN_MAX)
+		return 0;
+	else
+		return -EINVAL;
+}
 
-अटल अंतरभूत पूर्णांक __gpio_to_irq(अचिन्हित gpio)
-अणु
-	वापस -EINVAL;
-पूर्ण
+static inline int __gpio_to_irq(unsigned gpio)
+{
+	return -EINVAL;
+}
 
-अटल अंतरभूत पूर्णांक gpio_direction_input(अचिन्हित gpio)
-अणु
-	अगर (gpio < MCFGPIO_PIN_MAX)
-		वापस __mcfgpio_direction_input(gpio);
-	अन्यथा
-		वापस -EINVAL;
-पूर्ण
+static inline int gpio_direction_input(unsigned gpio)
+{
+	if (gpio < MCFGPIO_PIN_MAX)
+		return __mcfgpio_direction_input(gpio);
+	else
+		return -EINVAL;
+}
 
-अटल अंतरभूत पूर्णांक gpio_direction_output(अचिन्हित gpio, पूर्णांक value)
-अणु
-	अगर (gpio < MCFGPIO_PIN_MAX)
-		वापस __mcfgpio_direction_output(gpio, value);
-	अन्यथा
-		वापस -EINVAL;
-पूर्ण
+static inline int gpio_direction_output(unsigned gpio, int value)
+{
+	if (gpio < MCFGPIO_PIN_MAX)
+		return __mcfgpio_direction_output(gpio, value);
+	else
+		return -EINVAL;
+}
 
-अटल अंतरभूत पूर्णांक gpio_request(अचिन्हित gpio, स्थिर अक्षर *label)
-अणु
-	अगर (gpio < MCFGPIO_PIN_MAX)
-		वापस __mcfgpio_request(gpio);
-	अन्यथा
-		वापस -EINVAL;
-पूर्ण
+static inline int gpio_request(unsigned gpio, const char *label)
+{
+	if (gpio < MCFGPIO_PIN_MAX)
+		return __mcfgpio_request(gpio);
+	else
+		return -EINVAL;
+}
 
-अटल अंतरभूत व्योम gpio_मुक्त(अचिन्हित gpio)
-अणु
-	अगर (gpio < MCFGPIO_PIN_MAX)
-		__mcfgpio_मुक्त(gpio);
-पूर्ण
+static inline void gpio_free(unsigned gpio)
+{
+	if (gpio < MCFGPIO_PIN_MAX)
+		__mcfgpio_free(gpio);
+}
 
-#पूर्ण_अगर /* CONFIG_GPIOLIB */
+#endif /* CONFIG_GPIOLIB */
 
 
 /*
  * The Freescale Coldfire family is quite varied in how they implement GPIO.
  * Some parts have 8 bit ports, some have 16bit and some have 32bit; some have
  * only one port, others have multiple ports; some have a single data latch
- * क्रम both input and output, others have a separate pin data रेजिस्टर to पढ़ो
- * input; some require a पढ़ो-modअगरy-ग_लिखो access to change an output, others
- * have set and clear रेजिस्टरs क्रम some of the outमाला_दो; Some have all the
+ * for both input and output, others have a separate pin data register to read
+ * input; some require a read-modify-write access to change an output, others
+ * have set and clear registers for some of the outputs; Some have all the
  * GPIOs in a single control area, others have some GPIOs implemented in
- * dअगरferent modules.
+ * different modules.
  *
- * This implementation attempts accommodate the dअगरferences जबतक presenting
- * a generic पूर्णांकerface that will optimize to as few inकाष्ठाions as possible.
+ * This implementation attempts accommodate the differences while presenting
+ * a generic interface that will optimize to as few instructions as possible.
  */
-#अगर defined(CONFIG_M5206) || defined(CONFIG_M5206e) || \
+#if defined(CONFIG_M5206) || defined(CONFIG_M5206e) || \
     defined(CONFIG_M520x) || defined(CONFIG_M523x) || \
     defined(CONFIG_M527x) || defined(CONFIG_M528x) || \
     defined(CONFIG_M53xx) || defined(CONFIG_M54xx) || \
@@ -102,200 +101,200 @@
 
 /* These parts have GPIO organized by 8 bit ports */
 
-#घोषणा MCFGPIO_PORTTYPE		u8
-#घोषणा MCFGPIO_PORTSIZE		8
-#घोषणा mcfgpio_पढ़ो(port)		__raw_पढ़ोb(port)
-#घोषणा mcfgpio_ग_लिखो(data, port)	__raw_ग_लिखोb(data, port)
+#define MCFGPIO_PORTTYPE		u8
+#define MCFGPIO_PORTSIZE		8
+#define mcfgpio_read(port)		__raw_readb(port)
+#define mcfgpio_write(data, port)	__raw_writeb(data, port)
 
-#या_अगर defined(CONFIG_M5307) || defined(CONFIG_M5407) || defined(CONFIG_M5272)
+#elif defined(CONFIG_M5307) || defined(CONFIG_M5407) || defined(CONFIG_M5272)
 
 /* These parts have GPIO organized by 16 bit ports */
 
-#घोषणा MCFGPIO_PORTTYPE		u16
-#घोषणा MCFGPIO_PORTSIZE		16
-#घोषणा mcfgpio_पढ़ो(port)		__raw_पढ़ोw(port)
-#घोषणा mcfgpio_ग_लिखो(data, port)	__raw_ग_लिखोw(data, port)
+#define MCFGPIO_PORTTYPE		u16
+#define MCFGPIO_PORTSIZE		16
+#define mcfgpio_read(port)		__raw_readw(port)
+#define mcfgpio_write(data, port)	__raw_writew(data, port)
 
-#या_अगर defined(CONFIG_M5249) || defined(CONFIG_M525x)
+#elif defined(CONFIG_M5249) || defined(CONFIG_M525x)
 
 /* These parts have GPIO organized by 32 bit ports */
 
-#घोषणा MCFGPIO_PORTTYPE		u32
-#घोषणा MCFGPIO_PORTSIZE		32
-#घोषणा mcfgpio_पढ़ो(port)		__raw_पढ़ोl(port)
-#घोषणा mcfgpio_ग_लिखो(data, port)	__raw_ग_लिखोl(data, port)
+#define MCFGPIO_PORTTYPE		u32
+#define MCFGPIO_PORTSIZE		32
+#define mcfgpio_read(port)		__raw_readl(port)
+#define mcfgpio_write(data, port)	__raw_writel(data, port)
 
-#पूर्ण_अगर
+#endif
 
-#घोषणा mcfgpio_bit(gpio)		(1 << ((gpio) %  MCFGPIO_PORTSIZE))
-#घोषणा mcfgpio_port(gpio)		((gpio) / MCFGPIO_PORTSIZE)
+#define mcfgpio_bit(gpio)		(1 << ((gpio) %  MCFGPIO_PORTSIZE))
+#define mcfgpio_port(gpio)		((gpio) / MCFGPIO_PORTSIZE)
 
-#अगर defined(CONFIG_M520x) || defined(CONFIG_M523x) || \
+#if defined(CONFIG_M520x) || defined(CONFIG_M523x) || \
     defined(CONFIG_M527x) || defined(CONFIG_M528x) || \
     defined(CONFIG_M53xx) || defined(CONFIG_M54xx) || \
     defined(CONFIG_M5441x)
 /*
- * These parts have an 'Edge' Port module (बाह्यal पूर्णांकerrupt/GPIO) which uses
- * पढ़ो-modअगरy-ग_लिखो to change an output and a GPIO module which has separate
- * set/clr रेजिस्टरs to directly change outमाला_दो with a single ग_लिखो access.
+ * These parts have an 'Edge' Port module (external interrupt/GPIO) which uses
+ * read-modify-write to change an output and a GPIO module which has separate
+ * set/clr registers to directly change outputs with a single write access.
  */
-#अगर defined(CONFIG_M528x)
+#if defined(CONFIG_M528x)
 /*
  * The 528x also has GPIOs in other modules (GPT, QADC) which use
- * पढ़ो-modअगरy-ग_लिखो as well as those controlled by the EPORT and GPIO modules.
+ * read-modify-write as well as those controlled by the EPORT and GPIO modules.
  */
-#घोषणा MCFGPIO_SCR_START		40
-#या_अगर defined(CONFIGM5441x)
-/* The m5441x EPORT करोesn't have its own GPIO port, uses PORT C */
-#घोषणा MCFGPIO_SCR_START		0
-#अन्यथा
-#घोषणा MCFGPIO_SCR_START		8
-#पूर्ण_अगर
+#define MCFGPIO_SCR_START		40
+#elif defined(CONFIGM5441x)
+/* The m5441x EPORT doesn't have its own GPIO port, uses PORT C */
+#define MCFGPIO_SCR_START		0
+#else
+#define MCFGPIO_SCR_START		8
+#endif
 
-#घोषणा MCFGPIO_SETR_PORT(gpio)		(MCFGPIO_SETR + \
+#define MCFGPIO_SETR_PORT(gpio)		(MCFGPIO_SETR + \
 					mcfgpio_port(gpio - MCFGPIO_SCR_START))
 
-#घोषणा MCFGPIO_CLRR_PORT(gpio)		(MCFGPIO_CLRR + \
+#define MCFGPIO_CLRR_PORT(gpio)		(MCFGPIO_CLRR + \
 					mcfgpio_port(gpio - MCFGPIO_SCR_START))
-#अन्यथा
+#else
 
-#घोषणा MCFGPIO_SCR_START		MCFGPIO_PIN_MAX
+#define MCFGPIO_SCR_START		MCFGPIO_PIN_MAX
 /* with MCFGPIO_SCR == MCFGPIO_PIN_MAX, these will be optimized away */
-#घोषणा MCFGPIO_SETR_PORT(gpio)		0
-#घोषणा MCFGPIO_CLRR_PORT(gpio)		0
+#define MCFGPIO_SETR_PORT(gpio)		0
+#define MCFGPIO_CLRR_PORT(gpio)		0
 
-#पूर्ण_अगर
+#endif
 /*
- * Coldfire specअगरic helper functions
+ * Coldfire specific helper functions
  */
 
-/* वापस the port pin data रेजिस्टर क्रम a gpio */
-अटल अंतरभूत u32 __mcfgpio_ppdr(अचिन्हित gpio)
-अणु
-#अगर defined(CONFIG_M5206) || defined(CONFIG_M5206e) || \
+/* return the port pin data register for a gpio */
+static inline u32 __mcfgpio_ppdr(unsigned gpio)
+{
+#if defined(CONFIG_M5206) || defined(CONFIG_M5206e) || \
     defined(CONFIG_M5307) || defined(CONFIG_M5407)
-	वापस MCFSIM_PADAT;
-#या_अगर defined(CONFIG_M5272)
-	अगर (gpio < 16)
-		वापस MCFSIM_PADAT;
-	अन्यथा अगर (gpio < 32)
-		वापस MCFSIM_PBDAT;
-	अन्यथा
-		वापस MCFSIM_PCDAT;
-#या_अगर defined(CONFIG_M5249) || defined(CONFIG_M525x)
-	अगर (gpio < 32)
-		वापस MCFSIM2_GPIOREAD;
-	अन्यथा
-		वापस MCFSIM2_GPIO1READ;
-#या_अगर defined(CONFIG_M520x) || defined(CONFIG_M523x) || \
+	return MCFSIM_PADAT;
+#elif defined(CONFIG_M5272)
+	if (gpio < 16)
+		return MCFSIM_PADAT;
+	else if (gpio < 32)
+		return MCFSIM_PBDAT;
+	else
+		return MCFSIM_PCDAT;
+#elif defined(CONFIG_M5249) || defined(CONFIG_M525x)
+	if (gpio < 32)
+		return MCFSIM2_GPIOREAD;
+	else
+		return MCFSIM2_GPIO1READ;
+#elif defined(CONFIG_M520x) || defined(CONFIG_M523x) || \
       defined(CONFIG_M527x) || defined(CONFIG_M528x) || \
       defined(CONFIG_M53xx) || defined(CONFIG_M54xx) || \
       defined(CONFIG_M5441x)
-#अगर !defined(CONFIG_M5441x)
-	अगर (gpio < 8)
-		वापस MCFEPORT_EPPDR;
-#अगर defined(CONFIG_M528x)
-	अन्यथा अगर (gpio < 16)
-		वापस MCFGPTA_GPTPORT;
-	अन्यथा अगर (gpio < 24)
-		वापस MCFGPTB_GPTPORT;
-	अन्यथा अगर (gpio < 32)
-		वापस MCFQADC_PORTQA;
-	अन्यथा अगर (gpio < 40)
-		वापस MCFQADC_PORTQB;
-#पूर्ण_अगर /* defined(CONFIG_M528x) */
-	अन्यथा
-#पूर्ण_अगर /* !defined(CONFIG_M5441x) */
-		वापस MCFGPIO_PPDR + mcfgpio_port(gpio - MCFGPIO_SCR_START);
-#अन्यथा
-	वापस 0;
-#पूर्ण_अगर
-पूर्ण
+#if !defined(CONFIG_M5441x)
+	if (gpio < 8)
+		return MCFEPORT_EPPDR;
+#if defined(CONFIG_M528x)
+	else if (gpio < 16)
+		return MCFGPTA_GPTPORT;
+	else if (gpio < 24)
+		return MCFGPTB_GPTPORT;
+	else if (gpio < 32)
+		return MCFQADC_PORTQA;
+	else if (gpio < 40)
+		return MCFQADC_PORTQB;
+#endif /* defined(CONFIG_M528x) */
+	else
+#endif /* !defined(CONFIG_M5441x) */
+		return MCFGPIO_PPDR + mcfgpio_port(gpio - MCFGPIO_SCR_START);
+#else
+	return 0;
+#endif
+}
 
-/* वापस the port output data रेजिस्टर क्रम a gpio */
-अटल अंतरभूत u32 __mcfgpio_podr(अचिन्हित gpio)
-अणु
-#अगर defined(CONFIG_M5206) || defined(CONFIG_M5206e) || \
+/* return the port output data register for a gpio */
+static inline u32 __mcfgpio_podr(unsigned gpio)
+{
+#if defined(CONFIG_M5206) || defined(CONFIG_M5206e) || \
     defined(CONFIG_M5307) || defined(CONFIG_M5407)
-	वापस MCFSIM_PADAT;
-#या_अगर defined(CONFIG_M5272)
-	अगर (gpio < 16)
-		वापस MCFSIM_PADAT;
-	अन्यथा अगर (gpio < 32)
-		वापस MCFSIM_PBDAT;
-	अन्यथा
-		वापस MCFSIM_PCDAT;
-#या_अगर defined(CONFIG_M5249) || defined(CONFIG_M525x)
-	अगर (gpio < 32)
-		वापस MCFSIM2_GPIOWRITE;
-	अन्यथा
-		वापस MCFSIM2_GPIO1WRITE;
-#या_अगर defined(CONFIG_M520x) || defined(CONFIG_M523x) || \
+	return MCFSIM_PADAT;
+#elif defined(CONFIG_M5272)
+	if (gpio < 16)
+		return MCFSIM_PADAT;
+	else if (gpio < 32)
+		return MCFSIM_PBDAT;
+	else
+		return MCFSIM_PCDAT;
+#elif defined(CONFIG_M5249) || defined(CONFIG_M525x)
+	if (gpio < 32)
+		return MCFSIM2_GPIOWRITE;
+	else
+		return MCFSIM2_GPIO1WRITE;
+#elif defined(CONFIG_M520x) || defined(CONFIG_M523x) || \
       defined(CONFIG_M527x) || defined(CONFIG_M528x) || \
       defined(CONFIG_M53xx) || defined(CONFIG_M54xx) || \
       defined(CONFIG_M5441x)
-#अगर !defined(CONFIG_M5441x)
-	अगर (gpio < 8)
-		वापस MCFEPORT_EPDR;
-#अगर defined(CONFIG_M528x)
-	अन्यथा अगर (gpio < 16)
-		वापस MCFGPTA_GPTPORT;
-	अन्यथा अगर (gpio < 24)
-		वापस MCFGPTB_GPTPORT;
-	अन्यथा अगर (gpio < 32)
-		वापस MCFQADC_PORTQA;
-	अन्यथा अगर (gpio < 40)
-		वापस MCFQADC_PORTQB;
-#पूर्ण_अगर /* defined(CONFIG_M528x) */
-	अन्यथा
-#पूर्ण_अगर /* !defined(CONFIG_M5441x) */
-		वापस MCFGPIO_PODR + mcfgpio_port(gpio - MCFGPIO_SCR_START);
-#अन्यथा
-	वापस 0;
-#पूर्ण_अगर
-पूर्ण
+#if !defined(CONFIG_M5441x)
+	if (gpio < 8)
+		return MCFEPORT_EPDR;
+#if defined(CONFIG_M528x)
+	else if (gpio < 16)
+		return MCFGPTA_GPTPORT;
+	else if (gpio < 24)
+		return MCFGPTB_GPTPORT;
+	else if (gpio < 32)
+		return MCFQADC_PORTQA;
+	else if (gpio < 40)
+		return MCFQADC_PORTQB;
+#endif /* defined(CONFIG_M528x) */
+	else
+#endif /* !defined(CONFIG_M5441x) */
+		return MCFGPIO_PODR + mcfgpio_port(gpio - MCFGPIO_SCR_START);
+#else
+	return 0;
+#endif
+}
 
-/* वापस the port direction data रेजिस्टर क्रम a gpio */
-अटल अंतरभूत u32 __mcfgpio_pddr(अचिन्हित gpio)
-अणु
-#अगर defined(CONFIG_M5206) || defined(CONFIG_M5206e) || \
+/* return the port direction data register for a gpio */
+static inline u32 __mcfgpio_pddr(unsigned gpio)
+{
+#if defined(CONFIG_M5206) || defined(CONFIG_M5206e) || \
     defined(CONFIG_M5307) || defined(CONFIG_M5407)
-	वापस MCFSIM_PADDR;
-#या_अगर defined(CONFIG_M5272)
-	अगर (gpio < 16)
-		वापस MCFSIM_PADDR;
-	अन्यथा अगर (gpio < 32)
-		वापस MCFSIM_PBDDR;
-	अन्यथा
-		वापस MCFSIM_PCDDR;
-#या_अगर defined(CONFIG_M5249) || defined(CONFIG_M525x)
-	अगर (gpio < 32)
-		वापस MCFSIM2_GPIOENABLE;
-	अन्यथा
-		वापस MCFSIM2_GPIO1ENABLE;
-#या_अगर defined(CONFIG_M520x) || defined(CONFIG_M523x) || \
+	return MCFSIM_PADDR;
+#elif defined(CONFIG_M5272)
+	if (gpio < 16)
+		return MCFSIM_PADDR;
+	else if (gpio < 32)
+		return MCFSIM_PBDDR;
+	else
+		return MCFSIM_PCDDR;
+#elif defined(CONFIG_M5249) || defined(CONFIG_M525x)
+	if (gpio < 32)
+		return MCFSIM2_GPIOENABLE;
+	else
+		return MCFSIM2_GPIO1ENABLE;
+#elif defined(CONFIG_M520x) || defined(CONFIG_M523x) || \
       defined(CONFIG_M527x) || defined(CONFIG_M528x) || \
       defined(CONFIG_M53xx) || defined(CONFIG_M54xx) || \
       defined(CONFIG_M5441x)
-#अगर !defined(CONFIG_M5441x)
-	अगर (gpio < 8)
-		वापस MCFEPORT_EPDDR;
-#अगर defined(CONFIG_M528x)
-	अन्यथा अगर (gpio < 16)
-		वापस MCFGPTA_GPTDDR;
-	अन्यथा अगर (gpio < 24)
-		वापस MCFGPTB_GPTDDR;
-	अन्यथा अगर (gpio < 32)
-		वापस MCFQADC_DDRQA;
-	अन्यथा अगर (gpio < 40)
-		वापस MCFQADC_DDRQB;
-#पूर्ण_अगर /* defined(CONFIG_M528x) */
-	अन्यथा
-#पूर्ण_अगर /* !defined(CONFIG_M5441x) */
-		वापस MCFGPIO_PDDR + mcfgpio_port(gpio - MCFGPIO_SCR_START);
-#अन्यथा
-	वापस 0;
-#पूर्ण_अगर
-पूर्ण
+#if !defined(CONFIG_M5441x)
+	if (gpio < 8)
+		return MCFEPORT_EPDDR;
+#if defined(CONFIG_M528x)
+	else if (gpio < 16)
+		return MCFGPTA_GPTDDR;
+	else if (gpio < 24)
+		return MCFGPTB_GPTDDR;
+	else if (gpio < 32)
+		return MCFQADC_DDRQA;
+	else if (gpio < 40)
+		return MCFQADC_DDRQB;
+#endif /* defined(CONFIG_M528x) */
+	else
+#endif /* !defined(CONFIG_M5441x) */
+		return MCFGPIO_PDDR + mcfgpio_port(gpio - MCFGPIO_SCR_START);
+#else
+	return 0;
+#endif
+}
 
-#पूर्ण_अगर /* mcfgpio_h */
+#endif /* mcfgpio_h */

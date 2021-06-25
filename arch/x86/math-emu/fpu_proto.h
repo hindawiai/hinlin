@@ -1,158 +1,157 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _FPU_PROTO_H
-#घोषणा _FPU_PROTO_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _FPU_PROTO_H
+#define _FPU_PROTO_H
 
 /* errors.c */
-बाह्य व्योम FPU_illegal(व्योम);
-बाह्य व्योम FPU_prपूर्णांकall(व्योम);
-यंत्रlinkage व्योम FPU_exception(पूर्णांक n);
-बाह्य पूर्णांक real_1op_NaN(FPU_REG *a);
-बाह्य पूर्णांक real_2op_NaN(FPU_REG स्थिर *b, u_अक्षर tagb, पूर्णांक deststnr,
-			FPU_REG स्थिर *शेषNaN);
-यंत्रlinkage पूर्णांक arith_invalid(पूर्णांक deststnr);
-यंत्रlinkage पूर्णांक FPU_भागide_by_zero(पूर्णांक deststnr, u_अक्षर sign);
-बाह्य पूर्णांक set_precision_flag(पूर्णांक flags);
-यंत्रlinkage व्योम set_precision_flag_up(व्योम);
-यंत्रlinkage व्योम set_precision_flag_करोwn(व्योम);
-यंत्रlinkage पूर्णांक denormal_opeअक्रम(व्योम);
-यंत्रlinkage पूर्णांक arith_overflow(FPU_REG *dest);
-यंत्रlinkage पूर्णांक arith_underflow(FPU_REG *dest);
-बाह्य व्योम FPU_stack_overflow(व्योम);
-बाह्य व्योम FPU_stack_underflow(व्योम);
-बाह्य व्योम FPU_stack_underflow_i(पूर्णांक i);
-बाह्य व्योम FPU_stack_underflow_pop(पूर्णांक i);
+extern void FPU_illegal(void);
+extern void FPU_printall(void);
+asmlinkage void FPU_exception(int n);
+extern int real_1op_NaN(FPU_REG *a);
+extern int real_2op_NaN(FPU_REG const *b, u_char tagb, int deststnr,
+			FPU_REG const *defaultNaN);
+asmlinkage int arith_invalid(int deststnr);
+asmlinkage int FPU_divide_by_zero(int deststnr, u_char sign);
+extern int set_precision_flag(int flags);
+asmlinkage void set_precision_flag_up(void);
+asmlinkage void set_precision_flag_down(void);
+asmlinkage int denormal_operand(void);
+asmlinkage int arith_overflow(FPU_REG *dest);
+asmlinkage int arith_underflow(FPU_REG *dest);
+extern void FPU_stack_overflow(void);
+extern void FPU_stack_underflow(void);
+extern void FPU_stack_underflow_i(int i);
+extern void FPU_stack_underflow_pop(int i);
 /* fpu_arith.c */
-बाह्य व्योम fadd__(व्योम);
-बाह्य व्योम fmul__(व्योम);
-बाह्य व्योम fsub__(व्योम);
-बाह्य व्योम fsubr_(व्योम);
-बाह्य व्योम fभाग__(व्योम);
-बाह्य व्योम fभागr_(व्योम);
-बाह्य व्योम fadd_i(व्योम);
-बाह्य व्योम fmul_i(व्योम);
-बाह्य व्योम fsubri(व्योम);
-बाह्य व्योम fsub_i(व्योम);
-बाह्य व्योम fभागri(व्योम);
-बाह्य व्योम fभाग_i(व्योम);
-बाह्य व्योम faddp_(व्योम);
-बाह्य व्योम fmulp_(व्योम);
-बाह्य व्योम fsubrp(व्योम);
-बाह्य व्योम fsubp_(व्योम);
-बाह्य व्योम fभागrp(व्योम);
-बाह्य व्योम fभागp_(व्योम);
+extern void fadd__(void);
+extern void fmul__(void);
+extern void fsub__(void);
+extern void fsubr_(void);
+extern void fdiv__(void);
+extern void fdivr_(void);
+extern void fadd_i(void);
+extern void fmul_i(void);
+extern void fsubri(void);
+extern void fsub_i(void);
+extern void fdivri(void);
+extern void fdiv_i(void);
+extern void faddp_(void);
+extern void fmulp_(void);
+extern void fsubrp(void);
+extern void fsubp_(void);
+extern void fdivrp(void);
+extern void fdivp_(void);
 /* fpu_aux.c */
-बाह्य व्योम finit(व्योम);
-बाह्य व्योम finit_(व्योम);
-बाह्य व्योम fstsw_(व्योम);
-बाह्य व्योम fp_nop(व्योम);
-बाह्य व्योम fld_i_(व्योम);
-बाह्य व्योम fxch_i(व्योम);
-बाह्य व्योम fcmovb(व्योम);
-बाह्य व्योम fcmove(व्योम);
-बाह्य व्योम fcmovbe(व्योम);
-बाह्य व्योम fcmovu(व्योम);
-बाह्य व्योम fcmovnb(व्योम);
-बाह्य व्योम fcmovne(व्योम);
-बाह्य व्योम fcmovnbe(व्योम);
-बाह्य व्योम fcmovnu(व्योम);
-बाह्य व्योम fमुक्त_(व्योम);
-बाह्य व्योम fमुक्तp(व्योम);
-बाह्य व्योम fst_i_(व्योम);
-बाह्य व्योम fstp_i(व्योम);
+extern void finit(void);
+extern void finit_(void);
+extern void fstsw_(void);
+extern void fp_nop(void);
+extern void fld_i_(void);
+extern void fxch_i(void);
+extern void fcmovb(void);
+extern void fcmove(void);
+extern void fcmovbe(void);
+extern void fcmovu(void);
+extern void fcmovnb(void);
+extern void fcmovne(void);
+extern void fcmovnbe(void);
+extern void fcmovnu(void);
+extern void ffree_(void);
+extern void ffreep(void);
+extern void fst_i_(void);
+extern void fstp_i(void);
 /* fpu_entry.c */
-बाह्य व्योम math_emulate(काष्ठा math_emu_info *info);
-बाह्य व्योम math_पात(काष्ठा math_emu_info *info, अचिन्हित पूर्णांक संकेत);
+extern void math_emulate(struct math_emu_info *info);
+extern void math_abort(struct math_emu_info *info, unsigned int signal);
 /* fpu_etc.c */
-बाह्य व्योम FPU_etc(व्योम);
+extern void FPU_etc(void);
 /* fpu_tags.c */
-बाह्य पूर्णांक FPU_gettag0(व्योम);
-बाह्य पूर्णांक FPU_gettagi(पूर्णांक stnr);
-बाह्य पूर्णांक FPU_gettag(पूर्णांक regnr);
-बाह्य व्योम FPU_settag0(पूर्णांक tag);
-बाह्य व्योम FPU_settagi(पूर्णांक stnr, पूर्णांक tag);
-बाह्य व्योम FPU_settag(पूर्णांक regnr, पूर्णांक tag);
-बाह्य पूर्णांक FPU_Special(FPU_REG स्थिर *ptr);
-बाह्य पूर्णांक isNaN(FPU_REG स्थिर *ptr);
-बाह्य व्योम FPU_pop(व्योम);
-बाह्य पूर्णांक FPU_empty_i(पूर्णांक stnr);
-बाह्य पूर्णांक FPU_stackoverflow(FPU_REG ** st_new_ptr);
-बाह्य व्योम FPU_copy_to_regi(FPU_REG स्थिर *r, u_अक्षर tag, पूर्णांक stnr);
-बाह्य व्योम FPU_copy_to_reg1(FPU_REG स्थिर *r, u_अक्षर tag);
-बाह्य व्योम FPU_copy_to_reg0(FPU_REG स्थिर *r, u_अक्षर tag);
+extern int FPU_gettag0(void);
+extern int FPU_gettagi(int stnr);
+extern int FPU_gettag(int regnr);
+extern void FPU_settag0(int tag);
+extern void FPU_settagi(int stnr, int tag);
+extern void FPU_settag(int regnr, int tag);
+extern int FPU_Special(FPU_REG const *ptr);
+extern int isNaN(FPU_REG const *ptr);
+extern void FPU_pop(void);
+extern int FPU_empty_i(int stnr);
+extern int FPU_stackoverflow(FPU_REG ** st_new_ptr);
+extern void FPU_copy_to_regi(FPU_REG const *r, u_char tag, int stnr);
+extern void FPU_copy_to_reg1(FPU_REG const *r, u_char tag);
+extern void FPU_copy_to_reg0(FPU_REG const *r, u_char tag);
 /* fpu_trig.c */
-बाह्य व्योम FPU_triga(व्योम);
-बाह्य व्योम FPU_trigb(व्योम);
+extern void FPU_triga(void);
+extern void FPU_trigb(void);
 /* get_address.c */
-बाह्य व्योम __user *FPU_get_address(u_अक्षर FPU_modrm, अचिन्हित दीर्घ *fpu_eip,
-				    काष्ठा address *addr,
+extern void __user *FPU_get_address(u_char FPU_modrm, unsigned long *fpu_eip,
+				    struct address *addr,
 				    fpu_addr_modes addr_modes);
-बाह्य व्योम __user *FPU_get_address_16(u_अक्षर FPU_modrm, अचिन्हित दीर्घ *fpu_eip,
-				       काष्ठा address *addr,
+extern void __user *FPU_get_address_16(u_char FPU_modrm, unsigned long *fpu_eip,
+				       struct address *addr,
 				       fpu_addr_modes addr_modes);
 /* load_store.c */
-बाह्य पूर्णांक FPU_load_store(u_अक्षर type, fpu_addr_modes addr_modes,
-			  व्योम __user * data_address);
+extern int FPU_load_store(u_char type, fpu_addr_modes addr_modes,
+			  void __user * data_address);
 /* poly_2xm1.c */
-बाह्य पूर्णांक poly_2xm1(u_अक्षर sign, FPU_REG * arg, FPU_REG *result);
+extern int poly_2xm1(u_char sign, FPU_REG * arg, FPU_REG *result);
 /* poly_atan.c */
-बाह्य व्योम poly_atan(FPU_REG * st0_ptr, u_अक्षर st0_tag, FPU_REG *st1_ptr,
-		      u_अक्षर st1_tag);
+extern void poly_atan(FPU_REG * st0_ptr, u_char st0_tag, FPU_REG *st1_ptr,
+		      u_char st1_tag);
 /* poly_l2.c */
-बाह्य व्योम poly_l2(FPU_REG *st0_ptr, FPU_REG *st1_ptr, u_अक्षर st1_sign);
-बाह्य पूर्णांक poly_l2p1(u_अक्षर s0, u_अक्षर s1, FPU_REG *r0, FPU_REG *r1,
+extern void poly_l2(FPU_REG *st0_ptr, FPU_REG *st1_ptr, u_char st1_sign);
+extern int poly_l2p1(u_char s0, u_char s1, FPU_REG *r0, FPU_REG *r1,
 		     FPU_REG * d);
 /* poly_sin.c */
-बाह्य व्योम poly_sine(FPU_REG *st0_ptr);
-बाह्य व्योम poly_cos(FPU_REG *st0_ptr);
+extern void poly_sine(FPU_REG *st0_ptr);
+extern void poly_cos(FPU_REG *st0_ptr);
 /* poly_tan.c */
-बाह्य व्योम poly_tan(FPU_REG *st0_ptr);
+extern void poly_tan(FPU_REG *st0_ptr);
 /* reg_add_sub.c */
-बाह्य पूर्णांक FPU_add(FPU_REG स्थिर *b, u_अक्षर tagb, पूर्णांक destrnr, पूर्णांक control_w);
-बाह्य पूर्णांक FPU_sub(पूर्णांक flags, पूर्णांक rm, पूर्णांक control_w);
+extern int FPU_add(FPU_REG const *b, u_char tagb, int destrnr, int control_w);
+extern int FPU_sub(int flags, int rm, int control_w);
 /* reg_compare.c */
-बाह्य पूर्णांक FPU_compare_st_data(FPU_REG स्थिर *loaded_data, u_अक्षर loaded_tag);
-बाह्य व्योम fcom_st(व्योम);
-बाह्य व्योम fcompst(व्योम);
-बाह्य व्योम fcompp(व्योम);
-बाह्य व्योम fucom_(व्योम);
-बाह्य व्योम fucomp(व्योम);
-बाह्य व्योम fucompp(व्योम);
-बाह्य व्योम fcomi_(व्योम);
-बाह्य व्योम fcomip(व्योम);
-बाह्य व्योम fucomi_(व्योम);
-बाह्य व्योम fucomip(व्योम);
-/* reg_स्थिरant.c */
-बाह्य व्योम fस्थिर(व्योम);
+extern int FPU_compare_st_data(FPU_REG const *loaded_data, u_char loaded_tag);
+extern void fcom_st(void);
+extern void fcompst(void);
+extern void fcompp(void);
+extern void fucom_(void);
+extern void fucomp(void);
+extern void fucompp(void);
+extern void fcomi_(void);
+extern void fcomip(void);
+extern void fucomi_(void);
+extern void fucomip(void);
+/* reg_constant.c */
+extern void fconst(void);
 /* reg_ld_str.c */
-बाह्य पूर्णांक FPU_load_extended(दीर्घ द्विगुन __user *s, पूर्णांक stnr);
-बाह्य पूर्णांक FPU_load_द्विगुन(द्विगुन __user *dभग्न, FPU_REG *loaded_data);
-बाह्य पूर्णांक FPU_load_single(भग्न __user *single, FPU_REG *loaded_data);
-बाह्य पूर्णांक FPU_load_पूर्णांक64(दीर्घ दीर्घ __user *_s);
-बाह्य पूर्णांक FPU_load_पूर्णांक32(दीर्घ __user *_s, FPU_REG *loaded_data);
-बाह्य पूर्णांक FPU_load_पूर्णांक16(लघु __user *_s, FPU_REG *loaded_data);
-बाह्य पूर्णांक FPU_load_bcd(u_अक्षर __user *s);
-बाह्य पूर्णांक FPU_store_extended(FPU_REG *st0_ptr, u_अक्षर st0_tag,
-			      दीर्घ द्विगुन __user * d);
-बाह्य पूर्णांक FPU_store_द्विगुन(FPU_REG *st0_ptr, u_अक्षर st0_tag,
-			    द्विगुन __user * dभग्न);
-बाह्य पूर्णांक FPU_store_single(FPU_REG *st0_ptr, u_अक्षर st0_tag,
-			    भग्न __user * single);
-बाह्य पूर्णांक FPU_store_पूर्णांक64(FPU_REG *st0_ptr, u_अक्षर st0_tag,
-			   दीर्घ दीर्घ __user * d);
-बाह्य पूर्णांक FPU_store_पूर्णांक32(FPU_REG *st0_ptr, u_अक्षर st0_tag, दीर्घ __user *d);
-बाह्य पूर्णांक FPU_store_पूर्णांक16(FPU_REG *st0_ptr, u_अक्षर st0_tag, लघु __user *d);
-बाह्य पूर्णांक FPU_store_bcd(FPU_REG *st0_ptr, u_अक्षर st0_tag, u_अक्षर __user *d);
-बाह्य पूर्णांक FPU_round_to_पूर्णांक(FPU_REG *r, u_अक्षर tag);
-बाह्य u_अक्षर __user *fldenv(fpu_addr_modes addr_modes, u_अक्षर __user *s);
-बाह्य व्योम frstor(fpu_addr_modes addr_modes, u_अक्षर __user *data_address);
-बाह्य u_अक्षर __user *fstenv(fpu_addr_modes addr_modes, u_अक्षर __user *d);
-बाह्य व्योम fsave(fpu_addr_modes addr_modes, u_अक्षर __user *data_address);
-बाह्य पूर्णांक FPU_tagof(FPU_REG *ptr);
+extern int FPU_load_extended(long double __user *s, int stnr);
+extern int FPU_load_double(double __user *dfloat, FPU_REG *loaded_data);
+extern int FPU_load_single(float __user *single, FPU_REG *loaded_data);
+extern int FPU_load_int64(long long __user *_s);
+extern int FPU_load_int32(long __user *_s, FPU_REG *loaded_data);
+extern int FPU_load_int16(short __user *_s, FPU_REG *loaded_data);
+extern int FPU_load_bcd(u_char __user *s);
+extern int FPU_store_extended(FPU_REG *st0_ptr, u_char st0_tag,
+			      long double __user * d);
+extern int FPU_store_double(FPU_REG *st0_ptr, u_char st0_tag,
+			    double __user * dfloat);
+extern int FPU_store_single(FPU_REG *st0_ptr, u_char st0_tag,
+			    float __user * single);
+extern int FPU_store_int64(FPU_REG *st0_ptr, u_char st0_tag,
+			   long long __user * d);
+extern int FPU_store_int32(FPU_REG *st0_ptr, u_char st0_tag, long __user *d);
+extern int FPU_store_int16(FPU_REG *st0_ptr, u_char st0_tag, short __user *d);
+extern int FPU_store_bcd(FPU_REG *st0_ptr, u_char st0_tag, u_char __user *d);
+extern int FPU_round_to_int(FPU_REG *r, u_char tag);
+extern u_char __user *fldenv(fpu_addr_modes addr_modes, u_char __user *s);
+extern void frstor(fpu_addr_modes addr_modes, u_char __user *data_address);
+extern u_char __user *fstenv(fpu_addr_modes addr_modes, u_char __user *d);
+extern void fsave(fpu_addr_modes addr_modes, u_char __user *data_address);
+extern int FPU_tagof(FPU_REG *ptr);
 /* reg_mul.c */
-बाह्य पूर्णांक FPU_mul(FPU_REG स्थिर *b, u_अक्षर tagb, पूर्णांक deststnr, पूर्णांक control_w);
+extern int FPU_mul(FPU_REG const *b, u_char tagb, int deststnr, int control_w);
 
-बाह्य पूर्णांक FPU_भाग(पूर्णांक flags, पूर्णांक regrm, पूर्णांक control_w);
+extern int FPU_div(int flags, int regrm, int control_w);
 /* reg_convert.c */
-बाह्य पूर्णांक FPU_to_exp16(FPU_REG स्थिर *a, FPU_REG *x);
-#पूर्ण_अगर /* _FPU_PROTO_H */
+extern int FPU_to_exp16(FPU_REG const *a, FPU_REG *x);
+#endif /* _FPU_PROTO_H */

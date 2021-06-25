@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
-  USB Driver layer क्रम GSM modems
+  USB Driver layer for GSM modems
 
   Copyright (C) 2005  Matthias Urlichs <smurf@smurf.noris.de>
 
@@ -11,72 +10,72 @@
 
   Work sponsored by: Sigos GmbH, Germany <info@sigos.de>
 
-  This driver exists because the "normal" serial driver करोesn't work too well
+  This driver exists because the "normal" serial driver doesn't work too well
   with GSM modems. Issues:
   - data loss -- one single Receive URB is not nearly enough
-  - controlling the baud rate करोesn't make sense
+  - controlling the baud rate doesn't make sense
 */
 
-#घोषणा DRIVER_AUTHOR "Matthias Urlichs <smurf@smurf.noris.de>"
-#घोषणा DRIVER_DESC "USB Driver for GSM modems"
+#define DRIVER_AUTHOR "Matthias Urlichs <smurf@smurf.noris.de>"
+#define DRIVER_DESC "USB Driver for GSM modems"
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/tty_flip.h>
-#समावेश <linux/module.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/usb/serial.h>
-#समावेश <linux/serial.h>
-#समावेश "usb-wwan.h"
+#include <linux/kernel.h>
+#include <linux/jiffies.h>
+#include <linux/errno.h>
+#include <linux/slab.h>
+#include <linux/tty.h>
+#include <linux/tty_flip.h>
+#include <linux/module.h>
+#include <linux/bitops.h>
+#include <linux/uaccess.h>
+#include <linux/usb.h>
+#include <linux/usb/serial.h>
+#include <linux/serial.h>
+#include "usb-wwan.h"
 
 /*
- * Generate DTR/RTS संकेतs on the port using the SET_CONTROL_LINE_STATE request
+ * Generate DTR/RTS signals on the port using the SET_CONTROL_LINE_STATE request
  * in CDC ACM.
  */
-अटल पूर्णांक usb_wwan_send_setup(काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा usb_serial *serial = port->serial;
-	काष्ठा usb_wwan_port_निजी *portdata;
-	पूर्णांक val = 0;
-	पूर्णांक अगरnum;
-	पूर्णांक res;
+static int usb_wwan_send_setup(struct usb_serial_port *port)
+{
+	struct usb_serial *serial = port->serial;
+	struct usb_wwan_port_private *portdata;
+	int val = 0;
+	int ifnum;
+	int res;
 
 	portdata = usb_get_serial_port_data(port);
 
-	अगर (portdata->dtr_state)
+	if (portdata->dtr_state)
 		val |= 0x01;
-	अगर (portdata->rts_state)
+	if (portdata->rts_state)
 		val |= 0x02;
 
-	अगरnum = serial->पूर्णांकerface->cur_altsetting->desc.bInterfaceNumber;
+	ifnum = serial->interface->cur_altsetting->desc.bInterfaceNumber;
 
-	res = usb_स्वतःpm_get_पूर्णांकerface(serial->पूर्णांकerface);
-	अगर (res)
-		वापस res;
+	res = usb_autopm_get_interface(serial->interface);
+	if (res)
+		return res;
 
 	res = usb_control_msg(serial->dev, usb_sndctrlpipe(serial->dev, 0),
-				0x22, 0x21, val, अगरnum, शून्य, 0,
+				0x22, 0x21, val, ifnum, NULL, 0,
 				USB_CTRL_SET_TIMEOUT);
 
-	usb_स्वतःpm_put_पूर्णांकerface(port->serial->पूर्णांकerface);
+	usb_autopm_put_interface(port->serial->interface);
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-व्योम usb_wwan_dtr_rts(काष्ठा usb_serial_port *port, पूर्णांक on)
-अणु
-	काष्ठा usb_wwan_port_निजी *portdata;
-	काष्ठा usb_wwan_पूर्णांकf_निजी *पूर्णांकfdata;
+void usb_wwan_dtr_rts(struct usb_serial_port *port, int on)
+{
+	struct usb_wwan_port_private *portdata;
+	struct usb_wwan_intf_private *intfdata;
 
-	पूर्णांकfdata = usb_get_serial_data(port->serial);
+	intfdata = usb_get_serial_data(port->serial);
 
-	अगर (!पूर्णांकfdata->use_send_setup)
-		वापस;
+	if (!intfdata->use_send_setup)
+		return;
 
 	portdata = usb_get_serial_port_data(port);
 	/* FIXME: locking */
@@ -84,14 +83,14 @@
 	portdata->dtr_state = on;
 
 	usb_wwan_send_setup(port);
-पूर्ण
+}
 EXPORT_SYMBOL(usb_wwan_dtr_rts);
 
-पूर्णांक usb_wwan_tiocmget(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा usb_serial_port *port = tty->driver_data;
-	अचिन्हित पूर्णांक value;
-	काष्ठा usb_wwan_port_निजी *portdata;
+int usb_wwan_tiocmget(struct tty_struct *tty)
+{
+	struct usb_serial_port *port = tty->driver_data;
+	unsigned int value;
+	struct usb_wwan_port_private *portdata;
 
 	portdata = usb_get_serial_port_data(port);
 
@@ -102,555 +101,555 @@ EXPORT_SYMBOL(usb_wwan_dtr_rts);
 	    ((portdata->dcd_state) ? TIOCM_CAR : 0) |
 	    ((portdata->ri_state) ? TIOCM_RNG : 0);
 
-	वापस value;
-पूर्ण
+	return value;
+}
 EXPORT_SYMBOL(usb_wwan_tiocmget);
 
-पूर्णांक usb_wwan_tiocmset(काष्ठा tty_काष्ठा *tty,
-		      अचिन्हित पूर्णांक set, अचिन्हित पूर्णांक clear)
-अणु
-	काष्ठा usb_serial_port *port = tty->driver_data;
-	काष्ठा usb_wwan_port_निजी *portdata;
-	काष्ठा usb_wwan_पूर्णांकf_निजी *पूर्णांकfdata;
+int usb_wwan_tiocmset(struct tty_struct *tty,
+		      unsigned int set, unsigned int clear)
+{
+	struct usb_serial_port *port = tty->driver_data;
+	struct usb_wwan_port_private *portdata;
+	struct usb_wwan_intf_private *intfdata;
 
 	portdata = usb_get_serial_port_data(port);
-	पूर्णांकfdata = usb_get_serial_data(port->serial);
+	intfdata = usb_get_serial_data(port->serial);
 
-	अगर (!पूर्णांकfdata->use_send_setup)
-		वापस -EINVAL;
+	if (!intfdata->use_send_setup)
+		return -EINVAL;
 
 	/* FIXME: what locks portdata fields ? */
-	अगर (set & TIOCM_RTS)
+	if (set & TIOCM_RTS)
 		portdata->rts_state = 1;
-	अगर (set & TIOCM_DTR)
+	if (set & TIOCM_DTR)
 		portdata->dtr_state = 1;
 
-	अगर (clear & TIOCM_RTS)
+	if (clear & TIOCM_RTS)
 		portdata->rts_state = 0;
-	अगर (clear & TIOCM_DTR)
+	if (clear & TIOCM_DTR)
 		portdata->dtr_state = 0;
-	वापस usb_wwan_send_setup(port);
-पूर्ण
+	return usb_wwan_send_setup(port);
+}
 EXPORT_SYMBOL(usb_wwan_tiocmset);
 
-पूर्णांक usb_wwan_ग_लिखो(काष्ठा tty_काष्ठा *tty, काष्ठा usb_serial_port *port,
-		   स्थिर अचिन्हित अक्षर *buf, पूर्णांक count)
-अणु
-	काष्ठा usb_wwan_port_निजी *portdata;
-	काष्ठा usb_wwan_पूर्णांकf_निजी *पूर्णांकfdata;
-	पूर्णांक i;
-	पूर्णांक left, toकरो;
-	काष्ठा urb *this_urb = शून्य;	/* spurious */
-	पूर्णांक err;
-	अचिन्हित दीर्घ flags;
+int usb_wwan_write(struct tty_struct *tty, struct usb_serial_port *port,
+		   const unsigned char *buf, int count)
+{
+	struct usb_wwan_port_private *portdata;
+	struct usb_wwan_intf_private *intfdata;
+	int i;
+	int left, todo;
+	struct urb *this_urb = NULL;	/* spurious */
+	int err;
+	unsigned long flags;
 
 	portdata = usb_get_serial_port_data(port);
-	पूर्णांकfdata = usb_get_serial_data(port->serial);
+	intfdata = usb_get_serial_data(port->serial);
 
 	dev_dbg(&port->dev, "%s: write (%d chars)\n", __func__, count);
 
 	i = 0;
 	left = count;
-	क्रम (i = 0; left > 0 && i < N_OUT_URB; i++) अणु
-		toकरो = left;
-		अगर (toकरो > OUT_BUFLEN)
-			toकरो = OUT_BUFLEN;
+	for (i = 0; left > 0 && i < N_OUT_URB; i++) {
+		todo = left;
+		if (todo > OUT_BUFLEN)
+			todo = OUT_BUFLEN;
 
 		this_urb = portdata->out_urbs[i];
-		अगर (test_and_set_bit(i, &portdata->out_busy)) अणु
-			अगर (समय_beक्रमe(jअगरfies,
-					portdata->tx_start_समय[i] + 10 * HZ))
-				जारी;
+		if (test_and_set_bit(i, &portdata->out_busy)) {
+			if (time_before(jiffies,
+					portdata->tx_start_time[i] + 10 * HZ))
+				continue;
 			usb_unlink_urb(this_urb);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		dev_dbg(&port->dev, "%s: endpoint %d buf %d\n", __func__,
-			usb_pipeendpoपूर्णांक(this_urb->pipe), i);
+			usb_pipeendpoint(this_urb->pipe), i);
 
-		err = usb_स्वतःpm_get_पूर्णांकerface_async(port->serial->पूर्णांकerface);
-		अगर (err < 0) अणु
+		err = usb_autopm_get_interface_async(port->serial->interface);
+		if (err < 0) {
 			clear_bit(i, &portdata->out_busy);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/* send the data */
-		स_नकल(this_urb->transfer_buffer, buf, toकरो);
-		this_urb->transfer_buffer_length = toकरो;
+		memcpy(this_urb->transfer_buffer, buf, todo);
+		this_urb->transfer_buffer_length = todo;
 
-		spin_lock_irqsave(&पूर्णांकfdata->susp_lock, flags);
-		अगर (पूर्णांकfdata->suspended) अणु
+		spin_lock_irqsave(&intfdata->susp_lock, flags);
+		if (intfdata->suspended) {
 			usb_anchor_urb(this_urb, &portdata->delayed);
-			spin_unlock_irqrestore(&पूर्णांकfdata->susp_lock, flags);
-		पूर्ण अन्यथा अणु
-			पूर्णांकfdata->in_flight++;
-			spin_unlock_irqrestore(&पूर्णांकfdata->susp_lock, flags);
+			spin_unlock_irqrestore(&intfdata->susp_lock, flags);
+		} else {
+			intfdata->in_flight++;
+			spin_unlock_irqrestore(&intfdata->susp_lock, flags);
 			err = usb_submit_urb(this_urb, GFP_ATOMIC);
-			अगर (err) अणु
+			if (err) {
 				dev_err(&port->dev,
 					"%s: submit urb %d failed: %d\n",
 					__func__, i, err);
 				clear_bit(i, &portdata->out_busy);
-				spin_lock_irqsave(&पूर्णांकfdata->susp_lock, flags);
-				पूर्णांकfdata->in_flight--;
-				spin_unlock_irqrestore(&पूर्णांकfdata->susp_lock,
+				spin_lock_irqsave(&intfdata->susp_lock, flags);
+				intfdata->in_flight--;
+				spin_unlock_irqrestore(&intfdata->susp_lock,
 						       flags);
-				usb_स्वतःpm_put_पूर्णांकerface_async(port->serial->पूर्णांकerface);
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				usb_autopm_put_interface_async(port->serial->interface);
+				break;
+			}
+		}
 
-		portdata->tx_start_समय[i] = jअगरfies;
-		buf += toकरो;
-		left -= toकरो;
-	पूर्ण
+		portdata->tx_start_time[i] = jiffies;
+		buf += todo;
+		left -= todo;
+	}
 
 	count -= left;
 	dev_dbg(&port->dev, "%s: wrote (did %d)\n", __func__, count);
-	वापस count;
-पूर्ण
-EXPORT_SYMBOL(usb_wwan_ग_लिखो);
+	return count;
+}
+EXPORT_SYMBOL(usb_wwan_write);
 
-अटल व्योम usb_wwan_indat_callback(काष्ठा urb *urb)
-अणु
-	पूर्णांक err;
-	पूर्णांक endpoपूर्णांक;
-	काष्ठा usb_serial_port *port;
-	काष्ठा device *dev;
-	अचिन्हित अक्षर *data = urb->transfer_buffer;
-	पूर्णांक status = urb->status;
+static void usb_wwan_indat_callback(struct urb *urb)
+{
+	int err;
+	int endpoint;
+	struct usb_serial_port *port;
+	struct device *dev;
+	unsigned char *data = urb->transfer_buffer;
+	int status = urb->status;
 
-	endpoपूर्णांक = usb_pipeendpoपूर्णांक(urb->pipe);
+	endpoint = usb_pipeendpoint(urb->pipe);
 	port = urb->context;
 	dev = &port->dev;
 
-	अगर (status) अणु
+	if (status) {
 		dev_dbg(dev, "%s: nonzero status: %d on endpoint %02x.\n",
-			__func__, status, endpoपूर्णांक);
+			__func__, status, endpoint);
 
-		/* करोn't resubmit on fatal errors */
-		अगर (status == -ESHUTDOWN || status == -ENOENT)
-			वापस;
-	पूर्ण अन्यथा अणु
-		अगर (urb->actual_length) अणु
+		/* don't resubmit on fatal errors */
+		if (status == -ESHUTDOWN || status == -ENOENT)
+			return;
+	} else {
+		if (urb->actual_length) {
 			tty_insert_flip_string(&port->port, data,
 					urb->actual_length);
 			tty_flip_buffer_push(&port->port);
-		पूर्ण अन्यथा
+		} else
 			dev_dbg(dev, "%s: empty read urb received\n", __func__);
-	पूर्ण
-	/* Resubmit urb so we जारी receiving */
+	}
+	/* Resubmit urb so we continue receiving */
 	err = usb_submit_urb(urb, GFP_ATOMIC);
-	अगर (err) अणु
-		अगर (err != -EPERM && err != -ENODEV) अणु
+	if (err) {
+		if (err != -EPERM && err != -ENODEV) {
 			dev_err(dev, "%s: resubmit read urb failed. (%d)\n",
 				__func__, err);
-			/* busy also in error unless we are समाप्तed */
+			/* busy also in error unless we are killed */
 			usb_mark_last_busy(port->serial->dev);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		usb_mark_last_busy(port->serial->dev);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम usb_wwan_outdat_callback(काष्ठा urb *urb)
-अणु
-	काष्ठा usb_serial_port *port;
-	काष्ठा usb_wwan_port_निजी *portdata;
-	काष्ठा usb_wwan_पूर्णांकf_निजी *पूर्णांकfdata;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक i;
+static void usb_wwan_outdat_callback(struct urb *urb)
+{
+	struct usb_serial_port *port;
+	struct usb_wwan_port_private *portdata;
+	struct usb_wwan_intf_private *intfdata;
+	unsigned long flags;
+	int i;
 
 	port = urb->context;
-	पूर्णांकfdata = usb_get_serial_data(port->serial);
+	intfdata = usb_get_serial_data(port->serial);
 
-	usb_serial_port_softपूर्णांक(port);
-	usb_स्वतःpm_put_पूर्णांकerface_async(port->serial->पूर्णांकerface);
+	usb_serial_port_softint(port);
+	usb_autopm_put_interface_async(port->serial->interface);
 	portdata = usb_get_serial_port_data(port);
-	spin_lock_irqsave(&पूर्णांकfdata->susp_lock, flags);
-	पूर्णांकfdata->in_flight--;
-	spin_unlock_irqrestore(&पूर्णांकfdata->susp_lock, flags);
+	spin_lock_irqsave(&intfdata->susp_lock, flags);
+	intfdata->in_flight--;
+	spin_unlock_irqrestore(&intfdata->susp_lock, flags);
 
-	क्रम (i = 0; i < N_OUT_URB; ++i) अणु
-		अगर (portdata->out_urbs[i] == urb) अणु
-			smp_mb__beक्रमe_atomic();
+	for (i = 0; i < N_OUT_URB; ++i) {
+		if (portdata->out_urbs[i] == urb) {
+			smp_mb__before_atomic();
 			clear_bit(i, &portdata->out_busy);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		}
+	}
+}
 
-पूर्णांक usb_wwan_ग_लिखो_room(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा usb_serial_port *port = tty->driver_data;
-	काष्ठा usb_wwan_port_निजी *portdata;
-	पूर्णांक i;
-	पूर्णांक data_len = 0;
-	काष्ठा urb *this_urb;
+int usb_wwan_write_room(struct tty_struct *tty)
+{
+	struct usb_serial_port *port = tty->driver_data;
+	struct usb_wwan_port_private *portdata;
+	int i;
+	int data_len = 0;
+	struct urb *this_urb;
 
 	portdata = usb_get_serial_port_data(port);
 
-	क्रम (i = 0; i < N_OUT_URB; i++) अणु
+	for (i = 0; i < N_OUT_URB; i++) {
 		this_urb = portdata->out_urbs[i];
-		अगर (this_urb && !test_bit(i, &portdata->out_busy))
+		if (this_urb && !test_bit(i, &portdata->out_busy))
 			data_len += OUT_BUFLEN;
-	पूर्ण
+	}
 
 	dev_dbg(&port->dev, "%s: %d\n", __func__, data_len);
-	वापस data_len;
-पूर्ण
-EXPORT_SYMBOL(usb_wwan_ग_लिखो_room);
+	return data_len;
+}
+EXPORT_SYMBOL(usb_wwan_write_room);
 
-पूर्णांक usb_wwan_अक्षरs_in_buffer(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा usb_serial_port *port = tty->driver_data;
-	काष्ठा usb_wwan_port_निजी *portdata;
-	पूर्णांक i;
-	पूर्णांक data_len = 0;
-	काष्ठा urb *this_urb;
+int usb_wwan_chars_in_buffer(struct tty_struct *tty)
+{
+	struct usb_serial_port *port = tty->driver_data;
+	struct usb_wwan_port_private *portdata;
+	int i;
+	int data_len = 0;
+	struct urb *this_urb;
 
 	portdata = usb_get_serial_port_data(port);
 
-	क्रम (i = 0; i < N_OUT_URB; i++) अणु
+	for (i = 0; i < N_OUT_URB; i++) {
 		this_urb = portdata->out_urbs[i];
 		/* FIXME: This locking is insufficient as this_urb may
 		   go unused during the test */
-		अगर (this_urb && test_bit(i, &portdata->out_busy))
+		if (this_urb && test_bit(i, &portdata->out_busy))
 			data_len += this_urb->transfer_buffer_length;
-	पूर्ण
+	}
 	dev_dbg(&port->dev, "%s: %d\n", __func__, data_len);
-	वापस data_len;
-पूर्ण
-EXPORT_SYMBOL(usb_wwan_अक्षरs_in_buffer);
+	return data_len;
+}
+EXPORT_SYMBOL(usb_wwan_chars_in_buffer);
 
-पूर्णांक usb_wwan_खोलो(काष्ठा tty_काष्ठा *tty, काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा usb_wwan_port_निजी *portdata;
-	काष्ठा usb_wwan_पूर्णांकf_निजी *पूर्णांकfdata;
-	काष्ठा usb_serial *serial = port->serial;
-	पूर्णांक i, err;
-	काष्ठा urb *urb;
+int usb_wwan_open(struct tty_struct *tty, struct usb_serial_port *port)
+{
+	struct usb_wwan_port_private *portdata;
+	struct usb_wwan_intf_private *intfdata;
+	struct usb_serial *serial = port->serial;
+	int i, err;
+	struct urb *urb;
 
 	portdata = usb_get_serial_port_data(port);
-	पूर्णांकfdata = usb_get_serial_data(serial);
+	intfdata = usb_get_serial_data(serial);
 
-	अगर (port->पूर्णांकerrupt_in_urb) अणु
-		err = usb_submit_urb(port->पूर्णांकerrupt_in_urb, GFP_KERNEL);
-		अगर (err) अणु
+	if (port->interrupt_in_urb) {
+		err = usb_submit_urb(port->interrupt_in_urb, GFP_KERNEL);
+		if (err) {
 			dev_err(&port->dev, "%s: submit int urb failed: %d\n",
 				__func__, err);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* Start पढ़ोing from the IN endpoपूर्णांक */
-	क्रम (i = 0; i < N_IN_URB; i++) अणु
+	/* Start reading from the IN endpoint */
+	for (i = 0; i < N_IN_URB; i++) {
 		urb = portdata->in_urbs[i];
-		अगर (!urb)
-			जारी;
+		if (!urb)
+			continue;
 		err = usb_submit_urb(urb, GFP_KERNEL);
-		अगर (err) अणु
+		if (err) {
 			dev_err(&port->dev,
 				"%s: submit read urb %d failed: %d\n",
 				__func__, i, err);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	spin_lock_irq(&पूर्णांकfdata->susp_lock);
-	अगर (++पूर्णांकfdata->खोलो_ports == 1)
-		serial->पूर्णांकerface->needs_remote_wakeup = 1;
-	spin_unlock_irq(&पूर्णांकfdata->susp_lock);
+	spin_lock_irq(&intfdata->susp_lock);
+	if (++intfdata->open_ports == 1)
+		serial->interface->needs_remote_wakeup = 1;
+	spin_unlock_irq(&intfdata->susp_lock);
 	/* this balances a get in the generic USB serial code */
-	usb_स्वतःpm_put_पूर्णांकerface(serial->पूर्णांकerface);
+	usb_autopm_put_interface(serial->interface);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(usb_wwan_खोलो);
+	return 0;
+}
+EXPORT_SYMBOL(usb_wwan_open);
 
-अटल व्योम unbusy_queued_urb(काष्ठा urb *urb,
-					काष्ठा usb_wwan_port_निजी *portdata)
-अणु
-	पूर्णांक i;
+static void unbusy_queued_urb(struct urb *urb,
+					struct usb_wwan_port_private *portdata)
+{
+	int i;
 
-	क्रम (i = 0; i < N_OUT_URB; i++) अणु
-		अगर (urb == portdata->out_urbs[i]) अणु
+	for (i = 0; i < N_OUT_URB; i++) {
+		if (urb == portdata->out_urbs[i]) {
 			clear_bit(i, &portdata->out_busy);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		}
+	}
+}
 
-व्योम usb_wwan_बंद(काष्ठा usb_serial_port *port)
-अणु
-	पूर्णांक i;
-	काष्ठा usb_serial *serial = port->serial;
-	काष्ठा usb_wwan_port_निजी *portdata;
-	काष्ठा usb_wwan_पूर्णांकf_निजी *पूर्णांकfdata = usb_get_serial_data(serial);
-	काष्ठा urb *urb;
+void usb_wwan_close(struct usb_serial_port *port)
+{
+	int i;
+	struct usb_serial *serial = port->serial;
+	struct usb_wwan_port_private *portdata;
+	struct usb_wwan_intf_private *intfdata = usb_get_serial_data(serial);
+	struct urb *urb;
 
 	portdata = usb_get_serial_port_data(port);
 
 	/*
-	 * Need to take susp_lock to make sure port is not alपढ़ोy being
+	 * Need to take susp_lock to make sure port is not already being
 	 * resumed, but no need to hold it due to initialized
 	 */
-	spin_lock_irq(&पूर्णांकfdata->susp_lock);
-	अगर (--पूर्णांकfdata->खोलो_ports == 0)
-		serial->पूर्णांकerface->needs_remote_wakeup = 0;
-	spin_unlock_irq(&पूर्णांकfdata->susp_lock);
+	spin_lock_irq(&intfdata->susp_lock);
+	if (--intfdata->open_ports == 0)
+		serial->interface->needs_remote_wakeup = 0;
+	spin_unlock_irq(&intfdata->susp_lock);
 
-	क्रम (;;) अणु
+	for (;;) {
 		urb = usb_get_from_anchor(&portdata->delayed);
-		अगर (!urb)
-			अवरोध;
+		if (!urb)
+			break;
 		unbusy_queued_urb(urb, portdata);
-		usb_स्वतःpm_put_पूर्णांकerface_async(serial->पूर्णांकerface);
-	पूर्ण
+		usb_autopm_put_interface_async(serial->interface);
+	}
 
-	क्रम (i = 0; i < N_IN_URB; i++)
-		usb_समाप्त_urb(portdata->in_urbs[i]);
-	क्रम (i = 0; i < N_OUT_URB; i++)
-		usb_समाप्त_urb(portdata->out_urbs[i]);
-	usb_समाप्त_urb(port->पूर्णांकerrupt_in_urb);
+	for (i = 0; i < N_IN_URB; i++)
+		usb_kill_urb(portdata->in_urbs[i]);
+	for (i = 0; i < N_OUT_URB; i++)
+		usb_kill_urb(portdata->out_urbs[i]);
+	usb_kill_urb(port->interrupt_in_urb);
 
-	usb_स्वतःpm_get_पूर्णांकerface_no_resume(serial->पूर्णांकerface);
-पूर्ण
-EXPORT_SYMBOL(usb_wwan_बंद);
+	usb_autopm_get_interface_no_resume(serial->interface);
+}
+EXPORT_SYMBOL(usb_wwan_close);
 
-अटल काष्ठा urb *usb_wwan_setup_urb(काष्ठा usb_serial_port *port,
-				      पूर्णांक endpoपूर्णांक,
-				      पूर्णांक dir, व्योम *ctx, अक्षर *buf, पूर्णांक len,
-				      व्योम (*callback) (काष्ठा urb *))
-अणु
-	काष्ठा usb_serial *serial = port->serial;
-	काष्ठा usb_wwan_पूर्णांकf_निजी *पूर्णांकfdata = usb_get_serial_data(serial);
-	काष्ठा urb *urb;
+static struct urb *usb_wwan_setup_urb(struct usb_serial_port *port,
+				      int endpoint,
+				      int dir, void *ctx, char *buf, int len,
+				      void (*callback) (struct urb *))
+{
+	struct usb_serial *serial = port->serial;
+	struct usb_wwan_intf_private *intfdata = usb_get_serial_data(serial);
+	struct urb *urb;
 
 	urb = usb_alloc_urb(0, GFP_KERNEL);	/* No ISO */
-	अगर (!urb)
-		वापस शून्य;
+	if (!urb)
+		return NULL;
 
 	usb_fill_bulk_urb(urb, serial->dev,
-			  usb_sndbulkpipe(serial->dev, endpoपूर्णांक) | dir,
+			  usb_sndbulkpipe(serial->dev, endpoint) | dir,
 			  buf, len, callback, ctx);
 
-	अगर (पूर्णांकfdata->use_zlp && dir == USB_सूची_OUT)
+	if (intfdata->use_zlp && dir == USB_DIR_OUT)
 		urb->transfer_flags |= URB_ZERO_PACKET;
 
-	वापस urb;
-पूर्ण
+	return urb;
+}
 
-पूर्णांक usb_wwan_port_probe(काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा usb_wwan_port_निजी *portdata;
-	काष्ठा urb *urb;
+int usb_wwan_port_probe(struct usb_serial_port *port)
+{
+	struct usb_wwan_port_private *portdata;
+	struct urb *urb;
 	u8 *buffer;
-	पूर्णांक i;
+	int i;
 
-	अगर (!port->bulk_in_size || !port->bulk_out_size)
-		वापस -ENODEV;
+	if (!port->bulk_in_size || !port->bulk_out_size)
+		return -ENODEV;
 
-	portdata = kzalloc(माप(*portdata), GFP_KERNEL);
-	अगर (!portdata)
-		वापस -ENOMEM;
+	portdata = kzalloc(sizeof(*portdata), GFP_KERNEL);
+	if (!portdata)
+		return -ENOMEM;
 
 	init_usb_anchor(&portdata->delayed);
 
-	क्रम (i = 0; i < N_IN_URB; i++) अणु
-		buffer = (u8 *)__get_मुक्त_page(GFP_KERNEL);
-		अगर (!buffer)
-			जाओ bail_out_error;
+	for (i = 0; i < N_IN_URB; i++) {
+		buffer = (u8 *)__get_free_page(GFP_KERNEL);
+		if (!buffer)
+			goto bail_out_error;
 		portdata->in_buffer[i] = buffer;
 
-		urb = usb_wwan_setup_urb(port, port->bulk_in_endpoपूर्णांकAddress,
-						USB_सूची_IN, port,
+		urb = usb_wwan_setup_urb(port, port->bulk_in_endpointAddress,
+						USB_DIR_IN, port,
 						buffer, IN_BUFLEN,
 						usb_wwan_indat_callback);
 		portdata->in_urbs[i] = urb;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < N_OUT_URB; i++) अणु
-		buffer = kदो_स्मृति(OUT_BUFLEN, GFP_KERNEL);
-		अगर (!buffer)
-			जाओ bail_out_error2;
+	for (i = 0; i < N_OUT_URB; i++) {
+		buffer = kmalloc(OUT_BUFLEN, GFP_KERNEL);
+		if (!buffer)
+			goto bail_out_error2;
 		portdata->out_buffer[i] = buffer;
 
-		urb = usb_wwan_setup_urb(port, port->bulk_out_endpoपूर्णांकAddress,
-						USB_सूची_OUT, port,
+		urb = usb_wwan_setup_urb(port, port->bulk_out_endpointAddress,
+						USB_DIR_OUT, port,
 						buffer, OUT_BUFLEN,
 						usb_wwan_outdat_callback);
 		portdata->out_urbs[i] = urb;
-	पूर्ण
+	}
 
 	usb_set_serial_port_data(port, portdata);
 
-	वापस 0;
+	return 0;
 
 bail_out_error2:
-	क्रम (i = 0; i < N_OUT_URB; i++) अणु
-		usb_मुक्त_urb(portdata->out_urbs[i]);
-		kमुक्त(portdata->out_buffer[i]);
-	पूर्ण
+	for (i = 0; i < N_OUT_URB; i++) {
+		usb_free_urb(portdata->out_urbs[i]);
+		kfree(portdata->out_buffer[i]);
+	}
 bail_out_error:
-	क्रम (i = 0; i < N_IN_URB; i++) अणु
-		usb_मुक्त_urb(portdata->in_urbs[i]);
-		मुक्त_page((अचिन्हित दीर्घ)portdata->in_buffer[i]);
-	पूर्ण
-	kमुक्त(portdata);
+	for (i = 0; i < N_IN_URB; i++) {
+		usb_free_urb(portdata->in_urbs[i]);
+		free_page((unsigned long)portdata->in_buffer[i]);
+	}
+	kfree(portdata);
 
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 EXPORT_SYMBOL_GPL(usb_wwan_port_probe);
 
-व्योम usb_wwan_port_हटाओ(काष्ठा usb_serial_port *port)
-अणु
-	पूर्णांक i;
-	काष्ठा usb_wwan_port_निजी *portdata;
+void usb_wwan_port_remove(struct usb_serial_port *port)
+{
+	int i;
+	struct usb_wwan_port_private *portdata;
 
 	portdata = usb_get_serial_port_data(port);
-	usb_set_serial_port_data(port, शून्य);
+	usb_set_serial_port_data(port, NULL);
 
-	क्रम (i = 0; i < N_IN_URB; i++) अणु
-		usb_मुक्त_urb(portdata->in_urbs[i]);
-		मुक्त_page((अचिन्हित दीर्घ)portdata->in_buffer[i]);
-	पूर्ण
-	क्रम (i = 0; i < N_OUT_URB; i++) अणु
-		usb_मुक्त_urb(portdata->out_urbs[i]);
-		kमुक्त(portdata->out_buffer[i]);
-	पूर्ण
+	for (i = 0; i < N_IN_URB; i++) {
+		usb_free_urb(portdata->in_urbs[i]);
+		free_page((unsigned long)portdata->in_buffer[i]);
+	}
+	for (i = 0; i < N_OUT_URB; i++) {
+		usb_free_urb(portdata->out_urbs[i]);
+		kfree(portdata->out_buffer[i]);
+	}
 
-	kमुक्त(portdata);
-पूर्ण
-EXPORT_SYMBOL(usb_wwan_port_हटाओ);
+	kfree(portdata);
+}
+EXPORT_SYMBOL(usb_wwan_port_remove);
 
-#अगर_घोषित CONFIG_PM
-अटल व्योम stop_urbs(काष्ठा usb_serial *serial)
-अणु
-	पूर्णांक i, j;
-	काष्ठा usb_serial_port *port;
-	काष्ठा usb_wwan_port_निजी *portdata;
+#ifdef CONFIG_PM
+static void stop_urbs(struct usb_serial *serial)
+{
+	int i, j;
+	struct usb_serial_port *port;
+	struct usb_wwan_port_private *portdata;
 
-	क्रम (i = 0; i < serial->num_ports; ++i) अणु
+	for (i = 0; i < serial->num_ports; ++i) {
 		port = serial->port[i];
 		portdata = usb_get_serial_port_data(port);
-		अगर (!portdata)
-			जारी;
-		क्रम (j = 0; j < N_IN_URB; j++)
-			usb_समाप्त_urb(portdata->in_urbs[j]);
-		क्रम (j = 0; j < N_OUT_URB; j++)
-			usb_समाप्त_urb(portdata->out_urbs[j]);
-		usb_समाप्त_urb(port->पूर्णांकerrupt_in_urb);
-	पूर्ण
-पूर्ण
+		if (!portdata)
+			continue;
+		for (j = 0; j < N_IN_URB; j++)
+			usb_kill_urb(portdata->in_urbs[j]);
+		for (j = 0; j < N_OUT_URB; j++)
+			usb_kill_urb(portdata->out_urbs[j]);
+		usb_kill_urb(port->interrupt_in_urb);
+	}
+}
 
-पूर्णांक usb_wwan_suspend(काष्ठा usb_serial *serial, pm_message_t message)
-अणु
-	काष्ठा usb_wwan_पूर्णांकf_निजी *पूर्णांकfdata = usb_get_serial_data(serial);
+int usb_wwan_suspend(struct usb_serial *serial, pm_message_t message)
+{
+	struct usb_wwan_intf_private *intfdata = usb_get_serial_data(serial);
 
-	spin_lock_irq(&पूर्णांकfdata->susp_lock);
-	अगर (PMSG_IS_AUTO(message)) अणु
-		अगर (पूर्णांकfdata->in_flight) अणु
-			spin_unlock_irq(&पूर्णांकfdata->susp_lock);
-			वापस -EBUSY;
-		पूर्ण
-	पूर्ण
-	पूर्णांकfdata->suspended = 1;
-	spin_unlock_irq(&पूर्णांकfdata->susp_lock);
+	spin_lock_irq(&intfdata->susp_lock);
+	if (PMSG_IS_AUTO(message)) {
+		if (intfdata->in_flight) {
+			spin_unlock_irq(&intfdata->susp_lock);
+			return -EBUSY;
+		}
+	}
+	intfdata->suspended = 1;
+	spin_unlock_irq(&intfdata->susp_lock);
 
 	stop_urbs(serial);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(usb_wwan_suspend);
 
 /* Caller must hold susp_lock. */
-अटल पूर्णांक usb_wwan_submit_delayed_urbs(काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा usb_serial *serial = port->serial;
-	काष्ठा usb_wwan_पूर्णांकf_निजी *data = usb_get_serial_data(serial);
-	काष्ठा usb_wwan_port_निजी *portdata;
-	काष्ठा urb *urb;
-	पूर्णांक err_count = 0;
-	पूर्णांक err;
+static int usb_wwan_submit_delayed_urbs(struct usb_serial_port *port)
+{
+	struct usb_serial *serial = port->serial;
+	struct usb_wwan_intf_private *data = usb_get_serial_data(serial);
+	struct usb_wwan_port_private *portdata;
+	struct urb *urb;
+	int err_count = 0;
+	int err;
 
 	portdata = usb_get_serial_port_data(port);
 
-	क्रम (;;) अणु
+	for (;;) {
 		urb = usb_get_from_anchor(&portdata->delayed);
-		अगर (!urb)
-			अवरोध;
+		if (!urb)
+			break;
 
 		err = usb_submit_urb(urb, GFP_ATOMIC);
-		अगर (err) अणु
+		if (err) {
 			dev_err(&port->dev, "%s: submit urb failed: %d\n",
 					__func__, err);
 			err_count++;
 			unbusy_queued_urb(urb, portdata);
-			usb_स्वतःpm_put_पूर्णांकerface_async(serial->पूर्णांकerface);
-			जारी;
-		पूर्ण
+			usb_autopm_put_interface_async(serial->interface);
+			continue;
+		}
 		data->in_flight++;
-	पूर्ण
+	}
 
-	अगर (err_count)
-		वापस -EIO;
+	if (err_count)
+		return -EIO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक usb_wwan_resume(काष्ठा usb_serial *serial)
-अणु
-	पूर्णांक i, j;
-	काष्ठा usb_serial_port *port;
-	काष्ठा usb_wwan_पूर्णांकf_निजी *पूर्णांकfdata = usb_get_serial_data(serial);
-	काष्ठा usb_wwan_port_निजी *portdata;
-	काष्ठा urb *urb;
-	पूर्णांक err;
-	पूर्णांक err_count = 0;
+int usb_wwan_resume(struct usb_serial *serial)
+{
+	int i, j;
+	struct usb_serial_port *port;
+	struct usb_wwan_intf_private *intfdata = usb_get_serial_data(serial);
+	struct usb_wwan_port_private *portdata;
+	struct urb *urb;
+	int err;
+	int err_count = 0;
 
-	spin_lock_irq(&पूर्णांकfdata->susp_lock);
-	क्रम (i = 0; i < serial->num_ports; i++) अणु
+	spin_lock_irq(&intfdata->susp_lock);
+	for (i = 0; i < serial->num_ports; i++) {
 		port = serial->port[i];
 
-		अगर (!tty_port_initialized(&port->port))
-			जारी;
+		if (!tty_port_initialized(&port->port))
+			continue;
 
 		portdata = usb_get_serial_port_data(port);
 
-		अगर (port->पूर्णांकerrupt_in_urb) अणु
-			err = usb_submit_urb(port->पूर्णांकerrupt_in_urb,
+		if (port->interrupt_in_urb) {
+			err = usb_submit_urb(port->interrupt_in_urb,
 					GFP_ATOMIC);
-			अगर (err) अणु
+			if (err) {
 				dev_err(&port->dev,
 					"%s: submit int urb failed: %d\n",
 					__func__, err);
 				err_count++;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		err = usb_wwan_submit_delayed_urbs(port);
-		अगर (err)
+		if (err)
 			err_count++;
 
-		क्रम (j = 0; j < N_IN_URB; j++) अणु
+		for (j = 0; j < N_IN_URB; j++) {
 			urb = portdata->in_urbs[j];
 			err = usb_submit_urb(urb, GFP_ATOMIC);
-			अगर (err < 0) अणु
+			if (err < 0) {
 				dev_err(&port->dev,
 					"%s: submit read urb %d failed: %d\n",
 					__func__, i, err);
 				err_count++;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	पूर्णांकfdata->suspended = 0;
-	spin_unlock_irq(&पूर्णांकfdata->susp_lock);
+			}
+		}
+	}
+	intfdata->suspended = 0;
+	spin_unlock_irq(&intfdata->susp_lock);
 
-	अगर (err_count)
-		वापस -EIO;
+	if (err_count)
+		return -EIO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(usb_wwan_resume);
-#पूर्ण_अगर
+#endif
 
 MODULE_AUTHOR(DRIVER_AUTHOR);
 MODULE_DESCRIPTION(DRIVER_DESC);

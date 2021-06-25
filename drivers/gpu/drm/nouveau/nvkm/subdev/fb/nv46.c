@@ -1,14 +1,13 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2010 Francisco Jerez.
  * All Rights Reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining
- * a copy of this software and associated करोcumentation files (the
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modअगरy, merge, publish,
+ * without limitation the rights to use, copy, modify, merge, publish,
  * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to करो so, subject to
+ * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -24,35 +23,35 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#समावेश "priv.h"
-#समावेश "ram.h"
+#include "priv.h"
+#include "ram.h"
 
-व्योम
-nv46_fb_tile_init(काष्ठा nvkm_fb *fb, पूर्णांक i, u32 addr, u32 size, u32 pitch,
-		  u32 flags, काष्ठा nvkm_fb_tile *tile)
-अणु
-	/* क्रम perक्रमmance, select alternate bank offset क्रम zeta */
-	अगर (!(flags & 4)) tile->addr = (0 << 3);
-	अन्यथा              tile->addr = (1 << 3);
+void
+nv46_fb_tile_init(struct nvkm_fb *fb, int i, u32 addr, u32 size, u32 pitch,
+		  u32 flags, struct nvkm_fb_tile *tile)
+{
+	/* for performance, select alternate bank offset for zeta */
+	if (!(flags & 4)) tile->addr = (0 << 3);
+	else              tile->addr = (1 << 3);
 
 	tile->addr |= 0x00000001; /* mode = vram */
 	tile->addr |= addr;
 	tile->limit = max(1u, addr + size) - 1;
 	tile->pitch = pitch;
-पूर्ण
+}
 
-अटल स्थिर काष्ठा nvkm_fb_func
-nv46_fb = अणु
+static const struct nvkm_fb_func
+nv46_fb = {
 	.init = nv44_fb_init,
 	.tile.regions = 15,
 	.tile.init = nv46_fb_tile_init,
 	.tile.fini = nv20_fb_tile_fini,
 	.tile.prog = nv44_fb_tile_prog,
 	.ram_new = nv44_ram_new,
-पूर्ण;
+};
 
-पूर्णांक
-nv46_fb_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst, काष्ठा nvkm_fb **pfb)
-अणु
-	वापस nvkm_fb_new_(&nv46_fb, device, type, inst, pfb);
-पूर्ण
+int
+nv46_fb_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst, struct nvkm_fb **pfb)
+{
+	return nvkm_fb_new_(&nv46_fb, device, type, inst, pfb);
+}

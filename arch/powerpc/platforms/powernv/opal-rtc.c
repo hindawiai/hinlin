@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * PowerNV Real Time Clock.
  *
@@ -7,78 +6,78 @@
  */
 
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/bcd.h>
-#समावेश <linux/rtc.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/of_platक्रमm.h>
+#include <linux/kernel.h>
+#include <linux/time.h>
+#include <linux/bcd.h>
+#include <linux/rtc.h>
+#include <linux/delay.h>
+#include <linux/platform_device.h>
+#include <linux/of_platform.h>
 
-#समावेश <यंत्र/opal.h>
-#समावेश <यंत्र/firmware.h>
-#समावेश <यंत्र/machdep.h>
+#include <asm/opal.h>
+#include <asm/firmware.h>
+#include <asm/machdep.h>
 
-अटल व्योम opal_to_पंचांग(u32 y_m_d, u64 h_m_s_ms, काष्ठा rtc_समय *पंचांग)
-अणु
-	पंचांग->पंचांग_year	= ((bcd2bin(y_m_d >> 24) * 100) +
+static void opal_to_tm(u32 y_m_d, u64 h_m_s_ms, struct rtc_time *tm)
+{
+	tm->tm_year	= ((bcd2bin(y_m_d >> 24) * 100) +
 			   bcd2bin((y_m_d >> 16) & 0xff)) - 1900;
-	पंचांग->पंचांग_mon	= bcd2bin((y_m_d >> 8) & 0xff) - 1;
-	पंचांग->पंचांग_mday	= bcd2bin(y_m_d & 0xff);
-	पंचांग->पंचांग_hour	= bcd2bin((h_m_s_ms >> 56) & 0xff);
-	पंचांग->पंचांग_min	= bcd2bin((h_m_s_ms >> 48) & 0xff);
-	पंचांग->पंचांग_sec	= bcd2bin((h_m_s_ms >> 40) & 0xff);
-	पंचांग->पंचांग_wday     = -1;
-पूर्ण
+	tm->tm_mon	= bcd2bin((y_m_d >> 8) & 0xff) - 1;
+	tm->tm_mday	= bcd2bin(y_m_d & 0xff);
+	tm->tm_hour	= bcd2bin((h_m_s_ms >> 56) & 0xff);
+	tm->tm_min	= bcd2bin((h_m_s_ms >> 48) & 0xff);
+	tm->tm_sec	= bcd2bin((h_m_s_ms >> 40) & 0xff);
+	tm->tm_wday     = -1;
+}
 
-समय64_t __init opal_get_boot_समय(व्योम)
-अणु
-	काष्ठा rtc_समय पंचांग;
+time64_t __init opal_get_boot_time(void)
+{
+	struct rtc_time tm;
 	u32 y_m_d;
 	u64 h_m_s_ms;
 	__be32 __y_m_d;
 	__be64 __h_m_s_ms;
-	दीर्घ rc = OPAL_BUSY;
+	long rc = OPAL_BUSY;
 
-	अगर (!opal_check_token(OPAL_RTC_READ))
-		वापस 0;
+	if (!opal_check_token(OPAL_RTC_READ))
+		return 0;
 
-	जबतक (rc == OPAL_BUSY || rc == OPAL_BUSY_EVENT) अणु
-		rc = opal_rtc_पढ़ो(&__y_m_d, &__h_m_s_ms);
-		अगर (rc == OPAL_BUSY_EVENT) अणु
+	while (rc == OPAL_BUSY || rc == OPAL_BUSY_EVENT) {
+		rc = opal_rtc_read(&__y_m_d, &__h_m_s_ms);
+		if (rc == OPAL_BUSY_EVENT) {
 			mdelay(OPAL_BUSY_DELAY_MS);
-			opal_poll_events(शून्य);
-		पूर्ण अन्यथा अगर (rc == OPAL_BUSY) अणु
+			opal_poll_events(NULL);
+		} else if (rc == OPAL_BUSY) {
 			mdelay(OPAL_BUSY_DELAY_MS);
-		पूर्ण
-	पूर्ण
-	अगर (rc != OPAL_SUCCESS)
-		वापस 0;
+		}
+	}
+	if (rc != OPAL_SUCCESS)
+		return 0;
 
 	y_m_d = be32_to_cpu(__y_m_d);
 	h_m_s_ms = be64_to_cpu(__h_m_s_ms);
-	opal_to_पंचांग(y_m_d, h_m_s_ms, &पंचांग);
-	वापस rtc_पंचांग_to_समय64(&पंचांग);
-पूर्ण
+	opal_to_tm(y_m_d, h_m_s_ms, &tm);
+	return rtc_tm_to_time64(&tm);
+}
 
-अटल __init पूर्णांक opal_समय_init(व्योम)
-अणु
-	काष्ठा platक्रमm_device *pdev;
-	काष्ठा device_node *rtc;
+static __init int opal_time_init(void)
+{
+	struct platform_device *pdev;
+	struct device_node *rtc;
 
 	rtc = of_find_node_by_path("/ibm,opal/rtc");
-	अगर (rtc) अणु
-		pdev = of_platक्रमm_device_create(rtc, "opal-rtc", शून्य);
+	if (rtc) {
+		pdev = of_platform_device_create(rtc, "opal-rtc", NULL);
 		of_node_put(rtc);
-	पूर्ण अन्यथा अणु
-		अगर (opal_check_token(OPAL_RTC_READ) ||
+	} else {
+		if (opal_check_token(OPAL_RTC_READ) ||
 		    opal_check_token(OPAL_READ_TPO))
-			pdev = platक्रमm_device_रेजिस्टर_simple("opal-rtc", -1,
-							       शून्य, 0);
-		अन्यथा
-			वापस -ENODEV;
-	पूर्ण
+			pdev = platform_device_register_simple("opal-rtc", -1,
+							       NULL, 0);
+		else
+			return -ENODEV;
+	}
 
-	वापस PTR_ERR_OR_ZERO(pdev);
-पूर्ण
-machine_subsys_initcall(घातernv, opal_समय_init);
+	return PTR_ERR_OR_ZERO(pdev);
+}
+machine_subsys_initcall(powernv, opal_time_init);

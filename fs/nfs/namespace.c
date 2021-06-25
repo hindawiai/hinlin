@@ -1,182 +1,181 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * linux/fs/nfs/namespace.c
  *
  * Copyright (C) 2005 Trond Myklebust <Trond.Myklebust@netapp.com>
- * - Modअगरied by David Howells <dhowells@redhat.com>
+ * - Modified by David Howells <dhowells@redhat.com>
  *
  * NFS namespace
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/dcache.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/mount.h>
-#समावेश <linux/namei.h>
-#समावेश <linux/nfs_fs.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/sunrpc/clnt.h>
-#समावेश <linux/vfs.h>
-#समावेश <linux/sunrpc/gss_api.h>
-#समावेश "internal.h"
-#समावेश "nfs.h"
+#include <linux/module.h>
+#include <linux/dcache.h>
+#include <linux/gfp.h>
+#include <linux/mount.h>
+#include <linux/namei.h>
+#include <linux/nfs_fs.h>
+#include <linux/string.h>
+#include <linux/sunrpc/clnt.h>
+#include <linux/vfs.h>
+#include <linux/sunrpc/gss_api.h>
+#include "internal.h"
+#include "nfs.h"
 
-#घोषणा NFSDBG_FACILITY		NFSDBG_VFS
+#define NFSDBG_FACILITY		NFSDBG_VFS
 
-अटल व्योम nfs_expire_स्वतःmounts(काष्ठा work_काष्ठा *work);
+static void nfs_expire_automounts(struct work_struct *work);
 
-अटल LIST_HEAD(nfs_स्वतःmount_list);
-अटल DECLARE_DELAYED_WORK(nfs_स्वतःmount_task, nfs_expire_स्वतःmounts);
-पूर्णांक nfs_mountpoपूर्णांक_expiry_समयout = 500 * HZ;
+static LIST_HEAD(nfs_automount_list);
+static DECLARE_DELAYED_WORK(nfs_automount_task, nfs_expire_automounts);
+int nfs_mountpoint_expiry_timeout = 500 * HZ;
 
 /*
- * nfs_path - reस्थिरruct the path given an arbitrary dentry
- * @base - used to वापस poपूर्णांकer to the end of devname part of path
- * @dentry_in - poपूर्णांकer to dentry
+ * nfs_path - reconstruct the path given an arbitrary dentry
+ * @base - used to return pointer to the end of devname part of path
+ * @dentry_in - pointer to dentry
  * @buffer - result buffer
  * @buflen_in - length of buffer
  * @flags - options (see below)
  *
- * Helper function क्रम स्थिरructing the server pathname
+ * Helper function for constructing the server pathname
  * by arbitrary hashed dentry.
  *
- * This is मुख्यly क्रम use in figuring out the path on the
- * server side when स्वतःmounting on top of an existing partition
- * and in generating /proc/mounts and मित्रs.
+ * This is mainly for use in figuring out the path on the
+ * server side when automounting on top of an existing partition
+ * and in generating /proc/mounts and friends.
  *
  * Supported flags:
  * NFS_PATH_CANONICAL: ensure there is exactly one slash after
  *		       the original device (export) name
- *		       (अगर unset, the original name is वापसed verbatim)
+ *		       (if unset, the original name is returned verbatim)
  */
-अक्षर *nfs_path(अक्षर **p, काष्ठा dentry *dentry_in, अक्षर *buffer,
-	       sमाप_प्रकार buflen_in, अचिन्हित flags)
-अणु
-	अक्षर *end;
-	पूर्णांक namelen;
-	अचिन्हित seq;
-	स्थिर अक्षर *base;
-	काष्ठा dentry *dentry;
-	sमाप_प्रकार buflen;
+char *nfs_path(char **p, struct dentry *dentry_in, char *buffer,
+	       ssize_t buflen_in, unsigned flags)
+{
+	char *end;
+	int namelen;
+	unsigned seq;
+	const char *base;
+	struct dentry *dentry;
+	ssize_t buflen;
 
-नाम_retry:
+rename_retry:
 	buflen = buflen_in;
 	dentry = dentry_in;
 	end = buffer+buflen;
 	*--end = '\0';
 	buflen--;
 
-	seq = पढ़ो_seqbegin(&नाम_lock);
-	rcu_पढ़ो_lock();
-	जबतक (1) अणु
+	seq = read_seqbegin(&rename_lock);
+	rcu_read_lock();
+	while (1) {
 		spin_lock(&dentry->d_lock);
-		अगर (IS_ROOT(dentry))
-			अवरोध;
+		if (IS_ROOT(dentry))
+			break;
 		namelen = dentry->d_name.len;
 		buflen -= namelen + 1;
-		अगर (buflen < 0)
-			जाओ Eदीर्घ_unlock;
+		if (buflen < 0)
+			goto Elong_unlock;
 		end -= namelen;
-		स_नकल(end, dentry->d_name.name, namelen);
+		memcpy(end, dentry->d_name.name, namelen);
 		*--end = '/';
 		spin_unlock(&dentry->d_lock);
 		dentry = dentry->d_parent;
-	पूर्ण
-	अगर (पढ़ो_seqretry(&नाम_lock, seq)) अणु
+	}
+	if (read_seqretry(&rename_lock, seq)) {
 		spin_unlock(&dentry->d_lock);
-		rcu_पढ़ो_unlock();
-		जाओ नाम_retry;
-	पूर्ण
-	अगर ((flags & NFS_PATH_CANONICAL) && *end != '/') अणु
-		अगर (--buflen < 0) अणु
+		rcu_read_unlock();
+		goto rename_retry;
+	}
+	if ((flags & NFS_PATH_CANONICAL) && *end != '/') {
+		if (--buflen < 0) {
 			spin_unlock(&dentry->d_lock);
-			rcu_पढ़ो_unlock();
-			जाओ Eदीर्घ;
-		पूर्ण
+			rcu_read_unlock();
+			goto Elong;
+		}
 		*--end = '/';
-	पूर्ण
+	}
 	*p = end;
 	base = dentry->d_fsdata;
-	अगर (!base) अणु
+	if (!base) {
 		spin_unlock(&dentry->d_lock);
-		rcu_पढ़ो_unlock();
+		rcu_read_unlock();
 		WARN_ON(1);
-		वापस end;
-	पूर्ण
-	namelen = म_माप(base);
-	अगर (*end == '/') अणु
+		return end;
+	}
+	namelen = strlen(base);
+	if (*end == '/') {
 		/* Strip off excess slashes in base string */
-		जबतक (namelen > 0 && base[namelen - 1] == '/')
+		while (namelen > 0 && base[namelen - 1] == '/')
 			namelen--;
-	पूर्ण
+	}
 	buflen -= namelen;
-	अगर (buflen < 0) अणु
+	if (buflen < 0) {
 		spin_unlock(&dentry->d_lock);
-		rcu_पढ़ो_unlock();
-		जाओ Eदीर्घ;
-	पूर्ण
+		rcu_read_unlock();
+		goto Elong;
+	}
 	end -= namelen;
-	स_नकल(end, base, namelen);
+	memcpy(end, base, namelen);
 	spin_unlock(&dentry->d_lock);
-	rcu_पढ़ो_unlock();
-	वापस end;
-Eदीर्घ_unlock:
+	rcu_read_unlock();
+	return end;
+Elong_unlock:
 	spin_unlock(&dentry->d_lock);
-	rcu_पढ़ो_unlock();
-	अगर (पढ़ो_seqretry(&नाम_lock, seq))
-		जाओ नाम_retry;
-Eदीर्घ:
-	वापस ERR_PTR(-ENAMETOOLONG);
-पूर्ण
+	rcu_read_unlock();
+	if (read_seqretry(&rename_lock, seq))
+		goto rename_retry;
+Elong:
+	return ERR_PTR(-ENAMETOOLONG);
+}
 EXPORT_SYMBOL_GPL(nfs_path);
 
 /*
- * nfs_d_स्वतःmount - Handle crossing a mountpoपूर्णांक on the server
- * @path - The mountpoपूर्णांक
+ * nfs_d_automount - Handle crossing a mountpoint on the server
+ * @path - The mountpoint
  *
- * When we encounter a mountpoपूर्णांक on the server, we want to set up
- * a mountpoपूर्णांक on the client too, to prevent inode numbers from
+ * When we encounter a mountpoint on the server, we want to set up
+ * a mountpoint on the client too, to prevent inode numbers from
  * colliding, and to allow "df" to work properly.
- * On NFSv4, we also want to allow क्रम the fact that dअगरferent
- * fileप्रणालीs may be migrated to dअगरferent servers in a failover
- * situation, and that dअगरferent fileप्रणालीs may want to use
- * dअगरferent security flavours.
+ * On NFSv4, we also want to allow for the fact that different
+ * filesystems may be migrated to different servers in a failover
+ * situation, and that different filesystems may want to use
+ * different security flavours.
  */
-काष्ठा vfsmount *nfs_d_स्वतःmount(काष्ठा path *path)
-अणु
-	काष्ठा nfs_fs_context *ctx;
-	काष्ठा fs_context *fc;
-	काष्ठा vfsmount *mnt = ERR_PTR(-ENOMEM);
-	काष्ठा nfs_server *server = NFS_SERVER(d_inode(path->dentry));
-	काष्ठा nfs_client *client = server->nfs_client;
-	पूर्णांक समयout = READ_ONCE(nfs_mountpoपूर्णांक_expiry_समयout);
-	पूर्णांक ret;
+struct vfsmount *nfs_d_automount(struct path *path)
+{
+	struct nfs_fs_context *ctx;
+	struct fs_context *fc;
+	struct vfsmount *mnt = ERR_PTR(-ENOMEM);
+	struct nfs_server *server = NFS_SERVER(d_inode(path->dentry));
+	struct nfs_client *client = server->nfs_client;
+	int timeout = READ_ONCE(nfs_mountpoint_expiry_timeout);
+	int ret;
 
-	अगर (IS_ROOT(path->dentry))
-		वापस ERR_PTR(-ESTALE);
+	if (IS_ROOT(path->dentry))
+		return ERR_PTR(-ESTALE);
 
-	/* Open a new fileप्रणाली context, transferring parameters from the
+	/* Open a new filesystem context, transferring parameters from the
 	 * parent superblock, including the network namespace.
 	 */
-	fc = fs_context_क्रम_submount(path->mnt->mnt_sb->s_type, path->dentry);
-	अगर (IS_ERR(fc))
-		वापस ERR_CAST(fc);
+	fc = fs_context_for_submount(path->mnt->mnt_sb->s_type, path->dentry);
+	if (IS_ERR(fc))
+		return ERR_CAST(fc);
 
 	ctx = nfs_fc2context(fc);
 	ctx->clone_data.dentry	= path->dentry;
 	ctx->clone_data.sb	= path->dentry->d_sb;
 	ctx->clone_data.fattr	= nfs_alloc_fattr();
-	अगर (!ctx->clone_data.fattr)
-		जाओ out_fc;
+	if (!ctx->clone_data.fattr)
+		goto out_fc;
 
-	अगर (fc->net_ns != client->cl_net) अणु
+	if (fc->net_ns != client->cl_net) {
 		put_net(fc->net_ns);
 		fc->net_ns = get_net(client->cl_net);
-	पूर्ण
+	}
 
-	/* क्रम submounts we want the same server; referrals will reassign */
-	स_नकल(&ctx->nfs_server.address, &client->cl_addr, client->cl_addrlen);
+	/* for submounts we want the same server; referrals will reassign */
+	memcpy(&ctx->nfs_server.address, &client->cl_addr, client->cl_addrlen);
 	ctx->nfs_server.addrlen	= client->cl_addrlen;
 	ctx->nfs_server.port	= server->port;
 
@@ -186,87 +185,87 @@ EXPORT_SYMBOL_GPL(nfs_path);
 	__module_get(ctx->nfs_mod->owner);
 
 	ret = client->rpc_ops->submount(fc, server);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		mnt = ERR_PTR(ret);
-		जाओ out_fc;
-	पूर्ण
+		goto out_fc;
+	}
 
-	up_ग_लिखो(&fc->root->d_sb->s_umount);
+	up_write(&fc->root->d_sb->s_umount);
 	mnt = vfs_create_mount(fc);
-	अगर (IS_ERR(mnt))
-		जाओ out_fc;
+	if (IS_ERR(mnt))
+		goto out_fc;
 
 	mntget(mnt); /* prevent immediate expiration */
-	अगर (समयout <= 0)
-		जाओ out_fc;
+	if (timeout <= 0)
+		goto out_fc;
 
-	mnt_set_expiry(mnt, &nfs_स्वतःmount_list);
-	schedule_delayed_work(&nfs_स्वतःmount_task, समयout);
+	mnt_set_expiry(mnt, &nfs_automount_list);
+	schedule_delayed_work(&nfs_automount_task, timeout);
 
 out_fc:
 	put_fs_context(fc);
-	वापस mnt;
-पूर्ण
+	return mnt;
+}
 
-अटल पूर्णांक
-nfs_namespace_getattr(काष्ठा user_namespace *mnt_userns,
-		      स्थिर काष्ठा path *path, काष्ठा kstat *stat,
-		      u32 request_mask, अचिन्हित पूर्णांक query_flags)
-अणु
-	अगर (NFS_FH(d_inode(path->dentry))->size != 0)
-		वापस nfs_getattr(mnt_userns, path, stat, request_mask,
+static int
+nfs_namespace_getattr(struct user_namespace *mnt_userns,
+		      const struct path *path, struct kstat *stat,
+		      u32 request_mask, unsigned int query_flags)
+{
+	if (NFS_FH(d_inode(path->dentry))->size != 0)
+		return nfs_getattr(mnt_userns, path, stat, request_mask,
 				   query_flags);
 	generic_fillattr(&init_user_ns, d_inode(path->dentry), stat);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-nfs_namespace_setattr(काष्ठा user_namespace *mnt_userns, काष्ठा dentry *dentry,
-		      काष्ठा iattr *attr)
-अणु
-	अगर (NFS_FH(d_inode(dentry))->size != 0)
-		वापस nfs_setattr(mnt_userns, dentry, attr);
-	वापस -EACCES;
-पूर्ण
+static int
+nfs_namespace_setattr(struct user_namespace *mnt_userns, struct dentry *dentry,
+		      struct iattr *attr)
+{
+	if (NFS_FH(d_inode(dentry))->size != 0)
+		return nfs_setattr(mnt_userns, dentry, attr);
+	return -EACCES;
+}
 
-स्थिर काष्ठा inode_operations nfs_mountpoपूर्णांक_inode_operations = अणु
+const struct inode_operations nfs_mountpoint_inode_operations = {
 	.getattr	= nfs_getattr,
 	.setattr	= nfs_setattr,
-पूर्ण;
+};
 
-स्थिर काष्ठा inode_operations nfs_referral_inode_operations = अणु
+const struct inode_operations nfs_referral_inode_operations = {
 	.getattr	= nfs_namespace_getattr,
 	.setattr	= nfs_namespace_setattr,
-पूर्ण;
+};
 
-अटल व्योम nfs_expire_स्वतःmounts(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा list_head *list = &nfs_स्वतःmount_list;
-	पूर्णांक समयout = READ_ONCE(nfs_mountpoपूर्णांक_expiry_समयout);
+static void nfs_expire_automounts(struct work_struct *work)
+{
+	struct list_head *list = &nfs_automount_list;
+	int timeout = READ_ONCE(nfs_mountpoint_expiry_timeout);
 
-	mark_mounts_क्रम_expiry(list);
-	अगर (!list_empty(list) && समयout > 0)
-		schedule_delayed_work(&nfs_स्वतःmount_task, समयout);
-पूर्ण
+	mark_mounts_for_expiry(list);
+	if (!list_empty(list) && timeout > 0)
+		schedule_delayed_work(&nfs_automount_task, timeout);
+}
 
-व्योम nfs_release_स्वतःmount_समयr(व्योम)
-अणु
-	अगर (list_empty(&nfs_स्वतःmount_list))
-		cancel_delayed_work(&nfs_स्वतःmount_task);
-पूर्ण
+void nfs_release_automount_timer(void)
+{
+	if (list_empty(&nfs_automount_list))
+		cancel_delayed_work(&nfs_automount_task);
+}
 
 /**
- * nfs_करो_submount - set up mountpoपूर्णांक when crossing a fileप्रणाली boundary
- * @fc: poपूर्णांकer to काष्ठा nfs_fs_context
+ * nfs_do_submount - set up mountpoint when crossing a filesystem boundary
+ * @fc: pointer to struct nfs_fs_context
  *
  */
-पूर्णांक nfs_करो_submount(काष्ठा fs_context *fc)
-अणु
-	काष्ठा nfs_fs_context *ctx = nfs_fc2context(fc);
-	काष्ठा dentry *dentry = ctx->clone_data.dentry;
-	काष्ठा nfs_server *server;
-	अक्षर *buffer, *p;
-	पूर्णांक ret;
+int nfs_do_submount(struct fs_context *fc)
+{
+	struct nfs_fs_context *ctx = nfs_fc2context(fc);
+	struct dentry *dentry = ctx->clone_data.dentry;
+	struct nfs_server *server;
+	char *buffer, *p;
+	int ret;
 
 	/* create a new volume representation */
 	server = ctx->nfs_mod->rpc_ops->clone_server(NFS_SB(ctx->clone_data.sb),
@@ -274,98 +273,98 @@ nfs_namespace_setattr(काष्ठा user_namespace *mnt_userns, काष�
 						     ctx->clone_data.fattr,
 						     ctx->selected_flavor);
 
-	अगर (IS_ERR(server))
-		वापस PTR_ERR(server);
+	if (IS_ERR(server))
+		return PTR_ERR(server);
 
 	ctx->server = server;
 
-	buffer = kदो_स्मृति(4096, GFP_USER);
-	अगर (!buffer)
-		वापस -ENOMEM;
+	buffer = kmalloc(4096, GFP_USER);
+	if (!buffer)
+		return -ENOMEM;
 
-	ctx->पूर्णांकernal		= true;
+	ctx->internal		= true;
 	ctx->clone_data.inherited_bsize = ctx->clone_data.sb->s_blocksize_bits;
 
 	p = nfs_devname(dentry, buffer, 4096);
-	अगर (IS_ERR(p)) अणु
+	if (IS_ERR(p)) {
 		nfs_errorf(fc, "NFS: Couldn't determine submount pathname");
 		ret = PTR_ERR(p);
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = vfs_parse_fs_string(fc, "source", p, buffer + 4096 - p);
-		अगर (!ret)
+		if (!ret)
 			ret = vfs_get_tree(fc);
-	पूर्ण
-	kमुक्त(buffer);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(nfs_करो_submount);
+	}
+	kfree(buffer);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(nfs_do_submount);
 
-पूर्णांक nfs_submount(काष्ठा fs_context *fc, काष्ठा nfs_server *server)
-अणु
-	काष्ठा nfs_fs_context *ctx = nfs_fc2context(fc);
-	काष्ठा dentry *dentry = ctx->clone_data.dentry;
-	काष्ठा dentry *parent = dget_parent(dentry);
-	पूर्णांक err;
+int nfs_submount(struct fs_context *fc, struct nfs_server *server)
+{
+	struct nfs_fs_context *ctx = nfs_fc2context(fc);
+	struct dentry *dentry = ctx->clone_data.dentry;
+	struct dentry *parent = dget_parent(dentry);
+	int err;
 
 	/* Look it up again to get its attributes */
 	err = server->nfs_client->rpc_ops->lookup(d_inode(parent), dentry,
 						  ctx->mntfh, ctx->clone_data.fattr,
-						  शून्य);
+						  NULL);
 	dput(parent);
-	अगर (err != 0)
-		वापस err;
+	if (err != 0)
+		return err;
 
 	ctx->selected_flavor = server->client->cl_auth->au_flavor;
-	वापस nfs_करो_submount(fc);
-पूर्ण
+	return nfs_do_submount(fc);
+}
 EXPORT_SYMBOL_GPL(nfs_submount);
 
-अटल पूर्णांक param_set_nfs_समयout(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp)
-अणु
-	दीर्घ num;
-	पूर्णांक ret;
+static int param_set_nfs_timeout(const char *val, const struct kernel_param *kp)
+{
+	long num;
+	int ret;
 
-	अगर (!val)
-		वापस -EINVAL;
-	ret = kम_से_दीर्घ(val, 0, &num);
-	अगर (ret)
-		वापस -EINVAL;
-	अगर (num > 0) अणु
-		अगर (num >= पूर्णांक_उच्च / HZ)
-			num = पूर्णांक_उच्च;
-		अन्यथा
+	if (!val)
+		return -EINVAL;
+	ret = kstrtol(val, 0, &num);
+	if (ret)
+		return -EINVAL;
+	if (num > 0) {
+		if (num >= INT_MAX / HZ)
+			num = INT_MAX;
+		else
 			num *= HZ;
-		*((पूर्णांक *)kp->arg) = num;
-		अगर (!list_empty(&nfs_स्वतःmount_list))
-			mod_delayed_work(प्रणाली_wq, &nfs_स्वतःmount_task, num);
-	पूर्ण अन्यथा अणु
-		*((पूर्णांक *)kp->arg) = -1*HZ;
-		cancel_delayed_work(&nfs_स्वतःmount_task);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		*((int *)kp->arg) = num;
+		if (!list_empty(&nfs_automount_list))
+			mod_delayed_work(system_wq, &nfs_automount_task, num);
+	} else {
+		*((int *)kp->arg) = -1*HZ;
+		cancel_delayed_work(&nfs_automount_task);
+	}
+	return 0;
+}
 
-अटल पूर्णांक param_get_nfs_समयout(अक्षर *buffer, स्थिर काष्ठा kernel_param *kp)
-अणु
-	दीर्घ num = *((पूर्णांक *)kp->arg);
+static int param_get_nfs_timeout(char *buffer, const struct kernel_param *kp)
+{
+	long num = *((int *)kp->arg);
 
-	अगर (num > 0) अणु
-		अगर (num >= पूर्णांक_उच्च - (HZ - 1))
-			num = पूर्णांक_उच्च / HZ;
-		अन्यथा
+	if (num > 0) {
+		if (num >= INT_MAX - (HZ - 1))
+			num = INT_MAX / HZ;
+		else
 			num = (num + (HZ - 1)) / HZ;
-	पूर्ण अन्यथा
+	} else
 		num = -1;
-	वापस scnम_लिखो(buffer, PAGE_SIZE, "%li\n", num);
-पूर्ण
+	return scnprintf(buffer, PAGE_SIZE, "%li\n", num);
+}
 
-अटल स्थिर काष्ठा kernel_param_ops param_ops_nfs_समयout = अणु
-	.set = param_set_nfs_समयout,
-	.get = param_get_nfs_समयout,
-पूर्ण;
-#घोषणा param_check_nfs_समयout(name, p) __param_check(name, p, पूर्णांक)
+static const struct kernel_param_ops param_ops_nfs_timeout = {
+	.set = param_set_nfs_timeout,
+	.get = param_get_nfs_timeout,
+};
+#define param_check_nfs_timeout(name, p) __param_check(name, p, int)
 
-module_param(nfs_mountpoपूर्णांक_expiry_समयout, nfs_समयout, 0644);
-MODULE_PARM_DESC(nfs_mountpoपूर्णांक_expiry_समयout,
+module_param(nfs_mountpoint_expiry_timeout, nfs_timeout, 0644);
+MODULE_PARM_DESC(nfs_mountpoint_expiry_timeout,
 		"Set the NFS automounted mountpoint timeout value (seconds)."
 		"Values <= 0 turn expiration off.");

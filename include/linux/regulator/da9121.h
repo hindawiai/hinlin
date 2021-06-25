@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * DA9121 Single-channel dual-phase 10A buck converter
  * DA9130 Single-channel dual-phase 10A buck converter (Automotive)
@@ -14,24 +13,24 @@
  * Authors: Adam Ward, Dialog Semiconductor
  */
 
-#अगर_अघोषित __LINUX_REGULATOR_DA9121_H
-#घोषणा __LINUX_REGULATOR_DA9121_H
+#ifndef __LINUX_REGULATOR_DA9121_H
+#define __LINUX_REGULATOR_DA9121_H
 
-#समावेश <linux/regulator/machine.h>
+#include <linux/regulator/machine.h>
 
-काष्ठा gpio_desc;
+struct gpio_desc;
 
-क्रमागत अणु
+enum {
 	DA9121_IDX_BUCK1,
 	DA9121_IDX_BUCK2,
 	DA9121_IDX_MAX
-पूर्ण;
+};
 
-काष्ठा da9121_pdata अणु
-	पूर्णांक num_buck;
-	काष्ठा gpio_desc *gpiod_ren[DA9121_IDX_MAX];
-	काष्ठा device_node *reg_node[DA9121_IDX_MAX];
-	काष्ठा regulator_init_data *init_data[DA9121_IDX_MAX];
-पूर्ण;
+struct da9121_pdata {
+	int num_buck;
+	struct gpio_desc *gpiod_ren[DA9121_IDX_MAX];
+	struct device_node *reg_node[DA9121_IDX_MAX];
+	struct regulator_init_data *init_data[DA9121_IDX_MAX];
+};
 
-#पूर्ण_अगर
+#endif

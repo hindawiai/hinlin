@@ -1,11 +1,10 @@
-<शैली गुरु>
 /*
-   BlueZ - Bluetooth protocol stack क्रम Linux
+   BlueZ - Bluetooth protocol stack for Linux
    Copyright (C) 2000-2001 Qualcomm Incorporated
 
    Written 2000,2001 by Maxim Krasnyansky <maxk@qualcomm.com>
 
-   This program is मुक्त software; you can redistribute it and/or modअगरy
+   This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License version 2 as
    published by the Free Software Foundation;
 
@@ -13,7 +12,7 @@
    OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF THIRD PARTY RIGHTS.
    IN NO EVENT SHALL THE COPYRIGHT HOLDER(S) AND AUTHOR(S) BE LIABLE FOR ANY
-   CLAIM, OR ANY SPECIAL INसूचीECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES
+   CLAIM, OR ANY SPECIAL INDIRECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES
    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
@@ -25,59 +24,59 @@
 
 /* Bluetooth SCO sockets. */
 
-#समावेश <linux/module.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/sched/संकेत.स>
+#include <linux/module.h>
+#include <linux/debugfs.h>
+#include <linux/seq_file.h>
+#include <linux/sched/signal.h>
 
-#समावेश <net/bluetooth/bluetooth.h>
-#समावेश <net/bluetooth/hci_core.h>
-#समावेश <net/bluetooth/sco.h>
+#include <net/bluetooth/bluetooth.h>
+#include <net/bluetooth/hci_core.h>
+#include <net/bluetooth/sco.h>
 
-अटल bool disable_esco;
+static bool disable_esco;
 
-अटल स्थिर काष्ठा proto_ops sco_sock_ops;
+static const struct proto_ops sco_sock_ops;
 
-अटल काष्ठा bt_sock_list sco_sk_list = अणु
+static struct bt_sock_list sco_sk_list = {
 	.lock = __RW_LOCK_UNLOCKED(sco_sk_list.lock)
-पूर्ण;
+};
 
 /* ---- SCO connections ---- */
-काष्ठा sco_conn अणु
-	काष्ठा hci_conn	*hcon;
+struct sco_conn {
+	struct hci_conn	*hcon;
 
 	spinlock_t	lock;
-	काष्ठा sock	*sk;
+	struct sock	*sk;
 
-	अचिन्हित पूर्णांक    mtu;
-पूर्ण;
+	unsigned int    mtu;
+};
 
-#घोषणा sco_conn_lock(c)	spin_lock(&c->lock)
-#घोषणा sco_conn_unlock(c)	spin_unlock(&c->lock)
+#define sco_conn_lock(c)	spin_lock(&c->lock)
+#define sco_conn_unlock(c)	spin_unlock(&c->lock)
 
-अटल व्योम sco_sock_बंद(काष्ठा sock *sk);
-अटल व्योम sco_sock_समाप्त(काष्ठा sock *sk);
+static void sco_sock_close(struct sock *sk);
+static void sco_sock_kill(struct sock *sk);
 
 /* ----- SCO socket info ----- */
-#घोषणा sco_pi(sk) ((काष्ठा sco_pinfo *) sk)
+#define sco_pi(sk) ((struct sco_pinfo *) sk)
 
-काष्ठा sco_pinfo अणु
-	काष्ठा bt_sock	bt;
+struct sco_pinfo {
+	struct bt_sock	bt;
 	bdaddr_t	src;
 	bdaddr_t	dst;
 	__u32		flags;
 	__u16		setting;
 	__u8		cmsg_mask;
-	काष्ठा sco_conn	*conn;
-पूर्ण;
+	struct sco_conn	*conn;
+};
 
-/* ---- SCO समयrs ---- */
-#घोषणा SCO_CONN_TIMEOUT	(HZ * 40)
-#घोषणा SCO_DISCONN_TIMEOUT	(HZ * 2)
+/* ---- SCO timers ---- */
+#define SCO_CONN_TIMEOUT	(HZ * 40)
+#define SCO_DISCONN_TIMEOUT	(HZ * 2)
 
-अटल व्योम sco_sock_समयout(काष्ठा समयr_list *t)
-अणु
-	काष्ठा sock *sk = from_समयr(sk, t, sk_समयr);
+static void sco_sock_timeout(struct timer_list *t)
+{
+	struct sock *sk = from_timer(sk, t, sk_timer);
 
 	BT_DBG("sock %p state %d", sk, sk->sk_state);
 
@@ -86,84 +85,84 @@
 	sk->sk_state_change(sk);
 	bh_unlock_sock(sk);
 
-	sco_sock_समाप्त(sk);
+	sco_sock_kill(sk);
 	sock_put(sk);
-पूर्ण
+}
 
-अटल व्योम sco_sock_set_समयr(काष्ठा sock *sk, दीर्घ समयout)
-अणु
-	BT_DBG("sock %p state %d timeout %ld", sk, sk->sk_state, समयout);
-	sk_reset_समयr(sk, &sk->sk_समयr, jअगरfies + समयout);
-पूर्ण
+static void sco_sock_set_timer(struct sock *sk, long timeout)
+{
+	BT_DBG("sock %p state %d timeout %ld", sk, sk->sk_state, timeout);
+	sk_reset_timer(sk, &sk->sk_timer, jiffies + timeout);
+}
 
-अटल व्योम sco_sock_clear_समयr(काष्ठा sock *sk)
-अणु
+static void sco_sock_clear_timer(struct sock *sk)
+{
 	BT_DBG("sock %p state %d", sk, sk->sk_state);
-	sk_stop_समयr(sk, &sk->sk_समयr);
-पूर्ण
+	sk_stop_timer(sk, &sk->sk_timer);
+}
 
 /* ---- SCO connections ---- */
-अटल काष्ठा sco_conn *sco_conn_add(काष्ठा hci_conn *hcon)
-अणु
-	काष्ठा hci_dev *hdev = hcon->hdev;
-	काष्ठा sco_conn *conn = hcon->sco_data;
+static struct sco_conn *sco_conn_add(struct hci_conn *hcon)
+{
+	struct hci_dev *hdev = hcon->hdev;
+	struct sco_conn *conn = hcon->sco_data;
 
-	अगर (conn)
-		वापस conn;
+	if (conn)
+		return conn;
 
-	conn = kzalloc(माप(काष्ठा sco_conn), GFP_KERNEL);
-	अगर (!conn)
-		वापस शून्य;
+	conn = kzalloc(sizeof(struct sco_conn), GFP_KERNEL);
+	if (!conn)
+		return NULL;
 
 	spin_lock_init(&conn->lock);
 
 	hcon->sco_data = conn;
 	conn->hcon = hcon;
 
-	अगर (hdev->sco_mtu > 0)
+	if (hdev->sco_mtu > 0)
 		conn->mtu = hdev->sco_mtu;
-	अन्यथा
+	else
 		conn->mtu = 60;
 
 	BT_DBG("hcon %p conn %p", hcon, conn);
 
-	वापस conn;
-पूर्ण
+	return conn;
+}
 
 /* Delete channel.
  * Must be called on the locked socket. */
-अटल व्योम sco_chan_del(काष्ठा sock *sk, पूर्णांक err)
-अणु
-	काष्ठा sco_conn *conn;
+static void sco_chan_del(struct sock *sk, int err)
+{
+	struct sco_conn *conn;
 
 	conn = sco_pi(sk)->conn;
 
 	BT_DBG("sk %p, conn %p, err %d", sk, conn, err);
 
-	अगर (conn) अणु
+	if (conn) {
 		sco_conn_lock(conn);
-		conn->sk = शून्य;
-		sco_pi(sk)->conn = शून्य;
+		conn->sk = NULL;
+		sco_pi(sk)->conn = NULL;
 		sco_conn_unlock(conn);
 
-		अगर (conn->hcon)
+		if (conn->hcon)
 			hci_conn_drop(conn->hcon);
-	पूर्ण
+	}
 
 	sk->sk_state = BT_CLOSED;
 	sk->sk_err   = err;
 	sk->sk_state_change(sk);
 
 	sock_set_flag(sk, SOCK_ZAPPED);
-पूर्ण
+}
 
-अटल व्योम sco_conn_del(काष्ठा hci_conn *hcon, पूर्णांक err)
-अणु
-	काष्ठा sco_conn *conn = hcon->sco_data;
-	काष्ठा sock *sk;
+static void sco_conn_del(struct hci_conn *hcon, int err)
+{
+	struct sco_conn *conn = hcon->sco_data;
+	struct sock *sk;
 
-	अगर (!conn)
-		वापस;
+	if (!conn)
+		return;
 
 	BT_DBG("hcon %p conn %p, err %d", hcon, conn, err);
 
@@ -172,232 +171,232 @@
 	sk = conn->sk;
 	sco_conn_unlock(conn);
 
-	अगर (sk) अणु
+	if (sk) {
 		sock_hold(sk);
 		bh_lock_sock(sk);
-		sco_sock_clear_समयr(sk);
+		sco_sock_clear_timer(sk);
 		sco_chan_del(sk, err);
 		bh_unlock_sock(sk);
-		sco_sock_समाप्त(sk);
+		sco_sock_kill(sk);
 		sock_put(sk);
-	पूर्ण
+	}
 
-	hcon->sco_data = शून्य;
-	kमुक्त(conn);
-पूर्ण
+	hcon->sco_data = NULL;
+	kfree(conn);
+}
 
-अटल व्योम __sco_chan_add(काष्ठा sco_conn *conn, काष्ठा sock *sk,
-			   काष्ठा sock *parent)
-अणु
+static void __sco_chan_add(struct sco_conn *conn, struct sock *sk,
+			   struct sock *parent)
+{
 	BT_DBG("conn %p", conn);
 
 	sco_pi(sk)->conn = conn;
 	conn->sk = sk;
 
-	अगर (parent)
+	if (parent)
 		bt_accept_enqueue(parent, sk, true);
-पूर्ण
+}
 
-अटल पूर्णांक sco_chan_add(काष्ठा sco_conn *conn, काष्ठा sock *sk,
-			काष्ठा sock *parent)
-अणु
-	पूर्णांक err = 0;
+static int sco_chan_add(struct sco_conn *conn, struct sock *sk,
+			struct sock *parent)
+{
+	int err = 0;
 
 	sco_conn_lock(conn);
-	अगर (conn->sk)
+	if (conn->sk)
 		err = -EBUSY;
-	अन्यथा
+	else
 		__sco_chan_add(conn, sk, parent);
 
 	sco_conn_unlock(conn);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक sco_connect(काष्ठा sock *sk)
-अणु
-	काष्ठा sco_conn *conn;
-	काष्ठा hci_conn *hcon;
-	काष्ठा hci_dev  *hdev;
-	पूर्णांक err, type;
+static int sco_connect(struct sock *sk)
+{
+	struct sco_conn *conn;
+	struct hci_conn *hcon;
+	struct hci_dev  *hdev;
+	int err, type;
 
 	BT_DBG("%pMR -> %pMR", &sco_pi(sk)->src, &sco_pi(sk)->dst);
 
 	hdev = hci_get_route(&sco_pi(sk)->dst, &sco_pi(sk)->src, BDADDR_BREDR);
-	अगर (!hdev)
-		वापस -EHOSTUNREACH;
+	if (!hdev)
+		return -EHOSTUNREACH;
 
 	hci_dev_lock(hdev);
 
-	अगर (lmp_esco_capable(hdev) && !disable_esco)
+	if (lmp_esco_capable(hdev) && !disable_esco)
 		type = ESCO_LINK;
-	अन्यथा
+	else
 		type = SCO_LINK;
 
-	अगर (sco_pi(sk)->setting == BT_VOICE_TRANSPARENT &&
-	    (!lmp_transp_capable(hdev) || !lmp_esco_capable(hdev))) अणु
+	if (sco_pi(sk)->setting == BT_VOICE_TRANSPARENT &&
+	    (!lmp_transp_capable(hdev) || !lmp_esco_capable(hdev))) {
 		err = -EOPNOTSUPP;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	hcon = hci_connect_sco(hdev, type, &sco_pi(sk)->dst,
 			       sco_pi(sk)->setting);
-	अगर (IS_ERR(hcon)) अणु
+	if (IS_ERR(hcon)) {
 		err = PTR_ERR(hcon);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	conn = sco_conn_add(hcon);
-	अगर (!conn) अणु
+	if (!conn) {
 		hci_conn_drop(hcon);
 		err = -ENOMEM;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	/* Update source addr of the socket */
 	bacpy(&sco_pi(sk)->src, &hcon->src);
 
-	err = sco_chan_add(conn, sk, शून्य);
-	अगर (err)
-		जाओ करोne;
+	err = sco_chan_add(conn, sk, NULL);
+	if (err)
+		goto done;
 
-	अगर (hcon->state == BT_CONNECTED) अणु
-		sco_sock_clear_समयr(sk);
+	if (hcon->state == BT_CONNECTED) {
+		sco_sock_clear_timer(sk);
 		sk->sk_state = BT_CONNECTED;
-	पूर्ण अन्यथा अणु
+	} else {
 		sk->sk_state = BT_CONNECT;
-		sco_sock_set_समयr(sk, sk->sk_sndसमयo);
-	पूर्ण
+		sco_sock_set_timer(sk, sk->sk_sndtimeo);
+	}
 
-करोne:
+done:
 	hci_dev_unlock(hdev);
 	hci_dev_put(hdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक sco_send_frame(काष्ठा sock *sk, काष्ठा msghdr *msg, पूर्णांक len)
-अणु
-	काष्ठा sco_conn *conn = sco_pi(sk)->conn;
-	काष्ठा sk_buff *skb;
-	पूर्णांक err;
+static int sco_send_frame(struct sock *sk, struct msghdr *msg, int len)
+{
+	struct sco_conn *conn = sco_pi(sk)->conn;
+	struct sk_buff *skb;
+	int err;
 
 	/* Check outgoing MTU */
-	अगर (len > conn->mtu)
-		वापस -EINVAL;
+	if (len > conn->mtu)
+		return -EINVAL;
 
 	BT_DBG("sk %p len %d", sk, len);
 
 	skb = bt_skb_send_alloc(sk, len, msg->msg_flags & MSG_DONTWAIT, &err);
-	अगर (!skb)
-		वापस err;
+	if (!skb)
+		return err;
 
-	अगर (स_नकल_from_msg(skb_put(skb, len), msg, len)) अणु
-		kमुक्त_skb(skb);
-		वापस -EFAULT;
-	पूर्ण
+	if (memcpy_from_msg(skb_put(skb, len), msg, len)) {
+		kfree_skb(skb);
+		return -EFAULT;
+	}
 
 	hci_send_sco(conn->hcon, skb);
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल व्योम sco_recv_frame(काष्ठा sco_conn *conn, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा sock *sk;
+static void sco_recv_frame(struct sco_conn *conn, struct sk_buff *skb)
+{
+	struct sock *sk;
 
 	sco_conn_lock(conn);
 	sk = conn->sk;
 	sco_conn_unlock(conn);
 
-	अगर (!sk)
-		जाओ drop;
+	if (!sk)
+		goto drop;
 
 	BT_DBG("sk %p len %d", sk, skb->len);
 
-	अगर (sk->sk_state != BT_CONNECTED)
-		जाओ drop;
+	if (sk->sk_state != BT_CONNECTED)
+		goto drop;
 
-	अगर (!sock_queue_rcv_skb(sk, skb))
-		वापस;
+	if (!sock_queue_rcv_skb(sk, skb))
+		return;
 
 drop:
-	kमुक्त_skb(skb);
-पूर्ण
+	kfree_skb(skb);
+}
 
-/* -------- Socket पूर्णांकerface ---------- */
-अटल काष्ठा sock *__sco_get_sock_listen_by_addr(bdaddr_t *ba)
-अणु
-	काष्ठा sock *sk;
+/* -------- Socket interface ---------- */
+static struct sock *__sco_get_sock_listen_by_addr(bdaddr_t *ba)
+{
+	struct sock *sk;
 
-	sk_क्रम_each(sk, &sco_sk_list.head) अणु
-		अगर (sk->sk_state != BT_LISTEN)
-			जारी;
+	sk_for_each(sk, &sco_sk_list.head) {
+		if (sk->sk_state != BT_LISTEN)
+			continue;
 
-		अगर (!bacmp(&sco_pi(sk)->src, ba))
-			वापस sk;
-	पूर्ण
+		if (!bacmp(&sco_pi(sk)->src, ba))
+			return sk;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /* Find socket listening on source bdaddr.
- * Returns बंदst match.
+ * Returns closest match.
  */
-अटल काष्ठा sock *sco_get_sock_listen(bdaddr_t *src)
-अणु
-	काष्ठा sock *sk = शून्य, *sk1 = शून्य;
+static struct sock *sco_get_sock_listen(bdaddr_t *src)
+{
+	struct sock *sk = NULL, *sk1 = NULL;
 
-	पढ़ो_lock(&sco_sk_list.lock);
+	read_lock(&sco_sk_list.lock);
 
-	sk_क्रम_each(sk, &sco_sk_list.head) अणु
-		अगर (sk->sk_state != BT_LISTEN)
-			जारी;
+	sk_for_each(sk, &sco_sk_list.head) {
+		if (sk->sk_state != BT_LISTEN)
+			continue;
 
 		/* Exact match. */
-		अगर (!bacmp(&sco_pi(sk)->src, src))
-			अवरोध;
+		if (!bacmp(&sco_pi(sk)->src, src))
+			break;
 
 		/* Closest match */
-		अगर (!bacmp(&sco_pi(sk)->src, BDADDR_ANY))
+		if (!bacmp(&sco_pi(sk)->src, BDADDR_ANY))
 			sk1 = sk;
-	पूर्ण
+	}
 
-	पढ़ो_unlock(&sco_sk_list.lock);
+	read_unlock(&sco_sk_list.lock);
 
-	वापस sk ? sk : sk1;
-पूर्ण
+	return sk ? sk : sk1;
+}
 
-अटल व्योम sco_sock_deकाष्ठा(काष्ठा sock *sk)
-अणु
+static void sco_sock_destruct(struct sock *sk)
+{
 	BT_DBG("sk %p", sk);
 
 	skb_queue_purge(&sk->sk_receive_queue);
-	skb_queue_purge(&sk->sk_ग_लिखो_queue);
-पूर्ण
+	skb_queue_purge(&sk->sk_write_queue);
+}
 
-अटल व्योम sco_sock_cleanup_listen(काष्ठा sock *parent)
-अणु
-	काष्ठा sock *sk;
+static void sco_sock_cleanup_listen(struct sock *parent)
+{
+	struct sock *sk;
 
 	BT_DBG("parent %p", parent);
 
 	/* Close not yet accepted channels */
-	जबतक ((sk = bt_accept_dequeue(parent, शून्य))) अणु
-		sco_sock_बंद(sk);
-		sco_sock_समाप्त(sk);
-	पूर्ण
+	while ((sk = bt_accept_dequeue(parent, NULL))) {
+		sco_sock_close(sk);
+		sco_sock_kill(sk);
+	}
 
 	parent->sk_state  = BT_CLOSED;
 	sock_set_flag(parent, SOCK_ZAPPED);
-पूर्ण
+}
 
-/* Kill socket (only अगर zapped and orphan)
+/* Kill socket (only if zapped and orphan)
  * Must be called on unlocked socket.
  */
-अटल व्योम sco_sock_समाप्त(काष्ठा sock *sk)
-अणु
-	अगर (!sock_flag(sk, SOCK_ZAPPED) || sk->sk_socket ||
+static void sco_sock_kill(struct sock *sk)
+{
+	if (!sock_flag(sk, SOCK_ZAPPED) || sk->sk_socket ||
 	    sock_flag(sk, SOCK_DEAD))
-		वापस;
+		return;
 
 	BT_DBG("sk %p state %d", sk, sk->sk_state);
 
@@ -405,94 +404,94 @@ drop:
 	bt_sock_unlink(&sco_sk_list, sk);
 	sock_set_flag(sk, SOCK_DEAD);
 	sock_put(sk);
-पूर्ण
+}
 
-अटल व्योम __sco_sock_बंद(काष्ठा sock *sk)
-अणु
+static void __sco_sock_close(struct sock *sk)
+{
 	BT_DBG("sk %p state %d socket %p", sk, sk->sk_state, sk->sk_socket);
 
-	चयन (sk->sk_state) अणु
-	हाल BT_LISTEN:
+	switch (sk->sk_state) {
+	case BT_LISTEN:
 		sco_sock_cleanup_listen(sk);
-		अवरोध;
+		break;
 
-	हाल BT_CONNECTED:
-	हाल BT_CONFIG:
-		अगर (sco_pi(sk)->conn->hcon) अणु
+	case BT_CONNECTED:
+	case BT_CONFIG:
+		if (sco_pi(sk)->conn->hcon) {
 			sk->sk_state = BT_DISCONN;
-			sco_sock_set_समयr(sk, SCO_DISCONN_TIMEOUT);
+			sco_sock_set_timer(sk, SCO_DISCONN_TIMEOUT);
 			sco_conn_lock(sco_pi(sk)->conn);
 			hci_conn_drop(sco_pi(sk)->conn->hcon);
-			sco_pi(sk)->conn->hcon = शून्य;
+			sco_pi(sk)->conn->hcon = NULL;
 			sco_conn_unlock(sco_pi(sk)->conn);
-		पूर्ण अन्यथा
+		} else
 			sco_chan_del(sk, ECONNRESET);
-		अवरोध;
+		break;
 
-	हाल BT_CONNECT2:
-	हाल BT_CONNECT:
-	हाल BT_DISCONN:
+	case BT_CONNECT2:
+	case BT_CONNECT:
+	case BT_DISCONN:
 		sco_chan_del(sk, ECONNRESET);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		sock_set_flag(sk, SOCK_ZAPPED);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
 /* Must be called on unlocked socket. */
-अटल व्योम sco_sock_बंद(काष्ठा sock *sk)
-अणु
-	sco_sock_clear_समयr(sk);
+static void sco_sock_close(struct sock *sk)
+{
+	sco_sock_clear_timer(sk);
 	lock_sock(sk);
-	__sco_sock_बंद(sk);
+	__sco_sock_close(sk);
 	release_sock(sk);
-	sco_sock_समाप्त(sk);
-पूर्ण
+	sco_sock_kill(sk);
+}
 
-अटल व्योम sco_skb_put_cmsg(काष्ठा sk_buff *skb, काष्ठा msghdr *msg,
-			     काष्ठा sock *sk)
-अणु
-	अगर (sco_pi(sk)->cmsg_mask & SCO_CMSG_PKT_STATUS)
+static void sco_skb_put_cmsg(struct sk_buff *skb, struct msghdr *msg,
+			     struct sock *sk)
+{
+	if (sco_pi(sk)->cmsg_mask & SCO_CMSG_PKT_STATUS)
 		put_cmsg(msg, SOL_BLUETOOTH, BT_SCM_PKT_STATUS,
-			 माप(bt_cb(skb)->sco.pkt_status),
+			 sizeof(bt_cb(skb)->sco.pkt_status),
 			 &bt_cb(skb)->sco.pkt_status);
-पूर्ण
+}
 
-अटल व्योम sco_sock_init(काष्ठा sock *sk, काष्ठा sock *parent)
-अणु
+static void sco_sock_init(struct sock *sk, struct sock *parent)
+{
 	BT_DBG("sk %p", sk);
 
-	अगर (parent) अणु
+	if (parent) {
 		sk->sk_type = parent->sk_type;
 		bt_sk(sk)->flags = bt_sk(parent)->flags;
 		security_sk_clone(parent, sk);
-	पूर्ण अन्यथा अणु
+	} else {
 		bt_sk(sk)->skb_put_cmsg = sco_skb_put_cmsg;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल काष्ठा proto sco_proto = अणु
+static struct proto sco_proto = {
 	.name		= "SCO",
 	.owner		= THIS_MODULE,
-	.obj_size	= माप(काष्ठा sco_pinfo)
-पूर्ण;
+	.obj_size	= sizeof(struct sco_pinfo)
+};
 
-अटल काष्ठा sock *sco_sock_alloc(काष्ठा net *net, काष्ठा socket *sock,
-				   पूर्णांक proto, gfp_t prio, पूर्णांक kern)
-अणु
-	काष्ठा sock *sk;
+static struct sock *sco_sock_alloc(struct net *net, struct socket *sock,
+				   int proto, gfp_t prio, int kern)
+{
+	struct sock *sk;
 
 	sk = sk_alloc(net, PF_BLUETOOTH, prio, &sco_proto, kern);
-	अगर (!sk)
-		वापस शून्य;
+	if (!sk)
+		return NULL;
 
 	sock_init_data(sock, sk);
 	INIT_LIST_HEAD(&bt_sk(sk)->accept_q);
 
-	sk->sk_deकाष्ठा = sco_sock_deकाष्ठा;
-	sk->sk_sndसमयo = SCO_CONN_TIMEOUT;
+	sk->sk_destruct = sco_sock_destruct;
+	sk->sk_sndtimeo = SCO_CONN_TIMEOUT;
 
 	sock_reset_flag(sk, SOCK_ZAPPED);
 
@@ -501,85 +500,85 @@ drop:
 
 	sco_pi(sk)->setting = BT_VOICE_CVSD_16BIT;
 
-	समयr_setup(&sk->sk_समयr, sco_sock_समयout, 0);
+	timer_setup(&sk->sk_timer, sco_sock_timeout, 0);
 
 	bt_sock_link(&sco_sk_list, sk);
-	वापस sk;
-पूर्ण
+	return sk;
+}
 
-अटल पूर्णांक sco_sock_create(काष्ठा net *net, काष्ठा socket *sock, पूर्णांक protocol,
-			   पूर्णांक kern)
-अणु
-	काष्ठा sock *sk;
+static int sco_sock_create(struct net *net, struct socket *sock, int protocol,
+			   int kern)
+{
+	struct sock *sk;
 
 	BT_DBG("sock %p", sock);
 
 	sock->state = SS_UNCONNECTED;
 
-	अगर (sock->type != SOCK_SEQPACKET)
-		वापस -ESOCKTNOSUPPORT;
+	if (sock->type != SOCK_SEQPACKET)
+		return -ESOCKTNOSUPPORT;
 
 	sock->ops = &sco_sock_ops;
 
 	sk = sco_sock_alloc(net, sock, protocol, GFP_ATOMIC, kern);
-	अगर (!sk)
-		वापस -ENOMEM;
+	if (!sk)
+		return -ENOMEM;
 
-	sco_sock_init(sk, शून्य);
-	वापस 0;
-पूर्ण
+	sco_sock_init(sk, NULL);
+	return 0;
+}
 
-अटल पूर्णांक sco_sock_bind(काष्ठा socket *sock, काष्ठा sockaddr *addr,
-			 पूर्णांक addr_len)
-अणु
-	काष्ठा sockaddr_sco *sa = (काष्ठा sockaddr_sco *) addr;
-	काष्ठा sock *sk = sock->sk;
-	पूर्णांक err = 0;
+static int sco_sock_bind(struct socket *sock, struct sockaddr *addr,
+			 int addr_len)
+{
+	struct sockaddr_sco *sa = (struct sockaddr_sco *) addr;
+	struct sock *sk = sock->sk;
+	int err = 0;
 
-	अगर (!addr || addr_len < माप(काष्ठा sockaddr_sco) ||
+	if (!addr || addr_len < sizeof(struct sockaddr_sco) ||
 	    addr->sa_family != AF_BLUETOOTH)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	BT_DBG("sk %p %pMR", sk, &sa->sco_bdaddr);
 
 	lock_sock(sk);
 
-	अगर (sk->sk_state != BT_OPEN) अणु
+	if (sk->sk_state != BT_OPEN) {
 		err = -EBADFD;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (sk->sk_type != SOCK_SEQPACKET) अणु
+	if (sk->sk_type != SOCK_SEQPACKET) {
 		err = -EINVAL;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	bacpy(&sco_pi(sk)->src, &sa->sco_bdaddr);
 
 	sk->sk_state = BT_BOUND;
 
-करोne:
+done:
 	release_sock(sk);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक sco_sock_connect(काष्ठा socket *sock, काष्ठा sockaddr *addr, पूर्णांक alen, पूर्णांक flags)
-अणु
-	काष्ठा sockaddr_sco *sa = (काष्ठा sockaddr_sco *) addr;
-	काष्ठा sock *sk = sock->sk;
-	पूर्णांक err;
+static int sco_sock_connect(struct socket *sock, struct sockaddr *addr, int alen, int flags)
+{
+	struct sockaddr_sco *sa = (struct sockaddr_sco *) addr;
+	struct sock *sk = sock->sk;
+	int err;
 
 	BT_DBG("sk %p", sk);
 
-	अगर (alen < माप(काष्ठा sockaddr_sco) ||
+	if (alen < sizeof(struct sockaddr_sco) ||
 	    addr->sa_family != AF_BLUETOOTH)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (sk->sk_state != BT_OPEN && sk->sk_state != BT_BOUND)
-		वापस -EBADFD;
+	if (sk->sk_state != BT_OPEN && sk->sk_state != BT_BOUND)
+		return -EBADFD;
 
-	अगर (sk->sk_type != SOCK_SEQPACKET)
-		वापस -EINVAL;
+	if (sk->sk_type != SOCK_SEQPACKET)
+		return -EINVAL;
 
 	lock_sock(sk);
 
@@ -587,43 +586,43 @@ drop:
 	bacpy(&sco_pi(sk)->dst, &sa->sco_bdaddr);
 
 	err = sco_connect(sk);
-	अगर (err)
-		जाओ करोne;
+	if (err)
+		goto done;
 
-	err = bt_sock_रुको_state(sk, BT_CONNECTED,
-				 sock_sndसमयo(sk, flags & O_NONBLOCK));
+	err = bt_sock_wait_state(sk, BT_CONNECTED,
+				 sock_sndtimeo(sk, flags & O_NONBLOCK));
 
-करोne:
+done:
 	release_sock(sk);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक sco_sock_listen(काष्ठा socket *sock, पूर्णांक backlog)
-अणु
-	काष्ठा sock *sk = sock->sk;
+static int sco_sock_listen(struct socket *sock, int backlog)
+{
+	struct sock *sk = sock->sk;
 	bdaddr_t *src = &sco_pi(sk)->src;
-	पूर्णांक err = 0;
+	int err = 0;
 
 	BT_DBG("sk %p backlog %d", sk, backlog);
 
 	lock_sock(sk);
 
-	अगर (sk->sk_state != BT_BOUND) अणु
+	if (sk->sk_state != BT_BOUND) {
 		err = -EBADFD;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (sk->sk_type != SOCK_SEQPACKET) अणु
+	if (sk->sk_type != SOCK_SEQPACKET) {
 		err = -EINVAL;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	ग_लिखो_lock(&sco_sk_list.lock);
+	write_lock(&sco_sk_list.lock);
 
-	अगर (__sco_get_sock_listen_by_addr(src)) अणु
+	if (__sco_get_sock_listen_by_addr(src)) {
 		err = -EADDRINUSE;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	sk->sk_max_ack_backlog = backlog;
 	sk->sk_ack_backlog = 0;
@@ -631,487 +630,487 @@ drop:
 	sk->sk_state = BT_LISTEN;
 
 unlock:
-	ग_लिखो_unlock(&sco_sk_list.lock);
+	write_unlock(&sco_sk_list.lock);
 
-करोne:
+done:
 	release_sock(sk);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक sco_sock_accept(काष्ठा socket *sock, काष्ठा socket *newsock,
-			   पूर्णांक flags, bool kern)
-अणु
-	DEFINE_WAIT_FUNC(रुको, woken_wake_function);
-	काष्ठा sock *sk = sock->sk, *ch;
-	दीर्घ समयo;
-	पूर्णांक err = 0;
+static int sco_sock_accept(struct socket *sock, struct socket *newsock,
+			   int flags, bool kern)
+{
+	DEFINE_WAIT_FUNC(wait, woken_wake_function);
+	struct sock *sk = sock->sk, *ch;
+	long timeo;
+	int err = 0;
 
 	lock_sock(sk);
 
-	समयo = sock_rcvसमयo(sk, flags & O_NONBLOCK);
+	timeo = sock_rcvtimeo(sk, flags & O_NONBLOCK);
 
-	BT_DBG("sk %p timeo %ld", sk, समयo);
+	BT_DBG("sk %p timeo %ld", sk, timeo);
 
-	/* Wait क्रम an incoming connection. (wake-one). */
-	add_रुको_queue_exclusive(sk_sleep(sk), &रुको);
-	जबतक (1) अणु
-		अगर (sk->sk_state != BT_LISTEN) अणु
+	/* Wait for an incoming connection. (wake-one). */
+	add_wait_queue_exclusive(sk_sleep(sk), &wait);
+	while (1) {
+		if (sk->sk_state != BT_LISTEN) {
 			err = -EBADFD;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		ch = bt_accept_dequeue(sk, newsock);
-		अगर (ch)
-			अवरोध;
+		if (ch)
+			break;
 
-		अगर (!समयo) अणु
+		if (!timeo) {
 			err = -EAGAIN;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (संकेत_pending(current)) अणु
-			err = sock_पूर्णांकr_त्रुटि_सं(समयo);
-			अवरोध;
-		पूर्ण
+		if (signal_pending(current)) {
+			err = sock_intr_errno(timeo);
+			break;
+		}
 
 		release_sock(sk);
 
-		समयo = रुको_woken(&रुको, TASK_INTERRUPTIBLE, समयo);
+		timeo = wait_woken(&wait, TASK_INTERRUPTIBLE, timeo);
 		lock_sock(sk);
-	पूर्ण
-	हटाओ_रुको_queue(sk_sleep(sk), &रुको);
+	}
+	remove_wait_queue(sk_sleep(sk), &wait);
 
-	अगर (err)
-		जाओ करोne;
+	if (err)
+		goto done;
 
 	newsock->state = SS_CONNECTED;
 
 	BT_DBG("new socket %p", ch);
 
-करोne:
+done:
 	release_sock(sk);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक sco_sock_getname(काष्ठा socket *sock, काष्ठा sockaddr *addr,
-			    पूर्णांक peer)
-अणु
-	काष्ठा sockaddr_sco *sa = (काष्ठा sockaddr_sco *) addr;
-	काष्ठा sock *sk = sock->sk;
+static int sco_sock_getname(struct socket *sock, struct sockaddr *addr,
+			    int peer)
+{
+	struct sockaddr_sco *sa = (struct sockaddr_sco *) addr;
+	struct sock *sk = sock->sk;
 
 	BT_DBG("sock %p, sk %p", sock, sk);
 
 	addr->sa_family = AF_BLUETOOTH;
 
-	अगर (peer)
+	if (peer)
 		bacpy(&sa->sco_bdaddr, &sco_pi(sk)->dst);
-	अन्यथा
+	else
 		bacpy(&sa->sco_bdaddr, &sco_pi(sk)->src);
 
-	वापस माप(काष्ठा sockaddr_sco);
-पूर्ण
+	return sizeof(struct sockaddr_sco);
+}
 
-अटल पूर्णांक sco_sock_sendmsg(काष्ठा socket *sock, काष्ठा msghdr *msg,
-			    माप_प्रकार len)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	पूर्णांक err;
+static int sco_sock_sendmsg(struct socket *sock, struct msghdr *msg,
+			    size_t len)
+{
+	struct sock *sk = sock->sk;
+	int err;
 
 	BT_DBG("sock %p, sk %p", sock, sk);
 
 	err = sock_error(sk);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (msg->msg_flags & MSG_OOB)
-		वापस -EOPNOTSUPP;
+	if (msg->msg_flags & MSG_OOB)
+		return -EOPNOTSUPP;
 
 	lock_sock(sk);
 
-	अगर (sk->sk_state == BT_CONNECTED)
+	if (sk->sk_state == BT_CONNECTED)
 		err = sco_send_frame(sk, msg, len);
-	अन्यथा
+	else
 		err = -ENOTCONN;
 
 	release_sock(sk);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम sco_conn_defer_accept(काष्ठा hci_conn *conn, u16 setting)
-अणु
-	काष्ठा hci_dev *hdev = conn->hdev;
+static void sco_conn_defer_accept(struct hci_conn *conn, u16 setting)
+{
+	struct hci_dev *hdev = conn->hdev;
 
 	BT_DBG("conn %p", conn);
 
 	conn->state = BT_CONFIG;
 
-	अगर (!lmp_esco_capable(hdev)) अणु
-		काष्ठा hci_cp_accept_conn_req cp;
+	if (!lmp_esco_capable(hdev)) {
+		struct hci_cp_accept_conn_req cp;
 
 		bacpy(&cp.bdaddr, &conn->dst);
 		cp.role = 0x00; /* Ignored */
 
-		hci_send_cmd(hdev, HCI_OP_ACCEPT_CONN_REQ, माप(cp), &cp);
-	पूर्ण अन्यथा अणु
-		काष्ठा hci_cp_accept_sync_conn_req cp;
+		hci_send_cmd(hdev, HCI_OP_ACCEPT_CONN_REQ, sizeof(cp), &cp);
+	} else {
+		struct hci_cp_accept_sync_conn_req cp;
 
 		bacpy(&cp.bdaddr, &conn->dst);
 		cp.pkt_type = cpu_to_le16(conn->pkt_type);
 
 		cp.tx_bandwidth   = cpu_to_le32(0x00001f40);
 		cp.rx_bandwidth   = cpu_to_le32(0x00001f40);
-		cp.content_क्रमmat = cpu_to_le16(setting);
+		cp.content_format = cpu_to_le16(setting);
 
-		चयन (setting & SCO_AIRMODE_MASK) अणु
-		हाल SCO_AIRMODE_TRANSP:
-			अगर (conn->pkt_type & ESCO_2EV3)
+		switch (setting & SCO_AIRMODE_MASK) {
+		case SCO_AIRMODE_TRANSP:
+			if (conn->pkt_type & ESCO_2EV3)
 				cp.max_latency = cpu_to_le16(0x0008);
-			अन्यथा
+			else
 				cp.max_latency = cpu_to_le16(0x000D);
-			cp.retrans_efक्रमt = 0x02;
-			अवरोध;
-		हाल SCO_AIRMODE_CVSD:
+			cp.retrans_effort = 0x02;
+			break;
+		case SCO_AIRMODE_CVSD:
 			cp.max_latency = cpu_to_le16(0xffff);
-			cp.retrans_efक्रमt = 0xff;
-			अवरोध;
-		पूर्ण
+			cp.retrans_effort = 0xff;
+			break;
+		}
 
 		hci_send_cmd(hdev, HCI_OP_ACCEPT_SYNC_CONN_REQ,
-			     माप(cp), &cp);
-	पूर्ण
-पूर्ण
+			     sizeof(cp), &cp);
+	}
+}
 
-अटल पूर्णांक sco_sock_recvmsg(काष्ठा socket *sock, काष्ठा msghdr *msg,
-			    माप_प्रकार len, पूर्णांक flags)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा sco_pinfo *pi = sco_pi(sk);
+static int sco_sock_recvmsg(struct socket *sock, struct msghdr *msg,
+			    size_t len, int flags)
+{
+	struct sock *sk = sock->sk;
+	struct sco_pinfo *pi = sco_pi(sk);
 
 	lock_sock(sk);
 
-	अगर (sk->sk_state == BT_CONNECT2 &&
-	    test_bit(BT_SK_DEFER_SETUP, &bt_sk(sk)->flags)) अणु
+	if (sk->sk_state == BT_CONNECT2 &&
+	    test_bit(BT_SK_DEFER_SETUP, &bt_sk(sk)->flags)) {
 		sco_conn_defer_accept(pi->conn->hcon, pi->setting);
 		sk->sk_state = BT_CONFIG;
 
 		release_sock(sk);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	release_sock(sk);
 
-	वापस bt_sock_recvmsg(sock, msg, len, flags);
-पूर्ण
+	return bt_sock_recvmsg(sock, msg, len, flags);
+}
 
-अटल पूर्णांक sco_sock_setsockopt(काष्ठा socket *sock, पूर्णांक level, पूर्णांक optname,
-			       sockptr_t optval, अचिन्हित पूर्णांक optlen)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	पूर्णांक len, err = 0;
-	काष्ठा bt_voice voice;
+static int sco_sock_setsockopt(struct socket *sock, int level, int optname,
+			       sockptr_t optval, unsigned int optlen)
+{
+	struct sock *sk = sock->sk;
+	int len, err = 0;
+	struct bt_voice voice;
 	u32 opt;
 
 	BT_DBG("sk %p", sk);
 
 	lock_sock(sk);
 
-	चयन (optname) अणु
+	switch (optname) {
 
-	हाल BT_DEFER_SETUP:
-		अगर (sk->sk_state != BT_BOUND && sk->sk_state != BT_LISTEN) अणु
+	case BT_DEFER_SETUP:
+		if (sk->sk_state != BT_BOUND && sk->sk_state != BT_LISTEN) {
 			err = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (copy_from_sockptr(&opt, optval, माप(u32))) अणु
+		if (copy_from_sockptr(&opt, optval, sizeof(u32))) {
 			err = -EFAULT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (opt)
+		if (opt)
 			set_bit(BT_SK_DEFER_SETUP, &bt_sk(sk)->flags);
-		अन्यथा
+		else
 			clear_bit(BT_SK_DEFER_SETUP, &bt_sk(sk)->flags);
-		अवरोध;
+		break;
 
-	हाल BT_VOICE:
-		अगर (sk->sk_state != BT_OPEN && sk->sk_state != BT_BOUND &&
-		    sk->sk_state != BT_CONNECT2) अणु
+	case BT_VOICE:
+		if (sk->sk_state != BT_OPEN && sk->sk_state != BT_BOUND &&
+		    sk->sk_state != BT_CONNECT2) {
 			err = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		voice.setting = sco_pi(sk)->setting;
 
-		len = min_t(अचिन्हित पूर्णांक, माप(voice), optlen);
-		अगर (copy_from_sockptr(&voice, optval, len)) अणु
+		len = min_t(unsigned int, sizeof(voice), optlen);
+		if (copy_from_sockptr(&voice, optval, len)) {
 			err = -EFAULT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		/* Explicitly check क्रम these values */
-		अगर (voice.setting != BT_VOICE_TRANSPARENT &&
-		    voice.setting != BT_VOICE_CVSD_16BIT) अणु
+		/* Explicitly check for these values */
+		if (voice.setting != BT_VOICE_TRANSPARENT &&
+		    voice.setting != BT_VOICE_CVSD_16BIT) {
 			err = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		sco_pi(sk)->setting = voice.setting;
-		अवरोध;
+		break;
 
-	हाल BT_PKT_STATUS:
-		अगर (copy_from_sockptr(&opt, optval, माप(u32))) अणु
+	case BT_PKT_STATUS:
+		if (copy_from_sockptr(&opt, optval, sizeof(u32))) {
 			err = -EFAULT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (opt)
+		if (opt)
 			sco_pi(sk)->cmsg_mask |= SCO_CMSG_PKT_STATUS;
-		अन्यथा
+		else
 			sco_pi(sk)->cmsg_mask &= SCO_CMSG_PKT_STATUS;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		err = -ENOPROTOOPT;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	release_sock(sk);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक sco_sock_माला_लोockopt_old(काष्ठा socket *sock, पूर्णांक optname,
-				   अक्षर __user *optval, पूर्णांक __user *optlen)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा sco_options opts;
-	काष्ठा sco_conninfo cinfo;
-	पूर्णांक len, err = 0;
+static int sco_sock_getsockopt_old(struct socket *sock, int optname,
+				   char __user *optval, int __user *optlen)
+{
+	struct sock *sk = sock->sk;
+	struct sco_options opts;
+	struct sco_conninfo cinfo;
+	int len, err = 0;
 
 	BT_DBG("sk %p", sk);
 
-	अगर (get_user(len, optlen))
-		वापस -EFAULT;
+	if (get_user(len, optlen))
+		return -EFAULT;
 
 	lock_sock(sk);
 
-	चयन (optname) अणु
-	हाल SCO_OPTIONS:
-		अगर (sk->sk_state != BT_CONNECTED &&
+	switch (optname) {
+	case SCO_OPTIONS:
+		if (sk->sk_state != BT_CONNECTED &&
 		    !(sk->sk_state == BT_CONNECT2 &&
-		      test_bit(BT_SK_DEFER_SETUP, &bt_sk(sk)->flags))) अणु
+		      test_bit(BT_SK_DEFER_SETUP, &bt_sk(sk)->flags))) {
 			err = -ENOTCONN;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		opts.mtu = sco_pi(sk)->conn->mtu;
 
 		BT_DBG("mtu %d", opts.mtu);
 
-		len = min_t(अचिन्हित पूर्णांक, len, माप(opts));
-		अगर (copy_to_user(optval, (अक्षर *)&opts, len))
+		len = min_t(unsigned int, len, sizeof(opts));
+		if (copy_to_user(optval, (char *)&opts, len))
 			err = -EFAULT;
 
-		अवरोध;
+		break;
 
-	हाल SCO_CONNINFO:
-		अगर (sk->sk_state != BT_CONNECTED &&
+	case SCO_CONNINFO:
+		if (sk->sk_state != BT_CONNECTED &&
 		    !(sk->sk_state == BT_CONNECT2 &&
-		      test_bit(BT_SK_DEFER_SETUP, &bt_sk(sk)->flags))) अणु
+		      test_bit(BT_SK_DEFER_SETUP, &bt_sk(sk)->flags))) {
 			err = -ENOTCONN;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		स_रखो(&cinfo, 0, माप(cinfo));
+		memset(&cinfo, 0, sizeof(cinfo));
 		cinfo.hci_handle = sco_pi(sk)->conn->hcon->handle;
-		स_नकल(cinfo.dev_class, sco_pi(sk)->conn->hcon->dev_class, 3);
+		memcpy(cinfo.dev_class, sco_pi(sk)->conn->hcon->dev_class, 3);
 
-		len = min_t(अचिन्हित पूर्णांक, len, माप(cinfo));
-		अगर (copy_to_user(optval, (अक्षर *)&cinfo, len))
+		len = min_t(unsigned int, len, sizeof(cinfo));
+		if (copy_to_user(optval, (char *)&cinfo, len))
 			err = -EFAULT;
 
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		err = -ENOPROTOOPT;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	release_sock(sk);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक sco_sock_माला_लोockopt(काष्ठा socket *sock, पूर्णांक level, पूर्णांक optname,
-			       अक्षर __user *optval, पूर्णांक __user *optlen)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	पूर्णांक len, err = 0;
-	काष्ठा bt_voice voice;
+static int sco_sock_getsockopt(struct socket *sock, int level, int optname,
+			       char __user *optval, int __user *optlen)
+{
+	struct sock *sk = sock->sk;
+	int len, err = 0;
+	struct bt_voice voice;
 	u32 phys;
-	पूर्णांक pkt_status;
+	int pkt_status;
 
 	BT_DBG("sk %p", sk);
 
-	अगर (level == SOL_SCO)
-		वापस sco_sock_माला_लोockopt_old(sock, optname, optval, optlen);
+	if (level == SOL_SCO)
+		return sco_sock_getsockopt_old(sock, optname, optval, optlen);
 
-	अगर (get_user(len, optlen))
-		वापस -EFAULT;
+	if (get_user(len, optlen))
+		return -EFAULT;
 
 	lock_sock(sk);
 
-	चयन (optname) अणु
+	switch (optname) {
 
-	हाल BT_DEFER_SETUP:
-		अगर (sk->sk_state != BT_BOUND && sk->sk_state != BT_LISTEN) अणु
+	case BT_DEFER_SETUP:
+		if (sk->sk_state != BT_BOUND && sk->sk_state != BT_LISTEN) {
 			err = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (put_user(test_bit(BT_SK_DEFER_SETUP, &bt_sk(sk)->flags),
+		if (put_user(test_bit(BT_SK_DEFER_SETUP, &bt_sk(sk)->flags),
 			     (u32 __user *)optval))
 			err = -EFAULT;
 
-		अवरोध;
+		break;
 
-	हाल BT_VOICE:
+	case BT_VOICE:
 		voice.setting = sco_pi(sk)->setting;
 
-		len = min_t(अचिन्हित पूर्णांक, len, माप(voice));
-		अगर (copy_to_user(optval, (अक्षर *)&voice, len))
+		len = min_t(unsigned int, len, sizeof(voice));
+		if (copy_to_user(optval, (char *)&voice, len))
 			err = -EFAULT;
 
-		अवरोध;
+		break;
 
-	हाल BT_PHY:
-		अगर (sk->sk_state != BT_CONNECTED) अणु
+	case BT_PHY:
+		if (sk->sk_state != BT_CONNECTED) {
 			err = -ENOTCONN;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		phys = hci_conn_get_phy(sco_pi(sk)->conn->hcon);
 
-		अगर (put_user(phys, (u32 __user *) optval))
+		if (put_user(phys, (u32 __user *) optval))
 			err = -EFAULT;
-		अवरोध;
+		break;
 
-	हाल BT_PKT_STATUS:
+	case BT_PKT_STATUS:
 		pkt_status = (sco_pi(sk)->cmsg_mask & SCO_CMSG_PKT_STATUS);
 
-		अगर (put_user(pkt_status, (पूर्णांक __user *)optval))
+		if (put_user(pkt_status, (int __user *)optval))
 			err = -EFAULT;
-		अवरोध;
+		break;
 
-	हाल BT_SNDMTU:
-	हाल BT_RCVMTU:
-		अगर (sk->sk_state != BT_CONNECTED) अणु
+	case BT_SNDMTU:
+	case BT_RCVMTU:
+		if (sk->sk_state != BT_CONNECTED) {
 			err = -ENOTCONN;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (put_user(sco_pi(sk)->conn->mtu, (u32 __user *)optval))
+		if (put_user(sco_pi(sk)->conn->mtu, (u32 __user *)optval))
 			err = -EFAULT;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		err = -ENOPROTOOPT;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	release_sock(sk);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक sco_sock_shutकरोwn(काष्ठा socket *sock, पूर्णांक how)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	पूर्णांक err = 0;
+static int sco_sock_shutdown(struct socket *sock, int how)
+{
+	struct sock *sk = sock->sk;
+	int err = 0;
 
 	BT_DBG("sock %p, sk %p", sock, sk);
 
-	अगर (!sk)
-		वापस 0;
+	if (!sk)
+		return 0;
 
 	sock_hold(sk);
 	lock_sock(sk);
 
-	अगर (!sk->sk_shutकरोwn) अणु
-		sk->sk_shutकरोwn = SHUTDOWN_MASK;
-		sco_sock_clear_समयr(sk);
-		__sco_sock_बंद(sk);
+	if (!sk->sk_shutdown) {
+		sk->sk_shutdown = SHUTDOWN_MASK;
+		sco_sock_clear_timer(sk);
+		__sco_sock_close(sk);
 
-		अगर (sock_flag(sk, SOCK_LINGER) && sk->sk_lingerसमय &&
+		if (sock_flag(sk, SOCK_LINGER) && sk->sk_lingertime &&
 		    !(current->flags & PF_EXITING))
-			err = bt_sock_रुको_state(sk, BT_CLOSED,
-						 sk->sk_lingerसमय);
-	पूर्ण
+			err = bt_sock_wait_state(sk, BT_CLOSED,
+						 sk->sk_lingertime);
+	}
 
 	release_sock(sk);
 	sock_put(sk);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक sco_sock_release(काष्ठा socket *sock)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	पूर्णांक err = 0;
+static int sco_sock_release(struct socket *sock)
+{
+	struct sock *sk = sock->sk;
+	int err = 0;
 
 	BT_DBG("sock %p, sk %p", sock, sk);
 
-	अगर (!sk)
-		वापस 0;
+	if (!sk)
+		return 0;
 
-	sco_sock_बंद(sk);
+	sco_sock_close(sk);
 
-	अगर (sock_flag(sk, SOCK_LINGER) && sk->sk_lingerसमय &&
-	    !(current->flags & PF_EXITING)) अणु
+	if (sock_flag(sk, SOCK_LINGER) && sk->sk_lingertime &&
+	    !(current->flags & PF_EXITING)) {
 		lock_sock(sk);
-		err = bt_sock_रुको_state(sk, BT_CLOSED, sk->sk_lingerसमय);
+		err = bt_sock_wait_state(sk, BT_CLOSED, sk->sk_lingertime);
 		release_sock(sk);
-	पूर्ण
+	}
 
 	sock_orphan(sk);
-	sco_sock_समाप्त(sk);
-	वापस err;
-पूर्ण
+	sco_sock_kill(sk);
+	return err;
+}
 
-अटल व्योम sco_conn_पढ़ोy(काष्ठा sco_conn *conn)
-अणु
-	काष्ठा sock *parent;
-	काष्ठा sock *sk = conn->sk;
+static void sco_conn_ready(struct sco_conn *conn)
+{
+	struct sock *parent;
+	struct sock *sk = conn->sk;
 
 	BT_DBG("conn %p", conn);
 
-	अगर (sk) अणु
-		sco_sock_clear_समयr(sk);
+	if (sk) {
+		sco_sock_clear_timer(sk);
 		bh_lock_sock(sk);
 		sk->sk_state = BT_CONNECTED;
 		sk->sk_state_change(sk);
 		bh_unlock_sock(sk);
-	पूर्ण अन्यथा अणु
+	} else {
 		sco_conn_lock(conn);
 
-		अगर (!conn->hcon) अणु
+		if (!conn->hcon) {
 			sco_conn_unlock(conn);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		parent = sco_get_sock_listen(&conn->hcon->src);
-		अगर (!parent) अणु
+		if (!parent) {
 			sco_conn_unlock(conn);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		bh_lock_sock(parent);
 
-		sk = sco_sock_alloc(sock_net(parent), शून्य,
+		sk = sco_sock_alloc(sock_net(parent), NULL,
 				    BTPROTO_SCO, GFP_ATOMIC, 0);
-		अगर (!sk) अणु
+		if (!sk) {
 			bh_unlock_sock(parent);
 			sco_conn_unlock(conn);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		sco_sock_init(sk, parent);
 
@@ -1121,120 +1120,120 @@ unlock:
 		hci_conn_hold(conn->hcon);
 		__sco_chan_add(conn, sk, parent);
 
-		अगर (test_bit(BT_SK_DEFER_SETUP, &bt_sk(parent)->flags))
+		if (test_bit(BT_SK_DEFER_SETUP, &bt_sk(parent)->flags))
 			sk->sk_state = BT_CONNECT2;
-		अन्यथा
+		else
 			sk->sk_state = BT_CONNECTED;
 
 		/* Wake up parent */
-		parent->sk_data_पढ़ोy(parent);
+		parent->sk_data_ready(parent);
 
 		bh_unlock_sock(parent);
 
 		sco_conn_unlock(conn);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* ----- SCO पूर्णांकerface with lower layer (HCI) ----- */
-पूर्णांक sco_connect_ind(काष्ठा hci_dev *hdev, bdaddr_t *bdaddr, __u8 *flags)
-अणु
-	काष्ठा sock *sk;
-	पूर्णांक lm = 0;
+/* ----- SCO interface with lower layer (HCI) ----- */
+int sco_connect_ind(struct hci_dev *hdev, bdaddr_t *bdaddr, __u8 *flags)
+{
+	struct sock *sk;
+	int lm = 0;
 
 	BT_DBG("hdev %s, bdaddr %pMR", hdev->name, bdaddr);
 
 	/* Find listening sockets */
-	पढ़ो_lock(&sco_sk_list.lock);
-	sk_क्रम_each(sk, &sco_sk_list.head) अणु
-		अगर (sk->sk_state != BT_LISTEN)
-			जारी;
+	read_lock(&sco_sk_list.lock);
+	sk_for_each(sk, &sco_sk_list.head) {
+		if (sk->sk_state != BT_LISTEN)
+			continue;
 
-		अगर (!bacmp(&sco_pi(sk)->src, &hdev->bdaddr) ||
-		    !bacmp(&sco_pi(sk)->src, BDADDR_ANY)) अणु
+		if (!bacmp(&sco_pi(sk)->src, &hdev->bdaddr) ||
+		    !bacmp(&sco_pi(sk)->src, BDADDR_ANY)) {
 			lm |= HCI_LM_ACCEPT;
 
-			अगर (test_bit(BT_SK_DEFER_SETUP, &bt_sk(sk)->flags))
+			if (test_bit(BT_SK_DEFER_SETUP, &bt_sk(sk)->flags))
 				*flags |= HCI_PROTO_DEFER;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	पढ़ो_unlock(&sco_sk_list.lock);
+			break;
+		}
+	}
+	read_unlock(&sco_sk_list.lock);
 
-	वापस lm;
-पूर्ण
+	return lm;
+}
 
-अटल व्योम sco_connect_cfm(काष्ठा hci_conn *hcon, __u8 status)
-अणु
-	अगर (hcon->type != SCO_LINK && hcon->type != ESCO_LINK)
-		वापस;
+static void sco_connect_cfm(struct hci_conn *hcon, __u8 status)
+{
+	if (hcon->type != SCO_LINK && hcon->type != ESCO_LINK)
+		return;
 
 	BT_DBG("hcon %p bdaddr %pMR status %d", hcon, &hcon->dst, status);
 
-	अगर (!status) अणु
-		काष्ठा sco_conn *conn;
+	if (!status) {
+		struct sco_conn *conn;
 
 		conn = sco_conn_add(hcon);
-		अगर (conn)
-			sco_conn_पढ़ोy(conn);
-	पूर्ण अन्यथा
-		sco_conn_del(hcon, bt_to_त्रुटि_सं(status));
-पूर्ण
+		if (conn)
+			sco_conn_ready(conn);
+	} else
+		sco_conn_del(hcon, bt_to_errno(status));
+}
 
-अटल व्योम sco_disconn_cfm(काष्ठा hci_conn *hcon, __u8 reason)
-अणु
-	अगर (hcon->type != SCO_LINK && hcon->type != ESCO_LINK)
-		वापस;
+static void sco_disconn_cfm(struct hci_conn *hcon, __u8 reason)
+{
+	if (hcon->type != SCO_LINK && hcon->type != ESCO_LINK)
+		return;
 
 	BT_DBG("hcon %p reason %d", hcon, reason);
 
-	sco_conn_del(hcon, bt_to_त्रुटि_सं(reason));
-पूर्ण
+	sco_conn_del(hcon, bt_to_errno(reason));
+}
 
-व्योम sco_recv_scodata(काष्ठा hci_conn *hcon, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा sco_conn *conn = hcon->sco_data;
+void sco_recv_scodata(struct hci_conn *hcon, struct sk_buff *skb)
+{
+	struct sco_conn *conn = hcon->sco_data;
 
-	अगर (!conn)
-		जाओ drop;
+	if (!conn)
+		goto drop;
 
 	BT_DBG("conn %p len %d", conn, skb->len);
 
-	अगर (skb->len) अणु
+	if (skb->len) {
 		sco_recv_frame(conn, skb);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 drop:
-	kमुक्त_skb(skb);
-पूर्ण
+	kfree_skb(skb);
+}
 
-अटल काष्ठा hci_cb sco_cb = अणु
+static struct hci_cb sco_cb = {
 	.name		= "SCO",
 	.connect_cfm	= sco_connect_cfm,
 	.disconn_cfm	= sco_disconn_cfm,
-पूर्ण;
+};
 
-अटल पूर्णांक sco_debugfs_show(काष्ठा seq_file *f, व्योम *p)
-अणु
-	काष्ठा sock *sk;
+static int sco_debugfs_show(struct seq_file *f, void *p)
+{
+	struct sock *sk;
 
-	पढ़ो_lock(&sco_sk_list.lock);
+	read_lock(&sco_sk_list.lock);
 
-	sk_क्रम_each(sk, &sco_sk_list.head) अणु
-		seq_म_लिखो(f, "%pMR %pMR %d\n", &sco_pi(sk)->src,
+	sk_for_each(sk, &sco_sk_list.head) {
+		seq_printf(f, "%pMR %pMR %d\n", &sco_pi(sk)->src,
 			   &sco_pi(sk)->dst, sk->sk_state);
-	पूर्ण
+	}
 
-	पढ़ो_unlock(&sco_sk_list.lock);
+	read_unlock(&sco_sk_list.lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 DEFINE_SHOW_ATTRIBUTE(sco_debugfs);
 
-अटल काष्ठा dentry *sco_debugfs;
+static struct dentry *sco_debugfs;
 
-अटल स्थिर काष्ठा proto_ops sco_sock_ops = अणु
+static const struct proto_ops sco_sock_ops = {
 	.family		= PF_BLUETOOTH,
 	.owner		= THIS_MODULE,
 	.release	= sco_sock_release,
@@ -1250,69 +1249,69 @@ DEFINE_SHOW_ATTRIBUTE(sco_debugfs);
 	.gettstamp	= sock_gettstamp,
 	.mmap		= sock_no_mmap,
 	.socketpair	= sock_no_socketpair,
-	.shutकरोwn	= sco_sock_shutकरोwn,
+	.shutdown	= sco_sock_shutdown,
 	.setsockopt	= sco_sock_setsockopt,
-	.माला_लोockopt	= sco_sock_माला_लोockopt
-पूर्ण;
+	.getsockopt	= sco_sock_getsockopt
+};
 
-अटल स्थिर काष्ठा net_proto_family sco_sock_family_ops = अणु
+static const struct net_proto_family sco_sock_family_ops = {
 	.family	= PF_BLUETOOTH,
 	.owner	= THIS_MODULE,
 	.create	= sco_sock_create,
-पूर्ण;
+};
 
-पूर्णांक __init sco_init(व्योम)
-अणु
-	पूर्णांक err;
+int __init sco_init(void)
+{
+	int err;
 
-	BUILD_BUG_ON(माप(काष्ठा sockaddr_sco) > माप(काष्ठा sockaddr));
+	BUILD_BUG_ON(sizeof(struct sockaddr_sco) > sizeof(struct sockaddr));
 
-	err = proto_रेजिस्टर(&sco_proto, 0);
-	अगर (err < 0)
-		वापस err;
+	err = proto_register(&sco_proto, 0);
+	if (err < 0)
+		return err;
 
-	err = bt_sock_रेजिस्टर(BTPROTO_SCO, &sco_sock_family_ops);
-	अगर (err < 0) अणु
+	err = bt_sock_register(BTPROTO_SCO, &sco_sock_family_ops);
+	if (err < 0) {
 		BT_ERR("SCO socket registration failed");
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	err = bt_procfs_init(&init_net, "sco", &sco_sk_list, शून्य);
-	अगर (err < 0) अणु
+	err = bt_procfs_init(&init_net, "sco", &sco_sk_list, NULL);
+	if (err < 0) {
 		BT_ERR("Failed to create SCO proc file");
-		bt_sock_unरेजिस्टर(BTPROTO_SCO);
-		जाओ error;
-	पूर्ण
+		bt_sock_unregister(BTPROTO_SCO);
+		goto error;
+	}
 
 	BT_INFO("SCO socket layer initialized");
 
-	hci_रेजिस्टर_cb(&sco_cb);
+	hci_register_cb(&sco_cb);
 
-	अगर (IS_ERR_OR_शून्य(bt_debugfs))
-		वापस 0;
+	if (IS_ERR_OR_NULL(bt_debugfs))
+		return 0;
 
 	sco_debugfs = debugfs_create_file("sco", 0444, bt_debugfs,
-					  शून्य, &sco_debugfs_fops);
+					  NULL, &sco_debugfs_fops);
 
-	वापस 0;
+	return 0;
 
 error:
-	proto_unरेजिस्टर(&sco_proto);
-	वापस err;
-पूर्ण
+	proto_unregister(&sco_proto);
+	return err;
+}
 
-व्योम sco_निकास(व्योम)
-अणु
+void sco_exit(void)
+{
 	bt_procfs_cleanup(&init_net, "sco");
 
-	debugfs_हटाओ(sco_debugfs);
+	debugfs_remove(sco_debugfs);
 
-	hci_unरेजिस्टर_cb(&sco_cb);
+	hci_unregister_cb(&sco_cb);
 
-	bt_sock_unरेजिस्टर(BTPROTO_SCO);
+	bt_sock_unregister(BTPROTO_SCO);
 
-	proto_unरेजिस्टर(&sco_proto);
-पूर्ण
+	proto_unregister(&sco_proto);
+}
 
 module_param(disable_esco, bool, 0644);
 MODULE_PARM_DESC(disable_esco, "Disable eSCO connection creation");

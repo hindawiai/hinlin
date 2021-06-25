@@ -1,97 +1,96 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Landlock tests - Ptrace
  *
- * Copyright तऊ 2017-2020 Mickaथ+l Salaथञn <mic@digikod.net>
- * Copyright तऊ 2019-2020 ANSSI
+ * Copyright © 2017-2020 Mickaël Salaün <mic@digikod.net>
+ * Copyright © 2019-2020 ANSSI
  */
 
-#घोषणा _GNU_SOURCE
-#समावेश <त्रुटिसं.स>
-#समावेश <fcntl.h>
-#समावेश <linux/landlock.h>
-#समावेश <संकेत.स>
-#समावेश <sys/prctl.h>
-#समावेश <sys/ptrace.h>
-#समावेश <sys/types.h>
-#समावेश <sys/रुको.h>
-#समावेश <unistd.h>
+#define _GNU_SOURCE
+#include <errno.h>
+#include <fcntl.h>
+#include <linux/landlock.h>
+#include <signal.h>
+#include <sys/prctl.h>
+#include <sys/ptrace.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
-#समावेश "common.h"
+#include "common.h"
 
-अटल व्योम create_करोमुख्य(काष्ठा __test_metadata *स्थिर _metadata)
-अणु
-	पूर्णांक ruleset_fd;
-	काष्ठा landlock_ruleset_attr ruleset_attr = अणु
+static void create_domain(struct __test_metadata *const _metadata)
+{
+	int ruleset_fd;
+	struct landlock_ruleset_attr ruleset_attr = {
 		.handled_access_fs = LANDLOCK_ACCESS_FS_MAKE_BLOCK,
-	पूर्ण;
+	};
 
 	ruleset_fd = landlock_create_ruleset(&ruleset_attr,
-			माप(ruleset_attr), 0);
-	EXPECT_LE(0, ruleset_fd) अणु
-		TH_LOG("Failed to create a ruleset: %s", म_त्रुटि(त्रुटि_सं));
-	पूर्ण
+			sizeof(ruleset_attr), 0);
+	EXPECT_LE(0, ruleset_fd) {
+		TH_LOG("Failed to create a ruleset: %s", strerror(errno));
+	}
 	EXPECT_EQ(0, prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0));
 	EXPECT_EQ(0, landlock_restrict_self(ruleset_fd, 0));
-	EXPECT_EQ(0, बंद(ruleset_fd));
-पूर्ण
+	EXPECT_EQ(0, close(ruleset_fd));
+}
 
-अटल पूर्णांक test_ptrace_पढ़ो(स्थिर pid_t pid)
-अणु
-	अटल स्थिर अक्षर path_ढाँचा[] = "/proc/%d/environ";
-	अक्षर procenv_path[माप(path_ढाँचा) + 10];
-	पूर्णांक procenv_path_size, fd;
+static int test_ptrace_read(const pid_t pid)
+{
+	static const char path_template[] = "/proc/%d/environ";
+	char procenv_path[sizeof(path_template) + 10];
+	int procenv_path_size, fd;
 
-	procenv_path_size = snम_लिखो(procenv_path, माप(procenv_path),
-			path_ढाँचा, pid);
-	अगर (procenv_path_size >= माप(procenv_path))
-		वापस E2BIG;
+	procenv_path_size = snprintf(procenv_path, sizeof(procenv_path),
+			path_template, pid);
+	if (procenv_path_size >= sizeof(procenv_path))
+		return E2BIG;
 
-	fd = खोलो(procenv_path, O_RDONLY | O_CLOEXEC);
-	अगर (fd < 0)
-		वापस त्रुटि_सं;
+	fd = open(procenv_path, O_RDONLY | O_CLOEXEC);
+	if (fd < 0)
+		return errno;
 	/*
-	 * Mixing error codes from बंद(2) and खोलो(2) should not lead to any
-	 * (access type) confusion क्रम this test.
+	 * Mixing error codes from close(2) and open(2) should not lead to any
+	 * (access type) confusion for this test.
 	 */
-	अगर (बंद(fd) != 0)
-		वापस त्रुटि_सं;
-	वापस 0;
-पूर्ण
+	if (close(fd) != 0)
+		return errno;
+	return 0;
+}
 
-FIXTURE(hierarchy) अणु पूर्ण;
+FIXTURE(hierarchy) { };
 
-FIXTURE_VARIANT(hierarchy) अणु
-	स्थिर bool करोमुख्य_both;
-	स्थिर bool करोमुख्य_parent;
-	स्थिर bool करोमुख्य_child;
-पूर्ण;
+FIXTURE_VARIANT(hierarchy) {
+	const bool domain_both;
+	const bool domain_parent;
+	const bool domain_child;
+};
 
 /*
  * Test multiple tracing combinations between a parent process P1 and a child
  * process P2.
  *
  * Yama's scoped ptrace is presumed disabled.  If enabled, this optional
- * restriction is enक्रमced in addition to any Landlock check, which means that
+ * restriction is enforced in addition to any Landlock check, which means that
  * all P2 requests to trace P1 would be denied.
  */
 
 /*
- *        No करोमुख्य
+ *        No domain
  *
  *   P1-.               P1 -> P2 : allow
  *       \              P2 -> P1 : allow
  *        'P2
  */
-FIXTURE_VARIANT_ADD(hierarchy, allow_without_करोमुख्य) अणु
-	.करोमुख्य_both = false,
-	.करोमुख्य_parent = false,
-	.करोमुख्य_child = false,
-पूर्ण;
+FIXTURE_VARIANT_ADD(hierarchy, allow_without_domain) {
+	.domain_both = false,
+	.domain_parent = false,
+	.domain_child = false,
+};
 
 /*
- *        Child करोमुख्य
+ *        Child domain
  *
  *   P1--.              P1 -> P2 : allow
  *        \             P2 -> P1 : deny
@@ -99,28 +98,28 @@ FIXTURE_VARIANT_ADD(hierarchy, allow_without_करोमुख्य) अणु
  *        |  P2  |
  *        '------'
  */
-FIXTURE_VARIANT_ADD(hierarchy, allow_with_one_करोमुख्य) अणु
-	.करोमुख्य_both = false,
-	.करोमुख्य_parent = false,
-	.करोमुख्य_child = true,
-पूर्ण;
+FIXTURE_VARIANT_ADD(hierarchy, allow_with_one_domain) {
+	.domain_both = false,
+	.domain_parent = false,
+	.domain_child = true,
+};
 
 /*
- *        Parent करोमुख्य
+ *        Parent domain
  * .------.
  * |  P1  --.           P1 -> P2 : deny
  * '------'  \          P2 -> P1 : allow
  *            '
  *            P2
  */
-FIXTURE_VARIANT_ADD(hierarchy, deny_with_parent_करोमुख्य) अणु
-	.करोमुख्य_both = false,
-	.करोमुख्य_parent = true,
-	.करोमुख्य_child = false,
-पूर्ण;
+FIXTURE_VARIANT_ADD(hierarchy, deny_with_parent_domain) {
+	.domain_both = false,
+	.domain_parent = true,
+	.domain_child = false,
+};
 
 /*
- *        Parent + child करोमुख्य (siblings)
+ *        Parent + child domain (siblings)
  * .------.
  * |  P1  ---.          P1 -> P2 : deny
  * '------'   \         P2 -> P1 : deny
@@ -128,14 +127,14 @@ FIXTURE_VARIANT_ADD(hierarchy, deny_with_parent_करोमुख्य) अण
  *         |  P2  |
  *         '------'
  */
-FIXTURE_VARIANT_ADD(hierarchy, deny_with_sibling_करोमुख्य) अणु
-	.करोमुख्य_both = false,
-	.करोमुख्य_parent = true,
-	.करोमुख्य_child = true,
-पूर्ण;
+FIXTURE_VARIANT_ADD(hierarchy, deny_with_sibling_domain) {
+	.domain_both = false,
+	.domain_parent = true,
+	.domain_child = true,
+};
 
 /*
- *         Same करोमुख्य (inherited)
+ *         Same domain (inherited)
  * .-------------.
  * | P1----.     |      P1 -> P2 : allow
  * |        \    |      P2 -> P1 : allow
@@ -143,14 +142,14 @@ FIXTURE_VARIANT_ADD(hierarchy, deny_with_sibling_करोमुख्य) अ�
  * |         P2  |
  * '-------------'
  */
-FIXTURE_VARIANT_ADD(hierarchy, allow_sibling_करोमुख्य) अणु
-	.करोमुख्य_both = true,
-	.करोमुख्य_parent = false,
-	.करोमुख्य_child = false,
-पूर्ण;
+FIXTURE_VARIANT_ADD(hierarchy, allow_sibling_domain) {
+	.domain_both = true,
+	.domain_parent = false,
+	.domain_child = false,
+};
 
 /*
- *         Inherited + child करोमुख्य
+ *         Inherited + child domain
  * .-----------------.
  * |  P1----.        |  P1 -> P2 : allow
  * |         \       |  P2 -> P1 : deny
@@ -159,14 +158,14 @@ FIXTURE_VARIANT_ADD(hierarchy, allow_sibling_करोमुख्य) अणु
  * |        '------' |
  * '-----------------'
  */
-FIXTURE_VARIANT_ADD(hierarchy, allow_with_nested_करोमुख्य) अणु
-	.करोमुख्य_both = true,
-	.करोमुख्य_parent = false,
-	.करोमुख्य_child = true,
-पूर्ण;
+FIXTURE_VARIANT_ADD(hierarchy, allow_with_nested_domain) {
+	.domain_both = true,
+	.domain_parent = false,
+	.domain_child = true,
+};
 
 /*
- *         Inherited + parent करोमुख्य
+ *         Inherited + parent domain
  * .-----------------.
  * |.------.         |  P1 -> P2 : deny
  * ||  P1  ----.     |  P2 -> P1 : allow
@@ -175,14 +174,14 @@ FIXTURE_VARIANT_ADD(hierarchy, allow_with_nested_करोमुख्य) अ�
  * |             P2  |
  * '-----------------'
  */
-FIXTURE_VARIANT_ADD(hierarchy, deny_with_nested_and_parent_करोमुख्य) अणु
-	.करोमुख्य_both = true,
-	.करोमुख्य_parent = true,
-	.करोमुख्य_child = false,
-पूर्ण;
+FIXTURE_VARIANT_ADD(hierarchy, deny_with_nested_and_parent_domain) {
+	.domain_both = true,
+	.domain_parent = true,
+	.domain_child = false,
+};
 
 /*
- *         Inherited + parent and child करोमुख्य (siblings)
+ *         Inherited + parent and child domain (siblings)
  * .-----------------.
  * | .------.        |  P1 -> P2 : deny
  * | |  P1  .        |  P2 -> P1 : deny
@@ -193,146 +192,146 @@ FIXTURE_VARIANT_ADD(hierarchy, deny_with_nested_and_parent_करोमुख्
  * |        '------' |
  * '-----------------'
  */
-FIXTURE_VARIANT_ADD(hierarchy, deny_with_विभाजनed_करोमुख्य) अणु
-	.करोमुख्य_both = true,
-	.करोमुख्य_parent = true,
-	.करोमुख्य_child = true,
-पूर्ण;
+FIXTURE_VARIANT_ADD(hierarchy, deny_with_forked_domain) {
+	.domain_both = true,
+	.domain_parent = true,
+	.domain_child = true,
+};
 
 FIXTURE_SETUP(hierarchy)
-अणु पूर्ण
+{ }
 
 FIXTURE_TEARDOWN(hierarchy)
-अणु पूर्ण
+{ }
 
-/* Test PTRACE_TRACEME and PTRACE_ATTACH क्रम parent and child. */
+/* Test PTRACE_TRACEME and PTRACE_ATTACH for parent and child. */
 TEST_F(hierarchy, trace)
-अणु
+{
 	pid_t child, parent;
-	पूर्णांक status, err_proc_पढ़ो;
-	पूर्णांक pipe_child[2], pipe_parent[2];
-	अक्षर buf_parent;
-	दीर्घ ret;
+	int status, err_proc_read;
+	int pipe_child[2], pipe_parent[2];
+	char buf_parent;
+	long ret;
 
 	/*
-	 * Removes all effective and permitted capabilities to not पूर्णांकerfere
-	 * with cap_ptrace_access_check() in हाल of PTRACE_MODE_FSCREDS.
+	 * Removes all effective and permitted capabilities to not interfere
+	 * with cap_ptrace_access_check() in case of PTRACE_MODE_FSCREDS.
 	 */
 	drop_caps(_metadata);
 
 	parent = getpid();
 	ASSERT_EQ(0, pipe2(pipe_child, O_CLOEXEC));
 	ASSERT_EQ(0, pipe2(pipe_parent, O_CLOEXEC));
-	अगर (variant->करोमुख्य_both) अणु
-		create_करोमुख्य(_metadata);
-		अगर (!_metadata->passed)
-			/* Aborts beक्रमe विभाजनing. */
-			वापस;
-	पूर्ण
+	if (variant->domain_both) {
+		create_domain(_metadata);
+		if (!_metadata->passed)
+			/* Aborts before forking. */
+			return;
+	}
 
-	child = विभाजन();
+	child = fork();
 	ASSERT_LE(0, child);
-	अगर (child == 0) अणु
-		अक्षर buf_child;
+	if (child == 0) {
+		char buf_child;
 
-		ASSERT_EQ(0, बंद(pipe_parent[1]));
-		ASSERT_EQ(0, बंद(pipe_child[0]));
-		अगर (variant->करोमुख्य_child)
-			create_करोमुख्य(_metadata);
+		ASSERT_EQ(0, close(pipe_parent[1]));
+		ASSERT_EQ(0, close(pipe_child[0]));
+		if (variant->domain_child)
+			create_domain(_metadata);
 
-		/* Waits क्रम the parent to be in a करोमुख्य, अगर any. */
-		ASSERT_EQ(1, पढ़ो(pipe_parent[0], &buf_child, 1));
+		/* Waits for the parent to be in a domain, if any. */
+		ASSERT_EQ(1, read(pipe_parent[0], &buf_child, 1));
 
 		/* Tests PTRACE_ATTACH and PTRACE_MODE_READ on the parent. */
-		err_proc_पढ़ो = test_ptrace_पढ़ो(parent);
-		ret = ptrace(PTRACE_ATTACH, parent, शून्य, 0);
-		अगर (variant->करोमुख्य_child) अणु
+		err_proc_read = test_ptrace_read(parent);
+		ret = ptrace(PTRACE_ATTACH, parent, NULL, 0);
+		if (variant->domain_child) {
 			EXPECT_EQ(-1, ret);
-			EXPECT_EQ(EPERM, त्रुटि_सं);
-			EXPECT_EQ(EACCES, err_proc_पढ़ो);
-		पूर्ण अन्यथा अणु
+			EXPECT_EQ(EPERM, errno);
+			EXPECT_EQ(EACCES, err_proc_read);
+		} else {
 			EXPECT_EQ(0, ret);
-			EXPECT_EQ(0, err_proc_पढ़ो);
-		पूर्ण
-		अगर (ret == 0) अणु
-			ASSERT_EQ(parent, रुकोpid(parent, &status, 0));
+			EXPECT_EQ(0, err_proc_read);
+		}
+		if (ret == 0) {
+			ASSERT_EQ(parent, waitpid(parent, &status, 0));
 			ASSERT_EQ(1, WIFSTOPPED(status));
-			ASSERT_EQ(0, ptrace(PTRACE_DETACH, parent, शून्य, 0));
-		पूर्ण
+			ASSERT_EQ(0, ptrace(PTRACE_DETACH, parent, NULL, 0));
+		}
 
 		/* Tests child PTRACE_TRACEME. */
 		ret = ptrace(PTRACE_TRACEME);
-		अगर (variant->करोमुख्य_parent) अणु
+		if (variant->domain_parent) {
 			EXPECT_EQ(-1, ret);
-			EXPECT_EQ(EPERM, त्रुटि_सं);
-		पूर्ण अन्यथा अणु
+			EXPECT_EQ(EPERM, errno);
+		} else {
 			EXPECT_EQ(0, ret);
-		पूर्ण
+		}
 
 		/*
-		 * Signals that the PTRACE_ATTACH test is करोne and the
+		 * Signals that the PTRACE_ATTACH test is done and the
 		 * PTRACE_TRACEME test is ongoing.
 		 */
-		ASSERT_EQ(1, ग_लिखो(pipe_child[1], ".", 1));
+		ASSERT_EQ(1, write(pipe_child[1], ".", 1));
 
-		अगर (!variant->करोमुख्य_parent) अणु
-			ASSERT_EQ(0, उठाओ(SIGSTOP));
-		पूर्ण
+		if (!variant->domain_parent) {
+			ASSERT_EQ(0, raise(SIGSTOP));
+		}
 
-		/* Waits क्रम the parent PTRACE_ATTACH test. */
-		ASSERT_EQ(1, पढ़ो(pipe_parent[0], &buf_child, 1));
-		_निकास(_metadata->passed ? निकास_सफल : निकास_त्रुटि);
-		वापस;
-	पूर्ण
+		/* Waits for the parent PTRACE_ATTACH test. */
+		ASSERT_EQ(1, read(pipe_parent[0], &buf_child, 1));
+		_exit(_metadata->passed ? EXIT_SUCCESS : EXIT_FAILURE);
+		return;
+	}
 
-	ASSERT_EQ(0, बंद(pipe_child[1]));
-	ASSERT_EQ(0, बंद(pipe_parent[0]));
-	अगर (variant->करोमुख्य_parent)
-		create_करोमुख्य(_metadata);
+	ASSERT_EQ(0, close(pipe_child[1]));
+	ASSERT_EQ(0, close(pipe_parent[0]));
+	if (variant->domain_parent)
+		create_domain(_metadata);
 
-	/* Signals that the parent is in a करोमुख्य, अगर any. */
-	ASSERT_EQ(1, ग_लिखो(pipe_parent[1], ".", 1));
+	/* Signals that the parent is in a domain, if any. */
+	ASSERT_EQ(1, write(pipe_parent[1], ".", 1));
 
 	/*
-	 * Waits क्रम the child to test PTRACE_ATTACH on the parent and start
+	 * Waits for the child to test PTRACE_ATTACH on the parent and start
 	 * testing PTRACE_TRACEME.
 	 */
-	ASSERT_EQ(1, पढ़ो(pipe_child[0], &buf_parent, 1));
+	ASSERT_EQ(1, read(pipe_child[0], &buf_parent, 1));
 
 	/* Tests child PTRACE_TRACEME. */
-	अगर (!variant->करोमुख्य_parent) अणु
-		ASSERT_EQ(child, रुकोpid(child, &status, 0));
+	if (!variant->domain_parent) {
+		ASSERT_EQ(child, waitpid(child, &status, 0));
 		ASSERT_EQ(1, WIFSTOPPED(status));
-		ASSERT_EQ(0, ptrace(PTRACE_DETACH, child, शून्य, 0));
-	पूर्ण अन्यथा अणु
+		ASSERT_EQ(0, ptrace(PTRACE_DETACH, child, NULL, 0));
+	} else {
 		/* The child should not be traced by the parent. */
-		EXPECT_EQ(-1, ptrace(PTRACE_DETACH, child, शून्य, 0));
-		EXPECT_EQ(ESRCH, त्रुटि_सं);
-	पूर्ण
+		EXPECT_EQ(-1, ptrace(PTRACE_DETACH, child, NULL, 0));
+		EXPECT_EQ(ESRCH, errno);
+	}
 
 	/* Tests PTRACE_ATTACH and PTRACE_MODE_READ on the child. */
-	err_proc_पढ़ो = test_ptrace_पढ़ो(child);
-	ret = ptrace(PTRACE_ATTACH, child, शून्य, 0);
-	अगर (variant->करोमुख्य_parent) अणु
+	err_proc_read = test_ptrace_read(child);
+	ret = ptrace(PTRACE_ATTACH, child, NULL, 0);
+	if (variant->domain_parent) {
 		EXPECT_EQ(-1, ret);
-		EXPECT_EQ(EPERM, त्रुटि_सं);
-		EXPECT_EQ(EACCES, err_proc_पढ़ो);
-	पूर्ण अन्यथा अणु
+		EXPECT_EQ(EPERM, errno);
+		EXPECT_EQ(EACCES, err_proc_read);
+	} else {
 		EXPECT_EQ(0, ret);
-		EXPECT_EQ(0, err_proc_पढ़ो);
-	पूर्ण
-	अगर (ret == 0) अणु
-		ASSERT_EQ(child, रुकोpid(child, &status, 0));
+		EXPECT_EQ(0, err_proc_read);
+	}
+	if (ret == 0) {
+		ASSERT_EQ(child, waitpid(child, &status, 0));
 		ASSERT_EQ(1, WIFSTOPPED(status));
-		ASSERT_EQ(0, ptrace(PTRACE_DETACH, child, शून्य, 0));
-	पूर्ण
+		ASSERT_EQ(0, ptrace(PTRACE_DETACH, child, NULL, 0));
+	}
 
-	/* Signals that the parent PTRACE_ATTACH test is करोne. */
-	ASSERT_EQ(1, ग_लिखो(pipe_parent[1], ".", 1));
-	ASSERT_EQ(child, रुकोpid(child, &status, 0));
-	अगर (WIFSIGNALED(status) || !WIFEXITED(status) ||
-			WEXITSTATUS(status) != निकास_सफल)
+	/* Signals that the parent PTRACE_ATTACH test is done. */
+	ASSERT_EQ(1, write(pipe_parent[1], ".", 1));
+	ASSERT_EQ(child, waitpid(child, &status, 0));
+	if (WIFSIGNALED(status) || !WIFEXITED(status) ||
+			WEXITSTATUS(status) != EXIT_SUCCESS)
 		_metadata->passed = 0;
-पूर्ण
+}
 
 TEST_HARNESS_MAIN

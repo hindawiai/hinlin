@@ -1,23 +1,22 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_SYSTEM iocost
+/* SPDX-License-Identifier: GPL-2.0 */
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM iocost
 
-काष्ठा ioc;
-काष्ठा ioc_now;
-काष्ठा ioc_gq;
+struct ioc;
+struct ioc_now;
+struct ioc_gq;
 
-#अगर !defined(_TRACE_BLK_IOCOST_H) || defined(TRACE_HEADER_MULTI_READ)
-#घोषणा _TRACE_BLK_IOCOST_H
+#if !defined(_TRACE_BLK_IOCOST_H) || defined(TRACE_HEADER_MULTI_READ)
+#define _TRACE_BLK_IOCOST_H
 
-#समावेश <linux/tracepoपूर्णांक.h>
+#include <linux/tracepoint.h>
 
 DECLARE_EVENT_CLASS(iocost_iocg_state,
 
-	TP_PROTO(काष्ठा ioc_gq *iocg, स्थिर अक्षर *path, काष्ठा ioc_now *now,
-		u64 last_period, u64 cur_period, u64 vसमय),
+	TP_PROTO(struct ioc_gq *iocg, const char *path, struct ioc_now *now,
+		u64 last_period, u64 cur_period, u64 vtime),
 
-	TP_ARGS(iocg, path, now, last_period, cur_period, vसमय),
+	TP_ARGS(iocg, path, now, last_period, cur_period, vtime),
 
 	TP_STRUCT__entry (
 		__string(devname, ioc_name(iocg->ioc))
@@ -27,7 +26,7 @@ DECLARE_EVENT_CLASS(iocost_iocg_state,
 		__field(u64, vrate)
 		__field(u64, last_period)
 		__field(u64, cur_period)
-		__field(u64, vसमय)
+		__field(u64, vtime)
 		__field(u32, weight)
 		__field(u32, inuse)
 		__field(u64, hweight_active)
@@ -42,41 +41,41 @@ DECLARE_EVENT_CLASS(iocost_iocg_state,
 		__entry->vrate = now->vrate;
 		__entry->last_period = last_period;
 		__entry->cur_period = cur_period;
-		__entry->vसमय = vसमय;
+		__entry->vtime = vtime;
 		__entry->weight = iocg->weight;
 		__entry->inuse = iocg->inuse;
 		__entry->hweight_active = iocg->hweight_active;
 		__entry->hweight_inuse = iocg->hweight_inuse;
 	),
 
-	TP_prपूर्णांकk("[%s:%s] now=%llu:%llu vrate=%llu "
+	TP_printk("[%s:%s] now=%llu:%llu vrate=%llu "
 		  "period=%llu->%llu vtime=%llu "
 		  "weight=%u/%u hweight=%llu/%llu",
 		__get_str(devname), __get_str(cgroup),
 		__entry->now, __entry->vnow, __entry->vrate,
 		__entry->last_period, __entry->cur_period,
-		__entry->vसमय, __entry->inuse, __entry->weight,
+		__entry->vtime, __entry->inuse, __entry->weight,
 		__entry->hweight_inuse, __entry->hweight_active
 	)
 );
 
 DEFINE_EVENT(iocost_iocg_state, iocost_iocg_activate,
-	TP_PROTO(काष्ठा ioc_gq *iocg, स्थिर अक्षर *path, काष्ठा ioc_now *now,
-		 u64 last_period, u64 cur_period, u64 vसमय),
+	TP_PROTO(struct ioc_gq *iocg, const char *path, struct ioc_now *now,
+		 u64 last_period, u64 cur_period, u64 vtime),
 
-	TP_ARGS(iocg, path, now, last_period, cur_period, vसमय)
+	TP_ARGS(iocg, path, now, last_period, cur_period, vtime)
 );
 
 DEFINE_EVENT(iocost_iocg_state, iocost_iocg_idle,
-	TP_PROTO(काष्ठा ioc_gq *iocg, स्थिर अक्षर *path, काष्ठा ioc_now *now,
-		 u64 last_period, u64 cur_period, u64 vसमय),
+	TP_PROTO(struct ioc_gq *iocg, const char *path, struct ioc_now *now,
+		 u64 last_period, u64 cur_period, u64 vtime),
 
-	TP_ARGS(iocg, path, now, last_period, cur_period, vसमय)
+	TP_ARGS(iocg, path, now, last_period, cur_period, vtime)
 );
 
 DECLARE_EVENT_CLASS(iocg_inuse_update,
 
-	TP_PROTO(काष्ठा ioc_gq *iocg, स्थिर अक्षर *path, काष्ठा ioc_now *now,
+	TP_PROTO(struct ioc_gq *iocg, const char *path, struct ioc_now *now,
 		u32 old_inuse, u32 new_inuse,
 		u64 old_hw_inuse, u64 new_hw_inuse),
 
@@ -103,16 +102,16 @@ DECLARE_EVENT_CLASS(iocg_inuse_update,
 		__entry->new_hweight_inuse = new_hw_inuse;
 	),
 
-	TP_prपूर्णांकk("[%s:%s] now=%llu inuse=%u->%u hw_inuse=%llu->%llu",
+	TP_printk("[%s:%s] now=%llu inuse=%u->%u hw_inuse=%llu->%llu",
 		__get_str(devname), __get_str(cgroup), __entry->now,
 		__entry->old_inuse, __entry->new_inuse,
 		__entry->old_hweight_inuse, __entry->new_hweight_inuse
 	)
 );
 
-DEFINE_EVENT(iocg_inuse_update, iocost_inuse_लघुage,
+DEFINE_EVENT(iocg_inuse_update, iocost_inuse_shortage,
 
-	TP_PROTO(काष्ठा ioc_gq *iocg, स्थिर अक्षर *path, काष्ठा ioc_now *now,
+	TP_PROTO(struct ioc_gq *iocg, const char *path, struct ioc_now *now,
 		u32 old_inuse, u32 new_inuse,
 		u64 old_hw_inuse, u64 new_hw_inuse),
 
@@ -122,7 +121,7 @@ DEFINE_EVENT(iocg_inuse_update, iocost_inuse_लघुage,
 
 DEFINE_EVENT(iocg_inuse_update, iocost_inuse_transfer,
 
-	TP_PROTO(काष्ठा ioc_gq *iocg, स्थिर अक्षर *path, काष्ठा ioc_now *now,
+	TP_PROTO(struct ioc_gq *iocg, const char *path, struct ioc_now *now,
 		u32 old_inuse, u32 new_inuse,
 		u64 old_hw_inuse, u64 new_hw_inuse),
 
@@ -132,7 +131,7 @@ DEFINE_EVENT(iocg_inuse_update, iocost_inuse_transfer,
 
 DEFINE_EVENT(iocg_inuse_update, iocost_inuse_adjust,
 
-	TP_PROTO(काष्ठा ioc_gq *iocg, स्थिर अक्षर *path, काष्ठा ioc_now *now,
+	TP_PROTO(struct ioc_gq *iocg, const char *path, struct ioc_now *now,
 		u32 old_inuse, u32 new_inuse,
 		u64 old_hw_inuse, u64 new_hw_inuse),
 
@@ -142,46 +141,46 @@ DEFINE_EVENT(iocg_inuse_update, iocost_inuse_adjust,
 
 TRACE_EVENT(iocost_ioc_vrate_adj,
 
-	TP_PROTO(काष्ठा ioc *ioc, u64 new_vrate, u32 *missed_ppm,
-		u32 rq_रुको_pct, पूर्णांक nr_lagging, पूर्णांक nr_लघुages),
+	TP_PROTO(struct ioc *ioc, u64 new_vrate, u32 *missed_ppm,
+		u32 rq_wait_pct, int nr_lagging, int nr_shortages),
 
-	TP_ARGS(ioc, new_vrate, missed_ppm, rq_रुको_pct, nr_lagging, nr_लघुages),
+	TP_ARGS(ioc, new_vrate, missed_ppm, rq_wait_pct, nr_lagging, nr_shortages),
 
 	TP_STRUCT__entry (
 		__string(devname, ioc_name(ioc))
 		__field(u64, old_vrate)
 		__field(u64, new_vrate)
-		__field(पूर्णांक, busy_level)
-		__field(u32, पढ़ो_missed_ppm)
-		__field(u32, ग_लिखो_missed_ppm)
-		__field(u32, rq_रुको_pct)
-		__field(पूर्णांक, nr_lagging)
-		__field(पूर्णांक, nr_लघुages)
+		__field(int, busy_level)
+		__field(u32, read_missed_ppm)
+		__field(u32, write_missed_ppm)
+		__field(u32, rq_wait_pct)
+		__field(int, nr_lagging)
+		__field(int, nr_shortages)
 	),
 
 	TP_fast_assign(
 		__assign_str(devname, ioc_name(ioc));
-		__entry->old_vrate = atomic64_पढ़ो(&ioc->vसमय_rate);;
+		__entry->old_vrate = atomic64_read(&ioc->vtime_rate);;
 		__entry->new_vrate = new_vrate;
 		__entry->busy_level = ioc->busy_level;
-		__entry->पढ़ो_missed_ppm = missed_ppm[READ];
-		__entry->ग_लिखो_missed_ppm = missed_ppm[WRITE];
-		__entry->rq_रुको_pct = rq_रुको_pct;
+		__entry->read_missed_ppm = missed_ppm[READ];
+		__entry->write_missed_ppm = missed_ppm[WRITE];
+		__entry->rq_wait_pct = rq_wait_pct;
 		__entry->nr_lagging = nr_lagging;
-		__entry->nr_लघुages = nr_लघुages;
+		__entry->nr_shortages = nr_shortages;
 	),
 
-	TP_prपूर्णांकk("[%s] vrate=%llu->%llu busy=%d missed_ppm=%u:%u rq_wait_pct=%u lagging=%d shortages=%d",
+	TP_printk("[%s] vrate=%llu->%llu busy=%d missed_ppm=%u:%u rq_wait_pct=%u lagging=%d shortages=%d",
 		__get_str(devname), __entry->old_vrate, __entry->new_vrate,
 		__entry->busy_level,
-		__entry->पढ़ो_missed_ppm, __entry->ग_लिखो_missed_ppm,
-		__entry->rq_रुको_pct, __entry->nr_lagging, __entry->nr_लघुages
+		__entry->read_missed_ppm, __entry->write_missed_ppm,
+		__entry->rq_wait_pct, __entry->nr_lagging, __entry->nr_shortages
 	)
 );
 
-TRACE_EVENT(iocost_iocg_क्रमgive_debt,
+TRACE_EVENT(iocost_iocg_forgive_debt,
 
-	TP_PROTO(काष्ठा ioc_gq *iocg, स्थिर अक्षर *path, काष्ठा ioc_now *now,
+	TP_PROTO(struct ioc_gq *iocg, const char *path, struct ioc_now *now,
 		u32 usage_pct, u64 old_debt, u64 new_debt,
 		u64 old_delay, u64 new_delay),
 
@@ -212,7 +211,7 @@ TRACE_EVENT(iocost_iocg_क्रमgive_debt,
 		__entry->new_delay = new_delay;
 	),
 
-	TP_prपूर्णांकk("[%s:%s] now=%llu:%llu usage=%u debt=%llu->%llu delay=%llu->%llu",
+	TP_printk("[%s:%s] now=%llu:%llu usage=%u debt=%llu->%llu delay=%llu->%llu",
 		__get_str(devname), __get_str(cgroup),
 		__entry->now, __entry->vnow, __entry->usage_pct,
 		__entry->old_debt, __entry->new_debt,
@@ -220,7 +219,7 @@ TRACE_EVENT(iocost_iocg_क्रमgive_debt,
 	)
 );
 
-#पूर्ण_अगर /* _TRACE_BLK_IOCOST_H */
+#endif /* _TRACE_BLK_IOCOST_H */
 
 /* This part must be outside protection */
-#समावेश <trace/define_trace.h>
+#include <trace/define_trace.h>

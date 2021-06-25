@@ -1,125 +1,124 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/console.h>
-#समावेश <linux/types.h>
-#समावेश <linux/रुको.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/console.h>
+#include <linux/types.h>
+#include <linux/wait.h>
 
-#समावेश "speakup.h"
-#समावेश "spk_priv.h"
+#include "speakup.h"
+#include "spk_priv.h"
 
-#घोषणा SYNTH_BUF_SIZE 8192	/* currently 8K bytes */
+#define SYNTH_BUF_SIZE 8192	/* currently 8K bytes */
 
-अटल u16 synth_buffer[SYNTH_BUF_SIZE];	/* guess what this is क्रम! */
-अटल u16 *buff_in = synth_buffer;
-अटल u16 *buff_out = synth_buffer;
-अटल u16 *buffer_end = synth_buffer + SYNTH_BUF_SIZE - 1;
+static u16 synth_buffer[SYNTH_BUF_SIZE];	/* guess what this is for! */
+static u16 *buff_in = synth_buffer;
+static u16 *buff_out = synth_buffer;
+static u16 *buffer_end = synth_buffer + SYNTH_BUF_SIZE - 1;
 
 /* These try to throttle applications by stopping the TTYs
  * Note: we need to make sure that we will restart them eventually, which is
- * usually not possible to करो from the notअगरiers. TODO: it should be possible
+ * usually not possible to do from the notifiers. TODO: it should be possible
  * starting from linux 2.6.26.
  *
- * So we only stop when we know alive == 1 (अन्यथा we discard the data anyway),
- * and the alive synth will eventually call start_ttys from the thपढ़ो context.
+ * So we only stop when we know alive == 1 (else we discard the data anyway),
+ * and the alive synth will eventually call start_ttys from the thread context.
  */
-व्योम speakup_start_ttys(व्योम)
-अणु
-	पूर्णांक i;
+void speakup_start_ttys(void)
+{
+	int i;
 
-	क्रम (i = 0; i < MAX_NR_CONSOLES; i++) अणु
-		अगर (speakup_console[i] && speakup_console[i]->tty_stopped)
-			जारी;
-		अगर (vc_cons[i].d && vc_cons[i].d->port.tty)
+	for (i = 0; i < MAX_NR_CONSOLES; i++) {
+		if (speakup_console[i] && speakup_console[i]->tty_stopped)
+			continue;
+		if (vc_cons[i].d && vc_cons[i].d->port.tty)
 			start_tty(vc_cons[i].d->port.tty);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(speakup_start_ttys);
 
-अटल व्योम speakup_stop_ttys(व्योम)
-अणु
-	पूर्णांक i;
+static void speakup_stop_ttys(void)
+{
+	int i;
 
-	क्रम (i = 0; i < MAX_NR_CONSOLES; i++)
-		अगर (vc_cons[i].d && vc_cons[i].d->port.tty)
+	for (i = 0; i < MAX_NR_CONSOLES; i++)
+		if (vc_cons[i].d && vc_cons[i].d->port.tty)
 			stop_tty(vc_cons[i].d->port.tty);
-पूर्ण
+}
 
-अटल पूर्णांक synth_buffer_मुक्त(व्योम)
-अणु
-	पूर्णांक अक्षरs_मुक्त;
+static int synth_buffer_free(void)
+{
+	int chars_free;
 
-	अगर (buff_in >= buff_out)
-		अक्षरs_मुक्त = SYNTH_BUF_SIZE - (buff_in - buff_out);
-	अन्यथा
-		अक्षरs_मुक्त = buff_out - buff_in;
-	वापस अक्षरs_मुक्त;
-पूर्ण
+	if (buff_in >= buff_out)
+		chars_free = SYNTH_BUF_SIZE - (buff_in - buff_out);
+	else
+		chars_free = buff_out - buff_in;
+	return chars_free;
+}
 
-पूर्णांक synth_buffer_empty(व्योम)
-अणु
-	वापस (buff_in == buff_out);
-पूर्ण
+int synth_buffer_empty(void)
+{
+	return (buff_in == buff_out);
+}
 EXPORT_SYMBOL_GPL(synth_buffer_empty);
 
-व्योम synth_buffer_add(u16 ch)
-अणु
-	अगर (!synth->alive) अणु
-		/* This makes sure that we won't stop TTYs अगर there is no synth
+void synth_buffer_add(u16 ch)
+{
+	if (!synth->alive) {
+		/* This makes sure that we won't stop TTYs if there is no synth
 		 * to restart them
 		 */
-		वापस;
-	पूर्ण
-	अगर (synth_buffer_मुक्त() <= 100) अणु
+		return;
+	}
+	if (synth_buffer_free() <= 100) {
 		synth_start();
 		speakup_stop_ttys();
-	पूर्ण
-	अगर (synth_buffer_मुक्त() <= 1)
-		वापस;
+	}
+	if (synth_buffer_free() <= 1)
+		return;
 	*buff_in++ = ch;
-	अगर (buff_in > buffer_end)
+	if (buff_in > buffer_end)
 		buff_in = synth_buffer;
 	/* We have written something to the speech synthesis, so we are not
-	 * छोड़ोd any more.
+	 * paused any more.
 	 */
-	spk_छोड़ोd = false;
-पूर्ण
+	spk_paused = false;
+}
 
-u16 synth_buffer_अ_लो(व्योम)
-अणु
+u16 synth_buffer_getc(void)
+{
 	u16 ch;
 
-	अगर (buff_out == buff_in)
-		वापस 0;
+	if (buff_out == buff_in)
+		return 0;
 	ch = *buff_out++;
-	अगर (buff_out > buffer_end)
+	if (buff_out > buffer_end)
 		buff_out = synth_buffer;
-	वापस ch;
-पूर्ण
-EXPORT_SYMBOL_GPL(synth_buffer_अ_लो);
+	return ch;
+}
+EXPORT_SYMBOL_GPL(synth_buffer_getc);
 
-u16 synth_buffer_peek(व्योम)
-अणु
-	अगर (buff_out == buff_in)
-		वापस 0;
-	वापस *buff_out;
-पूर्ण
+u16 synth_buffer_peek(void)
+{
+	if (buff_out == buff_in)
+		return 0;
+	return *buff_out;
+}
 EXPORT_SYMBOL_GPL(synth_buffer_peek);
 
-व्योम synth_buffer_skip_nonlatin1(व्योम)
-अणु
-	जबतक (buff_out != buff_in) अणु
-		अगर (*buff_out < 0x100)
-			वापस;
+void synth_buffer_skip_nonlatin1(void)
+{
+	while (buff_out != buff_in) {
+		if (*buff_out < 0x100)
+			return;
 		buff_out++;
-		अगर (buff_out > buffer_end)
+		if (buff_out > buffer_end)
 			buff_out = synth_buffer;
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(synth_buffer_skip_nonlatin1);
 
-व्योम synth_buffer_clear(व्योम)
-अणु
+void synth_buffer_clear(void)
+{
 	buff_in = synth_buffer;
 	buff_out = synth_buffer;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(synth_buffer_clear);

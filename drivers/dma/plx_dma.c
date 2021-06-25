@@ -1,184 +1,183 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Microsemi Switchtec(पंचांग) PCIe Management Driver
+ * Microsemi Switchtec(tm) PCIe Management Driver
  * Copyright (c) 2019, Logan Gunthorpe <logang@deltatee.com>
  * Copyright (c) 2019, GigaIO Networks, Inc
  */
 
-#समावेश "dmaengine.h"
+#include "dmaengine.h"
 
-#समावेश <linux/circ_buf.h>
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/kref.h>
-#समावेश <linux/list.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
+#include <linux/circ_buf.h>
+#include <linux/dmaengine.h>
+#include <linux/kref.h>
+#include <linux/list.h>
+#include <linux/module.h>
+#include <linux/pci.h>
 
 MODULE_DESCRIPTION("PLX ExpressLane PEX PCI Switch DMA Engine");
 MODULE_VERSION("0.1");
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Logan Gunthorpe");
 
-#घोषणा PLX_REG_DESC_RING_ADDR			0x214
-#घोषणा PLX_REG_DESC_RING_ADDR_HI		0x218
-#घोषणा PLX_REG_DESC_RING_NEXT_ADDR		0x21C
-#घोषणा PLX_REG_DESC_RING_COUNT			0x220
-#घोषणा PLX_REG_DESC_RING_LAST_ADDR		0x224
-#घोषणा PLX_REG_DESC_RING_LAST_SIZE		0x228
-#घोषणा PLX_REG_PREF_LIMIT			0x234
-#घोषणा PLX_REG_CTRL				0x238
-#घोषणा PLX_REG_CTRL2				0x23A
-#घोषणा PLX_REG_INTR_CTRL			0x23C
-#घोषणा PLX_REG_INTR_STATUS			0x23E
+#define PLX_REG_DESC_RING_ADDR			0x214
+#define PLX_REG_DESC_RING_ADDR_HI		0x218
+#define PLX_REG_DESC_RING_NEXT_ADDR		0x21C
+#define PLX_REG_DESC_RING_COUNT			0x220
+#define PLX_REG_DESC_RING_LAST_ADDR		0x224
+#define PLX_REG_DESC_RING_LAST_SIZE		0x228
+#define PLX_REG_PREF_LIMIT			0x234
+#define PLX_REG_CTRL				0x238
+#define PLX_REG_CTRL2				0x23A
+#define PLX_REG_INTR_CTRL			0x23C
+#define PLX_REG_INTR_STATUS			0x23E
 
-#घोषणा PLX_REG_PREF_LIMIT_PREF_FOUR		8
+#define PLX_REG_PREF_LIMIT_PREF_FOUR		8
 
-#घोषणा PLX_REG_CTRL_GRACEFUL_PAUSE		BIT(0)
-#घोषणा PLX_REG_CTRL_ABORT			BIT(1)
-#घोषणा PLX_REG_CTRL_WRITE_BACK_EN		BIT(2)
-#घोषणा PLX_REG_CTRL_START			BIT(3)
-#घोषणा PLX_REG_CTRL_RING_STOP_MODE		BIT(4)
-#घोषणा PLX_REG_CTRL_DESC_MODE_BLOCK		(0 << 5)
-#घोषणा PLX_REG_CTRL_DESC_MODE_ON_CHIP		(1 << 5)
-#घोषणा PLX_REG_CTRL_DESC_MODE_OFF_CHIP		(2 << 5)
-#घोषणा PLX_REG_CTRL_DESC_INVALID		BIT(8)
-#घोषणा PLX_REG_CTRL_GRACEFUL_PAUSE_DONE	BIT(9)
-#घोषणा PLX_REG_CTRL_ABORT_DONE			BIT(10)
-#घोषणा PLX_REG_CTRL_IMM_PAUSE_DONE		BIT(12)
-#घोषणा PLX_REG_CTRL_IN_PROGRESS		BIT(30)
+#define PLX_REG_CTRL_GRACEFUL_PAUSE		BIT(0)
+#define PLX_REG_CTRL_ABORT			BIT(1)
+#define PLX_REG_CTRL_WRITE_BACK_EN		BIT(2)
+#define PLX_REG_CTRL_START			BIT(3)
+#define PLX_REG_CTRL_RING_STOP_MODE		BIT(4)
+#define PLX_REG_CTRL_DESC_MODE_BLOCK		(0 << 5)
+#define PLX_REG_CTRL_DESC_MODE_ON_CHIP		(1 << 5)
+#define PLX_REG_CTRL_DESC_MODE_OFF_CHIP		(2 << 5)
+#define PLX_REG_CTRL_DESC_INVALID		BIT(8)
+#define PLX_REG_CTRL_GRACEFUL_PAUSE_DONE	BIT(9)
+#define PLX_REG_CTRL_ABORT_DONE			BIT(10)
+#define PLX_REG_CTRL_IMM_PAUSE_DONE		BIT(12)
+#define PLX_REG_CTRL_IN_PROGRESS		BIT(30)
 
-#घोषणा PLX_REG_CTRL_RESET_VAL	(PLX_REG_CTRL_DESC_INVALID | \
+#define PLX_REG_CTRL_RESET_VAL	(PLX_REG_CTRL_DESC_INVALID | \
 				 PLX_REG_CTRL_GRACEFUL_PAUSE_DONE | \
 				 PLX_REG_CTRL_ABORT_DONE | \
 				 PLX_REG_CTRL_IMM_PAUSE_DONE)
 
-#घोषणा PLX_REG_CTRL_START_VAL	(PLX_REG_CTRL_WRITE_BACK_EN | \
+#define PLX_REG_CTRL_START_VAL	(PLX_REG_CTRL_WRITE_BACK_EN | \
 				 PLX_REG_CTRL_DESC_MODE_OFF_CHIP | \
 				 PLX_REG_CTRL_START | \
 				 PLX_REG_CTRL_RESET_VAL)
 
-#घोषणा PLX_REG_CTRL2_MAX_TXFR_SIZE_64B		0
-#घोषणा PLX_REG_CTRL2_MAX_TXFR_SIZE_128B	1
-#घोषणा PLX_REG_CTRL2_MAX_TXFR_SIZE_256B	2
-#घोषणा PLX_REG_CTRL2_MAX_TXFR_SIZE_512B	3
-#घोषणा PLX_REG_CTRL2_MAX_TXFR_SIZE_1KB		4
-#घोषणा PLX_REG_CTRL2_MAX_TXFR_SIZE_2KB		5
-#घोषणा PLX_REG_CTRL2_MAX_TXFR_SIZE_4B		7
+#define PLX_REG_CTRL2_MAX_TXFR_SIZE_64B		0
+#define PLX_REG_CTRL2_MAX_TXFR_SIZE_128B	1
+#define PLX_REG_CTRL2_MAX_TXFR_SIZE_256B	2
+#define PLX_REG_CTRL2_MAX_TXFR_SIZE_512B	3
+#define PLX_REG_CTRL2_MAX_TXFR_SIZE_1KB		4
+#define PLX_REG_CTRL2_MAX_TXFR_SIZE_2KB		5
+#define PLX_REG_CTRL2_MAX_TXFR_SIZE_4B		7
 
-#घोषणा PLX_REG_INTR_CRTL_ERROR_EN		BIT(0)
-#घोषणा PLX_REG_INTR_CRTL_INV_DESC_EN		BIT(1)
-#घोषणा PLX_REG_INTR_CRTL_ABORT_DONE_EN		BIT(3)
-#घोषणा PLX_REG_INTR_CRTL_PAUSE_DONE_EN		BIT(4)
-#घोषणा PLX_REG_INTR_CRTL_IMM_PAUSE_DONE_EN	BIT(5)
+#define PLX_REG_INTR_CRTL_ERROR_EN		BIT(0)
+#define PLX_REG_INTR_CRTL_INV_DESC_EN		BIT(1)
+#define PLX_REG_INTR_CRTL_ABORT_DONE_EN		BIT(3)
+#define PLX_REG_INTR_CRTL_PAUSE_DONE_EN		BIT(4)
+#define PLX_REG_INTR_CRTL_IMM_PAUSE_DONE_EN	BIT(5)
 
-#घोषणा PLX_REG_INTR_STATUS_ERROR		BIT(0)
-#घोषणा PLX_REG_INTR_STATUS_INV_DESC		BIT(1)
-#घोषणा PLX_REG_INTR_STATUS_DESC_DONE		BIT(2)
-#घोषणा PLX_REG_INTR_CRTL_ABORT_DONE		BIT(3)
+#define PLX_REG_INTR_STATUS_ERROR		BIT(0)
+#define PLX_REG_INTR_STATUS_INV_DESC		BIT(1)
+#define PLX_REG_INTR_STATUS_DESC_DONE		BIT(2)
+#define PLX_REG_INTR_CRTL_ABORT_DONE		BIT(3)
 
-काष्ठा plx_dma_hw_std_desc अणु
+struct plx_dma_hw_std_desc {
 	__le32 flags_and_size;
 	__le16 dst_addr_hi;
 	__le16 src_addr_hi;
 	__le32 dst_addr_lo;
 	__le32 src_addr_lo;
-पूर्ण;
+};
 
-#घोषणा PLX_DESC_SIZE_MASK		0x7ffffff
-#घोषणा PLX_DESC_FLAG_VALID		BIT(31)
-#घोषणा PLX_DESC_FLAG_INT_WHEN_DONE	BIT(30)
+#define PLX_DESC_SIZE_MASK		0x7ffffff
+#define PLX_DESC_FLAG_VALID		BIT(31)
+#define PLX_DESC_FLAG_INT_WHEN_DONE	BIT(30)
 
-#घोषणा PLX_DESC_WB_SUCCESS		BIT(30)
-#घोषणा PLX_DESC_WB_RD_FAIL		BIT(29)
-#घोषणा PLX_DESC_WB_WR_FAIL		BIT(28)
+#define PLX_DESC_WB_SUCCESS		BIT(30)
+#define PLX_DESC_WB_RD_FAIL		BIT(29)
+#define PLX_DESC_WB_WR_FAIL		BIT(28)
 
-#घोषणा PLX_DMA_RING_COUNT		2048
+#define PLX_DMA_RING_COUNT		2048
 
-काष्ठा plx_dma_desc अणु
-	काष्ठा dma_async_tx_descriptor txd;
-	काष्ठा plx_dma_hw_std_desc *hw;
+struct plx_dma_desc {
+	struct dma_async_tx_descriptor txd;
+	struct plx_dma_hw_std_desc *hw;
 	u32 orig_size;
-पूर्ण;
+};
 
-काष्ठा plx_dma_dev अणु
-	काष्ठा dma_device dma_dev;
-	काष्ठा dma_chan dma_chan;
-	काष्ठा pci_dev __rcu *pdev;
-	व्योम __iomem *bar;
-	काष्ठा tasklet_काष्ठा desc_task;
+struct plx_dma_dev {
+	struct dma_device dma_dev;
+	struct dma_chan dma_chan;
+	struct pci_dev __rcu *pdev;
+	void __iomem *bar;
+	struct tasklet_struct desc_task;
 
 	spinlock_t ring_lock;
 	bool ring_active;
-	पूर्णांक head;
-	पूर्णांक tail;
-	काष्ठा plx_dma_hw_std_desc *hw_ring;
+	int head;
+	int tail;
+	struct plx_dma_hw_std_desc *hw_ring;
 	dma_addr_t hw_ring_dma;
-	काष्ठा plx_dma_desc **desc_ring;
-पूर्ण;
+	struct plx_dma_desc **desc_ring;
+};
 
-अटल काष्ठा plx_dma_dev *chan_to_plx_dma_dev(काष्ठा dma_chan *c)
-अणु
-	वापस container_of(c, काष्ठा plx_dma_dev, dma_chan);
-पूर्ण
+static struct plx_dma_dev *chan_to_plx_dma_dev(struct dma_chan *c)
+{
+	return container_of(c, struct plx_dma_dev, dma_chan);
+}
 
-अटल काष्ठा plx_dma_desc *to_plx_desc(काष्ठा dma_async_tx_descriptor *txd)
-अणु
-	वापस container_of(txd, काष्ठा plx_dma_desc, txd);
-पूर्ण
+static struct plx_dma_desc *to_plx_desc(struct dma_async_tx_descriptor *txd)
+{
+	return container_of(txd, struct plx_dma_desc, txd);
+}
 
-अटल काष्ठा plx_dma_desc *plx_dma_get_desc(काष्ठा plx_dma_dev *plxdev, पूर्णांक i)
-अणु
-	वापस plxdev->desc_ring[i & (PLX_DMA_RING_COUNT - 1)];
-पूर्ण
+static struct plx_dma_desc *plx_dma_get_desc(struct plx_dma_dev *plxdev, int i)
+{
+	return plxdev->desc_ring[i & (PLX_DMA_RING_COUNT - 1)];
+}
 
-अटल व्योम plx_dma_process_desc(काष्ठा plx_dma_dev *plxdev)
-अणु
-	काष्ठा dmaengine_result res;
-	काष्ठा plx_dma_desc *desc;
+static void plx_dma_process_desc(struct plx_dma_dev *plxdev)
+{
+	struct dmaengine_result res;
+	struct plx_dma_desc *desc;
 	u32 flags;
 
 	spin_lock_bh(&plxdev->ring_lock);
 
-	जबतक (plxdev->tail != plxdev->head) अणु
+	while (plxdev->tail != plxdev->head) {
 		desc = plx_dma_get_desc(plxdev, plxdev->tail);
 
 		flags = le32_to_cpu(READ_ONCE(desc->hw->flags_and_size));
 
-		अगर (flags & PLX_DESC_FLAG_VALID)
-			अवरोध;
+		if (flags & PLX_DESC_FLAG_VALID)
+			break;
 
 		res.residue = desc->orig_size - (flags & PLX_DESC_SIZE_MASK);
 
-		अगर (flags & PLX_DESC_WB_SUCCESS)
+		if (flags & PLX_DESC_WB_SUCCESS)
 			res.result = DMA_TRANS_NOERROR;
-		अन्यथा अगर (flags & PLX_DESC_WB_WR_FAIL)
+		else if (flags & PLX_DESC_WB_WR_FAIL)
 			res.result = DMA_TRANS_WRITE_FAILED;
-		अन्यथा
+		else
 			res.result = DMA_TRANS_READ_FAILED;
 
 		dma_cookie_complete(&desc->txd);
 		dma_descriptor_unmap(&desc->txd);
 		dmaengine_desc_get_callback_invoke(&desc->txd, &res);
-		desc->txd.callback = शून्य;
-		desc->txd.callback_result = शून्य;
+		desc->txd.callback = NULL;
+		desc->txd.callback_result = NULL;
 
 		plxdev->tail++;
-	पूर्ण
+	}
 
 	spin_unlock_bh(&plxdev->ring_lock);
-पूर्ण
+}
 
-अटल व्योम plx_dma_पात_desc(काष्ठा plx_dma_dev *plxdev)
-अणु
-	काष्ठा dmaengine_result res;
-	काष्ठा plx_dma_desc *desc;
+static void plx_dma_abort_desc(struct plx_dma_dev *plxdev)
+{
+	struct dmaengine_result res;
+	struct plx_dma_desc *desc;
 
 	plx_dma_process_desc(plxdev);
 
 	spin_lock_bh(&plxdev->ring_lock);
 
-	जबतक (plxdev->tail != plxdev->head) अणु
+	while (plxdev->tail != plxdev->head) {
 		desc = plx_dma_get_desc(plxdev, plxdev->tail);
 
 		res.residue = desc->orig_size;
@@ -187,85 +186,85 @@ MODULE_AUTHOR("Logan Gunthorpe");
 		dma_cookie_complete(&desc->txd);
 		dma_descriptor_unmap(&desc->txd);
 		dmaengine_desc_get_callback_invoke(&desc->txd, &res);
-		desc->txd.callback = शून्य;
-		desc->txd.callback_result = शून्य;
+		desc->txd.callback = NULL;
+		desc->txd.callback_result = NULL;
 
 		plxdev->tail++;
-	पूर्ण
+	}
 
 	spin_unlock_bh(&plxdev->ring_lock);
-पूर्ण
+}
 
-अटल व्योम __plx_dma_stop(काष्ठा plx_dma_dev *plxdev)
-अणु
-	अचिन्हित दीर्घ समयout = jअगरfies + msecs_to_jअगरfies(1000);
+static void __plx_dma_stop(struct plx_dma_dev *plxdev)
+{
+	unsigned long timeout = jiffies + msecs_to_jiffies(1000);
 	u32 val;
 
-	val = पढ़ोl(plxdev->bar + PLX_REG_CTRL);
-	अगर (!(val & ~PLX_REG_CTRL_GRACEFUL_PAUSE))
-		वापस;
+	val = readl(plxdev->bar + PLX_REG_CTRL);
+	if (!(val & ~PLX_REG_CTRL_GRACEFUL_PAUSE))
+		return;
 
-	ग_लिखोl(PLX_REG_CTRL_RESET_VAL | PLX_REG_CTRL_GRACEFUL_PAUSE,
+	writel(PLX_REG_CTRL_RESET_VAL | PLX_REG_CTRL_GRACEFUL_PAUSE,
 	       plxdev->bar + PLX_REG_CTRL);
 
-	जबतक (!समय_after(jअगरfies, समयout)) अणु
-		val = पढ़ोl(plxdev->bar + PLX_REG_CTRL);
-		अगर (val & PLX_REG_CTRL_GRACEFUL_PAUSE_DONE)
-			अवरोध;
+	while (!time_after(jiffies, timeout)) {
+		val = readl(plxdev->bar + PLX_REG_CTRL);
+		if (val & PLX_REG_CTRL_GRACEFUL_PAUSE_DONE)
+			break;
 
 		cpu_relax();
-	पूर्ण
+	}
 
-	अगर (!(val & PLX_REG_CTRL_GRACEFUL_PAUSE_DONE))
+	if (!(val & PLX_REG_CTRL_GRACEFUL_PAUSE_DONE))
 		dev_err(plxdev->dma_dev.dev,
 			"Timeout waiting for graceful pause!\n");
 
-	ग_लिखोl(PLX_REG_CTRL_RESET_VAL | PLX_REG_CTRL_GRACEFUL_PAUSE,
+	writel(PLX_REG_CTRL_RESET_VAL | PLX_REG_CTRL_GRACEFUL_PAUSE,
 	       plxdev->bar + PLX_REG_CTRL);
 
-	ग_लिखोl(0, plxdev->bar + PLX_REG_DESC_RING_COUNT);
-	ग_लिखोl(0, plxdev->bar + PLX_REG_DESC_RING_ADDR);
-	ग_लिखोl(0, plxdev->bar + PLX_REG_DESC_RING_ADDR_HI);
-	ग_लिखोl(0, plxdev->bar + PLX_REG_DESC_RING_NEXT_ADDR);
-पूर्ण
+	writel(0, plxdev->bar + PLX_REG_DESC_RING_COUNT);
+	writel(0, plxdev->bar + PLX_REG_DESC_RING_ADDR);
+	writel(0, plxdev->bar + PLX_REG_DESC_RING_ADDR_HI);
+	writel(0, plxdev->bar + PLX_REG_DESC_RING_NEXT_ADDR);
+}
 
-अटल व्योम plx_dma_stop(काष्ठा plx_dma_dev *plxdev)
-अणु
-	rcu_पढ़ो_lock();
-	अगर (!rcu_dereference(plxdev->pdev)) अणु
-		rcu_पढ़ो_unlock();
-		वापस;
-	पूर्ण
+static void plx_dma_stop(struct plx_dma_dev *plxdev)
+{
+	rcu_read_lock();
+	if (!rcu_dereference(plxdev->pdev)) {
+		rcu_read_unlock();
+		return;
+	}
 
 	__plx_dma_stop(plxdev);
 
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_unlock();
+}
 
-अटल व्योम plx_dma_desc_task(काष्ठा tasklet_काष्ठा *t)
-अणु
-	काष्ठा plx_dma_dev *plxdev = from_tasklet(plxdev, t, desc_task);
+static void plx_dma_desc_task(struct tasklet_struct *t)
+{
+	struct plx_dma_dev *plxdev = from_tasklet(plxdev, t, desc_task);
 
 	plx_dma_process_desc(plxdev);
-पूर्ण
+}
 
-अटल काष्ठा dma_async_tx_descriptor *plx_dma_prep_स_नकल(काष्ठा dma_chan *c,
-		dma_addr_t dma_dst, dma_addr_t dma_src, माप_प्रकार len,
-		अचिन्हित दीर्घ flags)
+static struct dma_async_tx_descriptor *plx_dma_prep_memcpy(struct dma_chan *c,
+		dma_addr_t dma_dst, dma_addr_t dma_src, size_t len,
+		unsigned long flags)
 	__acquires(plxdev->ring_lock)
-अणु
-	काष्ठा plx_dma_dev *plxdev = chan_to_plx_dma_dev(c);
-	काष्ठा plx_dma_desc *plxdesc;
+{
+	struct plx_dma_dev *plxdev = chan_to_plx_dma_dev(c);
+	struct plx_dma_desc *plxdesc;
 
 	spin_lock_bh(&plxdev->ring_lock);
-	अगर (!plxdev->ring_active)
-		जाओ err_unlock;
+	if (!plxdev->ring_active)
+		goto err_unlock;
 
-	अगर (!CIRC_SPACE(plxdev->head, plxdev->tail, PLX_DMA_RING_COUNT))
-		जाओ err_unlock;
+	if (!CIRC_SPACE(plxdev->head, plxdev->tail, PLX_DMA_RING_COUNT))
+		goto err_unlock;
 
-	अगर (len > PLX_DESC_SIZE_MASK)
-		जाओ err_unlock;
+	if (len > PLX_DESC_SIZE_MASK)
+		goto err_unlock;
 
 	plxdesc = plx_dma_get_desc(plxdev, plxdev->head);
 	plxdev->head++;
@@ -277,15 +276,15 @@ MODULE_AUTHOR("Logan Gunthorpe");
 
 	plxdesc->orig_size = len;
 
-	अगर (flags & DMA_PREP_INTERRUPT)
+	if (flags & DMA_PREP_INTERRUPT)
 		len |= PLX_DESC_FLAG_INT_WHEN_DONE;
 
 	plxdesc->hw->flags_and_size = cpu_to_le32(len);
 	plxdesc->txd.flags = flags;
 
-	/* वापस with the lock held, it will be released in tx_submit */
+	/* return with the lock held, it will be released in tx_submit */
 
-	वापस &plxdesc->txd;
+	return &plxdesc->txd;
 
 err_unlock:
 	/*
@@ -295,21 +294,21 @@ err_unlock:
 	__acquire(plxdev->ring_lock);
 
 	spin_unlock_bh(&plxdev->ring_lock);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल dma_cookie_t plx_dma_tx_submit(काष्ठा dma_async_tx_descriptor *desc)
+static dma_cookie_t plx_dma_tx_submit(struct dma_async_tx_descriptor *desc)
 	__releases(plxdev->ring_lock)
-अणु
-	काष्ठा plx_dma_dev *plxdev = chan_to_plx_dma_dev(desc->chan);
-	काष्ठा plx_dma_desc *plxdesc = to_plx_desc(desc);
+{
+	struct plx_dma_dev *plxdev = chan_to_plx_dma_dev(desc->chan);
+	struct plx_dma_desc *plxdesc = to_plx_desc(desc);
 	dma_cookie_t cookie;
 
 	cookie = dma_cookie_assign(desc);
 
 	/*
 	 * Ensure the descriptor updates are visible to the dma device
-	 * beक्रमe setting the valid bit.
+	 * before setting the valid bit.
 	 */
 	wmb();
 
@@ -317,146 +316,146 @@ err_unlock:
 
 	spin_unlock_bh(&plxdev->ring_lock);
 
-	वापस cookie;
-पूर्ण
+	return cookie;
+}
 
-अटल क्रमागत dma_status plx_dma_tx_status(काष्ठा dma_chan *chan,
-		dma_cookie_t cookie, काष्ठा dma_tx_state *txstate)
-अणु
-	काष्ठा plx_dma_dev *plxdev = chan_to_plx_dma_dev(chan);
-	क्रमागत dma_status ret;
+static enum dma_status plx_dma_tx_status(struct dma_chan *chan,
+		dma_cookie_t cookie, struct dma_tx_state *txstate)
+{
+	struct plx_dma_dev *plxdev = chan_to_plx_dma_dev(chan);
+	enum dma_status ret;
 
 	ret = dma_cookie_status(chan, cookie, txstate);
-	अगर (ret == DMA_COMPLETE)
-		वापस ret;
+	if (ret == DMA_COMPLETE)
+		return ret;
 
 	plx_dma_process_desc(plxdev);
 
-	वापस dma_cookie_status(chan, cookie, txstate);
-पूर्ण
+	return dma_cookie_status(chan, cookie, txstate);
+}
 
-अटल व्योम plx_dma_issue_pending(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा plx_dma_dev *plxdev = chan_to_plx_dma_dev(chan);
+static void plx_dma_issue_pending(struct dma_chan *chan)
+{
+	struct plx_dma_dev *plxdev = chan_to_plx_dma_dev(chan);
 
-	rcu_पढ़ो_lock();
-	अगर (!rcu_dereference(plxdev->pdev)) अणु
-		rcu_पढ़ो_unlock();
-		वापस;
-	पूर्ण
+	rcu_read_lock();
+	if (!rcu_dereference(plxdev->pdev)) {
+		rcu_read_unlock();
+		return;
+	}
 
 	/*
-	 * Ensure the valid bits are visible beक्रमe starting the
+	 * Ensure the valid bits are visible before starting the
 	 * DMA engine.
 	 */
 	wmb();
 
-	ग_लिखोw(PLX_REG_CTRL_START_VAL, plxdev->bar + PLX_REG_CTRL);
+	writew(PLX_REG_CTRL_START_VAL, plxdev->bar + PLX_REG_CTRL);
 
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_unlock();
+}
 
-अटल irqवापस_t plx_dma_isr(पूर्णांक irq, व्योम *devid)
-अणु
-	काष्ठा plx_dma_dev *plxdev = devid;
+static irqreturn_t plx_dma_isr(int irq, void *devid)
+{
+	struct plx_dma_dev *plxdev = devid;
 	u32 status;
 
-	status = पढ़ोw(plxdev->bar + PLX_REG_INTR_STATUS);
+	status = readw(plxdev->bar + PLX_REG_INTR_STATUS);
 
-	अगर (!status)
-		वापस IRQ_NONE;
+	if (!status)
+		return IRQ_NONE;
 
-	अगर (status & PLX_REG_INTR_STATUS_DESC_DONE && plxdev->ring_active)
+	if (status & PLX_REG_INTR_STATUS_DESC_DONE && plxdev->ring_active)
 		tasklet_schedule(&plxdev->desc_task);
 
-	ग_लिखोw(status, plxdev->bar + PLX_REG_INTR_STATUS);
+	writew(status, plxdev->bar + PLX_REG_INTR_STATUS);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक plx_dma_alloc_desc(काष्ठा plx_dma_dev *plxdev)
-अणु
-	काष्ठा plx_dma_desc *desc;
-	पूर्णांक i;
+static int plx_dma_alloc_desc(struct plx_dma_dev *plxdev)
+{
+	struct plx_dma_desc *desc;
+	int i;
 
-	plxdev->desc_ring = kसुस्मृति(PLX_DMA_RING_COUNT,
-				    माप(*plxdev->desc_ring), GFP_KERNEL);
-	अगर (!plxdev->desc_ring)
-		वापस -ENOMEM;
+	plxdev->desc_ring = kcalloc(PLX_DMA_RING_COUNT,
+				    sizeof(*plxdev->desc_ring), GFP_KERNEL);
+	if (!plxdev->desc_ring)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < PLX_DMA_RING_COUNT; i++) अणु
-		desc = kzalloc(माप(*desc), GFP_KERNEL);
-		अगर (!desc)
-			जाओ मुक्त_and_निकास;
+	for (i = 0; i < PLX_DMA_RING_COUNT; i++) {
+		desc = kzalloc(sizeof(*desc), GFP_KERNEL);
+		if (!desc)
+			goto free_and_exit;
 
 		dma_async_tx_descriptor_init(&desc->txd, &plxdev->dma_chan);
 		desc->txd.tx_submit = plx_dma_tx_submit;
 		desc->hw = &plxdev->hw_ring[i];
 
 		plxdev->desc_ring[i] = desc;
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
-मुक्त_and_निकास:
-	क्रम (i = 0; i < PLX_DMA_RING_COUNT; i++)
-		kमुक्त(plxdev->desc_ring[i]);
-	kमुक्त(plxdev->desc_ring);
-	वापस -ENOMEM;
-पूर्ण
+free_and_exit:
+	for (i = 0; i < PLX_DMA_RING_COUNT; i++)
+		kfree(plxdev->desc_ring[i]);
+	kfree(plxdev->desc_ring);
+	return -ENOMEM;
+}
 
-अटल पूर्णांक plx_dma_alloc_chan_resources(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा plx_dma_dev *plxdev = chan_to_plx_dma_dev(chan);
-	माप_प्रकार ring_sz = PLX_DMA_RING_COUNT * माप(*plxdev->hw_ring);
-	पूर्णांक rc;
+static int plx_dma_alloc_chan_resources(struct dma_chan *chan)
+{
+	struct plx_dma_dev *plxdev = chan_to_plx_dma_dev(chan);
+	size_t ring_sz = PLX_DMA_RING_COUNT * sizeof(*plxdev->hw_ring);
+	int rc;
 
 	plxdev->head = plxdev->tail = 0;
 	plxdev->hw_ring = dma_alloc_coherent(plxdev->dma_dev.dev, ring_sz,
 					     &plxdev->hw_ring_dma, GFP_KERNEL);
-	अगर (!plxdev->hw_ring)
-		वापस -ENOMEM;
+	if (!plxdev->hw_ring)
+		return -ENOMEM;
 
 	rc = plx_dma_alloc_desc(plxdev);
-	अगर (rc)
-		जाओ out_मुक्त_hw_ring;
+	if (rc)
+		goto out_free_hw_ring;
 
-	rcu_पढ़ो_lock();
-	अगर (!rcu_dereference(plxdev->pdev)) अणु
-		rcu_पढ़ो_unlock();
+	rcu_read_lock();
+	if (!rcu_dereference(plxdev->pdev)) {
+		rcu_read_unlock();
 		rc = -ENODEV;
-		जाओ out_मुक्त_hw_ring;
-	पूर्ण
+		goto out_free_hw_ring;
+	}
 
-	ग_लिखोl(PLX_REG_CTRL_RESET_VAL, plxdev->bar + PLX_REG_CTRL);
-	ग_लिखोl(lower_32_bits(plxdev->hw_ring_dma),
+	writel(PLX_REG_CTRL_RESET_VAL, plxdev->bar + PLX_REG_CTRL);
+	writel(lower_32_bits(plxdev->hw_ring_dma),
 	       plxdev->bar + PLX_REG_DESC_RING_ADDR);
-	ग_लिखोl(upper_32_bits(plxdev->hw_ring_dma),
+	writel(upper_32_bits(plxdev->hw_ring_dma),
 	       plxdev->bar + PLX_REG_DESC_RING_ADDR_HI);
-	ग_लिखोl(lower_32_bits(plxdev->hw_ring_dma),
+	writel(lower_32_bits(plxdev->hw_ring_dma),
 	       plxdev->bar + PLX_REG_DESC_RING_NEXT_ADDR);
-	ग_लिखोl(PLX_DMA_RING_COUNT, plxdev->bar + PLX_REG_DESC_RING_COUNT);
-	ग_लिखोl(PLX_REG_PREF_LIMIT_PREF_FOUR, plxdev->bar + PLX_REG_PREF_LIMIT);
+	writel(PLX_DMA_RING_COUNT, plxdev->bar + PLX_REG_DESC_RING_COUNT);
+	writel(PLX_REG_PREF_LIMIT_PREF_FOUR, plxdev->bar + PLX_REG_PREF_LIMIT);
 
 	plxdev->ring_active = true;
 
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस PLX_DMA_RING_COUNT;
+	return PLX_DMA_RING_COUNT;
 
-out_मुक्त_hw_ring:
-	dma_मुक्त_coherent(plxdev->dma_dev.dev, ring_sz, plxdev->hw_ring,
+out_free_hw_ring:
+	dma_free_coherent(plxdev->dma_dev.dev, ring_sz, plxdev->hw_ring,
 			  plxdev->hw_ring_dma);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम plx_dma_मुक्त_chan_resources(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा plx_dma_dev *plxdev = chan_to_plx_dma_dev(chan);
-	माप_प्रकार ring_sz = PLX_DMA_RING_COUNT * माप(*plxdev->hw_ring);
-	काष्ठा pci_dev *pdev;
-	पूर्णांक irq = -1;
-	पूर्णांक i;
+static void plx_dma_free_chan_resources(struct dma_chan *chan)
+{
+	struct plx_dma_dev *plxdev = chan_to_plx_dma_dev(chan);
+	size_t ring_sz = PLX_DMA_RING_COUNT * sizeof(*plxdev->hw_ring);
+	struct pci_dev *pdev;
+	int irq = -1;
+	int i;
 
 	spin_lock_bh(&plxdev->ring_lock);
 	plxdev->ring_active = false;
@@ -464,52 +463,52 @@ out_मुक्त_hw_ring:
 
 	plx_dma_stop(plxdev);
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	pdev = rcu_dereference(plxdev->pdev);
-	अगर (pdev)
+	if (pdev)
 		irq = pci_irq_vector(pdev, 0);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	अगर (irq > 0)
+	if (irq > 0)
 		synchronize_irq(irq);
 
-	tasklet_समाप्त(&plxdev->desc_task);
+	tasklet_kill(&plxdev->desc_task);
 
-	plx_dma_पात_desc(plxdev);
+	plx_dma_abort_desc(plxdev);
 
-	क्रम (i = 0; i < PLX_DMA_RING_COUNT; i++)
-		kमुक्त(plxdev->desc_ring[i]);
+	for (i = 0; i < PLX_DMA_RING_COUNT; i++)
+		kfree(plxdev->desc_ring[i]);
 
-	kमुक्त(plxdev->desc_ring);
-	dma_मुक्त_coherent(plxdev->dma_dev.dev, ring_sz, plxdev->hw_ring,
+	kfree(plxdev->desc_ring);
+	dma_free_coherent(plxdev->dma_dev.dev, ring_sz, plxdev->hw_ring,
 			  plxdev->hw_ring_dma);
 
-पूर्ण
+}
 
-अटल व्योम plx_dma_release(काष्ठा dma_device *dma_dev)
-अणु
-	काष्ठा plx_dma_dev *plxdev =
-		container_of(dma_dev, काष्ठा plx_dma_dev, dma_dev);
+static void plx_dma_release(struct dma_device *dma_dev)
+{
+	struct plx_dma_dev *plxdev =
+		container_of(dma_dev, struct plx_dma_dev, dma_dev);
 
 	put_device(dma_dev->dev);
-	kमुक्त(plxdev);
-पूर्ण
+	kfree(plxdev);
+}
 
-अटल पूर्णांक plx_dma_create(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा plx_dma_dev *plxdev;
-	काष्ठा dma_device *dma;
-	काष्ठा dma_chan *chan;
-	पूर्णांक rc;
+static int plx_dma_create(struct pci_dev *pdev)
+{
+	struct plx_dma_dev *plxdev;
+	struct dma_device *dma;
+	struct dma_chan *chan;
+	int rc;
 
-	plxdev = kzalloc(माप(*plxdev), GFP_KERNEL);
-	अगर (!plxdev)
-		वापस -ENOMEM;
+	plxdev = kzalloc(sizeof(*plxdev), GFP_KERNEL);
+	if (!plxdev)
+		return -ENOMEM;
 
 	rc = request_irq(pci_irq_vector(pdev, 0), plx_dma_isr, 0,
 			 KBUILD_MODNAME, plxdev);
-	अगर (rc)
-		जाओ मुक्त_plx;
+	if (rc)
+		goto free_plx;
 
 	spin_lock_init(&plxdev->ring_lock);
 	tasklet_setup(&plxdev->desc_task, plx_dma_desc_task);
@@ -525,8 +524,8 @@ out_मुक्त_hw_ring:
 	dma->dev = get_device(&pdev->dev);
 
 	dma->device_alloc_chan_resources = plx_dma_alloc_chan_resources;
-	dma->device_मुक्त_chan_resources = plx_dma_मुक्त_chan_resources;
-	dma->device_prep_dma_स_नकल = plx_dma_prep_स_नकल;
+	dma->device_free_chan_resources = plx_dma_free_chan_resources;
+	dma->device_prep_dma_memcpy = plx_dma_prep_memcpy;
 	dma->device_issue_pending = plx_dma_issue_pending;
 	dma->device_tx_status = plx_dma_tx_status;
 	dma->device_release = plx_dma_release;
@@ -536,76 +535,76 @@ out_मुक्त_hw_ring:
 	dma_cookie_init(chan);
 	list_add_tail(&chan->device_node, &dma->channels);
 
-	rc = dma_async_device_रेजिस्टर(dma);
-	अगर (rc) अणु
+	rc = dma_async_device_register(dma);
+	if (rc) {
 		pci_err(pdev, "Failed to register dma device: %d\n", rc);
-		जाओ put_device;
-	पूर्ण
+		goto put_device;
+	}
 
 	pci_set_drvdata(pdev, plxdev);
 
-	वापस 0;
+	return 0;
 
 put_device:
 	put_device(&pdev->dev);
-	मुक्त_irq(pci_irq_vector(pdev, 0),  plxdev);
-मुक्त_plx:
-	kमुक्त(plxdev);
+	free_irq(pci_irq_vector(pdev, 0),  plxdev);
+free_plx:
+	kfree(plxdev);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक plx_dma_probe(काष्ठा pci_dev *pdev,
-			 स्थिर काष्ठा pci_device_id *id)
-अणु
-	पूर्णांक rc;
+static int plx_dma_probe(struct pci_dev *pdev,
+			 const struct pci_device_id *id)
+{
+	int rc;
 
 	rc = pcim_enable_device(pdev);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	rc = pci_set_dma_mask(pdev, DMA_BIT_MASK(48));
-	अगर (rc)
+	if (rc)
 		rc = pci_set_dma_mask(pdev, DMA_BIT_MASK(32));
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	rc = pci_set_consistent_dma_mask(pdev, DMA_BIT_MASK(48));
-	अगर (rc)
+	if (rc)
 		rc = pci_set_consistent_dma_mask(pdev, DMA_BIT_MASK(32));
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	rc = pcim_iomap_regions(pdev, 1, KBUILD_MODNAME);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	rc = pci_alloc_irq_vectors(pdev, 1, 1, PCI_IRQ_ALL_TYPES);
-	अगर (rc <= 0)
-		वापस rc;
+	if (rc <= 0)
+		return rc;
 
 	pci_set_master(pdev);
 
 	rc = plx_dma_create(pdev);
-	अगर (rc)
-		जाओ err_मुक्त_irq_vectors;
+	if (rc)
+		goto err_free_irq_vectors;
 
 	pci_info(pdev, "PLX DMA Channel Registered\n");
 
-	वापस 0;
+	return 0;
 
-err_मुक्त_irq_vectors:
-	pci_मुक्त_irq_vectors(pdev);
-	वापस rc;
-पूर्ण
+err_free_irq_vectors:
+	pci_free_irq_vectors(pdev);
+	return rc;
+}
 
-अटल व्योम plx_dma_हटाओ(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा plx_dma_dev *plxdev = pci_get_drvdata(pdev);
+static void plx_dma_remove(struct pci_dev *pdev)
+{
+	struct plx_dma_dev *plxdev = pci_get_drvdata(pdev);
 
-	मुक्त_irq(pci_irq_vector(pdev, 0),  plxdev);
+	free_irq(pci_irq_vector(pdev, 0),  plxdev);
 
-	rcu_assign_poपूर्णांकer(plxdev->pdev, शून्य);
+	rcu_assign_pointer(plxdev->pdev, NULL);
 	synchronize_rcu();
 
 	spin_lock_bh(&plxdev->ring_lock);
@@ -613,31 +612,31 @@ err_मुक्त_irq_vectors:
 	spin_unlock_bh(&plxdev->ring_lock);
 
 	__plx_dma_stop(plxdev);
-	plx_dma_पात_desc(plxdev);
+	plx_dma_abort_desc(plxdev);
 
-	plxdev->bar = शून्य;
-	dma_async_device_unरेजिस्टर(&plxdev->dma_dev);
+	plxdev->bar = NULL;
+	dma_async_device_unregister(&plxdev->dma_dev);
 
-	pci_मुक्त_irq_vectors(pdev);
-पूर्ण
+	pci_free_irq_vectors(pdev);
+}
 
-अटल स्थिर काष्ठा pci_device_id plx_dma_pci_tbl[] = अणु
-	अणु
-		.venकरोr		= PCI_VENDOR_ID_PLX,
+static const struct pci_device_id plx_dma_pci_tbl[] = {
+	{
+		.vendor		= PCI_VENDOR_ID_PLX,
 		.device		= 0x87D0,
-		.subvenकरोr	= PCI_ANY_ID,
+		.subvendor	= PCI_ANY_ID,
 		.subdevice	= PCI_ANY_ID,
 		.class		= PCI_CLASS_SYSTEM_OTHER << 8,
 		.class_mask	= 0xFFFFFFFF,
-	पूर्ण,
-	अणु0पूर्ण
-पूर्ण;
+	},
+	{0}
+};
 MODULE_DEVICE_TABLE(pci, plx_dma_pci_tbl);
 
-अटल काष्ठा pci_driver plx_dma_pci_driver = अणु
+static struct pci_driver plx_dma_pci_driver = {
 	.name           = KBUILD_MODNAME,
 	.id_table       = plx_dma_pci_tbl,
 	.probe          = plx_dma_probe,
-	.हटाओ		= plx_dma_हटाओ,
-पूर्ण;
+	.remove		= plx_dma_remove,
+};
 module_pci_driver(plx_dma_pci_driver);

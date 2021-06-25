@@ -1,144 +1,143 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * Queue पढ़ो/ग_लिखो lock
+ * Queue read/write lock
  *
  * (C) Copyright 2013-2014 Hewlett-Packard Development Company, L.P.
  *
- * Authors: Waiman Long <waiman.दीर्घ@hp.com>
+ * Authors: Waiman Long <waiman.long@hp.com>
  */
-#अगर_अघोषित __ASM_GENERIC_QRWLOCK_H
-#घोषणा __ASM_GENERIC_QRWLOCK_H
+#ifndef __ASM_GENERIC_QRWLOCK_H
+#define __ASM_GENERIC_QRWLOCK_H
 
-#समावेश <linux/atomic.h>
-#समावेश <यंत्र/barrier.h>
-#समावेश <यंत्र/processor.h>
+#include <linux/atomic.h>
+#include <asm/barrier.h>
+#include <asm/processor.h>
 
-#समावेश <यंत्र-generic/qrwlock_types.h>
+#include <asm-generic/qrwlock_types.h>
 
-/* Must be included from यंत्र/spinlock.h after defining arch_spin_is_locked.  */
+/* Must be included from asm/spinlock.h after defining arch_spin_is_locked.  */
 
 /*
- * Writer states & पढ़ोer shअगरt and bias.
+ * Writer states & reader shift and bias.
  */
-#घोषणा	_QW_WAITING	0x100		/* A ग_लिखोr is रुकोing	   */
-#घोषणा	_QW_LOCKED	0x0ff		/* A ग_लिखोr holds the lock */
-#घोषणा	_QW_WMASK	0x1ff		/* Writer mask		   */
-#घोषणा	_QR_SHIFT	9		/* Reader count shअगरt	   */
-#घोषणा _QR_BIAS	(1U << _QR_SHIFT)
+#define	_QW_WAITING	0x100		/* A writer is waiting	   */
+#define	_QW_LOCKED	0x0ff		/* A writer holds the lock */
+#define	_QW_WMASK	0x1ff		/* Writer mask		   */
+#define	_QR_SHIFT	9		/* Reader count shift	   */
+#define _QR_BIAS	(1U << _QR_SHIFT)
 
 /*
  * External function declarations
  */
-बाह्य व्योम queued_पढ़ो_lock_slowpath(काष्ठा qrwlock *lock);
-बाह्य व्योम queued_ग_लिखो_lock_slowpath(काष्ठा qrwlock *lock);
+extern void queued_read_lock_slowpath(struct qrwlock *lock);
+extern void queued_write_lock_slowpath(struct qrwlock *lock);
 
 /**
- * queued_पढ़ो_trylock - try to acquire पढ़ो lock of a queue rwlock
- * @lock : Poपूर्णांकer to queue rwlock काष्ठाure
- * Return: 1 अगर lock acquired, 0 अगर failed
+ * queued_read_trylock - try to acquire read lock of a queue rwlock
+ * @lock : Pointer to queue rwlock structure
+ * Return: 1 if lock acquired, 0 if failed
  */
-अटल अंतरभूत पूर्णांक queued_पढ़ो_trylock(काष्ठा qrwlock *lock)
-अणु
-	पूर्णांक cnts;
+static inline int queued_read_trylock(struct qrwlock *lock)
+{
+	int cnts;
 
-	cnts = atomic_पढ़ो(&lock->cnts);
-	अगर (likely(!(cnts & _QW_WMASK))) अणु
-		cnts = (u32)atomic_add_वापस_acquire(_QR_BIAS, &lock->cnts);
-		अगर (likely(!(cnts & _QW_WMASK)))
-			वापस 1;
+	cnts = atomic_read(&lock->cnts);
+	if (likely(!(cnts & _QW_WMASK))) {
+		cnts = (u32)atomic_add_return_acquire(_QR_BIAS, &lock->cnts);
+		if (likely(!(cnts & _QW_WMASK)))
+			return 1;
 		atomic_sub(_QR_BIAS, &lock->cnts);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /**
- * queued_ग_लिखो_trylock - try to acquire ग_लिखो lock of a queue rwlock
- * @lock : Poपूर्णांकer to queue rwlock काष्ठाure
- * Return: 1 अगर lock acquired, 0 अगर failed
+ * queued_write_trylock - try to acquire write lock of a queue rwlock
+ * @lock : Pointer to queue rwlock structure
+ * Return: 1 if lock acquired, 0 if failed
  */
-अटल अंतरभूत पूर्णांक queued_ग_लिखो_trylock(काष्ठा qrwlock *lock)
-अणु
-	पूर्णांक cnts;
+static inline int queued_write_trylock(struct qrwlock *lock)
+{
+	int cnts;
 
-	cnts = atomic_पढ़ो(&lock->cnts);
-	अगर (unlikely(cnts))
-		वापस 0;
+	cnts = atomic_read(&lock->cnts);
+	if (unlikely(cnts))
+		return 0;
 
-	वापस likely(atomic_try_cmpxchg_acquire(&lock->cnts, &cnts,
+	return likely(atomic_try_cmpxchg_acquire(&lock->cnts, &cnts,
 				_QW_LOCKED));
-पूर्ण
+}
 /**
- * queued_पढ़ो_lock - acquire पढ़ो lock of a queue rwlock
- * @lock: Poपूर्णांकer to queue rwlock काष्ठाure
+ * queued_read_lock - acquire read lock of a queue rwlock
+ * @lock: Pointer to queue rwlock structure
  */
-अटल अंतरभूत व्योम queued_पढ़ो_lock(काष्ठा qrwlock *lock)
-अणु
-	पूर्णांक cnts;
+static inline void queued_read_lock(struct qrwlock *lock)
+{
+	int cnts;
 
-	cnts = atomic_add_वापस_acquire(_QR_BIAS, &lock->cnts);
-	अगर (likely(!(cnts & _QW_WMASK)))
-		वापस;
+	cnts = atomic_add_return_acquire(_QR_BIAS, &lock->cnts);
+	if (likely(!(cnts & _QW_WMASK)))
+		return;
 
-	/* The slowpath will decrement the पढ़ोer count, अगर necessary. */
-	queued_पढ़ो_lock_slowpath(lock);
-पूर्ण
-
-/**
- * queued_ग_लिखो_lock - acquire ग_लिखो lock of a queue rwlock
- * @lock : Poपूर्णांकer to queue rwlock काष्ठाure
- */
-अटल अंतरभूत व्योम queued_ग_लिखो_lock(काष्ठा qrwlock *lock)
-अणु
-	पूर्णांक cnts = 0;
-	/* Optimize क्रम the unfair lock हाल where the fair flag is 0. */
-	अगर (likely(atomic_try_cmpxchg_acquire(&lock->cnts, &cnts, _QW_LOCKED)))
-		वापस;
-
-	queued_ग_लिखो_lock_slowpath(lock);
-पूर्ण
+	/* The slowpath will decrement the reader count, if necessary. */
+	queued_read_lock_slowpath(lock);
+}
 
 /**
- * queued_पढ़ो_unlock - release पढ़ो lock of a queue rwlock
- * @lock : Poपूर्णांकer to queue rwlock काष्ठाure
+ * queued_write_lock - acquire write lock of a queue rwlock
+ * @lock : Pointer to queue rwlock structure
  */
-अटल अंतरभूत व्योम queued_पढ़ो_unlock(काष्ठा qrwlock *lock)
-अणु
+static inline void queued_write_lock(struct qrwlock *lock)
+{
+	int cnts = 0;
+	/* Optimize for the unfair lock case where the fair flag is 0. */
+	if (likely(atomic_try_cmpxchg_acquire(&lock->cnts, &cnts, _QW_LOCKED)))
+		return;
+
+	queued_write_lock_slowpath(lock);
+}
+
+/**
+ * queued_read_unlock - release read lock of a queue rwlock
+ * @lock : Pointer to queue rwlock structure
+ */
+static inline void queued_read_unlock(struct qrwlock *lock)
+{
 	/*
-	 * Atomically decrement the पढ़ोer count
+	 * Atomically decrement the reader count
 	 */
-	(व्योम)atomic_sub_वापस_release(_QR_BIAS, &lock->cnts);
-पूर्ण
+	(void)atomic_sub_return_release(_QR_BIAS, &lock->cnts);
+}
 
 /**
- * queued_ग_लिखो_unlock - release ग_लिखो lock of a queue rwlock
- * @lock : Poपूर्णांकer to queue rwlock काष्ठाure
+ * queued_write_unlock - release write lock of a queue rwlock
+ * @lock : Pointer to queue rwlock structure
  */
-अटल अंतरभूत व्योम queued_ग_लिखो_unlock(काष्ठा qrwlock *lock)
-अणु
+static inline void queued_write_unlock(struct qrwlock *lock)
+{
 	smp_store_release(&lock->wlocked, 0);
-पूर्ण
+}
 
 /**
- * queued_rwlock_is_contended - check अगर the lock is contended
- * @lock : Poपूर्णांकer to queue rwlock काष्ठाure
- * Return: 1 अगर lock contended, 0 otherwise
+ * queued_rwlock_is_contended - check if the lock is contended
+ * @lock : Pointer to queue rwlock structure
+ * Return: 1 if lock contended, 0 otherwise
  */
-अटल अंतरभूत पूर्णांक queued_rwlock_is_contended(काष्ठा qrwlock *lock)
-अणु
-	वापस arch_spin_is_locked(&lock->रुको_lock);
-पूर्ण
+static inline int queued_rwlock_is_contended(struct qrwlock *lock)
+{
+	return arch_spin_is_locked(&lock->wait_lock);
+}
 
 /*
- * Remapping rwlock architecture specअगरic functions to the corresponding
+ * Remapping rwlock architecture specific functions to the corresponding
  * queue rwlock functions.
  */
-#घोषणा arch_पढ़ो_lock(l)		queued_पढ़ो_lock(l)
-#घोषणा arch_ग_लिखो_lock(l)		queued_ग_लिखो_lock(l)
-#घोषणा arch_पढ़ो_trylock(l)		queued_पढ़ो_trylock(l)
-#घोषणा arch_ग_लिखो_trylock(l)		queued_ग_लिखो_trylock(l)
-#घोषणा arch_पढ़ो_unlock(l)		queued_पढ़ो_unlock(l)
-#घोषणा arch_ग_लिखो_unlock(l)		queued_ग_लिखो_unlock(l)
-#घोषणा arch_rwlock_is_contended(l)	queued_rwlock_is_contended(l)
+#define arch_read_lock(l)		queued_read_lock(l)
+#define arch_write_lock(l)		queued_write_lock(l)
+#define arch_read_trylock(l)		queued_read_trylock(l)
+#define arch_write_trylock(l)		queued_write_trylock(l)
+#define arch_read_unlock(l)		queued_read_unlock(l)
+#define arch_write_unlock(l)		queued_write_unlock(l)
+#define arch_rwlock_is_contended(l)	queued_rwlock_is_contended(l)
 
-#पूर्ण_अगर /* __ASM_GENERIC_QRWLOCK_H */
+#endif /* __ASM_GENERIC_QRWLOCK_H */

@@ -1,61 +1,60 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * fs/sysfs/group.c - Operations क्रम adding/removing multiple files at once.
+ * fs/sysfs/group.c - Operations for adding/removing multiple files at once.
  *
  * Copyright (c) 2003 Patrick Mochel
  * Copyright (c) 2003 Open Source Development Lab
- * Copyright (c) 2013 Greg Kroah-Harपंचांगan
+ * Copyright (c) 2013 Greg Kroah-Hartman
  * Copyright (c) 2013 The Linux Foundation
  */
 
-#समावेश <linux/kobject.h>
-#समावेश <linux/module.h>
-#समावेश <linux/dcache.h>
-#समावेश <linux/namei.h>
-#समावेश <linux/err.h>
-#समावेश <linux/fs.h>
-#समावेश "sysfs.h"
+#include <linux/kobject.h>
+#include <linux/module.h>
+#include <linux/dcache.h>
+#include <linux/namei.h>
+#include <linux/err.h>
+#include <linux/fs.h>
+#include "sysfs.h"
 
 
-अटल व्योम हटाओ_files(काष्ठा kernfs_node *parent,
-			 स्थिर काष्ठा attribute_group *grp)
-अणु
-	काष्ठा attribute *स्थिर *attr;
-	काष्ठा bin_attribute *स्थिर *bin_attr;
+static void remove_files(struct kernfs_node *parent,
+			 const struct attribute_group *grp)
+{
+	struct attribute *const *attr;
+	struct bin_attribute *const *bin_attr;
 
-	अगर (grp->attrs)
-		क्रम (attr = grp->attrs; *attr; attr++)
-			kernfs_हटाओ_by_name(parent, (*attr)->name);
-	अगर (grp->bin_attrs)
-		क्रम (bin_attr = grp->bin_attrs; *bin_attr; bin_attr++)
-			kernfs_हटाओ_by_name(parent, (*bin_attr)->attr.name);
-पूर्ण
+	if (grp->attrs)
+		for (attr = grp->attrs; *attr; attr++)
+			kernfs_remove_by_name(parent, (*attr)->name);
+	if (grp->bin_attrs)
+		for (bin_attr = grp->bin_attrs; *bin_attr; bin_attr++)
+			kernfs_remove_by_name(parent, (*bin_attr)->attr.name);
+}
 
-अटल पूर्णांक create_files(काष्ठा kernfs_node *parent, काष्ठा kobject *kobj,
+static int create_files(struct kernfs_node *parent, struct kobject *kobj,
 			kuid_t uid, kgid_t gid,
-			स्थिर काष्ठा attribute_group *grp, पूर्णांक update)
-अणु
-	काष्ठा attribute *स्थिर *attr;
-	काष्ठा bin_attribute *स्थिर *bin_attr;
-	पूर्णांक error = 0, i;
+			const struct attribute_group *grp, int update)
+{
+	struct attribute *const *attr;
+	struct bin_attribute *const *bin_attr;
+	int error = 0, i;
 
-	अगर (grp->attrs) अणु
-		क्रम (i = 0, attr = grp->attrs; *attr && !error; i++, attr++) अणु
+	if (grp->attrs) {
+		for (i = 0, attr = grp->attrs; *attr && !error; i++, attr++) {
 			umode_t mode = (*attr)->mode;
 
 			/*
 			 * In update mode, we're changing the permissions or
 			 * visibility.  Do this by first removing then
-			 * re-adding (अगर required) the file.
+			 * re-adding (if required) the file.
 			 */
-			अगर (update)
-				kernfs_हटाओ_by_name(parent, (*attr)->name);
-			अगर (grp->is_visible) अणु
+			if (update)
+				kernfs_remove_by_name(parent, (*attr)->name);
+			if (grp->is_visible) {
 				mode = grp->is_visible(kobj, *attr, i);
-				अगर (!mode)
-					जारी;
-			पूर्ण
+				if (!mode)
+					continue;
+			}
 
 			WARN(mode & ~(SYSFS_PREALLOC | 0664),
 			     "Attribute %s: Invalid permissions 0%o\n",
@@ -63,28 +62,28 @@
 
 			mode &= SYSFS_PREALLOC | 0664;
 			error = sysfs_add_file_mode_ns(parent, *attr, false,
-						       mode, uid, gid, शून्य);
-			अगर (unlikely(error))
-				अवरोध;
-		पूर्ण
-		अगर (error) अणु
-			हटाओ_files(parent, grp);
-			जाओ निकास;
-		पूर्ण
-	पूर्ण
+						       mode, uid, gid, NULL);
+			if (unlikely(error))
+				break;
+		}
+		if (error) {
+			remove_files(parent, grp);
+			goto exit;
+		}
+	}
 
-	अगर (grp->bin_attrs) अणु
-		क्रम (i = 0, bin_attr = grp->bin_attrs; *bin_attr; i++, bin_attr++) अणु
+	if (grp->bin_attrs) {
+		for (i = 0, bin_attr = grp->bin_attrs; *bin_attr; i++, bin_attr++) {
 			umode_t mode = (*bin_attr)->attr.mode;
 
-			अगर (update)
-				kernfs_हटाओ_by_name(parent,
+			if (update)
+				kernfs_remove_by_name(parent,
 						(*bin_attr)->attr.name);
-			अगर (grp->is_bin_visible) अणु
+			if (grp->is_bin_visible) {
 				mode = grp->is_bin_visible(kobj, *bin_attr, i);
-				अगर (!mode)
-					जारी;
-			पूर्ण
+				if (!mode)
+					continue;
+			}
 
 			WARN(mode & ~(SYSFS_PREALLOC | 0664),
 			     "Attribute %s: Invalid permissions 0%o\n",
@@ -94,145 +93,145 @@
 			error = sysfs_add_file_mode_ns(parent,
 					&(*bin_attr)->attr, true,
 					mode,
-					uid, gid, शून्य);
-			अगर (error)
-				अवरोध;
-		पूर्ण
-		अगर (error)
-			हटाओ_files(parent, grp);
-	पूर्ण
-निकास:
-	वापस error;
-पूर्ण
+					uid, gid, NULL);
+			if (error)
+				break;
+		}
+		if (error)
+			remove_files(parent, grp);
+	}
+exit:
+	return error;
+}
 
 
-अटल पूर्णांक पूर्णांकernal_create_group(काष्ठा kobject *kobj, पूर्णांक update,
-				 स्थिर काष्ठा attribute_group *grp)
-अणु
-	काष्ठा kernfs_node *kn;
+static int internal_create_group(struct kobject *kobj, int update,
+				 const struct attribute_group *grp)
+{
+	struct kernfs_node *kn;
 	kuid_t uid;
 	kgid_t gid;
-	पूर्णांक error;
+	int error;
 
-	अगर (WARN_ON(!kobj || (!update && !kobj->sd)))
-		वापस -EINVAL;
+	if (WARN_ON(!kobj || (!update && !kobj->sd)))
+		return -EINVAL;
 
-	/* Updates may happen beक्रमe the object has been instantiated */
-	अगर (unlikely(update && !kobj->sd))
-		वापस -EINVAL;
-	अगर (!grp->attrs && !grp->bin_attrs) अणु
+	/* Updates may happen before the object has been instantiated */
+	if (unlikely(update && !kobj->sd))
+		return -EINVAL;
+	if (!grp->attrs && !grp->bin_attrs) {
 		WARN(1, "sysfs: (bin_)attrs not set by subsystem for group: %s/%s\n",
 			kobj->name, grp->name ?: "");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	kobject_get_ownership(kobj, &uid, &gid);
-	अगर (grp->name) अणु
-		अगर (update) अणु
+	if (grp->name) {
+		if (update) {
 			kn = kernfs_find_and_get(kobj->sd, grp->name);
-			अगर (!kn) अणु
+			if (!kn) {
 				pr_warn("Can't update unknown attr grp name: %s/%s\n",
 					kobj->name, grp->name);
-				वापस -EINVAL;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				return -EINVAL;
+			}
+		} else {
 			kn = kernfs_create_dir_ns(kobj->sd, grp->name,
 						  S_IRWXU | S_IRUGO | S_IXUGO,
-						  uid, gid, kobj, शून्य);
-			अगर (IS_ERR(kn)) अणु
-				अगर (PTR_ERR(kn) == -EEXIST)
+						  uid, gid, kobj, NULL);
+			if (IS_ERR(kn)) {
+				if (PTR_ERR(kn) == -EEXIST)
 					sysfs_warn_dup(kobj->sd, grp->name);
-				वापस PTR_ERR(kn);
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा
+				return PTR_ERR(kn);
+			}
+		}
+	} else
 		kn = kobj->sd;
 	kernfs_get(kn);
 	error = create_files(kn, kobj, uid, gid, grp, update);
-	अगर (error) अणु
-		अगर (grp->name)
-			kernfs_हटाओ(kn);
-	पूर्ण
+	if (error) {
+		if (grp->name)
+			kernfs_remove(kn);
+	}
 	kernfs_put(kn);
 
-	अगर (grp->name && update)
+	if (grp->name && update)
 		kernfs_put(kn);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /**
  * sysfs_create_group - given a directory kobject, create an attribute group
  * @kobj:	The kobject to create the group on
  * @grp:	The attribute group to create
  *
- * This function creates a group क्रम the first समय.  It will explicitly
- * warn and error अगर any of the attribute files being created alपढ़ोy exist.
+ * This function creates a group for the first time.  It will explicitly
+ * warn and error if any of the attribute files being created already exist.
  *
  * Returns 0 on success or error code on failure.
  */
-पूर्णांक sysfs_create_group(काष्ठा kobject *kobj,
-		       स्थिर काष्ठा attribute_group *grp)
-अणु
-	वापस पूर्णांकernal_create_group(kobj, 0, grp);
-पूर्ण
+int sysfs_create_group(struct kobject *kobj,
+		       const struct attribute_group *grp)
+{
+	return internal_create_group(kobj, 0, grp);
+}
 EXPORT_SYMBOL_GPL(sysfs_create_group);
 
-अटल पूर्णांक पूर्णांकernal_create_groups(काष्ठा kobject *kobj, पूर्णांक update,
-				  स्थिर काष्ठा attribute_group **groups)
-अणु
-	पूर्णांक error = 0;
-	पूर्णांक i;
+static int internal_create_groups(struct kobject *kobj, int update,
+				  const struct attribute_group **groups)
+{
+	int error = 0;
+	int i;
 
-	अगर (!groups)
-		वापस 0;
+	if (!groups)
+		return 0;
 
-	क्रम (i = 0; groups[i]; i++) अणु
-		error = पूर्णांकernal_create_group(kobj, update, groups[i]);
-		अगर (error) अणु
-			जबतक (--i >= 0)
-				sysfs_हटाओ_group(kobj, groups[i]);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस error;
-पूर्ण
+	for (i = 0; groups[i]; i++) {
+		error = internal_create_group(kobj, update, groups[i]);
+		if (error) {
+			while (--i >= 0)
+				sysfs_remove_group(kobj, groups[i]);
+			break;
+		}
+	}
+	return error;
+}
 
 /**
  * sysfs_create_groups - given a directory kobject, create a bunch of attribute groups
  * @kobj:	The kobject to create the group on
- * @groups:	The attribute groups to create, शून्य terminated
+ * @groups:	The attribute groups to create, NULL terminated
  *
  * This function creates a bunch of attribute groups.  If an error occurs when
- * creating a group, all previously created groups will be हटाओd, unwinding
+ * creating a group, all previously created groups will be removed, unwinding
  * everything back to the original state when this function was called.
- * It will explicitly warn and error अगर any of the attribute files being
- * created alपढ़ोy exist.
+ * It will explicitly warn and error if any of the attribute files being
+ * created already exist.
  *
  * Returns 0 on success or error code from sysfs_create_group on failure.
  */
-पूर्णांक sysfs_create_groups(काष्ठा kobject *kobj,
-			स्थिर काष्ठा attribute_group **groups)
-अणु
-	वापस पूर्णांकernal_create_groups(kobj, 0, groups);
-पूर्ण
+int sysfs_create_groups(struct kobject *kobj,
+			const struct attribute_group **groups)
+{
+	return internal_create_groups(kobj, 0, groups);
+}
 EXPORT_SYMBOL_GPL(sysfs_create_groups);
 
 /**
  * sysfs_update_groups - given a directory kobject, create a bunch of attribute groups
  * @kobj:	The kobject to update the group on
- * @groups:	The attribute groups to update, शून्य terminated
+ * @groups:	The attribute groups to update, NULL terminated
  *
  * This function update a bunch of attribute groups.  If an error occurs when
- * updating a group, all previously updated groups will be हटाओd together
- * with alपढ़ोy existing (not updated) attributes.
+ * updating a group, all previously updated groups will be removed together
+ * with already existing (not updated) attributes.
  *
  * Returns 0 on success or error code from sysfs_update_group on failure.
  */
-पूर्णांक sysfs_update_groups(काष्ठा kobject *kobj,
-			स्थिर काष्ठा attribute_group **groups)
-अणु
-	वापस पूर्णांकernal_create_groups(kobj, 1, groups);
-पूर्ण
+int sysfs_update_groups(struct kobject *kobj,
+			const struct attribute_group **groups)
+{
+	return internal_create_groups(kobj, 1, groups);
+}
 EXPORT_SYMBOL_GPL(sysfs_update_groups);
 
 /**
@@ -241,136 +240,136 @@ EXPORT_SYMBOL_GPL(sysfs_update_groups);
  * @grp:	The attribute group to update
  *
  * This function updates an attribute group.  Unlike
- * sysfs_create_group(), it will explicitly not warn or error अगर any
- * of the attribute files being created alपढ़ोy exist.  Furthermore,
- * अगर the visibility of the files has changed through the is_visible()
- * callback, it will update the permissions and add or हटाओ the
+ * sysfs_create_group(), it will explicitly not warn or error if any
+ * of the attribute files being created already exist.  Furthermore,
+ * if the visibility of the files has changed through the is_visible()
+ * callback, it will update the permissions and add or remove the
  * relevant files. Changing a group's name (subdirectory name under
  * kobj's directory in sysfs) is not allowed.
  *
- * The primary use क्रम this function is to call it after making a change
+ * The primary use for this function is to call it after making a change
  * that affects group visibility.
  *
  * Returns 0 on success or error code on failure.
  */
-पूर्णांक sysfs_update_group(काष्ठा kobject *kobj,
-		       स्थिर काष्ठा attribute_group *grp)
-अणु
-	वापस पूर्णांकernal_create_group(kobj, 1, grp);
-पूर्ण
+int sysfs_update_group(struct kobject *kobj,
+		       const struct attribute_group *grp)
+{
+	return internal_create_group(kobj, 1, grp);
+}
 EXPORT_SYMBOL_GPL(sysfs_update_group);
 
 /**
- * sysfs_हटाओ_group: हटाओ a group from a kobject
- * @kobj:	kobject to हटाओ the group from
- * @grp:	group to हटाओ
+ * sysfs_remove_group: remove a group from a kobject
+ * @kobj:	kobject to remove the group from
+ * @grp:	group to remove
  *
- * This function हटाओs a group of attributes from a kobject.  The attributes
- * previously have to have been created क्रम this group, otherwise it will fail.
+ * This function removes a group of attributes from a kobject.  The attributes
+ * previously have to have been created for this group, otherwise it will fail.
  */
-व्योम sysfs_हटाओ_group(काष्ठा kobject *kobj,
-			स्थिर काष्ठा attribute_group *grp)
-अणु
-	काष्ठा kernfs_node *parent = kobj->sd;
-	काष्ठा kernfs_node *kn;
+void sysfs_remove_group(struct kobject *kobj,
+			const struct attribute_group *grp)
+{
+	struct kernfs_node *parent = kobj->sd;
+	struct kernfs_node *kn;
 
-	अगर (grp->name) अणु
+	if (grp->name) {
 		kn = kernfs_find_and_get(parent, grp->name);
-		अगर (!kn) अणु
+		if (!kn) {
 			WARN(!kn, KERN_WARNING
 			     "sysfs group '%s' not found for kobject '%s'\n",
 			     grp->name, kobject_name(kobj));
-			वापस;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return;
+		}
+	} else {
 		kn = parent;
 		kernfs_get(kn);
-	पूर्ण
+	}
 
-	हटाओ_files(kn, grp);
-	अगर (grp->name)
-		kernfs_हटाओ(kn);
+	remove_files(kn, grp);
+	if (grp->name)
+		kernfs_remove(kn);
 
 	kernfs_put(kn);
-पूर्ण
-EXPORT_SYMBOL_GPL(sysfs_हटाओ_group);
+}
+EXPORT_SYMBOL_GPL(sysfs_remove_group);
 
 /**
- * sysfs_हटाओ_groups - हटाओ a list of groups
+ * sysfs_remove_groups - remove a list of groups
  *
- * @kobj:	The kobject क्रम the groups to be हटाओd from
- * @groups:	शून्य terminated list of groups to be हटाओd
+ * @kobj:	The kobject for the groups to be removed from
+ * @groups:	NULL terminated list of groups to be removed
  *
- * If groups is not शून्य, हटाओ the specअगरied groups from the kobject.
+ * If groups is not NULL, remove the specified groups from the kobject.
  */
-व्योम sysfs_हटाओ_groups(काष्ठा kobject *kobj,
-			 स्थिर काष्ठा attribute_group **groups)
-अणु
-	पूर्णांक i;
+void sysfs_remove_groups(struct kobject *kobj,
+			 const struct attribute_group **groups)
+{
+	int i;
 
-	अगर (!groups)
-		वापस;
-	क्रम (i = 0; groups[i]; i++)
-		sysfs_हटाओ_group(kobj, groups[i]);
-पूर्ण
-EXPORT_SYMBOL_GPL(sysfs_हटाओ_groups);
+	if (!groups)
+		return;
+	for (i = 0; groups[i]; i++)
+		sysfs_remove_group(kobj, groups[i]);
+}
+EXPORT_SYMBOL_GPL(sysfs_remove_groups);
 
 /**
- * sysfs_merge_group - merge files पूर्णांकo a pre-existing attribute group.
+ * sysfs_merge_group - merge files into a pre-existing attribute group.
  * @kobj:	The kobject containing the group.
- * @grp:	The files to create and the attribute group they beदीर्घ to.
+ * @grp:	The files to create and the attribute group they belong to.
  *
- * This function वापसs an error अगर the group करोesn't exist or any of the
- * files alपढ़ोy exist in that group, in which हाल none of the new files
+ * This function returns an error if the group doesn't exist or any of the
+ * files already exist in that group, in which case none of the new files
  * are created.
  */
-पूर्णांक sysfs_merge_group(काष्ठा kobject *kobj,
-		       स्थिर काष्ठा attribute_group *grp)
-अणु
-	काष्ठा kernfs_node *parent;
+int sysfs_merge_group(struct kobject *kobj,
+		       const struct attribute_group *grp)
+{
+	struct kernfs_node *parent;
 	kuid_t uid;
 	kgid_t gid;
-	पूर्णांक error = 0;
-	काष्ठा attribute *स्थिर *attr;
-	पूर्णांक i;
+	int error = 0;
+	struct attribute *const *attr;
+	int i;
 
 	parent = kernfs_find_and_get(kobj->sd, grp->name);
-	अगर (!parent)
-		वापस -ENOENT;
+	if (!parent)
+		return -ENOENT;
 
 	kobject_get_ownership(kobj, &uid, &gid);
 
-	क्रम ((i = 0, attr = grp->attrs); *attr && !error; (++i, ++attr))
+	for ((i = 0, attr = grp->attrs); *attr && !error; (++i, ++attr))
 		error = sysfs_add_file_mode_ns(parent, *attr, false,
-					       (*attr)->mode, uid, gid, शून्य);
-	अगर (error) अणु
-		जबतक (--i >= 0)
-			kernfs_हटाओ_by_name(parent, (*--attr)->name);
-	पूर्ण
+					       (*attr)->mode, uid, gid, NULL);
+	if (error) {
+		while (--i >= 0)
+			kernfs_remove_by_name(parent, (*--attr)->name);
+	}
 	kernfs_put(parent);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 EXPORT_SYMBOL_GPL(sysfs_merge_group);
 
 /**
- * sysfs_unmerge_group - हटाओ files from a pre-existing attribute group.
+ * sysfs_unmerge_group - remove files from a pre-existing attribute group.
  * @kobj:	The kobject containing the group.
- * @grp:	The files to हटाओ and the attribute group they beदीर्घ to.
+ * @grp:	The files to remove and the attribute group they belong to.
  */
-व्योम sysfs_unmerge_group(काष्ठा kobject *kobj,
-		       स्थिर काष्ठा attribute_group *grp)
-अणु
-	काष्ठा kernfs_node *parent;
-	काष्ठा attribute *स्थिर *attr;
+void sysfs_unmerge_group(struct kobject *kobj,
+		       const struct attribute_group *grp)
+{
+	struct kernfs_node *parent;
+	struct attribute *const *attr;
 
 	parent = kernfs_find_and_get(kobj->sd, grp->name);
-	अगर (parent) अणु
-		क्रम (attr = grp->attrs; *attr; ++attr)
-			kernfs_हटाओ_by_name(parent, (*attr)->name);
+	if (parent) {
+		for (attr = grp->attrs; *attr; ++attr)
+			kernfs_remove_by_name(parent, (*attr)->name);
 		kernfs_put(parent);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(sysfs_unmerge_group);
 
 /**
@@ -380,131 +379,131 @@ EXPORT_SYMBOL_GPL(sysfs_unmerge_group);
  * @target:	The target kobject of the symlink to create.
  * @link_name:	The name of the symlink to create.
  */
-पूर्णांक sysfs_add_link_to_group(काष्ठा kobject *kobj, स्थिर अक्षर *group_name,
-			    काष्ठा kobject *target, स्थिर अक्षर *link_name)
-अणु
-	काष्ठा kernfs_node *parent;
-	पूर्णांक error = 0;
+int sysfs_add_link_to_group(struct kobject *kobj, const char *group_name,
+			    struct kobject *target, const char *link_name)
+{
+	struct kernfs_node *parent;
+	int error = 0;
 
 	parent = kernfs_find_and_get(kobj->sd, group_name);
-	अगर (!parent)
-		वापस -ENOENT;
+	if (!parent)
+		return -ENOENT;
 
 	error = sysfs_create_link_sd(parent, target, link_name);
 	kernfs_put(parent);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 EXPORT_SYMBOL_GPL(sysfs_add_link_to_group);
 
 /**
- * sysfs_हटाओ_link_from_group - हटाओ a symlink from an attribute group.
+ * sysfs_remove_link_from_group - remove a symlink from an attribute group.
  * @kobj:	The kobject containing the group.
  * @group_name:	The name of the group.
- * @link_name:	The name of the symlink to हटाओ.
+ * @link_name:	The name of the symlink to remove.
  */
-व्योम sysfs_हटाओ_link_from_group(काष्ठा kobject *kobj, स्थिर अक्षर *group_name,
-				  स्थिर अक्षर *link_name)
-अणु
-	काष्ठा kernfs_node *parent;
+void sysfs_remove_link_from_group(struct kobject *kobj, const char *group_name,
+				  const char *link_name)
+{
+	struct kernfs_node *parent;
 
 	parent = kernfs_find_and_get(kobj->sd, group_name);
-	अगर (parent) अणु
-		kernfs_हटाओ_by_name(parent, link_name);
+	if (parent) {
+		kernfs_remove_by_name(parent, link_name);
 		kernfs_put(parent);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(sysfs_हटाओ_link_from_group);
+	}
+}
+EXPORT_SYMBOL_GPL(sysfs_remove_link_from_group);
 
 /**
- * compat_only_sysfs_link_entry_to_kobj - add a symlink to a kobject poपूर्णांकing
+ * compat_only_sysfs_link_entry_to_kobj - add a symlink to a kobject pointing
  * to a group or an attribute
  * @kobj:		The kobject containing the group.
  * @target_kobj:	The target kobject.
  * @target_name:	The name of the target group or attribute.
  * @symlink_name:	The name of the symlink file (target_name will be
- *			considered अगर symlink_name is शून्य).
+ *			considered if symlink_name is NULL).
  */
-पूर्णांक compat_only_sysfs_link_entry_to_kobj(काष्ठा kobject *kobj,
-					 काष्ठा kobject *target_kobj,
-					 स्थिर अक्षर *target_name,
-					 स्थिर अक्षर *symlink_name)
-अणु
-	काष्ठा kernfs_node *target;
-	काष्ठा kernfs_node *entry;
-	काष्ठा kernfs_node *link;
+int compat_only_sysfs_link_entry_to_kobj(struct kobject *kobj,
+					 struct kobject *target_kobj,
+					 const char *target_name,
+					 const char *symlink_name)
+{
+	struct kernfs_node *target;
+	struct kernfs_node *entry;
+	struct kernfs_node *link;
 
 	/*
-	 * We करोn't own @target_kobj and it may be हटाओd at any समय.
-	 * Synchronize using sysfs_symlink_target_lock. See sysfs_हटाओ_dir()
-	 * क्रम details.
+	 * We don't own @target_kobj and it may be removed at any time.
+	 * Synchronize using sysfs_symlink_target_lock. See sysfs_remove_dir()
+	 * for details.
 	 */
 	spin_lock(&sysfs_symlink_target_lock);
 	target = target_kobj->sd;
-	अगर (target)
+	if (target)
 		kernfs_get(target);
 	spin_unlock(&sysfs_symlink_target_lock);
-	अगर (!target)
-		वापस -ENOENT;
+	if (!target)
+		return -ENOENT;
 
 	entry = kernfs_find_and_get(target_kobj->sd, target_name);
-	अगर (!entry) अणु
+	if (!entry) {
 		kernfs_put(target);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
-	अगर (!symlink_name)
+	if (!symlink_name)
 		symlink_name = target_name;
 
 	link = kernfs_create_link(kobj->sd, symlink_name, entry);
-	अगर (PTR_ERR(link) == -EEXIST)
+	if (PTR_ERR(link) == -EEXIST)
 		sysfs_warn_dup(kobj->sd, symlink_name);
 
 	kernfs_put(entry);
 	kernfs_put(target);
-	वापस PTR_ERR_OR_ZERO(link);
-पूर्ण
+	return PTR_ERR_OR_ZERO(link);
+}
 EXPORT_SYMBOL_GPL(compat_only_sysfs_link_entry_to_kobj);
 
-अटल पूर्णांक sysfs_group_attrs_change_owner(काष्ठा kernfs_node *grp_kn,
-					  स्थिर काष्ठा attribute_group *grp,
-					  काष्ठा iattr *newattrs)
-अणु
-	काष्ठा kernfs_node *kn;
-	पूर्णांक error;
+static int sysfs_group_attrs_change_owner(struct kernfs_node *grp_kn,
+					  const struct attribute_group *grp,
+					  struct iattr *newattrs)
+{
+	struct kernfs_node *kn;
+	int error;
 
-	अगर (grp->attrs) अणु
-		काष्ठा attribute *स्थिर *attr;
+	if (grp->attrs) {
+		struct attribute *const *attr;
 
-		क्रम (attr = grp->attrs; *attr; attr++) अणु
+		for (attr = grp->attrs; *attr; attr++) {
 			kn = kernfs_find_and_get(grp_kn, (*attr)->name);
-			अगर (!kn)
-				वापस -ENOENT;
+			if (!kn)
+				return -ENOENT;
 
 			error = kernfs_setattr(kn, newattrs);
 			kernfs_put(kn);
-			अगर (error)
-				वापस error;
-		पूर्ण
-	पूर्ण
+			if (error)
+				return error;
+		}
+	}
 
-	अगर (grp->bin_attrs) अणु
-		काष्ठा bin_attribute *स्थिर *bin_attr;
+	if (grp->bin_attrs) {
+		struct bin_attribute *const *bin_attr;
 
-		क्रम (bin_attr = grp->bin_attrs; *bin_attr; bin_attr++) अणु
+		for (bin_attr = grp->bin_attrs; *bin_attr; bin_attr++) {
 			kn = kernfs_find_and_get(grp_kn, (*bin_attr)->attr.name);
-			अगर (!kn)
-				वापस -ENOENT;
+			if (!kn)
+				return -ENOENT;
 
 			error = kernfs_setattr(kn, newattrs);
 			kernfs_put(kn);
-			अगर (error)
-				वापस error;
-		पूर्ण
-	पूर्ण
+			if (error)
+				return error;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * sysfs_group_change_owner - change owner of an attribute group.
@@ -515,38 +514,38 @@ EXPORT_SYMBOL_GPL(compat_only_sysfs_link_entry_to_kobj);
  *
  * Returns 0 on success or error code on failure.
  */
-पूर्णांक sysfs_group_change_owner(काष्ठा kobject *kobj,
-			     स्थिर काष्ठा attribute_group *grp, kuid_t kuid,
+int sysfs_group_change_owner(struct kobject *kobj,
+			     const struct attribute_group *grp, kuid_t kuid,
 			     kgid_t kgid)
-अणु
-	काष्ठा kernfs_node *grp_kn;
-	पूर्णांक error;
-	काष्ठा iattr newattrs = अणु
+{
+	struct kernfs_node *grp_kn;
+	int error;
+	struct iattr newattrs = {
 		.ia_valid = ATTR_UID | ATTR_GID,
 		.ia_uid = kuid,
 		.ia_gid = kgid,
-	पूर्ण;
+	};
 
-	अगर (!kobj->state_in_sysfs)
-		वापस -EINVAL;
+	if (!kobj->state_in_sysfs)
+		return -EINVAL;
 
-	अगर (grp->name) अणु
+	if (grp->name) {
 		grp_kn = kernfs_find_and_get(kobj->sd, grp->name);
-	पूर्ण अन्यथा अणु
+	} else {
 		kernfs_get(kobj->sd);
 		grp_kn = kobj->sd;
-	पूर्ण
-	अगर (!grp_kn)
-		वापस -ENOENT;
+	}
+	if (!grp_kn)
+		return -ENOENT;
 
 	error = kernfs_setattr(grp_kn, &newattrs);
-	अगर (!error)
+	if (!error)
 		error = sysfs_group_attrs_change_owner(grp_kn, grp, &newattrs);
 
 	kernfs_put(grp_kn);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 EXPORT_SYMBOL_GPL(sysfs_group_change_owner);
 
 /**
@@ -558,24 +557,24 @@ EXPORT_SYMBOL_GPL(sysfs_group_change_owner);
  *
  * Returns 0 on success or error code on failure.
  */
-पूर्णांक sysfs_groups_change_owner(काष्ठा kobject *kobj,
-			      स्थिर काष्ठा attribute_group **groups,
+int sysfs_groups_change_owner(struct kobject *kobj,
+			      const struct attribute_group **groups,
 			      kuid_t kuid, kgid_t kgid)
-अणु
-	पूर्णांक error = 0, i;
+{
+	int error = 0, i;
 
-	अगर (!kobj->state_in_sysfs)
-		वापस -EINVAL;
+	if (!kobj->state_in_sysfs)
+		return -EINVAL;
 
-	अगर (!groups)
-		वापस 0;
+	if (!groups)
+		return 0;
 
-	क्रम (i = 0; groups[i]; i++) अणु
+	for (i = 0; groups[i]; i++) {
 		error = sysfs_group_change_owner(kobj, groups[i], kuid, kgid);
-		अगर (error)
-			अवरोध;
-	पूर्ण
+		if (error)
+			break;
+	}
 
-	वापस error;
-पूर्ण
+	return error;
+}
 EXPORT_SYMBOL_GPL(sysfs_groups_change_owner);

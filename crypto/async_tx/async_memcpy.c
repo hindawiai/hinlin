@@ -1,54 +1,53 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * copy offload engine support
  *
- * Copyright तऊ 2006, Intel Corporation.
+ * Copyright © 2006, Intel Corporation.
  *
- *      Dan Williams <dan.j.williams@पूर्णांकel.com>
+ *      Dan Williams <dan.j.williams@intel.com>
  *
  *      with architecture considerations by:
  *      Neil Brown <neilb@suse.de>
  *      Jeff Garzik <jeff@garzik.org>
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/module.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/async_tx.h>
+#include <linux/kernel.h>
+#include <linux/highmem.h>
+#include <linux/module.h>
+#include <linux/mm.h>
+#include <linux/dma-mapping.h>
+#include <linux/async_tx.h>
 
 /**
- * async_स_नकल - attempt to copy memory with a dma engine.
+ * async_memcpy - attempt to copy memory with a dma engine.
  * @dest: destination page
  * @src: src page
- * @dest_offset: offset पूर्णांकo 'dest' to start transaction
- * @src_offset: offset पूर्णांकo 'src' to start transaction
+ * @dest_offset: offset into 'dest' to start transaction
+ * @src_offset: offset into 'src' to start transaction
  * @len: length in bytes
- * @submit: submission / completion modअगरiers
+ * @submit: submission / completion modifiers
  *
  * honored flags: ASYNC_TX_ACK
  */
-काष्ठा dma_async_tx_descriptor *
-async_स_नकल(काष्ठा page *dest, काष्ठा page *src, अचिन्हित पूर्णांक dest_offset,
-	     अचिन्हित पूर्णांक src_offset, माप_प्रकार len,
-	     काष्ठा async_submit_ctl *submit)
-अणु
-	काष्ठा dma_chan *chan = async_tx_find_channel(submit, DMA_MEMCPY,
+struct dma_async_tx_descriptor *
+async_memcpy(struct page *dest, struct page *src, unsigned int dest_offset,
+	     unsigned int src_offset, size_t len,
+	     struct async_submit_ctl *submit)
+{
+	struct dma_chan *chan = async_tx_find_channel(submit, DMA_MEMCPY,
 						      &dest, 1, &src, 1, len);
-	काष्ठा dma_device *device = chan ? chan->device : शून्य;
-	काष्ठा dma_async_tx_descriptor *tx = शून्य;
-	काष्ठा dmaengine_unmap_data *unmap = शून्य;
+	struct dma_device *device = chan ? chan->device : NULL;
+	struct dma_async_tx_descriptor *tx = NULL;
+	struct dmaengine_unmap_data *unmap = NULL;
 
-	अगर (device)
+	if (device)
 		unmap = dmaengine_get_unmap_data(device->dev, 2, GFP_NOWAIT);
 
-	अगर (unmap && is_dma_copy_aligned(device, src_offset, dest_offset, len)) अणु
-		अचिन्हित दीर्घ dma_prep_flags = 0;
+	if (unmap && is_dma_copy_aligned(device, src_offset, dest_offset, len)) {
+		unsigned long dma_prep_flags = 0;
 
-		अगर (submit->cb_fn)
+		if (submit->cb_fn)
 			dma_prep_flags |= DMA_PREP_INTERRUPT;
-		अगर (submit->flags & ASYNC_TX_FENCE)
+		if (submit->flags & ASYNC_TX_FENCE)
 			dma_prep_flags |= DMA_PREP_FENCE;
 
 		unmap->to_cnt = 1;
@@ -59,39 +58,39 @@ async_स_नकल(काष्ठा page *dest, काष्ठा page *src,
 					      DMA_FROM_DEVICE);
 		unmap->len = len;
 
-		tx = device->device_prep_dma_स_नकल(chan, unmap->addr[1],
+		tx = device->device_prep_dma_memcpy(chan, unmap->addr[1],
 						    unmap->addr[0], len,
 						    dma_prep_flags);
-	पूर्ण
+	}
 
-	अगर (tx) अणु
+	if (tx) {
 		pr_debug("%s: (async) len: %zu\n", __func__, len);
 
 		dma_set_unmap(tx, unmap);
 		async_tx_submit(chan, tx, submit);
-	पूर्ण अन्यथा अणु
-		व्योम *dest_buf, *src_buf;
+	} else {
+		void *dest_buf, *src_buf;
 		pr_debug("%s: (sync) len: %zu\n", __func__, len);
 
-		/* रुको क्रम any prerequisite operations */
+		/* wait for any prerequisite operations */
 		async_tx_quiesce(&submit->depend_tx);
 
 		dest_buf = kmap_atomic(dest) + dest_offset;
 		src_buf = kmap_atomic(src) + src_offset;
 
-		स_नकल(dest_buf, src_buf, len);
+		memcpy(dest_buf, src_buf, len);
 
 		kunmap_atomic(src_buf);
 		kunmap_atomic(dest_buf);
 
 		async_tx_sync_epilog(submit);
-	पूर्ण
+	}
 
 	dmaengine_unmap_put(unmap);
 
-	वापस tx;
-पूर्ण
-EXPORT_SYMBOL_GPL(async_स_नकल);
+	return tx;
+}
+EXPORT_SYMBOL_GPL(async_memcpy);
 
 MODULE_AUTHOR("Intel Corporation");
 MODULE_DESCRIPTION("asynchronous memcpy api");

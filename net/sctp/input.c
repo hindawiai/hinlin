@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /* SCTP kernel implementation
  * Copyright (c) 1999-2000 Cisco, Inc.
  * Copyright (c) 1999-2001 Motorola, Inc.
@@ -10,135 +9,135 @@
  *
  * This file is part of the SCTP kernel implementation
  *
- * These functions handle all input from the IP layer पूर्णांकo SCTP.
+ * These functions handle all input from the IP layer into SCTP.
  *
  * Please send any bug reports or fixes you make to the
  * email address(es):
  *    lksctp developers <linux-sctp@vger.kernel.org>
  *
- * Written or modअगरied by:
+ * Written or modified by:
  *    La Monte H.P. Yarroll <piggy@acm.org>
  *    Karl Knutson <karl@athena.chicago.il.us>
- *    Xingang Guo <xingang.guo@पूर्णांकel.com>
+ *    Xingang Guo <xingang.guo@intel.com>
  *    Jon Grimm <jgrimm@us.ibm.com>
  *    Hui Huang <hui.huang@nokia.com>
  *    Daisy Chang <daisyc@us.ibm.com>
  *    Sridhar Samudrala <sri@us.ibm.com>
- *    Ardelle Fan <ardelle.fan@पूर्णांकel.com>
+ *    Ardelle Fan <ardelle.fan@intel.com>
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/list.h> /* For काष्ठा list_head */
-#समावेश <linux/socket.h>
-#समावेश <linux/ip.h>
-#समावेश <linux/समय.स> /* For काष्ठा समयval */
-#समावेश <linux/slab.h>
-#समावेश <net/ip.h>
-#समावेश <net/icmp.h>
-#समावेश <net/snmp.h>
-#समावेश <net/sock.h>
-#समावेश <net/xfrm.h>
-#समावेश <net/sctp/sctp.h>
-#समावेश <net/sctp/sm.h>
-#समावेश <net/sctp/checksum.h>
-#समावेश <net/net_namespace.h>
-#समावेश <linux/rhashtable.h>
-#समावेश <net/sock_reuseport.h>
+#include <linux/types.h>
+#include <linux/list.h> /* For struct list_head */
+#include <linux/socket.h>
+#include <linux/ip.h>
+#include <linux/time.h> /* For struct timeval */
+#include <linux/slab.h>
+#include <net/ip.h>
+#include <net/icmp.h>
+#include <net/snmp.h>
+#include <net/sock.h>
+#include <net/xfrm.h>
+#include <net/sctp/sctp.h>
+#include <net/sctp/sm.h>
+#include <net/sctp/checksum.h>
+#include <net/net_namespace.h>
+#include <linux/rhashtable.h>
+#include <net/sock_reuseport.h>
 
-/* Forward declarations क्रम पूर्णांकernal helpers. */
-अटल पूर्णांक sctp_rcv_ootb(काष्ठा sk_buff *);
-अटल काष्ठा sctp_association *__sctp_rcv_lookup(काष्ठा net *net,
-				      काष्ठा sk_buff *skb,
-				      स्थिर जोड़ sctp_addr *paddr,
-				      स्थिर जोड़ sctp_addr *laddr,
-				      काष्ठा sctp_transport **transportp);
-अटल काष्ठा sctp_endpoपूर्णांक *__sctp_rcv_lookup_endpoपूर्णांक(
-					काष्ठा net *net, काष्ठा sk_buff *skb,
-					स्थिर जोड़ sctp_addr *laddr,
-					स्थिर जोड़ sctp_addr *daddr);
-अटल काष्ठा sctp_association *__sctp_lookup_association(
-					काष्ठा net *net,
-					स्थिर जोड़ sctp_addr *local,
-					स्थिर जोड़ sctp_addr *peer,
-					काष्ठा sctp_transport **pt);
+/* Forward declarations for internal helpers. */
+static int sctp_rcv_ootb(struct sk_buff *);
+static struct sctp_association *__sctp_rcv_lookup(struct net *net,
+				      struct sk_buff *skb,
+				      const union sctp_addr *paddr,
+				      const union sctp_addr *laddr,
+				      struct sctp_transport **transportp);
+static struct sctp_endpoint *__sctp_rcv_lookup_endpoint(
+					struct net *net, struct sk_buff *skb,
+					const union sctp_addr *laddr,
+					const union sctp_addr *daddr);
+static struct sctp_association *__sctp_lookup_association(
+					struct net *net,
+					const union sctp_addr *local,
+					const union sctp_addr *peer,
+					struct sctp_transport **pt);
 
-अटल पूर्णांक sctp_add_backlog(काष्ठा sock *sk, काष्ठा sk_buff *skb);
+static int sctp_add_backlog(struct sock *sk, struct sk_buff *skb);
 
 
 /* Calculate the SCTP checksum of an SCTP packet.  */
-अटल अंतरभूत पूर्णांक sctp_rcv_checksum(काष्ठा net *net, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा sctphdr *sh = sctp_hdr(skb);
+static inline int sctp_rcv_checksum(struct net *net, struct sk_buff *skb)
+{
+	struct sctphdr *sh = sctp_hdr(skb);
 	__le32 cmp = sh->checksum;
 	__le32 val = sctp_compute_cksum(skb, 0);
 
-	अगर (val != cmp) अणु
+	if (val != cmp) {
 		/* CRC failure, dump it. */
 		__SCTP_INC_STATS(net, SCTP_MIB_CHECKSUMERRORS);
-		वापस -1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -1;
+	}
+	return 0;
+}
 
 /*
  * This is the routine which IP calls when receiving an SCTP packet.
  */
-पूर्णांक sctp_rcv(काष्ठा sk_buff *skb)
-अणु
-	काष्ठा sock *sk;
-	काष्ठा sctp_association *asoc;
-	काष्ठा sctp_endpoपूर्णांक *ep = शून्य;
-	काष्ठा sctp_ep_common *rcvr;
-	काष्ठा sctp_transport *transport = शून्य;
-	काष्ठा sctp_chunk *chunk;
-	जोड़ sctp_addr src;
-	जोड़ sctp_addr dest;
-	पूर्णांक family;
-	काष्ठा sctp_af *af;
-	काष्ठा net *net = dev_net(skb->dev);
+int sctp_rcv(struct sk_buff *skb)
+{
+	struct sock *sk;
+	struct sctp_association *asoc;
+	struct sctp_endpoint *ep = NULL;
+	struct sctp_ep_common *rcvr;
+	struct sctp_transport *transport = NULL;
+	struct sctp_chunk *chunk;
+	union sctp_addr src;
+	union sctp_addr dest;
+	int family;
+	struct sctp_af *af;
+	struct net *net = dev_net(skb->dev);
 	bool is_gso = skb_is_gso(skb) && skb_is_gso_sctp(skb);
 
-	अगर (skb->pkt_type != PACKET_HOST)
-		जाओ discard_it;
+	if (skb->pkt_type != PACKET_HOST)
+		goto discard_it;
 
 	__SCTP_INC_STATS(net, SCTP_MIB_INSCTPPACKS);
 
 	/* If packet is too small to contain a single chunk, let's not
-	 * waste समय on it anymore.
+	 * waste time on it anymore.
 	 */
-	अगर (skb->len < माप(काष्ठा sctphdr) + माप(काष्ठा sctp_chunkhdr) +
+	if (skb->len < sizeof(struct sctphdr) + sizeof(struct sctp_chunkhdr) +
 		       skb_transport_offset(skb))
-		जाओ discard_it;
+		goto discard_it;
 
-	/* If the packet is fragmented and we need to करो crc checking,
+	/* If the packet is fragmented and we need to do crc checking,
 	 * it's better to just linearize it otherwise crc computing
-	 * takes दीर्घer.
+	 * takes longer.
 	 */
-	अगर ((!is_gso && skb_linearize(skb)) ||
-	    !pskb_may_pull(skb, माप(काष्ठा sctphdr)))
-		जाओ discard_it;
+	if ((!is_gso && skb_linearize(skb)) ||
+	    !pskb_may_pull(skb, sizeof(struct sctphdr)))
+		goto discard_it;
 
 	/* Pull up the IP header. */
 	__skb_pull(skb, skb_transport_offset(skb));
 
 	skb->csum_valid = 0; /* Previous value not applicable */
-	अगर (skb_csum_unnecessary(skb))
+	if (skb_csum_unnecessary(skb))
 		__skb_decr_checksum_unnecessary(skb);
-	अन्यथा अगर (!sctp_checksum_disable &&
+	else if (!sctp_checksum_disable &&
 		 !is_gso &&
 		 sctp_rcv_checksum(net, skb) < 0)
-		जाओ discard_it;
+		goto discard_it;
 	skb->csum_valid = 1;
 
-	__skb_pull(skb, माप(काष्ठा sctphdr));
+	__skb_pull(skb, sizeof(struct sctphdr));
 
 	family = ipver2af(ip_hdr(skb)->version);
-	af = sctp_get_af_specअगरic(family);
-	अगर (unlikely(!af))
-		जाओ discard_it;
+	af = sctp_get_af_specific(family);
+	if (unlikely(!af))
+		goto discard_it;
 	SCTP_INPUT_CB(skb)->af = af;
 
-	/* Initialize local addresses क्रम lookups. */
+	/* Initialize local addresses for lookups. */
 	af->from_skb(&src, skb, 1);
 	af->from_skb(&dest, skb, 0);
 
@@ -153,67 +152,67 @@
 	 * IP broadcast addresses cannot be used in an SCTP transport
 	 * address."
 	 */
-	अगर (!af->addr_valid(&src, शून्य, skb) ||
-	    !af->addr_valid(&dest, शून्य, skb))
-		जाओ discard_it;
+	if (!af->addr_valid(&src, NULL, skb) ||
+	    !af->addr_valid(&dest, NULL, skb))
+		goto discard_it;
 
 	asoc = __sctp_rcv_lookup(net, skb, &src, &dest, &transport);
 
-	अगर (!asoc)
-		ep = __sctp_rcv_lookup_endpoपूर्णांक(net, skb, &dest, &src);
+	if (!asoc)
+		ep = __sctp_rcv_lookup_endpoint(net, skb, &dest, &src);
 
-	/* Retrieve the common input handling subकाष्ठाure. */
+	/* Retrieve the common input handling substructure. */
 	rcvr = asoc ? &asoc->base : &ep->base;
 	sk = rcvr->sk;
 
 	/*
-	 * If a frame arrives on an पूर्णांकerface and the receiving socket is
-	 * bound to another पूर्णांकerface, via SO_BINDTODEVICE, treat it as OOTB
+	 * If a frame arrives on an interface and the receiving socket is
+	 * bound to another interface, via SO_BINDTODEVICE, treat it as OOTB
 	 */
-	अगर (sk->sk_bound_dev_अगर && (sk->sk_bound_dev_अगर != af->skb_iअगर(skb))) अणु
-		अगर (transport) अणु
+	if (sk->sk_bound_dev_if && (sk->sk_bound_dev_if != af->skb_iif(skb))) {
+		if (transport) {
 			sctp_transport_put(transport);
-			asoc = शून्य;
-			transport = शून्य;
-		पूर्ण अन्यथा अणु
-			sctp_endpoपूर्णांक_put(ep);
-			ep = शून्य;
-		पूर्ण
+			asoc = NULL;
+			transport = NULL;
+		} else {
+			sctp_endpoint_put(ep);
+			ep = NULL;
+		}
 		sk = net->sctp.ctl_sock;
 		ep = sctp_sk(sk)->ep;
-		sctp_endpoपूर्णांक_hold(ep);
+		sctp_endpoint_hold(ep);
 		rcvr = &ep->base;
-	पूर्ण
+	}
 
 	/*
 	 * RFC 2960, 8.4 - Handle "Out of the blue" Packets.
 	 * An SCTP packet is called an "out of the blue" (OOTB)
-	 * packet अगर it is correctly क्रमmed, i.e., passed the
+	 * packet if it is correctly formed, i.e., passed the
 	 * receiver's checksum check, but the receiver is not
-	 * able to identअगरy the association to which this
-	 * packet beदीर्घs.
+	 * able to identify the association to which this
+	 * packet belongs.
 	 */
-	अगर (!asoc) अणु
-		अगर (sctp_rcv_ootb(skb)) अणु
+	if (!asoc) {
+		if (sctp_rcv_ootb(skb)) {
 			__SCTP_INC_STATS(net, SCTP_MIB_OUTOFBLUES);
-			जाओ discard_release;
-		पूर्ण
-	पूर्ण
+			goto discard_release;
+		}
+	}
 
-	अगर (!xfrm_policy_check(sk, XFRM_POLICY_IN, skb, family))
-		जाओ discard_release;
+	if (!xfrm_policy_check(sk, XFRM_POLICY_IN, skb, family))
+		goto discard_release;
 	nf_reset_ct(skb);
 
-	अगर (sk_filter(sk, skb))
-		जाओ discard_release;
+	if (sk_filter(sk, skb))
+		goto discard_release;
 
-	/* Create an SCTP packet काष्ठाure. */
-	chunk = sctp_chunkअगरy(skb, asoc, sk, GFP_ATOMIC);
-	अगर (!chunk)
-		जाओ discard_release;
+	/* Create an SCTP packet structure. */
+	chunk = sctp_chunkify(skb, asoc, sk, GFP_ATOMIC);
+	if (!chunk)
+		goto discard_release;
 	SCTP_INPUT_CB(skb)->chunk = chunk;
 
-	/* Remember what endpoपूर्णांक is to handle this packet. */
+	/* Remember what endpoint is to handle this packet. */
 	chunk->rcvr = rcvr;
 
 	/* Remember the SCTP header. */
@@ -227,91 +226,91 @@
 
 	/* Acquire access to the sock lock. Note: We are safe from other
 	 * bottom halves on this lock, but a user may be in the lock too,
-	 * so check अगर it is busy.
+	 * so check if it is busy.
 	 */
 	bh_lock_sock(sk);
 
-	अगर (sk != rcvr->sk) अणु
-		/* Our cached sk is dअगरferent from the rcvr->sk.  This is
+	if (sk != rcvr->sk) {
+		/* Our cached sk is different from the rcvr->sk.  This is
 		 * because migrate()/accept() may have moved the association
 		 * to a new socket and released all the sockets.  So now we
-		 * are holding a lock on the old socket जबतक the user may
-		 * be करोing something with the new socket.  Switch our veiw
+		 * are holding a lock on the old socket while the user may
+		 * be doing something with the new socket.  Switch our veiw
 		 * of the current sk.
 		 */
 		bh_unlock_sock(sk);
 		sk = rcvr->sk;
 		bh_lock_sock(sk);
-	पूर्ण
+	}
 
-	अगर (sock_owned_by_user(sk) || !sctp_newsk_पढ़ोy(sk)) अणु
-		अगर (sctp_add_backlog(sk, skb)) अणु
+	if (sock_owned_by_user(sk) || !sctp_newsk_ready(sk)) {
+		if (sctp_add_backlog(sk, skb)) {
 			bh_unlock_sock(sk);
-			sctp_chunk_मुक्त(chunk);
-			skb = शून्य; /* sctp_chunk_मुक्त alपढ़ोy मुक्तd the skb */
-			जाओ discard_release;
-		पूर्ण
+			sctp_chunk_free(chunk);
+			skb = NULL; /* sctp_chunk_free already freed the skb */
+			goto discard_release;
+		}
 		__SCTP_INC_STATS(net, SCTP_MIB_IN_PKT_BACKLOG);
-	पूर्ण अन्यथा अणु
+	} else {
 		__SCTP_INC_STATS(net, SCTP_MIB_IN_PKT_SOFTIRQ);
 		sctp_inq_push(&chunk->rcvr->inqueue, chunk);
-	पूर्ण
+	}
 
 	bh_unlock_sock(sk);
 
 	/* Release the asoc/ep ref we took in the lookup calls. */
-	अगर (transport)
+	if (transport)
 		sctp_transport_put(transport);
-	अन्यथा
-		sctp_endpoपूर्णांक_put(ep);
+	else
+		sctp_endpoint_put(ep);
 
-	वापस 0;
+	return 0;
 
 discard_it:
 	__SCTP_INC_STATS(net, SCTP_MIB_IN_PKT_DISCARDS);
-	kमुक्त_skb(skb);
-	वापस 0;
+	kfree_skb(skb);
+	return 0;
 
 discard_release:
 	/* Release the asoc/ep ref we took in the lookup calls. */
-	अगर (transport)
+	if (transport)
 		sctp_transport_put(transport);
-	अन्यथा
-		sctp_endpoपूर्णांक_put(ep);
+	else
+		sctp_endpoint_put(ep);
 
-	जाओ discard_it;
-पूर्ण
+	goto discard_it;
+}
 
 /* Process the backlog queue of the socket.  Every skb on
- * the backlog holds a ref on an association or endpoपूर्णांक.
+ * the backlog holds a ref on an association or endpoint.
  * We hold this ref throughout the state machine to make
- * sure that the काष्ठाure we need is still around.
+ * sure that the structure we need is still around.
  */
-पूर्णांक sctp_backlog_rcv(काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा sctp_chunk *chunk = SCTP_INPUT_CB(skb)->chunk;
-	काष्ठा sctp_inq *inqueue = &chunk->rcvr->inqueue;
-	काष्ठा sctp_transport *t = chunk->transport;
-	काष्ठा sctp_ep_common *rcvr = शून्य;
-	पूर्णांक backloged = 0;
+int sctp_backlog_rcv(struct sock *sk, struct sk_buff *skb)
+{
+	struct sctp_chunk *chunk = SCTP_INPUT_CB(skb)->chunk;
+	struct sctp_inq *inqueue = &chunk->rcvr->inqueue;
+	struct sctp_transport *t = chunk->transport;
+	struct sctp_ep_common *rcvr = NULL;
+	int backloged = 0;
 
 	rcvr = chunk->rcvr;
 
-	/* If the rcvr is dead then the association or endpoपूर्णांक
+	/* If the rcvr is dead then the association or endpoint
 	 * has been deleted and we can safely drop the chunk
 	 * and refs that we are holding.
 	 */
-	अगर (rcvr->dead) अणु
-		sctp_chunk_मुक्त(chunk);
-		जाओ करोne;
-	पूर्ण
+	if (rcvr->dead) {
+		sctp_chunk_free(chunk);
+		goto done;
+	}
 
-	अगर (unlikely(rcvr->sk != sk)) अणु
-		/* In this हाल, the association moved from one socket to
+	if (unlikely(rcvr->sk != sk)) {
+		/* In this case, the association moved from one socket to
 		 * another.  We are currently sitting on the backlog of the
 		 * old socket, so we need to move.
 		 * However, since we are here in the process context we
-		 * need to take make sure that the user करोesn't own
+		 * need to take make sure that the user doesn't own
 		 * the new socket when we process the packet.
 		 * If the new socket is user-owned, queue the chunk to the
 		 * backlog of the new socket without dropping any refs.
@@ -322,267 +321,267 @@ discard_release:
 		local_bh_disable();
 		bh_lock_sock(sk);
 
-		अगर (sock_owned_by_user(sk) || !sctp_newsk_पढ़ोy(sk)) अणु
-			अगर (sk_add_backlog(sk, skb, READ_ONCE(sk->sk_rcvbuf)))
-				sctp_chunk_मुक्त(chunk);
-			अन्यथा
+		if (sock_owned_by_user(sk) || !sctp_newsk_ready(sk)) {
+			if (sk_add_backlog(sk, skb, READ_ONCE(sk->sk_rcvbuf)))
+				sctp_chunk_free(chunk);
+			else
 				backloged = 1;
-		पूर्ण अन्यथा
+		} else
 			sctp_inq_push(inqueue, chunk);
 
 		bh_unlock_sock(sk);
 		local_bh_enable();
 
-		/* If the chunk was backloged again, करोn't drop refs */
-		अगर (backloged)
-			वापस 0;
-	पूर्ण अन्यथा अणु
-		अगर (!sctp_newsk_पढ़ोy(sk)) अणु
-			अगर (!sk_add_backlog(sk, skb, READ_ONCE(sk->sk_rcvbuf)))
-				वापस 0;
-			sctp_chunk_मुक्त(chunk);
-		पूर्ण अन्यथा अणु
+		/* If the chunk was backloged again, don't drop refs */
+		if (backloged)
+			return 0;
+	} else {
+		if (!sctp_newsk_ready(sk)) {
+			if (!sk_add_backlog(sk, skb, READ_ONCE(sk->sk_rcvbuf)))
+				return 0;
+			sctp_chunk_free(chunk);
+		} else {
 			sctp_inq_push(inqueue, chunk);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-करोne:
+done:
 	/* Release the refs we took in sctp_add_backlog */
-	अगर (SCTP_EP_TYPE_ASSOCIATION == rcvr->type)
+	if (SCTP_EP_TYPE_ASSOCIATION == rcvr->type)
 		sctp_transport_put(t);
-	अन्यथा अगर (SCTP_EP_TYPE_SOCKET == rcvr->type)
-		sctp_endpoपूर्णांक_put(sctp_ep(rcvr));
-	अन्यथा
+	else if (SCTP_EP_TYPE_SOCKET == rcvr->type)
+		sctp_endpoint_put(sctp_ep(rcvr));
+	else
 		BUG();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sctp_add_backlog(काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा sctp_chunk *chunk = SCTP_INPUT_CB(skb)->chunk;
-	काष्ठा sctp_transport *t = chunk->transport;
-	काष्ठा sctp_ep_common *rcvr = chunk->rcvr;
-	पूर्णांक ret;
+static int sctp_add_backlog(struct sock *sk, struct sk_buff *skb)
+{
+	struct sctp_chunk *chunk = SCTP_INPUT_CB(skb)->chunk;
+	struct sctp_transport *t = chunk->transport;
+	struct sctp_ep_common *rcvr = chunk->rcvr;
+	int ret;
 
 	ret = sk_add_backlog(sk, skb, READ_ONCE(sk->sk_rcvbuf));
-	अगर (!ret) अणु
-		/* Hold the assoc/ep जबतक hanging on the backlog queue.
-		 * This way, we know काष्ठाures we need will not disappear
+	if (!ret) {
+		/* Hold the assoc/ep while hanging on the backlog queue.
+		 * This way, we know structures we need will not disappear
 		 * from us
 		 */
-		अगर (SCTP_EP_TYPE_ASSOCIATION == rcvr->type)
+		if (SCTP_EP_TYPE_ASSOCIATION == rcvr->type)
 			sctp_transport_hold(t);
-		अन्यथा अगर (SCTP_EP_TYPE_SOCKET == rcvr->type)
-			sctp_endpoपूर्णांक_hold(sctp_ep(rcvr));
-		अन्यथा
+		else if (SCTP_EP_TYPE_SOCKET == rcvr->type)
+			sctp_endpoint_hold(sctp_ep(rcvr));
+		else
 			BUG();
-	पूर्ण
-	वापस ret;
+	}
+	return ret;
 
-पूर्ण
+}
 
 /* Handle icmp frag needed error. */
-व्योम sctp_icmp_frag_needed(काष्ठा sock *sk, काष्ठा sctp_association *asoc,
-			   काष्ठा sctp_transport *t, __u32 pmtu)
-अणु
-	अगर (!t || (t->pathmtu <= pmtu))
-		वापस;
+void sctp_icmp_frag_needed(struct sock *sk, struct sctp_association *asoc,
+			   struct sctp_transport *t, __u32 pmtu)
+{
+	if (!t || (t->pathmtu <= pmtu))
+		return;
 
-	अगर (sock_owned_by_user(sk)) अणु
+	if (sock_owned_by_user(sk)) {
 		atomic_set(&t->mtu_info, pmtu);
 		asoc->pmtu_pending = 1;
 		t->pmtu_pending = 1;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!(t->param_flags & SPP_PMTUD_ENABLE))
-		/* We can't allow retransmitting in such हाल, as the
-		 * retransmission would be sized just as beक्रमe, and thus we
+	if (!(t->param_flags & SPP_PMTUD_ENABLE))
+		/* We can't allow retransmitting in such case, as the
+		 * retransmission would be sized just as before, and thus we
 		 * would get another icmp, and retransmit again.
 		 */
-		वापस;
+		return;
 
-	/* Update transports view of the MTU. Return अगर no update was needed.
+	/* Update transports view of the MTU. Return if no update was needed.
 	 * If an update wasn't needed/possible, it also doesn't make sense to
 	 * try to retransmit now.
 	 */
-	अगर (!sctp_transport_update_pmtu(t, pmtu))
-		वापस;
+	if (!sctp_transport_update_pmtu(t, pmtu))
+		return;
 
 	/* Update association pmtu. */
 	sctp_assoc_sync_pmtu(asoc);
 
 	/* Retransmit with the new pmtu setting. */
 	sctp_retransmit(&asoc->outqueue, t, SCTP_RTXR_PMTUD);
-पूर्ण
+}
 
-व्योम sctp_icmp_redirect(काष्ठा sock *sk, काष्ठा sctp_transport *t,
-			काष्ठा sk_buff *skb)
-अणु
-	काष्ठा dst_entry *dst;
+void sctp_icmp_redirect(struct sock *sk, struct sctp_transport *t,
+			struct sk_buff *skb)
+{
+	struct dst_entry *dst;
 
-	अगर (sock_owned_by_user(sk) || !t)
-		वापस;
+	if (sock_owned_by_user(sk) || !t)
+		return;
 	dst = sctp_transport_dst_check(t);
-	अगर (dst)
+	if (dst)
 		dst->ops->redirect(dst, sk, skb);
-पूर्ण
+}
 
 /*
  * SCTP Implementer's Guide, 2.37 ICMP handling procedures
  *
  * ICMP8) If the ICMP code is a "Unrecognized next header type encountered"
- *        or a "Protocol Unreachable" treat this message as an पात
+ *        or a "Protocol Unreachable" treat this message as an abort
  *        with the T bit set.
  *
- * This function sends an event to the state machine, which will पात the
+ * This function sends an event to the state machine, which will abort the
  * association.
  *
  */
-व्योम sctp_icmp_proto_unreachable(काष्ठा sock *sk,
-			   काष्ठा sctp_association *asoc,
-			   काष्ठा sctp_transport *t)
-अणु
-	अगर (sock_owned_by_user(sk)) अणु
-		अगर (समयr_pending(&t->proto_unreach_समयr))
-			वापस;
-		अन्यथा अणु
-			अगर (!mod_समयr(&t->proto_unreach_समयr,
-						jअगरfies + (HZ/20)))
+void sctp_icmp_proto_unreachable(struct sock *sk,
+			   struct sctp_association *asoc,
+			   struct sctp_transport *t)
+{
+	if (sock_owned_by_user(sk)) {
+		if (timer_pending(&t->proto_unreach_timer))
+			return;
+		else {
+			if (!mod_timer(&t->proto_unreach_timer,
+						jiffies + (HZ/20)))
 				sctp_transport_hold(t);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		काष्ठा net *net = sock_net(sk);
+		}
+	} else {
+		struct net *net = sock_net(sk);
 
 		pr_debug("%s: unrecognized next header type "
 			 "encountered!\n", __func__);
 
-		अगर (del_समयr(&t->proto_unreach_समयr))
+		if (del_timer(&t->proto_unreach_timer))
 			sctp_transport_put(t);
 
-		sctp_करो_sm(net, SCTP_EVENT_T_OTHER,
+		sctp_do_sm(net, SCTP_EVENT_T_OTHER,
 			   SCTP_ST_OTHER(SCTP_EVENT_ICMP_PROTO_UNREACH),
 			   asoc->state, asoc->ep, asoc, t,
 			   GFP_ATOMIC);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* Common lookup code क्रम icmp/icmpv6 error handler. */
-काष्ठा sock *sctp_err_lookup(काष्ठा net *net, पूर्णांक family, काष्ठा sk_buff *skb,
-			     काष्ठा sctphdr *sctphdr,
-			     काष्ठा sctp_association **app,
-			     काष्ठा sctp_transport **tpp)
-अणु
-	काष्ठा sctp_init_chunk *chunkhdr, _chunkhdr;
-	जोड़ sctp_addr saddr;
-	जोड़ sctp_addr daddr;
-	काष्ठा sctp_af *af;
-	काष्ठा sock *sk = शून्य;
-	काष्ठा sctp_association *asoc;
-	काष्ठा sctp_transport *transport = शून्य;
+/* Common lookup code for icmp/icmpv6 error handler. */
+struct sock *sctp_err_lookup(struct net *net, int family, struct sk_buff *skb,
+			     struct sctphdr *sctphdr,
+			     struct sctp_association **app,
+			     struct sctp_transport **tpp)
+{
+	struct sctp_init_chunk *chunkhdr, _chunkhdr;
+	union sctp_addr saddr;
+	union sctp_addr daddr;
+	struct sctp_af *af;
+	struct sock *sk = NULL;
+	struct sctp_association *asoc;
+	struct sctp_transport *transport = NULL;
 	__u32 vtag = ntohl(sctphdr->vtag);
 
-	*app = शून्य; *tpp = शून्य;
+	*app = NULL; *tpp = NULL;
 
-	af = sctp_get_af_specअगरic(family);
-	अगर (unlikely(!af)) अणु
-		वापस शून्य;
-	पूर्ण
+	af = sctp_get_af_specific(family);
+	if (unlikely(!af)) {
+		return NULL;
+	}
 
-	/* Initialize local addresses क्रम lookups. */
+	/* Initialize local addresses for lookups. */
 	af->from_skb(&saddr, skb, 1);
 	af->from_skb(&daddr, skb, 0);
 
-	/* Look क्रम an association that matches the incoming ICMP error
+	/* Look for an association that matches the incoming ICMP error
 	 * packet.
 	 */
 	asoc = __sctp_lookup_association(net, &saddr, &daddr, &transport);
-	अगर (!asoc)
-		वापस शून्य;
+	if (!asoc)
+		return NULL;
 
 	sk = asoc->base.sk;
 
 	/* RFC 4960, Appendix C. ICMP Handling
 	 *
-	 * ICMP6) An implementation MUST validate that the Verअगरication Tag
-	 * contained in the ICMP message matches the Verअगरication Tag of
-	 * the peer.  If the Verअगरication Tag is not 0 and करोes NOT
+	 * ICMP6) An implementation MUST validate that the Verification Tag
+	 * contained in the ICMP message matches the Verification Tag of
+	 * the peer.  If the Verification Tag is not 0 and does NOT
 	 * match, discard the ICMP message.  If it is 0 and the ICMP
-	 * message contains enough bytes to verअगरy that the chunk type is
+	 * message contains enough bytes to verify that the chunk type is
 	 * an INIT chunk and that the Initiate Tag matches the tag of the
-	 * peer, जारी with ICMP7.  If the ICMP message is too लघु
-	 * or the chunk type or the Initiate Tag करोes not match, silently
+	 * peer, continue with ICMP7.  If the ICMP message is too short
+	 * or the chunk type or the Initiate Tag does not match, silently
 	 * discard the packet.
 	 */
-	अगर (vtag == 0) अणु
+	if (vtag == 0) {
 		/* chunk header + first 4 octects of init header */
-		chunkhdr = skb_header_poपूर्णांकer(skb, skb_transport_offset(skb) +
-					      माप(काष्ठा sctphdr),
-					      माप(काष्ठा sctp_chunkhdr) +
-					      माप(__be32), &_chunkhdr);
-		अगर (!chunkhdr ||
+		chunkhdr = skb_header_pointer(skb, skb_transport_offset(skb) +
+					      sizeof(struct sctphdr),
+					      sizeof(struct sctp_chunkhdr) +
+					      sizeof(__be32), &_chunkhdr);
+		if (!chunkhdr ||
 		    chunkhdr->chunk_hdr.type != SCTP_CID_INIT ||
 		    ntohl(chunkhdr->init_hdr.init_tag) != asoc->c.my_vtag)
-			जाओ out;
+			goto out;
 
-	पूर्ण अन्यथा अगर (vtag != asoc->c.peer_vtag) अणु
-		जाओ out;
-	पूर्ण
+	} else if (vtag != asoc->c.peer_vtag) {
+		goto out;
+	}
 
 	bh_lock_sock(sk);
 
 	/* If too many ICMPs get dropped on busy
-	 * servers this needs to be solved dअगरferently.
+	 * servers this needs to be solved differently.
 	 */
-	अगर (sock_owned_by_user(sk))
+	if (sock_owned_by_user(sk))
 		__NET_INC_STATS(net, LINUX_MIB_LOCKDROPPEDICMPS);
 
 	*app = asoc;
 	*tpp = transport;
-	वापस sk;
+	return sk;
 
 out:
 	sctp_transport_put(transport);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-/* Common cleanup code क्रम icmp/icmpv6 error handler. */
-व्योम sctp_err_finish(काष्ठा sock *sk, काष्ठा sctp_transport *t)
+/* Common cleanup code for icmp/icmpv6 error handler. */
+void sctp_err_finish(struct sock *sk, struct sctp_transport *t)
 	__releases(&((__sk)->sk_lock.slock))
-अणु
+{
 	bh_unlock_sock(sk);
 	sctp_transport_put(t);
-पूर्ण
+}
 
 /*
- * This routine is called by the ICMP module when it माला_लो some
+ * This routine is called by the ICMP module when it gets some
  * sort of error condition.  If err < 0 then the socket should
- * be बंदd and the error वापसed to the user.  If err > 0
- * it's just the icmp type << 8 | icmp code.  After adjusपंचांगent
- * header poपूर्णांकs to the first 8 bytes of the sctp header.  We need
+ * be closed and the error returned to the user.  If err > 0
+ * it's just the icmp type << 8 | icmp code.  After adjustment
+ * header points to the first 8 bytes of the sctp header.  We need
  * to find the appropriate port.
  *
  * The locking strategy used here is very "optimistic". When
- * someone अन्यथा accesses the socket the ICMP is just dropped
- * and क्रम some paths there is no check at all.
- * A more general error queue to queue errors क्रम later handling
+ * someone else accesses the socket the ICMP is just dropped
+ * and for some paths there is no check at all.
+ * A more general error queue to queue errors for later handling
  * is probably better.
  *
  */
-पूर्णांक sctp_v4_err(काष्ठा sk_buff *skb, __u32 info)
-अणु
-	स्थिर काष्ठा iphdr *iph = (स्थिर काष्ठा iphdr *)skb->data;
-	स्थिर पूर्णांक ihlen = iph->ihl * 4;
-	स्थिर पूर्णांक type = icmp_hdr(skb)->type;
-	स्थिर पूर्णांक code = icmp_hdr(skb)->code;
-	काष्ठा sock *sk;
-	काष्ठा sctp_association *asoc = शून्य;
-	काष्ठा sctp_transport *transport;
-	काष्ठा inet_sock *inet;
+int sctp_v4_err(struct sk_buff *skb, __u32 info)
+{
+	const struct iphdr *iph = (const struct iphdr *)skb->data;
+	const int ihlen = iph->ihl * 4;
+	const int type = icmp_hdr(skb)->type;
+	const int code = icmp_hdr(skb)->code;
+	struct sock *sk;
+	struct sctp_association *asoc = NULL;
+	struct sctp_transport *transport;
+	struct inet_sock *inet;
 	__u16 saveip, savesctp;
-	पूर्णांक err;
-	काष्ठा net *net = dev_net(skb->dev);
+	int err;
+	struct net *net = dev_net(skb->dev);
 
 	/* Fix up skb to look at the embedded net header. */
 	saveip = skb->network_header;
@@ -593,201 +592,201 @@ out:
 	/* Put back, the original values. */
 	skb->network_header = saveip;
 	skb->transport_header = savesctp;
-	अगर (!sk) अणु
+	if (!sk) {
 		__ICMP_INC_STATS(net, ICMP_MIB_INERRORS);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 	/* Warning:  The sock lock is held.  Remember to call
 	 * sctp_err_finish!
 	 */
 
-	चयन (type) अणु
-	हाल ICMP_PARAMETERPROB:
+	switch (type) {
+	case ICMP_PARAMETERPROB:
 		err = EPROTO;
-		अवरोध;
-	हाल ICMP_DEST_UNREACH:
-		अगर (code > NR_ICMP_UNREACH)
-			जाओ out_unlock;
+		break;
+	case ICMP_DEST_UNREACH:
+		if (code > NR_ICMP_UNREACH)
+			goto out_unlock;
 
 		/* PMTU discovery (RFC1191) */
-		अगर (ICMP_FRAG_NEEDED == code) अणु
+		if (ICMP_FRAG_NEEDED == code) {
 			sctp_icmp_frag_needed(sk, asoc, transport,
 					      SCTP_TRUNC4(info));
-			जाओ out_unlock;
-		पूर्ण अन्यथा अणु
-			अगर (ICMP_PROT_UNREACH == code) अणु
+			goto out_unlock;
+		} else {
+			if (ICMP_PROT_UNREACH == code) {
 				sctp_icmp_proto_unreachable(sk, asoc,
 							    transport);
-				जाओ out_unlock;
-			पूर्ण
-		पूर्ण
-		err = icmp_err_convert[code].त्रुटि_सं;
-		अवरोध;
-	हाल ICMP_TIME_EXCEEDED:
-		/* Ignore any समय exceeded errors due to fragment reassembly
-		 * समयouts.
+				goto out_unlock;
+			}
+		}
+		err = icmp_err_convert[code].errno;
+		break;
+	case ICMP_TIME_EXCEEDED:
+		/* Ignore any time exceeded errors due to fragment reassembly
+		 * timeouts.
 		 */
-		अगर (ICMP_EXC_FRAGTIME == code)
-			जाओ out_unlock;
+		if (ICMP_EXC_FRAGTIME == code)
+			goto out_unlock;
 
 		err = EHOSTUNREACH;
-		अवरोध;
-	हाल ICMP_REसूचीECT:
+		break;
+	case ICMP_REDIRECT:
 		sctp_icmp_redirect(sk, transport, skb);
 		/* Fall through to out_unlock. */
-	शेष:
-		जाओ out_unlock;
-	पूर्ण
+	default:
+		goto out_unlock;
+	}
 
 	inet = inet_sk(sk);
-	अगर (!sock_owned_by_user(sk) && inet->recverr) अणु
+	if (!sock_owned_by_user(sk) && inet->recverr) {
 		sk->sk_err = err;
 		sk->sk_error_report(sk);
-	पूर्ण अन्यथा अणु  /* Only an error on समयout */
+	} else {  /* Only an error on timeout */
 		sk->sk_err_soft = err;
-	पूर्ण
+	}
 
 out_unlock:
 	sctp_err_finish(sk, transport);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * RFC 2960, 8.4 - Handle "Out of the blue" Packets.
  *
- * This function scans all the chunks in the OOTB packet to determine अगर
+ * This function scans all the chunks in the OOTB packet to determine if
  * the packet should be discarded right away.  If a response might be needed
- * क्रम this packet, or, अगर further processing is possible, the packet will
- * be queued to a proper inqueue क्रम the next phase of handling.
+ * for this packet, or, if further processing is possible, the packet will
+ * be queued to a proper inqueue for the next phase of handling.
  *
  * Output:
  * Return 0 - If further processing is needed.
  * Return 1 - If the packet can be discarded right away.
  */
-अटल पूर्णांक sctp_rcv_ootb(काष्ठा sk_buff *skb)
-अणु
-	काष्ठा sctp_chunkhdr *ch, _ch;
-	पूर्णांक ch_end, offset = 0;
+static int sctp_rcv_ootb(struct sk_buff *skb)
+{
+	struct sctp_chunkhdr *ch, _ch;
+	int ch_end, offset = 0;
 
 	/* Scan through all the chunks in the packet.  */
-	करो अणु
+	do {
 		/* Make sure we have at least the header there */
-		अगर (offset + माप(_ch) > skb->len)
-			अवरोध;
+		if (offset + sizeof(_ch) > skb->len)
+			break;
 
-		ch = skb_header_poपूर्णांकer(skb, offset, माप(*ch), &_ch);
+		ch = skb_header_pointer(skb, offset, sizeof(*ch), &_ch);
 
-		/* Break out अगर chunk length is less then minimal. */
-		अगर (ntohs(ch->length) < माप(_ch))
-			अवरोध;
+		/* Break out if chunk length is less then minimal. */
+		if (ntohs(ch->length) < sizeof(_ch))
+			break;
 
 		ch_end = offset + SCTP_PAD4(ntohs(ch->length));
-		अगर (ch_end > skb->len)
-			अवरोध;
+		if (ch_end > skb->len)
+			break;
 
 		/* RFC 8.4, 2) If the OOTB packet contains an ABORT chunk, the
 		 * receiver MUST silently discard the OOTB packet and take no
 		 * further action.
 		 */
-		अगर (SCTP_CID_ABORT == ch->type)
-			जाओ discard;
+		if (SCTP_CID_ABORT == ch->type)
+			goto discard;
 
 		/* RFC 8.4, 6) If the packet contains a SHUTDOWN COMPLETE
 		 * chunk, the receiver should silently discard the packet
 		 * and take no further action.
 		 */
-		अगर (SCTP_CID_SHUTDOWN_COMPLETE == ch->type)
-			जाओ discard;
+		if (SCTP_CID_SHUTDOWN_COMPLETE == ch->type)
+			goto discard;
 
 		/* RFC 4460, 2.11.2
 		 * This will discard packets with INIT chunk bundled as
 		 * subsequent chunks in the packet.  When INIT is first,
 		 * the normal INIT processing will discard the chunk.
 		 */
-		अगर (SCTP_CID_INIT == ch->type && (व्योम *)ch != skb->data)
-			जाओ discard;
+		if (SCTP_CID_INIT == ch->type && (void *)ch != skb->data)
+			goto discard;
 
 		offset = ch_end;
-	पूर्ण जबतक (ch_end < skb->len);
+	} while (ch_end < skb->len);
 
-	वापस 0;
+	return 0;
 
 discard:
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-/* Insert endpoपूर्णांक पूर्णांकo the hash table.  */
-अटल पूर्णांक __sctp_hash_endpoपूर्णांक(काष्ठा sctp_endpoपूर्णांक *ep)
-अणु
-	काष्ठा sock *sk = ep->base.sk;
-	काष्ठा net *net = sock_net(sk);
-	काष्ठा sctp_hashbucket *head;
-	काष्ठा sctp_ep_common *epb;
+/* Insert endpoint into the hash table.  */
+static int __sctp_hash_endpoint(struct sctp_endpoint *ep)
+{
+	struct sock *sk = ep->base.sk;
+	struct net *net = sock_net(sk);
+	struct sctp_hashbucket *head;
+	struct sctp_ep_common *epb;
 
 	epb = &ep->base;
 	epb->hashent = sctp_ep_hashfn(net, epb->bind_addr.port);
 	head = &sctp_ep_hashtable[epb->hashent];
 
-	अगर (sk->sk_reuseport) अणु
+	if (sk->sk_reuseport) {
 		bool any = sctp_is_ep_boundall(sk);
-		काष्ठा sctp_ep_common *epb2;
-		काष्ठा list_head *list;
-		पूर्णांक cnt = 0, err = 1;
+		struct sctp_ep_common *epb2;
+		struct list_head *list;
+		int cnt = 0, err = 1;
 
-		list_क्रम_each(list, &ep->base.bind_addr.address_list)
+		list_for_each(list, &ep->base.bind_addr.address_list)
 			cnt++;
 
-		sctp_क्रम_each_hentry(epb2, &head->chain) अणु
-			काष्ठा sock *sk2 = epb2->sk;
+		sctp_for_each_hentry(epb2, &head->chain) {
+			struct sock *sk2 = epb2->sk;
 
-			अगर (!net_eq(sock_net(sk2), net) || sk2 == sk ||
+			if (!net_eq(sock_net(sk2), net) || sk2 == sk ||
 			    !uid_eq(sock_i_uid(sk2), sock_i_uid(sk)) ||
 			    !sk2->sk_reuseport)
-				जारी;
+				continue;
 
 			err = sctp_bind_addrs_check(sctp_sk(sk2),
 						    sctp_sk(sk), cnt);
-			अगर (!err) अणु
+			if (!err) {
 				err = reuseport_add_sock(sk, sk2, any);
-				अगर (err)
-					वापस err;
-				अवरोध;
-			पूर्ण अन्यथा अगर (err < 0) अणु
-				वापस err;
-			पूर्ण
-		पूर्ण
+				if (err)
+					return err;
+				break;
+			} else if (err < 0) {
+				return err;
+			}
+		}
 
-		अगर (err) अणु
+		if (err) {
 			err = reuseport_alloc(sk, any);
-			अगर (err)
-				वापस err;
-		पूर्ण
-	पूर्ण
+			if (err)
+				return err;
+		}
+	}
 
-	ग_लिखो_lock(&head->lock);
+	write_lock(&head->lock);
 	hlist_add_head(&epb->node, &head->chain);
-	ग_लिखो_unlock(&head->lock);
-	वापस 0;
-पूर्ण
+	write_unlock(&head->lock);
+	return 0;
+}
 
-/* Add an endpoपूर्णांक to the hash. Local BH-safe. */
-पूर्णांक sctp_hash_endpoपूर्णांक(काष्ठा sctp_endpoपूर्णांक *ep)
-अणु
-	पूर्णांक err;
+/* Add an endpoint to the hash. Local BH-safe. */
+int sctp_hash_endpoint(struct sctp_endpoint *ep)
+{
+	int err;
 
 	local_bh_disable();
-	err = __sctp_hash_endpoपूर्णांक(ep);
+	err = __sctp_hash_endpoint(ep);
 	local_bh_enable();
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-/* Remove endpoपूर्णांक from the hash table.  */
-अटल व्योम __sctp_unhash_endpoपूर्णांक(काष्ठा sctp_endpoपूर्णांक *ep)
-अणु
-	काष्ठा sock *sk = ep->base.sk;
-	काष्ठा sctp_hashbucket *head;
-	काष्ठा sctp_ep_common *epb;
+/* Remove endpoint from the hash table.  */
+static void __sctp_unhash_endpoint(struct sctp_endpoint *ep)
+{
+	struct sock *sk = ep->base.sk;
+	struct sctp_hashbucket *head;
+	struct sctp_ep_common *epb;
 
 	epb = &ep->base;
 
@@ -795,292 +794,292 @@ discard:
 
 	head = &sctp_ep_hashtable[epb->hashent];
 
-	अगर (rcu_access_poपूर्णांकer(sk->sk_reuseport_cb))
+	if (rcu_access_pointer(sk->sk_reuseport_cb))
 		reuseport_detach_sock(sk);
 
-	ग_लिखो_lock(&head->lock);
+	write_lock(&head->lock);
 	hlist_del_init(&epb->node);
-	ग_लिखो_unlock(&head->lock);
-पूर्ण
+	write_unlock(&head->lock);
+}
 
-/* Remove endpoपूर्णांक from the hash.  Local BH-safe. */
-व्योम sctp_unhash_endpoपूर्णांक(काष्ठा sctp_endpoपूर्णांक *ep)
-अणु
+/* Remove endpoint from the hash.  Local BH-safe. */
+void sctp_unhash_endpoint(struct sctp_endpoint *ep)
+{
 	local_bh_disable();
-	__sctp_unhash_endpoपूर्णांक(ep);
+	__sctp_unhash_endpoint(ep);
 	local_bh_enable();
-पूर्ण
+}
 
-अटल अंतरभूत __u32 sctp_hashfn(स्थिर काष्ठा net *net, __be16 lport,
-				स्थिर जोड़ sctp_addr *paddr, __u32 seed)
-अणु
+static inline __u32 sctp_hashfn(const struct net *net, __be16 lport,
+				const union sctp_addr *paddr, __u32 seed)
+{
 	__u32 addr;
 
-	अगर (paddr->sa.sa_family == AF_INET6)
+	if (paddr->sa.sa_family == AF_INET6)
 		addr = jhash(&paddr->v6.sin6_addr, 16, seed);
-	अन्यथा
-		addr = (__क्रमce __u32)paddr->v4.sin_addr.s_addr;
+	else
+		addr = (__force __u32)paddr->v4.sin_addr.s_addr;
 
-	वापस  jhash_3words(addr, ((__क्रमce __u32)paddr->v4.sin_port) << 16 |
-			     (__क्रमce __u32)lport, net_hash_mix(net), seed);
-पूर्ण
+	return  jhash_3words(addr, ((__force __u32)paddr->v4.sin_port) << 16 |
+			     (__force __u32)lport, net_hash_mix(net), seed);
+}
 
-/* Look up an endpoपूर्णांक. */
-अटल काष्ठा sctp_endpoपूर्णांक *__sctp_rcv_lookup_endpoपूर्णांक(
-					काष्ठा net *net, काष्ठा sk_buff *skb,
-					स्थिर जोड़ sctp_addr *laddr,
-					स्थिर जोड़ sctp_addr *paddr)
-अणु
-	काष्ठा sctp_hashbucket *head;
-	काष्ठा sctp_ep_common *epb;
-	काष्ठा sctp_endpoपूर्णांक *ep;
-	काष्ठा sock *sk;
+/* Look up an endpoint. */
+static struct sctp_endpoint *__sctp_rcv_lookup_endpoint(
+					struct net *net, struct sk_buff *skb,
+					const union sctp_addr *laddr,
+					const union sctp_addr *paddr)
+{
+	struct sctp_hashbucket *head;
+	struct sctp_ep_common *epb;
+	struct sctp_endpoint *ep;
+	struct sock *sk;
 	__be16 lport;
-	पूर्णांक hash;
+	int hash;
 
 	lport = laddr->v4.sin_port;
 	hash = sctp_ep_hashfn(net, ntohs(lport));
 	head = &sctp_ep_hashtable[hash];
-	पढ़ो_lock(&head->lock);
-	sctp_क्रम_each_hentry(epb, &head->chain) अणु
+	read_lock(&head->lock);
+	sctp_for_each_hentry(epb, &head->chain) {
 		ep = sctp_ep(epb);
-		अगर (sctp_endpoपूर्णांक_is_match(ep, net, laddr))
-			जाओ hit;
-	पूर्ण
+		if (sctp_endpoint_is_match(ep, net, laddr))
+			goto hit;
+	}
 
 	ep = sctp_sk(net->sctp.ctl_sock)->ep;
 
 hit:
 	sk = ep->base.sk;
-	अगर (sk->sk_reuseport) अणु
+	if (sk->sk_reuseport) {
 		__u32 phash = sctp_hashfn(net, lport, paddr, 0);
 
 		sk = reuseport_select_sock(sk, phash, skb,
-					   माप(काष्ठा sctphdr));
-		अगर (sk)
+					   sizeof(struct sctphdr));
+		if (sk)
 			ep = sctp_sk(sk)->ep;
-	पूर्ण
-	sctp_endpoपूर्णांक_hold(ep);
-	पढ़ो_unlock(&head->lock);
-	वापस ep;
-पूर्ण
+	}
+	sctp_endpoint_hold(ep);
+	read_unlock(&head->lock);
+	return ep;
+}
 
-/* rhashtable क्रम transport */
-काष्ठा sctp_hash_cmp_arg अणु
-	स्थिर जोड़ sctp_addr	*paddr;
-	स्थिर काष्ठा net	*net;
+/* rhashtable for transport */
+struct sctp_hash_cmp_arg {
+	const union sctp_addr	*paddr;
+	const struct net	*net;
 	__be16			lport;
-पूर्ण;
+};
 
-अटल अंतरभूत पूर्णांक sctp_hash_cmp(काष्ठा rhashtable_compare_arg *arg,
-				स्थिर व्योम *ptr)
-अणु
-	काष्ठा sctp_transport *t = (काष्ठा sctp_transport *)ptr;
-	स्थिर काष्ठा sctp_hash_cmp_arg *x = arg->key;
-	पूर्णांक err = 1;
+static inline int sctp_hash_cmp(struct rhashtable_compare_arg *arg,
+				const void *ptr)
+{
+	struct sctp_transport *t = (struct sctp_transport *)ptr;
+	const struct sctp_hash_cmp_arg *x = arg->key;
+	int err = 1;
 
-	अगर (!sctp_cmp_addr_exact(&t->ipaddr, x->paddr))
-		वापस err;
-	अगर (!sctp_transport_hold(t))
-		वापस err;
+	if (!sctp_cmp_addr_exact(&t->ipaddr, x->paddr))
+		return err;
+	if (!sctp_transport_hold(t))
+		return err;
 
-	अगर (!net_eq(t->asoc->base.net, x->net))
-		जाओ out;
-	अगर (x->lport != htons(t->asoc->base.bind_addr.port))
-		जाओ out;
+	if (!net_eq(t->asoc->base.net, x->net))
+		goto out;
+	if (x->lport != htons(t->asoc->base.bind_addr.port))
+		goto out;
 
 	err = 0;
 out:
 	sctp_transport_put(t);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल अंतरभूत __u32 sctp_hash_obj(स्थिर व्योम *data, u32 len, u32 seed)
-अणु
-	स्थिर काष्ठा sctp_transport *t = data;
+static inline __u32 sctp_hash_obj(const void *data, u32 len, u32 seed)
+{
+	const struct sctp_transport *t = data;
 
-	वापस sctp_hashfn(t->asoc->base.net,
+	return sctp_hashfn(t->asoc->base.net,
 			   htons(t->asoc->base.bind_addr.port),
 			   &t->ipaddr, seed);
-पूर्ण
+}
 
-अटल अंतरभूत __u32 sctp_hash_key(स्थिर व्योम *data, u32 len, u32 seed)
-अणु
-	स्थिर काष्ठा sctp_hash_cmp_arg *x = data;
+static inline __u32 sctp_hash_key(const void *data, u32 len, u32 seed)
+{
+	const struct sctp_hash_cmp_arg *x = data;
 
-	वापस sctp_hashfn(x->net, x->lport, x->paddr, seed);
-पूर्ण
+	return sctp_hashfn(x->net, x->lport, x->paddr, seed);
+}
 
-अटल स्थिर काष्ठा rhashtable_params sctp_hash_params = अणु
-	.head_offset		= दुरत्व(काष्ठा sctp_transport, node),
+static const struct rhashtable_params sctp_hash_params = {
+	.head_offset		= offsetof(struct sctp_transport, node),
 	.hashfn			= sctp_hash_key,
 	.obj_hashfn		= sctp_hash_obj,
 	.obj_cmpfn		= sctp_hash_cmp,
-	.स्वतःmatic_shrinking	= true,
-पूर्ण;
+	.automatic_shrinking	= true,
+};
 
-पूर्णांक sctp_transport_hashtable_init(व्योम)
-अणु
-	वापस rhltable_init(&sctp_transport_hashtable, &sctp_hash_params);
-पूर्ण
+int sctp_transport_hashtable_init(void)
+{
+	return rhltable_init(&sctp_transport_hashtable, &sctp_hash_params);
+}
 
-व्योम sctp_transport_hashtable_destroy(व्योम)
-अणु
+void sctp_transport_hashtable_destroy(void)
+{
 	rhltable_destroy(&sctp_transport_hashtable);
-पूर्ण
+}
 
-पूर्णांक sctp_hash_transport(काष्ठा sctp_transport *t)
-अणु
-	काष्ठा sctp_transport *transport;
-	काष्ठा rhlist_head *पंचांगp, *list;
-	काष्ठा sctp_hash_cmp_arg arg;
-	पूर्णांक err;
+int sctp_hash_transport(struct sctp_transport *t)
+{
+	struct sctp_transport *transport;
+	struct rhlist_head *tmp, *list;
+	struct sctp_hash_cmp_arg arg;
+	int err;
 
-	अगर (t->asoc->temp)
-		वापस 0;
+	if (t->asoc->temp)
+		return 0;
 
 	arg.net   = t->asoc->base.net;
 	arg.paddr = &t->ipaddr;
 	arg.lport = htons(t->asoc->base.bind_addr.port);
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	list = rhltable_lookup(&sctp_transport_hashtable, &arg,
 			       sctp_hash_params);
 
-	rhl_क्रम_each_entry_rcu(transport, पंचांगp, list, node)
-		अगर (transport->asoc->ep == t->asoc->ep) अणु
-			rcu_पढ़ो_unlock();
-			वापस -EEXIST;
-		पूर्ण
-	rcu_पढ़ो_unlock();
+	rhl_for_each_entry_rcu(transport, tmp, list, node)
+		if (transport->asoc->ep == t->asoc->ep) {
+			rcu_read_unlock();
+			return -EEXIST;
+		}
+	rcu_read_unlock();
 
 	err = rhltable_insert_key(&sctp_transport_hashtable, &arg,
 				  &t->node, sctp_hash_params);
-	अगर (err)
+	if (err)
 		pr_err_once("insert transport fail, errno %d\n", err);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम sctp_unhash_transport(काष्ठा sctp_transport *t)
-अणु
-	अगर (t->asoc->temp)
-		वापस;
+void sctp_unhash_transport(struct sctp_transport *t)
+{
+	if (t->asoc->temp)
+		return;
 
-	rhltable_हटाओ(&sctp_transport_hashtable, &t->node,
+	rhltable_remove(&sctp_transport_hashtable, &t->node,
 			sctp_hash_params);
-पूर्ण
+}
 
-/* वापस a transport with holding it */
-काष्ठा sctp_transport *sctp_addrs_lookup_transport(
-				काष्ठा net *net,
-				स्थिर जोड़ sctp_addr *laddr,
-				स्थिर जोड़ sctp_addr *paddr)
-अणु
-	काष्ठा rhlist_head *पंचांगp, *list;
-	काष्ठा sctp_transport *t;
-	काष्ठा sctp_hash_cmp_arg arg = अणु
+/* return a transport with holding it */
+struct sctp_transport *sctp_addrs_lookup_transport(
+				struct net *net,
+				const union sctp_addr *laddr,
+				const union sctp_addr *paddr)
+{
+	struct rhlist_head *tmp, *list;
+	struct sctp_transport *t;
+	struct sctp_hash_cmp_arg arg = {
 		.paddr = paddr,
 		.net   = net,
 		.lport = laddr->v4.sin_port,
-	पूर्ण;
+	};
 
 	list = rhltable_lookup(&sctp_transport_hashtable, &arg,
 			       sctp_hash_params);
 
-	rhl_क्रम_each_entry_rcu(t, पंचांगp, list, node) अणु
-		अगर (!sctp_transport_hold(t))
-			जारी;
+	rhl_for_each_entry_rcu(t, tmp, list, node) {
+		if (!sctp_transport_hold(t))
+			continue;
 
-		अगर (sctp_bind_addr_match(&t->asoc->base.bind_addr,
+		if (sctp_bind_addr_match(&t->asoc->base.bind_addr,
 					 laddr, sctp_sk(t->asoc->base.sk)))
-			वापस t;
+			return t;
 		sctp_transport_put(t);
-	पूर्ण
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-/* वापस a transport without holding it, as it's only used under sock lock */
-काष्ठा sctp_transport *sctp_epaddr_lookup_transport(
-				स्थिर काष्ठा sctp_endpoपूर्णांक *ep,
-				स्थिर जोड़ sctp_addr *paddr)
-अणु
-	काष्ठा rhlist_head *पंचांगp, *list;
-	काष्ठा sctp_transport *t;
-	काष्ठा sctp_hash_cmp_arg arg = अणु
+/* return a transport without holding it, as it's only used under sock lock */
+struct sctp_transport *sctp_epaddr_lookup_transport(
+				const struct sctp_endpoint *ep,
+				const union sctp_addr *paddr)
+{
+	struct rhlist_head *tmp, *list;
+	struct sctp_transport *t;
+	struct sctp_hash_cmp_arg arg = {
 		.paddr = paddr,
 		.net   = ep->base.net,
 		.lport = htons(ep->base.bind_addr.port),
-	पूर्ण;
+	};
 
 	list = rhltable_lookup(&sctp_transport_hashtable, &arg,
 			       sctp_hash_params);
 
-	rhl_क्रम_each_entry_rcu(t, पंचांगp, list, node)
-		अगर (ep == t->asoc->ep)
-			वापस t;
+	rhl_for_each_entry_rcu(t, tmp, list, node)
+		if (ep == t->asoc->ep)
+			return t;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /* Look up an association. */
-अटल काष्ठा sctp_association *__sctp_lookup_association(
-					काष्ठा net *net,
-					स्थिर जोड़ sctp_addr *local,
-					स्थिर जोड़ sctp_addr *peer,
-					काष्ठा sctp_transport **pt)
-अणु
-	काष्ठा sctp_transport *t;
-	काष्ठा sctp_association *asoc = शून्य;
+static struct sctp_association *__sctp_lookup_association(
+					struct net *net,
+					const union sctp_addr *local,
+					const union sctp_addr *peer,
+					struct sctp_transport **pt)
+{
+	struct sctp_transport *t;
+	struct sctp_association *asoc = NULL;
 
 	t = sctp_addrs_lookup_transport(net, local, peer);
-	अगर (!t)
-		जाओ out;
+	if (!t)
+		goto out;
 
 	asoc = t->asoc;
 	*pt = t;
 
 out:
-	वापस asoc;
-पूर्ण
+	return asoc;
+}
 
-/* Look up an association. रक्षित by RCU पढ़ो lock */
-अटल
-काष्ठा sctp_association *sctp_lookup_association(काष्ठा net *net,
-						 स्थिर जोड़ sctp_addr *laddr,
-						 स्थिर जोड़ sctp_addr *paddr,
-						 काष्ठा sctp_transport **transportp)
-अणु
-	काष्ठा sctp_association *asoc;
+/* Look up an association. protected by RCU read lock */
+static
+struct sctp_association *sctp_lookup_association(struct net *net,
+						 const union sctp_addr *laddr,
+						 const union sctp_addr *paddr,
+						 struct sctp_transport **transportp)
+{
+	struct sctp_association *asoc;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	asoc = __sctp_lookup_association(net, laddr, paddr, transportp);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस asoc;
-पूर्ण
+	return asoc;
+}
 
 /* Is there an association matching the given local and peer addresses? */
-bool sctp_has_association(काष्ठा net *net,
-			  स्थिर जोड़ sctp_addr *laddr,
-			  स्थिर जोड़ sctp_addr *paddr)
-अणु
-	काष्ठा sctp_transport *transport;
+bool sctp_has_association(struct net *net,
+			  const union sctp_addr *laddr,
+			  const union sctp_addr *paddr)
+{
+	struct sctp_transport *transport;
 
-	अगर (sctp_lookup_association(net, laddr, paddr, &transport)) अणु
+	if (sctp_lookup_association(net, laddr, paddr, &transport)) {
 		sctp_transport_put(transport);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /*
  * SCTP Implementors Guide, 2.18 Handling of address
  * parameters within the INIT or INIT-ACK.
  *
- * D) When searching क्रम a matching TCB upon reception of an INIT
+ * D) When searching for a matching TCB upon reception of an INIT
  *    or INIT-ACK chunk the receiver SHOULD use not only the
  *    source address of the packet (containing the INIT or
  *    INIT-ACK) but the receiver SHOULD also use all valid
@@ -1088,23 +1087,23 @@ bool sctp_has_association(काष्ठा net *net,
  *
  * 2.18.3 Solution description
  *
- * This new text clearly specअगरies to an implementor the need
+ * This new text clearly specifies to an implementor the need
  * to look within the INIT or INIT-ACK. Any implementation that
- * करोes not करो this, may not be able to establish associations
+ * does not do this, may not be able to establish associations
  * in certain circumstances.
  *
  */
-अटल काष्ठा sctp_association *__sctp_rcv_init_lookup(काष्ठा net *net,
-	काष्ठा sk_buff *skb,
-	स्थिर जोड़ sctp_addr *laddr, काष्ठा sctp_transport **transportp)
-अणु
-	काष्ठा sctp_association *asoc;
-	जोड़ sctp_addr addr;
-	जोड़ sctp_addr *paddr = &addr;
-	काष्ठा sctphdr *sh = sctp_hdr(skb);
-	जोड़ sctp_params params;
-	काष्ठा sctp_init_chunk *init;
-	काष्ठा sctp_af *af;
+static struct sctp_association *__sctp_rcv_init_lookup(struct net *net,
+	struct sk_buff *skb,
+	const union sctp_addr *laddr, struct sctp_transport **transportp)
+{
+	struct sctp_association *asoc;
+	union sctp_addr addr;
+	union sctp_addr *paddr = &addr;
+	struct sctphdr *sh = sctp_hdr(skb);
+	union sctp_params params;
+	struct sctp_init_chunk *init;
+	struct sctp_af *af;
 
 	/*
 	 * This code will NOT touch anything inside the chunk--it is
@@ -1112,39 +1111,39 @@ bool sctp_has_association(काष्ठा net *net,
 	 *
 	 * RFC 2960 3  SCTP packet Format
 	 *
-	 * Multiple chunks can be bundled पूर्णांकo one SCTP packet up to
-	 * the MTU size, except क्रम the INIT, INIT ACK, and SHUTDOWN
+	 * Multiple chunks can be bundled into one SCTP packet up to
+	 * the MTU size, except for the INIT, INIT ACK, and SHUTDOWN
 	 * COMPLETE chunks.  These chunks MUST NOT be bundled with any
-	 * other chunk in a packet.  See Section 6.10 क्रम more details
+	 * other chunk in a packet.  See Section 6.10 for more details
 	 * on chunk bundling.
 	 */
 
 	/* Find the start of the TLVs and the end of the chunk.  This is
-	 * the region we search क्रम address parameters.
+	 * the region we search for address parameters.
 	 */
-	init = (काष्ठा sctp_init_chunk *)skb->data;
+	init = (struct sctp_init_chunk *)skb->data;
 
-	/* Walk the parameters looking क्रम embedded addresses. */
-	sctp_walk_params(params, init, init_hdr.params) अणु
+	/* Walk the parameters looking for embedded addresses. */
+	sctp_walk_params(params, init, init_hdr.params) {
 
 		/* Note: Ignoring hostname addresses. */
-		af = sctp_get_af_specअगरic(param_type2af(params.p->type));
-		अगर (!af)
-			जारी;
+		af = sctp_get_af_specific(param_type2af(params.p->type));
+		if (!af)
+			continue;
 
 		af->from_addr_param(paddr, params.addr, sh->source, 0);
 
 		asoc = __sctp_lookup_association(net, laddr, paddr, transportp);
-		अगर (asoc)
-			वापस asoc;
-	पूर्ण
+		if (asoc)
+			return asoc;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /* ADD-IP, Section 5.2
- * When an endpoपूर्णांक receives an ASCONF Chunk from the remote peer
- * special procedures may be needed to identअगरy the association the
+ * When an endpoint receives an ASCONF Chunk from the remote peer
+ * special procedures may be needed to identify the association the
  * ASCONF Chunk is associated with. To properly find the association
  * the following procedures SHOULD be followed:
  *
@@ -1156,169 +1155,169 @@ bool sctp_has_association(काष्ठा net *net,
  * address found in the ASCONF Address Parameter TLV of each of the
  * subsequent ASCONF Chunks. If found, proceed to rule D4.
  */
-अटल काष्ठा sctp_association *__sctp_rcv_asconf_lookup(
-					काष्ठा net *net,
-					काष्ठा sctp_chunkhdr *ch,
-					स्थिर जोड़ sctp_addr *laddr,
+static struct sctp_association *__sctp_rcv_asconf_lookup(
+					struct net *net,
+					struct sctp_chunkhdr *ch,
+					const union sctp_addr *laddr,
 					__be16 peer_port,
-					काष्ठा sctp_transport **transportp)
-अणु
-	काष्ठा sctp_addip_chunk *asconf = (काष्ठा sctp_addip_chunk *)ch;
-	काष्ठा sctp_af *af;
-	जोड़ sctp_addr_param *param;
-	जोड़ sctp_addr paddr;
+					struct sctp_transport **transportp)
+{
+	struct sctp_addip_chunk *asconf = (struct sctp_addip_chunk *)ch;
+	struct sctp_af *af;
+	union sctp_addr_param *param;
+	union sctp_addr paddr;
 
 	/* Skip over the ADDIP header and find the Address parameter */
-	param = (जोड़ sctp_addr_param *)(asconf + 1);
+	param = (union sctp_addr_param *)(asconf + 1);
 
-	af = sctp_get_af_specअगरic(param_type2af(param->p.type));
-	अगर (unlikely(!af))
-		वापस शून्य;
+	af = sctp_get_af_specific(param_type2af(param->p.type));
+	if (unlikely(!af))
+		return NULL;
 
 	af->from_addr_param(&paddr, param, peer_port, 0);
 
-	वापस __sctp_lookup_association(net, laddr, &paddr, transportp);
-पूर्ण
+	return __sctp_lookup_association(net, laddr, &paddr, transportp);
+}
 
 
 /* SCTP-AUTH, Section 6.3:
-*    If the receiver करोes not find a STCB क्रम a packet containing an AUTH
+*    If the receiver does not find a STCB for a packet containing an AUTH
 *    chunk as the first chunk and not a COOKIE-ECHO chunk as the second
 *    chunk, it MUST use the chunks after the AUTH chunk to look up an existing
 *    association.
 *
-* This means that any chunks that can help us identअगरy the association need
+* This means that any chunks that can help us identify the association need
 * to be looked at to find this association.
 */
-अटल काष्ठा sctp_association *__sctp_rcv_walk_lookup(काष्ठा net *net,
-				      काष्ठा sk_buff *skb,
-				      स्थिर जोड़ sctp_addr *laddr,
-				      काष्ठा sctp_transport **transportp)
-अणु
-	काष्ठा sctp_association *asoc = शून्य;
-	काष्ठा sctp_chunkhdr *ch;
-	पूर्णांक have_auth = 0;
-	अचिन्हित पूर्णांक chunk_num = 1;
+static struct sctp_association *__sctp_rcv_walk_lookup(struct net *net,
+				      struct sk_buff *skb,
+				      const union sctp_addr *laddr,
+				      struct sctp_transport **transportp)
+{
+	struct sctp_association *asoc = NULL;
+	struct sctp_chunkhdr *ch;
+	int have_auth = 0;
+	unsigned int chunk_num = 1;
 	__u8 *ch_end;
 
-	/* Walk through the chunks looking क्रम AUTH or ASCONF chunks
+	/* Walk through the chunks looking for AUTH or ASCONF chunks
 	 * to help us find the association.
 	 */
-	ch = (काष्ठा sctp_chunkhdr *)skb->data;
-	करो अणु
-		/* Break out अगर chunk length is less then minimal. */
-		अगर (ntohs(ch->length) < माप(*ch))
-			अवरोध;
+	ch = (struct sctp_chunkhdr *)skb->data;
+	do {
+		/* Break out if chunk length is less then minimal. */
+		if (ntohs(ch->length) < sizeof(*ch))
+			break;
 
 		ch_end = ((__u8 *)ch) + SCTP_PAD4(ntohs(ch->length));
-		अगर (ch_end > skb_tail_poपूर्णांकer(skb))
-			अवरोध;
+		if (ch_end > skb_tail_pointer(skb))
+			break;
 
-		चयन (ch->type) अणु
-		हाल SCTP_CID_AUTH:
+		switch (ch->type) {
+		case SCTP_CID_AUTH:
 			have_auth = chunk_num;
-			अवरोध;
+			break;
 
-		हाल SCTP_CID_COOKIE_ECHO:
+		case SCTP_CID_COOKIE_ECHO:
 			/* If a packet arrives containing an AUTH chunk as
 			 * a first chunk, a COOKIE-ECHO chunk as the second
 			 * chunk, and possibly more chunks after them, and
-			 * the receiver करोes not have an STCB क्रम that
+			 * the receiver does not have an STCB for that
 			 * packet, then authentication is based on
 			 * the contents of the COOKIE- ECHO chunk.
 			 */
-			अगर (have_auth == 1 && chunk_num == 2)
-				वापस शून्य;
-			अवरोध;
+			if (have_auth == 1 && chunk_num == 2)
+				return NULL;
+			break;
 
-		हाल SCTP_CID_ASCONF:
-			अगर (have_auth || net->sctp.addip_noauth)
+		case SCTP_CID_ASCONF:
+			if (have_auth || net->sctp.addip_noauth)
 				asoc = __sctp_rcv_asconf_lookup(
 						net, ch, laddr,
 						sctp_hdr(skb)->source,
 						transportp);
-		शेष:
-			अवरोध;
-		पूर्ण
+		default:
+			break;
+		}
 
-		अगर (asoc)
-			अवरोध;
+		if (asoc)
+			break;
 
-		ch = (काष्ठा sctp_chunkhdr *)ch_end;
+		ch = (struct sctp_chunkhdr *)ch_end;
 		chunk_num++;
-	पूर्ण जबतक (ch_end < skb_tail_poपूर्णांकer(skb));
+	} while (ch_end < skb_tail_pointer(skb));
 
-	वापस asoc;
-पूर्ण
+	return asoc;
+}
 
 /*
  * There are circumstances when we need to look inside the SCTP packet
- * क्रम inक्रमmation to help us find the association.   Examples
+ * for information to help us find the association.   Examples
  * include looking inside of INIT/INIT-ACK chunks or after the AUTH
  * chunks.
  */
-अटल काष्ठा sctp_association *__sctp_rcv_lookup_harder(काष्ठा net *net,
-				      काष्ठा sk_buff *skb,
-				      स्थिर जोड़ sctp_addr *laddr,
-				      काष्ठा sctp_transport **transportp)
-अणु
-	काष्ठा sctp_chunkhdr *ch;
+static struct sctp_association *__sctp_rcv_lookup_harder(struct net *net,
+				      struct sk_buff *skb,
+				      const union sctp_addr *laddr,
+				      struct sctp_transport **transportp)
+{
+	struct sctp_chunkhdr *ch;
 
-	/* We करो not allow GSO frames here as we need to linearize and
+	/* We do not allow GSO frames here as we need to linearize and
 	 * then cannot guarantee frame boundaries. This shouldn't be an
 	 * issue as packets hitting this are mostly INIT or INIT-ACK and
 	 * those cannot be on GSO-style anyway.
 	 */
-	अगर (skb_is_gso(skb) && skb_is_gso_sctp(skb))
-		वापस शून्य;
+	if (skb_is_gso(skb) && skb_is_gso_sctp(skb))
+		return NULL;
 
-	ch = (काष्ठा sctp_chunkhdr *)skb->data;
+	ch = (struct sctp_chunkhdr *)skb->data;
 
 	/* The code below will attempt to walk the chunk and extract
-	 * parameter inक्रमmation.  Beक्रमe we करो that, we need to verअगरy
-	 * that the chunk length करोesn't cause overflow.  Otherwise, we'll
+	 * parameter information.  Before we do that, we need to verify
+	 * that the chunk length doesn't cause overflow.  Otherwise, we'll
 	 * walk off the end.
 	 */
-	अगर (SCTP_PAD4(ntohs(ch->length)) > skb->len)
-		वापस शून्य;
+	if (SCTP_PAD4(ntohs(ch->length)) > skb->len)
+		return NULL;
 
 	/* If this is INIT/INIT-ACK look inside the chunk too. */
-	अगर (ch->type == SCTP_CID_INIT || ch->type == SCTP_CID_INIT_ACK)
-		वापस __sctp_rcv_init_lookup(net, skb, laddr, transportp);
+	if (ch->type == SCTP_CID_INIT || ch->type == SCTP_CID_INIT_ACK)
+		return __sctp_rcv_init_lookup(net, skb, laddr, transportp);
 
-	वापस __sctp_rcv_walk_lookup(net, skb, laddr, transportp);
-पूर्ण
+	return __sctp_rcv_walk_lookup(net, skb, laddr, transportp);
+}
 
-/* Lookup an association क्रम an inbound skb. */
-अटल काष्ठा sctp_association *__sctp_rcv_lookup(काष्ठा net *net,
-				      काष्ठा sk_buff *skb,
-				      स्थिर जोड़ sctp_addr *paddr,
-				      स्थिर जोड़ sctp_addr *laddr,
-				      काष्ठा sctp_transport **transportp)
-अणु
-	काष्ठा sctp_association *asoc;
+/* Lookup an association for an inbound skb. */
+static struct sctp_association *__sctp_rcv_lookup(struct net *net,
+				      struct sk_buff *skb,
+				      const union sctp_addr *paddr,
+				      const union sctp_addr *laddr,
+				      struct sctp_transport **transportp)
+{
+	struct sctp_association *asoc;
 
 	asoc = __sctp_lookup_association(net, laddr, paddr, transportp);
-	अगर (asoc)
-		जाओ out;
+	if (asoc)
+		goto out;
 
-	/* Further lookup क्रम INIT/INIT-ACK packets.
+	/* Further lookup for INIT/INIT-ACK packets.
 	 * SCTP Implementors Guide, 2.18 Handling of address
 	 * parameters within the INIT or INIT-ACK.
 	 */
 	asoc = __sctp_rcv_lookup_harder(net, skb, laddr, transportp);
-	अगर (asoc)
-		जाओ out;
+	if (asoc)
+		goto out;
 
-	अगर (paddr->sa.sa_family == AF_INET)
+	if (paddr->sa.sa_family == AF_INET)
 		pr_debug("sctp: asoc not found for src:%pI4:%d dst:%pI4:%d\n",
 			 &laddr->v4.sin_addr, ntohs(laddr->v4.sin_port),
 			 &paddr->v4.sin_addr, ntohs(paddr->v4.sin_port));
-	अन्यथा
+	else
 		pr_debug("sctp: asoc not found for src:%pI6:%d dst:%pI6:%d\n",
 			 &laddr->v6.sin6_addr, ntohs(laddr->v6.sin6_port),
 			 &paddr->v6.sin6_addr, ntohs(paddr->v6.sin6_port));
 
 out:
-	वापस asoc;
-पूर्ण
+	return asoc;
+}

@@ -1,34 +1,33 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <पूर्णांकernal/xyarray.h>
-#समावेश <linux/zभाग.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
+// SPDX-License-Identifier: GPL-2.0
+#include <internal/xyarray.h>
+#include <linux/zalloc.h>
+#include <stdlib.h>
+#include <string.h>
 
-काष्ठा xyarray *xyarray__new(पूर्णांक xlen, पूर्णांक ylen, माप_प्रकार entry_size)
-अणु
-	माप_प्रकार row_size = ylen * entry_size;
-	काष्ठा xyarray *xy = zalloc(माप(*xy) + xlen * row_size);
+struct xyarray *xyarray__new(int xlen, int ylen, size_t entry_size)
+{
+	size_t row_size = ylen * entry_size;
+	struct xyarray *xy = zalloc(sizeof(*xy) + xlen * row_size);
 
-	अगर (xy != शून्य) अणु
+	if (xy != NULL) {
 		xy->entry_size = entry_size;
 		xy->row_size   = row_size;
 		xy->entries    = xlen * ylen;
 		xy->max_x      = xlen;
 		xy->max_y      = ylen;
-	पूर्ण
+	}
 
-	वापस xy;
-पूर्ण
+	return xy;
+}
 
-व्योम xyarray__reset(काष्ठा xyarray *xy)
-अणु
-	माप_प्रकार n = xy->entries * xy->entry_size;
+void xyarray__reset(struct xyarray *xy)
+{
+	size_t n = xy->entries * xy->entry_size;
 
-	स_रखो(xy->contents, 0, n);
-पूर्ण
+	memset(xy->contents, 0, n);
+}
 
-व्योम xyarray__delete(काष्ठा xyarray *xy)
-अणु
-	मुक्त(xy);
-पूर्ण
+void xyarray__delete(struct xyarray *xy)
+{
+	free(xy);
+}

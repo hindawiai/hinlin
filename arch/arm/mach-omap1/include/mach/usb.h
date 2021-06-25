@@ -1,41 +1,40 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * FIXME correct answer depends on hmc_mode,
- * as करोes (on omap1) any nonzero value क्रम config->otg port number
+ * as does (on omap1) any nonzero value for config->otg port number
  */
-#अगर IS_ENABLED(CONFIG_USB_OMAP)
-#घोषणा	is_usb0_device(config)	1
-#अन्यथा
-#घोषणा	is_usb0_device(config)	0
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_USB_OMAP)
+#define	is_usb0_device(config)	1
+#else
+#define	is_usb0_device(config)	0
+#endif
 
-#समावेश <linux/platक्रमm_data/usb-omap1.h>
+#include <linux/platform_data/usb-omap1.h>
 
-#अगर IS_ENABLED(CONFIG_USB_SUPPORT)
-व्योम omap1_usb_init(काष्ठा omap_usb_config *pdata);
-#अन्यथा
-अटल अंतरभूत व्योम omap1_usb_init(काष्ठा omap_usb_config *pdata)
-अणु
-पूर्ण
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_USB_SUPPORT)
+void omap1_usb_init(struct omap_usb_config *pdata);
+#else
+static inline void omap1_usb_init(struct omap_usb_config *pdata)
+{
+}
+#endif
 
-#घोषणा OMAP1_OTG_BASE			0xfffb0400
-#घोषणा OMAP1_UDC_BASE			0xfffb4000
-#घोषणा OMAP1_OHCI_BASE			0xfffba000
+#define OMAP1_OTG_BASE			0xfffb0400
+#define OMAP1_UDC_BASE			0xfffb4000
+#define OMAP1_OHCI_BASE			0xfffba000
 
-#घोषणा OMAP2_OHCI_BASE			0x4805e000
-#घोषणा OMAP2_UDC_BASE			0x4805e200
-#घोषणा OMAP2_OTG_BASE			0x4805e300
-#घोषणा OTG_BASE			OMAP1_OTG_BASE
-#घोषणा UDC_BASE			OMAP1_UDC_BASE
-#घोषणा OMAP_OHCI_BASE			OMAP1_OHCI_BASE
+#define OMAP2_OHCI_BASE			0x4805e000
+#define OMAP2_UDC_BASE			0x4805e200
+#define OMAP2_OTG_BASE			0x4805e300
+#define OTG_BASE			OMAP1_OTG_BASE
+#define UDC_BASE			OMAP1_UDC_BASE
+#define OMAP_OHCI_BASE			OMAP1_OHCI_BASE
 
 /*
- * OTG and transceiver रेजिस्टरs, क्रम OMAPs starting with ARM926
+ * OTG and transceiver registers, for OMAPs starting with ARM926
  */
-#घोषणा OTG_REV				(OTG_BASE + 0x00)
-#घोषणा OTG_SYSCON_1			(OTG_BASE + 0x04)
+#define OTG_REV				(OTG_BASE + 0x00)
+#define OTG_SYSCON_1			(OTG_BASE + 0x04)
 #	define	 USB2_TRX_MODE(w)	(((w)>>24)&0x07)
 #	define	 USB1_TRX_MODE(w)	(((w)>>20)&0x07)
 #	define	 USB0_TRX_MODE(w)	(((w)>>16)&0x07)
@@ -44,7 +43,7 @@
 #	define	 DEV_IDLE_EN		(1 << 13)
 #	define	 OTG_RESET_DONE		(1 << 2)
 #	define	 OTG_SOFT_RESET		(1 << 1)
-#घोषणा OTG_SYSCON_2			(OTG_BASE + 0x08)
+#define OTG_SYSCON_2			(OTG_BASE + 0x08)
 #	define	 OTG_EN			(1 << 31)
 #	define	 USBX_SYNCHRO		(1 << 30)
 #	define	 OTG_MST16		(1 << 29)
@@ -62,7 +61,7 @@
 #	define	 HMC_TLLSPEED		(1 << 7)
 #	define	 HMC_TLLATTACH		(1 << 6)
 #	define	 OTG_HMC(w)		(((w)>>0)&0x3f)
-#घोषणा OTG_CTRL			(OTG_BASE + 0x0c)
+#define OTG_CTRL			(OTG_BASE + 0x0c)
 #	define	 OTG_USB2_EN		(1 << 29)
 #	define	 OTG_USB2_DP		(1 << 28)
 #	define	 OTG_USB2_DM		(1 << 27)
@@ -89,7 +88,7 @@
 #	define	 OTG_PD_VBUS		(1 << 2)
 #	define	 OTG_PU_VBUS		(1 << 1)
 #	define	 OTG_PU_ID		(1 << 0)
-#घोषणा OTG_IRQ_EN			(OTG_BASE + 0x10)	/* 16-bit */
+#define OTG_IRQ_EN			(OTG_BASE + 0x10)	/* 16-bit */
 #	define	 DRIVER_SWITCH		(1 << 15)
 #	define	 A_VBUS_ERR		(1 << 13)
 #	define	 A_REQ_TMROUT		(1 << 12)
@@ -99,9 +98,9 @@
 #	define	 B_SRP_DONE		(1 << 8)
 #	define	 B_SRP_STARTED		(1 << 7)
 #	define	 OPRT_CHG		(1 << 0)
-#घोषणा OTG_IRQ_SRC			(OTG_BASE + 0x14)	/* 16-bit */
+#define OTG_IRQ_SRC			(OTG_BASE + 0x14)	/* 16-bit */
 	// same bits as in IRQ_EN
-#घोषणा OTG_OUTCTRL			(OTG_BASE + 0x18)	/* 16-bit */
+#define OTG_OUTCTRL			(OTG_BASE + 0x18)	/* 16-bit */
 #	define	 OTGVPD			(1 << 14)
 #	define	 OTGVPU			(1 << 13)
 #	define	 OTGPUID		(1 << 12)
@@ -114,13 +113,13 @@
 #	define	 USB0VDR		(1 << 2)
 #	define	 USB0PDEN		(1 << 1)
 #	define	 USB0PUEN		(1 << 0)
-#घोषणा OTG_TEST			(OTG_BASE + 0x20)	/* 16-bit */
-#घोषणा OTG_VENDOR_CODE			(OTG_BASE + 0xfc)	/* 16-bit */
+#define OTG_TEST			(OTG_BASE + 0x20)	/* 16-bit */
+#define OTG_VENDOR_CODE			(OTG_BASE + 0xfc)	/* 16-bit */
 
 /*-------------------------------------------------------------------------*/
 
 /* OMAP1 */
-#घोषणा	USB_TRANSCEIVER_CTRL		(0xfffe1000 + 0x0064)
+#define	USB_TRANSCEIVER_CTRL		(0xfffe1000 + 0x0064)
 #	define	CONF_USB2_UNI_R		(1 << 8)
 #	define	CONF_USB1_UNI_R		(1 << 7)
 #	define	CONF_USB_PORT0_R(x)	(((x)>>4)&0x7)

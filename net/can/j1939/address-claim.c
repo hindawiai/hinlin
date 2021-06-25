@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2010-2011 EIA Electronics,
 //                         Kurt Van Dijck <kurt.van.dijck@eia.be>
 // Copyright (c) 2010-2011 EIA Electronics,
@@ -12,143 +11,143 @@
 /* J1939 Address Claiming.
  * Address Claiming in the kernel
  * - keeps track of the AC states of ECU's,
- * - resolves NAME<=>SA taking पूर्णांकo account the AC states of ECU's.
+ * - resolves NAME<=>SA taking into account the AC states of ECU's.
  *
  * All Address Claim msgs (including host-originated msg) are processed
  * at the receive path (a sent msg is always received again via CAN echo).
- * As such, the processing of AC msgs is करोne in the order on which msgs
+ * As such, the processing of AC msgs is done in the order on which msgs
  * are sent on the bus.
  *
- * This module करोesn't send msgs itself (e.g. replies on Address Claims),
+ * This module doesn't send msgs itself (e.g. replies on Address Claims),
  * this is the responsibility of a user space application or daemon.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/netdevice.h>
-#समावेश <linux/skbuff.h>
+#include <linux/netdevice.h>
+#include <linux/skbuff.h>
 
-#समावेश "j1939-priv.h"
+#include "j1939-priv.h"
 
-अटल अंतरभूत name_t j1939_skb_to_name(स्थिर काष्ठा sk_buff *skb)
-अणु
-	वापस le64_to_cpup((__le64 *)skb->data);
-पूर्ण
+static inline name_t j1939_skb_to_name(const struct sk_buff *skb)
+{
+	return le64_to_cpup((__le64 *)skb->data);
+}
 
-अटल अंतरभूत bool j1939_ac_msg_is_request(काष्ठा sk_buff *skb)
-अणु
-	काष्ठा j1939_sk_buff_cb *skcb = j1939_skb_to_cb(skb);
-	पूर्णांक req_pgn;
+static inline bool j1939_ac_msg_is_request(struct sk_buff *skb)
+{
+	struct j1939_sk_buff_cb *skcb = j1939_skb_to_cb(skb);
+	int req_pgn;
 
-	अगर (skb->len < 3 || skcb->addr.pgn != J1939_PGN_REQUEST)
-		वापस false;
+	if (skb->len < 3 || skcb->addr.pgn != J1939_PGN_REQUEST)
+		return false;
 
 	req_pgn = skb->data[0] | (skb->data[1] << 8) | (skb->data[2] << 16);
 
-	वापस req_pgn == J1939_PGN_ADDRESS_CLAIMED;
-पूर्ण
+	return req_pgn == J1939_PGN_ADDRESS_CLAIMED;
+}
 
-अटल पूर्णांक j1939_ac_verअगरy_outgoing(काष्ठा j1939_priv *priv,
-				    काष्ठा sk_buff *skb)
-अणु
-	काष्ठा j1939_sk_buff_cb *skcb = j1939_skb_to_cb(skb);
+static int j1939_ac_verify_outgoing(struct j1939_priv *priv,
+				    struct sk_buff *skb)
+{
+	struct j1939_sk_buff_cb *skcb = j1939_skb_to_cb(skb);
 
-	अगर (skb->len != 8) अणु
+	if (skb->len != 8) {
 		netdev_notice(priv->ndev, "tx address claim with dlc %i\n",
 			      skb->len);
-		वापस -EPROTO;
-	पूर्ण
+		return -EPROTO;
+	}
 
-	अगर (skcb->addr.src_name != j1939_skb_to_name(skb)) अणु
+	if (skcb->addr.src_name != j1939_skb_to_name(skb)) {
 		netdev_notice(priv->ndev, "tx address claim with different name\n");
-		वापस -EPROTO;
-	पूर्ण
+		return -EPROTO;
+	}
 
-	अगर (skcb->addr.sa == J1939_NO_ADDR) अणु
+	if (skcb->addr.sa == J1939_NO_ADDR) {
 		netdev_notice(priv->ndev, "tx address claim with broadcast sa\n");
-		वापस -EPROTO;
-	पूर्ण
+		return -EPROTO;
+	}
 
 	/* ac must always be a broadcast */
-	अगर (skcb->addr.dst_name || skcb->addr.da != J1939_NO_ADDR) अणु
+	if (skcb->addr.dst_name || skcb->addr.da != J1939_NO_ADDR) {
 		netdev_notice(priv->ndev, "tx address claim with dest, not broadcast\n");
-		वापस -EPROTO;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EPROTO;
+	}
+	return 0;
+}
 
-पूर्णांक j1939_ac_fixup(काष्ठा j1939_priv *priv, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा j1939_sk_buff_cb *skcb = j1939_skb_to_cb(skb);
-	पूर्णांक ret;
+int j1939_ac_fixup(struct j1939_priv *priv, struct sk_buff *skb)
+{
+	struct j1939_sk_buff_cb *skcb = j1939_skb_to_cb(skb);
+	int ret;
 	u8 addr;
 
 	/* network mgmt: address claiming msgs */
-	अगर (skcb->addr.pgn == J1939_PGN_ADDRESS_CLAIMED) अणु
-		काष्ठा j1939_ecu *ecu;
+	if (skcb->addr.pgn == J1939_PGN_ADDRESS_CLAIMED) {
+		struct j1939_ecu *ecu;
 
-		ret = j1939_ac_verअगरy_outgoing(priv, skb);
-		/* वापस both when failure & when successful */
-		अगर (ret < 0)
-			वापस ret;
+		ret = j1939_ac_verify_outgoing(priv, skb);
+		/* return both when failure & when successful */
+		if (ret < 0)
+			return ret;
 		ecu = j1939_ecu_get_by_name(priv, skcb->addr.src_name);
-		अगर (!ecu)
-			वापस -ENODEV;
+		if (!ecu)
+			return -ENODEV;
 
-		अगर (ecu->addr != skcb->addr.sa)
-			/* hold further traffic क्रम ecu, हटाओ from parent */
+		if (ecu->addr != skcb->addr.sa)
+			/* hold further traffic for ecu, remove from parent */
 			j1939_ecu_unmap(ecu);
 		j1939_ecu_put(ecu);
-	पूर्ण अन्यथा अगर (skcb->addr.src_name) अणु
+	} else if (skcb->addr.src_name) {
 		/* assign source address */
 		addr = j1939_name_to_addr(priv, skcb->addr.src_name);
-		अगर (!j1939_address_is_unicast(addr) &&
-		    !j1939_ac_msg_is_request(skb)) अणु
+		if (!j1939_address_is_unicast(addr) &&
+		    !j1939_ac_msg_is_request(skb)) {
 			netdev_notice(priv->ndev, "tx drop: invalid sa for name 0x%016llx\n",
 				      skcb->addr.src_name);
-			वापस -EADDRNOTAVAIL;
-		पूर्ण
+			return -EADDRNOTAVAIL;
+		}
 		skcb->addr.sa = addr;
-	पूर्ण
+	}
 
 	/* assign destination address */
-	अगर (skcb->addr.dst_name) अणु
+	if (skcb->addr.dst_name) {
 		addr = j1939_name_to_addr(priv, skcb->addr.dst_name);
-		अगर (!j1939_address_is_unicast(addr)) अणु
+		if (!j1939_address_is_unicast(addr)) {
 			netdev_notice(priv->ndev, "tx drop: invalid da for name 0x%016llx\n",
 				      skcb->addr.dst_name);
-			वापस -EADDRNOTAVAIL;
-		पूर्ण
+			return -EADDRNOTAVAIL;
+		}
 		skcb->addr.da = addr;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल व्योम j1939_ac_process(काष्ठा j1939_priv *priv, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा j1939_sk_buff_cb *skcb = j1939_skb_to_cb(skb);
-	काष्ठा j1939_ecu *ecu, *prev;
+static void j1939_ac_process(struct j1939_priv *priv, struct sk_buff *skb)
+{
+	struct j1939_sk_buff_cb *skcb = j1939_skb_to_cb(skb);
+	struct j1939_ecu *ecu, *prev;
 	name_t name;
 
-	अगर (skb->len != 8) अणु
+	if (skb->len != 8) {
 		netdev_notice(priv->ndev, "rx address claim with wrong dlc %i\n",
 			      skb->len);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	name = j1939_skb_to_name(skb);
 	skcb->addr.src_name = name;
-	अगर (!name) अणु
+	if (!name) {
 		netdev_notice(priv->ndev, "rx address claim without name\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!j1939_address_is_valid(skcb->addr.sa)) अणु
+	if (!j1939_address_is_valid(skcb->addr.sa)) {
 		netdev_notice(priv->ndev, "rx address claim with broadcast sa\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	ग_लिखो_lock_bh(&priv->lock);
+	write_lock_bh(&priv->lock);
 
 	/* Few words on the ECU ref counting:
 	 *
@@ -158,74 +157,74 @@
 	 * with a ref counter of 1).
 	 *
 	 * j1939_ecu_unmap_locked() will decrement the ref counter,
-	 * but only अगर the ECU was mapped beक्रमe. So "ecu" still
-	 * beदीर्घs to us.
+	 * but only if the ECU was mapped before. So "ecu" still
+	 * belongs to us.
 	 *
-	 * j1939_ecu_समयr_start() will increment the ref counter
-	 * beक्रमe it starts the समयr, so we can put the ecu when
+	 * j1939_ecu_timer_start() will increment the ref counter
+	 * before it starts the timer, so we can put the ecu when
 	 * leaving this function.
 	 */
 	ecu = j1939_ecu_get_by_name_locked(priv, name);
-	अगर (!ecu && j1939_address_is_unicast(skcb->addr.sa))
+	if (!ecu && j1939_address_is_unicast(skcb->addr.sa))
 		ecu = j1939_ecu_create_locked(priv, name);
 
-	अगर (IS_ERR_OR_शून्य(ecu))
-		जाओ out_unlock_bh;
+	if (IS_ERR_OR_NULL(ecu))
+		goto out_unlock_bh;
 
 	/* cancel pending (previous) address claim */
-	j1939_ecu_समयr_cancel(ecu);
+	j1939_ecu_timer_cancel(ecu);
 
-	अगर (j1939_address_is_idle(skcb->addr.sa)) अणु
+	if (j1939_address_is_idle(skcb->addr.sa)) {
 		j1939_ecu_unmap_locked(ecu);
-		जाओ out_ecu_put;
-	पूर्ण
+		goto out_ecu_put;
+	}
 
 	/* save new addr */
-	अगर (ecu->addr != skcb->addr.sa)
+	if (ecu->addr != skcb->addr.sa)
 		j1939_ecu_unmap_locked(ecu);
 	ecu->addr = skcb->addr.sa;
 
 	prev = j1939_ecu_get_by_addr_locked(priv, skcb->addr.sa);
-	अगर (prev) अणु
-		अगर (ecu->name > prev->name) अणु
+	if (prev) {
+		if (ecu->name > prev->name) {
 			j1939_ecu_unmap_locked(ecu);
 			j1939_ecu_put(prev);
-			जाओ out_ecu_put;
-		पूर्ण अन्यथा अणु
-			/* kick prev अगर less or equal */
+			goto out_ecu_put;
+		} else {
+			/* kick prev if less or equal */
 			j1939_ecu_unmap_locked(prev);
 			j1939_ecu_put(prev);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	j1939_ecu_समयr_start(ecu);
+	j1939_ecu_timer_start(ecu);
  out_ecu_put:
 	j1939_ecu_put(ecu);
  out_unlock_bh:
-	ग_लिखो_unlock_bh(&priv->lock);
-पूर्ण
+	write_unlock_bh(&priv->lock);
+}
 
-व्योम j1939_ac_recv(काष्ठा j1939_priv *priv, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा j1939_sk_buff_cb *skcb = j1939_skb_to_cb(skb);
-	काष्ठा j1939_ecu *ecu;
+void j1939_ac_recv(struct j1939_priv *priv, struct sk_buff *skb)
+{
+	struct j1939_sk_buff_cb *skcb = j1939_skb_to_cb(skb);
+	struct j1939_ecu *ecu;
 
 	/* network mgmt */
-	अगर (skcb->addr.pgn == J1939_PGN_ADDRESS_CLAIMED) अणु
+	if (skcb->addr.pgn == J1939_PGN_ADDRESS_CLAIMED) {
 		j1939_ac_process(priv, skb);
-	पूर्ण अन्यथा अगर (j1939_address_is_unicast(skcb->addr.sa)) अणु
+	} else if (j1939_address_is_unicast(skcb->addr.sa)) {
 		/* assign source name */
 		ecu = j1939_ecu_get_by_addr(priv, skcb->addr.sa);
-		अगर (ecu) अणु
+		if (ecu) {
 			skcb->addr.src_name = ecu->name;
 			j1939_ecu_put(ecu);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* assign destination name */
 	ecu = j1939_ecu_get_by_addr(priv, skcb->addr.da);
-	अगर (ecu) अणु
+	if (ecu) {
 		skcb->addr.dst_name = ecu->name;
 		j1939_ecu_put(ecu);
-	पूर्ण
-पूर्ण
+	}
+}

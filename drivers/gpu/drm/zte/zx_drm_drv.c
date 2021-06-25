@@ -1,41 +1,40 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright 2016 Linaro Ltd.
  * Copyright 2016 ZTE Corporation.
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/component.h>
-#समावेश <linux/list.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_graph.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/spinlock.h>
+#include <linux/clk.h>
+#include <linux/component.h>
+#include <linux/list.h>
+#include <linux/module.h>
+#include <linux/of_graph.h>
+#include <linux/of_platform.h>
+#include <linux/spinlock.h>
 
-#समावेश <drm/drm_atomic_helper.h>
-#समावेश <drm/drm_crtc.h>
-#समावेश <drm/drm_drv.h>
-#समावेश <drm/drm_fb_cma_helper.h>
-#समावेश <drm/drm_fb_helper.h>
-#समावेश <drm/drm_gem_cma_helper.h>
-#समावेश <drm/drm_gem_framebuffer_helper.h>
-#समावेश <drm/drm_of.h>
-#समावेश <drm/drm_probe_helper.h>
-#समावेश <drm/drm_vblank.h>
+#include <drm/drm_atomic_helper.h>
+#include <drm/drm_crtc.h>
+#include <drm/drm_drv.h>
+#include <drm/drm_fb_cma_helper.h>
+#include <drm/drm_fb_helper.h>
+#include <drm/drm_gem_cma_helper.h>
+#include <drm/drm_gem_framebuffer_helper.h>
+#include <drm/drm_of.h>
+#include <drm/drm_probe_helper.h>
+#include <drm/drm_vblank.h>
 
-#समावेश "zx_drm_drv.h"
-#समावेश "zx_vou.h"
+#include "zx_drm_drv.h"
+#include "zx_vou.h"
 
-अटल स्थिर काष्ठा drm_mode_config_funcs zx_drm_mode_config_funcs = अणु
+static const struct drm_mode_config_funcs zx_drm_mode_config_funcs = {
 	.fb_create = drm_gem_fb_create,
 	.atomic_check = drm_atomic_helper_check,
 	.atomic_commit = drm_atomic_helper_commit,
-पूर्ण;
+};
 
 DEFINE_DRM_GEM_CMA_FOPS(zx_drm_fops);
 
-अटल स्थिर काष्ठा drm_driver zx_drm_driver = अणु
+static const struct drm_driver zx_drm_driver = {
 	.driver_features = DRIVER_GEM | DRIVER_MODESET | DRIVER_ATOMIC,
 	DRM_GEM_CMA_DRIVER_OPS,
 	.fops = &zx_drm_fops,
@@ -44,16 +43,16 @@ DEFINE_DRM_GEM_CMA_FOPS(zx_drm_fops);
 	.date = "20160811",
 	.major = 1,
 	.minor = 0,
-पूर्ण;
+};
 
-अटल पूर्णांक zx_drm_bind(काष्ठा device *dev)
-अणु
-	काष्ठा drm_device *drm;
-	पूर्णांक ret;
+static int zx_drm_bind(struct device *dev)
+{
+	struct drm_device *drm;
+	int ret;
 
 	drm = drm_dev_alloc(&zx_drm_driver, dev);
-	अगर (IS_ERR(drm))
-		वापस PTR_ERR(drm);
+	if (IS_ERR(drm))
+		return PTR_ERR(drm);
 
 	dev_set_drvdata(dev, drm);
 
@@ -65,126 +64,126 @@ DEFINE_DRM_GEM_CMA_FOPS(zx_drm_fops);
 	drm->mode_config.funcs = &zx_drm_mode_config_funcs;
 
 	ret = component_bind_all(dev, drm);
-	अगर (ret) अणु
+	if (ret) {
 		DRM_DEV_ERROR(dev, "failed to bind all components: %d\n", ret);
-		जाओ out_unरेजिस्टर;
-	पूर्ण
+		goto out_unregister;
+	}
 
 	ret = drm_vblank_init(drm, drm->mode_config.num_crtc);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		DRM_DEV_ERROR(dev, "failed to init vblank: %d\n", ret);
-		जाओ out_unbind;
-	पूर्ण
+		goto out_unbind;
+	}
 
 	/*
-	 * We will manage irq handler on our own.  In this हाल, irq_enabled
-	 * need to be true क्रम using vblank core support.
+	 * We will manage irq handler on our own.  In this case, irq_enabled
+	 * need to be true for using vblank core support.
 	 */
 	drm->irq_enabled = true;
 
 	drm_mode_config_reset(drm);
 	drm_kms_helper_poll_init(drm);
 
-	ret = drm_dev_रेजिस्टर(drm, 0);
-	अगर (ret)
-		जाओ out_poll_fini;
+	ret = drm_dev_register(drm, 0);
+	if (ret)
+		goto out_poll_fini;
 
 	drm_fbdev_generic_setup(drm, 32);
 
-	वापस 0;
+	return 0;
 
 out_poll_fini:
 	drm_kms_helper_poll_fini(drm);
 	drm_mode_config_cleanup(drm);
 out_unbind:
 	component_unbind_all(dev, drm);
-out_unरेजिस्टर:
-	dev_set_drvdata(dev, शून्य);
+out_unregister:
+	dev_set_drvdata(dev, NULL);
 	drm_dev_put(drm);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम zx_drm_unbind(काष्ठा device *dev)
-अणु
-	काष्ठा drm_device *drm = dev_get_drvdata(dev);
+static void zx_drm_unbind(struct device *dev)
+{
+	struct drm_device *drm = dev_get_drvdata(dev);
 
-	drm_dev_unरेजिस्टर(drm);
+	drm_dev_unregister(drm);
 	drm_kms_helper_poll_fini(drm);
-	drm_atomic_helper_shutकरोwn(drm);
+	drm_atomic_helper_shutdown(drm);
 	drm_mode_config_cleanup(drm);
 	component_unbind_all(dev, drm);
-	dev_set_drvdata(dev, शून्य);
+	dev_set_drvdata(dev, NULL);
 	drm_dev_put(drm);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा component_master_ops zx_drm_master_ops = अणु
+static const struct component_master_ops zx_drm_master_ops = {
 	.bind = zx_drm_bind,
 	.unbind = zx_drm_unbind,
-पूर्ण;
+};
 
-अटल पूर्णांक compare_of(काष्ठा device *dev, व्योम *data)
-अणु
-	वापस dev->of_node == data;
-पूर्ण
+static int compare_of(struct device *dev, void *data)
+{
+	return dev->of_node == data;
+}
 
-अटल पूर्णांक zx_drm_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा device_node *parent = dev->of_node;
-	काष्ठा device_node *child;
-	काष्ठा component_match *match = शून्य;
-	पूर्णांक ret;
+static int zx_drm_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct device_node *parent = dev->of_node;
+	struct device_node *child;
+	struct component_match *match = NULL;
+	int ret;
 
-	ret = devm_of_platक्रमm_populate(dev);
-	अगर (ret)
-		वापस ret;
+	ret = devm_of_platform_populate(dev);
+	if (ret)
+		return ret;
 
-	क्रम_each_available_child_of_node(parent, child)
+	for_each_available_child_of_node(parent, child)
 		component_match_add(dev, &match, compare_of, child);
 
-	वापस component_master_add_with_match(dev, &zx_drm_master_ops, match);
-पूर्ण
+	return component_master_add_with_match(dev, &zx_drm_master_ops, match);
+}
 
-अटल पूर्णांक zx_drm_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
+static int zx_drm_remove(struct platform_device *pdev)
+{
 	component_master_del(&pdev->dev, &zx_drm_master_ops);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id zx_drm_of_match[] = अणु
-	अणु .compatible = "zte,zx296718-vou", पूर्ण,
-	अणु /* end */ पूर्ण,
-पूर्ण;
+static const struct of_device_id zx_drm_of_match[] = {
+	{ .compatible = "zte,zx296718-vou", },
+	{ /* end */ },
+};
 MODULE_DEVICE_TABLE(of, zx_drm_of_match);
 
-अटल काष्ठा platक्रमm_driver zx_drm_platक्रमm_driver = अणु
+static struct platform_driver zx_drm_platform_driver = {
 	.probe = zx_drm_probe,
-	.हटाओ = zx_drm_हटाओ,
-	.driver	= अणु
+	.remove = zx_drm_remove,
+	.driver	= {
 		.name = "zx-drm",
 		.of_match_table	= zx_drm_of_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा platक्रमm_driver *drivers[] = अणु
+static struct platform_driver *drivers[] = {
 	&zx_crtc_driver,
 	&zx_hdmi_driver,
 	&zx_tvenc_driver,
 	&zx_vga_driver,
-	&zx_drm_platक्रमm_driver,
-पूर्ण;
+	&zx_drm_platform_driver,
+};
 
-अटल पूर्णांक zx_drm_init(व्योम)
-अणु
-	वापस platक्रमm_रेजिस्टर_drivers(drivers, ARRAY_SIZE(drivers));
-पूर्ण
+static int zx_drm_init(void)
+{
+	return platform_register_drivers(drivers, ARRAY_SIZE(drivers));
+}
 module_init(zx_drm_init);
 
-अटल व्योम zx_drm_निकास(व्योम)
-अणु
-	platक्रमm_unरेजिस्टर_drivers(drivers, ARRAY_SIZE(drivers));
-पूर्ण
-module_निकास(zx_drm_निकास);
+static void zx_drm_exit(void)
+{
+	platform_unregister_drivers(drivers, ARRAY_SIZE(drivers));
+}
+module_exit(zx_drm_exit);
 
 MODULE_AUTHOR("Shawn Guo <shawn.guo@linaro.org>");
 MODULE_DESCRIPTION("ZTE ZX VOU DRM driver");

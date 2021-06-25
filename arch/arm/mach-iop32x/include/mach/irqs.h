@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * arch/arm/mach-iop32x/include/mach/irqs.h
  *
@@ -7,9 +6,9 @@
  * Copyright:	(C) 2002 Rory Bolt
  */
 
-#अगर_अघोषित __IRQS_H
-#घोषणा __IRQS_H
+#ifndef __IRQS_H
+#define __IRQS_H
 
-#घोषणा NR_IRQS			32
+#define NR_IRQS			32
 
-#पूर्ण_अगर
+#endif

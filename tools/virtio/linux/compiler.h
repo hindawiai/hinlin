@@ -1,12 +1,11 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित LINUX_COMPILER_H
-#घोषणा LINUX_COMPILER_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef LINUX_COMPILER_H
+#define LINUX_COMPILER_H
 
-#घोषणा WRITE_ONCE(var, val) \
-	(*((अस्थिर typeof(val) *)(&(var))) = (val))
+#define WRITE_ONCE(var, val) \
+	(*((volatile typeof(val) *)(&(var))) = (val))
 
-#घोषणा READ_ONCE(var) (*((अस्थिर typeof(var) *)(&(var))))
+#define READ_ONCE(var) (*((volatile typeof(var) *)(&(var))))
 
-#घोषणा __aligned(x) __attribute((__aligned__(x)))
-#पूर्ण_अगर
+#define __aligned(x) __attribute((__aligned__(x)))
+#endif

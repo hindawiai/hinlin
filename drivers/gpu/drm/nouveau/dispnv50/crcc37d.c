@@ -1,19 +1,18 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: MIT
-#समावेश <drm/drm_crtc.h>
+// SPDX-License-Identifier: MIT
+#include <drm/drm_crtc.h>
 
-#समावेश "crc.h"
-#समावेश "core.h"
-#समावेश "disp.h"
-#समावेश "head.h"
+#include "crc.h"
+#include "core.h"
+#include "disp.h"
+#include "head.h"
 
-#समावेश <nvअगर/pushc37b.h>
+#include <nvif/pushc37b.h>
 
-#समावेश <nvhw/class/clc37d.h>
+#include <nvhw/class/clc37d.h>
 
-#घोषणा CRCC37D_MAX_ENTRIES 2047
+#define CRCC37D_MAX_ENTRIES 2047
 
-काष्ठा crcc37d_notअगरier अणु
+struct crcc37d_notifier {
 	u32 status;
 
 	/* reserved */
@@ -25,131 +24,131 @@
 	u32 :32;
 	u32 :32;
 
-	काष्ठा crcc37d_entry अणु
+	struct crcc37d_entry {
 		u32 status[2];
 		u32 :32; /* reserved */
 		u32 compositor_crc;
 		u32 rg_crc;
 		u32 output_crc[2];
 		u32 :32; /* reserved */
-	पूर्ण entries[CRCC37D_MAX_ENTRIES];
-पूर्ण __packed;
+	} entries[CRCC37D_MAX_ENTRIES];
+} __packed;
 
-अटल पूर्णांक
-crcc37d_set_src(काष्ठा nv50_head *head, पूर्णांक or,
-		क्रमागत nv50_crc_source_type source,
-		काष्ठा nv50_crc_notअगरier_ctx *ctx, u32 wndw)
-अणु
-	काष्ठा nvअगर_push *push = nv50_disp(head->base.base.dev)->core->chan.push;
-	स्थिर पूर्णांक i = head->base.index;
+static int
+crcc37d_set_src(struct nv50_head *head, int or,
+		enum nv50_crc_source_type source,
+		struct nv50_crc_notifier_ctx *ctx, u32 wndw)
+{
+	struct nvif_push *push = nv50_disp(head->base.base.dev)->core->chan.push;
+	const int i = head->base.index;
 	u32 crc_args = NVVAL(NVC37D, HEAD_SET_CRC_CONTROL, CONTROLLING_CHANNEL, wndw) |
 		       NVDEF(NVC37D, HEAD_SET_CRC_CONTROL, EXPECT_BUFFER_COLLAPSE, FALSE) |
 		       NVDEF(NVC37D, HEAD_SET_CRC_CONTROL, SECONDARY_CRC, NONE) |
 		       NVDEF(NVC37D, HEAD_SET_CRC_CONTROL, CRC_DURING_SNOOZE, DISABLE);
-	पूर्णांक ret;
+	int ret;
 
-	चयन (source) अणु
-	हाल NV50_CRC_SOURCE_TYPE_SOR:
+	switch (source) {
+	case NV50_CRC_SOURCE_TYPE_SOR:
 		crc_args |= NVDEF(NVC37D, HEAD_SET_CRC_CONTROL, PRIMARY_CRC, SOR(or));
-		अवरोध;
-	हाल NV50_CRC_SOURCE_TYPE_PIOR:
+		break;
+	case NV50_CRC_SOURCE_TYPE_PIOR:
 		crc_args |= NVDEF(NVC37D, HEAD_SET_CRC_CONTROL, PRIMARY_CRC, PIOR(or));
-		अवरोध;
-	हाल NV50_CRC_SOURCE_TYPE_SF:
+		break;
+	case NV50_CRC_SOURCE_TYPE_SF:
 		crc_args |= NVDEF(NVC37D, HEAD_SET_CRC_CONTROL, PRIMARY_CRC, SF);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	अगर ((ret = PUSH_WAIT(push, 4)))
-		वापस ret;
+	if ((ret = PUSH_WAIT(push, 4)))
+		return ret;
 
-	अगर (source) अणु
+	if (source) {
 		PUSH_MTHD(push, NVC37D, HEAD_SET_CONTEXT_DMA_CRC(i), ctx->ntfy.handle);
 		PUSH_MTHD(push, NVC37D, HEAD_SET_CRC_CONTROL(i), crc_args);
-	पूर्ण अन्यथा अणु
+	} else {
 		PUSH_MTHD(push, NVC37D, HEAD_SET_CRC_CONTROL(i), 0);
 		PUSH_MTHD(push, NVC37D, HEAD_SET_CONTEXT_DMA_CRC(i), 0);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-crcc37d_set_ctx(काष्ठा nv50_head *head, काष्ठा nv50_crc_notअगरier_ctx *ctx)
-अणु
-	काष्ठा nvअगर_push *push = nv50_disp(head->base.base.dev)->core->chan.push;
-	स्थिर पूर्णांक i = head->base.index;
-	पूर्णांक ret;
+static int
+crcc37d_set_ctx(struct nv50_head *head, struct nv50_crc_notifier_ctx *ctx)
+{
+	struct nvif_push *push = nv50_disp(head->base.base.dev)->core->chan.push;
+	const int i = head->base.index;
+	int ret;
 
-	अगर ((ret = PUSH_WAIT(push, 2)))
-		वापस ret;
+	if ((ret = PUSH_WAIT(push, 2)))
+		return ret;
 
 	PUSH_MTHD(push, NVC37D, HEAD_SET_CONTEXT_DMA_CRC(i), ctx ? ctx->ntfy.handle : 0);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u32 crcc37d_get_entry(काष्ठा nv50_head *head,
-			     काष्ठा nv50_crc_notअगरier_ctx *ctx,
-			     क्रमागत nv50_crc_source source, पूर्णांक idx)
-अणु
-	काष्ठा crcc37d_notअगरier __iomem *notअगरier = ctx->mem.object.map.ptr;
-	काष्ठा crcc37d_entry __iomem *entry = &notअगरier->entries[idx];
+static u32 crcc37d_get_entry(struct nv50_head *head,
+			     struct nv50_crc_notifier_ctx *ctx,
+			     enum nv50_crc_source source, int idx)
+{
+	struct crcc37d_notifier __iomem *notifier = ctx->mem.object.map.ptr;
+	struct crcc37d_entry __iomem *entry = &notifier->entries[idx];
 	u32 __iomem *crc_addr;
 
-	अगर (source == NV50_CRC_SOURCE_RG)
+	if (source == NV50_CRC_SOURCE_RG)
 		crc_addr = &entry->rg_crc;
-	अन्यथा
+	else
 		crc_addr = &entry->output_crc[0];
 
-	वापस ioपढ़ो32_native(crc_addr);
-पूर्ण
+	return ioread32_native(crc_addr);
+}
 
-अटल bool crcc37d_ctx_finished(काष्ठा nv50_head *head,
-				 काष्ठा nv50_crc_notअगरier_ctx *ctx)
-अणु
-	काष्ठा nouveau_drm *drm = nouveau_drm(head->base.base.dev);
-	काष्ठा crcc37d_notअगरier __iomem *notअगरier = ctx->mem.object.map.ptr;
-	स्थिर u32 status = ioपढ़ो32_native(&notअगरier->status);
-	स्थिर u32 overflow = status & 0x0000007e;
+static bool crcc37d_ctx_finished(struct nv50_head *head,
+				 struct nv50_crc_notifier_ctx *ctx)
+{
+	struct nouveau_drm *drm = nouveau_drm(head->base.base.dev);
+	struct crcc37d_notifier __iomem *notifier = ctx->mem.object.map.ptr;
+	const u32 status = ioread32_native(&notifier->status);
+	const u32 overflow = status & 0x0000007e;
 
-	अगर (!(status & 0x00000001))
-		वापस false;
+	if (!(status & 0x00000001))
+		return false;
 
-	अगर (overflow) अणु
-		स्थिर अक्षर *engine = शून्य;
+	if (overflow) {
+		const char *engine = NULL;
 
-		चयन (overflow) अणु
-		हाल 0x00000004: engine = "Front End"; अवरोध;
-		हाल 0x00000008: engine = "Compositor"; अवरोध;
-		हाल 0x00000010: engine = "RG"; अवरोध;
-		हाल 0x00000020: engine = "CRC output 1"; अवरोध;
-		हाल 0x00000040: engine = "CRC output 2"; अवरोध;
-		पूर्ण
+		switch (overflow) {
+		case 0x00000004: engine = "Front End"; break;
+		case 0x00000008: engine = "Compositor"; break;
+		case 0x00000010: engine = "RG"; break;
+		case 0x00000020: engine = "CRC output 1"; break;
+		case 0x00000040: engine = "CRC output 2"; break;
+		}
 
-		अगर (engine)
+		if (engine)
 			NV_ERROR(drm,
 				 "CRC notifier context for head %d overflowed on %s: %x\n",
 				 head->base.index, engine, status);
-		अन्यथा
+		else
 			NV_ERROR(drm,
 				 "CRC notifier context for head %d overflowed: %x\n",
 				 head->base.index, status);
-	पूर्ण
+	}
 
 	NV_DEBUG(drm, "Head %d CRC context status: %x\n",
 		 head->base.index, status);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-स्थिर काष्ठा nv50_crc_func crcc37d = अणु
+const struct nv50_crc_func crcc37d = {
 	.set_src = crcc37d_set_src,
 	.set_ctx = crcc37d_set_ctx,
 	.get_entry = crcc37d_get_entry,
 	.ctx_finished = crcc37d_ctx_finished,
 	.flip_threshold = CRCC37D_MAX_ENTRIES - 30,
 	.num_entries = CRCC37D_MAX_ENTRIES,
-	.notअगरier_len = माप(काष्ठा crcc37d_notअगरier),
-पूर्ण;
+	.notifier_len = sizeof(struct crcc37d_notifier),
+};

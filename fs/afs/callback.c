@@ -1,12 +1,11 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2002, 2007 Red Hat, Inc. All rights reserved.
  *
- * This software may be मुक्तly redistributed under the terms of the
+ * This software may be freely redistributed under the terms of the
  * GNU General Public License.
  *
  * You should have received a copy of the GNU General Public License
- * aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * Authors: David Woodhouse <dwmw2@infradead.org>
@@ -14,176 +13,176 @@
  *
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/circ_buf.h>
-#समावेश <linux/sched.h>
-#समावेश "internal.h"
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/circ_buf.h>
+#include <linux/sched.h>
+#include "internal.h"
 
 /*
  * Allow the fileserver to request callback state (re-)initialisation.
- * Unक्रमtunately, UUIDs are not guaranteed unique.
+ * Unfortunately, UUIDs are not guaranteed unique.
  */
-व्योम afs_init_callback_state(काष्ठा afs_server *server)
-अणु
-	rcu_पढ़ो_lock();
-	करो अणु
-		server->cb_s_अवरोध++;
+void afs_init_callback_state(struct afs_server *server)
+{
+	rcu_read_lock();
+	do {
+		server->cb_s_break++;
 		server = rcu_dereference(server->uuid_next);
-	पूर्ण जबतक (0);
-	rcu_पढ़ो_unlock();
-पूर्ण
+	} while (0);
+	rcu_read_unlock();
+}
 
 /*
- * actually अवरोध a callback
+ * actually break a callback
  */
-व्योम __afs_अवरोध_callback(काष्ठा afs_vnode *vnode, क्रमागत afs_cb_अवरोध_reason reason)
-अणु
+void __afs_break_callback(struct afs_vnode *vnode, enum afs_cb_break_reason reason)
+{
 	_enter("");
 
 	clear_bit(AFS_VNODE_NEW_CONTENT, &vnode->flags);
-	अगर (test_and_clear_bit(AFS_VNODE_CB_PROMISED, &vnode->flags)) अणु
-		vnode->cb_अवरोध++;
+	if (test_and_clear_bit(AFS_VNODE_CB_PROMISED, &vnode->flags)) {
+		vnode->cb_break++;
 		afs_clear_permits(vnode);
 
-		अगर (vnode->lock_state == AFS_VNODE_LOCK_WAITING_FOR_CB)
+		if (vnode->lock_state == AFS_VNODE_LOCK_WAITING_FOR_CB)
 			afs_lock_may_be_available(vnode);
 
-		trace_afs_cb_अवरोध(&vnode->fid, vnode->cb_अवरोध, reason, true);
-	पूर्ण अन्यथा अणु
-		trace_afs_cb_अवरोध(&vnode->fid, vnode->cb_अवरोध, reason, false);
-	पूर्ण
-पूर्ण
+		trace_afs_cb_break(&vnode->fid, vnode->cb_break, reason, true);
+	} else {
+		trace_afs_cb_break(&vnode->fid, vnode->cb_break, reason, false);
+	}
+}
 
-व्योम afs_अवरोध_callback(काष्ठा afs_vnode *vnode, क्रमागत afs_cb_अवरोध_reason reason)
-अणु
-	ग_लिखो_seqlock(&vnode->cb_lock);
-	__afs_अवरोध_callback(vnode, reason);
-	ग_लिखो_sequnlock(&vnode->cb_lock);
-पूर्ण
+void afs_break_callback(struct afs_vnode *vnode, enum afs_cb_break_reason reason)
+{
+	write_seqlock(&vnode->cb_lock);
+	__afs_break_callback(vnode, reason);
+	write_sequnlock(&vnode->cb_lock);
+}
 
 /*
  * Look up a volume by volume ID under RCU conditions.
  */
-अटल काष्ठा afs_volume *afs_lookup_volume_rcu(काष्ठा afs_cell *cell,
+static struct afs_volume *afs_lookup_volume_rcu(struct afs_cell *cell,
 						afs_volid_t vid)
-अणु
-	काष्ठा afs_volume *volume = शून्य;
-	काष्ठा rb_node *p;
-	पूर्णांक seq = 0;
+{
+	struct afs_volume *volume = NULL;
+	struct rb_node *p;
+	int seq = 0;
 
-	करो अणु
-		/* Unक्रमtunately, rbtree walking करोesn't give reliable results
-		 * under just the RCU पढ़ो lock, so we have to check क्रम
+	do {
+		/* Unfortunately, rbtree walking doesn't give reliable results
+		 * under just the RCU read lock, so we have to check for
 		 * changes.
 		 */
-		पढ़ो_seqbegin_or_lock(&cell->volume_lock, &seq);
+		read_seqbegin_or_lock(&cell->volume_lock, &seq);
 
 		p = rcu_dereference_raw(cell->volumes.rb_node);
-		जबतक (p) अणु
-			volume = rb_entry(p, काष्ठा afs_volume, cell_node);
+		while (p) {
+			volume = rb_entry(p, struct afs_volume, cell_node);
 
-			अगर (volume->vid < vid)
+			if (volume->vid < vid)
 				p = rcu_dereference_raw(p->rb_left);
-			अन्यथा अगर (volume->vid > vid)
+			else if (volume->vid > vid)
 				p = rcu_dereference_raw(p->rb_right);
-			अन्यथा
-				अवरोध;
-			volume = शून्य;
-		पूर्ण
+			else
+				break;
+			volume = NULL;
+		}
 
-	पूर्ण जबतक (need_seqretry(&cell->volume_lock, seq));
+	} while (need_seqretry(&cell->volume_lock, seq));
 
-	करोne_seqretry(&cell->volume_lock, seq);
-	वापस volume;
-पूर्ण
+	done_seqretry(&cell->volume_lock, seq);
+	return volume;
+}
 
 /*
- * allow the fileserver to explicitly अवरोध one callback
+ * allow the fileserver to explicitly break one callback
  * - happens when
  *   - the backing file is changed
  *   - a lock is released
  */
-अटल व्योम afs_अवरोध_one_callback(काष्ठा afs_volume *volume,
-				   काष्ठा afs_fid *fid)
-अणु
-	काष्ठा super_block *sb;
-	काष्ठा afs_vnode *vnode;
-	काष्ठा inode *inode;
+static void afs_break_one_callback(struct afs_volume *volume,
+				   struct afs_fid *fid)
+{
+	struct super_block *sb;
+	struct afs_vnode *vnode;
+	struct inode *inode;
 
-	अगर (fid->vnode == 0 && fid->unique == 0) अणु
-		/* The callback अवरोध applies to an entire volume. */
-		ग_लिखो_lock(&volume->cb_v_अवरोध_lock);
-		volume->cb_v_अवरोध++;
-		trace_afs_cb_अवरोध(fid, volume->cb_v_अवरोध,
-				   afs_cb_अवरोध_क्रम_volume_callback, false);
-		ग_लिखो_unlock(&volume->cb_v_अवरोध_lock);
-		वापस;
-	पूर्ण
+	if (fid->vnode == 0 && fid->unique == 0) {
+		/* The callback break applies to an entire volume. */
+		write_lock(&volume->cb_v_break_lock);
+		volume->cb_v_break++;
+		trace_afs_cb_break(fid, volume->cb_v_break,
+				   afs_cb_break_for_volume_callback, false);
+		write_unlock(&volume->cb_v_break_lock);
+		return;
+	}
 
-	/* See अगर we can find a matching inode - even an I_NEW inode needs to
-	 * be marked as it can have its callback broken beक्रमe we finish
+	/* See if we can find a matching inode - even an I_NEW inode needs to
+	 * be marked as it can have its callback broken before we finish
 	 * setting up the local inode.
 	 */
 	sb = rcu_dereference(volume->sb);
-	अगर (!sb)
-		वापस;
+	if (!sb)
+		return;
 
 	inode = find_inode_rcu(sb, fid->vnode, afs_ilookup5_test_by_fid, fid);
-	अगर (inode) अणु
+	if (inode) {
 		vnode = AFS_FS_I(inode);
-		afs_अवरोध_callback(vnode, afs_cb_अवरोध_क्रम_callback);
-	पूर्ण अन्यथा अणु
-		trace_afs_cb_miss(fid, afs_cb_अवरोध_क्रम_callback);
-	पूर्ण
-पूर्ण
+		afs_break_callback(vnode, afs_cb_break_for_callback);
+	} else {
+		trace_afs_cb_miss(fid, afs_cb_break_for_callback);
+	}
+}
 
-अटल व्योम afs_अवरोध_some_callbacks(काष्ठा afs_server *server,
-				     काष्ठा afs_callback_अवरोध *cbb,
-				     माप_प्रकार *_count)
-अणु
-	काष्ठा afs_callback_अवरोध *residue = cbb;
-	काष्ठा afs_volume *volume;
+static void afs_break_some_callbacks(struct afs_server *server,
+				     struct afs_callback_break *cbb,
+				     size_t *_count)
+{
+	struct afs_callback_break *residue = cbb;
+	struct afs_volume *volume;
 	afs_volid_t vid = cbb->fid.vid;
-	माप_प्रकार i;
+	size_t i;
 
 	volume = afs_lookup_volume_rcu(server->cell, vid);
 
-	/* TODO: Find all matching volumes अगर we couldn't match the server and
-	 * अवरोध them anyway.
+	/* TODO: Find all matching volumes if we couldn't match the server and
+	 * break them anyway.
 	 */
 
-	क्रम (i = *_count; i > 0; cbb++, i--) अणु
-		अगर (cbb->fid.vid == vid) अणु
+	for (i = *_count; i > 0; cbb++, i--) {
+		if (cbb->fid.vid == vid) {
 			_debug("- Fid { vl=%08llx n=%llu u=%u }",
 			       cbb->fid.vid,
 			       cbb->fid.vnode,
 			       cbb->fid.unique);
 			--*_count;
-			अगर (volume)
-				afs_अवरोध_one_callback(volume, &cbb->fid);
-		पूर्ण अन्यथा अणु
+			if (volume)
+				afs_break_one_callback(volume, &cbb->fid);
+		} else {
 			*residue++ = *cbb;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*
- * allow the fileserver to अवरोध callback promises
+ * allow the fileserver to break callback promises
  */
-व्योम afs_अवरोध_callbacks(काष्ठा afs_server *server, माप_प्रकार count,
-			 काष्ठा afs_callback_अवरोध *callbacks)
-अणु
+void afs_break_callbacks(struct afs_server *server, size_t count,
+			 struct afs_callback_break *callbacks)
+{
 	_enter("%p,%zu,", server, count);
 
-	ASSERT(server != शून्य);
+	ASSERT(server != NULL);
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
-	जबतक (count > 0)
-		afs_अवरोध_some_callbacks(server, callbacks, &count);
+	while (count > 0)
+		afs_break_some_callbacks(server, callbacks, &count);
 
-	rcu_पढ़ो_unlock();
-	वापस;
-पूर्ण
+	rcu_read_unlock();
+	return;
+}

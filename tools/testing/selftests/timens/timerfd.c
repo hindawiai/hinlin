@@ -1,134 +1,133 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#घोषणा _GNU_SOURCE
-#समावेश <sched.h>
+// SPDX-License-Identifier: GPL-2.0
+#define _GNU_SOURCE
+#include <sched.h>
 
-#समावेश <sys/समयrfd.h>
-#समावेश <sys/syscall.h>
-#समावेश <sys/types.h>
-#समावेश <sys/रुको.h>
-#समावेश <समय.स>
-#समावेश <unistd.h>
-#समावेश <मानककोष.स>
-#समावेश <मानकपन.स>
-#समावेश <मानक_निवेशt.h>
+#include <sys/timerfd.h>
+#include <sys/syscall.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <time.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdint.h>
 
-#समावेश "log.h"
-#समावेश "timens.h"
+#include "log.h"
+#include "timens.h"
 
-अटल पूर्णांक tघड़ी_समय_लो(घड़ी_प्रकार घड़ीid, काष्ठा बारpec *now)
-अणु
-	अगर (घड़ीid == CLOCK_BOOTTIME_ALARM)
-		घड़ीid = CLOCK_BOOTTIME;
-	वापस घड़ी_समय_लो(घड़ीid, now);
-पूर्ण
+static int tclock_gettime(clock_t clockid, struct timespec *now)
+{
+	if (clockid == CLOCK_BOOTTIME_ALARM)
+		clockid = CLOCK_BOOTTIME;
+	return clock_gettime(clockid, now);
+}
 
-पूर्णांक run_test(पूर्णांक घड़ीid, काष्ठा बारpec now)
-अणु
-	काष्ठा iसमयrspec new_value;
-	दीर्घ दीर्घ elapsed;
-	पूर्णांक fd, i;
+int run_test(int clockid, struct timespec now)
+{
+	struct itimerspec new_value;
+	long long elapsed;
+	int fd, i;
 
-	अगर (check_skip(घड़ीid))
-		वापस 0;
+	if (check_skip(clockid))
+		return 0;
 
-	अगर (tघड़ी_समय_लो(घड़ीid, &now))
-		वापस pr_लिखो_त्रुटि("clock_gettime(%d)", घड़ीid);
+	if (tclock_gettime(clockid, &now))
+		return pr_perror("clock_gettime(%d)", clockid);
 
-	क्रम (i = 0; i < 2; i++) अणु
-		पूर्णांक flags = 0;
+	for (i = 0; i < 2; i++) {
+		int flags = 0;
 
 		new_value.it_value.tv_sec = 3600;
 		new_value.it_value.tv_nsec = 0;
-		new_value.it_पूर्णांकerval.tv_sec = 1;
-		new_value.it_पूर्णांकerval.tv_nsec = 0;
+		new_value.it_interval.tv_sec = 1;
+		new_value.it_interval.tv_nsec = 0;
 
-		अगर (i == 1) अणु
+		if (i == 1) {
 			new_value.it_value.tv_sec += now.tv_sec;
 			new_value.it_value.tv_nsec += now.tv_nsec;
-		पूर्ण
+		}
 
-		fd = समयrfd_create(घड़ीid, 0);
-		अगर (fd == -1)
-			वापस pr_लिखो_त्रुटि("timerfd_create(%d)", घड़ीid);
+		fd = timerfd_create(clockid, 0);
+		if (fd == -1)
+			return pr_perror("timerfd_create(%d)", clockid);
 
-		अगर (i == 1)
+		if (i == 1)
 			flags |= TFD_TIMER_ABSTIME;
 
-		अगर (समयrfd_समय_रखो(fd, flags, &new_value, शून्य))
-			वापस pr_लिखो_त्रुटि("timerfd_settime(%d)", घड़ीid);
+		if (timerfd_settime(fd, flags, &new_value, NULL))
+			return pr_perror("timerfd_settime(%d)", clockid);
 
-		अगर (समयrfd_समय_लो(fd, &new_value))
-			वापस pr_लिखो_त्रुटि("timerfd_gettime(%d)", घड़ीid);
+		if (timerfd_gettime(fd, &new_value))
+			return pr_perror("timerfd_gettime(%d)", clockid);
 
 		elapsed = new_value.it_value.tv_sec;
-		अगर (असल(elapsed - 3600) > 60) अणु
+		if (abs(elapsed - 3600) > 60) {
 			ksft_test_result_fail("clockid: %d elapsed: %lld\n",
-					      घड़ीid, elapsed);
-			वापस 1;
-		पूर्ण
+					      clockid, elapsed);
+			return 1;
+		}
 
-		बंद(fd);
-	पूर्ण
+		close(fd);
+	}
 
-	ksft_test_result_pass("clockid=%d\n", घड़ीid);
+	ksft_test_result_pass("clockid=%d\n", clockid);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
-	पूर्णांक ret, status, len, fd;
-	अक्षर buf[4096];
+int main(int argc, char *argv[])
+{
+	int ret, status, len, fd;
+	char buf[4096];
 	pid_t pid;
-	काष्ठा बारpec bसमय_now, mसमय_now;
+	struct timespec btime_now, mtime_now;
 
 	nscheck();
 
-	check_supported_समयrs();
+	check_supported_timers();
 
 	ksft_set_plan(3);
 
-	घड़ी_समय_लो(CLOCK_MONOTONIC, &mसमय_now);
-	घड़ी_समय_लो(CLOCK_BOOTTIME, &bसमय_now);
+	clock_gettime(CLOCK_MONOTONIC, &mtime_now);
+	clock_gettime(CLOCK_BOOTTIME, &btime_now);
 
-	अगर (unshare_समयns())
-		वापस 1;
+	if (unshare_timens())
+		return 1;
 
-	len = snम_लिखो(buf, माप(buf), "%d %d 0\n%d %d 0",
+	len = snprintf(buf, sizeof(buf), "%d %d 0\n%d %d 0",
 			CLOCK_MONOTONIC, 70 * 24 * 3600,
 			CLOCK_BOOTTIME, 9 * 24 * 3600);
-	fd = खोलो("/proc/self/timens_offsets", O_WRONLY);
-	अगर (fd < 0)
-		वापस pr_लिखो_त्रुटि("/proc/self/timens_offsets");
+	fd = open("/proc/self/timens_offsets", O_WRONLY);
+	if (fd < 0)
+		return pr_perror("/proc/self/timens_offsets");
 
-	अगर (ग_लिखो(fd, buf, len) != len)
-		वापस pr_लिखो_त्रुटि("/proc/self/timens_offsets");
+	if (write(fd, buf, len) != len)
+		return pr_perror("/proc/self/timens_offsets");
 
-	बंद(fd);
-	mसमय_now.tv_sec += 70 * 24 * 3600;
-	bसमय_now.tv_sec += 9 * 24 * 3600;
+	close(fd);
+	mtime_now.tv_sec += 70 * 24 * 3600;
+	btime_now.tv_sec += 9 * 24 * 3600;
 
-	pid = विभाजन();
-	अगर (pid < 0)
-		वापस pr_लिखो_त्रुटि("Unable to fork");
-	अगर (pid == 0) अणु
+	pid = fork();
+	if (pid < 0)
+		return pr_perror("Unable to fork");
+	if (pid == 0) {
 		ret = 0;
-		ret |= run_test(CLOCK_BOOTTIME, bसमय_now);
-		ret |= run_test(CLOCK_MONOTONIC, mसमय_now);
-		ret |= run_test(CLOCK_BOOTTIME_ALARM, bसमय_now);
+		ret |= run_test(CLOCK_BOOTTIME, btime_now);
+		ret |= run_test(CLOCK_MONOTONIC, mtime_now);
+		ret |= run_test(CLOCK_BOOTTIME_ALARM, btime_now);
 
-		अगर (ret)
-			ksft_निकास_fail();
-		ksft_निकास_pass();
-		वापस ret;
-	पूर्ण
+		if (ret)
+			ksft_exit_fail();
+		ksft_exit_pass();
+		return ret;
+	}
 
-	अगर (रुकोpid(pid, &status, 0) != pid)
-		वापस pr_लिखो_त्रुटि("Unable to wait the child process");
+	if (waitpid(pid, &status, 0) != pid)
+		return pr_perror("Unable to wait the child process");
 
-	अगर (WIFEXITED(status))
-		वापस WEXITSTATUS(status);
+	if (WIFEXITED(status))
+		return WEXITSTATUS(status);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}

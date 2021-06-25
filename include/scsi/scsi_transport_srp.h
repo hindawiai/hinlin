@@ -1,146 +1,145 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित SCSI_TRANSPORT_SRP_H
-#घोषणा SCSI_TRANSPORT_SRP_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef SCSI_TRANSPORT_SRP_H
+#define SCSI_TRANSPORT_SRP_H
 
-#समावेश <linux/transport_class.h>
-#समावेश <linux/types.h>
-#समावेश <linux/mutex.h>
+#include <linux/transport_class.h>
+#include <linux/types.h>
+#include <linux/mutex.h>
 
-#घोषणा SRP_RPORT_ROLE_INITIATOR 0
-#घोषणा SRP_RPORT_ROLE_TARGET 1
+#define SRP_RPORT_ROLE_INITIATOR 0
+#define SRP_RPORT_ROLE_TARGET 1
 
-काष्ठा srp_rport_identअगरiers अणु
+struct srp_rport_identifiers {
 	u8 port_id[16];
 	u8 roles;
-पूर्ण;
+};
 
 /**
- * क्रमागत srp_rport_state - SRP transport layer state
+ * enum srp_rport_state - SRP transport layer state
  * @SRP_RPORT_RUNNING:   Transport layer operational.
- * @SRP_RPORT_BLOCKED:   Transport layer not operational; fast I/O fail समयr
+ * @SRP_RPORT_BLOCKED:   Transport layer not operational; fast I/O fail timer
  *                       is running and I/O has been blocked.
- * @SRP_RPORT_FAIL_FAST: Fast I/O fail समयr has expired; fail I/O fast.
- * @SRP_RPORT_LOST:      Port is being हटाओd.
+ * @SRP_RPORT_FAIL_FAST: Fast I/O fail timer has expired; fail I/O fast.
+ * @SRP_RPORT_LOST:      Port is being removed.
  */
-क्रमागत srp_rport_state अणु
+enum srp_rport_state {
 	SRP_RPORT_RUNNING,
 	SRP_RPORT_BLOCKED,
 	SRP_RPORT_FAIL_FAST,
 	SRP_RPORT_LOST,
-पूर्ण;
+};
 
 /**
- * काष्ठा srp_rport - SRP initiator or target port
+ * struct srp_rport - SRP initiator or target port
  *
- * Fields that are relevant क्रम SRP initiator and SRP target drivers:
+ * Fields that are relevant for SRP initiator and SRP target drivers:
  * @dev:               Device associated with this rport.
- * @port_id:           16-byte port identअगरier.
+ * @port_id:           16-byte port identifier.
  * @roles:             Role of this port - initiator or target.
  *
- * Fields that are only relevant क्रम SRP initiator drivers:
- * @lld_data:          LLD निजी data.
+ * Fields that are only relevant for SRP initiator drivers:
+ * @lld_data:          LLD private data.
  * @mutex:             Protects against concurrent rport reconnect /
- *                     fast_io_fail / dev_loss_पंचांगo activity.
+ *                     fast_io_fail / dev_loss_tmo activity.
  * @state:             rport state.
  * @reconnect_delay:   Reconnect delay in seconds.
  * @failed_reconnects: Number of failed reconnect attempts.
- * @reconnect_work:    Work काष्ठाure used क्रम scheduling reconnect attempts.
- * @fast_io_fail_पंचांगo:  Fast I/O fail समयout in seconds.
- * @dev_loss_पंचांगo:      Device loss समयout in seconds.
- * @fast_io_fail_work: Work काष्ठाure used क्रम scheduling fast I/O fail work.
- * @dev_loss_work:     Work काष्ठाure used क्रम scheduling device loss work.
+ * @reconnect_work:    Work structure used for scheduling reconnect attempts.
+ * @fast_io_fail_tmo:  Fast I/O fail timeout in seconds.
+ * @dev_loss_tmo:      Device loss timeout in seconds.
+ * @fast_io_fail_work: Work structure used for scheduling fast I/O fail work.
+ * @dev_loss_work:     Work structure used for scheduling device loss work.
  */
-काष्ठा srp_rport अणु
-	/* क्रम initiator and target drivers */
+struct srp_rport {
+	/* for initiator and target drivers */
 
-	काष्ठा device dev;
+	struct device dev;
 
 	u8 port_id[16];
 	u8 roles;
 
-	/* क्रम initiator drivers */
+	/* for initiator drivers */
 
-	व्योम			*lld_data;
+	void			*lld_data;
 
-	काष्ठा mutex		mutex;
-	क्रमागत srp_rport_state	state;
-	पूर्णांक			reconnect_delay;
-	पूर्णांक			failed_reconnects;
-	काष्ठा delayed_work	reconnect_work;
-	पूर्णांक			fast_io_fail_पंचांगo;
-	पूर्णांक			dev_loss_पंचांगo;
-	काष्ठा delayed_work	fast_io_fail_work;
-	काष्ठा delayed_work	dev_loss_work;
-पूर्ण;
+	struct mutex		mutex;
+	enum srp_rport_state	state;
+	int			reconnect_delay;
+	int			failed_reconnects;
+	struct delayed_work	reconnect_work;
+	int			fast_io_fail_tmo;
+	int			dev_loss_tmo;
+	struct delayed_work	fast_io_fail_work;
+	struct delayed_work	dev_loss_work;
+};
 
 /**
- * काष्ठा srp_function_ढाँचा
+ * struct srp_function_template
  *
- * Fields that are only relevant क्रम SRP initiator drivers:
- * @has_rport_state: Whether or not to create the state, fast_io_fail_पंचांगo and
- *     dev_loss_पंचांगo sysfs attribute क्रम an rport.
- * @reset_समयr_अगर_blocked: Whether or srp_समयd_out() should reset the command
- *     समयr अगर the device on which it has been queued is blocked.
- * @reconnect_delay: If not शून्य, poपूर्णांकs to the शेष reconnect_delay value.
- * @fast_io_fail_पंचांगo: If not शून्य, poपूर्णांकs to the शेष fast_io_fail_पंचांगo value.
- * @dev_loss_पंचांगo: If not शून्य, poपूर्णांकs to the शेष dev_loss_पंचांगo value.
- * @reconnect: Callback function क्रम reconnecting to the target. See also
+ * Fields that are only relevant for SRP initiator drivers:
+ * @has_rport_state: Whether or not to create the state, fast_io_fail_tmo and
+ *     dev_loss_tmo sysfs attribute for an rport.
+ * @reset_timer_if_blocked: Whether or srp_timed_out() should reset the command
+ *     timer if the device on which it has been queued is blocked.
+ * @reconnect_delay: If not NULL, points to the default reconnect_delay value.
+ * @fast_io_fail_tmo: If not NULL, points to the default fast_io_fail_tmo value.
+ * @dev_loss_tmo: If not NULL, points to the default dev_loss_tmo value.
+ * @reconnect: Callback function for reconnecting to the target. See also
  *     srp_reconnect_rport().
- * @terminate_rport_io: Callback function क्रम terminating all outstanding I/O
- *     requests क्रम an rport.
+ * @terminate_rport_io: Callback function for terminating all outstanding I/O
+ *     requests for an rport.
  * @rport_delete: Callback function that deletes an rport.
  */
-काष्ठा srp_function_ढाँचा अणु
-	/* क्रम initiator drivers */
+struct srp_function_template {
+	/* for initiator drivers */
 	bool has_rport_state;
-	bool reset_समयr_अगर_blocked;
-	पूर्णांक *reconnect_delay;
-	पूर्णांक *fast_io_fail_पंचांगo;
-	पूर्णांक *dev_loss_पंचांगo;
-	पूर्णांक (*reconnect)(काष्ठा srp_rport *rport);
-	व्योम (*terminate_rport_io)(काष्ठा srp_rport *rport);
-	व्योम (*rport_delete)(काष्ठा srp_rport *rport);
-पूर्ण;
+	bool reset_timer_if_blocked;
+	int *reconnect_delay;
+	int *fast_io_fail_tmo;
+	int *dev_loss_tmo;
+	int (*reconnect)(struct srp_rport *rport);
+	void (*terminate_rport_io)(struct srp_rport *rport);
+	void (*rport_delete)(struct srp_rport *rport);
+};
 
-बाह्य काष्ठा scsi_transport_ढाँचा *
-srp_attach_transport(काष्ठा srp_function_ढाँचा *);
-बाह्य व्योम srp_release_transport(काष्ठा scsi_transport_ढाँचा *);
+extern struct scsi_transport_template *
+srp_attach_transport(struct srp_function_template *);
+extern void srp_release_transport(struct scsi_transport_template *);
 
-बाह्य व्योम srp_rport_get(काष्ठा srp_rport *rport);
-बाह्य व्योम srp_rport_put(काष्ठा srp_rport *rport);
-बाह्य काष्ठा srp_rport *srp_rport_add(काष्ठा Scsi_Host *,
-				       काष्ठा srp_rport_identअगरiers *);
-बाह्य व्योम srp_rport_del(काष्ठा srp_rport *);
-बाह्य पूर्णांक srp_पंचांगo_valid(पूर्णांक reconnect_delay, पूर्णांक fast_io_fail_पंचांगo,
-			 दीर्घ dev_loss_पंचांगo);
-पूर्णांक srp_parse_पंचांगo(पूर्णांक *पंचांगo, स्थिर अक्षर *buf);
-बाह्य पूर्णांक srp_reconnect_rport(काष्ठा srp_rport *rport);
-बाह्य व्योम srp_start_tl_fail_समयrs(काष्ठा srp_rport *rport);
-बाह्य व्योम srp_हटाओ_host(काष्ठा Scsi_Host *);
-बाह्य व्योम srp_stop_rport_समयrs(काष्ठा srp_rport *rport);
-क्रमागत blk_eh_समयr_वापस srp_समयd_out(काष्ठा scsi_cmnd *scmd);
+extern void srp_rport_get(struct srp_rport *rport);
+extern void srp_rport_put(struct srp_rport *rport);
+extern struct srp_rport *srp_rport_add(struct Scsi_Host *,
+				       struct srp_rport_identifiers *);
+extern void srp_rport_del(struct srp_rport *);
+extern int srp_tmo_valid(int reconnect_delay, int fast_io_fail_tmo,
+			 long dev_loss_tmo);
+int srp_parse_tmo(int *tmo, const char *buf);
+extern int srp_reconnect_rport(struct srp_rport *rport);
+extern void srp_start_tl_fail_timers(struct srp_rport *rport);
+extern void srp_remove_host(struct Scsi_Host *);
+extern void srp_stop_rport_timers(struct srp_rport *rport);
+enum blk_eh_timer_return srp_timed_out(struct scsi_cmnd *scmd);
 
 /**
- * srp_chkपढ़ोy() - evaluate the transport layer state beक्रमe I/O
- * @rport: SRP target port poपूर्णांकer.
+ * srp_chkready() - evaluate the transport layer state before I/O
+ * @rport: SRP target port pointer.
  *
- * Returns a SCSI result code that can be वापसed by the LLD queuecommand()
+ * Returns a SCSI result code that can be returned by the LLD queuecommand()
  * implementation. The role of this function is similar to that of
- * fc_remote_port_chkपढ़ोy().
+ * fc_remote_port_chkready().
  */
-अटल अंतरभूत पूर्णांक srp_chkपढ़ोy(काष्ठा srp_rport *rport)
-अणु
-	चयन (rport->state) अणु
-	हाल SRP_RPORT_RUNNING:
-	हाल SRP_RPORT_BLOCKED:
-	शेष:
-		वापस 0;
-	हाल SRP_RPORT_FAIL_FAST:
-		वापस DID_TRANSPORT_FAILFAST << 16;
-	हाल SRP_RPORT_LOST:
-		वापस DID_NO_CONNECT << 16;
-	पूर्ण
-पूर्ण
+static inline int srp_chkready(struct srp_rport *rport)
+{
+	switch (rport->state) {
+	case SRP_RPORT_RUNNING:
+	case SRP_RPORT_BLOCKED:
+	default:
+		return 0;
+	case SRP_RPORT_FAIL_FAST:
+		return DID_TRANSPORT_FAILFAST << 16;
+	case SRP_RPORT_LOST:
+		return DID_NO_CONNECT << 16;
+	}
+}
 
-#पूर्ण_अगर
+#endif

@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,25 +20,25 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#अगर_अघोषित PP_THERMAL_H
-#घोषणा PP_THERMAL_H
+#ifndef PP_THERMAL_H
+#define PP_THERMAL_H
 
-#समावेश "power_state.h"
+#include "power_state.h"
 
-अटल स्थिर काष्ठा PP_TemperatureRange __maybe_unused SMU7ThermalWithDelayPolicy[] =
-अणु
-	अणु-273150,  99000, 99000, -273150, 99000, 99000, -273150, 99000, 99000पूर्ण,
-	अणु 120000, 120000, 120000, 120000, 120000, 120000, 120000, 120000, 120000पूर्ण,
-पूर्ण;
+static const struct PP_TemperatureRange __maybe_unused SMU7ThermalWithDelayPolicy[] =
+{
+	{-273150,  99000, 99000, -273150, 99000, 99000, -273150, 99000, 99000},
+	{ 120000, 120000, 120000, 120000, 120000, 120000, 120000, 120000, 120000},
+};
 
-अटल स्थिर काष्ठा PP_TemperatureRange __maybe_unused SMU7ThermalPolicy[] =
-अणु
-	अणु-273150,  99000, 99000, -273150, 99000, 99000, -273150, 99000, 99000पूर्ण,
-	अणु 120000, 120000, 120000, 120000, 120000, 120000, 120000, 120000, 120000पूर्ण,
-पूर्ण;
+static const struct PP_TemperatureRange __maybe_unused SMU7ThermalPolicy[] =
+{
+	{-273150,  99000, 99000, -273150, 99000, 99000, -273150, 99000, 99000},
+	{ 120000, 120000, 120000, 120000, 120000, 120000, 120000, 120000, 120000},
+};
 
-#घोषणा CTF_OFFSET_EDGE			5
-#घोषणा CTF_OFFSET_HOTSPOT		5
-#घोषणा CTF_OFFSET_HBM			5
+#define CTF_OFFSET_EDGE			5
+#define CTF_OFFSET_HOTSPOT		5
+#define CTF_OFFSET_HBM			5
 
-#पूर्ण_अगर
+#endif

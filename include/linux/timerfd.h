@@ -1,21 +1,20 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- *  include/linux/समयrfd.h
+ *  include/linux/timerfd.h
  *
  *  Copyright (C) 2007  Davide Libenzi <davidel@xmailserver.org>
  *
  */
 
-#अगर_अघोषित _LINUX_TIMERFD_H
-#घोषणा _LINUX_TIMERFD_H
+#ifndef _LINUX_TIMERFD_H
+#define _LINUX_TIMERFD_H
 
-#समावेश <uapi/linux/समयrfd.h>
+#include <uapi/linux/timerfd.h>
 
-#घोषणा TFD_SHARED_FCNTL_FLAGS (TFD_CLOEXEC | TFD_NONBLOCK)
-/* Flags क्रम समयrfd_create.  */
-#घोषणा TFD_CREATE_FLAGS TFD_SHARED_FCNTL_FLAGS
-/* Flags क्रम समयrfd_समय_रखो.  */
-#घोषणा TFD_SETTIME_FLAGS (TFD_TIMER_ABSTIME | TFD_TIMER_CANCEL_ON_SET)
+#define TFD_SHARED_FCNTL_FLAGS (TFD_CLOEXEC | TFD_NONBLOCK)
+/* Flags for timerfd_create.  */
+#define TFD_CREATE_FLAGS TFD_SHARED_FCNTL_FLAGS
+/* Flags for timerfd_settime.  */
+#define TFD_SETTIME_FLAGS (TFD_TIMER_ABSTIME | TFD_TIMER_CANCEL_ON_SET)
 
-#पूर्ण_अगर /* _LINUX_TIMERFD_H */
+#endif /* _LINUX_TIMERFD_H */

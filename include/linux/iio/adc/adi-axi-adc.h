@@ -1,65 +1,64 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Analog Devices Generic AXI ADC IP core driver/library
- * Link: https://wiki.analog.com/resources/fpga/करोcs/axi_adc_ip
+ * Link: https://wiki.analog.com/resources/fpga/docs/axi_adc_ip
  *
  * Copyright 2012-2020 Analog Devices Inc.
  */
-#अगर_अघोषित __ADI_AXI_ADC_H__
-#घोषणा __ADI_AXI_ADC_H__
+#ifndef __ADI_AXI_ADC_H__
+#define __ADI_AXI_ADC_H__
 
-काष्ठा device;
-काष्ठा iio_chan_spec;
+struct device;
+struct iio_chan_spec;
 
 /**
- * काष्ठा adi_axi_adc_chip_info - Chip specअगरic inक्रमmation
+ * struct adi_axi_adc_chip_info - Chip specific information
  * @name		Chip name
  * @id			Chip ID (usually product ID)
- * @channels		Channel specअगरications of type @काष्ठा iio_chan_spec
+ * @channels		Channel specifications of type @struct iio_chan_spec
  * @num_channels	Number of @channels
- * @scale_table		Supported scales by the chip; tuples of 2 पूर्णांकs
+ * @scale_table		Supported scales by the chip; tuples of 2 ints
  * @num_scales		Number of scales in the table
  * @max_rate		Maximum sampling rate supported by the device
  */
-काष्ठा adi_axi_adc_chip_info अणु
-	स्थिर अक्षर			*name;
-	अचिन्हित पूर्णांक			id;
+struct adi_axi_adc_chip_info {
+	const char			*name;
+	unsigned int			id;
 
-	स्थिर काष्ठा iio_chan_spec	*channels;
-	अचिन्हित पूर्णांक			num_channels;
+	const struct iio_chan_spec	*channels;
+	unsigned int			num_channels;
 
-	स्थिर अचिन्हित पूर्णांक		(*scale_table)[2];
-	पूर्णांक				num_scales;
+	const unsigned int		(*scale_table)[2];
+	int				num_scales;
 
-	अचिन्हित दीर्घ			max_rate;
-पूर्ण;
+	unsigned long			max_rate;
+};
 
 /**
- * काष्ठा adi_axi_adc_conv - data of the ADC attached to the AXI ADC
- * @chip_info		chip info details क्रम the client ADC
- * @preenable_setup	op to run in the client beक्रमe enabling the AXI ADC
- * @reg_access		IIO debugfs_reg_access hook क्रम the client ADC
- * @पढ़ो_raw		IIO पढ़ो_raw hook क्रम the client ADC
- * @ग_लिखो_raw		IIO ग_लिखो_raw hook क्रम the client ADC
+ * struct adi_axi_adc_conv - data of the ADC attached to the AXI ADC
+ * @chip_info		chip info details for the client ADC
+ * @preenable_setup	op to run in the client before enabling the AXI ADC
+ * @reg_access		IIO debugfs_reg_access hook for the client ADC
+ * @read_raw		IIO read_raw hook for the client ADC
+ * @write_raw		IIO write_raw hook for the client ADC
  */
-काष्ठा adi_axi_adc_conv अणु
-	स्थिर काष्ठा adi_axi_adc_chip_info		*chip_info;
+struct adi_axi_adc_conv {
+	const struct adi_axi_adc_chip_info		*chip_info;
 
-	पूर्णांक (*preenable_setup)(काष्ठा adi_axi_adc_conv *conv);
-	पूर्णांक (*reg_access)(काष्ठा adi_axi_adc_conv *conv, अचिन्हित पूर्णांक reg,
-			  अचिन्हित पूर्णांक ग_लिखोval, अचिन्हित पूर्णांक *पढ़ोval);
-	पूर्णांक (*पढ़ो_raw)(काष्ठा adi_axi_adc_conv *conv,
-			काष्ठा iio_chan_spec स्थिर *chan,
-			पूर्णांक *val, पूर्णांक *val2, दीर्घ mask);
-	पूर्णांक (*ग_लिखो_raw)(काष्ठा adi_axi_adc_conv *conv,
-			 काष्ठा iio_chan_spec स्थिर *chan,
-			 पूर्णांक val, पूर्णांक val2, दीर्घ mask);
-पूर्ण;
+	int (*preenable_setup)(struct adi_axi_adc_conv *conv);
+	int (*reg_access)(struct adi_axi_adc_conv *conv, unsigned int reg,
+			  unsigned int writeval, unsigned int *readval);
+	int (*read_raw)(struct adi_axi_adc_conv *conv,
+			struct iio_chan_spec const *chan,
+			int *val, int *val2, long mask);
+	int (*write_raw)(struct adi_axi_adc_conv *conv,
+			 struct iio_chan_spec const *chan,
+			 int val, int val2, long mask);
+};
 
-काष्ठा adi_axi_adc_conv *devm_adi_axi_adc_conv_रेजिस्टर(काष्ठा device *dev,
-							माप_प्रकार माप_priv);
+struct adi_axi_adc_conv *devm_adi_axi_adc_conv_register(struct device *dev,
+							size_t sizeof_priv);
 
-व्योम *adi_axi_adc_conv_priv(काष्ठा adi_axi_adc_conv *conv);
+void *adi_axi_adc_conv_priv(struct adi_axi_adc_conv *conv);
 
-#पूर्ण_अगर
+#endif

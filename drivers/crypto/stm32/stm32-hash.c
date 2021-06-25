@@ -1,316 +1,315 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * This file is part of STM32 Crypto driver क्रम Linux.
+ * This file is part of STM32 Crypto driver for Linux.
  *
  * Copyright (C) 2017, STMicroelectronics - All Rights Reserved
- * Author(s): Lionel DEBIEVE <lionel.debieve@st.com> क्रम STMicroelectronics.
+ * Author(s): Lionel DEBIEVE <lionel.debieve@st.com> for STMicroelectronics.
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/crypto.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/iopoll.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/reset.h>
+#include <linux/clk.h>
+#include <linux/crypto.h>
+#include <linux/delay.h>
+#include <linux/dma-mapping.h>
+#include <linux/dmaengine.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/iopoll.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
+#include <linux/reset.h>
 
-#समावेश <crypto/engine.h>
-#समावेश <crypto/hash.h>
-#समावेश <crypto/md5.h>
-#समावेश <crypto/scatterwalk.h>
-#समावेश <crypto/sha1.h>
-#समावेश <crypto/sha2.h>
-#समावेश <crypto/पूर्णांकernal/hash.h>
+#include <crypto/engine.h>
+#include <crypto/hash.h>
+#include <crypto/md5.h>
+#include <crypto/scatterwalk.h>
+#include <crypto/sha1.h>
+#include <crypto/sha2.h>
+#include <crypto/internal/hash.h>
 
-#घोषणा HASH_CR				0x00
-#घोषणा HASH_DIN			0x04
-#घोषणा HASH_STR			0x08
-#घोषणा HASH_IMR			0x20
-#घोषणा HASH_SR				0x24
-#घोषणा HASH_CSR(x)			(0x0F8 + ((x) * 0x04))
-#घोषणा HASH_HREG(x)			(0x310 + ((x) * 0x04))
-#घोषणा HASH_HWCFGR			0x3F0
-#घोषणा HASH_VER			0x3F4
-#घोषणा HASH_ID				0x3F8
+#define HASH_CR				0x00
+#define HASH_DIN			0x04
+#define HASH_STR			0x08
+#define HASH_IMR			0x20
+#define HASH_SR				0x24
+#define HASH_CSR(x)			(0x0F8 + ((x) * 0x04))
+#define HASH_HREG(x)			(0x310 + ((x) * 0x04))
+#define HASH_HWCFGR			0x3F0
+#define HASH_VER			0x3F4
+#define HASH_ID				0x3F8
 
 /* Control Register */
-#घोषणा HASH_CR_INIT			BIT(2)
-#घोषणा HASH_CR_DMAE			BIT(3)
-#घोषणा HASH_CR_DATATYPE_POS		4
-#घोषणा HASH_CR_MODE			BIT(6)
-#घोषणा HASH_CR_MDMAT			BIT(13)
-#घोषणा HASH_CR_DMAA			BIT(14)
-#घोषणा HASH_CR_LKEY			BIT(16)
+#define HASH_CR_INIT			BIT(2)
+#define HASH_CR_DMAE			BIT(3)
+#define HASH_CR_DATATYPE_POS		4
+#define HASH_CR_MODE			BIT(6)
+#define HASH_CR_MDMAT			BIT(13)
+#define HASH_CR_DMAA			BIT(14)
+#define HASH_CR_LKEY			BIT(16)
 
-#घोषणा HASH_CR_ALGO_SHA1		0x0
-#घोषणा HASH_CR_ALGO_MD5		0x80
-#घोषणा HASH_CR_ALGO_SHA224		0x40000
-#घोषणा HASH_CR_ALGO_SHA256		0x40080
+#define HASH_CR_ALGO_SHA1		0x0
+#define HASH_CR_ALGO_MD5		0x80
+#define HASH_CR_ALGO_SHA224		0x40000
+#define HASH_CR_ALGO_SHA256		0x40080
 
 /* Interrupt */
-#घोषणा HASH_DINIE			BIT(0)
-#घोषणा HASH_DCIE			BIT(1)
+#define HASH_DINIE			BIT(0)
+#define HASH_DCIE			BIT(1)
 
 /* Interrupt Mask */
-#घोषणा HASH_MASK_CALC_COMPLETION	BIT(0)
-#घोषणा HASH_MASK_DATA_INPUT		BIT(1)
+#define HASH_MASK_CALC_COMPLETION	BIT(0)
+#define HASH_MASK_DATA_INPUT		BIT(1)
 
-/* Context swap रेजिस्टर */
-#घोषणा HASH_CSR_REGISTER_NUMBER	53
+/* Context swap register */
+#define HASH_CSR_REGISTER_NUMBER	53
 
 /* Status Flags */
-#घोषणा HASH_SR_DATA_INPUT_READY	BIT(0)
-#घोषणा HASH_SR_OUTPUT_READY		BIT(1)
-#घोषणा HASH_SR_DMA_ACTIVE		BIT(2)
-#घोषणा HASH_SR_BUSY			BIT(3)
+#define HASH_SR_DATA_INPUT_READY	BIT(0)
+#define HASH_SR_OUTPUT_READY		BIT(1)
+#define HASH_SR_DMA_ACTIVE		BIT(2)
+#define HASH_SR_BUSY			BIT(3)
 
 /* STR Register */
-#घोषणा HASH_STR_NBLW_MASK		GENMASK(4, 0)
-#घोषणा HASH_STR_DCAL			BIT(8)
+#define HASH_STR_NBLW_MASK		GENMASK(4, 0)
+#define HASH_STR_DCAL			BIT(8)
 
-#घोषणा HASH_FLAGS_INIT			BIT(0)
-#घोषणा HASH_FLAGS_OUTPUT_READY		BIT(1)
-#घोषणा HASH_FLAGS_CPU			BIT(2)
-#घोषणा HASH_FLAGS_DMA_READY		BIT(3)
-#घोषणा HASH_FLAGS_DMA_ACTIVE		BIT(4)
-#घोषणा HASH_FLAGS_HMAC_INIT		BIT(5)
-#घोषणा HASH_FLAGS_HMAC_FINAL		BIT(6)
-#घोषणा HASH_FLAGS_HMAC_KEY		BIT(7)
+#define HASH_FLAGS_INIT			BIT(0)
+#define HASH_FLAGS_OUTPUT_READY		BIT(1)
+#define HASH_FLAGS_CPU			BIT(2)
+#define HASH_FLAGS_DMA_READY		BIT(3)
+#define HASH_FLAGS_DMA_ACTIVE		BIT(4)
+#define HASH_FLAGS_HMAC_INIT		BIT(5)
+#define HASH_FLAGS_HMAC_FINAL		BIT(6)
+#define HASH_FLAGS_HMAC_KEY		BIT(7)
 
-#घोषणा HASH_FLAGS_FINAL		BIT(15)
-#घोषणा HASH_FLAGS_FINUP		BIT(16)
-#घोषणा HASH_FLAGS_ALGO_MASK		GENMASK(21, 18)
-#घोषणा HASH_FLAGS_MD5			BIT(18)
-#घोषणा HASH_FLAGS_SHA1			BIT(19)
-#घोषणा HASH_FLAGS_SHA224		BIT(20)
-#घोषणा HASH_FLAGS_SHA256		BIT(21)
-#घोषणा HASH_FLAGS_ERRORS		BIT(22)
-#घोषणा HASH_FLAGS_HMAC			BIT(23)
+#define HASH_FLAGS_FINAL		BIT(15)
+#define HASH_FLAGS_FINUP		BIT(16)
+#define HASH_FLAGS_ALGO_MASK		GENMASK(21, 18)
+#define HASH_FLAGS_MD5			BIT(18)
+#define HASH_FLAGS_SHA1			BIT(19)
+#define HASH_FLAGS_SHA224		BIT(20)
+#define HASH_FLAGS_SHA256		BIT(21)
+#define HASH_FLAGS_ERRORS		BIT(22)
+#define HASH_FLAGS_HMAC			BIT(23)
 
-#घोषणा HASH_OP_UPDATE			1
-#घोषणा HASH_OP_FINAL			2
+#define HASH_OP_UPDATE			1
+#define HASH_OP_FINAL			2
 
-क्रमागत sपंचांग32_hash_data_क्रमmat अणु
+enum stm32_hash_data_format {
 	HASH_DATA_32_BITS		= 0x0,
 	HASH_DATA_16_BITS		= 0x1,
 	HASH_DATA_8_BITS		= 0x2,
 	HASH_DATA_1_BIT			= 0x3
-पूर्ण;
+};
 
-#घोषणा HASH_BUFLEN			256
-#घोषणा HASH_LONG_KEY			64
-#घोषणा HASH_MAX_KEY_SIZE		(SHA256_BLOCK_SIZE * 8)
-#घोषणा HASH_QUEUE_LENGTH		16
-#घोषणा HASH_DMA_THRESHOLD		50
+#define HASH_BUFLEN			256
+#define HASH_LONG_KEY			64
+#define HASH_MAX_KEY_SIZE		(SHA256_BLOCK_SIZE * 8)
+#define HASH_QUEUE_LENGTH		16
+#define HASH_DMA_THRESHOLD		50
 
-#घोषणा HASH_AUTOSUSPEND_DELAY		50
+#define HASH_AUTOSUSPEND_DELAY		50
 
-काष्ठा sपंचांग32_hash_ctx अणु
-	काष्ठा crypto_engine_ctx enginectx;
-	काष्ठा sपंचांग32_hash_dev	*hdev;
-	अचिन्हित दीर्घ		flags;
+struct stm32_hash_ctx {
+	struct crypto_engine_ctx enginectx;
+	struct stm32_hash_dev	*hdev;
+	unsigned long		flags;
 
 	u8			key[HASH_MAX_KEY_SIZE];
-	पूर्णांक			keylen;
-पूर्ण;
+	int			keylen;
+};
 
-काष्ठा sपंचांग32_hash_request_ctx अणु
-	काष्ठा sपंचांग32_hash_dev	*hdev;
-	अचिन्हित दीर्घ		flags;
-	अचिन्हित दीर्घ		op;
+struct stm32_hash_request_ctx {
+	struct stm32_hash_dev	*hdev;
+	unsigned long		flags;
+	unsigned long		op;
 
-	u8 digest[SHA256_DIGEST_SIZE] __aligned(माप(u32));
-	माप_प्रकार			digcnt;
-	माप_प्रकार			bufcnt;
-	माप_प्रकार			buflen;
+	u8 digest[SHA256_DIGEST_SIZE] __aligned(sizeof(u32));
+	size_t			digcnt;
+	size_t			bufcnt;
+	size_t			buflen;
 
 	/* DMA */
-	काष्ठा scatterlist	*sg;
-	अचिन्हित पूर्णांक		offset;
-	अचिन्हित पूर्णांक		total;
-	काष्ठा scatterlist	sg_key;
+	struct scatterlist	*sg;
+	unsigned int		offset;
+	unsigned int		total;
+	struct scatterlist	sg_key;
 
 	dma_addr_t		dma_addr;
-	माप_प्रकार			dma_ct;
-	पूर्णांक			nents;
+	size_t			dma_ct;
+	int			nents;
 
 	u8			data_type;
 
-	u8 buffer[HASH_BUFLEN] __aligned(माप(u32));
+	u8 buffer[HASH_BUFLEN] __aligned(sizeof(u32));
 
 	/* Export Context */
 	u32			*hw_context;
-पूर्ण;
+};
 
-काष्ठा sपंचांग32_hash_algs_info अणु
-	काष्ठा ahash_alg	*algs_list;
-	माप_प्रकार			size;
-पूर्ण;
+struct stm32_hash_algs_info {
+	struct ahash_alg	*algs_list;
+	size_t			size;
+};
 
-काष्ठा sपंचांग32_hash_pdata अणु
-	काष्ठा sपंचांग32_hash_algs_info	*algs_info;
-	माप_प्रकार				algs_info_size;
-पूर्ण;
+struct stm32_hash_pdata {
+	struct stm32_hash_algs_info	*algs_info;
+	size_t				algs_info_size;
+};
 
-काष्ठा sपंचांग32_hash_dev अणु
-	काष्ठा list_head	list;
-	काष्ठा device		*dev;
-	काष्ठा clk		*clk;
-	काष्ठा reset_control	*rst;
-	व्योम __iomem		*io_base;
+struct stm32_hash_dev {
+	struct list_head	list;
+	struct device		*dev;
+	struct clk		*clk;
+	struct reset_control	*rst;
+	void __iomem		*io_base;
 	phys_addr_t		phys_base;
 	u32			dma_mode;
 	u32			dma_maxburst;
 
-	काष्ठा ahash_request	*req;
-	काष्ठा crypto_engine	*engine;
+	struct ahash_request	*req;
+	struct crypto_engine	*engine;
 
-	पूर्णांक			err;
-	अचिन्हित दीर्घ		flags;
+	int			err;
+	unsigned long		flags;
 
-	काष्ठा dma_chan		*dma_lch;
-	काष्ठा completion	dma_completion;
+	struct dma_chan		*dma_lch;
+	struct completion	dma_completion;
 
-	स्थिर काष्ठा sपंचांग32_hash_pdata	*pdata;
-पूर्ण;
+	const struct stm32_hash_pdata	*pdata;
+};
 
-काष्ठा sपंचांग32_hash_drv अणु
-	काष्ठा list_head	dev_list;
+struct stm32_hash_drv {
+	struct list_head	dev_list;
 	spinlock_t		lock; /* List protection access */
-पूर्ण;
+};
 
-अटल काष्ठा sपंचांग32_hash_drv sपंचांग32_hash = अणु
-	.dev_list = LIST_HEAD_INIT(sपंचांग32_hash.dev_list),
-	.lock = __SPIN_LOCK_UNLOCKED(sपंचांग32_hash.lock),
-पूर्ण;
+static struct stm32_hash_drv stm32_hash = {
+	.dev_list = LIST_HEAD_INIT(stm32_hash.dev_list),
+	.lock = __SPIN_LOCK_UNLOCKED(stm32_hash.lock),
+};
 
-अटल व्योम sपंचांग32_hash_dma_callback(व्योम *param);
+static void stm32_hash_dma_callback(void *param);
 
-अटल अंतरभूत u32 sपंचांग32_hash_पढ़ो(काष्ठा sपंचांग32_hash_dev *hdev, u32 offset)
-अणु
-	वापस पढ़ोl_relaxed(hdev->io_base + offset);
-पूर्ण
+static inline u32 stm32_hash_read(struct stm32_hash_dev *hdev, u32 offset)
+{
+	return readl_relaxed(hdev->io_base + offset);
+}
 
-अटल अंतरभूत व्योम sपंचांग32_hash_ग_लिखो(काष्ठा sपंचांग32_hash_dev *hdev,
+static inline void stm32_hash_write(struct stm32_hash_dev *hdev,
 				    u32 offset, u32 value)
-अणु
-	ग_लिखोl_relaxed(value, hdev->io_base + offset);
-पूर्ण
+{
+	writel_relaxed(value, hdev->io_base + offset);
+}
 
-अटल अंतरभूत पूर्णांक sपंचांग32_hash_रुको_busy(काष्ठा sपंचांग32_hash_dev *hdev)
-अणु
+static inline int stm32_hash_wait_busy(struct stm32_hash_dev *hdev)
+{
 	u32 status;
 
-	वापस पढ़ोl_relaxed_poll_समयout(hdev->io_base + HASH_SR, status,
+	return readl_relaxed_poll_timeout(hdev->io_base + HASH_SR, status,
 				   !(status & HASH_SR_BUSY), 10, 10000);
-पूर्ण
+}
 
-अटल व्योम sपंचांग32_hash_set_nblw(काष्ठा sपंचांग32_hash_dev *hdev, पूर्णांक length)
-अणु
+static void stm32_hash_set_nblw(struct stm32_hash_dev *hdev, int length)
+{
 	u32 reg;
 
-	reg = sपंचांग32_hash_पढ़ो(hdev, HASH_STR);
+	reg = stm32_hash_read(hdev, HASH_STR);
 	reg &= ~(HASH_STR_NBLW_MASK);
 	reg |= (8U * ((length) % 4U));
-	sपंचांग32_hash_ग_लिखो(hdev, HASH_STR, reg);
-पूर्ण
+	stm32_hash_write(hdev, HASH_STR, reg);
+}
 
-अटल पूर्णांक sपंचांग32_hash_ग_लिखो_key(काष्ठा sपंचांग32_hash_dev *hdev)
-अणु
-	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(hdev->req);
-	काष्ठा sपंचांग32_hash_ctx *ctx = crypto_ahash_ctx(tfm);
+static int stm32_hash_write_key(struct stm32_hash_dev *hdev)
+{
+	struct crypto_ahash *tfm = crypto_ahash_reqtfm(hdev->req);
+	struct stm32_hash_ctx *ctx = crypto_ahash_ctx(tfm);
 	u32 reg;
-	पूर्णांक keylen = ctx->keylen;
-	व्योम *key = ctx->key;
+	int keylen = ctx->keylen;
+	void *key = ctx->key;
 
-	अगर (keylen) अणु
-		sपंचांग32_hash_set_nblw(hdev, keylen);
+	if (keylen) {
+		stm32_hash_set_nblw(hdev, keylen);
 
-		जबतक (keylen > 0) अणु
-			sपंचांग32_hash_ग_लिखो(hdev, HASH_DIN, *(u32 *)key);
+		while (keylen > 0) {
+			stm32_hash_write(hdev, HASH_DIN, *(u32 *)key);
 			keylen -= 4;
 			key += 4;
-		पूर्ण
+		}
 
-		reg = sपंचांग32_hash_पढ़ो(hdev, HASH_STR);
+		reg = stm32_hash_read(hdev, HASH_STR);
 		reg |= HASH_STR_DCAL;
-		sपंचांग32_hash_ग_लिखो(hdev, HASH_STR, reg);
+		stm32_hash_write(hdev, HASH_STR, reg);
 
-		वापस -EINPROGRESS;
-	पूर्ण
+		return -EINPROGRESS;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sपंचांग32_hash_ग_लिखो_ctrl(काष्ठा sपंचांग32_hash_dev *hdev)
-अणु
-	काष्ठा sपंचांग32_hash_request_ctx *rctx = ahash_request_ctx(hdev->req);
-	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(hdev->req);
-	काष्ठा sपंचांग32_hash_ctx *ctx = crypto_ahash_ctx(tfm);
+static void stm32_hash_write_ctrl(struct stm32_hash_dev *hdev)
+{
+	struct stm32_hash_request_ctx *rctx = ahash_request_ctx(hdev->req);
+	struct crypto_ahash *tfm = crypto_ahash_reqtfm(hdev->req);
+	struct stm32_hash_ctx *ctx = crypto_ahash_ctx(tfm);
 
 	u32 reg = HASH_CR_INIT;
 
-	अगर (!(hdev->flags & HASH_FLAGS_INIT)) अणु
-		चयन (rctx->flags & HASH_FLAGS_ALGO_MASK) अणु
-		हाल HASH_FLAGS_MD5:
+	if (!(hdev->flags & HASH_FLAGS_INIT)) {
+		switch (rctx->flags & HASH_FLAGS_ALGO_MASK) {
+		case HASH_FLAGS_MD5:
 			reg |= HASH_CR_ALGO_MD5;
-			अवरोध;
-		हाल HASH_FLAGS_SHA1:
+			break;
+		case HASH_FLAGS_SHA1:
 			reg |= HASH_CR_ALGO_SHA1;
-			अवरोध;
-		हाल HASH_FLAGS_SHA224:
+			break;
+		case HASH_FLAGS_SHA224:
 			reg |= HASH_CR_ALGO_SHA224;
-			अवरोध;
-		हाल HASH_FLAGS_SHA256:
+			break;
+		case HASH_FLAGS_SHA256:
 			reg |= HASH_CR_ALGO_SHA256;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			reg |= HASH_CR_ALGO_MD5;
-		पूर्ण
+		}
 
 		reg |= (rctx->data_type << HASH_CR_DATATYPE_POS);
 
-		अगर (rctx->flags & HASH_FLAGS_HMAC) अणु
+		if (rctx->flags & HASH_FLAGS_HMAC) {
 			hdev->flags |= HASH_FLAGS_HMAC;
 			reg |= HASH_CR_MODE;
-			अगर (ctx->keylen > HASH_LONG_KEY)
+			if (ctx->keylen > HASH_LONG_KEY)
 				reg |= HASH_CR_LKEY;
-		पूर्ण
+		}
 
-		sपंचांग32_hash_ग_लिखो(hdev, HASH_IMR, HASH_DCIE);
+		stm32_hash_write(hdev, HASH_IMR, HASH_DCIE);
 
-		sपंचांग32_hash_ग_लिखो(hdev, HASH_CR, reg);
+		stm32_hash_write(hdev, HASH_CR, reg);
 
 		hdev->flags |= HASH_FLAGS_INIT;
 
 		dev_dbg(hdev->dev, "Write Control %x\n", reg);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम sपंचांग32_hash_append_sg(काष्ठा sपंचांग32_hash_request_ctx *rctx)
-अणु
-	माप_प्रकार count;
+static void stm32_hash_append_sg(struct stm32_hash_request_ctx *rctx)
+{
+	size_t count;
 
-	जबतक ((rctx->bufcnt < rctx->buflen) && rctx->total) अणु
+	while ((rctx->bufcnt < rctx->buflen) && rctx->total) {
 		count = min(rctx->sg->length - rctx->offset, rctx->total);
 		count = min(count, rctx->buflen - rctx->bufcnt);
 
-		अगर (count <= 0) अणु
-			अगर ((rctx->sg->length == 0) && !sg_is_last(rctx->sg)) अणु
+		if (count <= 0) {
+			if ((rctx->sg->length == 0) && !sg_is_last(rctx->sg)) {
 				rctx->sg = sg_next(rctx->sg);
-				जारी;
-			पूर्ण अन्यथा अणु
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				continue;
+			} else {
+				break;
+			}
+		}
 
 		scatterwalk_map_and_copy(rctx->buffer + rctx->bufcnt, rctx->sg,
 					 rctx->offset, count, 0);
@@ -319,201 +318,201 @@
 		rctx->offset += count;
 		rctx->total -= count;
 
-		अगर (rctx->offset == rctx->sg->length) अणु
+		if (rctx->offset == rctx->sg->length) {
 			rctx->sg = sg_next(rctx->sg);
-			अगर (rctx->sg)
+			if (rctx->sg)
 				rctx->offset = 0;
-			अन्यथा
+			else
 				rctx->total = 0;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक sपंचांग32_hash_xmit_cpu(काष्ठा sपंचांग32_hash_dev *hdev,
-			       स्थिर u8 *buf, माप_प्रकार length, पूर्णांक final)
-अणु
-	अचिन्हित पूर्णांक count, len32;
-	स्थिर u32 *buffer = (स्थिर u32 *)buf;
+static int stm32_hash_xmit_cpu(struct stm32_hash_dev *hdev,
+			       const u8 *buf, size_t length, int final)
+{
+	unsigned int count, len32;
+	const u32 *buffer = (const u32 *)buf;
 	u32 reg;
 
-	अगर (final)
+	if (final)
 		hdev->flags |= HASH_FLAGS_FINAL;
 
-	len32 = DIV_ROUND_UP(length, माप(u32));
+	len32 = DIV_ROUND_UP(length, sizeof(u32));
 
 	dev_dbg(hdev->dev, "%s: length: %zd, final: %x len32 %i\n",
 		__func__, length, final, len32);
 
 	hdev->flags |= HASH_FLAGS_CPU;
 
-	sपंचांग32_hash_ग_लिखो_ctrl(hdev);
+	stm32_hash_write_ctrl(hdev);
 
-	अगर (sपंचांग32_hash_रुको_busy(hdev))
-		वापस -ETIMEDOUT;
+	if (stm32_hash_wait_busy(hdev))
+		return -ETIMEDOUT;
 
-	अगर ((hdev->flags & HASH_FLAGS_HMAC) &&
-	    (!(hdev->flags & HASH_FLAGS_HMAC_KEY))) अणु
+	if ((hdev->flags & HASH_FLAGS_HMAC) &&
+	    (!(hdev->flags & HASH_FLAGS_HMAC_KEY))) {
 		hdev->flags |= HASH_FLAGS_HMAC_KEY;
-		sपंचांग32_hash_ग_लिखो_key(hdev);
-		अगर (sपंचांग32_hash_रुको_busy(hdev))
-			वापस -ETIMEDOUT;
-	पूर्ण
+		stm32_hash_write_key(hdev);
+		if (stm32_hash_wait_busy(hdev))
+			return -ETIMEDOUT;
+	}
 
-	क्रम (count = 0; count < len32; count++)
-		sपंचांग32_hash_ग_लिखो(hdev, HASH_DIN, buffer[count]);
+	for (count = 0; count < len32; count++)
+		stm32_hash_write(hdev, HASH_DIN, buffer[count]);
 
-	अगर (final) अणु
-		sपंचांग32_hash_set_nblw(hdev, length);
-		reg = sपंचांग32_hash_पढ़ो(hdev, HASH_STR);
+	if (final) {
+		stm32_hash_set_nblw(hdev, length);
+		reg = stm32_hash_read(hdev, HASH_STR);
 		reg |= HASH_STR_DCAL;
-		sपंचांग32_hash_ग_लिखो(hdev, HASH_STR, reg);
-		अगर (hdev->flags & HASH_FLAGS_HMAC) अणु
-			अगर (sपंचांग32_hash_रुको_busy(hdev))
-				वापस -ETIMEDOUT;
-			sपंचांग32_hash_ग_लिखो_key(hdev);
-		पूर्ण
-		वापस -EINPROGRESS;
-	पूर्ण
+		stm32_hash_write(hdev, HASH_STR, reg);
+		if (hdev->flags & HASH_FLAGS_HMAC) {
+			if (stm32_hash_wait_busy(hdev))
+				return -ETIMEDOUT;
+			stm32_hash_write_key(hdev);
+		}
+		return -EINPROGRESS;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sपंचांग32_hash_update_cpu(काष्ठा sपंचांग32_hash_dev *hdev)
-अणु
-	काष्ठा sपंचांग32_hash_request_ctx *rctx = ahash_request_ctx(hdev->req);
-	पूर्णांक bufcnt, err = 0, final;
+static int stm32_hash_update_cpu(struct stm32_hash_dev *hdev)
+{
+	struct stm32_hash_request_ctx *rctx = ahash_request_ctx(hdev->req);
+	int bufcnt, err = 0, final;
 
 	dev_dbg(hdev->dev, "%s flags %lx\n", __func__, rctx->flags);
 
 	final = (rctx->flags & HASH_FLAGS_FINUP);
 
-	जबतक ((rctx->total >= rctx->buflen) ||
-	       (rctx->bufcnt + rctx->total >= rctx->buflen)) अणु
-		sपंचांग32_hash_append_sg(rctx);
+	while ((rctx->total >= rctx->buflen) ||
+	       (rctx->bufcnt + rctx->total >= rctx->buflen)) {
+		stm32_hash_append_sg(rctx);
 		bufcnt = rctx->bufcnt;
 		rctx->bufcnt = 0;
-		err = sपंचांग32_hash_xmit_cpu(hdev, rctx->buffer, bufcnt, 0);
-	पूर्ण
+		err = stm32_hash_xmit_cpu(hdev, rctx->buffer, bufcnt, 0);
+	}
 
-	sपंचांग32_hash_append_sg(rctx);
+	stm32_hash_append_sg(rctx);
 
-	अगर (final) अणु
+	if (final) {
 		bufcnt = rctx->bufcnt;
 		rctx->bufcnt = 0;
-		err = sपंचांग32_hash_xmit_cpu(hdev, rctx->buffer, bufcnt,
+		err = stm32_hash_xmit_cpu(hdev, rctx->buffer, bufcnt,
 					  (rctx->flags & HASH_FLAGS_FINUP));
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक sपंचांग32_hash_xmit_dma(काष्ठा sपंचांग32_hash_dev *hdev,
-			       काष्ठा scatterlist *sg, पूर्णांक length, पूर्णांक mdma)
-अणु
-	काष्ठा dma_async_tx_descriptor *in_desc;
+static int stm32_hash_xmit_dma(struct stm32_hash_dev *hdev,
+			       struct scatterlist *sg, int length, int mdma)
+{
+	struct dma_async_tx_descriptor *in_desc;
 	dma_cookie_t cookie;
 	u32 reg;
-	पूर्णांक err;
+	int err;
 
 	in_desc = dmaengine_prep_slave_sg(hdev->dma_lch, sg, 1,
 					  DMA_MEM_TO_DEV, DMA_PREP_INTERRUPT |
 					  DMA_CTRL_ACK);
-	अगर (!in_desc) अणु
+	if (!in_desc) {
 		dev_err(hdev->dev, "dmaengine_prep_slave error\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	reinit_completion(&hdev->dma_completion);
-	in_desc->callback = sपंचांग32_hash_dma_callback;
+	in_desc->callback = stm32_hash_dma_callback;
 	in_desc->callback_param = hdev;
 
 	hdev->flags |= HASH_FLAGS_FINAL;
 	hdev->flags |= HASH_FLAGS_DMA_ACTIVE;
 
-	reg = sपंचांग32_hash_पढ़ो(hdev, HASH_CR);
+	reg = stm32_hash_read(hdev, HASH_CR);
 
-	अगर (mdma)
+	if (mdma)
 		reg |= HASH_CR_MDMAT;
-	अन्यथा
+	else
 		reg &= ~HASH_CR_MDMAT;
 
 	reg |= HASH_CR_DMAE;
 
-	sपंचांग32_hash_ग_लिखो(hdev, HASH_CR, reg);
+	stm32_hash_write(hdev, HASH_CR, reg);
 
-	sपंचांग32_hash_set_nblw(hdev, length);
+	stm32_hash_set_nblw(hdev, length);
 
 	cookie = dmaengine_submit(in_desc);
 	err = dma_submit_error(cookie);
-	अगर (err)
-		वापस -ENOMEM;
+	if (err)
+		return -ENOMEM;
 
 	dma_async_issue_pending(hdev->dma_lch);
 
-	अगर (!रुको_क्रम_completion_समयout(&hdev->dma_completion,
-					 msecs_to_jअगरfies(100)))
+	if (!wait_for_completion_timeout(&hdev->dma_completion,
+					 msecs_to_jiffies(100)))
 		err = -ETIMEDOUT;
 
-	अगर (dma_async_is_tx_complete(hdev->dma_lch, cookie,
-				     शून्य, शून्य) != DMA_COMPLETE)
+	if (dma_async_is_tx_complete(hdev->dma_lch, cookie,
+				     NULL, NULL) != DMA_COMPLETE)
 		err = -ETIMEDOUT;
 
-	अगर (err) अणु
+	if (err) {
 		dev_err(hdev->dev, "DMA Error %i\n", err);
 		dmaengine_terminate_all(hdev->dma_lch);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस -EINPROGRESS;
-पूर्ण
+	return -EINPROGRESS;
+}
 
-अटल व्योम sपंचांग32_hash_dma_callback(व्योम *param)
-अणु
-	काष्ठा sपंचांग32_hash_dev *hdev = param;
+static void stm32_hash_dma_callback(void *param)
+{
+	struct stm32_hash_dev *hdev = param;
 
 	complete(&hdev->dma_completion);
 
 	hdev->flags |= HASH_FLAGS_DMA_READY;
-पूर्ण
+}
 
-अटल पूर्णांक sपंचांग32_hash_hmac_dma_send(काष्ठा sपंचांग32_hash_dev *hdev)
-अणु
-	काष्ठा sपंचांग32_hash_request_ctx *rctx = ahash_request_ctx(hdev->req);
-	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(hdev->req);
-	काष्ठा sपंचांग32_hash_ctx *ctx = crypto_ahash_ctx(tfm);
-	पूर्णांक err;
+static int stm32_hash_hmac_dma_send(struct stm32_hash_dev *hdev)
+{
+	struct stm32_hash_request_ctx *rctx = ahash_request_ctx(hdev->req);
+	struct crypto_ahash *tfm = crypto_ahash_reqtfm(hdev->req);
+	struct stm32_hash_ctx *ctx = crypto_ahash_ctx(tfm);
+	int err;
 
-	अगर (ctx->keylen < HASH_DMA_THRESHOLD || (hdev->dma_mode == 1)) अणु
-		err = sपंचांग32_hash_ग_लिखो_key(hdev);
-		अगर (sपंचांग32_hash_रुको_busy(hdev))
-			वापस -ETIMEDOUT;
-	पूर्ण अन्यथा अणु
-		अगर (!(hdev->flags & HASH_FLAGS_HMAC_KEY))
+	if (ctx->keylen < HASH_DMA_THRESHOLD || (hdev->dma_mode == 1)) {
+		err = stm32_hash_write_key(hdev);
+		if (stm32_hash_wait_busy(hdev))
+			return -ETIMEDOUT;
+	} else {
+		if (!(hdev->flags & HASH_FLAGS_HMAC_KEY))
 			sg_init_one(&rctx->sg_key, ctx->key,
-				    ALIGN(ctx->keylen, माप(u32)));
+				    ALIGN(ctx->keylen, sizeof(u32)));
 
 		rctx->dma_ct = dma_map_sg(hdev->dev, &rctx->sg_key, 1,
 					  DMA_TO_DEVICE);
-		अगर (rctx->dma_ct == 0) अणु
+		if (rctx->dma_ct == 0) {
 			dev_err(hdev->dev, "dma_map_sg error\n");
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 
-		err = sपंचांग32_hash_xmit_dma(hdev, &rctx->sg_key, ctx->keylen, 0);
+		err = stm32_hash_xmit_dma(hdev, &rctx->sg_key, ctx->keylen, 0);
 
 		dma_unmap_sg(hdev->dev, &rctx->sg_key, 1, DMA_TO_DEVICE);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक sपंचांग32_hash_dma_init(काष्ठा sपंचांग32_hash_dev *hdev)
-अणु
-	काष्ठा dma_slave_config dma_conf;
-	काष्ठा dma_chan *chan;
-	पूर्णांक err;
+static int stm32_hash_dma_init(struct stm32_hash_dev *hdev)
+{
+	struct dma_slave_config dma_conf;
+	struct dma_chan *chan;
+	int err;
 
-	स_रखो(&dma_conf, 0, माप(dma_conf));
+	memset(&dma_conf, 0, sizeof(dma_conf));
 
 	dma_conf.direction = DMA_MEM_TO_DEV;
 	dma_conf.dst_addr = hdev->phys_base + HASH_DIN;
@@ -523,54 +522,54 @@
 	dma_conf.device_fc = false;
 
 	chan = dma_request_chan(hdev->dev, "in");
-	अगर (IS_ERR(chan))
-		वापस PTR_ERR(chan);
+	if (IS_ERR(chan))
+		return PTR_ERR(chan);
 
 	hdev->dma_lch = chan;
 
 	err = dmaengine_slave_config(hdev->dma_lch, &dma_conf);
-	अगर (err) अणु
+	if (err) {
 		dma_release_channel(hdev->dma_lch);
-		hdev->dma_lch = शून्य;
+		hdev->dma_lch = NULL;
 		dev_err(hdev->dev, "Couldn't configure DMA slave.\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	init_completion(&hdev->dma_completion);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sपंचांग32_hash_dma_send(काष्ठा sपंचांग32_hash_dev *hdev)
-अणु
-	काष्ठा sपंचांग32_hash_request_ctx *rctx = ahash_request_ctx(hdev->req);
-	काष्ठा scatterlist sg[1], *tsg;
-	पूर्णांक err = 0, len = 0, reg, ncp = 0;
-	अचिन्हित पूर्णांक i;
-	u32 *buffer = (व्योम *)rctx->buffer;
+static int stm32_hash_dma_send(struct stm32_hash_dev *hdev)
+{
+	struct stm32_hash_request_ctx *rctx = ahash_request_ctx(hdev->req);
+	struct scatterlist sg[1], *tsg;
+	int err = 0, len = 0, reg, ncp = 0;
+	unsigned int i;
+	u32 *buffer = (void *)rctx->buffer;
 
 	rctx->sg = hdev->req->src;
 	rctx->total = hdev->req->nbytes;
 
 	rctx->nents = sg_nents(rctx->sg);
 
-	अगर (rctx->nents < 0)
-		वापस -EINVAL;
+	if (rctx->nents < 0)
+		return -EINVAL;
 
-	sपंचांग32_hash_ग_लिखो_ctrl(hdev);
+	stm32_hash_write_ctrl(hdev);
 
-	अगर (hdev->flags & HASH_FLAGS_HMAC) अणु
-		err = sपंचांग32_hash_hmac_dma_send(hdev);
-		अगर (err != -EINPROGRESS)
-			वापस err;
-	पूर्ण
+	if (hdev->flags & HASH_FLAGS_HMAC) {
+		err = stm32_hash_hmac_dma_send(hdev);
+		if (err != -EINPROGRESS)
+			return err;
+	}
 
-	क्रम_each_sg(rctx->sg, tsg, rctx->nents, i) अणु
+	for_each_sg(rctx->sg, tsg, rctx->nents, i) {
 		len = sg->length;
 
 		sg[0] = *tsg;
-		अगर (sg_is_last(sg)) अणु
-			अगर (hdev->dma_mode == 1) अणु
+		if (sg_is_last(sg)) {
+			if (hdev->dma_mode == 1) {
 				len = (ALIGN(sg->length, 16) - 16);
 
 				ncp = sg_pcopy_to_buffer(
@@ -579,135 +578,135 @@
 					rctx->total - sg->length + len);
 
 				sg->length = len;
-			पूर्ण अन्यथा अणु
-				अगर (!(IS_ALIGNED(sg->length, माप(u32)))) अणु
+			} else {
+				if (!(IS_ALIGNED(sg->length, sizeof(u32)))) {
 					len = sg->length;
 					sg->length = ALIGN(sg->length,
-							   माप(u32));
-				पूर्ण
-			पूर्ण
-		पूर्ण
+							   sizeof(u32));
+				}
+			}
+		}
 
 		rctx->dma_ct = dma_map_sg(hdev->dev, sg, 1,
 					  DMA_TO_DEVICE);
-		अगर (rctx->dma_ct == 0) अणु
+		if (rctx->dma_ct == 0) {
 			dev_err(hdev->dev, "dma_map_sg error\n");
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 
-		err = sपंचांग32_hash_xmit_dma(hdev, sg, len,
+		err = stm32_hash_xmit_dma(hdev, sg, len,
 					  !sg_is_last(sg));
 
 		dma_unmap_sg(hdev->dev, sg, 1, DMA_TO_DEVICE);
 
-		अगर (err == -ENOMEM)
-			वापस err;
-	पूर्ण
+		if (err == -ENOMEM)
+			return err;
+	}
 
-	अगर (hdev->dma_mode == 1) अणु
-		अगर (sपंचांग32_hash_रुको_busy(hdev))
-			वापस -ETIMEDOUT;
-		reg = sपंचांग32_hash_पढ़ो(hdev, HASH_CR);
+	if (hdev->dma_mode == 1) {
+		if (stm32_hash_wait_busy(hdev))
+			return -ETIMEDOUT;
+		reg = stm32_hash_read(hdev, HASH_CR);
 		reg &= ~HASH_CR_DMAE;
 		reg |= HASH_CR_DMAA;
-		sपंचांग32_hash_ग_लिखो(hdev, HASH_CR, reg);
+		stm32_hash_write(hdev, HASH_CR, reg);
 
-		अगर (ncp) अणु
-			स_रखो(buffer + ncp, 0,
-			       DIV_ROUND_UP(ncp, माप(u32)) - ncp);
-			ग_लिखोsl(hdev->io_base + HASH_DIN, buffer,
-				DIV_ROUND_UP(ncp, माप(u32)));
-		पूर्ण
-		sपंचांग32_hash_set_nblw(hdev, ncp);
-		reg = sपंचांग32_hash_पढ़ो(hdev, HASH_STR);
+		if (ncp) {
+			memset(buffer + ncp, 0,
+			       DIV_ROUND_UP(ncp, sizeof(u32)) - ncp);
+			writesl(hdev->io_base + HASH_DIN, buffer,
+				DIV_ROUND_UP(ncp, sizeof(u32)));
+		}
+		stm32_hash_set_nblw(hdev, ncp);
+		reg = stm32_hash_read(hdev, HASH_STR);
 		reg |= HASH_STR_DCAL;
-		sपंचांग32_hash_ग_लिखो(hdev, HASH_STR, reg);
+		stm32_hash_write(hdev, HASH_STR, reg);
 		err = -EINPROGRESS;
-	पूर्ण
+	}
 
-	अगर (hdev->flags & HASH_FLAGS_HMAC) अणु
-		अगर (sपंचांग32_hash_रुको_busy(hdev))
-			वापस -ETIMEDOUT;
-		err = sपंचांग32_hash_hmac_dma_send(hdev);
-	पूर्ण
+	if (hdev->flags & HASH_FLAGS_HMAC) {
+		if (stm32_hash_wait_busy(hdev))
+			return -ETIMEDOUT;
+		err = stm32_hash_hmac_dma_send(hdev);
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल काष्ठा sपंचांग32_hash_dev *sपंचांग32_hash_find_dev(काष्ठा sपंचांग32_hash_ctx *ctx)
-अणु
-	काष्ठा sपंचांग32_hash_dev *hdev = शून्य, *पंचांगp;
+static struct stm32_hash_dev *stm32_hash_find_dev(struct stm32_hash_ctx *ctx)
+{
+	struct stm32_hash_dev *hdev = NULL, *tmp;
 
-	spin_lock_bh(&sपंचांग32_hash.lock);
-	अगर (!ctx->hdev) अणु
-		list_क्रम_each_entry(पंचांगp, &sपंचांग32_hash.dev_list, list) अणु
-			hdev = पंचांगp;
-			अवरोध;
-		पूर्ण
+	spin_lock_bh(&stm32_hash.lock);
+	if (!ctx->hdev) {
+		list_for_each_entry(tmp, &stm32_hash.dev_list, list) {
+			hdev = tmp;
+			break;
+		}
 		ctx->hdev = hdev;
-	पूर्ण अन्यथा अणु
+	} else {
 		hdev = ctx->hdev;
-	पूर्ण
+	}
 
-	spin_unlock_bh(&sपंचांग32_hash.lock);
+	spin_unlock_bh(&stm32_hash.lock);
 
-	वापस hdev;
-पूर्ण
+	return hdev;
+}
 
-अटल bool sपंचांग32_hash_dma_aligned_data(काष्ठा ahash_request *req)
-अणु
-	काष्ठा scatterlist *sg;
-	काष्ठा sपंचांग32_hash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(req));
-	काष्ठा sपंचांग32_hash_dev *hdev = sपंचांग32_hash_find_dev(ctx);
-	पूर्णांक i;
+static bool stm32_hash_dma_aligned_data(struct ahash_request *req)
+{
+	struct scatterlist *sg;
+	struct stm32_hash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(req));
+	struct stm32_hash_dev *hdev = stm32_hash_find_dev(ctx);
+	int i;
 
-	अगर (req->nbytes <= HASH_DMA_THRESHOLD)
-		वापस false;
+	if (req->nbytes <= HASH_DMA_THRESHOLD)
+		return false;
 
-	अगर (sg_nents(req->src) > 1) अणु
-		अगर (hdev->dma_mode == 1)
-			वापस false;
-		क्रम_each_sg(req->src, sg, sg_nents(req->src), i) अणु
-			अगर ((!IS_ALIGNED(sg->length, माप(u32))) &&
+	if (sg_nents(req->src) > 1) {
+		if (hdev->dma_mode == 1)
+			return false;
+		for_each_sg(req->src, sg, sg_nents(req->src), i) {
+			if ((!IS_ALIGNED(sg->length, sizeof(u32))) &&
 			    (!sg_is_last(sg)))
-				वापस false;
-		पूर्ण
-	पूर्ण
+				return false;
+		}
+	}
 
-	अगर (req->src->offset % 4)
-		वापस false;
+	if (req->src->offset % 4)
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक sपंचांग32_hash_init(काष्ठा ahash_request *req)
-अणु
-	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	काष्ठा sपंचांग32_hash_ctx *ctx = crypto_ahash_ctx(tfm);
-	काष्ठा sपंचांग32_hash_request_ctx *rctx = ahash_request_ctx(req);
-	काष्ठा sपंचांग32_hash_dev *hdev = sपंचांग32_hash_find_dev(ctx);
+static int stm32_hash_init(struct ahash_request *req)
+{
+	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	struct stm32_hash_ctx *ctx = crypto_ahash_ctx(tfm);
+	struct stm32_hash_request_ctx *rctx = ahash_request_ctx(req);
+	struct stm32_hash_dev *hdev = stm32_hash_find_dev(ctx);
 
 	rctx->hdev = hdev;
 
 	rctx->flags = HASH_FLAGS_CPU;
 
 	rctx->digcnt = crypto_ahash_digestsize(tfm);
-	चयन (rctx->digcnt) अणु
-	हाल MD5_DIGEST_SIZE:
+	switch (rctx->digcnt) {
+	case MD5_DIGEST_SIZE:
 		rctx->flags |= HASH_FLAGS_MD5;
-		अवरोध;
-	हाल SHA1_DIGEST_SIZE:
+		break;
+	case SHA1_DIGEST_SIZE:
 		rctx->flags |= HASH_FLAGS_SHA1;
-		अवरोध;
-	हाल SHA224_DIGEST_SIZE:
+		break;
+	case SHA224_DIGEST_SIZE:
 		rctx->flags |= HASH_FLAGS_SHA224;
-		अवरोध;
-	हाल SHA256_DIGEST_SIZE:
+		break;
+	case SHA256_DIGEST_SIZE:
 		rctx->flags |= HASH_FLAGS_SHA256;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	rctx->bufcnt = 0;
 	rctx->buflen = HASH_BUFLEN;
@@ -715,137 +714,137 @@
 	rctx->offset = 0;
 	rctx->data_type = HASH_DATA_8_BITS;
 
-	स_रखो(rctx->buffer, 0, HASH_BUFLEN);
+	memset(rctx->buffer, 0, HASH_BUFLEN);
 
-	अगर (ctx->flags & HASH_FLAGS_HMAC)
+	if (ctx->flags & HASH_FLAGS_HMAC)
 		rctx->flags |= HASH_FLAGS_HMAC;
 
 	dev_dbg(hdev->dev, "%s Flags %lx\n", __func__, rctx->flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sपंचांग32_hash_update_req(काष्ठा sपंचांग32_hash_dev *hdev)
-अणु
-	वापस sपंचांग32_hash_update_cpu(hdev);
-पूर्ण
+static int stm32_hash_update_req(struct stm32_hash_dev *hdev)
+{
+	return stm32_hash_update_cpu(hdev);
+}
 
-अटल पूर्णांक sपंचांग32_hash_final_req(काष्ठा sपंचांग32_hash_dev *hdev)
-अणु
-	काष्ठा ahash_request *req = hdev->req;
-	काष्ठा sपंचांग32_hash_request_ctx *rctx = ahash_request_ctx(req);
-	पूर्णांक err;
-	पूर्णांक buflen = rctx->bufcnt;
+static int stm32_hash_final_req(struct stm32_hash_dev *hdev)
+{
+	struct ahash_request *req = hdev->req;
+	struct stm32_hash_request_ctx *rctx = ahash_request_ctx(req);
+	int err;
+	int buflen = rctx->bufcnt;
 
 	rctx->bufcnt = 0;
 
-	अगर (!(rctx->flags & HASH_FLAGS_CPU))
-		err = sपंचांग32_hash_dma_send(hdev);
-	अन्यथा
-		err = sपंचांग32_hash_xmit_cpu(hdev, rctx->buffer, buflen, 1);
+	if (!(rctx->flags & HASH_FLAGS_CPU))
+		err = stm32_hash_dma_send(hdev);
+	else
+		err = stm32_hash_xmit_cpu(hdev, rctx->buffer, buflen, 1);
 
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम sपंचांग32_hash_copy_hash(काष्ठा ahash_request *req)
-अणु
-	काष्ठा sपंचांग32_hash_request_ctx *rctx = ahash_request_ctx(req);
-	__be32 *hash = (व्योम *)rctx->digest;
-	अचिन्हित पूर्णांक i, hashsize;
+static void stm32_hash_copy_hash(struct ahash_request *req)
+{
+	struct stm32_hash_request_ctx *rctx = ahash_request_ctx(req);
+	__be32 *hash = (void *)rctx->digest;
+	unsigned int i, hashsize;
 
-	चयन (rctx->flags & HASH_FLAGS_ALGO_MASK) अणु
-	हाल HASH_FLAGS_MD5:
+	switch (rctx->flags & HASH_FLAGS_ALGO_MASK) {
+	case HASH_FLAGS_MD5:
 		hashsize = MD5_DIGEST_SIZE;
-		अवरोध;
-	हाल HASH_FLAGS_SHA1:
+		break;
+	case HASH_FLAGS_SHA1:
 		hashsize = SHA1_DIGEST_SIZE;
-		अवरोध;
-	हाल HASH_FLAGS_SHA224:
+		break;
+	case HASH_FLAGS_SHA224:
 		hashsize = SHA224_DIGEST_SIZE;
-		अवरोध;
-	हाल HASH_FLAGS_SHA256:
+		break;
+	case HASH_FLAGS_SHA256:
 		hashsize = SHA256_DIGEST_SIZE;
-		अवरोध;
-	शेष:
-		वापस;
-	पूर्ण
+		break;
+	default:
+		return;
+	}
 
-	क्रम (i = 0; i < hashsize / माप(u32); i++)
-		hash[i] = cpu_to_be32(sपंचांग32_hash_पढ़ो(rctx->hdev,
+	for (i = 0; i < hashsize / sizeof(u32); i++)
+		hash[i] = cpu_to_be32(stm32_hash_read(rctx->hdev,
 						      HASH_HREG(i)));
-पूर्ण
+}
 
-अटल पूर्णांक sपंचांग32_hash_finish(काष्ठा ahash_request *req)
-अणु
-	काष्ठा sपंचांग32_hash_request_ctx *rctx = ahash_request_ctx(req);
+static int stm32_hash_finish(struct ahash_request *req)
+{
+	struct stm32_hash_request_ctx *rctx = ahash_request_ctx(req);
 
-	अगर (!req->result)
-		वापस -EINVAL;
+	if (!req->result)
+		return -EINVAL;
 
-	स_नकल(req->result, rctx->digest, rctx->digcnt);
+	memcpy(req->result, rctx->digest, rctx->digcnt);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sपंचांग32_hash_finish_req(काष्ठा ahash_request *req, पूर्णांक err)
-अणु
-	काष्ठा sपंचांग32_hash_request_ctx *rctx = ahash_request_ctx(req);
-	काष्ठा sपंचांग32_hash_dev *hdev = rctx->hdev;
+static void stm32_hash_finish_req(struct ahash_request *req, int err)
+{
+	struct stm32_hash_request_ctx *rctx = ahash_request_ctx(req);
+	struct stm32_hash_dev *hdev = rctx->hdev;
 
-	अगर (!err && (HASH_FLAGS_FINAL & hdev->flags)) अणु
-		sपंचांग32_hash_copy_hash(req);
-		err = sपंचांग32_hash_finish(req);
+	if (!err && (HASH_FLAGS_FINAL & hdev->flags)) {
+		stm32_hash_copy_hash(req);
+		err = stm32_hash_finish(req);
 		hdev->flags &= ~(HASH_FLAGS_FINAL | HASH_FLAGS_CPU |
 				 HASH_FLAGS_INIT | HASH_FLAGS_DMA_READY |
 				 HASH_FLAGS_OUTPUT_READY | HASH_FLAGS_HMAC |
 				 HASH_FLAGS_HMAC_INIT | HASH_FLAGS_HMAC_FINAL |
 				 HASH_FLAGS_HMAC_KEY);
-	पूर्ण अन्यथा अणु
+	} else {
 		rctx->flags |= HASH_FLAGS_ERRORS;
-	पूर्ण
+	}
 
-	pm_runसमय_mark_last_busy(hdev->dev);
-	pm_runसमय_put_स्वतःsuspend(hdev->dev);
+	pm_runtime_mark_last_busy(hdev->dev);
+	pm_runtime_put_autosuspend(hdev->dev);
 
 	crypto_finalize_hash_request(hdev->engine, req, err);
-पूर्ण
+}
 
-अटल पूर्णांक sपंचांग32_hash_hw_init(काष्ठा sपंचांग32_hash_dev *hdev,
-			      काष्ठा sपंचांग32_hash_request_ctx *rctx)
-अणु
-	pm_runसमय_resume_and_get(hdev->dev);
+static int stm32_hash_hw_init(struct stm32_hash_dev *hdev,
+			      struct stm32_hash_request_ctx *rctx)
+{
+	pm_runtime_resume_and_get(hdev->dev);
 
-	अगर (!(HASH_FLAGS_INIT & hdev->flags)) अणु
-		sपंचांग32_hash_ग_लिखो(hdev, HASH_CR, HASH_CR_INIT);
-		sपंचांग32_hash_ग_लिखो(hdev, HASH_STR, 0);
-		sपंचांग32_hash_ग_लिखो(hdev, HASH_DIN, 0);
-		sपंचांग32_hash_ग_लिखो(hdev, HASH_IMR, 0);
+	if (!(HASH_FLAGS_INIT & hdev->flags)) {
+		stm32_hash_write(hdev, HASH_CR, HASH_CR_INIT);
+		stm32_hash_write(hdev, HASH_STR, 0);
+		stm32_hash_write(hdev, HASH_DIN, 0);
+		stm32_hash_write(hdev, HASH_IMR, 0);
 		hdev->err = 0;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sपंचांग32_hash_one_request(काष्ठा crypto_engine *engine, व्योम *areq);
-अटल पूर्णांक sपंचांग32_hash_prepare_req(काष्ठा crypto_engine *engine, व्योम *areq);
+static int stm32_hash_one_request(struct crypto_engine *engine, void *areq);
+static int stm32_hash_prepare_req(struct crypto_engine *engine, void *areq);
 
-अटल पूर्णांक sपंचांग32_hash_handle_queue(काष्ठा sपंचांग32_hash_dev *hdev,
-				   काष्ठा ahash_request *req)
-अणु
-	वापस crypto_transfer_hash_request_to_engine(hdev->engine, req);
-पूर्ण
+static int stm32_hash_handle_queue(struct stm32_hash_dev *hdev,
+				   struct ahash_request *req)
+{
+	return crypto_transfer_hash_request_to_engine(hdev->engine, req);
+}
 
-अटल पूर्णांक sपंचांग32_hash_prepare_req(काष्ठा crypto_engine *engine, व्योम *areq)
-अणु
-	काष्ठा ahash_request *req = container_of(areq, काष्ठा ahash_request,
+static int stm32_hash_prepare_req(struct crypto_engine *engine, void *areq)
+{
+	struct ahash_request *req = container_of(areq, struct ahash_request,
 						 base);
-	काष्ठा sपंचांग32_hash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(req));
-	काष्ठा sपंचांग32_hash_dev *hdev = sपंचांग32_hash_find_dev(ctx);
-	काष्ठा sपंचांग32_hash_request_ctx *rctx;
+	struct stm32_hash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(req));
+	struct stm32_hash_dev *hdev = stm32_hash_find_dev(ctx);
+	struct stm32_hash_request_ctx *rctx;
 
-	अगर (!hdev)
-		वापस -ENODEV;
+	if (!hdev)
+		return -ENODEV;
 
 	hdev->req = req;
 
@@ -854,785 +853,785 @@
 	dev_dbg(hdev->dev, "processing new req, op: %lu, nbytes %d\n",
 		rctx->op, req->nbytes);
 
-	वापस sपंचांग32_hash_hw_init(hdev, rctx);
-पूर्ण
+	return stm32_hash_hw_init(hdev, rctx);
+}
 
-अटल पूर्णांक sपंचांग32_hash_one_request(काष्ठा crypto_engine *engine, व्योम *areq)
-अणु
-	काष्ठा ahash_request *req = container_of(areq, काष्ठा ahash_request,
+static int stm32_hash_one_request(struct crypto_engine *engine, void *areq)
+{
+	struct ahash_request *req = container_of(areq, struct ahash_request,
 						 base);
-	काष्ठा sपंचांग32_hash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(req));
-	काष्ठा sपंचांग32_hash_dev *hdev = sपंचांग32_hash_find_dev(ctx);
-	काष्ठा sपंचांग32_hash_request_ctx *rctx;
-	पूर्णांक err = 0;
+	struct stm32_hash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(req));
+	struct stm32_hash_dev *hdev = stm32_hash_find_dev(ctx);
+	struct stm32_hash_request_ctx *rctx;
+	int err = 0;
 
-	अगर (!hdev)
-		वापस -ENODEV;
+	if (!hdev)
+		return -ENODEV;
 
 	hdev->req = req;
 
 	rctx = ahash_request_ctx(req);
 
-	अगर (rctx->op == HASH_OP_UPDATE)
-		err = sपंचांग32_hash_update_req(hdev);
-	अन्यथा अगर (rctx->op == HASH_OP_FINAL)
-		err = sपंचांग32_hash_final_req(hdev);
+	if (rctx->op == HASH_OP_UPDATE)
+		err = stm32_hash_update_req(hdev);
+	else if (rctx->op == HASH_OP_FINAL)
+		err = stm32_hash_final_req(hdev);
 
-	अगर (err != -EINPROGRESS)
-	/* करोne task will not finish it, so करो it here */
-		sपंचांग32_hash_finish_req(req, err);
+	if (err != -EINPROGRESS)
+	/* done task will not finish it, so do it here */
+		stm32_hash_finish_req(req, err);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sपंचांग32_hash_enqueue(काष्ठा ahash_request *req, अचिन्हित पूर्णांक op)
-अणु
-	काष्ठा sपंचांग32_hash_request_ctx *rctx = ahash_request_ctx(req);
-	काष्ठा sपंचांग32_hash_ctx *ctx = crypto_tfm_ctx(req->base.tfm);
-	काष्ठा sपंचांग32_hash_dev *hdev = ctx->hdev;
+static int stm32_hash_enqueue(struct ahash_request *req, unsigned int op)
+{
+	struct stm32_hash_request_ctx *rctx = ahash_request_ctx(req);
+	struct stm32_hash_ctx *ctx = crypto_tfm_ctx(req->base.tfm);
+	struct stm32_hash_dev *hdev = ctx->hdev;
 
 	rctx->op = op;
 
-	वापस sपंचांग32_hash_handle_queue(hdev, req);
-पूर्ण
+	return stm32_hash_handle_queue(hdev, req);
+}
 
-अटल पूर्णांक sपंचांग32_hash_update(काष्ठा ahash_request *req)
-अणु
-	काष्ठा sपंचांग32_hash_request_ctx *rctx = ahash_request_ctx(req);
+static int stm32_hash_update(struct ahash_request *req)
+{
+	struct stm32_hash_request_ctx *rctx = ahash_request_ctx(req);
 
-	अगर (!req->nbytes || !(rctx->flags & HASH_FLAGS_CPU))
-		वापस 0;
+	if (!req->nbytes || !(rctx->flags & HASH_FLAGS_CPU))
+		return 0;
 
 	rctx->total = req->nbytes;
 	rctx->sg = req->src;
 	rctx->offset = 0;
 
-	अगर ((rctx->bufcnt + rctx->total < rctx->buflen)) अणु
-		sपंचांग32_hash_append_sg(rctx);
-		वापस 0;
-	पूर्ण
+	if ((rctx->bufcnt + rctx->total < rctx->buflen)) {
+		stm32_hash_append_sg(rctx);
+		return 0;
+	}
 
-	वापस sपंचांग32_hash_enqueue(req, HASH_OP_UPDATE);
-पूर्ण
+	return stm32_hash_enqueue(req, HASH_OP_UPDATE);
+}
 
-अटल पूर्णांक sपंचांग32_hash_final(काष्ठा ahash_request *req)
-अणु
-	काष्ठा sपंचांग32_hash_request_ctx *rctx = ahash_request_ctx(req);
-
-	rctx->flags |= HASH_FLAGS_FINUP;
-
-	वापस sपंचांग32_hash_enqueue(req, HASH_OP_FINAL);
-पूर्ण
-
-अटल पूर्णांक sपंचांग32_hash_finup(काष्ठा ahash_request *req)
-अणु
-	काष्ठा sपंचांग32_hash_request_ctx *rctx = ahash_request_ctx(req);
-	काष्ठा sपंचांग32_hash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(req));
-	काष्ठा sपंचांग32_hash_dev *hdev = sपंचांग32_hash_find_dev(ctx);
-	पूर्णांक err1, err2;
+static int stm32_hash_final(struct ahash_request *req)
+{
+	struct stm32_hash_request_ctx *rctx = ahash_request_ctx(req);
 
 	rctx->flags |= HASH_FLAGS_FINUP;
 
-	अगर (hdev->dma_lch && sपंचांग32_hash_dma_aligned_data(req))
+	return stm32_hash_enqueue(req, HASH_OP_FINAL);
+}
+
+static int stm32_hash_finup(struct ahash_request *req)
+{
+	struct stm32_hash_request_ctx *rctx = ahash_request_ctx(req);
+	struct stm32_hash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(req));
+	struct stm32_hash_dev *hdev = stm32_hash_find_dev(ctx);
+	int err1, err2;
+
+	rctx->flags |= HASH_FLAGS_FINUP;
+
+	if (hdev->dma_lch && stm32_hash_dma_aligned_data(req))
 		rctx->flags &= ~HASH_FLAGS_CPU;
 
-	err1 = sपंचांग32_hash_update(req);
+	err1 = stm32_hash_update(req);
 
-	अगर (err1 == -EINPROGRESS || err1 == -EBUSY)
-		वापस err1;
+	if (err1 == -EINPROGRESS || err1 == -EBUSY)
+		return err1;
 
 	/*
 	 * final() has to be always called to cleanup resources
-	 * even अगर update() failed, except EINPROGRESS
+	 * even if update() failed, except EINPROGRESS
 	 */
-	err2 = sपंचांग32_hash_final(req);
+	err2 = stm32_hash_final(req);
 
-	वापस err1 ?: err2;
-पूर्ण
+	return err1 ?: err2;
+}
 
-अटल पूर्णांक sपंचांग32_hash_digest(काष्ठा ahash_request *req)
-अणु
-	वापस sपंचांग32_hash_init(req) ?: sपंचांग32_hash_finup(req);
-पूर्ण
+static int stm32_hash_digest(struct ahash_request *req)
+{
+	return stm32_hash_init(req) ?: stm32_hash_finup(req);
+}
 
-अटल पूर्णांक sपंचांग32_hash_export(काष्ठा ahash_request *req, व्योम *out)
-अणु
-	काष्ठा sपंचांग32_hash_request_ctx *rctx = ahash_request_ctx(req);
-	काष्ठा sपंचांग32_hash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(req));
-	काष्ठा sपंचांग32_hash_dev *hdev = sपंचांग32_hash_find_dev(ctx);
+static int stm32_hash_export(struct ahash_request *req, void *out)
+{
+	struct stm32_hash_request_ctx *rctx = ahash_request_ctx(req);
+	struct stm32_hash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(req));
+	struct stm32_hash_dev *hdev = stm32_hash_find_dev(ctx);
 	u32 *preg;
-	अचिन्हित पूर्णांक i;
+	unsigned int i;
 
-	pm_runसमय_resume_and_get(hdev->dev);
+	pm_runtime_resume_and_get(hdev->dev);
 
-	जबतक ((sपंचांग32_hash_पढ़ो(hdev, HASH_SR) & HASH_SR_BUSY))
+	while ((stm32_hash_read(hdev, HASH_SR) & HASH_SR_BUSY))
 		cpu_relax();
 
-	rctx->hw_context = kदो_स्मृति_array(3 + HASH_CSR_REGISTER_NUMBER,
-					 माप(u32),
+	rctx->hw_context = kmalloc_array(3 + HASH_CSR_REGISTER_NUMBER,
+					 sizeof(u32),
 					 GFP_KERNEL);
 
 	preg = rctx->hw_context;
 
-	*preg++ = sपंचांग32_hash_पढ़ो(hdev, HASH_IMR);
-	*preg++ = sपंचांग32_hash_पढ़ो(hdev, HASH_STR);
-	*preg++ = sपंचांग32_hash_पढ़ो(hdev, HASH_CR);
-	क्रम (i = 0; i < HASH_CSR_REGISTER_NUMBER; i++)
-		*preg++ = sपंचांग32_hash_पढ़ो(hdev, HASH_CSR(i));
+	*preg++ = stm32_hash_read(hdev, HASH_IMR);
+	*preg++ = stm32_hash_read(hdev, HASH_STR);
+	*preg++ = stm32_hash_read(hdev, HASH_CR);
+	for (i = 0; i < HASH_CSR_REGISTER_NUMBER; i++)
+		*preg++ = stm32_hash_read(hdev, HASH_CSR(i));
 
-	pm_runसमय_mark_last_busy(hdev->dev);
-	pm_runसमय_put_स्वतःsuspend(hdev->dev);
+	pm_runtime_mark_last_busy(hdev->dev);
+	pm_runtime_put_autosuspend(hdev->dev);
 
-	स_नकल(out, rctx, माप(*rctx));
+	memcpy(out, rctx, sizeof(*rctx));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sपंचांग32_hash_import(काष्ठा ahash_request *req, स्थिर व्योम *in)
-अणु
-	काष्ठा sपंचांग32_hash_request_ctx *rctx = ahash_request_ctx(req);
-	काष्ठा sपंचांग32_hash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(req));
-	काष्ठा sपंचांग32_hash_dev *hdev = sपंचांग32_hash_find_dev(ctx);
-	स्थिर u32 *preg = in;
+static int stm32_hash_import(struct ahash_request *req, const void *in)
+{
+	struct stm32_hash_request_ctx *rctx = ahash_request_ctx(req);
+	struct stm32_hash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(req));
+	struct stm32_hash_dev *hdev = stm32_hash_find_dev(ctx);
+	const u32 *preg = in;
 	u32 reg;
-	अचिन्हित पूर्णांक i;
+	unsigned int i;
 
-	स_नकल(rctx, in, माप(*rctx));
+	memcpy(rctx, in, sizeof(*rctx));
 
 	preg = rctx->hw_context;
 
-	pm_runसमय_resume_and_get(hdev->dev);
+	pm_runtime_resume_and_get(hdev->dev);
 
-	sपंचांग32_hash_ग_लिखो(hdev, HASH_IMR, *preg++);
-	sपंचांग32_hash_ग_लिखो(hdev, HASH_STR, *preg++);
-	sपंचांग32_hash_ग_लिखो(hdev, HASH_CR, *preg);
+	stm32_hash_write(hdev, HASH_IMR, *preg++);
+	stm32_hash_write(hdev, HASH_STR, *preg++);
+	stm32_hash_write(hdev, HASH_CR, *preg);
 	reg = *preg++ | HASH_CR_INIT;
-	sपंचांग32_hash_ग_लिखो(hdev, HASH_CR, reg);
+	stm32_hash_write(hdev, HASH_CR, reg);
 
-	क्रम (i = 0; i < HASH_CSR_REGISTER_NUMBER; i++)
-		sपंचांग32_hash_ग_लिखो(hdev, HASH_CSR(i), *preg++);
+	for (i = 0; i < HASH_CSR_REGISTER_NUMBER; i++)
+		stm32_hash_write(hdev, HASH_CSR(i), *preg++);
 
-	pm_runसमय_mark_last_busy(hdev->dev);
-	pm_runसमय_put_स्वतःsuspend(hdev->dev);
+	pm_runtime_mark_last_busy(hdev->dev);
+	pm_runtime_put_autosuspend(hdev->dev);
 
-	kमुक्त(rctx->hw_context);
+	kfree(rctx->hw_context);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sपंचांग32_hash_setkey(काष्ठा crypto_ahash *tfm,
-			     स्थिर u8 *key, अचिन्हित पूर्णांक keylen)
-अणु
-	काष्ठा sपंचांग32_hash_ctx *ctx = crypto_ahash_ctx(tfm);
+static int stm32_hash_setkey(struct crypto_ahash *tfm,
+			     const u8 *key, unsigned int keylen)
+{
+	struct stm32_hash_ctx *ctx = crypto_ahash_ctx(tfm);
 
-	अगर (keylen <= HASH_MAX_KEY_SIZE) अणु
-		स_नकल(ctx->key, key, keylen);
+	if (keylen <= HASH_MAX_KEY_SIZE) {
+		memcpy(ctx->key, key, keylen);
 		ctx->keylen = keylen;
-	पूर्ण अन्यथा अणु
-		वापस -ENOMEM;
-	पूर्ण
+	} else {
+		return -ENOMEM;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sपंचांग32_hash_cra_init_algs(काष्ठा crypto_tfm *tfm,
-				    स्थिर अक्षर *algs_hmac_name)
-अणु
-	काष्ठा sपंचांग32_hash_ctx *ctx = crypto_tfm_ctx(tfm);
+static int stm32_hash_cra_init_algs(struct crypto_tfm *tfm,
+				    const char *algs_hmac_name)
+{
+	struct stm32_hash_ctx *ctx = crypto_tfm_ctx(tfm);
 
 	crypto_ahash_set_reqsize(__crypto_ahash_cast(tfm),
-				 माप(काष्ठा sपंचांग32_hash_request_ctx));
+				 sizeof(struct stm32_hash_request_ctx));
 
 	ctx->keylen = 0;
 
-	अगर (algs_hmac_name)
+	if (algs_hmac_name)
 		ctx->flags |= HASH_FLAGS_HMAC;
 
-	ctx->enginectx.op.करो_one_request = sपंचांग32_hash_one_request;
-	ctx->enginectx.op.prepare_request = sपंचांग32_hash_prepare_req;
-	ctx->enginectx.op.unprepare_request = शून्य;
-	वापस 0;
-पूर्ण
+	ctx->enginectx.op.do_one_request = stm32_hash_one_request;
+	ctx->enginectx.op.prepare_request = stm32_hash_prepare_req;
+	ctx->enginectx.op.unprepare_request = NULL;
+	return 0;
+}
 
-अटल पूर्णांक sपंचांग32_hash_cra_init(काष्ठा crypto_tfm *tfm)
-अणु
-	वापस sपंचांग32_hash_cra_init_algs(tfm, शून्य);
-पूर्ण
+static int stm32_hash_cra_init(struct crypto_tfm *tfm)
+{
+	return stm32_hash_cra_init_algs(tfm, NULL);
+}
 
-अटल पूर्णांक sपंचांग32_hash_cra_md5_init(काष्ठा crypto_tfm *tfm)
-अणु
-	वापस sपंचांग32_hash_cra_init_algs(tfm, "md5");
-पूर्ण
+static int stm32_hash_cra_md5_init(struct crypto_tfm *tfm)
+{
+	return stm32_hash_cra_init_algs(tfm, "md5");
+}
 
-अटल पूर्णांक sपंचांग32_hash_cra_sha1_init(काष्ठा crypto_tfm *tfm)
-अणु
-	वापस sपंचांग32_hash_cra_init_algs(tfm, "sha1");
-पूर्ण
+static int stm32_hash_cra_sha1_init(struct crypto_tfm *tfm)
+{
+	return stm32_hash_cra_init_algs(tfm, "sha1");
+}
 
-अटल पूर्णांक sपंचांग32_hash_cra_sha224_init(काष्ठा crypto_tfm *tfm)
-अणु
-	वापस sपंचांग32_hash_cra_init_algs(tfm, "sha224");
-पूर्ण
+static int stm32_hash_cra_sha224_init(struct crypto_tfm *tfm)
+{
+	return stm32_hash_cra_init_algs(tfm, "sha224");
+}
 
-अटल पूर्णांक sपंचांग32_hash_cra_sha256_init(काष्ठा crypto_tfm *tfm)
-अणु
-	वापस sपंचांग32_hash_cra_init_algs(tfm, "sha256");
-पूर्ण
+static int stm32_hash_cra_sha256_init(struct crypto_tfm *tfm)
+{
+	return stm32_hash_cra_init_algs(tfm, "sha256");
+}
 
-अटल irqवापस_t sपंचांग32_hash_irq_thपढ़ो(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा sपंचांग32_hash_dev *hdev = dev_id;
+static irqreturn_t stm32_hash_irq_thread(int irq, void *dev_id)
+{
+	struct stm32_hash_dev *hdev = dev_id;
 
-	अगर (HASH_FLAGS_CPU & hdev->flags) अणु
-		अगर (HASH_FLAGS_OUTPUT_READY & hdev->flags) अणु
+	if (HASH_FLAGS_CPU & hdev->flags) {
+		if (HASH_FLAGS_OUTPUT_READY & hdev->flags) {
 			hdev->flags &= ~HASH_FLAGS_OUTPUT_READY;
-			जाओ finish;
-		पूर्ण
-	पूर्ण अन्यथा अगर (HASH_FLAGS_DMA_READY & hdev->flags) अणु
-		अगर (HASH_FLAGS_DMA_ACTIVE & hdev->flags) अणु
+			goto finish;
+		}
+	} else if (HASH_FLAGS_DMA_READY & hdev->flags) {
+		if (HASH_FLAGS_DMA_ACTIVE & hdev->flags) {
 			hdev->flags &= ~HASH_FLAGS_DMA_ACTIVE;
-				जाओ finish;
-		पूर्ण
-	पूर्ण
+				goto finish;
+		}
+	}
 
-	वापस IRQ_HANDLED;
+	return IRQ_HANDLED;
 
 finish:
 	/* Finish current request */
-	sपंचांग32_hash_finish_req(hdev->req, 0);
+	stm32_hash_finish_req(hdev->req, 0);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t sपंचांग32_hash_irq_handler(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा sपंचांग32_hash_dev *hdev = dev_id;
+static irqreturn_t stm32_hash_irq_handler(int irq, void *dev_id)
+{
+	struct stm32_hash_dev *hdev = dev_id;
 	u32 reg;
 
-	reg = sपंचांग32_hash_पढ़ो(hdev, HASH_SR);
-	अगर (reg & HASH_SR_OUTPUT_READY) अणु
+	reg = stm32_hash_read(hdev, HASH_SR);
+	if (reg & HASH_SR_OUTPUT_READY) {
 		reg &= ~HASH_SR_OUTPUT_READY;
-		sपंचांग32_hash_ग_लिखो(hdev, HASH_SR, reg);
+		stm32_hash_write(hdev, HASH_SR, reg);
 		hdev->flags |= HASH_FLAGS_OUTPUT_READY;
 		/* Disable IT*/
-		sपंचांग32_hash_ग_लिखो(hdev, HASH_IMR, 0);
-		वापस IRQ_WAKE_THREAD;
-	पूर्ण
+		stm32_hash_write(hdev, HASH_IMR, 0);
+		return IRQ_WAKE_THREAD;
+	}
 
-	वापस IRQ_NONE;
-पूर्ण
+	return IRQ_NONE;
+}
 
-अटल काष्ठा ahash_alg algs_md5_sha1[] = अणु
-	अणु
-		.init = sपंचांग32_hash_init,
-		.update = sपंचांग32_hash_update,
-		.final = sपंचांग32_hash_final,
-		.finup = sपंचांग32_hash_finup,
-		.digest = sपंचांग32_hash_digest,
-		.export = sपंचांग32_hash_export,
-		.import = sपंचांग32_hash_import,
-		.halg = अणु
+static struct ahash_alg algs_md5_sha1[] = {
+	{
+		.init = stm32_hash_init,
+		.update = stm32_hash_update,
+		.final = stm32_hash_final,
+		.finup = stm32_hash_finup,
+		.digest = stm32_hash_digest,
+		.export = stm32_hash_export,
+		.import = stm32_hash_import,
+		.halg = {
 			.digestsize = MD5_DIGEST_SIZE,
-			.statesize = माप(काष्ठा sपंचांग32_hash_request_ctx),
-			.base = अणु
+			.statesize = sizeof(struct stm32_hash_request_ctx),
+			.base = {
 				.cra_name = "md5",
 				.cra_driver_name = "stm32-md5",
 				.cra_priority = 200,
 				.cra_flags = CRYPTO_ALG_ASYNC |
 					CRYPTO_ALG_KERN_DRIVER_ONLY,
 				.cra_blocksize = MD5_HMAC_BLOCK_SIZE,
-				.cra_ctxsize = माप(काष्ठा sपंचांग32_hash_ctx),
+				.cra_ctxsize = sizeof(struct stm32_hash_ctx),
 				.cra_alignmask = 3,
-				.cra_init = sपंचांग32_hash_cra_init,
+				.cra_init = stm32_hash_cra_init,
 				.cra_module = THIS_MODULE,
-			पूर्ण
-		पूर्ण
-	पूर्ण,
-	अणु
-		.init = sपंचांग32_hash_init,
-		.update = sपंचांग32_hash_update,
-		.final = sपंचांग32_hash_final,
-		.finup = sपंचांग32_hash_finup,
-		.digest = sपंचांग32_hash_digest,
-		.export = sपंचांग32_hash_export,
-		.import = sपंचांग32_hash_import,
-		.setkey = sपंचांग32_hash_setkey,
-		.halg = अणु
+			}
+		}
+	},
+	{
+		.init = stm32_hash_init,
+		.update = stm32_hash_update,
+		.final = stm32_hash_final,
+		.finup = stm32_hash_finup,
+		.digest = stm32_hash_digest,
+		.export = stm32_hash_export,
+		.import = stm32_hash_import,
+		.setkey = stm32_hash_setkey,
+		.halg = {
 			.digestsize = MD5_DIGEST_SIZE,
-			.statesize = माप(काष्ठा sपंचांग32_hash_request_ctx),
-			.base = अणु
+			.statesize = sizeof(struct stm32_hash_request_ctx),
+			.base = {
 				.cra_name = "hmac(md5)",
 				.cra_driver_name = "stm32-hmac-md5",
 				.cra_priority = 200,
 				.cra_flags = CRYPTO_ALG_ASYNC |
 					CRYPTO_ALG_KERN_DRIVER_ONLY,
 				.cra_blocksize = MD5_HMAC_BLOCK_SIZE,
-				.cra_ctxsize = माप(काष्ठा sपंचांग32_hash_ctx),
+				.cra_ctxsize = sizeof(struct stm32_hash_ctx),
 				.cra_alignmask = 3,
-				.cra_init = sपंचांग32_hash_cra_md5_init,
+				.cra_init = stm32_hash_cra_md5_init,
 				.cra_module = THIS_MODULE,
-			पूर्ण
-		पूर्ण
-	पूर्ण,
-	अणु
-		.init = sपंचांग32_hash_init,
-		.update = sपंचांग32_hash_update,
-		.final = sपंचांग32_hash_final,
-		.finup = sपंचांग32_hash_finup,
-		.digest = sपंचांग32_hash_digest,
-		.export = sपंचांग32_hash_export,
-		.import = sपंचांग32_hash_import,
-		.halg = अणु
+			}
+		}
+	},
+	{
+		.init = stm32_hash_init,
+		.update = stm32_hash_update,
+		.final = stm32_hash_final,
+		.finup = stm32_hash_finup,
+		.digest = stm32_hash_digest,
+		.export = stm32_hash_export,
+		.import = stm32_hash_import,
+		.halg = {
 			.digestsize = SHA1_DIGEST_SIZE,
-			.statesize = माप(काष्ठा sपंचांग32_hash_request_ctx),
-			.base = अणु
+			.statesize = sizeof(struct stm32_hash_request_ctx),
+			.base = {
 				.cra_name = "sha1",
 				.cra_driver_name = "stm32-sha1",
 				.cra_priority = 200,
 				.cra_flags = CRYPTO_ALG_ASYNC |
 					CRYPTO_ALG_KERN_DRIVER_ONLY,
 				.cra_blocksize = SHA1_BLOCK_SIZE,
-				.cra_ctxsize = माप(काष्ठा sपंचांग32_hash_ctx),
+				.cra_ctxsize = sizeof(struct stm32_hash_ctx),
 				.cra_alignmask = 3,
-				.cra_init = sपंचांग32_hash_cra_init,
+				.cra_init = stm32_hash_cra_init,
 				.cra_module = THIS_MODULE,
-			पूर्ण
-		पूर्ण
-	पूर्ण,
-	अणु
-		.init = sपंचांग32_hash_init,
-		.update = sपंचांग32_hash_update,
-		.final = sपंचांग32_hash_final,
-		.finup = sपंचांग32_hash_finup,
-		.digest = sपंचांग32_hash_digest,
-		.export = sपंचांग32_hash_export,
-		.import = sपंचांग32_hash_import,
-		.setkey = sपंचांग32_hash_setkey,
-		.halg = अणु
+			}
+		}
+	},
+	{
+		.init = stm32_hash_init,
+		.update = stm32_hash_update,
+		.final = stm32_hash_final,
+		.finup = stm32_hash_finup,
+		.digest = stm32_hash_digest,
+		.export = stm32_hash_export,
+		.import = stm32_hash_import,
+		.setkey = stm32_hash_setkey,
+		.halg = {
 			.digestsize = SHA1_DIGEST_SIZE,
-			.statesize = माप(काष्ठा sपंचांग32_hash_request_ctx),
-			.base = अणु
+			.statesize = sizeof(struct stm32_hash_request_ctx),
+			.base = {
 				.cra_name = "hmac(sha1)",
 				.cra_driver_name = "stm32-hmac-sha1",
 				.cra_priority = 200,
 				.cra_flags = CRYPTO_ALG_ASYNC |
 					CRYPTO_ALG_KERN_DRIVER_ONLY,
 				.cra_blocksize = SHA1_BLOCK_SIZE,
-				.cra_ctxsize = माप(काष्ठा sपंचांग32_hash_ctx),
+				.cra_ctxsize = sizeof(struct stm32_hash_ctx),
 				.cra_alignmask = 3,
-				.cra_init = sपंचांग32_hash_cra_sha1_init,
+				.cra_init = stm32_hash_cra_sha1_init,
 				.cra_module = THIS_MODULE,
-			पूर्ण
-		पूर्ण
-	पूर्ण,
-पूर्ण;
+			}
+		}
+	},
+};
 
-अटल काष्ठा ahash_alg algs_sha224_sha256[] = अणु
-	अणु
-		.init = sपंचांग32_hash_init,
-		.update = sपंचांग32_hash_update,
-		.final = sपंचांग32_hash_final,
-		.finup = sपंचांग32_hash_finup,
-		.digest = sपंचांग32_hash_digest,
-		.export = sपंचांग32_hash_export,
-		.import = sपंचांग32_hash_import,
-		.halg = अणु
+static struct ahash_alg algs_sha224_sha256[] = {
+	{
+		.init = stm32_hash_init,
+		.update = stm32_hash_update,
+		.final = stm32_hash_final,
+		.finup = stm32_hash_finup,
+		.digest = stm32_hash_digest,
+		.export = stm32_hash_export,
+		.import = stm32_hash_import,
+		.halg = {
 			.digestsize = SHA224_DIGEST_SIZE,
-			.statesize = माप(काष्ठा sपंचांग32_hash_request_ctx),
-			.base = अणु
+			.statesize = sizeof(struct stm32_hash_request_ctx),
+			.base = {
 				.cra_name = "sha224",
 				.cra_driver_name = "stm32-sha224",
 				.cra_priority = 200,
 				.cra_flags = CRYPTO_ALG_ASYNC |
 					CRYPTO_ALG_KERN_DRIVER_ONLY,
 				.cra_blocksize = SHA224_BLOCK_SIZE,
-				.cra_ctxsize = माप(काष्ठा sपंचांग32_hash_ctx),
+				.cra_ctxsize = sizeof(struct stm32_hash_ctx),
 				.cra_alignmask = 3,
-				.cra_init = sपंचांग32_hash_cra_init,
+				.cra_init = stm32_hash_cra_init,
 				.cra_module = THIS_MODULE,
-			पूर्ण
-		पूर्ण
-	पूर्ण,
-	अणु
-		.init = sपंचांग32_hash_init,
-		.update = sपंचांग32_hash_update,
-		.final = sपंचांग32_hash_final,
-		.finup = sपंचांग32_hash_finup,
-		.digest = sपंचांग32_hash_digest,
-		.setkey = sपंचांग32_hash_setkey,
-		.export = sपंचांग32_hash_export,
-		.import = sपंचांग32_hash_import,
-		.halg = अणु
+			}
+		}
+	},
+	{
+		.init = stm32_hash_init,
+		.update = stm32_hash_update,
+		.final = stm32_hash_final,
+		.finup = stm32_hash_finup,
+		.digest = stm32_hash_digest,
+		.setkey = stm32_hash_setkey,
+		.export = stm32_hash_export,
+		.import = stm32_hash_import,
+		.halg = {
 			.digestsize = SHA224_DIGEST_SIZE,
-			.statesize = माप(काष्ठा sपंचांग32_hash_request_ctx),
-			.base = अणु
+			.statesize = sizeof(struct stm32_hash_request_ctx),
+			.base = {
 				.cra_name = "hmac(sha224)",
 				.cra_driver_name = "stm32-hmac-sha224",
 				.cra_priority = 200,
 				.cra_flags = CRYPTO_ALG_ASYNC |
 					CRYPTO_ALG_KERN_DRIVER_ONLY,
 				.cra_blocksize = SHA224_BLOCK_SIZE,
-				.cra_ctxsize = माप(काष्ठा sपंचांग32_hash_ctx),
+				.cra_ctxsize = sizeof(struct stm32_hash_ctx),
 				.cra_alignmask = 3,
-				.cra_init = sपंचांग32_hash_cra_sha224_init,
+				.cra_init = stm32_hash_cra_sha224_init,
 				.cra_module = THIS_MODULE,
-			पूर्ण
-		पूर्ण
-	पूर्ण,
-	अणु
-		.init = sपंचांग32_hash_init,
-		.update = sपंचांग32_hash_update,
-		.final = sपंचांग32_hash_final,
-		.finup = sपंचांग32_hash_finup,
-		.digest = sपंचांग32_hash_digest,
-		.export = sपंचांग32_hash_export,
-		.import = sपंचांग32_hash_import,
-		.halg = अणु
+			}
+		}
+	},
+	{
+		.init = stm32_hash_init,
+		.update = stm32_hash_update,
+		.final = stm32_hash_final,
+		.finup = stm32_hash_finup,
+		.digest = stm32_hash_digest,
+		.export = stm32_hash_export,
+		.import = stm32_hash_import,
+		.halg = {
 			.digestsize = SHA256_DIGEST_SIZE,
-			.statesize = माप(काष्ठा sपंचांग32_hash_request_ctx),
-			.base = अणु
+			.statesize = sizeof(struct stm32_hash_request_ctx),
+			.base = {
 				.cra_name = "sha256",
 				.cra_driver_name = "stm32-sha256",
 				.cra_priority = 200,
 				.cra_flags = CRYPTO_ALG_ASYNC |
 					CRYPTO_ALG_KERN_DRIVER_ONLY,
 				.cra_blocksize = SHA256_BLOCK_SIZE,
-				.cra_ctxsize = माप(काष्ठा sपंचांग32_hash_ctx),
+				.cra_ctxsize = sizeof(struct stm32_hash_ctx),
 				.cra_alignmask = 3,
-				.cra_init = sपंचांग32_hash_cra_init,
+				.cra_init = stm32_hash_cra_init,
 				.cra_module = THIS_MODULE,
-			पूर्ण
-		पूर्ण
-	पूर्ण,
-	अणु
-		.init = sपंचांग32_hash_init,
-		.update = sपंचांग32_hash_update,
-		.final = sपंचांग32_hash_final,
-		.finup = sपंचांग32_hash_finup,
-		.digest = sपंचांग32_hash_digest,
-		.export = sपंचांग32_hash_export,
-		.import = sपंचांग32_hash_import,
-		.setkey = sपंचांग32_hash_setkey,
-		.halg = अणु
+			}
+		}
+	},
+	{
+		.init = stm32_hash_init,
+		.update = stm32_hash_update,
+		.final = stm32_hash_final,
+		.finup = stm32_hash_finup,
+		.digest = stm32_hash_digest,
+		.export = stm32_hash_export,
+		.import = stm32_hash_import,
+		.setkey = stm32_hash_setkey,
+		.halg = {
 			.digestsize = SHA256_DIGEST_SIZE,
-			.statesize = माप(काष्ठा sपंचांग32_hash_request_ctx),
-			.base = अणु
+			.statesize = sizeof(struct stm32_hash_request_ctx),
+			.base = {
 				.cra_name = "hmac(sha256)",
 				.cra_driver_name = "stm32-hmac-sha256",
 				.cra_priority = 200,
 				.cra_flags = CRYPTO_ALG_ASYNC |
 					CRYPTO_ALG_KERN_DRIVER_ONLY,
 				.cra_blocksize = SHA256_BLOCK_SIZE,
-				.cra_ctxsize = माप(काष्ठा sपंचांग32_hash_ctx),
+				.cra_ctxsize = sizeof(struct stm32_hash_ctx),
 				.cra_alignmask = 3,
-				.cra_init = sपंचांग32_hash_cra_sha256_init,
+				.cra_init = stm32_hash_cra_sha256_init,
 				.cra_module = THIS_MODULE,
-			पूर्ण
-		पूर्ण
-	पूर्ण,
-पूर्ण;
+			}
+		}
+	},
+};
 
-अटल पूर्णांक sपंचांग32_hash_रेजिस्टर_algs(काष्ठा sपंचांग32_hash_dev *hdev)
-अणु
-	अचिन्हित पूर्णांक i, j;
-	पूर्णांक err;
+static int stm32_hash_register_algs(struct stm32_hash_dev *hdev)
+{
+	unsigned int i, j;
+	int err;
 
-	क्रम (i = 0; i < hdev->pdata->algs_info_size; i++) अणु
-		क्रम (j = 0; j < hdev->pdata->algs_info[i].size; j++) अणु
-			err = crypto_रेजिस्टर_ahash(
+	for (i = 0; i < hdev->pdata->algs_info_size; i++) {
+		for (j = 0; j < hdev->pdata->algs_info[i].size; j++) {
+			err = crypto_register_ahash(
 				&hdev->pdata->algs_info[i].algs_list[j]);
-			अगर (err)
-				जाओ err_algs;
-		पूर्ण
-	पूर्ण
+			if (err)
+				goto err_algs;
+		}
+	}
 
-	वापस 0;
+	return 0;
 err_algs:
 	dev_err(hdev->dev, "Algo %d : %d failed\n", i, j);
-	क्रम (; i--; ) अणु
-		क्रम (; j--;)
-			crypto_unरेजिस्टर_ahash(
+	for (; i--; ) {
+		for (; j--;)
+			crypto_unregister_ahash(
 				&hdev->pdata->algs_info[i].algs_list[j]);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक sपंचांग32_hash_unरेजिस्टर_algs(काष्ठा sपंचांग32_hash_dev *hdev)
-अणु
-	अचिन्हित पूर्णांक i, j;
+static int stm32_hash_unregister_algs(struct stm32_hash_dev *hdev)
+{
+	unsigned int i, j;
 
-	क्रम (i = 0; i < hdev->pdata->algs_info_size; i++) अणु
-		क्रम (j = 0; j < hdev->pdata->algs_info[i].size; j++)
-			crypto_unरेजिस्टर_ahash(
+	for (i = 0; i < hdev->pdata->algs_info_size; i++) {
+		for (j = 0; j < hdev->pdata->algs_info[i].size; j++)
+			crypto_unregister_ahash(
 				&hdev->pdata->algs_info[i].algs_list[j]);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा sपंचांग32_hash_algs_info sपंचांग32_hash_algs_info_sपंचांग32f4[] = अणु
-	अणु
+static struct stm32_hash_algs_info stm32_hash_algs_info_stm32f4[] = {
+	{
 		.algs_list	= algs_md5_sha1,
 		.size		= ARRAY_SIZE(algs_md5_sha1),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा sपंचांग32_hash_pdata sपंचांग32_hash_pdata_sपंचांग32f4 = अणु
-	.algs_info	= sपंचांग32_hash_algs_info_sपंचांग32f4,
-	.algs_info_size	= ARRAY_SIZE(sपंचांग32_hash_algs_info_sपंचांग32f4),
-पूर्ण;
+static const struct stm32_hash_pdata stm32_hash_pdata_stm32f4 = {
+	.algs_info	= stm32_hash_algs_info_stm32f4,
+	.algs_info_size	= ARRAY_SIZE(stm32_hash_algs_info_stm32f4),
+};
 
-अटल काष्ठा sपंचांग32_hash_algs_info sपंचांग32_hash_algs_info_sपंचांग32f7[] = अणु
-	अणु
+static struct stm32_hash_algs_info stm32_hash_algs_info_stm32f7[] = {
+	{
 		.algs_list	= algs_md5_sha1,
 		.size		= ARRAY_SIZE(algs_md5_sha1),
-	पूर्ण,
-	अणु
+	},
+	{
 		.algs_list	= algs_sha224_sha256,
 		.size		= ARRAY_SIZE(algs_sha224_sha256),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा sपंचांग32_hash_pdata sपंचांग32_hash_pdata_sपंचांग32f7 = अणु
-	.algs_info	= sपंचांग32_hash_algs_info_sपंचांग32f7,
-	.algs_info_size	= ARRAY_SIZE(sपंचांग32_hash_algs_info_sपंचांग32f7),
-पूर्ण;
+static const struct stm32_hash_pdata stm32_hash_pdata_stm32f7 = {
+	.algs_info	= stm32_hash_algs_info_stm32f7,
+	.algs_info_size	= ARRAY_SIZE(stm32_hash_algs_info_stm32f7),
+};
 
-अटल स्थिर काष्ठा of_device_id sपंचांग32_hash_of_match[] = अणु
-	अणु
+static const struct of_device_id stm32_hash_of_match[] = {
+	{
 		.compatible = "st,stm32f456-hash",
-		.data = &sपंचांग32_hash_pdata_sपंचांग32f4,
-	पूर्ण,
-	अणु
+		.data = &stm32_hash_pdata_stm32f4,
+	},
+	{
 		.compatible = "st,stm32f756-hash",
-		.data = &sपंचांग32_hash_pdata_sपंचांग32f7,
-	पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+		.data = &stm32_hash_pdata_stm32f7,
+	},
+	{},
+};
 
-MODULE_DEVICE_TABLE(of, sपंचांग32_hash_of_match);
+MODULE_DEVICE_TABLE(of, stm32_hash_of_match);
 
-अटल पूर्णांक sपंचांग32_hash_get_of_match(काष्ठा sपंचांग32_hash_dev *hdev,
-				   काष्ठा device *dev)
-अणु
+static int stm32_hash_get_of_match(struct stm32_hash_dev *hdev,
+				   struct device *dev)
+{
 	hdev->pdata = of_device_get_match_data(dev);
-	अगर (!hdev->pdata) अणु
+	if (!hdev->pdata) {
 		dev_err(dev, "no compatible OF match\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (of_property_पढ़ो_u32(dev->of_node, "dma-maxburst",
-				 &hdev->dma_maxburst)) अणु
+	if (of_property_read_u32(dev->of_node, "dma-maxburst",
+				 &hdev->dma_maxburst)) {
 		dev_info(dev, "dma-maxburst not specified, using 0\n");
 		hdev->dma_maxburst = 0;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sपंचांग32_hash_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sपंचांग32_hash_dev *hdev;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा resource *res;
-	पूर्णांक ret, irq;
+static int stm32_hash_probe(struct platform_device *pdev)
+{
+	struct stm32_hash_dev *hdev;
+	struct device *dev = &pdev->dev;
+	struct resource *res;
+	int ret, irq;
 
-	hdev = devm_kzalloc(dev, माप(*hdev), GFP_KERNEL);
-	अगर (!hdev)
-		वापस -ENOMEM;
+	hdev = devm_kzalloc(dev, sizeof(*hdev), GFP_KERNEL);
+	if (!hdev)
+		return -ENOMEM;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	hdev->io_base = devm_ioremap_resource(dev, res);
-	अगर (IS_ERR(hdev->io_base))
-		वापस PTR_ERR(hdev->io_base);
+	if (IS_ERR(hdev->io_base))
+		return PTR_ERR(hdev->io_base);
 
 	hdev->phys_base = res->start;
 
-	ret = sपंचांग32_hash_get_of_match(hdev, dev);
-	अगर (ret)
-		वापस ret;
+	ret = stm32_hash_get_of_match(hdev, dev);
+	if (ret)
+		return ret;
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0)
-		वापस irq;
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0)
+		return irq;
 
-	ret = devm_request_thपढ़ोed_irq(dev, irq, sपंचांग32_hash_irq_handler,
-					sपंचांग32_hash_irq_thपढ़ो, IRQF_ONESHOT,
+	ret = devm_request_threaded_irq(dev, irq, stm32_hash_irq_handler,
+					stm32_hash_irq_thread, IRQF_ONESHOT,
 					dev_name(dev), hdev);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Cannot grab IRQ\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	hdev->clk = devm_clk_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(hdev->clk))
-		वापस dev_err_probe(dev, PTR_ERR(hdev->clk),
+	hdev->clk = devm_clk_get(&pdev->dev, NULL);
+	if (IS_ERR(hdev->clk))
+		return dev_err_probe(dev, PTR_ERR(hdev->clk),
 				     "failed to get clock for hash\n");
 
 	ret = clk_prepare_enable(hdev->clk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to enable hash clock (%d)\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	pm_runसमय_set_स्वतःsuspend_delay(dev, HASH_AUTOSUSPEND_DELAY);
-	pm_runसमय_use_स्वतःsuspend(dev);
+	pm_runtime_set_autosuspend_delay(dev, HASH_AUTOSUSPEND_DELAY);
+	pm_runtime_use_autosuspend(dev);
 
-	pm_runसमय_get_noresume(dev);
-	pm_runसमय_set_active(dev);
-	pm_runसमय_enable(dev);
+	pm_runtime_get_noresume(dev);
+	pm_runtime_set_active(dev);
+	pm_runtime_enable(dev);
 
-	hdev->rst = devm_reset_control_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(hdev->rst)) अणु
-		अगर (PTR_ERR(hdev->rst) == -EPROBE_DEFER) अणु
+	hdev->rst = devm_reset_control_get(&pdev->dev, NULL);
+	if (IS_ERR(hdev->rst)) {
+		if (PTR_ERR(hdev->rst) == -EPROBE_DEFER) {
 			ret = -EPROBE_DEFER;
-			जाओ err_reset;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		reset_control_निश्चित(hdev->rst);
+			goto err_reset;
+		}
+	} else {
+		reset_control_assert(hdev->rst);
 		udelay(2);
-		reset_control_deनिश्चित(hdev->rst);
-	पूर्ण
+		reset_control_deassert(hdev->rst);
+	}
 
 	hdev->dev = dev;
 
-	platक्रमm_set_drvdata(pdev, hdev);
+	platform_set_drvdata(pdev, hdev);
 
-	ret = sपंचांग32_hash_dma_init(hdev);
-	चयन (ret) अणु
-	हाल 0:
-		अवरोध;
-	हाल -ENOENT:
+	ret = stm32_hash_dma_init(hdev);
+	switch (ret) {
+	case 0:
+		break;
+	case -ENOENT:
 		dev_dbg(dev, "DMA mode not available\n");
-		अवरोध;
-	शेष:
-		जाओ err_dma;
-	पूर्ण
+		break;
+	default:
+		goto err_dma;
+	}
 
-	spin_lock(&sपंचांग32_hash.lock);
-	list_add_tail(&hdev->list, &sपंचांग32_hash.dev_list);
-	spin_unlock(&sपंचांग32_hash.lock);
+	spin_lock(&stm32_hash.lock);
+	list_add_tail(&hdev->list, &stm32_hash.dev_list);
+	spin_unlock(&stm32_hash.lock);
 
 	/* Initialize crypto engine */
 	hdev->engine = crypto_engine_alloc_init(dev, 1);
-	अगर (!hdev->engine) अणु
+	if (!hdev->engine) {
 		ret = -ENOMEM;
-		जाओ err_engine;
-	पूर्ण
+		goto err_engine;
+	}
 
 	ret = crypto_engine_start(hdev->engine);
-	अगर (ret)
-		जाओ err_engine_start;
+	if (ret)
+		goto err_engine_start;
 
-	hdev->dma_mode = sपंचांग32_hash_पढ़ो(hdev, HASH_HWCFGR);
+	hdev->dma_mode = stm32_hash_read(hdev, HASH_HWCFGR);
 
 	/* Register algos */
-	ret = sपंचांग32_hash_रेजिस्टर_algs(hdev);
-	अगर (ret)
-		जाओ err_algs;
+	ret = stm32_hash_register_algs(hdev);
+	if (ret)
+		goto err_algs;
 
 	dev_info(dev, "Init HASH done HW ver %x DMA mode %u\n",
-		 sपंचांग32_hash_पढ़ो(hdev, HASH_VER), hdev->dma_mode);
+		 stm32_hash_read(hdev, HASH_VER), hdev->dma_mode);
 
-	pm_runसमय_put_sync(dev);
+	pm_runtime_put_sync(dev);
 
-	वापस 0;
+	return 0;
 
 err_algs:
 err_engine_start:
-	crypto_engine_निकास(hdev->engine);
+	crypto_engine_exit(hdev->engine);
 err_engine:
-	spin_lock(&sपंचांग32_hash.lock);
+	spin_lock(&stm32_hash.lock);
 	list_del(&hdev->list);
-	spin_unlock(&sपंचांग32_hash.lock);
+	spin_unlock(&stm32_hash.lock);
 err_dma:
-	अगर (hdev->dma_lch)
+	if (hdev->dma_lch)
 		dma_release_channel(hdev->dma_lch);
 err_reset:
-	pm_runसमय_disable(dev);
-	pm_runसमय_put_noidle(dev);
+	pm_runtime_disable(dev);
+	pm_runtime_put_noidle(dev);
 
 	clk_disable_unprepare(hdev->clk);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sपंचांग32_hash_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sपंचांग32_hash_dev *hdev;
-	पूर्णांक ret;
+static int stm32_hash_remove(struct platform_device *pdev)
+{
+	struct stm32_hash_dev *hdev;
+	int ret;
 
-	hdev = platक्रमm_get_drvdata(pdev);
-	अगर (!hdev)
-		वापस -ENODEV;
+	hdev = platform_get_drvdata(pdev);
+	if (!hdev)
+		return -ENODEV;
 
-	ret = pm_runसमय_resume_and_get(hdev->dev);
-	अगर (ret < 0)
-		वापस ret;
+	ret = pm_runtime_resume_and_get(hdev->dev);
+	if (ret < 0)
+		return ret;
 
-	sपंचांग32_hash_unरेजिस्टर_algs(hdev);
+	stm32_hash_unregister_algs(hdev);
 
-	crypto_engine_निकास(hdev->engine);
+	crypto_engine_exit(hdev->engine);
 
-	spin_lock(&sपंचांग32_hash.lock);
+	spin_lock(&stm32_hash.lock);
 	list_del(&hdev->list);
-	spin_unlock(&sपंचांग32_hash.lock);
+	spin_unlock(&stm32_hash.lock);
 
-	अगर (hdev->dma_lch)
+	if (hdev->dma_lch)
 		dma_release_channel(hdev->dma_lch);
 
-	pm_runसमय_disable(hdev->dev);
-	pm_runसमय_put_noidle(hdev->dev);
+	pm_runtime_disable(hdev->dev);
+	pm_runtime_put_noidle(hdev->dev);
 
 	clk_disable_unprepare(hdev->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक sपंचांग32_hash_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा sपंचांग32_hash_dev *hdev = dev_get_drvdata(dev);
+#ifdef CONFIG_PM
+static int stm32_hash_runtime_suspend(struct device *dev)
+{
+	struct stm32_hash_dev *hdev = dev_get_drvdata(dev);
 
 	clk_disable_unprepare(hdev->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sपंचांग32_hash_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा sपंचांग32_hash_dev *hdev = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static int stm32_hash_runtime_resume(struct device *dev)
+{
+	struct stm32_hash_dev *hdev = dev_get_drvdata(dev);
+	int ret;
 
 	ret = clk_prepare_enable(hdev->clk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(hdev->dev, "Failed to prepare_enable clock\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल स्थिर काष्ठा dev_pm_ops sपंचांग32_hash_pm_ops = अणु
-	SET_SYSTEM_SLEEP_PM_OPS(pm_runसमय_क्रमce_suspend,
-				pm_runसमय_क्रमce_resume)
-	SET_RUNTIME_PM_OPS(sपंचांग32_hash_runसमय_suspend,
-			   sपंचांग32_hash_runसमय_resume, शून्य)
-पूर्ण;
+static const struct dev_pm_ops stm32_hash_pm_ops = {
+	SET_SYSTEM_SLEEP_PM_OPS(pm_runtime_force_suspend,
+				pm_runtime_force_resume)
+	SET_RUNTIME_PM_OPS(stm32_hash_runtime_suspend,
+			   stm32_hash_runtime_resume, NULL)
+};
 
-अटल काष्ठा platक्रमm_driver sपंचांग32_hash_driver = अणु
-	.probe		= sपंचांग32_hash_probe,
-	.हटाओ		= sपंचांग32_hash_हटाओ,
-	.driver		= अणु
+static struct platform_driver stm32_hash_driver = {
+	.probe		= stm32_hash_probe,
+	.remove		= stm32_hash_remove,
+	.driver		= {
 		.name	= "stm32-hash",
-		.pm = &sपंचांग32_hash_pm_ops,
-		.of_match_table	= sपंचांग32_hash_of_match,
-	पूर्ण
-पूर्ण;
+		.pm = &stm32_hash_pm_ops,
+		.of_match_table	= stm32_hash_of_match,
+	}
+};
 
-module_platक्रमm_driver(sपंचांग32_hash_driver);
+module_platform_driver(stm32_hash_driver);
 
 MODULE_DESCRIPTION("STM32 SHA1/224/256 & MD5 (HMAC) hw accelerator driver");
 MODULE_AUTHOR("Lionel Debieve <lionel.debieve@st.com>");

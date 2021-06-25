@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * generic helper functions क्रम handling video4linux capture buffers
+ * generic helper functions for handling video4linux capture buffers
  *
  * (c) 2007 Mauro Carvalho Chehab, <mchehab@kernel.org>
  *
@@ -11,149 +10,149 @@
  * (c) 2006 Ted Walther and John Sokol
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/पूर्णांकerrupt.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/mm.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/interrupt.h>
 
-#समावेश <media/videobuf-core.h>
-#समावेश <media/v4l2-common.h>
+#include <media/videobuf-core.h>
+#include <media/v4l2-common.h>
 
-#घोषणा MAGIC_BUFFER 0x20070728
-#घोषणा MAGIC_CHECK(is, should)						\
-	करो अणु								\
-		अगर (unlikely((is) != (should))) अणु			\
-			prपूर्णांकk(KERN_ERR					\
+#define MAGIC_BUFFER 0x20070728
+#define MAGIC_CHECK(is, should)						\
+	do {								\
+		if (unlikely((is) != (should))) {			\
+			printk(KERN_ERR					\
 				"magic mismatch: %x (expected %x)\n",	\
 					is, should);			\
 			BUG();						\
-		पूर्ण							\
-	पूर्ण जबतक (0)
+		}							\
+	} while (0)
 
-अटल पूर्णांक debug;
-module_param(debug, पूर्णांक, 0644);
+static int debug;
+module_param(debug, int, 0644);
 
 MODULE_DESCRIPTION("helper module to manage video4linux buffers");
 MODULE_AUTHOR("Mauro Carvalho Chehab <mchehab@kernel.org>");
 MODULE_LICENSE("GPL");
 
-#घोषणा dprपूर्णांकk(level, fmt, arg...)					\
-	करो अणु								\
-		अगर (debug >= level)					\
-			prपूर्णांकk(KERN_DEBUG "vbuf: " fmt, ## arg);	\
-	पूर्ण जबतक (0)
+#define dprintk(level, fmt, arg...)					\
+	do {								\
+		if (debug >= level)					\
+			printk(KERN_DEBUG "vbuf: " fmt, ## arg);	\
+	} while (0)
 
 /* --------------------------------------------------------------------- */
 
-#घोषणा CALL(q, f, arg...)						\
-	((q->पूर्णांक_ops->f) ? q->पूर्णांक_ops->f(arg) : 0)
-#घोषणा CALLPTR(q, f, arg...)						\
-	((q->पूर्णांक_ops->f) ? q->पूर्णांक_ops->f(arg) : शून्य)
+#define CALL(q, f, arg...)						\
+	((q->int_ops->f) ? q->int_ops->f(arg) : 0)
+#define CALLPTR(q, f, arg...)						\
+	((q->int_ops->f) ? q->int_ops->f(arg) : NULL)
 
-काष्ठा videobuf_buffer *videobuf_alloc_vb(काष्ठा videobuf_queue *q)
-अणु
-	काष्ठा videobuf_buffer *vb;
+struct videobuf_buffer *videobuf_alloc_vb(struct videobuf_queue *q)
+{
+	struct videobuf_buffer *vb;
 
-	BUG_ON(q->msize < माप(*vb));
+	BUG_ON(q->msize < sizeof(*vb));
 
-	अगर (!q->पूर्णांक_ops || !q->पूर्णांक_ops->alloc_vb) अणु
-		prपूर्णांकk(KERN_ERR "No specific ops defined!\n");
+	if (!q->int_ops || !q->int_ops->alloc_vb) {
+		printk(KERN_ERR "No specific ops defined!\n");
 		BUG();
-	पूर्ण
+	}
 
-	vb = q->पूर्णांक_ops->alloc_vb(q->msize);
-	अगर (शून्य != vb) अणु
-		init_रुकोqueue_head(&vb->करोne);
+	vb = q->int_ops->alloc_vb(q->msize);
+	if (NULL != vb) {
+		init_waitqueue_head(&vb->done);
 		vb->magic = MAGIC_BUFFER;
-	पूर्ण
+	}
 
-	वापस vb;
-पूर्ण
+	return vb;
+}
 EXPORT_SYMBOL_GPL(videobuf_alloc_vb);
 
-अटल पूर्णांक state_neither_active_nor_queued(काष्ठा videobuf_queue *q,
-					   काष्ठा videobuf_buffer *vb)
-अणु
-	अचिन्हित दीर्घ flags;
+static int state_neither_active_nor_queued(struct videobuf_queue *q,
+					   struct videobuf_buffer *vb)
+{
+	unsigned long flags;
 	bool rc;
 
 	spin_lock_irqsave(q->irqlock, flags);
 	rc = vb->state != VIDEOBUF_ACTIVE && vb->state != VIDEOBUF_QUEUED;
 	spin_unlock_irqrestore(q->irqlock, flags);
-	वापस rc;
-पूर्ण;
+	return rc;
+};
 
-पूर्णांक videobuf_रुकोon(काष्ठा videobuf_queue *q, काष्ठा videobuf_buffer *vb,
-		पूर्णांक non_blocking, पूर्णांक पूर्णांकr)
-अणु
+int videobuf_waiton(struct videobuf_queue *q, struct videobuf_buffer *vb,
+		int non_blocking, int intr)
+{
 	bool is_ext_locked;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	MAGIC_CHECK(vb->magic, MAGIC_BUFFER);
 
-	अगर (non_blocking) अणु
-		अगर (state_neither_active_nor_queued(q, vb))
-			वापस 0;
-		वापस -EAGAIN;
-	पूर्ण
+	if (non_blocking) {
+		if (state_neither_active_nor_queued(q, vb))
+			return 0;
+		return -EAGAIN;
+	}
 
 	is_ext_locked = q->ext_lock && mutex_is_locked(q->ext_lock);
 
-	/* Release vdev lock to prevent this रुको from blocking outside access to
+	/* Release vdev lock to prevent this wait from blocking outside access to
 	   the device. */
-	अगर (is_ext_locked)
+	if (is_ext_locked)
 		mutex_unlock(q->ext_lock);
-	अगर (पूर्णांकr)
-		ret = रुको_event_पूर्णांकerruptible(vb->करोne,
+	if (intr)
+		ret = wait_event_interruptible(vb->done,
 					state_neither_active_nor_queued(q, vb));
-	अन्यथा
-		रुको_event(vb->करोne, state_neither_active_nor_queued(q, vb));
+	else
+		wait_event(vb->done, state_neither_active_nor_queued(q, vb));
 	/* Relock */
-	अगर (is_ext_locked)
+	if (is_ext_locked)
 		mutex_lock(q->ext_lock);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(videobuf_रुकोon);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(videobuf_waiton);
 
-पूर्णांक videobuf_iolock(काष्ठा videobuf_queue *q, काष्ठा videobuf_buffer *vb,
-		    काष्ठा v4l2_framebuffer *fbuf)
-अणु
+int videobuf_iolock(struct videobuf_queue *q, struct videobuf_buffer *vb,
+		    struct v4l2_framebuffer *fbuf)
+{
 	MAGIC_CHECK(vb->magic, MAGIC_BUFFER);
-	MAGIC_CHECK(q->पूर्णांक_ops->magic, MAGIC_QTYPE_OPS);
+	MAGIC_CHECK(q->int_ops->magic, MAGIC_QTYPE_OPS);
 
-	वापस CALL(q, iolock, q, vb, fbuf);
-पूर्ण
+	return CALL(q, iolock, q, vb, fbuf);
+}
 EXPORT_SYMBOL_GPL(videobuf_iolock);
 
-व्योम *videobuf_queue_to_vaddr(काष्ठा videobuf_queue *q,
-			      काष्ठा videobuf_buffer *buf)
-अणु
-	अगर (q->पूर्णांक_ops->vaddr)
-		वापस q->पूर्णांक_ops->vaddr(buf);
-	वापस शून्य;
-पूर्ण
+void *videobuf_queue_to_vaddr(struct videobuf_queue *q,
+			      struct videobuf_buffer *buf)
+{
+	if (q->int_ops->vaddr)
+		return q->int_ops->vaddr(buf);
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(videobuf_queue_to_vaddr);
 
 /* --------------------------------------------------------------------- */
 
 
-व्योम videobuf_queue_core_init(काष्ठा videobuf_queue *q,
-			 स्थिर काष्ठा videobuf_queue_ops *ops,
-			 काष्ठा device *dev,
+void videobuf_queue_core_init(struct videobuf_queue *q,
+			 const struct videobuf_queue_ops *ops,
+			 struct device *dev,
 			 spinlock_t *irqlock,
-			 क्रमागत v4l2_buf_type type,
-			 क्रमागत v4l2_field field,
-			 अचिन्हित पूर्णांक msize,
-			 व्योम *priv,
-			 काष्ठा videobuf_qtype_ops *पूर्णांक_ops,
-			 काष्ठा mutex *ext_lock)
-अणु
+			 enum v4l2_buf_type type,
+			 enum v4l2_field field,
+			 unsigned int msize,
+			 void *priv,
+			 struct videobuf_qtype_ops *int_ops,
+			 struct mutex *ext_lock)
+{
 	BUG_ON(!q);
-	स_रखो(q, 0, माप(*q));
+	memset(q, 0, sizeof(*q));
 	q->irqlock   = irqlock;
 	q->ext_lock  = ext_lock;
 	q->dev       = dev;
@@ -162,7 +161,7 @@ EXPORT_SYMBOL_GPL(videobuf_queue_to_vaddr);
 	q->msize     = msize;
 	q->ops       = ops;
 	q->priv_data = priv;
-	q->पूर्णांक_ops   = पूर्णांक_ops;
+	q->int_ops   = int_ops;
 
 	/* All buffer operations are mandatory */
 	BUG_ON(!q->ops->buf_setup);
@@ -170,1030 +169,1030 @@ EXPORT_SYMBOL_GPL(videobuf_queue_to_vaddr);
 	BUG_ON(!q->ops->buf_queue);
 	BUG_ON(!q->ops->buf_release);
 
-	/* Lock is mandatory क्रम queue_cancel to work */
+	/* Lock is mandatory for queue_cancel to work */
 	BUG_ON(!irqlock);
 
-	/* Having implementations क्रम असलtract methods are mandatory */
-	BUG_ON(!q->पूर्णांक_ops);
+	/* Having implementations for abstract methods are mandatory */
+	BUG_ON(!q->int_ops);
 
 	mutex_init(&q->vb_lock);
-	init_रुकोqueue_head(&q->रुको);
+	init_waitqueue_head(&q->wait);
 	INIT_LIST_HEAD(&q->stream);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(videobuf_queue_core_init);
 
-/* Locking: Only usage in bttv unsafe find way to हटाओ */
-पूर्णांक videobuf_queue_is_busy(काष्ठा videobuf_queue *q)
-अणु
-	पूर्णांक i;
+/* Locking: Only usage in bttv unsafe find way to remove */
+int videobuf_queue_is_busy(struct videobuf_queue *q)
+{
+	int i;
 
-	MAGIC_CHECK(q->पूर्णांक_ops->magic, MAGIC_QTYPE_OPS);
+	MAGIC_CHECK(q->int_ops->magic, MAGIC_QTYPE_OPS);
 
-	अगर (q->streaming) अणु
-		dprपूर्णांकk(1, "busy: streaming active\n");
-		वापस 1;
-	पूर्ण
-	अगर (q->पढ़ोing) अणु
-		dprपूर्णांकk(1, "busy: pending read #1\n");
-		वापस 1;
-	पूर्ण
-	अगर (q->पढ़ो_buf) अणु
-		dprपूर्णांकk(1, "busy: pending read #2\n");
-		वापस 1;
-	पूर्ण
-	क्रम (i = 0; i < VIDEO_MAX_FRAME; i++) अणु
-		अगर (शून्य == q->bufs[i])
-			जारी;
-		अगर (q->bufs[i]->map) अणु
-			dprपूर्णांकk(1, "busy: buffer #%d mapped\n", i);
-			वापस 1;
-		पूर्ण
-		अगर (q->bufs[i]->state == VIDEOBUF_QUEUED) अणु
-			dprपूर्णांकk(1, "busy: buffer #%d queued\n", i);
-			वापस 1;
-		पूर्ण
-		अगर (q->bufs[i]->state == VIDEOBUF_ACTIVE) अणु
-			dprपूर्णांकk(1, "busy: buffer #%d active\n", i);
-			वापस 1;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+	if (q->streaming) {
+		dprintk(1, "busy: streaming active\n");
+		return 1;
+	}
+	if (q->reading) {
+		dprintk(1, "busy: pending read #1\n");
+		return 1;
+	}
+	if (q->read_buf) {
+		dprintk(1, "busy: pending read #2\n");
+		return 1;
+	}
+	for (i = 0; i < VIDEO_MAX_FRAME; i++) {
+		if (NULL == q->bufs[i])
+			continue;
+		if (q->bufs[i]->map) {
+			dprintk(1, "busy: buffer #%d mapped\n", i);
+			return 1;
+		}
+		if (q->bufs[i]->state == VIDEOBUF_QUEUED) {
+			dprintk(1, "busy: buffer #%d queued\n", i);
+			return 1;
+		}
+		if (q->bufs[i]->state == VIDEOBUF_ACTIVE) {
+			dprintk(1, "busy: buffer #%d active\n", i);
+			return 1;
+		}
+	}
+	return 0;
+}
 EXPORT_SYMBOL_GPL(videobuf_queue_is_busy);
 
 /*
- * __videobuf_मुक्त() - मुक्त all the buffers and their control काष्ठाures
+ * __videobuf_free() - free all the buffers and their control structures
  *
- * This function can only be called अगर streaming/पढ़ोing is off, i.e. no buffers
+ * This function can only be called if streaming/reading is off, i.e. no buffers
  * are under control of the driver.
  */
 /* Locking: Caller holds q->vb_lock */
-अटल पूर्णांक __videobuf_मुक्त(काष्ठा videobuf_queue *q)
-अणु
-	पूर्णांक i;
+static int __videobuf_free(struct videobuf_queue *q)
+{
+	int i;
 
-	dprपूर्णांकk(1, "%s\n", __func__);
-	अगर (!q)
-		वापस 0;
+	dprintk(1, "%s\n", __func__);
+	if (!q)
+		return 0;
 
-	अगर (q->streaming || q->पढ़ोing) अणु
-		dprपूर्णांकk(1, "Cannot free buffers when streaming or reading\n");
-		वापस -EBUSY;
-	पूर्ण
+	if (q->streaming || q->reading) {
+		dprintk(1, "Cannot free buffers when streaming or reading\n");
+		return -EBUSY;
+	}
 
-	MAGIC_CHECK(q->पूर्णांक_ops->magic, MAGIC_QTYPE_OPS);
+	MAGIC_CHECK(q->int_ops->magic, MAGIC_QTYPE_OPS);
 
-	क्रम (i = 0; i < VIDEO_MAX_FRAME; i++)
-		अगर (q->bufs[i] && q->bufs[i]->map) अणु
-			dprपूर्णांकk(1, "Cannot free mmapped buffers\n");
-			वापस -EBUSY;
-		पूर्ण
+	for (i = 0; i < VIDEO_MAX_FRAME; i++)
+		if (q->bufs[i] && q->bufs[i]->map) {
+			dprintk(1, "Cannot free mmapped buffers\n");
+			return -EBUSY;
+		}
 
-	क्रम (i = 0; i < VIDEO_MAX_FRAME; i++) अणु
-		अगर (शून्य == q->bufs[i])
-			जारी;
+	for (i = 0; i < VIDEO_MAX_FRAME; i++) {
+		if (NULL == q->bufs[i])
+			continue;
 		q->ops->buf_release(q, q->bufs[i]);
-		kमुक्त(q->bufs[i]);
-		q->bufs[i] = शून्य;
-	पूर्ण
+		kfree(q->bufs[i]);
+		q->bufs[i] = NULL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Locking: Caller holds q->vb_lock */
-व्योम videobuf_queue_cancel(काष्ठा videobuf_queue *q)
-अणु
-	अचिन्हित दीर्घ flags = 0;
-	पूर्णांक i;
+void videobuf_queue_cancel(struct videobuf_queue *q)
+{
+	unsigned long flags = 0;
+	int i;
 
 	q->streaming = 0;
-	q->पढ़ोing  = 0;
-	wake_up_पूर्णांकerruptible_sync(&q->रुको);
+	q->reading  = 0;
+	wake_up_interruptible_sync(&q->wait);
 
-	/* हटाओ queued buffers from list */
+	/* remove queued buffers from list */
 	spin_lock_irqsave(q->irqlock, flags);
-	क्रम (i = 0; i < VIDEO_MAX_FRAME; i++) अणु
-		अगर (शून्य == q->bufs[i])
-			जारी;
-		अगर (q->bufs[i]->state == VIDEOBUF_QUEUED) अणु
+	for (i = 0; i < VIDEO_MAX_FRAME; i++) {
+		if (NULL == q->bufs[i])
+			continue;
+		if (q->bufs[i]->state == VIDEOBUF_QUEUED) {
 			list_del(&q->bufs[i]->queue);
 			q->bufs[i]->state = VIDEOBUF_ERROR;
-			wake_up_all(&q->bufs[i]->करोne);
-		पूर्ण
-	पूर्ण
+			wake_up_all(&q->bufs[i]->done);
+		}
+	}
 	spin_unlock_irqrestore(q->irqlock, flags);
 
-	/* मुक्त all buffers + clear queue */
-	क्रम (i = 0; i < VIDEO_MAX_FRAME; i++) अणु
-		अगर (शून्य == q->bufs[i])
-			जारी;
+	/* free all buffers + clear queue */
+	for (i = 0; i < VIDEO_MAX_FRAME; i++) {
+		if (NULL == q->bufs[i])
+			continue;
 		q->ops->buf_release(q, q->bufs[i]);
-	पूर्ण
+	}
 	INIT_LIST_HEAD(&q->stream);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(videobuf_queue_cancel);
 
 /* --------------------------------------------------------------------- */
 
 /* Locking: Caller holds q->vb_lock */
-क्रमागत v4l2_field videobuf_next_field(काष्ठा videobuf_queue *q)
-अणु
-	क्रमागत v4l2_field field = q->field;
+enum v4l2_field videobuf_next_field(struct videobuf_queue *q)
+{
+	enum v4l2_field field = q->field;
 
 	BUG_ON(V4L2_FIELD_ANY == field);
 
-	अगर (V4L2_FIELD_ALTERNATE == field) अणु
-		अगर (V4L2_FIELD_TOP == q->last) अणु
+	if (V4L2_FIELD_ALTERNATE == field) {
+		if (V4L2_FIELD_TOP == q->last) {
 			field   = V4L2_FIELD_BOTTOM;
 			q->last = V4L2_FIELD_BOTTOM;
-		पूर्ण अन्यथा अणु
+		} else {
 			field   = V4L2_FIELD_TOP;
 			q->last = V4L2_FIELD_TOP;
-		पूर्ण
-	पूर्ण
-	वापस field;
-पूर्ण
+		}
+	}
+	return field;
+}
 EXPORT_SYMBOL_GPL(videobuf_next_field);
 
 /* Locking: Caller holds q->vb_lock */
-अटल व्योम videobuf_status(काष्ठा videobuf_queue *q, काष्ठा v4l2_buffer *b,
-			    काष्ठा videobuf_buffer *vb, क्रमागत v4l2_buf_type type)
-अणु
+static void videobuf_status(struct videobuf_queue *q, struct v4l2_buffer *b,
+			    struct videobuf_buffer *vb, enum v4l2_buf_type type)
+{
 	MAGIC_CHECK(vb->magic, MAGIC_BUFFER);
-	MAGIC_CHECK(q->पूर्णांक_ops->magic, MAGIC_QTYPE_OPS);
+	MAGIC_CHECK(q->int_ops->magic, MAGIC_QTYPE_OPS);
 
 	b->index    = vb->i;
 	b->type     = type;
 
 	b->memory   = vb->memory;
-	चयन (b->memory) अणु
-	हाल V4L2_MEMORY_MMAP:
+	switch (b->memory) {
+	case V4L2_MEMORY_MMAP:
 		b->m.offset  = vb->boff;
 		b->length    = vb->bsize;
-		अवरोध;
-	हाल V4L2_MEMORY_USERPTR:
+		break;
+	case V4L2_MEMORY_USERPTR:
 		b->m.userptr = vb->baddr;
 		b->length    = vb->bsize;
-		अवरोध;
-	हाल V4L2_MEMORY_OVERLAY:
+		break;
+	case V4L2_MEMORY_OVERLAY:
 		b->m.offset  = vb->boff;
-		अवरोध;
-	हाल V4L2_MEMORY_DMABUF:
+		break;
+	case V4L2_MEMORY_DMABUF:
 		/* DMABUF is not handled in videobuf framework */
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	b->flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
-	अगर (vb->map)
+	if (vb->map)
 		b->flags |= V4L2_BUF_FLAG_MAPPED;
 
-	चयन (vb->state) अणु
-	हाल VIDEOBUF_PREPARED:
-	हाल VIDEOBUF_QUEUED:
-	हाल VIDEOBUF_ACTIVE:
+	switch (vb->state) {
+	case VIDEOBUF_PREPARED:
+	case VIDEOBUF_QUEUED:
+	case VIDEOBUF_ACTIVE:
 		b->flags |= V4L2_BUF_FLAG_QUEUED;
-		अवरोध;
-	हाल VIDEOBUF_ERROR:
+		break;
+	case VIDEOBUF_ERROR:
 		b->flags |= V4L2_BUF_FLAG_ERROR;
 		fallthrough;
-	हाल VIDEOBUF_DONE:
+	case VIDEOBUF_DONE:
 		b->flags |= V4L2_BUF_FLAG_DONE;
-		अवरोध;
-	हाल VIDEOBUF_NEEDS_INIT:
-	हाल VIDEOBUF_IDLE:
+		break;
+	case VIDEOBUF_NEEDS_INIT:
+	case VIDEOBUF_IDLE:
 		/* nothing */
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	b->field     = vb->field;
-	v4l2_buffer_set_बारtamp(b, vb->ts);
+	v4l2_buffer_set_timestamp(b, vb->ts);
 	b->bytesused = vb->size;
 	b->sequence  = vb->field_count >> 1;
-पूर्ण
+}
 
-पूर्णांक videobuf_mmap_मुक्त(काष्ठा videobuf_queue *q)
-अणु
-	पूर्णांक ret;
+int videobuf_mmap_free(struct videobuf_queue *q)
+{
+	int ret;
 	videobuf_queue_lock(q);
-	ret = __videobuf_मुक्त(q);
+	ret = __videobuf_free(q);
 	videobuf_queue_unlock(q);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(videobuf_mmap_मुक्त);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(videobuf_mmap_free);
 
 /* Locking: Caller holds q->vb_lock */
-पूर्णांक __videobuf_mmap_setup(काष्ठा videobuf_queue *q,
-			अचिन्हित पूर्णांक bcount, अचिन्हित पूर्णांक bsize,
-			क्रमागत v4l2_memory memory)
-अणु
-	अचिन्हित पूर्णांक i;
-	पूर्णांक err;
+int __videobuf_mmap_setup(struct videobuf_queue *q,
+			unsigned int bcount, unsigned int bsize,
+			enum v4l2_memory memory)
+{
+	unsigned int i;
+	int err;
 
-	MAGIC_CHECK(q->पूर्णांक_ops->magic, MAGIC_QTYPE_OPS);
+	MAGIC_CHECK(q->int_ops->magic, MAGIC_QTYPE_OPS);
 
-	err = __videobuf_मुक्त(q);
-	अगर (0 != err)
-		वापस err;
+	err = __videobuf_free(q);
+	if (0 != err)
+		return err;
 
 	/* Allocate and initialize buffers */
-	क्रम (i = 0; i < bcount; i++) अणु
+	for (i = 0; i < bcount; i++) {
 		q->bufs[i] = videobuf_alloc_vb(q);
 
-		अगर (शून्य == q->bufs[i])
-			अवरोध;
+		if (NULL == q->bufs[i])
+			break;
 
 		q->bufs[i]->i      = i;
 		q->bufs[i]->memory = memory;
 		q->bufs[i]->bsize  = bsize;
-		चयन (memory) अणु
-		हाल V4L2_MEMORY_MMAP:
+		switch (memory) {
+		case V4L2_MEMORY_MMAP:
 			q->bufs[i]->boff = PAGE_ALIGN(bsize) * i;
-			अवरोध;
-		हाल V4L2_MEMORY_USERPTR:
-		हाल V4L2_MEMORY_OVERLAY:
-		हाल V4L2_MEMORY_DMABUF:
+			break;
+		case V4L2_MEMORY_USERPTR:
+		case V4L2_MEMORY_OVERLAY:
+		case V4L2_MEMORY_DMABUF:
 			/* nothing */
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (!i)
-		वापस -ENOMEM;
+	if (!i)
+		return -ENOMEM;
 
-	dprपूर्णांकk(1, "mmap setup: %d buffers, %d bytes each\n", i, bsize);
+	dprintk(1, "mmap setup: %d buffers, %d bytes each\n", i, bsize);
 
-	वापस i;
-पूर्ण
+	return i;
+}
 EXPORT_SYMBOL_GPL(__videobuf_mmap_setup);
 
-पूर्णांक videobuf_mmap_setup(काष्ठा videobuf_queue *q,
-			अचिन्हित पूर्णांक bcount, अचिन्हित पूर्णांक bsize,
-			क्रमागत v4l2_memory memory)
-अणु
-	पूर्णांक ret;
+int videobuf_mmap_setup(struct videobuf_queue *q,
+			unsigned int bcount, unsigned int bsize,
+			enum v4l2_memory memory)
+{
+	int ret;
 	videobuf_queue_lock(q);
 	ret = __videobuf_mmap_setup(q, bcount, bsize, memory);
 	videobuf_queue_unlock(q);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(videobuf_mmap_setup);
 
-पूर्णांक videobuf_reqbufs(काष्ठा videobuf_queue *q,
-		 काष्ठा v4l2_requestbuffers *req)
-अणु
-	अचिन्हित पूर्णांक size, count;
-	पूर्णांक retval;
+int videobuf_reqbufs(struct videobuf_queue *q,
+		 struct v4l2_requestbuffers *req)
+{
+	unsigned int size, count;
+	int retval;
 
-	अगर (req->memory != V4L2_MEMORY_MMAP     &&
+	if (req->memory != V4L2_MEMORY_MMAP     &&
 	    req->memory != V4L2_MEMORY_USERPTR  &&
-	    req->memory != V4L2_MEMORY_OVERLAY) अणु
-		dprपूर्णांकk(1, "reqbufs: memory type invalid\n");
-		वापस -EINVAL;
-	पूर्ण
+	    req->memory != V4L2_MEMORY_OVERLAY) {
+		dprintk(1, "reqbufs: memory type invalid\n");
+		return -EINVAL;
+	}
 
 	videobuf_queue_lock(q);
-	अगर (req->type != q->type) अणु
-		dprपूर्णांकk(1, "reqbufs: queue type invalid\n");
+	if (req->type != q->type) {
+		dprintk(1, "reqbufs: queue type invalid\n");
 		retval = -EINVAL;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (q->streaming) अणु
-		dprपूर्णांकk(1, "reqbufs: streaming already exists\n");
+	if (q->streaming) {
+		dprintk(1, "reqbufs: streaming already exists\n");
 		retval = -EBUSY;
-		जाओ करोne;
-	पूर्ण
-	अगर (!list_empty(&q->stream)) अणु
-		dprपूर्णांकk(1, "reqbufs: stream running\n");
+		goto done;
+	}
+	if (!list_empty(&q->stream)) {
+		dprintk(1, "reqbufs: stream running\n");
 		retval = -EBUSY;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (req->count == 0) अणु
-		dprपूर्णांकk(1, "reqbufs: count invalid (%d)\n", req->count);
-		retval = __videobuf_मुक्त(q);
-		जाओ करोne;
-	पूर्ण
+	if (req->count == 0) {
+		dprintk(1, "reqbufs: count invalid (%d)\n", req->count);
+		retval = __videobuf_free(q);
+		goto done;
+	}
 
 	count = req->count;
-	अगर (count > VIDEO_MAX_FRAME)
+	if (count > VIDEO_MAX_FRAME)
 		count = VIDEO_MAX_FRAME;
 	size = 0;
 	q->ops->buf_setup(q, &count, &size);
-	dprपूर्णांकk(1, "reqbufs: bufs=%d, size=0x%x [%u pages total]\n",
+	dprintk(1, "reqbufs: bufs=%d, size=0x%x [%u pages total]\n",
 		count, size,
-		(अचिन्हित पूर्णांक)((count * PAGE_ALIGN(size)) >> PAGE_SHIFT));
+		(unsigned int)((count * PAGE_ALIGN(size)) >> PAGE_SHIFT));
 
 	retval = __videobuf_mmap_setup(q, count, size, req->memory);
-	अगर (retval < 0) अणु
-		dprपूर्णांकk(1, "reqbufs: mmap setup returned %d\n", retval);
-		जाओ करोne;
-	पूर्ण
+	if (retval < 0) {
+		dprintk(1, "reqbufs: mmap setup returned %d\n", retval);
+		goto done;
+	}
 
 	req->count = retval;
 	retval = 0;
 
- करोne:
+ done:
 	videobuf_queue_unlock(q);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 EXPORT_SYMBOL_GPL(videobuf_reqbufs);
 
-पूर्णांक videobuf_querybuf(काष्ठा videobuf_queue *q, काष्ठा v4l2_buffer *b)
-अणु
-	पूर्णांक ret = -EINVAL;
+int videobuf_querybuf(struct videobuf_queue *q, struct v4l2_buffer *b)
+{
+	int ret = -EINVAL;
 
 	videobuf_queue_lock(q);
-	अगर (unlikely(b->type != q->type)) अणु
-		dprपूर्णांकk(1, "querybuf: Wrong type.\n");
-		जाओ करोne;
-	पूर्ण
-	अगर (unlikely(b->index >= VIDEO_MAX_FRAME)) अणु
-		dprपूर्णांकk(1, "querybuf: index out of range.\n");
-		जाओ करोne;
-	पूर्ण
-	अगर (unlikely(शून्य == q->bufs[b->index])) अणु
-		dprपूर्णांकk(1, "querybuf: buffer is null.\n");
-		जाओ करोne;
-	पूर्ण
+	if (unlikely(b->type != q->type)) {
+		dprintk(1, "querybuf: Wrong type.\n");
+		goto done;
+	}
+	if (unlikely(b->index >= VIDEO_MAX_FRAME)) {
+		dprintk(1, "querybuf: index out of range.\n");
+		goto done;
+	}
+	if (unlikely(NULL == q->bufs[b->index])) {
+		dprintk(1, "querybuf: buffer is null.\n");
+		goto done;
+	}
 
 	videobuf_status(q, b, q->bufs[b->index], q->type);
 
 	ret = 0;
-करोne:
+done:
 	videobuf_queue_unlock(q);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(videobuf_querybuf);
 
-पूर्णांक videobuf_qbuf(काष्ठा videobuf_queue *q, काष्ठा v4l2_buffer *b)
-अणु
-	काष्ठा videobuf_buffer *buf;
-	क्रमागत v4l2_field field;
-	अचिन्हित दीर्घ flags = 0;
-	पूर्णांक retval;
+int videobuf_qbuf(struct videobuf_queue *q, struct v4l2_buffer *b)
+{
+	struct videobuf_buffer *buf;
+	enum v4l2_field field;
+	unsigned long flags = 0;
+	int retval;
 
-	MAGIC_CHECK(q->पूर्णांक_ops->magic, MAGIC_QTYPE_OPS);
+	MAGIC_CHECK(q->int_ops->magic, MAGIC_QTYPE_OPS);
 
-	अगर (b->memory == V4L2_MEMORY_MMAP)
-		mmap_पढ़ो_lock(current->mm);
+	if (b->memory == V4L2_MEMORY_MMAP)
+		mmap_read_lock(current->mm);
 
 	videobuf_queue_lock(q);
 	retval = -EBUSY;
-	अगर (q->पढ़ोing) अणु
-		dprपूर्णांकk(1, "qbuf: Reading running...\n");
-		जाओ करोne;
-	पूर्ण
+	if (q->reading) {
+		dprintk(1, "qbuf: Reading running...\n");
+		goto done;
+	}
 	retval = -EINVAL;
-	अगर (b->type != q->type) अणु
-		dprपूर्णांकk(1, "qbuf: Wrong type.\n");
-		जाओ करोne;
-	पूर्ण
-	अगर (b->index >= VIDEO_MAX_FRAME) अणु
-		dprपूर्णांकk(1, "qbuf: index out of range.\n");
-		जाओ करोne;
-	पूर्ण
+	if (b->type != q->type) {
+		dprintk(1, "qbuf: Wrong type.\n");
+		goto done;
+	}
+	if (b->index >= VIDEO_MAX_FRAME) {
+		dprintk(1, "qbuf: index out of range.\n");
+		goto done;
+	}
 	buf = q->bufs[b->index];
-	अगर (शून्य == buf) अणु
-		dprपूर्णांकk(1, "qbuf: buffer is null.\n");
-		जाओ करोne;
-	पूर्ण
+	if (NULL == buf) {
+		dprintk(1, "qbuf: buffer is null.\n");
+		goto done;
+	}
 	MAGIC_CHECK(buf->magic, MAGIC_BUFFER);
-	अगर (buf->memory != b->memory) अणु
-		dprपूर्णांकk(1, "qbuf: memory type is wrong.\n");
-		जाओ करोne;
-	पूर्ण
-	अगर (buf->state != VIDEOBUF_NEEDS_INIT && buf->state != VIDEOBUF_IDLE) अणु
-		dprपूर्णांकk(1, "qbuf: buffer is already queued or active.\n");
-		जाओ करोne;
-	पूर्ण
+	if (buf->memory != b->memory) {
+		dprintk(1, "qbuf: memory type is wrong.\n");
+		goto done;
+	}
+	if (buf->state != VIDEOBUF_NEEDS_INIT && buf->state != VIDEOBUF_IDLE) {
+		dprintk(1, "qbuf: buffer is already queued or active.\n");
+		goto done;
+	}
 
-	चयन (b->memory) अणु
-	हाल V4L2_MEMORY_MMAP:
-		अगर (0 == buf->baddr) अणु
-			dprपूर्णांकk(1, "qbuf: mmap requested but buffer addr is zero!\n");
-			जाओ करोne;
-		पूर्ण
-		अगर (q->type == V4L2_BUF_TYPE_VIDEO_OUTPUT
+	switch (b->memory) {
+	case V4L2_MEMORY_MMAP:
+		if (0 == buf->baddr) {
+			dprintk(1, "qbuf: mmap requested but buffer addr is zero!\n");
+			goto done;
+		}
+		if (q->type == V4L2_BUF_TYPE_VIDEO_OUTPUT
 		    || q->type == V4L2_BUF_TYPE_VBI_OUTPUT
 		    || q->type == V4L2_BUF_TYPE_SLICED_VBI_OUTPUT
-		    || q->type == V4L2_BUF_TYPE_SDR_OUTPUT) अणु
+		    || q->type == V4L2_BUF_TYPE_SDR_OUTPUT) {
 			buf->size = b->bytesused;
 			buf->field = b->field;
-			buf->ts = v4l2_buffer_get_बारtamp(b);
-		पूर्ण
-		अवरोध;
-	हाल V4L2_MEMORY_USERPTR:
-		अगर (b->length < buf->bsize) अणु
-			dprपूर्णांकk(1, "qbuf: buffer length is not enough\n");
-			जाओ करोne;
-		पूर्ण
-		अगर (VIDEOBUF_NEEDS_INIT != buf->state &&
+			buf->ts = v4l2_buffer_get_timestamp(b);
+		}
+		break;
+	case V4L2_MEMORY_USERPTR:
+		if (b->length < buf->bsize) {
+			dprintk(1, "qbuf: buffer length is not enough\n");
+			goto done;
+		}
+		if (VIDEOBUF_NEEDS_INIT != buf->state &&
 		    buf->baddr != b->m.userptr)
 			q->ops->buf_release(q, buf);
 		buf->baddr = b->m.userptr;
-		अवरोध;
-	हाल V4L2_MEMORY_OVERLAY:
+		break;
+	case V4L2_MEMORY_OVERLAY:
 		buf->boff = b->m.offset;
-		अवरोध;
-	शेष:
-		dprपूर्णांकk(1, "qbuf: wrong memory type\n");
-		जाओ करोne;
-	पूर्ण
+		break;
+	default:
+		dprintk(1, "qbuf: wrong memory type\n");
+		goto done;
+	}
 
-	dprपूर्णांकk(1, "qbuf: requesting next field\n");
+	dprintk(1, "qbuf: requesting next field\n");
 	field = videobuf_next_field(q);
 	retval = q->ops->buf_prepare(q, buf, field);
-	अगर (0 != retval) अणु
-		dprपूर्णांकk(1, "qbuf: buffer_prepare returned %d\n", retval);
-		जाओ करोne;
-	पूर्ण
+	if (0 != retval) {
+		dprintk(1, "qbuf: buffer_prepare returned %d\n", retval);
+		goto done;
+	}
 
 	list_add_tail(&buf->stream, &q->stream);
-	अगर (q->streaming) अणु
+	if (q->streaming) {
 		spin_lock_irqsave(q->irqlock, flags);
 		q->ops->buf_queue(q, buf);
 		spin_unlock_irqrestore(q->irqlock, flags);
-	पूर्ण
-	dprपूर्णांकk(1, "qbuf: succeeded\n");
+	}
+	dprintk(1, "qbuf: succeeded\n");
 	retval = 0;
-	wake_up_पूर्णांकerruptible_sync(&q->रुको);
+	wake_up_interruptible_sync(&q->wait);
 
-करोne:
+done:
 	videobuf_queue_unlock(q);
 
-	अगर (b->memory == V4L2_MEMORY_MMAP)
-		mmap_पढ़ो_unlock(current->mm);
+	if (b->memory == V4L2_MEMORY_MMAP)
+		mmap_read_unlock(current->mm);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 EXPORT_SYMBOL_GPL(videobuf_qbuf);
 
 /* Locking: Caller holds q->vb_lock */
-अटल पूर्णांक stream_next_buffer_check_queue(काष्ठा videobuf_queue *q, पूर्णांक noblock)
-अणु
-	पूर्णांक retval;
+static int stream_next_buffer_check_queue(struct videobuf_queue *q, int noblock)
+{
+	int retval;
 
 checks:
-	अगर (!q->streaming) अणु
-		dprपूर्णांकk(1, "next_buffer: Not streaming\n");
+	if (!q->streaming) {
+		dprintk(1, "next_buffer: Not streaming\n");
 		retval = -EINVAL;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (list_empty(&q->stream)) अणु
-		अगर (noblock) अणु
+	if (list_empty(&q->stream)) {
+		if (noblock) {
 			retval = -EAGAIN;
-			dprपूर्णांकk(2, "next_buffer: no buffers to dequeue\n");
-			जाओ करोne;
-		पूर्ण अन्यथा अणु
-			dprपूर्णांकk(2, "next_buffer: waiting on buffer\n");
+			dprintk(2, "next_buffer: no buffers to dequeue\n");
+			goto done;
+		} else {
+			dprintk(2, "next_buffer: waiting on buffer\n");
 
-			/* Drop lock to aव्योम deadlock with qbuf */
+			/* Drop lock to avoid deadlock with qbuf */
 			videobuf_queue_unlock(q);
 
 			/* Checking list_empty and streaming is safe without
-			 * locks because we जाओ checks to validate जबतक
-			 * holding locks beक्रमe proceeding */
-			retval = रुको_event_पूर्णांकerruptible(q->रुको,
+			 * locks because we goto checks to validate while
+			 * holding locks before proceeding */
+			retval = wait_event_interruptible(q->wait,
 				!list_empty(&q->stream) || !q->streaming);
 			videobuf_queue_lock(q);
 
-			अगर (retval)
-				जाओ करोne;
+			if (retval)
+				goto done;
 
-			जाओ checks;
-		पूर्ण
-	पूर्ण
+			goto checks;
+		}
+	}
 
 	retval = 0;
 
-करोne:
-	वापस retval;
-पूर्ण
+done:
+	return retval;
+}
 
 /* Locking: Caller holds q->vb_lock */
-अटल पूर्णांक stream_next_buffer(काष्ठा videobuf_queue *q,
-			काष्ठा videobuf_buffer **vb, पूर्णांक nonblocking)
-अणु
-	पूर्णांक retval;
-	काष्ठा videobuf_buffer *buf = शून्य;
+static int stream_next_buffer(struct videobuf_queue *q,
+			struct videobuf_buffer **vb, int nonblocking)
+{
+	int retval;
+	struct videobuf_buffer *buf = NULL;
 
 	retval = stream_next_buffer_check_queue(q, nonblocking);
-	अगर (retval)
-		जाओ करोne;
+	if (retval)
+		goto done;
 
-	buf = list_entry(q->stream.next, काष्ठा videobuf_buffer, stream);
-	retval = videobuf_रुकोon(q, buf, nonblocking, 1);
-	अगर (retval < 0)
-		जाओ करोne;
+	buf = list_entry(q->stream.next, struct videobuf_buffer, stream);
+	retval = videobuf_waiton(q, buf, nonblocking, 1);
+	if (retval < 0)
+		goto done;
 
 	*vb = buf;
-करोne:
-	वापस retval;
-पूर्ण
+done:
+	return retval;
+}
 
-पूर्णांक videobuf_dqbuf(काष्ठा videobuf_queue *q,
-		   काष्ठा v4l2_buffer *b, पूर्णांक nonblocking)
-अणु
-	काष्ठा videobuf_buffer *buf = शून्य;
-	पूर्णांक retval;
+int videobuf_dqbuf(struct videobuf_queue *q,
+		   struct v4l2_buffer *b, int nonblocking)
+{
+	struct videobuf_buffer *buf = NULL;
+	int retval;
 
-	MAGIC_CHECK(q->पूर्णांक_ops->magic, MAGIC_QTYPE_OPS);
+	MAGIC_CHECK(q->int_ops->magic, MAGIC_QTYPE_OPS);
 
-	स_रखो(b, 0, माप(*b));
+	memset(b, 0, sizeof(*b));
 	videobuf_queue_lock(q);
 
 	retval = stream_next_buffer(q, &buf, nonblocking);
-	अगर (retval < 0) अणु
-		dprपूर्णांकk(1, "dqbuf: next_buffer error: %i\n", retval);
-		जाओ करोne;
-	पूर्ण
+	if (retval < 0) {
+		dprintk(1, "dqbuf: next_buffer error: %i\n", retval);
+		goto done;
+	}
 
-	चयन (buf->state) अणु
-	हाल VIDEOBUF_ERROR:
-		dprपूर्णांकk(1, "dqbuf: state is error\n");
-		अवरोध;
-	हाल VIDEOBUF_DONE:
-		dprपूर्णांकk(1, "dqbuf: state is done\n");
-		अवरोध;
-	शेष:
-		dprपूर्णांकk(1, "dqbuf: state invalid\n");
+	switch (buf->state) {
+	case VIDEOBUF_ERROR:
+		dprintk(1, "dqbuf: state is error\n");
+		break;
+	case VIDEOBUF_DONE:
+		dprintk(1, "dqbuf: state is done\n");
+		break;
+	default:
+		dprintk(1, "dqbuf: state invalid\n");
 		retval = -EINVAL;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 	CALL(q, sync, q, buf);
 	videobuf_status(q, b, buf, q->type);
 	list_del(&buf->stream);
 	buf->state = VIDEOBUF_IDLE;
 	b->flags &= ~V4L2_BUF_FLAG_DONE;
-करोne:
+done:
 	videobuf_queue_unlock(q);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 EXPORT_SYMBOL_GPL(videobuf_dqbuf);
 
-पूर्णांक videobuf_streamon(काष्ठा videobuf_queue *q)
-अणु
-	काष्ठा videobuf_buffer *buf;
-	अचिन्हित दीर्घ flags = 0;
-	पूर्णांक retval;
+int videobuf_streamon(struct videobuf_queue *q)
+{
+	struct videobuf_buffer *buf;
+	unsigned long flags = 0;
+	int retval;
 
 	videobuf_queue_lock(q);
 	retval = -EBUSY;
-	अगर (q->पढ़ोing)
-		जाओ करोne;
+	if (q->reading)
+		goto done;
 	retval = 0;
-	अगर (q->streaming)
-		जाओ करोne;
+	if (q->streaming)
+		goto done;
 	q->streaming = 1;
 	spin_lock_irqsave(q->irqlock, flags);
-	list_क्रम_each_entry(buf, &q->stream, stream)
-		अगर (buf->state == VIDEOBUF_PREPARED)
+	list_for_each_entry(buf, &q->stream, stream)
+		if (buf->state == VIDEOBUF_PREPARED)
 			q->ops->buf_queue(q, buf);
 	spin_unlock_irqrestore(q->irqlock, flags);
 
-	wake_up_पूर्णांकerruptible_sync(&q->रुको);
-करोne:
+	wake_up_interruptible_sync(&q->wait);
+done:
 	videobuf_queue_unlock(q);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 EXPORT_SYMBOL_GPL(videobuf_streamon);
 
 /* Locking: Caller holds q->vb_lock */
-अटल पूर्णांक __videobuf_streamoff(काष्ठा videobuf_queue *q)
-अणु
-	अगर (!q->streaming)
-		वापस -EINVAL;
+static int __videobuf_streamoff(struct videobuf_queue *q)
+{
+	if (!q->streaming)
+		return -EINVAL;
 
 	videobuf_queue_cancel(q);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक videobuf_streamoff(काष्ठा videobuf_queue *q)
-अणु
-	पूर्णांक retval;
+int videobuf_streamoff(struct videobuf_queue *q)
+{
+	int retval;
 
 	videobuf_queue_lock(q);
 	retval = __videobuf_streamoff(q);
 	videobuf_queue_unlock(q);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 EXPORT_SYMBOL_GPL(videobuf_streamoff);
 
 /* Locking: Caller holds q->vb_lock */
-अटल sमाप_प्रकार videobuf_पढ़ो_zerocopy(काष्ठा videobuf_queue *q,
-				      अक्षर __user *data,
-				      माप_प्रकार count, loff_t *ppos)
-अणु
-	क्रमागत v4l2_field field;
-	अचिन्हित दीर्घ flags = 0;
-	पूर्णांक retval;
+static ssize_t videobuf_read_zerocopy(struct videobuf_queue *q,
+				      char __user *data,
+				      size_t count, loff_t *ppos)
+{
+	enum v4l2_field field;
+	unsigned long flags = 0;
+	int retval;
 
-	MAGIC_CHECK(q->पूर्णांक_ops->magic, MAGIC_QTYPE_OPS);
+	MAGIC_CHECK(q->int_ops->magic, MAGIC_QTYPE_OPS);
 
 	/* setup stuff */
-	q->पढ़ो_buf = videobuf_alloc_vb(q);
-	अगर (शून्य == q->पढ़ो_buf)
-		वापस -ENOMEM;
+	q->read_buf = videobuf_alloc_vb(q);
+	if (NULL == q->read_buf)
+		return -ENOMEM;
 
-	q->पढ़ो_buf->memory = V4L2_MEMORY_USERPTR;
-	q->पढ़ो_buf->baddr  = (अचिन्हित दीर्घ)data;
-	q->पढ़ो_buf->bsize  = count;
+	q->read_buf->memory = V4L2_MEMORY_USERPTR;
+	q->read_buf->baddr  = (unsigned long)data;
+	q->read_buf->bsize  = count;
 
 	field = videobuf_next_field(q);
-	retval = q->ops->buf_prepare(q, q->पढ़ो_buf, field);
-	अगर (0 != retval)
-		जाओ करोne;
+	retval = q->ops->buf_prepare(q, q->read_buf, field);
+	if (0 != retval)
+		goto done;
 
-	/* start capture & रुको */
+	/* start capture & wait */
 	spin_lock_irqsave(q->irqlock, flags);
-	q->ops->buf_queue(q, q->पढ़ो_buf);
+	q->ops->buf_queue(q, q->read_buf);
 	spin_unlock_irqrestore(q->irqlock, flags);
-	retval = videobuf_रुकोon(q, q->पढ़ो_buf, 0, 0);
-	अगर (0 == retval) अणु
-		CALL(q, sync, q, q->पढ़ो_buf);
-		अगर (VIDEOBUF_ERROR == q->पढ़ो_buf->state)
+	retval = videobuf_waiton(q, q->read_buf, 0, 0);
+	if (0 == retval) {
+		CALL(q, sync, q, q->read_buf);
+		if (VIDEOBUF_ERROR == q->read_buf->state)
 			retval = -EIO;
-		अन्यथा
-			retval = q->पढ़ो_buf->size;
-	पूर्ण
+		else
+			retval = q->read_buf->size;
+	}
 
-करोne:
+done:
 	/* cleanup */
-	q->ops->buf_release(q, q->पढ़ो_buf);
-	kमुक्त(q->पढ़ो_buf);
-	q->पढ़ो_buf = शून्य;
-	वापस retval;
-पूर्ण
+	q->ops->buf_release(q, q->read_buf);
+	kfree(q->read_buf);
+	q->read_buf = NULL;
+	return retval;
+}
 
-अटल पूर्णांक __videobuf_copy_to_user(काष्ठा videobuf_queue *q,
-				   काष्ठा videobuf_buffer *buf,
-				   अक्षर __user *data, माप_प्रकार count,
-				   पूर्णांक nonblocking)
-अणु
-	व्योम *vaddr = CALLPTR(q, vaddr, buf);
+static int __videobuf_copy_to_user(struct videobuf_queue *q,
+				   struct videobuf_buffer *buf,
+				   char __user *data, size_t count,
+				   int nonblocking)
+{
+	void *vaddr = CALLPTR(q, vaddr, buf);
 
 	/* copy to userspace */
-	अगर (count > buf->size - q->पढ़ो_off)
-		count = buf->size - q->पढ़ो_off;
+	if (count > buf->size - q->read_off)
+		count = buf->size - q->read_off;
 
-	अगर (copy_to_user(data, vaddr + q->पढ़ो_off, count))
-		वापस -EFAULT;
+	if (copy_to_user(data, vaddr + q->read_off, count))
+		return -EFAULT;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल पूर्णांक __videobuf_copy_stream(काष्ठा videobuf_queue *q,
-				  काष्ठा videobuf_buffer *buf,
-				  अक्षर __user *data, माप_प्रकार count, माप_प्रकार pos,
-				  पूर्णांक vbihack, पूर्णांक nonblocking)
-अणु
-	अचिन्हित पूर्णांक *fc = CALLPTR(q, vaddr, buf);
+static int __videobuf_copy_stream(struct videobuf_queue *q,
+				  struct videobuf_buffer *buf,
+				  char __user *data, size_t count, size_t pos,
+				  int vbihack, int nonblocking)
+{
+	unsigned int *fc = CALLPTR(q, vaddr, buf);
 
-	अगर (vbihack) अणु
-		/* dirty, unकरोcumented hack -- pass the frame counter
+	if (vbihack) {
+		/* dirty, undocumented hack -- pass the frame counter
 			* within the last four bytes of each vbi data block.
-			* We need that one to मुख्यtain backward compatibility
+			* We need that one to maintain backward compatibility
 			* to all vbi decoding software out there ... */
 		fc += (buf->size >> 2) - 1;
 		*fc = buf->field_count >> 1;
-		dprपूर्णांकk(1, "vbihack: %d\n", *fc);
-	पूर्ण
+		dprintk(1, "vbihack: %d\n", *fc);
+	}
 
 	/* copy stuff using the common method */
 	count = __videobuf_copy_to_user(q, buf, data, count, nonblocking);
 
-	अगर ((count == -EFAULT) && (pos == 0))
-		वापस -EFAULT;
+	if ((count == -EFAULT) && (pos == 0))
+		return -EFAULT;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-sमाप_प्रकार videobuf_पढ़ो_one(काष्ठा videobuf_queue *q,
-			  अक्षर __user *data, माप_प्रकार count, loff_t *ppos,
-			  पूर्णांक nonblocking)
-अणु
-	क्रमागत v4l2_field field;
-	अचिन्हित दीर्घ flags = 0;
-	अचिन्हित size = 0, nbufs = 1;
-	पूर्णांक retval;
+ssize_t videobuf_read_one(struct videobuf_queue *q,
+			  char __user *data, size_t count, loff_t *ppos,
+			  int nonblocking)
+{
+	enum v4l2_field field;
+	unsigned long flags = 0;
+	unsigned size = 0, nbufs = 1;
+	int retval;
 
-	MAGIC_CHECK(q->पूर्णांक_ops->magic, MAGIC_QTYPE_OPS);
+	MAGIC_CHECK(q->int_ops->magic, MAGIC_QTYPE_OPS);
 
 	videobuf_queue_lock(q);
 
 	q->ops->buf_setup(q, &nbufs, &size);
 
-	अगर (शून्य == q->पढ़ो_buf  &&
+	if (NULL == q->read_buf  &&
 	    count >= size        &&
-	    !nonblocking) अणु
-		retval = videobuf_पढ़ो_zerocopy(q, data, count, ppos);
-		अगर (retval >= 0  ||  retval == -EIO)
-			/* ok, all करोne */
-			जाओ करोne;
+	    !nonblocking) {
+		retval = videobuf_read_zerocopy(q, data, count, ppos);
+		if (retval >= 0  ||  retval == -EIO)
+			/* ok, all done */
+			goto done;
 		/* fallback to kernel bounce buffer on failures */
-	पूर्ण
+	}
 
-	अगर (शून्य == q->पढ़ो_buf) अणु
+	if (NULL == q->read_buf) {
 		/* need to capture a new frame */
 		retval = -ENOMEM;
-		q->पढ़ो_buf = videobuf_alloc_vb(q);
+		q->read_buf = videobuf_alloc_vb(q);
 
-		dprपूर्णांकk(1, "video alloc=0x%p\n", q->पढ़ो_buf);
-		अगर (शून्य == q->पढ़ो_buf)
-			जाओ करोne;
-		q->पढ़ो_buf->memory = V4L2_MEMORY_USERPTR;
-		q->पढ़ो_buf->bsize = count; /* preferred size */
+		dprintk(1, "video alloc=0x%p\n", q->read_buf);
+		if (NULL == q->read_buf)
+			goto done;
+		q->read_buf->memory = V4L2_MEMORY_USERPTR;
+		q->read_buf->bsize = count; /* preferred size */
 		field = videobuf_next_field(q);
-		retval = q->ops->buf_prepare(q, q->पढ़ो_buf, field);
+		retval = q->ops->buf_prepare(q, q->read_buf, field);
 
-		अगर (0 != retval) अणु
-			kमुक्त(q->पढ़ो_buf);
-			q->पढ़ो_buf = शून्य;
-			जाओ करोne;
-		पूर्ण
+		if (0 != retval) {
+			kfree(q->read_buf);
+			q->read_buf = NULL;
+			goto done;
+		}
 
 		spin_lock_irqsave(q->irqlock, flags);
-		q->ops->buf_queue(q, q->पढ़ो_buf);
+		q->ops->buf_queue(q, q->read_buf);
 		spin_unlock_irqrestore(q->irqlock, flags);
 
-		q->पढ़ो_off = 0;
-	पूर्ण
+		q->read_off = 0;
+	}
 
-	/* रुको until capture is करोne */
-	retval = videobuf_रुकोon(q, q->पढ़ो_buf, nonblocking, 1);
-	अगर (0 != retval)
-		जाओ करोne;
+	/* wait until capture is done */
+	retval = videobuf_waiton(q, q->read_buf, nonblocking, 1);
+	if (0 != retval)
+		goto done;
 
-	CALL(q, sync, q, q->पढ़ो_buf);
+	CALL(q, sync, q, q->read_buf);
 
-	अगर (VIDEOBUF_ERROR == q->पढ़ो_buf->state) अणु
+	if (VIDEOBUF_ERROR == q->read_buf->state) {
 		/* catch I/O errors */
-		q->ops->buf_release(q, q->पढ़ो_buf);
-		kमुक्त(q->पढ़ो_buf);
-		q->पढ़ो_buf = शून्य;
+		q->ops->buf_release(q, q->read_buf);
+		kfree(q->read_buf);
+		q->read_buf = NULL;
 		retval = -EIO;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	/* Copy to userspace */
-	retval = __videobuf_copy_to_user(q, q->पढ़ो_buf, data, count, nonblocking);
-	अगर (retval < 0)
-		जाओ करोne;
+	retval = __videobuf_copy_to_user(q, q->read_buf, data, count, nonblocking);
+	if (retval < 0)
+		goto done;
 
-	q->पढ़ो_off += retval;
-	अगर (q->पढ़ो_off == q->पढ़ो_buf->size) अणु
+	q->read_off += retval;
+	if (q->read_off == q->read_buf->size) {
 		/* all data copied, cleanup */
-		q->ops->buf_release(q, q->पढ़ो_buf);
-		kमुक्त(q->पढ़ो_buf);
-		q->पढ़ो_buf = शून्य;
-	पूर्ण
+		q->ops->buf_release(q, q->read_buf);
+		kfree(q->read_buf);
+		q->read_buf = NULL;
+	}
 
-करोne:
+done:
 	videobuf_queue_unlock(q);
-	वापस retval;
-पूर्ण
-EXPORT_SYMBOL_GPL(videobuf_पढ़ो_one);
+	return retval;
+}
+EXPORT_SYMBOL_GPL(videobuf_read_one);
 
 /* Locking: Caller holds q->vb_lock */
-अटल पूर्णांक __videobuf_पढ़ो_start(काष्ठा videobuf_queue *q)
-अणु
-	क्रमागत v4l2_field field;
-	अचिन्हित दीर्घ flags = 0;
-	अचिन्हित पूर्णांक count = 0, size = 0;
-	पूर्णांक err, i;
+static int __videobuf_read_start(struct videobuf_queue *q)
+{
+	enum v4l2_field field;
+	unsigned long flags = 0;
+	unsigned int count = 0, size = 0;
+	int err, i;
 
 	q->ops->buf_setup(q, &count, &size);
-	अगर (count < 2)
+	if (count < 2)
 		count = 2;
-	अगर (count > VIDEO_MAX_FRAME)
+	if (count > VIDEO_MAX_FRAME)
 		count = VIDEO_MAX_FRAME;
 	size = PAGE_ALIGN(size);
 
 	err = __videobuf_mmap_setup(q, count, size, V4L2_MEMORY_USERPTR);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	count = err;
 
-	क्रम (i = 0; i < count; i++) अणु
+	for (i = 0; i < count; i++) {
 		field = videobuf_next_field(q);
 		err = q->ops->buf_prepare(q, q->bufs[i], field);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 		list_add_tail(&q->bufs[i]->stream, &q->stream);
-	पूर्ण
+	}
 	spin_lock_irqsave(q->irqlock, flags);
-	क्रम (i = 0; i < count; i++)
+	for (i = 0; i < count; i++)
 		q->ops->buf_queue(q, q->bufs[i]);
 	spin_unlock_irqrestore(q->irqlock, flags);
-	q->पढ़ोing = 1;
-	वापस 0;
-पूर्ण
+	q->reading = 1;
+	return 0;
+}
 
-अटल व्योम __videobuf_पढ़ो_stop(काष्ठा videobuf_queue *q)
-अणु
-	पूर्णांक i;
+static void __videobuf_read_stop(struct videobuf_queue *q)
+{
+	int i;
 
 	videobuf_queue_cancel(q);
-	__videobuf_मुक्त(q);
+	__videobuf_free(q);
 	INIT_LIST_HEAD(&q->stream);
-	क्रम (i = 0; i < VIDEO_MAX_FRAME; i++) अणु
-		अगर (शून्य == q->bufs[i])
-			जारी;
-		kमुक्त(q->bufs[i]);
-		q->bufs[i] = शून्य;
-	पूर्ण
-	q->पढ़ो_buf = शून्य;
-पूर्ण
+	for (i = 0; i < VIDEO_MAX_FRAME; i++) {
+		if (NULL == q->bufs[i])
+			continue;
+		kfree(q->bufs[i]);
+		q->bufs[i] = NULL;
+	}
+	q->read_buf = NULL;
+}
 
-पूर्णांक videobuf_पढ़ो_start(काष्ठा videobuf_queue *q)
-अणु
-	पूर्णांक rc;
+int videobuf_read_start(struct videobuf_queue *q)
+{
+	int rc;
 
 	videobuf_queue_lock(q);
-	rc = __videobuf_पढ़ो_start(q);
+	rc = __videobuf_read_start(q);
 	videobuf_queue_unlock(q);
 
-	वापस rc;
-पूर्ण
-EXPORT_SYMBOL_GPL(videobuf_पढ़ो_start);
+	return rc;
+}
+EXPORT_SYMBOL_GPL(videobuf_read_start);
 
-व्योम videobuf_पढ़ो_stop(काष्ठा videobuf_queue *q)
-अणु
+void videobuf_read_stop(struct videobuf_queue *q)
+{
 	videobuf_queue_lock(q);
-	__videobuf_पढ़ो_stop(q);
+	__videobuf_read_stop(q);
 	videobuf_queue_unlock(q);
-पूर्ण
-EXPORT_SYMBOL_GPL(videobuf_पढ़ो_stop);
+}
+EXPORT_SYMBOL_GPL(videobuf_read_stop);
 
-व्योम videobuf_stop(काष्ठा videobuf_queue *q)
-अणु
+void videobuf_stop(struct videobuf_queue *q)
+{
 	videobuf_queue_lock(q);
 
-	अगर (q->streaming)
+	if (q->streaming)
 		__videobuf_streamoff(q);
 
-	अगर (q->पढ़ोing)
-		__videobuf_पढ़ो_stop(q);
+	if (q->reading)
+		__videobuf_read_stop(q);
 
 	videobuf_queue_unlock(q);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(videobuf_stop);
 
-sमाप_प्रकार videobuf_पढ़ो_stream(काष्ठा videobuf_queue *q,
-			     अक्षर __user *data, माप_प्रकार count, loff_t *ppos,
-			     पूर्णांक vbihack, पूर्णांक nonblocking)
-अणु
-	पूर्णांक rc, retval;
-	अचिन्हित दीर्घ flags = 0;
+ssize_t videobuf_read_stream(struct videobuf_queue *q,
+			     char __user *data, size_t count, loff_t *ppos,
+			     int vbihack, int nonblocking)
+{
+	int rc, retval;
+	unsigned long flags = 0;
 
-	MAGIC_CHECK(q->पूर्णांक_ops->magic, MAGIC_QTYPE_OPS);
+	MAGIC_CHECK(q->int_ops->magic, MAGIC_QTYPE_OPS);
 
-	dprपूर्णांकk(2, "%s\n", __func__);
+	dprintk(2, "%s\n", __func__);
 	videobuf_queue_lock(q);
 	retval = -EBUSY;
-	अगर (q->streaming)
-		जाओ करोne;
-	अगर (!q->पढ़ोing) अणु
-		retval = __videobuf_पढ़ो_start(q);
-		अगर (retval < 0)
-			जाओ करोne;
-	पूर्ण
+	if (q->streaming)
+		goto done;
+	if (!q->reading) {
+		retval = __videobuf_read_start(q);
+		if (retval < 0)
+			goto done;
+	}
 
 	retval = 0;
-	जबतक (count > 0) अणु
-		/* get / रुको क्रम data */
-		अगर (शून्य == q->पढ़ो_buf) अणु
-			q->पढ़ो_buf = list_entry(q->stream.next,
-						 काष्ठा videobuf_buffer,
+	while (count > 0) {
+		/* get / wait for data */
+		if (NULL == q->read_buf) {
+			q->read_buf = list_entry(q->stream.next,
+						 struct videobuf_buffer,
 						 stream);
-			list_del(&q->पढ़ो_buf->stream);
-			q->पढ़ो_off = 0;
-		पूर्ण
-		rc = videobuf_रुकोon(q, q->पढ़ो_buf, nonblocking, 1);
-		अगर (rc < 0) अणु
-			अगर (0 == retval)
+			list_del(&q->read_buf->stream);
+			q->read_off = 0;
+		}
+		rc = videobuf_waiton(q, q->read_buf, nonblocking, 1);
+		if (rc < 0) {
+			if (0 == retval)
 				retval = rc;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (q->पढ़ो_buf->state == VIDEOBUF_DONE) अणु
-			rc = __videobuf_copy_stream(q, q->पढ़ो_buf, data + retval, count,
+		if (q->read_buf->state == VIDEOBUF_DONE) {
+			rc = __videobuf_copy_stream(q, q->read_buf, data + retval, count,
 					retval, vbihack, nonblocking);
-			अगर (rc < 0) अणु
+			if (rc < 0) {
 				retval = rc;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			retval      += rc;
 			count       -= rc;
-			q->पढ़ो_off += rc;
-		पूर्ण अन्यथा अणु
+			q->read_off += rc;
+		} else {
 			/* some error */
-			q->पढ़ो_off = q->पढ़ो_buf->size;
-			अगर (0 == retval)
+			q->read_off = q->read_buf->size;
+			if (0 == retval)
 				retval = -EIO;
-		पूर्ण
+		}
 
-		/* requeue buffer when करोne with copying */
-		अगर (q->पढ़ो_off == q->पढ़ो_buf->size) अणु
-			list_add_tail(&q->पढ़ो_buf->stream,
+		/* requeue buffer when done with copying */
+		if (q->read_off == q->read_buf->size) {
+			list_add_tail(&q->read_buf->stream,
 				      &q->stream);
 			spin_lock_irqsave(q->irqlock, flags);
-			q->ops->buf_queue(q, q->पढ़ो_buf);
+			q->ops->buf_queue(q, q->read_buf);
 			spin_unlock_irqrestore(q->irqlock, flags);
-			q->पढ़ो_buf = शून्य;
-		पूर्ण
-		अगर (retval < 0)
-			अवरोध;
-	पूर्ण
+			q->read_buf = NULL;
+		}
+		if (retval < 0)
+			break;
+	}
 
-करोne:
+done:
 	videobuf_queue_unlock(q);
-	वापस retval;
-पूर्ण
-EXPORT_SYMBOL_GPL(videobuf_पढ़ो_stream);
+	return retval;
+}
+EXPORT_SYMBOL_GPL(videobuf_read_stream);
 
-__poll_t videobuf_poll_stream(काष्ठा file *file,
-			      काष्ठा videobuf_queue *q,
-			      poll_table *रुको)
-अणु
-	__poll_t req_events = poll_requested_events(रुको);
-	काष्ठा videobuf_buffer *buf = शून्य;
+__poll_t videobuf_poll_stream(struct file *file,
+			      struct videobuf_queue *q,
+			      poll_table *wait)
+{
+	__poll_t req_events = poll_requested_events(wait);
+	struct videobuf_buffer *buf = NULL;
 	__poll_t rc = 0;
 
 	videobuf_queue_lock(q);
-	अगर (q->streaming) अणु
-		अगर (!list_empty(&q->stream))
+	if (q->streaming) {
+		if (!list_empty(&q->stream))
 			buf = list_entry(q->stream.next,
-					 काष्ठा videobuf_buffer, stream);
-	पूर्ण अन्यथा अगर (req_events & (EPOLLIN | EPOLLRDNORM)) अणु
-		अगर (!q->पढ़ोing)
-			__videobuf_पढ़ो_start(q);
-		अगर (!q->पढ़ोing) अणु
+					 struct videobuf_buffer, stream);
+	} else if (req_events & (EPOLLIN | EPOLLRDNORM)) {
+		if (!q->reading)
+			__videobuf_read_start(q);
+		if (!q->reading) {
 			rc = EPOLLERR;
-		पूर्ण अन्यथा अगर (शून्य == q->पढ़ो_buf) अणु
-			q->पढ़ो_buf = list_entry(q->stream.next,
-						 काष्ठा videobuf_buffer,
+		} else if (NULL == q->read_buf) {
+			q->read_buf = list_entry(q->stream.next,
+						 struct videobuf_buffer,
 						 stream);
-			list_del(&q->पढ़ो_buf->stream);
-			q->पढ़ो_off = 0;
-		पूर्ण
-		buf = q->पढ़ो_buf;
-	पूर्ण
-	अगर (buf)
-		poll_रुको(file, &buf->करोne, रुको);
-	अन्यथा
+			list_del(&q->read_buf->stream);
+			q->read_off = 0;
+		}
+		buf = q->read_buf;
+	}
+	if (buf)
+		poll_wait(file, &buf->done, wait);
+	else
 		rc = EPOLLERR;
 
-	अगर (0 == rc) अणु
-		अगर (buf->state == VIDEOBUF_DONE ||
-		    buf->state == VIDEOBUF_ERROR) अणु
-			चयन (q->type) अणु
-			हाल V4L2_BUF_TYPE_VIDEO_OUTPUT:
-			हाल V4L2_BUF_TYPE_VBI_OUTPUT:
-			हाल V4L2_BUF_TYPE_SLICED_VBI_OUTPUT:
-			हाल V4L2_BUF_TYPE_SDR_OUTPUT:
+	if (0 == rc) {
+		if (buf->state == VIDEOBUF_DONE ||
+		    buf->state == VIDEOBUF_ERROR) {
+			switch (q->type) {
+			case V4L2_BUF_TYPE_VIDEO_OUTPUT:
+			case V4L2_BUF_TYPE_VBI_OUTPUT:
+			case V4L2_BUF_TYPE_SLICED_VBI_OUTPUT:
+			case V4L2_BUF_TYPE_SDR_OUTPUT:
 				rc = EPOLLOUT | EPOLLWRNORM;
-				अवरोध;
-			शेष:
+				break;
+			default:
 				rc = EPOLLIN | EPOLLRDNORM;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 	videobuf_queue_unlock(q);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL_GPL(videobuf_poll_stream);
 
-पूर्णांक videobuf_mmap_mapper(काष्ठा videobuf_queue *q, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	पूर्णांक rc = -EINVAL;
-	पूर्णांक i;
+int videobuf_mmap_mapper(struct videobuf_queue *q, struct vm_area_struct *vma)
+{
+	int rc = -EINVAL;
+	int i;
 
-	MAGIC_CHECK(q->पूर्णांक_ops->magic, MAGIC_QTYPE_OPS);
+	MAGIC_CHECK(q->int_ops->magic, MAGIC_QTYPE_OPS);
 
-	अगर (!(vma->vm_flags & VM_WRITE) || !(vma->vm_flags & VM_SHARED)) अणु
-		dprपूर्णांकk(1, "mmap appl bug: PROT_WRITE and MAP_SHARED are required\n");
-		वापस -EINVAL;
-	पूर्ण
+	if (!(vma->vm_flags & VM_WRITE) || !(vma->vm_flags & VM_SHARED)) {
+		dprintk(1, "mmap appl bug: PROT_WRITE and MAP_SHARED are required\n");
+		return -EINVAL;
+	}
 
 	videobuf_queue_lock(q);
-	क्रम (i = 0; i < VIDEO_MAX_FRAME; i++) अणु
-		काष्ठा videobuf_buffer *buf = q->bufs[i];
+	for (i = 0; i < VIDEO_MAX_FRAME; i++) {
+		struct videobuf_buffer *buf = q->bufs[i];
 
-		अगर (buf && buf->memory == V4L2_MEMORY_MMAP &&
-				buf->boff == (vma->vm_pgoff << PAGE_SHIFT)) अणु
+		if (buf && buf->memory == V4L2_MEMORY_MMAP &&
+				buf->boff == (vma->vm_pgoff << PAGE_SHIFT)) {
 			rc = CALL(q, mmap_mapper, q, buf, vma);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	videobuf_queue_unlock(q);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL_GPL(videobuf_mmap_mapper);

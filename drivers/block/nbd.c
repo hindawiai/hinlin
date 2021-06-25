@@ -1,10 +1,9 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Network block device - make block devices work over TCP
  *
  * Note that you can not swap over this thing, yet. Seems to work but
- * deadlocks someबार - you can not swap over TCP in general.
+ * deadlocks sometimes - you can not swap over TCP in general.
  * 
  * Copyright 1997-2000, 2008 Pavel Machek <pavel@ucw.cz>
  * Parts copyright 2001 Steven Whitehouse <steve@chygwyn.com>
@@ -12,1048 +11,1048 @@
  * (part of code stolen from loop.c)
  */
 
-#समावेश <linux/major.h>
+#include <linux/major.h>
 
-#समावेश <linux/blkdev.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/mm.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/bपन.स>
-#समावेश <linux/स्थिति.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/file.h>
-#समावेश <linux/ioctl.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/compiler.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/err.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <net/sock.h>
-#समावेश <linux/net.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/types.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/blk-mq.h>
+#include <linux/blkdev.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/sched.h>
+#include <linux/sched/mm.h>
+#include <linux/fs.h>
+#include <linux/bio.h>
+#include <linux/stat.h>
+#include <linux/errno.h>
+#include <linux/file.h>
+#include <linux/ioctl.h>
+#include <linux/mutex.h>
+#include <linux/compiler.h>
+#include <linux/completion.h>
+#include <linux/err.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <net/sock.h>
+#include <linux/net.h>
+#include <linux/kthread.h>
+#include <linux/types.h>
+#include <linux/debugfs.h>
+#include <linux/blk-mq.h>
 
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/types.h>
+#include <linux/uaccess.h>
+#include <asm/types.h>
 
-#समावेश <linux/nbd.h>
-#समावेश <linux/nbd-netlink.h>
-#समावेश <net/genetlink.h>
+#include <linux/nbd.h>
+#include <linux/nbd-netlink.h>
+#include <net/genetlink.h>
 
-#घोषणा CREATE_TRACE_POINTS
-#समावेश <trace/events/nbd.h>
+#define CREATE_TRACE_POINTS
+#include <trace/events/nbd.h>
 
-अटल DEFINE_IDR(nbd_index_idr);
-अटल DEFINE_MUTEX(nbd_index_mutex);
-अटल पूर्णांक nbd_total_devices = 0;
+static DEFINE_IDR(nbd_index_idr);
+static DEFINE_MUTEX(nbd_index_mutex);
+static int nbd_total_devices = 0;
 
-काष्ठा nbd_sock अणु
-	काष्ठा socket *sock;
-	काष्ठा mutex tx_lock;
-	काष्ठा request *pending;
-	पूर्णांक sent;
+struct nbd_sock {
+	struct socket *sock;
+	struct mutex tx_lock;
+	struct request *pending;
+	int sent;
 	bool dead;
-	पूर्णांक fallback_index;
-	पूर्णांक cookie;
-पूर्ण;
+	int fallback_index;
+	int cookie;
+};
 
-काष्ठा recv_thपढ़ो_args अणु
-	काष्ठा work_काष्ठा work;
-	काष्ठा nbd_device *nbd;
-	पूर्णांक index;
-पूर्ण;
+struct recv_thread_args {
+	struct work_struct work;
+	struct nbd_device *nbd;
+	int index;
+};
 
-काष्ठा link_dead_args अणु
-	काष्ठा work_काष्ठा work;
-	पूर्णांक index;
-पूर्ण;
+struct link_dead_args {
+	struct work_struct work;
+	int index;
+};
 
-#घोषणा NBD_RT_TIMEDOUT			0
-#घोषणा NBD_RT_DISCONNECT_REQUESTED	1
-#घोषणा NBD_RT_DISCONNECTED		2
-#घोषणा NBD_RT_HAS_PID_खाता		3
-#घोषणा NBD_RT_HAS_CONFIG_REF		4
-#घोषणा NBD_RT_BOUND			5
-#घोषणा NBD_RT_DISCONNECT_ON_CLOSE	6
+#define NBD_RT_TIMEDOUT			0
+#define NBD_RT_DISCONNECT_REQUESTED	1
+#define NBD_RT_DISCONNECTED		2
+#define NBD_RT_HAS_PID_FILE		3
+#define NBD_RT_HAS_CONFIG_REF		4
+#define NBD_RT_BOUND			5
+#define NBD_RT_DISCONNECT_ON_CLOSE	6
 
-#घोषणा NBD_DESTROY_ON_DISCONNECT	0
-#घोषणा NBD_DISCONNECT_REQUESTED	1
+#define NBD_DESTROY_ON_DISCONNECT	0
+#define NBD_DISCONNECT_REQUESTED	1
 
-काष्ठा nbd_config अणु
+struct nbd_config {
 	u32 flags;
-	अचिन्हित दीर्घ runसमय_flags;
-	u64 dead_conn_समयout;
+	unsigned long runtime_flags;
+	u64 dead_conn_timeout;
 
-	काष्ठा nbd_sock **socks;
-	पूर्णांक num_connections;
+	struct nbd_sock **socks;
+	int num_connections;
 	atomic_t live_connections;
-	रुको_queue_head_t conn_रुको;
+	wait_queue_head_t conn_wait;
 
-	atomic_t recv_thपढ़ोs;
-	रुको_queue_head_t recv_wq;
+	atomic_t recv_threads;
+	wait_queue_head_t recv_wq;
 	loff_t blksize;
 	loff_t bytesize;
-#अगर IS_ENABLED(CONFIG_DEBUG_FS)
-	काष्ठा dentry *dbg_dir;
-#पूर्ण_अगर
-पूर्ण;
+#if IS_ENABLED(CONFIG_DEBUG_FS)
+	struct dentry *dbg_dir;
+#endif
+};
 
-काष्ठा nbd_device अणु
-	काष्ठा blk_mq_tag_set tag_set;
+struct nbd_device {
+	struct blk_mq_tag_set tag_set;
 
-	पूर्णांक index;
+	int index;
 	refcount_t config_refs;
 	refcount_t refs;
-	काष्ठा nbd_config *config;
-	काष्ठा mutex config_lock;
-	काष्ठा gendisk *disk;
-	काष्ठा workqueue_काष्ठा *recv_workq;
+	struct nbd_config *config;
+	struct mutex config_lock;
+	struct gendisk *disk;
+	struct workqueue_struct *recv_workq;
 
-	काष्ठा list_head list;
-	काष्ठा task_काष्ठा *task_recv;
-	काष्ठा task_काष्ठा *task_setup;
+	struct list_head list;
+	struct task_struct *task_recv;
+	struct task_struct *task_setup;
 
-	काष्ठा completion *destroy_complete;
-	अचिन्हित दीर्घ flags;
-पूर्ण;
+	struct completion *destroy_complete;
+	unsigned long flags;
+};
 
-#घोषणा NBD_CMD_REQUEUED	1
+#define NBD_CMD_REQUEUED	1
 
-काष्ठा nbd_cmd अणु
-	काष्ठा nbd_device *nbd;
-	काष्ठा mutex lock;
-	पूर्णांक index;
-	पूर्णांक cookie;
-	पूर्णांक retries;
+struct nbd_cmd {
+	struct nbd_device *nbd;
+	struct mutex lock;
+	int index;
+	int cookie;
+	int retries;
 	blk_status_t status;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 	u32 cmd_cookie;
-पूर्ण;
+};
 
-#अगर IS_ENABLED(CONFIG_DEBUG_FS)
-अटल काष्ठा dentry *nbd_dbg_dir;
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_DEBUG_FS)
+static struct dentry *nbd_dbg_dir;
+#endif
 
-#घोषणा nbd_name(nbd) ((nbd)->disk->disk_name)
+#define nbd_name(nbd) ((nbd)->disk->disk_name)
 
-#घोषणा NBD_MAGIC 0x68797548
+#define NBD_MAGIC 0x68797548
 
-#घोषणा NBD_DEF_BLKSIZE 1024
+#define NBD_DEF_BLKSIZE 1024
 
-अटल अचिन्हित पूर्णांक nbds_max = 16;
-अटल पूर्णांक max_part = 16;
-अटल पूर्णांक part_shअगरt;
+static unsigned int nbds_max = 16;
+static int max_part = 16;
+static int part_shift;
 
-अटल पूर्णांक nbd_dev_dbg_init(काष्ठा nbd_device *nbd);
-अटल व्योम nbd_dev_dbg_बंद(काष्ठा nbd_device *nbd);
-अटल व्योम nbd_config_put(काष्ठा nbd_device *nbd);
-अटल व्योम nbd_connect_reply(काष्ठा genl_info *info, पूर्णांक index);
-अटल पूर्णांक nbd_genl_status(काष्ठा sk_buff *skb, काष्ठा genl_info *info);
-अटल व्योम nbd_dead_link_work(काष्ठा work_काष्ठा *work);
-अटल व्योम nbd_disconnect_and_put(काष्ठा nbd_device *nbd);
+static int nbd_dev_dbg_init(struct nbd_device *nbd);
+static void nbd_dev_dbg_close(struct nbd_device *nbd);
+static void nbd_config_put(struct nbd_device *nbd);
+static void nbd_connect_reply(struct genl_info *info, int index);
+static int nbd_genl_status(struct sk_buff *skb, struct genl_info *info);
+static void nbd_dead_link_work(struct work_struct *work);
+static void nbd_disconnect_and_put(struct nbd_device *nbd);
 
-अटल अंतरभूत काष्ठा device *nbd_to_dev(काष्ठा nbd_device *nbd)
-अणु
-	वापस disk_to_dev(nbd->disk);
-पूर्ण
+static inline struct device *nbd_to_dev(struct nbd_device *nbd)
+{
+	return disk_to_dev(nbd->disk);
+}
 
-अटल व्योम nbd_requeue_cmd(काष्ठा nbd_cmd *cmd)
-अणु
-	काष्ठा request *req = blk_mq_rq_from_pdu(cmd);
+static void nbd_requeue_cmd(struct nbd_cmd *cmd)
+{
+	struct request *req = blk_mq_rq_from_pdu(cmd);
 
-	अगर (!test_and_set_bit(NBD_CMD_REQUEUED, &cmd->flags))
+	if (!test_and_set_bit(NBD_CMD_REQUEUED, &cmd->flags))
 		blk_mq_requeue_request(req, true);
-पूर्ण
+}
 
-#घोषणा NBD_COOKIE_BITS 32
+#define NBD_COOKIE_BITS 32
 
-अटल u64 nbd_cmd_handle(काष्ठा nbd_cmd *cmd)
-अणु
-	काष्ठा request *req = blk_mq_rq_from_pdu(cmd);
+static u64 nbd_cmd_handle(struct nbd_cmd *cmd)
+{
+	struct request *req = blk_mq_rq_from_pdu(cmd);
 	u32 tag = blk_mq_unique_tag(req);
 	u64 cookie = cmd->cmd_cookie;
 
-	वापस (cookie << NBD_COOKIE_BITS) | tag;
-पूर्ण
+	return (cookie << NBD_COOKIE_BITS) | tag;
+}
 
-अटल u32 nbd_handle_to_tag(u64 handle)
-अणु
-	वापस (u32)handle;
-पूर्ण
+static u32 nbd_handle_to_tag(u64 handle)
+{
+	return (u32)handle;
+}
 
-अटल u32 nbd_handle_to_cookie(u64 handle)
-अणु
-	वापस (u32)(handle >> NBD_COOKIE_BITS);
-पूर्ण
+static u32 nbd_handle_to_cookie(u64 handle)
+{
+	return (u32)(handle >> NBD_COOKIE_BITS);
+}
 
-अटल स्थिर अक्षर *nbdcmd_to_ascii(पूर्णांक cmd)
-अणु
-	चयन (cmd) अणु
-	हाल  NBD_CMD_READ: वापस "read";
-	हाल NBD_CMD_WRITE: वापस "write";
-	हाल  NBD_CMD_DISC: वापस "disconnect";
-	हाल NBD_CMD_FLUSH: वापस "flush";
-	हाल  NBD_CMD_TRIM: वापस "trim/discard";
-	पूर्ण
-	वापस "invalid";
-पूर्ण
+static const char *nbdcmd_to_ascii(int cmd)
+{
+	switch (cmd) {
+	case  NBD_CMD_READ: return "read";
+	case NBD_CMD_WRITE: return "write";
+	case  NBD_CMD_DISC: return "disconnect";
+	case NBD_CMD_FLUSH: return "flush";
+	case  NBD_CMD_TRIM: return "trim/discard";
+	}
+	return "invalid";
+}
 
-अटल sमाप_प्रकार pid_show(काष्ठा device *dev,
-			काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा gendisk *disk = dev_to_disk(dev);
-	काष्ठा nbd_device *nbd = (काष्ठा nbd_device *)disk->निजी_data;
+static ssize_t pid_show(struct device *dev,
+			struct device_attribute *attr, char *buf)
+{
+	struct gendisk *disk = dev_to_disk(dev);
+	struct nbd_device *nbd = (struct nbd_device *)disk->private_data;
 
-	वापस प्र_लिखो(buf, "%d\n", task_pid_nr(nbd->task_recv));
-पूर्ण
+	return sprintf(buf, "%d\n", task_pid_nr(nbd->task_recv));
+}
 
-अटल स्थिर काष्ठा device_attribute pid_attr = अणु
-	.attr = अणु .name = "pid", .mode = 0444पूर्ण,
+static const struct device_attribute pid_attr = {
+	.attr = { .name = "pid", .mode = 0444},
 	.show = pid_show,
-पूर्ण;
+};
 
-अटल व्योम nbd_dev_हटाओ(काष्ठा nbd_device *nbd)
-अणु
-	काष्ठा gendisk *disk = nbd->disk;
-	काष्ठा request_queue *q;
+static void nbd_dev_remove(struct nbd_device *nbd)
+{
+	struct gendisk *disk = nbd->disk;
+	struct request_queue *q;
 
-	अगर (disk) अणु
+	if (disk) {
 		q = disk->queue;
 		del_gendisk(disk);
 		blk_cleanup_queue(q);
-		blk_mq_मुक्त_tag_set(&nbd->tag_set);
-		disk->निजी_data = शून्य;
+		blk_mq_free_tag_set(&nbd->tag_set);
+		disk->private_data = NULL;
 		put_disk(disk);
-	पूर्ण
+	}
 
 	/*
-	 * Place this in the last just beक्रमe the nbd is मुक्तd to
+	 * Place this in the last just before the nbd is freed to
 	 * make sure that the disk and the related kobject are also
-	 * totally हटाओd to aव्योम duplicate creation of the same
+	 * totally removed to avoid duplicate creation of the same
 	 * one.
 	 */
-	अगर (test_bit(NBD_DESTROY_ON_DISCONNECT, &nbd->flags) && nbd->destroy_complete)
+	if (test_bit(NBD_DESTROY_ON_DISCONNECT, &nbd->flags) && nbd->destroy_complete)
 		complete(nbd->destroy_complete);
 
-	kमुक्त(nbd);
-पूर्ण
+	kfree(nbd);
+}
 
-अटल व्योम nbd_put(काष्ठा nbd_device *nbd)
-अणु
-	अगर (refcount_dec_and_mutex_lock(&nbd->refs,
-					&nbd_index_mutex)) अणु
-		idr_हटाओ(&nbd_index_idr, nbd->index);
-		nbd_dev_हटाओ(nbd);
+static void nbd_put(struct nbd_device *nbd)
+{
+	if (refcount_dec_and_mutex_lock(&nbd->refs,
+					&nbd_index_mutex)) {
+		idr_remove(&nbd_index_idr, nbd->index);
+		nbd_dev_remove(nbd);
 		mutex_unlock(&nbd_index_mutex);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक nbd_disconnected(काष्ठा nbd_config *config)
-अणु
-	वापस test_bit(NBD_RT_DISCONNECTED, &config->runसमय_flags) ||
-		test_bit(NBD_RT_DISCONNECT_REQUESTED, &config->runसमय_flags);
-पूर्ण
+static int nbd_disconnected(struct nbd_config *config)
+{
+	return test_bit(NBD_RT_DISCONNECTED, &config->runtime_flags) ||
+		test_bit(NBD_RT_DISCONNECT_REQUESTED, &config->runtime_flags);
+}
 
-अटल व्योम nbd_mark_nsock_dead(काष्ठा nbd_device *nbd, काष्ठा nbd_sock *nsock,
-				पूर्णांक notअगरy)
-अणु
-	अगर (!nsock->dead && notअगरy && !nbd_disconnected(nbd->config)) अणु
-		काष्ठा link_dead_args *args;
-		args = kदो_स्मृति(माप(काष्ठा link_dead_args), GFP_NOIO);
-		अगर (args) अणु
+static void nbd_mark_nsock_dead(struct nbd_device *nbd, struct nbd_sock *nsock,
+				int notify)
+{
+	if (!nsock->dead && notify && !nbd_disconnected(nbd->config)) {
+		struct link_dead_args *args;
+		args = kmalloc(sizeof(struct link_dead_args), GFP_NOIO);
+		if (args) {
 			INIT_WORK(&args->work, nbd_dead_link_work);
 			args->index = nbd->index;
-			queue_work(प्रणाली_wq, &args->work);
-		पूर्ण
-	पूर्ण
-	अगर (!nsock->dead) अणु
-		kernel_sock_shutकरोwn(nsock->sock, SHUT_RDWR);
-		अगर (atomic_dec_वापस(&nbd->config->live_connections) == 0) अणु
-			अगर (test_and_clear_bit(NBD_RT_DISCONNECT_REQUESTED,
-					       &nbd->config->runसमय_flags)) अणु
+			queue_work(system_wq, &args->work);
+		}
+	}
+	if (!nsock->dead) {
+		kernel_sock_shutdown(nsock->sock, SHUT_RDWR);
+		if (atomic_dec_return(&nbd->config->live_connections) == 0) {
+			if (test_and_clear_bit(NBD_RT_DISCONNECT_REQUESTED,
+					       &nbd->config->runtime_flags)) {
 				set_bit(NBD_RT_DISCONNECTED,
-					&nbd->config->runसमय_flags);
+					&nbd->config->runtime_flags);
 				dev_info(nbd_to_dev(nbd),
 					"Disconnected due to user request.\n");
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 	nsock->dead = true;
-	nsock->pending = शून्य;
+	nsock->pending = NULL;
 	nsock->sent = 0;
-पूर्ण
+}
 
-अटल व्योम nbd_size_clear(काष्ठा nbd_device *nbd)
-अणु
-	अगर (nbd->config->bytesize) अणु
+static void nbd_size_clear(struct nbd_device *nbd)
+{
+	if (nbd->config->bytesize) {
 		set_capacity(nbd->disk, 0);
 		kobject_uevent(&nbd_to_dev(nbd)->kobj, KOBJ_CHANGE);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक nbd_set_size(काष्ठा nbd_device *nbd, loff_t bytesize,
+static int nbd_set_size(struct nbd_device *nbd, loff_t bytesize,
 		loff_t blksize)
-अणु
-	अगर (!blksize)
+{
+	if (!blksize)
 		blksize = NBD_DEF_BLKSIZE;
-	अगर (blksize < 512 || blksize > PAGE_SIZE || !is_घातer_of_2(blksize))
-		वापस -EINVAL;
+	if (blksize < 512 || blksize > PAGE_SIZE || !is_power_of_2(blksize))
+		return -EINVAL;
 
 	nbd->config->bytesize = bytesize;
 	nbd->config->blksize = blksize;
 
-	अगर (!nbd->task_recv)
-		वापस 0;
+	if (!nbd->task_recv)
+		return 0;
 
-	अगर (nbd->config->flags & NBD_FLAG_SEND_TRIM) अणु
+	if (nbd->config->flags & NBD_FLAG_SEND_TRIM) {
 		nbd->disk->queue->limits.discard_granularity = blksize;
 		nbd->disk->queue->limits.discard_alignment = blksize;
-		blk_queue_max_discard_sectors(nbd->disk->queue, अच_पूर्णांक_उच्च);
-	पूर्ण
+		blk_queue_max_discard_sectors(nbd->disk->queue, UINT_MAX);
+	}
 	blk_queue_logical_block_size(nbd->disk->queue, blksize);
 	blk_queue_physical_block_size(nbd->disk->queue, blksize);
 
-	अगर (max_part)
+	if (max_part)
 		set_bit(GD_NEED_PART_SCAN, &nbd->disk->state);
-	अगर (!set_capacity_and_notअगरy(nbd->disk, bytesize >> 9))
+	if (!set_capacity_and_notify(nbd->disk, bytesize >> 9))
 		kobject_uevent(&nbd_to_dev(nbd)->kobj, KOBJ_CHANGE);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम nbd_complete_rq(काष्ठा request *req)
-अणु
-	काष्ठा nbd_cmd *cmd = blk_mq_rq_to_pdu(req);
+static void nbd_complete_rq(struct request *req)
+{
+	struct nbd_cmd *cmd = blk_mq_rq_to_pdu(req);
 
 	dev_dbg(nbd_to_dev(cmd->nbd), "request %p: %s\n", req,
 		cmd->status ? "failed" : "done");
 
 	blk_mq_end_request(req, cmd->status);
-पूर्ण
+}
 
 /*
- * Forcibly shutकरोwn the socket causing all listeners to error
+ * Forcibly shutdown the socket causing all listeners to error
  */
-अटल व्योम sock_shutकरोwn(काष्ठा nbd_device *nbd)
-अणु
-	काष्ठा nbd_config *config = nbd->config;
-	पूर्णांक i;
+static void sock_shutdown(struct nbd_device *nbd)
+{
+	struct nbd_config *config = nbd->config;
+	int i;
 
-	अगर (config->num_connections == 0)
-		वापस;
-	अगर (test_and_set_bit(NBD_RT_DISCONNECTED, &config->runसमय_flags))
-		वापस;
+	if (config->num_connections == 0)
+		return;
+	if (test_and_set_bit(NBD_RT_DISCONNECTED, &config->runtime_flags))
+		return;
 
-	क्रम (i = 0; i < config->num_connections; i++) अणु
-		काष्ठा nbd_sock *nsock = config->socks[i];
+	for (i = 0; i < config->num_connections; i++) {
+		struct nbd_sock *nsock = config->socks[i];
 		mutex_lock(&nsock->tx_lock);
 		nbd_mark_nsock_dead(nbd, nsock, 0);
 		mutex_unlock(&nsock->tx_lock);
-	पूर्ण
+	}
 	dev_warn(disk_to_dev(nbd->disk), "shutting down sockets\n");
-पूर्ण
+}
 
-अटल u32 req_to_nbd_cmd_type(काष्ठा request *req)
-अणु
-	चयन (req_op(req)) अणु
-	हाल REQ_OP_DISCARD:
-		वापस NBD_CMD_TRIM;
-	हाल REQ_OP_FLUSH:
-		वापस NBD_CMD_FLUSH;
-	हाल REQ_OP_WRITE:
-		वापस NBD_CMD_WRITE;
-	हाल REQ_OP_READ:
-		वापस NBD_CMD_READ;
-	शेष:
-		वापस U32_MAX;
-	पूर्ण
-पूर्ण
+static u32 req_to_nbd_cmd_type(struct request *req)
+{
+	switch (req_op(req)) {
+	case REQ_OP_DISCARD:
+		return NBD_CMD_TRIM;
+	case REQ_OP_FLUSH:
+		return NBD_CMD_FLUSH;
+	case REQ_OP_WRITE:
+		return NBD_CMD_WRITE;
+	case REQ_OP_READ:
+		return NBD_CMD_READ;
+	default:
+		return U32_MAX;
+	}
+}
 
-अटल क्रमागत blk_eh_समयr_वापस nbd_xmit_समयout(काष्ठा request *req,
+static enum blk_eh_timer_return nbd_xmit_timeout(struct request *req,
 						 bool reserved)
-अणु
-	काष्ठा nbd_cmd *cmd = blk_mq_rq_to_pdu(req);
-	काष्ठा nbd_device *nbd = cmd->nbd;
-	काष्ठा nbd_config *config;
+{
+	struct nbd_cmd *cmd = blk_mq_rq_to_pdu(req);
+	struct nbd_device *nbd = cmd->nbd;
+	struct nbd_config *config;
 
-	अगर (!mutex_trylock(&cmd->lock))
-		वापस BLK_EH_RESET_TIMER;
+	if (!mutex_trylock(&cmd->lock))
+		return BLK_EH_RESET_TIMER;
 
-	अगर (!refcount_inc_not_zero(&nbd->config_refs)) अणु
+	if (!refcount_inc_not_zero(&nbd->config_refs)) {
 		cmd->status = BLK_STS_TIMEOUT;
 		mutex_unlock(&cmd->lock);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 	config = nbd->config;
 
-	अगर (config->num_connections > 1 ||
-	    (config->num_connections == 1 && nbd->tag_set.समयout)) अणु
+	if (config->num_connections > 1 ||
+	    (config->num_connections == 1 && nbd->tag_set.timeout)) {
 		dev_err_ratelimited(nbd_to_dev(nbd),
 				    "Connection timed out, retrying (%d/%d alive)\n",
-				    atomic_पढ़ो(&config->live_connections),
+				    atomic_read(&config->live_connections),
 				    config->num_connections);
 		/*
 		 * Hooray we have more connections, requeue this IO, the submit
-		 * path will put it on a real connection. Or अगर only one
-		 * connection is configured, the submit path will रुको util
-		 * a new connection is reconfigured or util dead समयout.
+		 * path will put it on a real connection. Or if only one
+		 * connection is configured, the submit path will wait util
+		 * a new connection is reconfigured or util dead timeout.
 		 */
-		अगर (config->socks) अणु
-			अगर (cmd->index < config->num_connections) अणु
-				काष्ठा nbd_sock *nsock =
+		if (config->socks) {
+			if (cmd->index < config->num_connections) {
+				struct nbd_sock *nsock =
 					config->socks[cmd->index];
 				mutex_lock(&nsock->tx_lock);
 				/* We can have multiple outstanding requests, so
-				 * we करोn't want to mark the nsock dead if we've
-				 * alपढ़ोy reconnected with a new socket, so
-				 * only mark it dead अगर its the same socket we
+				 * we don't want to mark the nsock dead if we've
+				 * already reconnected with a new socket, so
+				 * only mark it dead if its the same socket we
 				 * were sent out on.
 				 */
-				अगर (cmd->cookie == nsock->cookie)
+				if (cmd->cookie == nsock->cookie)
 					nbd_mark_nsock_dead(nbd, nsock, 1);
 				mutex_unlock(&nsock->tx_lock);
-			पूर्ण
+			}
 			mutex_unlock(&cmd->lock);
 			nbd_requeue_cmd(cmd);
 			nbd_config_put(nbd);
-			वापस BLK_EH_DONE;
-		पूर्ण
-	पूर्ण
+			return BLK_EH_DONE;
+		}
+	}
 
-	अगर (!nbd->tag_set.समयout) अणु
+	if (!nbd->tag_set.timeout) {
 		/*
-		 * Userspace sets समयout=0 to disable socket disconnection,
-		 * so just warn and reset the समयr.
+		 * Userspace sets timeout=0 to disable socket disconnection,
+		 * so just warn and reset the timer.
 		 */
-		काष्ठा nbd_sock *nsock = config->socks[cmd->index];
+		struct nbd_sock *nsock = config->socks[cmd->index];
 		cmd->retries++;
 		dev_info(nbd_to_dev(nbd), "Possible stuck request %p: control (%s@%llu,%uB). Runtime %u seconds\n",
 			req, nbdcmd_to_ascii(req_to_nbd_cmd_type(req)),
-			(अचिन्हित दीर्घ दीर्घ)blk_rq_pos(req) << 9,
-			blk_rq_bytes(req), (req->समयout / HZ) * cmd->retries);
+			(unsigned long long)blk_rq_pos(req) << 9,
+			blk_rq_bytes(req), (req->timeout / HZ) * cmd->retries);
 
 		mutex_lock(&nsock->tx_lock);
-		अगर (cmd->cookie != nsock->cookie) अणु
+		if (cmd->cookie != nsock->cookie) {
 			nbd_requeue_cmd(cmd);
 			mutex_unlock(&nsock->tx_lock);
 			mutex_unlock(&cmd->lock);
 			nbd_config_put(nbd);
-			वापस BLK_EH_DONE;
-		पूर्ण
+			return BLK_EH_DONE;
+		}
 		mutex_unlock(&nsock->tx_lock);
 		mutex_unlock(&cmd->lock);
 		nbd_config_put(nbd);
-		वापस BLK_EH_RESET_TIMER;
-	पूर्ण
+		return BLK_EH_RESET_TIMER;
+	}
 
 	dev_err_ratelimited(nbd_to_dev(nbd), "Connection timed out\n");
-	set_bit(NBD_RT_TIMEDOUT, &config->runसमय_flags);
+	set_bit(NBD_RT_TIMEDOUT, &config->runtime_flags);
 	cmd->status = BLK_STS_IOERR;
 	mutex_unlock(&cmd->lock);
-	sock_shutकरोwn(nbd);
+	sock_shutdown(nbd);
 	nbd_config_put(nbd);
-करोne:
+done:
 	blk_mq_complete_request(req);
-	वापस BLK_EH_DONE;
-पूर्ण
+	return BLK_EH_DONE;
+}
 
 /*
  *  Send or receive packet.
  */
-अटल पूर्णांक sock_xmit(काष्ठा nbd_device *nbd, पूर्णांक index, पूर्णांक send,
-		     काष्ठा iov_iter *iter, पूर्णांक msg_flags, पूर्णांक *sent)
-अणु
-	काष्ठा nbd_config *config = nbd->config;
-	काष्ठा socket *sock = config->socks[index]->sock;
-	पूर्णांक result;
-	काष्ठा msghdr msg;
-	अचिन्हित पूर्णांक noreclaim_flag;
+static int sock_xmit(struct nbd_device *nbd, int index, int send,
+		     struct iov_iter *iter, int msg_flags, int *sent)
+{
+	struct nbd_config *config = nbd->config;
+	struct socket *sock = config->socks[index]->sock;
+	int result;
+	struct msghdr msg;
+	unsigned int noreclaim_flag;
 
-	अगर (unlikely(!sock)) अणु
+	if (unlikely(!sock)) {
 		dev_err_ratelimited(disk_to_dev(nbd->disk),
 			"Attempted %s on closed socket in sock_xmit\n",
 			(send ? "send" : "recv"));
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	msg.msg_iter = *iter;
 
-	noreclaim_flag = meदो_स्मृति_noreclaim_save();
-	करो अणु
+	noreclaim_flag = memalloc_noreclaim_save();
+	do {
 		sock->sk->sk_allocation = GFP_NOIO | __GFP_MEMALLOC;
-		msg.msg_name = शून्य;
+		msg.msg_name = NULL;
 		msg.msg_namelen = 0;
-		msg.msg_control = शून्य;
+		msg.msg_control = NULL;
 		msg.msg_controllen = 0;
 		msg.msg_flags = msg_flags | MSG_NOSIGNAL;
 
-		अगर (send)
+		if (send)
 			result = sock_sendmsg(sock, &msg);
-		अन्यथा
+		else
 			result = sock_recvmsg(sock, &msg, msg.msg_flags);
 
-		अगर (result <= 0) अणु
-			अगर (result == 0)
-				result = -EPIPE; /* लघु पढ़ो */
-			अवरोध;
-		पूर्ण
-		अगर (sent)
+		if (result <= 0) {
+			if (result == 0)
+				result = -EPIPE; /* short read */
+			break;
+		}
+		if (sent)
 			*sent += result;
-	पूर्ण जबतक (msg_data_left(&msg));
+	} while (msg_data_left(&msg));
 
-	meदो_स्मृति_noreclaim_restore(noreclaim_flag);
+	memalloc_noreclaim_restore(noreclaim_flag);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /*
- * Dअगरferent settings क्रम sk->sk_sndसमयo can result in dअगरferent वापस values
- * अगर there is a संकेत pending when we enter sendmsg, because reasons?
+ * Different settings for sk->sk_sndtimeo can result in different return values
+ * if there is a signal pending when we enter sendmsg, because reasons?
  */
-अटल अंतरभूत पूर्णांक was_पूर्णांकerrupted(पूर्णांक result)
-अणु
-	वापस result == -ERESTARTSYS || result == -EINTR;
-पूर्ण
+static inline int was_interrupted(int result)
+{
+	return result == -ERESTARTSYS || result == -EINTR;
+}
 
 /* always call with the tx_lock held */
-अटल पूर्णांक nbd_send_cmd(काष्ठा nbd_device *nbd, काष्ठा nbd_cmd *cmd, पूर्णांक index)
-अणु
-	काष्ठा request *req = blk_mq_rq_from_pdu(cmd);
-	काष्ठा nbd_config *config = nbd->config;
-	काष्ठा nbd_sock *nsock = config->socks[index];
-	पूर्णांक result;
-	काष्ठा nbd_request request = अणु.magic = htonl(NBD_REQUEST_MAGIC)पूर्ण;
-	काष्ठा kvec iov = अणु.iov_base = &request, .iov_len = माप(request)पूर्ण;
-	काष्ठा iov_iter from;
-	अचिन्हित दीर्घ size = blk_rq_bytes(req);
-	काष्ठा bio *bio;
+static int nbd_send_cmd(struct nbd_device *nbd, struct nbd_cmd *cmd, int index)
+{
+	struct request *req = blk_mq_rq_from_pdu(cmd);
+	struct nbd_config *config = nbd->config;
+	struct nbd_sock *nsock = config->socks[index];
+	int result;
+	struct nbd_request request = {.magic = htonl(NBD_REQUEST_MAGIC)};
+	struct kvec iov = {.iov_base = &request, .iov_len = sizeof(request)};
+	struct iov_iter from;
+	unsigned long size = blk_rq_bytes(req);
+	struct bio *bio;
 	u64 handle;
 	u32 type;
 	u32 nbd_cmd_flags = 0;
-	पूर्णांक sent = nsock->sent, skip = 0;
+	int sent = nsock->sent, skip = 0;
 
-	iov_iter_kvec(&from, WRITE, &iov, 1, माप(request));
+	iov_iter_kvec(&from, WRITE, &iov, 1, sizeof(request));
 
 	type = req_to_nbd_cmd_type(req);
-	अगर (type == U32_MAX)
-		वापस -EIO;
+	if (type == U32_MAX)
+		return -EIO;
 
-	अगर (rq_data_dir(req) == WRITE &&
-	    (config->flags & NBD_FLAG_READ_ONLY)) अणु
+	if (rq_data_dir(req) == WRITE &&
+	    (config->flags & NBD_FLAG_READ_ONLY)) {
 		dev_err_ratelimited(disk_to_dev(nbd->disk),
 				    "Write on read-only\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	अगर (req->cmd_flags & REQ_FUA)
+	if (req->cmd_flags & REQ_FUA)
 		nbd_cmd_flags |= NBD_CMD_FLAG_FUA;
 
 	/* We did a partial send previously, and we at least sent the whole
-	 * request काष्ठा, so just go and send the rest of the pages in the
+	 * request struct, so just go and send the rest of the pages in the
 	 * request.
 	 */
-	अगर (sent) अणु
-		अगर (sent >= माप(request)) अणु
-			skip = sent - माप(request);
+	if (sent) {
+		if (sent >= sizeof(request)) {
+			skip = sent - sizeof(request);
 
-			/* initialize handle क्रम tracing purposes */
+			/* initialize handle for tracing purposes */
 			handle = nbd_cmd_handle(cmd);
 
-			जाओ send_pages;
-		पूर्ण
+			goto send_pages;
+		}
 		iov_iter_advance(&from, sent);
-	पूर्ण अन्यथा अणु
+	} else {
 		cmd->cmd_cookie++;
-	पूर्ण
+	}
 	cmd->index = index;
 	cmd->cookie = nsock->cookie;
 	cmd->retries = 0;
 	request.type = htonl(type | nbd_cmd_flags);
-	अगर (type != NBD_CMD_FLUSH) अणु
+	if (type != NBD_CMD_FLUSH) {
 		request.from = cpu_to_be64((u64)blk_rq_pos(req) << 9);
 		request.len = htonl(size);
-	पूर्ण
+	}
 	handle = nbd_cmd_handle(cmd);
-	स_नकल(request.handle, &handle, माप(handle));
+	memcpy(request.handle, &handle, sizeof(handle));
 
 	trace_nbd_send_request(&request, nbd->index, blk_mq_rq_from_pdu(cmd));
 
 	dev_dbg(nbd_to_dev(nbd), "request %p: sending control (%s@%llu,%uB)\n",
 		req, nbdcmd_to_ascii(type),
-		(अचिन्हित दीर्घ दीर्घ)blk_rq_pos(req) << 9, blk_rq_bytes(req));
+		(unsigned long long)blk_rq_pos(req) << 9, blk_rq_bytes(req));
 	result = sock_xmit(nbd, index, 1, &from,
 			(type == NBD_CMD_WRITE) ? MSG_MORE : 0, &sent);
 	trace_nbd_header_sent(req, handle);
-	अगर (result <= 0) अणु
-		अगर (was_पूर्णांकerrupted(result)) अणु
-			/* If we havne't sent anything we can just वापस BUSY,
-			 * however अगर we have sent something we need to make
+	if (result <= 0) {
+		if (was_interrupted(result)) {
+			/* If we havne't sent anything we can just return BUSY,
+			 * however if we have sent something we need to make
 			 * sure we only allow this req to be sent until we are
-			 * completely करोne.
+			 * completely done.
 			 */
-			अगर (sent) अणु
+			if (sent) {
 				nsock->pending = req;
 				nsock->sent = sent;
-			पूर्ण
+			}
 			set_bit(NBD_CMD_REQUEUED, &cmd->flags);
-			वापस BLK_STS_RESOURCE;
-		पूर्ण
+			return BLK_STS_RESOURCE;
+		}
 		dev_err_ratelimited(disk_to_dev(nbd->disk),
 			"Send control failed (result %d)\n", result);
-		वापस -EAGAIN;
-	पूर्ण
+		return -EAGAIN;
+	}
 send_pages:
-	अगर (type != NBD_CMD_WRITE)
-		जाओ out;
+	if (type != NBD_CMD_WRITE)
+		goto out;
 
 	bio = req->bio;
-	जबतक (bio) अणु
-		काष्ठा bio *next = bio->bi_next;
-		काष्ठा bvec_iter iter;
-		काष्ठा bio_vec bvec;
+	while (bio) {
+		struct bio *next = bio->bi_next;
+		struct bvec_iter iter;
+		struct bio_vec bvec;
 
-		bio_क्रम_each_segment(bvec, bio, iter) अणु
+		bio_for_each_segment(bvec, bio, iter) {
 			bool is_last = !next && bio_iter_last(bvec, iter);
-			पूर्णांक flags = is_last ? 0 : MSG_MORE;
+			int flags = is_last ? 0 : MSG_MORE;
 
 			dev_dbg(nbd_to_dev(nbd), "request %p: sending %d bytes data\n",
 				req, bvec.bv_len);
 			iov_iter_bvec(&from, WRITE, &bvec, 1, bvec.bv_len);
-			अगर (skip) अणु
-				अगर (skip >= iov_iter_count(&from)) अणु
+			if (skip) {
+				if (skip >= iov_iter_count(&from)) {
 					skip -= iov_iter_count(&from);
-					जारी;
-				पूर्ण
+					continue;
+				}
 				iov_iter_advance(&from, skip);
 				skip = 0;
-			पूर्ण
+			}
 			result = sock_xmit(nbd, index, 1, &from, flags, &sent);
-			अगर (result <= 0) अणु
-				अगर (was_पूर्णांकerrupted(result)) अणु
-					/* We've alपढ़ोy sent the header, we
+			if (result <= 0) {
+				if (was_interrupted(result)) {
+					/* We've already sent the header, we
 					 * have no choice but to set pending and
-					 * वापस BUSY.
+					 * return BUSY.
 					 */
 					nsock->pending = req;
 					nsock->sent = sent;
 					set_bit(NBD_CMD_REQUEUED, &cmd->flags);
-					वापस BLK_STS_RESOURCE;
-				पूर्ण
+					return BLK_STS_RESOURCE;
+				}
 				dev_err(disk_to_dev(nbd->disk),
 					"Send data failed (result %d)\n",
 					result);
-				वापस -EAGAIN;
-			पूर्ण
+				return -EAGAIN;
+			}
 			/*
-			 * The completion might alपढ़ोy have come in,
-			 * so अवरोध क्रम the last one instead of letting
-			 * the iterator करो it. This prevents use-after-मुक्त
+			 * The completion might already have come in,
+			 * so break for the last one instead of letting
+			 * the iterator do it. This prevents use-after-free
 			 * of the bio.
 			 */
-			अगर (is_last)
-				अवरोध;
-		पूर्ण
+			if (is_last)
+				break;
+		}
 		bio = next;
-	पूर्ण
+	}
 out:
 	trace_nbd_payload_sent(req, handle);
-	nsock->pending = शून्य;
+	nsock->pending = NULL;
 	nsock->sent = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* शून्य वापसed = something went wrong, inक्रमm userspace */
-अटल काष्ठा nbd_cmd *nbd_पढ़ो_stat(काष्ठा nbd_device *nbd, पूर्णांक index)
-अणु
-	काष्ठा nbd_config *config = nbd->config;
-	पूर्णांक result;
-	काष्ठा nbd_reply reply;
-	काष्ठा nbd_cmd *cmd;
-	काष्ठा request *req = शून्य;
+/* NULL returned = something went wrong, inform userspace */
+static struct nbd_cmd *nbd_read_stat(struct nbd_device *nbd, int index)
+{
+	struct nbd_config *config = nbd->config;
+	int result;
+	struct nbd_reply reply;
+	struct nbd_cmd *cmd;
+	struct request *req = NULL;
 	u64 handle;
 	u16 hwq;
 	u32 tag;
-	काष्ठा kvec iov = अणु.iov_base = &reply, .iov_len = माप(reply)पूर्ण;
-	काष्ठा iov_iter to;
-	पूर्णांक ret = 0;
+	struct kvec iov = {.iov_base = &reply, .iov_len = sizeof(reply)};
+	struct iov_iter to;
+	int ret = 0;
 
 	reply.magic = 0;
-	iov_iter_kvec(&to, READ, &iov, 1, माप(reply));
-	result = sock_xmit(nbd, index, 0, &to, MSG_WAITALL, शून्य);
-	अगर (result <= 0) अणु
-		अगर (!nbd_disconnected(config))
+	iov_iter_kvec(&to, READ, &iov, 1, sizeof(reply));
+	result = sock_xmit(nbd, index, 0, &to, MSG_WAITALL, NULL);
+	if (result <= 0) {
+		if (!nbd_disconnected(config))
 			dev_err(disk_to_dev(nbd->disk),
 				"Receive control failed (result %d)\n", result);
-		वापस ERR_PTR(result);
-	पूर्ण
+		return ERR_PTR(result);
+	}
 
-	अगर (ntohl(reply.magic) != NBD_REPLY_MAGIC) अणु
+	if (ntohl(reply.magic) != NBD_REPLY_MAGIC) {
 		dev_err(disk_to_dev(nbd->disk), "Wrong magic (0x%lx)\n",
-				(अचिन्हित दीर्घ)ntohl(reply.magic));
-		वापस ERR_PTR(-EPROTO);
-	पूर्ण
+				(unsigned long)ntohl(reply.magic));
+		return ERR_PTR(-EPROTO);
+	}
 
-	स_नकल(&handle, reply.handle, माप(handle));
+	memcpy(&handle, reply.handle, sizeof(handle));
 	tag = nbd_handle_to_tag(handle);
 	hwq = blk_mq_unique_tag_to_hwq(tag);
-	अगर (hwq < nbd->tag_set.nr_hw_queues)
+	if (hwq < nbd->tag_set.nr_hw_queues)
 		req = blk_mq_tag_to_rq(nbd->tag_set.tags[hwq],
 				       blk_mq_unique_tag_to_tag(tag));
-	अगर (!req || !blk_mq_request_started(req)) अणु
+	if (!req || !blk_mq_request_started(req)) {
 		dev_err(disk_to_dev(nbd->disk), "Unexpected reply (%d) %p\n",
 			tag, req);
-		वापस ERR_PTR(-ENOENT);
-	पूर्ण
+		return ERR_PTR(-ENOENT);
+	}
 	trace_nbd_header_received(req, handle);
 	cmd = blk_mq_rq_to_pdu(req);
 
 	mutex_lock(&cmd->lock);
-	अगर (cmd->cmd_cookie != nbd_handle_to_cookie(handle)) अणु
+	if (cmd->cmd_cookie != nbd_handle_to_cookie(handle)) {
 		dev_err(disk_to_dev(nbd->disk), "Double reply on req %p, cmd_cookie %u, handle cookie %u\n",
 			req, cmd->cmd_cookie, nbd_handle_to_cookie(handle));
 		ret = -ENOENT;
-		जाओ out;
-	पूर्ण
-	अगर (cmd->status != BLK_STS_OK) अणु
+		goto out;
+	}
+	if (cmd->status != BLK_STS_OK) {
 		dev_err(disk_to_dev(nbd->disk), "Command already handled %p\n",
 			req);
 		ret = -ENOENT;
-		जाओ out;
-	पूर्ण
-	अगर (test_bit(NBD_CMD_REQUEUED, &cmd->flags)) अणु
+		goto out;
+	}
+	if (test_bit(NBD_CMD_REQUEUED, &cmd->flags)) {
 		dev_err(disk_to_dev(nbd->disk), "Raced with timeout on req %p\n",
 			req);
 		ret = -ENOENT;
-		जाओ out;
-	पूर्ण
-	अगर (ntohl(reply.error)) अणु
+		goto out;
+	}
+	if (ntohl(reply.error)) {
 		dev_err(disk_to_dev(nbd->disk), "Other side returned error (%d)\n",
 			ntohl(reply.error));
 		cmd->status = BLK_STS_IOERR;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	dev_dbg(nbd_to_dev(nbd), "request %p: got reply\n", req);
-	अगर (rq_data_dir(req) != WRITE) अणु
-		काष्ठा req_iterator iter;
-		काष्ठा bio_vec bvec;
+	if (rq_data_dir(req) != WRITE) {
+		struct req_iterator iter;
+		struct bio_vec bvec;
 
-		rq_क्रम_each_segment(bvec, req, iter) अणु
+		rq_for_each_segment(bvec, req, iter) {
 			iov_iter_bvec(&to, READ, &bvec, 1, bvec.bv_len);
-			result = sock_xmit(nbd, index, 0, &to, MSG_WAITALL, शून्य);
-			अगर (result <= 0) अणु
+			result = sock_xmit(nbd, index, 0, &to, MSG_WAITALL, NULL);
+			if (result <= 0) {
 				dev_err(disk_to_dev(nbd->disk), "Receive data failed (result %d)\n",
 					result);
 				/*
 				 * If we've disconnected, we need to make sure we
 				 * complete this request, otherwise error out
-				 * and let the समयout stuff handle resubmitting
+				 * and let the timeout stuff handle resubmitting
 				 * this request onto another connection.
 				 */
-				अगर (nbd_disconnected(config)) अणु
+				if (nbd_disconnected(config)) {
 					cmd->status = BLK_STS_IOERR;
-					जाओ out;
-				पूर्ण
+					goto out;
+				}
 				ret = -EIO;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			dev_dbg(nbd_to_dev(nbd), "request %p: got %d bytes data\n",
 				req, bvec.bv_len);
-		पूर्ण
-	पूर्ण
+		}
+	}
 out:
 	trace_nbd_payload_received(req, handle);
 	mutex_unlock(&cmd->lock);
-	वापस ret ? ERR_PTR(ret) : cmd;
-पूर्ण
+	return ret ? ERR_PTR(ret) : cmd;
+}
 
-अटल व्योम recv_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा recv_thपढ़ो_args *args = container_of(work,
-						     काष्ठा recv_thपढ़ो_args,
+static void recv_work(struct work_struct *work)
+{
+	struct recv_thread_args *args = container_of(work,
+						     struct recv_thread_args,
 						     work);
-	काष्ठा nbd_device *nbd = args->nbd;
-	काष्ठा nbd_config *config = nbd->config;
-	काष्ठा nbd_cmd *cmd;
-	काष्ठा request *rq;
+	struct nbd_device *nbd = args->nbd;
+	struct nbd_config *config = nbd->config;
+	struct nbd_cmd *cmd;
+	struct request *rq;
 
-	जबतक (1) अणु
-		cmd = nbd_पढ़ो_stat(nbd, args->index);
-		अगर (IS_ERR(cmd)) अणु
-			काष्ठा nbd_sock *nsock = config->socks[args->index];
+	while (1) {
+		cmd = nbd_read_stat(nbd, args->index);
+		if (IS_ERR(cmd)) {
+			struct nbd_sock *nsock = config->socks[args->index];
 
 			mutex_lock(&nsock->tx_lock);
 			nbd_mark_nsock_dead(nbd, nsock, 1);
 			mutex_unlock(&nsock->tx_lock);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		rq = blk_mq_rq_from_pdu(cmd);
-		अगर (likely(!blk_should_fake_समयout(rq->q)))
+		if (likely(!blk_should_fake_timeout(rq->q)))
 			blk_mq_complete_request(rq);
-	पूर्ण
+	}
 	nbd_config_put(nbd);
-	atomic_dec(&config->recv_thपढ़ोs);
+	atomic_dec(&config->recv_threads);
 	wake_up(&config->recv_wq);
-	kमुक्त(args);
-पूर्ण
+	kfree(args);
+}
 
-अटल bool nbd_clear_req(काष्ठा request *req, व्योम *data, bool reserved)
-अणु
-	काष्ठा nbd_cmd *cmd = blk_mq_rq_to_pdu(req);
+static bool nbd_clear_req(struct request *req, void *data, bool reserved)
+{
+	struct nbd_cmd *cmd = blk_mq_rq_to_pdu(req);
 
 	mutex_lock(&cmd->lock);
 	cmd->status = BLK_STS_IOERR;
 	mutex_unlock(&cmd->lock);
 
 	blk_mq_complete_request(req);
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम nbd_clear_que(काष्ठा nbd_device *nbd)
-अणु
+static void nbd_clear_que(struct nbd_device *nbd)
+{
 	blk_mq_quiesce_queue(nbd->disk->queue);
-	blk_mq_tagset_busy_iter(&nbd->tag_set, nbd_clear_req, शून्य);
+	blk_mq_tagset_busy_iter(&nbd->tag_set, nbd_clear_req, NULL);
 	blk_mq_unquiesce_queue(nbd->disk->queue);
 	dev_dbg(disk_to_dev(nbd->disk), "queue cleared\n");
-पूर्ण
+}
 
-अटल पूर्णांक find_fallback(काष्ठा nbd_device *nbd, पूर्णांक index)
-अणु
-	काष्ठा nbd_config *config = nbd->config;
-	पूर्णांक new_index = -1;
-	काष्ठा nbd_sock *nsock = config->socks[index];
-	पूर्णांक fallback = nsock->fallback_index;
+static int find_fallback(struct nbd_device *nbd, int index)
+{
+	struct nbd_config *config = nbd->config;
+	int new_index = -1;
+	struct nbd_sock *nsock = config->socks[index];
+	int fallback = nsock->fallback_index;
 
-	अगर (test_bit(NBD_RT_DISCONNECTED, &config->runसमय_flags))
-		वापस new_index;
+	if (test_bit(NBD_RT_DISCONNECTED, &config->runtime_flags))
+		return new_index;
 
-	अगर (config->num_connections <= 1) अणु
+	if (config->num_connections <= 1) {
 		dev_err_ratelimited(disk_to_dev(nbd->disk),
 				    "Dead connection, failed to find a fallback\n");
-		वापस new_index;
-	पूर्ण
+		return new_index;
+	}
 
-	अगर (fallback >= 0 && fallback < config->num_connections &&
+	if (fallback >= 0 && fallback < config->num_connections &&
 	    !config->socks[fallback]->dead)
-		वापस fallback;
+		return fallback;
 
-	अगर (nsock->fallback_index < 0 ||
+	if (nsock->fallback_index < 0 ||
 	    nsock->fallback_index >= config->num_connections ||
-	    config->socks[nsock->fallback_index]->dead) अणु
-		पूर्णांक i;
-		क्रम (i = 0; i < config->num_connections; i++) अणु
-			अगर (i == index)
-				जारी;
-			अगर (!config->socks[i]->dead) अणु
+	    config->socks[nsock->fallback_index]->dead) {
+		int i;
+		for (i = 0; i < config->num_connections; i++) {
+			if (i == index)
+				continue;
+			if (!config->socks[i]->dead) {
 				new_index = i;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 		nsock->fallback_index = new_index;
-		अगर (new_index < 0) अणु
+		if (new_index < 0) {
 			dev_err_ratelimited(disk_to_dev(nbd->disk),
 					    "Dead connection, failed to find a fallback\n");
-			वापस new_index;
-		पूर्ण
-	पूर्ण
+			return new_index;
+		}
+	}
 	new_index = nsock->fallback_index;
-	वापस new_index;
-पूर्ण
+	return new_index;
+}
 
-अटल पूर्णांक रुको_क्रम_reconnect(काष्ठा nbd_device *nbd)
-अणु
-	काष्ठा nbd_config *config = nbd->config;
-	अगर (!config->dead_conn_समयout)
-		वापस 0;
-	अगर (test_bit(NBD_RT_DISCONNECTED, &config->runसमय_flags))
-		वापस 0;
-	वापस रुको_event_समयout(config->conn_रुको,
-				  atomic_पढ़ो(&config->live_connections) > 0,
-				  config->dead_conn_समयout) > 0;
-पूर्ण
+static int wait_for_reconnect(struct nbd_device *nbd)
+{
+	struct nbd_config *config = nbd->config;
+	if (!config->dead_conn_timeout)
+		return 0;
+	if (test_bit(NBD_RT_DISCONNECTED, &config->runtime_flags))
+		return 0;
+	return wait_event_timeout(config->conn_wait,
+				  atomic_read(&config->live_connections) > 0,
+				  config->dead_conn_timeout) > 0;
+}
 
-अटल पूर्णांक nbd_handle_cmd(काष्ठा nbd_cmd *cmd, पूर्णांक index)
-अणु
-	काष्ठा request *req = blk_mq_rq_from_pdu(cmd);
-	काष्ठा nbd_device *nbd = cmd->nbd;
-	काष्ठा nbd_config *config;
-	काष्ठा nbd_sock *nsock;
-	पूर्णांक ret;
+static int nbd_handle_cmd(struct nbd_cmd *cmd, int index)
+{
+	struct request *req = blk_mq_rq_from_pdu(cmd);
+	struct nbd_device *nbd = cmd->nbd;
+	struct nbd_config *config;
+	struct nbd_sock *nsock;
+	int ret;
 
-	अगर (!refcount_inc_not_zero(&nbd->config_refs)) अणु
+	if (!refcount_inc_not_zero(&nbd->config_refs)) {
 		dev_err_ratelimited(disk_to_dev(nbd->disk),
 				    "Socks array is empty\n");
 		blk_mq_start_request(req);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	config = nbd->config;
 
-	अगर (index >= config->num_connections) अणु
+	if (index >= config->num_connections) {
 		dev_err_ratelimited(disk_to_dev(nbd->disk),
 				    "Attempted send on invalid socket\n");
 		nbd_config_put(nbd);
 		blk_mq_start_request(req);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	cmd->status = BLK_STS_OK;
 again:
 	nsock = config->socks[index];
 	mutex_lock(&nsock->tx_lock);
-	अगर (nsock->dead) अणु
-		पूर्णांक old_index = index;
+	if (nsock->dead) {
+		int old_index = index;
 		index = find_fallback(nbd, index);
 		mutex_unlock(&nsock->tx_lock);
-		अगर (index < 0) अणु
-			अगर (रुको_क्रम_reconnect(nbd)) अणु
+		if (index < 0) {
+			if (wait_for_reconnect(nbd)) {
 				index = old_index;
-				जाओ again;
-			पूर्ण
-			/* All the sockets should alपढ़ोy be करोwn at this poपूर्णांक,
+				goto again;
+			}
+			/* All the sockets should already be down at this point,
 			 * we just want to make sure that DISCONNECTED is set so
-			 * any requests that come in that were queue'ed रुकोing
-			 * क्रम the reconnect समयr करोn't trigger the समयr again
+			 * any requests that come in that were queue'ed waiting
+			 * for the reconnect timer don't trigger the timer again
 			 * and instead just error out.
 			 */
-			sock_shutकरोwn(nbd);
+			sock_shutdown(nbd);
 			nbd_config_put(nbd);
 			blk_mq_start_request(req);
-			वापस -EIO;
-		पूर्ण
-		जाओ again;
-	पूर्ण
+			return -EIO;
+		}
+		goto again;
+	}
 
-	/* Handle the हाल that we have a pending request that was partially
+	/* Handle the case that we have a pending request that was partially
 	 * transmitted that _has_ to be serviced first.  We need to call requeue
-	 * here so that it माला_लो put _after_ the request that is alपढ़ोy on the
+	 * here so that it gets put _after_ the request that is already on the
 	 * dispatch list.
 	 */
 	blk_mq_start_request(req);
-	अगर (unlikely(nsock->pending && nsock->pending != req)) अणु
+	if (unlikely(nsock->pending && nsock->pending != req)) {
 		nbd_requeue_cmd(cmd);
 		ret = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	/*
-	 * Some failures are related to the link going करोwn, so anything that
-	 * वापसs EAGAIN can be retried on a dअगरferent socket.
+	 * Some failures are related to the link going down, so anything that
+	 * returns EAGAIN can be retried on a different socket.
 	 */
 	ret = nbd_send_cmd(nbd, cmd, index);
-	अगर (ret == -EAGAIN) अणु
+	if (ret == -EAGAIN) {
 		dev_err_ratelimited(disk_to_dev(nbd->disk),
 				    "Request send failed, requeueing\n");
 		nbd_mark_nsock_dead(nbd, nsock, 1);
 		nbd_requeue_cmd(cmd);
 		ret = 0;
-	पूर्ण
+	}
 out:
 	mutex_unlock(&nsock->tx_lock);
 	nbd_config_put(nbd);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल blk_status_t nbd_queue_rq(काष्ठा blk_mq_hw_ctx *hctx,
-			स्थिर काष्ठा blk_mq_queue_data *bd)
-अणु
-	काष्ठा nbd_cmd *cmd = blk_mq_rq_to_pdu(bd->rq);
-	पूर्णांक ret;
+static blk_status_t nbd_queue_rq(struct blk_mq_hw_ctx *hctx,
+			const struct blk_mq_queue_data *bd)
+{
+	struct nbd_cmd *cmd = blk_mq_rq_to_pdu(bd->rq);
+	int ret;
 
 	/*
 	 * Since we look at the bio's to send the request over the network we
-	 * need to make sure the completion work करोesn't mark this request करोne
-	 * beक्रमe we are करोne करोing our send.  This keeps us from dereferencing
-	 * मुक्तd data अगर we have particularly fast completions (ie we get the
-	 * completion beक्रमe we निकास sock_xmit on the last bvec) or in the हाल
-	 * that the server is misbehaving (or there was an error) beक्रमe we're
-	 * करोne sending everything over the wire.
+	 * need to make sure the completion work doesn't mark this request done
+	 * before we are done doing our send.  This keeps us from dereferencing
+	 * freed data if we have particularly fast completions (ie we get the
+	 * completion before we exit sock_xmit on the last bvec) or in the case
+	 * that the server is misbehaving (or there was an error) before we're
+	 * done sending everything over the wire.
 	 */
 	mutex_lock(&cmd->lock);
 	clear_bit(NBD_CMD_REQUEUED, &cmd->flags);
 
 	/* We can be called directly from the user space process, which means we
-	 * could possibly have संकेतs pending so our sendmsg will fail.  In
-	 * this हाल we need to वापस that we are busy, otherwise error out as
+	 * could possibly have signals pending so our sendmsg will fail.  In
+	 * this case we need to return that we are busy, otherwise error out as
 	 * appropriate.
 	 */
 	ret = nbd_handle_cmd(cmd, hctx->queue_num);
-	अगर (ret < 0)
+	if (ret < 0)
 		ret = BLK_STS_IOERR;
-	अन्यथा अगर (!ret)
+	else if (!ret)
 		ret = BLK_STS_OK;
 	mutex_unlock(&cmd->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा socket *nbd_get_socket(काष्ठा nbd_device *nbd, अचिन्हित दीर्घ fd,
-				     पूर्णांक *err)
-अणु
-	काष्ठा socket *sock;
+static struct socket *nbd_get_socket(struct nbd_device *nbd, unsigned long fd,
+				     int *err)
+{
+	struct socket *sock;
 
 	*err = 0;
 	sock = sockfd_lookup(fd, err);
-	अगर (!sock)
-		वापस शून्य;
+	if (!sock)
+		return NULL;
 
-	अगर (sock->ops->shutकरोwn == sock_no_shutकरोwn) अणु
+	if (sock->ops->shutdown == sock_no_shutdown) {
 		dev_err(disk_to_dev(nbd->disk), "Unsupported socket: shutdown callout must be supported.\n");
 		*err = -EINVAL;
 		sockfd_put(sock);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	वापस sock;
-पूर्ण
+	return sock;
+}
 
-अटल पूर्णांक nbd_add_socket(काष्ठा nbd_device *nbd, अचिन्हित दीर्घ arg,
+static int nbd_add_socket(struct nbd_device *nbd, unsigned long arg,
 			  bool netlink)
-अणु
-	काष्ठा nbd_config *config = nbd->config;
-	काष्ठा socket *sock;
-	काष्ठा nbd_sock **socks;
-	काष्ठा nbd_sock *nsock;
-	पूर्णांक err;
+{
+	struct nbd_config *config = nbd->config;
+	struct socket *sock;
+	struct nbd_sock **socks;
+	struct nbd_sock *nsock;
+	int err;
 
 	sock = nbd_get_socket(nbd, arg, &err);
-	अगर (!sock)
-		वापस err;
+	if (!sock)
+		return err;
 
 	/*
-	 * We need to make sure we करोn't get any errant requests while we're
-	 * पुनः_स्मृतिating the ->socks array.
+	 * We need to make sure we don't get any errant requests while we're
+	 * reallocating the ->socks array.
 	 */
-	blk_mq_मुक्तze_queue(nbd->disk->queue);
+	blk_mq_freeze_queue(nbd->disk->queue);
 
-	अगर (!netlink && !nbd->task_setup &&
-	    !test_bit(NBD_RT_BOUND, &config->runसमय_flags))
+	if (!netlink && !nbd->task_setup &&
+	    !test_bit(NBD_RT_BOUND, &config->runtime_flags))
 		nbd->task_setup = current;
 
-	अगर (!netlink &&
+	if (!netlink &&
 	    (nbd->task_setup != current ||
-	     test_bit(NBD_RT_BOUND, &config->runसमय_flags))) अणु
+	     test_bit(NBD_RT_BOUND, &config->runtime_flags))) {
 		dev_err(disk_to_dev(nbd->disk),
 			"Device being setup by another task");
 		err = -EBUSY;
-		जाओ put_socket;
-	पूर्ण
+		goto put_socket;
+	}
 
-	nsock = kzalloc(माप(*nsock), GFP_KERNEL);
-	अगर (!nsock) अणु
+	nsock = kzalloc(sizeof(*nsock), GFP_KERNEL);
+	if (!nsock) {
 		err = -ENOMEM;
-		जाओ put_socket;
-	पूर्ण
+		goto put_socket;
+	}
 
-	socks = kपुनः_स्मृति(config->socks, (config->num_connections + 1) *
-			 माप(काष्ठा nbd_sock *), GFP_KERNEL);
-	अगर (!socks) अणु
-		kमुक्त(nsock);
+	socks = krealloc(config->socks, (config->num_connections + 1) *
+			 sizeof(struct nbd_sock *), GFP_KERNEL);
+	if (!socks) {
+		kfree(nsock);
 		err = -ENOMEM;
-		जाओ put_socket;
-	पूर्ण
+		goto put_socket;
+	}
 
 	config->socks = socks;
 
@@ -1061,54 +1060,54 @@ out:
 	nsock->dead = false;
 	mutex_init(&nsock->tx_lock);
 	nsock->sock = sock;
-	nsock->pending = शून्य;
+	nsock->pending = NULL;
 	nsock->sent = 0;
 	nsock->cookie = 0;
 	socks[config->num_connections++] = nsock;
 	atomic_inc(&config->live_connections);
-	blk_mq_unमुक्तze_queue(nbd->disk->queue);
+	blk_mq_unfreeze_queue(nbd->disk->queue);
 
-	वापस 0;
+	return 0;
 
 put_socket:
-	blk_mq_unमुक्तze_queue(nbd->disk->queue);
+	blk_mq_unfreeze_queue(nbd->disk->queue);
 	sockfd_put(sock);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक nbd_reconnect_socket(काष्ठा nbd_device *nbd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा nbd_config *config = nbd->config;
-	काष्ठा socket *sock, *old;
-	काष्ठा recv_thपढ़ो_args *args;
-	पूर्णांक i;
-	पूर्णांक err;
+static int nbd_reconnect_socket(struct nbd_device *nbd, unsigned long arg)
+{
+	struct nbd_config *config = nbd->config;
+	struct socket *sock, *old;
+	struct recv_thread_args *args;
+	int i;
+	int err;
 
 	sock = nbd_get_socket(nbd, arg, &err);
-	अगर (!sock)
-		वापस err;
+	if (!sock)
+		return err;
 
-	args = kzalloc(माप(*args), GFP_KERNEL);
-	अगर (!args) अणु
+	args = kzalloc(sizeof(*args), GFP_KERNEL);
+	if (!args) {
 		sockfd_put(sock);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	क्रम (i = 0; i < config->num_connections; i++) अणु
-		काष्ठा nbd_sock *nsock = config->socks[i];
+	for (i = 0; i < config->num_connections; i++) {
+		struct nbd_sock *nsock = config->socks[i];
 
-		अगर (!nsock->dead)
-			जारी;
+		if (!nsock->dead)
+			continue;
 
 		mutex_lock(&nsock->tx_lock);
-		अगर (!nsock->dead) अणु
+		if (!nsock->dead) {
 			mutex_unlock(&nsock->tx_lock);
-			जारी;
-		पूर्ण
-		sk_set_meदो_स्मृति(sock->sk);
-		अगर (nbd->tag_set.समयout)
-			sock->sk->sk_sndसमयo = nbd->tag_set.समयout;
-		atomic_inc(&config->recv_thपढ़ोs);
+			continue;
+		}
+		sk_set_memalloc(sock->sk);
+		if (nbd->tag_set.timeout)
+			sock->sk->sk_sndtimeo = nbd->tag_set.timeout;
+		atomic_inc(&config->recv_threads);
 		refcount_inc(&nbd->config_refs);
 		old = nsock->sock;
 		nsock->fallback_index = -1;
@@ -1121,7 +1120,7 @@ put_socket:
 		mutex_unlock(&nsock->tx_lock);
 		sockfd_put(old);
 
-		clear_bit(NBD_RT_DISCONNECTED, &config->runसमय_flags);
+		clear_bit(NBD_RT_DISCONNECTED, &config->runtime_flags);
 
 		/* We take the tx_mutex in an error path in the recv_work, so we
 		 * need to queue_work outside of the tx_mutex.
@@ -1129,144 +1128,144 @@ put_socket:
 		queue_work(nbd->recv_workq, &args->work);
 
 		atomic_inc(&config->live_connections);
-		wake_up(&config->conn_रुको);
-		वापस 0;
-	पूर्ण
+		wake_up(&config->conn_wait);
+		return 0;
+	}
 	sockfd_put(sock);
-	kमुक्त(args);
-	वापस -ENOSPC;
-पूर्ण
+	kfree(args);
+	return -ENOSPC;
+}
 
-अटल व्योम nbd_bdev_reset(काष्ठा block_device *bdev)
-अणु
-	अगर (bdev->bd_खोलोers > 1)
-		वापस;
+static void nbd_bdev_reset(struct block_device *bdev)
+{
+	if (bdev->bd_openers > 1)
+		return;
 	set_capacity(bdev->bd_disk, 0);
-पूर्ण
+}
 
-अटल व्योम nbd_parse_flags(काष्ठा nbd_device *nbd)
-अणु
-	काष्ठा nbd_config *config = nbd->config;
-	अगर (config->flags & NBD_FLAG_READ_ONLY)
+static void nbd_parse_flags(struct nbd_device *nbd)
+{
+	struct nbd_config *config = nbd->config;
+	if (config->flags & NBD_FLAG_READ_ONLY)
 		set_disk_ro(nbd->disk, true);
-	अन्यथा
+	else
 		set_disk_ro(nbd->disk, false);
-	अगर (config->flags & NBD_FLAG_SEND_TRIM)
+	if (config->flags & NBD_FLAG_SEND_TRIM)
 		blk_queue_flag_set(QUEUE_FLAG_DISCARD, nbd->disk->queue);
-	अगर (config->flags & NBD_FLAG_SEND_FLUSH) अणु
-		अगर (config->flags & NBD_FLAG_SEND_FUA)
-			blk_queue_ग_लिखो_cache(nbd->disk->queue, true, true);
-		अन्यथा
-			blk_queue_ग_लिखो_cache(nbd->disk->queue, true, false);
-	पूर्ण
-	अन्यथा
-		blk_queue_ग_लिखो_cache(nbd->disk->queue, false, false);
-पूर्ण
+	if (config->flags & NBD_FLAG_SEND_FLUSH) {
+		if (config->flags & NBD_FLAG_SEND_FUA)
+			blk_queue_write_cache(nbd->disk->queue, true, true);
+		else
+			blk_queue_write_cache(nbd->disk->queue, true, false);
+	}
+	else
+		blk_queue_write_cache(nbd->disk->queue, false, false);
+}
 
-अटल व्योम send_disconnects(काष्ठा nbd_device *nbd)
-अणु
-	काष्ठा nbd_config *config = nbd->config;
-	काष्ठा nbd_request request = अणु
+static void send_disconnects(struct nbd_device *nbd)
+{
+	struct nbd_config *config = nbd->config;
+	struct nbd_request request = {
 		.magic = htonl(NBD_REQUEST_MAGIC),
 		.type = htonl(NBD_CMD_DISC),
-	पूर्ण;
-	काष्ठा kvec iov = अणु.iov_base = &request, .iov_len = माप(request)पूर्ण;
-	काष्ठा iov_iter from;
-	पूर्णांक i, ret;
+	};
+	struct kvec iov = {.iov_base = &request, .iov_len = sizeof(request)};
+	struct iov_iter from;
+	int i, ret;
 
-	क्रम (i = 0; i < config->num_connections; i++) अणु
-		काष्ठा nbd_sock *nsock = config->socks[i];
+	for (i = 0; i < config->num_connections; i++) {
+		struct nbd_sock *nsock = config->socks[i];
 
-		iov_iter_kvec(&from, WRITE, &iov, 1, माप(request));
+		iov_iter_kvec(&from, WRITE, &iov, 1, sizeof(request));
 		mutex_lock(&nsock->tx_lock);
-		ret = sock_xmit(nbd, i, 1, &from, 0, शून्य);
-		अगर (ret <= 0)
+		ret = sock_xmit(nbd, i, 1, &from, 0, NULL);
+		if (ret <= 0)
 			dev_err(disk_to_dev(nbd->disk),
 				"Send disconnect failed %d\n", ret);
 		mutex_unlock(&nsock->tx_lock);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक nbd_disconnect(काष्ठा nbd_device *nbd)
-अणु
-	काष्ठा nbd_config *config = nbd->config;
+static int nbd_disconnect(struct nbd_device *nbd)
+{
+	struct nbd_config *config = nbd->config;
 
 	dev_info(disk_to_dev(nbd->disk), "NBD_DISCONNECT\n");
-	set_bit(NBD_RT_DISCONNECT_REQUESTED, &config->runसमय_flags);
+	set_bit(NBD_RT_DISCONNECT_REQUESTED, &config->runtime_flags);
 	set_bit(NBD_DISCONNECT_REQUESTED, &nbd->flags);
 	send_disconnects(nbd);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम nbd_clear_sock(काष्ठा nbd_device *nbd)
-अणु
-	sock_shutकरोwn(nbd);
+static void nbd_clear_sock(struct nbd_device *nbd)
+{
+	sock_shutdown(nbd);
 	nbd_clear_que(nbd);
-	nbd->task_setup = शून्य;
-पूर्ण
+	nbd->task_setup = NULL;
+}
 
-अटल व्योम nbd_config_put(काष्ठा nbd_device *nbd)
-अणु
-	अगर (refcount_dec_and_mutex_lock(&nbd->config_refs,
-					&nbd->config_lock)) अणु
-		काष्ठा nbd_config *config = nbd->config;
-		nbd_dev_dbg_बंद(nbd);
+static void nbd_config_put(struct nbd_device *nbd)
+{
+	if (refcount_dec_and_mutex_lock(&nbd->config_refs,
+					&nbd->config_lock)) {
+		struct nbd_config *config = nbd->config;
+		nbd_dev_dbg_close(nbd);
 		nbd_size_clear(nbd);
-		अगर (test_and_clear_bit(NBD_RT_HAS_PID_खाता,
-				       &config->runसमय_flags))
-			device_हटाओ_file(disk_to_dev(nbd->disk), &pid_attr);
-		nbd->task_recv = शून्य;
+		if (test_and_clear_bit(NBD_RT_HAS_PID_FILE,
+				       &config->runtime_flags))
+			device_remove_file(disk_to_dev(nbd->disk), &pid_attr);
+		nbd->task_recv = NULL;
 		nbd_clear_sock(nbd);
-		अगर (config->num_connections) अणु
-			पूर्णांक i;
-			क्रम (i = 0; i < config->num_connections; i++) अणु
+		if (config->num_connections) {
+			int i;
+			for (i = 0; i < config->num_connections; i++) {
 				sockfd_put(config->socks[i]->sock);
-				kमुक्त(config->socks[i]);
-			पूर्ण
-			kमुक्त(config->socks);
-		पूर्ण
-		kमुक्त(nbd->config);
-		nbd->config = शून्य;
+				kfree(config->socks[i]);
+			}
+			kfree(config->socks);
+		}
+		kfree(nbd->config);
+		nbd->config = NULL;
 
-		अगर (nbd->recv_workq)
+		if (nbd->recv_workq)
 			destroy_workqueue(nbd->recv_workq);
-		nbd->recv_workq = शून्य;
+		nbd->recv_workq = NULL;
 
-		nbd->tag_set.समयout = 0;
+		nbd->tag_set.timeout = 0;
 		nbd->disk->queue->limits.discard_granularity = 0;
 		nbd->disk->queue->limits.discard_alignment = 0;
-		blk_queue_max_discard_sectors(nbd->disk->queue, अच_पूर्णांक_उच्च);
+		blk_queue_max_discard_sectors(nbd->disk->queue, UINT_MAX);
 		blk_queue_flag_clear(QUEUE_FLAG_DISCARD, nbd->disk->queue);
 
 		mutex_unlock(&nbd->config_lock);
 		nbd_put(nbd);
 		module_put(THIS_MODULE);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक nbd_start_device(काष्ठा nbd_device *nbd)
-अणु
-	काष्ठा nbd_config *config = nbd->config;
-	पूर्णांक num_connections = config->num_connections;
-	पूर्णांक error = 0, i;
+static int nbd_start_device(struct nbd_device *nbd)
+{
+	struct nbd_config *config = nbd->config;
+	int num_connections = config->num_connections;
+	int error = 0, i;
 
-	अगर (nbd->task_recv)
-		वापस -EBUSY;
-	अगर (!config->socks)
-		वापस -EINVAL;
-	अगर (num_connections > 1 &&
-	    !(config->flags & NBD_FLAG_CAN_MULTI_CONN)) अणु
+	if (nbd->task_recv)
+		return -EBUSY;
+	if (!config->socks)
+		return -EINVAL;
+	if (num_connections > 1 &&
+	    !(config->flags & NBD_FLAG_CAN_MULTI_CONN)) {
 		dev_err(disk_to_dev(nbd->disk), "server does not support multiple connections per device.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	nbd->recv_workq = alloc_workqueue("knbd%d-recv",
 					  WQ_MEM_RECLAIM | WQ_HIGHPRI |
 					  WQ_UNBOUND, 0, nbd->index);
-	अगर (!nbd->recv_workq) अणु
+	if (!nbd->recv_workq) {
 		dev_err(disk_to_dev(nbd->disk), "Could not allocate knbd recv work queue.\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	blk_mq_update_nr_hw_queues(&nbd->tag_set, config->num_connections);
 	nbd->task_recv = current;
@@ -1274,402 +1273,402 @@ put_socket:
 	nbd_parse_flags(nbd);
 
 	error = device_create_file(disk_to_dev(nbd->disk), &pid_attr);
-	अगर (error) अणु
+	if (error) {
 		dev_err(disk_to_dev(nbd->disk), "device_create_file failed!\n");
-		वापस error;
-	पूर्ण
-	set_bit(NBD_RT_HAS_PID_खाता, &config->runसमय_flags);
+		return error;
+	}
+	set_bit(NBD_RT_HAS_PID_FILE, &config->runtime_flags);
 
 	nbd_dev_dbg_init(nbd);
-	क्रम (i = 0; i < num_connections; i++) अणु
-		काष्ठा recv_thपढ़ो_args *args;
+	for (i = 0; i < num_connections; i++) {
+		struct recv_thread_args *args;
 
-		args = kzalloc(माप(*args), GFP_KERNEL);
-		अगर (!args) अणु
-			sock_shutकरोwn(nbd);
+		args = kzalloc(sizeof(*args), GFP_KERNEL);
+		if (!args) {
+			sock_shutdown(nbd);
 			/*
 			 * If num_connections is m (2 < m),
 			 * and NO.1 ~ NO.n(1 < n < m) kzallocs are successful.
-			 * But NO.(n + 1) failed. We still have n recv thपढ़ोs.
-			 * So, add flush_workqueue here to prevent recv thपढ़ोs
+			 * But NO.(n + 1) failed. We still have n recv threads.
+			 * So, add flush_workqueue here to prevent recv threads
 			 * dropping the last config_refs and trying to destroy
 			 * the workqueue from inside the workqueue.
 			 */
-			अगर (i)
+			if (i)
 				flush_workqueue(nbd->recv_workq);
-			वापस -ENOMEM;
-		पूर्ण
-		sk_set_meदो_स्मृति(config->socks[i]->sock->sk);
-		अगर (nbd->tag_set.समयout)
-			config->socks[i]->sock->sk->sk_sndसमयo =
-				nbd->tag_set.समयout;
-		atomic_inc(&config->recv_thपढ़ोs);
+			return -ENOMEM;
+		}
+		sk_set_memalloc(config->socks[i]->sock->sk);
+		if (nbd->tag_set.timeout)
+			config->socks[i]->sock->sk->sk_sndtimeo =
+				nbd->tag_set.timeout;
+		atomic_inc(&config->recv_threads);
 		refcount_inc(&nbd->config_refs);
 		INIT_WORK(&args->work, recv_work);
 		args->nbd = nbd;
 		args->index = i;
 		queue_work(nbd->recv_workq, &args->work);
-	पूर्ण
-	वापस nbd_set_size(nbd, config->bytesize, config->blksize);
-पूर्ण
+	}
+	return nbd_set_size(nbd, config->bytesize, config->blksize);
+}
 
-अटल पूर्णांक nbd_start_device_ioctl(काष्ठा nbd_device *nbd, काष्ठा block_device *bdev)
-अणु
-	काष्ठा nbd_config *config = nbd->config;
-	पूर्णांक ret;
+static int nbd_start_device_ioctl(struct nbd_device *nbd, struct block_device *bdev)
+{
+	struct nbd_config *config = nbd->config;
+	int ret;
 
 	ret = nbd_start_device(nbd);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (max_part)
+	if (max_part)
 		set_bit(GD_NEED_PART_SCAN, &nbd->disk->state);
 	mutex_unlock(&nbd->config_lock);
-	ret = रुको_event_पूर्णांकerruptible(config->recv_wq,
-					 atomic_पढ़ो(&config->recv_thपढ़ोs) == 0);
-	अगर (ret)
-		sock_shutकरोwn(nbd);
+	ret = wait_event_interruptible(config->recv_wq,
+					 atomic_read(&config->recv_threads) == 0);
+	if (ret)
+		sock_shutdown(nbd);
 	flush_workqueue(nbd->recv_workq);
 
 	mutex_lock(&nbd->config_lock);
 	nbd_bdev_reset(bdev);
 	/* user requested, ignore socket errors */
-	अगर (test_bit(NBD_RT_DISCONNECT_REQUESTED, &config->runसमय_flags))
+	if (test_bit(NBD_RT_DISCONNECT_REQUESTED, &config->runtime_flags))
 		ret = 0;
-	अगर (test_bit(NBD_RT_TIMEDOUT, &config->runसमय_flags))
+	if (test_bit(NBD_RT_TIMEDOUT, &config->runtime_flags))
 		ret = -ETIMEDOUT;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम nbd_clear_sock_ioctl(काष्ठा nbd_device *nbd,
-				 काष्ठा block_device *bdev)
-अणु
-	sock_shutकरोwn(nbd);
+static void nbd_clear_sock_ioctl(struct nbd_device *nbd,
+				 struct block_device *bdev)
+{
+	sock_shutdown(nbd);
 	__invalidate_device(bdev, true);
 	nbd_bdev_reset(bdev);
-	अगर (test_and_clear_bit(NBD_RT_HAS_CONFIG_REF,
-			       &nbd->config->runसमय_flags))
+	if (test_and_clear_bit(NBD_RT_HAS_CONFIG_REF,
+			       &nbd->config->runtime_flags))
 		nbd_config_put(nbd);
-पूर्ण
+}
 
-अटल व्योम nbd_set_cmd_समयout(काष्ठा nbd_device *nbd, u64 समयout)
-अणु
-	nbd->tag_set.समयout = समयout * HZ;
-	अगर (समयout)
-		blk_queue_rq_समयout(nbd->disk->queue, समयout * HZ);
-	अन्यथा
-		blk_queue_rq_समयout(nbd->disk->queue, 30 * HZ);
-पूर्ण
+static void nbd_set_cmd_timeout(struct nbd_device *nbd, u64 timeout)
+{
+	nbd->tag_set.timeout = timeout * HZ;
+	if (timeout)
+		blk_queue_rq_timeout(nbd->disk->queue, timeout * HZ);
+	else
+		blk_queue_rq_timeout(nbd->disk->queue, 30 * HZ);
+}
 
 /* Must be called with config_lock held */
-अटल पूर्णांक __nbd_ioctl(काष्ठा block_device *bdev, काष्ठा nbd_device *nbd,
-		       अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा nbd_config *config = nbd->config;
+static int __nbd_ioctl(struct block_device *bdev, struct nbd_device *nbd,
+		       unsigned int cmd, unsigned long arg)
+{
+	struct nbd_config *config = nbd->config;
 
-	चयन (cmd) अणु
-	हाल NBD_DISCONNECT:
-		वापस nbd_disconnect(nbd);
-	हाल NBD_CLEAR_SOCK:
+	switch (cmd) {
+	case NBD_DISCONNECT:
+		return nbd_disconnect(nbd);
+	case NBD_CLEAR_SOCK:
 		nbd_clear_sock_ioctl(nbd, bdev);
-		वापस 0;
-	हाल NBD_SET_SOCK:
-		वापस nbd_add_socket(nbd, arg, false);
-	हाल NBD_SET_BLKSIZE:
-		वापस nbd_set_size(nbd, config->bytesize, arg);
-	हाल NBD_SET_SIZE:
-		वापस nbd_set_size(nbd, arg, config->blksize);
-	हाल NBD_SET_SIZE_BLOCKS:
-		वापस nbd_set_size(nbd, arg * config->blksize,
+		return 0;
+	case NBD_SET_SOCK:
+		return nbd_add_socket(nbd, arg, false);
+	case NBD_SET_BLKSIZE:
+		return nbd_set_size(nbd, config->bytesize, arg);
+	case NBD_SET_SIZE:
+		return nbd_set_size(nbd, arg, config->blksize);
+	case NBD_SET_SIZE_BLOCKS:
+		return nbd_set_size(nbd, arg * config->blksize,
 				    config->blksize);
-	हाल NBD_SET_TIMEOUT:
-		nbd_set_cmd_समयout(nbd, arg);
-		वापस 0;
+	case NBD_SET_TIMEOUT:
+		nbd_set_cmd_timeout(nbd, arg);
+		return 0;
 
-	हाल NBD_SET_FLAGS:
+	case NBD_SET_FLAGS:
 		config->flags = arg;
-		वापस 0;
-	हाल NBD_DO_IT:
-		वापस nbd_start_device_ioctl(nbd, bdev);
-	हाल NBD_CLEAR_QUE:
+		return 0;
+	case NBD_DO_IT:
+		return nbd_start_device_ioctl(nbd, bdev);
+	case NBD_CLEAR_QUE:
 		/*
-		 * This is क्रम compatibility only.  The queue is always cleared
+		 * This is for compatibility only.  The queue is always cleared
 		 * by NBD_DO_IT or NBD_CLEAR_SOCK.
 		 */
-		वापस 0;
-	हाल NBD_PRINT_DEBUG:
+		return 0;
+	case NBD_PRINT_DEBUG:
 		/*
-		 * For compatibility only, we no दीर्घer keep a list of
+		 * For compatibility only, we no longer keep a list of
 		 * outstanding requests.
 		 */
-		वापस 0;
-	पूर्ण
-	वापस -ENOTTY;
-पूर्ण
+		return 0;
+	}
+	return -ENOTTY;
+}
 
-अटल पूर्णांक nbd_ioctl(काष्ठा block_device *bdev, भ_शेषe_t mode,
-		     अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा nbd_device *nbd = bdev->bd_disk->निजी_data;
-	काष्ठा nbd_config *config = nbd->config;
-	पूर्णांक error = -EINVAL;
+static int nbd_ioctl(struct block_device *bdev, fmode_t mode,
+		     unsigned int cmd, unsigned long arg)
+{
+	struct nbd_device *nbd = bdev->bd_disk->private_data;
+	struct nbd_config *config = nbd->config;
+	int error = -EINVAL;
 
-	अगर (!capable(CAP_SYS_ADMIN))
-		वापस -EPERM;
+	if (!capable(CAP_SYS_ADMIN))
+		return -EPERM;
 
-	/* The block layer will pass back some non-nbd ioctls in हाल we have
-	 * special handling क्रम them, but we करोn't so just वापस an error.
+	/* The block layer will pass back some non-nbd ioctls in case we have
+	 * special handling for them, but we don't so just return an error.
 	 */
-	अगर (_IOC_TYPE(cmd) != 0xab)
-		वापस -EINVAL;
+	if (_IOC_TYPE(cmd) != 0xab)
+		return -EINVAL;
 
 	mutex_lock(&nbd->config_lock);
 
 	/* Don't allow ioctl operations on a nbd device that was created with
 	 * netlink, unless it's DISCONNECT or CLEAR_SOCK, which are fine.
 	 */
-	अगर (!test_bit(NBD_RT_BOUND, &config->runसमय_flags) ||
+	if (!test_bit(NBD_RT_BOUND, &config->runtime_flags) ||
 	    (cmd == NBD_DISCONNECT || cmd == NBD_CLEAR_SOCK))
 		error = __nbd_ioctl(bdev, nbd, cmd, arg);
-	अन्यथा
+	else
 		dev_err(nbd_to_dev(nbd), "Cannot use ioctl interface on a netlink controlled device.\n");
 	mutex_unlock(&nbd->config_lock);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल काष्ठा nbd_config *nbd_alloc_config(व्योम)
-अणु
-	काष्ठा nbd_config *config;
+static struct nbd_config *nbd_alloc_config(void)
+{
+	struct nbd_config *config;
 
-	config = kzalloc(माप(काष्ठा nbd_config), GFP_NOFS);
-	अगर (!config)
-		वापस शून्य;
-	atomic_set(&config->recv_thपढ़ोs, 0);
-	init_रुकोqueue_head(&config->recv_wq);
-	init_रुकोqueue_head(&config->conn_रुको);
+	config = kzalloc(sizeof(struct nbd_config), GFP_NOFS);
+	if (!config)
+		return NULL;
+	atomic_set(&config->recv_threads, 0);
+	init_waitqueue_head(&config->recv_wq);
+	init_waitqueue_head(&config->conn_wait);
 	config->blksize = NBD_DEF_BLKSIZE;
 	atomic_set(&config->live_connections, 0);
 	try_module_get(THIS_MODULE);
-	वापस config;
-पूर्ण
+	return config;
+}
 
-अटल पूर्णांक nbd_खोलो(काष्ठा block_device *bdev, भ_शेषe_t mode)
-अणु
-	काष्ठा nbd_device *nbd;
-	पूर्णांक ret = 0;
+static int nbd_open(struct block_device *bdev, fmode_t mode)
+{
+	struct nbd_device *nbd;
+	int ret = 0;
 
 	mutex_lock(&nbd_index_mutex);
-	nbd = bdev->bd_disk->निजी_data;
-	अगर (!nbd) अणु
+	nbd = bdev->bd_disk->private_data;
+	if (!nbd) {
 		ret = -ENXIO;
-		जाओ out;
-	पूर्ण
-	अगर (!refcount_inc_not_zero(&nbd->refs)) अणु
+		goto out;
+	}
+	if (!refcount_inc_not_zero(&nbd->refs)) {
 		ret = -ENXIO;
-		जाओ out;
-	पूर्ण
-	अगर (!refcount_inc_not_zero(&nbd->config_refs)) अणु
-		काष्ठा nbd_config *config;
+		goto out;
+	}
+	if (!refcount_inc_not_zero(&nbd->config_refs)) {
+		struct nbd_config *config;
 
 		mutex_lock(&nbd->config_lock);
-		अगर (refcount_inc_not_zero(&nbd->config_refs)) अणु
+		if (refcount_inc_not_zero(&nbd->config_refs)) {
 			mutex_unlock(&nbd->config_lock);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		config = nbd->config = nbd_alloc_config();
-		अगर (!config) अणु
+		if (!config) {
 			ret = -ENOMEM;
 			mutex_unlock(&nbd->config_lock);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		refcount_set(&nbd->config_refs, 1);
 		refcount_inc(&nbd->refs);
 		mutex_unlock(&nbd->config_lock);
-		अगर (max_part)
+		if (max_part)
 			set_bit(GD_NEED_PART_SCAN, &bdev->bd_disk->state);
-	पूर्ण अन्यथा अगर (nbd_disconnected(nbd->config)) अणु
-		अगर (max_part)
+	} else if (nbd_disconnected(nbd->config)) {
+		if (max_part)
 			set_bit(GD_NEED_PART_SCAN, &bdev->bd_disk->state);
-	पूर्ण
+	}
 out:
 	mutex_unlock(&nbd_index_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम nbd_release(काष्ठा gendisk *disk, भ_शेषe_t mode)
-अणु
-	काष्ठा nbd_device *nbd = disk->निजी_data;
+static void nbd_release(struct gendisk *disk, fmode_t mode)
+{
+	struct nbd_device *nbd = disk->private_data;
 
-	अगर (test_bit(NBD_RT_DISCONNECT_ON_CLOSE, &nbd->config->runसमय_flags) &&
-			disk->part0->bd_खोलोers == 0)
+	if (test_bit(NBD_RT_DISCONNECT_ON_CLOSE, &nbd->config->runtime_flags) &&
+			disk->part0->bd_openers == 0)
 		nbd_disconnect_and_put(nbd);
 
 	nbd_config_put(nbd);
 	nbd_put(nbd);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा block_device_operations nbd_fops =
-अणु
+static const struct block_device_operations nbd_fops =
+{
 	.owner =	THIS_MODULE,
-	.खोलो =		nbd_खोलो,
+	.open =		nbd_open,
 	.release =	nbd_release,
 	.ioctl =	nbd_ioctl,
 	.compat_ioctl =	nbd_ioctl,
-पूर्ण;
+};
 
-#अगर IS_ENABLED(CONFIG_DEBUG_FS)
+#if IS_ENABLED(CONFIG_DEBUG_FS)
 
-अटल पूर्णांक nbd_dbg_tasks_show(काष्ठा seq_file *s, व्योम *unused)
-अणु
-	काष्ठा nbd_device *nbd = s->निजी;
+static int nbd_dbg_tasks_show(struct seq_file *s, void *unused)
+{
+	struct nbd_device *nbd = s->private;
 
-	अगर (nbd->task_recv)
-		seq_म_लिखो(s, "recv: %d\n", task_pid_nr(nbd->task_recv));
+	if (nbd->task_recv)
+		seq_printf(s, "recv: %d\n", task_pid_nr(nbd->task_recv));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 DEFINE_SHOW_ATTRIBUTE(nbd_dbg_tasks);
 
-अटल पूर्णांक nbd_dbg_flags_show(काष्ठा seq_file *s, व्योम *unused)
-अणु
-	काष्ठा nbd_device *nbd = s->निजी;
+static int nbd_dbg_flags_show(struct seq_file *s, void *unused)
+{
+	struct nbd_device *nbd = s->private;
 	u32 flags = nbd->config->flags;
 
-	seq_म_लिखो(s, "Hex: 0x%08x\n\n", flags);
+	seq_printf(s, "Hex: 0x%08x\n\n", flags);
 
-	seq_माला_दो(s, "Known flags:\n");
+	seq_puts(s, "Known flags:\n");
 
-	अगर (flags & NBD_FLAG_HAS_FLAGS)
-		seq_माला_दो(s, "NBD_FLAG_HAS_FLAGS\n");
-	अगर (flags & NBD_FLAG_READ_ONLY)
-		seq_माला_दो(s, "NBD_FLAG_READ_ONLY\n");
-	अगर (flags & NBD_FLAG_SEND_FLUSH)
-		seq_माला_दो(s, "NBD_FLAG_SEND_FLUSH\n");
-	अगर (flags & NBD_FLAG_SEND_FUA)
-		seq_माला_दो(s, "NBD_FLAG_SEND_FUA\n");
-	अगर (flags & NBD_FLAG_SEND_TRIM)
-		seq_माला_दो(s, "NBD_FLAG_SEND_TRIM\n");
+	if (flags & NBD_FLAG_HAS_FLAGS)
+		seq_puts(s, "NBD_FLAG_HAS_FLAGS\n");
+	if (flags & NBD_FLAG_READ_ONLY)
+		seq_puts(s, "NBD_FLAG_READ_ONLY\n");
+	if (flags & NBD_FLAG_SEND_FLUSH)
+		seq_puts(s, "NBD_FLAG_SEND_FLUSH\n");
+	if (flags & NBD_FLAG_SEND_FUA)
+		seq_puts(s, "NBD_FLAG_SEND_FUA\n");
+	if (flags & NBD_FLAG_SEND_TRIM)
+		seq_puts(s, "NBD_FLAG_SEND_TRIM\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 DEFINE_SHOW_ATTRIBUTE(nbd_dbg_flags);
 
-अटल पूर्णांक nbd_dev_dbg_init(काष्ठा nbd_device *nbd)
-अणु
-	काष्ठा dentry *dir;
-	काष्ठा nbd_config *config = nbd->config;
+static int nbd_dev_dbg_init(struct nbd_device *nbd)
+{
+	struct dentry *dir;
+	struct nbd_config *config = nbd->config;
 
-	अगर (!nbd_dbg_dir)
-		वापस -EIO;
+	if (!nbd_dbg_dir)
+		return -EIO;
 
 	dir = debugfs_create_dir(nbd_name(nbd), nbd_dbg_dir);
-	अगर (!dir) अणु
+	if (!dir) {
 		dev_err(nbd_to_dev(nbd), "Failed to create debugfs dir for '%s'\n",
 			nbd_name(nbd));
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 	config->dbg_dir = dir;
 
 	debugfs_create_file("tasks", 0444, dir, nbd, &nbd_dbg_tasks_fops);
 	debugfs_create_u64("size_bytes", 0444, dir, &config->bytesize);
-	debugfs_create_u32("timeout", 0444, dir, &nbd->tag_set.समयout);
+	debugfs_create_u32("timeout", 0444, dir, &nbd->tag_set.timeout);
 	debugfs_create_u64("blocksize", 0444, dir, &config->blksize);
 	debugfs_create_file("flags", 0444, dir, nbd, &nbd_dbg_flags_fops);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम nbd_dev_dbg_बंद(काष्ठा nbd_device *nbd)
-अणु
-	debugfs_हटाओ_recursive(nbd->config->dbg_dir);
-पूर्ण
+static void nbd_dev_dbg_close(struct nbd_device *nbd)
+{
+	debugfs_remove_recursive(nbd->config->dbg_dir);
+}
 
-अटल पूर्णांक nbd_dbg_init(व्योम)
-अणु
-	काष्ठा dentry *dbg_dir;
+static int nbd_dbg_init(void)
+{
+	struct dentry *dbg_dir;
 
-	dbg_dir = debugfs_create_dir("nbd", शून्य);
-	अगर (!dbg_dir)
-		वापस -EIO;
+	dbg_dir = debugfs_create_dir("nbd", NULL);
+	if (!dbg_dir)
+		return -EIO;
 
 	nbd_dbg_dir = dbg_dir;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम nbd_dbg_बंद(व्योम)
-अणु
-	debugfs_हटाओ_recursive(nbd_dbg_dir);
-पूर्ण
+static void nbd_dbg_close(void)
+{
+	debugfs_remove_recursive(nbd_dbg_dir);
+}
 
-#अन्यथा  /* IS_ENABLED(CONFIG_DEBUG_FS) */
+#else  /* IS_ENABLED(CONFIG_DEBUG_FS) */
 
-अटल पूर्णांक nbd_dev_dbg_init(काष्ठा nbd_device *nbd)
-अणु
-	वापस 0;
-पूर्ण
+static int nbd_dev_dbg_init(struct nbd_device *nbd)
+{
+	return 0;
+}
 
-अटल व्योम nbd_dev_dbg_बंद(काष्ठा nbd_device *nbd)
-अणु
-पूर्ण
+static void nbd_dev_dbg_close(struct nbd_device *nbd)
+{
+}
 
-अटल पूर्णांक nbd_dbg_init(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+static int nbd_dbg_init(void)
+{
+	return 0;
+}
 
-अटल व्योम nbd_dbg_बंद(व्योम)
-अणु
-पूर्ण
+static void nbd_dbg_close(void)
+{
+}
 
-#पूर्ण_अगर
+#endif
 
-अटल पूर्णांक nbd_init_request(काष्ठा blk_mq_tag_set *set, काष्ठा request *rq,
-			    अचिन्हित पूर्णांक hctx_idx, अचिन्हित पूर्णांक numa_node)
-अणु
-	काष्ठा nbd_cmd *cmd = blk_mq_rq_to_pdu(rq);
+static int nbd_init_request(struct blk_mq_tag_set *set, struct request *rq,
+			    unsigned int hctx_idx, unsigned int numa_node)
+{
+	struct nbd_cmd *cmd = blk_mq_rq_to_pdu(rq);
 	cmd->nbd = set->driver_data;
 	cmd->flags = 0;
 	mutex_init(&cmd->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा blk_mq_ops nbd_mq_ops = अणु
+static const struct blk_mq_ops nbd_mq_ops = {
 	.queue_rq	= nbd_queue_rq,
 	.complete	= nbd_complete_rq,
 	.init_request	= nbd_init_request,
-	.समयout	= nbd_xmit_समयout,
-पूर्ण;
+	.timeout	= nbd_xmit_timeout,
+};
 
-अटल पूर्णांक nbd_dev_add(पूर्णांक index)
-अणु
-	काष्ठा nbd_device *nbd;
-	काष्ठा gendisk *disk;
-	काष्ठा request_queue *q;
-	पूर्णांक err = -ENOMEM;
+static int nbd_dev_add(int index)
+{
+	struct nbd_device *nbd;
+	struct gendisk *disk;
+	struct request_queue *q;
+	int err = -ENOMEM;
 
-	nbd = kzalloc(माप(काष्ठा nbd_device), GFP_KERNEL);
-	अगर (!nbd)
-		जाओ out;
+	nbd = kzalloc(sizeof(struct nbd_device), GFP_KERNEL);
+	if (!nbd)
+		goto out;
 
-	disk = alloc_disk(1 << part_shअगरt);
-	अगर (!disk)
-		जाओ out_मुक्त_nbd;
+	disk = alloc_disk(1 << part_shift);
+	if (!disk)
+		goto out_free_nbd;
 
-	अगर (index >= 0) अणु
+	if (index >= 0) {
 		err = idr_alloc(&nbd_index_idr, nbd, index, index + 1,
 				GFP_KERNEL);
-		अगर (err == -ENOSPC)
+		if (err == -ENOSPC)
 			err = -EEXIST;
-	पूर्ण अन्यथा अणु
+	} else {
 		err = idr_alloc(&nbd_index_idr, nbd, 0, 0, GFP_KERNEL);
-		अगर (err >= 0)
+		if (err >= 0)
 			index = err;
-	पूर्ण
-	अगर (err < 0)
-		जाओ out_मुक्त_disk;
+	}
+	if (err < 0)
+		goto out_free_disk;
 
 	nbd->index = index;
 	nbd->disk = disk;
@@ -1677,21 +1676,21 @@ DEFINE_SHOW_ATTRIBUTE(nbd_dbg_flags);
 	nbd->tag_set.nr_hw_queues = 1;
 	nbd->tag_set.queue_depth = 128;
 	nbd->tag_set.numa_node = NUMA_NO_NODE;
-	nbd->tag_set.cmd_size = माप(काष्ठा nbd_cmd);
+	nbd->tag_set.cmd_size = sizeof(struct nbd_cmd);
 	nbd->tag_set.flags = BLK_MQ_F_SHOULD_MERGE |
 		BLK_MQ_F_BLOCKING;
 	nbd->tag_set.driver_data = nbd;
-	nbd->destroy_complete = शून्य;
+	nbd->destroy_complete = NULL;
 
 	err = blk_mq_alloc_tag_set(&nbd->tag_set);
-	अगर (err)
-		जाओ out_मुक्त_idr;
+	if (err)
+		goto out_free_idr;
 
 	q = blk_mq_init_queue(&nbd->tag_set);
-	अगर (IS_ERR(q)) अणु
+	if (IS_ERR(q)) {
 		err = PTR_ERR(q);
-		जाओ out_मुक्त_tags;
-	पूर्ण
+		goto out_free_tags;
+	}
 	disk->queue = q;
 
 	/*
@@ -1702,8 +1701,8 @@ DEFINE_SHOW_ATTRIBUTE(nbd_dbg_flags);
 	disk->queue->limits.discard_granularity = 0;
 	disk->queue->limits.discard_alignment = 0;
 	blk_queue_max_discard_sectors(disk->queue, 0);
-	blk_queue_max_segment_size(disk->queue, अच_पूर्णांक_उच्च);
-	blk_queue_max_segments(disk->queue, अच_लघु_उच्च);
+	blk_queue_max_segment_size(disk->queue, UINT_MAX);
+	blk_queue_max_segments(disk->queue, USHRT_MAX);
 	blk_queue_max_hw_sectors(disk->queue, 65536);
 	disk->queue->limits.max_sectors = 256;
 
@@ -1712,472 +1711,472 @@ DEFINE_SHOW_ATTRIBUTE(nbd_dbg_flags);
 	refcount_set(&nbd->refs, 1);
 	INIT_LIST_HEAD(&nbd->list);
 	disk->major = NBD_MAJOR;
-	disk->first_minor = index << part_shअगरt;
+	disk->first_minor = index << part_shift;
 	disk->fops = &nbd_fops;
-	disk->निजी_data = nbd;
-	प्र_लिखो(disk->disk_name, "nbd%d", index);
+	disk->private_data = nbd;
+	sprintf(disk->disk_name, "nbd%d", index);
 	add_disk(disk);
 	nbd_total_devices++;
-	वापस index;
+	return index;
 
-out_मुक्त_tags:
-	blk_mq_मुक्त_tag_set(&nbd->tag_set);
-out_मुक्त_idr:
-	idr_हटाओ(&nbd_index_idr, index);
-out_मुक्त_disk:
+out_free_tags:
+	blk_mq_free_tag_set(&nbd->tag_set);
+out_free_idr:
+	idr_remove(&nbd_index_idr, index);
+out_free_disk:
 	put_disk(disk);
-out_मुक्त_nbd:
-	kमुक्त(nbd);
+out_free_nbd:
+	kfree(nbd);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक find_मुक्त_cb(पूर्णांक id, व्योम *ptr, व्योम *data)
-अणु
-	काष्ठा nbd_device *nbd = ptr;
-	काष्ठा nbd_device **found = data;
+static int find_free_cb(int id, void *ptr, void *data)
+{
+	struct nbd_device *nbd = ptr;
+	struct nbd_device **found = data;
 
-	अगर (!refcount_पढ़ो(&nbd->config_refs)) अणु
+	if (!refcount_read(&nbd->config_refs)) {
 		*found = nbd;
-		वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return 1;
+	}
+	return 0;
+}
 
-/* Netlink पूर्णांकerface. */
-अटल स्थिर काष्ठा nla_policy nbd_attr_policy[NBD_ATTR_MAX + 1] = अणु
-	[NBD_ATTR_INDEX]		=	अणु .type = NLA_U32 पूर्ण,
-	[NBD_ATTR_SIZE_BYTES]		=	अणु .type = NLA_U64 पूर्ण,
-	[NBD_ATTR_BLOCK_SIZE_BYTES]	=	अणु .type = NLA_U64 पूर्ण,
-	[NBD_ATTR_TIMEOUT]		=	अणु .type = NLA_U64 पूर्ण,
-	[NBD_ATTR_SERVER_FLAGS]		=	अणु .type = NLA_U64 पूर्ण,
-	[NBD_ATTR_CLIENT_FLAGS]		=	अणु .type = NLA_U64 पूर्ण,
-	[NBD_ATTR_SOCKETS]		=	अणु .type = NLA_NESTEDपूर्ण,
-	[NBD_ATTR_DEAD_CONN_TIMEOUT]	=	अणु .type = NLA_U64 पूर्ण,
-	[NBD_ATTR_DEVICE_LIST]		=	अणु .type = NLA_NESTEDपूर्ण,
-पूर्ण;
+/* Netlink interface. */
+static const struct nla_policy nbd_attr_policy[NBD_ATTR_MAX + 1] = {
+	[NBD_ATTR_INDEX]		=	{ .type = NLA_U32 },
+	[NBD_ATTR_SIZE_BYTES]		=	{ .type = NLA_U64 },
+	[NBD_ATTR_BLOCK_SIZE_BYTES]	=	{ .type = NLA_U64 },
+	[NBD_ATTR_TIMEOUT]		=	{ .type = NLA_U64 },
+	[NBD_ATTR_SERVER_FLAGS]		=	{ .type = NLA_U64 },
+	[NBD_ATTR_CLIENT_FLAGS]		=	{ .type = NLA_U64 },
+	[NBD_ATTR_SOCKETS]		=	{ .type = NLA_NESTED},
+	[NBD_ATTR_DEAD_CONN_TIMEOUT]	=	{ .type = NLA_U64 },
+	[NBD_ATTR_DEVICE_LIST]		=	{ .type = NLA_NESTED},
+};
 
-अटल स्थिर काष्ठा nla_policy nbd_sock_policy[NBD_SOCK_MAX + 1] = अणु
-	[NBD_SOCK_FD]			=	अणु .type = NLA_U32 पूर्ण,
-पूर्ण;
+static const struct nla_policy nbd_sock_policy[NBD_SOCK_MAX + 1] = {
+	[NBD_SOCK_FD]			=	{ .type = NLA_U32 },
+};
 
-/* We करोn't use this right now since we don't parse the incoming list, but we
+/* We don't use this right now since we don't parse the incoming list, but we
  * still want it here so userspace knows what to expect.
  */
-अटल स्थिर काष्ठा nla_policy __attribute__((unused))
-nbd_device_policy[NBD_DEVICE_ATTR_MAX + 1] = अणु
-	[NBD_DEVICE_INDEX]		=	अणु .type = NLA_U32 पूर्ण,
-	[NBD_DEVICE_CONNECTED]		=	अणु .type = NLA_U8 पूर्ण,
-पूर्ण;
+static const struct nla_policy __attribute__((unused))
+nbd_device_policy[NBD_DEVICE_ATTR_MAX + 1] = {
+	[NBD_DEVICE_INDEX]		=	{ .type = NLA_U32 },
+	[NBD_DEVICE_CONNECTED]		=	{ .type = NLA_U8 },
+};
 
-अटल पूर्णांक nbd_genl_size_set(काष्ठा genl_info *info, काष्ठा nbd_device *nbd)
-अणु
-	काष्ठा nbd_config *config = nbd->config;
+static int nbd_genl_size_set(struct genl_info *info, struct nbd_device *nbd)
+{
+	struct nbd_config *config = nbd->config;
 	u64 bsize = config->blksize;
 	u64 bytes = config->bytesize;
 
-	अगर (info->attrs[NBD_ATTR_SIZE_BYTES])
+	if (info->attrs[NBD_ATTR_SIZE_BYTES])
 		bytes = nla_get_u64(info->attrs[NBD_ATTR_SIZE_BYTES]);
 
-	अगर (info->attrs[NBD_ATTR_BLOCK_SIZE_BYTES])
+	if (info->attrs[NBD_ATTR_BLOCK_SIZE_BYTES])
 		bsize = nla_get_u64(info->attrs[NBD_ATTR_BLOCK_SIZE_BYTES]);
 
-	अगर (bytes != config->bytesize || bsize != config->blksize)
-		वापस nbd_set_size(nbd, bytes, bsize);
-	वापस 0;
-पूर्ण
+	if (bytes != config->bytesize || bsize != config->blksize)
+		return nbd_set_size(nbd, bytes, bsize);
+	return 0;
+}
 
-अटल पूर्णांक nbd_genl_connect(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
+static int nbd_genl_connect(struct sk_buff *skb, struct genl_info *info)
+{
 	DECLARE_COMPLETION_ONSTACK(destroy_complete);
-	काष्ठा nbd_device *nbd = शून्य;
-	काष्ठा nbd_config *config;
-	पूर्णांक index = -1;
-	पूर्णांक ret;
+	struct nbd_device *nbd = NULL;
+	struct nbd_config *config;
+	int index = -1;
+	int ret;
 	bool put_dev = false;
 
-	अगर (!netlink_capable(skb, CAP_SYS_ADMIN))
-		वापस -EPERM;
+	if (!netlink_capable(skb, CAP_SYS_ADMIN))
+		return -EPERM;
 
-	अगर (info->attrs[NBD_ATTR_INDEX])
+	if (info->attrs[NBD_ATTR_INDEX])
 		index = nla_get_u32(info->attrs[NBD_ATTR_INDEX]);
-	अगर (!info->attrs[NBD_ATTR_SOCKETS]) अणु
-		prपूर्णांकk(KERN_ERR "nbd: must specify at least one socket\n");
-		वापस -EINVAL;
-	पूर्ण
-	अगर (!info->attrs[NBD_ATTR_SIZE_BYTES]) अणु
-		prपूर्णांकk(KERN_ERR "nbd: must specify a size in bytes for the device\n");
-		वापस -EINVAL;
-	पूर्ण
+	if (!info->attrs[NBD_ATTR_SOCKETS]) {
+		printk(KERN_ERR "nbd: must specify at least one socket\n");
+		return -EINVAL;
+	}
+	if (!info->attrs[NBD_ATTR_SIZE_BYTES]) {
+		printk(KERN_ERR "nbd: must specify a size in bytes for the device\n");
+		return -EINVAL;
+	}
 again:
 	mutex_lock(&nbd_index_mutex);
-	अगर (index == -1) अणु
-		ret = idr_क्रम_each(&nbd_index_idr, &find_मुक्त_cb, &nbd);
-		अगर (ret == 0) अणु
-			पूर्णांक new_index;
+	if (index == -1) {
+		ret = idr_for_each(&nbd_index_idr, &find_free_cb, &nbd);
+		if (ret == 0) {
+			int new_index;
 			new_index = nbd_dev_add(-1);
-			अगर (new_index < 0) अणु
+			if (new_index < 0) {
 				mutex_unlock(&nbd_index_mutex);
-				prपूर्णांकk(KERN_ERR "nbd: failed to add new device\n");
-				वापस new_index;
-			पूर्ण
+				printk(KERN_ERR "nbd: failed to add new device\n");
+				return new_index;
+			}
 			nbd = idr_find(&nbd_index_idr, new_index);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		nbd = idr_find(&nbd_index_idr, index);
-		अगर (!nbd) अणु
+		if (!nbd) {
 			ret = nbd_dev_add(index);
-			अगर (ret < 0) अणु
+			if (ret < 0) {
 				mutex_unlock(&nbd_index_mutex);
-				prपूर्णांकk(KERN_ERR "nbd: failed to add new device\n");
-				वापस ret;
-			पूर्ण
+				printk(KERN_ERR "nbd: failed to add new device\n");
+				return ret;
+			}
 			nbd = idr_find(&nbd_index_idr, index);
-		पूर्ण
-	पूर्ण
-	अगर (!nbd) अणु
-		prपूर्णांकk(KERN_ERR "nbd: couldn't find device at index %d\n",
+		}
+	}
+	if (!nbd) {
+		printk(KERN_ERR "nbd: couldn't find device at index %d\n",
 		       index);
 		mutex_unlock(&nbd_index_mutex);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (test_bit(NBD_DESTROY_ON_DISCONNECT, &nbd->flags) &&
-	    test_bit(NBD_DISCONNECT_REQUESTED, &nbd->flags)) अणु
+	if (test_bit(NBD_DESTROY_ON_DISCONNECT, &nbd->flags) &&
+	    test_bit(NBD_DISCONNECT_REQUESTED, &nbd->flags)) {
 		nbd->destroy_complete = &destroy_complete;
 		mutex_unlock(&nbd_index_mutex);
 
 		/* Wait untill the the nbd stuff is totally destroyed */
-		रुको_क्रम_completion(&destroy_complete);
-		जाओ again;
-	पूर्ण
+		wait_for_completion(&destroy_complete);
+		goto again;
+	}
 
-	अगर (!refcount_inc_not_zero(&nbd->refs)) अणु
+	if (!refcount_inc_not_zero(&nbd->refs)) {
 		mutex_unlock(&nbd_index_mutex);
-		अगर (index == -1)
-			जाओ again;
-		prपूर्णांकk(KERN_ERR "nbd: device at index %d is going down\n",
+		if (index == -1)
+			goto again;
+		printk(KERN_ERR "nbd: device at index %d is going down\n",
 		       index);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	mutex_unlock(&nbd_index_mutex);
 
 	mutex_lock(&nbd->config_lock);
-	अगर (refcount_पढ़ो(&nbd->config_refs)) अणु
+	if (refcount_read(&nbd->config_refs)) {
 		mutex_unlock(&nbd->config_lock);
 		nbd_put(nbd);
-		अगर (index == -1)
-			जाओ again;
-		prपूर्णांकk(KERN_ERR "nbd: nbd%d already in use\n", index);
-		वापस -EBUSY;
-	पूर्ण
-	अगर (WARN_ON(nbd->config)) अणु
+		if (index == -1)
+			goto again;
+		printk(KERN_ERR "nbd: nbd%d already in use\n", index);
+		return -EBUSY;
+	}
+	if (WARN_ON(nbd->config)) {
 		mutex_unlock(&nbd->config_lock);
 		nbd_put(nbd);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	config = nbd->config = nbd_alloc_config();
-	अगर (!nbd->config) अणु
+	if (!nbd->config) {
 		mutex_unlock(&nbd->config_lock);
 		nbd_put(nbd);
-		prपूर्णांकk(KERN_ERR "nbd: couldn't allocate config\n");
-		वापस -ENOMEM;
-	पूर्ण
+		printk(KERN_ERR "nbd: couldn't allocate config\n");
+		return -ENOMEM;
+	}
 	refcount_set(&nbd->config_refs, 1);
-	set_bit(NBD_RT_BOUND, &config->runसमय_flags);
+	set_bit(NBD_RT_BOUND, &config->runtime_flags);
 
 	ret = nbd_genl_size_set(info, nbd);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	अगर (info->attrs[NBD_ATTR_TIMEOUT])
-		nbd_set_cmd_समयout(nbd,
+	if (info->attrs[NBD_ATTR_TIMEOUT])
+		nbd_set_cmd_timeout(nbd,
 				    nla_get_u64(info->attrs[NBD_ATTR_TIMEOUT]));
-	अगर (info->attrs[NBD_ATTR_DEAD_CONN_TIMEOUT]) अणु
-		config->dead_conn_समयout =
+	if (info->attrs[NBD_ATTR_DEAD_CONN_TIMEOUT]) {
+		config->dead_conn_timeout =
 			nla_get_u64(info->attrs[NBD_ATTR_DEAD_CONN_TIMEOUT]);
-		config->dead_conn_समयout *= HZ;
-	पूर्ण
-	अगर (info->attrs[NBD_ATTR_SERVER_FLAGS])
+		config->dead_conn_timeout *= HZ;
+	}
+	if (info->attrs[NBD_ATTR_SERVER_FLAGS])
 		config->flags =
 			nla_get_u64(info->attrs[NBD_ATTR_SERVER_FLAGS]);
-	अगर (info->attrs[NBD_ATTR_CLIENT_FLAGS]) अणु
+	if (info->attrs[NBD_ATTR_CLIENT_FLAGS]) {
 		u64 flags = nla_get_u64(info->attrs[NBD_ATTR_CLIENT_FLAGS]);
-		अगर (flags & NBD_CFLAG_DESTROY_ON_DISCONNECT) अणु
+		if (flags & NBD_CFLAG_DESTROY_ON_DISCONNECT) {
 			/*
 			 * We have 1 ref to keep the device around, and then 1
-			 * ref क्रम our current operation here, which will be
-			 * inherited by the config.  If we alपढ़ोy have
-			 * DESTROY_ON_DISCONNECT set then we know we करोn't have
-			 * that extra ref alपढ़ोy held so we करोn't need the
+			 * ref for our current operation here, which will be
+			 * inherited by the config.  If we already have
+			 * DESTROY_ON_DISCONNECT set then we know we don't have
+			 * that extra ref already held so we don't need the
 			 * put_dev.
 			 */
-			अगर (!test_and_set_bit(NBD_DESTROY_ON_DISCONNECT,
+			if (!test_and_set_bit(NBD_DESTROY_ON_DISCONNECT,
 					      &nbd->flags))
 				put_dev = true;
-		पूर्ण अन्यथा अणु
-			अगर (test_and_clear_bit(NBD_DESTROY_ON_DISCONNECT,
+		} else {
+			if (test_and_clear_bit(NBD_DESTROY_ON_DISCONNECT,
 					       &nbd->flags))
 				refcount_inc(&nbd->refs);
-		पूर्ण
-		अगर (flags & NBD_CFLAG_DISCONNECT_ON_CLOSE) अणु
+		}
+		if (flags & NBD_CFLAG_DISCONNECT_ON_CLOSE) {
 			set_bit(NBD_RT_DISCONNECT_ON_CLOSE,
-				&config->runसमय_flags);
-		पूर्ण
-	पूर्ण
+				&config->runtime_flags);
+		}
+	}
 
-	अगर (info->attrs[NBD_ATTR_SOCKETS]) अणु
-		काष्ठा nlattr *attr;
-		पूर्णांक rem, fd;
+	if (info->attrs[NBD_ATTR_SOCKETS]) {
+		struct nlattr *attr;
+		int rem, fd;
 
-		nla_क्रम_each_nested(attr, info->attrs[NBD_ATTR_SOCKETS],
-				    rem) अणु
-			काष्ठा nlattr *socks[NBD_SOCK_MAX+1];
+		nla_for_each_nested(attr, info->attrs[NBD_ATTR_SOCKETS],
+				    rem) {
+			struct nlattr *socks[NBD_SOCK_MAX+1];
 
-			अगर (nla_type(attr) != NBD_SOCK_ITEM) अणु
-				prपूर्णांकk(KERN_ERR "nbd: socks must be embedded in a SOCK_ITEM attr\n");
+			if (nla_type(attr) != NBD_SOCK_ITEM) {
+				printk(KERN_ERR "nbd: socks must be embedded in a SOCK_ITEM attr\n");
 				ret = -EINVAL;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			ret = nla_parse_nested_deprecated(socks, NBD_SOCK_MAX,
 							  attr,
 							  nbd_sock_policy,
 							  info->extack);
-			अगर (ret != 0) अणु
-				prपूर्णांकk(KERN_ERR "nbd: error processing sock list\n");
+			if (ret != 0) {
+				printk(KERN_ERR "nbd: error processing sock list\n");
 				ret = -EINVAL;
-				जाओ out;
-			पूर्ण
-			अगर (!socks[NBD_SOCK_FD])
-				जारी;
-			fd = (पूर्णांक)nla_get_u32(socks[NBD_SOCK_FD]);
+				goto out;
+			}
+			if (!socks[NBD_SOCK_FD])
+				continue;
+			fd = (int)nla_get_u32(socks[NBD_SOCK_FD]);
 			ret = nbd_add_socket(nbd, fd, true);
-			अगर (ret)
-				जाओ out;
-		पूर्ण
-	पूर्ण
+			if (ret)
+				goto out;
+		}
+	}
 	ret = nbd_start_device(nbd);
 out:
 	mutex_unlock(&nbd->config_lock);
-	अगर (!ret) अणु
-		set_bit(NBD_RT_HAS_CONFIG_REF, &config->runसमय_flags);
+	if (!ret) {
+		set_bit(NBD_RT_HAS_CONFIG_REF, &config->runtime_flags);
 		refcount_inc(&nbd->config_refs);
 		nbd_connect_reply(info, nbd->index);
-	पूर्ण
+	}
 	nbd_config_put(nbd);
-	अगर (put_dev)
+	if (put_dev)
 		nbd_put(nbd);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम nbd_disconnect_and_put(काष्ठा nbd_device *nbd)
-अणु
+static void nbd_disconnect_and_put(struct nbd_device *nbd)
+{
 	mutex_lock(&nbd->config_lock);
 	nbd_disconnect(nbd);
 	nbd_clear_sock(nbd);
 	mutex_unlock(&nbd->config_lock);
 	/*
-	 * Make sure recv thपढ़ो has finished, so it करोes not drop the last
+	 * Make sure recv thread has finished, so it does not drop the last
 	 * config ref and try to destroy the workqueue from inside the work
 	 * queue.
 	 */
-	अगर (nbd->recv_workq)
+	if (nbd->recv_workq)
 		flush_workqueue(nbd->recv_workq);
-	अगर (test_and_clear_bit(NBD_RT_HAS_CONFIG_REF,
-			       &nbd->config->runसमय_flags))
+	if (test_and_clear_bit(NBD_RT_HAS_CONFIG_REF,
+			       &nbd->config->runtime_flags))
 		nbd_config_put(nbd);
-पूर्ण
+}
 
-अटल पूर्णांक nbd_genl_disconnect(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा nbd_device *nbd;
-	पूर्णांक index;
+static int nbd_genl_disconnect(struct sk_buff *skb, struct genl_info *info)
+{
+	struct nbd_device *nbd;
+	int index;
 
-	अगर (!netlink_capable(skb, CAP_SYS_ADMIN))
-		वापस -EPERM;
+	if (!netlink_capable(skb, CAP_SYS_ADMIN))
+		return -EPERM;
 
-	अगर (!info->attrs[NBD_ATTR_INDEX]) अणु
-		prपूर्णांकk(KERN_ERR "nbd: must specify an index to disconnect\n");
-		वापस -EINVAL;
-	पूर्ण
+	if (!info->attrs[NBD_ATTR_INDEX]) {
+		printk(KERN_ERR "nbd: must specify an index to disconnect\n");
+		return -EINVAL;
+	}
 	index = nla_get_u32(info->attrs[NBD_ATTR_INDEX]);
 	mutex_lock(&nbd_index_mutex);
 	nbd = idr_find(&nbd_index_idr, index);
-	अगर (!nbd) अणु
+	if (!nbd) {
 		mutex_unlock(&nbd_index_mutex);
-		prपूर्णांकk(KERN_ERR "nbd: couldn't find device at index %d\n",
+		printk(KERN_ERR "nbd: couldn't find device at index %d\n",
 		       index);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (!refcount_inc_not_zero(&nbd->refs)) अणु
+		return -EINVAL;
+	}
+	if (!refcount_inc_not_zero(&nbd->refs)) {
 		mutex_unlock(&nbd_index_mutex);
-		prपूर्णांकk(KERN_ERR "nbd: device at index %d is going down\n",
+		printk(KERN_ERR "nbd: device at index %d is going down\n",
 		       index);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	mutex_unlock(&nbd_index_mutex);
-	अगर (!refcount_inc_not_zero(&nbd->config_refs))
-		जाओ put_nbd;
+	if (!refcount_inc_not_zero(&nbd->config_refs))
+		goto put_nbd;
 	nbd_disconnect_and_put(nbd);
 	nbd_config_put(nbd);
 put_nbd:
 	nbd_put(nbd);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nbd_genl_reconfigure(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा nbd_device *nbd = शून्य;
-	काष्ठा nbd_config *config;
-	पूर्णांक index;
-	पूर्णांक ret = 0;
+static int nbd_genl_reconfigure(struct sk_buff *skb, struct genl_info *info)
+{
+	struct nbd_device *nbd = NULL;
+	struct nbd_config *config;
+	int index;
+	int ret = 0;
 	bool put_dev = false;
 
-	अगर (!netlink_capable(skb, CAP_SYS_ADMIN))
-		वापस -EPERM;
+	if (!netlink_capable(skb, CAP_SYS_ADMIN))
+		return -EPERM;
 
-	अगर (!info->attrs[NBD_ATTR_INDEX]) अणु
-		prपूर्णांकk(KERN_ERR "nbd: must specify a device to reconfigure\n");
-		वापस -EINVAL;
-	पूर्ण
+	if (!info->attrs[NBD_ATTR_INDEX]) {
+		printk(KERN_ERR "nbd: must specify a device to reconfigure\n");
+		return -EINVAL;
+	}
 	index = nla_get_u32(info->attrs[NBD_ATTR_INDEX]);
 	mutex_lock(&nbd_index_mutex);
 	nbd = idr_find(&nbd_index_idr, index);
-	अगर (!nbd) अणु
+	if (!nbd) {
 		mutex_unlock(&nbd_index_mutex);
-		prपूर्णांकk(KERN_ERR "nbd: couldn't find a device at index %d\n",
+		printk(KERN_ERR "nbd: couldn't find a device at index %d\n",
 		       index);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (!refcount_inc_not_zero(&nbd->refs)) अणु
+		return -EINVAL;
+	}
+	if (!refcount_inc_not_zero(&nbd->refs)) {
 		mutex_unlock(&nbd_index_mutex);
-		prपूर्णांकk(KERN_ERR "nbd: device at index %d is going down\n",
+		printk(KERN_ERR "nbd: device at index %d is going down\n",
 		       index);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	mutex_unlock(&nbd_index_mutex);
 
-	अगर (!refcount_inc_not_zero(&nbd->config_refs)) अणु
+	if (!refcount_inc_not_zero(&nbd->config_refs)) {
 		dev_err(nbd_to_dev(nbd),
 			"not configured, cannot reconfigure\n");
 		nbd_put(nbd);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	mutex_lock(&nbd->config_lock);
 	config = nbd->config;
-	अगर (!test_bit(NBD_RT_BOUND, &config->runसमय_flags) ||
-	    !nbd->task_recv) अणु
+	if (!test_bit(NBD_RT_BOUND, &config->runtime_flags) ||
+	    !nbd->task_recv) {
 		dev_err(nbd_to_dev(nbd),
 			"not configured, cannot reconfigure\n");
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = nbd_genl_size_set(info, nbd);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	अगर (info->attrs[NBD_ATTR_TIMEOUT])
-		nbd_set_cmd_समयout(nbd,
+	if (info->attrs[NBD_ATTR_TIMEOUT])
+		nbd_set_cmd_timeout(nbd,
 				    nla_get_u64(info->attrs[NBD_ATTR_TIMEOUT]));
-	अगर (info->attrs[NBD_ATTR_DEAD_CONN_TIMEOUT]) अणु
-		config->dead_conn_समयout =
+	if (info->attrs[NBD_ATTR_DEAD_CONN_TIMEOUT]) {
+		config->dead_conn_timeout =
 			nla_get_u64(info->attrs[NBD_ATTR_DEAD_CONN_TIMEOUT]);
-		config->dead_conn_समयout *= HZ;
-	पूर्ण
-	अगर (info->attrs[NBD_ATTR_CLIENT_FLAGS]) अणु
+		config->dead_conn_timeout *= HZ;
+	}
+	if (info->attrs[NBD_ATTR_CLIENT_FLAGS]) {
 		u64 flags = nla_get_u64(info->attrs[NBD_ATTR_CLIENT_FLAGS]);
-		अगर (flags & NBD_CFLAG_DESTROY_ON_DISCONNECT) अणु
-			अगर (!test_and_set_bit(NBD_DESTROY_ON_DISCONNECT,
+		if (flags & NBD_CFLAG_DESTROY_ON_DISCONNECT) {
+			if (!test_and_set_bit(NBD_DESTROY_ON_DISCONNECT,
 					      &nbd->flags))
 				put_dev = true;
-		पूर्ण अन्यथा अणु
-			अगर (test_and_clear_bit(NBD_DESTROY_ON_DISCONNECT,
+		} else {
+			if (test_and_clear_bit(NBD_DESTROY_ON_DISCONNECT,
 					       &nbd->flags))
 				refcount_inc(&nbd->refs);
-		पूर्ण
+		}
 
-		अगर (flags & NBD_CFLAG_DISCONNECT_ON_CLOSE) अणु
+		if (flags & NBD_CFLAG_DISCONNECT_ON_CLOSE) {
 			set_bit(NBD_RT_DISCONNECT_ON_CLOSE,
-					&config->runसमय_flags);
-		पूर्ण अन्यथा अणु
+					&config->runtime_flags);
+		} else {
 			clear_bit(NBD_RT_DISCONNECT_ON_CLOSE,
-					&config->runसमय_flags);
-		पूर्ण
-	पूर्ण
+					&config->runtime_flags);
+		}
+	}
 
-	अगर (info->attrs[NBD_ATTR_SOCKETS]) अणु
-		काष्ठा nlattr *attr;
-		पूर्णांक rem, fd;
+	if (info->attrs[NBD_ATTR_SOCKETS]) {
+		struct nlattr *attr;
+		int rem, fd;
 
-		nla_क्रम_each_nested(attr, info->attrs[NBD_ATTR_SOCKETS],
-				    rem) अणु
-			काष्ठा nlattr *socks[NBD_SOCK_MAX+1];
+		nla_for_each_nested(attr, info->attrs[NBD_ATTR_SOCKETS],
+				    rem) {
+			struct nlattr *socks[NBD_SOCK_MAX+1];
 
-			अगर (nla_type(attr) != NBD_SOCK_ITEM) अणु
-				prपूर्णांकk(KERN_ERR "nbd: socks must be embedded in a SOCK_ITEM attr\n");
+			if (nla_type(attr) != NBD_SOCK_ITEM) {
+				printk(KERN_ERR "nbd: socks must be embedded in a SOCK_ITEM attr\n");
 				ret = -EINVAL;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			ret = nla_parse_nested_deprecated(socks, NBD_SOCK_MAX,
 							  attr,
 							  nbd_sock_policy,
 							  info->extack);
-			अगर (ret != 0) अणु
-				prपूर्णांकk(KERN_ERR "nbd: error processing sock list\n");
+			if (ret != 0) {
+				printk(KERN_ERR "nbd: error processing sock list\n");
 				ret = -EINVAL;
-				जाओ out;
-			पूर्ण
-			अगर (!socks[NBD_SOCK_FD])
-				जारी;
-			fd = (पूर्णांक)nla_get_u32(socks[NBD_SOCK_FD]);
+				goto out;
+			}
+			if (!socks[NBD_SOCK_FD])
+				continue;
+			fd = (int)nla_get_u32(socks[NBD_SOCK_FD]);
 			ret = nbd_reconnect_socket(nbd, fd);
-			अगर (ret) अणु
-				अगर (ret == -ENOSPC)
+			if (ret) {
+				if (ret == -ENOSPC)
 					ret = 0;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			dev_info(nbd_to_dev(nbd), "reconnected socket\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 out:
 	mutex_unlock(&nbd->config_lock);
 	nbd_config_put(nbd);
 	nbd_put(nbd);
-	अगर (put_dev)
+	if (put_dev)
 		nbd_put(nbd);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा genl_small_ops nbd_connect_genl_ops[] = अणु
-	अणु
+static const struct genl_small_ops nbd_connect_genl_ops[] = {
+	{
 		.cmd	= NBD_CMD_CONNECT,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit	= nbd_genl_connect,
-	पूर्ण,
-	अणु
+		.doit	= nbd_genl_connect,
+	},
+	{
 		.cmd	= NBD_CMD_DISCONNECT,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit	= nbd_genl_disconnect,
-	पूर्ण,
-	अणु
+		.doit	= nbd_genl_disconnect,
+	},
+	{
 		.cmd	= NBD_CMD_RECONFIGURE,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit	= nbd_genl_reconfigure,
-	पूर्ण,
-	अणु
+		.doit	= nbd_genl_reconfigure,
+	},
+	{
 		.cmd	= NBD_CMD_STATUS,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit	= nbd_genl_status,
-	पूर्ण,
-पूर्ण;
+		.doit	= nbd_genl_status,
+	},
+};
 
-अटल स्थिर काष्ठा genl_multicast_group nbd_mcast_grps[] = अणु
-	अणु .name = NBD_GENL_MCAST_GROUP_NAME, पूर्ण,
-पूर्ण;
+static const struct genl_multicast_group nbd_mcast_grps[] = {
+	{ .name = NBD_GENL_MCAST_GROUP_NAME, },
+};
 
-अटल काष्ठा genl_family nbd_genl_family __ro_after_init = अणु
+static struct genl_family nbd_genl_family __ro_after_init = {
 	.hdrsize	= 0,
 	.name		= NBD_GENL_FAMILY_NAME,
 	.version	= NBD_GENL_VERSION,
@@ -2188,241 +2187,241 @@ out:
 	.policy = nbd_attr_policy,
 	.mcgrps		= nbd_mcast_grps,
 	.n_mcgrps	= ARRAY_SIZE(nbd_mcast_grps),
-पूर्ण;
+};
 
-अटल पूर्णांक populate_nbd_status(काष्ठा nbd_device *nbd, काष्ठा sk_buff *reply)
-अणु
-	काष्ठा nlattr *dev_opt;
+static int populate_nbd_status(struct nbd_device *nbd, struct sk_buff *reply)
+{
+	struct nlattr *dev_opt;
 	u8 connected = 0;
-	पूर्णांक ret;
+	int ret;
 
-	/* This is a little racey, but क्रम status it's ok.  The
-	 * reason we करोn't take a ref here is because we can't
-	 * take a ref in the index == -1 हाल as we would need
+	/* This is a little racey, but for status it's ok.  The
+	 * reason we don't take a ref here is because we can't
+	 * take a ref in the index == -1 case as we would need
 	 * to put under the nbd_index_mutex, which could
-	 * deadlock अगर we are configured to हटाओ ourselves
+	 * deadlock if we are configured to remove ourselves
 	 * once we're disconnected.
 	 */
-	अगर (refcount_पढ़ो(&nbd->config_refs))
+	if (refcount_read(&nbd->config_refs))
 		connected = 1;
 	dev_opt = nla_nest_start_noflag(reply, NBD_DEVICE_ITEM);
-	अगर (!dev_opt)
-		वापस -EMSGSIZE;
+	if (!dev_opt)
+		return -EMSGSIZE;
 	ret = nla_put_u32(reply, NBD_DEVICE_INDEX, nbd->index);
-	अगर (ret)
-		वापस -EMSGSIZE;
+	if (ret)
+		return -EMSGSIZE;
 	ret = nla_put_u8(reply, NBD_DEVICE_CONNECTED,
 			 connected);
-	अगर (ret)
-		वापस -EMSGSIZE;
+	if (ret)
+		return -EMSGSIZE;
 	nla_nest_end(reply, dev_opt);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक status_cb(पूर्णांक id, व्योम *ptr, व्योम *data)
-अणु
-	काष्ठा nbd_device *nbd = ptr;
-	वापस populate_nbd_status(nbd, (काष्ठा sk_buff *)data);
-पूर्ण
+static int status_cb(int id, void *ptr, void *data)
+{
+	struct nbd_device *nbd = ptr;
+	return populate_nbd_status(nbd, (struct sk_buff *)data);
+}
 
-अटल पूर्णांक nbd_genl_status(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा nlattr *dev_list;
-	काष्ठा sk_buff *reply;
-	व्योम *reply_head;
-	माप_प्रकार msg_size;
-	पूर्णांक index = -1;
-	पूर्णांक ret = -ENOMEM;
+static int nbd_genl_status(struct sk_buff *skb, struct genl_info *info)
+{
+	struct nlattr *dev_list;
+	struct sk_buff *reply;
+	void *reply_head;
+	size_t msg_size;
+	int index = -1;
+	int ret = -ENOMEM;
 
-	अगर (info->attrs[NBD_ATTR_INDEX])
+	if (info->attrs[NBD_ATTR_INDEX])
 		index = nla_get_u32(info->attrs[NBD_ATTR_INDEX]);
 
 	mutex_lock(&nbd_index_mutex);
 
-	msg_size = nla_total_size(nla_attr_size(माप(u32)) +
-				  nla_attr_size(माप(u8)));
+	msg_size = nla_total_size(nla_attr_size(sizeof(u32)) +
+				  nla_attr_size(sizeof(u8)));
 	msg_size *= (index == -1) ? nbd_total_devices : 1;
 
 	reply = genlmsg_new(msg_size, GFP_KERNEL);
-	अगर (!reply)
-		जाओ out;
+	if (!reply)
+		goto out;
 	reply_head = genlmsg_put_reply(reply, info, &nbd_genl_family, 0,
 				       NBD_CMD_STATUS);
-	अगर (!reply_head) अणु
-		nlmsg_मुक्त(reply);
-		जाओ out;
-	पूर्ण
+	if (!reply_head) {
+		nlmsg_free(reply);
+		goto out;
+	}
 
 	dev_list = nla_nest_start_noflag(reply, NBD_ATTR_DEVICE_LIST);
-	अगर (index == -1) अणु
-		ret = idr_क्रम_each(&nbd_index_idr, &status_cb, reply);
-		अगर (ret) अणु
-			nlmsg_मुक्त(reply);
-			जाओ out;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		काष्ठा nbd_device *nbd;
+	if (index == -1) {
+		ret = idr_for_each(&nbd_index_idr, &status_cb, reply);
+		if (ret) {
+			nlmsg_free(reply);
+			goto out;
+		}
+	} else {
+		struct nbd_device *nbd;
 		nbd = idr_find(&nbd_index_idr, index);
-		अगर (nbd) अणु
+		if (nbd) {
 			ret = populate_nbd_status(nbd, reply);
-			अगर (ret) अणु
-				nlmsg_मुक्त(reply);
-				जाओ out;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			if (ret) {
+				nlmsg_free(reply);
+				goto out;
+			}
+		}
+	}
 	nla_nest_end(reply, dev_list);
 	genlmsg_end(reply, reply_head);
 	ret = genlmsg_reply(reply, info);
 out:
 	mutex_unlock(&nbd_index_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम nbd_connect_reply(काष्ठा genl_info *info, पूर्णांक index)
-अणु
-	काष्ठा sk_buff *skb;
-	व्योम *msg_head;
-	पूर्णांक ret;
+static void nbd_connect_reply(struct genl_info *info, int index)
+{
+	struct sk_buff *skb;
+	void *msg_head;
+	int ret;
 
-	skb = genlmsg_new(nla_total_size(माप(u32)), GFP_KERNEL);
-	अगर (!skb)
-		वापस;
+	skb = genlmsg_new(nla_total_size(sizeof(u32)), GFP_KERNEL);
+	if (!skb)
+		return;
 	msg_head = genlmsg_put_reply(skb, info, &nbd_genl_family, 0,
 				     NBD_CMD_CONNECT);
-	अगर (!msg_head) अणु
-		nlmsg_मुक्त(skb);
-		वापस;
-	पूर्ण
+	if (!msg_head) {
+		nlmsg_free(skb);
+		return;
+	}
 	ret = nla_put_u32(skb, NBD_ATTR_INDEX, index);
-	अगर (ret) अणु
-		nlmsg_मुक्त(skb);
-		वापस;
-	पूर्ण
+	if (ret) {
+		nlmsg_free(skb);
+		return;
+	}
 	genlmsg_end(skb, msg_head);
 	genlmsg_reply(skb, info);
-पूर्ण
+}
 
-अटल व्योम nbd_mcast_index(पूर्णांक index)
-अणु
-	काष्ठा sk_buff *skb;
-	व्योम *msg_head;
-	पूर्णांक ret;
+static void nbd_mcast_index(int index)
+{
+	struct sk_buff *skb;
+	void *msg_head;
+	int ret;
 
-	skb = genlmsg_new(nla_total_size(माप(u32)), GFP_KERNEL);
-	अगर (!skb)
-		वापस;
+	skb = genlmsg_new(nla_total_size(sizeof(u32)), GFP_KERNEL);
+	if (!skb)
+		return;
 	msg_head = genlmsg_put(skb, 0, 0, &nbd_genl_family, 0,
 				     NBD_CMD_LINK_DEAD);
-	अगर (!msg_head) अणु
-		nlmsg_मुक्त(skb);
-		वापस;
-	पूर्ण
+	if (!msg_head) {
+		nlmsg_free(skb);
+		return;
+	}
 	ret = nla_put_u32(skb, NBD_ATTR_INDEX, index);
-	अगर (ret) अणु
-		nlmsg_मुक्त(skb);
-		वापस;
-	पूर्ण
+	if (ret) {
+		nlmsg_free(skb);
+		return;
+	}
 	genlmsg_end(skb, msg_head);
 	genlmsg_multicast(&nbd_genl_family, skb, 0, 0, GFP_KERNEL);
-पूर्ण
+}
 
-अटल व्योम nbd_dead_link_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा link_dead_args *args = container_of(work, काष्ठा link_dead_args,
+static void nbd_dead_link_work(struct work_struct *work)
+{
+	struct link_dead_args *args = container_of(work, struct link_dead_args,
 						   work);
 	nbd_mcast_index(args->index);
-	kमुक्त(args);
-पूर्ण
+	kfree(args);
+}
 
-अटल पूर्णांक __init nbd_init(व्योम)
-अणु
-	पूर्णांक i;
+static int __init nbd_init(void)
+{
+	int i;
 
-	BUILD_BUG_ON(माप(काष्ठा nbd_request) != 28);
+	BUILD_BUG_ON(sizeof(struct nbd_request) != 28);
 
-	अगर (max_part < 0) अणु
-		prपूर्णांकk(KERN_ERR "nbd: max_part must be >= 0\n");
-		वापस -EINVAL;
-	पूर्ण
+	if (max_part < 0) {
+		printk(KERN_ERR "nbd: max_part must be >= 0\n");
+		return -EINVAL;
+	}
 
-	part_shअगरt = 0;
-	अगर (max_part > 0) अणु
-		part_shअगरt = fls(max_part);
+	part_shift = 0;
+	if (max_part > 0) {
+		part_shift = fls(max_part);
 
 		/*
-		 * Adjust max_part according to part_shअगरt as it is exported
+		 * Adjust max_part according to part_shift as it is exported
 		 * to user space so that user can know the max number of
 		 * partition kernel should be able to manage.
 		 *
 		 * Note that -1 is required because partition 0 is reserved
-		 * क्रम the whole disk.
+		 * for the whole disk.
 		 */
-		max_part = (1UL << part_shअगरt) - 1;
-	पूर्ण
+		max_part = (1UL << part_shift) - 1;
+	}
 
-	अगर ((1UL << part_shअगरt) > DISK_MAX_PARTS)
-		वापस -EINVAL;
+	if ((1UL << part_shift) > DISK_MAX_PARTS)
+		return -EINVAL;
 
-	अगर (nbds_max > 1UL << (MINORBITS - part_shअगरt))
-		वापस -EINVAL;
+	if (nbds_max > 1UL << (MINORBITS - part_shift))
+		return -EINVAL;
 
-	अगर (रेजिस्टर_blkdev(NBD_MAJOR, "nbd"))
-		वापस -EIO;
+	if (register_blkdev(NBD_MAJOR, "nbd"))
+		return -EIO;
 
-	अगर (genl_रेजिस्टर_family(&nbd_genl_family)) अणु
-		unरेजिस्टर_blkdev(NBD_MAJOR, "nbd");
-		वापस -EINVAL;
-	पूर्ण
+	if (genl_register_family(&nbd_genl_family)) {
+		unregister_blkdev(NBD_MAJOR, "nbd");
+		return -EINVAL;
+	}
 	nbd_dbg_init();
 
 	mutex_lock(&nbd_index_mutex);
-	क्रम (i = 0; i < nbds_max; i++)
+	for (i = 0; i < nbds_max; i++)
 		nbd_dev_add(i);
 	mutex_unlock(&nbd_index_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nbd_निकास_cb(पूर्णांक id, व्योम *ptr, व्योम *data)
-अणु
-	काष्ठा list_head *list = (काष्ठा list_head *)data;
-	काष्ठा nbd_device *nbd = ptr;
+static int nbd_exit_cb(int id, void *ptr, void *data)
+{
+	struct list_head *list = (struct list_head *)data;
+	struct nbd_device *nbd = ptr;
 
 	list_add_tail(&nbd->list, list);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास nbd_cleanup(व्योम)
-अणु
-	काष्ठा nbd_device *nbd;
+static void __exit nbd_cleanup(void)
+{
+	struct nbd_device *nbd;
 	LIST_HEAD(del_list);
 
-	nbd_dbg_बंद();
+	nbd_dbg_close();
 
 	mutex_lock(&nbd_index_mutex);
-	idr_क्रम_each(&nbd_index_idr, &nbd_निकास_cb, &del_list);
+	idr_for_each(&nbd_index_idr, &nbd_exit_cb, &del_list);
 	mutex_unlock(&nbd_index_mutex);
 
-	जबतक (!list_empty(&del_list)) अणु
-		nbd = list_first_entry(&del_list, काष्ठा nbd_device, list);
+	while (!list_empty(&del_list)) {
+		nbd = list_first_entry(&del_list, struct nbd_device, list);
 		list_del_init(&nbd->list);
-		अगर (refcount_पढ़ो(&nbd->refs) != 1)
-			prपूर्णांकk(KERN_ERR "nbd: possibly leaking a device\n");
+		if (refcount_read(&nbd->refs) != 1)
+			printk(KERN_ERR "nbd: possibly leaking a device\n");
 		nbd_put(nbd);
-	पूर्ण
+	}
 
 	idr_destroy(&nbd_index_idr);
-	genl_unरेजिस्टर_family(&nbd_genl_family);
-	unरेजिस्टर_blkdev(NBD_MAJOR, "nbd");
-पूर्ण
+	genl_unregister_family(&nbd_genl_family);
+	unregister_blkdev(NBD_MAJOR, "nbd");
+}
 
 module_init(nbd_init);
-module_निकास(nbd_cleanup);
+module_exit(nbd_cleanup);
 
 MODULE_DESCRIPTION("Network Block Device");
 MODULE_LICENSE("GPL");
 
-module_param(nbds_max, पूर्णांक, 0444);
+module_param(nbds_max, int, 0444);
 MODULE_PARM_DESC(nbds_max, "number of network block devices to initialize (default: 16)");
-module_param(max_part, पूर्णांक, 0444);
+module_param(max_part, int, 0444);
 MODULE_PARM_DESC(max_part, "number of partitions per device (default: 16)");

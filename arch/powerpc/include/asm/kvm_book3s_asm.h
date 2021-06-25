@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  *
  * Copyright SUSE Linux Products GmbH 2009
@@ -7,106 +6,106 @@
  * Authors: Alexander Graf <agraf@suse.de>
  */
 
-#अगर_अघोषित __ASM_KVM_BOOK3S_ASM_H__
-#घोषणा __ASM_KVM_BOOK3S_ASM_H__
+#ifndef __ASM_KVM_BOOK3S_ASM_H__
+#define __ASM_KVM_BOOK3S_ASM_H__
 
-/* XICS ICP रेजिस्टर offsets */
-#घोषणा XICS_XIRR		4
-#घोषणा XICS_MFRR		0xc
-#घोषणा XICS_IPI		2	/* पूर्णांकerrupt source # क्रम IPIs */
+/* XICS ICP register offsets */
+#define XICS_XIRR		4
+#define XICS_MFRR		0xc
+#define XICS_IPI		2	/* interrupt source # for IPIs */
 
-/* LPIDs we support with this build -- runसमय limit may be lower */
-#घोषणा KVMPPC_NR_LPIDS			(LPID_RSVD + 1)
+/* LPIDs we support with this build -- runtime limit may be lower */
+#define KVMPPC_NR_LPIDS			(LPID_RSVD + 1)
 
-/* Maximum number of thपढ़ोs per physical core */
-#घोषणा MAX_SMT_THREADS		8
+/* Maximum number of threads per physical core */
+#define MAX_SMT_THREADS		8
 
 /* Maximum number of subcores per physical core */
-#घोषणा MAX_SUBCORES		4
+#define MAX_SUBCORES		4
 
-#अगर_घोषित __ASSEMBLY__
+#ifdef __ASSEMBLY__
 
-#अगर_घोषित CONFIG_KVM_BOOK3S_HANDLER
+#ifdef CONFIG_KVM_BOOK3S_HANDLER
 
-#समावेश <यंत्र/kvm_यंत्र.h>
+#include <asm/kvm_asm.h>
 
-.macro DO_KVM पूर्णांकno
-	.अगर (\पूर्णांकno == BOOK3S_INTERRUPT_SYSTEM_RESET) || \
-	    (\पूर्णांकno == BOOK3S_INTERRUPT_MACHINE_CHECK) || \
-	    (\पूर्णांकno == BOOK3S_INTERRUPT_DATA_STORAGE) || \
-	    (\पूर्णांकno == BOOK3S_INTERRUPT_INST_STORAGE) || \
-	    (\पूर्णांकno == BOOK3S_INTERRUPT_DATA_SEGMENT) || \
-	    (\पूर्णांकno == BOOK3S_INTERRUPT_INST_SEGMENT) || \
-	    (\पूर्णांकno == BOOK3S_INTERRUPT_EXTERNAL) || \
-	    (\पूर्णांकno == BOOK3S_INTERRUPT_EXTERNAL_HV) || \
-	    (\पूर्णांकno == BOOK3S_INTERRUPT_ALIGNMENT) || \
-	    (\पूर्णांकno == BOOK3S_INTERRUPT_PROGRAM) || \
-	    (\पूर्णांकno == BOOK3S_INTERRUPT_FP_UNAVAIL) || \
-	    (\पूर्णांकno == BOOK3S_INTERRUPT_DECREMENTER) || \
-	    (\पूर्णांकno == BOOK3S_INTERRUPT_SYSCALL) || \
-	    (\पूर्णांकno == BOOK3S_INTERRUPT_TRACE) || \
-	    (\पूर्णांकno == BOOK3S_INTERRUPT_PERFMON) || \
-	    (\पूर्णांकno == BOOK3S_INTERRUPT_ALTIVEC) || \
-	    (\पूर्णांकno == BOOK3S_INTERRUPT_VSX)
+.macro DO_KVM intno
+	.if (\intno == BOOK3S_INTERRUPT_SYSTEM_RESET) || \
+	    (\intno == BOOK3S_INTERRUPT_MACHINE_CHECK) || \
+	    (\intno == BOOK3S_INTERRUPT_DATA_STORAGE) || \
+	    (\intno == BOOK3S_INTERRUPT_INST_STORAGE) || \
+	    (\intno == BOOK3S_INTERRUPT_DATA_SEGMENT) || \
+	    (\intno == BOOK3S_INTERRUPT_INST_SEGMENT) || \
+	    (\intno == BOOK3S_INTERRUPT_EXTERNAL) || \
+	    (\intno == BOOK3S_INTERRUPT_EXTERNAL_HV) || \
+	    (\intno == BOOK3S_INTERRUPT_ALIGNMENT) || \
+	    (\intno == BOOK3S_INTERRUPT_PROGRAM) || \
+	    (\intno == BOOK3S_INTERRUPT_FP_UNAVAIL) || \
+	    (\intno == BOOK3S_INTERRUPT_DECREMENTER) || \
+	    (\intno == BOOK3S_INTERRUPT_SYSCALL) || \
+	    (\intno == BOOK3S_INTERRUPT_TRACE) || \
+	    (\intno == BOOK3S_INTERRUPT_PERFMON) || \
+	    (\intno == BOOK3S_INTERRUPT_ALTIVEC) || \
+	    (\intno == BOOK3S_INTERRUPT_VSX)
 
-	b	kvmppc_trampoline_\पूर्णांकno
-kvmppc_resume_\पूर्णांकno:
+	b	kvmppc_trampoline_\intno
+kvmppc_resume_\intno:
 
-	.endअगर
+	.endif
 .endm
 
-#अन्यथा
+#else
 
-.macro DO_KVM पूर्णांकno
+.macro DO_KVM intno
 .endm
 
-#पूर्ण_अगर /* CONFIG_KVM_BOOK3S_HANDLER */
+#endif /* CONFIG_KVM_BOOK3S_HANDLER */
 
-#अन्यथा  /*__ASSEMBLY__ */
+#else  /*__ASSEMBLY__ */
 
-काष्ठा kvmppc_vcore;
+struct kvmppc_vcore;
 
-/* Struct used क्रम coordinating micro-thपढ़ोing (split-core) mode changes */
-काष्ठा kvm_split_mode अणु
-	अचिन्हित दीर्घ	rpr;
-	अचिन्हित दीर्घ	pmmar;
-	अचिन्हित दीर्घ	ldbar;
+/* Struct used for coordinating micro-threading (split-core) mode changes */
+struct kvm_split_mode {
+	unsigned long	rpr;
+	unsigned long	pmmar;
+	unsigned long	ldbar;
 	u8		subcore_size;
-	u8		करो_nap;
+	u8		do_nap;
 	u8		napped[MAX_SMT_THREADS];
-	काष्ठा kvmppc_vcore *vc[MAX_SUBCORES];
-पूर्ण;
+	struct kvmppc_vcore *vc[MAX_SUBCORES];
+};
 
 /*
- * This काष्ठा goes in the PACA on 64-bit processors.  It is used
+ * This struct goes in the PACA on 64-bit processors.  It is used
  * to store host state that needs to be saved when we enter a guest
- * and restored when we निकास, but isn't specअगरic to any particular
+ * and restored when we exit, but isn't specific to any particular
  * guest or vcpu.  It also has some scratch fields used by the guest
- * निकास code.
+ * exit code.
  */
-काष्ठा kvmppc_host_state अणु
-	uदीर्घ host_r1;
-	uदीर्घ host_r2;
-	uदीर्घ host_msr;
-	uदीर्घ vmhandler;
-	uदीर्घ scratch0;
-	uदीर्घ scratch1;
-	uदीर्घ scratch2;
+struct kvmppc_host_state {
+	ulong host_r1;
+	ulong host_r2;
+	ulong host_msr;
+	ulong vmhandler;
+	ulong scratch0;
+	ulong scratch1;
+	ulong scratch2;
 	u8 in_guest;
 	u8 restore_hid5;
 	u8 napping;
 
-#अगर_घोषित CONFIG_KVM_BOOK3S_HV_POSSIBLE
-	u8 hwthपढ़ो_req;
-	u8 hwthपढ़ो_state;
+#ifdef CONFIG_KVM_BOOK3S_HV_POSSIBLE
+	u8 hwthread_req;
+	u8 hwthread_state;
 	u8 host_ipi;
-	u8 ptid;		/* thपढ़ो number within subcore when split */
+	u8 ptid;		/* thread number within subcore when split */
 	u8 fake_suspend;
-	काष्ठा kvm_vcpu *kvm_vcpu;
-	काष्ठा kvmppc_vcore *kvm_vcore;
-	व्योम __iomem *xics_phys;
-	व्योम __iomem *xive_tima_phys;
-	व्योम __iomem *xive_tima_virt;
+	struct kvm_vcpu *kvm_vcpu;
+	struct kvmppc_vcore *kvm_vcore;
+	void __iomem *xics_phys;
+	void __iomem *xive_tima_phys;
+	void __iomem *xive_tima_virt;
 	u32 saved_xirr;
 	u64 dabr;
 	u64 host_mmcr[10];	/* MMCR 0,1,A, SIAR, SDAR, MMCR2, SIER, MMCR3, SIER2/3 */
@@ -115,50 +114,50 @@ kvmppc_resume_\पूर्णांकno:
 	u64 host_spurr;
 	u64 host_dscr;
 	u64 dec_expires;
-	काष्ठा kvm_split_mode *kvm_split_mode;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PPC_BOOK3S_64
+	struct kvm_split_mode *kvm_split_mode;
+#endif
+#ifdef CONFIG_PPC_BOOK3S_64
 	u64 cfar;
 	u64 ppr;
 	u64 host_fscr;
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-काष्ठा kvmppc_book3s_shaकरोw_vcpu अणु
+struct kvmppc_book3s_shadow_vcpu {
 	bool in_use;
-	uदीर्घ gpr[14];
+	ulong gpr[14];
 	u32 cr;
-	uदीर्घ xer;
-	uदीर्घ ctr;
-	uदीर्घ lr;
-	uदीर्घ pc;
+	ulong xer;
+	ulong ctr;
+	ulong lr;
+	ulong pc;
 
-	uदीर्घ shaकरोw_srr1;
-	uदीर्घ fault_dar;
+	ulong shadow_srr1;
+	ulong fault_dar;
 	u32 fault_dsisr;
 	u32 last_inst;
 
-#अगर_घोषित CONFIG_PPC_BOOK3S_32
+#ifdef CONFIG_PPC_BOOK3S_32
 	u32     sr[16];			/* Guest SRs */
 
-	काष्ठा kvmppc_host_state hstate;
-#पूर्ण_अगर
+	struct kvmppc_host_state hstate;
+#endif
 
-#अगर_घोषित CONFIG_PPC_BOOK3S_64
+#ifdef CONFIG_PPC_BOOK3S_64
 	u8 slb_max;			/* highest used guest slb entry */
-	काष्ठा  अणु
+	struct  {
 		u64     esid;
 		u64     vsid;
-	पूर्ण slb[64];			/* guest SLB */
-	u64 shaकरोw_fscr;
-#पूर्ण_अगर
-पूर्ण;
+	} slb[64];			/* guest SLB */
+	u64 shadow_fscr;
+#endif
+};
 
-#पूर्ण_अगर /*__ASSEMBLY__ */
+#endif /*__ASSEMBLY__ */
 
-/* Values क्रम kvm_state */
-#घोषणा KVM_HWTHREAD_IN_KERNEL	0
-#घोषणा KVM_HWTHREAD_IN_IDLE	1
-#घोषणा KVM_HWTHREAD_IN_KVM	2
+/* Values for kvm_state */
+#define KVM_HWTHREAD_IN_KERNEL	0
+#define KVM_HWTHREAD_IN_IDLE	1
+#define KVM_HWTHREAD_IN_KVM	2
 
-#पूर्ण_अगर /* __ASM_KVM_BOOK3S_ASM_H__ */
+#endif /* __ASM_KVM_BOOK3S_ASM_H__ */

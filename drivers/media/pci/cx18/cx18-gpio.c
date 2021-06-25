@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  cx18 gpio functions
  *
@@ -9,20 +8,20 @@
  *  Copyright (C) 2008  Andy Walls <awalls@md.metrocast.net>
  */
 
-#समावेश "cx18-driver.h"
-#समावेश "cx18-io.h"
-#समावेश "cx18-cards.h"
-#समावेश "cx18-gpio.h"
-#समावेश "tuner-xc2028.h"
+#include "cx18-driver.h"
+#include "cx18-io.h"
+#include "cx18-cards.h"
+#include "cx18-gpio.h"
+#include "tuner-xc2028.h"
 
 /********************* GPIO stuffs *********************/
 
-/* GPIO रेजिस्टरs */
-#घोषणा CX18_REG_GPIO_IN     0xc72010
-#घोषणा CX18_REG_GPIO_OUT1   0xc78100
-#घोषणा CX18_REG_GPIO_सूची1   0xc78108
-#घोषणा CX18_REG_GPIO_OUT2   0xc78104
-#घोषणा CX18_REG_GPIO_सूची2   0xc7810c
+/* GPIO registers */
+#define CX18_REG_GPIO_IN     0xc72010
+#define CX18_REG_GPIO_OUT1   0xc78100
+#define CX18_REG_GPIO_DIR1   0xc78108
+#define CX18_REG_GPIO_OUT2   0xc78104
+#define CX18_REG_GPIO_DIR2   0xc7810c
 
 /*
  * HVR-1600 GPIO pins, courtesy of Hauppauge:
@@ -36,303 +35,303 @@
 /*
  * File scope utility functions
  */
-अटल व्योम gpio_ग_लिखो(काष्ठा cx18 *cx)
-अणु
+static void gpio_write(struct cx18 *cx)
+{
 	u32 dir_lo = cx->gpio_dir & 0xffff;
 	u32 val_lo = cx->gpio_val & 0xffff;
 	u32 dir_hi = cx->gpio_dir >> 16;
 	u32 val_hi = cx->gpio_val >> 16;
 
-	cx18_ग_लिखो_reg_expect(cx, dir_lo << 16,
-					CX18_REG_GPIO_सूची1, ~dir_lo, dir_lo);
-	cx18_ग_लिखो_reg_expect(cx, (dir_lo << 16) | val_lo,
+	cx18_write_reg_expect(cx, dir_lo << 16,
+					CX18_REG_GPIO_DIR1, ~dir_lo, dir_lo);
+	cx18_write_reg_expect(cx, (dir_lo << 16) | val_lo,
 					CX18_REG_GPIO_OUT1, val_lo, dir_lo);
-	cx18_ग_लिखो_reg_expect(cx, dir_hi << 16,
-					CX18_REG_GPIO_सूची2, ~dir_hi, dir_hi);
-	cx18_ग_लिखो_reg_expect(cx, (dir_hi << 16) | val_hi,
+	cx18_write_reg_expect(cx, dir_hi << 16,
+					CX18_REG_GPIO_DIR2, ~dir_hi, dir_hi);
+	cx18_write_reg_expect(cx, (dir_hi << 16) | val_hi,
 					CX18_REG_GPIO_OUT2, val_hi, dir_hi);
-पूर्ण
+}
 
-अटल व्योम gpio_update(काष्ठा cx18 *cx, u32 mask, u32 data)
-अणु
-	अगर (mask == 0)
-		वापस;
+static void gpio_update(struct cx18 *cx, u32 mask, u32 data)
+{
+	if (mask == 0)
+		return;
 
 	mutex_lock(&cx->gpio_lock);
 	cx->gpio_val = (cx->gpio_val & ~mask) | (data & mask);
-	gpio_ग_लिखो(cx);
+	gpio_write(cx);
 	mutex_unlock(&cx->gpio_lock);
-पूर्ण
+}
 
-अटल व्योम gpio_reset_seq(काष्ठा cx18 *cx, u32 active_lo, u32 active_hi,
-			   अचिन्हित पूर्णांक निश्चित_msecs,
-			   अचिन्हित पूर्णांक recovery_msecs)
-अणु
+static void gpio_reset_seq(struct cx18 *cx, u32 active_lo, u32 active_hi,
+			   unsigned int assert_msecs,
+			   unsigned int recovery_msecs)
+{
 	u32 mask;
 
 	mask = active_lo | active_hi;
-	अगर (mask == 0)
-		वापस;
+	if (mask == 0)
+		return;
 
 	/*
 	 * Assuming that active_hi and active_lo are a subsets of the bits in
-	 * gpio_dir.  Also assumes that active_lo and active_hi करोn't overlap
+	 * gpio_dir.  Also assumes that active_lo and active_hi don't overlap
 	 * in any bit position
 	 */
 
 	/* Assert */
 	gpio_update(cx, mask, ~active_lo);
-	schedule_समयout_unपूर्णांकerruptible(msecs_to_jअगरfies(निश्चित_msecs));
+	schedule_timeout_uninterruptible(msecs_to_jiffies(assert_msecs));
 
-	/* Deनिश्चित */
+	/* Deassert */
 	gpio_update(cx, mask, ~active_hi);
-	schedule_समयout_unपूर्णांकerruptible(msecs_to_jअगरfies(recovery_msecs));
-पूर्ण
+	schedule_timeout_uninterruptible(msecs_to_jiffies(recovery_msecs));
+}
 
 /*
  * GPIO Multiplexer - logical device
  */
-अटल पूर्णांक gpiomux_log_status(काष्ठा v4l2_subdev *sd)
-अणु
-	काष्ठा cx18 *cx = v4l2_get_subdevdata(sd);
+static int gpiomux_log_status(struct v4l2_subdev *sd)
+{
+	struct cx18 *cx = v4l2_get_subdevdata(sd);
 
 	mutex_lock(&cx->gpio_lock);
 	CX18_INFO_DEV(sd, "GPIO:  direction 0x%08x, value 0x%08x\n",
 		      cx->gpio_dir, cx->gpio_val);
 	mutex_unlock(&cx->gpio_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gpiomux_s_radio(काष्ठा v4l2_subdev *sd)
-अणु
-	काष्ठा cx18 *cx = v4l2_get_subdevdata(sd);
+static int gpiomux_s_radio(struct v4l2_subdev *sd)
+{
+	struct cx18 *cx = v4l2_get_subdevdata(sd);
 
 	/*
 	 * FIXME - work out the cx->active/audio_input mess - this is
-	 * पूर्णांकended to handle the चयन to radio mode and set the
+	 * intended to handle the switch to radio mode and set the
 	 * audio routing, but we need to update the state in cx
 	 */
 	gpio_update(cx, cx->card->gpio_audio_input.mask,
 			cx->card->gpio_audio_input.radio);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gpiomux_s_std(काष्ठा v4l2_subdev *sd, v4l2_std_id norm)
-अणु
-	काष्ठा cx18 *cx = v4l2_get_subdevdata(sd);
+static int gpiomux_s_std(struct v4l2_subdev *sd, v4l2_std_id norm)
+{
+	struct cx18 *cx = v4l2_get_subdevdata(sd);
 	u32 data;
 
-	चयन (cx->card->audio_inमाला_दो[cx->audio_input].muxer_input) अणु
-	हाल 1:
+	switch (cx->card->audio_inputs[cx->audio_input].muxer_input) {
+	case 1:
 		data = cx->card->gpio_audio_input.linein;
-		अवरोध;
-	हाल 0:
+		break;
+	case 0:
 		data = cx->card->gpio_audio_input.tuner;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		/*
 		 * FIXME - work out the cx->active/audio_input mess - this is
-		 * पूर्णांकended to handle the चयन from radio mode and set the
+		 * intended to handle the switch from radio mode and set the
 		 * audio routing, but we need to update the state in cx
 		 */
 		data = cx->card->gpio_audio_input.tuner;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	gpio_update(cx, cx->card->gpio_audio_input.mask, data);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gpiomux_s_audio_routing(काष्ठा v4l2_subdev *sd,
+static int gpiomux_s_audio_routing(struct v4l2_subdev *sd,
 				   u32 input, u32 output, u32 config)
-अणु
-	काष्ठा cx18 *cx = v4l2_get_subdevdata(sd);
+{
+	struct cx18 *cx = v4l2_get_subdevdata(sd);
 	u32 data;
 
-	चयन (input) अणु
-	हाल 0:
+	switch (input) {
+	case 0:
 		data = cx->card->gpio_audio_input.tuner;
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		data = cx->card->gpio_audio_input.linein;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		data = cx->card->gpio_audio_input.radio;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 	gpio_update(cx, cx->card->gpio_audio_input.mask, data);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा v4l2_subdev_core_ops gpiomux_core_ops = अणु
+static const struct v4l2_subdev_core_ops gpiomux_core_ops = {
 	.log_status = gpiomux_log_status,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_tuner_ops gpiomux_tuner_ops = अणु
+static const struct v4l2_subdev_tuner_ops gpiomux_tuner_ops = {
 	.s_radio = gpiomux_s_radio,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_audio_ops gpiomux_audio_ops = अणु
+static const struct v4l2_subdev_audio_ops gpiomux_audio_ops = {
 	.s_routing = gpiomux_s_audio_routing,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_video_ops gpiomux_video_ops = अणु
+static const struct v4l2_subdev_video_ops gpiomux_video_ops = {
 	.s_std = gpiomux_s_std,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_ops gpiomux_ops = अणु
+static const struct v4l2_subdev_ops gpiomux_ops = {
 	.core = &gpiomux_core_ops,
 	.tuner = &gpiomux_tuner_ops,
 	.audio = &gpiomux_audio_ops,
 	.video = &gpiomux_video_ops,
-पूर्ण;
+};
 
 /*
  * GPIO Reset Controller - logical device
  */
-अटल पूर्णांक resetctrl_log_status(काष्ठा v4l2_subdev *sd)
-अणु
-	काष्ठा cx18 *cx = v4l2_get_subdevdata(sd);
+static int resetctrl_log_status(struct v4l2_subdev *sd)
+{
+	struct cx18 *cx = v4l2_get_subdevdata(sd);
 
 	mutex_lock(&cx->gpio_lock);
 	CX18_INFO_DEV(sd, "GPIO:  direction 0x%08x, value 0x%08x\n",
 		      cx->gpio_dir, cx->gpio_val);
 	mutex_unlock(&cx->gpio_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक resetctrl_reset(काष्ठा v4l2_subdev *sd, u32 val)
-अणु
-	काष्ठा cx18 *cx = v4l2_get_subdevdata(sd);
-	स्थिर काष्ठा cx18_gpio_i2c_slave_reset *p;
+static int resetctrl_reset(struct v4l2_subdev *sd, u32 val)
+{
+	struct cx18 *cx = v4l2_get_subdevdata(sd);
+	const struct cx18_gpio_i2c_slave_reset *p;
 
 	p = &cx->card->gpio_i2c_slave_reset;
-	चयन (val) अणु
-	हाल CX18_GPIO_RESET_I2C:
+	switch (val) {
+	case CX18_GPIO_RESET_I2C:
 		gpio_reset_seq(cx, p->active_lo_mask, p->active_hi_mask,
-			       p->msecs_निश्चितed, p->msecs_recovery);
-		अवरोध;
-	हाल CX18_GPIO_RESET_Z8F0811:
+			       p->msecs_asserted, p->msecs_recovery);
+		break;
+	case CX18_GPIO_RESET_Z8F0811:
 		/*
-		 * Assert timing क्रम the Z8F0811 on HVR-1600 boards:
-		 * 1. Assert RESET क्रम min of 4 घड़ी cycles at 18.432 MHz to
+		 * Assert timing for the Z8F0811 on HVR-1600 boards:
+		 * 1. Assert RESET for min of 4 clock cycles at 18.432 MHz to
 		 *    initiate
-		 * 2. Reset then takes 66 WDT cycles at 10 kHz + 16 xtal घड़ी
+		 * 2. Reset then takes 66 WDT cycles at 10 kHz + 16 xtal clock
 		 *    cycles (6,601,085 nanoseconds ~= 7 milliseconds)
-		 * 3. DBG pin must be high beक्रमe chip निकासs reset क्रम normal
-		 *    operation.  DBG is खोलो drain and hopefully pulled high
-		 *    since we करोn't normally drive it (GPIO 1?) क्रम the
+		 * 3. DBG pin must be high before chip exits reset for normal
+		 *    operation.  DBG is open drain and hopefully pulled high
+		 *    since we don't normally drive it (GPIO 1?) for the
 		 *    HVR-1600
-		 * 4. Z8F0811 won't निकास reset until RESET is deनिश्चितed
+		 * 4. Z8F0811 won't exit reset until RESET is deasserted
 		 * 5. Zilog comes out of reset, loads reset vector address and
 		 *    executes from there. Required recovery delay unknown.
 		 */
 		gpio_reset_seq(cx, p->ir_reset_mask, 0,
-			       p->msecs_निश्चितed, p->msecs_recovery);
-		अवरोध;
-	हाल CX18_GPIO_RESET_XC2028:
-		अगर (cx->card->tuners[0].tuner == TUNER_XC2028)
+			       p->msecs_asserted, p->msecs_recovery);
+		break;
+	case CX18_GPIO_RESET_XC2028:
+		if (cx->card->tuners[0].tuner == TUNER_XC2028)
 			gpio_reset_seq(cx, (1 << cx->card->xceive_pin), 0,
 				       1, 1);
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	}
+	return 0;
+}
 
-अटल स्थिर काष्ठा v4l2_subdev_core_ops resetctrl_core_ops = अणु
+static const struct v4l2_subdev_core_ops resetctrl_core_ops = {
 	.log_status = resetctrl_log_status,
 	.reset = resetctrl_reset,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_ops resetctrl_ops = अणु
+static const struct v4l2_subdev_ops resetctrl_ops = {
 	.core = &resetctrl_core_ops,
-पूर्ण;
+};
 
 /*
- * External entry poपूर्णांकs
+ * External entry points
  */
-व्योम cx18_gpio_init(काष्ठा cx18 *cx)
-अणु
+void cx18_gpio_init(struct cx18 *cx)
+{
 	mutex_lock(&cx->gpio_lock);
 	cx->gpio_dir = cx->card->gpio_init.direction;
 	cx->gpio_val = cx->card->gpio_init.initial_value;
 
-	अगर (cx->card->tuners[0].tuner == TUNER_XC2028) अणु
+	if (cx->card->tuners[0].tuner == TUNER_XC2028) {
 		cx->gpio_dir |= 1 << cx->card->xceive_pin;
 		cx->gpio_val |= 1 << cx->card->xceive_pin;
-	पूर्ण
+	}
 
-	अगर (cx->gpio_dir == 0) अणु
+	if (cx->gpio_dir == 0) {
 		mutex_unlock(&cx->gpio_lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	CX18_DEBUG_INFO("GPIO initial dir: %08x/%08x out: %08x/%08x\n",
-			cx18_पढ़ो_reg(cx, CX18_REG_GPIO_सूची1),
-			cx18_पढ़ो_reg(cx, CX18_REG_GPIO_सूची2),
-			cx18_पढ़ो_reg(cx, CX18_REG_GPIO_OUT1),
-			cx18_पढ़ो_reg(cx, CX18_REG_GPIO_OUT2));
+			cx18_read_reg(cx, CX18_REG_GPIO_DIR1),
+			cx18_read_reg(cx, CX18_REG_GPIO_DIR2),
+			cx18_read_reg(cx, CX18_REG_GPIO_OUT1),
+			cx18_read_reg(cx, CX18_REG_GPIO_OUT2));
 
-	gpio_ग_लिखो(cx);
+	gpio_write(cx);
 	mutex_unlock(&cx->gpio_lock);
-पूर्ण
+}
 
-पूर्णांक cx18_gpio_रेजिस्टर(काष्ठा cx18 *cx, u32 hw)
-अणु
-	काष्ठा v4l2_subdev *sd;
-	स्थिर काष्ठा v4l2_subdev_ops *ops;
-	अक्षर *str;
+int cx18_gpio_register(struct cx18 *cx, u32 hw)
+{
+	struct v4l2_subdev *sd;
+	const struct v4l2_subdev_ops *ops;
+	char *str;
 
-	चयन (hw) अणु
-	हाल CX18_HW_GPIO_MUX:
+	switch (hw) {
+	case CX18_HW_GPIO_MUX:
 		sd = &cx->sd_gpiomux;
 		ops = &gpiomux_ops;
 		str = "gpio-mux";
-		अवरोध;
-	हाल CX18_HW_GPIO_RESET_CTRL:
+		break;
+	case CX18_HW_GPIO_RESET_CTRL:
 		sd = &cx->sd_resetctrl;
 		ops = &resetctrl_ops;
 		str = "gpio-reset-ctrl";
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	v4l2_subdev_init(sd, ops);
 	v4l2_set_subdevdata(sd, cx);
-	snम_लिखो(sd->name, माप(sd->name), "%s %s", cx->v4l2_dev.name, str);
+	snprintf(sd->name, sizeof(sd->name), "%s %s", cx->v4l2_dev.name, str);
 	sd->grp_id = hw;
-	वापस v4l2_device_रेजिस्टर_subdev(&cx->v4l2_dev, sd);
-पूर्ण
+	return v4l2_device_register_subdev(&cx->v4l2_dev, sd);
+}
 
-व्योम cx18_reset_ir_gpio(व्योम *data)
-अणु
-	काष्ठा cx18 *cx = to_cx18((काष्ठा v4l2_device *)data);
+void cx18_reset_ir_gpio(void *data)
+{
+	struct cx18 *cx = to_cx18((struct v4l2_device *)data);
 
-	अगर (cx->card->gpio_i2c_slave_reset.ir_reset_mask == 0)
-		वापस;
+	if (cx->card->gpio_i2c_slave_reset.ir_reset_mask == 0)
+		return;
 
 	CX18_DEBUG_INFO("Resetting IR microcontroller\n");
 
 	v4l2_subdev_call(&cx->sd_resetctrl,
 			 core, reset, CX18_GPIO_RESET_Z8F0811);
-पूर्ण
+}
 EXPORT_SYMBOL(cx18_reset_ir_gpio);
-/* This symbol is exported क्रम use by lirc_pvr150 क्रम the IR-blaster */
+/* This symbol is exported for use by lirc_pvr150 for the IR-blaster */
 
 /* Xceive tuner reset function */
-पूर्णांक cx18_reset_tuner_gpio(व्योम *dev, पूर्णांक component, पूर्णांक cmd, पूर्णांक value)
-अणु
-	काष्ठा i2c_algo_bit_data *algo = dev;
-	काष्ठा cx18_i2c_algo_callback_data *cb_data = algo->data;
-	काष्ठा cx18 *cx = cb_data->cx;
+int cx18_reset_tuner_gpio(void *dev, int component, int cmd, int value)
+{
+	struct i2c_algo_bit_data *algo = dev;
+	struct cx18_i2c_algo_callback_data *cb_data = algo->data;
+	struct cx18 *cx = cb_data->cx;
 
-	अगर (cmd != XC2028_TUNER_RESET ||
+	if (cmd != XC2028_TUNER_RESET ||
 	    cx->card->tuners[0].tuner != TUNER_XC2028)
-		वापस 0;
+		return 0;
 
 	CX18_DEBUG_INFO("Resetting XCeive tuner\n");
-	वापस v4l2_subdev_call(&cx->sd_resetctrl,
+	return v4l2_subdev_call(&cx->sd_resetctrl,
 				core, reset, CX18_GPIO_RESET_XC2028);
-पूर्ण
+}

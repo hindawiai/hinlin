@@ -1,36 +1,35 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0 OR BSD-2-Clause)
+// SPDX-License-Identifier: (GPL-2.0 OR BSD-2-Clause)
 // Copyright (c) 2019 Hisilicon Limited.
 
-#समावेश "hnae3.h"
-#समावेश "hns_roce_device.h"
-#समावेश "hns_roce_cmd.h"
-#समावेश "hns_roce_hw_v2.h"
+#include "hnae3.h"
+#include "hns_roce_device.h"
+#include "hns_roce_cmd.h"
+#include "hns_roce_hw_v2.h"
 
-पूर्णांक hns_roce_v2_query_cqc_info(काष्ठा hns_roce_dev *hr_dev, u32 cqn,
-			       पूर्णांक *buffer)
-अणु
-	काष्ठा hns_roce_v2_cq_context *cq_context;
-	काष्ठा hns_roce_cmd_mailbox *mailbox;
-	पूर्णांक ret;
+int hns_roce_v2_query_cqc_info(struct hns_roce_dev *hr_dev, u32 cqn,
+			       int *buffer)
+{
+	struct hns_roce_v2_cq_context *cq_context;
+	struct hns_roce_cmd_mailbox *mailbox;
+	int ret;
 
 	mailbox = hns_roce_alloc_cmd_mailbox(hr_dev);
-	अगर (IS_ERR(mailbox))
-		वापस PTR_ERR(mailbox);
+	if (IS_ERR(mailbox))
+		return PTR_ERR(mailbox);
 
 	cq_context = mailbox->buf;
 	ret = hns_roce_cmd_mbox(hr_dev, 0, mailbox->dma, cqn, 0,
 				HNS_ROCE_CMD_QUERY_CQC,
 				HNS_ROCE_CMD_TIMEOUT_MSECS);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(hr_dev->dev, "QUERY cqc cmd process error\n");
-		जाओ err_mailbox;
-	पूर्ण
+		goto err_mailbox;
+	}
 
-	स_नकल(buffer, cq_context, माप(*cq_context));
+	memcpy(buffer, cq_context, sizeof(*cq_context));
 
 err_mailbox:
-	hns_roce_मुक्त_cmd_mailbox(hr_dev, mailbox);
+	hns_roce_free_cmd_mailbox(hr_dev, mailbox);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

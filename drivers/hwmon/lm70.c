@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * lm70.c
  *
@@ -7,71 +6,71 @@
  * Copyright (C) 2006 Kaiwan N Billimoria <kaiwan@designergraphix.com>
  *
  * The LM70 communicates with a host processor via an SPI/Microwire Bus
- * पूर्णांकerface. The complete datasheet is available at National's website
+ * interface. The complete datasheet is available at National's website
  * here:
- * http://www.national.com/pf/LM/LM70.hपंचांगl
+ * http://www.national.com/pf/LM/LM70.html
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/sysfs.h>
-#समावेश <linux/hwmon.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <linux/property.h>
-#समावेश <linux/spi/spi.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/acpi.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/device.h>
+#include <linux/err.h>
+#include <linux/sysfs.h>
+#include <linux/hwmon.h>
+#include <linux/mutex.h>
+#include <linux/mod_devicetable.h>
+#include <linux/property.h>
+#include <linux/spi/spi.h>
+#include <linux/slab.h>
+#include <linux/acpi.h>
 
-#घोषणा DRVNAME		"lm70"
+#define DRVNAME		"lm70"
 
-#घोषणा LM70_CHIP_LM70		0	/* original NS LM70 */
-#घोषणा LM70_CHIP_TMP121	1	/* TI TMP121/TMP123 */
-#घोषणा LM70_CHIP_LM71		2	/* NS LM71 */
-#घोषणा LM70_CHIP_LM74		3	/* NS LM74 */
-#घोषणा LM70_CHIP_TMP122	4	/* TI TMP122/TMP124 */
+#define LM70_CHIP_LM70		0	/* original NS LM70 */
+#define LM70_CHIP_TMP121	1	/* TI TMP121/TMP123 */
+#define LM70_CHIP_LM71		2	/* NS LM71 */
+#define LM70_CHIP_LM74		3	/* NS LM74 */
+#define LM70_CHIP_TMP122	4	/* TI TMP122/TMP124 */
 
-काष्ठा lm70 अणु
-	काष्ठा spi_device *spi;
-	काष्ठा mutex lock;
-	अचिन्हित पूर्णांक chip;
-पूर्ण;
+struct lm70 {
+	struct spi_device *spi;
+	struct mutex lock;
+	unsigned int chip;
+};
 
 /* sysfs hook function */
-अटल sमाप_प्रकार temp1_input_show(काष्ठा device *dev,
-				काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा lm70 *p_lm70 = dev_get_drvdata(dev);
-	काष्ठा spi_device *spi = p_lm70->spi;
-	पूर्णांक status, val = 0;
+static ssize_t temp1_input_show(struct device *dev,
+				struct device_attribute *attr, char *buf)
+{
+	struct lm70 *p_lm70 = dev_get_drvdata(dev);
+	struct spi_device *spi = p_lm70->spi;
+	int status, val = 0;
 	u8 rxbuf[2];
 	s16 raw = 0;
 
-	अगर (mutex_lock_पूर्णांकerruptible(&p_lm70->lock))
-		वापस -ERESTARTSYS;
+	if (mutex_lock_interruptible(&p_lm70->lock))
+		return -ERESTARTSYS;
 
 	/*
-	 * spi_पढ़ो() requires a DMA-safe buffer; so we use
-	 * spi_ग_लिखो_then_पढ़ो(), transmitting 0 bytes.
+	 * spi_read() requires a DMA-safe buffer; so we use
+	 * spi_write_then_read(), transmitting 0 bytes.
 	 */
-	status = spi_ग_लिखो_then_पढ़ो(spi, शून्य, 0, &rxbuf[0], 2);
-	अगर (status < 0) अणु
+	status = spi_write_then_read(spi, NULL, 0, &rxbuf[0], 2);
+	if (status < 0) {
 		dev_warn(dev, "spi_write_then_read failed with status %d\n",
 			 status);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	raw = (rxbuf[0] << 8) + rxbuf[1];
 	dev_dbg(dev, "rxbuf[0] : 0x%02x rxbuf[1] : 0x%02x raw=0x%04x\n",
 		rxbuf[0], rxbuf[1], raw);
 
 	/*
 	 * LM70:
-	 * The "raw" temperature पढ़ो पूर्णांकo rxbuf[] is a 16-bit चिन्हित 2's
+	 * The "raw" temperature read into rxbuf[] is a 16-bit signed 2's
 	 * complement value. Only the MSB 11 bits (1 sign + 10 temperature
 	 * bits) are meaningful; the LSB 5 bits are to be discarded.
 	 * See the datasheet.
@@ -89,140 +88,140 @@
 	 * 14 bits of 2's complement data, discard LSB 2 bits,
 	 * resolution 0.0312 degrees celsius.
 	 */
-	चयन (p_lm70->chip) अणु
-	हाल LM70_CHIP_LM70:
-		val = ((पूर्णांक)raw / 32) * 250;
-		अवरोध;
+	switch (p_lm70->chip) {
+	case LM70_CHIP_LM70:
+		val = ((int)raw / 32) * 250;
+		break;
 
-	हाल LM70_CHIP_TMP121:
-	हाल LM70_CHIP_TMP122:
-	हाल LM70_CHIP_LM74:
-		val = ((पूर्णांक)raw / 8) * 625 / 10;
-		अवरोध;
+	case LM70_CHIP_TMP121:
+	case LM70_CHIP_TMP122:
+	case LM70_CHIP_LM74:
+		val = ((int)raw / 8) * 625 / 10;
+		break;
 
-	हाल LM70_CHIP_LM71:
-		val = ((पूर्णांक)raw / 4) * 3125 / 100;
-		अवरोध;
-	पूर्ण
+	case LM70_CHIP_LM71:
+		val = ((int)raw / 4) * 3125 / 100;
+		break;
+	}
 
-	status = प्र_लिखो(buf, "%d\n", val); /* millidegrees Celsius */
+	status = sprintf(buf, "%d\n", val); /* millidegrees Celsius */
 out:
 	mutex_unlock(&p_lm70->lock);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल DEVICE_ATTR_RO(temp1_input);
+static DEVICE_ATTR_RO(temp1_input);
 
-अटल काष्ठा attribute *lm70_attrs[] = अणु
+static struct attribute *lm70_attrs[] = {
 	&dev_attr_temp1_input.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
 ATTRIBUTE_GROUPS(lm70);
 
 /*----------------------------------------------------------------------*/
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id lm70_of_ids[] = अणु
-	अणु
+#ifdef CONFIG_OF
+static const struct of_device_id lm70_of_ids[] = {
+	{
 		.compatible = "ti,lm70",
-		.data = (व्योम *) LM70_CHIP_LM70,
-	पूर्ण,
-	अणु
+		.data = (void *) LM70_CHIP_LM70,
+	},
+	{
 		.compatible = "ti,tmp121",
-		.data = (व्योम *) LM70_CHIP_TMP121,
-	पूर्ण,
-	अणु
+		.data = (void *) LM70_CHIP_TMP121,
+	},
+	{
 		.compatible = "ti,tmp122",
-		.data = (व्योम *) LM70_CHIP_TMP122,
-	पूर्ण,
-	अणु
+		.data = (void *) LM70_CHIP_TMP122,
+	},
+	{
 		.compatible = "ti,lm71",
-		.data = (व्योम *) LM70_CHIP_LM71,
-	पूर्ण,
-	अणु
+		.data = (void *) LM70_CHIP_LM71,
+	},
+	{
 		.compatible = "ti,lm74",
-		.data = (व्योम *) LM70_CHIP_LM74,
-	पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+		.data = (void *) LM70_CHIP_LM74,
+	},
+	{},
+};
 MODULE_DEVICE_TABLE(of, lm70_of_ids);
-#पूर्ण_अगर
+#endif
 
-#अगर_घोषित CONFIG_ACPI
-अटल स्थिर काष्ठा acpi_device_id lm70_acpi_ids[] = अणु
-	अणु
+#ifdef CONFIG_ACPI
+static const struct acpi_device_id lm70_acpi_ids[] = {
+	{
 		.id = "LM000070",
 		.driver_data = LM70_CHIP_LM70,
-	पूर्ण,
-	अणु
+	},
+	{
 		.id = "TMP00121",
 		.driver_data = LM70_CHIP_TMP121,
-	पूर्ण,
-	अणु
+	},
+	{
 		.id = "LM000071",
 		.driver_data = LM70_CHIP_LM71,
-	पूर्ण,
-	अणु
+	},
+	{
 		.id = "LM000074",
 		.driver_data = LM70_CHIP_LM74,
-	पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+	},
+	{},
+};
 MODULE_DEVICE_TABLE(acpi, lm70_acpi_ids);
-#पूर्ण_अगर
+#endif
 
-अटल पूर्णांक lm70_probe(काष्ठा spi_device *spi)
-अणु
-	काष्ठा device *hwmon_dev;
-	काष्ठा lm70 *p_lm70;
-	पूर्णांक chip;
+static int lm70_probe(struct spi_device *spi)
+{
+	struct device *hwmon_dev;
+	struct lm70 *p_lm70;
+	int chip;
 
-	अगर (dev_fwnode(&spi->dev))
-		chip = (पूर्णांक)(uपूर्णांकptr_t)device_get_match_data(&spi->dev);
-	अन्यथा
+	if (dev_fwnode(&spi->dev))
+		chip = (int)(uintptr_t)device_get_match_data(&spi->dev);
+	else
 		chip = spi_get_device_id(spi)->driver_data;
 
 
-	/* संकेतing is SPI_MODE_0 */
-	अगर (spi->mode & (SPI_CPOL | SPI_CPHA))
-		वापस -EINVAL;
+	/* signaling is SPI_MODE_0 */
+	if (spi->mode & (SPI_CPOL | SPI_CPHA))
+		return -EINVAL;
 
 	/* NOTE:  we assume 8-bit words, and convert to 16 bits manually */
 
-	p_lm70 = devm_kzalloc(&spi->dev, माप(*p_lm70), GFP_KERNEL);
-	अगर (!p_lm70)
-		वापस -ENOMEM;
+	p_lm70 = devm_kzalloc(&spi->dev, sizeof(*p_lm70), GFP_KERNEL);
+	if (!p_lm70)
+		return -ENOMEM;
 
 	mutex_init(&p_lm70->lock);
 	p_lm70->chip = chip;
 	p_lm70->spi = spi;
 
-	hwmon_dev = devm_hwmon_device_रेजिस्टर_with_groups(&spi->dev,
+	hwmon_dev = devm_hwmon_device_register_with_groups(&spi->dev,
 							   spi->modalias,
 							   p_lm70, lm70_groups);
-	वापस PTR_ERR_OR_ZERO(hwmon_dev);
-पूर्ण
+	return PTR_ERR_OR_ZERO(hwmon_dev);
+}
 
-अटल स्थिर काष्ठा spi_device_id lm70_ids[] = अणु
-	अणु "lm70",   LM70_CHIP_LM70 पूर्ण,
-	अणु "tmp121", LM70_CHIP_TMP121 पूर्ण,
-	अणु "tmp122", LM70_CHIP_TMP122 पूर्ण,
-	अणु "lm71",   LM70_CHIP_LM71 पूर्ण,
-	अणु "lm74",   LM70_CHIP_LM74 पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct spi_device_id lm70_ids[] = {
+	{ "lm70",   LM70_CHIP_LM70 },
+	{ "tmp121", LM70_CHIP_TMP121 },
+	{ "tmp122", LM70_CHIP_TMP122 },
+	{ "lm71",   LM70_CHIP_LM71 },
+	{ "lm74",   LM70_CHIP_LM74 },
+	{ },
+};
 MODULE_DEVICE_TABLE(spi, lm70_ids);
 
-अटल काष्ठा spi_driver lm70_driver = अणु
-	.driver = अणु
+static struct spi_driver lm70_driver = {
+	.driver = {
 		.name	= "lm70",
 		.of_match_table	= of_match_ptr(lm70_of_ids),
 		.acpi_match_table = ACPI_PTR(lm70_acpi_ids),
-	पूर्ण,
+	},
 	.id_table = lm70_ids,
 	.probe	= lm70_probe,
-पूर्ण;
+};
 
 module_spi_driver(lm70_driver);
 

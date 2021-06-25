@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2007 Mellanox Technologies. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -32,113 +31,113 @@
  *
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/अगर_ether.h>
+#include <linux/errno.h>
+#include <linux/if_ether.h>
 
-#समावेश <linux/mlx4/cmd.h>
+#include <linux/mlx4/cmd.h>
 
-#समावेश "mlx4.h"
+#include "mlx4.h"
 
-पूर्णांक mlx4_SENSE_PORT(काष्ठा mlx4_dev *dev, पूर्णांक port,
-		    क्रमागत mlx4_port_type *type)
-अणु
+int mlx4_SENSE_PORT(struct mlx4_dev *dev, int port,
+		    enum mlx4_port_type *type)
+{
 	u64 out_param;
-	पूर्णांक err = 0;
+	int err = 0;
 
 	err = mlx4_cmd_imm(dev, 0, &out_param, port, 0,
 			   MLX4_CMD_SENSE_PORT, MLX4_CMD_TIME_CLASS_B,
 			   MLX4_CMD_WRAPPED);
-	अगर (err) अणु
+	if (err) {
 		mlx4_err(dev, "Sense command failed for port: %d\n", port);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (out_param > 2) अणु
+	if (out_param > 2) {
 		mlx4_err(dev, "Sense returned illegal value: 0x%llx\n", out_param);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	*type = out_param;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम mlx4_करो_sense_ports(काष्ठा mlx4_dev *dev,
-			 क्रमागत mlx4_port_type *stype,
-			 क्रमागत mlx4_port_type *शेषs)
-अणु
-	काष्ठा mlx4_sense *sense = &mlx4_priv(dev)->sense;
-	पूर्णांक err;
-	पूर्णांक i;
+void mlx4_do_sense_ports(struct mlx4_dev *dev,
+			 enum mlx4_port_type *stype,
+			 enum mlx4_port_type *defaults)
+{
+	struct mlx4_sense *sense = &mlx4_priv(dev)->sense;
+	int err;
+	int i;
 
-	क्रम (i = 1; i <= dev->caps.num_ports; i++) अणु
+	for (i = 1; i <= dev->caps.num_ports; i++) {
 		stype[i - 1] = 0;
-		अगर (sense->करो_sense_port[i] && sense->sense_allowed[i] &&
-		    dev->caps.possible_type[i] == MLX4_PORT_TYPE_AUTO) अणु
+		if (sense->do_sense_port[i] && sense->sense_allowed[i] &&
+		    dev->caps.possible_type[i] == MLX4_PORT_TYPE_AUTO) {
 			err = mlx4_SENSE_PORT(dev, i, &stype[i - 1]);
-			अगर (err)
-				stype[i - 1] = शेषs[i - 1];
-		पूर्ण अन्यथा
-			stype[i - 1] = शेषs[i - 1];
-	पूर्ण
+			if (err)
+				stype[i - 1] = defaults[i - 1];
+		} else
+			stype[i - 1] = defaults[i - 1];
+	}
 
 	/*
-	 * If sensed nothing, reमुख्य in current configuration.
+	 * If sensed nothing, remain in current configuration.
 	 */
-	क्रम (i = 0; i < dev->caps.num_ports; i++)
-		stype[i] = stype[i] ? stype[i] : शेषs[i];
+	for (i = 0; i < dev->caps.num_ports; i++)
+		stype[i] = stype[i] ? stype[i] : defaults[i];
 
-पूर्ण
+}
 
-अटल व्योम mlx4_sense_port(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा delayed_work *delay = to_delayed_work(work);
-	काष्ठा mlx4_sense *sense = container_of(delay, काष्ठा mlx4_sense,
+static void mlx4_sense_port(struct work_struct *work)
+{
+	struct delayed_work *delay = to_delayed_work(work);
+	struct mlx4_sense *sense = container_of(delay, struct mlx4_sense,
 						sense_poll);
-	काष्ठा mlx4_dev *dev = sense->dev;
-	काष्ठा mlx4_priv *priv = mlx4_priv(dev);
-	क्रमागत mlx4_port_type stype[MLX4_MAX_PORTS];
+	struct mlx4_dev *dev = sense->dev;
+	struct mlx4_priv *priv = mlx4_priv(dev);
+	enum mlx4_port_type stype[MLX4_MAX_PORTS];
 
 	mutex_lock(&priv->port_mutex);
-	mlx4_करो_sense_ports(dev, stype, &dev->caps.port_type[1]);
+	mlx4_do_sense_ports(dev, stype, &dev->caps.port_type[1]);
 
-	अगर (mlx4_check_port_params(dev, stype))
-		जाओ sense_again;
+	if (mlx4_check_port_params(dev, stype))
+		goto sense_again;
 
-	अगर (mlx4_change_port_types(dev, stype))
+	if (mlx4_change_port_types(dev, stype))
 		mlx4_err(dev, "Failed to change port_types\n");
 
 sense_again:
 	mutex_unlock(&priv->port_mutex);
 	queue_delayed_work(mlx4_wq , &sense->sense_poll,
-			   round_jअगरfies_relative(MLX4_SENSE_RANGE));
-पूर्ण
+			   round_jiffies_relative(MLX4_SENSE_RANGE));
+}
 
-व्योम mlx4_start_sense(काष्ठा mlx4_dev *dev)
-अणु
-	काष्ठा mlx4_priv *priv = mlx4_priv(dev);
-	काष्ठा mlx4_sense *sense = &priv->sense;
+void mlx4_start_sense(struct mlx4_dev *dev)
+{
+	struct mlx4_priv *priv = mlx4_priv(dev);
+	struct mlx4_sense *sense = &priv->sense;
 
-	अगर (!(dev->caps.flags & MLX4_DEV_CAP_FLAG_DPDP))
-		वापस;
+	if (!(dev->caps.flags & MLX4_DEV_CAP_FLAG_DPDP))
+		return;
 
 	queue_delayed_work(mlx4_wq , &sense->sense_poll,
-			   round_jअगरfies_relative(MLX4_SENSE_RANGE));
-पूर्ण
+			   round_jiffies_relative(MLX4_SENSE_RANGE));
+}
 
-व्योम mlx4_stop_sense(काष्ठा mlx4_dev *dev)
-अणु
+void mlx4_stop_sense(struct mlx4_dev *dev)
+{
 	cancel_delayed_work_sync(&mlx4_priv(dev)->sense.sense_poll);
-पूर्ण
+}
 
-व्योम  mlx4_sense_init(काष्ठा mlx4_dev *dev)
-अणु
-	काष्ठा mlx4_priv *priv = mlx4_priv(dev);
-	काष्ठा mlx4_sense *sense = &priv->sense;
-	पूर्णांक port;
+void  mlx4_sense_init(struct mlx4_dev *dev)
+{
+	struct mlx4_priv *priv = mlx4_priv(dev);
+	struct mlx4_sense *sense = &priv->sense;
+	int port;
 
 	sense->dev = dev;
-	क्रम (port = 1; port <= dev->caps.num_ports; port++)
-		sense->करो_sense_port[port] = 1;
+	for (port = 1; port <= dev->caps.num_ports; port++)
+		sense->do_sense_port[port] = 1;
 
 	INIT_DEFERRABLE_WORK(&sense->sense_poll, mlx4_sense_port);
-पूर्ण
+}

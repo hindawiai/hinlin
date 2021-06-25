@@ -1,194 +1,193 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /******************************************************************************
  *
  *	(C)Copyright 1998,1999 SysKonnect,
- *	a business unit of Schneider & Koch & Co. Datenप्रणालीe GmbH.
+ *	a business unit of Schneider & Koch & Co. Datensysteme GmbH.
  *
- *	The inक्रमmation in this file is provided "AS IS" without warranty.
+ *	The information in this file is provided "AS IS" without warranty.
  *
  ******************************************************************************/
 
-#अगर_अघोषित	_HWM_
-#घोषणा	_HWM_
+#ifndef	_HWM_
+#define	_HWM_
 
-#समावेश "mbuf.h"
+#include "mbuf.h"
 
 /*
- * MACRO क्रम DMA synchronization:
+ * MACRO for DMA synchronization:
  *	The descriptor 'desc' is flushed for the device 'flag'.
  *	Devices are the CPU (DDI_DMA_SYNC_FORCPU) and the
  *	adapter (DDI_DMA_SYNC_FORDEV).
  *
- *	'desc'	Poपूर्णांकer to a Rx or Tx descriptor.
- *	'flag'	Flag क्रम direction (view क्रम CPU or DEVICE) that
+ *	'desc'	Pointer to a Rx or Tx descriptor.
+ *	'flag'	Flag for direction (view for CPU or DEVICE) that
  *		should be synchronized.
  *
- *	Empty macros and defines are specअगरied here. The real macro
- *	is os-specअगरic and should be defined in osdef1st.h.
+ *	Empty macros and defines are specified here. The real macro
+ *	is os-specific and should be defined in osdef1st.h.
  */
-#अगर_अघोषित DRV_BUF_FLUSH
-#घोषणा DRV_BUF_FLUSH(desc,flag)
-#घोषणा DDI_DMA_SYNC_FORCPU
-#घोषणा DDI_DMA_SYNC_FORDEV
-#पूर्ण_अगर
+#ifndef DRV_BUF_FLUSH
+#define DRV_BUF_FLUSH(desc,flag)
+#define DDI_DMA_SYNC_FORCPU
+#define DDI_DMA_SYNC_FORDEV
+#endif
 
 	/*
 	 * hardware modul dependent receive modes
 	 */
-#घोषणा	RX_ENABLE_PASS_SMT	21
-#घोषणा	RX_DISABLE_PASS_SMT	22
-#घोषणा	RX_ENABLE_PASS_NSA	23
-#घोषणा	RX_DISABLE_PASS_NSA	24
-#घोषणा	RX_ENABLE_PASS_DB	25
-#घोषणा	RX_DISABLE_PASS_DB	26
-#घोषणा	RX_DISABLE_PASS_ALL	27
-#घोषणा	RX_DISABLE_LLC_PROMISC	28
-#घोषणा	RX_ENABLE_LLC_PROMISC	29
+#define	RX_ENABLE_PASS_SMT	21
+#define	RX_DISABLE_PASS_SMT	22
+#define	RX_ENABLE_PASS_NSA	23
+#define	RX_DISABLE_PASS_NSA	24
+#define	RX_ENABLE_PASS_DB	25
+#define	RX_DISABLE_PASS_DB	26
+#define	RX_DISABLE_PASS_ALL	27
+#define	RX_DISABLE_LLC_PROMISC	28
+#define	RX_ENABLE_LLC_PROMISC	29
 
 
-#अगर_अघोषित	DMA_RD
-#घोषणा DMA_RD		1	/* memory -> hw */
-#पूर्ण_अगर
-#अगर_अघोषित DMA_WR
-#घोषणा DMA_WR		2	/* hw -> memory */
-#पूर्ण_अगर
-#घोषणा SMT_BUF		0x80
+#ifndef	DMA_RD
+#define DMA_RD		1	/* memory -> hw */
+#endif
+#ifndef DMA_WR
+#define DMA_WR		2	/* hw -> memory */
+#endif
+#define SMT_BUF		0x80
 
 	/*
 	 * bits of the frame status byte
 	 */
-#घोषणा EN_IRQ_खातापूर्ण	0x02	/* get IRQ after end of frame transmission */
-#घोषणा	LOC_TX		0x04	/* send frame to the local SMT */
-#घोषणा LAST_FRAG	0x08	/* last TxD of the frame */
-#घोषणा	FIRST_FRAG	0x10	/* first TxD of the frame */
-#घोषणा	LAN_TX		0x20	/* send frame to network अगर set */
-#घोषणा RING_DOWN	0x40	/* error: unable to send, ring करोwn */
-#घोषणा OUT_OF_TXD	0x80	/* error: not enough TxDs available */
+#define EN_IRQ_EOF	0x02	/* get IRQ after end of frame transmission */
+#define	LOC_TX		0x04	/* send frame to the local SMT */
+#define LAST_FRAG	0x08	/* last TxD of the frame */
+#define	FIRST_FRAG	0x10	/* first TxD of the frame */
+#define	LAN_TX		0x20	/* send frame to network if set */
+#define RING_DOWN	0x40	/* error: unable to send, ring down */
+#define OUT_OF_TXD	0x80	/* error: not enough TxDs available */
 
 
-#अगर_अघोषित शून्य
-#घोषणा शून्य 		0
-#पूर्ण_अगर
+#ifndef NULL
+#define NULL 		0
+#endif
 
-#घोषणा C_INDIC		(1L<<25)
-#घोषणा A_INDIC		(1L<<26)
-#घोषणा	RD_FS_LOCAL	0x80
+#define C_INDIC		(1L<<25)
+#define A_INDIC		(1L<<26)
+#define	RD_FS_LOCAL	0x80
 
 	/*
 	 * DEBUG FLAGS
 	 */
-#घोषणा	DEBUG_SMTF	1
-#घोषणा	DEBUG_SMT	2
-#घोषणा	DEBUG_ECM	3
-#घोषणा	DEBUG_RMT	4
-#घोषणा	DEBUG_CFM	5
-#घोषणा	DEBUG_PCM	6
-#घोषणा	DEBUG_SBA	7
-#घोषणा	DEBUG_ESS	8
+#define	DEBUG_SMTF	1
+#define	DEBUG_SMT	2
+#define	DEBUG_ECM	3
+#define	DEBUG_RMT	4
+#define	DEBUG_CFM	5
+#define	DEBUG_PCM	6
+#define	DEBUG_SBA	7
+#define	DEBUG_ESS	8
 
-#घोषणा	DB_HWM_RX	10
-#घोषणा	DB_HWM_TX	11
-#घोषणा DB_HWM_GEN	12
+#define	DB_HWM_RX	10
+#define	DB_HWM_TX	11
+#define DB_HWM_GEN	12
 
-काष्ठा s_mbuf_pool अणु
-#अगर_अघोषित	MB_OUTSIDE_SMC
+struct s_mbuf_pool {
+#ifndef	MB_OUTSIDE_SMC
 	SMbuf		mb[MAX_MBUF] ;		/* mbuf pool */
-#पूर्ण_अगर
-	SMbuf		*mb_start ;		/* poपूर्णांकs to the first mb */
-	SMbuf		*mb_मुक्त ;		/* मुक्त queue */
-पूर्ण ;
+#endif
+	SMbuf		*mb_start ;		/* points to the first mb */
+	SMbuf		*mb_free ;		/* free queue */
+} ;
 
-काष्ठा hwm_r अणु
+struct hwm_r {
 	/*
-	 * hardware modul specअगरic receive variables
+	 * hardware modul specific receive variables
 	 */
-	u_पूर्णांक			len ;		/* length of the whole frame */
-	अक्षर			*mb_pos ;	/* SMbuf receive position */
-पूर्ण ;
+	u_int			len ;		/* length of the whole frame */
+	char			*mb_pos ;	/* SMbuf receive position */
+} ;
 
-काष्ठा hw_modul अणु
+struct hw_modul {
 	/*
-	 * All hardware modul specअगरic variables
+	 * All hardware modul specific variables
 	 */
-	काष्ठा	s_mbuf_pool	mbuf_pool ;
-	काष्ठा	hwm_r	r ;
+	struct	s_mbuf_pool	mbuf_pool ;
+	struct	hwm_r	r ;
 
-	जोड़ s_fp_descr अस्थिर *descr_p ; /* poपूर्णांकs to the desriptor area */
+	union s_fp_descr volatile *descr_p ; /* points to the desriptor area */
 
-	u_लघु pass_SMT ;		/* pass SMT frames */
-	u_लघु pass_NSA ;		/* pass all NSA frames */
-	u_लघु pass_DB ;		/* pass Direct Beacon Frames */
-	u_लघु pass_llc_promisc ;	/* pass all llc frames (शेष ON) */
+	u_short pass_SMT ;		/* pass SMT frames */
+	u_short pass_NSA ;		/* pass all NSA frames */
+	u_short pass_DB ;		/* pass Direct Beacon Frames */
+	u_short pass_llc_promisc ;	/* pass all llc frames (default ON) */
 
-	SMbuf	*llc_rx_pipe ;		/* poपूर्णांकs to the first queued llc fr */
-	SMbuf	*llc_rx_tail ;		/* poपूर्णांकs to the last queued llc fr */
-	पूर्णांक	queued_rx_frames ;	/* number of queued frames */
+	SMbuf	*llc_rx_pipe ;		/* points to the first queued llc fr */
+	SMbuf	*llc_rx_tail ;		/* points to the last queued llc fr */
+	int	queued_rx_frames ;	/* number of queued frames */
 
-	SMbuf	*txd_tx_pipe ;		/* poपूर्णांकs to first mb in the txd ring */
-	SMbuf	*txd_tx_tail ;		/* poपूर्णांकs to last mb in the txd ring */
-	पूर्णांक	queued_txd_mb ;		/* number of SMT MBufs in txd ring */
+	SMbuf	*txd_tx_pipe ;		/* points to first mb in the txd ring */
+	SMbuf	*txd_tx_tail ;		/* points to last mb in the txd ring */
+	int	queued_txd_mb ;		/* number of SMT MBufs in txd ring */
 
-	पूर्णांक	rx_अवरोध ;		/* rev. was अवरोधed because ind. off */
-	पूर्णांक	leave_isr ;		/* leave fddi_isr immedeately अगर set */
-	पूर्णांक	isr_flag ;		/* set, when HWM is entered from isr */
+	int	rx_break ;		/* rev. was breaked because ind. off */
+	int	leave_isr ;		/* leave fddi_isr immedeately if set */
+	int	isr_flag ;		/* set, when HWM is entered from isr */
 	/*
-	 * variables क्रम the current transmit frame
+	 * variables for the current transmit frame
 	 */
-	काष्ठा s_smt_tx_queue *tx_p ;	/* poपूर्णांकer to the transmit queue */
-	u_दीर्घ	tx_descr ;		/* tx descriptor क्रम FORMAC+ */
-	पूर्णांक	tx_len ;		/* tx frame length */
-	SMbuf	*tx_mb ;		/* SMT tx MBuf poपूर्णांकer */
-	अक्षर	*tx_data ;		/* data poपूर्णांकer to the SMT tx Mbuf */
+	struct s_smt_tx_queue *tx_p ;	/* pointer to the transmit queue */
+	u_long	tx_descr ;		/* tx descriptor for FORMAC+ */
+	int	tx_len ;		/* tx frame length */
+	SMbuf	*tx_mb ;		/* SMT tx MBuf pointer */
+	char	*tx_data ;		/* data pointer to the SMT tx Mbuf */
 
-	पूर्णांक	detec_count ;		/* counter क्रम out of RxD condition */
-	u_दीर्घ	rx_len_error ;		/* rx len FORMAC != sum of fragments */
-पूर्ण ;
+	int	detec_count ;		/* counter for out of RxD condition */
+	u_long	rx_len_error ;		/* rx len FORMAC != sum of fragments */
+} ;
 
 
 /*
- * DEBUG काष्ठाs and macros
+ * DEBUG structs and macros
  */
 
-#अगर_घोषित	DEBUG
-काष्ठा os_debug अणु
-	पूर्णांक	hwm_rx ;
-	पूर्णांक	hwm_tx ;
-	पूर्णांक	hwm_gen ;
-पूर्ण ;
-#पूर्ण_अगर
+#ifdef	DEBUG
+struct os_debug {
+	int	hwm_rx ;
+	int	hwm_tx ;
+	int	hwm_gen ;
+} ;
+#endif
 
-#अगर_घोषित	DEBUG
-#अगर_घोषित	DEBUG_BRD
-#घोषणा	DB_P	smc->debug
-#अन्यथा
-#घोषणा DB_P	debug
-#पूर्ण_अगर
+#ifdef	DEBUG
+#ifdef	DEBUG_BRD
+#define	DB_P	smc->debug
+#else
+#define DB_P	debug
+#endif
 
-#घोषणा DB_RX(lev, fmt, ...)						\
-करो अणु									\
-	अगर (DB_P.d_os.hwm_rx >= (lev))					\
-		म_लिखो(fmt "\n", ##__VA_ARGS__);			\
-पूर्ण जबतक (0)
-#घोषणा DB_TX(lev, fmt, ...)						\
-करो अणु									\
-	अगर (DB_P.d_os.hwm_tx >= (lev))					\
-		म_लिखो(fmt "\n", ##__VA_ARGS__);			\
-पूर्ण जबतक (0)
-#घोषणा DB_GEN(lev, fmt, ...)						\
-करो अणु									\
-	अगर (DB_P.d_os.hwm_gen >= (lev))					\
-		म_लिखो(fmt "\n", ##__VA_ARGS__);			\
-पूर्ण जबतक (0)
-#अन्यथा	/* DEBUG */
-#घोषणा DB_RX(lev, fmt, ...)	no_prपूर्णांकk(fmt "\n", ##__VA_ARGS__)
-#घोषणा DB_TX(lev, fmt, ...)	no_prपूर्णांकk(fmt "\n", ##__VA_ARGS__)
-#घोषणा DB_GEN(lev, fmt, ...)	no_prपूर्णांकk(fmt "\n", ##__VA_ARGS__)
-#पूर्ण_अगर	/* DEBUG */
+#define DB_RX(lev, fmt, ...)						\
+do {									\
+	if (DB_P.d_os.hwm_rx >= (lev))					\
+		printf(fmt "\n", ##__VA_ARGS__);			\
+} while (0)
+#define DB_TX(lev, fmt, ...)						\
+do {									\
+	if (DB_P.d_os.hwm_tx >= (lev))					\
+		printf(fmt "\n", ##__VA_ARGS__);			\
+} while (0)
+#define DB_GEN(lev, fmt, ...)						\
+do {									\
+	if (DB_P.d_os.hwm_gen >= (lev))					\
+		printf(fmt "\n", ##__VA_ARGS__);			\
+} while (0)
+#else	/* DEBUG */
+#define DB_RX(lev, fmt, ...)	no_printk(fmt "\n", ##__VA_ARGS__)
+#define DB_TX(lev, fmt, ...)	no_printk(fmt "\n", ##__VA_ARGS__)
+#define DB_GEN(lev, fmt, ...)	no_printk(fmt "\n", ##__VA_ARGS__)
+#endif	/* DEBUG */
 
-#अगर_अघोषित	SK_BREAK
-#घोषणा	SK_BREAK()
-#पूर्ण_अगर
+#ifndef	SK_BREAK
+#define	SK_BREAK()
+#endif
 
 
 /*
@@ -197,203 +196,203 @@
 
 /*
  *	BEGIN_MANUAL_ENTRY(HWM_GET_TX_PHYS)
- *	u_दीर्घ HWM_GET_TX_PHYS(txd)
+ *	u_long HWM_GET_TX_PHYS(txd)
  *
- * function	MACRO		(hardware module, hwmपंचांग.h)
- *		This macro may be invoked by the OS-specअगरic module to पढ़ो
- *		the physical address of the specअगरied TxD.
+ * function	MACRO		(hardware module, hwmtm.h)
+ *		This macro may be invoked by the OS-specific module to read
+ *		the physical address of the specified TxD.
  *
- * para	txd	poपूर्णांकer to the TxD
+ * para	txd	pointer to the TxD
  *
  *	END_MANUAL_ENTRY
  */
-#घोषणा	HWM_GET_TX_PHYS(txd)		(u_दीर्घ)AIX_REVERSE((txd)->txd_tbadr)
+#define	HWM_GET_TX_PHYS(txd)		(u_long)AIX_REVERSE((txd)->txd_tbadr)
 
 /*
  *	BEGIN_MANUAL_ENTRY(HWM_GET_TX_LEN)
- *	पूर्णांक HWM_GET_TX_LEN(txd)
+ *	int HWM_GET_TX_LEN(txd)
  *
- * function	MACRO		(hardware module, hwmपंचांग.h)
- *		This macro may be invoked by the OS-specअगरic module to पढ़ो
- *		the fragment length of the specअगरied TxD
+ * function	MACRO		(hardware module, hwmtm.h)
+ *		This macro may be invoked by the OS-specific module to read
+ *		the fragment length of the specified TxD
  *
- * para	rxd	poपूर्णांकer to the TxD
+ * para	rxd	pointer to the TxD
  *
- * वापस	the length of the fragment in bytes
+ * return	the length of the fragment in bytes
  *
  *	END_MANUAL_ENTRY
  */
-#घोषणा	HWM_GET_TX_LEN(txd)	((पूर्णांक)AIX_REVERSE((txd)->txd_tbctrl)& RD_LENGTH)
+#define	HWM_GET_TX_LEN(txd)	((int)AIX_REVERSE((txd)->txd_tbctrl)& RD_LENGTH)
 
 /*
  *	BEGIN_MANUAL_ENTRY(HWM_GET_TX_USED)
  *	txd *HWM_GET_TX_USED(smc,queue)
  *
- * function	MACRO		(hardware module, hwmपंचांग.h)
- *		This macro may be invoked by the OS-specअगरic module to get the
- *		number of used TxDs क्रम the queue, specअगरied by the index.
+ * function	MACRO		(hardware module, hwmtm.h)
+ *		This macro may be invoked by the OS-specific module to get the
+ *		number of used TxDs for the queue, specified by the index.
  *
- * para	queue	the number of the send queue: Can be specअगरied by
+ * para	queue	the number of the send queue: Can be specified by
  *		QUEUE_A0, QUEUE_S or (frame_status & QUEUE_A0)
  *
- * वापस	number of used TxDs क्रम this send queue
+ * return	number of used TxDs for this send queue
  *
  *	END_MANUAL_ENTRY
  */
-#घोषणा	HWM_GET_TX_USED(smc,queue)	(पूर्णांक) (smc)->hw.fp.tx_q[queue].tx_used
+#define	HWM_GET_TX_USED(smc,queue)	(int) (smc)->hw.fp.tx_q[queue].tx_used
 
 /*
  *	BEGIN_MANUAL_ENTRY(HWM_GET_CURR_TXD)
  *	txd *HWM_GET_CURR_TXD(smc,queue)
  *
- * function	MACRO		(hardware module, hwmपंचांग.h)
- *		This macro may be invoked by the OS-specअगरic module to get the
- *		poपूर्णांकer to the TxD which poपूर्णांकs to the current queue put
+ * function	MACRO		(hardware module, hwmtm.h)
+ *		This macro may be invoked by the OS-specific module to get the
+ *		pointer to the TxD which points to the current queue put
  *		position.
  *
- * para	queue	the number of the send queue: Can be specअगरied by
+ * para	queue	the number of the send queue: Can be specified by
  *		QUEUE_A0, QUEUE_S or (frame_status & QUEUE_A0)
  *
- * वापस	poपूर्णांकer to the current TxD
+ * return	pointer to the current TxD
  *
  *	END_MANUAL_ENTRY
  */
-#घोषणा	HWM_GET_CURR_TXD(smc,queue)	(काष्ठा s_smt_fp_txd अस्थिर *)\
+#define	HWM_GET_CURR_TXD(smc,queue)	(struct s_smt_fp_txd volatile *)\
 					(smc)->hw.fp.tx_q[queue].tx_curr_put
 
 /*
  *	BEGIN_MANUAL_ENTRY(HWM_GET_RX_FRAG_LEN)
- *	पूर्णांक HWM_GET_RX_FRAG_LEN(rxd)
+ *	int HWM_GET_RX_FRAG_LEN(rxd)
  *
- * function	MACRO		(hardware module, hwmपंचांग.h)
- *		This macro may be invoked by the OS-specअगरic module to पढ़ो
- *		the fragment length of the specअगरied RxD
+ * function	MACRO		(hardware module, hwmtm.h)
+ *		This macro may be invoked by the OS-specific module to read
+ *		the fragment length of the specified RxD
  *
- * para	rxd	poपूर्णांकer to the RxD
+ * para	rxd	pointer to the RxD
  *
- * वापस	the length of the fragment in bytes
+ * return	the length of the fragment in bytes
  *
  *	END_MANUAL_ENTRY
  */
-#घोषणा	HWM_GET_RX_FRAG_LEN(rxd)	((पूर्णांक)AIX_REVERSE((rxd)->rxd_rbctrl)& \
+#define	HWM_GET_RX_FRAG_LEN(rxd)	((int)AIX_REVERSE((rxd)->rxd_rbctrl)& \
 				RD_LENGTH)
 
 /*
  *	BEGIN_MANUAL_ENTRY(HWM_GET_RX_PHYS)
- *	u_दीर्घ HWM_GET_RX_PHYS(rxd)
+ *	u_long HWM_GET_RX_PHYS(rxd)
  *
- * function	MACRO		(hardware module, hwmपंचांग.h)
- *		This macro may be invoked by the OS-specअगरic module to पढ़ो
- *		the physical address of the specअगरied RxD.
+ * function	MACRO		(hardware module, hwmtm.h)
+ *		This macro may be invoked by the OS-specific module to read
+ *		the physical address of the specified RxD.
  *
- * para	rxd	poपूर्णांकer to the RxD
+ * para	rxd	pointer to the RxD
  *
- * वापस	the RxD's physical poपूर्णांकer to the data fragment
+ * return	the RxD's physical pointer to the data fragment
  *
  *	END_MANUAL_ENTRY
  */
-#घोषणा	HWM_GET_RX_PHYS(rxd)	(u_दीर्घ)AIX_REVERSE((rxd)->rxd_rbadr)
+#define	HWM_GET_RX_PHYS(rxd)	(u_long)AIX_REVERSE((rxd)->rxd_rbadr)
 
 /*
  *	BEGIN_MANUAL_ENTRY(HWM_GET_RX_USED)
- *	पूर्णांक HWM_GET_RX_USED(smc)
+ *	int HWM_GET_RX_USED(smc)
  *
- * function	MACRO		(hardware module, hwmपंचांग.h)
- *		This macro may be invoked by the OS-specअगरic module to get
+ * function	MACRO		(hardware module, hwmtm.h)
+ *		This macro may be invoked by the OS-specific module to get
  *		the count of used RXDs in receive queue 1.
  *
- * वापस	the used RXD count of receive queue 1
+ * return	the used RXD count of receive queue 1
  *
  * NOTE: Remember, because of an ASIC bug at least one RXD should be unused
  *	 in the descriptor ring !
  *
  *	END_MANUAL_ENTRY
  */
-#घोषणा	HWM_GET_RX_USED(smc)	((पूर्णांक)(smc)->hw.fp.rx_q[QUEUE_R1].rx_used)
+#define	HWM_GET_RX_USED(smc)	((int)(smc)->hw.fp.rx_q[QUEUE_R1].rx_used)
 
 /*
  *	BEGIN_MANUAL_ENTRY(HWM_GET_RX_FREE)
- *	पूर्णांक HWM_GET_RX_FREE(smc)
+ *	int HWM_GET_RX_FREE(smc)
  *
- * function	MACRO		(hardware module, hwmपंचांग.h)
- *		This macro may be invoked by the OS-specअगरic module to get
- *		the rxd_मुक्त count of receive queue 1.
+ * function	MACRO		(hardware module, hwmtm.h)
+ *		This macro may be invoked by the OS-specific module to get
+ *		the rxd_free count of receive queue 1.
  *
- * वापस	the rxd_मुक्त count of receive queue 1
+ * return	the rxd_free count of receive queue 1
  *
  *	END_MANUAL_ENTRY
  */
-#घोषणा	HWM_GET_RX_FREE(smc)	((पूर्णांक)(smc)->hw.fp.rx_q[QUEUE_R1].rx_मुक्त-1)
+#define	HWM_GET_RX_FREE(smc)	((int)(smc)->hw.fp.rx_q[QUEUE_R1].rx_free-1)
 
 /*
  *	BEGIN_MANUAL_ENTRY(HWM_GET_CURR_RXD)
  *	rxd *HWM_GET_CURR_RXD(smc)
  *
- * function	MACRO		(hardware module, hwmपंचांग.h)
- *		This macro may be invoked by the OS-specअगरic module to get the
- *		poपूर्णांकer to the RxD which poपूर्णांकs to the current queue put
+ * function	MACRO		(hardware module, hwmtm.h)
+ *		This macro may be invoked by the OS-specific module to get the
+ *		pointer to the RxD which points to the current queue put
  *		position.
  *
- * वापस	poपूर्णांकer to the current RxD
+ * return	pointer to the current RxD
  *
  *	END_MANUAL_ENTRY
  */
-#घोषणा	HWM_GET_CURR_RXD(smc)	(काष्ठा s_smt_fp_rxd अस्थिर *)\
+#define	HWM_GET_CURR_RXD(smc)	(struct s_smt_fp_rxd volatile *)\
 				(smc)->hw.fp.rx_q[QUEUE_R1].rx_curr_put
 
 /*
  *	BEGIN_MANUAL_ENTRY(HWM_RX_CHECK)
- *	व्योम HWM_RX_CHECK(smc,low_water)
+ *	void HWM_RX_CHECK(smc,low_water)
  *
- * function	MACRO		(hardware module, hwmपंचांग.h)
- *		This macro is invoked by the OS-specअगरic beक्रमe it left the
+ * function	MACRO		(hardware module, hwmtm.h)
+ *		This macro is invoked by the OS-specific before it left the
  *		function mac_drv_rx_complete. This macro calls mac_drv_fill_rxd
- *		अगर the number of used RxDs is equal or lower than the
+ *		if the number of used RxDs is equal or lower than the
  *		the given low water mark.
  *
  * para	low_water	low water mark of used RxD's
  *
  *	END_MANUAL_ENTRY
  */
-#अगर_अघोषित HWM_NO_FLOW_CTL
-#घोषणा	HWM_RX_CHECK(smc,low_water) अणु\
-	अगर ((low_water) >= (smc)->hw.fp.rx_q[QUEUE_R1].rx_used) अणु\
+#ifndef HWM_NO_FLOW_CTL
+#define	HWM_RX_CHECK(smc,low_water) {\
+	if ((low_water) >= (smc)->hw.fp.rx_q[QUEUE_R1].rx_used) {\
 		mac_drv_fill_rxd(smc) ;\
-	पूर्ण\
-पूर्ण
-#अन्यथा
-#घोषणा	HWM_RX_CHECK(smc,low_water)		mac_drv_fill_rxd(smc)
-#पूर्ण_अगर
+	}\
+}
+#else
+#define	HWM_RX_CHECK(smc,low_water)		mac_drv_fill_rxd(smc)
+#endif
 
-#अगर_अघोषित	HWM_EBASE
-#घोषणा	HWM_EBASE	500
-#पूर्ण_अगर
+#ifndef	HWM_EBASE
+#define	HWM_EBASE	500
+#endif
 
-#घोषणा	HWM_E0001	HWM_EBASE + 1
-#घोषणा	HWM_E0001_MSG	"HWM: Wrong size of s_rxd_os struct"
-#घोषणा	HWM_E0002	HWM_EBASE + 2
-#घोषणा	HWM_E0002_MSG	"HWM: Wrong size of s_txd_os struct"
-#घोषणा	HWM_E0003	HWM_EBASE + 3
-#घोषणा	HWM_E0003_MSG	"HWM: smt_free_mbuf() called with NULL pointer"
-#घोषणा	HWM_E0004	HWM_EBASE + 4
-#घोषणा	HWM_E0004_MSG	"HWM: Parity error rx queue 1"
-#घोषणा	HWM_E0005	HWM_EBASE + 5
-#घोषणा	HWM_E0005_MSG	"HWM: Encoding error rx queue 1"
-#घोषणा	HWM_E0006	HWM_EBASE + 6
-#घोषणा	HWM_E0006_MSG	"HWM: Encoding error async tx queue"
-#घोषणा	HWM_E0007	HWM_EBASE + 7
-#घोषणा	HWM_E0007_MSG	"HWM: Encoding error sync tx queue"
-#घोषणा	HWM_E0008	HWM_EBASE + 8
-#घोषणा	HWM_E0008_MSG	""
-#घोषणा	HWM_E0009	HWM_EBASE + 9
-#घोषणा	HWM_E0009_MSG	"HWM: Out of RxD condition detected"
-#घोषणा	HWM_E0010	HWM_EBASE + 10
-#घोषणा	HWM_E0010_MSG	"HWM: A protocol layer has tried to send a frame with an invalid frame control"
-#घोषणा HWM_E0011	HWM_EBASE + 11
-#घोषणा HWM_E0011_MSG	"HWM: mac_drv_clear_tx_queue was called although the hardware wasn't stopped"
-#घोषणा HWM_E0012	HWM_EBASE + 12
-#घोषणा HWM_E0012_MSG	"HWM: mac_drv_clear_rx_queue was called although the hardware wasn't stopped"
-#घोषणा HWM_E0013	HWM_EBASE + 13
-#घोषणा HWM_E0013_MSG	"HWM: mac_drv_repair_descr was called although the hardware wasn't stopped"
+#define	HWM_E0001	HWM_EBASE + 1
+#define	HWM_E0001_MSG	"HWM: Wrong size of s_rxd_os struct"
+#define	HWM_E0002	HWM_EBASE + 2
+#define	HWM_E0002_MSG	"HWM: Wrong size of s_txd_os struct"
+#define	HWM_E0003	HWM_EBASE + 3
+#define	HWM_E0003_MSG	"HWM: smt_free_mbuf() called with NULL pointer"
+#define	HWM_E0004	HWM_EBASE + 4
+#define	HWM_E0004_MSG	"HWM: Parity error rx queue 1"
+#define	HWM_E0005	HWM_EBASE + 5
+#define	HWM_E0005_MSG	"HWM: Encoding error rx queue 1"
+#define	HWM_E0006	HWM_EBASE + 6
+#define	HWM_E0006_MSG	"HWM: Encoding error async tx queue"
+#define	HWM_E0007	HWM_EBASE + 7
+#define	HWM_E0007_MSG	"HWM: Encoding error sync tx queue"
+#define	HWM_E0008	HWM_EBASE + 8
+#define	HWM_E0008_MSG	""
+#define	HWM_E0009	HWM_EBASE + 9
+#define	HWM_E0009_MSG	"HWM: Out of RxD condition detected"
+#define	HWM_E0010	HWM_EBASE + 10
+#define	HWM_E0010_MSG	"HWM: A protocol layer has tried to send a frame with an invalid frame control"
+#define HWM_E0011	HWM_EBASE + 11
+#define HWM_E0011_MSG	"HWM: mac_drv_clear_tx_queue was called although the hardware wasn't stopped"
+#define HWM_E0012	HWM_EBASE + 12
+#define HWM_E0012_MSG	"HWM: mac_drv_clear_rx_queue was called although the hardware wasn't stopped"
+#define HWM_E0013	HWM_EBASE + 13
+#define HWM_E0013_MSG	"HWM: mac_drv_repair_descr was called although the hardware wasn't stopped"
 
-#पूर्ण_अगर
+#endif

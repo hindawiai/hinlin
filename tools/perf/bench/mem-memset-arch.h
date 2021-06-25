@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
-#अगर_घोषित HAVE_ARCH_X86_64_SUPPORT
+#ifdef HAVE_ARCH_X86_64_SUPPORT
 
-#घोषणा MEMSET_FN(fn, name, desc)		\
-	व्योम *fn(व्योम *, पूर्णांक, माप_प्रकार);
+#define MEMSET_FN(fn, name, desc)		\
+	void *fn(void *, int, size_t);
 
-#समावेश "mem-memset-x86-64-asm-def.h"
+#include "mem-memset-x86-64-asm-def.h"
 
-#अघोषित MEMSET_FN
+#undef MEMSET_FN
 
-#पूर्ण_अगर
+#endif
 

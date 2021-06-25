@@ -1,88 +1,87 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Key-agreement Protocol Primitives (KPP)
  *
  * Copyright (c) 2016, Intel Corporation
- * Authors: Salvatore Benedetto <salvatore.benedetto@पूर्णांकel.com>
+ * Authors: Salvatore Benedetto <salvatore.benedetto@intel.com>
  */
 
-#अगर_अघोषित _CRYPTO_KPP_
-#घोषणा _CRYPTO_KPP_
-#समावेश <linux/crypto.h>
+#ifndef _CRYPTO_KPP_
+#define _CRYPTO_KPP_
+#include <linux/crypto.h>
 
 /**
- * काष्ठा kpp_request
+ * struct kpp_request
  *
- * @base:	Common attributes क्रम async crypto requests
+ * @base:	Common attributes for async crypto requests
  * @src:	Source data
  * @dst:	Destination data
  * @src_len:	Size of the input buffer
  * @dst_len:	Size of the output buffer. It needs to be at least
  *		as big as the expected result depending	on the operation
  *		After operation it will be updated with the actual size of the
- *		result. In हाल of error where the dst sgl size was insufficient,
- *		it will be updated to the size required क्रम the operation.
- * @__ctx:	Start of निजी context data
+ *		result. In case of error where the dst sgl size was insufficient,
+ *		it will be updated to the size required for the operation.
+ * @__ctx:	Start of private context data
  */
-काष्ठा kpp_request अणु
-	काष्ठा crypto_async_request base;
-	काष्ठा scatterlist *src;
-	काष्ठा scatterlist *dst;
-	अचिन्हित पूर्णांक src_len;
-	अचिन्हित पूर्णांक dst_len;
-	व्योम *__ctx[] CRYPTO_MINALIGN_ATTR;
-पूर्ण;
+struct kpp_request {
+	struct crypto_async_request base;
+	struct scatterlist *src;
+	struct scatterlist *dst;
+	unsigned int src_len;
+	unsigned int dst_len;
+	void *__ctx[] CRYPTO_MINALIGN_ATTR;
+};
 
 /**
- * काष्ठा crypto_kpp - user-instantiated object which encapsulate
+ * struct crypto_kpp - user-instantiated object which encapsulate
  * algorithms and core processing logic
  *
- * @base:	Common crypto API algorithm data काष्ठाure
+ * @base:	Common crypto API algorithm data structure
  */
-काष्ठा crypto_kpp अणु
-	काष्ठा crypto_tfm base;
-पूर्ण;
+struct crypto_kpp {
+	struct crypto_tfm base;
+};
 
 /**
- * काष्ठा kpp_alg - generic key-agreement protocol primitives
+ * struct kpp_alg - generic key-agreement protocol primitives
  *
- * @set_secret:		Function invokes the protocol specअगरic function to
- *			store the secret निजी key aदीर्घ with parameters.
+ * @set_secret:		Function invokes the protocol specific function to
+ *			store the secret private key along with parameters.
  *			The implementation knows how to decode the buffer
- * @generate_खुला_key: Function generate the खुला key to be sent to the
- *			counterpart. In हाल of error, where output is not big
+ * @generate_public_key: Function generate the public key to be sent to the
+ *			counterpart. In case of error, where output is not big
  *			enough req->dst_len will be updated to the size
  *			required
  * @compute_shared_secret: Function compute the shared secret as defined by
  *			the algorithm. The result is given back to the user.
- *			In हाल of error, where output is not big enough,
+ *			In case of error, where output is not big enough,
  *			req->dst_len will be updated to the size required
- * @max_size:		Function वापसs the size of the output buffer
+ * @max_size:		Function returns the size of the output buffer
  * @init:		Initialize the object. This is called only once at
- *			instantiation समय. In हाल the cryptographic hardware
+ *			instantiation time. In case the cryptographic hardware
  *			needs to be initialized. Software fallback should be
  *			put in place here.
- * @निकास:		Unकरो everything @init did.
+ * @exit:		Undo everything @init did.
  *
  * @reqsize:		Request context size required by algorithm
  *			implementation
- * @base:		Common crypto API algorithm data काष्ठाure
+ * @base:		Common crypto API algorithm data structure
  */
-काष्ठा kpp_alg अणु
-	पूर्णांक (*set_secret)(काष्ठा crypto_kpp *tfm, स्थिर व्योम *buffer,
-			  अचिन्हित पूर्णांक len);
-	पूर्णांक (*generate_खुला_key)(काष्ठा kpp_request *req);
-	पूर्णांक (*compute_shared_secret)(काष्ठा kpp_request *req);
+struct kpp_alg {
+	int (*set_secret)(struct crypto_kpp *tfm, const void *buffer,
+			  unsigned int len);
+	int (*generate_public_key)(struct kpp_request *req);
+	int (*compute_shared_secret)(struct kpp_request *req);
 
-	अचिन्हित पूर्णांक (*max_size)(काष्ठा crypto_kpp *tfm);
+	unsigned int (*max_size)(struct crypto_kpp *tfm);
 
-	पूर्णांक (*init)(काष्ठा crypto_kpp *tfm);
-	व्योम (*निकास)(काष्ठा crypto_kpp *tfm);
+	int (*init)(struct crypto_kpp *tfm);
+	void (*exit)(struct crypto_kpp *tfm);
 
-	अचिन्हित पूर्णांक reqsize;
-	काष्ठा crypto_alg base;
-पूर्ण;
+	unsigned int reqsize;
+	struct crypto_alg base;
+};
 
 /**
  * DOC: Generic Key-agreement Protocol Primitives API
@@ -94,74 +93,74 @@
 /**
  * crypto_alloc_kpp() - allocate KPP tfm handle
  * @alg_name: is the name of the kpp algorithm (e.g. "dh", "ecdh")
- * @type: specअगरies the type of the algorithm
- * @mask: specअगरies the mask क्रम the algorithm
+ * @type: specifies the type of the algorithm
+ * @mask: specifies the mask for the algorithm
  *
- * Allocate a handle क्रम kpp algorithm. The वापसed काष्ठा crypto_kpp
- * is required क्रम any following API invocation
+ * Allocate a handle for kpp algorithm. The returned struct crypto_kpp
+ * is required for any following API invocation
  *
- * Return: allocated handle in हाल of success; IS_ERR() is true in हाल of
- *	   an error, PTR_ERR() वापसs the error code.
+ * Return: allocated handle in case of success; IS_ERR() is true in case of
+ *	   an error, PTR_ERR() returns the error code.
  */
-काष्ठा crypto_kpp *crypto_alloc_kpp(स्थिर अक्षर *alg_name, u32 type, u32 mask);
+struct crypto_kpp *crypto_alloc_kpp(const char *alg_name, u32 type, u32 mask);
 
-अटल अंतरभूत काष्ठा crypto_tfm *crypto_kpp_tfm(काष्ठा crypto_kpp *tfm)
-अणु
-	वापस &tfm->base;
-पूर्ण
+static inline struct crypto_tfm *crypto_kpp_tfm(struct crypto_kpp *tfm)
+{
+	return &tfm->base;
+}
 
-अटल अंतरभूत काष्ठा kpp_alg *__crypto_kpp_alg(काष्ठा crypto_alg *alg)
-अणु
-	वापस container_of(alg, काष्ठा kpp_alg, base);
-पूर्ण
+static inline struct kpp_alg *__crypto_kpp_alg(struct crypto_alg *alg)
+{
+	return container_of(alg, struct kpp_alg, base);
+}
 
-अटल अंतरभूत काष्ठा crypto_kpp *__crypto_kpp_tfm(काष्ठा crypto_tfm *tfm)
-अणु
-	वापस container_of(tfm, काष्ठा crypto_kpp, base);
-पूर्ण
+static inline struct crypto_kpp *__crypto_kpp_tfm(struct crypto_tfm *tfm)
+{
+	return container_of(tfm, struct crypto_kpp, base);
+}
 
-अटल अंतरभूत काष्ठा kpp_alg *crypto_kpp_alg(काष्ठा crypto_kpp *tfm)
-अणु
-	वापस __crypto_kpp_alg(crypto_kpp_tfm(tfm)->__crt_alg);
-पूर्ण
+static inline struct kpp_alg *crypto_kpp_alg(struct crypto_kpp *tfm)
+{
+	return __crypto_kpp_alg(crypto_kpp_tfm(tfm)->__crt_alg);
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक crypto_kpp_reqsize(काष्ठा crypto_kpp *tfm)
-अणु
-	वापस crypto_kpp_alg(tfm)->reqsize;
-पूर्ण
+static inline unsigned int crypto_kpp_reqsize(struct crypto_kpp *tfm)
+{
+	return crypto_kpp_alg(tfm)->reqsize;
+}
 
-अटल अंतरभूत व्योम kpp_request_set_tfm(काष्ठा kpp_request *req,
-				       काष्ठा crypto_kpp *tfm)
-अणु
+static inline void kpp_request_set_tfm(struct kpp_request *req,
+				       struct crypto_kpp *tfm)
+{
 	req->base.tfm = crypto_kpp_tfm(tfm);
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा crypto_kpp *crypto_kpp_reqtfm(काष्ठा kpp_request *req)
-अणु
-	वापस __crypto_kpp_tfm(req->base.tfm);
-पूर्ण
+static inline struct crypto_kpp *crypto_kpp_reqtfm(struct kpp_request *req)
+{
+	return __crypto_kpp_tfm(req->base.tfm);
+}
 
-अटल अंतरभूत u32 crypto_kpp_get_flags(काष्ठा crypto_kpp *tfm)
-अणु
-	वापस crypto_tfm_get_flags(crypto_kpp_tfm(tfm));
-पूर्ण
+static inline u32 crypto_kpp_get_flags(struct crypto_kpp *tfm)
+{
+	return crypto_tfm_get_flags(crypto_kpp_tfm(tfm));
+}
 
-अटल अंतरभूत व्योम crypto_kpp_set_flags(काष्ठा crypto_kpp *tfm, u32 flags)
-अणु
+static inline void crypto_kpp_set_flags(struct crypto_kpp *tfm, u32 flags)
+{
 	crypto_tfm_set_flags(crypto_kpp_tfm(tfm), flags);
-पूर्ण
+}
 
 /**
- * crypto_मुक्त_kpp() - मुक्त KPP tfm handle
+ * crypto_free_kpp() - free KPP tfm handle
  *
  * @tfm: KPP tfm handle allocated with crypto_alloc_kpp()
  *
- * If @tfm is a शून्य or error poपूर्णांकer, this function करोes nothing.
+ * If @tfm is a NULL or error pointer, this function does nothing.
  */
-अटल अंतरभूत व्योम crypto_मुक्त_kpp(काष्ठा crypto_kpp *tfm)
-अणु
+static inline void crypto_free_kpp(struct crypto_kpp *tfm)
+{
 	crypto_destroy_tfm(tfm, crypto_kpp_tfm(tfm));
-पूर्ण
+}
 
 /**
  * kpp_request_alloc() - allocates kpp request
@@ -169,29 +168,29 @@
  * @tfm:	KPP tfm handle allocated with crypto_alloc_kpp()
  * @gfp:	allocation flags
  *
- * Return: allocated handle in हाल of success or शून्य in हाल of an error.
+ * Return: allocated handle in case of success or NULL in case of an error.
  */
-अटल अंतरभूत काष्ठा kpp_request *kpp_request_alloc(काष्ठा crypto_kpp *tfm,
+static inline struct kpp_request *kpp_request_alloc(struct crypto_kpp *tfm,
 						    gfp_t gfp)
-अणु
-	काष्ठा kpp_request *req;
+{
+	struct kpp_request *req;
 
-	req = kदो_स्मृति(माप(*req) + crypto_kpp_reqsize(tfm), gfp);
-	अगर (likely(req))
+	req = kmalloc(sizeof(*req) + crypto_kpp_reqsize(tfm), gfp);
+	if (likely(req))
 		kpp_request_set_tfm(req, tfm);
 
-	वापस req;
-पूर्ण
+	return req;
+}
 
 /**
- * kpp_request_मुक्त() - zeroize and मुक्त kpp request
+ * kpp_request_free() - zeroize and free kpp request
  *
- * @req:	request to मुक्त
+ * @req:	request to free
  */
-अटल अंतरभूत व्योम kpp_request_मुक्त(काष्ठा kpp_request *req)
-अणु
-	kमुक्त_sensitive(req);
-पूर्ण
+static inline void kpp_request_free(struct kpp_request *req)
+{
+	kfree_sensitive(req);
+}
 
 /**
  * kpp_request_set_callback() - Sets an asynchronous callback.
@@ -199,37 +198,37 @@
  * Callback will be called when an asynchronous operation on a given
  * request is finished.
  *
- * @req:	request that the callback will be set क्रम
- * @flgs:	specअगरy क्रम instance अगर the operation may backlog
+ * @req:	request that the callback will be set for
+ * @flgs:	specify for instance if the operation may backlog
  * @cmpl:	callback which will be called
- * @data:	निजी data used by the caller
+ * @data:	private data used by the caller
  */
-अटल अंतरभूत व्योम kpp_request_set_callback(काष्ठा kpp_request *req,
+static inline void kpp_request_set_callback(struct kpp_request *req,
 					    u32 flgs,
 					    crypto_completion_t cmpl,
-					    व्योम *data)
-अणु
+					    void *data)
+{
 	req->base.complete = cmpl;
 	req->base.data = data;
 	req->base.flags = flgs;
-पूर्ण
+}
 
 /**
  * kpp_request_set_input() - Sets input buffer
  *
- * Sets parameters required by generate_खुला_key
+ * Sets parameters required by generate_public_key
  *
  * @req:	kpp request
  * @input:	ptr to input scatter list
  * @input_len:	size of the input scatter list
  */
-अटल अंतरभूत व्योम kpp_request_set_input(काष्ठा kpp_request *req,
-					 काष्ठा scatterlist *input,
-					 अचिन्हित पूर्णांक input_len)
-अणु
+static inline void kpp_request_set_input(struct kpp_request *req,
+					 struct scatterlist *input,
+					 unsigned int input_len)
+{
 	req->src = input;
 	req->src_len = input_len;
-पूर्ण
+}
 
 /**
  * kpp_request_set_output() - Sets output buffer
@@ -240,124 +239,124 @@
  * @output:	ptr to output scatter list
  * @output_len:	size of the output scatter list
  */
-अटल अंतरभूत व्योम kpp_request_set_output(काष्ठा kpp_request *req,
-					  काष्ठा scatterlist *output,
-					  अचिन्हित पूर्णांक output_len)
-अणु
+static inline void kpp_request_set_output(struct kpp_request *req,
+					  struct scatterlist *output,
+					  unsigned int output_len)
+{
 	req->dst = output;
 	req->dst_len = output_len;
-पूर्ण
+}
 
-क्रमागत अणु
+enum {
 	CRYPTO_KPP_SECRET_TYPE_UNKNOWN,
 	CRYPTO_KPP_SECRET_TYPE_DH,
 	CRYPTO_KPP_SECRET_TYPE_ECDH,
-पूर्ण;
+};
 
 /**
- * काष्ठा kpp_secret - small header क्रम packing secret buffer
+ * struct kpp_secret - small header for packing secret buffer
  *
  * @type:	define type of secret. Each kpp type will define its own
- * @len:	specअगरy the len of the secret, include the header, that
- *		follows the काष्ठा
+ * @len:	specify the len of the secret, include the header, that
+ *		follows the struct
  */
-काष्ठा kpp_secret अणु
-	अचिन्हित लघु type;
-	अचिन्हित लघु len;
-पूर्ण;
+struct kpp_secret {
+	unsigned short type;
+	unsigned short len;
+};
 
 /**
  * crypto_kpp_set_secret() - Invoke kpp operation
  *
- * Function invokes the specअगरic kpp operation क्रम a given alg.
+ * Function invokes the specific kpp operation for a given alg.
  *
  * @tfm:	tfm handle
- * @buffer:	Buffer holding the packet representation of the निजी
- *		key. The काष्ठाure of the packet key depends on the particular
+ * @buffer:	Buffer holding the packet representation of the private
+ *		key. The structure of the packet key depends on the particular
  *		KPP implementation. Packing and unpacking helpers are provided
- *		क्रम ECDH and DH (see the respective header files क्रम those
+ *		for ECDH and DH (see the respective header files for those
  *		implementations).
- * @len:	Length of the packet निजी key buffer.
+ * @len:	Length of the packet private key buffer.
  *
- * Return: zero on success; error code in हाल of error
+ * Return: zero on success; error code in case of error
  */
-अटल अंतरभूत पूर्णांक crypto_kpp_set_secret(काष्ठा crypto_kpp *tfm,
-					स्थिर व्योम *buffer, अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा kpp_alg *alg = crypto_kpp_alg(tfm);
-	काष्ठा crypto_alg *calg = tfm->base.__crt_alg;
-	पूर्णांक ret;
+static inline int crypto_kpp_set_secret(struct crypto_kpp *tfm,
+					const void *buffer, unsigned int len)
+{
+	struct kpp_alg *alg = crypto_kpp_alg(tfm);
+	struct crypto_alg *calg = tfm->base.__crt_alg;
+	int ret;
 
 	crypto_stats_get(calg);
 	ret = alg->set_secret(tfm, buffer, len);
 	crypto_stats_kpp_set_secret(calg, ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * crypto_kpp_generate_खुला_key() - Invoke kpp operation
+ * crypto_kpp_generate_public_key() - Invoke kpp operation
  *
- * Function invokes the specअगरic kpp operation क्रम generating the खुला part
- * क्रम a given kpp algorithm.
+ * Function invokes the specific kpp operation for generating the public part
+ * for a given kpp algorithm.
  *
- * To generate a निजी key, the caller should use a अक्रमom number generator.
- * The output of the requested length serves as the निजी key.
+ * To generate a private key, the caller should use a random number generator.
+ * The output of the requested length serves as the private key.
  *
  * @req:	kpp key request
  *
- * Return: zero on success; error code in हाल of error
+ * Return: zero on success; error code in case of error
  */
-अटल अंतरभूत पूर्णांक crypto_kpp_generate_खुला_key(काष्ठा kpp_request *req)
-अणु
-	काष्ठा crypto_kpp *tfm = crypto_kpp_reqtfm(req);
-	काष्ठा kpp_alg *alg = crypto_kpp_alg(tfm);
-	काष्ठा crypto_alg *calg = tfm->base.__crt_alg;
-	पूर्णांक ret;
+static inline int crypto_kpp_generate_public_key(struct kpp_request *req)
+{
+	struct crypto_kpp *tfm = crypto_kpp_reqtfm(req);
+	struct kpp_alg *alg = crypto_kpp_alg(tfm);
+	struct crypto_alg *calg = tfm->base.__crt_alg;
+	int ret;
 
 	crypto_stats_get(calg);
-	ret = alg->generate_खुला_key(req);
-	crypto_stats_kpp_generate_खुला_key(calg, ret);
-	वापस ret;
-पूर्ण
+	ret = alg->generate_public_key(req);
+	crypto_stats_kpp_generate_public_key(calg, ret);
+	return ret;
+}
 
 /**
  * crypto_kpp_compute_shared_secret() - Invoke kpp operation
  *
- * Function invokes the specअगरic kpp operation क्रम computing the shared secret
- * क्रम a given kpp algorithm.
+ * Function invokes the specific kpp operation for computing the shared secret
+ * for a given kpp algorithm.
  *
  * @req:	kpp key request
  *
- * Return: zero on success; error code in हाल of error
+ * Return: zero on success; error code in case of error
  */
-अटल अंतरभूत पूर्णांक crypto_kpp_compute_shared_secret(काष्ठा kpp_request *req)
-अणु
-	काष्ठा crypto_kpp *tfm = crypto_kpp_reqtfm(req);
-	काष्ठा kpp_alg *alg = crypto_kpp_alg(tfm);
-	काष्ठा crypto_alg *calg = tfm->base.__crt_alg;
-	पूर्णांक ret;
+static inline int crypto_kpp_compute_shared_secret(struct kpp_request *req)
+{
+	struct crypto_kpp *tfm = crypto_kpp_reqtfm(req);
+	struct kpp_alg *alg = crypto_kpp_alg(tfm);
+	struct crypto_alg *calg = tfm->base.__crt_alg;
+	int ret;
 
 	crypto_stats_get(calg);
 	ret = alg->compute_shared_secret(req);
 	crypto_stats_kpp_compute_shared_secret(calg, ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * crypto_kpp_maxsize() - Get len क्रम output buffer
+ * crypto_kpp_maxsize() - Get len for output buffer
  *
- * Function वापसs the output buffer size required क्रम a given key.
- * Function assumes that the key is alपढ़ोy set in the transक्रमmation. If this
+ * Function returns the output buffer size required for a given key.
+ * Function assumes that the key is already set in the transformation. If this
  * function is called without a setkey or with a failed setkey, you will end up
- * in a शून्य dereference.
+ * in a NULL dereference.
  *
  * @tfm:	KPP tfm handle allocated with crypto_alloc_kpp()
  */
-अटल अंतरभूत अचिन्हित पूर्णांक crypto_kpp_maxsize(काष्ठा crypto_kpp *tfm)
-अणु
-	काष्ठा kpp_alg *alg = crypto_kpp_alg(tfm);
+static inline unsigned int crypto_kpp_maxsize(struct crypto_kpp *tfm)
+{
+	struct kpp_alg *alg = crypto_kpp_alg(tfm);
 
-	वापस alg->max_size(tfm);
-पूर्ण
+	return alg->max_size(tfm);
+}
 
-#पूर्ण_अगर
+#endif

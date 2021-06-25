@@ -1,166 +1,165 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * linux/sound/soc/pxa/z2.c
  *
- * SoC Audio driver क्रम Aeronix Zipit Z2
+ * SoC Audio driver for Aeronix Zipit Z2
  *
  * Copyright (C) 2009 Ken McGuire <kenm@desertweyr.com>
  * Copyright (C) 2010 Marek Vasut <marek.vasut@gmail.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/gpपन.स>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/timer.h>
+#include <linux/interrupt.h>
+#include <linux/platform_device.h>
+#include <linux/gpio.h>
 
-#समावेश <sound/core.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/soc.h>
-#समावेश <sound/jack.h>
+#include <sound/core.h>
+#include <sound/pcm.h>
+#include <sound/soc.h>
+#include <sound/jack.h>
 
-#समावेश <यंत्र/mach-types.h>
-#समावेश <mach/hardware.h>
-#समावेश <mach/audपन.स>
-#समावेश <mach/z2.h>
+#include <asm/mach-types.h>
+#include <mach/hardware.h>
+#include <mach/audio.h>
+#include <mach/z2.h>
 
-#समावेश "../codecs/wm8750.h"
-#समावेश "pxa2xx-i2s.h"
+#include "../codecs/wm8750.h"
+#include "pxa2xx-i2s.h"
 
-अटल काष्ठा snd_soc_card snd_soc_z2;
+static struct snd_soc_card snd_soc_z2;
 
-अटल पूर्णांक z2_hw_params(काष्ठा snd_pcm_substream *substream,
-	काष्ठा snd_pcm_hw_params *params)
-अणु
-	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
-	काष्ठा snd_soc_dai *codec_dai = asoc_rtd_to_codec(rtd, 0);
-	काष्ठा snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
-	अचिन्हित पूर्णांक clk = 0;
-	पूर्णांक ret = 0;
+static int z2_hw_params(struct snd_pcm_substream *substream,
+	struct snd_pcm_hw_params *params)
+{
+	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
+	struct snd_soc_dai *codec_dai = asoc_rtd_to_codec(rtd, 0);
+	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
+	unsigned int clk = 0;
+	int ret = 0;
 
-	चयन (params_rate(params)) अणु
-	हाल 8000:
-	हाल 16000:
-	हाल 48000:
-	हाल 96000:
+	switch (params_rate(params)) {
+	case 8000:
+	case 16000:
+	case 48000:
+	case 96000:
 		clk = 12288000;
-		अवरोध;
-	हाल 11025:
-	हाल 22050:
-	हाल 44100:
+		break;
+	case 11025:
+	case 22050:
+	case 44100:
 		clk = 11289600;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	/* set the codec प्रणाली घड़ी क्रम DAC and ADC */
+	/* set the codec system clock for DAC and ADC */
 	ret = snd_soc_dai_set_sysclk(codec_dai, WM8750_SYSCLK, clk,
 		SND_SOC_CLOCK_IN);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	/* set the I2S प्रणाली घड़ी as input (unused) */
+	/* set the I2S system clock as input (unused) */
 	ret = snd_soc_dai_set_sysclk(cpu_dai, PXA2XX_I2S_SYSCLK, 0,
 		SND_SOC_CLOCK_IN);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा snd_soc_jack hs_jack;
+static struct snd_soc_jack hs_jack;
 
 /* Headset jack detection DAPM pins */
-अटल काष्ठा snd_soc_jack_pin hs_jack_pins[] = अणु
-	अणु
+static struct snd_soc_jack_pin hs_jack_pins[] = {
+	{
 		.pin	= "Mic Jack",
 		.mask	= SND_JACK_MICROPHONE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.pin	= "Headphone Jack",
 		.mask	= SND_JACK_HEADPHONE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.pin    = "Ext Spk",
 		.mask   = SND_JACK_HEADPHONE,
 		.invert = 1
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /* Headset jack detection gpios */
-अटल काष्ठा snd_soc_jack_gpio hs_jack_gpios[] = अणु
-	अणु
+static struct snd_soc_jack_gpio hs_jack_gpios[] = {
+	{
 		.gpio		= GPIO37_ZIPITZ2_HEADSET_DETECT,
 		.name		= "hsdet-gpio",
 		.report		= SND_JACK_HEADSET,
-		.debounce_समय	= 200,
+		.debounce_time	= 200,
 		.invert		= 1,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-/* z2 machine dapm widमाला_लो */
-अटल स्थिर काष्ठा snd_soc_dapm_widget wm8750_dapm_widमाला_लो[] = अणु
-	SND_SOC_DAPM_HP("Headphone Jack", शून्य),
-	SND_SOC_DAPM_MIC("Mic Jack", शून्य),
-	SND_SOC_DAPM_SPK("Ext Spk", शून्य),
+/* z2 machine dapm widgets */
+static const struct snd_soc_dapm_widget wm8750_dapm_widgets[] = {
+	SND_SOC_DAPM_HP("Headphone Jack", NULL),
+	SND_SOC_DAPM_MIC("Mic Jack", NULL),
+	SND_SOC_DAPM_SPK("Ext Spk", NULL),
 
 	/* headset is a mic and mono headphone */
-	SND_SOC_DAPM_HP("Headset Jack", शून्य),
-पूर्ण;
+	SND_SOC_DAPM_HP("Headset Jack", NULL),
+};
 
 /* Z2 machine audio_map */
-अटल स्थिर काष्ठा snd_soc_dapm_route z2_audio_map[] = अणु
+static const struct snd_soc_dapm_route z2_audio_map[] = {
 
 	/* headphone connected to LOUT1, ROUT1 */
-	अणु"Headphone Jack", शून्य, "LOUT1"पूर्ण,
-	अणु"Headphone Jack", शून्य, "ROUT1"पूर्ण,
+	{"Headphone Jack", NULL, "LOUT1"},
+	{"Headphone Jack", NULL, "ROUT1"},
 
 	/* ext speaker connected to LOUT2, ROUT2  */
-	अणु"Ext Spk", शून्य, "ROUT2"पूर्ण,
-	अणु"Ext Spk", शून्य, "LOUT2"पूर्ण,
+	{"Ext Spk", NULL, "ROUT2"},
+	{"Ext Spk", NULL, "LOUT2"},
 
 	/* mic is connected to R input 2 - with bias */
-	अणु"RINPUT2", शून्य, "Mic Bias"पूर्ण,
-	अणु"Mic Bias", शून्य, "Mic Jack"पूर्ण,
-पूर्ण;
+	{"RINPUT2", NULL, "Mic Bias"},
+	{"Mic Bias", NULL, "Mic Jack"},
+};
 
 /*
- * Logic क्रम a wm8750 as connected on a Z2 Device
+ * Logic for a wm8750 as connected on a Z2 Device
  */
-अटल पूर्णांक z2_wm8750_init(काष्ठा snd_soc_pcm_runसमय *rtd)
-अणु
-	पूर्णांक ret;
+static int z2_wm8750_init(struct snd_soc_pcm_runtime *rtd)
+{
+	int ret;
 
 	/* Jack detection API stuff */
 	ret = snd_soc_card_jack_new(rtd->card, "Headset Jack", SND_JACK_HEADSET,
 				    &hs_jack, hs_jack_pins,
 				    ARRAY_SIZE(hs_jack_pins));
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	ret = snd_soc_jack_add_gpios(&hs_jack, ARRAY_SIZE(hs_jack_gpios),
 				hs_jack_gpios);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
-	वापस 0;
+	return 0;
 
 err:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा snd_soc_ops z2_ops = अणु
+static const struct snd_soc_ops z2_ops = {
 	.hw_params = z2_hw_params,
-पूर्ण;
+};
 
-/* z2 digital audio पूर्णांकerface glue - connects codec <--> CPU */
+/* z2 digital audio interface glue - connects codec <--> CPU */
 SND_SOC_DAILINK_DEFS(wm8750,
 	DAILINK_COMP_ARRAY(COMP_CPU("pxa2xx-i2s")),
 	DAILINK_COMP_ARRAY(COMP_CODEC("wm8750.0-001b", "wm8750-hifi")),
 	DAILINK_COMP_ARRAY(COMP_PLATFORM("pxa-pcm-audio")));
 
-अटल काष्ठा snd_soc_dai_link z2_dai = अणु
+static struct snd_soc_dai_link z2_dai = {
 	.name		= "wm8750",
 	.stream_name	= "WM8750",
 	.init		= z2_wm8750_init,
@@ -168,51 +167,51 @@ SND_SOC_DAILINK_DEFS(wm8750,
 			  SND_SOC_DAIFMT_CBS_CFS,
 	.ops		= &z2_ops,
 	SND_SOC_DAILINK_REG(wm8750),
-पूर्ण;
+};
 
 /* z2 audio machine driver */
-अटल काष्ठा snd_soc_card snd_soc_z2 = अणु
+static struct snd_soc_card snd_soc_z2 = {
 	.name		= "Z2",
 	.owner		= THIS_MODULE,
 	.dai_link	= &z2_dai,
 	.num_links	= 1,
 
-	.dapm_widमाला_लो = wm8750_dapm_widमाला_लो,
-	.num_dapm_widमाला_लो = ARRAY_SIZE(wm8750_dapm_widमाला_लो),
+	.dapm_widgets = wm8750_dapm_widgets,
+	.num_dapm_widgets = ARRAY_SIZE(wm8750_dapm_widgets),
 	.dapm_routes = z2_audio_map,
 	.num_dapm_routes = ARRAY_SIZE(z2_audio_map),
 	.fully_routed = true,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device *z2_snd_device;
+static struct platform_device *z2_snd_device;
 
-अटल पूर्णांक __init z2_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init z2_init(void)
+{
+	int ret;
 
-	अगर (!machine_is_zipit2())
-		वापस -ENODEV;
+	if (!machine_is_zipit2())
+		return -ENODEV;
 
-	z2_snd_device = platक्रमm_device_alloc("soc-audio", -1);
-	अगर (!z2_snd_device)
-		वापस -ENOMEM;
+	z2_snd_device = platform_device_alloc("soc-audio", -1);
+	if (!z2_snd_device)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(z2_snd_device, &snd_soc_z2);
-	ret = platक्रमm_device_add(z2_snd_device);
+	platform_set_drvdata(z2_snd_device, &snd_soc_z2);
+	ret = platform_device_add(z2_snd_device);
 
-	अगर (ret)
-		platक्रमm_device_put(z2_snd_device);
+	if (ret)
+		platform_device_put(z2_snd_device);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम __निकास z2_निकास(व्योम)
-अणु
-	platक्रमm_device_unरेजिस्टर(z2_snd_device);
-पूर्ण
+static void __exit z2_exit(void)
+{
+	platform_device_unregister(z2_snd_device);
+}
 
 module_init(z2_init);
-module_निकास(z2_निकास);
+module_exit(z2_exit);
 
 MODULE_AUTHOR("Ken McGuire <kenm@desertweyr.com>, "
 		"Marek Vasut <marek.vasut@gmail.com>");

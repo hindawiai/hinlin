@@ -1,21 +1,20 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
- * Name: hwsleep.c - ACPI Hardware Sleep/Wake Support functions क्रम the
- *                   original/legacy sleep/PM रेजिस्टरs.
+ * Name: hwsleep.c - ACPI Hardware Sleep/Wake Support functions for the
+ *                   original/legacy sleep/PM registers.
  *
  * Copyright (C) 2000 - 2021, Intel Corp.
  *
  *****************************************************************************/
 
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
 
-#घोषणा _COMPONENT          ACPI_HARDWARE
+#define _COMPONENT          ACPI_HARDWARE
 ACPI_MODULE_NAME("hwsleep")
 
-#अगर (!ACPI_REDUCED_HARDWARE)	/* Entire module */
+#if (!ACPI_REDUCED_HARDWARE)	/* Entire module */
 /*******************************************************************************
  *
  * FUNCTION:    acpi_hw_legacy_sleep
@@ -24,14 +23,14 @@ ACPI_MODULE_NAME("hwsleep")
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Enter a प्रणाली sleep state via the legacy FADT PM रेजिस्टरs
+ * DESCRIPTION: Enter a system sleep state via the legacy FADT PM registers
  *              THIS FUNCTION MUST BE CALLED WITH INTERRUPTS DISABLED
  *
  ******************************************************************************/
 acpi_status acpi_hw_legacy_sleep(u8 sleep_state)
-अणु
-	काष्ठा acpi_bit_रेजिस्टर_info *sleep_type_reg_info;
-	काष्ठा acpi_bit_रेजिस्टर_info *sleep_enable_reg_info;
+{
+	struct acpi_bit_register_info *sleep_type_reg_info;
+	struct acpi_bit_register_info *sleep_enable_reg_info;
 	u32 pm1a_control;
 	u32 pm1b_control;
 	u32 in_value;
@@ -40,42 +39,42 @@ acpi_status acpi_hw_legacy_sleep(u8 sleep_state)
 	ACPI_FUNCTION_TRACE(hw_legacy_sleep);
 
 	sleep_type_reg_info =
-	    acpi_hw_get_bit_रेजिस्टर_info(ACPI_BITREG_SLEEP_TYPE);
+	    acpi_hw_get_bit_register_info(ACPI_BITREG_SLEEP_TYPE);
 	sleep_enable_reg_info =
-	    acpi_hw_get_bit_रेजिस्टर_info(ACPI_BITREG_SLEEP_ENABLE);
+	    acpi_hw_get_bit_register_info(ACPI_BITREG_SLEEP_ENABLE);
 
 	/* Clear wake status */
 
-	status = acpi_ग_लिखो_bit_रेजिस्टर(ACPI_BITREG_WAKE_STATUS,
+	status = acpi_write_bit_register(ACPI_BITREG_WAKE_STATUS,
 					 ACPI_CLEAR_STATUS);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		return_ACPI_STATUS(status);
+	}
 
 	/* Disable all GPEs */
 	status = acpi_hw_disable_all_gpes();
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		return_ACPI_STATUS(status);
+	}
 	status = acpi_hw_clear_acpi_status();
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस_ACPI_STATUS(status);
-	पूर्ण
-	acpi_gbl_प्रणाली_awake_and_running = FALSE;
+	if (ACPI_FAILURE(status)) {
+		return_ACPI_STATUS(status);
+	}
+	acpi_gbl_system_awake_and_running = FALSE;
 
 	 /* Enable all wakeup GPEs */
 	status = acpi_hw_enable_all_wakeup_gpes();
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		return_ACPI_STATUS(status);
+	}
 
 	/* Get current value of PM1A control */
 
-	status = acpi_hw_रेजिस्टर_पढ़ो(ACPI_REGISTER_PM1_CONTROL,
+	status = acpi_hw_register_read(ACPI_REGISTER_PM1_CONTROL,
 				       &pm1a_control);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		return_ACPI_STATUS(status);
+	}
 	ACPI_DEBUG_PRINT((ACPI_DB_INIT,
 			  "Entering sleep state [S%u]\n", sleep_state));
 
@@ -93,42 +92,42 @@ acpi_status acpi_hw_legacy_sleep(u8 sleep_state)
 	    (acpi_gbl_sleep_type_b << sleep_type_reg_info->bit_position);
 
 	/*
-	 * We split the ग_लिखोs of SLP_TYP and SLP_EN to workaround
+	 * We split the writes of SLP_TYP and SLP_EN to workaround
 	 * poorly implemented hardware.
 	 */
 
-	/* Write #1: ग_लिखो the SLP_TYP data to the PM1 Control रेजिस्टरs */
+	/* Write #1: write the SLP_TYP data to the PM1 Control registers */
 
-	status = acpi_hw_ग_लिखो_pm1_control(pm1a_control, pm1b_control);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+	status = acpi_hw_write_pm1_control(pm1a_control, pm1b_control);
+	if (ACPI_FAILURE(status)) {
+		return_ACPI_STATUS(status);
+	}
 
 	/* Insert the sleep enable (SLP_EN) bit */
 
 	pm1a_control |= sleep_enable_reg_info->access_bit_mask;
 	pm1b_control |= sleep_enable_reg_info->access_bit_mask;
 
-	/* Flush caches, as per ACPI specअगरication */
+	/* Flush caches, as per ACPI specification */
 
 	ACPI_FLUSH_CPU_CACHE();
 
 	status = acpi_os_enter_sleep(sleep_state, pm1a_control, pm1b_control);
-	अगर (status == AE_CTRL_TERMINATE) अणु
-		वापस_ACPI_STATUS(AE_OK);
-	पूर्ण
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+	if (status == AE_CTRL_TERMINATE) {
+		return_ACPI_STATUS(AE_OK);
+	}
+	if (ACPI_FAILURE(status)) {
+		return_ACPI_STATUS(status);
+	}
 
 	/* Write #2: Write both SLP_TYP + SLP_EN */
 
-	status = acpi_hw_ग_लिखो_pm1_control(pm1a_control, pm1b_control);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+	status = acpi_hw_write_pm1_control(pm1a_control, pm1b_control);
+	if (ACPI_FAILURE(status)) {
+		return_ACPI_STATUS(status);
+	}
 
-	अगर (sleep_state > ACPI_STATE_S3) अणु
+	if (sleep_state > ACPI_STATE_S3) {
 		/*
 		 * We wanted to sleep > S3, but it didn't happen (by virtue of the
 		 * fact that we are still executing!)
@@ -136,53 +135,53 @@ acpi_status acpi_hw_legacy_sleep(u8 sleep_state)
 		 * Wait ten seconds, then try again. This is to get S4/S5 to work on
 		 * all machines.
 		 *
-		 * We रुको so दीर्घ to allow chipsets that poll this reg very slowly
-		 * to still पढ़ो the right value. Ideally, this block would go
+		 * We wait so long to allow chipsets that poll this reg very slowly
+		 * to still read the right value. Ideally, this block would go
 		 * away entirely.
 		 */
 		acpi_os_stall(10 * ACPI_USEC_PER_SEC);
 
-		status = acpi_hw_रेजिस्टर_ग_लिखो(ACPI_REGISTER_PM1_CONTROL,
+		status = acpi_hw_register_write(ACPI_REGISTER_PM1_CONTROL,
 						sleep_enable_reg_info->
 						access_bit_mask);
-		अगर (ACPI_FAILURE(status)) अणु
-			वापस_ACPI_STATUS(status);
-		पूर्ण
-	पूर्ण
+		if (ACPI_FAILURE(status)) {
+			return_ACPI_STATUS(status);
+		}
+	}
 
-	/* Wait क्रम transition back to Working State */
+	/* Wait for transition back to Working State */
 
-	करो अणु
+	do {
 		status =
-		    acpi_पढ़ो_bit_रेजिस्टर(ACPI_BITREG_WAKE_STATUS, &in_value);
-		अगर (ACPI_FAILURE(status)) अणु
-			वापस_ACPI_STATUS(status);
-		पूर्ण
+		    acpi_read_bit_register(ACPI_BITREG_WAKE_STATUS, &in_value);
+		if (ACPI_FAILURE(status)) {
+			return_ACPI_STATUS(status);
+		}
 
-	पूर्ण जबतक (!in_value);
+	} while (!in_value);
 
-	वापस_ACPI_STATUS(AE_OK);
-पूर्ण
+	return_ACPI_STATUS(AE_OK);
+}
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_hw_legacy_wake_prep
  *
- * PARAMETERS:  sleep_state         - Which sleep state we just निकासed
+ * PARAMETERS:  sleep_state         - Which sleep state we just exited
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Perक्रमm the first state of OS-independent ACPI cleanup after a
+ * DESCRIPTION: Perform the first state of OS-independent ACPI cleanup after a
  *              sleep.
- *              Called with पूर्णांकerrupts ENABLED.
+ *              Called with interrupts ENABLED.
  *
  ******************************************************************************/
 
 acpi_status acpi_hw_legacy_wake_prep(u8 sleep_state)
-अणु
+{
 	acpi_status status;
-	काष्ठा acpi_bit_रेजिस्टर_info *sleep_type_reg_info;
-	काष्ठा acpi_bit_रेजिस्टर_info *sleep_enable_reg_info;
+	struct acpi_bit_register_info *sleep_type_reg_info;
+	struct acpi_bit_register_info *sleep_enable_reg_info;
 	u32 pm1a_control;
 	u32 pm1b_control;
 
@@ -196,17 +195,17 @@ acpi_status acpi_hw_legacy_wake_prep(u8 sleep_state)
 	status = acpi_get_sleep_type_data(ACPI_STATE_S0,
 					  &acpi_gbl_sleep_type_a,
 					  &acpi_gbl_sleep_type_b);
-	अगर (ACPI_SUCCESS(status)) अणु
+	if (ACPI_SUCCESS(status)) {
 		sleep_type_reg_info =
-		    acpi_hw_get_bit_रेजिस्टर_info(ACPI_BITREG_SLEEP_TYPE);
+		    acpi_hw_get_bit_register_info(ACPI_BITREG_SLEEP_TYPE);
 		sleep_enable_reg_info =
-		    acpi_hw_get_bit_रेजिस्टर_info(ACPI_BITREG_SLEEP_ENABLE);
+		    acpi_hw_get_bit_register_info(ACPI_BITREG_SLEEP_ENABLE);
 
 		/* Get current value of PM1A control */
 
-		status = acpi_hw_रेजिस्टर_पढ़ो(ACPI_REGISTER_PM1_CONTROL,
+		status = acpi_hw_register_read(ACPI_REGISTER_PM1_CONTROL,
 					       &pm1a_control);
-		अगर (ACPI_SUCCESS(status)) अणु
+		if (ACPI_SUCCESS(status)) {
 
 			/* Clear the SLP_EN and SLP_TYP fields */
 
@@ -222,31 +221,31 @@ acpi_status acpi_hw_legacy_wake_prep(u8 sleep_state)
 			pm1b_control |= (acpi_gbl_sleep_type_b <<
 					 sleep_type_reg_info->bit_position);
 
-			/* Write the control रेजिस्टरs and ignore any errors */
+			/* Write the control registers and ignore any errors */
 
-			(व्योम)acpi_hw_ग_लिखो_pm1_control(pm1a_control,
+			(void)acpi_hw_write_pm1_control(pm1a_control,
 							pm1b_control);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	return_ACPI_STATUS(status);
+}
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_hw_legacy_wake
  *
- * PARAMETERS:  sleep_state         - Which sleep state we just निकासed
+ * PARAMETERS:  sleep_state         - Which sleep state we just exited
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Perक्रमm OS-independent ACPI cleanup after a sleep
- *              Called with पूर्णांकerrupts ENABLED.
+ * DESCRIPTION: Perform OS-independent ACPI cleanup after a sleep
+ *              Called with interrupts ENABLED.
  *
  ******************************************************************************/
 
 acpi_status acpi_hw_legacy_wake(u8 sleep_state)
-अणु
+{
 	acpi_status status;
 
 	ACPI_FUNCTION_TRACE(hw_legacy_wake);
@@ -257,64 +256,64 @@ acpi_status acpi_hw_legacy_wake(u8 sleep_state)
 	acpi_hw_execute_sleep_method(METHOD_PATHNAME__SST, ACPI_SST_WAKING);
 
 	/*
-	 * GPEs must be enabled beक्रमe _WAK is called as GPEs
+	 * GPEs must be enabled before _WAK is called as GPEs
 	 * might get fired there
 	 *
 	 * Restore the GPEs:
 	 * 1) Disable all GPEs
-	 * 2) Enable all runसमय GPEs
+	 * 2) Enable all runtime GPEs
 	 */
 	status = acpi_hw_disable_all_gpes();
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		return_ACPI_STATUS(status);
+	}
 
-	status = acpi_hw_enable_all_runसमय_gpes();
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+	status = acpi_hw_enable_all_runtime_gpes();
+	if (ACPI_FAILURE(status)) {
+		return_ACPI_STATUS(status);
+	}
 
 	/*
 	 * Now we can execute _WAK, etc. Some machines require that the GPEs
-	 * are enabled beक्रमe the wake methods are executed.
+	 * are enabled before the wake methods are executed.
 	 */
 	acpi_hw_execute_sleep_method(METHOD_PATHNAME__WAK, sleep_state);
 
 	/*
 	 * Some BIOS code assumes that WAK_STS will be cleared on resume
-	 * and use it to determine whether the प्रणाली is rebooting or
-	 * resuming. Clear WAK_STS क्रम compatibility.
+	 * and use it to determine whether the system is rebooting or
+	 * resuming. Clear WAK_STS for compatibility.
 	 */
-	(व्योम)acpi_ग_लिखो_bit_रेजिस्टर(ACPI_BITREG_WAKE_STATUS,
+	(void)acpi_write_bit_register(ACPI_BITREG_WAKE_STATUS,
 				      ACPI_CLEAR_STATUS);
-	acpi_gbl_प्रणाली_awake_and_running = TRUE;
+	acpi_gbl_system_awake_and_running = TRUE;
 
-	/* Enable घातer button */
+	/* Enable power button */
 
-	(व्योम)
-	    acpi_ग_लिखो_bit_रेजिस्टर(acpi_gbl_fixed_event_info
+	(void)
+	    acpi_write_bit_register(acpi_gbl_fixed_event_info
 				    [ACPI_EVENT_POWER_BUTTON].
-				    enable_रेजिस्टर_id, ACPI_ENABLE_EVENT);
+				    enable_register_id, ACPI_ENABLE_EVENT);
 
-	(व्योम)
-	    acpi_ग_लिखो_bit_रेजिस्टर(acpi_gbl_fixed_event_info
+	(void)
+	    acpi_write_bit_register(acpi_gbl_fixed_event_info
 				    [ACPI_EVENT_POWER_BUTTON].
-				    status_रेजिस्टर_id, ACPI_CLEAR_STATUS);
+				    status_register_id, ACPI_CLEAR_STATUS);
 
 	/* Enable sleep button */
 
-	(व्योम)
-	    acpi_ग_लिखो_bit_रेजिस्टर(acpi_gbl_fixed_event_info
+	(void)
+	    acpi_write_bit_register(acpi_gbl_fixed_event_info
 				    [ACPI_EVENT_SLEEP_BUTTON].
-				    enable_रेजिस्टर_id, ACPI_ENABLE_EVENT);
+				    enable_register_id, ACPI_ENABLE_EVENT);
 
-	(व्योम)
-	    acpi_ग_लिखो_bit_रेजिस्टर(acpi_gbl_fixed_event_info
+	(void)
+	    acpi_write_bit_register(acpi_gbl_fixed_event_info
 				    [ACPI_EVENT_SLEEP_BUTTON].
-				    status_रेजिस्टर_id, ACPI_CLEAR_STATUS);
+				    status_register_id, ACPI_CLEAR_STATUS);
 
 	acpi_hw_execute_sleep_method(METHOD_PATHNAME__SST, ACPI_SST_WORKING);
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	return_ACPI_STATUS(status);
+}
 
-#पूर्ण_अगर				/* !ACPI_REDUCED_HARDWARE */
+#endif				/* !ACPI_REDUCED_HARDWARE */

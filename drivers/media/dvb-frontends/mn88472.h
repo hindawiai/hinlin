@@ -1,51 +1,50 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Panasonic MN88472 DVB-T/T2/C demodulator driver
  *
  * Copyright (C) 2013 Antti Palosaari <crope@iki.fi>
  */
 
-#अगर_अघोषित MN88472_H
-#घोषणा MN88472_H
+#ifndef MN88472_H
+#define MN88472_H
 
-#समावेश <linux/dvb/frontend.h>
+#include <linux/dvb/frontend.h>
 
-/* Define old names क्रम backward compatibility */
-#घोषणा VARIABLE_TS_CLOCK   MN88472_TS_CLK_VARIABLE
-#घोषणा FIXED_TS_CLOCK      MN88472_TS_CLK_FIXED
-#घोषणा SERIAL_TS_MODE      MN88472_TS_MODE_SERIAL
-#घोषणा PARALLEL_TS_MODE    MN88472_TS_MODE_PARALLEL
+/* Define old names for backward compatibility */
+#define VARIABLE_TS_CLOCK   MN88472_TS_CLK_VARIABLE
+#define FIXED_TS_CLOCK      MN88472_TS_CLK_FIXED
+#define SERIAL_TS_MODE      MN88472_TS_MODE_SERIAL
+#define PARALLEL_TS_MODE    MN88472_TS_MODE_PARALLEL
 
 /**
- * काष्ठा mn88472_config - Platक्रमm data क्रम the mn88472 driver
+ * struct mn88472_config - Platform data for the mn88472 driver
  * @xtal: Clock frequency.
  * @ts_mode: TS mode.
- * @ts_घड़ी: TS घड़ी config.
- * @i2c_wr_max: Max number of bytes driver ग_लिखोs to I2C at once.
- * @fe: poपूर्णांकer to a frontend poपूर्णांकer
+ * @ts_clock: TS clock config.
+ * @i2c_wr_max: Max number of bytes driver writes to I2C at once.
+ * @fe: pointer to a frontend pointer
  * @get_dvb_frontend: Get DVB frontend callback.
  */
-काष्ठा mn88472_config अणु
-	अचिन्हित पूर्णांक xtal;
+struct mn88472_config {
+	unsigned int xtal;
 
-#घोषणा MN88472_TS_MODE_SERIAL      0
-#घोषणा MN88472_TS_MODE_PARALLEL    1
-	पूर्णांक ts_mode;
+#define MN88472_TS_MODE_SERIAL      0
+#define MN88472_TS_MODE_PARALLEL    1
+	int ts_mode;
 
-#घोषणा MN88472_TS_CLK_FIXED        0
-#घोषणा MN88472_TS_CLK_VARIABLE     1
-	पूर्णांक ts_घड़ी;
+#define MN88472_TS_CLK_FIXED        0
+#define MN88472_TS_CLK_VARIABLE     1
+	int ts_clock;
 
 	u16 i2c_wr_max;
 
-	/* Everything after that is वापसed by the driver. */
+	/* Everything after that is returned by the driver. */
 
 	/*
 	 * DVB frontend.
 	 */
-	काष्ठा dvb_frontend **fe;
-	काष्ठा dvb_frontend* (*get_dvb_frontend)(काष्ठा i2c_client *);
-पूर्ण;
+	struct dvb_frontend **fe;
+	struct dvb_frontend* (*get_dvb_frontend)(struct i2c_client *);
+};
 
-#पूर्ण_अगर
+#endif

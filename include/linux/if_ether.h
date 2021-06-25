@@ -1,45 +1,44 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * INET		An implementation of the TCP/IP protocol suite क्रम the LINUX
- *		operating प्रणाली.  INET is implemented using the  BSD Socket
- *		पूर्णांकerface as the means of communication with the user level.
+ * INET		An implementation of the TCP/IP protocol suite for the LINUX
+ *		operating system.  INET is implemented using the  BSD Socket
+ *		interface as the means of communication with the user level.
  *
- *		Global definitions क्रम the Ethernet IEEE 802.3 पूर्णांकerface.
+ *		Global definitions for the Ethernet IEEE 802.3 interface.
  *
- * Version:	@(#)अगर_ether.h	1.0.1a	02/08/94
+ * Version:	@(#)if_ether.h	1.0.1a	02/08/94
  *
  * Author:	Fred N. van Kempen, <waltje@uWalt.NL.Mugnet.ORG>
  *		Donald Becker, <becker@super.org>
  *		Alan Cox, <alan@lxorguk.ukuu.org.uk>
  *		Steve Whitehouse, <gw7rrm@eeshack3.swan.ac.uk>
  */
-#अगर_अघोषित _LINUX_IF_ETHER_H
-#घोषणा _LINUX_IF_ETHER_H
+#ifndef _LINUX_IF_ETHER_H
+#define _LINUX_IF_ETHER_H
 
-#समावेश <linux/skbuff.h>
-#समावेश <uapi/linux/अगर_ether.h>
+#include <linux/skbuff.h>
+#include <uapi/linux/if_ether.h>
 
-अटल अंतरभूत काष्ठा ethhdr *eth_hdr(स्थिर काष्ठा sk_buff *skb)
-अणु
-	वापस (काष्ठा ethhdr *)skb_mac_header(skb);
-पूर्ण
+static inline struct ethhdr *eth_hdr(const struct sk_buff *skb)
+{
+	return (struct ethhdr *)skb_mac_header(skb);
+}
 
 /* Prefer this version in TX path, instead of
  * skb_reset_mac_header() + eth_hdr()
  */
-अटल अंतरभूत काष्ठा ethhdr *skb_eth_hdr(स्थिर काष्ठा sk_buff *skb)
-अणु
-	वापस (काष्ठा ethhdr *)skb->data;
-पूर्ण
+static inline struct ethhdr *skb_eth_hdr(const struct sk_buff *skb)
+{
+	return (struct ethhdr *)skb->data;
+}
 
-अटल अंतरभूत काष्ठा ethhdr *inner_eth_hdr(स्थिर काष्ठा sk_buff *skb)
-अणु
-	वापस (काष्ठा ethhdr *)skb_inner_mac_header(skb);
-पूर्ण
+static inline struct ethhdr *inner_eth_hdr(const struct sk_buff *skb)
+{
+	return (struct ethhdr *)skb_inner_mac_header(skb);
+}
 
-पूर्णांक eth_header_parse(स्थिर काष्ठा sk_buff *skb, अचिन्हित अक्षर *haddr);
+int eth_header_parse(const struct sk_buff *skb, unsigned char *haddr);
 
-बाह्य sमाप_प्रकार sysfs_क्रमmat_mac(अक्षर *buf, स्थिर अचिन्हित अक्षर *addr, पूर्णांक len);
+extern ssize_t sysfs_format_mac(char *buf, const unsigned char *addr, int len);
 
-#पूर्ण_अगर	/* _LINUX_IF_ETHER_H */
+#endif	/* _LINUX_IF_ETHER_H */

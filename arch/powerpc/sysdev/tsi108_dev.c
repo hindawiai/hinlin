@@ -1,89 +1,88 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * tsi108/109 device setup code
  *
- * Maपूर्णांकained by Roy Zang < tie-fei.zang@मुक्तscale.com >
+ * Maintained by Roy Zang < tie-fei.zang@freescale.com >
  */
 
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/major.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/export.h>
-#समावेश <linux/device.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/of_net.h>
-#समावेश <यंत्र/tsi108.h>
+#include <linux/stddef.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/errno.h>
+#include <linux/major.h>
+#include <linux/delay.h>
+#include <linux/irq.h>
+#include <linux/export.h>
+#include <linux/device.h>
+#include <linux/etherdevice.h>
+#include <linux/platform_device.h>
+#include <linux/of_net.h>
+#include <asm/tsi108.h>
 
-#समावेश <linux/atomic.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/prom.h>
-#समावेश <mm/mmu_decl.h>
+#include <linux/atomic.h>
+#include <asm/io.h>
+#include <asm/irq.h>
+#include <asm/prom.h>
+#include <mm/mmu_decl.h>
 
-#अघोषित DEBUG
+#undef DEBUG
 
-#अगर_घोषित DEBUG
-#घोषणा DBG(fmt...) करो अणु prपूर्णांकk(fmt); पूर्ण जबतक(0)
-#अन्यथा
-#घोषणा DBG(fmt...) करो अणु पूर्ण जबतक(0)
-#पूर्ण_अगर
+#ifdef DEBUG
+#define DBG(fmt...) do { printk(fmt); } while(0)
+#else
+#define DBG(fmt...) do { } while(0)
+#endif
 
-अटल phys_addr_t tsi108_csr_base = -1;
+static phys_addr_t tsi108_csr_base = -1;
 
-phys_addr_t get_csrbase(व्योम)
-अणु
-	काष्ठा device_node *tsi;
+phys_addr_t get_csrbase(void)
+{
+	struct device_node *tsi;
 
-	अगर (tsi108_csr_base != -1)
-		वापस tsi108_csr_base;
+	if (tsi108_csr_base != -1)
+		return tsi108_csr_base;
 
-	tsi = of_find_node_by_type(शून्य, "tsi-bridge");
-	अगर (tsi) अणु
-		अचिन्हित पूर्णांक size;
-		स्थिर व्योम *prop = of_get_property(tsi, "reg", &size);
+	tsi = of_find_node_by_type(NULL, "tsi-bridge");
+	if (tsi) {
+		unsigned int size;
+		const void *prop = of_get_property(tsi, "reg", &size);
 		tsi108_csr_base = of_translate_address(tsi, prop);
 		of_node_put(tsi);
-	पूर्ण
-	वापस tsi108_csr_base;
-पूर्ण
+	}
+	return tsi108_csr_base;
+}
 
-u32 get_vir_csrbase(व्योम)
-अणु
-	वापस (u32) (ioremap(get_csrbase(), 0x10000));
-पूर्ण
+u32 get_vir_csrbase(void)
+{
+	return (u32) (ioremap(get_csrbase(), 0x10000));
+}
 
 EXPORT_SYMBOL(get_csrbase);
 EXPORT_SYMBOL(get_vir_csrbase);
 
-अटल पूर्णांक __init tsi108_eth_of_init(व्योम)
-अणु
-	काष्ठा device_node *np;
-	अचिन्हित पूर्णांक i = 0;
-	काष्ठा platक्रमm_device *tsi_eth_dev;
-	काष्ठा resource res;
-	पूर्णांक ret;
+static int __init tsi108_eth_of_init(void)
+{
+	struct device_node *np;
+	unsigned int i = 0;
+	struct platform_device *tsi_eth_dev;
+	struct resource res;
+	int ret;
 
-	क्रम_each_compatible_node(np, "network", "tsi108-ethernet") अणु
-		काष्ठा resource r[2];
-		काष्ठा device_node *phy, *mdio;
+	for_each_compatible_node(np, "network", "tsi108-ethernet") {
+		struct resource r[2];
+		struct device_node *phy, *mdio;
 		hw_info tsi_eth_data;
-		स्थिर अचिन्हित पूर्णांक *phy_id;
-		स्थिर phandle *ph;
+		const unsigned int *phy_id;
+		const phandle *ph;
 
-		स_रखो(r, 0, माप(r));
-		स_रखो(&tsi_eth_data, 0, माप(tsi_eth_data));
+		memset(r, 0, sizeof(r));
+		memset(&tsi_eth_data, 0, sizeof(tsi_eth_data));
 
 		ret = of_address_to_resource(np, 0, &r[0]);
 		DBG("%s: name:start->end = %s:%pR\n",
 		    __func__, r[0].name, &r[0]);
-		अगर (ret)
-			जाओ err;
+		if (ret)
+			goto err;
 
 		r[1].name = "tx";
 		r[1].start = irq_of_parse_and_map(np, 0);
@@ -93,32 +92,32 @@ EXPORT_SYMBOL(get_vir_csrbase);
 			__func__, r[1].name, &r[1]);
 
 		tsi_eth_dev =
-		    platक्रमm_device_रेजिस्टर_simple("tsi-ethernet", i++, &r[0],
+		    platform_device_register_simple("tsi-ethernet", i++, &r[0],
 						    1);
 
-		अगर (IS_ERR(tsi_eth_dev)) अणु
+		if (IS_ERR(tsi_eth_dev)) {
 			ret = PTR_ERR(tsi_eth_dev);
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
 		of_get_mac_address(np, tsi_eth_data.mac_addr);
 
-		ph = of_get_property(np, "mdio-handle", शून्य);
+		ph = of_get_property(np, "mdio-handle", NULL);
 		mdio = of_find_node_by_phandle(*ph);
 		ret = of_address_to_resource(mdio, 0, &res);
 		of_node_put(mdio);
-		अगर (ret)
-			जाओ unreg;
+		if (ret)
+			goto unreg;
 
-		ph = of_get_property(np, "phy-handle", शून्य);
+		ph = of_get_property(np, "phy-handle", NULL);
 		phy = of_find_node_by_phandle(*ph);
 
-		अगर (phy == शून्य) अणु
+		if (phy == NULL) {
 			ret = -ENODEV;
-			जाओ unreg;
-		पूर्ण
+			goto unreg;
+		}
 
-		phy_id = of_get_property(phy, "reg", शून्य);
+		phy_id = of_get_property(phy, "reg", NULL);
 
 		tsi_eth_data.regs = r[0].start;
 		tsi_eth_data.phyregs = res.start;
@@ -131,24 +130,24 @@ EXPORT_SYMBOL(get_vir_csrbase);
 		 * "txc-rxc-delay-disable" property enables this
 		 * workaround.  FIXME: Need to port the tsi108_eth
 		 * driver itself to phylib and use a non-misleading
-		 * name क्रम the workaround flag - it's not actually to
-		 * करो with the model of PHY in use */
-		अगर (of_get_property(phy, "txc-rxc-delay-disable", शून्य))
+		 * name for the workaround flag - it's not actually to
+		 * do with the model of PHY in use */
+		if (of_get_property(phy, "txc-rxc-delay-disable", NULL))
 			tsi_eth_data.phy_type = TSI108_PHY_BCM54XX;
 		of_node_put(phy);
 
 		ret =
-		    platक्रमm_device_add_data(tsi_eth_dev, &tsi_eth_data,
-					     माप(hw_info));
-		अगर (ret)
-			जाओ unreg;
-	पूर्ण
-	वापस 0;
+		    platform_device_add_data(tsi_eth_dev, &tsi_eth_data,
+					     sizeof(hw_info));
+		if (ret)
+			goto unreg;
+	}
+	return 0;
 unreg:
-	platक्रमm_device_unरेजिस्टर(tsi_eth_dev);
+	platform_device_unregister(tsi_eth_dev);
 err:
 	of_node_put(np);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 arch_initcall(tsi108_eth_of_init);

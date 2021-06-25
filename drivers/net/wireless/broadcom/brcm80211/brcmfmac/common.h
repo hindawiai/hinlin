@@ -1,80 +1,79 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: ISC
+// SPDX-License-Identifier: ISC
 /*
  * Copyright (c) 2014 Broadcom Corporation
  */
-#अगर_अघोषित BRCMFMAC_COMMON_H
-#घोषणा BRCMFMAC_COMMON_H
+#ifndef BRCMFMAC_COMMON_H
+#define BRCMFMAC_COMMON_H
 
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/platक्रमm_data/brcmfmac.h>
-#समावेश "fwil_types.h"
+#include <linux/platform_device.h>
+#include <linux/platform_data/brcmfmac.h>
+#include "fwil_types.h"
 
-#घोषणा BRCMF_FW_ALTPATH_LEN			256
+#define BRCMF_FW_ALTPATH_LEN			256
 
-/* Definitions क्रम the module global and device specअगरic settings are defined
- * here. Two काष्ठाs are used क्रम them. brcmf_mp_global_t and brcmf_mp_device.
- * The mp_global is instantiated once in a global काष्ठा and माला_लो initialized
- * by the common_attach function which should be called beक्रमe any other
- * (module) initiliazation takes place. The device specअगरic settings is part
- * of the drvr काष्ठा and should be initialized on every brcmf_attach.
+/* Definitions for the module global and device specific settings are defined
+ * here. Two structs are used for them. brcmf_mp_global_t and brcmf_mp_device.
+ * The mp_global is instantiated once in a global struct and gets initialized
+ * by the common_attach function which should be called before any other
+ * (module) initiliazation takes place. The device specific settings is part
+ * of the drvr struct and should be initialized on every brcmf_attach.
  */
 
 /**
- * काष्ठा brcmf_mp_global_t - Global module paramaters.
+ * struct brcmf_mp_global_t - Global module paramaters.
  *
  * @firmware_path: Alternative firmware path.
  */
-काष्ठा brcmf_mp_global_t अणु
-	अक्षर	firmware_path[BRCMF_FW_ALTPATH_LEN];
-पूर्ण;
+struct brcmf_mp_global_t {
+	char	firmware_path[BRCMF_FW_ALTPATH_LEN];
+};
 
-बाह्य काष्ठा brcmf_mp_global_t brcmf_mp_global;
+extern struct brcmf_mp_global_t brcmf_mp_global;
 
 /**
- * काष्ठा brcmf_mp_device - Device module paramaters.
+ * struct brcmf_mp_device - Device module paramaters.
  *
  * @p2p_enable: Legacy P2P0 enable (old wpa_supplicant).
- * @feature_disable: Feature_disable biपंचांगask.
+ * @feature_disable: Feature_disable bitmask.
  * @fcmode: FWS flow control.
  * @roamoff: Firmware roaming off?
  * @ignore_probe_fail: Ignore probe failure.
- * @country_codes: If available, poपूर्णांकer to काष्ठा क्रम translating country codes
- * @bus: Bus specअगरic platक्रमm data. Only SDIO at the mmoment.
+ * @country_codes: If available, pointer to struct for translating country codes
+ * @bus: Bus specific platform data. Only SDIO at the mmoment.
  */
-काष्ठा brcmf_mp_device अणु
+struct brcmf_mp_device {
 	bool		p2p_enable;
-	अचिन्हित पूर्णांक	feature_disable;
-	पूर्णांक		fcmode;
+	unsigned int	feature_disable;
+	int		fcmode;
 	bool		roamoff;
 	bool		iapp;
 	bool		ignore_probe_fail;
-	काष्ठा brcmfmac_pd_cc *country_codes;
-	स्थिर अक्षर	*board_type;
-	जोड़ अणु
-		काष्ठा brcmfmac_sdio_pd sdio;
-	पूर्ण bus;
-पूर्ण;
+	struct brcmfmac_pd_cc *country_codes;
+	const char	*board_type;
+	union {
+		struct brcmfmac_sdio_pd sdio;
+	} bus;
+};
 
-व्योम brcmf_c_set_joinpref_शेष(काष्ठा brcmf_अगर *अगरp);
+void brcmf_c_set_joinpref_default(struct brcmf_if *ifp);
 
-काष्ठा brcmf_mp_device *brcmf_get_module_param(काष्ठा device *dev,
-					       क्रमागत brcmf_bus_type bus_type,
+struct brcmf_mp_device *brcmf_get_module_param(struct device *dev,
+					       enum brcmf_bus_type bus_type,
 					       u32 chip, u32 chiprev);
-व्योम brcmf_release_module_param(काष्ठा brcmf_mp_device *module_param);
+void brcmf_release_module_param(struct brcmf_mp_device *module_param);
 
-/* Sets करोngle media info (drv_version, mac address). */
-पूर्णांक brcmf_c_preinit_dcmds(काष्ठा brcmf_अगर *अगरp);
+/* Sets dongle media info (drv_version, mac address). */
+int brcmf_c_preinit_dcmds(struct brcmf_if *ifp);
 
-#अगर_घोषित CONFIG_DMI
-व्योम brcmf_dmi_probe(काष्ठा brcmf_mp_device *settings, u32 chip, u32 chiprev);
-#अन्यथा
-अटल अंतरभूत व्योम
-brcmf_dmi_probe(काष्ठा brcmf_mp_device *settings, u32 chip, u32 chiprev) अणुपूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_DMI
+void brcmf_dmi_probe(struct brcmf_mp_device *settings, u32 chip, u32 chiprev);
+#else
+static inline void
+brcmf_dmi_probe(struct brcmf_mp_device *settings, u32 chip, u32 chiprev) {}
+#endif
 
-u8 brcmf_map_prio_to_prec(व्योम *cfg, u8 prio);
+u8 brcmf_map_prio_to_prec(void *cfg, u8 prio);
 
-u8 brcmf_map_prio_to_aci(व्योम *cfg, u8 prio);
+u8 brcmf_map_prio_to_aci(void *cfg, u8 prio);
 
-#पूर्ण_अगर /* BRCMFMAC_COMMON_H */
+#endif /* BRCMFMAC_COMMON_H */

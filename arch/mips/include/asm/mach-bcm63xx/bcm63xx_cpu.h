@@ -1,94 +1,93 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित BCM63XX_CPU_H_
-#घोषणा BCM63XX_CPU_H_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef BCM63XX_CPU_H_
+#define BCM63XX_CPU_H_
 
-#समावेश <linux/types.h>
-#समावेश <linux/init.h>
+#include <linux/types.h>
+#include <linux/init.h>
 
 /*
  * Macro to fetch bcm63xx cpu id and revision, should be optimized at
- * compile समय अगर only one CPU support is enabled (idea stolen from
+ * compile time if only one CPU support is enabled (idea stolen from
  * arm mach-types)
  */
-#घोषणा BCM3368_CPU_ID		0x3368
-#घोषणा BCM6328_CPU_ID		0x6328
-#घोषणा BCM6338_CPU_ID		0x6338
-#घोषणा BCM6345_CPU_ID		0x6345
-#घोषणा BCM6348_CPU_ID		0x6348
-#घोषणा BCM6358_CPU_ID		0x6358
-#घोषणा BCM6362_CPU_ID		0x6362
-#घोषणा BCM6368_CPU_ID		0x6368
+#define BCM3368_CPU_ID		0x3368
+#define BCM6328_CPU_ID		0x6328
+#define BCM6338_CPU_ID		0x6338
+#define BCM6345_CPU_ID		0x6345
+#define BCM6348_CPU_ID		0x6348
+#define BCM6358_CPU_ID		0x6358
+#define BCM6362_CPU_ID		0x6362
+#define BCM6368_CPU_ID		0x6368
 
-व्योम __init bcm63xx_cpu_init(व्योम);
-u8 bcm63xx_get_cpu_rev(व्योम);
-अचिन्हित पूर्णांक bcm63xx_get_cpu_freq(व्योम);
+void __init bcm63xx_cpu_init(void);
+u8 bcm63xx_get_cpu_rev(void);
+unsigned int bcm63xx_get_cpu_freq(void);
 
-अटल अंतरभूत u16 __pure __bcm63xx_get_cpu_id(स्थिर u16 cpu_id)
-अणु
-	चयन (cpu_id) अणु
-#अगर_घोषित CONFIG_BCM63XX_CPU_3368
-		हाल BCM3368_CPU_ID:
-#पूर्ण_अगर
+static inline u16 __pure __bcm63xx_get_cpu_id(const u16 cpu_id)
+{
+	switch (cpu_id) {
+#ifdef CONFIG_BCM63XX_CPU_3368
+		case BCM3368_CPU_ID:
+#endif
 
-#अगर_घोषित CONFIG_BCM63XX_CPU_6328
-		हाल BCM6328_CPU_ID:
-#पूर्ण_अगर
+#ifdef CONFIG_BCM63XX_CPU_6328
+		case BCM6328_CPU_ID:
+#endif
 
-#अगर_घोषित CONFIG_BCM63XX_CPU_6338
-		हाल BCM6338_CPU_ID:
-#पूर्ण_अगर
+#ifdef CONFIG_BCM63XX_CPU_6338
+		case BCM6338_CPU_ID:
+#endif
 
-#अगर_घोषित CONFIG_BCM63XX_CPU_6345
-		हाल BCM6345_CPU_ID:
-#पूर्ण_अगर
+#ifdef CONFIG_BCM63XX_CPU_6345
+		case BCM6345_CPU_ID:
+#endif
 
-#अगर_घोषित CONFIG_BCM63XX_CPU_6348
-		हाल BCM6348_CPU_ID:
-#पूर्ण_अगर
+#ifdef CONFIG_BCM63XX_CPU_6348
+		case BCM6348_CPU_ID:
+#endif
 
-#अगर_घोषित CONFIG_BCM63XX_CPU_6358
-		हाल BCM6358_CPU_ID:
-#पूर्ण_अगर
+#ifdef CONFIG_BCM63XX_CPU_6358
+		case BCM6358_CPU_ID:
+#endif
 
-#अगर_घोषित CONFIG_BCM63XX_CPU_6362
-		हाल BCM6362_CPU_ID:
-#पूर्ण_अगर
+#ifdef CONFIG_BCM63XX_CPU_6362
+		case BCM6362_CPU_ID:
+#endif
 
-#अगर_घोषित CONFIG_BCM63XX_CPU_6368
-		हाल BCM6368_CPU_ID:
-#पूर्ण_अगर
-		अवरोध;
-	शेष:
+#ifdef CONFIG_BCM63XX_CPU_6368
+		case BCM6368_CPU_ID:
+#endif
+		break;
+	default:
 		unreachable();
-	पूर्ण
+	}
 
-	वापस cpu_id;
-पूर्ण
+	return cpu_id;
+}
 
-बाह्य u16 bcm63xx_cpu_id;
+extern u16 bcm63xx_cpu_id;
 
-अटल अंतरभूत u16 __pure bcm63xx_get_cpu_id(व्योम)
-अणु
-	स्थिर u16 cpu_id = bcm63xx_cpu_id;
+static inline u16 __pure bcm63xx_get_cpu_id(void)
+{
+	const u16 cpu_id = bcm63xx_cpu_id;
 
-	वापस __bcm63xx_get_cpu_id(cpu_id);
-पूर्ण
+	return __bcm63xx_get_cpu_id(cpu_id);
+}
 
-#घोषणा BCMCPU_IS_3368()	(bcm63xx_get_cpu_id() == BCM3368_CPU_ID)
-#घोषणा BCMCPU_IS_6328()	(bcm63xx_get_cpu_id() == BCM6328_CPU_ID)
-#घोषणा BCMCPU_IS_6338()	(bcm63xx_get_cpu_id() == BCM6338_CPU_ID)
-#घोषणा BCMCPU_IS_6345()	(bcm63xx_get_cpu_id() == BCM6345_CPU_ID)
-#घोषणा BCMCPU_IS_6348()	(bcm63xx_get_cpu_id() == BCM6348_CPU_ID)
-#घोषणा BCMCPU_IS_6358()	(bcm63xx_get_cpu_id() == BCM6358_CPU_ID)
-#घोषणा BCMCPU_IS_6362()	(bcm63xx_get_cpu_id() == BCM6362_CPU_ID)
-#घोषणा BCMCPU_IS_6368()	(bcm63xx_get_cpu_id() == BCM6368_CPU_ID)
+#define BCMCPU_IS_3368()	(bcm63xx_get_cpu_id() == BCM3368_CPU_ID)
+#define BCMCPU_IS_6328()	(bcm63xx_get_cpu_id() == BCM6328_CPU_ID)
+#define BCMCPU_IS_6338()	(bcm63xx_get_cpu_id() == BCM6338_CPU_ID)
+#define BCMCPU_IS_6345()	(bcm63xx_get_cpu_id() == BCM6345_CPU_ID)
+#define BCMCPU_IS_6348()	(bcm63xx_get_cpu_id() == BCM6348_CPU_ID)
+#define BCMCPU_IS_6358()	(bcm63xx_get_cpu_id() == BCM6358_CPU_ID)
+#define BCMCPU_IS_6362()	(bcm63xx_get_cpu_id() == BCM6362_CPU_ID)
+#define BCMCPU_IS_6368()	(bcm63xx_get_cpu_id() == BCM6368_CPU_ID)
 
 /*
- * While रेजिस्टरs sets are (mostly) the same across 63xx CPU, base
- * address of these sets करो change.
+ * While registers sets are (mostly) the same across 63xx CPU, base
+ * address of these sets do change.
  */
-क्रमागत bcm63xx_regs_set अणु
+enum bcm63xx_regs_set {
 	RSET_DSL_LMEM = 0,
 	RSET_PERF,
 	RSET_TIMER,
@@ -130,427 +129,427 @@ u8 bcm63xx_get_cpu_rev(व्योम);
 	RSET_PCMDMAS,
 	RSET_RNG,
 	RSET_MISC
-पूर्ण;
+};
 
-#घोषणा RSET_DSL_LMEM_SIZE		(64 * 1024 * 4)
-#घोषणा RSET_DSL_SIZE			4096
-#घोषणा RSET_WDT_SIZE			12
-#घोषणा BCM_6338_RSET_SPI_SIZE		64
-#घोषणा BCM_6348_RSET_SPI_SIZE		64
-#घोषणा BCM_6358_RSET_SPI_SIZE		1804
-#घोषणा BCM_6368_RSET_SPI_SIZE		1804
-#घोषणा RSET_ENET_SIZE			2048
-#घोषणा RSET_ENETDMA_SIZE		256
-#घोषणा RSET_6345_ENETDMA_SIZE		64
-#घोषणा RSET_ENETDMAC_SIZE(chans)	(16 * (chans))
-#घोषणा RSET_ENETDMAS_SIZE(chans)	(16 * (chans))
-#घोषणा RSET_ENETSW_SIZE		65536
-#घोषणा RSET_UART_SIZE			24
-#घोषणा RSET_HSSPI_SIZE			1536
-#घोषणा RSET_UDC_SIZE			256
-#घोषणा RSET_OHCI_SIZE			256
-#घोषणा RSET_EHCI_SIZE			256
-#घोषणा RSET_USBD_SIZE			256
-#घोषणा RSET_USBDMA_SIZE		1280
-#घोषणा RSET_PCMCIA_SIZE		12
-#घोषणा RSET_M2M_SIZE			256
-#घोषणा RSET_ATM_SIZE			4096
-#घोषणा RSET_XTM_SIZE			10240
-#घोषणा RSET_XTMDMA_SIZE		256
-#घोषणा RSET_XTMDMAC_SIZE(chans)	(16 * (chans))
-#घोषणा RSET_XTMDMAS_SIZE(chans)	(16 * (chans))
-#घोषणा RSET_RNG_SIZE			20
-
-/*
- * 3368 रेजिस्टर sets base address
- */
-#घोषणा BCM_3368_DSL_LMEM_BASE		(0xdeadbeef)
-#घोषणा BCM_3368_PERF_BASE		(0xfff8c000)
-#घोषणा BCM_3368_TIMER_BASE		(0xfff8c040)
-#घोषणा BCM_3368_WDT_BASE		(0xfff8c080)
-#घोषणा BCM_3368_UART0_BASE		(0xfff8c100)
-#घोषणा BCM_3368_UART1_BASE		(0xfff8c120)
-#घोषणा BCM_3368_GPIO_BASE		(0xfff8c080)
-#घोषणा BCM_3368_SPI_BASE		(0xfff8c800)
-#घोषणा BCM_3368_HSSPI_BASE		(0xdeadbeef)
-#घोषणा BCM_3368_UDC0_BASE		(0xdeadbeef)
-#घोषणा BCM_3368_USBDMA_BASE		(0xdeadbeef)
-#घोषणा BCM_3368_OHCI0_BASE		(0xdeadbeef)
-#घोषणा BCM_3368_OHCI_PRIV_BASE		(0xdeadbeef)
-#घोषणा BCM_3368_USBH_PRIV_BASE		(0xdeadbeef)
-#घोषणा BCM_3368_USBD_BASE		(0xdeadbeef)
-#घोषणा BCM_3368_MPI_BASE		(0xfff80000)
-#घोषणा BCM_3368_PCMCIA_BASE		(0xfff80054)
-#घोषणा BCM_3368_PCIE_BASE		(0xdeadbeef)
-#घोषणा BCM_3368_SDRAM_REGS_BASE	(0xdeadbeef)
-#घोषणा BCM_3368_DSL_BASE		(0xdeadbeef)
-#घोषणा BCM_3368_UBUS_BASE		(0xdeadbeef)
-#घोषणा BCM_3368_ENET0_BASE		(0xfff98000)
-#घोषणा BCM_3368_ENET1_BASE		(0xfff98800)
-#घोषणा BCM_3368_ENETDMA_BASE		(0xfff99800)
-#घोषणा BCM_3368_ENETDMAC_BASE		(0xfff99900)
-#घोषणा BCM_3368_ENETDMAS_BASE		(0xfff99a00)
-#घोषणा BCM_3368_ENETSW_BASE		(0xdeadbeef)
-#घोषणा BCM_3368_EHCI0_BASE		(0xdeadbeef)
-#घोषणा BCM_3368_SDRAM_BASE		(0xdeadbeef)
-#घोषणा BCM_3368_MEMC_BASE		(0xfff84000)
-#घोषणा BCM_3368_DDR_BASE		(0xdeadbeef)
-#घोषणा BCM_3368_M2M_BASE		(0xdeadbeef)
-#घोषणा BCM_3368_ATM_BASE		(0xdeadbeef)
-#घोषणा BCM_3368_XTM_BASE		(0xdeadbeef)
-#घोषणा BCM_3368_XTMDMA_BASE		(0xdeadbeef)
-#घोषणा BCM_3368_XTMDMAC_BASE		(0xdeadbeef)
-#घोषणा BCM_3368_XTMDMAS_BASE		(0xdeadbeef)
-#घोषणा BCM_3368_PCM_BASE		(0xfff9c200)
-#घोषणा BCM_3368_PCMDMA_BASE		(0xdeadbeef)
-#घोषणा BCM_3368_PCMDMAC_BASE		(0xdeadbeef)
-#घोषणा BCM_3368_PCMDMAS_BASE		(0xdeadbeef)
-#घोषणा BCM_3368_RNG_BASE		(0xdeadbeef)
-#घोषणा BCM_3368_MISC_BASE		(0xdeadbeef)
+#define RSET_DSL_LMEM_SIZE		(64 * 1024 * 4)
+#define RSET_DSL_SIZE			4096
+#define RSET_WDT_SIZE			12
+#define BCM_6338_RSET_SPI_SIZE		64
+#define BCM_6348_RSET_SPI_SIZE		64
+#define BCM_6358_RSET_SPI_SIZE		1804
+#define BCM_6368_RSET_SPI_SIZE		1804
+#define RSET_ENET_SIZE			2048
+#define RSET_ENETDMA_SIZE		256
+#define RSET_6345_ENETDMA_SIZE		64
+#define RSET_ENETDMAC_SIZE(chans)	(16 * (chans))
+#define RSET_ENETDMAS_SIZE(chans)	(16 * (chans))
+#define RSET_ENETSW_SIZE		65536
+#define RSET_UART_SIZE			24
+#define RSET_HSSPI_SIZE			1536
+#define RSET_UDC_SIZE			256
+#define RSET_OHCI_SIZE			256
+#define RSET_EHCI_SIZE			256
+#define RSET_USBD_SIZE			256
+#define RSET_USBDMA_SIZE		1280
+#define RSET_PCMCIA_SIZE		12
+#define RSET_M2M_SIZE			256
+#define RSET_ATM_SIZE			4096
+#define RSET_XTM_SIZE			10240
+#define RSET_XTMDMA_SIZE		256
+#define RSET_XTMDMAC_SIZE(chans)	(16 * (chans))
+#define RSET_XTMDMAS_SIZE(chans)	(16 * (chans))
+#define RSET_RNG_SIZE			20
 
 /*
- * 6328 रेजिस्टर sets base address
+ * 3368 register sets base address
  */
-#घोषणा BCM_6328_DSL_LMEM_BASE		(0xdeadbeef)
-#घोषणा BCM_6328_PERF_BASE		(0xb0000000)
-#घोषणा BCM_6328_TIMER_BASE		(0xb0000040)
-#घोषणा BCM_6328_WDT_BASE		(0xb000005c)
-#घोषणा BCM_6328_UART0_BASE		(0xb0000100)
-#घोषणा BCM_6328_UART1_BASE		(0xb0000120)
-#घोषणा BCM_6328_GPIO_BASE		(0xb0000080)
-#घोषणा BCM_6328_SPI_BASE		(0xdeadbeef)
-#घोषणा BCM_6328_HSSPI_BASE		(0xb0001000)
-#घोषणा BCM_6328_UDC0_BASE		(0xdeadbeef)
-#घोषणा BCM_6328_USBDMA_BASE		(0xb000c000)
-#घोषणा BCM_6328_OHCI0_BASE		(0xb0002600)
-#घोषणा BCM_6328_OHCI_PRIV_BASE		(0xdeadbeef)
-#घोषणा BCM_6328_USBH_PRIV_BASE		(0xb0002700)
-#घोषणा BCM_6328_USBD_BASE		(0xb0002400)
-#घोषणा BCM_6328_MPI_BASE		(0xdeadbeef)
-#घोषणा BCM_6328_PCMCIA_BASE		(0xdeadbeef)
-#घोषणा BCM_6328_PCIE_BASE		(0xb0e40000)
-#घोषणा BCM_6328_SDRAM_REGS_BASE	(0xdeadbeef)
-#घोषणा BCM_6328_DSL_BASE		(0xb0001900)
-#घोषणा BCM_6328_UBUS_BASE		(0xdeadbeef)
-#घोषणा BCM_6328_ENET0_BASE		(0xdeadbeef)
-#घोषणा BCM_6328_ENET1_BASE		(0xdeadbeef)
-#घोषणा BCM_6328_ENETDMA_BASE		(0xb000d800)
-#घोषणा BCM_6328_ENETDMAC_BASE		(0xb000da00)
-#घोषणा BCM_6328_ENETDMAS_BASE		(0xb000dc00)
-#घोषणा BCM_6328_ENETSW_BASE		(0xb0e00000)
-#घोषणा BCM_6328_EHCI0_BASE		(0xb0002500)
-#घोषणा BCM_6328_SDRAM_BASE		(0xdeadbeef)
-#घोषणा BCM_6328_MEMC_BASE		(0xdeadbeef)
-#घोषणा BCM_6328_DDR_BASE		(0xb0003000)
-#घोषणा BCM_6328_M2M_BASE		(0xdeadbeef)
-#घोषणा BCM_6328_ATM_BASE		(0xdeadbeef)
-#घोषणा BCM_6328_XTM_BASE		(0xdeadbeef)
-#घोषणा BCM_6328_XTMDMA_BASE		(0xb000b800)
-#घोषणा BCM_6328_XTMDMAC_BASE		(0xdeadbeef)
-#घोषणा BCM_6328_XTMDMAS_BASE		(0xdeadbeef)
-#घोषणा BCM_6328_PCM_BASE		(0xb000a800)
-#घोषणा BCM_6328_PCMDMA_BASE		(0xdeadbeef)
-#घोषणा BCM_6328_PCMDMAC_BASE		(0xdeadbeef)
-#घोषणा BCM_6328_PCMDMAS_BASE		(0xdeadbeef)
-#घोषणा BCM_6328_RNG_BASE		(0xdeadbeef)
-#घोषणा BCM_6328_MISC_BASE		(0xb0001800)
-#घोषणा BCM_6328_OTP_BASE		(0xb0000600)
+#define BCM_3368_DSL_LMEM_BASE		(0xdeadbeef)
+#define BCM_3368_PERF_BASE		(0xfff8c000)
+#define BCM_3368_TIMER_BASE		(0xfff8c040)
+#define BCM_3368_WDT_BASE		(0xfff8c080)
+#define BCM_3368_UART0_BASE		(0xfff8c100)
+#define BCM_3368_UART1_BASE		(0xfff8c120)
+#define BCM_3368_GPIO_BASE		(0xfff8c080)
+#define BCM_3368_SPI_BASE		(0xfff8c800)
+#define BCM_3368_HSSPI_BASE		(0xdeadbeef)
+#define BCM_3368_UDC0_BASE		(0xdeadbeef)
+#define BCM_3368_USBDMA_BASE		(0xdeadbeef)
+#define BCM_3368_OHCI0_BASE		(0xdeadbeef)
+#define BCM_3368_OHCI_PRIV_BASE		(0xdeadbeef)
+#define BCM_3368_USBH_PRIV_BASE		(0xdeadbeef)
+#define BCM_3368_USBD_BASE		(0xdeadbeef)
+#define BCM_3368_MPI_BASE		(0xfff80000)
+#define BCM_3368_PCMCIA_BASE		(0xfff80054)
+#define BCM_3368_PCIE_BASE		(0xdeadbeef)
+#define BCM_3368_SDRAM_REGS_BASE	(0xdeadbeef)
+#define BCM_3368_DSL_BASE		(0xdeadbeef)
+#define BCM_3368_UBUS_BASE		(0xdeadbeef)
+#define BCM_3368_ENET0_BASE		(0xfff98000)
+#define BCM_3368_ENET1_BASE		(0xfff98800)
+#define BCM_3368_ENETDMA_BASE		(0xfff99800)
+#define BCM_3368_ENETDMAC_BASE		(0xfff99900)
+#define BCM_3368_ENETDMAS_BASE		(0xfff99a00)
+#define BCM_3368_ENETSW_BASE		(0xdeadbeef)
+#define BCM_3368_EHCI0_BASE		(0xdeadbeef)
+#define BCM_3368_SDRAM_BASE		(0xdeadbeef)
+#define BCM_3368_MEMC_BASE		(0xfff84000)
+#define BCM_3368_DDR_BASE		(0xdeadbeef)
+#define BCM_3368_M2M_BASE		(0xdeadbeef)
+#define BCM_3368_ATM_BASE		(0xdeadbeef)
+#define BCM_3368_XTM_BASE		(0xdeadbeef)
+#define BCM_3368_XTMDMA_BASE		(0xdeadbeef)
+#define BCM_3368_XTMDMAC_BASE		(0xdeadbeef)
+#define BCM_3368_XTMDMAS_BASE		(0xdeadbeef)
+#define BCM_3368_PCM_BASE		(0xfff9c200)
+#define BCM_3368_PCMDMA_BASE		(0xdeadbeef)
+#define BCM_3368_PCMDMAC_BASE		(0xdeadbeef)
+#define BCM_3368_PCMDMAS_BASE		(0xdeadbeef)
+#define BCM_3368_RNG_BASE		(0xdeadbeef)
+#define BCM_3368_MISC_BASE		(0xdeadbeef)
 
 /*
- * 6338 रेजिस्टर sets base address
+ * 6328 register sets base address
  */
-#घोषणा BCM_6338_DSL_LMEM_BASE		(0xfff00000)
-#घोषणा BCM_6338_PERF_BASE		(0xfffe0000)
-#घोषणा BCM_6338_BB_BASE		(0xfffe0100)
-#घोषणा BCM_6338_TIMER_BASE		(0xfffe0200)
-#घोषणा BCM_6338_WDT_BASE		(0xfffe021c)
-#घोषणा BCM_6338_UART0_BASE		(0xfffe0300)
-#घोषणा BCM_6338_UART1_BASE		(0xdeadbeef)
-#घोषणा BCM_6338_GPIO_BASE		(0xfffe0400)
-#घोषणा BCM_6338_SPI_BASE		(0xfffe0c00)
-#घोषणा BCM_6338_HSSPI_BASE		(0xdeadbeef)
-#घोषणा BCM_6338_UDC0_BASE		(0xdeadbeef)
-#घोषणा BCM_6338_USBDMA_BASE		(0xfffe2400)
-#घोषणा BCM_6338_OHCI0_BASE		(0xdeadbeef)
-#घोषणा BCM_6338_OHCI_PRIV_BASE		(0xfffe3000)
-#घोषणा BCM_6338_USBH_PRIV_BASE		(0xdeadbeef)
-#घोषणा BCM_6338_USBD_BASE		(0xdeadbeef)
-#घोषणा BCM_6338_MPI_BASE		(0xfffe3160)
-#घोषणा BCM_6338_PCMCIA_BASE		(0xdeadbeef)
-#घोषणा BCM_6338_PCIE_BASE		(0xdeadbeef)
-#घोषणा BCM_6338_SDRAM_REGS_BASE	(0xfffe3100)
-#घोषणा BCM_6338_DSL_BASE		(0xfffe1000)
-#घोषणा BCM_6338_UBUS_BASE		(0xdeadbeef)
-#घोषणा BCM_6338_ENET0_BASE		(0xfffe2800)
-#घोषणा BCM_6338_ENET1_BASE		(0xdeadbeef)
-#घोषणा BCM_6338_ENETDMA_BASE		(0xfffe2400)
-#घोषणा BCM_6338_ENETDMAC_BASE		(0xfffe2500)
-#घोषणा BCM_6338_ENETDMAS_BASE		(0xfffe2600)
-#घोषणा BCM_6338_ENETSW_BASE		(0xdeadbeef)
-#घोषणा BCM_6338_EHCI0_BASE		(0xdeadbeef)
-#घोषणा BCM_6338_SDRAM_BASE		(0xfffe3100)
-#घोषणा BCM_6338_MEMC_BASE		(0xdeadbeef)
-#घोषणा BCM_6338_DDR_BASE		(0xdeadbeef)
-#घोषणा BCM_6338_M2M_BASE		(0xdeadbeef)
-#घोषणा BCM_6338_ATM_BASE		(0xfffe2000)
-#घोषणा BCM_6338_XTM_BASE		(0xdeadbeef)
-#घोषणा BCM_6338_XTMDMA_BASE		(0xdeadbeef)
-#घोषणा BCM_6338_XTMDMAC_BASE		(0xdeadbeef)
-#घोषणा BCM_6338_XTMDMAS_BASE		(0xdeadbeef)
-#घोषणा BCM_6338_PCM_BASE		(0xdeadbeef)
-#घोषणा BCM_6338_PCMDMA_BASE		(0xdeadbeef)
-#घोषणा BCM_6338_PCMDMAC_BASE		(0xdeadbeef)
-#घोषणा BCM_6338_PCMDMAS_BASE		(0xdeadbeef)
-#घोषणा BCM_6338_RNG_BASE		(0xdeadbeef)
-#घोषणा BCM_6338_MISC_BASE		(0xdeadbeef)
+#define BCM_6328_DSL_LMEM_BASE		(0xdeadbeef)
+#define BCM_6328_PERF_BASE		(0xb0000000)
+#define BCM_6328_TIMER_BASE		(0xb0000040)
+#define BCM_6328_WDT_BASE		(0xb000005c)
+#define BCM_6328_UART0_BASE		(0xb0000100)
+#define BCM_6328_UART1_BASE		(0xb0000120)
+#define BCM_6328_GPIO_BASE		(0xb0000080)
+#define BCM_6328_SPI_BASE		(0xdeadbeef)
+#define BCM_6328_HSSPI_BASE		(0xb0001000)
+#define BCM_6328_UDC0_BASE		(0xdeadbeef)
+#define BCM_6328_USBDMA_BASE		(0xb000c000)
+#define BCM_6328_OHCI0_BASE		(0xb0002600)
+#define BCM_6328_OHCI_PRIV_BASE		(0xdeadbeef)
+#define BCM_6328_USBH_PRIV_BASE		(0xb0002700)
+#define BCM_6328_USBD_BASE		(0xb0002400)
+#define BCM_6328_MPI_BASE		(0xdeadbeef)
+#define BCM_6328_PCMCIA_BASE		(0xdeadbeef)
+#define BCM_6328_PCIE_BASE		(0xb0e40000)
+#define BCM_6328_SDRAM_REGS_BASE	(0xdeadbeef)
+#define BCM_6328_DSL_BASE		(0xb0001900)
+#define BCM_6328_UBUS_BASE		(0xdeadbeef)
+#define BCM_6328_ENET0_BASE		(0xdeadbeef)
+#define BCM_6328_ENET1_BASE		(0xdeadbeef)
+#define BCM_6328_ENETDMA_BASE		(0xb000d800)
+#define BCM_6328_ENETDMAC_BASE		(0xb000da00)
+#define BCM_6328_ENETDMAS_BASE		(0xb000dc00)
+#define BCM_6328_ENETSW_BASE		(0xb0e00000)
+#define BCM_6328_EHCI0_BASE		(0xb0002500)
+#define BCM_6328_SDRAM_BASE		(0xdeadbeef)
+#define BCM_6328_MEMC_BASE		(0xdeadbeef)
+#define BCM_6328_DDR_BASE		(0xb0003000)
+#define BCM_6328_M2M_BASE		(0xdeadbeef)
+#define BCM_6328_ATM_BASE		(0xdeadbeef)
+#define BCM_6328_XTM_BASE		(0xdeadbeef)
+#define BCM_6328_XTMDMA_BASE		(0xb000b800)
+#define BCM_6328_XTMDMAC_BASE		(0xdeadbeef)
+#define BCM_6328_XTMDMAS_BASE		(0xdeadbeef)
+#define BCM_6328_PCM_BASE		(0xb000a800)
+#define BCM_6328_PCMDMA_BASE		(0xdeadbeef)
+#define BCM_6328_PCMDMAC_BASE		(0xdeadbeef)
+#define BCM_6328_PCMDMAS_BASE		(0xdeadbeef)
+#define BCM_6328_RNG_BASE		(0xdeadbeef)
+#define BCM_6328_MISC_BASE		(0xb0001800)
+#define BCM_6328_OTP_BASE		(0xb0000600)
 
 /*
- * 6345 रेजिस्टर sets base address
+ * 6338 register sets base address
  */
-#घोषणा BCM_6345_DSL_LMEM_BASE		(0xfff00000)
-#घोषणा BCM_6345_PERF_BASE		(0xfffe0000)
-#घोषणा BCM_6345_BB_BASE		(0xfffe0100)
-#घोषणा BCM_6345_TIMER_BASE		(0xfffe0200)
-#घोषणा BCM_6345_WDT_BASE		(0xfffe021c)
-#घोषणा BCM_6345_UART0_BASE		(0xfffe0300)
-#घोषणा BCM_6345_UART1_BASE		(0xdeadbeef)
-#घोषणा BCM_6345_GPIO_BASE		(0xfffe0400)
-#घोषणा BCM_6345_SPI_BASE		(0xdeadbeef)
-#घोषणा BCM_6345_HSSPI_BASE		(0xdeadbeef)
-#घोषणा BCM_6345_UDC0_BASE		(0xdeadbeef)
-#घोषणा BCM_6345_USBDMA_BASE		(0xfffe2800)
-#घोषणा BCM_6345_ENET0_BASE		(0xfffe1800)
-#घोषणा BCM_6345_ENETDMA_BASE		(0xfffe2800)
-#घोषणा BCM_6345_ENETDMAC_BASE		(0xfffe2840)
-#घोषणा BCM_6345_ENETDMAS_BASE		(0xfffe2a00)
-#घोषणा BCM_6345_ENETSW_BASE		(0xdeadbeef)
-#घोषणा BCM_6345_PCMCIA_BASE		(0xfffe2028)
-#घोषणा BCM_6345_MPI_BASE		(0xfffe2000)
-#घोषणा BCM_6345_PCIE_BASE		(0xdeadbeef)
-#घोषणा BCM_6345_OHCI0_BASE		(0xfffe2100)
-#घोषणा BCM_6345_OHCI_PRIV_BASE		(0xfffe2200)
-#घोषणा BCM_6345_USBH_PRIV_BASE		(0xdeadbeef)
-#घोषणा BCM_6345_USBD_BASE		(0xdeadbeef)
-#घोषणा BCM_6345_SDRAM_REGS_BASE	(0xfffe2300)
-#घोषणा BCM_6345_DSL_BASE		(0xdeadbeef)
-#घोषणा BCM_6345_UBUS_BASE		(0xdeadbeef)
-#घोषणा BCM_6345_ENET1_BASE		(0xdeadbeef)
-#घोषणा BCM_6345_EHCI0_BASE		(0xdeadbeef)
-#घोषणा BCM_6345_SDRAM_BASE		(0xfffe2300)
-#घोषणा BCM_6345_MEMC_BASE		(0xdeadbeef)
-#घोषणा BCM_6345_DDR_BASE		(0xdeadbeef)
-#घोषणा BCM_6345_M2M_BASE		(0xdeadbeef)
-#घोषणा BCM_6345_ATM_BASE		(0xfffe4000)
-#घोषणा BCM_6345_XTM_BASE		(0xdeadbeef)
-#घोषणा BCM_6345_XTMDMA_BASE		(0xdeadbeef)
-#घोषणा BCM_6345_XTMDMAC_BASE		(0xdeadbeef)
-#घोषणा BCM_6345_XTMDMAS_BASE		(0xdeadbeef)
-#घोषणा BCM_6345_PCM_BASE		(0xdeadbeef)
-#घोषणा BCM_6345_PCMDMA_BASE		(0xdeadbeef)
-#घोषणा BCM_6345_PCMDMAC_BASE		(0xdeadbeef)
-#घोषणा BCM_6345_PCMDMAS_BASE		(0xdeadbeef)
-#घोषणा BCM_6345_RNG_BASE		(0xdeadbeef)
-#घोषणा BCM_6345_MISC_BASE		(0xdeadbeef)
+#define BCM_6338_DSL_LMEM_BASE		(0xfff00000)
+#define BCM_6338_PERF_BASE		(0xfffe0000)
+#define BCM_6338_BB_BASE		(0xfffe0100)
+#define BCM_6338_TIMER_BASE		(0xfffe0200)
+#define BCM_6338_WDT_BASE		(0xfffe021c)
+#define BCM_6338_UART0_BASE		(0xfffe0300)
+#define BCM_6338_UART1_BASE		(0xdeadbeef)
+#define BCM_6338_GPIO_BASE		(0xfffe0400)
+#define BCM_6338_SPI_BASE		(0xfffe0c00)
+#define BCM_6338_HSSPI_BASE		(0xdeadbeef)
+#define BCM_6338_UDC0_BASE		(0xdeadbeef)
+#define BCM_6338_USBDMA_BASE		(0xfffe2400)
+#define BCM_6338_OHCI0_BASE		(0xdeadbeef)
+#define BCM_6338_OHCI_PRIV_BASE		(0xfffe3000)
+#define BCM_6338_USBH_PRIV_BASE		(0xdeadbeef)
+#define BCM_6338_USBD_BASE		(0xdeadbeef)
+#define BCM_6338_MPI_BASE		(0xfffe3160)
+#define BCM_6338_PCMCIA_BASE		(0xdeadbeef)
+#define BCM_6338_PCIE_BASE		(0xdeadbeef)
+#define BCM_6338_SDRAM_REGS_BASE	(0xfffe3100)
+#define BCM_6338_DSL_BASE		(0xfffe1000)
+#define BCM_6338_UBUS_BASE		(0xdeadbeef)
+#define BCM_6338_ENET0_BASE		(0xfffe2800)
+#define BCM_6338_ENET1_BASE		(0xdeadbeef)
+#define BCM_6338_ENETDMA_BASE		(0xfffe2400)
+#define BCM_6338_ENETDMAC_BASE		(0xfffe2500)
+#define BCM_6338_ENETDMAS_BASE		(0xfffe2600)
+#define BCM_6338_ENETSW_BASE		(0xdeadbeef)
+#define BCM_6338_EHCI0_BASE		(0xdeadbeef)
+#define BCM_6338_SDRAM_BASE		(0xfffe3100)
+#define BCM_6338_MEMC_BASE		(0xdeadbeef)
+#define BCM_6338_DDR_BASE		(0xdeadbeef)
+#define BCM_6338_M2M_BASE		(0xdeadbeef)
+#define BCM_6338_ATM_BASE		(0xfffe2000)
+#define BCM_6338_XTM_BASE		(0xdeadbeef)
+#define BCM_6338_XTMDMA_BASE		(0xdeadbeef)
+#define BCM_6338_XTMDMAC_BASE		(0xdeadbeef)
+#define BCM_6338_XTMDMAS_BASE		(0xdeadbeef)
+#define BCM_6338_PCM_BASE		(0xdeadbeef)
+#define BCM_6338_PCMDMA_BASE		(0xdeadbeef)
+#define BCM_6338_PCMDMAC_BASE		(0xdeadbeef)
+#define BCM_6338_PCMDMAS_BASE		(0xdeadbeef)
+#define BCM_6338_RNG_BASE		(0xdeadbeef)
+#define BCM_6338_MISC_BASE		(0xdeadbeef)
 
 /*
- * 6348 रेजिस्टर sets base address
+ * 6345 register sets base address
  */
-#घोषणा BCM_6348_DSL_LMEM_BASE		(0xfff00000)
-#घोषणा BCM_6348_PERF_BASE		(0xfffe0000)
-#घोषणा BCM_6348_TIMER_BASE		(0xfffe0200)
-#घोषणा BCM_6348_WDT_BASE		(0xfffe021c)
-#घोषणा BCM_6348_UART0_BASE		(0xfffe0300)
-#घोषणा BCM_6348_UART1_BASE		(0xdeadbeef)
-#घोषणा BCM_6348_GPIO_BASE		(0xfffe0400)
-#घोषणा BCM_6348_SPI_BASE		(0xfffe0c00)
-#घोषणा BCM_6348_HSSPI_BASE		(0xdeadbeef)
-#घोषणा BCM_6348_UDC0_BASE		(0xfffe1000)
-#घोषणा BCM_6348_USBDMA_BASE		(0xdeadbeef)
-#घोषणा BCM_6348_OHCI0_BASE		(0xfffe1b00)
-#घोषणा BCM_6348_OHCI_PRIV_BASE		(0xfffe1c00)
-#घोषणा BCM_6348_USBH_PRIV_BASE		(0xdeadbeef)
-#घोषणा BCM_6348_USBD_BASE		(0xdeadbeef)
-#घोषणा BCM_6348_MPI_BASE		(0xfffe2000)
-#घोषणा BCM_6348_PCMCIA_BASE		(0xfffe2054)
-#घोषणा BCM_6348_PCIE_BASE		(0xdeadbeef)
-#घोषणा BCM_6348_SDRAM_REGS_BASE	(0xfffe2300)
-#घोषणा BCM_6348_M2M_BASE		(0xfffe2800)
-#घोषणा BCM_6348_DSL_BASE		(0xfffe3000)
-#घोषणा BCM_6348_ENET0_BASE		(0xfffe6000)
-#घोषणा BCM_6348_ENET1_BASE		(0xfffe6800)
-#घोषणा BCM_6348_ENETDMA_BASE		(0xfffe7000)
-#घोषणा BCM_6348_ENETDMAC_BASE		(0xfffe7100)
-#घोषणा BCM_6348_ENETDMAS_BASE		(0xfffe7200)
-#घोषणा BCM_6348_ENETSW_BASE		(0xdeadbeef)
-#घोषणा BCM_6348_EHCI0_BASE		(0xdeadbeef)
-#घोषणा BCM_6348_SDRAM_BASE		(0xfffe2300)
-#घोषणा BCM_6348_MEMC_BASE		(0xdeadbeef)
-#घोषणा BCM_6348_DDR_BASE		(0xdeadbeef)
-#घोषणा BCM_6348_ATM_BASE		(0xfffe4000)
-#घोषणा BCM_6348_XTM_BASE		(0xdeadbeef)
-#घोषणा BCM_6348_XTMDMA_BASE		(0xdeadbeef)
-#घोषणा BCM_6348_XTMDMAC_BASE		(0xdeadbeef)
-#घोषणा BCM_6348_XTMDMAS_BASE		(0xdeadbeef)
-#घोषणा BCM_6348_PCM_BASE		(0xdeadbeef)
-#घोषणा BCM_6348_PCMDMA_BASE		(0xdeadbeef)
-#घोषणा BCM_6348_PCMDMAC_BASE		(0xdeadbeef)
-#घोषणा BCM_6348_PCMDMAS_BASE		(0xdeadbeef)
-#घोषणा BCM_6348_RNG_BASE		(0xdeadbeef)
-#घोषणा BCM_6348_MISC_BASE		(0xdeadbeef)
+#define BCM_6345_DSL_LMEM_BASE		(0xfff00000)
+#define BCM_6345_PERF_BASE		(0xfffe0000)
+#define BCM_6345_BB_BASE		(0xfffe0100)
+#define BCM_6345_TIMER_BASE		(0xfffe0200)
+#define BCM_6345_WDT_BASE		(0xfffe021c)
+#define BCM_6345_UART0_BASE		(0xfffe0300)
+#define BCM_6345_UART1_BASE		(0xdeadbeef)
+#define BCM_6345_GPIO_BASE		(0xfffe0400)
+#define BCM_6345_SPI_BASE		(0xdeadbeef)
+#define BCM_6345_HSSPI_BASE		(0xdeadbeef)
+#define BCM_6345_UDC0_BASE		(0xdeadbeef)
+#define BCM_6345_USBDMA_BASE		(0xfffe2800)
+#define BCM_6345_ENET0_BASE		(0xfffe1800)
+#define BCM_6345_ENETDMA_BASE		(0xfffe2800)
+#define BCM_6345_ENETDMAC_BASE		(0xfffe2840)
+#define BCM_6345_ENETDMAS_BASE		(0xfffe2a00)
+#define BCM_6345_ENETSW_BASE		(0xdeadbeef)
+#define BCM_6345_PCMCIA_BASE		(0xfffe2028)
+#define BCM_6345_MPI_BASE		(0xfffe2000)
+#define BCM_6345_PCIE_BASE		(0xdeadbeef)
+#define BCM_6345_OHCI0_BASE		(0xfffe2100)
+#define BCM_6345_OHCI_PRIV_BASE		(0xfffe2200)
+#define BCM_6345_USBH_PRIV_BASE		(0xdeadbeef)
+#define BCM_6345_USBD_BASE		(0xdeadbeef)
+#define BCM_6345_SDRAM_REGS_BASE	(0xfffe2300)
+#define BCM_6345_DSL_BASE		(0xdeadbeef)
+#define BCM_6345_UBUS_BASE		(0xdeadbeef)
+#define BCM_6345_ENET1_BASE		(0xdeadbeef)
+#define BCM_6345_EHCI0_BASE		(0xdeadbeef)
+#define BCM_6345_SDRAM_BASE		(0xfffe2300)
+#define BCM_6345_MEMC_BASE		(0xdeadbeef)
+#define BCM_6345_DDR_BASE		(0xdeadbeef)
+#define BCM_6345_M2M_BASE		(0xdeadbeef)
+#define BCM_6345_ATM_BASE		(0xfffe4000)
+#define BCM_6345_XTM_BASE		(0xdeadbeef)
+#define BCM_6345_XTMDMA_BASE		(0xdeadbeef)
+#define BCM_6345_XTMDMAC_BASE		(0xdeadbeef)
+#define BCM_6345_XTMDMAS_BASE		(0xdeadbeef)
+#define BCM_6345_PCM_BASE		(0xdeadbeef)
+#define BCM_6345_PCMDMA_BASE		(0xdeadbeef)
+#define BCM_6345_PCMDMAC_BASE		(0xdeadbeef)
+#define BCM_6345_PCMDMAS_BASE		(0xdeadbeef)
+#define BCM_6345_RNG_BASE		(0xdeadbeef)
+#define BCM_6345_MISC_BASE		(0xdeadbeef)
 
 /*
- * 6358 रेजिस्टर sets base address
+ * 6348 register sets base address
  */
-#घोषणा BCM_6358_DSL_LMEM_BASE		(0xfff00000)
-#घोषणा BCM_6358_PERF_BASE		(0xfffe0000)
-#घोषणा BCM_6358_TIMER_BASE		(0xfffe0040)
-#घोषणा BCM_6358_WDT_BASE		(0xfffe005c)
-#घोषणा BCM_6358_UART0_BASE		(0xfffe0100)
-#घोषणा BCM_6358_UART1_BASE		(0xfffe0120)
-#घोषणा BCM_6358_GPIO_BASE		(0xfffe0080)
-#घोषणा BCM_6358_SPI_BASE		(0xfffe0800)
-#घोषणा BCM_6358_HSSPI_BASE		(0xdeadbeef)
-#घोषणा BCM_6358_UDC0_BASE		(0xfffe0800)
-#घोषणा BCM_6358_USBDMA_BASE		(0xdeadbeef)
-#घोषणा BCM_6358_OHCI0_BASE		(0xfffe1400)
-#घोषणा BCM_6358_OHCI_PRIV_BASE		(0xdeadbeef)
-#घोषणा BCM_6358_USBH_PRIV_BASE		(0xfffe1500)
-#घोषणा BCM_6358_USBD_BASE		(0xdeadbeef)
-#घोषणा BCM_6358_MPI_BASE		(0xfffe1000)
-#घोषणा BCM_6358_PCMCIA_BASE		(0xfffe1054)
-#घोषणा BCM_6358_PCIE_BASE		(0xdeadbeef)
-#घोषणा BCM_6358_SDRAM_REGS_BASE	(0xfffe2300)
-#घोषणा BCM_6358_M2M_BASE		(0xdeadbeef)
-#घोषणा BCM_6358_DSL_BASE		(0xfffe3000)
-#घोषणा BCM_6358_ENET0_BASE		(0xfffe4000)
-#घोषणा BCM_6358_ENET1_BASE		(0xfffe4800)
-#घोषणा BCM_6358_ENETDMA_BASE		(0xfffe5000)
-#घोषणा BCM_6358_ENETDMAC_BASE		(0xfffe5100)
-#घोषणा BCM_6358_ENETDMAS_BASE		(0xfffe5200)
-#घोषणा BCM_6358_ENETSW_BASE		(0xdeadbeef)
-#घोषणा BCM_6358_EHCI0_BASE		(0xfffe1300)
-#घोषणा BCM_6358_SDRAM_BASE		(0xdeadbeef)
-#घोषणा BCM_6358_MEMC_BASE		(0xfffe1200)
-#घोषणा BCM_6358_DDR_BASE		(0xfffe12a0)
-#घोषणा BCM_6358_ATM_BASE		(0xfffe2000)
-#घोषणा BCM_6358_XTM_BASE		(0xdeadbeef)
-#घोषणा BCM_6358_XTMDMA_BASE		(0xdeadbeef)
-#घोषणा BCM_6358_XTMDMAC_BASE		(0xdeadbeef)
-#घोषणा BCM_6358_XTMDMAS_BASE		(0xdeadbeef)
-#घोषणा BCM_6358_PCM_BASE		(0xfffe1600)
-#घोषणा BCM_6358_PCMDMA_BASE		(0xfffe1800)
-#घोषणा BCM_6358_PCMDMAC_BASE		(0xfffe1900)
-#घोषणा BCM_6358_PCMDMAS_BASE		(0xfffe1a00)
-#घोषणा BCM_6358_RNG_BASE		(0xdeadbeef)
-#घोषणा BCM_6358_MISC_BASE		(0xdeadbeef)
+#define BCM_6348_DSL_LMEM_BASE		(0xfff00000)
+#define BCM_6348_PERF_BASE		(0xfffe0000)
+#define BCM_6348_TIMER_BASE		(0xfffe0200)
+#define BCM_6348_WDT_BASE		(0xfffe021c)
+#define BCM_6348_UART0_BASE		(0xfffe0300)
+#define BCM_6348_UART1_BASE		(0xdeadbeef)
+#define BCM_6348_GPIO_BASE		(0xfffe0400)
+#define BCM_6348_SPI_BASE		(0xfffe0c00)
+#define BCM_6348_HSSPI_BASE		(0xdeadbeef)
+#define BCM_6348_UDC0_BASE		(0xfffe1000)
+#define BCM_6348_USBDMA_BASE		(0xdeadbeef)
+#define BCM_6348_OHCI0_BASE		(0xfffe1b00)
+#define BCM_6348_OHCI_PRIV_BASE		(0xfffe1c00)
+#define BCM_6348_USBH_PRIV_BASE		(0xdeadbeef)
+#define BCM_6348_USBD_BASE		(0xdeadbeef)
+#define BCM_6348_MPI_BASE		(0xfffe2000)
+#define BCM_6348_PCMCIA_BASE		(0xfffe2054)
+#define BCM_6348_PCIE_BASE		(0xdeadbeef)
+#define BCM_6348_SDRAM_REGS_BASE	(0xfffe2300)
+#define BCM_6348_M2M_BASE		(0xfffe2800)
+#define BCM_6348_DSL_BASE		(0xfffe3000)
+#define BCM_6348_ENET0_BASE		(0xfffe6000)
+#define BCM_6348_ENET1_BASE		(0xfffe6800)
+#define BCM_6348_ENETDMA_BASE		(0xfffe7000)
+#define BCM_6348_ENETDMAC_BASE		(0xfffe7100)
+#define BCM_6348_ENETDMAS_BASE		(0xfffe7200)
+#define BCM_6348_ENETSW_BASE		(0xdeadbeef)
+#define BCM_6348_EHCI0_BASE		(0xdeadbeef)
+#define BCM_6348_SDRAM_BASE		(0xfffe2300)
+#define BCM_6348_MEMC_BASE		(0xdeadbeef)
+#define BCM_6348_DDR_BASE		(0xdeadbeef)
+#define BCM_6348_ATM_BASE		(0xfffe4000)
+#define BCM_6348_XTM_BASE		(0xdeadbeef)
+#define BCM_6348_XTMDMA_BASE		(0xdeadbeef)
+#define BCM_6348_XTMDMAC_BASE		(0xdeadbeef)
+#define BCM_6348_XTMDMAS_BASE		(0xdeadbeef)
+#define BCM_6348_PCM_BASE		(0xdeadbeef)
+#define BCM_6348_PCMDMA_BASE		(0xdeadbeef)
+#define BCM_6348_PCMDMAC_BASE		(0xdeadbeef)
+#define BCM_6348_PCMDMAS_BASE		(0xdeadbeef)
+#define BCM_6348_RNG_BASE		(0xdeadbeef)
+#define BCM_6348_MISC_BASE		(0xdeadbeef)
+
+/*
+ * 6358 register sets base address
+ */
+#define BCM_6358_DSL_LMEM_BASE		(0xfff00000)
+#define BCM_6358_PERF_BASE		(0xfffe0000)
+#define BCM_6358_TIMER_BASE		(0xfffe0040)
+#define BCM_6358_WDT_BASE		(0xfffe005c)
+#define BCM_6358_UART0_BASE		(0xfffe0100)
+#define BCM_6358_UART1_BASE		(0xfffe0120)
+#define BCM_6358_GPIO_BASE		(0xfffe0080)
+#define BCM_6358_SPI_BASE		(0xfffe0800)
+#define BCM_6358_HSSPI_BASE		(0xdeadbeef)
+#define BCM_6358_UDC0_BASE		(0xfffe0800)
+#define BCM_6358_USBDMA_BASE		(0xdeadbeef)
+#define BCM_6358_OHCI0_BASE		(0xfffe1400)
+#define BCM_6358_OHCI_PRIV_BASE		(0xdeadbeef)
+#define BCM_6358_USBH_PRIV_BASE		(0xfffe1500)
+#define BCM_6358_USBD_BASE		(0xdeadbeef)
+#define BCM_6358_MPI_BASE		(0xfffe1000)
+#define BCM_6358_PCMCIA_BASE		(0xfffe1054)
+#define BCM_6358_PCIE_BASE		(0xdeadbeef)
+#define BCM_6358_SDRAM_REGS_BASE	(0xfffe2300)
+#define BCM_6358_M2M_BASE		(0xdeadbeef)
+#define BCM_6358_DSL_BASE		(0xfffe3000)
+#define BCM_6358_ENET0_BASE		(0xfffe4000)
+#define BCM_6358_ENET1_BASE		(0xfffe4800)
+#define BCM_6358_ENETDMA_BASE		(0xfffe5000)
+#define BCM_6358_ENETDMAC_BASE		(0xfffe5100)
+#define BCM_6358_ENETDMAS_BASE		(0xfffe5200)
+#define BCM_6358_ENETSW_BASE		(0xdeadbeef)
+#define BCM_6358_EHCI0_BASE		(0xfffe1300)
+#define BCM_6358_SDRAM_BASE		(0xdeadbeef)
+#define BCM_6358_MEMC_BASE		(0xfffe1200)
+#define BCM_6358_DDR_BASE		(0xfffe12a0)
+#define BCM_6358_ATM_BASE		(0xfffe2000)
+#define BCM_6358_XTM_BASE		(0xdeadbeef)
+#define BCM_6358_XTMDMA_BASE		(0xdeadbeef)
+#define BCM_6358_XTMDMAC_BASE		(0xdeadbeef)
+#define BCM_6358_XTMDMAS_BASE		(0xdeadbeef)
+#define BCM_6358_PCM_BASE		(0xfffe1600)
+#define BCM_6358_PCMDMA_BASE		(0xfffe1800)
+#define BCM_6358_PCMDMAC_BASE		(0xfffe1900)
+#define BCM_6358_PCMDMAS_BASE		(0xfffe1a00)
+#define BCM_6358_RNG_BASE		(0xdeadbeef)
+#define BCM_6358_MISC_BASE		(0xdeadbeef)
 
 
 /*
- * 6362 रेजिस्टर sets base address
+ * 6362 register sets base address
  */
-#घोषणा BCM_6362_DSL_LMEM_BASE		(0xdeadbeef)
-#घोषणा BCM_6362_PERF_BASE		(0xb0000000)
-#घोषणा BCM_6362_TIMER_BASE		(0xb0000040)
-#घोषणा BCM_6362_WDT_BASE		(0xb000005c)
-#घोषणा BCM_6362_UART0_BASE             (0xb0000100)
-#घोषणा BCM_6362_UART1_BASE		(0xb0000120)
-#घोषणा BCM_6362_GPIO_BASE		(0xb0000080)
-#घोषणा BCM_6362_SPI_BASE		(0xb0000800)
-#घोषणा BCM_6362_HSSPI_BASE		(0xb0001000)
-#घोषणा BCM_6362_UDC0_BASE		(0xdeadbeef)
-#घोषणा BCM_6362_USBDMA_BASE		(0xb000c000)
-#घोषणा BCM_6362_OHCI0_BASE		(0xb0002600)
-#घोषणा BCM_6362_OHCI_PRIV_BASE		(0xdeadbeef)
-#घोषणा BCM_6362_USBH_PRIV_BASE		(0xb0002700)
-#घोषणा BCM_6362_USBD_BASE		(0xb0002400)
-#घोषणा BCM_6362_MPI_BASE		(0xdeadbeef)
-#घोषणा BCM_6362_PCMCIA_BASE		(0xdeadbeef)
-#घोषणा BCM_6362_PCIE_BASE		(0xb0e40000)
-#घोषणा BCM_6362_SDRAM_REGS_BASE	(0xdeadbeef)
-#घोषणा BCM_6362_DSL_BASE		(0xdeadbeef)
-#घोषणा BCM_6362_UBUS_BASE		(0xdeadbeef)
-#घोषणा BCM_6362_ENET0_BASE		(0xdeadbeef)
-#घोषणा BCM_6362_ENET1_BASE		(0xdeadbeef)
-#घोषणा BCM_6362_ENETDMA_BASE		(0xb000d800)
-#घोषणा BCM_6362_ENETDMAC_BASE		(0xb000da00)
-#घोषणा BCM_6362_ENETDMAS_BASE		(0xb000dc00)
-#घोषणा BCM_6362_ENETSW_BASE		(0xb0e00000)
-#घोषणा BCM_6362_EHCI0_BASE		(0xb0002500)
-#घोषणा BCM_6362_SDRAM_BASE		(0xdeadbeef)
-#घोषणा BCM_6362_MEMC_BASE		(0xdeadbeef)
-#घोषणा BCM_6362_DDR_BASE		(0xb0003000)
-#घोषणा BCM_6362_M2M_BASE		(0xdeadbeef)
-#घोषणा BCM_6362_ATM_BASE		(0xdeadbeef)
-#घोषणा BCM_6362_XTM_BASE		(0xb0007800)
-#घोषणा BCM_6362_XTMDMA_BASE		(0xb000b800)
-#घोषणा BCM_6362_XTMDMAC_BASE		(0xdeadbeef)
-#घोषणा BCM_6362_XTMDMAS_BASE		(0xdeadbeef)
-#घोषणा BCM_6362_PCM_BASE		(0xb000a800)
-#घोषणा BCM_6362_PCMDMA_BASE		(0xdeadbeef)
-#घोषणा BCM_6362_PCMDMAC_BASE		(0xdeadbeef)
-#घोषणा BCM_6362_PCMDMAS_BASE		(0xdeadbeef)
-#घोषणा BCM_6362_RNG_BASE		(0xdeadbeef)
-#घोषणा BCM_6362_MISC_BASE		(0xb0001800)
+#define BCM_6362_DSL_LMEM_BASE		(0xdeadbeef)
+#define BCM_6362_PERF_BASE		(0xb0000000)
+#define BCM_6362_TIMER_BASE		(0xb0000040)
+#define BCM_6362_WDT_BASE		(0xb000005c)
+#define BCM_6362_UART0_BASE             (0xb0000100)
+#define BCM_6362_UART1_BASE		(0xb0000120)
+#define BCM_6362_GPIO_BASE		(0xb0000080)
+#define BCM_6362_SPI_BASE		(0xb0000800)
+#define BCM_6362_HSSPI_BASE		(0xb0001000)
+#define BCM_6362_UDC0_BASE		(0xdeadbeef)
+#define BCM_6362_USBDMA_BASE		(0xb000c000)
+#define BCM_6362_OHCI0_BASE		(0xb0002600)
+#define BCM_6362_OHCI_PRIV_BASE		(0xdeadbeef)
+#define BCM_6362_USBH_PRIV_BASE		(0xb0002700)
+#define BCM_6362_USBD_BASE		(0xb0002400)
+#define BCM_6362_MPI_BASE		(0xdeadbeef)
+#define BCM_6362_PCMCIA_BASE		(0xdeadbeef)
+#define BCM_6362_PCIE_BASE		(0xb0e40000)
+#define BCM_6362_SDRAM_REGS_BASE	(0xdeadbeef)
+#define BCM_6362_DSL_BASE		(0xdeadbeef)
+#define BCM_6362_UBUS_BASE		(0xdeadbeef)
+#define BCM_6362_ENET0_BASE		(0xdeadbeef)
+#define BCM_6362_ENET1_BASE		(0xdeadbeef)
+#define BCM_6362_ENETDMA_BASE		(0xb000d800)
+#define BCM_6362_ENETDMAC_BASE		(0xb000da00)
+#define BCM_6362_ENETDMAS_BASE		(0xb000dc00)
+#define BCM_6362_ENETSW_BASE		(0xb0e00000)
+#define BCM_6362_EHCI0_BASE		(0xb0002500)
+#define BCM_6362_SDRAM_BASE		(0xdeadbeef)
+#define BCM_6362_MEMC_BASE		(0xdeadbeef)
+#define BCM_6362_DDR_BASE		(0xb0003000)
+#define BCM_6362_M2M_BASE		(0xdeadbeef)
+#define BCM_6362_ATM_BASE		(0xdeadbeef)
+#define BCM_6362_XTM_BASE		(0xb0007800)
+#define BCM_6362_XTMDMA_BASE		(0xb000b800)
+#define BCM_6362_XTMDMAC_BASE		(0xdeadbeef)
+#define BCM_6362_XTMDMAS_BASE		(0xdeadbeef)
+#define BCM_6362_PCM_BASE		(0xb000a800)
+#define BCM_6362_PCMDMA_BASE		(0xdeadbeef)
+#define BCM_6362_PCMDMAC_BASE		(0xdeadbeef)
+#define BCM_6362_PCMDMAS_BASE		(0xdeadbeef)
+#define BCM_6362_RNG_BASE		(0xdeadbeef)
+#define BCM_6362_MISC_BASE		(0xb0001800)
 
-#घोषणा BCM_6362_न_अंकD_REG_BASE		(0xb0000200)
-#घोषणा BCM_6362_न_अंकD_CACHE_BASE	(0xb0000600)
-#घोषणा BCM_6362_LED_BASE		(0xb0001900)
-#घोषणा BCM_6362_IPSEC_BASE		(0xb0002800)
-#घोषणा BCM_6362_IPSEC_DMA_BASE		(0xb000d000)
-#घोषणा BCM_6362_WLAN_CHIPCOMMON_BASE	(0xb0004000)
-#घोषणा BCM_6362_WLAN_D11_BASE		(0xb0005000)
-#घोषणा BCM_6362_WLAN_SHIM_BASE		(0xb0007000)
+#define BCM_6362_NAND_REG_BASE		(0xb0000200)
+#define BCM_6362_NAND_CACHE_BASE	(0xb0000600)
+#define BCM_6362_LED_BASE		(0xb0001900)
+#define BCM_6362_IPSEC_BASE		(0xb0002800)
+#define BCM_6362_IPSEC_DMA_BASE		(0xb000d000)
+#define BCM_6362_WLAN_CHIPCOMMON_BASE	(0xb0004000)
+#define BCM_6362_WLAN_D11_BASE		(0xb0005000)
+#define BCM_6362_WLAN_SHIM_BASE		(0xb0007000)
 
 /*
- * 6368 रेजिस्टर sets base address
+ * 6368 register sets base address
  */
-#घोषणा BCM_6368_DSL_LMEM_BASE		(0xdeadbeef)
-#घोषणा BCM_6368_PERF_BASE		(0xb0000000)
-#घोषणा BCM_6368_TIMER_BASE		(0xb0000040)
-#घोषणा BCM_6368_WDT_BASE		(0xb000005c)
-#घोषणा BCM_6368_UART0_BASE		(0xb0000100)
-#घोषणा BCM_6368_UART1_BASE		(0xb0000120)
-#घोषणा BCM_6368_GPIO_BASE		(0xb0000080)
-#घोषणा BCM_6368_SPI_BASE		(0xb0000800)
-#घोषणा BCM_6368_HSSPI_BASE		(0xdeadbeef)
-#घोषणा BCM_6368_UDC0_BASE		(0xdeadbeef)
-#घोषणा BCM_6368_USBDMA_BASE		(0xb0004800)
-#घोषणा BCM_6368_OHCI0_BASE		(0xb0001600)
-#घोषणा BCM_6368_OHCI_PRIV_BASE		(0xdeadbeef)
-#घोषणा BCM_6368_USBH_PRIV_BASE		(0xb0001700)
-#घोषणा BCM_6368_USBD_BASE		(0xb0001400)
-#घोषणा BCM_6368_MPI_BASE		(0xb0001000)
-#घोषणा BCM_6368_PCMCIA_BASE		(0xb0001054)
-#घोषणा BCM_6368_PCIE_BASE		(0xdeadbeef)
-#घोषणा BCM_6368_SDRAM_REGS_BASE	(0xdeadbeef)
-#घोषणा BCM_6368_M2M_BASE		(0xdeadbeef)
-#घोषणा BCM_6368_DSL_BASE		(0xdeadbeef)
-#घोषणा BCM_6368_ENET0_BASE		(0xdeadbeef)
-#घोषणा BCM_6368_ENET1_BASE		(0xdeadbeef)
-#घोषणा BCM_6368_ENETDMA_BASE		(0xb0006800)
-#घोषणा BCM_6368_ENETDMAC_BASE		(0xb0006a00)
-#घोषणा BCM_6368_ENETDMAS_BASE		(0xb0006c00)
-#घोषणा BCM_6368_ENETSW_BASE		(0xb0f00000)
-#घोषणा BCM_6368_EHCI0_BASE		(0xb0001500)
-#घोषणा BCM_6368_SDRAM_BASE		(0xdeadbeef)
-#घोषणा BCM_6368_MEMC_BASE		(0xb0001200)
-#घोषणा BCM_6368_DDR_BASE		(0xb0001280)
-#घोषणा BCM_6368_ATM_BASE		(0xdeadbeef)
-#घोषणा BCM_6368_XTM_BASE		(0xb0001800)
-#घोषणा BCM_6368_XTMDMA_BASE		(0xb0005000)
-#घोषणा BCM_6368_XTMDMAC_BASE		(0xb0005200)
-#घोषणा BCM_6368_XTMDMAS_BASE		(0xb0005400)
-#घोषणा BCM_6368_PCM_BASE		(0xb0004000)
-#घोषणा BCM_6368_PCMDMA_BASE		(0xb0005800)
-#घोषणा BCM_6368_PCMDMAC_BASE		(0xb0005a00)
-#घोषणा BCM_6368_PCMDMAS_BASE		(0xb0005c00)
-#घोषणा BCM_6368_RNG_BASE		(0xb0004180)
-#घोषणा BCM_6368_MISC_BASE		(0xdeadbeef)
+#define BCM_6368_DSL_LMEM_BASE		(0xdeadbeef)
+#define BCM_6368_PERF_BASE		(0xb0000000)
+#define BCM_6368_TIMER_BASE		(0xb0000040)
+#define BCM_6368_WDT_BASE		(0xb000005c)
+#define BCM_6368_UART0_BASE		(0xb0000100)
+#define BCM_6368_UART1_BASE		(0xb0000120)
+#define BCM_6368_GPIO_BASE		(0xb0000080)
+#define BCM_6368_SPI_BASE		(0xb0000800)
+#define BCM_6368_HSSPI_BASE		(0xdeadbeef)
+#define BCM_6368_UDC0_BASE		(0xdeadbeef)
+#define BCM_6368_USBDMA_BASE		(0xb0004800)
+#define BCM_6368_OHCI0_BASE		(0xb0001600)
+#define BCM_6368_OHCI_PRIV_BASE		(0xdeadbeef)
+#define BCM_6368_USBH_PRIV_BASE		(0xb0001700)
+#define BCM_6368_USBD_BASE		(0xb0001400)
+#define BCM_6368_MPI_BASE		(0xb0001000)
+#define BCM_6368_PCMCIA_BASE		(0xb0001054)
+#define BCM_6368_PCIE_BASE		(0xdeadbeef)
+#define BCM_6368_SDRAM_REGS_BASE	(0xdeadbeef)
+#define BCM_6368_M2M_BASE		(0xdeadbeef)
+#define BCM_6368_DSL_BASE		(0xdeadbeef)
+#define BCM_6368_ENET0_BASE		(0xdeadbeef)
+#define BCM_6368_ENET1_BASE		(0xdeadbeef)
+#define BCM_6368_ENETDMA_BASE		(0xb0006800)
+#define BCM_6368_ENETDMAC_BASE		(0xb0006a00)
+#define BCM_6368_ENETDMAS_BASE		(0xb0006c00)
+#define BCM_6368_ENETSW_BASE		(0xb0f00000)
+#define BCM_6368_EHCI0_BASE		(0xb0001500)
+#define BCM_6368_SDRAM_BASE		(0xdeadbeef)
+#define BCM_6368_MEMC_BASE		(0xb0001200)
+#define BCM_6368_DDR_BASE		(0xb0001280)
+#define BCM_6368_ATM_BASE		(0xdeadbeef)
+#define BCM_6368_XTM_BASE		(0xb0001800)
+#define BCM_6368_XTMDMA_BASE		(0xb0005000)
+#define BCM_6368_XTMDMAC_BASE		(0xb0005200)
+#define BCM_6368_XTMDMAS_BASE		(0xb0005400)
+#define BCM_6368_PCM_BASE		(0xb0004000)
+#define BCM_6368_PCMDMA_BASE		(0xb0005800)
+#define BCM_6368_PCMDMAC_BASE		(0xb0005a00)
+#define BCM_6368_PCMDMAS_BASE		(0xb0005c00)
+#define BCM_6368_RNG_BASE		(0xb0004180)
+#define BCM_6368_MISC_BASE		(0xdeadbeef)
 
 
-बाह्य स्थिर अचिन्हित दीर्घ *bcm63xx_regs_base;
+extern const unsigned long *bcm63xx_regs_base;
 
-#घोषणा __GEN_CPU_REGS_TABLE(__cpu)					\
+#define __GEN_CPU_REGS_TABLE(__cpu)					\
 	[RSET_DSL_LMEM]		= BCM_## __cpu ##_DSL_LMEM_BASE,	\
 	[RSET_PERF]		= BCM_## __cpu ##_PERF_BASE,		\
 	[RSET_TIMER]		= BCM_## __cpu ##_TIMER_BASE,		\
@@ -594,15 +593,15 @@ u8 bcm63xx_get_cpu_rev(व्योम);
 	[RSET_MISC]		= BCM_## __cpu ##_MISC_BASE,		\
 
 
-अटल अंतरभूत अचिन्हित दीर्घ bcm63xx_regset_address(क्रमागत bcm63xx_regs_set set)
-अणु
-	वापस bcm63xx_regs_base[set];
-पूर्ण
+static inline unsigned long bcm63xx_regset_address(enum bcm63xx_regs_set set)
+{
+	return bcm63xx_regs_base[set];
+}
 
 /*
  * IRQ number changes across CPU too
  */
-क्रमागत bcm63xx_irq अणु
+enum bcm63xx_irq {
 	IRQ_TIMER = 0,
 	IRQ_SPI,
 	IRQ_UART0,
@@ -638,384 +637,384 @@ u8 bcm63xx_get_cpu_rev(व्योम);
 	IRQ_ENETSW_TXDMA3,
 	IRQ_XTM,
 	IRQ_XTM_DMA0,
-पूर्ण;
+};
 
 /*
  * 3368 irqs
  */
-#घोषणा BCM_3368_TIMER_IRQ		(IRQ_INTERNAL_BASE + 0)
-#घोषणा BCM_3368_SPI_IRQ		(IRQ_INTERNAL_BASE + 1)
-#घोषणा BCM_3368_UART0_IRQ		(IRQ_INTERNAL_BASE + 2)
-#घोषणा BCM_3368_UART1_IRQ		(IRQ_INTERNAL_BASE + 3)
-#घोषणा BCM_3368_DSL_IRQ		0
-#घोषणा BCM_3368_UDC0_IRQ		0
-#घोषणा BCM_3368_OHCI0_IRQ		0
-#घोषणा BCM_3368_ENET0_IRQ		(IRQ_INTERNAL_BASE + 8)
-#घोषणा BCM_3368_ENET1_IRQ		(IRQ_INTERNAL_BASE + 6)
-#घोषणा BCM_3368_ENET_PHY_IRQ		(IRQ_INTERNAL_BASE + 9)
-#घोषणा BCM_3368_ENET0_RXDMA_IRQ	(IRQ_INTERNAL_BASE + 15)
-#घोषणा BCM_3368_ENET0_TXDMA_IRQ	(IRQ_INTERNAL_BASE + 16)
-#घोषणा BCM_3368_HSSPI_IRQ		0
-#घोषणा BCM_3368_EHCI0_IRQ		0
-#घोषणा BCM_3368_USBD_IRQ		0
-#घोषणा BCM_3368_USBD_RXDMA0_IRQ	0
-#घोषणा BCM_3368_USBD_TXDMA0_IRQ	0
-#घोषणा BCM_3368_USBD_RXDMA1_IRQ	0
-#घोषणा BCM_3368_USBD_TXDMA1_IRQ	0
-#घोषणा BCM_3368_USBD_RXDMA2_IRQ	0
-#घोषणा BCM_3368_USBD_TXDMA2_IRQ	0
-#घोषणा BCM_3368_ENET1_RXDMA_IRQ        (IRQ_INTERNAL_BASE + 17)
-#घोषणा BCM_3368_ENET1_TXDMA_IRQ        (IRQ_INTERNAL_BASE + 18)
-#घोषणा BCM_3368_PCI_IRQ		(IRQ_INTERNAL_BASE + 31)
-#घोषणा BCM_3368_PCMCIA_IRQ		0
-#घोषणा BCM_3368_ATM_IRQ		0
-#घोषणा BCM_3368_ENETSW_RXDMA0_IRQ	0
-#घोषणा BCM_3368_ENETSW_RXDMA1_IRQ	0
-#घोषणा BCM_3368_ENETSW_RXDMA2_IRQ	0
-#घोषणा BCM_3368_ENETSW_RXDMA3_IRQ	0
-#घोषणा BCM_3368_ENETSW_TXDMA0_IRQ	0
-#घोषणा BCM_3368_ENETSW_TXDMA1_IRQ	0
-#घोषणा BCM_3368_ENETSW_TXDMA2_IRQ	0
-#घोषणा BCM_3368_ENETSW_TXDMA3_IRQ	0
-#घोषणा BCM_3368_XTM_IRQ		0
-#घोषणा BCM_3368_XTM_DMA0_IRQ		0
+#define BCM_3368_TIMER_IRQ		(IRQ_INTERNAL_BASE + 0)
+#define BCM_3368_SPI_IRQ		(IRQ_INTERNAL_BASE + 1)
+#define BCM_3368_UART0_IRQ		(IRQ_INTERNAL_BASE + 2)
+#define BCM_3368_UART1_IRQ		(IRQ_INTERNAL_BASE + 3)
+#define BCM_3368_DSL_IRQ		0
+#define BCM_3368_UDC0_IRQ		0
+#define BCM_3368_OHCI0_IRQ		0
+#define BCM_3368_ENET0_IRQ		(IRQ_INTERNAL_BASE + 8)
+#define BCM_3368_ENET1_IRQ		(IRQ_INTERNAL_BASE + 6)
+#define BCM_3368_ENET_PHY_IRQ		(IRQ_INTERNAL_BASE + 9)
+#define BCM_3368_ENET0_RXDMA_IRQ	(IRQ_INTERNAL_BASE + 15)
+#define BCM_3368_ENET0_TXDMA_IRQ	(IRQ_INTERNAL_BASE + 16)
+#define BCM_3368_HSSPI_IRQ		0
+#define BCM_3368_EHCI0_IRQ		0
+#define BCM_3368_USBD_IRQ		0
+#define BCM_3368_USBD_RXDMA0_IRQ	0
+#define BCM_3368_USBD_TXDMA0_IRQ	0
+#define BCM_3368_USBD_RXDMA1_IRQ	0
+#define BCM_3368_USBD_TXDMA1_IRQ	0
+#define BCM_3368_USBD_RXDMA2_IRQ	0
+#define BCM_3368_USBD_TXDMA2_IRQ	0
+#define BCM_3368_ENET1_RXDMA_IRQ        (IRQ_INTERNAL_BASE + 17)
+#define BCM_3368_ENET1_TXDMA_IRQ        (IRQ_INTERNAL_BASE + 18)
+#define BCM_3368_PCI_IRQ		(IRQ_INTERNAL_BASE + 31)
+#define BCM_3368_PCMCIA_IRQ		0
+#define BCM_3368_ATM_IRQ		0
+#define BCM_3368_ENETSW_RXDMA0_IRQ	0
+#define BCM_3368_ENETSW_RXDMA1_IRQ	0
+#define BCM_3368_ENETSW_RXDMA2_IRQ	0
+#define BCM_3368_ENETSW_RXDMA3_IRQ	0
+#define BCM_3368_ENETSW_TXDMA0_IRQ	0
+#define BCM_3368_ENETSW_TXDMA1_IRQ	0
+#define BCM_3368_ENETSW_TXDMA2_IRQ	0
+#define BCM_3368_ENETSW_TXDMA3_IRQ	0
+#define BCM_3368_XTM_IRQ		0
+#define BCM_3368_XTM_DMA0_IRQ		0
 
-#घोषणा BCM_3368_EXT_IRQ0		(IRQ_INTERNAL_BASE + 25)
-#घोषणा BCM_3368_EXT_IRQ1		(IRQ_INTERNAL_BASE + 26)
-#घोषणा BCM_3368_EXT_IRQ2		(IRQ_INTERNAL_BASE + 27)
-#घोषणा BCM_3368_EXT_IRQ3		(IRQ_INTERNAL_BASE + 28)
+#define BCM_3368_EXT_IRQ0		(IRQ_INTERNAL_BASE + 25)
+#define BCM_3368_EXT_IRQ1		(IRQ_INTERNAL_BASE + 26)
+#define BCM_3368_EXT_IRQ2		(IRQ_INTERNAL_BASE + 27)
+#define BCM_3368_EXT_IRQ3		(IRQ_INTERNAL_BASE + 28)
 
 
 /*
  * 6328 irqs
  */
-#घोषणा BCM_6328_HIGH_IRQ_BASE		(IRQ_INTERNAL_BASE + 32)
+#define BCM_6328_HIGH_IRQ_BASE		(IRQ_INTERNAL_BASE + 32)
 
-#घोषणा BCM_6328_TIMER_IRQ		(IRQ_INTERNAL_BASE + 31)
-#घोषणा BCM_6328_SPI_IRQ		0
-#घोषणा BCM_6328_UART0_IRQ		(IRQ_INTERNAL_BASE + 28)
-#घोषणा BCM_6328_UART1_IRQ		(BCM_6328_HIGH_IRQ_BASE + 7)
-#घोषणा BCM_6328_DSL_IRQ		(IRQ_INTERNAL_BASE + 4)
-#घोषणा BCM_6328_UDC0_IRQ		0
-#घोषणा BCM_6328_ENET0_IRQ		0
-#घोषणा BCM_6328_ENET1_IRQ		0
-#घोषणा BCM_6328_ENET_PHY_IRQ		(IRQ_INTERNAL_BASE + 12)
-#घोषणा BCM_6328_HSSPI_IRQ		(IRQ_INTERNAL_BASE + 29)
-#घोषणा BCM_6328_OHCI0_IRQ		(BCM_6328_HIGH_IRQ_BASE + 9)
-#घोषणा BCM_6328_EHCI0_IRQ		(BCM_6328_HIGH_IRQ_BASE + 10)
-#घोषणा BCM_6328_USBD_IRQ		(IRQ_INTERNAL_BASE + 4)
-#घोषणा BCM_6328_USBD_RXDMA0_IRQ	(IRQ_INTERNAL_BASE + 5)
-#घोषणा BCM_6328_USBD_TXDMA0_IRQ	(IRQ_INTERNAL_BASE + 6)
-#घोषणा BCM_6328_USBD_RXDMA1_IRQ	(IRQ_INTERNAL_BASE + 7)
-#घोषणा BCM_6328_USBD_TXDMA1_IRQ	(IRQ_INTERNAL_BASE + 8)
-#घोषणा BCM_6328_USBD_RXDMA2_IRQ	(IRQ_INTERNAL_BASE + 9)
-#घोषणा BCM_6328_USBD_TXDMA2_IRQ	(IRQ_INTERNAL_BASE + 10)
-#घोषणा BCM_6328_PCMCIA_IRQ		0
-#घोषणा BCM_6328_ENET0_RXDMA_IRQ	0
-#घोषणा BCM_6328_ENET0_TXDMA_IRQ	0
-#घोषणा BCM_6328_ENET1_RXDMA_IRQ	0
-#घोषणा BCM_6328_ENET1_TXDMA_IRQ	0
-#घोषणा BCM_6328_PCI_IRQ		(IRQ_INTERNAL_BASE + 23)
-#घोषणा BCM_6328_ATM_IRQ		0
-#घोषणा BCM_6328_ENETSW_RXDMA0_IRQ	(BCM_6328_HIGH_IRQ_BASE + 0)
-#घोषणा BCM_6328_ENETSW_RXDMA1_IRQ	(BCM_6328_HIGH_IRQ_BASE + 1)
-#घोषणा BCM_6328_ENETSW_RXDMA2_IRQ	(BCM_6328_HIGH_IRQ_BASE + 2)
-#घोषणा BCM_6328_ENETSW_RXDMA3_IRQ	(BCM_6328_HIGH_IRQ_BASE + 3)
-#घोषणा BCM_6328_ENETSW_TXDMA0_IRQ	0
-#घोषणा BCM_6328_ENETSW_TXDMA1_IRQ	0
-#घोषणा BCM_6328_ENETSW_TXDMA2_IRQ	0
-#घोषणा BCM_6328_ENETSW_TXDMA3_IRQ	0
-#घोषणा BCM_6328_XTM_IRQ		(BCM_6328_HIGH_IRQ_BASE + 31)
-#घोषणा BCM_6328_XTM_DMA0_IRQ		(BCM_6328_HIGH_IRQ_BASE + 11)
+#define BCM_6328_TIMER_IRQ		(IRQ_INTERNAL_BASE + 31)
+#define BCM_6328_SPI_IRQ		0
+#define BCM_6328_UART0_IRQ		(IRQ_INTERNAL_BASE + 28)
+#define BCM_6328_UART1_IRQ		(BCM_6328_HIGH_IRQ_BASE + 7)
+#define BCM_6328_DSL_IRQ		(IRQ_INTERNAL_BASE + 4)
+#define BCM_6328_UDC0_IRQ		0
+#define BCM_6328_ENET0_IRQ		0
+#define BCM_6328_ENET1_IRQ		0
+#define BCM_6328_ENET_PHY_IRQ		(IRQ_INTERNAL_BASE + 12)
+#define BCM_6328_HSSPI_IRQ		(IRQ_INTERNAL_BASE + 29)
+#define BCM_6328_OHCI0_IRQ		(BCM_6328_HIGH_IRQ_BASE + 9)
+#define BCM_6328_EHCI0_IRQ		(BCM_6328_HIGH_IRQ_BASE + 10)
+#define BCM_6328_USBD_IRQ		(IRQ_INTERNAL_BASE + 4)
+#define BCM_6328_USBD_RXDMA0_IRQ	(IRQ_INTERNAL_BASE + 5)
+#define BCM_6328_USBD_TXDMA0_IRQ	(IRQ_INTERNAL_BASE + 6)
+#define BCM_6328_USBD_RXDMA1_IRQ	(IRQ_INTERNAL_BASE + 7)
+#define BCM_6328_USBD_TXDMA1_IRQ	(IRQ_INTERNAL_BASE + 8)
+#define BCM_6328_USBD_RXDMA2_IRQ	(IRQ_INTERNAL_BASE + 9)
+#define BCM_6328_USBD_TXDMA2_IRQ	(IRQ_INTERNAL_BASE + 10)
+#define BCM_6328_PCMCIA_IRQ		0
+#define BCM_6328_ENET0_RXDMA_IRQ	0
+#define BCM_6328_ENET0_TXDMA_IRQ	0
+#define BCM_6328_ENET1_RXDMA_IRQ	0
+#define BCM_6328_ENET1_TXDMA_IRQ	0
+#define BCM_6328_PCI_IRQ		(IRQ_INTERNAL_BASE + 23)
+#define BCM_6328_ATM_IRQ		0
+#define BCM_6328_ENETSW_RXDMA0_IRQ	(BCM_6328_HIGH_IRQ_BASE + 0)
+#define BCM_6328_ENETSW_RXDMA1_IRQ	(BCM_6328_HIGH_IRQ_BASE + 1)
+#define BCM_6328_ENETSW_RXDMA2_IRQ	(BCM_6328_HIGH_IRQ_BASE + 2)
+#define BCM_6328_ENETSW_RXDMA3_IRQ	(BCM_6328_HIGH_IRQ_BASE + 3)
+#define BCM_6328_ENETSW_TXDMA0_IRQ	0
+#define BCM_6328_ENETSW_TXDMA1_IRQ	0
+#define BCM_6328_ENETSW_TXDMA2_IRQ	0
+#define BCM_6328_ENETSW_TXDMA3_IRQ	0
+#define BCM_6328_XTM_IRQ		(BCM_6328_HIGH_IRQ_BASE + 31)
+#define BCM_6328_XTM_DMA0_IRQ		(BCM_6328_HIGH_IRQ_BASE + 11)
 
-#घोषणा BCM_6328_PCM_DMA0_IRQ		(IRQ_INTERNAL_BASE + 2)
-#घोषणा BCM_6328_PCM_DMA1_IRQ		(IRQ_INTERNAL_BASE + 3)
-#घोषणा BCM_6328_EXT_IRQ0		(IRQ_INTERNAL_BASE + 24)
-#घोषणा BCM_6328_EXT_IRQ1		(IRQ_INTERNAL_BASE + 25)
-#घोषणा BCM_6328_EXT_IRQ2		(IRQ_INTERNAL_BASE + 26)
-#घोषणा BCM_6328_EXT_IRQ3		(IRQ_INTERNAL_BASE + 27)
+#define BCM_6328_PCM_DMA0_IRQ		(IRQ_INTERNAL_BASE + 2)
+#define BCM_6328_PCM_DMA1_IRQ		(IRQ_INTERNAL_BASE + 3)
+#define BCM_6328_EXT_IRQ0		(IRQ_INTERNAL_BASE + 24)
+#define BCM_6328_EXT_IRQ1		(IRQ_INTERNAL_BASE + 25)
+#define BCM_6328_EXT_IRQ2		(IRQ_INTERNAL_BASE + 26)
+#define BCM_6328_EXT_IRQ3		(IRQ_INTERNAL_BASE + 27)
 
 /*
  * 6338 irqs
  */
-#घोषणा BCM_6338_TIMER_IRQ		(IRQ_INTERNAL_BASE + 0)
-#घोषणा BCM_6338_SPI_IRQ		(IRQ_INTERNAL_BASE + 1)
-#घोषणा BCM_6338_UART0_IRQ		(IRQ_INTERNAL_BASE + 2)
-#घोषणा BCM_6338_UART1_IRQ		0
-#घोषणा BCM_6338_DSL_IRQ		(IRQ_INTERNAL_BASE + 5)
-#घोषणा BCM_6338_ENET0_IRQ		(IRQ_INTERNAL_BASE + 8)
-#घोषणा BCM_6338_ENET1_IRQ		0
-#घोषणा BCM_6338_ENET_PHY_IRQ		(IRQ_INTERNAL_BASE + 9)
-#घोषणा BCM_6338_HSSPI_IRQ		0
-#घोषणा BCM_6338_OHCI0_IRQ		0
-#घोषणा BCM_6338_EHCI0_IRQ		0
-#घोषणा BCM_6338_USBD_IRQ		0
-#घोषणा BCM_6338_USBD_RXDMA0_IRQ	0
-#घोषणा BCM_6338_USBD_TXDMA0_IRQ	0
-#घोषणा BCM_6338_USBD_RXDMA1_IRQ	0
-#घोषणा BCM_6338_USBD_TXDMA1_IRQ	0
-#घोषणा BCM_6338_USBD_RXDMA2_IRQ	0
-#घोषणा BCM_6338_USBD_TXDMA2_IRQ	0
-#घोषणा BCM_6338_ENET0_RXDMA_IRQ	(IRQ_INTERNAL_BASE + 15)
-#घोषणा BCM_6338_ENET0_TXDMA_IRQ	(IRQ_INTERNAL_BASE + 16)
-#घोषणा BCM_6338_ENET1_RXDMA_IRQ	0
-#घोषणा BCM_6338_ENET1_TXDMA_IRQ	0
-#घोषणा BCM_6338_PCI_IRQ		0
-#घोषणा BCM_6338_PCMCIA_IRQ		0
-#घोषणा BCM_6338_ATM_IRQ		0
-#घोषणा BCM_6338_ENETSW_RXDMA0_IRQ	0
-#घोषणा BCM_6338_ENETSW_RXDMA1_IRQ	0
-#घोषणा BCM_6338_ENETSW_RXDMA2_IRQ	0
-#घोषणा BCM_6338_ENETSW_RXDMA3_IRQ	0
-#घोषणा BCM_6338_ENETSW_TXDMA0_IRQ	0
-#घोषणा BCM_6338_ENETSW_TXDMA1_IRQ	0
-#घोषणा BCM_6338_ENETSW_TXDMA2_IRQ	0
-#घोषणा BCM_6338_ENETSW_TXDMA3_IRQ	0
-#घोषणा BCM_6338_XTM_IRQ		0
-#घोषणा BCM_6338_XTM_DMA0_IRQ		0
+#define BCM_6338_TIMER_IRQ		(IRQ_INTERNAL_BASE + 0)
+#define BCM_6338_SPI_IRQ		(IRQ_INTERNAL_BASE + 1)
+#define BCM_6338_UART0_IRQ		(IRQ_INTERNAL_BASE + 2)
+#define BCM_6338_UART1_IRQ		0
+#define BCM_6338_DSL_IRQ		(IRQ_INTERNAL_BASE + 5)
+#define BCM_6338_ENET0_IRQ		(IRQ_INTERNAL_BASE + 8)
+#define BCM_6338_ENET1_IRQ		0
+#define BCM_6338_ENET_PHY_IRQ		(IRQ_INTERNAL_BASE + 9)
+#define BCM_6338_HSSPI_IRQ		0
+#define BCM_6338_OHCI0_IRQ		0
+#define BCM_6338_EHCI0_IRQ		0
+#define BCM_6338_USBD_IRQ		0
+#define BCM_6338_USBD_RXDMA0_IRQ	0
+#define BCM_6338_USBD_TXDMA0_IRQ	0
+#define BCM_6338_USBD_RXDMA1_IRQ	0
+#define BCM_6338_USBD_TXDMA1_IRQ	0
+#define BCM_6338_USBD_RXDMA2_IRQ	0
+#define BCM_6338_USBD_TXDMA2_IRQ	0
+#define BCM_6338_ENET0_RXDMA_IRQ	(IRQ_INTERNAL_BASE + 15)
+#define BCM_6338_ENET0_TXDMA_IRQ	(IRQ_INTERNAL_BASE + 16)
+#define BCM_6338_ENET1_RXDMA_IRQ	0
+#define BCM_6338_ENET1_TXDMA_IRQ	0
+#define BCM_6338_PCI_IRQ		0
+#define BCM_6338_PCMCIA_IRQ		0
+#define BCM_6338_ATM_IRQ		0
+#define BCM_6338_ENETSW_RXDMA0_IRQ	0
+#define BCM_6338_ENETSW_RXDMA1_IRQ	0
+#define BCM_6338_ENETSW_RXDMA2_IRQ	0
+#define BCM_6338_ENETSW_RXDMA3_IRQ	0
+#define BCM_6338_ENETSW_TXDMA0_IRQ	0
+#define BCM_6338_ENETSW_TXDMA1_IRQ	0
+#define BCM_6338_ENETSW_TXDMA2_IRQ	0
+#define BCM_6338_ENETSW_TXDMA3_IRQ	0
+#define BCM_6338_XTM_IRQ		0
+#define BCM_6338_XTM_DMA0_IRQ		0
 
 /*
  * 6345 irqs
  */
-#घोषणा BCM_6345_TIMER_IRQ		(IRQ_INTERNAL_BASE + 0)
-#घोषणा BCM_6345_SPI_IRQ		0
-#घोषणा BCM_6345_UART0_IRQ		(IRQ_INTERNAL_BASE + 2)
-#घोषणा BCM_6345_UART1_IRQ		0
-#घोषणा BCM_6345_DSL_IRQ		(IRQ_INTERNAL_BASE + 3)
-#घोषणा BCM_6345_ENET0_IRQ		(IRQ_INTERNAL_BASE + 8)
-#घोषणा BCM_6345_ENET1_IRQ		0
-#घोषणा BCM_6345_ENET_PHY_IRQ		(IRQ_INTERNAL_BASE + 12)
-#घोषणा BCM_6345_HSSPI_IRQ		0
-#घोषणा BCM_6345_OHCI0_IRQ		0
-#घोषणा BCM_6345_EHCI0_IRQ		0
-#घोषणा BCM_6345_USBD_IRQ		0
-#घोषणा BCM_6345_USBD_RXDMA0_IRQ	0
-#घोषणा BCM_6345_USBD_TXDMA0_IRQ	0
-#घोषणा BCM_6345_USBD_RXDMA1_IRQ	0
-#घोषणा BCM_6345_USBD_TXDMA1_IRQ	0
-#घोषणा BCM_6345_USBD_RXDMA2_IRQ	0
-#घोषणा BCM_6345_USBD_TXDMA2_IRQ	0
-#घोषणा BCM_6345_ENET0_RXDMA_IRQ	(IRQ_INTERNAL_BASE + 13 + 1)
-#घोषणा BCM_6345_ENET0_TXDMA_IRQ	(IRQ_INTERNAL_BASE + 13 + 2)
-#घोषणा BCM_6345_ENET1_RXDMA_IRQ	0
-#घोषणा BCM_6345_ENET1_TXDMA_IRQ	0
-#घोषणा BCM_6345_PCI_IRQ		0
-#घोषणा BCM_6345_PCMCIA_IRQ		0
-#घोषणा BCM_6345_ATM_IRQ		0
-#घोषणा BCM_6345_ENETSW_RXDMA0_IRQ	0
-#घोषणा BCM_6345_ENETSW_RXDMA1_IRQ	0
-#घोषणा BCM_6345_ENETSW_RXDMA2_IRQ	0
-#घोषणा BCM_6345_ENETSW_RXDMA3_IRQ	0
-#घोषणा BCM_6345_ENETSW_TXDMA0_IRQ	0
-#घोषणा BCM_6345_ENETSW_TXDMA1_IRQ	0
-#घोषणा BCM_6345_ENETSW_TXDMA2_IRQ	0
-#घोषणा BCM_6345_ENETSW_TXDMA3_IRQ	0
-#घोषणा BCM_6345_XTM_IRQ		0
-#घोषणा BCM_6345_XTM_DMA0_IRQ		0
+#define BCM_6345_TIMER_IRQ		(IRQ_INTERNAL_BASE + 0)
+#define BCM_6345_SPI_IRQ		0
+#define BCM_6345_UART0_IRQ		(IRQ_INTERNAL_BASE + 2)
+#define BCM_6345_UART1_IRQ		0
+#define BCM_6345_DSL_IRQ		(IRQ_INTERNAL_BASE + 3)
+#define BCM_6345_ENET0_IRQ		(IRQ_INTERNAL_BASE + 8)
+#define BCM_6345_ENET1_IRQ		0
+#define BCM_6345_ENET_PHY_IRQ		(IRQ_INTERNAL_BASE + 12)
+#define BCM_6345_HSSPI_IRQ		0
+#define BCM_6345_OHCI0_IRQ		0
+#define BCM_6345_EHCI0_IRQ		0
+#define BCM_6345_USBD_IRQ		0
+#define BCM_6345_USBD_RXDMA0_IRQ	0
+#define BCM_6345_USBD_TXDMA0_IRQ	0
+#define BCM_6345_USBD_RXDMA1_IRQ	0
+#define BCM_6345_USBD_TXDMA1_IRQ	0
+#define BCM_6345_USBD_RXDMA2_IRQ	0
+#define BCM_6345_USBD_TXDMA2_IRQ	0
+#define BCM_6345_ENET0_RXDMA_IRQ	(IRQ_INTERNAL_BASE + 13 + 1)
+#define BCM_6345_ENET0_TXDMA_IRQ	(IRQ_INTERNAL_BASE + 13 + 2)
+#define BCM_6345_ENET1_RXDMA_IRQ	0
+#define BCM_6345_ENET1_TXDMA_IRQ	0
+#define BCM_6345_PCI_IRQ		0
+#define BCM_6345_PCMCIA_IRQ		0
+#define BCM_6345_ATM_IRQ		0
+#define BCM_6345_ENETSW_RXDMA0_IRQ	0
+#define BCM_6345_ENETSW_RXDMA1_IRQ	0
+#define BCM_6345_ENETSW_RXDMA2_IRQ	0
+#define BCM_6345_ENETSW_RXDMA3_IRQ	0
+#define BCM_6345_ENETSW_TXDMA0_IRQ	0
+#define BCM_6345_ENETSW_TXDMA1_IRQ	0
+#define BCM_6345_ENETSW_TXDMA2_IRQ	0
+#define BCM_6345_ENETSW_TXDMA3_IRQ	0
+#define BCM_6345_XTM_IRQ		0
+#define BCM_6345_XTM_DMA0_IRQ		0
 
 /*
  * 6348 irqs
  */
-#घोषणा BCM_6348_TIMER_IRQ		(IRQ_INTERNAL_BASE + 0)
-#घोषणा BCM_6348_SPI_IRQ		(IRQ_INTERNAL_BASE + 1)
-#घोषणा BCM_6348_UART0_IRQ		(IRQ_INTERNAL_BASE + 2)
-#घोषणा BCM_6348_UART1_IRQ		0
-#घोषणा BCM_6348_DSL_IRQ		(IRQ_INTERNAL_BASE + 4)
-#घोषणा BCM_6348_ENET0_IRQ		(IRQ_INTERNAL_BASE + 8)
-#घोषणा BCM_6348_ENET1_IRQ		(IRQ_INTERNAL_BASE + 7)
-#घोषणा BCM_6348_ENET_PHY_IRQ		(IRQ_INTERNAL_BASE + 9)
-#घोषणा BCM_6348_HSSPI_IRQ		0
-#घोषणा BCM_6348_OHCI0_IRQ		(IRQ_INTERNAL_BASE + 12)
-#घोषणा BCM_6348_EHCI0_IRQ		0
-#घोषणा BCM_6348_USBD_IRQ		0
-#घोषणा BCM_6348_USBD_RXDMA0_IRQ	0
-#घोषणा BCM_6348_USBD_TXDMA0_IRQ	0
-#घोषणा BCM_6348_USBD_RXDMA1_IRQ	0
-#घोषणा BCM_6348_USBD_TXDMA1_IRQ	0
-#घोषणा BCM_6348_USBD_RXDMA2_IRQ	0
-#घोषणा BCM_6348_USBD_TXDMA2_IRQ	0
-#घोषणा BCM_6348_ENET0_RXDMA_IRQ	(IRQ_INTERNAL_BASE + 20)
-#घोषणा BCM_6348_ENET0_TXDMA_IRQ	(IRQ_INTERNAL_BASE + 21)
-#घोषणा BCM_6348_ENET1_RXDMA_IRQ	(IRQ_INTERNAL_BASE + 22)
-#घोषणा BCM_6348_ENET1_TXDMA_IRQ	(IRQ_INTERNAL_BASE + 23)
-#घोषणा BCM_6348_PCI_IRQ		(IRQ_INTERNAL_BASE + 24)
-#घोषणा BCM_6348_PCMCIA_IRQ		(IRQ_INTERNAL_BASE + 24)
-#घोषणा BCM_6348_ATM_IRQ		(IRQ_INTERNAL_BASE + 5)
-#घोषणा BCM_6348_ENETSW_RXDMA0_IRQ	0
-#घोषणा BCM_6348_ENETSW_RXDMA1_IRQ	0
-#घोषणा BCM_6348_ENETSW_RXDMA2_IRQ	0
-#घोषणा BCM_6348_ENETSW_RXDMA3_IRQ	0
-#घोषणा BCM_6348_ENETSW_TXDMA0_IRQ	0
-#घोषणा BCM_6348_ENETSW_TXDMA1_IRQ	0
-#घोषणा BCM_6348_ENETSW_TXDMA2_IRQ	0
-#घोषणा BCM_6348_ENETSW_TXDMA3_IRQ	0
-#घोषणा BCM_6348_XTM_IRQ		0
-#घोषणा BCM_6348_XTM_DMA0_IRQ		0
+#define BCM_6348_TIMER_IRQ		(IRQ_INTERNAL_BASE + 0)
+#define BCM_6348_SPI_IRQ		(IRQ_INTERNAL_BASE + 1)
+#define BCM_6348_UART0_IRQ		(IRQ_INTERNAL_BASE + 2)
+#define BCM_6348_UART1_IRQ		0
+#define BCM_6348_DSL_IRQ		(IRQ_INTERNAL_BASE + 4)
+#define BCM_6348_ENET0_IRQ		(IRQ_INTERNAL_BASE + 8)
+#define BCM_6348_ENET1_IRQ		(IRQ_INTERNAL_BASE + 7)
+#define BCM_6348_ENET_PHY_IRQ		(IRQ_INTERNAL_BASE + 9)
+#define BCM_6348_HSSPI_IRQ		0
+#define BCM_6348_OHCI0_IRQ		(IRQ_INTERNAL_BASE + 12)
+#define BCM_6348_EHCI0_IRQ		0
+#define BCM_6348_USBD_IRQ		0
+#define BCM_6348_USBD_RXDMA0_IRQ	0
+#define BCM_6348_USBD_TXDMA0_IRQ	0
+#define BCM_6348_USBD_RXDMA1_IRQ	0
+#define BCM_6348_USBD_TXDMA1_IRQ	0
+#define BCM_6348_USBD_RXDMA2_IRQ	0
+#define BCM_6348_USBD_TXDMA2_IRQ	0
+#define BCM_6348_ENET0_RXDMA_IRQ	(IRQ_INTERNAL_BASE + 20)
+#define BCM_6348_ENET0_TXDMA_IRQ	(IRQ_INTERNAL_BASE + 21)
+#define BCM_6348_ENET1_RXDMA_IRQ	(IRQ_INTERNAL_BASE + 22)
+#define BCM_6348_ENET1_TXDMA_IRQ	(IRQ_INTERNAL_BASE + 23)
+#define BCM_6348_PCI_IRQ		(IRQ_INTERNAL_BASE + 24)
+#define BCM_6348_PCMCIA_IRQ		(IRQ_INTERNAL_BASE + 24)
+#define BCM_6348_ATM_IRQ		(IRQ_INTERNAL_BASE + 5)
+#define BCM_6348_ENETSW_RXDMA0_IRQ	0
+#define BCM_6348_ENETSW_RXDMA1_IRQ	0
+#define BCM_6348_ENETSW_RXDMA2_IRQ	0
+#define BCM_6348_ENETSW_RXDMA3_IRQ	0
+#define BCM_6348_ENETSW_TXDMA0_IRQ	0
+#define BCM_6348_ENETSW_TXDMA1_IRQ	0
+#define BCM_6348_ENETSW_TXDMA2_IRQ	0
+#define BCM_6348_ENETSW_TXDMA3_IRQ	0
+#define BCM_6348_XTM_IRQ		0
+#define BCM_6348_XTM_DMA0_IRQ		0
 
 /*
  * 6358 irqs
  */
-#घोषणा BCM_6358_TIMER_IRQ		(IRQ_INTERNAL_BASE + 0)
-#घोषणा BCM_6358_SPI_IRQ		(IRQ_INTERNAL_BASE + 1)
-#घोषणा BCM_6358_UART0_IRQ		(IRQ_INTERNAL_BASE + 2)
-#घोषणा BCM_6358_UART1_IRQ		(IRQ_INTERNAL_BASE + 3)
-#घोषणा BCM_6358_DSL_IRQ		(IRQ_INTERNAL_BASE + 29)
-#घोषणा BCM_6358_ENET0_IRQ		(IRQ_INTERNAL_BASE + 8)
-#घोषणा BCM_6358_ENET1_IRQ		(IRQ_INTERNAL_BASE + 6)
-#घोषणा BCM_6358_ENET_PHY_IRQ		(IRQ_INTERNAL_BASE + 9)
-#घोषणा BCM_6358_HSSPI_IRQ		0
-#घोषणा BCM_6358_OHCI0_IRQ		(IRQ_INTERNAL_BASE + 5)
-#घोषणा BCM_6358_EHCI0_IRQ		(IRQ_INTERNAL_BASE + 10)
-#घोषणा BCM_6358_USBD_IRQ		0
-#घोषणा BCM_6358_USBD_RXDMA0_IRQ	0
-#घोषणा BCM_6358_USBD_TXDMA0_IRQ	0
-#घोषणा BCM_6358_USBD_RXDMA1_IRQ	0
-#घोषणा BCM_6358_USBD_TXDMA1_IRQ	0
-#घोषणा BCM_6358_USBD_RXDMA2_IRQ	0
-#घोषणा BCM_6358_USBD_TXDMA2_IRQ	0
-#घोषणा BCM_6358_ENET0_RXDMA_IRQ	(IRQ_INTERNAL_BASE + 15)
-#घोषणा BCM_6358_ENET0_TXDMA_IRQ	(IRQ_INTERNAL_BASE + 16)
-#घोषणा BCM_6358_ENET1_RXDMA_IRQ	(IRQ_INTERNAL_BASE + 17)
-#घोषणा BCM_6358_ENET1_TXDMA_IRQ	(IRQ_INTERNAL_BASE + 18)
-#घोषणा BCM_6358_PCI_IRQ		(IRQ_INTERNAL_BASE + 31)
-#घोषणा BCM_6358_PCMCIA_IRQ		(IRQ_INTERNAL_BASE + 24)
-#घोषणा BCM_6358_ATM_IRQ		(IRQ_INTERNAL_BASE + 19)
-#घोषणा BCM_6358_ENETSW_RXDMA0_IRQ	0
-#घोषणा BCM_6358_ENETSW_RXDMA1_IRQ	0
-#घोषणा BCM_6358_ENETSW_RXDMA2_IRQ	0
-#घोषणा BCM_6358_ENETSW_RXDMA3_IRQ	0
-#घोषणा BCM_6358_ENETSW_TXDMA0_IRQ	0
-#घोषणा BCM_6358_ENETSW_TXDMA1_IRQ	0
-#घोषणा BCM_6358_ENETSW_TXDMA2_IRQ	0
-#घोषणा BCM_6358_ENETSW_TXDMA3_IRQ	0
-#घोषणा BCM_6358_XTM_IRQ		0
-#घोषणा BCM_6358_XTM_DMA0_IRQ		0
+#define BCM_6358_TIMER_IRQ		(IRQ_INTERNAL_BASE + 0)
+#define BCM_6358_SPI_IRQ		(IRQ_INTERNAL_BASE + 1)
+#define BCM_6358_UART0_IRQ		(IRQ_INTERNAL_BASE + 2)
+#define BCM_6358_UART1_IRQ		(IRQ_INTERNAL_BASE + 3)
+#define BCM_6358_DSL_IRQ		(IRQ_INTERNAL_BASE + 29)
+#define BCM_6358_ENET0_IRQ		(IRQ_INTERNAL_BASE + 8)
+#define BCM_6358_ENET1_IRQ		(IRQ_INTERNAL_BASE + 6)
+#define BCM_6358_ENET_PHY_IRQ		(IRQ_INTERNAL_BASE + 9)
+#define BCM_6358_HSSPI_IRQ		0
+#define BCM_6358_OHCI0_IRQ		(IRQ_INTERNAL_BASE + 5)
+#define BCM_6358_EHCI0_IRQ		(IRQ_INTERNAL_BASE + 10)
+#define BCM_6358_USBD_IRQ		0
+#define BCM_6358_USBD_RXDMA0_IRQ	0
+#define BCM_6358_USBD_TXDMA0_IRQ	0
+#define BCM_6358_USBD_RXDMA1_IRQ	0
+#define BCM_6358_USBD_TXDMA1_IRQ	0
+#define BCM_6358_USBD_RXDMA2_IRQ	0
+#define BCM_6358_USBD_TXDMA2_IRQ	0
+#define BCM_6358_ENET0_RXDMA_IRQ	(IRQ_INTERNAL_BASE + 15)
+#define BCM_6358_ENET0_TXDMA_IRQ	(IRQ_INTERNAL_BASE + 16)
+#define BCM_6358_ENET1_RXDMA_IRQ	(IRQ_INTERNAL_BASE + 17)
+#define BCM_6358_ENET1_TXDMA_IRQ	(IRQ_INTERNAL_BASE + 18)
+#define BCM_6358_PCI_IRQ		(IRQ_INTERNAL_BASE + 31)
+#define BCM_6358_PCMCIA_IRQ		(IRQ_INTERNAL_BASE + 24)
+#define BCM_6358_ATM_IRQ		(IRQ_INTERNAL_BASE + 19)
+#define BCM_6358_ENETSW_RXDMA0_IRQ	0
+#define BCM_6358_ENETSW_RXDMA1_IRQ	0
+#define BCM_6358_ENETSW_RXDMA2_IRQ	0
+#define BCM_6358_ENETSW_RXDMA3_IRQ	0
+#define BCM_6358_ENETSW_TXDMA0_IRQ	0
+#define BCM_6358_ENETSW_TXDMA1_IRQ	0
+#define BCM_6358_ENETSW_TXDMA2_IRQ	0
+#define BCM_6358_ENETSW_TXDMA3_IRQ	0
+#define BCM_6358_XTM_IRQ		0
+#define BCM_6358_XTM_DMA0_IRQ		0
 
-#घोषणा BCM_6358_PCM_DMA0_IRQ		(IRQ_INTERNAL_BASE + 23)
-#घोषणा BCM_6358_PCM_DMA1_IRQ		(IRQ_INTERNAL_BASE + 24)
-#घोषणा BCM_6358_EXT_IRQ0		(IRQ_INTERNAL_BASE + 25)
-#घोषणा BCM_6358_EXT_IRQ1		(IRQ_INTERNAL_BASE + 26)
-#घोषणा BCM_6358_EXT_IRQ2		(IRQ_INTERNAL_BASE + 27)
-#घोषणा BCM_6358_EXT_IRQ3		(IRQ_INTERNAL_BASE + 28)
+#define BCM_6358_PCM_DMA0_IRQ		(IRQ_INTERNAL_BASE + 23)
+#define BCM_6358_PCM_DMA1_IRQ		(IRQ_INTERNAL_BASE + 24)
+#define BCM_6358_EXT_IRQ0		(IRQ_INTERNAL_BASE + 25)
+#define BCM_6358_EXT_IRQ1		(IRQ_INTERNAL_BASE + 26)
+#define BCM_6358_EXT_IRQ2		(IRQ_INTERNAL_BASE + 27)
+#define BCM_6358_EXT_IRQ3		(IRQ_INTERNAL_BASE + 28)
 
 /*
  * 6362 irqs
  */
-#घोषणा BCM_6362_HIGH_IRQ_BASE		(IRQ_INTERNAL_BASE + 32)
+#define BCM_6362_HIGH_IRQ_BASE		(IRQ_INTERNAL_BASE + 32)
 
-#घोषणा BCM_6362_TIMER_IRQ		(IRQ_INTERNAL_BASE + 0)
-#घोषणा BCM_6362_SPI_IRQ		(IRQ_INTERNAL_BASE + 2)
-#घोषणा BCM_6362_UART0_IRQ		(IRQ_INTERNAL_BASE + 3)
-#घोषणा BCM_6362_UART1_IRQ		(IRQ_INTERNAL_BASE + 4)
-#घोषणा BCM_6362_DSL_IRQ		(IRQ_INTERNAL_BASE + 28)
-#घोषणा BCM_6362_UDC0_IRQ		0
-#घोषणा BCM_6362_ENET0_IRQ		0
-#घोषणा BCM_6362_ENET1_IRQ		0
-#घोषणा BCM_6362_ENET_PHY_IRQ		(IRQ_INTERNAL_BASE + 14)
-#घोषणा BCM_6362_HSSPI_IRQ		(IRQ_INTERNAL_BASE + 5)
-#घोषणा BCM_6362_OHCI0_IRQ		(IRQ_INTERNAL_BASE + 9)
-#घोषणा BCM_6362_EHCI0_IRQ		(IRQ_INTERNAL_BASE + 10)
-#घोषणा BCM_6362_USBD_IRQ		(IRQ_INTERNAL_BASE + 11)
-#घोषणा BCM_6362_USBD_RXDMA0_IRQ	(IRQ_INTERNAL_BASE + 20)
-#घोषणा BCM_6362_USBD_TXDMA0_IRQ	(IRQ_INTERNAL_BASE + 21)
-#घोषणा BCM_6362_USBD_RXDMA1_IRQ	(IRQ_INTERNAL_BASE + 22)
-#घोषणा BCM_6362_USBD_TXDMA1_IRQ	(IRQ_INTERNAL_BASE + 23)
-#घोषणा BCM_6362_USBD_RXDMA2_IRQ	(IRQ_INTERNAL_BASE + 24)
-#घोषणा BCM_6362_USBD_TXDMA2_IRQ	(IRQ_INTERNAL_BASE + 25)
-#घोषणा BCM_6362_PCMCIA_IRQ		0
-#घोषणा BCM_6362_ENET0_RXDMA_IRQ	0
-#घोषणा BCM_6362_ENET0_TXDMA_IRQ	0
-#घोषणा BCM_6362_ENET1_RXDMA_IRQ	0
-#घोषणा BCM_6362_ENET1_TXDMA_IRQ	0
-#घोषणा BCM_6362_PCI_IRQ		(IRQ_INTERNAL_BASE + 30)
-#घोषणा BCM_6362_ATM_IRQ		0
-#घोषणा BCM_6362_ENETSW_RXDMA0_IRQ	(BCM_6362_HIGH_IRQ_BASE + 0)
-#घोषणा BCM_6362_ENETSW_RXDMA1_IRQ	(BCM_6362_HIGH_IRQ_BASE + 1)
-#घोषणा BCM_6362_ENETSW_RXDMA2_IRQ	(BCM_6362_HIGH_IRQ_BASE + 2)
-#घोषणा BCM_6362_ENETSW_RXDMA3_IRQ	(BCM_6362_HIGH_IRQ_BASE + 3)
-#घोषणा BCM_6362_ENETSW_TXDMA0_IRQ	0
-#घोषणा BCM_6362_ENETSW_TXDMA1_IRQ	0
-#घोषणा BCM_6362_ENETSW_TXDMA2_IRQ	0
-#घोषणा BCM_6362_ENETSW_TXDMA3_IRQ	0
-#घोषणा BCM_6362_XTM_IRQ		0
-#घोषणा BCM_6362_XTM_DMA0_IRQ		(BCM_6362_HIGH_IRQ_BASE + 12)
+#define BCM_6362_TIMER_IRQ		(IRQ_INTERNAL_BASE + 0)
+#define BCM_6362_SPI_IRQ		(IRQ_INTERNAL_BASE + 2)
+#define BCM_6362_UART0_IRQ		(IRQ_INTERNAL_BASE + 3)
+#define BCM_6362_UART1_IRQ		(IRQ_INTERNAL_BASE + 4)
+#define BCM_6362_DSL_IRQ		(IRQ_INTERNAL_BASE + 28)
+#define BCM_6362_UDC0_IRQ		0
+#define BCM_6362_ENET0_IRQ		0
+#define BCM_6362_ENET1_IRQ		0
+#define BCM_6362_ENET_PHY_IRQ		(IRQ_INTERNAL_BASE + 14)
+#define BCM_6362_HSSPI_IRQ		(IRQ_INTERNAL_BASE + 5)
+#define BCM_6362_OHCI0_IRQ		(IRQ_INTERNAL_BASE + 9)
+#define BCM_6362_EHCI0_IRQ		(IRQ_INTERNAL_BASE + 10)
+#define BCM_6362_USBD_IRQ		(IRQ_INTERNAL_BASE + 11)
+#define BCM_6362_USBD_RXDMA0_IRQ	(IRQ_INTERNAL_BASE + 20)
+#define BCM_6362_USBD_TXDMA0_IRQ	(IRQ_INTERNAL_BASE + 21)
+#define BCM_6362_USBD_RXDMA1_IRQ	(IRQ_INTERNAL_BASE + 22)
+#define BCM_6362_USBD_TXDMA1_IRQ	(IRQ_INTERNAL_BASE + 23)
+#define BCM_6362_USBD_RXDMA2_IRQ	(IRQ_INTERNAL_BASE + 24)
+#define BCM_6362_USBD_TXDMA2_IRQ	(IRQ_INTERNAL_BASE + 25)
+#define BCM_6362_PCMCIA_IRQ		0
+#define BCM_6362_ENET0_RXDMA_IRQ	0
+#define BCM_6362_ENET0_TXDMA_IRQ	0
+#define BCM_6362_ENET1_RXDMA_IRQ	0
+#define BCM_6362_ENET1_TXDMA_IRQ	0
+#define BCM_6362_PCI_IRQ		(IRQ_INTERNAL_BASE + 30)
+#define BCM_6362_ATM_IRQ		0
+#define BCM_6362_ENETSW_RXDMA0_IRQ	(BCM_6362_HIGH_IRQ_BASE + 0)
+#define BCM_6362_ENETSW_RXDMA1_IRQ	(BCM_6362_HIGH_IRQ_BASE + 1)
+#define BCM_6362_ENETSW_RXDMA2_IRQ	(BCM_6362_HIGH_IRQ_BASE + 2)
+#define BCM_6362_ENETSW_RXDMA3_IRQ	(BCM_6362_HIGH_IRQ_BASE + 3)
+#define BCM_6362_ENETSW_TXDMA0_IRQ	0
+#define BCM_6362_ENETSW_TXDMA1_IRQ	0
+#define BCM_6362_ENETSW_TXDMA2_IRQ	0
+#define BCM_6362_ENETSW_TXDMA3_IRQ	0
+#define BCM_6362_XTM_IRQ		0
+#define BCM_6362_XTM_DMA0_IRQ		(BCM_6362_HIGH_IRQ_BASE + 12)
 
-#घोषणा BCM_6362_RING_OSC_IRQ		(IRQ_INTERNAL_BASE + 1)
-#घोषणा BCM_6362_WLAN_GPIO_IRQ		(IRQ_INTERNAL_BASE + 6)
-#घोषणा BCM_6362_WLAN_IRQ		(IRQ_INTERNAL_BASE + 7)
-#घोषणा BCM_6362_IPSEC_IRQ		(IRQ_INTERNAL_BASE + 8)
-#घोषणा BCM_6362_न_अंकD_IRQ		(IRQ_INTERNAL_BASE + 12)
-#घोषणा BCM_6362_PCM_IRQ		(IRQ_INTERNAL_BASE + 13)
-#घोषणा BCM_6362_DG_IRQ			(IRQ_INTERNAL_BASE + 15)
-#घोषणा BCM_6362_EPHY_ENERGY0_IRQ	(IRQ_INTERNAL_BASE + 16)
-#घोषणा BCM_6362_EPHY_ENERGY1_IRQ	(IRQ_INTERNAL_BASE + 17)
-#घोषणा BCM_6362_EPHY_ENERGY2_IRQ	(IRQ_INTERNAL_BASE + 18)
-#घोषणा BCM_6362_EPHY_ENERGY3_IRQ	(IRQ_INTERNAL_BASE + 19)
-#घोषणा BCM_6362_IPSEC_DMA0_IRQ		(IRQ_INTERNAL_BASE + 26)
-#घोषणा BCM_6362_IPSEC_DMA1_IRQ		(IRQ_INTERNAL_BASE + 27)
-#घोषणा BCM_6362_FAP0_IRQ		(IRQ_INTERNAL_BASE + 29)
-#घोषणा BCM_6362_PCM_DMA0_IRQ		(BCM_6362_HIGH_IRQ_BASE + 4)
-#घोषणा BCM_6362_PCM_DMA1_IRQ		(BCM_6362_HIGH_IRQ_BASE + 5)
-#घोषणा BCM_6362_DECT0_IRQ		(BCM_6362_HIGH_IRQ_BASE + 6)
-#घोषणा BCM_6362_DECT1_IRQ		(BCM_6362_HIGH_IRQ_BASE + 7)
-#घोषणा BCM_6362_EXT_IRQ0		(BCM_6362_HIGH_IRQ_BASE + 8)
-#घोषणा BCM_6362_EXT_IRQ1		(BCM_6362_HIGH_IRQ_BASE + 9)
-#घोषणा BCM_6362_EXT_IRQ2		(BCM_6362_HIGH_IRQ_BASE + 10)
-#घोषणा BCM_6362_EXT_IRQ3		(BCM_6362_HIGH_IRQ_BASE + 11)
+#define BCM_6362_RING_OSC_IRQ		(IRQ_INTERNAL_BASE + 1)
+#define BCM_6362_WLAN_GPIO_IRQ		(IRQ_INTERNAL_BASE + 6)
+#define BCM_6362_WLAN_IRQ		(IRQ_INTERNAL_BASE + 7)
+#define BCM_6362_IPSEC_IRQ		(IRQ_INTERNAL_BASE + 8)
+#define BCM_6362_NAND_IRQ		(IRQ_INTERNAL_BASE + 12)
+#define BCM_6362_PCM_IRQ		(IRQ_INTERNAL_BASE + 13)
+#define BCM_6362_DG_IRQ			(IRQ_INTERNAL_BASE + 15)
+#define BCM_6362_EPHY_ENERGY0_IRQ	(IRQ_INTERNAL_BASE + 16)
+#define BCM_6362_EPHY_ENERGY1_IRQ	(IRQ_INTERNAL_BASE + 17)
+#define BCM_6362_EPHY_ENERGY2_IRQ	(IRQ_INTERNAL_BASE + 18)
+#define BCM_6362_EPHY_ENERGY3_IRQ	(IRQ_INTERNAL_BASE + 19)
+#define BCM_6362_IPSEC_DMA0_IRQ		(IRQ_INTERNAL_BASE + 26)
+#define BCM_6362_IPSEC_DMA1_IRQ		(IRQ_INTERNAL_BASE + 27)
+#define BCM_6362_FAP0_IRQ		(IRQ_INTERNAL_BASE + 29)
+#define BCM_6362_PCM_DMA0_IRQ		(BCM_6362_HIGH_IRQ_BASE + 4)
+#define BCM_6362_PCM_DMA1_IRQ		(BCM_6362_HIGH_IRQ_BASE + 5)
+#define BCM_6362_DECT0_IRQ		(BCM_6362_HIGH_IRQ_BASE + 6)
+#define BCM_6362_DECT1_IRQ		(BCM_6362_HIGH_IRQ_BASE + 7)
+#define BCM_6362_EXT_IRQ0		(BCM_6362_HIGH_IRQ_BASE + 8)
+#define BCM_6362_EXT_IRQ1		(BCM_6362_HIGH_IRQ_BASE + 9)
+#define BCM_6362_EXT_IRQ2		(BCM_6362_HIGH_IRQ_BASE + 10)
+#define BCM_6362_EXT_IRQ3		(BCM_6362_HIGH_IRQ_BASE + 11)
 
 /*
  * 6368 irqs
  */
-#घोषणा BCM_6368_HIGH_IRQ_BASE		(IRQ_INTERNAL_BASE + 32)
+#define BCM_6368_HIGH_IRQ_BASE		(IRQ_INTERNAL_BASE + 32)
 
-#घोषणा BCM_6368_TIMER_IRQ		(IRQ_INTERNAL_BASE + 0)
-#घोषणा BCM_6368_SPI_IRQ		(IRQ_INTERNAL_BASE + 1)
-#घोषणा BCM_6368_UART0_IRQ		(IRQ_INTERNAL_BASE + 2)
-#घोषणा BCM_6368_UART1_IRQ		(IRQ_INTERNAL_BASE + 3)
-#घोषणा BCM_6368_DSL_IRQ		(IRQ_INTERNAL_BASE + 4)
-#घोषणा BCM_6368_ENET0_IRQ		0
-#घोषणा BCM_6368_ENET1_IRQ		0
-#घोषणा BCM_6368_ENET_PHY_IRQ		(IRQ_INTERNAL_BASE + 15)
-#घोषणा BCM_6368_HSSPI_IRQ		0
-#घोषणा BCM_6368_OHCI0_IRQ		(IRQ_INTERNAL_BASE + 5)
-#घोषणा BCM_6368_EHCI0_IRQ		(IRQ_INTERNAL_BASE + 7)
-#घोषणा BCM_6368_USBD_IRQ		(IRQ_INTERNAL_BASE + 8)
-#घोषणा BCM_6368_USBD_RXDMA0_IRQ	(IRQ_INTERNAL_BASE + 26)
-#घोषणा BCM_6368_USBD_TXDMA0_IRQ	(IRQ_INTERNAL_BASE + 27)
-#घोषणा BCM_6368_USBD_RXDMA1_IRQ	(IRQ_INTERNAL_BASE + 28)
-#घोषणा BCM_6368_USBD_TXDMA1_IRQ	(IRQ_INTERNAL_BASE + 29)
-#घोषणा BCM_6368_USBD_RXDMA2_IRQ	(IRQ_INTERNAL_BASE + 30)
-#घोषणा BCM_6368_USBD_TXDMA2_IRQ	(IRQ_INTERNAL_BASE + 31)
-#घोषणा BCM_6368_PCMCIA_IRQ		0
-#घोषणा BCM_6368_ENET0_RXDMA_IRQ	0
-#घोषणा BCM_6368_ENET0_TXDMA_IRQ	0
-#घोषणा BCM_6368_ENET1_RXDMA_IRQ	0
-#घोषणा BCM_6368_ENET1_TXDMA_IRQ	0
-#घोषणा BCM_6368_PCI_IRQ		(IRQ_INTERNAL_BASE + 13)
-#घोषणा BCM_6368_ATM_IRQ		0
-#घोषणा BCM_6368_ENETSW_RXDMA0_IRQ	(BCM_6368_HIGH_IRQ_BASE + 0)
-#घोषणा BCM_6368_ENETSW_RXDMA1_IRQ	(BCM_6368_HIGH_IRQ_BASE + 1)
-#घोषणा BCM_6368_ENETSW_RXDMA2_IRQ	(BCM_6368_HIGH_IRQ_BASE + 2)
-#घोषणा BCM_6368_ENETSW_RXDMA3_IRQ	(BCM_6368_HIGH_IRQ_BASE + 3)
-#घोषणा BCM_6368_ENETSW_TXDMA0_IRQ	(BCM_6368_HIGH_IRQ_BASE + 4)
-#घोषणा BCM_6368_ENETSW_TXDMA1_IRQ	(BCM_6368_HIGH_IRQ_BASE + 5)
-#घोषणा BCM_6368_ENETSW_TXDMA2_IRQ	(BCM_6368_HIGH_IRQ_BASE + 6)
-#घोषणा BCM_6368_ENETSW_TXDMA3_IRQ	(BCM_6368_HIGH_IRQ_BASE + 7)
-#घोषणा BCM_6368_XTM_IRQ		(IRQ_INTERNAL_BASE + 11)
-#घोषणा BCM_6368_XTM_DMA0_IRQ		(BCM_6368_HIGH_IRQ_BASE + 8)
+#define BCM_6368_TIMER_IRQ		(IRQ_INTERNAL_BASE + 0)
+#define BCM_6368_SPI_IRQ		(IRQ_INTERNAL_BASE + 1)
+#define BCM_6368_UART0_IRQ		(IRQ_INTERNAL_BASE + 2)
+#define BCM_6368_UART1_IRQ		(IRQ_INTERNAL_BASE + 3)
+#define BCM_6368_DSL_IRQ		(IRQ_INTERNAL_BASE + 4)
+#define BCM_6368_ENET0_IRQ		0
+#define BCM_6368_ENET1_IRQ		0
+#define BCM_6368_ENET_PHY_IRQ		(IRQ_INTERNAL_BASE + 15)
+#define BCM_6368_HSSPI_IRQ		0
+#define BCM_6368_OHCI0_IRQ		(IRQ_INTERNAL_BASE + 5)
+#define BCM_6368_EHCI0_IRQ		(IRQ_INTERNAL_BASE + 7)
+#define BCM_6368_USBD_IRQ		(IRQ_INTERNAL_BASE + 8)
+#define BCM_6368_USBD_RXDMA0_IRQ	(IRQ_INTERNAL_BASE + 26)
+#define BCM_6368_USBD_TXDMA0_IRQ	(IRQ_INTERNAL_BASE + 27)
+#define BCM_6368_USBD_RXDMA1_IRQ	(IRQ_INTERNAL_BASE + 28)
+#define BCM_6368_USBD_TXDMA1_IRQ	(IRQ_INTERNAL_BASE + 29)
+#define BCM_6368_USBD_RXDMA2_IRQ	(IRQ_INTERNAL_BASE + 30)
+#define BCM_6368_USBD_TXDMA2_IRQ	(IRQ_INTERNAL_BASE + 31)
+#define BCM_6368_PCMCIA_IRQ		0
+#define BCM_6368_ENET0_RXDMA_IRQ	0
+#define BCM_6368_ENET0_TXDMA_IRQ	0
+#define BCM_6368_ENET1_RXDMA_IRQ	0
+#define BCM_6368_ENET1_TXDMA_IRQ	0
+#define BCM_6368_PCI_IRQ		(IRQ_INTERNAL_BASE + 13)
+#define BCM_6368_ATM_IRQ		0
+#define BCM_6368_ENETSW_RXDMA0_IRQ	(BCM_6368_HIGH_IRQ_BASE + 0)
+#define BCM_6368_ENETSW_RXDMA1_IRQ	(BCM_6368_HIGH_IRQ_BASE + 1)
+#define BCM_6368_ENETSW_RXDMA2_IRQ	(BCM_6368_HIGH_IRQ_BASE + 2)
+#define BCM_6368_ENETSW_RXDMA3_IRQ	(BCM_6368_HIGH_IRQ_BASE + 3)
+#define BCM_6368_ENETSW_TXDMA0_IRQ	(BCM_6368_HIGH_IRQ_BASE + 4)
+#define BCM_6368_ENETSW_TXDMA1_IRQ	(BCM_6368_HIGH_IRQ_BASE + 5)
+#define BCM_6368_ENETSW_TXDMA2_IRQ	(BCM_6368_HIGH_IRQ_BASE + 6)
+#define BCM_6368_ENETSW_TXDMA3_IRQ	(BCM_6368_HIGH_IRQ_BASE + 7)
+#define BCM_6368_XTM_IRQ		(IRQ_INTERNAL_BASE + 11)
+#define BCM_6368_XTM_DMA0_IRQ		(BCM_6368_HIGH_IRQ_BASE + 8)
 
-#घोषणा BCM_6368_PCM_DMA0_IRQ		(BCM_6368_HIGH_IRQ_BASE + 30)
-#घोषणा BCM_6368_PCM_DMA1_IRQ		(BCM_6368_HIGH_IRQ_BASE + 31)
-#घोषणा BCM_6368_EXT_IRQ0		(IRQ_INTERNAL_BASE + 20)
-#घोषणा BCM_6368_EXT_IRQ1		(IRQ_INTERNAL_BASE + 21)
-#घोषणा BCM_6368_EXT_IRQ2		(IRQ_INTERNAL_BASE + 22)
-#घोषणा BCM_6368_EXT_IRQ3		(IRQ_INTERNAL_BASE + 23)
-#घोषणा BCM_6368_EXT_IRQ4		(IRQ_INTERNAL_BASE + 24)
-#घोषणा BCM_6368_EXT_IRQ5		(IRQ_INTERNAL_BASE + 25)
+#define BCM_6368_PCM_DMA0_IRQ		(BCM_6368_HIGH_IRQ_BASE + 30)
+#define BCM_6368_PCM_DMA1_IRQ		(BCM_6368_HIGH_IRQ_BASE + 31)
+#define BCM_6368_EXT_IRQ0		(IRQ_INTERNAL_BASE + 20)
+#define BCM_6368_EXT_IRQ1		(IRQ_INTERNAL_BASE + 21)
+#define BCM_6368_EXT_IRQ2		(IRQ_INTERNAL_BASE + 22)
+#define BCM_6368_EXT_IRQ3		(IRQ_INTERNAL_BASE + 23)
+#define BCM_6368_EXT_IRQ4		(IRQ_INTERNAL_BASE + 24)
+#define BCM_6368_EXT_IRQ5		(IRQ_INTERNAL_BASE + 25)
 
-बाह्य स्थिर पूर्णांक *bcm63xx_irqs;
+extern const int *bcm63xx_irqs;
 
-#घोषणा __GEN_CPU_IRQ_TABLE(__cpu)					\
+#define __GEN_CPU_IRQ_TABLE(__cpu)					\
 	[IRQ_TIMER]		= BCM_## __cpu ##_TIMER_IRQ,		\
 	[IRQ_SPI]		= BCM_## __cpu ##_SPI_IRQ,		\
 	[IRQ_UART0]		= BCM_## __cpu ##_UART0_IRQ,		\
@@ -1052,18 +1051,18 @@ u8 bcm63xx_get_cpu_rev(व्योम);
 	[IRQ_XTM]		= BCM_## __cpu ##_XTM_IRQ,		\
 	[IRQ_XTM_DMA0]		= BCM_## __cpu ##_XTM_DMA0_IRQ,		\
 
-अटल अंतरभूत पूर्णांक bcm63xx_get_irq_number(क्रमागत bcm63xx_irq irq)
-अणु
-	वापस bcm63xx_irqs[irq];
-पूर्ण
+static inline int bcm63xx_get_irq_number(enum bcm63xx_irq irq)
+{
+	return bcm63xx_irqs[irq];
+}
 
 /*
- * वापस installed memory size
+ * return installed memory size
  */
-अचिन्हित पूर्णांक bcm63xx_get_memory_size(व्योम);
+unsigned int bcm63xx_get_memory_size(void);
 
-व्योम bcm63xx_machine_halt(व्योम);
+void bcm63xx_machine_halt(void);
 
-व्योम bcm63xx_machine_reboot(व्योम);
+void bcm63xx_machine_reboot(void);
 
-#पूर्ण_अगर /* !BCM63XX_CPU_H_ */
+#endif /* !BCM63XX_CPU_H_ */

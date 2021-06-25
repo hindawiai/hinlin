@@ -1,345 +1,344 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2020 Cloudflare
-#समावेश <error.h>
-#समावेश <netinet/tcp.h>
+#include <error.h>
+#include <netinet/tcp.h>
 
-#समावेश "test_progs.h"
-#समावेश "test_skmsg_load_helpers.skel.h"
-#समावेश "test_sockmap_update.skel.h"
-#समावेश "test_sockmap_invalid_update.skel.h"
-#समावेश "test_sockmap_skb_verdict_attach.skel.h"
-#समावेश "bpf_iter_sockmap.skel.h"
+#include "test_progs.h"
+#include "test_skmsg_load_helpers.skel.h"
+#include "test_sockmap_update.skel.h"
+#include "test_sockmap_invalid_update.skel.h"
+#include "test_sockmap_skb_verdict_attach.skel.h"
+#include "bpf_iter_sockmap.skel.h"
 
-#घोषणा TCP_REPAIR		19	/* TCP sock is under repair right now */
+#define TCP_REPAIR		19	/* TCP sock is under repair right now */
 
-#घोषणा TCP_REPAIR_ON		1
-#घोषणा TCP_REPAIR_OFF_NO_WP	-1	/* Turn off without winकरोw probes */
+#define TCP_REPAIR_ON		1
+#define TCP_REPAIR_OFF_NO_WP	-1	/* Turn off without window probes */
 
-अटल पूर्णांक connected_socket_v4(व्योम)
-अणु
-	काष्ठा sockaddr_in addr = अणु
+static int connected_socket_v4(void)
+{
+	struct sockaddr_in addr = {
 		.sin_family = AF_INET,
 		.sin_port = htons(80),
-		.sin_addr = अणु inet_addr("127.0.0.1") पूर्ण,
-	पूर्ण;
-	socklen_t len = माप(addr);
-	पूर्णांक s, repair, err;
+		.sin_addr = { inet_addr("127.0.0.1") },
+	};
+	socklen_t len = sizeof(addr);
+	int s, repair, err;
 
 	s = socket(AF_INET, SOCK_STREAM, 0);
-	अगर (CHECK_FAIL(s == -1))
-		जाओ error;
+	if (CHECK_FAIL(s == -1))
+		goto error;
 
 	repair = TCP_REPAIR_ON;
-	err = setsockopt(s, SOL_TCP, TCP_REPAIR, &repair, माप(repair));
-	अगर (CHECK_FAIL(err))
-		जाओ error;
+	err = setsockopt(s, SOL_TCP, TCP_REPAIR, &repair, sizeof(repair));
+	if (CHECK_FAIL(err))
+		goto error;
 
-	err = connect(s, (काष्ठा sockaddr *)&addr, len);
-	अगर (CHECK_FAIL(err))
-		जाओ error;
+	err = connect(s, (struct sockaddr *)&addr, len);
+	if (CHECK_FAIL(err))
+		goto error;
 
 	repair = TCP_REPAIR_OFF_NO_WP;
-	err = setsockopt(s, SOL_TCP, TCP_REPAIR, &repair, माप(repair));
-	अगर (CHECK_FAIL(err))
-		जाओ error;
+	err = setsockopt(s, SOL_TCP, TCP_REPAIR, &repair, sizeof(repair));
+	if (CHECK_FAIL(err))
+		goto error;
 
-	वापस s;
+	return s;
 error:
-	लिखो_त्रुटि(__func__);
-	बंद(s);
-	वापस -1;
-पूर्ण
+	perror(__func__);
+	close(s);
+	return -1;
+}
 
-अटल व्योम compare_cookies(काष्ठा bpf_map *src, काष्ठा bpf_map *dst)
-अणु
+static void compare_cookies(struct bpf_map *src, struct bpf_map *dst)
+{
 	__u32 i, max_entries = bpf_map__max_entries(src);
-	पूर्णांक err, duration = 0, src_fd, dst_fd;
+	int err, duration = 0, src_fd, dst_fd;
 
 	src_fd = bpf_map__fd(src);
 	dst_fd = bpf_map__fd(dst);
 
-	क्रम (i = 0; i < max_entries; i++) अणु
+	for (i = 0; i < max_entries; i++) {
 		__u64 src_cookie, dst_cookie;
 
 		err = bpf_map_lookup_elem(src_fd, &i, &src_cookie);
-		अगर (err && त्रुटि_सं == ENOENT) अणु
+		if (err && errno == ENOENT) {
 			err = bpf_map_lookup_elem(dst_fd, &i, &dst_cookie);
 			CHECK(!err, "map_lookup_elem(dst)", "element %u not deleted\n", i);
-			CHECK(err && त्रुटि_सं != ENOENT, "map_lookup_elem(dst)", "%s\n",
-			      म_त्रुटि(त्रुटि_सं));
-			जारी;
-		पूर्ण
-		अगर (CHECK(err, "lookup_elem(src)", "%s\n", म_त्रुटि(त्रुटि_सं)))
-			जारी;
+			CHECK(err && errno != ENOENT, "map_lookup_elem(dst)", "%s\n",
+			      strerror(errno));
+			continue;
+		}
+		if (CHECK(err, "lookup_elem(src)", "%s\n", strerror(errno)))
+			continue;
 
 		err = bpf_map_lookup_elem(dst_fd, &i, &dst_cookie);
-		अगर (CHECK(err, "lookup_elem(dst)", "%s\n", म_त्रुटि(त्रुटि_सं)))
-			जारी;
+		if (CHECK(err, "lookup_elem(dst)", "%s\n", strerror(errno)))
+			continue;
 
 		CHECK(dst_cookie != src_cookie, "cookie mismatch",
 		      "%llu != %llu (pos %u)\n", dst_cookie, src_cookie, i);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* Create a map, populate it with one socket, and मुक्त the map. */
-अटल व्योम test_sockmap_create_update_मुक्त(क्रमागत bpf_map_type map_type)
-अणु
-	स्थिर पूर्णांक zero = 0;
-	पूर्णांक s, map, err;
+/* Create a map, populate it with one socket, and free the map. */
+static void test_sockmap_create_update_free(enum bpf_map_type map_type)
+{
+	const int zero = 0;
+	int s, map, err;
 
 	s = connected_socket_v4();
-	अगर (CHECK_FAIL(s == -1))
-		वापस;
+	if (CHECK_FAIL(s == -1))
+		return;
 
-	map = bpf_create_map(map_type, माप(पूर्णांक), माप(पूर्णांक), 1, 0);
-	अगर (CHECK_FAIL(map == -1)) अणु
-		लिखो_त्रुटि("bpf_create_map");
-		जाओ out;
-	पूर्ण
+	map = bpf_create_map(map_type, sizeof(int), sizeof(int), 1, 0);
+	if (CHECK_FAIL(map == -1)) {
+		perror("bpf_create_map");
+		goto out;
+	}
 
 	err = bpf_map_update_elem(map, &zero, &s, BPF_NOEXIST);
-	अगर (CHECK_FAIL(err)) अणु
-		लिखो_त्रुटि("bpf_map_update");
-		जाओ out;
-	पूर्ण
+	if (CHECK_FAIL(err)) {
+		perror("bpf_map_update");
+		goto out;
+	}
 
 out:
-	बंद(map);
-	बंद(s);
-पूर्ण
+	close(map);
+	close(s);
+}
 
-अटल व्योम test_skmsg_helpers(क्रमागत bpf_map_type map_type)
-अणु
-	काष्ठा test_skmsg_load_helpers *skel;
-	पूर्णांक err, map, verdict;
+static void test_skmsg_helpers(enum bpf_map_type map_type)
+{
+	struct test_skmsg_load_helpers *skel;
+	int err, map, verdict;
 
-	skel = test_skmsg_load_helpers__खोलो_and_load();
-	अगर (CHECK_FAIL(!skel)) अणु
-		लिखो_त्रुटि("test_skmsg_load_helpers__open_and_load");
-		वापस;
-	पूर्ण
+	skel = test_skmsg_load_helpers__open_and_load();
+	if (CHECK_FAIL(!skel)) {
+		perror("test_skmsg_load_helpers__open_and_load");
+		return;
+	}
 
 	verdict = bpf_program__fd(skel->progs.prog_msg_verdict);
 	map = bpf_map__fd(skel->maps.sock_map);
 
 	err = bpf_prog_attach(verdict, map, BPF_SK_MSG_VERDICT, 0);
-	अगर (CHECK_FAIL(err)) अणु
-		लिखो_त्रुटि("bpf_prog_attach");
-		जाओ out;
-	पूर्ण
+	if (CHECK_FAIL(err)) {
+		perror("bpf_prog_attach");
+		goto out;
+	}
 
 	err = bpf_prog_detach2(verdict, map, BPF_SK_MSG_VERDICT);
-	अगर (CHECK_FAIL(err)) अणु
-		लिखो_त्रुटि("bpf_prog_detach2");
-		जाओ out;
-	पूर्ण
+	if (CHECK_FAIL(err)) {
+		perror("bpf_prog_detach2");
+		goto out;
+	}
 out:
 	test_skmsg_load_helpers__destroy(skel);
-पूर्ण
+}
 
-अटल व्योम test_sockmap_update(क्रमागत bpf_map_type map_type)
-अणु
-	काष्ठा bpf_prog_test_run_attr tattr;
-	पूर्णांक err, prog, src, duration = 0;
-	काष्ठा test_sockmap_update *skel;
-	काष्ठा bpf_map *dst_map;
-	स्थिर __u32 zero = 0;
-	अक्षर dummy[14] = अणु0पूर्ण;
+static void test_sockmap_update(enum bpf_map_type map_type)
+{
+	struct bpf_prog_test_run_attr tattr;
+	int err, prog, src, duration = 0;
+	struct test_sockmap_update *skel;
+	struct bpf_map *dst_map;
+	const __u32 zero = 0;
+	char dummy[14] = {0};
 	__s64 sk;
 
 	sk = connected_socket_v4();
-	अगर (CHECK(sk == -1, "connected_socket_v4", "cannot connect\n"))
-		वापस;
+	if (CHECK(sk == -1, "connected_socket_v4", "cannot connect\n"))
+		return;
 
-	skel = test_sockmap_update__खोलो_and_load();
-	अगर (CHECK(!skel, "open_and_load", "cannot load skeleton\n"))
-		जाओ बंद_sk;
+	skel = test_sockmap_update__open_and_load();
+	if (CHECK(!skel, "open_and_load", "cannot load skeleton\n"))
+		goto close_sk;
 
 	prog = bpf_program__fd(skel->progs.copy_sock_map);
 	src = bpf_map__fd(skel->maps.src);
-	अगर (map_type == BPF_MAP_TYPE_SOCKMAP)
+	if (map_type == BPF_MAP_TYPE_SOCKMAP)
 		dst_map = skel->maps.dst_sock_map;
-	अन्यथा
+	else
 		dst_map = skel->maps.dst_sock_hash;
 
 	err = bpf_map_update_elem(src, &zero, &sk, BPF_NOEXIST);
-	अगर (CHECK(err, "update_elem(src)", "errno=%u\n", त्रुटि_सं))
-		जाओ out;
+	if (CHECK(err, "update_elem(src)", "errno=%u\n", errno))
+		goto out;
 
-	tattr = (काष्ठा bpf_prog_test_run_attr)अणु
+	tattr = (struct bpf_prog_test_run_attr){
 		.prog_fd = prog,
 		.repeat = 1,
 		.data_in = dummy,
-		.data_size_in = माप(dummy),
-	पूर्ण;
+		.data_size_in = sizeof(dummy),
+	};
 
 	err = bpf_prog_test_run_xattr(&tattr);
-	अगर (CHECK_ATTR(err || !tattr.retval, "bpf_prog_test_run",
-		       "errno=%u retval=%u\n", त्रुटि_सं, tattr.retval))
-		जाओ out;
+	if (CHECK_ATTR(err || !tattr.retval, "bpf_prog_test_run",
+		       "errno=%u retval=%u\n", errno, tattr.retval))
+		goto out;
 
 	compare_cookies(skel->maps.src, dst_map);
 
 out:
 	test_sockmap_update__destroy(skel);
-बंद_sk:
-	बंद(sk);
-पूर्ण
+close_sk:
+	close(sk);
+}
 
-अटल व्योम test_sockmap_invalid_update(व्योम)
-अणु
-	काष्ठा test_sockmap_invalid_update *skel;
-	पूर्णांक duration = 0;
+static void test_sockmap_invalid_update(void)
+{
+	struct test_sockmap_invalid_update *skel;
+	int duration = 0;
 
-	skel = test_sockmap_invalid_update__खोलो_and_load();
-	अगर (CHECK(skel, "open_and_load", "verifier accepted map_update\n"))
+	skel = test_sockmap_invalid_update__open_and_load();
+	if (CHECK(skel, "open_and_load", "verifier accepted map_update\n"))
 		test_sockmap_invalid_update__destroy(skel);
-पूर्ण
+}
 
-अटल व्योम test_sockmap_copy(क्रमागत bpf_map_type map_type)
-अणु
+static void test_sockmap_copy(enum bpf_map_type map_type)
+{
 	DECLARE_LIBBPF_OPTS(bpf_iter_attach_opts, opts);
-	पूर्णांक err, len, src_fd, iter_fd, duration = 0;
-	जोड़ bpf_iter_link_info linfo = अणुपूर्ण;
+	int err, len, src_fd, iter_fd, duration = 0;
+	union bpf_iter_link_info linfo = {};
 	__u32 i, num_sockets, num_elems;
-	काष्ठा bpf_iter_sockmap *skel;
-	__s64 *sock_fd = शून्य;
-	काष्ठा bpf_link *link;
-	काष्ठा bpf_map *src;
-	अक्षर buf[64];
+	struct bpf_iter_sockmap *skel;
+	__s64 *sock_fd = NULL;
+	struct bpf_link *link;
+	struct bpf_map *src;
+	char buf[64];
 
-	skel = bpf_iter_sockmap__खोलो_and_load();
-	अगर (CHECK(!skel, "bpf_iter_sockmap__open_and_load", "skeleton open_and_load failed\n"))
-		वापस;
+	skel = bpf_iter_sockmap__open_and_load();
+	if (CHECK(!skel, "bpf_iter_sockmap__open_and_load", "skeleton open_and_load failed\n"))
+		return;
 
-	अगर (map_type == BPF_MAP_TYPE_SOCKMAP) अणु
+	if (map_type == BPF_MAP_TYPE_SOCKMAP) {
 		src = skel->maps.sockmap;
 		num_elems = bpf_map__max_entries(src);
 		num_sockets = num_elems - 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		src = skel->maps.sockhash;
 		num_elems = bpf_map__max_entries(src) - 1;
 		num_sockets = num_elems;
-	पूर्ण
+	}
 
-	sock_fd = सुस्मृति(num_sockets, माप(*sock_fd));
-	अगर (CHECK(!sock_fd, "calloc(sock_fd)", "failed to allocate\n"))
-		जाओ out;
+	sock_fd = calloc(num_sockets, sizeof(*sock_fd));
+	if (CHECK(!sock_fd, "calloc(sock_fd)", "failed to allocate\n"))
+		goto out;
 
-	क्रम (i = 0; i < num_sockets; i++)
+	for (i = 0; i < num_sockets; i++)
 		sock_fd[i] = -1;
 
 	src_fd = bpf_map__fd(src);
 
-	क्रम (i = 0; i < num_sockets; i++) अणु
+	for (i = 0; i < num_sockets; i++) {
 		sock_fd[i] = connected_socket_v4();
-		अगर (CHECK(sock_fd[i] == -1, "connected_socket_v4", "cannot connect\n"))
-			जाओ out;
+		if (CHECK(sock_fd[i] == -1, "connected_socket_v4", "cannot connect\n"))
+			goto out;
 
 		err = bpf_map_update_elem(src_fd, &i, &sock_fd[i], BPF_NOEXIST);
-		अगर (CHECK(err, "map_update", "failed: %s\n", म_त्रुटि(त्रुटि_सं)))
-			जाओ out;
-	पूर्ण
+		if (CHECK(err, "map_update", "failed: %s\n", strerror(errno)))
+			goto out;
+	}
 
 	linfo.map.map_fd = src_fd;
 	opts.link_info = &linfo;
-	opts.link_info_len = माप(linfo);
+	opts.link_info_len = sizeof(linfo);
 	link = bpf_program__attach_iter(skel->progs.copy, &opts);
-	अगर (CHECK(IS_ERR(link), "attach_iter", "attach_iter failed\n"))
-		जाओ out;
+	if (CHECK(IS_ERR(link), "attach_iter", "attach_iter failed\n"))
+		goto out;
 
 	iter_fd = bpf_iter_create(bpf_link__fd(link));
-	अगर (CHECK(iter_fd < 0, "create_iter", "create_iter failed\n"))
-		जाओ मुक्त_link;
+	if (CHECK(iter_fd < 0, "create_iter", "create_iter failed\n"))
+		goto free_link;
 
-	/* करो some tests */
-	जबतक ((len = पढ़ो(iter_fd, buf, माप(buf))) > 0)
+	/* do some tests */
+	while ((len = read(iter_fd, buf, sizeof(buf))) > 0)
 		;
-	अगर (CHECK(len < 0, "read", "failed: %s\n", म_त्रुटि(त्रुटि_सं)))
-		जाओ बंद_iter;
+	if (CHECK(len < 0, "read", "failed: %s\n", strerror(errno)))
+		goto close_iter;
 
 	/* test results */
-	अगर (CHECK(skel->bss->elems != num_elems, "elems", "got %u expected %u\n",
+	if (CHECK(skel->bss->elems != num_elems, "elems", "got %u expected %u\n",
 		  skel->bss->elems, num_elems))
-		जाओ बंद_iter;
+		goto close_iter;
 
-	अगर (CHECK(skel->bss->socks != num_sockets, "socks", "got %u expected %u\n",
+	if (CHECK(skel->bss->socks != num_sockets, "socks", "got %u expected %u\n",
 		  skel->bss->socks, num_sockets))
-		जाओ बंद_iter;
+		goto close_iter;
 
 	compare_cookies(src, skel->maps.dst);
 
-बंद_iter:
-	बंद(iter_fd);
-मुक्त_link:
+close_iter:
+	close(iter_fd);
+free_link:
 	bpf_link__destroy(link);
 out:
-	क्रम (i = 0; sock_fd && i < num_sockets; i++)
-		अगर (sock_fd[i] >= 0)
-			बंद(sock_fd[i]);
-	अगर (sock_fd)
-		मुक्त(sock_fd);
+	for (i = 0; sock_fd && i < num_sockets; i++)
+		if (sock_fd[i] >= 0)
+			close(sock_fd[i]);
+	if (sock_fd)
+		free(sock_fd);
 	bpf_iter_sockmap__destroy(skel);
-पूर्ण
+}
 
-अटल व्योम test_sockmap_skb_verdict_attach(क्रमागत bpf_attach_type first,
-					    क्रमागत bpf_attach_type second)
-अणु
-	काष्ठा test_sockmap_skb_verdict_attach *skel;
-	पूर्णांक err, map, verdict;
+static void test_sockmap_skb_verdict_attach(enum bpf_attach_type first,
+					    enum bpf_attach_type second)
+{
+	struct test_sockmap_skb_verdict_attach *skel;
+	int err, map, verdict;
 
-	skel = test_sockmap_skb_verdict_attach__खोलो_and_load();
-	अगर (CHECK_FAIL(!skel)) अणु
-		लिखो_त्रुटि("test_sockmap_skb_verdict_attach__open_and_load");
-		वापस;
-	पूर्ण
+	skel = test_sockmap_skb_verdict_attach__open_and_load();
+	if (CHECK_FAIL(!skel)) {
+		perror("test_sockmap_skb_verdict_attach__open_and_load");
+		return;
+	}
 
 	verdict = bpf_program__fd(skel->progs.prog_skb_verdict);
 	map = bpf_map__fd(skel->maps.sock_map);
 
 	err = bpf_prog_attach(verdict, map, first, 0);
-	अगर (CHECK_FAIL(err)) अणु
-		लिखो_त्रुटि("bpf_prog_attach");
-		जाओ out;
-	पूर्ण
+	if (CHECK_FAIL(err)) {
+		perror("bpf_prog_attach");
+		goto out;
+	}
 
 	err = bpf_prog_attach(verdict, map, second, 0);
-	निश्चित(err == -1 && त्रुटि_सं == EBUSY);
+	assert(err == -1 && errno == EBUSY);
 
 	err = bpf_prog_detach2(verdict, map, first);
-	अगर (CHECK_FAIL(err)) अणु
-		लिखो_त्रुटि("bpf_prog_detach2");
-		जाओ out;
-	पूर्ण
+	if (CHECK_FAIL(err)) {
+		perror("bpf_prog_detach2");
+		goto out;
+	}
 out:
 	test_sockmap_skb_verdict_attach__destroy(skel);
-पूर्ण
+}
 
-व्योम test_sockmap_basic(व्योम)
-अणु
-	अगर (test__start_subtest("sockmap create_update_free"))
-		test_sockmap_create_update_मुक्त(BPF_MAP_TYPE_SOCKMAP);
-	अगर (test__start_subtest("sockhash create_update_free"))
-		test_sockmap_create_update_मुक्त(BPF_MAP_TYPE_SOCKHASH);
-	अगर (test__start_subtest("sockmap sk_msg load helpers"))
+void test_sockmap_basic(void)
+{
+	if (test__start_subtest("sockmap create_update_free"))
+		test_sockmap_create_update_free(BPF_MAP_TYPE_SOCKMAP);
+	if (test__start_subtest("sockhash create_update_free"))
+		test_sockmap_create_update_free(BPF_MAP_TYPE_SOCKHASH);
+	if (test__start_subtest("sockmap sk_msg load helpers"))
 		test_skmsg_helpers(BPF_MAP_TYPE_SOCKMAP);
-	अगर (test__start_subtest("sockhash sk_msg load helpers"))
+	if (test__start_subtest("sockhash sk_msg load helpers"))
 		test_skmsg_helpers(BPF_MAP_TYPE_SOCKHASH);
-	अगर (test__start_subtest("sockmap update"))
+	if (test__start_subtest("sockmap update"))
 		test_sockmap_update(BPF_MAP_TYPE_SOCKMAP);
-	अगर (test__start_subtest("sockhash update"))
+	if (test__start_subtest("sockhash update"))
 		test_sockmap_update(BPF_MAP_TYPE_SOCKHASH);
-	अगर (test__start_subtest("sockmap update in unsafe context"))
+	if (test__start_subtest("sockmap update in unsafe context"))
 		test_sockmap_invalid_update();
-	अगर (test__start_subtest("sockmap copy"))
+	if (test__start_subtest("sockmap copy"))
 		test_sockmap_copy(BPF_MAP_TYPE_SOCKMAP);
-	अगर (test__start_subtest("sockhash copy"))
+	if (test__start_subtest("sockhash copy"))
 		test_sockmap_copy(BPF_MAP_TYPE_SOCKHASH);
-	अगर (test__start_subtest("sockmap skb_verdict attach")) अणु
+	if (test__start_subtest("sockmap skb_verdict attach")) {
 		test_sockmap_skb_verdict_attach(BPF_SK_SKB_VERDICT,
 						BPF_SK_SKB_STREAM_VERDICT);
 		test_sockmap_skb_verdict_attach(BPF_SK_SKB_STREAM_VERDICT,
 						BPF_SK_SKB_VERDICT);
-	पूर्ण
-पूर्ण
+	}
+}

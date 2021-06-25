@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * MUSB OTG driver host defines
  *
@@ -8,122 +7,122 @@
  * Copyright (C) 2006-2007 Nokia Corporation
  */
 
-#अगर_अघोषित _MUSB_HOST_H
-#घोषणा _MUSB_HOST_H
+#ifndef _MUSB_HOST_H
+#define _MUSB_HOST_H
 
-#समावेश <linux/scatterlist.h>
+#include <linux/scatterlist.h>
 
-/* stored in "usb_host_endpoint.hcpriv" क्रम scheduled endpoपूर्णांकs */
-काष्ठा musb_qh अणु
-	काष्ठा usb_host_endpoपूर्णांक *hep;		/* usbcore info */
-	काष्ठा usb_device	*dev;
-	काष्ठा musb_hw_ep	*hw_ep;		/* current binding */
+/* stored in "usb_host_endpoint.hcpriv" for scheduled endpoints */
+struct musb_qh {
+	struct usb_host_endpoint *hep;		/* usbcore info */
+	struct usb_device	*dev;
+	struct musb_hw_ep	*hw_ep;		/* current binding */
 
-	काष्ठा list_head	ring;		/* of musb_qh */
-	/* काष्ठा musb_qh		*next; */	/* क्रम periodic tree */
+	struct list_head	ring;		/* of musb_qh */
+	/* struct musb_qh		*next; */	/* for periodic tree */
 	u8			mux;		/* qh multiplexed to hw_ep */
 
-	अचिन्हित		offset;		/* in urb->transfer_buffer */
-	अचिन्हित		segsize;	/* current xfer fragment */
+	unsigned		offset;		/* in urb->transfer_buffer */
+	unsigned		segsize;	/* current xfer fragment */
 
-	u8			type_reg;	/* अणुrx,txपूर्ण type रेजिस्टर */
-	u8			पूर्णांकv_reg;	/* अणुrx,txपूर्ण पूर्णांकerval रेजिस्टर */
-	u8			addr_reg;	/* device address रेजिस्टर */
-	u8			h_addr_reg;	/* hub address रेजिस्टर */
-	u8			h_port_reg;	/* hub port रेजिस्टर */
+	u8			type_reg;	/* {rx,tx} type register */
+	u8			intv_reg;	/* {rx,tx} interval register */
+	u8			addr_reg;	/* device address register */
+	u8			h_addr_reg;	/* hub address register */
+	u8			h_port_reg;	/* hub port register */
 
-	u8			is_पढ़ोy;	/* safe to modअगरy hw_ep */
+	u8			is_ready;	/* safe to modify hw_ep */
 	u8			type;		/* XFERTYPE_* */
 	u8			epnum;
 	u8			hb_mult;	/* high bandwidth pkts per uf */
 	u16			maxpacket;
-	u16			frame;		/* क्रम periodic schedule */
-	अचिन्हित		iso_idx;	/* in urb->iso_frame_desc[] */
-	काष्ठा sg_mapping_iter sg_miter;	/* क्रम highmem in PIO mode */
+	u16			frame;		/* for periodic schedule */
+	unsigned		iso_idx;	/* in urb->iso_frame_desc[] */
+	struct sg_mapping_iter sg_miter;	/* for highmem in PIO mode */
 	bool			use_sg;		/* to track urb using sglist */
-पूर्ण;
+};
 
 /* map from control or bulk queue head to the first qh on that ring */
-अटल अंतरभूत काष्ठा musb_qh *first_qh(काष्ठा list_head *q)
-अणु
-	अगर (list_empty(q))
-		वापस शून्य;
-	वापस list_entry(q->next, काष्ठा musb_qh, ring);
-पूर्ण
+static inline struct musb_qh *first_qh(struct list_head *q)
+{
+	if (list_empty(q))
+		return NULL;
+	return list_entry(q->next, struct musb_qh, ring);
+}
 
 
-#अगर IS_ENABLED(CONFIG_USB_MUSB_HOST) || IS_ENABLED(CONFIG_USB_MUSB_DUAL_ROLE)
-बाह्य काष्ठा musb *hcd_to_musb(काष्ठा usb_hcd *);
-बाह्य irqवापस_t musb_h_ep0_irq(काष्ठा musb *);
-बाह्य पूर्णांक musb_host_alloc(काष्ठा musb *);
-बाह्य पूर्णांक musb_host_setup(काष्ठा musb *, पूर्णांक);
-बाह्य व्योम musb_host_cleanup(काष्ठा musb *);
-बाह्य व्योम musb_host_tx(काष्ठा musb *, u8);
-बाह्य व्योम musb_host_rx(काष्ठा musb *, u8);
-बाह्य व्योम musb_root_disconnect(काष्ठा musb *musb);
-बाह्य व्योम musb_host_मुक्त(काष्ठा musb *);
-बाह्य व्योम musb_host_cleanup(काष्ठा musb *);
-बाह्य व्योम musb_host_tx(काष्ठा musb *, u8);
-बाह्य व्योम musb_host_rx(काष्ठा musb *, u8);
-बाह्य व्योम musb_root_disconnect(काष्ठा musb *musb);
-बाह्य व्योम musb_host_resume_root_hub(काष्ठा musb *musb);
-बाह्य व्योम musb_host_poke_root_hub(काष्ठा musb *musb);
-बाह्य पूर्णांक musb_port_suspend(काष्ठा musb *musb, bool करो_suspend);
-बाह्य व्योम musb_port_reset(काष्ठा musb *musb, bool करो_reset);
-बाह्य व्योम musb_host_finish_resume(काष्ठा work_काष्ठा *work);
-#अन्यथा
-अटल अंतरभूत काष्ठा musb *hcd_to_musb(काष्ठा usb_hcd *hcd)
-अणु
-	वापस शून्य;
-पूर्ण
+#if IS_ENABLED(CONFIG_USB_MUSB_HOST) || IS_ENABLED(CONFIG_USB_MUSB_DUAL_ROLE)
+extern struct musb *hcd_to_musb(struct usb_hcd *);
+extern irqreturn_t musb_h_ep0_irq(struct musb *);
+extern int musb_host_alloc(struct musb *);
+extern int musb_host_setup(struct musb *, int);
+extern void musb_host_cleanup(struct musb *);
+extern void musb_host_tx(struct musb *, u8);
+extern void musb_host_rx(struct musb *, u8);
+extern void musb_root_disconnect(struct musb *musb);
+extern void musb_host_free(struct musb *);
+extern void musb_host_cleanup(struct musb *);
+extern void musb_host_tx(struct musb *, u8);
+extern void musb_host_rx(struct musb *, u8);
+extern void musb_root_disconnect(struct musb *musb);
+extern void musb_host_resume_root_hub(struct musb *musb);
+extern void musb_host_poke_root_hub(struct musb *musb);
+extern int musb_port_suspend(struct musb *musb, bool do_suspend);
+extern void musb_port_reset(struct musb *musb, bool do_reset);
+extern void musb_host_finish_resume(struct work_struct *work);
+#else
+static inline struct musb *hcd_to_musb(struct usb_hcd *hcd)
+{
+	return NULL;
+}
 
-अटल अंतरभूत irqवापस_t musb_h_ep0_irq(काष्ठा musb *musb)
-अणु
-	वापस 0;
-पूर्ण
+static inline irqreturn_t musb_h_ep0_irq(struct musb *musb)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक musb_host_alloc(काष्ठा musb *musb)
-अणु
-	वापस 0;
-पूर्ण
+static inline int musb_host_alloc(struct musb *musb)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक musb_host_setup(काष्ठा musb *musb, पूर्णांक घातer_budget)
-अणु
-	वापस 0;
-पूर्ण
+static inline int musb_host_setup(struct musb *musb, int power_budget)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम musb_host_cleanup(काष्ठा musb *musb)		अणुपूर्ण
-अटल अंतरभूत व्योम musb_host_मुक्त(काष्ठा musb *musb)		अणुपूर्ण
-अटल अंतरभूत व्योम musb_host_tx(काष्ठा musb *musb, u8 epnum)	अणुपूर्ण
-अटल अंतरभूत व्योम musb_host_rx(काष्ठा musb *musb, u8 epnum)	अणुपूर्ण
-अटल अंतरभूत व्योम musb_root_disconnect(काष्ठा musb *musb)	अणुपूर्ण
-अटल अंतरभूत व्योम musb_host_resume_root_hub(काष्ठा musb *musb)	अणुपूर्ण
-अटल अंतरभूत व्योम musb_host_poke_root_hub(काष्ठा musb *musb)	अणुपूर्ण
-अटल अंतरभूत पूर्णांक musb_port_suspend(काष्ठा musb *musb, bool करो_suspend)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत व्योम musb_port_reset(काष्ठा musb *musb, bool करो_reset) अणुपूर्ण
-अटल अंतरभूत व्योम musb_host_finish_resume(काष्ठा work_काष्ठा *work) अणुपूर्ण
-#पूर्ण_अगर
+static inline void musb_host_cleanup(struct musb *musb)		{}
+static inline void musb_host_free(struct musb *musb)		{}
+static inline void musb_host_tx(struct musb *musb, u8 epnum)	{}
+static inline void musb_host_rx(struct musb *musb, u8 epnum)	{}
+static inline void musb_root_disconnect(struct musb *musb)	{}
+static inline void musb_host_resume_root_hub(struct musb *musb)	{}
+static inline void musb_host_poke_root_hub(struct musb *musb)	{}
+static inline int musb_port_suspend(struct musb *musb, bool do_suspend)
+{
+	return 0;
+}
+static inline void musb_port_reset(struct musb *musb, bool do_reset) {}
+static inline void musb_host_finish_resume(struct work_struct *work) {}
+#endif
 
-काष्ठा usb_hcd;
+struct usb_hcd;
 
-बाह्य पूर्णांक musb_hub_status_data(काष्ठा usb_hcd *hcd, अक्षर *buf);
-बाह्य पूर्णांक musb_hub_control(काष्ठा usb_hcd *hcd,
+extern int musb_hub_status_data(struct usb_hcd *hcd, char *buf);
+extern int musb_hub_control(struct usb_hcd *hcd,
 			u16 typeReq, u16 wValue, u16 wIndex,
-			अक्षर *buf, u16 wLength);
+			char *buf, u16 wLength);
 
-अटल अंतरभूत काष्ठा urb *next_urb(काष्ठा musb_qh *qh)
-अणु
-	काष्ठा list_head	*queue;
+static inline struct urb *next_urb(struct musb_qh *qh)
+{
+	struct list_head	*queue;
 
-	अगर (!qh)
-		वापस शून्य;
+	if (!qh)
+		return NULL;
 	queue = &qh->hep->urb_list;
-	अगर (list_empty(queue))
-		वापस शून्य;
-	वापस list_entry(queue->next, काष्ठा urb, urb_list);
-पूर्ण
+	if (list_empty(queue))
+		return NULL;
+	return list_entry(queue->next, struct urb, urb_list);
+}
 
-#पूर्ण_अगर				/* _MUSB_HOST_H */
+#endif				/* _MUSB_HOST_H */

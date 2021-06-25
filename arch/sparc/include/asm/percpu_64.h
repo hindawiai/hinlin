@@ -1,28 +1,27 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ARCH_SPARC64_PERCPU__
-#घोषणा __ARCH_SPARC64_PERCPU__
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ARCH_SPARC64_PERCPU__
+#define __ARCH_SPARC64_PERCPU__
 
-#समावेश <linux/compiler.h>
+#include <linux/compiler.h>
 
-#अगर_अघोषित BUILD_VDSO
-रेजिस्टर अचिन्हित दीर्घ __local_per_cpu_offset यंत्र("g5");
-#पूर्ण_अगर
+#ifndef BUILD_VDSO
+register unsigned long __local_per_cpu_offset asm("g5");
+#endif
 
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 
-#समावेश <यंत्र/trap_block.h>
+#include <asm/trap_block.h>
 
-#घोषणा __per_cpu_offset(__cpu) \
+#define __per_cpu_offset(__cpu) \
 	(trap_block[(__cpu)].__per_cpu_base)
-#घोषणा per_cpu_offset(x) (__per_cpu_offset(x))
+#define per_cpu_offset(x) (__per_cpu_offset(x))
 
-#घोषणा __my_cpu_offset __local_per_cpu_offset
+#define __my_cpu_offset __local_per_cpu_offset
 
-#अन्यथा /* ! SMP */
+#else /* ! SMP */
 
-#पूर्ण_अगर	/* SMP */
+#endif	/* SMP */
 
-#समावेश <यंत्र-generic/percpu.h>
+#include <asm-generic/percpu.h>
 
-#पूर्ण_अगर /* __ARCH_SPARC64_PERCPU__ */
+#endif /* __ARCH_SPARC64_PERCPU__ */

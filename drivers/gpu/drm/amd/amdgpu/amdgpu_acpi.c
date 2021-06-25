@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,435 +21,435 @@
  *
  */
 
-#समावेश <linux/pci.h>
-#समावेश <linux/acpi.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/घातer_supply.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <acpi/video.h>
-#समावेश <acpi/actbl.h>
+#include <linux/pci.h>
+#include <linux/acpi.h>
+#include <linux/slab.h>
+#include <linux/power_supply.h>
+#include <linux/pm_runtime.h>
+#include <acpi/video.h>
+#include <acpi/actbl.h>
 
-#समावेश <drm/drm_crtc_helper.h>
-#समावेश "amdgpu.h"
-#समावेश "amdgpu_pm.h"
-#समावेश "amdgpu_display.h"
-#समावेश "amd_acpi.h"
-#समावेश "atom.h"
+#include <drm/drm_crtc_helper.h>
+#include "amdgpu.h"
+#include "amdgpu_pm.h"
+#include "amdgpu_display.h"
+#include "amd_acpi.h"
+#include "atom.h"
 
-काष्ठा amdgpu_atअगर_notअगरication_cfg अणु
+struct amdgpu_atif_notification_cfg {
 	bool enabled;
-	पूर्णांक command_code;
-पूर्ण;
+	int command_code;
+};
 
-काष्ठा amdgpu_atअगर_notअगरications अणु
+struct amdgpu_atif_notifications {
 	bool thermal_state;
-	bool क्रमced_घातer_state;
-	bool प्रणाली_घातer_state;
+	bool forced_power_state;
+	bool system_power_state;
 	bool brightness_change;
 	bool dgpu_display_event;
-	bool gpu_package_घातer_limit;
-पूर्ण;
+	bool gpu_package_power_limit;
+};
 
-काष्ठा amdgpu_atअगर_functions अणु
-	bool प्रणाली_params;
+struct amdgpu_atif_functions {
+	bool system_params;
 	bool sbios_requests;
 	bool temperature_change;
-	bool query_backlight_transfer_अक्षरacteristics;
-	bool पढ़ोy_to_unकरोck;
-	bool बाह्यal_gpu_inक्रमmation;
-पूर्ण;
+	bool query_backlight_transfer_characteristics;
+	bool ready_to_undock;
+	bool external_gpu_information;
+};
 
-काष्ठा amdgpu_atअगर अणु
+struct amdgpu_atif {
 	acpi_handle handle;
 
-	काष्ठा amdgpu_atअगर_notअगरications notअगरications;
-	काष्ठा amdgpu_atअगर_functions functions;
-	काष्ठा amdgpu_atअगर_notअगरication_cfg notअगरication_cfg;
-#अगर defined(CONFIG_BACKLIGHT_CLASS_DEVICE) || defined(CONFIG_BACKLIGHT_CLASS_DEVICE_MODULE)
-	काष्ठा backlight_device *bd;
-#पूर्ण_अगर
-	काष्ठा amdgpu_dm_backlight_caps backlight_caps;
-पूर्ण;
+	struct amdgpu_atif_notifications notifications;
+	struct amdgpu_atif_functions functions;
+	struct amdgpu_atif_notification_cfg notification_cfg;
+#if defined(CONFIG_BACKLIGHT_CLASS_DEVICE) || defined(CONFIG_BACKLIGHT_CLASS_DEVICE_MODULE)
+	struct backlight_device *bd;
+#endif
+	struct amdgpu_dm_backlight_caps backlight_caps;
+};
 
 /* Call the ATIF method
  */
 /**
- * amdgpu_atअगर_call - call an ATIF method
+ * amdgpu_atif_call - call an ATIF method
  *
  * @handle: acpi handle
  * @function: the ATIF function to execute
  * @params: ATIF function params
  *
  * Executes the requested ATIF function (all asics).
- * Returns a poपूर्णांकer to the acpi output buffer.
+ * Returns a pointer to the acpi output buffer.
  */
-अटल जोड़ acpi_object *amdgpu_atअगर_call(काष्ठा amdgpu_atअगर *atअगर,
-					   पूर्णांक function,
-					   काष्ठा acpi_buffer *params)
-अणु
+static union acpi_object *amdgpu_atif_call(struct amdgpu_atif *atif,
+					   int function,
+					   struct acpi_buffer *params)
+{
 	acpi_status status;
-	जोड़ acpi_object atअगर_arg_elements[2];
-	काष्ठा acpi_object_list atअगर_arg;
-	काष्ठा acpi_buffer buffer = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
+	union acpi_object atif_arg_elements[2];
+	struct acpi_object_list atif_arg;
+	struct acpi_buffer buffer = { ACPI_ALLOCATE_BUFFER, NULL };
 
-	atअगर_arg.count = 2;
-	atअगर_arg.poपूर्णांकer = &atअगर_arg_elements[0];
+	atif_arg.count = 2;
+	atif_arg.pointer = &atif_arg_elements[0];
 
-	atअगर_arg_elements[0].type = ACPI_TYPE_INTEGER;
-	atअगर_arg_elements[0].पूर्णांकeger.value = function;
+	atif_arg_elements[0].type = ACPI_TYPE_INTEGER;
+	atif_arg_elements[0].integer.value = function;
 
-	अगर (params) अणु
-		atअगर_arg_elements[1].type = ACPI_TYPE_BUFFER;
-		atअगर_arg_elements[1].buffer.length = params->length;
-		atअगर_arg_elements[1].buffer.poपूर्णांकer = params->poपूर्णांकer;
-	पूर्ण अन्यथा अणु
+	if (params) {
+		atif_arg_elements[1].type = ACPI_TYPE_BUFFER;
+		atif_arg_elements[1].buffer.length = params->length;
+		atif_arg_elements[1].buffer.pointer = params->pointer;
+	} else {
 		/* We need a second fake parameter */
-		atअगर_arg_elements[1].type = ACPI_TYPE_INTEGER;
-		atअगर_arg_elements[1].पूर्णांकeger.value = 0;
-	पूर्ण
+		atif_arg_elements[1].type = ACPI_TYPE_INTEGER;
+		atif_arg_elements[1].integer.value = 0;
+	}
 
-	status = acpi_evaluate_object(atअगर->handle, शून्य, &atअगर_arg,
+	status = acpi_evaluate_object(atif->handle, NULL, &atif_arg,
 				      &buffer);
 
-	/* Fail only अगर calling the method fails and ATIF is supported */
-	अगर (ACPI_FAILURE(status) && status != AE_NOT_FOUND) अणु
+	/* Fail only if calling the method fails and ATIF is supported */
+	if (ACPI_FAILURE(status) && status != AE_NOT_FOUND) {
 		DRM_DEBUG_DRIVER("failed to evaluate ATIF got %s\n",
-				 acpi_क्रमmat_exception(status));
-		kमुक्त(buffer.poपूर्णांकer);
-		वापस शून्य;
-	पूर्ण
+				 acpi_format_exception(status));
+		kfree(buffer.pointer);
+		return NULL;
+	}
 
-	वापस buffer.poपूर्णांकer;
-पूर्ण
+	return buffer.pointer;
+}
 
 /**
- * amdgpu_atअगर_parse_notअगरication - parse supported notअगरications
+ * amdgpu_atif_parse_notification - parse supported notifications
  *
- * @n: supported notअगरications काष्ठा
- * @mask: supported notअगरications mask from ATIF
+ * @n: supported notifications struct
+ * @mask: supported notifications mask from ATIF
  *
- * Use the supported notअगरications mask from ATIF function
- * ATIF_FUNCTION_VERIFY_INTERFACE to determine what notअगरications
+ * Use the supported notifications mask from ATIF function
+ * ATIF_FUNCTION_VERIFY_INTERFACE to determine what notifications
  * are supported (all asics).
  */
-अटल व्योम amdgpu_atअगर_parse_notअगरication(काष्ठा amdgpu_atअगर_notअगरications *n, u32 mask)
-अणु
+static void amdgpu_atif_parse_notification(struct amdgpu_atif_notifications *n, u32 mask)
+{
 	n->thermal_state = mask & ATIF_THERMAL_STATE_CHANGE_REQUEST_SUPPORTED;
-	n->क्रमced_घातer_state = mask & ATIF_FORCED_POWER_STATE_CHANGE_REQUEST_SUPPORTED;
-	n->प्रणाली_घातer_state = mask & ATIF_SYSTEM_POWER_SOURCE_CHANGE_REQUEST_SUPPORTED;
+	n->forced_power_state = mask & ATIF_FORCED_POWER_STATE_CHANGE_REQUEST_SUPPORTED;
+	n->system_power_state = mask & ATIF_SYSTEM_POWER_SOURCE_CHANGE_REQUEST_SUPPORTED;
 	n->brightness_change = mask & ATIF_PANEL_BRIGHTNESS_CHANGE_REQUEST_SUPPORTED;
 	n->dgpu_display_event = mask & ATIF_DGPU_DISPLAY_EVENT_SUPPORTED;
-	n->gpu_package_घातer_limit = mask & ATIF_GPU_PACKAGE_POWER_LIMIT_REQUEST_SUPPORTED;
-पूर्ण
+	n->gpu_package_power_limit = mask & ATIF_GPU_PACKAGE_POWER_LIMIT_REQUEST_SUPPORTED;
+}
 
 /**
- * amdgpu_atअगर_parse_functions - parse supported functions
+ * amdgpu_atif_parse_functions - parse supported functions
  *
- * @f: supported functions काष्ठा
+ * @f: supported functions struct
  * @mask: supported functions mask from ATIF
  *
  * Use the supported functions mask from ATIF function
  * ATIF_FUNCTION_VERIFY_INTERFACE to determine what functions
  * are supported (all asics).
  */
-अटल व्योम amdgpu_atअगर_parse_functions(काष्ठा amdgpu_atअगर_functions *f, u32 mask)
-अणु
-	f->प्रणाली_params = mask & ATIF_GET_SYSTEM_PARAMETERS_SUPPORTED;
+static void amdgpu_atif_parse_functions(struct amdgpu_atif_functions *f, u32 mask)
+{
+	f->system_params = mask & ATIF_GET_SYSTEM_PARAMETERS_SUPPORTED;
 	f->sbios_requests = mask & ATIF_GET_SYSTEM_BIOS_REQUESTS_SUPPORTED;
 	f->temperature_change = mask & ATIF_TEMPERATURE_CHANGE_NOTIFICATION_SUPPORTED;
-	f->query_backlight_transfer_अक्षरacteristics =
+	f->query_backlight_transfer_characteristics =
 		mask & ATIF_QUERY_BACKLIGHT_TRANSFER_CHARACTERISTICS_SUPPORTED;
-	f->पढ़ोy_to_unकरोck = mask & ATIF_READY_TO_UNDOCK_NOTIFICATION_SUPPORTED;
-	f->बाह्यal_gpu_inक्रमmation = mask & ATIF_GET_EXTERNAL_GPU_INFORMATION_SUPPORTED;
-पूर्ण
+	f->ready_to_undock = mask & ATIF_READY_TO_UNDOCK_NOTIFICATION_SUPPORTED;
+	f->external_gpu_information = mask & ATIF_GET_EXTERNAL_GPU_INFORMATION_SUPPORTED;
+}
 
 /**
- * amdgpu_atअगर_verअगरy_पूर्णांकerface - verअगरy ATIF
+ * amdgpu_atif_verify_interface - verify ATIF
  *
  * @handle: acpi handle
- * @atअगर: amdgpu atअगर काष्ठा
+ * @atif: amdgpu atif struct
  *
  * Execute the ATIF_FUNCTION_VERIFY_INTERFACE ATIF function
  * to initialize ATIF and determine what features are supported
  * (all asics).
- * वापसs 0 on success, error on failure.
+ * returns 0 on success, error on failure.
  */
-अटल पूर्णांक amdgpu_atअगर_verअगरy_पूर्णांकerface(काष्ठा amdgpu_atअगर *atअगर)
-अणु
-	जोड़ acpi_object *info;
-	काष्ठा atअगर_verअगरy_पूर्णांकerface output;
-	माप_प्रकार size;
-	पूर्णांक err = 0;
+static int amdgpu_atif_verify_interface(struct amdgpu_atif *atif)
+{
+	union acpi_object *info;
+	struct atif_verify_interface output;
+	size_t size;
+	int err = 0;
 
-	info = amdgpu_atअगर_call(atअगर, ATIF_FUNCTION_VERIFY_INTERFACE, शून्य);
-	अगर (!info)
-		वापस -EIO;
+	info = amdgpu_atif_call(atif, ATIF_FUNCTION_VERIFY_INTERFACE, NULL);
+	if (!info)
+		return -EIO;
 
-	स_रखो(&output, 0, माप(output));
+	memset(&output, 0, sizeof(output));
 
-	size = *(u16 *) info->buffer.poपूर्णांकer;
-	अगर (size < 12) अणु
+	size = *(u16 *) info->buffer.pointer;
+	if (size < 12) {
 		DRM_INFO("ATIF buffer is too small: %zu\n", size);
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
-	size = min(माप(output), size);
+		goto out;
+	}
+	size = min(sizeof(output), size);
 
-	स_नकल(&output, info->buffer.poपूर्णांकer, size);
+	memcpy(&output, info->buffer.pointer, size);
 
 	/* TODO: check version? */
 	DRM_DEBUG_DRIVER("ATIF version %u\n", output.version);
 
-	amdgpu_atअगर_parse_notअगरication(&atअगर->notअगरications, output.notअगरication_mask);
-	amdgpu_atअगर_parse_functions(&atअगर->functions, output.function_bits);
+	amdgpu_atif_parse_notification(&atif->notifications, output.notification_mask);
+	amdgpu_atif_parse_functions(&atif->functions, output.function_bits);
 
 out:
-	kमुक्त(info);
-	वापस err;
-पूर्ण
+	kfree(info);
+	return err;
+}
 
-अटल acpi_handle amdgpu_atअगर_probe_handle(acpi_handle dhandle)
-अणु
-	acpi_handle handle = शून्य;
-	अक्षर acpi_method_name[255] = अणु 0 पूर्ण;
-	काष्ठा acpi_buffer buffer = अणु माप(acpi_method_name), acpi_method_name पूर्ण;
+static acpi_handle amdgpu_atif_probe_handle(acpi_handle dhandle)
+{
+	acpi_handle handle = NULL;
+	char acpi_method_name[255] = { 0 };
+	struct acpi_buffer buffer = { sizeof(acpi_method_name), acpi_method_name };
 	acpi_status status;
 
-	/* For PX/HG प्रणालीs, ATIF and ATPX are in the iGPU's namespace, on dGPU only
-	 * प्रणालीs, ATIF is in the dGPU's namespace.
+	/* For PX/HG systems, ATIF and ATPX are in the iGPU's namespace, on dGPU only
+	 * systems, ATIF is in the dGPU's namespace.
 	 */
 	status = acpi_get_handle(dhandle, "ATIF", &handle);
-	अगर (ACPI_SUCCESS(status))
-		जाओ out;
+	if (ACPI_SUCCESS(status))
+		goto out;
 
-	अगर (amdgpu_has_atpx()) अणु
+	if (amdgpu_has_atpx()) {
 		status = acpi_get_handle(amdgpu_atpx_get_dhandle(), "ATIF",
 					 &handle);
-		अगर (ACPI_SUCCESS(status))
-			जाओ out;
-	पूर्ण
+		if (ACPI_SUCCESS(status))
+			goto out;
+	}
 
 	DRM_DEBUG_DRIVER("No ATIF handle found\n");
-	वापस शून्य;
+	return NULL;
 out:
 	acpi_get_name(handle, ACPI_FULL_PATHNAME, &buffer);
 	DRM_DEBUG_DRIVER("Found ATIF handle %s\n", acpi_method_name);
-	वापस handle;
-पूर्ण
+	return handle;
+}
 
 /**
- * amdgpu_atअगर_get_notअगरication_params - determine notअगरy configuration
+ * amdgpu_atif_get_notification_params - determine notify configuration
  *
  * @handle: acpi handle
- * @n: atअगर notअगरication configuration काष्ठा
+ * @n: atif notification configuration struct
  *
  * Execute the ATIF_FUNCTION_GET_SYSTEM_PARAMETERS ATIF function
- * to determine अगर a notअगरier is used and अगर so which one
- * (all asics).  This is either Notअगरy(VGA, 0x81) or Notअगरy(VGA, n)
- * where n is specअगरied in the result अगर a notअगरier is used.
+ * to determine if a notifier is used and if so which one
+ * (all asics).  This is either Notify(VGA, 0x81) or Notify(VGA, n)
+ * where n is specified in the result if a notifier is used.
  * Returns 0 on success, error on failure.
  */
-अटल पूर्णांक amdgpu_atअगर_get_notअगरication_params(काष्ठा amdgpu_atअगर *atअगर)
-अणु
-	जोड़ acpi_object *info;
-	काष्ठा amdgpu_atअगर_notअगरication_cfg *n = &atअगर->notअगरication_cfg;
-	काष्ठा atअगर_प्रणाली_params params;
-	माप_प्रकार size;
-	पूर्णांक err = 0;
+static int amdgpu_atif_get_notification_params(struct amdgpu_atif *atif)
+{
+	union acpi_object *info;
+	struct amdgpu_atif_notification_cfg *n = &atif->notification_cfg;
+	struct atif_system_params params;
+	size_t size;
+	int err = 0;
 
-	info = amdgpu_atअगर_call(atअगर, ATIF_FUNCTION_GET_SYSTEM_PARAMETERS,
-				शून्य);
-	अगर (!info) अणु
+	info = amdgpu_atif_call(atif, ATIF_FUNCTION_GET_SYSTEM_PARAMETERS,
+				NULL);
+	if (!info) {
 		err = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	size = *(u16 *) info->buffer.poपूर्णांकer;
-	अगर (size < 10) अणु
+	size = *(u16 *) info->buffer.pointer;
+	if (size < 10) {
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	स_रखो(&params, 0, माप(params));
-	size = min(माप(params), size);
-	स_नकल(&params, info->buffer.poपूर्णांकer, size);
+	memset(&params, 0, sizeof(params));
+	size = min(sizeof(params), size);
+	memcpy(&params, info->buffer.pointer, size);
 
 	DRM_DEBUG_DRIVER("SYSTEM_PARAMS: mask = %#x, flags = %#x\n",
 			params.flags, params.valid_mask);
 	params.flags = params.flags & params.valid_mask;
 
-	अगर ((params.flags & ATIF_NOTIFY_MASK) == ATIF_NOTIFY_NONE) अणु
+	if ((params.flags & ATIF_NOTIFY_MASK) == ATIF_NOTIFY_NONE) {
 		n->enabled = false;
 		n->command_code = 0;
-	पूर्ण अन्यथा अगर ((params.flags & ATIF_NOTIFY_MASK) == ATIF_NOTIFY_81) अणु
+	} else if ((params.flags & ATIF_NOTIFY_MASK) == ATIF_NOTIFY_81) {
 		n->enabled = true;
 		n->command_code = 0x81;
-	पूर्ण अन्यथा अणु
-		अगर (size < 11) अणु
+	} else {
+		if (size < 11) {
 			err = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		n->enabled = true;
 		n->command_code = params.command_code;
-	पूर्ण
+	}
 
 out:
 	DRM_DEBUG_DRIVER("Notification %s, command code = %#x\n",
 			(n->enabled ? "enabled" : "disabled"),
 			n->command_code);
-	kमुक्त(info);
-	वापस err;
-पूर्ण
+	kfree(info);
+	return err;
+}
 
 /**
- * amdgpu_atअगर_query_backlight_caps - get min and max backlight input संकेत
+ * amdgpu_atif_query_backlight_caps - get min and max backlight input signal
  *
  * @handle: acpi handle
  *
  * Execute the QUERY_BRIGHTNESS_TRANSFER_CHARACTERISTICS ATIF function
  * to determine the acceptable range of backlight values
  *
- * Backlight_caps.caps_valid will be set to true अगर the query is successful
+ * Backlight_caps.caps_valid will be set to true if the query is successful
  *
- * The input संकेतs are in range 0-255
+ * The input signals are in range 0-255
  *
  * This function assumes the display with backlight is the first LCD
  *
  * Returns 0 on success, error on failure.
  */
-अटल पूर्णांक amdgpu_atअगर_query_backlight_caps(काष्ठा amdgpu_atअगर *atअगर)
-अणु
-	जोड़ acpi_object *info;
-	काष्ठा atअगर_qbtc_output अक्षरacteristics;
-	काष्ठा atअगर_qbtc_arguments arguments;
-	काष्ठा acpi_buffer params;
-	माप_प्रकार size;
-	पूर्णांक err = 0;
+static int amdgpu_atif_query_backlight_caps(struct amdgpu_atif *atif)
+{
+	union acpi_object *info;
+	struct atif_qbtc_output characteristics;
+	struct atif_qbtc_arguments arguments;
+	struct acpi_buffer params;
+	size_t size;
+	int err = 0;
 
-	arguments.size = माप(arguments);
+	arguments.size = sizeof(arguments);
 	arguments.requested_display = ATIF_QBTC_REQUEST_LCD1;
 
-	params.length = माप(arguments);
-	params.poपूर्णांकer = (व्योम *)&arguments;
+	params.length = sizeof(arguments);
+	params.pointer = (void *)&arguments;
 
-	info = amdgpu_atअगर_call(atअगर,
+	info = amdgpu_atif_call(atif,
 		ATIF_FUNCTION_QUERY_BRIGHTNESS_TRANSFER_CHARACTERISTICS,
 		&params);
-	अगर (!info) अणु
+	if (!info) {
 		err = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	size = *(u16 *) info->buffer.poपूर्णांकer;
-	अगर (size < 10) अणु
+	size = *(u16 *) info->buffer.pointer;
+	if (size < 10) {
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	स_रखो(&अक्षरacteristics, 0, माप(अक्षरacteristics));
-	size = min(माप(अक्षरacteristics), size);
-	स_नकल(&अक्षरacteristics, info->buffer.poपूर्णांकer, size);
+	memset(&characteristics, 0, sizeof(characteristics));
+	size = min(sizeof(characteristics), size);
+	memcpy(&characteristics, info->buffer.pointer, size);
 
-	atअगर->backlight_caps.caps_valid = true;
-	atअगर->backlight_caps.min_input_संकेत =
-			अक्षरacteristics.min_input_संकेत;
-	atअगर->backlight_caps.max_input_संकेत =
-			अक्षरacteristics.max_input_संकेत;
+	atif->backlight_caps.caps_valid = true;
+	atif->backlight_caps.min_input_signal =
+			characteristics.min_input_signal;
+	atif->backlight_caps.max_input_signal =
+			characteristics.max_input_signal;
 out:
-	kमुक्त(info);
-	वापस err;
-पूर्ण
+	kfree(info);
+	return err;
+}
 
 /**
- * amdgpu_atअगर_get_sbios_requests - get requested sbios event
+ * amdgpu_atif_get_sbios_requests - get requested sbios event
  *
  * @handle: acpi handle
- * @req: atअगर sbios request काष्ठा
+ * @req: atif sbios request struct
  *
  * Execute the ATIF_FUNCTION_GET_SYSTEM_BIOS_REQUESTS ATIF function
  * to determine what requests the sbios is making to the driver
  * (all asics).
  * Returns 0 on success, error on failure.
  */
-अटल पूर्णांक amdgpu_atअगर_get_sbios_requests(काष्ठा amdgpu_atअगर *atअगर,
-					  काष्ठा atअगर_sbios_requests *req)
-अणु
-	जोड़ acpi_object *info;
-	माप_प्रकार size;
-	पूर्णांक count = 0;
+static int amdgpu_atif_get_sbios_requests(struct amdgpu_atif *atif,
+					  struct atif_sbios_requests *req)
+{
+	union acpi_object *info;
+	size_t size;
+	int count = 0;
 
-	info = amdgpu_atअगर_call(atअगर, ATIF_FUNCTION_GET_SYSTEM_BIOS_REQUESTS,
-				शून्य);
-	अगर (!info)
-		वापस -EIO;
+	info = amdgpu_atif_call(atif, ATIF_FUNCTION_GET_SYSTEM_BIOS_REQUESTS,
+				NULL);
+	if (!info)
+		return -EIO;
 
-	size = *(u16 *)info->buffer.poपूर्णांकer;
-	अगर (size < 0xd) अणु
+	size = *(u16 *)info->buffer.pointer;
+	if (size < 0xd) {
 		count = -EINVAL;
-		जाओ out;
-	पूर्ण
-	स_रखो(req, 0, माप(*req));
+		goto out;
+	}
+	memset(req, 0, sizeof(*req));
 
-	size = min(माप(*req), size);
-	स_नकल(req, info->buffer.poपूर्णांकer, size);
+	size = min(sizeof(*req), size);
+	memcpy(req, info->buffer.pointer, size);
 	DRM_DEBUG_DRIVER("SBIOS pending requests: %#x\n", req->pending);
 
 	count = hweight32(req->pending);
 
 out:
-	kमुक्त(info);
-	वापस count;
-पूर्ण
+	kfree(info);
+	return count;
+}
 
 /**
- * amdgpu_atअगर_handler - handle ATIF notअगरy requests
+ * amdgpu_atif_handler - handle ATIF notify requests
  *
- * @adev: amdgpu_device poपूर्णांकer
- * @event: atअगर sbios request काष्ठा
+ * @adev: amdgpu_device pointer
+ * @event: atif sbios request struct
  *
- * Checks the acpi event and अगर it matches an atअगर event,
+ * Checks the acpi event and if it matches an atif event,
  * handles it.
  *
  * Returns:
  * NOTIFY_BAD or NOTIFY_DONE, depending on the event.
  */
-अटल पूर्णांक amdgpu_atअगर_handler(काष्ठा amdgpu_device *adev,
-			       काष्ठा acpi_bus_event *event)
-अणु
-	काष्ठा amdgpu_atअगर *atअगर = adev->atअगर;
-	पूर्णांक count;
+static int amdgpu_atif_handler(struct amdgpu_device *adev,
+			       struct acpi_bus_event *event)
+{
+	struct amdgpu_atif *atif = adev->atif;
+	int count;
 
 	DRM_DEBUG_DRIVER("event, device_class = %s, type = %#x\n",
 			event->device_class, event->type);
 
-	अगर (म_भेद(event->device_class, ACPI_VIDEO_CLASS) != 0)
-		वापस NOTIFY_DONE;
+	if (strcmp(event->device_class, ACPI_VIDEO_CLASS) != 0)
+		return NOTIFY_DONE;
 
 	/* Is this actually our event? */
-	अगर (!atअगर ||
-	    !atअगर->notअगरication_cfg.enabled ||
-	    event->type != atअगर->notअगरication_cfg.command_code) अणु
+	if (!atif ||
+	    !atif->notification_cfg.enabled ||
+	    event->type != atif->notification_cfg.command_code) {
 		/* These events will generate keypresses otherwise */
-		अगर (event->type == ACPI_VIDEO_NOTIFY_PROBE)
-			वापस NOTIFY_BAD;
-		अन्यथा
-			वापस NOTIFY_DONE;
-	पूर्ण
+		if (event->type == ACPI_VIDEO_NOTIFY_PROBE)
+			return NOTIFY_BAD;
+		else
+			return NOTIFY_DONE;
+	}
 
-	अगर (atअगर->functions.sbios_requests) अणु
-		काष्ठा atअगर_sbios_requests req;
+	if (atif->functions.sbios_requests) {
+		struct atif_sbios_requests req;
 
 		/* Check pending SBIOS requests */
-		count = amdgpu_atअगर_get_sbios_requests(atअगर, &req);
+		count = amdgpu_atif_get_sbios_requests(atif, &req);
 
-		अगर (count <= 0)
-			वापस NOTIFY_BAD;
+		if (count <= 0)
+			return NOTIFY_BAD;
 
 		DRM_DEBUG_DRIVER("ATIF: %d pending SBIOS requests\n", count);
 
-		अगर (req.pending & ATIF_PANEL_BRIGHTNESS_CHANGE_REQUEST) अणु
-#अगर defined(CONFIG_BACKLIGHT_CLASS_DEVICE) || defined(CONFIG_BACKLIGHT_CLASS_DEVICE_MODULE)
-			अगर (atअगर->bd) अणु
+		if (req.pending & ATIF_PANEL_BRIGHTNESS_CHANGE_REQUEST) {
+#if defined(CONFIG_BACKLIGHT_CLASS_DEVICE) || defined(CONFIG_BACKLIGHT_CLASS_DEVICE_MODULE)
+			if (atif->bd) {
 				DRM_DEBUG_DRIVER("Changing brightness to %d\n",
 						 req.backlight_level);
 				/*
@@ -458,30 +457,30 @@ out:
 				 * hardwired to post BACKLIGHT_UPDATE_SYSFS.
 				 * It probably should accept 'reason' parameter.
 				 */
-				backlight_device_set_brightness(atअगर->bd, req.backlight_level);
-			पूर्ण
-#पूर्ण_अगर
-		पूर्ण
+				backlight_device_set_brightness(atif->bd, req.backlight_level);
+			}
+#endif
+		}
 
-		अगर (req.pending & ATIF_DGPU_DISPLAY_EVENT) अणु
-			अगर (adev->flags & AMD_IS_PX) अणु
-				pm_runसमय_get_sync(adev_to_drm(adev)->dev);
-				/* Just fire off a uevent and let userspace tell us what to करो */
+		if (req.pending & ATIF_DGPU_DISPLAY_EVENT) {
+			if (adev->flags & AMD_IS_PX) {
+				pm_runtime_get_sync(adev_to_drm(adev)->dev);
+				/* Just fire off a uevent and let userspace tell us what to do */
 				drm_helper_hpd_irq_event(adev_to_drm(adev));
-				pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
-				pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
-			पूर्ण
-		पूर्ण
+				pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
+				pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
+			}
+		}
 		/* TODO: check other events */
-	पूर्ण
+	}
 
-	/* We've handled the event, stop the notअगरier chain. The ACPI पूर्णांकerface
-	 * overloads ACPI_VIDEO_NOTIFY_PROBE, we करोn't want to send that to
-	 * userspace अगर the event was generated only to संकेत a SBIOS
+	/* We've handled the event, stop the notifier chain. The ACPI interface
+	 * overloads ACPI_VIDEO_NOTIFY_PROBE, we don't want to send that to
+	 * userspace if the event was generated only to signal a SBIOS
 	 * request.
 	 */
-	वापस NOTIFY_BAD;
-पूर्ण
+	return NOTIFY_BAD;
+}
 
 /* Call the ATCS method
  */
@@ -493,97 +492,97 @@ out:
  * @params: ATCS function params
  *
  * Executes the requested ATCS function (all asics).
- * Returns a poपूर्णांकer to the acpi output buffer.
+ * Returns a pointer to the acpi output buffer.
  */
-अटल जोड़ acpi_object *amdgpu_atcs_call(acpi_handle handle, पूर्णांक function,
-					   काष्ठा acpi_buffer *params)
-अणु
+static union acpi_object *amdgpu_atcs_call(acpi_handle handle, int function,
+					   struct acpi_buffer *params)
+{
 	acpi_status status;
-	जोड़ acpi_object atcs_arg_elements[2];
-	काष्ठा acpi_object_list atcs_arg;
-	काष्ठा acpi_buffer buffer = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
+	union acpi_object atcs_arg_elements[2];
+	struct acpi_object_list atcs_arg;
+	struct acpi_buffer buffer = { ACPI_ALLOCATE_BUFFER, NULL };
 
 	atcs_arg.count = 2;
-	atcs_arg.poपूर्णांकer = &atcs_arg_elements[0];
+	atcs_arg.pointer = &atcs_arg_elements[0];
 
 	atcs_arg_elements[0].type = ACPI_TYPE_INTEGER;
-	atcs_arg_elements[0].पूर्णांकeger.value = function;
+	atcs_arg_elements[0].integer.value = function;
 
-	अगर (params) अणु
+	if (params) {
 		atcs_arg_elements[1].type = ACPI_TYPE_BUFFER;
 		atcs_arg_elements[1].buffer.length = params->length;
-		atcs_arg_elements[1].buffer.poपूर्णांकer = params->poपूर्णांकer;
-	पूर्ण अन्यथा अणु
+		atcs_arg_elements[1].buffer.pointer = params->pointer;
+	} else {
 		/* We need a second fake parameter */
 		atcs_arg_elements[1].type = ACPI_TYPE_INTEGER;
-		atcs_arg_elements[1].पूर्णांकeger.value = 0;
-	पूर्ण
+		atcs_arg_elements[1].integer.value = 0;
+	}
 
 	status = acpi_evaluate_object(handle, "ATCS", &atcs_arg, &buffer);
 
-	/* Fail only अगर calling the method fails and ATIF is supported */
-	अगर (ACPI_FAILURE(status) && status != AE_NOT_FOUND) अणु
+	/* Fail only if calling the method fails and ATIF is supported */
+	if (ACPI_FAILURE(status) && status != AE_NOT_FOUND) {
 		DRM_DEBUG_DRIVER("failed to evaluate ATCS got %s\n",
-				 acpi_क्रमmat_exception(status));
-		kमुक्त(buffer.poपूर्णांकer);
-		वापस शून्य;
-	पूर्ण
+				 acpi_format_exception(status));
+		kfree(buffer.pointer);
+		return NULL;
+	}
 
-	वापस buffer.poपूर्णांकer;
-पूर्ण
+	return buffer.pointer;
+}
 
 /**
  * amdgpu_atcs_parse_functions - parse supported functions
  *
- * @f: supported functions काष्ठा
+ * @f: supported functions struct
  * @mask: supported functions mask from ATCS
  *
  * Use the supported functions mask from ATCS function
  * ATCS_FUNCTION_VERIFY_INTERFACE to determine what functions
  * are supported (all asics).
  */
-अटल व्योम amdgpu_atcs_parse_functions(काष्ठा amdgpu_atcs_functions *f, u32 mask)
-अणु
+static void amdgpu_atcs_parse_functions(struct amdgpu_atcs_functions *f, u32 mask)
+{
 	f->get_ext_state = mask & ATCS_GET_EXTERNAL_STATE_SUPPORTED;
 	f->pcie_perf_req = mask & ATCS_PCIE_PERFORMANCE_REQUEST_SUPPORTED;
 	f->pcie_dev_rdy = mask & ATCS_PCIE_DEVICE_READY_NOTIFICATION_SUPPORTED;
 	f->pcie_bus_width = mask & ATCS_SET_PCIE_BUS_WIDTH_SUPPORTED;
-पूर्ण
+}
 
 /**
- * amdgpu_atcs_verअगरy_पूर्णांकerface - verअगरy ATCS
+ * amdgpu_atcs_verify_interface - verify ATCS
  *
  * @handle: acpi handle
- * @atcs: amdgpu atcs काष्ठा
+ * @atcs: amdgpu atcs struct
  *
  * Execute the ATCS_FUNCTION_VERIFY_INTERFACE ATCS function
  * to initialize ATCS and determine what features are supported
  * (all asics).
- * वापसs 0 on success, error on failure.
+ * returns 0 on success, error on failure.
  */
-अटल पूर्णांक amdgpu_atcs_verअगरy_पूर्णांकerface(acpi_handle handle,
-					काष्ठा amdgpu_atcs *atcs)
-अणु
-	जोड़ acpi_object *info;
-	काष्ठा atcs_verअगरy_पूर्णांकerface output;
-	माप_प्रकार size;
-	पूर्णांक err = 0;
+static int amdgpu_atcs_verify_interface(acpi_handle handle,
+					struct amdgpu_atcs *atcs)
+{
+	union acpi_object *info;
+	struct atcs_verify_interface output;
+	size_t size;
+	int err = 0;
 
-	info = amdgpu_atcs_call(handle, ATCS_FUNCTION_VERIFY_INTERFACE, शून्य);
-	अगर (!info)
-		वापस -EIO;
+	info = amdgpu_atcs_call(handle, ATCS_FUNCTION_VERIFY_INTERFACE, NULL);
+	if (!info)
+		return -EIO;
 
-	स_रखो(&output, 0, माप(output));
+	memset(&output, 0, sizeof(output));
 
-	size = *(u16 *) info->buffer.poपूर्णांकer;
-	अगर (size < 8) अणु
+	size = *(u16 *) info->buffer.pointer;
+	if (size < 8) {
 		DRM_INFO("ATCS buffer is too small: %zu\n", size);
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
-	size = min(माप(output), size);
+		goto out;
+	}
+	size = min(sizeof(output), size);
 
-	स_नकल(&output, info->buffer.poपूर्णांकer, size);
+	memcpy(&output, info->buffer.pointer, size);
 
 	/* TODO: check version? */
 	DRM_DEBUG_DRIVER("ATCS version %u\n", output.version);
@@ -591,146 +590,146 @@ out:
 	amdgpu_atcs_parse_functions(&atcs->functions, output.function_bits);
 
 out:
-	kमुक्त(info);
-	वापस err;
-पूर्ण
+	kfree(info);
+	return err;
+}
 
 /**
- * amdgpu_acpi_is_pcie_perक्रमmance_request_supported
+ * amdgpu_acpi_is_pcie_performance_request_supported
  *
- * @adev: amdgpu_device poपूर्णांकer
+ * @adev: amdgpu_device pointer
  *
- * Check अगर the ATCS pcie_perf_req and pcie_dev_rdy methods
+ * Check if the ATCS pcie_perf_req and pcie_dev_rdy methods
  * are supported (all asics).
- * वापसs true अगर supported, false अगर not.
+ * returns true if supported, false if not.
  */
-bool amdgpu_acpi_is_pcie_perक्रमmance_request_supported(काष्ठा amdgpu_device *adev)
-अणु
-	काष्ठा amdgpu_atcs *atcs = &adev->atcs;
+bool amdgpu_acpi_is_pcie_performance_request_supported(struct amdgpu_device *adev)
+{
+	struct amdgpu_atcs *atcs = &adev->atcs;
 
-	अगर (atcs->functions.pcie_perf_req && atcs->functions.pcie_dev_rdy)
-		वापस true;
+	if (atcs->functions.pcie_perf_req && atcs->functions.pcie_dev_rdy)
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /**
- * amdgpu_acpi_pcie_notअगरy_device_पढ़ोy
+ * amdgpu_acpi_pcie_notify_device_ready
  *
- * @adev: amdgpu_device poपूर्णांकer
+ * @adev: amdgpu_device pointer
  *
  * Executes the PCIE_DEVICE_READY_NOTIFICATION method
  * (all asics).
- * वापसs 0 on success, error on failure.
+ * returns 0 on success, error on failure.
  */
-पूर्णांक amdgpu_acpi_pcie_notअगरy_device_पढ़ोy(काष्ठा amdgpu_device *adev)
-अणु
+int amdgpu_acpi_pcie_notify_device_ready(struct amdgpu_device *adev)
+{
 	acpi_handle handle;
-	जोड़ acpi_object *info;
-	काष्ठा amdgpu_atcs *atcs = &adev->atcs;
+	union acpi_object *info;
+	struct amdgpu_atcs *atcs = &adev->atcs;
 
 	/* Get the device handle */
 	handle = ACPI_HANDLE(&adev->pdev->dev);
-	अगर (!handle)
-		वापस -EINVAL;
+	if (!handle)
+		return -EINVAL;
 
-	अगर (!atcs->functions.pcie_dev_rdy)
-		वापस -EINVAL;
+	if (!atcs->functions.pcie_dev_rdy)
+		return -EINVAL;
 
-	info = amdgpu_atcs_call(handle, ATCS_FUNCTION_PCIE_DEVICE_READY_NOTIFICATION, शून्य);
-	अगर (!info)
-		वापस -EIO;
+	info = amdgpu_atcs_call(handle, ATCS_FUNCTION_PCIE_DEVICE_READY_NOTIFICATION, NULL);
+	if (!info)
+		return -EIO;
 
-	kमुक्त(info);
+	kfree(info);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * amdgpu_acpi_pcie_perक्रमmance_request
+ * amdgpu_acpi_pcie_performance_request
  *
- * @adev: amdgpu_device poपूर्णांकer
+ * @adev: amdgpu_device pointer
  * @perf_req: requested perf level (pcie gen speed)
- * @advertise: set advertise caps flag अगर set
+ * @advertise: set advertise caps flag if set
  *
  * Executes the PCIE_PERFORMANCE_REQUEST method to
  * change the pcie gen speed (all asics).
- * वापसs 0 on success, error on failure.
+ * returns 0 on success, error on failure.
  */
-पूर्णांक amdgpu_acpi_pcie_perक्रमmance_request(काष्ठा amdgpu_device *adev,
+int amdgpu_acpi_pcie_performance_request(struct amdgpu_device *adev,
 					 u8 perf_req, bool advertise)
-अणु
+{
 	acpi_handle handle;
-	जोड़ acpi_object *info;
-	काष्ठा amdgpu_atcs *atcs = &adev->atcs;
-	काष्ठा atcs_pref_req_input atcs_input;
-	काष्ठा atcs_pref_req_output atcs_output;
-	काष्ठा acpi_buffer params;
-	माप_प्रकार size;
+	union acpi_object *info;
+	struct amdgpu_atcs *atcs = &adev->atcs;
+	struct atcs_pref_req_input atcs_input;
+	struct atcs_pref_req_output atcs_output;
+	struct acpi_buffer params;
+	size_t size;
 	u32 retry = 3;
 
-	अगर (amdgpu_acpi_pcie_notअगरy_device_पढ़ोy(adev))
-		वापस -EINVAL;
+	if (amdgpu_acpi_pcie_notify_device_ready(adev))
+		return -EINVAL;
 
 	/* Get the device handle */
 	handle = ACPI_HANDLE(&adev->pdev->dev);
-	अगर (!handle)
-		वापस -EINVAL;
+	if (!handle)
+		return -EINVAL;
 
-	अगर (!atcs->functions.pcie_perf_req)
-		वापस -EINVAL;
+	if (!atcs->functions.pcie_perf_req)
+		return -EINVAL;
 
-	atcs_input.size = माप(काष्ठा atcs_pref_req_input);
+	atcs_input.size = sizeof(struct atcs_pref_req_input);
 	/* client id (bit 2-0: func num, 7-3: dev num, 15-8: bus num) */
 	atcs_input.client_id = adev->pdev->devfn | (adev->pdev->bus->number << 8);
 	atcs_input.valid_flags_mask = ATCS_VALID_FLAGS_MASK;
 	atcs_input.flags = ATCS_WAIT_FOR_COMPLETION;
-	अगर (advertise)
+	if (advertise)
 		atcs_input.flags |= ATCS_ADVERTISE_CAPS;
 	atcs_input.req_type = ATCS_PCIE_LINK_SPEED;
 	atcs_input.perf_req = perf_req;
 
-	params.length = माप(काष्ठा atcs_pref_req_input);
-	params.poपूर्णांकer = &atcs_input;
+	params.length = sizeof(struct atcs_pref_req_input);
+	params.pointer = &atcs_input;
 
-	जबतक (retry--) अणु
+	while (retry--) {
 		info = amdgpu_atcs_call(handle, ATCS_FUNCTION_PCIE_PERFORMANCE_REQUEST, &params);
-		अगर (!info)
-			वापस -EIO;
+		if (!info)
+			return -EIO;
 
-		स_रखो(&atcs_output, 0, माप(atcs_output));
+		memset(&atcs_output, 0, sizeof(atcs_output));
 
-		size = *(u16 *) info->buffer.poपूर्णांकer;
-		अगर (size < 3) अणु
+		size = *(u16 *) info->buffer.pointer;
+		if (size < 3) {
 			DRM_INFO("ATCS buffer is too small: %zu\n", size);
-			kमुक्त(info);
-			वापस -EINVAL;
-		पूर्ण
-		size = min(माप(atcs_output), size);
+			kfree(info);
+			return -EINVAL;
+		}
+		size = min(sizeof(atcs_output), size);
 
-		स_नकल(&atcs_output, info->buffer.poपूर्णांकer, size);
+		memcpy(&atcs_output, info->buffer.pointer, size);
 
-		kमुक्त(info);
+		kfree(info);
 
-		चयन (atcs_output.ret_val) अणु
-		हाल ATCS_REQUEST_REFUSED:
-		शेष:
-			वापस -EINVAL;
-		हाल ATCS_REQUEST_COMPLETE:
-			वापस 0;
-		हाल ATCS_REQUEST_IN_PROGRESS:
+		switch (atcs_output.ret_val) {
+		case ATCS_REQUEST_REFUSED:
+		default:
+			return -EINVAL;
+		case ATCS_REQUEST_COMPLETE:
+			return 0;
+		case ATCS_REQUEST_IN_PROGRESS:
 			udelay(10);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * amdgpu_acpi_event - handle notअगरy events
+ * amdgpu_acpi_event - handle notify events
  *
- * @nb: notअगरier block
+ * @nb: notifier block
  * @val: val
  * @data: acpi event
  *
@@ -738,177 +737,177 @@ bool amdgpu_acpi_is_pcie_perक्रमmance_request_supported(काष्ठ�
  * acpi events.
  * Returns NOTIFY code
  */
-अटल पूर्णांक amdgpu_acpi_event(काष्ठा notअगरier_block *nb,
-			     अचिन्हित दीर्घ val,
-			     व्योम *data)
-अणु
-	काष्ठा amdgpu_device *adev = container_of(nb, काष्ठा amdgpu_device, acpi_nb);
-	काष्ठा acpi_bus_event *entry = (काष्ठा acpi_bus_event *)data;
+static int amdgpu_acpi_event(struct notifier_block *nb,
+			     unsigned long val,
+			     void *data)
+{
+	struct amdgpu_device *adev = container_of(nb, struct amdgpu_device, acpi_nb);
+	struct acpi_bus_event *entry = (struct acpi_bus_event *)data;
 
-	अगर (म_भेद(entry->device_class, ACPI_AC_CLASS) == 0) अणु
-		अगर (घातer_supply_is_प्रणाली_supplied() > 0)
+	if (strcmp(entry->device_class, ACPI_AC_CLASS) == 0) {
+		if (power_supply_is_system_supplied() > 0)
 			DRM_DEBUG_DRIVER("pm: AC\n");
-		अन्यथा
+		else
 			DRM_DEBUG_DRIVER("pm: DC\n");
 
 		amdgpu_pm_acpi_event_handler(adev);
-	पूर्ण
+	}
 
-	/* Check क्रम pending SBIOS requests */
-	वापस amdgpu_atअगर_handler(adev, entry);
-पूर्ण
+	/* Check for pending SBIOS requests */
+	return amdgpu_atif_handler(adev, entry);
+}
 
 /* Call all ACPI methods here */
 /**
  * amdgpu_acpi_init - init driver acpi support
  *
- * @adev: amdgpu_device poपूर्णांकer
+ * @adev: amdgpu_device pointer
  *
- * Verअगरies the AMD ACPI पूर्णांकerfaces and रेजिस्टरs with the acpi
- * notअगरier chain (all asics).
+ * Verifies the AMD ACPI interfaces and registers with the acpi
+ * notifier chain (all asics).
  * Returns 0 on success, error on failure.
  */
-पूर्णांक amdgpu_acpi_init(काष्ठा amdgpu_device *adev)
-अणु
-	acpi_handle handle, atअगर_handle;
-	काष्ठा amdgpu_atअगर *atअगर;
-	काष्ठा amdgpu_atcs *atcs = &adev->atcs;
-	पूर्णांक ret;
+int amdgpu_acpi_init(struct amdgpu_device *adev)
+{
+	acpi_handle handle, atif_handle;
+	struct amdgpu_atif *atif;
+	struct amdgpu_atcs *atcs = &adev->atcs;
+	int ret;
 
 	/* Get the device handle */
 	handle = ACPI_HANDLE(&adev->pdev->dev);
 
-	अगर (!adev->bios || !handle)
-		वापस 0;
+	if (!adev->bios || !handle)
+		return 0;
 
 	/* Call the ATCS method */
-	ret = amdgpu_atcs_verअगरy_पूर्णांकerface(handle, atcs);
-	अगर (ret) अणु
+	ret = amdgpu_atcs_verify_interface(handle, atcs);
+	if (ret) {
 		DRM_DEBUG_DRIVER("Call to ATCS verify_interface failed: %d\n", ret);
-	पूर्ण
+	}
 
-	/* Probe क्रम ATIF, and initialize it अगर found */
-	atअगर_handle = amdgpu_atअगर_probe_handle(handle);
-	अगर (!atअगर_handle)
-		जाओ out;
+	/* Probe for ATIF, and initialize it if found */
+	atif_handle = amdgpu_atif_probe_handle(handle);
+	if (!atif_handle)
+		goto out;
 
-	atअगर = kzalloc(माप(*atअगर), GFP_KERNEL);
-	अगर (!atअगर) अणु
+	atif = kzalloc(sizeof(*atif), GFP_KERNEL);
+	if (!atif) {
 		DRM_WARN("Not enough memory to initialize ATIF\n");
-		जाओ out;
-	पूर्ण
-	atअगर->handle = atअगर_handle;
+		goto out;
+	}
+	atif->handle = atif_handle;
 
 	/* Call the ATIF method */
-	ret = amdgpu_atअगर_verअगरy_पूर्णांकerface(atअगर);
-	अगर (ret) अणु
+	ret = amdgpu_atif_verify_interface(atif);
+	if (ret) {
 		DRM_DEBUG_DRIVER("Call to ATIF verify_interface failed: %d\n", ret);
-		kमुक्त(atअगर);
-		जाओ out;
-	पूर्ण
-	adev->atअगर = atअगर;
+		kfree(atif);
+		goto out;
+	}
+	adev->atif = atif;
 
-#अगर defined(CONFIG_BACKLIGHT_CLASS_DEVICE) || defined(CONFIG_BACKLIGHT_CLASS_DEVICE_MODULE)
-	अगर (atअगर->notअगरications.brightness_change) अणु
-		अगर (amdgpu_device_has_dc_support(adev)) अणु
-#अगर defined(CONFIG_DRM_AMD_DC)
-			काष्ठा amdgpu_display_manager *dm = &adev->dm;
-			atअगर->bd = dm->backlight_dev;
-#पूर्ण_अगर
-		पूर्ण अन्यथा अणु
-			काष्ठा drm_encoder *पंचांगp;
+#if defined(CONFIG_BACKLIGHT_CLASS_DEVICE) || defined(CONFIG_BACKLIGHT_CLASS_DEVICE_MODULE)
+	if (atif->notifications.brightness_change) {
+		if (amdgpu_device_has_dc_support(adev)) {
+#if defined(CONFIG_DRM_AMD_DC)
+			struct amdgpu_display_manager *dm = &adev->dm;
+			atif->bd = dm->backlight_dev;
+#endif
+		} else {
+			struct drm_encoder *tmp;
 
 			/* Find the encoder controlling the brightness */
-			list_क्रम_each_entry(पंचांगp, &adev_to_drm(adev)->mode_config.encoder_list,
-					    head) अणु
-				काष्ठा amdgpu_encoder *enc = to_amdgpu_encoder(पंचांगp);
+			list_for_each_entry(tmp, &adev_to_drm(adev)->mode_config.encoder_list,
+					    head) {
+				struct amdgpu_encoder *enc = to_amdgpu_encoder(tmp);
 
-				अगर ((enc->devices & (ATOM_DEVICE_LCD_SUPPORT)) &&
-				    enc->enc_priv) अणु
-					काष्ठा amdgpu_encoder_atom_dig *dig = enc->enc_priv;
-					अगर (dig->bl_dev) अणु
-						atअगर->bd = dig->bl_dev;
-						अवरोध;
-					पूर्ण
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
+				if ((enc->devices & (ATOM_DEVICE_LCD_SUPPORT)) &&
+				    enc->enc_priv) {
+					struct amdgpu_encoder_atom_dig *dig = enc->enc_priv;
+					if (dig->bl_dev) {
+						atif->bd = dig->bl_dev;
+						break;
+					}
+				}
+			}
+		}
+	}
+#endif
 
-	अगर (atअगर->functions.sbios_requests && !atअगर->functions.प्रणाली_params) अणु
-		/* XXX check this workraround, अगर sbios request function is
-		 * present we have to see how it's configured in the प्रणाली
+	if (atif->functions.sbios_requests && !atif->functions.system_params) {
+		/* XXX check this workraround, if sbios request function is
+		 * present we have to see how it's configured in the system
 		 * params
 		 */
-		atअगर->functions.प्रणाली_params = true;
-	पूर्ण
+		atif->functions.system_params = true;
+	}
 
-	अगर (atअगर->functions.प्रणाली_params) अणु
-		ret = amdgpu_atअगर_get_notअगरication_params(atअगर);
-		अगर (ret) अणु
+	if (atif->functions.system_params) {
+		ret = amdgpu_atif_get_notification_params(atif);
+		if (ret) {
 			DRM_DEBUG_DRIVER("Call to GET_SYSTEM_PARAMS failed: %d\n",
 					ret);
-			/* Disable notअगरication */
-			atअगर->notअगरication_cfg.enabled = false;
-		पूर्ण
-	पूर्ण
+			/* Disable notification */
+			atif->notification_cfg.enabled = false;
+		}
+	}
 
-	अगर (atअगर->functions.query_backlight_transfer_अक्षरacteristics) अणु
-		ret = amdgpu_atअगर_query_backlight_caps(atअगर);
-		अगर (ret) अणु
+	if (atif->functions.query_backlight_transfer_characteristics) {
+		ret = amdgpu_atif_query_backlight_caps(atif);
+		if (ret) {
 			DRM_DEBUG_DRIVER("Call to QUERY_BACKLIGHT_TRANSFER_CHARACTERISTICS failed: %d\n",
 					ret);
-			atअगर->backlight_caps.caps_valid = false;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		atअगर->backlight_caps.caps_valid = false;
-	पूर्ण
+			atif->backlight_caps.caps_valid = false;
+		}
+	} else {
+		atif->backlight_caps.caps_valid = false;
+	}
 
 out:
-	adev->acpi_nb.notअगरier_call = amdgpu_acpi_event;
-	रेजिस्टर_acpi_notअगरier(&adev->acpi_nb);
+	adev->acpi_nb.notifier_call = amdgpu_acpi_event;
+	register_acpi_notifier(&adev->acpi_nb);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम amdgpu_acpi_get_backlight_caps(काष्ठा amdgpu_device *adev,
-		काष्ठा amdgpu_dm_backlight_caps *caps)
-अणु
-	अगर (!adev->atअगर) अणु
+void amdgpu_acpi_get_backlight_caps(struct amdgpu_device *adev,
+		struct amdgpu_dm_backlight_caps *caps)
+{
+	if (!adev->atif) {
 		caps->caps_valid = false;
-		वापस;
-	पूर्ण
-	caps->caps_valid = adev->atअगर->backlight_caps.caps_valid;
-	caps->min_input_संकेत = adev->atअगर->backlight_caps.min_input_संकेत;
-	caps->max_input_संकेत = adev->atअगर->backlight_caps.max_input_संकेत;
-पूर्ण
+		return;
+	}
+	caps->caps_valid = adev->atif->backlight_caps.caps_valid;
+	caps->min_input_signal = adev->atif->backlight_caps.min_input_signal;
+	caps->max_input_signal = adev->atif->backlight_caps.max_input_signal;
+}
 
 /**
- * amdgpu_acpi_fini - tear करोwn driver acpi support
+ * amdgpu_acpi_fini - tear down driver acpi support
  *
- * @adev: amdgpu_device poपूर्णांकer
+ * @adev: amdgpu_device pointer
  *
- * Unरेजिस्टरs with the acpi notअगरier chain (all asics).
+ * Unregisters with the acpi notifier chain (all asics).
  */
-व्योम amdgpu_acpi_fini(काष्ठा amdgpu_device *adev)
-अणु
-	unरेजिस्टर_acpi_notअगरier(&adev->acpi_nb);
-	kमुक्त(adev->atअगर);
-पूर्ण
+void amdgpu_acpi_fini(struct amdgpu_device *adev)
+{
+	unregister_acpi_notifier(&adev->acpi_nb);
+	kfree(adev->atif);
+}
 
 /**
  * amdgpu_acpi_is_s0ix_supported
  *
- * वापसs true अगर supported, false अगर not.
+ * returns true if supported, false if not.
  */
-bool amdgpu_acpi_is_s0ix_supported(काष्ठा amdgpu_device *adev)
-अणु
-#अगर defined(CONFIG_AMD_PMC) || defined(CONFIG_AMD_PMC_MODULE)
-	अगर (acpi_gbl_FADT.flags & ACPI_FADT_LOW_POWER_S0) अणु
-		अगर (adev->flags & AMD_IS_APU)
-			वापस true;
-	पूर्ण
-#पूर्ण_अगर
-	वापस false;
-पूर्ण
+bool amdgpu_acpi_is_s0ix_supported(struct amdgpu_device *adev)
+{
+#if defined(CONFIG_AMD_PMC) || defined(CONFIG_AMD_PMC_MODULE)
+	if (acpi_gbl_FADT.flags & ACPI_FADT_LOW_POWER_S0) {
+		if (adev->flags & AMD_IS_APU)
+			return true;
+	}
+#endif
+	return false;
+}

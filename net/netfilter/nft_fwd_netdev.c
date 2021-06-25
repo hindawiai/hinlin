@@ -1,260 +1,259 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2015 Pablo Neira Ayuso <pablo@netfilter.org>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/netlink.h>
-#समावेश <linux/netfilter.h>
-#समावेश <linux/netfilter/nf_tables.h>
-#समावेश <linux/ip.h>
-#समावेश <linux/ipv6.h>
-#समावेश <net/netfilter/nf_tables.h>
-#समावेश <net/netfilter/nf_tables_offload.h>
-#समावेश <net/netfilter/nf_dup_netdev.h>
-#समावेश <net/neighbour.h>
-#समावेश <net/ip.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/netlink.h>
+#include <linux/netfilter.h>
+#include <linux/netfilter/nf_tables.h>
+#include <linux/ip.h>
+#include <linux/ipv6.h>
+#include <net/netfilter/nf_tables.h>
+#include <net/netfilter/nf_tables_offload.h>
+#include <net/netfilter/nf_dup_netdev.h>
+#include <net/neighbour.h>
+#include <net/ip.h>
 
-काष्ठा nft_fwd_netdev अणु
+struct nft_fwd_netdev {
 	u8	sreg_dev;
-पूर्ण;
+};
 
-अटल व्योम nft_fwd_netdev_eval(स्थिर काष्ठा nft_expr *expr,
-				काष्ठा nft_regs *regs,
-				स्थिर काष्ठा nft_pktinfo *pkt)
-अणु
-	काष्ठा nft_fwd_netdev *priv = nft_expr_priv(expr);
-	पूर्णांक oअगर = regs->data[priv->sreg_dev];
+static void nft_fwd_netdev_eval(const struct nft_expr *expr,
+				struct nft_regs *regs,
+				const struct nft_pktinfo *pkt)
+{
+	struct nft_fwd_netdev *priv = nft_expr_priv(expr);
+	int oif = regs->data[priv->sreg_dev];
 
-	/* This is used by अगरb only. */
+	/* This is used by ifb only. */
 	skb_set_redirected(pkt->skb, true);
 
-	nf_fwd_netdev_egress(pkt, oअगर);
+	nf_fwd_netdev_egress(pkt, oif);
 	regs->verdict.code = NF_STOLEN;
-पूर्ण
+}
 
-अटल स्थिर काष्ठा nla_policy nft_fwd_netdev_policy[NFTA_FWD_MAX + 1] = अणु
-	[NFTA_FWD_SREG_DEV]	= अणु .type = NLA_U32 पूर्ण,
-	[NFTA_FWD_SREG_ADDR]	= अणु .type = NLA_U32 पूर्ण,
-	[NFTA_FWD_NFPROTO]	= अणु .type = NLA_U32 पूर्ण,
-पूर्ण;
+static const struct nla_policy nft_fwd_netdev_policy[NFTA_FWD_MAX + 1] = {
+	[NFTA_FWD_SREG_DEV]	= { .type = NLA_U32 },
+	[NFTA_FWD_SREG_ADDR]	= { .type = NLA_U32 },
+	[NFTA_FWD_NFPROTO]	= { .type = NLA_U32 },
+};
 
-अटल पूर्णांक nft_fwd_netdev_init(स्थिर काष्ठा nft_ctx *ctx,
-			       स्थिर काष्ठा nft_expr *expr,
-			       स्थिर काष्ठा nlattr * स्थिर tb[])
-अणु
-	काष्ठा nft_fwd_netdev *priv = nft_expr_priv(expr);
+static int nft_fwd_netdev_init(const struct nft_ctx *ctx,
+			       const struct nft_expr *expr,
+			       const struct nlattr * const tb[])
+{
+	struct nft_fwd_netdev *priv = nft_expr_priv(expr);
 
-	अगर (tb[NFTA_FWD_SREG_DEV] == शून्य)
-		वापस -EINVAL;
+	if (tb[NFTA_FWD_SREG_DEV] == NULL)
+		return -EINVAL;
 
-	वापस nft_parse_रेजिस्टर_load(tb[NFTA_FWD_SREG_DEV], &priv->sreg_dev,
-				       माप(पूर्णांक));
-पूर्ण
+	return nft_parse_register_load(tb[NFTA_FWD_SREG_DEV], &priv->sreg_dev,
+				       sizeof(int));
+}
 
-अटल पूर्णांक nft_fwd_netdev_dump(काष्ठा sk_buff *skb, स्थिर काष्ठा nft_expr *expr)
-अणु
-	काष्ठा nft_fwd_netdev *priv = nft_expr_priv(expr);
+static int nft_fwd_netdev_dump(struct sk_buff *skb, const struct nft_expr *expr)
+{
+	struct nft_fwd_netdev *priv = nft_expr_priv(expr);
 
-	अगर (nft_dump_रेजिस्टर(skb, NFTA_FWD_SREG_DEV, priv->sreg_dev))
-		जाओ nla_put_failure;
+	if (nft_dump_register(skb, NFTA_FWD_SREG_DEV, priv->sreg_dev))
+		goto nla_put_failure;
 
-	वापस 0;
+	return 0;
 
 nla_put_failure:
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल पूर्णांक nft_fwd_netdev_offload(काष्ठा nft_offload_ctx *ctx,
-				  काष्ठा nft_flow_rule *flow,
-				  स्थिर काष्ठा nft_expr *expr)
-अणु
-	स्थिर काष्ठा nft_fwd_netdev *priv = nft_expr_priv(expr);
-	पूर्णांक oअगर = ctx->regs[priv->sreg_dev].data.data[0];
+static int nft_fwd_netdev_offload(struct nft_offload_ctx *ctx,
+				  struct nft_flow_rule *flow,
+				  const struct nft_expr *expr)
+{
+	const struct nft_fwd_netdev *priv = nft_expr_priv(expr);
+	int oif = ctx->regs[priv->sreg_dev].data.data[0];
 
-	वापस nft_fwd_dup_netdev_offload(ctx, flow, FLOW_ACTION_REसूचीECT, oअगर);
-पूर्ण
+	return nft_fwd_dup_netdev_offload(ctx, flow, FLOW_ACTION_REDIRECT, oif);
+}
 
-काष्ठा nft_fwd_neigh अणु
+struct nft_fwd_neigh {
 	u8			sreg_dev;
 	u8			sreg_addr;
 	u8			nfproto;
-पूर्ण;
+};
 
-अटल व्योम nft_fwd_neigh_eval(स्थिर काष्ठा nft_expr *expr,
-			      काष्ठा nft_regs *regs,
-			      स्थिर काष्ठा nft_pktinfo *pkt)
-अणु
-	काष्ठा nft_fwd_neigh *priv = nft_expr_priv(expr);
-	व्योम *addr = &regs->data[priv->sreg_addr];
-	पूर्णांक oअगर = regs->data[priv->sreg_dev];
-	अचिन्हित पूर्णांक verdict = NF_STOLEN;
-	काष्ठा sk_buff *skb = pkt->skb;
-	काष्ठा net_device *dev;
-	पूर्णांक neigh_table;
+static void nft_fwd_neigh_eval(const struct nft_expr *expr,
+			      struct nft_regs *regs,
+			      const struct nft_pktinfo *pkt)
+{
+	struct nft_fwd_neigh *priv = nft_expr_priv(expr);
+	void *addr = &regs->data[priv->sreg_addr];
+	int oif = regs->data[priv->sreg_dev];
+	unsigned int verdict = NF_STOLEN;
+	struct sk_buff *skb = pkt->skb;
+	struct net_device *dev;
+	int neigh_table;
 
-	चयन (priv->nfproto) अणु
-	हाल NFPROTO_IPV4: अणु
-		काष्ठा iphdr *iph;
+	switch (priv->nfproto) {
+	case NFPROTO_IPV4: {
+		struct iphdr *iph;
 
-		अगर (skb->protocol != htons(ETH_P_IP)) अणु
+		if (skb->protocol != htons(ETH_P_IP)) {
 			verdict = NFT_BREAK;
-			जाओ out;
-		पूर्ण
-		अगर (skb_try_make_writable(skb, माप(*iph))) अणु
+			goto out;
+		}
+		if (skb_try_make_writable(skb, sizeof(*iph))) {
 			verdict = NF_DROP;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		iph = ip_hdr(skb);
 		ip_decrease_ttl(iph);
 		neigh_table = NEIGH_ARP_TABLE;
-		अवरोध;
-		पूर्ण
-	हाल NFPROTO_IPV6: अणु
-		काष्ठा ipv6hdr *ip6h;
+		break;
+		}
+	case NFPROTO_IPV6: {
+		struct ipv6hdr *ip6h;
 
-		अगर (skb->protocol != htons(ETH_P_IPV6)) अणु
+		if (skb->protocol != htons(ETH_P_IPV6)) {
 			verdict = NFT_BREAK;
-			जाओ out;
-		पूर्ण
-		अगर (skb_try_make_writable(skb, माप(*ip6h))) अणु
+			goto out;
+		}
+		if (skb_try_make_writable(skb, sizeof(*ip6h))) {
 			verdict = NF_DROP;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		ip6h = ipv6_hdr(skb);
 		ip6h->hop_limit--;
 		neigh_table = NEIGH_ND_TABLE;
-		अवरोध;
-		पूर्ण
-	शेष:
+		break;
+		}
+	default:
 		verdict = NFT_BREAK;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	dev = dev_get_by_index_rcu(nft_net(pkt), oअगर);
-	अगर (dev == शून्य)
-		वापस;
+	dev = dev_get_by_index_rcu(nft_net(pkt), oif);
+	if (dev == NULL)
+		return;
 
 	skb->dev = dev;
 	skb->tstamp = 0;
 	neigh_xmit(neigh_table, dev, addr, skb);
 out:
 	regs->verdict.code = verdict;
-पूर्ण
+}
 
-अटल पूर्णांक nft_fwd_neigh_init(स्थिर काष्ठा nft_ctx *ctx,
-			      स्थिर काष्ठा nft_expr *expr,
-			      स्थिर काष्ठा nlattr * स्थिर tb[])
-अणु
-	काष्ठा nft_fwd_neigh *priv = nft_expr_priv(expr);
-	अचिन्हित पूर्णांक addr_len;
-	पूर्णांक err;
+static int nft_fwd_neigh_init(const struct nft_ctx *ctx,
+			      const struct nft_expr *expr,
+			      const struct nlattr * const tb[])
+{
+	struct nft_fwd_neigh *priv = nft_expr_priv(expr);
+	unsigned int addr_len;
+	int err;
 
-	अगर (!tb[NFTA_FWD_SREG_DEV] ||
+	if (!tb[NFTA_FWD_SREG_DEV] ||
 	    !tb[NFTA_FWD_SREG_ADDR] ||
 	    !tb[NFTA_FWD_NFPROTO])
-		वापस -EINVAL;
+		return -EINVAL;
 
 	priv->nfproto = ntohl(nla_get_be32(tb[NFTA_FWD_NFPROTO]));
 
-	चयन (priv->nfproto) अणु
-	हाल NFPROTO_IPV4:
-		addr_len = माप(काष्ठा in_addr);
-		अवरोध;
-	हाल NFPROTO_IPV6:
-		addr_len = माप(काष्ठा in6_addr);
-		अवरोध;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
+	switch (priv->nfproto) {
+	case NFPROTO_IPV4:
+		addr_len = sizeof(struct in_addr);
+		break;
+	case NFPROTO_IPV6:
+		addr_len = sizeof(struct in6_addr);
+		break;
+	default:
+		return -EOPNOTSUPP;
+	}
 
-	err = nft_parse_रेजिस्टर_load(tb[NFTA_FWD_SREG_DEV], &priv->sreg_dev,
-				      माप(पूर्णांक));
-	अगर (err < 0)
-		वापस err;
+	err = nft_parse_register_load(tb[NFTA_FWD_SREG_DEV], &priv->sreg_dev,
+				      sizeof(int));
+	if (err < 0)
+		return err;
 
-	वापस nft_parse_रेजिस्टर_load(tb[NFTA_FWD_SREG_ADDR], &priv->sreg_addr,
+	return nft_parse_register_load(tb[NFTA_FWD_SREG_ADDR], &priv->sreg_addr,
 				       addr_len);
-पूर्ण
+}
 
-अटल पूर्णांक nft_fwd_neigh_dump(काष्ठा sk_buff *skb, स्थिर काष्ठा nft_expr *expr)
-अणु
-	काष्ठा nft_fwd_neigh *priv = nft_expr_priv(expr);
+static int nft_fwd_neigh_dump(struct sk_buff *skb, const struct nft_expr *expr)
+{
+	struct nft_fwd_neigh *priv = nft_expr_priv(expr);
 
-	अगर (nft_dump_रेजिस्टर(skb, NFTA_FWD_SREG_DEV, priv->sreg_dev) ||
-	    nft_dump_रेजिस्टर(skb, NFTA_FWD_SREG_ADDR, priv->sreg_addr) ||
+	if (nft_dump_register(skb, NFTA_FWD_SREG_DEV, priv->sreg_dev) ||
+	    nft_dump_register(skb, NFTA_FWD_SREG_ADDR, priv->sreg_addr) ||
 	    nla_put_be32(skb, NFTA_FWD_NFPROTO, htonl(priv->nfproto)))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
-	वापस 0;
+	return 0;
 
 nla_put_failure:
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल पूर्णांक nft_fwd_validate(स्थिर काष्ठा nft_ctx *ctx,
-			    स्थिर काष्ठा nft_expr *expr,
-			    स्थिर काष्ठा nft_data **data)
-अणु
-	वापस nft_chain_validate_hooks(ctx->chain, (1 << NF_NETDEV_INGRESS));
-पूर्ण
+static int nft_fwd_validate(const struct nft_ctx *ctx,
+			    const struct nft_expr *expr,
+			    const struct nft_data **data)
+{
+	return nft_chain_validate_hooks(ctx->chain, (1 << NF_NETDEV_INGRESS));
+}
 
-अटल काष्ठा nft_expr_type nft_fwd_netdev_type;
-अटल स्थिर काष्ठा nft_expr_ops nft_fwd_neigh_netdev_ops = अणु
+static struct nft_expr_type nft_fwd_netdev_type;
+static const struct nft_expr_ops nft_fwd_neigh_netdev_ops = {
 	.type		= &nft_fwd_netdev_type,
-	.size		= NFT_EXPR_SIZE(माप(काष्ठा nft_fwd_neigh)),
+	.size		= NFT_EXPR_SIZE(sizeof(struct nft_fwd_neigh)),
 	.eval		= nft_fwd_neigh_eval,
 	.init		= nft_fwd_neigh_init,
 	.dump		= nft_fwd_neigh_dump,
 	.validate	= nft_fwd_validate,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा nft_expr_ops nft_fwd_netdev_ops = अणु
+static const struct nft_expr_ops nft_fwd_netdev_ops = {
 	.type		= &nft_fwd_netdev_type,
-	.size		= NFT_EXPR_SIZE(माप(काष्ठा nft_fwd_netdev)),
+	.size		= NFT_EXPR_SIZE(sizeof(struct nft_fwd_netdev)),
 	.eval		= nft_fwd_netdev_eval,
 	.init		= nft_fwd_netdev_init,
 	.dump		= nft_fwd_netdev_dump,
 	.validate	= nft_fwd_validate,
 	.offload	= nft_fwd_netdev_offload,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा nft_expr_ops *
-nft_fwd_select_ops(स्थिर काष्ठा nft_ctx *ctx,
-		   स्थिर काष्ठा nlattr * स्थिर tb[])
-अणु
-	अगर (tb[NFTA_FWD_SREG_ADDR])
-		वापस &nft_fwd_neigh_netdev_ops;
-	अगर (tb[NFTA_FWD_SREG_DEV])
-		वापस &nft_fwd_netdev_ops;
+static const struct nft_expr_ops *
+nft_fwd_select_ops(const struct nft_ctx *ctx,
+		   const struct nlattr * const tb[])
+{
+	if (tb[NFTA_FWD_SREG_ADDR])
+		return &nft_fwd_neigh_netdev_ops;
+	if (tb[NFTA_FWD_SREG_DEV])
+		return &nft_fwd_netdev_ops;
 
-        वापस ERR_PTR(-EOPNOTSUPP);
-पूर्ण
+        return ERR_PTR(-EOPNOTSUPP);
+}
 
-अटल काष्ठा nft_expr_type nft_fwd_netdev_type __पढ़ो_mostly = अणु
+static struct nft_expr_type nft_fwd_netdev_type __read_mostly = {
 	.family		= NFPROTO_NETDEV,
 	.name		= "fwd",
 	.select_ops	= nft_fwd_select_ops,
 	.policy		= nft_fwd_netdev_policy,
 	.maxattr	= NFTA_FWD_MAX,
 	.owner		= THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक __init nft_fwd_netdev_module_init(व्योम)
-अणु
-	वापस nft_रेजिस्टर_expr(&nft_fwd_netdev_type);
-पूर्ण
+static int __init nft_fwd_netdev_module_init(void)
+{
+	return nft_register_expr(&nft_fwd_netdev_type);
+}
 
-अटल व्योम __निकास nft_fwd_netdev_module_निकास(व्योम)
-अणु
-	nft_unरेजिस्टर_expr(&nft_fwd_netdev_type);
-पूर्ण
+static void __exit nft_fwd_netdev_module_exit(void)
+{
+	nft_unregister_expr(&nft_fwd_netdev_type);
+}
 
 module_init(nft_fwd_netdev_module_init);
-module_निकास(nft_fwd_netdev_module_निकास);
+module_exit(nft_fwd_netdev_module_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Pablo Neira Ayuso <pablo@netfilter.org>");

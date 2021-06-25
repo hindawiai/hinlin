@@ -1,123 +1,122 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * GPIO driver क्रम Analog Devices ADP5520 MFD PMICs
+ * GPIO driver for Analog Devices ADP5520 MFD PMICs
  *
  * Copyright 2009 Analog Devices Inc.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/mfd/adp5520.h>
-#समावेश <linux/gpio/driver.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/platform_device.h>
+#include <linux/mfd/adp5520.h>
+#include <linux/gpio/driver.h>
 
-काष्ठा adp5520_gpio अणु
-	काष्ठा device *master;
-	काष्ठा gpio_chip gpio_chip;
-	अचिन्हित अक्षर lut[ADP5520_MAXGPIOS];
-	अचिन्हित दीर्घ output;
-पूर्ण;
+struct adp5520_gpio {
+	struct device *master;
+	struct gpio_chip gpio_chip;
+	unsigned char lut[ADP5520_MAXGPIOS];
+	unsigned long output;
+};
 
-अटल पूर्णांक adp5520_gpio_get_value(काष्ठा gpio_chip *chip, अचिन्हित off)
-अणु
-	काष्ठा adp5520_gpio *dev;
-	uपूर्णांक8_t reg_val;
+static int adp5520_gpio_get_value(struct gpio_chip *chip, unsigned off)
+{
+	struct adp5520_gpio *dev;
+	uint8_t reg_val;
 
 	dev = gpiochip_get_data(chip);
 
 	/*
-	 * There are dedicated रेजिस्टरs क्रम GPIO IN/OUT.
-	 * Make sure we वापस the right value, even when configured as output
+	 * There are dedicated registers for GPIO IN/OUT.
+	 * Make sure we return the right value, even when configured as output
 	 */
 
-	अगर (test_bit(off, &dev->output))
-		adp5520_पढ़ो(dev->master, ADP5520_GPIO_OUT, &reg_val);
-	अन्यथा
-		adp5520_पढ़ो(dev->master, ADP5520_GPIO_IN, &reg_val);
+	if (test_bit(off, &dev->output))
+		adp5520_read(dev->master, ADP5520_GPIO_OUT, &reg_val);
+	else
+		adp5520_read(dev->master, ADP5520_GPIO_IN, &reg_val);
 
-	वापस !!(reg_val & dev->lut[off]);
-पूर्ण
+	return !!(reg_val & dev->lut[off]);
+}
 
-अटल व्योम adp5520_gpio_set_value(काष्ठा gpio_chip *chip,
-		अचिन्हित off, पूर्णांक val)
-अणु
-	काष्ठा adp5520_gpio *dev;
+static void adp5520_gpio_set_value(struct gpio_chip *chip,
+		unsigned off, int val)
+{
+	struct adp5520_gpio *dev;
 	dev = gpiochip_get_data(chip);
 
-	अगर (val)
+	if (val)
 		adp5520_set_bits(dev->master, ADP5520_GPIO_OUT, dev->lut[off]);
-	अन्यथा
+	else
 		adp5520_clr_bits(dev->master, ADP5520_GPIO_OUT, dev->lut[off]);
-पूर्ण
+}
 
-अटल पूर्णांक adp5520_gpio_direction_input(काष्ठा gpio_chip *chip, अचिन्हित off)
-अणु
-	काष्ठा adp5520_gpio *dev;
+static int adp5520_gpio_direction_input(struct gpio_chip *chip, unsigned off)
+{
+	struct adp5520_gpio *dev;
 	dev = gpiochip_get_data(chip);
 
 	clear_bit(off, &dev->output);
 
-	वापस adp5520_clr_bits(dev->master, ADP5520_GPIO_CFG_2,
+	return adp5520_clr_bits(dev->master, ADP5520_GPIO_CFG_2,
 				dev->lut[off]);
-पूर्ण
+}
 
-अटल पूर्णांक adp5520_gpio_direction_output(काष्ठा gpio_chip *chip,
-		अचिन्हित off, पूर्णांक val)
-अणु
-	काष्ठा adp5520_gpio *dev;
-	पूर्णांक ret = 0;
+static int adp5520_gpio_direction_output(struct gpio_chip *chip,
+		unsigned off, int val)
+{
+	struct adp5520_gpio *dev;
+	int ret = 0;
 	dev = gpiochip_get_data(chip);
 
 	set_bit(off, &dev->output);
 
-	अगर (val)
+	if (val)
 		ret |= adp5520_set_bits(dev->master, ADP5520_GPIO_OUT,
 					dev->lut[off]);
-	अन्यथा
+	else
 		ret |= adp5520_clr_bits(dev->master, ADP5520_GPIO_OUT,
 					dev->lut[off]);
 
 	ret |= adp5520_set_bits(dev->master, ADP5520_GPIO_CFG_2,
 					dev->lut[off]);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक adp5520_gpio_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा adp5520_gpio_platक्रमm_data *pdata = dev_get_platdata(&pdev->dev);
-	काष्ठा adp5520_gpio *dev;
-	काष्ठा gpio_chip *gc;
-	पूर्णांक ret, i, gpios;
-	अचिन्हित अक्षर ctl_mask = 0;
+static int adp5520_gpio_probe(struct platform_device *pdev)
+{
+	struct adp5520_gpio_platform_data *pdata = dev_get_platdata(&pdev->dev);
+	struct adp5520_gpio *dev;
+	struct gpio_chip *gc;
+	int ret, i, gpios;
+	unsigned char ctl_mask = 0;
 
-	अगर (pdata == शून्य) अणु
+	if (pdata == NULL) {
 		dev_err(&pdev->dev, "missing platform data\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (pdev->id != ID_ADP5520) अणु
+	if (pdev->id != ID_ADP5520) {
 		dev_err(&pdev->dev, "only ADP5520 supports GPIO\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	dev = devm_kzalloc(&pdev->dev, माप(*dev), GFP_KERNEL);
-	अगर (dev == शून्य)
-		वापस -ENOMEM;
+	dev = devm_kzalloc(&pdev->dev, sizeof(*dev), GFP_KERNEL);
+	if (dev == NULL)
+		return -ENOMEM;
 
 	dev->master = pdev->dev.parent;
 
-	क्रम (gpios = 0, i = 0; i < ADP5520_MAXGPIOS; i++)
-		अगर (pdata->gpio_en_mask & (1 << i))
+	for (gpios = 0, i = 0; i < ADP5520_MAXGPIOS; i++)
+		if (pdata->gpio_en_mask & (1 << i))
 			dev->lut[gpios++] = 1 << i;
 
-	अगर (gpios < 1) अणु
+	if (gpios < 1) {
 		ret = -EINVAL;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	gc = &dev->gpio_chip;
 	gc->direction_input  = adp5520_gpio_direction_input;
@@ -134,43 +133,43 @@
 	ret = adp5520_clr_bits(dev->master, ADP5520_GPIO_CFG_1,
 		pdata->gpio_en_mask);
 
-	अगर (pdata->gpio_en_mask & ADP5520_GPIO_C3)
+	if (pdata->gpio_en_mask & ADP5520_GPIO_C3)
 		ctl_mask |= ADP5520_C3_MODE;
 
-	अगर (pdata->gpio_en_mask & ADP5520_GPIO_R3)
+	if (pdata->gpio_en_mask & ADP5520_GPIO_R3)
 		ctl_mask |= ADP5520_R3_MODE;
 
-	अगर (ctl_mask)
+	if (ctl_mask)
 		ret = adp5520_set_bits(dev->master, ADP5520_LED_CONTROL,
 			ctl_mask);
 
 	ret |= adp5520_set_bits(dev->master, ADP5520_GPIO_PULLUP,
 		pdata->gpio_pullup_mask);
 
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "failed to write\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	ret = devm_gpiochip_add_data(&pdev->dev, &dev->gpio_chip, dev);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
-	platक्रमm_set_drvdata(pdev, dev);
-	वापस 0;
+	platform_set_drvdata(pdev, dev);
+	return 0;
 
 err:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा platक्रमm_driver adp5520_gpio_driver = अणु
-	.driver	= अणु
+static struct platform_driver adp5520_gpio_driver = {
+	.driver	= {
 		.name	= "adp5520-gpio",
-	पूर्ण,
+	},
 	.probe		= adp5520_gpio_probe,
-पूर्ण;
+};
 
-module_platक्रमm_driver(adp5520_gpio_driver);
+module_platform_driver(adp5520_gpio_driver);
 
 MODULE_AUTHOR("Michael Hennerich <michael.hennerich@analog.com>");
 MODULE_DESCRIPTION("GPIO ADP5520 Driver");

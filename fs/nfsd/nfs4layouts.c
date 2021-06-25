@@ -1,165 +1,164 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2014 Christoph Hellwig.
  */
-#समावेश <linux/blkdev.h>
-#समावेश <linux/kmod.h>
-#समावेश <linux/file.h>
-#समावेश <linux/jhash.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sunrpc/addr.h>
+#include <linux/blkdev.h>
+#include <linux/kmod.h>
+#include <linux/file.h>
+#include <linux/jhash.h>
+#include <linux/sched.h>
+#include <linux/sunrpc/addr.h>
 
-#समावेश "pnfs.h"
-#समावेश "netns.h"
-#समावेश "trace.h"
+#include "pnfs.h"
+#include "netns.h"
+#include "trace.h"
 
-#घोषणा NFSDDBG_FACILITY                NFSDDBG_PNFS
+#define NFSDDBG_FACILITY                NFSDDBG_PNFS
 
-काष्ठा nfs4_layout अणु
-	काष्ठा list_head		lo_perstate;
-	काष्ठा nfs4_layout_stateid	*lo_state;
-	काष्ठा nfsd4_layout_seg		lo_seg;
-पूर्ण;
+struct nfs4_layout {
+	struct list_head		lo_perstate;
+	struct nfs4_layout_stateid	*lo_state;
+	struct nfsd4_layout_seg		lo_seg;
+};
 
-अटल काष्ठा kmem_cache *nfs4_layout_cache;
-अटल काष्ठा kmem_cache *nfs4_layout_stateid_cache;
+static struct kmem_cache *nfs4_layout_cache;
+static struct kmem_cache *nfs4_layout_stateid_cache;
 
-अटल स्थिर काष्ठा nfsd4_callback_ops nfsd4_cb_layout_ops;
-अटल स्थिर काष्ठा lock_manager_operations nfsd4_layouts_lm_ops;
+static const struct nfsd4_callback_ops nfsd4_cb_layout_ops;
+static const struct lock_manager_operations nfsd4_layouts_lm_ops;
 
-स्थिर काष्ठा nfsd4_layout_ops *nfsd4_layout_ops[LAYOUT_TYPE_MAX] =  अणु
-#अगर_घोषित CONFIG_NFSD_FLEXखाताLAYOUT
-	[LAYOUT_FLEX_खाताS]	= &ff_layout_ops,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_NFSD_BLOCKLAYOUT
+const struct nfsd4_layout_ops *nfsd4_layout_ops[LAYOUT_TYPE_MAX] =  {
+#ifdef CONFIG_NFSD_FLEXFILELAYOUT
+	[LAYOUT_FLEX_FILES]	= &ff_layout_ops,
+#endif
+#ifdef CONFIG_NFSD_BLOCKLAYOUT
 	[LAYOUT_BLOCK_VOLUME]	= &bl_layout_ops,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_NFSD_SCSILAYOUT
+#endif
+#ifdef CONFIG_NFSD_SCSILAYOUT
 	[LAYOUT_SCSI]		= &scsi_layout_ops,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
 /* pNFS device ID to export fsid mapping */
-#घोषणा DEVID_HASH_BITS	8
-#घोषणा DEVID_HASH_SIZE	(1 << DEVID_HASH_BITS)
-#घोषणा DEVID_HASH_MASK	(DEVID_HASH_SIZE - 1)
-अटल u64 nfsd_devid_seq = 1;
-अटल काष्ठा list_head nfsd_devid_hash[DEVID_HASH_SIZE];
-अटल DEFINE_SPINLOCK(nfsd_devid_lock);
+#define DEVID_HASH_BITS	8
+#define DEVID_HASH_SIZE	(1 << DEVID_HASH_BITS)
+#define DEVID_HASH_MASK	(DEVID_HASH_SIZE - 1)
+static u64 nfsd_devid_seq = 1;
+static struct list_head nfsd_devid_hash[DEVID_HASH_SIZE];
+static DEFINE_SPINLOCK(nfsd_devid_lock);
 
-अटल अंतरभूत u32 devid_hashfn(u64 idx)
-अणु
-	वापस jhash_2words(idx, idx >> 32, 0) & DEVID_HASH_MASK;
-पूर्ण
+static inline u32 devid_hashfn(u64 idx)
+{
+	return jhash_2words(idx, idx >> 32, 0) & DEVID_HASH_MASK;
+}
 
-अटल व्योम
-nfsd4_alloc_devid_map(स्थिर काष्ठा svc_fh *fhp)
-अणु
-	स्थिर काष्ठा knfsd_fh *fh = &fhp->fh_handle;
-	माप_प्रकार fsid_len = key_len(fh->fh_fsid_type);
-	काष्ठा nfsd4_deviceid_map *map, *old;
-	पूर्णांक i;
+static void
+nfsd4_alloc_devid_map(const struct svc_fh *fhp)
+{
+	const struct knfsd_fh *fh = &fhp->fh_handle;
+	size_t fsid_len = key_len(fh->fh_fsid_type);
+	struct nfsd4_deviceid_map *map, *old;
+	int i;
 
-	map = kzalloc(माप(*map) + fsid_len, GFP_KERNEL);
-	अगर (!map)
-		वापस;
+	map = kzalloc(sizeof(*map) + fsid_len, GFP_KERNEL);
+	if (!map)
+		return;
 
 	map->fsid_type = fh->fh_fsid_type;
-	स_नकल(&map->fsid, fh->fh_fsid, fsid_len);
+	memcpy(&map->fsid, fh->fh_fsid, fsid_len);
 
 	spin_lock(&nfsd_devid_lock);
-	अगर (fhp->fh_export->ex_devid_map)
-		जाओ out_unlock;
+	if (fhp->fh_export->ex_devid_map)
+		goto out_unlock;
 
-	क्रम (i = 0; i < DEVID_HASH_SIZE; i++) अणु
-		list_क्रम_each_entry(old, &nfsd_devid_hash[i], hash) अणु
-			अगर (old->fsid_type != fh->fh_fsid_type)
-				जारी;
-			अगर (स_भेद(old->fsid, fh->fh_fsid,
+	for (i = 0; i < DEVID_HASH_SIZE; i++) {
+		list_for_each_entry(old, &nfsd_devid_hash[i], hash) {
+			if (old->fsid_type != fh->fh_fsid_type)
+				continue;
+			if (memcmp(old->fsid, fh->fh_fsid,
 					key_len(old->fsid_type)))
-				जारी;
+				continue;
 
 			fhp->fh_export->ex_devid_map = old;
-			जाओ out_unlock;
-		पूर्ण
-	पूर्ण
+			goto out_unlock;
+		}
+	}
 
 	map->idx = nfsd_devid_seq++;
 	list_add_tail_rcu(&map->hash, &nfsd_devid_hash[devid_hashfn(map->idx)]);
 	fhp->fh_export->ex_devid_map = map;
-	map = शून्य;
+	map = NULL;
 
 out_unlock:
 	spin_unlock(&nfsd_devid_lock);
-	kमुक्त(map);
-पूर्ण
+	kfree(map);
+}
 
-काष्ठा nfsd4_deviceid_map *
-nfsd4_find_devid_map(पूर्णांक idx)
-अणु
-	काष्ठा nfsd4_deviceid_map *map, *ret = शून्य;
+struct nfsd4_deviceid_map *
+nfsd4_find_devid_map(int idx)
+{
+	struct nfsd4_deviceid_map *map, *ret = NULL;
 
-	rcu_पढ़ो_lock();
-	list_क्रम_each_entry_rcu(map, &nfsd_devid_hash[devid_hashfn(idx)], hash)
-		अगर (map->idx == idx)
+	rcu_read_lock();
+	list_for_each_entry_rcu(map, &nfsd_devid_hash[devid_hashfn(idx)], hash)
+		if (map->idx == idx)
 			ret = map;
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक
-nfsd4_set_deviceid(काष्ठा nfsd4_deviceid *id, स्थिर काष्ठा svc_fh *fhp,
+int
+nfsd4_set_deviceid(struct nfsd4_deviceid *id, const struct svc_fh *fhp,
 		u32 device_generation)
-अणु
-	अगर (!fhp->fh_export->ex_devid_map) अणु
+{
+	if (!fhp->fh_export->ex_devid_map) {
 		nfsd4_alloc_devid_map(fhp);
-		अगर (!fhp->fh_export->ex_devid_map)
-			वापस -ENOMEM;
-	पूर्ण
+		if (!fhp->fh_export->ex_devid_map)
+			return -ENOMEM;
+	}
 
 	id->fsid_idx = fhp->fh_export->ex_devid_map->idx;
 	id->generation = device_generation;
 	id->pad = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम nfsd4_setup_layout_type(काष्ठा svc_export *exp)
-अणु
-#अगर defined(CONFIG_NFSD_BLOCKLAYOUT) || defined(CONFIG_NFSD_SCSILAYOUT)
-	काष्ठा super_block *sb = exp->ex_path.mnt->mnt_sb;
-#पूर्ण_अगर
+void nfsd4_setup_layout_type(struct svc_export *exp)
+{
+#if defined(CONFIG_NFSD_BLOCKLAYOUT) || defined(CONFIG_NFSD_SCSILAYOUT)
+	struct super_block *sb = exp->ex_path.mnt->mnt_sb;
+#endif
 
-	अगर (!(exp->ex_flags & NFSEXP_PNFS))
-		वापस;
+	if (!(exp->ex_flags & NFSEXP_PNFS))
+		return;
 
-#अगर_घोषित CONFIG_NFSD_FLEXखाताLAYOUT
-	exp->ex_layout_types |= 1 << LAYOUT_FLEX_खाताS;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_NFSD_BLOCKLAYOUT
-	अगर (sb->s_export_op->get_uuid &&
+#ifdef CONFIG_NFSD_FLEXFILELAYOUT
+	exp->ex_layout_types |= 1 << LAYOUT_FLEX_FILES;
+#endif
+#ifdef CONFIG_NFSD_BLOCKLAYOUT
+	if (sb->s_export_op->get_uuid &&
 	    sb->s_export_op->map_blocks &&
 	    sb->s_export_op->commit_blocks)
 		exp->ex_layout_types |= 1 << LAYOUT_BLOCK_VOLUME;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_NFSD_SCSILAYOUT
-	अगर (sb->s_export_op->map_blocks &&
+#endif
+#ifdef CONFIG_NFSD_SCSILAYOUT
+	if (sb->s_export_op->map_blocks &&
 	    sb->s_export_op->commit_blocks &&
 	    sb->s_bdev && sb->s_bdev->bd_disk->fops->pr_ops &&
 		blk_queue_scsi_passthrough(sb->s_bdev->bd_disk->queue))
 		exp->ex_layout_types |= 1 << LAYOUT_SCSI;
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल व्योम
-nfsd4_मुक्त_layout_stateid(काष्ठा nfs4_stid *stid)
-अणु
-	काष्ठा nfs4_layout_stateid *ls = layoutstateid(stid);
-	काष्ठा nfs4_client *clp = ls->ls_stid.sc_client;
-	काष्ठा nfs4_file *fp = ls->ls_stid.sc_file;
+static void
+nfsd4_free_layout_stateid(struct nfs4_stid *stid)
+{
+	struct nfs4_layout_stateid *ls = layoutstateid(stid);
+	struct nfs4_client *clp = ls->ls_stid.sc_client;
+	struct nfs4_file *fp = ls->ls_stid.sc_file;
 
-	trace_nfsd_layoutstate_मुक्त(&ls->ls_stid.sc_stateid);
+	trace_nfsd_layoutstate_free(&ls->ls_stid.sc_stateid);
 
 	spin_lock(&clp->cl_lock);
 	list_del_init(&ls->ls_perclnt);
@@ -169,28 +168,28 @@ nfsd4_मुक्त_layout_stateid(काष्ठा nfs4_stid *stid)
 	list_del_init(&ls->ls_perfile);
 	spin_unlock(&fp->fi_lock);
 
-	अगर (!nfsd4_layout_ops[ls->ls_layout_type]->disable_recalls)
-		vfs_setlease(ls->ls_file->nf_file, F_UNLCK, शून्य, (व्योम **)&ls);
+	if (!nfsd4_layout_ops[ls->ls_layout_type]->disable_recalls)
+		vfs_setlease(ls->ls_file->nf_file, F_UNLCK, NULL, (void **)&ls);
 	nfsd_file_put(ls->ls_file);
 
-	अगर (ls->ls_recalled)
+	if (ls->ls_recalled)
 		atomic_dec(&ls->ls_stid.sc_file->fi_lo_recalls);
 
-	kmem_cache_मुक्त(nfs4_layout_stateid_cache, ls);
-पूर्ण
+	kmem_cache_free(nfs4_layout_stateid_cache, ls);
+}
 
-अटल पूर्णांक
-nfsd4_layout_setlease(काष्ठा nfs4_layout_stateid *ls)
-अणु
-	काष्ठा file_lock *fl;
-	पूर्णांक status;
+static int
+nfsd4_layout_setlease(struct nfs4_layout_stateid *ls)
+{
+	struct file_lock *fl;
+	int status;
 
-	अगर (nfsd4_layout_ops[ls->ls_layout_type]->disable_recalls)
-		वापस 0;
+	if (nfsd4_layout_ops[ls->ls_layout_type]->disable_recalls)
+		return 0;
 
 	fl = locks_alloc_lock();
-	अगर (!fl)
-		वापस -ENOMEM;
+	if (!fl)
+		return -ENOMEM;
 	locks_init_lock(fl);
 	fl->fl_lmops = &nfsd4_layouts_lm_ops;
 	fl->fl_flags = FL_LAYOUT;
@@ -200,28 +199,28 @@ nfsd4_layout_setlease(काष्ठा nfs4_layout_stateid *ls)
 	fl->fl_pid = current->tgid;
 	fl->fl_file = ls->ls_file->nf_file;
 
-	status = vfs_setlease(fl->fl_file, fl->fl_type, &fl, शून्य);
-	अगर (status) अणु
-		locks_मुक्त_lock(fl);
-		वापस status;
-	पूर्ण
-	BUG_ON(fl != शून्य);
-	वापस 0;
-पूर्ण
+	status = vfs_setlease(fl->fl_file, fl->fl_type, &fl, NULL);
+	if (status) {
+		locks_free_lock(fl);
+		return status;
+	}
+	BUG_ON(fl != NULL);
+	return 0;
+}
 
-अटल काष्ठा nfs4_layout_stateid *
-nfsd4_alloc_layout_stateid(काष्ठा nfsd4_compound_state *cstate,
-		काष्ठा nfs4_stid *parent, u32 layout_type)
-अणु
-	काष्ठा nfs4_client *clp = cstate->clp;
-	काष्ठा nfs4_file *fp = parent->sc_file;
-	काष्ठा nfs4_layout_stateid *ls;
-	काष्ठा nfs4_stid *stp;
+static struct nfs4_layout_stateid *
+nfsd4_alloc_layout_stateid(struct nfsd4_compound_state *cstate,
+		struct nfs4_stid *parent, u32 layout_type)
+{
+	struct nfs4_client *clp = cstate->clp;
+	struct nfs4_file *fp = parent->sc_file;
+	struct nfs4_layout_stateid *ls;
+	struct nfs4_stid *stp;
 
 	stp = nfs4_alloc_stid(cstate->clp, nfs4_layout_stateid_cache,
-					nfsd4_मुक्त_layout_stateid);
-	अगर (!stp)
-		वापस शून्य;
+					nfsd4_free_layout_stateid);
+	if (!stp)
+		return NULL;
 
 	get_nfs4_file(fp);
 	stp->sc_file = fp;
@@ -236,18 +235,18 @@ nfsd4_alloc_layout_stateid(काष्ठा nfsd4_compound_state *cstate,
 	nfsd4_init_cb(&ls->ls_recall, clp, &nfsd4_cb_layout_ops,
 			NFSPROC4_CLNT_CB_LAYOUT);
 
-	अगर (parent->sc_type == NFS4_DELEG_STID)
+	if (parent->sc_type == NFS4_DELEG_STID)
 		ls->ls_file = nfsd_file_get(fp->fi_deleg_file);
-	अन्यथा
+	else
 		ls->ls_file = find_any_file(fp);
 	BUG_ON(!ls->ls_file);
 
-	अगर (nfsd4_layout_setlease(ls)) अणु
+	if (nfsd4_layout_setlease(ls)) {
 		nfsd_file_put(ls->ls_file);
 		put_nfs4_file(fp);
-		kmem_cache_मुक्त(nfs4_layout_stateid_cache, ls);
-		वापस शून्य;
-	पूर्ण
+		kmem_cache_free(nfs4_layout_stateid_cache, ls);
+		return NULL;
+	}
 
 	spin_lock(&clp->cl_lock);
 	stp->sc_type = NFS4_LAYOUT_STID;
@@ -259,74 +258,74 @@ nfsd4_alloc_layout_stateid(काष्ठा nfsd4_compound_state *cstate,
 	spin_unlock(&fp->fi_lock);
 
 	trace_nfsd_layoutstate_alloc(&ls->ls_stid.sc_stateid);
-	वापस ls;
-पूर्ण
+	return ls;
+}
 
 __be32
-nfsd4_preprocess_layout_stateid(काष्ठा svc_rqst *rqstp,
-		काष्ठा nfsd4_compound_state *cstate, stateid_t *stateid,
-		bool create, u32 layout_type, काष्ठा nfs4_layout_stateid **lsp)
-अणु
-	काष्ठा nfs4_layout_stateid *ls;
-	काष्ठा nfs4_stid *stid;
-	अचिन्हित अक्षर typemask = NFS4_LAYOUT_STID;
+nfsd4_preprocess_layout_stateid(struct svc_rqst *rqstp,
+		struct nfsd4_compound_state *cstate, stateid_t *stateid,
+		bool create, u32 layout_type, struct nfs4_layout_stateid **lsp)
+{
+	struct nfs4_layout_stateid *ls;
+	struct nfs4_stid *stid;
+	unsigned char typemask = NFS4_LAYOUT_STID;
 	__be32 status;
 
-	अगर (create)
+	if (create)
 		typemask |= (NFS4_OPEN_STID | NFS4_LOCK_STID | NFS4_DELEG_STID);
 
 	status = nfsd4_lookup_stateid(cstate, stateid, typemask, &stid,
 			net_generic(SVC_NET(rqstp), nfsd_net_id));
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 
-	अगर (!fh_match(&cstate->current_fh.fh_handle,
-		      &stid->sc_file->fi_fhandle)) अणु
+	if (!fh_match(&cstate->current_fh.fh_handle,
+		      &stid->sc_file->fi_fhandle)) {
 		status = nfserr_bad_stateid;
-		जाओ out_put_stid;
-	पूर्ण
+		goto out_put_stid;
+	}
 
-	अगर (stid->sc_type != NFS4_LAYOUT_STID) अणु
+	if (stid->sc_type != NFS4_LAYOUT_STID) {
 		ls = nfsd4_alloc_layout_stateid(cstate, stid, layout_type);
 		nfs4_put_stid(stid);
 
 		status = nfserr_jukebox;
-		अगर (!ls)
-			जाओ out;
+		if (!ls)
+			goto out;
 		mutex_lock(&ls->ls_mutex);
-	पूर्ण अन्यथा अणु
-		ls = container_of(stid, काष्ठा nfs4_layout_stateid, ls_stid);
+	} else {
+		ls = container_of(stid, struct nfs4_layout_stateid, ls_stid);
 
 		status = nfserr_bad_stateid;
 		mutex_lock(&ls->ls_mutex);
-		अगर (nfsd4_stateid_generation_after(stateid, &stid->sc_stateid))
-			जाओ out_unlock_stid;
-		अगर (layout_type != ls->ls_layout_type)
-			जाओ out_unlock_stid;
-	पूर्ण
+		if (nfsd4_stateid_generation_after(stateid, &stid->sc_stateid))
+			goto out_unlock_stid;
+		if (layout_type != ls->ls_layout_type)
+			goto out_unlock_stid;
+	}
 
 	*lsp = ls;
-	वापस 0;
+	return 0;
 
 out_unlock_stid:
 	mutex_unlock(&ls->ls_mutex);
 out_put_stid:
 	nfs4_put_stid(stid);
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल व्योम
-nfsd4_recall_file_layout(काष्ठा nfs4_layout_stateid *ls)
-अणु
+static void
+nfsd4_recall_file_layout(struct nfs4_layout_stateid *ls)
+{
 	spin_lock(&ls->ls_lock);
-	अगर (ls->ls_recalled)
-		जाओ out_unlock;
+	if (ls->ls_recalled)
+		goto out_unlock;
 
 	ls->ls_recalled = true;
 	atomic_inc(&ls->ls_stid.sc_file->fi_lo_recalls);
-	अगर (list_empty(&ls->ls_layouts))
-		जाओ out_unlock;
+	if (list_empty(&ls->ls_layouts))
+		goto out_unlock;
 
 	trace_nfsd_layout_recall(&ls->ls_stid.sc_stateid);
 
@@ -335,453 +334,453 @@ nfsd4_recall_file_layout(काष्ठा nfs4_layout_stateid *ls)
 
 out_unlock:
 	spin_unlock(&ls->ls_lock);
-पूर्ण
+}
 
-अटल अंतरभूत u64
-layout_end(काष्ठा nfsd4_layout_seg *seg)
-अणु
+static inline u64
+layout_end(struct nfsd4_layout_seg *seg)
+{
 	u64 end = seg->offset + seg->length;
-	वापस end >= seg->offset ? end : NFS4_MAX_UINT64;
-पूर्ण
+	return end >= seg->offset ? end : NFS4_MAX_UINT64;
+}
 
-अटल व्योम
-layout_update_len(काष्ठा nfsd4_layout_seg *lo, u64 end)
-अणु
-	अगर (end == NFS4_MAX_UINT64)
+static void
+layout_update_len(struct nfsd4_layout_seg *lo, u64 end)
+{
+	if (end == NFS4_MAX_UINT64)
 		lo->length = NFS4_MAX_UINT64;
-	अन्यथा
+	else
 		lo->length = end - lo->offset;
-पूर्ण
+}
 
-अटल bool
-layouts_overlapping(काष्ठा nfs4_layout *lo, काष्ठा nfsd4_layout_seg *s)
-अणु
-	अगर (s->iomode != IOMODE_ANY && s->iomode != lo->lo_seg.iomode)
-		वापस false;
-	अगर (layout_end(&lo->lo_seg) <= s->offset)
-		वापस false;
-	अगर (layout_end(s) <= lo->lo_seg.offset)
-		वापस false;
-	वापस true;
-पूर्ण
+static bool
+layouts_overlapping(struct nfs4_layout *lo, struct nfsd4_layout_seg *s)
+{
+	if (s->iomode != IOMODE_ANY && s->iomode != lo->lo_seg.iomode)
+		return false;
+	if (layout_end(&lo->lo_seg) <= s->offset)
+		return false;
+	if (layout_end(s) <= lo->lo_seg.offset)
+		return false;
+	return true;
+}
 
-अटल bool
-layouts_try_merge(काष्ठा nfsd4_layout_seg *lo, काष्ठा nfsd4_layout_seg *new)
-अणु
-	अगर (lo->iomode != new->iomode)
-		वापस false;
-	अगर (layout_end(new) < lo->offset)
-		वापस false;
-	अगर (layout_end(lo) < new->offset)
-		वापस false;
+static bool
+layouts_try_merge(struct nfsd4_layout_seg *lo, struct nfsd4_layout_seg *new)
+{
+	if (lo->iomode != new->iomode)
+		return false;
+	if (layout_end(new) < lo->offset)
+		return false;
+	if (layout_end(lo) < new->offset)
+		return false;
 
 	lo->offset = min(lo->offset, new->offset);
 	layout_update_len(lo, max(layout_end(lo), layout_end(new)));
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल __be32
-nfsd4_recall_conflict(काष्ठा nfs4_layout_stateid *ls)
-अणु
-	काष्ठा nfs4_file *fp = ls->ls_stid.sc_file;
-	काष्ठा nfs4_layout_stateid *l, *n;
+static __be32
+nfsd4_recall_conflict(struct nfs4_layout_stateid *ls)
+{
+	struct nfs4_file *fp = ls->ls_stid.sc_file;
+	struct nfs4_layout_stateid *l, *n;
 	__be32 nfserr = nfs_ok;
 
-	निश्चित_spin_locked(&fp->fi_lock);
+	assert_spin_locked(&fp->fi_lock);
 
-	list_क्रम_each_entry_safe(l, n, &fp->fi_lo_states, ls_perfile) अणु
-		अगर (l != ls) अणु
+	list_for_each_entry_safe(l, n, &fp->fi_lo_states, ls_perfile) {
+		if (l != ls) {
 			nfsd4_recall_file_layout(l);
 			nfserr = nfserr_recallconflict;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस nfserr;
-पूर्ण
+	return nfserr;
+}
 
 __be32
-nfsd4_insert_layout(काष्ठा nfsd4_layoutget *lgp, काष्ठा nfs4_layout_stateid *ls)
-अणु
-	काष्ठा nfsd4_layout_seg *seg = &lgp->lg_seg;
-	काष्ठा nfs4_file *fp = ls->ls_stid.sc_file;
-	काष्ठा nfs4_layout *lp, *new = शून्य;
+nfsd4_insert_layout(struct nfsd4_layoutget *lgp, struct nfs4_layout_stateid *ls)
+{
+	struct nfsd4_layout_seg *seg = &lgp->lg_seg;
+	struct nfs4_file *fp = ls->ls_stid.sc_file;
+	struct nfs4_layout *lp, *new = NULL;
 	__be32 nfserr;
 
 	spin_lock(&fp->fi_lock);
 	nfserr = nfsd4_recall_conflict(ls);
-	अगर (nfserr)
-		जाओ out;
+	if (nfserr)
+		goto out;
 	spin_lock(&ls->ls_lock);
-	list_क्रम_each_entry(lp, &ls->ls_layouts, lo_perstate) अणु
-		अगर (layouts_try_merge(&lp->lo_seg, seg))
-			जाओ करोne;
-	पूर्ण
+	list_for_each_entry(lp, &ls->ls_layouts, lo_perstate) {
+		if (layouts_try_merge(&lp->lo_seg, seg))
+			goto done;
+	}
 	spin_unlock(&ls->ls_lock);
 	spin_unlock(&fp->fi_lock);
 
 	new = kmem_cache_alloc(nfs4_layout_cache, GFP_KERNEL);
-	अगर (!new)
-		वापस nfserr_jukebox;
-	स_नकल(&new->lo_seg, seg, माप(lp->lo_seg));
+	if (!new)
+		return nfserr_jukebox;
+	memcpy(&new->lo_seg, seg, sizeof(lp->lo_seg));
 	new->lo_state = ls;
 
 	spin_lock(&fp->fi_lock);
 	nfserr = nfsd4_recall_conflict(ls);
-	अगर (nfserr)
-		जाओ out;
+	if (nfserr)
+		goto out;
 	spin_lock(&ls->ls_lock);
-	list_क्रम_each_entry(lp, &ls->ls_layouts, lo_perstate) अणु
-		अगर (layouts_try_merge(&lp->lo_seg, seg))
-			जाओ करोne;
-	पूर्ण
+	list_for_each_entry(lp, &ls->ls_layouts, lo_perstate) {
+		if (layouts_try_merge(&lp->lo_seg, seg))
+			goto done;
+	}
 
 	refcount_inc(&ls->ls_stid.sc_count);
 	list_add_tail(&new->lo_perstate, &ls->ls_layouts);
-	new = शून्य;
-करोne:
+	new = NULL;
+done:
 	nfs4_inc_and_copy_stateid(&lgp->lg_sid, &ls->ls_stid);
 	spin_unlock(&ls->ls_lock);
 out:
 	spin_unlock(&fp->fi_lock);
-	अगर (new)
-		kmem_cache_मुक्त(nfs4_layout_cache, new);
-	वापस nfserr;
-पूर्ण
+	if (new)
+		kmem_cache_free(nfs4_layout_cache, new);
+	return nfserr;
+}
 
-अटल व्योम
-nfsd4_मुक्त_layouts(काष्ठा list_head *reaplist)
-अणु
-	जबतक (!list_empty(reaplist)) अणु
-		काष्ठा nfs4_layout *lp = list_first_entry(reaplist,
-				काष्ठा nfs4_layout, lo_perstate);
+static void
+nfsd4_free_layouts(struct list_head *reaplist)
+{
+	while (!list_empty(reaplist)) {
+		struct nfs4_layout *lp = list_first_entry(reaplist,
+				struct nfs4_layout, lo_perstate);
 
 		list_del(&lp->lo_perstate);
 		nfs4_put_stid(&lp->lo_state->ls_stid);
-		kmem_cache_मुक्त(nfs4_layout_cache, lp);
-	पूर्ण
-पूर्ण
+		kmem_cache_free(nfs4_layout_cache, lp);
+	}
+}
 
-अटल व्योम
-nfsd4_वापस_file_layout(काष्ठा nfs4_layout *lp, काष्ठा nfsd4_layout_seg *seg,
-		काष्ठा list_head *reaplist)
-अणु
-	काष्ठा nfsd4_layout_seg *lo = &lp->lo_seg;
+static void
+nfsd4_return_file_layout(struct nfs4_layout *lp, struct nfsd4_layout_seg *seg,
+		struct list_head *reaplist)
+{
+	struct nfsd4_layout_seg *lo = &lp->lo_seg;
 	u64 end = layout_end(lo);
 
-	अगर (seg->offset <= lo->offset) अणु
-		अगर (layout_end(seg) >= end) अणु
+	if (seg->offset <= lo->offset) {
+		if (layout_end(seg) >= end) {
 			list_move_tail(&lp->lo_perstate, reaplist);
-			वापस;
-		पूर्ण
+			return;
+		}
 		lo->offset = layout_end(seg);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* retain the whole layout segment on a split. */
-		अगर (layout_end(seg) < end) अणु
-			dprपूर्णांकk("%s: split not supported\n", __func__);
-			वापस;
-		पूर्ण
+		if (layout_end(seg) < end) {
+			dprintk("%s: split not supported\n", __func__);
+			return;
+		}
 		end = seg->offset;
-	पूर्ण
+	}
 
 	layout_update_len(lo, end);
-पूर्ण
+}
 
 __be32
-nfsd4_वापस_file_layouts(काष्ठा svc_rqst *rqstp,
-		काष्ठा nfsd4_compound_state *cstate,
-		काष्ठा nfsd4_layoutवापस *lrp)
-अणु
-	काष्ठा nfs4_layout_stateid *ls;
-	काष्ठा nfs4_layout *lp, *n;
+nfsd4_return_file_layouts(struct svc_rqst *rqstp,
+		struct nfsd4_compound_state *cstate,
+		struct nfsd4_layoutreturn *lrp)
+{
+	struct nfs4_layout_stateid *ls;
+	struct nfs4_layout *lp, *n;
 	LIST_HEAD(reaplist);
 	__be32 nfserr;
-	पूर्णांक found = 0;
+	int found = 0;
 
 	nfserr = nfsd4_preprocess_layout_stateid(rqstp, cstate, &lrp->lr_sid,
 						false, lrp->lr_layout_type,
 						&ls);
-	अगर (nfserr) अणु
-		trace_nfsd_layout_वापस_lookup_fail(&lrp->lr_sid);
-		वापस nfserr;
-	पूर्ण
+	if (nfserr) {
+		trace_nfsd_layout_return_lookup_fail(&lrp->lr_sid);
+		return nfserr;
+	}
 
 	spin_lock(&ls->ls_lock);
-	list_क्रम_each_entry_safe(lp, n, &ls->ls_layouts, lo_perstate) अणु
-		अगर (layouts_overlapping(lp, &lrp->lr_seg)) अणु
-			nfsd4_वापस_file_layout(lp, &lrp->lr_seg, &reaplist);
+	list_for_each_entry_safe(lp, n, &ls->ls_layouts, lo_perstate) {
+		if (layouts_overlapping(lp, &lrp->lr_seg)) {
+			nfsd4_return_file_layout(lp, &lrp->lr_seg, &reaplist);
 			found++;
-		पूर्ण
-	पूर्ण
-	अगर (!list_empty(&ls->ls_layouts)) अणु
-		अगर (found)
+		}
+	}
+	if (!list_empty(&ls->ls_layouts)) {
+		if (found)
 			nfs4_inc_and_copy_stateid(&lrp->lr_sid, &ls->ls_stid);
 		lrp->lrs_present = 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		trace_nfsd_layoutstate_unhash(&ls->ls_stid.sc_stateid);
 		nfs4_unhash_stid(&ls->ls_stid);
 		lrp->lrs_present = 0;
-	पूर्ण
+	}
 	spin_unlock(&ls->ls_lock);
 
 	mutex_unlock(&ls->ls_mutex);
 	nfs4_put_stid(&ls->ls_stid);
-	nfsd4_मुक्त_layouts(&reaplist);
-	वापस nfs_ok;
-पूर्ण
+	nfsd4_free_layouts(&reaplist);
+	return nfs_ok;
+}
 
 __be32
-nfsd4_वापस_client_layouts(काष्ठा svc_rqst *rqstp,
-		काष्ठा nfsd4_compound_state *cstate,
-		काष्ठा nfsd4_layoutवापस *lrp)
-अणु
-	काष्ठा nfs4_layout_stateid *ls, *n;
-	काष्ठा nfs4_client *clp = cstate->clp;
-	काष्ठा nfs4_layout *lp, *t;
+nfsd4_return_client_layouts(struct svc_rqst *rqstp,
+		struct nfsd4_compound_state *cstate,
+		struct nfsd4_layoutreturn *lrp)
+{
+	struct nfs4_layout_stateid *ls, *n;
+	struct nfs4_client *clp = cstate->clp;
+	struct nfs4_layout *lp, *t;
 	LIST_HEAD(reaplist);
 
 	lrp->lrs_present = 0;
 
 	spin_lock(&clp->cl_lock);
-	list_क्रम_each_entry_safe(ls, n, &clp->cl_lo_states, ls_perclnt) अणु
-		अगर (ls->ls_layout_type != lrp->lr_layout_type)
-			जारी;
+	list_for_each_entry_safe(ls, n, &clp->cl_lo_states, ls_perclnt) {
+		if (ls->ls_layout_type != lrp->lr_layout_type)
+			continue;
 
-		अगर (lrp->lr_वापस_type == RETURN_FSID &&
+		if (lrp->lr_return_type == RETURN_FSID &&
 		    !fh_fsid_match(&ls->ls_stid.sc_file->fi_fhandle,
 				   &cstate->current_fh.fh_handle))
-			जारी;
+			continue;
 
 		spin_lock(&ls->ls_lock);
-		list_क्रम_each_entry_safe(lp, t, &ls->ls_layouts, lo_perstate) अणु
-			अगर (lrp->lr_seg.iomode == IOMODE_ANY ||
+		list_for_each_entry_safe(lp, t, &ls->ls_layouts, lo_perstate) {
+			if (lrp->lr_seg.iomode == IOMODE_ANY ||
 			    lrp->lr_seg.iomode == lp->lo_seg.iomode)
 				list_move_tail(&lp->lo_perstate, &reaplist);
-		पूर्ण
+		}
 		spin_unlock(&ls->ls_lock);
-	पूर्ण
+	}
 	spin_unlock(&clp->cl_lock);
 
-	nfsd4_मुक्त_layouts(&reaplist);
-	वापस 0;
-पूर्ण
+	nfsd4_free_layouts(&reaplist);
+	return 0;
+}
 
-अटल व्योम
-nfsd4_वापस_all_layouts(काष्ठा nfs4_layout_stateid *ls,
-		काष्ठा list_head *reaplist)
-अणु
+static void
+nfsd4_return_all_layouts(struct nfs4_layout_stateid *ls,
+		struct list_head *reaplist)
+{
 	spin_lock(&ls->ls_lock);
 	list_splice_init(&ls->ls_layouts, reaplist);
 	spin_unlock(&ls->ls_lock);
-पूर्ण
+}
 
-व्योम
-nfsd4_वापस_all_client_layouts(काष्ठा nfs4_client *clp)
-अणु
-	काष्ठा nfs4_layout_stateid *ls, *n;
+void
+nfsd4_return_all_client_layouts(struct nfs4_client *clp)
+{
+	struct nfs4_layout_stateid *ls, *n;
 	LIST_HEAD(reaplist);
 
 	spin_lock(&clp->cl_lock);
-	list_क्रम_each_entry_safe(ls, n, &clp->cl_lo_states, ls_perclnt)
-		nfsd4_वापस_all_layouts(ls, &reaplist);
+	list_for_each_entry_safe(ls, n, &clp->cl_lo_states, ls_perclnt)
+		nfsd4_return_all_layouts(ls, &reaplist);
 	spin_unlock(&clp->cl_lock);
 
-	nfsd4_मुक्त_layouts(&reaplist);
-पूर्ण
+	nfsd4_free_layouts(&reaplist);
+}
 
-व्योम
-nfsd4_वापस_all_file_layouts(काष्ठा nfs4_client *clp, काष्ठा nfs4_file *fp)
-अणु
-	काष्ठा nfs4_layout_stateid *ls, *n;
+void
+nfsd4_return_all_file_layouts(struct nfs4_client *clp, struct nfs4_file *fp)
+{
+	struct nfs4_layout_stateid *ls, *n;
 	LIST_HEAD(reaplist);
 
 	spin_lock(&fp->fi_lock);
-	list_क्रम_each_entry_safe(ls, n, &fp->fi_lo_states, ls_perfile) अणु
-		अगर (ls->ls_stid.sc_client == clp)
-			nfsd4_वापस_all_layouts(ls, &reaplist);
-	पूर्ण
+	list_for_each_entry_safe(ls, n, &fp->fi_lo_states, ls_perfile) {
+		if (ls->ls_stid.sc_client == clp)
+			nfsd4_return_all_layouts(ls, &reaplist);
+	}
 	spin_unlock(&fp->fi_lock);
 
-	nfsd4_मुक्त_layouts(&reaplist);
-पूर्ण
+	nfsd4_free_layouts(&reaplist);
+}
 
-अटल व्योम
-nfsd4_cb_layout_fail(काष्ठा nfs4_layout_stateid *ls)
-अणु
-	काष्ठा nfs4_client *clp = ls->ls_stid.sc_client;
-	अक्षर addr_str[INET6_ADDRSTRLEN];
-	अटल अक्षर स्थिर nfsd_recall_failed[] = "/sbin/nfsd-recall-failed";
-	अटल अक्षर *envp[] = अणु
+static void
+nfsd4_cb_layout_fail(struct nfs4_layout_stateid *ls)
+{
+	struct nfs4_client *clp = ls->ls_stid.sc_client;
+	char addr_str[INET6_ADDRSTRLEN];
+	static char const nfsd_recall_failed[] = "/sbin/nfsd-recall-failed";
+	static char *envp[] = {
 		"HOME=/",
 		"TERM=linux",
 		"PATH=/sbin:/usr/sbin:/bin:/usr/bin",
-		शून्य
-	पूर्ण;
-	अक्षर *argv[8];
-	पूर्णांक error;
+		NULL
+	};
+	char *argv[8];
+	int error;
 
-	rpc_ntop((काष्ठा sockaddr *)&clp->cl_addr, addr_str, माप(addr_str));
+	rpc_ntop((struct sockaddr *)&clp->cl_addr, addr_str, sizeof(addr_str));
 
-	prपूर्णांकk(KERN_WARNING
+	printk(KERN_WARNING
 		"nfsd: client %s failed to respond to layout recall. "
 		"  Fencing..\n", addr_str);
 
-	argv[0] = (अक्षर *)nfsd_recall_failed;
+	argv[0] = (char *)nfsd_recall_failed;
 	argv[1] = addr_str;
 	argv[2] = ls->ls_file->nf_file->f_path.mnt->mnt_sb->s_id;
-	argv[3] = शून्य;
+	argv[3] = NULL;
 
 	error = call_usermodehelper(nfsd_recall_failed, argv, envp,
 				    UMH_WAIT_PROC);
-	अगर (error) अणु
-		prपूर्णांकk(KERN_ERR "nfsd: fence failed for client %s: %d!\n",
+	if (error) {
+		printk(KERN_ERR "nfsd: fence failed for client %s: %d!\n",
 			addr_str, error);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम
-nfsd4_cb_layout_prepare(काष्ठा nfsd4_callback *cb)
-अणु
-	काष्ठा nfs4_layout_stateid *ls =
-		container_of(cb, काष्ठा nfs4_layout_stateid, ls_recall);
+static void
+nfsd4_cb_layout_prepare(struct nfsd4_callback *cb)
+{
+	struct nfs4_layout_stateid *ls =
+		container_of(cb, struct nfs4_layout_stateid, ls_recall);
 
 	mutex_lock(&ls->ls_mutex);
 	nfs4_inc_and_copy_stateid(&ls->ls_recall_sid, &ls->ls_stid);
 	mutex_unlock(&ls->ls_mutex);
-पूर्ण
+}
 
-अटल पूर्णांक
-nfsd4_cb_layout_करोne(काष्ठा nfsd4_callback *cb, काष्ठा rpc_task *task)
-अणु
-	काष्ठा nfs4_layout_stateid *ls =
-		container_of(cb, काष्ठा nfs4_layout_stateid, ls_recall);
-	काष्ठा nfsd_net *nn;
-	kसमय_प्रकार now, cutoff;
-	स्थिर काष्ठा nfsd4_layout_ops *ops;
+static int
+nfsd4_cb_layout_done(struct nfsd4_callback *cb, struct rpc_task *task)
+{
+	struct nfs4_layout_stateid *ls =
+		container_of(cb, struct nfs4_layout_stateid, ls_recall);
+	struct nfsd_net *nn;
+	ktime_t now, cutoff;
+	const struct nfsd4_layout_ops *ops;
 
 
-	चयन (task->tk_status) अणु
-	हाल 0:
-	हाल -NFS4ERR_DELAY:
+	switch (task->tk_status) {
+	case 0:
+	case -NFS4ERR_DELAY:
 		/*
-		 * Anything left? If not, then call it करोne. Note that we करोn't
+		 * Anything left? If not, then call it done. Note that we don't
 		 * take the spinlock since this is an optimization and nothing
 		 * should get added until the cb counter goes to zero.
 		 */
-		अगर (list_empty(&ls->ls_layouts))
-			वापस 1;
+		if (list_empty(&ls->ls_layouts))
+			return 1;
 
-		/* Poll the client until it's करोne with the layout */
-		now = kसमय_get();
+		/* Poll the client until it's done with the layout */
+		now = ktime_get();
 		nn = net_generic(ls->ls_stid.sc_client->net, nfsd_net_id);
 
-		/* Client माला_लो 2 lease periods to वापस it */
-		cutoff = kसमय_add_ns(task->tk_start,
+		/* Client gets 2 lease periods to return it */
+		cutoff = ktime_add_ns(task->tk_start,
 					 (u64)nn->nfsd4_lease * NSEC_PER_SEC * 2);
 
-		अगर (kसमय_beक्रमe(now, cutoff)) अणु
+		if (ktime_before(now, cutoff)) {
 			rpc_delay(task, HZ/100); /* 10 mili-seconds */
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		fallthrough;
-	शेष:
+	default:
 		/*
 		 * Unknown error or non-responding client, we'll need to fence.
 		 */
 		trace_nfsd_layout_recall_fail(&ls->ls_stid.sc_stateid);
 
 		ops = nfsd4_layout_ops[ls->ls_layout_type];
-		अगर (ops->fence_client)
+		if (ops->fence_client)
 			ops->fence_client(ls);
-		अन्यथा
+		else
 			nfsd4_cb_layout_fail(ls);
-		वापस 1;
-	हाल -NFS4ERR_NOMATCHING_LAYOUT:
-		trace_nfsd_layout_recall_करोne(&ls->ls_stid.sc_stateid);
+		return 1;
+	case -NFS4ERR_NOMATCHING_LAYOUT:
+		trace_nfsd_layout_recall_done(&ls->ls_stid.sc_stateid);
 		task->tk_status = 0;
-		वापस 1;
-	पूर्ण
-पूर्ण
+		return 1;
+	}
+}
 
-अटल व्योम
-nfsd4_cb_layout_release(काष्ठा nfsd4_callback *cb)
-अणु
-	काष्ठा nfs4_layout_stateid *ls =
-		container_of(cb, काष्ठा nfs4_layout_stateid, ls_recall);
+static void
+nfsd4_cb_layout_release(struct nfsd4_callback *cb)
+{
+	struct nfs4_layout_stateid *ls =
+		container_of(cb, struct nfs4_layout_stateid, ls_recall);
 	LIST_HEAD(reaplist);
 
 	trace_nfsd_layout_recall_release(&ls->ls_stid.sc_stateid);
 
-	nfsd4_वापस_all_layouts(ls, &reaplist);
-	nfsd4_मुक्त_layouts(&reaplist);
+	nfsd4_return_all_layouts(ls, &reaplist);
+	nfsd4_free_layouts(&reaplist);
 	nfs4_put_stid(&ls->ls_stid);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा nfsd4_callback_ops nfsd4_cb_layout_ops = अणु
+static const struct nfsd4_callback_ops nfsd4_cb_layout_ops = {
 	.prepare	= nfsd4_cb_layout_prepare,
-	.करोne		= nfsd4_cb_layout_करोne,
+	.done		= nfsd4_cb_layout_done,
 	.release	= nfsd4_cb_layout_release,
-पूर्ण;
+};
 
-अटल bool
-nfsd4_layout_lm_अवरोध(काष्ठा file_lock *fl)
-अणु
+static bool
+nfsd4_layout_lm_break(struct file_lock *fl)
+{
 	/*
-	 * We करोn't want the locks code to समयout the lease क्रम us;
-	 * we'll remove it ourself if a layout isn't वापसed
-	 * in समय:
+	 * We don't want the locks code to timeout the lease for us;
+	 * we'll remove it ourself if a layout isn't returned
+	 * in time:
 	 */
-	fl->fl_अवरोध_समय = 0;
+	fl->fl_break_time = 0;
 	nfsd4_recall_file_layout(fl->fl_owner);
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक
-nfsd4_layout_lm_change(काष्ठा file_lock *onlist, पूर्णांक arg,
-		काष्ठा list_head *dispose)
-अणु
+static int
+nfsd4_layout_lm_change(struct file_lock *onlist, int arg,
+		struct list_head *dispose)
+{
 	BUG_ON(!(arg & F_UNLCK));
-	वापस lease_modअगरy(onlist, arg, dispose);
-पूर्ण
+	return lease_modify(onlist, arg, dispose);
+}
 
-अटल स्थिर काष्ठा lock_manager_operations nfsd4_layouts_lm_ops = अणु
-	.lm_अवरोध	= nfsd4_layout_lm_अवरोध,
+static const struct lock_manager_operations nfsd4_layouts_lm_ops = {
+	.lm_break	= nfsd4_layout_lm_break,
 	.lm_change	= nfsd4_layout_lm_change,
-पूर्ण;
+};
 
-पूर्णांक
-nfsd4_init_pnfs(व्योम)
-अणु
-	पूर्णांक i;
+int
+nfsd4_init_pnfs(void)
+{
+	int i;
 
-	क्रम (i = 0; i < DEVID_HASH_SIZE; i++)
+	for (i = 0; i < DEVID_HASH_SIZE; i++)
 		INIT_LIST_HEAD(&nfsd_devid_hash[i]);
 
 	nfs4_layout_cache = kmem_cache_create("nfs4_layout",
-			माप(काष्ठा nfs4_layout), 0, 0, शून्य);
-	अगर (!nfs4_layout_cache)
-		वापस -ENOMEM;
+			sizeof(struct nfs4_layout), 0, 0, NULL);
+	if (!nfs4_layout_cache)
+		return -ENOMEM;
 
 	nfs4_layout_stateid_cache = kmem_cache_create("nfs4_layout_stateid",
-			माप(काष्ठा nfs4_layout_stateid), 0, 0, शून्य);
-	अगर (!nfs4_layout_stateid_cache) अणु
+			sizeof(struct nfs4_layout_stateid), 0, 0, NULL);
+	if (!nfs4_layout_stateid_cache) {
 		kmem_cache_destroy(nfs4_layout_cache);
-		वापस -ENOMEM;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -ENOMEM;
+	}
+	return 0;
+}
 
-व्योम
-nfsd4_निकास_pnfs(व्योम)
-अणु
-	पूर्णांक i;
+void
+nfsd4_exit_pnfs(void)
+{
+	int i;
 
 	kmem_cache_destroy(nfs4_layout_cache);
 	kmem_cache_destroy(nfs4_layout_stateid_cache);
 
-	क्रम (i = 0; i < DEVID_HASH_SIZE; i++) अणु
-		काष्ठा nfsd4_deviceid_map *map, *n;
+	for (i = 0; i < DEVID_HASH_SIZE; i++) {
+		struct nfsd4_deviceid_map *map, *n;
 
-		list_क्रम_each_entry_safe(map, n, &nfsd_devid_hash[i], hash)
-			kमुक्त(map);
-	पूर्ण
-पूर्ण
+		list_for_each_entry_safe(map, n, &nfsd_devid_hash[i], hash)
+			kfree(map);
+	}
+}

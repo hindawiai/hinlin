@@ -1,70 +1,69 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *	linux/arch/alpha/kernel/sys_rawhide.c
  *
  *	Copyright (C) 1995 David A Rusling
  *	Copyright (C) 1996 Jay A Estabrook
- *	Copyright (C) 1998, 1999 Riअक्षरd Henderson
+ *	Copyright (C) 1998, 1999 Richard Henderson
  *
  * Code supporting the RAWHIDE.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/mm.h>
+#include <linux/sched.h>
+#include <linux/pci.h>
+#include <linux/init.h>
 
-#समावेश <यंत्र/ptrace.h>
-#समावेश <यंत्र/dma.h>
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/mmu_context.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/core_mcpcia.h>
-#समावेश <यंत्र/tlbflush.h>
+#include <asm/ptrace.h>
+#include <asm/dma.h>
+#include <asm/irq.h>
+#include <asm/mmu_context.h>
+#include <asm/io.h>
+#include <asm/core_mcpcia.h>
+#include <asm/tlbflush.h>
 
-#समावेश "proto.h"
-#समावेश "irq_impl.h"
-#समावेश "pci_impl.h"
-#समावेश "machvec_impl.h"
+#include "proto.h"
+#include "irq_impl.h"
+#include "pci_impl.h"
+#include "machvec_impl.h"
 
 
 /*
- * HACK ALERT! only the boot cpu is used क्रम पूर्णांकerrupts.
+ * HACK ALERT! only the boot cpu is used for interrupts.
  */
 
 
-/* Note mask bit is true क्रम ENABLED irqs.  */
+/* Note mask bit is true for ENABLED irqs.  */
 
-अटल अचिन्हित पूर्णांक hose_irq_masks[4] = अणु
+static unsigned int hose_irq_masks[4] = {
 	0xff0000, 0xfe0000, 0xff0000, 0xff0000
-पूर्ण;
-अटल अचिन्हित पूर्णांक cached_irq_masks[4];
+};
+static unsigned int cached_irq_masks[4];
 DEFINE_SPINLOCK(rawhide_irq_lock);
 
-अटल अंतरभूत व्योम
-rawhide_update_irq_hw(पूर्णांक hose, पूर्णांक mask)
-अणु
+static inline void
+rawhide_update_irq_hw(int hose, int mask)
+{
 	*(vuip)MCPCIA_INT_MASK0(MCPCIA_HOSE2MID(hose)) = mask;
 	mb();
 	*(vuip)MCPCIA_INT_MASK0(MCPCIA_HOSE2MID(hose));
-पूर्ण
+}
 
-#घोषणा hose_exists(h) \
+#define hose_exists(h) \
   (((h) < MCPCIA_MAX_HOSES) && (cached_irq_masks[(h)] != 0))
 
-अटल अंतरभूत व्योम 
-rawhide_enable_irq(काष्ठा irq_data *d)
-अणु
-	अचिन्हित पूर्णांक mask, hose;
-	अचिन्हित पूर्णांक irq = d->irq;
+static inline void 
+rawhide_enable_irq(struct irq_data *d)
+{
+	unsigned int mask, hose;
+	unsigned int irq = d->irq;
 
 	irq -= 16;
 	hose = irq / 24;
-	अगर (!hose_exists(hose)) /* अगर hose non-existent, निकास */
-		वापस;
+	if (!hose_exists(hose)) /* if hose non-existent, exit */
+		return;
 
 	irq -= hose * 24;
 	mask = 1 << irq;
@@ -74,18 +73,18 @@ rawhide_enable_irq(काष्ठा irq_data *d)
 	cached_irq_masks[hose] = mask;
 	rawhide_update_irq_hw(hose, mask);
 	spin_unlock(&rawhide_irq_lock);
-पूर्ण
+}
 
-अटल व्योम 
-rawhide_disable_irq(काष्ठा irq_data *d)
-अणु
-	अचिन्हित पूर्णांक mask, hose;
-	अचिन्हित पूर्णांक irq = d->irq;
+static void 
+rawhide_disable_irq(struct irq_data *d)
+{
+	unsigned int mask, hose;
+	unsigned int irq = d->irq;
 
 	irq -= 16;
 	hose = irq / 24;
-	अगर (!hose_exists(hose)) /* अगर hose non-existent, निकास */
-		वापस;
+	if (!hose_exists(hose)) /* if hose non-existent, exit */
+		return;
 
 	irq -= hose * 24;
 	mask = ~(1 << irq) | hose_irq_masks[hose];
@@ -95,18 +94,18 @@ rawhide_disable_irq(काष्ठा irq_data *d)
 	cached_irq_masks[hose] = mask;
 	rawhide_update_irq_hw(hose, mask);
 	spin_unlock(&rawhide_irq_lock);
-पूर्ण
+}
 
-अटल व्योम
-rawhide_mask_and_ack_irq(काष्ठा irq_data *d)
-अणु
-	अचिन्हित पूर्णांक mask, mask1, hose;
-	अचिन्हित पूर्णांक irq = d->irq;
+static void
+rawhide_mask_and_ack_irq(struct irq_data *d)
+{
+	unsigned int mask, mask1, hose;
+	unsigned int irq = d->irq;
 
 	irq -= 16;
 	hose = irq / 24;
-	अगर (!hose_exists(hose)) /* अगर hose non-existent, निकास */
-		वापस;
+	if (!hose_exists(hose)) /* if hose non-existent, exit */
+		return;
 
 	irq -= hose * 24;
 	mask1 = 1 << irq;
@@ -118,76 +117,76 @@ rawhide_mask_and_ack_irq(काष्ठा irq_data *d)
 	cached_irq_masks[hose] = mask;
 	rawhide_update_irq_hw(hose, mask);
 
-	/* Clear the पूर्णांकerrupt.  */
+	/* Clear the interrupt.  */
 	*(vuip)MCPCIA_INT_REQ(MCPCIA_HOSE2MID(hose)) = mask1;
 
 	spin_unlock(&rawhide_irq_lock);
-पूर्ण
+}
 
-अटल काष्ठा irq_chip rawhide_irq_type = अणु
+static struct irq_chip rawhide_irq_type = {
 	.name		= "RAWHIDE",
 	.irq_unmask	= rawhide_enable_irq,
 	.irq_mask	= rawhide_disable_irq,
 	.irq_mask_ack	= rawhide_mask_and_ack_irq,
-पूर्ण;
+};
 
-अटल व्योम 
-rawhide_srm_device_पूर्णांकerrupt(अचिन्हित दीर्घ vector)
-अणु
-	पूर्णांक irq;
+static void 
+rawhide_srm_device_interrupt(unsigned long vector)
+{
+	int irq;
 
 	irq = (vector - 0x800) >> 4;
 
         /*
-         * The RAWHIDE SRM console reports PCI पूर्णांकerrupts with a vector
+         * The RAWHIDE SRM console reports PCI interrupts with a vector
 	 * 0x80 *higher* than one might expect, as PCI IRQ 0 (ie bit 0)
-	 * shows up as IRQ 24, etc, etc. We adjust it करोwn by 8 to have
-	 * it line up with the actual bit numbers from the REQ रेजिस्टरs,
-	 * which is how we manage the पूर्णांकerrupts/mask. Sigh...
+	 * shows up as IRQ 24, etc, etc. We adjust it down by 8 to have
+	 * it line up with the actual bit numbers from the REQ registers,
+	 * which is how we manage the interrupts/mask. Sigh...
 	 *
-	 * Also, PCI #1 पूर्णांकerrupts are offset some more... :-(
+	 * Also, PCI #1 interrupts are offset some more... :-(
          */
 
-	अगर (irq == 52) अणु
+	if (irq == 52) {
 		/* SCSI on PCI1 is special.  */
 		irq = 72;
-	पूर्ण
+	}
 
 	/* Adjust by which hose it is from.  */
 	irq -= ((irq + 16) >> 2) & 0x38;
 
 	handle_irq(irq);
-पूर्ण
+}
 
-अटल व्योम __init
-rawhide_init_irq(व्योम)
-अणु
-	काष्ठा pci_controller *hose;
-	दीर्घ i;
+static void __init
+rawhide_init_irq(void)
+{
+	struct pci_controller *hose;
+	long i;
 
 	mcpcia_init_hoses();
 
 	/* Clear them all; only hoses that exist will be non-zero. */
-	क्रम (i = 0; i < MCPCIA_MAX_HOSES; i++) cached_irq_masks[i] = 0;
+	for (i = 0; i < MCPCIA_MAX_HOSES; i++) cached_irq_masks[i] = 0;
 
-	क्रम (hose = hose_head; hose; hose = hose->next) अणु
-		अचिन्हित पूर्णांक h = hose->index;
-		अचिन्हित पूर्णांक mask = hose_irq_masks[h];
+	for (hose = hose_head; hose; hose = hose->next) {
+		unsigned int h = hose->index;
+		unsigned int mask = hose_irq_masks[h];
 
 		cached_irq_masks[h] = mask;
 		*(vuip)MCPCIA_INT_MASK0(MCPCIA_HOSE2MID(h)) = mask;
 		*(vuip)MCPCIA_INT_MASK1(MCPCIA_HOSE2MID(h)) = 0;
-	पूर्ण
+	}
 
-	क्रम (i = 16; i < 128; ++i) अणु
+	for (i = 16; i < 128; ++i) {
 		irq_set_chip_and_handler(i, &rawhide_irq_type,
 					 handle_level_irq);
 		irq_set_status_flags(i, IRQ_LEVEL);
-	पूर्ण
+	}
 
 	init_i8259a_irqs();
 	common_init_isa_dma();
-पूर्ण
+}
 
 /*
  * PCI Fixup configuration.
@@ -210,7 +209,7 @@ rawhide_init_irq(व्योम)
  * 13       Interrupt Line B from slot 5 PCI0
  * 14       Interrupt Line C from slot 5 PCI0
  * 15       Interrupt Line D from slot 5 PCI0
- * 16       EISA पूर्णांकerrupt (PCI 0) or SCSI पूर्णांकerrupt (PCI 1)
+ * 16       EISA interrupt (PCI 0) or SCSI interrupt (PCI 1)
  * 17-23    NA
  *
  * IdSel	
@@ -222,32 +221,32 @@ rawhide_init_irq(व्योम)
  * 
  */
 
-अटल पूर्णांक
-rawhide_map_irq(स्थिर काष्ठा pci_dev *dev, u8 slot, u8 pin)
-अणु
-	अटल अक्षर irq_tab[5][5] = अणु
+static int
+rawhide_map_irq(const struct pci_dev *dev, u8 slot, u8 pin)
+{
+	static char irq_tab[5][5] = {
 		/*INT    INTA   INTB   INTC   INTD */
-		अणु 16+16, 16+16, 16+16, 16+16, 16+16पूर्ण, /* IdSel 1 SCSI PCI 1 */
-		अणु 16+ 0, 16+ 0, 16+ 1, 16+ 2, 16+ 3पूर्ण, /* IdSel 2 slot 2 */
-		अणु 16+ 4, 16+ 4, 16+ 5, 16+ 6, 16+ 7पूर्ण, /* IdSel 3 slot 3 */
-		अणु 16+ 8, 16+ 8, 16+ 9, 16+10, 16+11पूर्ण, /* IdSel 4 slot 4 */
-		अणु 16+12, 16+12, 16+13, 16+14, 16+15पूर्ण  /* IdSel 5 slot 5 */
-	पूर्ण;
-	स्थिर दीर्घ min_idsel = 1, max_idsel = 5, irqs_per_slot = 5;
+		{ 16+16, 16+16, 16+16, 16+16, 16+16}, /* IdSel 1 SCSI PCI 1 */
+		{ 16+ 0, 16+ 0, 16+ 1, 16+ 2, 16+ 3}, /* IdSel 2 slot 2 */
+		{ 16+ 4, 16+ 4, 16+ 5, 16+ 6, 16+ 7}, /* IdSel 3 slot 3 */
+		{ 16+ 8, 16+ 8, 16+ 9, 16+10, 16+11}, /* IdSel 4 slot 4 */
+		{ 16+12, 16+12, 16+13, 16+14, 16+15}  /* IdSel 5 slot 5 */
+	};
+	const long min_idsel = 1, max_idsel = 5, irqs_per_slot = 5;
 
-	काष्ठा pci_controller *hose = dev->sysdata;
-	पूर्णांक irq = COMMON_TABLE_LOOKUP;
-	अगर (irq >= 0)
+	struct pci_controller *hose = dev->sysdata;
+	int irq = COMMON_TABLE_LOOKUP;
+	if (irq >= 0)
 		irq += 24 * hose->index;
-	वापस irq;
-पूर्ण
+	return irq;
+}
 
 
 /*
  * The System Vector
  */
 
-काष्ठा alpha_machine_vector rawhide_mv __iniपंचांगv = अणु
+struct alpha_machine_vector rawhide_mv __initmv = {
 	.vector_name		= "Rawhide",
 	DO_EV5_MMU,
 	DO_DEFAULT_RTC,
@@ -259,14 +258,14 @@ rawhide_map_irq(स्थिर काष्ठा pci_dev *dev, u8 slot, u8 pin
 	.pci_dac_offset		= MCPCIA_DAC_OFFSET,
 
 	.nr_irqs		= 128,
-	.device_पूर्णांकerrupt	= rawhide_srm_device_पूर्णांकerrupt,
+	.device_interrupt	= rawhide_srm_device_interrupt,
 
 	.init_arch		= mcpcia_init_arch,
 	.init_irq		= rawhide_init_irq,
 	.init_rtc		= common_init_rtc,
 	.init_pci		= common_init_pci,
-	.समाप्त_arch		= शून्य,
+	.kill_arch		= NULL,
 	.pci_map_irq		= rawhide_map_irq,
 	.pci_swizzle		= common_swizzle,
-पूर्ण;
+};
 ALIAS_MV(rawhide)

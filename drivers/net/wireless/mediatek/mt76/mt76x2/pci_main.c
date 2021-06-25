@@ -1,16 +1,15 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: ISC
+// SPDX-License-Identifier: ISC
 /*
  * Copyright (C) 2016 Felix Fietkau <nbd@nbd.name>
  */
 
-#समावेश "mt76x2.h"
-#समावेश "../mt76x02_mac.h"
+#include "mt76x2.h"
+#include "../mt76x02_mac.h"
 
-अटल पूर्णांक
-mt76x2_start(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा mt76x02_dev *dev = hw->priv;
+static int
+mt76x2_start(struct ieee80211_hw *hw)
+{
+	struct mt76x02_dev *dev = hw->priv;
 
 	mt76x02_mac_start(dev);
 	mt76x2_phy_start(dev);
@@ -21,21 +20,21 @@ mt76x2_start(काष्ठा ieee80211_hw *hw)
 				     MT_WATCHDOG_TIME);
 
 	set_bit(MT76_STATE_RUNNING, &dev->mphy.state);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-mt76x2_stop(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा mt76x02_dev *dev = hw->priv;
+static void
+mt76x2_stop(struct ieee80211_hw *hw)
+{
+	struct mt76x02_dev *dev = hw->priv;
 
 	clear_bit(MT76_STATE_RUNNING, &dev->mphy.state);
 	mt76x2_stop_hardware(dev);
-पूर्ण
+}
 
-अटल व्योम
-mt76x2_set_channel(काष्ठा mt76x02_dev *dev, काष्ठा cfg80211_chan_def *chandef)
-अणु
+static void
+mt76x2_set_channel(struct mt76x02_dev *dev, struct cfg80211_chan_def *chandef)
+{
 	cancel_delayed_work_sync(&dev->cal_work);
 	tasklet_disable(&dev->mt76.pre_tbtt_tasklet);
 	tasklet_disable(&dev->dfs_pd.dfs_tasklet);
@@ -60,60 +59,60 @@ mt76x2_set_channel(काष्ठा mt76x02_dev *dev, काष्ठा cfg80
 	tasklet_enable(&dev->mt76.pre_tbtt_tasklet);
 
 	mt76_txq_schedule_all(&dev->mphy);
-पूर्ण
+}
 
-अटल पूर्णांक
-mt76x2_config(काष्ठा ieee80211_hw *hw, u32 changed)
-अणु
-	काष्ठा mt76x02_dev *dev = hw->priv;
+static int
+mt76x2_config(struct ieee80211_hw *hw, u32 changed)
+{
+	struct mt76x02_dev *dev = hw->priv;
 
 	mutex_lock(&dev->mt76.mutex);
 
-	अगर (changed & IEEE80211_CONF_CHANGE_MONITOR) अणु
-		अगर (!(hw->conf.flags & IEEE80211_CONF_MONITOR))
+	if (changed & IEEE80211_CONF_CHANGE_MONITOR) {
+		if (!(hw->conf.flags & IEEE80211_CONF_MONITOR))
 			dev->mt76.rxfilter |= MT_RX_FILTR_CFG_PROMISC;
-		अन्यथा
+		else
 			dev->mt76.rxfilter &= ~MT_RX_FILTR_CFG_PROMISC;
 
 		mt76_wr(dev, MT_RX_FILTR_CFG, dev->mt76.rxfilter);
-	पूर्ण
+	}
 
-	अगर (changed & IEEE80211_CONF_CHANGE_POWER) अणु
-		dev->txघातer_conf = hw->conf.घातer_level * 2;
+	if (changed & IEEE80211_CONF_CHANGE_POWER) {
+		dev->txpower_conf = hw->conf.power_level * 2;
 
-		/* convert to per-chain घातer क्रम 2x2 devices */
-		dev->txघातer_conf -= 6;
+		/* convert to per-chain power for 2x2 devices */
+		dev->txpower_conf -= 6;
 
-		अगर (test_bit(MT76_STATE_RUNNING, &dev->mphy.state)) अणु
-			mt76x2_phy_set_txघातer(dev);
-			mt76x02_tx_set_txpwr_स्वतः(dev, dev->txघातer_conf);
-		पूर्ण
-	पूर्ण
+		if (test_bit(MT76_STATE_RUNNING, &dev->mphy.state)) {
+			mt76x2_phy_set_txpower(dev);
+			mt76x02_tx_set_txpwr_auto(dev, dev->txpower_conf);
+		}
+	}
 
 	mutex_unlock(&dev->mt76.mutex);
 
-	अगर (changed & IEEE80211_CONF_CHANGE_CHANNEL) अणु
+	if (changed & IEEE80211_CONF_CHANGE_CHANNEL) {
 		ieee80211_stop_queues(hw);
 		mt76x2_set_channel(dev, &hw->conf.chandef);
 		ieee80211_wake_queues(hw);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-mt76x2_flush(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
+static void
+mt76x2_flush(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 	     u32 queues, bool drop)
-अणु
-पूर्ण
+{
+}
 
-अटल पूर्णांक mt76x2_set_antenna(काष्ठा ieee80211_hw *hw, u32 tx_ant,
+static int mt76x2_set_antenna(struct ieee80211_hw *hw, u32 tx_ant,
 			      u32 rx_ant)
-अणु
-	काष्ठा mt76x02_dev *dev = hw->priv;
+{
+	struct mt76x02_dev *dev = hw->priv;
 
-	अगर (!tx_ant || tx_ant > 3 || tx_ant != rx_ant)
-		वापस -EINVAL;
+	if (!tx_ant || tx_ant > 3 || tx_ant != rx_ant)
+		return -EINVAL;
 
 	mutex_lock(&dev->mt76.mutex);
 
@@ -125,27 +124,27 @@ mt76x2_flush(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_v
 
 	mutex_unlock(&dev->mt76.mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा ieee80211_ops mt76x2_ops = अणु
+const struct ieee80211_ops mt76x2_ops = {
 	.tx = mt76x02_tx,
 	.start = mt76x2_start,
 	.stop = mt76x2_stop,
-	.add_पूर्णांकerface = mt76x02_add_पूर्णांकerface,
-	.हटाओ_पूर्णांकerface = mt76x02_हटाओ_पूर्णांकerface,
+	.add_interface = mt76x02_add_interface,
+	.remove_interface = mt76x02_remove_interface,
 	.config = mt76x2_config,
 	.configure_filter = mt76x02_configure_filter,
 	.bss_info_changed = mt76x02_bss_info_changed,
 	.sta_state = mt76_sta_state,
-	.sta_pre_rcu_हटाओ = mt76_sta_pre_rcu_हटाओ,
+	.sta_pre_rcu_remove = mt76_sta_pre_rcu_remove,
 	.set_key = mt76x02_set_key,
 	.conf_tx = mt76x02_conf_tx,
 	.sw_scan_start = mt76_sw_scan,
 	.sw_scan_complete = mt76x02_sw_scan_complete,
 	.flush = mt76x2_flush,
 	.ampdu_action = mt76x02_ampdu_action,
-	.get_txघातer = mt76_get_txघातer,
+	.get_txpower = mt76_get_txpower,
 	.wake_tx_queue = mt76_wake_tx_queue,
 	.sta_rate_tbl_update = mt76x02_sta_rate_tbl_update,
 	.release_buffered_frames = mt76_release_buffered_frames,
@@ -156,5 +155,5 @@ mt76x2_flush(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_v
 	.get_antenna = mt76_get_antenna,
 	.set_rts_threshold = mt76x02_set_rts_threshold,
 	.reconfig_complete = mt76x02_reconfig_complete,
-पूर्ण;
+};
 

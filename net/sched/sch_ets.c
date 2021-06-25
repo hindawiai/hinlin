@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * net/sched/sch_ets.c         Enhanced Transmission Selection scheduler
  *
@@ -11,126 +10,126 @@
  * ETS makes it easy to configure a set of strict and bandwidth-sharing bands to
  * implement the transmission selection described in 802.1Qaz.
  *
- * Although ETS is technically classful, it's not possible to add and हटाओ
- * classes at will. Instead one specअगरies number of classes, how many are
- * PRIO-like and how many DRR-like, and quanta क्रम the latter.
+ * Although ETS is technically classful, it's not possible to add and remove
+ * classes at will. Instead one specifies number of classes, how many are
+ * PRIO-like and how many DRR-like, and quanta for the latter.
  *
  * Algorithm
  * ---------
  *
- * The strict classes, अगर any, are tried क्रम traffic first: first band 0, अगर it
+ * The strict classes, if any, are tried for traffic first: first band 0, if it
  * has no traffic then band 1, etc.
  *
  * When there is no traffic in any of the strict queues, the bandwidth-sharing
- * ones are tried next. Each band is asचिन्हित a deficit counter, initialized to
- * "quantum" of that band. ETS मुख्यtains a list of active bandwidth-sharing
+ * ones are tried next. Each band is assigned a deficit counter, initialized to
+ * "quantum" of that band. ETS maintains a list of active bandwidth-sharing
  * bands whose qdiscs are non-empty. A packet is dequeued from the band at the
- * head of the list अगर the packet size is smaller or equal to the deficit
+ * head of the list if the packet size is smaller or equal to the deficit
  * counter. If the counter is too small, it is increased by "quantum" and the
  * scheduler moves on to the next band in the active list.
  */
 
-#समावेश <linux/module.h>
-#समावेश <net/gen_stats.h>
-#समावेश <net/netlink.h>
-#समावेश <net/pkt_cls.h>
-#समावेश <net/pkt_sched.h>
-#समावेश <net/sch_generic.h>
+#include <linux/module.h>
+#include <net/gen_stats.h>
+#include <net/netlink.h>
+#include <net/pkt_cls.h>
+#include <net/pkt_sched.h>
+#include <net/sch_generic.h>
 
-काष्ठा ets_class अणु
-	काष्ठा list_head alist; /* In काष्ठा ets_sched.active. */
-	काष्ठा Qdisc *qdisc;
+struct ets_class {
+	struct list_head alist; /* In struct ets_sched.active. */
+	struct Qdisc *qdisc;
 	u32 quantum;
 	u32 deficit;
-	काष्ठा gnet_stats_basic_packed bstats;
-	काष्ठा gnet_stats_queue qstats;
-पूर्ण;
+	struct gnet_stats_basic_packed bstats;
+	struct gnet_stats_queue qstats;
+};
 
-काष्ठा ets_sched अणु
-	काष्ठा list_head active;
-	काष्ठा tcf_proto __rcu *filter_list;
-	काष्ठा tcf_block *block;
-	अचिन्हित पूर्णांक nbands;
-	अचिन्हित पूर्णांक nstrict;
+struct ets_sched {
+	struct list_head active;
+	struct tcf_proto __rcu *filter_list;
+	struct tcf_block *block;
+	unsigned int nbands;
+	unsigned int nstrict;
 	u8 prio2band[TC_PRIO_MAX + 1];
-	काष्ठा ets_class classes[TCQ_ETS_MAX_BANDS];
-पूर्ण;
+	struct ets_class classes[TCQ_ETS_MAX_BANDS];
+};
 
-अटल स्थिर काष्ठा nla_policy ets_policy[TCA_ETS_MAX + 1] = अणु
-	[TCA_ETS_NBANDS] = अणु .type = NLA_U8 पूर्ण,
-	[TCA_ETS_NSTRICT] = अणु .type = NLA_U8 पूर्ण,
-	[TCA_ETS_QUANTA] = अणु .type = NLA_NESTED पूर्ण,
-	[TCA_ETS_PRIOMAP] = अणु .type = NLA_NESTED पूर्ण,
-पूर्ण;
+static const struct nla_policy ets_policy[TCA_ETS_MAX + 1] = {
+	[TCA_ETS_NBANDS] = { .type = NLA_U8 },
+	[TCA_ETS_NSTRICT] = { .type = NLA_U8 },
+	[TCA_ETS_QUANTA] = { .type = NLA_NESTED },
+	[TCA_ETS_PRIOMAP] = { .type = NLA_NESTED },
+};
 
-अटल स्थिर काष्ठा nla_policy ets_priomap_policy[TCA_ETS_MAX + 1] = अणु
-	[TCA_ETS_PRIOMAP_BAND] = अणु .type = NLA_U8 पूर्ण,
-पूर्ण;
+static const struct nla_policy ets_priomap_policy[TCA_ETS_MAX + 1] = {
+	[TCA_ETS_PRIOMAP_BAND] = { .type = NLA_U8 },
+};
 
-अटल स्थिर काष्ठा nla_policy ets_quanta_policy[TCA_ETS_MAX + 1] = अणु
-	[TCA_ETS_QUANTA_BAND] = अणु .type = NLA_U32 पूर्ण,
-पूर्ण;
+static const struct nla_policy ets_quanta_policy[TCA_ETS_MAX + 1] = {
+	[TCA_ETS_QUANTA_BAND] = { .type = NLA_U32 },
+};
 
-अटल स्थिर काष्ठा nla_policy ets_class_policy[TCA_ETS_MAX + 1] = अणु
-	[TCA_ETS_QUANTA_BAND] = अणु .type = NLA_U32 पूर्ण,
-पूर्ण;
+static const struct nla_policy ets_class_policy[TCA_ETS_MAX + 1] = {
+	[TCA_ETS_QUANTA_BAND] = { .type = NLA_U32 },
+};
 
-अटल पूर्णांक ets_quantum_parse(काष्ठा Qdisc *sch, स्थिर काष्ठा nlattr *attr,
-			     अचिन्हित पूर्णांक *quantum,
-			     काष्ठा netlink_ext_ack *extack)
-अणु
+static int ets_quantum_parse(struct Qdisc *sch, const struct nlattr *attr,
+			     unsigned int *quantum,
+			     struct netlink_ext_ack *extack)
+{
 	*quantum = nla_get_u32(attr);
-	अगर (!*quantum) अणु
+	if (!*quantum) {
 		NL_SET_ERR_MSG(extack, "ETS quantum cannot be zero");
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल काष्ठा ets_class *
-ets_class_from_arg(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा ets_sched *q = qdisc_priv(sch);
+static struct ets_class *
+ets_class_from_arg(struct Qdisc *sch, unsigned long arg)
+{
+	struct ets_sched *q = qdisc_priv(sch);
 
-	वापस &q->classes[arg - 1];
-पूर्ण
+	return &q->classes[arg - 1];
+}
 
-अटल u32 ets_class_id(काष्ठा Qdisc *sch, स्थिर काष्ठा ets_class *cl)
-अणु
-	काष्ठा ets_sched *q = qdisc_priv(sch);
-	पूर्णांक band = cl - q->classes;
+static u32 ets_class_id(struct Qdisc *sch, const struct ets_class *cl)
+{
+	struct ets_sched *q = qdisc_priv(sch);
+	int band = cl - q->classes;
 
-	वापस TC_H_MAKE(sch->handle, band + 1);
-पूर्ण
+	return TC_H_MAKE(sch->handle, band + 1);
+}
 
-अटल व्योम ets_offload_change(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा net_device *dev = qdisc_dev(sch);
-	काष्ठा ets_sched *q = qdisc_priv(sch);
-	काष्ठा tc_ets_qopt_offload qopt;
-	अचिन्हित पूर्णांक w_psum_prev = 0;
-	अचिन्हित पूर्णांक q_psum = 0;
-	अचिन्हित पूर्णांक q_sum = 0;
-	अचिन्हित पूर्णांक quantum;
-	अचिन्हित पूर्णांक w_psum;
-	अचिन्हित पूर्णांक weight;
-	अचिन्हित पूर्णांक i;
+static void ets_offload_change(struct Qdisc *sch)
+{
+	struct net_device *dev = qdisc_dev(sch);
+	struct ets_sched *q = qdisc_priv(sch);
+	struct tc_ets_qopt_offload qopt;
+	unsigned int w_psum_prev = 0;
+	unsigned int q_psum = 0;
+	unsigned int q_sum = 0;
+	unsigned int quantum;
+	unsigned int w_psum;
+	unsigned int weight;
+	unsigned int i;
 
-	अगर (!tc_can_offload(dev) || !dev->netdev_ops->nकरो_setup_tc)
-		वापस;
+	if (!tc_can_offload(dev) || !dev->netdev_ops->ndo_setup_tc)
+		return;
 
 	qopt.command = TC_ETS_REPLACE;
 	qopt.handle = sch->handle;
 	qopt.parent = sch->parent;
 	qopt.replace_params.bands = q->nbands;
 	qopt.replace_params.qstats = &sch->qstats;
-	स_नकल(&qopt.replace_params.priomap,
-	       q->prio2band, माप(q->prio2band));
+	memcpy(&qopt.replace_params.priomap,
+	       q->prio2band, sizeof(q->prio2band));
 
-	क्रम (i = 0; i < q->nbands; i++)
+	for (i = 0; i < q->nbands; i++)
 		q_sum += q->classes[i].quantum;
 
-	क्रम (i = 0; i < q->nbands; i++) अणु
+	for (i = 0; i < q->nbands; i++) {
 		quantum = q->classes[i].quantum;
 		q_psum += quantum;
 		w_psum = quantum ? q_psum * 100 / q_sum : 0;
@@ -139,31 +138,31 @@ ets_class_from_arg(काष्ठा Qdisc *sch, अचिन्हित द�
 
 		qopt.replace_params.quanta[i] = quantum;
 		qopt.replace_params.weights[i] = weight;
-	पूर्ण
+	}
 
-	dev->netdev_ops->nकरो_setup_tc(dev, TC_SETUP_QDISC_ETS, &qopt);
-पूर्ण
+	dev->netdev_ops->ndo_setup_tc(dev, TC_SETUP_QDISC_ETS, &qopt);
+}
 
-अटल व्योम ets_offload_destroy(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा net_device *dev = qdisc_dev(sch);
-	काष्ठा tc_ets_qopt_offload qopt;
+static void ets_offload_destroy(struct Qdisc *sch)
+{
+	struct net_device *dev = qdisc_dev(sch);
+	struct tc_ets_qopt_offload qopt;
 
-	अगर (!tc_can_offload(dev) || !dev->netdev_ops->nकरो_setup_tc)
-		वापस;
+	if (!tc_can_offload(dev) || !dev->netdev_ops->ndo_setup_tc)
+		return;
 
 	qopt.command = TC_ETS_DESTROY;
 	qopt.handle = sch->handle;
 	qopt.parent = sch->parent;
-	dev->netdev_ops->nकरो_setup_tc(dev, TC_SETUP_QDISC_ETS, &qopt);
-पूर्ण
+	dev->netdev_ops->ndo_setup_tc(dev, TC_SETUP_QDISC_ETS, &qopt);
+}
 
-अटल व्योम ets_offload_graft(काष्ठा Qdisc *sch, काष्ठा Qdisc *new,
-			      काष्ठा Qdisc *old, अचिन्हित दीर्घ arg,
-			      काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा net_device *dev = qdisc_dev(sch);
-	काष्ठा tc_ets_qopt_offload qopt;
+static void ets_offload_graft(struct Qdisc *sch, struct Qdisc *new,
+			      struct Qdisc *old, unsigned long arg,
+			      struct netlink_ext_ack *extack)
+{
+	struct net_device *dev = qdisc_dev(sch);
+	struct tc_ets_qopt_offload qopt;
 
 	qopt.command = TC_ETS_GRAFT;
 	qopt.handle = sch->handle;
@@ -173,11 +172,11 @@ ets_class_from_arg(काष्ठा Qdisc *sch, अचिन्हित द�
 
 	qdisc_offload_graft_helper(dev, sch, new, old, TC_SETUP_QDISC_ETS,
 				   &qopt, extack);
-पूर्ण
+}
 
-अटल पूर्णांक ets_offload_dump(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा tc_ets_qopt_offload qopt;
+static int ets_offload_dump(struct Qdisc *sch)
+{
+	struct tc_ets_qopt_offload qopt;
 
 	qopt.command = TC_ETS_STATS;
 	qopt.handle = sch->handle;
@@ -185,624 +184,624 @@ ets_class_from_arg(काष्ठा Qdisc *sch, अचिन्हित द�
 	qopt.stats.bstats = &sch->bstats;
 	qopt.stats.qstats = &sch->qstats;
 
-	वापस qdisc_offload_dump_helper(sch, TC_SETUP_QDISC_ETS, &qopt);
-पूर्ण
+	return qdisc_offload_dump_helper(sch, TC_SETUP_QDISC_ETS, &qopt);
+}
 
-अटल bool ets_class_is_strict(काष्ठा ets_sched *q, स्थिर काष्ठा ets_class *cl)
-अणु
-	अचिन्हित पूर्णांक band = cl - q->classes;
+static bool ets_class_is_strict(struct ets_sched *q, const struct ets_class *cl)
+{
+	unsigned int band = cl - q->classes;
 
-	वापस band < q->nstrict;
-पूर्ण
+	return band < q->nstrict;
+}
 
-अटल पूर्णांक ets_class_change(काष्ठा Qdisc *sch, u32 classid, u32 parentid,
-			    काष्ठा nlattr **tca, अचिन्हित दीर्घ *arg,
-			    काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा ets_class *cl = ets_class_from_arg(sch, *arg);
-	काष्ठा ets_sched *q = qdisc_priv(sch);
-	काष्ठा nlattr *opt = tca[TCA_OPTIONS];
-	काष्ठा nlattr *tb[TCA_ETS_MAX + 1];
-	अचिन्हित पूर्णांक quantum;
-	पूर्णांक err;
+static int ets_class_change(struct Qdisc *sch, u32 classid, u32 parentid,
+			    struct nlattr **tca, unsigned long *arg,
+			    struct netlink_ext_ack *extack)
+{
+	struct ets_class *cl = ets_class_from_arg(sch, *arg);
+	struct ets_sched *q = qdisc_priv(sch);
+	struct nlattr *opt = tca[TCA_OPTIONS];
+	struct nlattr *tb[TCA_ETS_MAX + 1];
+	unsigned int quantum;
+	int err;
 
-	/* Classes can be added and हटाओd only through Qdisc_ops.change
-	 * पूर्णांकerface.
+	/* Classes can be added and removed only through Qdisc_ops.change
+	 * interface.
 	 */
-	अगर (!cl) अणु
+	if (!cl) {
 		NL_SET_ERR_MSG(extack, "Fine-grained class addition and removal is not supported");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	अगर (!opt) अणु
+	if (!opt) {
 		NL_SET_ERR_MSG(extack, "ETS options are required for this operation");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	err = nla_parse_nested(tb, TCA_ETS_MAX, opt, ets_class_policy, extack);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	अगर (!tb[TCA_ETS_QUANTA_BAND])
+	if (!tb[TCA_ETS_QUANTA_BAND])
 		/* Nothing to configure. */
-		वापस 0;
+		return 0;
 
-	अगर (ets_class_is_strict(q, cl)) अणु
+	if (ets_class_is_strict(q, cl)) {
 		NL_SET_ERR_MSG(extack, "Strict bands do not have a configurable quantum");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	err = ets_quantum_parse(sch, tb[TCA_ETS_QUANTA_BAND], &quantum,
 				extack);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	sch_tree_lock(sch);
 	cl->quantum = quantum;
 	sch_tree_unlock(sch);
 
 	ets_offload_change(sch);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ets_class_graft(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg,
-			   काष्ठा Qdisc *new, काष्ठा Qdisc **old,
-			   काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा ets_class *cl = ets_class_from_arg(sch, arg);
+static int ets_class_graft(struct Qdisc *sch, unsigned long arg,
+			   struct Qdisc *new, struct Qdisc **old,
+			   struct netlink_ext_ack *extack)
+{
+	struct ets_class *cl = ets_class_from_arg(sch, arg);
 
-	अगर (!new) अणु
-		new = qdisc_create_dflt(sch->dev_queue, &pfअगरo_qdisc_ops,
-					ets_class_id(sch, cl), शून्य);
-		अगर (!new)
+	if (!new) {
+		new = qdisc_create_dflt(sch->dev_queue, &pfifo_qdisc_ops,
+					ets_class_id(sch, cl), NULL);
+		if (!new)
 			new = &noop_qdisc;
-		अन्यथा
+		else
 			qdisc_hash_add(new, true);
-	पूर्ण
+	}
 
 	*old = qdisc_replace(sch, new, &cl->qdisc);
 	ets_offload_graft(sch, new, *old, arg, extack);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा Qdisc *ets_class_leaf(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा ets_class *cl = ets_class_from_arg(sch, arg);
+static struct Qdisc *ets_class_leaf(struct Qdisc *sch, unsigned long arg)
+{
+	struct ets_class *cl = ets_class_from_arg(sch, arg);
 
-	वापस cl->qdisc;
-पूर्ण
+	return cl->qdisc;
+}
 
-अटल अचिन्हित दीर्घ ets_class_find(काष्ठा Qdisc *sch, u32 classid)
-अणु
-	अचिन्हित दीर्घ band = TC_H_MIN(classid);
-	काष्ठा ets_sched *q = qdisc_priv(sch);
+static unsigned long ets_class_find(struct Qdisc *sch, u32 classid)
+{
+	unsigned long band = TC_H_MIN(classid);
+	struct ets_sched *q = qdisc_priv(sch);
 
-	अगर (band - 1 >= q->nbands)
-		वापस 0;
-	वापस band;
-पूर्ण
+	if (band - 1 >= q->nbands)
+		return 0;
+	return band;
+}
 
-अटल व्योम ets_class_qlen_notअगरy(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा ets_class *cl = ets_class_from_arg(sch, arg);
-	काष्ठा ets_sched *q = qdisc_priv(sch);
+static void ets_class_qlen_notify(struct Qdisc *sch, unsigned long arg)
+{
+	struct ets_class *cl = ets_class_from_arg(sch, arg);
+	struct ets_sched *q = qdisc_priv(sch);
 
-	/* We get notअगरied about zero-length child Qdiscs as well अगर they are
+	/* We get notified about zero-length child Qdiscs as well if they are
 	 * offloaded. Those aren't on the active list though, so don't attempt
-	 * to हटाओ them.
+	 * to remove them.
 	 */
-	अगर (!ets_class_is_strict(q, cl) && sch->q.qlen)
+	if (!ets_class_is_strict(q, cl) && sch->q.qlen)
 		list_del(&cl->alist);
-पूर्ण
+}
 
-अटल पूर्णांक ets_class_dump(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg,
-			  काष्ठा sk_buff *skb, काष्ठा tcmsg *tcm)
-अणु
-	काष्ठा ets_class *cl = ets_class_from_arg(sch, arg);
-	काष्ठा ets_sched *q = qdisc_priv(sch);
-	काष्ठा nlattr *nest;
+static int ets_class_dump(struct Qdisc *sch, unsigned long arg,
+			  struct sk_buff *skb, struct tcmsg *tcm)
+{
+	struct ets_class *cl = ets_class_from_arg(sch, arg);
+	struct ets_sched *q = qdisc_priv(sch);
+	struct nlattr *nest;
 
 	tcm->tcm_parent = TC_H_ROOT;
 	tcm->tcm_handle = ets_class_id(sch, cl);
 	tcm->tcm_info = cl->qdisc->handle;
 
 	nest = nla_nest_start_noflag(skb, TCA_OPTIONS);
-	अगर (!nest)
-		जाओ nla_put_failure;
-	अगर (!ets_class_is_strict(q, cl)) अणु
-		अगर (nla_put_u32(skb, TCA_ETS_QUANTA_BAND, cl->quantum))
-			जाओ nla_put_failure;
-	पूर्ण
-	वापस nla_nest_end(skb, nest);
+	if (!nest)
+		goto nla_put_failure;
+	if (!ets_class_is_strict(q, cl)) {
+		if (nla_put_u32(skb, TCA_ETS_QUANTA_BAND, cl->quantum))
+			goto nla_put_failure;
+	}
+	return nla_nest_end(skb, nest);
 
 nla_put_failure:
 	nla_nest_cancel(skb, nest);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल पूर्णांक ets_class_dump_stats(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg,
-				काष्ठा gnet_dump *d)
-अणु
-	काष्ठा ets_class *cl = ets_class_from_arg(sch, arg);
-	काष्ठा Qdisc *cl_q = cl->qdisc;
+static int ets_class_dump_stats(struct Qdisc *sch, unsigned long arg,
+				struct gnet_dump *d)
+{
+	struct ets_class *cl = ets_class_from_arg(sch, arg);
+	struct Qdisc *cl_q = cl->qdisc;
 
-	अगर (gnet_stats_copy_basic(qdisc_root_sleeping_running(sch),
-				  d, शून्य, &cl_q->bstats) < 0 ||
+	if (gnet_stats_copy_basic(qdisc_root_sleeping_running(sch),
+				  d, NULL, &cl_q->bstats) < 0 ||
 	    qdisc_qstats_copy(d, cl_q) < 0)
-		वापस -1;
+		return -1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ets_qdisc_walk(काष्ठा Qdisc *sch, काष्ठा qdisc_walker *arg)
-अणु
-	काष्ठा ets_sched *q = qdisc_priv(sch);
-	पूर्णांक i;
+static void ets_qdisc_walk(struct Qdisc *sch, struct qdisc_walker *arg)
+{
+	struct ets_sched *q = qdisc_priv(sch);
+	int i;
 
-	अगर (arg->stop)
-		वापस;
+	if (arg->stop)
+		return;
 
-	क्रम (i = 0; i < q->nbands; i++) अणु
-		अगर (arg->count < arg->skip) अणु
+	for (i = 0; i < q->nbands; i++) {
+		if (arg->count < arg->skip) {
 			arg->count++;
-			जारी;
-		पूर्ण
-		अगर (arg->fn(sch, i + 1, arg) < 0) अणु
+			continue;
+		}
+		if (arg->fn(sch, i + 1, arg) < 0) {
 			arg->stop = 1;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		arg->count++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल काष्ठा tcf_block *
-ets_qdisc_tcf_block(काष्ठा Qdisc *sch, अचिन्हित दीर्घ cl,
-		    काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा ets_sched *q = qdisc_priv(sch);
+static struct tcf_block *
+ets_qdisc_tcf_block(struct Qdisc *sch, unsigned long cl,
+		    struct netlink_ext_ack *extack)
+{
+	struct ets_sched *q = qdisc_priv(sch);
 
-	अगर (cl) अणु
+	if (cl) {
 		NL_SET_ERR_MSG(extack, "ETS classid must be zero");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	वापस q->block;
-पूर्ण
+	return q->block;
+}
 
-अटल अचिन्हित दीर्घ ets_qdisc_bind_tcf(काष्ठा Qdisc *sch, अचिन्हित दीर्घ parent,
+static unsigned long ets_qdisc_bind_tcf(struct Qdisc *sch, unsigned long parent,
 					u32 classid)
-अणु
-	वापस ets_class_find(sch, classid);
-पूर्ण
+{
+	return ets_class_find(sch, classid);
+}
 
-अटल व्योम ets_qdisc_unbind_tcf(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg)
-अणु
-पूर्ण
+static void ets_qdisc_unbind_tcf(struct Qdisc *sch, unsigned long arg)
+{
+}
 
-अटल काष्ठा ets_class *ets_classअगरy(काष्ठा sk_buff *skb, काष्ठा Qdisc *sch,
-				      पूर्णांक *qerr)
-अणु
-	काष्ठा ets_sched *q = qdisc_priv(sch);
+static struct ets_class *ets_classify(struct sk_buff *skb, struct Qdisc *sch,
+				      int *qerr)
+{
+	struct ets_sched *q = qdisc_priv(sch);
 	u32 band = skb->priority;
-	काष्ठा tcf_result res;
-	काष्ठा tcf_proto *fl;
-	पूर्णांक err;
+	struct tcf_result res;
+	struct tcf_proto *fl;
+	int err;
 
 	*qerr = NET_XMIT_SUCCESS | __NET_XMIT_BYPASS;
-	अगर (TC_H_MAJ(skb->priority) != sch->handle) अणु
+	if (TC_H_MAJ(skb->priority) != sch->handle) {
 		fl = rcu_dereference_bh(q->filter_list);
-		err = tcf_classअगरy(skb, fl, &res, false);
-#अगर_घोषित CONFIG_NET_CLS_ACT
-		चयन (err) अणु
-		हाल TC_ACT_STOLEN:
-		हाल TC_ACT_QUEUED:
-		हाल TC_ACT_TRAP:
+		err = tcf_classify(skb, fl, &res, false);
+#ifdef CONFIG_NET_CLS_ACT
+		switch (err) {
+		case TC_ACT_STOLEN:
+		case TC_ACT_QUEUED:
+		case TC_ACT_TRAP:
 			*qerr = NET_XMIT_SUCCESS | __NET_XMIT_STOLEN;
 			fallthrough;
-		हाल TC_ACT_SHOT:
-			वापस शून्य;
-		पूर्ण
-#पूर्ण_अगर
-		अगर (!fl || err < 0) अणु
-			अगर (TC_H_MAJ(band))
+		case TC_ACT_SHOT:
+			return NULL;
+		}
+#endif
+		if (!fl || err < 0) {
+			if (TC_H_MAJ(band))
 				band = 0;
-			वापस &q->classes[q->prio2band[band & TC_PRIO_MAX]];
-		पूर्ण
+			return &q->classes[q->prio2band[band & TC_PRIO_MAX]];
+		}
 		band = res.classid;
-	पूर्ण
+	}
 	band = TC_H_MIN(band) - 1;
-	अगर (band >= q->nbands)
-		वापस &q->classes[q->prio2band[0]];
-	वापस &q->classes[band];
-पूर्ण
+	if (band >= q->nbands)
+		return &q->classes[q->prio2band[0]];
+	return &q->classes[band];
+}
 
-अटल पूर्णांक ets_qdisc_enqueue(काष्ठा sk_buff *skb, काष्ठा Qdisc *sch,
-			     काष्ठा sk_buff **to_मुक्त)
-अणु
-	अचिन्हित पूर्णांक len = qdisc_pkt_len(skb);
-	काष्ठा ets_sched *q = qdisc_priv(sch);
-	काष्ठा ets_class *cl;
-	पूर्णांक err = 0;
+static int ets_qdisc_enqueue(struct sk_buff *skb, struct Qdisc *sch,
+			     struct sk_buff **to_free)
+{
+	unsigned int len = qdisc_pkt_len(skb);
+	struct ets_sched *q = qdisc_priv(sch);
+	struct ets_class *cl;
+	int err = 0;
 	bool first;
 
-	cl = ets_classअगरy(skb, sch, &err);
-	अगर (!cl) अणु
-		अगर (err & __NET_XMIT_BYPASS)
+	cl = ets_classify(skb, sch, &err);
+	if (!cl) {
+		if (err & __NET_XMIT_BYPASS)
 			qdisc_qstats_drop(sch);
-		__qdisc_drop(skb, to_मुक्त);
-		वापस err;
-	पूर्ण
+		__qdisc_drop(skb, to_free);
+		return err;
+	}
 
 	first = !cl->qdisc->q.qlen;
-	err = qdisc_enqueue(skb, cl->qdisc, to_मुक्त);
-	अगर (unlikely(err != NET_XMIT_SUCCESS)) अणु
-		अगर (net_xmit_drop_count(err)) अणु
+	err = qdisc_enqueue(skb, cl->qdisc, to_free);
+	if (unlikely(err != NET_XMIT_SUCCESS)) {
+		if (net_xmit_drop_count(err)) {
 			cl->qstats.drops++;
 			qdisc_qstats_drop(sch);
-		पूर्ण
-		वापस err;
-	पूर्ण
+		}
+		return err;
+	}
 
-	अगर (first && !ets_class_is_strict(q, cl)) अणु
+	if (first && !ets_class_is_strict(q, cl)) {
 		list_add_tail(&cl->alist, &q->active);
 		cl->deficit = cl->quantum;
-	पूर्ण
+	}
 
 	sch->qstats.backlog += len;
 	sch->q.qlen++;
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल काष्ठा sk_buff *
-ets_qdisc_dequeue_skb(काष्ठा Qdisc *sch, काष्ठा sk_buff *skb)
-अणु
+static struct sk_buff *
+ets_qdisc_dequeue_skb(struct Qdisc *sch, struct sk_buff *skb)
+{
 	qdisc_bstats_update(sch, skb);
 	qdisc_qstats_backlog_dec(sch, skb);
 	sch->q.qlen--;
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल काष्ठा sk_buff *ets_qdisc_dequeue(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा ets_sched *q = qdisc_priv(sch);
-	काष्ठा ets_class *cl;
-	काष्ठा sk_buff *skb;
-	अचिन्हित पूर्णांक band;
-	अचिन्हित पूर्णांक len;
+static struct sk_buff *ets_qdisc_dequeue(struct Qdisc *sch)
+{
+	struct ets_sched *q = qdisc_priv(sch);
+	struct ets_class *cl;
+	struct sk_buff *skb;
+	unsigned int band;
+	unsigned int len;
 
-	जबतक (1) अणु
-		क्रम (band = 0; band < q->nstrict; band++) अणु
+	while (1) {
+		for (band = 0; band < q->nstrict; band++) {
 			cl = &q->classes[band];
 			skb = qdisc_dequeue_peeked(cl->qdisc);
-			अगर (skb)
-				वापस ets_qdisc_dequeue_skb(sch, skb);
-		पूर्ण
+			if (skb)
+				return ets_qdisc_dequeue_skb(sch, skb);
+		}
 
-		अगर (list_empty(&q->active))
-			जाओ out;
+		if (list_empty(&q->active))
+			goto out;
 
-		cl = list_first_entry(&q->active, काष्ठा ets_class, alist);
+		cl = list_first_entry(&q->active, struct ets_class, alist);
 		skb = cl->qdisc->ops->peek(cl->qdisc);
-		अगर (!skb) अणु
+		if (!skb) {
 			qdisc_warn_nonwc(__func__, cl->qdisc);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		len = qdisc_pkt_len(skb);
-		अगर (len <= cl->deficit) अणु
+		if (len <= cl->deficit) {
 			cl->deficit -= len;
 			skb = qdisc_dequeue_peeked(cl->qdisc);
-			अगर (unlikely(!skb))
-				जाओ out;
-			अगर (cl->qdisc->q.qlen == 0)
+			if (unlikely(!skb))
+				goto out;
+			if (cl->qdisc->q.qlen == 0)
 				list_del(&cl->alist);
-			वापस ets_qdisc_dequeue_skb(sch, skb);
-		पूर्ण
+			return ets_qdisc_dequeue_skb(sch, skb);
+		}
 
 		cl->deficit += cl->quantum;
 		list_move_tail(&cl->alist, &q->active);
-	पूर्ण
+	}
 out:
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक ets_qdisc_priomap_parse(काष्ठा nlattr *priomap_attr,
-				   अचिन्हित पूर्णांक nbands, u8 *priomap,
-				   काष्ठा netlink_ext_ack *extack)
-अणु
-	स्थिर काष्ठा nlattr *attr;
-	पूर्णांक prio = 0;
+static int ets_qdisc_priomap_parse(struct nlattr *priomap_attr,
+				   unsigned int nbands, u8 *priomap,
+				   struct netlink_ext_ack *extack)
+{
+	const struct nlattr *attr;
+	int prio = 0;
 	u8 band;
-	पूर्णांक rem;
-	पूर्णांक err;
+	int rem;
+	int err;
 
 	err = __nla_validate_nested(priomap_attr, TCA_ETS_MAX,
 				    ets_priomap_policy, NL_VALIDATE_STRICT,
 				    extack);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	nla_क्रम_each_nested(attr, priomap_attr, rem) अणु
-		चयन (nla_type(attr)) अणु
-		हाल TCA_ETS_PRIOMAP_BAND:
-			अगर (prio > TC_PRIO_MAX) अणु
+	nla_for_each_nested(attr, priomap_attr, rem) {
+		switch (nla_type(attr)) {
+		case TCA_ETS_PRIOMAP_BAND:
+			if (prio > TC_PRIO_MAX) {
 				NL_SET_ERR_MSG_MOD(extack, "Too many priorities in ETS priomap");
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 			band = nla_get_u8(attr);
-			अगर (band >= nbands) अणु
+			if (band >= nbands) {
 				NL_SET_ERR_MSG_MOD(extack, "Invalid band number in ETS priomap");
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 			priomap[prio++] = band;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			WARN_ON_ONCE(1); /* Validate should have caught this. */
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ets_qdisc_quanta_parse(काष्ठा Qdisc *sch, काष्ठा nlattr *quanta_attr,
-				  अचिन्हित पूर्णांक nbands, अचिन्हित पूर्णांक nstrict,
-				  अचिन्हित पूर्णांक *quanta,
-				  काष्ठा netlink_ext_ack *extack)
-अणु
-	स्थिर काष्ठा nlattr *attr;
-	पूर्णांक band = nstrict;
-	पूर्णांक rem;
-	पूर्णांक err;
+static int ets_qdisc_quanta_parse(struct Qdisc *sch, struct nlattr *quanta_attr,
+				  unsigned int nbands, unsigned int nstrict,
+				  unsigned int *quanta,
+				  struct netlink_ext_ack *extack)
+{
+	const struct nlattr *attr;
+	int band = nstrict;
+	int rem;
+	int err;
 
 	err = __nla_validate_nested(quanta_attr, TCA_ETS_MAX,
 				    ets_quanta_policy, NL_VALIDATE_STRICT,
 				    extack);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	nla_क्रम_each_nested(attr, quanta_attr, rem) अणु
-		चयन (nla_type(attr)) अणु
-		हाल TCA_ETS_QUANTA_BAND:
-			अगर (band >= nbands) अणु
+	nla_for_each_nested(attr, quanta_attr, rem) {
+		switch (nla_type(attr)) {
+		case TCA_ETS_QUANTA_BAND:
+			if (band >= nbands) {
 				NL_SET_ERR_MSG_MOD(extack, "ETS quanta has more values than bands");
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 			err = ets_quantum_parse(sch, attr, &quanta[band++],
 						extack);
-			अगर (err)
-				वापस err;
-			अवरोध;
-		शेष:
+			if (err)
+				return err;
+			break;
+		default:
 			WARN_ON_ONCE(1); /* Validate should have caught this. */
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ets_qdisc_change(काष्ठा Qdisc *sch, काष्ठा nlattr *opt,
-			    काष्ठा netlink_ext_ack *extack)
-अणु
-	अचिन्हित पूर्णांक quanta[TCQ_ETS_MAX_BANDS] = अणु0पूर्ण;
-	काष्ठा Qdisc *queues[TCQ_ETS_MAX_BANDS];
-	काष्ठा ets_sched *q = qdisc_priv(sch);
-	काष्ठा nlattr *tb[TCA_ETS_MAX + 1];
-	अचिन्हित पूर्णांक oldbands = q->nbands;
+static int ets_qdisc_change(struct Qdisc *sch, struct nlattr *opt,
+			    struct netlink_ext_ack *extack)
+{
+	unsigned int quanta[TCQ_ETS_MAX_BANDS] = {0};
+	struct Qdisc *queues[TCQ_ETS_MAX_BANDS];
+	struct ets_sched *q = qdisc_priv(sch);
+	struct nlattr *tb[TCA_ETS_MAX + 1];
+	unsigned int oldbands = q->nbands;
 	u8 priomap[TC_PRIO_MAX + 1];
-	अचिन्हित पूर्णांक nstrict = 0;
-	अचिन्हित पूर्णांक nbands;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक err;
+	unsigned int nstrict = 0;
+	unsigned int nbands;
+	unsigned int i;
+	int err;
 
-	अगर (!opt) अणु
+	if (!opt) {
 		NL_SET_ERR_MSG(extack, "ETS options are required for this operation");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	err = nla_parse_nested(tb, TCA_ETS_MAX, opt, ets_policy, extack);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	अगर (!tb[TCA_ETS_NBANDS]) अणु
+	if (!tb[TCA_ETS_NBANDS]) {
 		NL_SET_ERR_MSG_MOD(extack, "Number of bands is a required argument");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	nbands = nla_get_u8(tb[TCA_ETS_NBANDS]);
-	अगर (nbands < 1 || nbands > TCQ_ETS_MAX_BANDS) अणु
+	if (nbands < 1 || nbands > TCQ_ETS_MAX_BANDS) {
 		NL_SET_ERR_MSG_MOD(extack, "Invalid number of bands");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	/* Unless overridden, traffic goes to the last band. */
-	स_रखो(priomap, nbands - 1, माप(priomap));
+	memset(priomap, nbands - 1, sizeof(priomap));
 
-	अगर (tb[TCA_ETS_NSTRICT]) अणु
+	if (tb[TCA_ETS_NSTRICT]) {
 		nstrict = nla_get_u8(tb[TCA_ETS_NSTRICT]);
-		अगर (nstrict > nbands) अणु
+		if (nstrict > nbands) {
 			NL_SET_ERR_MSG_MOD(extack, "Invalid number of strict bands");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	अगर (tb[TCA_ETS_PRIOMAP]) अणु
+	if (tb[TCA_ETS_PRIOMAP]) {
 		err = ets_qdisc_priomap_parse(tb[TCA_ETS_PRIOMAP],
 					      nbands, priomap, extack);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	अगर (tb[TCA_ETS_QUANTA]) अणु
+	if (tb[TCA_ETS_QUANTA]) {
 		err = ets_qdisc_quanta_parse(sch, tb[TCA_ETS_QUANTA],
 					     nbands, nstrict, quanta, extack);
-		अगर (err)
-			वापस err;
-	पूर्ण
-	/* If there are more bands than strict + quanta provided, the reमुख्यing
+		if (err)
+			return err;
+	}
+	/* If there are more bands than strict + quanta provided, the remaining
 	 * ones are ETS with quantum of MTU. Initialize the missing values here.
 	 */
-	क्रम (i = nstrict; i < nbands; i++) अणु
-		अगर (!quanta[i])
+	for (i = nstrict; i < nbands; i++) {
+		if (!quanta[i])
 			quanta[i] = psched_mtu(qdisc_dev(sch));
-	पूर्ण
+	}
 
-	/* Beक्रमe commit, make sure we can allocate all new qdiscs */
-	क्रम (i = oldbands; i < nbands; i++) अणु
-		queues[i] = qdisc_create_dflt(sch->dev_queue, &pfअगरo_qdisc_ops,
+	/* Before commit, make sure we can allocate all new qdiscs */
+	for (i = oldbands; i < nbands; i++) {
+		queues[i] = qdisc_create_dflt(sch->dev_queue, &pfifo_qdisc_ops,
 					      ets_class_id(sch, &q->classes[i]),
 					      extack);
-		अगर (!queues[i]) अणु
-			जबतक (i > oldbands)
+		if (!queues[i]) {
+			while (i > oldbands)
 				qdisc_put(queues[--i]);
-			वापस -ENOMEM;
-		पूर्ण
-	पूर्ण
+			return -ENOMEM;
+		}
+	}
 
 	sch_tree_lock(sch);
 
 	q->nbands = nbands;
 	q->nstrict = nstrict;
-	स_नकल(q->prio2band, priomap, माप(priomap));
+	memcpy(q->prio2band, priomap, sizeof(priomap));
 
-	क्रम (i = q->nbands; i < oldbands; i++)
+	for (i = q->nbands; i < oldbands; i++)
 		qdisc_tree_flush_backlog(q->classes[i].qdisc);
 
-	क्रम (i = 0; i < q->nbands; i++)
+	for (i = 0; i < q->nbands; i++)
 		q->classes[i].quantum = quanta[i];
 
-	क्रम (i = oldbands; i < q->nbands; i++) अणु
+	for (i = oldbands; i < q->nbands; i++) {
 		q->classes[i].qdisc = queues[i];
-		अगर (q->classes[i].qdisc != &noop_qdisc)
+		if (q->classes[i].qdisc != &noop_qdisc)
 			qdisc_hash_add(q->classes[i].qdisc, true);
-	पूर्ण
+	}
 
 	sch_tree_unlock(sch);
 
 	ets_offload_change(sch);
-	क्रम (i = q->nbands; i < oldbands; i++) अणु
+	for (i = q->nbands; i < oldbands; i++) {
 		qdisc_put(q->classes[i].qdisc);
-		स_रखो(&q->classes[i], 0, माप(q->classes[i]));
-	पूर्ण
-	वापस 0;
-पूर्ण
+		memset(&q->classes[i], 0, sizeof(q->classes[i]));
+	}
+	return 0;
+}
 
-अटल पूर्णांक ets_qdisc_init(काष्ठा Qdisc *sch, काष्ठा nlattr *opt,
-			  काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा ets_sched *q = qdisc_priv(sch);
-	पूर्णांक err;
+static int ets_qdisc_init(struct Qdisc *sch, struct nlattr *opt,
+			  struct netlink_ext_ack *extack)
+{
+	struct ets_sched *q = qdisc_priv(sch);
+	int err;
 
-	अगर (!opt)
-		वापस -EINVAL;
+	if (!opt)
+		return -EINVAL;
 
 	err = tcf_block_get(&q->block, &q->filter_list, sch, extack);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	INIT_LIST_HEAD(&q->active);
-	वापस ets_qdisc_change(sch, opt, extack);
-पूर्ण
+	return ets_qdisc_change(sch, opt, extack);
+}
 
-अटल व्योम ets_qdisc_reset(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा ets_sched *q = qdisc_priv(sch);
-	पूर्णांक band;
+static void ets_qdisc_reset(struct Qdisc *sch)
+{
+	struct ets_sched *q = qdisc_priv(sch);
+	int band;
 
-	क्रम (band = q->nstrict; band < q->nbands; band++) अणु
-		अगर (q->classes[band].qdisc->q.qlen)
+	for (band = q->nstrict; band < q->nbands; band++) {
+		if (q->classes[band].qdisc->q.qlen)
 			list_del(&q->classes[band].alist);
-	पूर्ण
-	क्रम (band = 0; band < q->nbands; band++)
+	}
+	for (band = 0; band < q->nbands; band++)
 		qdisc_reset(q->classes[band].qdisc);
 	sch->qstats.backlog = 0;
 	sch->q.qlen = 0;
-पूर्ण
+}
 
-अटल व्योम ets_qdisc_destroy(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा ets_sched *q = qdisc_priv(sch);
-	पूर्णांक band;
+static void ets_qdisc_destroy(struct Qdisc *sch)
+{
+	struct ets_sched *q = qdisc_priv(sch);
+	int band;
 
 	ets_offload_destroy(sch);
 	tcf_block_put(q->block);
-	क्रम (band = 0; band < q->nbands; band++)
+	for (band = 0; band < q->nbands; band++)
 		qdisc_put(q->classes[band].qdisc);
-पूर्ण
+}
 
-अटल पूर्णांक ets_qdisc_dump(काष्ठा Qdisc *sch, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा ets_sched *q = qdisc_priv(sch);
-	काष्ठा nlattr *opts;
-	काष्ठा nlattr *nest;
-	पूर्णांक band;
-	पूर्णांक prio;
-	पूर्णांक err;
+static int ets_qdisc_dump(struct Qdisc *sch, struct sk_buff *skb)
+{
+	struct ets_sched *q = qdisc_priv(sch);
+	struct nlattr *opts;
+	struct nlattr *nest;
+	int band;
+	int prio;
+	int err;
 
 	err = ets_offload_dump(sch);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	opts = nla_nest_start_noflag(skb, TCA_OPTIONS);
-	अगर (!opts)
-		जाओ nla_err;
+	if (!opts)
+		goto nla_err;
 
-	अगर (nla_put_u8(skb, TCA_ETS_NBANDS, q->nbands))
-		जाओ nla_err;
+	if (nla_put_u8(skb, TCA_ETS_NBANDS, q->nbands))
+		goto nla_err;
 
-	अगर (q->nstrict &&
+	if (q->nstrict &&
 	    nla_put_u8(skb, TCA_ETS_NSTRICT, q->nstrict))
-		जाओ nla_err;
+		goto nla_err;
 
-	अगर (q->nbands > q->nstrict) अणु
+	if (q->nbands > q->nstrict) {
 		nest = nla_nest_start(skb, TCA_ETS_QUANTA);
-		अगर (!nest)
-			जाओ nla_err;
+		if (!nest)
+			goto nla_err;
 
-		क्रम (band = q->nstrict; band < q->nbands; band++) अणु
-			अगर (nla_put_u32(skb, TCA_ETS_QUANTA_BAND,
+		for (band = q->nstrict; band < q->nbands; band++) {
+			if (nla_put_u32(skb, TCA_ETS_QUANTA_BAND,
 					q->classes[band].quantum))
-				जाओ nla_err;
-		पूर्ण
+				goto nla_err;
+		}
 
 		nla_nest_end(skb, nest);
-	पूर्ण
+	}
 
 	nest = nla_nest_start(skb, TCA_ETS_PRIOMAP);
-	अगर (!nest)
-		जाओ nla_err;
+	if (!nest)
+		goto nla_err;
 
-	क्रम (prio = 0; prio <= TC_PRIO_MAX; prio++) अणु
-		अगर (nla_put_u8(skb, TCA_ETS_PRIOMAP_BAND, q->prio2band[prio]))
-			जाओ nla_err;
-	पूर्ण
+	for (prio = 0; prio <= TC_PRIO_MAX; prio++) {
+		if (nla_put_u8(skb, TCA_ETS_PRIOMAP_BAND, q->prio2band[prio]))
+			goto nla_err;
+	}
 
 	nla_nest_end(skb, nest);
 
-	वापस nla_nest_end(skb, opts);
+	return nla_nest_end(skb, opts);
 
 nla_err:
 	nla_nest_cancel(skb, opts);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल स्थिर काष्ठा Qdisc_class_ops ets_class_ops = अणु
+static const struct Qdisc_class_ops ets_class_ops = {
 	.change		= ets_class_change,
 	.graft		= ets_class_graft,
 	.leaf		= ets_class_leaf,
 	.find		= ets_class_find,
-	.qlen_notअगरy	= ets_class_qlen_notअगरy,
+	.qlen_notify	= ets_class_qlen_notify,
 	.dump		= ets_class_dump,
 	.dump_stats	= ets_class_dump_stats,
 	.walk		= ets_qdisc_walk,
 	.tcf_block	= ets_qdisc_tcf_block,
 	.bind_tcf	= ets_qdisc_bind_tcf,
 	.unbind_tcf	= ets_qdisc_unbind_tcf,
-पूर्ण;
+};
 
-अटल काष्ठा Qdisc_ops ets_qdisc_ops __पढ़ो_mostly = अणु
+static struct Qdisc_ops ets_qdisc_ops __read_mostly = {
 	.cl_ops		= &ets_class_ops,
 	.id		= "ets",
-	.priv_size	= माप(काष्ठा ets_sched),
+	.priv_size	= sizeof(struct ets_sched),
 	.enqueue	= ets_qdisc_enqueue,
 	.dequeue	= ets_qdisc_dequeue,
 	.peek		= qdisc_peek_dequeued,
@@ -812,18 +811,18 @@ nla_err:
 	.destroy	= ets_qdisc_destroy,
 	.dump		= ets_qdisc_dump,
 	.owner		= THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक __init ets_init(व्योम)
-अणु
-	वापस रेजिस्टर_qdisc(&ets_qdisc_ops);
-पूर्ण
+static int __init ets_init(void)
+{
+	return register_qdisc(&ets_qdisc_ops);
+}
 
-अटल व्योम __निकास ets_निकास(व्योम)
-अणु
-	unरेजिस्टर_qdisc(&ets_qdisc_ops);
-पूर्ण
+static void __exit ets_exit(void)
+{
+	unregister_qdisc(&ets_qdisc_ops);
+}
 
 module_init(ets_init);
-module_निकास(ets_निकास);
+module_exit(ets_exit);
 MODULE_LICENSE("GPL");

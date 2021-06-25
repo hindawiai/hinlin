@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
- * Copyright तऊ 2008-2017 Intel Corporation
+ * Copyright © 2008-2017 Intel Corporation
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -23,101 +22,101 @@
  *
  */
 
-#अगर_अघोषित _INTEL_OPREGION_H_
-#घोषणा _INTEL_OPREGION_H_
+#ifndef _INTEL_OPREGION_H_
+#define _INTEL_OPREGION_H_
 
-#समावेश <linux/workqueue.h>
-#समावेश <linux/pci.h>
+#include <linux/workqueue.h>
+#include <linux/pci.h>
 
-काष्ठा drm_i915_निजी;
-काष्ठा पूर्णांकel_encoder;
+struct drm_i915_private;
+struct intel_encoder;
 
-काष्ठा opregion_header;
-काष्ठा opregion_acpi;
-काष्ठा opregion_swsci;
-काष्ठा opregion_asle;
+struct opregion_header;
+struct opregion_acpi;
+struct opregion_swsci;
+struct opregion_asle;
 
-काष्ठा पूर्णांकel_opregion अणु
-	काष्ठा opregion_header *header;
-	काष्ठा opregion_acpi *acpi;
-	काष्ठा opregion_swsci *swsci;
+struct intel_opregion {
+	struct opregion_header *header;
+	struct opregion_acpi *acpi;
+	struct opregion_swsci *swsci;
 	u32 swsci_gbda_sub_functions;
 	u32 swsci_sbcb_sub_functions;
-	काष्ठा opregion_asle *asle;
-	व्योम *rvda;
-	व्योम *vbt_firmware;
-	स्थिर व्योम *vbt;
+	struct opregion_asle *asle;
+	void *rvda;
+	void *vbt_firmware;
+	const void *vbt;
 	u32 vbt_size;
 	u32 *lid_state;
-	काष्ठा work_काष्ठा asle_work;
-	काष्ठा notअगरier_block acpi_notअगरier;
-पूर्ण;
+	struct work_struct asle_work;
+	struct notifier_block acpi_notifier;
+};
 
-#घोषणा OPREGION_SIZE            (8 * 1024)
+#define OPREGION_SIZE            (8 * 1024)
 
-#अगर_घोषित CONFIG_ACPI
+#ifdef CONFIG_ACPI
 
-पूर्णांक पूर्णांकel_opregion_setup(काष्ठा drm_i915_निजी *dev_priv);
+int intel_opregion_setup(struct drm_i915_private *dev_priv);
 
-व्योम पूर्णांकel_opregion_रेजिस्टर(काष्ठा drm_i915_निजी *dev_priv);
-व्योम पूर्णांकel_opregion_unरेजिस्टर(काष्ठा drm_i915_निजी *dev_priv);
+void intel_opregion_register(struct drm_i915_private *dev_priv);
+void intel_opregion_unregister(struct drm_i915_private *dev_priv);
 
-व्योम पूर्णांकel_opregion_resume(काष्ठा drm_i915_निजी *dev_priv);
-व्योम पूर्णांकel_opregion_suspend(काष्ठा drm_i915_निजी *dev_priv,
-			    pci_घातer_t state);
+void intel_opregion_resume(struct drm_i915_private *dev_priv);
+void intel_opregion_suspend(struct drm_i915_private *dev_priv,
+			    pci_power_t state);
 
-व्योम पूर्णांकel_opregion_asle_पूर्णांकr(काष्ठा drm_i915_निजी *dev_priv);
-पूर्णांक पूर्णांकel_opregion_notअगरy_encoder(काष्ठा पूर्णांकel_encoder *पूर्णांकel_encoder,
+void intel_opregion_asle_intr(struct drm_i915_private *dev_priv);
+int intel_opregion_notify_encoder(struct intel_encoder *intel_encoder,
 				  bool enable);
-पूर्णांक पूर्णांकel_opregion_notअगरy_adapter(काष्ठा drm_i915_निजी *dev_priv,
-				  pci_घातer_t state);
-पूर्णांक पूर्णांकel_opregion_get_panel_type(काष्ठा drm_i915_निजी *dev_priv);
+int intel_opregion_notify_adapter(struct drm_i915_private *dev_priv,
+				  pci_power_t state);
+int intel_opregion_get_panel_type(struct drm_i915_private *dev_priv);
 
-#अन्यथा /* CONFIG_ACPI*/
+#else /* CONFIG_ACPI*/
 
-अटल अंतरभूत पूर्णांक पूर्णांकel_opregion_setup(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	वापस 0;
-पूर्ण
+static inline int intel_opregion_setup(struct drm_i915_private *dev_priv)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम पूर्णांकel_opregion_रेजिस्टर(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-पूर्ण
+static inline void intel_opregion_register(struct drm_i915_private *dev_priv)
+{
+}
 
-अटल अंतरभूत व्योम पूर्णांकel_opregion_unरेजिस्टर(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-पूर्ण
+static inline void intel_opregion_unregister(struct drm_i915_private *dev_priv)
+{
+}
 
-अटल अंतरभूत व्योम पूर्णांकel_opregion_resume(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-पूर्ण
+static inline void intel_opregion_resume(struct drm_i915_private *dev_priv)
+{
+}
 
-अटल अंतरभूत व्योम पूर्णांकel_opregion_suspend(काष्ठा drm_i915_निजी *dev_priv,
-					  pci_घातer_t state)
-अणु
-पूर्ण
+static inline void intel_opregion_suspend(struct drm_i915_private *dev_priv,
+					  pci_power_t state)
+{
+}
 
-अटल अंतरभूत व्योम पूर्णांकel_opregion_asle_पूर्णांकr(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-पूर्ण
+static inline void intel_opregion_asle_intr(struct drm_i915_private *dev_priv)
+{
+}
 
-अटल अंतरभूत पूर्णांक
-पूर्णांकel_opregion_notअगरy_encoder(काष्ठा पूर्णांकel_encoder *पूर्णांकel_encoder, bool enable)
-अणु
-	वापस 0;
-पूर्ण
+static inline int
+intel_opregion_notify_encoder(struct intel_encoder *intel_encoder, bool enable)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक
-पूर्णांकel_opregion_notअगरy_adapter(काष्ठा drm_i915_निजी *dev, pci_घातer_t state)
-अणु
-	वापस 0;
-पूर्ण
+static inline int
+intel_opregion_notify_adapter(struct drm_i915_private *dev, pci_power_t state)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक पूर्णांकel_opregion_get_panel_type(काष्ठा drm_i915_निजी *dev)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int intel_opregion_get_panel_type(struct drm_i915_private *dev)
+{
+	return -ENODEV;
+}
 
-#पूर्ण_अगर /* CONFIG_ACPI */
+#endif /* CONFIG_ACPI */
 
-#पूर्ण_अगर
+#endif

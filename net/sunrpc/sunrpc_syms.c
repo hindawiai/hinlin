@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * linux/net/sunrpc/sunrpc_syms.c
  *
@@ -8,137 +7,137 @@
  * Copyright (C) 1997 Olaf Kirch <okir@monad.swb.de>
  */
 
-#समावेश <linux/module.h>
+#include <linux/module.h>
 
-#समावेश <linux/types.h>
-#समावेश <linux/uपन.स>
-#समावेश <linux/unistd.h>
-#समावेश <linux/init.h>
+#include <linux/types.h>
+#include <linux/uio.h>
+#include <linux/unistd.h>
+#include <linux/init.h>
 
-#समावेश <linux/sunrpc/sched.h>
-#समावेश <linux/sunrpc/clnt.h>
-#समावेश <linux/sunrpc/svc.h>
-#समावेश <linux/sunrpc/svcsock.h>
-#समावेश <linux/sunrpc/auth.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/sunrpc/rpc_pipe_fs.h>
-#समावेश <linux/sunrpc/xprtsock.h>
+#include <linux/sunrpc/sched.h>
+#include <linux/sunrpc/clnt.h>
+#include <linux/sunrpc/svc.h>
+#include <linux/sunrpc/svcsock.h>
+#include <linux/sunrpc/auth.h>
+#include <linux/workqueue.h>
+#include <linux/sunrpc/rpc_pipe_fs.h>
+#include <linux/sunrpc/xprtsock.h>
 
-#समावेश "sunrpc.h"
-#समावेश "netns.h"
+#include "sunrpc.h"
+#include "netns.h"
 
-अचिन्हित पूर्णांक sunrpc_net_id;
+unsigned int sunrpc_net_id;
 EXPORT_SYMBOL_GPL(sunrpc_net_id);
 
-अटल __net_init पूर्णांक sunrpc_init_net(काष्ठा net *net)
-अणु
-	पूर्णांक err;
-	काष्ठा sunrpc_net *sn = net_generic(net, sunrpc_net_id);
+static __net_init int sunrpc_init_net(struct net *net)
+{
+	int err;
+	struct sunrpc_net *sn = net_generic(net, sunrpc_net_id);
 
 	err = rpc_proc_init(net);
-	अगर (err)
-		जाओ err_proc;
+	if (err)
+		goto err_proc;
 
 	err = ip_map_cache_create(net);
-	अगर (err)
-		जाओ err_ipmap;
+	if (err)
+		goto err_ipmap;
 
 	err = unix_gid_cache_create(net);
-	अगर (err)
-		जाओ err_unixgid;
+	if (err)
+		goto err_unixgid;
 
 	err = rpc_pipefs_init_net(net);
-	अगर (err)
-		जाओ err_pipefs;
+	if (err)
+		goto err_pipefs;
 
 	INIT_LIST_HEAD(&sn->all_clients);
 	spin_lock_init(&sn->rpc_client_lock);
 	spin_lock_init(&sn->rpcb_clnt_lock);
-	वापस 0;
+	return 0;
 
 err_pipefs:
 	unix_gid_cache_destroy(net);
 err_unixgid:
 	ip_map_cache_destroy(net);
 err_ipmap:
-	rpc_proc_निकास(net);
+	rpc_proc_exit(net);
 err_proc:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल __net_निकास व्योम sunrpc_निकास_net(काष्ठा net *net)
-अणु
-	काष्ठा sunrpc_net *sn = net_generic(net, sunrpc_net_id);
+static __net_exit void sunrpc_exit_net(struct net *net)
+{
+	struct sunrpc_net *sn = net_generic(net, sunrpc_net_id);
 
-	rpc_pipefs_निकास_net(net);
+	rpc_pipefs_exit_net(net);
 	unix_gid_cache_destroy(net);
 	ip_map_cache_destroy(net);
-	rpc_proc_निकास(net);
+	rpc_proc_exit(net);
 	WARN_ON_ONCE(!list_empty(&sn->all_clients));
-पूर्ण
+}
 
-अटल काष्ठा pernet_operations sunrpc_net_ops = अणु
+static struct pernet_operations sunrpc_net_ops = {
 	.init = sunrpc_init_net,
-	.निकास = sunrpc_निकास_net,
+	.exit = sunrpc_exit_net,
 	.id = &sunrpc_net_id,
-	.size = माप(काष्ठा sunrpc_net),
-पूर्ण;
+	.size = sizeof(struct sunrpc_net),
+};
 
-अटल पूर्णांक __init
-init_sunrpc(व्योम)
-अणु
-	पूर्णांक err = rpc_init_mempool();
-	अगर (err)
-		जाओ out;
+static int __init
+init_sunrpc(void)
+{
+	int err = rpc_init_mempool();
+	if (err)
+		goto out;
 	err = rpcauth_init_module();
-	अगर (err)
-		जाओ out2;
+	if (err)
+		goto out2;
 
 	cache_initialize();
 
-	err = रेजिस्टर_pernet_subsys(&sunrpc_net_ops);
-	अगर (err)
-		जाओ out3;
+	err = register_pernet_subsys(&sunrpc_net_ops);
+	if (err)
+		goto out3;
 
-	err = रेजिस्टर_rpc_pipefs();
-	अगर (err)
-		जाओ out4;
+	err = register_rpc_pipefs();
+	if (err)
+		goto out4;
 
 	sunrpc_debugfs_init();
-#अगर IS_ENABLED(CONFIG_SUNRPC_DEBUG)
-	rpc_रेजिस्टर_sysctl();
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_SUNRPC_DEBUG)
+	rpc_register_sysctl();
+#endif
 	svc_init_xprt_sock();	/* svc sock transport */
 	init_socket_xprt();	/* clnt sock transport */
-	वापस 0;
+	return 0;
 
 out4:
-	unरेजिस्टर_pernet_subsys(&sunrpc_net_ops);
+	unregister_pernet_subsys(&sunrpc_net_ops);
 out3:
-	rpcauth_हटाओ_module();
+	rpcauth_remove_module();
 out2:
 	rpc_destroy_mempool();
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम __निकास
-cleanup_sunrpc(व्योम)
-अणु
+static void __exit
+cleanup_sunrpc(void)
+{
 	rpc_cleanup_clids();
-	rpcauth_हटाओ_module();
+	rpcauth_remove_module();
 	cleanup_socket_xprt();
 	svc_cleanup_xprt_sock();
-	sunrpc_debugfs_निकास();
-	unरेजिस्टर_rpc_pipefs();
+	sunrpc_debugfs_exit();
+	unregister_rpc_pipefs();
 	rpc_destroy_mempool();
-	unरेजिस्टर_pernet_subsys(&sunrpc_net_ops);
-	auth_करोमुख्य_cleanup();
-#अगर IS_ENABLED(CONFIG_SUNRPC_DEBUG)
-	rpc_unरेजिस्टर_sysctl();
-#पूर्ण_अगर
-	rcu_barrier(); /* Wait क्रम completion of call_rcu()'s */
-पूर्ण
+	unregister_pernet_subsys(&sunrpc_net_ops);
+	auth_domain_cleanup();
+#if IS_ENABLED(CONFIG_SUNRPC_DEBUG)
+	rpc_unregister_sysctl();
+#endif
+	rcu_barrier(); /* Wait for completion of call_rcu()'s */
+}
 MODULE_LICENSE("GPL");
-fs_initcall(init_sunrpc); /* Ensure we're initialised beक्रमe nfs */
-module_निकास(cleanup_sunrpc);
+fs_initcall(init_sunrpc); /* Ensure we're initialised before nfs */
+module_exit(cleanup_sunrpc);

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Author(s)......: Holger Smolinski <Holger.Smolinski@de.ibm.com>
  *		    Horst Hummel <Horst.Hummel@de.ibm.com>
@@ -9,30 +8,30 @@
  * Copyright IBM Corp. 1999,2001
  *
  * Device mapping and dasd= parameter parsing functions. All devmap
- * functions may not be called from पूर्णांकerrupt context. In particular
- * dasd_get_device is a no-no from पूर्णांकerrupt context.
+ * functions may not be called from interrupt context. In particular
+ * dasd_get_device is a no-no from interrupt context.
  *
  */
 
-#घोषणा KMSG_COMPONENT "dasd"
+#define KMSG_COMPONENT "dasd"
 
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
+#include <linux/ctype.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/slab.h>
 
-#समावेश <यंत्र/debug.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/ipl.h>
+#include <asm/debug.h>
+#include <linux/uaccess.h>
+#include <asm/ipl.h>
 
 /* This is ugly... */
-#घोषणा PRINTK_HEADER "dasd_devmap:"
-#घोषणा DASD_BUS_ID_SIZE 20
-#घोषणा DASD_MAX_PARAMS 256
+#define PRINTK_HEADER "dasd_devmap:"
+#define DASD_BUS_ID_SIZE 20
+#define DASD_MAX_PARAMS 256
 
-#समावेश "dasd_int.h"
+#include "dasd_int.h"
 
-काष्ठा kmem_cache *dasd_page_cache;
+struct kmem_cache *dasd_page_cache;
 EXPORT_SYMBOL_GPL(dasd_page_cache);
 
 /*
@@ -42,19 +41,19 @@ EXPORT_SYMBOL_GPL(dasd_page_cache);
  * dasd_devmap_t is added to two linked lists, one to search by
  * the device number and one to search by the device index. As
  * soon as big minor numbers are available the device index list
- * can be हटाओd since the device number will then be identical
+ * can be removed since the device number will then be identical
  * to the device index.
  */
-काष्ठा dasd_devmap अणु
-	काष्ठा list_head list;
-	अक्षर bus_id[DASD_BUS_ID_SIZE];
-        अचिन्हित पूर्णांक devindex;
-        अचिन्हित लघु features;
-	काष्ठा dasd_device *device;
-पूर्ण;
+struct dasd_devmap {
+	struct list_head list;
+	char bus_id[DASD_BUS_ID_SIZE];
+        unsigned int devindex;
+        unsigned short features;
+	struct dasd_device *device;
+};
 
 /*
- * Parameter parsing functions क्रम dasd= parameter. The syntax is:
+ * Parameter parsing functions for dasd= parameter. The syntax is:
  *   <devno>		: (0x)?[0-9a-fA-F]+
  *   <busid>		: [0-0a-f]\.[0-9a-f]\.(0x)?[0-9a-fA-F]+
  *   <feature>		: ro
@@ -64,921 +63,921 @@ EXPORT_SYMBOL_GPL(dasd_page_cache);
  *   <devices>		: <devno-range>|<busid-range>
  *   <dasd_module>	: dasd_diag_mod|dasd_eckd_mod|dasd_fba_mod
  *
- *   <dasd>		: स्वतःdetect|probeonly|<devices>(,<devices>)*
+ *   <dasd>		: autodetect|probeonly|<devices>(,<devices>)*
  */
 
-पूर्णांक dasd_probeonly =  0;	/* is true, when probeonly mode is active */
-पूर्णांक dasd_स्वतःdetect = 0;	/* is true, when स्वतःdetection is active */
-पूर्णांक dasd_nopav = 0;		/* is true, when PAV is disabled */
+int dasd_probeonly =  0;	/* is true, when probeonly mode is active */
+int dasd_autodetect = 0;	/* is true, when autodetection is active */
+int dasd_nopav = 0;		/* is true, when PAV is disabled */
 EXPORT_SYMBOL_GPL(dasd_nopav);
-पूर्णांक dasd_nofcx;			/* disable High Perक्रमmance Ficon */
+int dasd_nofcx;			/* disable High Performance Ficon */
 EXPORT_SYMBOL_GPL(dasd_nofcx);
 
 /*
- * अक्षर *dasd[] is पूर्णांकended to hold the ranges supplied by the dasd= statement
+ * char *dasd[] is intended to hold the ranges supplied by the dasd= statement
  * it is named 'dasd' to directly be filled by insmod with the comma separated
  * strings when running as a module.
  */
-अटल अक्षर *dasd[DASD_MAX_PARAMS];
-module_param_array(dasd, अक्षरp, शून्य, S_IRUGO);
+static char *dasd[DASD_MAX_PARAMS];
+module_param_array(dasd, charp, NULL, S_IRUGO);
 
 /*
- * Single spinlock to protect devmap and servermap काष्ठाures and lists.
+ * Single spinlock to protect devmap and servermap structures and lists.
  */
-अटल DEFINE_SPINLOCK(dasd_devmap_lock);
+static DEFINE_SPINLOCK(dasd_devmap_lock);
 
 /*
- * Hash lists क्रम devmap काष्ठाures.
+ * Hash lists for devmap structures.
  */
-अटल काष्ठा list_head dasd_hashlists[256];
-पूर्णांक dasd_max_devindex;
+static struct list_head dasd_hashlists[256];
+int dasd_max_devindex;
 
-अटल काष्ठा dasd_devmap *dasd_add_busid(स्थिर अक्षर *, पूर्णांक);
+static struct dasd_devmap *dasd_add_busid(const char *, int);
 
-अटल अंतरभूत पूर्णांक
-dasd_hash_busid(स्थिर अक्षर *bus_id)
-अणु
-	पूर्णांक hash, i;
+static inline int
+dasd_hash_busid(const char *bus_id)
+{
+	int hash, i;
 
 	hash = 0;
-	क्रम (i = 0; (i < DASD_BUS_ID_SIZE) && *bus_id; i++, bus_id++)
+	for (i = 0; (i < DASD_BUS_ID_SIZE) && *bus_id; i++, bus_id++)
 		hash += *bus_id;
-	वापस hash & 0xff;
-पूर्ण
+	return hash & 0xff;
+}
 
-#अगर_अघोषित MODULE
-अटल पूर्णांक __init dasd_call_setup(अक्षर *opt)
-अणु
-	अटल पूर्णांक i __initdata;
-	अक्षर *पंचांगp;
+#ifndef MODULE
+static int __init dasd_call_setup(char *opt)
+{
+	static int i __initdata;
+	char *tmp;
 
-	जबतक (i < DASD_MAX_PARAMS) अणु
-		पंचांगp = strsep(&opt, ",");
-		अगर (!पंचांगp)
-			अवरोध;
+	while (i < DASD_MAX_PARAMS) {
+		tmp = strsep(&opt, ",");
+		if (!tmp)
+			break;
 
-		dasd[i++] = पंचांगp;
-	पूर्ण
+		dasd[i++] = tmp;
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 __setup ("dasd=", dasd_call_setup);
-#पूर्ण_अगर	/* #अगर_अघोषित MODULE */
+#endif	/* #ifndef MODULE */
 
-#घोषणा	DASD_IPLDEV	"ipldev"
+#define	DASD_IPLDEV	"ipldev"
 
 /*
  * Read a device busid/devno from a string.
  */
-अटल पूर्णांक __init dasd_busid(अक्षर *str, पूर्णांक *id0, पूर्णांक *id1, पूर्णांक *devno)
-अणु
-	अचिन्हित पूर्णांक val;
-	अक्षर *tok;
+static int __init dasd_busid(char *str, int *id0, int *id1, int *devno)
+{
+	unsigned int val;
+	char *tok;
 
 	/* Interpret ipldev busid */
-	अगर (म_भेदन(DASD_IPLDEV, str, म_माप(DASD_IPLDEV)) == 0) अणु
-		अगर (ipl_info.type != IPL_TYPE_CCW) अणु
+	if (strncmp(DASD_IPLDEV, str, strlen(DASD_IPLDEV)) == 0) {
+		if (ipl_info.type != IPL_TYPE_CCW) {
 			pr_err("The IPL device is not a CCW device\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		*id0 = 0;
 		*id1 = ipl_info.data.ccw.dev_id.ssid;
 		*devno = ipl_info.data.ccw.dev_id.devno;
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* Old style 0xXXXX or XXXX */
-	अगर (!kstrtouपूर्णांक(str, 16, &val)) अणु
+	if (!kstrtouint(str, 16, &val)) {
 		*id0 = *id1 = 0;
-		अगर (val > 0xffff)
-			वापस -EINVAL;
+		if (val > 0xffff)
+			return -EINVAL;
 		*devno = val;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* New style x.y.z busid */
 	tok = strsep(&str, ".");
-	अगर (kstrtouपूर्णांक(tok, 16, &val) || val > 0xff)
-		वापस -EINVAL;
+	if (kstrtouint(tok, 16, &val) || val > 0xff)
+		return -EINVAL;
 	*id0 = val;
 
 	tok = strsep(&str, ".");
-	अगर (kstrtouपूर्णांक(tok, 16, &val) || val > 0xff)
-		वापस -EINVAL;
+	if (kstrtouint(tok, 16, &val) || val > 0xff)
+		return -EINVAL;
 	*id1 = val;
 
 	tok = strsep(&str, ".");
-	अगर (kstrtouपूर्णांक(tok, 16, &val) || val > 0xffff)
-		वापस -EINVAL;
+	if (kstrtouint(tok, 16, &val) || val > 0xffff)
+		return -EINVAL;
 	*devno = val;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Read colon separated list of dasd features.
  */
-अटल पूर्णांक __init dasd_feature_list(अक्षर *str)
-अणु
-	पूर्णांक features, len, rc;
+static int __init dasd_feature_list(char *str)
+{
+	int features, len, rc;
 
 	features = 0;
 	rc = 0;
 
-	अगर (!str)
-		वापस DASD_FEATURE_DEFAULT;
+	if (!str)
+		return DASD_FEATURE_DEFAULT;
 
-	जबतक (1) अणु
-		क्रम (len = 0;
+	while (1) {
+		for (len = 0;
 		     str[len] && str[len] != ':' && str[len] != ')'; len++);
-		अगर (len == 2 && !म_भेदन(str, "ro", 2))
+		if (len == 2 && !strncmp(str, "ro", 2))
 			features |= DASD_FEATURE_READONLY;
-		अन्यथा अगर (len == 4 && !म_भेदन(str, "diag", 4))
+		else if (len == 4 && !strncmp(str, "diag", 4))
 			features |= DASD_FEATURE_USEDIAG;
-		अन्यथा अगर (len == 3 && !म_भेदन(str, "raw", 3))
+		else if (len == 3 && !strncmp(str, "raw", 3))
 			features |= DASD_FEATURE_USERAW;
-		अन्यथा अगर (len == 6 && !म_भेदन(str, "erplog", 6))
+		else if (len == 6 && !strncmp(str, "erplog", 6))
 			features |= DASD_FEATURE_ERPLOG;
-		अन्यथा अगर (len == 8 && !म_भेदन(str, "failfast", 8))
+		else if (len == 8 && !strncmp(str, "failfast", 8))
 			features |= DASD_FEATURE_FAILFAST;
-		अन्यथा अणु
+		else {
 			pr_warn("%.*s is not a supported device option\n",
 				len, str);
 			rc = -EINVAL;
-		पूर्ण
+		}
 		str += len;
-		अगर (*str != ':')
-			अवरोध;
+		if (*str != ':')
+			break;
 		str++;
-	पूर्ण
+	}
 
-	वापस rc ? : features;
-पूर्ण
+	return rc ? : features;
+}
 
 /*
  * Try to match the first element on the comma separated parse string
  * with one of the known keywords. If a keyword is found, take the approprate
- * action and वापस a poपूर्णांकer to the residual string. If the first element
- * could not be matched to any keyword then वापस an error code.
+ * action and return a pointer to the residual string. If the first element
+ * could not be matched to any keyword then return an error code.
  */
-अटल पूर्णांक __init dasd_parse_keyword(अक्षर *keyword)
-अणु
-	पूर्णांक length = म_माप(keyword);
+static int __init dasd_parse_keyword(char *keyword)
+{
+	int length = strlen(keyword);
 
-	अगर (म_भेदन("autodetect", keyword, length) == 0) अणु
-		dasd_स्वतःdetect = 1;
+	if (strncmp("autodetect", keyword, length) == 0) {
+		dasd_autodetect = 1;
 		pr_info("The autodetection mode has been activated\n");
-		वापस 0;
-        पूर्ण
-	अगर (म_भेदन("probeonly", keyword, length) == 0) अणु
+		return 0;
+        }
+	if (strncmp("probeonly", keyword, length) == 0) {
 		dasd_probeonly = 1;
 		pr_info("The probeonly mode has been activated\n");
-		वापस 0;
-        पूर्ण
-	अगर (म_भेदन("nopav", keyword, length) == 0) अणु
-		अगर (MACHINE_IS_VM)
+		return 0;
+        }
+	if (strncmp("nopav", keyword, length) == 0) {
+		if (MACHINE_IS_VM)
 			pr_info("'nopav' is not supported on z/VM\n");
-		अन्यथा अणु
+		else {
 			dasd_nopav = 1;
 			pr_info("PAV support has be deactivated\n");
-		पूर्ण
-		वापस 0;
-	पूर्ण
-	अगर (म_भेदन("nofcx", keyword, length) == 0) अणु
+		}
+		return 0;
+	}
+	if (strncmp("nofcx", keyword, length) == 0) {
 		dasd_nofcx = 1;
 		pr_info("High Performance FICON support has been "
 			"deactivated\n");
-		वापस 0;
-	पूर्ण
-	अगर (म_भेदन("fixedbuffers", keyword, length) == 0) अणु
-		अगर (dasd_page_cache)
-			वापस 0;
+		return 0;
+	}
+	if (strncmp("fixedbuffers", keyword, length) == 0) {
+		if (dasd_page_cache)
+			return 0;
 		dasd_page_cache =
 			kmem_cache_create("dasd_page_cache", PAGE_SIZE,
 					  PAGE_SIZE, SLAB_CACHE_DMA,
-					  शून्य);
-		अगर (!dasd_page_cache)
+					  NULL);
+		if (!dasd_page_cache)
 			DBF_EVENT(DBF_WARNING, "%s", "Failed to create slab, "
 				"fixed buffer mode disabled.");
-		अन्यथा
+		else
 			DBF_EVENT(DBF_INFO, "%s",
 				 "turning on fixed buffer mode");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 /*
- * Split a string of a device range पूर्णांकo its pieces and वापस the from, to, and
+ * Split a string of a device range into its pieces and return the from, to, and
  * feature parts separately.
  * e.g.:
  * 0.0.1234-0.0.5678(ro:erplog) -> from: 0.0.1234 to: 0.0.5678 features: ro:erplog
  * 0.0.8765(raw) -> from: 0.0.8765 to: null features: raw
  * 0x4321 -> from: 0x4321 to: null features: null
  */
-अटल पूर्णांक __init dasd_evaluate_range_param(अक्षर *range, अक्षर **from_str,
-					    अक्षर **to_str, अक्षर **features_str)
-अणु
-	पूर्णांक rc = 0;
+static int __init dasd_evaluate_range_param(char *range, char **from_str,
+					    char **to_str, char **features_str)
+{
+	int rc = 0;
 
 	/* Do we have a range or a single device? */
-	अगर (म_अक्षर(range, '-')) अणु
+	if (strchr(range, '-')) {
 		*from_str = strsep(&range, "-");
 		*to_str = strsep(&range, "(");
 		*features_str = strsep(&range, ")");
-	पूर्ण अन्यथा अणु
+	} else {
 		*from_str = strsep(&range, "(");
 		*features_str = strsep(&range, ")");
-	पूर्ण
+	}
 
-	अगर (*features_str && !range) अणु
+	if (*features_str && !range) {
 		pr_warn("A closing parenthesis ')' is missing in the dasd= parameter\n");
 		rc = -EINVAL;
-	पूर्ण
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
- * Try to पूर्णांकerprete the range string as a device number or a range of devices.
- * If the पूर्णांकerpretation is successful, create the matching dasd_devmap entries.
- * If पूर्णांकerpretation fails or in हाल of an error, वापस an error code.
+ * Try to interprete the range string as a device number or a range of devices.
+ * If the interpretation is successful, create the matching dasd_devmap entries.
+ * If interpretation fails or in case of an error, return an error code.
  */
-अटल पूर्णांक __init dasd_parse_range(स्थिर अक्षर *range)
-अणु
-	काष्ठा dasd_devmap *devmap;
-	पूर्णांक from, from_id0, from_id1;
-	पूर्णांक to, to_id0, to_id1;
-	पूर्णांक features;
-	अक्षर bus_id[DASD_BUS_ID_SIZE + 1];
-	अक्षर *features_str = शून्य;
-	अक्षर *from_str = शून्य;
-	अक्षर *to_str = शून्य;
-	पूर्णांक rc = 0;
-	अक्षर *पंचांगp;
+static int __init dasd_parse_range(const char *range)
+{
+	struct dasd_devmap *devmap;
+	int from, from_id0, from_id1;
+	int to, to_id0, to_id1;
+	int features;
+	char bus_id[DASD_BUS_ID_SIZE + 1];
+	char *features_str = NULL;
+	char *from_str = NULL;
+	char *to_str = NULL;
+	int rc = 0;
+	char *tmp;
 
-	पंचांगp = kstrdup(range, GFP_KERNEL);
-	अगर (!पंचांगp)
-		वापस -ENOMEM;
+	tmp = kstrdup(range, GFP_KERNEL);
+	if (!tmp)
+		return -ENOMEM;
 
-	अगर (dasd_evaluate_range_param(पंचांगp, &from_str, &to_str, &features_str)) अणु
+	if (dasd_evaluate_range_param(tmp, &from_str, &to_str, &features_str)) {
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (dasd_busid(from_str, &from_id0, &from_id1, &from)) अणु
+	if (dasd_busid(from_str, &from_id0, &from_id1, &from)) {
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	to = from;
 	to_id0 = from_id0;
 	to_id1 = from_id1;
-	अगर (to_str) अणु
-		अगर (dasd_busid(to_str, &to_id0, &to_id1, &to)) अणु
+	if (to_str) {
+		if (dasd_busid(to_str, &to_id0, &to_id1, &to)) {
 			rc = -EINVAL;
-			जाओ out;
-		पूर्ण
-		अगर (from_id0 != to_id0 || from_id1 != to_id1 || from > to) अणु
+			goto out;
+		}
+		if (from_id0 != to_id0 || from_id1 != to_id1 || from > to) {
 			pr_err("%s is not a valid device range\n", range);
 			rc = -EINVAL;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	features = dasd_feature_list(features_str);
-	अगर (features < 0) अणु
+	if (features < 0) {
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	/* each device in dasd= parameter should be set initially online */
 	features |= DASD_FEATURE_INITIAL_ONLINE;
-	जबतक (from <= to) अणु
-		प्र_लिखो(bus_id, "%01x.%01x.%04x", from_id0, from_id1, from++);
+	while (from <= to) {
+		sprintf(bus_id, "%01x.%01x.%04x", from_id0, from_id1, from++);
 		devmap = dasd_add_busid(bus_id, features);
-		अगर (IS_ERR(devmap)) अणु
+		if (IS_ERR(devmap)) {
 			rc = PTR_ERR(devmap);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 out:
-	kमुक्त(पंचांगp);
+	kfree(tmp);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  * Parse parameters stored in dasd[]
- * The 'dasd=...' parameter allows to specअगरy a comma separated list of
+ * The 'dasd=...' parameter allows to specify a comma separated list of
  * keywords and device ranges. The parameters in that list will be stored as
  * separate elementes in dasd[].
  */
-पूर्णांक __init dasd_parse(व्योम)
-अणु
-	पूर्णांक rc, i;
-	अक्षर *cur;
+int __init dasd_parse(void)
+{
+	int rc, i;
+	char *cur;
 
 	rc = 0;
-	क्रम (i = 0; i < DASD_MAX_PARAMS; i++) अणु
+	for (i = 0; i < DASD_MAX_PARAMS; i++) {
 		cur = dasd[i];
-		अगर (!cur)
-			अवरोध;
-		अगर (*cur == '\0')
-			जारी;
+		if (!cur)
+			break;
+		if (*cur == '\0')
+			continue;
 
 		rc = dasd_parse_keyword(cur);
-		अगर (rc)
+		if (rc)
 			rc = dasd_parse_range(cur);
 
-		अगर (rc)
-			अवरोध;
-	पूर्ण
+		if (rc)
+			break;
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
- * Add a devmap क्रम the device specअगरied by busid. It is possible that
- * the devmap alपढ़ोy exists (dasd= parameter). The order of the devices
- * added through this function will define the kdevs क्रम the inभागidual
+ * Add a devmap for the device specified by busid. It is possible that
+ * the devmap already exists (dasd= parameter). The order of the devices
+ * added through this function will define the kdevs for the individual
  * devices.
  */
-अटल काष्ठा dasd_devmap *
-dasd_add_busid(स्थिर अक्षर *bus_id, पूर्णांक features)
-अणु
-	काष्ठा dasd_devmap *devmap, *new, *पंचांगp;
-	पूर्णांक hash;
+static struct dasd_devmap *
+dasd_add_busid(const char *bus_id, int features)
+{
+	struct dasd_devmap *devmap, *new, *tmp;
+	int hash;
 
-	new = kzalloc(माप(काष्ठा dasd_devmap), GFP_KERNEL);
-	अगर (!new)
-		वापस ERR_PTR(-ENOMEM);
+	new = kzalloc(sizeof(struct dasd_devmap), GFP_KERNEL);
+	if (!new)
+		return ERR_PTR(-ENOMEM);
 	spin_lock(&dasd_devmap_lock);
-	devmap = शून्य;
+	devmap = NULL;
 	hash = dasd_hash_busid(bus_id);
-	list_क्रम_each_entry(पंचांगp, &dasd_hashlists[hash], list)
-		अगर (म_भेदन(पंचांगp->bus_id, bus_id, DASD_BUS_ID_SIZE) == 0) अणु
-			devmap = पंचांगp;
-			अवरोध;
-		पूर्ण
-	अगर (!devmap) अणु
+	list_for_each_entry(tmp, &dasd_hashlists[hash], list)
+		if (strncmp(tmp->bus_id, bus_id, DASD_BUS_ID_SIZE) == 0) {
+			devmap = tmp;
+			break;
+		}
+	if (!devmap) {
 		/* This bus_id is new. */
 		new->devindex = dasd_max_devindex++;
 		strlcpy(new->bus_id, bus_id, DASD_BUS_ID_SIZE);
 		new->features = features;
-		new->device = शून्य;
+		new->device = NULL;
 		list_add(&new->list, &dasd_hashlists[hash]);
 		devmap = new;
-		new = शून्य;
-	पूर्ण
+		new = NULL;
+	}
 	spin_unlock(&dasd_devmap_lock);
-	kमुक्त(new);
-	वापस devmap;
-पूर्ण
+	kfree(new);
+	return devmap;
+}
 
 /*
- * Find devmap क्रम device with given bus_id.
+ * Find devmap for device with given bus_id.
  */
-अटल काष्ठा dasd_devmap *
-dasd_find_busid(स्थिर अक्षर *bus_id)
-अणु
-	काष्ठा dasd_devmap *devmap, *पंचांगp;
-	पूर्णांक hash;
+static struct dasd_devmap *
+dasd_find_busid(const char *bus_id)
+{
+	struct dasd_devmap *devmap, *tmp;
+	int hash;
 
 	spin_lock(&dasd_devmap_lock);
 	devmap = ERR_PTR(-ENODEV);
 	hash = dasd_hash_busid(bus_id);
-	list_क्रम_each_entry(पंचांगp, &dasd_hashlists[hash], list) अणु
-		अगर (म_भेदन(पंचांगp->bus_id, bus_id, DASD_BUS_ID_SIZE) == 0) अणु
-			devmap = पंचांगp;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+	list_for_each_entry(tmp, &dasd_hashlists[hash], list) {
+		if (strncmp(tmp->bus_id, bus_id, DASD_BUS_ID_SIZE) == 0) {
+			devmap = tmp;
+			break;
+		}
+	}
 	spin_unlock(&dasd_devmap_lock);
-	वापस devmap;
-पूर्ण
+	return devmap;
+}
 
 /*
- * Check अगर busid has been added to the list of dasd ranges.
+ * Check if busid has been added to the list of dasd ranges.
  */
-पूर्णांक
-dasd_busid_known(स्थिर अक्षर *bus_id)
-अणु
-	वापस IS_ERR(dasd_find_busid(bus_id)) ? -ENOENT : 0;
-पूर्ण
+int
+dasd_busid_known(const char *bus_id)
+{
+	return IS_ERR(dasd_find_busid(bus_id)) ? -ENOENT : 0;
+}
 
 /*
  * Forget all about the device numbers added so far.
- * This may only be called at module unload or प्रणाली shutकरोwn.
+ * This may only be called at module unload or system shutdown.
  */
-अटल व्योम
-dasd_क्रमget_ranges(व्योम)
-अणु
-	काष्ठा dasd_devmap *devmap, *n;
-	पूर्णांक i;
+static void
+dasd_forget_ranges(void)
+{
+	struct dasd_devmap *devmap, *n;
+	int i;
 
 	spin_lock(&dasd_devmap_lock);
-	क्रम (i = 0; i < 256; i++) अणु
-		list_क्रम_each_entry_safe(devmap, n, &dasd_hashlists[i], list) अणु
-			BUG_ON(devmap->device != शून्य);
+	for (i = 0; i < 256; i++) {
+		list_for_each_entry_safe(devmap, n, &dasd_hashlists[i], list) {
+			BUG_ON(devmap->device != NULL);
 			list_del(&devmap->list);
-			kमुक्त(devmap);
-		पूर्ण
-	पूर्ण
+			kfree(devmap);
+		}
+	}
 	spin_unlock(&dasd_devmap_lock);
-पूर्ण
+}
 
 /*
- * Find the device काष्ठा by its device index.
+ * Find the device struct by its device index.
  */
-काष्ठा dasd_device *
-dasd_device_from_devindex(पूर्णांक devindex)
-अणु
-	काष्ठा dasd_devmap *devmap, *पंचांगp;
-	काष्ठा dasd_device *device;
-	पूर्णांक i;
+struct dasd_device *
+dasd_device_from_devindex(int devindex)
+{
+	struct dasd_devmap *devmap, *tmp;
+	struct dasd_device *device;
+	int i;
 
 	spin_lock(&dasd_devmap_lock);
-	devmap = शून्य;
-	क्रम (i = 0; (i < 256) && !devmap; i++)
-		list_क्रम_each_entry(पंचांगp, &dasd_hashlists[i], list)
-			अगर (पंचांगp->devindex == devindex) अणु
-				/* Found the devmap क्रम the device. */
-				devmap = पंचांगp;
-				अवरोध;
-			पूर्ण
-	अगर (devmap && devmap->device) अणु
+	devmap = NULL;
+	for (i = 0; (i < 256) && !devmap; i++)
+		list_for_each_entry(tmp, &dasd_hashlists[i], list)
+			if (tmp->devindex == devindex) {
+				/* Found the devmap for the device. */
+				devmap = tmp;
+				break;
+			}
+	if (devmap && devmap->device) {
 		device = devmap->device;
 		dasd_get_device(device);
-	पूर्ण अन्यथा
+	} else
 		device = ERR_PTR(-ENODEV);
 	spin_unlock(&dasd_devmap_lock);
-	वापस device;
-पूर्ण
+	return device;
+}
 
 /*
- * Return devmap क्रम cdev. If no devmap exists yet, create one and
+ * Return devmap for cdev. If no devmap exists yet, create one and
  * connect it to the cdev.
  */
-अटल काष्ठा dasd_devmap *
-dasd_devmap_from_cdev(काष्ठा ccw_device *cdev)
-अणु
-	काष्ठा dasd_devmap *devmap;
+static struct dasd_devmap *
+dasd_devmap_from_cdev(struct ccw_device *cdev)
+{
+	struct dasd_devmap *devmap;
 
 	devmap = dasd_find_busid(dev_name(&cdev->dev));
-	अगर (IS_ERR(devmap))
+	if (IS_ERR(devmap))
 		devmap = dasd_add_busid(dev_name(&cdev->dev),
 					DASD_FEATURE_DEFAULT);
-	वापस devmap;
-पूर्ण
+	return devmap;
+}
 
 /*
- * Create a dasd device काष्ठाure क्रम cdev.
+ * Create a dasd device structure for cdev.
  */
-काष्ठा dasd_device *
-dasd_create_device(काष्ठा ccw_device *cdev)
-अणु
-	काष्ठा dasd_devmap *devmap;
-	काष्ठा dasd_device *device;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक rc;
+struct dasd_device *
+dasd_create_device(struct ccw_device *cdev)
+{
+	struct dasd_devmap *devmap;
+	struct dasd_device *device;
+	unsigned long flags;
+	int rc;
 
 	devmap = dasd_devmap_from_cdev(cdev);
-	अगर (IS_ERR(devmap))
-		वापस (व्योम *) devmap;
+	if (IS_ERR(devmap))
+		return (void *) devmap;
 
 	device = dasd_alloc_device();
-	अगर (IS_ERR(device))
-		वापस device;
+	if (IS_ERR(device))
+		return device;
 	atomic_set(&device->ref_count, 3);
 
 	spin_lock(&dasd_devmap_lock);
-	अगर (!devmap->device) अणु
+	if (!devmap->device) {
 		devmap->device = device;
 		device->devindex = devmap->devindex;
 		device->features = devmap->features;
 		get_device(&cdev->dev);
 		device->cdev = cdev;
 		rc = 0;
-	पूर्ण अन्यथा
-		/* Someone अन्यथा was faster. */
+	} else
+		/* Someone else was faster. */
 		rc = -EBUSY;
 	spin_unlock(&dasd_devmap_lock);
 
-	अगर (rc) अणु
-		dasd_मुक्त_device(device);
-		वापस ERR_PTR(rc);
-	पूर्ण
+	if (rc) {
+		dasd_free_device(device);
+		return ERR_PTR(rc);
+	}
 
 	spin_lock_irqsave(get_ccwdev_lock(cdev), flags);
 	dev_set_drvdata(&cdev->dev, device);
 	spin_unlock_irqrestore(get_ccwdev_lock(cdev), flags);
 
-	device->paths_info = kset_create_and_add("paths_info", शून्य,
+	device->paths_info = kset_create_and_add("paths_info", NULL,
 						 &device->cdev->dev.kobj);
-	अगर (!device->paths_info)
+	if (!device->paths_info)
 		dev_warn(&cdev->dev, "Could not create paths_info kset\n");
 
-	वापस device;
-पूर्ण
+	return device;
+}
 
 /*
- * Wait queue क्रम dasd_delete_device रुकोs.
+ * Wait queue for dasd_delete_device waits.
  */
-अटल DECLARE_WAIT_QUEUE_HEAD(dasd_delete_wq);
+static DECLARE_WAIT_QUEUE_HEAD(dasd_delete_wq);
 
 /*
- * Remove a dasd device काष्ठाure. The passed referenced
+ * Remove a dasd device structure. The passed referenced
  * is destroyed.
  */
-व्योम
-dasd_delete_device(काष्ठा dasd_device *device)
-अणु
-	काष्ठा ccw_device *cdev;
-	काष्ठा dasd_devmap *devmap;
-	अचिन्हित दीर्घ flags;
+void
+dasd_delete_device(struct dasd_device *device)
+{
+	struct ccw_device *cdev;
+	struct dasd_devmap *devmap;
+	unsigned long flags;
 
-	/* First हटाओ device poपूर्णांकer from devmap. */
+	/* First remove device pointer from devmap. */
 	devmap = dasd_find_busid(dev_name(&device->cdev->dev));
 	BUG_ON(IS_ERR(devmap));
 	spin_lock(&dasd_devmap_lock);
-	अगर (devmap->device != device) अणु
+	if (devmap->device != device) {
 		spin_unlock(&dasd_devmap_lock);
 		dasd_put_device(device);
-		वापस;
-	पूर्ण
-	devmap->device = शून्य;
+		return;
+	}
+	devmap->device = NULL;
 	spin_unlock(&dasd_devmap_lock);
 
-	/* Disconnect dasd_device काष्ठाure from ccw_device काष्ठाure. */
+	/* Disconnect dasd_device structure from ccw_device structure. */
 	spin_lock_irqsave(get_ccwdev_lock(device->cdev), flags);
-	dev_set_drvdata(&device->cdev->dev, शून्य);
+	dev_set_drvdata(&device->cdev->dev, NULL);
 	spin_unlock_irqrestore(get_ccwdev_lock(device->cdev), flags);
 
 	/*
-	 * Drop ref_count by 3, one क्रम the devmap reference, one क्रम
-	 * the cdev reference and one क्रम the passed reference.
+	 * Drop ref_count by 3, one for the devmap reference, one for
+	 * the cdev reference and one for the passed reference.
 	 */
 	atomic_sub(3, &device->ref_count);
 
-	/* Wait क्रम reference counter to drop to zero. */
-	रुको_event(dasd_delete_wq, atomic_पढ़ो(&device->ref_count) == 0);
+	/* Wait for reference counter to drop to zero. */
+	wait_event(dasd_delete_wq, atomic_read(&device->ref_count) == 0);
 
-	dasd_generic_मुक्त_discipline(device);
+	dasd_generic_free_discipline(device);
 
-	kset_unरेजिस्टर(device->paths_info);
+	kset_unregister(device->paths_info);
 
-	/* Disconnect dasd_device काष्ठाure from ccw_device काष्ठाure. */
+	/* Disconnect dasd_device structure from ccw_device structure. */
 	cdev = device->cdev;
-	device->cdev = शून्य;
+	device->cdev = NULL;
 
-	/* Put ccw_device काष्ठाure. */
+	/* Put ccw_device structure. */
 	put_device(&cdev->dev);
 
-	/* Now the device काष्ठाure can be मुक्तd. */
-	dasd_मुक्त_device(device);
-पूर्ण
+	/* Now the device structure can be freed. */
+	dasd_free_device(device);
+}
 
 /*
- * Reference counter dropped to zero. Wake up रुकोer
+ * Reference counter dropped to zero. Wake up waiter
  * in dasd_delete_device.
  */
-व्योम
-dasd_put_device_wake(काष्ठा dasd_device *device)
-अणु
+void
+dasd_put_device_wake(struct dasd_device *device)
+{
 	wake_up(&dasd_delete_wq);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(dasd_put_device_wake);
 
 /*
- * Return dasd_device काष्ठाure associated with cdev.
+ * Return dasd_device structure associated with cdev.
  * This function needs to be called with the ccw device
- * lock held. It can be used from पूर्णांकerrupt context.
+ * lock held. It can be used from interrupt context.
  */
-काष्ठा dasd_device *
-dasd_device_from_cdev_locked(काष्ठा ccw_device *cdev)
-अणु
-	काष्ठा dasd_device *device = dev_get_drvdata(&cdev->dev);
+struct dasd_device *
+dasd_device_from_cdev_locked(struct ccw_device *cdev)
+{
+	struct dasd_device *device = dev_get_drvdata(&cdev->dev);
 
-	अगर (!device)
-		वापस ERR_PTR(-ENODEV);
+	if (!device)
+		return ERR_PTR(-ENODEV);
 	dasd_get_device(device);
-	वापस device;
-पूर्ण
+	return device;
+}
 
 /*
- * Return dasd_device काष्ठाure associated with cdev.
+ * Return dasd_device structure associated with cdev.
  */
-काष्ठा dasd_device *
-dasd_device_from_cdev(काष्ठा ccw_device *cdev)
-अणु
-	काष्ठा dasd_device *device;
-	अचिन्हित दीर्घ flags;
+struct dasd_device *
+dasd_device_from_cdev(struct ccw_device *cdev)
+{
+	struct dasd_device *device;
+	unsigned long flags;
 
 	spin_lock_irqsave(get_ccwdev_lock(cdev), flags);
 	device = dasd_device_from_cdev_locked(cdev);
 	spin_unlock_irqrestore(get_ccwdev_lock(cdev), flags);
-	वापस device;
-पूर्ण
+	return device;
+}
 
-व्योम dasd_add_link_to_gendisk(काष्ठा gendisk *gdp, काष्ठा dasd_device *device)
-अणु
-	काष्ठा dasd_devmap *devmap;
+void dasd_add_link_to_gendisk(struct gendisk *gdp, struct dasd_device *device)
+{
+	struct dasd_devmap *devmap;
 
 	devmap = dasd_find_busid(dev_name(&device->cdev->dev));
-	अगर (IS_ERR(devmap))
-		वापस;
+	if (IS_ERR(devmap))
+		return;
 	spin_lock(&dasd_devmap_lock);
-	gdp->निजी_data = devmap;
+	gdp->private_data = devmap;
 	spin_unlock(&dasd_devmap_lock);
-पूर्ण
+}
 
-काष्ठा dasd_device *dasd_device_from_gendisk(काष्ठा gendisk *gdp)
-अणु
-	काष्ठा dasd_device *device;
-	काष्ठा dasd_devmap *devmap;
+struct dasd_device *dasd_device_from_gendisk(struct gendisk *gdp)
+{
+	struct dasd_device *device;
+	struct dasd_devmap *devmap;
 
-	अगर (!gdp->निजी_data)
-		वापस शून्य;
-	device = शून्य;
+	if (!gdp->private_data)
+		return NULL;
+	device = NULL;
 	spin_lock(&dasd_devmap_lock);
-	devmap = gdp->निजी_data;
-	अगर (devmap && devmap->device) अणु
+	devmap = gdp->private_data;
+	if (devmap && devmap->device) {
 		device = devmap->device;
 		dasd_get_device(device);
-	पूर्ण
+	}
 	spin_unlock(&dasd_devmap_lock);
-	वापस device;
-पूर्ण
+	return device;
+}
 
 /*
  * SECTION: files in sysfs
  */
 
 /*
- * failfast controls the behaviour, अगर no path is available
+ * failfast controls the behaviour, if no path is available
  */
-अटल sमाप_प्रकार dasd_ff_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			    अक्षर *buf)
-अणु
-	काष्ठा dasd_devmap *devmap;
-	पूर्णांक ff_flag;
+static ssize_t dasd_ff_show(struct device *dev, struct device_attribute *attr,
+			    char *buf)
+{
+	struct dasd_devmap *devmap;
+	int ff_flag;
 
 	devmap = dasd_find_busid(dev_name(dev));
-	अगर (!IS_ERR(devmap))
+	if (!IS_ERR(devmap))
 		ff_flag = (devmap->features & DASD_FEATURE_FAILFAST) != 0;
-	अन्यथा
+	else
 		ff_flag = (DASD_FEATURE_DEFAULT & DASD_FEATURE_FAILFAST) != 0;
-	वापस snम_लिखो(buf, PAGE_SIZE, ff_flag ? "1\n" : "0\n");
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, ff_flag ? "1\n" : "0\n");
+}
 
-अटल sमाप_प्रकार dasd_ff_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-	      स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	अचिन्हित पूर्णांक val;
-	पूर्णांक rc;
+static ssize_t dasd_ff_store(struct device *dev, struct device_attribute *attr,
+	      const char *buf, size_t count)
+{
+	unsigned int val;
+	int rc;
 
-	अगर (kstrtouपूर्णांक(buf, 0, &val) || val > 1)
-		वापस -EINVAL;
+	if (kstrtouint(buf, 0, &val) || val > 1)
+		return -EINVAL;
 
 	rc = dasd_set_feature(to_ccwdev(dev), DASD_FEATURE_FAILFAST, val);
 
-	वापस rc ? : count;
-पूर्ण
+	return rc ? : count;
+}
 
-अटल DEVICE_ATTR(failfast, 0644, dasd_ff_show, dasd_ff_store);
+static DEVICE_ATTR(failfast, 0644, dasd_ff_show, dasd_ff_store);
 
 /*
- * पढ़ोonly controls the पढ़ोonly status of a dasd
+ * readonly controls the readonly status of a dasd
  */
-अटल sमाप_प्रकार
-dasd_ro_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा dasd_devmap *devmap;
-	काष्ठा dasd_device *device;
-	पूर्णांक ro_flag = 0;
+static ssize_t
+dasd_ro_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct dasd_devmap *devmap;
+	struct dasd_device *device;
+	int ro_flag = 0;
 
 	devmap = dasd_find_busid(dev_name(dev));
-	अगर (IS_ERR(devmap))
-		जाओ out;
+	if (IS_ERR(devmap))
+		goto out;
 
 	ro_flag = !!(devmap->features & DASD_FEATURE_READONLY);
 
 	spin_lock(&dasd_devmap_lock);
 	device = devmap->device;
-	अगर (device)
+	if (device)
 		ro_flag |= test_bit(DASD_FLAG_DEVICE_RO, &device->flags);
 	spin_unlock(&dasd_devmap_lock);
 
 out:
-	वापस snम_लिखो(buf, PAGE_SIZE, ro_flag ? "1\n" : "0\n");
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, ro_flag ? "1\n" : "0\n");
+}
 
-अटल sमाप_प्रकार
-dasd_ro_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-	      स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा ccw_device *cdev = to_ccwdev(dev);
-	काष्ठा dasd_device *device;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक val;
-	पूर्णांक rc;
+static ssize_t
+dasd_ro_store(struct device *dev, struct device_attribute *attr,
+	      const char *buf, size_t count)
+{
+	struct ccw_device *cdev = to_ccwdev(dev);
+	struct dasd_device *device;
+	unsigned long flags;
+	unsigned int val;
+	int rc;
 
-	अगर (kstrtouपूर्णांक(buf, 0, &val) || val > 1)
-		वापस -EINVAL;
+	if (kstrtouint(buf, 0, &val) || val > 1)
+		return -EINVAL;
 
 	rc = dasd_set_feature(cdev, DASD_FEATURE_READONLY, val);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	device = dasd_device_from_cdev(cdev);
-	अगर (IS_ERR(device))
-		वापस count;
+	if (IS_ERR(device))
+		return count;
 
 	spin_lock_irqsave(get_ccwdev_lock(cdev), flags);
 	val = val || test_bit(DASD_FLAG_DEVICE_RO, &device->flags);
 
-	अगर (!device->block || !device->block->gdp ||
-	    test_bit(DASD_FLAG_OFFLINE, &device->flags)) अणु
+	if (!device->block || !device->block->gdp ||
+	    test_bit(DASD_FLAG_OFFLINE, &device->flags)) {
 		spin_unlock_irqrestore(get_ccwdev_lock(cdev), flags);
-		जाओ out;
-	पूर्ण
-	/* Increase खोलो_count to aव्योम losing the block device */
-	atomic_inc(&device->block->खोलो_count);
+		goto out;
+	}
+	/* Increase open_count to avoid losing the block device */
+	atomic_inc(&device->block->open_count);
 	spin_unlock_irqrestore(get_ccwdev_lock(cdev), flags);
 
 	set_disk_ro(device->block->gdp, val);
-	atomic_dec(&device->block->खोलो_count);
+	atomic_dec(&device->block->open_count);
 
 out:
 	dasd_put_device(device);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल DEVICE_ATTR(पढ़ोonly, 0644, dasd_ro_show, dasd_ro_store);
+static DEVICE_ATTR(readonly, 0644, dasd_ro_show, dasd_ro_store);
 /*
  * erplog controls the logging of ERP related data
  * (e.g. failing channel programs).
  */
-अटल sमाप_प्रकार
-dasd_erplog_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा dasd_devmap *devmap;
-	पूर्णांक erplog;
+static ssize_t
+dasd_erplog_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct dasd_devmap *devmap;
+	int erplog;
 
 	devmap = dasd_find_busid(dev_name(dev));
-	अगर (!IS_ERR(devmap))
+	if (!IS_ERR(devmap))
 		erplog = (devmap->features & DASD_FEATURE_ERPLOG) != 0;
-	अन्यथा
+	else
 		erplog = (DASD_FEATURE_DEFAULT & DASD_FEATURE_ERPLOG) != 0;
-	वापस snम_लिखो(buf, PAGE_SIZE, erplog ? "1\n" : "0\n");
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, erplog ? "1\n" : "0\n");
+}
 
-अटल sमाप_प्रकार
-dasd_erplog_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-	      स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	अचिन्हित पूर्णांक val;
-	पूर्णांक rc;
+static ssize_t
+dasd_erplog_store(struct device *dev, struct device_attribute *attr,
+	      const char *buf, size_t count)
+{
+	unsigned int val;
+	int rc;
 
-	अगर (kstrtouपूर्णांक(buf, 0, &val) || val > 1)
-		वापस -EINVAL;
+	if (kstrtouint(buf, 0, &val) || val > 1)
+		return -EINVAL;
 
 	rc = dasd_set_feature(to_ccwdev(dev), DASD_FEATURE_ERPLOG, val);
 
-	वापस rc ? : count;
-पूर्ण
+	return rc ? : count;
+}
 
-अटल DEVICE_ATTR(erplog, 0644, dasd_erplog_show, dasd_erplog_store);
+static DEVICE_ATTR(erplog, 0644, dasd_erplog_show, dasd_erplog_store);
 
 /*
  * use_diag controls whether the driver should use diag rather than ssch
  * to talk to the device
  */
-अटल sमाप_प्रकार
-dasd_use_diag_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा dasd_devmap *devmap;
-	पूर्णांक use_diag;
+static ssize_t
+dasd_use_diag_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct dasd_devmap *devmap;
+	int use_diag;
 
 	devmap = dasd_find_busid(dev_name(dev));
-	अगर (!IS_ERR(devmap))
+	if (!IS_ERR(devmap))
 		use_diag = (devmap->features & DASD_FEATURE_USEDIAG) != 0;
-	अन्यथा
+	else
 		use_diag = (DASD_FEATURE_DEFAULT & DASD_FEATURE_USEDIAG) != 0;
-	वापस प्र_लिखो(buf, use_diag ? "1\n" : "0\n");
-पूर्ण
+	return sprintf(buf, use_diag ? "1\n" : "0\n");
+}
 
-अटल sमाप_प्रकार
-dasd_use_diag_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		    स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा dasd_devmap *devmap;
-	अचिन्हित पूर्णांक val;
-	sमाप_प्रकार rc;
+static ssize_t
+dasd_use_diag_store(struct device *dev, struct device_attribute *attr,
+		    const char *buf, size_t count)
+{
+	struct dasd_devmap *devmap;
+	unsigned int val;
+	ssize_t rc;
 
 	devmap = dasd_devmap_from_cdev(to_ccwdev(dev));
-	अगर (IS_ERR(devmap))
-		वापस PTR_ERR(devmap);
+	if (IS_ERR(devmap))
+		return PTR_ERR(devmap);
 
-	अगर (kstrtouपूर्णांक(buf, 0, &val) || val > 1)
-		वापस -EINVAL;
+	if (kstrtouint(buf, 0, &val) || val > 1)
+		return -EINVAL;
 
 	spin_lock(&dasd_devmap_lock);
 	/* Changing diag discipline flag is only allowed in offline state. */
 	rc = count;
-	अगर (!devmap->device && !(devmap->features & DASD_FEATURE_USERAW)) अणु
-		अगर (val)
+	if (!devmap->device && !(devmap->features & DASD_FEATURE_USERAW)) {
+		if (val)
 			devmap->features |= DASD_FEATURE_USEDIAG;
-		अन्यथा
+		else
 			devmap->features &= ~DASD_FEATURE_USEDIAG;
-	पूर्ण अन्यथा
+	} else
 		rc = -EPERM;
 	spin_unlock(&dasd_devmap_lock);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल DEVICE_ATTR(use_diag, 0644, dasd_use_diag_show, dasd_use_diag_store);
+static DEVICE_ATTR(use_diag, 0644, dasd_use_diag_show, dasd_use_diag_store);
 
 /*
  * use_raw controls whether the driver should give access to raw eckd data or
  * operate in standard mode
  */
-अटल sमाप_प्रकार
-dasd_use_raw_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा dasd_devmap *devmap;
-	पूर्णांक use_raw;
+static ssize_t
+dasd_use_raw_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct dasd_devmap *devmap;
+	int use_raw;
 
 	devmap = dasd_find_busid(dev_name(dev));
-	अगर (!IS_ERR(devmap))
+	if (!IS_ERR(devmap))
 		use_raw = (devmap->features & DASD_FEATURE_USERAW) != 0;
-	अन्यथा
+	else
 		use_raw = (DASD_FEATURE_DEFAULT & DASD_FEATURE_USERAW) != 0;
-	वापस प्र_लिखो(buf, use_raw ? "1\n" : "0\n");
-पूर्ण
+	return sprintf(buf, use_raw ? "1\n" : "0\n");
+}
 
-अटल sमाप_प्रकार
-dasd_use_raw_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		    स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा dasd_devmap *devmap;
-	sमाप_प्रकार rc;
-	अचिन्हित दीर्घ val;
+static ssize_t
+dasd_use_raw_store(struct device *dev, struct device_attribute *attr,
+		    const char *buf, size_t count)
+{
+	struct dasd_devmap *devmap;
+	ssize_t rc;
+	unsigned long val;
 
 	devmap = dasd_devmap_from_cdev(to_ccwdev(dev));
-	अगर (IS_ERR(devmap))
-		वापस PTR_ERR(devmap);
+	if (IS_ERR(devmap))
+		return PTR_ERR(devmap);
 
-	अगर ((kम_से_अदीर्घ(buf, 10, &val) != 0) || val > 1)
-		वापस -EINVAL;
+	if ((kstrtoul(buf, 10, &val) != 0) || val > 1)
+		return -EINVAL;
 
 	spin_lock(&dasd_devmap_lock);
 	/* Changing diag discipline flag is only allowed in offline state. */
 	rc = count;
-	अगर (!devmap->device && !(devmap->features & DASD_FEATURE_USEDIAG)) अणु
-		अगर (val)
+	if (!devmap->device && !(devmap->features & DASD_FEATURE_USEDIAG)) {
+		if (val)
 			devmap->features |= DASD_FEATURE_USERAW;
-		अन्यथा
+		else
 			devmap->features &= ~DASD_FEATURE_USERAW;
-	पूर्ण अन्यथा
+	} else
 		rc = -EPERM;
 	spin_unlock(&dasd_devmap_lock);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल DEVICE_ATTR(raw_track_access, 0644, dasd_use_raw_show,
+static DEVICE_ATTR(raw_track_access, 0644, dasd_use_raw_show,
 		   dasd_use_raw_store);
 
-अटल sमाप_प्रकार
-dasd_safe_offline_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा ccw_device *cdev = to_ccwdev(dev);
-	काष्ठा dasd_device *device;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक rc;
+static ssize_t
+dasd_safe_offline_store(struct device *dev, struct device_attribute *attr,
+			const char *buf, size_t count)
+{
+	struct ccw_device *cdev = to_ccwdev(dev);
+	struct dasd_device *device;
+	unsigned long flags;
+	int rc;
 
 	spin_lock_irqsave(get_ccwdev_lock(cdev), flags);
 	device = dasd_device_from_cdev_locked(cdev);
-	अगर (IS_ERR(device)) अणु
+	if (IS_ERR(device)) {
 		rc = PTR_ERR(device);
 		spin_unlock_irqrestore(get_ccwdev_lock(cdev), flags);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (test_bit(DASD_FLAG_OFFLINE, &device->flags) ||
-	    test_bit(DASD_FLAG_SAFE_OFFLINE_RUNNING, &device->flags)) अणु
-		/* Alपढ़ोy करोing offline processing */
+	if (test_bit(DASD_FLAG_OFFLINE, &device->flags) ||
+	    test_bit(DASD_FLAG_SAFE_OFFLINE_RUNNING, &device->flags)) {
+		/* Already doing offline processing */
 		dasd_put_device(device);
 		spin_unlock_irqrestore(get_ccwdev_lock(cdev), flags);
 		rc = -EBUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	set_bit(DASD_FLAG_SAFE_OFFLINE, &device->flags);
 	dasd_put_device(device);
@@ -987,721 +986,721 @@ dasd_safe_offline_store(काष्ठा device *dev, काष्ठा devic
 	rc = ccw_device_set_offline(cdev);
 
 out:
-	वापस rc ? rc : count;
-पूर्ण
+	return rc ? rc : count;
+}
 
-अटल DEVICE_ATTR(safe_offline, 0200, शून्य, dasd_safe_offline_store);
+static DEVICE_ATTR(safe_offline, 0200, NULL, dasd_safe_offline_store);
 
-अटल sमाप_प्रकार
-dasd_access_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		 अक्षर *buf)
-अणु
-	काष्ठा ccw_device *cdev = to_ccwdev(dev);
-	काष्ठा dasd_device *device;
-	पूर्णांक count;
+static ssize_t
+dasd_access_show(struct device *dev, struct device_attribute *attr,
+		 char *buf)
+{
+	struct ccw_device *cdev = to_ccwdev(dev);
+	struct dasd_device *device;
+	int count;
 
 	device = dasd_device_from_cdev(cdev);
-	अगर (IS_ERR(device))
-		वापस PTR_ERR(device);
+	if (IS_ERR(device))
+		return PTR_ERR(device);
 
-	अगर (!device->discipline)
+	if (!device->discipline)
 		count = -ENODEV;
-	अन्यथा अगर (!device->discipline->host_access_count)
+	else if (!device->discipline->host_access_count)
 		count = -EOPNOTSUPP;
-	अन्यथा
+	else
 		count = device->discipline->host_access_count(device);
 
 	dasd_put_device(device);
-	अगर (count < 0)
-		वापस count;
+	if (count < 0)
+		return count;
 
-	वापस प्र_लिखो(buf, "%d\n", count);
-पूर्ण
+	return sprintf(buf, "%d\n", count);
+}
 
-अटल DEVICE_ATTR(host_access_count, 0444, dasd_access_show, शून्य);
+static DEVICE_ATTR(host_access_count, 0444, dasd_access_show, NULL);
 
-अटल sमाप_प्रकार
-dasd_discipline_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		     अक्षर *buf)
-अणु
-	काष्ठा dasd_device *device;
-	sमाप_प्रकार len;
+static ssize_t
+dasd_discipline_show(struct device *dev, struct device_attribute *attr,
+		     char *buf)
+{
+	struct dasd_device *device;
+	ssize_t len;
 
 	device = dasd_device_from_cdev(to_ccwdev(dev));
-	अगर (IS_ERR(device))
-		जाओ out;
-	अन्यथा अगर (!device->discipline) अणु
+	if (IS_ERR(device))
+		goto out;
+	else if (!device->discipline) {
 		dasd_put_device(device);
-		जाओ out;
-	पूर्ण अन्यथा अणु
-		len = snम_लिखो(buf, PAGE_SIZE, "%s\n",
+		goto out;
+	} else {
+		len = snprintf(buf, PAGE_SIZE, "%s\n",
 			       device->discipline->name);
 		dasd_put_device(device);
-		वापस len;
-	पूर्ण
+		return len;
+	}
 out:
-	len = snम_लिखो(buf, PAGE_SIZE, "none\n");
-	वापस len;
-पूर्ण
+	len = snprintf(buf, PAGE_SIZE, "none\n");
+	return len;
+}
 
-अटल DEVICE_ATTR(discipline, 0444, dasd_discipline_show, शून्य);
+static DEVICE_ATTR(discipline, 0444, dasd_discipline_show, NULL);
 
-अटल sमाप_प्रकार
-dasd_device_status_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		     अक्षर *buf)
-अणु
-	काष्ठा dasd_device *device;
-	sमाप_प्रकार len;
+static ssize_t
+dasd_device_status_show(struct device *dev, struct device_attribute *attr,
+		     char *buf)
+{
+	struct dasd_device *device;
+	ssize_t len;
 
 	device = dasd_device_from_cdev(to_ccwdev(dev));
-	अगर (!IS_ERR(device)) अणु
-		चयन (device->state) अणु
-		हाल DASD_STATE_NEW:
-			len = snम_लिखो(buf, PAGE_SIZE, "new\n");
-			अवरोध;
-		हाल DASD_STATE_KNOWN:
-			len = snम_लिखो(buf, PAGE_SIZE, "detected\n");
-			अवरोध;
-		हाल DASD_STATE_BASIC:
-			len = snम_लिखो(buf, PAGE_SIZE, "basic\n");
-			अवरोध;
-		हाल DASD_STATE_UNFMT:
-			len = snम_लिखो(buf, PAGE_SIZE, "unformatted\n");
-			अवरोध;
-		हाल DASD_STATE_READY:
-			len = snम_लिखो(buf, PAGE_SIZE, "ready\n");
-			अवरोध;
-		हाल DASD_STATE_ONLINE:
-			len = snम_लिखो(buf, PAGE_SIZE, "online\n");
-			अवरोध;
-		शेष:
-			len = snम_लिखो(buf, PAGE_SIZE, "no stat\n");
-			अवरोध;
-		पूर्ण
+	if (!IS_ERR(device)) {
+		switch (device->state) {
+		case DASD_STATE_NEW:
+			len = snprintf(buf, PAGE_SIZE, "new\n");
+			break;
+		case DASD_STATE_KNOWN:
+			len = snprintf(buf, PAGE_SIZE, "detected\n");
+			break;
+		case DASD_STATE_BASIC:
+			len = snprintf(buf, PAGE_SIZE, "basic\n");
+			break;
+		case DASD_STATE_UNFMT:
+			len = snprintf(buf, PAGE_SIZE, "unformatted\n");
+			break;
+		case DASD_STATE_READY:
+			len = snprintf(buf, PAGE_SIZE, "ready\n");
+			break;
+		case DASD_STATE_ONLINE:
+			len = snprintf(buf, PAGE_SIZE, "online\n");
+			break;
+		default:
+			len = snprintf(buf, PAGE_SIZE, "no stat\n");
+			break;
+		}
 		dasd_put_device(device);
-	पूर्ण अन्यथा
-		len = snम_लिखो(buf, PAGE_SIZE, "unknown\n");
-	वापस len;
-पूर्ण
+	} else
+		len = snprintf(buf, PAGE_SIZE, "unknown\n");
+	return len;
+}
 
-अटल DEVICE_ATTR(status, 0444, dasd_device_status_show, शून्य);
+static DEVICE_ATTR(status, 0444, dasd_device_status_show, NULL);
 
-अटल sमाप_प्रकार dasd_alias_show(काष्ठा device *dev,
-			       काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा dasd_device *device;
-	काष्ठा dasd_uid uid;
+static ssize_t dasd_alias_show(struct device *dev,
+			       struct device_attribute *attr, char *buf)
+{
+	struct dasd_device *device;
+	struct dasd_uid uid;
 
 	device = dasd_device_from_cdev(to_ccwdev(dev));
-	अगर (IS_ERR(device))
-		वापस प्र_लिखो(buf, "0\n");
+	if (IS_ERR(device))
+		return sprintf(buf, "0\n");
 
-	अगर (device->discipline && device->discipline->get_uid &&
-	    !device->discipline->get_uid(device, &uid)) अणु
-		अगर (uid.type == UA_BASE_PAV_ALIAS ||
-		    uid.type == UA_HYPER_PAV_ALIAS) अणु
+	if (device->discipline && device->discipline->get_uid &&
+	    !device->discipline->get_uid(device, &uid)) {
+		if (uid.type == UA_BASE_PAV_ALIAS ||
+		    uid.type == UA_HYPER_PAV_ALIAS) {
 			dasd_put_device(device);
-			वापस प्र_लिखो(buf, "1\n");
-		पूर्ण
-	पूर्ण
+			return sprintf(buf, "1\n");
+		}
+	}
 	dasd_put_device(device);
 
-	वापस प्र_लिखो(buf, "0\n");
-पूर्ण
+	return sprintf(buf, "0\n");
+}
 
-अटल DEVICE_ATTR(alias, 0444, dasd_alias_show, शून्य);
+static DEVICE_ATTR(alias, 0444, dasd_alias_show, NULL);
 
-अटल sमाप_प्रकार dasd_venकरोr_show(काष्ठा device *dev,
-				काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा dasd_device *device;
-	काष्ठा dasd_uid uid;
-	अक्षर *venकरोr;
+static ssize_t dasd_vendor_show(struct device *dev,
+				struct device_attribute *attr, char *buf)
+{
+	struct dasd_device *device;
+	struct dasd_uid uid;
+	char *vendor;
 
 	device = dasd_device_from_cdev(to_ccwdev(dev));
-	venकरोr = "";
-	अगर (IS_ERR(device))
-		वापस snम_लिखो(buf, PAGE_SIZE, "%s\n", venकरोr);
+	vendor = "";
+	if (IS_ERR(device))
+		return snprintf(buf, PAGE_SIZE, "%s\n", vendor);
 
-	अगर (device->discipline && device->discipline->get_uid &&
+	if (device->discipline && device->discipline->get_uid &&
 	    !device->discipline->get_uid(device, &uid))
-			venकरोr = uid.venकरोr;
+			vendor = uid.vendor;
 
 	dasd_put_device(device);
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%s\n", venकरोr);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%s\n", vendor);
+}
 
-अटल DEVICE_ATTR(venकरोr, 0444, dasd_venकरोr_show, शून्य);
+static DEVICE_ATTR(vendor, 0444, dasd_vendor_show, NULL);
 
-#घोषणा UID_STRLEN ( /* venकरोr */ 3 + 1 + /* serial    */ 14 + 1 +\
+#define UID_STRLEN ( /* vendor */ 3 + 1 + /* serial    */ 14 + 1 +\
 		     /* SSID   */ 4 + 1 + /* unit addr */ 2 + 1 +\
 		     /* vduit */ 32 + 1)
 
-अटल sमाप_प्रकार
-dasd_uid_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा dasd_device *device;
-	काष्ठा dasd_uid uid;
-	अक्षर uid_string[UID_STRLEN];
-	अक्षर ua_string[3];
+static ssize_t
+dasd_uid_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct dasd_device *device;
+	struct dasd_uid uid;
+	char uid_string[UID_STRLEN];
+	char ua_string[3];
 
 	device = dasd_device_from_cdev(to_ccwdev(dev));
 	uid_string[0] = 0;
-	अगर (IS_ERR(device))
-		वापस snम_लिखो(buf, PAGE_SIZE, "%s\n", uid_string);
+	if (IS_ERR(device))
+		return snprintf(buf, PAGE_SIZE, "%s\n", uid_string);
 
-	अगर (device->discipline && device->discipline->get_uid &&
-	    !device->discipline->get_uid(device, &uid)) अणु
-		चयन (uid.type) अणु
-		हाल UA_BASE_DEVICE:
-			snम_लिखो(ua_string, माप(ua_string), "%02x",
+	if (device->discipline && device->discipline->get_uid &&
+	    !device->discipline->get_uid(device, &uid)) {
+		switch (uid.type) {
+		case UA_BASE_DEVICE:
+			snprintf(ua_string, sizeof(ua_string), "%02x",
 				 uid.real_unit_addr);
-			अवरोध;
-		हाल UA_BASE_PAV_ALIAS:
-			snम_लिखो(ua_string, माप(ua_string), "%02x",
+			break;
+		case UA_BASE_PAV_ALIAS:
+			snprintf(ua_string, sizeof(ua_string), "%02x",
 				 uid.base_unit_addr);
-			अवरोध;
-		हाल UA_HYPER_PAV_ALIAS:
-			snम_लिखो(ua_string, माप(ua_string), "xx");
-			अवरोध;
-		शेष:
+			break;
+		case UA_HYPER_PAV_ALIAS:
+			snprintf(ua_string, sizeof(ua_string), "xx");
+			break;
+		default:
 			/* should not happen, treat like base device */
-			snम_लिखो(ua_string, माप(ua_string), "%02x",
+			snprintf(ua_string, sizeof(ua_string), "%02x",
 				 uid.real_unit_addr);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (म_माप(uid.vduit) > 0)
-			snम_लिखो(uid_string, माप(uid_string),
+		if (strlen(uid.vduit) > 0)
+			snprintf(uid_string, sizeof(uid_string),
 				 "%s.%s.%04x.%s.%s",
-				 uid.venकरोr, uid.serial, uid.ssid, ua_string,
+				 uid.vendor, uid.serial, uid.ssid, ua_string,
 				 uid.vduit);
-		अन्यथा
-			snम_लिखो(uid_string, माप(uid_string),
+		else
+			snprintf(uid_string, sizeof(uid_string),
 				 "%s.%s.%04x.%s",
-				 uid.venकरोr, uid.serial, uid.ssid, ua_string);
-	पूर्ण
+				 uid.vendor, uid.serial, uid.ssid, ua_string);
+	}
 	dasd_put_device(device);
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%s\n", uid_string);
-पूर्ण
-अटल DEVICE_ATTR(uid, 0444, dasd_uid_show, शून्य);
+	return snprintf(buf, PAGE_SIZE, "%s\n", uid_string);
+}
+static DEVICE_ATTR(uid, 0444, dasd_uid_show, NULL);
 
 /*
  * extended error-reporting
  */
-अटल sमाप_प्रकार
-dasd_eer_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा dasd_devmap *devmap;
-	पूर्णांक eer_flag;
+static ssize_t
+dasd_eer_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct dasd_devmap *devmap;
+	int eer_flag;
 
 	devmap = dasd_find_busid(dev_name(dev));
-	अगर (!IS_ERR(devmap) && devmap->device)
+	if (!IS_ERR(devmap) && devmap->device)
 		eer_flag = dasd_eer_enabled(devmap->device);
-	अन्यथा
+	else
 		eer_flag = 0;
-	वापस snम_लिखो(buf, PAGE_SIZE, eer_flag ? "1\n" : "0\n");
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, eer_flag ? "1\n" : "0\n");
+}
 
-अटल sमाप_प्रकार
-dasd_eer_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-	       स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा dasd_device *device;
-	अचिन्हित पूर्णांक val;
-	पूर्णांक rc = 0;
+static ssize_t
+dasd_eer_store(struct device *dev, struct device_attribute *attr,
+	       const char *buf, size_t count)
+{
+	struct dasd_device *device;
+	unsigned int val;
+	int rc = 0;
 
 	device = dasd_device_from_cdev(to_ccwdev(dev));
-	अगर (IS_ERR(device))
-		वापस PTR_ERR(device);
+	if (IS_ERR(device))
+		return PTR_ERR(device);
 
-	अगर (kstrtouपूर्णांक(buf, 0, &val) || val > 1)
-		वापस -EINVAL;
+	if (kstrtouint(buf, 0, &val) || val > 1)
+		return -EINVAL;
 
-	अगर (val)
+	if (val)
 		rc = dasd_eer_enable(device);
-	अन्यथा
+	else
 		dasd_eer_disable(device);
 
 	dasd_put_device(device);
 
-	वापस rc ? : count;
-पूर्ण
+	return rc ? : count;
+}
 
-अटल DEVICE_ATTR(eer_enabled, 0644, dasd_eer_show, dasd_eer_store);
+static DEVICE_ATTR(eer_enabled, 0644, dasd_eer_show, dasd_eer_store);
 
 /*
- * expiration समय क्रम शेष requests
+ * expiration time for default requests
  */
-अटल sमाप_प्रकार
-dasd_expires_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा dasd_device *device;
-	पूर्णांक len;
+static ssize_t
+dasd_expires_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct dasd_device *device;
+	int len;
 
 	device = dasd_device_from_cdev(to_ccwdev(dev));
-	अगर (IS_ERR(device))
-		वापस -ENODEV;
-	len = snम_लिखो(buf, PAGE_SIZE, "%lu\n", device->शेष_expires);
+	if (IS_ERR(device))
+		return -ENODEV;
+	len = snprintf(buf, PAGE_SIZE, "%lu\n", device->default_expires);
 	dasd_put_device(device);
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल sमाप_प्रकार
-dasd_expires_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-	       स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा dasd_device *device;
-	अचिन्हित दीर्घ val;
+static ssize_t
+dasd_expires_store(struct device *dev, struct device_attribute *attr,
+	       const char *buf, size_t count)
+{
+	struct dasd_device *device;
+	unsigned long val;
 
 	device = dasd_device_from_cdev(to_ccwdev(dev));
-	अगर (IS_ERR(device))
-		वापस -ENODEV;
+	if (IS_ERR(device))
+		return -ENODEV;
 
-	अगर ((kम_से_अदीर्घ(buf, 10, &val) != 0) ||
-	    (val > DASD_EXPIRES_MAX) || val == 0) अणु
+	if ((kstrtoul(buf, 10, &val) != 0) ||
+	    (val > DASD_EXPIRES_MAX) || val == 0) {
 		dasd_put_device(device);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (val)
-		device->शेष_expires = val;
+	if (val)
+		device->default_expires = val;
 
 	dasd_put_device(device);
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल DEVICE_ATTR(expires, 0644, dasd_expires_show, dasd_expires_store);
+static DEVICE_ATTR(expires, 0644, dasd_expires_show, dasd_expires_store);
 
-अटल sमाप_प्रकार
-dasd_retries_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा dasd_device *device;
-	पूर्णांक len;
+static ssize_t
+dasd_retries_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct dasd_device *device;
+	int len;
 
 	device = dasd_device_from_cdev(to_ccwdev(dev));
-	अगर (IS_ERR(device))
-		वापस -ENODEV;
-	len = snम_लिखो(buf, PAGE_SIZE, "%lu\n", device->शेष_retries);
+	if (IS_ERR(device))
+		return -ENODEV;
+	len = snprintf(buf, PAGE_SIZE, "%lu\n", device->default_retries);
 	dasd_put_device(device);
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल sमाप_प्रकार
-dasd_retries_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		   स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा dasd_device *device;
-	अचिन्हित दीर्घ val;
+static ssize_t
+dasd_retries_store(struct device *dev, struct device_attribute *attr,
+		   const char *buf, size_t count)
+{
+	struct dasd_device *device;
+	unsigned long val;
 
 	device = dasd_device_from_cdev(to_ccwdev(dev));
-	अगर (IS_ERR(device))
-		वापस -ENODEV;
+	if (IS_ERR(device))
+		return -ENODEV;
 
-	अगर ((kम_से_अदीर्घ(buf, 10, &val) != 0) ||
-	    (val > DASD_RETRIES_MAX)) अणु
+	if ((kstrtoul(buf, 10, &val) != 0) ||
+	    (val > DASD_RETRIES_MAX)) {
 		dasd_put_device(device);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (val)
-		device->शेष_retries = val;
+	if (val)
+		device->default_retries = val;
 
 	dasd_put_device(device);
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल DEVICE_ATTR(retries, 0644, dasd_retries_show, dasd_retries_store);
+static DEVICE_ATTR(retries, 0644, dasd_retries_show, dasd_retries_store);
 
-अटल sमाप_प्रकार
-dasd_समयout_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		  अक्षर *buf)
-अणु
-	काष्ठा dasd_device *device;
-	पूर्णांक len;
+static ssize_t
+dasd_timeout_show(struct device *dev, struct device_attribute *attr,
+		  char *buf)
+{
+	struct dasd_device *device;
+	int len;
 
 	device = dasd_device_from_cdev(to_ccwdev(dev));
-	अगर (IS_ERR(device))
-		वापस -ENODEV;
-	len = snम_लिखो(buf, PAGE_SIZE, "%lu\n", device->blk_समयout);
+	if (IS_ERR(device))
+		return -ENODEV;
+	len = snprintf(buf, PAGE_SIZE, "%lu\n", device->blk_timeout);
 	dasd_put_device(device);
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल sमाप_प्रकार
-dasd_समयout_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		   स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा dasd_device *device;
-	काष्ठा request_queue *q;
-	अचिन्हित दीर्घ val;
+static ssize_t
+dasd_timeout_store(struct device *dev, struct device_attribute *attr,
+		   const char *buf, size_t count)
+{
+	struct dasd_device *device;
+	struct request_queue *q;
+	unsigned long val;
 
 	device = dasd_device_from_cdev(to_ccwdev(dev));
-	अगर (IS_ERR(device) || !device->block)
-		वापस -ENODEV;
+	if (IS_ERR(device) || !device->block)
+		return -ENODEV;
 
-	अगर ((kम_से_अदीर्घ(buf, 10, &val) != 0) ||
-	    val > अच_पूर्णांक_उच्च / HZ) अणु
+	if ((kstrtoul(buf, 10, &val) != 0) ||
+	    val > UINT_MAX / HZ) {
 		dasd_put_device(device);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	q = device->block->request_queue;
-	अगर (!q) अणु
+	if (!q) {
 		dasd_put_device(device);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	device->blk_समयout = val;
+	device->blk_timeout = val;
 
-	blk_queue_rq_समयout(q, device->blk_समयout * HZ);
+	blk_queue_rq_timeout(q, device->blk_timeout * HZ);
 
 	dasd_put_device(device);
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल DEVICE_ATTR(समयout, 0644,
-		   dasd_समयout_show, dasd_समयout_store);
+static DEVICE_ATTR(timeout, 0644,
+		   dasd_timeout_show, dasd_timeout_store);
 
 
-अटल sमाप_प्रकार
-dasd_path_reset_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		      स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा dasd_device *device;
-	अचिन्हित पूर्णांक val;
+static ssize_t
+dasd_path_reset_store(struct device *dev, struct device_attribute *attr,
+		      const char *buf, size_t count)
+{
+	struct dasd_device *device;
+	unsigned int val;
 
 	device = dasd_device_from_cdev(to_ccwdev(dev));
-	अगर (IS_ERR(device))
-		वापस -ENODEV;
+	if (IS_ERR(device))
+		return -ENODEV;
 
-	अगर ((kstrtouपूर्णांक(buf, 16, &val) != 0) || val > 0xff)
+	if ((kstrtouint(buf, 16, &val) != 0) || val > 0xff)
 		val = 0;
 
-	अगर (device->discipline && device->discipline->reset_path)
+	if (device->discipline && device->discipline->reset_path)
 		device->discipline->reset_path(device, (__u8) val);
 
 	dasd_put_device(device);
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल DEVICE_ATTR(path_reset, 0200, शून्य, dasd_path_reset_store);
+static DEVICE_ATTR(path_reset, 0200, NULL, dasd_path_reset_store);
 
-अटल sमाप_प्रकार dasd_hpf_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			     अक्षर *buf)
-अणु
-	काष्ठा dasd_device *device;
-	पूर्णांक hpf;
+static ssize_t dasd_hpf_show(struct device *dev, struct device_attribute *attr,
+			     char *buf)
+{
+	struct dasd_device *device;
+	int hpf;
 
 	device = dasd_device_from_cdev(to_ccwdev(dev));
-	अगर (IS_ERR(device))
-		वापस -ENODEV;
-	अगर (!device->discipline || !device->discipline->hpf_enabled) अणु
+	if (IS_ERR(device))
+		return -ENODEV;
+	if (!device->discipline || !device->discipline->hpf_enabled) {
 		dasd_put_device(device);
-		वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", dasd_nofcx);
-	पूर्ण
+		return snprintf(buf, PAGE_SIZE, "%d\n", dasd_nofcx);
+	}
 	hpf = device->discipline->hpf_enabled(device);
 	dasd_put_device(device);
-	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", hpf);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%d\n", hpf);
+}
 
-अटल DEVICE_ATTR(hpf, 0444, dasd_hpf_show, शून्य);
+static DEVICE_ATTR(hpf, 0444, dasd_hpf_show, NULL);
 
-अटल sमाप_प्रकार dasd_reservation_policy_show(काष्ठा device *dev,
-					    काष्ठा device_attribute *attr,
-					    अक्षर *buf)
-अणु
-	काष्ठा dasd_devmap *devmap;
-	पूर्णांक rc = 0;
+static ssize_t dasd_reservation_policy_show(struct device *dev,
+					    struct device_attribute *attr,
+					    char *buf)
+{
+	struct dasd_devmap *devmap;
+	int rc = 0;
 
 	devmap = dasd_find_busid(dev_name(dev));
-	अगर (IS_ERR(devmap)) अणु
-		rc = snम_लिखो(buf, PAGE_SIZE, "ignore\n");
-	पूर्ण अन्यथा अणु
+	if (IS_ERR(devmap)) {
+		rc = snprintf(buf, PAGE_SIZE, "ignore\n");
+	} else {
 		spin_lock(&dasd_devmap_lock);
-		अगर (devmap->features & DASD_FEATURE_FAILONSLCK)
-			rc = snम_लिखो(buf, PAGE_SIZE, "fail\n");
-		अन्यथा
-			rc = snम_लिखो(buf, PAGE_SIZE, "ignore\n");
+		if (devmap->features & DASD_FEATURE_FAILONSLCK)
+			rc = snprintf(buf, PAGE_SIZE, "fail\n");
+		else
+			rc = snprintf(buf, PAGE_SIZE, "ignore\n");
 		spin_unlock(&dasd_devmap_lock);
-	पूर्ण
-	वापस rc;
-पूर्ण
+	}
+	return rc;
+}
 
-अटल sमाप_प्रकार dasd_reservation_policy_store(काष्ठा device *dev,
-					     काष्ठा device_attribute *attr,
-					     स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा ccw_device *cdev = to_ccwdev(dev);
-	पूर्णांक rc;
+static ssize_t dasd_reservation_policy_store(struct device *dev,
+					     struct device_attribute *attr,
+					     const char *buf, size_t count)
+{
+	struct ccw_device *cdev = to_ccwdev(dev);
+	int rc;
 
-	अगर (sysfs_streq("ignore", buf))
+	if (sysfs_streq("ignore", buf))
 		rc = dasd_set_feature(cdev, DASD_FEATURE_FAILONSLCK, 0);
-	अन्यथा अगर (sysfs_streq("fail", buf))
+	else if (sysfs_streq("fail", buf))
 		rc = dasd_set_feature(cdev, DASD_FEATURE_FAILONSLCK, 1);
-	अन्यथा
+	else
 		rc = -EINVAL;
 
-	वापस rc ? : count;
-पूर्ण
+	return rc ? : count;
+}
 
-अटल DEVICE_ATTR(reservation_policy, 0644,
+static DEVICE_ATTR(reservation_policy, 0644,
 		   dasd_reservation_policy_show, dasd_reservation_policy_store);
 
-अटल sमाप_प्रकार dasd_reservation_state_show(काष्ठा device *dev,
-					   काष्ठा device_attribute *attr,
-					   अक्षर *buf)
-अणु
-	काष्ठा dasd_device *device;
-	पूर्णांक rc = 0;
+static ssize_t dasd_reservation_state_show(struct device *dev,
+					   struct device_attribute *attr,
+					   char *buf)
+{
+	struct dasd_device *device;
+	int rc = 0;
 
 	device = dasd_device_from_cdev(to_ccwdev(dev));
-	अगर (IS_ERR(device))
-		वापस snम_लिखो(buf, PAGE_SIZE, "none\n");
+	if (IS_ERR(device))
+		return snprintf(buf, PAGE_SIZE, "none\n");
 
-	अगर (test_bit(DASD_FLAG_IS_RESERVED, &device->flags))
-		rc = snम_लिखो(buf, PAGE_SIZE, "reserved\n");
-	अन्यथा अगर (test_bit(DASD_FLAG_LOCK_STOLEN, &device->flags))
-		rc = snम_लिखो(buf, PAGE_SIZE, "lost\n");
-	अन्यथा
-		rc = snम_लिखो(buf, PAGE_SIZE, "none\n");
+	if (test_bit(DASD_FLAG_IS_RESERVED, &device->flags))
+		rc = snprintf(buf, PAGE_SIZE, "reserved\n");
+	else if (test_bit(DASD_FLAG_LOCK_STOLEN, &device->flags))
+		rc = snprintf(buf, PAGE_SIZE, "lost\n");
+	else
+		rc = snprintf(buf, PAGE_SIZE, "none\n");
 	dasd_put_device(device);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल sमाप_प्रकार dasd_reservation_state_store(काष्ठा device *dev,
-					    काष्ठा device_attribute *attr,
-					    स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा dasd_device *device;
-	पूर्णांक rc = 0;
+static ssize_t dasd_reservation_state_store(struct device *dev,
+					    struct device_attribute *attr,
+					    const char *buf, size_t count)
+{
+	struct dasd_device *device;
+	int rc = 0;
 
 	device = dasd_device_from_cdev(to_ccwdev(dev));
-	अगर (IS_ERR(device))
-		वापस -ENODEV;
-	अगर (sysfs_streq("reset", buf))
+	if (IS_ERR(device))
+		return -ENODEV;
+	if (sysfs_streq("reset", buf))
 		clear_bit(DASD_FLAG_LOCK_STOLEN, &device->flags);
-	अन्यथा
+	else
 		rc = -EINVAL;
 	dasd_put_device(device);
 
-	अगर (rc)
-		वापस rc;
-	अन्यथा
-		वापस count;
-पूर्ण
+	if (rc)
+		return rc;
+	else
+		return count;
+}
 
-अटल DEVICE_ATTR(last_known_reservation_state, 0644,
+static DEVICE_ATTR(last_known_reservation_state, 0644,
 		   dasd_reservation_state_show, dasd_reservation_state_store);
 
-अटल sमाप_प्रकार dasd_pm_show(काष्ठा device *dev,
-			      काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा dasd_device *device;
-	u8 opm, nppm, cablepm, cuirpm, hpfpm, अगरccpm;
+static ssize_t dasd_pm_show(struct device *dev,
+			      struct device_attribute *attr, char *buf)
+{
+	struct dasd_device *device;
+	u8 opm, nppm, cablepm, cuirpm, hpfpm, ifccpm;
 
 	device = dasd_device_from_cdev(to_ccwdev(dev));
-	अगर (IS_ERR(device))
-		वापस प्र_लिखो(buf, "0\n");
+	if (IS_ERR(device))
+		return sprintf(buf, "0\n");
 
 	opm = dasd_path_get_opm(device);
 	nppm = dasd_path_get_nppm(device);
 	cablepm = dasd_path_get_cablepm(device);
 	cuirpm = dasd_path_get_cuirpm(device);
 	hpfpm = dasd_path_get_hpfpm(device);
-	अगरccpm = dasd_path_get_अगरccpm(device);
+	ifccpm = dasd_path_get_ifccpm(device);
 	dasd_put_device(device);
 
-	वापस प्र_लिखो(buf, "%02x %02x %02x %02x %02x %02x\n", opm, nppm,
-		       cablepm, cuirpm, hpfpm, अगरccpm);
-पूर्ण
+	return sprintf(buf, "%02x %02x %02x %02x %02x %02x\n", opm, nppm,
+		       cablepm, cuirpm, hpfpm, ifccpm);
+}
 
-अटल DEVICE_ATTR(path_masks, 0444, dasd_pm_show, शून्य);
+static DEVICE_ATTR(path_masks, 0444, dasd_pm_show, NULL);
 
 /*
- * threshold value क्रम IFCC/CCC errors
+ * threshold value for IFCC/CCC errors
  */
-अटल sमाप_प्रकार
-dasd_path_threshold_show(काष्ठा device *dev,
-			  काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा dasd_device *device;
-	पूर्णांक len;
+static ssize_t
+dasd_path_threshold_show(struct device *dev,
+			  struct device_attribute *attr, char *buf)
+{
+	struct dasd_device *device;
+	int len;
 
 	device = dasd_device_from_cdev(to_ccwdev(dev));
-	अगर (IS_ERR(device))
-		वापस -ENODEV;
-	len = snम_लिखो(buf, PAGE_SIZE, "%lu\n", device->path_thrhld);
+	if (IS_ERR(device))
+		return -ENODEV;
+	len = snprintf(buf, PAGE_SIZE, "%lu\n", device->path_thrhld);
 	dasd_put_device(device);
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल sमाप_प्रकार
-dasd_path_threshold_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			   स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा dasd_device *device;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित दीर्घ val;
+static ssize_t
+dasd_path_threshold_store(struct device *dev, struct device_attribute *attr,
+			   const char *buf, size_t count)
+{
+	struct dasd_device *device;
+	unsigned long flags;
+	unsigned long val;
 
 	device = dasd_device_from_cdev(to_ccwdev(dev));
-	अगर (IS_ERR(device))
-		वापस -ENODEV;
+	if (IS_ERR(device))
+		return -ENODEV;
 
-	अगर (kम_से_अदीर्घ(buf, 10, &val) != 0 || val > DASD_THRHLD_MAX) अणु
+	if (kstrtoul(buf, 10, &val) != 0 || val > DASD_THRHLD_MAX) {
 		dasd_put_device(device);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	spin_lock_irqsave(get_ccwdev_lock(to_ccwdev(dev)), flags);
 	device->path_thrhld = val;
 	spin_unlock_irqrestore(get_ccwdev_lock(to_ccwdev(dev)), flags);
 	dasd_put_device(device);
-	वापस count;
-पूर्ण
-अटल DEVICE_ATTR(path_threshold, 0644, dasd_path_threshold_show,
+	return count;
+}
+static DEVICE_ATTR(path_threshold, 0644, dasd_path_threshold_show,
 		   dasd_path_threshold_store);
 
 /*
- * configure अगर path is disabled after IFCC/CCC error threshold is
+ * configure if path is disabled after IFCC/CCC error threshold is
  * exceeded
  */
-अटल sमाप_प्रकार
-dasd_path_स्वतःdisable_show(काष्ठा device *dev,
-				   काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा dasd_devmap *devmap;
-	पूर्णांक flag;
+static ssize_t
+dasd_path_autodisable_show(struct device *dev,
+				   struct device_attribute *attr, char *buf)
+{
+	struct dasd_devmap *devmap;
+	int flag;
 
 	devmap = dasd_find_busid(dev_name(dev));
-	अगर (!IS_ERR(devmap))
+	if (!IS_ERR(devmap))
 		flag = (devmap->features & DASD_FEATURE_PATH_AUTODISABLE) != 0;
-	अन्यथा
+	else
 		flag = (DASD_FEATURE_DEFAULT &
 			DASD_FEATURE_PATH_AUTODISABLE) != 0;
-	वापस snम_लिखो(buf, PAGE_SIZE, flag ? "1\n" : "0\n");
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, flag ? "1\n" : "0\n");
+}
 
-अटल sमाप_प्रकार
-dasd_path_स्वतःdisable_store(काष्ठा device *dev,
-				    काष्ठा device_attribute *attr,
-				    स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	अचिन्हित पूर्णांक val;
-	पूर्णांक rc;
+static ssize_t
+dasd_path_autodisable_store(struct device *dev,
+				    struct device_attribute *attr,
+				    const char *buf, size_t count)
+{
+	unsigned int val;
+	int rc;
 
-	अगर (kstrtouपूर्णांक(buf, 0, &val) || val > 1)
-		वापस -EINVAL;
+	if (kstrtouint(buf, 0, &val) || val > 1)
+		return -EINVAL;
 
 	rc = dasd_set_feature(to_ccwdev(dev),
 			      DASD_FEATURE_PATH_AUTODISABLE, val);
 
-	वापस rc ? : count;
-पूर्ण
+	return rc ? : count;
+}
 
-अटल DEVICE_ATTR(path_स्वतःdisable, 0644,
-		   dasd_path_स्वतःdisable_show,
-		   dasd_path_स्वतःdisable_store);
+static DEVICE_ATTR(path_autodisable, 0644,
+		   dasd_path_autodisable_show,
+		   dasd_path_autodisable_store);
 /*
- * पूर्णांकerval क्रम IFCC/CCC checks
- * meaning समय with no IFCC/CCC error beक्रमe the error counter
- * माला_लो reset
+ * interval for IFCC/CCC checks
+ * meaning time with no IFCC/CCC error before the error counter
+ * gets reset
  */
-अटल sमाप_प्रकार
-dasd_path_पूर्णांकerval_show(काष्ठा device *dev,
-			काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा dasd_device *device;
-	पूर्णांक len;
+static ssize_t
+dasd_path_interval_show(struct device *dev,
+			struct device_attribute *attr, char *buf)
+{
+	struct dasd_device *device;
+	int len;
 
 	device = dasd_device_from_cdev(to_ccwdev(dev));
-	अगर (IS_ERR(device))
-		वापस -ENODEV;
-	len = snम_लिखो(buf, PAGE_SIZE, "%lu\n", device->path_पूर्णांकerval);
+	if (IS_ERR(device))
+		return -ENODEV;
+	len = snprintf(buf, PAGE_SIZE, "%lu\n", device->path_interval);
 	dasd_put_device(device);
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल sमाप_प्रकार
-dasd_path_पूर्णांकerval_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-	       स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा dasd_device *device;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित दीर्घ val;
+static ssize_t
+dasd_path_interval_store(struct device *dev, struct device_attribute *attr,
+	       const char *buf, size_t count)
+{
+	struct dasd_device *device;
+	unsigned long flags;
+	unsigned long val;
 
 	device = dasd_device_from_cdev(to_ccwdev(dev));
-	अगर (IS_ERR(device))
-		वापस -ENODEV;
+	if (IS_ERR(device))
+		return -ENODEV;
 
-	अगर ((kम_से_अदीर्घ(buf, 10, &val) != 0) ||
-	    (val > DASD_INTERVAL_MAX) || val == 0) अणु
+	if ((kstrtoul(buf, 10, &val) != 0) ||
+	    (val > DASD_INTERVAL_MAX) || val == 0) {
 		dasd_put_device(device);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	spin_lock_irqsave(get_ccwdev_lock(to_ccwdev(dev)), flags);
-	अगर (val)
-		device->path_पूर्णांकerval = val;
+	if (val)
+		device->path_interval = val;
 	spin_unlock_irqrestore(get_ccwdev_lock(to_ccwdev(dev)), flags);
 	dasd_put_device(device);
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल DEVICE_ATTR(path_पूर्णांकerval, 0644, dasd_path_पूर्णांकerval_show,
-		   dasd_path_पूर्णांकerval_store);
+static DEVICE_ATTR(path_interval, 0644, dasd_path_interval_show,
+		   dasd_path_interval_store);
 
-अटल sमाप_प्रकार
-dasd_device_fcs_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		     अक्षर *buf)
-अणु
-	काष्ठा dasd_device *device;
-	पूर्णांक fc_sec;
-	पूर्णांक rc;
+static ssize_t
+dasd_device_fcs_show(struct device *dev, struct device_attribute *attr,
+		     char *buf)
+{
+	struct dasd_device *device;
+	int fc_sec;
+	int rc;
 
 	device = dasd_device_from_cdev(to_ccwdev(dev));
-	अगर (IS_ERR(device))
-		वापस -ENODEV;
+	if (IS_ERR(device))
+		return -ENODEV;
 	fc_sec = dasd_path_get_fcs_device(device);
-	अगर (fc_sec == -EINVAL)
-		rc = snम_लिखो(buf, PAGE_SIZE, "Inconsistent\n");
-	अन्यथा
-		rc = snम_लिखो(buf, PAGE_SIZE, "%s\n", dasd_path_get_fcs_str(fc_sec));
+	if (fc_sec == -EINVAL)
+		rc = snprintf(buf, PAGE_SIZE, "Inconsistent\n");
+	else
+		rc = snprintf(buf, PAGE_SIZE, "%s\n", dasd_path_get_fcs_str(fc_sec));
 	dasd_put_device(device);
 
-	वापस rc;
-पूर्ण
-अटल DEVICE_ATTR(fc_security, 0444, dasd_device_fcs_show, शून्य);
+	return rc;
+}
+static DEVICE_ATTR(fc_security, 0444, dasd_device_fcs_show, NULL);
 
-अटल sमाप_प्रकार
-dasd_path_fcs_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा dasd_path *path = to_dasd_path(kobj);
-	अचिन्हित पूर्णांक fc_sec = path->fc_security;
+static ssize_t
+dasd_path_fcs_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+	struct dasd_path *path = to_dasd_path(kobj);
+	unsigned int fc_sec = path->fc_security;
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%s\n", dasd_path_get_fcs_str(fc_sec));
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%s\n", dasd_path_get_fcs_str(fc_sec));
+}
 
-अटल काष्ठा kobj_attribute path_fcs_attribute =
-	__ATTR(fc_security, 0444, dasd_path_fcs_show, शून्य);
+static struct kobj_attribute path_fcs_attribute =
+	__ATTR(fc_security, 0444, dasd_path_fcs_show, NULL);
 
-#घोषणा DASD_DEFINE_ATTR(_name, _func)					\
-अटल sमाप_प्रकार dasd_##_name##_show(काष्ठा device *dev,			\
-				   काष्ठा device_attribute *attr,	\
-				   अक्षर *buf)				\
-अणु									\
-	काष्ठा ccw_device *cdev = to_ccwdev(dev);			\
-	काष्ठा dasd_device *device = dasd_device_from_cdev(cdev);	\
-	पूर्णांक val = 0;							\
+#define DASD_DEFINE_ATTR(_name, _func)					\
+static ssize_t dasd_##_name##_show(struct device *dev,			\
+				   struct device_attribute *attr,	\
+				   char *buf)				\
+{									\
+	struct ccw_device *cdev = to_ccwdev(dev);			\
+	struct dasd_device *device = dasd_device_from_cdev(cdev);	\
+	int val = 0;							\
 									\
-	अगर (IS_ERR(device))						\
-		वापस -ENODEV;						\
-	अगर (device->discipline && _func)				\
+	if (IS_ERR(device))						\
+		return -ENODEV;						\
+	if (device->discipline && _func)				\
 		val = _func(device);					\
 	dasd_put_device(device);					\
 									\
-	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", val);			\
-पूर्ण									\
-अटल DEVICE_ATTR(_name, 0444, dasd_##_name##_show, शून्य);		\
+	return snprintf(buf, PAGE_SIZE, "%d\n", val);			\
+}									\
+static DEVICE_ATTR(_name, 0444, dasd_##_name##_show, NULL);		\
 
 DASD_DEFINE_ATTR(ese, device->discipline->is_ese);
 DASD_DEFINE_ATTR(extent_size, device->discipline->ext_size);
@@ -1713,12 +1712,12 @@ DASD_DEFINE_ATTR(warn_threshold, device->discipline->ext_pool_warn_thrshld);
 DASD_DEFINE_ATTR(cap_at_warnlevel, device->discipline->ext_pool_cap_at_warnlevel);
 DASD_DEFINE_ATTR(pool_oos, device->discipline->ext_pool_oos);
 
-अटल काष्ठा attribute * dasd_attrs[] = अणु
-	&dev_attr_पढ़ोonly.attr,
+static struct attribute * dasd_attrs[] = {
+	&dev_attr_readonly.attr,
 	&dev_attr_discipline.attr,
 	&dev_attr_status.attr,
 	&dev_attr_alias.attr,
-	&dev_attr_venकरोr.attr,
+	&dev_attr_vendor.attr,
 	&dev_attr_uid.attr,
 	&dev_attr_use_diag.attr,
 	&dev_attr_raw_track_access.attr,
@@ -1727,190 +1726,190 @@ DASD_DEFINE_ATTR(pool_oos, device->discipline->ext_pool_oos);
 	&dev_attr_failfast.attr,
 	&dev_attr_expires.attr,
 	&dev_attr_retries.attr,
-	&dev_attr_समयout.attr,
+	&dev_attr_timeout.attr,
 	&dev_attr_reservation_policy.attr,
 	&dev_attr_last_known_reservation_state.attr,
 	&dev_attr_safe_offline.attr,
 	&dev_attr_host_access_count.attr,
 	&dev_attr_path_masks.attr,
 	&dev_attr_path_threshold.attr,
-	&dev_attr_path_स्वतःdisable.attr,
-	&dev_attr_path_पूर्णांकerval.attr,
+	&dev_attr_path_autodisable.attr,
+	&dev_attr_path_interval.attr,
 	&dev_attr_path_reset.attr,
 	&dev_attr_hpf.attr,
 	&dev_attr_ese.attr,
 	&dev_attr_fc_security.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group dasd_attr_group = अणु
+static const struct attribute_group dasd_attr_group = {
 	.attrs = dasd_attrs,
-पूर्ण;
+};
 
-अटल काष्ठा attribute *capacity_attrs[] = अणु
+static struct attribute *capacity_attrs[] = {
 	&dev_attr_space_configured.attr,
 	&dev_attr_space_allocated.attr,
 	&dev_attr_logical_capacity.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group capacity_attr_group = अणु
+static const struct attribute_group capacity_attr_group = {
 	.name = "capacity",
 	.attrs = capacity_attrs,
-पूर्ण;
+};
 
-अटल काष्ठा attribute *ext_pool_attrs[] = अणु
+static struct attribute *ext_pool_attrs[] = {
 	&dev_attr_pool_id.attr,
 	&dev_attr_extent_size.attr,
 	&dev_attr_warn_threshold.attr,
 	&dev_attr_cap_at_warnlevel.attr,
 	&dev_attr_pool_oos.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group ext_pool_attr_group = अणु
+static const struct attribute_group ext_pool_attr_group = {
 	.name = "extent_pool",
 	.attrs = ext_pool_attrs,
-पूर्ण;
+};
 
-स्थिर काष्ठा attribute_group *dasd_dev_groups[] = अणु
+const struct attribute_group *dasd_dev_groups[] = {
 	&dasd_attr_group,
 	&capacity_attr_group,
 	&ext_pool_attr_group,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 EXPORT_SYMBOL_GPL(dasd_dev_groups);
 
 /*
- * Return value of the specअगरied feature.
+ * Return value of the specified feature.
  */
-पूर्णांक
-dasd_get_feature(काष्ठा ccw_device *cdev, पूर्णांक feature)
-अणु
-	काष्ठा dasd_devmap *devmap;
+int
+dasd_get_feature(struct ccw_device *cdev, int feature)
+{
+	struct dasd_devmap *devmap;
 
 	devmap = dasd_find_busid(dev_name(&cdev->dev));
-	अगर (IS_ERR(devmap))
-		वापस PTR_ERR(devmap);
+	if (IS_ERR(devmap))
+		return PTR_ERR(devmap);
 
-	वापस ((devmap->features & feature) != 0);
-पूर्ण
+	return ((devmap->features & feature) != 0);
+}
 
 /*
  * Set / reset given feature.
  * Flag indicates whether to set (!=0) or the reset (=0) the feature.
  */
-पूर्णांक
-dasd_set_feature(काष्ठा ccw_device *cdev, पूर्णांक feature, पूर्णांक flag)
-अणु
-	काष्ठा dasd_devmap *devmap;
+int
+dasd_set_feature(struct ccw_device *cdev, int feature, int flag)
+{
+	struct dasd_devmap *devmap;
 
 	devmap = dasd_devmap_from_cdev(cdev);
-	अगर (IS_ERR(devmap))
-		वापस PTR_ERR(devmap);
+	if (IS_ERR(devmap))
+		return PTR_ERR(devmap);
 
 	spin_lock(&dasd_devmap_lock);
-	अगर (flag)
+	if (flag)
 		devmap->features |= feature;
-	अन्यथा
+	else
 		devmap->features &= ~feature;
-	अगर (devmap->device)
+	if (devmap->device)
 		devmap->device->features = devmap->features;
 	spin_unlock(&dasd_devmap_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(dasd_set_feature);
 
-अटल काष्ठा attribute *paths_info_attrs[] = अणु
+static struct attribute *paths_info_attrs[] = {
 	&path_fcs_attribute.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल काष्ठा kobj_type path_attr_type = अणु
+static struct kobj_type path_attr_type = {
 	.release	= dasd_path_release,
-	.शेष_attrs	= paths_info_attrs,
+	.default_attrs	= paths_info_attrs,
 	.sysfs_ops	= &kobj_sysfs_ops,
-पूर्ण;
+};
 
-अटल व्योम dasd_path_init_kobj(काष्ठा dasd_device *device, पूर्णांक chp)
-अणु
+static void dasd_path_init_kobj(struct dasd_device *device, int chp)
+{
 	device->path[chp].kobj.kset = device->paths_info;
 	kobject_init(&device->path[chp].kobj, &path_attr_type);
-पूर्ण
+}
 
-व्योम dasd_path_create_kobj(काष्ठा dasd_device *device, पूर्णांक chp)
-अणु
-	पूर्णांक rc;
+void dasd_path_create_kobj(struct dasd_device *device, int chp)
+{
+	int rc;
 
-	अगर (test_bit(DASD_FLAG_OFFLINE, &device->flags))
-		वापस;
-	अगर (!device->paths_info) अणु
+	if (test_bit(DASD_FLAG_OFFLINE, &device->flags))
+		return;
+	if (!device->paths_info) {
 		dev_warn(&device->cdev->dev, "Unable to create paths objects\n");
-		वापस;
-	पूर्ण
-	अगर (device->path[chp].in_sysfs)
-		वापस;
-	अगर (!device->path[chp].conf_data)
-		वापस;
+		return;
+	}
+	if (device->path[chp].in_sysfs)
+		return;
+	if (!device->path[chp].conf_data)
+		return;
 
 	dasd_path_init_kobj(device, chp);
 
-	rc = kobject_add(&device->path[chp].kobj, शून्य, "%x.%02x",
+	rc = kobject_add(&device->path[chp].kobj, NULL, "%x.%02x",
 			 device->path[chp].cssid, device->path[chp].chpid);
-	अगर (rc)
+	if (rc)
 		kobject_put(&device->path[chp].kobj);
 	device->path[chp].in_sysfs = true;
-पूर्ण
+}
 EXPORT_SYMBOL(dasd_path_create_kobj);
 
-व्योम dasd_path_create_kobjects(काष्ठा dasd_device *device)
-अणु
+void dasd_path_create_kobjects(struct dasd_device *device)
+{
 	u8 lpm, opm;
 
 	opm = dasd_path_get_opm(device);
-	क्रम (lpm = 0x80; lpm; lpm >>= 1) अणु
-		अगर (!(lpm & opm))
-			जारी;
+	for (lpm = 0x80; lpm; lpm >>= 1) {
+		if (!(lpm & opm))
+			continue;
 		dasd_path_create_kobj(device, pathmask_to_pos(lpm));
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL(dasd_path_create_kobjects);
 
-अटल व्योम dasd_path_हटाओ_kobj(काष्ठा dasd_device *device, पूर्णांक chp)
-अणु
-	अगर (device->path[chp].in_sysfs) अणु
+static void dasd_path_remove_kobj(struct dasd_device *device, int chp)
+{
+	if (device->path[chp].in_sysfs) {
 		kobject_put(&device->path[chp].kobj);
 		device->path[chp].in_sysfs = false;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * As we keep kobjects क्रम the lअगरeसमय of a device, this function must not be
+ * As we keep kobjects for the lifetime of a device, this function must not be
  * called anywhere but in the context of offlining a device.
  */
-व्योम dasd_path_हटाओ_kobjects(काष्ठा dasd_device *device)
-अणु
-	पूर्णांक i;
+void dasd_path_remove_kobjects(struct dasd_device *device)
+{
+	int i;
 
-	क्रम (i = 0; i < 8; i++)
-		dasd_path_हटाओ_kobj(device, i);
-पूर्ण
-EXPORT_SYMBOL(dasd_path_हटाओ_kobjects);
+	for (i = 0; i < 8; i++)
+		dasd_path_remove_kobj(device, i);
+}
+EXPORT_SYMBOL(dasd_path_remove_kobjects);
 
-पूर्णांक
-dasd_devmap_init(व्योम)
-अणु
-	पूर्णांक i;
+int
+dasd_devmap_init(void)
+{
+	int i;
 
-	/* Initialize devmap काष्ठाures. */
+	/* Initialize devmap structures. */
 	dasd_max_devindex = 0;
-	क्रम (i = 0; i < 256; i++)
+	for (i = 0; i < 256; i++)
 		INIT_LIST_HEAD(&dasd_hashlists[i]);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम
-dasd_devmap_निकास(व्योम)
-अणु
-	dasd_क्रमget_ranges();
-पूर्ण
+void
+dasd_devmap_exit(void)
+{
+	dasd_forget_ranges();
+}

@@ -1,13 +1,12 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /******************************************************************************
  *
  *	(C)Copyright 1998,1999 SysKonnect,
- *	a business unit of Schneider & Koch & Co. Datenप्रणालीe GmbH.
+ *	a business unit of Schneider & Koch & Co. Datensysteme GmbH.
  *
- *	See the file "skfddi.c" क्रम further inक्रमmation.
+ *	See the file "skfddi.c" for further information.
  *
- *	The inक्रमmation in this file is provided "AS IS" without warranty.
+ *	The information in this file is provided "AS IS" without warranty.
  *
  ******************************************************************************/
 
@@ -16,83 +15,83 @@
 	SRF state machine and frame generation
 */
 
-#समावेश "h/types.h"
-#समावेश "h/fddi.h"
-#समावेश "h/smc.h"
-#समावेश "h/smt_p.h"
+#include "h/types.h"
+#include "h/fddi.h"
+#include "h/smc.h"
+#include "h/smt_p.h"
 
-#घोषणा KERNEL
-#समावेश "h/smtstate.h"
+#define KERNEL
+#include "h/smtstate.h"
 
-#अगर_अघोषित	SLIM_SMT
-#अगर_अघोषित	BOOT
+#ifndef	SLIM_SMT
+#ifndef	BOOT
 
 /*
  * function declarations
  */
-अटल व्योम clear_all_rep(काष्ठा s_smc *smc);
-अटल व्योम clear_reported(काष्ठा s_smc *smc);
-अटल व्योम smt_send_srf(काष्ठा s_smc *smc);
-अटल काष्ठा s_srf_evc *smt_get_evc(काष्ठा s_smc *smc, पूर्णांक code, पूर्णांक index);
+static void clear_all_rep(struct s_smc *smc);
+static void clear_reported(struct s_smc *smc);
+static void smt_send_srf(struct s_smc *smc);
+static struct s_srf_evc *smt_get_evc(struct s_smc *smc, int code, int index);
 
-#घोषणा MAX_EVCS	ARRAY_SIZE(smc->evcs)
+#define MAX_EVCS	ARRAY_SIZE(smc->evcs)
 
-काष्ठा evc_init अणु
-	u_अक्षर code ;
-	u_अक्षर index ;
-	u_अक्षर n ;
-	u_लघु	para ;
-पूर्ण  ;
+struct evc_init {
+	u_char code ;
+	u_char index ;
+	u_char n ;
+	u_short	para ;
+}  ;
 
-अटल स्थिर काष्ठा evc_init evc_inits[] = अणु
-	अणु SMT_COND_SMT_PEER_WRAP,		0,1,SMT_P1048	पूर्ण ,
+static const struct evc_init evc_inits[] = {
+	{ SMT_COND_SMT_PEER_WRAP,		0,1,SMT_P1048	} ,
 
-	अणु SMT_COND_MAC_DUP_ADDR,		INDEX_MAC, NUMMACS,SMT_P208C पूर्ण ,
-	अणु SMT_COND_MAC_FRAME_ERROR,		INDEX_MAC, NUMMACS,SMT_P208D पूर्ण ,
-	अणु SMT_COND_MAC_NOT_COPIED,		INDEX_MAC, NUMMACS,SMT_P208E पूर्ण ,
-	अणु SMT_EVENT_MAC_NEIGHBOR_CHANGE,	INDEX_MAC, NUMMACS,SMT_P208F पूर्ण ,
-	अणु SMT_EVENT_MAC_PATH_CHANGE,		INDEX_MAC, NUMMACS,SMT_P2090 पूर्ण ,
+	{ SMT_COND_MAC_DUP_ADDR,		INDEX_MAC, NUMMACS,SMT_P208C } ,
+	{ SMT_COND_MAC_FRAME_ERROR,		INDEX_MAC, NUMMACS,SMT_P208D } ,
+	{ SMT_COND_MAC_NOT_COPIED,		INDEX_MAC, NUMMACS,SMT_P208E } ,
+	{ SMT_EVENT_MAC_NEIGHBOR_CHANGE,	INDEX_MAC, NUMMACS,SMT_P208F } ,
+	{ SMT_EVENT_MAC_PATH_CHANGE,		INDEX_MAC, NUMMACS,SMT_P2090 } ,
 
-	अणु SMT_COND_PORT_LER,			INDEX_PORT,NUMPHYS,SMT_P4050 पूर्ण ,
-	अणु SMT_COND_PORT_EB_ERROR,		INDEX_PORT,NUMPHYS,SMT_P4052 पूर्ण ,
-	अणु SMT_EVENT_PORT_CONNECTION,		INDEX_PORT,NUMPHYS,SMT_P4051 पूर्ण ,
-	अणु SMT_EVENT_PORT_PATH_CHANGE,		INDEX_PORT,NUMPHYS,SMT_P4053 पूर्ण ,
-पूर्ण ;
+	{ SMT_COND_PORT_LER,			INDEX_PORT,NUMPHYS,SMT_P4050 } ,
+	{ SMT_COND_PORT_EB_ERROR,		INDEX_PORT,NUMPHYS,SMT_P4052 } ,
+	{ SMT_EVENT_PORT_CONNECTION,		INDEX_PORT,NUMPHYS,SMT_P4051 } ,
+	{ SMT_EVENT_PORT_PATH_CHANGE,		INDEX_PORT,NUMPHYS,SMT_P4053 } ,
+} ;
 
-#घोषणा MAX_INIT_EVC	ARRAY_SIZE(evc_inits)
+#define MAX_INIT_EVC	ARRAY_SIZE(evc_inits)
 
-व्योम smt_init_evc(काष्ठा s_smc *smc)
-अणु
-	काष्ठा s_srf_evc	*evc ;
-	स्थिर काष्ठा evc_init 	*init ;
-	अचिन्हित पूर्णांक		i ;
-	पूर्णांक			index ;
-	पूर्णांक			offset ;
+void smt_init_evc(struct s_smc *smc)
+{
+	struct s_srf_evc	*evc ;
+	const struct evc_init 	*init ;
+	unsigned int		i ;
+	int			index ;
+	int			offset ;
 
-	अटल u_अक्षर		fail_safe = FALSE ;
+	static u_char		fail_safe = FALSE ;
 
-	स_रखो((अक्षर *)smc->evcs,0,माप(smc->evcs)) ;
+	memset((char *)smc->evcs,0,sizeof(smc->evcs)) ;
 
 	evc = smc->evcs ;
 	init = evc_inits ;
 
-	क्रम (i = 0 ; i < MAX_INIT_EVC ; i++) अणु
-		क्रम (index = 0 ; index < init->n ; index++) अणु
+	for (i = 0 ; i < MAX_INIT_EVC ; i++) {
+		for (index = 0 ; index < init->n ; index++) {
 			evc->evc_code = init->code ;
 			evc->evc_para = init->para ;
 			evc->evc_index = init->index + index ;
-#अगर_अघोषित	DEBUG
+#ifndef	DEBUG
 			evc->evc_multiple = &fail_safe ;
 			evc->evc_cond_state = &fail_safe ;
-#पूर्ण_अगर
+#endif
 			evc++ ;
-		पूर्ण
+		}
 		init++ ;
-	पूर्ण
+	}
 
-	अगर ((अचिन्हित पूर्णांक) (evc - smc->evcs) > MAX_EVCS) अणु
+	if ((unsigned int) (evc - smc->evcs) > MAX_EVCS) {
 		SMT_PANIC(smc,SMT_E0127, SMT_E0127_MSG) ;
-	पूर्ण
+	}
 
 	/*
 	 * conditions
@@ -112,7 +111,7 @@
 	smc->evcs[5].evc_multiple = &smc->mib.m[MAC0].fddiMACMultiple_P ;
 
 	offset = 6 ;
-	क्रम (i = 0 ; i < NUMPHYS ; i++) अणु
+	for (i = 0 ; i < NUMPHYS ; i++) {
 		/*
 		 * conditions
 		 */
@@ -129,259 +128,259 @@
 		smc->evcs[offset + 3*NUMPHYS].evc_multiple =
 			&smc->mib.p[i].fddiPORTMultiple_P ;
 		offset++ ;
-	पूर्ण
-#अगर_घोषित	DEBUG
-	क्रम (i = 0, evc = smc->evcs ; i < MAX_EVCS ; i++, evc++) अणु
-		अगर (SMT_IS_CONDITION(evc->evc_code)) अणु
-			अगर (!evc->evc_cond_state) अणु
+	}
+#ifdef	DEBUG
+	for (i = 0, evc = smc->evcs ; i < MAX_EVCS ; i++, evc++) {
+		if (SMT_IS_CONDITION(evc->evc_code)) {
+			if (!evc->evc_cond_state) {
 				SMT_PANIC(smc,SMT_E0128, SMT_E0128_MSG) ;
-			पूर्ण
+			}
 			evc->evc_multiple = &fail_safe ;
-		पूर्ण
-		अन्यथा अणु
-			अगर (!evc->evc_multiple) अणु
+		}
+		else {
+			if (!evc->evc_multiple) {
 				SMT_PANIC(smc,SMT_E0129, SMT_E0129_MSG) ;
-			पूर्ण
+			}
 			evc->evc_cond_state = &fail_safe ;
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
-	smc->srf.TSR = smt_get_समय() ;
+		}
+	}
+#endif
+	smc->srf.TSR = smt_get_time() ;
 	smc->srf.sr_state = SR0_WAIT ;
-पूर्ण
+}
 
-अटल काष्ठा s_srf_evc *smt_get_evc(काष्ठा s_smc *smc, पूर्णांक code, पूर्णांक index)
-अणु
-	अचिन्हित पूर्णांक		i ;
-	काष्ठा s_srf_evc	*evc ;
+static struct s_srf_evc *smt_get_evc(struct s_smc *smc, int code, int index)
+{
+	unsigned int		i ;
+	struct s_srf_evc	*evc ;
 
-	क्रम (i = 0, evc = smc->evcs ; i < MAX_EVCS ; i++, evc++) अणु
-		अगर (evc->evc_code == code && evc->evc_index == index)
-			वापस evc;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	for (i = 0, evc = smc->evcs ; i < MAX_EVCS ; i++, evc++) {
+		if (evc->evc_code == code && evc->evc_index == index)
+			return evc;
+	}
+	return NULL;
+}
 
-#घोषणा THRESHOLD_2	(2*TICKS_PER_SECOND)
-#घोषणा THRESHOLD_32	(32*TICKS_PER_SECOND)
+#define THRESHOLD_2	(2*TICKS_PER_SECOND)
+#define THRESHOLD_32	(32*TICKS_PER_SECOND)
 
-अटल स्थिर अक्षर * स्थिर srf_names[] = अणु
+static const char * const srf_names[] = {
 	"None","MACPathChangeEvent",	"MACNeighborChangeEvent",
 	"PORTPathChangeEvent",		"PORTUndesiredConnectionAttemptEvent",
 	"SMTPeerWrapCondition",		"SMTHoldCondition",
 	"MACFrameErrorCondition",	"MACDuplicateAddressCondition",
 	"MACNotCopiedCondition",	"PORTEBErrorCondition",
 	"PORTLerCondition"
-पूर्ण ;
+} ;
 
-व्योम smt_srf_event(काष्ठा s_smc *smc, पूर्णांक code, पूर्णांक index, पूर्णांक cond)
-अणु
-	काष्ठा s_srf_evc	*evc ;
-	पूर्णांक			cond_निश्चितed = 0 ;
-	पूर्णांक			cond_deनिश्चितed = 0 ;
-	पूर्णांक			event_occurred = 0 ;
-	पूर्णांक			tsr ;
-	पूर्णांक			T_Limit = 2*TICKS_PER_SECOND ;
+void smt_srf_event(struct s_smc *smc, int code, int index, int cond)
+{
+	struct s_srf_evc	*evc ;
+	int			cond_asserted = 0 ;
+	int			cond_deasserted = 0 ;
+	int			event_occurred = 0 ;
+	int			tsr ;
+	int			T_Limit = 2*TICKS_PER_SECOND ;
 
-	अगर (code == SMT_COND_MAC_DUP_ADDR && cond) अणु
+	if (code == SMT_COND_MAC_DUP_ADDR && cond) {
 		RS_SET(smc,RS_DUPADDR) ;
-	पूर्ण
+	}
 
-	अगर (code) अणु
+	if (code) {
 		DB_SMT("SRF: %s index %d", srf_names[code], index);
 
-		अगर (!(evc = smt_get_evc(smc,code,index))) अणु
+		if (!(evc = smt_get_evc(smc,code,index))) {
 			DB_SMT("SRF : smt_get_evc() failed");
-			वापस ;
-		पूर्ण
+			return ;
+		}
 		/*
-		 * ignore condition अगर no change
+		 * ignore condition if no change
 		 */
-		अगर (SMT_IS_CONDITION(code)) अणु
-			अगर (*evc->evc_cond_state == cond)
-				वापस ;
-		पूर्ण
+		if (SMT_IS_CONDITION(code)) {
+			if (*evc->evc_cond_state == cond)
+				return ;
+		}
 
 		/*
-		 * set transition समय stamp
+		 * set transition time stamp
 		 */
-		smt_set_बारtamp(smc,smc->mib.fddiSMTTransitionTimeStamp) ;
-		अगर (SMT_IS_CONDITION(code)) अणु
+		smt_set_timestamp(smc,smc->mib.fddiSMTTransitionTimeStamp) ;
+		if (SMT_IS_CONDITION(code)) {
 			DB_SMT("SRF: condition is %s", cond ? "ON" : "OFF");
-			अगर (cond) अणु
+			if (cond) {
 				*evc->evc_cond_state = TRUE ;
 				evc->evc_rep_required = TRUE ;
 				smc->srf.any_report = TRUE ;
-				cond_निश्चितed = TRUE ;
-			पूर्ण
-			अन्यथा अणु
+				cond_asserted = TRUE ;
+			}
+			else {
 				*evc->evc_cond_state = FALSE ;
-				cond_deनिश्चितed = TRUE ;
-			पूर्ण
-		पूर्ण
-		अन्यथा अणु
-			अगर (evc->evc_rep_required) अणु
+				cond_deasserted = TRUE ;
+			}
+		}
+		else {
+			if (evc->evc_rep_required) {
 				*evc->evc_multiple  = TRUE ;
-			पूर्ण
-			अन्यथा अणु
+			}
+			else {
 				evc->evc_rep_required = TRUE ;
 				*evc->evc_multiple  = FALSE ;
-			पूर्ण
+			}
 			smc->srf.any_report = TRUE ;
 			event_occurred = TRUE ;
-		पूर्ण
-#अगर_घोषित	FDDI_MIB
+		}
+#ifdef	FDDI_MIB
 		snmp_srf_event(smc,evc) ;
-#पूर्ण_अगर	/* FDDI_MIB */
-	पूर्ण
-	tsr = smt_get_समय() - smc->srf.TSR ;
+#endif	/* FDDI_MIB */
+	}
+	tsr = smt_get_time() - smc->srf.TSR ;
 
-	चयन (smc->srf.sr_state) अणु
-	हाल SR0_WAIT :
+	switch (smc->srf.sr_state) {
+	case SR0_WAIT :
 		/* SR01a */
-		अगर (cond_निश्चितed && tsr < T_Limit) अणु
+		if (cond_asserted && tsr < T_Limit) {
 			smc->srf.SRThreshold = THRESHOLD_2 ;
 			smc->srf.sr_state = SR1_HOLDOFF ;
-			अवरोध ;
-		पूर्ण
+			break ;
+		}
 		/* SR01b */
-		अगर (cond_deनिश्चितed && tsr < T_Limit) अणु
+		if (cond_deasserted && tsr < T_Limit) {
 			smc->srf.sr_state = SR1_HOLDOFF ;
-			अवरोध ;
-		पूर्ण
+			break ;
+		}
 		/* SR01c */
-		अगर (event_occurred && tsr < T_Limit) अणु
+		if (event_occurred && tsr < T_Limit) {
 			smc->srf.sr_state = SR1_HOLDOFF ;
-			अवरोध ;
-		पूर्ण
+			break ;
+		}
 		/* SR00b */
-		अगर (cond_निश्चितed && tsr >= T_Limit) अणु
+		if (cond_asserted && tsr >= T_Limit) {
 			smc->srf.SRThreshold = THRESHOLD_2 ;
-			smc->srf.TSR = smt_get_समय() ;
+			smc->srf.TSR = smt_get_time() ;
 			smt_send_srf(smc) ;
-			अवरोध ;
-		पूर्ण
+			break ;
+		}
 		/* SR00c */
-		अगर (cond_deनिश्चितed && tsr >= T_Limit) अणु
-			smc->srf.TSR = smt_get_समय() ;
+		if (cond_deasserted && tsr >= T_Limit) {
+			smc->srf.TSR = smt_get_time() ;
 			smt_send_srf(smc) ;
-			अवरोध ;
-		पूर्ण
+			break ;
+		}
 		/* SR00d */
-		अगर (event_occurred && tsr >= T_Limit) अणु
-			smc->srf.TSR = smt_get_समय() ;
+		if (event_occurred && tsr >= T_Limit) {
+			smc->srf.TSR = smt_get_time() ;
 			smt_send_srf(smc) ;
-			अवरोध ;
-		पूर्ण
+			break ;
+		}
 		/* SR00e */
-		अगर (smc->srf.any_report && (u_दीर्घ) tsr >=
-			smc->srf.SRThreshold) अणु
+		if (smc->srf.any_report && (u_long) tsr >=
+			smc->srf.SRThreshold) {
 			smc->srf.SRThreshold *= 2 ;
-			अगर (smc->srf.SRThreshold > THRESHOLD_32)
+			if (smc->srf.SRThreshold > THRESHOLD_32)
 				smc->srf.SRThreshold = THRESHOLD_32 ;
-			smc->srf.TSR = smt_get_समय() ;
+			smc->srf.TSR = smt_get_time() ;
 			smt_send_srf(smc) ;
-			अवरोध ;
-		पूर्ण
+			break ;
+		}
 		/* SR02 */
-		अगर (!smc->mib.fddiSMTStatRptPolicy) अणु
+		if (!smc->mib.fddiSMTStatRptPolicy) {
 			smc->srf.sr_state = SR2_DISABLED ;
-			अवरोध ;
-		पूर्ण
-		अवरोध ;
-	हाल SR1_HOLDOFF :
+			break ;
+		}
+		break ;
+	case SR1_HOLDOFF :
 		/* SR10b */
-		अगर (tsr >= T_Limit) अणु
+		if (tsr >= T_Limit) {
 			smc->srf.sr_state = SR0_WAIT ;
-			smc->srf.TSR = smt_get_समय() ;
+			smc->srf.TSR = smt_get_time() ;
 			smt_send_srf(smc) ;
-			अवरोध ;
-		पूर्ण
+			break ;
+		}
 		/* SR11a */
-		अगर (cond_निश्चितed) अणु
+		if (cond_asserted) {
 			smc->srf.SRThreshold = THRESHOLD_2 ;
-		पूर्ण
+		}
 		/* SR11b */
 		/* SR11c */
 		/* handled above */
 		/* SR12 */
-		अगर (!smc->mib.fddiSMTStatRptPolicy) अणु
+		if (!smc->mib.fddiSMTStatRptPolicy) {
 			smc->srf.sr_state = SR2_DISABLED ;
-			अवरोध ;
-		पूर्ण
-		अवरोध ;
-	हाल SR2_DISABLED :
-		अगर (smc->mib.fddiSMTStatRptPolicy) अणु
+			break ;
+		}
+		break ;
+	case SR2_DISABLED :
+		if (smc->mib.fddiSMTStatRptPolicy) {
 			smc->srf.sr_state = SR0_WAIT ;
-			smc->srf.TSR = smt_get_समय() ;
+			smc->srf.TSR = smt_get_time() ;
 			smc->srf.SRThreshold = THRESHOLD_2 ;
 			clear_all_rep(smc) ;
-			अवरोध ;
-		पूर्ण
-		अवरोध ;
-	पूर्ण
-पूर्ण
+			break ;
+		}
+		break ;
+	}
+}
 
-अटल व्योम clear_all_rep(काष्ठा s_smc *smc)
-अणु
-	काष्ठा s_srf_evc	*evc ;
-	अचिन्हित पूर्णांक		i ;
+static void clear_all_rep(struct s_smc *smc)
+{
+	struct s_srf_evc	*evc ;
+	unsigned int		i ;
 
-	क्रम (i = 0, evc = smc->evcs ; i < MAX_EVCS ; i++, evc++) अणु
+	for (i = 0, evc = smc->evcs ; i < MAX_EVCS ; i++, evc++) {
 		evc->evc_rep_required = FALSE ;
-		अगर (SMT_IS_CONDITION(evc->evc_code))
+		if (SMT_IS_CONDITION(evc->evc_code))
 			*evc->evc_cond_state = FALSE ;
-	पूर्ण
+	}
 	smc->srf.any_report = FALSE ;
-पूर्ण
+}
 
-अटल व्योम clear_reported(काष्ठा s_smc *smc)
-अणु
-	काष्ठा s_srf_evc	*evc ;
-	अचिन्हित पूर्णांक		i ;
+static void clear_reported(struct s_smc *smc)
+{
+	struct s_srf_evc	*evc ;
+	unsigned int		i ;
 
 	smc->srf.any_report = FALSE ;
-	क्रम (i = 0, evc = smc->evcs ; i < MAX_EVCS ; i++, evc++) अणु
-		अगर (SMT_IS_CONDITION(evc->evc_code)) अणु
-			अगर (*evc->evc_cond_state == FALSE)
+	for (i = 0, evc = smc->evcs ; i < MAX_EVCS ; i++, evc++) {
+		if (SMT_IS_CONDITION(evc->evc_code)) {
+			if (*evc->evc_cond_state == FALSE)
 				evc->evc_rep_required = FALSE ;
-			अन्यथा
+			else
 				smc->srf.any_report = TRUE ;
-		पूर्ण
-		अन्यथा अणु
+		}
+		else {
 			evc->evc_rep_required = FALSE ;
 			*evc->evc_multiple = FALSE ;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*
  * build and send SMT SRF frame
  */
-अटल व्योम smt_send_srf(काष्ठा s_smc *smc)
-अणु
+static void smt_send_srf(struct s_smc *smc)
+{
 
-	काष्ठा smt_header	*smt ;
-	काष्ठा s_srf_evc	*evc ;
-	SK_LOC_DECL(काष्ठा s_pcon,pcon) ;
+	struct smt_header	*smt ;
+	struct s_srf_evc	*evc ;
+	SK_LOC_DECL(struct s_pcon,pcon) ;
 	SMbuf			*mb ;
-	अचिन्हित पूर्णांक		i ;
+	unsigned int		i ;
 
-	अटल स्थिर काष्ठा fddi_addr SMT_SRF_DA = अणु
-		अणु 0x80, 0x01, 0x43, 0x00, 0x80, 0x08 पूर्ण
-	पूर्ण ;
+	static const struct fddi_addr SMT_SRF_DA = {
+		{ 0x80, 0x01, 0x43, 0x00, 0x80, 0x08 }
+	} ;
 
 	/*
 	 * build SMT header
 	 */
-	अगर (!smc->r.sm_ma_avail)
-		वापस ;
-	अगर (!(mb = smt_build_frame(smc,SMT_SRF,SMT_ANNOUNCE,0)))
-		वापस ;
+	if (!smc->r.sm_ma_avail)
+		return ;
+	if (!(mb = smt_build_frame(smc,SMT_SRF,SMT_ANNOUNCE,0)))
+		return ;
 
 	RS_SET(smc,RS_SOFTERROR) ;
 
-	smt = smtod(mb, काष्ठा smt_header *) ;
+	smt = smtod(mb, struct smt_header *) ;
 	smt->smt_dest = SMT_SRF_DA ;		/* DA == SRF multicast */
 
 	/*
@@ -390,30 +389,30 @@
 	pcon.pc_len = SMT_MAX_INFO_LEN ;	/* max para length */
 	pcon.pc_err = 0 ;			/* no error */
 	pcon.pc_badset = 0 ;			/* no bad set count */
-	pcon.pc_p = (व्योम *) (smt + 1) ;	/* paras start here */
+	pcon.pc_p = (void *) (smt + 1) ;	/* paras start here */
 
-	smt_add_para(smc,&pcon,(u_लघु) SMT_P1033,0,0) ;
-	smt_add_para(smc,&pcon,(u_लघु) SMT_P1034,0,0) ;
+	smt_add_para(smc,&pcon,(u_short) SMT_P1033,0,0) ;
+	smt_add_para(smc,&pcon,(u_short) SMT_P1034,0,0) ;
 
-	क्रम (i = 0, evc = smc->evcs ; i < MAX_EVCS ; i++, evc++) अणु
-		अगर (evc->evc_rep_required) अणु
+	for (i = 0, evc = smc->evcs ; i < MAX_EVCS ; i++, evc++) {
+		if (evc->evc_rep_required) {
 			smt_add_para(smc,&pcon,evc->evc_para,
-				(पूर्णांक)evc->evc_index,0) ;
-		पूर्ण
-	पूर्ण
+				(int)evc->evc_index,0) ;
+		}
+	}
 	smt->smt_len = SMT_MAX_INFO_LEN - pcon.pc_len ;
-	mb->sm_len = smt->smt_len + माप(काष्ठा smt_header) ;
+	mb->sm_len = smt->smt_len + sizeof(struct smt_header) ;
 
 	DB_SMT("SRF: sending SRF at %p, len %d", smt, mb->sm_len);
 	DB_SMT("SRF: state SR%d Threshold %lu",
 	       smc->srf.sr_state, smc->srf.SRThreshold / TICKS_PER_SECOND);
-#अगर_घोषित	DEBUG
+#ifdef	DEBUG
 	dump_smt(smc,smt,"SRF Send") ;
-#पूर्ण_अगर
+#endif
 	smt_send_frame(smc,mb,FC_SMT_INFO,0) ;
 	clear_reported(smc) ;
-पूर्ण
+}
 
-#पूर्ण_अगर	/* no BOOT */
-#पूर्ण_अगर	/* no SLIM_SMT */
+#endif	/* no BOOT */
+#endif	/* no SLIM_SMT */
 

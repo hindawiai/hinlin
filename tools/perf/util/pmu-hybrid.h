@@ -1,23 +1,22 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __PMU_HYBRID_H
-#घोषणा __PMU_HYBRID_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __PMU_HYBRID_H
+#define __PMU_HYBRID_H
 
-#समावेश <linux/perf_event.h>
-#समावेश <linux/compiler.h>
-#समावेश <linux/list.h>
-#समावेश <stdbool.h>
-#समावेश "pmu.h"
+#include <linux/perf_event.h>
+#include <linux/compiler.h>
+#include <linux/list.h>
+#include <stdbool.h>
+#include "pmu.h"
 
-बाह्य काष्ठा list_head perf_pmu__hybrid_pmus;
+extern struct list_head perf_pmu__hybrid_pmus;
 
-#घोषणा perf_pmu__क्रम_each_hybrid_pmu(pmu)	\
-	list_क्रम_each_entry(pmu, &perf_pmu__hybrid_pmus, hybrid_list)
+#define perf_pmu__for_each_hybrid_pmu(pmu)	\
+	list_for_each_entry(pmu, &perf_pmu__hybrid_pmus, hybrid_list)
 
-bool perf_pmu__hybrid_mounted(स्थिर अक्षर *name);
+bool perf_pmu__hybrid_mounted(const char *name);
 
-काष्ठा perf_pmu *perf_pmu__find_hybrid_pmu(स्थिर अक्षर *name);
-bool perf_pmu__is_hybrid(स्थिर अक्षर *name);
-अक्षर *perf_pmu__hybrid_type_to_pmu(स्थिर अक्षर *type);
+struct perf_pmu *perf_pmu__find_hybrid_pmu(const char *name);
+bool perf_pmu__is_hybrid(const char *name);
+char *perf_pmu__hybrid_type_to_pmu(const char *type);
 
-#पूर्ण_अगर /* __PMU_HYBRID_H */
+#endif /* __PMU_HYBRID_H */

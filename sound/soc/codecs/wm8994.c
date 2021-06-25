@@ -1,152 +1,151 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * wm8994.c  --  WM8994 ALSA SoC Audio driver
  *
  * Copyright 2009-12 Wolfson Microelectronics plc
  *
- * Author: Mark Brown <broonie@खोलोsource.wolfsonmicro.com>
+ * Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/init.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/gcd.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/slab.h>
-#समावेश <sound/core.h>
-#समावेश <sound/jack.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/pcm_params.h>
-#समावेश <sound/soc.h>
-#समावेश <sound/initval.h>
-#समावेश <sound/tlv.h>
-#समावेश <trace/events/asoc.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/init.h>
+#include <linux/delay.h>
+#include <linux/pm.h>
+#include <linux/gcd.h>
+#include <linux/i2c.h>
+#include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
+#include <linux/regulator/consumer.h>
+#include <linux/slab.h>
+#include <sound/core.h>
+#include <sound/jack.h>
+#include <sound/pcm.h>
+#include <sound/pcm_params.h>
+#include <sound/soc.h>
+#include <sound/initval.h>
+#include <sound/tlv.h>
+#include <trace/events/asoc.h>
 
-#समावेश <linux/mfd/wm8994/core.h>
-#समावेश <linux/mfd/wm8994/रेजिस्टरs.h>
-#समावेश <linux/mfd/wm8994/pdata.h>
-#समावेश <linux/mfd/wm8994/gpपन.स>
+#include <linux/mfd/wm8994/core.h>
+#include <linux/mfd/wm8994/registers.h>
+#include <linux/mfd/wm8994/pdata.h>
+#include <linux/mfd/wm8994/gpio.h>
 
-#समावेश "wm8994.h"
-#समावेश "wm_hubs.h"
+#include "wm8994.h"
+#include "wm_hubs.h"
 
-#घोषणा WM1811_JACKDET_MODE_NONE  0x0000
-#घोषणा WM1811_JACKDET_MODE_JACK  0x0100
-#घोषणा WM1811_JACKDET_MODE_MIC   0x0080
-#घोषणा WM1811_JACKDET_MODE_AUDIO 0x0180
+#define WM1811_JACKDET_MODE_NONE  0x0000
+#define WM1811_JACKDET_MODE_JACK  0x0100
+#define WM1811_JACKDET_MODE_MIC   0x0080
+#define WM1811_JACKDET_MODE_AUDIO 0x0180
 
-#घोषणा WM8994_NUM_DRC 3
-#घोषणा WM8994_NUM_EQ  3
+#define WM8994_NUM_DRC 3
+#define WM8994_NUM_EQ  3
 
-काष्ठा wm8994_reg_mask अणु
-	अचिन्हित पूर्णांक reg;
-	अचिन्हित पूर्णांक mask;
-पूर्ण;
+struct wm8994_reg_mask {
+	unsigned int reg;
+	unsigned int mask;
+};
 
-अटल काष्ठा wm8994_reg_mask wm8994_vu_bits[] = अणु
-	अणु WM8994_LEFT_LINE_INPUT_1_2_VOLUME, WM8994_IN1_VU पूर्ण,
-	अणु WM8994_RIGHT_LINE_INPUT_1_2_VOLUME, WM8994_IN1_VU पूर्ण,
-	अणु WM8994_LEFT_LINE_INPUT_3_4_VOLUME, WM8994_IN2_VU पूर्ण,
-	अणु WM8994_RIGHT_LINE_INPUT_3_4_VOLUME, WM8994_IN2_VU पूर्ण,
-	अणु WM8994_SPEAKER_VOLUME_LEFT, WM8994_SPKOUT_VU पूर्ण,
-	अणु WM8994_SPEAKER_VOLUME_RIGHT, WM8994_SPKOUT_VU पूर्ण,
-	अणु WM8994_LEFT_OUTPUT_VOLUME, WM8994_HPOUT1_VU पूर्ण,
-	अणु WM8994_RIGHT_OUTPUT_VOLUME, WM8994_HPOUT1_VU पूर्ण,
-	अणु WM8994_LEFT_OPGA_VOLUME, WM8994_MIXOUT_VU पूर्ण,
-	अणु WM8994_RIGHT_OPGA_VOLUME, WM8994_MIXOUT_VU पूर्ण,
+static struct wm8994_reg_mask wm8994_vu_bits[] = {
+	{ WM8994_LEFT_LINE_INPUT_1_2_VOLUME, WM8994_IN1_VU },
+	{ WM8994_RIGHT_LINE_INPUT_1_2_VOLUME, WM8994_IN1_VU },
+	{ WM8994_LEFT_LINE_INPUT_3_4_VOLUME, WM8994_IN2_VU },
+	{ WM8994_RIGHT_LINE_INPUT_3_4_VOLUME, WM8994_IN2_VU },
+	{ WM8994_SPEAKER_VOLUME_LEFT, WM8994_SPKOUT_VU },
+	{ WM8994_SPEAKER_VOLUME_RIGHT, WM8994_SPKOUT_VU },
+	{ WM8994_LEFT_OUTPUT_VOLUME, WM8994_HPOUT1_VU },
+	{ WM8994_RIGHT_OUTPUT_VOLUME, WM8994_HPOUT1_VU },
+	{ WM8994_LEFT_OPGA_VOLUME, WM8994_MIXOUT_VU },
+	{ WM8994_RIGHT_OPGA_VOLUME, WM8994_MIXOUT_VU },
 
-	अणु WM8994_AIF1_DAC1_LEFT_VOLUME, WM8994_AIF1DAC1_VU पूर्ण,
-	अणु WM8994_AIF1_DAC1_RIGHT_VOLUME, WM8994_AIF1DAC1_VU पूर्ण,
-	अणु WM8994_AIF2_DAC_LEFT_VOLUME, WM8994_AIF2DAC_VU पूर्ण,
-	अणु WM8994_AIF2_DAC_RIGHT_VOLUME, WM8994_AIF2DAC_VU पूर्ण,
-	अणु WM8994_AIF1_ADC1_LEFT_VOLUME, WM8994_AIF1ADC1_VU पूर्ण,
-	अणु WM8994_AIF1_ADC1_RIGHT_VOLUME, WM8994_AIF1ADC1_VU पूर्ण,
-	अणु WM8994_AIF2_ADC_LEFT_VOLUME, WM8994_AIF2ADC_VU पूर्ण,
-	अणु WM8994_AIF2_ADC_RIGHT_VOLUME, WM8994_AIF1ADC2_VU पूर्ण,
-	अणु WM8994_DAC1_LEFT_VOLUME, WM8994_DAC1_VU पूर्ण,
-	अणु WM8994_DAC1_RIGHT_VOLUME, WM8994_DAC1_VU पूर्ण,
-	अणु WM8994_DAC2_LEFT_VOLUME, WM8994_DAC2_VU पूर्ण,
-	अणु WM8994_DAC2_RIGHT_VOLUME, WM8994_DAC2_VU पूर्ण,
-पूर्ण;
+	{ WM8994_AIF1_DAC1_LEFT_VOLUME, WM8994_AIF1DAC1_VU },
+	{ WM8994_AIF1_DAC1_RIGHT_VOLUME, WM8994_AIF1DAC1_VU },
+	{ WM8994_AIF2_DAC_LEFT_VOLUME, WM8994_AIF2DAC_VU },
+	{ WM8994_AIF2_DAC_RIGHT_VOLUME, WM8994_AIF2DAC_VU },
+	{ WM8994_AIF1_ADC1_LEFT_VOLUME, WM8994_AIF1ADC1_VU },
+	{ WM8994_AIF1_ADC1_RIGHT_VOLUME, WM8994_AIF1ADC1_VU },
+	{ WM8994_AIF2_ADC_LEFT_VOLUME, WM8994_AIF2ADC_VU },
+	{ WM8994_AIF2_ADC_RIGHT_VOLUME, WM8994_AIF1ADC2_VU },
+	{ WM8994_DAC1_LEFT_VOLUME, WM8994_DAC1_VU },
+	{ WM8994_DAC1_RIGHT_VOLUME, WM8994_DAC1_VU },
+	{ WM8994_DAC2_LEFT_VOLUME, WM8994_DAC2_VU },
+	{ WM8994_DAC2_RIGHT_VOLUME, WM8994_DAC2_VU },
+};
 
-/* VU bitfields क्रम ADC2, DAC2 not available on WM1811 */
-अटल काष्ठा wm8994_reg_mask wm8994_adc2_dac2_vu_bits[] = अणु
-	अणु WM8994_AIF1_DAC2_LEFT_VOLUME, WM8994_AIF1DAC2_VU पूर्ण,
-	अणु WM8994_AIF1_DAC2_RIGHT_VOLUME, WM8994_AIF1DAC2_VU पूर्ण,
-	अणु WM8994_AIF1_ADC2_LEFT_VOLUME, WM8994_AIF1ADC2_VU पूर्ण,
-	अणु WM8994_AIF1_ADC2_RIGHT_VOLUME, WM8994_AIF1ADC2_VU पूर्ण,
-पूर्ण;
+/* VU bitfields for ADC2, DAC2 not available on WM1811 */
+static struct wm8994_reg_mask wm8994_adc2_dac2_vu_bits[] = {
+	{ WM8994_AIF1_DAC2_LEFT_VOLUME, WM8994_AIF1DAC2_VU },
+	{ WM8994_AIF1_DAC2_RIGHT_VOLUME, WM8994_AIF1DAC2_VU },
+	{ WM8994_AIF1_ADC2_LEFT_VOLUME, WM8994_AIF1ADC2_VU },
+	{ WM8994_AIF1_ADC2_RIGHT_VOLUME, WM8994_AIF1ADC2_VU },
+};
 
-अटल पूर्णांक wm8994_drc_base[] = अणु
+static int wm8994_drc_base[] = {
 	WM8994_AIF1_DRC1_1,
 	WM8994_AIF1_DRC2_1,
 	WM8994_AIF2_DRC_1,
-पूर्ण;
+};
 
-अटल पूर्णांक wm8994_retune_mobile_base[] = अणु
+static int wm8994_retune_mobile_base[] = {
 	WM8994_AIF1_DAC1_EQ_GAINS_1,
 	WM8994_AIF1_DAC2_EQ_GAINS_1,
 	WM8994_AIF2_EQ_GAINS_1,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा wm8958_micd_rate micdet_rates[] = अणु
-	अणु 32768,       true,  1, 4 पूर्ण,
-	अणु 32768,       false, 1, 1 पूर्ण,
-	अणु 44100 * 256, true,  7, 10 पूर्ण,
-	अणु 44100 * 256, false, 7, 10 पूर्ण,
-पूर्ण;
+static const struct wm8958_micd_rate micdet_rates[] = {
+	{ 32768,       true,  1, 4 },
+	{ 32768,       false, 1, 1 },
+	{ 44100 * 256, true,  7, 10 },
+	{ 44100 * 256, false, 7, 10 },
+};
 
-अटल स्थिर काष्ठा wm8958_micd_rate jackdet_rates[] = अणु
-	अणु 32768,       true,  0, 1 पूर्ण,
-	अणु 32768,       false, 0, 1 पूर्ण,
-	अणु 44100 * 256, true,  10, 10 पूर्ण,
-	अणु 44100 * 256, false, 7, 8 पूर्ण,
-पूर्ण;
+static const struct wm8958_micd_rate jackdet_rates[] = {
+	{ 32768,       true,  0, 1 },
+	{ 32768,       false, 0, 1 },
+	{ 44100 * 256, true,  10, 10 },
+	{ 44100 * 256, false, 7, 8 },
+};
 
-अटल व्योम wm8958_micd_set_rate(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
-	काष्ठा wm8994 *control = wm8994->wm8994;
-	पूर्णांक best, i, sysclk, val;
+static void wm8958_micd_set_rate(struct snd_soc_component *component)
+{
+	struct wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
+	struct wm8994 *control = wm8994->wm8994;
+	int best, i, sysclk, val;
 	bool idle;
-	स्थिर काष्ठा wm8958_micd_rate *rates;
-	पूर्णांक num_rates;
+	const struct wm8958_micd_rate *rates;
+	int num_rates;
 
 	idle = !wm8994->jack_mic;
 
-	sysclk = snd_soc_component_पढ़ो(component, WM8994_CLOCKING_1);
-	अगर (sysclk & WM8994_SYSCLK_SRC)
-		sysclk = wm8994->aअगरclk[1];
-	अन्यथा
-		sysclk = wm8994->aअगरclk[0];
+	sysclk = snd_soc_component_read(component, WM8994_CLOCKING_1);
+	if (sysclk & WM8994_SYSCLK_SRC)
+		sysclk = wm8994->aifclk[1];
+	else
+		sysclk = wm8994->aifclk[0];
 
-	अगर (control->pdata.micd_rates) अणु
+	if (control->pdata.micd_rates) {
 		rates = control->pdata.micd_rates;
 		num_rates = control->pdata.num_micd_rates;
-	पूर्ण अन्यथा अगर (wm8994->jackdet) अणु
+	} else if (wm8994->jackdet) {
 		rates = jackdet_rates;
 		num_rates = ARRAY_SIZE(jackdet_rates);
-	पूर्ण अन्यथा अणु
+	} else {
 		rates = micdet_rates;
 		num_rates = ARRAY_SIZE(micdet_rates);
-	पूर्ण
+	}
 
 	best = 0;
-	क्रम (i = 0; i < num_rates; i++) अणु
-		अगर (rates[i].idle != idle)
-			जारी;
-		अगर (असल(rates[i].sysclk - sysclk) <
-		    असल(rates[best].sysclk - sysclk))
+	for (i = 0; i < num_rates; i++) {
+		if (rates[i].idle != idle)
+			continue;
+		if (abs(rates[i].sysclk - sysclk) <
+		    abs(rates[best].sysclk - sysclk))
 			best = i;
-		अन्यथा अगर (rates[best].idle != idle)
+		else if (rates[best].idle != idle)
 			best = i;
-	पूर्ण
+	}
 
 	val = rates[best].start << WM8958_MICD_BIAS_STARTTIME_SHIFT
 		| rates[best].rate << WM8958_MICD_RATE_SHIFT;
@@ -158,388 +157,388 @@
 	snd_soc_component_update_bits(component, WM8958_MIC_DETECT_1,
 			    WM8958_MICD_BIAS_STARTTIME_MASK |
 			    WM8958_MICD_RATE_MASK, val);
-पूर्ण
+}
 
-अटल पूर्णांक configure_aअगर_घड़ी(काष्ठा snd_soc_component *component, पूर्णांक aअगर)
-अणु
-	काष्ठा wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
-	पूर्णांक rate;
-	पूर्णांक reg1 = 0;
-	पूर्णांक offset;
+static int configure_aif_clock(struct snd_soc_component *component, int aif)
+{
+	struct wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
+	int rate;
+	int reg1 = 0;
+	int offset;
 
-	अगर (aअगर)
+	if (aif)
 		offset = 4;
-	अन्यथा
+	else
 		offset = 0;
 
-	चयन (wm8994->sysclk[aअगर]) अणु
-	हाल WM8994_SYSCLK_MCLK1:
+	switch (wm8994->sysclk[aif]) {
+	case WM8994_SYSCLK_MCLK1:
 		rate = wm8994->mclk_rate[0];
-		अवरोध;
+		break;
 
-	हाल WM8994_SYSCLK_MCLK2:
+	case WM8994_SYSCLK_MCLK2:
 		reg1 |= 0x8;
 		rate = wm8994->mclk_rate[1];
-		अवरोध;
+		break;
 
-	हाल WM8994_SYSCLK_FLL1:
+	case WM8994_SYSCLK_FLL1:
 		reg1 |= 0x10;
 		rate = wm8994->fll[0].out;
-		अवरोध;
+		break;
 
-	हाल WM8994_SYSCLK_FLL2:
+	case WM8994_SYSCLK_FLL2:
 		reg1 |= 0x18;
 		rate = wm8994->fll[1].out;
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
-	अगर (rate >= 13500000) अणु
+	if (rate >= 13500000) {
 		rate /= 2;
 		reg1 |= WM8994_AIF1CLK_DIV;
 
 		dev_dbg(component->dev, "Dividing AIF%d clock to %dHz\n",
-			aअगर + 1, rate);
-	पूर्ण
+			aif + 1, rate);
+	}
 
-	wm8994->aअगरclk[aअगर] = rate;
+	wm8994->aifclk[aif] = rate;
 
 	snd_soc_component_update_bits(component, WM8994_AIF1_CLOCKING_1 + offset,
 			    WM8994_AIF1CLK_SRC_MASK | WM8994_AIF1CLK_DIV,
 			    reg1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक configure_घड़ी(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
-	काष्ठा wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
-	पूर्णांक change, new;
+static int configure_clock(struct snd_soc_component *component)
+{
+	struct snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
+	struct wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
+	int change, new;
 
-	/* Bring up the AIF घड़ीs first */
-	configure_aअगर_घड़ी(component, 0);
-	configure_aअगर_घड़ी(component, 1);
+	/* Bring up the AIF clocks first */
+	configure_aif_clock(component, 0);
+	configure_aif_clock(component, 1);
 
-	/* Then चयन CLK_SYS over to the higher of them; a change
-	 * can only happen as a result of a घड़ीing change which can
-	 * only be made outside of DAPM so we can safely reकरो the
-	 * घड़ीing.
+	/* Then switch CLK_SYS over to the higher of them; a change
+	 * can only happen as a result of a clocking change which can
+	 * only be made outside of DAPM so we can safely redo the
+	 * clocking.
 	 */
 
 	/* If they're equal it doesn't matter which is used */
-	अगर (wm8994->aअगरclk[0] == wm8994->aअगरclk[1]) अणु
+	if (wm8994->aifclk[0] == wm8994->aifclk[1]) {
 		wm8958_micd_set_rate(component);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (wm8994->aअगरclk[0] < wm8994->aअगरclk[1])
+	if (wm8994->aifclk[0] < wm8994->aifclk[1])
 		new = WM8994_SYSCLK_SRC;
-	अन्यथा
+	else
 		new = 0;
 
 	change = snd_soc_component_update_bits(component, WM8994_CLOCKING_1,
 				     WM8994_SYSCLK_SRC, new);
-	अगर (change)
+	if (change)
 		snd_soc_dapm_sync(dapm);
 
 	wm8958_micd_set_rate(component);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक check_clk_sys(काष्ठा snd_soc_dapm_widget *source,
-			 काष्ठा snd_soc_dapm_widget *sink)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(source->dapm);
-	पूर्णांक reg = snd_soc_component_पढ़ो(component, WM8994_CLOCKING_1);
-	स्थिर अक्षर *clk;
+static int check_clk_sys(struct snd_soc_dapm_widget *source,
+			 struct snd_soc_dapm_widget *sink)
+{
+	struct snd_soc_component *component = snd_soc_dapm_to_component(source->dapm);
+	int reg = snd_soc_component_read(component, WM8994_CLOCKING_1);
+	const char *clk;
 
-	/* Check what we're currently using क्रम CLK_SYS */
-	अगर (reg & WM8994_SYSCLK_SRC)
+	/* Check what we're currently using for CLK_SYS */
+	if (reg & WM8994_SYSCLK_SRC)
 		clk = "AIF2CLK";
-	अन्यथा
+	else
 		clk = "AIF1CLK";
 
-	वापस म_भेद(source->name, clk) == 0;
-पूर्ण
+	return strcmp(source->name, clk) == 0;
+}
 
-अटल स्थिर अक्षर *sidetone_hpf_text[] = अणु
+static const char *sidetone_hpf_text[] = {
 	"2.7kHz", "1.35kHz", "675Hz", "370Hz", "180Hz", "90Hz", "45Hz"
-पूर्ण;
+};
 
-अटल SOC_ENUM_SINGLE_DECL(sidetone_hpf,
+static SOC_ENUM_SINGLE_DECL(sidetone_hpf,
 			    WM8994_SIDETONE, 7, sidetone_hpf_text);
 
-अटल स्थिर अक्षर *adc_hpf_text[] = अणु
+static const char *adc_hpf_text[] = {
 	"HiFi", "Voice 1", "Voice 2", "Voice 3"
-पूर्ण;
+};
 
-अटल SOC_ENUM_SINGLE_DECL(aअगर1adc1_hpf,
+static SOC_ENUM_SINGLE_DECL(aif1adc1_hpf,
 			    WM8994_AIF1_ADC1_FILTERS, 13, adc_hpf_text);
 
-अटल SOC_ENUM_SINGLE_DECL(aअगर1adc2_hpf,
+static SOC_ENUM_SINGLE_DECL(aif1adc2_hpf,
 			    WM8994_AIF1_ADC2_FILTERS, 13, adc_hpf_text);
 
-अटल SOC_ENUM_SINGLE_DECL(aअगर2adc_hpf,
+static SOC_ENUM_SINGLE_DECL(aif2adc_hpf,
 			    WM8994_AIF2_ADC_FILTERS, 13, adc_hpf_text);
 
-अटल स्थिर DECLARE_TLV_DB_SCALE(aअगर_tlv, 0, 600, 0);
-अटल स्थिर DECLARE_TLV_DB_SCALE(digital_tlv, -7200, 75, 1);
-अटल स्थिर DECLARE_TLV_DB_SCALE(st_tlv, -3600, 300, 0);
-अटल स्थिर DECLARE_TLV_DB_SCALE(wm8994_3d_tlv, -1600, 183, 0);
-अटल स्थिर DECLARE_TLV_DB_SCALE(eq_tlv, -1200, 100, 0);
-अटल स्थिर DECLARE_TLV_DB_SCALE(ng_tlv, -10200, 600, 0);
+static const DECLARE_TLV_DB_SCALE(aif_tlv, 0, 600, 0);
+static const DECLARE_TLV_DB_SCALE(digital_tlv, -7200, 75, 1);
+static const DECLARE_TLV_DB_SCALE(st_tlv, -3600, 300, 0);
+static const DECLARE_TLV_DB_SCALE(wm8994_3d_tlv, -1600, 183, 0);
+static const DECLARE_TLV_DB_SCALE(eq_tlv, -1200, 100, 0);
+static const DECLARE_TLV_DB_SCALE(ng_tlv, -10200, 600, 0);
 
-#घोषणा WM8994_DRC_SWITCH(xname, reg, shअगरt) \
-	SOC_SINGLE_EXT(xname, reg, shअगरt, 1, 0, \
+#define WM8994_DRC_SWITCH(xname, reg, shift) \
+	SOC_SINGLE_EXT(xname, reg, shift, 1, 0, \
 		snd_soc_get_volsw, wm8994_put_drc_sw)
 
-अटल पूर्णांक wm8994_put_drc_sw(काष्ठा snd_kcontrol *kcontrol,
-			     काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा soc_mixer_control *mc =
-		(काष्ठा soc_mixer_control *)kcontrol->निजी_value;
-	काष्ठा snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
-	पूर्णांक mask, ret;
+static int wm8994_put_drc_sw(struct snd_kcontrol *kcontrol,
+			     struct snd_ctl_elem_value *ucontrol)
+{
+	struct soc_mixer_control *mc =
+		(struct soc_mixer_control *)kcontrol->private_value;
+	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+	int mask, ret;
 
 	/* Can't enable both ADC and DAC paths simultaneously */
-	अगर (mc->shअगरt == WM8994_AIF1DAC1_DRC_ENA_SHIFT)
+	if (mc->shift == WM8994_AIF1DAC1_DRC_ENA_SHIFT)
 		mask = WM8994_AIF1ADC1L_DRC_ENA_MASK |
 			WM8994_AIF1ADC1R_DRC_ENA_MASK;
-	अन्यथा
+	else
 		mask = WM8994_AIF1DAC1_DRC_ENA_MASK;
 
-	ret = snd_soc_component_पढ़ो(component, mc->reg);
-	अगर (ret < 0)
-		वापस ret;
-	अगर (ret & mask)
-		वापस -EINVAL;
+	ret = snd_soc_component_read(component, mc->reg);
+	if (ret < 0)
+		return ret;
+	if (ret & mask)
+		return -EINVAL;
 
-	वापस snd_soc_put_volsw(kcontrol, ucontrol);
-पूर्ण
+	return snd_soc_put_volsw(kcontrol, ucontrol);
+}
 
-अटल व्योम wm8994_set_drc(काष्ठा snd_soc_component *component, पूर्णांक drc)
-अणु
-	काष्ठा wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
-	काष्ठा wm8994 *control = wm8994->wm8994;
-	काष्ठा wm8994_pdata *pdata = &control->pdata;
-	पूर्णांक base = wm8994_drc_base[drc];
-	पूर्णांक cfg = wm8994->drc_cfg[drc];
-	पूर्णांक save, i;
+static void wm8994_set_drc(struct snd_soc_component *component, int drc)
+{
+	struct wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
+	struct wm8994 *control = wm8994->wm8994;
+	struct wm8994_pdata *pdata = &control->pdata;
+	int base = wm8994_drc_base[drc];
+	int cfg = wm8994->drc_cfg[drc];
+	int save, i;
 
 	/* Save any enables; the configuration should clear them. */
-	save = snd_soc_component_पढ़ो(component, base);
+	save = snd_soc_component_read(component, base);
 	save &= WM8994_AIF1DAC1_DRC_ENA | WM8994_AIF1ADC1L_DRC_ENA |
 		WM8994_AIF1ADC1R_DRC_ENA;
 
-	क्रम (i = 0; i < WM8994_DRC_REGS; i++)
+	for (i = 0; i < WM8994_DRC_REGS; i++)
 		snd_soc_component_update_bits(component, base + i, 0xffff,
 				    pdata->drc_cfgs[cfg].regs[i]);
 
 	snd_soc_component_update_bits(component, base, WM8994_AIF1DAC1_DRC_ENA |
 			     WM8994_AIF1ADC1L_DRC_ENA |
 			     WM8994_AIF1ADC1R_DRC_ENA, save);
-पूर्ण
+}
 
 /* Icky as hell but saves code duplication */
-अटल पूर्णांक wm8994_get_drc(स्थिर अक्षर *name)
-अणु
-	अगर (म_भेद(name, "AIF1DRC1 Mode") == 0)
-		वापस 0;
-	अगर (म_भेद(name, "AIF1DRC2 Mode") == 0)
-		वापस 1;
-	अगर (म_भेद(name, "AIF2DRC Mode") == 0)
-		वापस 2;
-	वापस -EINVAL;
-पूर्ण
+static int wm8994_get_drc(const char *name)
+{
+	if (strcmp(name, "AIF1DRC1 Mode") == 0)
+		return 0;
+	if (strcmp(name, "AIF1DRC2 Mode") == 0)
+		return 1;
+	if (strcmp(name, "AIF2DRC Mode") == 0)
+		return 2;
+	return -EINVAL;
+}
 
-अटल पूर्णांक wm8994_put_drc_क्रमागत(काष्ठा snd_kcontrol *kcontrol,
-			       काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
-	काष्ठा wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
-	काष्ठा wm8994 *control = wm8994->wm8994;
-	काष्ठा wm8994_pdata *pdata = &control->pdata;
-	पूर्णांक drc = wm8994_get_drc(kcontrol->id.name);
-	पूर्णांक value = ucontrol->value.क्रमागतerated.item[0];
+static int wm8994_put_drc_enum(struct snd_kcontrol *kcontrol,
+			       struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+	struct wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
+	struct wm8994 *control = wm8994->wm8994;
+	struct wm8994_pdata *pdata = &control->pdata;
+	int drc = wm8994_get_drc(kcontrol->id.name);
+	int value = ucontrol->value.enumerated.item[0];
 
-	अगर (drc < 0)
-		वापस drc;
+	if (drc < 0)
+		return drc;
 
-	अगर (value >= pdata->num_drc_cfgs)
-		वापस -EINVAL;
+	if (value >= pdata->num_drc_cfgs)
+		return -EINVAL;
 
 	wm8994->drc_cfg[drc] = value;
 
 	wm8994_set_drc(component, drc);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wm8994_get_drc_क्रमागत(काष्ठा snd_kcontrol *kcontrol,
-			       काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
-	काष्ठा wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
-	पूर्णांक drc = wm8994_get_drc(kcontrol->id.name);
+static int wm8994_get_drc_enum(struct snd_kcontrol *kcontrol,
+			       struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+	struct wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
+	int drc = wm8994_get_drc(kcontrol->id.name);
 
-	अगर (drc < 0)
-		वापस drc;
-	ucontrol->value.क्रमागतerated.item[0] = wm8994->drc_cfg[drc];
+	if (drc < 0)
+		return drc;
+	ucontrol->value.enumerated.item[0] = wm8994->drc_cfg[drc];
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम wm8994_set_retune_mobile(काष्ठा snd_soc_component *component, पूर्णांक block)
-अणु
-	काष्ठा wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
-	काष्ठा wm8994 *control = wm8994->wm8994;
-	काष्ठा wm8994_pdata *pdata = &control->pdata;
-	पूर्णांक base = wm8994_retune_mobile_base[block];
-	पूर्णांक अगरace, best, best_val, save, i, cfg;
+static void wm8994_set_retune_mobile(struct snd_soc_component *component, int block)
+{
+	struct wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
+	struct wm8994 *control = wm8994->wm8994;
+	struct wm8994_pdata *pdata = &control->pdata;
+	int base = wm8994_retune_mobile_base[block];
+	int iface, best, best_val, save, i, cfg;
 
-	अगर (!pdata || !wm8994->num_retune_mobile_texts)
-		वापस;
+	if (!pdata || !wm8994->num_retune_mobile_texts)
+		return;
 
-	चयन (block) अणु
-	हाल 0:
-	हाल 1:
-		अगरace = 0;
-		अवरोध;
-	हाल 2:
-		अगरace = 1;
-		अवरोध;
-	शेष:
-		वापस;
-	पूर्ण
+	switch (block) {
+	case 0:
+	case 1:
+		iface = 0;
+		break;
+	case 2:
+		iface = 1;
+		break;
+	default:
+		return;
+	}
 
 	/* Find the version of the currently selected configuration
 	 * with the nearest sample rate. */
 	cfg = wm8994->retune_mobile_cfg[block];
 	best = 0;
-	best_val = पूर्णांक_उच्च;
-	क्रम (i = 0; i < pdata->num_retune_mobile_cfgs; i++) अणु
-		अगर (म_भेद(pdata->retune_mobile_cfgs[i].name,
+	best_val = INT_MAX;
+	for (i = 0; i < pdata->num_retune_mobile_cfgs; i++) {
+		if (strcmp(pdata->retune_mobile_cfgs[i].name,
 			   wm8994->retune_mobile_texts[cfg]) == 0 &&
-		    असल(pdata->retune_mobile_cfgs[i].rate
-			- wm8994->dac_rates[अगरace]) < best_val) अणु
+		    abs(pdata->retune_mobile_cfgs[i].rate
+			- wm8994->dac_rates[iface]) < best_val) {
 			best = i;
-			best_val = असल(pdata->retune_mobile_cfgs[i].rate
-				       - wm8994->dac_rates[अगरace]);
-		पूर्ण
-	पूर्ण
+			best_val = abs(pdata->retune_mobile_cfgs[i].rate
+				       - wm8994->dac_rates[iface]);
+		}
+	}
 
 	dev_dbg(component->dev, "ReTune Mobile %d %s/%dHz for %dHz sample rate\n",
 		block,
 		pdata->retune_mobile_cfgs[best].name,
 		pdata->retune_mobile_cfgs[best].rate,
-		wm8994->dac_rates[अगरace]);
+		wm8994->dac_rates[iface]);
 
-	/* The EQ will be disabled जबतक reconfiguring it, remember the
+	/* The EQ will be disabled while reconfiguring it, remember the
 	 * current configuration.
 	 */
-	save = snd_soc_component_पढ़ो(component, base);
+	save = snd_soc_component_read(component, base);
 	save &= WM8994_AIF1DAC1_EQ_ENA;
 
-	क्रम (i = 0; i < WM8994_EQ_REGS; i++)
+	for (i = 0; i < WM8994_EQ_REGS; i++)
 		snd_soc_component_update_bits(component, base + i, 0xffff,
 				pdata->retune_mobile_cfgs[best].regs[i]);
 
 	snd_soc_component_update_bits(component, base, WM8994_AIF1DAC1_EQ_ENA, save);
-पूर्ण
+}
 
 /* Icky as hell but saves code duplication */
-अटल पूर्णांक wm8994_get_retune_mobile_block(स्थिर अक्षर *name)
-अणु
-	अगर (म_भेद(name, "AIF1.1 EQ Mode") == 0)
-		वापस 0;
-	अगर (म_भेद(name, "AIF1.2 EQ Mode") == 0)
-		वापस 1;
-	अगर (म_भेद(name, "AIF2 EQ Mode") == 0)
-		वापस 2;
-	वापस -EINVAL;
-पूर्ण
+static int wm8994_get_retune_mobile_block(const char *name)
+{
+	if (strcmp(name, "AIF1.1 EQ Mode") == 0)
+		return 0;
+	if (strcmp(name, "AIF1.2 EQ Mode") == 0)
+		return 1;
+	if (strcmp(name, "AIF2 EQ Mode") == 0)
+		return 2;
+	return -EINVAL;
+}
 
-अटल पूर्णांक wm8994_put_retune_mobile_क्रमागत(काष्ठा snd_kcontrol *kcontrol,
-					 काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
-	काष्ठा wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
-	काष्ठा wm8994 *control = wm8994->wm8994;
-	काष्ठा wm8994_pdata *pdata = &control->pdata;
-	पूर्णांक block = wm8994_get_retune_mobile_block(kcontrol->id.name);
-	पूर्णांक value = ucontrol->value.क्रमागतerated.item[0];
+static int wm8994_put_retune_mobile_enum(struct snd_kcontrol *kcontrol,
+					 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+	struct wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
+	struct wm8994 *control = wm8994->wm8994;
+	struct wm8994_pdata *pdata = &control->pdata;
+	int block = wm8994_get_retune_mobile_block(kcontrol->id.name);
+	int value = ucontrol->value.enumerated.item[0];
 
-	अगर (block < 0)
-		वापस block;
+	if (block < 0)
+		return block;
 
-	अगर (value >= pdata->num_retune_mobile_cfgs)
-		वापस -EINVAL;
+	if (value >= pdata->num_retune_mobile_cfgs)
+		return -EINVAL;
 
 	wm8994->retune_mobile_cfg[block] = value;
 
 	wm8994_set_retune_mobile(component, block);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wm8994_get_retune_mobile_क्रमागत(काष्ठा snd_kcontrol *kcontrol,
-					 काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
-	काष्ठा wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
-	पूर्णांक block = wm8994_get_retune_mobile_block(kcontrol->id.name);
+static int wm8994_get_retune_mobile_enum(struct snd_kcontrol *kcontrol,
+					 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+	struct wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
+	int block = wm8994_get_retune_mobile_block(kcontrol->id.name);
 
-	अगर (block < 0)
-		वापस block;
+	if (block < 0)
+		return block;
 
-	ucontrol->value.क्रमागतerated.item[0] = wm8994->retune_mobile_cfg[block];
+	ucontrol->value.enumerated.item[0] = wm8994->retune_mobile_cfg[block];
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर अक्षर *aअगर_chan_src_text[] = अणु
+static const char *aif_chan_src_text[] = {
 	"Left", "Right"
-पूर्ण;
+};
 
-अटल SOC_ENUM_SINGLE_DECL(aअगर1adcl_src,
-			    WM8994_AIF1_CONTROL_1, 15, aअगर_chan_src_text);
+static SOC_ENUM_SINGLE_DECL(aif1adcl_src,
+			    WM8994_AIF1_CONTROL_1, 15, aif_chan_src_text);
 
-अटल SOC_ENUM_SINGLE_DECL(aअगर1adcr_src,
-			    WM8994_AIF1_CONTROL_1, 14, aअगर_chan_src_text);
+static SOC_ENUM_SINGLE_DECL(aif1adcr_src,
+			    WM8994_AIF1_CONTROL_1, 14, aif_chan_src_text);
 
-अटल SOC_ENUM_SINGLE_DECL(aअगर2adcl_src,
-			    WM8994_AIF2_CONTROL_1, 15, aअगर_chan_src_text);
+static SOC_ENUM_SINGLE_DECL(aif2adcl_src,
+			    WM8994_AIF2_CONTROL_1, 15, aif_chan_src_text);
 
-अटल SOC_ENUM_SINGLE_DECL(aअगर2adcr_src,
-			    WM8994_AIF2_CONTROL_1, 14, aअगर_chan_src_text);
+static SOC_ENUM_SINGLE_DECL(aif2adcr_src,
+			    WM8994_AIF2_CONTROL_1, 14, aif_chan_src_text);
 
-अटल SOC_ENUM_SINGLE_DECL(aअगर1dacl_src,
-			    WM8994_AIF1_CONTROL_2, 15, aअगर_chan_src_text);
+static SOC_ENUM_SINGLE_DECL(aif1dacl_src,
+			    WM8994_AIF1_CONTROL_2, 15, aif_chan_src_text);
 
-अटल SOC_ENUM_SINGLE_DECL(aअगर1dacr_src,
-			    WM8994_AIF1_CONTROL_2, 14, aअगर_chan_src_text);
+static SOC_ENUM_SINGLE_DECL(aif1dacr_src,
+			    WM8994_AIF1_CONTROL_2, 14, aif_chan_src_text);
 
-अटल SOC_ENUM_SINGLE_DECL(aअगर2dacl_src,
-			    WM8994_AIF2_CONTROL_2, 15, aअगर_chan_src_text);
+static SOC_ENUM_SINGLE_DECL(aif2dacl_src,
+			    WM8994_AIF2_CONTROL_2, 15, aif_chan_src_text);
 
-अटल SOC_ENUM_SINGLE_DECL(aअगर2dacr_src,
-			    WM8994_AIF2_CONTROL_2, 14, aअगर_chan_src_text);
+static SOC_ENUM_SINGLE_DECL(aif2dacr_src,
+			    WM8994_AIF2_CONTROL_2, 14, aif_chan_src_text);
 
-अटल स्थिर अक्षर *osr_text[] = अणु
+static const char *osr_text[] = {
 	"Low Power", "High Performance",
-पूर्ण;
+};
 
-अटल SOC_ENUM_SINGLE_DECL(dac_osr,
+static SOC_ENUM_SINGLE_DECL(dac_osr,
 			    WM8994_OVERSAMPLING, 0, osr_text);
 
-अटल SOC_ENUM_SINGLE_DECL(adc_osr,
+static SOC_ENUM_SINGLE_DECL(adc_osr,
 			    WM8994_OVERSAMPLING, 1, osr_text);
 
-अटल स्थिर काष्ठा snd_kcontrol_new wm8994_common_snd_controls[] = अणु
+static const struct snd_kcontrol_new wm8994_common_snd_controls[] = {
 SOC_DOUBLE_R_TLV("AIF1ADC1 Volume", WM8994_AIF1_ADC1_LEFT_VOLUME,
 		 WM8994_AIF1_ADC1_RIGHT_VOLUME,
 		 1, 119, 0, digital_tlv),
@@ -547,23 +546,23 @@ SOC_DOUBLE_R_TLV("AIF2ADC Volume", WM8994_AIF2_ADC_LEFT_VOLUME,
 		 WM8994_AIF2_ADC_RIGHT_VOLUME,
 		 1, 119, 0, digital_tlv),
 
-SOC_ENUM("AIF1ADCL Source", aअगर1adcl_src),
-SOC_ENUM("AIF1ADCR Source", aअगर1adcr_src),
-SOC_ENUM("AIF2ADCL Source", aअगर2adcl_src),
-SOC_ENUM("AIF2ADCR Source", aअगर2adcr_src),
+SOC_ENUM("AIF1ADCL Source", aif1adcl_src),
+SOC_ENUM("AIF1ADCR Source", aif1adcr_src),
+SOC_ENUM("AIF2ADCL Source", aif2adcl_src),
+SOC_ENUM("AIF2ADCR Source", aif2adcr_src),
 
-SOC_ENUM("AIF1DACL Source", aअगर1dacl_src),
-SOC_ENUM("AIF1DACR Source", aअगर1dacr_src),
-SOC_ENUM("AIF2DACL Source", aअगर2dacl_src),
-SOC_ENUM("AIF2DACR Source", aअगर2dacr_src),
+SOC_ENUM("AIF1DACL Source", aif1dacl_src),
+SOC_ENUM("AIF1DACR Source", aif1dacr_src),
+SOC_ENUM("AIF2DACL Source", aif2dacl_src),
+SOC_ENUM("AIF2DACR Source", aif2dacr_src),
 
 SOC_DOUBLE_R_TLV("AIF1DAC1 Volume", WM8994_AIF1_DAC1_LEFT_VOLUME,
 		 WM8994_AIF1_DAC1_RIGHT_VOLUME, 1, 96, 0, digital_tlv),
 SOC_DOUBLE_R_TLV("AIF2DAC Volume", WM8994_AIF2_DAC_LEFT_VOLUME,
 		 WM8994_AIF2_DAC_RIGHT_VOLUME, 1, 96, 0, digital_tlv),
 
-SOC_SINGLE_TLV("AIF1 Boost Volume", WM8994_AIF1_CONTROL_2, 10, 3, 0, aअगर_tlv),
-SOC_SINGLE_TLV("AIF2 Boost Volume", WM8994_AIF2_CONTROL_2, 10, 3, 0, aअगर_tlv),
+SOC_SINGLE_TLV("AIF1 Boost Volume", WM8994_AIF1_CONTROL_2, 10, 3, 0, aif_tlv),
+SOC_SINGLE_TLV("AIF2 Boost Volume", WM8994_AIF2_CONTROL_2, 10, 3, 0, aif_tlv),
 
 SOC_SINGLE("AIF1DAC1 EQ Switch", WM8994_AIF1_DAC1_EQ_GAINS_1, 0, 1, 0),
 SOC_SINGLE("AIF2 EQ Switch", WM8994_AIF2_EQ_GAINS_1, 0, 1, 0),
@@ -587,10 +586,10 @@ SOC_SINGLE_TLV("DAC2 Left Sidetone Volume", WM8994_DAC2_MIXER_VOLUMES,
 SOC_ENUM("Sidetone HPF Mux", sidetone_hpf),
 SOC_SINGLE("Sidetone HPF Switch", WM8994_SIDETONE, 6, 1, 0),
 
-SOC_ENUM("AIF1ADC1 HPF Mode", aअगर1adc1_hpf),
+SOC_ENUM("AIF1ADC1 HPF Mode", aif1adc1_hpf),
 SOC_DOUBLE("AIF1ADC1 HPF Switch", WM8994_AIF1_ADC1_FILTERS, 12, 11, 1, 0),
 
-SOC_ENUM("AIF2ADC HPF Mode", aअगर2adc_hpf),
+SOC_ENUM("AIF2ADC HPF Mode", aif2adc_hpf),
 SOC_DOUBLE("AIF2ADC HPF Switch", WM8994_AIF2_ADC_FILTERS, 12, 11, 1, 0),
 
 SOC_ENUM("ADC OSR", adc_osr),
@@ -628,10 +627,10 @@ SOC_SINGLE_TLV("AIF2DAC 3D Stereo Volume", WM8994_AIF2_DAC_FILTERS_2,
 	       10, 15, 0, wm8994_3d_tlv),
 SOC_SINGLE("AIF2DAC 3D Stereo Switch", WM8994_AIF2_DAC_FILTERS_2,
 	   8, 1, 0),
-पूर्ण;
+};
 
 /* Controls not available on WM1811 */
-अटल स्थिर काष्ठा snd_kcontrol_new wm8994_snd_controls[] = अणु
+static const struct snd_kcontrol_new wm8994_snd_controls[] = {
 SOC_DOUBLE_R_TLV("AIF1ADC2 Volume", WM8994_AIF1_ADC2_LEFT_VOLUME,
 		 WM8994_AIF1_ADC2_RIGHT_VOLUME,
 		 1, 119, 0, digital_tlv),
@@ -644,11 +643,11 @@ WM8994_DRC_SWITCH("AIF1DAC2 DRC Switch", WM8994_AIF1_DRC2_1, 2),
 WM8994_DRC_SWITCH("AIF1ADC2L DRC Switch", WM8994_AIF1_DRC2_1, 1),
 WM8994_DRC_SWITCH("AIF1ADC2R DRC Switch", WM8994_AIF1_DRC2_1, 0),
 
-SOC_ENUM("AIF1ADC2 HPF Mode", aअगर1adc2_hpf),
+SOC_ENUM("AIF1ADC2 HPF Mode", aif1adc2_hpf),
 SOC_DOUBLE("AIF1ADC2 HPF Switch", WM8994_AIF1_ADC2_FILTERS, 12, 11, 1, 0),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new wm8994_eq_controls[] = अणु
+static const struct snd_kcontrol_new wm8994_eq_controls[] = {
 SOC_SINGLE_TLV("AIF1DAC1 EQ1 Volume", WM8994_AIF1_DAC1_EQ_GAINS_1, 11, 31, 0,
 	       eq_tlv),
 SOC_SINGLE_TLV("AIF1DAC1 EQ2 Volume", WM8994_AIF1_DAC1_EQ_GAINS_1, 6, 31, 0,
@@ -681,9 +680,9 @@ SOC_SINGLE_TLV("AIF2 EQ4 Volume", WM8994_AIF2_EQ_GAINS_2, 11, 31, 0,
 	       eq_tlv),
 SOC_SINGLE_TLV("AIF2 EQ5 Volume", WM8994_AIF2_EQ_GAINS_2, 6, 31, 0,
 	       eq_tlv),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new wm8994_drc_controls[] = अणु
+static const struct snd_kcontrol_new wm8994_drc_controls[] = {
 SND_SOC_BYTES_MASK("AIF1.1 DRC", WM8994_AIF1_DRC1_1, 5,
 		   WM8994_AIF1DAC1_DRC_ENA | WM8994_AIF1ADC1L_DRC_ENA |
 		   WM8994_AIF1ADC1R_DRC_ENA),
@@ -693,79 +692,79 @@ SND_SOC_BYTES_MASK("AIF1.2 DRC", WM8994_AIF1_DRC2_1, 5,
 SND_SOC_BYTES_MASK("AIF2 DRC", WM8994_AIF2_DRC_1, 5,
 		   WM8994_AIF2DAC_DRC_ENA | WM8994_AIF2ADCL_DRC_ENA |
 		   WM8994_AIF2ADCR_DRC_ENA),
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *wm8958_ng_text[] = अणु
+static const char *wm8958_ng_text[] = {
 	"30ms", "125ms", "250ms", "500ms",
-पूर्ण;
+};
 
-अटल SOC_ENUM_SINGLE_DECL(wm8958_aअगर1dac1_ng_hold,
+static SOC_ENUM_SINGLE_DECL(wm8958_aif1dac1_ng_hold,
 			    WM8958_AIF1_DAC1_NOISE_GATE,
 			    WM8958_AIF1DAC1_NG_THR_SHIFT,
 			    wm8958_ng_text);
 
-अटल SOC_ENUM_SINGLE_DECL(wm8958_aअगर1dac2_ng_hold,
+static SOC_ENUM_SINGLE_DECL(wm8958_aif1dac2_ng_hold,
 			    WM8958_AIF1_DAC2_NOISE_GATE,
 			    WM8958_AIF1DAC2_NG_THR_SHIFT,
 			    wm8958_ng_text);
 
-अटल SOC_ENUM_SINGLE_DECL(wm8958_aअगर2dac_ng_hold,
+static SOC_ENUM_SINGLE_DECL(wm8958_aif2dac_ng_hold,
 			    WM8958_AIF2_DAC_NOISE_GATE,
 			    WM8958_AIF2DAC_NG_THR_SHIFT,
 			    wm8958_ng_text);
 
-अटल स्थिर काष्ठा snd_kcontrol_new wm8958_snd_controls[] = अणु
-SOC_SINGLE_TLV("AIF3 Boost Volume", WM8958_AIF3_CONTROL_2, 10, 3, 0, aअगर_tlv),
+static const struct snd_kcontrol_new wm8958_snd_controls[] = {
+SOC_SINGLE_TLV("AIF3 Boost Volume", WM8958_AIF3_CONTROL_2, 10, 3, 0, aif_tlv),
 
 SOC_SINGLE("AIF1DAC1 Noise Gate Switch", WM8958_AIF1_DAC1_NOISE_GATE,
 	   WM8958_AIF1DAC1_NG_ENA_SHIFT, 1, 0),
-SOC_ENUM("AIF1DAC1 Noise Gate Hold Time", wm8958_aअगर1dac1_ng_hold),
+SOC_ENUM("AIF1DAC1 Noise Gate Hold Time", wm8958_aif1dac1_ng_hold),
 SOC_SINGLE_TLV("AIF1DAC1 Noise Gate Threshold Volume",
 	       WM8958_AIF1_DAC1_NOISE_GATE, WM8958_AIF1DAC1_NG_THR_SHIFT,
 	       7, 1, ng_tlv),
 
 SOC_SINGLE("AIF1DAC2 Noise Gate Switch", WM8958_AIF1_DAC2_NOISE_GATE,
 	   WM8958_AIF1DAC2_NG_ENA_SHIFT, 1, 0),
-SOC_ENUM("AIF1DAC2 Noise Gate Hold Time", wm8958_aअगर1dac2_ng_hold),
+SOC_ENUM("AIF1DAC2 Noise Gate Hold Time", wm8958_aif1dac2_ng_hold),
 SOC_SINGLE_TLV("AIF1DAC2 Noise Gate Threshold Volume",
 	       WM8958_AIF1_DAC2_NOISE_GATE, WM8958_AIF1DAC2_NG_THR_SHIFT,
 	       7, 1, ng_tlv),
 
 SOC_SINGLE("AIF2DAC Noise Gate Switch", WM8958_AIF2_DAC_NOISE_GATE,
 	   WM8958_AIF2DAC_NG_ENA_SHIFT, 1, 0),
-SOC_ENUM("AIF2DAC Noise Gate Hold Time", wm8958_aअगर2dac_ng_hold),
+SOC_ENUM("AIF2DAC Noise Gate Hold Time", wm8958_aif2dac_ng_hold),
 SOC_SINGLE_TLV("AIF2DAC Noise Gate Threshold Volume",
 	       WM8958_AIF2_DAC_NOISE_GATE, WM8958_AIF2DAC_NG_THR_SHIFT,
 	       7, 1, ng_tlv),
-पूर्ण;
+};
 
-/* We run all mode setting through a function to enक्रमce audio mode */
-अटल व्योम wm1811_jackdet_set_mode(काष्ठा snd_soc_component *component, u16 mode)
-अणु
-	काष्ठा wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
+/* We run all mode setting through a function to enforce audio mode */
+static void wm1811_jackdet_set_mode(struct snd_soc_component *component, u16 mode)
+{
+	struct wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
 
-	अगर (!wm8994->jackdet || !wm8994->micdet[0].jack)
-		वापस;
+	if (!wm8994->jackdet || !wm8994->micdet[0].jack)
+		return;
 
-	अगर (wm8994->active_refcount)
+	if (wm8994->active_refcount)
 		mode = WM1811_JACKDET_MODE_AUDIO;
 
-	अगर (mode == wm8994->jackdet_mode)
-		वापस;
+	if (mode == wm8994->jackdet_mode)
+		return;
 
 	wm8994->jackdet_mode = mode;
 
-	/* Always use audio mode to detect जबतक the प्रणाली is active */
-	अगर (mode != WM1811_JACKDET_MODE_NONE)
+	/* Always use audio mode to detect while the system is active */
+	if (mode != WM1811_JACKDET_MODE_NONE)
 		mode = WM1811_JACKDET_MODE_AUDIO;
 
 	snd_soc_component_update_bits(component, WM8994_ANTIPOP_2,
 			    WM1811_JACKDET_MODE_MASK, mode);
-पूर्ण
+}
 
-अटल व्योम active_reference(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
+static void active_reference(struct snd_soc_component *component)
+{
+	struct wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
 
 	mutex_lock(&wm8994->accdet_lock);
 
@@ -774,15 +773,15 @@ SOC_SINGLE_TLV("AIF2DAC Noise Gate Threshold Volume",
 	dev_dbg(component->dev, "Active refcount incremented, now %d\n",
 		wm8994->active_refcount);
 
-	/* If we're using jack detection go पूर्णांकo audio mode */
+	/* If we're using jack detection go into audio mode */
 	wm1811_jackdet_set_mode(component, WM1811_JACKDET_MODE_AUDIO);
 
 	mutex_unlock(&wm8994->accdet_lock);
-पूर्ण
+}
 
-अटल व्योम active_dereference(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
+static void active_dereference(struct snd_soc_component *component)
+{
+	struct wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
 	u16 mode;
 
 	mutex_lock(&wm8994->accdet_lock);
@@ -792,76 +791,76 @@ SOC_SINGLE_TLV("AIF2DAC Noise Gate Threshold Volume",
 	dev_dbg(component->dev, "Active refcount decremented, now %d\n",
 		wm8994->active_refcount);
 
-	अगर (wm8994->active_refcount == 0) अणु
-		/* Go पूर्णांकo appropriate detection only mode */
-		अगर (wm8994->jack_mic || wm8994->mic_detecting)
+	if (wm8994->active_refcount == 0) {
+		/* Go into appropriate detection only mode */
+		if (wm8994->jack_mic || wm8994->mic_detecting)
 			mode = WM1811_JACKDET_MODE_MIC;
-		अन्यथा
+		else
 			mode = WM1811_JACKDET_MODE_JACK;
 
 		wm1811_jackdet_set_mode(component, mode);
-	पूर्ण
+	}
 
 	mutex_unlock(&wm8994->accdet_lock);
-पूर्ण
+}
 
-अटल पूर्णांक clk_sys_event(काष्ठा snd_soc_dapm_widget *w,
-			 काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
-	काष्ठा wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
+static int clk_sys_event(struct snd_soc_dapm_widget *w,
+			 struct snd_kcontrol *kcontrol, int event)
+{
+	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+	struct wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
 
-	चयन (event) अणु
-	हाल SND_SOC_DAPM_PRE_PMU:
-		वापस configure_घड़ी(component);
+	switch (event) {
+	case SND_SOC_DAPM_PRE_PMU:
+		return configure_clock(component);
 
-	हाल SND_SOC_DAPM_POST_PMU:
+	case SND_SOC_DAPM_POST_PMU:
 		/*
-		 * JACKDET won't run until we start the घड़ी and it
-		 * only reports deltas, make sure we notअगरy the state
+		 * JACKDET won't run until we start the clock and it
+		 * only reports deltas, make sure we notify the state
 		 * up the stack on startup.  Use a *very* generous
-		 * समयout क्रम paranoia, there's no urgency and we
-		 * करोn't want false reports.
+		 * timeout for paranoia, there's no urgency and we
+		 * don't want false reports.
 		 */
-		अगर (wm8994->jackdet && !wm8994->clk_has_run) अणु
-			queue_delayed_work(प्रणाली_घातer_efficient_wq,
+		if (wm8994->jackdet && !wm8994->clk_has_run) {
+			queue_delayed_work(system_power_efficient_wq,
 					   &wm8994->jackdet_bootstrap,
-					   msecs_to_jअगरfies(1000));
+					   msecs_to_jiffies(1000));
 			wm8994->clk_has_run = true;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल SND_SOC_DAPM_POST_PMD:
-		configure_घड़ी(component);
-		अवरोध;
-	पूर्ण
+	case SND_SOC_DAPM_POST_PMD:
+		configure_clock(component);
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम vmid_reference(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
+static void vmid_reference(struct snd_soc_component *component)
+{
+	struct wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
 
-	pm_runसमय_get_sync(component->dev);
+	pm_runtime_get_sync(component->dev);
 
 	wm8994->vmid_refcount++;
 
 	dev_dbg(component->dev, "Referencing VMID, refcount is now %d\n",
 		wm8994->vmid_refcount);
 
-	अगर (wm8994->vmid_refcount == 1) अणु
+	if (wm8994->vmid_refcount == 1) {
 		snd_soc_component_update_bits(component, WM8994_ANTIPOP_1,
 				    WM8994_LINEOUT1_DISCH |
 				    WM8994_LINEOUT2_DISCH, 0);
 
 		wm_hubs_vmid_ena(component);
 
-		चयन (wm8994->vmid_mode) अणु
-		शेष:
-			WARN_ON(शून्य == "Invalid VMID mode");
+		switch (wm8994->vmid_mode) {
+		default:
+			WARN_ON(NULL == "Invalid VMID mode");
 			fallthrough;
-		हाल WM8994_VMID_NORMAL:
+		case WM8994_VMID_NORMAL:
 			/* Startup bias, VMID ramp & buffer */
 			snd_soc_component_update_bits(component, WM8994_ANTIPOP_2,
 					    WM8994_BIAS_SRC |
@@ -886,9 +885,9 @@ SOC_SINGLE_TLV("AIF2DAC Noise Gate Threshold Volume",
 					    WM8994_VMID_RAMP_MASK |
 					    WM8994_BIAS_SRC,
 					    0);
-			अवरोध;
+			break;
 
-		हाल WM8994_VMID_FORCE:
+		case WM8994_VMID_FORCE:
 			/* Startup bias, slow VMID ramp & buffer */
 			snd_soc_component_update_bits(component, WM8994_ANTIPOP_2,
 					    WM8994_BIAS_SRC |
@@ -913,36 +912,36 @@ SOC_SINGLE_TLV("AIF2DAC Noise Gate Threshold Volume",
 					    WM8994_VMID_RAMP_MASK |
 					    WM8994_BIAS_SRC,
 					    0);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		}
+	}
+}
 
-अटल व्योम vmid_dereference(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
+static void vmid_dereference(struct snd_soc_component *component)
+{
+	struct wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
 
 	wm8994->vmid_refcount--;
 
 	dev_dbg(component->dev, "Dereferencing VMID, refcount is now %d\n",
 		wm8994->vmid_refcount);
 
-	अगर (wm8994->vmid_refcount == 0) अणु
-		अगर (wm8994->hubs.lineout1_se)
+	if (wm8994->vmid_refcount == 0) {
+		if (wm8994->hubs.lineout1_se)
 			snd_soc_component_update_bits(component, WM8994_POWER_MANAGEMENT_3,
 					    WM8994_LINEOUT1N_ENA |
 					    WM8994_LINEOUT1P_ENA,
 					    WM8994_LINEOUT1N_ENA |
 					    WM8994_LINEOUT1P_ENA);
 
-		अगर (wm8994->hubs.lineout2_se)
+		if (wm8994->hubs.lineout2_se)
 			snd_soc_component_update_bits(component, WM8994_POWER_MANAGEMENT_3,
 					    WM8994_LINEOUT2N_ENA |
 					    WM8994_LINEOUT2P_ENA,
 					    WM8994_LINEOUT2N_ENA |
 					    WM8994_LINEOUT2P_ENA);
 
-		/* Start disअक्षरging VMID */
+		/* Start discharging VMID */
 		snd_soc_component_update_bits(component, WM8994_ANTIPOP_2,
 				    WM8994_BIAS_SRC |
 				    WM8994_VMID_DISCH,
@@ -954,7 +953,7 @@ SOC_SINGLE_TLV("AIF2DAC Noise Gate Threshold Volume",
 
 		msleep(400);
 
-		/* Active disअक्षरge */
+		/* Active discharge */
 		snd_soc_component_update_bits(component, WM8994_ANTIPOP_1,
 				    WM8994_LINEOUT1_DISCH |
 				    WM8994_LINEOUT2_DISCH,
@@ -976,176 +975,176 @@ SOC_SINGLE_TLV("AIF2DAC Noise Gate Threshold Volume",
 
 		snd_soc_component_update_bits(component, WM8994_POWER_MANAGEMENT_1,
 				    WM8994_VMID_SEL_MASK, 0);
-	पूर्ण
+	}
 
-	pm_runसमय_put(component->dev);
-पूर्ण
+	pm_runtime_put(component->dev);
+}
 
-अटल पूर्णांक vmid_event(काष्ठा snd_soc_dapm_widget *w,
-		      काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+static int vmid_event(struct snd_soc_dapm_widget *w,
+		      struct snd_kcontrol *kcontrol, int event)
+{
+	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
 
-	चयन (event) अणु
-	हाल SND_SOC_DAPM_PRE_PMU:
+	switch (event) {
+	case SND_SOC_DAPM_PRE_PMU:
 		vmid_reference(component);
-		अवरोध;
+		break;
 
-	हाल SND_SOC_DAPM_POST_PMD:
+	case SND_SOC_DAPM_POST_PMD:
 		vmid_dereference(component);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool wm8994_check_class_w_digital(काष्ठा snd_soc_component *component)
-अणु
-	पूर्णांक source = 0;  /* GCC flow analysis can't track enable */
-	पूर्णांक reg, reg_r;
+static bool wm8994_check_class_w_digital(struct snd_soc_component *component)
+{
+	int source = 0;  /* GCC flow analysis can't track enable */
+	int reg, reg_r;
 
-	/* We also need the same AIF source क्रम L/R and only one path */
-	reg = snd_soc_component_पढ़ो(component, WM8994_DAC1_LEFT_MIXER_ROUTING);
-	चयन (reg) अणु
-	हाल WM8994_AIF2DACL_TO_DAC1L:
+	/* We also need the same AIF source for L/R and only one path */
+	reg = snd_soc_component_read(component, WM8994_DAC1_LEFT_MIXER_ROUTING);
+	switch (reg) {
+	case WM8994_AIF2DACL_TO_DAC1L:
 		dev_vdbg(component->dev, "Class W source AIF2DAC\n");
 		source = 2 << WM8994_CP_DYN_SRC_SEL_SHIFT;
-		अवरोध;
-	हाल WM8994_AIF1DAC2L_TO_DAC1L:
+		break;
+	case WM8994_AIF1DAC2L_TO_DAC1L:
 		dev_vdbg(component->dev, "Class W source AIF1DAC2\n");
 		source = 1 << WM8994_CP_DYN_SRC_SEL_SHIFT;
-		अवरोध;
-	हाल WM8994_AIF1DAC1L_TO_DAC1L:
+		break;
+	case WM8994_AIF1DAC1L_TO_DAC1L:
 		dev_vdbg(component->dev, "Class W source AIF1DAC1\n");
 		source = 0 << WM8994_CP_DYN_SRC_SEL_SHIFT;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_vdbg(component->dev, "DAC mixer setting: %x\n", reg);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	reg_r = snd_soc_component_पढ़ो(component, WM8994_DAC1_RIGHT_MIXER_ROUTING);
-	अगर (reg_r != reg) अणु
+	reg_r = snd_soc_component_read(component, WM8994_DAC1_RIGHT_MIXER_ROUTING);
+	if (reg_r != reg) {
 		dev_vdbg(component->dev, "Left and right DAC mixers different\n");
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	/* Set the source up */
 	snd_soc_component_update_bits(component, WM8994_CLASS_W_1,
 			    WM8994_CP_DYN_SRC_SEL_MASK, source);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम wm8994_update_vu_bits(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
-	काष्ठा wm8994 *control = wm8994->wm8994;
-	पूर्णांक i;
+static void wm8994_update_vu_bits(struct snd_soc_component *component)
+{
+	struct wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
+	struct wm8994 *control = wm8994->wm8994;
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(wm8994_vu_bits); i++)
-		snd_soc_component_ग_लिखो(component, wm8994_vu_bits[i].reg,
-					snd_soc_component_पढ़ो(component,
+	for (i = 0; i < ARRAY_SIZE(wm8994_vu_bits); i++)
+		snd_soc_component_write(component, wm8994_vu_bits[i].reg,
+					snd_soc_component_read(component,
 						       wm8994_vu_bits[i].reg));
-	अगर (control->type == WM1811)
-		वापस;
+	if (control->type == WM1811)
+		return;
 
-	क्रम (i = 0; i < ARRAY_SIZE(wm8994_adc2_dac2_vu_bits); i++)
-		snd_soc_component_ग_लिखो(component,
+	for (i = 0; i < ARRAY_SIZE(wm8994_adc2_dac2_vu_bits); i++)
+		snd_soc_component_write(component,
 				wm8994_adc2_dac2_vu_bits[i].reg,
-				snd_soc_component_पढ़ो(component,
+				snd_soc_component_read(component,
 					wm8994_adc2_dac2_vu_bits[i].reg));
-पूर्ण
+}
 
-अटल पूर्णांक aअगर_mclk_set(काष्ठा snd_soc_component *component, पूर्णांक aअगर, bool enable)
-अणु
-	काष्ठा wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
-	अचिन्हित पूर्णांक offset, val, clk_idx;
-	पूर्णांक ret;
+static int aif_mclk_set(struct snd_soc_component *component, int aif, bool enable)
+{
+	struct wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
+	unsigned int offset, val, clk_idx;
+	int ret;
 
-	अगर (aअगर)
+	if (aif)
 		offset = 4;
-	अन्यथा
+	else
 		offset = 0;
 
-	val = snd_soc_component_पढ़ो(component, WM8994_AIF1_CLOCKING_1 + offset);
+	val = snd_soc_component_read(component, WM8994_AIF1_CLOCKING_1 + offset);
 	val &= WM8994_AIF1CLK_SRC_MASK;
 
-	चयन (val) अणु
-	हाल 0:
+	switch (val) {
+	case 0:
 		clk_idx = WM8994_MCLK1;
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		clk_idx = WM8994_MCLK2;
-		अवरोध;
-	शेष:
-		वापस 0;
-	पूर्ण
+		break;
+	default:
+		return 0;
+	}
 
-	अगर (enable) अणु
+	if (enable) {
 		ret = clk_prepare_enable(wm8994->mclk[clk_idx].clk);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(component->dev,	"Failed to enable MCLK%d\n",
 				clk_idx);
-			वापस ret;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return ret;
+		}
+	} else {
 		clk_disable_unprepare(wm8994->mclk[clk_idx].clk);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक aअगर1clk_ev(काष्ठा snd_soc_dapm_widget *w,
-		      काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
-	काष्ठा wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
-	काष्ठा wm8994 *control = wm8994->wm8994;
-	पूर्णांक mask = WM8994_AIF1DAC1L_ENA | WM8994_AIF1DAC1R_ENA;
-	पूर्णांक ret;
-	पूर्णांक dac;
-	पूर्णांक adc;
-	पूर्णांक val;
+static int aif1clk_ev(struct snd_soc_dapm_widget *w,
+		      struct snd_kcontrol *kcontrol, int event)
+{
+	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+	struct wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
+	struct wm8994 *control = wm8994->wm8994;
+	int mask = WM8994_AIF1DAC1L_ENA | WM8994_AIF1DAC1R_ENA;
+	int ret;
+	int dac;
+	int adc;
+	int val;
 
-	चयन (control->type) अणु
-	हाल WM8994:
-	हाल WM8958:
+	switch (control->type) {
+	case WM8994:
+	case WM8958:
 		mask |= WM8994_AIF1DAC2L_ENA | WM8994_AIF1DAC2R_ENA;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	चयन (event) अणु
-	हाल SND_SOC_DAPM_PRE_PMU:
-		ret = aअगर_mclk_set(component, 0, true);
-		अगर (ret < 0)
-			वापस ret;
+	switch (event) {
+	case SND_SOC_DAPM_PRE_PMU:
+		ret = aif_mclk_set(component, 0, true);
+		if (ret < 0)
+			return ret;
 
-		/* Don't enable बारlot 2 अगर not in use */
-		अगर (wm8994->channels[0] <= 2)
+		/* Don't enable timeslot 2 if not in use */
+		if (wm8994->channels[0] <= 2)
 			mask &= ~(WM8994_AIF1DAC2L_ENA | WM8994_AIF1DAC2R_ENA);
 
-		val = snd_soc_component_पढ़ो(component, WM8994_AIF1_CONTROL_1);
-		अगर ((val & WM8994_AIF1ADCL_SRC) &&
+		val = snd_soc_component_read(component, WM8994_AIF1_CONTROL_1);
+		if ((val & WM8994_AIF1ADCL_SRC) &&
 		    (val & WM8994_AIF1ADCR_SRC))
 			adc = WM8994_AIF1ADC1R_ENA | WM8994_AIF1ADC2R_ENA;
-		अन्यथा अगर (!(val & WM8994_AIF1ADCL_SRC) &&
+		else if (!(val & WM8994_AIF1ADCL_SRC) &&
 			 !(val & WM8994_AIF1ADCR_SRC))
 			adc = WM8994_AIF1ADC1L_ENA | WM8994_AIF1ADC2L_ENA;
-		अन्यथा
+		else
 			adc = WM8994_AIF1ADC1R_ENA | WM8994_AIF1ADC2R_ENA |
 				WM8994_AIF1ADC1L_ENA | WM8994_AIF1ADC2L_ENA;
 
-		val = snd_soc_component_पढ़ो(component, WM8994_AIF1_CONTROL_2);
-		अगर ((val & WM8994_AIF1DACL_SRC) &&
+		val = snd_soc_component_read(component, WM8994_AIF1_CONTROL_2);
+		if ((val & WM8994_AIF1DACL_SRC) &&
 		    (val & WM8994_AIF1DACR_SRC))
 			dac = WM8994_AIF1DAC1R_ENA | WM8994_AIF1DAC2R_ENA;
-		अन्यथा अगर (!(val & WM8994_AIF1DACL_SRC) &&
+		else if (!(val & WM8994_AIF1DACL_SRC) &&
 			 !(val & WM8994_AIF1DACR_SRC))
 			dac = WM8994_AIF1DAC1L_ENA | WM8994_AIF1DAC2L_ENA;
-		अन्यथा
+		else
 			dac = WM8994_AIF1DAC1R_ENA | WM8994_AIF1DAC2R_ENA |
 				WM8994_AIF1DAC1L_ENA | WM8994_AIF1DAC2L_ENA;
 
@@ -1168,73 +1167,73 @@ SOC_SINGLE_TLV("AIF2DAC Noise Gate Threshold Volume",
 				    WM8994_AIF1DAC1L_ENA |
 				    WM8994_AIF1DAC2R_ENA |
 				    WM8994_AIF1DAC2L_ENA);
-		अवरोध;
+		break;
 
-	हाल SND_SOC_DAPM_POST_PMU:
+	case SND_SOC_DAPM_POST_PMU:
 		wm8994_update_vu_bits(component);
-		अवरोध;
+		break;
 
-	हाल SND_SOC_DAPM_PRE_PMD:
-	हाल SND_SOC_DAPM_POST_PMD:
+	case SND_SOC_DAPM_PRE_PMD:
+	case SND_SOC_DAPM_POST_PMD:
 		snd_soc_component_update_bits(component, WM8994_POWER_MANAGEMENT_5,
 				    mask, 0);
 		snd_soc_component_update_bits(component, WM8994_POWER_MANAGEMENT_4,
 				    mask, 0);
 
-		val = snd_soc_component_पढ़ो(component, WM8994_CLOCKING_1);
-		अगर (val & WM8994_AIF2DSPCLK_ENA)
+		val = snd_soc_component_read(component, WM8994_CLOCKING_1);
+		if (val & WM8994_AIF2DSPCLK_ENA)
 			val = WM8994_SYSDSPCLK_ENA;
-		अन्यथा
+		else
 			val = 0;
 		snd_soc_component_update_bits(component, WM8994_CLOCKING_1,
 				    WM8994_SYSDSPCLK_ENA |
 				    WM8994_AIF1DSPCLK_ENA, val);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	चयन (event) अणु
-	हाल SND_SOC_DAPM_POST_PMD:
-		aअगर_mclk_set(component, 0, false);
-		अवरोध;
-	पूर्ण
+	switch (event) {
+	case SND_SOC_DAPM_POST_PMD:
+		aif_mclk_set(component, 0, false);
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक aअगर2clk_ev(काष्ठा snd_soc_dapm_widget *w,
-		      काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
-	पूर्णांक ret;
-	पूर्णांक dac;
-	पूर्णांक adc;
-	पूर्णांक val;
+static int aif2clk_ev(struct snd_soc_dapm_widget *w,
+		      struct snd_kcontrol *kcontrol, int event)
+{
+	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+	int ret;
+	int dac;
+	int adc;
+	int val;
 
-	चयन (event) अणु
-	हाल SND_SOC_DAPM_PRE_PMU:
-		ret = aअगर_mclk_set(component, 1, true);
-		अगर (ret < 0)
-			वापस ret;
+	switch (event) {
+	case SND_SOC_DAPM_PRE_PMU:
+		ret = aif_mclk_set(component, 1, true);
+		if (ret < 0)
+			return ret;
 
-		val = snd_soc_component_पढ़ो(component, WM8994_AIF2_CONTROL_1);
-		अगर ((val & WM8994_AIF2ADCL_SRC) &&
+		val = snd_soc_component_read(component, WM8994_AIF2_CONTROL_1);
+		if ((val & WM8994_AIF2ADCL_SRC) &&
 		    (val & WM8994_AIF2ADCR_SRC))
 			adc = WM8994_AIF2ADCR_ENA;
-		अन्यथा अगर (!(val & WM8994_AIF2ADCL_SRC) &&
+		else if (!(val & WM8994_AIF2ADCL_SRC) &&
 			 !(val & WM8994_AIF2ADCR_SRC))
 			adc = WM8994_AIF2ADCL_ENA;
-		अन्यथा
+		else
 			adc = WM8994_AIF2ADCL_ENA | WM8994_AIF2ADCR_ENA;
 
 
-		val = snd_soc_component_पढ़ो(component, WM8994_AIF2_CONTROL_2);
-		अगर ((val & WM8994_AIF2DACL_SRC) &&
+		val = snd_soc_component_read(component, WM8994_AIF2_CONTROL_2);
+		if ((val & WM8994_AIF2DACL_SRC) &&
 		    (val & WM8994_AIF2DACR_SRC))
 			dac = WM8994_AIF2DACR_ENA;
-		अन्यथा अगर (!(val & WM8994_AIF2DACL_SRC) &&
+		else if (!(val & WM8994_AIF2DACL_SRC) &&
 			 !(val & WM8994_AIF2DACR_SRC))
 			dac = WM8994_AIF2DACL_ENA;
-		अन्यथा
+		else
 			dac = WM8994_AIF2DACL_ENA | WM8994_AIF2DACR_ENA;
 
 		snd_soc_component_update_bits(component, WM8994_POWER_MANAGEMENT_4,
@@ -1258,14 +1257,14 @@ SOC_SINGLE_TLV("AIF2DAC Noise Gate Threshold Volume",
 				    WM8994_AIF2DACR_ENA,
 				    WM8994_AIF2DACL_ENA |
 				    WM8994_AIF2DACR_ENA);
-		अवरोध;
+		break;
 
-	हाल SND_SOC_DAPM_POST_PMU:
+	case SND_SOC_DAPM_POST_PMU:
 		wm8994_update_vu_bits(component);
-		अवरोध;
+		break;
 
-	हाल SND_SOC_DAPM_PRE_PMD:
-	हाल SND_SOC_DAPM_POST_PMD:
+	case SND_SOC_DAPM_PRE_PMD:
+	case SND_SOC_DAPM_POST_PMD:
 		snd_soc_component_update_bits(component, WM8994_POWER_MANAGEMENT_5,
 				    WM8994_AIF2DACL_ENA |
 				    WM8994_AIF2DACR_ENA, 0);
@@ -1273,217 +1272,217 @@ SOC_SINGLE_TLV("AIF2DAC Noise Gate Threshold Volume",
 				    WM8994_AIF2ADCL_ENA |
 				    WM8994_AIF2ADCR_ENA, 0);
 
-		val = snd_soc_component_पढ़ो(component, WM8994_CLOCKING_1);
-		अगर (val & WM8994_AIF1DSPCLK_ENA)
+		val = snd_soc_component_read(component, WM8994_CLOCKING_1);
+		if (val & WM8994_AIF1DSPCLK_ENA)
 			val = WM8994_SYSDSPCLK_ENA;
-		अन्यथा
+		else
 			val = 0;
 		snd_soc_component_update_bits(component, WM8994_CLOCKING_1,
 				    WM8994_SYSDSPCLK_ENA |
 				    WM8994_AIF2DSPCLK_ENA, val);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	चयन (event) अणु
-	हाल SND_SOC_DAPM_POST_PMD:
-		aअगर_mclk_set(component, 1, false);
-		अवरोध;
-	पूर्ण
+	switch (event) {
+	case SND_SOC_DAPM_POST_PMD:
+		aif_mclk_set(component, 1, false);
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक aअगर1clk_late_ev(काष्ठा snd_soc_dapm_widget *w,
-			   काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
-	काष्ठा wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
+static int aif1clk_late_ev(struct snd_soc_dapm_widget *w,
+			   struct snd_kcontrol *kcontrol, int event)
+{
+	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+	struct wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
 
-	चयन (event) अणु
-	हाल SND_SOC_DAPM_PRE_PMU:
-		wm8994->aअगर1clk_enable = 1;
-		अवरोध;
-	हाल SND_SOC_DAPM_POST_PMD:
-		wm8994->aअगर1clk_disable = 1;
-		अवरोध;
-	पूर्ण
+	switch (event) {
+	case SND_SOC_DAPM_PRE_PMU:
+		wm8994->aif1clk_enable = 1;
+		break;
+	case SND_SOC_DAPM_POST_PMD:
+		wm8994->aif1clk_disable = 1;
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक aअगर2clk_late_ev(काष्ठा snd_soc_dapm_widget *w,
-			   काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
-	काष्ठा wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
+static int aif2clk_late_ev(struct snd_soc_dapm_widget *w,
+			   struct snd_kcontrol *kcontrol, int event)
+{
+	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+	struct wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
 
-	चयन (event) अणु
-	हाल SND_SOC_DAPM_PRE_PMU:
-		wm8994->aअगर2clk_enable = 1;
-		अवरोध;
-	हाल SND_SOC_DAPM_POST_PMD:
-		wm8994->aअगर2clk_disable = 1;
-		अवरोध;
-	पूर्ण
+	switch (event) {
+	case SND_SOC_DAPM_PRE_PMU:
+		wm8994->aif2clk_enable = 1;
+		break;
+	case SND_SOC_DAPM_POST_PMD:
+		wm8994->aif2clk_disable = 1;
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक late_enable_ev(काष्ठा snd_soc_dapm_widget *w,
-			  काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
-	काष्ठा wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
+static int late_enable_ev(struct snd_soc_dapm_widget *w,
+			  struct snd_kcontrol *kcontrol, int event)
+{
+	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+	struct wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
 
-	चयन (event) अणु
-	हाल SND_SOC_DAPM_PRE_PMU:
-		अगर (wm8994->aअगर1clk_enable) अणु
-			aअगर1clk_ev(w, kcontrol, SND_SOC_DAPM_PRE_PMU);
+	switch (event) {
+	case SND_SOC_DAPM_PRE_PMU:
+		if (wm8994->aif1clk_enable) {
+			aif1clk_ev(w, kcontrol, SND_SOC_DAPM_PRE_PMU);
 			snd_soc_component_update_bits(component, WM8994_AIF1_CLOCKING_1,
 					    WM8994_AIF1CLK_ENA_MASK,
 					    WM8994_AIF1CLK_ENA);
-			aअगर1clk_ev(w, kcontrol, SND_SOC_DAPM_POST_PMU);
-			wm8994->aअगर1clk_enable = 0;
-		पूर्ण
-		अगर (wm8994->aअगर2clk_enable) अणु
-			aअगर2clk_ev(w, kcontrol, SND_SOC_DAPM_PRE_PMU);
+			aif1clk_ev(w, kcontrol, SND_SOC_DAPM_POST_PMU);
+			wm8994->aif1clk_enable = 0;
+		}
+		if (wm8994->aif2clk_enable) {
+			aif2clk_ev(w, kcontrol, SND_SOC_DAPM_PRE_PMU);
 			snd_soc_component_update_bits(component, WM8994_AIF2_CLOCKING_1,
 					    WM8994_AIF2CLK_ENA_MASK,
 					    WM8994_AIF2CLK_ENA);
-			aअगर2clk_ev(w, kcontrol, SND_SOC_DAPM_POST_PMU);
-			wm8994->aअगर2clk_enable = 0;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+			aif2clk_ev(w, kcontrol, SND_SOC_DAPM_POST_PMU);
+			wm8994->aif2clk_enable = 0;
+		}
+		break;
+	}
 
 	/* We may also have postponed startup of DSP, handle that. */
-	wm8958_aअगर_ev(w, kcontrol, event);
+	wm8958_aif_ev(w, kcontrol, event);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक late_disable_ev(काष्ठा snd_soc_dapm_widget *w,
-			   काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
-	काष्ठा wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
+static int late_disable_ev(struct snd_soc_dapm_widget *w,
+			   struct snd_kcontrol *kcontrol, int event)
+{
+	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+	struct wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
 
-	चयन (event) अणु
-	हाल SND_SOC_DAPM_POST_PMD:
-		अगर (wm8994->aअगर1clk_disable) अणु
-			aअगर1clk_ev(w, kcontrol, SND_SOC_DAPM_PRE_PMD);
+	switch (event) {
+	case SND_SOC_DAPM_POST_PMD:
+		if (wm8994->aif1clk_disable) {
+			aif1clk_ev(w, kcontrol, SND_SOC_DAPM_PRE_PMD);
 			snd_soc_component_update_bits(component, WM8994_AIF1_CLOCKING_1,
 					    WM8994_AIF1CLK_ENA_MASK, 0);
-			aअगर1clk_ev(w, kcontrol, SND_SOC_DAPM_POST_PMD);
-			wm8994->aअगर1clk_disable = 0;
-		पूर्ण
-		अगर (wm8994->aअगर2clk_disable) अणु
-			aअगर2clk_ev(w, kcontrol, SND_SOC_DAPM_PRE_PMD);
+			aif1clk_ev(w, kcontrol, SND_SOC_DAPM_POST_PMD);
+			wm8994->aif1clk_disable = 0;
+		}
+		if (wm8994->aif2clk_disable) {
+			aif2clk_ev(w, kcontrol, SND_SOC_DAPM_PRE_PMD);
 			snd_soc_component_update_bits(component, WM8994_AIF2_CLOCKING_1,
 					    WM8994_AIF2CLK_ENA_MASK, 0);
-			aअगर2clk_ev(w, kcontrol, SND_SOC_DAPM_POST_PMD);
-			wm8994->aअगर2clk_disable = 0;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+			aif2clk_ev(w, kcontrol, SND_SOC_DAPM_POST_PMD);
+			wm8994->aif2clk_disable = 0;
+		}
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक adc_mux_ev(काष्ठा snd_soc_dapm_widget *w,
-		      काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
-अणु
+static int adc_mux_ev(struct snd_soc_dapm_widget *w,
+		      struct snd_kcontrol *kcontrol, int event)
+{
 	late_enable_ev(w, kcontrol, event);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक micbias_ev(काष्ठा snd_soc_dapm_widget *w,
-		      काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
-अणु
+static int micbias_ev(struct snd_soc_dapm_widget *w,
+		      struct snd_kcontrol *kcontrol, int event)
+{
 	late_enable_ev(w, kcontrol, event);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dac_ev(काष्ठा snd_soc_dapm_widget *w,
-		  काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
-	अचिन्हित पूर्णांक mask = 1 << w->shअगरt;
+static int dac_ev(struct snd_soc_dapm_widget *w,
+		  struct snd_kcontrol *kcontrol, int event)
+{
+	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+	unsigned int mask = 1 << w->shift;
 
 	snd_soc_component_update_bits(component, WM8994_POWER_MANAGEMENT_5,
 			    mask, mask);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर अक्षर *adc_mux_text[] = अणु
+static const char *adc_mux_text[] = {
 	"ADC",
 	"DMIC",
-पूर्ण;
+};
 
-अटल SOC_ENUM_SINGLE_VIRT_DECL(adc_क्रमागत, adc_mux_text);
+static SOC_ENUM_SINGLE_VIRT_DECL(adc_enum, adc_mux_text);
 
-अटल स्थिर काष्ठा snd_kcontrol_new adcl_mux =
-	SOC_DAPM_ENUM("ADCL Mux", adc_क्रमागत);
+static const struct snd_kcontrol_new adcl_mux =
+	SOC_DAPM_ENUM("ADCL Mux", adc_enum);
 
-अटल स्थिर काष्ठा snd_kcontrol_new adcr_mux =
-	SOC_DAPM_ENUM("ADCR Mux", adc_क्रमागत);
+static const struct snd_kcontrol_new adcr_mux =
+	SOC_DAPM_ENUM("ADCR Mux", adc_enum);
 
-अटल स्थिर काष्ठा snd_kcontrol_new left_speaker_mixer[] = अणु
+static const struct snd_kcontrol_new left_speaker_mixer[] = {
 SOC_DAPM_SINGLE("DAC2 Switch", WM8994_SPEAKER_MIXER, 9, 1, 0),
 SOC_DAPM_SINGLE("Input Switch", WM8994_SPEAKER_MIXER, 7, 1, 0),
 SOC_DAPM_SINGLE("IN1LP Switch", WM8994_SPEAKER_MIXER, 5, 1, 0),
 SOC_DAPM_SINGLE("Output Switch", WM8994_SPEAKER_MIXER, 3, 1, 0),
 SOC_DAPM_SINGLE("DAC1 Switch", WM8994_SPEAKER_MIXER, 1, 1, 0),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new right_speaker_mixer[] = अणु
+static const struct snd_kcontrol_new right_speaker_mixer[] = {
 SOC_DAPM_SINGLE("DAC2 Switch", WM8994_SPEAKER_MIXER, 8, 1, 0),
 SOC_DAPM_SINGLE("Input Switch", WM8994_SPEAKER_MIXER, 6, 1, 0),
 SOC_DAPM_SINGLE("IN1RP Switch", WM8994_SPEAKER_MIXER, 4, 1, 0),
 SOC_DAPM_SINGLE("Output Switch", WM8994_SPEAKER_MIXER, 2, 1, 0),
 SOC_DAPM_SINGLE("DAC1 Switch", WM8994_SPEAKER_MIXER, 0, 1, 0),
-पूर्ण;
+};
 
 /* Debugging; dump chip status after DAPM transitions */
-अटल पूर्णांक post_ev(काष्ठा snd_soc_dapm_widget *w,
-	    काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+static int post_ev(struct snd_soc_dapm_widget *w,
+	    struct snd_kcontrol *kcontrol, int event)
+{
+	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
 	dev_dbg(component->dev, "SRC status: %x\n",
-		snd_soc_component_पढ़ो(component,
+		snd_soc_component_read(component,
 			     WM8994_RATE_STATUS));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new aअगर1adc1l_mix[] = अणु
+static const struct snd_kcontrol_new aif1adc1l_mix[] = {
 SOC_DAPM_SINGLE("ADC/DMIC Switch", WM8994_AIF1_ADC1_LEFT_MIXER_ROUTING,
 		1, 1, 0),
 SOC_DAPM_SINGLE("AIF2 Switch", WM8994_AIF1_ADC1_LEFT_MIXER_ROUTING,
 		0, 1, 0),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new aअगर1adc1r_mix[] = अणु
+static const struct snd_kcontrol_new aif1adc1r_mix[] = {
 SOC_DAPM_SINGLE("ADC/DMIC Switch", WM8994_AIF1_ADC1_RIGHT_MIXER_ROUTING,
 		1, 1, 0),
 SOC_DAPM_SINGLE("AIF2 Switch", WM8994_AIF1_ADC1_RIGHT_MIXER_ROUTING,
 		0, 1, 0),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new aअगर1adc2l_mix[] = अणु
+static const struct snd_kcontrol_new aif1adc2l_mix[] = {
 SOC_DAPM_SINGLE("DMIC Switch", WM8994_AIF1_ADC2_LEFT_MIXER_ROUTING,
 		1, 1, 0),
 SOC_DAPM_SINGLE("AIF2 Switch", WM8994_AIF1_ADC2_LEFT_MIXER_ROUTING,
 		0, 1, 0),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new aअगर1adc2r_mix[] = अणु
+static const struct snd_kcontrol_new aif1adc2r_mix[] = {
 SOC_DAPM_SINGLE("DMIC Switch", WM8994_AIF1_ADC2_RIGHT_MIXER_ROUTING,
 		1, 1, 0),
 SOC_DAPM_SINGLE("AIF2 Switch", WM8994_AIF1_ADC2_RIGHT_MIXER_ROUTING,
 		0, 1, 0),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new aअगर2dac2l_mix[] = अणु
+static const struct snd_kcontrol_new aif2dac2l_mix[] = {
 SOC_DAPM_SINGLE("Right Sidetone Switch", WM8994_DAC2_LEFT_MIXER_ROUTING,
 		5, 1, 0),
 SOC_DAPM_SINGLE("Left Sidetone Switch", WM8994_DAC2_LEFT_MIXER_ROUTING,
@@ -1494,9 +1493,9 @@ SOC_DAPM_SINGLE("AIF1.2 Switch", WM8994_DAC2_LEFT_MIXER_ROUTING,
 		1, 1, 0),
 SOC_DAPM_SINGLE("AIF1.1 Switch", WM8994_DAC2_LEFT_MIXER_ROUTING,
 		0, 1, 0),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new aअगर2dac2r_mix[] = अणु
+static const struct snd_kcontrol_new aif2dac2r_mix[] = {
 SOC_DAPM_SINGLE("Right Sidetone Switch", WM8994_DAC2_RIGHT_MIXER_ROUTING,
 		5, 1, 0),
 SOC_DAPM_SINGLE("Left Sidetone Switch", WM8994_DAC2_RIGHT_MIXER_ROUTING,
@@ -1507,26 +1506,26 @@ SOC_DAPM_SINGLE("AIF1.2 Switch", WM8994_DAC2_RIGHT_MIXER_ROUTING,
 		1, 1, 0),
 SOC_DAPM_SINGLE("AIF1.1 Switch", WM8994_DAC2_RIGHT_MIXER_ROUTING,
 		0, 1, 0),
-पूर्ण;
+};
 
-#घोषणा WM8994_CLASS_W_SWITCH(xname, reg, shअगरt, max, invert) \
-	SOC_SINGLE_EXT(xname, reg, shअगरt, max, invert, \
+#define WM8994_CLASS_W_SWITCH(xname, reg, shift, max, invert) \
+	SOC_SINGLE_EXT(xname, reg, shift, max, invert, \
 		snd_soc_dapm_get_volsw, wm8994_put_class_w)
 
-अटल पूर्णांक wm8994_put_class_w(काष्ठा snd_kcontrol *kcontrol,
-			      काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_dapm_kcontrol_component(kcontrol);
-	पूर्णांक ret;
+static int wm8994_put_class_w(struct snd_kcontrol *kcontrol,
+			      struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component = snd_soc_dapm_kcontrol_component(kcontrol);
+	int ret;
 
 	ret = snd_soc_dapm_put_volsw(kcontrol, ucontrol);
 
 	wm_hubs_update_class_w(component);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new dac1l_mix[] = अणु
+static const struct snd_kcontrol_new dac1l_mix[] = {
 WM8994_CLASS_W_SWITCH("Right Sidetone Switch", WM8994_DAC1_LEFT_MIXER_ROUTING,
 		      5, 1, 0),
 WM8994_CLASS_W_SWITCH("Left Sidetone Switch", WM8994_DAC1_LEFT_MIXER_ROUTING,
@@ -1537,9 +1536,9 @@ WM8994_CLASS_W_SWITCH("AIF1.2 Switch", WM8994_DAC1_LEFT_MIXER_ROUTING,
 		      1, 1, 0),
 WM8994_CLASS_W_SWITCH("AIF1.1 Switch", WM8994_DAC1_LEFT_MIXER_ROUTING,
 		      0, 1, 0),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new dac1r_mix[] = अणु
+static const struct snd_kcontrol_new dac1r_mix[] = {
 WM8994_CLASS_W_SWITCH("Right Sidetone Switch", WM8994_DAC1_RIGHT_MIXER_ROUTING,
 		      5, 1, 0),
 WM8994_CLASS_W_SWITCH("Left Sidetone Switch", WM8994_DAC1_RIGHT_MIXER_ROUTING,
@@ -1550,132 +1549,132 @@ WM8994_CLASS_W_SWITCH("AIF1.2 Switch", WM8994_DAC1_RIGHT_MIXER_ROUTING,
 		      1, 1, 0),
 WM8994_CLASS_W_SWITCH("AIF1.1 Switch", WM8994_DAC1_RIGHT_MIXER_ROUTING,
 		      0, 1, 0),
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *sidetone_text[] = अणु
+static const char *sidetone_text[] = {
 	"ADC/DMIC1", "DMIC2",
-पूर्ण;
+};
 
-अटल SOC_ENUM_SINGLE_DECL(sidetone1_क्रमागत,
+static SOC_ENUM_SINGLE_DECL(sidetone1_enum,
 			    WM8994_SIDETONE, 0, sidetone_text);
 
-अटल स्थिर काष्ठा snd_kcontrol_new sidetone1_mux =
-	SOC_DAPM_ENUM("Left Sidetone Mux", sidetone1_क्रमागत);
+static const struct snd_kcontrol_new sidetone1_mux =
+	SOC_DAPM_ENUM("Left Sidetone Mux", sidetone1_enum);
 
-अटल SOC_ENUM_SINGLE_DECL(sidetone2_क्रमागत,
+static SOC_ENUM_SINGLE_DECL(sidetone2_enum,
 			    WM8994_SIDETONE, 1, sidetone_text);
 
-अटल स्थिर काष्ठा snd_kcontrol_new sidetone2_mux =
-	SOC_DAPM_ENUM("Right Sidetone Mux", sidetone2_क्रमागत);
+static const struct snd_kcontrol_new sidetone2_mux =
+	SOC_DAPM_ENUM("Right Sidetone Mux", sidetone2_enum);
 
-अटल स्थिर अक्षर *aअगर1dac_text[] = अणु
+static const char *aif1dac_text[] = {
 	"AIF1DACDAT", "AIF3DACDAT",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *loopback_text[] = अणु
+static const char *loopback_text[] = {
 	"None", "ADCDAT",
-पूर्ण;
+};
 
-अटल SOC_ENUM_SINGLE_DECL(aअगर1_loopback_क्रमागत,
+static SOC_ENUM_SINGLE_DECL(aif1_loopback_enum,
 			    WM8994_AIF1_CONTROL_2,
 			    WM8994_AIF1_LOOPBACK_SHIFT,
 			    loopback_text);
 
-अटल स्थिर काष्ठा snd_kcontrol_new aअगर1_loopback =
-	SOC_DAPM_ENUM("AIF1 Loopback", aअगर1_loopback_क्रमागत);
+static const struct snd_kcontrol_new aif1_loopback =
+	SOC_DAPM_ENUM("AIF1 Loopback", aif1_loopback_enum);
 
-अटल SOC_ENUM_SINGLE_DECL(aअगर2_loopback_क्रमागत,
+static SOC_ENUM_SINGLE_DECL(aif2_loopback_enum,
 			    WM8994_AIF2_CONTROL_2,
 			    WM8994_AIF2_LOOPBACK_SHIFT,
 			    loopback_text);
 
-अटल स्थिर काष्ठा snd_kcontrol_new aअगर2_loopback =
-	SOC_DAPM_ENUM("AIF2 Loopback", aअगर2_loopback_क्रमागत);
+static const struct snd_kcontrol_new aif2_loopback =
+	SOC_DAPM_ENUM("AIF2 Loopback", aif2_loopback_enum);
 
-अटल SOC_ENUM_SINGLE_DECL(aअगर1dac_क्रमागत,
-			    WM8994_POWER_MANAGEMENT_6, 0, aअगर1dac_text);
+static SOC_ENUM_SINGLE_DECL(aif1dac_enum,
+			    WM8994_POWER_MANAGEMENT_6, 0, aif1dac_text);
 
-अटल स्थिर काष्ठा snd_kcontrol_new aअगर1dac_mux =
-	SOC_DAPM_ENUM("AIF1DAC Mux", aअगर1dac_क्रमागत);
+static const struct snd_kcontrol_new aif1dac_mux =
+	SOC_DAPM_ENUM("AIF1DAC Mux", aif1dac_enum);
 
-अटल स्थिर अक्षर *aअगर2dac_text[] = अणु
+static const char *aif2dac_text[] = {
 	"AIF2DACDAT", "AIF3DACDAT",
-पूर्ण;
+};
 
-अटल SOC_ENUM_SINGLE_DECL(aअगर2dac_क्रमागत,
-			    WM8994_POWER_MANAGEMENT_6, 1, aअगर2dac_text);
+static SOC_ENUM_SINGLE_DECL(aif2dac_enum,
+			    WM8994_POWER_MANAGEMENT_6, 1, aif2dac_text);
 
-अटल स्थिर काष्ठा snd_kcontrol_new aअगर2dac_mux =
-	SOC_DAPM_ENUM("AIF2DAC Mux", aअगर2dac_क्रमागत);
+static const struct snd_kcontrol_new aif2dac_mux =
+	SOC_DAPM_ENUM("AIF2DAC Mux", aif2dac_enum);
 
-अटल स्थिर अक्षर *aअगर2adc_text[] = अणु
+static const char *aif2adc_text[] = {
 	"AIF2ADCDAT", "AIF3DACDAT",
-पूर्ण;
+};
 
-अटल SOC_ENUM_SINGLE_DECL(aअगर2adc_क्रमागत,
-			    WM8994_POWER_MANAGEMENT_6, 2, aअगर2adc_text);
+static SOC_ENUM_SINGLE_DECL(aif2adc_enum,
+			    WM8994_POWER_MANAGEMENT_6, 2, aif2adc_text);
 
-अटल स्थिर काष्ठा snd_kcontrol_new aअगर2adc_mux =
-	SOC_DAPM_ENUM("AIF2ADC Mux", aअगर2adc_क्रमागत);
+static const struct snd_kcontrol_new aif2adc_mux =
+	SOC_DAPM_ENUM("AIF2ADC Mux", aif2adc_enum);
 
-अटल स्थिर अक्षर *aअगर3adc_text[] = अणु
+static const char *aif3adc_text[] = {
 	"AIF1ADCDAT", "AIF2ADCDAT", "AIF2DACDAT", "Mono PCM",
-पूर्ण;
+};
 
-अटल SOC_ENUM_SINGLE_DECL(wm8994_aअगर3adc_क्रमागत,
-			    WM8994_POWER_MANAGEMENT_6, 3, aअगर3adc_text);
+static SOC_ENUM_SINGLE_DECL(wm8994_aif3adc_enum,
+			    WM8994_POWER_MANAGEMENT_6, 3, aif3adc_text);
 
-अटल स्थिर काष्ठा snd_kcontrol_new wm8994_aअगर3adc_mux =
-	SOC_DAPM_ENUM("AIF3ADC Mux", wm8994_aअगर3adc_क्रमागत);
+static const struct snd_kcontrol_new wm8994_aif3adc_mux =
+	SOC_DAPM_ENUM("AIF3ADC Mux", wm8994_aif3adc_enum);
 
-अटल SOC_ENUM_SINGLE_DECL(wm8958_aअगर3adc_क्रमागत,
-			    WM8994_POWER_MANAGEMENT_6, 3, aअगर3adc_text);
+static SOC_ENUM_SINGLE_DECL(wm8958_aif3adc_enum,
+			    WM8994_POWER_MANAGEMENT_6, 3, aif3adc_text);
 
-अटल स्थिर काष्ठा snd_kcontrol_new wm8958_aअगर3adc_mux =
-	SOC_DAPM_ENUM("AIF3ADC Mux", wm8958_aअगर3adc_क्रमागत);
+static const struct snd_kcontrol_new wm8958_aif3adc_mux =
+	SOC_DAPM_ENUM("AIF3ADC Mux", wm8958_aif3adc_enum);
 
-अटल स्थिर अक्षर *mono_pcm_out_text[] = अणु
+static const char *mono_pcm_out_text[] = {
 	"None", "AIF2ADCL", "AIF2ADCR",
-पूर्ण;
+};
 
-अटल SOC_ENUM_SINGLE_DECL(mono_pcm_out_क्रमागत,
+static SOC_ENUM_SINGLE_DECL(mono_pcm_out_enum,
 			    WM8994_POWER_MANAGEMENT_6, 9, mono_pcm_out_text);
 
-अटल स्थिर काष्ठा snd_kcontrol_new mono_pcm_out_mux =
-	SOC_DAPM_ENUM("Mono PCM Out Mux", mono_pcm_out_क्रमागत);
+static const struct snd_kcontrol_new mono_pcm_out_mux =
+	SOC_DAPM_ENUM("Mono PCM Out Mux", mono_pcm_out_enum);
 
-अटल स्थिर अक्षर *aअगर2dac_src_text[] = अणु
+static const char *aif2dac_src_text[] = {
 	"AIF2", "AIF3",
-पूर्ण;
+};
 
-/* Note that these two control shouldn't be simultaneously चयनed to AIF3 */
-अटल SOC_ENUM_SINGLE_DECL(aअगर2dacl_src_क्रमागत,
-			    WM8994_POWER_MANAGEMENT_6, 7, aअगर2dac_src_text);
+/* Note that these two control shouldn't be simultaneously switched to AIF3 */
+static SOC_ENUM_SINGLE_DECL(aif2dacl_src_enum,
+			    WM8994_POWER_MANAGEMENT_6, 7, aif2dac_src_text);
 
-अटल स्थिर काष्ठा snd_kcontrol_new aअगर2dacl_src_mux =
-	SOC_DAPM_ENUM("AIF2DACL Mux", aअगर2dacl_src_क्रमागत);
+static const struct snd_kcontrol_new aif2dacl_src_mux =
+	SOC_DAPM_ENUM("AIF2DACL Mux", aif2dacl_src_enum);
 
-अटल SOC_ENUM_SINGLE_DECL(aअगर2dacr_src_क्रमागत,
-			    WM8994_POWER_MANAGEMENT_6, 8, aअगर2dac_src_text);
+static SOC_ENUM_SINGLE_DECL(aif2dacr_src_enum,
+			    WM8994_POWER_MANAGEMENT_6, 8, aif2dac_src_text);
 
-अटल स्थिर काष्ठा snd_kcontrol_new aअगर2dacr_src_mux =
-	SOC_DAPM_ENUM("AIF2DACR Mux", aअगर2dacr_src_क्रमागत);
+static const struct snd_kcontrol_new aif2dacr_src_mux =
+	SOC_DAPM_ENUM("AIF2DACR Mux", aif2dacr_src_enum);
 
-अटल स्थिर काष्ठा snd_soc_dapm_widget wm8994_lateclk_revd_widमाला_लो[] = अणु
-SND_SOC_DAPM_SUPPLY("AIF1CLK", SND_SOC_NOPM, 0, 0, aअगर1clk_late_ev,
+static const struct snd_soc_dapm_widget wm8994_lateclk_revd_widgets[] = {
+SND_SOC_DAPM_SUPPLY("AIF1CLK", SND_SOC_NOPM, 0, 0, aif1clk_late_ev,
 	SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
-SND_SOC_DAPM_SUPPLY("AIF2CLK", SND_SOC_NOPM, 0, 0, aअगर2clk_late_ev,
+SND_SOC_DAPM_SUPPLY("AIF2CLK", SND_SOC_NOPM, 0, 0, aif2clk_late_ev,
 	SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 
-SND_SOC_DAPM_PGA_E("Late DAC1L Enable PGA", SND_SOC_NOPM, 0, 0, शून्य, 0,
+SND_SOC_DAPM_PGA_E("Late DAC1L Enable PGA", SND_SOC_NOPM, 0, 0, NULL, 0,
 	late_enable_ev, SND_SOC_DAPM_PRE_PMU),
-SND_SOC_DAPM_PGA_E("Late DAC1R Enable PGA", SND_SOC_NOPM, 0, 0, शून्य, 0,
+SND_SOC_DAPM_PGA_E("Late DAC1R Enable PGA", SND_SOC_NOPM, 0, 0, NULL, 0,
 	late_enable_ev, SND_SOC_DAPM_PRE_PMU),
-SND_SOC_DAPM_PGA_E("Late DAC2L Enable PGA", SND_SOC_NOPM, 0, 0, शून्य, 0,
+SND_SOC_DAPM_PGA_E("Late DAC2L Enable PGA", SND_SOC_NOPM, 0, 0, NULL, 0,
 	late_enable_ev, SND_SOC_DAPM_PRE_PMU),
-SND_SOC_DAPM_PGA_E("Late DAC2R Enable PGA", SND_SOC_NOPM, 0, 0, शून्य, 0,
+SND_SOC_DAPM_PGA_E("Late DAC2R Enable PGA", SND_SOC_NOPM, 0, 0, NULL, 0,
 	late_enable_ev, SND_SOC_DAPM_PRE_PMU),
-SND_SOC_DAPM_PGA_E("Direct Voice", SND_SOC_NOPM, 0, 0, शून्य, 0,
+SND_SOC_DAPM_PGA_E("Direct Voice", SND_SOC_NOPM, 0, 0, NULL, 0,
 	late_enable_ev, SND_SOC_DAPM_PRE_PMU),
 
 SND_SOC_DAPM_MIXER_E("SPKL", WM8994_POWER_MANAGEMENT_3, 8, 0,
@@ -1690,55 +1689,55 @@ SND_SOC_DAPM_MUX_E("Right Headphone Mux", SND_SOC_NOPM, 0, 0, &wm_hubs_hpr_mux,
 		   late_enable_ev, SND_SOC_DAPM_PRE_PMU),
 
 SND_SOC_DAPM_POST("Late Disable PGA", late_disable_ev)
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_widget wm8994_lateclk_widमाला_लो[] = अणु
-SND_SOC_DAPM_SUPPLY("AIF1CLK", WM8994_AIF1_CLOCKING_1, 0, 0, aअगर1clk_ev,
+static const struct snd_soc_dapm_widget wm8994_lateclk_widgets[] = {
+SND_SOC_DAPM_SUPPLY("AIF1CLK", WM8994_AIF1_CLOCKING_1, 0, 0, aif1clk_ev,
 		    SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
 		    SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD),
-SND_SOC_DAPM_SUPPLY("AIF2CLK", WM8994_AIF2_CLOCKING_1, 0, 0, aअगर2clk_ev,
+SND_SOC_DAPM_SUPPLY("AIF2CLK", WM8994_AIF2_CLOCKING_1, 0, 0, aif2clk_ev,
 		    SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
 		    SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD),
-SND_SOC_DAPM_PGA("Direct Voice", SND_SOC_NOPM, 0, 0, शून्य, 0),
+SND_SOC_DAPM_PGA("Direct Voice", SND_SOC_NOPM, 0, 0, NULL, 0),
 SND_SOC_DAPM_MIXER("SPKL", WM8994_POWER_MANAGEMENT_3, 8, 0,
 		   left_speaker_mixer, ARRAY_SIZE(left_speaker_mixer)),
 SND_SOC_DAPM_MIXER("SPKR", WM8994_POWER_MANAGEMENT_3, 9, 0,
 		   right_speaker_mixer, ARRAY_SIZE(right_speaker_mixer)),
 SND_SOC_DAPM_MUX("Left Headphone Mux", SND_SOC_NOPM, 0, 0, &wm_hubs_hpl_mux),
 SND_SOC_DAPM_MUX("Right Headphone Mux", SND_SOC_NOPM, 0, 0, &wm_hubs_hpr_mux),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_widget wm8994_dac_revd_widमाला_लो[] = अणु
-SND_SOC_DAPM_DAC_E("DAC2L", शून्य, SND_SOC_NOPM, 3, 0,
+static const struct snd_soc_dapm_widget wm8994_dac_revd_widgets[] = {
+SND_SOC_DAPM_DAC_E("DAC2L", NULL, SND_SOC_NOPM, 3, 0,
 	dac_ev, SND_SOC_DAPM_PRE_PMU),
-SND_SOC_DAPM_DAC_E("DAC2R", शून्य, SND_SOC_NOPM, 2, 0,
+SND_SOC_DAPM_DAC_E("DAC2R", NULL, SND_SOC_NOPM, 2, 0,
 	dac_ev, SND_SOC_DAPM_PRE_PMU),
-SND_SOC_DAPM_DAC_E("DAC1L", शून्य, SND_SOC_NOPM, 1, 0,
+SND_SOC_DAPM_DAC_E("DAC1L", NULL, SND_SOC_NOPM, 1, 0,
 	dac_ev, SND_SOC_DAPM_PRE_PMU),
-SND_SOC_DAPM_DAC_E("DAC1R", शून्य, SND_SOC_NOPM, 0, 0,
+SND_SOC_DAPM_DAC_E("DAC1R", NULL, SND_SOC_NOPM, 0, 0,
 	dac_ev, SND_SOC_DAPM_PRE_PMU),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_widget wm8994_dac_widमाला_लो[] = अणु
-SND_SOC_DAPM_DAC("DAC2L", शून्य, WM8994_POWER_MANAGEMENT_5, 3, 0),
-SND_SOC_DAPM_DAC("DAC2R", शून्य, WM8994_POWER_MANAGEMENT_5, 2, 0),
-SND_SOC_DAPM_DAC("DAC1L", शून्य, WM8994_POWER_MANAGEMENT_5, 1, 0),
-SND_SOC_DAPM_DAC("DAC1R", शून्य, WM8994_POWER_MANAGEMENT_5, 0, 0),
-पूर्ण;
+static const struct snd_soc_dapm_widget wm8994_dac_widgets[] = {
+SND_SOC_DAPM_DAC("DAC2L", NULL, WM8994_POWER_MANAGEMENT_5, 3, 0),
+SND_SOC_DAPM_DAC("DAC2R", NULL, WM8994_POWER_MANAGEMENT_5, 2, 0),
+SND_SOC_DAPM_DAC("DAC1L", NULL, WM8994_POWER_MANAGEMENT_5, 1, 0),
+SND_SOC_DAPM_DAC("DAC1R", NULL, WM8994_POWER_MANAGEMENT_5, 0, 0),
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_widget wm8994_adc_revd_widमाला_लो[] = अणु
+static const struct snd_soc_dapm_widget wm8994_adc_revd_widgets[] = {
 SND_SOC_DAPM_MUX_E("ADCL Mux", WM8994_POWER_MANAGEMENT_4, 1, 0, &adcl_mux,
 			adc_mux_ev, SND_SOC_DAPM_PRE_PMU),
 SND_SOC_DAPM_MUX_E("ADCR Mux", WM8994_POWER_MANAGEMENT_4, 0, 0, &adcr_mux,
 			adc_mux_ev, SND_SOC_DAPM_PRE_PMU),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_widget wm8994_adc_widमाला_लो[] = अणु
+static const struct snd_soc_dapm_widget wm8994_adc_widgets[] = {
 SND_SOC_DAPM_MUX("ADCL Mux", WM8994_POWER_MANAGEMENT_4, 1, 0, &adcl_mux),
 SND_SOC_DAPM_MUX("ADCR Mux", WM8994_POWER_MANAGEMENT_4, 0, 0, &adcr_mux),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_widget wm8994_dapm_widमाला_लो[] = अणु
+static const struct snd_soc_dapm_widget wm8994_dapm_widgets[] = {
 SND_SOC_DAPM_INPUT("DMIC1DAT"),
 SND_SOC_DAPM_INPUT("DMIC2DAT"),
 SND_SOC_DAPM_INPUT("Clock"),
@@ -1752,46 +1751,46 @@ SND_SOC_DAPM_SUPPLY("CLK_SYS", SND_SOC_NOPM, 0, 0, clk_sys_event,
 		    SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
 		    SND_SOC_DAPM_PRE_PMD),
 
-SND_SOC_DAPM_SUPPLY("DSP1CLK", SND_SOC_NOPM, 3, 0, शून्य, 0),
-SND_SOC_DAPM_SUPPLY("DSP2CLK", SND_SOC_NOPM, 2, 0, शून्य, 0),
-SND_SOC_DAPM_SUPPLY("DSPINTCLK", SND_SOC_NOPM, 1, 0, शून्य, 0),
+SND_SOC_DAPM_SUPPLY("DSP1CLK", SND_SOC_NOPM, 3, 0, NULL, 0),
+SND_SOC_DAPM_SUPPLY("DSP2CLK", SND_SOC_NOPM, 2, 0, NULL, 0),
+SND_SOC_DAPM_SUPPLY("DSPINTCLK", SND_SOC_NOPM, 1, 0, NULL, 0),
 
-SND_SOC_DAPM_AIF_OUT("AIF1ADC1L", शून्य,
+SND_SOC_DAPM_AIF_OUT("AIF1ADC1L", NULL,
 		     0, SND_SOC_NOPM, 9, 0),
-SND_SOC_DAPM_AIF_OUT("AIF1ADC1R", शून्य,
+SND_SOC_DAPM_AIF_OUT("AIF1ADC1R", NULL,
 		     0, SND_SOC_NOPM, 8, 0),
-SND_SOC_DAPM_AIF_IN_E("AIF1DAC1L", शून्य, 0,
-		      SND_SOC_NOPM, 9, 0, wm8958_aअगर_ev,
+SND_SOC_DAPM_AIF_IN_E("AIF1DAC1L", NULL, 0,
+		      SND_SOC_NOPM, 9, 0, wm8958_aif_ev,
 		      SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_POST_PMD),
-SND_SOC_DAPM_AIF_IN_E("AIF1DAC1R", शून्य, 0,
-		      SND_SOC_NOPM, 8, 0, wm8958_aअगर_ev,
+SND_SOC_DAPM_AIF_IN_E("AIF1DAC1R", NULL, 0,
+		      SND_SOC_NOPM, 8, 0, wm8958_aif_ev,
 		      SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_POST_PMD),
 
-SND_SOC_DAPM_AIF_OUT("AIF1ADC2L", शून्य,
+SND_SOC_DAPM_AIF_OUT("AIF1ADC2L", NULL,
 		     0, SND_SOC_NOPM, 11, 0),
-SND_SOC_DAPM_AIF_OUT("AIF1ADC2R", शून्य,
+SND_SOC_DAPM_AIF_OUT("AIF1ADC2R", NULL,
 		     0, SND_SOC_NOPM, 10, 0),
-SND_SOC_DAPM_AIF_IN_E("AIF1DAC2L", शून्य, 0,
-		      SND_SOC_NOPM, 11, 0, wm8958_aअगर_ev,
+SND_SOC_DAPM_AIF_IN_E("AIF1DAC2L", NULL, 0,
+		      SND_SOC_NOPM, 11, 0, wm8958_aif_ev,
 		      SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_POST_PMD),
-SND_SOC_DAPM_AIF_IN_E("AIF1DAC2R", शून्य, 0,
-		      SND_SOC_NOPM, 10, 0, wm8958_aअगर_ev,
+SND_SOC_DAPM_AIF_IN_E("AIF1DAC2R", NULL, 0,
+		      SND_SOC_NOPM, 10, 0, wm8958_aif_ev,
 		      SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_POST_PMD),
 
 SND_SOC_DAPM_MIXER("AIF1ADC1L Mixer", SND_SOC_NOPM, 0, 0,
-		   aअगर1adc1l_mix, ARRAY_SIZE(aअगर1adc1l_mix)),
+		   aif1adc1l_mix, ARRAY_SIZE(aif1adc1l_mix)),
 SND_SOC_DAPM_MIXER("AIF1ADC1R Mixer", SND_SOC_NOPM, 0, 0,
-		   aअगर1adc1r_mix, ARRAY_SIZE(aअगर1adc1r_mix)),
+		   aif1adc1r_mix, ARRAY_SIZE(aif1adc1r_mix)),
 
 SND_SOC_DAPM_MIXER("AIF1ADC2L Mixer", SND_SOC_NOPM, 0, 0,
-		   aअगर1adc2l_mix, ARRAY_SIZE(aअगर1adc2l_mix)),
+		   aif1adc2l_mix, ARRAY_SIZE(aif1adc2l_mix)),
 SND_SOC_DAPM_MIXER("AIF1ADC2R Mixer", SND_SOC_NOPM, 0, 0,
-		   aअगर1adc2r_mix, ARRAY_SIZE(aअगर1adc2r_mix)),
+		   aif1adc2r_mix, ARRAY_SIZE(aif1adc2r_mix)),
 
 SND_SOC_DAPM_MIXER("AIF2DAC2L Mixer", SND_SOC_NOPM, 0, 0,
-		   aअगर2dac2l_mix, ARRAY_SIZE(aअगर2dac2l_mix)),
+		   aif2dac2l_mix, ARRAY_SIZE(aif2dac2l_mix)),
 SND_SOC_DAPM_MIXER("AIF2DAC2R Mixer", SND_SOC_NOPM, 0, 0,
-		   aअगर2dac2r_mix, ARRAY_SIZE(aअगर2dac2r_mix)),
+		   aif2dac2r_mix, ARRAY_SIZE(aif2dac2r_mix)),
 
 SND_SOC_DAPM_MUX("Left Sidetone", SND_SOC_NOPM, 0, 0, &sidetone1_mux),
 SND_SOC_DAPM_MUX("Right Sidetone", SND_SOC_NOPM, 0, 0, &sidetone2_mux),
@@ -1801,524 +1800,524 @@ SND_SOC_DAPM_MIXER("DAC1L Mixer", SND_SOC_NOPM, 0, 0,
 SND_SOC_DAPM_MIXER("DAC1R Mixer", SND_SOC_NOPM, 0, 0,
 		   dac1r_mix, ARRAY_SIZE(dac1r_mix)),
 
-SND_SOC_DAPM_AIF_OUT("AIF2ADCL", शून्य, 0,
+SND_SOC_DAPM_AIF_OUT("AIF2ADCL", NULL, 0,
 		     SND_SOC_NOPM, 13, 0),
-SND_SOC_DAPM_AIF_OUT("AIF2ADCR", शून्य, 0,
+SND_SOC_DAPM_AIF_OUT("AIF2ADCR", NULL, 0,
 		     SND_SOC_NOPM, 12, 0),
-SND_SOC_DAPM_AIF_IN_E("AIF2DACL", शून्य, 0,
-		      SND_SOC_NOPM, 13, 0, wm8958_aअगर_ev,
+SND_SOC_DAPM_AIF_IN_E("AIF2DACL", NULL, 0,
+		      SND_SOC_NOPM, 13, 0, wm8958_aif_ev,
 		      SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMD),
-SND_SOC_DAPM_AIF_IN_E("AIF2DACR", शून्य, 0,
-		      SND_SOC_NOPM, 12, 0, wm8958_aअगर_ev,
+SND_SOC_DAPM_AIF_IN_E("AIF2DACR", NULL, 0,
+		      SND_SOC_NOPM, 12, 0, wm8958_aif_ev,
 		      SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMD),
 
-SND_SOC_DAPM_AIF_IN("AIF1DACDAT", शून्य, 0, SND_SOC_NOPM, 0, 0),
-SND_SOC_DAPM_AIF_IN("AIF2DACDAT", शून्य, 0, SND_SOC_NOPM, 0, 0),
-SND_SOC_DAPM_AIF_OUT("AIF1ADCDAT", शून्य, 0, SND_SOC_NOPM, 0, 0),
-SND_SOC_DAPM_AIF_OUT("AIF2ADCDAT",  शून्य, 0, SND_SOC_NOPM, 0, 0),
+SND_SOC_DAPM_AIF_IN("AIF1DACDAT", NULL, 0, SND_SOC_NOPM, 0, 0),
+SND_SOC_DAPM_AIF_IN("AIF2DACDAT", NULL, 0, SND_SOC_NOPM, 0, 0),
+SND_SOC_DAPM_AIF_OUT("AIF1ADCDAT", NULL, 0, SND_SOC_NOPM, 0, 0),
+SND_SOC_DAPM_AIF_OUT("AIF2ADCDAT",  NULL, 0, SND_SOC_NOPM, 0, 0),
 
-SND_SOC_DAPM_MUX("AIF1DAC Mux", SND_SOC_NOPM, 0, 0, &aअगर1dac_mux),
-SND_SOC_DAPM_MUX("AIF2DAC Mux", SND_SOC_NOPM, 0, 0, &aअगर2dac_mux),
-SND_SOC_DAPM_MUX("AIF2ADC Mux", SND_SOC_NOPM, 0, 0, &aअगर2adc_mux),
+SND_SOC_DAPM_MUX("AIF1DAC Mux", SND_SOC_NOPM, 0, 0, &aif1dac_mux),
+SND_SOC_DAPM_MUX("AIF2DAC Mux", SND_SOC_NOPM, 0, 0, &aif2dac_mux),
+SND_SOC_DAPM_MUX("AIF2ADC Mux", SND_SOC_NOPM, 0, 0, &aif2adc_mux),
 
-SND_SOC_DAPM_AIF_IN("AIF3DACDAT", शून्य, 0, SND_SOC_NOPM, 0, 0),
-SND_SOC_DAPM_AIF_OUT("AIF3ADCDAT", शून्य, 0, SND_SOC_NOPM, 0, 0),
+SND_SOC_DAPM_AIF_IN("AIF3DACDAT", NULL, 0, SND_SOC_NOPM, 0, 0),
+SND_SOC_DAPM_AIF_OUT("AIF3ADCDAT", NULL, 0, SND_SOC_NOPM, 0, 0),
 
-SND_SOC_DAPM_SUPPLY("TOCLK", WM8994_CLOCKING_1, 4, 0, शून्य, 0),
+SND_SOC_DAPM_SUPPLY("TOCLK", WM8994_CLOCKING_1, 4, 0, NULL, 0),
 
-SND_SOC_DAPM_ADC("DMIC2L", शून्य, WM8994_POWER_MANAGEMENT_4, 5, 0),
-SND_SOC_DAPM_ADC("DMIC2R", शून्य, WM8994_POWER_MANAGEMENT_4, 4, 0),
-SND_SOC_DAPM_ADC("DMIC1L", शून्य, WM8994_POWER_MANAGEMENT_4, 3, 0),
-SND_SOC_DAPM_ADC("DMIC1R", शून्य, WM8994_POWER_MANAGEMENT_4, 2, 0),
+SND_SOC_DAPM_ADC("DMIC2L", NULL, WM8994_POWER_MANAGEMENT_4, 5, 0),
+SND_SOC_DAPM_ADC("DMIC2R", NULL, WM8994_POWER_MANAGEMENT_4, 4, 0),
+SND_SOC_DAPM_ADC("DMIC1L", NULL, WM8994_POWER_MANAGEMENT_4, 3, 0),
+SND_SOC_DAPM_ADC("DMIC1R", NULL, WM8994_POWER_MANAGEMENT_4, 2, 0),
 
-/* Power is करोne with the muxes since the ADC घातer also controls the
- * करोwnsampling chain, the chip will स्वतःmatically manage the analogue
- * specअगरic portions.
+/* Power is done with the muxes since the ADC power also controls the
+ * downsampling chain, the chip will automatically manage the analogue
+ * specific portions.
  */
-SND_SOC_DAPM_ADC("ADCL", शून्य, SND_SOC_NOPM, 1, 0),
-SND_SOC_DAPM_ADC("ADCR", शून्य, SND_SOC_NOPM, 0, 0),
+SND_SOC_DAPM_ADC("ADCL", NULL, SND_SOC_NOPM, 1, 0),
+SND_SOC_DAPM_ADC("ADCR", NULL, SND_SOC_NOPM, 0, 0),
 
-SND_SOC_DAPM_MUX("AIF1 Loopback", SND_SOC_NOPM, 0, 0, &aअगर1_loopback),
-SND_SOC_DAPM_MUX("AIF2 Loopback", SND_SOC_NOPM, 0, 0, &aअगर2_loopback),
+SND_SOC_DAPM_MUX("AIF1 Loopback", SND_SOC_NOPM, 0, 0, &aif1_loopback),
+SND_SOC_DAPM_MUX("AIF2 Loopback", SND_SOC_NOPM, 0, 0, &aif2_loopback),
 
 SND_SOC_DAPM_POST("Debug log", post_ev),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_widget wm8994_specअगरic_dapm_widमाला_लो[] = अणु
-SND_SOC_DAPM_MUX("AIF3ADC Mux", SND_SOC_NOPM, 0, 0, &wm8994_aअगर3adc_mux),
-पूर्ण;
+static const struct snd_soc_dapm_widget wm8994_specific_dapm_widgets[] = {
+SND_SOC_DAPM_MUX("AIF3ADC Mux", SND_SOC_NOPM, 0, 0, &wm8994_aif3adc_mux),
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_widget wm8958_dapm_widमाला_लो[] = अणु
-SND_SOC_DAPM_SUPPLY("AIF3", WM8994_POWER_MANAGEMENT_6, 5, 1, शून्य, 0),
+static const struct snd_soc_dapm_widget wm8958_dapm_widgets[] = {
+SND_SOC_DAPM_SUPPLY("AIF3", WM8994_POWER_MANAGEMENT_6, 5, 1, NULL, 0),
 SND_SOC_DAPM_MUX("Mono PCM Out Mux", SND_SOC_NOPM, 0, 0, &mono_pcm_out_mux),
-SND_SOC_DAPM_MUX("AIF2DACL Mux", SND_SOC_NOPM, 0, 0, &aअगर2dacl_src_mux),
-SND_SOC_DAPM_MUX("AIF2DACR Mux", SND_SOC_NOPM, 0, 0, &aअगर2dacr_src_mux),
-SND_SOC_DAPM_MUX("AIF3ADC Mux", SND_SOC_NOPM, 0, 0, &wm8958_aअगर3adc_mux),
-पूर्ण;
+SND_SOC_DAPM_MUX("AIF2DACL Mux", SND_SOC_NOPM, 0, 0, &aif2dacl_src_mux),
+SND_SOC_DAPM_MUX("AIF2DACR Mux", SND_SOC_NOPM, 0, 0, &aif2dacr_src_mux),
+SND_SOC_DAPM_MUX("AIF3ADC Mux", SND_SOC_NOPM, 0, 0, &wm8958_aif3adc_mux),
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_route पूर्णांकercon[] = अणु
-	अणु "CLK_SYS", शून्य, "AIF1CLK", check_clk_sys पूर्ण,
-	अणु "CLK_SYS", शून्य, "AIF2CLK", check_clk_sys पूर्ण,
+static const struct snd_soc_dapm_route intercon[] = {
+	{ "CLK_SYS", NULL, "AIF1CLK", check_clk_sys },
+	{ "CLK_SYS", NULL, "AIF2CLK", check_clk_sys },
 
-	अणु "DSP1CLK", शून्य, "CLK_SYS" पूर्ण,
-	अणु "DSP2CLK", शून्य, "CLK_SYS" पूर्ण,
-	अणु "DSPINTCLK", शून्य, "CLK_SYS" पूर्ण,
+	{ "DSP1CLK", NULL, "CLK_SYS" },
+	{ "DSP2CLK", NULL, "CLK_SYS" },
+	{ "DSPINTCLK", NULL, "CLK_SYS" },
 
-	अणु "AIF1ADC1L", शून्य, "AIF1CLK" पूर्ण,
-	अणु "AIF1ADC1L", शून्य, "DSP1CLK" पूर्ण,
-	अणु "AIF1ADC1R", शून्य, "AIF1CLK" पूर्ण,
-	अणु "AIF1ADC1R", शून्य, "DSP1CLK" पूर्ण,
-	अणु "AIF1ADC1R", शून्य, "DSPINTCLK" पूर्ण,
+	{ "AIF1ADC1L", NULL, "AIF1CLK" },
+	{ "AIF1ADC1L", NULL, "DSP1CLK" },
+	{ "AIF1ADC1R", NULL, "AIF1CLK" },
+	{ "AIF1ADC1R", NULL, "DSP1CLK" },
+	{ "AIF1ADC1R", NULL, "DSPINTCLK" },
 
-	अणु "AIF1DAC1L", शून्य, "AIF1CLK" पूर्ण,
-	अणु "AIF1DAC1L", शून्य, "DSP1CLK" पूर्ण,
-	अणु "AIF1DAC1R", शून्य, "AIF1CLK" पूर्ण,
-	अणु "AIF1DAC1R", शून्य, "DSP1CLK" पूर्ण,
-	अणु "AIF1DAC1R", शून्य, "DSPINTCLK" पूर्ण,
+	{ "AIF1DAC1L", NULL, "AIF1CLK" },
+	{ "AIF1DAC1L", NULL, "DSP1CLK" },
+	{ "AIF1DAC1R", NULL, "AIF1CLK" },
+	{ "AIF1DAC1R", NULL, "DSP1CLK" },
+	{ "AIF1DAC1R", NULL, "DSPINTCLK" },
 
-	अणु "AIF1ADC2L", शून्य, "AIF1CLK" पूर्ण,
-	अणु "AIF1ADC2L", शून्य, "DSP1CLK" पूर्ण,
-	अणु "AIF1ADC2R", शून्य, "AIF1CLK" पूर्ण,
-	अणु "AIF1ADC2R", शून्य, "DSP1CLK" पूर्ण,
-	अणु "AIF1ADC2R", शून्य, "DSPINTCLK" पूर्ण,
+	{ "AIF1ADC2L", NULL, "AIF1CLK" },
+	{ "AIF1ADC2L", NULL, "DSP1CLK" },
+	{ "AIF1ADC2R", NULL, "AIF1CLK" },
+	{ "AIF1ADC2R", NULL, "DSP1CLK" },
+	{ "AIF1ADC2R", NULL, "DSPINTCLK" },
 
-	अणु "AIF1DAC2L", शून्य, "AIF1CLK" पूर्ण,
-	अणु "AIF1DAC2L", शून्य, "DSP1CLK" पूर्ण,
-	अणु "AIF1DAC2R", शून्य, "AIF1CLK" पूर्ण,
-	अणु "AIF1DAC2R", शून्य, "DSP1CLK" पूर्ण,
-	अणु "AIF1DAC2R", शून्य, "DSPINTCLK" पूर्ण,
+	{ "AIF1DAC2L", NULL, "AIF1CLK" },
+	{ "AIF1DAC2L", NULL, "DSP1CLK" },
+	{ "AIF1DAC2R", NULL, "AIF1CLK" },
+	{ "AIF1DAC2R", NULL, "DSP1CLK" },
+	{ "AIF1DAC2R", NULL, "DSPINTCLK" },
 
-	अणु "AIF2ADCL", शून्य, "AIF2CLK" पूर्ण,
-	अणु "AIF2ADCL", शून्य, "DSP2CLK" पूर्ण,
-	अणु "AIF2ADCR", शून्य, "AIF2CLK" पूर्ण,
-	अणु "AIF2ADCR", शून्य, "DSP2CLK" पूर्ण,
-	अणु "AIF2ADCR", शून्य, "DSPINTCLK" पूर्ण,
+	{ "AIF2ADCL", NULL, "AIF2CLK" },
+	{ "AIF2ADCL", NULL, "DSP2CLK" },
+	{ "AIF2ADCR", NULL, "AIF2CLK" },
+	{ "AIF2ADCR", NULL, "DSP2CLK" },
+	{ "AIF2ADCR", NULL, "DSPINTCLK" },
 
-	अणु "AIF2DACL", शून्य, "AIF2CLK" पूर्ण,
-	अणु "AIF2DACL", शून्य, "DSP2CLK" पूर्ण,
-	अणु "AIF2DACR", शून्य, "AIF2CLK" पूर्ण,
-	अणु "AIF2DACR", शून्य, "DSP2CLK" पूर्ण,
-	अणु "AIF2DACR", शून्य, "DSPINTCLK" पूर्ण,
+	{ "AIF2DACL", NULL, "AIF2CLK" },
+	{ "AIF2DACL", NULL, "DSP2CLK" },
+	{ "AIF2DACR", NULL, "AIF2CLK" },
+	{ "AIF2DACR", NULL, "DSP2CLK" },
+	{ "AIF2DACR", NULL, "DSPINTCLK" },
 
-	अणु "DMIC1L", शून्य, "DMIC1DAT" पूर्ण,
-	अणु "DMIC1L", शून्य, "CLK_SYS" पूर्ण,
-	अणु "DMIC1R", शून्य, "DMIC1DAT" पूर्ण,
-	अणु "DMIC1R", शून्य, "CLK_SYS" पूर्ण,
-	अणु "DMIC2L", शून्य, "DMIC2DAT" पूर्ण,
-	अणु "DMIC2L", शून्य, "CLK_SYS" पूर्ण,
-	अणु "DMIC2R", शून्य, "DMIC2DAT" पूर्ण,
-	अणु "DMIC2R", शून्य, "CLK_SYS" पूर्ण,
+	{ "DMIC1L", NULL, "DMIC1DAT" },
+	{ "DMIC1L", NULL, "CLK_SYS" },
+	{ "DMIC1R", NULL, "DMIC1DAT" },
+	{ "DMIC1R", NULL, "CLK_SYS" },
+	{ "DMIC2L", NULL, "DMIC2DAT" },
+	{ "DMIC2L", NULL, "CLK_SYS" },
+	{ "DMIC2R", NULL, "DMIC2DAT" },
+	{ "DMIC2R", NULL, "CLK_SYS" },
 
-	अणु "ADCL", शून्य, "AIF1CLK" पूर्ण,
-	अणु "ADCL", शून्य, "DSP1CLK" पूर्ण,
-	अणु "ADCL", शून्य, "DSPINTCLK" पूर्ण,
+	{ "ADCL", NULL, "AIF1CLK" },
+	{ "ADCL", NULL, "DSP1CLK" },
+	{ "ADCL", NULL, "DSPINTCLK" },
 
-	अणु "ADCR", शून्य, "AIF1CLK" पूर्ण,
-	अणु "ADCR", शून्य, "DSP1CLK" पूर्ण,
-	अणु "ADCR", शून्य, "DSPINTCLK" पूर्ण,
+	{ "ADCR", NULL, "AIF1CLK" },
+	{ "ADCR", NULL, "DSP1CLK" },
+	{ "ADCR", NULL, "DSPINTCLK" },
 
-	अणु "ADCL Mux", "ADC", "ADCL" पूर्ण,
-	अणु "ADCL Mux", "DMIC", "DMIC1L" पूर्ण,
-	अणु "ADCR Mux", "ADC", "ADCR" पूर्ण,
-	अणु "ADCR Mux", "DMIC", "DMIC1R" पूर्ण,
+	{ "ADCL Mux", "ADC", "ADCL" },
+	{ "ADCL Mux", "DMIC", "DMIC1L" },
+	{ "ADCR Mux", "ADC", "ADCR" },
+	{ "ADCR Mux", "DMIC", "DMIC1R" },
 
-	अणु "DAC1L", शून्य, "AIF1CLK" पूर्ण,
-	अणु "DAC1L", शून्य, "DSP1CLK" पूर्ण,
-	अणु "DAC1L", शून्य, "DSPINTCLK" पूर्ण,
+	{ "DAC1L", NULL, "AIF1CLK" },
+	{ "DAC1L", NULL, "DSP1CLK" },
+	{ "DAC1L", NULL, "DSPINTCLK" },
 
-	अणु "DAC1R", शून्य, "AIF1CLK" पूर्ण,
-	अणु "DAC1R", शून्य, "DSP1CLK" पूर्ण,
-	अणु "DAC1R", शून्य, "DSPINTCLK" पूर्ण,
+	{ "DAC1R", NULL, "AIF1CLK" },
+	{ "DAC1R", NULL, "DSP1CLK" },
+	{ "DAC1R", NULL, "DSPINTCLK" },
 
-	अणु "DAC2L", शून्य, "AIF2CLK" पूर्ण,
-	अणु "DAC2L", शून्य, "DSP2CLK" पूर्ण,
-	अणु "DAC2L", शून्य, "DSPINTCLK" पूर्ण,
+	{ "DAC2L", NULL, "AIF2CLK" },
+	{ "DAC2L", NULL, "DSP2CLK" },
+	{ "DAC2L", NULL, "DSPINTCLK" },
 
-	अणु "DAC2R", शून्य, "AIF2DACR" पूर्ण,
-	अणु "DAC2R", शून्य, "AIF2CLK" पूर्ण,
-	अणु "DAC2R", शून्य, "DSP2CLK" पूर्ण,
-	अणु "DAC2R", शून्य, "DSPINTCLK" पूर्ण,
+	{ "DAC2R", NULL, "AIF2DACR" },
+	{ "DAC2R", NULL, "AIF2CLK" },
+	{ "DAC2R", NULL, "DSP2CLK" },
+	{ "DAC2R", NULL, "DSPINTCLK" },
 
-	अणु "TOCLK", शून्य, "CLK_SYS" पूर्ण,
+	{ "TOCLK", NULL, "CLK_SYS" },
 
-	अणु "AIF1DACDAT", शून्य, "AIF1 Playback" पूर्ण,
-	अणु "AIF2DACDAT", शून्य, "AIF2 Playback" पूर्ण,
-	अणु "AIF3DACDAT", शून्य, "AIF3 Playback" पूर्ण,
+	{ "AIF1DACDAT", NULL, "AIF1 Playback" },
+	{ "AIF2DACDAT", NULL, "AIF2 Playback" },
+	{ "AIF3DACDAT", NULL, "AIF3 Playback" },
 
-	अणु "AIF1 Capture", शून्य, "AIF1ADCDAT" पूर्ण,
-	अणु "AIF2 Capture", शून्य, "AIF2ADCDAT" पूर्ण,
-	अणु "AIF3 Capture", शून्य, "AIF3ADCDAT" पूर्ण,
+	{ "AIF1 Capture", NULL, "AIF1ADCDAT" },
+	{ "AIF2 Capture", NULL, "AIF2ADCDAT" },
+	{ "AIF3 Capture", NULL, "AIF3ADCDAT" },
 
-	/* AIF1 outमाला_दो */
-	अणु "AIF1ADC1L", शून्य, "AIF1ADC1L Mixer" पूर्ण,
-	अणु "AIF1ADC1L Mixer", "ADC/DMIC Switch", "ADCL Mux" पूर्ण,
-	अणु "AIF1ADC1L Mixer", "AIF2 Switch", "AIF2DACL" पूर्ण,
+	/* AIF1 outputs */
+	{ "AIF1ADC1L", NULL, "AIF1ADC1L Mixer" },
+	{ "AIF1ADC1L Mixer", "ADC/DMIC Switch", "ADCL Mux" },
+	{ "AIF1ADC1L Mixer", "AIF2 Switch", "AIF2DACL" },
 
-	अणु "AIF1ADC1R", शून्य, "AIF1ADC1R Mixer" पूर्ण,
-	अणु "AIF1ADC1R Mixer", "ADC/DMIC Switch", "ADCR Mux" पूर्ण,
-	अणु "AIF1ADC1R Mixer", "AIF2 Switch", "AIF2DACR" पूर्ण,
+	{ "AIF1ADC1R", NULL, "AIF1ADC1R Mixer" },
+	{ "AIF1ADC1R Mixer", "ADC/DMIC Switch", "ADCR Mux" },
+	{ "AIF1ADC1R Mixer", "AIF2 Switch", "AIF2DACR" },
 
-	अणु "AIF1ADC2L", शून्य, "AIF1ADC2L Mixer" पूर्ण,
-	अणु "AIF1ADC2L Mixer", "DMIC Switch", "DMIC2L" पूर्ण,
-	अणु "AIF1ADC2L Mixer", "AIF2 Switch", "AIF2DACL" पूर्ण,
+	{ "AIF1ADC2L", NULL, "AIF1ADC2L Mixer" },
+	{ "AIF1ADC2L Mixer", "DMIC Switch", "DMIC2L" },
+	{ "AIF1ADC2L Mixer", "AIF2 Switch", "AIF2DACL" },
 
-	अणु "AIF1ADC2R", शून्य, "AIF1ADC2R Mixer" पूर्ण,
-	अणु "AIF1ADC2R Mixer", "DMIC Switch", "DMIC2R" पूर्ण,
-	अणु "AIF1ADC2R Mixer", "AIF2 Switch", "AIF2DACR" पूर्ण,
+	{ "AIF1ADC2R", NULL, "AIF1ADC2R Mixer" },
+	{ "AIF1ADC2R Mixer", "DMIC Switch", "DMIC2R" },
+	{ "AIF1ADC2R Mixer", "AIF2 Switch", "AIF2DACR" },
 
-	/* Pin level routing क्रम AIF3 */
-	अणु "AIF1DAC1L", शून्य, "AIF1DAC Mux" पूर्ण,
-	अणु "AIF1DAC1R", शून्य, "AIF1DAC Mux" पूर्ण,
-	अणु "AIF1DAC2L", शून्य, "AIF1DAC Mux" पूर्ण,
-	अणु "AIF1DAC2R", शून्य, "AIF1DAC Mux" पूर्ण,
+	/* Pin level routing for AIF3 */
+	{ "AIF1DAC1L", NULL, "AIF1DAC Mux" },
+	{ "AIF1DAC1R", NULL, "AIF1DAC Mux" },
+	{ "AIF1DAC2L", NULL, "AIF1DAC Mux" },
+	{ "AIF1DAC2R", NULL, "AIF1DAC Mux" },
 
-	अणु "AIF1DAC Mux", "AIF1DACDAT", "AIF1 Loopback" पूर्ण,
-	अणु "AIF1DAC Mux", "AIF3DACDAT", "AIF3DACDAT" पूर्ण,
-	अणु "AIF2DAC Mux", "AIF2DACDAT", "AIF2 Loopback" पूर्ण,
-	अणु "AIF2DAC Mux", "AIF3DACDAT", "AIF3DACDAT" पूर्ण,
-	अणु "AIF2ADC Mux", "AIF2ADCDAT", "AIF2ADCL" पूर्ण,
-	अणु "AIF2ADC Mux", "AIF2ADCDAT", "AIF2ADCR" पूर्ण,
-	अणु "AIF2ADC Mux", "AIF3DACDAT", "AIF3ADCDAT" पूर्ण,
+	{ "AIF1DAC Mux", "AIF1DACDAT", "AIF1 Loopback" },
+	{ "AIF1DAC Mux", "AIF3DACDAT", "AIF3DACDAT" },
+	{ "AIF2DAC Mux", "AIF2DACDAT", "AIF2 Loopback" },
+	{ "AIF2DAC Mux", "AIF3DACDAT", "AIF3DACDAT" },
+	{ "AIF2ADC Mux", "AIF2ADCDAT", "AIF2ADCL" },
+	{ "AIF2ADC Mux", "AIF2ADCDAT", "AIF2ADCR" },
+	{ "AIF2ADC Mux", "AIF3DACDAT", "AIF3ADCDAT" },
 
-	/* DAC1 inमाला_दो */
-	अणु "DAC1L Mixer", "AIF2 Switch", "AIF2DACL" पूर्ण,
-	अणु "DAC1L Mixer", "AIF1.2 Switch", "AIF1DAC2L" पूर्ण,
-	अणु "DAC1L Mixer", "AIF1.1 Switch", "AIF1DAC1L" पूर्ण,
-	अणु "DAC1L Mixer", "Left Sidetone Switch", "Left Sidetone" पूर्ण,
-	अणु "DAC1L Mixer", "Right Sidetone Switch", "Right Sidetone" पूर्ण,
+	/* DAC1 inputs */
+	{ "DAC1L Mixer", "AIF2 Switch", "AIF2DACL" },
+	{ "DAC1L Mixer", "AIF1.2 Switch", "AIF1DAC2L" },
+	{ "DAC1L Mixer", "AIF1.1 Switch", "AIF1DAC1L" },
+	{ "DAC1L Mixer", "Left Sidetone Switch", "Left Sidetone" },
+	{ "DAC1L Mixer", "Right Sidetone Switch", "Right Sidetone" },
 
-	अणु "DAC1R Mixer", "AIF2 Switch", "AIF2DACR" पूर्ण,
-	अणु "DAC1R Mixer", "AIF1.2 Switch", "AIF1DAC2R" पूर्ण,
-	अणु "DAC1R Mixer", "AIF1.1 Switch", "AIF1DAC1R" पूर्ण,
-	अणु "DAC1R Mixer", "Left Sidetone Switch", "Left Sidetone" पूर्ण,
-	अणु "DAC1R Mixer", "Right Sidetone Switch", "Right Sidetone" पूर्ण,
+	{ "DAC1R Mixer", "AIF2 Switch", "AIF2DACR" },
+	{ "DAC1R Mixer", "AIF1.2 Switch", "AIF1DAC2R" },
+	{ "DAC1R Mixer", "AIF1.1 Switch", "AIF1DAC1R" },
+	{ "DAC1R Mixer", "Left Sidetone Switch", "Left Sidetone" },
+	{ "DAC1R Mixer", "Right Sidetone Switch", "Right Sidetone" },
 
-	/* DAC2/AIF2 outमाला_दो  */
-	अणु "AIF2ADCL", शून्य, "AIF2DAC2L Mixer" पूर्ण,
-	अणु "AIF2DAC2L Mixer", "AIF2 Switch", "AIF2DACL" पूर्ण,
-	अणु "AIF2DAC2L Mixer", "AIF1.2 Switch", "AIF1DAC2L" पूर्ण,
-	अणु "AIF2DAC2L Mixer", "AIF1.1 Switch", "AIF1DAC1L" पूर्ण,
-	अणु "AIF2DAC2L Mixer", "Left Sidetone Switch", "Left Sidetone" पूर्ण,
-	अणु "AIF2DAC2L Mixer", "Right Sidetone Switch", "Right Sidetone" पूर्ण,
+	/* DAC2/AIF2 outputs  */
+	{ "AIF2ADCL", NULL, "AIF2DAC2L Mixer" },
+	{ "AIF2DAC2L Mixer", "AIF2 Switch", "AIF2DACL" },
+	{ "AIF2DAC2L Mixer", "AIF1.2 Switch", "AIF1DAC2L" },
+	{ "AIF2DAC2L Mixer", "AIF1.1 Switch", "AIF1DAC1L" },
+	{ "AIF2DAC2L Mixer", "Left Sidetone Switch", "Left Sidetone" },
+	{ "AIF2DAC2L Mixer", "Right Sidetone Switch", "Right Sidetone" },
 
-	अणु "AIF2ADCR", शून्य, "AIF2DAC2R Mixer" पूर्ण,
-	अणु "AIF2DAC2R Mixer", "AIF2 Switch", "AIF2DACR" पूर्ण,
-	अणु "AIF2DAC2R Mixer", "AIF1.2 Switch", "AIF1DAC2R" पूर्ण,
-	अणु "AIF2DAC2R Mixer", "AIF1.1 Switch", "AIF1DAC1R" पूर्ण,
-	अणु "AIF2DAC2R Mixer", "Left Sidetone Switch", "Left Sidetone" पूर्ण,
-	अणु "AIF2DAC2R Mixer", "Right Sidetone Switch", "Right Sidetone" पूर्ण,
+	{ "AIF2ADCR", NULL, "AIF2DAC2R Mixer" },
+	{ "AIF2DAC2R Mixer", "AIF2 Switch", "AIF2DACR" },
+	{ "AIF2DAC2R Mixer", "AIF1.2 Switch", "AIF1DAC2R" },
+	{ "AIF2DAC2R Mixer", "AIF1.1 Switch", "AIF1DAC1R" },
+	{ "AIF2DAC2R Mixer", "Left Sidetone Switch", "Left Sidetone" },
+	{ "AIF2DAC2R Mixer", "Right Sidetone Switch", "Right Sidetone" },
 
-	अणु "AIF1ADCDAT", शून्य, "AIF1ADC1L" पूर्ण,
-	अणु "AIF1ADCDAT", शून्य, "AIF1ADC1R" पूर्ण,
-	अणु "AIF1ADCDAT", शून्य, "AIF1ADC2L" पूर्ण,
-	अणु "AIF1ADCDAT", शून्य, "AIF1ADC2R" पूर्ण,
+	{ "AIF1ADCDAT", NULL, "AIF1ADC1L" },
+	{ "AIF1ADCDAT", NULL, "AIF1ADC1R" },
+	{ "AIF1ADCDAT", NULL, "AIF1ADC2L" },
+	{ "AIF1ADCDAT", NULL, "AIF1ADC2R" },
 
-	अणु "AIF2ADCDAT", शून्य, "AIF2ADC Mux" पूर्ण,
+	{ "AIF2ADCDAT", NULL, "AIF2ADC Mux" },
 
 	/* AIF3 output */
-	अणु "AIF3ADC Mux", "AIF1ADCDAT", "AIF1ADC1L" पूर्ण,
-	अणु "AIF3ADC Mux", "AIF1ADCDAT", "AIF1ADC1R" पूर्ण,
-	अणु "AIF3ADC Mux", "AIF1ADCDAT", "AIF1ADC2L" पूर्ण,
-	अणु "AIF3ADC Mux", "AIF1ADCDAT", "AIF1ADC2R" पूर्ण,
-	अणु "AIF3ADC Mux", "AIF2ADCDAT", "AIF2ADCL" पूर्ण,
-	अणु "AIF3ADC Mux", "AIF2ADCDAT", "AIF2ADCR" पूर्ण,
-	अणु "AIF3ADC Mux", "AIF2DACDAT", "AIF2DACL" पूर्ण,
-	अणु "AIF3ADC Mux", "AIF2DACDAT", "AIF2DACR" पूर्ण,
+	{ "AIF3ADC Mux", "AIF1ADCDAT", "AIF1ADC1L" },
+	{ "AIF3ADC Mux", "AIF1ADCDAT", "AIF1ADC1R" },
+	{ "AIF3ADC Mux", "AIF1ADCDAT", "AIF1ADC2L" },
+	{ "AIF3ADC Mux", "AIF1ADCDAT", "AIF1ADC2R" },
+	{ "AIF3ADC Mux", "AIF2ADCDAT", "AIF2ADCL" },
+	{ "AIF3ADC Mux", "AIF2ADCDAT", "AIF2ADCR" },
+	{ "AIF3ADC Mux", "AIF2DACDAT", "AIF2DACL" },
+	{ "AIF3ADC Mux", "AIF2DACDAT", "AIF2DACR" },
 
-	अणु "AIF3ADCDAT", शून्य, "AIF3ADC Mux" पूर्ण,
+	{ "AIF3ADCDAT", NULL, "AIF3ADC Mux" },
 
 	/* Loopback */
-	अणु "AIF1 Loopback", "ADCDAT", "AIF1ADCDAT" पूर्ण,
-	अणु "AIF1 Loopback", "None", "AIF1DACDAT" पूर्ण,
-	अणु "AIF2 Loopback", "ADCDAT", "AIF2ADCDAT" पूर्ण,
-	अणु "AIF2 Loopback", "None", "AIF2DACDAT" पूर्ण,
+	{ "AIF1 Loopback", "ADCDAT", "AIF1ADCDAT" },
+	{ "AIF1 Loopback", "None", "AIF1DACDAT" },
+	{ "AIF2 Loopback", "ADCDAT", "AIF2ADCDAT" },
+	{ "AIF2 Loopback", "None", "AIF2DACDAT" },
 
 	/* Sidetone */
-	अणु "Left Sidetone", "ADC/DMIC1", "ADCL Mux" पूर्ण,
-	अणु "Left Sidetone", "DMIC2", "DMIC2L" पूर्ण,
-	अणु "Right Sidetone", "ADC/DMIC1", "ADCR Mux" पूर्ण,
-	अणु "Right Sidetone", "DMIC2", "DMIC2R" पूर्ण,
+	{ "Left Sidetone", "ADC/DMIC1", "ADCL Mux" },
+	{ "Left Sidetone", "DMIC2", "DMIC2L" },
+	{ "Right Sidetone", "ADC/DMIC1", "ADCR Mux" },
+	{ "Right Sidetone", "DMIC2", "DMIC2R" },
 
 	/* Output stages */
-	अणु "Left Output Mixer", "DAC Switch", "DAC1L" पूर्ण,
-	अणु "Right Output Mixer", "DAC Switch", "DAC1R" पूर्ण,
+	{ "Left Output Mixer", "DAC Switch", "DAC1L" },
+	{ "Right Output Mixer", "DAC Switch", "DAC1R" },
 
-	अणु "SPKL", "DAC1 Switch", "DAC1L" पूर्ण,
-	अणु "SPKL", "DAC2 Switch", "DAC2L" पूर्ण,
+	{ "SPKL", "DAC1 Switch", "DAC1L" },
+	{ "SPKL", "DAC2 Switch", "DAC2L" },
 
-	अणु "SPKR", "DAC1 Switch", "DAC1R" पूर्ण,
-	अणु "SPKR", "DAC2 Switch", "DAC2R" पूर्ण,
+	{ "SPKR", "DAC1 Switch", "DAC1R" },
+	{ "SPKR", "DAC2 Switch", "DAC2R" },
 
-	अणु "Left Headphone Mux", "DAC", "DAC1L" पूर्ण,
-	अणु "Right Headphone Mux", "DAC", "DAC1R" पूर्ण,
-पूर्ण;
+	{ "Left Headphone Mux", "DAC", "DAC1L" },
+	{ "Right Headphone Mux", "DAC", "DAC1R" },
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_route wm8994_lateclk_revd_पूर्णांकercon[] = अणु
-	अणु "DAC1L", शून्य, "Late DAC1L Enable PGA" पूर्ण,
-	अणु "Late DAC1L Enable PGA", शून्य, "DAC1L Mixer" पूर्ण,
-	अणु "DAC1R", शून्य, "Late DAC1R Enable PGA" पूर्ण,
-	अणु "Late DAC1R Enable PGA", शून्य, "DAC1R Mixer" पूर्ण,
-	अणु "DAC2L", शून्य, "Late DAC2L Enable PGA" पूर्ण,
-	अणु "Late DAC2L Enable PGA", शून्य, "AIF2DAC2L Mixer" पूर्ण,
-	अणु "DAC2R", शून्य, "Late DAC2R Enable PGA" पूर्ण,
-	अणु "Late DAC2R Enable PGA", शून्य, "AIF2DAC2R Mixer" पूर्ण
-पूर्ण;
+static const struct snd_soc_dapm_route wm8994_lateclk_revd_intercon[] = {
+	{ "DAC1L", NULL, "Late DAC1L Enable PGA" },
+	{ "Late DAC1L Enable PGA", NULL, "DAC1L Mixer" },
+	{ "DAC1R", NULL, "Late DAC1R Enable PGA" },
+	{ "Late DAC1R Enable PGA", NULL, "DAC1R Mixer" },
+	{ "DAC2L", NULL, "Late DAC2L Enable PGA" },
+	{ "Late DAC2L Enable PGA", NULL, "AIF2DAC2L Mixer" },
+	{ "DAC2R", NULL, "Late DAC2R Enable PGA" },
+	{ "Late DAC2R Enable PGA", NULL, "AIF2DAC2R Mixer" }
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_route wm8994_lateclk_पूर्णांकercon[] = अणु
-	अणु "DAC1L", शून्य, "DAC1L Mixer" पूर्ण,
-	अणु "DAC1R", शून्य, "DAC1R Mixer" पूर्ण,
-	अणु "DAC2L", शून्य, "AIF2DAC2L Mixer" पूर्ण,
-	अणु "DAC2R", शून्य, "AIF2DAC2R Mixer" पूर्ण,
-पूर्ण;
+static const struct snd_soc_dapm_route wm8994_lateclk_intercon[] = {
+	{ "DAC1L", NULL, "DAC1L Mixer" },
+	{ "DAC1R", NULL, "DAC1R Mixer" },
+	{ "DAC2L", NULL, "AIF2DAC2L Mixer" },
+	{ "DAC2R", NULL, "AIF2DAC2R Mixer" },
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_route wm8994_revd_पूर्णांकercon[] = अणु
-	अणु "AIF1DACDAT", शून्य, "AIF2DACDAT" पूर्ण,
-	अणु "AIF2DACDAT", शून्य, "AIF1DACDAT" पूर्ण,
-	अणु "AIF1ADCDAT", शून्य, "AIF2ADCDAT" पूर्ण,
-	अणु "AIF2ADCDAT", शून्य, "AIF1ADCDAT" पूर्ण,
-	अणु "MICBIAS1", शून्य, "CLK_SYS" पूर्ण,
-	अणु "MICBIAS1", शून्य, "MICBIAS Supply" पूर्ण,
-	अणु "MICBIAS2", शून्य, "CLK_SYS" पूर्ण,
-	अणु "MICBIAS2", शून्य, "MICBIAS Supply" पूर्ण,
-पूर्ण;
+static const struct snd_soc_dapm_route wm8994_revd_intercon[] = {
+	{ "AIF1DACDAT", NULL, "AIF2DACDAT" },
+	{ "AIF2DACDAT", NULL, "AIF1DACDAT" },
+	{ "AIF1ADCDAT", NULL, "AIF2ADCDAT" },
+	{ "AIF2ADCDAT", NULL, "AIF1ADCDAT" },
+	{ "MICBIAS1", NULL, "CLK_SYS" },
+	{ "MICBIAS1", NULL, "MICBIAS Supply" },
+	{ "MICBIAS2", NULL, "CLK_SYS" },
+	{ "MICBIAS2", NULL, "MICBIAS Supply" },
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_route wm8994_पूर्णांकercon[] = अणु
-	अणु "AIF2DACL", शून्य, "AIF2DAC Mux" पूर्ण,
-	अणु "AIF2DACR", शून्य, "AIF2DAC Mux" पूर्ण,
-	अणु "MICBIAS1", शून्य, "VMID" पूर्ण,
-	अणु "MICBIAS2", शून्य, "VMID" पूर्ण,
-पूर्ण;
+static const struct snd_soc_dapm_route wm8994_intercon[] = {
+	{ "AIF2DACL", NULL, "AIF2DAC Mux" },
+	{ "AIF2DACR", NULL, "AIF2DAC Mux" },
+	{ "MICBIAS1", NULL, "VMID" },
+	{ "MICBIAS2", NULL, "VMID" },
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_route wm8958_पूर्णांकercon[] = अणु
-	अणु "AIF2DACL", शून्य, "AIF2DACL Mux" पूर्ण,
-	अणु "AIF2DACR", शून्य, "AIF2DACR Mux" पूर्ण,
+static const struct snd_soc_dapm_route wm8958_intercon[] = {
+	{ "AIF2DACL", NULL, "AIF2DACL Mux" },
+	{ "AIF2DACR", NULL, "AIF2DACR Mux" },
 
-	अणु "AIF2DACL Mux", "AIF2", "AIF2DAC Mux" पूर्ण,
-	अणु "AIF2DACL Mux", "AIF3", "AIF3DACDAT" पूर्ण,
-	अणु "AIF2DACR Mux", "AIF2", "AIF2DAC Mux" पूर्ण,
-	अणु "AIF2DACR Mux", "AIF3", "AIF3DACDAT" पूर्ण,
+	{ "AIF2DACL Mux", "AIF2", "AIF2DAC Mux" },
+	{ "AIF2DACL Mux", "AIF3", "AIF3DACDAT" },
+	{ "AIF2DACR Mux", "AIF2", "AIF2DAC Mux" },
+	{ "AIF2DACR Mux", "AIF3", "AIF3DACDAT" },
 
-	अणु "AIF3DACDAT", शून्य, "AIF3" पूर्ण,
-	अणु "AIF3ADCDAT", शून्य, "AIF3" पूर्ण,
+	{ "AIF3DACDAT", NULL, "AIF3" },
+	{ "AIF3ADCDAT", NULL, "AIF3" },
 
-	अणु "Mono PCM Out Mux", "AIF2ADCL", "AIF2ADCL" पूर्ण,
-	अणु "Mono PCM Out Mux", "AIF2ADCR", "AIF2ADCR" पूर्ण,
+	{ "Mono PCM Out Mux", "AIF2ADCL", "AIF2ADCL" },
+	{ "Mono PCM Out Mux", "AIF2ADCR", "AIF2ADCR" },
 
-	अणु "AIF3ADC Mux", "Mono PCM", "Mono PCM Out Mux" पूर्ण,
-पूर्ण;
+	{ "AIF3ADC Mux", "Mono PCM", "Mono PCM Out Mux" },
+};
 
-/* The size in bits of the FLL भागide multiplied by 10
+/* The size in bits of the FLL divide multiplied by 10
  * to allow rounding later */
-#घोषणा FIXED_FLL_SIZE ((1 << 16) * 10)
+#define FIXED_FLL_SIZE ((1 << 16) * 10)
 
-काष्ठा fll_भाग अणु
-	u16 outभाग;
+struct fll_div {
+	u16 outdiv;
 	u16 n;
 	u16 k;
 	u16 lambda;
-	u16 clk_ref_भाग;
+	u16 clk_ref_div;
 	u16 fll_fratio;
-पूर्ण;
+};
 
-अटल पूर्णांक wm8994_get_fll_config(काष्ठा wm8994 *control, काष्ठा fll_भाग *fll,
-				 पूर्णांक freq_in, पूर्णांक freq_out)
-अणु
+static int wm8994_get_fll_config(struct wm8994 *control, struct fll_div *fll,
+				 int freq_in, int freq_out)
+{
 	u64 Kpart;
-	अचिन्हित पूर्णांक K, Nभाग, Nmod, gcd_fll;
+	unsigned int K, Ndiv, Nmod, gcd_fll;
 
 	pr_debug("FLL input=%dHz, output=%dHz\n", freq_in, freq_out);
 
-	/* Scale the input frequency करोwn to <= 13.5MHz */
-	fll->clk_ref_भाग = 0;
-	जबतक (freq_in > 13500000) अणु
-		fll->clk_ref_भाग++;
+	/* Scale the input frequency down to <= 13.5MHz */
+	fll->clk_ref_div = 0;
+	while (freq_in > 13500000) {
+		fll->clk_ref_div++;
 		freq_in /= 2;
 
-		अगर (fll->clk_ref_भाग > 3)
-			वापस -EINVAL;
-	पूर्ण
-	pr_debug("CLK_REF_DIV=%d, Fref=%dHz\n", fll->clk_ref_भाग, freq_in);
+		if (fll->clk_ref_div > 3)
+			return -EINVAL;
+	}
+	pr_debug("CLK_REF_DIV=%d, Fref=%dHz\n", fll->clk_ref_div, freq_in);
 
 	/* Scale the output to give 90MHz<=Fvco<=100MHz */
-	fll->outभाग = 3;
-	जबतक (freq_out * (fll->outभाग + 1) < 90000000) अणु
-		fll->outभाग++;
-		अगर (fll->outभाग > 63)
-			वापस -EINVAL;
-	पूर्ण
-	freq_out *= fll->outभाग + 1;
-	pr_debug("OUTDIV=%d, Fvco=%dHz\n", fll->outभाग, freq_out);
+	fll->outdiv = 3;
+	while (freq_out * (fll->outdiv + 1) < 90000000) {
+		fll->outdiv++;
+		if (fll->outdiv > 63)
+			return -EINVAL;
+	}
+	freq_out *= fll->outdiv + 1;
+	pr_debug("OUTDIV=%d, Fvco=%dHz\n", fll->outdiv, freq_out);
 
-	अगर (freq_in > 1000000) अणु
+	if (freq_in > 1000000) {
 		fll->fll_fratio = 0;
-	पूर्ण अन्यथा अगर (freq_in > 256000) अणु
+	} else if (freq_in > 256000) {
 		fll->fll_fratio = 1;
 		freq_in *= 2;
-	पूर्ण अन्यथा अगर (freq_in > 128000) अणु
+	} else if (freq_in > 128000) {
 		fll->fll_fratio = 2;
 		freq_in *= 4;
-	पूर्ण अन्यथा अगर (freq_in > 64000) अणु
+	} else if (freq_in > 64000) {
 		fll->fll_fratio = 3;
 		freq_in *= 8;
-	पूर्ण अन्यथा अणु
+	} else {
 		fll->fll_fratio = 4;
 		freq_in *= 16;
-	पूर्ण
+	}
 	pr_debug("FLL_FRATIO=%d, Fref=%dHz\n", fll->fll_fratio, freq_in);
 
 	/* Now, calculate N.K */
-	Nभाग = freq_out / freq_in;
+	Ndiv = freq_out / freq_in;
 
-	fll->n = Nभाग;
+	fll->n = Ndiv;
 	Nmod = freq_out % freq_in;
 	pr_debug("Nmod=%d\n", Nmod);
 
-	चयन (control->type) अणु
-	हाल WM8994:
+	switch (control->type) {
+	case WM8994:
 		/* Calculate fractional part - scale up so we can round. */
-		Kpart = FIXED_FLL_SIZE * (दीर्घ दीर्घ)Nmod;
+		Kpart = FIXED_FLL_SIZE * (long long)Nmod;
 
-		करो_भाग(Kpart, freq_in);
+		do_div(Kpart, freq_in);
 
 		K = Kpart & 0xFFFFFFFF;
 
-		अगर ((K % 10) >= 5)
+		if ((K % 10) >= 5)
 			K += 5;
 
-		/* Move करोwn to proper range now rounding is करोne */
+		/* Move down to proper range now rounding is done */
 		fll->k = K / 10;
 		fll->lambda = 0;
 
 		pr_debug("N=%x K=%x\n", fll->n, fll->k);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		gcd_fll = gcd(freq_out, freq_in);
 
 		fll->k = (freq_out - (freq_in * fll->n)) / gcd_fll;
 		fll->lambda = freq_in / gcd_fll;
 		
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक _wm8994_set_fll(काष्ठा snd_soc_component *component, पूर्णांक id, पूर्णांक src,
-			  अचिन्हित पूर्णांक freq_in, अचिन्हित पूर्णांक freq_out)
-अणु
-	काष्ठा wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
-	काष्ठा wm8994 *control = wm8994->wm8994;
-	पूर्णांक reg_offset, ret;
-	काष्ठा fll_भाग fll;
-	u16 reg, clk1, aअगर_reg, aअगर_src;
-	अचिन्हित दीर्घ समयout;
+static int _wm8994_set_fll(struct snd_soc_component *component, int id, int src,
+			  unsigned int freq_in, unsigned int freq_out)
+{
+	struct wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
+	struct wm8994 *control = wm8994->wm8994;
+	int reg_offset, ret;
+	struct fll_div fll;
+	u16 reg, clk1, aif_reg, aif_src;
+	unsigned long timeout;
 	bool was_enabled;
-	काष्ठा clk *mclk;
+	struct clk *mclk;
 
-	चयन (id) अणु
-	हाल WM8994_FLL1:
+	switch (id) {
+	case WM8994_FLL1:
 		reg_offset = 0;
 		id = 0;
-		aअगर_src = 0x10;
-		अवरोध;
-	हाल WM8994_FLL2:
+		aif_src = 0x10;
+		break;
+	case WM8994_FLL2:
 		reg_offset = 0x20;
 		id = 1;
-		aअगर_src = 0x18;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		aif_src = 0x18;
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	reg = snd_soc_component_पढ़ो(component, WM8994_FLL1_CONTROL_1 + reg_offset);
+	reg = snd_soc_component_read(component, WM8994_FLL1_CONTROL_1 + reg_offset);
 	was_enabled = reg & WM8994_FLL1_ENA;
 
-	चयन (src) अणु
-	हाल 0:
-		/* Allow no source specअगरication when stopping */
-		अगर (freq_out)
-			वापस -EINVAL;
+	switch (src) {
+	case 0:
+		/* Allow no source specification when stopping */
+		if (freq_out)
+			return -EINVAL;
 		src = wm8994->fll[id].src;
-		अवरोध;
-	हाल WM8994_FLL_SRC_MCLK1:
-	हाल WM8994_FLL_SRC_MCLK2:
-	हाल WM8994_FLL_SRC_LRCLK:
-	हाल WM8994_FLL_SRC_BCLK:
-		अवरोध;
-	हाल WM8994_FLL_SRC_INTERNAL:
+		break;
+	case WM8994_FLL_SRC_MCLK1:
+	case WM8994_FLL_SRC_MCLK2:
+	case WM8994_FLL_SRC_LRCLK:
+	case WM8994_FLL_SRC_BCLK:
+		break;
+	case WM8994_FLL_SRC_INTERNAL:
 		freq_in = 12000000;
 		freq_out = 12000000;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	/* Are we changing anything? */
-	अगर (wm8994->fll[id].src == src &&
+	if (wm8994->fll[id].src == src &&
 	    wm8994->fll[id].in == freq_in && wm8994->fll[id].out == freq_out)
-		वापस 0;
+		return 0;
 
-	/* If we're stopping the FLL reकरो the old config - no
-	 * रेजिस्टरs will actually be written but we aव्योम GCC flow
+	/* If we're stopping the FLL redo the old config - no
+	 * registers will actually be written but we avoid GCC flow
 	 * analysis bugs spewing warnings.
 	 */
-	अगर (freq_out)
+	if (freq_out)
 		ret = wm8994_get_fll_config(control, &fll, freq_in, freq_out);
-	अन्यथा
+	else
 		ret = wm8994_get_fll_config(control, &fll, wm8994->fll[id].in,
 					    wm8994->fll[id].out);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	/* Make sure that we're not providing SYSCLK right now */
-	clk1 = snd_soc_component_पढ़ो(component, WM8994_CLOCKING_1);
-	अगर (clk1 & WM8994_SYSCLK_SRC)
-		aअगर_reg = WM8994_AIF2_CLOCKING_1;
-	अन्यथा
-		aअगर_reg = WM8994_AIF1_CLOCKING_1;
-	reg = snd_soc_component_पढ़ो(component, aअगर_reg);
+	clk1 = snd_soc_component_read(component, WM8994_CLOCKING_1);
+	if (clk1 & WM8994_SYSCLK_SRC)
+		aif_reg = WM8994_AIF2_CLOCKING_1;
+	else
+		aif_reg = WM8994_AIF1_CLOCKING_1;
+	reg = snd_soc_component_read(component, aif_reg);
 
-	अगर ((reg & WM8994_AIF1CLK_ENA) &&
-	    (reg & WM8994_AIF1CLK_SRC_MASK) == aअगर_src) अणु
+	if ((reg & WM8994_AIF1CLK_ENA) &&
+	    (reg & WM8994_AIF1CLK_SRC_MASK) == aif_src) {
 		dev_err(component->dev, "FLL%d is currently providing SYSCLK\n",
 			id + 1);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	/* We always need to disable the FLL जबतक reconfiguring */
+	/* We always need to disable the FLL while reconfiguring */
 	snd_soc_component_update_bits(component, WM8994_FLL1_CONTROL_1 + reg_offset,
 			    WM8994_FLL1_ENA, 0);
 
-	/* Disable MCLK अगर needed beक्रमe we possibly change to new घड़ी parent */
-	अगर (was_enabled) अणु
-		reg = snd_soc_component_पढ़ो(component, WM8994_FLL1_CONTROL_5
+	/* Disable MCLK if needed before we possibly change to new clock parent */
+	if (was_enabled) {
+		reg = snd_soc_component_read(component, WM8994_FLL1_CONTROL_5
 							+ reg_offset);
 		reg = ((reg & WM8994_FLL1_REFCLK_SRC_MASK)
 			>> WM8994_FLL1_REFCLK_SRC_SHIFT) + 1;
 
-		चयन (reg) अणु
-		हाल WM8994_FLL_SRC_MCLK1:
+		switch (reg) {
+		case WM8994_FLL_SRC_MCLK1:
 			mclk = wm8994->mclk[WM8994_MCLK1].clk;
-			अवरोध;
-		हाल WM8994_FLL_SRC_MCLK2:
+			break;
+		case WM8994_FLL_SRC_MCLK2:
 			mclk = wm8994->mclk[WM8994_MCLK2].clk;
-			अवरोध;
-		शेष:
-			mclk = शून्य;
-		पूर्ण
+			break;
+		default:
+			mclk = NULL;
+		}
 
 		clk_disable_unprepare(mclk);
-	पूर्ण
+	}
 
-	अगर (wm8994->fll_byp && src == WM8994_FLL_SRC_BCLK &&
-	    freq_in == freq_out && freq_out) अणु
+	if (wm8994->fll_byp && src == WM8994_FLL_SRC_BCLK &&
+	    freq_in == freq_out && freq_out) {
 		dev_dbg(component->dev, "Bypassing FLL%d\n", id + 1);
 		snd_soc_component_update_bits(component, WM8994_FLL1_CONTROL_5 + reg_offset,
 				    WM8958_FLL1_BYP, WM8958_FLL1_BYP);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	reg = (fll.outभाग << WM8994_FLL1_OUTDIV_SHIFT) |
+	reg = (fll.outdiv << WM8994_FLL1_OUTDIV_SHIFT) |
 		(fll.fll_fratio << WM8994_FLL1_FRATIO_SHIFT);
 	snd_soc_component_update_bits(component, WM8994_FLL1_CONTROL_2 + reg_offset,
 			    WM8994_FLL1_OUTDIV_MASK |
@@ -2331,16 +2330,16 @@ SND_SOC_DAPM_MUX("AIF3ADC Mux", SND_SOC_NOPM, 0, 0, &wm8958_aअगर3adc_mux),
 			    WM8994_FLL1_N_MASK,
 			    fll.n << WM8994_FLL1_N_SHIFT);
 
-	अगर (fll.lambda) अणु
+	if (fll.lambda) {
 		snd_soc_component_update_bits(component, WM8958_FLL1_EFS_1 + reg_offset,
 				    WM8958_FLL1_LAMBDA_MASK,
 				    fll.lambda);
 		snd_soc_component_update_bits(component, WM8958_FLL1_EFS_2 + reg_offset,
 				    WM8958_FLL1_EFS_ENA, WM8958_FLL1_EFS_ENA);
-	पूर्ण अन्यथा अणु
+	} else {
 		snd_soc_component_update_bits(component, WM8958_FLL1_EFS_2 + reg_offset,
 				    WM8958_FLL1_EFS_ENA, 0);
-	पूर्ण
+	}
 
 	snd_soc_component_update_bits(component, WM8994_FLL1_CONTROL_5 + reg_offset,
 			    WM8994_FLL1_FRC_NCO | WM8958_FLL1_BYP |
@@ -2348,530 +2347,530 @@ SND_SOC_DAPM_MUX("AIF3ADC Mux", SND_SOC_NOPM, 0, 0, &wm8958_aअगर3adc_mux),
 			    WM8994_FLL1_REFCLK_SRC_MASK,
 			    ((src == WM8994_FLL_SRC_INTERNAL)
 			     << WM8994_FLL1_FRC_NCO_SHIFT) |
-			    (fll.clk_ref_भाग << WM8994_FLL1_REFCLK_DIV_SHIFT) |
+			    (fll.clk_ref_div << WM8994_FLL1_REFCLK_DIV_SHIFT) |
 			    (src - 1));
 
 	/* Clear any pending completion from a previous failure */
-	try_रुको_क्रम_completion(&wm8994->fll_locked[id]);
+	try_wait_for_completion(&wm8994->fll_locked[id]);
 
-	चयन (src) अणु
-	हाल WM8994_FLL_SRC_MCLK1:
+	switch (src) {
+	case WM8994_FLL_SRC_MCLK1:
 		mclk = wm8994->mclk[WM8994_MCLK1].clk;
-		अवरोध;
-	हाल WM8994_FLL_SRC_MCLK2:
+		break;
+	case WM8994_FLL_SRC_MCLK2:
 		mclk = wm8994->mclk[WM8994_MCLK2].clk;
-		अवरोध;
-	शेष:
-		mclk = शून्य;
-	पूर्ण
+		break;
+	default:
+		mclk = NULL;
+	}
 
-	/* Enable (with fractional mode अगर required) */
-	अगर (freq_out) अणु
+	/* Enable (with fractional mode if required) */
+	if (freq_out) {
 		ret = clk_prepare_enable(mclk);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(component->dev, "Failed to enable MCLK for FLL%d\n",
 				id + 1);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		/* Enable VMID अगर we need it */
-		अगर (!was_enabled) अणु
+		/* Enable VMID if we need it */
+		if (!was_enabled) {
 
 			active_reference(component);
 
-			चयन (control->type) अणु
-			हाल WM8994:
+			switch (control->type) {
+			case WM8994:
 				vmid_reference(component);
-				अवरोध;
-			हाल WM8958:
-				अगर (control->revision < 1)
+				break;
+			case WM8958:
+				if (control->revision < 1)
 					vmid_reference(component);
-				अवरोध;
-			शेष:
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			default:
+				break;
+			}
+		}
 
 		reg = WM8994_FLL1_ENA;
 
-		अगर (fll.k)
+		if (fll.k)
 			reg |= WM8994_FLL1_FRAC;
-		अगर (src == WM8994_FLL_SRC_INTERNAL)
+		if (src == WM8994_FLL_SRC_INTERNAL)
 			reg |= WM8994_FLL1_OSC_ENA;
 
 		snd_soc_component_update_bits(component, WM8994_FLL1_CONTROL_1 + reg_offset,
 				    WM8994_FLL1_ENA | WM8994_FLL1_OSC_ENA |
 				    WM8994_FLL1_FRAC, reg);
 
-		अगर (wm8994->fll_locked_irq) अणु
-			समयout = रुको_क्रम_completion_समयout(&wm8994->fll_locked[id],
-							      msecs_to_jअगरfies(10));
-			अगर (समयout == 0)
+		if (wm8994->fll_locked_irq) {
+			timeout = wait_for_completion_timeout(&wm8994->fll_locked[id],
+							      msecs_to_jiffies(10));
+			if (timeout == 0)
 				dev_warn(component->dev,
 					 "Timed out waiting for FLL lock\n");
-		पूर्ण अन्यथा अणु
+		} else {
 			msleep(5);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (was_enabled) अणु
-			चयन (control->type) अणु
-			हाल WM8994:
+		}
+	} else {
+		if (was_enabled) {
+			switch (control->type) {
+			case WM8994:
 				vmid_dereference(component);
-				अवरोध;
-			हाल WM8958:
-				अगर (control->revision < 1)
+				break;
+			case WM8958:
+				if (control->revision < 1)
 					vmid_dereference(component);
-				अवरोध;
-			शेष:
-				अवरोध;
-			पूर्ण
+				break;
+			default:
+				break;
+			}
 
 			active_dereference(component);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 out:
 	wm8994->fll[id].in = freq_in;
 	wm8994->fll[id].out = freq_out;
 	wm8994->fll[id].src = src;
 
-	configure_घड़ी(component);
+	configure_clock(component);
 
 	/*
-	 * If SYSCLK will be less than 50kHz adjust AIFnCLK भागiders
-	 * क्रम detection.
+	 * If SYSCLK will be less than 50kHz adjust AIFnCLK dividers
+	 * for detection.
 	 */
-	अगर (max(wm8994->aअगरclk[0], wm8994->aअगरclk[1]) < 50000) अणु
+	if (max(wm8994->aifclk[0], wm8994->aifclk[1]) < 50000) {
 		dev_dbg(component->dev, "Configuring AIFs for 128fs\n");
 
-		wm8994->aअगरभाग[0] = snd_soc_component_पढ़ो(component, WM8994_AIF1_RATE)
+		wm8994->aifdiv[0] = snd_soc_component_read(component, WM8994_AIF1_RATE)
 			& WM8994_AIF1CLK_RATE_MASK;
-		wm8994->aअगरभाग[1] = snd_soc_component_पढ़ो(component, WM8994_AIF2_RATE)
+		wm8994->aifdiv[1] = snd_soc_component_read(component, WM8994_AIF2_RATE)
 			& WM8994_AIF1CLK_RATE_MASK;
 
 		snd_soc_component_update_bits(component, WM8994_AIF1_RATE,
 				    WM8994_AIF1CLK_RATE_MASK, 0x1);
 		snd_soc_component_update_bits(component, WM8994_AIF2_RATE,
 				    WM8994_AIF2CLK_RATE_MASK, 0x1);
-	पूर्ण अन्यथा अगर (wm8994->aअगरभाग[0]) अणु
+	} else if (wm8994->aifdiv[0]) {
 		snd_soc_component_update_bits(component, WM8994_AIF1_RATE,
 				    WM8994_AIF1CLK_RATE_MASK,
-				    wm8994->aअगरभाग[0]);
+				    wm8994->aifdiv[0]);
 		snd_soc_component_update_bits(component, WM8994_AIF2_RATE,
 				    WM8994_AIF2CLK_RATE_MASK,
-				    wm8994->aअगरभाग[1]);
+				    wm8994->aifdiv[1]);
 
-		wm8994->aअगरभाग[0] = 0;
-		wm8994->aअगरभाग[1] = 0;
-	पूर्ण
+		wm8994->aifdiv[0] = 0;
+		wm8994->aifdiv[1] = 0;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल irqवापस_t wm8994_fll_locked_irq(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा completion *completion = data;
+static irqreturn_t wm8994_fll_locked_irq(int irq, void *data)
+{
+	struct completion *completion = data;
 
 	complete(completion);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक opclk_भागs[] = अणु 10, 20, 30, 40, 55, 60, 80, 120, 160 पूर्ण;
+static int opclk_divs[] = { 10, 20, 30, 40, 55, 60, 80, 120, 160 };
 
-अटल पूर्णांक wm8994_set_fll(काष्ठा snd_soc_dai *dai, पूर्णांक id, पूर्णांक src,
-			  अचिन्हित पूर्णांक freq_in, अचिन्हित पूर्णांक freq_out)
-अणु
-	वापस _wm8994_set_fll(dai->component, id, src, freq_in, freq_out);
-पूर्ण
+static int wm8994_set_fll(struct snd_soc_dai *dai, int id, int src,
+			  unsigned int freq_in, unsigned int freq_out)
+{
+	return _wm8994_set_fll(dai->component, id, src, freq_in, freq_out);
+}
 
-अटल पूर्णांक wm8994_set_mclk_rate(काष्ठा wm8994_priv *wm8994, अचिन्हित पूर्णांक id,
-				अचिन्हित पूर्णांक *freq)
-अणु
-	पूर्णांक ret;
+static int wm8994_set_mclk_rate(struct wm8994_priv *wm8994, unsigned int id,
+				unsigned int *freq)
+{
+	int ret;
 
-	अगर (!wm8994->mclk[id].clk || *freq == wm8994->mclk_rate[id])
-		वापस 0;
+	if (!wm8994->mclk[id].clk || *freq == wm8994->mclk_rate[id])
+		return 0;
 
 	ret = clk_set_rate(wm8994->mclk[id].clk, *freq);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	*freq = clk_get_rate(wm8994->mclk[id].clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wm8994_set_dai_sysclk(काष्ठा snd_soc_dai *dai,
-		पूर्णांक clk_id, अचिन्हित पूर्णांक freq, पूर्णांक dir)
-अणु
-	काष्ठा snd_soc_component *component = dai->component;
-	काष्ठा wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
-	पूर्णांक ret, i;
+static int wm8994_set_dai_sysclk(struct snd_soc_dai *dai,
+		int clk_id, unsigned int freq, int dir)
+{
+	struct snd_soc_component *component = dai->component;
+	struct wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
+	int ret, i;
 
-	चयन (dai->id) अणु
-	हाल 1:
-	हाल 2:
-		अवरोध;
+	switch (dai->id) {
+	case 1:
+	case 2:
+		break;
 
-	शेष:
-		/* AIF3 shares घड़ीing with AIF1/2 */
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		/* AIF3 shares clocking with AIF1/2 */
+		return -EINVAL;
+	}
 
-	चयन (clk_id) अणु
-	हाल WM8994_SYSCLK_MCLK1:
+	switch (clk_id) {
+	case WM8994_SYSCLK_MCLK1:
 		wm8994->sysclk[dai->id - 1] = WM8994_SYSCLK_MCLK1;
 
 		ret = wm8994_set_mclk_rate(wm8994, dai->id - 1, &freq);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
 		wm8994->mclk_rate[0] = freq;
 		dev_dbg(dai->dev, "AIF%d using MCLK1 at %uHz\n",
 			dai->id, freq);
-		अवरोध;
+		break;
 
-	हाल WM8994_SYSCLK_MCLK2:
+	case WM8994_SYSCLK_MCLK2:
 		/* TODO: Set GPIO AF */
 		wm8994->sysclk[dai->id - 1] = WM8994_SYSCLK_MCLK2;
 
 		ret = wm8994_set_mclk_rate(wm8994, dai->id - 1, &freq);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
 		wm8994->mclk_rate[1] = freq;
 		dev_dbg(dai->dev, "AIF%d using MCLK2 at %uHz\n",
 			dai->id, freq);
-		अवरोध;
+		break;
 
-	हाल WM8994_SYSCLK_FLL1:
+	case WM8994_SYSCLK_FLL1:
 		wm8994->sysclk[dai->id - 1] = WM8994_SYSCLK_FLL1;
 		dev_dbg(dai->dev, "AIF%d using FLL1\n", dai->id);
-		अवरोध;
+		break;
 
-	हाल WM8994_SYSCLK_FLL2:
+	case WM8994_SYSCLK_FLL2:
 		wm8994->sysclk[dai->id - 1] = WM8994_SYSCLK_FLL2;
 		dev_dbg(dai->dev, "AIF%d using FLL2\n", dai->id);
-		अवरोध;
+		break;
 
-	हाल WM8994_SYSCLK_OPCLK:
-		/* Special हाल - a भागision (बार 10) is given and
-		 * no effect on मुख्य घड़ीing.
+	case WM8994_SYSCLK_OPCLK:
+		/* Special case - a division (times 10) is given and
+		 * no effect on main clocking.
 		 */
-		अगर (freq) अणु
-			क्रम (i = 0; i < ARRAY_SIZE(opclk_भागs); i++)
-				अगर (opclk_भागs[i] == freq)
-					अवरोध;
-			अगर (i == ARRAY_SIZE(opclk_भागs))
-				वापस -EINVAL;
+		if (freq) {
+			for (i = 0; i < ARRAY_SIZE(opclk_divs); i++)
+				if (opclk_divs[i] == freq)
+					break;
+			if (i == ARRAY_SIZE(opclk_divs))
+				return -EINVAL;
 			snd_soc_component_update_bits(component, WM8994_CLOCKING_2,
 					    WM8994_OPCLK_DIV_MASK, i);
 			snd_soc_component_update_bits(component, WM8994_POWER_MANAGEMENT_2,
 					    WM8994_OPCLK_ENA, WM8994_OPCLK_ENA);
-		पूर्ण अन्यथा अणु
+		} else {
 			snd_soc_component_update_bits(component, WM8994_POWER_MANAGEMENT_2,
 					    WM8994_OPCLK_ENA, 0);
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
-	configure_घड़ी(component);
+	configure_clock(component);
 
 	/*
-	 * If SYSCLK will be less than 50kHz adjust AIFnCLK भागiders
-	 * क्रम detection.
+	 * If SYSCLK will be less than 50kHz adjust AIFnCLK dividers
+	 * for detection.
 	 */
-	अगर (max(wm8994->aअगरclk[0], wm8994->aअगरclk[1]) < 50000) अणु
+	if (max(wm8994->aifclk[0], wm8994->aifclk[1]) < 50000) {
 		dev_dbg(component->dev, "Configuring AIFs for 128fs\n");
 
-		wm8994->aअगरभाग[0] = snd_soc_component_पढ़ो(component, WM8994_AIF1_RATE)
+		wm8994->aifdiv[0] = snd_soc_component_read(component, WM8994_AIF1_RATE)
 			& WM8994_AIF1CLK_RATE_MASK;
-		wm8994->aअगरभाग[1] = snd_soc_component_पढ़ो(component, WM8994_AIF2_RATE)
+		wm8994->aifdiv[1] = snd_soc_component_read(component, WM8994_AIF2_RATE)
 			& WM8994_AIF1CLK_RATE_MASK;
 
 		snd_soc_component_update_bits(component, WM8994_AIF1_RATE,
 				    WM8994_AIF1CLK_RATE_MASK, 0x1);
 		snd_soc_component_update_bits(component, WM8994_AIF2_RATE,
 				    WM8994_AIF2CLK_RATE_MASK, 0x1);
-	पूर्ण अन्यथा अगर (wm8994->aअगरभाग[0]) अणु
+	} else if (wm8994->aifdiv[0]) {
 		snd_soc_component_update_bits(component, WM8994_AIF1_RATE,
 				    WM8994_AIF1CLK_RATE_MASK,
-				    wm8994->aअगरभाग[0]);
+				    wm8994->aifdiv[0]);
 		snd_soc_component_update_bits(component, WM8994_AIF2_RATE,
 				    WM8994_AIF2CLK_RATE_MASK,
-				    wm8994->aअगरभाग[1]);
+				    wm8994->aifdiv[1]);
 
-		wm8994->aअगरभाग[0] = 0;
-		wm8994->aअगरभाग[1] = 0;
-	पूर्ण
+		wm8994->aifdiv[0] = 0;
+		wm8994->aifdiv[1] = 0;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wm8994_set_bias_level(काष्ठा snd_soc_component *component,
-				 क्रमागत snd_soc_bias_level level)
-अणु
-	काष्ठा wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
-	काष्ठा wm8994 *control = wm8994->wm8994;
+static int wm8994_set_bias_level(struct snd_soc_component *component,
+				 enum snd_soc_bias_level level)
+{
+	struct wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
+	struct wm8994 *control = wm8994->wm8994;
 
 	wm_hubs_set_bias_level(component, level);
 
-	चयन (level) अणु
-	हाल SND_SOC_BIAS_ON:
-		अवरोध;
+	switch (level) {
+	case SND_SOC_BIAS_ON:
+		break;
 
-	हाल SND_SOC_BIAS_PREPARE:
-		/* MICBIAS पूर्णांकo regulating mode */
-		चयन (control->type) अणु
-		हाल WM8958:
-		हाल WM1811:
+	case SND_SOC_BIAS_PREPARE:
+		/* MICBIAS into regulating mode */
+		switch (control->type) {
+		case WM8958:
+		case WM1811:
 			snd_soc_component_update_bits(component, WM8958_MICBIAS1,
 					    WM8958_MICB1_MODE, 0);
 			snd_soc_component_update_bits(component, WM8958_MICBIAS2,
 					    WM8958_MICB2_MODE, 0);
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
+			break;
+		default:
+			break;
+		}
 
-		अगर (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_STANDBY)
+		if (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_STANDBY)
 			active_reference(component);
-		अवरोध;
+		break;
 
-	हाल SND_SOC_BIAS_STANDBY:
-		अगर (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_OFF) अणु
-			चयन (control->type) अणु
-			हाल WM8958:
-				अगर (control->revision == 0) अणु
-					/* Optimise perक्रमmance क्रम rev A */
+	case SND_SOC_BIAS_STANDBY:
+		if (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_OFF) {
+			switch (control->type) {
+			case WM8958:
+				if (control->revision == 0) {
+					/* Optimise performance for rev A */
 					snd_soc_component_update_bits(component,
 							    WM8958_CHARGE_PUMP_2,
 							    WM8958_CP_DISCH,
 							    WM8958_CP_DISCH);
-				पूर्ण
-				अवरोध;
+				}
+				break;
 
-			शेष:
-				अवरोध;
-			पूर्ण
+			default:
+				break;
+			}
 
-			/* Disअक्षरge LINEOUT1 & 2 */
+			/* Discharge LINEOUT1 & 2 */
 			snd_soc_component_update_bits(component, WM8994_ANTIPOP_1,
 					    WM8994_LINEOUT1_DISCH |
 					    WM8994_LINEOUT2_DISCH,
 					    WM8994_LINEOUT1_DISCH |
 					    WM8994_LINEOUT2_DISCH);
-		पूर्ण
+		}
 
-		अगर (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_PREPARE)
+		if (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_PREPARE)
 			active_dereference(component);
 
-		/* MICBIAS पूर्णांकo bypass mode on newer devices */
-		चयन (control->type) अणु
-		हाल WM8958:
-		हाल WM1811:
+		/* MICBIAS into bypass mode on newer devices */
+		switch (control->type) {
+		case WM8958:
+		case WM1811:
 			snd_soc_component_update_bits(component, WM8958_MICBIAS1,
 					    WM8958_MICB1_MODE,
 					    WM8958_MICB1_MODE);
 			snd_soc_component_update_bits(component, WM8958_MICBIAS2,
 					    WM8958_MICB2_MODE,
 					    WM8958_MICB2_MODE);
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-		अवरोध;
+			break;
+		default:
+			break;
+		}
+		break;
 
-	हाल SND_SOC_BIAS_OFF:
-		अगर (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_STANDBY)
-			wm8994->cur_fw = शून्य;
-		अवरोध;
-	पूर्ण
+	case SND_SOC_BIAS_OFF:
+		if (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_STANDBY)
+			wm8994->cur_fw = NULL;
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक wm8994_vmid_mode(काष्ठा snd_soc_component *component, क्रमागत wm8994_vmid_mode mode)
-अणु
-	काष्ठा wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
-	काष्ठा snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
+int wm8994_vmid_mode(struct snd_soc_component *component, enum wm8994_vmid_mode mode)
+{
+	struct wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
+	struct snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
 
-	चयन (mode) अणु
-	हाल WM8994_VMID_NORMAL:
+	switch (mode) {
+	case WM8994_VMID_NORMAL:
 		snd_soc_dapm_mutex_lock(dapm);
 
-		अगर (wm8994->hubs.lineout1_se) अणु
+		if (wm8994->hubs.lineout1_se) {
 			snd_soc_dapm_disable_pin_unlocked(dapm,
 							  "LINEOUT1N Driver");
 			snd_soc_dapm_disable_pin_unlocked(dapm,
 							  "LINEOUT1P Driver");
-		पूर्ण
-		अगर (wm8994->hubs.lineout2_se) अणु
+		}
+		if (wm8994->hubs.lineout2_se) {
 			snd_soc_dapm_disable_pin_unlocked(dapm,
 							  "LINEOUT2N Driver");
 			snd_soc_dapm_disable_pin_unlocked(dapm,
 							  "LINEOUT2P Driver");
-		पूर्ण
+		}
 
 		/* Do the sync with the old mode to allow it to clean up */
 		snd_soc_dapm_sync_unlocked(dapm);
 		wm8994->vmid_mode = mode;
 
 		snd_soc_dapm_mutex_unlock(dapm);
-		अवरोध;
+		break;
 
-	हाल WM8994_VMID_FORCE:
+	case WM8994_VMID_FORCE:
 		snd_soc_dapm_mutex_lock(dapm);
 
-		अगर (wm8994->hubs.lineout1_se) अणु
-			snd_soc_dapm_क्रमce_enable_pin_unlocked(dapm,
+		if (wm8994->hubs.lineout1_se) {
+			snd_soc_dapm_force_enable_pin_unlocked(dapm,
 							       "LINEOUT1N Driver");
-			snd_soc_dapm_क्रमce_enable_pin_unlocked(dapm,
+			snd_soc_dapm_force_enable_pin_unlocked(dapm,
 							       "LINEOUT1P Driver");
-		पूर्ण
-		अगर (wm8994->hubs.lineout2_se) अणु
-			snd_soc_dapm_क्रमce_enable_pin_unlocked(dapm,
+		}
+		if (wm8994->hubs.lineout2_se) {
+			snd_soc_dapm_force_enable_pin_unlocked(dapm,
 							       "LINEOUT2N Driver");
-			snd_soc_dapm_क्रमce_enable_pin_unlocked(dapm,
+			snd_soc_dapm_force_enable_pin_unlocked(dapm,
 							       "LINEOUT2P Driver");
-		पूर्ण
+		}
 
 		wm8994->vmid_mode = mode;
 		snd_soc_dapm_sync_unlocked(dapm);
 
 		snd_soc_dapm_mutex_unlock(dapm);
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wm8994_set_dai_fmt(काष्ठा snd_soc_dai *dai, अचिन्हित पूर्णांक fmt)
-अणु
-	काष्ठा snd_soc_component *component = dai->component;
-	काष्ठा wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
-	काष्ठा wm8994 *control = wm8994->wm8994;
-	पूर्णांक ms_reg;
-	पूर्णांक aअगर1_reg;
-	पूर्णांक dac_reg;
-	पूर्णांक adc_reg;
-	पूर्णांक ms = 0;
-	पूर्णांक aअगर1 = 0;
-	पूर्णांक lrclk = 0;
+static int wm8994_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
+{
+	struct snd_soc_component *component = dai->component;
+	struct wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
+	struct wm8994 *control = wm8994->wm8994;
+	int ms_reg;
+	int aif1_reg;
+	int dac_reg;
+	int adc_reg;
+	int ms = 0;
+	int aif1 = 0;
+	int lrclk = 0;
 
-	चयन (dai->id) अणु
-	हाल 1:
+	switch (dai->id) {
+	case 1:
 		ms_reg = WM8994_AIF1_MASTER_SLAVE;
-		aअगर1_reg = WM8994_AIF1_CONTROL_1;
+		aif1_reg = WM8994_AIF1_CONTROL_1;
 		dac_reg = WM8994_AIF1DAC_LRCLK;
 		adc_reg = WM8994_AIF1ADC_LRCLK;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		ms_reg = WM8994_AIF2_MASTER_SLAVE;
-		aअगर1_reg = WM8994_AIF2_CONTROL_1;
+		aif1_reg = WM8994_AIF2_CONTROL_1;
 		dac_reg = WM8994_AIF1DAC_LRCLK;
 		adc_reg = WM8994_AIF1ADC_LRCLK;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	चयन (fmt & SND_SOC_DAIFMT_MASTER_MASK) अणु
-	हाल SND_SOC_DAIFMT_CBS_CFS:
-		अवरोध;
-	हाल SND_SOC_DAIFMT_CBM_CFM:
+	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
+	case SND_SOC_DAIFMT_CBS_CFS:
+		break;
+	case SND_SOC_DAIFMT_CBM_CFM:
 		ms = WM8994_AIF1_MSTR;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	चयन (fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
-	हाल SND_SOC_DAIFMT_DSP_B:
-		aअगर1 |= WM8994_AIF1_LRCLK_INV;
+	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
+	case SND_SOC_DAIFMT_DSP_B:
+		aif1 |= WM8994_AIF1_LRCLK_INV;
 		lrclk |= WM8958_AIF1_LRCLK_INV;
 		fallthrough;
-	हाल SND_SOC_DAIFMT_DSP_A:
-		aअगर1 |= 0x18;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_I2S:
-		aअगर1 |= 0x10;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_RIGHT_J:
-		अवरोध;
-	हाल SND_SOC_DAIFMT_LEFT_J:
-		aअगर1 |= 0x8;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	case SND_SOC_DAIFMT_DSP_A:
+		aif1 |= 0x18;
+		break;
+	case SND_SOC_DAIFMT_I2S:
+		aif1 |= 0x10;
+		break;
+	case SND_SOC_DAIFMT_RIGHT_J:
+		break;
+	case SND_SOC_DAIFMT_LEFT_J:
+		aif1 |= 0x8;
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	चयन (fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
-	हाल SND_SOC_DAIFMT_DSP_A:
-	हाल SND_SOC_DAIFMT_DSP_B:
-		/* frame inversion not valid क्रम DSP modes */
-		चयन (fmt & SND_SOC_DAIFMT_INV_MASK) अणु
-		हाल SND_SOC_DAIFMT_NB_NF:
-			अवरोध;
-		हाल SND_SOC_DAIFMT_IB_NF:
-			aअगर1 |= WM8994_AIF1_BCLK_INV;
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
+	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
+	case SND_SOC_DAIFMT_DSP_A:
+	case SND_SOC_DAIFMT_DSP_B:
+		/* frame inversion not valid for DSP modes */
+		switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
+		case SND_SOC_DAIFMT_NB_NF:
+			break;
+		case SND_SOC_DAIFMT_IB_NF:
+			aif1 |= WM8994_AIF1_BCLK_INV;
+			break;
+		default:
+			return -EINVAL;
+		}
+		break;
 
-	हाल SND_SOC_DAIFMT_I2S:
-	हाल SND_SOC_DAIFMT_RIGHT_J:
-	हाल SND_SOC_DAIFMT_LEFT_J:
-		चयन (fmt & SND_SOC_DAIFMT_INV_MASK) अणु
-		हाल SND_SOC_DAIFMT_NB_NF:
-			अवरोध;
-		हाल SND_SOC_DAIFMT_IB_IF:
-			aअगर1 |= WM8994_AIF1_BCLK_INV | WM8994_AIF1_LRCLK_INV;
+	case SND_SOC_DAIFMT_I2S:
+	case SND_SOC_DAIFMT_RIGHT_J:
+	case SND_SOC_DAIFMT_LEFT_J:
+		switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
+		case SND_SOC_DAIFMT_NB_NF:
+			break;
+		case SND_SOC_DAIFMT_IB_IF:
+			aif1 |= WM8994_AIF1_BCLK_INV | WM8994_AIF1_LRCLK_INV;
 			lrclk |= WM8958_AIF1_LRCLK_INV;
-			अवरोध;
-		हाल SND_SOC_DAIFMT_IB_NF:
-			aअगर1 |= WM8994_AIF1_BCLK_INV;
-			अवरोध;
-		हाल SND_SOC_DAIFMT_NB_IF:
-			aअगर1 |= WM8994_AIF1_LRCLK_INV;
+			break;
+		case SND_SOC_DAIFMT_IB_NF:
+			aif1 |= WM8994_AIF1_BCLK_INV;
+			break;
+		case SND_SOC_DAIFMT_NB_IF:
+			aif1 |= WM8994_AIF1_LRCLK_INV;
 			lrclk |= WM8958_AIF1_LRCLK_INV;
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+			break;
+		default:
+			return -EINVAL;
+		}
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	/* The AIF2 क्रमmat configuration needs to be mirrored to AIF3
-	 * on WM8958 अगर it's in use so just करो it all the समय. */
-	चयन (control->type) अणु
-	हाल WM1811:
-	हाल WM8958:
-		अगर (dai->id == 2)
+	/* The AIF2 format configuration needs to be mirrored to AIF3
+	 * on WM8958 if it's in use so just do it all the time. */
+	switch (control->type) {
+	case WM1811:
+	case WM8958:
+		if (dai->id == 2)
 			snd_soc_component_update_bits(component, WM8958_AIF3_CONTROL_1,
 					    WM8994_AIF1_LRCLK_INV |
-					    WM8958_AIF3_FMT_MASK, aअगर1);
-		अवरोध;
+					    WM8958_AIF3_FMT_MASK, aif1);
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
-	snd_soc_component_update_bits(component, aअगर1_reg,
+	snd_soc_component_update_bits(component, aif1_reg,
 			    WM8994_AIF1_BCLK_INV | WM8994_AIF1_LRCLK_INV |
 			    WM8994_AIF1_FMT_MASK,
-			    aअगर1);
+			    aif1);
 	snd_soc_component_update_bits(component, ms_reg, WM8994_AIF1_MSTR,
 			    ms);
 	snd_soc_component_update_bits(component, dac_reg,
@@ -2879,317 +2878,317 @@ out:
 	snd_soc_component_update_bits(component, adc_reg,
 			    WM8958_AIF1_LRCLK_INV, lrclk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा अणु
-	पूर्णांक val, rate;
-पूर्ण srs[] = अणु
-	अणु 0,   8000 पूर्ण,
-	अणु 1,  11025 पूर्ण,
-	अणु 2,  12000 पूर्ण,
-	अणु 3,  16000 पूर्ण,
-	अणु 4,  22050 पूर्ण,
-	अणु 5,  24000 पूर्ण,
-	अणु 6,  32000 पूर्ण,
-	अणु 7,  44100 पूर्ण,
-	अणु 8,  48000 पूर्ण,
-	अणु 9,  88200 पूर्ण,
-	अणु 10, 96000 पूर्ण,
-पूर्ण;
+static struct {
+	int val, rate;
+} srs[] = {
+	{ 0,   8000 },
+	{ 1,  11025 },
+	{ 2,  12000 },
+	{ 3,  16000 },
+	{ 4,  22050 },
+	{ 5,  24000 },
+	{ 6,  32000 },
+	{ 7,  44100 },
+	{ 8,  48000 },
+	{ 9,  88200 },
+	{ 10, 96000 },
+};
 
-अटल पूर्णांक fs_ratios[] = अणु
+static int fs_ratios[] = {
 	64, 128, 192, 256, 384, 512, 768, 1024, 1408, 1536
-पूर्ण;
+};
 
-अटल पूर्णांक bclk_भागs[] = अणु
+static int bclk_divs[] = {
 	10, 15, 20, 30, 40, 50, 60, 80, 110, 120, 160, 220, 240, 320, 440, 480,
 	640, 880, 960, 1280, 1760, 1920
-पूर्ण;
+};
 
-अटल पूर्णांक wm8994_hw_params(काष्ठा snd_pcm_substream *substream,
-			    काष्ठा snd_pcm_hw_params *params,
-			    काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा snd_soc_component *component = dai->component;
-	काष्ठा wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
-	काष्ठा wm8994 *control = wm8994->wm8994;
-	काष्ठा wm8994_pdata *pdata = &control->pdata;
-	पूर्णांक aअगर1_reg;
-	पूर्णांक aअगर2_reg;
-	पूर्णांक bclk_reg;
-	पूर्णांक lrclk_reg;
-	पूर्णांक rate_reg;
-	पूर्णांक aअगर1 = 0;
-	पूर्णांक aअगर2 = 0;
-	पूर्णांक bclk = 0;
-	पूर्णांक lrclk = 0;
-	पूर्णांक rate_val = 0;
-	पूर्णांक id = dai->id - 1;
+static int wm8994_hw_params(struct snd_pcm_substream *substream,
+			    struct snd_pcm_hw_params *params,
+			    struct snd_soc_dai *dai)
+{
+	struct snd_soc_component *component = dai->component;
+	struct wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
+	struct wm8994 *control = wm8994->wm8994;
+	struct wm8994_pdata *pdata = &control->pdata;
+	int aif1_reg;
+	int aif2_reg;
+	int bclk_reg;
+	int lrclk_reg;
+	int rate_reg;
+	int aif1 = 0;
+	int aif2 = 0;
+	int bclk = 0;
+	int lrclk = 0;
+	int rate_val = 0;
+	int id = dai->id - 1;
 
-	पूर्णांक i, cur_val, best_val, bclk_rate, best;
+	int i, cur_val, best_val, bclk_rate, best;
 
-	चयन (dai->id) अणु
-	हाल 1:
-		aअगर1_reg = WM8994_AIF1_CONTROL_1;
-		aअगर2_reg = WM8994_AIF1_CONTROL_2;
+	switch (dai->id) {
+	case 1:
+		aif1_reg = WM8994_AIF1_CONTROL_1;
+		aif2_reg = WM8994_AIF1_CONTROL_2;
 		bclk_reg = WM8994_AIF1_BCLK;
 		rate_reg = WM8994_AIF1_RATE;
-		अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK ||
-		    wm8994->lrclk_shared[0]) अणु
+		if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK ||
+		    wm8994->lrclk_shared[0]) {
 			lrclk_reg = WM8994_AIF1DAC_LRCLK;
-		पूर्ण अन्यथा अणु
+		} else {
 			lrclk_reg = WM8994_AIF1ADC_LRCLK;
 			dev_dbg(component->dev, "AIF1 using split LRCLK\n");
-		पूर्ण
-		अवरोध;
-	हाल 2:
-		aअगर1_reg = WM8994_AIF2_CONTROL_1;
-		aअगर2_reg = WM8994_AIF2_CONTROL_2;
+		}
+		break;
+	case 2:
+		aif1_reg = WM8994_AIF2_CONTROL_1;
+		aif2_reg = WM8994_AIF2_CONTROL_2;
 		bclk_reg = WM8994_AIF2_BCLK;
 		rate_reg = WM8994_AIF2_RATE;
-		अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK ||
-		    wm8994->lrclk_shared[1]) अणु
+		if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK ||
+		    wm8994->lrclk_shared[1]) {
 			lrclk_reg = WM8994_AIF2DAC_LRCLK;
-		पूर्ण अन्यथा अणु
+		} else {
 			lrclk_reg = WM8994_AIF2ADC_LRCLK;
 			dev_dbg(component->dev, "AIF2 using split LRCLK\n");
-		पूर्ण
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		}
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	bclk_rate = params_rate(params);
-	चयन (params_width(params)) अणु
-	हाल 16:
+	switch (params_width(params)) {
+	case 16:
 		bclk_rate *= 16;
-		अवरोध;
-	हाल 20:
+		break;
+	case 20:
 		bclk_rate *= 20;
-		aअगर1 |= 0x20;
-		अवरोध;
-	हाल 24:
+		aif1 |= 0x20;
+		break;
+	case 24:
 		bclk_rate *= 24;
-		aअगर1 |= 0x40;
-		अवरोध;
-	हाल 32:
+		aif1 |= 0x40;
+		break;
+	case 32:
 		bclk_rate *= 32;
-		aअगर1 |= 0x60;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		aif1 |= 0x60;
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	wm8994->channels[id] = params_channels(params);
-	अगर (pdata->max_channels_घड़ीed[id] &&
-	    wm8994->channels[id] > pdata->max_channels_घड़ीed[id]) अणु
+	if (pdata->max_channels_clocked[id] &&
+	    wm8994->channels[id] > pdata->max_channels_clocked[id]) {
 		dev_dbg(dai->dev, "Constraining channels to %d from %d\n",
-			pdata->max_channels_घड़ीed[id], wm8994->channels[id]);
-		wm8994->channels[id] = pdata->max_channels_घड़ीed[id];
-	पूर्ण
+			pdata->max_channels_clocked[id], wm8994->channels[id]);
+		wm8994->channels[id] = pdata->max_channels_clocked[id];
+	}
 
-	चयन (wm8994->channels[id]) अणु
-	हाल 1:
-	हाल 2:
+	switch (wm8994->channels[id]) {
+	case 1:
+	case 2:
 		bclk_rate *= 2;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		bclk_rate *= 4;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	/* Try to find an appropriate sample rate; look क्रम an exact match. */
-	क्रम (i = 0; i < ARRAY_SIZE(srs); i++)
-		अगर (srs[i].rate == params_rate(params))
-			अवरोध;
-	अगर (i == ARRAY_SIZE(srs))
-		वापस -EINVAL;
+	/* Try to find an appropriate sample rate; look for an exact match. */
+	for (i = 0; i < ARRAY_SIZE(srs); i++)
+		if (srs[i].rate == params_rate(params))
+			break;
+	if (i == ARRAY_SIZE(srs))
+		return -EINVAL;
 	rate_val |= srs[i].val << WM8994_AIF1_SR_SHIFT;
 
 	dev_dbg(dai->dev, "Sample rate is %dHz\n", srs[i].rate);
 	dev_dbg(dai->dev, "AIF%dCLK is %dHz, target BCLK %dHz\n",
-		dai->id, wm8994->aअगरclk[id], bclk_rate);
+		dai->id, wm8994->aifclk[id], bclk_rate);
 
-	अगर (wm8994->channels[id] == 1 &&
-	    (snd_soc_component_पढ़ो(component, aअगर1_reg) & 0x18) == 0x18)
-		aअगर2 |= WM8994_AIF1_MONO;
+	if (wm8994->channels[id] == 1 &&
+	    (snd_soc_component_read(component, aif1_reg) & 0x18) == 0x18)
+		aif2 |= WM8994_AIF1_MONO;
 
-	अगर (wm8994->aअगरclk[id] == 0) अणु
+	if (wm8994->aifclk[id] == 0) {
 		dev_err(dai->dev, "AIF%dCLK not configured\n", dai->id);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* AIFCLK/fs ratio; look क्रम a बंद match in either direction */
+	/* AIFCLK/fs ratio; look for a close match in either direction */
 	best = 0;
-	best_val = असल((fs_ratios[0] * params_rate(params))
-		       - wm8994->aअगरclk[id]);
-	क्रम (i = 1; i < ARRAY_SIZE(fs_ratios); i++) अणु
-		cur_val = असल((fs_ratios[i] * params_rate(params))
-			      - wm8994->aअगरclk[id]);
-		अगर (cur_val >= best_val)
-			जारी;
+	best_val = abs((fs_ratios[0] * params_rate(params))
+		       - wm8994->aifclk[id]);
+	for (i = 1; i < ARRAY_SIZE(fs_ratios); i++) {
+		cur_val = abs((fs_ratios[i] * params_rate(params))
+			      - wm8994->aifclk[id]);
+		if (cur_val >= best_val)
+			continue;
 		best = i;
 		best_val = cur_val;
-	पूर्ण
+	}
 	dev_dbg(dai->dev, "Selected AIF%dCLK/fs = %d\n",
 		dai->id, fs_ratios[best]);
 	rate_val |= best;
 
-	/* We may not get quite the right frequency अगर using
-	 * approximate घड़ीs so look क्रम the बंदst match that is
+	/* We may not get quite the right frequency if using
+	 * approximate clocks so look for the closest match that is
 	 * higher than the target (we need to ensure that there enough
-	 * BCLKs to घड़ी out the samples).
+	 * BCLKs to clock out the samples).
 	 */
 	best = 0;
-	क्रम (i = 0; i < ARRAY_SIZE(bclk_भागs); i++) अणु
-		cur_val = (wm8994->aअगरclk[id] * 10 / bclk_भागs[i]) - bclk_rate;
-		अगर (cur_val < 0) /* BCLK table is sorted */
-			अवरोध;
+	for (i = 0; i < ARRAY_SIZE(bclk_divs); i++) {
+		cur_val = (wm8994->aifclk[id] * 10 / bclk_divs[i]) - bclk_rate;
+		if (cur_val < 0) /* BCLK table is sorted */
+			break;
 		best = i;
-	पूर्ण
-	bclk_rate = wm8994->aअगरclk[id] * 10 / bclk_भागs[best];
+	}
+	bclk_rate = wm8994->aifclk[id] * 10 / bclk_divs[best];
 	dev_dbg(dai->dev, "Using BCLK_DIV %d for actual BCLK %dHz\n",
-		bclk_भागs[best], bclk_rate);
+		bclk_divs[best], bclk_rate);
 	bclk |= best << WM8994_AIF1_BCLK_DIV_SHIFT;
 
 	lrclk = bclk_rate / params_rate(params);
-	अगर (!lrclk) अणु
+	if (!lrclk) {
 		dev_err(dai->dev, "Unable to generate LRCLK from %dHz BCLK\n",
 			bclk_rate);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	dev_dbg(dai->dev, "Using LRCLK rate %d for actual LRCLK %dHz\n",
 		lrclk, bclk_rate / lrclk);
 
-	snd_soc_component_update_bits(component, aअगर1_reg, WM8994_AIF1_WL_MASK, aअगर1);
-	snd_soc_component_update_bits(component, aअगर2_reg, WM8994_AIF1_MONO, aअगर2);
+	snd_soc_component_update_bits(component, aif1_reg, WM8994_AIF1_WL_MASK, aif1);
+	snd_soc_component_update_bits(component, aif2_reg, WM8994_AIF1_MONO, aif2);
 	snd_soc_component_update_bits(component, bclk_reg, WM8994_AIF1_BCLK_DIV_MASK, bclk);
 	snd_soc_component_update_bits(component, lrclk_reg, WM8994_AIF1DAC_RATE_MASK,
 			    lrclk);
 	snd_soc_component_update_bits(component, rate_reg, WM8994_AIF1_SR_MASK |
 			    WM8994_AIF1CLK_RATE_MASK, rate_val);
 
-	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
-		चयन (dai->id) अणु
-		हाल 1:
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
+		switch (dai->id) {
+		case 1:
 			wm8994->dac_rates[0] = params_rate(params);
 			wm8994_set_retune_mobile(component, 0);
 			wm8994_set_retune_mobile(component, 1);
-			अवरोध;
-		हाल 2:
+			break;
+		case 2:
 			wm8994->dac_rates[1] = params_rate(params);
 			wm8994_set_retune_mobile(component, 2);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wm8994_aअगर3_hw_params(काष्ठा snd_pcm_substream *substream,
-				 काष्ठा snd_pcm_hw_params *params,
-				 काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा snd_soc_component *component = dai->component;
-	काष्ठा wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
-	काष्ठा wm8994 *control = wm8994->wm8994;
-	पूर्णांक aअगर1_reg;
-	पूर्णांक aअगर1 = 0;
+static int wm8994_aif3_hw_params(struct snd_pcm_substream *substream,
+				 struct snd_pcm_hw_params *params,
+				 struct snd_soc_dai *dai)
+{
+	struct snd_soc_component *component = dai->component;
+	struct wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
+	struct wm8994 *control = wm8994->wm8994;
+	int aif1_reg;
+	int aif1 = 0;
 
-	चयन (dai->id) अणु
-	हाल 3:
-		चयन (control->type) अणु
-		हाल WM1811:
-		हाल WM8958:
-			aअगर1_reg = WM8958_AIF3_CONTROL_1;
-			अवरोध;
-		शेष:
-			वापस 0;
-		पूर्ण
-		अवरोध;
-	शेष:
-		वापस 0;
-	पूर्ण
+	switch (dai->id) {
+	case 3:
+		switch (control->type) {
+		case WM1811:
+		case WM8958:
+			aif1_reg = WM8958_AIF3_CONTROL_1;
+			break;
+		default:
+			return 0;
+		}
+		break;
+	default:
+		return 0;
+	}
 
-	चयन (params_width(params)) अणु
-	हाल 16:
-		अवरोध;
-	हाल 20:
-		aअगर1 |= 0x20;
-		अवरोध;
-	हाल 24:
-		aअगर1 |= 0x40;
-		अवरोध;
-	हाल 32:
-		aअगर1 |= 0x60;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (params_width(params)) {
+	case 16:
+		break;
+	case 20:
+		aif1 |= 0x20;
+		break;
+	case 24:
+		aif1 |= 0x40;
+		break;
+	case 32:
+		aif1 |= 0x60;
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस snd_soc_component_update_bits(component, aअगर1_reg, WM8994_AIF1_WL_MASK, aअगर1);
-पूर्ण
+	return snd_soc_component_update_bits(component, aif1_reg, WM8994_AIF1_WL_MASK, aif1);
+}
 
-अटल पूर्णांक wm8994_aअगर_mute(काष्ठा snd_soc_dai *codec_dai, पूर्णांक mute,
-			   पूर्णांक direction)
-अणु
-	काष्ठा snd_soc_component *component = codec_dai->component;
-	पूर्णांक mute_reg;
-	पूर्णांक reg;
+static int wm8994_aif_mute(struct snd_soc_dai *codec_dai, int mute,
+			   int direction)
+{
+	struct snd_soc_component *component = codec_dai->component;
+	int mute_reg;
+	int reg;
 
-	चयन (codec_dai->id) अणु
-	हाल 1:
+	switch (codec_dai->id) {
+	case 1:
 		mute_reg = WM8994_AIF1_DAC1_FILTERS_1;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		mute_reg = WM8994_AIF2_DAC_FILTERS_1;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	अगर (mute)
+	if (mute)
 		reg = WM8994_AIF1DAC1_MUTE;
-	अन्यथा
+	else
 		reg = 0;
 
 	snd_soc_component_update_bits(component, mute_reg, WM8994_AIF1DAC1_MUTE, reg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wm8994_set_tristate(काष्ठा snd_soc_dai *codec_dai, पूर्णांक tristate)
-अणु
-	काष्ठा snd_soc_component *component = codec_dai->component;
-	पूर्णांक reg, val, mask;
+static int wm8994_set_tristate(struct snd_soc_dai *codec_dai, int tristate)
+{
+	struct snd_soc_component *component = codec_dai->component;
+	int reg, val, mask;
 
-	चयन (codec_dai->id) अणु
-	हाल 1:
+	switch (codec_dai->id) {
+	case 1:
 		reg = WM8994_AIF1_MASTER_SLAVE;
 		mask = WM8994_AIF1_TRI;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		reg = WM8994_AIF2_MASTER_SLAVE;
 		mask = WM8994_AIF2_TRI;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	अगर (tristate)
+	if (tristate)
 		val = mask;
-	अन्यथा
+	else
 		val = 0;
 
-	वापस snd_soc_component_update_bits(component, reg, mask, val);
-पूर्ण
+	return snd_soc_component_update_bits(component, reg, mask, val);
+}
 
-अटल पूर्णांक wm8994_aअगर2_probe(काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा snd_soc_component *component = dai->component;
+static int wm8994_aif2_probe(struct snd_soc_dai *dai)
+{
+	struct snd_soc_component *component = dai->component;
 
-	/* Disable the pulls on the AIF अगर we're using it to save घातer. */
+	/* Disable the pulls on the AIF if we're using it to save power. */
 	snd_soc_component_update_bits(component, WM8994_GPIO_3,
 			    WM8994_GPN_PU | WM8994_GPN_PD, 0);
 	snd_soc_component_update_bits(component, WM8994_GPIO_4,
@@ -3197,195 +3196,195 @@ out:
 	snd_soc_component_update_bits(component, WM8994_GPIO_5,
 			    WM8994_GPN_PU | WM8994_GPN_PD, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा WM8994_RATES SNDRV_PCM_RATE_8000_96000
+#define WM8994_RATES SNDRV_PCM_RATE_8000_96000
 
-#घोषणा WM8994_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S20_3LE |\
+#define WM8994_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S20_3LE |\
 			SNDRV_PCM_FMTBIT_S24_LE | SNDRV_PCM_FMTBIT_S32_LE)
 
-अटल स्थिर काष्ठा snd_soc_dai_ops wm8994_aअगर1_dai_ops = अणु
+static const struct snd_soc_dai_ops wm8994_aif1_dai_ops = {
 	.set_sysclk	= wm8994_set_dai_sysclk,
 	.set_fmt	= wm8994_set_dai_fmt,
 	.hw_params	= wm8994_hw_params,
-	.mute_stream	= wm8994_aअगर_mute,
+	.mute_stream	= wm8994_aif_mute,
 	.set_pll	= wm8994_set_fll,
 	.set_tristate	= wm8994_set_tristate,
 	.no_capture_mute = 1,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_dai_ops wm8994_aअगर2_dai_ops = अणु
+static const struct snd_soc_dai_ops wm8994_aif2_dai_ops = {
 	.set_sysclk	= wm8994_set_dai_sysclk,
 	.set_fmt	= wm8994_set_dai_fmt,
 	.hw_params	= wm8994_hw_params,
-	.mute_stream	= wm8994_aअगर_mute,
+	.mute_stream	= wm8994_aif_mute,
 	.set_pll	= wm8994_set_fll,
 	.set_tristate	= wm8994_set_tristate,
 	.no_capture_mute = 1,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_dai_ops wm8994_aअगर3_dai_ops = अणु
-	.hw_params	= wm8994_aअगर3_hw_params,
-पूर्ण;
+static const struct snd_soc_dai_ops wm8994_aif3_dai_ops = {
+	.hw_params	= wm8994_aif3_hw_params,
+};
 
-अटल काष्ठा snd_soc_dai_driver wm8994_dai[] = अणु
-	अणु
+static struct snd_soc_dai_driver wm8994_dai[] = {
+	{
 		.name = "wm8994-aif1",
 		.id = 1,
-		.playback = अणु
+		.playback = {
 			.stream_name = "AIF1 Playback",
 			.channels_min = 1,
 			.channels_max = 2,
 			.rates = WM8994_RATES,
-			.क्रमmats = WM8994_FORMATS,
+			.formats = WM8994_FORMATS,
 			.sig_bits = 24,
-		पूर्ण,
-		.capture = अणु
+		},
+		.capture = {
 			.stream_name = "AIF1 Capture",
 			.channels_min = 1,
 			.channels_max = 2,
 			.rates = WM8994_RATES,
-			.क्रमmats = WM8994_FORMATS,
+			.formats = WM8994_FORMATS,
 			.sig_bits = 24,
-		 पूर्ण,
-		.ops = &wm8994_aअगर1_dai_ops,
-	पूर्ण,
-	अणु
+		 },
+		.ops = &wm8994_aif1_dai_ops,
+	},
+	{
 		.name = "wm8994-aif2",
 		.id = 2,
-		.playback = अणु
+		.playback = {
 			.stream_name = "AIF2 Playback",
 			.channels_min = 1,
 			.channels_max = 2,
 			.rates = WM8994_RATES,
-			.क्रमmats = WM8994_FORMATS,
+			.formats = WM8994_FORMATS,
 			.sig_bits = 24,
-		पूर्ण,
-		.capture = अणु
+		},
+		.capture = {
 			.stream_name = "AIF2 Capture",
 			.channels_min = 1,
 			.channels_max = 2,
 			.rates = WM8994_RATES,
-			.क्रमmats = WM8994_FORMATS,
+			.formats = WM8994_FORMATS,
 			.sig_bits = 24,
-		पूर्ण,
-		.probe = wm8994_aअगर2_probe,
-		.ops = &wm8994_aअगर2_dai_ops,
-	पूर्ण,
-	अणु
+		},
+		.probe = wm8994_aif2_probe,
+		.ops = &wm8994_aif2_dai_ops,
+	},
+	{
 		.name = "wm8994-aif3",
 		.id = 3,
-		.playback = अणु
+		.playback = {
 			.stream_name = "AIF3 Playback",
 			.channels_min = 1,
 			.channels_max = 2,
 			.rates = WM8994_RATES,
-			.क्रमmats = WM8994_FORMATS,
+			.formats = WM8994_FORMATS,
 			.sig_bits = 24,
-		पूर्ण,
-		.capture = अणु
+		},
+		.capture = {
 			.stream_name = "AIF3 Capture",
 			.channels_min = 1,
 			.channels_max = 2,
 			.rates = WM8994_RATES,
-			.क्रमmats = WM8994_FORMATS,
+			.formats = WM8994_FORMATS,
 			.sig_bits = 24,
-		 पूर्ण,
-		.ops = &wm8994_aअगर3_dai_ops,
-	पूर्ण
-पूर्ण;
+		 },
+		.ops = &wm8994_aif3_dai_ops,
+	}
+};
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक wm8994_component_suspend(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
-	पूर्णांक i, ret;
+#ifdef CONFIG_PM
+static int wm8994_component_suspend(struct snd_soc_component *component)
+{
+	struct wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
+	int i, ret;
 
-	क्रम (i = 0; i < ARRAY_SIZE(wm8994->fll); i++) अणु
-		स_नकल(&wm8994->fll_suspend[i], &wm8994->fll[i],
-		       माप(काष्ठा wm8994_fll_config));
+	for (i = 0; i < ARRAY_SIZE(wm8994->fll); i++) {
+		memcpy(&wm8994->fll_suspend[i], &wm8994->fll[i],
+		       sizeof(struct wm8994_fll_config));
 		ret = _wm8994_set_fll(component, i + 1, 0, 0, 0);
-		अगर (ret < 0)
+		if (ret < 0)
 			dev_warn(component->dev, "Failed to stop FLL%d: %d\n",
 				 i + 1, ret);
-	पूर्ण
+	}
 
-	snd_soc_component_क्रमce_bias_level(component, SND_SOC_BIAS_OFF);
+	snd_soc_component_force_bias_level(component, SND_SOC_BIAS_OFF);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wm8994_component_resume(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
-	पूर्णांक i, ret;
+static int wm8994_component_resume(struct snd_soc_component *component)
+{
+	struct wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
+	int i, ret;
 
-	क्रम (i = 0; i < ARRAY_SIZE(wm8994->fll); i++) अणु
-		अगर (!wm8994->fll_suspend[i].out)
-			जारी;
+	for (i = 0; i < ARRAY_SIZE(wm8994->fll); i++) {
+		if (!wm8994->fll_suspend[i].out)
+			continue;
 
 		ret = _wm8994_set_fll(component, i + 1,
 				     wm8994->fll_suspend[i].src,
 				     wm8994->fll_suspend[i].in,
 				     wm8994->fll_suspend[i].out);
-		अगर (ret < 0)
+		if (ret < 0)
 			dev_warn(component->dev, "Failed to restore FLL%d: %d\n",
 				 i + 1, ret);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
-#अन्यथा
-#घोषणा wm8994_component_suspend शून्य
-#घोषणा wm8994_component_resume शून्य
-#पूर्ण_अगर
+	return 0;
+}
+#else
+#define wm8994_component_suspend NULL
+#define wm8994_component_resume NULL
+#endif
 
-अटल व्योम wm8994_handle_retune_mobile_pdata(काष्ठा wm8994_priv *wm8994)
-अणु
-	काष्ठा snd_soc_component *component = wm8994->hubs.component;
-	काष्ठा wm8994 *control = wm8994->wm8994;
-	काष्ठा wm8994_pdata *pdata = &control->pdata;
-	काष्ठा snd_kcontrol_new controls[] = अणु
+static void wm8994_handle_retune_mobile_pdata(struct wm8994_priv *wm8994)
+{
+	struct snd_soc_component *component = wm8994->hubs.component;
+	struct wm8994 *control = wm8994->wm8994;
+	struct wm8994_pdata *pdata = &control->pdata;
+	struct snd_kcontrol_new controls[] = {
 		SOC_ENUM_EXT("AIF1.1 EQ Mode",
-			     wm8994->retune_mobile_क्रमागत,
-			     wm8994_get_retune_mobile_क्रमागत,
-			     wm8994_put_retune_mobile_क्रमागत),
+			     wm8994->retune_mobile_enum,
+			     wm8994_get_retune_mobile_enum,
+			     wm8994_put_retune_mobile_enum),
 		SOC_ENUM_EXT("AIF1.2 EQ Mode",
-			     wm8994->retune_mobile_क्रमागत,
-			     wm8994_get_retune_mobile_क्रमागत,
-			     wm8994_put_retune_mobile_क्रमागत),
+			     wm8994->retune_mobile_enum,
+			     wm8994_get_retune_mobile_enum,
+			     wm8994_put_retune_mobile_enum),
 		SOC_ENUM_EXT("AIF2 EQ Mode",
-			     wm8994->retune_mobile_क्रमागत,
-			     wm8994_get_retune_mobile_क्रमागत,
-			     wm8994_put_retune_mobile_क्रमागत),
-	पूर्ण;
-	पूर्णांक ret, i, j;
-	स्थिर अक्षर **t;
+			     wm8994->retune_mobile_enum,
+			     wm8994_get_retune_mobile_enum,
+			     wm8994_put_retune_mobile_enum),
+	};
+	int ret, i, j;
+	const char **t;
 
-	/* We need an array of texts क्रम the क्रमागत API but the number
+	/* We need an array of texts for the enum API but the number
 	 * of texts is likely to be less than the number of
 	 * configurations due to the sample rate dependency of the
 	 * configurations. */
 	wm8994->num_retune_mobile_texts = 0;
-	wm8994->retune_mobile_texts = शून्य;
-	क्रम (i = 0; i < pdata->num_retune_mobile_cfgs; i++) अणु
-		क्रम (j = 0; j < wm8994->num_retune_mobile_texts; j++) अणु
-			अगर (म_भेद(pdata->retune_mobile_cfgs[i].name,
+	wm8994->retune_mobile_texts = NULL;
+	for (i = 0; i < pdata->num_retune_mobile_cfgs; i++) {
+		for (j = 0; j < wm8994->num_retune_mobile_texts; j++) {
+			if (strcmp(pdata->retune_mobile_cfgs[i].name,
 				   wm8994->retune_mobile_texts[j]) == 0)
-				अवरोध;
-		पूर्ण
+				break;
+		}
 
-		अगर (j != wm8994->num_retune_mobile_texts)
-			जारी;
+		if (j != wm8994->num_retune_mobile_texts)
+			continue;
 
 		/* Expand the array... */
-		t = kपुनः_स्मृति(wm8994->retune_mobile_texts,
-			     माप(अक्षर *) *
+		t = krealloc(wm8994->retune_mobile_texts,
+			     sizeof(char *) *
 			     (wm8994->num_retune_mobile_texts + 1),
 			     GFP_KERNEL);
-		अगर (t == शून्य)
-			जारी;
+		if (t == NULL)
+			continue;
 
 		/* ...store the new entry... */
 		t[wm8994->num_retune_mobile_texts] =
@@ -3394,33 +3393,33 @@ out:
 		/* ...and remember the new version. */
 		wm8994->num_retune_mobile_texts++;
 		wm8994->retune_mobile_texts = t;
-	पूर्ण
+	}
 
 	dev_dbg(component->dev, "Allocated %d unique ReTune Mobile names\n",
 		wm8994->num_retune_mobile_texts);
 
-	wm8994->retune_mobile_क्रमागत.items = wm8994->num_retune_mobile_texts;
-	wm8994->retune_mobile_क्रमागत.texts = wm8994->retune_mobile_texts;
+	wm8994->retune_mobile_enum.items = wm8994->num_retune_mobile_texts;
+	wm8994->retune_mobile_enum.texts = wm8994->retune_mobile_texts;
 
 	ret = snd_soc_add_component_controls(wm8994->hubs.component, controls,
 				   ARRAY_SIZE(controls));
-	अगर (ret != 0)
+	if (ret != 0)
 		dev_err(wm8994->hubs.component->dev,
 			"Failed to add ReTune Mobile controls: %d\n", ret);
-पूर्ण
+}
 
-अटल व्योम wm8994_handle_pdata(काष्ठा wm8994_priv *wm8994)
-अणु
-	काष्ठा snd_soc_component *component = wm8994->hubs.component;
-	काष्ठा wm8994 *control = wm8994->wm8994;
-	काष्ठा wm8994_pdata *pdata = &control->pdata;
-	पूर्णांक ret, i;
+static void wm8994_handle_pdata(struct wm8994_priv *wm8994)
+{
+	struct snd_soc_component *component = wm8994->hubs.component;
+	struct wm8994 *control = wm8994->wm8994;
+	struct wm8994_pdata *pdata = &control->pdata;
+	int ret, i;
 
-	अगर (!pdata)
-		वापस;
+	if (!pdata)
+		return;
 
-	wm_hubs_handle_analogue_pdata(component, pdata->lineout1_dअगरf,
-				      pdata->lineout2_dअगरf,
+	wm_hubs_handle_analogue_pdata(component, pdata->lineout1_diff,
+				      pdata->lineout2_diff,
 				      pdata->lineout1fb,
 				      pdata->lineout2fb,
 				      pdata->jd_scthr,
@@ -3432,39 +3431,39 @@ out:
 
 	dev_dbg(component->dev, "%d DRC configurations\n", pdata->num_drc_cfgs);
 
-	अगर (pdata->num_drc_cfgs) अणु
-		काष्ठा snd_kcontrol_new controls[] = अणु
-			SOC_ENUM_EXT("AIF1DRC1 Mode", wm8994->drc_क्रमागत,
-				     wm8994_get_drc_क्रमागत, wm8994_put_drc_क्रमागत),
-			SOC_ENUM_EXT("AIF1DRC2 Mode", wm8994->drc_क्रमागत,
-				     wm8994_get_drc_क्रमागत, wm8994_put_drc_क्रमागत),
-			SOC_ENUM_EXT("AIF2DRC Mode", wm8994->drc_क्रमागत,
-				     wm8994_get_drc_क्रमागत, wm8994_put_drc_क्रमागत),
-		पूर्ण;
+	if (pdata->num_drc_cfgs) {
+		struct snd_kcontrol_new controls[] = {
+			SOC_ENUM_EXT("AIF1DRC1 Mode", wm8994->drc_enum,
+				     wm8994_get_drc_enum, wm8994_put_drc_enum),
+			SOC_ENUM_EXT("AIF1DRC2 Mode", wm8994->drc_enum,
+				     wm8994_get_drc_enum, wm8994_put_drc_enum),
+			SOC_ENUM_EXT("AIF2DRC Mode", wm8994->drc_enum,
+				     wm8994_get_drc_enum, wm8994_put_drc_enum),
+		};
 
-		/* We need an array of texts क्रम the क्रमागत API */
-		wm8994->drc_texts = devm_kसुस्मृति(wm8994->hubs.component->dev,
-			    pdata->num_drc_cfgs, माप(अक्षर *), GFP_KERNEL);
-		अगर (!wm8994->drc_texts)
-			वापस;
+		/* We need an array of texts for the enum API */
+		wm8994->drc_texts = devm_kcalloc(wm8994->hubs.component->dev,
+			    pdata->num_drc_cfgs, sizeof(char *), GFP_KERNEL);
+		if (!wm8994->drc_texts)
+			return;
 
-		क्रम (i = 0; i < pdata->num_drc_cfgs; i++)
+		for (i = 0; i < pdata->num_drc_cfgs; i++)
 			wm8994->drc_texts[i] = pdata->drc_cfgs[i].name;
 
-		wm8994->drc_क्रमागत.items = pdata->num_drc_cfgs;
-		wm8994->drc_क्रमागत.texts = wm8994->drc_texts;
+		wm8994->drc_enum.items = pdata->num_drc_cfgs;
+		wm8994->drc_enum.texts = wm8994->drc_texts;
 
 		ret = snd_soc_add_component_controls(wm8994->hubs.component, controls,
 					   ARRAY_SIZE(controls));
-		क्रम (i = 0; i < WM8994_NUM_DRC; i++)
+		for (i = 0; i < WM8994_NUM_DRC; i++)
 			wm8994_set_drc(component, i);
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = snd_soc_add_component_controls(wm8994->hubs.component,
 						 wm8994_drc_controls,
 						 ARRAY_SIZE(wm8994_drc_controls));
-	पूर्ण
+	}
 
-	अगर (ret != 0)
+	if (ret != 0)
 		dev_err(wm8994->hubs.component->dev,
 			"Failed to add DRC mode controls: %d\n", ret);
 
@@ -3472,19 +3471,19 @@ out:
 	dev_dbg(component->dev, "%d ReTune Mobile configurations\n",
 		pdata->num_retune_mobile_cfgs);
 
-	अगर (pdata->num_retune_mobile_cfgs)
+	if (pdata->num_retune_mobile_cfgs)
 		wm8994_handle_retune_mobile_pdata(wm8994);
-	अन्यथा
+	else
 		snd_soc_add_component_controls(wm8994->hubs.component, wm8994_eq_controls,
 				     ARRAY_SIZE(wm8994_eq_controls));
 
-	क्रम (i = 0; i < ARRAY_SIZE(pdata->micbias); i++) अणु
-		अगर (pdata->micbias[i]) अणु
-			snd_soc_component_ग_लिखो(component, WM8958_MICBIAS1 + i,
+	for (i = 0; i < ARRAY_SIZE(pdata->micbias); i++) {
+		if (pdata->micbias[i]) {
+			snd_soc_component_write(component, WM8958_MICBIAS1 + i,
 				pdata->micbias[i] & 0xffff);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /**
  * wm8994_mic_detect - Enable microphone detection via the WM8994 IRQ
@@ -3494,50 +3493,50 @@ out:
  * @micbias: microphone bias to detect on
  *
  * Enable microphone detection via IRQ on the WM8994.  If GPIOs are
- * being used to bring out संकेतs to the processor then only platक्रमm
- * data configuration is needed क्रम WM8994 and processor GPIOs should
+ * being used to bring out signals to the processor then only platform
+ * data configuration is needed for WM8994 and processor GPIOs should
  * be configured using snd_soc_jack_add_gpios() instead.
  *
  * Configuration of detection levels is available via the micbias1_lvl
- * and micbias2_lvl platक्रमm data members.
+ * and micbias2_lvl platform data members.
  */
-पूर्णांक wm8994_mic_detect(काष्ठा snd_soc_component *component, काष्ठा snd_soc_jack *jack,
-		      पूर्णांक micbias)
-अणु
-	काष्ठा snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
-	काष्ठा wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
-	काष्ठा wm8994_micdet *micdet;
-	काष्ठा wm8994 *control = wm8994->wm8994;
-	पूर्णांक reg, ret;
+int wm8994_mic_detect(struct snd_soc_component *component, struct snd_soc_jack *jack,
+		      int micbias)
+{
+	struct snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
+	struct wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
+	struct wm8994_micdet *micdet;
+	struct wm8994 *control = wm8994->wm8994;
+	int reg, ret;
 
-	अगर (control->type != WM8994) अणु
+	if (control->type != WM8994) {
 		dev_warn(component->dev, "Not a WM8994\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	pm_runसमय_get_sync(component->dev);
+	pm_runtime_get_sync(component->dev);
 
-	चयन (micbias) अणु
-	हाल 1:
+	switch (micbias) {
+	case 1:
 		micdet = &wm8994->micdet[0];
-		अगर (jack)
-			ret = snd_soc_dapm_क्रमce_enable_pin(dapm, "MICBIAS1");
-		अन्यथा
+		if (jack)
+			ret = snd_soc_dapm_force_enable_pin(dapm, "MICBIAS1");
+		else
 			ret = snd_soc_dapm_disable_pin(dapm, "MICBIAS1");
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		micdet = &wm8994->micdet[1];
-		अगर (jack)
-			ret = snd_soc_dapm_क्रमce_enable_pin(dapm, "MICBIAS1");
-		अन्यथा
+		if (jack)
+			ret = snd_soc_dapm_force_enable_pin(dapm, "MICBIAS1");
+		else
 			ret = snd_soc_dapm_disable_pin(dapm, "MICBIAS1");
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_warn(component->dev, "Invalid MICBIAS %d\n", micbias);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (ret != 0)
+	if (ret != 0)
 		dev_warn(component->dev, "Failed to configure MICBIAS%d: %d\n",
 			 micbias, ret);
 
@@ -3549,9 +3548,9 @@ out:
 	micdet->detecting = true;
 
 	/* If either of the jacks is set up then enable detection */
-	अगर (wm8994->micdet[0].jack || wm8994->micdet[1].jack)
+	if (wm8994->micdet[0].jack || wm8994->micdet[1].jack)
 		reg = WM8994_MICD_ENA;
-	अन्यथा
+	else
 		reg = 0;
 
 	snd_soc_component_update_bits(component, WM8994_MICBIAS, WM8994_MICD_ENA, reg);
@@ -3564,144 +3563,144 @@ out:
 
 	snd_soc_dapm_sync(dapm);
 
-	pm_runसमय_put(component->dev);
+	pm_runtime_put(component->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(wm8994_mic_detect);
 
-अटल व्योम wm8994_mic_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा wm8994_priv *priv = container_of(work,
-						काष्ठा wm8994_priv,
+static void wm8994_mic_work(struct work_struct *work)
+{
+	struct wm8994_priv *priv = container_of(work,
+						struct wm8994_priv,
 						mic_work.work);
-	काष्ठा regmap *regmap = priv->wm8994->regmap;
-	काष्ठा device *dev = priv->wm8994->dev;
-	अचिन्हित पूर्णांक reg;
-	पूर्णांक ret;
-	पूर्णांक report;
+	struct regmap *regmap = priv->wm8994->regmap;
+	struct device *dev = priv->wm8994->dev;
+	unsigned int reg;
+	int ret;
+	int report;
 
-	pm_runसमय_get_sync(dev);
+	pm_runtime_get_sync(dev);
 
-	ret = regmap_पढ़ो(regmap, WM8994_INTERRUPT_RAW_STATUS_2, &reg);
-	अगर (ret < 0) अणु
+	ret = regmap_read(regmap, WM8994_INTERRUPT_RAW_STATUS_2, &reg);
+	if (ret < 0) {
 		dev_err(dev, "Failed to read microphone status: %d\n",
 			ret);
-		pm_runसमय_put(dev);
-		वापस;
-	पूर्ण
+		pm_runtime_put(dev);
+		return;
+	}
 
 	dev_dbg(dev, "Microphone status: %x\n", reg);
 
 	report = 0;
-	अगर (reg & WM8994_MIC1_DET_STS) अणु
-		अगर (priv->micdet[0].detecting)
+	if (reg & WM8994_MIC1_DET_STS) {
+		if (priv->micdet[0].detecting)
 			report = SND_JACK_HEADSET;
-	पूर्ण
-	अगर (reg & WM8994_MIC1_SHRT_STS) अणु
-		अगर (priv->micdet[0].detecting)
+	}
+	if (reg & WM8994_MIC1_SHRT_STS) {
+		if (priv->micdet[0].detecting)
 			report = SND_JACK_HEADPHONE;
-		अन्यथा
+		else
 			report |= SND_JACK_BTN_0;
-	पूर्ण
-	अगर (report)
+	}
+	if (report)
 		priv->micdet[0].detecting = false;
-	अन्यथा
+	else
 		priv->micdet[0].detecting = true;
 
 	snd_soc_jack_report(priv->micdet[0].jack, report,
 			    SND_JACK_HEADSET | SND_JACK_BTN_0);
 
 	report = 0;
-	अगर (reg & WM8994_MIC2_DET_STS) अणु
-		अगर (priv->micdet[1].detecting)
+	if (reg & WM8994_MIC2_DET_STS) {
+		if (priv->micdet[1].detecting)
 			report = SND_JACK_HEADSET;
-	पूर्ण
-	अगर (reg & WM8994_MIC2_SHRT_STS) अणु
-		अगर (priv->micdet[1].detecting)
+	}
+	if (reg & WM8994_MIC2_SHRT_STS) {
+		if (priv->micdet[1].detecting)
 			report = SND_JACK_HEADPHONE;
-		अन्यथा
+		else
 			report |= SND_JACK_BTN_0;
-	पूर्ण
-	अगर (report)
+	}
+	if (report)
 		priv->micdet[1].detecting = false;
-	अन्यथा
+	else
 		priv->micdet[1].detecting = true;
 
 	snd_soc_jack_report(priv->micdet[1].jack, report,
 			    SND_JACK_HEADSET | SND_JACK_BTN_0);
 
-	pm_runसमय_put(dev);
-पूर्ण
+	pm_runtime_put(dev);
+}
 
-अटल irqवापस_t wm8994_mic_irq(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा wm8994_priv *priv = data;
-	काष्ठा snd_soc_component *component = priv->hubs.component;
+static irqreturn_t wm8994_mic_irq(int irq, void *data)
+{
+	struct wm8994_priv *priv = data;
+	struct snd_soc_component *component = priv->hubs.component;
 
-#अगर_अघोषित CONFIG_SND_SOC_WM8994_MODULE
+#ifndef CONFIG_SND_SOC_WM8994_MODULE
 	trace_snd_soc_jack_irq(dev_name(component->dev));
-#पूर्ण_अगर
+#endif
 
 	pm_wakeup_event(component->dev, 300);
 
-	queue_delayed_work(प्रणाली_घातer_efficient_wq,
-			   &priv->mic_work, msecs_to_jअगरfies(250));
+	queue_delayed_work(system_power_efficient_wq,
+			   &priv->mic_work, msecs_to_jiffies(250));
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /* Should be called with accdet_lock held */
-अटल व्योम wm1811_micd_stop(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
-	काष्ठा wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
+static void wm1811_micd_stop(struct snd_soc_component *component)
+{
+	struct snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
+	struct wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
 
-	अगर (!wm8994->jackdet)
-		वापस;
+	if (!wm8994->jackdet)
+		return;
 
 	snd_soc_component_update_bits(component, WM8958_MIC_DETECT_1, WM8958_MICD_ENA, 0);
 
 	wm1811_jackdet_set_mode(component, WM1811_JACKDET_MODE_JACK);
 
-	अगर (wm8994->wm8994->pdata.jd_ext_cap)
+	if (wm8994->wm8994->pdata.jd_ext_cap)
 		snd_soc_dapm_disable_pin(dapm, "MICBIAS2");
-पूर्ण
+}
 
-अटल व्योम wm8958_button_det(काष्ठा snd_soc_component *component, u16 status)
-अणु
-	काष्ठा wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
-	पूर्णांक report;
+static void wm8958_button_det(struct snd_soc_component *component, u16 status)
+{
+	struct wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
+	int report;
 
 	report = 0;
-	अगर (status & 0x4)
+	if (status & 0x4)
 		report |= SND_JACK_BTN_0;
 
-	अगर (status & 0x8)
+	if (status & 0x8)
 		report |= SND_JACK_BTN_1;
 
-	अगर (status & 0x10)
+	if (status & 0x10)
 		report |= SND_JACK_BTN_2;
 
-	अगर (status & 0x20)
+	if (status & 0x20)
 		report |= SND_JACK_BTN_3;
 
-	अगर (status & 0x40)
+	if (status & 0x40)
 		report |= SND_JACK_BTN_4;
 
-	अगर (status & 0x80)
+	if (status & 0x80)
 		report |= SND_JACK_BTN_5;
 
 	snd_soc_jack_report(wm8994->micdet[0].jack, report,
 			    wm8994->btn_mask);
-पूर्ण
+}
 
-अटल व्योम wm8958_खोलो_circuit_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा wm8994_priv *wm8994 = container_of(work,
-						  काष्ठा wm8994_priv,
-						  खोलो_circuit_work.work);
-	काष्ठा device *dev = wm8994->wm8994->dev;
+static void wm8958_open_circuit_work(struct work_struct *work)
+{
+	struct wm8994_priv *wm8994 = container_of(work,
+						  struct wm8994_priv,
+						  open_circuit_work.work);
+	struct device *dev = wm8994->wm8994->dev;
 
 	mutex_lock(&wm8994->accdet_lock);
 
@@ -3719,28 +3718,28 @@ EXPORT_SYMBOL_GPL(wm8994_mic_detect);
 			    SND_JACK_HEADSET);
 
 	mutex_unlock(&wm8994->accdet_lock);
-पूर्ण
+}
 
-अटल व्योम wm8958_mic_id(व्योम *data, u16 status)
-अणु
-	काष्ठा snd_soc_component *component = data;
-	काष्ठा wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
+static void wm8958_mic_id(void *data, u16 status)
+{
+	struct snd_soc_component *component = data;
+	struct wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
 
 	/* Either nothing present or just starting detection */
-	अगर (!(status & WM8958_MICD_STS)) अणु
+	if (!(status & WM8958_MICD_STS)) {
 		/* If nothing present then clear our statuses */
 		dev_dbg(component->dev, "Detected open circuit\n");
 
-		queue_delayed_work(प्रणाली_घातer_efficient_wq,
-				   &wm8994->खोलो_circuit_work,
-				   msecs_to_jअगरfies(2500));
-		वापस;
-	पूर्ण
+		queue_delayed_work(system_power_efficient_wq,
+				   &wm8994->open_circuit_work,
+				   msecs_to_jiffies(2500));
+		return;
+	}
 
 	/* If the measurement is showing a high impedence we've got a
 	 * microphone.
 	 */
-	अगर (status & 0x600) अणु
+	if (status & 0x600) {
 		dev_dbg(component->dev, "Detected microphone\n");
 
 		wm8994->mic_detecting = false;
@@ -3750,10 +3749,10 @@ EXPORT_SYMBOL_GPL(wm8994_mic_detect);
 
 		snd_soc_jack_report(wm8994->micdet[0].jack, SND_JACK_HEADSET,
 				    SND_JACK_HEADSET);
-	पूर्ण
+	}
 
 
-	अगर (status & 0xfc) अणु
+	if (status & 0xfc) {
 		dev_dbg(component->dev, "Detected headphone\n");
 		wm8994->mic_detecting = false;
 
@@ -3764,34 +3763,34 @@ EXPORT_SYMBOL_GPL(wm8994_mic_detect);
 
 		snd_soc_jack_report(wm8994->micdet[0].jack, SND_JACK_HEADPHONE,
 				    SND_JACK_HEADSET);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* Deferred mic detection to allow क्रम extra settling समय */
-अटल व्योम wm1811_mic_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा wm8994_priv *wm8994 = container_of(work, काष्ठा wm8994_priv,
+/* Deferred mic detection to allow for extra settling time */
+static void wm1811_mic_work(struct work_struct *work)
+{
+	struct wm8994_priv *wm8994 = container_of(work, struct wm8994_priv,
 						  mic_work.work);
-	काष्ठा wm8994 *control = wm8994->wm8994;
-	काष्ठा snd_soc_component *component = wm8994->hubs.component;
-	काष्ठा snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
+	struct wm8994 *control = wm8994->wm8994;
+	struct snd_soc_component *component = wm8994->hubs.component;
+	struct snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
 
-	pm_runसमय_get_sync(component->dev);
+	pm_runtime_get_sync(component->dev);
 
-	/* If required क्रम an बाह्यal cap क्रमce MICBIAS on */
-	अगर (control->pdata.jd_ext_cap) अणु
-		snd_soc_dapm_क्रमce_enable_pin(dapm, "MICBIAS2");
+	/* If required for an external cap force MICBIAS on */
+	if (control->pdata.jd_ext_cap) {
+		snd_soc_dapm_force_enable_pin(dapm, "MICBIAS2");
 		snd_soc_dapm_sync(dapm);
-	पूर्ण
+	}
 
 	mutex_lock(&wm8994->accdet_lock);
 
 	dev_dbg(component->dev, "Starting mic detection\n");
 
-	/* Use a user-supplied callback अगर we have one */
-	अगर (wm8994->micd_cb) अणु
+	/* Use a user-supplied callback if we have one */
+	if (wm8994->micd_cb) {
 		wm8994->micd_cb(wm8994->micd_cb_data);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
 		 * Start off measument of microphone impedence to find out
 		 * what's actually there.
@@ -3801,41 +3800,41 @@ EXPORT_SYMBOL_GPL(wm8994_mic_detect);
 
 		snd_soc_component_update_bits(component, WM8958_MIC_DETECT_1,
 				    WM8958_MICD_ENA, WM8958_MICD_ENA);
-	पूर्ण
+	}
 
 	mutex_unlock(&wm8994->accdet_lock);
 
-	pm_runसमय_put(component->dev);
-पूर्ण
+	pm_runtime_put(component->dev);
+}
 
-अटल irqवापस_t wm1811_jackdet_irq(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा wm8994_priv *wm8994 = data;
-	काष्ठा wm8994 *control = wm8994->wm8994;
-	काष्ठा snd_soc_component *component = wm8994->hubs.component;
-	काष्ठा snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
-	पूर्णांक reg, delay;
+static irqreturn_t wm1811_jackdet_irq(int irq, void *data)
+{
+	struct wm8994_priv *wm8994 = data;
+	struct wm8994 *control = wm8994->wm8994;
+	struct snd_soc_component *component = wm8994->hubs.component;
+	struct snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
+	int reg, delay;
 	bool present;
 
-	pm_runसमय_get_sync(component->dev);
+	pm_runtime_get_sync(component->dev);
 
 	cancel_delayed_work_sync(&wm8994->mic_complete_work);
 
 	mutex_lock(&wm8994->accdet_lock);
 
-	reg = snd_soc_component_पढ़ो(component, WM1811_JACKDET_CTRL);
-	अगर (reg < 0) अणु
+	reg = snd_soc_component_read(component, WM1811_JACKDET_CTRL);
+	if (reg < 0) {
 		dev_err(component->dev, "Failed to read jack status: %d\n", reg);
 		mutex_unlock(&wm8994->accdet_lock);
-		pm_runसमय_put(component->dev);
-		वापस IRQ_NONE;
-	पूर्ण
+		pm_runtime_put(component->dev);
+		return IRQ_NONE;
+	}
 
 	dev_dbg(component->dev, "JACKDET %x\n", reg);
 
 	present = reg & WM1811_JACKDET_LVL;
 
-	अगर (present) अणु
+	if (present) {
 		dev_dbg(component->dev, "Jack detected\n");
 
 		wm8958_micd_set_rate(component);
@@ -3843,15 +3842,15 @@ EXPORT_SYMBOL_GPL(wm8994_mic_detect);
 		snd_soc_component_update_bits(component, WM8958_MICBIAS2,
 				    WM8958_MICB2_DISCH, 0);
 
-		/* Disable debounce जबतक inserted */
+		/* Disable debounce while inserted */
 		snd_soc_component_update_bits(component, WM1811_JACKDET_CTRL,
 				    WM1811_JACKDET_DB, 0);
 
 		delay = control->pdata.micdet_delay;
-		queue_delayed_work(प्रणाली_घातer_efficient_wq,
+		queue_delayed_work(system_power_efficient_wq,
 				   &wm8994->mic_work,
-				   msecs_to_jअगरfies(delay));
-	पूर्ण अन्यथा अणु
+				   msecs_to_jiffies(delay));
+	} else {
 		dev_dbg(component->dev, "Jack not detected\n");
 
 		cancel_delayed_work_sync(&wm8994->mic_work);
@@ -3859,7 +3858,7 @@ EXPORT_SYMBOL_GPL(wm8994_mic_detect);
 		snd_soc_component_update_bits(component, WM8958_MICBIAS2,
 				    WM8958_MICB2_DISCH, WM8958_MICB2_DISCH);
 
-		/* Enable debounce जबतक हटाओd */
+		/* Enable debounce while removed */
 		snd_soc_component_update_bits(component, WM1811_JACKDET_CTRL,
 				    WM1811_JACKDET_DB, WM1811_JACKDET_DB);
 
@@ -3868,37 +3867,37 @@ EXPORT_SYMBOL_GPL(wm8994_mic_detect);
 		snd_soc_component_update_bits(component, WM8958_MIC_DETECT_1,
 				    WM8958_MICD_ENA, 0);
 		wm1811_jackdet_set_mode(component, WM1811_JACKDET_MODE_JACK);
-	पूर्ण
+	}
 
 	mutex_unlock(&wm8994->accdet_lock);
 
-	/* Turn off MICBIAS अगर it was on क्रम an बाह्यal cap */
-	अगर (control->pdata.jd_ext_cap && !present)
+	/* Turn off MICBIAS if it was on for an external cap */
+	if (control->pdata.jd_ext_cap && !present)
 		snd_soc_dapm_disable_pin(dapm, "MICBIAS2");
 
-	अगर (present)
+	if (present)
 		snd_soc_jack_report(wm8994->micdet[0].jack,
 				    SND_JACK_MECHANICAL, SND_JACK_MECHANICAL);
-	अन्यथा
+	else
 		snd_soc_jack_report(wm8994->micdet[0].jack, 0,
 				    SND_JACK_MECHANICAL | SND_JACK_HEADSET |
 				    wm8994->btn_mask);
 
-	/* Since we only report deltas क्रमce an update, ensures we
-	 * aव्योम bootstrapping issues with the core. */
+	/* Since we only report deltas force an update, ensures we
+	 * avoid bootstrapping issues with the core. */
 	snd_soc_jack_report(wm8994->micdet[0].jack, 0, 0);
 
-	pm_runसमय_put(component->dev);
-	वापस IRQ_HANDLED;
-पूर्ण
+	pm_runtime_put(component->dev);
+	return IRQ_HANDLED;
+}
 
-अटल व्योम wm1811_jackdet_bootstrap(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा wm8994_priv *wm8994 = container_of(work,
-						काष्ठा wm8994_priv,
+static void wm1811_jackdet_bootstrap(struct work_struct *work)
+{
+	struct wm8994_priv *wm8994 = container_of(work,
+						struct wm8994_priv,
 						jackdet_bootstrap.work);
 	wm1811_jackdet_irq(0, wm8994);
-पूर्ण
+}
 
 /**
  * wm8958_mic_detect - Enable microphone detection via the WM8958 IRQ
@@ -3906,67 +3905,67 @@ EXPORT_SYMBOL_GPL(wm8994_mic_detect);
  * @component:   WM8958 component
  * @jack:    jack to report detection events on
  * @det_cb: detection callback
- * @det_cb_data: data क्रम detection callback
+ * @det_cb_data: data for detection callback
  * @id_cb: mic id callback
- * @id_cb_data: data क्रम mic id callback
+ * @id_cb_data: data for mic id callback
  *
- * Enable microphone detection functionality क्रम the WM8958.  By
- * शेष simple detection which supports the detection of up to 6
+ * Enable microphone detection functionality for the WM8958.  By
+ * default simple detection which supports the detection of up to 6
  * buttons plus video and microphone functionality is supported.
  *
  * The WM8958 has an advanced jack detection facility which is able to
  * support complex accessory detection, especially when used in
- * conjunction with बाह्यal circuitry.  In order to provide maximum
+ * conjunction with external circuitry.  In order to provide maximum
  * flexiblity a callback is provided which allows a completely custom
  * detection algorithm.
  */
-पूर्णांक wm8958_mic_detect(काष्ठा snd_soc_component *component, काष्ठा snd_soc_jack *jack,
-		      wm1811_micdet_cb det_cb, व्योम *det_cb_data,
-		      wm1811_mic_id_cb id_cb, व्योम *id_cb_data)
-अणु
-	काष्ठा snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
-	काष्ठा wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
-	काष्ठा wm8994 *control = wm8994->wm8994;
+int wm8958_mic_detect(struct snd_soc_component *component, struct snd_soc_jack *jack,
+		      wm1811_micdet_cb det_cb, void *det_cb_data,
+		      wm1811_mic_id_cb id_cb, void *id_cb_data)
+{
+	struct snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
+	struct wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
+	struct wm8994 *control = wm8994->wm8994;
 	u16 micd_lvl_sel;
 
-	चयन (control->type) अणु
-	हाल WM1811:
-	हाल WM8958:
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (control->type) {
+	case WM1811:
+	case WM8958:
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	pm_runसमय_get_sync(component->dev);
+	pm_runtime_get_sync(component->dev);
 
-	अगर (jack) अणु
-		snd_soc_dapm_क्रमce_enable_pin(dapm, "CLK_SYS");
+	if (jack) {
+		snd_soc_dapm_force_enable_pin(dapm, "CLK_SYS");
 		snd_soc_dapm_sync(dapm);
 
 		wm8994->micdet[0].jack = jack;
 
-		अगर (det_cb) अणु
+		if (det_cb) {
 			wm8994->micd_cb = det_cb;
 			wm8994->micd_cb_data = det_cb_data;
-		पूर्ण अन्यथा अणु
+		} else {
 			wm8994->mic_detecting = true;
 			wm8994->jack_mic = false;
-		पूर्ण
+		}
 
-		अगर (id_cb) अणु
+		if (id_cb) {
 			wm8994->mic_id_cb = id_cb;
 			wm8994->mic_id_cb_data = id_cb_data;
-		पूर्ण अन्यथा अणु
+		} else {
 			wm8994->mic_id_cb = wm8958_mic_id;
 			wm8994->mic_id_cb_data = component;
-		पूर्ण
+		}
 
 		wm8958_micd_set_rate(component);
 
-		/* Detect microphones and लघु circuits by शेष */
-		अगर (control->pdata.micd_lvl_sel)
+		/* Detect microphones and short circuits by default */
+		if (control->pdata.micd_lvl_sel)
 			micd_lvl_sel = control->pdata.micd_lvl_sel;
-		अन्यथा
+		else
 			micd_lvl_sel = 0x41;
 
 		wm8994->btn_mask = SND_JACK_BTN_0 | SND_JACK_BTN_1 |
@@ -3982,8 +3981,8 @@ EXPORT_SYMBOL_GPL(wm8994_mic_detect);
 		 * If we can use jack detection start off with that,
 		 * otherwise jump straight to microphone detection.
 		 */
-		अगर (wm8994->jackdet) अणु
-			/* Disable debounce क्रम the initial detect */
+		if (wm8994->jackdet) {
+			/* Disable debounce for the initial detect */
 			snd_soc_component_update_bits(component, WM1811_JACKDET_CTRL,
 					    WM1811_JACKDET_DB, 0);
 
@@ -3994,33 +3993,33 @@ EXPORT_SYMBOL_GPL(wm8994_mic_detect);
 					    WM8994_LDO1_DISCH, 0);
 			wm1811_jackdet_set_mode(component,
 						WM1811_JACKDET_MODE_JACK);
-		पूर्ण अन्यथा अणु
+		} else {
 			snd_soc_component_update_bits(component, WM8958_MIC_DETECT_1,
 					    WM8958_MICD_ENA, WM8958_MICD_ENA);
-		पूर्ण
+		}
 
-	पूर्ण अन्यथा अणु
+	} else {
 		snd_soc_component_update_bits(component, WM8958_MIC_DETECT_1,
 				    WM8958_MICD_ENA, 0);
 		wm1811_jackdet_set_mode(component, WM1811_JACKDET_MODE_NONE);
 		snd_soc_dapm_disable_pin(dapm, "CLK_SYS");
 		snd_soc_dapm_sync(dapm);
-	पूर्ण
+	}
 
-	pm_runसमय_put(component->dev);
+	pm_runtime_put(component->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(wm8958_mic_detect);
 
-अटल व्योम wm8958_mic_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा wm8994_priv *wm8994 = container_of(work,
-						  काष्ठा wm8994_priv,
+static void wm8958_mic_work(struct work_struct *work)
+{
+	struct wm8994_priv *wm8994 = container_of(work,
+						  struct wm8994_priv,
 						  mic_complete_work.work);
-	काष्ठा snd_soc_component *component = wm8994->hubs.component;
+	struct snd_soc_component *component = wm8994->hubs.component;
 
-	pm_runसमय_get_sync(component->dev);
+	pm_runtime_get_sync(component->dev);
 
 	mutex_lock(&wm8994->accdet_lock);
 
@@ -4028,127 +4027,127 @@ EXPORT_SYMBOL_GPL(wm8958_mic_detect);
 
 	mutex_unlock(&wm8994->accdet_lock);
 
-	pm_runसमय_put(component->dev);
-पूर्ण
+	pm_runtime_put(component->dev);
+}
 
-अटल irqवापस_t wm8958_mic_irq(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा wm8994_priv *wm8994 = data;
-	काष्ठा snd_soc_component *component = wm8994->hubs.component;
-	पूर्णांक reg, count, ret, id_delay;
+static irqreturn_t wm8958_mic_irq(int irq, void *data)
+{
+	struct wm8994_priv *wm8994 = data;
+	struct snd_soc_component *component = wm8994->hubs.component;
+	int reg, count, ret, id_delay;
 
 	/*
 	 * Jack detection may have detected a removal simulataneously
-	 * with an update of the MICDET status; अगर so it will have
-	 * stopped detection and we can ignore this पूर्णांकerrupt.
+	 * with an update of the MICDET status; if so it will have
+	 * stopped detection and we can ignore this interrupt.
 	 */
-	अगर (!(snd_soc_component_पढ़ो(component, WM8958_MIC_DETECT_1) & WM8958_MICD_ENA))
-		वापस IRQ_HANDLED;
+	if (!(snd_soc_component_read(component, WM8958_MIC_DETECT_1) & WM8958_MICD_ENA))
+		return IRQ_HANDLED;
 
 	cancel_delayed_work_sync(&wm8994->mic_complete_work);
-	cancel_delayed_work_sync(&wm8994->खोलो_circuit_work);
+	cancel_delayed_work_sync(&wm8994->open_circuit_work);
 
-	pm_runसमय_get_sync(component->dev);
+	pm_runtime_get_sync(component->dev);
 
-	/* We may occasionally पढ़ो a detection without an impedence
-	 * range being provided - अगर that happens loop again.
+	/* We may occasionally read a detection without an impedence
+	 * range being provided - if that happens loop again.
 	 */
 	count = 10;
-	करो अणु
-		reg = snd_soc_component_पढ़ो(component, WM8958_MIC_DETECT_3);
-		अगर (reg < 0) अणु
+	do {
+		reg = snd_soc_component_read(component, WM8958_MIC_DETECT_3);
+		if (reg < 0) {
 			dev_err(component->dev,
 				"Failed to read mic detect status: %d\n",
 				reg);
-			pm_runसमय_put(component->dev);
-			वापस IRQ_NONE;
-		पूर्ण
+			pm_runtime_put(component->dev);
+			return IRQ_NONE;
+		}
 
-		अगर (!(reg & WM8958_MICD_VALID)) अणु
+		if (!(reg & WM8958_MICD_VALID)) {
 			dev_dbg(component->dev, "Mic detect data not valid\n");
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अगर (!(reg & WM8958_MICD_STS) || (reg & WM8958_MICD_LVL_MASK))
-			अवरोध;
+		if (!(reg & WM8958_MICD_STS) || (reg & WM8958_MICD_LVL_MASK))
+			break;
 
 		msleep(1);
-	पूर्ण जबतक (count--);
+	} while (count--);
 
-	अगर (count == 0)
+	if (count == 0)
 		dev_warn(component->dev, "No impedance range reported for jack\n");
 
-#अगर_अघोषित CONFIG_SND_SOC_WM8994_MODULE
+#ifndef CONFIG_SND_SOC_WM8994_MODULE
 	trace_snd_soc_jack_irq(dev_name(component->dev));
-#पूर्ण_अगर
+#endif
 
-	/* Aव्योम a transient report when the accessory is being हटाओd */
-	अगर (wm8994->jackdet) अणु
-		ret = snd_soc_component_पढ़ो(component, WM1811_JACKDET_CTRL);
-		अगर (ret < 0) अणु
+	/* Avoid a transient report when the accessory is being removed */
+	if (wm8994->jackdet) {
+		ret = snd_soc_component_read(component, WM1811_JACKDET_CTRL);
+		if (ret < 0) {
 			dev_err(component->dev, "Failed to read jack status: %d\n",
 				ret);
-		पूर्ण अन्यथा अगर (!(ret & WM1811_JACKDET_LVL)) अणु
+		} else if (!(ret & WM1811_JACKDET_LVL)) {
 			dev_dbg(component->dev, "Ignoring removed jack\n");
-			जाओ out;
-		पूर्ण
-	पूर्ण अन्यथा अगर (!(reg & WM8958_MICD_STS)) अणु
+			goto out;
+		}
+	} else if (!(reg & WM8958_MICD_STS)) {
 		snd_soc_jack_report(wm8994->micdet[0].jack, 0,
 				    SND_JACK_MECHANICAL | SND_JACK_HEADSET |
 				    wm8994->btn_mask);
 		wm8994->mic_detecting = true;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	wm8994->mic_status = reg;
 	id_delay = wm8994->wm8994->pdata.mic_id_delay;
 
-	अगर (wm8994->mic_detecting)
-		queue_delayed_work(प्रणाली_घातer_efficient_wq,
+	if (wm8994->mic_detecting)
+		queue_delayed_work(system_power_efficient_wq,
 				   &wm8994->mic_complete_work,
-				   msecs_to_jअगरfies(id_delay));
-	अन्यथा
+				   msecs_to_jiffies(id_delay));
+	else
 		wm8958_button_det(component, reg);
 
 out:
-	pm_runसमय_put(component->dev);
-	वापस IRQ_HANDLED;
-पूर्ण
+	pm_runtime_put(component->dev);
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t wm8994_fअगरo_error(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा snd_soc_component *component = data;
+static irqreturn_t wm8994_fifo_error(int irq, void *data)
+{
+	struct snd_soc_component *component = data;
 
 	dev_err(component->dev, "FIFO error\n");
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t wm8994_temp_warn(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा snd_soc_component *component = data;
+static irqreturn_t wm8994_temp_warn(int irq, void *data)
+{
+	struct snd_soc_component *component = data;
 
 	dev_err(component->dev, "Thermal warning\n");
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t wm8994_temp_shut(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा snd_soc_component *component = data;
+static irqreturn_t wm8994_temp_shut(int irq, void *data)
+{
+	struct snd_soc_component *component = data;
 
 	dev_crit(component->dev, "Thermal shutdown\n");
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक wm8994_component_probe(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
-	काष्ठा wm8994 *control = dev_get_drvdata(component->dev->parent);
-	काष्ठा wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
-	अचिन्हित पूर्णांक reg;
-	पूर्णांक ret, i;
+static int wm8994_component_probe(struct snd_soc_component *component)
+{
+	struct snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
+	struct wm8994 *control = dev_get_drvdata(component->dev->parent);
+	struct wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
+	unsigned int reg;
+	int ret, i;
 
 	snd_soc_component_init_regmap(component, control->regmap);
 
@@ -4157,70 +4156,70 @@ out:
 	mutex_init(&wm8994->accdet_lock);
 	INIT_DELAYED_WORK(&wm8994->jackdet_bootstrap,
 			  wm1811_jackdet_bootstrap);
-	INIT_DELAYED_WORK(&wm8994->खोलो_circuit_work,
-			  wm8958_खोलो_circuit_work);
+	INIT_DELAYED_WORK(&wm8994->open_circuit_work,
+			  wm8958_open_circuit_work);
 
-	चयन (control->type) अणु
-	हाल WM8994:
+	switch (control->type) {
+	case WM8994:
 		INIT_DELAYED_WORK(&wm8994->mic_work, wm8994_mic_work);
-		अवरोध;
-	हाल WM1811:
+		break;
+	case WM1811:
 		INIT_DELAYED_WORK(&wm8994->mic_work, wm1811_mic_work);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
 	INIT_DELAYED_WORK(&wm8994->mic_complete_work, wm8958_mic_work);
 
-	क्रम (i = 0; i < ARRAY_SIZE(wm8994->fll_locked); i++)
+	for (i = 0; i < ARRAY_SIZE(wm8994->fll_locked); i++)
 		init_completion(&wm8994->fll_locked[i]);
 
 	wm8994->micdet_irq = control->pdata.micdet_irq;
 
-	/* By शेष use idle_bias_off, will override क्रम WM8994 */
+	/* By default use idle_bias_off, will override for WM8994 */
 	dapm->idle_bias_off = 1;
 
-	/* Set revision-specअगरic configuration */
-	चयन (control->type) अणु
-	हाल WM8994:
-		/* Single ended line outमाला_दो should have VMID on. */
-		अगर (!control->pdata.lineout1_dअगरf ||
-		    !control->pdata.lineout2_dअगरf)
+	/* Set revision-specific configuration */
+	switch (control->type) {
+	case WM8994:
+		/* Single ended line outputs should have VMID on. */
+		if (!control->pdata.lineout1_diff ||
+		    !control->pdata.lineout2_diff)
 			dapm->idle_bias_off = 0;
 
-		चयन (control->revision) अणु
-		हाल 2:
-		हाल 3:
+		switch (control->revision) {
+		case 2:
+		case 3:
 			wm8994->hubs.dcs_codes_l = -5;
 			wm8994->hubs.dcs_codes_r = -5;
 			wm8994->hubs.hp_startup_mode = 1;
-			wm8994->hubs.dcs_पढ़ोback_mode = 1;
+			wm8994->hubs.dcs_readback_mode = 1;
 			wm8994->hubs.series_startup = 1;
-			अवरोध;
-		शेष:
-			wm8994->hubs.dcs_पढ़ोback_mode = 2;
-			अवरोध;
-		पूर्ण
+			break;
+		default:
+			wm8994->hubs.dcs_readback_mode = 2;
+			break;
+		}
 		wm8994->hubs.micd_scthr = true;
-		अवरोध;
+		break;
 
-	हाल WM8958:
-		wm8994->hubs.dcs_पढ़ोback_mode = 1;
+	case WM8958:
+		wm8994->hubs.dcs_readback_mode = 1;
 		wm8994->hubs.hp_startup_mode = 1;
 		wm8994->hubs.micd_scthr = true;
 
-		चयन (control->revision) अणु
-		हाल 0:
-			अवरोध;
-		शेष:
+		switch (control->revision) {
+		case 0:
+			break;
+		default:
 			wm8994->fll_byp = true;
-			अवरोध;
-		पूर्ण
-		अवरोध;
+			break;
+		}
+		break;
 
-	हाल WM1811:
-		wm8994->hubs.dcs_पढ़ोback_mode = 2;
+	case WM1811:
+		wm8994->hubs.dcs_readback_mode = 2;
 		wm8994->hubs.no_series_update = 1;
 		wm8994->hubs.hp_startup_mode = 1;
 		wm8994->hubs.no_cache_dac_hp_direct = true;
@@ -4231,35 +4230,35 @@ out:
 
 		snd_soc_component_update_bits(component, WM8994_ANALOGUE_HP_1,
 				    WM1811_HPOUT1_ATTN, WM1811_HPOUT1_ATTN);
-		अवरोध;
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
 	wm8994_request_irq(wm8994->wm8994, WM8994_IRQ_FIFOS_ERR,
-			   wm8994_fअगरo_error, "FIFO error", component);
+			   wm8994_fifo_error, "FIFO error", component);
 	wm8994_request_irq(wm8994->wm8994, WM8994_IRQ_TEMP_WARN,
 			   wm8994_temp_warn, "Thermal warning", component);
 	wm8994_request_irq(wm8994->wm8994, WM8994_IRQ_TEMP_SHUT,
 			   wm8994_temp_shut, "Thermal shutdown", component);
 
-	चयन (control->type) अणु
-	हाल WM8994:
-		अगर (wm8994->micdet_irq)
-			ret = request_thपढ़ोed_irq(wm8994->micdet_irq, शून्य,
+	switch (control->type) {
+	case WM8994:
+		if (wm8994->micdet_irq)
+			ret = request_threaded_irq(wm8994->micdet_irq, NULL,
 						   wm8994_mic_irq,
 						   IRQF_TRIGGER_RISING |
 						   IRQF_ONESHOT,
 						   "Mic1 detect",
 						   wm8994);
-		 अन्यथा
+		 else
 			ret = wm8994_request_irq(wm8994->wm8994,
 					WM8994_IRQ_MIC1_DET,
 					wm8994_mic_irq, "Mic 1 detect",
 					wm8994);
 
-		अगर (ret != 0)
+		if (ret != 0)
 			dev_warn(component->dev,
 				 "Failed to request Mic1 detect IRQ: %d\n",
 				 ret);
@@ -4269,7 +4268,7 @@ out:
 					 WM8994_IRQ_MIC1_SHRT,
 					 wm8994_mic_irq, "Mic 1 short",
 					 wm8994);
-		अगर (ret != 0)
+		if (ret != 0)
 			dev_warn(component->dev,
 				 "Failed to request Mic1 short IRQ: %d\n",
 				 ret);
@@ -4278,7 +4277,7 @@ out:
 					 WM8994_IRQ_MIC2_DET,
 					 wm8994_mic_irq, "Mic 2 detect",
 					 wm8994);
-		अगर (ret != 0)
+		if (ret != 0)
 			dev_warn(component->dev,
 				 "Failed to request Mic2 detect IRQ: %d\n",
 				 ret);
@@ -4287,103 +4286,103 @@ out:
 					 WM8994_IRQ_MIC2_SHRT,
 					 wm8994_mic_irq, "Mic 2 short",
 					 wm8994);
-		अगर (ret != 0)
+		if (ret != 0)
 			dev_warn(component->dev,
 				 "Failed to request Mic2 short IRQ: %d\n",
 				 ret);
-		अवरोध;
+		break;
 
-	हाल WM8958:
-	हाल WM1811:
-		अगर (wm8994->micdet_irq) अणु
-			ret = request_thपढ़ोed_irq(wm8994->micdet_irq, शून्य,
+	case WM8958:
+	case WM1811:
+		if (wm8994->micdet_irq) {
+			ret = request_threaded_irq(wm8994->micdet_irq, NULL,
 						   wm8958_mic_irq,
 						   IRQF_TRIGGER_RISING |
 						   IRQF_ONESHOT,
 						   "Mic detect",
 						   wm8994);
-			अगर (ret != 0)
+			if (ret != 0)
 				dev_warn(component->dev,
 					 "Failed to request Mic detect IRQ: %d\n",
 					 ret);
-		पूर्ण अन्यथा अणु
+		} else {
 			wm8994_request_irq(wm8994->wm8994, WM8994_IRQ_MIC1_DET,
 					   wm8958_mic_irq, "Mic detect",
 					   wm8994);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	चयन (control->type) अणु
-	हाल WM1811:
-		अगर (control->cust_id > 1 || control->revision > 1) अणु
+	switch (control->type) {
+	case WM1811:
+		if (control->cust_id > 1 || control->revision > 1) {
 			ret = wm8994_request_irq(wm8994->wm8994,
 						 WM8994_IRQ_GPIO(6),
 						 wm1811_jackdet_irq, "JACKDET",
 						 wm8994);
-			अगर (ret == 0)
+			if (ret == 0)
 				wm8994->jackdet = true;
-		पूर्ण
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		}
+		break;
+	default:
+		break;
+	}
 
 	wm8994->fll_locked_irq = true;
-	क्रम (i = 0; i < ARRAY_SIZE(wm8994->fll_locked); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(wm8994->fll_locked); i++) {
 		ret = wm8994_request_irq(wm8994->wm8994,
 					 WM8994_IRQ_FLL1_LOCK + i,
 					 wm8994_fll_locked_irq, "FLL lock",
 					 &wm8994->fll_locked[i]);
-		अगर (ret != 0)
+		if (ret != 0)
 			wm8994->fll_locked_irq = false;
-	पूर्ण
+	}
 
-	/* Make sure we can पढ़ो from the GPIOs अगर they're inमाला_दो */
-	pm_runसमय_get_sync(component->dev);
+	/* Make sure we can read from the GPIOs if they're inputs */
+	pm_runtime_get_sync(component->dev);
 
-	/* Remember अगर AIFnLRCLK is configured as a GPIO.  This should be
-	 * configured on init - अगर a प्रणाली wants to करो this dynamically
-	 * at runसमय we can deal with that then.
+	/* Remember if AIFnLRCLK is configured as a GPIO.  This should be
+	 * configured on init - if a system wants to do this dynamically
+	 * at runtime we can deal with that then.
 	 */
-	ret = regmap_पढ़ो(control->regmap, WM8994_GPIO_1, &reg);
-	अगर (ret < 0) अणु
+	ret = regmap_read(control->regmap, WM8994_GPIO_1, &reg);
+	if (ret < 0) {
 		dev_err(component->dev, "Failed to read GPIO1 state: %d\n", ret);
-		जाओ err_irq;
-	पूर्ण
-	अगर ((reg & WM8994_GPN_FN_MASK) != WM8994_GP_FN_PIN_SPECIFIC) अणु
+		goto err_irq;
+	}
+	if ((reg & WM8994_GPN_FN_MASK) != WM8994_GP_FN_PIN_SPECIFIC) {
 		wm8994->lrclk_shared[0] = 1;
 		wm8994_dai[0].symmetric_rate = 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		wm8994->lrclk_shared[0] = 0;
-	पूर्ण
+	}
 
-	ret = regmap_पढ़ो(control->regmap, WM8994_GPIO_6, &reg);
-	अगर (ret < 0) अणु
+	ret = regmap_read(control->regmap, WM8994_GPIO_6, &reg);
+	if (ret < 0) {
 		dev_err(component->dev, "Failed to read GPIO6 state: %d\n", ret);
-		जाओ err_irq;
-	पूर्ण
-	अगर ((reg & WM8994_GPN_FN_MASK) != WM8994_GP_FN_PIN_SPECIFIC) अणु
+		goto err_irq;
+	}
+	if ((reg & WM8994_GPN_FN_MASK) != WM8994_GP_FN_PIN_SPECIFIC) {
 		wm8994->lrclk_shared[1] = 1;
 		wm8994_dai[1].symmetric_rate = 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		wm8994->lrclk_shared[1] = 0;
-	पूर्ण
+	}
 
-	pm_runसमय_put(component->dev);
+	pm_runtime_put(component->dev);
 
 	/* Latch volume update bits */
-	क्रम (i = 0; i < ARRAY_SIZE(wm8994_vu_bits); i++)
+	for (i = 0; i < ARRAY_SIZE(wm8994_vu_bits); i++)
 		snd_soc_component_update_bits(component, wm8994_vu_bits[i].reg,
 				    wm8994_vu_bits[i].mask,
 				    wm8994_vu_bits[i].mask);
 
-	अगर (control->type != WM1811) अणु
-		क्रम (i = 0; i < ARRAY_SIZE(wm8994_adc2_dac2_vu_bits); i++)
+	if (control->type != WM1811) {
+		for (i = 0; i < ARRAY_SIZE(wm8994_adc2_dac2_vu_bits); i++)
 			snd_soc_component_update_bits(component,
 					wm8994_adc2_dac2_vu_bits[i].reg,
 					wm8994_adc2_dac2_vu_bits[i].mask,
 					wm8994_adc2_dac2_vu_bits[i].mask);
-	पूर्ण
+	}
 
 	/* Set the low bit of the 3D stereo depth so TLV matches */
 	snd_soc_component_update_bits(component, WM8994_AIF1_DAC1_FILTERS_2,
@@ -4397,30 +4396,30 @@ out:
 			    1 << WM8994_AIF2DAC_3D_GAIN_SHIFT);
 
 	/* Unconditionally enable AIF1 ADC TDM mode on chips which can
-	 * use this; it only affects behaviour on idle TDM घड़ी
+	 * use this; it only affects behaviour on idle TDM clock
 	 * cycles. */
-	चयन (control->type) अणु
-	हाल WM8994:
-	हाल WM8958:
+	switch (control->type) {
+	case WM8994:
+	case WM8958:
 		snd_soc_component_update_bits(component, WM8994_AIF1_CONTROL_1,
 				    WM8994_AIF1ADC_TDM, WM8994_AIF1ADC_TDM);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	/* Put MICBIAS पूर्णांकo bypass mode by शेष on newer devices */
-	चयन (control->type) अणु
-	हाल WM8958:
-	हाल WM1811:
+	/* Put MICBIAS into bypass mode by default on newer devices */
+	switch (control->type) {
+	case WM8958:
+	case WM1811:
 		snd_soc_component_update_bits(component, WM8958_MICBIAS1,
 				    WM8958_MICB1_MODE, WM8958_MICB1_MODE);
 		snd_soc_component_update_bits(component, WM8958_MICBIAS2,
 				    WM8958_MICB2_MODE, WM8958_MICB2_MODE);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
 	wm8994->hubs.check_class_w_digital = wm8994_check_class_w_digital;
 	wm_hubs_update_class_w(component);
@@ -4430,204 +4429,204 @@ out:
 	wm_hubs_add_analogue_controls(component);
 	snd_soc_add_component_controls(component, wm8994_common_snd_controls,
 				       ARRAY_SIZE(wm8994_common_snd_controls));
-	snd_soc_dapm_new_controls(dapm, wm8994_dapm_widमाला_लो,
-				  ARRAY_SIZE(wm8994_dapm_widमाला_लो));
+	snd_soc_dapm_new_controls(dapm, wm8994_dapm_widgets,
+				  ARRAY_SIZE(wm8994_dapm_widgets));
 
-	चयन (control->type) अणु
-	हाल WM8994:
+	switch (control->type) {
+	case WM8994:
 		snd_soc_add_component_controls(component, wm8994_snd_controls,
 					       ARRAY_SIZE(wm8994_snd_controls));
-		snd_soc_dapm_new_controls(dapm, wm8994_specअगरic_dapm_widमाला_लो,
-					  ARRAY_SIZE(wm8994_specअगरic_dapm_widमाला_लो));
-		अगर (control->revision < 4) अणु
-			snd_soc_dapm_new_controls(dapm, wm8994_lateclk_revd_widमाला_लो,
-						  ARRAY_SIZE(wm8994_lateclk_revd_widमाला_लो));
-			snd_soc_dapm_new_controls(dapm, wm8994_adc_revd_widमाला_लो,
-						  ARRAY_SIZE(wm8994_adc_revd_widमाला_लो));
-			snd_soc_dapm_new_controls(dapm, wm8994_dac_revd_widमाला_लो,
-						  ARRAY_SIZE(wm8994_dac_revd_widमाला_लो));
-		पूर्ण अन्यथा अणु
-			snd_soc_dapm_new_controls(dapm, wm8994_lateclk_widमाला_लो,
-						  ARRAY_SIZE(wm8994_lateclk_widमाला_लो));
-			snd_soc_dapm_new_controls(dapm, wm8994_adc_widमाला_लो,
-						  ARRAY_SIZE(wm8994_adc_widमाला_लो));
-			snd_soc_dapm_new_controls(dapm, wm8994_dac_widमाला_लो,
-						  ARRAY_SIZE(wm8994_dac_widमाला_लो));
-		पूर्ण
-		अवरोध;
-	हाल WM8958:
+		snd_soc_dapm_new_controls(dapm, wm8994_specific_dapm_widgets,
+					  ARRAY_SIZE(wm8994_specific_dapm_widgets));
+		if (control->revision < 4) {
+			snd_soc_dapm_new_controls(dapm, wm8994_lateclk_revd_widgets,
+						  ARRAY_SIZE(wm8994_lateclk_revd_widgets));
+			snd_soc_dapm_new_controls(dapm, wm8994_adc_revd_widgets,
+						  ARRAY_SIZE(wm8994_adc_revd_widgets));
+			snd_soc_dapm_new_controls(dapm, wm8994_dac_revd_widgets,
+						  ARRAY_SIZE(wm8994_dac_revd_widgets));
+		} else {
+			snd_soc_dapm_new_controls(dapm, wm8994_lateclk_widgets,
+						  ARRAY_SIZE(wm8994_lateclk_widgets));
+			snd_soc_dapm_new_controls(dapm, wm8994_adc_widgets,
+						  ARRAY_SIZE(wm8994_adc_widgets));
+			snd_soc_dapm_new_controls(dapm, wm8994_dac_widgets,
+						  ARRAY_SIZE(wm8994_dac_widgets));
+		}
+		break;
+	case WM8958:
 		snd_soc_add_component_controls(component, wm8994_snd_controls,
 					       ARRAY_SIZE(wm8994_snd_controls));
 		snd_soc_add_component_controls(component, wm8958_snd_controls,
 					       ARRAY_SIZE(wm8958_snd_controls));
-		snd_soc_dapm_new_controls(dapm, wm8958_dapm_widमाला_लो,
-					  ARRAY_SIZE(wm8958_dapm_widमाला_लो));
-		अगर (control->revision < 1) अणु
-			snd_soc_dapm_new_controls(dapm, wm8994_lateclk_revd_widमाला_लो,
-						  ARRAY_SIZE(wm8994_lateclk_revd_widमाला_लो));
-			snd_soc_dapm_new_controls(dapm, wm8994_adc_revd_widमाला_लो,
-						  ARRAY_SIZE(wm8994_adc_revd_widमाला_लो));
-			snd_soc_dapm_new_controls(dapm, wm8994_dac_revd_widमाला_लो,
-						  ARRAY_SIZE(wm8994_dac_revd_widमाला_लो));
-		पूर्ण अन्यथा अणु
-			snd_soc_dapm_new_controls(dapm, wm8994_lateclk_widमाला_लो,
-						  ARRAY_SIZE(wm8994_lateclk_widमाला_लो));
-			snd_soc_dapm_new_controls(dapm, wm8994_adc_widमाला_लो,
-						  ARRAY_SIZE(wm8994_adc_widमाला_लो));
-			snd_soc_dapm_new_controls(dapm, wm8994_dac_widमाला_लो,
-						  ARRAY_SIZE(wm8994_dac_widमाला_लो));
-		पूर्ण
-		अवरोध;
+		snd_soc_dapm_new_controls(dapm, wm8958_dapm_widgets,
+					  ARRAY_SIZE(wm8958_dapm_widgets));
+		if (control->revision < 1) {
+			snd_soc_dapm_new_controls(dapm, wm8994_lateclk_revd_widgets,
+						  ARRAY_SIZE(wm8994_lateclk_revd_widgets));
+			snd_soc_dapm_new_controls(dapm, wm8994_adc_revd_widgets,
+						  ARRAY_SIZE(wm8994_adc_revd_widgets));
+			snd_soc_dapm_new_controls(dapm, wm8994_dac_revd_widgets,
+						  ARRAY_SIZE(wm8994_dac_revd_widgets));
+		} else {
+			snd_soc_dapm_new_controls(dapm, wm8994_lateclk_widgets,
+						  ARRAY_SIZE(wm8994_lateclk_widgets));
+			snd_soc_dapm_new_controls(dapm, wm8994_adc_widgets,
+						  ARRAY_SIZE(wm8994_adc_widgets));
+			snd_soc_dapm_new_controls(dapm, wm8994_dac_widgets,
+						  ARRAY_SIZE(wm8994_dac_widgets));
+		}
+		break;
 
-	हाल WM1811:
+	case WM1811:
 		snd_soc_add_component_controls(component, wm8958_snd_controls,
 				     ARRAY_SIZE(wm8958_snd_controls));
-		snd_soc_dapm_new_controls(dapm, wm8958_dapm_widमाला_लो,
-					  ARRAY_SIZE(wm8958_dapm_widमाला_लो));
-		snd_soc_dapm_new_controls(dapm, wm8994_lateclk_widमाला_लो,
-					  ARRAY_SIZE(wm8994_lateclk_widमाला_लो));
-		snd_soc_dapm_new_controls(dapm, wm8994_adc_widमाला_लो,
-					  ARRAY_SIZE(wm8994_adc_widमाला_लो));
-		snd_soc_dapm_new_controls(dapm, wm8994_dac_widमाला_लो,
-					  ARRAY_SIZE(wm8994_dac_widमाला_लो));
-		अवरोध;
-	पूर्ण
+		snd_soc_dapm_new_controls(dapm, wm8958_dapm_widgets,
+					  ARRAY_SIZE(wm8958_dapm_widgets));
+		snd_soc_dapm_new_controls(dapm, wm8994_lateclk_widgets,
+					  ARRAY_SIZE(wm8994_lateclk_widgets));
+		snd_soc_dapm_new_controls(dapm, wm8994_adc_widgets,
+					  ARRAY_SIZE(wm8994_adc_widgets));
+		snd_soc_dapm_new_controls(dapm, wm8994_dac_widgets,
+					  ARRAY_SIZE(wm8994_dac_widgets));
+		break;
+	}
 
 	wm_hubs_add_analogue_routes(component, 0, 0);
 	ret = wm8994_request_irq(wm8994->wm8994, WM8994_IRQ_DCS_DONE,
-				 wm_hubs_dcs_करोne, "DC servo done",
+				 wm_hubs_dcs_done, "DC servo done",
 				 &wm8994->hubs);
-	अगर (ret == 0)
-		wm8994->hubs.dcs_करोne_irq = true;
-	snd_soc_dapm_add_routes(dapm, पूर्णांकercon, ARRAY_SIZE(पूर्णांकercon));
+	if (ret == 0)
+		wm8994->hubs.dcs_done_irq = true;
+	snd_soc_dapm_add_routes(dapm, intercon, ARRAY_SIZE(intercon));
 
-	चयन (control->type) अणु
-	हाल WM8994:
-		snd_soc_dapm_add_routes(dapm, wm8994_पूर्णांकercon,
-					ARRAY_SIZE(wm8994_पूर्णांकercon));
+	switch (control->type) {
+	case WM8994:
+		snd_soc_dapm_add_routes(dapm, wm8994_intercon,
+					ARRAY_SIZE(wm8994_intercon));
 
-		अगर (control->revision < 4) अणु
-			snd_soc_dapm_add_routes(dapm, wm8994_revd_पूर्णांकercon,
-						ARRAY_SIZE(wm8994_revd_पूर्णांकercon));
-			snd_soc_dapm_add_routes(dapm, wm8994_lateclk_revd_पूर्णांकercon,
-						ARRAY_SIZE(wm8994_lateclk_revd_पूर्णांकercon));
-		पूर्ण अन्यथा अणु
-			snd_soc_dapm_add_routes(dapm, wm8994_lateclk_पूर्णांकercon,
-						ARRAY_SIZE(wm8994_lateclk_पूर्णांकercon));
-		पूर्ण
-		अवरोध;
-	हाल WM8958:
-		अगर (control->revision < 1) अणु
-			snd_soc_dapm_add_routes(dapm, wm8994_पूर्णांकercon,
-						ARRAY_SIZE(wm8994_पूर्णांकercon));
-			snd_soc_dapm_add_routes(dapm, wm8994_revd_पूर्णांकercon,
-						ARRAY_SIZE(wm8994_revd_पूर्णांकercon));
-			snd_soc_dapm_add_routes(dapm, wm8994_lateclk_revd_पूर्णांकercon,
-						ARRAY_SIZE(wm8994_lateclk_revd_पूर्णांकercon));
-		पूर्ण अन्यथा अणु
-			snd_soc_dapm_add_routes(dapm, wm8994_lateclk_पूर्णांकercon,
-						ARRAY_SIZE(wm8994_lateclk_पूर्णांकercon));
-			snd_soc_dapm_add_routes(dapm, wm8958_पूर्णांकercon,
-						ARRAY_SIZE(wm8958_पूर्णांकercon));
-		पूर्ण
+		if (control->revision < 4) {
+			snd_soc_dapm_add_routes(dapm, wm8994_revd_intercon,
+						ARRAY_SIZE(wm8994_revd_intercon));
+			snd_soc_dapm_add_routes(dapm, wm8994_lateclk_revd_intercon,
+						ARRAY_SIZE(wm8994_lateclk_revd_intercon));
+		} else {
+			snd_soc_dapm_add_routes(dapm, wm8994_lateclk_intercon,
+						ARRAY_SIZE(wm8994_lateclk_intercon));
+		}
+		break;
+	case WM8958:
+		if (control->revision < 1) {
+			snd_soc_dapm_add_routes(dapm, wm8994_intercon,
+						ARRAY_SIZE(wm8994_intercon));
+			snd_soc_dapm_add_routes(dapm, wm8994_revd_intercon,
+						ARRAY_SIZE(wm8994_revd_intercon));
+			snd_soc_dapm_add_routes(dapm, wm8994_lateclk_revd_intercon,
+						ARRAY_SIZE(wm8994_lateclk_revd_intercon));
+		} else {
+			snd_soc_dapm_add_routes(dapm, wm8994_lateclk_intercon,
+						ARRAY_SIZE(wm8994_lateclk_intercon));
+			snd_soc_dapm_add_routes(dapm, wm8958_intercon,
+						ARRAY_SIZE(wm8958_intercon));
+		}
 
 		wm8958_dsp2_init(component);
-		अवरोध;
-	हाल WM1811:
-		snd_soc_dapm_add_routes(dapm, wm8994_lateclk_पूर्णांकercon,
-					ARRAY_SIZE(wm8994_lateclk_पूर्णांकercon));
-		snd_soc_dapm_add_routes(dapm, wm8958_पूर्णांकercon,
-					ARRAY_SIZE(wm8958_पूर्णांकercon));
-		अवरोध;
-	पूर्ण
+		break;
+	case WM1811:
+		snd_soc_dapm_add_routes(dapm, wm8994_lateclk_intercon,
+					ARRAY_SIZE(wm8994_lateclk_intercon));
+		snd_soc_dapm_add_routes(dapm, wm8958_intercon,
+					ARRAY_SIZE(wm8958_intercon));
+		break;
+	}
 
-	वापस 0;
+	return 0;
 
 err_irq:
-	अगर (wm8994->jackdet)
-		wm8994_मुक्त_irq(wm8994->wm8994, WM8994_IRQ_GPIO(6), wm8994);
-	wm8994_मुक्त_irq(wm8994->wm8994, WM8994_IRQ_MIC2_SHRT, wm8994);
-	wm8994_मुक्त_irq(wm8994->wm8994, WM8994_IRQ_MIC2_DET, wm8994);
-	wm8994_मुक्त_irq(wm8994->wm8994, WM8994_IRQ_MIC1_SHRT, wm8994);
-	अगर (wm8994->micdet_irq)
-		मुक्त_irq(wm8994->micdet_irq, wm8994);
-	क्रम (i = 0; i < ARRAY_SIZE(wm8994->fll_locked); i++)
-		wm8994_मुक्त_irq(wm8994->wm8994, WM8994_IRQ_FLL1_LOCK + i,
+	if (wm8994->jackdet)
+		wm8994_free_irq(wm8994->wm8994, WM8994_IRQ_GPIO(6), wm8994);
+	wm8994_free_irq(wm8994->wm8994, WM8994_IRQ_MIC2_SHRT, wm8994);
+	wm8994_free_irq(wm8994->wm8994, WM8994_IRQ_MIC2_DET, wm8994);
+	wm8994_free_irq(wm8994->wm8994, WM8994_IRQ_MIC1_SHRT, wm8994);
+	if (wm8994->micdet_irq)
+		free_irq(wm8994->micdet_irq, wm8994);
+	for (i = 0; i < ARRAY_SIZE(wm8994->fll_locked); i++)
+		wm8994_free_irq(wm8994->wm8994, WM8994_IRQ_FLL1_LOCK + i,
 				&wm8994->fll_locked[i]);
-	wm8994_मुक्त_irq(wm8994->wm8994, WM8994_IRQ_DCS_DONE,
+	wm8994_free_irq(wm8994->wm8994, WM8994_IRQ_DCS_DONE,
 			&wm8994->hubs);
-	wm8994_मुक्त_irq(wm8994->wm8994, WM8994_IRQ_FIFOS_ERR, component);
-	wm8994_मुक्त_irq(wm8994->wm8994, WM8994_IRQ_TEMP_SHUT, component);
-	wm8994_मुक्त_irq(wm8994->wm8994, WM8994_IRQ_TEMP_WARN, component);
+	wm8994_free_irq(wm8994->wm8994, WM8994_IRQ_FIFOS_ERR, component);
+	wm8994_free_irq(wm8994->wm8994, WM8994_IRQ_TEMP_SHUT, component);
+	wm8994_free_irq(wm8994->wm8994, WM8994_IRQ_TEMP_WARN, component);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम wm8994_component_हटाओ(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
-	काष्ठा wm8994 *control = wm8994->wm8994;
-	पूर्णांक i;
+static void wm8994_component_remove(struct snd_soc_component *component)
+{
+	struct wm8994_priv *wm8994 = snd_soc_component_get_drvdata(component);
+	struct wm8994 *control = wm8994->wm8994;
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(wm8994->fll_locked); i++)
-		wm8994_मुक्त_irq(wm8994->wm8994, WM8994_IRQ_FLL1_LOCK + i,
+	for (i = 0; i < ARRAY_SIZE(wm8994->fll_locked); i++)
+		wm8994_free_irq(wm8994->wm8994, WM8994_IRQ_FLL1_LOCK + i,
 				&wm8994->fll_locked[i]);
 
-	wm8994_मुक्त_irq(wm8994->wm8994, WM8994_IRQ_DCS_DONE,
+	wm8994_free_irq(wm8994->wm8994, WM8994_IRQ_DCS_DONE,
 			&wm8994->hubs);
-	wm8994_मुक्त_irq(wm8994->wm8994, WM8994_IRQ_FIFOS_ERR, component);
-	wm8994_मुक्त_irq(wm8994->wm8994, WM8994_IRQ_TEMP_SHUT, component);
-	wm8994_मुक्त_irq(wm8994->wm8994, WM8994_IRQ_TEMP_WARN, component);
+	wm8994_free_irq(wm8994->wm8994, WM8994_IRQ_FIFOS_ERR, component);
+	wm8994_free_irq(wm8994->wm8994, WM8994_IRQ_TEMP_SHUT, component);
+	wm8994_free_irq(wm8994->wm8994, WM8994_IRQ_TEMP_WARN, component);
 
-	अगर (wm8994->jackdet)
-		wm8994_मुक्त_irq(wm8994->wm8994, WM8994_IRQ_GPIO(6), wm8994);
+	if (wm8994->jackdet)
+		wm8994_free_irq(wm8994->wm8994, WM8994_IRQ_GPIO(6), wm8994);
 
-	चयन (control->type) अणु
-	हाल WM8994:
-		अगर (wm8994->micdet_irq)
-			मुक्त_irq(wm8994->micdet_irq, wm8994);
-		wm8994_मुक्त_irq(wm8994->wm8994, WM8994_IRQ_MIC2_DET,
+	switch (control->type) {
+	case WM8994:
+		if (wm8994->micdet_irq)
+			free_irq(wm8994->micdet_irq, wm8994);
+		wm8994_free_irq(wm8994->wm8994, WM8994_IRQ_MIC2_DET,
 				wm8994);
-		wm8994_मुक्त_irq(wm8994->wm8994, WM8994_IRQ_MIC1_SHRT,
+		wm8994_free_irq(wm8994->wm8994, WM8994_IRQ_MIC1_SHRT,
 				wm8994);
-		wm8994_मुक्त_irq(wm8994->wm8994, WM8994_IRQ_MIC1_DET,
+		wm8994_free_irq(wm8994->wm8994, WM8994_IRQ_MIC1_DET,
 				wm8994);
-		अवरोध;
+		break;
 
-	हाल WM1811:
-	हाल WM8958:
-		अगर (wm8994->micdet_irq)
-			मुक्त_irq(wm8994->micdet_irq, wm8994);
-		अवरोध;
-	पूर्ण
+	case WM1811:
+	case WM8958:
+		if (wm8994->micdet_irq)
+			free_irq(wm8994->micdet_irq, wm8994);
+		break;
+	}
 	release_firmware(wm8994->mbc);
 	release_firmware(wm8994->mbc_vss);
 	release_firmware(wm8994->enh_eq);
-	kमुक्त(wm8994->retune_mobile_texts);
-पूर्ण
+	kfree(wm8994->retune_mobile_texts);
+}
 
-अटल स्थिर काष्ठा snd_soc_component_driver soc_component_dev_wm8994 = अणु
+static const struct snd_soc_component_driver soc_component_dev_wm8994 = {
 	.probe			= wm8994_component_probe,
-	.हटाओ			= wm8994_component_हटाओ,
+	.remove			= wm8994_component_remove,
 	.suspend		= wm8994_component_suspend,
 	.resume			= wm8994_component_resume,
 	.set_bias_level		= wm8994_set_bias_level,
 	.idle_bias_on		= 1,
-	.use_pmकरोwn_समय	= 1,
+	.use_pmdown_time	= 1,
 	.endianness		= 1,
 	.non_legacy_dai_naming	= 1,
-पूर्ण;
+};
 
-अटल पूर्णांक wm8994_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा wm8994_priv *wm8994;
-	पूर्णांक ret;
+static int wm8994_probe(struct platform_device *pdev)
+{
+	struct wm8994_priv *wm8994;
+	int ret;
 
-	wm8994 = devm_kzalloc(&pdev->dev, माप(काष्ठा wm8994_priv),
+	wm8994 = devm_kzalloc(&pdev->dev, sizeof(struct wm8994_priv),
 			      GFP_KERNEL);
-	अगर (wm8994 == शून्य)
-		वापस -ENOMEM;
-	platक्रमm_set_drvdata(pdev, wm8994);
+	if (wm8994 == NULL)
+		return -ENOMEM;
+	platform_set_drvdata(pdev, wm8994);
 
 	mutex_init(&wm8994->fw_lock);
 
@@ -4638,70 +4637,70 @@ err_irq:
 
 	ret = devm_clk_bulk_get_optional(pdev->dev.parent, ARRAY_SIZE(wm8994->mclk),
 					 wm8994->mclk);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&pdev->dev, "Failed to get clocks: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	pm_runसमय_enable(&pdev->dev);
-	pm_runसमय_idle(&pdev->dev);
+	pm_runtime_enable(&pdev->dev);
+	pm_runtime_idle(&pdev->dev);
 
-	ret = devm_snd_soc_रेजिस्टर_component(&pdev->dev, &soc_component_dev_wm8994,
+	ret = devm_snd_soc_register_component(&pdev->dev, &soc_component_dev_wm8994,
 			wm8994_dai, ARRAY_SIZE(wm8994_dai));
-	अगर (ret < 0)
-		pm_runसमय_disable(&pdev->dev);
+	if (ret < 0)
+		pm_runtime_disable(&pdev->dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक wm8994_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	pm_runसमय_disable(&pdev->dev);
+static int wm8994_remove(struct platform_device *pdev)
+{
+	pm_runtime_disable(&pdev->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक wm8994_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा wm8994_priv *wm8994 = dev_get_drvdata(dev);
+#ifdef CONFIG_PM_SLEEP
+static int wm8994_suspend(struct device *dev)
+{
+	struct wm8994_priv *wm8994 = dev_get_drvdata(dev);
 
-	/* Drop करोwn to घातer saving mode when प्रणाली is suspended */
-	अगर (wm8994->jackdet && !wm8994->active_refcount)
+	/* Drop down to power saving mode when system is suspended */
+	if (wm8994->jackdet && !wm8994->active_refcount)
 		regmap_update_bits(wm8994->wm8994->regmap, WM8994_ANTIPOP_2,
 				   WM1811_JACKDET_MODE_MASK,
 				   wm8994->jackdet_mode);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wm8994_resume(काष्ठा device *dev)
-अणु
-	काष्ठा wm8994_priv *wm8994 = dev_get_drvdata(dev);
+static int wm8994_resume(struct device *dev)
+{
+	struct wm8994_priv *wm8994 = dev_get_drvdata(dev);
 
-	अगर (wm8994->jackdet && wm8994->jackdet_mode)
+	if (wm8994->jackdet && wm8994->jackdet_mode)
 		regmap_update_bits(wm8994->wm8994->regmap, WM8994_ANTIPOP_2,
 				   WM1811_JACKDET_MODE_MASK,
 				   WM1811_JACKDET_MODE_AUDIO);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल स्थिर काष्ठा dev_pm_ops wm8994_pm_ops = अणु
+static const struct dev_pm_ops wm8994_pm_ops = {
 	SET_SYSTEM_SLEEP_PM_OPS(wm8994_suspend, wm8994_resume)
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_driver wm8994_codec_driver = अणु
-	.driver = अणु
+static struct platform_driver wm8994_codec_driver = {
+	.driver = {
 		.name = "wm8994-codec",
 		.pm = &wm8994_pm_ops,
-	पूर्ण,
+	},
 	.probe = wm8994_probe,
-	.हटाओ = wm8994_हटाओ,
-पूर्ण;
+	.remove = wm8994_remove,
+};
 
-module_platक्रमm_driver(wm8994_codec_driver);
+module_platform_driver(wm8994_codec_driver);
 
 MODULE_DESCRIPTION("ASoC WM8994 driver");
 MODULE_AUTHOR("Mark Brown <broonie@opensource.wolfsonmicro.com>");

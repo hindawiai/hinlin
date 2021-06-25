@@ -1,67 +1,66 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * 32 bit compatibility code क्रम System V IPC
+ * 32 bit compatibility code for System V IPC
  *
  * Copyright (C) 1997,1998	Jakub Jelinek (jj@sunsite.mff.cuni.cz)
  * Copyright (C) 1997		David S. Miller (davem@caip.rutgers.edu)
- * Copyright (C) 1999		Arun Sharma <arun.sharma@पूर्णांकel.com>
+ * Copyright (C) 1999		Arun Sharma <arun.sharma@intel.com>
  * Copyright (C) 2000		VA Linux Co
  * Copyright (C) 2000		Don Dugger <n0ano@valinux.com>
  * Copyright (C) 2000           Hewlett-Packard Co.
  * Copyright (C) 2000           David Mosberger-Tang <davidm@hpl.hp.com>
  * Copyright (C) 2000           Gerhard Tonn (ton@de.ibm.com)
- * Copyright (C) 2000-2002      Andi Kleen, SuSE Lअसल (x86-64 port)
+ * Copyright (C) 2000-2002      Andi Kleen, SuSE Labs (x86-64 port)
  * Copyright (C) 2000		Silicon Graphics, Inc.
  * Copyright (C) 2001		IBM
  * Copyright (C) 2004		IBM Deutschland Entwicklung GmbH, IBM Corporation
  * Copyright (C) 2004		Arnd Bergmann (arnd@arndb.de)
  *
- * This code is collected from the versions क्रम sparc64, mips64, s390x, ia64,
+ * This code is collected from the versions for sparc64, mips64, s390x, ia64,
  * ppc64 and x86_64, all of which are based on the original sparc64 version
  * by Jakub Jelinek.
  *
  */
-#समावेश <linux/compat.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/highuid.h>
-#समावेश <linux/init.h>
-#समावेश <linux/msg.h>
-#समावेश <linux/shm.h>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/ptrace.h>
+#include <linux/compat.h>
+#include <linux/errno.h>
+#include <linux/highuid.h>
+#include <linux/init.h>
+#include <linux/msg.h>
+#include <linux/shm.h>
+#include <linux/syscalls.h>
+#include <linux/ptrace.h>
 
-#समावेश <linux/mutex.h>
-#समावेश <linux/uaccess.h>
+#include <linux/mutex.h>
+#include <linux/uaccess.h>
 
-#समावेश "util.h"
+#include "util.h"
 
-पूर्णांक get_compat_ipc64_perm(काष्ठा ipc64_perm *to,
-			  काष्ठा compat_ipc64_perm __user *from)
-अणु
-	काष्ठा compat_ipc64_perm v;
-	अगर (copy_from_user(&v, from, माप(v)))
-		वापस -EFAULT;
+int get_compat_ipc64_perm(struct ipc64_perm *to,
+			  struct compat_ipc64_perm __user *from)
+{
+	struct compat_ipc64_perm v;
+	if (copy_from_user(&v, from, sizeof(v)))
+		return -EFAULT;
 	to->uid = v.uid;
 	to->gid = v.gid;
 	to->mode = v.mode;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक get_compat_ipc_perm(काष्ठा ipc64_perm *to,
-			काष्ठा compat_ipc_perm __user *from)
-अणु
-	काष्ठा compat_ipc_perm v;
-	अगर (copy_from_user(&v, from, माप(v)))
-		वापस -EFAULT;
+int get_compat_ipc_perm(struct ipc64_perm *to,
+			struct compat_ipc_perm __user *from)
+{
+	struct compat_ipc_perm v;
+	if (copy_from_user(&v, from, sizeof(v)))
+		return -EFAULT;
 	to->uid = v.uid;
 	to->gid = v.gid;
 	to->mode = v.mode;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम to_compat_ipc64_perm(काष्ठा compat_ipc64_perm *to, काष्ठा ipc64_perm *from)
-अणु
+void to_compat_ipc64_perm(struct compat_ipc64_perm *to, struct ipc64_perm *from)
+{
 	to->key = from->key;
 	to->uid = from->uid;
 	to->gid = from->gid;
@@ -69,10 +68,10 @@
 	to->cgid = from->cgid;
 	to->mode = from->mode;
 	to->seq = from->seq;
-पूर्ण
+}
 
-व्योम to_compat_ipc_perm(काष्ठा compat_ipc_perm *to, काष्ठा ipc64_perm *from)
-अणु
+void to_compat_ipc_perm(struct compat_ipc_perm *to, struct ipc64_perm *from)
+{
 	to->key = from->key;
 	SET_UID(to->uid, from->uid);
 	SET_GID(to->gid, from->gid);
@@ -80,4 +79,4 @@
 	SET_GID(to->cgid, from->cgid);
 	to->mode = from->mode;
 	to->seq = from->seq;
-पूर्ण
+}

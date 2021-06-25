@@ -1,10 +1,9 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित I18N_H
-#घोषणा I18N_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef I18N_H
+#define I18N_H
 /* Internationalization declarations */
 
-क्रमागत msg_index_t अणु
+enum msg_index_t {
 	MSG_FIRST_INDEX,
 	MSG_ANNOUNCEMENTS_START = MSG_FIRST_INDEX,
 	MSG_BLANK = MSG_ANNOUNCEMENTS_START,
@@ -25,7 +24,7 @@
 	MSG_ON,
 	MSG_NO_WINDOW,
 
-	/* These must be ordered the same as क्रमागत cursor_track */
+	/* These must be ordered the same as enum cursor_track */
 	MSG_CURSOR_MSGS_START,
 	MSG_CURSORING_OFF = MSG_CURSOR_MSGS_START,
 	MSG_CURSORING_ON,
@@ -46,7 +45,7 @@
 	MSG_IS_UNASSIGNED,
 	MSG_HELP_INFO,
 
-	/* These must be ordered the same as क्रमागत edge */
+	/* These must be ordered the same as enum edge */
 	MSG_EDGE_MSGS_START,
 	MSG_EDGE_TOP  = MSG_EDGE_MSGS_START,
 	MSG_EDGE_BOTTOM,
@@ -63,7 +62,7 @@
 	MSG_DISJUNCTION,
 	MSG_ANNOUNCEMENTS_END = MSG_DISJUNCTION,
 
-/* Messages with क्रमmat specअगरiers. */
+/* Messages with format specifiers. */
 	MSG_FORMATTED_START,
 	MSG_POS_INFO = MSG_FORMATTED_START,
 	MSG_CHAR_INFO,
@@ -166,10 +165,10 @@
 	MSG_KEYNAME_FIND, MSG_KEYNAME_CUT, MSG_KEYNAME_HELP, MSG_KEYNAME_MENU,
 	MSG_KEYNAME_CALC,
 	MSG_KEYNAME_SETUP, MSG_KEYNAME_SLEEP, MSG_KEYNAME_WAKEUP,
-	MSG_KEYNAME_खाता, MSG_KEYNAME_SENDखाता,
-	MSG_KEYNAME_DELखाता, MSG_KEYNAME_XFER, MSG_KEYNAME_PROG1,
+	MSG_KEYNAME_FILE, MSG_KEYNAME_SENDFILE,
+	MSG_KEYNAME_DELFILE, MSG_KEYNAME_XFER, MSG_KEYNAME_PROG1,
 	MSG_KEYNAME_PROG2, MSG_KEYNAME_WWW,
-	MSG_KEYNAME_MSDOS, MSG_KEYNAME_COFFEE, MSG_KEYNAME_सूचीECTION,
+	MSG_KEYNAME_MSDOS, MSG_KEYNAME_COFFEE, MSG_KEYNAME_DIRECTION,
 	MSG_KEYNAME_CYCLEWINDOWS, MSG_KEYNAME_MAIL,
 	MSG_KEYNAME_BOOKMARKS, MSG_KEYNAME_COMPUTER, MSG_KEYNAME_BACK,
 	MSG_KEYNAME_FORWARD, MSG_KEYNAME_CLOSECD,
@@ -224,19 +223,19 @@
 
 	/* all valid indices must be above this */
 	MSG_LAST_INDEX
-पूर्ण;
+};
 
-काष्ठा msg_group_t अणु
-	अक्षर *name;
-	क्रमागत msg_index_t start;
-	क्रमागत msg_index_t end;
-पूर्ण;
+struct msg_group_t {
+	char *name;
+	enum msg_index_t start;
+	enum msg_index_t end;
+};
 
-अक्षर *spk_msg_get(क्रमागत msg_index_t index);
-sमाप_प्रकार spk_msg_set(क्रमागत msg_index_t index, अक्षर *text, माप_प्रकार length);
-काष्ठा msg_group_t *spk_find_msg_group(स्थिर अक्षर *group_name);
-व्योम spk_reset_msg_group(काष्ठा msg_group_t *group);
-व्योम spk_initialize_msgs(व्योम);
-व्योम spk_मुक्त_user_msgs(व्योम);
+char *spk_msg_get(enum msg_index_t index);
+ssize_t spk_msg_set(enum msg_index_t index, char *text, size_t length);
+struct msg_group_t *spk_find_msg_group(const char *group_name);
+void spk_reset_msg_group(struct msg_group_t *group);
+void spk_initialize_msgs(void);
+void spk_free_user_msgs(void);
 
-#पूर्ण_अगर
+#endif

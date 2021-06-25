@@ -1,24 +1,23 @@
-<शैली गुरु>
 /* QLogic qedr NIC Driver
  * Copyright (c) 2015-2016  QLogic Corporation
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and /or other materials
+ *        disclaimer in the documentation and /or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -30,84 +29,84 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/crc32.h>
-#समावेश <linux/iommu.h>
-#समावेश <net/ip.h>
-#समावेश <net/ipv6.h>
-#समावेश <net/udp.h>
+#include <linux/dma-mapping.h>
+#include <linux/crc32.h>
+#include <linux/iommu.h>
+#include <net/ip.h>
+#include <net/ipv6.h>
+#include <net/udp.h>
 
-#समावेश <rdma/ib_verbs.h>
-#समावेश <rdma/ib_user_verbs.h>
-#समावेश <rdma/iw_cm.h>
-#समावेश <rdma/ib_uस्मृति.स>
-#समावेश <rdma/ib_addr.h>
-#समावेश <rdma/ib_cache.h>
+#include <rdma/ib_verbs.h>
+#include <rdma/ib_user_verbs.h>
+#include <rdma/iw_cm.h>
+#include <rdma/ib_umem.h>
+#include <rdma/ib_addr.h>
+#include <rdma/ib_cache.h>
 
-#समावेश <linux/qed/qed_अगर.h>
-#समावेश <linux/qed/qed_rdma_अगर.h>
-#समावेश "qedr.h"
-#समावेश "verbs.h"
-#समावेश <rdma/qedr-abi.h>
-#समावेश "qedr_roce_cm.h"
+#include <linux/qed/qed_if.h>
+#include <linux/qed/qed_rdma_if.h>
+#include "qedr.h"
+#include "verbs.h"
+#include <rdma/qedr-abi.h>
+#include "qedr_roce_cm.h"
 
-व्योम qedr_inc_sw_gsi_cons(काष्ठा qedr_qp_hwq_info *info)
-अणु
+void qedr_inc_sw_gsi_cons(struct qedr_qp_hwq_info *info)
+{
 	info->gsi_cons = (info->gsi_cons + 1) % info->max_wr;
-पूर्ण
+}
 
-व्योम qedr_store_gsi_qp_cq(काष्ठा qedr_dev *dev, काष्ठा qedr_qp *qp,
-			  काष्ठा ib_qp_init_attr *attrs)
-अणु
+void qedr_store_gsi_qp_cq(struct qedr_dev *dev, struct qedr_qp *qp,
+			  struct ib_qp_init_attr *attrs)
+{
 	dev->gsi_qp_created = 1;
 	dev->gsi_sqcq = get_qedr_cq(attrs->send_cq);
 	dev->gsi_rqcq = get_qedr_cq(attrs->recv_cq);
 	dev->gsi_qp = qp;
-पूर्ण
+}
 
-अटल व्योम qedr_ll2_complete_tx_packet(व्योम *cxt, u8 connection_handle,
-					व्योम *cookie,
+static void qedr_ll2_complete_tx_packet(void *cxt, u8 connection_handle,
+					void *cookie,
 					dma_addr_t first_frag_addr,
 					bool b_last_fragment,
 					bool b_last_packet)
-अणु
-	काष्ठा qedr_dev *dev = (काष्ठा qedr_dev *)cxt;
-	काष्ठा qed_roce_ll2_packet *pkt = cookie;
-	काष्ठा qedr_cq *cq = dev->gsi_sqcq;
-	काष्ठा qedr_qp *qp = dev->gsi_qp;
-	अचिन्हित दीर्घ flags;
+{
+	struct qedr_dev *dev = (struct qedr_dev *)cxt;
+	struct qed_roce_ll2_packet *pkt = cookie;
+	struct qedr_cq *cq = dev->gsi_sqcq;
+	struct qedr_qp *qp = dev->gsi_qp;
+	unsigned long flags;
 
 	DP_DEBUG(dev, QEDR_MSG_GSI,
 		 "LL2 TX CB: gsi_sqcq=%p, gsi_rqcq=%p, gsi_cons=%d, ibcq_comp=%s\n",
 		 dev->gsi_sqcq, dev->gsi_rqcq, qp->sq.gsi_cons,
 		 cq->ibcq.comp_handler ? "Yes" : "No");
 
-	dma_मुक्त_coherent(&dev->pdev->dev, pkt->header.len, pkt->header.vaddr,
+	dma_free_coherent(&dev->pdev->dev, pkt->header.len, pkt->header.vaddr,
 			  pkt->header.baddr);
-	kमुक्त(pkt);
+	kfree(pkt);
 
 	spin_lock_irqsave(&qp->q_lock, flags);
 	qedr_inc_sw_gsi_cons(&qp->sq);
 	spin_unlock_irqrestore(&qp->q_lock, flags);
 
-	अगर (cq->ibcq.comp_handler)
+	if (cq->ibcq.comp_handler)
 		(*cq->ibcq.comp_handler) (&cq->ibcq, cq->ibcq.cq_context);
-पूर्ण
+}
 
-अटल व्योम qedr_ll2_complete_rx_packet(व्योम *cxt,
-					काष्ठा qed_ll2_comp_rx_data *data)
-अणु
-	काष्ठा qedr_dev *dev = (काष्ठा qedr_dev *)cxt;
-	काष्ठा qedr_cq *cq = dev->gsi_rqcq;
-	काष्ठा qedr_qp *qp = dev->gsi_qp;
-	अचिन्हित दीर्घ flags;
+static void qedr_ll2_complete_rx_packet(void *cxt,
+					struct qed_ll2_comp_rx_data *data)
+{
+	struct qedr_dev *dev = (struct qedr_dev *)cxt;
+	struct qedr_cq *cq = dev->gsi_rqcq;
+	struct qedr_qp *qp = dev->gsi_qp;
+	unsigned long flags;
 
 	spin_lock_irqsave(&qp->q_lock, flags);
 
 	qp->rqe_wr_id[qp->rq.gsi_cons].rc = data->u.data_length_error ?
 		-EINVAL : 0;
 	qp->rqe_wr_id[qp->rq.gsi_cons].vlan = data->vlan;
-	/* note: length stands क्रम data length i.e. GRH is excluded */
+	/* note: length stands for data length i.e. GRH is excluded */
 	qp->rqe_wr_id[qp->rq.gsi_cons].sg_list[0].length =
 		data->length.data_length;
 	*((u32 *)&qp->rqe_wr_id[qp->rq.gsi_cons].smac[0]) =
@@ -119,79 +118,79 @@
 
 	spin_unlock_irqrestore(&qp->q_lock, flags);
 
-	अगर (cq->ibcq.comp_handler)
+	if (cq->ibcq.comp_handler)
 		(*cq->ibcq.comp_handler) (&cq->ibcq, cq->ibcq.cq_context);
-पूर्ण
+}
 
-अटल व्योम qedr_ll2_release_rx_packet(व्योम *cxt, u8 connection_handle,
-				       व्योम *cookie, dma_addr_t rx_buf_addr,
+static void qedr_ll2_release_rx_packet(void *cxt, u8 connection_handle,
+				       void *cookie, dma_addr_t rx_buf_addr,
 				       bool b_last_packet)
-अणु
+{
 	/* Do nothing... */
-पूर्ण
+}
 
-अटल व्योम qedr_destroy_gsi_cq(काष्ठा qedr_dev *dev,
-				काष्ठा ib_qp_init_attr *attrs)
-अणु
-	काष्ठा qed_rdma_destroy_cq_in_params iparams;
-	काष्ठा qed_rdma_destroy_cq_out_params oparams;
-	काष्ठा qedr_cq *cq;
+static void qedr_destroy_gsi_cq(struct qedr_dev *dev,
+				struct ib_qp_init_attr *attrs)
+{
+	struct qed_rdma_destroy_cq_in_params iparams;
+	struct qed_rdma_destroy_cq_out_params oparams;
+	struct qedr_cq *cq;
 
 	cq = get_qedr_cq(attrs->send_cq);
 	iparams.icid = cq->icid;
 	dev->ops->rdma_destroy_cq(dev->rdma_ctx, &iparams, &oparams);
-	dev->ops->common->chain_मुक्त(dev->cdev, &cq->pbl);
+	dev->ops->common->chain_free(dev->cdev, &cq->pbl);
 
 	cq = get_qedr_cq(attrs->recv_cq);
-	/* अगर a dedicated recv_cq was used, delete it too */
-	अगर (iparams.icid != cq->icid) अणु
+	/* if a dedicated recv_cq was used, delete it too */
+	if (iparams.icid != cq->icid) {
 		iparams.icid = cq->icid;
 		dev->ops->rdma_destroy_cq(dev->rdma_ctx, &iparams, &oparams);
-		dev->ops->common->chain_मुक्त(dev->cdev, &cq->pbl);
-	पूर्ण
-पूर्ण
+		dev->ops->common->chain_free(dev->cdev, &cq->pbl);
+	}
+}
 
-अटल अंतरभूत पूर्णांक qedr_check_gsi_qp_attrs(काष्ठा qedr_dev *dev,
-					  काष्ठा ib_qp_init_attr *attrs)
-अणु
-	अगर (attrs->cap.max_recv_sge > QEDR_GSI_MAX_RECV_SGE) अणु
+static inline int qedr_check_gsi_qp_attrs(struct qedr_dev *dev,
+					  struct ib_qp_init_attr *attrs)
+{
+	if (attrs->cap.max_recv_sge > QEDR_GSI_MAX_RECV_SGE) {
 		DP_ERR(dev,
 		       " create gsi qp: failed. max_recv_sge is larger the max %d>%d\n",
 		       attrs->cap.max_recv_sge, QEDR_GSI_MAX_RECV_SGE);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (attrs->cap.max_recv_wr > QEDR_GSI_MAX_RECV_WR) अणु
+	if (attrs->cap.max_recv_wr > QEDR_GSI_MAX_RECV_WR) {
 		DP_ERR(dev,
 		       " create gsi qp: failed. max_recv_wr is too large %d>%d\n",
 		       attrs->cap.max_recv_wr, QEDR_GSI_MAX_RECV_WR);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (attrs->cap.max_send_wr > QEDR_GSI_MAX_SEND_WR) अणु
+	if (attrs->cap.max_send_wr > QEDR_GSI_MAX_SEND_WR) {
 		DP_ERR(dev,
 		       " create gsi qp: failed. max_send_wr is too large %d>%d\n",
 		       attrs->cap.max_send_wr, QEDR_GSI_MAX_SEND_WR);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qedr_ll2_post_tx(काष्ठा qedr_dev *dev,
-			    काष्ठा qed_roce_ll2_packet *pkt)
-अणु
-	क्रमागत qed_ll2_roce_flavor_type roce_flavor;
-	काष्ठा qed_ll2_tx_pkt_info ll2_tx_pkt;
-	पूर्णांक rc;
-	पूर्णांक i;
+static int qedr_ll2_post_tx(struct qedr_dev *dev,
+			    struct qed_roce_ll2_packet *pkt)
+{
+	enum qed_ll2_roce_flavor_type roce_flavor;
+	struct qed_ll2_tx_pkt_info ll2_tx_pkt;
+	int rc;
+	int i;
 
-	स_रखो(&ll2_tx_pkt, 0, माप(ll2_tx_pkt));
+	memset(&ll2_tx_pkt, 0, sizeof(ll2_tx_pkt));
 
 	roce_flavor = (pkt->roce_mode == ROCE_V1) ?
 	    QED_LL2_ROCE : QED_LL2_RROCE;
 
-	अगर (pkt->roce_mode == ROCE_V2_IPV4)
+	if (pkt->roce_mode == ROCE_V2_IPV4)
 		ll2_tx_pkt.enable_ip_cksum = 1;
 
 	ll2_tx_pkt.num_of_bds = 1 /* hdr */  + pkt->n_seg;
@@ -206,66 +205,66 @@
 	rc = dev->ops->ll2_prepare_tx_packet(dev->rdma_ctx,
 					     dev->gsi_ll2_handle,
 					     &ll2_tx_pkt, 1);
-	अगर (rc) अणु
-		/* TX failed जबतक posting header - release resources */
-		dma_मुक्त_coherent(&dev->pdev->dev, pkt->header.len,
+	if (rc) {
+		/* TX failed while posting header - release resources */
+		dma_free_coherent(&dev->pdev->dev, pkt->header.len,
 				  pkt->header.vaddr, pkt->header.baddr);
-		kमुक्त(pkt);
+		kfree(pkt);
 
 		DP_ERR(dev, "roce ll2 tx: header failed (rc=%d)\n", rc);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	/* tx payload */
-	क्रम (i = 0; i < pkt->n_seg; i++) अणु
+	for (i = 0; i < pkt->n_seg; i++) {
 		rc = dev->ops->ll2_set_fragment_of_tx_packet(
 			dev->rdma_ctx,
 			dev->gsi_ll2_handle,
 			pkt->payload[i].baddr,
 			pkt->payload[i].len);
 
-		अगर (rc) अणु
-			/* अगर failed not much to करो here, partial packet has
-			 * been posted we can't मुक्त memory, will need to रुको
-			 * क्रम completion
+		if (rc) {
+			/* if failed not much to do here, partial packet has
+			 * been posted we can't free memory, will need to wait
+			 * for completion
 			 */
 			DP_ERR(dev, "ll2 tx: payload failed (rc=%d)\n", rc);
-			वापस rc;
-		पूर्ण
-	पूर्ण
+			return rc;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qedr_ll2_stop(काष्ठा qedr_dev *dev)
-अणु
-	पूर्णांक rc;
+static int qedr_ll2_stop(struct qedr_dev *dev)
+{
+	int rc;
 
-	अगर (dev->gsi_ll2_handle == QED_LL2_UNUSED_HANDLE)
-		वापस 0;
+	if (dev->gsi_ll2_handle == QED_LL2_UNUSED_HANDLE)
+		return 0;
 
-	/* हटाओ LL2 MAC address filter */
+	/* remove LL2 MAC address filter */
 	rc = dev->ops->ll2_set_mac_filter(dev->cdev,
-					  dev->gsi_ll2_mac_address, शून्य);
+					  dev->gsi_ll2_mac_address, NULL);
 
 	rc = dev->ops->ll2_terminate_connection(dev->rdma_ctx,
 						dev->gsi_ll2_handle);
-	अगर (rc)
+	if (rc)
 		DP_ERR(dev, "Failed to terminate LL2 connection (rc=%d)\n", rc);
 
 	dev->ops->ll2_release_connection(dev->rdma_ctx, dev->gsi_ll2_handle);
 
 	dev->gsi_ll2_handle = QED_LL2_UNUSED_HANDLE;
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक qedr_ll2_start(काष्ठा qedr_dev *dev,
-			  काष्ठा ib_qp_init_attr *attrs, काष्ठा qedr_qp *qp)
-अणु
-	काष्ठा qed_ll2_acquire_data data;
-	काष्ठा qed_ll2_cbs cbs;
-	पूर्णांक rc;
+static int qedr_ll2_start(struct qedr_dev *dev,
+			  struct ib_qp_init_attr *attrs, struct qedr_qp *qp)
+{
+	struct qed_ll2_acquire_data data;
+	struct qed_ll2_cbs cbs;
+	int rc;
 
 	/* configure and start LL2 */
 	cbs.rx_comp_cb = qedr_ll2_complete_rx_packet;
@@ -274,7 +273,7 @@
 	cbs.tx_release_cb = qedr_ll2_complete_tx_packet;
 	cbs.cookie = dev;
 
-	स_रखो(&data, 0, माप(data));
+	memset(&data, 0, sizeof(data));
 	data.input.conn_type = QED_LL2_TYPE_ROCE;
 	data.input.mtu = dev->ndev->mtu;
 	data.input.rx_num_desc = attrs->cap.max_recv_wr;
@@ -290,160 +289,160 @@
 	data.cbs = &cbs;
 
 	rc = dev->ops->ll2_acquire_connection(dev->rdma_ctx, &data);
-	अगर (rc) अणु
+	if (rc) {
 		DP_ERR(dev,
 		       "ll2 start: failed to acquire LL2 connection (rc=%d)\n",
 		       rc);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	rc = dev->ops->ll2_establish_connection(dev->rdma_ctx,
 						dev->gsi_ll2_handle);
-	अगर (rc) अणु
+	if (rc) {
 		DP_ERR(dev,
 		       "ll2 start: failed to establish LL2 connection (rc=%d)\n",
 		       rc);
-		जाओ err1;
-	पूर्ण
+		goto err1;
+	}
 
-	rc = dev->ops->ll2_set_mac_filter(dev->cdev, शून्य, dev->ndev->dev_addr);
-	अगर (rc)
-		जाओ err2;
+	rc = dev->ops->ll2_set_mac_filter(dev->cdev, NULL, dev->ndev->dev_addr);
+	if (rc)
+		goto err2;
 
-	वापस 0;
+	return 0;
 
 err2:
 	dev->ops->ll2_terminate_connection(dev->rdma_ctx, dev->gsi_ll2_handle);
 err1:
 	dev->ops->ll2_release_connection(dev->rdma_ctx, dev->gsi_ll2_handle);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-काष्ठा ib_qp *qedr_create_gsi_qp(काष्ठा qedr_dev *dev,
-				 काष्ठा ib_qp_init_attr *attrs,
-				 काष्ठा qedr_qp *qp)
-अणु
-	पूर्णांक rc;
+struct ib_qp *qedr_create_gsi_qp(struct qedr_dev *dev,
+				 struct ib_qp_init_attr *attrs,
+				 struct qedr_qp *qp)
+{
+	int rc;
 
 	rc = qedr_check_gsi_qp_attrs(dev, attrs);
-	अगर (rc)
-		वापस ERR_PTR(rc);
+	if (rc)
+		return ERR_PTR(rc);
 
 	rc = qedr_ll2_start(dev, attrs, qp);
-	अगर (rc) अणु
+	if (rc) {
 		DP_ERR(dev, "create gsi qp: failed on ll2 start. rc=%d\n", rc);
-		वापस ERR_PTR(rc);
-	पूर्ण
+		return ERR_PTR(rc);
+	}
 
 	/* create QP */
 	qp->ibqp.qp_num = 1;
 	qp->rq.max_wr = attrs->cap.max_recv_wr;
 	qp->sq.max_wr = attrs->cap.max_send_wr;
 
-	qp->rqe_wr_id = kसुस्मृति(qp->rq.max_wr, माप(*qp->rqe_wr_id),
+	qp->rqe_wr_id = kcalloc(qp->rq.max_wr, sizeof(*qp->rqe_wr_id),
 				GFP_KERNEL);
-	अगर (!qp->rqe_wr_id)
-		जाओ err;
-	qp->wqe_wr_id = kसुस्मृति(qp->sq.max_wr, माप(*qp->wqe_wr_id),
+	if (!qp->rqe_wr_id)
+		goto err;
+	qp->wqe_wr_id = kcalloc(qp->sq.max_wr, sizeof(*qp->wqe_wr_id),
 				GFP_KERNEL);
-	अगर (!qp->wqe_wr_id)
-		जाओ err;
+	if (!qp->wqe_wr_id)
+		goto err;
 
 	qedr_store_gsi_qp_cq(dev, qp, attrs);
 	ether_addr_copy(dev->gsi_ll2_mac_address, dev->ndev->dev_addr);
 
-	/* the GSI CQ is handled by the driver so हटाओ it from the FW */
+	/* the GSI CQ is handled by the driver so remove it from the FW */
 	qedr_destroy_gsi_cq(dev, attrs);
 	dev->gsi_rqcq->cq_type = QEDR_CQ_TYPE_GSI;
 	dev->gsi_rqcq->cq_type = QEDR_CQ_TYPE_GSI;
 
 	DP_DEBUG(dev, QEDR_MSG_GSI, "created GSI QP %p\n", qp);
 
-	वापस &qp->ibqp;
+	return &qp->ibqp;
 
 err:
-	kमुक्त(qp->rqe_wr_id);
+	kfree(qp->rqe_wr_id);
 
 	rc = qedr_ll2_stop(dev);
-	अगर (rc)
+	if (rc)
 		DP_ERR(dev, "create gsi qp: failed destroy on create\n");
 
-	वापस ERR_PTR(-ENOMEM);
-पूर्ण
+	return ERR_PTR(-ENOMEM);
+}
 
-पूर्णांक qedr_destroy_gsi_qp(काष्ठा qedr_dev *dev)
-अणु
-	वापस qedr_ll2_stop(dev);
-पूर्ण
+int qedr_destroy_gsi_qp(struct qedr_dev *dev)
+{
+	return qedr_ll2_stop(dev);
+}
 
-#घोषणा QEDR_MAX_UD_HEADER_SIZE	(100)
-#घोषणा QEDR_GSI_QPN		(1)
-अटल अंतरभूत पूर्णांक qedr_gsi_build_header(काष्ठा qedr_dev *dev,
-					काष्ठा qedr_qp *qp,
-					स्थिर काष्ठा ib_send_wr *swr,
-					काष्ठा ib_ud_header *udh,
-					पूर्णांक *roce_mode)
-अणु
+#define QEDR_MAX_UD_HEADER_SIZE	(100)
+#define QEDR_GSI_QPN		(1)
+static inline int qedr_gsi_build_header(struct qedr_dev *dev,
+					struct qedr_qp *qp,
+					const struct ib_send_wr *swr,
+					struct ib_ud_header *udh,
+					int *roce_mode)
+{
 	bool has_vlan = false, has_grh_ipv6 = true;
-	काष्ठा rdma_ah_attr *ah_attr = &get_qedr_ah(ud_wr(swr)->ah)->attr;
-	स्थिर काष्ठा ib_global_route *grh = rdma_ah_पढ़ो_grh(ah_attr);
-	स्थिर काष्ठा ib_gid_attr *sgid_attr = grh->sgid_attr;
-	पूर्णांक send_size = 0;
+	struct rdma_ah_attr *ah_attr = &get_qedr_ah(ud_wr(swr)->ah)->attr;
+	const struct ib_global_route *grh = rdma_ah_read_grh(ah_attr);
+	const struct ib_gid_attr *sgid_attr = grh->sgid_attr;
+	int send_size = 0;
 	u16 vlan_id = 0;
 	u16 ether_type;
-	पूर्णांक rc;
-	पूर्णांक ip_ver = 0;
+	int rc;
+	int ip_ver = 0;
 
 	bool has_udp = false;
-	पूर्णांक i;
+	int i;
 
-	rc = rdma_पढ़ो_gid_l2_fields(sgid_attr, &vlan_id, शून्य);
-	अगर (rc)
-		वापस rc;
+	rc = rdma_read_gid_l2_fields(sgid_attr, &vlan_id, NULL);
+	if (rc)
+		return rc;
 
-	अगर (vlan_id < VLAN_CFI_MASK)
+	if (vlan_id < VLAN_CFI_MASK)
 		has_vlan = true;
 
 	send_size = 0;
-	क्रम (i = 0; i < swr->num_sge; ++i)
+	for (i = 0; i < swr->num_sge; ++i)
 		send_size += swr->sg_list[i].length;
 
 	has_udp = (sgid_attr->gid_type == IB_GID_TYPE_ROCE_UDP_ENCAP);
-	अगर (!has_udp) अणु
+	if (!has_udp) {
 		/* RoCE v1 */
 		ether_type = ETH_P_IBOE;
 		*roce_mode = ROCE_V1;
-	पूर्ण अन्यथा अगर (ipv6_addr_v4mapped((काष्ठा in6_addr *)&sgid_attr->gid)) अणु
+	} else if (ipv6_addr_v4mapped((struct in6_addr *)&sgid_attr->gid)) {
 		/* RoCE v2 IPv4 */
 		ip_ver = 4;
 		ether_type = ETH_P_IP;
 		has_grh_ipv6 = false;
 		*roce_mode = ROCE_V2_IPV4;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* RoCE v2 IPv6 */
 		ip_ver = 6;
 		ether_type = ETH_P_IPV6;
 		*roce_mode = ROCE_V2_IPV6;
-	पूर्ण
+	}
 
 	rc = ib_ud_header_init(send_size, false, true, has_vlan,
 			       has_grh_ipv6, ip_ver, has_udp, 0, udh);
-	अगर (rc) अणु
+	if (rc) {
 		DP_ERR(dev, "gsi post send: failed to init header\n");
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	/* ENET + VLAN headers */
 	ether_addr_copy(udh->eth.dmac_h, ah_attr->roce.dmac);
 	ether_addr_copy(udh->eth.smac_h, dev->ndev->dev_addr);
-	अगर (has_vlan) अणु
+	if (has_vlan) {
 		udh->eth.type = htons(ETH_P_8021Q);
 		udh->vlan.tag = htons(vlan_id);
 		udh->vlan.type = htons(ether_type);
-	पूर्ण अन्यथा अणु
+	} else {
 		udh->eth.type = htons(ether_type);
-	पूर्ण
+	}
 
 	/* BTH */
 	udh->bth.solicited_event = !!(swr->send_flags & IB_SEND_SOLICITED);
@@ -456,15 +455,15 @@ err:
 	udh->deth.qkey = htonl(0x80010000);
 	udh->deth.source_qpn = htonl(QEDR_GSI_QPN);
 
-	अगर (has_grh_ipv6) अणु
+	if (has_grh_ipv6) {
 		/* GRH / IPv6 header */
 		udh->grh.traffic_class = grh->traffic_class;
 		udh->grh.flow_label = grh->flow_label;
 		udh->grh.hop_limit = grh->hop_limit;
 		udh->grh.destination_gid = grh->dgid;
-		स_नकल(&udh->grh.source_gid.raw, sgid_attr->gid.raw,
-		       माप(udh->grh.source_gid.raw));
-	पूर्ण अन्यथा अणु
+		memcpy(&udh->grh.source_gid.raw, sgid_attr->gid.raw,
+		       sizeof(udh->grh.source_gid.raw));
+	} else {
 		/* IPv4 header */
 		u32 ipv4_addr;
 
@@ -478,211 +477,211 @@ err:
 		ipv4_addr = qedr_get_ipv4_from_gid(grh->dgid.raw);
 		udh->ip4.daddr = ipv4_addr;
 		/* note: checksum is calculated by the device */
-	पूर्ण
+	}
 
 	/* UDP */
-	अगर (has_udp) अणु
+	if (has_udp) {
 		udh->udp.sport = htons(QEDR_ROCE_V2_UDP_SPORT);
 		udh->udp.dport = htons(ROCE_V2_UDP_DPORT);
 		udh->udp.csum = 0;
 		/* UDP length is untouched hence is zero */
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक qedr_gsi_build_packet(काष्ठा qedr_dev *dev,
-					काष्ठा qedr_qp *qp,
-					स्थिर काष्ठा ib_send_wr *swr,
-					काष्ठा qed_roce_ll2_packet **p_packet)
-अणु
+static inline int qedr_gsi_build_packet(struct qedr_dev *dev,
+					struct qedr_qp *qp,
+					const struct ib_send_wr *swr,
+					struct qed_roce_ll2_packet **p_packet)
+{
 	u8 ud_header_buffer[QEDR_MAX_UD_HEADER_SIZE];
-	काष्ठा qed_roce_ll2_packet *packet;
-	काष्ठा pci_dev *pdev = dev->pdev;
-	पूर्णांक roce_mode, header_size;
-	काष्ठा ib_ud_header udh;
-	पूर्णांक i, rc;
+	struct qed_roce_ll2_packet *packet;
+	struct pci_dev *pdev = dev->pdev;
+	int roce_mode, header_size;
+	struct ib_ud_header udh;
+	int i, rc;
 
-	*p_packet = शून्य;
+	*p_packet = NULL;
 
 	rc = qedr_gsi_build_header(dev, qp, swr, &udh, &roce_mode);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	header_size = ib_ud_header_pack(&udh, &ud_header_buffer);
 
-	packet = kzalloc(माप(*packet), GFP_ATOMIC);
-	अगर (!packet)
-		वापस -ENOMEM;
+	packet = kzalloc(sizeof(*packet), GFP_ATOMIC);
+	if (!packet)
+		return -ENOMEM;
 
 	packet->header.vaddr = dma_alloc_coherent(&pdev->dev, header_size,
 						  &packet->header.baddr,
 						  GFP_ATOMIC);
-	अगर (!packet->header.vaddr) अणु
-		kमुक्त(packet);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!packet->header.vaddr) {
+		kfree(packet);
+		return -ENOMEM;
+	}
 
-	अगर (ether_addr_equal(udh.eth.smac_h, udh.eth.dmac_h))
+	if (ether_addr_equal(udh.eth.smac_h, udh.eth.dmac_h))
 		packet->tx_dest = QED_LL2_TX_DEST_LB;
-	अन्यथा
+	else
 		packet->tx_dest = QED_LL2_TX_DEST_NW;
 
 	packet->roce_mode = roce_mode;
-	स_नकल(packet->header.vaddr, ud_header_buffer, header_size);
+	memcpy(packet->header.vaddr, ud_header_buffer, header_size);
 	packet->header.len = header_size;
 	packet->n_seg = swr->num_sge;
-	क्रम (i = 0; i < packet->n_seg; i++) अणु
+	for (i = 0; i < packet->n_seg; i++) {
 		packet->payload[i].baddr = swr->sg_list[i].addr;
 		packet->payload[i].len = swr->sg_list[i].length;
-	पूर्ण
+	}
 
 	*p_packet = packet;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक qedr_gsi_post_send(काष्ठा ib_qp *ibqp, स्थिर काष्ठा ib_send_wr *wr,
-		       स्थिर काष्ठा ib_send_wr **bad_wr)
-अणु
-	काष्ठा qed_roce_ll2_packet *pkt = शून्य;
-	काष्ठा qedr_qp *qp = get_qedr_qp(ibqp);
-	काष्ठा qedr_dev *dev = qp->dev;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक rc;
+int qedr_gsi_post_send(struct ib_qp *ibqp, const struct ib_send_wr *wr,
+		       const struct ib_send_wr **bad_wr)
+{
+	struct qed_roce_ll2_packet *pkt = NULL;
+	struct qedr_qp *qp = get_qedr_qp(ibqp);
+	struct qedr_dev *dev = qp->dev;
+	unsigned long flags;
+	int rc;
 
-	अगर (qp->state != QED_ROCE_QP_STATE_RTS) अणु
+	if (qp->state != QED_ROCE_QP_STATE_RTS) {
 		*bad_wr = wr;
 		DP_ERR(dev,
 		       "gsi post recv: failed to post rx buffer. state is %d and not QED_ROCE_QP_STATE_RTS\n",
 		       qp->state);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (wr->num_sge > RDMA_MAX_SGE_PER_SQ_WQE) अणु
+	if (wr->num_sge > RDMA_MAX_SGE_PER_SQ_WQE) {
 		DP_ERR(dev, "gsi post send: num_sge is too large (%d>%d)\n",
 		       wr->num_sge, RDMA_MAX_SGE_PER_SQ_WQE);
 		rc = -EINVAL;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	अगर (wr->opcode != IB_WR_SEND) अणु
+	if (wr->opcode != IB_WR_SEND) {
 		DP_ERR(dev,
 		       "gsi post send: failed due to unsupported opcode %d\n",
 		       wr->opcode);
 		rc = -EINVAL;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	spin_lock_irqsave(&qp->q_lock, flags);
 
 	rc = qedr_gsi_build_packet(dev, qp, wr, &pkt);
-	अगर (rc) अणु
+	if (rc) {
 		spin_unlock_irqrestore(&qp->q_lock, flags);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	rc = qedr_ll2_post_tx(dev, pkt);
 
-	अगर (!rc) अणु
+	if (!rc) {
 		qp->wqe_wr_id[qp->sq.prod].wr_id = wr->wr_id;
 		qedr_inc_sw_prod(&qp->sq);
 		DP_DEBUG(qp->dev, QEDR_MSG_GSI,
 			 "gsi post send: opcode=%d, wr_id=%llx\n", wr->opcode,
 			 wr->wr_id);
-	पूर्ण अन्यथा अणु
+	} else {
 		DP_ERR(dev, "gsi post send: failed to transmit (rc=%d)\n", rc);
 		rc = -EAGAIN;
 		*bad_wr = wr;
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&qp->q_lock, flags);
 
-	अगर (wr->next) अणु
+	if (wr->next) {
 		DP_ERR(dev,
 		       "gsi post send: failed second WR. Only one WR may be passed at a time\n");
 		*bad_wr = wr->next;
 		rc = -EINVAL;
-	पूर्ण
+	}
 
-	वापस rc;
+	return rc;
 
 err:
 	*bad_wr = wr;
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक qedr_gsi_post_recv(काष्ठा ib_qp *ibqp, स्थिर काष्ठा ib_recv_wr *wr,
-		       स्थिर काष्ठा ib_recv_wr **bad_wr)
-अणु
-	काष्ठा qedr_dev *dev = get_qedr_dev(ibqp->device);
-	काष्ठा qedr_qp *qp = get_qedr_qp(ibqp);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक rc = 0;
+int qedr_gsi_post_recv(struct ib_qp *ibqp, const struct ib_recv_wr *wr,
+		       const struct ib_recv_wr **bad_wr)
+{
+	struct qedr_dev *dev = get_qedr_dev(ibqp->device);
+	struct qedr_qp *qp = get_qedr_qp(ibqp);
+	unsigned long flags;
+	int rc = 0;
 
-	अगर ((qp->state != QED_ROCE_QP_STATE_RTR) &&
-	    (qp->state != QED_ROCE_QP_STATE_RTS)) अणु
+	if ((qp->state != QED_ROCE_QP_STATE_RTR) &&
+	    (qp->state != QED_ROCE_QP_STATE_RTS)) {
 		*bad_wr = wr;
 		DP_ERR(dev,
 		       "gsi post recv: failed to post rx buffer. state is %d and not QED_ROCE_QP_STATE_RTR/S\n",
 		       qp->state);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	spin_lock_irqsave(&qp->q_lock, flags);
 
-	जबतक (wr) अणु
-		अगर (wr->num_sge > QEDR_GSI_MAX_RECV_SGE) अणु
+	while (wr) {
+		if (wr->num_sge > QEDR_GSI_MAX_RECV_SGE) {
 			DP_ERR(dev,
 			       "gsi post recv: failed to post rx buffer. too many sges %d>%d\n",
 			       wr->num_sge, QEDR_GSI_MAX_RECV_SGE);
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
 		rc = dev->ops->ll2_post_rx_buffer(dev->rdma_ctx,
 						  dev->gsi_ll2_handle,
 						  wr->sg_list[0].addr,
 						  wr->sg_list[0].length,
-						  शून्य /* cookie */,
-						  1 /* notअगरy_fw */);
-		अगर (rc) अणु
+						  NULL /* cookie */,
+						  1 /* notify_fw */);
+		if (rc) {
 			DP_ERR(dev,
 			       "gsi post recv: failed to post rx buffer (rc=%d)\n",
 			       rc);
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
-		स_रखो(&qp->rqe_wr_id[qp->rq.prod], 0,
-		       माप(qp->rqe_wr_id[qp->rq.prod]));
+		memset(&qp->rqe_wr_id[qp->rq.prod], 0,
+		       sizeof(qp->rqe_wr_id[qp->rq.prod]));
 		qp->rqe_wr_id[qp->rq.prod].sg_list[0] = wr->sg_list[0];
 		qp->rqe_wr_id[qp->rq.prod].wr_id = wr->wr_id;
 
 		qedr_inc_sw_prod(&qp->rq);
 
 		wr = wr->next;
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&qp->q_lock, flags);
 
-	वापस rc;
+	return rc;
 err:
 	spin_unlock_irqrestore(&qp->q_lock, flags);
 	*bad_wr = wr;
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-पूर्णांक qedr_gsi_poll_cq(काष्ठा ib_cq *ibcq, पूर्णांक num_entries, काष्ठा ib_wc *wc)
-अणु
-	काष्ठा qedr_dev *dev = get_qedr_dev(ibcq->device);
-	काष्ठा qedr_cq *cq = get_qedr_cq(ibcq);
-	काष्ठा qedr_qp *qp = dev->gsi_qp;
-	अचिन्हित दीर्घ flags;
+int qedr_gsi_poll_cq(struct ib_cq *ibcq, int num_entries, struct ib_wc *wc)
+{
+	struct qedr_dev *dev = get_qedr_dev(ibcq->device);
+	struct qedr_cq *cq = get_qedr_cq(ibcq);
+	struct qedr_qp *qp = dev->gsi_qp;
+	unsigned long flags;
 	u16 vlan_id;
-	पूर्णांक i = 0;
+	int i = 0;
 
 	spin_lock_irqsave(&cq->cq_lock, flags);
 
-	जबतक (i < num_entries && qp->rq.cons != qp->rq.gsi_cons) अणु
-		स_रखो(&wc[i], 0, माप(*wc));
+	while (i < num_entries && qp->rq.cons != qp->rq.gsi_cons) {
+		memset(&wc[i], 0, sizeof(*wc));
 
 		wc[i].qp = &qp->ibqp;
 		wc[i].wr_id = qp->rqe_wr_id[qp->rq.cons].wr_id;
@@ -698,19 +697,19 @@ err:
 
 		vlan_id = qp->rqe_wr_id[qp->rq.cons].vlan &
 			  VLAN_VID_MASK;
-		अगर (vlan_id) अणु
+		if (vlan_id) {
 			wc[i].wc_flags |= IB_WC_WITH_VLAN;
 			wc[i].vlan_id = vlan_id;
 			wc[i].sl = (qp->rqe_wr_id[qp->rq.cons].vlan &
 				    VLAN_PRIO_MASK) >> VLAN_PRIO_SHIFT;
-		पूर्ण
+		}
 
 		qedr_inc_sw_cons(&qp->rq);
 		i++;
-	पूर्ण
+	}
 
-	जबतक (i < num_entries && qp->sq.cons != qp->sq.gsi_cons) अणु
-		स_रखो(&wc[i], 0, माप(*wc));
+	while (i < num_entries && qp->sq.cons != qp->sq.gsi_cons) {
+		memset(&wc[i], 0, sizeof(*wc));
 
 		wc[i].qp = &qp->ibqp;
 		wc[i].wr_id = qp->wqe_wr_id[qp->sq.cons].wr_id;
@@ -719,7 +718,7 @@ err:
 
 		qedr_inc_sw_cons(&qp->sq);
 		i++;
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&cq->cq_lock, flags);
 
@@ -728,5 +727,5 @@ err:
 		 num_entries, i, qp->rq.cons, qp->rq.gsi_cons, qp->sq.cons,
 		 qp->sq.gsi_cons, qp->ibqp.qp_num);
 
-	वापस i;
-पूर्ण
+	return i;
+}

@@ -1,26 +1,25 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_SYSTEM page_pool
+/* SPDX-License-Identifier: GPL-2.0 */
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM page_pool
 
-#अगर !defined(_TRACE_PAGE_POOL_H) || defined(TRACE_HEADER_MULTI_READ)
-#घोषणा      _TRACE_PAGE_POOL_H
+#if !defined(_TRACE_PAGE_POOL_H) || defined(TRACE_HEADER_MULTI_READ)
+#define      _TRACE_PAGE_POOL_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/tracepoपूर्णांक.h>
+#include <linux/types.h>
+#include <linux/tracepoint.h>
 
-#समावेश <trace/events/mmflags.h>
-#समावेश <net/page_pool.h>
+#include <trace/events/mmflags.h>
+#include <net/page_pool.h>
 
 TRACE_EVENT(page_pool_release,
 
-	TP_PROTO(स्थिर काष्ठा page_pool *pool,
+	TP_PROTO(const struct page_pool *pool,
 		 s32 inflight, u32 hold, u32 release),
 
 	TP_ARGS(pool, inflight, hold, release),
 
 	TP_STRUCT__entry(
-		__field(स्थिर काष्ठा page_pool *, pool)
+		__field(const struct page_pool *, pool)
 		__field(s32,	inflight)
 		__field(u32,	hold)
 		__field(u32,	release)
@@ -35,23 +34,23 @@ TRACE_EVENT(page_pool_release,
 		__entry->cnt		= pool->destroy_cnt;
 	),
 
-	TP_prपूर्णांकk("page_pool=%p inflight=%d hold=%u release=%u cnt=%llu",
+	TP_printk("page_pool=%p inflight=%d hold=%u release=%u cnt=%llu",
 		__entry->pool, __entry->inflight, __entry->hold,
 		__entry->release, __entry->cnt)
 );
 
 TRACE_EVENT(page_pool_state_release,
 
-	TP_PROTO(स्थिर काष्ठा page_pool *pool,
-		 स्थिर काष्ठा page *page, u32 release),
+	TP_PROTO(const struct page_pool *pool,
+		 const struct page *page, u32 release),
 
 	TP_ARGS(pool, page, release),
 
 	TP_STRUCT__entry(
-		__field(स्थिर काष्ठा page_pool *,	pool)
-		__field(स्थिर काष्ठा page *,		page)
+		__field(const struct page_pool *,	pool)
+		__field(const struct page *,		page)
 		__field(u32,				release)
-		__field(अचिन्हित दीर्घ,			pfn)
+		__field(unsigned long,			pfn)
 	),
 
 	TP_fast_assign(
@@ -61,22 +60,22 @@ TRACE_EVENT(page_pool_state_release,
 		__entry->pfn		= page_to_pfn(page);
 	),
 
-	TP_prपूर्णांकk("page_pool=%p page=%p pfn=%lu release=%u",
+	TP_printk("page_pool=%p page=%p pfn=%lu release=%u",
 		  __entry->pool, __entry->page, __entry->pfn, __entry->release)
 );
 
 TRACE_EVENT(page_pool_state_hold,
 
-	TP_PROTO(स्थिर काष्ठा page_pool *pool,
-		 स्थिर काष्ठा page *page, u32 hold),
+	TP_PROTO(const struct page_pool *pool,
+		 const struct page *page, u32 hold),
 
 	TP_ARGS(pool, page, hold),
 
 	TP_STRUCT__entry(
-		__field(स्थिर काष्ठा page_pool *,	pool)
-		__field(स्थिर काष्ठा page *,		page)
+		__field(const struct page_pool *,	pool)
+		__field(const struct page *,		page)
 		__field(u32,				hold)
-		__field(अचिन्हित दीर्घ,			pfn)
+		__field(unsigned long,			pfn)
 	),
 
 	TP_fast_assign(
@@ -86,20 +85,20 @@ TRACE_EVENT(page_pool_state_hold,
 		__entry->pfn	= page_to_pfn(page);
 	),
 
-	TP_prपूर्णांकk("page_pool=%p page=%p pfn=%lu hold=%u",
+	TP_printk("page_pool=%p page=%p pfn=%lu hold=%u",
 		  __entry->pool, __entry->page, __entry->pfn, __entry->hold)
 );
 
 TRACE_EVENT(page_pool_update_nid,
 
-	TP_PROTO(स्थिर काष्ठा page_pool *pool, पूर्णांक new_nid),
+	TP_PROTO(const struct page_pool *pool, int new_nid),
 
 	TP_ARGS(pool, new_nid),
 
 	TP_STRUCT__entry(
-		__field(स्थिर काष्ठा page_pool *, pool)
-		__field(पूर्णांक,			  pool_nid)
-		__field(पूर्णांक,			  new_nid)
+		__field(const struct page_pool *, pool)
+		__field(int,			  pool_nid)
+		__field(int,			  new_nid)
 	),
 
 	TP_fast_assign(
@@ -108,11 +107,11 @@ TRACE_EVENT(page_pool_update_nid,
 		__entry->new_nid	= new_nid;
 	),
 
-	TP_prपूर्णांकk("page_pool=%p pool_nid=%d new_nid=%d",
+	TP_printk("page_pool=%p pool_nid=%d new_nid=%d",
 		  __entry->pool, __entry->pool_nid, __entry->new_nid)
 );
 
-#पूर्ण_अगर /* _TRACE_PAGE_POOL_H */
+#endif /* _TRACE_PAGE_POOL_H */
 
 /* This part must be outside protection */
-#समावेश <trace/define_trace.h>
+#include <trace/define_trace.h>

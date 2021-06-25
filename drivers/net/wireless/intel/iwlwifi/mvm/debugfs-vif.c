@@ -1,773 +1,772 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause
+// SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
 /*
  * Copyright (C) 2012-2014, 2018-2020 Intel Corporation
  * Copyright (C) 2013-2015 Intel Mobile Communications GmbH
  * Copyright (C) 2016-2017 Intel Deutschland GmbH
  */
-#समावेश "mvm.h"
-#समावेश "debugfs.h"
+#include "mvm.h"
+#include "debugfs.h"
 
-अटल व्योम iwl_dbgfs_update_pm(काष्ठा iwl_mvm *mvm,
-				 काष्ठा ieee80211_vअगर *vअगर,
-				 क्रमागत iwl_dbgfs_pm_mask param, पूर्णांक val)
-अणु
-	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
-	काष्ठा iwl_dbgfs_pm *dbgfs_pm = &mvmvअगर->dbgfs_pm;
+static void iwl_dbgfs_update_pm(struct iwl_mvm *mvm,
+				 struct ieee80211_vif *vif,
+				 enum iwl_dbgfs_pm_mask param, int val)
+{
+	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
+	struct iwl_dbgfs_pm *dbgfs_pm = &mvmvif->dbgfs_pm;
 
 	dbgfs_pm->mask |= param;
 
-	चयन (param) अणु
-	हाल MVM_DEBUGFS_PM_KEEP_ALIVE: अणु
-		पूर्णांक dtimper = vअगर->bss_conf.dtim_period ?: 1;
-		पूर्णांक dtimper_msec = dtimper * vअगर->bss_conf.beacon_पूर्णांक;
+	switch (param) {
+	case MVM_DEBUGFS_PM_KEEP_ALIVE: {
+		int dtimper = vif->bss_conf.dtim_period ?: 1;
+		int dtimper_msec = dtimper * vif->bss_conf.beacon_int;
 
 		IWL_DEBUG_POWER(mvm, "debugfs: set keep_alive= %d sec\n", val);
-		अगर (val * MSEC_PER_SEC < 3 * dtimper_msec)
+		if (val * MSEC_PER_SEC < 3 * dtimper_msec)
 			IWL_WARN(mvm,
 				 "debugfs: keep alive period (%ld msec) is less than minimum required (%d msec)\n",
 				 val * MSEC_PER_SEC, 3 * dtimper_msec);
 		dbgfs_pm->keep_alive_seconds = val;
-		अवरोध;
-	पूर्ण
-	हाल MVM_DEBUGFS_PM_SKIP_OVER_DTIM:
+		break;
+	}
+	case MVM_DEBUGFS_PM_SKIP_OVER_DTIM:
 		IWL_DEBUG_POWER(mvm, "skip_over_dtim %s\n",
 				val ? "enabled" : "disabled");
 		dbgfs_pm->skip_over_dtim = val;
-		अवरोध;
-	हाल MVM_DEBUGFS_PM_SKIP_DTIM_PERIODS:
+		break;
+	case MVM_DEBUGFS_PM_SKIP_DTIM_PERIODS:
 		IWL_DEBUG_POWER(mvm, "skip_dtim_periods=%d\n", val);
 		dbgfs_pm->skip_dtim_periods = val;
-		अवरोध;
-	हाल MVM_DEBUGFS_PM_RX_DATA_TIMEOUT:
+		break;
+	case MVM_DEBUGFS_PM_RX_DATA_TIMEOUT:
 		IWL_DEBUG_POWER(mvm, "rx_data_timeout=%d\n", val);
-		dbgfs_pm->rx_data_समयout = val;
-		अवरोध;
-	हाल MVM_DEBUGFS_PM_TX_DATA_TIMEOUT:
+		dbgfs_pm->rx_data_timeout = val;
+		break;
+	case MVM_DEBUGFS_PM_TX_DATA_TIMEOUT:
 		IWL_DEBUG_POWER(mvm, "tx_data_timeout=%d\n", val);
-		dbgfs_pm->tx_data_समयout = val;
-		अवरोध;
-	हाल MVM_DEBUGFS_PM_LPRX_ENA:
+		dbgfs_pm->tx_data_timeout = val;
+		break;
+	case MVM_DEBUGFS_PM_LPRX_ENA:
 		IWL_DEBUG_POWER(mvm, "lprx %s\n", val ? "enabled" : "disabled");
 		dbgfs_pm->lprx_ena = val;
-		अवरोध;
-	हाल MVM_DEBUGFS_PM_LPRX_RSSI_THRESHOLD:
+		break;
+	case MVM_DEBUGFS_PM_LPRX_RSSI_THRESHOLD:
 		IWL_DEBUG_POWER(mvm, "lprx_rssi_threshold=%d\n", val);
 		dbgfs_pm->lprx_rssi_threshold = val;
-		अवरोध;
-	हाल MVM_DEBUGFS_PM_SNOOZE_ENABLE:
+		break;
+	case MVM_DEBUGFS_PM_SNOOZE_ENABLE:
 		IWL_DEBUG_POWER(mvm, "snooze_enable=%d\n", val);
 		dbgfs_pm->snooze_ena = val;
-		अवरोध;
-	हाल MVM_DEBUGFS_PM_UAPSD_MISBEHAVING:
+		break;
+	case MVM_DEBUGFS_PM_UAPSD_MISBEHAVING:
 		IWL_DEBUG_POWER(mvm, "uapsd_misbehaving_enable=%d\n", val);
 		dbgfs_pm->uapsd_misbehaving = val;
-		अवरोध;
-	हाल MVM_DEBUGFS_PM_USE_PS_POLL:
+		break;
+	case MVM_DEBUGFS_PM_USE_PS_POLL:
 		IWL_DEBUG_POWER(mvm, "use_ps_poll=%d\n", val);
 		dbgfs_pm->use_ps_poll = val;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल sमाप_प्रकार iwl_dbgfs_pm_params_ग_लिखो(काष्ठा ieee80211_vअगर *vअगर, अक्षर *buf,
-					 माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
-	काष्ठा iwl_mvm *mvm = mvmvअगर->mvm;
-	क्रमागत iwl_dbgfs_pm_mask param;
-	पूर्णांक val, ret;
+static ssize_t iwl_dbgfs_pm_params_write(struct ieee80211_vif *vif, char *buf,
+					 size_t count, loff_t *ppos)
+{
+	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
+	struct iwl_mvm *mvm = mvmvif->mvm;
+	enum iwl_dbgfs_pm_mask param;
+	int val, ret;
 
-	अगर (!म_भेदन("keep_alive=", buf, 11)) अणु
-		अगर (माला_पूछो(buf + 11, "%d", &val) != 1)
-			वापस -EINVAL;
+	if (!strncmp("keep_alive=", buf, 11)) {
+		if (sscanf(buf + 11, "%d", &val) != 1)
+			return -EINVAL;
 		param = MVM_DEBUGFS_PM_KEEP_ALIVE;
-	पूर्ण अन्यथा अगर (!म_भेदन("skip_over_dtim=", buf, 15)) अणु
-		अगर (माला_पूछो(buf + 15, "%d", &val) != 1)
-			वापस -EINVAL;
+	} else if (!strncmp("skip_over_dtim=", buf, 15)) {
+		if (sscanf(buf + 15, "%d", &val) != 1)
+			return -EINVAL;
 		param = MVM_DEBUGFS_PM_SKIP_OVER_DTIM;
-	पूर्ण अन्यथा अगर (!म_भेदन("skip_dtim_periods=", buf, 18)) अणु
-		अगर (माला_पूछो(buf + 18, "%d", &val) != 1)
-			वापस -EINVAL;
+	} else if (!strncmp("skip_dtim_periods=", buf, 18)) {
+		if (sscanf(buf + 18, "%d", &val) != 1)
+			return -EINVAL;
 		param = MVM_DEBUGFS_PM_SKIP_DTIM_PERIODS;
-	पूर्ण अन्यथा अगर (!म_भेदन("rx_data_timeout=", buf, 16)) अणु
-		अगर (माला_पूछो(buf + 16, "%d", &val) != 1)
-			वापस -EINVAL;
+	} else if (!strncmp("rx_data_timeout=", buf, 16)) {
+		if (sscanf(buf + 16, "%d", &val) != 1)
+			return -EINVAL;
 		param = MVM_DEBUGFS_PM_RX_DATA_TIMEOUT;
-	पूर्ण अन्यथा अगर (!म_भेदन("tx_data_timeout=", buf, 16)) अणु
-		अगर (माला_पूछो(buf + 16, "%d", &val) != 1)
-			वापस -EINVAL;
+	} else if (!strncmp("tx_data_timeout=", buf, 16)) {
+		if (sscanf(buf + 16, "%d", &val) != 1)
+			return -EINVAL;
 		param = MVM_DEBUGFS_PM_TX_DATA_TIMEOUT;
-	पूर्ण अन्यथा अगर (!म_भेदन("lprx=", buf, 5)) अणु
-		अगर (माला_पूछो(buf + 5, "%d", &val) != 1)
-			वापस -EINVAL;
+	} else if (!strncmp("lprx=", buf, 5)) {
+		if (sscanf(buf + 5, "%d", &val) != 1)
+			return -EINVAL;
 		param = MVM_DEBUGFS_PM_LPRX_ENA;
-	पूर्ण अन्यथा अगर (!म_भेदन("lprx_rssi_threshold=", buf, 20)) अणु
-		अगर (माला_पूछो(buf + 20, "%d", &val) != 1)
-			वापस -EINVAL;
-		अगर (val > POWER_LPRX_RSSI_THRESHOLD_MAX || val <
+	} else if (!strncmp("lprx_rssi_threshold=", buf, 20)) {
+		if (sscanf(buf + 20, "%d", &val) != 1)
+			return -EINVAL;
+		if (val > POWER_LPRX_RSSI_THRESHOLD_MAX || val <
 		    POWER_LPRX_RSSI_THRESHOLD_MIN)
-			वापस -EINVAL;
+			return -EINVAL;
 		param = MVM_DEBUGFS_PM_LPRX_RSSI_THRESHOLD;
-	पूर्ण अन्यथा अगर (!म_भेदन("snooze_enable=", buf, 14)) अणु
-		अगर (माला_पूछो(buf + 14, "%d", &val) != 1)
-			वापस -EINVAL;
+	} else if (!strncmp("snooze_enable=", buf, 14)) {
+		if (sscanf(buf + 14, "%d", &val) != 1)
+			return -EINVAL;
 		param = MVM_DEBUGFS_PM_SNOOZE_ENABLE;
-	पूर्ण अन्यथा अगर (!म_भेदन("uapsd_misbehaving=", buf, 18)) अणु
-		अगर (माला_पूछो(buf + 18, "%d", &val) != 1)
-			वापस -EINVAL;
+	} else if (!strncmp("uapsd_misbehaving=", buf, 18)) {
+		if (sscanf(buf + 18, "%d", &val) != 1)
+			return -EINVAL;
 		param = MVM_DEBUGFS_PM_UAPSD_MISBEHAVING;
-	पूर्ण अन्यथा अगर (!म_भेदन("use_ps_poll=", buf, 12)) अणु
-		अगर (माला_पूछो(buf + 12, "%d", &val) != 1)
-			वापस -EINVAL;
+	} else if (!strncmp("use_ps_poll=", buf, 12)) {
+		if (sscanf(buf + 12, "%d", &val) != 1)
+			return -EINVAL;
 		param = MVM_DEBUGFS_PM_USE_PS_POLL;
-	पूर्ण अन्यथा अणु
-		वापस -EINVAL;
-	पूर्ण
+	} else {
+		return -EINVAL;
+	}
 
 	mutex_lock(&mvm->mutex);
-	iwl_dbgfs_update_pm(mvm, vअगर, param, val);
-	ret = iwl_mvm_घातer_update_mac(mvm);
+	iwl_dbgfs_update_pm(mvm, vif, param, val);
+	ret = iwl_mvm_power_update_mac(mvm);
 	mutex_unlock(&mvm->mutex);
 
-	वापस ret ?: count;
-पूर्ण
+	return ret ?: count;
+}
 
-अटल sमाप_प्रकार iwl_dbgfs_tx_pwr_lmt_पढ़ो(काष्ठा file *file,
-					 अक्षर __user *user_buf,
-					 माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा ieee80211_vअगर *vअगर = file->निजी_data;
-	अक्षर buf[64];
-	पूर्णांक bufsz = माप(buf);
-	पूर्णांक pos;
+static ssize_t iwl_dbgfs_tx_pwr_lmt_read(struct file *file,
+					 char __user *user_buf,
+					 size_t count, loff_t *ppos)
+{
+	struct ieee80211_vif *vif = file->private_data;
+	char buf[64];
+	int bufsz = sizeof(buf);
+	int pos;
 
-	pos = scnम_लिखो(buf, bufsz, "bss limit = %d\n",
-			vअगर->bss_conf.txघातer);
+	pos = scnprintf(buf, bufsz, "bss limit = %d\n",
+			vif->bss_conf.txpower);
 
-	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, pos);
-पूर्ण
+	return simple_read_from_buffer(user_buf, count, ppos, buf, pos);
+}
 
-अटल sमाप_प्रकार iwl_dbgfs_pm_params_पढ़ो(काष्ठा file *file,
-					अक्षर __user *user_buf,
-					माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा ieee80211_vअगर *vअगर = file->निजी_data;
-	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
-	काष्ठा iwl_mvm *mvm = mvmvअगर->mvm;
-	अक्षर buf[512];
-	पूर्णांक bufsz = माप(buf);
-	पूर्णांक pos;
+static ssize_t iwl_dbgfs_pm_params_read(struct file *file,
+					char __user *user_buf,
+					size_t count, loff_t *ppos)
+{
+	struct ieee80211_vif *vif = file->private_data;
+	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
+	struct iwl_mvm *mvm = mvmvif->mvm;
+	char buf[512];
+	int bufsz = sizeof(buf);
+	int pos;
 
-	pos = iwl_mvm_घातer_mac_dbgfs_पढ़ो(mvm, vअगर, buf, bufsz);
+	pos = iwl_mvm_power_mac_dbgfs_read(mvm, vif, buf, bufsz);
 
-	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, pos);
-पूर्ण
+	return simple_read_from_buffer(user_buf, count, ppos, buf, pos);
+}
 
-अटल sमाप_प्रकार iwl_dbgfs_mac_params_पढ़ो(काष्ठा file *file,
-					 अक्षर __user *user_buf,
-					 माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा ieee80211_vअगर *vअगर = file->निजी_data;
-	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
-	काष्ठा iwl_mvm *mvm = mvmvअगर->mvm;
+static ssize_t iwl_dbgfs_mac_params_read(struct file *file,
+					 char __user *user_buf,
+					 size_t count, loff_t *ppos)
+{
+	struct ieee80211_vif *vif = file->private_data;
+	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
+	struct iwl_mvm *mvm = mvmvif->mvm;
 	u8 ap_sta_id;
-	काष्ठा ieee80211_chanctx_conf *chanctx_conf;
-	अक्षर buf[512];
-	पूर्णांक bufsz = माप(buf);
-	पूर्णांक pos = 0;
-	पूर्णांक i;
+	struct ieee80211_chanctx_conf *chanctx_conf;
+	char buf[512];
+	int bufsz = sizeof(buf);
+	int pos = 0;
+	int i;
 
 	mutex_lock(&mvm->mutex);
 
-	ap_sta_id = mvmvअगर->ap_sta_id;
+	ap_sta_id = mvmvif->ap_sta_id;
 
-	चयन (ieee80211_vअगर_type_p2p(vअगर)) अणु
-	हाल NL80211_IFTYPE_ADHOC:
-		pos += scnम_लिखो(buf+pos, bufsz-pos, "type: ibss\n");
-		अवरोध;
-	हाल NL80211_IFTYPE_STATION:
-		pos += scnम_लिखो(buf+pos, bufsz-pos, "type: bss\n");
-		अवरोध;
-	हाल NL80211_IFTYPE_AP:
-		pos += scnम_लिखो(buf+pos, bufsz-pos, "type: ap\n");
-		अवरोध;
-	हाल NL80211_IFTYPE_P2P_CLIENT:
-		pos += scnम_लिखो(buf+pos, bufsz-pos, "type: p2p client\n");
-		अवरोध;
-	हाल NL80211_IFTYPE_P2P_GO:
-		pos += scnम_लिखो(buf+pos, bufsz-pos, "type: p2p go\n");
-		अवरोध;
-	हाल NL80211_IFTYPE_P2P_DEVICE:
-		pos += scnम_लिखो(buf+pos, bufsz-pos, "type: p2p dev\n");
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+	switch (ieee80211_vif_type_p2p(vif)) {
+	case NL80211_IFTYPE_ADHOC:
+		pos += scnprintf(buf+pos, bufsz-pos, "type: ibss\n");
+		break;
+	case NL80211_IFTYPE_STATION:
+		pos += scnprintf(buf+pos, bufsz-pos, "type: bss\n");
+		break;
+	case NL80211_IFTYPE_AP:
+		pos += scnprintf(buf+pos, bufsz-pos, "type: ap\n");
+		break;
+	case NL80211_IFTYPE_P2P_CLIENT:
+		pos += scnprintf(buf+pos, bufsz-pos, "type: p2p client\n");
+		break;
+	case NL80211_IFTYPE_P2P_GO:
+		pos += scnprintf(buf+pos, bufsz-pos, "type: p2p go\n");
+		break;
+	case NL80211_IFTYPE_P2P_DEVICE:
+		pos += scnprintf(buf+pos, bufsz-pos, "type: p2p dev\n");
+		break;
+	default:
+		break;
+	}
 
-	pos += scnम_लिखो(buf+pos, bufsz-pos, "mac id/color: %d / %d\n",
-			 mvmvअगर->id, mvmvअगर->color);
-	pos += scnम_लिखो(buf+pos, bufsz-pos, "bssid: %pM\n",
-			 vअगर->bss_conf.bssid);
-	pos += scnम_लिखो(buf+pos, bufsz-pos, "Load: %d\n",
-			 mvm->tcm.result.load[mvmvअगर->id]);
-	pos += scnम_लिखो(buf+pos, bufsz-pos, "QoS:\n");
-	क्रम (i = 0; i < ARRAY_SIZE(mvmvअगर->queue_params); i++)
-		pos += scnम_लिखो(buf+pos, bufsz-pos,
+	pos += scnprintf(buf+pos, bufsz-pos, "mac id/color: %d / %d\n",
+			 mvmvif->id, mvmvif->color);
+	pos += scnprintf(buf+pos, bufsz-pos, "bssid: %pM\n",
+			 vif->bss_conf.bssid);
+	pos += scnprintf(buf+pos, bufsz-pos, "Load: %d\n",
+			 mvm->tcm.result.load[mvmvif->id]);
+	pos += scnprintf(buf+pos, bufsz-pos, "QoS:\n");
+	for (i = 0; i < ARRAY_SIZE(mvmvif->queue_params); i++)
+		pos += scnprintf(buf+pos, bufsz-pos,
 				 "\t%d: txop:%d - cw_min:%d - cw_max = %d - aifs = %d upasd = %d\n",
-				 i, mvmvअगर->queue_params[i].txop,
-				 mvmvअगर->queue_params[i].cw_min,
-				 mvmvअगर->queue_params[i].cw_max,
-				 mvmvअगर->queue_params[i].aअगरs,
-				 mvmvअगर->queue_params[i].uapsd);
+				 i, mvmvif->queue_params[i].txop,
+				 mvmvif->queue_params[i].cw_min,
+				 mvmvif->queue_params[i].cw_max,
+				 mvmvif->queue_params[i].aifs,
+				 mvmvif->queue_params[i].uapsd);
 
-	अगर (vअगर->type == NL80211_IFTYPE_STATION &&
-	    ap_sta_id != IWL_MVM_INVALID_STA) अणु
-		काष्ठा iwl_mvm_sta *mvm_sta;
+	if (vif->type == NL80211_IFTYPE_STATION &&
+	    ap_sta_id != IWL_MVM_INVALID_STA) {
+		struct iwl_mvm_sta *mvm_sta;
 
-		mvm_sta = iwl_mvm_sta_from_staid_रक्षित(mvm, ap_sta_id);
-		अगर (mvm_sta) अणु
-			pos += scnम_लिखो(buf+pos, bufsz-pos,
+		mvm_sta = iwl_mvm_sta_from_staid_protected(mvm, ap_sta_id);
+		if (mvm_sta) {
+			pos += scnprintf(buf+pos, bufsz-pos,
 					 "ap_sta_id %d - reduced Tx power %d\n",
 					 ap_sta_id,
-					 mvm_sta->bt_reduced_txघातer);
-		पूर्ण
-	पूर्ण
+					 mvm_sta->bt_reduced_txpower);
+		}
+	}
 
-	rcu_पढ़ो_lock();
-	chanctx_conf = rcu_dereference(vअगर->chanctx_conf);
-	अगर (chanctx_conf)
-		pos += scnम_लिखो(buf+pos, bufsz-pos,
+	rcu_read_lock();
+	chanctx_conf = rcu_dereference(vif->chanctx_conf);
+	if (chanctx_conf)
+		pos += scnprintf(buf+pos, bufsz-pos,
 				 "idle rx chains %d, active rx chains: %d\n",
-				 chanctx_conf->rx_chains_अटल,
+				 chanctx_conf->rx_chains_static,
 				 chanctx_conf->rx_chains_dynamic);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
 	mutex_unlock(&mvm->mutex);
 
-	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, pos);
-पूर्ण
+	return simple_read_from_buffer(user_buf, count, ppos, buf, pos);
+}
 
-अटल व्योम iwl_dbgfs_update_bf(काष्ठा ieee80211_vअगर *vअगर,
-				क्रमागत iwl_dbgfs_bf_mask param, पूर्णांक value)
-अणु
-	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
-	काष्ठा iwl_dbgfs_bf *dbgfs_bf = &mvmvअगर->dbgfs_bf;
+static void iwl_dbgfs_update_bf(struct ieee80211_vif *vif,
+				enum iwl_dbgfs_bf_mask param, int value)
+{
+	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
+	struct iwl_dbgfs_bf *dbgfs_bf = &mvmvif->dbgfs_bf;
 
 	dbgfs_bf->mask |= param;
 
-	चयन (param) अणु
-	हाल MVM_DEBUGFS_BF_ENERGY_DELTA:
+	switch (param) {
+	case MVM_DEBUGFS_BF_ENERGY_DELTA:
 		dbgfs_bf->bf_energy_delta = value;
-		अवरोध;
-	हाल MVM_DEBUGFS_BF_ROAMING_ENERGY_DELTA:
+		break;
+	case MVM_DEBUGFS_BF_ROAMING_ENERGY_DELTA:
 		dbgfs_bf->bf_roaming_energy_delta = value;
-		अवरोध;
-	हाल MVM_DEBUGFS_BF_ROAMING_STATE:
+		break;
+	case MVM_DEBUGFS_BF_ROAMING_STATE:
 		dbgfs_bf->bf_roaming_state = value;
-		अवरोध;
-	हाल MVM_DEBUGFS_BF_TEMP_THRESHOLD:
+		break;
+	case MVM_DEBUGFS_BF_TEMP_THRESHOLD:
 		dbgfs_bf->bf_temp_threshold = value;
-		अवरोध;
-	हाल MVM_DEBUGFS_BF_TEMP_FAST_FILTER:
+		break;
+	case MVM_DEBUGFS_BF_TEMP_FAST_FILTER:
 		dbgfs_bf->bf_temp_fast_filter = value;
-		अवरोध;
-	हाल MVM_DEBUGFS_BF_TEMP_SLOW_FILTER:
+		break;
+	case MVM_DEBUGFS_BF_TEMP_SLOW_FILTER:
 		dbgfs_bf->bf_temp_slow_filter = value;
-		अवरोध;
-	हाल MVM_DEBUGFS_BF_ENABLE_BEACON_FILTER:
+		break;
+	case MVM_DEBUGFS_BF_ENABLE_BEACON_FILTER:
 		dbgfs_bf->bf_enable_beacon_filter = value;
-		अवरोध;
-	हाल MVM_DEBUGFS_BF_DEBUG_FLAG:
+		break;
+	case MVM_DEBUGFS_BF_DEBUG_FLAG:
 		dbgfs_bf->bf_debug_flag = value;
-		अवरोध;
-	हाल MVM_DEBUGFS_BF_ESCAPE_TIMER:
-		dbgfs_bf->bf_escape_समयr = value;
-		अवरोध;
-	हाल MVM_DEBUGFS_BA_ENABLE_BEACON_ABORT:
-		dbgfs_bf->ba_enable_beacon_पात = value;
-		अवरोध;
-	हाल MVM_DEBUGFS_BA_ESCAPE_TIMER:
-		dbgfs_bf->ba_escape_समयr = value;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	case MVM_DEBUGFS_BF_ESCAPE_TIMER:
+		dbgfs_bf->bf_escape_timer = value;
+		break;
+	case MVM_DEBUGFS_BA_ENABLE_BEACON_ABORT:
+		dbgfs_bf->ba_enable_beacon_abort = value;
+		break;
+	case MVM_DEBUGFS_BA_ESCAPE_TIMER:
+		dbgfs_bf->ba_escape_timer = value;
+		break;
+	}
+}
 
-अटल sमाप_प्रकार iwl_dbgfs_bf_params_ग_लिखो(काष्ठा ieee80211_vअगर *vअगर, अक्षर *buf,
-					 माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
-	काष्ठा iwl_mvm *mvm = mvmvअगर->mvm;
-	क्रमागत iwl_dbgfs_bf_mask param;
-	पूर्णांक value, ret = 0;
+static ssize_t iwl_dbgfs_bf_params_write(struct ieee80211_vif *vif, char *buf,
+					 size_t count, loff_t *ppos)
+{
+	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
+	struct iwl_mvm *mvm = mvmvif->mvm;
+	enum iwl_dbgfs_bf_mask param;
+	int value, ret = 0;
 
-	अगर (!म_भेदन("bf_energy_delta=", buf, 16)) अणु
-		अगर (माला_पूछो(buf+16, "%d", &value) != 1)
-			वापस -EINVAL;
-		अगर (value < IWL_BF_ENERGY_DELTA_MIN ||
+	if (!strncmp("bf_energy_delta=", buf, 16)) {
+		if (sscanf(buf+16, "%d", &value) != 1)
+			return -EINVAL;
+		if (value < IWL_BF_ENERGY_DELTA_MIN ||
 		    value > IWL_BF_ENERGY_DELTA_MAX)
-			वापस -EINVAL;
+			return -EINVAL;
 		param = MVM_DEBUGFS_BF_ENERGY_DELTA;
-	पूर्ण अन्यथा अगर (!म_भेदन("bf_roaming_energy_delta=", buf, 24)) अणु
-		अगर (माला_पूछो(buf+24, "%d", &value) != 1)
-			वापस -EINVAL;
-		अगर (value < IWL_BF_ROAMING_ENERGY_DELTA_MIN ||
+	} else if (!strncmp("bf_roaming_energy_delta=", buf, 24)) {
+		if (sscanf(buf+24, "%d", &value) != 1)
+			return -EINVAL;
+		if (value < IWL_BF_ROAMING_ENERGY_DELTA_MIN ||
 		    value > IWL_BF_ROAMING_ENERGY_DELTA_MAX)
-			वापस -EINVAL;
+			return -EINVAL;
 		param = MVM_DEBUGFS_BF_ROAMING_ENERGY_DELTA;
-	पूर्ण अन्यथा अगर (!म_भेदन("bf_roaming_state=", buf, 17)) अणु
-		अगर (माला_पूछो(buf+17, "%d", &value) != 1)
-			वापस -EINVAL;
-		अगर (value < IWL_BF_ROAMING_STATE_MIN ||
+	} else if (!strncmp("bf_roaming_state=", buf, 17)) {
+		if (sscanf(buf+17, "%d", &value) != 1)
+			return -EINVAL;
+		if (value < IWL_BF_ROAMING_STATE_MIN ||
 		    value > IWL_BF_ROAMING_STATE_MAX)
-			वापस -EINVAL;
+			return -EINVAL;
 		param = MVM_DEBUGFS_BF_ROAMING_STATE;
-	पूर्ण अन्यथा अगर (!म_भेदन("bf_temp_threshold=", buf, 18)) अणु
-		अगर (माला_पूछो(buf+18, "%d", &value) != 1)
-			वापस -EINVAL;
-		अगर (value < IWL_BF_TEMP_THRESHOLD_MIN ||
+	} else if (!strncmp("bf_temp_threshold=", buf, 18)) {
+		if (sscanf(buf+18, "%d", &value) != 1)
+			return -EINVAL;
+		if (value < IWL_BF_TEMP_THRESHOLD_MIN ||
 		    value > IWL_BF_TEMP_THRESHOLD_MAX)
-			वापस -EINVAL;
+			return -EINVAL;
 		param = MVM_DEBUGFS_BF_TEMP_THRESHOLD;
-	पूर्ण अन्यथा अगर (!म_भेदन("bf_temp_fast_filter=", buf, 20)) अणु
-		अगर (माला_पूछो(buf+20, "%d", &value) != 1)
-			वापस -EINVAL;
-		अगर (value < IWL_BF_TEMP_FAST_FILTER_MIN ||
+	} else if (!strncmp("bf_temp_fast_filter=", buf, 20)) {
+		if (sscanf(buf+20, "%d", &value) != 1)
+			return -EINVAL;
+		if (value < IWL_BF_TEMP_FAST_FILTER_MIN ||
 		    value > IWL_BF_TEMP_FAST_FILTER_MAX)
-			वापस -EINVAL;
+			return -EINVAL;
 		param = MVM_DEBUGFS_BF_TEMP_FAST_FILTER;
-	पूर्ण अन्यथा अगर (!म_भेदन("bf_temp_slow_filter=", buf, 20)) अणु
-		अगर (माला_पूछो(buf+20, "%d", &value) != 1)
-			वापस -EINVAL;
-		अगर (value < IWL_BF_TEMP_SLOW_FILTER_MIN ||
+	} else if (!strncmp("bf_temp_slow_filter=", buf, 20)) {
+		if (sscanf(buf+20, "%d", &value) != 1)
+			return -EINVAL;
+		if (value < IWL_BF_TEMP_SLOW_FILTER_MIN ||
 		    value > IWL_BF_TEMP_SLOW_FILTER_MAX)
-			वापस -EINVAL;
+			return -EINVAL;
 		param = MVM_DEBUGFS_BF_TEMP_SLOW_FILTER;
-	पूर्ण अन्यथा अगर (!म_भेदन("bf_enable_beacon_filter=", buf, 24)) अणु
-		अगर (माला_पूछो(buf+24, "%d", &value) != 1)
-			वापस -EINVAL;
-		अगर (value < 0 || value > 1)
-			वापस -EINVAL;
+	} else if (!strncmp("bf_enable_beacon_filter=", buf, 24)) {
+		if (sscanf(buf+24, "%d", &value) != 1)
+			return -EINVAL;
+		if (value < 0 || value > 1)
+			return -EINVAL;
 		param = MVM_DEBUGFS_BF_ENABLE_BEACON_FILTER;
-	पूर्ण अन्यथा अगर (!म_भेदन("bf_debug_flag=", buf, 14)) अणु
-		अगर (माला_पूछो(buf+14, "%d", &value) != 1)
-			वापस -EINVAL;
-		अगर (value < 0 || value > 1)
-			वापस -EINVAL;
+	} else if (!strncmp("bf_debug_flag=", buf, 14)) {
+		if (sscanf(buf+14, "%d", &value) != 1)
+			return -EINVAL;
+		if (value < 0 || value > 1)
+			return -EINVAL;
 		param = MVM_DEBUGFS_BF_DEBUG_FLAG;
-	पूर्ण अन्यथा अगर (!म_भेदन("bf_escape_timer=", buf, 16)) अणु
-		अगर (माला_पूछो(buf+16, "%d", &value) != 1)
-			वापस -EINVAL;
-		अगर (value < IWL_BF_ESCAPE_TIMER_MIN ||
+	} else if (!strncmp("bf_escape_timer=", buf, 16)) {
+		if (sscanf(buf+16, "%d", &value) != 1)
+			return -EINVAL;
+		if (value < IWL_BF_ESCAPE_TIMER_MIN ||
 		    value > IWL_BF_ESCAPE_TIMER_MAX)
-			वापस -EINVAL;
+			return -EINVAL;
 		param = MVM_DEBUGFS_BF_ESCAPE_TIMER;
-	पूर्ण अन्यथा अगर (!म_भेदन("ba_escape_timer=", buf, 16)) अणु
-		अगर (माला_पूछो(buf+16, "%d", &value) != 1)
-			वापस -EINVAL;
-		अगर (value < IWL_BA_ESCAPE_TIMER_MIN ||
+	} else if (!strncmp("ba_escape_timer=", buf, 16)) {
+		if (sscanf(buf+16, "%d", &value) != 1)
+			return -EINVAL;
+		if (value < IWL_BA_ESCAPE_TIMER_MIN ||
 		    value > IWL_BA_ESCAPE_TIMER_MAX)
-			वापस -EINVAL;
+			return -EINVAL;
 		param = MVM_DEBUGFS_BA_ESCAPE_TIMER;
-	पूर्ण अन्यथा अगर (!म_भेदन("ba_enable_beacon_abort=", buf, 23)) अणु
-		अगर (माला_पूछो(buf+23, "%d", &value) != 1)
-			वापस -EINVAL;
-		अगर (value < 0 || value > 1)
-			वापस -EINVAL;
+	} else if (!strncmp("ba_enable_beacon_abort=", buf, 23)) {
+		if (sscanf(buf+23, "%d", &value) != 1)
+			return -EINVAL;
+		if (value < 0 || value > 1)
+			return -EINVAL;
 		param = MVM_DEBUGFS_BA_ENABLE_BEACON_ABORT;
-	पूर्ण अन्यथा अणु
-		वापस -EINVAL;
-	पूर्ण
+	} else {
+		return -EINVAL;
+	}
 
 	mutex_lock(&mvm->mutex);
-	iwl_dbgfs_update_bf(vअगर, param, value);
-	अगर (param == MVM_DEBUGFS_BF_ENABLE_BEACON_FILTER && !value)
-		ret = iwl_mvm_disable_beacon_filter(mvm, vअगर, 0);
-	अन्यथा
-		ret = iwl_mvm_enable_beacon_filter(mvm, vअगर, 0);
+	iwl_dbgfs_update_bf(vif, param, value);
+	if (param == MVM_DEBUGFS_BF_ENABLE_BEACON_FILTER && !value)
+		ret = iwl_mvm_disable_beacon_filter(mvm, vif, 0);
+	else
+		ret = iwl_mvm_enable_beacon_filter(mvm, vif, 0);
 	mutex_unlock(&mvm->mutex);
 
-	वापस ret ?: count;
-पूर्ण
+	return ret ?: count;
+}
 
-अटल sमाप_प्रकार iwl_dbgfs_bf_params_पढ़ो(काष्ठा file *file,
-					अक्षर __user *user_buf,
-					माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा ieee80211_vअगर *vअगर = file->निजी_data;
-	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
-	अक्षर buf[256];
-	पूर्णांक pos = 0;
-	स्थिर माप_प्रकार bufsz = माप(buf);
-	काष्ठा iwl_beacon_filter_cmd cmd = अणु
+static ssize_t iwl_dbgfs_bf_params_read(struct file *file,
+					char __user *user_buf,
+					size_t count, loff_t *ppos)
+{
+	struct ieee80211_vif *vif = file->private_data;
+	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
+	char buf[256];
+	int pos = 0;
+	const size_t bufsz = sizeof(buf);
+	struct iwl_beacon_filter_cmd cmd = {
 		IWL_BF_CMD_CONFIG_DEFAULTS,
 		.bf_enable_beacon_filter =
 			cpu_to_le32(IWL_BF_ENABLE_BEACON_FILTER_DEFAULT),
-		.ba_enable_beacon_पात =
+		.ba_enable_beacon_abort =
 			cpu_to_le32(IWL_BA_ENABLE_BEACON_ABORT_DEFAULT),
-	पूर्ण;
+	};
 
-	iwl_mvm_beacon_filter_debugfs_parameters(vअगर, &cmd);
-	अगर (mvmvअगर->bf_data.bf_enabled)
+	iwl_mvm_beacon_filter_debugfs_parameters(vif, &cmd);
+	if (mvmvif->bf_data.bf_enabled)
 		cmd.bf_enable_beacon_filter = cpu_to_le32(1);
-	अन्यथा
+	else
 		cmd.bf_enable_beacon_filter = 0;
 
-	pos += scnम_लिखो(buf+pos, bufsz-pos, "bf_energy_delta = %d\n",
+	pos += scnprintf(buf+pos, bufsz-pos, "bf_energy_delta = %d\n",
 			 le32_to_cpu(cmd.bf_energy_delta));
-	pos += scnम_लिखो(buf+pos, bufsz-pos, "bf_roaming_energy_delta = %d\n",
+	pos += scnprintf(buf+pos, bufsz-pos, "bf_roaming_energy_delta = %d\n",
 			 le32_to_cpu(cmd.bf_roaming_energy_delta));
-	pos += scnम_लिखो(buf+pos, bufsz-pos, "bf_roaming_state = %d\n",
+	pos += scnprintf(buf+pos, bufsz-pos, "bf_roaming_state = %d\n",
 			 le32_to_cpu(cmd.bf_roaming_state));
-	pos += scnम_लिखो(buf+pos, bufsz-pos, "bf_temp_threshold = %d\n",
+	pos += scnprintf(buf+pos, bufsz-pos, "bf_temp_threshold = %d\n",
 			 le32_to_cpu(cmd.bf_temp_threshold));
-	pos += scnम_लिखो(buf+pos, bufsz-pos, "bf_temp_fast_filter = %d\n",
+	pos += scnprintf(buf+pos, bufsz-pos, "bf_temp_fast_filter = %d\n",
 			 le32_to_cpu(cmd.bf_temp_fast_filter));
-	pos += scnम_लिखो(buf+pos, bufsz-pos, "bf_temp_slow_filter = %d\n",
+	pos += scnprintf(buf+pos, bufsz-pos, "bf_temp_slow_filter = %d\n",
 			 le32_to_cpu(cmd.bf_temp_slow_filter));
-	pos += scnम_लिखो(buf+pos, bufsz-pos, "bf_enable_beacon_filter = %d\n",
+	pos += scnprintf(buf+pos, bufsz-pos, "bf_enable_beacon_filter = %d\n",
 			 le32_to_cpu(cmd.bf_enable_beacon_filter));
-	pos += scnम_लिखो(buf+pos, bufsz-pos, "bf_debug_flag = %d\n",
+	pos += scnprintf(buf+pos, bufsz-pos, "bf_debug_flag = %d\n",
 			 le32_to_cpu(cmd.bf_debug_flag));
-	pos += scnम_लिखो(buf+pos, bufsz-pos, "bf_escape_timer = %d\n",
-			 le32_to_cpu(cmd.bf_escape_समयr));
-	pos += scnम_लिखो(buf+pos, bufsz-pos, "ba_escape_timer = %d\n",
-			 le32_to_cpu(cmd.ba_escape_समयr));
-	pos += scnम_लिखो(buf+pos, bufsz-pos, "ba_enable_beacon_abort = %d\n",
-			 le32_to_cpu(cmd.ba_enable_beacon_पात));
+	pos += scnprintf(buf+pos, bufsz-pos, "bf_escape_timer = %d\n",
+			 le32_to_cpu(cmd.bf_escape_timer));
+	pos += scnprintf(buf+pos, bufsz-pos, "ba_escape_timer = %d\n",
+			 le32_to_cpu(cmd.ba_escape_timer));
+	pos += scnprintf(buf+pos, bufsz-pos, "ba_enable_beacon_abort = %d\n",
+			 le32_to_cpu(cmd.ba_enable_beacon_abort));
 
-	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, pos);
-पूर्ण
+	return simple_read_from_buffer(user_buf, count, ppos, buf, pos);
+}
 
-अटल अंतरभूत अक्षर *iwl_dbgfs_is_match(अक्षर *name, अक्षर *buf)
-अणु
-	पूर्णांक len = म_माप(name);
+static inline char *iwl_dbgfs_is_match(char *name, char *buf)
+{
+	int len = strlen(name);
 
-	वापस !म_भेदन(name, buf, len) ? buf + len : शून्य;
-पूर्ण
+	return !strncmp(name, buf, len) ? buf + len : NULL;
+}
 
-अटल sमाप_प्रकार iwl_dbgfs_os_device_समयdअगरf_पढ़ो(काष्ठा file *file,
-						 अक्षर __user *user_buf,
-						 माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा ieee80211_vअगर *vअगर = file->निजी_data;
-	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
-	काष्ठा iwl_mvm *mvm = mvmvअगर->mvm;
+static ssize_t iwl_dbgfs_os_device_timediff_read(struct file *file,
+						 char __user *user_buf,
+						 size_t count, loff_t *ppos)
+{
+	struct ieee80211_vif *vif = file->private_data;
+	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
+	struct iwl_mvm *mvm = mvmvif->mvm;
 	u32 curr_gp2;
 	u64 curr_os;
-	s64 dअगरf;
-	अक्षर buf[64];
-	स्थिर माप_प्रकार bufsz = माप(buf);
-	पूर्णांक pos = 0;
+	s64 diff;
+	char buf[64];
+	const size_t bufsz = sizeof(buf);
+	int pos = 0;
 
 	mutex_lock(&mvm->mutex);
-	iwl_mvm_get_sync_समय(mvm, &curr_gp2, &curr_os);
+	iwl_mvm_get_sync_time(mvm, &curr_gp2, &curr_os);
 	mutex_unlock(&mvm->mutex);
 
-	करो_भाग(curr_os, NSEC_PER_USEC);
-	dअगरf = curr_os - curr_gp2;
-	pos += scnम_लिखो(buf + pos, bufsz - pos, "diff=%lld\n", dअगरf);
+	do_div(curr_os, NSEC_PER_USEC);
+	diff = curr_os - curr_gp2;
+	pos += scnprintf(buf + pos, bufsz - pos, "diff=%lld\n", diff);
 
-	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, pos);
-पूर्ण
+	return simple_read_from_buffer(user_buf, count, ppos, buf, pos);
+}
 
-अटल sमाप_प्रकार iwl_dbgfs_low_latency_ग_लिखो(काष्ठा ieee80211_vअगर *vअगर, अक्षर *buf,
-					   माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
-	काष्ठा iwl_mvm *mvm = mvmvअगर->mvm;
+static ssize_t iwl_dbgfs_low_latency_write(struct ieee80211_vif *vif, char *buf,
+					   size_t count, loff_t *ppos)
+{
+	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
+	struct iwl_mvm *mvm = mvmvif->mvm;
 	u8 value;
-	पूर्णांक ret;
+	int ret;
 
 	ret = kstrtou8(buf, 0, &value);
-	अगर (ret)
-		वापस ret;
-	अगर (value > 1)
-		वापस -EINVAL;
+	if (ret)
+		return ret;
+	if (value > 1)
+		return -EINVAL;
 
 	mutex_lock(&mvm->mutex);
-	iwl_mvm_update_low_latency(mvm, vअगर, value, LOW_LATENCY_DEBUGFS);
+	iwl_mvm_update_low_latency(mvm, vif, value, LOW_LATENCY_DEBUGFS);
 	mutex_unlock(&mvm->mutex);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार
-iwl_dbgfs_low_latency_क्रमce_ग_लिखो(काष्ठा ieee80211_vअगर *vअगर, अक्षर *buf,
-				  माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
-	काष्ठा iwl_mvm *mvm = mvmvअगर->mvm;
+static ssize_t
+iwl_dbgfs_low_latency_force_write(struct ieee80211_vif *vif, char *buf,
+				  size_t count, loff_t *ppos)
+{
+	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
+	struct iwl_mvm *mvm = mvmvif->mvm;
 	u8 value;
-	पूर्णांक ret;
+	int ret;
 
 	ret = kstrtou8(buf, 0, &value);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (value > NUM_LOW_LATENCY_FORCE)
-		वापस -EINVAL;
+	if (value > NUM_LOW_LATENCY_FORCE)
+		return -EINVAL;
 
 	mutex_lock(&mvm->mutex);
-	अगर (value == LOW_LATENCY_FORCE_UNSET) अणु
-		iwl_mvm_update_low_latency(mvm, vअगर, false,
+	if (value == LOW_LATENCY_FORCE_UNSET) {
+		iwl_mvm_update_low_latency(mvm, vif, false,
 					   LOW_LATENCY_DEBUGFS_FORCE);
-		iwl_mvm_update_low_latency(mvm, vअगर, false,
+		iwl_mvm_update_low_latency(mvm, vif, false,
 					   LOW_LATENCY_DEBUGFS_FORCE_ENABLE);
-	पूर्ण अन्यथा अणु
-		iwl_mvm_update_low_latency(mvm, vअगर,
+	} else {
+		iwl_mvm_update_low_latency(mvm, vif,
 					   value == LOW_LATENCY_FORCE_ON,
 					   LOW_LATENCY_DEBUGFS_FORCE);
-		iwl_mvm_update_low_latency(mvm, vअगर, true,
+		iwl_mvm_update_low_latency(mvm, vif, true,
 					   LOW_LATENCY_DEBUGFS_FORCE_ENABLE);
-	पूर्ण
+	}
 	mutex_unlock(&mvm->mutex);
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार iwl_dbgfs_low_latency_पढ़ो(काष्ठा file *file,
-					  अक्षर __user *user_buf,
-					  माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा ieee80211_vअगर *vअगर = file->निजी_data;
-	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
-	अक्षर क्रमmat[] = "traffic=%d\ndbgfs=%d\nvcmd=%d\nvif_type=%d\n"
+static ssize_t iwl_dbgfs_low_latency_read(struct file *file,
+					  char __user *user_buf,
+					  size_t count, loff_t *ppos)
+{
+	struct ieee80211_vif *vif = file->private_data;
+	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
+	char format[] = "traffic=%d\ndbgfs=%d\nvcmd=%d\nvif_type=%d\n"
 			"dbgfs_force_enable=%d\ndbgfs_force=%d\nactual=%d\n";
 
 	/*
-	 * all values in क्रमmat are boolean so the size of क्रमmat is enough
-	 * क्रम holding the result string
+	 * all values in format are boolean so the size of format is enough
+	 * for holding the result string
 	 */
-	अक्षर buf[माप(क्रमmat) + 1] = अणुपूर्ण;
-	पूर्णांक len;
+	char buf[sizeof(format) + 1] = {};
+	int len;
 
-	len = scnम_लिखो(buf, माप(buf) - 1, क्रमmat,
-			!!(mvmvअगर->low_latency & LOW_LATENCY_TRAFFIC),
-			!!(mvmvअगर->low_latency & LOW_LATENCY_DEBUGFS),
-			!!(mvmvअगर->low_latency & LOW_LATENCY_VCMD),
-			!!(mvmvअगर->low_latency & LOW_LATENCY_VIF_TYPE),
-			!!(mvmvअगर->low_latency &
+	len = scnprintf(buf, sizeof(buf) - 1, format,
+			!!(mvmvif->low_latency & LOW_LATENCY_TRAFFIC),
+			!!(mvmvif->low_latency & LOW_LATENCY_DEBUGFS),
+			!!(mvmvif->low_latency & LOW_LATENCY_VCMD),
+			!!(mvmvif->low_latency & LOW_LATENCY_VIF_TYPE),
+			!!(mvmvif->low_latency &
 			   LOW_LATENCY_DEBUGFS_FORCE_ENABLE),
-			!!(mvmvअगर->low_latency & LOW_LATENCY_DEBUGFS_FORCE),
-			!!(mvmvअगर->low_latency_actual));
-	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, len);
-पूर्ण
+			!!(mvmvif->low_latency & LOW_LATENCY_DEBUGFS_FORCE),
+			!!(mvmvif->low_latency_actual));
+	return simple_read_from_buffer(user_buf, count, ppos, buf, len);
+}
 
-अटल sमाप_प्रकार iwl_dbgfs_uapsd_misbehaving_पढ़ो(काष्ठा file *file,
-						अक्षर __user *user_buf,
-						माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा ieee80211_vअगर *vअगर = file->निजी_data;
-	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
-	अक्षर buf[20];
-	पूर्णांक len;
+static ssize_t iwl_dbgfs_uapsd_misbehaving_read(struct file *file,
+						char __user *user_buf,
+						size_t count, loff_t *ppos)
+{
+	struct ieee80211_vif *vif = file->private_data;
+	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
+	char buf[20];
+	int len;
 
-	len = प्र_लिखो(buf, "%pM\n", mvmvअगर->uapsd_misbehaving_bssid);
-	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, len);
-पूर्ण
+	len = sprintf(buf, "%pM\n", mvmvif->uapsd_misbehaving_bssid);
+	return simple_read_from_buffer(user_buf, count, ppos, buf, len);
+}
 
-अटल sमाप_प्रकार iwl_dbgfs_uapsd_misbehaving_ग_लिखो(काष्ठा ieee80211_vअगर *vअगर,
-						 अक्षर *buf, माप_प्रकार count,
+static ssize_t iwl_dbgfs_uapsd_misbehaving_write(struct ieee80211_vif *vif,
+						 char *buf, size_t count,
 						 loff_t *ppos)
-अणु
-	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
-	काष्ठा iwl_mvm *mvm = mvmvअगर->mvm;
+{
+	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
+	struct iwl_mvm *mvm = mvmvif->mvm;
 	bool ret;
 
 	mutex_lock(&mvm->mutex);
-	ret = mac_pton(buf, mvmvअगर->uapsd_misbehaving_bssid);
+	ret = mac_pton(buf, mvmvif->uapsd_misbehaving_bssid);
 	mutex_unlock(&mvm->mutex);
 
-	वापस ret ? count : -EINVAL;
-पूर्ण
+	return ret ? count : -EINVAL;
+}
 
-अटल sमाप_प्रकार iwl_dbgfs_rx_phyinfo_ग_लिखो(काष्ठा ieee80211_vअगर *vअगर, अक्षर *buf,
-					  माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
-	काष्ठा iwl_mvm *mvm = mvmvअगर->mvm;
-	काष्ठा ieee80211_chanctx_conf *chanctx_conf;
-	काष्ठा iwl_mvm_phy_ctxt *phy_ctxt;
+static ssize_t iwl_dbgfs_rx_phyinfo_write(struct ieee80211_vif *vif, char *buf,
+					  size_t count, loff_t *ppos)
+{
+	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
+	struct iwl_mvm *mvm = mvmvif->mvm;
+	struct ieee80211_chanctx_conf *chanctx_conf;
+	struct iwl_mvm_phy_ctxt *phy_ctxt;
 	u16 value;
-	पूर्णांक ret;
+	int ret;
 
 	ret = kstrtou16(buf, 0, &value);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	mutex_lock(&mvm->mutex);
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
-	chanctx_conf = rcu_dereference(vअगर->chanctx_conf);
-	/* make sure the channel context is asचिन्हित */
-	अगर (!chanctx_conf) अणु
-		rcu_पढ़ो_unlock();
+	chanctx_conf = rcu_dereference(vif->chanctx_conf);
+	/* make sure the channel context is assigned */
+	if (!chanctx_conf) {
+		rcu_read_unlock();
 		mutex_unlock(&mvm->mutex);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	phy_ctxt = &mvm->phy_ctxts[*(u16 *)chanctx_conf->drv_priv];
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
 	mvm->dbgfs_rx_phyinfo = value;
 
 	ret = iwl_mvm_phy_ctxt_changed(mvm, phy_ctxt, &chanctx_conf->min_def,
-				       chanctx_conf->rx_chains_अटल,
+				       chanctx_conf->rx_chains_static,
 				       chanctx_conf->rx_chains_dynamic);
 	mutex_unlock(&mvm->mutex);
 
-	वापस ret ?: count;
-पूर्ण
+	return ret ?: count;
+}
 
-अटल sमाप_प्रकार iwl_dbgfs_rx_phyinfo_पढ़ो(काष्ठा file *file,
-					 अक्षर __user *user_buf,
-					 माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा ieee80211_vअगर *vअगर = file->निजी_data;
-	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
-	अक्षर buf[8];
-	पूर्णांक len;
+static ssize_t iwl_dbgfs_rx_phyinfo_read(struct file *file,
+					 char __user *user_buf,
+					 size_t count, loff_t *ppos)
+{
+	struct ieee80211_vif *vif = file->private_data;
+	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
+	char buf[8];
+	int len;
 
-	len = scnम_लिखो(buf, माप(buf), "0x%04x\n",
-			mvmvअगर->mvm->dbgfs_rx_phyinfo);
+	len = scnprintf(buf, sizeof(buf), "0x%04x\n",
+			mvmvif->mvm->dbgfs_rx_phyinfo);
 
-	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, len);
-पूर्ण
+	return simple_read_from_buffer(user_buf, count, ppos, buf, len);
+}
 
-अटल व्योम iwl_dbgfs_quota_check(व्योम *data, u8 *mac,
-				  काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
-	पूर्णांक *ret = data;
+static void iwl_dbgfs_quota_check(void *data, u8 *mac,
+				  struct ieee80211_vif *vif)
+{
+	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
+	int *ret = data;
 
-	अगर (mvmvअगर->dbgfs_quota_min)
+	if (mvmvif->dbgfs_quota_min)
 		*ret = -EINVAL;
-पूर्ण
+}
 
-अटल sमाप_प्रकार iwl_dbgfs_quota_min_ग_लिखो(काष्ठा ieee80211_vअगर *vअगर, अक्षर *buf,
-					 माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
-	काष्ठा iwl_mvm *mvm = mvmvअगर->mvm;
+static ssize_t iwl_dbgfs_quota_min_write(struct ieee80211_vif *vif, char *buf,
+					 size_t count, loff_t *ppos)
+{
+	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
+	struct iwl_mvm *mvm = mvmvif->mvm;
 	u16 value;
-	पूर्णांक ret;
+	int ret;
 
 	ret = kstrtou16(buf, 0, &value);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (value > 95)
-		वापस -EINVAL;
+	if (value > 95)
+		return -EINVAL;
 
 	mutex_lock(&mvm->mutex);
 
-	mvmvअगर->dbgfs_quota_min = 0;
-	ieee80211_iterate_पूर्णांकerfaces(mvm->hw, IEEE80211_IFACE_ITER_NORMAL,
+	mvmvif->dbgfs_quota_min = 0;
+	ieee80211_iterate_interfaces(mvm->hw, IEEE80211_IFACE_ITER_NORMAL,
 				     iwl_dbgfs_quota_check, &ret);
-	अगर (ret == 0) अणु
-		mvmvअगर->dbgfs_quota_min = value;
-		iwl_mvm_update_quotas(mvm, false, शून्य);
-	पूर्ण
+	if (ret == 0) {
+		mvmvif->dbgfs_quota_min = value;
+		iwl_mvm_update_quotas(mvm, false, NULL);
+	}
 	mutex_unlock(&mvm->mutex);
 
-	वापस ret ?: count;
-पूर्ण
+	return ret ?: count;
+}
 
-अटल sमाप_प्रकार iwl_dbgfs_quota_min_पढ़ो(काष्ठा file *file,
-					अक्षर __user *user_buf,
-					माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा ieee80211_vअगर *vअगर = file->निजी_data;
-	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
-	अक्षर buf[10];
-	पूर्णांक len;
+static ssize_t iwl_dbgfs_quota_min_read(struct file *file,
+					char __user *user_buf,
+					size_t count, loff_t *ppos)
+{
+	struct ieee80211_vif *vif = file->private_data;
+	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
+	char buf[10];
+	int len;
 
-	len = scnम_लिखो(buf, माप(buf), "%d\n", mvmvअगर->dbgfs_quota_min);
+	len = scnprintf(buf, sizeof(buf), "%d\n", mvmvif->dbgfs_quota_min);
 
-	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, len);
-पूर्ण
+	return simple_read_from_buffer(user_buf, count, ppos, buf, len);
+}
 
-#घोषणा MVM_DEBUGFS_WRITE_खाता_OPS(name, bufsz) \
-	_MVM_DEBUGFS_WRITE_खाता_OPS(name, bufsz, काष्ठा ieee80211_vअगर)
-#घोषणा MVM_DEBUGFS_READ_WRITE_खाता_OPS(name, bufsz) \
-	_MVM_DEBUGFS_READ_WRITE_खाता_OPS(name, bufsz, काष्ठा ieee80211_vअगर)
-#घोषणा MVM_DEBUGFS_ADD_खाता_VIF(name, parent, mode) करो अणु		\
-		debugfs_create_file(#name, mode, parent, vअगर,		\
+#define MVM_DEBUGFS_WRITE_FILE_OPS(name, bufsz) \
+	_MVM_DEBUGFS_WRITE_FILE_OPS(name, bufsz, struct ieee80211_vif)
+#define MVM_DEBUGFS_READ_WRITE_FILE_OPS(name, bufsz) \
+	_MVM_DEBUGFS_READ_WRITE_FILE_OPS(name, bufsz, struct ieee80211_vif)
+#define MVM_DEBUGFS_ADD_FILE_VIF(name, parent, mode) do {		\
+		debugfs_create_file(#name, mode, parent, vif,		\
 				    &iwl_dbgfs_##name##_ops);		\
-	पूर्ण जबतक (0)
+	} while (0)
 
-MVM_DEBUGFS_READ_खाता_OPS(mac_params);
-MVM_DEBUGFS_READ_खाता_OPS(tx_pwr_lmt);
-MVM_DEBUGFS_READ_WRITE_खाता_OPS(pm_params, 32);
-MVM_DEBUGFS_READ_WRITE_खाता_OPS(bf_params, 256);
-MVM_DEBUGFS_READ_WRITE_खाता_OPS(low_latency, 10);
-MVM_DEBUGFS_WRITE_खाता_OPS(low_latency_क्रमce, 10);
-MVM_DEBUGFS_READ_WRITE_खाता_OPS(uapsd_misbehaving, 20);
-MVM_DEBUGFS_READ_WRITE_खाता_OPS(rx_phyinfo, 10);
-MVM_DEBUGFS_READ_WRITE_खाता_OPS(quota_min, 32);
-MVM_DEBUGFS_READ_खाता_OPS(os_device_समयdअगरf);
+MVM_DEBUGFS_READ_FILE_OPS(mac_params);
+MVM_DEBUGFS_READ_FILE_OPS(tx_pwr_lmt);
+MVM_DEBUGFS_READ_WRITE_FILE_OPS(pm_params, 32);
+MVM_DEBUGFS_READ_WRITE_FILE_OPS(bf_params, 256);
+MVM_DEBUGFS_READ_WRITE_FILE_OPS(low_latency, 10);
+MVM_DEBUGFS_WRITE_FILE_OPS(low_latency_force, 10);
+MVM_DEBUGFS_READ_WRITE_FILE_OPS(uapsd_misbehaving, 20);
+MVM_DEBUGFS_READ_WRITE_FILE_OPS(rx_phyinfo, 10);
+MVM_DEBUGFS_READ_WRITE_FILE_OPS(quota_min, 32);
+MVM_DEBUGFS_READ_FILE_OPS(os_device_timediff);
 
 
-व्योम iwl_mvm_vअगर_dbgfs_रेजिस्टर(काष्ठा iwl_mvm *mvm, काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा dentry *dbgfs_dir = vअगर->debugfs_dir;
-	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
-	अक्षर buf[100];
+void iwl_mvm_vif_dbgfs_register(struct iwl_mvm *mvm, struct ieee80211_vif *vif)
+{
+	struct dentry *dbgfs_dir = vif->debugfs_dir;
+	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
+	char buf[100];
 
 	/*
-	 * Check अगर debugfs directory alपढ़ोy exist beक्रमe creating it.
-	 * This may happen when, क्रम example, resetting hw or suspend-resume
+	 * Check if debugfs directory already exist before creating it.
+	 * This may happen when, for example, resetting hw or suspend-resume
 	 */
-	अगर (!dbgfs_dir || mvmvअगर->dbgfs_dir)
-		वापस;
+	if (!dbgfs_dir || mvmvif->dbgfs_dir)
+		return;
 
-	mvmvअगर->dbgfs_dir = debugfs_create_dir("iwlmvm", dbgfs_dir);
-	अगर (IS_ERR_OR_शून्य(mvmvअगर->dbgfs_dir)) अणु
+	mvmvif->dbgfs_dir = debugfs_create_dir("iwlmvm", dbgfs_dir);
+	if (IS_ERR_OR_NULL(mvmvif->dbgfs_dir)) {
 		IWL_ERR(mvm, "Failed to create debugfs directory under %pd\n",
 			dbgfs_dir);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (iwlmvm_mod_params.घातer_scheme != IWL_POWER_SCHEME_CAM &&
-	    ((vअगर->type == NL80211_IFTYPE_STATION && !vअगर->p2p) ||
-	     (vअगर->type == NL80211_IFTYPE_STATION && vअगर->p2p)))
-		MVM_DEBUGFS_ADD_खाता_VIF(pm_params, mvmvअगर->dbgfs_dir, 0600);
+	if (iwlmvm_mod_params.power_scheme != IWL_POWER_SCHEME_CAM &&
+	    ((vif->type == NL80211_IFTYPE_STATION && !vif->p2p) ||
+	     (vif->type == NL80211_IFTYPE_STATION && vif->p2p)))
+		MVM_DEBUGFS_ADD_FILE_VIF(pm_params, mvmvif->dbgfs_dir, 0600);
 
-	MVM_DEBUGFS_ADD_खाता_VIF(tx_pwr_lmt, mvmvअगर->dbgfs_dir, 0400);
-	MVM_DEBUGFS_ADD_खाता_VIF(mac_params, mvmvअगर->dbgfs_dir, 0400);
-	MVM_DEBUGFS_ADD_खाता_VIF(low_latency, mvmvअगर->dbgfs_dir, 0600);
-	MVM_DEBUGFS_ADD_खाता_VIF(low_latency_क्रमce, mvmvअगर->dbgfs_dir, 0600);
-	MVM_DEBUGFS_ADD_खाता_VIF(uapsd_misbehaving, mvmvअगर->dbgfs_dir, 0600);
-	MVM_DEBUGFS_ADD_खाता_VIF(rx_phyinfo, mvmvअगर->dbgfs_dir, 0600);
-	MVM_DEBUGFS_ADD_खाता_VIF(quota_min, mvmvअगर->dbgfs_dir, 0600);
-	MVM_DEBUGFS_ADD_खाता_VIF(os_device_समयdअगरf, mvmvअगर->dbgfs_dir, 0400);
+	MVM_DEBUGFS_ADD_FILE_VIF(tx_pwr_lmt, mvmvif->dbgfs_dir, 0400);
+	MVM_DEBUGFS_ADD_FILE_VIF(mac_params, mvmvif->dbgfs_dir, 0400);
+	MVM_DEBUGFS_ADD_FILE_VIF(low_latency, mvmvif->dbgfs_dir, 0600);
+	MVM_DEBUGFS_ADD_FILE_VIF(low_latency_force, mvmvif->dbgfs_dir, 0600);
+	MVM_DEBUGFS_ADD_FILE_VIF(uapsd_misbehaving, mvmvif->dbgfs_dir, 0600);
+	MVM_DEBUGFS_ADD_FILE_VIF(rx_phyinfo, mvmvif->dbgfs_dir, 0600);
+	MVM_DEBUGFS_ADD_FILE_VIF(quota_min, mvmvif->dbgfs_dir, 0600);
+	MVM_DEBUGFS_ADD_FILE_VIF(os_device_timediff, mvmvif->dbgfs_dir, 0400);
 
-	अगर (vअगर->type == NL80211_IFTYPE_STATION && !vअगर->p2p &&
-	    mvmvअगर == mvm->bf_allowed_vअगर)
-		MVM_DEBUGFS_ADD_खाता_VIF(bf_params, mvmvअगर->dbgfs_dir, 0600);
+	if (vif->type == NL80211_IFTYPE_STATION && !vif->p2p &&
+	    mvmvif == mvm->bf_allowed_vif)
+		MVM_DEBUGFS_ADD_FILE_VIF(bf_params, mvmvif->dbgfs_dir, 0600);
 
 	/*
-	 * Create symlink क्रम convenience poपूर्णांकing to पूर्णांकerface specअगरic
-	 * debugfs entries क्रम the driver. For example, under
-	 * /sys/kernel/debug/iwlwअगरi/0000\:02\:00.0/iwlmvm/
+	 * Create symlink for convenience pointing to interface specific
+	 * debugfs entries for the driver. For example, under
+	 * /sys/kernel/debug/iwlwifi/0000\:02\:00.0/iwlmvm/
 	 * find
 	 * netdev:wlan0 -> ../../../ieee80211/phy0/netdev:wlan0/iwlmvm/
 	 */
-	snम_लिखो(buf, 100, "../../../%pd3/%pd",
+	snprintf(buf, 100, "../../../%pd3/%pd",
 		 dbgfs_dir,
-		 mvmvअगर->dbgfs_dir);
+		 mvmvif->dbgfs_dir);
 
-	mvmvअगर->dbgfs_slink = debugfs_create_symlink(dbgfs_dir->d_name.name,
+	mvmvif->dbgfs_slink = debugfs_create_symlink(dbgfs_dir->d_name.name,
 						     mvm->debugfs_dir, buf);
-पूर्ण
+}
 
-व्योम iwl_mvm_vअगर_dbgfs_clean(काष्ठा iwl_mvm *mvm, काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
+void iwl_mvm_vif_dbgfs_clean(struct iwl_mvm *mvm, struct ieee80211_vif *vif)
+{
+	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
 
-	debugfs_हटाओ(mvmvअगर->dbgfs_slink);
-	mvmvअगर->dbgfs_slink = शून्य;
+	debugfs_remove(mvmvif->dbgfs_slink);
+	mvmvif->dbgfs_slink = NULL;
 
-	debugfs_हटाओ_recursive(mvmvअगर->dbgfs_dir);
-	mvmvअगर->dbgfs_dir = शून्य;
-पूर्ण
+	debugfs_remove_recursive(mvmvif->dbgfs_dir);
+	mvmvif->dbgfs_dir = NULL;
+}

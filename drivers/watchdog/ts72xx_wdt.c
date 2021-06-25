@@ -1,9 +1,8 @@
-<शैली गुरु>
 /*
- * Watchकरोg driver क्रम Technologic Systems TS-72xx based SBCs
- * (TS-7200, TS-7250 and TS-7260). These boards have बाह्यal
- * glue logic CPLD chip, which includes programmable watchकरोg
- * समयr.
+ * Watchdog driver for Technologic Systems TS-72xx based SBCs
+ * (TS-7200, TS-7250 and TS-7260). These boards have external
+ * glue logic CPLD chip, which includes programmable watchdog
+ * timer.
  *
  * Copyright (c) 2009 Mika Westerberg <mika.westerberg@iki.fi>
  *
@@ -14,163 +13,163 @@
  * warranty of any kind, whether express or implied.
  */
 
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/module.h>
-#समावेश <linux/watchकरोg.h>
-#समावेश <linux/पन.स>
+#include <linux/platform_device.h>
+#include <linux/module.h>
+#include <linux/watchdog.h>
+#include <linux/io.h>
 
-#घोषणा TS72XX_WDT_DEFAULT_TIMEOUT	30
+#define TS72XX_WDT_DEFAULT_TIMEOUT	30
 
-अटल पूर्णांक समयout;
-module_param(समयout, पूर्णांक, 0);
-MODULE_PARM_DESC(समयout, "Watchdog timeout in seconds.");
+static int timeout;
+module_param(timeout, int, 0);
+MODULE_PARM_DESC(timeout, "Watchdog timeout in seconds.");
 
-अटल bool nowayout = WATCHDOG_NOWAYOUT;
+static bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout, "Disable watchdog shutdown on close");
 
 /* priv->control_reg */
-#घोषणा TS72XX_WDT_CTRL_DISABLE		0x00
-#घोषणा TS72XX_WDT_CTRL_250MS		0x01
-#घोषणा TS72XX_WDT_CTRL_500MS		0x02
-#घोषणा TS72XX_WDT_CTRL_1SEC		0x03
-#घोषणा TS72XX_WDT_CTRL_RESERVED	0x04
-#घोषणा TS72XX_WDT_CTRL_2SEC		0x05
-#घोषणा TS72XX_WDT_CTRL_4SEC		0x06
-#घोषणा TS72XX_WDT_CTRL_8SEC		0x07
+#define TS72XX_WDT_CTRL_DISABLE		0x00
+#define TS72XX_WDT_CTRL_250MS		0x01
+#define TS72XX_WDT_CTRL_500MS		0x02
+#define TS72XX_WDT_CTRL_1SEC		0x03
+#define TS72XX_WDT_CTRL_RESERVED	0x04
+#define TS72XX_WDT_CTRL_2SEC		0x05
+#define TS72XX_WDT_CTRL_4SEC		0x06
+#define TS72XX_WDT_CTRL_8SEC		0x07
 
 /* priv->feed_reg */
-#घोषणा TS72XX_WDT_FEED_VAL		0x05
+#define TS72XX_WDT_FEED_VAL		0x05
 
-काष्ठा ts72xx_wdt_priv अणु
-	व्योम __iomem	*control_reg;
-	व्योम __iomem	*feed_reg;
-	काष्ठा watchकरोg_device wdd;
-	अचिन्हित अक्षर regval;
-पूर्ण;
+struct ts72xx_wdt_priv {
+	void __iomem	*control_reg;
+	void __iomem	*feed_reg;
+	struct watchdog_device wdd;
+	unsigned char regval;
+};
 
-अटल पूर्णांक ts72xx_wdt_start(काष्ठा watchकरोg_device *wdd)
-अणु
-	काष्ठा ts72xx_wdt_priv *priv = watchकरोg_get_drvdata(wdd);
+static int ts72xx_wdt_start(struct watchdog_device *wdd)
+{
+	struct ts72xx_wdt_priv *priv = watchdog_get_drvdata(wdd);
 
-	ग_लिखोb(TS72XX_WDT_FEED_VAL, priv->feed_reg);
-	ग_लिखोb(priv->regval, priv->control_reg);
+	writeb(TS72XX_WDT_FEED_VAL, priv->feed_reg);
+	writeb(priv->regval, priv->control_reg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ts72xx_wdt_stop(काष्ठा watchकरोg_device *wdd)
-अणु
-	काष्ठा ts72xx_wdt_priv *priv = watchकरोg_get_drvdata(wdd);
+static int ts72xx_wdt_stop(struct watchdog_device *wdd)
+{
+	struct ts72xx_wdt_priv *priv = watchdog_get_drvdata(wdd);
 
-	ग_लिखोb(TS72XX_WDT_FEED_VAL, priv->feed_reg);
-	ग_लिखोb(TS72XX_WDT_CTRL_DISABLE, priv->control_reg);
+	writeb(TS72XX_WDT_FEED_VAL, priv->feed_reg);
+	writeb(TS72XX_WDT_CTRL_DISABLE, priv->control_reg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ts72xx_wdt_ping(काष्ठा watchकरोg_device *wdd)
-अणु
-	काष्ठा ts72xx_wdt_priv *priv = watchकरोg_get_drvdata(wdd);
+static int ts72xx_wdt_ping(struct watchdog_device *wdd)
+{
+	struct ts72xx_wdt_priv *priv = watchdog_get_drvdata(wdd);
 
-	ग_लिखोb(TS72XX_WDT_FEED_VAL, priv->feed_reg);
+	writeb(TS72XX_WDT_FEED_VAL, priv->feed_reg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ts72xx_wdt_समय_रखोout(काष्ठा watchकरोg_device *wdd, अचिन्हित पूर्णांक to)
-अणु
-	काष्ठा ts72xx_wdt_priv *priv = watchकरोg_get_drvdata(wdd);
+static int ts72xx_wdt_settimeout(struct watchdog_device *wdd, unsigned int to)
+{
+	struct ts72xx_wdt_priv *priv = watchdog_get_drvdata(wdd);
 
-	अगर (to == 1) अणु
+	if (to == 1) {
 		priv->regval = TS72XX_WDT_CTRL_1SEC;
-	पूर्ण अन्यथा अगर (to == 2) अणु
+	} else if (to == 2) {
 		priv->regval = TS72XX_WDT_CTRL_2SEC;
-	पूर्ण अन्यथा अगर (to <= 4) अणु
+	} else if (to <= 4) {
 		priv->regval = TS72XX_WDT_CTRL_4SEC;
 		to = 4;
-	पूर्ण अन्यथा अणु
+	} else {
 		priv->regval = TS72XX_WDT_CTRL_8SEC;
-		अगर (to <= 8)
+		if (to <= 8)
 			to = 8;
-	पूर्ण
+	}
 
-	wdd->समयout = to;
+	wdd->timeout = to;
 
-	अगर (watchकरोg_active(wdd)) अणु
+	if (watchdog_active(wdd)) {
 		ts72xx_wdt_stop(wdd);
 		ts72xx_wdt_start(wdd);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा watchकरोg_info ts72xx_wdt_ident = अणु
+static const struct watchdog_info ts72xx_wdt_ident = {
 	.options		= WDIOF_KEEPALIVEPING |
 				  WDIOF_SETTIMEOUT |
 				  WDIOF_MAGICCLOSE,
 	.firmware_version	= 1,
 	.identity		= "TS-72XX WDT",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा watchकरोg_ops ts72xx_wdt_ops = अणु
+static const struct watchdog_ops ts72xx_wdt_ops = {
 	.owner		= THIS_MODULE,
 	.start		= ts72xx_wdt_start,
 	.stop		= ts72xx_wdt_stop,
 	.ping		= ts72xx_wdt_ping,
-	.set_समयout	= ts72xx_wdt_समय_रखोout,
-पूर्ण;
+	.set_timeout	= ts72xx_wdt_settimeout,
+};
 
-अटल पूर्णांक ts72xx_wdt_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा ts72xx_wdt_priv *priv;
-	काष्ठा watchकरोg_device *wdd;
-	पूर्णांक ret;
+static int ts72xx_wdt_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct ts72xx_wdt_priv *priv;
+	struct watchdog_device *wdd;
+	int ret;
 
-	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
-	priv->control_reg = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(priv->control_reg))
-		वापस PTR_ERR(priv->control_reg);
+	priv->control_reg = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(priv->control_reg))
+		return PTR_ERR(priv->control_reg);
 
-	priv->feed_reg = devm_platक्रमm_ioremap_resource(pdev, 1);
-	अगर (IS_ERR(priv->feed_reg))
-		वापस PTR_ERR(priv->feed_reg);
+	priv->feed_reg = devm_platform_ioremap_resource(pdev, 1);
+	if (IS_ERR(priv->feed_reg))
+		return PTR_ERR(priv->feed_reg);
 
 	wdd = &priv->wdd;
 	wdd->info = &ts72xx_wdt_ident;
 	wdd->ops = &ts72xx_wdt_ops;
-	wdd->min_समयout = 1;
+	wdd->min_timeout = 1;
 	wdd->max_hw_heartbeat_ms = 8000;
 	wdd->parent = dev;
 
-	watchकरोg_set_nowayout(wdd, nowayout);
+	watchdog_set_nowayout(wdd, nowayout);
 
-	wdd->समयout = TS72XX_WDT_DEFAULT_TIMEOUT;
-	watchकरोg_init_समयout(wdd, समयout, dev);
+	wdd->timeout = TS72XX_WDT_DEFAULT_TIMEOUT;
+	watchdog_init_timeout(wdd, timeout, dev);
 
-	watchकरोg_set_drvdata(wdd, priv);
+	watchdog_set_drvdata(wdd, priv);
 
-	ret = devm_watchकरोg_रेजिस्टर_device(dev, wdd);
-	अगर (ret)
-		वापस ret;
+	ret = devm_watchdog_register_device(dev, wdd);
+	if (ret)
+		return ret;
 
 	dev_info(dev, "TS-72xx Watchdog driver\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver ts72xx_wdt_driver = अणु
+static struct platform_driver ts72xx_wdt_driver = {
 	.probe		= ts72xx_wdt_probe,
-	.driver		= अणु
+	.driver		= {
 		.name	= "ts72xx-wdt",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(ts72xx_wdt_driver);
+module_platform_driver(ts72xx_wdt_driver);
 
 MODULE_AUTHOR("Mika Westerberg <mika.westerberg@iki.fi>");
 MODULE_DESCRIPTION("TS-72xx SBC Watchdog");

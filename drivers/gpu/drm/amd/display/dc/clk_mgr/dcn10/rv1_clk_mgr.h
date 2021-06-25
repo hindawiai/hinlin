@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,9 +23,9 @@
  *
  */
 
-#अगर_अघोषित __RV1_CLK_MGR_H__
-#घोषणा __RV1_CLK_MGR_H__
+#ifndef __RV1_CLK_MGR_H__
+#define __RV1_CLK_MGR_H__
 
-व्योम rv1_clk_mgr_स्थिरruct(काष्ठा dc_context *ctx, काष्ठा clk_mgr_पूर्णांकernal *clk_mgr, काष्ठा pp_smu_funcs *pp_smu);
+void rv1_clk_mgr_construct(struct dc_context *ctx, struct clk_mgr_internal *clk_mgr, struct pp_smu_funcs *pp_smu);
 
-#पूर्ण_अगर //__DCN10_CLK_MGR_H__
+#endif //__DCN10_CLK_MGR_H__

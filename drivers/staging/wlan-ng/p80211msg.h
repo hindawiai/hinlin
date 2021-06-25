@@ -1,8 +1,7 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: (GPL-2.0 OR MPL-1.1) */
+/* SPDX-License-Identifier: (GPL-2.0 OR MPL-1.1) */
 /* p80211msg.h
  *
- * Macros, स्थिरants, types, and funcs क्रम req and ind messages
+ * Macros, constants, types, and funcs for req and ind messages
  *
  * Copyright (C) 1999 AbsoluteValue Systems, Inc.  All Rights Reserved.
  * --------------------------------------------------------------------
@@ -16,17 +15,17 @@
  *
  *   Software distributed under the License is distributed on an "AS
  *   IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or
- *   implied. See the License क्रम the specअगरic language governing
+ *   implied. See the License for the specific language governing
  *   rights and limitations under the License.
  *
  *   Alternatively, the contents of this file may be used under the
  *   terms of the GNU Public License version 2 (the "GPL"), in which
- *   हाल the provisions of the GPL are applicable instead of the
+ *   case the provisions of the GPL are applicable instead of the
  *   above.  If you wish to allow the use of your version of this file
  *   only under the terms of the GPL and not to allow others to use
  *   your version of this file under the MPL, indicate your decision
  *   by deleting the provisions above and replace them with the notice
- *   and other provisions required by the GPL.  If you करो not delete
+ *   and other provisions required by the GPL.  If you do not delete
  *   the provisions above, a recipient may use your version of this
  *   file under either the MPL or the GPL.
  *
@@ -47,15 +46,15 @@
  * --------------------------------------------------------------------
  */
 
-#अगर_अघोषित _P80211MSG_H
-#घोषणा _P80211MSG_H
+#ifndef _P80211MSG_H
+#define _P80211MSG_H
 
-#घोषणा WLAN_DEVNAMELEN_MAX	16
+#define WLAN_DEVNAMELEN_MAX	16
 
-काष्ठा p80211msg अणु
+struct p80211msg {
 	u32 msgcode;
 	u32 msglen;
 	u8 devname[WLAN_DEVNAMELEN_MAX];
-पूर्ण __packed;
+} __packed;
 
-#पूर्ण_अगर /* _P80211MSG_H */
+#endif /* _P80211MSG_H */

@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,27 +23,27 @@
  *
  */
 
-#अगर_अघोषित __DAL_HW_DDC_H__
-#घोषणा __DAL_HW_DDC_H__
+#ifndef __DAL_HW_DDC_H__
+#define __DAL_HW_DDC_H__
 
-#समावेश "ddc_regs.h"
+#include "ddc_regs.h"
 
-काष्ठा hw_ddc अणु
-	काष्ठा hw_gpio base;
-	स्थिर काष्ठा ddc_रेजिस्टरs *regs;
-	स्थिर काष्ठा ddc_sh_mask *shअगरts;
-	स्थिर काष्ठा ddc_sh_mask *masks;
-पूर्ण;
+struct hw_ddc {
+	struct hw_gpio base;
+	const struct ddc_registers *regs;
+	const struct ddc_sh_mask *shifts;
+	const struct ddc_sh_mask *masks;
+};
 
-#घोषणा HW_DDC_FROM_BASE(hw_gpio) \
-	container_of((HW_GPIO_FROM_BASE(hw_gpio)), काष्ठा hw_ddc, base)
+#define HW_DDC_FROM_BASE(hw_gpio) \
+	container_of((HW_GPIO_FROM_BASE(hw_gpio)), struct hw_ddc, base)
 
-व्योम dal_hw_ddc_init(
-	काष्ठा hw_ddc **hw_ddc,
-	काष्ठा dc_context *ctx,
-	क्रमागत gpio_id id,
-	uपूर्णांक32_t en);
+void dal_hw_ddc_init(
+	struct hw_ddc **hw_ddc,
+	struct dc_context *ctx,
+	enum gpio_id id,
+	uint32_t en);
 
-काष्ठा hw_gpio_pin *dal_hw_ddc_get_pin(काष्ठा gpio *gpio);
+struct hw_gpio_pin *dal_hw_ddc_get_pin(struct gpio *gpio);
 
-#पूर्ण_अगर
+#endif

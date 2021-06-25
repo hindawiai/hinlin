@@ -1,10 +1,9 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित PLATFORM_DATA_SYSCON_H
-#घोषणा PLATFORM_DATA_SYSCON_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef PLATFORM_DATA_SYSCON_H
+#define PLATFORM_DATA_SYSCON_H
 
-काष्ठा syscon_platक्रमm_data अणु
-	स्थिर अक्षर *label;
-पूर्ण;
+struct syscon_platform_data {
+	const char *label;
+};
 
-#पूर्ण_अगर
+#endif

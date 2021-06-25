@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *	IPV4 GSO/GRO offload support
  *	Linux INET implementation
@@ -7,30 +6,30 @@
  *	GRE GSO support
  */
 
-#समावेश <linux/skbuff.h>
-#समावेश <linux/init.h>
-#समावेश <net/protocol.h>
-#समावेश <net/gre.h>
+#include <linux/skbuff.h>
+#include <linux/init.h>
+#include <net/protocol.h>
+#include <net/gre.h>
 
-अटल काष्ठा sk_buff *gre_gso_segment(काष्ठा sk_buff *skb,
+static struct sk_buff *gre_gso_segment(struct sk_buff *skb,
 				       netdev_features_t features)
-अणु
-	पूर्णांक tnl_hlen = skb_inner_mac_header(skb) - skb_transport_header(skb);
+{
+	int tnl_hlen = skb_inner_mac_header(skb) - skb_transport_header(skb);
 	bool need_csum, offload_csum, gso_partial, need_ipsec;
-	काष्ठा sk_buff *segs = ERR_PTR(-EINVAL);
+	struct sk_buff *segs = ERR_PTR(-EINVAL);
 	u16 mac_offset = skb->mac_header;
 	__be16 protocol = skb->protocol;
 	u16 mac_len = skb->mac_len;
-	पूर्णांक gre_offset, outer_hlen;
+	int gre_offset, outer_hlen;
 
-	अगर (!skb->encapsulation)
-		जाओ out;
+	if (!skb->encapsulation)
+		goto out;
 
-	अगर (unlikely(tnl_hlen < माप(काष्ठा gre_base_hdr)))
-		जाओ out;
+	if (unlikely(tnl_hlen < sizeof(struct gre_base_hdr)))
+		goto out;
 
-	अगर (unlikely(!pskb_may_pull(skb, tnl_hlen)))
-		जाओ out;
+	if (unlikely(!pskb_may_pull(skb, tnl_hlen)))
+		goto out;
 
 	/* setup inner skb. */
 	skb->encapsulation = 0;
@@ -45,36 +44,36 @@
 	skb->encap_hdr_csum = need_csum;
 
 	features &= skb->dev->hw_enc_features;
-	अगर (need_csum)
+	if (need_csum)
 		features &= ~NETIF_F_SCTP_CRC;
 
 	need_ipsec = skb_dst(skb) && dst_xfrm(skb_dst(skb));
-	/* Try to offload checksum अगर possible */
+	/* Try to offload checksum if possible */
 	offload_csum = !!(need_csum && !need_ipsec &&
 			  (skb->dev->features & NETIF_F_HW_CSUM));
 
 	/* segment inner packet. */
 	segs = skb_mac_gso_segment(skb, features);
-	अगर (IS_ERR_OR_शून्य(segs)) अणु
+	if (IS_ERR_OR_NULL(segs)) {
 		skb_gso_error_unwind(skb, protocol, tnl_hlen, mac_offset,
 				     mac_len);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	gso_partial = !!(skb_shinfo(segs)->gso_type & SKB_GSO_PARTIAL);
 
 	outer_hlen = skb_tnl_header_len(skb);
 	gre_offset = outer_hlen - tnl_hlen;
 	skb = segs;
-	करो अणु
-		काष्ठा gre_base_hdr *greh;
+	do {
+		struct gre_base_hdr *greh;
 		__sum16 *pcsum;
 
-		/* Set up inner headers अगर we are offloading inner checksum */
-		अगर (skb->ip_summed == CHECKSUM_PARTIAL) अणु
+		/* Set up inner headers if we are offloading inner checksum */
+		if (skb->ip_summed == CHECKSUM_PARTIAL) {
 			skb_reset_inner_headers(skb);
 			skb->encapsulation = 1;
-		पूर्ण
+		}
 
 		skb->mac_len = mac_len;
 		skb->protocol = protocol;
@@ -84,143 +83,143 @@
 		skb_set_network_header(skb, mac_len);
 		skb_set_transport_header(skb, gre_offset);
 
-		अगर (!need_csum)
-			जारी;
+		if (!need_csum)
+			continue;
 
-		greh = (काष्ठा gre_base_hdr *)skb_transport_header(skb);
+		greh = (struct gre_base_hdr *)skb_transport_header(skb);
 		pcsum = (__sum16 *)(greh + 1);
 
-		अगर (gso_partial && skb_is_gso(skb)) अणु
-			अचिन्हित पूर्णांक partial_adj;
+		if (gso_partial && skb_is_gso(skb)) {
+			unsigned int partial_adj;
 
-			/* Adjust checksum to account क्रम the fact that
+			/* Adjust checksum to account for the fact that
 			 * the partial checksum is based on actual size
 			 * whereas headers should be based on MSS size.
 			 */
 			partial_adj = skb->len + skb_headroom(skb) -
 				      SKB_GSO_CB(skb)->data_offset -
 				      skb_shinfo(skb)->gso_size;
-			*pcsum = ~csum_fold((__क्रमce __wsum)htonl(partial_adj));
-		पूर्ण अन्यथा अणु
+			*pcsum = ~csum_fold((__force __wsum)htonl(partial_adj));
+		} else {
 			*pcsum = 0;
-		पूर्ण
+		}
 
 		*(pcsum + 1) = 0;
-		अगर (skb->encapsulation || !offload_csum) अणु
+		if (skb->encapsulation || !offload_csum) {
 			*pcsum = gso_make_checksum(skb, 0);
-		पूर्ण अन्यथा अणु
+		} else {
 			skb->ip_summed = CHECKSUM_PARTIAL;
 			skb->csum_start = skb_transport_header(skb) - skb->head;
-			skb->csum_offset = माप(*greh);
-		पूर्ण
-	पूर्ण जबतक ((skb = skb->next));
+			skb->csum_offset = sizeof(*greh);
+		}
+	} while ((skb = skb->next));
 out:
-	वापस segs;
-पूर्ण
+	return segs;
+}
 
-अटल काष्ठा sk_buff *gre_gro_receive(काष्ठा list_head *head,
-				       काष्ठा sk_buff *skb)
-अणु
-	काष्ठा sk_buff *pp = शून्य;
-	काष्ठा sk_buff *p;
-	स्थिर काष्ठा gre_base_hdr *greh;
-	अचिन्हित पूर्णांक hlen, grehlen;
-	अचिन्हित पूर्णांक off;
-	पूर्णांक flush = 1;
-	काष्ठा packet_offload *ptype;
+static struct sk_buff *gre_gro_receive(struct list_head *head,
+				       struct sk_buff *skb)
+{
+	struct sk_buff *pp = NULL;
+	struct sk_buff *p;
+	const struct gre_base_hdr *greh;
+	unsigned int hlen, grehlen;
+	unsigned int off;
+	int flush = 1;
+	struct packet_offload *ptype;
 	__be16 type;
 
-	अगर (NAPI_GRO_CB(skb)->encap_mark)
-		जाओ out;
+	if (NAPI_GRO_CB(skb)->encap_mark)
+		goto out;
 
 	NAPI_GRO_CB(skb)->encap_mark = 1;
 
 	off = skb_gro_offset(skb);
-	hlen = off + माप(*greh);
+	hlen = off + sizeof(*greh);
 	greh = skb_gro_header_fast(skb, off);
-	अगर (skb_gro_header_hard(skb, hlen)) अणु
+	if (skb_gro_header_hard(skb, hlen)) {
 		greh = skb_gro_header_slow(skb, hlen, off);
-		अगर (unlikely(!greh))
-			जाओ out;
-	पूर्ण
+		if (unlikely(!greh))
+			goto out;
+	}
 
 	/* Only support version 0 and K (key), C (csum) flags. Note that
-	 * although the support क्रम the S (seq#) flag can be added easily
-	 * क्रम GRO, this is problematic क्रम GSO hence can not be enabled
-	 * here because a GRO pkt may end up in the क्रमwarding path, thus
-	 * requiring GSO support to अवरोध it up correctly.
+	 * although the support for the S (seq#) flag can be added easily
+	 * for GRO, this is problematic for GSO hence can not be enabled
+	 * here because a GRO pkt may end up in the forwarding path, thus
+	 * requiring GSO support to break it up correctly.
 	 */
-	अगर ((greh->flags & ~(GRE_KEY|GRE_CSUM)) != 0)
-		जाओ out;
+	if ((greh->flags & ~(GRE_KEY|GRE_CSUM)) != 0)
+		goto out;
 
-	/* We can only support GRE_CSUM अगर we can track the location of
-	 * the GRE header.  In the हाल of FOU/GUE we cannot because the
+	/* We can only support GRE_CSUM if we can track the location of
+	 * the GRE header.  In the case of FOU/GUE we cannot because the
 	 * outer UDP header displaces the GRE header leaving us in a state
 	 * of limbo.
 	 */
-	अगर ((greh->flags & GRE_CSUM) && NAPI_GRO_CB(skb)->is_fou)
-		जाओ out;
+	if ((greh->flags & GRE_CSUM) && NAPI_GRO_CB(skb)->is_fou)
+		goto out;
 
 	type = greh->protocol;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	ptype = gro_find_receive_by_type(type);
-	अगर (!ptype)
-		जाओ out_unlock;
+	if (!ptype)
+		goto out_unlock;
 
 	grehlen = GRE_HEADER_SECTION;
 
-	अगर (greh->flags & GRE_KEY)
+	if (greh->flags & GRE_KEY)
 		grehlen += GRE_HEADER_SECTION;
 
-	अगर (greh->flags & GRE_CSUM)
+	if (greh->flags & GRE_CSUM)
 		grehlen += GRE_HEADER_SECTION;
 
 	hlen = off + grehlen;
-	अगर (skb_gro_header_hard(skb, hlen)) अणु
+	if (skb_gro_header_hard(skb, hlen)) {
 		greh = skb_gro_header_slow(skb, hlen, off);
-		अगर (unlikely(!greh))
-			जाओ out_unlock;
-	पूर्ण
+		if (unlikely(!greh))
+			goto out_unlock;
+	}
 
 	/* Don't bother verifying checksum if we're going to flush anyway. */
-	अगर ((greh->flags & GRE_CSUM) && !NAPI_GRO_CB(skb)->flush) अणु
-		अगर (skb_gro_checksum_simple_validate(skb))
-			जाओ out_unlock;
+	if ((greh->flags & GRE_CSUM) && !NAPI_GRO_CB(skb)->flush) {
+		if (skb_gro_checksum_simple_validate(skb))
+			goto out_unlock;
 
 		skb_gro_checksum_try_convert(skb, IPPROTO_GRE,
-					     null_compute_pseuकरो);
-	पूर्ण
+					     null_compute_pseudo);
+	}
 
-	list_क्रम_each_entry(p, head, list) अणु
-		स्थिर काष्ठा gre_base_hdr *greh2;
+	list_for_each_entry(p, head, list) {
+		const struct gre_base_hdr *greh2;
 
-		अगर (!NAPI_GRO_CB(p)->same_flow)
-			जारी;
+		if (!NAPI_GRO_CB(p)->same_flow)
+			continue;
 
 		/* The following checks are needed to ensure only pkts
-		 * from the same tunnel are considered क्रम aggregation.
-		 * The criteria क्रम "the same tunnel" includes:
+		 * from the same tunnel are considered for aggregation.
+		 * The criteria for "the same tunnel" includes:
 		 * 1) same version (we only support version 0 here)
-		 * 2) same protocol (we only support ETH_P_IP क्रम now)
+		 * 2) same protocol (we only support ETH_P_IP for now)
 		 * 3) same set of flags
-		 * 4) same key अगर the key field is present.
+		 * 4) same key if the key field is present.
 		 */
-		greh2 = (काष्ठा gre_base_hdr *)(p->data + off);
+		greh2 = (struct gre_base_hdr *)(p->data + off);
 
-		अगर (greh2->flags != greh->flags ||
-		    greh2->protocol != greh->protocol) अणु
+		if (greh2->flags != greh->flags ||
+		    greh2->protocol != greh->protocol) {
 			NAPI_GRO_CB(p)->same_flow = 0;
-			जारी;
-		पूर्ण
-		अगर (greh->flags & GRE_KEY) अणु
+			continue;
+		}
+		if (greh->flags & GRE_KEY) {
 			/* compare keys */
-			अगर (*(__be32 *)(greh2+1) != *(__be32 *)(greh+1)) अणु
+			if (*(__be32 *)(greh2+1) != *(__be32 *)(greh+1)) {
 				NAPI_GRO_CB(p)->same_flow = 0;
-				जारी;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				continue;
+			}
+		}
+	}
 
 	skb_gro_pull(skb, grehlen);
 
@@ -231,65 +230,65 @@ out:
 	flush = 0;
 
 out_unlock:
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 out:
 	skb_gro_flush_final(skb, pp, flush);
 
-	वापस pp;
-पूर्ण
+	return pp;
+}
 
-अटल पूर्णांक gre_gro_complete(काष्ठा sk_buff *skb, पूर्णांक nhoff)
-अणु
-	काष्ठा gre_base_hdr *greh = (काष्ठा gre_base_hdr *)(skb->data + nhoff);
-	काष्ठा packet_offload *ptype;
-	अचिन्हित पूर्णांक grehlen = माप(*greh);
-	पूर्णांक err = -ENOENT;
+static int gre_gro_complete(struct sk_buff *skb, int nhoff)
+{
+	struct gre_base_hdr *greh = (struct gre_base_hdr *)(skb->data + nhoff);
+	struct packet_offload *ptype;
+	unsigned int grehlen = sizeof(*greh);
+	int err = -ENOENT;
 	__be16 type;
 
 	skb->encapsulation = 1;
 	skb_shinfo(skb)->gso_type = SKB_GSO_GRE;
 
 	type = greh->protocol;
-	अगर (greh->flags & GRE_KEY)
+	if (greh->flags & GRE_KEY)
 		grehlen += GRE_HEADER_SECTION;
 
-	अगर (greh->flags & GRE_CSUM)
+	if (greh->flags & GRE_CSUM)
 		grehlen += GRE_HEADER_SECTION;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	ptype = gro_find_complete_by_type(type);
-	अगर (ptype)
+	if (ptype)
 		err = ptype->callbacks.gro_complete(skb, nhoff + grehlen);
 
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
 	skb_set_inner_mac_header(skb, nhoff + grehlen);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल स्थिर काष्ठा net_offload gre_offload = अणु
-	.callbacks = अणु
+static const struct net_offload gre_offload = {
+	.callbacks = {
 		.gso_segment = gre_gso_segment,
 		.gro_receive = gre_gro_receive,
 		.gro_complete = gre_gro_complete,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init gre_offload_init(व्योम)
-अणु
-	पूर्णांक err;
+static int __init gre_offload_init(void)
+{
+	int err;
 
 	err = inet_add_offload(&gre_offload, IPPROTO_GRE);
-#अगर IS_ENABLED(CONFIG_IPV6)
-	अगर (err)
-		वापस err;
+#if IS_ENABLED(CONFIG_IPV6)
+	if (err)
+		return err;
 
 	err = inet6_add_offload(&gre_offload, IPPROTO_GRE);
-	अगर (err)
+	if (err)
 		inet_del_offload(&gre_offload, IPPROTO_GRE);
-#पूर्ण_अगर
+#endif
 
-	वापस err;
-पूर्ण
+	return err;
+}
 device_initcall(gre_offload_init);

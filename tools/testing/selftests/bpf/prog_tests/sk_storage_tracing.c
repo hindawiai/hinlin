@@ -1,136 +1,135 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2020 Facebook */
 
-#समावेश <sys/types.h>
-#समावेश <bpf/bpf.h>
-#समावेश <bpf/libbpf.h>
-#समावेश "test_progs.h"
-#समावेश "network_helpers.h"
-#समावेश "test_sk_storage_trace_itself.skel.h"
-#समावेश "test_sk_storage_tracing.skel.h"
+#include <sys/types.h>
+#include <bpf/bpf.h>
+#include <bpf/libbpf.h>
+#include "test_progs.h"
+#include "network_helpers.h"
+#include "test_sk_storage_trace_itself.skel.h"
+#include "test_sk_storage_tracing.skel.h"
 
-#घोषणा LO_ADDR6 "::1"
-#घोषणा TEST_COMM "test_progs"
+#define LO_ADDR6 "::1"
+#define TEST_COMM "test_progs"
 
-काष्ठा sk_stg अणु
+struct sk_stg {
 	__u32 pid;
-	__u32 last_notबंद_state;
-	अक्षर comm[16];
-पूर्ण;
+	__u32 last_notclose_state;
+	char comm[16];
+};
 
-अटल काष्ठा test_sk_storage_tracing *skel;
-अटल __u32 duration;
-अटल pid_t my_pid;
+static struct test_sk_storage_tracing *skel;
+static __u32 duration;
+static pid_t my_pid;
 
-अटल पूर्णांक check_sk_stg(पूर्णांक sk_fd, __u32 expected_state)
-अणु
-	काष्ठा sk_stg sk_stg;
-	पूर्णांक err;
+static int check_sk_stg(int sk_fd, __u32 expected_state)
+{
+	struct sk_stg sk_stg;
+	int err;
 
 	err = bpf_map_lookup_elem(bpf_map__fd(skel->maps.sk_stg_map), &sk_fd,
 				  &sk_stg);
-	अगर (!ASSERT_OK(err, "map_lookup(sk_stg_map)"))
-		वापस -1;
+	if (!ASSERT_OK(err, "map_lookup(sk_stg_map)"))
+		return -1;
 
-	अगर (!ASSERT_EQ(sk_stg.last_notबंद_state, expected_state,
+	if (!ASSERT_EQ(sk_stg.last_notclose_state, expected_state,
 		       "last_notclose_state"))
-		वापस -1;
+		return -1;
 
-	अगर (!ASSERT_EQ(sk_stg.pid, my_pid, "pid"))
-		वापस -1;
+	if (!ASSERT_EQ(sk_stg.pid, my_pid, "pid"))
+		return -1;
 
-	अगर (!ASSERT_STREQ(sk_stg.comm, skel->bss->task_comm, "task_comm"))
-		वापस -1;
+	if (!ASSERT_STREQ(sk_stg.comm, skel->bss->task_comm, "task_comm"))
+		return -1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम करो_test(व्योम)
-अणु
-	पूर्णांक listen_fd = -1, passive_fd = -1, active_fd = -1, value = 1, err;
-	अक्षर abyte;
+static void do_test(void)
+{
+	int listen_fd = -1, passive_fd = -1, active_fd = -1, value = 1, err;
+	char abyte;
 
 	listen_fd = start_server(AF_INET6, SOCK_STREAM, LO_ADDR6, 0, 0);
-	अगर (CHECK(listen_fd == -1, "start_server",
-		  "listen_fd:%d errno:%d\n", listen_fd, त्रुटि_सं))
-		वापस;
+	if (CHECK(listen_fd == -1, "start_server",
+		  "listen_fd:%d errno:%d\n", listen_fd, errno))
+		return;
 
 	active_fd = connect_to_fd(listen_fd, 0);
-	अगर (CHECK(active_fd == -1, "connect_to_fd", "active_fd:%d errno:%d\n",
-		  active_fd, त्रुटि_सं))
-		जाओ out;
+	if (CHECK(active_fd == -1, "connect_to_fd", "active_fd:%d errno:%d\n",
+		  active_fd, errno))
+		goto out;
 
 	err = bpf_map_update_elem(bpf_map__fd(skel->maps.del_sk_stg_map),
 				  &active_fd, &value, 0);
-	अगर (!ASSERT_OK(err, "map_update(del_sk_stg_map)"))
-		जाओ out;
+	if (!ASSERT_OK(err, "map_update(del_sk_stg_map)"))
+		goto out;
 
-	passive_fd = accept(listen_fd, शून्य, 0);
-	अगर (CHECK(passive_fd == -1, "accept", "passive_fd:%d errno:%d\n",
-		  passive_fd, त्रुटि_सं))
-		जाओ out;
+	passive_fd = accept(listen_fd, NULL, 0);
+	if (CHECK(passive_fd == -1, "accept", "passive_fd:%d errno:%d\n",
+		  passive_fd, errno))
+		goto out;
 
-	shutकरोwn(active_fd, SHUT_WR);
-	err = पढ़ो(passive_fd, &abyte, 1);
-	अगर (!ASSERT_OK(err, "read(passive_fd)"))
-		जाओ out;
+	shutdown(active_fd, SHUT_WR);
+	err = read(passive_fd, &abyte, 1);
+	if (!ASSERT_OK(err, "read(passive_fd)"))
+		goto out;
 
-	shutकरोwn(passive_fd, SHUT_WR);
-	err = पढ़ो(active_fd, &abyte, 1);
-	अगर (!ASSERT_OK(err, "read(active_fd)"))
-		जाओ out;
+	shutdown(passive_fd, SHUT_WR);
+	err = read(active_fd, &abyte, 1);
+	if (!ASSERT_OK(err, "read(active_fd)"))
+		goto out;
 
 	err = bpf_map_lookup_elem(bpf_map__fd(skel->maps.del_sk_stg_map),
 				  &active_fd, &value);
-	अगर (!ASSERT_ERR(err, "map_lookup(del_sk_stg_map)"))
-		जाओ out;
+	if (!ASSERT_ERR(err, "map_lookup(del_sk_stg_map)"))
+		goto out;
 
 	err = check_sk_stg(listen_fd, BPF_TCP_LISTEN);
-	अगर (!ASSERT_OK(err, "listen_fd sk_stg"))
-		जाओ out;
+	if (!ASSERT_OK(err, "listen_fd sk_stg"))
+		goto out;
 
 	err = check_sk_stg(active_fd, BPF_TCP_FIN_WAIT2);
-	अगर (!ASSERT_OK(err, "active_fd sk_stg"))
-		जाओ out;
+	if (!ASSERT_OK(err, "active_fd sk_stg"))
+		goto out;
 
 	err = check_sk_stg(passive_fd, BPF_TCP_LAST_ACK);
 	ASSERT_OK(err, "passive_fd sk_stg");
 
 out:
-	अगर (active_fd != -1)
-		बंद(active_fd);
-	अगर (passive_fd != -1)
-		बंद(passive_fd);
-	अगर (listen_fd != -1)
-		बंद(listen_fd);
-पूर्ण
+	if (active_fd != -1)
+		close(active_fd);
+	if (passive_fd != -1)
+		close(passive_fd);
+	if (listen_fd != -1)
+		close(listen_fd);
+}
 
-व्योम test_sk_storage_tracing(व्योम)
-अणु
-	काष्ठा test_sk_storage_trace_itself *skel_itself;
-	पूर्णांक err;
+void test_sk_storage_tracing(void)
+{
+	struct test_sk_storage_trace_itself *skel_itself;
+	int err;
 
 	my_pid = getpid();
 
-	skel_itself = test_sk_storage_trace_itself__खोलो_and_load();
+	skel_itself = test_sk_storage_trace_itself__open_and_load();
 
-	अगर (!ASSERT_शून्य(skel_itself, "test_sk_storage_trace_itself")) अणु
+	if (!ASSERT_NULL(skel_itself, "test_sk_storage_trace_itself")) {
 		test_sk_storage_trace_itself__destroy(skel_itself);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	skel = test_sk_storage_tracing__खोलो_and_load();
-	अगर (!ASSERT_OK_PTR(skel, "test_sk_storage_tracing"))
-		वापस;
+	skel = test_sk_storage_tracing__open_and_load();
+	if (!ASSERT_OK_PTR(skel, "test_sk_storage_tracing"))
+		return;
 
 	err = test_sk_storage_tracing__attach(skel);
-	अगर (!ASSERT_OK(err, "test_sk_storage_tracing__attach")) अणु
+	if (!ASSERT_OK(err, "test_sk_storage_tracing__attach")) {
 		test_sk_storage_tracing__destroy(skel);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	करो_test();
+	do_test();
 
 	test_sk_storage_tracing__destroy(skel);
-पूर्ण
+}

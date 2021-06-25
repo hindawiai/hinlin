@@ -1,25 +1,24 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __VDSO_MATH64_H
-#घोषणा __VDSO_MATH64_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __VDSO_MATH64_H
+#define __VDSO_MATH64_H
 
-अटल __always_अंतरभूत u32
-__iter_भाग_u64_rem(u64 भागidend, u32 भागisor, u64 *reमुख्यder)
-अणु
+static __always_inline u32
+__iter_div_u64_rem(u64 dividend, u32 divisor, u64 *remainder)
+{
 	u32 ret = 0;
 
-	जबतक (भागidend >= भागisor) अणु
-		/* The following यंत्र() prevents the compiler from
-		   optimising this loop पूर्णांकo a modulo operation.  */
-		यंत्र("" : "+rm"(भागidend));
+	while (dividend >= divisor) {
+		/* The following asm() prevents the compiler from
+		   optimising this loop into a modulo operation.  */
+		asm("" : "+rm"(dividend));
 
-		भागidend -= भागisor;
+		dividend -= divisor;
 		ret++;
-	पूर्ण
+	}
 
-	*reमुख्यder = भागidend;
+	*remainder = dividend;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#पूर्ण_अगर /* __VDSO_MATH64_H */
+#endif /* __VDSO_MATH64_H */

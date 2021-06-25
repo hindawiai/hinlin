@@ -1,67 +1,66 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2015 Josh Poimboeuf <jpoimboe@redhat.com>
  */
 
-#अगर_अघोषित _WARN_H
-#घोषणा _WARN_H
+#ifndef _WARN_H
+#define _WARN_H
 
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <sys/types.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <fcntl.h>
-#समावेश <objtool/elf.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <objtool/elf.h>
 
-बाह्य स्थिर अक्षर *objname;
+extern const char *objname;
 
-अटल अंतरभूत अक्षर *offstr(काष्ठा section *sec, अचिन्हित दीर्घ offset)
-अणु
-	काष्ठा symbol *func;
-	अक्षर *name, *str;
-	अचिन्हित दीर्घ name_off;
+static inline char *offstr(struct section *sec, unsigned long offset)
+{
+	struct symbol *func;
+	char *name, *str;
+	unsigned long name_off;
 
 	func = find_func_containing(sec, offset);
-	अगर (func) अणु
+	if (func) {
 		name = func->name;
 		name_off = offset - func->offset;
-	पूर्ण अन्यथा अणु
+	} else {
 		name = sec->name;
 		name_off = offset;
-	पूर्ण
+	}
 
-	str = दो_स्मृति(म_माप(name) + 20);
+	str = malloc(strlen(name) + 20);
 
-	अगर (func)
-		प्र_लिखो(str, "%s()+0x%lx", name, name_off);
-	अन्यथा
-		प्र_लिखो(str, "%s+0x%lx", name, name_off);
+	if (func)
+		sprintf(str, "%s()+0x%lx", name, name_off);
+	else
+		sprintf(str, "%s+0x%lx", name, name_off);
 
-	वापस str;
-पूर्ण
+	return str;
+}
 
-#घोषणा WARN(क्रमmat, ...)				\
-	ख_लिखो(मानक_त्रुटि,					\
-		"%s: warning: objtool: " क्रमmat "\n",	\
+#define WARN(format, ...)				\
+	fprintf(stderr,					\
+		"%s: warning: objtool: " format "\n",	\
 		objname, ##__VA_ARGS__)
 
-#घोषणा WARN_FUNC(क्रमmat, sec, offset, ...)		\
-(अणु							\
-	अक्षर *_str = offstr(sec, offset);		\
-	WARN("%s: " क्रमmat, _str, ##__VA_ARGS__);	\
-	मुक्त(_str);					\
-पूर्ण)
+#define WARN_FUNC(format, sec, offset, ...)		\
+({							\
+	char *_str = offstr(sec, offset);		\
+	WARN("%s: " format, _str, ##__VA_ARGS__);	\
+	free(_str);					\
+})
 
-#घोषणा BT_FUNC(क्रमmat, insn, ...)			\
-(अणु							\
-	काष्ठा inकाष्ठाion *_insn = (insn);		\
-	अक्षर *_str = offstr(_insn->sec, _insn->offset); \
-	WARN("  %s: " क्रमmat, _str, ##__VA_ARGS__);	\
-	मुक्त(_str);					\
-पूर्ण)
+#define BT_FUNC(format, insn, ...)			\
+({							\
+	struct instruction *_insn = (insn);		\
+	char *_str = offstr(_insn->sec, _insn->offset); \
+	WARN("  %s: " format, _str, ##__VA_ARGS__);	\
+	free(_str);					\
+})
 
-#घोषणा WARN_ELF(क्रमmat, ...)				\
-	WARN(क्रमmat ": %s", ##__VA_ARGS__, elf_errmsg(-1))
+#define WARN_ELF(format, ...)				\
+	WARN(format ": %s", ##__VA_ARGS__, elf_errmsg(-1))
 
-#पूर्ण_अगर /* _WARN_H */
+#endif /* _WARN_H */

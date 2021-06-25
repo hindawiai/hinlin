@@ -1,42 +1,41 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright 2014, Michael Ellerman, IBM Corp.
  */
 
-#अगर_अघोषित _SELFTESTS_POWERPC_PMU_EBB_TRACE_H
-#घोषणा _SELFTESTS_POWERPC_PMU_EBB_TRACE_H
+#ifndef _SELFTESTS_POWERPC_PMU_EBB_TRACE_H
+#define _SELFTESTS_POWERPC_PMU_EBB_TRACE_H
 
-#समावेश "utils.h"
+#include "utils.h"
 
-#घोषणा TRACE_TYPE_REG		1
-#घोषणा TRACE_TYPE_COUNTER	2
-#घोषणा TRACE_TYPE_STRING	3
-#घोषणा TRACE_TYPE_INDENT	4
-#घोषणा TRACE_TYPE_OUTDENT	5
+#define TRACE_TYPE_REG		1
+#define TRACE_TYPE_COUNTER	2
+#define TRACE_TYPE_STRING	3
+#define TRACE_TYPE_INDENT	4
+#define TRACE_TYPE_OUTDENT	5
 
-काष्ठा trace_entry
-अणु
+struct trace_entry
+{
 	u8 type;
 	u8 length;
 	u8 data[];
-पूर्ण;
+};
 
-काष्ठा trace_buffer
-अणु
+struct trace_buffer
+{
 	u64  size;
 	bool overflow;
-	व्योम *tail;
+	void *tail;
 	u8   data[];
-पूर्ण;
+};
 
-काष्ठा trace_buffer *trace_buffer_allocate(u64 size);
-पूर्णांक trace_log_reg(काष्ठा trace_buffer *tb, u64 reg, u64 value);
-पूर्णांक trace_log_counter(काष्ठा trace_buffer *tb, u64 value);
-पूर्णांक trace_log_string(काष्ठा trace_buffer *tb, अक्षर *str);
-पूर्णांक trace_log_indent(काष्ठा trace_buffer *tb);
-पूर्णांक trace_log_outdent(काष्ठा trace_buffer *tb);
-व्योम trace_buffer_prपूर्णांक(काष्ठा trace_buffer *tb);
-व्योम trace_prपूर्णांक_location(काष्ठा trace_buffer *tb);
+struct trace_buffer *trace_buffer_allocate(u64 size);
+int trace_log_reg(struct trace_buffer *tb, u64 reg, u64 value);
+int trace_log_counter(struct trace_buffer *tb, u64 value);
+int trace_log_string(struct trace_buffer *tb, char *str);
+int trace_log_indent(struct trace_buffer *tb);
+int trace_log_outdent(struct trace_buffer *tb);
+void trace_buffer_print(struct trace_buffer *tb);
+void trace_print_location(struct trace_buffer *tb);
 
-#पूर्ण_अगर /* _SELFTESTS_POWERPC_PMU_EBB_TRACE_H */
+#endif /* _SELFTESTS_POWERPC_PMU_EBB_TRACE_H */

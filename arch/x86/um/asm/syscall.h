@@ -1,22 +1,21 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __UM_ASM_SYSCALL_H
-#घोषणा __UM_ASM_SYSCALL_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __UM_ASM_SYSCALL_H
+#define __UM_ASM_SYSCALL_H
 
-#समावेश <यंत्र/syscall-generic.h>
-#समावेश <uapi/linux/audit.h>
+#include <asm/syscall-generic.h>
+#include <uapi/linux/audit.h>
 
-प्रकार यंत्रlinkage दीर्घ (*sys_call_ptr_t)(अचिन्हित दीर्घ, अचिन्हित दीर्घ,
-					  अचिन्हित दीर्घ, अचिन्हित दीर्घ,
-					  अचिन्हित दीर्घ, अचिन्हित दीर्घ);
+typedef asmlinkage long (*sys_call_ptr_t)(unsigned long, unsigned long,
+					  unsigned long, unsigned long,
+					  unsigned long, unsigned long);
 
-अटल अंतरभूत पूर्णांक syscall_get_arch(काष्ठा task_काष्ठा *task)
-अणु
-#अगर_घोषित CONFIG_X86_32
-	वापस AUDIT_ARCH_I386;
-#अन्यथा
-	वापस AUDIT_ARCH_X86_64;
-#पूर्ण_अगर
-पूर्ण
+static inline int syscall_get_arch(struct task_struct *task)
+{
+#ifdef CONFIG_X86_32
+	return AUDIT_ARCH_I386;
+#else
+	return AUDIT_ARCH_X86_64;
+#endif
+}
 
-#पूर्ण_अगर /* __UM_ASM_SYSCALL_H */
+#endif /* __UM_ASM_SYSCALL_H */

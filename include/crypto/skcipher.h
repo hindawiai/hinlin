@@ -1,136 +1,135 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Symmetric key ciphers.
  * 
- * Copyright (c) 2007-2015 Herbert Xu <herbert@gonकरोr.apana.org.au>
+ * Copyright (c) 2007-2015 Herbert Xu <herbert@gondor.apana.org.au>
  */
 
-#अगर_अघोषित _CRYPTO_SKCIPHER_H
-#घोषणा _CRYPTO_SKCIPHER_H
+#ifndef _CRYPTO_SKCIPHER_H
+#define _CRYPTO_SKCIPHER_H
 
-#समावेश <linux/crypto.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
+#include <linux/crypto.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
 
 /**
- *	काष्ठा skcipher_request - Symmetric key cipher request
+ *	struct skcipher_request - Symmetric key cipher request
  *	@cryptlen: Number of bytes to encrypt or decrypt
  *	@iv: Initialisation Vector
  *	@src: Source SG list
  *	@dst: Destination SG list
  *	@base: Underlying async request
- *	@__ctx: Start of निजी context data
+ *	@__ctx: Start of private context data
  */
-काष्ठा skcipher_request अणु
-	अचिन्हित पूर्णांक cryptlen;
+struct skcipher_request {
+	unsigned int cryptlen;
 
 	u8 *iv;
 
-	काष्ठा scatterlist *src;
-	काष्ठा scatterlist *dst;
+	struct scatterlist *src;
+	struct scatterlist *dst;
 
-	काष्ठा crypto_async_request base;
+	struct crypto_async_request base;
 
-	व्योम *__ctx[] CRYPTO_MINALIGN_ATTR;
-पूर्ण;
+	void *__ctx[] CRYPTO_MINALIGN_ATTR;
+};
 
-काष्ठा crypto_skcipher अणु
-	अचिन्हित पूर्णांक reqsize;
+struct crypto_skcipher {
+	unsigned int reqsize;
 
-	काष्ठा crypto_tfm base;
-पूर्ण;
+	struct crypto_tfm base;
+};
 
-काष्ठा crypto_sync_skcipher अणु
-	काष्ठा crypto_skcipher base;
-पूर्ण;
+struct crypto_sync_skcipher {
+	struct crypto_skcipher base;
+};
 
 /**
- * काष्ठा skcipher_alg - symmetric key cipher definition
- * @min_keysize: Minimum key size supported by the transक्रमmation. This is the
- *		 smallest key length supported by this transक्रमmation algorithm.
+ * struct skcipher_alg - symmetric key cipher definition
+ * @min_keysize: Minimum key size supported by the transformation. This is the
+ *		 smallest key length supported by this transformation algorithm.
  *		 This must be set to one of the pre-defined values as this is
- *		 not hardware specअगरic. Possible values क्रम this field can be
+ *		 not hardware specific. Possible values for this field can be
  *		 found via git grep "_MIN_KEY_SIZE" include/crypto/
- * @max_keysize: Maximum key size supported by the transक्रमmation. This is the
- *		 largest key length supported by this transक्रमmation algorithm.
+ * @max_keysize: Maximum key size supported by the transformation. This is the
+ *		 largest key length supported by this transformation algorithm.
  *		 This must be set to one of the pre-defined values as this is
- *		 not hardware specअगरic. Possible values क्रम this field can be
+ *		 not hardware specific. Possible values for this field can be
  *		 found via git grep "_MAX_KEY_SIZE" include/crypto/
- * @setkey: Set key क्रम the transक्रमmation. This function is used to either
- *	    program a supplied key पूर्णांकo the hardware or store the key in the
- *	    transक्रमmation context क्रम programming it later. Note that this
- *	    function करोes modअगरy the transक्रमmation context. This function can
- *	    be called multiple बार during the existence of the transक्रमmation
- *	    object, so one must make sure the key is properly reprogrammed पूर्णांकo
- *	    the hardware. This function is also responsible क्रम checking the key
- *	    length क्रम validity. In हाल a software fallback was put in place in
- *	    the @cra_init call, this function might need to use the fallback अगर
- *	    the algorithm करोesn't support all of the key sizes.
+ * @setkey: Set key for the transformation. This function is used to either
+ *	    program a supplied key into the hardware or store the key in the
+ *	    transformation context for programming it later. Note that this
+ *	    function does modify the transformation context. This function can
+ *	    be called multiple times during the existence of the transformation
+ *	    object, so one must make sure the key is properly reprogrammed into
+ *	    the hardware. This function is also responsible for checking the key
+ *	    length for validity. In case a software fallback was put in place in
+ *	    the @cra_init call, this function might need to use the fallback if
+ *	    the algorithm doesn't support all of the key sizes.
  * @encrypt: Encrypt a scatterlist of blocks. This function is used to encrypt
  *	     the supplied scatterlist containing the blocks of data. The crypto
- *	     API consumer is responsible क्रम aligning the entries of the
+ *	     API consumer is responsible for aligning the entries of the
  *	     scatterlist properly and making sure the chunks are correctly
- *	     sized. In हाल a software fallback was put in place in the
- *	     @cra_init call, this function might need to use the fallback अगर
- *	     the algorithm करोesn't support all of the key sizes. In हाल the
- *	     key was stored in transक्रमmation context, the key might need to be
- *	     re-programmed पूर्णांकo the hardware in this function. This function
- *	     shall not modअगरy the transक्रमmation context, as this function may
- *	     be called in parallel with the same transक्रमmation object.
+ *	     sized. In case a software fallback was put in place in the
+ *	     @cra_init call, this function might need to use the fallback if
+ *	     the algorithm doesn't support all of the key sizes. In case the
+ *	     key was stored in transformation context, the key might need to be
+ *	     re-programmed into the hardware in this function. This function
+ *	     shall not modify the transformation context, as this function may
+ *	     be called in parallel with the same transformation object.
  * @decrypt: Decrypt a single block. This is a reverse counterpart to @encrypt
  *	     and the conditions are exactly the same.
- * @init: Initialize the cryptographic transक्रमmation object. This function
- *	  is used to initialize the cryptographic transक्रमmation object.
- *	  This function is called only once at the instantiation समय, right
- *	  after the transक्रमmation context was allocated. In हाल the
+ * @init: Initialize the cryptographic transformation object. This function
+ *	  is used to initialize the cryptographic transformation object.
+ *	  This function is called only once at the instantiation time, right
+ *	  after the transformation context was allocated. In case the
  *	  cryptographic hardware has some special requirements which need to
- *	  be handled by software, this function shall check क्रम the precise
- *	  requirement of the transक्रमmation and put any software fallbacks
+ *	  be handled by software, this function shall check for the precise
+ *	  requirement of the transformation and put any software fallbacks
  *	  in place.
- * @निकास: Deinitialize the cryptographic transक्रमmation object. This is a
- *	  counterpart to @init, used to हटाओ various changes set in
+ * @exit: Deinitialize the cryptographic transformation object. This is a
+ *	  counterpart to @init, used to remove various changes set in
  *	  @init.
- * @ivsize: IV size applicable क्रम transक्रमmation. The consumer must provide an
- *	    IV of exactly that size to perक्रमm the encrypt or decrypt operation.
- * @chunksize: Equal to the block size except क्रम stream ciphers such as
+ * @ivsize: IV size applicable for transformation. The consumer must provide an
+ *	    IV of exactly that size to perform the encrypt or decrypt operation.
+ * @chunksize: Equal to the block size except for stream ciphers such as
  *	       CTR where it is set to the underlying block size.
- * @walksize: Equal to the chunk size except in हालs where the algorithm is
- * 	      considerably more efficient अगर it can operate on multiple chunks
+ * @walksize: Equal to the chunk size except in cases where the algorithm is
+ * 	      considerably more efficient if it can operate on multiple chunks
  * 	      in parallel. Should be a multiple of chunksize.
  * @base: Definition of a generic crypto algorithm.
  *
  * All fields except @ivsize are mandatory and must be filled.
  */
-काष्ठा skcipher_alg अणु
-	पूर्णांक (*setkey)(काष्ठा crypto_skcipher *tfm, स्थिर u8 *key,
-	              अचिन्हित पूर्णांक keylen);
-	पूर्णांक (*encrypt)(काष्ठा skcipher_request *req);
-	पूर्णांक (*decrypt)(काष्ठा skcipher_request *req);
-	पूर्णांक (*init)(काष्ठा crypto_skcipher *tfm);
-	व्योम (*निकास)(काष्ठा crypto_skcipher *tfm);
+struct skcipher_alg {
+	int (*setkey)(struct crypto_skcipher *tfm, const u8 *key,
+	              unsigned int keylen);
+	int (*encrypt)(struct skcipher_request *req);
+	int (*decrypt)(struct skcipher_request *req);
+	int (*init)(struct crypto_skcipher *tfm);
+	void (*exit)(struct crypto_skcipher *tfm);
 
-	अचिन्हित पूर्णांक min_keysize;
-	अचिन्हित पूर्णांक max_keysize;
-	अचिन्हित पूर्णांक ivsize;
-	अचिन्हित पूर्णांक chunksize;
-	अचिन्हित पूर्णांक walksize;
+	unsigned int min_keysize;
+	unsigned int max_keysize;
+	unsigned int ivsize;
+	unsigned int chunksize;
+	unsigned int walksize;
 
-	काष्ठा crypto_alg base;
-पूर्ण;
+	struct crypto_alg base;
+};
 
-#घोषणा MAX_SYNC_SKCIPHER_REQSIZE      384
+#define MAX_SYNC_SKCIPHER_REQSIZE      384
 /*
- * This perक्रमms a type-check against the "tfm" argument to make sure
- * all users have the correct skcipher tfm क्रम करोing on-stack requests.
+ * This performs a type-check against the "tfm" argument to make sure
+ * all users have the correct skcipher tfm for doing on-stack requests.
  */
-#घोषणा SYNC_SKCIPHER_REQUEST_ON_STACK(name, tfm) \
-	अक्षर __##name##_desc[माप(काष्ठा skcipher_request) + \
+#define SYNC_SKCIPHER_REQUEST_ON_STACK(name, tfm) \
+	char __##name##_desc[sizeof(struct skcipher_request) + \
 			     MAX_SYNC_SKCIPHER_REQSIZE + \
-			     (!(माप((काष्ठा crypto_sync_skcipher *)1 == \
+			     (!(sizeof((struct crypto_sync_skcipher *)1 == \
 				       (typeof(tfm))1))) \
 			    ] CRYPTO_MINALIGN_ATTR; \
-	काष्ठा skcipher_request *name = (व्योम *)__##name##_desc
+	struct skcipher_request *name = (void *)__##name##_desc
 
 /**
  * DOC: Symmetric Key Cipher API
@@ -138,423 +137,423 @@
  * Symmetric key cipher API is used with the ciphers of type
  * CRYPTO_ALG_TYPE_SKCIPHER (listed as type "skcipher" in /proc/crypto).
  *
- * Asynchronous cipher operations imply that the function invocation क्रम a
- * cipher request वापसs immediately beक्रमe the completion of the operation.
- * The cipher request is scheduled as a separate kernel thपढ़ो and thereक्रमe
- * load-balanced on the dअगरferent CPUs via the process scheduler. To allow
- * the kernel crypto API to inक्रमm the caller about the completion of a cipher
+ * Asynchronous cipher operations imply that the function invocation for a
+ * cipher request returns immediately before the completion of the operation.
+ * The cipher request is scheduled as a separate kernel thread and therefore
+ * load-balanced on the different CPUs via the process scheduler. To allow
+ * the kernel crypto API to inform the caller about the completion of a cipher
  * request, the caller must provide a callback function. That function is
  * invoked with the cipher handle when the request completes.
  *
- * To support the asynchronous operation, additional inक्रमmation than just the
+ * To support the asynchronous operation, additional information than just the
  * cipher handle must be supplied to the kernel crypto API. That additional
- * inक्रमmation is given by filling in the skcipher_request data काष्ठाure.
+ * information is given by filling in the skcipher_request data structure.
  *
- * For the symmetric key cipher API, the state is मुख्यtained with the tfm
+ * For the symmetric key cipher API, the state is maintained with the tfm
  * cipher handle. A single tfm can be used across multiple calls and in
  * parallel. For asynchronous block cipher calls, context data supplied and
- * only used by the caller can be referenced the request data काष्ठाure in
- * addition to the IV used क्रम the cipher request. The मुख्यtenance of such
- * state inक्रमmation would be important क्रम a crypto driver implementer to
+ * only used by the caller can be referenced the request data structure in
+ * addition to the IV used for the cipher request. The maintenance of such
+ * state information would be important for a crypto driver implementer to
  * have, because when calling the callback function upon completion of the
- * cipher operation, that callback function may need some inक्रमmation about
- * which operation just finished अगर it invoked multiple in parallel. This
- * state inक्रमmation is unused by the kernel crypto API.
+ * cipher operation, that callback function may need some information about
+ * which operation just finished if it invoked multiple in parallel. This
+ * state information is unused by the kernel crypto API.
  */
 
-अटल अंतरभूत काष्ठा crypto_skcipher *__crypto_skcipher_cast(
-	काष्ठा crypto_tfm *tfm)
-अणु
-	वापस container_of(tfm, काष्ठा crypto_skcipher, base);
-पूर्ण
+static inline struct crypto_skcipher *__crypto_skcipher_cast(
+	struct crypto_tfm *tfm)
+{
+	return container_of(tfm, struct crypto_skcipher, base);
+}
 
 /**
  * crypto_alloc_skcipher() - allocate symmetric key cipher handle
  * @alg_name: is the cra_name / name or cra_driver_name / driver name of the
  *	      skcipher cipher
- * @type: specअगरies the type of the cipher
- * @mask: specअगरies the mask क्रम the cipher
+ * @type: specifies the type of the cipher
+ * @mask: specifies the mask for the cipher
  *
- * Allocate a cipher handle क्रम an skcipher. The वापसed काष्ठा
- * crypto_skcipher is the cipher handle that is required क्रम any subsequent
- * API invocation क्रम that skcipher.
+ * Allocate a cipher handle for an skcipher. The returned struct
+ * crypto_skcipher is the cipher handle that is required for any subsequent
+ * API invocation for that skcipher.
  *
- * Return: allocated cipher handle in हाल of success; IS_ERR() is true in हाल
- *	   of an error, PTR_ERR() वापसs the error code.
+ * Return: allocated cipher handle in case of success; IS_ERR() is true in case
+ *	   of an error, PTR_ERR() returns the error code.
  */
-काष्ठा crypto_skcipher *crypto_alloc_skcipher(स्थिर अक्षर *alg_name,
+struct crypto_skcipher *crypto_alloc_skcipher(const char *alg_name,
 					      u32 type, u32 mask);
 
-काष्ठा crypto_sync_skcipher *crypto_alloc_sync_skcipher(स्थिर अक्षर *alg_name,
+struct crypto_sync_skcipher *crypto_alloc_sync_skcipher(const char *alg_name,
 					      u32 type, u32 mask);
 
-अटल अंतरभूत काष्ठा crypto_tfm *crypto_skcipher_tfm(
-	काष्ठा crypto_skcipher *tfm)
-अणु
-	वापस &tfm->base;
-पूर्ण
+static inline struct crypto_tfm *crypto_skcipher_tfm(
+	struct crypto_skcipher *tfm)
+{
+	return &tfm->base;
+}
 
 /**
- * crypto_मुक्त_skcipher() - zeroize and मुक्त cipher handle
- * @tfm: cipher handle to be मुक्तd
+ * crypto_free_skcipher() - zeroize and free cipher handle
+ * @tfm: cipher handle to be freed
  *
- * If @tfm is a शून्य or error poपूर्णांकer, this function करोes nothing.
+ * If @tfm is a NULL or error pointer, this function does nothing.
  */
-अटल अंतरभूत व्योम crypto_मुक्त_skcipher(काष्ठा crypto_skcipher *tfm)
-अणु
+static inline void crypto_free_skcipher(struct crypto_skcipher *tfm)
+{
 	crypto_destroy_tfm(tfm, crypto_skcipher_tfm(tfm));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम crypto_मुक्त_sync_skcipher(काष्ठा crypto_sync_skcipher *tfm)
-अणु
-	crypto_मुक्त_skcipher(&tfm->base);
-पूर्ण
+static inline void crypto_free_sync_skcipher(struct crypto_sync_skcipher *tfm)
+{
+	crypto_free_skcipher(&tfm->base);
+}
 
 /**
- * crypto_has_skcipher() - Search क्रम the availability of an skcipher.
+ * crypto_has_skcipher() - Search for the availability of an skcipher.
  * @alg_name: is the cra_name / name or cra_driver_name / driver name of the
  *	      skcipher
- * @type: specअगरies the type of the skcipher
- * @mask: specअगरies the mask क्रम the skcipher
+ * @type: specifies the type of the skcipher
+ * @mask: specifies the mask for the skcipher
  *
  * Return: true when the skcipher is known to the kernel crypto API; false
  *	   otherwise
  */
-पूर्णांक crypto_has_skcipher(स्थिर अक्षर *alg_name, u32 type, u32 mask);
+int crypto_has_skcipher(const char *alg_name, u32 type, u32 mask);
 
-अटल अंतरभूत स्थिर अक्षर *crypto_skcipher_driver_name(
-	काष्ठा crypto_skcipher *tfm)
-अणु
-	वापस crypto_tfm_alg_driver_name(crypto_skcipher_tfm(tfm));
-पूर्ण
+static inline const char *crypto_skcipher_driver_name(
+	struct crypto_skcipher *tfm)
+{
+	return crypto_tfm_alg_driver_name(crypto_skcipher_tfm(tfm));
+}
 
-अटल अंतरभूत काष्ठा skcipher_alg *crypto_skcipher_alg(
-	काष्ठा crypto_skcipher *tfm)
-अणु
-	वापस container_of(crypto_skcipher_tfm(tfm)->__crt_alg,
-			    काष्ठा skcipher_alg, base);
-पूर्ण
+static inline struct skcipher_alg *crypto_skcipher_alg(
+	struct crypto_skcipher *tfm)
+{
+	return container_of(crypto_skcipher_tfm(tfm)->__crt_alg,
+			    struct skcipher_alg, base);
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक crypto_skcipher_alg_ivsize(काष्ठा skcipher_alg *alg)
-अणु
-	वापस alg->ivsize;
-पूर्ण
+static inline unsigned int crypto_skcipher_alg_ivsize(struct skcipher_alg *alg)
+{
+	return alg->ivsize;
+}
 
 /**
  * crypto_skcipher_ivsize() - obtain IV size
  * @tfm: cipher handle
  *
- * The size of the IV क्रम the skcipher referenced by the cipher handle is
- * वापसed. This IV size may be zero अगर the cipher करोes not need an IV.
+ * The size of the IV for the skcipher referenced by the cipher handle is
+ * returned. This IV size may be zero if the cipher does not need an IV.
  *
  * Return: IV size in bytes
  */
-अटल अंतरभूत अचिन्हित पूर्णांक crypto_skcipher_ivsize(काष्ठा crypto_skcipher *tfm)
-अणु
-	वापस crypto_skcipher_alg(tfm)->ivsize;
-पूर्ण
+static inline unsigned int crypto_skcipher_ivsize(struct crypto_skcipher *tfm)
+{
+	return crypto_skcipher_alg(tfm)->ivsize;
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक crypto_sync_skcipher_ivsize(
-	काष्ठा crypto_sync_skcipher *tfm)
-अणु
-	वापस crypto_skcipher_ivsize(&tfm->base);
-पूर्ण
+static inline unsigned int crypto_sync_skcipher_ivsize(
+	struct crypto_sync_skcipher *tfm)
+{
+	return crypto_skcipher_ivsize(&tfm->base);
+}
 
 /**
  * crypto_skcipher_blocksize() - obtain block size of cipher
  * @tfm: cipher handle
  *
- * The block size क्रम the skcipher referenced with the cipher handle is
- * वापसed. The caller may use that inक्रमmation to allocate appropriate
- * memory क्रम the data वापसed by the encryption or decryption operation
+ * The block size for the skcipher referenced with the cipher handle is
+ * returned. The caller may use that information to allocate appropriate
+ * memory for the data returned by the encryption or decryption operation
  *
  * Return: block size of cipher
  */
-अटल अंतरभूत अचिन्हित पूर्णांक crypto_skcipher_blocksize(
-	काष्ठा crypto_skcipher *tfm)
-अणु
-	वापस crypto_tfm_alg_blocksize(crypto_skcipher_tfm(tfm));
-पूर्ण
+static inline unsigned int crypto_skcipher_blocksize(
+	struct crypto_skcipher *tfm)
+{
+	return crypto_tfm_alg_blocksize(crypto_skcipher_tfm(tfm));
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक crypto_skcipher_alg_chunksize(
-	काष्ठा skcipher_alg *alg)
-अणु
-	वापस alg->chunksize;
-पूर्ण
+static inline unsigned int crypto_skcipher_alg_chunksize(
+	struct skcipher_alg *alg)
+{
+	return alg->chunksize;
+}
 
 /**
  * crypto_skcipher_chunksize() - obtain chunk size
  * @tfm: cipher handle
  *
- * The block size is set to one क्रम ciphers such as CTR.  However,
+ * The block size is set to one for ciphers such as CTR.  However,
  * you still need to provide incremental updates in multiples of
- * the underlying block size as the IV करोes not have sub-block
+ * the underlying block size as the IV does not have sub-block
  * granularity.  This is known in this API as the chunk size.
  *
  * Return: chunk size in bytes
  */
-अटल अंतरभूत अचिन्हित पूर्णांक crypto_skcipher_chunksize(
-	काष्ठा crypto_skcipher *tfm)
-अणु
-	वापस crypto_skcipher_alg_chunksize(crypto_skcipher_alg(tfm));
-पूर्ण
+static inline unsigned int crypto_skcipher_chunksize(
+	struct crypto_skcipher *tfm)
+{
+	return crypto_skcipher_alg_chunksize(crypto_skcipher_alg(tfm));
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक crypto_sync_skcipher_blocksize(
-	काष्ठा crypto_sync_skcipher *tfm)
-अणु
-	वापस crypto_skcipher_blocksize(&tfm->base);
-पूर्ण
+static inline unsigned int crypto_sync_skcipher_blocksize(
+	struct crypto_sync_skcipher *tfm)
+{
+	return crypto_skcipher_blocksize(&tfm->base);
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक crypto_skcipher_alignmask(
-	काष्ठा crypto_skcipher *tfm)
-अणु
-	वापस crypto_tfm_alg_alignmask(crypto_skcipher_tfm(tfm));
-पूर्ण
+static inline unsigned int crypto_skcipher_alignmask(
+	struct crypto_skcipher *tfm)
+{
+	return crypto_tfm_alg_alignmask(crypto_skcipher_tfm(tfm));
+}
 
-अटल अंतरभूत u32 crypto_skcipher_get_flags(काष्ठा crypto_skcipher *tfm)
-अणु
-	वापस crypto_tfm_get_flags(crypto_skcipher_tfm(tfm));
-पूर्ण
+static inline u32 crypto_skcipher_get_flags(struct crypto_skcipher *tfm)
+{
+	return crypto_tfm_get_flags(crypto_skcipher_tfm(tfm));
+}
 
-अटल अंतरभूत व्योम crypto_skcipher_set_flags(काष्ठा crypto_skcipher *tfm,
+static inline void crypto_skcipher_set_flags(struct crypto_skcipher *tfm,
 					       u32 flags)
-अणु
+{
 	crypto_tfm_set_flags(crypto_skcipher_tfm(tfm), flags);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम crypto_skcipher_clear_flags(काष्ठा crypto_skcipher *tfm,
+static inline void crypto_skcipher_clear_flags(struct crypto_skcipher *tfm,
 						 u32 flags)
-अणु
+{
 	crypto_tfm_clear_flags(crypto_skcipher_tfm(tfm), flags);
-पूर्ण
+}
 
-अटल अंतरभूत u32 crypto_sync_skcipher_get_flags(
-	काष्ठा crypto_sync_skcipher *tfm)
-अणु
-	वापस crypto_skcipher_get_flags(&tfm->base);
-पूर्ण
+static inline u32 crypto_sync_skcipher_get_flags(
+	struct crypto_sync_skcipher *tfm)
+{
+	return crypto_skcipher_get_flags(&tfm->base);
+}
 
-अटल अंतरभूत व्योम crypto_sync_skcipher_set_flags(
-	काष्ठा crypto_sync_skcipher *tfm, u32 flags)
-अणु
+static inline void crypto_sync_skcipher_set_flags(
+	struct crypto_sync_skcipher *tfm, u32 flags)
+{
 	crypto_skcipher_set_flags(&tfm->base, flags);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम crypto_sync_skcipher_clear_flags(
-	काष्ठा crypto_sync_skcipher *tfm, u32 flags)
-अणु
+static inline void crypto_sync_skcipher_clear_flags(
+	struct crypto_sync_skcipher *tfm, u32 flags)
+{
 	crypto_skcipher_clear_flags(&tfm->base, flags);
-पूर्ण
+}
 
 /**
- * crypto_skcipher_setkey() - set key क्रम cipher
+ * crypto_skcipher_setkey() - set key for cipher
  * @tfm: cipher handle
  * @key: buffer holding the key
  * @keylen: length of the key in bytes
  *
- * The caller provided key is set क्रम the skcipher referenced by the cipher
+ * The caller provided key is set for the skcipher referenced by the cipher
  * handle.
  *
  * Note, the key length determines the cipher type. Many block ciphers implement
- * dअगरferent cipher modes depending on the key size, such as AES-128 vs AES-192
- * vs. AES-256. When providing a 16 byte key क्रम an AES cipher handle, AES-128
- * is perक्रमmed.
+ * different cipher modes depending on the key size, such as AES-128 vs AES-192
+ * vs. AES-256. When providing a 16 byte key for an AES cipher handle, AES-128
+ * is performed.
  *
- * Return: 0 अगर the setting of the key was successful; < 0 अगर an error occurred
+ * Return: 0 if the setting of the key was successful; < 0 if an error occurred
  */
-पूर्णांक crypto_skcipher_setkey(काष्ठा crypto_skcipher *tfm,
-			   स्थिर u8 *key, अचिन्हित पूर्णांक keylen);
+int crypto_skcipher_setkey(struct crypto_skcipher *tfm,
+			   const u8 *key, unsigned int keylen);
 
-अटल अंतरभूत पूर्णांक crypto_sync_skcipher_setkey(काष्ठा crypto_sync_skcipher *tfm,
-					 स्थिर u8 *key, अचिन्हित पूर्णांक keylen)
-अणु
-	वापस crypto_skcipher_setkey(&tfm->base, key, keylen);
-पूर्ण
+static inline int crypto_sync_skcipher_setkey(struct crypto_sync_skcipher *tfm,
+					 const u8 *key, unsigned int keylen)
+{
+	return crypto_skcipher_setkey(&tfm->base, key, keylen);
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक crypto_skcipher_min_keysize(
-	काष्ठा crypto_skcipher *tfm)
-अणु
-	वापस crypto_skcipher_alg(tfm)->min_keysize;
-पूर्ण
+static inline unsigned int crypto_skcipher_min_keysize(
+	struct crypto_skcipher *tfm)
+{
+	return crypto_skcipher_alg(tfm)->min_keysize;
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक crypto_skcipher_max_keysize(
-	काष्ठा crypto_skcipher *tfm)
-अणु
-	वापस crypto_skcipher_alg(tfm)->max_keysize;
-पूर्ण
+static inline unsigned int crypto_skcipher_max_keysize(
+	struct crypto_skcipher *tfm)
+{
+	return crypto_skcipher_alg(tfm)->max_keysize;
+}
 
 /**
  * crypto_skcipher_reqtfm() - obtain cipher handle from request
  * @req: skcipher_request out of which the cipher handle is to be obtained
  *
  * Return the crypto_skcipher handle when furnishing an skcipher_request
- * data काष्ठाure.
+ * data structure.
  *
  * Return: crypto_skcipher handle
  */
-अटल अंतरभूत काष्ठा crypto_skcipher *crypto_skcipher_reqtfm(
-	काष्ठा skcipher_request *req)
-अणु
-	वापस __crypto_skcipher_cast(req->base.tfm);
-पूर्ण
+static inline struct crypto_skcipher *crypto_skcipher_reqtfm(
+	struct skcipher_request *req)
+{
+	return __crypto_skcipher_cast(req->base.tfm);
+}
 
-अटल अंतरभूत काष्ठा crypto_sync_skcipher *crypto_sync_skcipher_reqtfm(
-	काष्ठा skcipher_request *req)
-अणु
-	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+static inline struct crypto_sync_skcipher *crypto_sync_skcipher_reqtfm(
+	struct skcipher_request *req)
+{
+	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
 
-	वापस container_of(tfm, काष्ठा crypto_sync_skcipher, base);
-पूर्ण
+	return container_of(tfm, struct crypto_sync_skcipher, base);
+}
 
 /**
- * crypto_skcipher_encrypt() - encrypt plaपूर्णांकext
- * @req: reference to the skcipher_request handle that holds all inक्रमmation
- *	 needed to perक्रमm the cipher operation
+ * crypto_skcipher_encrypt() - encrypt plaintext
+ * @req: reference to the skcipher_request handle that holds all information
+ *	 needed to perform the cipher operation
  *
- * Encrypt plaपूर्णांकext data using the skcipher_request handle. That data
- * काष्ठाure and how it is filled with data is discussed with the
+ * Encrypt plaintext data using the skcipher_request handle. That data
+ * structure and how it is filled with data is discussed with the
  * skcipher_request_* functions.
  *
- * Return: 0 अगर the cipher operation was successful; < 0 अगर an error occurred
+ * Return: 0 if the cipher operation was successful; < 0 if an error occurred
  */
-पूर्णांक crypto_skcipher_encrypt(काष्ठा skcipher_request *req);
+int crypto_skcipher_encrypt(struct skcipher_request *req);
 
 /**
  * crypto_skcipher_decrypt() - decrypt ciphertext
- * @req: reference to the skcipher_request handle that holds all inक्रमmation
- *	 needed to perक्रमm the cipher operation
+ * @req: reference to the skcipher_request handle that holds all information
+ *	 needed to perform the cipher operation
  *
  * Decrypt ciphertext data using the skcipher_request handle. That data
- * काष्ठाure and how it is filled with data is discussed with the
+ * structure and how it is filled with data is discussed with the
  * skcipher_request_* functions.
  *
- * Return: 0 अगर the cipher operation was successful; < 0 अगर an error occurred
+ * Return: 0 if the cipher operation was successful; < 0 if an error occurred
  */
-पूर्णांक crypto_skcipher_decrypt(काष्ठा skcipher_request *req);
+int crypto_skcipher_decrypt(struct skcipher_request *req);
 
 /**
  * DOC: Symmetric Key Cipher Request Handle
  *
- * The skcipher_request data काष्ठाure contains all poपूर्णांकers to data
- * required क्रम the symmetric key cipher operation. This includes the cipher
- * handle (which can be used by multiple skcipher_request instances), poपूर्णांकer
- * to plaपूर्णांकext and ciphertext, asynchronous callback function, etc. It acts
+ * The skcipher_request data structure contains all pointers to data
+ * required for the symmetric key cipher operation. This includes the cipher
+ * handle (which can be used by multiple skcipher_request instances), pointer
+ * to plaintext and ciphertext, asynchronous callback function, etc. It acts
  * as a handle to the skcipher_request_* API calls in a similar way as
  * skcipher handle to the crypto_skcipher_* API calls.
  */
 
 /**
- * crypto_skcipher_reqsize() - obtain size of the request data काष्ठाure
+ * crypto_skcipher_reqsize() - obtain size of the request data structure
  * @tfm: cipher handle
  *
  * Return: number of bytes
  */
-अटल अंतरभूत अचिन्हित पूर्णांक crypto_skcipher_reqsize(काष्ठा crypto_skcipher *tfm)
-अणु
-	वापस tfm->reqsize;
-पूर्ण
+static inline unsigned int crypto_skcipher_reqsize(struct crypto_skcipher *tfm)
+{
+	return tfm->reqsize;
+}
 
 /**
  * skcipher_request_set_tfm() - update cipher handle reference in request
- * @req: request handle to be modअगरied
+ * @req: request handle to be modified
  * @tfm: cipher handle that shall be added to the request handle
  *
  * Allow the caller to replace the existing skcipher handle in the request
- * data काष्ठाure with a dअगरferent one.
+ * data structure with a different one.
  */
-अटल अंतरभूत व्योम skcipher_request_set_tfm(काष्ठा skcipher_request *req,
-					    काष्ठा crypto_skcipher *tfm)
-अणु
+static inline void skcipher_request_set_tfm(struct skcipher_request *req,
+					    struct crypto_skcipher *tfm)
+{
 	req->base.tfm = crypto_skcipher_tfm(tfm);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम skcipher_request_set_sync_tfm(काष्ठा skcipher_request *req,
-					    काष्ठा crypto_sync_skcipher *tfm)
-अणु
+static inline void skcipher_request_set_sync_tfm(struct skcipher_request *req,
+					    struct crypto_sync_skcipher *tfm)
+{
 	skcipher_request_set_tfm(req, &tfm->base);
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा skcipher_request *skcipher_request_cast(
-	काष्ठा crypto_async_request *req)
-अणु
-	वापस container_of(req, काष्ठा skcipher_request, base);
-पूर्ण
+static inline struct skcipher_request *skcipher_request_cast(
+	struct crypto_async_request *req)
+{
+	return container_of(req, struct skcipher_request, base);
+}
 
 /**
- * skcipher_request_alloc() - allocate request data काष्ठाure
- * @tfm: cipher handle to be रेजिस्टरed with the request
- * @gfp: memory allocation flag that is handed to kदो_स्मृति by the API call.
+ * skcipher_request_alloc() - allocate request data structure
+ * @tfm: cipher handle to be registered with the request
+ * @gfp: memory allocation flag that is handed to kmalloc by the API call.
  *
- * Allocate the request data काष्ठाure that must be used with the skcipher
+ * Allocate the request data structure that must be used with the skcipher
  * encrypt and decrypt API calls. During the allocation, the provided skcipher
- * handle is रेजिस्टरed in the request data काष्ठाure.
+ * handle is registered in the request data structure.
  *
- * Return: allocated request handle in हाल of success, or शून्य अगर out of memory
+ * Return: allocated request handle in case of success, or NULL if out of memory
  */
-अटल अंतरभूत काष्ठा skcipher_request *skcipher_request_alloc(
-	काष्ठा crypto_skcipher *tfm, gfp_t gfp)
-अणु
-	काष्ठा skcipher_request *req;
+static inline struct skcipher_request *skcipher_request_alloc(
+	struct crypto_skcipher *tfm, gfp_t gfp)
+{
+	struct skcipher_request *req;
 
-	req = kदो_स्मृति(माप(काष्ठा skcipher_request) +
+	req = kmalloc(sizeof(struct skcipher_request) +
 		      crypto_skcipher_reqsize(tfm), gfp);
 
-	अगर (likely(req))
+	if (likely(req))
 		skcipher_request_set_tfm(req, tfm);
 
-	वापस req;
-पूर्ण
+	return req;
+}
 
 /**
- * skcipher_request_मुक्त() - zeroize and मुक्त request data काष्ठाure
- * @req: request data काष्ठाure cipher handle to be मुक्तd
+ * skcipher_request_free() - zeroize and free request data structure
+ * @req: request data structure cipher handle to be freed
  */
-अटल अंतरभूत व्योम skcipher_request_मुक्त(काष्ठा skcipher_request *req)
-अणु
-	kमुक्त_sensitive(req);
-पूर्ण
+static inline void skcipher_request_free(struct skcipher_request *req)
+{
+	kfree_sensitive(req);
+}
 
-अटल अंतरभूत व्योम skcipher_request_zero(काष्ठा skcipher_request *req)
-अणु
-	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+static inline void skcipher_request_zero(struct skcipher_request *req)
+{
+	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
 
-	memzero_explicit(req, माप(*req) + crypto_skcipher_reqsize(tfm));
-पूर्ण
+	memzero_explicit(req, sizeof(*req) + crypto_skcipher_reqsize(tfm));
+}
 
 /**
  * skcipher_request_set_callback() - set asynchronous callback function
  * @req: request handle
- * @flags: specअगरy zero or an ORing of the flags
+ * @flags: specify zero or an ORing of the flags
  *	   CRYPTO_TFM_REQ_MAY_BACKLOG the request queue may back log and
- *	   increase the रुको queue beyond the initial maximum size;
+ *	   increase the wait queue beyond the initial maximum size;
  *	   CRYPTO_TFM_REQ_MAY_SLEEP the request processing may sleep
- * @compl: callback function poपूर्णांकer to be रेजिस्टरed with the request handle
- * @data: The data poपूर्णांकer refers to memory that is not used by the kernel
- *	  crypto API, but provided to the callback function क्रम it to use. Here,
+ * @compl: callback function pointer to be registered with the request handle
+ * @data: The data pointer refers to memory that is not used by the kernel
+ *	  crypto API, but provided to the callback function for it to use. Here,
  *	  the caller can provide a reference to memory the callback function can
  *	  operate on. As the callback function is invoked asynchronously to the
- *	  related functionality, it may need to access data काष्ठाures of the
- *	  related functionality which can be referenced using this poपूर्णांकer. The
+ *	  related functionality, it may need to access data structures of the
+ *	  related functionality which can be referenced using this pointer. The
  *	  callback function can access the memory via the "data" field in the
- *	  crypto_async_request data काष्ठाure provided to the callback function.
+ *	  crypto_async_request data structure provided to the callback function.
  *
  * This function allows setting the callback function that is triggered once the
  * cipher operation completes.
  *
- * The callback function is रेजिस्टरed with the skcipher_request handle and
- * must comply with the following ढाँचा::
+ * The callback function is registered with the skcipher_request handle and
+ * must comply with the following template::
  *
- *	व्योम callback_function(काष्ठा crypto_async_request *req, पूर्णांक error)
+ *	void callback_function(struct crypto_async_request *req, int error)
  */
-अटल अंतरभूत व्योम skcipher_request_set_callback(काष्ठा skcipher_request *req,
+static inline void skcipher_request_set_callback(struct skcipher_request *req,
 						 u32 flags,
 						 crypto_completion_t compl,
-						 व्योम *data)
-अणु
+						 void *data)
+{
 	req->base.complete = compl;
 	req->base.data = data;
 	req->base.flags = flags;
-पूर्ण
+}
 
 /**
  * skcipher_request_set_crypt() - set data buffers
@@ -562,26 +561,26 @@
  * @src: source scatter / gather list
  * @dst: destination scatter / gather list
  * @cryptlen: number of bytes to process from @src
- * @iv: IV क्रम the cipher operation which must comply with the IV size defined
+ * @iv: IV for the cipher operation which must comply with the IV size defined
  *      by crypto_skcipher_ivsize
  *
  * This function allows setting of the source data and destination data
  * scatter / gather lists.
  *
- * For encryption, the source is treated as the plaपूर्णांकext and the
+ * For encryption, the source is treated as the plaintext and the
  * destination is the ciphertext. For a decryption operation, the use is
- * reversed - the source is the ciphertext and the destination is the plaपूर्णांकext.
+ * reversed - the source is the ciphertext and the destination is the plaintext.
  */
-अटल अंतरभूत व्योम skcipher_request_set_crypt(
-	काष्ठा skcipher_request *req,
-	काष्ठा scatterlist *src, काष्ठा scatterlist *dst,
-	अचिन्हित पूर्णांक cryptlen, व्योम *iv)
-अणु
+static inline void skcipher_request_set_crypt(
+	struct skcipher_request *req,
+	struct scatterlist *src, struct scatterlist *dst,
+	unsigned int cryptlen, void *iv)
+{
 	req->src = src;
 	req->dst = dst;
 	req->cryptlen = cryptlen;
 	req->iv = iv;
-पूर्ण
+}
 
-#पूर्ण_अगर	/* _CRYPTO_SKCIPHER_H */
+#endif	/* _CRYPTO_SKCIPHER_H */
 

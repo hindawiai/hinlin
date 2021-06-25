@@ -1,14 +1,13 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * GPU memory trace poपूर्णांकs
+ * GPU memory trace points
  *
  * Copyright (C) 2020 Google, Inc.
  */
 
-#समावेश <linux/module.h>
+#include <linux/module.h>
 
-#घोषणा CREATE_TRACE_POINTS
-#समावेश <trace/events/gpu_स्मृति.स>
+#define CREATE_TRACE_POINTS
+#include <trace/events/gpu_mem.h>
 
 EXPORT_TRACEPOINT_SYMBOL(gpu_mem_total);

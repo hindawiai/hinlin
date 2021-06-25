@@ -1,81 +1,80 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2020 Intel Corporation
  * Author: Johannes Berg <johannes@sipsolutions.net>
  */
-#समावेश <os.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <sched.h>
-#समावेश <unistd.h>
-#समावेश <kern_util.h>
-#समावेश <sys/select.h>
-#समावेश <मानकपन.स>
-#समावेश <sys/समयrfd.h>
-#समावेश "rtc.h"
+#include <os.h>
+#include <errno.h>
+#include <sched.h>
+#include <unistd.h>
+#include <kern_util.h>
+#include <sys/select.h>
+#include <stdio.h>
+#include <sys/timerfd.h>
+#include "rtc.h"
 
-अटल पूर्णांक uml_rtc_irq_fds[2];
+static int uml_rtc_irq_fds[2];
 
-व्योम uml_rtc_send_समयtravel_alarm(व्योम)
-अणु
-	अचिन्हित दीर्घ दीर्घ c = 1;
+void uml_rtc_send_timetravel_alarm(void)
+{
+	unsigned long long c = 1;
 
-	CATCH_EINTR(ग_लिखो(uml_rtc_irq_fds[1], &c, माप(c)));
-पूर्ण
+	CATCH_EINTR(write(uml_rtc_irq_fds[1], &c, sizeof(c)));
+}
 
-पूर्णांक uml_rtc_start(bool समयtravel)
-अणु
-	पूर्णांक err;
+int uml_rtc_start(bool timetravel)
+{
+	int err;
 
-	अगर (समयtravel) अणु
-		पूर्णांक err = os_pipe(uml_rtc_irq_fds, 1, 1);
-		अगर (err)
-			जाओ fail;
-	पूर्ण अन्यथा अणु
-		uml_rtc_irq_fds[0] = समयrfd_create(CLOCK_REALTIME, TFD_CLOEXEC);
-		अगर (uml_rtc_irq_fds[0] < 0) अणु
-			err = -त्रुटि_सं;
-			जाओ fail;
-		पूर्ण
+	if (timetravel) {
+		int err = os_pipe(uml_rtc_irq_fds, 1, 1);
+		if (err)
+			goto fail;
+	} else {
+		uml_rtc_irq_fds[0] = timerfd_create(CLOCK_REALTIME, TFD_CLOEXEC);
+		if (uml_rtc_irq_fds[0] < 0) {
+			err = -errno;
+			goto fail;
+		}
 
-		/* apparently समयrfd won't send SIGIO, use workaround */
+		/* apparently timerfd won't send SIGIO, use workaround */
 		sigio_broken(uml_rtc_irq_fds[0]);
 		err = add_sigio_fd(uml_rtc_irq_fds[0]);
-		अगर (err < 0) अणु
-			बंद(uml_rtc_irq_fds[0]);
-			जाओ fail;
-		पूर्ण
-	पूर्ण
+		if (err < 0) {
+			close(uml_rtc_irq_fds[0]);
+			goto fail;
+		}
+	}
 
-	वापस uml_rtc_irq_fds[0];
+	return uml_rtc_irq_fds[0];
 fail:
-	uml_rtc_stop(समयtravel);
-	वापस err;
-पूर्ण
+	uml_rtc_stop(timetravel);
+	return err;
+}
 
-पूर्णांक uml_rtc_enable_alarm(अचिन्हित दीर्घ दीर्घ delta_seconds)
-अणु
-	काष्ठा iसमयrspec it = अणु
-		.it_value = अणु
+int uml_rtc_enable_alarm(unsigned long long delta_seconds)
+{
+	struct itimerspec it = {
+		.it_value = {
 			.tv_sec = delta_seconds,
-		पूर्ण,
-	पूर्ण;
+		},
+	};
 
-	अगर (समयrfd_समय_रखो(uml_rtc_irq_fds[0], 0, &it, शून्य))
-		वापस -त्रुटि_सं;
-	वापस 0;
-पूर्ण
+	if (timerfd_settime(uml_rtc_irq_fds[0], 0, &it, NULL))
+		return -errno;
+	return 0;
+}
 
-व्योम uml_rtc_disable_alarm(व्योम)
-अणु
+void uml_rtc_disable_alarm(void)
+{
 	uml_rtc_enable_alarm(0);
-पूर्ण
+}
 
-व्योम uml_rtc_stop(bool समयtravel)
-अणु
-	अगर (समयtravel)
-		os_बंद_file(uml_rtc_irq_fds[1]);
-	अन्यथा
+void uml_rtc_stop(bool timetravel)
+{
+	if (timetravel)
+		os_close_file(uml_rtc_irq_fds[1]);
+	else
 		ignore_sigio_fd(uml_rtc_irq_fds[0]);
-	os_बंद_file(uml_rtc_irq_fds[0]);
-पूर्ण
+	os_close_file(uml_rtc_irq_fds[0]);
+}

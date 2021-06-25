@@ -1,156 +1,155 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2014-2016 Pratyush Anand <panand@redhat.com>
  */
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/uprobes.h>
-#समावेश <यंत्र/cacheflush.h>
+#include <linux/highmem.h>
+#include <linux/ptrace.h>
+#include <linux/uprobes.h>
+#include <asm/cacheflush.h>
 
-#समावेश "decode-insn.h"
+#include "decode-insn.h"
 
-#घोषणा UPROBE_TRAP_NR	अच_पूर्णांक_उच्च
+#define UPROBE_TRAP_NR	UINT_MAX
 
 bool is_swbp_insn(uprobe_opcode_t *insn)
-अणु
-	वापस (*insn & 0xffff) == UPROBE_SWBP_INSN;
-पूर्ण
+{
+	return (*insn & 0xffff) == UPROBE_SWBP_INSN;
+}
 
-अचिन्हित दीर्घ uprobe_get_swbp_addr(काष्ठा pt_regs *regs)
-अणु
-	वापस inकाष्ठाion_poपूर्णांकer(regs);
-पूर्ण
+unsigned long uprobe_get_swbp_addr(struct pt_regs *regs)
+{
+	return instruction_pointer(regs);
+}
 
-पूर्णांक arch_uprobe_analyze_insn(काष्ठा arch_uprobe *auprobe, काष्ठा mm_काष्ठा *mm,
-		अचिन्हित दीर्घ addr)
-अणु
+int arch_uprobe_analyze_insn(struct arch_uprobe *auprobe, struct mm_struct *mm,
+		unsigned long addr)
+{
 	probe_opcode_t insn;
 
 	insn = *(probe_opcode_t *)(&auprobe->insn[0]);
 
 	auprobe->insn_size = is_insn32(insn) ? 4 : 2;
 
-	चयन (csky_probe_decode_insn(&insn, &auprobe->api)) अणु
-	हाल INSN_REJECTED:
-		वापस -EINVAL;
+	switch (csky_probe_decode_insn(&insn, &auprobe->api)) {
+	case INSN_REJECTED:
+		return -EINVAL;
 
-	हाल INSN_GOOD_NO_SLOT:
+	case INSN_GOOD_NO_SLOT:
 		auprobe->simulate = true;
-		अवरोध;
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक arch_uprobe_pre_xol(काष्ठा arch_uprobe *auprobe, काष्ठा pt_regs *regs)
-अणु
-	काष्ठा uprobe_task *utask = current->utask;
+int arch_uprobe_pre_xol(struct arch_uprobe *auprobe, struct pt_regs *regs)
+{
+	struct uprobe_task *utask = current->utask;
 
-	utask->autask.saved_trap_no = current->thपढ़ो.trap_no;
-	current->thपढ़ो.trap_no = UPROBE_TRAP_NR;
+	utask->autask.saved_trap_no = current->thread.trap_no;
+	current->thread.trap_no = UPROBE_TRAP_NR;
 
-	inकाष्ठाion_poपूर्णांकer_set(regs, utask->xol_vaddr);
+	instruction_pointer_set(regs, utask->xol_vaddr);
 
 	user_enable_single_step(current);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक arch_uprobe_post_xol(काष्ठा arch_uprobe *auprobe, काष्ठा pt_regs *regs)
-अणु
-	काष्ठा uprobe_task *utask = current->utask;
+int arch_uprobe_post_xol(struct arch_uprobe *auprobe, struct pt_regs *regs)
+{
+	struct uprobe_task *utask = current->utask;
 
-	WARN_ON_ONCE(current->thपढ़ो.trap_no != UPROBE_TRAP_NR);
+	WARN_ON_ONCE(current->thread.trap_no != UPROBE_TRAP_NR);
 
-	inकाष्ठाion_poपूर्णांकer_set(regs, utask->vaddr + auprobe->insn_size);
+	instruction_pointer_set(regs, utask->vaddr + auprobe->insn_size);
 
 	user_disable_single_step(current);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-bool arch_uprobe_xol_was_trapped(काष्ठा task_काष्ठा *t)
-अणु
-	अगर (t->thपढ़ो.trap_no != UPROBE_TRAP_NR)
-		वापस true;
+bool arch_uprobe_xol_was_trapped(struct task_struct *t)
+{
+	if (t->thread.trap_no != UPROBE_TRAP_NR)
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-bool arch_uprobe_skip_sstep(काष्ठा arch_uprobe *auprobe, काष्ठा pt_regs *regs)
-अणु
+bool arch_uprobe_skip_sstep(struct arch_uprobe *auprobe, struct pt_regs *regs)
+{
 	probe_opcode_t insn;
-	अचिन्हित दीर्घ addr;
+	unsigned long addr;
 
-	अगर (!auprobe->simulate)
-		वापस false;
+	if (!auprobe->simulate)
+		return false;
 
 	insn = *(probe_opcode_t *)(&auprobe->insn[0]);
-	addr = inकाष्ठाion_poपूर्णांकer(regs);
+	addr = instruction_pointer(regs);
 
-	अगर (auprobe->api.handler)
+	if (auprobe->api.handler)
 		auprobe->api.handler(insn, addr, regs);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-व्योम arch_uprobe_पात_xol(काष्ठा arch_uprobe *auprobe, काष्ठा pt_regs *regs)
-अणु
-	काष्ठा uprobe_task *utask = current->utask;
+void arch_uprobe_abort_xol(struct arch_uprobe *auprobe, struct pt_regs *regs)
+{
+	struct uprobe_task *utask = current->utask;
 
 	/*
-	 * Task has received a fatal संकेत, so reset back to probbed
+	 * Task has received a fatal signal, so reset back to probbed
 	 * address.
 	 */
-	inकाष्ठाion_poपूर्णांकer_set(regs, utask->vaddr);
+	instruction_pointer_set(regs, utask->vaddr);
 
 	user_disable_single_step(current);
-पूर्ण
+}
 
-bool arch_uretprobe_is_alive(काष्ठा वापस_instance *ret, क्रमागत rp_check ctx,
-		काष्ठा pt_regs *regs)
-अणु
-	अगर (ctx == RP_CHECK_CHAIN_CALL)
-		वापस regs->usp <= ret->stack;
-	अन्यथा
-		वापस regs->usp < ret->stack;
-पूर्ण
+bool arch_uretprobe_is_alive(struct return_instance *ret, enum rp_check ctx,
+		struct pt_regs *regs)
+{
+	if (ctx == RP_CHECK_CHAIN_CALL)
+		return regs->usp <= ret->stack;
+	else
+		return regs->usp < ret->stack;
+}
 
-अचिन्हित दीर्घ
-arch_uretprobe_hijack_वापस_addr(अचिन्हित दीर्घ trampoline_vaddr,
-				  काष्ठा pt_regs *regs)
-अणु
-	अचिन्हित दीर्घ ra;
+unsigned long
+arch_uretprobe_hijack_return_addr(unsigned long trampoline_vaddr,
+				  struct pt_regs *regs)
+{
+	unsigned long ra;
 
 	ra = regs->lr;
 
 	regs->lr = trampoline_vaddr;
 
-	वापस ra;
-पूर्ण
+	return ra;
+}
 
-पूर्णांक arch_uprobe_exception_notअगरy(काष्ठा notअगरier_block *self,
-				 अचिन्हित दीर्घ val, व्योम *data)
-अणु
-	वापस NOTIFY_DONE;
-पूर्ण
+int arch_uprobe_exception_notify(struct notifier_block *self,
+				 unsigned long val, void *data)
+{
+	return NOTIFY_DONE;
+}
 
-पूर्णांक uprobe_अवरोधpoपूर्णांक_handler(काष्ठा pt_regs *regs)
-अणु
-	अगर (uprobe_pre_sstep_notअगरier(regs))
-		वापस 1;
+int uprobe_breakpoint_handler(struct pt_regs *regs)
+{
+	if (uprobe_pre_sstep_notifier(regs))
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक uprobe_single_step_handler(काष्ठा pt_regs *regs)
-अणु
-	अगर (uprobe_post_sstep_notअगरier(regs))
-		वापस 1;
+int uprobe_single_step_handler(struct pt_regs *regs)
+{
+	if (uprobe_post_sstep_notifier(regs))
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

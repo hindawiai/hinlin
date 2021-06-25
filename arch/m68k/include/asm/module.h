@@ -1,43 +1,42 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_M68K_MODULE_H
-#घोषणा _ASM_M68K_MODULE_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_M68K_MODULE_H
+#define _ASM_M68K_MODULE_H
 
-#समावेश <यंत्र-generic/module.h>
+#include <asm-generic/module.h>
 
-क्रमागत m68k_fixup_type अणु
+enum m68k_fixup_type {
 	m68k_fixup_memoffset,
-	m68k_fixup_vnode_shअगरt,
-पूर्ण;
+	m68k_fixup_vnode_shift,
+};
 
-काष्ठा m68k_fixup_info अणु
-	क्रमागत m68k_fixup_type type;
-	व्योम *addr;
-पूर्ण;
+struct m68k_fixup_info {
+	enum m68k_fixup_type type;
+	void *addr;
+};
 
-काष्ठा mod_arch_specअगरic अणु
-	काष्ठा m68k_fixup_info *fixup_start, *fixup_end;
-पूर्ण;
+struct mod_arch_specific {
+	struct m68k_fixup_info *fixup_start, *fixup_end;
+};
 
-#अगर_घोषित CONFIG_MMU
+#ifdef CONFIG_MMU
 
-#घोषणा MODULE_ARCH_INIT अणु				\
+#define MODULE_ARCH_INIT {				\
 	.fixup_start		= __start_fixup,	\
 	.fixup_end		= __stop_fixup,		\
-पूर्ण
+}
 
 
-#घोषणा m68k_fixup(type, addr)			\
+#define m68k_fixup(type, addr)			\
 	"	.section \".m68k_fixup\",\"aw\"\n"	\
 	"	.long " #type "," #addr "\n"	\
 	"	.previous\n"
 
-#पूर्ण_अगर /* CONFIG_MMU */
+#endif /* CONFIG_MMU */
 
-बाह्य काष्ठा m68k_fixup_info __start_fixup[], __stop_fixup[];
+extern struct m68k_fixup_info __start_fixup[], __stop_fixup[];
 
-काष्ठा module;
-बाह्य व्योम module_fixup(काष्ठा module *mod, काष्ठा m68k_fixup_info *start,
-			 काष्ठा m68k_fixup_info *end);
+struct module;
+extern void module_fixup(struct module *mod, struct m68k_fixup_info *start,
+			 struct m68k_fixup_info *end);
 
-#पूर्ण_अगर /* _ASM_M68K_MODULE_H */
+#endif /* _ASM_M68K_MODULE_H */

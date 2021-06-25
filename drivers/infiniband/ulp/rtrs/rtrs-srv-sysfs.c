@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * RDMA Transport Layer
  *
@@ -7,306 +6,306 @@
  * Copyright (c) 2018 - 2019 1&1 IONOS Cloud GmbH. All rights reserved.
  * Copyright (c) 2019 - 2020 1&1 IONOS SE. All rights reserved.
  */
-#अघोषित pr_fmt
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME " L" __stringअगरy(__LINE__) ": " fmt
+#undef pr_fmt
+#define pr_fmt(fmt) KBUILD_MODNAME " L" __stringify(__LINE__) ": " fmt
 
-#समावेश "rtrs-pri.h"
-#समावेश "rtrs-srv.h"
-#समावेश "rtrs-log.h"
+#include "rtrs-pri.h"
+#include "rtrs-srv.h"
+#include "rtrs-log.h"
 
-अटल व्योम rtrs_srv_release(काष्ठा kobject *kobj)
-अणु
-	काष्ठा rtrs_srv_sess *sess;
+static void rtrs_srv_release(struct kobject *kobj)
+{
+	struct rtrs_srv_sess *sess;
 
-	sess = container_of(kobj, काष्ठा rtrs_srv_sess, kobj);
-	kमुक्त(sess);
-पूर्ण
+	sess = container_of(kobj, struct rtrs_srv_sess, kobj);
+	kfree(sess);
+}
 
-अटल काष्ठा kobj_type ktype = अणु
+static struct kobj_type ktype = {
 	.sysfs_ops	= &kobj_sysfs_ops,
 	.release	= rtrs_srv_release,
-पूर्ण;
+};
 
-अटल sमाप_प्रकार rtrs_srv_disconnect_show(काष्ठा kobject *kobj,
-					काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	वापस sysfs_emit(buf, "Usage: echo 1 > %s\n", attr->attr.name);
-पूर्ण
+static ssize_t rtrs_srv_disconnect_show(struct kobject *kobj,
+					struct kobj_attribute *attr, char *buf)
+{
+	return sysfs_emit(buf, "Usage: echo 1 > %s\n", attr->attr.name);
+}
 
-अटल sमाप_प्रकार rtrs_srv_disconnect_store(काष्ठा kobject *kobj,
-					  काष्ठा kobj_attribute *attr,
-					  स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा rtrs_srv_sess *sess;
-	काष्ठा rtrs_sess *s;
-	अक्षर str[MAXHOSTNAMELEN];
+static ssize_t rtrs_srv_disconnect_store(struct kobject *kobj,
+					  struct kobj_attribute *attr,
+					  const char *buf, size_t count)
+{
+	struct rtrs_srv_sess *sess;
+	struct rtrs_sess *s;
+	char str[MAXHOSTNAMELEN];
 
-	sess = container_of(kobj, काष्ठा rtrs_srv_sess, kobj);
+	sess = container_of(kobj, struct rtrs_srv_sess, kobj);
 	s = &sess->s;
-	अगर (!sysfs_streq(buf, "1")) अणु
+	if (!sysfs_streq(buf, "1")) {
 		rtrs_err(s, "%s: invalid value: '%s'\n",
 			  attr->attr.name, buf);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	sockaddr_to_str((काष्ठा sockaddr *)&sess->s.dst_addr, str, माप(str));
+	sockaddr_to_str((struct sockaddr *)&sess->s.dst_addr, str, sizeof(str));
 
 	rtrs_info(s, "disconnect for path %s requested\n", str);
-	/* first हटाओ sysfs itself to aव्योम deadlock */
-	sysfs_हटाओ_file_self(&sess->kobj, &attr->attr);
-	बंद_sess(sess);
+	/* first remove sysfs itself to avoid deadlock */
+	sysfs_remove_file_self(&sess->kobj, &attr->attr);
+	close_sess(sess);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल काष्ठा kobj_attribute rtrs_srv_disconnect_attr =
+static struct kobj_attribute rtrs_srv_disconnect_attr =
 	__ATTR(disconnect, 0644,
 	       rtrs_srv_disconnect_show, rtrs_srv_disconnect_store);
 
-अटल sमाप_प्रकार rtrs_srv_hca_port_show(काष्ठा kobject *kobj,
-				       काष्ठा kobj_attribute *attr,
-				       अक्षर *page)
-अणु
-	काष्ठा rtrs_srv_sess *sess;
-	काष्ठा rtrs_con *usr_con;
+static ssize_t rtrs_srv_hca_port_show(struct kobject *kobj,
+				       struct kobj_attribute *attr,
+				       char *page)
+{
+	struct rtrs_srv_sess *sess;
+	struct rtrs_con *usr_con;
 
 	sess = container_of(kobj, typeof(*sess), kobj);
 	usr_con = sess->s.con[0];
 
-	वापस sysfs_emit(page, "%u\n", usr_con->cm_id->port_num);
-पूर्ण
+	return sysfs_emit(page, "%u\n", usr_con->cm_id->port_num);
+}
 
-अटल काष्ठा kobj_attribute rtrs_srv_hca_port_attr =
-	__ATTR(hca_port, 0444, rtrs_srv_hca_port_show, शून्य);
+static struct kobj_attribute rtrs_srv_hca_port_attr =
+	__ATTR(hca_port, 0444, rtrs_srv_hca_port_show, NULL);
 
-अटल sमाप_प्रकार rtrs_srv_hca_name_show(काष्ठा kobject *kobj,
-				       काष्ठा kobj_attribute *attr,
-				       अक्षर *page)
-अणु
-	काष्ठा rtrs_srv_sess *sess;
+static ssize_t rtrs_srv_hca_name_show(struct kobject *kobj,
+				       struct kobj_attribute *attr,
+				       char *page)
+{
+	struct rtrs_srv_sess *sess;
 
-	sess = container_of(kobj, काष्ठा rtrs_srv_sess, kobj);
+	sess = container_of(kobj, struct rtrs_srv_sess, kobj);
 
-	वापस sysfs_emit(page, "%s\n", sess->s.dev->ib_dev->name);
-पूर्ण
+	return sysfs_emit(page, "%s\n", sess->s.dev->ib_dev->name);
+}
 
-अटल काष्ठा kobj_attribute rtrs_srv_hca_name_attr =
-	__ATTR(hca_name, 0444, rtrs_srv_hca_name_show, शून्य);
+static struct kobj_attribute rtrs_srv_hca_name_attr =
+	__ATTR(hca_name, 0444, rtrs_srv_hca_name_show, NULL);
 
-अटल sमाप_प्रकार rtrs_srv_src_addr_show(काष्ठा kobject *kobj,
-				       काष्ठा kobj_attribute *attr,
-				       अक्षर *page)
-अणु
-	काष्ठा rtrs_srv_sess *sess;
-	पूर्णांक cnt;
+static ssize_t rtrs_srv_src_addr_show(struct kobject *kobj,
+				       struct kobj_attribute *attr,
+				       char *page)
+{
+	struct rtrs_srv_sess *sess;
+	int cnt;
 
-	sess = container_of(kobj, काष्ठा rtrs_srv_sess, kobj);
-	cnt = sockaddr_to_str((काष्ठा sockaddr *)&sess->s.dst_addr,
+	sess = container_of(kobj, struct rtrs_srv_sess, kobj);
+	cnt = sockaddr_to_str((struct sockaddr *)&sess->s.dst_addr,
 			      page, PAGE_SIZE);
-	वापस cnt + scnम_लिखो(page + cnt, PAGE_SIZE - cnt, "\n");
-पूर्ण
+	return cnt + scnprintf(page + cnt, PAGE_SIZE - cnt, "\n");
+}
 
-अटल काष्ठा kobj_attribute rtrs_srv_src_addr_attr =
-	__ATTR(src_addr, 0444, rtrs_srv_src_addr_show, शून्य);
+static struct kobj_attribute rtrs_srv_src_addr_attr =
+	__ATTR(src_addr, 0444, rtrs_srv_src_addr_show, NULL);
 
-अटल sमाप_प्रकार rtrs_srv_dst_addr_show(काष्ठा kobject *kobj,
-				       काष्ठा kobj_attribute *attr,
-				       अक्षर *page)
-अणु
-	काष्ठा rtrs_srv_sess *sess;
-	पूर्णांक len;
+static ssize_t rtrs_srv_dst_addr_show(struct kobject *kobj,
+				       struct kobj_attribute *attr,
+				       char *page)
+{
+	struct rtrs_srv_sess *sess;
+	int len;
 
-	sess = container_of(kobj, काष्ठा rtrs_srv_sess, kobj);
-	len = sockaddr_to_str((काष्ठा sockaddr *)&sess->s.src_addr, page,
+	sess = container_of(kobj, struct rtrs_srv_sess, kobj);
+	len = sockaddr_to_str((struct sockaddr *)&sess->s.src_addr, page,
 			      PAGE_SIZE);
 	len += sysfs_emit_at(page, len, "\n");
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल काष्ठा kobj_attribute rtrs_srv_dst_addr_attr =
-	__ATTR(dst_addr, 0444, rtrs_srv_dst_addr_show, शून्य);
+static struct kobj_attribute rtrs_srv_dst_addr_attr =
+	__ATTR(dst_addr, 0444, rtrs_srv_dst_addr_show, NULL);
 
-अटल काष्ठा attribute *rtrs_srv_sess_attrs[] = अणु
+static struct attribute *rtrs_srv_sess_attrs[] = {
 	&rtrs_srv_hca_name_attr.attr,
 	&rtrs_srv_hca_port_attr.attr,
 	&rtrs_srv_src_addr_attr.attr,
 	&rtrs_srv_dst_addr_attr.attr,
 	&rtrs_srv_disconnect_attr.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group rtrs_srv_sess_attr_group = अणु
+static const struct attribute_group rtrs_srv_sess_attr_group = {
 	.attrs = rtrs_srv_sess_attrs,
-पूर्ण;
+};
 
-STAT_ATTR(काष्ठा rtrs_srv_stats, rdma,
+STAT_ATTR(struct rtrs_srv_stats, rdma,
 	  rtrs_srv_stats_rdma_to_str,
 	  rtrs_srv_reset_rdma_stats);
 
-अटल काष्ठा attribute *rtrs_srv_stats_attrs[] = अणु
+static struct attribute *rtrs_srv_stats_attrs[] = {
 	&rdma_attr.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group rtrs_srv_stats_attr_group = अणु
+static const struct attribute_group rtrs_srv_stats_attr_group = {
 	.attrs = rtrs_srv_stats_attrs,
-पूर्ण;
+};
 
-अटल पूर्णांक rtrs_srv_create_once_sysfs_root_folders(काष्ठा rtrs_srv_sess *sess)
-अणु
-	काष्ठा rtrs_srv *srv = sess->srv;
-	पूर्णांक err = 0;
+static int rtrs_srv_create_once_sysfs_root_folders(struct rtrs_srv_sess *sess)
+{
+	struct rtrs_srv *srv = sess->srv;
+	int err = 0;
 
 	mutex_lock(&srv->paths_mutex);
-	अगर (srv->dev_ref++) अणु
+	if (srv->dev_ref++) {
 		/*
-		 * Device needs to be रेजिस्टरed only on the first session
+		 * Device needs to be registered only on the first session
 		 */
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 	srv->dev.class = rtrs_dev_class;
 	err = dev_set_name(&srv->dev, "%s", sess->s.sessname);
-	अगर (err)
-		जाओ unlock;
+	if (err)
+		goto unlock;
 
 	/*
-	 * Suppress user space notअगरication until
+	 * Suppress user space notification until
 	 * sysfs files are created
 	 */
 	dev_set_uevent_suppress(&srv->dev, true);
 	err = device_add(&srv->dev);
-	अगर (err) अणु
+	if (err) {
 		pr_err("device_add(): %d\n", err);
 		put_device(&srv->dev);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 	srv->kobj_paths = kobject_create_and_add("paths", &srv->dev.kobj);
-	अगर (!srv->kobj_paths) अणु
+	if (!srv->kobj_paths) {
 		err = -ENOMEM;
 		pr_err("kobject_create_and_add(): %d\n", err);
 		device_del(&srv->dev);
 		put_device(&srv->dev);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 	dev_set_uevent_suppress(&srv->dev, false);
 	kobject_uevent(&srv->dev.kobj, KOBJ_ADD);
 unlock:
 	mutex_unlock(&srv->paths_mutex);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम
-rtrs_srv_destroy_once_sysfs_root_folders(काष्ठा rtrs_srv_sess *sess)
-अणु
-	काष्ठा rtrs_srv *srv = sess->srv;
+static void
+rtrs_srv_destroy_once_sysfs_root_folders(struct rtrs_srv_sess *sess)
+{
+	struct rtrs_srv *srv = sess->srv;
 
 	mutex_lock(&srv->paths_mutex);
-	अगर (!--srv->dev_ref) अणु
+	if (!--srv->dev_ref) {
 		kobject_del(srv->kobj_paths);
 		kobject_put(srv->kobj_paths);
 		mutex_unlock(&srv->paths_mutex);
 		device_del(&srv->dev);
 		put_device(&srv->dev);
-	पूर्ण अन्यथा अणु
+	} else {
 		mutex_unlock(&srv->paths_mutex);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम rtrs_srv_sess_stats_release(काष्ठा kobject *kobj)
-अणु
-	काष्ठा rtrs_srv_stats *stats;
+static void rtrs_srv_sess_stats_release(struct kobject *kobj)
+{
+	struct rtrs_srv_stats *stats;
 
-	stats = container_of(kobj, काष्ठा rtrs_srv_stats, kobj_stats);
+	stats = container_of(kobj, struct rtrs_srv_stats, kobj_stats);
 
-	kमुक्त(stats);
-पूर्ण
+	kfree(stats);
+}
 
-अटल काष्ठा kobj_type ktype_stats = अणु
+static struct kobj_type ktype_stats = {
 	.sysfs_ops = &kobj_sysfs_ops,
 	.release = rtrs_srv_sess_stats_release,
-पूर्ण;
+};
 
-अटल पूर्णांक rtrs_srv_create_stats_files(काष्ठा rtrs_srv_sess *sess)
-अणु
-	पूर्णांक err;
-	काष्ठा rtrs_sess *s = &sess->s;
+static int rtrs_srv_create_stats_files(struct rtrs_srv_sess *sess)
+{
+	int err;
+	struct rtrs_sess *s = &sess->s;
 
 	err = kobject_init_and_add(&sess->stats->kobj_stats, &ktype_stats,
 				   &sess->kobj, "stats");
-	अगर (err) अणु
+	if (err) {
 		rtrs_err(s, "kobject_init_and_add(): %d\n", err);
 		kobject_put(&sess->stats->kobj_stats);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 	err = sysfs_create_group(&sess->stats->kobj_stats,
 				 &rtrs_srv_stats_attr_group);
-	अगर (err) अणु
+	if (err) {
 		rtrs_err(s, "sysfs_create_group(): %d\n", err);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	वापस 0;
+	return 0;
 
 err:
 	kobject_del(&sess->stats->kobj_stats);
 	kobject_put(&sess->stats->kobj_stats);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक rtrs_srv_create_sess_files(काष्ठा rtrs_srv_sess *sess)
-अणु
-	काष्ठा rtrs_srv *srv = sess->srv;
-	काष्ठा rtrs_sess *s = &sess->s;
-	अक्षर str[NAME_MAX];
-	पूर्णांक err;
-	काष्ठा rtrs_addr path = अणु
+int rtrs_srv_create_sess_files(struct rtrs_srv_sess *sess)
+{
+	struct rtrs_srv *srv = sess->srv;
+	struct rtrs_sess *s = &sess->s;
+	char str[NAME_MAX];
+	int err;
+	struct rtrs_addr path = {
 		.src = &sess->s.dst_addr,
 		.dst = &sess->s.src_addr,
-	पूर्ण;
+	};
 
-	rtrs_addr_to_str(&path, str, माप(str));
+	rtrs_addr_to_str(&path, str, sizeof(str));
 	err = rtrs_srv_create_once_sysfs_root_folders(sess);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = kobject_init_and_add(&sess->kobj, &ktype, srv->kobj_paths,
 				   "%s", str);
-	अगर (err) अणु
+	if (err) {
 		rtrs_err(s, "kobject_init_and_add(): %d\n", err);
-		जाओ destroy_root;
-	पूर्ण
+		goto destroy_root;
+	}
 	err = sysfs_create_group(&sess->kobj, &rtrs_srv_sess_attr_group);
-	अगर (err) अणु
+	if (err) {
 		rtrs_err(s, "sysfs_create_group(): %d\n", err);
-		जाओ put_kobj;
-	पूर्ण
+		goto put_kobj;
+	}
 	err = rtrs_srv_create_stats_files(sess);
-	अगर (err)
-		जाओ हटाओ_group;
+	if (err)
+		goto remove_group;
 
-	वापस 0;
+	return 0;
 
-हटाओ_group:
-	sysfs_हटाओ_group(&sess->kobj, &rtrs_srv_sess_attr_group);
+remove_group:
+	sysfs_remove_group(&sess->kobj, &rtrs_srv_sess_attr_group);
 put_kobj:
 	kobject_del(&sess->kobj);
 destroy_root:
 	kobject_put(&sess->kobj);
 	rtrs_srv_destroy_once_sysfs_root_folders(sess);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम rtrs_srv_destroy_sess_files(काष्ठा rtrs_srv_sess *sess)
-अणु
-	अगर (sess->kobj.state_in_sysfs) अणु
+void rtrs_srv_destroy_sess_files(struct rtrs_srv_sess *sess)
+{
+	if (sess->kobj.state_in_sysfs) {
 		kobject_del(&sess->stats->kobj_stats);
 		kobject_put(&sess->stats->kobj_stats);
-		sysfs_हटाओ_group(&sess->kobj, &rtrs_srv_sess_attr_group);
+		sysfs_remove_group(&sess->kobj, &rtrs_srv_sess_attr_group);
 		kobject_put(&sess->kobj);
 
 		rtrs_srv_destroy_once_sysfs_root_folders(sess);
-	पूर्ण
-पूर्ण
+	}
+}

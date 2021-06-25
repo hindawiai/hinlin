@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  *
  * Copyright IBM Corp. 2008
@@ -7,92 +6,92 @@
  * Authors: Christian Ehrhardt <ehrhardt@linux.vnet.ibm.com>
  */
 
-#अगर_अघोषित __POWERPC_KVM_EXITTIMING_H__
-#घोषणा __POWERPC_KVM_EXITTIMING_H__
+#ifndef __POWERPC_KVM_EXITTIMING_H__
+#define __POWERPC_KVM_EXITTIMING_H__
 
-#समावेश <linux/kvm_host.h>
+#include <linux/kvm_host.h>
 
-#अगर_घोषित CONFIG_KVM_EXIT_TIMING
-व्योम kvmppc_init_timing_stats(काष्ठा kvm_vcpu *vcpu);
-व्योम kvmppc_update_timing_stats(काष्ठा kvm_vcpu *vcpu);
-व्योम kvmppc_create_vcpu_debugfs(काष्ठा kvm_vcpu *vcpu, अचिन्हित पूर्णांक id);
-व्योम kvmppc_हटाओ_vcpu_debugfs(काष्ठा kvm_vcpu *vcpu);
+#ifdef CONFIG_KVM_EXIT_TIMING
+void kvmppc_init_timing_stats(struct kvm_vcpu *vcpu);
+void kvmppc_update_timing_stats(struct kvm_vcpu *vcpu);
+void kvmppc_create_vcpu_debugfs(struct kvm_vcpu *vcpu, unsigned int id);
+void kvmppc_remove_vcpu_debugfs(struct kvm_vcpu *vcpu);
 
-अटल अंतरभूत व्योम kvmppc_set_निकास_type(काष्ठा kvm_vcpu *vcpu, पूर्णांक type)
-अणु
-	vcpu->arch.last_निकास_type = type;
-पूर्ण
+static inline void kvmppc_set_exit_type(struct kvm_vcpu *vcpu, int type)
+{
+	vcpu->arch.last_exit_type = type;
+}
 
-#अन्यथा
-/* अगर निकास timing is not configured there is no need to build the c file */
-अटल अंतरभूत व्योम kvmppc_init_timing_stats(काष्ठा kvm_vcpu *vcpu) अणुपूर्ण
-अटल अंतरभूत व्योम kvmppc_update_timing_stats(काष्ठा kvm_vcpu *vcpu) अणुपूर्ण
-अटल अंतरभूत व्योम kvmppc_create_vcpu_debugfs(काष्ठा kvm_vcpu *vcpu,
-						अचिन्हित पूर्णांक id) अणुपूर्ण
-अटल अंतरभूत व्योम kvmppc_हटाओ_vcpu_debugfs(काष्ठा kvm_vcpu *vcpu) अणुपूर्ण
-अटल अंतरभूत व्योम kvmppc_set_निकास_type(काष्ठा kvm_vcpu *vcpu, पूर्णांक type) अणुपूर्ण
-#पूर्ण_अगर /* CONFIG_KVM_EXIT_TIMING */
+#else
+/* if exit timing is not configured there is no need to build the c file */
+static inline void kvmppc_init_timing_stats(struct kvm_vcpu *vcpu) {}
+static inline void kvmppc_update_timing_stats(struct kvm_vcpu *vcpu) {}
+static inline void kvmppc_create_vcpu_debugfs(struct kvm_vcpu *vcpu,
+						unsigned int id) {}
+static inline void kvmppc_remove_vcpu_debugfs(struct kvm_vcpu *vcpu) {}
+static inline void kvmppc_set_exit_type(struct kvm_vcpu *vcpu, int type) {}
+#endif /* CONFIG_KVM_EXIT_TIMING */
 
-/* account the निकास in kvm_stats */
-अटल अंतरभूत व्योम kvmppc_account_निकास_stat(काष्ठा kvm_vcpu *vcpu, पूर्णांक type)
-अणु
-	/* type has to be known at build समय क्रम optimization */
+/* account the exit in kvm_stats */
+static inline void kvmppc_account_exit_stat(struct kvm_vcpu *vcpu, int type)
+{
+	/* type has to be known at build time for optimization */
 
-	/* The BUILD_BUG_ON below अवरोधs in funny ways, commented out
-	 * क्रम now ... -BenH
-	BUILD_BUG_ON(!__builtin_स्थिरant_p(type));
+	/* The BUILD_BUG_ON below breaks in funny ways, commented out
+	 * for now ... -BenH
+	BUILD_BUG_ON(!__builtin_constant_p(type));
 	*/
-	चयन (type) अणु
-	हाल EXT_INTR_EXITS:
-		vcpu->stat.ext_पूर्णांकr_निकासs++;
-		अवरोध;
-	हाल DEC_EXITS:
-		vcpu->stat.dec_निकासs++;
-		अवरोध;
-	हाल EMULATED_INST_EXITS:
-		vcpu->stat.emulated_inst_निकासs++;
-		अवरोध;
-	हाल DSI_EXITS:
-		vcpu->stat.dsi_निकासs++;
-		अवरोध;
-	हाल ISI_EXITS:
-		vcpu->stat.isi_निकासs++;
-		अवरोध;
-	हाल SYSCALL_EXITS:
-		vcpu->stat.syscall_निकासs++;
-		अवरोध;
-	हाल DTLB_REAL_MISS_EXITS:
-		vcpu->stat.dtlb_real_miss_निकासs++;
-		अवरोध;
-	हाल DTLB_VIRT_MISS_EXITS:
-		vcpu->stat.dtlb_virt_miss_निकासs++;
-		अवरोध;
-	हाल MMIO_EXITS:
-		vcpu->stat.mmio_निकासs++;
-		अवरोध;
-	हाल ITLB_REAL_MISS_EXITS:
-		vcpu->stat.itlb_real_miss_निकासs++;
-		अवरोध;
-	हाल ITLB_VIRT_MISS_EXITS:
-		vcpu->stat.itlb_virt_miss_निकासs++;
-		अवरोध;
-	हाल SIGNAL_EXITS:
-		vcpu->stat.संकेत_निकासs++;
-		अवरोध;
-	हाल DBELL_EXITS:
-		vcpu->stat.dbell_निकासs++;
-		अवरोध;
-	हाल GDBELL_EXITS:
-		vcpu->stat.gdbell_निकासs++;
-		अवरोध;
-	पूर्ण
-पूर्ण
+	switch (type) {
+	case EXT_INTR_EXITS:
+		vcpu->stat.ext_intr_exits++;
+		break;
+	case DEC_EXITS:
+		vcpu->stat.dec_exits++;
+		break;
+	case EMULATED_INST_EXITS:
+		vcpu->stat.emulated_inst_exits++;
+		break;
+	case DSI_EXITS:
+		vcpu->stat.dsi_exits++;
+		break;
+	case ISI_EXITS:
+		vcpu->stat.isi_exits++;
+		break;
+	case SYSCALL_EXITS:
+		vcpu->stat.syscall_exits++;
+		break;
+	case DTLB_REAL_MISS_EXITS:
+		vcpu->stat.dtlb_real_miss_exits++;
+		break;
+	case DTLB_VIRT_MISS_EXITS:
+		vcpu->stat.dtlb_virt_miss_exits++;
+		break;
+	case MMIO_EXITS:
+		vcpu->stat.mmio_exits++;
+		break;
+	case ITLB_REAL_MISS_EXITS:
+		vcpu->stat.itlb_real_miss_exits++;
+		break;
+	case ITLB_VIRT_MISS_EXITS:
+		vcpu->stat.itlb_virt_miss_exits++;
+		break;
+	case SIGNAL_EXITS:
+		vcpu->stat.signal_exits++;
+		break;
+	case DBELL_EXITS:
+		vcpu->stat.dbell_exits++;
+		break;
+	case GDBELL_EXITS:
+		vcpu->stat.gdbell_exits++;
+		break;
+	}
+}
 
-/* wrapper to set निकास समय and account क्रम it in kvm_stats */
-अटल अंतरभूत व्योम kvmppc_account_निकास(काष्ठा kvm_vcpu *vcpu, पूर्णांक type)
-अणु
-	kvmppc_set_निकास_type(vcpu, type);
-	kvmppc_account_निकास_stat(vcpu, type);
-पूर्ण
+/* wrapper to set exit time and account for it in kvm_stats */
+static inline void kvmppc_account_exit(struct kvm_vcpu *vcpu, int type)
+{
+	kvmppc_set_exit_type(vcpu, type);
+	kvmppc_account_exit_stat(vcpu, type);
+}
 
-#पूर्ण_अगर /* __POWERPC_KVM_EXITTIMING_H__ */
+#endif /* __POWERPC_KVM_EXITTIMING_H__ */

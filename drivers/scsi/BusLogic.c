@@ -1,89 +1,88 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 
 /*
 
-  Linux Driver क्रम BusLogic MultiMaster and FlashPoपूर्णांक SCSI Host Adapters
+  Linux Driver for BusLogic MultiMaster and FlashPoint SCSI Host Adapters
 
   Copyright 1995-1998 by Leonard N. Zubkoff <lnz@dandelion.com>
 
 
-  The author respectfully requests that any modअगरications to this software be
-  sent directly to him क्रम evaluation and testing.
+  The author respectfully requests that any modifications to this software be
+  sent directly to him for evaluation and testing.
 
   Special thanks to Wayne Yen, Jin-Lon Hon, and Alex Win of BusLogic, whose
-  advice has been invaluable, to David Gentzel, क्रम writing the original Linux
-  BusLogic driver, and to Paul Gorपंचांगaker, क्रम being such a dedicated test site.
+  advice has been invaluable, to David Gentzel, for writing the original Linux
+  BusLogic driver, and to Paul Gortmaker, for being such a dedicated test site.
 
-  Finally, special thanks to Mylex/BusLogic क्रम making the FlashPoपूर्णांक SCCB
-  Manager available as मुक्तly redistributable source code.
+  Finally, special thanks to Mylex/BusLogic for making the FlashPoint SCCB
+  Manager available as freely redistributable source code.
 
 */
 
-#घोषणा blogic_drvr_version		"2.1.17"
-#घोषणा blogic_drvr_date		"12 September 2013"
+#define blogic_drvr_version		"2.1.17"
+#define blogic_drvr_date		"12 September 2013"
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/types.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/स्थिति.स>
-#समावेश <linux/pci.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/msकरोs_partition.h>
-#समावेश <scsi/scsicam.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/types.h>
+#include <linux/blkdev.h>
+#include <linux/delay.h>
+#include <linux/ioport.h>
+#include <linux/mm.h>
+#include <linux/stat.h>
+#include <linux/pci.h>
+#include <linux/spinlock.h>
+#include <linux/jiffies.h>
+#include <linux/dma-mapping.h>
+#include <linux/slab.h>
+#include <linux/msdos_partition.h>
+#include <scsi/scsicam.h>
 
-#समावेश <यंत्र/dma.h>
-#समावेश <यंत्र/पन.स>
+#include <asm/dma.h>
+#include <asm/io.h>
 
-#समावेश <scsi/scsi.h>
-#समावेश <scsi/scsi_cmnd.h>
-#समावेश <scsi/scsi_device.h>
-#समावेश <scsi/scsi_host.h>
-#समावेश <scsi/scsi_tcq.h>
-#समावेश "BusLogic.h"
-#समावेश "FlashPoint.c"
+#include <scsi/scsi.h>
+#include <scsi/scsi_cmnd.h>
+#include <scsi/scsi_device.h>
+#include <scsi/scsi_host.h>
+#include <scsi/scsi_tcq.h>
+#include "BusLogic.h"
+#include "FlashPoint.c"
 
-#अगर_अघोषित FAILURE
-#घोषणा FAILURE (-1)
-#पूर्ण_अगर
+#ifndef FAILURE
+#define FAILURE (-1)
+#endif
 
-अटल काष्ठा scsi_host_ढाँचा blogic_ढाँचा;
+static struct scsi_host_template blogic_template;
 
 /*
   blogic_drvr_options_count is a count of the number of BusLogic Driver
-  Options specअगरications provided via the Linux Kernel Command Line or via
+  Options specifications provided via the Linux Kernel Command Line or via
   the Loadable Kernel Module Installation Facility.
 */
 
-अटल पूर्णांक blogic_drvr_options_count;
+static int blogic_drvr_options_count;
 
 
 /*
-  blogic_drvr_options is an array of Driver Options काष्ठाures representing
-  BusLogic Driver Options specअगरications provided via the Linux Kernel Command
+  blogic_drvr_options is an array of Driver Options structures representing
+  BusLogic Driver Options specifications provided via the Linux Kernel Command
   Line or via the Loadable Kernel Module Installation Facility.
 */
 
-अटल काष्ठा blogic_drvr_options blogic_drvr_options[BLOGIC_MAX_ADAPTERS];
+static struct blogic_drvr_options blogic_drvr_options[BLOGIC_MAX_ADAPTERS];
 
 
 /*
-  BusLogic can be asचिन्हित a string by insmod.
+  BusLogic can be assigned a string by insmod.
 */
 
 MODULE_LICENSE("GPL");
-#अगर_घोषित MODULE
-अटल अक्षर *BusLogic;
-module_param(BusLogic, अक्षरp, 0);
-#पूर्ण_अगर
+#ifdef MODULE
+static char *BusLogic;
+module_param(BusLogic, charp, 0);
+#endif
 
 
 /*
@@ -91,7 +90,7 @@ module_param(BusLogic, अक्षरp, 0);
   all BusLogic Host Adapters.
 */
 
-अटल काष्ठा blogic_probe_options blogic_probe_options;
+static struct blogic_probe_options blogic_probe_options;
 
 
 /*
@@ -99,229 +98,229 @@ module_param(BusLogic, अक्षरp, 0);
   all BusLogic Host Adapters.
 */
 
-अटल काष्ठा blogic_global_options blogic_global_options;
+static struct blogic_global_options blogic_global_options;
 
-अटल LIST_HEAD(blogic_host_list);
+static LIST_HEAD(blogic_host_list);
 
 /*
   blogic_probeinfo_count is the number of entries in blogic_probeinfo_list.
 */
 
-अटल पूर्णांक blogic_probeinfo_count;
+static int blogic_probeinfo_count;
 
 
 /*
-  blogic_probeinfo_list is the list of I/O Addresses and Bus Probe Inक्रमmation
-  to be checked क्रम potential BusLogic Host Adapters.  It is initialized by
-  पूर्णांकerrogating the PCI Configuration Space on PCI machines as well as from the
+  blogic_probeinfo_list is the list of I/O Addresses and Bus Probe Information
+  to be checked for potential BusLogic Host Adapters.  It is initialized by
+  interrogating the PCI Configuration Space on PCI machines as well as from the
   list of standard BusLogic I/O Addresses.
 */
 
-अटल काष्ठा blogic_probeinfo *blogic_probeinfo_list;
+static struct blogic_probeinfo *blogic_probeinfo_list;
 
 
 /*
-  blogic_cmd_failure_reason holds a string identअगरying the reason why a
-  call to blogic_cmd failed.  It is only non-शून्य when blogic_cmd
-  वापसs a failure code.
+  blogic_cmd_failure_reason holds a string identifying the reason why a
+  call to blogic_cmd failed.  It is only non-NULL when blogic_cmd
+  returns a failure code.
 */
 
-अटल अक्षर *blogic_cmd_failure_reason;
+static char *blogic_cmd_failure_reason;
 
 /*
   blogic_announce_drvr announces the Driver Version and Date, Author's
   Name, Copyright Notice, and Electronic Mail Address.
 */
 
-अटल व्योम blogic_announce_drvr(काष्ठा blogic_adapter *adapter)
-अणु
+static void blogic_announce_drvr(struct blogic_adapter *adapter)
+{
 	blogic_announce("***** BusLogic SCSI Driver Version " blogic_drvr_version " of " blogic_drvr_date " *****\n", adapter);
 	blogic_announce("Copyright 1995-1998 by Leonard N. Zubkoff <lnz@dandelion.com>\n", adapter);
-पूर्ण
+}
 
 
 /*
-  blogic_drvr_info वापसs the Host Adapter Name to identअगरy this SCSI
+  blogic_drvr_info returns the Host Adapter Name to identify this SCSI
   Driver and Host Adapter.
 */
 
-अटल स्थिर अक्षर *blogic_drvr_info(काष्ठा Scsi_Host *host)
-अणु
-	काष्ठा blogic_adapter *adapter =
-				(काष्ठा blogic_adapter *) host->hostdata;
-	वापस adapter->full_model;
-पूर्ण
+static const char *blogic_drvr_info(struct Scsi_Host *host)
+{
+	struct blogic_adapter *adapter =
+				(struct blogic_adapter *) host->hostdata;
+	return adapter->full_model;
+}
 
 /*
   blogic_init_ccbs initializes a group of Command Control Blocks (CCBs)
-  क्रम Host Adapter from the blk_size bytes located at blk_poपूर्णांकer.  The newly
-  created CCBs are added to Host Adapter's मुक्त list.
+  for Host Adapter from the blk_size bytes located at blk_pointer.  The newly
+  created CCBs are added to Host Adapter's free list.
 */
 
-अटल व्योम blogic_init_ccbs(काष्ठा blogic_adapter *adapter, व्योम *blk_poपूर्णांकer,
-				पूर्णांक blk_size, dma_addr_t blkp)
-अणु
-	काष्ठा blogic_ccb *ccb = (काष्ठा blogic_ccb *) blk_poपूर्णांकer;
-	अचिन्हित पूर्णांक offset = 0;
-	स_रखो(blk_poपूर्णांकer, 0, blk_size);
+static void blogic_init_ccbs(struct blogic_adapter *adapter, void *blk_pointer,
+				int blk_size, dma_addr_t blkp)
+{
+	struct blogic_ccb *ccb = (struct blogic_ccb *) blk_pointer;
+	unsigned int offset = 0;
+	memset(blk_pointer, 0, blk_size);
 	ccb->allocgrp_head = blkp;
 	ccb->allocgrp_size = blk_size;
-	जबतक ((blk_size -= माप(काष्ठा blogic_ccb)) >= 0) अणु
+	while ((blk_size -= sizeof(struct blogic_ccb)) >= 0) {
 		ccb->status = BLOGIC_CCB_FREE;
 		ccb->adapter = adapter;
 		ccb->dma_handle = (u32) blkp + offset;
-		अगर (blogic_flashpoपूर्णांक_type(adapter)) अणु
+		if (blogic_flashpoint_type(adapter)) {
 			ccb->callback = blogic_qcompleted_ccb;
 			ccb->base_addr = adapter->fpinfo.base_addr;
-		पूर्ण
-		ccb->next = adapter->मुक्त_ccbs;
+		}
+		ccb->next = adapter->free_ccbs;
 		ccb->next_all = adapter->all_ccbs;
-		adapter->मुक्त_ccbs = ccb;
+		adapter->free_ccbs = ccb;
 		adapter->all_ccbs = ccb;
 		adapter->alloc_ccbs++;
 		ccb++;
-		offset += माप(काष्ठा blogic_ccb);
-	पूर्ण
-पूर्ण
+		offset += sizeof(struct blogic_ccb);
+	}
+}
 
 
 /*
-  blogic_create_initccbs allocates the initial CCBs क्रम Host Adapter.
+  blogic_create_initccbs allocates the initial CCBs for Host Adapter.
 */
 
-अटल bool __init blogic_create_initccbs(काष्ठा blogic_adapter *adapter)
-अणु
-	पूर्णांक blk_size = BLOGIC_CCB_GRP_ALLOCSIZE * माप(काष्ठा blogic_ccb);
-	व्योम *blk_poपूर्णांकer;
+static bool __init blogic_create_initccbs(struct blogic_adapter *adapter)
+{
+	int blk_size = BLOGIC_CCB_GRP_ALLOCSIZE * sizeof(struct blogic_ccb);
+	void *blk_pointer;
 	dma_addr_t blkp;
 
-	जबतक (adapter->alloc_ccbs < adapter->initccbs) अणु
-		blk_poपूर्णांकer = dma_alloc_coherent(&adapter->pci_device->dev,
+	while (adapter->alloc_ccbs < adapter->initccbs) {
+		blk_pointer = dma_alloc_coherent(&adapter->pci_device->dev,
 				blk_size, &blkp, GFP_KERNEL);
-		अगर (blk_poपूर्णांकer == शून्य) अणु
+		if (blk_pointer == NULL) {
 			blogic_err("UNABLE TO ALLOCATE CCB GROUP - DETACHING\n",
 					adapter);
-			वापस false;
-		पूर्ण
-		blogic_init_ccbs(adapter, blk_poपूर्णांकer, blk_size, blkp);
-	पूर्ण
-	वापस true;
-पूर्ण
+			return false;
+		}
+		blogic_init_ccbs(adapter, blk_pointer, blk_size, blkp);
+	}
+	return true;
+}
 
 
 /*
-  blogic_destroy_ccbs deallocates the CCBs क्रम Host Adapter.
+  blogic_destroy_ccbs deallocates the CCBs for Host Adapter.
 */
 
-अटल व्योम blogic_destroy_ccbs(काष्ठा blogic_adapter *adapter)
-अणु
-	काष्ठा blogic_ccb *next_ccb = adapter->all_ccbs, *ccb, *lastccb = शून्य;
-	adapter->all_ccbs = शून्य;
-	adapter->मुक्त_ccbs = शून्य;
-	जबतक ((ccb = next_ccb) != शून्य) अणु
+static void blogic_destroy_ccbs(struct blogic_adapter *adapter)
+{
+	struct blogic_ccb *next_ccb = adapter->all_ccbs, *ccb, *lastccb = NULL;
+	adapter->all_ccbs = NULL;
+	adapter->free_ccbs = NULL;
+	while ((ccb = next_ccb) != NULL) {
 		next_ccb = ccb->next_all;
-		अगर (ccb->allocgrp_head) अणु
-			अगर (lastccb)
-				dma_मुक्त_coherent(&adapter->pci_device->dev,
+		if (ccb->allocgrp_head) {
+			if (lastccb)
+				dma_free_coherent(&adapter->pci_device->dev,
 						lastccb->allocgrp_size, lastccb,
 						lastccb->allocgrp_head);
 			lastccb = ccb;
-		पूर्ण
-	पूर्ण
-	अगर (lastccb)
-		dma_मुक्त_coherent(&adapter->pci_device->dev,
+		}
+	}
+	if (lastccb)
+		dma_free_coherent(&adapter->pci_device->dev,
 				lastccb->allocgrp_size, lastccb,
 				lastccb->allocgrp_head);
-पूर्ण
+}
 
 
 /*
-  blogic_create_addlccbs allocates Additional CCBs क्रम Host Adapter.  If
-  allocation fails and there are no reमुख्यing CCBs available, the Driver Queue
-  Depth is decreased to a known safe value to aव्योम potential deadlocks when
+  blogic_create_addlccbs allocates Additional CCBs for Host Adapter.  If
+  allocation fails and there are no remaining CCBs available, the Driver Queue
+  Depth is decreased to a known safe value to avoid potential deadlocks when
   multiple host adapters share the same IRQ Channel.
 */
 
-अटल व्योम blogic_create_addlccbs(काष्ठा blogic_adapter *adapter,
-					पूर्णांक addl_ccbs, bool prपूर्णांक_success)
-अणु
-	पूर्णांक blk_size = BLOGIC_CCB_GRP_ALLOCSIZE * माप(काष्ठा blogic_ccb);
-	पूर्णांक prev_alloc = adapter->alloc_ccbs;
-	व्योम *blk_poपूर्णांकer;
+static void blogic_create_addlccbs(struct blogic_adapter *adapter,
+					int addl_ccbs, bool print_success)
+{
+	int blk_size = BLOGIC_CCB_GRP_ALLOCSIZE * sizeof(struct blogic_ccb);
+	int prev_alloc = adapter->alloc_ccbs;
+	void *blk_pointer;
 	dma_addr_t blkp;
-	अगर (addl_ccbs <= 0)
-		वापस;
-	जबतक (adapter->alloc_ccbs - prev_alloc < addl_ccbs) अणु
-		blk_poपूर्णांकer = dma_alloc_coherent(&adapter->pci_device->dev,
+	if (addl_ccbs <= 0)
+		return;
+	while (adapter->alloc_ccbs - prev_alloc < addl_ccbs) {
+		blk_pointer = dma_alloc_coherent(&adapter->pci_device->dev,
 				blk_size, &blkp, GFP_KERNEL);
-		अगर (blk_poपूर्णांकer == शून्य)
-			अवरोध;
-		blogic_init_ccbs(adapter, blk_poपूर्णांकer, blk_size, blkp);
-	पूर्ण
-	अगर (adapter->alloc_ccbs > prev_alloc) अणु
-		अगर (prपूर्णांक_success)
+		if (blk_pointer == NULL)
+			break;
+		blogic_init_ccbs(adapter, blk_pointer, blk_size, blkp);
+	}
+	if (adapter->alloc_ccbs > prev_alloc) {
+		if (print_success)
 			blogic_notice("Allocated %d additional CCBs (total now %d)\n", adapter, adapter->alloc_ccbs - prev_alloc, adapter->alloc_ccbs);
-		वापस;
-	पूर्ण
+		return;
+	}
 	blogic_notice("Failed to allocate additional CCBs\n", adapter);
-	अगर (adapter->drvr_qdepth > adapter->alloc_ccbs - adapter->tgt_count) अणु
+	if (adapter->drvr_qdepth > adapter->alloc_ccbs - adapter->tgt_count) {
 		adapter->drvr_qdepth = adapter->alloc_ccbs - adapter->tgt_count;
 		adapter->scsi_host->can_queue = adapter->drvr_qdepth;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
-  blogic_alloc_ccb allocates a CCB from Host Adapter's मुक्त list,
-  allocating more memory from the Kernel अगर necessary.  The Host Adapter's
-  Lock should alपढ़ोy have been acquired by the caller.
+  blogic_alloc_ccb allocates a CCB from Host Adapter's free list,
+  allocating more memory from the Kernel if necessary.  The Host Adapter's
+  Lock should already have been acquired by the caller.
 */
 
-अटल काष्ठा blogic_ccb *blogic_alloc_ccb(काष्ठा blogic_adapter *adapter)
-अणु
-	अटल अचिन्हित दीर्घ serial;
-	काष्ठा blogic_ccb *ccb;
-	ccb = adapter->मुक्त_ccbs;
-	अगर (ccb != शून्य) अणु
+static struct blogic_ccb *blogic_alloc_ccb(struct blogic_adapter *adapter)
+{
+	static unsigned long serial;
+	struct blogic_ccb *ccb;
+	ccb = adapter->free_ccbs;
+	if (ccb != NULL) {
 		ccb->serial = ++serial;
-		adapter->मुक्त_ccbs = ccb->next;
-		ccb->next = शून्य;
-		अगर (adapter->मुक्त_ccbs == शून्य)
+		adapter->free_ccbs = ccb->next;
+		ccb->next = NULL;
+		if (adapter->free_ccbs == NULL)
 			blogic_create_addlccbs(adapter, adapter->inc_ccbs,
 						true);
-		वापस ccb;
-	पूर्ण
+		return ccb;
+	}
 	blogic_create_addlccbs(adapter, adapter->inc_ccbs, true);
-	ccb = adapter->मुक्त_ccbs;
-	अगर (ccb == शून्य)
-		वापस शून्य;
+	ccb = adapter->free_ccbs;
+	if (ccb == NULL)
+		return NULL;
 	ccb->serial = ++serial;
-	adapter->मुक्त_ccbs = ccb->next;
-	ccb->next = शून्य;
-	वापस ccb;
-पूर्ण
+	adapter->free_ccbs = ccb->next;
+	ccb->next = NULL;
+	return ccb;
+}
 
 
 /*
-  blogic_dealloc_ccb deallocates a CCB, वापसing it to the Host Adapter's
-  मुक्त list.  The Host Adapter's Lock should alपढ़ोy have been acquired by the
+  blogic_dealloc_ccb deallocates a CCB, returning it to the Host Adapter's
+  free list.  The Host Adapter's Lock should already have been acquired by the
   caller.
 */
 
-अटल व्योम blogic_dealloc_ccb(काष्ठा blogic_ccb *ccb, पूर्णांक dma_unmap)
-अणु
-	काष्ठा blogic_adapter *adapter = ccb->adapter;
+static void blogic_dealloc_ccb(struct blogic_ccb *ccb, int dma_unmap)
+{
+	struct blogic_adapter *adapter = ccb->adapter;
 
-	अगर (ccb->command != शून्य)
+	if (ccb->command != NULL)
 		scsi_dma_unmap(ccb->command);
-	अगर (dma_unmap)
+	if (dma_unmap)
 		dma_unmap_single(&adapter->pci_device->dev, ccb->sensedata,
 			 ccb->sense_datalen, DMA_FROM_DEVICE);
 
-	ccb->command = शून्य;
+	ccb->command = NULL;
 	ccb->status = BLOGIC_CCB_FREE;
-	ccb->next = adapter->मुक्त_ccbs;
-	adapter->मुक्त_ccbs = ccb;
-पूर्ण
+	ccb->next = adapter->free_ccbs;
+	adapter->free_ccbs = ccb;
+}
 
 
 /*
@@ -330,60 +329,60 @@ module_param(BusLogic, अक्षरp, 0);
   replylen bytes of reply; any excess reply data is received but
   discarded.
 
-  On success, this function वापसs the number of reply bytes पढ़ो from
-  the Host Adapter (including any discarded data); on failure, it वापसs
-  -1 अगर the command was invalid, or -2 अगर a समयout occurred.
+  On success, this function returns the number of reply bytes read from
+  the Host Adapter (including any discarded data); on failure, it returns
+  -1 if the command was invalid, or -2 if a timeout occurred.
 
   blogic_cmd is called exclusively during host adapter detection and
-  initialization, so perक्रमmance and latency are not critical, and exclusive
+  initialization, so performance and latency are not critical, and exclusive
   access to the Host Adapter hardware is assumed.  Once the host adapter and
   driver are initialized, the only Host Adapter command that is issued is the
-  single byte Execute Mailbox Command operation code, which करोes not require
-  रुकोing क्रम the Host Adapter Ready bit to be set in the Status Register.
+  single byte Execute Mailbox Command operation code, which does not require
+  waiting for the Host Adapter Ready bit to be set in the Status Register.
 */
 
-अटल पूर्णांक blogic_cmd(काष्ठा blogic_adapter *adapter, क्रमागत blogic_opcode opcode,
-			व्योम *param, पूर्णांक paramlen, व्योम *reply, पूर्णांक replylen)
-अणु
-	अचिन्हित अक्षर *param_p = (अचिन्हित अक्षर *) param;
-	अचिन्हित अक्षर *reply_p = (अचिन्हित अक्षर *) reply;
-	जोड़ blogic_stat_reg statusreg;
-	जोड़ blogic_पूर्णांक_reg पूर्णांकreg;
-	अचिन्हित दीर्घ processor_flag = 0;
-	पूर्णांक reply_b = 0, result;
-	दीर्घ समयout;
+static int blogic_cmd(struct blogic_adapter *adapter, enum blogic_opcode opcode,
+			void *param, int paramlen, void *reply, int replylen)
+{
+	unsigned char *param_p = (unsigned char *) param;
+	unsigned char *reply_p = (unsigned char *) reply;
+	union blogic_stat_reg statusreg;
+	union blogic_int_reg intreg;
+	unsigned long processor_flag = 0;
+	int reply_b = 0, result;
+	long timeout;
 	/*
-	   Clear out the Reply Data अगर provided.
+	   Clear out the Reply Data if provided.
 	 */
-	अगर (replylen > 0)
-		स_रखो(reply, 0, replylen);
+	if (replylen > 0)
+		memset(reply, 0, replylen);
 	/*
-	   If the IRQ Channel has not yet been acquired, then पूर्णांकerrupts
-	   must be disabled जबतक issuing host adapter commands since a
-	   Command Complete पूर्णांकerrupt could occur अगर the IRQ Channel was
+	   If the IRQ Channel has not yet been acquired, then interrupts
+	   must be disabled while issuing host adapter commands since a
+	   Command Complete interrupt could occur if the IRQ Channel was
 	   previously enabled by another BusLogic Host Adapter or another
 	   driver sharing the same IRQ Channel.
 	 */
-	अगर (!adapter->irq_acquired)
+	if (!adapter->irq_acquired)
 		local_irq_save(processor_flag);
 	/*
-	   Wait क्रम the Host Adapter Ready bit to be set and the
+	   Wait for the Host Adapter Ready bit to be set and the
 	   Command/Parameter Register Busy bit to be reset in the Status
 	   Register.
 	 */
-	समयout = 10000;
-	जबतक (--समयout >= 0) अणु
+	timeout = 10000;
+	while (--timeout >= 0) {
 		statusreg.all = blogic_rdstatus(adapter);
-		अगर (statusreg.sr.adapter_पढ़ोy && !statusreg.sr.cmd_param_busy)
-			अवरोध;
+		if (statusreg.sr.adapter_ready && !statusreg.sr.cmd_param_busy)
+			break;
 		udelay(100);
-	पूर्ण
-	अगर (समयout < 0) अणु
+	}
+	if (timeout < 0) {
 		blogic_cmd_failure_reason =
 				"Timeout waiting for Host Adapter Ready";
 		result = -2;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 	/*
 	   Write the opcode to the Command/Parameter Register.
 	 */
@@ -392,174 +391,174 @@ module_param(BusLogic, अक्षरp, 0);
 	/*
 	   Write any additional Parameter Bytes.
 	 */
-	समयout = 10000;
-	जबतक (paramlen > 0 && --समयout >= 0) अणु
+	timeout = 10000;
+	while (paramlen > 0 && --timeout >= 0) {
 		/*
 		   Wait 100 microseconds to give the Host Adapter enough
-		   समय to determine whether the last value written to the
+		   time to determine whether the last value written to the
 		   Command/Parameter Register was valid or not. If the
 		   Command Complete bit is set in the Interrupt Register,
 		   then the Command Invalid bit in the Status Register will
-		   be reset अगर the Operation Code or Parameter was valid
-		   and the command has completed, or set अगर the Operation
+		   be reset if the Operation Code or Parameter was valid
+		   and the command has completed, or set if the Operation
 		   Code or Parameter was invalid. If the Data In Register
 		   Ready bit is set in the Status Register, then the
-		   Operation Code was valid, and data is रुकोing to be पढ़ो
-		   back from the Host Adapter. Otherwise, रुको क्रम the
+		   Operation Code was valid, and data is waiting to be read
+		   back from the Host Adapter. Otherwise, wait for the
 		   Command/Parameter Register Busy bit in the Status
 		   Register to be reset.
 		 */
 		udelay(100);
-		पूर्णांकreg.all = blogic_rdपूर्णांक(adapter);
+		intreg.all = blogic_rdint(adapter);
 		statusreg.all = blogic_rdstatus(adapter);
-		अगर (पूर्णांकreg.ir.cmd_complete)
-			अवरोध;
-		अगर (adapter->adapter_cmd_complete)
-			अवरोध;
-		अगर (statusreg.sr.datain_पढ़ोy)
-			अवरोध;
-		अगर (statusreg.sr.cmd_param_busy)
-			जारी;
+		if (intreg.ir.cmd_complete)
+			break;
+		if (adapter->adapter_cmd_complete)
+			break;
+		if (statusreg.sr.datain_ready)
+			break;
+		if (statusreg.sr.cmd_param_busy)
+			continue;
 		blogic_setcmdparam(adapter, *param_p++);
 		paramlen--;
-	पूर्ण
-	अगर (समयout < 0) अणु
+	}
+	if (timeout < 0) {
 		blogic_cmd_failure_reason =
 				"Timeout waiting for Parameter Acceptance";
 		result = -2;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 	/*
-	   The Modअगरy I/O Address command करोes not cause a Command Complete
+	   The Modify I/O Address command does not cause a Command Complete
 	   Interrupt.
 	 */
-	अगर (opcode == BLOGIC_MOD_IOADDR) अणु
+	if (opcode == BLOGIC_MOD_IOADDR) {
 		statusreg.all = blogic_rdstatus(adapter);
-		अगर (statusreg.sr.cmd_invalid) अणु
+		if (statusreg.sr.cmd_invalid) {
 			blogic_cmd_failure_reason =
 					"Modify I/O Address Invalid";
 			result = -1;
-			जाओ करोne;
-		पूर्ण
-		अगर (blogic_global_options.trace_config)
+			goto done;
+		}
+		if (blogic_global_options.trace_config)
 			blogic_notice("blogic_cmd(%02X) Status = %02X: (Modify I/O Address)\n", adapter, opcode, statusreg.all);
 		result = 0;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 	/*
-	   Select an appropriate समयout value क्रम aरुकोing command completion.
+	   Select an appropriate timeout value for awaiting command completion.
 	 */
-	चयन (opcode) अणु
-	हाल BLOGIC_INQ_DEV0TO7:
-	हाल BLOGIC_INQ_DEV8TO15:
-	हाल BLOGIC_INQ_DEV:
+	switch (opcode) {
+	case BLOGIC_INQ_DEV0TO7:
+	case BLOGIC_INQ_DEV8TO15:
+	case BLOGIC_INQ_DEV:
 		/* Approximately 60 seconds. */
-		समयout = 60 * 10000;
-		अवरोध;
-	शेष:
+		timeout = 60 * 10000;
+		break;
+	default:
 		/* Approximately 1 second. */
-		समयout = 10000;
-		अवरोध;
-	पूर्ण
+		timeout = 10000;
+		break;
+	}
 	/*
-	   Receive any Reply Bytes, रुकोing क्रम either the Command
-	   Complete bit to be set in the Interrupt Register, or क्रम the
+	   Receive any Reply Bytes, waiting for either the Command
+	   Complete bit to be set in the Interrupt Register, or for the
 	   Interrupt Handler to set the Host Adapter Command Completed
-	   bit in the Host Adapter काष्ठाure.
+	   bit in the Host Adapter structure.
 	 */
-	जबतक (--समयout >= 0) अणु
-		पूर्णांकreg.all = blogic_rdपूर्णांक(adapter);
+	while (--timeout >= 0) {
+		intreg.all = blogic_rdint(adapter);
 		statusreg.all = blogic_rdstatus(adapter);
-		अगर (पूर्णांकreg.ir.cmd_complete)
-			अवरोध;
-		अगर (adapter->adapter_cmd_complete)
-			अवरोध;
-		अगर (statusreg.sr.datain_पढ़ोy) अणु
-			अगर (++reply_b <= replylen)
+		if (intreg.ir.cmd_complete)
+			break;
+		if (adapter->adapter_cmd_complete)
+			break;
+		if (statusreg.sr.datain_ready) {
+			if (++reply_b <= replylen)
 				*reply_p++ = blogic_rddatain(adapter);
-			अन्यथा
+			else
 				blogic_rddatain(adapter);
-		पूर्ण
-		अगर (opcode == BLOGIC_FETCH_LOCALRAM &&
-				statusreg.sr.adapter_पढ़ोy)
-			अवरोध;
+		}
+		if (opcode == BLOGIC_FETCH_LOCALRAM &&
+				statusreg.sr.adapter_ready)
+			break;
 		udelay(100);
-	पूर्ण
-	अगर (समयout < 0) अणु
+	}
+	if (timeout < 0) {
 		blogic_cmd_failure_reason =
 					"Timeout waiting for Command Complete";
 		result = -2;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 	/*
 	   Clear any pending Command Complete Interrupt.
 	 */
-	blogic_पूर्णांकreset(adapter);
+	blogic_intreset(adapter);
 	/*
-	   Provide tracing inक्रमmation अगर requested.
+	   Provide tracing information if requested.
 	 */
-	अगर (blogic_global_options.trace_config) अणु
-		पूर्णांक i;
+	if (blogic_global_options.trace_config) {
+		int i;
 		blogic_notice("blogic_cmd(%02X) Status = %02X: %2d ==> %2d:",
 				adapter, opcode, statusreg.all, replylen,
 				reply_b);
-		अगर (replylen > reply_b)
+		if (replylen > reply_b)
 			replylen = reply_b;
-		क्रम (i = 0; i < replylen; i++)
+		for (i = 0; i < replylen; i++)
 			blogic_notice(" %02X", adapter,
-					((अचिन्हित अक्षर *) reply)[i]);
+					((unsigned char *) reply)[i]);
 		blogic_notice("\n", adapter);
-	पूर्ण
+	}
 	/*
 	   Process Command Invalid conditions.
 	 */
-	अगर (statusreg.sr.cmd_invalid) अणु
+	if (statusreg.sr.cmd_invalid) {
 		/*
 		   Some early BusLogic Host Adapters may not recover
-		   properly from a Command Invalid condition, so अगर this
-		   appears to be the हाल, a Soft Reset is issued to the
+		   properly from a Command Invalid condition, so if this
+		   appears to be the case, a Soft Reset is issued to the
 		   Host Adapter.  Potentially invalid commands are never
-		   attempted after Mailbox Initialization is perक्रमmed,
+		   attempted after Mailbox Initialization is performed,
 		   so there should be no Host Adapter state lost by a
 		   Soft Reset in response to a Command Invalid condition.
 		 */
 		udelay(1000);
 		statusreg.all = blogic_rdstatus(adapter);
-		अगर (statusreg.sr.cmd_invalid || statusreg.sr.rsvd ||
-				statusreg.sr.datain_पढ़ोy ||
+		if (statusreg.sr.cmd_invalid || statusreg.sr.rsvd ||
+				statusreg.sr.datain_ready ||
 				statusreg.sr.cmd_param_busy ||
-				!statusreg.sr.adapter_पढ़ोy ||
+				!statusreg.sr.adapter_ready ||
 				!statusreg.sr.init_reqd ||
 				statusreg.sr.diag_active ||
-				statusreg.sr.diag_failed) अणु
+				statusreg.sr.diag_failed) {
 			blogic_softreset(adapter);
 			udelay(1000);
-		पूर्ण
+		}
 		blogic_cmd_failure_reason = "Command Invalid";
 		result = -1;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 	/*
 	   Handle Excess Parameters Supplied conditions.
 	 */
-	अगर (paramlen > 0) अणु
+	if (paramlen > 0) {
 		blogic_cmd_failure_reason = "Excess Parameters Supplied";
 		result = -1;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 	/*
 	   Indicate the command completed successfully.
 	 */
-	blogic_cmd_failure_reason = शून्य;
+	blogic_cmd_failure_reason = NULL;
 	result = reply_b;
 	/*
-	   Restore the पूर्णांकerrupt status अगर necessary and वापस.
+	   Restore the interrupt status if necessary and return.
 	 */
-करोne:
-	अगर (!adapter->irq_acquired)
+done:
+	if (!adapter->irq_acquired)
 		local_irq_restore(processor_flag);
-	वापस result;
-पूर्ण
+	return result;
+}
 
 
 /*
@@ -567,92 +566,92 @@ module_param(BusLogic, अक्षरp, 0);
   of increasing PCI Bus and Device Number.
 */
 
-अटल व्योम __init blogic_sort_probeinfo(काष्ठा blogic_probeinfo
-					*probeinfo_list, पूर्णांक probeinfo_cnt)
-अणु
-	पूर्णांक last_exchange = probeinfo_cnt - 1, bound, j;
+static void __init blogic_sort_probeinfo(struct blogic_probeinfo
+					*probeinfo_list, int probeinfo_cnt)
+{
+	int last_exchange = probeinfo_cnt - 1, bound, j;
 
-	जबतक (last_exchange > 0) अणु
+	while (last_exchange > 0) {
 		bound = last_exchange;
 		last_exchange = 0;
-		क्रम (j = 0; j < bound; j++) अणु
-			काष्ठा blogic_probeinfo *probeinfo1 =
+		for (j = 0; j < bound; j++) {
+			struct blogic_probeinfo *probeinfo1 =
 							&probeinfo_list[j];
-			काष्ठा blogic_probeinfo *probeinfo2 =
+			struct blogic_probeinfo *probeinfo2 =
 							&probeinfo_list[j + 1];
-			अगर (probeinfo1->bus > probeinfo2->bus ||
+			if (probeinfo1->bus > probeinfo2->bus ||
 				(probeinfo1->bus == probeinfo2->bus &&
-				(probeinfo1->dev > probeinfo2->dev))) अणु
-				काष्ठा blogic_probeinfo पंचांगp_probeinfo;
+				(probeinfo1->dev > probeinfo2->dev))) {
+				struct blogic_probeinfo tmp_probeinfo;
 
-				स_नकल(&पंचांगp_probeinfo, probeinfo1,
-					माप(काष्ठा blogic_probeinfo));
-				स_नकल(probeinfo1, probeinfo2,
-					माप(काष्ठा blogic_probeinfo));
-				स_नकल(probeinfo2, &पंचांगp_probeinfo,
-					माप(काष्ठा blogic_probeinfo));
+				memcpy(&tmp_probeinfo, probeinfo1,
+					sizeof(struct blogic_probeinfo));
+				memcpy(probeinfo1, probeinfo2,
+					sizeof(struct blogic_probeinfo));
+				memcpy(probeinfo2, &tmp_probeinfo,
+					sizeof(struct blogic_probeinfo));
 				last_exchange = j;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
 
 /*
   blogic_init_mm_probeinfo initializes the list of I/O Address
-  and Bus Probe Inक्रमmation to be checked क्रम potential BusLogic MultiMaster
-  SCSI Host Adapters by पूर्णांकerrogating the PCI Configuration Space on PCI
+  and Bus Probe Information to be checked for potential BusLogic MultiMaster
+  SCSI Host Adapters by interrogating the PCI Configuration Space on PCI
   machines as well as from the list of standard BusLogic MultiMaster ISA
-  I/O Addresses.  It वापसs the number of PCI MultiMaster Host Adapters found.
+  I/O Addresses.  It returns the number of PCI MultiMaster Host Adapters found.
 */
 
-अटल पूर्णांक __init blogic_init_mm_probeinfo(काष्ठा blogic_adapter *adapter)
-अणु
-	काष्ठा blogic_probeinfo *pr_probeinfo =
+static int __init blogic_init_mm_probeinfo(struct blogic_adapter *adapter)
+{
+	struct blogic_probeinfo *pr_probeinfo =
 		&blogic_probeinfo_list[blogic_probeinfo_count];
-	पूर्णांक nonpr_mmindex = blogic_probeinfo_count + 1;
-	पूर्णांक nonpr_mmcount = 0, mmcount = 0;
-	bool क्रमce_scan_order = false;
-	bool क्रमce_scan_order_checked = false;
-	काष्ठा pci_dev *pci_device = शून्य;
-	पूर्णांक i;
-	अगर (blogic_probeinfo_count >= BLOGIC_MAX_ADAPTERS)
-		वापस 0;
+	int nonpr_mmindex = blogic_probeinfo_count + 1;
+	int nonpr_mmcount = 0, mmcount = 0;
+	bool force_scan_order = false;
+	bool force_scan_order_checked = false;
+	struct pci_dev *pci_device = NULL;
+	int i;
+	if (blogic_probeinfo_count >= BLOGIC_MAX_ADAPTERS)
+		return 0;
 	blogic_probeinfo_count++;
 	/*
 	   Iterate over the MultiMaster PCI Host Adapters.  For each
-	   क्रमागतerated host adapter, determine whether its ISA Compatible
-	   I/O Port is enabled and अगर so, whether it is asचिन्हित the
-	   Primary I/O Address.  A host adapter that is asचिन्हित the
+	   enumerated host adapter, determine whether its ISA Compatible
+	   I/O Port is enabled and if so, whether it is assigned the
+	   Primary I/O Address.  A host adapter that is assigned the
 	   Primary I/O Address will always be the preferred boot device.
 	   The MultiMaster BIOS will first recognize a host adapter at
 	   the Primary I/O Address, then any other PCI host adapters,
-	   and finally any host adapters located at the reमुख्यing
+	   and finally any host adapters located at the remaining
 	   standard ISA I/O Addresses.  When a PCI host adapter is found
 	   with its ISA Compatible I/O Port enabled, a command is issued
 	   to disable the ISA Compatible I/O Port, and it is noted that the
 	   particular standard ISA I/O Address need not be probed.
 	 */
 	pr_probeinfo->io_addr = 0;
-	जबतक ((pci_device = pci_get_device(PCI_VENDOR_ID_BUSLOGIC,
+	while ((pci_device = pci_get_device(PCI_VENDOR_ID_BUSLOGIC,
 					PCI_DEVICE_ID_BUSLOGIC_MULTIMASTER,
-					pci_device)) != शून्य) अणु
-		काष्ठा blogic_adapter *host_adapter = adapter;
-		काष्ठा blogic_adapter_info adapter_info;
-		क्रमागत blogic_isa_ioport mod_ioaddr_req;
-		अचिन्हित अक्षर bus;
-		अचिन्हित अक्षर device;
-		अचिन्हित पूर्णांक irq_ch;
-		अचिन्हित दीर्घ base_addr0;
-		अचिन्हित दीर्घ base_addr1;
-		अचिन्हित दीर्घ io_addr;
-		अचिन्हित दीर्घ pci_addr;
+					pci_device)) != NULL) {
+		struct blogic_adapter *host_adapter = adapter;
+		struct blogic_adapter_info adapter_info;
+		enum blogic_isa_ioport mod_ioaddr_req;
+		unsigned char bus;
+		unsigned char device;
+		unsigned int irq_ch;
+		unsigned long base_addr0;
+		unsigned long base_addr1;
+		unsigned long io_addr;
+		unsigned long pci_addr;
 
-		अगर (pci_enable_device(pci_device))
-			जारी;
+		if (pci_enable_device(pci_device))
+			continue;
 
-		अगर (dma_set_mask(&pci_device->dev, DMA_BIT_MASK(32)))
-			जारी;
+		if (dma_set_mask(&pci_device->dev, DMA_BIT_MASK(32)))
+			continue;
 
 		bus = pci_device->bus->number;
 		device = pci_device->devfn >> 3;
@@ -660,83 +659,83 @@ module_param(BusLogic, अक्षरp, 0);
 		io_addr = base_addr0 = pci_resource_start(pci_device, 0);
 		pci_addr = base_addr1 = pci_resource_start(pci_device, 1);
 
-		अगर (pci_resource_flags(pci_device, 0) & IORESOURCE_MEM) अणु
-			blogic_err("BusLogic: Base Address0 0x%lX not I/O for MultiMaster Host Adapter\n", शून्य, base_addr0);
-			blogic_err("at PCI Bus %d Device %d I/O Address 0x%lX\n", शून्य, bus, device, io_addr);
-			जारी;
-		पूर्ण
-		अगर (pci_resource_flags(pci_device, 1) & IORESOURCE_IO) अणु
-			blogic_err("BusLogic: Base Address1 0x%lX not Memory for MultiMaster Host Adapter\n", शून्य, base_addr1);
-			blogic_err("at PCI Bus %d Device %d PCI Address 0x%lX\n", शून्य, bus, device, pci_addr);
-			जारी;
-		पूर्ण
-		अगर (irq_ch == 0) अणु
-			blogic_err("BusLogic: IRQ Channel %d invalid for MultiMaster Host Adapter\n", शून्य, irq_ch);
-			blogic_err("at PCI Bus %d Device %d I/O Address 0x%lX\n", शून्य, bus, device, io_addr);
-			जारी;
-		पूर्ण
-		अगर (blogic_global_options.trace_probe) अणु
-			blogic_notice("BusLogic: PCI MultiMaster Host Adapter detected at\n", शून्य);
-			blogic_notice("BusLogic: PCI Bus %d Device %d I/O Address 0x%lX PCI Address 0x%lX\n", शून्य, bus, device, io_addr, pci_addr);
-		पूर्ण
+		if (pci_resource_flags(pci_device, 0) & IORESOURCE_MEM) {
+			blogic_err("BusLogic: Base Address0 0x%lX not I/O for MultiMaster Host Adapter\n", NULL, base_addr0);
+			blogic_err("at PCI Bus %d Device %d I/O Address 0x%lX\n", NULL, bus, device, io_addr);
+			continue;
+		}
+		if (pci_resource_flags(pci_device, 1) & IORESOURCE_IO) {
+			blogic_err("BusLogic: Base Address1 0x%lX not Memory for MultiMaster Host Adapter\n", NULL, base_addr1);
+			blogic_err("at PCI Bus %d Device %d PCI Address 0x%lX\n", NULL, bus, device, pci_addr);
+			continue;
+		}
+		if (irq_ch == 0) {
+			blogic_err("BusLogic: IRQ Channel %d invalid for MultiMaster Host Adapter\n", NULL, irq_ch);
+			blogic_err("at PCI Bus %d Device %d I/O Address 0x%lX\n", NULL, bus, device, io_addr);
+			continue;
+		}
+		if (blogic_global_options.trace_probe) {
+			blogic_notice("BusLogic: PCI MultiMaster Host Adapter detected at\n", NULL);
+			blogic_notice("BusLogic: PCI Bus %d Device %d I/O Address 0x%lX PCI Address 0x%lX\n", NULL, bus, device, io_addr, pci_addr);
+		}
 		/*
-		   Issue the Inquire PCI Host Adapter Inक्रमmation command to determine
+		   Issue the Inquire PCI Host Adapter Information command to determine
 		   the ISA Compatible I/O Port.  If the ISA Compatible I/O Port is
 		   known and enabled, note that the particular Standard ISA I/O
 		   Address should not be probed.
 		 */
 		host_adapter->io_addr = io_addr;
-		blogic_पूर्णांकreset(host_adapter);
-		अगर (blogic_cmd(host_adapter, BLOGIC_INQ_PCI_INFO, शून्य, 0,
-				&adapter_info, माप(adapter_info)) !=
-				माप(adapter_info))
+		blogic_intreset(host_adapter);
+		if (blogic_cmd(host_adapter, BLOGIC_INQ_PCI_INFO, NULL, 0,
+				&adapter_info, sizeof(adapter_info)) !=
+				sizeof(adapter_info))
 			adapter_info.isa_port = BLOGIC_IO_DISABLE;
 		/*
-		   Issue the Modअगरy I/O Address command to disable the
+		   Issue the Modify I/O Address command to disable the
 		   ISA Compatible I/O Port. On PCI Host Adapters, the
-		   Modअगरy I/O Address command allows modअगरication of the
+		   Modify I/O Address command allows modification of the
 		   ISA compatible I/O Address that the Host Adapter
-		   responds to; it करोes not affect the PCI compliant
-		   I/O Address asचिन्हित at प्रणाली initialization.
+		   responds to; it does not affect the PCI compliant
+		   I/O Address assigned at system initialization.
 		 */
 		mod_ioaddr_req = BLOGIC_IO_DISABLE;
 		blogic_cmd(host_adapter, BLOGIC_MOD_IOADDR, &mod_ioaddr_req,
-				माप(mod_ioaddr_req), शून्य, 0);
+				sizeof(mod_ioaddr_req), NULL, 0);
 		/*
-		   For the first MultiMaster Host Adapter क्रमागतerated,
-		   issue the Fetch Host Adapter Local RAM command to पढ़ो
-		   byte 45 of the AutoSCSI area, क्रम the setting of the
+		   For the first MultiMaster Host Adapter enumerated,
+		   issue the Fetch Host Adapter Local RAM command to read
+		   byte 45 of the AutoSCSI area, for the setting of the
 		   "Use Bus And Device # For PCI Scanning Seq." option.
 		   Issue the Inquire Board ID command since this option is
-		   only valid क्रम the BT-948/958/958D.
+		   only valid for the BT-948/958/958D.
 		 */
-		अगर (!क्रमce_scan_order_checked) अणु
-			काष्ठा blogic_fetch_localram fetch_localram;
-			काष्ठा blogic_स्वतःscsi_byte45 स्वतःscsi_byte45;
-			काष्ठा blogic_board_id id;
+		if (!force_scan_order_checked) {
+			struct blogic_fetch_localram fetch_localram;
+			struct blogic_autoscsi_byte45 autoscsi_byte45;
+			struct blogic_board_id id;
 
 			fetch_localram.offset = BLOGIC_AUTOSCSI_BASE + 45;
-			fetch_localram.count = माप(स्वतःscsi_byte45);
+			fetch_localram.count = sizeof(autoscsi_byte45);
 			blogic_cmd(host_adapter, BLOGIC_FETCH_LOCALRAM,
-					&fetch_localram, माप(fetch_localram),
-					&स्वतःscsi_byte45,
-					माप(स्वतःscsi_byte45));
-			blogic_cmd(host_adapter, BLOGIC_GET_BOARD_ID, शून्य, 0,
-					&id, माप(id));
-			अगर (id.fw_ver_digit1 == '5')
-				क्रमce_scan_order =
-					स्वतःscsi_byte45.क्रमce_scan_order;
-			क्रमce_scan_order_checked = true;
-		पूर्ण
+					&fetch_localram, sizeof(fetch_localram),
+					&autoscsi_byte45,
+					sizeof(autoscsi_byte45));
+			blogic_cmd(host_adapter, BLOGIC_GET_BOARD_ID, NULL, 0,
+					&id, sizeof(id));
+			if (id.fw_ver_digit1 == '5')
+				force_scan_order =
+					autoscsi_byte45.force_scan_order;
+			force_scan_order_checked = true;
+		}
 		/*
 		   Determine whether this MultiMaster Host Adapter has its
-		   ISA Compatible I/O Port enabled and is asचिन्हित the
-		   Primary I/O Address. If it करोes, then it is the Primary
+		   ISA Compatible I/O Port enabled and is assigned the
+		   Primary I/O Address. If it does, then it is the Primary
 		   MultiMaster Host Adapter and must be recognized first.
-		   If it करोes not, then it is added to the list क्रम probing
+		   If it does not, then it is added to the list for probing
 		   after any Primary MultiMaster Host Adapter is probed.
 		 */
-		अगर (adapter_info.isa_port == BLOGIC_IO_330) अणु
+		if (adapter_info.isa_port == BLOGIC_IO_330) {
 			pr_probeinfo->adapter_type = BLOGIC_MULTIMASTER;
 			pr_probeinfo->adapter_bus_type = BLOGIC_PCI_BUS;
 			pr_probeinfo->io_addr = io_addr;
@@ -746,8 +745,8 @@ module_param(BusLogic, अक्षरp, 0);
 			pr_probeinfo->irq_ch = irq_ch;
 			pr_probeinfo->pci_device = pci_dev_get(pci_device);
 			mmcount++;
-		पूर्ण अन्यथा अगर (blogic_probeinfo_count < BLOGIC_MAX_ADAPTERS) अणु
-			काष्ठा blogic_probeinfo *probeinfo =
+		} else if (blogic_probeinfo_count < BLOGIC_MAX_ADAPTERS) {
+			struct blogic_probeinfo *probeinfo =
 				&blogic_probeinfo_list[blogic_probeinfo_count++];
 			probeinfo->adapter_type = BLOGIC_MULTIMASTER;
 			probeinfo->adapter_bus_type = BLOGIC_PCI_BUS;
@@ -759,126 +758,126 @@ module_param(BusLogic, अक्षरp, 0);
 			probeinfo->pci_device = pci_dev_get(pci_device);
 			nonpr_mmcount++;
 			mmcount++;
-		पूर्ण अन्यथा
-			blogic_warn("BusLogic: Too many Host Adapters detected\n", शून्य);
-	पूर्ण
+		} else
+			blogic_warn("BusLogic: Too many Host Adapters detected\n", NULL);
+	}
 	/*
 	   If the AutoSCSI "Use Bus And Device # For PCI Scanning Seq."
-	   option is ON क्रम the first क्रमागतerated MultiMaster Host Adapter,
-	   and अगर that host adapter is a BT-948/958/958D, then the
+	   option is ON for the first enumerated MultiMaster Host Adapter,
+	   and if that host adapter is a BT-948/958/958D, then the
 	   MultiMaster BIOS will recognize MultiMaster Host Adapters in
-	   the order of increasing PCI Bus and Device Number. In that हाल,
-	   sort the probe inक्रमmation पूर्णांकo the same order the BIOS uses.
+	   the order of increasing PCI Bus and Device Number. In that case,
+	   sort the probe information into the same order the BIOS uses.
 	   If this option is OFF, then the MultiMaster BIOS will recognize
-	   MultiMaster Host Adapters in the order they are क्रमागतerated by
+	   MultiMaster Host Adapters in the order they are enumerated by
 	   the PCI BIOS, and hence no sorting is necessary.
 	 */
-	अगर (क्रमce_scan_order)
+	if (force_scan_order)
 		blogic_sort_probeinfo(&blogic_probeinfo_list[nonpr_mmindex],
 					nonpr_mmcount);
 	/*
 	   Iterate over the older non-compliant MultiMaster PCI Host Adapters,
-	   noting the PCI bus location and asचिन्हित IRQ Channel.
+	   noting the PCI bus location and assigned IRQ Channel.
 	 */
-	pci_device = शून्य;
-	जबतक ((pci_device = pci_get_device(PCI_VENDOR_ID_BUSLOGIC,
+	pci_device = NULL;
+	while ((pci_device = pci_get_device(PCI_VENDOR_ID_BUSLOGIC,
 					PCI_DEVICE_ID_BUSLOGIC_MULTIMASTER_NC,
-					pci_device)) != शून्य) अणु
-		अचिन्हित अक्षर bus;
-		अचिन्हित अक्षर device;
-		अचिन्हित पूर्णांक irq_ch;
-		अचिन्हित दीर्घ io_addr;
+					pci_device)) != NULL) {
+		unsigned char bus;
+		unsigned char device;
+		unsigned int irq_ch;
+		unsigned long io_addr;
 
-		अगर (pci_enable_device(pci_device))
-			जारी;
+		if (pci_enable_device(pci_device))
+			continue;
 
-		अगर (dma_set_mask(&pci_device->dev, DMA_BIT_MASK(32)))
-			जारी;
+		if (dma_set_mask(&pci_device->dev, DMA_BIT_MASK(32)))
+			continue;
 
 		bus = pci_device->bus->number;
 		device = pci_device->devfn >> 3;
 		irq_ch = pci_device->irq;
 		io_addr = pci_resource_start(pci_device, 0);
 
-		अगर (io_addr == 0 || irq_ch == 0)
-			जारी;
-		क्रम (i = 0; i < blogic_probeinfo_count; i++) अणु
-			काष्ठा blogic_probeinfo *probeinfo =
+		if (io_addr == 0 || irq_ch == 0)
+			continue;
+		for (i = 0; i < blogic_probeinfo_count; i++) {
+			struct blogic_probeinfo *probeinfo =
 						&blogic_probeinfo_list[i];
-			अगर (probeinfo->io_addr == io_addr &&
-				probeinfo->adapter_type == BLOGIC_MULTIMASTER) अणु
+			if (probeinfo->io_addr == io_addr &&
+				probeinfo->adapter_type == BLOGIC_MULTIMASTER) {
 				probeinfo->adapter_bus_type = BLOGIC_PCI_BUS;
 				probeinfo->pci_addr = 0;
 				probeinfo->bus = bus;
 				probeinfo->dev = device;
 				probeinfo->irq_ch = irq_ch;
 				probeinfo->pci_device = pci_dev_get(pci_device);
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस mmcount;
-पूर्ण
+				break;
+			}
+		}
+	}
+	return mmcount;
+}
 
 
 /*
   blogic_init_fp_probeinfo initializes the list of I/O Address
-  and Bus Probe Inक्रमmation to be checked क्रम potential BusLogic FlashPoपूर्णांक
-  Host Adapters by पूर्णांकerrogating the PCI Configuration Space.  It वापसs the
-  number of FlashPoपूर्णांक Host Adapters found.
+  and Bus Probe Information to be checked for potential BusLogic FlashPoint
+  Host Adapters by interrogating the PCI Configuration Space.  It returns the
+  number of FlashPoint Host Adapters found.
 */
 
-अटल पूर्णांक __init blogic_init_fp_probeinfo(काष्ठा blogic_adapter *adapter)
-अणु
-	पूर्णांक fpindex = blogic_probeinfo_count, fpcount = 0;
-	काष्ठा pci_dev *pci_device = शून्य;
+static int __init blogic_init_fp_probeinfo(struct blogic_adapter *adapter)
+{
+	int fpindex = blogic_probeinfo_count, fpcount = 0;
+	struct pci_dev *pci_device = NULL;
 	/*
-	   Interrogate PCI Configuration Space क्रम any FlashPoपूर्णांक Host Adapters.
+	   Interrogate PCI Configuration Space for any FlashPoint Host Adapters.
 	 */
-	जबतक ((pci_device = pci_get_device(PCI_VENDOR_ID_BUSLOGIC,
+	while ((pci_device = pci_get_device(PCI_VENDOR_ID_BUSLOGIC,
 					PCI_DEVICE_ID_BUSLOGIC_FLASHPOINT,
-					pci_device)) != शून्य) अणु
-		अचिन्हित अक्षर bus;
-		अचिन्हित अक्षर device;
-		अचिन्हित पूर्णांक irq_ch;
-		अचिन्हित दीर्घ base_addr0;
-		अचिन्हित दीर्घ base_addr1;
-		अचिन्हित दीर्घ io_addr;
-		अचिन्हित दीर्घ pci_addr;
+					pci_device)) != NULL) {
+		unsigned char bus;
+		unsigned char device;
+		unsigned int irq_ch;
+		unsigned long base_addr0;
+		unsigned long base_addr1;
+		unsigned long io_addr;
+		unsigned long pci_addr;
 
-		अगर (pci_enable_device(pci_device))
-			जारी;
+		if (pci_enable_device(pci_device))
+			continue;
 
-		अगर (dma_set_mask(&pci_device->dev, DMA_BIT_MASK(32)))
-			जारी;
+		if (dma_set_mask(&pci_device->dev, DMA_BIT_MASK(32)))
+			continue;
 
 		bus = pci_device->bus->number;
 		device = pci_device->devfn >> 3;
 		irq_ch = pci_device->irq;
 		io_addr = base_addr0 = pci_resource_start(pci_device, 0);
 		pci_addr = base_addr1 = pci_resource_start(pci_device, 1);
-#अगर_घोषित CONFIG_SCSI_FLASHPOINT
-		अगर (pci_resource_flags(pci_device, 0) & IORESOURCE_MEM) अणु
-			blogic_err("BusLogic: Base Address0 0x%lX not I/O for FlashPoint Host Adapter\n", शून्य, base_addr0);
-			blogic_err("at PCI Bus %d Device %d I/O Address 0x%lX\n", शून्य, bus, device, io_addr);
-			जारी;
-		पूर्ण
-		अगर (pci_resource_flags(pci_device, 1) & IORESOURCE_IO) अणु
-			blogic_err("BusLogic: Base Address1 0x%lX not Memory for FlashPoint Host Adapter\n", शून्य, base_addr1);
-			blogic_err("at PCI Bus %d Device %d PCI Address 0x%lX\n", शून्य, bus, device, pci_addr);
-			जारी;
-		पूर्ण
-		अगर (irq_ch == 0) अणु
-			blogic_err("BusLogic: IRQ Channel %d invalid for FlashPoint Host Adapter\n", शून्य, irq_ch);
-			blogic_err("at PCI Bus %d Device %d I/O Address 0x%lX\n", शून्य, bus, device, io_addr);
-			जारी;
-		पूर्ण
-		अगर (blogic_global_options.trace_probe) अणु
-			blogic_notice("BusLogic: FlashPoint Host Adapter detected at\n", शून्य);
-			blogic_notice("BusLogic: PCI Bus %d Device %d I/O Address 0x%lX PCI Address 0x%lX\n", शून्य, bus, device, io_addr, pci_addr);
-		पूर्ण
-		अगर (blogic_probeinfo_count < BLOGIC_MAX_ADAPTERS) अणु
-			काष्ठा blogic_probeinfo *probeinfo =
+#ifdef CONFIG_SCSI_FLASHPOINT
+		if (pci_resource_flags(pci_device, 0) & IORESOURCE_MEM) {
+			blogic_err("BusLogic: Base Address0 0x%lX not I/O for FlashPoint Host Adapter\n", NULL, base_addr0);
+			blogic_err("at PCI Bus %d Device %d I/O Address 0x%lX\n", NULL, bus, device, io_addr);
+			continue;
+		}
+		if (pci_resource_flags(pci_device, 1) & IORESOURCE_IO) {
+			blogic_err("BusLogic: Base Address1 0x%lX not Memory for FlashPoint Host Adapter\n", NULL, base_addr1);
+			blogic_err("at PCI Bus %d Device %d PCI Address 0x%lX\n", NULL, bus, device, pci_addr);
+			continue;
+		}
+		if (irq_ch == 0) {
+			blogic_err("BusLogic: IRQ Channel %d invalid for FlashPoint Host Adapter\n", NULL, irq_ch);
+			blogic_err("at PCI Bus %d Device %d I/O Address 0x%lX\n", NULL, bus, device, io_addr);
+			continue;
+		}
+		if (blogic_global_options.trace_probe) {
+			blogic_notice("BusLogic: FlashPoint Host Adapter detected at\n", NULL);
+			blogic_notice("BusLogic: PCI Bus %d Device %d I/O Address 0x%lX PCI Address 0x%lX\n", NULL, bus, device, io_addr, pci_addr);
+		}
+		if (blogic_probeinfo_count < BLOGIC_MAX_ADAPTERS) {
+			struct blogic_probeinfo *probeinfo =
 				&blogic_probeinfo_list[blogic_probeinfo_count++];
 			probeinfo->adapter_type = BLOGIC_FLASHPOINT;
 			probeinfo->adapter_bus_type = BLOGIC_PCI_BUS;
@@ -889,246 +888,246 @@ module_param(BusLogic, अक्षरp, 0);
 			probeinfo->irq_ch = irq_ch;
 			probeinfo->pci_device = pci_dev_get(pci_device);
 			fpcount++;
-		पूर्ण अन्यथा
-			blogic_warn("BusLogic: Too many Host Adapters detected\n", शून्य);
-#अन्यथा
-		blogic_err("BusLogic: FlashPoint Host Adapter detected at PCI Bus %d Device %d\n", शून्य, bus, device);
-		blogic_err("BusLogic: I/O Address 0x%lX PCI Address 0x%lX, irq %d, but FlashPoint\n", शून्य, io_addr, pci_addr, irq_ch);
-		blogic_err("BusLogic: support was omitted in this kernel configuration.\n", शून्य);
-#पूर्ण_अगर
-	पूर्ण
+		} else
+			blogic_warn("BusLogic: Too many Host Adapters detected\n", NULL);
+#else
+		blogic_err("BusLogic: FlashPoint Host Adapter detected at PCI Bus %d Device %d\n", NULL, bus, device);
+		blogic_err("BusLogic: I/O Address 0x%lX PCI Address 0x%lX, irq %d, but FlashPoint\n", NULL, io_addr, pci_addr, irq_ch);
+		blogic_err("BusLogic: support was omitted in this kernel configuration.\n", NULL);
+#endif
+	}
 	/*
-	   The FlashPoपूर्णांक BIOS will scan क्रम FlashPoपूर्णांक Host Adapters in the order of
-	   increasing PCI Bus and Device Number, so sort the probe inक्रमmation पूर्णांकo
+	   The FlashPoint BIOS will scan for FlashPoint Host Adapters in the order of
+	   increasing PCI Bus and Device Number, so sort the probe information into
 	   the same order the BIOS uses.
 	 */
 	blogic_sort_probeinfo(&blogic_probeinfo_list[fpindex], fpcount);
-	वापस fpcount;
-पूर्ण
+	return fpcount;
+}
 
 
 /*
   blogic_init_probeinfo_list initializes the list of I/O Address and Bus
-  Probe Inक्रमmation to be checked क्रम potential BusLogic SCSI Host Adapters by
-  पूर्णांकerrogating the PCI Configuration Space on PCI machines as well as from the
-  list of standard BusLogic MultiMaster ISA I/O Addresses.  By शेष, अगर both
-  FlashPoपूर्णांक and PCI MultiMaster Host Adapters are present, this driver will
-  probe क्रम FlashPoपूर्णांक Host Adapters first unless the BIOS primary disk is
-  controlled by the first PCI MultiMaster Host Adapter, in which हाल
+  Probe Information to be checked for potential BusLogic SCSI Host Adapters by
+  interrogating the PCI Configuration Space on PCI machines as well as from the
+  list of standard BusLogic MultiMaster ISA I/O Addresses.  By default, if both
+  FlashPoint and PCI MultiMaster Host Adapters are present, this driver will
+  probe for FlashPoint Host Adapters first unless the BIOS primary disk is
+  controlled by the first PCI MultiMaster Host Adapter, in which case
   MultiMaster Host Adapters will be probed first.  The BusLogic Driver Options
-  specअगरications "MultiMasterFirst" and "FlashPointFirst" can be used to क्रमce
+  specifications "MultiMasterFirst" and "FlashPointFirst" can be used to force
   a particular probe order.
 */
 
-अटल व्योम __init blogic_init_probeinfo_list(काष्ठा blogic_adapter *adapter)
-अणु
+static void __init blogic_init_probeinfo_list(struct blogic_adapter *adapter)
+{
 	/*
-	   If a PCI BIOS is present, पूर्णांकerrogate it क्रम MultiMaster and
-	   FlashPoपूर्णांक Host Adapters; otherwise, शेष to the standard
+	   If a PCI BIOS is present, interrogate it for MultiMaster and
+	   FlashPoint Host Adapters; otherwise, default to the standard
 	   ISA MultiMaster probe.
 	 */
-	अगर (!blogic_probe_options.noprobe_pci) अणु
-		अगर (blogic_probe_options.multimaster_first) अणु
+	if (!blogic_probe_options.noprobe_pci) {
+		if (blogic_probe_options.multimaster_first) {
 			blogic_init_mm_probeinfo(adapter);
 			blogic_init_fp_probeinfo(adapter);
-		पूर्ण अन्यथा अगर (blogic_probe_options.flashpoपूर्णांक_first) अणु
+		} else if (blogic_probe_options.flashpoint_first) {
 			blogic_init_fp_probeinfo(adapter);
 			blogic_init_mm_probeinfo(adapter);
-		पूर्ण अन्यथा अणु
-			पूर्णांक fpcount = blogic_init_fp_probeinfo(adapter);
-			पूर्णांक mmcount = blogic_init_mm_probeinfo(adapter);
-			अगर (fpcount > 0 && mmcount > 0) अणु
-				काष्ठा blogic_probeinfo *probeinfo =
+		} else {
+			int fpcount = blogic_init_fp_probeinfo(adapter);
+			int mmcount = blogic_init_mm_probeinfo(adapter);
+			if (fpcount > 0 && mmcount > 0) {
+				struct blogic_probeinfo *probeinfo =
 					&blogic_probeinfo_list[fpcount];
-				काष्ठा blogic_adapter *myadapter = adapter;
-				काष्ठा blogic_fetch_localram fetch_localram;
-				काष्ठा blogic_bios_drvmap d0_mapbyte;
+				struct blogic_adapter *myadapter = adapter;
+				struct blogic_fetch_localram fetch_localram;
+				struct blogic_bios_drvmap d0_mapbyte;
 
-				जबतक (probeinfo->adapter_bus_type !=
+				while (probeinfo->adapter_bus_type !=
 						BLOGIC_PCI_BUS)
 					probeinfo++;
 				myadapter->io_addr = probeinfo->io_addr;
 				fetch_localram.offset =
 					BLOGIC_BIOS_BASE + BLOGIC_BIOS_DRVMAP;
-				fetch_localram.count = माप(d0_mapbyte);
+				fetch_localram.count = sizeof(d0_mapbyte);
 				blogic_cmd(myadapter, BLOGIC_FETCH_LOCALRAM,
 						&fetch_localram,
-						माप(fetch_localram),
+						sizeof(fetch_localram),
 						&d0_mapbyte,
-						माप(d0_mapbyte));
+						sizeof(d0_mapbyte));
 				/*
-				   If the Map Byte क्रम BIOS Drive 0 indicates
+				   If the Map Byte for BIOS Drive 0 indicates
 				   that BIOS Drive 0 is controlled by this
 				   PCI MultiMaster Host Adapter, then reverse
 				   the probe order so that MultiMaster Host
-				   Adapters are probed beक्रमe FlashPoपूर्णांक Host
+				   Adapters are probed before FlashPoint Host
 				   Adapters.
 				 */
-				अगर (d0_mapbyte.diskgeom != BLOGIC_BIOS_NODISK) अणु
-					काष्ठा blogic_probeinfo saved_probeinfo[BLOGIC_MAX_ADAPTERS];
-					पूर्णांक mmcount = blogic_probeinfo_count - fpcount;
+				if (d0_mapbyte.diskgeom != BLOGIC_BIOS_NODISK) {
+					struct blogic_probeinfo saved_probeinfo[BLOGIC_MAX_ADAPTERS];
+					int mmcount = blogic_probeinfo_count - fpcount;
 
-					स_नकल(saved_probeinfo,
+					memcpy(saved_probeinfo,
 						blogic_probeinfo_list,
-						blogic_probeinfo_count * माप(काष्ठा blogic_probeinfo));
-					स_नकल(&blogic_probeinfo_list[0],
+						blogic_probeinfo_count * sizeof(struct blogic_probeinfo));
+					memcpy(&blogic_probeinfo_list[0],
 						&saved_probeinfo[fpcount],
-						mmcount * माप(काष्ठा blogic_probeinfo));
-					स_नकल(&blogic_probeinfo_list[mmcount],
+						mmcount * sizeof(struct blogic_probeinfo));
+					memcpy(&blogic_probeinfo_list[mmcount],
 						&saved_probeinfo[0],
-						fpcount * माप(काष्ठा blogic_probeinfo));
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+						fpcount * sizeof(struct blogic_probeinfo));
+				}
+			}
+		}
+	}
+}
 
 
 /*
-  blogic_failure prपूर्णांकs a standardized error message, and then वापसs false.
+  blogic_failure prints a standardized error message, and then returns false.
 */
 
-अटल bool blogic_failure(काष्ठा blogic_adapter *adapter, अक्षर *msg)
-अणु
+static bool blogic_failure(struct blogic_adapter *adapter, char *msg)
+{
 	blogic_announce_drvr(adapter);
-	अगर (adapter->adapter_bus_type == BLOGIC_PCI_BUS) अणु
+	if (adapter->adapter_bus_type == BLOGIC_PCI_BUS) {
 		blogic_err("While configuring BusLogic PCI Host Adapter at\n",
 				adapter);
 		blogic_err("Bus %d Device %d I/O Address 0x%lX PCI Address 0x%lX:\n", adapter, adapter->bus, adapter->dev, adapter->io_addr, adapter->pci_addr);
-	पूर्ण अन्यथा
+	} else
 		blogic_err("While configuring BusLogic Host Adapter at I/O Address 0x%lX:\n", adapter, adapter->io_addr);
 	blogic_err("%s FAILED - DETACHING\n", adapter, msg);
-	अगर (blogic_cmd_failure_reason != शून्य)
+	if (blogic_cmd_failure_reason != NULL)
 		blogic_err("ADDITIONAL FAILURE INFO - %s\n", adapter,
 				blogic_cmd_failure_reason);
-	वापस false;
-पूर्ण
+	return false;
+}
 
 
 /*
-  blogic_probe probes क्रम a BusLogic Host Adapter.
+  blogic_probe probes for a BusLogic Host Adapter.
 */
 
-अटल bool __init blogic_probe(काष्ठा blogic_adapter *adapter)
-अणु
-	जोड़ blogic_stat_reg statusreg;
-	जोड़ blogic_पूर्णांक_reg पूर्णांकreg;
-	जोड़ blogic_geo_reg georeg;
+static bool __init blogic_probe(struct blogic_adapter *adapter)
+{
+	union blogic_stat_reg statusreg;
+	union blogic_int_reg intreg;
+	union blogic_geo_reg georeg;
 	/*
-	   FlashPoपूर्णांक Host Adapters are Probed by the FlashPoपूर्णांक SCCB Manager.
+	   FlashPoint Host Adapters are Probed by the FlashPoint SCCB Manager.
 	 */
-	अगर (blogic_flashpoपूर्णांक_type(adapter)) अणु
-		काष्ठा fpoपूर्णांक_info *fpinfo = &adapter->fpinfo;
+	if (blogic_flashpoint_type(adapter)) {
+		struct fpoint_info *fpinfo = &adapter->fpinfo;
 		fpinfo->base_addr = (u32) adapter->io_addr;
 		fpinfo->irq_ch = adapter->irq_ch;
 		fpinfo->present = false;
-		अगर (!(FlashPoपूर्णांक_ProbeHostAdapter(fpinfo) == 0 &&
-					fpinfo->present)) अणु
+		if (!(FlashPoint_ProbeHostAdapter(fpinfo) == 0 &&
+					fpinfo->present)) {
 			blogic_err("BusLogic: FlashPoint Host Adapter detected at PCI Bus %d Device %d\n", adapter, adapter->bus, adapter->dev);
 			blogic_err("BusLogic: I/O Address 0x%lX PCI Address 0x%lX, but FlashPoint\n", adapter, adapter->io_addr, adapter->pci_addr);
 			blogic_err("BusLogic: Probe Function failed to validate it.\n", adapter);
-			वापस false;
-		पूर्ण
-		अगर (blogic_global_options.trace_probe)
+			return false;
+		}
+		if (blogic_global_options.trace_probe)
 			blogic_notice("BusLogic_Probe(0x%lX): FlashPoint Found\n", adapter, adapter->io_addr);
 		/*
 		   Indicate the Host Adapter Probe completed successfully.
 		 */
-		वापस true;
-	पूर्ण
+		return true;
+	}
 	/*
-	   Read the Status, Interrupt, and Geometry Registers to test अगर there are I/O
-	   ports that respond, and to check the values to determine अगर they are from a
-	   BusLogic Host Adapter.  A nonexistent I/O port will वापस 0xFF, in which
-	   हाल there is definitely no BusLogic Host Adapter at this base I/O Address.
+	   Read the Status, Interrupt, and Geometry Registers to test if there are I/O
+	   ports that respond, and to check the values to determine if they are from a
+	   BusLogic Host Adapter.  A nonexistent I/O port will return 0xFF, in which
+	   case there is definitely no BusLogic Host Adapter at this base I/O Address.
 	   The test here is a subset of that used by the BusLogic Host Adapter BIOS.
 	 */
 	statusreg.all = blogic_rdstatus(adapter);
-	पूर्णांकreg.all = blogic_rdपूर्णांक(adapter);
+	intreg.all = blogic_rdint(adapter);
 	georeg.all = blogic_rdgeom(adapter);
-	अगर (blogic_global_options.trace_probe)
-		blogic_notice("BusLogic_Probe(0x%lX): Status 0x%02X, Interrupt 0x%02X, Geometry 0x%02X\n", adapter, adapter->io_addr, statusreg.all, पूर्णांकreg.all, georeg.all);
-	अगर (statusreg.all == 0 || statusreg.sr.diag_active ||
+	if (blogic_global_options.trace_probe)
+		blogic_notice("BusLogic_Probe(0x%lX): Status 0x%02X, Interrupt 0x%02X, Geometry 0x%02X\n", adapter, adapter->io_addr, statusreg.all, intreg.all, georeg.all);
+	if (statusreg.all == 0 || statusreg.sr.diag_active ||
 			statusreg.sr.cmd_param_busy || statusreg.sr.rsvd ||
-			statusreg.sr.cmd_invalid || पूर्णांकreg.ir.rsvd != 0)
-		वापस false;
+			statusreg.sr.cmd_invalid || intreg.ir.rsvd != 0)
+		return false;
 	/*
-	   Check the unकरोcumented Geometry Register to test अगर there is
-	   an I/O port that responded.  Adaptec Host Adapters करो not
+	   Check the undocumented Geometry Register to test if there is
+	   an I/O port that responded.  Adaptec Host Adapters do not
 	   implement the Geometry Register, so this test helps serve to
-	   aव्योम incorrectly recognizing an Adaptec 1542A or 1542B as a
-	   BusLogic.  Unक्रमtunately, the Adaptec 1542C series करोes respond
+	   avoid incorrectly recognizing an Adaptec 1542A or 1542B as a
+	   BusLogic.  Unfortunately, the Adaptec 1542C series does respond
 	   to the Geometry Register I/O port, but it will be rejected
-	   later when the Inquire Extended Setup Inक्रमmation command is
+	   later when the Inquire Extended Setup Information command is
 	   issued in blogic_checkadapter.  The AMI FastDisk Host Adapter
-	   is a BusLogic clone that implements the same पूर्णांकerface as
-	   earlier BusLogic Host Adapters, including the unकरोcumented
-	   commands, and is thereक्रमe supported by this driver. However,
-	   the AMI FastDisk always वापसs 0x00 upon पढ़ोing the Geometry
+	   is a BusLogic clone that implements the same interface as
+	   earlier BusLogic Host Adapters, including the undocumented
+	   commands, and is therefore supported by this driver. However,
+	   the AMI FastDisk always returns 0x00 upon reading the Geometry
 	   Register, so the extended translation option should always be
 	   left disabled on the AMI FastDisk.
 	 */
-	अगर (georeg.all == 0xFF)
-		वापस false;
+	if (georeg.all == 0xFF)
+		return false;
 	/*
 	   Indicate the Host Adapter Probe completed successfully.
 	 */
-	वापस true;
-पूर्ण
+	return true;
+}
 
 
 /*
   blogic_hwreset issues a Hardware Reset to the Host Adapter
-  and रुकोs क्रम Host Adapter Diagnostics to complete.  If hard_reset is true, a
-  Hard Reset is perक्रमmed which also initiates a SCSI Bus Reset.  Otherwise, a
-  Soft Reset is perक्रमmed which only resets the Host Adapter without क्रमcing a
+  and waits for Host Adapter Diagnostics to complete.  If hard_reset is true, a
+  Hard Reset is performed which also initiates a SCSI Bus Reset.  Otherwise, a
+  Soft Reset is performed which only resets the Host Adapter without forcing a
   SCSI Bus Reset.
 */
 
-अटल bool blogic_hwreset(काष्ठा blogic_adapter *adapter, bool hard_reset)
-अणु
-	जोड़ blogic_stat_reg statusreg;
-	पूर्णांक समयout;
+static bool blogic_hwreset(struct blogic_adapter *adapter, bool hard_reset)
+{
+	union blogic_stat_reg statusreg;
+	int timeout;
 	/*
-	   FlashPoपूर्णांक Host Adapters are Hard Reset by the FlashPoपूर्णांक
+	   FlashPoint Host Adapters are Hard Reset by the FlashPoint
 	   SCCB Manager.
 	 */
-	अगर (blogic_flashpoपूर्णांक_type(adapter)) अणु
-		काष्ठा fpoपूर्णांक_info *fpinfo = &adapter->fpinfo;
+	if (blogic_flashpoint_type(adapter)) {
+		struct fpoint_info *fpinfo = &adapter->fpinfo;
 		fpinfo->softreset = !hard_reset;
 		fpinfo->report_underrun = true;
 		adapter->cardhandle =
-			FlashPoपूर्णांक_HardwareResetHostAdapter(fpinfo);
-		अगर (adapter->cardhandle == (व्योम *)FPOINT_BADCARD_HANDLE)
-			वापस false;
+			FlashPoint_HardwareResetHostAdapter(fpinfo);
+		if (adapter->cardhandle == (void *)FPOINT_BADCARD_HANDLE)
+			return false;
 		/*
 		   Indicate the Host Adapter Hard Reset completed successfully.
 		 */
-		वापस true;
-	पूर्ण
+		return true;
+	}
 	/*
 	   Issue a Hard Reset or Soft Reset Command to the Host Adapter.
 	   The Host Adapter should respond by setting Diagnostic Active in
 	   the Status Register.
 	 */
-	अगर (hard_reset)
+	if (hard_reset)
 		blogic_hardreset(adapter);
-	अन्यथा
+	else
 		blogic_softreset(adapter);
 	/*
 	   Wait until Diagnostic Active is set in the Status Register.
 	 */
-	समयout = 5 * 10000;
-	जबतक (--समयout >= 0) अणु
+	timeout = 5 * 10000;
+	while (--timeout >= 0) {
 		statusreg.all = blogic_rdstatus(adapter);
-		अगर (statusreg.sr.diag_active)
-			अवरोध;
+		if (statusreg.sr.diag_active)
+			break;
 		udelay(100);
-	पूर्ण
-	अगर (blogic_global_options.trace_hw_reset)
+	}
+	if (blogic_global_options.trace_hw_reset)
 		blogic_notice("BusLogic_HardwareReset(0x%lX): Diagnostic Active, Status 0x%02X\n", adapter, adapter->io_addr, statusreg.all);
-	अगर (समयout < 0)
-		वापस false;
+	if (timeout < 0)
+		return false;
 	/*
 	   Wait 100 microseconds to allow completion of any initial diagnostic
 	   activity which might leave the contents of the Status Register
@@ -1138,54 +1137,54 @@ module_param(BusLogic, अक्षरp, 0);
 	/*
 	   Wait until Diagnostic Active is reset in the Status Register.
 	 */
-	समयout = 10 * 10000;
-	जबतक (--समयout >= 0) अणु
+	timeout = 10 * 10000;
+	while (--timeout >= 0) {
 		statusreg.all = blogic_rdstatus(adapter);
-		अगर (!statusreg.sr.diag_active)
-			अवरोध;
+		if (!statusreg.sr.diag_active)
+			break;
 		udelay(100);
-	पूर्ण
-	अगर (blogic_global_options.trace_hw_reset)
+	}
+	if (blogic_global_options.trace_hw_reset)
 		blogic_notice("BusLogic_HardwareReset(0x%lX): Diagnostic Completed, Status 0x%02X\n", adapter, adapter->io_addr, statusreg.all);
-	अगर (समयout < 0)
-		वापस false;
+	if (timeout < 0)
+		return false;
 	/*
 	   Wait until at least one of the Diagnostic Failure, Host Adapter
 	   Ready, or Data In Register Ready bits is set in the Status Register.
 	 */
-	समयout = 10000;
-	जबतक (--समयout >= 0) अणु
+	timeout = 10000;
+	while (--timeout >= 0) {
 		statusreg.all = blogic_rdstatus(adapter);
-		अगर (statusreg.sr.diag_failed || statusreg.sr.adapter_पढ़ोy ||
-				statusreg.sr.datain_पढ़ोy)
-			अवरोध;
+		if (statusreg.sr.diag_failed || statusreg.sr.adapter_ready ||
+				statusreg.sr.datain_ready)
+			break;
 		udelay(100);
-	पूर्ण
-	अगर (blogic_global_options.trace_hw_reset)
+	}
+	if (blogic_global_options.trace_hw_reset)
 		blogic_notice("BusLogic_HardwareReset(0x%lX): Host Adapter Ready, Status 0x%02X\n", adapter, adapter->io_addr, statusreg.all);
-	अगर (समयout < 0)
-		वापस false;
+	if (timeout < 0)
+		return false;
 	/*
 	   If Diagnostic Failure is set or Host Adapter Ready is reset,
 	   then an error occurred during the Host Adapter diagnostics.
 	   If Data In Register Ready is set, then there is an Error Code
 	   available.
 	 */
-	अगर (statusreg.sr.diag_failed || !statusreg.sr.adapter_पढ़ोy) अणु
-		blogic_cmd_failure_reason = शून्य;
+	if (statusreg.sr.diag_failed || !statusreg.sr.adapter_ready) {
+		blogic_cmd_failure_reason = NULL;
 		blogic_failure(adapter, "HARD RESET DIAGNOSTICS");
 		blogic_err("HOST ADAPTER STATUS REGISTER = %02X\n", adapter,
 				statusreg.all);
-		अगर (statusreg.sr.datain_पढ़ोy)
+		if (statusreg.sr.datain_ready)
 			blogic_err("HOST ADAPTER ERROR CODE = %d\n", adapter,
 					blogic_rddatain(adapter));
-		वापस false;
-	पूर्ण
+		return false;
+	}
 	/*
 	   Indicate the Host Adapter Hard Reset completed successfully.
 	 */
-	वापस true;
-पूर्ण
+	return true;
+}
 
 
 /*
@@ -1193,82 +1192,82 @@ module_param(BusLogic, अक्षरp, 0);
   Host Adapter.
 */
 
-अटल bool __init blogic_checkadapter(काष्ठा blogic_adapter *adapter)
-अणु
-	काष्ठा blogic_ext_setup ext_setupinfo;
-	अचिन्हित अक्षर req_replylen;
+static bool __init blogic_checkadapter(struct blogic_adapter *adapter)
+{
+	struct blogic_ext_setup ext_setupinfo;
+	unsigned char req_replylen;
 	bool result = true;
 	/*
-	   FlashPoपूर्णांक Host Adapters करो not require this protection.
+	   FlashPoint Host Adapters do not require this protection.
 	 */
-	अगर (blogic_flashpoपूर्णांक_type(adapter))
-		वापस true;
+	if (blogic_flashpoint_type(adapter))
+		return true;
 	/*
-	   Issue the Inquire Extended Setup Inक्रमmation command. Only genuine
+	   Issue the Inquire Extended Setup Information command. Only genuine
 	   BusLogic Host Adapters and true clones support this command.
 	   Adaptec 1542C series Host Adapters that respond to the Geometry
 	   Register I/O port will fail this command.
 	 */
-	req_replylen = माप(ext_setupinfo);
-	अगर (blogic_cmd(adapter, BLOGIC_INQ_EXTSETUP, &req_replylen,
-				माप(req_replylen), &ext_setupinfo,
-				माप(ext_setupinfo)) != माप(ext_setupinfo))
+	req_replylen = sizeof(ext_setupinfo);
+	if (blogic_cmd(adapter, BLOGIC_INQ_EXTSETUP, &req_replylen,
+				sizeof(req_replylen), &ext_setupinfo,
+				sizeof(ext_setupinfo)) != sizeof(ext_setupinfo))
 		result = false;
 	/*
-	   Provide tracing inक्रमmation अगर requested and वापस.
+	   Provide tracing information if requested and return.
 	 */
-	अगर (blogic_global_options.trace_probe)
+	if (blogic_global_options.trace_probe)
 		blogic_notice("BusLogic_Check(0x%lX): MultiMaster %s\n", adapter,
 				adapter->io_addr,
 				(result ? "Found" : "Not Found"));
-	वापस result;
-पूर्ण
+	return result;
+}
 
 
 /*
-  blogic_rdconfig पढ़ोs the Configuration Inक्रमmation
-  from Host Adapter and initializes the Host Adapter काष्ठाure.
+  blogic_rdconfig reads the Configuration Information
+  from Host Adapter and initializes the Host Adapter structure.
 */
 
-अटल bool __init blogic_rdconfig(काष्ठा blogic_adapter *adapter)
-अणु
-	काष्ठा blogic_board_id id;
-	काष्ठा blogic_config config;
-	काष्ठा blogic_setup_info setupinfo;
-	काष्ठा blogic_ext_setup ext_setupinfo;
-	अचिन्हित अक्षर model[5];
-	अचिन्हित अक्षर fw_ver_digit3;
-	अचिन्हित अक्षर fw_ver_letter;
-	काष्ठा blogic_adapter_info adapter_info;
-	काष्ठा blogic_fetch_localram fetch_localram;
-	काष्ठा blogic_स्वतःscsi स्वतःscsi;
-	जोड़ blogic_geo_reg georeg;
-	अचिन्हित अक्षर req_replylen;
-	अचिन्हित अक्षर *tgt, ch;
-	पूर्णांक tgt_id, i;
+static bool __init blogic_rdconfig(struct blogic_adapter *adapter)
+{
+	struct blogic_board_id id;
+	struct blogic_config config;
+	struct blogic_setup_info setupinfo;
+	struct blogic_ext_setup ext_setupinfo;
+	unsigned char model[5];
+	unsigned char fw_ver_digit3;
+	unsigned char fw_ver_letter;
+	struct blogic_adapter_info adapter_info;
+	struct blogic_fetch_localram fetch_localram;
+	struct blogic_autoscsi autoscsi;
+	union blogic_geo_reg georeg;
+	unsigned char req_replylen;
+	unsigned char *tgt, ch;
+	int tgt_id, i;
 	/*
-	   Configuration Inक्रमmation क्रम FlashPoपूर्णांक Host Adapters is
-	   provided in the fpoपूर्णांक_info काष्ठाure by the FlashPoपूर्णांक
+	   Configuration Information for FlashPoint Host Adapters is
+	   provided in the fpoint_info structure by the FlashPoint
 	   SCCB Manager's Probe Function. Initialize fields in the
-	   Host Adapter काष्ठाure from the fpoपूर्णांक_info काष्ठाure.
+	   Host Adapter structure from the fpoint_info structure.
 	 */
-	अगर (blogic_flashpoपूर्णांक_type(adapter)) अणु
-		काष्ठा fpoपूर्णांक_info *fpinfo = &adapter->fpinfo;
+	if (blogic_flashpoint_type(adapter)) {
+		struct fpoint_info *fpinfo = &adapter->fpinfo;
 		tgt = adapter->model;
 		*tgt++ = 'B';
 		*tgt++ = 'T';
 		*tgt++ = '-';
-		क्रम (i = 0; i < माप(fpinfo->model); i++)
+		for (i = 0; i < sizeof(fpinfo->model); i++)
 			*tgt++ = fpinfo->model[i];
 		*tgt++ = '\0';
-		म_नकल(adapter->fw_ver, FLASHPOINT_FW_VER);
+		strcpy(adapter->fw_ver, FLASHPOINT_FW_VER);
 		adapter->scsi_id = fpinfo->scsi_id;
 		adapter->ext_trans_enable = fpinfo->ext_trans_enable;
 		adapter->parity = fpinfo->parity;
 		adapter->reset_enabled = !fpinfo->softreset;
-		adapter->level_पूर्णांक = true;
+		adapter->level_int = true;
 		adapter->wide = fpinfo->wide;
-		adapter->dअगरferential = false;
+		adapter->differential = false;
 		adapter->scam = true;
 		adapter->ultra = true;
 		adapter->ext_lun = true;
@@ -1290,72 +1289,72 @@ module_param(BusLogic, अक्षरp, 0);
 		adapter->wide_ok = fpinfo->wide_ok;
 		adapter->discon_ok = fpinfo->discon_ok;
 		adapter->tagq_ok = 0xFFFF;
-		जाओ common;
-	पूर्ण
+		goto common;
+	}
 	/*
 	   Issue the Inquire Board ID command.
 	 */
-	अगर (blogic_cmd(adapter, BLOGIC_GET_BOARD_ID, शून्य, 0, &id,
-				माप(id)) != माप(id))
-		वापस blogic_failure(adapter, "INQUIRE BOARD ID");
+	if (blogic_cmd(adapter, BLOGIC_GET_BOARD_ID, NULL, 0, &id,
+				sizeof(id)) != sizeof(id))
+		return blogic_failure(adapter, "INQUIRE BOARD ID");
 	/*
 	   Issue the Inquire Configuration command.
 	 */
-	अगर (blogic_cmd(adapter, BLOGIC_INQ_CONFIG, शून्य, 0, &config,
-				माप(config))
-	    != माप(config))
-		वापस blogic_failure(adapter, "INQUIRE CONFIGURATION");
+	if (blogic_cmd(adapter, BLOGIC_INQ_CONFIG, NULL, 0, &config,
+				sizeof(config))
+	    != sizeof(config))
+		return blogic_failure(adapter, "INQUIRE CONFIGURATION");
 	/*
-	   Issue the Inquire Setup Inक्रमmation command.
+	   Issue the Inquire Setup Information command.
 	 */
-	req_replylen = माप(setupinfo);
-	अगर (blogic_cmd(adapter, BLOGIC_INQ_SETUPINFO, &req_replylen,
-				माप(req_replylen), &setupinfo,
-				माप(setupinfo)) != माप(setupinfo))
-		वापस blogic_failure(adapter, "INQUIRE SETUP INFORMATION");
+	req_replylen = sizeof(setupinfo);
+	if (blogic_cmd(adapter, BLOGIC_INQ_SETUPINFO, &req_replylen,
+				sizeof(req_replylen), &setupinfo,
+				sizeof(setupinfo)) != sizeof(setupinfo))
+		return blogic_failure(adapter, "INQUIRE SETUP INFORMATION");
 	/*
-	   Issue the Inquire Extended Setup Inक्रमmation command.
+	   Issue the Inquire Extended Setup Information command.
 	 */
-	req_replylen = माप(ext_setupinfo);
-	अगर (blogic_cmd(adapter, BLOGIC_INQ_EXTSETUP, &req_replylen,
-				माप(req_replylen), &ext_setupinfo,
-				माप(ext_setupinfo)) != माप(ext_setupinfo))
-		वापस blogic_failure(adapter,
+	req_replylen = sizeof(ext_setupinfo);
+	if (blogic_cmd(adapter, BLOGIC_INQ_EXTSETUP, &req_replylen,
+				sizeof(req_replylen), &ext_setupinfo,
+				sizeof(ext_setupinfo)) != sizeof(ext_setupinfo))
+		return blogic_failure(adapter,
 					"INQUIRE EXTENDED SETUP INFORMATION");
 	/*
 	   Issue the Inquire Firmware Version 3rd Digit command.
 	 */
 	fw_ver_digit3 = '\0';
-	अगर (id.fw_ver_digit1 > '0')
-		अगर (blogic_cmd(adapter, BLOGIC_INQ_FWVER_D3, शून्य, 0,
+	if (id.fw_ver_digit1 > '0')
+		if (blogic_cmd(adapter, BLOGIC_INQ_FWVER_D3, NULL, 0,
 				&fw_ver_digit3,
-				माप(fw_ver_digit3)) != माप(fw_ver_digit3))
-			वापस blogic_failure(adapter,
+				sizeof(fw_ver_digit3)) != sizeof(fw_ver_digit3))
+			return blogic_failure(adapter,
 						"INQUIRE FIRMWARE 3RD DIGIT");
 	/*
 	   Issue the Inquire Host Adapter Model Number command.
 	 */
-	अगर (ext_setupinfo.bus_type == 'A' && id.fw_ver_digit1 == '2')
+	if (ext_setupinfo.bus_type == 'A' && id.fw_ver_digit1 == '2')
 		/* BusLogic BT-542B ISA 2.xx */
-		म_नकल(model, "542B");
-	अन्यथा अगर (ext_setupinfo.bus_type == 'E' && id.fw_ver_digit1 == '2' &&
+		strcpy(model, "542B");
+	else if (ext_setupinfo.bus_type == 'E' && id.fw_ver_digit1 == '2' &&
 			(id.fw_ver_digit2 <= '1' || (id.fw_ver_digit2 == '2' &&
 						     fw_ver_digit3 == '0')))
 		/* BusLogic BT-742A EISA 2.1x or 2.20 */
-		म_नकल(model, "742A");
-	अन्यथा अगर (ext_setupinfo.bus_type == 'E' && id.fw_ver_digit1 == '0')
+		strcpy(model, "742A");
+	else if (ext_setupinfo.bus_type == 'E' && id.fw_ver_digit1 == '0')
 		/* AMI FastDisk EISA Series 441 0.x */
-		म_नकल(model, "747A");
-	अन्यथा अणु
-		req_replylen = माप(model);
-		अगर (blogic_cmd(adapter, BLOGIC_INQ_MODELNO, &req_replylen,
-					माप(req_replylen), &model,
-					माप(model)) != माप(model))
-			वापस blogic_failure(adapter,
+		strcpy(model, "747A");
+	else {
+		req_replylen = sizeof(model);
+		if (blogic_cmd(adapter, BLOGIC_INQ_MODELNO, &req_replylen,
+					sizeof(req_replylen), &model,
+					sizeof(model)) != sizeof(model))
+			return blogic_failure(adapter,
 					"INQUIRE HOST ADAPTER MODEL NUMBER");
-	पूर्ण
+	}
 	/*
-	   BusLogic MultiMaster Host Adapters can be identअगरied by their
+	   BusLogic MultiMaster Host Adapters can be identified by their
 	   model number and the major version number of their firmware
 	   as follows:
 
@@ -1372,216 +1371,216 @@ module_param(BusLogic, अक्षरp, 0);
 	 */
 	/*
 	   Save the Model Name and Host Adapter Name in the Host Adapter
-	   काष्ठाure.
+	   structure.
 	 */
 	tgt = adapter->model;
 	*tgt++ = 'B';
 	*tgt++ = 'T';
 	*tgt++ = '-';
-	क्रम (i = 0; i < माप(model); i++) अणु
+	for (i = 0; i < sizeof(model); i++) {
 		ch = model[i];
-		अगर (ch == ' ' || ch == '\0')
-			अवरोध;
+		if (ch == ' ' || ch == '\0')
+			break;
 		*tgt++ = ch;
-	पूर्ण
+	}
 	*tgt++ = '\0';
 	/*
-	   Save the Firmware Version in the Host Adapter काष्ठाure.
+	   Save the Firmware Version in the Host Adapter structure.
 	 */
 	tgt = adapter->fw_ver;
 	*tgt++ = id.fw_ver_digit1;
 	*tgt++ = '.';
 	*tgt++ = id.fw_ver_digit2;
-	अगर (fw_ver_digit3 != ' ' && fw_ver_digit3 != '\0')
+	if (fw_ver_digit3 != ' ' && fw_ver_digit3 != '\0')
 		*tgt++ = fw_ver_digit3;
 	*tgt = '\0';
 	/*
 	   Issue the Inquire Firmware Version Letter command.
 	 */
-	अगर (म_भेद(adapter->fw_ver, "3.3") >= 0) अणु
-		अगर (blogic_cmd(adapter, BLOGIC_INQ_FWVER_LETTER, शून्य, 0,
+	if (strcmp(adapter->fw_ver, "3.3") >= 0) {
+		if (blogic_cmd(adapter, BLOGIC_INQ_FWVER_LETTER, NULL, 0,
 				&fw_ver_letter,
-				माप(fw_ver_letter)) != माप(fw_ver_letter))
-			वापस blogic_failure(adapter,
+				sizeof(fw_ver_letter)) != sizeof(fw_ver_letter))
+			return blogic_failure(adapter,
 					"INQUIRE FIRMWARE VERSION LETTER");
-		अगर (fw_ver_letter != ' ' && fw_ver_letter != '\0')
+		if (fw_ver_letter != ' ' && fw_ver_letter != '\0')
 			*tgt++ = fw_ver_letter;
 		*tgt = '\0';
-	पूर्ण
+	}
 	/*
-	   Save the Host Adapter SCSI ID in the Host Adapter काष्ठाure.
+	   Save the Host Adapter SCSI ID in the Host Adapter structure.
 	 */
 	adapter->scsi_id = config.id;
 	/*
-	   Determine the Bus Type and save it in the Host Adapter काष्ठाure,
-	   determine and save the IRQ Channel अगर necessary, and determine
-	   and save the DMA Channel क्रम ISA Host Adapters.
+	   Determine the Bus Type and save it in the Host Adapter structure,
+	   determine and save the IRQ Channel if necessary, and determine
+	   and save the DMA Channel for ISA Host Adapters.
 	 */
 	adapter->adapter_bus_type =
 			blogic_adater_bus_types[adapter->model[3] - '4'];
-	अगर (adapter->irq_ch == 0) अणु
-		अगर (config.irq_ch9)
+	if (adapter->irq_ch == 0) {
+		if (config.irq_ch9)
 			adapter->irq_ch = 9;
-		अन्यथा अगर (config.irq_ch10)
+		else if (config.irq_ch10)
 			adapter->irq_ch = 10;
-		अन्यथा अगर (config.irq_ch11)
+		else if (config.irq_ch11)
 			adapter->irq_ch = 11;
-		अन्यथा अगर (config.irq_ch12)
+		else if (config.irq_ch12)
 			adapter->irq_ch = 12;
-		अन्यथा अगर (config.irq_ch14)
+		else if (config.irq_ch14)
 			adapter->irq_ch = 14;
-		अन्यथा अगर (config.irq_ch15)
+		else if (config.irq_ch15)
 			adapter->irq_ch = 15;
-	पूर्ण
+	}
 	/*
 	   Determine whether Extended Translation is enabled and save it in
-	   the Host Adapter काष्ठाure.
+	   the Host Adapter structure.
 	 */
 	georeg.all = blogic_rdgeom(adapter);
 	adapter->ext_trans_enable = georeg.gr.ext_trans_enable;
 	/*
 	   Save the Scatter Gather Limits, Level Sensitive Interrupt flag, Wide
-	   SCSI flag, Dअगरferential SCSI flag, SCAM Supported flag, and
-	   Ultra SCSI flag in the Host Adapter काष्ठाure.
+	   SCSI flag, Differential SCSI flag, SCAM Supported flag, and
+	   Ultra SCSI flag in the Host Adapter structure.
 	 */
 	adapter->adapter_sglimit = ext_setupinfo.sg_limit;
 	adapter->drvr_sglimit = adapter->adapter_sglimit;
-	अगर (adapter->adapter_sglimit > BLOGIC_SG_LIMIT)
+	if (adapter->adapter_sglimit > BLOGIC_SG_LIMIT)
 		adapter->drvr_sglimit = BLOGIC_SG_LIMIT;
-	अगर (ext_setupinfo.misc.level_पूर्णांक)
-		adapter->level_पूर्णांक = true;
+	if (ext_setupinfo.misc.level_int)
+		adapter->level_int = true;
 	adapter->wide = ext_setupinfo.wide;
-	adapter->dअगरferential = ext_setupinfo.dअगरferential;
+	adapter->differential = ext_setupinfo.differential;
 	adapter->scam = ext_setupinfo.scam;
 	adapter->ultra = ext_setupinfo.ultra;
 	/*
 	   Determine whether Extended LUN Format CCBs are supported and save the
-	   inक्रमmation in the Host Adapter काष्ठाure.
+	   information in the Host Adapter structure.
 	 */
-	अगर (adapter->fw_ver[0] == '5' || (adapter->fw_ver[0] == '4' &&
+	if (adapter->fw_ver[0] == '5' || (adapter->fw_ver[0] == '4' &&
 				adapter->wide))
 		adapter->ext_lun = true;
 	/*
-	   Issue the Inquire PCI Host Adapter Inक्रमmation command to पढ़ो the
-	   Termination Inक्रमmation from "W" series MultiMaster Host Adapters.
+	   Issue the Inquire PCI Host Adapter Information command to read the
+	   Termination Information from "W" series MultiMaster Host Adapters.
 	 */
-	अगर (adapter->fw_ver[0] == '5') अणु
-		अगर (blogic_cmd(adapter, BLOGIC_INQ_PCI_INFO, शून्य, 0,
+	if (adapter->fw_ver[0] == '5') {
+		if (blogic_cmd(adapter, BLOGIC_INQ_PCI_INFO, NULL, 0,
 				&adapter_info,
-				माप(adapter_info)) != माप(adapter_info))
-			वापस blogic_failure(adapter,
+				sizeof(adapter_info)) != sizeof(adapter_info))
+			return blogic_failure(adapter,
 					"INQUIRE PCI HOST ADAPTER INFORMATION");
 		/*
-		   Save the Termination Inक्रमmation in the Host Adapter
-		   काष्ठाure.
+		   Save the Termination Information in the Host Adapter
+		   structure.
 		 */
-		अगर (adapter_info.genericinfo_valid) अणु
+		if (adapter_info.genericinfo_valid) {
 			adapter->terminfo_valid = true;
 			adapter->low_term = adapter_info.low_term;
 			adapter->high_term = adapter_info.high_term;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	/*
-	   Issue the Fetch Host Adapter Local RAM command to पढ़ो the
+	   Issue the Fetch Host Adapter Local RAM command to read the
 	   AutoSCSI data from "W" and "C" series MultiMaster Host Adapters.
 	 */
-	अगर (adapter->fw_ver[0] >= '4') अणु
+	if (adapter->fw_ver[0] >= '4') {
 		fetch_localram.offset = BLOGIC_AUTOSCSI_BASE;
-		fetch_localram.count = माप(स्वतःscsi);
-		अगर (blogic_cmd(adapter, BLOGIC_FETCH_LOCALRAM, &fetch_localram,
-					माप(fetch_localram), &स्वतःscsi,
-					माप(स्वतःscsi)) != माप(स्वतःscsi))
-			वापस blogic_failure(adapter,
+		fetch_localram.count = sizeof(autoscsi);
+		if (blogic_cmd(adapter, BLOGIC_FETCH_LOCALRAM, &fetch_localram,
+					sizeof(fetch_localram), &autoscsi,
+					sizeof(autoscsi)) != sizeof(autoscsi))
+			return blogic_failure(adapter,
 						"FETCH HOST ADAPTER LOCAL RAM");
 		/*
 		   Save the Parity Checking Enabled, Bus Reset Enabled,
-		   and Termination Inक्रमmation in the Host Adapter काष्ठाure.
+		   and Termination Information in the Host Adapter structure.
 		 */
-		adapter->parity = स्वतःscsi.parity;
-		adapter->reset_enabled = स्वतःscsi.reset_enabled;
-		अगर (adapter->fw_ver[0] == '4') अणु
+		adapter->parity = autoscsi.parity;
+		adapter->reset_enabled = autoscsi.reset_enabled;
+		if (adapter->fw_ver[0] == '4') {
 			adapter->terminfo_valid = true;
-			adapter->low_term = स्वतःscsi.low_term;
-			adapter->high_term = स्वतःscsi.high_term;
-		पूर्ण
+			adapter->low_term = autoscsi.low_term;
+			adapter->high_term = autoscsi.high_term;
+		}
 		/*
 		   Save the Wide Permitted, Fast Permitted, Synchronous
 		   Permitted, Disconnect Permitted, Ultra Permitted, and
-		   SCAM Inक्रमmation in the Host Adapter काष्ठाure.
+		   SCAM Information in the Host Adapter structure.
 		 */
-		adapter->wide_ok = स्वतःscsi.wide_ok;
-		adapter->fast_ok = स्वतःscsi.fast_ok;
-		adapter->sync_ok = स्वतःscsi.sync_ok;
-		adapter->discon_ok = स्वतःscsi.discon_ok;
-		अगर (adapter->ultra)
-			adapter->ultra_ok = स्वतःscsi.ultra_ok;
-		अगर (adapter->scam) अणु
-			adapter->scam_enabled = स्वतःscsi.scam_enabled;
-			adapter->scam_lev2 = स्वतःscsi.scam_lev2;
-		पूर्ण
-	पूर्ण
+		adapter->wide_ok = autoscsi.wide_ok;
+		adapter->fast_ok = autoscsi.fast_ok;
+		adapter->sync_ok = autoscsi.sync_ok;
+		adapter->discon_ok = autoscsi.discon_ok;
+		if (adapter->ultra)
+			adapter->ultra_ok = autoscsi.ultra_ok;
+		if (adapter->scam) {
+			adapter->scam_enabled = autoscsi.scam_enabled;
+			adapter->scam_lev2 = autoscsi.scam_lev2;
+		}
+	}
 	/*
-	   Initialize fields in the Host Adapter काष्ठाure क्रम "S" and "A"
+	   Initialize fields in the Host Adapter structure for "S" and "A"
 	   series MultiMaster Host Adapters.
 	 */
-	अगर (adapter->fw_ver[0] < '4') अणु
-		अगर (setupinfo.sync) अणु
+	if (adapter->fw_ver[0] < '4') {
+		if (setupinfo.sync) {
 			adapter->sync_ok = 0xFF;
-			अगर (adapter->adapter_bus_type == BLOGIC_EISA_BUS) अणु
-				अगर (ext_setupinfo.misc.fast_on_eisa)
+			if (adapter->adapter_bus_type == BLOGIC_EISA_BUS) {
+				if (ext_setupinfo.misc.fast_on_eisa)
 					adapter->fast_ok = 0xFF;
-				अगर (म_भेद(adapter->model, "BT-757") == 0)
+				if (strcmp(adapter->model, "BT-757") == 0)
 					adapter->wide_ok = 0xFF;
-			पूर्ण
-		पूर्ण
+			}
+		}
 		adapter->discon_ok = 0xFF;
 		adapter->parity = setupinfo.parity;
 		adapter->reset_enabled = true;
-	पूर्ण
+	}
 	/*
 	   Determine the maximum number of Target IDs and Logical Units
-	   supported by this driver क्रम Wide and Narrow Host Adapters.
+	   supported by this driver for Wide and Narrow Host Adapters.
 	 */
 	adapter->maxdev = (adapter->wide ? 16 : 8);
 	adapter->maxlun = (adapter->ext_lun ? 32 : 8);
 	/*
-	   Select appropriate values क्रम the Mailbox Count, Driver Queue Depth,
+	   Select appropriate values for the Mailbox Count, Driver Queue Depth,
 	   Initial CCBs, and Incremental CCBs variables based on whether
 	   or not Strict Round Robin Mode is supported.  If Strict Round
-	   Robin Mode is supported, then there is no perक्रमmance degradation
+	   Robin Mode is supported, then there is no performance degradation
 	   in using the maximum possible number of Outgoing and Incoming
 	   Mailboxes and allowing the Tagged and Untagged Queue Depths to
 	   determine the actual utilization.  If Strict Round Robin Mode is
 	   not supported, then the Host Adapter must scan all the Outgoing
 	   Mailboxes whenever an Outgoing Mailbox entry is made, which can
-	   cause a substantial perक्रमmance penalty.  The host adapters
+	   cause a substantial performance penalty.  The host adapters
 	   actually have room to store the following number of CCBs
-	   पूर्णांकernally; that is, they can पूर्णांकernally queue and manage this
-	   many active commands on the SCSI bus simultaneously.  Perक्रमmance
+	   internally; that is, they can internally queue and manage this
+	   many active commands on the SCSI bus simultaneously.  Performance
 	   measurements demonstrate that the Driver Queue Depth should be
 	   set to the Mailbox Count, rather than the Host Adapter Queue
-	   Depth (पूर्णांकernal CCB capacity), as it is more efficient to have the
-	   queued commands रुकोing in Outgoing Mailboxes अगर necessary than
-	   to block the process in the higher levels of the SCSI Subप्रणाली.
+	   Depth (internal CCB capacity), as it is more efficient to have the
+	   queued commands waiting in Outgoing Mailboxes if necessary than
+	   to block the process in the higher levels of the SCSI Subsystem.
 
 	   192          BT-948/958/958D
 	   100          BT-946C/956C/956CD/747C/757C/757CD/445C
 	   50   BT-545C/540CF
 	   30   BT-747S/747D/757S/757D/445S/545S/542D/542B/742A
 	 */
-	अगर (adapter->fw_ver[0] == '5')
+	if (adapter->fw_ver[0] == '5')
 		adapter->adapter_qdepth = 192;
-	अन्यथा अगर (adapter->fw_ver[0] == '4')
+	else if (adapter->fw_ver[0] == '4')
 		adapter->adapter_qdepth = 100;
-	अन्यथा
+	else
 		adapter->adapter_qdepth = 30;
-	अगर (म_भेद(adapter->fw_ver, "3.31") >= 0) अणु
+	if (strcmp(adapter->fw_ver, "3.31") >= 0) {
 		adapter->strict_rr = true;
 		adapter->mbox_count = BLOGIC_MAX_MAILBOX;
-	पूर्ण अन्यथा अणु
+	} else {
 		adapter->strict_rr = false;
 		adapter->mbox_count = 32;
-	पूर्ण
+	}
 	adapter->drvr_qdepth = adapter->mbox_count;
 	adapter->initccbs = 4 * BLOGIC_CCB_GRP_ALLOCSIZE;
 	adapter->inc_ccbs = BLOGIC_CCB_GRP_ALLOCSIZE;
@@ -1593,22 +1592,22 @@ module_param(BusLogic, अक्षरp, 0);
 	   3.35 and above.
 	 */
 	adapter->tagq_ok = 0;
-	चयन (adapter->fw_ver[0]) अणु
-	हाल '5':
+	switch (adapter->fw_ver[0]) {
+	case '5':
 		adapter->tagq_ok = 0xFFFF;
-		अवरोध;
-	हाल '4':
-		अगर (म_भेद(adapter->fw_ver, "4.22") >= 0)
+		break;
+	case '4':
+		if (strcmp(adapter->fw_ver, "4.22") >= 0)
 			adapter->tagq_ok = 0xFFFF;
-		अवरोध;
-	हाल '3':
-		अगर (म_भेद(adapter->fw_ver, "3.35") >= 0)
+		break;
+	case '3':
+		if (strcmp(adapter->fw_ver, "3.35") >= 0)
 			adapter->tagq_ok = 0xFFFF;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	/*
-	   Determine the Host Adapter BIOS Address अगर the BIOS is enabled and
-	   save it in the Host Adapter काष्ठाure.  The BIOS is disabled अगर the
+	   Determine the Host Adapter BIOS Address if the BIOS is enabled and
+	   save it in the Host Adapter structure.  The BIOS is disabled if the
 	   bios_addr is 0.
 	 */
 	adapter->bios_addr = ext_setupinfo.bios_addr << 12;
@@ -1619,111 +1618,111 @@ module_param(BusLogic, अक्षरp, 0);
 	   incorrectly.  Only properly functioning BT-445S Host Adapters
 	   have firmware version 3.37.
 	 */
-	अगर (adapter->bios_addr > 0 &&
-	    म_भेद(adapter->model, "BT-445S") == 0 &&
-	    म_भेद(adapter->fw_ver, "3.37") < 0)
-		वापस blogic_failure(adapter, "Too old firmware");
+	if (adapter->bios_addr > 0 &&
+	    strcmp(adapter->model, "BT-445S") == 0 &&
+	    strcmp(adapter->fw_ver, "3.37") < 0)
+		return blogic_failure(adapter, "Too old firmware");
 	/*
-	   Initialize parameters common to MultiMaster and FlashPoपूर्णांक
+	   Initialize parameters common to MultiMaster and FlashPoint
 	   Host Adapters.
 	 */
 common:
 	/*
 	   Initialize the Host Adapter Full Model Name from the Model Name.
 	 */
-	म_नकल(adapter->full_model, "BusLogic ");
-	म_जोड़ो(adapter->full_model, adapter->model);
+	strcpy(adapter->full_model, "BusLogic ");
+	strcat(adapter->full_model, adapter->model);
 	/*
-	   Select an appropriate value क्रम the Tagged Queue Depth either from a
-	   BusLogic Driver Options specअगरication, or based on whether this Host
+	   Select an appropriate value for the Tagged Queue Depth either from a
+	   BusLogic Driver Options specification, or based on whether this Host
 	   Adapter requires that ISA Bounce Buffers be used.  The Tagged Queue
-	   Depth is left at 0 क्रम स्वतःmatic determination in
+	   Depth is left at 0 for automatic determination in
 	   BusLogic_SelectQueueDepths. Initialize the Untagged Queue Depth.
 	 */
-	क्रम (tgt_id = 0; tgt_id < BLOGIC_MAXDEV; tgt_id++) अणु
-		अचिन्हित अक्षर qdepth = 0;
-		अगर (adapter->drvr_opts != शून्य &&
+	for (tgt_id = 0; tgt_id < BLOGIC_MAXDEV; tgt_id++) {
+		unsigned char qdepth = 0;
+		if (adapter->drvr_opts != NULL &&
 				adapter->drvr_opts->qdepth[tgt_id] > 0)
 			qdepth = adapter->drvr_opts->qdepth[tgt_id];
 		adapter->qdepth[tgt_id] = qdepth;
-	पूर्ण
+	}
 	adapter->untag_qdepth = BLOGIC_UNTAG_DEPTH;
-	अगर (adapter->drvr_opts != शून्य)
+	if (adapter->drvr_opts != NULL)
 		adapter->common_qdepth = adapter->drvr_opts->common_qdepth;
-	अगर (adapter->common_qdepth > 0 &&
+	if (adapter->common_qdepth > 0 &&
 			adapter->common_qdepth < adapter->untag_qdepth)
 		adapter->untag_qdepth = adapter->common_qdepth;
 	/*
-	   Tagged Queuing is only allowed अगर Disconnect/Reconnect is permitted.
-	   Thereक्रमe, mask the Tagged Queuing Permitted Default bits with the
+	   Tagged Queuing is only allowed if Disconnect/Reconnect is permitted.
+	   Therefore, mask the Tagged Queuing Permitted Default bits with the
 	   Disconnect/Reconnect Permitted bits.
 	 */
 	adapter->tagq_ok &= adapter->discon_ok;
 	/*
-	   Combine the शेष Tagged Queuing Permitted bits with any
-	   BusLogic Driver Options Tagged Queuing specअगरication.
+	   Combine the default Tagged Queuing Permitted bits with any
+	   BusLogic Driver Options Tagged Queuing specification.
 	 */
-	अगर (adapter->drvr_opts != शून्य)
+	if (adapter->drvr_opts != NULL)
 		adapter->tagq_ok = (adapter->drvr_opts->tagq_ok &
 				adapter->drvr_opts->tagq_ok_mask) |
 			(adapter->tagq_ok & ~adapter->drvr_opts->tagq_ok_mask);
 
 	/*
-	   Select an appropriate value क्रम Bus Settle Time either from a
-	   BusLogic Driver Options specअगरication, or from
+	   Select an appropriate value for Bus Settle Time either from a
+	   BusLogic Driver Options specification, or from
 	   BLOGIC_BUS_SETTLE_TIME.
 	 */
-	अगर (adapter->drvr_opts != शून्य &&
-			adapter->drvr_opts->bus_settle_समय > 0)
-		adapter->bus_settle_समय = adapter->drvr_opts->bus_settle_समय;
-	अन्यथा
-		adapter->bus_settle_समय = BLOGIC_BUS_SETTLE_TIME;
+	if (adapter->drvr_opts != NULL &&
+			adapter->drvr_opts->bus_settle_time > 0)
+		adapter->bus_settle_time = adapter->drvr_opts->bus_settle_time;
+	else
+		adapter->bus_settle_time = BLOGIC_BUS_SETTLE_TIME;
 	/*
-	   Indicate पढ़ोing the Host Adapter Configuration completed
+	   Indicate reading the Host Adapter Configuration completed
 	   successfully.
 	 */
-	वापस true;
-पूर्ण
+	return true;
+}
 
 
 /*
   blogic_reportconfig reports the configuration of Host Adapter.
 */
 
-अटल bool __init blogic_reportconfig(काष्ठा blogic_adapter *adapter)
-अणु
-	अचिन्हित लघु alltgt_mask = (1 << adapter->maxdev) - 1;
-	अचिन्हित लघु sync_ok, fast_ok;
-	अचिन्हित लघु ultra_ok, wide_ok;
-	अचिन्हित लघु discon_ok, tagq_ok;
+static bool __init blogic_reportconfig(struct blogic_adapter *adapter)
+{
+	unsigned short alltgt_mask = (1 << adapter->maxdev) - 1;
+	unsigned short sync_ok, fast_ok;
+	unsigned short ultra_ok, wide_ok;
+	unsigned short discon_ok, tagq_ok;
 	bool common_syncneg, common_tagq_depth;
-	अक्षर syncstr[BLOGIC_MAXDEV + 1];
-	अक्षर widestr[BLOGIC_MAXDEV + 1];
-	अक्षर discon_str[BLOGIC_MAXDEV + 1];
-	अक्षर tagq_str[BLOGIC_MAXDEV + 1];
-	अक्षर *syncmsg = syncstr;
-	अक्षर *widemsg = widestr;
-	अक्षर *discon_msg = discon_str;
-	अक्षर *tagq_msg = tagq_str;
-	पूर्णांक tgt_id;
+	char syncstr[BLOGIC_MAXDEV + 1];
+	char widestr[BLOGIC_MAXDEV + 1];
+	char discon_str[BLOGIC_MAXDEV + 1];
+	char tagq_str[BLOGIC_MAXDEV + 1];
+	char *syncmsg = syncstr;
+	char *widemsg = widestr;
+	char *discon_msg = discon_str;
+	char *tagq_msg = tagq_str;
+	int tgt_id;
 
-	blogic_info("Configuring BusLogic Model %s %s%s%s%s SCSI Host Adapter\n", adapter, adapter->model, blogic_adapter_busnames[adapter->adapter_bus_type], (adapter->wide ? " Wide" : ""), (adapter->dअगरferential ? " Differential" : ""), (adapter->ultra ? " Ultra" : ""));
-	blogic_info("  Firmware Version: %s, I/O Address: 0x%lX, IRQ Channel: %d/%s\n", adapter, adapter->fw_ver, adapter->io_addr, adapter->irq_ch, (adapter->level_पूर्णांक ? "Level" : "Edge"));
-	अगर (adapter->adapter_bus_type != BLOGIC_PCI_BUS) अणु
+	blogic_info("Configuring BusLogic Model %s %s%s%s%s SCSI Host Adapter\n", adapter, adapter->model, blogic_adapter_busnames[adapter->adapter_bus_type], (adapter->wide ? " Wide" : ""), (adapter->differential ? " Differential" : ""), (adapter->ultra ? " Ultra" : ""));
+	blogic_info("  Firmware Version: %s, I/O Address: 0x%lX, IRQ Channel: %d/%s\n", adapter, adapter->fw_ver, adapter->io_addr, adapter->irq_ch, (adapter->level_int ? "Level" : "Edge"));
+	if (adapter->adapter_bus_type != BLOGIC_PCI_BUS) {
 		blogic_info("  DMA Channel: None, ", adapter);
-		अगर (adapter->bios_addr > 0)
+		if (adapter->bios_addr > 0)
 			blogic_info("BIOS Address: 0x%lX, ", adapter,
 					adapter->bios_addr);
-		अन्यथा
+		else
 			blogic_info("BIOS Address: None, ", adapter);
-	पूर्ण अन्यथा अणु
+	} else {
 		blogic_info("  PCI Bus: %d, Device: %d, Address: ", adapter,
 				adapter->bus, adapter->dev);
-		अगर (adapter->pci_addr > 0)
+		if (adapter->pci_addr > 0)
 			blogic_info("0x%lX, ", adapter, adapter->pci_addr);
-		अन्यथा
+		else
 			blogic_info("Unassigned, ", adapter);
-	पूर्ण
+	}
 	blogic_info("Host Adapter SCSI ID: %d\n", adapter, adapter->scsi_id);
 	blogic_info("  Parity Checking: %s, Extended Translation: %s\n",
 			adapter, (adapter->parity ? "Enabled" : "Disabled"),
@@ -1732,276 +1731,276 @@ common:
 	sync_ok = adapter->sync_ok & alltgt_mask;
 	fast_ok = adapter->fast_ok & alltgt_mask;
 	ultra_ok = adapter->ultra_ok & alltgt_mask;
-	अगर ((blogic_multimaster_type(adapter) &&
+	if ((blogic_multimaster_type(adapter) &&
 			(adapter->fw_ver[0] >= '4' ||
 			 adapter->adapter_bus_type == BLOGIC_EISA_BUS)) ||
-			blogic_flashpoपूर्णांक_type(adapter)) अणु
+			blogic_flashpoint_type(adapter)) {
 		common_syncneg = false;
-		अगर (sync_ok == 0) अणु
+		if (sync_ok == 0) {
 			syncmsg = "Disabled";
 			common_syncneg = true;
-		पूर्ण अन्यथा अगर (sync_ok == alltgt_mask) अणु
-			अगर (fast_ok == 0) अणु
+		} else if (sync_ok == alltgt_mask) {
+			if (fast_ok == 0) {
 				syncmsg = "Slow";
 				common_syncneg = true;
-			पूर्ण अन्यथा अगर (fast_ok == alltgt_mask) अणु
-				अगर (ultra_ok == 0) अणु
+			} else if (fast_ok == alltgt_mask) {
+				if (ultra_ok == 0) {
 					syncmsg = "Fast";
 					common_syncneg = true;
-				पूर्ण अन्यथा अगर (ultra_ok == alltgt_mask) अणु
+				} else if (ultra_ok == alltgt_mask) {
 					syncmsg = "Ultra";
 					common_syncneg = true;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-		अगर (!common_syncneg) अणु
-			क्रम (tgt_id = 0; tgt_id < adapter->maxdev; tgt_id++)
+				}
+			}
+		}
+		if (!common_syncneg) {
+			for (tgt_id = 0; tgt_id < adapter->maxdev; tgt_id++)
 				syncstr[tgt_id] = ((!(sync_ok & (1 << tgt_id))) ? 'N' : (!(fast_ok & (1 << tgt_id)) ? 'S' : (!(ultra_ok & (1 << tgt_id)) ? 'F' : 'U')));
 			syncstr[adapter->scsi_id] = '#';
 			syncstr[adapter->maxdev] = '\0';
-		पूर्ण
-	पूर्ण अन्यथा
+		}
+	} else
 		syncmsg = (sync_ok == 0 ? "Disabled" : "Enabled");
 	wide_ok = adapter->wide_ok & alltgt_mask;
-	अगर (wide_ok == 0)
+	if (wide_ok == 0)
 		widemsg = "Disabled";
-	अन्यथा अगर (wide_ok == alltgt_mask)
+	else if (wide_ok == alltgt_mask)
 		widemsg = "Enabled";
-	अन्यथा अणु
-		क्रम (tgt_id = 0; tgt_id < adapter->maxdev; tgt_id++)
+	else {
+		for (tgt_id = 0; tgt_id < adapter->maxdev; tgt_id++)
 			widestr[tgt_id] = ((wide_ok & (1 << tgt_id)) ? 'Y' : 'N');
 		widestr[adapter->scsi_id] = '#';
 		widestr[adapter->maxdev] = '\0';
-	पूर्ण
+	}
 	discon_ok = adapter->discon_ok & alltgt_mask;
-	अगर (discon_ok == 0)
+	if (discon_ok == 0)
 		discon_msg = "Disabled";
-	अन्यथा अगर (discon_ok == alltgt_mask)
+	else if (discon_ok == alltgt_mask)
 		discon_msg = "Enabled";
-	अन्यथा अणु
-		क्रम (tgt_id = 0; tgt_id < adapter->maxdev; tgt_id++)
+	else {
+		for (tgt_id = 0; tgt_id < adapter->maxdev; tgt_id++)
 			discon_str[tgt_id] = ((discon_ok & (1 << tgt_id)) ? 'Y' : 'N');
 		discon_str[adapter->scsi_id] = '#';
 		discon_str[adapter->maxdev] = '\0';
-	पूर्ण
+	}
 	tagq_ok = adapter->tagq_ok & alltgt_mask;
-	अगर (tagq_ok == 0)
+	if (tagq_ok == 0)
 		tagq_msg = "Disabled";
-	अन्यथा अगर (tagq_ok == alltgt_mask)
+	else if (tagq_ok == alltgt_mask)
 		tagq_msg = "Enabled";
-	अन्यथा अणु
-		क्रम (tgt_id = 0; tgt_id < adapter->maxdev; tgt_id++)
+	else {
+		for (tgt_id = 0; tgt_id < adapter->maxdev; tgt_id++)
 			tagq_str[tgt_id] = ((tagq_ok & (1 << tgt_id)) ? 'Y' : 'N');
 		tagq_str[adapter->scsi_id] = '#';
 		tagq_str[adapter->maxdev] = '\0';
-	पूर्ण
+	}
 	blogic_info("  Synchronous Negotiation: %s, Wide Negotiation: %s\n",
 			adapter, syncmsg, widemsg);
 	blogic_info("  Disconnect/Reconnect: %s, Tagged Queuing: %s\n", adapter,
 			discon_msg, tagq_msg);
-	अगर (blogic_multimaster_type(adapter)) अणु
+	if (blogic_multimaster_type(adapter)) {
 		blogic_info("  Scatter/Gather Limit: %d of %d segments, Mailboxes: %d\n", adapter, adapter->drvr_sglimit, adapter->adapter_sglimit, adapter->mbox_count);
 		blogic_info("  Driver Queue Depth: %d, Host Adapter Queue Depth: %d\n", adapter, adapter->drvr_qdepth, adapter->adapter_qdepth);
-	पूर्ण अन्यथा
+	} else
 		blogic_info("  Driver Queue Depth: %d, Scatter/Gather Limit: %d segments\n", adapter, adapter->drvr_qdepth, adapter->drvr_sglimit);
 	blogic_info("  Tagged Queue Depth: ", adapter);
 	common_tagq_depth = true;
-	क्रम (tgt_id = 1; tgt_id < adapter->maxdev; tgt_id++)
-		अगर (adapter->qdepth[tgt_id] != adapter->qdepth[0]) अणु
+	for (tgt_id = 1; tgt_id < adapter->maxdev; tgt_id++)
+		if (adapter->qdepth[tgt_id] != adapter->qdepth[0]) {
 			common_tagq_depth = false;
-			अवरोध;
-		पूर्ण
-	अगर (common_tagq_depth) अणु
-		अगर (adapter->qdepth[0] > 0)
+			break;
+		}
+	if (common_tagq_depth) {
+		if (adapter->qdepth[0] > 0)
 			blogic_info("%d", adapter, adapter->qdepth[0]);
-		अन्यथा
+		else
 			blogic_info("Automatic", adapter);
-	पूर्ण अन्यथा
+	} else
 		blogic_info("Individual", adapter);
 	blogic_info(", Untagged Queue Depth: %d\n", adapter,
 			adapter->untag_qdepth);
-	अगर (adapter->terminfo_valid) अणु
-		अगर (adapter->wide)
+	if (adapter->terminfo_valid) {
+		if (adapter->wide)
 			blogic_info("  SCSI Bus Termination: %s", adapter,
 				(adapter->low_term ? (adapter->high_term ? "Both Enabled" : "Low Enabled") : (adapter->high_term ? "High Enabled" : "Both Disabled")));
-		अन्यथा
+		else
 			blogic_info("  SCSI Bus Termination: %s", adapter,
 				(adapter->low_term ? "Enabled" : "Disabled"));
-		अगर (adapter->scam)
+		if (adapter->scam)
 			blogic_info(", SCAM: %s", adapter,
 				(adapter->scam_enabled ? (adapter->scam_lev2 ? "Enabled, Level 2" : "Enabled, Level 1") : "Disabled"));
 		blogic_info("\n", adapter);
-	पूर्ण
+	}
 	/*
 	   Indicate reporting the Host Adapter configuration completed
 	   successfully.
 	 */
-	वापस true;
-पूर्ण
+	return true;
+}
 
 
 /*
-  blogic_getres acquires the प्रणाली resources necessary to use
+  blogic_getres acquires the system resources necessary to use
   Host Adapter.
 */
 
-अटल bool __init blogic_getres(काष्ठा blogic_adapter *adapter)
-अणु
-	अगर (adapter->irq_ch == 0) अणु
+static bool __init blogic_getres(struct blogic_adapter *adapter)
+{
+	if (adapter->irq_ch == 0) {
 		blogic_err("NO LEGAL INTERRUPT CHANNEL ASSIGNED - DETACHING\n",
 				adapter);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 	/*
 	   Acquire shared access to the IRQ Channel.
 	 */
-	अगर (request_irq(adapter->irq_ch, blogic_पूर्णांकhandler, IRQF_SHARED,
-				adapter->full_model, adapter) < 0) अणु
+	if (request_irq(adapter->irq_ch, blogic_inthandler, IRQF_SHARED,
+				adapter->full_model, adapter) < 0) {
 		blogic_err("UNABLE TO ACQUIRE IRQ CHANNEL %d - DETACHING\n",
 				adapter, adapter->irq_ch);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 	adapter->irq_acquired = true;
 	/*
 	   Indicate the System Resource Acquisition completed successfully,
 	 */
-	वापस true;
-पूर्ण
+	return true;
+}
 
 
 /*
-  blogic_relres releases any प्रणाली resources previously acquired
+  blogic_relres releases any system resources previously acquired
   by blogic_getres.
 */
 
-अटल व्योम blogic_relres(काष्ठा blogic_adapter *adapter)
-अणु
+static void blogic_relres(struct blogic_adapter *adapter)
+{
 	/*
 	   Release shared access to the IRQ Channel.
 	 */
-	अगर (adapter->irq_acquired)
-		मुक्त_irq(adapter->irq_ch, adapter);
+	if (adapter->irq_acquired)
+		free_irq(adapter->irq_ch, adapter);
 	/*
-	   Release any allocated memory काष्ठाs not released अन्यथाwhere
+	   Release any allocated memory structs not released elsewhere
 	 */
-	अगर (adapter->mbox_space)
-		dma_मुक्त_coherent(&adapter->pci_device->dev, adapter->mbox_sz,
+	if (adapter->mbox_space)
+		dma_free_coherent(&adapter->pci_device->dev, adapter->mbox_sz,
 			adapter->mbox_space, adapter->mbox_space_handle);
 	pci_dev_put(adapter->pci_device);
-	adapter->mbox_space = शून्य;
+	adapter->mbox_space = NULL;
 	adapter->mbox_space_handle = 0;
 	adapter->mbox_sz = 0;
-पूर्ण
+}
 
 
 /*
   blogic_initadapter initializes Host Adapter.  This is the only
-  function called during SCSI Host Adapter detection which modअगरies the state
-  of the Host Adapter from its initial घातer on or hard reset state.
+  function called during SCSI Host Adapter detection which modifies the state
+  of the Host Adapter from its initial power on or hard reset state.
 */
 
-अटल bool blogic_initadapter(काष्ठा blogic_adapter *adapter)
-अणु
-	काष्ठा blogic_exपंचांगbox_req exपंचांगbox_req;
-	क्रमागत blogic_rr_req rr_req;
-	क्रमागत blogic_setccb_fmt setccb_fmt;
-	पूर्णांक tgt_id;
+static bool blogic_initadapter(struct blogic_adapter *adapter)
+{
+	struct blogic_extmbox_req extmbox_req;
+	enum blogic_rr_req rr_req;
+	enum blogic_setccb_fmt setccb_fmt;
+	int tgt_id;
 
 	/*
-	   Initialize the poपूर्णांकers to the first and last CCBs that are
-	   queued क्रम completion processing.
+	   Initialize the pointers to the first and last CCBs that are
+	   queued for completion processing.
 	 */
-	adapter->firstccb = शून्य;
-	adapter->lastccb = शून्य;
+	adapter->firstccb = NULL;
+	adapter->lastccb = NULL;
 
 	/*
 	   Initialize the Bus Device Reset Pending CCB, Tagged Queuing Active,
 	   Command Successful Flag, Active Commands, and Commands Since Reset
-	   क्रम each Target Device.
+	   for each Target Device.
 	 */
-	क्रम (tgt_id = 0; tgt_id < adapter->maxdev; tgt_id++) अणु
-		adapter->bdr_pend[tgt_id] = शून्य;
+	for (tgt_id = 0; tgt_id < adapter->maxdev; tgt_id++) {
+		adapter->bdr_pend[tgt_id] = NULL;
 		adapter->tgt_flags[tgt_id].tagq_active = false;
 		adapter->tgt_flags[tgt_id].cmd_good = false;
 		adapter->active_cmds[tgt_id] = 0;
 		adapter->cmds_since_rst[tgt_id] = 0;
-	पूर्ण
+	}
 
 	/*
-	   FlashPoपूर्णांक Host Adapters करो not use Outgoing and Incoming Mailboxes.
+	   FlashPoint Host Adapters do not use Outgoing and Incoming Mailboxes.
 	 */
-	अगर (blogic_flashpoपूर्णांक_type(adapter))
-		जाओ करोne;
+	if (blogic_flashpoint_type(adapter))
+		goto done;
 
 	/*
-	   Initialize the Outgoing and Incoming Mailbox poपूर्णांकers.
+	   Initialize the Outgoing and Incoming Mailbox pointers.
 	 */
-	adapter->mbox_sz = adapter->mbox_count * (माप(काष्ठा blogic_outbox) + माप(काष्ठा blogic_inbox));
+	adapter->mbox_sz = adapter->mbox_count * (sizeof(struct blogic_outbox) + sizeof(struct blogic_inbox));
 	adapter->mbox_space = dma_alloc_coherent(&adapter->pci_device->dev,
 				adapter->mbox_sz, &adapter->mbox_space_handle,
 				GFP_KERNEL);
-	अगर (adapter->mbox_space == शून्य)
-		वापस blogic_failure(adapter, "MAILBOX ALLOCATION");
-	adapter->first_outbox = (काष्ठा blogic_outbox *) adapter->mbox_space;
+	if (adapter->mbox_space == NULL)
+		return blogic_failure(adapter, "MAILBOX ALLOCATION");
+	adapter->first_outbox = (struct blogic_outbox *) adapter->mbox_space;
 	adapter->last_outbox = adapter->first_outbox + adapter->mbox_count - 1;
 	adapter->next_outbox = adapter->first_outbox;
-	adapter->first_inbox = (काष्ठा blogic_inbox *) (adapter->last_outbox + 1);
+	adapter->first_inbox = (struct blogic_inbox *) (adapter->last_outbox + 1);
 	adapter->last_inbox = adapter->first_inbox + adapter->mbox_count - 1;
 	adapter->next_inbox = adapter->first_inbox;
 
 	/*
-	   Initialize the Outgoing and Incoming Mailbox काष्ठाures.
+	   Initialize the Outgoing and Incoming Mailbox structures.
 	 */
-	स_रखो(adapter->first_outbox, 0,
-			adapter->mbox_count * माप(काष्ठा blogic_outbox));
-	स_रखो(adapter->first_inbox, 0,
-			adapter->mbox_count * माप(काष्ठा blogic_inbox));
+	memset(adapter->first_outbox, 0,
+			adapter->mbox_count * sizeof(struct blogic_outbox));
+	memset(adapter->first_inbox, 0,
+			adapter->mbox_count * sizeof(struct blogic_inbox));
 
 	/*
-	   Initialize the Host Adapter's Poपूर्णांकer to the Outgoing/Incoming
+	   Initialize the Host Adapter's Pointer to the Outgoing/Incoming
 	   Mailboxes.
 	 */
-	exपंचांगbox_req.mbox_count = adapter->mbox_count;
-	exपंचांगbox_req.base_mbox_addr = (u32) adapter->mbox_space_handle;
-	अगर (blogic_cmd(adapter, BLOGIC_INIT_EXT_MBOX, &exपंचांगbox_req,
-				माप(exपंचांगbox_req), शून्य, 0) < 0)
-		वापस blogic_failure(adapter, "MAILBOX INITIALIZATION");
+	extmbox_req.mbox_count = adapter->mbox_count;
+	extmbox_req.base_mbox_addr = (u32) adapter->mbox_space_handle;
+	if (blogic_cmd(adapter, BLOGIC_INIT_EXT_MBOX, &extmbox_req,
+				sizeof(extmbox_req), NULL, 0) < 0)
+		return blogic_failure(adapter, "MAILBOX INITIALIZATION");
 	/*
-	   Enable Strict Round Robin Mode अगर supported by the Host Adapter. In
+	   Enable Strict Round Robin Mode if supported by the Host Adapter. In
 	   Strict Round Robin Mode, the Host Adapter only looks at the next
-	   Outgoing Mailbox क्रम each new command, rather than scanning
+	   Outgoing Mailbox for each new command, rather than scanning
 	   through all the Outgoing Mailboxes to find any that have new
-	   commands in them.  Strict Round Robin Mode is signअगरicantly more
+	   commands in them.  Strict Round Robin Mode is significantly more
 	   efficient.
 	 */
-	अगर (adapter->strict_rr) अणु
+	if (adapter->strict_rr) {
 		rr_req = BLOGIC_STRICT_RR_MODE;
-		अगर (blogic_cmd(adapter, BLOGIC_STRICT_RR, &rr_req,
-					माप(rr_req), शून्य, 0) < 0)
-			वापस blogic_failure(adapter,
+		if (blogic_cmd(adapter, BLOGIC_STRICT_RR, &rr_req,
+					sizeof(rr_req), NULL, 0) < 0)
+			return blogic_failure(adapter,
 					"ENABLE STRICT ROUND ROBIN MODE");
-	पूर्ण
+	}
 
 	/*
 	   For Host Adapters that support Extended LUN Format CCBs, issue the
 	   Set CCB Format command to allow 32 Logical Units per Target Device.
 	 */
-	अगर (adapter->ext_lun) अणु
+	if (adapter->ext_lun) {
 		setccb_fmt = BLOGIC_EXT_LUN_CCB;
-		अगर (blogic_cmd(adapter, BLOGIC_SETCCB_FMT, &setccb_fmt,
-					माप(setccb_fmt), शून्य, 0) < 0)
-			वापस blogic_failure(adapter, "SET CCB FORMAT");
-	पूर्ण
+		if (blogic_cmd(adapter, BLOGIC_SETCCB_FMT, &setccb_fmt,
+					sizeof(setccb_fmt), NULL, 0) < 0)
+			return blogic_failure(adapter, "SET CCB FORMAT");
+	}
 
 	/*
 	   Announce Successful Initialization.
 	 */
-करोne:
-	अगर (!adapter->adapter_initd) अणु
+done:
+	if (!adapter->adapter_initd) {
 		blogic_info("*** %s Initialized Successfully ***\n", adapter,
 				adapter->full_model);
 		blogic_info("\n", adapter);
-	पूर्ण अन्यथा
+	} else
 		blogic_warn("*** %s Initialized Successfully ***\n", adapter,
 				adapter->full_model);
 	adapter->adapter_initd = true;
@@ -2009,8 +2008,8 @@ common:
 	/*
 	   Indicate the Host Adapter Initialization completed successfully.
 	 */
-	वापस true;
-पूर्ण
+	return true;
+}
 
 
 /*
@@ -2018,130 +2017,130 @@ common:
   through Host Adapter.
 */
 
-अटल bool __init blogic_inquiry(काष्ठा blogic_adapter *adapter)
-अणु
+static bool __init blogic_inquiry(struct blogic_adapter *adapter)
+{
 	u16 installed_devs;
 	u8 installed_devs0to7[8];
-	काष्ठा blogic_setup_info setupinfo;
+	struct blogic_setup_info setupinfo;
 	u8 sync_period[BLOGIC_MAXDEV];
-	अचिन्हित अक्षर req_replylen;
-	पूर्णांक tgt_id;
+	unsigned char req_replylen;
+	int tgt_id;
 
 	/*
 	   Wait a few seconds between the Host Adapter Hard Reset which
 	   initiates a SCSI Bus Reset and issuing any SCSI Commands. Some
-	   SCSI devices get confused अगर they receive SCSI Commands too soon
+	   SCSI devices get confused if they receive SCSI Commands too soon
 	   after a SCSI Bus Reset.
 	 */
-	blogic_delay(adapter->bus_settle_समय);
+	blogic_delay(adapter->bus_settle_time);
 	/*
-	   FlashPoपूर्णांक Host Adapters करो not provide क्रम Target Device Inquiry.
+	   FlashPoint Host Adapters do not provide for Target Device Inquiry.
 	 */
-	अगर (blogic_flashpoपूर्णांक_type(adapter))
-		वापस true;
+	if (blogic_flashpoint_type(adapter))
+		return true;
 	/*
-	   Inhibit the Target Device Inquiry अगर requested.
+	   Inhibit the Target Device Inquiry if requested.
 	 */
-	अगर (adapter->drvr_opts != शून्य && adapter->drvr_opts->stop_tgt_inquiry)
-		वापस true;
+	if (adapter->drvr_opts != NULL && adapter->drvr_opts->stop_tgt_inquiry)
+		return true;
 	/*
-	   Issue the Inquire Target Devices command क्रम host adapters with
+	   Issue the Inquire Target Devices command for host adapters with
 	   firmware version 4.25 or later, or the Inquire Installed Devices
-	   ID 0 to 7 command क्रम older host adapters.  This is necessary to
-	   क्रमce Synchronous Transfer Negotiation so that the Inquire Setup
-	   Inक्रमmation and Inquire Synchronous Period commands will वापस
+	   ID 0 to 7 command for older host adapters.  This is necessary to
+	   force Synchronous Transfer Negotiation so that the Inquire Setup
+	   Information and Inquire Synchronous Period commands will return
 	   valid data.  The Inquire Target Devices command is preferable to
 	   Inquire Installed Devices ID 0 to 7 since it only probes Logical
 	   Unit 0 of each Target Device.
 	 */
-	अगर (म_भेद(adapter->fw_ver, "4.25") >= 0) अणु
+	if (strcmp(adapter->fw_ver, "4.25") >= 0) {
 
 		/*
 		   Issue a Inquire Target Devices command. Inquire Target
 		   Devices only tests Logical Unit 0 of each Target Device
 		   unlike the Inquire Installed Devices commands which test
-		   Logical Units 0 - 7.  Two bytes are वापसed, where byte
+		   Logical Units 0 - 7.  Two bytes are returned, where byte
 		   0 bit 0 set indicates that Target Device 0 exists, and so on.
 		 */
 
-		अगर (blogic_cmd(adapter, BLOGIC_INQ_DEV, शून्य, 0,
-					&installed_devs, माप(installed_devs))
-		    != माप(installed_devs))
-			वापस blogic_failure(adapter, "INQUIRE TARGET DEVICES");
-		क्रम (tgt_id = 0; tgt_id < adapter->maxdev; tgt_id++)
+		if (blogic_cmd(adapter, BLOGIC_INQ_DEV, NULL, 0,
+					&installed_devs, sizeof(installed_devs))
+		    != sizeof(installed_devs))
+			return blogic_failure(adapter, "INQUIRE TARGET DEVICES");
+		for (tgt_id = 0; tgt_id < adapter->maxdev; tgt_id++)
 			adapter->tgt_flags[tgt_id].tgt_exists =
 				(installed_devs & (1 << tgt_id) ? true : false);
-	पूर्ण अन्यथा अणु
+	} else {
 
 		/*
 		   Issue an Inquire Installed Devices command. For each
-		   Target Device, a byte is वापसed where bit 0 set
+		   Target Device, a byte is returned where bit 0 set
 		   indicates that Logical Unit 0 * exists, bit 1 set
 		   indicates that Logical Unit 1 exists, and so on.
 		 */
 
-		अगर (blogic_cmd(adapter, BLOGIC_INQ_DEV0TO7, शून्य, 0,
-				&installed_devs0to7, माप(installed_devs0to7))
-		    != माप(installed_devs0to7))
-			वापस blogic_failure(adapter,
+		if (blogic_cmd(adapter, BLOGIC_INQ_DEV0TO7, NULL, 0,
+				&installed_devs0to7, sizeof(installed_devs0to7))
+		    != sizeof(installed_devs0to7))
+			return blogic_failure(adapter,
 					"INQUIRE INSTALLED DEVICES ID 0 TO 7");
-		क्रम (tgt_id = 0; tgt_id < 8; tgt_id++)
+		for (tgt_id = 0; tgt_id < 8; tgt_id++)
 			adapter->tgt_flags[tgt_id].tgt_exists =
 				installed_devs0to7[tgt_id] != 0;
-	पूर्ण
+	}
 	/*
-	   Issue the Inquire Setup Inक्रमmation command.
+	   Issue the Inquire Setup Information command.
 	 */
-	req_replylen = माप(setupinfo);
-	अगर (blogic_cmd(adapter, BLOGIC_INQ_SETUPINFO, &req_replylen,
-			माप(req_replylen), &setupinfo, माप(setupinfo))
-	    != माप(setupinfo))
-		वापस blogic_failure(adapter, "INQUIRE SETUP INFORMATION");
-	क्रम (tgt_id = 0; tgt_id < adapter->maxdev; tgt_id++)
+	req_replylen = sizeof(setupinfo);
+	if (blogic_cmd(adapter, BLOGIC_INQ_SETUPINFO, &req_replylen,
+			sizeof(req_replylen), &setupinfo, sizeof(setupinfo))
+	    != sizeof(setupinfo))
+		return blogic_failure(adapter, "INQUIRE SETUP INFORMATION");
+	for (tgt_id = 0; tgt_id < adapter->maxdev; tgt_id++)
 		adapter->sync_offset[tgt_id] = (tgt_id < 8 ? setupinfo.sync0to7[tgt_id].offset : setupinfo.sync8to15[tgt_id - 8].offset);
-	अगर (म_भेद(adapter->fw_ver, "5.06L") >= 0)
-		क्रम (tgt_id = 0; tgt_id < adapter->maxdev; tgt_id++)
+	if (strcmp(adapter->fw_ver, "5.06L") >= 0)
+		for (tgt_id = 0; tgt_id < adapter->maxdev; tgt_id++)
 			adapter->tgt_flags[tgt_id].wide_active = (tgt_id < 8 ? (setupinfo.wide_tx_active0to7 & (1 << tgt_id) ? true : false) : (setupinfo.wide_tx_active8to15 & (1 << (tgt_id - 8)) ? true : false));
 	/*
 	   Issue the Inquire Synchronous Period command.
 	 */
-	अगर (adapter->fw_ver[0] >= '3') अणु
+	if (adapter->fw_ver[0] >= '3') {
 
 		/* Issue a Inquire Synchronous Period command. For each
-		   Target Device, a byte is वापसed which represents the
+		   Target Device, a byte is returned which represents the
 		   Synchronous Transfer Period in units of 10 nanoseconds.
 		 */
 
-		req_replylen = माप(sync_period);
-		अगर (blogic_cmd(adapter, BLOGIC_INQ_SYNC_PERIOD, &req_replylen,
-				माप(req_replylen), &sync_period,
-				माप(sync_period)) != माप(sync_period))
-			वापस blogic_failure(adapter,
+		req_replylen = sizeof(sync_period);
+		if (blogic_cmd(adapter, BLOGIC_INQ_SYNC_PERIOD, &req_replylen,
+				sizeof(req_replylen), &sync_period,
+				sizeof(sync_period)) != sizeof(sync_period))
+			return blogic_failure(adapter,
 					"INQUIRE SYNCHRONOUS PERIOD");
-		क्रम (tgt_id = 0; tgt_id < adapter->maxdev; tgt_id++)
+		for (tgt_id = 0; tgt_id < adapter->maxdev; tgt_id++)
 			adapter->sync_period[tgt_id] = sync_period[tgt_id];
-	पूर्ण अन्यथा
-		क्रम (tgt_id = 0; tgt_id < adapter->maxdev; tgt_id++)
-			अगर (setupinfo.sync0to7[tgt_id].offset > 0)
+	} else
+		for (tgt_id = 0; tgt_id < adapter->maxdev; tgt_id++)
+			if (setupinfo.sync0to7[tgt_id].offset > 0)
 				adapter->sync_period[tgt_id] = 20 + 5 * setupinfo.sync0to7[tgt_id].tx_period;
 	/*
 	   Indicate the Target Device Inquiry completed successfully.
 	 */
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
-  blogic_inithostकाष्ठा initializes the fields in the SCSI Host
-  काष्ठाure.  The base, io_port, n_io_ports, irq, and dma_channel fields in the
-  SCSI Host काष्ठाure are पूर्णांकentionally left uninitialized, as this driver
+  blogic_inithoststruct initializes the fields in the SCSI Host
+  structure.  The base, io_port, n_io_ports, irq, and dma_channel fields in the
+  SCSI Host structure are intentionally left uninitialized, as this driver
   handles acquisition and release of these resources explicitly, as well as
-  ensuring exclusive access to the Host Adapter hardware and data काष्ठाures
+  ensuring exclusive access to the Host Adapter hardware and data structures
   through explicit acquisition and release of the Host Adapter's Lock.
 */
 
-अटल व्योम __init blogic_inithostकाष्ठा(काष्ठा blogic_adapter *adapter,
-		काष्ठा Scsi_Host *host)
-अणु
+static void __init blogic_inithoststruct(struct blogic_adapter *adapter,
+		struct Scsi_Host *host)
+{
 	host->max_id = adapter->maxdev;
 	host->max_lun = adapter->maxlun;
 	host->max_channel = 0;
@@ -2150,96 +2149,96 @@ common:
 	host->can_queue = adapter->drvr_qdepth;
 	host->sg_tablesize = adapter->drvr_sglimit;
 	host->cmd_per_lun = adapter->untag_qdepth;
-पूर्ण
+}
 
 /*
-  blogic_slaveconfig will actually set the queue depth on inभागidual
+  blogic_slaveconfig will actually set the queue depth on individual
   scsi devices as they are permanently added to the device chain.  We
   shamelessly rip off the SelectQueueDepths code to make this work mostly
-  like it used to.  Since we करोn't get called once at the end of the scan
-  but instead get called क्रम each device, we have to करो things a bit
-  dअगरferently.
+  like it used to.  Since we don't get called once at the end of the scan
+  but instead get called for each device, we have to do things a bit
+  differently.
 */
-अटल पूर्णांक blogic_slaveconfig(काष्ठा scsi_device *dev)
-अणु
-	काष्ठा blogic_adapter *adapter =
-		(काष्ठा blogic_adapter *) dev->host->hostdata;
-	पूर्णांक tgt_id = dev->id;
-	पूर्णांक qdepth = adapter->qdepth[tgt_id];
+static int blogic_slaveconfig(struct scsi_device *dev)
+{
+	struct blogic_adapter *adapter =
+		(struct blogic_adapter *) dev->host->hostdata;
+	int tgt_id = dev->id;
+	int qdepth = adapter->qdepth[tgt_id];
 
-	अगर (adapter->tgt_flags[tgt_id].tagq_ok &&
-			(adapter->tagq_ok & (1 << tgt_id))) अणु
-		अगर (qdepth == 0)
+	if (adapter->tgt_flags[tgt_id].tagq_ok &&
+			(adapter->tagq_ok & (1 << tgt_id))) {
+		if (qdepth == 0)
 			qdepth = BLOGIC_MAX_AUTO_TAG_DEPTH;
 		adapter->qdepth[tgt_id] = qdepth;
 		scsi_change_queue_depth(dev, qdepth);
-	पूर्ण अन्यथा अणु
+	} else {
 		adapter->tagq_ok &= ~(1 << tgt_id);
 		qdepth = adapter->untag_qdepth;
 		adapter->qdepth[tgt_id] = qdepth;
 		scsi_change_queue_depth(dev, qdepth);
-	पूर्ण
+	}
 	qdepth = 0;
-	क्रम (tgt_id = 0; tgt_id < adapter->maxdev; tgt_id++)
-		अगर (adapter->tgt_flags[tgt_id].tgt_exists)
+	for (tgt_id = 0; tgt_id < adapter->maxdev; tgt_id++)
+		if (adapter->tgt_flags[tgt_id].tgt_exists)
 			qdepth += adapter->qdepth[tgt_id];
-	अगर (qdepth > adapter->alloc_ccbs)
+	if (qdepth > adapter->alloc_ccbs)
 		blogic_create_addlccbs(adapter, qdepth - adapter->alloc_ccbs,
 				false);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
-  blogic_init probes क्रम BusLogic Host Adapters at the standard
-  I/O Addresses where they may be located, initializing, रेजिस्टरing, and
+  blogic_init probes for BusLogic Host Adapters at the standard
+  I/O Addresses where they may be located, initializing, registering, and
   reporting the configuration of each BusLogic Host Adapter it finds.  It
-  वापसs the number of BusLogic Host Adapters successfully initialized and
-  रेजिस्टरed.
+  returns the number of BusLogic Host Adapters successfully initialized and
+  registered.
 */
 
-अटल पूर्णांक __init blogic_init(व्योम)
-अणु
-	पूर्णांक adapter_count = 0, drvr_optindex = 0, probeindex;
-	काष्ठा blogic_adapter *adapter;
-	पूर्णांक ret = 0;
+static int __init blogic_init(void)
+{
+	int adapter_count = 0, drvr_optindex = 0, probeindex;
+	struct blogic_adapter *adapter;
+	int ret = 0;
 
-#अगर_घोषित MODULE
-	अगर (BusLogic)
+#ifdef MODULE
+	if (BusLogic)
 		blogic_setup(BusLogic);
-#पूर्ण_अगर
+#endif
 
-	अगर (blogic_probe_options.noprobe)
-		वापस -ENODEV;
+	if (blogic_probe_options.noprobe)
+		return -ENODEV;
 	blogic_probeinfo_list =
-	    kसुस्मृति(BLOGIC_MAX_ADAPTERS, माप(काष्ठा blogic_probeinfo),
+	    kcalloc(BLOGIC_MAX_ADAPTERS, sizeof(struct blogic_probeinfo),
 			    GFP_KERNEL);
-	अगर (blogic_probeinfo_list == शून्य) अणु
+	if (blogic_probeinfo_list == NULL) {
 		blogic_err("BusLogic: Unable to allocate Probe Info List\n",
-				शून्य);
-		वापस -ENOMEM;
-	पूर्ण
+				NULL);
+		return -ENOMEM;
+	}
 
-	adapter = kzalloc(माप(काष्ठा blogic_adapter), GFP_KERNEL);
-	अगर (adapter == शून्य) अणु
-		kमुक्त(blogic_probeinfo_list);
-		blogic_err("BusLogic: Unable to allocate Prototype Host Adapter\n", शून्य);
-		वापस -ENOMEM;
-	पूर्ण
+	adapter = kzalloc(sizeof(struct blogic_adapter), GFP_KERNEL);
+	if (adapter == NULL) {
+		kfree(blogic_probeinfo_list);
+		blogic_err("BusLogic: Unable to allocate Prototype Host Adapter\n", NULL);
+		return -ENOMEM;
+	}
 
-#अगर_घोषित MODULE
-	अगर (BusLogic != शून्य)
+#ifdef MODULE
+	if (BusLogic != NULL)
 		blogic_setup(BusLogic);
-#पूर्ण_अगर
+#endif
 	blogic_init_probeinfo_list(adapter);
-	क्रम (probeindex = 0; probeindex < blogic_probeinfo_count; probeindex++) अणु
-		काष्ठा blogic_probeinfo *probeinfo =
+	for (probeindex = 0; probeindex < blogic_probeinfo_count; probeindex++) {
+		struct blogic_probeinfo *probeinfo =
 			&blogic_probeinfo_list[probeindex];
-		काष्ठा blogic_adapter *myadapter = adapter;
-		काष्ठा Scsi_Host *host;
+		struct blogic_adapter *myadapter = adapter;
+		struct Scsi_Host *host;
 
-		अगर (probeinfo->io_addr == 0)
-			जारी;
-		स_रखो(myadapter, 0, माप(काष्ठा blogic_adapter));
+		if (probeinfo->io_addr == 0)
+			continue;
+		memset(myadapter, 0, sizeof(struct blogic_adapter));
 		myadapter->adapter_type = probeinfo->adapter_type;
 		myadapter->adapter_bus_type = probeinfo->adapter_bus_type;
 		myadapter->io_addr = probeinfo->io_addr;
@@ -2252,42 +2251,42 @@ common:
 			blogic_adapter_addr_count[myadapter->adapter_type];
 
 		/*
-		   Make sure region is मुक्त prior to probing.
+		   Make sure region is free prior to probing.
 		 */
-		अगर (!request_region(myadapter->io_addr, myadapter->addr_count,
+		if (!request_region(myadapter->io_addr, myadapter->addr_count,
 					"BusLogic"))
-			जारी;
+			continue;
 		/*
-		   Probe the Host Adapter. If unsuccessful, पात further
+		   Probe the Host Adapter. If unsuccessful, abort further
 		   initialization.
 		 */
-		अगर (!blogic_probe(myadapter)) अणु
+		if (!blogic_probe(myadapter)) {
 			release_region(myadapter->io_addr,
 					myadapter->addr_count);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		/*
-		   Hard Reset the Host Adapter.  If unsuccessful, पात further
+		   Hard Reset the Host Adapter.  If unsuccessful, abort further
 		   initialization.
 		 */
-		अगर (!blogic_hwreset(myadapter, true)) अणु
+		if (!blogic_hwreset(myadapter, true)) {
 			release_region(myadapter->io_addr,
 					myadapter->addr_count);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		/*
-		   Check the Host Adapter.  If unsuccessful, पात further
+		   Check the Host Adapter.  If unsuccessful, abort further
 		   initialization.
 		 */
-		अगर (!blogic_checkadapter(myadapter)) अणु
+		if (!blogic_checkadapter(myadapter)) {
 			release_region(myadapter->io_addr,
 					myadapter->addr_count);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		/*
-		   Initialize the Driver Options field अगर provided.
+		   Initialize the Driver Options field if provided.
 		 */
-		अगर (drvr_optindex < blogic_drvr_options_count)
+		if (drvr_optindex < blogic_drvr_options_count)
 			myadapter->drvr_opts =
 				&blogic_drvr_options[drvr_optindex++];
 		/*
@@ -2296,22 +2295,22 @@ common:
 		 */
 		blogic_announce_drvr(myadapter);
 		/*
-		   Register the SCSI Host काष्ठाure.
+		   Register the SCSI Host structure.
 		 */
 
-		host = scsi_host_alloc(&blogic_ढाँचा,
-				माप(काष्ठा blogic_adapter));
-		अगर (host == शून्य) अणु
+		host = scsi_host_alloc(&blogic_template,
+				sizeof(struct blogic_adapter));
+		if (host == NULL) {
 			release_region(myadapter->io_addr,
 					myadapter->addr_count);
-			जारी;
-		पूर्ण
-		myadapter = (काष्ठा blogic_adapter *) host->hostdata;
-		स_नकल(myadapter, adapter, माप(काष्ठा blogic_adapter));
+			continue;
+		}
+		myadapter = (struct blogic_adapter *) host->hostdata;
+		memcpy(myadapter, adapter, sizeof(struct blogic_adapter));
 		myadapter->scsi_host = host;
 		myadapter->host_no = host->host_no;
 		/*
-		   Add Host Adapter to the end of the list of रेजिस्टरed
+		   Add Host Adapter to the end of the list of registered
 		   BusLogic Host Adapters.
 		 */
 		list_add_tail(&myadapter->host_list, &blogic_host_list);
@@ -2320,48 +2319,48 @@ common:
 		   Read the Host Adapter Configuration, Configure the Host
 		   Adapter, Acquire the System Resources necessary to use
 		   the Host Adapter, then Create the Initial CCBs, Initialize
-		   the Host Adapter, and finally perक्रमm Target Device
-		   Inquiry. From this poपूर्णांक onward, any failure will be
+		   the Host Adapter, and finally perform Target Device
+		   Inquiry. From this point onward, any failure will be
 		   assumed to be due to a problem with the Host Adapter,
-		   rather than due to having mistakenly identअगरied this port
-		   as beदीर्घing to a BusLogic Host Adapter. The I/O Address
+		   rather than due to having mistakenly identified this port
+		   as belonging to a BusLogic Host Adapter. The I/O Address
 		   range will not be released, thereby preventing it from
-		   being incorrectly identअगरied as any other type of Host
+		   being incorrectly identified as any other type of Host
 		   Adapter.
 		 */
-		अगर (blogic_rdconfig(myadapter) &&
+		if (blogic_rdconfig(myadapter) &&
 		    blogic_reportconfig(myadapter) &&
 		    blogic_getres(myadapter) &&
 		    blogic_create_initccbs(myadapter) &&
 		    blogic_initadapter(myadapter) &&
-		    blogic_inquiry(myadapter)) अणु
+		    blogic_inquiry(myadapter)) {
 			/*
 			   Initialization has been completed successfully.
-			   Release and re-रेजिस्टर usage of the I/O Address
+			   Release and re-register usage of the I/O Address
 			   range so that the Model Name of the Host Adapter
-			   will appear, and initialize the SCSI Host काष्ठाure.
+			   will appear, and initialize the SCSI Host structure.
 			 */
 			release_region(myadapter->io_addr,
 				       myadapter->addr_count);
-			अगर (!request_region(myadapter->io_addr,
+			if (!request_region(myadapter->io_addr,
 					    myadapter->addr_count,
-					    myadapter->full_model)) अणु
-				prपूर्णांकk(KERN_WARNING
+					    myadapter->full_model)) {
+				printk(KERN_WARNING
 					"BusLogic: Release and re-register of "
 					"port 0x%04lx failed \n",
-					(अचिन्हित दीर्घ)myadapter->io_addr);
+					(unsigned long)myadapter->io_addr);
 				blogic_destroy_ccbs(myadapter);
 				blogic_relres(myadapter);
 				list_del(&myadapter->host_list);
 				scsi_host_put(host);
 				ret = -ENOMEM;
-			पूर्ण अन्यथा अणु
-				blogic_inithostकाष्ठा(myadapter,
+			} else {
+				blogic_inithoststruct(myadapter,
 								 host);
-				अगर (scsi_add_host(host, myadapter->pci_device
+				if (scsi_add_host(host, myadapter->pci_device
 						? &myadapter->pci_device->dev
-						  : शून्य)) अणु
-					prपूर्णांकk(KERN_WARNING
+						  : NULL)) {
+					printk(KERN_WARNING
 					       "BusLogic: scsi_add_host()"
 					       "failed!\n");
 					blogic_destroy_ccbs(myadapter);
@@ -2369,20 +2368,20 @@ common:
 					list_del(&myadapter->host_list);
 					scsi_host_put(host);
 					ret = -ENODEV;
-				पूर्ण अन्यथा अणु
+				} else {
 					scsi_scan_host(host);
 					adapter_count++;
-				पूर्ण
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				}
+			}
+		} else {
 			/*
 			   An error occurred during Host Adapter Configuration
 			   Querying, Host Adapter Configuration, Resource
 			   Acquisition, CCB Creation, Host Adapter
 			   Initialization, or Target Device Inquiry, so
-			   हटाओ Host Adapter from the list of रेजिस्टरed
+			   remove Host Adapter from the list of registered
 			   BusLogic Host Adapters, destroy the CCBs, Release
-			   the System Resources, and Unरेजिस्टर the SCSI
+			   the System Resources, and Unregister the SCSI
 			   Host.
 			 */
 			blogic_destroy_ccbs(myadapter);
@@ -2390,35 +2389,35 @@ common:
 			list_del(&myadapter->host_list);
 			scsi_host_put(host);
 			ret = -ENODEV;
-		पूर्ण
-	पूर्ण
-	kमुक्त(adapter);
-	kमुक्त(blogic_probeinfo_list);
-	blogic_probeinfo_list = शून्य;
-	वापस ret;
-पूर्ण
+		}
+	}
+	kfree(adapter);
+	kfree(blogic_probeinfo_list);
+	blogic_probeinfo_list = NULL;
+	return ret;
+}
 
 
 /*
   blogic_deladapter releases all resources previously acquired to
-  support a specअगरic Host Adapter, including the I/O Address range, and
-  unरेजिस्टरs the BusLogic Host Adapter.
+  support a specific Host Adapter, including the I/O Address range, and
+  unregisters the BusLogic Host Adapter.
 */
 
-अटल पूर्णांक __निकास blogic_deladapter(काष्ठा blogic_adapter *adapter)
-अणु
-	काष्ठा Scsi_Host *host = adapter->scsi_host;
+static int __exit blogic_deladapter(struct blogic_adapter *adapter)
+{
+	struct Scsi_Host *host = adapter->scsi_host;
 
-	scsi_हटाओ_host(host);
+	scsi_remove_host(host);
 
 	/*
-	   FlashPoपूर्णांक Host Adapters must first be released by the FlashPoपूर्णांक
+	   FlashPoint Host Adapters must first be released by the FlashPoint
 	   SCCB Manager.
 	 */
-	अगर (blogic_flashpoपूर्णांक_type(adapter))
-		FlashPoपूर्णांक_ReleaseHostAdapter(adapter->cardhandle);
+	if (blogic_flashpoint_type(adapter))
+		FlashPoint_ReleaseHostAdapter(adapter->cardhandle);
 	/*
-	   Destroy the CCBs and release any प्रणाली resources acquired to
+	   Destroy the CCBs and release any system resources acquired to
 	   support Host Adapter.
 	 */
 	blogic_destroy_ccbs(adapter);
@@ -2428,139 +2427,139 @@ common:
 	 */
 	release_region(adapter->io_addr, adapter->addr_count);
 	/*
-	   Remove Host Adapter from the list of रेजिस्टरed BusLogic
+	   Remove Host Adapter from the list of registered BusLogic
 	   Host Adapters.
 	 */
 	list_del(&adapter->host_list);
 
 	scsi_host_put(host);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /*
-  blogic_qcompleted_ccb queues CCB क्रम completion processing.
+  blogic_qcompleted_ccb queues CCB for completion processing.
 */
 
-अटल व्योम blogic_qcompleted_ccb(काष्ठा blogic_ccb *ccb)
-अणु
-	काष्ठा blogic_adapter *adapter = ccb->adapter;
+static void blogic_qcompleted_ccb(struct blogic_ccb *ccb)
+{
+	struct blogic_adapter *adapter = ccb->adapter;
 
 	ccb->status = BLOGIC_CCB_COMPLETE;
-	ccb->next = शून्य;
-	अगर (adapter->firstccb == शून्य) अणु
+	ccb->next = NULL;
+	if (adapter->firstccb == NULL) {
 		adapter->firstccb = ccb;
 		adapter->lastccb = ccb;
-	पूर्ण अन्यथा अणु
+	} else {
 		adapter->lastccb->next = ccb;
 		adapter->lastccb = ccb;
-	पूर्ण
+	}
 	adapter->active_cmds[ccb->tgt_id]--;
-पूर्ण
+}
 
 
 /*
-  blogic_resultcode computes a SCSI Subप्रणाली Result Code from
+  blogic_resultcode computes a SCSI Subsystem Result Code from
   the Host Adapter Status and Target Device Status.
 */
 
-अटल पूर्णांक blogic_resultcode(काष्ठा blogic_adapter *adapter,
-		क्रमागत blogic_adapter_status adapter_status,
-		क्रमागत blogic_tgt_status tgt_status)
-अणु
-	पूर्णांक hoststatus;
+static int blogic_resultcode(struct blogic_adapter *adapter,
+		enum blogic_adapter_status adapter_status,
+		enum blogic_tgt_status tgt_status)
+{
+	int hoststatus;
 
-	चयन (adapter_status) अणु
-	हाल BLOGIC_CMD_CMPLT_NORMAL:
-	हाल BLOGIC_LINK_CMD_CMPLT:
-	हाल BLOGIC_LINK_CMD_CMPLT_FLAG:
+	switch (adapter_status) {
+	case BLOGIC_CMD_CMPLT_NORMAL:
+	case BLOGIC_LINK_CMD_CMPLT:
+	case BLOGIC_LINK_CMD_CMPLT_FLAG:
 		hoststatus = DID_OK;
-		अवरोध;
-	हाल BLOGIC_SELECT_TIMEOUT:
+		break;
+	case BLOGIC_SELECT_TIMEOUT:
 		hoststatus = DID_TIME_OUT;
-		अवरोध;
-	हाल BLOGIC_INVALID_OUTBOX_CODE:
-	हाल BLOGIC_INVALID_CMD_CODE:
-	हाल BLOGIC_BAD_CMD_PARAM:
+		break;
+	case BLOGIC_INVALID_OUTBOX_CODE:
+	case BLOGIC_INVALID_CMD_CODE:
+	case BLOGIC_BAD_CMD_PARAM:
 		blogic_warn("BusLogic Driver Protocol Error 0x%02X\n",
 				adapter, adapter_status);
 		fallthrough;
-	हाल BLOGIC_DATA_UNDERRUN:
-	हाल BLOGIC_DATA_OVERRUN:
-	हाल BLOGIC_NOEXPECT_BUSFREE:
-	हाल BLOGIC_LINKCCB_BADLUN:
-	हाल BLOGIC_AUTOREQSENSE_FAIL:
-	हाल BLOGIC_TAGQUEUE_REJECT:
-	हाल BLOGIC_BAD_MSG_RCVD:
-	हाल BLOGIC_HW_FAIL:
-	हाल BLOGIC_BAD_RECONNECT:
-	हाल BLOGIC_ABRT_QUEUE:
-	हाल BLOGIC_ADAPTER_SW_ERROR:
-	हाल BLOGIC_HW_TIMEOUT:
-	हाल BLOGIC_PARITY_ERR:
+	case BLOGIC_DATA_UNDERRUN:
+	case BLOGIC_DATA_OVERRUN:
+	case BLOGIC_NOEXPECT_BUSFREE:
+	case BLOGIC_LINKCCB_BADLUN:
+	case BLOGIC_AUTOREQSENSE_FAIL:
+	case BLOGIC_TAGQUEUE_REJECT:
+	case BLOGIC_BAD_MSG_RCVD:
+	case BLOGIC_HW_FAIL:
+	case BLOGIC_BAD_RECONNECT:
+	case BLOGIC_ABRT_QUEUE:
+	case BLOGIC_ADAPTER_SW_ERROR:
+	case BLOGIC_HW_TIMEOUT:
+	case BLOGIC_PARITY_ERR:
 		hoststatus = DID_ERROR;
-		अवरोध;
-	हाल BLOGIC_INVALID_BUSPHASE:
-	हाल BLOGIC_NORESPONSE_TO_ATN:
-	हाल BLOGIC_HW_RESET:
-	हाल BLOGIC_RST_FROM_OTHERDEV:
-	हाल BLOGIC_HW_BDR:
+		break;
+	case BLOGIC_INVALID_BUSPHASE:
+	case BLOGIC_NORESPONSE_TO_ATN:
+	case BLOGIC_HW_RESET:
+	case BLOGIC_RST_FROM_OTHERDEV:
+	case BLOGIC_HW_BDR:
 		hoststatus = DID_RESET;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		blogic_warn("Unknown Host Adapter Status 0x%02X\n", adapter,
 				adapter_status);
 		hoststatus = DID_ERROR;
-		अवरोध;
-	पूर्ण
-	वापस (hoststatus << 16) | tgt_status;
-पूर्ण
+		break;
+	}
+	return (hoststatus << 16) | tgt_status;
+}
 
 
 /*
   blogic_scan_inbox scans the Incoming Mailboxes saving any
-  Incoming Mailbox entries क्रम completion processing.
+  Incoming Mailbox entries for completion processing.
 */
 
-अटल व्योम blogic_scan_inbox(काष्ठा blogic_adapter *adapter)
-अणु
+static void blogic_scan_inbox(struct blogic_adapter *adapter)
+{
 	/*
 	   Scan through the Incoming Mailboxes in Strict Round Robin
-	   fashion, saving any completed CCBs क्रम further processing. It
-	   is essential that क्रम each CCB and SCSI Command issued, command
-	   completion processing is perक्रमmed exactly once.  Thereक्रमe,
+	   fashion, saving any completed CCBs for further processing. It
+	   is essential that for each CCB and SCSI Command issued, command
+	   completion processing is performed exactly once.  Therefore,
 	   only Incoming Mailboxes with completion code Command Completed
 	   Without Error, Command Completed With Error, or Command Aborted
-	   At Host Request are saved क्रम completion processing. When an
+	   At Host Request are saved for completion processing. When an
 	   Incoming Mailbox has a completion code of Aborted Command Not
-	   Found, the CCB had alपढ़ोy completed or been पातed beक्रमe the
+	   Found, the CCB had already completed or been aborted before the
 	   current Abort request was processed, and so completion processing
-	   has alपढ़ोy occurred and no further action should be taken.
+	   has already occurred and no further action should be taken.
 	 */
-	काष्ठा blogic_inbox *next_inbox = adapter->next_inbox;
-	क्रमागत blogic_cmplt_code comp_code;
+	struct blogic_inbox *next_inbox = adapter->next_inbox;
+	enum blogic_cmplt_code comp_code;
 
-	जबतक ((comp_code = next_inbox->comp_code) != BLOGIC_INBOX_FREE) अणु
+	while ((comp_code = next_inbox->comp_code) != BLOGIC_INBOX_FREE) {
 		/*
-		   We are only allowed to करो this because we limit our
+		   We are only allowed to do this because we limit our
 		   architectures we run on to machines where bus_to_virt(
 		   actually works.  There *needs* to be a dma_addr_to_virt()
-		   in the new PCI DMA mapping पूर्णांकerface to replace
-		   bus_to_virt() or अन्यथा this code is going to become very
+		   in the new PCI DMA mapping interface to replace
+		   bus_to_virt() or else this code is going to become very
 		   innefficient.
 		 */
-		काष्ठा blogic_ccb *ccb =
-			(काष्ठा blogic_ccb *) bus_to_virt(next_inbox->ccb);
-		अगर (comp_code != BLOGIC_CMD_NOTFOUND) अणु
-			अगर (ccb->status == BLOGIC_CCB_ACTIVE ||
-					ccb->status == BLOGIC_CCB_RESET) अणु
+		struct blogic_ccb *ccb =
+			(struct blogic_ccb *) bus_to_virt(next_inbox->ccb);
+		if (comp_code != BLOGIC_CMD_NOTFOUND) {
+			if (ccb->status == BLOGIC_CCB_ACTIVE ||
+					ccb->status == BLOGIC_CCB_RESET) {
 				/*
-				   Save the Completion Code क्रम this CCB and
-				   queue the CCB क्रम completion processing.
+				   Save the Completion Code for this CCB and
+				   queue the CCB for completion processing.
 				 */
 				ccb->comp_code = comp_code;
 				blogic_qcompleted_ccb(ccb);
-			पूर्ण अन्यथा अणु
+			} else {
 				/*
 				   If a CCB ever appears in an Incoming Mailbox
 				   and is not marked as status Active or Reset,
@@ -2568,290 +2567,290 @@ common:
 				   the Host Adapter firmware.
 				 */
 				blogic_warn("Illegal CCB #%ld status %d in Incoming Mailbox\n", adapter, ccb->serial, ccb->status);
-			पूर्ण
-		पूर्ण
+			}
+		}
 		next_inbox->comp_code = BLOGIC_INBOX_FREE;
-		अगर (++next_inbox > adapter->last_inbox)
+		if (++next_inbox > adapter->last_inbox)
 			next_inbox = adapter->first_inbox;
-	पूर्ण
+	}
 	adapter->next_inbox = next_inbox;
-पूर्ण
+}
 
 
 /*
-  blogic_process_ccbs iterates over the completed CCBs क्रम Host
+  blogic_process_ccbs iterates over the completed CCBs for Host
   Adapter setting the SCSI Command Result Codes, deallocating the CCBs, and
-  calling the SCSI Subप्रणाली Completion Routines.  The Host Adapter's Lock
-  should alपढ़ोy have been acquired by the caller.
+  calling the SCSI Subsystem Completion Routines.  The Host Adapter's Lock
+  should already have been acquired by the caller.
 */
 
-अटल व्योम blogic_process_ccbs(काष्ठा blogic_adapter *adapter)
-अणु
-	अगर (adapter->processing_ccbs)
-		वापस;
+static void blogic_process_ccbs(struct blogic_adapter *adapter)
+{
+	if (adapter->processing_ccbs)
+		return;
 	adapter->processing_ccbs = true;
-	जबतक (adapter->firstccb != शून्य) अणु
-		काष्ठा blogic_ccb *ccb = adapter->firstccb;
-		काष्ठा scsi_cmnd *command = ccb->command;
+	while (adapter->firstccb != NULL) {
+		struct blogic_ccb *ccb = adapter->firstccb;
+		struct scsi_cmnd *command = ccb->command;
 		adapter->firstccb = ccb->next;
-		अगर (adapter->firstccb == शून्य)
-			adapter->lastccb = शून्य;
+		if (adapter->firstccb == NULL)
+			adapter->lastccb = NULL;
 		/*
 		   Process the Completed CCB.
 		 */
-		अगर (ccb->opcode == BLOGIC_BDR) अणु
-			पूर्णांक tgt_id = ccb->tgt_id;
+		if (ccb->opcode == BLOGIC_BDR) {
+			int tgt_id = ccb->tgt_id;
 
 			blogic_warn("Bus Device Reset CCB #%ld to Target %d Completed\n", adapter, ccb->serial, tgt_id);
-			blogic_inc_count(&adapter->tgt_stats[tgt_id].bdr_करोne);
+			blogic_inc_count(&adapter->tgt_stats[tgt_id].bdr_done);
 			adapter->tgt_flags[tgt_id].tagq_active = false;
 			adapter->cmds_since_rst[tgt_id] = 0;
-			adapter->last_resetकरोne[tgt_id] = jअगरfies;
+			adapter->last_resetdone[tgt_id] = jiffies;
 			/*
-			   Place CCB back on the Host Adapter's मुक्त list.
+			   Place CCB back on the Host Adapter's free list.
 			 */
 			blogic_dealloc_ccb(ccb, 1);
-#अगर 0			/* this needs to be reकरोne dअगरferent क्रम new EH */
+#if 0			/* this needs to be redone different for new EH */
 			/*
 			   Bus Device Reset CCBs have the command field
-			   non-शून्य only when a Bus Device Reset was requested
-			   क्रम a command that did not have a currently active
+			   non-NULL only when a Bus Device Reset was requested
+			   for a command that did not have a currently active
 			   CCB in the Host Adapter (i.e., a Synchronous Bus
 			   Device Reset), and hence would not have its
 			   Completion Routine called otherwise.
 			 */
-			जबतक (command != शून्य) अणु
-				काष्ठा scsi_cmnd *nxt_cmd =
+			while (command != NULL) {
+				struct scsi_cmnd *nxt_cmd =
 					command->reset_chain;
-				command->reset_chain = शून्य;
+				command->reset_chain = NULL;
 				command->result = DID_RESET << 16;
-				command->scsi_करोne(command);
+				command->scsi_done(command);
 				command = nxt_cmd;
-			पूर्ण
-#पूर्ण_अगर
+			}
+#endif
 			/*
-			   Iterate over the CCBs क्रम this Host Adapter
-			   perक्रमming completion processing क्रम any CCBs
-			   marked as Reset क्रम this Target.
+			   Iterate over the CCBs for this Host Adapter
+			   performing completion processing for any CCBs
+			   marked as Reset for this Target.
 			 */
-			क्रम (ccb = adapter->all_ccbs; ccb != शून्य;
+			for (ccb = adapter->all_ccbs; ccb != NULL;
 					ccb = ccb->next_all)
-				अगर (ccb->status == BLOGIC_CCB_RESET &&
-						ccb->tgt_id == tgt_id) अणु
+				if (ccb->status == BLOGIC_CCB_RESET &&
+						ccb->tgt_id == tgt_id) {
 					command = ccb->command;
 					blogic_dealloc_ccb(ccb, 1);
 					adapter->active_cmds[tgt_id]--;
 					command->result = DID_RESET << 16;
-					command->scsi_करोne(command);
-				पूर्ण
-			adapter->bdr_pend[tgt_id] = शून्य;
-		पूर्ण अन्यथा अणु
+					command->scsi_done(command);
+				}
+			adapter->bdr_pend[tgt_id] = NULL;
+		} else {
 			/*
 			   Translate the Completion Code, Host Adapter Status,
-			   and Target Device Status पूर्णांकo a SCSI Subप्रणाली
+			   and Target Device Status into a SCSI Subsystem
 			   Result Code.
 			 */
-			चयन (ccb->comp_code) अणु
-			हाल BLOGIC_INBOX_FREE:
-			हाल BLOGIC_CMD_NOTFOUND:
-			हाल BLOGIC_INVALID_CCB:
+			switch (ccb->comp_code) {
+			case BLOGIC_INBOX_FREE:
+			case BLOGIC_CMD_NOTFOUND:
+			case BLOGIC_INVALID_CCB:
 				blogic_warn("CCB #%ld to Target %d Impossible State\n", adapter, ccb->serial, ccb->tgt_id);
-				अवरोध;
-			हाल BLOGIC_CMD_COMPLETE_GOOD:
+				break;
+			case BLOGIC_CMD_COMPLETE_GOOD:
 				adapter->tgt_stats[ccb->tgt_id]
 				    .cmds_complete++;
 				adapter->tgt_flags[ccb->tgt_id]
 				    .cmd_good = true;
 				command->result = DID_OK << 16;
-				अवरोध;
-			हाल BLOGIC_CMD_ABORT_BY_HOST:
+				break;
+			case BLOGIC_CMD_ABORT_BY_HOST:
 				blogic_warn("CCB #%ld to Target %d Aborted\n",
 					adapter, ccb->serial, ccb->tgt_id);
-				blogic_inc_count(&adapter->tgt_stats[ccb->tgt_id].पातs_करोne);
+				blogic_inc_count(&adapter->tgt_stats[ccb->tgt_id].aborts_done);
 				command->result = DID_ABORT << 16;
-				अवरोध;
-			हाल BLOGIC_CMD_COMPLETE_ERROR:
+				break;
+			case BLOGIC_CMD_COMPLETE_ERROR:
 				command->result = blogic_resultcode(adapter,
 					ccb->adapter_status, ccb->tgt_status);
-				अगर (ccb->adapter_status != BLOGIC_SELECT_TIMEOUT) अणु
+				if (ccb->adapter_status != BLOGIC_SELECT_TIMEOUT) {
 					adapter->tgt_stats[ccb->tgt_id]
 					    .cmds_complete++;
-					अगर (blogic_global_options.trace_err) अणु
-						पूर्णांक i;
+					if (blogic_global_options.trace_err) {
+						int i;
 						blogic_notice("CCB #%ld Target %d: Result %X Host "
 								"Adapter Status %02X Target Status %02X\n", adapter, ccb->serial, ccb->tgt_id, command->result, ccb->adapter_status, ccb->tgt_status);
 						blogic_notice("CDB   ", adapter);
-						क्रम (i = 0; i < ccb->cdblen; i++)
+						for (i = 0; i < ccb->cdblen; i++)
 							blogic_notice(" %02X", adapter, ccb->cdb[i]);
 						blogic_notice("\n", adapter);
 						blogic_notice("Sense ", adapter);
-						क्रम (i = 0; i < ccb->sense_datalen; i++)
+						for (i = 0; i < ccb->sense_datalen; i++)
 							blogic_notice(" %02X", adapter, command->sense_buffer[i]);
 						blogic_notice("\n", adapter);
-					पूर्ण
-				पूर्ण
-				अवरोध;
-			पूर्ण
+					}
+				}
+				break;
+			}
 			/*
 			   When an INQUIRY command completes normally, save the
 			   CmdQue (Tagged Queuing Supported) and WBus16 (16 Bit
 			   Wide Data Transfers Supported) bits.
 			 */
-			अगर (ccb->cdb[0] == INQUIRY && ccb->cdb[1] == 0 &&
-				ccb->adapter_status == BLOGIC_CMD_CMPLT_NORMAL) अणु
-				काष्ठा blogic_tgt_flags *tgt_flags =
+			if (ccb->cdb[0] == INQUIRY && ccb->cdb[1] == 0 &&
+				ccb->adapter_status == BLOGIC_CMD_CMPLT_NORMAL) {
+				struct blogic_tgt_flags *tgt_flags =
 					&adapter->tgt_flags[ccb->tgt_id];
-				काष्ठा scsi_inquiry *inquiry =
-					(काष्ठा scsi_inquiry *) scsi_sglist(command);
+				struct scsi_inquiry *inquiry =
+					(struct scsi_inquiry *) scsi_sglist(command);
 				tgt_flags->tgt_exists = true;
 				tgt_flags->tagq_ok = inquiry->CmdQue;
 				tgt_flags->wide_ok = inquiry->WBus16;
-			पूर्ण
+			}
 			/*
-			   Place CCB back on the Host Adapter's मुक्त list.
+			   Place CCB back on the Host Adapter's free list.
 			 */
 			blogic_dealloc_ccb(ccb, 1);
 			/*
 			   Call the SCSI Command Completion Routine.
 			 */
-			command->scsi_करोne(command);
-		पूर्ण
-	पूर्ण
+			command->scsi_done(command);
+		}
+	}
 	adapter->processing_ccbs = false;
-पूर्ण
+}
 
 
 /*
-  blogic_पूर्णांकhandler handles hardware पूर्णांकerrupts from BusLogic Host
+  blogic_inthandler handles hardware interrupts from BusLogic Host
   Adapters.
 */
 
-अटल irqवापस_t blogic_पूर्णांकhandler(पूर्णांक irq_ch, व्योम *devid)
-अणु
-	काष्ठा blogic_adapter *adapter = (काष्ठा blogic_adapter *) devid;
-	अचिन्हित दीर्घ processor_flag;
+static irqreturn_t blogic_inthandler(int irq_ch, void *devid)
+{
+	struct blogic_adapter *adapter = (struct blogic_adapter *) devid;
+	unsigned long processor_flag;
 	/*
 	   Acquire exclusive access to Host Adapter.
 	 */
 	spin_lock_irqsave(adapter->scsi_host->host_lock, processor_flag);
 	/*
-	   Handle Interrupts appropriately क्रम each Host Adapter type.
+	   Handle Interrupts appropriately for each Host Adapter type.
 	 */
-	अगर (blogic_multimaster_type(adapter)) अणु
-		जोड़ blogic_पूर्णांक_reg पूर्णांकreg;
+	if (blogic_multimaster_type(adapter)) {
+		union blogic_int_reg intreg;
 		/*
 		   Read the Host Adapter Interrupt Register.
 		 */
-		पूर्णांकreg.all = blogic_rdपूर्णांक(adapter);
-		अगर (पूर्णांकreg.ir.पूर्णांक_valid) अणु
+		intreg.all = blogic_rdint(adapter);
+		if (intreg.ir.int_valid) {
 			/*
-			   Acknowledge the पूर्णांकerrupt and reset the Host Adapter
+			   Acknowledge the interrupt and reset the Host Adapter
 			   Interrupt Register.
 			 */
-			blogic_पूर्णांकreset(adapter);
+			blogic_intreset(adapter);
 			/*
 			   Process valid External SCSI Bus Reset and Incoming
 			   Mailbox Loaded Interrupts. Command Complete
 			   Interrupts are noted, and Outgoing Mailbox Available
 			   Interrupts are ignored, as they are never enabled.
 			 */
-			अगर (पूर्णांकreg.ir.ext_busreset)
+			if (intreg.ir.ext_busreset)
 				adapter->adapter_extreset = true;
-			अन्यथा अगर (पूर्णांकreg.ir.mailin_loaded)
+			else if (intreg.ir.mailin_loaded)
 				blogic_scan_inbox(adapter);
-			अन्यथा अगर (पूर्णांकreg.ir.cmd_complete)
+			else if (intreg.ir.cmd_complete)
 				adapter->adapter_cmd_complete = true;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		/*
-		   Check अगर there is a pending पूर्णांकerrupt क्रम this Host Adapter.
+		   Check if there is a pending interrupt for this Host Adapter.
 		 */
-		अगर (FlashPoपूर्णांक_InterruptPending(adapter->cardhandle))
-			चयन (FlashPoपूर्णांक_HandleInterrupt(adapter->cardhandle)) अणु
-			हाल FPOINT_NORMAL_INT:
-				अवरोध;
-			हाल FPOINT_EXT_RESET:
+		if (FlashPoint_InterruptPending(adapter->cardhandle))
+			switch (FlashPoint_HandleInterrupt(adapter->cardhandle)) {
+			case FPOINT_NORMAL_INT:
+				break;
+			case FPOINT_EXT_RESET:
 				adapter->adapter_extreset = true;
-				अवरोध;
-			हाल FPOINT_INTERN_ERR:
+				break;
+			case FPOINT_INTERN_ERR:
 				blogic_warn("Internal FlashPoint Error detected - Resetting Host Adapter\n", adapter);
-				adapter->adapter_पूर्णांकern_err = true;
-				अवरोध;
-			पूर्ण
-	पूर्ण
+				adapter->adapter_intern_err = true;
+				break;
+			}
+	}
 	/*
 	   Process any completed CCBs.
 	 */
-	अगर (adapter->firstccb != शून्य)
+	if (adapter->firstccb != NULL)
 		blogic_process_ccbs(adapter);
 	/*
-	   Reset the Host Adapter अगर requested.
+	   Reset the Host Adapter if requested.
 	 */
-	अगर (adapter->adapter_extreset) अणु
+	if (adapter->adapter_extreset) {
 		blogic_warn("Resetting %s due to External SCSI Bus Reset\n", adapter, adapter->full_model);
 		blogic_inc_count(&adapter->ext_resets);
 		blogic_resetadapter(adapter, false);
 		adapter->adapter_extreset = false;
-	पूर्ण अन्यथा अगर (adapter->adapter_पूर्णांकern_err) अणु
+	} else if (adapter->adapter_intern_err) {
 		blogic_warn("Resetting %s due to Host Adapter Internal Error\n", adapter, adapter->full_model);
-		blogic_inc_count(&adapter->adapter_पूर्णांकern_errors);
+		blogic_inc_count(&adapter->adapter_intern_errors);
 		blogic_resetadapter(adapter, true);
-		adapter->adapter_पूर्णांकern_err = false;
-	पूर्ण
+		adapter->adapter_intern_err = false;
+	}
 	/*
 	   Release exclusive access to Host Adapter.
 	 */
 	spin_unlock_irqrestore(adapter->scsi_host->host_lock, processor_flag);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 
 /*
-  blogic_ग_लिखो_outbox places CCB and Action Code पूर्णांकo an Outgoing
-  Mailbox क्रम execution by Host Adapter.  The Host Adapter's Lock should
-  alपढ़ोy have been acquired by the caller.
+  blogic_write_outbox places CCB and Action Code into an Outgoing
+  Mailbox for execution by Host Adapter.  The Host Adapter's Lock should
+  already have been acquired by the caller.
 */
 
-अटल bool blogic_ग_लिखो_outbox(काष्ठा blogic_adapter *adapter,
-		क्रमागत blogic_action action, काष्ठा blogic_ccb *ccb)
-अणु
-	काष्ठा blogic_outbox *next_outbox;
+static bool blogic_write_outbox(struct blogic_adapter *adapter,
+		enum blogic_action action, struct blogic_ccb *ccb)
+{
+	struct blogic_outbox *next_outbox;
 
 	next_outbox = adapter->next_outbox;
-	अगर (next_outbox->action == BLOGIC_OUTBOX_FREE) अणु
+	if (next_outbox->action == BLOGIC_OUTBOX_FREE) {
 		ccb->status = BLOGIC_CCB_ACTIVE;
 		/*
-		   The CCB field must be written beक्रमe the Action Code field
+		   The CCB field must be written before the Action Code field
 		   since the Host Adapter is operating asynchronously and the
-		   locking code करोes not protect against simultaneous access
+		   locking code does not protect against simultaneous access
 		   by the Host Adapter.
 		 */
 		next_outbox->ccb = ccb->dma_handle;
 		next_outbox->action = action;
 		blogic_execmbox(adapter);
-		अगर (++next_outbox > adapter->last_outbox)
+		if (++next_outbox > adapter->last_outbox)
 			next_outbox = adapter->first_outbox;
 		adapter->next_outbox = next_outbox;
-		अगर (action == BLOGIC_MBOX_START) अणु
+		if (action == BLOGIC_MBOX_START) {
 			adapter->active_cmds[ccb->tgt_id]++;
-			अगर (ccb->opcode != BLOGIC_BDR)
+			if (ccb->opcode != BLOGIC_BDR)
 				adapter->tgt_stats[ccb->tgt_id].cmds_tried++;
-		पूर्ण
-		वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+		}
+		return true;
+	}
+	return false;
+}
 
 /* Error Handling (EH) support */
 
-अटल पूर्णांक blogic_hostreset(काष्ठा scsi_cmnd *SCpnt)
-अणु
-	काष्ठा blogic_adapter *adapter =
-		(काष्ठा blogic_adapter *) SCpnt->device->host->hostdata;
+static int blogic_hostreset(struct scsi_cmnd *SCpnt)
+{
+	struct blogic_adapter *adapter =
+		(struct blogic_adapter *) SCpnt->device->host->hostdata;
 
-	अचिन्हित पूर्णांक id = SCpnt->device->id;
-	काष्ठा blogic_tgt_stats *stats = &adapter->tgt_stats[id];
-	पूर्णांक rc;
+	unsigned int id = SCpnt->device->id;
+	struct blogic_tgt_stats *stats = &adapter->tgt_stats[id];
+	int rc;
 
 	spin_lock_irq(SCpnt->device->host->host_lock);
 
@@ -2859,109 +2858,109 @@ common:
 
 	rc = blogic_resetadapter(adapter, false);
 	spin_unlock_irq(SCpnt->device->host->host_lock);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
-  blogic_qcmd creates a CCB क्रम Command and places it पूर्णांकo an
-  Outgoing Mailbox क्रम execution by the associated Host Adapter.
+  blogic_qcmd creates a CCB for Command and places it into an
+  Outgoing Mailbox for execution by the associated Host Adapter.
 */
 
-अटल पूर्णांक blogic_qcmd_lck(काष्ठा scsi_cmnd *command,
-		व्योम (*comp_cb) (काष्ठा scsi_cmnd *))
-अणु
-	काष्ठा blogic_adapter *adapter =
-		(काष्ठा blogic_adapter *) command->device->host->hostdata;
-	काष्ठा blogic_tgt_flags *tgt_flags =
+static int blogic_qcmd_lck(struct scsi_cmnd *command,
+		void (*comp_cb) (struct scsi_cmnd *))
+{
+	struct blogic_adapter *adapter =
+		(struct blogic_adapter *) command->device->host->hostdata;
+	struct blogic_tgt_flags *tgt_flags =
 		&adapter->tgt_flags[command->device->id];
-	काष्ठा blogic_tgt_stats *tgt_stats = adapter->tgt_stats;
-	अचिन्हित अक्षर *cdb = command->cmnd;
-	पूर्णांक cdblen = command->cmd_len;
-	पूर्णांक tgt_id = command->device->id;
-	पूर्णांक lun = command->device->lun;
-	पूर्णांक buflen = scsi_bufflen(command);
-	पूर्णांक count;
-	काष्ठा blogic_ccb *ccb;
+	struct blogic_tgt_stats *tgt_stats = adapter->tgt_stats;
+	unsigned char *cdb = command->cmnd;
+	int cdblen = command->cmd_len;
+	int tgt_id = command->device->id;
+	int lun = command->device->lun;
+	int buflen = scsi_bufflen(command);
+	int count;
+	struct blogic_ccb *ccb;
 	dma_addr_t sense_buf;
 
 	/*
-	   SCSI REQUEST_SENSE commands will be executed स्वतःmatically by the
-	   Host Adapter क्रम any errors, so they should not be executed
+	   SCSI REQUEST_SENSE commands will be executed automatically by the
+	   Host Adapter for any errors, so they should not be executed
 	   explicitly unless the Sense Data is zero indicating that no error
 	   occurred.
 	 */
-	अगर (cdb[0] == REQUEST_SENSE && command->sense_buffer[0] != 0) अणु
+	if (cdb[0] == REQUEST_SENSE && command->sense_buffer[0] != 0) {
 		command->result = DID_OK << 16;
 		comp_cb(command);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	/*
-	   Allocate a CCB from the Host Adapter's मुक्त list. In the unlikely
+	   Allocate a CCB from the Host Adapter's free list. In the unlikely
 	   event that there are none available and memory allocation fails,
-	   रुको 1 second and try again. If that fails, the Host Adapter is
-	   probably hung so संकेत an error as a Host Adapter Hard Reset
+	   wait 1 second and try again. If that fails, the Host Adapter is
+	   probably hung so signal an error as a Host Adapter Hard Reset
 	   should be initiated soon.
 	 */
 	ccb = blogic_alloc_ccb(adapter);
-	अगर (ccb == शून्य) अणु
+	if (ccb == NULL) {
 		spin_unlock_irq(adapter->scsi_host->host_lock);
 		blogic_delay(1);
 		spin_lock_irq(adapter->scsi_host->host_lock);
 		ccb = blogic_alloc_ccb(adapter);
-		अगर (ccb == शून्य) अणु
+		if (ccb == NULL) {
 			command->result = DID_ERROR << 16;
 			comp_cb(command);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
 	/*
 	   Initialize the fields in the BusLogic Command Control Block (CCB).
 	 */
 	count = scsi_dma_map(command);
 	BUG_ON(count < 0);
-	अगर (count) अणु
-		काष्ठा scatterlist *sg;
-		पूर्णांक i;
+	if (count) {
+		struct scatterlist *sg;
+		int i;
 
 		ccb->opcode = BLOGIC_INITIATOR_CCB_SG;
-		ccb->datalen = count * माप(काष्ठा blogic_sg_seg);
-		अगर (blogic_multimaster_type(adapter))
-			ccb->data = (अचिन्हित पूर्णांक) ccb->dma_handle +
-					((अचिन्हित दीर्घ) &ccb->sglist -
-					(अचिन्हित दीर्घ) ccb);
-		अन्यथा
+		ccb->datalen = count * sizeof(struct blogic_sg_seg);
+		if (blogic_multimaster_type(adapter))
+			ccb->data = (unsigned int) ccb->dma_handle +
+					((unsigned long) &ccb->sglist -
+					(unsigned long) ccb);
+		else
 			ccb->data = virt_to_32bit_virt(ccb->sglist);
 
-		scsi_क्रम_each_sg(command, sg, count, i) अणु
+		scsi_for_each_sg(command, sg, count, i) {
 			ccb->sglist[i].segbytes = sg_dma_len(sg);
 			ccb->sglist[i].segdata = sg_dma_address(sg);
-		पूर्ण
-	पूर्ण अन्यथा अगर (!count) अणु
+		}
+	} else if (!count) {
 		ccb->opcode = BLOGIC_INITIATOR_CCB;
 		ccb->datalen = buflen;
 		ccb->data = 0;
-	पूर्ण
+	}
 
-	चयन (cdb[0]) अणु
-	हाल READ_6:
-	हाल READ_10:
+	switch (cdb[0]) {
+	case READ_6:
+	case READ_10:
 		ccb->datadir = BLOGIC_DATAIN_CHECKED;
-		tgt_stats[tgt_id].पढ़ो_cmds++;
-		blogic_addcount(&tgt_stats[tgt_id].bytesपढ़ो, buflen);
-		blogic_incszbucket(tgt_stats[tgt_id].पढ़ो_sz_buckets, buflen);
-		अवरोध;
-	हाल WRITE_6:
-	हाल WRITE_10:
+		tgt_stats[tgt_id].read_cmds++;
+		blogic_addcount(&tgt_stats[tgt_id].bytesread, buflen);
+		blogic_incszbucket(tgt_stats[tgt_id].read_sz_buckets, buflen);
+		break;
+	case WRITE_6:
+	case WRITE_10:
 		ccb->datadir = BLOGIC_DATAOUT_CHECKED;
-		tgt_stats[tgt_id].ग_लिखो_cmds++;
+		tgt_stats[tgt_id].write_cmds++;
 		blogic_addcount(&tgt_stats[tgt_id].byteswritten, buflen);
-		blogic_incszbucket(tgt_stats[tgt_id].ग_लिखो_sz_buckets, buflen);
-		अवरोध;
-	शेष:
+		blogic_incszbucket(tgt_stats[tgt_id].write_sz_buckets, buflen);
+		break;
+	default:
 		ccb->datadir = BLOGIC_UNCHECKED_TX;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	ccb->cdblen = cdblen;
 	ccb->adapter_status = 0;
 	ccb->tgt_status = 0;
@@ -2973,693 +2972,693 @@ common:
 	   BusLogic recommends that after a Reset the first couple of
 	   commands that are sent to a Target Device be sent in a non
 	   Tagged Queue fashion so that the Host Adapter and Target Device
-	   can establish Synchronous and Wide Transfer beक्रमe Queue Tag
-	   messages can पूर्णांकerfere with the Synchronous and Wide Negotiation
-	   messages.  By रुकोing to enable Tagged Queuing until after the
+	   can establish Synchronous and Wide Transfer before Queue Tag
+	   messages can interfere with the Synchronous and Wide Negotiation
+	   messages.  By waiting to enable Tagged Queuing until after the
 	   first BLOGIC_MAX_TAG_DEPTH commands have been queued, it is
 	   assured that after a Reset any pending commands are requeued
-	   beक्रमe Tagged Queuing is enabled and that the Tagged Queuing
-	   message will not occur जबतक the partition table is being prपूर्णांकed.
-	   In addition, some devices करो not properly handle the transition
-	   from non-tagged to tagged commands, so it is necessary to रुको
-	   until there are no pending commands क्रम a target device
-	   beक्रमe queuing tagged commands.
+	   before Tagged Queuing is enabled and that the Tagged Queuing
+	   message will not occur while the partition table is being printed.
+	   In addition, some devices do not properly handle the transition
+	   from non-tagged to tagged commands, so it is necessary to wait
+	   until there are no pending commands for a target device
+	   before queuing tagged commands.
 	 */
-	अगर (adapter->cmds_since_rst[tgt_id]++ >= BLOGIC_MAX_TAG_DEPTH &&
+	if (adapter->cmds_since_rst[tgt_id]++ >= BLOGIC_MAX_TAG_DEPTH &&
 			!tgt_flags->tagq_active &&
 			adapter->active_cmds[tgt_id] == 0
 			&& tgt_flags->tagq_ok &&
-			(adapter->tagq_ok & (1 << tgt_id))) अणु
+			(adapter->tagq_ok & (1 << tgt_id))) {
 		tgt_flags->tagq_active = true;
 		blogic_notice("Tagged Queuing now active for Target %d\n",
 					adapter, tgt_id);
-	पूर्ण
-	अगर (tgt_flags->tagq_active) अणु
-		क्रमागत blogic_queuetag queuetag = BLOGIC_SIMPLETAG;
+	}
+	if (tgt_flags->tagq_active) {
+		enum blogic_queuetag queuetag = BLOGIC_SIMPLETAG;
 		/*
 		   When using Tagged Queuing with Simple Queue Tags, it
-		   appears that disk drive controllers करो not guarantee that
-		   a queued command will not reमुख्य in a disconnected state
-		   indefinitely अगर commands that पढ़ो or ग_लिखो nearer the
-		   head position जारी to arrive without पूर्णांकerruption.
-		   Thereक्रमe, क्रम each Target Device this driver keeps track
-		   of the last समय either the queue was empty or an Ordered
-		   Queue Tag was issued. If more than 4 seconds (one fअगरth
-		   of the 20 second disk समयout) have elapsed since this
-		   last sequence poपूर्णांक, this command will be issued with an
+		   appears that disk drive controllers do not guarantee that
+		   a queued command will not remain in a disconnected state
+		   indefinitely if commands that read or write nearer the
+		   head position continue to arrive without interruption.
+		   Therefore, for each Target Device this driver keeps track
+		   of the last time either the queue was empty or an Ordered
+		   Queue Tag was issued. If more than 4 seconds (one fifth
+		   of the 20 second disk timeout) have elapsed since this
+		   last sequence point, this command will be issued with an
 		   Ordered Queue Tag rather than a Simple Queue Tag, which
-		   क्रमces the Target Device to complete all previously
-		   queued commands beक्रमe this command may be executed.
+		   forces the Target Device to complete all previously
+		   queued commands before this command may be executed.
 		 */
-		अगर (adapter->active_cmds[tgt_id] == 0)
-			adapter->last_seqpoपूर्णांक[tgt_id] = jअगरfies;
-		अन्यथा अगर (समय_after(jअगरfies,
-				adapter->last_seqpoपूर्णांक[tgt_id] + 4 * HZ)) अणु
-			adapter->last_seqpoपूर्णांक[tgt_id] = jअगरfies;
+		if (adapter->active_cmds[tgt_id] == 0)
+			adapter->last_seqpoint[tgt_id] = jiffies;
+		else if (time_after(jiffies,
+				adapter->last_seqpoint[tgt_id] + 4 * HZ)) {
+			adapter->last_seqpoint[tgt_id] = jiffies;
 			queuetag = BLOGIC_ORDEREDTAG;
-		पूर्ण
-		अगर (adapter->ext_lun) अणु
+		}
+		if (adapter->ext_lun) {
 			ccb->tag_enable = true;
 			ccb->queuetag = queuetag;
-		पूर्ण अन्यथा अणु
+		} else {
 			ccb->legacytag_enable = true;
 			ccb->legacy_tag = queuetag;
-		पूर्ण
-	पूर्ण
-	स_नकल(ccb->cdb, cdb, cdblen);
+		}
+	}
+	memcpy(ccb->cdb, cdb, cdblen);
 	ccb->sense_datalen = SCSI_SENSE_BUFFERSIZE;
 	ccb->command = command;
 	sense_buf = dma_map_single(&adapter->pci_device->dev,
 				command->sense_buffer, ccb->sense_datalen,
 				DMA_FROM_DEVICE);
-	अगर (dma_mapping_error(&adapter->pci_device->dev, sense_buf)) अणु
+	if (dma_mapping_error(&adapter->pci_device->dev, sense_buf)) {
 		blogic_err("DMA mapping for sense data buffer failed\n",
 				adapter);
 		blogic_dealloc_ccb(ccb, 0);
-		वापस SCSI_MLQUEUE_HOST_BUSY;
-	पूर्ण
+		return SCSI_MLQUEUE_HOST_BUSY;
+	}
 	ccb->sensedata = sense_buf;
-	command->scsi_करोne = comp_cb;
-	अगर (blogic_multimaster_type(adapter)) अणु
+	command->scsi_done = comp_cb;
+	if (blogic_multimaster_type(adapter)) {
 		/*
 		   Place the CCB in an Outgoing Mailbox. The higher levels
-		   of the SCSI Subप्रणाली should not attempt to queue more
+		   of the SCSI Subsystem should not attempt to queue more
 		   commands than can be placed in Outgoing Mailboxes, so
-		   there should always be one मुक्त.  In the unlikely event
-		   that there are none available, रुको 1 second and try
+		   there should always be one free.  In the unlikely event
+		   that there are none available, wait 1 second and try
 		   again. If that fails, the Host Adapter is probably hung
-		   so संकेत an error as a Host Adapter Hard Reset should
+		   so signal an error as a Host Adapter Hard Reset should
 		   be initiated soon.
 		 */
-		अगर (!blogic_ग_लिखो_outbox(adapter, BLOGIC_MBOX_START, ccb)) अणु
+		if (!blogic_write_outbox(adapter, BLOGIC_MBOX_START, ccb)) {
 			spin_unlock_irq(adapter->scsi_host->host_lock);
 			blogic_warn("Unable to write Outgoing Mailbox - Pausing for 1 second\n", adapter);
 			blogic_delay(1);
 			spin_lock_irq(adapter->scsi_host->host_lock);
-			अगर (!blogic_ग_लिखो_outbox(adapter, BLOGIC_MBOX_START,
-						ccb)) अणु
+			if (!blogic_write_outbox(adapter, BLOGIC_MBOX_START,
+						ccb)) {
 				blogic_warn("Still unable to write Outgoing Mailbox - Host Adapter Dead?\n", adapter);
 				blogic_dealloc_ccb(ccb, 1);
 				command->result = DID_ERROR << 16;
-				command->scsi_करोne(command);
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
+				command->scsi_done(command);
+			}
+		}
+	} else {
 		/*
-		   Call the FlashPoपूर्णांक SCCB Manager to start execution of
+		   Call the FlashPoint SCCB Manager to start execution of
 		   the CCB.
 		 */
 		ccb->status = BLOGIC_CCB_ACTIVE;
 		adapter->active_cmds[tgt_id]++;
 		tgt_stats[tgt_id].cmds_tried++;
-		FlashPoपूर्णांक_StartCCB(adapter->cardhandle, ccb);
+		FlashPoint_StartCCB(adapter->cardhandle, ccb);
 		/*
-		   The Command may have alपढ़ोy completed and
+		   The Command may have already completed and
 		   blogic_qcompleted_ccb been called, or it may still be
 		   pending.
 		 */
-		अगर (ccb->status == BLOGIC_CCB_COMPLETE)
+		if (ccb->status == BLOGIC_CCB_COMPLETE)
 			blogic_process_ccbs(adapter);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल DEF_SCSI_QCMD(blogic_qcmd)
+static DEF_SCSI_QCMD(blogic_qcmd)
 
-#अगर 0
+#if 0
 /*
-  blogic_पात पातs Command अगर possible.
+  blogic_abort aborts Command if possible.
 */
 
-अटल पूर्णांक blogic_पात(काष्ठा scsi_cmnd *command)
-अणु
-	काष्ठा blogic_adapter *adapter =
-		(काष्ठा blogic_adapter *) command->device->host->hostdata;
+static int blogic_abort(struct scsi_cmnd *command)
+{
+	struct blogic_adapter *adapter =
+		(struct blogic_adapter *) command->device->host->hostdata;
 
-	पूर्णांक tgt_id = command->device->id;
-	काष्ठा blogic_ccb *ccb;
-	blogic_inc_count(&adapter->tgt_stats[tgt_id].पातs_request);
+	int tgt_id = command->device->id;
+	struct blogic_ccb *ccb;
+	blogic_inc_count(&adapter->tgt_stats[tgt_id].aborts_request);
 
 	/*
-	   Attempt to find an Active CCB क्रम this Command. If no Active
-	   CCB क्रम this Command is found, then no Abort is necessary.
+	   Attempt to find an Active CCB for this Command. If no Active
+	   CCB for this Command is found, then no Abort is necessary.
 	 */
-	क्रम (ccb = adapter->all_ccbs; ccb != शून्य; ccb = ccb->next_all)
-		अगर (ccb->command == command)
-			अवरोध;
-	अगर (ccb == शून्य) अणु
+	for (ccb = adapter->all_ccbs; ccb != NULL; ccb = ccb->next_all)
+		if (ccb->command == command)
+			break;
+	if (ccb == NULL) {
 		blogic_warn("Unable to Abort Command to Target %d - No CCB Found\n", adapter, tgt_id);
-		वापस SUCCESS;
-	पूर्ण अन्यथा अगर (ccb->status == BLOGIC_CCB_COMPLETE) अणु
+		return SUCCESS;
+	} else if (ccb->status == BLOGIC_CCB_COMPLETE) {
 		blogic_warn("Unable to Abort Command to Target %d - CCB Completed\n", adapter, tgt_id);
-		वापस SUCCESS;
-	पूर्ण अन्यथा अगर (ccb->status == BLOGIC_CCB_RESET) अणु
+		return SUCCESS;
+	} else if (ccb->status == BLOGIC_CCB_RESET) {
 		blogic_warn("Unable to Abort Command to Target %d - CCB Reset\n", adapter, tgt_id);
-		वापस SUCCESS;
-	पूर्ण
-	अगर (blogic_multimaster_type(adapter)) अणु
+		return SUCCESS;
+	}
+	if (blogic_multimaster_type(adapter)) {
 		/*
 		   Attempt to Abort this CCB.  MultiMaster Firmware versions
-		   prior to 5.xx करो not generate Abort Tag messages, but only
+		   prior to 5.xx do not generate Abort Tag messages, but only
 		   generate the non-tagged Abort message.  Since non-tagged
 		   commands are not sent by the Host Adapter until the queue
 		   of outstanding tagged commands has completed, and the
 		   Abort message is treated as a non-tagged command, it is
-		   effectively impossible to पात commands when Tagged
-		   Queuing is active. Firmware version 5.xx करोes generate
-		   Abort Tag messages, so it is possible to पात commands
+		   effectively impossible to abort commands when Tagged
+		   Queuing is active. Firmware version 5.xx does generate
+		   Abort Tag messages, so it is possible to abort commands
 		   when Tagged Queuing is active.
 		 */
-		अगर (adapter->tgt_flags[tgt_id].tagq_active &&
-				adapter->fw_ver[0] < '5') अणु
+		if (adapter->tgt_flags[tgt_id].tagq_active &&
+				adapter->fw_ver[0] < '5') {
 			blogic_warn("Unable to Abort CCB #%ld to Target %d - Abort Tag Not Supported\n", adapter, ccb->serial, tgt_id);
-			वापस FAILURE;
-		पूर्ण अन्यथा अगर (blogic_ग_लिखो_outbox(adapter, BLOGIC_MBOX_ABORT,
-					ccb)) अणु
+			return FAILURE;
+		} else if (blogic_write_outbox(adapter, BLOGIC_MBOX_ABORT,
+					ccb)) {
 			blogic_warn("Aborting CCB #%ld to Target %d\n",
 					adapter, ccb->serial, tgt_id);
-			blogic_inc_count(&adapter->tgt_stats[tgt_id].पातs_tried);
-			वापस SUCCESS;
-		पूर्ण अन्यथा अणु
+			blogic_inc_count(&adapter->tgt_stats[tgt_id].aborts_tried);
+			return SUCCESS;
+		} else {
 			blogic_warn("Unable to Abort CCB #%ld to Target %d - No Outgoing Mailboxes\n", adapter, ccb->serial, tgt_id);
-			वापस FAILURE;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return FAILURE;
+		}
+	} else {
 		/*
-		   Call the FlashPoपूर्णांक SCCB Manager to पात execution of
+		   Call the FlashPoint SCCB Manager to abort execution of
 		   the CCB.
 		 */
 		blogic_warn("Aborting CCB #%ld to Target %d\n", adapter,
 				ccb->serial, tgt_id);
-		blogic_inc_count(&adapter->tgt_stats[tgt_id].पातs_tried);
-		FlashPoपूर्णांक_AbortCCB(adapter->cardhandle, ccb);
+		blogic_inc_count(&adapter->tgt_stats[tgt_id].aborts_tried);
+		FlashPoint_AbortCCB(adapter->cardhandle, ccb);
 		/*
-		   The Abort may have alपढ़ोy been completed and
+		   The Abort may have already been completed and
 		   blogic_qcompleted_ccb been called, or it
 		   may still be pending.
 		 */
-		अगर (ccb->status == BLOGIC_CCB_COMPLETE)
+		if (ccb->status == BLOGIC_CCB_COMPLETE)
 			blogic_process_ccbs(adapter);
-		वापस SUCCESS;
-	पूर्ण
-	वापस SUCCESS;
-पूर्ण
+		return SUCCESS;
+	}
+	return SUCCESS;
+}
 
-#पूर्ण_अगर
+#endif
 /*
-  blogic_resetadapter resets Host Adapter अगर possible, marking all
+  blogic_resetadapter resets Host Adapter if possible, marking all
   currently executing SCSI Commands as having been Reset.
 */
 
-अटल पूर्णांक blogic_resetadapter(काष्ठा blogic_adapter *adapter, bool hard_reset)
-अणु
-	काष्ठा blogic_ccb *ccb;
-	पूर्णांक tgt_id;
+static int blogic_resetadapter(struct blogic_adapter *adapter, bool hard_reset)
+{
+	struct blogic_ccb *ccb;
+	int tgt_id;
 
 	/*
 	 * Attempt to Reset and Reinitialize the Host Adapter.
 	 */
 
-	अगर (!(blogic_hwreset(adapter, hard_reset) &&
-				blogic_initadapter(adapter))) अणु
+	if (!(blogic_hwreset(adapter, hard_reset) &&
+				blogic_initadapter(adapter))) {
 		blogic_err("Resetting %s Failed\n", adapter,
 						adapter->full_model);
-		वापस FAILURE;
-	पूर्ण
+		return FAILURE;
+	}
 
 	/*
 	 * Deallocate all currently executing CCBs.
 	 */
 
-	क्रम (ccb = adapter->all_ccbs; ccb != शून्य; ccb = ccb->next_all)
-		अगर (ccb->status == BLOGIC_CCB_ACTIVE)
+	for (ccb = adapter->all_ccbs; ccb != NULL; ccb = ccb->next_all)
+		if (ccb->status == BLOGIC_CCB_ACTIVE)
 			blogic_dealloc_ccb(ccb, 1);
 	/*
 	 * Wait a few seconds between the Host Adapter Hard Reset which
 	 * initiates a SCSI Bus Reset and issuing any SCSI Commands.  Some
-	 * SCSI devices get confused अगर they receive SCSI Commands too soon
+	 * SCSI devices get confused if they receive SCSI Commands too soon
 	 * after a SCSI Bus Reset.
 	 */
 
-	अगर (hard_reset) अणु
+	if (hard_reset) {
 		spin_unlock_irq(adapter->scsi_host->host_lock);
-		blogic_delay(adapter->bus_settle_समय);
+		blogic_delay(adapter->bus_settle_time);
 		spin_lock_irq(adapter->scsi_host->host_lock);
-	पूर्ण
+	}
 
-	क्रम (tgt_id = 0; tgt_id < adapter->maxdev; tgt_id++) अणु
-		adapter->last_resettried[tgt_id] = jअगरfies;
-		adapter->last_resetकरोne[tgt_id] = jअगरfies;
-	पूर्ण
-	वापस SUCCESS;
-पूर्ण
+	for (tgt_id = 0; tgt_id < adapter->maxdev; tgt_id++) {
+		adapter->last_resettried[tgt_id] = jiffies;
+		adapter->last_resetdone[tgt_id] = jiffies;
+	}
+	return SUCCESS;
+}
 
 /*
-  blogic_diskparam वापसs the Heads/Sectors/Cylinders BIOS Disk
-  Parameters क्रम Disk.  The शेष disk geometry is 64 heads, 32 sectors, and
+  blogic_diskparam returns the Heads/Sectors/Cylinders BIOS Disk
+  Parameters for Disk.  The default disk geometry is 64 heads, 32 sectors, and
   the appropriate number of cylinders so as not to exceed drive capacity.  In
-  order क्रम disks equal to or larger than 1 GB to be addressable by the BIOS
+  order for disks equal to or larger than 1 GB to be addressable by the BIOS
   without exceeding the BIOS limitation of 1024 cylinders, Extended Translation
-  may be enabled in AutoSCSI on FlashPoपूर्णांक Host Adapters and on "W" and "C"
-  series MultiMaster Host Adapters, or by a dip चयन setting on "S" and "A"
+  may be enabled in AutoSCSI on FlashPoint Host Adapters and on "W" and "C"
+  series MultiMaster Host Adapters, or by a dip switch setting on "S" and "A"
   series MultiMaster Host Adapters.  With Extended Translation enabled, drives
   between 1 GB inclusive and 2 GB exclusive are given a disk geometry of 128
   heads and 32 sectors, and drives above 2 GB inclusive are given a disk
-  geometry of 255 heads and 63 sectors.  However, अगर the BIOS detects that the
-  Extended Translation setting करोes not match the geometry in the partition
+  geometry of 255 heads and 63 sectors.  However, if the BIOS detects that the
+  Extended Translation setting does not match the geometry in the partition
   table, then the translation inferred from the partition table will be used by
   the BIOS, and a warning may be displayed.
 */
 
-अटल पूर्णांक blogic_diskparam(काष्ठा scsi_device *sdev, काष्ठा block_device *dev,
-		sector_t capacity, पूर्णांक *params)
-अणु
-	काष्ठा blogic_adapter *adapter =
-				(काष्ठा blogic_adapter *) sdev->host->hostdata;
-	काष्ठा bios_diskparam *diskparam = (काष्ठा bios_diskparam *) params;
-	अचिन्हित अक्षर *buf;
+static int blogic_diskparam(struct scsi_device *sdev, struct block_device *dev,
+		sector_t capacity, int *params)
+{
+	struct blogic_adapter *adapter =
+				(struct blogic_adapter *) sdev->host->hostdata;
+	struct bios_diskparam *diskparam = (struct bios_diskparam *) params;
+	unsigned char *buf;
 
-	अगर (adapter->ext_trans_enable && capacity >= 2 * 1024 * 1024 /* 1 GB in 512 byte sectors */) अणु
-		अगर (capacity >= 4 * 1024 * 1024 /* 2 GB in 512 byte sectors */) अणु
+	if (adapter->ext_trans_enable && capacity >= 2 * 1024 * 1024 /* 1 GB in 512 byte sectors */) {
+		if (capacity >= 4 * 1024 * 1024 /* 2 GB in 512 byte sectors */) {
 			diskparam->heads = 255;
 			diskparam->sectors = 63;
-		पूर्ण अन्यथा अणु
+		} else {
 			diskparam->heads = 128;
 			diskparam->sectors = 32;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		diskparam->heads = 64;
 		diskparam->sectors = 32;
-	पूर्ण
-	diskparam->cylinders = (अचिन्हित दीर्घ) capacity / (diskparam->heads * diskparam->sectors);
+	}
+	diskparam->cylinders = (unsigned long) capacity / (diskparam->heads * diskparam->sectors);
 	buf = scsi_bios_ptable(dev);
-	अगर (buf == शून्य)
-		वापस 0;
+	if (buf == NULL)
+		return 0;
 	/*
-	   If the boot sector partition table flag is valid, search क्रम
+	   If the boot sector partition table flag is valid, search for
 	   a partition table entry whose end_head matches one of the
 	   standard BusLogic geometry translations (64/32, 128/32, or 255/63).
 	 */
-	अगर (*(अचिन्हित लघु *) (buf + 64) == MSDOS_LABEL_MAGIC) अणु
-		काष्ठा msकरोs_partition *part1_entry =
-				(काष्ठा msकरोs_partition *)buf;
-		काष्ठा msकरोs_partition *part_entry = part1_entry;
-		पूर्णांक saved_cyl = diskparam->cylinders, part_no;
-		अचिन्हित अक्षर part_end_head = 0, part_end_sector = 0;
+	if (*(unsigned short *) (buf + 64) == MSDOS_LABEL_MAGIC) {
+		struct msdos_partition *part1_entry =
+				(struct msdos_partition *)buf;
+		struct msdos_partition *part_entry = part1_entry;
+		int saved_cyl = diskparam->cylinders, part_no;
+		unsigned char part_end_head = 0, part_end_sector = 0;
 
-		क्रम (part_no = 0; part_no < 4; part_no++) अणु
+		for (part_no = 0; part_no < 4; part_no++) {
 			part_end_head = part_entry->end_head;
 			part_end_sector = part_entry->end_sector & 0x3F;
-			अगर (part_end_head == 64 - 1) अणु
+			if (part_end_head == 64 - 1) {
 				diskparam->heads = 64;
 				diskparam->sectors = 32;
-				अवरोध;
-			पूर्ण अन्यथा अगर (part_end_head == 128 - 1) अणु
+				break;
+			} else if (part_end_head == 128 - 1) {
 				diskparam->heads = 128;
 				diskparam->sectors = 32;
-				अवरोध;
-			पूर्ण अन्यथा अगर (part_end_head == 255 - 1) अणु
+				break;
+			} else if (part_end_head == 255 - 1) {
 				diskparam->heads = 255;
 				diskparam->sectors = 63;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			part_entry++;
-		पूर्ण
-		अगर (part_no == 4) अणु
+		}
+		if (part_no == 4) {
 			part_end_head = part1_entry->end_head;
 			part_end_sector = part1_entry->end_sector & 0x3F;
-		पूर्ण
-		diskparam->cylinders = (अचिन्हित दीर्घ) capacity / (diskparam->heads * diskparam->sectors);
-		अगर (part_no < 4 && part_end_sector == diskparam->sectors) अणु
-			अगर (diskparam->cylinders != saved_cyl)
+		}
+		diskparam->cylinders = (unsigned long) capacity / (diskparam->heads * diskparam->sectors);
+		if (part_no < 4 && part_end_sector == diskparam->sectors) {
+			if (diskparam->cylinders != saved_cyl)
 				blogic_warn("Adopting Geometry %d/%d from Partition Table\n", adapter, diskparam->heads, diskparam->sectors);
-		पूर्ण अन्यथा अगर (part_end_head > 0 || part_end_sector > 0) अणु
+		} else if (part_end_head > 0 || part_end_sector > 0) {
 			blogic_warn("Warning: Partition Table appears to have Geometry %d/%d which is\n", adapter, part_end_head + 1, part_end_sector);
 			blogic_warn("not compatible with current BusLogic Host Adapter Geometry %d/%d\n", adapter, diskparam->heads, diskparam->sectors);
-		पूर्ण
-	पूर्ण
-	kमुक्त(buf);
-	वापस 0;
-पूर्ण
+		}
+	}
+	kfree(buf);
+	return 0;
+}
 
 
 /*
   BugLogic_ProcDirectoryInfo implements /proc/scsi/BusLogic/<N>.
 */
 
-अटल पूर्णांक blogic_ग_लिखो_info(काष्ठा Scsi_Host *shost, अक्षर *procbuf,
-				पूर्णांक bytes_avail)
-अणु
-	काष्ठा blogic_adapter *adapter =
-				(काष्ठा blogic_adapter *) shost->hostdata;
-	काष्ठा blogic_tgt_stats *tgt_stats;
+static int blogic_write_info(struct Scsi_Host *shost, char *procbuf,
+				int bytes_avail)
+{
+	struct blogic_adapter *adapter =
+				(struct blogic_adapter *) shost->hostdata;
+	struct blogic_tgt_stats *tgt_stats;
 
 	tgt_stats = adapter->tgt_stats;
 	adapter->ext_resets = 0;
-	adapter->adapter_पूर्णांकern_errors = 0;
-	स_रखो(tgt_stats, 0, BLOGIC_MAXDEV * माप(काष्ठा blogic_tgt_stats));
-	वापस 0;
-पूर्ण
+	adapter->adapter_intern_errors = 0;
+	memset(tgt_stats, 0, BLOGIC_MAXDEV * sizeof(struct blogic_tgt_stats));
+	return 0;
+}
 
-अटल पूर्णांक blogic_show_info(काष्ठा seq_file *m, काष्ठा Scsi_Host *shost)
-अणु
-	काष्ठा blogic_adapter *adapter = (काष्ठा blogic_adapter *) shost->hostdata;
-	काष्ठा blogic_tgt_stats *tgt_stats;
-	पूर्णांक tgt;
+static int blogic_show_info(struct seq_file *m, struct Scsi_Host *shost)
+{
+	struct blogic_adapter *adapter = (struct blogic_adapter *) shost->hostdata;
+	struct blogic_tgt_stats *tgt_stats;
+	int tgt;
 
 	tgt_stats = adapter->tgt_stats;
-	seq_ग_लिखो(m, adapter->msgbuf, adapter->msgbuflen);
-	seq_म_लिखो(m, "\न\
-Current Driver Queue Depth:	%d\न\
-Currently Allocated CCBs:	%d\न", adapter->drvr_qdepth, adapter->alloc_ccbs);
-	seq_माला_दो(m, "\न\न\
-			   DATA TRANSFER STATISTICS\न\
-\न\
-Target	Tagged Queuing	Queue Depth  Active  Attempted	Completed\न\
-======	==============	===========  ======  =========	=========\न");
-	क्रम (tgt = 0; tgt < adapter->maxdev; tgt++) अणु
-		काष्ठा blogic_tgt_flags *tgt_flags = &adapter->tgt_flags[tgt];
-		अगर (!tgt_flags->tgt_exists)
-			जारी;
-		seq_म_लिखो(m, "  %2d	%s", tgt, (tgt_flags->tagq_ok ? (tgt_flags->tagq_active ? "    Active" : (adapter->tagq_ok & (1 << tgt)
+	seq_write(m, adapter->msgbuf, adapter->msgbuflen);
+	seq_printf(m, "\n\
+Current Driver Queue Depth:	%d\n\
+Currently Allocated CCBs:	%d\n", adapter->drvr_qdepth, adapter->alloc_ccbs);
+	seq_puts(m, "\n\n\
+			   DATA TRANSFER STATISTICS\n\
+\n\
+Target	Tagged Queuing	Queue Depth  Active  Attempted	Completed\n\
+======	==============	===========  ======  =========	=========\n");
+	for (tgt = 0; tgt < adapter->maxdev; tgt++) {
+		struct blogic_tgt_flags *tgt_flags = &adapter->tgt_flags[tgt];
+		if (!tgt_flags->tgt_exists)
+			continue;
+		seq_printf(m, "  %2d	%s", tgt, (tgt_flags->tagq_ok ? (tgt_flags->tagq_active ? "    Active" : (adapter->tagq_ok & (1 << tgt)
 																				    ? "  Permitted" : "   Disabled"))
 									  : "Not Supported"));
-		seq_म_लिखो(m,
+		seq_printf(m,
 				  "	    %3d       %3u    %9u	%9u\n", adapter->qdepth[tgt], adapter->active_cmds[tgt], tgt_stats[tgt].cmds_tried, tgt_stats[tgt].cmds_complete);
-	पूर्ण
-	seq_माला_दो(m, "\न\
-Target  Read Commands  Write Commands   Total Bytes Read    Total Bytes Written\न\
-======  =============  ==============  ===================  ===================\न");
-	क्रम (tgt = 0; tgt < adapter->maxdev; tgt++) अणु
-		काष्ठा blogic_tgt_flags *tgt_flags = &adapter->tgt_flags[tgt];
-		अगर (!tgt_flags->tgt_exists)
-			जारी;
-		seq_म_लिखो(m, "  %2d	  %9u	 %9u", tgt, tgt_stats[tgt].पढ़ो_cmds, tgt_stats[tgt].ग_लिखो_cmds);
-		अगर (tgt_stats[tgt].bytesपढ़ो.billions > 0)
-			seq_म_लिखो(m, "     %9u%09u", tgt_stats[tgt].bytesपढ़ो.billions, tgt_stats[tgt].bytesपढ़ो.units);
-		अन्यथा
-			seq_म_लिखो(m, "		%9u", tgt_stats[tgt].bytesपढ़ो.units);
-		अगर (tgt_stats[tgt].byteswritten.billions > 0)
-			seq_म_लिखो(m, "   %9u%09u\n", tgt_stats[tgt].byteswritten.billions, tgt_stats[tgt].byteswritten.units);
-		अन्यथा
-			seq_म_लिखो(m, "	     %9u\n", tgt_stats[tgt].byteswritten.units);
-	पूर्ण
-	seq_माला_दो(m, "\न\
-Target  Command    0-1KB      1-2KB      2-4KB      4-8KB     8-16KB\न\
-======  =======  =========  =========  =========  =========  =========\न");
-	क्रम (tgt = 0; tgt < adapter->maxdev; tgt++) अणु
-		काष्ठा blogic_tgt_flags *tgt_flags = &adapter->tgt_flags[tgt];
-		अगर (!tgt_flags->tgt_exists)
-			जारी;
-		seq_म_लिखो(m,
+	}
+	seq_puts(m, "\n\
+Target  Read Commands  Write Commands   Total Bytes Read    Total Bytes Written\n\
+======  =============  ==============  ===================  ===================\n");
+	for (tgt = 0; tgt < adapter->maxdev; tgt++) {
+		struct blogic_tgt_flags *tgt_flags = &adapter->tgt_flags[tgt];
+		if (!tgt_flags->tgt_exists)
+			continue;
+		seq_printf(m, "  %2d	  %9u	 %9u", tgt, tgt_stats[tgt].read_cmds, tgt_stats[tgt].write_cmds);
+		if (tgt_stats[tgt].bytesread.billions > 0)
+			seq_printf(m, "     %9u%09u", tgt_stats[tgt].bytesread.billions, tgt_stats[tgt].bytesread.units);
+		else
+			seq_printf(m, "		%9u", tgt_stats[tgt].bytesread.units);
+		if (tgt_stats[tgt].byteswritten.billions > 0)
+			seq_printf(m, "   %9u%09u\n", tgt_stats[tgt].byteswritten.billions, tgt_stats[tgt].byteswritten.units);
+		else
+			seq_printf(m, "	     %9u\n", tgt_stats[tgt].byteswritten.units);
+	}
+	seq_puts(m, "\n\
+Target  Command    0-1KB      1-2KB      2-4KB      4-8KB     8-16KB\n\
+======  =======  =========  =========  =========  =========  =========\n");
+	for (tgt = 0; tgt < adapter->maxdev; tgt++) {
+		struct blogic_tgt_flags *tgt_flags = &adapter->tgt_flags[tgt];
+		if (!tgt_flags->tgt_exists)
+			continue;
+		seq_printf(m,
 			    "  %2d	 Read	 %9u  %9u  %9u  %9u  %9u\n", tgt,
-			    tgt_stats[tgt].पढ़ो_sz_buckets[0],
-			    tgt_stats[tgt].पढ़ो_sz_buckets[1], tgt_stats[tgt].पढ़ो_sz_buckets[2], tgt_stats[tgt].पढ़ो_sz_buckets[3], tgt_stats[tgt].पढ़ो_sz_buckets[4]);
-		seq_म_लिखो(m,
+			    tgt_stats[tgt].read_sz_buckets[0],
+			    tgt_stats[tgt].read_sz_buckets[1], tgt_stats[tgt].read_sz_buckets[2], tgt_stats[tgt].read_sz_buckets[3], tgt_stats[tgt].read_sz_buckets[4]);
+		seq_printf(m,
 			    "  %2d	 Write	 %9u  %9u  %9u  %9u  %9u\n", tgt,
-			    tgt_stats[tgt].ग_लिखो_sz_buckets[0],
-			    tgt_stats[tgt].ग_लिखो_sz_buckets[1], tgt_stats[tgt].ग_लिखो_sz_buckets[2], tgt_stats[tgt].ग_लिखो_sz_buckets[3], tgt_stats[tgt].ग_लिखो_sz_buckets[4]);
-	पूर्ण
-	seq_माला_दो(m, "\न\
-Target  Command   16-32KB    32-64KB   64-128KB   128-256KB   256KB+\न\
-======  =======  =========  =========  =========  =========  =========\न");
-	क्रम (tgt = 0; tgt < adapter->maxdev; tgt++) अणु
-		काष्ठा blogic_tgt_flags *tgt_flags = &adapter->tgt_flags[tgt];
-		अगर (!tgt_flags->tgt_exists)
-			जारी;
-		seq_म_लिखो(m,
+			    tgt_stats[tgt].write_sz_buckets[0],
+			    tgt_stats[tgt].write_sz_buckets[1], tgt_stats[tgt].write_sz_buckets[2], tgt_stats[tgt].write_sz_buckets[3], tgt_stats[tgt].write_sz_buckets[4]);
+	}
+	seq_puts(m, "\n\
+Target  Command   16-32KB    32-64KB   64-128KB   128-256KB   256KB+\n\
+======  =======  =========  =========  =========  =========  =========\n");
+	for (tgt = 0; tgt < adapter->maxdev; tgt++) {
+		struct blogic_tgt_flags *tgt_flags = &adapter->tgt_flags[tgt];
+		if (!tgt_flags->tgt_exists)
+			continue;
+		seq_printf(m,
 			    "  %2d	 Read	 %9u  %9u  %9u  %9u  %9u\n", tgt,
-			    tgt_stats[tgt].पढ़ो_sz_buckets[5],
-			    tgt_stats[tgt].पढ़ो_sz_buckets[6], tgt_stats[tgt].पढ़ो_sz_buckets[7], tgt_stats[tgt].पढ़ो_sz_buckets[8], tgt_stats[tgt].पढ़ो_sz_buckets[9]);
-		seq_म_लिखो(m,
+			    tgt_stats[tgt].read_sz_buckets[5],
+			    tgt_stats[tgt].read_sz_buckets[6], tgt_stats[tgt].read_sz_buckets[7], tgt_stats[tgt].read_sz_buckets[8], tgt_stats[tgt].read_sz_buckets[9]);
+		seq_printf(m,
 			    "  %2d	 Write	 %9u  %9u  %9u  %9u  %9u\n", tgt,
-			    tgt_stats[tgt].ग_लिखो_sz_buckets[5],
-			    tgt_stats[tgt].ग_लिखो_sz_buckets[6], tgt_stats[tgt].ग_लिखो_sz_buckets[7], tgt_stats[tgt].ग_लिखो_sz_buckets[8], tgt_stats[tgt].ग_लिखो_sz_buckets[9]);
-	पूर्ण
-	seq_माला_दो(m, "\न\न\
-			   ERROR RECOVERY STATISTICS\न\
-\न\
-	  Command Aborts      Bus Device Resets	  Host Adapter Resets\न\
-Target	Requested Completed  Requested Completed  Requested Completed\न\
-  ID	\\\\\\\\ Attempted ////  \\\\\\\\ Attempted ////  \\\\\\\\ Attempted ////\न\
-======	 ===== ===== =====    ===== ===== =====	   ===== ===== =====\न");
-	क्रम (tgt = 0; tgt < adapter->maxdev; tgt++) अणु
-		काष्ठा blogic_tgt_flags *tgt_flags = &adapter->tgt_flags[tgt];
-		अगर (!tgt_flags->tgt_exists)
-			जारी;
-		seq_म_लिखो(m, "  %2d	 %5d %5d %5d    %5d %5d %5d	   %5d %5d %5d\n",
-			   tgt, tgt_stats[tgt].पातs_request,
-			   tgt_stats[tgt].पातs_tried,
-			   tgt_stats[tgt].पातs_करोne,
+			    tgt_stats[tgt].write_sz_buckets[5],
+			    tgt_stats[tgt].write_sz_buckets[6], tgt_stats[tgt].write_sz_buckets[7], tgt_stats[tgt].write_sz_buckets[8], tgt_stats[tgt].write_sz_buckets[9]);
+	}
+	seq_puts(m, "\n\n\
+			   ERROR RECOVERY STATISTICS\n\
+\n\
+	  Command Aborts      Bus Device Resets	  Host Adapter Resets\n\
+Target	Requested Completed  Requested Completed  Requested Completed\n\
+  ID	\\\\\\\\ Attempted ////  \\\\\\\\ Attempted ////  \\\\\\\\ Attempted ////\n\
+======	 ===== ===== =====    ===== ===== =====	   ===== ===== =====\n");
+	for (tgt = 0; tgt < adapter->maxdev; tgt++) {
+		struct blogic_tgt_flags *tgt_flags = &adapter->tgt_flags[tgt];
+		if (!tgt_flags->tgt_exists)
+			continue;
+		seq_printf(m, "  %2d	 %5d %5d %5d    %5d %5d %5d	   %5d %5d %5d\n",
+			   tgt, tgt_stats[tgt].aborts_request,
+			   tgt_stats[tgt].aborts_tried,
+			   tgt_stats[tgt].aborts_done,
 			   tgt_stats[tgt].bdr_request,
 			   tgt_stats[tgt].bdr_tried,
-			   tgt_stats[tgt].bdr_करोne,
+			   tgt_stats[tgt].bdr_done,
 			   tgt_stats[tgt].adapter_reset_req,
 			   tgt_stats[tgt].adapter_reset_attempt,
-			   tgt_stats[tgt].adapter_reset_करोne);
-	पूर्ण
-	seq_म_लिखो(m, "\nExternal Host Adapter Resets: %d\n", adapter->ext_resets);
-	seq_म_लिखो(m, "Host Adapter Internal Errors: %d\n", adapter->adapter_पूर्णांकern_errors);
-	वापस 0;
-पूर्ण
+			   tgt_stats[tgt].adapter_reset_done);
+	}
+	seq_printf(m, "\nExternal Host Adapter Resets: %d\n", adapter->ext_resets);
+	seq_printf(m, "Host Adapter Internal Errors: %d\n", adapter->adapter_intern_errors);
+	return 0;
+}
 
 
 /*
-  blogic_msg prपूर्णांकs Driver Messages.
+  blogic_msg prints Driver Messages.
 */
-__म_लिखो(2, 4)
-अटल व्योम blogic_msg(क्रमागत blogic_msglevel msglevel, अक्षर *fmt,
-			काष्ठा blogic_adapter *adapter, ...)
-अणु
-	अटल अक्षर buf[BLOGIC_LINEBUF_SIZE];
-	अटल bool begin = true;
-	बहु_सूची args;
-	पूर्णांक len = 0;
+__printf(2, 4)
+static void blogic_msg(enum blogic_msglevel msglevel, char *fmt,
+			struct blogic_adapter *adapter, ...)
+{
+	static char buf[BLOGIC_LINEBUF_SIZE];
+	static bool begin = true;
+	va_list args;
+	int len = 0;
 
-	बहु_शुरू(args, adapter);
-	len = भम_लिखो(buf, fmt, args);
-	बहु_पूर्ण(args);
-	अगर (msglevel == BLOGIC_ANNOUNCE_LEVEL) अणु
-		अटल पूर्णांक msglines = 0;
-		म_नकल(&adapter->msgbuf[adapter->msgbuflen], buf);
+	va_start(args, adapter);
+	len = vsprintf(buf, fmt, args);
+	va_end(args);
+	if (msglevel == BLOGIC_ANNOUNCE_LEVEL) {
+		static int msglines = 0;
+		strcpy(&adapter->msgbuf[adapter->msgbuflen], buf);
 		adapter->msgbuflen += len;
-		अगर (++msglines <= 2)
-			prपूर्णांकk("%sscsi: %s", blogic_msglevelmap[msglevel], buf);
-	पूर्ण अन्यथा अगर (msglevel == BLOGIC_INFO_LEVEL) अणु
-		म_नकल(&adapter->msgbuf[adapter->msgbuflen], buf);
+		if (++msglines <= 2)
+			printk("%sscsi: %s", blogic_msglevelmap[msglevel], buf);
+	} else if (msglevel == BLOGIC_INFO_LEVEL) {
+		strcpy(&adapter->msgbuf[adapter->msgbuflen], buf);
 		adapter->msgbuflen += len;
-		अगर (begin) अणु
-			अगर (buf[0] != '\n' || len > 1)
-				prपूर्णांकk("%sscsi%d: %s", blogic_msglevelmap[msglevel], adapter->host_no, buf);
-		पूर्ण अन्यथा
-			prपूर्णांकk("%s", buf);
-	पूर्ण अन्यथा अणु
-		अगर (begin) अणु
-			अगर (adapter != शून्य && adapter->adapter_initd)
-				prपूर्णांकk("%sscsi%d: %s", blogic_msglevelmap[msglevel], adapter->host_no, buf);
-			अन्यथा
-				prपूर्णांकk("%s%s", blogic_msglevelmap[msglevel], buf);
-		पूर्ण अन्यथा
-			prपूर्णांकk("%s", buf);
-	पूर्ण
+		if (begin) {
+			if (buf[0] != '\n' || len > 1)
+				printk("%sscsi%d: %s", blogic_msglevelmap[msglevel], adapter->host_no, buf);
+		} else
+			printk("%s", buf);
+	} else {
+		if (begin) {
+			if (adapter != NULL && adapter->adapter_initd)
+				printk("%sscsi%d: %s", blogic_msglevelmap[msglevel], adapter->host_no, buf);
+			else
+				printk("%s%s", blogic_msglevelmap[msglevel], buf);
+		} else
+			printk("%s", buf);
+	}
 	begin = (buf[len - 1] == '\n');
-पूर्ण
+}
 
 
 /*
-  blogic_parse parses an inभागidual option keyword.  It वापसs true
-  and updates the poपूर्णांकer अगर the keyword is recognized and false otherwise.
+  blogic_parse parses an individual option keyword.  It returns true
+  and updates the pointer if the keyword is recognized and false otherwise.
 */
 
-अटल bool __init blogic_parse(अक्षर **str, अक्षर *keyword)
-अणु
-	अक्षर *poपूर्णांकer = *str;
-	जबतक (*keyword != '\0') अणु
-		अक्षर strch = *poपूर्णांकer++;
-		अक्षर keywordch = *keyword++;
-		अगर (strch >= 'A' && strch <= 'Z')
+static bool __init blogic_parse(char **str, char *keyword)
+{
+	char *pointer = *str;
+	while (*keyword != '\0') {
+		char strch = *pointer++;
+		char keywordch = *keyword++;
+		if (strch >= 'A' && strch <= 'Z')
 			strch += 'a' - 'Z';
-		अगर (keywordch >= 'A' && keywordch <= 'Z')
+		if (keywordch >= 'A' && keywordch <= 'Z')
 			keywordch += 'a' - 'Z';
-		अगर (strch != keywordch)
-			वापस false;
-	पूर्ण
-	*str = poपूर्णांकer;
-	वापस true;
-पूर्ण
+		if (strch != keywordch)
+			return false;
+	}
+	*str = pointer;
+	return true;
+}
 
 
 /*
   blogic_parseopts handles processing of BusLogic Driver Options
-  specअगरications.
+  specifications.
 
-  BusLogic Driver Options may be specअगरied either via the Linux Kernel Command
+  BusLogic Driver Options may be specified either via the Linux Kernel Command
   Line or via the Loadable Kernel Module Installation Facility.  Driver Options
-  क्रम multiple host adapters may be specअगरied either by separating the option
-  strings by a semicolon, or by specअगरying multiple "BusLogic=" strings on the
-  command line.  Inभागidual option specअगरications क्रम a single host adapter are
+  for multiple host adapters may be specified either by separating the option
+  strings by a semicolon, or by specifying multiple "BusLogic=" strings on the
+  command line.  Individual option specifications for a single host adapter are
   separated by commas.  The Probing and Debugging Options apply to all host
-  adapters whereas the reमुख्यing options apply inभागidually only to the
+  adapters whereas the remaining options apply individually only to the
   selected host adapter.
 
   The BusLogic Driver Probing Options are described in
   <file:Documentation/scsi/BusLogic.rst>.
 */
 
-अटल पूर्णांक __init blogic_parseopts(अक्षर *options)
-अणु
-	जबतक (true) अणु
-		काष्ठा blogic_drvr_options *drvr_opts =
+static int __init blogic_parseopts(char *options)
+{
+	while (true) {
+		struct blogic_drvr_options *drvr_opts =
 			&blogic_drvr_options[blogic_drvr_options_count++];
-		पूर्णांक tgt_id;
+		int tgt_id;
 
-		स_रखो(drvr_opts, 0, माप(काष्ठा blogic_drvr_options));
-		जबतक (*options != '\0' && *options != ';') अणु
-			अगर (blogic_parse(&options, "NoProbePCI"))
+		memset(drvr_opts, 0, sizeof(struct blogic_drvr_options));
+		while (*options != '\0' && *options != ';') {
+			if (blogic_parse(&options, "NoProbePCI"))
 				blogic_probe_options.noprobe_pci = true;
-			अन्यथा अगर (blogic_parse(&options, "NoProbe"))
+			else if (blogic_parse(&options, "NoProbe"))
 				blogic_probe_options.noprobe = true;
-			अन्यथा अगर (blogic_parse(&options, "NoSortPCI"))
+			else if (blogic_parse(&options, "NoSortPCI"))
 				blogic_probe_options.nosort_pci = true;
-			अन्यथा अगर (blogic_parse(&options, "MultiMasterFirst"))
+			else if (blogic_parse(&options, "MultiMasterFirst"))
 				blogic_probe_options.multimaster_first = true;
-			अन्यथा अगर (blogic_parse(&options, "FlashPointFirst"))
-				blogic_probe_options.flashpoपूर्णांक_first = true;
+			else if (blogic_parse(&options, "FlashPointFirst"))
+				blogic_probe_options.flashpoint_first = true;
 			/* Tagged Queuing Options. */
-			अन्यथा अगर (blogic_parse(&options, "QueueDepth:[") ||
-					blogic_parse(&options, "QD:[")) अणु
-				क्रम (tgt_id = 0; tgt_id < BLOGIC_MAXDEV; tgt_id++) अणु
-					अचिन्हित लघु qdepth = simple_म_से_अदीर्घ(options, &options, 0);
-					अगर (qdepth > BLOGIC_MAX_TAG_DEPTH) अणु
-						blogic_err("BusLogic: Invalid Driver Options (invalid Queue Depth %d)\n", शून्य, qdepth);
-						वापस 0;
-					पूर्ण
+			else if (blogic_parse(&options, "QueueDepth:[") ||
+					blogic_parse(&options, "QD:[")) {
+				for (tgt_id = 0; tgt_id < BLOGIC_MAXDEV; tgt_id++) {
+					unsigned short qdepth = simple_strtoul(options, &options, 0);
+					if (qdepth > BLOGIC_MAX_TAG_DEPTH) {
+						blogic_err("BusLogic: Invalid Driver Options (invalid Queue Depth %d)\n", NULL, qdepth);
+						return 0;
+					}
 					drvr_opts->qdepth[tgt_id] = qdepth;
-					अगर (*options == ',')
+					if (*options == ',')
 						options++;
-					अन्यथा अगर (*options == ']')
-						अवरोध;
-					अन्यथा अणु
-						blogic_err("BusLogic: Invalid Driver Options (',' or ']' expected at '%s')\n", शून्य, options);
-						वापस 0;
-					पूर्ण
-				पूर्ण
-				अगर (*options != ']') अणु
-					blogic_err("BusLogic: Invalid Driver Options (']' expected at '%s')\n", शून्य, options);
-					वापस 0;
-				पूर्ण अन्यथा
+					else if (*options == ']')
+						break;
+					else {
+						blogic_err("BusLogic: Invalid Driver Options (',' or ']' expected at '%s')\n", NULL, options);
+						return 0;
+					}
+				}
+				if (*options != ']') {
+					blogic_err("BusLogic: Invalid Driver Options (']' expected at '%s')\n", NULL, options);
+					return 0;
+				} else
 					options++;
-			पूर्ण अन्यथा अगर (blogic_parse(&options, "QueueDepth:") || blogic_parse(&options, "QD:")) अणु
-				अचिन्हित लघु qdepth = simple_म_से_अदीर्घ(options, &options, 0);
-				अगर (qdepth == 0 ||
-						qdepth > BLOGIC_MAX_TAG_DEPTH) अणु
-					blogic_err("BusLogic: Invalid Driver Options (invalid Queue Depth %d)\n", शून्य, qdepth);
-					वापस 0;
-				पूर्ण
+			} else if (blogic_parse(&options, "QueueDepth:") || blogic_parse(&options, "QD:")) {
+				unsigned short qdepth = simple_strtoul(options, &options, 0);
+				if (qdepth == 0 ||
+						qdepth > BLOGIC_MAX_TAG_DEPTH) {
+					blogic_err("BusLogic: Invalid Driver Options (invalid Queue Depth %d)\n", NULL, qdepth);
+					return 0;
+				}
 				drvr_opts->common_qdepth = qdepth;
-				क्रम (tgt_id = 0; tgt_id < BLOGIC_MAXDEV; tgt_id++)
+				for (tgt_id = 0; tgt_id < BLOGIC_MAXDEV; tgt_id++)
 					drvr_opts->qdepth[tgt_id] = qdepth;
-			पूर्ण अन्यथा अगर (blogic_parse(&options, "TaggedQueuing:") ||
-					blogic_parse(&options, "TQ:")) अणु
-				अगर (blogic_parse(&options, "Default")) अणु
+			} else if (blogic_parse(&options, "TaggedQueuing:") ||
+					blogic_parse(&options, "TQ:")) {
+				if (blogic_parse(&options, "Default")) {
 					drvr_opts->tagq_ok = 0x0000;
 					drvr_opts->tagq_ok_mask = 0x0000;
-				पूर्ण अन्यथा अगर (blogic_parse(&options, "Enable")) अणु
+				} else if (blogic_parse(&options, "Enable")) {
 					drvr_opts->tagq_ok = 0xFFFF;
 					drvr_opts->tagq_ok_mask = 0xFFFF;
-				पूर्ण अन्यथा अगर (blogic_parse(&options, "Disable")) अणु
+				} else if (blogic_parse(&options, "Disable")) {
 					drvr_opts->tagq_ok = 0x0000;
 					drvr_opts->tagq_ok_mask = 0xFFFF;
-				पूर्ण अन्यथा अणु
-					अचिन्हित लघु tgt_bit;
-					क्रम (tgt_id = 0, tgt_bit = 1;
+				} else {
+					unsigned short tgt_bit;
+					for (tgt_id = 0, tgt_bit = 1;
 						tgt_id < BLOGIC_MAXDEV;
 						tgt_id++, tgt_bit <<= 1)
-						चयन (*options++) अणु
-						हाल 'Y':
+						switch (*options++) {
+						case 'Y':
 							drvr_opts->tagq_ok |= tgt_bit;
 							drvr_opts->tagq_ok_mask |= tgt_bit;
-							अवरोध;
-						हाल 'N':
+							break;
+						case 'N':
 							drvr_opts->tagq_ok &= ~tgt_bit;
 							drvr_opts->tagq_ok_mask |= tgt_bit;
-							अवरोध;
-						हाल 'X':
-							अवरोध;
-						शेष:
+							break;
+						case 'X':
+							break;
+						default:
 							options--;
 							tgt_id = BLOGIC_MAXDEV;
-							अवरोध;
-						पूर्ण
-				पूर्ण
-			पूर्ण
+							break;
+						}
+				}
+			}
 			/* Miscellaneous Options. */
-			अन्यथा अगर (blogic_parse(&options, "BusSettleTime:") ||
-					blogic_parse(&options, "BST:")) अणु
-				अचिन्हित लघु bus_settle_समय =
-					simple_म_से_अदीर्घ(options, &options, 0);
-				अगर (bus_settle_समय > 5 * 60) अणु
-					blogic_err("BusLogic: Invalid Driver Options (invalid Bus Settle Time %d)\n", शून्य, bus_settle_समय);
-					वापस 0;
-				पूर्ण
-				drvr_opts->bus_settle_समय = bus_settle_समय;
-			पूर्ण अन्यथा अगर (blogic_parse(&options,
+			else if (blogic_parse(&options, "BusSettleTime:") ||
+					blogic_parse(&options, "BST:")) {
+				unsigned short bus_settle_time =
+					simple_strtoul(options, &options, 0);
+				if (bus_settle_time > 5 * 60) {
+					blogic_err("BusLogic: Invalid Driver Options (invalid Bus Settle Time %d)\n", NULL, bus_settle_time);
+					return 0;
+				}
+				drvr_opts->bus_settle_time = bus_settle_time;
+			} else if (blogic_parse(&options,
 						"InhibitTargetInquiry"))
 				drvr_opts->stop_tgt_inquiry = true;
 			/* Debugging Options. */
-			अन्यथा अगर (blogic_parse(&options, "TraceProbe"))
+			else if (blogic_parse(&options, "TraceProbe"))
 				blogic_global_options.trace_probe = true;
-			अन्यथा अगर (blogic_parse(&options, "TraceHardwareReset"))
+			else if (blogic_parse(&options, "TraceHardwareReset"))
 				blogic_global_options.trace_hw_reset = true;
-			अन्यथा अगर (blogic_parse(&options, "TraceConfiguration"))
+			else if (blogic_parse(&options, "TraceConfiguration"))
 				blogic_global_options.trace_config = true;
-			अन्यथा अगर (blogic_parse(&options, "TraceErrors"))
+			else if (blogic_parse(&options, "TraceErrors"))
 				blogic_global_options.trace_err = true;
-			अन्यथा अगर (blogic_parse(&options, "Debug")) अणु
+			else if (blogic_parse(&options, "Debug")) {
 				blogic_global_options.trace_probe = true;
 				blogic_global_options.trace_hw_reset = true;
 				blogic_global_options.trace_config = true;
 				blogic_global_options.trace_err = true;
-			पूर्ण
-			अगर (*options == ',')
+			}
+			if (*options == ',')
 				options++;
-			अन्यथा अगर (*options != ';' && *options != '\0') अणु
-				blogic_err("BusLogic: Unexpected Driver Option '%s' ignored\n", शून्य, options);
+			else if (*options != ';' && *options != '\0') {
+				blogic_err("BusLogic: Unexpected Driver Option '%s' ignored\n", NULL, options);
 				*options = '\0';
-			पूर्ण
-		पूर्ण
-		अगर (!(blogic_drvr_options_count == 0 ||
+			}
+		}
+		if (!(blogic_drvr_options_count == 0 ||
 			blogic_probeinfo_count == 0 ||
-			blogic_drvr_options_count == blogic_probeinfo_count)) अणु
-			blogic_err("BusLogic: Invalid Driver Options (all or no I/O Addresses must be specified)\n", शून्य);
-			वापस 0;
-		पूर्ण
+			blogic_drvr_options_count == blogic_probeinfo_count)) {
+			blogic_err("BusLogic: Invalid Driver Options (all or no I/O Addresses must be specified)\n", NULL);
+			return 0;
+		}
 		/*
 		   Tagged Queuing is disabled when the Queue Depth is 1 since queuing
 		   multiple commands is not possible.
 		 */
-		क्रम (tgt_id = 0; tgt_id < BLOGIC_MAXDEV; tgt_id++)
-			अगर (drvr_opts->qdepth[tgt_id] == 1) अणु
-				अचिन्हित लघु tgt_bit = 1 << tgt_id;
+		for (tgt_id = 0; tgt_id < BLOGIC_MAXDEV; tgt_id++)
+			if (drvr_opts->qdepth[tgt_id] == 1) {
+				unsigned short tgt_bit = 1 << tgt_id;
 				drvr_opts->tagq_ok &= ~tgt_bit;
 				drvr_opts->tagq_ok_mask |= tgt_bit;
-			पूर्ण
-		अगर (*options == ';')
+			}
+		if (*options == ';')
 			options++;
-		अगर (*options == '\0')
-			वापस 0;
-	पूर्ण
-	वापस 1;
-पूर्ण
+		if (*options == '\0')
+			return 0;
+	}
+	return 1;
+}
 
 /*
   Get it all started
 */
 
-अटल काष्ठा scsi_host_ढाँचा blogic_ढाँचा = अणु
+static struct scsi_host_template blogic_template = {
 	.module = THIS_MODULE,
 	.proc_name = "BusLogic",
-	.ग_लिखो_info = blogic_ग_लिखो_info,
+	.write_info = blogic_write_info,
 	.show_info = blogic_show_info,
 	.name = "BusLogic",
 	.info = blogic_drvr_info,
@@ -3667,63 +3666,63 @@ __म_लिखो(2, 4)
 	.slave_configure = blogic_slaveconfig,
 	.bios_param = blogic_diskparam,
 	.eh_host_reset_handler = blogic_hostreset,
-#अगर 0
-	.eh_पात_handler = blogic_पात,
-#पूर्ण_अगर
+#if 0
+	.eh_abort_handler = blogic_abort,
+#endif
 	.max_sectors = 128,
-पूर्ण;
+};
 
 /*
   blogic_setup handles processing of Kernel Command Line Arguments.
 */
 
-अटल पूर्णांक __init blogic_setup(अक्षर *str)
-अणु
-	पूर्णांक पूर्णांकs[3];
+static int __init blogic_setup(char *str)
+{
+	int ints[3];
 
-	(व्योम) get_options(str, ARRAY_SIZE(पूर्णांकs), पूर्णांकs);
+	(void) get_options(str, ARRAY_SIZE(ints), ints);
 
-	अगर (पूर्णांकs[0] != 0) अणु
-		blogic_err("BusLogic: Obsolete Command Line Entry Format Ignored\n", शून्य);
-		वापस 0;
-	पूर्ण
-	अगर (str == शून्य || *str == '\0')
-		वापस 0;
-	वापस blogic_parseopts(str);
-पूर्ण
+	if (ints[0] != 0) {
+		blogic_err("BusLogic: Obsolete Command Line Entry Format Ignored\n", NULL);
+		return 0;
+	}
+	if (str == NULL || *str == '\0')
+		return 0;
+	return blogic_parseopts(str);
+}
 
 /*
  * Exit function.  Deletes all hosts associated with this driver.
  */
 
-अटल व्योम __निकास blogic_निकास(व्योम)
-अणु
-	काष्ठा blogic_adapter *ha, *next;
+static void __exit blogic_exit(void)
+{
+	struct blogic_adapter *ha, *next;
 
-	list_क्रम_each_entry_safe(ha, next, &blogic_host_list, host_list)
+	list_for_each_entry_safe(ha, next, &blogic_host_list, host_list)
 		blogic_deladapter(ha);
-पूर्ण
+}
 
 __setup("BusLogic=", blogic_setup);
 
-#अगर_घोषित MODULE
-/*अटल काष्ठा pci_device_id blogic_pci_tbl[] = अणु
-	अणु PCI_VENDOR_ID_BUSLOGIC, PCI_DEVICE_ID_BUSLOGIC_MULTIMASTER,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0पूर्ण,
-	अणु PCI_VENDOR_ID_BUSLOGIC, PCI_DEVICE_ID_BUSLOGIC_MULTIMASTER_NC,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0पूर्ण,
-	अणु PCI_VENDOR_ID_BUSLOGIC, PCI_DEVICE_ID_BUSLOGIC_FLASHPOINT,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0पूर्ण,
-	अणु पूर्ण
-पूर्ण;*/
-अटल स्थिर काष्ठा pci_device_id blogic_pci_tbl[] = अणु
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BUSLOGIC, PCI_DEVICE_ID_BUSLOGIC_MULTIMASTER)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BUSLOGIC, PCI_DEVICE_ID_BUSLOGIC_MULTIMASTER_NC)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BUSLOGIC, PCI_DEVICE_ID_BUSLOGIC_FLASHPOINT)पूर्ण,
-	अणु0, पूर्ण,
-पूर्ण;
-#पूर्ण_अगर
+#ifdef MODULE
+/*static struct pci_device_id blogic_pci_tbl[] = {
+	{ PCI_VENDOR_ID_BUSLOGIC, PCI_DEVICE_ID_BUSLOGIC_MULTIMASTER,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
+	{ PCI_VENDOR_ID_BUSLOGIC, PCI_DEVICE_ID_BUSLOGIC_MULTIMASTER_NC,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
+	{ PCI_VENDOR_ID_BUSLOGIC, PCI_DEVICE_ID_BUSLOGIC_FLASHPOINT,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
+	{ }
+};*/
+static const struct pci_device_id blogic_pci_tbl[] = {
+	{PCI_DEVICE(PCI_VENDOR_ID_BUSLOGIC, PCI_DEVICE_ID_BUSLOGIC_MULTIMASTER)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BUSLOGIC, PCI_DEVICE_ID_BUSLOGIC_MULTIMASTER_NC)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BUSLOGIC, PCI_DEVICE_ID_BUSLOGIC_FLASHPOINT)},
+	{0, },
+};
+#endif
 MODULE_DEVICE_TABLE(pci, blogic_pci_tbl);
 
 module_init(blogic_init);
-module_निकास(blogic_निकास);
+module_exit(blogic_exit);

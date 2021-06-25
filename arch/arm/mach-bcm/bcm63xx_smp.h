@@ -1,10 +1,9 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __BCM63XX_SMP_H
-#घोषणा __BCM63XX_SMP_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __BCM63XX_SMP_H
+#define __BCM63XX_SMP_H
 
-काष्ठा device_node;
+struct device_node;
 
-बाह्य पूर्णांक bcm63xx_pmb_घातer_on_cpu(काष्ठा device_node *dn);
+extern int bcm63xx_pmb_power_on_cpu(struct device_node *dn);
 
-#पूर्ण_अगर /* __BCM63XX_SMP_H */
+#endif /* __BCM63XX_SMP_H */

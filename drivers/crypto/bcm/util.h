@@ -1,114 +1,113 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright 2016 Broadcom
  */
 
-#अगर_अघोषित _UTIL_H
-#घोषणा _UTIL_H
+#ifndef _UTIL_H
+#define _UTIL_H
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/delay.h>
+#include <linux/kernel.h>
+#include <linux/delay.h>
 
-#समावेश "spu.h"
+#include "spu.h"
 
-बाह्य पूर्णांक flow_debug_logging;
-बाह्य पूर्णांक packet_debug_logging;
-बाह्य पूर्णांक debug_logging_sleep;
+extern int flow_debug_logging;
+extern int packet_debug_logging;
+extern int debug_logging_sleep;
 
-#अगर_घोषित DEBUG
-#घोषणा flow_log(...)	                \
-	करो अणु	                              \
-		अगर (flow_debug_logging) अणु	        \
-			prपूर्णांकk(__VA_ARGS__);	          \
-			अगर (debug_logging_sleep)	      \
+#ifdef DEBUG
+#define flow_log(...)	                \
+	do {	                              \
+		if (flow_debug_logging) {	        \
+			printk(__VA_ARGS__);	          \
+			if (debug_logging_sleep)	      \
 				msleep(debug_logging_sleep);	\
-		पूर्ण	                                \
-	पूर्ण जबतक (0)
-#घोषणा flow_dump(msg, var, var_len)	   \
-	करो अणु	                                 \
-		अगर (flow_debug_logging) अणु	           \
-			prपूर्णांक_hex_dump(KERN_ALERT, msg, DUMP_PREFIX_NONE,  \
+		}	                                \
+	} while (0)
+#define flow_dump(msg, var, var_len)	   \
+	do {	                                 \
+		if (flow_debug_logging) {	           \
+			print_hex_dump(KERN_ALERT, msg, DUMP_PREFIX_NONE,  \
 					16, 1, var, var_len, false); \
-				अगर (debug_logging_sleep)	       \
+				if (debug_logging_sleep)	       \
 					msleep(debug_logging_sleep);   \
-		पूर्ण                                    \
-	पूर्ण जबतक (0)
+		}                                    \
+	} while (0)
 
-#घोषणा packet_log(...)               \
-	करो अणु                                \
-		अगर (packet_debug_logging) अणु       \
-			prपूर्णांकk(__VA_ARGS__);            \
-			अगर (debug_logging_sleep)        \
+#define packet_log(...)               \
+	do {                                \
+		if (packet_debug_logging) {       \
+			printk(__VA_ARGS__);            \
+			if (debug_logging_sleep)        \
 				msleep(debug_logging_sleep);  \
-		पूर्ण                                 \
-	पूर्ण जबतक (0)
-#घोषणा packet_dump(msg, var, var_len)   \
-	करो अणु                                   \
-		अगर (packet_debug_logging) अणु          \
-			prपूर्णांक_hex_dump(KERN_ALERT, msg, DUMP_PREFIX_NONE,  \
+		}                                 \
+	} while (0)
+#define packet_dump(msg, var, var_len)   \
+	do {                                   \
+		if (packet_debug_logging) {          \
+			print_hex_dump(KERN_ALERT, msg, DUMP_PREFIX_NONE,  \
 					16, 1, var, var_len, false); \
-			अगर (debug_logging_sleep)           \
+			if (debug_logging_sleep)           \
 				msleep(debug_logging_sleep);     \
-		पूर्ण                                    \
-	पूर्ण जबतक (0)
+		}                                    \
+	} while (0)
 
-व्योम __dump_sg(काष्ठा scatterlist *sg, अचिन्हित पूर्णांक skip, अचिन्हित पूर्णांक len);
+void __dump_sg(struct scatterlist *sg, unsigned int skip, unsigned int len);
 
-#घोषणा dump_sg(sg, skip, len)     __dump_sg(sg, skip, len)
+#define dump_sg(sg, skip, len)     __dump_sg(sg, skip, len)
 
-#अन्यथा /* !DEBUG_ON */
+#else /* !DEBUG_ON */
 
-अटल अंतरभूत व्योम flow_log(स्थिर अक्षर *क्रमmat, ...)
-अणु
-पूर्ण
+static inline void flow_log(const char *format, ...)
+{
+}
 
-अटल अंतरभूत व्योम flow_dump(स्थिर अक्षर *msg, स्थिर व्योम *var, माप_प्रकार var_len)
-अणु
-पूर्ण
+static inline void flow_dump(const char *msg, const void *var, size_t var_len)
+{
+}
 
-अटल अंतरभूत व्योम packet_log(स्थिर अक्षर *क्रमmat, ...)
-अणु
-पूर्ण
+static inline void packet_log(const char *format, ...)
+{
+}
 
-अटल अंतरभूत व्योम packet_dump(स्थिर अक्षर *msg, स्थिर व्योम *var, माप_प्रकार var_len)
-अणु
-पूर्ण
+static inline void packet_dump(const char *msg, const void *var, size_t var_len)
+{
+}
 
-अटल अंतरभूत व्योम dump_sg(काष्ठा scatterlist *sg, अचिन्हित पूर्णांक skip,
-			   अचिन्हित पूर्णांक len)
-अणु
-पूर्ण
+static inline void dump_sg(struct scatterlist *sg, unsigned int skip,
+			   unsigned int len)
+{
+}
 
-#पूर्ण_अगर /* DEBUG_ON */
+#endif /* DEBUG_ON */
 
-पूर्णांक spu_sg_at_offset(काष्ठा scatterlist *sg, अचिन्हित पूर्णांक skip,
-		     काष्ठा scatterlist **sge, अचिन्हित पूर्णांक *sge_offset);
+int spu_sg_at_offset(struct scatterlist *sg, unsigned int skip,
+		     struct scatterlist **sge, unsigned int *sge_offset);
 
 /* Copy sg data, from skip, length len, to dest */
-व्योम sg_copy_part_to_buf(काष्ठा scatterlist *src, u8 *dest,
-			 अचिन्हित पूर्णांक len, अचिन्हित पूर्णांक skip);
-/* Copy src पूर्णांकo scatterlist from offset, length len */
-व्योम sg_copy_part_from_buf(काष्ठा scatterlist *dest, u8 *src,
-			   अचिन्हित पूर्णांक len, अचिन्हित पूर्णांक skip);
+void sg_copy_part_to_buf(struct scatterlist *src, u8 *dest,
+			 unsigned int len, unsigned int skip);
+/* Copy src into scatterlist from offset, length len */
+void sg_copy_part_from_buf(struct scatterlist *dest, u8 *src,
+			   unsigned int len, unsigned int skip);
 
-पूर्णांक spu_sg_count(काष्ठा scatterlist *sg_list, अचिन्हित पूर्णांक skip, पूर्णांक nbytes);
-u32 spu_msg_sg_add(काष्ठा scatterlist **to_sg,
-		   काष्ठा scatterlist **from_sg, u32 *skip,
+int spu_sg_count(struct scatterlist *sg_list, unsigned int skip, int nbytes);
+u32 spu_msg_sg_add(struct scatterlist **to_sg,
+		   struct scatterlist **from_sg, u32 *skip,
 		   u8 from_nents, u32 tot_len);
 
-व्योम add_to_ctr(u8 *ctr_pos, अचिन्हित पूर्णांक increment);
+void add_to_ctr(u8 *ctr_pos, unsigned int increment);
 
 /* produce a message digest from data of length n bytes */
-पूर्णांक करो_shash(अचिन्हित अक्षर *name, अचिन्हित अक्षर *result,
-	     स्थिर u8 *data1, अचिन्हित पूर्णांक data1_len,
-	     स्थिर u8 *data2, अचिन्हित पूर्णांक data2_len,
-	     स्थिर u8 *key, अचिन्हित पूर्णांक key_len);
+int do_shash(unsigned char *name, unsigned char *result,
+	     const u8 *data1, unsigned int data1_len,
+	     const u8 *data2, unsigned int data2_len,
+	     const u8 *key, unsigned int key_len);
 
-अक्षर *spu_alg_name(क्रमागत spu_cipher_alg alg, क्रमागत spu_cipher_mode mode);
+char *spu_alg_name(enum spu_cipher_alg alg, enum spu_cipher_mode mode);
 
-व्योम spu_setup_debugfs(व्योम);
-व्योम spu_मुक्त_debugfs(व्योम);
-व्योम क्रमmat_value_ccm(अचिन्हित पूर्णांक val, u8 *buf, u8 len);
+void spu_setup_debugfs(void);
+void spu_free_debugfs(void);
+void format_value_ccm(unsigned int val, u8 *buf, u8 len);
 
-#पूर्ण_अगर
+#endif

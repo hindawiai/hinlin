@@ -1,21 +1,20 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * TI K3 SoC info driver
  *
  * Copyright (C) 2020 Texas Instruments Incorporated - http://www.ti.com
  */
 
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/sys_soc.h>
+#include <linux/mfd/syscon.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/regmap.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
+#include <linux/string.h>
+#include <linux/sys_soc.h>
 
-#घोषणा CTRLMMR_WKUP_JTAGID_REG		0
+#define CTRLMMR_WKUP_JTAGID_REG		0
 /*
  * Bits:
  *  31-28 VARIANT	Device variant
@@ -23,70 +22,70 @@
  *  11-1  MFG		Indicates TI as manufacturer (0x17)
  *  1			Always 1
  */
-#घोषणा CTRLMMR_WKUP_JTAGID_VARIANT_SHIFT	(28)
-#घोषणा CTRLMMR_WKUP_JTAGID_VARIANT_MASK	GENMASK(31, 28)
+#define CTRLMMR_WKUP_JTAGID_VARIANT_SHIFT	(28)
+#define CTRLMMR_WKUP_JTAGID_VARIANT_MASK	GENMASK(31, 28)
 
-#घोषणा CTRLMMR_WKUP_JTAGID_PARTNO_SHIFT	(12)
-#घोषणा CTRLMMR_WKUP_JTAGID_PARTNO_MASK		GENMASK(27, 12)
+#define CTRLMMR_WKUP_JTAGID_PARTNO_SHIFT	(12)
+#define CTRLMMR_WKUP_JTAGID_PARTNO_MASK		GENMASK(27, 12)
 
-#घोषणा CTRLMMR_WKUP_JTAGID_MFG_SHIFT		(1)
-#घोषणा CTRLMMR_WKUP_JTAGID_MFG_MASK		GENMASK(11, 1)
+#define CTRLMMR_WKUP_JTAGID_MFG_SHIFT		(1)
+#define CTRLMMR_WKUP_JTAGID_MFG_MASK		GENMASK(11, 1)
 
-#घोषणा CTRLMMR_WKUP_JTAGID_MFG_TI		0x17
+#define CTRLMMR_WKUP_JTAGID_MFG_TI		0x17
 
-अटल स्थिर काष्ठा k3_soc_id अणु
-	अचिन्हित पूर्णांक id;
-	स्थिर अक्षर *family_name;
-पूर्ण k3_soc_ids[] = अणु
-	अणु 0xBB5A, "AM65X" पूर्ण,
-	अणु 0xBB64, "J721E" पूर्ण,
-	अणु 0xBB6D, "J7200" पूर्ण,
-	अणु 0xBB38, "AM64X" पूर्ण
-पूर्ण;
+static const struct k3_soc_id {
+	unsigned int id;
+	const char *family_name;
+} k3_soc_ids[] = {
+	{ 0xBB5A, "AM65X" },
+	{ 0xBB64, "J721E" },
+	{ 0xBB6D, "J7200" },
+	{ 0xBB38, "AM64X" }
+};
 
-अटल पूर्णांक
-k3_chipinfo_partno_to_names(अचिन्हित पूर्णांक partno,
-			    काष्ठा soc_device_attribute *soc_dev_attr)
-अणु
-	पूर्णांक i;
+static int
+k3_chipinfo_partno_to_names(unsigned int partno,
+			    struct soc_device_attribute *soc_dev_attr)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(k3_soc_ids); i++)
-		अगर (partno == k3_soc_ids[i].id) अणु
+	for (i = 0; i < ARRAY_SIZE(k3_soc_ids); i++)
+		if (partno == k3_soc_ids[i].id) {
 			soc_dev_attr->family = k3_soc_ids[i].family_name;
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक k3_chipinfo_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *node = pdev->dev.of_node;
-	काष्ठा soc_device_attribute *soc_dev_attr;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा soc_device *soc_dev;
-	काष्ठा regmap *regmap;
+static int k3_chipinfo_probe(struct platform_device *pdev)
+{
+	struct device_node *node = pdev->dev.of_node;
+	struct soc_device_attribute *soc_dev_attr;
+	struct device *dev = &pdev->dev;
+	struct soc_device *soc_dev;
+	struct regmap *regmap;
 	u32 partno_id;
 	u32 variant;
 	u32 jtag_id;
 	u32 mfg;
-	पूर्णांक ret;
+	int ret;
 
 	regmap = device_node_to_regmap(node);
-	अगर (IS_ERR(regmap))
-		वापस PTR_ERR(regmap);
+	if (IS_ERR(regmap))
+		return PTR_ERR(regmap);
 
-	ret = regmap_पढ़ो(regmap, CTRLMMR_WKUP_JTAGID_REG, &jtag_id);
-	अगर (ret < 0)
-		वापस ret;
+	ret = regmap_read(regmap, CTRLMMR_WKUP_JTAGID_REG, &jtag_id);
+	if (ret < 0)
+		return ret;
 
 	mfg = (jtag_id & CTRLMMR_WKUP_JTAGID_MFG_MASK) >>
 	       CTRLMMR_WKUP_JTAGID_MFG_SHIFT;
 
-	अगर (mfg != CTRLMMR_WKUP_JTAGID_MFG_TI) अणु
+	if (mfg != CTRLMMR_WKUP_JTAGID_MFG_TI) {
 		dev_err(dev, "Invalid MFG SoC\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	variant = (jtag_id & CTRLMMR_WKUP_JTAGID_VARIANT_MASK) >>
 		  CTRLMMR_WKUP_JTAGID_VARIANT_SHIFT;
@@ -95,61 +94,61 @@ k3_chipinfo_partno_to_names(अचिन्हित पूर्णांक pa
 	partno_id = (jtag_id & CTRLMMR_WKUP_JTAGID_PARTNO_MASK) >>
 		 CTRLMMR_WKUP_JTAGID_PARTNO_SHIFT;
 
-	soc_dev_attr = kzalloc(माप(*soc_dev_attr), GFP_KERNEL);
-	अगर (!soc_dev_attr)
-		वापस -ENOMEM;
+	soc_dev_attr = kzalloc(sizeof(*soc_dev_attr), GFP_KERNEL);
+	if (!soc_dev_attr)
+		return -ENOMEM;
 
-	soc_dev_attr->revision = kaप्र_लिखो(GFP_KERNEL, "SR%x.0", variant);
-	अगर (!soc_dev_attr->revision) अणु
+	soc_dev_attr->revision = kasprintf(GFP_KERNEL, "SR%x.0", variant);
+	if (!soc_dev_attr->revision) {
 		ret = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	ret = k3_chipinfo_partno_to_names(partno_id, soc_dev_attr);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Unknown SoC JTAGID[0x%08X]\n", jtag_id);
 		ret = -ENODEV;
-		जाओ err_मुक्त_rev;
-	पूर्ण
+		goto err_free_rev;
+	}
 
 	node = of_find_node_by_path("/");
-	of_property_पढ़ो_string(node, "model", &soc_dev_attr->machine);
+	of_property_read_string(node, "model", &soc_dev_attr->machine);
 	of_node_put(node);
 
-	soc_dev = soc_device_रेजिस्टर(soc_dev_attr);
-	अगर (IS_ERR(soc_dev)) अणु
+	soc_dev = soc_device_register(soc_dev_attr);
+	if (IS_ERR(soc_dev)) {
 		ret = PTR_ERR(soc_dev);
-		जाओ err_मुक्त_rev;
-	पूर्ण
+		goto err_free_rev;
+	}
 
 	dev_info(dev, "Family:%s rev:%s JTAGID[0x%08x] Detected\n",
 		 soc_dev_attr->family,
 		 soc_dev_attr->revision, jtag_id);
 
-	वापस 0;
+	return 0;
 
-err_मुक्त_rev:
-	kमुक्त(soc_dev_attr->revision);
+err_free_rev:
+	kfree(soc_dev_attr->revision);
 err:
-	kमुक्त(soc_dev_attr);
-	वापस ret;
-पूर्ण
+	kfree(soc_dev_attr);
+	return ret;
+}
 
-अटल स्थिर काष्ठा of_device_id k3_chipinfo_of_match[] = अणु
-	अणु .compatible = "ti,am654-chipid", पूर्ण,
-	अणु /* sentinel */ पूर्ण,
-पूर्ण;
+static const struct of_device_id k3_chipinfo_of_match[] = {
+	{ .compatible = "ti,am654-chipid", },
+	{ /* sentinel */ },
+};
 
-अटल काष्ठा platक्रमm_driver k3_chipinfo_driver = अणु
-	.driver = अणु
+static struct platform_driver k3_chipinfo_driver = {
+	.driver = {
 		.name = "k3-chipinfo",
 		.of_match_table = k3_chipinfo_of_match,
-	पूर्ण,
+	},
 	.probe = k3_chipinfo_probe,
-पूर्ण;
+};
 
-अटल पूर्णांक __init k3_chipinfo_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&k3_chipinfo_driver);
-पूर्ण
+static int __init k3_chipinfo_init(void)
+{
+	return platform_driver_register(&k3_chipinfo_driver);
+}
 subsys_initcall(k3_chipinfo_init);

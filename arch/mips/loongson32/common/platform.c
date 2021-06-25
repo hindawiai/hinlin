@@ -1,156 +1,155 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (c) 2011-2016 Zhang, Keguang <keguang.zhang@gmail.com>
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/err.h>
-#समावेश <linux/mtd/partitions.h>
-#समावेश <linux/sizes.h>
-#समावेश <linux/phy.h>
-#समावेश <linux/serial_8250.h>
-#समावेश <linux/sपंचांगmac.h>
-#समावेश <linux/usb/ehci_pdriver.h>
+#include <linux/clk.h>
+#include <linux/dma-mapping.h>
+#include <linux/err.h>
+#include <linux/mtd/partitions.h>
+#include <linux/sizes.h>
+#include <linux/phy.h>
+#include <linux/serial_8250.h>
+#include <linux/stmmac.h>
+#include <linux/usb/ehci_pdriver.h>
 
-#समावेश <platक्रमm.h>
-#समावेश <loongson1.h>
-#समावेश <cpufreq.h>
-#समावेश <dma.h>
-#समावेश <nand.h>
+#include <platform.h>
+#include <loongson1.h>
+#include <cpufreq.h>
+#include <dma.h>
+#include <nand.h>
 
 /* 8250/16550 compatible UART */
-#घोषणा LS1X_UART(_id)						\
-	अणु							\
+#define LS1X_UART(_id)						\
+	{							\
 		.mapbase	= LS1X_UART ## _id ## _BASE,	\
 		.irq		= LS1X_UART ## _id ## _IRQ,	\
 		.iotype		= UPIO_MEM,			\
 		.flags		= UPF_IOREMAP | UPF_FIXED_TYPE, \
 		.type		= PORT_16550A,			\
-	पूर्ण
+	}
 
-अटल काष्ठा plat_serial8250_port ls1x_serial8250_pdata[] = अणु
+static struct plat_serial8250_port ls1x_serial8250_pdata[] = {
 	LS1X_UART(0),
 	LS1X_UART(1),
 	LS1X_UART(2),
 	LS1X_UART(3),
-	अणुपूर्ण,
-पूर्ण;
+	{},
+};
 
-काष्ठा platक्रमm_device ls1x_uart_pdev = अणु
+struct platform_device ls1x_uart_pdev = {
 	.name		= "serial8250",
 	.id		= PLAT8250_DEV_PLATFORM,
-	.dev		= अणु
-		.platक्रमm_data = ls1x_serial8250_pdata,
-	पूर्ण,
-पूर्ण;
+	.dev		= {
+		.platform_data = ls1x_serial8250_pdata,
+	},
+};
 
-व्योम __init ls1x_serial_set_uartclk(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा clk *clk;
-	काष्ठा plat_serial8250_port *p;
+void __init ls1x_serial_set_uartclk(struct platform_device *pdev)
+{
+	struct clk *clk;
+	struct plat_serial8250_port *p;
 
 	clk = clk_get(&pdev->dev, pdev->name);
-	अगर (IS_ERR(clk)) अणु
+	if (IS_ERR(clk)) {
 		pr_err("unable to get %s clock, err=%ld",
 		       pdev->name, PTR_ERR(clk));
-		वापस;
-	पूर्ण
+		return;
+	}
 	clk_prepare_enable(clk);
 
-	क्रम (p = pdev->dev.platक्रमm_data; p->flags != 0; ++p)
+	for (p = pdev->dev.platform_data; p->flags != 0; ++p)
 		p->uartclk = clk_get_rate(clk);
-पूर्ण
+}
 
 /* CPUFreq */
-अटल काष्ठा plat_ls1x_cpufreq ls1x_cpufreq_pdata = अणु
+static struct plat_ls1x_cpufreq ls1x_cpufreq_pdata = {
 	.clk_name	= "cpu_clk",
 	.osc_clk_name	= "osc_clk",
 	.max_freq	= 266 * 1000,
 	.min_freq	= 33 * 1000,
-पूर्ण;
+};
 
-काष्ठा platक्रमm_device ls1x_cpufreq_pdev = अणु
+struct platform_device ls1x_cpufreq_pdev = {
 	.name		= "ls1x-cpufreq",
-	.dev		= अणु
-		.platक्रमm_data = &ls1x_cpufreq_pdata,
-	पूर्ण,
-पूर्ण;
+	.dev		= {
+		.platform_data = &ls1x_cpufreq_pdata,
+	},
+};
 
 /* Synopsys Ethernet GMAC */
-अटल काष्ठा sपंचांगmac_mdio_bus_data ls1x_mdio_bus_data = अणु
+static struct stmmac_mdio_bus_data ls1x_mdio_bus_data = {
 	.phy_mask	= 0,
-पूर्ण;
+};
 
-अटल काष्ठा sपंचांगmac_dma_cfg ls1x_eth_dma_cfg = अणु
+static struct stmmac_dma_cfg ls1x_eth_dma_cfg = {
 	.pbl		= 1,
-पूर्ण;
+};
 
-पूर्णांक ls1x_eth_mux_init(काष्ठा platक्रमm_device *pdev, व्योम *priv)
-अणु
-	काष्ठा plat_sपंचांगmacenet_data *plat_dat = शून्य;
+int ls1x_eth_mux_init(struct platform_device *pdev, void *priv)
+{
+	struct plat_stmmacenet_data *plat_dat = NULL;
 	u32 val;
 
-	val = __raw_पढ़ोl(LS1X_MUX_CTRL1);
+	val = __raw_readl(LS1X_MUX_CTRL1);
 
-#अगर defined(CONFIG_LOONGSON1_LS1B)
+#if defined(CONFIG_LOONGSON1_LS1B)
 	plat_dat = dev_get_platdata(&pdev->dev);
-	अगर (plat_dat->bus_id) अणु
-		__raw_ग_लिखोl(__raw_पढ़ोl(LS1X_MUX_CTRL0) | GMAC1_USE_UART1 |
+	if (plat_dat->bus_id) {
+		__raw_writel(__raw_readl(LS1X_MUX_CTRL0) | GMAC1_USE_UART1 |
 			     GMAC1_USE_UART0, LS1X_MUX_CTRL0);
-		चयन (plat_dat->पूर्णांकerface) अणु
-		हाल PHY_INTERFACE_MODE_RGMII:
+		switch (plat_dat->interface) {
+		case PHY_INTERFACE_MODE_RGMII:
 			val &= ~(GMAC1_USE_TXCLK | GMAC1_USE_PWM23);
-			अवरोध;
-		हाल PHY_INTERFACE_MODE_MII:
+			break;
+		case PHY_INTERFACE_MODE_MII:
 			val |= (GMAC1_USE_TXCLK | GMAC1_USE_PWM23);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			pr_err("unsupported mii mode %d\n",
-			       plat_dat->पूर्णांकerface);
-			वापस -ENOTSUPP;
-		पूर्ण
+			       plat_dat->interface);
+			return -ENOTSUPP;
+		}
 		val &= ~GMAC1_SHUT;
-	पूर्ण अन्यथा अणु
-		चयन (plat_dat->पूर्णांकerface) अणु
-		हाल PHY_INTERFACE_MODE_RGMII:
+	} else {
+		switch (plat_dat->interface) {
+		case PHY_INTERFACE_MODE_RGMII:
 			val &= ~(GMAC0_USE_TXCLK | GMAC0_USE_PWM01);
-			अवरोध;
-		हाल PHY_INTERFACE_MODE_MII:
+			break;
+		case PHY_INTERFACE_MODE_MII:
 			val |= (GMAC0_USE_TXCLK | GMAC0_USE_PWM01);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			pr_err("unsupported mii mode %d\n",
-			       plat_dat->पूर्णांकerface);
-			वापस -ENOTSUPP;
-		पूर्ण
+			       plat_dat->interface);
+			return -ENOTSUPP;
+		}
 		val &= ~GMAC0_SHUT;
-	पूर्ण
-	__raw_ग_लिखोl(val, LS1X_MUX_CTRL1);
-#या_अगर defined(CONFIG_LOONGSON1_LS1C)
+	}
+	__raw_writel(val, LS1X_MUX_CTRL1);
+#elif defined(CONFIG_LOONGSON1_LS1C)
 	plat_dat = dev_get_platdata(&pdev->dev);
 
 	val &= ~PHY_INTF_SELI;
-	अगर (plat_dat->पूर्णांकerface == PHY_INTERFACE_MODE_RMII)
+	if (plat_dat->interface == PHY_INTERFACE_MODE_RMII)
 		val |= 0x4 << PHY_INTF_SELI_SHIFT;
-	__raw_ग_लिखोl(val, LS1X_MUX_CTRL1);
+	__raw_writel(val, LS1X_MUX_CTRL1);
 
-	val = __raw_पढ़ोl(LS1X_MUX_CTRL0);
-	__raw_ग_लिखोl(val & (~GMAC_SHUT), LS1X_MUX_CTRL0);
-#पूर्ण_अगर
+	val = __raw_readl(LS1X_MUX_CTRL0);
+	__raw_writel(val & (~GMAC_SHUT), LS1X_MUX_CTRL0);
+#endif
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा plat_sपंचांगmacenet_data ls1x_eth0_pdata = अणु
+static struct plat_stmmacenet_data ls1x_eth0_pdata = {
 	.bus_id			= 0,
 	.phy_addr		= -1,
-#अगर defined(CONFIG_LOONGSON1_LS1B)
-	.पूर्णांकerface		= PHY_INTERFACE_MODE_MII,
-#या_अगर defined(CONFIG_LOONGSON1_LS1C)
-	.पूर्णांकerface		= PHY_INTERFACE_MODE_RMII,
-#पूर्ण_अगर
+#if defined(CONFIG_LOONGSON1_LS1B)
+	.interface		= PHY_INTERFACE_MODE_MII,
+#elif defined(CONFIG_LOONGSON1_LS1C)
+	.interface		= PHY_INTERFACE_MODE_RMII,
+#endif
 	.mdio_bus_data		= &ls1x_mdio_bus_data,
 	.dma_cfg		= &ls1x_eth_dma_cfg,
 	.has_gmac		= 1,
@@ -158,36 +157,36 @@
 	.rx_queues_to_use	= 1,
 	.tx_queues_to_use	= 1,
 	.init			= ls1x_eth_mux_init,
-पूर्ण;
+};
 
-अटल काष्ठा resource ls1x_eth0_resources[] = अणु
-	[0] = अणु
+static struct resource ls1x_eth0_resources[] = {
+	[0] = {
 		.start	= LS1X_GMAC0_BASE,
 		.end	= LS1X_GMAC0_BASE + SZ_64K - 1,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.name	= "macirq",
 		.start	= LS1X_GMAC0_IRQ,
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा platक्रमm_device ls1x_eth0_pdev = अणु
+struct platform_device ls1x_eth0_pdev = {
 	.name		= "stmmaceth",
 	.id		= 0,
 	.num_resources	= ARRAY_SIZE(ls1x_eth0_resources),
 	.resource	= ls1x_eth0_resources,
-	.dev		= अणु
-		.platक्रमm_data = &ls1x_eth0_pdata,
-	पूर्ण,
-पूर्ण;
+	.dev		= {
+		.platform_data = &ls1x_eth0_pdata,
+	},
+};
 
-#अगर_घोषित CONFIG_LOONGSON1_LS1B
-अटल काष्ठा plat_sपंचांगmacenet_data ls1x_eth1_pdata = अणु
+#ifdef CONFIG_LOONGSON1_LS1B
+static struct plat_stmmacenet_data ls1x_eth1_pdata = {
 	.bus_id			= 1,
 	.phy_addr		= -1,
-	.पूर्णांकerface		= PHY_INTERFACE_MODE_MII,
+	.interface		= PHY_INTERFACE_MODE_MII,
 	.mdio_bus_data		= &ls1x_mdio_bus_data,
 	.dma_cfg		= &ls1x_eth_dma_cfg,
 	.has_gmac		= 1,
@@ -195,118 +194,118 @@
 	.rx_queues_to_use	= 1,
 	.tx_queues_to_use	= 1,
 	.init			= ls1x_eth_mux_init,
-पूर्ण;
+};
 
-अटल काष्ठा resource ls1x_eth1_resources[] = अणु
-	[0] = अणु
+static struct resource ls1x_eth1_resources[] = {
+	[0] = {
 		.start	= LS1X_GMAC1_BASE,
 		.end	= LS1X_GMAC1_BASE + SZ_64K - 1,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.name	= "macirq",
 		.start	= LS1X_GMAC1_IRQ,
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा platक्रमm_device ls1x_eth1_pdev = अणु
+struct platform_device ls1x_eth1_pdev = {
 	.name		= "stmmaceth",
 	.id		= 1,
 	.num_resources	= ARRAY_SIZE(ls1x_eth1_resources),
 	.resource	= ls1x_eth1_resources,
-	.dev		= अणु
-		.platक्रमm_data = &ls1x_eth1_pdata,
-	पूर्ण,
-पूर्ण;
-#पूर्ण_अगर	/* CONFIG_LOONGSON1_LS1B */
+	.dev		= {
+		.platform_data = &ls1x_eth1_pdata,
+	},
+};
+#endif	/* CONFIG_LOONGSON1_LS1B */
 
 /* GPIO */
-अटल काष्ठा resource ls1x_gpio0_resources[] = अणु
-	[0] = अणु
+static struct resource ls1x_gpio0_resources[] = {
+	[0] = {
 		.start	= LS1X_GPIO0_BASE,
 		.end	= LS1X_GPIO0_BASE + SZ_4 - 1,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा platक्रमm_device ls1x_gpio0_pdev = अणु
+struct platform_device ls1x_gpio0_pdev = {
 	.name		= "ls1x-gpio",
 	.id		= 0,
 	.num_resources	= ARRAY_SIZE(ls1x_gpio0_resources),
 	.resource	= ls1x_gpio0_resources,
-पूर्ण;
+};
 
-अटल काष्ठा resource ls1x_gpio1_resources[] = अणु
-	[0] = अणु
+static struct resource ls1x_gpio1_resources[] = {
+	[0] = {
 		.start	= LS1X_GPIO1_BASE,
 		.end	= LS1X_GPIO1_BASE + SZ_4 - 1,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा platक्रमm_device ls1x_gpio1_pdev = अणु
+struct platform_device ls1x_gpio1_pdev = {
 	.name		= "ls1x-gpio",
 	.id		= 1,
 	.num_resources	= ARRAY_SIZE(ls1x_gpio1_resources),
 	.resource	= ls1x_gpio1_resources,
-पूर्ण;
+};
 
 /* USB EHCI */
-अटल u64 ls1x_ehci_dmamask = DMA_BIT_MASK(32);
+static u64 ls1x_ehci_dmamask = DMA_BIT_MASK(32);
 
-अटल काष्ठा resource ls1x_ehci_resources[] = अणु
-	[0] = अणु
+static struct resource ls1x_ehci_resources[] = {
+	[0] = {
 		.start	= LS1X_EHCI_BASE,
 		.end	= LS1X_EHCI_BASE + SZ_32K - 1,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.start	= LS1X_EHCI_IRQ,
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा usb_ehci_pdata ls1x_ehci_pdata = अणु
-पूर्ण;
+static struct usb_ehci_pdata ls1x_ehci_pdata = {
+};
 
-काष्ठा platक्रमm_device ls1x_ehci_pdev = अणु
+struct platform_device ls1x_ehci_pdev = {
 	.name		= "ehci-platform",
 	.id		= -1,
 	.num_resources	= ARRAY_SIZE(ls1x_ehci_resources),
 	.resource	= ls1x_ehci_resources,
-	.dev		= अणु
+	.dev		= {
 		.dma_mask = &ls1x_ehci_dmamask,
-		.platक्रमm_data = &ls1x_ehci_pdata,
-	पूर्ण,
-पूर्ण;
+		.platform_data = &ls1x_ehci_pdata,
+	},
+};
 
 /* Real Time Clock */
-व्योम __init ls1x_rtc_set_extclk(काष्ठा platक्रमm_device *pdev)
-अणु
-	u32 val = __raw_पढ़ोl(LS1X_RTC_CTRL);
+void __init ls1x_rtc_set_extclk(struct platform_device *pdev)
+{
+	u32 val = __raw_readl(LS1X_RTC_CTRL);
 
-	अगर (!(val & RTC_EXTCLK_OK))
-		__raw_ग_लिखोl(val | RTC_EXTCLK_EN, LS1X_RTC_CTRL);
-पूर्ण
+	if (!(val & RTC_EXTCLK_OK))
+		__raw_writel(val | RTC_EXTCLK_EN, LS1X_RTC_CTRL);
+}
 
-काष्ठा platक्रमm_device ls1x_rtc_pdev = अणु
+struct platform_device ls1x_rtc_pdev = {
 	.name		= "ls1x-rtc",
 	.id		= -1,
-पूर्ण;
+};
 
-/* Watchकरोg */
-अटल काष्ठा resource ls1x_wdt_resources[] = अणु
-	अणु
+/* Watchdog */
+static struct resource ls1x_wdt_resources[] = {
+	{
 		.start	= LS1X_WDT_BASE,
 		.end	= LS1X_WDT_BASE + SZ_16 - 1,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा platक्रमm_device ls1x_wdt_pdev = अणु
+struct platform_device ls1x_wdt_pdev = {
 	.name		= "ls1x-wdt",
 	.id		= -1,
 	.num_resources	= ARRAY_SIZE(ls1x_wdt_resources),
 	.resource	= ls1x_wdt_resources,
-पूर्ण;
+};

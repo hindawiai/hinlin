@@ -1,33 +1,32 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
-#अगर_अघोषित __NV31_MPEG_H__
-#घोषणा __NV31_MPEG_H__
-#घोषणा nv31_mpeg(p) container_of((p), काष्ठा nv31_mpeg, engine)
-#समावेश "priv.h"
-#समावेश <engine/mpeg.h>
+/* SPDX-License-Identifier: MIT */
+#ifndef __NV31_MPEG_H__
+#define __NV31_MPEG_H__
+#define nv31_mpeg(p) container_of((p), struct nv31_mpeg, engine)
+#include "priv.h"
+#include <engine/mpeg.h>
 
-काष्ठा nv31_mpeg अणु
-	स्थिर काष्ठा nv31_mpeg_func *func;
-	काष्ठा nvkm_engine engine;
-	काष्ठा nv31_mpeg_chan *chan;
-पूर्ण;
+struct nv31_mpeg {
+	const struct nv31_mpeg_func *func;
+	struct nvkm_engine engine;
+	struct nv31_mpeg_chan *chan;
+};
 
-पूर्णांक nv31_mpeg_new_(स्थिर काष्ठा nv31_mpeg_func *, काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक,
-		   काष्ठा nvkm_engine **);
+int nv31_mpeg_new_(const struct nv31_mpeg_func *, struct nvkm_device *, enum nvkm_subdev_type, int,
+		   struct nvkm_engine **);
 
-काष्ठा nv31_mpeg_func अणु
-	bool (*mthd_dma)(काष्ठा nvkm_device *, u32 mthd, u32 data);
-पूर्ण;
+struct nv31_mpeg_func {
+	bool (*mthd_dma)(struct nvkm_device *, u32 mthd, u32 data);
+};
 
-#घोषणा nv31_mpeg_chan(p) container_of((p), काष्ठा nv31_mpeg_chan, object)
-#समावेश <core/object.h>
+#define nv31_mpeg_chan(p) container_of((p), struct nv31_mpeg_chan, object)
+#include <core/object.h>
 
-काष्ठा nv31_mpeg_chan अणु
-	काष्ठा nvkm_object object;
-	काष्ठा nv31_mpeg *mpeg;
-	काष्ठा nvkm_fअगरo_chan *fअगरo;
-पूर्ण;
+struct nv31_mpeg_chan {
+	struct nvkm_object object;
+	struct nv31_mpeg *mpeg;
+	struct nvkm_fifo_chan *fifo;
+};
 
-पूर्णांक nv31_mpeg_chan_new(काष्ठा nvkm_fअगरo_chan *, स्थिर काष्ठा nvkm_oclass *,
-		       काष्ठा nvkm_object **);
-#पूर्ण_अगर
+int nv31_mpeg_chan_new(struct nvkm_fifo_chan *, const struct nvkm_oclass *,
+		       struct nvkm_object **);
+#endif

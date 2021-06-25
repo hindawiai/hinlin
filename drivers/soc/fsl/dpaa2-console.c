@@ -1,145 +1,144 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0+ OR BSD-3-Clause)
+// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
 /*
- * Freescale DPAA2 Platक्रमms Console Driver
+ * Freescale DPAA2 Platforms Console Driver
  *
  * Copyright 2015-2016 Freescale Semiconductor Inc.
  * Copyright 2018 NXP
  */
 
-#घोषणा pr_fmt(fmt) "dpaa2-console: " fmt
+#define pr_fmt(fmt) "dpaa2-console: " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/पन.स>
+#include <linux/module.h>
+#include <linux/of_device.h>
+#include <linux/of_address.h>
+#include <linux/miscdevice.h>
+#include <linux/uaccess.h>
+#include <linux/slab.h>
+#include <linux/fs.h>
+#include <linux/io.h>
 
-/* MC firmware base low/high रेजिस्टरs indexes */
-#घोषणा MCFBALR_OFFSET 0
-#घोषणा MCFBAHR_OFFSET 1
+/* MC firmware base low/high registers indexes */
+#define MCFBALR_OFFSET 0
+#define MCFBAHR_OFFSET 1
 
-/* Bit masks used to get the most/least signअगरicant part of the MC base addr */
-#घोषणा MC_FW_ADDR_MASK_HIGH 0x1FFFF
-#घोषणा MC_FW_ADDR_MASK_LOW  0xE0000000
+/* Bit masks used to get the most/least significant part of the MC base addr */
+#define MC_FW_ADDR_MASK_HIGH 0x1FFFF
+#define MC_FW_ADDR_MASK_LOW  0xE0000000
 
-#घोषणा MC_BUFFER_OFFSET 0x01000000
-#घोषणा MC_BUFFER_SIZE   (1024 * 1024 * 16)
-#घोषणा MC_OFFSET_DELTA  MC_BUFFER_OFFSET
+#define MC_BUFFER_OFFSET 0x01000000
+#define MC_BUFFER_SIZE   (1024 * 1024 * 16)
+#define MC_OFFSET_DELTA  MC_BUFFER_OFFSET
 
-#घोषणा AIOP_BUFFER_OFFSET 0x06000000
-#घोषणा AIOP_BUFFER_SIZE   (1024 * 1024 * 16)
-#घोषणा AIOP_OFFSET_DELTA  0
+#define AIOP_BUFFER_OFFSET 0x06000000
+#define AIOP_BUFFER_SIZE   (1024 * 1024 * 16)
+#define AIOP_OFFSET_DELTA  0
 
-#घोषणा LOG_HEADER_FLAG_BUFFER_WRAPAROUND 0x80000000
-#घोषणा LAST_BYTE(a) ((a) & ~(LOG_HEADER_FLAG_BUFFER_WRAPAROUND))
+#define LOG_HEADER_FLAG_BUFFER_WRAPAROUND 0x80000000
+#define LAST_BYTE(a) ((a) & ~(LOG_HEADER_FLAG_BUFFER_WRAPAROUND))
 
 /* MC and AIOP Magic words */
-#घोषणा MAGIC_MC   0x4d430100
-#घोषणा MAGIC_AIOP 0x41494F50
+#define MAGIC_MC   0x4d430100
+#define MAGIC_AIOP 0x41494F50
 
-काष्ठा log_header अणु
+struct log_header {
 	__le32 magic_word;
-	अक्षर reserved[4];
+	char reserved[4];
 	__le32 buf_start;
 	__le32 buf_length;
 	__le32 last_byte;
-पूर्ण;
+};
 
-काष्ठा console_data अणु
-	व्योम __iomem *map_addr;
-	काष्ठा log_header __iomem *hdr;
-	व्योम __iomem *start_addr;
-	व्योम __iomem *end_addr;
-	व्योम __iomem *end_of_data;
-	व्योम __iomem *cur_ptr;
-पूर्ण;
+struct console_data {
+	void __iomem *map_addr;
+	struct log_header __iomem *hdr;
+	void __iomem *start_addr;
+	void __iomem *end_addr;
+	void __iomem *end_of_data;
+	void __iomem *cur_ptr;
+};
 
-अटल काष्ठा resource mc_base_addr;
+static struct resource mc_base_addr;
 
-अटल अंतरभूत व्योम adjust_end(काष्ठा console_data *cd)
-अणु
-	u32 last_byte = पढ़ोl(&cd->hdr->last_byte);
+static inline void adjust_end(struct console_data *cd)
+{
+	u32 last_byte = readl(&cd->hdr->last_byte);
 
 	cd->end_of_data = cd->start_addr + LAST_BYTE(last_byte);
-पूर्ण
+}
 
-अटल u64 get_mc_fw_base_address(व्योम)
-अणु
+static u64 get_mc_fw_base_address(void)
+{
 	u64 mcfwbase = 0ULL;
 	u32 __iomem *mcfbaregs;
 
 	mcfbaregs = ioremap(mc_base_addr.start, resource_size(&mc_base_addr));
-	अगर (!mcfbaregs) अणु
+	if (!mcfbaregs) {
 		pr_err("could not map MC Firmware Base registers\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	mcfwbase  = पढ़ोl(mcfbaregs + MCFBAHR_OFFSET) &
+	mcfwbase  = readl(mcfbaregs + MCFBAHR_OFFSET) &
 			  MC_FW_ADDR_MASK_HIGH;
 	mcfwbase <<= 32;
-	mcfwbase |= पढ़ोl(mcfbaregs + MCFBALR_OFFSET) & MC_FW_ADDR_MASK_LOW;
+	mcfwbase |= readl(mcfbaregs + MCFBALR_OFFSET) & MC_FW_ADDR_MASK_LOW;
 	iounmap(mcfbaregs);
 
 	pr_debug("MC base address at 0x%016llx\n", mcfwbase);
-	वापस mcfwbase;
-पूर्ण
+	return mcfwbase;
+}
 
-अटल sमाप_प्रकार dpaa2_console_size(काष्ठा console_data *cd)
-अणु
-	sमाप_प्रकार size;
+static ssize_t dpaa2_console_size(struct console_data *cd)
+{
+	ssize_t size;
 
-	अगर (cd->cur_ptr <= cd->end_of_data)
+	if (cd->cur_ptr <= cd->end_of_data)
 		size = cd->end_of_data - cd->cur_ptr;
-	अन्यथा
+	else
 		size = (cd->end_addr - cd->cur_ptr) +
 			(cd->end_of_data - cd->start_addr);
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल पूर्णांक dpaa2_generic_console_खोलो(काष्ठा inode *node, काष्ठा file *fp,
+static int dpaa2_generic_console_open(struct inode *node, struct file *fp,
 				      u64 offset, u64 size,
 				      u32 expected_magic,
 				      u32 offset_delta)
-अणु
-	u32 पढ़ो_magic, wrapped, last_byte, buf_start, buf_length;
-	काष्ठा console_data *cd;
+{
+	u32 read_magic, wrapped, last_byte, buf_start, buf_length;
+	struct console_data *cd;
 	u64 base_addr;
-	पूर्णांक err;
+	int err;
 
-	cd = kदो_स्मृति(माप(*cd), GFP_KERNEL);
-	अगर (!cd)
-		वापस -ENOMEM;
+	cd = kmalloc(sizeof(*cd), GFP_KERNEL);
+	if (!cd)
+		return -ENOMEM;
 
 	base_addr = get_mc_fw_base_address();
-	अगर (!base_addr) अणु
+	if (!base_addr) {
 		err = -EIO;
-		जाओ err_fwba;
-	पूर्ण
+		goto err_fwba;
+	}
 
 	cd->map_addr = ioremap(base_addr + offset, size);
-	अगर (!cd->map_addr) अणु
+	if (!cd->map_addr) {
 		pr_err("cannot map console log memory\n");
 		err = -EIO;
-		जाओ err_ioremap;
-	पूर्ण
+		goto err_ioremap;
+	}
 
-	cd->hdr = (काष्ठा log_header __iomem *)cd->map_addr;
-	पढ़ो_magic = पढ़ोl(&cd->hdr->magic_word);
-	last_byte =  पढ़ोl(&cd->hdr->last_byte);
-	buf_start =  पढ़ोl(&cd->hdr->buf_start);
-	buf_length = पढ़ोl(&cd->hdr->buf_length);
+	cd->hdr = (struct log_header __iomem *)cd->map_addr;
+	read_magic = readl(&cd->hdr->magic_word);
+	last_byte =  readl(&cd->hdr->last_byte);
+	buf_start =  readl(&cd->hdr->buf_start);
+	buf_length = readl(&cd->hdr->buf_length);
 
-	अगर (पढ़ो_magic != expected_magic) अणु
+	if (read_magic != expected_magic) {
 		pr_warn("expected = %08x, read = %08x\n",
-			expected_magic, पढ़ो_magic);
+			expected_magic, read_magic);
 		err = -EIO;
-		जाओ err_magic;
-	पूर्ण
+		goto err_magic;
+	}
 
 	cd->start_addr = cd->map_addr + buf_start - offset_delta;
 	cd->end_addr = cd->start_addr + buf_length;
@@ -147,183 +146,183 @@
 	wrapped = last_byte & LOG_HEADER_FLAG_BUFFER_WRAPAROUND;
 
 	adjust_end(cd);
-	अगर (wrapped && cd->end_of_data != cd->end_addr)
+	if (wrapped && cd->end_of_data != cd->end_addr)
 		cd->cur_ptr = cd->end_of_data + 1;
-	अन्यथा
+	else
 		cd->cur_ptr = cd->start_addr;
 
-	fp->निजी_data = cd;
+	fp->private_data = cd;
 
-	वापस 0;
+	return 0;
 
 err_magic:
 	iounmap(cd->map_addr);
 
 err_ioremap:
 err_fwba:
-	kमुक्त(cd);
+	kfree(cd);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक dpaa2_mc_console_खोलो(काष्ठा inode *node, काष्ठा file *fp)
-अणु
-	वापस dpaa2_generic_console_खोलो(node, fp,
+static int dpaa2_mc_console_open(struct inode *node, struct file *fp)
+{
+	return dpaa2_generic_console_open(node, fp,
 					  MC_BUFFER_OFFSET, MC_BUFFER_SIZE,
 					  MAGIC_MC, MC_OFFSET_DELTA);
-पूर्ण
+}
 
-अटल पूर्णांक dpaa2_aiop_console_खोलो(काष्ठा inode *node, काष्ठा file *fp)
-अणु
-	वापस dpaa2_generic_console_खोलो(node, fp,
+static int dpaa2_aiop_console_open(struct inode *node, struct file *fp)
+{
+	return dpaa2_generic_console_open(node, fp,
 					  AIOP_BUFFER_OFFSET, AIOP_BUFFER_SIZE,
 					  MAGIC_AIOP, AIOP_OFFSET_DELTA);
-पूर्ण
+}
 
-अटल पूर्णांक dpaa2_console_बंद(काष्ठा inode *node, काष्ठा file *fp)
-अणु
-	काष्ठा console_data *cd = fp->निजी_data;
+static int dpaa2_console_close(struct inode *node, struct file *fp)
+{
+	struct console_data *cd = fp->private_data;
 
 	iounmap(cd->map_addr);
-	kमुक्त(cd);
-	वापस 0;
-पूर्ण
+	kfree(cd);
+	return 0;
+}
 
-अटल sमाप_प्रकार dpaa2_console_पढ़ो(काष्ठा file *fp, अक्षर __user *buf,
-				  माप_प्रकार count, loff_t *f_pos)
-अणु
-	काष्ठा console_data *cd = fp->निजी_data;
-	माप_प्रकार bytes = dpaa2_console_size(cd);
-	माप_प्रकार bytes_end = cd->end_addr - cd->cur_ptr;
-	माप_प्रकार written = 0;
-	व्योम *kbuf;
-	पूर्णांक err;
+static ssize_t dpaa2_console_read(struct file *fp, char __user *buf,
+				  size_t count, loff_t *f_pos)
+{
+	struct console_data *cd = fp->private_data;
+	size_t bytes = dpaa2_console_size(cd);
+	size_t bytes_end = cd->end_addr - cd->cur_ptr;
+	size_t written = 0;
+	void *kbuf;
+	int err;
 
-	/* Check अगर we need to adjust the end of data addr */
+	/* Check if we need to adjust the end of data addr */
 	adjust_end(cd);
 
-	अगर (cd->end_of_data == cd->cur_ptr)
-		वापस 0;
+	if (cd->end_of_data == cd->cur_ptr)
+		return 0;
 
-	अगर (count < bytes)
+	if (count < bytes)
 		bytes = count;
 
-	kbuf = kदो_स्मृति(bytes, GFP_KERNEL);
-	अगर (!kbuf)
-		वापस -ENOMEM;
+	kbuf = kmalloc(bytes, GFP_KERNEL);
+	if (!kbuf)
+		return -ENOMEM;
 
-	अगर (bytes > bytes_end) अणु
-		स_नकल_fromio(kbuf, cd->cur_ptr, bytes_end);
-		अगर (copy_to_user(buf, kbuf, bytes_end)) अणु
+	if (bytes > bytes_end) {
+		memcpy_fromio(kbuf, cd->cur_ptr, bytes_end);
+		if (copy_to_user(buf, kbuf, bytes_end)) {
 			err = -EFAULT;
-			जाओ err_मुक्त_buf;
-		पूर्ण
+			goto err_free_buf;
+		}
 		buf += bytes_end;
 		cd->cur_ptr = cd->start_addr;
 		bytes -= bytes_end;
 		written += bytes_end;
-	पूर्ण
+	}
 
-	स_नकल_fromio(kbuf, cd->cur_ptr, bytes);
-	अगर (copy_to_user(buf, kbuf, bytes)) अणु
+	memcpy_fromio(kbuf, cd->cur_ptr, bytes);
+	if (copy_to_user(buf, kbuf, bytes)) {
 		err = -EFAULT;
-		जाओ err_मुक्त_buf;
-	पूर्ण
+		goto err_free_buf;
+	}
 	cd->cur_ptr += bytes;
 	written += bytes;
 
-	वापस written;
+	return written;
 
-err_मुक्त_buf:
-	kमुक्त(kbuf);
+err_free_buf:
+	kfree(kbuf);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल स्थिर काष्ठा file_operations dpaa2_mc_console_fops = अणु
+static const struct file_operations dpaa2_mc_console_fops = {
 	.owner          = THIS_MODULE,
-	.खोलो           = dpaa2_mc_console_खोलो,
-	.release        = dpaa2_console_बंद,
-	.पढ़ो           = dpaa2_console_पढ़ो,
-पूर्ण;
+	.open           = dpaa2_mc_console_open,
+	.release        = dpaa2_console_close,
+	.read           = dpaa2_console_read,
+};
 
-अटल काष्ठा miscdevice dpaa2_mc_console_dev = अणु
+static struct miscdevice dpaa2_mc_console_dev = {
 	.minor = MISC_DYNAMIC_MINOR,
 	.name = "dpaa2_mc_console",
 	.fops = &dpaa2_mc_console_fops
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा file_operations dpaa2_aiop_console_fops = अणु
+static const struct file_operations dpaa2_aiop_console_fops = {
 	.owner          = THIS_MODULE,
-	.खोलो           = dpaa2_aiop_console_खोलो,
-	.release        = dpaa2_console_बंद,
-	.पढ़ो           = dpaa2_console_पढ़ो,
-पूर्ण;
+	.open           = dpaa2_aiop_console_open,
+	.release        = dpaa2_console_close,
+	.read           = dpaa2_console_read,
+};
 
-अटल काष्ठा miscdevice dpaa2_aiop_console_dev = अणु
+static struct miscdevice dpaa2_aiop_console_dev = {
 	.minor = MISC_DYNAMIC_MINOR,
 	.name = "dpaa2_aiop_console",
 	.fops = &dpaa2_aiop_console_fops
-पूर्ण;
+};
 
-अटल पूर्णांक dpaa2_console_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक error;
+static int dpaa2_console_probe(struct platform_device *pdev)
+{
+	int error;
 
 	error = of_address_to_resource(pdev->dev.of_node, 0, &mc_base_addr);
-	अगर (error < 0) अणु
+	if (error < 0) {
 		pr_err("of_address_to_resource() failed for %pOF with %d\n",
 		       pdev->dev.of_node, error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	error = misc_रेजिस्टर(&dpaa2_mc_console_dev);
-	अगर (error) अणु
+	error = misc_register(&dpaa2_mc_console_dev);
+	if (error) {
 		pr_err("cannot register device %s\n",
 		       dpaa2_mc_console_dev.name);
-		जाओ err_रेजिस्टर_mc;
-	पूर्ण
+		goto err_register_mc;
+	}
 
-	error = misc_रेजिस्टर(&dpaa2_aiop_console_dev);
-	अगर (error) अणु
+	error = misc_register(&dpaa2_aiop_console_dev);
+	if (error) {
 		pr_err("cannot register device %s\n",
 		       dpaa2_aiop_console_dev.name);
-		जाओ err_रेजिस्टर_aiop;
-	पूर्ण
+		goto err_register_aiop;
+	}
 
-	वापस 0;
+	return 0;
 
-err_रेजिस्टर_aiop:
-	misc_deरेजिस्टर(&dpaa2_mc_console_dev);
-err_रेजिस्टर_mc:
-	वापस error;
-पूर्ण
+err_register_aiop:
+	misc_deregister(&dpaa2_mc_console_dev);
+err_register_mc:
+	return error;
+}
 
-अटल पूर्णांक dpaa2_console_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	misc_deरेजिस्टर(&dpaa2_mc_console_dev);
-	misc_deरेजिस्टर(&dpaa2_aiop_console_dev);
+static int dpaa2_console_remove(struct platform_device *pdev)
+{
+	misc_deregister(&dpaa2_mc_console_dev);
+	misc_deregister(&dpaa2_aiop_console_dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id dpaa2_console_match_table[] = अणु
-	अणु .compatible = "fsl,dpaa2-console",पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id dpaa2_console_match_table[] = {
+	{ .compatible = "fsl,dpaa2-console",},
+	{},
+};
 
 MODULE_DEVICE_TABLE(of, dpaa2_console_match_table);
 
-अटल काष्ठा platक्रमm_driver dpaa2_console_driver = अणु
-	.driver = अणु
+static struct platform_driver dpaa2_console_driver = {
+	.driver = {
 		   .name = "dpaa2-console",
-		   .pm = शून्य,
+		   .pm = NULL,
 		   .of_match_table = dpaa2_console_match_table,
-		   पूर्ण,
+		   },
 	.probe = dpaa2_console_probe,
-	.हटाओ = dpaa2_console_हटाओ,
-पूर्ण;
-module_platक्रमm_driver(dpaa2_console_driver);
+	.remove = dpaa2_console_remove,
+};
+module_platform_driver(dpaa2_console_driver);
 
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_AUTHOR("Roy Pledge <roy.pledge@nxp.com>");

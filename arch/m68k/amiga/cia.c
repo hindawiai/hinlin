@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  *  linux/arch/m68k/amiga/cia.c - CIA support
  *
@@ -7,190 +6,190 @@
  *  The concept of some functions bases on the original Amiga OS function
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file COPYING in the main directory of this archive
+ * for more details.
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel_स्थिति.स>
-#समावेश <linux/init.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/sched.h>
+#include <linux/errno.h>
+#include <linux/kernel_stat.h>
+#include <linux/init.h>
+#include <linux/seq_file.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
 
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/amigahw.h>
-#समावेश <यंत्र/amigaपूर्णांकs.h>
+#include <asm/irq.h>
+#include <asm/amigahw.h>
+#include <asm/amigaints.h>
 
-काष्ठा ciabase अणु
-	अस्थिर काष्ठा CIA *cia;
-	अचिन्हित अक्षर icr_mask, icr_data;
-	अचिन्हित लघु पूर्णांक_mask;
-	पूर्णांक handler_irq, cia_irq, server_irq;
-	अक्षर *name;
-पूर्ण ciaa_base = अणु
+struct ciabase {
+	volatile struct CIA *cia;
+	unsigned char icr_mask, icr_data;
+	unsigned short int_mask;
+	int handler_irq, cia_irq, server_irq;
+	char *name;
+} ciaa_base = {
 	.cia		= &ciaa,
-	.पूर्णांक_mask	= IF_PORTS,
+	.int_mask	= IF_PORTS,
 	.handler_irq	= IRQ_AMIGA_PORTS,
 	.cia_irq	= IRQ_AMIGA_CIAA,
 	.name		= "CIAA"
-पूर्ण, ciab_base = अणु
+}, ciab_base = {
 	.cia		= &ciab,
-	.पूर्णांक_mask	= IF_EXTER,
+	.int_mask	= IF_EXTER,
 	.handler_irq	= IRQ_AMIGA_EXTER,
 	.cia_irq	= IRQ_AMIGA_CIAB,
 	.name		= "CIAB"
-पूर्ण;
+};
 
 /*
- *  Cause or clear CIA पूर्णांकerrupts, वापस old पूर्णांकerrupt status.
+ *  Cause or clear CIA interrupts, return old interrupt status.
  */
 
-अचिन्हित अक्षर cia_set_irq(काष्ठा ciabase *base, अचिन्हित अक्षर mask)
-अणु
-	अचिन्हित अक्षर old;
+unsigned char cia_set_irq(struct ciabase *base, unsigned char mask)
+{
+	unsigned char old;
 
 	old = (base->icr_data |= base->cia->icr);
-	अगर (mask & CIA_ICR_SETCLR)
+	if (mask & CIA_ICR_SETCLR)
 		base->icr_data |= mask;
-	अन्यथा
+	else
 		base->icr_data &= ~mask;
-	अगर (base->icr_data & base->icr_mask)
-		amiga_custom.पूर्णांकreq = IF_SETCLR | base->पूर्णांक_mask;
-	वापस old & base->icr_mask;
-पूर्ण
+	if (base->icr_data & base->icr_mask)
+		amiga_custom.intreq = IF_SETCLR | base->int_mask;
+	return old & base->icr_mask;
+}
 
 /*
- *  Enable or disable CIA पूर्णांकerrupts, वापस old पूर्णांकerrupt mask,
+ *  Enable or disable CIA interrupts, return old interrupt mask,
  */
 
-अचिन्हित अक्षर cia_able_irq(काष्ठा ciabase *base, अचिन्हित अक्षर mask)
-अणु
-	अचिन्हित अक्षर old;
+unsigned char cia_able_irq(struct ciabase *base, unsigned char mask)
+{
+	unsigned char old;
 
 	old = base->icr_mask;
 	base->icr_data |= base->cia->icr;
 	base->cia->icr = mask;
-	अगर (mask & CIA_ICR_SETCLR)
+	if (mask & CIA_ICR_SETCLR)
 		base->icr_mask |= mask;
-	अन्यथा
+	else
 		base->icr_mask &= ~mask;
 	base->icr_mask &= CIA_ICR_ALL;
-	अगर (base->icr_data & base->icr_mask)
-		amiga_custom.पूर्णांकreq = IF_SETCLR | base->पूर्णांक_mask;
-	वापस old;
-पूर्ण
+	if (base->icr_data & base->icr_mask)
+		amiga_custom.intreq = IF_SETCLR | base->int_mask;
+	return old;
+}
 
-अटल irqवापस_t cia_handler(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा ciabase *base = dev_id;
-	पूर्णांक mach_irq;
-	अचिन्हित अक्षर पूर्णांकs;
-	अचिन्हित दीर्घ flags;
+static irqreturn_t cia_handler(int irq, void *dev_id)
+{
+	struct ciabase *base = dev_id;
+	int mach_irq;
+	unsigned char ints;
+	unsigned long flags;
 
-	/* Interrupts get disabled जबतक the समयr irq flag is cleared and
-	 * the समयr पूर्णांकerrupt serviced.
+	/* Interrupts get disabled while the timer irq flag is cleared and
+	 * the timer interrupt serviced.
 	 */
 	mach_irq = base->cia_irq;
 	local_irq_save(flags);
-	पूर्णांकs = cia_set_irq(base, CIA_ICR_ALL);
-	amiga_custom.पूर्णांकreq = base->पूर्णांक_mask;
-	अगर (पूर्णांकs & 1)
+	ints = cia_set_irq(base, CIA_ICR_ALL);
+	amiga_custom.intreq = base->int_mask;
+	if (ints & 1)
 		generic_handle_irq(mach_irq);
 	local_irq_restore(flags);
-	mach_irq++, पूर्णांकs >>= 1;
-	क्रम (; पूर्णांकs; mach_irq++, पूर्णांकs >>= 1) अणु
-		अगर (पूर्णांकs & 1)
+	mach_irq++, ints >>= 1;
+	for (; ints; mach_irq++, ints >>= 1) {
+		if (ints & 1)
 			generic_handle_irq(mach_irq);
-	पूर्ण
-	वापस IRQ_HANDLED;
-पूर्ण
+	}
+	return IRQ_HANDLED;
+}
 
-अटल व्योम cia_irq_enable(काष्ठा irq_data *data)
-अणु
-	अचिन्हित पूर्णांक irq = data->irq;
-	अचिन्हित अक्षर mask;
+static void cia_irq_enable(struct irq_data *data)
+{
+	unsigned int irq = data->irq;
+	unsigned char mask;
 
-	अगर (irq >= IRQ_AMIGA_CIAB) अणु
+	if (irq >= IRQ_AMIGA_CIAB) {
 		mask = 1 << (irq - IRQ_AMIGA_CIAB);
 		cia_set_irq(&ciab_base, mask);
 		cia_able_irq(&ciab_base, CIA_ICR_SETCLR | mask);
-	पूर्ण अन्यथा अणु
+	} else {
 		mask = 1 << (irq - IRQ_AMIGA_CIAA);
 		cia_set_irq(&ciaa_base, mask);
 		cia_able_irq(&ciaa_base, CIA_ICR_SETCLR | mask);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम cia_irq_disable(काष्ठा irq_data *data)
-अणु
-	अचिन्हित पूर्णांक irq = data->irq;
+static void cia_irq_disable(struct irq_data *data)
+{
+	unsigned int irq = data->irq;
 
-	अगर (irq >= IRQ_AMIGA_CIAB)
+	if (irq >= IRQ_AMIGA_CIAB)
 		cia_able_irq(&ciab_base, 1 << (irq - IRQ_AMIGA_CIAB));
-	अन्यथा
+	else
 		cia_able_irq(&ciaa_base, 1 << (irq - IRQ_AMIGA_CIAA));
-पूर्ण
+}
 
-अटल काष्ठा irq_chip cia_irq_chip = अणु
+static struct irq_chip cia_irq_chip = {
 	.name		= "cia",
 	.irq_enable	= cia_irq_enable,
 	.irq_disable	= cia_irq_disable,
-पूर्ण;
+};
 
 /*
- * Override स्वतः irq 2 & 6 and use them as general chain
- * क्रम बाह्यal पूर्णांकerrupts, we link the CIA पूर्णांकerrupt sources
- * पूर्णांकo this chain.
+ * Override auto irq 2 & 6 and use them as general chain
+ * for external interrupts, we link the CIA interrupt sources
+ * into this chain.
  */
 
-अटल व्योम स्वतः_irq_enable(काष्ठा irq_data *data)
-अणु
-	चयन (data->irq) अणु
-	हाल IRQ_AUTO_2:
-		amiga_custom.पूर्णांकena = IF_SETCLR | IF_PORTS;
-		अवरोध;
-	हाल IRQ_AUTO_6:
-		amiga_custom.पूर्णांकena = IF_SETCLR | IF_EXTER;
-		अवरोध;
-	पूर्ण
-पूर्ण
+static void auto_irq_enable(struct irq_data *data)
+{
+	switch (data->irq) {
+	case IRQ_AUTO_2:
+		amiga_custom.intena = IF_SETCLR | IF_PORTS;
+		break;
+	case IRQ_AUTO_6:
+		amiga_custom.intena = IF_SETCLR | IF_EXTER;
+		break;
+	}
+}
 
-अटल व्योम स्वतः_irq_disable(काष्ठा irq_data *data)
-अणु
-	चयन (data->irq) अणु
-	हाल IRQ_AUTO_2:
-		amiga_custom.पूर्णांकena = IF_PORTS;
-		अवरोध;
-	हाल IRQ_AUTO_6:
-		amiga_custom.पूर्णांकena = IF_EXTER;
-		अवरोध;
-	पूर्ण
-पूर्ण
+static void auto_irq_disable(struct irq_data *data)
+{
+	switch (data->irq) {
+	case IRQ_AUTO_2:
+		amiga_custom.intena = IF_PORTS;
+		break;
+	case IRQ_AUTO_6:
+		amiga_custom.intena = IF_EXTER;
+		break;
+	}
+}
 
-अटल काष्ठा irq_chip स्वतः_irq_chip = अणु
+static struct irq_chip auto_irq_chip = {
 	.name		= "auto",
-	.irq_enable	= स्वतः_irq_enable,
-	.irq_disable	= स्वतः_irq_disable,
-पूर्ण;
+	.irq_enable	= auto_irq_enable,
+	.irq_disable	= auto_irq_disable,
+};
 
-व्योम __init cia_init_IRQ(काष्ठा ciabase *base)
-अणु
+void __init cia_init_IRQ(struct ciabase *base)
+{
 	m68k_setup_irq_controller(&cia_irq_chip, handle_simple_irq,
 				  base->cia_irq, CIA_IRQS);
 
-	/* clear any pending पूर्णांकerrupt and turn off all पूर्णांकerrupts */
+	/* clear any pending interrupt and turn off all interrupts */
 	cia_set_irq(base, CIA_ICR_ALL);
 	cia_able_irq(base, CIA_ICR_ALL);
 
-	/* override स्वतः पूर्णांक and install CIA handler */
-	m68k_setup_irq_controller(&स्वतः_irq_chip, handle_simple_irq,
+	/* override auto int and install CIA handler */
+	m68k_setup_irq_controller(&auto_irq_chip, handle_simple_irq,
 				  base->handler_irq, 1);
 	m68k_irq_startup_irq(base->handler_irq);
-	अगर (request_irq(base->handler_irq, cia_handler, IRQF_SHARED,
+	if (request_irq(base->handler_irq, cia_handler, IRQF_SHARED,
 			base->name, base))
 		pr_err("Couldn't register %s interrupt\n", base->name);
-पूर्ण
+}

@@ -1,182 +1,181 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: ISC
+// SPDX-License-Identifier: ISC
 /*
  * Copyright (c) 2012-2017 Qualcomm Atheros, Inc.
  * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 
-#समावेश <linux/पूर्णांकerrupt.h>
+#include <linux/interrupt.h>
 
-#समावेश "wil6210.h"
-#समावेश "trace.h"
+#include "wil6210.h"
+#include "trace.h"
 
 /**
  * Theory of operation:
  *
- * There is ISR pseuकरो-cause रेजिस्टर,
+ * There is ISR pseudo-cause register,
  * dma_rgf->DMA_RGF.PSEUDO_CAUSE.PSEUDO_CAUSE
- * Its bits represents OR'ed bits from 3 real ISR रेजिस्टरs:
+ * Its bits represents OR'ed bits from 3 real ISR registers:
  * TX, RX, and MISC.
  *
  * Registers may be configured to either "write 1 to clear" or
  * "clear on read" mode
  *
- * When handling पूर्णांकerrupt, one have to mask/unmask पूर्णांकerrupts क्रम the
- * real ISR रेजिस्टरs, or hardware may malfunction.
+ * When handling interrupt, one have to mask/unmask interrupts for the
+ * real ISR registers, or hardware may malfunction.
  *
  */
 
-#घोषणा WIL6210_IRQ_DISABLE		(0xFFFFFFFFUL)
-#घोषणा WIL6210_IRQ_DISABLE_NO_HALP	(0xF7FFFFFFUL)
-#घोषणा WIL6210_IMC_RX		(BIT_DMA_EP_RX_ICR_RX_DONE | \
+#define WIL6210_IRQ_DISABLE		(0xFFFFFFFFUL)
+#define WIL6210_IRQ_DISABLE_NO_HALP	(0xF7FFFFFFUL)
+#define WIL6210_IMC_RX		(BIT_DMA_EP_RX_ICR_RX_DONE | \
 				 BIT_DMA_EP_RX_ICR_RX_HTRSH)
-#घोषणा WIL6210_IMC_RX_NO_RX_HTRSH (WIL6210_IMC_RX & \
+#define WIL6210_IMC_RX_NO_RX_HTRSH (WIL6210_IMC_RX & \
 				    (~(BIT_DMA_EP_RX_ICR_RX_HTRSH)))
-#घोषणा WIL6210_IMC_TX		(BIT_DMA_EP_TX_ICR_TX_DONE | \
+#define WIL6210_IMC_TX		(BIT_DMA_EP_TX_ICR_TX_DONE | \
 				BIT_DMA_EP_TX_ICR_TX_DONE_N(0))
-#घोषणा WIL6210_IMC_TX_EDMA		BIT_TX_STATUS_IRQ
-#घोषणा WIL6210_IMC_RX_EDMA		BIT_RX_STATUS_IRQ
-#घोषणा WIL6210_IMC_MISC_NO_HALP	(ISR_MISC_FW_READY | \
+#define WIL6210_IMC_TX_EDMA		BIT_TX_STATUS_IRQ
+#define WIL6210_IMC_RX_EDMA		BIT_RX_STATUS_IRQ
+#define WIL6210_IMC_MISC_NO_HALP	(ISR_MISC_FW_READY | \
 					 ISR_MISC_MBOX_EVT | \
 					 ISR_MISC_FW_ERROR)
-#घोषणा WIL6210_IMC_MISC		(WIL6210_IMC_MISC_NO_HALP | \
+#define WIL6210_IMC_MISC		(WIL6210_IMC_MISC_NO_HALP | \
 					 BIT_DMA_EP_MISC_ICR_HALP)
-#घोषणा WIL6210_IRQ_PSEUDO_MASK (u32)(~(BIT_DMA_PSEUDO_CAUSE_RX | \
+#define WIL6210_IRQ_PSEUDO_MASK (u32)(~(BIT_DMA_PSEUDO_CAUSE_RX | \
 					BIT_DMA_PSEUDO_CAUSE_TX | \
 					BIT_DMA_PSEUDO_CAUSE_MISC))
 
-#अगर defined(CONFIG_WIL6210_ISR_COR)
+#if defined(CONFIG_WIL6210_ISR_COR)
 /* configure to Clear-On-Read mode */
-#घोषणा WIL_ICR_ICC_VALUE	(0xFFFFFFFFUL)
-#घोषणा WIL_ICR_ICC_MISC_VALUE	(0xF7FFFFFFUL)
+#define WIL_ICR_ICC_VALUE	(0xFFFFFFFFUL)
+#define WIL_ICR_ICC_MISC_VALUE	(0xF7FFFFFFUL)
 
-अटल अंतरभूत व्योम wil_icr_clear(u32 x, व्योम __iomem *addr)
-अणु
-पूर्ण
-#अन्यथा /* defined(CONFIG_WIL6210_ISR_COR) */
+static inline void wil_icr_clear(u32 x, void __iomem *addr)
+{
+}
+#else /* defined(CONFIG_WIL6210_ISR_COR) */
 /* configure to Write-1-to-Clear mode */
-#घोषणा WIL_ICR_ICC_VALUE	(0UL)
-#घोषणा WIL_ICR_ICC_MISC_VALUE	(0UL)
+#define WIL_ICR_ICC_VALUE	(0UL)
+#define WIL_ICR_ICC_MISC_VALUE	(0UL)
 
-अटल अंतरभूत व्योम wil_icr_clear(u32 x, व्योम __iomem *addr)
-अणु
-	ग_लिखोl(x, addr);
-पूर्ण
-#पूर्ण_अगर /* defined(CONFIG_WIL6210_ISR_COR) */
+static inline void wil_icr_clear(u32 x, void __iomem *addr)
+{
+	writel(x, addr);
+}
+#endif /* defined(CONFIG_WIL6210_ISR_COR) */
 
-अटल अंतरभूत u32 wil_ioपढ़ो32_and_clear(व्योम __iomem *addr)
-अणु
-	u32 x = पढ़ोl(addr);
+static inline u32 wil_ioread32_and_clear(void __iomem *addr)
+{
+	u32 x = readl(addr);
 
 	wil_icr_clear(x, addr);
 
-	वापस x;
-पूर्ण
+	return x;
+}
 
-अटल व्योम wil6210_mask_irq_tx(काष्ठा wil6210_priv *wil)
-अणु
-	wil_w(wil, RGF_DMA_EP_TX_ICR + दुरत्व(काष्ठा RGF_ICR, IMS),
+static void wil6210_mask_irq_tx(struct wil6210_priv *wil)
+{
+	wil_w(wil, RGF_DMA_EP_TX_ICR + offsetof(struct RGF_ICR, IMS),
 	      WIL6210_IRQ_DISABLE);
-पूर्ण
+}
 
-अटल व्योम wil6210_mask_irq_tx_edma(काष्ठा wil6210_priv *wil)
-अणु
-	wil_w(wil, RGF_INT_GEN_TX_ICR + दुरत्व(काष्ठा RGF_ICR, IMS),
+static void wil6210_mask_irq_tx_edma(struct wil6210_priv *wil)
+{
+	wil_w(wil, RGF_INT_GEN_TX_ICR + offsetof(struct RGF_ICR, IMS),
 	      WIL6210_IRQ_DISABLE);
-पूर्ण
+}
 
-अटल व्योम wil6210_mask_irq_rx(काष्ठा wil6210_priv *wil)
-अणु
-	wil_w(wil, RGF_DMA_EP_RX_ICR + दुरत्व(काष्ठा RGF_ICR, IMS),
+static void wil6210_mask_irq_rx(struct wil6210_priv *wil)
+{
+	wil_w(wil, RGF_DMA_EP_RX_ICR + offsetof(struct RGF_ICR, IMS),
 	      WIL6210_IRQ_DISABLE);
-पूर्ण
+}
 
-अटल व्योम wil6210_mask_irq_rx_edma(काष्ठा wil6210_priv *wil)
-अणु
-	wil_w(wil, RGF_INT_GEN_RX_ICR + दुरत्व(काष्ठा RGF_ICR, IMS),
+static void wil6210_mask_irq_rx_edma(struct wil6210_priv *wil)
+{
+	wil_w(wil, RGF_INT_GEN_RX_ICR + offsetof(struct RGF_ICR, IMS),
 	      WIL6210_IRQ_DISABLE);
-पूर्ण
+}
 
-अटल व्योम wil6210_mask_irq_misc(काष्ठा wil6210_priv *wil, bool mask_halp)
-अणु
+static void wil6210_mask_irq_misc(struct wil6210_priv *wil, bool mask_halp)
+{
 	wil_dbg_irq(wil, "mask_irq_misc: mask_halp(%s)\n",
 		    mask_halp ? "true" : "false");
 
-	wil_w(wil, RGF_DMA_EP_MISC_ICR + दुरत्व(काष्ठा RGF_ICR, IMS),
+	wil_w(wil, RGF_DMA_EP_MISC_ICR + offsetof(struct RGF_ICR, IMS),
 	      mask_halp ? WIL6210_IRQ_DISABLE : WIL6210_IRQ_DISABLE_NO_HALP);
-पूर्ण
+}
 
-व्योम wil6210_mask_halp(काष्ठा wil6210_priv *wil)
-अणु
+void wil6210_mask_halp(struct wil6210_priv *wil)
+{
 	wil_dbg_irq(wil, "mask_halp\n");
 
-	wil_w(wil, RGF_DMA_EP_MISC_ICR + दुरत्व(काष्ठा RGF_ICR, IMS),
+	wil_w(wil, RGF_DMA_EP_MISC_ICR + offsetof(struct RGF_ICR, IMS),
 	      BIT_DMA_EP_MISC_ICR_HALP);
-पूर्ण
+}
 
-अटल व्योम wil6210_mask_irq_pseuकरो(काष्ठा wil6210_priv *wil)
-अणु
+static void wil6210_mask_irq_pseudo(struct wil6210_priv *wil)
+{
 	wil_dbg_irq(wil, "mask_irq_pseudo\n");
 
 	wil_w(wil, RGF_DMA_PSEUDO_CAUSE_MASK_SW, WIL6210_IRQ_DISABLE);
 
 	clear_bit(wil_status_irqen, wil->status);
-पूर्ण
+}
 
-व्योम wil6210_unmask_irq_tx(काष्ठा wil6210_priv *wil)
-अणु
-	wil_w(wil, RGF_DMA_EP_TX_ICR + दुरत्व(काष्ठा RGF_ICR, IMC),
+void wil6210_unmask_irq_tx(struct wil6210_priv *wil)
+{
+	wil_w(wil, RGF_DMA_EP_TX_ICR + offsetof(struct RGF_ICR, IMC),
 	      WIL6210_IMC_TX);
-पूर्ण
+}
 
-व्योम wil6210_unmask_irq_tx_edma(काष्ठा wil6210_priv *wil)
-अणु
-	wil_w(wil, RGF_INT_GEN_TX_ICR + दुरत्व(काष्ठा RGF_ICR, IMC),
+void wil6210_unmask_irq_tx_edma(struct wil6210_priv *wil)
+{
+	wil_w(wil, RGF_INT_GEN_TX_ICR + offsetof(struct RGF_ICR, IMC),
 	      WIL6210_IMC_TX_EDMA);
-पूर्ण
+}
 
-व्योम wil6210_unmask_irq_rx(काष्ठा wil6210_priv *wil)
-अणु
-	bool unmask_rx_htrsh = atomic_पढ़ो(&wil->connected_vअगरs) > 0;
+void wil6210_unmask_irq_rx(struct wil6210_priv *wil)
+{
+	bool unmask_rx_htrsh = atomic_read(&wil->connected_vifs) > 0;
 
-	wil_w(wil, RGF_DMA_EP_RX_ICR + दुरत्व(काष्ठा RGF_ICR, IMC),
+	wil_w(wil, RGF_DMA_EP_RX_ICR + offsetof(struct RGF_ICR, IMC),
 	      unmask_rx_htrsh ? WIL6210_IMC_RX : WIL6210_IMC_RX_NO_RX_HTRSH);
-पूर्ण
+}
 
-व्योम wil6210_unmask_irq_rx_edma(काष्ठा wil6210_priv *wil)
-अणु
-	wil_w(wil, RGF_INT_GEN_RX_ICR + दुरत्व(काष्ठा RGF_ICR, IMC),
+void wil6210_unmask_irq_rx_edma(struct wil6210_priv *wil)
+{
+	wil_w(wil, RGF_INT_GEN_RX_ICR + offsetof(struct RGF_ICR, IMC),
 	      WIL6210_IMC_RX_EDMA);
-पूर्ण
+}
 
-अटल व्योम wil6210_unmask_irq_misc(काष्ठा wil6210_priv *wil, bool unmask_halp)
-अणु
+static void wil6210_unmask_irq_misc(struct wil6210_priv *wil, bool unmask_halp)
+{
 	wil_dbg_irq(wil, "unmask_irq_misc: unmask_halp(%s)\n",
 		    unmask_halp ? "true" : "false");
 
-	wil_w(wil, RGF_DMA_EP_MISC_ICR + दुरत्व(काष्ठा RGF_ICR, IMC),
+	wil_w(wil, RGF_DMA_EP_MISC_ICR + offsetof(struct RGF_ICR, IMC),
 	      unmask_halp ? WIL6210_IMC_MISC : WIL6210_IMC_MISC_NO_HALP);
-पूर्ण
+}
 
-अटल व्योम wil6210_unmask_halp(काष्ठा wil6210_priv *wil)
-अणु
+static void wil6210_unmask_halp(struct wil6210_priv *wil)
+{
 	wil_dbg_irq(wil, "unmask_halp\n");
 
-	wil_w(wil, RGF_DMA_EP_MISC_ICR + दुरत्व(काष्ठा RGF_ICR, IMC),
+	wil_w(wil, RGF_DMA_EP_MISC_ICR + offsetof(struct RGF_ICR, IMC),
 	      BIT_DMA_EP_MISC_ICR_HALP);
-पूर्ण
+}
 
-अटल व्योम wil6210_unmask_irq_pseuकरो(काष्ठा wil6210_priv *wil)
-अणु
+static void wil6210_unmask_irq_pseudo(struct wil6210_priv *wil)
+{
 	wil_dbg_irq(wil, "unmask_irq_pseudo\n");
 
 	set_bit(wil_status_irqen, wil->status);
 
 	wil_w(wil, RGF_DMA_PSEUDO_CAUSE_MASK_SW, WIL6210_IRQ_PSEUDO_MASK);
-पूर्ण
+}
 
-व्योम wil_mask_irq(काष्ठा wil6210_priv *wil)
-अणु
+void wil_mask_irq(struct wil6210_priv *wil)
+{
 	wil_dbg_irq(wil, "mask_irq\n");
 
 	wil6210_mask_irq_tx(wil);
@@ -184,37 +183,37 @@
 	wil6210_mask_irq_rx(wil);
 	wil6210_mask_irq_rx_edma(wil);
 	wil6210_mask_irq_misc(wil, true);
-	wil6210_mask_irq_pseuकरो(wil);
-पूर्ण
+	wil6210_mask_irq_pseudo(wil);
+}
 
-व्योम wil_unmask_irq(काष्ठा wil6210_priv *wil)
-अणु
+void wil_unmask_irq(struct wil6210_priv *wil)
+{
 	wil_dbg_irq(wil, "unmask_irq\n");
 
-	wil_w(wil, RGF_DMA_EP_RX_ICR + दुरत्व(काष्ठा RGF_ICR, ICC),
+	wil_w(wil, RGF_DMA_EP_RX_ICR + offsetof(struct RGF_ICR, ICC),
 	      WIL_ICR_ICC_VALUE);
-	wil_w(wil, RGF_DMA_EP_TX_ICR + दुरत्व(काष्ठा RGF_ICR, ICC),
+	wil_w(wil, RGF_DMA_EP_TX_ICR + offsetof(struct RGF_ICR, ICC),
 	      WIL_ICR_ICC_VALUE);
-	wil_w(wil, RGF_DMA_EP_MISC_ICR + दुरत्व(काष्ठा RGF_ICR, ICC),
+	wil_w(wil, RGF_DMA_EP_MISC_ICR + offsetof(struct RGF_ICR, ICC),
 	      WIL_ICR_ICC_MISC_VALUE);
-	wil_w(wil, RGF_INT_GEN_TX_ICR + दुरत्व(काष्ठा RGF_ICR, ICC),
+	wil_w(wil, RGF_INT_GEN_TX_ICR + offsetof(struct RGF_ICR, ICC),
 	      WIL_ICR_ICC_VALUE);
-	wil_w(wil, RGF_INT_GEN_RX_ICR + दुरत्व(काष्ठा RGF_ICR, ICC),
+	wil_w(wil, RGF_INT_GEN_RX_ICR + offsetof(struct RGF_ICR, ICC),
 	      WIL_ICR_ICC_VALUE);
 
-	wil6210_unmask_irq_pseuकरो(wil);
-	अगर (wil->use_enhanced_dma_hw) अणु
+	wil6210_unmask_irq_pseudo(wil);
+	if (wil->use_enhanced_dma_hw) {
 		wil6210_unmask_irq_tx_edma(wil);
 		wil6210_unmask_irq_rx_edma(wil);
-	पूर्ण अन्यथा अणु
+	} else {
 		wil6210_unmask_irq_tx(wil);
 		wil6210_unmask_irq_rx(wil);
-	पूर्ण
+	}
 	wil6210_unmask_irq_misc(wil, true);
-पूर्ण
+}
 
-व्योम wil_configure_पूर्णांकerrupt_moderation_edma(काष्ठा wil6210_priv *wil)
-अणु
+void wil_configure_interrupt_moderation_edma(struct wil6210_priv *wil)
+{
 	u32 moderation;
 
 	wil_s(wil, RGF_INT_GEN_IDLE_TIME_LIMIT, WIL_EDMA_IDLE_TIME_LIMIT_USEC);
@@ -232,252 +231,252 @@
 	 */
 	wil_c(wil, RGF_INT_COUNT_ON_SPECIAL_EVT, 0x1FE);
 	wil_s(wil, RGF_INT_COUNT_ON_SPECIAL_EVT, 0x1);
-पूर्ण
+}
 
-व्योम wil_configure_पूर्णांकerrupt_moderation(काष्ठा wil6210_priv *wil)
-अणु
-	काष्ठा wireless_dev *wdev = wil->मुख्य_ndev->ieee80211_ptr;
+void wil_configure_interrupt_moderation(struct wil6210_priv *wil)
+{
+	struct wireless_dev *wdev = wil->main_ndev->ieee80211_ptr;
 
 	wil_dbg_irq(wil, "configure_interrupt_moderation\n");
 
-	/* disable पूर्णांकerrupt moderation क्रम monitor
-	 * to get better बारtamp precision
+	/* disable interrupt moderation for monitor
+	 * to get better timestamp precision
 	 */
-	अगर (wdev->अगरtype == NL80211_IFTYPE_MONITOR)
-		वापस;
+	if (wdev->iftype == NL80211_IFTYPE_MONITOR)
+		return;
 
-	/* Disable and clear tx counter beक्रमe (re)configuration */
+	/* Disable and clear tx counter before (re)configuration */
 	wil_w(wil, RGF_DMA_ITR_TX_CNT_CTL, BIT_DMA_ITR_TX_CNT_CTL_CLR);
 	wil_w(wil, RGF_DMA_ITR_TX_CNT_TRSH, wil->tx_max_burst_duration);
 	wil_info(wil, "set ITR_TX_CNT_TRSH = %d usec\n",
 		 wil->tx_max_burst_duration);
-	/* Configure TX max burst duration समयr to use usec units */
+	/* Configure TX max burst duration timer to use usec units */
 	wil_w(wil, RGF_DMA_ITR_TX_CNT_CTL,
 	      BIT_DMA_ITR_TX_CNT_CTL_EN | BIT_DMA_ITR_TX_CNT_CTL_EXT_TIC_SEL);
 
-	/* Disable and clear tx idle counter beक्रमe (re)configuration */
+	/* Disable and clear tx idle counter before (re)configuration */
 	wil_w(wil, RGF_DMA_ITR_TX_IDL_CNT_CTL, BIT_DMA_ITR_TX_IDL_CNT_CTL_CLR);
-	wil_w(wil, RGF_DMA_ITR_TX_IDL_CNT_TRSH, wil->tx_पूर्णांकerframe_समयout);
+	wil_w(wil, RGF_DMA_ITR_TX_IDL_CNT_TRSH, wil->tx_interframe_timeout);
 	wil_info(wil, "set ITR_TX_IDL_CNT_TRSH = %d usec\n",
-		 wil->tx_पूर्णांकerframe_समयout);
-	/* Configure TX max burst duration समयr to use usec units */
+		 wil->tx_interframe_timeout);
+	/* Configure TX max burst duration timer to use usec units */
 	wil_w(wil, RGF_DMA_ITR_TX_IDL_CNT_CTL, BIT_DMA_ITR_TX_IDL_CNT_CTL_EN |
 	      BIT_DMA_ITR_TX_IDL_CNT_CTL_EXT_TIC_SEL);
 
-	/* Disable and clear rx counter beक्रमe (re)configuration */
+	/* Disable and clear rx counter before (re)configuration */
 	wil_w(wil, RGF_DMA_ITR_RX_CNT_CTL, BIT_DMA_ITR_RX_CNT_CTL_CLR);
 	wil_w(wil, RGF_DMA_ITR_RX_CNT_TRSH, wil->rx_max_burst_duration);
 	wil_info(wil, "set ITR_RX_CNT_TRSH = %d usec\n",
 		 wil->rx_max_burst_duration);
-	/* Configure TX max burst duration समयr to use usec units */
+	/* Configure TX max burst duration timer to use usec units */
 	wil_w(wil, RGF_DMA_ITR_RX_CNT_CTL,
 	      BIT_DMA_ITR_RX_CNT_CTL_EN | BIT_DMA_ITR_RX_CNT_CTL_EXT_TIC_SEL);
 
-	/* Disable and clear rx idle counter beक्रमe (re)configuration */
+	/* Disable and clear rx idle counter before (re)configuration */
 	wil_w(wil, RGF_DMA_ITR_RX_IDL_CNT_CTL, BIT_DMA_ITR_RX_IDL_CNT_CTL_CLR);
-	wil_w(wil, RGF_DMA_ITR_RX_IDL_CNT_TRSH, wil->rx_पूर्णांकerframe_समयout);
+	wil_w(wil, RGF_DMA_ITR_RX_IDL_CNT_TRSH, wil->rx_interframe_timeout);
 	wil_info(wil, "set ITR_RX_IDL_CNT_TRSH = %d usec\n",
-		 wil->rx_पूर्णांकerframe_समयout);
-	/* Configure TX max burst duration समयr to use usec units */
+		 wil->rx_interframe_timeout);
+	/* Configure TX max burst duration timer to use usec units */
 	wil_w(wil, RGF_DMA_ITR_RX_IDL_CNT_CTL, BIT_DMA_ITR_RX_IDL_CNT_CTL_EN |
 	      BIT_DMA_ITR_RX_IDL_CNT_CTL_EXT_TIC_SEL);
-पूर्ण
+}
 
-अटल irqवापस_t wil6210_irq_rx(पूर्णांक irq, व्योम *cookie)
-अणु
-	काष्ठा wil6210_priv *wil = cookie;
+static irqreturn_t wil6210_irq_rx(int irq, void *cookie)
+{
+	struct wil6210_priv *wil = cookie;
 	u32 isr;
 	bool need_unmask = true;
 
 	wil6210_mask_irq_rx(wil);
 
-	isr = wil_ioपढ़ो32_and_clear(wil->csr +
+	isr = wil_ioread32_and_clear(wil->csr +
 				     HOSTADDR(RGF_DMA_EP_RX_ICR) +
-				     दुरत्व(काष्ठा RGF_ICR, ICR));
+				     offsetof(struct RGF_ICR, ICR));
 
 	trace_wil6210_irq_rx(isr);
 	wil_dbg_irq(wil, "ISR RX 0x%08x\n", isr);
 
-	अगर (unlikely(!isr)) अणु
+	if (unlikely(!isr)) {
 		wil_err_ratelimited(wil, "spurious IRQ: RX\n");
 		wil6210_unmask_irq_rx(wil);
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 
-	/* RX_DONE and RX_HTRSH पूर्णांकerrupts are the same अगर पूर्णांकerrupt
+	/* RX_DONE and RX_HTRSH interrupts are the same if interrupt
 	 * moderation is not used. Interrupt moderation may cause RX
-	 * buffer overflow जबतक RX_DONE is delayed. The required
+	 * buffer overflow while RX_DONE is delayed. The required
 	 * action is always the same - should empty the accumulated
 	 * packets from the RX ring.
 	 */
-	अगर (likely(isr & (BIT_DMA_EP_RX_ICR_RX_DONE |
-			  BIT_DMA_EP_RX_ICR_RX_HTRSH))) अणु
+	if (likely(isr & (BIT_DMA_EP_RX_ICR_RX_DONE |
+			  BIT_DMA_EP_RX_ICR_RX_HTRSH))) {
 		wil_dbg_irq(wil, "RX done / RX_HTRSH received, ISR (0x%x)\n",
 			    isr);
 
 		isr &= ~(BIT_DMA_EP_RX_ICR_RX_DONE |
 			 BIT_DMA_EP_RX_ICR_RX_HTRSH);
-		अगर (likely(test_bit(wil_status_fwपढ़ोy, wil->status))) अणु
-			अगर (likely(test_bit(wil_status_napi_en, wil->status))) अणु
+		if (likely(test_bit(wil_status_fwready, wil->status))) {
+			if (likely(test_bit(wil_status_napi_en, wil->status))) {
 				wil_dbg_txrx(wil, "NAPI(Rx) schedule\n");
 				need_unmask = false;
 				napi_schedule(&wil->napi_rx);
-			पूर्ण अन्यथा अणु
+			} else {
 				wil_err_ratelimited(
 					wil,
 					"Got Rx interrupt while stopping interface\n");
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			wil_err_ratelimited(wil, "Got Rx interrupt while in reset\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (unlikely(isr))
+	if (unlikely(isr))
 		wil_err(wil, "un-handled RX ISR bits 0x%08x\n", isr);
 
 	/* Rx IRQ will be enabled when NAPI processing finished */
 
 	atomic_inc(&wil->isr_count_rx);
 
-	अगर (unlikely(need_unmask))
+	if (unlikely(need_unmask))
 		wil6210_unmask_irq_rx(wil);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t wil6210_irq_rx_edma(पूर्णांक irq, व्योम *cookie)
-अणु
-	काष्ठा wil6210_priv *wil = cookie;
+static irqreturn_t wil6210_irq_rx_edma(int irq, void *cookie)
+{
+	struct wil6210_priv *wil = cookie;
 	u32 isr;
 	bool need_unmask = true;
 
 	wil6210_mask_irq_rx_edma(wil);
 
-	isr = wil_ioपढ़ो32_and_clear(wil->csr +
+	isr = wil_ioread32_and_clear(wil->csr +
 				     HOSTADDR(RGF_INT_GEN_RX_ICR) +
-				     दुरत्व(काष्ठा RGF_ICR, ICR));
+				     offsetof(struct RGF_ICR, ICR));
 
 	trace_wil6210_irq_rx(isr);
 	wil_dbg_irq(wil, "ISR RX 0x%08x\n", isr);
 
-	अगर (unlikely(!isr)) अणु
+	if (unlikely(!isr)) {
 		wil_err(wil, "spurious IRQ: RX\n");
 		wil6210_unmask_irq_rx_edma(wil);
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 
-	अगर (likely(isr & BIT_RX_STATUS_IRQ)) अणु
+	if (likely(isr & BIT_RX_STATUS_IRQ)) {
 		wil_dbg_irq(wil, "RX status ring\n");
 		isr &= ~BIT_RX_STATUS_IRQ;
-		अगर (likely(test_bit(wil_status_fwपढ़ोy, wil->status))) अणु
-			अगर (likely(test_bit(wil_status_napi_en, wil->status))) अणु
+		if (likely(test_bit(wil_status_fwready, wil->status))) {
+			if (likely(test_bit(wil_status_napi_en, wil->status))) {
 				wil_dbg_txrx(wil, "NAPI(Rx) schedule\n");
 				need_unmask = false;
 				napi_schedule(&wil->napi_rx);
-			पूर्ण अन्यथा अणु
+			} else {
 				wil_err(wil,
 					"Got Rx interrupt while stopping interface\n");
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			wil_err(wil, "Got Rx interrupt while in reset\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (unlikely(isr))
+	if (unlikely(isr))
 		wil_err(wil, "un-handled RX ISR bits 0x%08x\n", isr);
 
 	/* Rx IRQ will be enabled when NAPI processing finished */
 
 	atomic_inc(&wil->isr_count_rx);
 
-	अगर (unlikely(need_unmask))
+	if (unlikely(need_unmask))
 		wil6210_unmask_irq_rx_edma(wil);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t wil6210_irq_tx_edma(पूर्णांक irq, व्योम *cookie)
-अणु
-	काष्ठा wil6210_priv *wil = cookie;
+static irqreturn_t wil6210_irq_tx_edma(int irq, void *cookie)
+{
+	struct wil6210_priv *wil = cookie;
 	u32 isr;
 	bool need_unmask = true;
 
 	wil6210_mask_irq_tx_edma(wil);
 
-	isr = wil_ioपढ़ो32_and_clear(wil->csr +
+	isr = wil_ioread32_and_clear(wil->csr +
 				     HOSTADDR(RGF_INT_GEN_TX_ICR) +
-				     दुरत्व(काष्ठा RGF_ICR, ICR));
+				     offsetof(struct RGF_ICR, ICR));
 
 	trace_wil6210_irq_tx(isr);
 	wil_dbg_irq(wil, "ISR TX 0x%08x\n", isr);
 
-	अगर (unlikely(!isr)) अणु
+	if (unlikely(!isr)) {
 		wil_err(wil, "spurious IRQ: TX\n");
 		wil6210_unmask_irq_tx_edma(wil);
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 
-	अगर (likely(isr & BIT_TX_STATUS_IRQ)) अणु
+	if (likely(isr & BIT_TX_STATUS_IRQ)) {
 		wil_dbg_irq(wil, "TX status ring\n");
 		isr &= ~BIT_TX_STATUS_IRQ;
-		अगर (likely(test_bit(wil_status_fwपढ़ोy, wil->status))) अणु
+		if (likely(test_bit(wil_status_fwready, wil->status))) {
 			wil_dbg_txrx(wil, "NAPI(Tx) schedule\n");
 			need_unmask = false;
 			napi_schedule(&wil->napi_tx);
-		पूर्ण अन्यथा अणु
+		} else {
 			wil_err(wil, "Got Tx status ring IRQ while in reset\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (unlikely(isr))
+	if (unlikely(isr))
 		wil_err(wil, "un-handled TX ISR bits 0x%08x\n", isr);
 
 	/* Tx IRQ will be enabled when NAPI processing finished */
 
 	atomic_inc(&wil->isr_count_tx);
 
-	अगर (unlikely(need_unmask))
+	if (unlikely(need_unmask))
 		wil6210_unmask_irq_tx_edma(wil);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t wil6210_irq_tx(पूर्णांक irq, व्योम *cookie)
-अणु
-	काष्ठा wil6210_priv *wil = cookie;
+static irqreturn_t wil6210_irq_tx(int irq, void *cookie)
+{
+	struct wil6210_priv *wil = cookie;
 	u32 isr;
 	bool need_unmask = true;
 
 	wil6210_mask_irq_tx(wil);
 
-	isr = wil_ioपढ़ो32_and_clear(wil->csr +
+	isr = wil_ioread32_and_clear(wil->csr +
 				     HOSTADDR(RGF_DMA_EP_TX_ICR) +
-				     दुरत्व(काष्ठा RGF_ICR, ICR));
+				     offsetof(struct RGF_ICR, ICR));
 
 	trace_wil6210_irq_tx(isr);
 	wil_dbg_irq(wil, "ISR TX 0x%08x\n", isr);
 
-	अगर (unlikely(!isr)) अणु
+	if (unlikely(!isr)) {
 		wil_err_ratelimited(wil, "spurious IRQ: TX\n");
 		wil6210_unmask_irq_tx(wil);
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 
-	अगर (likely(isr & BIT_DMA_EP_TX_ICR_TX_DONE)) अणु
+	if (likely(isr & BIT_DMA_EP_TX_ICR_TX_DONE)) {
 		wil_dbg_irq(wil, "TX done\n");
 		isr &= ~BIT_DMA_EP_TX_ICR_TX_DONE;
-		/* clear also all VRING पूर्णांकerrupts */
+		/* clear also all VRING interrupts */
 		isr &= ~(BIT(25) - 1UL);
-		अगर (likely(test_bit(wil_status_fwपढ़ोy, wil->status))) अणु
+		if (likely(test_bit(wil_status_fwready, wil->status))) {
 			wil_dbg_txrx(wil, "NAPI(Tx) schedule\n");
 			need_unmask = false;
 			napi_schedule(&wil->napi_tx);
-		पूर्ण अन्यथा अणु
+		} else {
 			wil_err_ratelimited(wil, "Got Tx interrupt while in reset\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (unlikely(isr))
+	if (unlikely(isr))
 		wil_err_ratelimited(wil, "un-handled TX ISR bits 0x%08x\n",
 				    isr);
 
@@ -485,322 +484,322 @@
 
 	atomic_inc(&wil->isr_count_tx);
 
-	अगर (unlikely(need_unmask))
+	if (unlikely(need_unmask))
 		wil6210_unmask_irq_tx(wil);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम wil_notअगरy_fw_error(काष्ठा wil6210_priv *wil)
-अणु
-	काष्ठा device *dev = &wil->मुख्य_ndev->dev;
-	अक्षर *envp[3] = अणु
+static void wil_notify_fw_error(struct wil6210_priv *wil)
+{
+	struct device *dev = &wil->main_ndev->dev;
+	char *envp[3] = {
 		[0] = "SOURCE=wil6210",
 		[1] = "EVENT=FW_ERROR",
-		[2] = शून्य,
-	पूर्ण;
+		[2] = NULL,
+	};
 	wil_err(wil, "Notify about firmware error\n");
 	kobject_uevent_env(&dev->kobj, KOBJ_CHANGE, envp);
-पूर्ण
+}
 
-अटल व्योम wil_cache_mbox_regs(काष्ठा wil6210_priv *wil)
-अणु
-	/* make shaकरोw copy of रेजिस्टरs that should not change on run समय */
-	wil_स_नकल_fromio_32(&wil->mbox_ctl, wil->csr + HOST_MBOX,
-			     माप(काष्ठा wil6210_mbox_ctl));
+static void wil_cache_mbox_regs(struct wil6210_priv *wil)
+{
+	/* make shadow copy of registers that should not change on run time */
+	wil_memcpy_fromio_32(&wil->mbox_ctl, wil->csr + HOST_MBOX,
+			     sizeof(struct wil6210_mbox_ctl));
 	wil_mbox_ring_le2cpus(&wil->mbox_ctl.rx);
 	wil_mbox_ring_le2cpus(&wil->mbox_ctl.tx);
-पूर्ण
+}
 
-अटल bool wil_validate_mbox_regs(काष्ठा wil6210_priv *wil)
-अणु
-	माप_प्रकार min_size = माप(काष्ठा wil6210_mbox_hdr) +
-		माप(काष्ठा wmi_cmd_hdr);
+static bool wil_validate_mbox_regs(struct wil6210_priv *wil)
+{
+	size_t min_size = sizeof(struct wil6210_mbox_hdr) +
+		sizeof(struct wmi_cmd_hdr);
 
-	अगर (wil->mbox_ctl.rx.entry_size < min_size) अणु
+	if (wil->mbox_ctl.rx.entry_size < min_size) {
 		wil_err(wil, "rx mbox entry too small (%d)\n",
 			wil->mbox_ctl.rx.entry_size);
-		वापस false;
-	पूर्ण
-	अगर (wil->mbox_ctl.tx.entry_size < min_size) अणु
+		return false;
+	}
+	if (wil->mbox_ctl.tx.entry_size < min_size) {
 		wil_err(wil, "tx mbox entry too small (%d)\n",
 			wil->mbox_ctl.tx.entry_size);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल irqवापस_t wil6210_irq_misc(पूर्णांक irq, व्योम *cookie)
-अणु
-	काष्ठा wil6210_priv *wil = cookie;
+static irqreturn_t wil6210_irq_misc(int irq, void *cookie)
+{
+	struct wil6210_priv *wil = cookie;
 	u32 isr;
 
 	wil6210_mask_irq_misc(wil, false);
 
-	isr = wil_ioपढ़ो32_and_clear(wil->csr +
+	isr = wil_ioread32_and_clear(wil->csr +
 				     HOSTADDR(RGF_DMA_EP_MISC_ICR) +
-				     दुरत्व(काष्ठा RGF_ICR, ICR));
+				     offsetof(struct RGF_ICR, ICR));
 
 	trace_wil6210_irq_misc(isr);
 	wil_dbg_irq(wil, "ISR MISC 0x%08x\n", isr);
 
-	अगर (!isr) अणु
+	if (!isr) {
 		wil_err(wil, "spurious IRQ: MISC\n");
 		wil6210_unmask_irq_misc(wil, false);
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 
-	अगर (isr & ISR_MISC_FW_ERROR) अणु
-		u32 fw_निश्चित_code = wil_r(wil, wil->rgf_fw_निश्चित_code_addr);
-		u32 ucode_निश्चित_code =
-			wil_r(wil, wil->rgf_ucode_निश्चित_code_addr);
+	if (isr & ISR_MISC_FW_ERROR) {
+		u32 fw_assert_code = wil_r(wil, wil->rgf_fw_assert_code_addr);
+		u32 ucode_assert_code =
+			wil_r(wil, wil->rgf_ucode_assert_code_addr);
 
 		wil_err(wil,
 			"Firmware error detected, assert codes FW 0x%08x, UCODE 0x%08x\n",
-			fw_निश्चित_code, ucode_निश्चित_code);
-		clear_bit(wil_status_fwपढ़ोy, wil->status);
+			fw_assert_code, ucode_assert_code);
+		clear_bit(wil_status_fwready, wil->status);
 		/*
-		 * करो not clear @isr here - we करो 2-nd part in thपढ़ो
-		 * there, user space get notअगरied, and it should be करोne
+		 * do not clear @isr here - we do 2-nd part in thread
+		 * there, user space get notified, and it should be done
 		 * in non-atomic context
 		 */
-	पूर्ण
+	}
 
-	अगर (isr & ISR_MISC_FW_READY) अणु
+	if (isr & ISR_MISC_FW_READY) {
 		wil_dbg_irq(wil, "IRQ: FW ready\n");
 		wil_cache_mbox_regs(wil);
-		अगर (wil_validate_mbox_regs(wil))
-			set_bit(wil_status_mbox_पढ़ोy, wil->status);
+		if (wil_validate_mbox_regs(wil))
+			set_bit(wil_status_mbox_ready, wil->status);
 		/**
-		 * Actual FW पढ़ोy indicated by the
+		 * Actual FW ready indicated by the
 		 * WMI_FW_READY_EVENTID
 		 */
 		isr &= ~ISR_MISC_FW_READY;
-	पूर्ण
+	}
 
-	अगर (isr & BIT_DMA_EP_MISC_ICR_HALP) अणु
+	if (isr & BIT_DMA_EP_MISC_ICR_HALP) {
 		isr &= ~BIT_DMA_EP_MISC_ICR_HALP;
-		अगर (wil->halp.handle_icr) अणु
+		if (wil->halp.handle_icr) {
 			/* no need to handle HALP ICRs until next vote */
 			wil->halp.handle_icr = false;
 			wil_dbg_irq(wil, "irq_misc: HALP IRQ invoked\n");
 			wil6210_mask_irq_misc(wil, true);
 			complete(&wil->halp.comp);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	wil->isr_misc = isr;
 
-	अगर (isr) अणु
-		वापस IRQ_WAKE_THREAD;
-	पूर्ण अन्यथा अणु
+	if (isr) {
+		return IRQ_WAKE_THREAD;
+	} else {
 		wil6210_unmask_irq_misc(wil, false);
-		वापस IRQ_HANDLED;
-	पूर्ण
-पूर्ण
+		return IRQ_HANDLED;
+	}
+}
 
-अटल irqवापस_t wil6210_irq_misc_thपढ़ो(पूर्णांक irq, व्योम *cookie)
-अणु
-	काष्ठा wil6210_priv *wil = cookie;
+static irqreturn_t wil6210_irq_misc_thread(int irq, void *cookie)
+{
+	struct wil6210_priv *wil = cookie;
 	u32 isr = wil->isr_misc;
 
-	trace_wil6210_irq_misc_thपढ़ो(isr);
+	trace_wil6210_irq_misc_thread(isr);
 	wil_dbg_irq(wil, "Thread ISR MISC 0x%08x\n", isr);
 
-	अगर (isr & ISR_MISC_FW_ERROR) अणु
+	if (isr & ISR_MISC_FW_ERROR) {
 		wil->recovery_state = fw_recovery_pending;
 		wil_fw_core_dump(wil);
-		wil_notअगरy_fw_error(wil);
+		wil_notify_fw_error(wil);
 		isr &= ~ISR_MISC_FW_ERROR;
-		अगर (wil->platक्रमm_ops.notअगरy) अणु
+		if (wil->platform_ops.notify) {
 			wil_err(wil, "notify platform driver about FW crash");
-			wil->platक्रमm_ops.notअगरy(wil->platक्रमm_handle,
+			wil->platform_ops.notify(wil->platform_handle,
 						 WIL_PLATFORM_EVT_FW_CRASH);
-		पूर्ण अन्यथा अणु
+		} else {
 			wil_fw_error_recovery(wil);
-		पूर्ण
-	पूर्ण
-	अगर (isr & ISR_MISC_MBOX_EVT) अणु
+		}
+	}
+	if (isr & ISR_MISC_MBOX_EVT) {
 		wil_dbg_irq(wil, "MBOX event\n");
 		wmi_recv_cmd(wil);
 		isr &= ~ISR_MISC_MBOX_EVT;
-	पूर्ण
+	}
 
-	अगर (isr)
+	if (isr)
 		wil_dbg_irq(wil, "un-handled MISC ISR bits 0x%08x\n", isr);
 
 	wil->isr_misc = 0;
 
 	wil6210_unmask_irq_misc(wil, false);
 
-	/* in non-triple MSI हाल, this is करोne inside wil6210_thपढ़ो_irq
-	 * because it has to be करोne after unmasking the pseuकरो.
+	/* in non-triple MSI case, this is done inside wil6210_thread_irq
+	 * because it has to be done after unmasking the pseudo.
 	 */
-	अगर (wil->n_msi == 3 && wil->suspend_resp_rcvd) अणु
+	if (wil->n_msi == 3 && wil->suspend_resp_rcvd) {
 		wil_dbg_irq(wil, "set suspend_resp_comp to true\n");
 		wil->suspend_resp_comp = true;
-		wake_up_पूर्णांकerruptible(&wil->wq);
-	पूर्ण
+		wake_up_interruptible(&wil->wq);
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-/* thपढ़ो IRQ handler */
-अटल irqवापस_t wil6210_thपढ़ो_irq(पूर्णांक irq, व्योम *cookie)
-अणु
-	काष्ठा wil6210_priv *wil = cookie;
+/* thread IRQ handler */
+static irqreturn_t wil6210_thread_irq(int irq, void *cookie)
+{
+	struct wil6210_priv *wil = cookie;
 
 	wil_dbg_irq(wil, "Thread IRQ\n");
 	/* Discover real IRQ cause */
-	अगर (wil->isr_misc)
-		wil6210_irq_misc_thपढ़ो(irq, cookie);
+	if (wil->isr_misc)
+		wil6210_irq_misc_thread(irq, cookie);
 
-	wil6210_unmask_irq_pseuकरो(wil);
+	wil6210_unmask_irq_pseudo(wil);
 
-	अगर (wil->suspend_resp_rcvd) अणु
+	if (wil->suspend_resp_rcvd) {
 		wil_dbg_irq(wil, "set suspend_resp_comp to true\n");
 		wil->suspend_resp_comp = true;
-		wake_up_पूर्णांकerruptible(&wil->wq);
-	पूर्ण
+		wake_up_interruptible(&wil->wq);
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /* DEBUG
- * There is subtle bug in hardware that causes IRQ to उठाओ when it should be
+ * There is subtle bug in hardware that causes IRQ to raise when it should be
  * masked. It is quite rare and hard to debug.
  *
- * Catch irq issue अगर it happens and prपूर्णांक all I can.
+ * Catch irq issue if it happens and print all I can.
  */
-अटल पूर्णांक wil6210_debug_irq_mask(काष्ठा wil6210_priv *wil, u32 pseuकरो_cause)
-अणु
+static int wil6210_debug_irq_mask(struct wil6210_priv *wil, u32 pseudo_cause)
+{
 	u32 icm_rx, icr_rx, imv_rx;
 	u32 icm_tx, icr_tx, imv_tx;
 	u32 icm_misc, icr_misc, imv_misc;
 
-	अगर (!test_bit(wil_status_irqen, wil->status)) अणु
-		अगर (wil->use_enhanced_dma_hw) अणु
-			icm_rx = wil_ioपढ़ो32_and_clear(wil->csr +
+	if (!test_bit(wil_status_irqen, wil->status)) {
+		if (wil->use_enhanced_dma_hw) {
+			icm_rx = wil_ioread32_and_clear(wil->csr +
 					HOSTADDR(RGF_INT_GEN_RX_ICR) +
-					दुरत्व(काष्ठा RGF_ICR, ICM));
-			icr_rx = wil_ioपढ़ो32_and_clear(wil->csr +
+					offsetof(struct RGF_ICR, ICM));
+			icr_rx = wil_ioread32_and_clear(wil->csr +
 					HOSTADDR(RGF_INT_GEN_RX_ICR) +
-					दुरत्व(काष्ठा RGF_ICR, ICR));
+					offsetof(struct RGF_ICR, ICR));
 			imv_rx = wil_r(wil, RGF_INT_GEN_RX_ICR +
-				   दुरत्व(काष्ठा RGF_ICR, IMV));
-			icm_tx = wil_ioपढ़ो32_and_clear(wil->csr +
+				   offsetof(struct RGF_ICR, IMV));
+			icm_tx = wil_ioread32_and_clear(wil->csr +
 					HOSTADDR(RGF_INT_GEN_TX_ICR) +
-					दुरत्व(काष्ठा RGF_ICR, ICM));
-			icr_tx = wil_ioपढ़ो32_and_clear(wil->csr +
+					offsetof(struct RGF_ICR, ICM));
+			icr_tx = wil_ioread32_and_clear(wil->csr +
 					HOSTADDR(RGF_INT_GEN_TX_ICR) +
-					दुरत्व(काष्ठा RGF_ICR, ICR));
+					offsetof(struct RGF_ICR, ICR));
 			imv_tx = wil_r(wil, RGF_INT_GEN_TX_ICR +
-					   दुरत्व(काष्ठा RGF_ICR, IMV));
-		पूर्ण अन्यथा अणु
-			icm_rx = wil_ioपढ़ो32_and_clear(wil->csr +
+					   offsetof(struct RGF_ICR, IMV));
+		} else {
+			icm_rx = wil_ioread32_and_clear(wil->csr +
 					HOSTADDR(RGF_DMA_EP_RX_ICR) +
-					दुरत्व(काष्ठा RGF_ICR, ICM));
-			icr_rx = wil_ioपढ़ो32_and_clear(wil->csr +
+					offsetof(struct RGF_ICR, ICM));
+			icr_rx = wil_ioread32_and_clear(wil->csr +
 					HOSTADDR(RGF_DMA_EP_RX_ICR) +
-					दुरत्व(काष्ठा RGF_ICR, ICR));
+					offsetof(struct RGF_ICR, ICR));
 			imv_rx = wil_r(wil, RGF_DMA_EP_RX_ICR +
-				   दुरत्व(काष्ठा RGF_ICR, IMV));
-			icm_tx = wil_ioपढ़ो32_and_clear(wil->csr +
+				   offsetof(struct RGF_ICR, IMV));
+			icm_tx = wil_ioread32_and_clear(wil->csr +
 					HOSTADDR(RGF_DMA_EP_TX_ICR) +
-					दुरत्व(काष्ठा RGF_ICR, ICM));
-			icr_tx = wil_ioपढ़ो32_and_clear(wil->csr +
+					offsetof(struct RGF_ICR, ICM));
+			icr_tx = wil_ioread32_and_clear(wil->csr +
 					HOSTADDR(RGF_DMA_EP_TX_ICR) +
-					दुरत्व(काष्ठा RGF_ICR, ICR));
+					offsetof(struct RGF_ICR, ICR));
 			imv_tx = wil_r(wil, RGF_DMA_EP_TX_ICR +
-					   दुरत्व(काष्ठा RGF_ICR, IMV));
-		पूर्ण
-		icm_misc = wil_ioपढ़ो32_and_clear(wil->csr +
+					   offsetof(struct RGF_ICR, IMV));
+		}
+		icm_misc = wil_ioread32_and_clear(wil->csr +
 				HOSTADDR(RGF_DMA_EP_MISC_ICR) +
-				दुरत्व(काष्ठा RGF_ICR, ICM));
-		icr_misc = wil_ioपढ़ो32_and_clear(wil->csr +
+				offsetof(struct RGF_ICR, ICM));
+		icr_misc = wil_ioread32_and_clear(wil->csr +
 				HOSTADDR(RGF_DMA_EP_MISC_ICR) +
-				दुरत्व(काष्ठा RGF_ICR, ICR));
+				offsetof(struct RGF_ICR, ICR));
 		imv_misc = wil_r(wil, RGF_DMA_EP_MISC_ICR +
-				     दुरत्व(काष्ठा RGF_ICR, IMV));
+				     offsetof(struct RGF_ICR, IMV));
 
-		/* HALP पूर्णांकerrupt can be unmasked when misc पूर्णांकerrupts are
+		/* HALP interrupt can be unmasked when misc interrupts are
 		 * masked
 		 */
-		अगर (icr_misc & BIT_DMA_EP_MISC_ICR_HALP)
-			वापस 0;
+		if (icr_misc & BIT_DMA_EP_MISC_ICR_HALP)
+			return 0;
 
 		wil_err(wil, "IRQ when it should be masked: pseudo 0x%08x\n"
 				"Rx   icm:icr:imv 0x%08x 0x%08x 0x%08x\n"
 				"Tx   icm:icr:imv 0x%08x 0x%08x 0x%08x\n"
 				"Misc icm:icr:imv 0x%08x 0x%08x 0x%08x\n",
-				pseuकरो_cause,
+				pseudo_cause,
 				icm_rx, icr_rx, imv_rx,
 				icm_tx, icr_tx, imv_tx,
 				icm_misc, icr_misc, imv_misc);
 
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल irqवापस_t wil6210_hardirq(पूर्णांक irq, व्योम *cookie)
-अणु
-	irqवापस_t rc = IRQ_HANDLED;
-	काष्ठा wil6210_priv *wil = cookie;
-	u32 pseuकरो_cause = wil_r(wil, RGF_DMA_PSEUDO_CAUSE);
+static irqreturn_t wil6210_hardirq(int irq, void *cookie)
+{
+	irqreturn_t rc = IRQ_HANDLED;
+	struct wil6210_priv *wil = cookie;
+	u32 pseudo_cause = wil_r(wil, RGF_DMA_PSEUDO_CAUSE);
 
 	/**
-	 * pseuकरो_cause is Clear-On-Read, no need to ACK
+	 * pseudo_cause is Clear-On-Read, no need to ACK
 	 */
-	अगर (unlikely((pseuकरो_cause == 0) || ((pseuकरो_cause & 0xff) == 0xff)))
-		वापस IRQ_NONE;
+	if (unlikely((pseudo_cause == 0) || ((pseudo_cause & 0xff) == 0xff)))
+		return IRQ_NONE;
 
 	/* IRQ mask debug */
-	अगर (unlikely(wil6210_debug_irq_mask(wil, pseuकरो_cause)))
-		वापस IRQ_NONE;
+	if (unlikely(wil6210_debug_irq_mask(wil, pseudo_cause)))
+		return IRQ_NONE;
 
-	trace_wil6210_irq_pseuकरो(pseuकरो_cause);
-	wil_dbg_irq(wil, "Pseudo IRQ 0x%08x\n", pseuकरो_cause);
+	trace_wil6210_irq_pseudo(pseudo_cause);
+	wil_dbg_irq(wil, "Pseudo IRQ 0x%08x\n", pseudo_cause);
 
-	wil6210_mask_irq_pseuकरो(wil);
+	wil6210_mask_irq_pseudo(wil);
 
 	/* Discover real IRQ cause
-	 * There are 2 possible phases क्रम every IRQ:
+	 * There are 2 possible phases for every IRQ:
 	 * - hard IRQ handler called right here
-	 * - thपढ़ोed handler called later
+	 * - threaded handler called later
 	 *
-	 * Hard IRQ handler पढ़ोs and clears ISR.
+	 * Hard IRQ handler reads and clears ISR.
 	 *
-	 * If thपढ़ोed handler requested, hard IRQ handler
-	 * वापसs IRQ_WAKE_THREAD and saves ISR रेजिस्टर value
-	 * क्रम the thपढ़ोed handler use.
+	 * If threaded handler requested, hard IRQ handler
+	 * returns IRQ_WAKE_THREAD and saves ISR register value
+	 * for the threaded handler use.
 	 *
-	 * voting क्रम wake thपढ़ो - need at least 1 vote
+	 * voting for wake thread - need at least 1 vote
 	 */
-	अगर ((pseuकरो_cause & BIT_DMA_PSEUDO_CAUSE_RX) &&
+	if ((pseudo_cause & BIT_DMA_PSEUDO_CAUSE_RX) &&
 	    (wil->txrx_ops.irq_rx(irq, cookie) == IRQ_WAKE_THREAD))
 		rc = IRQ_WAKE_THREAD;
 
-	अगर ((pseuकरो_cause & BIT_DMA_PSEUDO_CAUSE_TX) &&
+	if ((pseudo_cause & BIT_DMA_PSEUDO_CAUSE_TX) &&
 	    (wil->txrx_ops.irq_tx(irq, cookie) == IRQ_WAKE_THREAD))
 		rc = IRQ_WAKE_THREAD;
 
-	अगर ((pseuकरो_cause & BIT_DMA_PSEUDO_CAUSE_MISC) &&
+	if ((pseudo_cause & BIT_DMA_PSEUDO_CAUSE_MISC) &&
 	    (wil6210_irq_misc(irq, cookie) == IRQ_WAKE_THREAD))
 		rc = IRQ_WAKE_THREAD;
 
-	/* अगर thपढ़ो is requested, it will unmask IRQ */
-	अगर (rc != IRQ_WAKE_THREAD)
-		wil6210_unmask_irq_pseuकरो(wil);
+	/* if thread is requested, it will unmask IRQ */
+	if (rc != IRQ_WAKE_THREAD)
+		wil6210_unmask_irq_pseudo(wil);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक wil6210_request_3msi(काष्ठा wil6210_priv *wil, पूर्णांक irq)
-अणु
-	पूर्णांक rc;
+static int wil6210_request_3msi(struct wil6210_priv *wil, int irq)
+{
+	int rc;
 
 	/* IRQ's are in the following order:
 	 * - Tx
@@ -809,102 +808,102 @@
 	 */
 	rc = request_irq(irq, wil->txrx_ops.irq_tx, IRQF_SHARED,
 			 WIL_NAME "_tx", wil);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	rc = request_irq(irq + 1, wil->txrx_ops.irq_rx, IRQF_SHARED,
 			 WIL_NAME "_rx", wil);
-	अगर (rc)
-		जाओ मुक्त0;
+	if (rc)
+		goto free0;
 
-	rc = request_thपढ़ोed_irq(irq + 2, wil6210_irq_misc,
-				  wil6210_irq_misc_thपढ़ो,
+	rc = request_threaded_irq(irq + 2, wil6210_irq_misc,
+				  wil6210_irq_misc_thread,
 				  IRQF_SHARED, WIL_NAME "_misc", wil);
-	अगर (rc)
-		जाओ मुक्त1;
+	if (rc)
+		goto free1;
 
-	वापस 0;
-मुक्त1:
-	मुक्त_irq(irq + 1, wil);
-मुक्त0:
-	मुक्त_irq(irq, wil);
+	return 0;
+free1:
+	free_irq(irq + 1, wil);
+free0:
+	free_irq(irq, wil);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-/* can't use wil_ioपढ़ो32_and_clear because ICC value is not set yet */
-अटल अंतरभूत व्योम wil_clear32(व्योम __iomem *addr)
-अणु
-	u32 x = पढ़ोl(addr);
+/* can't use wil_ioread32_and_clear because ICC value is not set yet */
+static inline void wil_clear32(void __iomem *addr)
+{
+	u32 x = readl(addr);
 
-	ग_लिखोl(x, addr);
-पूर्ण
+	writel(x, addr);
+}
 
-व्योम wil6210_clear_irq(काष्ठा wil6210_priv *wil)
-अणु
+void wil6210_clear_irq(struct wil6210_priv *wil)
+{
 	wil_clear32(wil->csr + HOSTADDR(RGF_DMA_EP_RX_ICR) +
-		    दुरत्व(काष्ठा RGF_ICR, ICR));
+		    offsetof(struct RGF_ICR, ICR));
 	wil_clear32(wil->csr + HOSTADDR(RGF_DMA_EP_TX_ICR) +
-		    दुरत्व(काष्ठा RGF_ICR, ICR));
+		    offsetof(struct RGF_ICR, ICR));
 	wil_clear32(wil->csr + HOSTADDR(RGF_INT_GEN_RX_ICR) +
-		    दुरत्व(काष्ठा RGF_ICR, ICR));
+		    offsetof(struct RGF_ICR, ICR));
 	wil_clear32(wil->csr + HOSTADDR(RGF_INT_GEN_TX_ICR) +
-		    दुरत्व(काष्ठा RGF_ICR, ICR));
+		    offsetof(struct RGF_ICR, ICR));
 	wil_clear32(wil->csr + HOSTADDR(RGF_DMA_EP_MISC_ICR) +
-		    दुरत्व(काष्ठा RGF_ICR, ICR));
-	wmb(); /* make sure ग_लिखो completed */
-पूर्ण
+		    offsetof(struct RGF_ICR, ICR));
+	wmb(); /* make sure write completed */
+}
 
-व्योम wil6210_set_halp(काष्ठा wil6210_priv *wil)
-अणु
+void wil6210_set_halp(struct wil6210_priv *wil)
+{
 	wil_dbg_irq(wil, "set_halp\n");
 
-	wil_w(wil, RGF_DMA_EP_MISC_ICR + दुरत्व(काष्ठा RGF_ICR, ICS),
+	wil_w(wil, RGF_DMA_EP_MISC_ICR + offsetof(struct RGF_ICR, ICS),
 	      BIT_DMA_EP_MISC_ICR_HALP);
-पूर्ण
+}
 
-व्योम wil6210_clear_halp(काष्ठा wil6210_priv *wil)
-अणु
+void wil6210_clear_halp(struct wil6210_priv *wil)
+{
 	wil_dbg_irq(wil, "clear_halp\n");
 
-	wil_w(wil, RGF_DMA_EP_MISC_ICR + दुरत्व(काष्ठा RGF_ICR, ICR),
+	wil_w(wil, RGF_DMA_EP_MISC_ICR + offsetof(struct RGF_ICR, ICR),
 	      BIT_DMA_EP_MISC_ICR_HALP);
 	wil6210_unmask_halp(wil);
-पूर्ण
+}
 
-पूर्णांक wil6210_init_irq(काष्ठा wil6210_priv *wil, पूर्णांक irq)
-अणु
-	पूर्णांक rc;
+int wil6210_init_irq(struct wil6210_priv *wil, int irq)
+{
+	int rc;
 
 	wil_dbg_misc(wil, "init_irq: %s, n_msi=%d\n",
 		     wil->n_msi ? "MSI" : "INTx", wil->n_msi);
 
-	अगर (wil->use_enhanced_dma_hw) अणु
+	if (wil->use_enhanced_dma_hw) {
 		wil->txrx_ops.irq_tx = wil6210_irq_tx_edma;
 		wil->txrx_ops.irq_rx = wil6210_irq_rx_edma;
-	पूर्ण अन्यथा अणु
+	} else {
 		wil->txrx_ops.irq_tx = wil6210_irq_tx;
 		wil->txrx_ops.irq_rx = wil6210_irq_rx;
-	पूर्ण
+	}
 
-	अगर (wil->n_msi == 3)
+	if (wil->n_msi == 3)
 		rc = wil6210_request_3msi(wil, irq);
-	अन्यथा
-		rc = request_thपढ़ोed_irq(irq, wil6210_hardirq,
-					  wil6210_thपढ़ो_irq,
+	else
+		rc = request_threaded_irq(irq, wil6210_hardirq,
+					  wil6210_thread_irq,
 					  wil->n_msi ? 0 : IRQF_SHARED,
 					  WIL_NAME, wil);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-व्योम wil6210_fini_irq(काष्ठा wil6210_priv *wil, पूर्णांक irq)
-अणु
+void wil6210_fini_irq(struct wil6210_priv *wil, int irq)
+{
 	wil_dbg_misc(wil, "fini_irq:\n");
 
 	wil_mask_irq(wil);
-	मुक्त_irq(irq, wil);
-	अगर (wil->n_msi == 3) अणु
-		मुक्त_irq(irq + 1, wil);
-		मुक्त_irq(irq + 2, wil);
-	पूर्ण
-पूर्ण
+	free_irq(irq, wil);
+	if (wil->n_msi == 3) {
+		free_irq(irq + 1, wil);
+		free_irq(irq + 2, wil);
+	}
+}

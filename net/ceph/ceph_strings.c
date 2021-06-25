@@ -1,91 +1,90 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Ceph string स्थिरants
+ * Ceph string constants
  */
-#समावेश <linux/module.h>
-#समावेश <linux/ceph/types.h>
+#include <linux/module.h>
+#include <linux/ceph/types.h>
 
-स्थिर अक्षर *ceph_entity_type_name(पूर्णांक type)
-अणु
-	चयन (type) अणु
-	हाल CEPH_ENTITY_TYPE_MDS: वापस "mds";
-	हाल CEPH_ENTITY_TYPE_OSD: वापस "osd";
-	हाल CEPH_ENTITY_TYPE_MON: वापस "mon";
-	हाल CEPH_ENTITY_TYPE_CLIENT: वापस "client";
-	हाल CEPH_ENTITY_TYPE_AUTH: वापस "auth";
-	शेष: वापस "unknown";
-	पूर्ण
-पूर्ण
+const char *ceph_entity_type_name(int type)
+{
+	switch (type) {
+	case CEPH_ENTITY_TYPE_MDS: return "mds";
+	case CEPH_ENTITY_TYPE_OSD: return "osd";
+	case CEPH_ENTITY_TYPE_MON: return "mon";
+	case CEPH_ENTITY_TYPE_CLIENT: return "client";
+	case CEPH_ENTITY_TYPE_AUTH: return "auth";
+	default: return "unknown";
+	}
+}
 EXPORT_SYMBOL(ceph_entity_type_name);
 
-स्थिर अक्षर *ceph_auth_proto_name(पूर्णांक proto)
-अणु
-	चयन (proto) अणु
-	हाल CEPH_AUTH_UNKNOWN:
-		वापस "unknown";
-	हाल CEPH_AUTH_NONE:
-		वापस "none";
-	हाल CEPH_AUTH_CEPHX:
-		वापस "cephx";
-	शेष:
-		वापस "???";
-	पूर्ण
-पूर्ण
+const char *ceph_auth_proto_name(int proto)
+{
+	switch (proto) {
+	case CEPH_AUTH_UNKNOWN:
+		return "unknown";
+	case CEPH_AUTH_NONE:
+		return "none";
+	case CEPH_AUTH_CEPHX:
+		return "cephx";
+	default:
+		return "???";
+	}
+}
 
-स्थिर अक्षर *ceph_con_mode_name(पूर्णांक mode)
-अणु
-	चयन (mode) अणु
-	हाल CEPH_CON_MODE_UNKNOWN:
-		वापस "unknown";
-	हाल CEPH_CON_MODE_CRC:
-		वापस "crc";
-	हाल CEPH_CON_MODE_SECURE:
-		वापस "secure";
-	शेष:
-		वापस "???";
-	पूर्ण
-पूर्ण
+const char *ceph_con_mode_name(int mode)
+{
+	switch (mode) {
+	case CEPH_CON_MODE_UNKNOWN:
+		return "unknown";
+	case CEPH_CON_MODE_CRC:
+		return "crc";
+	case CEPH_CON_MODE_SECURE:
+		return "secure";
+	default:
+		return "???";
+	}
+}
 
-स्थिर अक्षर *ceph_osd_op_name(पूर्णांक op)
-अणु
-	चयन (op) अणु
-#घोषणा GENERATE_CASE(op, opcode, str)	हाल CEPH_OSD_OP_##op: वापस (str);
+const char *ceph_osd_op_name(int op)
+{
+	switch (op) {
+#define GENERATE_CASE(op, opcode, str)	case CEPH_OSD_OP_##op: return (str);
 __CEPH_FORALL_OSD_OPS(GENERATE_CASE)
-#अघोषित GENERATE_CASE
-	शेष:
-		वापस "???";
-	पूर्ण
-पूर्ण
+#undef GENERATE_CASE
+	default:
+		return "???";
+	}
+}
 
-स्थिर अक्षर *ceph_osd_watch_op_name(पूर्णांक o)
-अणु
-	चयन (o) अणु
-	हाल CEPH_OSD_WATCH_OP_UNWATCH:
-		वापस "unwatch";
-	हाल CEPH_OSD_WATCH_OP_WATCH:
-		वापस "watch";
-	हाल CEPH_OSD_WATCH_OP_RECONNECT:
-		वापस "reconnect";
-	हाल CEPH_OSD_WATCH_OP_PING:
-		वापस "ping";
-	शेष:
-		वापस "???";
-	पूर्ण
-पूर्ण
+const char *ceph_osd_watch_op_name(int o)
+{
+	switch (o) {
+	case CEPH_OSD_WATCH_OP_UNWATCH:
+		return "unwatch";
+	case CEPH_OSD_WATCH_OP_WATCH:
+		return "watch";
+	case CEPH_OSD_WATCH_OP_RECONNECT:
+		return "reconnect";
+	case CEPH_OSD_WATCH_OP_PING:
+		return "ping";
+	default:
+		return "???";
+	}
+}
 
-स्थिर अक्षर *ceph_osd_state_name(पूर्णांक s)
-अणु
-	चयन (s) अणु
-	हाल CEPH_OSD_EXISTS:
-		वापस "exists";
-	हाल CEPH_OSD_UP:
-		वापस "up";
-	हाल CEPH_OSD_AUTOOUT:
-		वापस "autoout";
-	हाल CEPH_OSD_NEW:
-		वापस "new";
-	शेष:
-		वापस "???";
-	पूर्ण
-पूर्ण
+const char *ceph_osd_state_name(int s)
+{
+	switch (s) {
+	case CEPH_OSD_EXISTS:
+		return "exists";
+	case CEPH_OSD_UP:
+		return "up";
+	case CEPH_OSD_AUTOOUT:
+		return "autoout";
+	case CEPH_OSD_NEW:
+		return "new";
+	default:
+		return "???";
+	}
+}

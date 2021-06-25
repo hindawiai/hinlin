@@ -1,119 +1,118 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _SPARC_ERRNO_H
-#घोषणा _SPARC_ERRNO_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _SPARC_ERRNO_H
+#define _SPARC_ERRNO_H
 
 /* These match the SunOS error numbering scheme. */
 
-#समावेश <यंत्र-generic/त्रुटि_सं-base.h>
+#include <asm-generic/errno-base.h>
 
-#घोषणा	EWOULDBLOCK	EAGAIN	/* Operation would block */
-#घोषणा	EINPROGRESS	36	/* Operation now in progress */
-#घोषणा	EALREADY	37	/* Operation alपढ़ोy in progress */
-#घोषणा	ENOTSOCK	38	/* Socket operation on non-socket */
-#घोषणा	EDESTADDRREQ	39	/* Destination address required */
-#घोषणा	EMSGSIZE	40	/* Message too दीर्घ */
-#घोषणा	EPROTOTYPE	41	/* Protocol wrong type क्रम socket */
-#घोषणा	ENOPROTOOPT	42	/* Protocol not available */
-#घोषणा	EPROTONOSUPPORT	43	/* Protocol not supported */
-#घोषणा	ESOCKTNOSUPPORT	44	/* Socket type not supported */
-#घोषणा	EOPNOTSUPP	45	/* Op not supported on transport endpoपूर्णांक */
-#घोषणा	EPFNOSUPPORT	46	/* Protocol family not supported */
-#घोषणा	EAFNOSUPPORT	47	/* Address family not supported by protocol */
-#घोषणा	EADDRINUSE	48	/* Address alपढ़ोy in use */
-#घोषणा	EADDRNOTAVAIL	49	/* Cannot assign requested address */
-#घोषणा	ENETDOWN	50	/* Network is करोwn */
-#घोषणा	ENETUNREACH	51	/* Network is unreachable */
-#घोषणा	ENETRESET	52	/* Net dropped connection because of reset */
-#घोषणा	ECONNABORTED	53	/* Software caused connection पात */
-#घोषणा	ECONNRESET	54	/* Connection reset by peer */
-#घोषणा	ENOBUFS		55	/* No buffer space available */
-#घोषणा	EISCONN		56	/* Transport endpoपूर्णांक is alपढ़ोy connected */
-#घोषणा	ENOTCONN	57	/* Transport endpoपूर्णांक is not connected */
-#घोषणा	ESHUTDOWN	58	/* No send after transport endpoपूर्णांक shutकरोwn */
-#घोषणा	ETOOMANYREFS	59	/* Too many references: cannot splice */
-#घोषणा	ETIMEDOUT	60	/* Connection समयd out */
-#घोषणा	ECONNREFUSED	61	/* Connection refused */
-#घोषणा	ELOOP		62	/* Too many symbolic links encountered */
-#घोषणा	ENAMETOOLONG	63	/* File name too दीर्घ */
-#घोषणा	EHOSTDOWN	64	/* Host is करोwn */
-#घोषणा	EHOSTUNREACH	65	/* No route to host */
-#घोषणा	ENOTEMPTY	66	/* Directory not empty */
-#घोषणा EPROCLIM        67      /* SUNOS: Too many processes */
-#घोषणा	EUSERS		68	/* Too many users */
-#घोषणा	EDQUOT		69	/* Quota exceeded */
-#घोषणा	ESTALE		70	/* Stale file handle */
-#घोषणा	EREMOTE		71	/* Object is remote */
-#घोषणा	ENOSTR		72	/* Device not a stream */
-#घोषणा	ETIME		73	/* Timer expired */
-#घोषणा	ENOSR		74	/* Out of streams resources */
-#घोषणा	ENOMSG		75	/* No message of desired type */
-#घोषणा	EBADMSG		76	/* Not a data message */
-#घोषणा	EIDRM		77	/* Identअगरier हटाओd */
-#घोषणा	EDEADLK		78	/* Resource deadlock would occur */
-#घोषणा	ENOLCK		79	/* No record locks available */
-#घोषणा	ENONET		80	/* Machine is not on the network */
-#घोषणा ERREMOTE        81      /* SunOS: Too many lvls of remote in path */
-#घोषणा	ENOLINK		82	/* Link has been severed */
-#घोषणा	EADV		83	/* Advertise error */
-#घोषणा	ESRMNT		84	/* Srmount error */
-#घोषणा	ECOMM		85      /* Communication error on send */
-#घोषणा	EPROTO		86	/* Protocol error */
-#घोषणा	EMULTIHOP	87	/* Multihop attempted */
-#घोषणा	EDOTDOT		88	/* RFS specअगरic error */
-#घोषणा	EREMCHG		89	/* Remote address changed */
-#घोषणा	ENOSYS		90	/* Function not implemented */
+#define	EWOULDBLOCK	EAGAIN	/* Operation would block */
+#define	EINPROGRESS	36	/* Operation now in progress */
+#define	EALREADY	37	/* Operation already in progress */
+#define	ENOTSOCK	38	/* Socket operation on non-socket */
+#define	EDESTADDRREQ	39	/* Destination address required */
+#define	EMSGSIZE	40	/* Message too long */
+#define	EPROTOTYPE	41	/* Protocol wrong type for socket */
+#define	ENOPROTOOPT	42	/* Protocol not available */
+#define	EPROTONOSUPPORT	43	/* Protocol not supported */
+#define	ESOCKTNOSUPPORT	44	/* Socket type not supported */
+#define	EOPNOTSUPP	45	/* Op not supported on transport endpoint */
+#define	EPFNOSUPPORT	46	/* Protocol family not supported */
+#define	EAFNOSUPPORT	47	/* Address family not supported by protocol */
+#define	EADDRINUSE	48	/* Address already in use */
+#define	EADDRNOTAVAIL	49	/* Cannot assign requested address */
+#define	ENETDOWN	50	/* Network is down */
+#define	ENETUNREACH	51	/* Network is unreachable */
+#define	ENETRESET	52	/* Net dropped connection because of reset */
+#define	ECONNABORTED	53	/* Software caused connection abort */
+#define	ECONNRESET	54	/* Connection reset by peer */
+#define	ENOBUFS		55	/* No buffer space available */
+#define	EISCONN		56	/* Transport endpoint is already connected */
+#define	ENOTCONN	57	/* Transport endpoint is not connected */
+#define	ESHUTDOWN	58	/* No send after transport endpoint shutdown */
+#define	ETOOMANYREFS	59	/* Too many references: cannot splice */
+#define	ETIMEDOUT	60	/* Connection timed out */
+#define	ECONNREFUSED	61	/* Connection refused */
+#define	ELOOP		62	/* Too many symbolic links encountered */
+#define	ENAMETOOLONG	63	/* File name too long */
+#define	EHOSTDOWN	64	/* Host is down */
+#define	EHOSTUNREACH	65	/* No route to host */
+#define	ENOTEMPTY	66	/* Directory not empty */
+#define EPROCLIM        67      /* SUNOS: Too many processes */
+#define	EUSERS		68	/* Too many users */
+#define	EDQUOT		69	/* Quota exceeded */
+#define	ESTALE		70	/* Stale file handle */
+#define	EREMOTE		71	/* Object is remote */
+#define	ENOSTR		72	/* Device not a stream */
+#define	ETIME		73	/* Timer expired */
+#define	ENOSR		74	/* Out of streams resources */
+#define	ENOMSG		75	/* No message of desired type */
+#define	EBADMSG		76	/* Not a data message */
+#define	EIDRM		77	/* Identifier removed */
+#define	EDEADLK		78	/* Resource deadlock would occur */
+#define	ENOLCK		79	/* No record locks available */
+#define	ENONET		80	/* Machine is not on the network */
+#define ERREMOTE        81      /* SunOS: Too many lvls of remote in path */
+#define	ENOLINK		82	/* Link has been severed */
+#define	EADV		83	/* Advertise error */
+#define	ESRMNT		84	/* Srmount error */
+#define	ECOMM		85      /* Communication error on send */
+#define	EPROTO		86	/* Protocol error */
+#define	EMULTIHOP	87	/* Multihop attempted */
+#define	EDOTDOT		88	/* RFS specific error */
+#define	EREMCHG		89	/* Remote address changed */
+#define	ENOSYS		90	/* Function not implemented */
 
 /* The rest have no SunOS equivalent. */
-#घोषणा	ESTRPIPE	91	/* Streams pipe error */
-#घोषणा	EOVERFLOW	92	/* Value too large क्रम defined data type */
-#घोषणा	EBADFD		93	/* File descriptor in bad state */
-#घोषणा	ECHRNG		94	/* Channel number out of range */
-#घोषणा	EL2NSYNC	95	/* Level 2 not synchronized */
-#घोषणा	EL3HLT		96	/* Level 3 halted */
-#घोषणा	EL3RST		97	/* Level 3 reset */
-#घोषणा	ELNRNG		98	/* Link number out of range */
-#घोषणा	EUNATCH		99	/* Protocol driver not attached */
-#घोषणा	ENOCSI		100	/* No CSI काष्ठाure available */
-#घोषणा	EL2HLT		101	/* Level 2 halted */
-#घोषणा	EBADE		102	/* Invalid exchange */
-#घोषणा	EBADR		103	/* Invalid request descriptor */
-#घोषणा	EXFULL		104	/* Exchange full */
-#घोषणा	ENOANO		105	/* No anode */
-#घोषणा	EBADRQC		106	/* Invalid request code */
-#घोषणा	EBADSLT		107	/* Invalid slot */
-#घोषणा	EDEADLOCK	108	/* File locking deadlock error */
-#घोषणा	EBFONT		109	/* Bad font file क्रमmat */
-#घोषणा	ELIBEXEC	110	/* Cannot exec a shared library directly */
-#घोषणा	ENODATA		111	/* No data available */
-#घोषणा	ELIBBAD		112	/* Accessing a corrupted shared library */
-#घोषणा	ENOPKG		113	/* Package not installed */
-#घोषणा	ELIBACC		114	/* Can not access a needed shared library */
-#घोषणा	ENOTUNIQ	115	/* Name not unique on network */
-#घोषणा	ERESTART	116	/* Interrupted syscall should be restarted */
-#घोषणा	EUCLEAN		117	/* Structure needs cleaning */
-#घोषणा	ENOTNAM		118	/* Not a XENIX named type file */
-#घोषणा	ENAVAIL		119	/* No XENIX semaphores available */
-#घोषणा	EISNAM		120	/* Is a named type file */
-#घोषणा	EREMOTEIO	121	/* Remote I/O error */
-#घोषणा	EILSEQ		122	/* Illegal byte sequence */
-#घोषणा	ELIBMAX		123	/* Aपंचांगpt to link in too many shared libs */
-#घोषणा	ELIBSCN		124	/* .lib section in a.out corrupted */
+#define	ESTRPIPE	91	/* Streams pipe error */
+#define	EOVERFLOW	92	/* Value too large for defined data type */
+#define	EBADFD		93	/* File descriptor in bad state */
+#define	ECHRNG		94	/* Channel number out of range */
+#define	EL2NSYNC	95	/* Level 2 not synchronized */
+#define	EL3HLT		96	/* Level 3 halted */
+#define	EL3RST		97	/* Level 3 reset */
+#define	ELNRNG		98	/* Link number out of range */
+#define	EUNATCH		99	/* Protocol driver not attached */
+#define	ENOCSI		100	/* No CSI structure available */
+#define	EL2HLT		101	/* Level 2 halted */
+#define	EBADE		102	/* Invalid exchange */
+#define	EBADR		103	/* Invalid request descriptor */
+#define	EXFULL		104	/* Exchange full */
+#define	ENOANO		105	/* No anode */
+#define	EBADRQC		106	/* Invalid request code */
+#define	EBADSLT		107	/* Invalid slot */
+#define	EDEADLOCK	108	/* File locking deadlock error */
+#define	EBFONT		109	/* Bad font file format */
+#define	ELIBEXEC	110	/* Cannot exec a shared library directly */
+#define	ENODATA		111	/* No data available */
+#define	ELIBBAD		112	/* Accessing a corrupted shared library */
+#define	ENOPKG		113	/* Package not installed */
+#define	ELIBACC		114	/* Can not access a needed shared library */
+#define	ENOTUNIQ	115	/* Name not unique on network */
+#define	ERESTART	116	/* Interrupted syscall should be restarted */
+#define	EUCLEAN		117	/* Structure needs cleaning */
+#define	ENOTNAM		118	/* Not a XENIX named type file */
+#define	ENAVAIL		119	/* No XENIX semaphores available */
+#define	EISNAM		120	/* Is a named type file */
+#define	EREMOTEIO	121	/* Remote I/O error */
+#define	EILSEQ		122	/* Illegal byte sequence */
+#define	ELIBMAX		123	/* Atmpt to link in too many shared libs */
+#define	ELIBSCN		124	/* .lib section in a.out corrupted */
 
-#घोषणा	ENOMEDIUM	125	/* No medium found */
-#घोषणा	EMEDIUMTYPE	126	/* Wrong medium type */
-#घोषणा	ECANCELED	127	/* Operation Cancelled */
-#घोषणा	ENOKEY		128	/* Required key not available */
-#घोषणा	EKEYEXPIRED	129	/* Key has expired */
-#घोषणा	EKEYREVOKED	130	/* Key has been revoked */
-#घोषणा	EKEYREJECTED	131	/* Key was rejected by service */
+#define	ENOMEDIUM	125	/* No medium found */
+#define	EMEDIUMTYPE	126	/* Wrong medium type */
+#define	ECANCELED	127	/* Operation Cancelled */
+#define	ENOKEY		128	/* Required key not available */
+#define	EKEYEXPIRED	129	/* Key has expired */
+#define	EKEYREVOKED	130	/* Key has been revoked */
+#define	EKEYREJECTED	131	/* Key was rejected by service */
 
-/* क्रम robust mutexes */
-#घोषणा	EOWNERDEAD	132	/* Owner died */
-#घोषणा	ENOTRECOVERABLE	133	/* State not recoverable */
+/* for robust mutexes */
+#define	EOWNERDEAD	132	/* Owner died */
+#define	ENOTRECOVERABLE	133	/* State not recoverable */
 
-#घोषणा	ERFKILL		134	/* Operation not possible due to RF-समाप्त */
+#define	ERFKILL		134	/* Operation not possible due to RF-kill */
 
-#घोषणा EHWPOISON	135	/* Memory page has hardware error */
+#define EHWPOISON	135	/* Memory page has hardware error */
 
-#पूर्ण_अगर
+#endif

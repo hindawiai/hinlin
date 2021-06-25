@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,16 +22,16 @@
  * Authors: AMD
  *
  */
-#अगर_अघोषित DC_DDC_TYPES_H_
-#घोषणा DC_DDC_TYPES_H_
+#ifndef DC_DDC_TYPES_H_
+#define DC_DDC_TYPES_H_
 
-क्रमागत aux_transaction_type अणु
+enum aux_transaction_type {
 	AUX_TRANSACTION_TYPE_DP,
 	AUX_TRANSACTION_TYPE_I2C
-पूर्ण;
+};
 
 
-क्रमागत i2caux_transaction_action अणु
+enum i2caux_transaction_action {
 	I2CAUX_TRANSACTION_ACTION_I2C_WRITE = 0x00,
 	I2CAUX_TRANSACTION_ACTION_I2C_READ = 0x10,
 	I2CAUX_TRANSACTION_ACTION_I2C_STATUS_REQUEST = 0x20,
@@ -43,20 +42,20 @@
 
 	I2CAUX_TRANSACTION_ACTION_DP_WRITE = 0x80,
 	I2CAUX_TRANSACTION_ACTION_DP_READ = 0x90
-पूर्ण;
+};
 
-काष्ठा aux_request_transaction_data अणु
-	क्रमागत aux_transaction_type type;
-	क्रमागत i2caux_transaction_action action;
+struct aux_request_transaction_data {
+	enum aux_transaction_type type;
+	enum i2caux_transaction_action action;
 	/* 20-bit AUX channel transaction address */
-	uपूर्णांक32_t address;
+	uint32_t address;
 	/* delay, in 100-microsecond units */
-	uपूर्णांक8_t delay;
-	uपूर्णांक32_t length;
-	uपूर्णांक8_t *data;
-पूर्ण;
+	uint8_t delay;
+	uint32_t length;
+	uint8_t *data;
+};
 
-क्रमागत aux_transaction_reply अणु
+enum aux_transaction_reply {
 	AUX_TRANSACTION_REPLY_AUX_ACK = 0x00,
 	AUX_TRANSACTION_REPLY_AUX_NACK = 0x01,
 	AUX_TRANSACTION_REPLY_AUX_DEFER = 0x02,
@@ -70,99 +69,99 @@
 	AUX_TRANSACTION_REPLY_HPD_DISCON = 0x40,
 
 	AUX_TRANSACTION_REPLY_INVALID = 0xFF
-पूर्ण;
+};
 
-काष्ठा aux_reply_transaction_data अणु
-	क्रमागत aux_transaction_reply status;
-	uपूर्णांक32_t length;
-	uपूर्णांक8_t *data;
-पूर्ण;
+struct aux_reply_transaction_data {
+	enum aux_transaction_reply status;
+	uint32_t length;
+	uint8_t *data;
+};
 
-काष्ठा i2c_payload अणु
-	bool ग_लिखो;
-	uपूर्णांक8_t address;
-	uपूर्णांक32_t length;
-	uपूर्णांक8_t *data;
-पूर्ण;
+struct i2c_payload {
+	bool write;
+	uint8_t address;
+	uint32_t length;
+	uint8_t *data;
+};
 
-क्रमागत i2c_command_engine अणु
+enum i2c_command_engine {
 	I2C_COMMAND_ENGINE_DEFAULT,
 	I2C_COMMAND_ENGINE_SW,
 	I2C_COMMAND_ENGINE_HW
-पूर्ण;
+};
 
-काष्ठा i2c_command अणु
-	काष्ठा i2c_payload *payloads;
-	uपूर्णांक8_t number_of_payloads;
+struct i2c_command {
+	struct i2c_payload *payloads;
+	uint8_t number_of_payloads;
 
-	क्रमागत i2c_command_engine engine;
+	enum i2c_command_engine engine;
 
 	/* expressed in KHz
 	 * zero means "use default value" */
-	uपूर्णांक32_t speed;
-पूर्ण;
+	uint32_t speed;
+};
 
-काष्ठा gpio_ddc_hw_info अणु
+struct gpio_ddc_hw_info {
 	bool hw_supported;
-	uपूर्णांक32_t ddc_channel;
-पूर्ण;
+	uint32_t ddc_channel;
+};
 
-काष्ठा ddc अणु
-	काष्ठा gpio *pin_data;
-	काष्ठा gpio *pin_घड़ी;
-	काष्ठा gpio_ddc_hw_info hw_info;
-	काष्ठा dc_context *ctx;
-पूर्ण;
+struct ddc {
+	struct gpio *pin_data;
+	struct gpio *pin_clock;
+	struct gpio_ddc_hw_info hw_info;
+	struct dc_context *ctx;
+};
 
-जोड़ ddc_wa अणु
-	काष्ठा अणु
-		uपूर्णांक32_t DP_SKIP_POWER_OFF:1;
-		uपूर्णांक32_t DP_AUX_POWER_UP_WA_DELAY:1;
-	पूर्ण bits;
-	uपूर्णांक32_t raw;
-पूर्ण;
+union ddc_wa {
+	struct {
+		uint32_t DP_SKIP_POWER_OFF:1;
+		uint32_t DP_AUX_POWER_UP_WA_DELAY:1;
+	} bits;
+	uint32_t raw;
+};
 
-काष्ठा ddc_flags अणु
-	uपूर्णांक8_t EDID_QUERY_DONE_ONCE:1;
-	uपूर्णांक8_t IS_INTERNAL_DISPLAY:1;
-	uपूर्णांक8_t FORCE_READ_REPEATED_START:1;
-	uपूर्णांक8_t EDID_STRESS_READ:1;
+struct ddc_flags {
+	uint8_t EDID_QUERY_DONE_ONCE:1;
+	uint8_t IS_INTERNAL_DISPLAY:1;
+	uint8_t FORCE_READ_REPEATED_START:1;
+	uint8_t EDID_STRESS_READ:1;
 
-पूर्ण;
+};
 
-क्रमागत ddc_transaction_type अणु
+enum ddc_transaction_type {
 	DDC_TRANSACTION_TYPE_NONE = 0,
 	DDC_TRANSACTION_TYPE_I2C,
 	DDC_TRANSACTION_TYPE_I2C_OVER_AUX,
 	DDC_TRANSACTION_TYPE_I2C_OVER_AUX_WITH_DEFER,
 	DDC_TRANSACTION_TYPE_I2C_OVER_AUX_RETRY_DEFER
-पूर्ण;
+};
 
-क्रमागत display_करोngle_type अणु
+enum display_dongle_type {
 	DISPLAY_DONGLE_NONE = 0,
 	/* Active converter types*/
 	DISPLAY_DONGLE_DP_VGA_CONVERTER,
 	DISPLAY_DONGLE_DP_DVI_CONVERTER,
 	DISPLAY_DONGLE_DP_HDMI_CONVERTER,
-	/* DP-HDMI/DVI passive करोngles (Type 1 and Type 2)*/
+	/* DP-HDMI/DVI passive dongles (Type 1 and Type 2)*/
 	DISPLAY_DONGLE_DP_DVI_DONGLE,
 	DISPLAY_DONGLE_DP_HDMI_DONGLE,
-	/* Other types of करोngle*/
+	/* Other types of dongle*/
 	DISPLAY_DONGLE_DP_HDMI_MISMATCHED_DONGLE,
-पूर्ण;
+};
 
-काष्ठा ddc_service अणु
-	काष्ठा ddc *ddc_pin;
-	काष्ठा ddc_flags flags;
-	जोड़ ddc_wa wa;
-	क्रमागत ddc_transaction_type transaction_type;
-	क्रमागत display_करोngle_type करोngle_type;
-	काष्ठा dc_context *ctx;
-	काष्ठा dc_link *link;
+struct ddc_service {
+	struct ddc *ddc_pin;
+	struct ddc_flags flags;
+	union ddc_wa wa;
+	enum ddc_transaction_type transaction_type;
+	enum display_dongle_type dongle_type;
+	struct dc_context *ctx;
+	struct dc_link *link;
 
-	uपूर्णांक32_t address;
-	uपूर्णांक32_t edid_buf_len;
-	uपूर्णांक8_t edid_buf[DC_MAX_EDID_BUFFER_SIZE];
-पूर्ण;
+	uint32_t address;
+	uint32_t edid_buf_len;
+	uint8_t edid_buf[DC_MAX_EDID_BUFFER_SIZE];
+};
 
-#पूर्ण_अगर /* DC_DDC_TYPES_H_ */
+#endif /* DC_DDC_TYPES_H_ */

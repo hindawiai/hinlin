@@ -1,33 +1,32 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _UAPI_ASM_X86_SIGCONTEXT_H
-#घोषणा _UAPI_ASM_X86_SIGCONTEXT_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _UAPI_ASM_X86_SIGCONTEXT_H
+#define _UAPI_ASM_X86_SIGCONTEXT_H
 
 /*
- * Linux संकेत context definitions. The sigcontext includes a complex
+ * Linux signal context definitions. The sigcontext includes a complex
  * hierarchy of CPU and FPU state, available to user-space (on the stack) when
- * a संकेत handler is executed.
+ * a signal handler is executed.
  *
  * As over the years this ABI grew from its very simple roots towards
  * supporting more and more CPU state organically, some of the details (which
  * were rather clever hacks back in the days) became a bit quirky by today.
  *
- * The current ABI includes flexible provisions क्रम future extensions, so we
- * won't have to grow new quirks क्रम quite some समय. Promise!
+ * The current ABI includes flexible provisions for future extensions, so we
+ * won't have to grow new quirks for quite some time. Promise!
  */
 
-#समावेश <linux/compiler.h>
-#समावेश <linux/types.h>
+#include <linux/compiler.h>
+#include <linux/types.h>
 
-#घोषणा FP_XSTATE_MAGIC1		0x46505853U
-#घोषणा FP_XSTATE_MAGIC2		0x46505845U
-#घोषणा FP_XSTATE_MAGIC2_SIZE		माप(FP_XSTATE_MAGIC2)
+#define FP_XSTATE_MAGIC1		0x46505853U
+#define FP_XSTATE_MAGIC2		0x46505845U
+#define FP_XSTATE_MAGIC2_SIZE		sizeof(FP_XSTATE_MAGIC2)
 
 /*
  * Bytes 464..511 in the current 512-byte layout of the FXSAVE/FXRSTOR frame
- * are reserved क्रम SW usage. On CPUs supporting XSAVE/XRSTOR, these bytes are
- * used to extend the fpstate poपूर्णांकer in the sigcontext, which now includes the
- * extended state inक्रमmation aदीर्घ with fpstate inक्रमmation.
+ * are reserved for SW usage. On CPUs supporting XSAVE/XRSTOR, these bytes are
+ * used to extend the fpstate pointer in the sigcontext, which now includes the
+ * extended state information along with fpstate information.
  *
  * If sw_reserved.magic1 == FP_XSTATE_MAGIC1 then there's a
  * sw_reserved.extended_size bytes large extended context area present. (The
@@ -38,19 +37,19 @@
  * This extended area typically grows with newer CPUs that have larger and
  * larger XSAVE areas.
  */
-काष्ठा _fpx_sw_bytes अणु
+struct _fpx_sw_bytes {
 	/*
 	 * If set to FP_XSTATE_MAGIC1 then this is an xstate context.
-	 * 0 अगर a legacy frame.
+	 * 0 if a legacy frame.
 	 */
 	__u32				magic1;
 
 	/*
 	 * Total size of the fpstate area:
 	 *
-	 *  - अगर magic1 == 0 then it's माप(काष्ठा _fpstate)
-	 *  - अगर magic1 == FP_XSTATE_MAGIC1 then it's माप(काष्ठा _xstate)
-	 *    plus extensions (अगर any)
+	 *  - if magic1 == 0 then it's sizeof(struct _fpstate)
+	 *  - if magic1 == FP_XSTATE_MAGIC1 then it's sizeof(struct _xstate)
+	 *    plus extensions (if any)
 	 */
 	__u32				extended_size;
 
@@ -68,44 +67,44 @@
 
 	/* For future use: */
 	__u32				padding[7];
-पूर्ण;
+};
 
 /*
- * As करोcumented in the iBCS2 standard:
+ * As documented in the iBCS2 standard:
  *
  * The first part of "struct _fpstate" is just the normal i387 hardware setup,
- * the extra "status" word is used to save the coprocessor status word beक्रमe
+ * the extra "status" word is used to save the coprocessor status word before
  * entering the handler.
  *
- * The FPU state data काष्ठाure has had to grow to accommodate the extended FPU
- * state required by the Streaming SIMD Extensions.  There is no करोcumented
+ * The FPU state data structure has had to grow to accommodate the extended FPU
+ * state required by the Streaming SIMD Extensions.  There is no documented
  * standard to accomplish this at the moment.
  */
 
-/* 10-byte legacy भग्नing poपूर्णांक रेजिस्टर: */
-काष्ठा _fpreg अणु
-	__u16				signअगरicand[4];
+/* 10-byte legacy floating point register: */
+struct _fpreg {
+	__u16				significand[4];
 	__u16				exponent;
-पूर्ण;
+};
 
-/* 16-byte भग्नing poपूर्णांक रेजिस्टर: */
-काष्ठा _fpxreg अणु
-	__u16				signअगरicand[4];
+/* 16-byte floating point register: */
+struct _fpxreg {
+	__u16				significand[4];
 	__u16				exponent;
 	__u16				padding[3];
-पूर्ण;
+};
 
-/* 16-byte XMM रेजिस्टर: */
-काष्ठा _xmmreg अणु
+/* 16-byte XMM register: */
+struct _xmmreg {
 	__u32				element[4];
-पूर्ण;
+};
 
-#घोषणा X86_FXSR_MAGIC			0x0000
+#define X86_FXSR_MAGIC			0x0000
 
 /*
  * The 32-bit FPU frame:
  */
-काष्ठा _fpstate_32 अणु
+struct _fpstate_32 {
 	/* Legacy FPU environment: */
 	__u32				cw;
 	__u32				sw;
@@ -114,7 +113,7 @@
 	__u32				cssel;
 	__u32				dataoff;
 	__u32				datasel;
-	काष्ठा _fpreg			_st[8];
+	struct _fpreg			_st[8];
 	__u16				status;
 	__u16				magic;		/* 0xffff: regular FPU data only */
 							/* 0x0000: FXSR FPU data */
@@ -123,31 +122,31 @@
 	__u32				_fxsr_env[6];	/* FXSR FPU env is ignored */
 	__u32				mxcsr;
 	__u32				reserved;
-	काष्ठा _fpxreg			_fxsr_st[8];	/* FXSR FPU reg data is ignored */
-	काष्ठा _xmmreg			_xmm[8];	/* First 8 XMM रेजिस्टरs */
-	जोड़ अणु
-		__u32			padding1[44];	/* Second 8 XMM रेजिस्टरs plus padding */
-		__u32			padding[44];	/* Alias name क्रम old user-space */
-	पूर्ण;
+	struct _fpxreg			_fxsr_st[8];	/* FXSR FPU reg data is ignored */
+	struct _xmmreg			_xmm[8];	/* First 8 XMM registers */
+	union {
+		__u32			padding1[44];	/* Second 8 XMM registers plus padding */
+		__u32			padding[44];	/* Alias name for old user-space */
+	};
 
-	जोड़ अणु
+	union {
 		__u32			padding2[12];
-		काष्ठा _fpx_sw_bytes	sw_reserved;	/* Potential extended state is encoded here */
-	पूर्ण;
-पूर्ण;
+		struct _fpx_sw_bytes	sw_reserved;	/* Potential extended state is encoded here */
+	};
+};
 
 /*
- * The 64-bit FPU frame. (FXSAVE क्रमmat and later)
+ * The 64-bit FPU frame. (FXSAVE format and later)
  *
- * Note1: If sw_reserved.magic1 == FP_XSTATE_MAGIC1 then the काष्ठाure is
+ * Note1: If sw_reserved.magic1 == FP_XSTATE_MAGIC1 then the structure is
  *        larger: 'struct _xstate'. Note that 'struct _xstate' embeds
  *        'struct _fpstate' so that you can always assume the _fpstate portion
  *        exists so that you can check the magic value.
  *
  * Note2: Reserved fields may someday contain valuable data. Always
- *	  save/restore them when you change संकेत frames.
+ *	  save/restore them when you change signal frames.
  */
-काष्ठा _fpstate_64 अणु
+struct _fpstate_64 {
 	__u16				cwd;
 	__u16				swd;
 	/* Note this is not the same as the 32-bit/x87/FSAVE twd: */
@@ -157,50 +156,50 @@
 	__u64				rdp;
 	__u32				mxcsr;
 	__u32				mxcsr_mask;
-	__u32				st_space[32];	/*  8x  FP रेजिस्टरs, 16 bytes each */
-	__u32				xmm_space[64];	/* 16x XMM रेजिस्टरs, 16 bytes each */
+	__u32				st_space[32];	/*  8x  FP registers, 16 bytes each */
+	__u32				xmm_space[64];	/* 16x XMM registers, 16 bytes each */
 	__u32				reserved2[12];
-	जोड़ अणु
+	union {
 		__u32			reserved3[12];
-		काष्ठा _fpx_sw_bytes	sw_reserved;	/* Potential extended state is encoded here */
-	पूर्ण;
-पूर्ण;
+		struct _fpx_sw_bytes	sw_reserved;	/* Potential extended state is encoded here */
+	};
+};
 
-#अगर_घोषित __i386__
+#ifdef __i386__
 # define _fpstate _fpstate_32
-#अन्यथा
+#else
 # define _fpstate _fpstate_64
-#पूर्ण_अगर
+#endif
 
-काष्ठा _header अणु
+struct _header {
 	__u64				xfeatures;
 	__u64				reserved1[2];
 	__u64				reserved2[5];
-पूर्ण;
+};
 
-काष्ठा _ymmh_state अणु
-	/* 16x YMM रेजिस्टरs, 16 bytes each: */
+struct _ymmh_state {
+	/* 16x YMM registers, 16 bytes each: */
 	__u32				ymmh_space[64];
-पूर्ण;
+};
 
 /*
- * Extended state poपूर्णांकed to by sigcontext::fpstate.
+ * Extended state pointed to by sigcontext::fpstate.
  *
- * In addition to the fpstate, inक्रमmation encoded in _xstate::xstate_hdr
- * indicates the presence of other extended state inक्रमmation supported
+ * In addition to the fpstate, information encoded in _xstate::xstate_hdr
+ * indicates the presence of other extended state information supported
  * by the CPU and kernel:
  */
-काष्ठा _xstate अणु
-	काष्ठा _fpstate			fpstate;
-	काष्ठा _header			xstate_hdr;
-	काष्ठा _ymmh_state		ymmh;
+struct _xstate {
+	struct _fpstate			fpstate;
+	struct _header			xstate_hdr;
+	struct _ymmh_state		ymmh;
 	/* New processor state extensions go here: */
-पूर्ण;
+};
 
 /*
- * The 32-bit संकेत frame:
+ * The 32-bit signal frame:
  */
-काष्ठा sigcontext_32 अणु
+struct sigcontext_32 {
 	__u16				gs, __gsh;
 	__u16				fs, __fsh;
 	__u16				es, __esh;
@@ -218,25 +217,25 @@
 	__u32				ip;
 	__u16				cs, __csh;
 	__u32				flags;
-	__u32				sp_at_संकेत;
+	__u32				sp_at_signal;
 	__u16				ss, __ssh;
 
 	/*
-	 * fpstate is really (काष्ठा _fpstate *) or (काष्ठा _xstate *)
+	 * fpstate is really (struct _fpstate *) or (struct _xstate *)
 	 * depending on the FP_XSTATE_MAGIC1 encoded in the SW reserved
-	 * bytes of (काष्ठा _fpstate) and FP_XSTATE_MAGIC2 present at the end
+	 * bytes of (struct _fpstate) and FP_XSTATE_MAGIC2 present at the end
 	 * of extended memory layout. See comments at the definition of
-	 * (काष्ठा _fpx_sw_bytes)
+	 * (struct _fpx_sw_bytes)
 	 */
 	__u32				fpstate; /* Zero when no FPU/extended context */
 	__u32				oldmask;
 	__u32				cr2;
-पूर्ण;
+};
 
 /*
- * The 64-bit संकेत frame:
+ * The 64-bit signal frame:
  */
-काष्ठा sigcontext_64 अणु
+struct sigcontext_64 {
 	__u64				r8;
 	__u64				r9;
 	__u64				r10;
@@ -265,40 +264,40 @@
 	__u64				cr2;
 
 	/*
-	 * fpstate is really (काष्ठा _fpstate *) or (काष्ठा _xstate *)
+	 * fpstate is really (struct _fpstate *) or (struct _xstate *)
 	 * depending on the FP_XSTATE_MAGIC1 encoded in the SW reserved
-	 * bytes of (काष्ठा _fpstate) and FP_XSTATE_MAGIC2 present at the end
+	 * bytes of (struct _fpstate) and FP_XSTATE_MAGIC2 present at the end
 	 * of extended memory layout. See comments at the definition of
-	 * (काष्ठा _fpx_sw_bytes)
+	 * (struct _fpx_sw_bytes)
 	 */
 	__u64				fpstate; /* Zero when no FPU/extended context */
 	__u64				reserved1[8];
-पूर्ण;
+};
 
 /*
  * Create the real 'struct sigcontext' type:
  */
-#अगर_घोषित __KERNEL__
-# अगरdef __i386__
+#ifdef __KERNEL__
+# ifdef __i386__
 #  define sigcontext sigcontext_32
-# अन्यथा
+# else
 #  define sigcontext sigcontext_64
-# endअगर
-#पूर्ण_अगर
+# endif
+#endif
 
 /*
- * The old user-space sigcontext definition, just in हाल user-space still
- * relies on it. The kernel definition (in यंत्र/sigcontext.h) has unअगरied
+ * The old user-space sigcontext definition, just in case user-space still
+ * relies on it. The kernel definition (in asm/sigcontext.h) has unified
  * field names but otherwise the same layout.
  */
-#अगर_अघोषित __KERNEL__
+#ifndef __KERNEL__
 
-#घोषणा _fpstate_ia32			_fpstate_32
-#घोषणा sigcontext_ia32			sigcontext_32
+#define _fpstate_ia32			_fpstate_32
+#define sigcontext_ia32			sigcontext_32
 
 
-# अगरdef __i386__
-काष्ठा sigcontext अणु
+# ifdef __i386__
+struct sigcontext {
 	__u16				gs, __gsh;
 	__u16				fs, __fsh;
 	__u16				es, __esh;
@@ -316,14 +315,14 @@
 	__u32				eip;
 	__u16				cs, __csh;
 	__u32				eflags;
-	__u32				esp_at_संकेत;
+	__u32				esp_at_signal;
 	__u16				ss, __ssh;
-	काष्ठा _fpstate __user		*fpstate;
+	struct _fpstate __user		*fpstate;
 	__u32				oldmask;
 	__u32				cr2;
-पूर्ण;
-# अन्यथा /* __x86_64__: */
-काष्ठा sigcontext अणु
+};
+# else /* __x86_64__: */
+struct sigcontext {
 	__u64				r8;
 	__u64				r9;
 	__u64				r10;
@@ -356,35 +355,35 @@
 	 *    thus overwriting anything the kernel expects to be preserved
 	 *    in these slots.
 	 *
-	 *  - If these slots are ever needed क्रम any other purpose,
+	 *  - If these slots are ever needed for any other purpose,
 	 *    there is some risk that very old 64-bit binaries could get
-	 *    confused.  I करोubt that many such binaries still work,
-	 *    though, since the same patch in 2.5.64 also हटाओd the
-	 *    64-bit set_thपढ़ो_area syscall, so it appears that there
-	 *    is no TLS API beyond modअगरy_ldt that works in both pre-
+	 *    confused.  I doubt that many such binaries still work,
+	 *    though, since the same patch in 2.5.64 also removed the
+	 *    64-bit set_thread_area syscall, so it appears that there
+	 *    is no TLS API beyond modify_ldt that works in both pre-
 	 *    and post-2.5.64 kernels.
 	 *
 	 * If the kernel ever adds explicit fs, gs, fsbase, and gsbase
 	 * save/restore, it will most likely need to be opt-in and use
-	 * dअगरferent context slots.
+	 * different context slots.
 	 */
 	__u16				gs;
 	__u16				fs;
-	जोड़ अणु
+	union {
 		__u16			ss;	/* If UC_SIGCONTEXT_SS */
-		__u16			__pad0;	/* Alias name क्रम old (!UC_SIGCONTEXT_SS) user-space */
-	पूर्ण;
+		__u16			__pad0;	/* Alias name for old (!UC_SIGCONTEXT_SS) user-space */
+	};
 	__u64				err;
 	__u64				trapno;
 	__u64				oldmask;
 	__u64				cr2;
-	काष्ठा _fpstate __user		*fpstate;	/* Zero when no FPU context */
-#  अगरdef __ILP32__
+	struct _fpstate __user		*fpstate;	/* Zero when no FPU context */
+#  ifdef __ILP32__
 	__u32				__fpstate_pad;
-#  endअगर
+#  endif
 	__u64				reserved1[8];
-पूर्ण;
-# endअगर /* __x86_64__ */
-#पूर्ण_अगर /* !__KERNEL__ */
+};
+# endif /* __x86_64__ */
+#endif /* !__KERNEL__ */
 
-#पूर्ण_अगर /* _UAPI_ASM_X86_SIGCONTEXT_H */
+#endif /* _UAPI_ASM_X86_SIGCONTEXT_H */

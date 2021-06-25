@@ -1,135 +1,134 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /******************************************************************************
  *
  *	(C)Copyright 1998,1999 SysKonnect,
- *	a business unit of Schneider & Koch & Co. Datenप्रणालीe GmbH.
+ *	a business unit of Schneider & Koch & Co. Datensysteme GmbH.
  *
- *	The inक्रमmation in this file is provided "AS IS" without warranty.
+ *	The information in this file is provided "AS IS" without warranty.
  *
  ******************************************************************************/
 
-#अगर_अघोषित	_TARGETHW_
-#घोषणा _TARGETHW_
+#ifndef	_TARGETHW_
+#define _TARGETHW_
 
 	/*
 	 *  PCI Watermark definition
 	 */
-#अगर_घोषित	PCI
-#घोषणा	RX_WATERMARK	24
-#घोषणा TX_WATERMARK	24
-#घोषणा SK_ML_ID_1	0x20
-#घोषणा SK_ML_ID_2	0x30
-#पूर्ण_अगर
+#ifdef	PCI
+#define	RX_WATERMARK	24
+#define TX_WATERMARK	24
+#define SK_ML_ID_1	0x20
+#define SK_ML_ID_2	0x30
+#endif
 
-#समावेश	"skfbi.h"
-#अगर_अघोषित TAG_MODE	
-#समावेश	"fplus.h"
-#अन्यथा
-#समावेश	"fplustm.h"
-#पूर्ण_अगर
+#include	"skfbi.h"
+#ifndef TAG_MODE	
+#include	"fplus.h"
+#else
+#include	"fplustm.h"
+#endif
 
-#अगर_अघोषित	HW_PTR
-#घोषणा HW_PTR  व्योम __iomem *
-#पूर्ण_अगर
+#ifndef	HW_PTR
+#define HW_PTR  void __iomem *
+#endif
 
-#अगर_घोषित MULT_OEM
-#घोषणा	OI_STAT_LAST		0	/* end of OEM data base */
-#घोषणा	OI_STAT_PRESENT		1	/* entry present but not empty */
-#घोषणा	OI_STAT_VALID		2	/* holds valid ID, but is not active */ 
-#घोषणा	OI_STAT_ACTIVE		3	/* holds valid ID, entry is active */
+#ifdef MULT_OEM
+#define	OI_STAT_LAST		0	/* end of OEM data base */
+#define	OI_STAT_PRESENT		1	/* entry present but not empty */
+#define	OI_STAT_VALID		2	/* holds valid ID, but is not active */ 
+#define	OI_STAT_ACTIVE		3	/* holds valid ID, entry is active */
 					/* active = adapter is supported */
 
 /* Memory representation of IDs must match representation in adapter. */
-काष्ठा	s_oem_ids अणु
-	u_अक्षर	oi_status ;		/* Stat: last, present, valid, active */
-	u_अक्षर	oi_mark[5] ;		/* "PID00" .. "PID07" ..	*/
-	u_अक्षर 	oi_id[4] ;		/* id bytes, representation as	*/
+struct	s_oem_ids {
+	u_char	oi_status ;		/* Stat: last, present, valid, active */
+	u_char	oi_mark[5] ;		/* "PID00" .. "PID07" ..	*/
+	u_char 	oi_id[4] ;		/* id bytes, representation as	*/
 					/* defined by hardware,		*/	
-#अगर_घोषित PCI
-	u_अक्षर 	oi_sub_id[4] ;		/* sub id bytes, representation as */
+#ifdef PCI
+	u_char 	oi_sub_id[4] ;		/* sub id bytes, representation as */
 					/* defined by hardware,		*/
-#पूर्ण_अगर
-पूर्ण ;
-#पूर्ण_अगर	/* MULT_OEM */
+#endif
+} ;
+#endif	/* MULT_OEM */
 
 
-काष्ठा s_smt_hw अणु
+struct s_smt_hw {
 	/*
 	 * global
 	 */
 	HW_PTR	iop ;			/* IO base address */
-	लघु	dma ;			/* DMA channel */
-	लघु	irq ;			/* IRQ level */
-	लघु	eprom ;			/* FLASH prom */
+	short	dma ;			/* DMA channel */
+	short	irq ;			/* IRQ level */
+	short	eprom ;			/* FLASH prom */
 
-#अगर_अघोषित SYNC
-	u_लघु	n_a_send ;		/* pending send requests */
-#पूर्ण_अगर
+#ifndef SYNC
+	u_short	n_a_send ;		/* pending send requests */
+#endif
 
-#अगर	defined(PCI)
-	लघु	slot ;			/* slot number */
-	लघु   max_slots ;		/* maximum number of slots */
-	लघु	wकरोg_used ;		/* TRUE अगर the watch करोg is used */
-#पूर्ण_अगर
+#if	defined(PCI)
+	short	slot ;			/* slot number */
+	short   max_slots ;		/* maximum number of slots */
+	short	wdog_used ;		/* TRUE if the watch dog is used */
+#endif
 
-#अगर_घोषित	PCI
-	u_लघु	pci_handle ;		/* handle to access the BIOS func */
-	u_दीर्घ	is_imask ;		/* पूर्णांक maske क्रम the पूर्णांक source reg */
-	u_दीर्घ	phys_mem_addr ;		/* physical memory address */
-	u_लघु	mc_dummy ;		/* work around क्रम MC compiler bug */	
+#ifdef	PCI
+	u_short	pci_handle ;		/* handle to access the BIOS func */
+	u_long	is_imask ;		/* int maske for the int source reg */
+	u_long	phys_mem_addr ;		/* physical memory address */
+	u_short	mc_dummy ;		/* work around for MC compiler bug */	
 	/*
 	 * state of the hardware
 	 */
-	u_लघु hw_state ;		/* started or stopped */
+	u_short hw_state ;		/* started or stopped */
 
-#घोषणा	STARTED		1
-#घोषणा	STOPPED		0
+#define	STARTED		1
+#define	STOPPED		0
 
-	पूर्णांक	hw_is_64bit ;		/* करोes we have a 64 bit adapter */
-#पूर्ण_अगर
+	int	hw_is_64bit ;		/* does we have a 64 bit adapter */
+#endif
 
-#अगर_घोषित	TAG_MODE
-	u_दीर्घ	pci_fix_value ;		/* value parsed by PCIFIX */
-#पूर्ण_अगर
+#ifdef	TAG_MODE
+	u_long	pci_fix_value ;		/* value parsed by PCIFIX */
+#endif
 
 	/*
 	 * hwt.c
 	 */
-	u_दीर्घ	t_start ;		/* HWT start */
-	u_दीर्घ	t_stop ;		/* HWT stop */
-	u_लघु	समयr_activ ;		/* HWT समयr active */
+	u_long	t_start ;		/* HWT start */
+	u_long	t_stop ;		/* HWT stop */
+	u_short	timer_activ ;		/* HWT timer active */
 
 	/*
 	 * PIC
 	 */
-	u_अक्षर	pic_a1 ;
-	u_अक्षर	pic_21 ;
+	u_char	pic_a1 ;
+	u_char	pic_21 ;
 
 	/*
-	 * GENERIC ; करो not modअगरy beyond this line
+	 * GENERIC ; do not modify beyond this line
 	 */
 
 	/*
 	 * physical and canonical address
 	 */
-	काष्ठा fddi_addr fddi_home_addr ;
-	काष्ठा fddi_addr fddi_canon_addr ;
-	काष्ठा fddi_addr fddi_phys_addr ;
+	struct fddi_addr fddi_home_addr ;
+	struct fddi_addr fddi_canon_addr ;
+	struct fddi_addr fddi_phys_addr ;
 
 	/*
 	 * mac variables
 	 */
-	काष्ठा mac_parameter mac_pa ;	/* पंचांगin, पंचांगax, tvx, treq .. */
-	काष्ठा mac_counter mac_ct ;	/* recv., lost, error  */
-	u_लघु	mac_ring_is_up ;	/* ring is up flag */
+	struct mac_parameter mac_pa ;	/* tmin, tmax, tvx, treq .. */
+	struct mac_counter mac_ct ;	/* recv., lost, error  */
+	u_short	mac_ring_is_up ;	/* ring is up flag */
 
-	काष्ठा s_smt_fp	fp ;		/* क्रमmac+ */
+	struct s_smt_fp	fp ;		/* formac+ */
 
-#अगर_घोषित MULT_OEM
-	काष्ठा s_oem_ids *oem_id ;	/* poपूर्णांकer to selected id */
-	पूर्णांक oem_min_status ;		/* IDs to take care of */
-#पूर्ण_अगर	/* MULT_OEM */
+#ifdef MULT_OEM
+	struct s_oem_ids *oem_id ;	/* pointer to selected id */
+	int oem_min_status ;		/* IDs to take care of */
+#endif	/* MULT_OEM */
 
-पूर्ण ;
-#पूर्ण_अगर
+} ;
+#endif

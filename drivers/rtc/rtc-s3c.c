@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* drivers/rtc/rtc-s3c.c
  *
  * Copyright (c) 2010 Samsung Electronics Co., Ltd.
@@ -12,112 +11,112 @@
  * S3C2410/S3C2440/S3C24XX Internal RTC Driver
 */
 
-#समावेश <linux/module.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/init.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/rtc.h>
-#समावेश <linux/bcd.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/log2.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/पन.स>
+#include <linux/module.h>
+#include <linux/fs.h>
+#include <linux/string.h>
+#include <linux/init.h>
+#include <linux/platform_device.h>
+#include <linux/interrupt.h>
+#include <linux/rtc.h>
+#include <linux/bcd.h>
+#include <linux/clk.h>
+#include <linux/log2.h>
+#include <linux/slab.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/uaccess.h>
+#include <linux/io.h>
 
-#समावेश <यंत्र/irq.h>
-#समावेश "rtc-s3c.h"
+#include <asm/irq.h>
+#include "rtc-s3c.h"
 
-काष्ठा s3c_rtc अणु
-	काष्ठा device *dev;
-	काष्ठा rtc_device *rtc;
+struct s3c_rtc {
+	struct device *dev;
+	struct rtc_device *rtc;
 
-	व्योम __iomem *base;
-	काष्ठा clk *rtc_clk;
-	काष्ठा clk *rtc_src_clk;
+	void __iomem *base;
+	struct clk *rtc_clk;
+	struct clk *rtc_src_clk;
 	bool alarm_enabled;
 
-	स्थिर काष्ठा s3c_rtc_data *data;
+	const struct s3c_rtc_data *data;
 
-	पूर्णांक irq_alarm;
+	int irq_alarm;
 	spinlock_t alarm_lock;
 
 	bool wake_en;
-पूर्ण;
+};
 
-काष्ठा s3c_rtc_data अणु
+struct s3c_rtc_data {
 	bool needs_src_clk;
 
-	व्योम (*irq_handler) (काष्ठा s3c_rtc *info, पूर्णांक mask);
-	व्योम (*enable) (काष्ठा s3c_rtc *info);
-	व्योम (*disable) (काष्ठा s3c_rtc *info);
-पूर्ण;
+	void (*irq_handler) (struct s3c_rtc *info, int mask);
+	void (*enable) (struct s3c_rtc *info);
+	void (*disable) (struct s3c_rtc *info);
+};
 
-अटल पूर्णांक s3c_rtc_enable_clk(काष्ठा s3c_rtc *info)
-अणु
-	पूर्णांक ret;
+static int s3c_rtc_enable_clk(struct s3c_rtc *info)
+{
+	int ret;
 
 	ret = clk_enable(info->rtc_clk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (info->data->needs_src_clk) अणु
+	if (info->data->needs_src_clk) {
 		ret = clk_enable(info->rtc_src_clk);
-		अगर (ret) अणु
+		if (ret) {
 			clk_disable(info->rtc_clk);
-			वापस ret;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return ret;
+		}
+	}
+	return 0;
+}
 
-अटल व्योम s3c_rtc_disable_clk(काष्ठा s3c_rtc *info)
-अणु
-	अगर (info->data->needs_src_clk)
+static void s3c_rtc_disable_clk(struct s3c_rtc *info)
+{
+	if (info->data->needs_src_clk)
 		clk_disable(info->rtc_src_clk);
 	clk_disable(info->rtc_clk);
-पूर्ण
+}
 
 /* IRQ Handler */
-अटल irqवापस_t s3c_rtc_alarmirq(पूर्णांक irq, व्योम *id)
-अणु
-	काष्ठा s3c_rtc *info = (काष्ठा s3c_rtc *)id;
+static irqreturn_t s3c_rtc_alarmirq(int irq, void *id)
+{
+	struct s3c_rtc *info = (struct s3c_rtc *)id;
 
-	अगर (info->data->irq_handler)
+	if (info->data->irq_handler)
 		info->data->irq_handler(info, S3C2410_INTP_ALM);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-/* Update control रेजिस्टरs */
-अटल पूर्णांक s3c_rtc_setaie(काष्ठा device *dev, अचिन्हित पूर्णांक enabled)
-अणु
-	काष्ठा s3c_rtc *info = dev_get_drvdata(dev);
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक पंचांगp;
-	पूर्णांक ret;
+/* Update control registers */
+static int s3c_rtc_setaie(struct device *dev, unsigned int enabled)
+{
+	struct s3c_rtc *info = dev_get_drvdata(dev);
+	unsigned long flags;
+	unsigned int tmp;
+	int ret;
 
 	dev_dbg(info->dev, "%s: aie=%d\n", __func__, enabled);
 
 	ret = s3c_rtc_enable_clk(info);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	पंचांगp = पढ़ोb(info->base + S3C2410_RTCALM) & ~S3C2410_RTCALM_ALMEN;
+	tmp = readb(info->base + S3C2410_RTCALM) & ~S3C2410_RTCALM_ALMEN;
 
-	अगर (enabled)
-		पंचांगp |= S3C2410_RTCALM_ALMEN;
+	if (enabled)
+		tmp |= S3C2410_RTCALM_ALMEN;
 
-	ग_लिखोb(पंचांगp, info->base + S3C2410_RTCALM);
+	writeb(tmp, info->base + S3C2410_RTCALM);
 
 	spin_lock_irqsave(&info->alarm_lock, flags);
 
-	अगर (info->alarm_enabled && !enabled)
+	if (info->alarm_enabled && !enabled)
 		s3c_rtc_disable_clk(info);
-	अन्यथा अगर (!info->alarm_enabled && enabled)
+	else if (!info->alarm_enabled && enabled)
 		ret = s3c_rtc_enable_clk(info);
 
 	info->alarm_enabled = enabled;
@@ -125,471 +124,471 @@
 
 	s3c_rtc_disable_clk(info);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Time पढ़ो/ग_लिखो */
-अटल पूर्णांक s3c_rtc_समय_लो(काष्ठा device *dev, काष्ठा rtc_समय *rtc_पंचांग)
-अणु
-	काष्ठा s3c_rtc *info = dev_get_drvdata(dev);
-	अचिन्हित पूर्णांक have_retried = 0;
-	पूर्णांक ret;
+/* Time read/write */
+static int s3c_rtc_gettime(struct device *dev, struct rtc_time *rtc_tm)
+{
+	struct s3c_rtc *info = dev_get_drvdata(dev);
+	unsigned int have_retried = 0;
+	int ret;
 
 	ret = s3c_rtc_enable_clk(info);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-retry_get_समय:
-	rtc_पंचांग->पंचांग_min  = पढ़ोb(info->base + S3C2410_RTCMIN);
-	rtc_पंचांग->पंचांग_hour = पढ़ोb(info->base + S3C2410_RTCHOUR);
-	rtc_पंचांग->पंचांग_mday = पढ़ोb(info->base + S3C2410_RTCDATE);
-	rtc_पंचांग->पंचांग_mon  = पढ़ोb(info->base + S3C2410_RTCMON);
-	rtc_पंचांग->पंचांग_year = पढ़ोb(info->base + S3C2410_RTCYEAR);
-	rtc_पंचांग->पंचांग_sec  = पढ़ोb(info->base + S3C2410_RTCSEC);
+retry_get_time:
+	rtc_tm->tm_min  = readb(info->base + S3C2410_RTCMIN);
+	rtc_tm->tm_hour = readb(info->base + S3C2410_RTCHOUR);
+	rtc_tm->tm_mday = readb(info->base + S3C2410_RTCDATE);
+	rtc_tm->tm_mon  = readb(info->base + S3C2410_RTCMON);
+	rtc_tm->tm_year = readb(info->base + S3C2410_RTCYEAR);
+	rtc_tm->tm_sec  = readb(info->base + S3C2410_RTCSEC);
 
-	/* the only way to work out whether the प्रणाली was mid-update
-	 * when we पढ़ो it is to check the second counter, and अगर it
-	 * is zero, then we re-try the entire पढ़ो
+	/* the only way to work out whether the system was mid-update
+	 * when we read it is to check the second counter, and if it
+	 * is zero, then we re-try the entire read
 	 */
 
-	अगर (rtc_पंचांग->पंचांग_sec == 0 && !have_retried) अणु
+	if (rtc_tm->tm_sec == 0 && !have_retried) {
 		have_retried = 1;
-		जाओ retry_get_समय;
-	पूर्ण
+		goto retry_get_time;
+	}
 
-	rtc_पंचांग->पंचांग_sec = bcd2bin(rtc_पंचांग->पंचांग_sec);
-	rtc_पंचांग->पंचांग_min = bcd2bin(rtc_पंचांग->पंचांग_min);
-	rtc_पंचांग->पंचांग_hour = bcd2bin(rtc_पंचांग->पंचांग_hour);
-	rtc_पंचांग->पंचांग_mday = bcd2bin(rtc_पंचांग->पंचांग_mday);
-	rtc_पंचांग->पंचांग_mon = bcd2bin(rtc_पंचांग->पंचांग_mon);
-	rtc_पंचांग->पंचांग_year = bcd2bin(rtc_पंचांग->पंचांग_year);
+	rtc_tm->tm_sec = bcd2bin(rtc_tm->tm_sec);
+	rtc_tm->tm_min = bcd2bin(rtc_tm->tm_min);
+	rtc_tm->tm_hour = bcd2bin(rtc_tm->tm_hour);
+	rtc_tm->tm_mday = bcd2bin(rtc_tm->tm_mday);
+	rtc_tm->tm_mon = bcd2bin(rtc_tm->tm_mon);
+	rtc_tm->tm_year = bcd2bin(rtc_tm->tm_year);
 
 	s3c_rtc_disable_clk(info);
 
-	rtc_पंचांग->पंचांग_year += 100;
-	rtc_पंचांग->पंचांग_mon -= 1;
+	rtc_tm->tm_year += 100;
+	rtc_tm->tm_mon -= 1;
 
-	dev_dbg(dev, "read time %ptR\n", rtc_पंचांग);
-	वापस 0;
-पूर्ण
+	dev_dbg(dev, "read time %ptR\n", rtc_tm);
+	return 0;
+}
 
-अटल पूर्णांक s3c_rtc_समय_रखो(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	काष्ठा s3c_rtc *info = dev_get_drvdata(dev);
-	पूर्णांक year = पंचांग->पंचांग_year - 100;
-	पूर्णांक ret;
+static int s3c_rtc_settime(struct device *dev, struct rtc_time *tm)
+{
+	struct s3c_rtc *info = dev_get_drvdata(dev);
+	int year = tm->tm_year - 100;
+	int ret;
 
-	dev_dbg(dev, "set time %ptR\n", पंचांग);
+	dev_dbg(dev, "set time %ptR\n", tm);
 
 	/* we get around y2k by simply not supporting it */
 
-	अगर (year < 0 || year >= 100) अणु
+	if (year < 0 || year >= 100) {
 		dev_err(dev, "rtc only supports 100 years\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ret = s3c_rtc_enable_clk(info);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ग_लिखोb(bin2bcd(पंचांग->पंचांग_sec),  info->base + S3C2410_RTCSEC);
-	ग_लिखोb(bin2bcd(पंचांग->पंचांग_min),  info->base + S3C2410_RTCMIN);
-	ग_लिखोb(bin2bcd(पंचांग->पंचांग_hour), info->base + S3C2410_RTCHOUR);
-	ग_लिखोb(bin2bcd(पंचांग->पंचांग_mday), info->base + S3C2410_RTCDATE);
-	ग_लिखोb(bin2bcd(पंचांग->पंचांग_mon + 1), info->base + S3C2410_RTCMON);
-	ग_लिखोb(bin2bcd(year), info->base + S3C2410_RTCYEAR);
+	writeb(bin2bcd(tm->tm_sec),  info->base + S3C2410_RTCSEC);
+	writeb(bin2bcd(tm->tm_min),  info->base + S3C2410_RTCMIN);
+	writeb(bin2bcd(tm->tm_hour), info->base + S3C2410_RTCHOUR);
+	writeb(bin2bcd(tm->tm_mday), info->base + S3C2410_RTCDATE);
+	writeb(bin2bcd(tm->tm_mon + 1), info->base + S3C2410_RTCMON);
+	writeb(bin2bcd(year), info->base + S3C2410_RTCYEAR);
 
 	s3c_rtc_disable_clk(info);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक s3c_rtc_getalarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
-अणु
-	काष्ठा s3c_rtc *info = dev_get_drvdata(dev);
-	काष्ठा rtc_समय *alm_पंचांग = &alrm->समय;
-	अचिन्हित पूर्णांक alm_en;
-	पूर्णांक ret;
+static int s3c_rtc_getalarm(struct device *dev, struct rtc_wkalrm *alrm)
+{
+	struct s3c_rtc *info = dev_get_drvdata(dev);
+	struct rtc_time *alm_tm = &alrm->time;
+	unsigned int alm_en;
+	int ret;
 
 	ret = s3c_rtc_enable_clk(info);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	alm_पंचांग->पंचांग_sec  = पढ़ोb(info->base + S3C2410_ALMSEC);
-	alm_पंचांग->पंचांग_min  = पढ़ोb(info->base + S3C2410_ALMMIN);
-	alm_पंचांग->पंचांग_hour = पढ़ोb(info->base + S3C2410_ALMHOUR);
-	alm_पंचांग->पंचांग_mon  = पढ़ोb(info->base + S3C2410_ALMMON);
-	alm_पंचांग->पंचांग_mday = पढ़ोb(info->base + S3C2410_ALMDATE);
-	alm_पंचांग->पंचांग_year = पढ़ोb(info->base + S3C2410_ALMYEAR);
+	alm_tm->tm_sec  = readb(info->base + S3C2410_ALMSEC);
+	alm_tm->tm_min  = readb(info->base + S3C2410_ALMMIN);
+	alm_tm->tm_hour = readb(info->base + S3C2410_ALMHOUR);
+	alm_tm->tm_mon  = readb(info->base + S3C2410_ALMMON);
+	alm_tm->tm_mday = readb(info->base + S3C2410_ALMDATE);
+	alm_tm->tm_year = readb(info->base + S3C2410_ALMYEAR);
 
-	alm_en = पढ़ोb(info->base + S3C2410_RTCALM);
+	alm_en = readb(info->base + S3C2410_RTCALM);
 
 	s3c_rtc_disable_clk(info);
 
 	alrm->enabled = (alm_en & S3C2410_RTCALM_ALMEN) ? 1 : 0;
 
-	dev_dbg(dev, "read alarm %d, %ptR\n", alm_en, alm_पंचांग);
+	dev_dbg(dev, "read alarm %d, %ptR\n", alm_en, alm_tm);
 
 	/* decode the alarm enable field */
-	अगर (alm_en & S3C2410_RTCALM_SECEN)
-		alm_पंचांग->पंचांग_sec = bcd2bin(alm_पंचांग->पंचांग_sec);
+	if (alm_en & S3C2410_RTCALM_SECEN)
+		alm_tm->tm_sec = bcd2bin(alm_tm->tm_sec);
 
-	अगर (alm_en & S3C2410_RTCALM_MINEN)
-		alm_पंचांग->पंचांग_min = bcd2bin(alm_पंचांग->पंचांग_min);
+	if (alm_en & S3C2410_RTCALM_MINEN)
+		alm_tm->tm_min = bcd2bin(alm_tm->tm_min);
 
-	अगर (alm_en & S3C2410_RTCALM_HOUREN)
-		alm_पंचांग->पंचांग_hour = bcd2bin(alm_पंचांग->पंचांग_hour);
+	if (alm_en & S3C2410_RTCALM_HOUREN)
+		alm_tm->tm_hour = bcd2bin(alm_tm->tm_hour);
 
-	अगर (alm_en & S3C2410_RTCALM_DAYEN)
-		alm_पंचांग->पंचांग_mday = bcd2bin(alm_पंचांग->पंचांग_mday);
+	if (alm_en & S3C2410_RTCALM_DAYEN)
+		alm_tm->tm_mday = bcd2bin(alm_tm->tm_mday);
 
-	अगर (alm_en & S3C2410_RTCALM_MONEN) अणु
-		alm_पंचांग->पंचांग_mon = bcd2bin(alm_पंचांग->पंचांग_mon);
-		alm_पंचांग->पंचांग_mon -= 1;
-	पूर्ण
+	if (alm_en & S3C2410_RTCALM_MONEN) {
+		alm_tm->tm_mon = bcd2bin(alm_tm->tm_mon);
+		alm_tm->tm_mon -= 1;
+	}
 
-	अगर (alm_en & S3C2410_RTCALM_YEAREN)
-		alm_पंचांग->पंचांग_year = bcd2bin(alm_पंचांग->पंचांग_year);
+	if (alm_en & S3C2410_RTCALM_YEAREN)
+		alm_tm->tm_year = bcd2bin(alm_tm->tm_year);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक s3c_rtc_setalarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
-अणु
-	काष्ठा s3c_rtc *info = dev_get_drvdata(dev);
-	काष्ठा rtc_समय *पंचांग = &alrm->समय;
-	अचिन्हित पूर्णांक alrm_en;
-	पूर्णांक ret;
+static int s3c_rtc_setalarm(struct device *dev, struct rtc_wkalrm *alrm)
+{
+	struct s3c_rtc *info = dev_get_drvdata(dev);
+	struct rtc_time *tm = &alrm->time;
+	unsigned int alrm_en;
+	int ret;
 
-	dev_dbg(dev, "s3c_rtc_setalarm: %d, %ptR\n", alrm->enabled, पंचांग);
+	dev_dbg(dev, "s3c_rtc_setalarm: %d, %ptR\n", alrm->enabled, tm);
 
 	ret = s3c_rtc_enable_clk(info);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	alrm_en = पढ़ोb(info->base + S3C2410_RTCALM) & S3C2410_RTCALM_ALMEN;
-	ग_लिखोb(0x00, info->base + S3C2410_RTCALM);
+	alrm_en = readb(info->base + S3C2410_RTCALM) & S3C2410_RTCALM_ALMEN;
+	writeb(0x00, info->base + S3C2410_RTCALM);
 
-	अगर (पंचांग->पंचांग_sec < 60 && पंचांग->पंचांग_sec >= 0) अणु
+	if (tm->tm_sec < 60 && tm->tm_sec >= 0) {
 		alrm_en |= S3C2410_RTCALM_SECEN;
-		ग_लिखोb(bin2bcd(पंचांग->पंचांग_sec), info->base + S3C2410_ALMSEC);
-	पूर्ण
+		writeb(bin2bcd(tm->tm_sec), info->base + S3C2410_ALMSEC);
+	}
 
-	अगर (पंचांग->पंचांग_min < 60 && पंचांग->पंचांग_min >= 0) अणु
+	if (tm->tm_min < 60 && tm->tm_min >= 0) {
 		alrm_en |= S3C2410_RTCALM_MINEN;
-		ग_लिखोb(bin2bcd(पंचांग->पंचांग_min), info->base + S3C2410_ALMMIN);
-	पूर्ण
+		writeb(bin2bcd(tm->tm_min), info->base + S3C2410_ALMMIN);
+	}
 
-	अगर (पंचांग->पंचांग_hour < 24 && पंचांग->पंचांग_hour >= 0) अणु
+	if (tm->tm_hour < 24 && tm->tm_hour >= 0) {
 		alrm_en |= S3C2410_RTCALM_HOUREN;
-		ग_लिखोb(bin2bcd(पंचांग->पंचांग_hour), info->base + S3C2410_ALMHOUR);
-	पूर्ण
+		writeb(bin2bcd(tm->tm_hour), info->base + S3C2410_ALMHOUR);
+	}
 
-	अगर (पंचांग->पंचांग_mon < 12 && पंचांग->पंचांग_mon >= 0) अणु
+	if (tm->tm_mon < 12 && tm->tm_mon >= 0) {
 		alrm_en |= S3C2410_RTCALM_MONEN;
-		ग_लिखोb(bin2bcd(पंचांग->पंचांग_mon + 1), info->base + S3C2410_ALMMON);
-	पूर्ण
+		writeb(bin2bcd(tm->tm_mon + 1), info->base + S3C2410_ALMMON);
+	}
 
-	अगर (पंचांग->पंचांग_mday <= 31 && पंचांग->पंचांग_mday >= 1) अणु
+	if (tm->tm_mday <= 31 && tm->tm_mday >= 1) {
 		alrm_en |= S3C2410_RTCALM_DAYEN;
-		ग_लिखोb(bin2bcd(पंचांग->पंचांग_mday), info->base + S3C2410_ALMDATE);
-	पूर्ण
+		writeb(bin2bcd(tm->tm_mday), info->base + S3C2410_ALMDATE);
+	}
 
 	dev_dbg(dev, "setting S3C2410_RTCALM to %08x\n", alrm_en);
 
-	ग_लिखोb(alrm_en, info->base + S3C2410_RTCALM);
+	writeb(alrm_en, info->base + S3C2410_RTCALM);
 
 	s3c_rtc_setaie(dev, alrm->enabled);
 
 	s3c_rtc_disable_clk(info);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा rtc_class_ops s3c_rtcops = अणु
-	.पढ़ो_समय	= s3c_rtc_समय_लो,
-	.set_समय	= s3c_rtc_समय_रखो,
-	.पढ़ो_alarm	= s3c_rtc_getalarm,
+static const struct rtc_class_ops s3c_rtcops = {
+	.read_time	= s3c_rtc_gettime,
+	.set_time	= s3c_rtc_settime,
+	.read_alarm	= s3c_rtc_getalarm,
 	.set_alarm	= s3c_rtc_setalarm,
 	.alarm_irq_enable = s3c_rtc_setaie,
-पूर्ण;
+};
 
-अटल व्योम s3c24xx_rtc_enable(काष्ठा s3c_rtc *info)
-अणु
-	अचिन्हित पूर्णांक con, पंचांगp;
+static void s3c24xx_rtc_enable(struct s3c_rtc *info)
+{
+	unsigned int con, tmp;
 
-	con = पढ़ोw(info->base + S3C2410_RTCCON);
+	con = readw(info->base + S3C2410_RTCCON);
 	/* re-enable the device, and check it is ok */
-	अगर ((con & S3C2410_RTCCON_RTCEN) == 0) अणु
+	if ((con & S3C2410_RTCCON_RTCEN) == 0) {
 		dev_info(info->dev, "rtc disabled, re-enabling\n");
 
-		पंचांगp = पढ़ोw(info->base + S3C2410_RTCCON);
-		ग_लिखोw(पंचांगp | S3C2410_RTCCON_RTCEN, info->base + S3C2410_RTCCON);
-	पूर्ण
+		tmp = readw(info->base + S3C2410_RTCCON);
+		writew(tmp | S3C2410_RTCCON_RTCEN, info->base + S3C2410_RTCCON);
+	}
 
-	अगर (con & S3C2410_RTCCON_CNTSEL) अणु
+	if (con & S3C2410_RTCCON_CNTSEL) {
 		dev_info(info->dev, "removing RTCCON_CNTSEL\n");
 
-		पंचांगp = पढ़ोw(info->base + S3C2410_RTCCON);
-		ग_लिखोw(पंचांगp & ~S3C2410_RTCCON_CNTSEL,
+		tmp = readw(info->base + S3C2410_RTCCON);
+		writew(tmp & ~S3C2410_RTCCON_CNTSEL,
 		       info->base + S3C2410_RTCCON);
-	पूर्ण
+	}
 
-	अगर (con & S3C2410_RTCCON_CLKRST) अणु
+	if (con & S3C2410_RTCCON_CLKRST) {
 		dev_info(info->dev, "removing RTCCON_CLKRST\n");
 
-		पंचांगp = पढ़ोw(info->base + S3C2410_RTCCON);
-		ग_लिखोw(पंचांगp & ~S3C2410_RTCCON_CLKRST,
+		tmp = readw(info->base + S3C2410_RTCCON);
+		writew(tmp & ~S3C2410_RTCCON_CLKRST,
 		       info->base + S3C2410_RTCCON);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम s3c24xx_rtc_disable(काष्ठा s3c_rtc *info)
-अणु
-	अचिन्हित पूर्णांक con;
+static void s3c24xx_rtc_disable(struct s3c_rtc *info)
+{
+	unsigned int con;
 
-	con = पढ़ोw(info->base + S3C2410_RTCCON);
+	con = readw(info->base + S3C2410_RTCCON);
 	con &= ~S3C2410_RTCCON_RTCEN;
-	ग_लिखोw(con, info->base + S3C2410_RTCCON);
+	writew(con, info->base + S3C2410_RTCCON);
 
-	con = पढ़ोb(info->base + S3C2410_TICNT);
+	con = readb(info->base + S3C2410_TICNT);
 	con &= ~S3C2410_TICNT_ENABLE;
-	ग_लिखोb(con, info->base + S3C2410_TICNT);
-पूर्ण
+	writeb(con, info->base + S3C2410_TICNT);
+}
 
-अटल व्योम s3c6410_rtc_disable(काष्ठा s3c_rtc *info)
-अणु
-	अचिन्हित पूर्णांक con;
+static void s3c6410_rtc_disable(struct s3c_rtc *info)
+{
+	unsigned int con;
 
-	con = पढ़ोw(info->base + S3C2410_RTCCON);
+	con = readw(info->base + S3C2410_RTCCON);
 	con &= ~S3C64XX_RTCCON_TICEN;
 	con &= ~S3C2410_RTCCON_RTCEN;
-	ग_लिखोw(con, info->base + S3C2410_RTCCON);
-पूर्ण
+	writew(con, info->base + S3C2410_RTCCON);
+}
 
-अटल पूर्णांक s3c_rtc_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा s3c_rtc *info = platक्रमm_get_drvdata(pdev);
+static int s3c_rtc_remove(struct platform_device *pdev)
+{
+	struct s3c_rtc *info = platform_get_drvdata(pdev);
 
 	s3c_rtc_setaie(info->dev, 0);
 
-	अगर (info->data->needs_src_clk)
+	if (info->data->needs_src_clk)
 		clk_unprepare(info->rtc_src_clk);
 	clk_unprepare(info->rtc_clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक s3c_rtc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा s3c_rtc *info = शून्य;
-	पूर्णांक ret;
+static int s3c_rtc_probe(struct platform_device *pdev)
+{
+	struct s3c_rtc *info = NULL;
+	int ret;
 
-	info = devm_kzalloc(&pdev->dev, माप(*info), GFP_KERNEL);
-	अगर (!info)
-		वापस -ENOMEM;
+	info = devm_kzalloc(&pdev->dev, sizeof(*info), GFP_KERNEL);
+	if (!info)
+		return -ENOMEM;
 
 	info->dev = &pdev->dev;
 	info->data = of_device_get_match_data(&pdev->dev);
-	अगर (!info->data) अणु
+	if (!info->data) {
 		dev_err(&pdev->dev, "failed getting s3c_rtc_data\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	spin_lock_init(&info->alarm_lock);
 
-	platक्रमm_set_drvdata(pdev, info);
+	platform_set_drvdata(pdev, info);
 
-	info->irq_alarm = platक्रमm_get_irq(pdev, 0);
-	अगर (info->irq_alarm < 0)
-		वापस info->irq_alarm;
+	info->irq_alarm = platform_get_irq(pdev, 0);
+	if (info->irq_alarm < 0)
+		return info->irq_alarm;
 
 	dev_dbg(&pdev->dev, "s3c2410_rtc: alarm irq %d\n", info->irq_alarm);
 
 	/* get the memory region */
-	info->base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(info->base))
-		वापस PTR_ERR(info->base);
+	info->base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(info->base))
+		return PTR_ERR(info->base);
 
 	info->rtc_clk = devm_clk_get(&pdev->dev, "rtc");
-	अगर (IS_ERR(info->rtc_clk)) अणु
+	if (IS_ERR(info->rtc_clk)) {
 		ret = PTR_ERR(info->rtc_clk);
-		अगर (ret != -EPROBE_DEFER)
+		if (ret != -EPROBE_DEFER)
 			dev_err(&pdev->dev, "failed to find rtc clock\n");
-		अन्यथा
+		else
 			dev_dbg(&pdev->dev, "probe deferred due to missing rtc clk\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	ret = clk_prepare_enable(info->rtc_clk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (info->data->needs_src_clk) अणु
+	if (info->data->needs_src_clk) {
 		info->rtc_src_clk = devm_clk_get(&pdev->dev, "rtc_src");
-		अगर (IS_ERR(info->rtc_src_clk)) अणु
+		if (IS_ERR(info->rtc_src_clk)) {
 			ret = dev_err_probe(&pdev->dev, PTR_ERR(info->rtc_src_clk),
 					    "failed to find rtc source clock\n");
-			जाओ err_src_clk;
-		पूर्ण
+			goto err_src_clk;
+		}
 		ret = clk_prepare_enable(info->rtc_src_clk);
-		अगर (ret)
-			जाओ err_src_clk;
-	पूर्ण
+		if (ret)
+			goto err_src_clk;
+	}
 
 	/* disable RTC enable bits potentially set by the bootloader */
-	अगर (info->data->disable)
+	if (info->data->disable)
 		info->data->disable(info);
 
-	/* check to see अगर everything is setup correctly */
-	अगर (info->data->enable)
+	/* check to see if everything is setup correctly */
+	if (info->data->enable)
 		info->data->enable(info);
 
 	dev_dbg(&pdev->dev, "s3c2410_rtc: RTCCON=%02x\n",
-		पढ़ोw(info->base + S3C2410_RTCCON));
+		readw(info->base + S3C2410_RTCCON));
 
 	device_init_wakeup(&pdev->dev, 1);
 
-	/* रेजिस्टर RTC and निकास */
-	info->rtc = devm_rtc_device_रेजिस्टर(&pdev->dev, "s3c", &s3c_rtcops,
+	/* register RTC and exit */
+	info->rtc = devm_rtc_device_register(&pdev->dev, "s3c", &s3c_rtcops,
 					     THIS_MODULE);
-	अगर (IS_ERR(info->rtc)) अणु
+	if (IS_ERR(info->rtc)) {
 		dev_err(&pdev->dev, "cannot attach rtc\n");
 		ret = PTR_ERR(info->rtc);
-		जाओ err_nortc;
-	पूर्ण
+		goto err_nortc;
+	}
 
 	ret = devm_request_irq(&pdev->dev, info->irq_alarm, s3c_rtc_alarmirq,
 			       0, "s3c2410-rtc alarm", info);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "IRQ%d error %d\n", info->irq_alarm, ret);
-		जाओ err_nortc;
-	पूर्ण
+		goto err_nortc;
+	}
 
 	s3c_rtc_disable_clk(info);
 
-	वापस 0;
+	return 0;
 
 err_nortc:
-	अगर (info->data->disable)
+	if (info->data->disable)
 		info->data->disable(info);
 
-	अगर (info->data->needs_src_clk)
+	if (info->data->needs_src_clk)
 		clk_disable_unprepare(info->rtc_src_clk);
 err_src_clk:
 	clk_disable_unprepare(info->rtc_clk);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
+#ifdef CONFIG_PM_SLEEP
 
-अटल पूर्णांक s3c_rtc_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा s3c_rtc *info = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static int s3c_rtc_suspend(struct device *dev)
+{
+	struct s3c_rtc *info = dev_get_drvdata(dev);
+	int ret;
 
 	ret = s3c_rtc_enable_clk(info);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (info->data->disable)
+	if (info->data->disable)
 		info->data->disable(info);
 
-	अगर (device_may_wakeup(dev) && !info->wake_en) अणु
-		अगर (enable_irq_wake(info->irq_alarm) == 0)
+	if (device_may_wakeup(dev) && !info->wake_en) {
+		if (enable_irq_wake(info->irq_alarm) == 0)
 			info->wake_en = true;
-		अन्यथा
+		else
 			dev_err(dev, "enable_irq_wake failed\n");
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक s3c_rtc_resume(काष्ठा device *dev)
-अणु
-	काष्ठा s3c_rtc *info = dev_get_drvdata(dev);
+static int s3c_rtc_resume(struct device *dev)
+{
+	struct s3c_rtc *info = dev_get_drvdata(dev);
 
-	अगर (info->data->enable)
+	if (info->data->enable)
 		info->data->enable(info);
 
 	s3c_rtc_disable_clk(info);
 
-	अगर (device_may_wakeup(dev) && info->wake_en) अणु
+	if (device_may_wakeup(dev) && info->wake_en) {
 		disable_irq_wake(info->irq_alarm);
 		info->wake_en = false;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
-अटल SIMPLE_DEV_PM_OPS(s3c_rtc_pm_ops, s3c_rtc_suspend, s3c_rtc_resume);
+	return 0;
+}
+#endif
+static SIMPLE_DEV_PM_OPS(s3c_rtc_pm_ops, s3c_rtc_suspend, s3c_rtc_resume);
 
-अटल व्योम s3c24xx_rtc_irq(काष्ठा s3c_rtc *info, पूर्णांक mask)
-अणु
+static void s3c24xx_rtc_irq(struct s3c_rtc *info, int mask)
+{
 	rtc_update_irq(info->rtc, 1, RTC_AF | RTC_IRQF);
-पूर्ण
+}
 
-अटल व्योम s3c6410_rtc_irq(काष्ठा s3c_rtc *info, पूर्णांक mask)
-अणु
+static void s3c6410_rtc_irq(struct s3c_rtc *info, int mask)
+{
 	rtc_update_irq(info->rtc, 1, RTC_AF | RTC_IRQF);
-	ग_लिखोb(mask, info->base + S3C2410_INTP);
-पूर्ण
+	writeb(mask, info->base + S3C2410_INTP);
+}
 
-अटल काष्ठा s3c_rtc_data स्थिर s3c2410_rtc_data = अणु
+static struct s3c_rtc_data const s3c2410_rtc_data = {
 	.irq_handler		= s3c24xx_rtc_irq,
 	.enable			= s3c24xx_rtc_enable,
 	.disable		= s3c24xx_rtc_disable,
-पूर्ण;
+};
 
-अटल काष्ठा s3c_rtc_data स्थिर s3c2416_rtc_data = अणु
+static struct s3c_rtc_data const s3c2416_rtc_data = {
 	.irq_handler		= s3c24xx_rtc_irq,
 	.enable			= s3c24xx_rtc_enable,
 	.disable		= s3c24xx_rtc_disable,
-पूर्ण;
+};
 
-अटल काष्ठा s3c_rtc_data स्थिर s3c2443_rtc_data = अणु
+static struct s3c_rtc_data const s3c2443_rtc_data = {
 	.irq_handler		= s3c24xx_rtc_irq,
 	.enable			= s3c24xx_rtc_enable,
 	.disable		= s3c24xx_rtc_disable,
-पूर्ण;
+};
 
-अटल काष्ठा s3c_rtc_data स्थिर s3c6410_rtc_data = अणु
+static struct s3c_rtc_data const s3c6410_rtc_data = {
 	.needs_src_clk		= true,
 	.irq_handler		= s3c6410_rtc_irq,
 	.enable			= s3c24xx_rtc_enable,
 	.disable		= s3c6410_rtc_disable,
-पूर्ण;
+};
 
-अटल स्थिर __maybe_unused काष्ठा of_device_id s3c_rtc_dt_match[] = अणु
-	अणु
+static const __maybe_unused struct of_device_id s3c_rtc_dt_match[] = {
+	{
 		.compatible = "samsung,s3c2410-rtc",
 		.data = &s3c2410_rtc_data,
-	पूर्ण, अणु
+	}, {
 		.compatible = "samsung,s3c2416-rtc",
 		.data = &s3c2416_rtc_data,
-	पूर्ण, अणु
+	}, {
 		.compatible = "samsung,s3c2443-rtc",
 		.data = &s3c2443_rtc_data,
-	पूर्ण, अणु
+	}, {
 		.compatible = "samsung,s3c6410-rtc",
 		.data = &s3c6410_rtc_data,
-	पूर्ण, अणु
+	}, {
 		.compatible = "samsung,exynos3250-rtc",
 		.data = &s3c6410_rtc_data,
-	पूर्ण,
-	अणु /* sentinel */ पूर्ण,
-पूर्ण;
+	},
+	{ /* sentinel */ },
+};
 MODULE_DEVICE_TABLE(of, s3c_rtc_dt_match);
 
-अटल काष्ठा platक्रमm_driver s3c_rtc_driver = अणु
+static struct platform_driver s3c_rtc_driver = {
 	.probe		= s3c_rtc_probe,
-	.हटाओ		= s3c_rtc_हटाओ,
-	.driver		= अणु
+	.remove		= s3c_rtc_remove,
+	.driver		= {
 		.name	= "s3c-rtc",
 		.pm	= &s3c_rtc_pm_ops,
 		.of_match_table	= of_match_ptr(s3c_rtc_dt_match),
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(s3c_rtc_driver);
+	},
+};
+module_platform_driver(s3c_rtc_driver);
 
 MODULE_DESCRIPTION("Samsung S3C RTC Driver");
 MODULE_AUTHOR("Ben Dooks <ben@simtec.co.uk>");

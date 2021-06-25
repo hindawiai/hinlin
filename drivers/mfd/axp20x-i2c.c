@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * I2C driver क्रम the X-Powers' Power Management ICs
+ * I2C driver for the X-Powers' Power Management ICs
  *
- * AXP20x typically comprises an adaptive USB-Compatible PWM अक्षरger, BUCK DC-DC
+ * AXP20x typically comprises an adaptive USB-Compatible PWM charger, BUCK DC-DC
  * converters, LDOs, multiple 12-bit ADCs of voltage, current and temperature
  * as well as configurable GPIOs.
  *
@@ -14,99 +13,99 @@
  * Author: Carlo Caione <carlo@caione.org>
  */
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/err.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mfd/axp20x.h>
-#समावेश <linux/of.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/slab.h>
+#include <linux/acpi.h>
+#include <linux/err.h>
+#include <linux/i2c.h>
+#include <linux/module.h>
+#include <linux/mfd/axp20x.h>
+#include <linux/of.h>
+#include <linux/regmap.h>
+#include <linux/slab.h>
 
-अटल पूर्णांक axp20x_i2c_probe(काष्ठा i2c_client *i2c,
-			    स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा axp20x_dev *axp20x;
-	पूर्णांक ret;
+static int axp20x_i2c_probe(struct i2c_client *i2c,
+			    const struct i2c_device_id *id)
+{
+	struct axp20x_dev *axp20x;
+	int ret;
 
-	axp20x = devm_kzalloc(&i2c->dev, माप(*axp20x), GFP_KERNEL);
-	अगर (!axp20x)
-		वापस -ENOMEM;
+	axp20x = devm_kzalloc(&i2c->dev, sizeof(*axp20x), GFP_KERNEL);
+	if (!axp20x)
+		return -ENOMEM;
 
 	axp20x->dev = &i2c->dev;
 	axp20x->irq = i2c->irq;
 	dev_set_drvdata(axp20x->dev, axp20x);
 
 	ret = axp20x_match_device(axp20x);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	axp20x->regmap = devm_regmap_init_i2c(i2c, axp20x->regmap_cfg);
-	अगर (IS_ERR(axp20x->regmap)) अणु
+	if (IS_ERR(axp20x->regmap)) {
 		ret = PTR_ERR(axp20x->regmap);
 		dev_err(&i2c->dev, "regmap init failed: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस axp20x_device_probe(axp20x);
-पूर्ण
+	return axp20x_device_probe(axp20x);
+}
 
-अटल पूर्णांक axp20x_i2c_हटाओ(काष्ठा i2c_client *i2c)
-अणु
-	काष्ठा axp20x_dev *axp20x = i2c_get_clientdata(i2c);
+static int axp20x_i2c_remove(struct i2c_client *i2c)
+{
+	struct axp20x_dev *axp20x = i2c_get_clientdata(i2c);
 
-	axp20x_device_हटाओ(axp20x);
+	axp20x_device_remove(axp20x);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id axp20x_i2c_of_match[] = अणु
-	अणु .compatible = "x-powers,axp152", .data = (व्योम *)AXP152_ID पूर्ण,
-	अणु .compatible = "x-powers,axp202", .data = (व्योम *)AXP202_ID पूर्ण,
-	अणु .compatible = "x-powers,axp209", .data = (व्योम *)AXP209_ID पूर्ण,
-	अणु .compatible = "x-powers,axp221", .data = (व्योम *)AXP221_ID पूर्ण,
-	अणु .compatible = "x-powers,axp223", .data = (व्योम *)AXP223_ID पूर्ण,
-	अणु .compatible = "x-powers,axp803", .data = (व्योम *)AXP803_ID पूर्ण,
-	अणु .compatible = "x-powers,axp806", .data = (व्योम *)AXP806_ID पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id axp20x_i2c_of_match[] = {
+	{ .compatible = "x-powers,axp152", .data = (void *)AXP152_ID },
+	{ .compatible = "x-powers,axp202", .data = (void *)AXP202_ID },
+	{ .compatible = "x-powers,axp209", .data = (void *)AXP209_ID },
+	{ .compatible = "x-powers,axp221", .data = (void *)AXP221_ID },
+	{ .compatible = "x-powers,axp223", .data = (void *)AXP223_ID },
+	{ .compatible = "x-powers,axp803", .data = (void *)AXP803_ID },
+	{ .compatible = "x-powers,axp806", .data = (void *)AXP806_ID },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, axp20x_i2c_of_match);
-#पूर्ण_अगर
+#endif
 
-अटल स्थिर काष्ठा i2c_device_id axp20x_i2c_id[] = अणु
-	अणु "axp152", 0 पूर्ण,
-	अणु "axp202", 0 पूर्ण,
-	अणु "axp209", 0 पूर्ण,
-	अणु "axp221", 0 पूर्ण,
-	अणु "axp223", 0 पूर्ण,
-	अणु "axp803", 0 पूर्ण,
-	अणु "axp806", 0 पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct i2c_device_id axp20x_i2c_id[] = {
+	{ "axp152", 0 },
+	{ "axp202", 0 },
+	{ "axp209", 0 },
+	{ "axp221", 0 },
+	{ "axp223", 0 },
+	{ "axp803", 0 },
+	{ "axp806", 0 },
+	{ },
+};
 MODULE_DEVICE_TABLE(i2c, axp20x_i2c_id);
 
-#अगर_घोषित CONFIG_ACPI
-अटल स्थिर काष्ठा acpi_device_id axp20x_i2c_acpi_match[] = अणु
-	अणु
+#ifdef CONFIG_ACPI
+static const struct acpi_device_id axp20x_i2c_acpi_match[] = {
+	{
 		.id = "INT33F4",
 		.driver_data = AXP288_ID,
-	पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+	},
+	{ },
+};
 MODULE_DEVICE_TABLE(acpi, axp20x_i2c_acpi_match);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा i2c_driver axp20x_i2c_driver = अणु
-	.driver = अणु
+static struct i2c_driver axp20x_i2c_driver = {
+	.driver = {
 		.name	= "axp20x-i2c",
 		.of_match_table	= of_match_ptr(axp20x_i2c_of_match),
 		.acpi_match_table = ACPI_PTR(axp20x_i2c_acpi_match),
-	पूर्ण,
+	},
 	.probe		= axp20x_i2c_probe,
-	.हटाओ		= axp20x_i2c_हटाओ,
+	.remove		= axp20x_i2c_remove,
 	.id_table	= axp20x_i2c_id,
-पूर्ण;
+};
 
 module_i2c_driver(axp20x_i2c_driver);
 

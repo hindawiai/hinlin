@@ -1,428 +1,427 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
- * Module Name: nsconvert - Object conversions क्रम objects वापसed by
+ * Module Name: nsconvert - Object conversions for objects returned by
  *                          predefined methods
  *
  * Copyright (C) 2000 - 2021, Intel Corp.
  *
  *****************************************************************************/
 
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
-#समावेश "acnamesp.h"
-#समावेश "acinterp.h"
-#समावेश "acpredef.h"
-#समावेश "amlresrc.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
+#include "acnamesp.h"
+#include "acinterp.h"
+#include "acpredef.h"
+#include "amlresrc.h"
 
-#घोषणा _COMPONENT          ACPI_NAMESPACE
+#define _COMPONENT          ACPI_NAMESPACE
 ACPI_MODULE_NAME("nsconvert")
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ns_convert_to_पूर्णांकeger
+ * FUNCTION:    acpi_ns_convert_to_integer
  *
  * PARAMETERS:  original_object     - Object to be converted
- *              वापस_object       - Where the new converted object is वापसed
+ *              return_object       - Where the new converted object is returned
  *
- * RETURN:      Status. AE_OK अगर conversion was successful.
+ * RETURN:      Status. AE_OK if conversion was successful.
  *
  * DESCRIPTION: Attempt to convert a String/Buffer object to an Integer.
  *
  ******************************************************************************/
 acpi_status
-acpi_ns_convert_to_पूर्णांकeger(जोड़ acpi_opeअक्रम_object *original_object,
-			   जोड़ acpi_opeअक्रम_object **वापस_object)
-अणु
-	जोड़ acpi_opeअक्रम_object *new_object;
+acpi_ns_convert_to_integer(union acpi_operand_object *original_object,
+			   union acpi_operand_object **return_object)
+{
+	union acpi_operand_object *new_object;
 	acpi_status status;
 	u64 value = 0;
 	u32 i;
 
-	चयन (original_object->common.type) अणु
-	हाल ACPI_TYPE_STRING:
+	switch (original_object->common.type) {
+	case ACPI_TYPE_STRING:
 
 		/* String-to-Integer conversion */
 
 		status =
-		    acpi_ut_म_से_अदीर्घ64(original_object->string.poपूर्णांकer, &value);
-		अगर (ACPI_FAILURE(status)) अणु
-			वापस (status);
-		पूर्ण
-		अवरोध;
+		    acpi_ut_strtoul64(original_object->string.pointer, &value);
+		if (ACPI_FAILURE(status)) {
+			return (status);
+		}
+		break;
 
-	हाल ACPI_TYPE_BUFFER:
+	case ACPI_TYPE_BUFFER:
 
 		/* Buffer-to-Integer conversion. Max buffer size is 64 bits. */
 
-		अगर (original_object->buffer.length > 8) अणु
-			वापस (AE_AML_OPERAND_TYPE);
-		पूर्ण
+		if (original_object->buffer.length > 8) {
+			return (AE_AML_OPERAND_TYPE);
+		}
 
-		/* Extract each buffer byte to create the पूर्णांकeger */
+		/* Extract each buffer byte to create the integer */
 
-		क्रम (i = 0; i < original_object->buffer.length; i++) अणु
+		for (i = 0; i < original_object->buffer.length; i++) {
 			value |= ((u64)
-				  original_object->buffer.poपूर्णांकer[i] << (i *
+				  original_object->buffer.pointer[i] << (i *
 									 8));
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	शेष:
+	default:
 
-		वापस (AE_AML_OPERAND_TYPE);
-	पूर्ण
+		return (AE_AML_OPERAND_TYPE);
+	}
 
-	new_object = acpi_ut_create_पूर्णांकeger_object(value);
-	अगर (!new_object) अणु
-		वापस (AE_NO_MEMORY);
-	पूर्ण
+	new_object = acpi_ut_create_integer_object(value);
+	if (!new_object) {
+		return (AE_NO_MEMORY);
+	}
 
-	*वापस_object = new_object;
-	वापस (AE_OK);
-पूर्ण
+	*return_object = new_object;
+	return (AE_OK);
+}
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ns_convert_to_string
  *
  * PARAMETERS:  original_object     - Object to be converted
- *              वापस_object       - Where the new converted object is वापसed
+ *              return_object       - Where the new converted object is returned
  *
- * RETURN:      Status. AE_OK अगर conversion was successful.
+ * RETURN:      Status. AE_OK if conversion was successful.
  *
  * DESCRIPTION: Attempt to convert a Integer/Buffer object to a String.
  *
  ******************************************************************************/
 
 acpi_status
-acpi_ns_convert_to_string(जोड़ acpi_opeअक्रम_object *original_object,
-			  जोड़ acpi_opeअक्रम_object **वापस_object)
-अणु
-	जोड़ acpi_opeअक्रम_object *new_object;
+acpi_ns_convert_to_string(union acpi_operand_object *original_object,
+			  union acpi_operand_object **return_object)
+{
+	union acpi_operand_object *new_object;
 	acpi_size length;
 	acpi_status status;
 
-	चयन (original_object->common.type) अणु
-	हाल ACPI_TYPE_INTEGER:
+	switch (original_object->common.type) {
+	case ACPI_TYPE_INTEGER:
 		/*
 		 * Integer-to-String conversion. Commonly, convert
-		 * an पूर्णांकeger of value 0 to a शून्य string. The last element of
+		 * an integer of value 0 to a NULL string. The last element of
 		 * _BIF and _BIX packages occasionally need this fix.
 		 */
-		अगर (original_object->पूर्णांकeger.value == 0) अणु
+		if (original_object->integer.value == 0) {
 
-			/* Allocate a new शून्य string object */
+			/* Allocate a new NULL string object */
 
 			new_object = acpi_ut_create_string_object(0);
-			अगर (!new_object) अणु
-				वापस (AE_NO_MEMORY);
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			if (!new_object) {
+				return (AE_NO_MEMORY);
+			}
+		} else {
 			status = acpi_ex_convert_to_string(original_object,
 							   &new_object,
 							   ACPI_IMPLICIT_CONVERT_HEX);
-			अगर (ACPI_FAILURE(status)) अणु
-				वापस (status);
-			पूर्ण
-		पूर्ण
-		अवरोध;
+			if (ACPI_FAILURE(status)) {
+				return (status);
+			}
+		}
+		break;
 
-	हाल ACPI_TYPE_BUFFER:
+	case ACPI_TYPE_BUFFER:
 		/*
 		 * Buffer-to-String conversion. Use a to_string
-		 * conversion, no transक्रमm perक्रमmed on the buffer data. The best
+		 * conversion, no transform performed on the buffer data. The best
 		 * example of this is the _BIF method, where the string data from
-		 * the battery is often (incorrectly) वापसed as buffer object(s).
+		 * the battery is often (incorrectly) returned as buffer object(s).
 		 */
 		length = 0;
-		जबतक ((length < original_object->buffer.length) &&
-		       (original_object->buffer.poपूर्णांकer[length])) अणु
+		while ((length < original_object->buffer.length) &&
+		       (original_object->buffer.pointer[length])) {
 			length++;
-		पूर्ण
+		}
 
 		/* Allocate a new string object */
 
 		new_object = acpi_ut_create_string_object(length);
-		अगर (!new_object) अणु
-			वापस (AE_NO_MEMORY);
-		पूर्ण
+		if (!new_object) {
+			return (AE_NO_MEMORY);
+		}
 
 		/*
-		 * Copy the raw buffer data with no transक्रमm. String is alपढ़ोy शून्य
+		 * Copy the raw buffer data with no transform. String is already NULL
 		 * terminated at Length+1.
 		 */
-		स_नकल(new_object->string.poपूर्णांकer,
-		       original_object->buffer.poपूर्णांकer, length);
-		अवरोध;
+		memcpy(new_object->string.pointer,
+		       original_object->buffer.pointer, length);
+		break;
 
-	शेष:
+	default:
 
-		वापस (AE_AML_OPERAND_TYPE);
-	पूर्ण
+		return (AE_AML_OPERAND_TYPE);
+	}
 
-	*वापस_object = new_object;
-	वापस (AE_OK);
-पूर्ण
+	*return_object = new_object;
+	return (AE_OK);
+}
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ns_convert_to_buffer
  *
  * PARAMETERS:  original_object     - Object to be converted
- *              वापस_object       - Where the new converted object is वापसed
+ *              return_object       - Where the new converted object is returned
  *
- * RETURN:      Status. AE_OK अगर conversion was successful.
+ * RETURN:      Status. AE_OK if conversion was successful.
  *
  * DESCRIPTION: Attempt to convert a Integer/String/Package object to a Buffer.
  *
  ******************************************************************************/
 
 acpi_status
-acpi_ns_convert_to_buffer(जोड़ acpi_opeअक्रम_object *original_object,
-			  जोड़ acpi_opeअक्रम_object **वापस_object)
-अणु
-	जोड़ acpi_opeअक्रम_object *new_object;
+acpi_ns_convert_to_buffer(union acpi_operand_object *original_object,
+			  union acpi_operand_object **return_object)
+{
+	union acpi_operand_object *new_object;
 	acpi_status status;
-	जोड़ acpi_opeअक्रम_object **elements;
+	union acpi_operand_object **elements;
 	u32 *dword_buffer;
 	u32 count;
 	u32 i;
 
-	चयन (original_object->common.type) अणु
-	हाल ACPI_TYPE_INTEGER:
+	switch (original_object->common.type) {
+	case ACPI_TYPE_INTEGER:
 		/*
 		 * Integer-to-Buffer conversion.
 		 * Convert the Integer to a packed-byte buffer. _MAT and other
-		 * objects need this someबार, अगर a पढ़ो has been perक्रमmed on a
-		 * Field object that is less than or equal to the global पूर्णांकeger
+		 * objects need this sometimes, if a read has been performed on a
+		 * Field object that is less than or equal to the global integer
 		 * size (32 or 64 bits).
 		 */
 		status =
 		    acpi_ex_convert_to_buffer(original_object, &new_object);
-		अगर (ACPI_FAILURE(status)) अणु
-			वापस (status);
-		पूर्ण
-		अवरोध;
+		if (ACPI_FAILURE(status)) {
+			return (status);
+		}
+		break;
 
-	हाल ACPI_TYPE_STRING:
+	case ACPI_TYPE_STRING:
 
 		/* String-to-Buffer conversion. Simple data copy */
 
 		new_object = acpi_ut_create_buffer_object
 		    (original_object->string.length);
-		अगर (!new_object) अणु
-			वापस (AE_NO_MEMORY);
-		पूर्ण
+		if (!new_object) {
+			return (AE_NO_MEMORY);
+		}
 
-		स_नकल(new_object->buffer.poपूर्णांकer,
-		       original_object->string.poपूर्णांकer,
+		memcpy(new_object->buffer.pointer,
+		       original_object->string.pointer,
 		       original_object->string.length);
-		अवरोध;
+		break;
 
-	हाल ACPI_TYPE_PACKAGE:
+	case ACPI_TYPE_PACKAGE:
 		/*
-		 * This हाल is often seen क्रम predefined names that must वापस a
-		 * Buffer object with multiple DWORD पूर्णांकegers within. For example,
+		 * This case is often seen for predefined names that must return a
+		 * Buffer object with multiple DWORD integers within. For example,
 		 * _FDE and _GTM. The Package can be converted to a Buffer.
 		 */
 
-		/* All elements of the Package must be पूर्णांकegers */
+		/* All elements of the Package must be integers */
 
 		elements = original_object->package.elements;
 		count = original_object->package.count;
 
-		क्रम (i = 0; i < count; i++) अणु
-			अगर ((!*elements) ||
-			    ((*elements)->common.type != ACPI_TYPE_INTEGER)) अणु
-				वापस (AE_AML_OPERAND_TYPE);
-			पूर्ण
+		for (i = 0; i < count; i++) {
+			if ((!*elements) ||
+			    ((*elements)->common.type != ACPI_TYPE_INTEGER)) {
+				return (AE_AML_OPERAND_TYPE);
+			}
 			elements++;
-		पूर्ण
+		}
 
 		/* Create the new buffer object to replace the Package */
 
 		new_object = acpi_ut_create_buffer_object(ACPI_MUL_4(count));
-		अगर (!new_object) अणु
-			वापस (AE_NO_MEMORY);
-		पूर्ण
+		if (!new_object) {
+			return (AE_NO_MEMORY);
+		}
 
-		/* Copy the package elements (पूर्णांकegers) to the buffer as DWORDs */
+		/* Copy the package elements (integers) to the buffer as DWORDs */
 
 		elements = original_object->package.elements;
-		dword_buffer = ACPI_CAST_PTR(u32, new_object->buffer.poपूर्णांकer);
+		dword_buffer = ACPI_CAST_PTR(u32, new_object->buffer.pointer);
 
-		क्रम (i = 0; i < count; i++) अणु
-			*dword_buffer = (u32)(*elements)->पूर्णांकeger.value;
+		for (i = 0; i < count; i++) {
+			*dword_buffer = (u32)(*elements)->integer.value;
 			dword_buffer++;
 			elements++;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	शेष:
+	default:
 
-		वापस (AE_AML_OPERAND_TYPE);
-	पूर्ण
+		return (AE_AML_OPERAND_TYPE);
+	}
 
-	*वापस_object = new_object;
-	वापस (AE_OK);
-पूर्ण
+	*return_object = new_object;
+	return (AE_OK);
+}
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ns_convert_to_unicode
  *
- * PARAMETERS:  scope               - Namespace node क्रम the method/object
+ * PARAMETERS:  scope               - Namespace node for the method/object
  *              original_object     - ASCII String Object to be converted
- *              वापस_object       - Where the new converted object is वापसed
+ *              return_object       - Where the new converted object is returned
  *
- * RETURN:      Status. AE_OK अगर conversion was successful.
+ * RETURN:      Status. AE_OK if conversion was successful.
  *
  * DESCRIPTION: Attempt to convert a String object to a Unicode string Buffer.
  *
  ******************************************************************************/
 
 acpi_status
-acpi_ns_convert_to_unicode(काष्ठा acpi_namespace_node *scope,
-			   जोड़ acpi_opeअक्रम_object *original_object,
-			   जोड़ acpi_opeअक्रम_object **वापस_object)
-अणु
-	जोड़ acpi_opeअक्रम_object *new_object;
-	अक्षर *ascii_string;
+acpi_ns_convert_to_unicode(struct acpi_namespace_node *scope,
+			   union acpi_operand_object *original_object,
+			   union acpi_operand_object **return_object)
+{
+	union acpi_operand_object *new_object;
+	char *ascii_string;
 	u16 *unicode_buffer;
 	u32 unicode_length;
 	u32 i;
 
-	अगर (!original_object) अणु
-		वापस (AE_OK);
-	पूर्ण
+	if (!original_object) {
+		return (AE_OK);
+	}
 
-	/* If a Buffer was वापसed, it must be at least two bytes दीर्घ */
+	/* If a Buffer was returned, it must be at least two bytes long */
 
-	अगर (original_object->common.type == ACPI_TYPE_BUFFER) अणु
-		अगर (original_object->buffer.length < 2) अणु
-			वापस (AE_AML_OPERAND_VALUE);
-		पूर्ण
+	if (original_object->common.type == ACPI_TYPE_BUFFER) {
+		if (original_object->buffer.length < 2) {
+			return (AE_AML_OPERAND_VALUE);
+		}
 
-		*वापस_object = शून्य;
-		वापस (AE_OK);
-	पूर्ण
+		*return_object = NULL;
+		return (AE_OK);
+	}
 
 	/*
 	 * The original object is an ASCII string. Convert this string to
 	 * a unicode buffer.
 	 */
-	ascii_string = original_object->string.poपूर्णांकer;
+	ascii_string = original_object->string.pointer;
 	unicode_length = (original_object->string.length * 2) + 2;
 
-	/* Create a new buffer object क्रम the Unicode data */
+	/* Create a new buffer object for the Unicode data */
 
 	new_object = acpi_ut_create_buffer_object(unicode_length);
-	अगर (!new_object) अणु
-		वापस (AE_NO_MEMORY);
-	पूर्ण
+	if (!new_object) {
+		return (AE_NO_MEMORY);
+	}
 
-	unicode_buffer = ACPI_CAST_PTR(u16, new_object->buffer.poपूर्णांकer);
+	unicode_buffer = ACPI_CAST_PTR(u16, new_object->buffer.pointer);
 
 	/* Convert ASCII to Unicode */
 
-	क्रम (i = 0; i < original_object->string.length; i++) अणु
+	for (i = 0; i < original_object->string.length; i++) {
 		unicode_buffer[i] = (u16)ascii_string[i];
-	पूर्ण
+	}
 
-	*वापस_object = new_object;
-	वापस (AE_OK);
-पूर्ण
+	*return_object = new_object;
+	return (AE_OK);
+}
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ns_convert_to_resource
  *
- * PARAMETERS:  scope               - Namespace node क्रम the method/object
+ * PARAMETERS:  scope               - Namespace node for the method/object
  *              original_object     - Object to be converted
- *              वापस_object       - Where the new converted object is वापसed
+ *              return_object       - Where the new converted object is returned
  *
- * RETURN:      Status. AE_OK अगर conversion was successful
+ * RETURN:      Status. AE_OK if conversion was successful
  *
- * DESCRIPTION: Attempt to convert a Integer object to a resource_ढाँचा
+ * DESCRIPTION: Attempt to convert a Integer object to a resource_template
  *              Buffer.
  *
  ******************************************************************************/
 
 acpi_status
-acpi_ns_convert_to_resource(काष्ठा acpi_namespace_node *scope,
-			    जोड़ acpi_opeअक्रम_object *original_object,
-			    जोड़ acpi_opeअक्रम_object **वापस_object)
-अणु
-	जोड़ acpi_opeअक्रम_object *new_object;
+acpi_ns_convert_to_resource(struct acpi_namespace_node *scope,
+			    union acpi_operand_object *original_object,
+			    union acpi_operand_object **return_object)
+{
+	union acpi_operand_object *new_object;
 	u8 *buffer;
 
 	/*
-	 * We can fix the following हालs क्रम an expected resource ढाँचा:
-	 * 1. No वापस value (पूर्णांकerpreter slack mode is disabled)
+	 * We can fix the following cases for an expected resource template:
+	 * 1. No return value (interpreter slack mode is disabled)
 	 * 2. A "Return (Zero)" statement
 	 * 3. A "Return empty buffer" statement
 	 *
-	 * We will वापस a buffer containing a single end_tag
+	 * We will return a buffer containing a single end_tag
 	 * resource descriptor.
 	 */
-	अगर (original_object) अणु
-		चयन (original_object->common.type) अणु
-		हाल ACPI_TYPE_INTEGER:
+	if (original_object) {
+		switch (original_object->common.type) {
+		case ACPI_TYPE_INTEGER:
 
 			/* We can only repair an Integer==0 */
 
-			अगर (original_object->पूर्णांकeger.value) अणु
-				वापस (AE_AML_OPERAND_TYPE);
-			पूर्ण
-			अवरोध;
+			if (original_object->integer.value) {
+				return (AE_AML_OPERAND_TYPE);
+			}
+			break;
 
-		हाल ACPI_TYPE_BUFFER:
+		case ACPI_TYPE_BUFFER:
 
-			अगर (original_object->buffer.length) अणु
+			if (original_object->buffer.length) {
 
 				/* Additional checks can be added in the future */
 
-				*वापस_object = शून्य;
-				वापस (AE_OK);
-			पूर्ण
-			अवरोध;
+				*return_object = NULL;
+				return (AE_OK);
+			}
+			break;
 
-		हाल ACPI_TYPE_STRING:
-		शेष:
+		case ACPI_TYPE_STRING:
+		default:
 
-			वापस (AE_AML_OPERAND_TYPE);
-		पूर्ण
-	पूर्ण
+			return (AE_AML_OPERAND_TYPE);
+		}
+	}
 
-	/* Create the new buffer object क्रम the resource descriptor */
+	/* Create the new buffer object for the resource descriptor */
 
 	new_object = acpi_ut_create_buffer_object(2);
-	अगर (!new_object) अणु
-		वापस (AE_NO_MEMORY);
-	पूर्ण
+	if (!new_object) {
+		return (AE_NO_MEMORY);
+	}
 
-	buffer = ACPI_CAST_PTR(u8, new_object->buffer.poपूर्णांकer);
+	buffer = ACPI_CAST_PTR(u8, new_object->buffer.pointer);
 
 	/* Initialize the Buffer with a single end_tag descriptor */
 
 	buffer[0] = (ACPI_RESOURCE_NAME_END_TAG | ASL_RDESC_END_TAG_SIZE);
 	buffer[1] = 0x00;
 
-	*वापस_object = new_object;
-	वापस (AE_OK);
-पूर्ण
+	*return_object = new_object;
+	return (AE_OK);
+}
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ns_convert_to_reference
  *
- * PARAMETERS:  scope               - Namespace node क्रम the method/object
+ * PARAMETERS:  scope               - Namespace node for the method/object
  *              original_object     - Object to be converted
- *              वापस_object       - Where the new converted object is वापसed
+ *              return_object       - Where the new converted object is returned
  *
- * RETURN:      Status. AE_OK अगर conversion was successful
+ * RETURN:      Status. AE_OK if conversion was successful
  *
  * DESCRIPTION: Attempt to convert a Integer object to a object_reference.
  *              Buffer.
@@ -430,62 +429,62 @@ acpi_ns_convert_to_resource(काष्ठा acpi_namespace_node *scope,
  ******************************************************************************/
 
 acpi_status
-acpi_ns_convert_to_reference(काष्ठा acpi_namespace_node *scope,
-			     जोड़ acpi_opeअक्रम_object *original_object,
-			     जोड़ acpi_opeअक्रम_object **वापस_object)
-अणु
-	जोड़ acpi_opeअक्रम_object *new_object = शून्य;
+acpi_ns_convert_to_reference(struct acpi_namespace_node *scope,
+			     union acpi_operand_object *original_object,
+			     union acpi_operand_object **return_object)
+{
+	union acpi_operand_object *new_object = NULL;
 	acpi_status status;
-	काष्ठा acpi_namespace_node *node;
-	जोड़ acpi_generic_state scope_info;
-	अक्षर *name;
+	struct acpi_namespace_node *node;
+	union acpi_generic_state scope_info;
+	char *name;
 
 	ACPI_FUNCTION_NAME(ns_convert_to_reference);
 
-	/* Convert path पूर्णांकo पूर्णांकernal presentation */
+	/* Convert path into internal presentation */
 
 	status =
-	    acpi_ns_पूर्णांकernalize_name(original_object->string.poपूर्णांकer, &name);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+	    acpi_ns_internalize_name(original_object->string.pointer, &name);
+	if (ACPI_FAILURE(status)) {
+		return_ACPI_STATUS(status);
+	}
 
 	/* Find the namespace node */
 
 	scope_info.scope.node =
-	    ACPI_CAST_PTR(काष्ठा acpi_namespace_node, scope);
+	    ACPI_CAST_PTR(struct acpi_namespace_node, scope);
 	status =
 	    acpi_ns_lookup(&scope_info, name, ACPI_TYPE_ANY, ACPI_IMODE_EXECUTE,
 			   ACPI_NS_SEARCH_PARENT | ACPI_NS_DONT_OPEN_SCOPE,
-			   शून्य, &node);
-	अगर (ACPI_FAILURE(status)) अणु
+			   NULL, &node);
+	if (ACPI_FAILURE(status)) {
 
-		/* Check अगर we are resolving a named reference within a package */
+		/* Check if we are resolving a named reference within a package */
 
 		ACPI_ERROR_NAMESPACE(&scope_info,
-				     original_object->string.poपूर्णांकer, status);
-		जाओ error_निकास;
-	पूर्ण
+				     original_object->string.pointer, status);
+		goto error_exit;
+	}
 
-	/* Create and init a new पूर्णांकernal ACPI object */
+	/* Create and init a new internal ACPI object */
 
-	new_object = acpi_ut_create_पूर्णांकernal_object(ACPI_TYPE_LOCAL_REFERENCE);
-	अगर (!new_object) अणु
+	new_object = acpi_ut_create_internal_object(ACPI_TYPE_LOCAL_REFERENCE);
+	if (!new_object) {
 		status = AE_NO_MEMORY;
-		जाओ error_निकास;
-	पूर्ण
+		goto error_exit;
+	}
 	new_object->reference.node = node;
 	new_object->reference.object = node->object;
 	new_object->reference.class = ACPI_REFCLASS_NAME;
 
 	/*
-	 * Increase reference of the object अगर needed (the object is likely a
-	 * null क्रम device nodes).
+	 * Increase reference of the object if needed (the object is likely a
+	 * null for device nodes).
 	 */
 	acpi_ut_add_reference(node->object);
 
-error_निकास:
+error_exit:
 	ACPI_FREE(name);
-	*वापस_object = new_object;
-	वापस (status);
-पूर्ण
+	*return_object = new_object;
+	return (status);
+}

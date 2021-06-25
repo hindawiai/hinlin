@@ -1,219 +1,218 @@
-<शैली गुरु>
 /*
- * Pistachio घड़ीsource based on general-purpose समयrs
+ * Pistachio clocksource based on general-purpose timers
  *
  * Copyright (C) 2015 Imagination Technologies
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License. See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License. See the file "COPYING" in the main directory of this archive
+ * for more details.
  */
 
-#घोषणा pr_fmt(fmt) "%s: " fmt, __func__
+#define pr_fmt(fmt) "%s: " fmt, __func__
 
-#समावेश <linux/clk.h>
-#समावेश <linux/घड़ीsource.h>
-#समावेश <linux/घड़ीchips.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/err.h>
-#समावेश <linux/init.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/sched_घड़ी.h>
-#समावेश <linux/समय.स>
+#include <linux/clk.h>
+#include <linux/clocksource.h>
+#include <linux/clockchips.h>
+#include <linux/delay.h>
+#include <linux/err.h>
+#include <linux/init.h>
+#include <linux/spinlock.h>
+#include <linux/mfd/syscon.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
+#include <linux/sched_clock.h>
+#include <linux/time.h>
 
 /* Top level reg */
-#घोषणा CR_TIMER_CTRL_CFG		0x00
-#घोषणा TIMER_ME_GLOBAL			BIT(0)
-#घोषणा CR_TIMER_REV			0x10
+#define CR_TIMER_CTRL_CFG		0x00
+#define TIMER_ME_GLOBAL			BIT(0)
+#define CR_TIMER_REV			0x10
 
-/* Timer specअगरic रेजिस्टरs */
-#घोषणा TIMER_CFG			0x20
-#घोषणा TIMER_ME_LOCAL			BIT(0)
-#घोषणा TIMER_RELOAD_VALUE		0x24
-#घोषणा TIMER_CURRENT_VALUE		0x28
-#घोषणा TIMER_CURRENT_OVERFLOW_VALUE	0x2C
-#घोषणा TIMER_IRQ_STATUS		0x30
-#घोषणा TIMER_IRQ_CLEAR			0x34
-#घोषणा TIMER_IRQ_MASK			0x38
+/* Timer specific registers */
+#define TIMER_CFG			0x20
+#define TIMER_ME_LOCAL			BIT(0)
+#define TIMER_RELOAD_VALUE		0x24
+#define TIMER_CURRENT_VALUE		0x28
+#define TIMER_CURRENT_OVERFLOW_VALUE	0x2C
+#define TIMER_IRQ_STATUS		0x30
+#define TIMER_IRQ_CLEAR			0x34
+#define TIMER_IRQ_MASK			0x38
 
-#घोषणा PERIP_TIMER_CONTROL		0x90
+#define PERIP_TIMER_CONTROL		0x90
 
-/* Timer specअगरic configuration Values */
-#घोषणा RELOAD_VALUE			0xffffffff
+/* Timer specific configuration Values */
+#define RELOAD_VALUE			0xffffffff
 
-काष्ठा pistachio_घड़ीsource अणु
-	व्योम __iomem *base;
+struct pistachio_clocksource {
+	void __iomem *base;
 	raw_spinlock_t lock;
-	काष्ठा घड़ीsource cs;
-पूर्ण;
+	struct clocksource cs;
+};
 
-अटल काष्ठा pistachio_घड़ीsource pcs_gpt;
+static struct pistachio_clocksource pcs_gpt;
 
-#घोषणा to_pistachio_घड़ीsource(cs)	\
-	container_of(cs, काष्ठा pistachio_घड़ीsource, cs)
+#define to_pistachio_clocksource(cs)	\
+	container_of(cs, struct pistachio_clocksource, cs)
 
-अटल अंतरभूत u32 gpt_पढ़ोl(व्योम __iomem *base, u32 offset, u32 gpt_id)
-अणु
-	वापस पढ़ोl(base + 0x20 * gpt_id + offset);
-पूर्ण
+static inline u32 gpt_readl(void __iomem *base, u32 offset, u32 gpt_id)
+{
+	return readl(base + 0x20 * gpt_id + offset);
+}
 
-अटल अंतरभूत व्योम gpt_ग_लिखोl(व्योम __iomem *base, u32 value, u32 offset,
+static inline void gpt_writel(void __iomem *base, u32 value, u32 offset,
 		u32 gpt_id)
-अणु
-	ग_लिखोl(value, base + 0x20 * gpt_id + offset);
-पूर्ण
+{
+	writel(value, base + 0x20 * gpt_id + offset);
+}
 
-अटल u64 notrace
-pistachio_घड़ीsource_पढ़ो_cycles(काष्ठा घड़ीsource *cs)
-अणु
-	काष्ठा pistachio_घड़ीsource *pcs = to_pistachio_घड़ीsource(cs);
+static u64 notrace
+pistachio_clocksource_read_cycles(struct clocksource *cs)
+{
+	struct pistachio_clocksource *pcs = to_pistachio_clocksource(cs);
 	u32 counter, overflow;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	/*
-	 * The counter value is only refreshed after the overflow value is पढ़ो.
-	 * And they must be पढ़ो in strict order, hence raw spin lock added.
+	 * The counter value is only refreshed after the overflow value is read.
+	 * And they must be read in strict order, hence raw spin lock added.
 	 */
 
 	raw_spin_lock_irqsave(&pcs->lock, flags);
-	overflow = gpt_पढ़ोl(pcs->base, TIMER_CURRENT_OVERFLOW_VALUE, 0);
-	counter = gpt_पढ़ोl(pcs->base, TIMER_CURRENT_VALUE, 0);
+	overflow = gpt_readl(pcs->base, TIMER_CURRENT_OVERFLOW_VALUE, 0);
+	counter = gpt_readl(pcs->base, TIMER_CURRENT_VALUE, 0);
 	raw_spin_unlock_irqrestore(&pcs->lock, flags);
 
-	वापस (u64)~counter;
-पूर्ण
+	return (u64)~counter;
+}
 
-अटल u64 notrace pistachio_पढ़ो_sched_घड़ी(व्योम)
-अणु
-	वापस pistachio_घड़ीsource_पढ़ो_cycles(&pcs_gpt.cs);
-पूर्ण
+static u64 notrace pistachio_read_sched_clock(void)
+{
+	return pistachio_clocksource_read_cycles(&pcs_gpt.cs);
+}
 
-अटल व्योम pistachio_clksrc_set_mode(काष्ठा घड़ीsource *cs, पूर्णांक समयridx,
-			पूर्णांक enable)
-अणु
-	काष्ठा pistachio_घड़ीsource *pcs = to_pistachio_घड़ीsource(cs);
+static void pistachio_clksrc_set_mode(struct clocksource *cs, int timeridx,
+			int enable)
+{
+	struct pistachio_clocksource *pcs = to_pistachio_clocksource(cs);
 	u32 val;
 
-	val = gpt_पढ़ोl(pcs->base, TIMER_CFG, समयridx);
-	अगर (enable)
+	val = gpt_readl(pcs->base, TIMER_CFG, timeridx);
+	if (enable)
 		val |= TIMER_ME_LOCAL;
-	अन्यथा
+	else
 		val &= ~TIMER_ME_LOCAL;
 
-	gpt_ग_लिखोl(pcs->base, val, TIMER_CFG, समयridx);
-पूर्ण
+	gpt_writel(pcs->base, val, TIMER_CFG, timeridx);
+}
 
-अटल व्योम pistachio_clksrc_enable(काष्ठा घड़ीsource *cs, पूर्णांक समयridx)
-अणु
-	काष्ठा pistachio_घड़ीsource *pcs = to_pistachio_घड़ीsource(cs);
+static void pistachio_clksrc_enable(struct clocksource *cs, int timeridx)
+{
+	struct pistachio_clocksource *pcs = to_pistachio_clocksource(cs);
 
-	/* Disable GPT local beक्रमe loading reload value */
-	pistachio_clksrc_set_mode(cs, समयridx, false);
-	gpt_ग_लिखोl(pcs->base, RELOAD_VALUE, TIMER_RELOAD_VALUE, समयridx);
-	pistachio_clksrc_set_mode(cs, समयridx, true);
-पूर्ण
+	/* Disable GPT local before loading reload value */
+	pistachio_clksrc_set_mode(cs, timeridx, false);
+	gpt_writel(pcs->base, RELOAD_VALUE, TIMER_RELOAD_VALUE, timeridx);
+	pistachio_clksrc_set_mode(cs, timeridx, true);
+}
 
-अटल व्योम pistachio_clksrc_disable(काष्ठा घड़ीsource *cs, पूर्णांक समयridx)
-अणु
+static void pistachio_clksrc_disable(struct clocksource *cs, int timeridx)
+{
 	/* Disable GPT local */
-	pistachio_clksrc_set_mode(cs, समयridx, false);
-पूर्ण
+	pistachio_clksrc_set_mode(cs, timeridx, false);
+}
 
-अटल पूर्णांक pistachio_घड़ीsource_enable(काष्ठा घड़ीsource *cs)
-अणु
+static int pistachio_clocksource_enable(struct clocksource *cs)
+{
 	pistachio_clksrc_enable(cs, 0);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम pistachio_घड़ीsource_disable(काष्ठा घड़ीsource *cs)
-अणु
+static void pistachio_clocksource_disable(struct clocksource *cs)
+{
 	pistachio_clksrc_disable(cs, 0);
-पूर्ण
+}
 
-/* Desirable घड़ी source क्रम pistachio platक्रमm */
-अटल काष्ठा pistachio_घड़ीsource pcs_gpt = अणु
-	.cs =	अणु
+/* Desirable clock source for pistachio platform */
+static struct pistachio_clocksource pcs_gpt = {
+	.cs =	{
 		.name		= "gptimer",
 		.rating		= 300,
-		.enable		= pistachio_घड़ीsource_enable,
-		.disable	= pistachio_घड़ीsource_disable,
-		.पढ़ो		= pistachio_घड़ीsource_पढ़ो_cycles,
+		.enable		= pistachio_clocksource_enable,
+		.disable	= pistachio_clocksource_disable,
+		.read		= pistachio_clocksource_read_cycles,
 		.mask		= CLOCKSOURCE_MASK(32),
 		.flags		= CLOCK_SOURCE_IS_CONTINUOUS |
 				  CLOCK_SOURCE_SUSPEND_NONSTOP,
-		पूर्ण,
-पूर्ण;
+		},
+};
 
-अटल पूर्णांक __init pistachio_clksrc_of_init(काष्ठा device_node *node)
-अणु
-	काष्ठा clk *sys_clk, *fast_clk;
-	काष्ठा regmap *periph_regs;
-	अचिन्हित दीर्घ rate;
-	पूर्णांक ret;
+static int __init pistachio_clksrc_of_init(struct device_node *node)
+{
+	struct clk *sys_clk, *fast_clk;
+	struct regmap *periph_regs;
+	unsigned long rate;
+	int ret;
 
 	pcs_gpt.base = of_iomap(node, 0);
-	अगर (!pcs_gpt.base) अणु
+	if (!pcs_gpt.base) {
 		pr_err("cannot iomap\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
 	periph_regs = syscon_regmap_lookup_by_phandle(node, "img,cr-periph");
-	अगर (IS_ERR(periph_regs)) अणु
+	if (IS_ERR(periph_regs)) {
 		pr_err("cannot get peripheral regmap (%ld)\n",
 		       PTR_ERR(periph_regs));
-		वापस PTR_ERR(periph_regs);
-	पूर्ण
+		return PTR_ERR(periph_regs);
+	}
 
-	/* Switch to using the fast counter घड़ी */
+	/* Switch to using the fast counter clock */
 	ret = regmap_update_bits(periph_regs, PERIP_TIMER_CONTROL,
 				 0xf, 0x0);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	sys_clk = of_clk_get_by_name(node, "sys");
-	अगर (IS_ERR(sys_clk)) अणु
+	if (IS_ERR(sys_clk)) {
 		pr_err("clock get failed (%ld)\n", PTR_ERR(sys_clk));
-		वापस PTR_ERR(sys_clk);
-	पूर्ण
+		return PTR_ERR(sys_clk);
+	}
 
 	fast_clk = of_clk_get_by_name(node, "fast");
-	अगर (IS_ERR(fast_clk)) अणु
+	if (IS_ERR(fast_clk)) {
 		pr_err("clock get failed (%lu)\n", PTR_ERR(fast_clk));
-		वापस PTR_ERR(fast_clk);
-	पूर्ण
+		return PTR_ERR(fast_clk);
+	}
 
 	ret = clk_prepare_enable(sys_clk);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		pr_err("failed to enable clock (%d)\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = clk_prepare_enable(fast_clk);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		pr_err("failed to enable clock (%d)\n", ret);
 		clk_disable_unprepare(sys_clk);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	rate = clk_get_rate(fast_clk);
 
-	/* Disable irq's क्रम घड़ीsource usage */
-	gpt_ग_लिखोl(pcs_gpt.base, 0, TIMER_IRQ_MASK, 0);
-	gpt_ग_लिखोl(pcs_gpt.base, 0, TIMER_IRQ_MASK, 1);
-	gpt_ग_लिखोl(pcs_gpt.base, 0, TIMER_IRQ_MASK, 2);
-	gpt_ग_लिखोl(pcs_gpt.base, 0, TIMER_IRQ_MASK, 3);
+	/* Disable irq's for clocksource usage */
+	gpt_writel(pcs_gpt.base, 0, TIMER_IRQ_MASK, 0);
+	gpt_writel(pcs_gpt.base, 0, TIMER_IRQ_MASK, 1);
+	gpt_writel(pcs_gpt.base, 0, TIMER_IRQ_MASK, 2);
+	gpt_writel(pcs_gpt.base, 0, TIMER_IRQ_MASK, 3);
 
-	/* Enable समयr block */
-	ग_लिखोl(TIMER_ME_GLOBAL, pcs_gpt.base);
+	/* Enable timer block */
+	writel(TIMER_ME_GLOBAL, pcs_gpt.base);
 
 	raw_spin_lock_init(&pcs_gpt.lock);
-	sched_घड़ी_रेजिस्टर(pistachio_पढ़ो_sched_घड़ी, 32, rate);
-	वापस घड़ीsource_रेजिस्टर_hz(&pcs_gpt.cs, rate);
-पूर्ण
-TIMER_OF_DECLARE(pistachio_gpसमयr, "img,pistachio-gptimer",
+	sched_clock_register(pistachio_read_sched_clock, 32, rate);
+	return clocksource_register_hz(&pcs_gpt.cs, rate);
+}
+TIMER_OF_DECLARE(pistachio_gptimer, "img,pistachio-gptimer",
 		       pistachio_clksrc_of_init);

@@ -1,43 +1,42 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Core driver क्रम the Intel पूर्णांकegrated DMA 64-bit
+ * Core driver for the Intel integrated DMA 64-bit
  *
  * Copyright (C) 2015 Intel Corporation
- * Author: Andy Shevchenko <andriy.shevchenko@linux.पूर्णांकel.com>
+ * Author: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
  */
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/dmapool.h>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
+#include <linux/bitops.h>
+#include <linux/delay.h>
+#include <linux/dmaengine.h>
+#include <linux/dma-mapping.h>
+#include <linux/dmapool.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
 
-#समावेश <linux/dma/idma64.h>
+#include <linux/dma/idma64.h>
 
-#समावेश "idma64.h"
+#include "idma64.h"
 
 /* For now we support only two channels */
-#घोषणा IDMA64_NR_CHAN		2
+#define IDMA64_NR_CHAN		2
 
 /* ---------------------------------------------------------------------- */
 
-अटल काष्ठा device *chan2dev(काष्ठा dma_chan *chan)
-अणु
-	वापस &chan->dev->device;
-पूर्ण
+static struct device *chan2dev(struct dma_chan *chan)
+{
+	return &chan->dev->device;
+}
 
 /* ---------------------------------------------------------------------- */
 
-अटल व्योम idma64_off(काष्ठा idma64 *idma64)
-अणु
-	अचिन्हित लघु count = 100;
+static void idma64_off(struct idma64 *idma64)
+{
+	unsigned short count = 100;
 
-	dma_ग_लिखोl(idma64, CFG, 0);
+	dma_writel(idma64, CFG, 0);
 
 	channel_clear_bit(idma64, MASK(XFER), idma64->all_chan_mask);
 	channel_clear_bit(idma64, MASK(BLOCK), idma64->all_chan_mask);
@@ -45,82 +44,82 @@
 	channel_clear_bit(idma64, MASK(DST_TRAN), idma64->all_chan_mask);
 	channel_clear_bit(idma64, MASK(ERROR), idma64->all_chan_mask);
 
-	करो अणु
+	do {
 		cpu_relax();
-	पूर्ण जबतक (dma_पढ़ोl(idma64, CFG) & IDMA64_CFG_DMA_EN && --count);
-पूर्ण
+	} while (dma_readl(idma64, CFG) & IDMA64_CFG_DMA_EN && --count);
+}
 
-अटल व्योम idma64_on(काष्ठा idma64 *idma64)
-अणु
-	dma_ग_लिखोl(idma64, CFG, IDMA64_CFG_DMA_EN);
-पूर्ण
+static void idma64_on(struct idma64 *idma64)
+{
+	dma_writel(idma64, CFG, IDMA64_CFG_DMA_EN);
+}
 
 /* ---------------------------------------------------------------------- */
 
-अटल व्योम idma64_chan_init(काष्ठा idma64 *idma64, काष्ठा idma64_chan *idma64c)
-अणु
+static void idma64_chan_init(struct idma64 *idma64, struct idma64_chan *idma64c)
+{
 	u32 cfghi = IDMA64C_CFGH_SRC_PER(1) | IDMA64C_CFGH_DST_PER(0);
 	u32 cfglo = 0;
 
-	/* Set शेष burst alignment */
+	/* Set default burst alignment */
 	cfglo |= IDMA64C_CFGL_DST_BURST_ALIGN | IDMA64C_CFGL_SRC_BURST_ALIGN;
 
-	channel_ग_लिखोl(idma64c, CFG_LO, cfglo);
-	channel_ग_लिखोl(idma64c, CFG_HI, cfghi);
+	channel_writel(idma64c, CFG_LO, cfglo);
+	channel_writel(idma64c, CFG_HI, cfghi);
 
-	/* Enable पूर्णांकerrupts */
+	/* Enable interrupts */
 	channel_set_bit(idma64, MASK(XFER), idma64c->mask);
 	channel_set_bit(idma64, MASK(ERROR), idma64c->mask);
 
 	/*
-	 * Enक्रमce the controller to be turned on.
+	 * Enforce the controller to be turned on.
 	 *
-	 * The iDMA is turned off in ->probe() and looses context during प्रणाली
-	 * suspend / resume cycle. That's why we have to enable it each समय we
+	 * The iDMA is turned off in ->probe() and looses context during system
+	 * suspend / resume cycle. That's why we have to enable it each time we
 	 * use it.
 	 */
 	idma64_on(idma64);
-पूर्ण
+}
 
-अटल व्योम idma64_chan_stop(काष्ठा idma64 *idma64, काष्ठा idma64_chan *idma64c)
-अणु
+static void idma64_chan_stop(struct idma64 *idma64, struct idma64_chan *idma64c)
+{
 	channel_clear_bit(idma64, CH_EN, idma64c->mask);
-पूर्ण
+}
 
-अटल व्योम idma64_chan_start(काष्ठा idma64 *idma64, काष्ठा idma64_chan *idma64c)
-अणु
-	काष्ठा idma64_desc *desc = idma64c->desc;
-	काष्ठा idma64_hw_desc *hw = &desc->hw[0];
+static void idma64_chan_start(struct idma64 *idma64, struct idma64_chan *idma64c)
+{
+	struct idma64_desc *desc = idma64c->desc;
+	struct idma64_hw_desc *hw = &desc->hw[0];
 
-	channel_ग_लिखोq(idma64c, SAR, 0);
-	channel_ग_लिखोq(idma64c, DAR, 0);
+	channel_writeq(idma64c, SAR, 0);
+	channel_writeq(idma64c, DAR, 0);
 
-	channel_ग_लिखोl(idma64c, CTL_HI, IDMA64C_CTLH_BLOCK_TS(~0UL));
-	channel_ग_लिखोl(idma64c, CTL_LO, IDMA64C_CTLL_LLP_S_EN | IDMA64C_CTLL_LLP_D_EN);
+	channel_writel(idma64c, CTL_HI, IDMA64C_CTLH_BLOCK_TS(~0UL));
+	channel_writel(idma64c, CTL_LO, IDMA64C_CTLL_LLP_S_EN | IDMA64C_CTLL_LLP_D_EN);
 
-	channel_ग_लिखोq(idma64c, LLP, hw->llp);
+	channel_writeq(idma64c, LLP, hw->llp);
 
 	channel_set_bit(idma64, CH_EN, idma64c->mask);
-पूर्ण
+}
 
-अटल व्योम idma64_stop_transfer(काष्ठा idma64_chan *idma64c)
-अणु
-	काष्ठा idma64 *idma64 = to_idma64(idma64c->vchan.chan.device);
+static void idma64_stop_transfer(struct idma64_chan *idma64c)
+{
+	struct idma64 *idma64 = to_idma64(idma64c->vchan.chan.device);
 
 	idma64_chan_stop(idma64, idma64c);
-पूर्ण
+}
 
-अटल व्योम idma64_start_transfer(काष्ठा idma64_chan *idma64c)
-अणु
-	काष्ठा idma64 *idma64 = to_idma64(idma64c->vchan.chan.device);
-	काष्ठा virt_dma_desc *vdesc;
+static void idma64_start_transfer(struct idma64_chan *idma64c)
+{
+	struct idma64 *idma64 = to_idma64(idma64c->vchan.chan.device);
+	struct virt_dma_desc *vdesc;
 
 	/* Get the next descriptor */
 	vdesc = vchan_next_desc(&idma64c->vchan);
-	अगर (!vdesc) अणु
-		idma64c->desc = शून्य;
-		वापस;
-	पूर्ण
+	if (!vdesc) {
+		idma64c->desc = NULL;
+		return;
+	}
 
 	list_del(&vdesc->node);
 	idma64c->desc = to_idma64_desc(vdesc);
@@ -130,128 +129,128 @@
 
 	/* Start the channel with a new descriptor */
 	idma64_chan_start(idma64, idma64c);
-पूर्ण
+}
 
 /* ---------------------------------------------------------------------- */
 
-अटल व्योम idma64_chan_irq(काष्ठा idma64 *idma64, अचिन्हित लघु c,
+static void idma64_chan_irq(struct idma64 *idma64, unsigned short c,
 		u32 status_err, u32 status_xfer)
-अणु
-	काष्ठा idma64_chan *idma64c = &idma64->chan[c];
-	काष्ठा idma64_desc *desc;
+{
+	struct idma64_chan *idma64c = &idma64->chan[c];
+	struct idma64_desc *desc;
 
 	spin_lock(&idma64c->vchan.lock);
 	desc = idma64c->desc;
-	अगर (desc) अणु
-		अगर (status_err & (1 << c)) अणु
-			dma_ग_लिखोl(idma64, CLEAR(ERROR), idma64c->mask);
+	if (desc) {
+		if (status_err & (1 << c)) {
+			dma_writel(idma64, CLEAR(ERROR), idma64c->mask);
 			desc->status = DMA_ERROR;
-		पूर्ण अन्यथा अगर (status_xfer & (1 << c)) अणु
-			dma_ग_लिखोl(idma64, CLEAR(XFER), idma64c->mask);
+		} else if (status_xfer & (1 << c)) {
+			dma_writel(idma64, CLEAR(XFER), idma64c->mask);
 			desc->status = DMA_COMPLETE;
 			vchan_cookie_complete(&desc->vdesc);
 			idma64_start_transfer(idma64c);
-		पूर्ण
+		}
 
 		/* idma64_start_transfer() updates idma64c->desc */
-		अगर (idma64c->desc == शून्य || desc->status == DMA_ERROR)
+		if (idma64c->desc == NULL || desc->status == DMA_ERROR)
 			idma64_stop_transfer(idma64c);
-	पूर्ण
+	}
 	spin_unlock(&idma64c->vchan.lock);
-पूर्ण
+}
 
-अटल irqवापस_t idma64_irq(पूर्णांक irq, व्योम *dev)
-अणु
-	काष्ठा idma64 *idma64 = dev;
-	u32 status = dma_पढ़ोl(idma64, STATUS_INT);
+static irqreturn_t idma64_irq(int irq, void *dev)
+{
+	struct idma64 *idma64 = dev;
+	u32 status = dma_readl(idma64, STATUS_INT);
 	u32 status_xfer;
 	u32 status_err;
-	अचिन्हित लघु i;
+	unsigned short i;
 
 	dev_vdbg(idma64->dma.dev, "%s: status=%#x\n", __func__, status);
 
-	/* Check अगर we have any पूर्णांकerrupt from the DMA controller */
-	अगर (!status)
-		वापस IRQ_NONE;
+	/* Check if we have any interrupt from the DMA controller */
+	if (!status)
+		return IRQ_NONE;
 
-	status_xfer = dma_पढ़ोl(idma64, RAW(XFER));
-	status_err = dma_पढ़ोl(idma64, RAW(ERROR));
+	status_xfer = dma_readl(idma64, RAW(XFER));
+	status_err = dma_readl(idma64, RAW(ERROR));
 
-	क्रम (i = 0; i < idma64->dma.chancnt; i++)
+	for (i = 0; i < idma64->dma.chancnt; i++)
 		idma64_chan_irq(idma64, i, status_err, status_xfer);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /* ---------------------------------------------------------------------- */
 
-अटल काष्ठा idma64_desc *idma64_alloc_desc(अचिन्हित पूर्णांक ndesc)
-अणु
-	काष्ठा idma64_desc *desc;
+static struct idma64_desc *idma64_alloc_desc(unsigned int ndesc)
+{
+	struct idma64_desc *desc;
 
-	desc = kzalloc(माप(*desc), GFP_NOWAIT);
-	अगर (!desc)
-		वापस शून्य;
+	desc = kzalloc(sizeof(*desc), GFP_NOWAIT);
+	if (!desc)
+		return NULL;
 
-	desc->hw = kसुस्मृति(ndesc, माप(*desc->hw), GFP_NOWAIT);
-	अगर (!desc->hw) अणु
-		kमुक्त(desc);
-		वापस शून्य;
-	पूर्ण
+	desc->hw = kcalloc(ndesc, sizeof(*desc->hw), GFP_NOWAIT);
+	if (!desc->hw) {
+		kfree(desc);
+		return NULL;
+	}
 
-	वापस desc;
-पूर्ण
+	return desc;
+}
 
-अटल व्योम idma64_desc_मुक्त(काष्ठा idma64_chan *idma64c,
-		काष्ठा idma64_desc *desc)
-अणु
-	काष्ठा idma64_hw_desc *hw;
+static void idma64_desc_free(struct idma64_chan *idma64c,
+		struct idma64_desc *desc)
+{
+	struct idma64_hw_desc *hw;
 
-	अगर (desc->ndesc) अणु
-		अचिन्हित पूर्णांक i = desc->ndesc;
+	if (desc->ndesc) {
+		unsigned int i = desc->ndesc;
 
-		करो अणु
+		do {
 			hw = &desc->hw[--i];
-			dma_pool_मुक्त(idma64c->pool, hw->lli, hw->llp);
-		पूर्ण जबतक (i);
-	पूर्ण
+			dma_pool_free(idma64c->pool, hw->lli, hw->llp);
+		} while (i);
+	}
 
-	kमुक्त(desc->hw);
-	kमुक्त(desc);
-पूर्ण
+	kfree(desc->hw);
+	kfree(desc);
+}
 
-अटल व्योम idma64_vdesc_मुक्त(काष्ठा virt_dma_desc *vdesc)
-अणु
-	काष्ठा idma64_chan *idma64c = to_idma64_chan(vdesc->tx.chan);
+static void idma64_vdesc_free(struct virt_dma_desc *vdesc)
+{
+	struct idma64_chan *idma64c = to_idma64_chan(vdesc->tx.chan);
 
-	idma64_desc_मुक्त(idma64c, to_idma64_desc(vdesc));
-पूर्ण
+	idma64_desc_free(idma64c, to_idma64_desc(vdesc));
+}
 
-अटल व्योम idma64_hw_desc_fill(काष्ठा idma64_hw_desc *hw,
-		काष्ठा dma_slave_config *config,
-		क्रमागत dma_transfer_direction direction, u64 llp)
-अणु
-	काष्ठा idma64_lli *lli = hw->lli;
+static void idma64_hw_desc_fill(struct idma64_hw_desc *hw,
+		struct dma_slave_config *config,
+		enum dma_transfer_direction direction, u64 llp)
+{
+	struct idma64_lli *lli = hw->lli;
 	u64 sar, dar;
 	u32 ctlhi = IDMA64C_CTLH_BLOCK_TS(hw->len);
 	u32 ctllo = IDMA64C_CTLL_LLP_S_EN | IDMA64C_CTLL_LLP_D_EN;
 	u32 src_width, dst_width;
 
-	अगर (direction == DMA_MEM_TO_DEV) अणु
+	if (direction == DMA_MEM_TO_DEV) {
 		sar = hw->phys;
 		dar = config->dst_addr;
 		ctllo |= IDMA64C_CTLL_DST_FIX | IDMA64C_CTLL_SRC_INC |
 			 IDMA64C_CTLL_FC_M2P;
 		src_width = __ffs(sar | hw->len | 4);
 		dst_width = __ffs(config->dst_addr_width);
-	पूर्ण अन्यथा अणु	/* DMA_DEV_TO_MEM */
+	} else {	/* DMA_DEV_TO_MEM */
 		sar = config->src_addr;
 		dar = hw->phys;
 		ctllo |= IDMA64C_CTLL_DST_INC | IDMA64C_CTLL_SRC_FIX |
 			 IDMA64C_CTLL_FC_P2M;
 		src_width = __ffs(config->src_addr_width);
 		dst_width = __ffs(dar | hw->len | 4);
-	पूर्ण
+	}
 
 	lli->sar = sar;
 	lli->dar = dar;
@@ -264,287 +263,287 @@
 		     IDMA64C_CTLL_SRC_WIDTH(src_width);
 
 	lli->llp = llp;
-पूर्ण
+}
 
-अटल व्योम idma64_desc_fill(काष्ठा idma64_chan *idma64c,
-		काष्ठा idma64_desc *desc)
-अणु
-	काष्ठा dma_slave_config *config = &idma64c->config;
-	अचिन्हित पूर्णांक i = desc->ndesc;
-	काष्ठा idma64_hw_desc *hw = &desc->hw[i - 1];
-	काष्ठा idma64_lli *lli = hw->lli;
+static void idma64_desc_fill(struct idma64_chan *idma64c,
+		struct idma64_desc *desc)
+{
+	struct dma_slave_config *config = &idma64c->config;
+	unsigned int i = desc->ndesc;
+	struct idma64_hw_desc *hw = &desc->hw[i - 1];
+	struct idma64_lli *lli = hw->lli;
 	u64 llp = 0;
 
 	/* Fill the hardware descriptors and link them to a list */
-	करो अणु
+	do {
 		hw = &desc->hw[--i];
 		idma64_hw_desc_fill(hw, config, desc->direction, llp);
 		llp = hw->llp;
 		desc->length += hw->len;
-	पूर्ण जबतक (i);
+	} while (i);
 
-	/* Trigger an पूर्णांकerrupt after the last block is transfered */
+	/* Trigger an interrupt after the last block is transfered */
 	lli->ctllo |= IDMA64C_CTLL_INT_EN;
 
 	/* Disable LLP transfer in the last block */
 	lli->ctllo &= ~(IDMA64C_CTLL_LLP_S_EN | IDMA64C_CTLL_LLP_D_EN);
-पूर्ण
+}
 
-अटल काष्ठा dma_async_tx_descriptor *idma64_prep_slave_sg(
-		काष्ठा dma_chan *chan, काष्ठा scatterlist *sgl,
-		अचिन्हित पूर्णांक sg_len, क्रमागत dma_transfer_direction direction,
-		अचिन्हित दीर्घ flags, व्योम *context)
-अणु
-	काष्ठा idma64_chan *idma64c = to_idma64_chan(chan);
-	काष्ठा idma64_desc *desc;
-	काष्ठा scatterlist *sg;
-	अचिन्हित पूर्णांक i;
+static struct dma_async_tx_descriptor *idma64_prep_slave_sg(
+		struct dma_chan *chan, struct scatterlist *sgl,
+		unsigned int sg_len, enum dma_transfer_direction direction,
+		unsigned long flags, void *context)
+{
+	struct idma64_chan *idma64c = to_idma64_chan(chan);
+	struct idma64_desc *desc;
+	struct scatterlist *sg;
+	unsigned int i;
 
 	desc = idma64_alloc_desc(sg_len);
-	अगर (!desc)
-		वापस शून्य;
+	if (!desc)
+		return NULL;
 
-	क्रम_each_sg(sgl, sg, sg_len, i) अणु
-		काष्ठा idma64_hw_desc *hw = &desc->hw[i];
+	for_each_sg(sgl, sg, sg_len, i) {
+		struct idma64_hw_desc *hw = &desc->hw[i];
 
-		/* Allocate DMA capable memory क्रम hardware descriptor */
+		/* Allocate DMA capable memory for hardware descriptor */
 		hw->lli = dma_pool_alloc(idma64c->pool, GFP_NOWAIT, &hw->llp);
-		अगर (!hw->lli) अणु
+		if (!hw->lli) {
 			desc->ndesc = i;
-			idma64_desc_मुक्त(idma64c, desc);
-			वापस शून्य;
-		पूर्ण
+			idma64_desc_free(idma64c, desc);
+			return NULL;
+		}
 
 		hw->phys = sg_dma_address(sg);
 		hw->len = sg_dma_len(sg);
-	पूर्ण
+	}
 
 	desc->ndesc = sg_len;
 	desc->direction = direction;
 	desc->status = DMA_IN_PROGRESS;
 
 	idma64_desc_fill(idma64c, desc);
-	वापस vchan_tx_prep(&idma64c->vchan, &desc->vdesc, flags);
-पूर्ण
+	return vchan_tx_prep(&idma64c->vchan, &desc->vdesc, flags);
+}
 
-अटल व्योम idma64_issue_pending(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा idma64_chan *idma64c = to_idma64_chan(chan);
-	अचिन्हित दीर्घ flags;
+static void idma64_issue_pending(struct dma_chan *chan)
+{
+	struct idma64_chan *idma64c = to_idma64_chan(chan);
+	unsigned long flags;
 
 	spin_lock_irqsave(&idma64c->vchan.lock, flags);
-	अगर (vchan_issue_pending(&idma64c->vchan) && !idma64c->desc)
+	if (vchan_issue_pending(&idma64c->vchan) && !idma64c->desc)
 		idma64_start_transfer(idma64c);
 	spin_unlock_irqrestore(&idma64c->vchan.lock, flags);
-पूर्ण
+}
 
-अटल माप_प्रकार idma64_active_desc_size(काष्ठा idma64_chan *idma64c)
-अणु
-	काष्ठा idma64_desc *desc = idma64c->desc;
-	काष्ठा idma64_hw_desc *hw;
-	माप_प्रकार bytes = desc->length;
-	u64 llp = channel_पढ़ोq(idma64c, LLP);
-	u32 ctlhi = channel_पढ़ोl(idma64c, CTL_HI);
-	अचिन्हित पूर्णांक i = 0;
+static size_t idma64_active_desc_size(struct idma64_chan *idma64c)
+{
+	struct idma64_desc *desc = idma64c->desc;
+	struct idma64_hw_desc *hw;
+	size_t bytes = desc->length;
+	u64 llp = channel_readq(idma64c, LLP);
+	u32 ctlhi = channel_readl(idma64c, CTL_HI);
+	unsigned int i = 0;
 
-	करो अणु
+	do {
 		hw = &desc->hw[i];
-		अगर (hw->llp == llp)
-			अवरोध;
+		if (hw->llp == llp)
+			break;
 		bytes -= hw->len;
-	पूर्ण जबतक (++i < desc->ndesc);
+	} while (++i < desc->ndesc);
 
-	अगर (!i)
-		वापस bytes;
+	if (!i)
+		return bytes;
 
 	/* The current chunk is not fully transfered yet */
 	bytes += desc->hw[--i].len;
 
-	वापस bytes - IDMA64C_CTLH_BLOCK_TS(ctlhi);
-पूर्ण
+	return bytes - IDMA64C_CTLH_BLOCK_TS(ctlhi);
+}
 
-अटल क्रमागत dma_status idma64_tx_status(काष्ठा dma_chan *chan,
-		dma_cookie_t cookie, काष्ठा dma_tx_state *state)
-अणु
-	काष्ठा idma64_chan *idma64c = to_idma64_chan(chan);
-	काष्ठा virt_dma_desc *vdesc;
-	क्रमागत dma_status status;
-	माप_प्रकार bytes;
-	अचिन्हित दीर्घ flags;
+static enum dma_status idma64_tx_status(struct dma_chan *chan,
+		dma_cookie_t cookie, struct dma_tx_state *state)
+{
+	struct idma64_chan *idma64c = to_idma64_chan(chan);
+	struct virt_dma_desc *vdesc;
+	enum dma_status status;
+	size_t bytes;
+	unsigned long flags;
 
 	status = dma_cookie_status(chan, cookie, state);
-	अगर (status == DMA_COMPLETE)
-		वापस status;
+	if (status == DMA_COMPLETE)
+		return status;
 
 	spin_lock_irqsave(&idma64c->vchan.lock, flags);
 	vdesc = vchan_find_desc(&idma64c->vchan, cookie);
-	अगर (idma64c->desc && cookie == idma64c->desc->vdesc.tx.cookie) अणु
+	if (idma64c->desc && cookie == idma64c->desc->vdesc.tx.cookie) {
 		bytes = idma64_active_desc_size(idma64c);
 		dma_set_residue(state, bytes);
 		status = idma64c->desc->status;
-	पूर्ण अन्यथा अगर (vdesc) अणु
+	} else if (vdesc) {
 		bytes = to_idma64_desc(vdesc)->length;
 		dma_set_residue(state, bytes);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&idma64c->vchan.lock, flags);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल व्योम convert_burst(u32 *maxburst)
-अणु
-	अगर (*maxburst)
+static void convert_burst(u32 *maxburst)
+{
+	if (*maxburst)
 		*maxburst = __fls(*maxburst);
-	अन्यथा
+	else
 		*maxburst = 0;
-पूर्ण
+}
 
-अटल पूर्णांक idma64_slave_config(काष्ठा dma_chan *chan,
-		काष्ठा dma_slave_config *config)
-अणु
-	काष्ठा idma64_chan *idma64c = to_idma64_chan(chan);
+static int idma64_slave_config(struct dma_chan *chan,
+		struct dma_slave_config *config)
+{
+	struct idma64_chan *idma64c = to_idma64_chan(chan);
 
-	स_नकल(&idma64c->config, config, माप(idma64c->config));
+	memcpy(&idma64c->config, config, sizeof(idma64c->config));
 
 	convert_burst(&idma64c->config.src_maxburst);
 	convert_burst(&idma64c->config.dst_maxburst);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम idma64_chan_deactivate(काष्ठा idma64_chan *idma64c, bool drain)
-अणु
-	अचिन्हित लघु count = 100;
+static void idma64_chan_deactivate(struct idma64_chan *idma64c, bool drain)
+{
+	unsigned short count = 100;
 	u32 cfglo;
 
-	cfglo = channel_पढ़ोl(idma64c, CFG_LO);
-	अगर (drain)
+	cfglo = channel_readl(idma64c, CFG_LO);
+	if (drain)
 		cfglo |= IDMA64C_CFGL_CH_DRAIN;
-	अन्यथा
+	else
 		cfglo &= ~IDMA64C_CFGL_CH_DRAIN;
 
-	channel_ग_लिखोl(idma64c, CFG_LO, cfglo | IDMA64C_CFGL_CH_SUSP);
-	करो अणु
+	channel_writel(idma64c, CFG_LO, cfglo | IDMA64C_CFGL_CH_SUSP);
+	do {
 		udelay(1);
-		cfglo = channel_पढ़ोl(idma64c, CFG_LO);
-	पूर्ण जबतक (!(cfglo & IDMA64C_CFGL_FIFO_EMPTY) && --count);
-पूर्ण
+		cfglo = channel_readl(idma64c, CFG_LO);
+	} while (!(cfglo & IDMA64C_CFGL_FIFO_EMPTY) && --count);
+}
 
-अटल व्योम idma64_chan_activate(काष्ठा idma64_chan *idma64c)
-अणु
+static void idma64_chan_activate(struct idma64_chan *idma64c)
+{
 	u32 cfglo;
 
-	cfglo = channel_पढ़ोl(idma64c, CFG_LO);
-	channel_ग_लिखोl(idma64c, CFG_LO, cfglo & ~IDMA64C_CFGL_CH_SUSP);
-पूर्ण
+	cfglo = channel_readl(idma64c, CFG_LO);
+	channel_writel(idma64c, CFG_LO, cfglo & ~IDMA64C_CFGL_CH_SUSP);
+}
 
-अटल पूर्णांक idma64_छोड़ो(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा idma64_chan *idma64c = to_idma64_chan(chan);
-	अचिन्हित दीर्घ flags;
+static int idma64_pause(struct dma_chan *chan)
+{
+	struct idma64_chan *idma64c = to_idma64_chan(chan);
+	unsigned long flags;
 
 	spin_lock_irqsave(&idma64c->vchan.lock, flags);
-	अगर (idma64c->desc && idma64c->desc->status == DMA_IN_PROGRESS) अणु
+	if (idma64c->desc && idma64c->desc->status == DMA_IN_PROGRESS) {
 		idma64_chan_deactivate(idma64c, false);
 		idma64c->desc->status = DMA_PAUSED;
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&idma64c->vchan.lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक idma64_resume(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा idma64_chan *idma64c = to_idma64_chan(chan);
-	अचिन्हित दीर्घ flags;
+static int idma64_resume(struct dma_chan *chan)
+{
+	struct idma64_chan *idma64c = to_idma64_chan(chan);
+	unsigned long flags;
 
 	spin_lock_irqsave(&idma64c->vchan.lock, flags);
-	अगर (idma64c->desc && idma64c->desc->status == DMA_PAUSED) अणु
+	if (idma64c->desc && idma64c->desc->status == DMA_PAUSED) {
 		idma64c->desc->status = DMA_IN_PROGRESS;
 		idma64_chan_activate(idma64c);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&idma64c->vchan.lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक idma64_terminate_all(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा idma64_chan *idma64c = to_idma64_chan(chan);
-	अचिन्हित दीर्घ flags;
+static int idma64_terminate_all(struct dma_chan *chan)
+{
+	struct idma64_chan *idma64c = to_idma64_chan(chan);
+	unsigned long flags;
 	LIST_HEAD(head);
 
 	spin_lock_irqsave(&idma64c->vchan.lock, flags);
 	idma64_chan_deactivate(idma64c, true);
 	idma64_stop_transfer(idma64c);
-	अगर (idma64c->desc) अणु
-		idma64_vdesc_मुक्त(&idma64c->desc->vdesc);
-		idma64c->desc = शून्य;
-	पूर्ण
+	if (idma64c->desc) {
+		idma64_vdesc_free(&idma64c->desc->vdesc);
+		idma64c->desc = NULL;
+	}
 	vchan_get_all_descriptors(&idma64c->vchan, &head);
 	spin_unlock_irqrestore(&idma64c->vchan.lock, flags);
 
-	vchan_dma_desc_मुक्त_list(&idma64c->vchan, &head);
-	वापस 0;
-पूर्ण
+	vchan_dma_desc_free_list(&idma64c->vchan, &head);
+	return 0;
+}
 
-अटल व्योम idma64_synchronize(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा idma64_chan *idma64c = to_idma64_chan(chan);
+static void idma64_synchronize(struct dma_chan *chan)
+{
+	struct idma64_chan *idma64c = to_idma64_chan(chan);
 
 	vchan_synchronize(&idma64c->vchan);
-पूर्ण
+}
 
-अटल पूर्णांक idma64_alloc_chan_resources(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा idma64_chan *idma64c = to_idma64_chan(chan);
+static int idma64_alloc_chan_resources(struct dma_chan *chan)
+{
+	struct idma64_chan *idma64c = to_idma64_chan(chan);
 
-	/* Create a pool of consistent memory blocks क्रम hardware descriptors */
+	/* Create a pool of consistent memory blocks for hardware descriptors */
 	idma64c->pool = dma_pool_create(dev_name(chan2dev(chan)),
 					chan->device->dev,
-					माप(काष्ठा idma64_lli), 8, 0);
-	अगर (!idma64c->pool) अणु
+					sizeof(struct idma64_lli), 8, 0);
+	if (!idma64c->pool) {
 		dev_err(chan2dev(chan), "No memory for descriptors\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम idma64_मुक्त_chan_resources(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा idma64_chan *idma64c = to_idma64_chan(chan);
+static void idma64_free_chan_resources(struct dma_chan *chan)
+{
+	struct idma64_chan *idma64c = to_idma64_chan(chan);
 
-	vchan_मुक्त_chan_resources(to_virt_chan(chan));
+	vchan_free_chan_resources(to_virt_chan(chan));
 	dma_pool_destroy(idma64c->pool);
-	idma64c->pool = शून्य;
-पूर्ण
+	idma64c->pool = NULL;
+}
 
 /* ---------------------------------------------------------------------- */
 
-#घोषणा IDMA64_BUSWIDTHS				\
+#define IDMA64_BUSWIDTHS				\
 	BIT(DMA_SLAVE_BUSWIDTH_1_BYTE)		|	\
 	BIT(DMA_SLAVE_BUSWIDTH_2_BYTES)		|	\
 	BIT(DMA_SLAVE_BUSWIDTH_4_BYTES)
 
-अटल पूर्णांक idma64_probe(काष्ठा idma64_chip *chip)
-अणु
-	काष्ठा idma64 *idma64;
-	अचिन्हित लघु nr_chan = IDMA64_NR_CHAN;
-	अचिन्हित लघु i;
-	पूर्णांक ret;
+static int idma64_probe(struct idma64_chip *chip)
+{
+	struct idma64 *idma64;
+	unsigned short nr_chan = IDMA64_NR_CHAN;
+	unsigned short i;
+	int ret;
 
-	idma64 = devm_kzalloc(chip->dev, माप(*idma64), GFP_KERNEL);
-	अगर (!idma64)
-		वापस -ENOMEM;
+	idma64 = devm_kzalloc(chip->dev, sizeof(*idma64), GFP_KERNEL);
+	if (!idma64)
+		return -ENOMEM;
 
 	idma64->regs = chip->regs;
 	chip->idma64 = idma64;
 
-	idma64->chan = devm_kसुस्मृति(chip->dev, nr_chan, माप(*idma64->chan),
+	idma64->chan = devm_kcalloc(chip->dev, nr_chan, sizeof(*idma64->chan),
 				    GFP_KERNEL);
-	अगर (!idma64->chan)
-		वापस -ENOMEM;
+	if (!idma64->chan)
+		return -ENOMEM;
 
 	idma64->all_chan_mask = (1 << nr_chan) - 1;
 
@@ -553,25 +552,25 @@
 
 	ret = devm_request_irq(chip->dev, chip->irq, idma64_irq, IRQF_SHARED,
 			       dev_name(chip->dev), idma64);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	INIT_LIST_HEAD(&idma64->dma.channels);
-	क्रम (i = 0; i < nr_chan; i++) अणु
-		काष्ठा idma64_chan *idma64c = &idma64->chan[i];
+	for (i = 0; i < nr_chan; i++) {
+		struct idma64_chan *idma64c = &idma64->chan[i];
 
-		idma64c->vchan.desc_मुक्त = idma64_vdesc_मुक्त;
+		idma64c->vchan.desc_free = idma64_vdesc_free;
 		vchan_init(&idma64c->vchan, &idma64->dma);
 
 		idma64c->regs = idma64->regs + i * IDMA64_CH_LENGTH;
 		idma64c->mask = BIT(i);
-	पूर्ण
+	}
 
 	dma_cap_set(DMA_SLAVE, idma64->dma.cap_mask);
 	dma_cap_set(DMA_PRIVATE, idma64->dma.cap_mask);
 
 	idma64->dma.device_alloc_chan_resources = idma64_alloc_chan_resources;
-	idma64->dma.device_मुक्त_chan_resources = idma64_मुक्त_chan_resources;
+	idma64->dma.device_free_chan_resources = idma64_free_chan_resources;
 
 	idma64->dma.device_prep_slave_sg = idma64_prep_slave_sg;
 
@@ -579,7 +578,7 @@
 	idma64->dma.device_tx_status = idma64_tx_status;
 
 	idma64->dma.device_config = idma64_slave_config;
-	idma64->dma.device_छोड़ो = idma64_छोड़ो;
+	idma64->dma.device_pause = idma64_pause;
 	idma64->dma.device_resume = idma64_resume;
 	idma64->dma.device_terminate_all = idma64_terminate_all;
 	idma64->dma.device_synchronize = idma64_synchronize;
@@ -593,111 +592,111 @@
 
 	dma_set_max_seg_size(idma64->dma.dev, IDMA64C_CTLH_BLOCK_TS_MASK);
 
-	ret = dma_async_device_रेजिस्टर(&idma64->dma);
-	अगर (ret)
-		वापस ret;
+	ret = dma_async_device_register(&idma64->dma);
+	if (ret)
+		return ret;
 
 	dev_info(chip->dev, "Found Intel integrated DMA 64-bit\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक idma64_हटाओ(काष्ठा idma64_chip *chip)
-अणु
-	काष्ठा idma64 *idma64 = chip->idma64;
-	अचिन्हित लघु i;
+static int idma64_remove(struct idma64_chip *chip)
+{
+	struct idma64 *idma64 = chip->idma64;
+	unsigned short i;
 
-	dma_async_device_unरेजिस्टर(&idma64->dma);
+	dma_async_device_unregister(&idma64->dma);
 
 	/*
-	 * Explicitly call devm_request_irq() to aव्योम the side effects with
+	 * Explicitly call devm_request_irq() to avoid the side effects with
 	 * the scheduled tasklets.
 	 */
-	devm_मुक्त_irq(chip->dev, chip->irq, idma64);
+	devm_free_irq(chip->dev, chip->irq, idma64);
 
-	क्रम (i = 0; i < idma64->dma.chancnt; i++) अणु
-		काष्ठा idma64_chan *idma64c = &idma64->chan[i];
+	for (i = 0; i < idma64->dma.chancnt; i++) {
+		struct idma64_chan *idma64c = &idma64->chan[i];
 
-		tasklet_समाप्त(&idma64c->vchan.task);
-	पूर्ण
+		tasklet_kill(&idma64c->vchan.task);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* ---------------------------------------------------------------------- */
 
-अटल पूर्णांक idma64_platक्रमm_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा idma64_chip *chip;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा device *sysdev = dev->parent;
-	काष्ठा resource *mem;
-	पूर्णांक ret;
+static int idma64_platform_probe(struct platform_device *pdev)
+{
+	struct idma64_chip *chip;
+	struct device *dev = &pdev->dev;
+	struct device *sysdev = dev->parent;
+	struct resource *mem;
+	int ret;
 
-	chip = devm_kzalloc(dev, माप(*chip), GFP_KERNEL);
-	अगर (!chip)
-		वापस -ENOMEM;
+	chip = devm_kzalloc(dev, sizeof(*chip), GFP_KERNEL);
+	if (!chip)
+		return -ENOMEM;
 
-	chip->irq = platक्रमm_get_irq(pdev, 0);
-	अगर (chip->irq < 0)
-		वापस chip->irq;
+	chip->irq = platform_get_irq(pdev, 0);
+	if (chip->irq < 0)
+		return chip->irq;
 
-	mem = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	chip->regs = devm_ioremap_resource(dev, mem);
-	अगर (IS_ERR(chip->regs))
-		वापस PTR_ERR(chip->regs);
+	if (IS_ERR(chip->regs))
+		return PTR_ERR(chip->regs);
 
 	ret = dma_coerce_mask_and_coherent(sysdev, DMA_BIT_MASK(64));
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	chip->dev = dev;
 	chip->sysdev = sysdev;
 
 	ret = idma64_probe(chip);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	platक्रमm_set_drvdata(pdev, chip);
-	वापस 0;
-पूर्ण
+	platform_set_drvdata(pdev, chip);
+	return 0;
+}
 
-अटल पूर्णांक idma64_platक्रमm_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा idma64_chip *chip = platक्रमm_get_drvdata(pdev);
+static int idma64_platform_remove(struct platform_device *pdev)
+{
+	struct idma64_chip *chip = platform_get_drvdata(pdev);
 
-	वापस idma64_हटाओ(chip);
-पूर्ण
+	return idma64_remove(chip);
+}
 
-अटल पूर्णांक __maybe_unused idma64_pm_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा idma64_chip *chip = dev_get_drvdata(dev);
+static int __maybe_unused idma64_pm_suspend(struct device *dev)
+{
+	struct idma64_chip *chip = dev_get_drvdata(dev);
 
 	idma64_off(chip->idma64);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused idma64_pm_resume(काष्ठा device *dev)
-अणु
-	काष्ठा idma64_chip *chip = dev_get_drvdata(dev);
+static int __maybe_unused idma64_pm_resume(struct device *dev)
+{
+	struct idma64_chip *chip = dev_get_drvdata(dev);
 
 	idma64_on(chip->idma64);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops idma64_dev_pm_ops = अणु
+static const struct dev_pm_ops idma64_dev_pm_ops = {
 	SET_SYSTEM_SLEEP_PM_OPS(idma64_pm_suspend, idma64_pm_resume)
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_driver idma64_platक्रमm_driver = अणु
-	.probe		= idma64_platक्रमm_probe,
-	.हटाओ		= idma64_platक्रमm_हटाओ,
-	.driver = अणु
+static struct platform_driver idma64_platform_driver = {
+	.probe		= idma64_platform_probe,
+	.remove		= idma64_platform_remove,
+	.driver = {
 		.name	= LPSS_IDMA64_DRIVER_NAME,
 		.pm	= &idma64_dev_pm_ops,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(idma64_platक्रमm_driver);
+module_platform_driver(idma64_platform_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("iDMA64 core driver");

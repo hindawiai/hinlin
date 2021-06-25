@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,286 +21,286 @@
  *
  * Authors: Ben Skeggs
  */
-#समावेश "changk104.h"
-#समावेश "cgrp.h"
+#include "changk104.h"
+#include "cgrp.h"
 
-#समावेश <core/client.h>
-#समावेश <core/gpuobj.h>
-#समावेश <subdev/fb.h>
-#समावेश <subdev/mmu.h>
-#समावेश <subdev/समयr.h>
+#include <core/client.h>
+#include <core/gpuobj.h>
+#include <subdev/fb.h>
+#include <subdev/mmu.h>
+#include <subdev/timer.h>
 
-#समावेश <nvअगर/class.h>
-#समावेश <nvअगर/cla06f.h>
-#समावेश <nvअगर/unpack.h>
+#include <nvif/class.h>
+#include <nvif/cla06f.h>
+#include <nvif/unpack.h>
 
-पूर्णांक
-gk104_fअगरo_gpfअगरo_kick_locked(काष्ठा gk104_fअगरo_chan *chan)
-अणु
-	काष्ठा gk104_fअगरo *fअगरo = chan->fअगरo;
-	काष्ठा nvkm_subdev *subdev = &fअगरo->base.engine.subdev;
-	काष्ठा nvkm_device *device = subdev->device;
-	काष्ठा nvkm_client *client = chan->base.object.client;
-	काष्ठा nvkm_fअगरo_cgrp *cgrp = chan->cgrp;
-	पूर्णांक ret = 0;
+int
+gk104_fifo_gpfifo_kick_locked(struct gk104_fifo_chan *chan)
+{
+	struct gk104_fifo *fifo = chan->fifo;
+	struct nvkm_subdev *subdev = &fifo->base.engine.subdev;
+	struct nvkm_device *device = subdev->device;
+	struct nvkm_client *client = chan->base.object.client;
+	struct nvkm_fifo_cgrp *cgrp = chan->cgrp;
+	int ret = 0;
 
-	अगर (cgrp)
+	if (cgrp)
 		nvkm_wr32(device, 0x002634, cgrp->id | 0x01000000);
-	अन्यथा
+	else
 		nvkm_wr32(device, 0x002634, chan->base.chid);
-	अगर (nvkm_msec(device, 2000,
-		अगर (!(nvkm_rd32(device, 0x002634) & 0x00100000))
-			अवरोध;
-	) < 0) अणु
+	if (nvkm_msec(device, 2000,
+		if (!(nvkm_rd32(device, 0x002634) & 0x00100000))
+			break;
+	) < 0) {
 		nvkm_error(subdev, "%s %d [%s] kick timeout\n",
 			   cgrp ? "tsg" : "channel",
 			   cgrp ? cgrp->id : chan->base.chid, client->name);
-		nvkm_fअगरo_recover_chan(&fअगरo->base, chan->base.chid);
+		nvkm_fifo_recover_chan(&fifo->base, chan->base.chid);
 		ret = -ETIMEDOUT;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-पूर्णांक
-gk104_fअगरo_gpfअगरo_kick(काष्ठा gk104_fअगरo_chan *chan)
-अणु
-	पूर्णांक ret;
-	mutex_lock(&chan->base.fअगरo->mutex);
-	ret = gk104_fअगरo_gpfअगरo_kick_locked(chan);
-	mutex_unlock(&chan->base.fअगरo->mutex);
-	वापस ret;
-पूर्ण
+int
+gk104_fifo_gpfifo_kick(struct gk104_fifo_chan *chan)
+{
+	int ret;
+	mutex_lock(&chan->base.fifo->mutex);
+	ret = gk104_fifo_gpfifo_kick_locked(chan);
+	mutex_unlock(&chan->base.fifo->mutex);
+	return ret;
+}
 
-अटल u32
-gk104_fअगरo_gpfअगरo_engine_addr(काष्ठा nvkm_engine *engine)
-अणु
-	चयन (engine->subdev.type) अणु
-	हाल NVKM_ENGINE_SW    :
-	हाल NVKM_ENGINE_CE    : वापस 0;
-	हाल NVKM_ENGINE_GR    : वापस 0x0210;
-	हाल NVKM_ENGINE_SEC   : वापस 0x0220;
-	हाल NVKM_ENGINE_MSPDEC: वापस 0x0250;
-	हाल NVKM_ENGINE_MSPPP : वापस 0x0260;
-	हाल NVKM_ENGINE_MSVLD : वापस 0x0270;
-	हाल NVKM_ENGINE_VIC   : वापस 0x0280;
-	हाल NVKM_ENGINE_MSENC : वापस 0x0290;
-	हाल NVKM_ENGINE_NVDEC : वापस 0x02100270;
-	हाल NVKM_ENGINE_NVENC :
-		अगर (engine->subdev.inst)
-			वापस 0x0210;
-		वापस 0x02100290;
-	शेष:
+static u32
+gk104_fifo_gpfifo_engine_addr(struct nvkm_engine *engine)
+{
+	switch (engine->subdev.type) {
+	case NVKM_ENGINE_SW    :
+	case NVKM_ENGINE_CE    : return 0;
+	case NVKM_ENGINE_GR    : return 0x0210;
+	case NVKM_ENGINE_SEC   : return 0x0220;
+	case NVKM_ENGINE_MSPDEC: return 0x0250;
+	case NVKM_ENGINE_MSPPP : return 0x0260;
+	case NVKM_ENGINE_MSVLD : return 0x0270;
+	case NVKM_ENGINE_VIC   : return 0x0280;
+	case NVKM_ENGINE_MSENC : return 0x0290;
+	case NVKM_ENGINE_NVDEC : return 0x02100270;
+	case NVKM_ENGINE_NVENC :
+		if (engine->subdev.inst)
+			return 0x0210;
+		return 0x02100290;
+	default:
 		WARN_ON(1);
-		वापस 0;
-	पूर्ण
-पूर्ण
+		return 0;
+	}
+}
 
-काष्ठा gk104_fअगरo_engn *
-gk104_fअगरo_gpfअगरo_engine(काष्ठा gk104_fअगरo_chan *chan, काष्ठा nvkm_engine *engine)
-अणु
-	पूर्णांक engi = chan->base.fअगरo->func->engine_id(chan->base.fअगरo, engine);
-	अगर (engi >= 0)
-		वापस &chan->engn[engi];
-	वापस शून्य;
-पूर्ण
+struct gk104_fifo_engn *
+gk104_fifo_gpfifo_engine(struct gk104_fifo_chan *chan, struct nvkm_engine *engine)
+{
+	int engi = chan->base.fifo->func->engine_id(chan->base.fifo, engine);
+	if (engi >= 0)
+		return &chan->engn[engi];
+	return NULL;
+}
 
-अटल पूर्णांक
-gk104_fअगरo_gpfअगरo_engine_fini(काष्ठा nvkm_fअगरo_chan *base,
-			      काष्ठा nvkm_engine *engine, bool suspend)
-अणु
-	काष्ठा gk104_fअगरo_chan *chan = gk104_fअगरo_chan(base);
-	काष्ठा nvkm_gpuobj *inst = chan->base.inst;
-	u32 offset = gk104_fअगरo_gpfअगरo_engine_addr(engine);
-	पूर्णांक ret;
+static int
+gk104_fifo_gpfifo_engine_fini(struct nvkm_fifo_chan *base,
+			      struct nvkm_engine *engine, bool suspend)
+{
+	struct gk104_fifo_chan *chan = gk104_fifo_chan(base);
+	struct nvkm_gpuobj *inst = chan->base.inst;
+	u32 offset = gk104_fifo_gpfifo_engine_addr(engine);
+	int ret;
 
-	ret = gk104_fअगरo_gpfअगरo_kick(chan);
-	अगर (ret && suspend)
-		वापस ret;
+	ret = gk104_fifo_gpfifo_kick(chan);
+	if (ret && suspend)
+		return ret;
 
-	अगर (offset) अणु
+	if (offset) {
 		nvkm_kmap(inst);
 		nvkm_wo32(inst, (offset & 0xffff) + 0x00, 0x00000000);
 		nvkm_wo32(inst, (offset & 0xffff) + 0x04, 0x00000000);
-		अगर ((offset >>= 16)) अणु
+		if ((offset >>= 16)) {
 			nvkm_wo32(inst, offset + 0x00, 0x00000000);
 			nvkm_wo32(inst, offset + 0x04, 0x00000000);
-		पूर्ण
-		nvkm_करोne(inst);
-	पूर्ण
+		}
+		nvkm_done(inst);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक
-gk104_fअगरo_gpfअगरo_engine_init(काष्ठा nvkm_fअगरo_chan *base,
-			      काष्ठा nvkm_engine *engine)
-अणु
-	काष्ठा gk104_fअगरo_chan *chan = gk104_fअगरo_chan(base);
-	काष्ठा gk104_fअगरo_engn *engn = gk104_fअगरo_gpfअगरo_engine(chan, engine);
-	काष्ठा nvkm_gpuobj *inst = chan->base.inst;
-	u32 offset = gk104_fअगरo_gpfअगरo_engine_addr(engine);
+static int
+gk104_fifo_gpfifo_engine_init(struct nvkm_fifo_chan *base,
+			      struct nvkm_engine *engine)
+{
+	struct gk104_fifo_chan *chan = gk104_fifo_chan(base);
+	struct gk104_fifo_engn *engn = gk104_fifo_gpfifo_engine(chan, engine);
+	struct nvkm_gpuobj *inst = chan->base.inst;
+	u32 offset = gk104_fifo_gpfifo_engine_addr(engine);
 
-	अगर (offset) अणु
+	if (offset) {
 		u32 datalo = lower_32_bits(engn->vma->addr) | 0x00000004;
 		u32 datahi = upper_32_bits(engn->vma->addr);
 		nvkm_kmap(inst);
 		nvkm_wo32(inst, (offset & 0xffff) + 0x00, datalo);
 		nvkm_wo32(inst, (offset & 0xffff) + 0x04, datahi);
-		अगर ((offset >>= 16)) अणु
+		if ((offset >>= 16)) {
 			nvkm_wo32(inst, offset + 0x00, datalo);
 			nvkm_wo32(inst, offset + 0x04, datahi);
-		पूर्ण
-		nvkm_करोne(inst);
-	पूर्ण
+		}
+		nvkm_done(inst);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम
-gk104_fअगरo_gpfअगरo_engine_dtor(काष्ठा nvkm_fअगरo_chan *base,
-			      काष्ठा nvkm_engine *engine)
-अणु
-	काष्ठा gk104_fअगरo_chan *chan = gk104_fअगरo_chan(base);
-	काष्ठा gk104_fअगरo_engn *engn = gk104_fअगरo_gpfअगरo_engine(chan, engine);
+void
+gk104_fifo_gpfifo_engine_dtor(struct nvkm_fifo_chan *base,
+			      struct nvkm_engine *engine)
+{
+	struct gk104_fifo_chan *chan = gk104_fifo_chan(base);
+	struct gk104_fifo_engn *engn = gk104_fifo_gpfifo_engine(chan, engine);
 	nvkm_vmm_put(chan->base.vmm, &engn->vma);
 	nvkm_gpuobj_del(&engn->inst);
-पूर्ण
+}
 
-पूर्णांक
-gk104_fअगरo_gpfअगरo_engine_ctor(काष्ठा nvkm_fअगरo_chan *base,
-			      काष्ठा nvkm_engine *engine,
-			      काष्ठा nvkm_object *object)
-अणु
-	काष्ठा gk104_fअगरo_chan *chan = gk104_fअगरo_chan(base);
-	काष्ठा gk104_fअगरo_engn *engn = gk104_fअगरo_gpfअगरo_engine(chan, engine);
-	पूर्णांक ret;
+int
+gk104_fifo_gpfifo_engine_ctor(struct nvkm_fifo_chan *base,
+			      struct nvkm_engine *engine,
+			      struct nvkm_object *object)
+{
+	struct gk104_fifo_chan *chan = gk104_fifo_chan(base);
+	struct gk104_fifo_engn *engn = gk104_fifo_gpfifo_engine(chan, engine);
+	int ret;
 
-	अगर (!gk104_fअगरo_gpfअगरo_engine_addr(engine))
-		वापस 0;
+	if (!gk104_fifo_gpfifo_engine_addr(engine))
+		return 0;
 
-	ret = nvkm_object_bind(object, शून्य, 0, &engn->inst);
-	अगर (ret)
-		वापस ret;
+	ret = nvkm_object_bind(object, NULL, 0, &engn->inst);
+	if (ret)
+		return ret;
 
 	ret = nvkm_vmm_get(chan->base.vmm, 12, engn->inst->size, &engn->vma);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस nvkm_memory_map(engn->inst, 0, chan->base.vmm, engn->vma, शून्य, 0);
-पूर्ण
+	return nvkm_memory_map(engn->inst, 0, chan->base.vmm, engn->vma, NULL, 0);
+}
 
-व्योम
-gk104_fअगरo_gpfअगरo_fini(काष्ठा nvkm_fअगरo_chan *base)
-अणु
-	काष्ठा gk104_fअगरo_chan *chan = gk104_fअगरo_chan(base);
-	काष्ठा gk104_fअगरo *fअगरo = chan->fअगरo;
-	काष्ठा nvkm_device *device = fअगरo->base.engine.subdev.device;
+void
+gk104_fifo_gpfifo_fini(struct nvkm_fifo_chan *base)
+{
+	struct gk104_fifo_chan *chan = gk104_fifo_chan(base);
+	struct gk104_fifo *fifo = chan->fifo;
+	struct nvkm_device *device = fifo->base.engine.subdev.device;
 	u32 coff = chan->base.chid * 8;
 
-	अगर (!list_empty(&chan->head)) अणु
-		gk104_fअगरo_runlist_हटाओ(fअगरo, chan);
+	if (!list_empty(&chan->head)) {
+		gk104_fifo_runlist_remove(fifo, chan);
 		nvkm_mask(device, 0x800004 + coff, 0x00000800, 0x00000800);
-		gk104_fअगरo_gpfअगरo_kick(chan);
-		gk104_fअगरo_runlist_update(fअगरo, chan->runl);
-	पूर्ण
+		gk104_fifo_gpfifo_kick(chan);
+		gk104_fifo_runlist_update(fifo, chan->runl);
+	}
 
 	nvkm_wr32(device, 0x800000 + coff, 0x00000000);
-पूर्ण
+}
 
-व्योम
-gk104_fअगरo_gpfअगरo_init(काष्ठा nvkm_fअगरo_chan *base)
-अणु
-	काष्ठा gk104_fअगरo_chan *chan = gk104_fअगरo_chan(base);
-	काष्ठा gk104_fअगरo *fअगरo = chan->fअगरo;
-	काष्ठा nvkm_device *device = fअगरo->base.engine.subdev.device;
+void
+gk104_fifo_gpfifo_init(struct nvkm_fifo_chan *base)
+{
+	struct gk104_fifo_chan *chan = gk104_fifo_chan(base);
+	struct gk104_fifo *fifo = chan->fifo;
+	struct nvkm_device *device = fifo->base.engine.subdev.device;
 	u32 addr = chan->base.inst->addr >> 12;
 	u32 coff = chan->base.chid * 8;
 
 	nvkm_mask(device, 0x800004 + coff, 0x000f0000, chan->runl << 16);
 	nvkm_wr32(device, 0x800000 + coff, 0x80000000 | addr);
 
-	अगर (list_empty(&chan->head) && !chan->समाप्तed) अणु
-		gk104_fअगरo_runlist_insert(fअगरo, chan);
+	if (list_empty(&chan->head) && !chan->killed) {
+		gk104_fifo_runlist_insert(fifo, chan);
 		nvkm_mask(device, 0x800004 + coff, 0x00000400, 0x00000400);
-		gk104_fअगरo_runlist_update(fअगरo, chan->runl);
+		gk104_fifo_runlist_update(fifo, chan->runl);
 		nvkm_mask(device, 0x800004 + coff, 0x00000400, 0x00000400);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम *
-gk104_fअगरo_gpfअगरo_dtor(काष्ठा nvkm_fअगरo_chan *base)
-अणु
-	काष्ठा gk104_fअगरo_chan *chan = gk104_fअगरo_chan(base);
+void *
+gk104_fifo_gpfifo_dtor(struct nvkm_fifo_chan *base)
+{
+	struct gk104_fifo_chan *chan = gk104_fifo_chan(base);
 	nvkm_memory_unref(&chan->mthd);
-	kमुक्त(chan->cgrp);
-	वापस chan;
-पूर्ण
+	kfree(chan->cgrp);
+	return chan;
+}
 
-स्थिर काष्ठा nvkm_fअगरo_chan_func
-gk104_fअगरo_gpfअगरo_func = अणु
-	.dtor = gk104_fअगरo_gpfअगरo_dtor,
-	.init = gk104_fअगरo_gpfअगरo_init,
-	.fini = gk104_fअगरo_gpfअगरo_fini,
-	.ntfy = gf100_fअगरo_chan_ntfy,
-	.engine_ctor = gk104_fअगरo_gpfअगरo_engine_ctor,
-	.engine_dtor = gk104_fअगरo_gpfअगरo_engine_dtor,
-	.engine_init = gk104_fअगरo_gpfअगरo_engine_init,
-	.engine_fini = gk104_fअगरo_gpfअगरo_engine_fini,
-पूर्ण;
+const struct nvkm_fifo_chan_func
+gk104_fifo_gpfifo_func = {
+	.dtor = gk104_fifo_gpfifo_dtor,
+	.init = gk104_fifo_gpfifo_init,
+	.fini = gk104_fifo_gpfifo_fini,
+	.ntfy = gf100_fifo_chan_ntfy,
+	.engine_ctor = gk104_fifo_gpfifo_engine_ctor,
+	.engine_dtor = gk104_fifo_gpfifo_engine_dtor,
+	.engine_init = gk104_fifo_gpfifo_engine_init,
+	.engine_fini = gk104_fifo_gpfifo_engine_fini,
+};
 
-अटल पूर्णांक
-gk104_fअगरo_gpfअगरo_new_(काष्ठा gk104_fअगरo *fअगरo, u64 *runlists, u16 *chid,
+static int
+gk104_fifo_gpfifo_new_(struct gk104_fifo *fifo, u64 *runlists, u16 *chid,
 		       u64 vmm, u64 ioffset, u64 ilength, u64 *inst, bool priv,
-		       स्थिर काष्ठा nvkm_oclass *oclass,
-		       काष्ठा nvkm_object **pobject)
-अणु
-	काष्ठा gk104_fअगरo_chan *chan;
-	पूर्णांक runlist = ffs(*runlists) -1, ret, i;
+		       const struct nvkm_oclass *oclass,
+		       struct nvkm_object **pobject)
+{
+	struct gk104_fifo_chan *chan;
+	int runlist = ffs(*runlists) -1, ret, i;
 	u64 usermem;
 
-	अगर (!vmm || runlist < 0 || runlist >= fअगरo->runlist_nr)
-		वापस -EINVAL;
+	if (!vmm || runlist < 0 || runlist >= fifo->runlist_nr)
+		return -EINVAL;
 	*runlists = BIT_ULL(runlist);
 
 	/* Allocate the channel. */
-	अगर (!(chan = kzalloc(माप(*chan), GFP_KERNEL)))
-		वापस -ENOMEM;
+	if (!(chan = kzalloc(sizeof(*chan), GFP_KERNEL)))
+		return -ENOMEM;
 	*pobject = &chan->base.object;
-	chan->fअगरo = fअगरo;
+	chan->fifo = fifo;
 	chan->runl = runlist;
 	INIT_LIST_HEAD(&chan->head);
 
-	ret = nvkm_fअगरo_chan_ctor(&gk104_fअगरo_gpfअगरo_func, &fअगरo->base,
-				  0x1000, 0x1000, true, vmm, 0, fअगरo->runlist[runlist].engm_sw,
-				  1, fअगरo->user.bar->addr, 0x200,
+	ret = nvkm_fifo_chan_ctor(&gk104_fifo_gpfifo_func, &fifo->base,
+				  0x1000, 0x1000, true, vmm, 0, fifo->runlist[runlist].engm_sw,
+				  1, fifo->user.bar->addr, 0x200,
 				  oclass, &chan->base);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	*chid = chan->base.chid;
 	*inst = chan->base.inst->addr;
 
-	/* Hack to support GPUs where even inभागidual channels should be
+	/* Hack to support GPUs where even individual channels should be
 	 * part of a channel group.
 	 */
-	अगर (fअगरo->func->cgrp_क्रमce) अणु
-		अगर (!(chan->cgrp = kदो_स्मृति(माप(*chan->cgrp), GFP_KERNEL)))
-			वापस -ENOMEM;
+	if (fifo->func->cgrp_force) {
+		if (!(chan->cgrp = kmalloc(sizeof(*chan->cgrp), GFP_KERNEL)))
+			return -ENOMEM;
 		chan->cgrp->id = chan->base.chid;
 		INIT_LIST_HEAD(&chan->cgrp->head);
 		INIT_LIST_HEAD(&chan->cgrp->chan);
 		chan->cgrp->chan_nr = 0;
-	पूर्ण
+	}
 
-	/* Clear channel control रेजिस्टरs. */
+	/* Clear channel control registers. */
 	usermem = chan->base.chid * 0x200;
 	ilength = order_base_2(ilength / 8);
 
-	nvkm_kmap(fअगरo->user.mem);
-	क्रम (i = 0; i < 0x200; i += 4)
-		nvkm_wo32(fअगरo->user.mem, usermem + i, 0x00000000);
-	nvkm_करोne(fअगरo->user.mem);
-	usermem = nvkm_memory_addr(fअगरo->user.mem) + usermem;
+	nvkm_kmap(fifo->user.mem);
+	for (i = 0; i < 0x200; i += 4)
+		nvkm_wo32(fifo->user.mem, usermem + i, 0x00000000);
+	nvkm_done(fifo->user.mem);
+	usermem = nvkm_memory_addr(fifo->user.mem) + usermem;
 
 	/* RAMFC */
 	nvkm_kmap(chan->base.inst);
@@ -321,30 +320,30 @@ gk104_fअगरo_gpfअगरo_new_(काष्ठा gk104_fअगरo *fअ�
 	nvkm_wo32(chan->base.inst, 0xb8, 0xf8000000);
 	nvkm_wo32(chan->base.inst, 0xf8, 0x10003080); /* 0x002310 */
 	nvkm_wo32(chan->base.inst, 0xfc, 0x10000010); /* 0x002350 */
-	nvkm_करोne(chan->base.inst);
-	वापस 0;
-पूर्ण
+	nvkm_done(chan->base.inst);
+	return 0;
+}
 
-पूर्णांक
-gk104_fअगरo_gpfअगरo_new(काष्ठा gk104_fअगरo *fअगरo, स्थिर काष्ठा nvkm_oclass *oclass,
-		      व्योम *data, u32 size, काष्ठा nvkm_object **pobject)
-अणु
-	काष्ठा nvkm_object *parent = oclass->parent;
-	जोड़ अणु
-		काष्ठा kepler_channel_gpfअगरo_a_v0 v0;
-	पूर्ण *args = data;
-	पूर्णांक ret = -ENOSYS;
+int
+gk104_fifo_gpfifo_new(struct gk104_fifo *fifo, const struct nvkm_oclass *oclass,
+		      void *data, u32 size, struct nvkm_object **pobject)
+{
+	struct nvkm_object *parent = oclass->parent;
+	union {
+		struct kepler_channel_gpfifo_a_v0 v0;
+	} *args = data;
+	int ret = -ENOSYS;
 
-	nvअगर_ioctl(parent, "create channel gpfifo size %d\n", size);
-	अगर (!(ret = nvअगर_unpack(ret, &data, &size, args->v0, 0, 0, false))) अणु
-		nvअगर_ioctl(parent, "create channel gpfifo vers %d vmm %llx "
+	nvif_ioctl(parent, "create channel gpfifo size %d\n", size);
+	if (!(ret = nvif_unpack(ret, &data, &size, args->v0, 0, 0, false))) {
+		nvif_ioctl(parent, "create channel gpfifo vers %d vmm %llx "
 				   "ioffset %016llx ilength %08x "
 				   "runlist %016llx priv %d\n",
 			   args->v0.version, args->v0.vmm, args->v0.ioffset,
 			   args->v0.ilength, args->v0.runlist, args->v0.priv);
-		अगर (args->v0.priv && !oclass->client->super)
-			वापस -EINVAL;
-		वापस gk104_fअगरo_gpfअगरo_new_(fअगरo,
+		if (args->v0.priv && !oclass->client->super)
+			return -EINVAL;
+		return gk104_fifo_gpfifo_new_(fifo,
 					      &args->v0.runlist,
 					      &args->v0.chid,
 					       args->v0.vmm,
@@ -353,7 +352,7 @@ gk104_fअगरo_gpfअगरo_new(काष्ठा gk104_fअगरo *fअ�
 					      &args->v0.inst,
 					       args->v0.priv,
 					      oclass, pobject);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

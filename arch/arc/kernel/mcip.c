@@ -1,33 +1,32 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * ARC ARConnect (MultiCore IP) support (क्रमmerly known as MCIP)
+ * ARC ARConnect (MultiCore IP) support (formerly known as MCIP)
  *
  * Copyright (C) 2013 Synopsys, Inc. (www.synopsys.com)
  */
 
-#समावेश <linux/smp.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/irqchip/chained_irq.h>
-#समावेश <linux/spinlock.h>
-#समावेश <soc/arc/mcip.h>
-#समावेश <यंत्र/irqflags-arcv2.h>
-#समावेश <यंत्र/setup.h>
+#include <linux/smp.h>
+#include <linux/irq.h>
+#include <linux/irqchip/chained_irq.h>
+#include <linux/spinlock.h>
+#include <soc/arc/mcip.h>
+#include <asm/irqflags-arcv2.h>
+#include <asm/setup.h>
 
-अटल DEFINE_RAW_SPINLOCK(mcip_lock);
+static DEFINE_RAW_SPINLOCK(mcip_lock);
 
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 
-अटल अक्षर smp_cpuinfo_buf[128];
+static char smp_cpuinfo_buf[128];
 
 /*
- * Set mask to halt GFRC अगर any online core in SMP cluster is halted.
- * Only works क्रम ARC HS v3.0+, on earlier versions has no effect.
+ * Set mask to halt GFRC if any online core in SMP cluster is halted.
+ * Only works for ARC HS v3.0+, on earlier versions has no effect.
  */
-अटल व्योम mcip_update_gfrc_halt_mask(पूर्णांक cpu)
-अणु
-	काष्ठा bcr_generic gfrc;
-	अचिन्हित दीर्घ flags;
+static void mcip_update_gfrc_halt_mask(int cpu)
+{
+	struct bcr_generic gfrc;
+	unsigned long flags;
 	u32 gfrc_halt_mask;
 
 	READ_BCR(ARC_REG_GFRC_BUILD, gfrc);
@@ -36,50 +35,50 @@
 	 * CMD_GFRC_SET_CORE and CMD_GFRC_READ_CORE commands were added in
 	 * GFRC 0x3 version.
 	 */
-	अगर (gfrc.ver < 0x3)
-		वापस;
+	if (gfrc.ver < 0x3)
+		return;
 
 	raw_spin_lock_irqsave(&mcip_lock, flags);
 
 	__mcip_cmd(CMD_GFRC_READ_CORE, 0);
-	gfrc_halt_mask = पढ़ो_aux_reg(ARC_REG_MCIP_READBACK);
+	gfrc_halt_mask = read_aux_reg(ARC_REG_MCIP_READBACK);
 	gfrc_halt_mask |= BIT(cpu);
 	__mcip_cmd_data(CMD_GFRC_SET_CORE, 0, gfrc_halt_mask);
 
 	raw_spin_unlock_irqrestore(&mcip_lock, flags);
-पूर्ण
+}
 
-अटल व्योम mcip_update_debug_halt_mask(पूर्णांक cpu)
-अणु
+static void mcip_update_debug_halt_mask(int cpu)
+{
 	u32 mcip_mask = 0;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	raw_spin_lock_irqsave(&mcip_lock, flags);
 
 	/*
-	 * mcip_mask is same क्रम CMD_DEBUG_SET_SELECT and CMD_DEBUG_SET_MASK
-	 * commands. So पढ़ो it once instead of पढ़ोing both CMD_DEBUG_READ_MASK
+	 * mcip_mask is same for CMD_DEBUG_SET_SELECT and CMD_DEBUG_SET_MASK
+	 * commands. So read it once instead of reading both CMD_DEBUG_READ_MASK
 	 * and CMD_DEBUG_READ_SELECT.
 	 */
 	__mcip_cmd(CMD_DEBUG_READ_SELECT, 0);
-	mcip_mask = पढ़ो_aux_reg(ARC_REG_MCIP_READBACK);
+	mcip_mask = read_aux_reg(ARC_REG_MCIP_READBACK);
 
 	mcip_mask |= BIT(cpu);
 
 	__mcip_cmd_data(CMD_DEBUG_SET_SELECT, 0, mcip_mask);
 	/*
-	 * Parameter specअगरied halt cause:
-	 * STATUS32[H]/actionpoपूर्णांक/अवरोधpoपूर्णांक/self-halt
+	 * Parameter specified halt cause:
+	 * STATUS32[H]/actionpoint/breakpoint/self-halt
 	 * We choose all of them (0xF).
 	 */
 	__mcip_cmd_data(CMD_DEBUG_SET_MASK, 0xF, mcip_mask);
 
 	raw_spin_unlock_irqrestore(&mcip_lock, flags);
-पूर्ण
+}
 
-अटल व्योम mcip_setup_per_cpu(पूर्णांक cpu)
-अणु
-	काष्ठा mcip_bcr mp;
+static void mcip_setup_per_cpu(int cpu)
+{
+	struct mcip_bcr mp;
 
 	READ_BCR(ARC_REG_MCIP_BCR, mp);
 
@@ -87,79 +86,79 @@
 	smp_ipi_irq_setup(cpu, SOFTIRQ_IRQ);
 
 	/* Update GFRC halt mask as new CPU came online */
-	अगर (mp.gfrc)
+	if (mp.gfrc)
 		mcip_update_gfrc_halt_mask(cpu);
 
 	/* Update MCIP debug mask as new CPU came online */
-	अगर (mp.dbg)
+	if (mp.dbg)
 		mcip_update_debug_halt_mask(cpu);
-पूर्ण
+}
 
-अटल व्योम mcip_ipi_send(पूर्णांक cpu)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ipi_was_pending;
+static void mcip_ipi_send(int cpu)
+{
+	unsigned long flags;
+	int ipi_was_pending;
 
 	/* ARConnect can only send IPI to others */
-	अगर (unlikely(cpu == raw_smp_processor_id())) अणु
+	if (unlikely(cpu == raw_smp_processor_id())) {
 		arc_softirq_trigger(SOFTIRQ_IRQ);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	raw_spin_lock_irqsave(&mcip_lock, flags);
 
 	/*
-	 * If receiver alपढ़ोy has a pending पूर्णांकerrupt, elide sending this one.
+	 * If receiver already has a pending interrupt, elide sending this one.
 	 * Linux cross core calling works well with concurrent IPIs
-	 * coalesced पूर्णांकo one
+	 * coalesced into one
 	 * see arch/arc/kernel/smp.c: ipi_send_msg_one()
 	 */
 	__mcip_cmd(CMD_INTRPT_READ_STATUS, cpu);
-	ipi_was_pending = पढ़ो_aux_reg(ARC_REG_MCIP_READBACK);
-	अगर (!ipi_was_pending)
+	ipi_was_pending = read_aux_reg(ARC_REG_MCIP_READBACK);
+	if (!ipi_was_pending)
 		__mcip_cmd(CMD_INTRPT_GENERATE_IRQ, cpu);
 
 	raw_spin_unlock_irqrestore(&mcip_lock, flags);
-पूर्ण
+}
 
-अटल व्योम mcip_ipi_clear(पूर्णांक irq)
-अणु
-	अचिन्हित पूर्णांक cpu, c;
-	अचिन्हित दीर्घ flags;
+static void mcip_ipi_clear(int irq)
+{
+	unsigned int cpu, c;
+	unsigned long flags;
 
-	अगर (unlikely(irq == SOFTIRQ_IRQ)) अणु
+	if (unlikely(irq == SOFTIRQ_IRQ)) {
 		arc_softirq_clear(irq);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	raw_spin_lock_irqsave(&mcip_lock, flags);
 
 	/* Who sent the IPI */
 	__mcip_cmd(CMD_INTRPT_CHECK_SOURCE, 0);
 
-	cpu = पढ़ो_aux_reg(ARC_REG_MCIP_READBACK);	/* 1,2,4,8... */
+	cpu = read_aux_reg(ARC_REG_MCIP_READBACK);	/* 1,2,4,8... */
 
 	/*
-	 * In rare हाल, multiple concurrent IPIs sent to same target can
-	 * possibly be coalesced by MCIP पूर्णांकo 1 निश्चितed IRQ, so @cpus can be
+	 * In rare case, multiple concurrent IPIs sent to same target can
+	 * possibly be coalesced by MCIP into 1 asserted IRQ, so @cpus can be
 	 * "vectored" (multiple bits sets) as opposed to typical single bit
 	 */
-	करो अणु
+	do {
 		c = __ffs(cpu);			/* 0,1,2,3 */
 		__mcip_cmd(CMD_INTRPT_GENERATE_ACK, c);
 		cpu &= ~(1U << c);
-	पूर्ण जबतक (cpu);
+	} while (cpu);
 
 	raw_spin_unlock_irqrestore(&mcip_lock, flags);
-पूर्ण
+}
 
-अटल व्योम mcip_probe_n_setup(व्योम)
-अणु
-	काष्ठा mcip_bcr mp;
+static void mcip_probe_n_setup(void)
+{
+	struct mcip_bcr mp;
 
 	READ_BCR(ARC_REG_MCIP_BCR, mp);
 
-	प्र_लिखो(smp_cpuinfo_buf,
+	sprintf(smp_cpuinfo_buf,
 		"Extn [SMP]\t: ARConnect (v%d): %d cores with %s%s%s%s\n",
 		mp.ver, mp.num_cores,
 		IS_AVAIL1(mp.ipi, "IPI "),
@@ -168,141 +167,141 @@
 		IS_AVAIL1(mp.gfrc, "GFRC"));
 
 	cpuinfo_arc700[0].extn.gfrc = mp.gfrc;
-पूर्ण
+}
 
-काष्ठा plat_smp_ops plat_smp_ops = अणु
+struct plat_smp_ops plat_smp_ops = {
 	.info		= smp_cpuinfo_buf,
 	.init_early_smp	= mcip_probe_n_setup,
 	.init_per_cpu	= mcip_setup_per_cpu,
 	.ipi_send	= mcip_ipi_send,
 	.ipi_clear	= mcip_ipi_clear,
-पूर्ण;
+};
 
-#पूर्ण_अगर
+#endif
 
 /***************************************************************************
  * ARCv2 Interrupt Distribution Unit (IDU)
  *
- * Connects बाह्यal "COMMON" IRQs to core पूर्णांकc, providing:
+ * Connects external "COMMON" IRQs to core intc, providing:
  *  -dynamic routing (IRQ affinity)
- *  -load balancing (Round Robin पूर्णांकerrupt distribution)
+ *  -load balancing (Round Robin interrupt distribution)
  *  -1:N distribution
  *
  * It physically resides in the MCIP hw block
  */
 
-#समावेश <linux/irqchip.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_irq.h>
+#include <linux/irqchip.h>
+#include <linux/of.h>
+#include <linux/of_irq.h>
 
 /*
- * Set the DEST क्रम @cmn_irq to @cpu_mask (1 bit per core)
+ * Set the DEST for @cmn_irq to @cpu_mask (1 bit per core)
  */
-अटल व्योम idu_set_dest(अचिन्हित पूर्णांक cmn_irq, अचिन्हित पूर्णांक cpu_mask)
-अणु
+static void idu_set_dest(unsigned int cmn_irq, unsigned int cpu_mask)
+{
 	__mcip_cmd_data(CMD_IDU_SET_DEST, cmn_irq, cpu_mask);
-पूर्ण
+}
 
-अटल व्योम idu_set_mode(अचिन्हित पूर्णांक cmn_irq, bool set_lvl, अचिन्हित पूर्णांक lvl,
-			 bool set_distr, अचिन्हित पूर्णांक distr)
-अणु
-	जोड़ अणु
-		अचिन्हित पूर्णांक word;
-		काष्ठा अणु
-			अचिन्हित पूर्णांक distr:2, pad:2, lvl:1, pad2:27;
-		पूर्ण;
-	पूर्ण data;
+static void idu_set_mode(unsigned int cmn_irq, bool set_lvl, unsigned int lvl,
+			 bool set_distr, unsigned int distr)
+{
+	union {
+		unsigned int word;
+		struct {
+			unsigned int distr:2, pad:2, lvl:1, pad2:27;
+		};
+	} data;
 
-	data.word = __mcip_cmd_पढ़ो(CMD_IDU_READ_MODE, cmn_irq);
-	अगर (set_distr)
+	data.word = __mcip_cmd_read(CMD_IDU_READ_MODE, cmn_irq);
+	if (set_distr)
 		data.distr = distr;
-	अगर (set_lvl)
+	if (set_lvl)
 		data.lvl = lvl;
 	__mcip_cmd_data(CMD_IDU_SET_MODE, cmn_irq, data.word);
-पूर्ण
+}
 
-अटल व्योम idu_irq_mask_raw(irq_hw_number_t hwirq)
-अणु
-	अचिन्हित दीर्घ flags;
+static void idu_irq_mask_raw(irq_hw_number_t hwirq)
+{
+	unsigned long flags;
 
 	raw_spin_lock_irqsave(&mcip_lock, flags);
 	__mcip_cmd_data(CMD_IDU_SET_MASK, hwirq, 1);
 	raw_spin_unlock_irqrestore(&mcip_lock, flags);
-पूर्ण
+}
 
-अटल व्योम idu_irq_mask(काष्ठा irq_data *data)
-अणु
+static void idu_irq_mask(struct irq_data *data)
+{
 	idu_irq_mask_raw(data->hwirq);
-पूर्ण
+}
 
-अटल व्योम idu_irq_unmask(काष्ठा irq_data *data)
-अणु
-	अचिन्हित दीर्घ flags;
+static void idu_irq_unmask(struct irq_data *data)
+{
+	unsigned long flags;
 
 	raw_spin_lock_irqsave(&mcip_lock, flags);
 	__mcip_cmd_data(CMD_IDU_SET_MASK, data->hwirq, 0);
 	raw_spin_unlock_irqrestore(&mcip_lock, flags);
-पूर्ण
+}
 
-अटल व्योम idu_irq_ack(काष्ठा irq_data *data)
-अणु
-	अचिन्हित दीर्घ flags;
+static void idu_irq_ack(struct irq_data *data)
+{
+	unsigned long flags;
 
 	raw_spin_lock_irqsave(&mcip_lock, flags);
 	__mcip_cmd(CMD_IDU_ACK_CIRQ, data->hwirq);
 	raw_spin_unlock_irqrestore(&mcip_lock, flags);
-पूर्ण
+}
 
-अटल व्योम idu_irq_mask_ack(काष्ठा irq_data *data)
-अणु
-	अचिन्हित दीर्घ flags;
+static void idu_irq_mask_ack(struct irq_data *data)
+{
+	unsigned long flags;
 
 	raw_spin_lock_irqsave(&mcip_lock, flags);
 	__mcip_cmd_data(CMD_IDU_SET_MASK, data->hwirq, 1);
 	__mcip_cmd(CMD_IDU_ACK_CIRQ, data->hwirq);
 	raw_spin_unlock_irqrestore(&mcip_lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक
-idu_irq_set_affinity(काष्ठा irq_data *data, स्थिर काष्ठा cpumask *cpumask,
-		     bool क्रमce)
-अणु
-	अचिन्हित दीर्घ flags;
+static int
+idu_irq_set_affinity(struct irq_data *data, const struct cpumask *cpumask,
+		     bool force)
+{
+	unsigned long flags;
 	cpumask_t online;
-	अचिन्हित पूर्णांक destination_bits;
-	अचिन्हित पूर्णांक distribution_mode;
+	unsigned int destination_bits;
+	unsigned int distribution_mode;
 
-	/* errout अगर no online cpu per @cpumask */
-	अगर (!cpumask_and(&online, cpumask, cpu_online_mask))
-		वापस -EINVAL;
+	/* errout if no online cpu per @cpumask */
+	if (!cpumask_and(&online, cpumask, cpu_online_mask))
+		return -EINVAL;
 
 	raw_spin_lock_irqsave(&mcip_lock, flags);
 
 	destination_bits = cpumask_bits(&online)[0];
 	idu_set_dest(data->hwirq, destination_bits);
 
-	अगर (ffs(destination_bits) == fls(destination_bits))
+	if (ffs(destination_bits) == fls(destination_bits))
 		distribution_mode = IDU_M_DISTRI_DEST;
-	अन्यथा
+	else
 		distribution_mode = IDU_M_DISTRI_RR;
 
 	idu_set_mode(data->hwirq, false, 0, true, distribution_mode);
 
 	raw_spin_unlock_irqrestore(&mcip_lock, flags);
 
-	वापस IRQ_SET_MASK_OK;
-पूर्ण
+	return IRQ_SET_MASK_OK;
+}
 
-अटल पूर्णांक idu_irq_set_type(काष्ठा irq_data *data, u32 type)
-अणु
-	अचिन्हित दीर्घ flags;
+static int idu_irq_set_type(struct irq_data *data, u32 type)
+{
+	unsigned long flags;
 
 	/*
-	 * ARCv2 IDU HW करोes not support inverse polarity, so these are the
-	 * only पूर्णांकerrupt types supported.
+	 * ARCv2 IDU HW does not support inverse polarity, so these are the
+	 * only interrupt types supported.
 	 */
-	अगर (type & ~(IRQ_TYPE_EDGE_RISING | IRQ_TYPE_LEVEL_HIGH))
-		वापस -EINVAL;
+	if (type & ~(IRQ_TYPE_EDGE_RISING | IRQ_TYPE_LEVEL_HIGH))
+		return -EINVAL;
 
 	raw_spin_lock_irqsave(&mcip_lock, flags);
 
@@ -313,25 +312,25 @@ idu_irq_set_affinity(काष्ठा irq_data *data, स्थिर का�
 
 	raw_spin_unlock_irqrestore(&mcip_lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम idu_irq_enable(काष्ठा irq_data *data)
-अणु
+static void idu_irq_enable(struct irq_data *data)
+{
 	/*
-	 * By शेष send all common पूर्णांकerrupts to all available online CPUs.
-	 * The affinity of common पूर्णांकerrupts in IDU must be set manually since
-	 * in some हालs the kernel will not call irq_set_affinity() by itself:
+	 * By default send all common interrupts to all available online CPUs.
+	 * The affinity of common interrupts in IDU must be set manually since
+	 * in some cases the kernel will not call irq_set_affinity() by itself:
 	 *   1. When the kernel is not configured with support of SMP.
 	 *   2. When the kernel is configured with support of SMP but upper
-	 *      पूर्णांकerrupt controllers करोes not support setting of the affinity
+	 *      interrupt controllers does not support setting of the affinity
 	 *      and cannot propagate it to IDU.
 	 */
 	idu_irq_set_affinity(data, cpu_online_mask, false);
 	idu_irq_unmask(data);
-पूर्ण
+}
 
-अटल काष्ठा irq_chip idu_irq_chip = अणु
+static struct irq_chip idu_irq_chip = {
 	.name			= "MCIP IDU Intc",
 	.irq_mask		= idu_irq_mask,
 	.irq_unmask		= idu_irq_unmask,
@@ -339,56 +338,56 @@ idu_irq_set_affinity(काष्ठा irq_data *data, स्थिर का�
 	.irq_mask_ack		= idu_irq_mask_ack,
 	.irq_enable		= idu_irq_enable,
 	.irq_set_type		= idu_irq_set_type,
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 	.irq_set_affinity       = idu_irq_set_affinity,
-#पूर्ण_अगर
+#endif
 
-पूर्ण;
+};
 
-अटल व्योम idu_cascade_isr(काष्ठा irq_desc *desc)
-अणु
-	काष्ठा irq_करोमुख्य *idu_करोमुख्य = irq_desc_get_handler_data(desc);
-	काष्ठा irq_chip *core_chip = irq_desc_get_chip(desc);
+static void idu_cascade_isr(struct irq_desc *desc)
+{
+	struct irq_domain *idu_domain = irq_desc_get_handler_data(desc);
+	struct irq_chip *core_chip = irq_desc_get_chip(desc);
 	irq_hw_number_t core_hwirq = irqd_to_hwirq(irq_desc_get_irq_data(desc));
 	irq_hw_number_t idu_hwirq = core_hwirq - FIRST_EXT_IRQ;
 
 	chained_irq_enter(core_chip, desc);
-	generic_handle_irq(irq_find_mapping(idu_करोमुख्य, idu_hwirq));
-	chained_irq_निकास(core_chip, desc);
-पूर्ण
+	generic_handle_irq(irq_find_mapping(idu_domain, idu_hwirq));
+	chained_irq_exit(core_chip, desc);
+}
 
-अटल पूर्णांक idu_irq_map(काष्ठा irq_करोमुख्य *d, अचिन्हित पूर्णांक virq, irq_hw_number_t hwirq)
-अणु
+static int idu_irq_map(struct irq_domain *d, unsigned int virq, irq_hw_number_t hwirq)
+{
 	irq_set_chip_and_handler(virq, &idu_irq_chip, handle_level_irq);
 	irq_set_status_flags(virq, IRQ_MOVE_PCNTXT);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा irq_करोमुख्य_ops idu_irq_ops = अणु
-	.xlate	= irq_करोमुख्य_xlate_onetwocell,
+static const struct irq_domain_ops idu_irq_ops = {
+	.xlate	= irq_domain_xlate_onetwocell,
 	.map	= idu_irq_map,
-पूर्ण;
+};
 
 /*
- * [16, 23]: Statically asचिन्हित always निजी-per-core (Timers, WDT, IPI)
+ * [16, 23]: Statically assigned always private-per-core (Timers, WDT, IPI)
  * [24, 23+C]: If C > 0 then "C" common IRQs
- * [24+C, N]: Not अटलally asचिन्हित, निजी-per-core
+ * [24+C, N]: Not statically assigned, private-per-core
  */
 
 
-अटल पूर्णांक __init
-idu_of_init(काष्ठा device_node *पूर्णांकc, काष्ठा device_node *parent)
-अणु
-	काष्ठा irq_करोमुख्य *करोमुख्य;
-	पूर्णांक nr_irqs;
-	पूर्णांक i, virq;
-	काष्ठा mcip_bcr mp;
-	काष्ठा mcip_idu_bcr idu_bcr;
+static int __init
+idu_of_init(struct device_node *intc, struct device_node *parent)
+{
+	struct irq_domain *domain;
+	int nr_irqs;
+	int i, virq;
+	struct mcip_bcr mp;
+	struct mcip_idu_bcr idu_bcr;
 
 	READ_BCR(ARC_REG_MCIP_BCR, mp);
 
-	अगर (!mp.idu)
+	if (!mp.idu)
 		panic("IDU not detected, but DeviceTree using it");
 
 	READ_BCR(ARC_REG_MCIP_IDU_BCR, idu_bcr);
@@ -396,27 +395,27 @@ idu_of_init(काष्ठा device_node *पूर्णांकc, काष
 
 	pr_info("MCIP: IDU supports %u common irqs\n", nr_irqs);
 
-	करोमुख्य = irq_करोमुख्य_add_linear(पूर्णांकc, nr_irqs, &idu_irq_ops, शून्य);
+	domain = irq_domain_add_linear(intc, nr_irqs, &idu_irq_ops, NULL);
 
-	/* Parent पूर्णांकerrupts (core-पूर्णांकc) are alपढ़ोy mapped */
+	/* Parent interrupts (core-intc) are already mapped */
 
-	क्रम (i = 0; i < nr_irqs; i++) अणु
-		/* Mask all common पूर्णांकerrupts by शेष */
+	for (i = 0; i < nr_irqs; i++) {
+		/* Mask all common interrupts by default */
 		idu_irq_mask_raw(i);
 
 		/*
-		 * Return parent uplink IRQs (towards core पूर्णांकc) 24,25,.....
-		 * this step has been करोne beक्रमe alपढ़ोy
+		 * Return parent uplink IRQs (towards core intc) 24,25,.....
+		 * this step has been done before already
 		 * however we need it to get the parent virq and set IDU handler
 		 * as first level isr
 		 */
-		virq = irq_create_mapping(शून्य, i + FIRST_EXT_IRQ);
+		virq = irq_create_mapping(NULL, i + FIRST_EXT_IRQ);
 		BUG_ON(!virq);
-		irq_set_chained_handler_and_data(virq, idu_cascade_isr, करोमुख्य);
-	पूर्ण
+		irq_set_chained_handler_and_data(virq, idu_cascade_isr, domain);
+	}
 
 	__mcip_cmd(CMD_IDU_ENABLE, 0);
 
-	वापस 0;
-पूर्ण
-IRQCHIP_DECLARE(arcv2_idu_पूर्णांकc, "snps,archs-idu-intc", idu_of_init);
+	return 0;
+}
+IRQCHIP_DECLARE(arcv2_idu_intc, "snps,archs-idu-intc", idu_of_init);

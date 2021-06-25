@@ -1,7 +1,6 @@
-<शैली गुरु>
-#अगर_अघोषित __NVIF_IF000A_H__
-#घोषणा __NVIF_IF000A_H__
-काष्ठा nvअगर_mem_v0 अणु
+#ifndef __NVIF_IF000A_H__
+#define __NVIF_IF000A_H__
+struct nvif_mem_v0 {
 	__u8  version;
 	__u8  type;
 	__u8  page;
@@ -9,15 +8,15 @@
 	__u64 size;
 	__u64 addr;
 	__u8  data[];
-पूर्ण;
+};
 
-काष्ठा nvअगर_mem_ram_vn अणु
-पूर्ण;
+struct nvif_mem_ram_vn {
+};
 
-काष्ठा nvअगर_mem_ram_v0 अणु
+struct nvif_mem_ram_v0 {
 	__u8  version;
 	__u8  pad01[7];
 	dma_addr_t *dma;
-	काष्ठा scatterlist *sgl;
-पूर्ण;
-#पूर्ण_अगर
+	struct scatterlist *sgl;
+};
+#endif

@@ -1,82 +1,81 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Support क्रम Intel Camera Imaging ISP subप्रणाली.
+ * Support for Intel Camera Imaging ISP subsystem.
  * Copyright (c) 2010 - 2015, Intel Corporation.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
 
-#समावेश "system_global.h"
-#समावेश <linux/kernel.h>
+#include "system_global.h"
+#include <linux/kernel.h>
 
-#अगर_अघोषित ISP2401
+#ifndef ISP2401
 
-#समावेश "ia_css_ifmtr.h"
-#समावेश <math_support.h>
-#समावेश "sh_css_internal.h"
-#समावेश "input_formatter.h"
-#समावेश "assert_support.h"
-#समावेश "sh_css_sp.h"
-#समावेश "isp/modes/interface/input_buf.isp.h"
+#include "ia_css_ifmtr.h"
+#include <math_support.h>
+#include "sh_css_internal.h"
+#include "input_formatter.h"
+#include "assert_support.h"
+#include "sh_css_sp.h"
+#include "isp/modes/interface/input_buf.isp.h"
 
 /************************************************************
  * Static functions declarations
  ************************************************************/
-अटल पूर्णांक अगरmtr_start_column(
-    स्थिर काष्ठा ia_css_stream_config *config,
-    अचिन्हित पूर्णांक bin_in,
-    अचिन्हित पूर्णांक *start_column);
+static int ifmtr_start_column(
+    const struct ia_css_stream_config *config,
+    unsigned int bin_in,
+    unsigned int *start_column);
 
-अटल पूर्णांक अगरmtr_input_start_line(
-    स्थिर काष्ठा ia_css_stream_config *config,
-    अचिन्हित पूर्णांक bin_in,
-    अचिन्हित पूर्णांक *start_line);
+static int ifmtr_input_start_line(
+    const struct ia_css_stream_config *config,
+    unsigned int bin_in,
+    unsigned int *start_line);
 
-अटल व्योम अगरmtr_set_अगर_blocking_mode(
-    स्थिर input_क्रमmatter_cfg_t *स्थिर config_a,
-    स्थिर input_क्रमmatter_cfg_t *स्थिर config_b);
+static void ifmtr_set_if_blocking_mode(
+    const input_formatter_cfg_t *const config_a,
+    const input_formatter_cfg_t *const config_b);
 
 /************************************************************
  * Public functions
  ************************************************************/
 
 /* ISP expects GRBG bayer order, we skip one line and/or one row
- * to correct in हाल the input bayer order is dअगरferent.
+ * to correct in case the input bayer order is different.
  */
-अचिन्हित पूर्णांक ia_css_अगरmtr_lines_needed_क्रम_bayer_order(
-    स्थिर काष्ठा ia_css_stream_config *config)
-अणु
-	निश्चित(config);
-	अगर ((config->input_config.bayer_order == IA_CSS_BAYER_ORDER_BGGR)
+unsigned int ia_css_ifmtr_lines_needed_for_bayer_order(
+    const struct ia_css_stream_config *config)
+{
+	assert(config);
+	if ((config->input_config.bayer_order == IA_CSS_BAYER_ORDER_BGGR)
 	    || (config->input_config.bayer_order == IA_CSS_BAYER_ORDER_GBRG))
-		वापस 1;
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अचिन्हित पूर्णांक ia_css_अगरmtr_columns_needed_क्रम_bayer_order(
-    स्थिर काष्ठा ia_css_stream_config *config)
-अणु
-	निश्चित(config);
-	अगर ((config->input_config.bayer_order == IA_CSS_BAYER_ORDER_RGGB)
+unsigned int ia_css_ifmtr_columns_needed_for_bayer_order(
+    const struct ia_css_stream_config *config)
+{
+	assert(config);
+	if ((config->input_config.bayer_order == IA_CSS_BAYER_ORDER_RGGB)
 	    || (config->input_config.bayer_order == IA_CSS_BAYER_ORDER_GBRG))
-		वापस 1;
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ia_css_अगरmtr_configure(काष्ठा ia_css_stream_config *config,
-				       काष्ठा ia_css_binary *binary)
-अणु
-	अचिन्हित पूर्णांक start_line, start_column = 0,
+int ia_css_ifmtr_configure(struct ia_css_stream_config *config,
+				       struct ia_css_binary *binary)
+{
+	unsigned int start_line, start_column = 0,
 				 cropped_height,
 				 cropped_width,
 				 num_vectors,
@@ -84,8 +83,8 @@
 				 buffer_width,
 				 two_ppc,
 				 vmem_increment = 0,
-				 deपूर्णांकerleaving = 0,
-				 deपूर्णांकerleaving_b = 0,
+				 deinterleaving = 0,
+				 deinterleaving_b = 0,
 				 width_a = 0,
 				 width_b = 0,
 				 bits_per_pixel,
@@ -97,458 +96,458 @@
 				 line_width = 0,
 				 width_b_factor = 1, start_column_b,
 				 left_padding = 0;
-	input_क्रमmatter_cfg_t अगर_a_config, अगर_b_config;
-	क्रमागत atomisp_input_क्रमmat input_क्रमmat;
-	पूर्णांक err = 0;
-	u8 अगर_config_index;
+	input_formatter_cfg_t if_a_config, if_b_config;
+	enum atomisp_input_format input_format;
+	int err = 0;
+	u8 if_config_index;
 
-	/* Determine which input क्रमmatter config set is targeted. */
+	/* Determine which input formatter config set is targeted. */
 	/* Index is equal to the CSI-2 port used. */
-	क्रमागत mipi_port_id port;
+	enum mipi_port_id port;
 
-	अगर (binary) अणु
+	if (binary) {
 		cropped_height = binary->in_frame_info.res.height;
 		cropped_width = binary->in_frame_info.res.width;
-		/* This should correspond to the input buffer definition क्रम
+		/* This should correspond to the input buffer definition for
 		ISP binaries in input_buf.isp.h */
-		अगर (binary->info->sp.enable.continuous &&
+		if (binary->info->sp.enable.continuous &&
 		    binary->info->sp.pipeline.mode != IA_CSS_BINARY_MODE_COPY)
 			buffer_width = MAX_VECTORS_PER_INPUT_LINE_CONT * ISP_VEC_NELEMS;
-		अन्यथा
+		else
 			buffer_width = binary->info->sp.input.max_width;
-		input_क्रमmat = binary->input_क्रमmat;
-	पूर्ण अन्यथा अणु
-		/* sp raw copy pipe (IA_CSS_PIPE_MODE_COPY): binary is शून्य */
+		input_format = binary->input_format;
+	} else {
+		/* sp raw copy pipe (IA_CSS_PIPE_MODE_COPY): binary is NULL */
 		cropped_height = config->input_config.input_res.height;
 		cropped_width = config->input_config.input_res.width;
 		buffer_width = MAX_VECTORS_PER_INPUT_LINE_CONT * ISP_VEC_NELEMS;
-		input_क्रमmat = config->input_config.क्रमmat;
-	पूर्ण
-	two_ppc = config->pixels_per_घड़ी == 2;
-	अगर (config->mode == IA_CSS_INPUT_MODE_SENSOR
-	    || config->mode == IA_CSS_INPUT_MODE_BUFFERED_SENSOR) अणु
+		input_format = config->input_config.format;
+	}
+	two_ppc = config->pixels_per_clock == 2;
+	if (config->mode == IA_CSS_INPUT_MODE_SENSOR
+	    || config->mode == IA_CSS_INPUT_MODE_BUFFERED_SENSOR) {
 		port = config->source.port.port;
-		अगर_config_index = (uपूर्णांक8_t)(port - MIPI_PORT0_ID);
-	पूर्ण अन्यथा अगर (config->mode == IA_CSS_INPUT_MODE_MEMORY) अणु
-		अगर_config_index = SH_CSS_IF_CONFIG_NOT_NEEDED;
-	पूर्ण अन्यथा अणु
-		अगर_config_index = 0;
-	पूर्ण
+		if_config_index = (uint8_t)(port - MIPI_PORT0_ID);
+	} else if (config->mode == IA_CSS_INPUT_MODE_MEMORY) {
+		if_config_index = SH_CSS_IF_CONFIG_NOT_NEEDED;
+	} else {
+		if_config_index = 0;
+	}
 
-	निश्चित(अगर_config_index <= SH_CSS_MAX_IF_CONFIGS
-	       || अगर_config_index == SH_CSS_IF_CONFIG_NOT_NEEDED);
+	assert(if_config_index <= SH_CSS_MAX_IF_CONFIGS
+	       || if_config_index == SH_CSS_IF_CONFIG_NOT_NEEDED);
 
-	/* TODO: check to see अगर input is RAW and अगर current mode पूर्णांकerprets
+	/* TODO: check to see if input is RAW and if current mode interprets
 	 * RAW data in any particular bayer order. copy binary with output
-	 * क्रमmat other than raw should not result in dropping lines and/or
+	 * format other than raw should not result in dropping lines and/or
 	 * columns.
 	 */
-	err = अगरmtr_input_start_line(config, cropped_height, &start_line);
-	अगर (err)
-		वापस err;
-	err = अगरmtr_start_column(config, cropped_width, &start_column);
-	अगर (err)
-		वापस err;
+	err = ifmtr_input_start_line(config, cropped_height, &start_line);
+	if (err)
+		return err;
+	err = ifmtr_start_column(config, cropped_width, &start_column);
+	if (err)
+		return err;
 
-	अगर (config->left_padding == -1)
-		अगर (!binary)
+	if (config->left_padding == -1)
+		if (!binary)
 			/* sp raw copy pipe: set left_padding value */
 			left_padding = 0;
-		अन्यथा
+		else
 			left_padding = binary->left_padding;
-	अन्यथा
+	else
 		left_padding = 2 * ISP_VEC_NELEMS - config->left_padding;
 
-	अगर (left_padding) अणु
+	if (left_padding) {
 		num_vectors = CEIL_DIV(cropped_width + left_padding,
 				       ISP_VEC_NELEMS);
-	पूर्ण अन्यथा अणु
+	} else {
 		num_vectors = CEIL_DIV(cropped_width, ISP_VEC_NELEMS);
 		num_vectors *= buffer_height;
-		/* toकरो: in हाल of left padding,
+		/* todo: in case of left padding,
 		   num_vectors is vectors per line,
 		   otherwise vectors per line * buffer_height. */
-	पूर्ण
+	}
 
 	start_column_b = start_column;
 
-	bits_per_pixel = input_क्रमmatter_get_alignment(INPUT_FORMATTER0_ID)
+	bits_per_pixel = input_formatter_get_alignment(INPUT_FORMATTER0_ID)
 			 * 8 / ISP_VEC_NELEMS;
-	चयन (input_क्रमmat) अणु
-	हाल ATOMISP_INPUT_FORMAT_YUV420_8_LEGACY:
-		अगर (two_ppc) अणु
+	switch (input_format) {
+	case ATOMISP_INPUT_FORMAT_YUV420_8_LEGACY:
+		if (two_ppc) {
 			vmem_increment = 1;
-			deपूर्णांकerleaving = 1;
-			deपूर्णांकerleaving_b = 1;
+			deinterleaving = 1;
+			deinterleaving_b = 1;
 			/* half lines */
-			width_a = cropped_width * deपूर्णांकerleaving / 2;
+			width_a = cropped_width * deinterleaving / 2;
 			width_b_factor = 2;
 			/* full lines */
 			width_b = width_a * width_b_factor;
-			buffer_width *= deपूर्णांकerleaving * 2;
+			buffer_width *= deinterleaving * 2;
 			/* Patch from bayer to yuv */
-			num_vectors *= deपूर्णांकerleaving;
+			num_vectors *= deinterleaving;
 			buf_offset_b = buffer_width / 2 / ISP_VEC_NELEMS;
 			vectors_per_line = num_vectors / buffer_height;
 			/* Even lines are half size */
 			line_width = vectors_per_line *
-				     input_क्रमmatter_get_alignment(INPUT_FORMATTER0_ID) /
+				     input_formatter_get_alignment(INPUT_FORMATTER0_ID) /
 				     2;
 			start_column /= 2;
-		पूर्ण अन्यथा अणु
+		} else {
 			vmem_increment = 1;
-			deपूर्णांकerleaving = 3;
-			width_a = cropped_width * deपूर्णांकerleaving / 2;
-			buffer_width = buffer_width * deपूर्णांकerleaving / 2;
+			deinterleaving = 3;
+			width_a = cropped_width * deinterleaving / 2;
+			buffer_width = buffer_width * deinterleaving / 2;
 			/* Patch from bayer to yuv */
-			num_vectors = num_vectors / 2 * deपूर्णांकerleaving;
-			start_column = start_column * deपूर्णांकerleaving / 2;
-		पूर्ण
-		अवरोध;
-	हाल ATOMISP_INPUT_FORMAT_YUV420_8:
-	हाल ATOMISP_INPUT_FORMAT_YUV420_10:
-	हाल ATOMISP_INPUT_FORMAT_YUV420_16:
-		अगर (two_ppc) अणु
+			num_vectors = num_vectors / 2 * deinterleaving;
+			start_column = start_column * deinterleaving / 2;
+		}
+		break;
+	case ATOMISP_INPUT_FORMAT_YUV420_8:
+	case ATOMISP_INPUT_FORMAT_YUV420_10:
+	case ATOMISP_INPUT_FORMAT_YUV420_16:
+		if (two_ppc) {
 			vmem_increment = 1;
-			deपूर्णांकerleaving = 1;
-			width_a = width_b = cropped_width * deपूर्णांकerleaving / 2;
-			buffer_width *= deपूर्णांकerleaving * 2;
-			num_vectors *= deपूर्णांकerleaving;
+			deinterleaving = 1;
+			width_a = width_b = cropped_width * deinterleaving / 2;
+			buffer_width *= deinterleaving * 2;
+			num_vectors *= deinterleaving;
 			buf_offset_b = buffer_width / 2 / ISP_VEC_NELEMS;
 			vectors_per_line = num_vectors / buffer_height;
 			/* Even lines are half size */
 			line_width = vectors_per_line *
-				     input_क्रमmatter_get_alignment(INPUT_FORMATTER0_ID) /
+				     input_formatter_get_alignment(INPUT_FORMATTER0_ID) /
 				     2;
-			start_column *= deपूर्णांकerleaving;
+			start_column *= deinterleaving;
 			start_column /= 2;
 			start_column_b = start_column;
-		पूर्ण अन्यथा अणु
+		} else {
 			vmem_increment = 1;
-			deपूर्णांकerleaving = 1;
-			width_a = cropped_width * deपूर्णांकerleaving;
-			buffer_width *= deपूर्णांकerleaving * 2;
-			num_vectors *= deपूर्णांकerleaving;
-			start_column *= deपूर्णांकerleaving;
-		पूर्ण
-		अवरोध;
-	हाल ATOMISP_INPUT_FORMAT_YUV422_8:
-	हाल ATOMISP_INPUT_FORMAT_YUV422_10:
-	हाल ATOMISP_INPUT_FORMAT_YUV422_16:
-		अगर (two_ppc) अणु
+			deinterleaving = 1;
+			width_a = cropped_width * deinterleaving;
+			buffer_width *= deinterleaving * 2;
+			num_vectors *= deinterleaving;
+			start_column *= deinterleaving;
+		}
+		break;
+	case ATOMISP_INPUT_FORMAT_YUV422_8:
+	case ATOMISP_INPUT_FORMAT_YUV422_10:
+	case ATOMISP_INPUT_FORMAT_YUV422_16:
+		if (two_ppc) {
 			vmem_increment = 1;
-			deपूर्णांकerleaving = 1;
-			width_a = width_b = cropped_width * deपूर्णांकerleaving;
-			buffer_width *= deपूर्णांकerleaving * 2;
-			num_vectors *= deपूर्णांकerleaving;
-			start_column *= deपूर्णांकerleaving;
+			deinterleaving = 1;
+			width_a = width_b = cropped_width * deinterleaving;
+			buffer_width *= deinterleaving * 2;
+			num_vectors *= deinterleaving;
+			start_column *= deinterleaving;
 			buf_offset_b = buffer_width / 2 / ISP_VEC_NELEMS;
 			start_column_b = start_column;
-		पूर्ण अन्यथा अणु
+		} else {
 			vmem_increment = 1;
-			deपूर्णांकerleaving = 2;
-			width_a = cropped_width * deपूर्णांकerleaving;
-			buffer_width *= deपूर्णांकerleaving;
-			num_vectors *= deपूर्णांकerleaving;
-			start_column *= deपूर्णांकerleaving;
-		पूर्ण
-		अवरोध;
-	हाल ATOMISP_INPUT_FORMAT_RGB_444:
-	हाल ATOMISP_INPUT_FORMAT_RGB_555:
-	हाल ATOMISP_INPUT_FORMAT_RGB_565:
-	हाल ATOMISP_INPUT_FORMAT_RGB_666:
-	हाल ATOMISP_INPUT_FORMAT_RGB_888:
+			deinterleaving = 2;
+			width_a = cropped_width * deinterleaving;
+			buffer_width *= deinterleaving;
+			num_vectors *= deinterleaving;
+			start_column *= deinterleaving;
+		}
+		break;
+	case ATOMISP_INPUT_FORMAT_RGB_444:
+	case ATOMISP_INPUT_FORMAT_RGB_555:
+	case ATOMISP_INPUT_FORMAT_RGB_565:
+	case ATOMISP_INPUT_FORMAT_RGB_666:
+	case ATOMISP_INPUT_FORMAT_RGB_888:
 		num_vectors *= 2;
-		अगर (two_ppc) अणु
-			deपूर्णांकerleaving = 2;	/* BR in अगर_a, G in अगर_b */
-			deपूर्णांकerleaving_b = 1;	/* BR in अगर_a, G in अगर_b */
+		if (two_ppc) {
+			deinterleaving = 2;	/* BR in if_a, G in if_b */
+			deinterleaving_b = 1;	/* BR in if_a, G in if_b */
 			buffers_per_line = 4;
 			start_column_b = start_column;
-			start_column *= deपूर्णांकerleaving;
-			start_column_b *= deपूर्णांकerleaving_b;
-		पूर्ण अन्यथा अणु
-			deपूर्णांकerleaving = 3;	/* BGR */
+			start_column *= deinterleaving;
+			start_column_b *= deinterleaving_b;
+		} else {
+			deinterleaving = 3;	/* BGR */
 			buffers_per_line = 3;
-			start_column *= deपूर्णांकerleaving;
-		पूर्ण
+			start_column *= deinterleaving;
+		}
 		vmem_increment = 1;
-		width_a = cropped_width * deपूर्णांकerleaving;
-		width_b = cropped_width * deपूर्णांकerleaving_b;
+		width_a = cropped_width * deinterleaving;
+		width_b = cropped_width * deinterleaving_b;
 		buffer_width *= buffers_per_line;
 		/* Patch from bayer to rgb */
-		num_vectors = num_vectors / 2 * deपूर्णांकerleaving;
+		num_vectors = num_vectors / 2 * deinterleaving;
 		buf_offset_b = buffer_width / 2 / ISP_VEC_NELEMS;
-		अवरोध;
-	हाल ATOMISP_INPUT_FORMAT_RAW_6:
-	हाल ATOMISP_INPUT_FORMAT_RAW_7:
-	हाल ATOMISP_INPUT_FORMAT_RAW_8:
-	हाल ATOMISP_INPUT_FORMAT_RAW_10:
-	हाल ATOMISP_INPUT_FORMAT_RAW_12:
-		अगर (two_ppc) अणु
-			पूर्णांक crop_col = (start_column % 2) == 1;
+		break;
+	case ATOMISP_INPUT_FORMAT_RAW_6:
+	case ATOMISP_INPUT_FORMAT_RAW_7:
+	case ATOMISP_INPUT_FORMAT_RAW_8:
+	case ATOMISP_INPUT_FORMAT_RAW_10:
+	case ATOMISP_INPUT_FORMAT_RAW_12:
+		if (two_ppc) {
+			int crop_col = (start_column % 2) == 1;
 
 			vmem_increment = 2;
-			deपूर्णांकerleaving = 1;
+			deinterleaving = 1;
 			width_a = width_b = cropped_width / 2;
 
 			/* When two_ppc is enabled AND we need to crop one extra
-			 * column, अगर_a crops by one extra and we swap the
-			 * output offsets to पूर्णांकerleave the bayer pattern in
+			 * column, if_a crops by one extra and we swap the
+			 * output offsets to interleave the bayer pattern in
 			 * the correct order.
 			 */
 			buf_offset_a   = crop_col ? 1 : 0;
 			buf_offset_b   = crop_col ? 0 : 1;
 			start_column_b = start_column / 2;
 			start_column   = start_column / 2 + crop_col;
-		पूर्ण अन्यथा अणु
+		} else {
 			vmem_increment = 1;
-			deपूर्णांकerleaving = 2;
-			अगर ((!binary) || (config->continuous && binary
-					  && binary->info->sp.pipeline.mode == IA_CSS_BINARY_MODE_COPY)) अणु
-				/* !binary -> sp raw copy pipe, no deपूर्णांकerleaving */
-				deपूर्णांकerleaving = 1;
-			पूर्ण
+			deinterleaving = 2;
+			if ((!binary) || (config->continuous && binary
+					  && binary->info->sp.pipeline.mode == IA_CSS_BINARY_MODE_COPY)) {
+				/* !binary -> sp raw copy pipe, no deinterleaving */
+				deinterleaving = 1;
+			}
 			width_a = cropped_width;
-			/* Must be multiple of deपूर्णांकerleaving */
-			num_vectors = CEIL_MUL(num_vectors, deपूर्णांकerleaving);
-		पूर्ण
+			/* Must be multiple of deinterleaving */
+			num_vectors = CEIL_MUL(num_vectors, deinterleaving);
+		}
 		buffer_height *= 2;
-		अगर ((!binary) || config->continuous)
+		if ((!binary) || config->continuous)
 			/* !binary -> sp raw copy pipe */
 			buffer_height *= 2;
 		vectors_per_line = CEIL_DIV(cropped_width, ISP_VEC_NELEMS);
-		vectors_per_line = CEIL_MUL(vectors_per_line, deपूर्णांकerleaving);
-		अवरोध;
-	हाल ATOMISP_INPUT_FORMAT_RAW_14:
-	हाल ATOMISP_INPUT_FORMAT_RAW_16:
-		अगर (two_ppc) अणु
+		vectors_per_line = CEIL_MUL(vectors_per_line, deinterleaving);
+		break;
+	case ATOMISP_INPUT_FORMAT_RAW_14:
+	case ATOMISP_INPUT_FORMAT_RAW_16:
+		if (two_ppc) {
 			num_vectors *= 2;
 			vmem_increment = 1;
-			deपूर्णांकerleaving = 2;
+			deinterleaving = 2;
 			width_a = width_b = cropped_width;
 			/* B buffer is one line further */
 			buf_offset_b = buffer_width / ISP_VEC_NELEMS;
 			bits_per_pixel *= 2;
-		पूर्ण अन्यथा अणु
+		} else {
 			vmem_increment = 1;
-			deपूर्णांकerleaving = 2;
+			deinterleaving = 2;
 			width_a = cropped_width;
-			start_column /= deपूर्णांकerleaving;
-		पूर्ण
+			start_column /= deinterleaving;
+		}
 		buffer_height *= 2;
-		अवरोध;
-	हाल ATOMISP_INPUT_FORMAT_BINARY_8:
-	हाल ATOMISP_INPUT_FORMAT_GENERIC_SHORT1:
-	हाल ATOMISP_INPUT_FORMAT_GENERIC_SHORT2:
-	हाल ATOMISP_INPUT_FORMAT_GENERIC_SHORT3:
-	हाल ATOMISP_INPUT_FORMAT_GENERIC_SHORT4:
-	हाल ATOMISP_INPUT_FORMAT_GENERIC_SHORT5:
-	हाल ATOMISP_INPUT_FORMAT_GENERIC_SHORT6:
-	हाल ATOMISP_INPUT_FORMAT_GENERIC_SHORT7:
-	हाल ATOMISP_INPUT_FORMAT_GENERIC_SHORT8:
-	हाल ATOMISP_INPUT_FORMAT_YUV420_8_SHIFT:
-	हाल ATOMISP_INPUT_FORMAT_YUV420_10_SHIFT:
-	हाल ATOMISP_INPUT_FORMAT_EMBEDDED:
-	हाल ATOMISP_INPUT_FORMAT_USER_DEF1:
-	हाल ATOMISP_INPUT_FORMAT_USER_DEF2:
-	हाल ATOMISP_INPUT_FORMAT_USER_DEF3:
-	हाल ATOMISP_INPUT_FORMAT_USER_DEF4:
-	हाल ATOMISP_INPUT_FORMAT_USER_DEF5:
-	हाल ATOMISP_INPUT_FORMAT_USER_DEF6:
-	हाल ATOMISP_INPUT_FORMAT_USER_DEF7:
-	हाल ATOMISP_INPUT_FORMAT_USER_DEF8:
-		अवरोध;
-	पूर्ण
-	अगर (width_a == 0)
-		वापस -EINVAL;
+		break;
+	case ATOMISP_INPUT_FORMAT_BINARY_8:
+	case ATOMISP_INPUT_FORMAT_GENERIC_SHORT1:
+	case ATOMISP_INPUT_FORMAT_GENERIC_SHORT2:
+	case ATOMISP_INPUT_FORMAT_GENERIC_SHORT3:
+	case ATOMISP_INPUT_FORMAT_GENERIC_SHORT4:
+	case ATOMISP_INPUT_FORMAT_GENERIC_SHORT5:
+	case ATOMISP_INPUT_FORMAT_GENERIC_SHORT6:
+	case ATOMISP_INPUT_FORMAT_GENERIC_SHORT7:
+	case ATOMISP_INPUT_FORMAT_GENERIC_SHORT8:
+	case ATOMISP_INPUT_FORMAT_YUV420_8_SHIFT:
+	case ATOMISP_INPUT_FORMAT_YUV420_10_SHIFT:
+	case ATOMISP_INPUT_FORMAT_EMBEDDED:
+	case ATOMISP_INPUT_FORMAT_USER_DEF1:
+	case ATOMISP_INPUT_FORMAT_USER_DEF2:
+	case ATOMISP_INPUT_FORMAT_USER_DEF3:
+	case ATOMISP_INPUT_FORMAT_USER_DEF4:
+	case ATOMISP_INPUT_FORMAT_USER_DEF5:
+	case ATOMISP_INPUT_FORMAT_USER_DEF6:
+	case ATOMISP_INPUT_FORMAT_USER_DEF7:
+	case ATOMISP_INPUT_FORMAT_USER_DEF8:
+		break;
+	}
+	if (width_a == 0)
+		return -EINVAL;
 
-	अगर (two_ppc)
+	if (two_ppc)
 		left_padding /= 2;
 
 	/* Default values */
-	अगर (left_padding)
+	if (left_padding)
 		vectors_per_line = num_vectors;
-	अगर (!vectors_per_line) अणु
+	if (!vectors_per_line) {
 		vectors_per_line = CEIL_MUL(num_vectors / buffer_height,
-					    deपूर्णांकerleaving);
+					    deinterleaving);
 		line_width = 0;
-	पूर्ण
-	अगर (!line_width)
+	}
+	if (!line_width)
 		line_width = vectors_per_line *
-			     input_क्रमmatter_get_alignment(INPUT_FORMATTER0_ID);
-	अगर (!buffers_per_line)
-		buffers_per_line = deपूर्णांकerleaving;
+			     input_formatter_get_alignment(INPUT_FORMATTER0_ID);
+	if (!buffers_per_line)
+		buffers_per_line = deinterleaving;
 	line_width = CEIL_MUL(line_width,
-			      input_क्रमmatter_get_alignment(INPUT_FORMATTER0_ID)
+			      input_formatter_get_alignment(INPUT_FORMATTER0_ID)
 			      * vmem_increment);
 
 	vectors_per_buffer = buffer_height * buffer_width / ISP_VEC_NELEMS;
 
-	अगर (config->mode == IA_CSS_INPUT_MODE_TPG &&
+	if (config->mode == IA_CSS_INPUT_MODE_TPG &&
 	    ((binary && binary->info->sp.pipeline.mode == IA_CSS_BINARY_MODE_VIDEO) ||
-	     (!binary))) अणु
+	     (!binary))) {
 		/* !binary -> sp raw copy pipe */
-		/* workaround क्रम TPG in video mode */
+		/* workaround for TPG in video mode */
 		start_line = 0;
 		start_column = 0;
 		cropped_height -= start_line;
 		width_a -= start_column;
-	पूर्ण
+	}
 
-	अगर_a_config.start_line = start_line;
-	अगर_a_config.start_column = start_column;
-	अगर_a_config.left_padding = left_padding / deपूर्णांकerleaving;
-	अगर_a_config.cropped_height = cropped_height;
-	अगर_a_config.cropped_width = width_a;
-	अगर_a_config.deपूर्णांकerleaving = deपूर्णांकerleaving;
-	अगर_a_config.buf_vecs = vectors_per_buffer;
-	अगर_a_config.buf_start_index = buf_offset_a;
-	अगर_a_config.buf_increment = vmem_increment;
-	अगर_a_config.buf_eol_offset =
+	if_a_config.start_line = start_line;
+	if_a_config.start_column = start_column;
+	if_a_config.left_padding = left_padding / deinterleaving;
+	if_a_config.cropped_height = cropped_height;
+	if_a_config.cropped_width = width_a;
+	if_a_config.deinterleaving = deinterleaving;
+	if_a_config.buf_vecs = vectors_per_buffer;
+	if_a_config.buf_start_index = buf_offset_a;
+	if_a_config.buf_increment = vmem_increment;
+	if_a_config.buf_eol_offset =
 	    buffer_width * bits_per_pixel / 8 - line_width;
-	अगर_a_config.is_yuv420_क्रमmat =
-	    (input_क्रमmat == ATOMISP_INPUT_FORMAT_YUV420_8)
-	    || (input_क्रमmat == ATOMISP_INPUT_FORMAT_YUV420_10)
-	    || (input_क्रमmat == ATOMISP_INPUT_FORMAT_YUV420_16);
-	अगर_a_config.block_no_reqs = (config->mode != IA_CSS_INPUT_MODE_SENSOR);
+	if_a_config.is_yuv420_format =
+	    (input_format == ATOMISP_INPUT_FORMAT_YUV420_8)
+	    || (input_format == ATOMISP_INPUT_FORMAT_YUV420_10)
+	    || (input_format == ATOMISP_INPUT_FORMAT_YUV420_16);
+	if_a_config.block_no_reqs = (config->mode != IA_CSS_INPUT_MODE_SENSOR);
 
-	अगर (two_ppc) अणु
-		अगर (deपूर्णांकerleaving_b) अणु
-			deपूर्णांकerleaving = deपूर्णांकerleaving_b;
-			width_b = cropped_width * deपूर्णांकerleaving;
-			buffer_width *= deपूर्णांकerleaving;
+	if (two_ppc) {
+		if (deinterleaving_b) {
+			deinterleaving = deinterleaving_b;
+			width_b = cropped_width * deinterleaving;
+			buffer_width *= deinterleaving;
 			/* Patch from bayer to rgb */
 			num_vectors = num_vectors / 2 *
-				      deपूर्णांकerleaving * width_b_factor;
+				      deinterleaving * width_b_factor;
 			vectors_per_line = num_vectors / buffer_height;
 			line_width = vectors_per_line *
-				     input_क्रमmatter_get_alignment(INPUT_FORMATTER0_ID);
-		पूर्ण
-		अगर_b_config.start_line = start_line;
-		अगर_b_config.start_column = start_column_b;
-		अगर_b_config.left_padding = left_padding / deपूर्णांकerleaving;
-		अगर_b_config.cropped_height = cropped_height;
-		अगर_b_config.cropped_width = width_b;
-		अगर_b_config.deपूर्णांकerleaving = deपूर्णांकerleaving;
-		अगर_b_config.buf_vecs = vectors_per_buffer;
-		अगर_b_config.buf_start_index = buf_offset_b;
-		अगर_b_config.buf_increment = vmem_increment;
-		अगर_b_config.buf_eol_offset =
+				     input_formatter_get_alignment(INPUT_FORMATTER0_ID);
+		}
+		if_b_config.start_line = start_line;
+		if_b_config.start_column = start_column_b;
+		if_b_config.left_padding = left_padding / deinterleaving;
+		if_b_config.cropped_height = cropped_height;
+		if_b_config.cropped_width = width_b;
+		if_b_config.deinterleaving = deinterleaving;
+		if_b_config.buf_vecs = vectors_per_buffer;
+		if_b_config.buf_start_index = buf_offset_b;
+		if_b_config.buf_increment = vmem_increment;
+		if_b_config.buf_eol_offset =
 		    buffer_width * bits_per_pixel / 8 - line_width;
-		अगर_b_config.is_yuv420_क्रमmat =
-		    input_क्रमmat == ATOMISP_INPUT_FORMAT_YUV420_8
-		    || input_क्रमmat == ATOMISP_INPUT_FORMAT_YUV420_10
-		    || input_क्रमmat == ATOMISP_INPUT_FORMAT_YUV420_16;
-		अगर_b_config.block_no_reqs =
+		if_b_config.is_yuv420_format =
+		    input_format == ATOMISP_INPUT_FORMAT_YUV420_8
+		    || input_format == ATOMISP_INPUT_FORMAT_YUV420_10
+		    || input_format == ATOMISP_INPUT_FORMAT_YUV420_16;
+		if_b_config.block_no_reqs =
 		    (config->mode != IA_CSS_INPUT_MODE_SENSOR);
 
-		अगर (अगर_config_index != SH_CSS_IF_CONFIG_NOT_NEEDED) अणु
-			निश्चित(अगर_config_index <= SH_CSS_MAX_IF_CONFIGS);
+		if (if_config_index != SH_CSS_IF_CONFIG_NOT_NEEDED) {
+			assert(if_config_index <= SH_CSS_MAX_IF_CONFIGS);
 
-			अगरmtr_set_अगर_blocking_mode(&अगर_a_config, &अगर_b_config);
-			/* Set the अगरconfigs to SP group */
-			sh_css_sp_set_अगर_configs(&अगर_a_config, &अगर_b_config,
-						 अगर_config_index);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (अगर_config_index != SH_CSS_IF_CONFIG_NOT_NEEDED) अणु
-			निश्चित(अगर_config_index <= SH_CSS_MAX_IF_CONFIGS);
+			ifmtr_set_if_blocking_mode(&if_a_config, &if_b_config);
+			/* Set the ifconfigs to SP group */
+			sh_css_sp_set_if_configs(&if_a_config, &if_b_config,
+						 if_config_index);
+		}
+	} else {
+		if (if_config_index != SH_CSS_IF_CONFIG_NOT_NEEDED) {
+			assert(if_config_index <= SH_CSS_MAX_IF_CONFIGS);
 
-			अगरmtr_set_अगर_blocking_mode(&अगर_a_config, शून्य);
-			/* Set the अगरconfigs to SP group */
-			sh_css_sp_set_अगर_configs(&अगर_a_config, शून्य,
-						 अगर_config_index);
-		पूर्ण
-	पूर्ण
+			ifmtr_set_if_blocking_mode(&if_a_config, NULL);
+			/* Set the ifconfigs to SP group */
+			sh_css_sp_set_if_configs(&if_a_config, NULL,
+						 if_config_index);
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-bool अगरmtr_set_अगर_blocking_mode_reset = true;
+bool ifmtr_set_if_blocking_mode_reset = true;
 
 /************************************************************
  * Static functions
  ************************************************************/
-अटल व्योम अगरmtr_set_अगर_blocking_mode(
-    स्थिर input_क्रमmatter_cfg_t *स्थिर config_a,
-    स्थिर input_क्रमmatter_cfg_t *स्थिर config_b)
-अणु
-	पूर्णांक i;
-	bool block[] = अणु false, false, false, false पूर्ण;
+static void ifmtr_set_if_blocking_mode(
+    const input_formatter_cfg_t *const config_a,
+    const input_formatter_cfg_t *const config_b)
+{
+	int i;
+	bool block[] = { false, false, false, false };
 
-	निश्चित(N_INPUT_FORMATTER_ID <= (ARRAY_SIZE(block)));
+	assert(N_INPUT_FORMATTER_ID <= (ARRAY_SIZE(block)));
 
 	block[INPUT_FORMATTER0_ID] = (bool)config_a->block_no_reqs;
-	अगर (config_b)
+	if (config_b)
 		block[INPUT_FORMATTER1_ID] = (bool)config_b->block_no_reqs;
 
 	/* TODO: next could cause issues when streams are started after
 	 * eachother. */
 	/*IF should not be reconfigured/reset from host */
-	अगर (अगरmtr_set_अगर_blocking_mode_reset) अणु
-		अगरmtr_set_अगर_blocking_mode_reset = false;
-		क्रम (i = 0; i < N_INPUT_FORMATTER_ID; i++) अणु
-			input_क्रमmatter_ID_t id = (input_क्रमmatter_ID_t)i;
+	if (ifmtr_set_if_blocking_mode_reset) {
+		ifmtr_set_if_blocking_mode_reset = false;
+		for (i = 0; i < N_INPUT_FORMATTER_ID; i++) {
+			input_formatter_ID_t id = (input_formatter_ID_t)i;
 
-			input_क्रमmatter_rst(id);
-			input_क्रमmatter_set_fअगरo_blocking_mode(id, block[id]);
-		पूर्ण
-	पूर्ण
+			input_formatter_rst(id);
+			input_formatter_set_fifo_blocking_mode(id, block[id]);
+		}
+	}
 
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल पूर्णांक अगरmtr_start_column(
-    स्थिर काष्ठा ia_css_stream_config *config,
-    अचिन्हित पूर्णांक bin_in,
-    अचिन्हित पूर्णांक *start_column)
-अणु
-	अचिन्हित पूर्णांक in = config->input_config.input_res.width, start,
-		     क्रम_bayer = ia_css_अगरmtr_columns_needed_क्रम_bayer_order(config);
+static int ifmtr_start_column(
+    const struct ia_css_stream_config *config,
+    unsigned int bin_in,
+    unsigned int *start_column)
+{
+	unsigned int in = config->input_config.input_res.width, start,
+		     for_bayer = ia_css_ifmtr_columns_needed_for_bayer_order(config);
 
-	अगर (bin_in + 2 * क्रम_bayer > in)
-		वापस -EINVAL;
+	if (bin_in + 2 * for_bayer > in)
+		return -EINVAL;
 
 	/* On the hardware, we want to use the middle of the input, so we
-	 * भागide the start column by 2. */
+	 * divide the start column by 2. */
 	start = (in - bin_in) / 2;
-	/* in हाल the number of extra columns is 2 or odd, we round the start
-	 * column करोwn */
+	/* in case the number of extra columns is 2 or odd, we round the start
+	 * column down */
 	start &= ~0x1;
 
-	/* now we add the one column (अगर needed) to correct क्रम the bayer
+	/* now we add the one column (if needed) to correct for the bayer
 	 * order).
 	 */
-	start += क्रम_bayer;
+	start += for_bayer;
 	*start_column = start;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक अगरmtr_input_start_line(
-    स्थिर काष्ठा ia_css_stream_config *config,
-    अचिन्हित पूर्णांक bin_in,
-    अचिन्हित पूर्णांक *start_line)
-अणु
-	अचिन्हित पूर्णांक in = config->input_config.input_res.height, start,
-		     क्रम_bayer = ia_css_अगरmtr_lines_needed_क्रम_bayer_order(config);
+static int ifmtr_input_start_line(
+    const struct ia_css_stream_config *config,
+    unsigned int bin_in,
+    unsigned int *start_line)
+{
+	unsigned int in = config->input_config.input_res.height, start,
+		     for_bayer = ia_css_ifmtr_lines_needed_for_bayer_order(config);
 
-	अगर (bin_in + 2 * क्रम_bayer > in)
-		वापस -EINVAL;
+	if (bin_in + 2 * for_bayer > in)
+		return -EINVAL;
 
 	/* On the hardware, we want to use the middle of the input, so we
-	 * भागide the start line by 2. On the simulator, we cannot handle extra
+	 * divide the start line by 2. On the simulator, we cannot handle extra
 	 * lines at the end of the frame.
 	 */
 	start = (in - bin_in) / 2;
-	/* in हाल the number of extra lines is 2 or odd, we round the start
-	 * line करोwn.
+	/* in case the number of extra lines is 2 or odd, we round the start
+	 * line down.
 	 */
 	start &= ~0x1;
 
-	/* now we add the one line (अगर needed) to correct क्रम the bayer order */
-	start += क्रम_bayer;
+	/* now we add the one line (if needed) to correct for the bayer order */
+	start += for_bayer;
 	*start_line = start;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#पूर्ण_अगर
+#endif

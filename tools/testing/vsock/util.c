@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * vsock test utilities
  *
@@ -8,369 +7,369 @@
  * Author: Stefan Hajnoczi <stefanha@redhat.com>
  */
 
-#समावेश <त्रुटिसं.स>
-#समावेश <मानकपन.स>
-#समावेश <मानक_निवेशt.h>
-#समावेश <मानककोष.स>
-#समावेश <संकेत.स>
-#समावेश <unistd.h>
-#समावेश <निश्चित.स>
-#समावेश <sys/epoll.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <signal.h>
+#include <unistd.h>
+#include <assert.h>
+#include <sys/epoll.h>
 
-#समावेश "timeout.h"
-#समावेश "control.h"
-#समावेश "util.h"
+#include "timeout.h"
+#include "control.h"
+#include "util.h"
 
-/* Install संकेत handlers */
-व्योम init_संकेतs(व्योम)
-अणु
-	काष्ठा sigaction act = अणु
+/* Install signal handlers */
+void init_signals(void)
+{
+	struct sigaction act = {
 		.sa_handler = sigalrm,
-	पूर्ण;
+	};
 
-	sigaction(SIGALRM, &act, शून्य);
-	संकेत(SIGPIPE, संक_छोड़ो);
-पूर्ण
+	sigaction(SIGALRM, &act, NULL);
+	signal(SIGPIPE, SIG_IGN);
+}
 
 /* Parse a CID in string representation */
-अचिन्हित पूर्णांक parse_cid(स्थिर अक्षर *str)
-अणु
-	अक्षर *endptr = शून्य;
-	अचिन्हित दीर्घ n;
+unsigned int parse_cid(const char *str)
+{
+	char *endptr = NULL;
+	unsigned long n;
 
-	त्रुटि_सं = 0;
-	n = म_से_अदीर्घ(str, &endptr, 10);
-	अगर (त्रुटि_सं || *endptr != '\0') अणु
-		ख_लिखो(मानक_त्रुटि, "malformed CID \"%s\"\n", str);
-		निकास(निकास_त्रुटि);
-	पूर्ण
-	वापस n;
-पूर्ण
+	errno = 0;
+	n = strtoul(str, &endptr, 10);
+	if (errno || *endptr != '\0') {
+		fprintf(stderr, "malformed CID \"%s\"\n", str);
+		exit(EXIT_FAILURE);
+	}
+	return n;
+}
 
-/* Wait क्रम the remote to बंद the connection */
-व्योम vsock_रुको_remote_बंद(पूर्णांक fd)
-अणु
-	काष्ठा epoll_event ev;
-	पूर्णांक epollfd, nfds;
+/* Wait for the remote to close the connection */
+void vsock_wait_remote_close(int fd)
+{
+	struct epoll_event ev;
+	int epollfd, nfds;
 
 	epollfd = epoll_create1(0);
-	अगर (epollfd == -1) अणु
-		लिखो_त्रुटि("epoll_create1");
-		निकास(निकास_त्रुटि);
-	पूर्ण
+	if (epollfd == -1) {
+		perror("epoll_create1");
+		exit(EXIT_FAILURE);
+	}
 
 	ev.events = EPOLLRDHUP | EPOLLHUP;
 	ev.data.fd = fd;
-	अगर (epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &ev) == -1) अणु
-		लिखो_त्रुटि("epoll_ctl");
-		निकास(निकास_त्रुटि);
-	पूर्ण
+	if (epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &ev) == -1) {
+		perror("epoll_ctl");
+		exit(EXIT_FAILURE);
+	}
 
-	nfds = epoll_रुको(epollfd, &ev, 1, TIMEOUT * 1000);
-	अगर (nfds == -1) अणु
-		लिखो_त्रुटि("epoll_wait");
-		निकास(निकास_त्रुटि);
-	पूर्ण
+	nfds = epoll_wait(epollfd, &ev, 1, TIMEOUT * 1000);
+	if (nfds == -1) {
+		perror("epoll_wait");
+		exit(EXIT_FAILURE);
+	}
 
-	अगर (nfds == 0) अणु
-		ख_लिखो(मानक_त्रुटि, "epoll_wait timed out\n");
-		निकास(निकास_त्रुटि);
-	पूर्ण
+	if (nfds == 0) {
+		fprintf(stderr, "epoll_wait timed out\n");
+		exit(EXIT_FAILURE);
+	}
 
-	निश्चित(nfds == 1);
-	निश्चित(ev.events & (EPOLLRDHUP | EPOLLHUP));
-	निश्चित(ev.data.fd == fd);
+	assert(nfds == 1);
+	assert(ev.events & (EPOLLRDHUP | EPOLLHUP));
+	assert(ev.data.fd == fd);
 
-	बंद(epollfd);
-पूर्ण
+	close(epollfd);
+}
 
-/* Connect to <cid, port> and वापस the file descriptor. */
-पूर्णांक vsock_stream_connect(अचिन्हित पूर्णांक cid, अचिन्हित पूर्णांक port)
-अणु
-	जोड़ अणु
-		काष्ठा sockaddr sa;
-		काष्ठा sockaddr_vm svm;
-	पूर्ण addr = अणु
-		.svm = अणु
+/* Connect to <cid, port> and return the file descriptor. */
+int vsock_stream_connect(unsigned int cid, unsigned int port)
+{
+	union {
+		struct sockaddr sa;
+		struct sockaddr_vm svm;
+	} addr = {
+		.svm = {
 			.svm_family = AF_VSOCK,
 			.svm_port = port,
 			.svm_cid = cid,
-		पूर्ण,
-	पूर्ण;
-	पूर्णांक ret;
-	पूर्णांक fd;
+		},
+	};
+	int ret;
+	int fd;
 
 	control_expectln("LISTENING");
 
 	fd = socket(AF_VSOCK, SOCK_STREAM, 0);
 
-	समयout_begin(TIMEOUT);
-	करो अणु
-		ret = connect(fd, &addr.sa, माप(addr.svm));
-		समयout_check("connect");
-	पूर्ण जबतक (ret < 0 && त्रुटि_सं == EINTR);
-	समयout_end();
+	timeout_begin(TIMEOUT);
+	do {
+		ret = connect(fd, &addr.sa, sizeof(addr.svm));
+		timeout_check("connect");
+	} while (ret < 0 && errno == EINTR);
+	timeout_end();
 
-	अगर (ret < 0) अणु
-		पूर्णांक old_त्रुटि_सं = त्रुटि_सं;
+	if (ret < 0) {
+		int old_errno = errno;
 
-		बंद(fd);
+		close(fd);
 		fd = -1;
-		त्रुटि_सं = old_त्रुटि_सं;
-	पूर्ण
-	वापस fd;
-पूर्ण
+		errno = old_errno;
+	}
+	return fd;
+}
 
-/* Listen on <cid, port> and वापस the first incoming connection.  The remote
- * address is stored to clientaddrp.  clientaddrp may be शून्य.
+/* Listen on <cid, port> and return the first incoming connection.  The remote
+ * address is stored to clientaddrp.  clientaddrp may be NULL.
  */
-पूर्णांक vsock_stream_accept(अचिन्हित पूर्णांक cid, अचिन्हित पूर्णांक port,
-			काष्ठा sockaddr_vm *clientaddrp)
-अणु
-	जोड़ अणु
-		काष्ठा sockaddr sa;
-		काष्ठा sockaddr_vm svm;
-	पूर्ण addr = अणु
-		.svm = अणु
+int vsock_stream_accept(unsigned int cid, unsigned int port,
+			struct sockaddr_vm *clientaddrp)
+{
+	union {
+		struct sockaddr sa;
+		struct sockaddr_vm svm;
+	} addr = {
+		.svm = {
 			.svm_family = AF_VSOCK,
 			.svm_port = port,
 			.svm_cid = cid,
-		पूर्ण,
-	पूर्ण;
-	जोड़ अणु
-		काष्ठा sockaddr sa;
-		काष्ठा sockaddr_vm svm;
-	पूर्ण clientaddr;
-	socklen_t clientaddr_len = माप(clientaddr.svm);
-	पूर्णांक fd;
-	पूर्णांक client_fd;
-	पूर्णांक old_त्रुटि_सं;
+		},
+	};
+	union {
+		struct sockaddr sa;
+		struct sockaddr_vm svm;
+	} clientaddr;
+	socklen_t clientaddr_len = sizeof(clientaddr.svm);
+	int fd;
+	int client_fd;
+	int old_errno;
 
 	fd = socket(AF_VSOCK, SOCK_STREAM, 0);
 
-	अगर (bind(fd, &addr.sa, माप(addr.svm)) < 0) अणु
-		लिखो_त्रुटि("bind");
-		निकास(निकास_त्रुटि);
-	पूर्ण
+	if (bind(fd, &addr.sa, sizeof(addr.svm)) < 0) {
+		perror("bind");
+		exit(EXIT_FAILURE);
+	}
 
-	अगर (listen(fd, 1) < 0) अणु
-		लिखो_त्रुटि("listen");
-		निकास(निकास_त्रुटि);
-	पूर्ण
+	if (listen(fd, 1) < 0) {
+		perror("listen");
+		exit(EXIT_FAILURE);
+	}
 
-	control_ग_लिखोln("LISTENING");
+	control_writeln("LISTENING");
 
-	समयout_begin(TIMEOUT);
-	करो अणु
+	timeout_begin(TIMEOUT);
+	do {
 		client_fd = accept(fd, &clientaddr.sa, &clientaddr_len);
-		समयout_check("accept");
-	पूर्ण जबतक (client_fd < 0 && त्रुटि_सं == EINTR);
-	समयout_end();
+		timeout_check("accept");
+	} while (client_fd < 0 && errno == EINTR);
+	timeout_end();
 
-	old_त्रुटि_सं = त्रुटि_सं;
-	बंद(fd);
-	त्रुटि_सं = old_त्रुटि_सं;
+	old_errno = errno;
+	close(fd);
+	errno = old_errno;
 
-	अगर (client_fd < 0)
-		वापस client_fd;
+	if (client_fd < 0)
+		return client_fd;
 
-	अगर (clientaddr_len != माप(clientaddr.svm)) अणु
-		ख_लिखो(मानक_त्रुटि, "unexpected addrlen from accept(2), %zu\n",
-			(माप_प्रकार)clientaddr_len);
-		निकास(निकास_त्रुटि);
-	पूर्ण
-	अगर (clientaddr.sa.sa_family != AF_VSOCK) अणु
-		ख_लिखो(मानक_त्रुटि, "expected AF_VSOCK from accept(2), got %d\n",
+	if (clientaddr_len != sizeof(clientaddr.svm)) {
+		fprintf(stderr, "unexpected addrlen from accept(2), %zu\n",
+			(size_t)clientaddr_len);
+		exit(EXIT_FAILURE);
+	}
+	if (clientaddr.sa.sa_family != AF_VSOCK) {
+		fprintf(stderr, "expected AF_VSOCK from accept(2), got %d\n",
 			clientaddr.sa.sa_family);
-		निकास(निकास_त्रुटि);
-	पूर्ण
+		exit(EXIT_FAILURE);
+	}
 
-	अगर (clientaddrp)
+	if (clientaddrp)
 		*clientaddrp = clientaddr.svm;
-	वापस client_fd;
-पूर्ण
+	return client_fd;
+}
 
-/* Transmit one byte and check the वापस value.
+/* Transmit one byte and check the return value.
  *
  * expected_ret:
- *  <0 Negative त्रुटि_सं (क्रम testing errors)
+ *  <0 Negative errno (for testing errors)
  *   0 End-of-file
  *   1 Success
  */
-व्योम send_byte(पूर्णांक fd, पूर्णांक expected_ret, पूर्णांक flags)
-अणु
-	स्थिर uपूर्णांक8_t byte = 'A';
-	sमाप_प्रकार nwritten;
+void send_byte(int fd, int expected_ret, int flags)
+{
+	const uint8_t byte = 'A';
+	ssize_t nwritten;
 
-	समयout_begin(TIMEOUT);
-	करो अणु
-		nwritten = send(fd, &byte, माप(byte), flags);
-		समयout_check("write");
-	पूर्ण जबतक (nwritten < 0 && त्रुटि_सं == EINTR);
-	समयout_end();
+	timeout_begin(TIMEOUT);
+	do {
+		nwritten = send(fd, &byte, sizeof(byte), flags);
+		timeout_check("write");
+	} while (nwritten < 0 && errno == EINTR);
+	timeout_end();
 
-	अगर (expected_ret < 0) अणु
-		अगर (nwritten != -1) अणु
-			ख_लिखो(मानक_त्रुटि, "bogus send(2) return value %zd\n",
+	if (expected_ret < 0) {
+		if (nwritten != -1) {
+			fprintf(stderr, "bogus send(2) return value %zd\n",
 				nwritten);
-			निकास(निकास_त्रुटि);
-		पूर्ण
-		अगर (त्रुटि_सं != -expected_ret) अणु
-			लिखो_त्रुटि("write");
-			निकास(निकास_त्रुटि);
-		पूर्ण
-		वापस;
-	पूर्ण
+			exit(EXIT_FAILURE);
+		}
+		if (errno != -expected_ret) {
+			perror("write");
+			exit(EXIT_FAILURE);
+		}
+		return;
+	}
 
-	अगर (nwritten < 0) अणु
-		लिखो_त्रुटि("write");
-		निकास(निकास_त्रुटि);
-	पूर्ण
-	अगर (nwritten == 0) अणु
-		अगर (expected_ret == 0)
-			वापस;
+	if (nwritten < 0) {
+		perror("write");
+		exit(EXIT_FAILURE);
+	}
+	if (nwritten == 0) {
+		if (expected_ret == 0)
+			return;
 
-		ख_लिखो(मानक_त्रुटि, "unexpected EOF while sending byte\n");
-		निकास(निकास_त्रुटि);
-	पूर्ण
-	अगर (nwritten != माप(byte)) अणु
-		ख_लिखो(मानक_त्रुटि, "bogus send(2) return value %zd\n", nwritten);
-		निकास(निकास_त्रुटि);
-	पूर्ण
-पूर्ण
+		fprintf(stderr, "unexpected EOF while sending byte\n");
+		exit(EXIT_FAILURE);
+	}
+	if (nwritten != sizeof(byte)) {
+		fprintf(stderr, "bogus send(2) return value %zd\n", nwritten);
+		exit(EXIT_FAILURE);
+	}
+}
 
-/* Receive one byte and check the वापस value.
+/* Receive one byte and check the return value.
  *
  * expected_ret:
- *  <0 Negative त्रुटि_सं (क्रम testing errors)
+ *  <0 Negative errno (for testing errors)
  *   0 End-of-file
  *   1 Success
  */
-व्योम recv_byte(पूर्णांक fd, पूर्णांक expected_ret, पूर्णांक flags)
-अणु
-	uपूर्णांक8_t byte;
-	sमाप_प्रकार nपढ़ो;
+void recv_byte(int fd, int expected_ret, int flags)
+{
+	uint8_t byte;
+	ssize_t nread;
 
-	समयout_begin(TIMEOUT);
-	करो अणु
-		nपढ़ो = recv(fd, &byte, माप(byte), flags);
-		समयout_check("read");
-	पूर्ण जबतक (nपढ़ो < 0 && त्रुटि_सं == EINTR);
-	समयout_end();
+	timeout_begin(TIMEOUT);
+	do {
+		nread = recv(fd, &byte, sizeof(byte), flags);
+		timeout_check("read");
+	} while (nread < 0 && errno == EINTR);
+	timeout_end();
 
-	अगर (expected_ret < 0) अणु
-		अगर (nपढ़ो != -1) अणु
-			ख_लिखो(मानक_त्रुटि, "bogus recv(2) return value %zd\n",
-				nपढ़ो);
-			निकास(निकास_त्रुटि);
-		पूर्ण
-		अगर (त्रुटि_सं != -expected_ret) अणु
-			लिखो_त्रुटि("read");
-			निकास(निकास_त्रुटि);
-		पूर्ण
-		वापस;
-	पूर्ण
+	if (expected_ret < 0) {
+		if (nread != -1) {
+			fprintf(stderr, "bogus recv(2) return value %zd\n",
+				nread);
+			exit(EXIT_FAILURE);
+		}
+		if (errno != -expected_ret) {
+			perror("read");
+			exit(EXIT_FAILURE);
+		}
+		return;
+	}
 
-	अगर (nपढ़ो < 0) अणु
-		लिखो_त्रुटि("read");
-		निकास(निकास_त्रुटि);
-	पूर्ण
-	अगर (nपढ़ो == 0) अणु
-		अगर (expected_ret == 0)
-			वापस;
+	if (nread < 0) {
+		perror("read");
+		exit(EXIT_FAILURE);
+	}
+	if (nread == 0) {
+		if (expected_ret == 0)
+			return;
 
-		ख_लिखो(मानक_त्रुटि, "unexpected EOF while receiving byte\n");
-		निकास(निकास_त्रुटि);
-	पूर्ण
-	अगर (nपढ़ो != माप(byte)) अणु
-		ख_लिखो(मानक_त्रुटि, "bogus recv(2) return value %zd\n", nपढ़ो);
-		निकास(निकास_त्रुटि);
-	पूर्ण
-	अगर (byte != 'A') अणु
-		ख_लिखो(मानक_त्रुटि, "unexpected byte read %c\n", byte);
-		निकास(निकास_त्रुटि);
-	पूर्ण
-पूर्ण
+		fprintf(stderr, "unexpected EOF while receiving byte\n");
+		exit(EXIT_FAILURE);
+	}
+	if (nread != sizeof(byte)) {
+		fprintf(stderr, "bogus recv(2) return value %zd\n", nread);
+		exit(EXIT_FAILURE);
+	}
+	if (byte != 'A') {
+		fprintf(stderr, "unexpected byte read %c\n", byte);
+		exit(EXIT_FAILURE);
+	}
+}
 
-/* Run test हालs.  The program terminates अगर a failure occurs. */
-व्योम run_tests(स्थिर काष्ठा test_हाल *test_हालs,
-	       स्थिर काष्ठा test_opts *opts)
-अणु
-	पूर्णांक i;
+/* Run test cases.  The program terminates if a failure occurs. */
+void run_tests(const struct test_case *test_cases,
+	       const struct test_opts *opts)
+{
+	int i;
 
-	क्रम (i = 0; test_हालs[i].name; i++) अणु
-		व्योम (*run)(स्थिर काष्ठा test_opts *opts);
-		अक्षर *line;
+	for (i = 0; test_cases[i].name; i++) {
+		void (*run)(const struct test_opts *opts);
+		char *line;
 
-		म_लिखो("%d - %s...", i, test_हालs[i].name);
-		ख_साफ(मानक_निकास);
+		printf("%d - %s...", i, test_cases[i].name);
+		fflush(stdout);
 
-		/* Full barrier beक्रमe executing the next test.  This
+		/* Full barrier before executing the next test.  This
 		 * ensures that client and server are executing the
-		 * same test हाल.  In particular, it means whoever is
+		 * same test case.  In particular, it means whoever is
 		 * faster will not see the peer still executing the
 		 * last test.  This is important because port numbers
-		 * can be used by multiple test हालs.
+		 * can be used by multiple test cases.
 		 */
-		अगर (test_हालs[i].skip)
-			control_ग_लिखोln("SKIP");
-		अन्यथा
-			control_ग_लिखोln("NEXT");
+		if (test_cases[i].skip)
+			control_writeln("SKIP");
+		else
+			control_writeln("NEXT");
 
-		line = control_पढ़ोln();
-		अगर (control_cmpln(line, "SKIP", false) || test_हालs[i].skip) अणु
+		line = control_readln();
+		if (control_cmpln(line, "SKIP", false) || test_cases[i].skip) {
 
-			म_लिखो("skipped\n");
+			printf("skipped\n");
 
-			मुक्त(line);
-			जारी;
-		पूर्ण
+			free(line);
+			continue;
+		}
 
 		control_cmpln(line, "NEXT", true);
-		मुक्त(line);
+		free(line);
 
-		अगर (opts->mode == TEST_MODE_CLIENT)
-			run = test_हालs[i].run_client;
-		अन्यथा
-			run = test_हालs[i].run_server;
+		if (opts->mode == TEST_MODE_CLIENT)
+			run = test_cases[i].run_client;
+		else
+			run = test_cases[i].run_server;
 
-		अगर (run)
+		if (run)
 			run(opts);
 
-		म_लिखो("ok\n");
-	पूर्ण
-पूर्ण
+		printf("ok\n");
+	}
+}
 
-व्योम list_tests(स्थिर काष्ठा test_हाल *test_हालs)
-अणु
-	पूर्णांक i;
+void list_tests(const struct test_case *test_cases)
+{
+	int i;
 
-	म_लिखो("ID\tTest name\n");
+	printf("ID\tTest name\n");
 
-	क्रम (i = 0; test_हालs[i].name; i++)
-		म_लिखो("%d\t%s\n", i, test_हालs[i].name);
+	for (i = 0; test_cases[i].name; i++)
+		printf("%d\t%s\n", i, test_cases[i].name);
 
-	निकास(निकास_त्रुटि);
-पूर्ण
+	exit(EXIT_FAILURE);
+}
 
-व्योम skip_test(काष्ठा test_हाल *test_हालs, माप_प्रकार test_हालs_len,
-	       स्थिर अक्षर *test_id_str)
-अणु
-	अचिन्हित दीर्घ test_id;
-	अक्षर *endptr = शून्य;
+void skip_test(struct test_case *test_cases, size_t test_cases_len,
+	       const char *test_id_str)
+{
+	unsigned long test_id;
+	char *endptr = NULL;
 
-	त्रुटि_सं = 0;
-	test_id = म_से_अदीर्घ(test_id_str, &endptr, 10);
-	अगर (त्रुटि_सं || *endptr != '\0') अणु
-		ख_लिखो(मानक_त्रुटि, "malformed test ID \"%s\"\n", test_id_str);
-		निकास(निकास_त्रुटि);
-	पूर्ण
+	errno = 0;
+	test_id = strtoul(test_id_str, &endptr, 10);
+	if (errno || *endptr != '\0') {
+		fprintf(stderr, "malformed test ID \"%s\"\n", test_id_str);
+		exit(EXIT_FAILURE);
+	}
 
-	अगर (test_id >= test_हालs_len) अणु
-		ख_लिखो(मानक_त्रुटि, "test ID (%lu) larger than the max allowed (%lu)\n",
-			test_id, test_हालs_len - 1);
-		निकास(निकास_त्रुटि);
-	पूर्ण
+	if (test_id >= test_cases_len) {
+		fprintf(stderr, "test ID (%lu) larger than the max allowed (%lu)\n",
+			test_id, test_cases_len - 1);
+		exit(EXIT_FAILURE);
+	}
 
-	test_हालs[test_id].skip = true;
-पूर्ण
+	test_cases[test_id].skip = true;
+}

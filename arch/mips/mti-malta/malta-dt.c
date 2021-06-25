@@ -1,16 +1,15 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2015 Imagination Technologies
  * Author: Paul Burton <paul.burton@mips.com>
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/init.h>
-#समावेश <linux/of_fdt.h>
-#समावेश <linux/of_platक्रमm.h>
+#include <linux/clk-provider.h>
+#include <linux/init.h>
+#include <linux/of_fdt.h>
+#include <linux/of_platform.h>
 
-व्योम __init device_tree_init(व्योम)
-अणु
+void __init device_tree_init(void)
+{
 	unflatten_and_copy_device_tree();
-पूर्ण
+}

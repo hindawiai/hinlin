@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2018 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,31 +19,31 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#समावेश "wimm.h"
+#include "wimm.h"
 
-#समावेश <nvअगर/class.h>
+#include <nvif/class.h>
 
-पूर्णांक
-nv50_wimm_init(काष्ठा nouveau_drm *drm, काष्ठा nv50_wndw *wndw)
-अणु
-	काष्ठा अणु
+int
+nv50_wimm_init(struct nouveau_drm *drm, struct nv50_wndw *wndw)
+{
+	struct {
 		s32 oclass;
-		पूर्णांक version;
-		पूर्णांक (*init)(काष्ठा nouveau_drm *, s32, काष्ठा nv50_wndw *);
-	पूर्ण wimms[] = अणु
-		अणु GA102_DISP_WINDOW_IMM_CHANNEL_DMA, 0, wimmc37b_init पूर्ण,
-		अणु TU102_DISP_WINDOW_IMM_CHANNEL_DMA, 0, wimmc37b_init पूर्ण,
-		अणु GV100_DISP_WINDOW_IMM_CHANNEL_DMA, 0, wimmc37b_init पूर्ण,
-		अणुपूर्ण
-	पूर्ण;
-	काष्ठा nv50_disp *disp = nv50_disp(drm->dev);
-	पूर्णांक cid;
+		int version;
+		int (*init)(struct nouveau_drm *, s32, struct nv50_wndw *);
+	} wimms[] = {
+		{ GA102_DISP_WINDOW_IMM_CHANNEL_DMA, 0, wimmc37b_init },
+		{ TU102_DISP_WINDOW_IMM_CHANNEL_DMA, 0, wimmc37b_init },
+		{ GV100_DISP_WINDOW_IMM_CHANNEL_DMA, 0, wimmc37b_init },
+		{}
+	};
+	struct nv50_disp *disp = nv50_disp(drm->dev);
+	int cid;
 
-	cid = nvअगर_mclass(&disp->disp->object, wimms);
-	अगर (cid < 0) अणु
+	cid = nvif_mclass(&disp->disp->object, wimms);
+	if (cid < 0) {
 		NV_ERROR(drm, "No supported window immediate class\n");
-		वापस cid;
-	पूर्ण
+		return cid;
+	}
 
-	वापस wimms[cid].init(drm, wimms[cid].oclass, wndw);
-पूर्ण
+	return wimms[cid].init(drm, wimms[cid].oclass, wndw);
+}

@@ -1,32 +1,31 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2020 Facebook */
-#समावेश <मानकघोष.स>
-#समावेश <linux/bpf.h>
-#समावेश <bpf/bpf_helpers.h>
+#include <stddef.h>
+#include <linux/bpf.h>
+#include <bpf/bpf_helpers.h>
 
-__attribute__ ((noअंतरभूत))
-पूर्णांक f1(काष्ठा __sk_buff *skb)
-अणु
-	वापस skb->len;
-पूर्ण
+__attribute__ ((noinline))
+int f1(struct __sk_buff *skb)
+{
+	return skb->len;
+}
 
-पूर्णांक f3(पूर्णांक, काष्ठा __sk_buff *skb);
+int f3(int, struct __sk_buff *skb);
 
-__attribute__ ((noअंतरभूत))
-पूर्णांक f2(पूर्णांक val, काष्ठा __sk_buff *skb)
-अणु
-	वापस f1(skb) + f3(val, skb + 1); /* type mismatch */
-पूर्ण
+__attribute__ ((noinline))
+int f2(int val, struct __sk_buff *skb)
+{
+	return f1(skb) + f3(val, skb + 1); /* type mismatch */
+}
 
-__attribute__ ((noअंतरभूत))
-पूर्णांक f3(पूर्णांक val, काष्ठा __sk_buff *skb)
-अणु
-	वापस skb->अगरindex * val;
-पूर्ण
+__attribute__ ((noinline))
+int f3(int val, struct __sk_buff *skb)
+{
+	return skb->ifindex * val;
+}
 
 SEC("classifier/test")
-पूर्णांक test_cls(काष्ठा __sk_buff *skb)
-अणु
-	वापस f1(skb) + f2(2, skb) + f3(3, skb);
-पूर्ण
+int test_cls(struct __sk_buff *skb)
+{
+	return f1(skb) + f2(2, skb) + f3(3, skb);
+}

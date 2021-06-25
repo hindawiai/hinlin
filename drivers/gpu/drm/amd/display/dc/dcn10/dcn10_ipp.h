@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,22 +23,22 @@
  *
  */
 
-#अगर_अघोषित _DCN10_IPP_H_
-#घोषणा _DCN10_IPP_H_
+#ifndef _DCN10_IPP_H_
+#define _DCN10_IPP_H_
 
-#समावेश "ipp.h"
+#include "ipp.h"
 
-#घोषणा TO_DCN10_IPP(ipp)\
-	container_of(ipp, काष्ठा dcn10_ipp, base)
+#define TO_DCN10_IPP(ipp)\
+	container_of(ipp, struct dcn10_ipp, base)
 
-#घोषणा IPP_REG_LIST_DCN(id) \
+#define IPP_REG_LIST_DCN(id) \
 	SRI(FORMAT_CONTROL, CNVC_CFG, id), \
 	SRI(CNVC_SURFACE_PIXEL_FORMAT, CNVC_CFG, id), \
 	SRI(CURSOR0_CONTROL, CNVC_CUR, id), \
 	SRI(CURSOR0_COLOR0, CNVC_CUR, id), \
 	SRI(CURSOR0_COLOR1, CNVC_CUR, id)
 
-#घोषणा IPP_REG_LIST_DCN10(id) \
+#define IPP_REG_LIST_DCN10(id) \
 	IPP_REG_LIST_DCN(id), \
 	SRI(CURSOR_SETTINS, HUBPREQ, id), \
 	SRI(CURSOR_SURFACE_ADDRESS_HIGH, CURSOR, id), \
@@ -50,7 +49,7 @@
 	SRI(CURSOR_HOT_SPOT, CURSOR, id), \
 	SRI(CURSOR_DST_OFFSET, CURSOR, id)
 
-#घोषणा IPP_REG_LIST_DCN20(id) \
+#define IPP_REG_LIST_DCN20(id) \
 	IPP_REG_LIST_DCN(id), \
 	SRI(CURSOR_SETTINGS, HUBPREQ, id), \
 	SRI(CURSOR_SURFACE_ADDRESS_HIGH, CURSOR0_, id), \
@@ -61,19 +60,19 @@
 	SRI(CURSOR_HOT_SPOT, CURSOR0_, id), \
 	SRI(CURSOR_DST_OFFSET, CURSOR0_, id)
 
-#घोषणा CURSOR0_CURSOR_CONTROL__CURSOR_2X_MAGNIFY__SHIFT	0x4
-#घोषणा CURSOR0_CURSOR_CONTROL__CURSOR_2X_MAGNIFY_MASK		0x00000010L
-#घोषणा CURSOR1_CURSOR_CONTROL__CURSOR_2X_MAGNIFY__SHIFT	0x4
-#घोषणा CURSOR1_CURSOR_CONTROL__CURSOR_2X_MAGNIFY_MASK		0x00000010L
-#घोषणा CURSOR2_CURSOR_CONTROL__CURSOR_2X_MAGNIFY__SHIFT	0x4
-#घोषणा CURSOR2_CURSOR_CONTROL__CURSOR_2X_MAGNIFY_MASK		0x00000010L
-#घोषणा CURSOR3_CURSOR_CONTROL__CURSOR_2X_MAGNIFY__SHIFT	0x4
-#घोषणा CURSOR3_CURSOR_CONTROL__CURSOR_2X_MAGNIFY_MASK		0x00000010L
+#define CURSOR0_CURSOR_CONTROL__CURSOR_2X_MAGNIFY__SHIFT	0x4
+#define CURSOR0_CURSOR_CONTROL__CURSOR_2X_MAGNIFY_MASK		0x00000010L
+#define CURSOR1_CURSOR_CONTROL__CURSOR_2X_MAGNIFY__SHIFT	0x4
+#define CURSOR1_CURSOR_CONTROL__CURSOR_2X_MAGNIFY_MASK		0x00000010L
+#define CURSOR2_CURSOR_CONTROL__CURSOR_2X_MAGNIFY__SHIFT	0x4
+#define CURSOR2_CURSOR_CONTROL__CURSOR_2X_MAGNIFY_MASK		0x00000010L
+#define CURSOR3_CURSOR_CONTROL__CURSOR_2X_MAGNIFY__SHIFT	0x4
+#define CURSOR3_CURSOR_CONTROL__CURSOR_2X_MAGNIFY_MASK		0x00000010L
 
-#घोषणा IPP_SF(reg_name, field_name, post_fix)\
+#define IPP_SF(reg_name, field_name, post_fix)\
 	.field_name = reg_name ## __ ## field_name ## post_fix
 
-#घोषणा IPP_MASK_SH_LIST_DCN(mask_sh) \
+#define IPP_MASK_SH_LIST_DCN(mask_sh) \
 	IPP_SF(CNVC_CFG0_CNVC_SURFACE_PIXEL_FORMAT, CNVC_SURFACE_PIXEL_FORMAT, mask_sh), \
 	IPP_SF(CNVC_CFG0_FORMAT_CONTROL, CNVC_BYPASS, mask_sh), \
 	IPP_SF(CNVC_CFG0_FORMAT_CONTROL, ALPHA_EN, mask_sh), \
@@ -84,7 +83,7 @@
 	IPP_SF(CNVC_CUR0_CURSOR0_CONTROL, CUR0_EXPANSION_MODE, mask_sh), \
 	IPP_SF(CNVC_CUR0_CURSOR0_CONTROL, CUR0_ENABLE, mask_sh)
 
-#घोषणा IPP_MASK_SH_LIST_DCN10(mask_sh) \
+#define IPP_MASK_SH_LIST_DCN10(mask_sh) \
 	IPP_MASK_SH_LIST_DCN(mask_sh),\
 	IPP_SF(HUBPREQ0_CURSOR_SETTINS, CURSOR0_DST_Y_OFFSET, mask_sh), \
 	IPP_SF(HUBPREQ0_CURSOR_SETTINS, CURSOR0_CHUNK_HDL_ADJUST, mask_sh), \
@@ -104,7 +103,7 @@
 	IPP_SF(CURSOR0_CURSOR_DST_OFFSET, CURSOR_DST_X_OFFSET, mask_sh), \
 	IPP_SF(CNVC_CFG0_FORMAT_CONTROL, OUTPUT_FP, mask_sh)
 
-#घोषणा IPP_MASK_SH_LIST_DCN20(mask_sh) \
+#define IPP_MASK_SH_LIST_DCN20(mask_sh) \
 	IPP_MASK_SH_LIST_DCN(mask_sh), \
 	IPP_SF(HUBPREQ0_CURSOR_SETTINGS, CURSOR0_DST_Y_OFFSET, mask_sh), \
 	IPP_SF(HUBPREQ0_CURSOR_SETTINGS, CURSOR0_CHUNK_HDL_ADJUST, mask_sh), \
@@ -123,7 +122,7 @@
 	IPP_SF(CURSOR0_0_CURSOR_HOT_SPOT, CURSOR_HOT_SPOT_Y, mask_sh), \
 	IPP_SF(CURSOR0_0_CURSOR_DST_OFFSET, CURSOR_DST_X_OFFSET, mask_sh)
 
-#घोषणा IPP_DCN10_REG_FIELD_LIST(type) \
+#define IPP_DCN10_REG_FIELD_LIST(type) \
 	type CNVC_SURFACE_PIXEL_FORMAT; \
 	type CNVC_BYPASS; \
 	type ALPHA_EN; \
@@ -151,53 +150,53 @@
 	type CURSOR_DST_X_OFFSET; \
 	type OUTPUT_FP
 
-काष्ठा dcn10_ipp_shअगरt अणु
-	IPP_DCN10_REG_FIELD_LIST(uपूर्णांक8_t);
-पूर्ण;
+struct dcn10_ipp_shift {
+	IPP_DCN10_REG_FIELD_LIST(uint8_t);
+};
 
-काष्ठा dcn10_ipp_mask अणु
-	IPP_DCN10_REG_FIELD_LIST(uपूर्णांक32_t);
-पूर्ण;
+struct dcn10_ipp_mask {
+	IPP_DCN10_REG_FIELD_LIST(uint32_t);
+};
 
-काष्ठा dcn10_ipp_रेजिस्टरs अणु
-	uपूर्णांक32_t CURSOR_SETTINS;
-	uपूर्णांक32_t CURSOR_SETTINGS;
-	uपूर्णांक32_t CNVC_SURFACE_PIXEL_FORMAT;
-	uपूर्णांक32_t CURSOR0_CONTROL;
-	uपूर्णांक32_t CURSOR0_COLOR0;
-	uपूर्णांक32_t CURSOR0_COLOR1;
-	uपूर्णांक32_t FORMAT_CONTROL;
-	uपूर्णांक32_t CURSOR_SURFACE_ADDRESS_HIGH;
-	uपूर्णांक32_t CURSOR_SURFACE_ADDRESS;
-	uपूर्णांक32_t CURSOR_SIZE;
-	uपूर्णांक32_t CURSOR_CONTROL;
-	uपूर्णांक32_t CURSOR_POSITION;
-	uपूर्णांक32_t CURSOR_HOT_SPOT;
-	uपूर्णांक32_t CURSOR_DST_OFFSET;
-पूर्ण;
+struct dcn10_ipp_registers {
+	uint32_t CURSOR_SETTINS;
+	uint32_t CURSOR_SETTINGS;
+	uint32_t CNVC_SURFACE_PIXEL_FORMAT;
+	uint32_t CURSOR0_CONTROL;
+	uint32_t CURSOR0_COLOR0;
+	uint32_t CURSOR0_COLOR1;
+	uint32_t FORMAT_CONTROL;
+	uint32_t CURSOR_SURFACE_ADDRESS_HIGH;
+	uint32_t CURSOR_SURFACE_ADDRESS;
+	uint32_t CURSOR_SIZE;
+	uint32_t CURSOR_CONTROL;
+	uint32_t CURSOR_POSITION;
+	uint32_t CURSOR_HOT_SPOT;
+	uint32_t CURSOR_DST_OFFSET;
+};
 
-काष्ठा dcn10_ipp अणु
-	काष्ठा input_pixel_processor base;
+struct dcn10_ipp {
+	struct input_pixel_processor base;
 
-	स्थिर काष्ठा dcn10_ipp_रेजिस्टरs *regs;
-	स्थिर काष्ठा dcn10_ipp_shअगरt *ipp_shअगरt;
-	स्थिर काष्ठा dcn10_ipp_mask *ipp_mask;
+	const struct dcn10_ipp_registers *regs;
+	const struct dcn10_ipp_shift *ipp_shift;
+	const struct dcn10_ipp_mask *ipp_mask;
 
-	काष्ठा dc_cursor_attributes curs_attr;
-पूर्ण;
+	struct dc_cursor_attributes curs_attr;
+};
 
-व्योम dcn10_ipp_स्थिरruct(काष्ठा dcn10_ipp *ippn10,
-	काष्ठा dc_context *ctx,
-	पूर्णांक inst,
-	स्थिर काष्ठा dcn10_ipp_रेजिस्टरs *regs,
-	स्थिर काष्ठा dcn10_ipp_shअगरt *ipp_shअगरt,
-	स्थिर काष्ठा dcn10_ipp_mask *ipp_mask);
+void dcn10_ipp_construct(struct dcn10_ipp *ippn10,
+	struct dc_context *ctx,
+	int inst,
+	const struct dcn10_ipp_registers *regs,
+	const struct dcn10_ipp_shift *ipp_shift,
+	const struct dcn10_ipp_mask *ipp_mask);
 
-व्योम dcn20_ipp_स्थिरruct(काष्ठा dcn10_ipp *ippn10,
-	काष्ठा dc_context *ctx,
-	पूर्णांक inst,
-	स्थिर काष्ठा dcn10_ipp_रेजिस्टरs *regs,
-	स्थिर काष्ठा dcn10_ipp_shअगरt *ipp_shअगरt,
-	स्थिर काष्ठा dcn10_ipp_mask *ipp_mask);
+void dcn20_ipp_construct(struct dcn10_ipp *ippn10,
+	struct dc_context *ctx,
+	int inst,
+	const struct dcn10_ipp_registers *regs,
+	const struct dcn10_ipp_shift *ipp_shift,
+	const struct dcn10_ipp_mask *ipp_mask);
 
-#पूर्ण_अगर /* _DCN10_IPP_H_ */
+#endif /* _DCN10_IPP_H_ */

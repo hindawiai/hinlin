@@ -1,161 +1,160 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Linux perक्रमmance counter support क्रम MIPS.
+ * Linux performance counter support for MIPS.
  *
  * Copyright (C) 2010 MIPS Technologies, Inc.
  * Copyright (C) 2011 Cavium Networks, Inc.
  * Author: Deng-Cheng Zhu
  *
- * This code is based on the implementation क्रम ARM, which is in turn
- * based on the sparc64 perf event code and the x86 code. Perक्रमmance
+ * This code is based on the implementation for ARM, which is in turn
+ * based on the sparc64 perf event code and the x86 code. Performance
  * counter access is based on the MIPS Oprofile code. And the callchain
  * support references the code of MIPS stacktrace.c.
  */
 
-#समावेश <linux/cpumask.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/perf_event.h>
-#समावेश <linux/uaccess.h>
+#include <linux/cpumask.h>
+#include <linux/interrupt.h>
+#include <linux/smp.h>
+#include <linux/kernel.h>
+#include <linux/perf_event.h>
+#include <linux/uaccess.h>
 
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/irq_regs.h>
-#समावेश <यंत्र/stacktrace.h>
-#समावेश <यंत्र/समय.स> /* For perf_irq */
+#include <asm/irq.h>
+#include <asm/irq_regs.h>
+#include <asm/stacktrace.h>
+#include <asm/time.h> /* For perf_irq */
 
-#घोषणा MIPS_MAX_HWEVENTS 4
-#घोषणा MIPS_TCS_PER_COUNTER 2
-#घोषणा MIPS_CPUID_TO_COUNTER_MASK (MIPS_TCS_PER_COUNTER - 1)
+#define MIPS_MAX_HWEVENTS 4
+#define MIPS_TCS_PER_COUNTER 2
+#define MIPS_CPUID_TO_COUNTER_MASK (MIPS_TCS_PER_COUNTER - 1)
 
-काष्ठा cpu_hw_events अणु
+struct cpu_hw_events {
 	/* Array of events on this cpu. */
-	काष्ठा perf_event	*events[MIPS_MAX_HWEVENTS];
+	struct perf_event	*events[MIPS_MAX_HWEVENTS];
 
 	/*
 	 * Set the bit (indexed by the counter number) when the counter
-	 * is used क्रम an event.
+	 * is used for an event.
 	 */
-	अचिन्हित दीर्घ		used_mask[BITS_TO_LONGS(MIPS_MAX_HWEVENTS)];
+	unsigned long		used_mask[BITS_TO_LONGS(MIPS_MAX_HWEVENTS)];
 
 	/*
-	 * Software copy of the control रेजिस्टर क्रम each perक्रमmance counter.
-	 * MIPS CPUs vary in perक्रमmance counters. They use this dअगरferently,
+	 * Software copy of the control register for each performance counter.
+	 * MIPS CPUs vary in performance counters. They use this differently,
 	 * and even may not use it.
 	 */
-	अचिन्हित पूर्णांक		saved_ctrl[MIPS_MAX_HWEVENTS];
-पूर्ण;
-DEFINE_PER_CPU(काष्ठा cpu_hw_events, cpu_hw_events) = अणु
-	.saved_ctrl = अणु0पूर्ण,
-पूर्ण;
+	unsigned int		saved_ctrl[MIPS_MAX_HWEVENTS];
+};
+DEFINE_PER_CPU(struct cpu_hw_events, cpu_hw_events) = {
+	.saved_ctrl = {0},
+};
 
-/* The description of MIPS perक्रमmance events. */
-काष्ठा mips_perf_event अणु
-	अचिन्हित पूर्णांक event_id;
+/* The description of MIPS performance events. */
+struct mips_perf_event {
+	unsigned int event_id;
 	/*
-	 * MIPS perक्रमmance counters are indexed starting from 0.
+	 * MIPS performance counters are indexed starting from 0.
 	 * CNTR_EVEN indicates the indexes of the counters to be used are
 	 * even numbers.
 	 */
-	अचिन्हित पूर्णांक cntr_mask;
-	#घोषणा CNTR_EVEN	0x55555555
-	#घोषणा CNTR_ODD	0xaaaaaaaa
-	#घोषणा CNTR_ALL	0xffffffff
-	क्रमागत अणु
+	unsigned int cntr_mask;
+	#define CNTR_EVEN	0x55555555
+	#define CNTR_ODD	0xaaaaaaaa
+	#define CNTR_ALL	0xffffffff
+	enum {
 		T  = 0,
 		V  = 1,
 		P  = 2,
-	पूर्ण range;
-पूर्ण;
+	} range;
+};
 
-अटल काष्ठा mips_perf_event raw_event;
-अटल DEFINE_MUTEX(raw_event_mutex);
+static struct mips_perf_event raw_event;
+static DEFINE_MUTEX(raw_event_mutex);
 
-#घोषणा C(x) PERF_COUNT_HW_CACHE_##x
+#define C(x) PERF_COUNT_HW_CACHE_##x
 
-काष्ठा mips_pmu अणु
+struct mips_pmu {
 	u64		max_period;
 	u64		valid_count;
 	u64		overflow;
-	स्थिर अक्षर	*name;
-	पूर्णांक		irq;
-	u64		(*पढ़ो_counter)(अचिन्हित पूर्णांक idx);
-	व्योम		(*ग_लिखो_counter)(अचिन्हित पूर्णांक idx, u64 val);
-	स्थिर काष्ठा mips_perf_event *(*map_raw_event)(u64 config);
-	स्थिर काष्ठा mips_perf_event (*general_event_map)[PERF_COUNT_HW_MAX];
-	स्थिर काष्ठा mips_perf_event (*cache_event_map)
+	const char	*name;
+	int		irq;
+	u64		(*read_counter)(unsigned int idx);
+	void		(*write_counter)(unsigned int idx, u64 val);
+	const struct mips_perf_event *(*map_raw_event)(u64 config);
+	const struct mips_perf_event (*general_event_map)[PERF_COUNT_HW_MAX];
+	const struct mips_perf_event (*cache_event_map)
 				[PERF_COUNT_HW_CACHE_MAX]
 				[PERF_COUNT_HW_CACHE_OP_MAX]
 				[PERF_COUNT_HW_CACHE_RESULT_MAX];
-	अचिन्हित पूर्णांक	num_counters;
-पूर्ण;
+	unsigned int	num_counters;
+};
 
-अटल पूर्णांक counter_bits;
-अटल काष्ठा mips_pmu mipspmu;
+static int counter_bits;
+static struct mips_pmu mipspmu;
 
-#घोषणा M_PERFCTL_EVENT(event)		(((event) << MIPS_PERFCTRL_EVENT_S) & \
+#define M_PERFCTL_EVENT(event)		(((event) << MIPS_PERFCTRL_EVENT_S) & \
 					 MIPS_PERFCTRL_EVENT)
-#घोषणा M_PERFCTL_VPEID(vpe)		((vpe)	  << MIPS_PERFCTRL_VPEID_S)
+#define M_PERFCTL_VPEID(vpe)		((vpe)	  << MIPS_PERFCTRL_VPEID_S)
 
-#अगर_घोषित CONFIG_CPU_BMIPS5000
-#घोषणा M_PERFCTL_MT_EN(filter)		0
-#अन्यथा /* !CONFIG_CPU_BMIPS5000 */
-#घोषणा M_PERFCTL_MT_EN(filter)		(filter)
-#पूर्ण_अगर /* CONFIG_CPU_BMIPS5000 */
+#ifdef CONFIG_CPU_BMIPS5000
+#define M_PERFCTL_MT_EN(filter)		0
+#else /* !CONFIG_CPU_BMIPS5000 */
+#define M_PERFCTL_MT_EN(filter)		(filter)
+#endif /* CONFIG_CPU_BMIPS5000 */
 
-#घोषणा	   M_TC_EN_ALL			M_PERFCTL_MT_EN(MIPS_PERFCTRL_MT_EN_ALL)
-#घोषणा	   M_TC_EN_VPE			M_PERFCTL_MT_EN(MIPS_PERFCTRL_MT_EN_VPE)
-#घोषणा	   M_TC_EN_TC			M_PERFCTL_MT_EN(MIPS_PERFCTRL_MT_EN_TC)
+#define	   M_TC_EN_ALL			M_PERFCTL_MT_EN(MIPS_PERFCTRL_MT_EN_ALL)
+#define	   M_TC_EN_VPE			M_PERFCTL_MT_EN(MIPS_PERFCTRL_MT_EN_VPE)
+#define	   M_TC_EN_TC			M_PERFCTL_MT_EN(MIPS_PERFCTRL_MT_EN_TC)
 
-#घोषणा M_PERFCTL_COUNT_EVENT_WHENEVER	(MIPS_PERFCTRL_EXL |		\
+#define M_PERFCTL_COUNT_EVENT_WHENEVER	(MIPS_PERFCTRL_EXL |		\
 					 MIPS_PERFCTRL_K |		\
 					 MIPS_PERFCTRL_U |		\
 					 MIPS_PERFCTRL_S |		\
 					 MIPS_PERFCTRL_IE)
 
-#अगर_घोषित CONFIG_MIPS_MT_SMP
-#घोषणा M_PERFCTL_CONFIG_MASK		0x3fff801f
-#अन्यथा
-#घोषणा M_PERFCTL_CONFIG_MASK		0x1f
-#पूर्ण_अगर
+#ifdef CONFIG_MIPS_MT_SMP
+#define M_PERFCTL_CONFIG_MASK		0x3fff801f
+#else
+#define M_PERFCTL_CONFIG_MASK		0x1f
+#endif
 
-#घोषणा CNTR_BIT_MASK(n)	(((n) == 64) ? ~0ULL : ((1ULL<<(n))-1))
+#define CNTR_BIT_MASK(n)	(((n) == 64) ? ~0ULL : ((1ULL<<(n))-1))
 
-#अगर_घोषित CONFIG_MIPS_PERF_SHARED_TC_COUNTERS
-अटल DEFINE_RWLOCK(pmuपूर्णांक_rwlock);
+#ifdef CONFIG_MIPS_PERF_SHARED_TC_COUNTERS
+static DEFINE_RWLOCK(pmuint_rwlock);
 
-#अगर defined(CONFIG_CPU_BMIPS5000)
-#घोषणा vpe_id()	(cpu_has_mipsmt_pertccounters ? \
+#if defined(CONFIG_CPU_BMIPS5000)
+#define vpe_id()	(cpu_has_mipsmt_pertccounters ? \
 			 0 : (smp_processor_id() & MIPS_CPUID_TO_COUNTER_MASK))
-#अन्यथा
-#घोषणा vpe_id()	(cpu_has_mipsmt_pertccounters ? \
+#else
+#define vpe_id()	(cpu_has_mipsmt_pertccounters ? \
 			 0 : cpu_vpe_id(&current_cpu_data))
-#पूर्ण_अगर
+#endif
 
 /* Copied from op_model_mipsxx.c */
-अटल अचिन्हित पूर्णांक vpe_shअगरt(व्योम)
-अणु
-	अगर (num_possible_cpus() > 1)
-		वापस 1;
+static unsigned int vpe_shift(void)
+{
+	if (num_possible_cpus() > 1)
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित पूर्णांक counters_total_to_per_cpu(अचिन्हित पूर्णांक counters)
-अणु
-	वापस counters >> vpe_shअगरt();
-पूर्ण
+static unsigned int counters_total_to_per_cpu(unsigned int counters)
+{
+	return counters >> vpe_shift();
+}
 
-#अन्यथा /* !CONFIG_MIPS_PERF_SHARED_TC_COUNTERS */
-#घोषणा vpe_id()	0
+#else /* !CONFIG_MIPS_PERF_SHARED_TC_COUNTERS */
+#define vpe_id()	0
 
-#पूर्ण_अगर /* CONFIG_MIPS_PERF_SHARED_TC_COUNTERS */
+#endif /* CONFIG_MIPS_PERF_SHARED_TC_COUNTERS */
 
-अटल व्योम resume_local_counters(व्योम);
-अटल व्योम छोड़ो_local_counters(व्योम);
-अटल irqवापस_t mipsxx_pmu_handle_irq(पूर्णांक, व्योम *);
-अटल पूर्णांक mipsxx_pmu_handle_shared_irq(व्योम);
+static void resume_local_counters(void);
+static void pause_local_counters(void);
+static irqreturn_t mipsxx_pmu_handle_irq(int, void *);
+static int mipsxx_pmu_handle_shared_irq(void);
 
 /* 0: Not Loongson-3
  * 1: Loongson-3A1000/3B1000/3B1500
@@ -163,223 +162,223 @@ DEFINE_PER_CPU(काष्ठा cpu_hw_events, cpu_hw_events) = अणु
  * 3: Loongson-3A4000+
  */
 
-#घोषणा LOONGSON_PMU_TYPE0 0
-#घोषणा LOONGSON_PMU_TYPE1 1
-#घोषणा LOONGSON_PMU_TYPE2 2
-#घोषणा LOONGSON_PMU_TYPE3 3
+#define LOONGSON_PMU_TYPE0 0
+#define LOONGSON_PMU_TYPE1 1
+#define LOONGSON_PMU_TYPE2 2
+#define LOONGSON_PMU_TYPE3 3
 
-अटल अंतरभूत पूर्णांक get_loongson3_pmu_type(व्योम)
-अणु
-	अगर (boot_cpu_type() != CPU_LOONGSON64)
-		वापस LOONGSON_PMU_TYPE0;
-	अगर ((boot_cpu_data.processor_id & PRID_COMP_MASK) == PRID_COMP_LEGACY)
-		वापस LOONGSON_PMU_TYPE1;
-	अगर ((boot_cpu_data.processor_id & PRID_IMP_MASK) == PRID_IMP_LOONGSON_64C)
-		वापस LOONGSON_PMU_TYPE2;
-	अगर ((boot_cpu_data.processor_id & PRID_IMP_MASK) == PRID_IMP_LOONGSON_64G)
-		वापस LOONGSON_PMU_TYPE3;
+static inline int get_loongson3_pmu_type(void)
+{
+	if (boot_cpu_type() != CPU_LOONGSON64)
+		return LOONGSON_PMU_TYPE0;
+	if ((boot_cpu_data.processor_id & PRID_COMP_MASK) == PRID_COMP_LEGACY)
+		return LOONGSON_PMU_TYPE1;
+	if ((boot_cpu_data.processor_id & PRID_IMP_MASK) == PRID_IMP_LOONGSON_64C)
+		return LOONGSON_PMU_TYPE2;
+	if ((boot_cpu_data.processor_id & PRID_IMP_MASK) == PRID_IMP_LOONGSON_64G)
+		return LOONGSON_PMU_TYPE3;
 
-	वापस LOONGSON_PMU_TYPE0;
-पूर्ण
+	return LOONGSON_PMU_TYPE0;
+}
 
-अटल अचिन्हित पूर्णांक mipsxx_pmu_swizzle_perf_idx(अचिन्हित पूर्णांक idx)
-अणु
-	अगर (vpe_id() == 1)
+static unsigned int mipsxx_pmu_swizzle_perf_idx(unsigned int idx)
+{
+	if (vpe_id() == 1)
 		idx = (idx + 2) & 3;
-	वापस idx;
-पूर्ण
+	return idx;
+}
 
-अटल u64 mipsxx_pmu_पढ़ो_counter(अचिन्हित पूर्णांक idx)
-अणु
+static u64 mipsxx_pmu_read_counter(unsigned int idx)
+{
 	idx = mipsxx_pmu_swizzle_perf_idx(idx);
 
-	चयन (idx) अणु
-	हाल 0:
+	switch (idx) {
+	case 0:
 		/*
-		 * The counters are अचिन्हित, we must cast to truncate
+		 * The counters are unsigned, we must cast to truncate
 		 * off the high bits.
 		 */
-		वापस (u32)पढ़ो_c0_perfcntr0();
-	हाल 1:
-		वापस (u32)पढ़ो_c0_perfcntr1();
-	हाल 2:
-		वापस (u32)पढ़ो_c0_perfcntr2();
-	हाल 3:
-		वापस (u32)पढ़ो_c0_perfcntr3();
-	शेष:
+		return (u32)read_c0_perfcntr0();
+	case 1:
+		return (u32)read_c0_perfcntr1();
+	case 2:
+		return (u32)read_c0_perfcntr2();
+	case 3:
+		return (u32)read_c0_perfcntr3();
+	default:
 		WARN_ONCE(1, "Invalid performance counter number (%d)\n", idx);
-		वापस 0;
-	पूर्ण
-पूर्ण
+		return 0;
+	}
+}
 
-अटल u64 mipsxx_pmu_पढ़ो_counter_64(अचिन्हित पूर्णांक idx)
-अणु
+static u64 mipsxx_pmu_read_counter_64(unsigned int idx)
+{
 	u64 mask = CNTR_BIT_MASK(counter_bits);
 	idx = mipsxx_pmu_swizzle_perf_idx(idx);
 
-	चयन (idx) अणु
-	हाल 0:
-		वापस पढ़ो_c0_perfcntr0_64() & mask;
-	हाल 1:
-		वापस पढ़ो_c0_perfcntr1_64() & mask;
-	हाल 2:
-		वापस पढ़ो_c0_perfcntr2_64() & mask;
-	हाल 3:
-		वापस पढ़ो_c0_perfcntr3_64() & mask;
-	शेष:
+	switch (idx) {
+	case 0:
+		return read_c0_perfcntr0_64() & mask;
+	case 1:
+		return read_c0_perfcntr1_64() & mask;
+	case 2:
+		return read_c0_perfcntr2_64() & mask;
+	case 3:
+		return read_c0_perfcntr3_64() & mask;
+	default:
 		WARN_ONCE(1, "Invalid performance counter number (%d)\n", idx);
-		वापस 0;
-	पूर्ण
-पूर्ण
+		return 0;
+	}
+}
 
-अटल व्योम mipsxx_pmu_ग_लिखो_counter(अचिन्हित पूर्णांक idx, u64 val)
-अणु
+static void mipsxx_pmu_write_counter(unsigned int idx, u64 val)
+{
 	idx = mipsxx_pmu_swizzle_perf_idx(idx);
 
-	चयन (idx) अणु
-	हाल 0:
-		ग_लिखो_c0_perfcntr0(val);
-		वापस;
-	हाल 1:
-		ग_लिखो_c0_perfcntr1(val);
-		वापस;
-	हाल 2:
-		ग_लिखो_c0_perfcntr2(val);
-		वापस;
-	हाल 3:
-		ग_लिखो_c0_perfcntr3(val);
-		वापस;
-	पूर्ण
-पूर्ण
+	switch (idx) {
+	case 0:
+		write_c0_perfcntr0(val);
+		return;
+	case 1:
+		write_c0_perfcntr1(val);
+		return;
+	case 2:
+		write_c0_perfcntr2(val);
+		return;
+	case 3:
+		write_c0_perfcntr3(val);
+		return;
+	}
+}
 
-अटल व्योम mipsxx_pmu_ग_लिखो_counter_64(अचिन्हित पूर्णांक idx, u64 val)
-अणु
+static void mipsxx_pmu_write_counter_64(unsigned int idx, u64 val)
+{
 	val &= CNTR_BIT_MASK(counter_bits);
 	idx = mipsxx_pmu_swizzle_perf_idx(idx);
 
-	चयन (idx) अणु
-	हाल 0:
-		ग_लिखो_c0_perfcntr0_64(val);
-		वापस;
-	हाल 1:
-		ग_लिखो_c0_perfcntr1_64(val);
-		वापस;
-	हाल 2:
-		ग_लिखो_c0_perfcntr2_64(val);
-		वापस;
-	हाल 3:
-		ग_लिखो_c0_perfcntr3_64(val);
-		वापस;
-	पूर्ण
-पूर्ण
+	switch (idx) {
+	case 0:
+		write_c0_perfcntr0_64(val);
+		return;
+	case 1:
+		write_c0_perfcntr1_64(val);
+		return;
+	case 2:
+		write_c0_perfcntr2_64(val);
+		return;
+	case 3:
+		write_c0_perfcntr3_64(val);
+		return;
+	}
+}
 
-अटल अचिन्हित पूर्णांक mipsxx_pmu_पढ़ो_control(अचिन्हित पूर्णांक idx)
-अणु
+static unsigned int mipsxx_pmu_read_control(unsigned int idx)
+{
 	idx = mipsxx_pmu_swizzle_perf_idx(idx);
 
-	चयन (idx) अणु
-	हाल 0:
-		वापस पढ़ो_c0_perfctrl0();
-	हाल 1:
-		वापस पढ़ो_c0_perfctrl1();
-	हाल 2:
-		वापस पढ़ो_c0_perfctrl2();
-	हाल 3:
-		वापस पढ़ो_c0_perfctrl3();
-	शेष:
+	switch (idx) {
+	case 0:
+		return read_c0_perfctrl0();
+	case 1:
+		return read_c0_perfctrl1();
+	case 2:
+		return read_c0_perfctrl2();
+	case 3:
+		return read_c0_perfctrl3();
+	default:
 		WARN_ONCE(1, "Invalid performance counter number (%d)\n", idx);
-		वापस 0;
-	पूर्ण
-पूर्ण
+		return 0;
+	}
+}
 
-अटल व्योम mipsxx_pmu_ग_लिखो_control(अचिन्हित पूर्णांक idx, अचिन्हित पूर्णांक val)
-अणु
+static void mipsxx_pmu_write_control(unsigned int idx, unsigned int val)
+{
 	idx = mipsxx_pmu_swizzle_perf_idx(idx);
 
-	चयन (idx) अणु
-	हाल 0:
-		ग_लिखो_c0_perfctrl0(val);
-		वापस;
-	हाल 1:
-		ग_लिखो_c0_perfctrl1(val);
-		वापस;
-	हाल 2:
-		ग_लिखो_c0_perfctrl2(val);
-		वापस;
-	हाल 3:
-		ग_लिखो_c0_perfctrl3(val);
-		वापस;
-	पूर्ण
-पूर्ण
+	switch (idx) {
+	case 0:
+		write_c0_perfctrl0(val);
+		return;
+	case 1:
+		write_c0_perfctrl1(val);
+		return;
+	case 2:
+		write_c0_perfctrl2(val);
+		return;
+	case 3:
+		write_c0_perfctrl3(val);
+		return;
+	}
+}
 
-अटल पूर्णांक mipsxx_pmu_alloc_counter(काष्ठा cpu_hw_events *cpuc,
-				    काष्ठा hw_perf_event *hwc)
-अणु
-	पूर्णांक i;
-	अचिन्हित दीर्घ cntr_mask;
+static int mipsxx_pmu_alloc_counter(struct cpu_hw_events *cpuc,
+				    struct hw_perf_event *hwc)
+{
+	int i;
+	unsigned long cntr_mask;
 
 	/*
 	 * We only need to care the counter mask. The range has been
 	 * checked definitely.
 	 */
-	अगर (get_loongson3_pmu_type() == LOONGSON_PMU_TYPE2)
+	if (get_loongson3_pmu_type() == LOONGSON_PMU_TYPE2)
 		cntr_mask = (hwc->event_base >> 10) & 0xffff;
-	अन्यथा
+	else
 		cntr_mask = (hwc->event_base >> 8) & 0xffff;
 
-	क्रम (i = mipspmu.num_counters - 1; i >= 0; i--) अणु
+	for (i = mipspmu.num_counters - 1; i >= 0; i--) {
 		/*
 		 * Note that some MIPS perf events can be counted by both
 		 * even and odd counters, wheresas many other are only by
-		 * even _or_ odd counters. This पूर्णांकroduces an issue that
-		 * when the क्रमmer kind of event takes the counter the
+		 * even _or_ odd counters. This introduces an issue that
+		 * when the former kind of event takes the counter the
 		 * latter kind of event wants to use, then the "counter
-		 * allocation" क्रम the latter event will fail. In fact अगर
+		 * allocation" for the latter event will fail. In fact if
 		 * they can be dynamically swapped, they both feel happy.
-		 * But here we leave this issue alone क्रम now.
+		 * But here we leave this issue alone for now.
 		 */
-		अगर (test_bit(i, &cntr_mask) &&
+		if (test_bit(i, &cntr_mask) &&
 			!test_and_set_bit(i, cpuc->used_mask))
-			वापस i;
-	पूर्ण
+			return i;
+	}
 
-	वापस -EAGAIN;
-पूर्ण
+	return -EAGAIN;
+}
 
-अटल व्योम mipsxx_pmu_enable_event(काष्ठा hw_perf_event *evt, पूर्णांक idx)
-अणु
-	काष्ठा perf_event *event = container_of(evt, काष्ठा perf_event, hw);
-	काष्ठा cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
-	अचिन्हित पूर्णांक range = evt->event_base >> 24;
+static void mipsxx_pmu_enable_event(struct hw_perf_event *evt, int idx)
+{
+	struct perf_event *event = container_of(evt, struct perf_event, hw);
+	struct cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
+	unsigned int range = evt->event_base >> 24;
 
 	WARN_ON(idx < 0 || idx >= mipspmu.num_counters);
 
-	अगर (get_loongson3_pmu_type() == LOONGSON_PMU_TYPE2)
+	if (get_loongson3_pmu_type() == LOONGSON_PMU_TYPE2)
 		cpuc->saved_ctrl[idx] = M_PERFCTL_EVENT(evt->event_base & 0x3ff) |
 			(evt->config_base & M_PERFCTL_CONFIG_MASK) |
-			/* Make sure पूर्णांकerrupt enabled. */
+			/* Make sure interrupt enabled. */
 			MIPS_PERFCTRL_IE;
-	अन्यथा
+	else
 		cpuc->saved_ctrl[idx] = M_PERFCTL_EVENT(evt->event_base & 0xff) |
 			(evt->config_base & M_PERFCTL_CONFIG_MASK) |
-			/* Make sure पूर्णांकerrupt enabled. */
+			/* Make sure interrupt enabled. */
 			MIPS_PERFCTRL_IE;
 
-	अगर (IS_ENABLED(CONFIG_CPU_BMIPS5000)) अणु
-		/* enable the counter क्रम the calling thपढ़ो */
+	if (IS_ENABLED(CONFIG_CPU_BMIPS5000)) {
+		/* enable the counter for the calling thread */
 		cpuc->saved_ctrl[idx] |=
 			(1 << (12 + vpe_id())) | BRCM_PERFCTRL_TC;
-	पूर्ण अन्यथा अगर (IS_ENABLED(CONFIG_MIPS_MT_SMP) && range > V) अणु
+	} else if (IS_ENABLED(CONFIG_MIPS_MT_SMP) && range > V) {
 		/* The counter is processor wide. Set it up to count all TCs. */
 		pr_debug("Enabling perf counter for all TCs\n");
 		cpuc->saved_ctrl[idx] |= M_TC_EN_ALL;
-	पूर्ण अन्यथा अणु
-		अचिन्हित पूर्णांक cpu, ctrl;
+	} else {
+		unsigned int cpu, ctrl;
 
 		/*
-		 * Set up the counter क्रम a particular CPU when event->cpu is
-		 * a valid CPU number. Otherwise set up the counter क्रम the CPU
-		 * scheduling this thपढ़ो.
+		 * Set up the counter for a particular CPU when event->cpu is
+		 * a valid CPU number. Otherwise set up the counter for the CPU
+		 * scheduling this thread.
 		 */
 		cpu = (event->cpu >= 0) ? event->cpu : smp_processor_id();
 
@@ -387,131 +386,131 @@ DEFINE_PER_CPU(काष्ठा cpu_hw_events, cpu_hw_events) = अणु
 		ctrl |= M_TC_EN_VPE;
 		cpuc->saved_ctrl[idx] |= ctrl;
 		pr_debug("Enabling perf counter for CPU%d\n", cpu);
-	पूर्ण
+	}
 	/*
-	 * We करो not actually let the counter run. Leave it until start().
+	 * We do not actually let the counter run. Leave it until start().
 	 */
-पूर्ण
+}
 
-अटल व्योम mipsxx_pmu_disable_event(पूर्णांक idx)
-अणु
-	काष्ठा cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
-	अचिन्हित दीर्घ flags;
+static void mipsxx_pmu_disable_event(int idx)
+{
+	struct cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
+	unsigned long flags;
 
 	WARN_ON(idx < 0 || idx >= mipspmu.num_counters);
 
 	local_irq_save(flags);
-	cpuc->saved_ctrl[idx] = mipsxx_pmu_पढ़ो_control(idx) &
+	cpuc->saved_ctrl[idx] = mipsxx_pmu_read_control(idx) &
 		~M_PERFCTL_COUNT_EVENT_WHENEVER;
-	mipsxx_pmu_ग_लिखो_control(idx, cpuc->saved_ctrl[idx]);
+	mipsxx_pmu_write_control(idx, cpuc->saved_ctrl[idx]);
 	local_irq_restore(flags);
-पूर्ण
+}
 
-अटल पूर्णांक mipspmu_event_set_period(काष्ठा perf_event *event,
-				    काष्ठा hw_perf_event *hwc,
-				    पूर्णांक idx)
-अणु
-	u64 left = local64_पढ़ो(&hwc->period_left);
+static int mipspmu_event_set_period(struct perf_event *event,
+				    struct hw_perf_event *hwc,
+				    int idx)
+{
+	u64 left = local64_read(&hwc->period_left);
 	u64 period = hwc->sample_period;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	अगर (unlikely((left + period) & (1ULL << 63))) अणु
+	if (unlikely((left + period) & (1ULL << 63))) {
 		/* left underflowed by more than period. */
 		left = period;
 		local64_set(&hwc->period_left, left);
 		hwc->last_period = period;
 		ret = 1;
-	पूर्ण अन्यथा	अगर (unlikely((left + period) <= period)) अणु
+	} else	if (unlikely((left + period) <= period)) {
 		/* left underflowed by less than period. */
 		left += period;
 		local64_set(&hwc->period_left, left);
 		hwc->last_period = period;
 		ret = 1;
-	पूर्ण
+	}
 
-	अगर (left > mipspmu.max_period) अणु
+	if (left > mipspmu.max_period) {
 		left = mipspmu.max_period;
 		local64_set(&hwc->period_left, left);
-	पूर्ण
+	}
 
 	local64_set(&hwc->prev_count, mipspmu.overflow - left);
 
-	अगर (get_loongson3_pmu_type() == LOONGSON_PMU_TYPE2)
-		mipsxx_pmu_ग_लिखो_control(idx,
+	if (get_loongson3_pmu_type() == LOONGSON_PMU_TYPE2)
+		mipsxx_pmu_write_control(idx,
 				M_PERFCTL_EVENT(hwc->event_base & 0x3ff));
 
-	mipspmu.ग_लिखो_counter(idx, mipspmu.overflow - left);
+	mipspmu.write_counter(idx, mipspmu.overflow - left);
 
 	perf_event_update_userpage(event);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम mipspmu_event_update(काष्ठा perf_event *event,
-				 काष्ठा hw_perf_event *hwc,
-				 पूर्णांक idx)
-अणु
+static void mipspmu_event_update(struct perf_event *event,
+				 struct hw_perf_event *hwc,
+				 int idx)
+{
 	u64 prev_raw_count, new_raw_count;
 	u64 delta;
 
 again:
-	prev_raw_count = local64_पढ़ो(&hwc->prev_count);
-	new_raw_count = mipspmu.पढ़ो_counter(idx);
+	prev_raw_count = local64_read(&hwc->prev_count);
+	new_raw_count = mipspmu.read_counter(idx);
 
-	अगर (local64_cmpxchg(&hwc->prev_count, prev_raw_count,
+	if (local64_cmpxchg(&hwc->prev_count, prev_raw_count,
 				new_raw_count) != prev_raw_count)
-		जाओ again;
+		goto again;
 
 	delta = new_raw_count - prev_raw_count;
 
 	local64_add(delta, &event->count);
 	local64_sub(delta, &hwc->period_left);
-पूर्ण
+}
 
-अटल व्योम mipspmu_start(काष्ठा perf_event *event, पूर्णांक flags)
-अणु
-	काष्ठा hw_perf_event *hwc = &event->hw;
+static void mipspmu_start(struct perf_event *event, int flags)
+{
+	struct hw_perf_event *hwc = &event->hw;
 
-	अगर (flags & PERF_EF_RELOAD)
+	if (flags & PERF_EF_RELOAD)
 		WARN_ON_ONCE(!(hwc->state & PERF_HES_UPTODATE));
 
 	hwc->state = 0;
 
-	/* Set the period क्रम the event. */
+	/* Set the period for the event. */
 	mipspmu_event_set_period(event, hwc, hwc->idx);
 
 	/* Enable the event. */
 	mipsxx_pmu_enable_event(hwc, hwc->idx);
-पूर्ण
+}
 
-अटल व्योम mipspmu_stop(काष्ठा perf_event *event, पूर्णांक flags)
-अणु
-	काष्ठा hw_perf_event *hwc = &event->hw;
+static void mipspmu_stop(struct perf_event *event, int flags)
+{
+	struct hw_perf_event *hwc = &event->hw;
 
-	अगर (!(hwc->state & PERF_HES_STOPPED)) अणु
+	if (!(hwc->state & PERF_HES_STOPPED)) {
 		/* We are working on a local event. */
 		mipsxx_pmu_disable_event(hwc->idx);
 		barrier();
 		mipspmu_event_update(event, hwc, hwc->idx);
 		hwc->state |= PERF_HES_STOPPED | PERF_HES_UPTODATE;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक mipspmu_add(काष्ठा perf_event *event, पूर्णांक flags)
-अणु
-	काष्ठा cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
-	काष्ठा hw_perf_event *hwc = &event->hw;
-	पूर्णांक idx;
-	पूर्णांक err = 0;
+static int mipspmu_add(struct perf_event *event, int flags)
+{
+	struct cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
+	struct hw_perf_event *hwc = &event->hw;
+	int idx;
+	int err = 0;
 
 	perf_pmu_disable(event->pmu);
 
-	/* To look क्रम a मुक्त counter क्रम this event. */
+	/* To look for a free counter for this event. */
 	idx = mipsxx_pmu_alloc_counter(cpuc, hwc);
-	अगर (idx < 0) अणु
+	if (idx < 0) {
 		err = idx;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
 	 * If there is an event in the counter we are going to use then
@@ -522,7 +521,7 @@ again:
 	cpuc->events[idx] = event;
 
 	hwc->state = PERF_HES_STOPPED | PERF_HES_UPTODATE;
-	अगर (flags & PERF_EF_START)
+	if (flags & PERF_EF_START)
 		mipspmu_start(event, PERF_EF_RELOAD);
 
 	/* Propagate our changes to the userspace mapping. */
@@ -530,164 +529,164 @@ again:
 
 out:
 	perf_pmu_enable(event->pmu);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम mipspmu_del(काष्ठा perf_event *event, पूर्णांक flags)
-अणु
-	काष्ठा cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
-	काष्ठा hw_perf_event *hwc = &event->hw;
-	पूर्णांक idx = hwc->idx;
+static void mipspmu_del(struct perf_event *event, int flags)
+{
+	struct cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
+	struct hw_perf_event *hwc = &event->hw;
+	int idx = hwc->idx;
 
 	WARN_ON(idx < 0 || idx >= mipspmu.num_counters);
 
 	mipspmu_stop(event, PERF_EF_UPDATE);
-	cpuc->events[idx] = शून्य;
+	cpuc->events[idx] = NULL;
 	clear_bit(idx, cpuc->used_mask);
 
 	perf_event_update_userpage(event);
-पूर्ण
+}
 
-अटल व्योम mipspmu_पढ़ो(काष्ठा perf_event *event)
-अणु
-	काष्ठा hw_perf_event *hwc = &event->hw;
+static void mipspmu_read(struct perf_event *event)
+{
+	struct hw_perf_event *hwc = &event->hw;
 
-	/* Don't पढ़ो disabled counters! */
-	अगर (hwc->idx < 0)
-		वापस;
+	/* Don't read disabled counters! */
+	if (hwc->idx < 0)
+		return;
 
 	mipspmu_event_update(event, hwc, hwc->idx);
-पूर्ण
+}
 
-अटल व्योम mipspmu_enable(काष्ठा pmu *pmu)
-अणु
-#अगर_घोषित CONFIG_MIPS_PERF_SHARED_TC_COUNTERS
-	ग_लिखो_unlock(&pmuपूर्णांक_rwlock);
-#पूर्ण_अगर
+static void mipspmu_enable(struct pmu *pmu)
+{
+#ifdef CONFIG_MIPS_PERF_SHARED_TC_COUNTERS
+	write_unlock(&pmuint_rwlock);
+#endif
 	resume_local_counters();
-पूर्ण
+}
 
 /*
- * MIPS perक्रमmance counters can be per-TC. The control रेजिस्टरs can
- * not be directly accessed across CPUs. Hence अगर we want to करो global
+ * MIPS performance counters can be per-TC. The control registers can
+ * not be directly accessed across CPUs. Hence if we want to do global
  * control, we need cross CPU calls. on_each_cpu() can help us, but we
- * can not make sure this function is called with पूर्णांकerrupts enabled. So
- * here we छोड़ो local counters and then grab a rwlock and leave the
- * counters on other CPUs alone. If any counter पूर्णांकerrupt उठाओs जबतक
- * we own the ग_लिखो lock, simply छोड़ो local counters on that CPU and
- * spin in the handler. Also we know we won't be चयनed to another
- * CPU after pausing local counters and beक्रमe grabbing the lock.
+ * can not make sure this function is called with interrupts enabled. So
+ * here we pause local counters and then grab a rwlock and leave the
+ * counters on other CPUs alone. If any counter interrupt raises while
+ * we own the write lock, simply pause local counters on that CPU and
+ * spin in the handler. Also we know we won't be switched to another
+ * CPU after pausing local counters and before grabbing the lock.
  */
-अटल व्योम mipspmu_disable(काष्ठा pmu *pmu)
-अणु
-	छोड़ो_local_counters();
-#अगर_घोषित CONFIG_MIPS_PERF_SHARED_TC_COUNTERS
-	ग_लिखो_lock(&pmuपूर्णांक_rwlock);
-#पूर्ण_अगर
-पूर्ण
+static void mipspmu_disable(struct pmu *pmu)
+{
+	pause_local_counters();
+#ifdef CONFIG_MIPS_PERF_SHARED_TC_COUNTERS
+	write_lock(&pmuint_rwlock);
+#endif
+}
 
-अटल atomic_t active_events = ATOMIC_INIT(0);
-अटल DEFINE_MUTEX(pmu_reserve_mutex);
-अटल पूर्णांक (*save_perf_irq)(व्योम);
+static atomic_t active_events = ATOMIC_INIT(0);
+static DEFINE_MUTEX(pmu_reserve_mutex);
+static int (*save_perf_irq)(void);
 
-अटल पूर्णांक mipspmu_get_irq(व्योम)
-अणु
-	पूर्णांक err;
+static int mipspmu_get_irq(void)
+{
+	int err;
 
-	अगर (mipspmu.irq >= 0) अणु
+	if (mipspmu.irq >= 0) {
 		/* Request my own irq handler. */
 		err = request_irq(mipspmu.irq, mipsxx_pmu_handle_irq,
 				  IRQF_PERCPU | IRQF_NOBALANCING |
 				  IRQF_NO_THREAD | IRQF_NO_SUSPEND |
 				  IRQF_SHARED,
 				  "mips_perf_pmu", &mipspmu);
-		अगर (err) अणु
+		if (err) {
 			pr_warn("Unable to request IRQ%d for MIPS performance counters!\n",
 				mipspmu.irq);
-		पूर्ण
-	पूर्ण अन्यथा अगर (cp0_perfcount_irq < 0) अणु
+		}
+	} else if (cp0_perfcount_irq < 0) {
 		/*
-		 * We are sharing the irq number with the समयr पूर्णांकerrupt.
+		 * We are sharing the irq number with the timer interrupt.
 		 */
 		save_perf_irq = perf_irq;
 		perf_irq = mipsxx_pmu_handle_shared_irq;
 		err = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		pr_warn("The platform hasn't properly defined its interrupt controller\n");
 		err = -ENOENT;
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम mipspmu_मुक्त_irq(व्योम)
-अणु
-	अगर (mipspmu.irq >= 0)
-		मुक्त_irq(mipspmu.irq, &mipspmu);
-	अन्यथा अगर (cp0_perfcount_irq < 0)
+static void mipspmu_free_irq(void)
+{
+	if (mipspmu.irq >= 0)
+		free_irq(mipspmu.irq, &mipspmu);
+	else if (cp0_perfcount_irq < 0)
 		perf_irq = save_perf_irq;
-पूर्ण
+}
 
 /*
- * mipsxx/rm9000/loongson2 have dअगरferent perक्रमmance counters, they have
- * specअगरic low-level init routines.
+ * mipsxx/rm9000/loongson2 have different performance counters, they have
+ * specific low-level init routines.
  */
-अटल व्योम reset_counters(व्योम *arg);
-अटल पूर्णांक __hw_perf_event_init(काष्ठा perf_event *event);
+static void reset_counters(void *arg);
+static int __hw_perf_event_init(struct perf_event *event);
 
-अटल व्योम hw_perf_event_destroy(काष्ठा perf_event *event)
-अणु
-	अगर (atomic_dec_and_mutex_lock(&active_events,
-				&pmu_reserve_mutex)) अणु
+static void hw_perf_event_destroy(struct perf_event *event)
+{
+	if (atomic_dec_and_mutex_lock(&active_events,
+				&pmu_reserve_mutex)) {
 		/*
-		 * We must not call the destroy function with पूर्णांकerrupts
+		 * We must not call the destroy function with interrupts
 		 * disabled.
 		 */
 		on_each_cpu(reset_counters,
-			(व्योम *)(दीर्घ)mipspmu.num_counters, 1);
-		mipspmu_मुक्त_irq();
+			(void *)(long)mipspmu.num_counters, 1);
+		mipspmu_free_irq();
 		mutex_unlock(&pmu_reserve_mutex);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक mipspmu_event_init(काष्ठा perf_event *event)
-अणु
-	पूर्णांक err = 0;
+static int mipspmu_event_init(struct perf_event *event)
+{
+	int err = 0;
 
-	/* करोes not support taken branch sampling */
-	अगर (has_branch_stack(event))
-		वापस -EOPNOTSUPP;
+	/* does not support taken branch sampling */
+	if (has_branch_stack(event))
+		return -EOPNOTSUPP;
 
-	चयन (event->attr.type) अणु
-	हाल PERF_TYPE_RAW:
-	हाल PERF_TYPE_HARDWARE:
-	हाल PERF_TYPE_HW_CACHE:
-		अवरोध;
+	switch (event->attr.type) {
+	case PERF_TYPE_RAW:
+	case PERF_TYPE_HARDWARE:
+	case PERF_TYPE_HW_CACHE:
+		break;
 
-	शेष:
-		वापस -ENOENT;
-	पूर्ण
+	default:
+		return -ENOENT;
+	}
 
-	अगर (event->cpu >= 0 && !cpu_online(event->cpu))
-		वापस -ENODEV;
+	if (event->cpu >= 0 && !cpu_online(event->cpu))
+		return -ENODEV;
 
-	अगर (!atomic_inc_not_zero(&active_events)) अणु
+	if (!atomic_inc_not_zero(&active_events)) {
 		mutex_lock(&pmu_reserve_mutex);
-		अगर (atomic_पढ़ो(&active_events) == 0)
+		if (atomic_read(&active_events) == 0)
 			err = mipspmu_get_irq();
 
-		अगर (!err)
+		if (!err)
 			atomic_inc(&active_events);
 		mutex_unlock(&pmu_reserve_mutex);
-	पूर्ण
+	}
 
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस __hw_perf_event_init(event);
-पूर्ण
+	return __hw_perf_event_init(event);
+}
 
-अटल काष्ठा pmu pmu = अणु
+static struct pmu pmu = {
 	.pmu_enable	= mipspmu_enable,
 	.pmu_disable	= mipspmu_disable,
 	.event_init	= mipspmu_event_init,
@@ -695,1449 +694,1449 @@ out:
 	.del		= mipspmu_del,
 	.start		= mipspmu_start,
 	.stop		= mipspmu_stop,
-	.पढ़ो		= mipspmu_पढ़ो,
-पूर्ण;
+	.read		= mipspmu_read,
+};
 
-अटल अचिन्हित पूर्णांक mipspmu_perf_event_encode(स्थिर काष्ठा mips_perf_event *pev)
-अणु
+static unsigned int mipspmu_perf_event_encode(const struct mips_perf_event *pev)
+{
 /*
- * Top 8 bits क्रम range, next 16 bits क्रम cntr_mask, lowest 8 bits क्रम
+ * Top 8 bits for range, next 16 bits for cntr_mask, lowest 8 bits for
  * event_id.
  */
-#अगर_घोषित CONFIG_MIPS_MT_SMP
-	अगर (num_possible_cpus() > 1)
-		वापस ((अचिन्हित पूर्णांक)pev->range << 24) |
+#ifdef CONFIG_MIPS_MT_SMP
+	if (num_possible_cpus() > 1)
+		return ((unsigned int)pev->range << 24) |
 			(pev->cntr_mask & 0xffff00) |
 			(pev->event_id & 0xff);
-	अन्यथा
-#पूर्ण_अगर /* CONFIG_MIPS_MT_SMP */
-	अणु
-		अगर (get_loongson3_pmu_type() == LOONGSON_PMU_TYPE2)
-			वापस (pev->cntr_mask & 0xfffc00) |
+	else
+#endif /* CONFIG_MIPS_MT_SMP */
+	{
+		if (get_loongson3_pmu_type() == LOONGSON_PMU_TYPE2)
+			return (pev->cntr_mask & 0xfffc00) |
 				(pev->event_id & 0x3ff);
-		अन्यथा
-			वापस (pev->cntr_mask & 0xffff00) |
+		else
+			return (pev->cntr_mask & 0xffff00) |
 				(pev->event_id & 0xff);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल स्थिर काष्ठा mips_perf_event *mipspmu_map_general_event(पूर्णांक idx)
-अणु
+static const struct mips_perf_event *mipspmu_map_general_event(int idx)
+{
 
-	अगर ((*mipspmu.general_event_map)[idx].cntr_mask == 0)
-		वापस ERR_PTR(-EOPNOTSUPP);
-	वापस &(*mipspmu.general_event_map)[idx];
-पूर्ण
+	if ((*mipspmu.general_event_map)[idx].cntr_mask == 0)
+		return ERR_PTR(-EOPNOTSUPP);
+	return &(*mipspmu.general_event_map)[idx];
+}
 
-अटल स्थिर काष्ठा mips_perf_event *mipspmu_map_cache_event(u64 config)
-अणु
-	अचिन्हित पूर्णांक cache_type, cache_op, cache_result;
-	स्थिर काष्ठा mips_perf_event *pev;
+static const struct mips_perf_event *mipspmu_map_cache_event(u64 config)
+{
+	unsigned int cache_type, cache_op, cache_result;
+	const struct mips_perf_event *pev;
 
 	cache_type = (config >> 0) & 0xff;
-	अगर (cache_type >= PERF_COUNT_HW_CACHE_MAX)
-		वापस ERR_PTR(-EINVAL);
+	if (cache_type >= PERF_COUNT_HW_CACHE_MAX)
+		return ERR_PTR(-EINVAL);
 
 	cache_op = (config >> 8) & 0xff;
-	अगर (cache_op >= PERF_COUNT_HW_CACHE_OP_MAX)
-		वापस ERR_PTR(-EINVAL);
+	if (cache_op >= PERF_COUNT_HW_CACHE_OP_MAX)
+		return ERR_PTR(-EINVAL);
 
 	cache_result = (config >> 16) & 0xff;
-	अगर (cache_result >= PERF_COUNT_HW_CACHE_RESULT_MAX)
-		वापस ERR_PTR(-EINVAL);
+	if (cache_result >= PERF_COUNT_HW_CACHE_RESULT_MAX)
+		return ERR_PTR(-EINVAL);
 
 	pev = &((*mipspmu.cache_event_map)
 					[cache_type]
 					[cache_op]
 					[cache_result]);
 
-	अगर (pev->cntr_mask == 0)
-		वापस ERR_PTR(-EOPNOTSUPP);
+	if (pev->cntr_mask == 0)
+		return ERR_PTR(-EOPNOTSUPP);
 
-	वापस pev;
+	return pev;
 
-पूर्ण
+}
 
-अटल पूर्णांक validate_group(काष्ठा perf_event *event)
-अणु
-	काष्ठा perf_event *sibling, *leader = event->group_leader;
-	काष्ठा cpu_hw_events fake_cpuc;
+static int validate_group(struct perf_event *event)
+{
+	struct perf_event *sibling, *leader = event->group_leader;
+	struct cpu_hw_events fake_cpuc;
 
-	स_रखो(&fake_cpuc, 0, माप(fake_cpuc));
+	memset(&fake_cpuc, 0, sizeof(fake_cpuc));
 
-	अगर (mipsxx_pmu_alloc_counter(&fake_cpuc, &leader->hw) < 0)
-		वापस -EINVAL;
+	if (mipsxx_pmu_alloc_counter(&fake_cpuc, &leader->hw) < 0)
+		return -EINVAL;
 
-	क्रम_each_sibling_event(sibling, leader) अणु
-		अगर (mipsxx_pmu_alloc_counter(&fake_cpuc, &sibling->hw) < 0)
-			वापस -EINVAL;
-	पूर्ण
+	for_each_sibling_event(sibling, leader) {
+		if (mipsxx_pmu_alloc_counter(&fake_cpuc, &sibling->hw) < 0)
+			return -EINVAL;
+	}
 
-	अगर (mipsxx_pmu_alloc_counter(&fake_cpuc, &event->hw) < 0)
-		वापस -EINVAL;
+	if (mipsxx_pmu_alloc_counter(&fake_cpuc, &event->hw) < 0)
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* This is needed by specअगरic irq handlers in perf_event_*.c */
-अटल व्योम handle_associated_event(काष्ठा cpu_hw_events *cpuc,
-				    पूर्णांक idx, काष्ठा perf_sample_data *data,
-				    काष्ठा pt_regs *regs)
-अणु
-	काष्ठा perf_event *event = cpuc->events[idx];
-	काष्ठा hw_perf_event *hwc = &event->hw;
+/* This is needed by specific irq handlers in perf_event_*.c */
+static void handle_associated_event(struct cpu_hw_events *cpuc,
+				    int idx, struct perf_sample_data *data,
+				    struct pt_regs *regs)
+{
+	struct perf_event *event = cpuc->events[idx];
+	struct hw_perf_event *hwc = &event->hw;
 
 	mipspmu_event_update(event, hwc, idx);
 	data->period = event->hw.last_period;
-	अगर (!mipspmu_event_set_period(event, hwc, idx))
-		वापस;
+	if (!mipspmu_event_set_period(event, hwc, idx))
+		return;
 
-	अगर (perf_event_overflow(event, data, regs))
+	if (perf_event_overflow(event, data, regs))
 		mipsxx_pmu_disable_event(idx);
-पूर्ण
+}
 
 
-अटल पूर्णांक __n_counters(व्योम)
-अणु
-	अगर (!cpu_has_perf)
-		वापस 0;
-	अगर (!(पढ़ो_c0_perfctrl0() & MIPS_PERFCTRL_M))
-		वापस 1;
-	अगर (!(पढ़ो_c0_perfctrl1() & MIPS_PERFCTRL_M))
-		वापस 2;
-	अगर (!(पढ़ो_c0_perfctrl2() & MIPS_PERFCTRL_M))
-		वापस 3;
+static int __n_counters(void)
+{
+	if (!cpu_has_perf)
+		return 0;
+	if (!(read_c0_perfctrl0() & MIPS_PERFCTRL_M))
+		return 1;
+	if (!(read_c0_perfctrl1() & MIPS_PERFCTRL_M))
+		return 2;
+	if (!(read_c0_perfctrl2() & MIPS_PERFCTRL_M))
+		return 3;
 
-	वापस 4;
-पूर्ण
+	return 4;
+}
 
-अटल पूर्णांक n_counters(व्योम)
-अणु
-	पूर्णांक counters;
+static int n_counters(void)
+{
+	int counters;
 
-	चयन (current_cpu_type()) अणु
-	हाल CPU_R10000:
+	switch (current_cpu_type()) {
+	case CPU_R10000:
 		counters = 2;
-		अवरोध;
+		break;
 
-	हाल CPU_R12000:
-	हाल CPU_R14000:
-	हाल CPU_R16000:
+	case CPU_R12000:
+	case CPU_R14000:
+	case CPU_R16000:
 		counters = 4;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		counters = __n_counters();
-	पूर्ण
+	}
 
-	वापस counters;
-पूर्ण
+	return counters;
+}
 
-अटल व्योम loongson3_reset_counters(व्योम *arg)
-अणु
-	पूर्णांक counters = (पूर्णांक)(दीर्घ)arg;
+static void loongson3_reset_counters(void *arg)
+{
+	int counters = (int)(long)arg;
 
-	चयन (counters) अणु
-	हाल 4:
-		mipsxx_pmu_ग_लिखो_control(3, 0);
-		mipspmu.ग_लिखो_counter(3, 0);
-		mipsxx_pmu_ग_लिखो_control(3, 127<<5);
-		mipspmu.ग_लिखो_counter(3, 0);
-		mipsxx_pmu_ग_लिखो_control(3, 191<<5);
-		mipspmu.ग_लिखो_counter(3, 0);
-		mipsxx_pmu_ग_लिखो_control(3, 255<<5);
-		mipspmu.ग_लिखो_counter(3, 0);
-		mipsxx_pmu_ग_लिखो_control(3, 319<<5);
-		mipspmu.ग_लिखो_counter(3, 0);
-		mipsxx_pmu_ग_लिखो_control(3, 383<<5);
-		mipspmu.ग_लिखो_counter(3, 0);
-		mipsxx_pmu_ग_लिखो_control(3, 575<<5);
-		mipspmu.ग_लिखो_counter(3, 0);
+	switch (counters) {
+	case 4:
+		mipsxx_pmu_write_control(3, 0);
+		mipspmu.write_counter(3, 0);
+		mipsxx_pmu_write_control(3, 127<<5);
+		mipspmu.write_counter(3, 0);
+		mipsxx_pmu_write_control(3, 191<<5);
+		mipspmu.write_counter(3, 0);
+		mipsxx_pmu_write_control(3, 255<<5);
+		mipspmu.write_counter(3, 0);
+		mipsxx_pmu_write_control(3, 319<<5);
+		mipspmu.write_counter(3, 0);
+		mipsxx_pmu_write_control(3, 383<<5);
+		mipspmu.write_counter(3, 0);
+		mipsxx_pmu_write_control(3, 575<<5);
+		mipspmu.write_counter(3, 0);
 		fallthrough;
-	हाल 3:
-		mipsxx_pmu_ग_लिखो_control(2, 0);
-		mipspmu.ग_लिखो_counter(2, 0);
-		mipsxx_pmu_ग_लिखो_control(2, 127<<5);
-		mipspmu.ग_लिखो_counter(2, 0);
-		mipsxx_pmu_ग_लिखो_control(2, 191<<5);
-		mipspmu.ग_लिखो_counter(2, 0);
-		mipsxx_pmu_ग_लिखो_control(2, 255<<5);
-		mipspmu.ग_लिखो_counter(2, 0);
-		mipsxx_pmu_ग_लिखो_control(2, 319<<5);
-		mipspmu.ग_लिखो_counter(2, 0);
-		mipsxx_pmu_ग_लिखो_control(2, 383<<5);
-		mipspmu.ग_लिखो_counter(2, 0);
-		mipsxx_pmu_ग_लिखो_control(2, 575<<5);
-		mipspmu.ग_लिखो_counter(2, 0);
+	case 3:
+		mipsxx_pmu_write_control(2, 0);
+		mipspmu.write_counter(2, 0);
+		mipsxx_pmu_write_control(2, 127<<5);
+		mipspmu.write_counter(2, 0);
+		mipsxx_pmu_write_control(2, 191<<5);
+		mipspmu.write_counter(2, 0);
+		mipsxx_pmu_write_control(2, 255<<5);
+		mipspmu.write_counter(2, 0);
+		mipsxx_pmu_write_control(2, 319<<5);
+		mipspmu.write_counter(2, 0);
+		mipsxx_pmu_write_control(2, 383<<5);
+		mipspmu.write_counter(2, 0);
+		mipsxx_pmu_write_control(2, 575<<5);
+		mipspmu.write_counter(2, 0);
 		fallthrough;
-	हाल 2:
-		mipsxx_pmu_ग_लिखो_control(1, 0);
-		mipspmu.ग_लिखो_counter(1, 0);
-		mipsxx_pmu_ग_लिखो_control(1, 127<<5);
-		mipspmu.ग_लिखो_counter(1, 0);
-		mipsxx_pmu_ग_लिखो_control(1, 191<<5);
-		mipspmu.ग_लिखो_counter(1, 0);
-		mipsxx_pmu_ग_लिखो_control(1, 255<<5);
-		mipspmu.ग_लिखो_counter(1, 0);
-		mipsxx_pmu_ग_लिखो_control(1, 319<<5);
-		mipspmu.ग_लिखो_counter(1, 0);
-		mipsxx_pmu_ग_लिखो_control(1, 383<<5);
-		mipspmu.ग_लिखो_counter(1, 0);
-		mipsxx_pmu_ग_लिखो_control(1, 575<<5);
-		mipspmu.ग_लिखो_counter(1, 0);
+	case 2:
+		mipsxx_pmu_write_control(1, 0);
+		mipspmu.write_counter(1, 0);
+		mipsxx_pmu_write_control(1, 127<<5);
+		mipspmu.write_counter(1, 0);
+		mipsxx_pmu_write_control(1, 191<<5);
+		mipspmu.write_counter(1, 0);
+		mipsxx_pmu_write_control(1, 255<<5);
+		mipspmu.write_counter(1, 0);
+		mipsxx_pmu_write_control(1, 319<<5);
+		mipspmu.write_counter(1, 0);
+		mipsxx_pmu_write_control(1, 383<<5);
+		mipspmu.write_counter(1, 0);
+		mipsxx_pmu_write_control(1, 575<<5);
+		mipspmu.write_counter(1, 0);
 		fallthrough;
-	हाल 1:
-		mipsxx_pmu_ग_लिखो_control(0, 0);
-		mipspmu.ग_लिखो_counter(0, 0);
-		mipsxx_pmu_ग_लिखो_control(0, 127<<5);
-		mipspmu.ग_लिखो_counter(0, 0);
-		mipsxx_pmu_ग_लिखो_control(0, 191<<5);
-		mipspmu.ग_लिखो_counter(0, 0);
-		mipsxx_pmu_ग_लिखो_control(0, 255<<5);
-		mipspmu.ग_लिखो_counter(0, 0);
-		mipsxx_pmu_ग_लिखो_control(0, 319<<5);
-		mipspmu.ग_लिखो_counter(0, 0);
-		mipsxx_pmu_ग_लिखो_control(0, 383<<5);
-		mipspmu.ग_लिखो_counter(0, 0);
-		mipsxx_pmu_ग_लिखो_control(0, 575<<5);
-		mipspmu.ग_लिखो_counter(0, 0);
-		अवरोध;
-	पूर्ण
-पूर्ण
+	case 1:
+		mipsxx_pmu_write_control(0, 0);
+		mipspmu.write_counter(0, 0);
+		mipsxx_pmu_write_control(0, 127<<5);
+		mipspmu.write_counter(0, 0);
+		mipsxx_pmu_write_control(0, 191<<5);
+		mipspmu.write_counter(0, 0);
+		mipsxx_pmu_write_control(0, 255<<5);
+		mipspmu.write_counter(0, 0);
+		mipsxx_pmu_write_control(0, 319<<5);
+		mipspmu.write_counter(0, 0);
+		mipsxx_pmu_write_control(0, 383<<5);
+		mipspmu.write_counter(0, 0);
+		mipsxx_pmu_write_control(0, 575<<5);
+		mipspmu.write_counter(0, 0);
+		break;
+	}
+}
 
-अटल व्योम reset_counters(व्योम *arg)
-अणु
-	पूर्णांक counters = (पूर्णांक)(दीर्घ)arg;
+static void reset_counters(void *arg)
+{
+	int counters = (int)(long)arg;
 
-	अगर (get_loongson3_pmu_type() == LOONGSON_PMU_TYPE2) अणु
+	if (get_loongson3_pmu_type() == LOONGSON_PMU_TYPE2) {
 		loongson3_reset_counters(arg);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	चयन (counters) अणु
-	हाल 4:
-		mipsxx_pmu_ग_लिखो_control(3, 0);
-		mipspmu.ग_लिखो_counter(3, 0);
+	switch (counters) {
+	case 4:
+		mipsxx_pmu_write_control(3, 0);
+		mipspmu.write_counter(3, 0);
 		fallthrough;
-	हाल 3:
-		mipsxx_pmu_ग_लिखो_control(2, 0);
-		mipspmu.ग_लिखो_counter(2, 0);
+	case 3:
+		mipsxx_pmu_write_control(2, 0);
+		mipspmu.write_counter(2, 0);
 		fallthrough;
-	हाल 2:
-		mipsxx_pmu_ग_लिखो_control(1, 0);
-		mipspmu.ग_लिखो_counter(1, 0);
+	case 2:
+		mipsxx_pmu_write_control(1, 0);
+		mipspmu.write_counter(1, 0);
 		fallthrough;
-	हाल 1:
-		mipsxx_pmu_ग_लिखो_control(0, 0);
-		mipspmu.ग_लिखो_counter(0, 0);
-		अवरोध;
-	पूर्ण
-पूर्ण
+	case 1:
+		mipsxx_pmu_write_control(0, 0);
+		mipspmu.write_counter(0, 0);
+		break;
+	}
+}
 
-/* 24K/34K/1004K/पूर्णांकerAptiv/loongson1 cores share the same event map. */
-अटल स्थिर काष्ठा mips_perf_event mipsxxcore_event_map
-				[PERF_COUNT_HW_MAX] = अणु
-	[PERF_COUNT_HW_CPU_CYCLES] = अणु 0x00, CNTR_EVEN | CNTR_ODD, P पूर्ण,
-	[PERF_COUNT_HW_INSTRUCTIONS] = अणु 0x01, CNTR_EVEN | CNTR_ODD, T पूर्ण,
-	[PERF_COUNT_HW_BRANCH_INSTRUCTIONS] = अणु 0x02, CNTR_EVEN, T पूर्ण,
-	[PERF_COUNT_HW_BRANCH_MISSES] = अणु 0x02, CNTR_ODD, T पूर्ण,
-पूर्ण;
+/* 24K/34K/1004K/interAptiv/loongson1 cores share the same event map. */
+static const struct mips_perf_event mipsxxcore_event_map
+				[PERF_COUNT_HW_MAX] = {
+	[PERF_COUNT_HW_CPU_CYCLES] = { 0x00, CNTR_EVEN | CNTR_ODD, P },
+	[PERF_COUNT_HW_INSTRUCTIONS] = { 0x01, CNTR_EVEN | CNTR_ODD, T },
+	[PERF_COUNT_HW_BRANCH_INSTRUCTIONS] = { 0x02, CNTR_EVEN, T },
+	[PERF_COUNT_HW_BRANCH_MISSES] = { 0x02, CNTR_ODD, T },
+};
 
-/* 74K/proAptiv core has dअगरferent branch event code. */
-अटल स्थिर काष्ठा mips_perf_event mipsxxcore_event_map2
-				[PERF_COUNT_HW_MAX] = अणु
-	[PERF_COUNT_HW_CPU_CYCLES] = अणु 0x00, CNTR_EVEN | CNTR_ODD, P पूर्ण,
-	[PERF_COUNT_HW_INSTRUCTIONS] = अणु 0x01, CNTR_EVEN | CNTR_ODD, T पूर्ण,
-	[PERF_COUNT_HW_BRANCH_INSTRUCTIONS] = अणु 0x27, CNTR_EVEN, T पूर्ण,
-	[PERF_COUNT_HW_BRANCH_MISSES] = अणु 0x27, CNTR_ODD, T पूर्ण,
-पूर्ण;
+/* 74K/proAptiv core has different branch event code. */
+static const struct mips_perf_event mipsxxcore_event_map2
+				[PERF_COUNT_HW_MAX] = {
+	[PERF_COUNT_HW_CPU_CYCLES] = { 0x00, CNTR_EVEN | CNTR_ODD, P },
+	[PERF_COUNT_HW_INSTRUCTIONS] = { 0x01, CNTR_EVEN | CNTR_ODD, T },
+	[PERF_COUNT_HW_BRANCH_INSTRUCTIONS] = { 0x27, CNTR_EVEN, T },
+	[PERF_COUNT_HW_BRANCH_MISSES] = { 0x27, CNTR_ODD, T },
+};
 
-अटल स्थिर काष्ठा mips_perf_event i6x00_event_map[PERF_COUNT_HW_MAX] = अणु
-	[PERF_COUNT_HW_CPU_CYCLES]          = अणु 0x00, CNTR_EVEN | CNTR_ODD पूर्ण,
-	[PERF_COUNT_HW_INSTRUCTIONS]        = अणु 0x01, CNTR_EVEN | CNTR_ODD पूर्ण,
+static const struct mips_perf_event i6x00_event_map[PERF_COUNT_HW_MAX] = {
+	[PERF_COUNT_HW_CPU_CYCLES]          = { 0x00, CNTR_EVEN | CNTR_ODD },
+	[PERF_COUNT_HW_INSTRUCTIONS]        = { 0x01, CNTR_EVEN | CNTR_ODD },
 	/* These only count dcache, not icache */
-	[PERF_COUNT_HW_CACHE_REFERENCES]    = अणु 0x45, CNTR_EVEN | CNTR_ODD पूर्ण,
-	[PERF_COUNT_HW_CACHE_MISSES]        = अणु 0x48, CNTR_EVEN | CNTR_ODD पूर्ण,
-	[PERF_COUNT_HW_BRANCH_INSTRUCTIONS] = अणु 0x15, CNTR_EVEN | CNTR_ODD पूर्ण,
-	[PERF_COUNT_HW_BRANCH_MISSES]       = अणु 0x16, CNTR_EVEN | CNTR_ODD पूर्ण,
-पूर्ण;
+	[PERF_COUNT_HW_CACHE_REFERENCES]    = { 0x45, CNTR_EVEN | CNTR_ODD },
+	[PERF_COUNT_HW_CACHE_MISSES]        = { 0x48, CNTR_EVEN | CNTR_ODD },
+	[PERF_COUNT_HW_BRANCH_INSTRUCTIONS] = { 0x15, CNTR_EVEN | CNTR_ODD },
+	[PERF_COUNT_HW_BRANCH_MISSES]       = { 0x16, CNTR_EVEN | CNTR_ODD },
+};
 
-अटल स्थिर काष्ठा mips_perf_event loongson3_event_map1[PERF_COUNT_HW_MAX] = अणु
-	[PERF_COUNT_HW_CPU_CYCLES] = अणु 0x00, CNTR_EVEN पूर्ण,
-	[PERF_COUNT_HW_INSTRUCTIONS] = अणु 0x00, CNTR_ODD पूर्ण,
-	[PERF_COUNT_HW_BRANCH_INSTRUCTIONS] = अणु 0x01, CNTR_EVEN पूर्ण,
-	[PERF_COUNT_HW_BRANCH_MISSES] = अणु 0x01, CNTR_ODD पूर्ण,
-पूर्ण;
+static const struct mips_perf_event loongson3_event_map1[PERF_COUNT_HW_MAX] = {
+	[PERF_COUNT_HW_CPU_CYCLES] = { 0x00, CNTR_EVEN },
+	[PERF_COUNT_HW_INSTRUCTIONS] = { 0x00, CNTR_ODD },
+	[PERF_COUNT_HW_BRANCH_INSTRUCTIONS] = { 0x01, CNTR_EVEN },
+	[PERF_COUNT_HW_BRANCH_MISSES] = { 0x01, CNTR_ODD },
+};
 
-अटल स्थिर काष्ठा mips_perf_event loongson3_event_map2[PERF_COUNT_HW_MAX] = अणु
-	[PERF_COUNT_HW_CPU_CYCLES] = अणु 0x80, CNTR_ALL पूर्ण,
-	[PERF_COUNT_HW_INSTRUCTIONS] = अणु 0x81, CNTR_ALL पूर्ण,
-	[PERF_COUNT_HW_CACHE_MISSES] = अणु 0x18, CNTR_ALL पूर्ण,
-	[PERF_COUNT_HW_BRANCH_INSTRUCTIONS] = अणु 0x94, CNTR_ALL पूर्ण,
-	[PERF_COUNT_HW_BRANCH_MISSES] = अणु 0x9c, CNTR_ALL पूर्ण,
-पूर्ण;
+static const struct mips_perf_event loongson3_event_map2[PERF_COUNT_HW_MAX] = {
+	[PERF_COUNT_HW_CPU_CYCLES] = { 0x80, CNTR_ALL },
+	[PERF_COUNT_HW_INSTRUCTIONS] = { 0x81, CNTR_ALL },
+	[PERF_COUNT_HW_CACHE_MISSES] = { 0x18, CNTR_ALL },
+	[PERF_COUNT_HW_BRANCH_INSTRUCTIONS] = { 0x94, CNTR_ALL },
+	[PERF_COUNT_HW_BRANCH_MISSES] = { 0x9c, CNTR_ALL },
+};
 
-अटल स्थिर काष्ठा mips_perf_event loongson3_event_map3[PERF_COUNT_HW_MAX] = अणु
-	[PERF_COUNT_HW_CPU_CYCLES] = अणु 0x00, CNTR_ALL पूर्ण,
-	[PERF_COUNT_HW_INSTRUCTIONS] = अणु 0x01, CNTR_ALL पूर्ण,
-	[PERF_COUNT_HW_CACHE_REFERENCES] = अणु 0x1c, CNTR_ALL पूर्ण,
-	[PERF_COUNT_HW_CACHE_MISSES] = अणु 0x1d, CNTR_ALL पूर्ण,
-	[PERF_COUNT_HW_BRANCH_INSTRUCTIONS] = अणु 0x02, CNTR_ALL पूर्ण,
-	[PERF_COUNT_HW_BRANCH_MISSES] = अणु 0x08, CNTR_ALL पूर्ण,
-पूर्ण;
+static const struct mips_perf_event loongson3_event_map3[PERF_COUNT_HW_MAX] = {
+	[PERF_COUNT_HW_CPU_CYCLES] = { 0x00, CNTR_ALL },
+	[PERF_COUNT_HW_INSTRUCTIONS] = { 0x01, CNTR_ALL },
+	[PERF_COUNT_HW_CACHE_REFERENCES] = { 0x1c, CNTR_ALL },
+	[PERF_COUNT_HW_CACHE_MISSES] = { 0x1d, CNTR_ALL },
+	[PERF_COUNT_HW_BRANCH_INSTRUCTIONS] = { 0x02, CNTR_ALL },
+	[PERF_COUNT_HW_BRANCH_MISSES] = { 0x08, CNTR_ALL },
+};
 
-अटल स्थिर काष्ठा mips_perf_event octeon_event_map[PERF_COUNT_HW_MAX] = अणु
-	[PERF_COUNT_HW_CPU_CYCLES] = अणु 0x01, CNTR_ALL पूर्ण,
-	[PERF_COUNT_HW_INSTRUCTIONS] = अणु 0x03, CNTR_ALL पूर्ण,
-	[PERF_COUNT_HW_CACHE_REFERENCES] = अणु 0x2b, CNTR_ALL पूर्ण,
-	[PERF_COUNT_HW_CACHE_MISSES] = अणु 0x2e, CNTR_ALL	 पूर्ण,
-	[PERF_COUNT_HW_BRANCH_INSTRUCTIONS] = अणु 0x08, CNTR_ALL पूर्ण,
-	[PERF_COUNT_HW_BRANCH_MISSES] = अणु 0x09, CNTR_ALL पूर्ण,
-	[PERF_COUNT_HW_BUS_CYCLES] = अणु 0x25, CNTR_ALL पूर्ण,
-पूर्ण;
+static const struct mips_perf_event octeon_event_map[PERF_COUNT_HW_MAX] = {
+	[PERF_COUNT_HW_CPU_CYCLES] = { 0x01, CNTR_ALL },
+	[PERF_COUNT_HW_INSTRUCTIONS] = { 0x03, CNTR_ALL },
+	[PERF_COUNT_HW_CACHE_REFERENCES] = { 0x2b, CNTR_ALL },
+	[PERF_COUNT_HW_CACHE_MISSES] = { 0x2e, CNTR_ALL	 },
+	[PERF_COUNT_HW_BRANCH_INSTRUCTIONS] = { 0x08, CNTR_ALL },
+	[PERF_COUNT_HW_BRANCH_MISSES] = { 0x09, CNTR_ALL },
+	[PERF_COUNT_HW_BUS_CYCLES] = { 0x25, CNTR_ALL },
+};
 
-अटल स्थिर काष्ठा mips_perf_event bmips5000_event_map
-				[PERF_COUNT_HW_MAX] = अणु
-	[PERF_COUNT_HW_CPU_CYCLES] = अणु 0x00, CNTR_EVEN | CNTR_ODD, T पूर्ण,
-	[PERF_COUNT_HW_INSTRUCTIONS] = अणु 0x01, CNTR_EVEN | CNTR_ODD, T पूर्ण,
-	[PERF_COUNT_HW_BRANCH_MISSES] = अणु 0x02, CNTR_ODD, T पूर्ण,
-पूर्ण;
+static const struct mips_perf_event bmips5000_event_map
+				[PERF_COUNT_HW_MAX] = {
+	[PERF_COUNT_HW_CPU_CYCLES] = { 0x00, CNTR_EVEN | CNTR_ODD, T },
+	[PERF_COUNT_HW_INSTRUCTIONS] = { 0x01, CNTR_EVEN | CNTR_ODD, T },
+	[PERF_COUNT_HW_BRANCH_MISSES] = { 0x02, CNTR_ODD, T },
+};
 
-अटल स्थिर काष्ठा mips_perf_event xlp_event_map[PERF_COUNT_HW_MAX] = अणु
-	[PERF_COUNT_HW_CPU_CYCLES] = अणु 0x01, CNTR_ALL पूर्ण,
-	[PERF_COUNT_HW_INSTRUCTIONS] = अणु 0x18, CNTR_ALL पूर्ण, /* PAPI_TOT_INS */
-	[PERF_COUNT_HW_CACHE_REFERENCES] = अणु 0x04, CNTR_ALL पूर्ण, /* PAPI_L1_ICA */
-	[PERF_COUNT_HW_CACHE_MISSES] = अणु 0x07, CNTR_ALL पूर्ण, /* PAPI_L1_ICM */
-	[PERF_COUNT_HW_BRANCH_INSTRUCTIONS] = अणु 0x1b, CNTR_ALL पूर्ण, /* PAPI_BR_CN */
-	[PERF_COUNT_HW_BRANCH_MISSES] = अणु 0x1c, CNTR_ALL पूर्ण, /* PAPI_BR_MSP */
-पूर्ण;
+static const struct mips_perf_event xlp_event_map[PERF_COUNT_HW_MAX] = {
+	[PERF_COUNT_HW_CPU_CYCLES] = { 0x01, CNTR_ALL },
+	[PERF_COUNT_HW_INSTRUCTIONS] = { 0x18, CNTR_ALL }, /* PAPI_TOT_INS */
+	[PERF_COUNT_HW_CACHE_REFERENCES] = { 0x04, CNTR_ALL }, /* PAPI_L1_ICA */
+	[PERF_COUNT_HW_CACHE_MISSES] = { 0x07, CNTR_ALL }, /* PAPI_L1_ICM */
+	[PERF_COUNT_HW_BRANCH_INSTRUCTIONS] = { 0x1b, CNTR_ALL }, /* PAPI_BR_CN */
+	[PERF_COUNT_HW_BRANCH_MISSES] = { 0x1c, CNTR_ALL }, /* PAPI_BR_MSP */
+};
 
-/* 24K/34K/1004K/पूर्णांकerAptiv/loongson1 cores share the same cache event map. */
-अटल स्थिर काष्ठा mips_perf_event mipsxxcore_cache_map
+/* 24K/34K/1004K/interAptiv/loongson1 cores share the same cache event map. */
+static const struct mips_perf_event mipsxxcore_cache_map
 				[PERF_COUNT_HW_CACHE_MAX]
 				[PERF_COUNT_HW_CACHE_OP_MAX]
-				[PERF_COUNT_HW_CACHE_RESULT_MAX] = अणु
-[C(L1D)] = अणु
+				[PERF_COUNT_HW_CACHE_RESULT_MAX] = {
+[C(L1D)] = {
 	/*
-	 * Like some other architectures (e.g. ARM), the perक्रमmance
-	 * counters करोn't dअगरferentiate between पढ़ो and ग_लिखो
+	 * Like some other architectures (e.g. ARM), the performance
+	 * counters don't differentiate between read and write
 	 * accesses/misses, so this isn't strictly correct, but it's the
-	 * best we can करो. Writes and पढ़ोs get combined.
+	 * best we can do. Writes and reads get combined.
 	 */
-	[C(OP_READ)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x0a, CNTR_EVEN, T पूर्ण,
-		[C(RESULT_MISS)]	= अणु 0x0b, CNTR_EVEN | CNTR_ODD, T पूर्ण,
-	पूर्ण,
-	[C(OP_WRITE)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x0a, CNTR_EVEN, T पूर्ण,
-		[C(RESULT_MISS)]	= अणु 0x0b, CNTR_EVEN | CNTR_ODD, T पूर्ण,
-	पूर्ण,
-पूर्ण,
-[C(L1I)] = अणु
-	[C(OP_READ)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x09, CNTR_EVEN, T पूर्ण,
-		[C(RESULT_MISS)]	= अणु 0x09, CNTR_ODD, T पूर्ण,
-	पूर्ण,
-	[C(OP_WRITE)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x09, CNTR_EVEN, T पूर्ण,
-		[C(RESULT_MISS)]	= अणु 0x09, CNTR_ODD, T पूर्ण,
-	पूर्ण,
-	[C(OP_PREFETCH)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x14, CNTR_EVEN, T पूर्ण,
+	[C(OP_READ)] = {
+		[C(RESULT_ACCESS)]	= { 0x0a, CNTR_EVEN, T },
+		[C(RESULT_MISS)]	= { 0x0b, CNTR_EVEN | CNTR_ODD, T },
+	},
+	[C(OP_WRITE)] = {
+		[C(RESULT_ACCESS)]	= { 0x0a, CNTR_EVEN, T },
+		[C(RESULT_MISS)]	= { 0x0b, CNTR_EVEN | CNTR_ODD, T },
+	},
+},
+[C(L1I)] = {
+	[C(OP_READ)] = {
+		[C(RESULT_ACCESS)]	= { 0x09, CNTR_EVEN, T },
+		[C(RESULT_MISS)]	= { 0x09, CNTR_ODD, T },
+	},
+	[C(OP_WRITE)] = {
+		[C(RESULT_ACCESS)]	= { 0x09, CNTR_EVEN, T },
+		[C(RESULT_MISS)]	= { 0x09, CNTR_ODD, T },
+	},
+	[C(OP_PREFETCH)] = {
+		[C(RESULT_ACCESS)]	= { 0x14, CNTR_EVEN, T },
 		/*
-		 * Note that MIPS has only "hit" events countable क्रम
+		 * Note that MIPS has only "hit" events countable for
 		 * the prefetch operation.
 		 */
-	पूर्ण,
-पूर्ण,
-[C(LL)] = अणु
-	[C(OP_READ)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x15, CNTR_ODD, P पूर्ण,
-		[C(RESULT_MISS)]	= अणु 0x16, CNTR_EVEN, P पूर्ण,
-	पूर्ण,
-	[C(OP_WRITE)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x15, CNTR_ODD, P पूर्ण,
-		[C(RESULT_MISS)]	= अणु 0x16, CNTR_EVEN, P पूर्ण,
-	पूर्ण,
-पूर्ण,
-[C(DTLB)] = अणु
-	[C(OP_READ)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x06, CNTR_EVEN, T पूर्ण,
-		[C(RESULT_MISS)]	= अणु 0x06, CNTR_ODD, T पूर्ण,
-	पूर्ण,
-	[C(OP_WRITE)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x06, CNTR_EVEN, T पूर्ण,
-		[C(RESULT_MISS)]	= अणु 0x06, CNTR_ODD, T पूर्ण,
-	पूर्ण,
-पूर्ण,
-[C(ITLB)] = अणु
-	[C(OP_READ)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x05, CNTR_EVEN, T पूर्ण,
-		[C(RESULT_MISS)]	= अणु 0x05, CNTR_ODD, T पूर्ण,
-	पूर्ण,
-	[C(OP_WRITE)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x05, CNTR_EVEN, T पूर्ण,
-		[C(RESULT_MISS)]	= अणु 0x05, CNTR_ODD, T पूर्ण,
-	पूर्ण,
-पूर्ण,
-[C(BPU)] = अणु
-	/* Using the same code क्रम *HW_BRANCH* */
-	[C(OP_READ)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x02, CNTR_EVEN, T पूर्ण,
-		[C(RESULT_MISS)]	= अणु 0x02, CNTR_ODD, T पूर्ण,
-	पूर्ण,
-	[C(OP_WRITE)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x02, CNTR_EVEN, T पूर्ण,
-		[C(RESULT_MISS)]	= अणु 0x02, CNTR_ODD, T पूर्ण,
-	पूर्ण,
-पूर्ण,
-पूर्ण;
+	},
+},
+[C(LL)] = {
+	[C(OP_READ)] = {
+		[C(RESULT_ACCESS)]	= { 0x15, CNTR_ODD, P },
+		[C(RESULT_MISS)]	= { 0x16, CNTR_EVEN, P },
+	},
+	[C(OP_WRITE)] = {
+		[C(RESULT_ACCESS)]	= { 0x15, CNTR_ODD, P },
+		[C(RESULT_MISS)]	= { 0x16, CNTR_EVEN, P },
+	},
+},
+[C(DTLB)] = {
+	[C(OP_READ)] = {
+		[C(RESULT_ACCESS)]	= { 0x06, CNTR_EVEN, T },
+		[C(RESULT_MISS)]	= { 0x06, CNTR_ODD, T },
+	},
+	[C(OP_WRITE)] = {
+		[C(RESULT_ACCESS)]	= { 0x06, CNTR_EVEN, T },
+		[C(RESULT_MISS)]	= { 0x06, CNTR_ODD, T },
+	},
+},
+[C(ITLB)] = {
+	[C(OP_READ)] = {
+		[C(RESULT_ACCESS)]	= { 0x05, CNTR_EVEN, T },
+		[C(RESULT_MISS)]	= { 0x05, CNTR_ODD, T },
+	},
+	[C(OP_WRITE)] = {
+		[C(RESULT_ACCESS)]	= { 0x05, CNTR_EVEN, T },
+		[C(RESULT_MISS)]	= { 0x05, CNTR_ODD, T },
+	},
+},
+[C(BPU)] = {
+	/* Using the same code for *HW_BRANCH* */
+	[C(OP_READ)] = {
+		[C(RESULT_ACCESS)]	= { 0x02, CNTR_EVEN, T },
+		[C(RESULT_MISS)]	= { 0x02, CNTR_ODD, T },
+	},
+	[C(OP_WRITE)] = {
+		[C(RESULT_ACCESS)]	= { 0x02, CNTR_EVEN, T },
+		[C(RESULT_MISS)]	= { 0x02, CNTR_ODD, T },
+	},
+},
+};
 
-/* 74K/proAptiv core has completely dअगरferent cache event map. */
-अटल स्थिर काष्ठा mips_perf_event mipsxxcore_cache_map2
+/* 74K/proAptiv core has completely different cache event map. */
+static const struct mips_perf_event mipsxxcore_cache_map2
 				[PERF_COUNT_HW_CACHE_MAX]
 				[PERF_COUNT_HW_CACHE_OP_MAX]
-				[PERF_COUNT_HW_CACHE_RESULT_MAX] = अणु
-[C(L1D)] = अणु
+				[PERF_COUNT_HW_CACHE_RESULT_MAX] = {
+[C(L1D)] = {
 	/*
-	 * Like some other architectures (e.g. ARM), the perक्रमmance
-	 * counters करोn't dअगरferentiate between पढ़ो and ग_लिखो
+	 * Like some other architectures (e.g. ARM), the performance
+	 * counters don't differentiate between read and write
 	 * accesses/misses, so this isn't strictly correct, but it's the
-	 * best we can करो. Writes and पढ़ोs get combined.
+	 * best we can do. Writes and reads get combined.
 	 */
-	[C(OP_READ)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x17, CNTR_ODD, T पूर्ण,
-		[C(RESULT_MISS)]	= अणु 0x18, CNTR_ODD, T पूर्ण,
-	पूर्ण,
-	[C(OP_WRITE)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x17, CNTR_ODD, T पूर्ण,
-		[C(RESULT_MISS)]	= अणु 0x18, CNTR_ODD, T पूर्ण,
-	पूर्ण,
-पूर्ण,
-[C(L1I)] = अणु
-	[C(OP_READ)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x06, CNTR_EVEN, T पूर्ण,
-		[C(RESULT_MISS)]	= अणु 0x06, CNTR_ODD, T पूर्ण,
-	पूर्ण,
-	[C(OP_WRITE)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x06, CNTR_EVEN, T पूर्ण,
-		[C(RESULT_MISS)]	= अणु 0x06, CNTR_ODD, T पूर्ण,
-	पूर्ण,
-	[C(OP_PREFETCH)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x34, CNTR_EVEN, T पूर्ण,
+	[C(OP_READ)] = {
+		[C(RESULT_ACCESS)]	= { 0x17, CNTR_ODD, T },
+		[C(RESULT_MISS)]	= { 0x18, CNTR_ODD, T },
+	},
+	[C(OP_WRITE)] = {
+		[C(RESULT_ACCESS)]	= { 0x17, CNTR_ODD, T },
+		[C(RESULT_MISS)]	= { 0x18, CNTR_ODD, T },
+	},
+},
+[C(L1I)] = {
+	[C(OP_READ)] = {
+		[C(RESULT_ACCESS)]	= { 0x06, CNTR_EVEN, T },
+		[C(RESULT_MISS)]	= { 0x06, CNTR_ODD, T },
+	},
+	[C(OP_WRITE)] = {
+		[C(RESULT_ACCESS)]	= { 0x06, CNTR_EVEN, T },
+		[C(RESULT_MISS)]	= { 0x06, CNTR_ODD, T },
+	},
+	[C(OP_PREFETCH)] = {
+		[C(RESULT_ACCESS)]	= { 0x34, CNTR_EVEN, T },
 		/*
-		 * Note that MIPS has only "hit" events countable क्रम
+		 * Note that MIPS has only "hit" events countable for
 		 * the prefetch operation.
 		 */
-	पूर्ण,
-पूर्ण,
-[C(LL)] = अणु
-	[C(OP_READ)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x1c, CNTR_ODD, P पूर्ण,
-		[C(RESULT_MISS)]	= अणु 0x1d, CNTR_EVEN, P पूर्ण,
-	पूर्ण,
-	[C(OP_WRITE)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x1c, CNTR_ODD, P पूर्ण,
-		[C(RESULT_MISS)]	= अणु 0x1d, CNTR_EVEN, P पूर्ण,
-	पूर्ण,
-पूर्ण,
+	},
+},
+[C(LL)] = {
+	[C(OP_READ)] = {
+		[C(RESULT_ACCESS)]	= { 0x1c, CNTR_ODD, P },
+		[C(RESULT_MISS)]	= { 0x1d, CNTR_EVEN, P },
+	},
+	[C(OP_WRITE)] = {
+		[C(RESULT_ACCESS)]	= { 0x1c, CNTR_ODD, P },
+		[C(RESULT_MISS)]	= { 0x1d, CNTR_EVEN, P },
+	},
+},
 /*
- * 74K core करोes not have specअगरic DTLB events. proAptiv core has
+ * 74K core does not have specific DTLB events. proAptiv core has
  * "speculative" DTLB events which are numbered 0x63 (even/odd) and
- * not included here. One can use raw events अगर really needed.
+ * not included here. One can use raw events if really needed.
  */
-[C(ITLB)] = अणु
-	[C(OP_READ)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x04, CNTR_EVEN, T पूर्ण,
-		[C(RESULT_MISS)]	= अणु 0x04, CNTR_ODD, T पूर्ण,
-	पूर्ण,
-	[C(OP_WRITE)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x04, CNTR_EVEN, T पूर्ण,
-		[C(RESULT_MISS)]	= अणु 0x04, CNTR_ODD, T पूर्ण,
-	पूर्ण,
-पूर्ण,
-[C(BPU)] = अणु
-	/* Using the same code क्रम *HW_BRANCH* */
-	[C(OP_READ)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x27, CNTR_EVEN, T पूर्ण,
-		[C(RESULT_MISS)]	= अणु 0x27, CNTR_ODD, T पूर्ण,
-	पूर्ण,
-	[C(OP_WRITE)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x27, CNTR_EVEN, T पूर्ण,
-		[C(RESULT_MISS)]	= अणु 0x27, CNTR_ODD, T पूर्ण,
-	पूर्ण,
-पूर्ण,
-पूर्ण;
+[C(ITLB)] = {
+	[C(OP_READ)] = {
+		[C(RESULT_ACCESS)]	= { 0x04, CNTR_EVEN, T },
+		[C(RESULT_MISS)]	= { 0x04, CNTR_ODD, T },
+	},
+	[C(OP_WRITE)] = {
+		[C(RESULT_ACCESS)]	= { 0x04, CNTR_EVEN, T },
+		[C(RESULT_MISS)]	= { 0x04, CNTR_ODD, T },
+	},
+},
+[C(BPU)] = {
+	/* Using the same code for *HW_BRANCH* */
+	[C(OP_READ)] = {
+		[C(RESULT_ACCESS)]	= { 0x27, CNTR_EVEN, T },
+		[C(RESULT_MISS)]	= { 0x27, CNTR_ODD, T },
+	},
+	[C(OP_WRITE)] = {
+		[C(RESULT_ACCESS)]	= { 0x27, CNTR_EVEN, T },
+		[C(RESULT_MISS)]	= { 0x27, CNTR_ODD, T },
+	},
+},
+};
 
-अटल स्थिर काष्ठा mips_perf_event i6x00_cache_map
+static const struct mips_perf_event i6x00_cache_map
 				[PERF_COUNT_HW_CACHE_MAX]
 				[PERF_COUNT_HW_CACHE_OP_MAX]
-				[PERF_COUNT_HW_CACHE_RESULT_MAX] = अणु
-[C(L1D)] = अणु
-	[C(OP_READ)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x46, CNTR_EVEN | CNTR_ODD पूर्ण,
-		[C(RESULT_MISS)]	= अणु 0x49, CNTR_EVEN | CNTR_ODD पूर्ण,
-	पूर्ण,
-	[C(OP_WRITE)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x47, CNTR_EVEN | CNTR_ODD पूर्ण,
-		[C(RESULT_MISS)]	= अणु 0x4a, CNTR_EVEN | CNTR_ODD पूर्ण,
-	पूर्ण,
-पूर्ण,
-[C(L1I)] = अणु
-	[C(OP_READ)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x84, CNTR_EVEN | CNTR_ODD पूर्ण,
-		[C(RESULT_MISS)]	= अणु 0x85, CNTR_EVEN | CNTR_ODD पूर्ण,
-	पूर्ण,
-पूर्ण,
-[C(DTLB)] = अणु
-	/* Can't distinguish पढ़ो & ग_लिखो */
-	[C(OP_READ)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x40, CNTR_EVEN | CNTR_ODD पूर्ण,
-		[C(RESULT_MISS)]	= अणु 0x41, CNTR_EVEN | CNTR_ODD पूर्ण,
-	पूर्ण,
-	[C(OP_WRITE)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x40, CNTR_EVEN | CNTR_ODD पूर्ण,
-		[C(RESULT_MISS)]	= अणु 0x41, CNTR_EVEN | CNTR_ODD पूर्ण,
-	पूर्ण,
-पूर्ण,
-[C(BPU)] = अणु
+				[PERF_COUNT_HW_CACHE_RESULT_MAX] = {
+[C(L1D)] = {
+	[C(OP_READ)] = {
+		[C(RESULT_ACCESS)]	= { 0x46, CNTR_EVEN | CNTR_ODD },
+		[C(RESULT_MISS)]	= { 0x49, CNTR_EVEN | CNTR_ODD },
+	},
+	[C(OP_WRITE)] = {
+		[C(RESULT_ACCESS)]	= { 0x47, CNTR_EVEN | CNTR_ODD },
+		[C(RESULT_MISS)]	= { 0x4a, CNTR_EVEN | CNTR_ODD },
+	},
+},
+[C(L1I)] = {
+	[C(OP_READ)] = {
+		[C(RESULT_ACCESS)]	= { 0x84, CNTR_EVEN | CNTR_ODD },
+		[C(RESULT_MISS)]	= { 0x85, CNTR_EVEN | CNTR_ODD },
+	},
+},
+[C(DTLB)] = {
+	/* Can't distinguish read & write */
+	[C(OP_READ)] = {
+		[C(RESULT_ACCESS)]	= { 0x40, CNTR_EVEN | CNTR_ODD },
+		[C(RESULT_MISS)]	= { 0x41, CNTR_EVEN | CNTR_ODD },
+	},
+	[C(OP_WRITE)] = {
+		[C(RESULT_ACCESS)]	= { 0x40, CNTR_EVEN | CNTR_ODD },
+		[C(RESULT_MISS)]	= { 0x41, CNTR_EVEN | CNTR_ODD },
+	},
+},
+[C(BPU)] = {
 	/* Conditional branches / mispredicted */
-	[C(OP_READ)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x15, CNTR_EVEN | CNTR_ODD पूर्ण,
-		[C(RESULT_MISS)]	= अणु 0x16, CNTR_EVEN | CNTR_ODD पूर्ण,
-	पूर्ण,
-पूर्ण,
-पूर्ण;
+	[C(OP_READ)] = {
+		[C(RESULT_ACCESS)]	= { 0x15, CNTR_EVEN | CNTR_ODD },
+		[C(RESULT_MISS)]	= { 0x16, CNTR_EVEN | CNTR_ODD },
+	},
+},
+};
 
-अटल स्थिर काष्ठा mips_perf_event loongson3_cache_map1
+static const struct mips_perf_event loongson3_cache_map1
 				[PERF_COUNT_HW_CACHE_MAX]
 				[PERF_COUNT_HW_CACHE_OP_MAX]
-				[PERF_COUNT_HW_CACHE_RESULT_MAX] = अणु
-[C(L1D)] = अणु
+				[PERF_COUNT_HW_CACHE_RESULT_MAX] = {
+[C(L1D)] = {
 	/*
-	 * Like some other architectures (e.g. ARM), the perक्रमmance
-	 * counters करोn't dअगरferentiate between पढ़ो and ग_लिखो
+	 * Like some other architectures (e.g. ARM), the performance
+	 * counters don't differentiate between read and write
 	 * accesses/misses, so this isn't strictly correct, but it's the
-	 * best we can करो. Writes and पढ़ोs get combined.
+	 * best we can do. Writes and reads get combined.
 	 */
-	[C(OP_READ)] = अणु
-		[C(RESULT_MISS)]        = अणु 0x04, CNTR_ODD पूर्ण,
-	पूर्ण,
-	[C(OP_WRITE)] = अणु
-		[C(RESULT_MISS)]        = अणु 0x04, CNTR_ODD पूर्ण,
-	पूर्ण,
-पूर्ण,
-[C(L1I)] = अणु
-	[C(OP_READ)] = अणु
-		[C(RESULT_MISS)]        = अणु 0x04, CNTR_EVEN पूर्ण,
-	पूर्ण,
-	[C(OP_WRITE)] = अणु
-		[C(RESULT_MISS)]        = अणु 0x04, CNTR_EVEN पूर्ण,
-	पूर्ण,
-पूर्ण,
-[C(DTLB)] = अणु
-	[C(OP_READ)] = अणु
-		[C(RESULT_MISS)]        = अणु 0x09, CNTR_ODD पूर्ण,
-	पूर्ण,
-	[C(OP_WRITE)] = अणु
-		[C(RESULT_MISS)]        = अणु 0x09, CNTR_ODD पूर्ण,
-	पूर्ण,
-पूर्ण,
-[C(ITLB)] = अणु
-	[C(OP_READ)] = अणु
-		[C(RESULT_MISS)]        = अणु 0x0c, CNTR_ODD पूर्ण,
-	पूर्ण,
-	[C(OP_WRITE)] = अणु
-		[C(RESULT_MISS)]        = अणु 0x0c, CNTR_ODD पूर्ण,
-	पूर्ण,
-पूर्ण,
-[C(BPU)] = अणु
-	/* Using the same code क्रम *HW_BRANCH* */
-	[C(OP_READ)] = अणु
-		[C(RESULT_ACCESS)]      = अणु 0x01, CNTR_EVEN पूर्ण,
-		[C(RESULT_MISS)]        = अणु 0x01, CNTR_ODD पूर्ण,
-	पूर्ण,
-	[C(OP_WRITE)] = अणु
-		[C(RESULT_ACCESS)]      = अणु 0x01, CNTR_EVEN पूर्ण,
-		[C(RESULT_MISS)]        = अणु 0x01, CNTR_ODD पूर्ण,
-	पूर्ण,
-पूर्ण,
-पूर्ण;
+	[C(OP_READ)] = {
+		[C(RESULT_MISS)]        = { 0x04, CNTR_ODD },
+	},
+	[C(OP_WRITE)] = {
+		[C(RESULT_MISS)]        = { 0x04, CNTR_ODD },
+	},
+},
+[C(L1I)] = {
+	[C(OP_READ)] = {
+		[C(RESULT_MISS)]        = { 0x04, CNTR_EVEN },
+	},
+	[C(OP_WRITE)] = {
+		[C(RESULT_MISS)]        = { 0x04, CNTR_EVEN },
+	},
+},
+[C(DTLB)] = {
+	[C(OP_READ)] = {
+		[C(RESULT_MISS)]        = { 0x09, CNTR_ODD },
+	},
+	[C(OP_WRITE)] = {
+		[C(RESULT_MISS)]        = { 0x09, CNTR_ODD },
+	},
+},
+[C(ITLB)] = {
+	[C(OP_READ)] = {
+		[C(RESULT_MISS)]        = { 0x0c, CNTR_ODD },
+	},
+	[C(OP_WRITE)] = {
+		[C(RESULT_MISS)]        = { 0x0c, CNTR_ODD },
+	},
+},
+[C(BPU)] = {
+	/* Using the same code for *HW_BRANCH* */
+	[C(OP_READ)] = {
+		[C(RESULT_ACCESS)]      = { 0x01, CNTR_EVEN },
+		[C(RESULT_MISS)]        = { 0x01, CNTR_ODD },
+	},
+	[C(OP_WRITE)] = {
+		[C(RESULT_ACCESS)]      = { 0x01, CNTR_EVEN },
+		[C(RESULT_MISS)]        = { 0x01, CNTR_ODD },
+	},
+},
+};
 
-अटल स्थिर काष्ठा mips_perf_event loongson3_cache_map2
+static const struct mips_perf_event loongson3_cache_map2
 				[PERF_COUNT_HW_CACHE_MAX]
 				[PERF_COUNT_HW_CACHE_OP_MAX]
-				[PERF_COUNT_HW_CACHE_RESULT_MAX] = अणु
-[C(L1D)] = अणु
+				[PERF_COUNT_HW_CACHE_RESULT_MAX] = {
+[C(L1D)] = {
 	/*
-	 * Like some other architectures (e.g. ARM), the perक्रमmance
-	 * counters करोn't dअगरferentiate between पढ़ो and ग_लिखो
+	 * Like some other architectures (e.g. ARM), the performance
+	 * counters don't differentiate between read and write
 	 * accesses/misses, so this isn't strictly correct, but it's the
-	 * best we can करो. Writes and पढ़ोs get combined.
+	 * best we can do. Writes and reads get combined.
 	 */
-	[C(OP_READ)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x156, CNTR_ALL पूर्ण,
-	पूर्ण,
-	[C(OP_WRITE)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x155, CNTR_ALL पूर्ण,
-		[C(RESULT_MISS)]        = अणु 0x153, CNTR_ALL पूर्ण,
-	पूर्ण,
-पूर्ण,
-[C(L1I)] = अणु
-	[C(OP_READ)] = अणु
-		[C(RESULT_MISS)]	= अणु 0x18, CNTR_ALL पूर्ण,
-	पूर्ण,
-	[C(OP_WRITE)] = अणु
-		[C(RESULT_MISS)]        = अणु 0x18, CNTR_ALL पूर्ण,
-	पूर्ण,
-पूर्ण,
-[C(LL)] = अणु
-	[C(OP_READ)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x1b6, CNTR_ALL पूर्ण,
-	पूर्ण,
-	[C(OP_WRITE)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x1b7, CNTR_ALL पूर्ण,
-	पूर्ण,
-	[C(OP_PREFETCH)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x1bf, CNTR_ALL पूर्ण,
-	पूर्ण,
-पूर्ण,
-[C(DTLB)] = अणु
-	[C(OP_READ)] = अणु
-		[C(RESULT_MISS)]        = अणु 0x92, CNTR_ALL पूर्ण,
-	पूर्ण,
-	[C(OP_WRITE)] = अणु
-		[C(RESULT_MISS)]        = अणु 0x92, CNTR_ALL पूर्ण,
-	पूर्ण,
-पूर्ण,
-[C(ITLB)] = अणु
-	[C(OP_READ)] = अणु
-		[C(RESULT_MISS)]	= अणु 0x1a, CNTR_ALL पूर्ण,
-	पूर्ण,
-	[C(OP_WRITE)] = अणु
-		[C(RESULT_MISS)]	= अणु 0x1a, CNTR_ALL पूर्ण,
-	पूर्ण,
-पूर्ण,
-[C(BPU)] = अणु
-	/* Using the same code क्रम *HW_BRANCH* */
-	[C(OP_READ)] = अणु
-		[C(RESULT_ACCESS)]      = अणु 0x94, CNTR_ALL पूर्ण,
-		[C(RESULT_MISS)]        = अणु 0x9c, CNTR_ALL पूर्ण,
-	पूर्ण,
-पूर्ण,
-पूर्ण;
+	[C(OP_READ)] = {
+		[C(RESULT_ACCESS)]	= { 0x156, CNTR_ALL },
+	},
+	[C(OP_WRITE)] = {
+		[C(RESULT_ACCESS)]	= { 0x155, CNTR_ALL },
+		[C(RESULT_MISS)]        = { 0x153, CNTR_ALL },
+	},
+},
+[C(L1I)] = {
+	[C(OP_READ)] = {
+		[C(RESULT_MISS)]	= { 0x18, CNTR_ALL },
+	},
+	[C(OP_WRITE)] = {
+		[C(RESULT_MISS)]        = { 0x18, CNTR_ALL },
+	},
+},
+[C(LL)] = {
+	[C(OP_READ)] = {
+		[C(RESULT_ACCESS)]	= { 0x1b6, CNTR_ALL },
+	},
+	[C(OP_WRITE)] = {
+		[C(RESULT_ACCESS)]	= { 0x1b7, CNTR_ALL },
+	},
+	[C(OP_PREFETCH)] = {
+		[C(RESULT_ACCESS)]	= { 0x1bf, CNTR_ALL },
+	},
+},
+[C(DTLB)] = {
+	[C(OP_READ)] = {
+		[C(RESULT_MISS)]        = { 0x92, CNTR_ALL },
+	},
+	[C(OP_WRITE)] = {
+		[C(RESULT_MISS)]        = { 0x92, CNTR_ALL },
+	},
+},
+[C(ITLB)] = {
+	[C(OP_READ)] = {
+		[C(RESULT_MISS)]	= { 0x1a, CNTR_ALL },
+	},
+	[C(OP_WRITE)] = {
+		[C(RESULT_MISS)]	= { 0x1a, CNTR_ALL },
+	},
+},
+[C(BPU)] = {
+	/* Using the same code for *HW_BRANCH* */
+	[C(OP_READ)] = {
+		[C(RESULT_ACCESS)]      = { 0x94, CNTR_ALL },
+		[C(RESULT_MISS)]        = { 0x9c, CNTR_ALL },
+	},
+},
+};
 
-अटल स्थिर काष्ठा mips_perf_event loongson3_cache_map3
+static const struct mips_perf_event loongson3_cache_map3
 				[PERF_COUNT_HW_CACHE_MAX]
 				[PERF_COUNT_HW_CACHE_OP_MAX]
-				[PERF_COUNT_HW_CACHE_RESULT_MAX] = अणु
-[C(L1D)] = अणु
+				[PERF_COUNT_HW_CACHE_RESULT_MAX] = {
+[C(L1D)] = {
 	/*
-	 * Like some other architectures (e.g. ARM), the perक्रमmance
-	 * counters करोn't dअगरferentiate between पढ़ो and ग_लिखो
+	 * Like some other architectures (e.g. ARM), the performance
+	 * counters don't differentiate between read and write
 	 * accesses/misses, so this isn't strictly correct, but it's the
-	 * best we can करो. Writes and पढ़ोs get combined.
+	 * best we can do. Writes and reads get combined.
 	 */
-	[C(OP_READ)] = अणु
-		[C(RESULT_ACCESS)]      = अणु 0x1e, CNTR_ALL पूर्ण,
-		[C(RESULT_MISS)]        = अणु 0x1f, CNTR_ALL पूर्ण,
-	पूर्ण,
-	[C(OP_PREFETCH)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0xaa, CNTR_ALL पूर्ण,
-		[C(RESULT_MISS)]	= अणु 0xa9, CNTR_ALL पूर्ण,
-	पूर्ण,
-पूर्ण,
-[C(L1I)] = अणु
-	[C(OP_READ)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x1c, CNTR_ALL पूर्ण,
-		[C(RESULT_MISS)]	= अणु 0x1d, CNTR_ALL पूर्ण,
-	पूर्ण,
-पूर्ण,
-[C(LL)] = अणु
-	[C(OP_READ)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x2e, CNTR_ALL पूर्ण,
-		[C(RESULT_MISS)]	= अणु 0x2f, CNTR_ALL पूर्ण,
-	पूर्ण,
-पूर्ण,
-[C(DTLB)] = अणु
-	[C(OP_READ)] = अणु
-		[C(RESULT_ACCESS)]      = अणु 0x14, CNTR_ALL पूर्ण,
-		[C(RESULT_MISS)]	= अणु 0x1b, CNTR_ALL पूर्ण,
-	पूर्ण,
-पूर्ण,
-[C(ITLB)] = अणु
-	[C(OP_READ)] = अणु
-		[C(RESULT_MISS)]	= अणु 0x1a, CNTR_ALL पूर्ण,
-	पूर्ण,
-पूर्ण,
-[C(BPU)] = अणु
-	/* Using the same code क्रम *HW_BRANCH* */
-	[C(OP_READ)] = अणु
-		[C(RESULT_ACCESS)]      = अणु 0x02, CNTR_ALL पूर्ण,
-		[C(RESULT_MISS)]        = अणु 0x08, CNTR_ALL पूर्ण,
-	पूर्ण,
-पूर्ण,
-पूर्ण;
+	[C(OP_READ)] = {
+		[C(RESULT_ACCESS)]      = { 0x1e, CNTR_ALL },
+		[C(RESULT_MISS)]        = { 0x1f, CNTR_ALL },
+	},
+	[C(OP_PREFETCH)] = {
+		[C(RESULT_ACCESS)]	= { 0xaa, CNTR_ALL },
+		[C(RESULT_MISS)]	= { 0xa9, CNTR_ALL },
+	},
+},
+[C(L1I)] = {
+	[C(OP_READ)] = {
+		[C(RESULT_ACCESS)]	= { 0x1c, CNTR_ALL },
+		[C(RESULT_MISS)]	= { 0x1d, CNTR_ALL },
+	},
+},
+[C(LL)] = {
+	[C(OP_READ)] = {
+		[C(RESULT_ACCESS)]	= { 0x2e, CNTR_ALL },
+		[C(RESULT_MISS)]	= { 0x2f, CNTR_ALL },
+	},
+},
+[C(DTLB)] = {
+	[C(OP_READ)] = {
+		[C(RESULT_ACCESS)]      = { 0x14, CNTR_ALL },
+		[C(RESULT_MISS)]	= { 0x1b, CNTR_ALL },
+	},
+},
+[C(ITLB)] = {
+	[C(OP_READ)] = {
+		[C(RESULT_MISS)]	= { 0x1a, CNTR_ALL },
+	},
+},
+[C(BPU)] = {
+	/* Using the same code for *HW_BRANCH* */
+	[C(OP_READ)] = {
+		[C(RESULT_ACCESS)]      = { 0x02, CNTR_ALL },
+		[C(RESULT_MISS)]        = { 0x08, CNTR_ALL },
+	},
+},
+};
 
 /* BMIPS5000 */
-अटल स्थिर काष्ठा mips_perf_event bmips5000_cache_map
+static const struct mips_perf_event bmips5000_cache_map
 				[PERF_COUNT_HW_CACHE_MAX]
 				[PERF_COUNT_HW_CACHE_OP_MAX]
-				[PERF_COUNT_HW_CACHE_RESULT_MAX] = अणु
-[C(L1D)] = अणु
+				[PERF_COUNT_HW_CACHE_RESULT_MAX] = {
+[C(L1D)] = {
 	/*
-	 * Like some other architectures (e.g. ARM), the perक्रमmance
-	 * counters करोn't dअगरferentiate between पढ़ो and ग_लिखो
+	 * Like some other architectures (e.g. ARM), the performance
+	 * counters don't differentiate between read and write
 	 * accesses/misses, so this isn't strictly correct, but it's the
-	 * best we can करो. Writes and पढ़ोs get combined.
+	 * best we can do. Writes and reads get combined.
 	 */
-	[C(OP_READ)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 12, CNTR_EVEN, T पूर्ण,
-		[C(RESULT_MISS)]	= अणु 12, CNTR_ODD, T पूर्ण,
-	पूर्ण,
-	[C(OP_WRITE)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 12, CNTR_EVEN, T पूर्ण,
-		[C(RESULT_MISS)]	= अणु 12, CNTR_ODD, T पूर्ण,
-	पूर्ण,
-पूर्ण,
-[C(L1I)] = अणु
-	[C(OP_READ)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 10, CNTR_EVEN, T पूर्ण,
-		[C(RESULT_MISS)]	= अणु 10, CNTR_ODD, T पूर्ण,
-	पूर्ण,
-	[C(OP_WRITE)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 10, CNTR_EVEN, T पूर्ण,
-		[C(RESULT_MISS)]	= अणु 10, CNTR_ODD, T पूर्ण,
-	पूर्ण,
-	[C(OP_PREFETCH)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 23, CNTR_EVEN, T पूर्ण,
+	[C(OP_READ)] = {
+		[C(RESULT_ACCESS)]	= { 12, CNTR_EVEN, T },
+		[C(RESULT_MISS)]	= { 12, CNTR_ODD, T },
+	},
+	[C(OP_WRITE)] = {
+		[C(RESULT_ACCESS)]	= { 12, CNTR_EVEN, T },
+		[C(RESULT_MISS)]	= { 12, CNTR_ODD, T },
+	},
+},
+[C(L1I)] = {
+	[C(OP_READ)] = {
+		[C(RESULT_ACCESS)]	= { 10, CNTR_EVEN, T },
+		[C(RESULT_MISS)]	= { 10, CNTR_ODD, T },
+	},
+	[C(OP_WRITE)] = {
+		[C(RESULT_ACCESS)]	= { 10, CNTR_EVEN, T },
+		[C(RESULT_MISS)]	= { 10, CNTR_ODD, T },
+	},
+	[C(OP_PREFETCH)] = {
+		[C(RESULT_ACCESS)]	= { 23, CNTR_EVEN, T },
 		/*
-		 * Note that MIPS has only "hit" events countable क्रम
+		 * Note that MIPS has only "hit" events countable for
 		 * the prefetch operation.
 		 */
-	पूर्ण,
-पूर्ण,
-[C(LL)] = अणु
-	[C(OP_READ)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 28, CNTR_EVEN, P पूर्ण,
-		[C(RESULT_MISS)]	= अणु 28, CNTR_ODD, P पूर्ण,
-	पूर्ण,
-	[C(OP_WRITE)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 28, CNTR_EVEN, P पूर्ण,
-		[C(RESULT_MISS)]	= अणु 28, CNTR_ODD, P पूर्ण,
-	पूर्ण,
-पूर्ण,
-[C(BPU)] = अणु
-	/* Using the same code क्रम *HW_BRANCH* */
-	[C(OP_READ)] = अणु
-		[C(RESULT_MISS)]	= अणु 0x02, CNTR_ODD, T पूर्ण,
-	पूर्ण,
-	[C(OP_WRITE)] = अणु
-		[C(RESULT_MISS)]	= अणु 0x02, CNTR_ODD, T पूर्ण,
-	पूर्ण,
-पूर्ण,
-पूर्ण;
+	},
+},
+[C(LL)] = {
+	[C(OP_READ)] = {
+		[C(RESULT_ACCESS)]	= { 28, CNTR_EVEN, P },
+		[C(RESULT_MISS)]	= { 28, CNTR_ODD, P },
+	},
+	[C(OP_WRITE)] = {
+		[C(RESULT_ACCESS)]	= { 28, CNTR_EVEN, P },
+		[C(RESULT_MISS)]	= { 28, CNTR_ODD, P },
+	},
+},
+[C(BPU)] = {
+	/* Using the same code for *HW_BRANCH* */
+	[C(OP_READ)] = {
+		[C(RESULT_MISS)]	= { 0x02, CNTR_ODD, T },
+	},
+	[C(OP_WRITE)] = {
+		[C(RESULT_MISS)]	= { 0x02, CNTR_ODD, T },
+	},
+},
+};
 
-अटल स्थिर काष्ठा mips_perf_event octeon_cache_map
+static const struct mips_perf_event octeon_cache_map
 				[PERF_COUNT_HW_CACHE_MAX]
 				[PERF_COUNT_HW_CACHE_OP_MAX]
-				[PERF_COUNT_HW_CACHE_RESULT_MAX] = अणु
-[C(L1D)] = अणु
-	[C(OP_READ)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x2b, CNTR_ALL पूर्ण,
-		[C(RESULT_MISS)]	= अणु 0x2e, CNTR_ALL पूर्ण,
-	पूर्ण,
-	[C(OP_WRITE)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x30, CNTR_ALL पूर्ण,
-	पूर्ण,
-पूर्ण,
-[C(L1I)] = अणु
-	[C(OP_READ)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x18, CNTR_ALL पूर्ण,
-	पूर्ण,
-	[C(OP_PREFETCH)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x19, CNTR_ALL पूर्ण,
-	पूर्ण,
-पूर्ण,
-[C(DTLB)] = अणु
+				[PERF_COUNT_HW_CACHE_RESULT_MAX] = {
+[C(L1D)] = {
+	[C(OP_READ)] = {
+		[C(RESULT_ACCESS)]	= { 0x2b, CNTR_ALL },
+		[C(RESULT_MISS)]	= { 0x2e, CNTR_ALL },
+	},
+	[C(OP_WRITE)] = {
+		[C(RESULT_ACCESS)]	= { 0x30, CNTR_ALL },
+	},
+},
+[C(L1I)] = {
+	[C(OP_READ)] = {
+		[C(RESULT_ACCESS)]	= { 0x18, CNTR_ALL },
+	},
+	[C(OP_PREFETCH)] = {
+		[C(RESULT_ACCESS)]	= { 0x19, CNTR_ALL },
+	},
+},
+[C(DTLB)] = {
 	/*
-	 * Only general DTLB misses are counted use the same event क्रम
-	 * पढ़ो and ग_लिखो.
+	 * Only general DTLB misses are counted use the same event for
+	 * read and write.
 	 */
-	[C(OP_READ)] = अणु
-		[C(RESULT_MISS)]	= अणु 0x35, CNTR_ALL पूर्ण,
-	पूर्ण,
-	[C(OP_WRITE)] = अणु
-		[C(RESULT_MISS)]	= अणु 0x35, CNTR_ALL पूर्ण,
-	पूर्ण,
-पूर्ण,
-[C(ITLB)] = अणु
-	[C(OP_READ)] = अणु
-		[C(RESULT_MISS)]	= अणु 0x37, CNTR_ALL पूर्ण,
-	पूर्ण,
-पूर्ण,
-पूर्ण;
+	[C(OP_READ)] = {
+		[C(RESULT_MISS)]	= { 0x35, CNTR_ALL },
+	},
+	[C(OP_WRITE)] = {
+		[C(RESULT_MISS)]	= { 0x35, CNTR_ALL },
+	},
+},
+[C(ITLB)] = {
+	[C(OP_READ)] = {
+		[C(RESULT_MISS)]	= { 0x37, CNTR_ALL },
+	},
+},
+};
 
-अटल स्थिर काष्ठा mips_perf_event xlp_cache_map
+static const struct mips_perf_event xlp_cache_map
 				[PERF_COUNT_HW_CACHE_MAX]
 				[PERF_COUNT_HW_CACHE_OP_MAX]
-				[PERF_COUNT_HW_CACHE_RESULT_MAX] = अणु
-[C(L1D)] = अणु
-	[C(OP_READ)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x31, CNTR_ALL पूर्ण, /* PAPI_L1_DCR */
-		[C(RESULT_MISS)]	= अणु 0x30, CNTR_ALL पूर्ण, /* PAPI_L1_LDM */
-	पूर्ण,
-	[C(OP_WRITE)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x2f, CNTR_ALL पूर्ण, /* PAPI_L1_DCW */
-		[C(RESULT_MISS)]	= अणु 0x2e, CNTR_ALL पूर्ण, /* PAPI_L1_STM */
-	पूर्ण,
-पूर्ण,
-[C(L1I)] = अणु
-	[C(OP_READ)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x04, CNTR_ALL पूर्ण, /* PAPI_L1_ICA */
-		[C(RESULT_MISS)]	= अणु 0x07, CNTR_ALL पूर्ण, /* PAPI_L1_ICM */
-	पूर्ण,
-पूर्ण,
-[C(LL)] = अणु
-	[C(OP_READ)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x35, CNTR_ALL पूर्ण, /* PAPI_L2_DCR */
-		[C(RESULT_MISS)]	= अणु 0x37, CNTR_ALL पूर्ण, /* PAPI_L2_LDM */
-	पूर्ण,
-	[C(OP_WRITE)] = अणु
-		[C(RESULT_ACCESS)]	= अणु 0x34, CNTR_ALL पूर्ण, /* PAPI_L2_DCA */
-		[C(RESULT_MISS)]	= अणु 0x36, CNTR_ALL पूर्ण, /* PAPI_L2_DCM */
-	पूर्ण,
-पूर्ण,
-[C(DTLB)] = अणु
+				[PERF_COUNT_HW_CACHE_RESULT_MAX] = {
+[C(L1D)] = {
+	[C(OP_READ)] = {
+		[C(RESULT_ACCESS)]	= { 0x31, CNTR_ALL }, /* PAPI_L1_DCR */
+		[C(RESULT_MISS)]	= { 0x30, CNTR_ALL }, /* PAPI_L1_LDM */
+	},
+	[C(OP_WRITE)] = {
+		[C(RESULT_ACCESS)]	= { 0x2f, CNTR_ALL }, /* PAPI_L1_DCW */
+		[C(RESULT_MISS)]	= { 0x2e, CNTR_ALL }, /* PAPI_L1_STM */
+	},
+},
+[C(L1I)] = {
+	[C(OP_READ)] = {
+		[C(RESULT_ACCESS)]	= { 0x04, CNTR_ALL }, /* PAPI_L1_ICA */
+		[C(RESULT_MISS)]	= { 0x07, CNTR_ALL }, /* PAPI_L1_ICM */
+	},
+},
+[C(LL)] = {
+	[C(OP_READ)] = {
+		[C(RESULT_ACCESS)]	= { 0x35, CNTR_ALL }, /* PAPI_L2_DCR */
+		[C(RESULT_MISS)]	= { 0x37, CNTR_ALL }, /* PAPI_L2_LDM */
+	},
+	[C(OP_WRITE)] = {
+		[C(RESULT_ACCESS)]	= { 0x34, CNTR_ALL }, /* PAPI_L2_DCA */
+		[C(RESULT_MISS)]	= { 0x36, CNTR_ALL }, /* PAPI_L2_DCM */
+	},
+},
+[C(DTLB)] = {
 	/*
-	 * Only general DTLB misses are counted use the same event क्रम
-	 * पढ़ो and ग_लिखो.
+	 * Only general DTLB misses are counted use the same event for
+	 * read and write.
 	 */
-	[C(OP_READ)] = अणु
-		[C(RESULT_MISS)]	= अणु 0x2d, CNTR_ALL पूर्ण, /* PAPI_TLB_DM */
-	पूर्ण,
-	[C(OP_WRITE)] = अणु
-		[C(RESULT_MISS)]	= अणु 0x2d, CNTR_ALL पूर्ण, /* PAPI_TLB_DM */
-	पूर्ण,
-पूर्ण,
-[C(ITLB)] = अणु
-	[C(OP_READ)] = अणु
-		[C(RESULT_MISS)]	= अणु 0x08, CNTR_ALL पूर्ण, /* PAPI_TLB_IM */
-	पूर्ण,
-	[C(OP_WRITE)] = अणु
-		[C(RESULT_MISS)]	= अणु 0x08, CNTR_ALL पूर्ण, /* PAPI_TLB_IM */
-	पूर्ण,
-पूर्ण,
-[C(BPU)] = अणु
-	[C(OP_READ)] = अणु
-		[C(RESULT_MISS)]	= अणु 0x25, CNTR_ALL पूर्ण,
-	पूर्ण,
-पूर्ण,
-पूर्ण;
+	[C(OP_READ)] = {
+		[C(RESULT_MISS)]	= { 0x2d, CNTR_ALL }, /* PAPI_TLB_DM */
+	},
+	[C(OP_WRITE)] = {
+		[C(RESULT_MISS)]	= { 0x2d, CNTR_ALL }, /* PAPI_TLB_DM */
+	},
+},
+[C(ITLB)] = {
+	[C(OP_READ)] = {
+		[C(RESULT_MISS)]	= { 0x08, CNTR_ALL }, /* PAPI_TLB_IM */
+	},
+	[C(OP_WRITE)] = {
+		[C(RESULT_MISS)]	= { 0x08, CNTR_ALL }, /* PAPI_TLB_IM */
+	},
+},
+[C(BPU)] = {
+	[C(OP_READ)] = {
+		[C(RESULT_MISS)]	= { 0x25, CNTR_ALL },
+	},
+},
+};
 
-अटल पूर्णांक __hw_perf_event_init(काष्ठा perf_event *event)
-अणु
-	काष्ठा perf_event_attr *attr = &event->attr;
-	काष्ठा hw_perf_event *hwc = &event->hw;
-	स्थिर काष्ठा mips_perf_event *pev;
-	पूर्णांक err;
+static int __hw_perf_event_init(struct perf_event *event)
+{
+	struct perf_event_attr *attr = &event->attr;
+	struct hw_perf_event *hwc = &event->hw;
+	const struct mips_perf_event *pev;
+	int err;
 
-	/* Returning MIPS event descriptor क्रम generic perf event. */
-	अगर (PERF_TYPE_HARDWARE == event->attr.type) अणु
-		अगर (event->attr.config >= PERF_COUNT_HW_MAX)
-			वापस -EINVAL;
+	/* Returning MIPS event descriptor for generic perf event. */
+	if (PERF_TYPE_HARDWARE == event->attr.type) {
+		if (event->attr.config >= PERF_COUNT_HW_MAX)
+			return -EINVAL;
 		pev = mipspmu_map_general_event(event->attr.config);
-	पूर्ण अन्यथा अगर (PERF_TYPE_HW_CACHE == event->attr.type) अणु
+	} else if (PERF_TYPE_HW_CACHE == event->attr.type) {
 		pev = mipspmu_map_cache_event(event->attr.config);
-	पूर्ण अन्यथा अगर (PERF_TYPE_RAW == event->attr.type) अणु
+	} else if (PERF_TYPE_RAW == event->attr.type) {
 		/* We are working on the global raw event. */
 		mutex_lock(&raw_event_mutex);
 		pev = mipspmu.map_raw_event(event->attr.config);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* The event type is not (yet) supported. */
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	अगर (IS_ERR(pev)) अणु
-		अगर (PERF_TYPE_RAW == event->attr.type)
+	if (IS_ERR(pev)) {
+		if (PERF_TYPE_RAW == event->attr.type)
 			mutex_unlock(&raw_event_mutex);
-		वापस PTR_ERR(pev);
-	पूर्ण
+		return PTR_ERR(pev);
+	}
 
 	/*
-	 * We allow max flexibility on how each inभागidual counter shared
+	 * We allow max flexibility on how each individual counter shared
 	 * by the single CPU operates (the mode exclusion and the range).
 	 */
 	hwc->config_base = MIPS_PERFCTRL_IE;
 
 	hwc->event_base = mipspmu_perf_event_encode(pev);
-	अगर (PERF_TYPE_RAW == event->attr.type)
+	if (PERF_TYPE_RAW == event->attr.type)
 		mutex_unlock(&raw_event_mutex);
 
-	अगर (!attr->exclude_user)
+	if (!attr->exclude_user)
 		hwc->config_base |= MIPS_PERFCTRL_U;
-	अगर (!attr->exclude_kernel) अणु
+	if (!attr->exclude_kernel) {
 		hwc->config_base |= MIPS_PERFCTRL_K;
 		/* MIPS kernel mode: KSU == 00b || EXL == 1 || ERL == 1 */
 		hwc->config_base |= MIPS_PERFCTRL_EXL;
-	पूर्ण
-	अगर (!attr->exclude_hv)
+	}
+	if (!attr->exclude_hv)
 		hwc->config_base |= MIPS_PERFCTRL_S;
 
 	hwc->config_base &= M_PERFCTL_CONFIG_MASK;
 	/*
-	 * The event can beदीर्घ to another cpu. We करो not assign a local
-	 * counter क्रम it क्रम now.
+	 * The event can belong to another cpu. We do not assign a local
+	 * counter for it for now.
 	 */
 	hwc->idx = -1;
 	hwc->config = 0;
 
-	अगर (!hwc->sample_period) अणु
+	if (!hwc->sample_period) {
 		hwc->sample_period  = mipspmu.max_period;
 		hwc->last_period    = hwc->sample_period;
 		local64_set(&hwc->period_left, hwc->sample_period);
-	पूर्ण
+	}
 
 	err = 0;
-	अगर (event->group_leader != event)
+	if (event->group_leader != event)
 		err = validate_group(event);
 
 	event->destroy = hw_perf_event_destroy;
 
-	अगर (err)
+	if (err)
 		event->destroy(event);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम छोड़ो_local_counters(व्योम)
-अणु
-	काष्ठा cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
-	पूर्णांक ctr = mipspmu.num_counters;
-	अचिन्हित दीर्घ flags;
+static void pause_local_counters(void)
+{
+	struct cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
+	int ctr = mipspmu.num_counters;
+	unsigned long flags;
 
 	local_irq_save(flags);
-	करो अणु
+	do {
 		ctr--;
-		cpuc->saved_ctrl[ctr] = mipsxx_pmu_पढ़ो_control(ctr);
-		mipsxx_pmu_ग_लिखो_control(ctr, cpuc->saved_ctrl[ctr] &
+		cpuc->saved_ctrl[ctr] = mipsxx_pmu_read_control(ctr);
+		mipsxx_pmu_write_control(ctr, cpuc->saved_ctrl[ctr] &
 					 ~M_PERFCTL_COUNT_EVENT_WHENEVER);
-	पूर्ण जबतक (ctr > 0);
+	} while (ctr > 0);
 	local_irq_restore(flags);
-पूर्ण
+}
 
-अटल व्योम resume_local_counters(व्योम)
-अणु
-	काष्ठा cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
-	पूर्णांक ctr = mipspmu.num_counters;
+static void resume_local_counters(void)
+{
+	struct cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
+	int ctr = mipspmu.num_counters;
 
-	करो अणु
+	do {
 		ctr--;
-		mipsxx_pmu_ग_लिखो_control(ctr, cpuc->saved_ctrl[ctr]);
-	पूर्ण जबतक (ctr > 0);
-पूर्ण
+		mipsxx_pmu_write_control(ctr, cpuc->saved_ctrl[ctr]);
+	} while (ctr > 0);
+}
 
-अटल पूर्णांक mipsxx_pmu_handle_shared_irq(व्योम)
-अणु
-	काष्ठा cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
-	काष्ठा perf_sample_data data;
-	अचिन्हित पूर्णांक counters = mipspmu.num_counters;
+static int mipsxx_pmu_handle_shared_irq(void)
+{
+	struct cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
+	struct perf_sample_data data;
+	unsigned int counters = mipspmu.num_counters;
 	u64 counter;
-	पूर्णांक n, handled = IRQ_NONE;
-	काष्ठा pt_regs *regs;
+	int n, handled = IRQ_NONE;
+	struct pt_regs *regs;
 
-	अगर (cpu_has_perf_cntr_पूर्णांकr_bit && !(पढ़ो_c0_cause() & CAUSEF_PCI))
-		वापस handled;
+	if (cpu_has_perf_cntr_intr_bit && !(read_c0_cause() & CAUSEF_PCI))
+		return handled;
 	/*
-	 * First we छोड़ो the local counters, so that when we are locked
-	 * here, the counters are all छोड़ोd. When it माला_लो locked due to
-	 * perf_disable(), the समयr पूर्णांकerrupt handler will be delayed.
+	 * First we pause the local counters, so that when we are locked
+	 * here, the counters are all paused. When it gets locked due to
+	 * perf_disable(), the timer interrupt handler will be delayed.
 	 *
 	 * See also mipsxx_pmu_start().
 	 */
-	छोड़ो_local_counters();
-#अगर_घोषित CONFIG_MIPS_PERF_SHARED_TC_COUNTERS
-	पढ़ो_lock(&pmuपूर्णांक_rwlock);
-#पूर्ण_अगर
+	pause_local_counters();
+#ifdef CONFIG_MIPS_PERF_SHARED_TC_COUNTERS
+	read_lock(&pmuint_rwlock);
+#endif
 
 	regs = get_irq_regs();
 
 	perf_sample_data_init(&data, 0, 0);
 
-	क्रम (n = counters - 1; n >= 0; n--) अणु
-		अगर (!test_bit(n, cpuc->used_mask))
-			जारी;
+	for (n = counters - 1; n >= 0; n--) {
+		if (!test_bit(n, cpuc->used_mask))
+			continue;
 
-		counter = mipspmu.पढ़ो_counter(n);
-		अगर (!(counter & mipspmu.overflow))
-			जारी;
+		counter = mipspmu.read_counter(n);
+		if (!(counter & mipspmu.overflow))
+			continue;
 
 		handle_associated_event(cpuc, n, &data, regs);
 		handled = IRQ_HANDLED;
-	पूर्ण
+	}
 
-#अगर_घोषित CONFIG_MIPS_PERF_SHARED_TC_COUNTERS
-	पढ़ो_unlock(&pmuपूर्णांक_rwlock);
-#पूर्ण_अगर
+#ifdef CONFIG_MIPS_PERF_SHARED_TC_COUNTERS
+	read_unlock(&pmuint_rwlock);
+#endif
 	resume_local_counters();
 
 	/*
-	 * Do all the work क्रम the pending perf events. We can करो this
-	 * in here because the perक्रमmance counter पूर्णांकerrupt is a regular
-	 * पूर्णांकerrupt, not NMI.
+	 * Do all the work for the pending perf events. We can do this
+	 * in here because the performance counter interrupt is a regular
+	 * interrupt, not NMI.
 	 */
-	अगर (handled == IRQ_HANDLED)
+	if (handled == IRQ_HANDLED)
 		irq_work_run();
 
-	वापस handled;
-पूर्ण
+	return handled;
+}
 
-अटल irqवापस_t mipsxx_pmu_handle_irq(पूर्णांक irq, व्योम *dev)
-अणु
-	वापस mipsxx_pmu_handle_shared_irq();
-पूर्ण
+static irqreturn_t mipsxx_pmu_handle_irq(int irq, void *dev)
+{
+	return mipsxx_pmu_handle_shared_irq();
+}
 
 /* 24K */
-#घोषणा IS_BOTH_COUNTERS_24K_EVENT(b)					\
+#define IS_BOTH_COUNTERS_24K_EVENT(b)					\
 	((b) == 0 || (b) == 1 || (b) == 11)
 
 /* 34K */
-#घोषणा IS_BOTH_COUNTERS_34K_EVENT(b)					\
+#define IS_BOTH_COUNTERS_34K_EVENT(b)					\
 	((b) == 0 || (b) == 1 || (b) == 11)
-#अगर_घोषित CONFIG_MIPS_MT_SMP
-#घोषणा IS_RANGE_P_34K_EVENT(r, b)					\
+#ifdef CONFIG_MIPS_MT_SMP
+#define IS_RANGE_P_34K_EVENT(r, b)					\
 	((b) == 0 || (r) == 18 || (b) == 21 || (b) == 22 ||		\
 	 (b) == 25 || (b) == 39 || (r) == 44 || (r) == 174 ||		\
 	 (r) == 176 || ((b) >= 50 && (b) <= 55) ||			\
 	 ((b) >= 64 && (b) <= 67))
-#घोषणा IS_RANGE_V_34K_EVENT(r) ((r) == 47)
-#पूर्ण_अगर
+#define IS_RANGE_V_34K_EVENT(r) ((r) == 47)
+#endif
 
 /* 74K */
-#घोषणा IS_BOTH_COUNTERS_74K_EVENT(b)					\
+#define IS_BOTH_COUNTERS_74K_EVENT(b)					\
 	((b) == 0 || (b) == 1)
 
 /* proAptiv */
-#घोषणा IS_BOTH_COUNTERS_PROAPTIV_EVENT(b)				\
+#define IS_BOTH_COUNTERS_PROAPTIV_EVENT(b)				\
 	((b) == 0 || (b) == 1)
 /* P5600 */
-#घोषणा IS_BOTH_COUNTERS_P5600_EVENT(b)					\
+#define IS_BOTH_COUNTERS_P5600_EVENT(b)					\
 	((b) == 0 || (b) == 1)
 
 /* 1004K */
-#घोषणा IS_BOTH_COUNTERS_1004K_EVENT(b)					\
+#define IS_BOTH_COUNTERS_1004K_EVENT(b)					\
 	((b) == 0 || (b) == 1 || (b) == 11)
-#अगर_घोषित CONFIG_MIPS_MT_SMP
-#घोषणा IS_RANGE_P_1004K_EVENT(r, b)					\
+#ifdef CONFIG_MIPS_MT_SMP
+#define IS_RANGE_P_1004K_EVENT(r, b)					\
 	((b) == 0 || (r) == 18 || (b) == 21 || (b) == 22 ||		\
 	 (b) == 25 || (b) == 36 || (b) == 39 || (r) == 44 ||		\
 	 (r) == 174 || (r) == 176 || ((b) >= 50 && (b) <= 59) ||	\
 	 (r) == 188 || (b) == 61 || (b) == 62 ||			\
 	 ((b) >= 64 && (b) <= 67))
-#घोषणा IS_RANGE_V_1004K_EVENT(r)	((r) == 47)
-#पूर्ण_अगर
+#define IS_RANGE_V_1004K_EVENT(r)	((r) == 47)
+#endif
 
-/* पूर्णांकerAptiv */
-#घोषणा IS_BOTH_COUNTERS_INTERAPTIV_EVENT(b)				\
+/* interAptiv */
+#define IS_BOTH_COUNTERS_INTERAPTIV_EVENT(b)				\
 	((b) == 0 || (b) == 1 || (b) == 11)
-#अगर_घोषित CONFIG_MIPS_MT_SMP
-/* The P/V/T info is not provided क्रम "(b) == 38" in SUM, assume P. */
-#घोषणा IS_RANGE_P_INTERAPTIV_EVENT(r, b)				\
+#ifdef CONFIG_MIPS_MT_SMP
+/* The P/V/T info is not provided for "(b) == 38" in SUM, assume P. */
+#define IS_RANGE_P_INTERAPTIV_EVENT(r, b)				\
 	((b) == 0 || (r) == 18 || (b) == 21 || (b) == 22 ||		\
 	 (b) == 25 || (b) == 36 || (b) == 38 || (b) == 39 ||		\
 	 (r) == 44 || (r) == 174 || (r) == 176 || ((b) >= 50 &&		\
 	 (b) <= 59) || (r) == 188 || (b) == 61 || (b) == 62 ||		\
 	 ((b) >= 64 && (b) <= 67))
-#घोषणा IS_RANGE_V_INTERAPTIV_EVENT(r)	((r) == 47 || (r) == 175)
-#पूर्ण_अगर
+#define IS_RANGE_V_INTERAPTIV_EVENT(r)	((r) == 47 || (r) == 175)
+#endif
 
 /* BMIPS5000 */
-#घोषणा IS_BOTH_COUNTERS_BMIPS5000_EVENT(b)				\
+#define IS_BOTH_COUNTERS_BMIPS5000_EVENT(b)				\
 	((b) == 0 || (b) == 1)
 
 
 /*
- * For most cores the user can use 0-255 raw events, where 0-127 क्रम the events
- * of even counters, and 128-255 क्रम odd counters. Note that bit 7 is used to
- * indicate the even/odd bank selector. So, क्रम example, when user wants to take
- * the Event Num of 15 क्रम odd counters (by referring to the user manual), then
- * 128 needs to be added to 15 as the input क्रम the event config, i.e., 143 (0x8F)
+ * For most cores the user can use 0-255 raw events, where 0-127 for the events
+ * of even counters, and 128-255 for odd counters. Note that bit 7 is used to
+ * indicate the even/odd bank selector. So, for example, when user wants to take
+ * the Event Num of 15 for odd counters (by referring to the user manual), then
+ * 128 needs to be added to 15 as the input for the event config, i.e., 143 (0x8F)
  * to be used.
  *
- * Some newer cores have even more events, in which हाल the user can use raw
- * events 0-511, where 0-255 are क्रम the events of even counters, and 256-511
- * are क्रम odd counters, so bit 8 is used to indicate the even/odd bank selector.
+ * Some newer cores have even more events, in which case the user can use raw
+ * events 0-511, where 0-255 are for the events of even counters, and 256-511
+ * are for odd counters, so bit 8 is used to indicate the even/odd bank selector.
  */
-अटल स्थिर काष्ठा mips_perf_event *mipsxx_pmu_map_raw_event(u64 config)
-अणु
+static const struct mips_perf_event *mipsxx_pmu_map_raw_event(u64 config)
+{
 	/* currently most cores have 7-bit event numbers */
-	पूर्णांक pmu_type;
-	अचिन्हित पूर्णांक raw_id = config & 0xff;
-	अचिन्हित पूर्णांक base_id = raw_id & 0x7f;
+	int pmu_type;
+	unsigned int raw_id = config & 0xff;
+	unsigned int base_id = raw_id & 0x7f;
 
-	चयन (current_cpu_type()) अणु
-	हाल CPU_24K:
-		अगर (IS_BOTH_COUNTERS_24K_EVENT(base_id))
+	switch (current_cpu_type()) {
+	case CPU_24K:
+		if (IS_BOTH_COUNTERS_24K_EVENT(base_id))
 			raw_event.cntr_mask = CNTR_EVEN | CNTR_ODD;
-		अन्यथा
+		else
 			raw_event.cntr_mask =
 				raw_id > 127 ? CNTR_ODD : CNTR_EVEN;
-#अगर_घोषित CONFIG_MIPS_MT_SMP
+#ifdef CONFIG_MIPS_MT_SMP
 		/*
-		 * This is actually करोing nothing. Non-multithपढ़ोing
+		 * This is actually doing nothing. Non-multithreading
 		 * CPUs will not check and calculate the range.
 		 */
 		raw_event.range = P;
-#पूर्ण_अगर
-		अवरोध;
-	हाल CPU_34K:
-		अगर (IS_BOTH_COUNTERS_34K_EVENT(base_id))
+#endif
+		break;
+	case CPU_34K:
+		if (IS_BOTH_COUNTERS_34K_EVENT(base_id))
 			raw_event.cntr_mask = CNTR_EVEN | CNTR_ODD;
-		अन्यथा
+		else
 			raw_event.cntr_mask =
 				raw_id > 127 ? CNTR_ODD : CNTR_EVEN;
-#अगर_घोषित CONFIG_MIPS_MT_SMP
-		अगर (IS_RANGE_P_34K_EVENT(raw_id, base_id))
+#ifdef CONFIG_MIPS_MT_SMP
+		if (IS_RANGE_P_34K_EVENT(raw_id, base_id))
 			raw_event.range = P;
-		अन्यथा अगर (unlikely(IS_RANGE_V_34K_EVENT(raw_id)))
+		else if (unlikely(IS_RANGE_V_34K_EVENT(raw_id)))
 			raw_event.range = V;
-		अन्यथा
+		else
 			raw_event.range = T;
-#पूर्ण_अगर
-		अवरोध;
-	हाल CPU_74K:
-	हाल CPU_1074K:
-		अगर (IS_BOTH_COUNTERS_74K_EVENT(base_id))
+#endif
+		break;
+	case CPU_74K:
+	case CPU_1074K:
+		if (IS_BOTH_COUNTERS_74K_EVENT(base_id))
 			raw_event.cntr_mask = CNTR_EVEN | CNTR_ODD;
-		अन्यथा
+		else
 			raw_event.cntr_mask =
 				raw_id > 127 ? CNTR_ODD : CNTR_EVEN;
-#अगर_घोषित CONFIG_MIPS_MT_SMP
+#ifdef CONFIG_MIPS_MT_SMP
 		raw_event.range = P;
-#पूर्ण_अगर
-		अवरोध;
-	हाल CPU_PROAPTIV:
-		अगर (IS_BOTH_COUNTERS_PROAPTIV_EVENT(base_id))
+#endif
+		break;
+	case CPU_PROAPTIV:
+		if (IS_BOTH_COUNTERS_PROAPTIV_EVENT(base_id))
 			raw_event.cntr_mask = CNTR_EVEN | CNTR_ODD;
-		अन्यथा
+		else
 			raw_event.cntr_mask =
 				raw_id > 127 ? CNTR_ODD : CNTR_EVEN;
-#अगर_घोषित CONFIG_MIPS_MT_SMP
+#ifdef CONFIG_MIPS_MT_SMP
 		raw_event.range = P;
-#पूर्ण_अगर
-		अवरोध;
-	हाल CPU_P5600:
-	हाल CPU_P6600:
+#endif
+		break;
+	case CPU_P5600:
+	case CPU_P6600:
 		/* 8-bit event numbers */
 		raw_id = config & 0x1ff;
 		base_id = raw_id & 0xff;
-		अगर (IS_BOTH_COUNTERS_P5600_EVENT(base_id))
+		if (IS_BOTH_COUNTERS_P5600_EVENT(base_id))
 			raw_event.cntr_mask = CNTR_EVEN | CNTR_ODD;
-		अन्यथा
+		else
 			raw_event.cntr_mask =
 				raw_id > 255 ? CNTR_ODD : CNTR_EVEN;
-#अगर_घोषित CONFIG_MIPS_MT_SMP
+#ifdef CONFIG_MIPS_MT_SMP
 		raw_event.range = P;
-#पूर्ण_अगर
-		अवरोध;
-	हाल CPU_I6400:
-	हाल CPU_I6500:
+#endif
+		break;
+	case CPU_I6400:
+	case CPU_I6500:
 		/* 8-bit event numbers */
 		base_id = config & 0xff;
 		raw_event.cntr_mask = CNTR_EVEN | CNTR_ODD;
-		अवरोध;
-	हाल CPU_1004K:
-		अगर (IS_BOTH_COUNTERS_1004K_EVENT(base_id))
+		break;
+	case CPU_1004K:
+		if (IS_BOTH_COUNTERS_1004K_EVENT(base_id))
 			raw_event.cntr_mask = CNTR_EVEN | CNTR_ODD;
-		अन्यथा
+		else
 			raw_event.cntr_mask =
 				raw_id > 127 ? CNTR_ODD : CNTR_EVEN;
-#अगर_घोषित CONFIG_MIPS_MT_SMP
-		अगर (IS_RANGE_P_1004K_EVENT(raw_id, base_id))
+#ifdef CONFIG_MIPS_MT_SMP
+		if (IS_RANGE_P_1004K_EVENT(raw_id, base_id))
 			raw_event.range = P;
-		अन्यथा अगर (unlikely(IS_RANGE_V_1004K_EVENT(raw_id)))
+		else if (unlikely(IS_RANGE_V_1004K_EVENT(raw_id)))
 			raw_event.range = V;
-		अन्यथा
+		else
 			raw_event.range = T;
-#पूर्ण_अगर
-		अवरोध;
-	हाल CPU_INTERAPTIV:
-		अगर (IS_BOTH_COUNTERS_INTERAPTIV_EVENT(base_id))
+#endif
+		break;
+	case CPU_INTERAPTIV:
+		if (IS_BOTH_COUNTERS_INTERAPTIV_EVENT(base_id))
 			raw_event.cntr_mask = CNTR_EVEN | CNTR_ODD;
-		अन्यथा
+		else
 			raw_event.cntr_mask =
 				raw_id > 127 ? CNTR_ODD : CNTR_EVEN;
-#अगर_घोषित CONFIG_MIPS_MT_SMP
-		अगर (IS_RANGE_P_INTERAPTIV_EVENT(raw_id, base_id))
+#ifdef CONFIG_MIPS_MT_SMP
+		if (IS_RANGE_P_INTERAPTIV_EVENT(raw_id, base_id))
 			raw_event.range = P;
-		अन्यथा अगर (unlikely(IS_RANGE_V_INTERAPTIV_EVENT(raw_id)))
+		else if (unlikely(IS_RANGE_V_INTERAPTIV_EVENT(raw_id)))
 			raw_event.range = V;
-		अन्यथा
+		else
 			raw_event.range = T;
-#पूर्ण_अगर
-		अवरोध;
-	हाल CPU_BMIPS5000:
-		अगर (IS_BOTH_COUNTERS_BMIPS5000_EVENT(base_id))
+#endif
+		break;
+	case CPU_BMIPS5000:
+		if (IS_BOTH_COUNTERS_BMIPS5000_EVENT(base_id))
 			raw_event.cntr_mask = CNTR_EVEN | CNTR_ODD;
-		अन्यथा
+		else
 			raw_event.cntr_mask =
 				raw_id > 127 ? CNTR_ODD : CNTR_EVEN;
-		अवरोध;
-	हाल CPU_LOONGSON64:
+		break;
+	case CPU_LOONGSON64:
 		pmu_type = get_loongson3_pmu_type();
 
-		चयन (pmu_type) अणु
-		हाल LOONGSON_PMU_TYPE1:
+		switch (pmu_type) {
+		case LOONGSON_PMU_TYPE1:
 			raw_event.cntr_mask =
 				raw_id > 127 ? CNTR_ODD : CNTR_EVEN;
-			अवरोध;
-		हाल LOONGSON_PMU_TYPE2:
+			break;
+		case LOONGSON_PMU_TYPE2:
 			base_id = config & 0x3ff;
 			raw_event.cntr_mask = CNTR_ALL;
 
-			अगर ((base_id >= 1 && base_id < 28) ||
+			if ((base_id >= 1 && base_id < 28) ||
 				(base_id >= 64 && base_id < 90) ||
 				(base_id >= 128 && base_id < 164) ||
 				(base_id >= 192 && base_id < 200) ||
 				(base_id >= 256 && base_id < 275) ||
 				(base_id >= 320 && base_id < 361) ||
 				(base_id >= 384 && base_id < 574))
-				अवरोध;
+				break;
 
-			वापस ERR_PTR(-EOPNOTSUPP);
-		हाल LOONGSON_PMU_TYPE3:
+			return ERR_PTR(-EOPNOTSUPP);
+		case LOONGSON_PMU_TYPE3:
 			base_id = raw_id;
 			raw_event.cntr_mask = CNTR_ALL;
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+			break;
+		}
+		break;
+	}
 
 	raw_event.event_id = base_id;
 
-	वापस &raw_event;
-पूर्ण
+	return &raw_event;
+}
 
-अटल स्थिर काष्ठा mips_perf_event *octeon_pmu_map_raw_event(u64 config)
-अणु
-	अचिन्हित पूर्णांक base_id = config & 0x7f;
-	अचिन्हित पूर्णांक event_max;
+static const struct mips_perf_event *octeon_pmu_map_raw_event(u64 config)
+{
+	unsigned int base_id = config & 0x7f;
+	unsigned int event_max;
 
 
 	raw_event.cntr_mask = CNTR_ALL;
 	raw_event.event_id = base_id;
 
-	अगर (current_cpu_type() == CPU_CAVIUM_OCTEON3)
+	if (current_cpu_type() == CPU_CAVIUM_OCTEON3)
 		event_max = 0x5f;
-	अन्यथा अगर (current_cpu_type() == CPU_CAVIUM_OCTEON2)
+	else if (current_cpu_type() == CPU_CAVIUM_OCTEON2)
 		event_max = 0x42;
-	अन्यथा
+	else
 		event_max = 0x3a;
 
-	अगर (base_id > event_max) अणु
-		वापस ERR_PTR(-EOPNOTSUPP);
-	पूर्ण
+	if (base_id > event_max) {
+		return ERR_PTR(-EOPNOTSUPP);
+	}
 
-	चयन (base_id) अणु
-	हाल 0x00:
-	हाल 0x0f:
-	हाल 0x1e:
-	हाल 0x1f:
-	हाल 0x2f:
-	हाल 0x34:
-	हाल 0x3e ... 0x3f:
-		वापस ERR_PTR(-EOPNOTSUPP);
-	शेष:
-		अवरोध;
-	पूर्ण
+	switch (base_id) {
+	case 0x00:
+	case 0x0f:
+	case 0x1e:
+	case 0x1f:
+	case 0x2f:
+	case 0x34:
+	case 0x3e ... 0x3f:
+		return ERR_PTR(-EOPNOTSUPP);
+	default:
+		break;
+	}
 
-	वापस &raw_event;
-पूर्ण
+	return &raw_event;
+}
 
-अटल स्थिर काष्ठा mips_perf_event *xlp_pmu_map_raw_event(u64 config)
-अणु
-	अचिन्हित पूर्णांक raw_id = config & 0xff;
+static const struct mips_perf_event *xlp_pmu_map_raw_event(u64 config)
+{
+	unsigned int raw_id = config & 0xff;
 
 	/* Only 1-63 are defined */
-	अगर ((raw_id < 0x01) || (raw_id > 0x3f))
-		वापस ERR_PTR(-EOPNOTSUPP);
+	if ((raw_id < 0x01) || (raw_id > 0x3f))
+		return ERR_PTR(-EOPNOTSUPP);
 
 	raw_event.cntr_mask = CNTR_ALL;
 	raw_event.event_id = raw_id;
 
-	वापस &raw_event;
-पूर्ण
+	return &raw_event;
+}
 
-अटल पूर्णांक __init
-init_hw_perf_events(व्योम)
-अणु
-	पूर्णांक counters, irq, pmu_type;
+static int __init
+init_hw_perf_events(void)
+{
+	int counters, irq, pmu_type;
 
 	pr_info("Performance counters: ");
 
 	counters = n_counters();
-	अगर (counters == 0) अणु
+	if (counters == 0) {
 		pr_cont("No available PMU.\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-#अगर_घोषित CONFIG_MIPS_PERF_SHARED_TC_COUNTERS
-	अगर (!cpu_has_mipsmt_pertccounters)
+#ifdef CONFIG_MIPS_PERF_SHARED_TC_COUNTERS
+	if (!cpu_has_mipsmt_pertccounters)
 		counters = counters_total_to_per_cpu(counters);
-#पूर्ण_अगर
+#endif
 
-	अगर (get_c0_perfcount_पूर्णांक)
-		irq = get_c0_perfcount_पूर्णांक();
-	अन्यथा अगर (cp0_perfcount_irq >= 0)
+	if (get_c0_perfcount_int)
+		irq = get_c0_perfcount_int();
+	else if (cp0_perfcount_irq >= 0)
 		irq = MIPS_CPU_IRQ_BASE + cp0_perfcount_irq;
-	अन्यथा
+	else
 		irq = -1;
 
 	mipspmu.map_raw_event = mipsxx_pmu_map_raw_event;
 
-	चयन (current_cpu_type()) अणु
-	हाल CPU_24K:
+	switch (current_cpu_type()) {
+	case CPU_24K:
 		mipspmu.name = "mips/24K";
 		mipspmu.general_event_map = &mipsxxcore_event_map;
 		mipspmu.cache_event_map = &mipsxxcore_cache_map;
-		अवरोध;
-	हाल CPU_34K:
+		break;
+	case CPU_34K:
 		mipspmu.name = "mips/34K";
 		mipspmu.general_event_map = &mipsxxcore_event_map;
 		mipspmu.cache_event_map = &mipsxxcore_cache_map;
-		अवरोध;
-	हाल CPU_74K:
+		break;
+	case CPU_74K:
 		mipspmu.name = "mips/74K";
 		mipspmu.general_event_map = &mipsxxcore_event_map2;
 		mipspmu.cache_event_map = &mipsxxcore_cache_map2;
-		अवरोध;
-	हाल CPU_PROAPTIV:
+		break;
+	case CPU_PROAPTIV:
 		mipspmu.name = "mips/proAptiv";
 		mipspmu.general_event_map = &mipsxxcore_event_map2;
 		mipspmu.cache_event_map = &mipsxxcore_cache_map2;
-		अवरोध;
-	हाल CPU_P5600:
+		break;
+	case CPU_P5600:
 		mipspmu.name = "mips/P5600";
 		mipspmu.general_event_map = &mipsxxcore_event_map2;
 		mipspmu.cache_event_map = &mipsxxcore_cache_map2;
-		अवरोध;
-	हाल CPU_P6600:
+		break;
+	case CPU_P6600:
 		mipspmu.name = "mips/P6600";
 		mipspmu.general_event_map = &mipsxxcore_event_map2;
 		mipspmu.cache_event_map = &mipsxxcore_cache_map2;
-		अवरोध;
-	हाल CPU_I6400:
+		break;
+	case CPU_I6400:
 		mipspmu.name = "mips/I6400";
 		mipspmu.general_event_map = &i6x00_event_map;
 		mipspmu.cache_event_map = &i6x00_cache_map;
-		अवरोध;
-	हाल CPU_I6500:
+		break;
+	case CPU_I6500:
 		mipspmu.name = "mips/I6500";
 		mipspmu.general_event_map = &i6x00_event_map;
 		mipspmu.cache_event_map = &i6x00_cache_map;
-		अवरोध;
-	हाल CPU_1004K:
+		break;
+	case CPU_1004K:
 		mipspmu.name = "mips/1004K";
 		mipspmu.general_event_map = &mipsxxcore_event_map;
 		mipspmu.cache_event_map = &mipsxxcore_cache_map;
-		अवरोध;
-	हाल CPU_1074K:
+		break;
+	case CPU_1074K:
 		mipspmu.name = "mips/1074K";
 		mipspmu.general_event_map = &mipsxxcore_event_map;
 		mipspmu.cache_event_map = &mipsxxcore_cache_map;
-		अवरोध;
-	हाल CPU_INTERAPTIV:
+		break;
+	case CPU_INTERAPTIV:
 		mipspmu.name = "mips/interAptiv";
 		mipspmu.general_event_map = &mipsxxcore_event_map;
 		mipspmu.cache_event_map = &mipsxxcore_cache_map;
-		अवरोध;
-	हाल CPU_LOONGSON32:
+		break;
+	case CPU_LOONGSON32:
 		mipspmu.name = "mips/loongson1";
 		mipspmu.general_event_map = &mipsxxcore_event_map;
 		mipspmu.cache_event_map = &mipsxxcore_cache_map;
-		अवरोध;
-	हाल CPU_LOONGSON64:
+		break;
+	case CPU_LOONGSON64:
 		mipspmu.name = "mips/loongson3";
 		pmu_type = get_loongson3_pmu_type();
 
-		चयन (pmu_type) अणु
-		हाल LOONGSON_PMU_TYPE1:
+		switch (pmu_type) {
+		case LOONGSON_PMU_TYPE1:
 			counters = 2;
 			mipspmu.general_event_map = &loongson3_event_map1;
 			mipspmu.cache_event_map = &loongson3_cache_map1;
-			अवरोध;
-		हाल LOONGSON_PMU_TYPE2:
+			break;
+		case LOONGSON_PMU_TYPE2:
 			counters = 4;
 			mipspmu.general_event_map = &loongson3_event_map2;
 			mipspmu.cache_event_map = &loongson3_cache_map2;
-			अवरोध;
-		हाल LOONGSON_PMU_TYPE3:
+			break;
+		case LOONGSON_PMU_TYPE3:
 			counters = 4;
 			mipspmu.general_event_map = &loongson3_event_map3;
 			mipspmu.cache_event_map = &loongson3_cache_map3;
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल CPU_CAVIUM_OCTEON:
-	हाल CPU_CAVIUM_OCTEON_PLUS:
-	हाल CPU_CAVIUM_OCTEON2:
-	हाल CPU_CAVIUM_OCTEON3:
+			break;
+		}
+		break;
+	case CPU_CAVIUM_OCTEON:
+	case CPU_CAVIUM_OCTEON_PLUS:
+	case CPU_CAVIUM_OCTEON2:
+	case CPU_CAVIUM_OCTEON3:
 		mipspmu.name = "octeon";
 		mipspmu.general_event_map = &octeon_event_map;
 		mipspmu.cache_event_map = &octeon_cache_map;
 		mipspmu.map_raw_event = octeon_pmu_map_raw_event;
-		अवरोध;
-	हाल CPU_BMIPS5000:
+		break;
+	case CPU_BMIPS5000:
 		mipspmu.name = "BMIPS5000";
 		mipspmu.general_event_map = &bmips5000_event_map;
 		mipspmu.cache_event_map = &bmips5000_cache_map;
-		अवरोध;
-	हाल CPU_XLP:
+		break;
+	case CPU_XLP:
 		mipspmu.name = "xlp";
 		mipspmu.general_event_map = &xlp_event_map;
 		mipspmu.cache_event_map = &xlp_cache_map;
 		mipspmu.map_raw_event = xlp_pmu_map_raw_event;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		pr_cont("Either hardware does not support performance "
 			"counters, or not yet implemented.\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	mipspmu.num_counters = counters;
 	mipspmu.irq = irq;
 
-	अगर (पढ़ो_c0_perfctrl0() & MIPS_PERFCTRL_W) अणु
-		अगर (get_loongson3_pmu_type() == LOONGSON_PMU_TYPE2) अणु
+	if (read_c0_perfctrl0() & MIPS_PERFCTRL_W) {
+		if (get_loongson3_pmu_type() == LOONGSON_PMU_TYPE2) {
 			counter_bits = 48;
 			mipspmu.max_period = (1ULL << 47) - 1;
 			mipspmu.valid_count = (1ULL << 47) - 1;
 			mipspmu.overflow = 1ULL << 47;
-		पूर्ण अन्यथा अणु
+		} else {
 			counter_bits = 64;
 			mipspmu.max_period = (1ULL << 63) - 1;
 			mipspmu.valid_count = (1ULL << 63) - 1;
 			mipspmu.overflow = 1ULL << 63;
-		पूर्ण
-		mipspmu.पढ़ो_counter = mipsxx_pmu_पढ़ो_counter_64;
-		mipspmu.ग_लिखो_counter = mipsxx_pmu_ग_लिखो_counter_64;
-	पूर्ण अन्यथा अणु
+		}
+		mipspmu.read_counter = mipsxx_pmu_read_counter_64;
+		mipspmu.write_counter = mipsxx_pmu_write_counter_64;
+	} else {
 		counter_bits = 32;
 		mipspmu.max_period = (1ULL << 31) - 1;
 		mipspmu.valid_count = (1ULL << 31) - 1;
 		mipspmu.overflow = 1ULL << 31;
-		mipspmu.पढ़ो_counter = mipsxx_pmu_पढ़ो_counter;
-		mipspmu.ग_लिखो_counter = mipsxx_pmu_ग_लिखो_counter;
-	पूर्ण
+		mipspmu.read_counter = mipsxx_pmu_read_counter;
+		mipspmu.write_counter = mipsxx_pmu_write_counter;
+	}
 
-	on_each_cpu(reset_counters, (व्योम *)(दीर्घ)counters, 1);
+	on_each_cpu(reset_counters, (void *)(long)counters, 1);
 
 	pr_cont("%s PMU enabled, %d %d-bit counters available to each "
 		"CPU, irq %d%s\n", mipspmu.name, counters, counter_bits, irq,
 		irq < 0 ? " (share with timer interrupt)" : "");
 
-	perf_pmu_रेजिस्टर(&pmu, "cpu", PERF_TYPE_RAW);
+	perf_pmu_register(&pmu, "cpu", PERF_TYPE_RAW);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 early_initcall(init_hw_perf_events);

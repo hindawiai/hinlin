@@ -1,224 +1,223 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB */
+/* SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB */
 /*
  * Copyright (c) 2004 Mellanox Technologies Ltd.  All rights reserved.
  * Copyright (c) 2004 Infinicon Corporation.  All rights reserved.
  * Copyright (c) 2004, 2020 Intel Corporation.  All rights reserved.
  * Copyright (c) 2004 Topspin Corporation.  All rights reserved.
  * Copyright (c) 2004 Voltaire Corporation.  All rights reserved.
- * Copyright (c) 2005 Sun Microप्रणालीs, Inc. All rights reserved.
+ * Copyright (c) 2005 Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2005, 2006, 2007 Cisco Systems.  All rights reserved.
  */
 
-#अगर_अघोषित IB_VERBS_H
-#घोषणा IB_VERBS_H
+#ifndef IB_VERBS_H
+#define IB_VERBS_H
 
-#समावेश <linux/ethtool.h>
-#समावेश <linux/types.h>
-#समावेश <linux/device.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/kref.h>
-#समावेश <linux/list.h>
-#समावेश <linux/rwsem.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/irq_poll.h>
-#समावेश <uapi/linux/अगर_ether.h>
-#समावेश <net/ipv6.h>
-#समावेश <net/ip.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/refcount.h>
-#समावेश <linux/अगर_link.h>
-#समावेश <linux/atomic.h>
-#समावेश <linux/mmu_notअगरier.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/cgroup_rdma.h>
-#समावेश <linux/irqflags.h>
-#समावेश <linux/preempt.h>
-#समावेश <linux/dim.h>
-#समावेश <uapi/rdma/ib_user_verbs.h>
-#समावेश <rdma/rdma_counter.h>
-#समावेश <rdma/restrack.h>
-#समावेश <rdma/signature.h>
-#समावेश <uapi/rdma/rdma_user_ioctl.h>
-#समावेश <uapi/rdma/ib_user_ioctl_verbs.h>
+#include <linux/ethtool.h>
+#include <linux/types.h>
+#include <linux/device.h>
+#include <linux/dma-mapping.h>
+#include <linux/kref.h>
+#include <linux/list.h>
+#include <linux/rwsem.h>
+#include <linux/workqueue.h>
+#include <linux/irq_poll.h>
+#include <uapi/linux/if_ether.h>
+#include <net/ipv6.h>
+#include <net/ip.h>
+#include <linux/string.h>
+#include <linux/slab.h>
+#include <linux/netdevice.h>
+#include <linux/refcount.h>
+#include <linux/if_link.h>
+#include <linux/atomic.h>
+#include <linux/mmu_notifier.h>
+#include <linux/uaccess.h>
+#include <linux/cgroup_rdma.h>
+#include <linux/irqflags.h>
+#include <linux/preempt.h>
+#include <linux/dim.h>
+#include <uapi/rdma/ib_user_verbs.h>
+#include <rdma/rdma_counter.h>
+#include <rdma/restrack.h>
+#include <rdma/signature.h>
+#include <uapi/rdma/rdma_user_ioctl.h>
+#include <uapi/rdma/ib_user_ioctl_verbs.h>
 
-#घोषणा IB_FW_VERSION_NAME_MAX	ETHTOOL_FWVERS_LEN
+#define IB_FW_VERSION_NAME_MAX	ETHTOOL_FWVERS_LEN
 
-काष्ठा ib_umem_odp;
-काष्ठा ib_uqp_object;
-काष्ठा ib_usrq_object;
-काष्ठा ib_uwq_object;
-काष्ठा rdma_cm_id;
+struct ib_umem_odp;
+struct ib_uqp_object;
+struct ib_usrq_object;
+struct ib_uwq_object;
+struct rdma_cm_id;
 
-बाह्य काष्ठा workqueue_काष्ठा *ib_wq;
-बाह्य काष्ठा workqueue_काष्ठा *ib_comp_wq;
-बाह्य काष्ठा workqueue_काष्ठा *ib_comp_unbound_wq;
+extern struct workqueue_struct *ib_wq;
+extern struct workqueue_struct *ib_comp_wq;
+extern struct workqueue_struct *ib_comp_unbound_wq;
 
-काष्ठा ib_ucq_object;
+struct ib_ucq_object;
 
-__म_लिखो(3, 4) __cold
-व्योम ibdev_prपूर्णांकk(स्थिर अक्षर *level, स्थिर काष्ठा ib_device *ibdev,
-		  स्थिर अक्षर *क्रमmat, ...);
-__म_लिखो(2, 3) __cold
-व्योम ibdev_emerg(स्थिर काष्ठा ib_device *ibdev, स्थिर अक्षर *क्रमmat, ...);
-__म_लिखो(2, 3) __cold
-व्योम ibdev_alert(स्थिर काष्ठा ib_device *ibdev, स्थिर अक्षर *क्रमmat, ...);
-__म_लिखो(2, 3) __cold
-व्योम ibdev_crit(स्थिर काष्ठा ib_device *ibdev, स्थिर अक्षर *क्रमmat, ...);
-__म_लिखो(2, 3) __cold
-व्योम ibdev_err(स्थिर काष्ठा ib_device *ibdev, स्थिर अक्षर *क्रमmat, ...);
-__म_लिखो(2, 3) __cold
-व्योम ibdev_warn(स्थिर काष्ठा ib_device *ibdev, स्थिर अक्षर *क्रमmat, ...);
-__म_लिखो(2, 3) __cold
-व्योम ibdev_notice(स्थिर काष्ठा ib_device *ibdev, स्थिर अक्षर *क्रमmat, ...);
-__म_लिखो(2, 3) __cold
-व्योम ibdev_info(स्थिर काष्ठा ib_device *ibdev, स्थिर अक्षर *क्रमmat, ...);
+__printf(3, 4) __cold
+void ibdev_printk(const char *level, const struct ib_device *ibdev,
+		  const char *format, ...);
+__printf(2, 3) __cold
+void ibdev_emerg(const struct ib_device *ibdev, const char *format, ...);
+__printf(2, 3) __cold
+void ibdev_alert(const struct ib_device *ibdev, const char *format, ...);
+__printf(2, 3) __cold
+void ibdev_crit(const struct ib_device *ibdev, const char *format, ...);
+__printf(2, 3) __cold
+void ibdev_err(const struct ib_device *ibdev, const char *format, ...);
+__printf(2, 3) __cold
+void ibdev_warn(const struct ib_device *ibdev, const char *format, ...);
+__printf(2, 3) __cold
+void ibdev_notice(const struct ib_device *ibdev, const char *format, ...);
+__printf(2, 3) __cold
+void ibdev_info(const struct ib_device *ibdev, const char *format, ...);
 
-#अगर defined(CONFIG_DYNAMIC_DEBUG) || \
+#if defined(CONFIG_DYNAMIC_DEBUG) || \
 	(defined(CONFIG_DYNAMIC_DEBUG_CORE) && defined(DYNAMIC_DEBUG_MODULE))
-#घोषणा ibdev_dbg(__dev, क्रमmat, args...)                       \
-	dynamic_ibdev_dbg(__dev, क्रमmat, ##args)
-#अन्यथा
-__म_लिखो(2, 3) __cold
-अटल अंतरभूत
-व्योम ibdev_dbg(स्थिर काष्ठा ib_device *ibdev, स्थिर अक्षर *क्रमmat, ...) अणुपूर्ण
-#पूर्ण_अगर
+#define ibdev_dbg(__dev, format, args...)                       \
+	dynamic_ibdev_dbg(__dev, format, ##args)
+#else
+__printf(2, 3) __cold
+static inline
+void ibdev_dbg(const struct ib_device *ibdev, const char *format, ...) {}
+#endif
 
-#घोषणा ibdev_level_ratelimited(ibdev_level, ibdev, fmt, ...)           \
-करो अणु                                                                    \
-	अटल DEFINE_RATELIMIT_STATE(_rs,                              \
+#define ibdev_level_ratelimited(ibdev_level, ibdev, fmt, ...)           \
+do {                                                                    \
+	static DEFINE_RATELIMIT_STATE(_rs,                              \
 				      DEFAULT_RATELIMIT_INTERVAL,       \
 				      DEFAULT_RATELIMIT_BURST);         \
-	अगर (__ratelimit(&_rs))                                          \
+	if (__ratelimit(&_rs))                                          \
 		ibdev_level(ibdev, fmt, ##__VA_ARGS__);                 \
-पूर्ण जबतक (0)
+} while (0)
 
-#घोषणा ibdev_emerg_ratelimited(ibdev, fmt, ...) \
+#define ibdev_emerg_ratelimited(ibdev, fmt, ...) \
 	ibdev_level_ratelimited(ibdev_emerg, ibdev, fmt, ##__VA_ARGS__)
-#घोषणा ibdev_alert_ratelimited(ibdev, fmt, ...) \
+#define ibdev_alert_ratelimited(ibdev, fmt, ...) \
 	ibdev_level_ratelimited(ibdev_alert, ibdev, fmt, ##__VA_ARGS__)
-#घोषणा ibdev_crit_ratelimited(ibdev, fmt, ...) \
+#define ibdev_crit_ratelimited(ibdev, fmt, ...) \
 	ibdev_level_ratelimited(ibdev_crit, ibdev, fmt, ##__VA_ARGS__)
-#घोषणा ibdev_err_ratelimited(ibdev, fmt, ...) \
+#define ibdev_err_ratelimited(ibdev, fmt, ...) \
 	ibdev_level_ratelimited(ibdev_err, ibdev, fmt, ##__VA_ARGS__)
-#घोषणा ibdev_warn_ratelimited(ibdev, fmt, ...) \
+#define ibdev_warn_ratelimited(ibdev, fmt, ...) \
 	ibdev_level_ratelimited(ibdev_warn, ibdev, fmt, ##__VA_ARGS__)
-#घोषणा ibdev_notice_ratelimited(ibdev, fmt, ...) \
+#define ibdev_notice_ratelimited(ibdev, fmt, ...) \
 	ibdev_level_ratelimited(ibdev_notice, ibdev, fmt, ##__VA_ARGS__)
-#घोषणा ibdev_info_ratelimited(ibdev, fmt, ...) \
+#define ibdev_info_ratelimited(ibdev, fmt, ...) \
 	ibdev_level_ratelimited(ibdev_info, ibdev, fmt, ##__VA_ARGS__)
 
-#अगर defined(CONFIG_DYNAMIC_DEBUG) || \
+#if defined(CONFIG_DYNAMIC_DEBUG) || \
 	(defined(CONFIG_DYNAMIC_DEBUG_CORE) && defined(DYNAMIC_DEBUG_MODULE))
 /* descriptor check is first to prevent flooding with "callbacks suppressed" */
-#घोषणा ibdev_dbg_ratelimited(ibdev, fmt, ...)                          \
-करो अणु                                                                    \
-	अटल DEFINE_RATELIMIT_STATE(_rs,                              \
+#define ibdev_dbg_ratelimited(ibdev, fmt, ...)                          \
+do {                                                                    \
+	static DEFINE_RATELIMIT_STATE(_rs,                              \
 				      DEFAULT_RATELIMIT_INTERVAL,       \
 				      DEFAULT_RATELIMIT_BURST);         \
 	DEFINE_DYNAMIC_DEBUG_METADATA(descriptor, fmt);                 \
-	अगर (DYNAMIC_DEBUG_BRANCH(descriptor) && __ratelimit(&_rs))      \
+	if (DYNAMIC_DEBUG_BRANCH(descriptor) && __ratelimit(&_rs))      \
 		__dynamic_ibdev_dbg(&descriptor, ibdev, fmt,            \
 				    ##__VA_ARGS__);                     \
-पूर्ण जबतक (0)
-#अन्यथा
-__म_लिखो(2, 3) __cold
-अटल अंतरभूत
-व्योम ibdev_dbg_ratelimited(स्थिर काष्ठा ib_device *ibdev, स्थिर अक्षर *क्रमmat, ...) अणुपूर्ण
-#पूर्ण_अगर
+} while (0)
+#else
+__printf(2, 3) __cold
+static inline
+void ibdev_dbg_ratelimited(const struct ib_device *ibdev, const char *format, ...) {}
+#endif
 
-जोड़ ib_gid अणु
+union ib_gid {
 	u8	raw[16];
-	काष्ठा अणु
+	struct {
 		__be64	subnet_prefix;
-		__be64	पूर्णांकerface_id;
-	पूर्ण global;
-पूर्ण;
+		__be64	interface_id;
+	} global;
+};
 
-बाह्य जोड़ ib_gid zgid;
+extern union ib_gid zgid;
 
-क्रमागत ib_gid_type अणु
+enum ib_gid_type {
 	IB_GID_TYPE_IB = IB_UVERBS_GID_TYPE_IB,
 	IB_GID_TYPE_ROCE = IB_UVERBS_GID_TYPE_ROCE_V1,
 	IB_GID_TYPE_ROCE_UDP_ENCAP = IB_UVERBS_GID_TYPE_ROCE_V2,
 	IB_GID_TYPE_SIZE
-पूर्ण;
+};
 
-#घोषणा ROCE_V2_UDP_DPORT      4791
-काष्ठा ib_gid_attr अणु
-	काष्ठा net_device __rcu	*ndev;
-	काष्ठा ib_device	*device;
-	जोड़ ib_gid		gid;
-	क्रमागत ib_gid_type	gid_type;
+#define ROCE_V2_UDP_DPORT      4791
+struct ib_gid_attr {
+	struct net_device __rcu	*ndev;
+	struct ib_device	*device;
+	union ib_gid		gid;
+	enum ib_gid_type	gid_type;
 	u16			index;
 	u32			port_num;
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	/* set the local administered indication */
 	IB_SA_WELL_KNOWN_GUID	= BIT_ULL(57) | 2,
-पूर्ण;
+};
 
-क्रमागत rdma_transport_type अणु
+enum rdma_transport_type {
 	RDMA_TRANSPORT_IB,
 	RDMA_TRANSPORT_IWARP,
 	RDMA_TRANSPORT_USNIC,
 	RDMA_TRANSPORT_USNIC_UDP,
 	RDMA_TRANSPORT_UNSPECIFIED,
-पूर्ण;
+};
 
-क्रमागत rdma_protocol_type अणु
+enum rdma_protocol_type {
 	RDMA_PROTOCOL_IB,
 	RDMA_PROTOCOL_IBOE,
 	RDMA_PROTOCOL_IWARP,
 	RDMA_PROTOCOL_USNIC_UDP
-पूर्ण;
+};
 
-__attribute_स्थिर__ क्रमागत rdma_transport_type
-rdma_node_get_transport(अचिन्हित पूर्णांक node_type);
+__attribute_const__ enum rdma_transport_type
+rdma_node_get_transport(unsigned int node_type);
 
-क्रमागत rdma_network_type अणु
+enum rdma_network_type {
 	RDMA_NETWORK_IB,
 	RDMA_NETWORK_ROCE_V1,
 	RDMA_NETWORK_IPV4,
 	RDMA_NETWORK_IPV6
-पूर्ण;
+};
 
-अटल अंतरभूत क्रमागत ib_gid_type ib_network_to_gid_type(क्रमागत rdma_network_type network_type)
-अणु
-	अगर (network_type == RDMA_NETWORK_IPV4 ||
+static inline enum ib_gid_type ib_network_to_gid_type(enum rdma_network_type network_type)
+{
+	if (network_type == RDMA_NETWORK_IPV4 ||
 	    network_type == RDMA_NETWORK_IPV6)
-		वापस IB_GID_TYPE_ROCE_UDP_ENCAP;
-	अन्यथा अगर (network_type == RDMA_NETWORK_ROCE_V1)
-		वापस IB_GID_TYPE_ROCE;
-	अन्यथा
-		वापस IB_GID_TYPE_IB;
-पूर्ण
+		return IB_GID_TYPE_ROCE_UDP_ENCAP;
+	else if (network_type == RDMA_NETWORK_ROCE_V1)
+		return IB_GID_TYPE_ROCE;
+	else
+		return IB_GID_TYPE_IB;
+}
 
-अटल अंतरभूत क्रमागत rdma_network_type
-rdma_gid_attr_network_type(स्थिर काष्ठा ib_gid_attr *attr)
-अणु
-	अगर (attr->gid_type == IB_GID_TYPE_IB)
-		वापस RDMA_NETWORK_IB;
+static inline enum rdma_network_type
+rdma_gid_attr_network_type(const struct ib_gid_attr *attr)
+{
+	if (attr->gid_type == IB_GID_TYPE_IB)
+		return RDMA_NETWORK_IB;
 
-	अगर (attr->gid_type == IB_GID_TYPE_ROCE)
-		वापस RDMA_NETWORK_ROCE_V1;
+	if (attr->gid_type == IB_GID_TYPE_ROCE)
+		return RDMA_NETWORK_ROCE_V1;
 
-	अगर (ipv6_addr_v4mapped((काष्ठा in6_addr *)&attr->gid))
-		वापस RDMA_NETWORK_IPV4;
-	अन्यथा
-		वापस RDMA_NETWORK_IPV6;
-पूर्ण
+	if (ipv6_addr_v4mapped((struct in6_addr *)&attr->gid))
+		return RDMA_NETWORK_IPV4;
+	else
+		return RDMA_NETWORK_IPV6;
+}
 
-क्रमागत rdma_link_layer अणु
+enum rdma_link_layer {
 	IB_LINK_LAYER_UNSPECIFIED,
 	IB_LINK_LAYER_INFINIBAND,
 	IB_LINK_LAYER_ETHERNET,
-पूर्ण;
+};
 
-क्रमागत ib_device_cap_flags अणु
+enum ib_device_cap_flags {
 	IB_DEVICE_RESIZE_MAX_WR			= (1 << 0),
 	IB_DEVICE_BAD_PKEY_CNTR			= (1 << 1),
 	IB_DEVICE_BAD_QKEY_CNTR			= (1 << 2),
@@ -228,7 +227,7 @@ rdma_gid_attr_network_type(स्थिर काष्ठा ib_gid_attr *attr)
 	IB_DEVICE_UD_AV_PORT_ENFORCE		= (1 << 6),
 	IB_DEVICE_CURR_QP_STATE_MOD		= (1 << 7),
 	IB_DEVICE_SHUTDOWN_PORT			= (1 << 8),
-	/* Not in use, क्रमmer INIT_TYPE		= (1 << 9),*/
+	/* Not in use, former INIT_TYPE		= (1 << 9),*/
 	IB_DEVICE_PORT_ACTIVE_EVENT		= (1 << 10),
 	IB_DEVICE_SYS_IMAGE_GUID		= (1 << 11),
 	IB_DEVICE_RC_RNR_NAK_GEN		= (1 << 12),
@@ -237,20 +236,20 @@ rdma_gid_attr_network_type(स्थिर काष्ठा ib_gid_attr *attr)
 
 	/*
 	 * This device supports a per-device lkey or stag that can be
-	 * used without perक्रमming a memory registration क्रम the local
+	 * used without performing a memory registration for the local
 	 * memory.  Note that ULPs should never check this flag, but
-	 * instead of use the local_dma_lkey flag in the ib_pd काष्ठाure,
+	 * instead of use the local_dma_lkey flag in the ib_pd structure,
 	 * which will always contain a usable lkey.
 	 */
 	IB_DEVICE_LOCAL_DMA_LKEY		= (1 << 15),
 	/* Reserved, old SEND_W_INV		= (1 << 16),*/
 	IB_DEVICE_MEM_WINDOW			= (1 << 17),
 	/*
-	 * Devices should set IB_DEVICE_UD_IP_SUM अगर they support
+	 * Devices should set IB_DEVICE_UD_IP_SUM if they support
 	 * insertion of UDP and TCP checksum on outgoing UD IPoIB
-	 * messages and can verअगरy the validity of checksum क्रम
+	 * messages and can verify the validity of checksum for
 	 * incoming messages.  Setting this flag implies that the
-	 * IPoIB driver may set NETIF_F_IP_CSUM क्रम datagram mode.
+	 * IPoIB driver may set NETIF_F_IP_CSUM for datagram mode.
 	 */
 	IB_DEVICE_UD_IP_CSUM			= (1 << 18),
 	IB_DEVICE_UD_TSO			= (1 << 19),
@@ -258,11 +257,11 @@ rdma_gid_attr_network_type(स्थिर काष्ठा ib_gid_attr *attr)
 
 	/*
 	 * This device supports the IB "base memory management extension",
-	 * which includes support क्रम fast registrations (IB_WR_REG_MR,
+	 * which includes support for fast registrations (IB_WR_REG_MR,
 	 * IB_WR_LOCAL_INV and IB_WR_SEND_WITH_INV verbs).  This flag should
 	 * also be set by any iWarp device which must support FRs to comply
 	 * to the iWarp verbs spec.  iWarp devices also support the
-	 * IB_WR_RDMA_READ_WITH_INV verb क्रम RDMA READs that invalidate the
+	 * IB_WR_RDMA_READ_WITH_INV verb for RDMA READs that invalidate the
 	 * stag.
 	 */
 	IB_DEVICE_MEM_MGT_EXTENSIONS		= (1 << 21),
@@ -273,7 +272,7 @@ rdma_gid_attr_network_type(स्थिर काष्ठा ib_gid_attr *attr)
 	/* Deprecated. Please use IB_RAW_PACKET_CAP_IP_CSUM. */
 	IB_DEVICE_RAW_IP_CSUM			= (1 << 26),
 	/*
-	 * Devices should set IB_DEVICE_CROSS_CHANNEL अगर they
+	 * Devices should set IB_DEVICE_CROSS_CHANNEL if they
 	 * support execution of WQEs that involve synchronization
 	 * of I/O operations with single completion queue managed
 	 * by hardware.
@@ -287,223 +286,223 @@ rdma_gid_attr_network_type(स्थिर काष्ठा ib_gid_attr *attr)
 	/* Deprecated. Please use IB_RAW_PACKET_CAP_SCATTER_FCS. */
 	IB_DEVICE_RAW_SCATTER_FCS		= (1ULL << 34),
 	IB_DEVICE_RDMA_NETDEV_OPA		= (1ULL << 35),
-	/* The device supports padding incoming ग_लिखोs to cacheline. */
+	/* The device supports padding incoming writes to cacheline. */
 	IB_DEVICE_PCI_WRITE_END_PADDING		= (1ULL << 36),
 	IB_DEVICE_ALLOW_USER_UNREG		= (1ULL << 37),
-पूर्ण;
+};
 
-क्रमागत ib_atomic_cap अणु
+enum ib_atomic_cap {
 	IB_ATOMIC_NONE,
 	IB_ATOMIC_HCA,
 	IB_ATOMIC_GLOB
-पूर्ण;
+};
 
-क्रमागत ib_odp_general_cap_bits अणु
+enum ib_odp_general_cap_bits {
 	IB_ODP_SUPPORT		= 1 << 0,
 	IB_ODP_SUPPORT_IMPLICIT = 1 << 1,
-पूर्ण;
+};
 
-क्रमागत ib_odp_transport_cap_bits अणु
+enum ib_odp_transport_cap_bits {
 	IB_ODP_SUPPORT_SEND	= 1 << 0,
 	IB_ODP_SUPPORT_RECV	= 1 << 1,
 	IB_ODP_SUPPORT_WRITE	= 1 << 2,
 	IB_ODP_SUPPORT_READ	= 1 << 3,
 	IB_ODP_SUPPORT_ATOMIC	= 1 << 4,
 	IB_ODP_SUPPORT_SRQ_RECV	= 1 << 5,
-पूर्ण;
+};
 
-काष्ठा ib_odp_caps अणु
-	uपूर्णांक64_t general_caps;
-	काष्ठा अणु
-		uपूर्णांक32_t  rc_odp_caps;
-		uपूर्णांक32_t  uc_odp_caps;
-		uपूर्णांक32_t  ud_odp_caps;
-		uपूर्णांक32_t  xrc_odp_caps;
-	पूर्ण per_transport_caps;
-पूर्ण;
+struct ib_odp_caps {
+	uint64_t general_caps;
+	struct {
+		uint32_t  rc_odp_caps;
+		uint32_t  uc_odp_caps;
+		uint32_t  ud_odp_caps;
+		uint32_t  xrc_odp_caps;
+	} per_transport_caps;
+};
 
-काष्ठा ib_rss_caps अणु
-	/* Corresponding bit will be set अगर qp type from
+struct ib_rss_caps {
+	/* Corresponding bit will be set if qp type from
 	 * 'enum ib_qp_type' is supported, e.g.
 	 * supported_qpts |= 1 << IB_QPT_UD
 	 */
 	u32 supported_qpts;
 	u32 max_rwq_indirection_tables;
 	u32 max_rwq_indirection_table_size;
-पूर्ण;
+};
 
-क्रमागत ib_पंचांग_cap_flags अणु
-	/*  Support tag matching with rendezvous offload क्रम RC transport */
+enum ib_tm_cap_flags {
+	/*  Support tag matching with rendezvous offload for RC transport */
 	IB_TM_CAP_RNDV_RC = 1 << 0,
-पूर्ण;
+};
 
-काष्ठा ib_पंचांग_caps अणु
+struct ib_tm_caps {
 	/* Max size of RNDV header */
 	u32 max_rndv_hdr_size;
 	/* Max number of entries in tag matching list */
 	u32 max_num_tags;
-	/* From क्रमागत ib_पंचांग_cap_flags */
+	/* From enum ib_tm_cap_flags */
 	u32 flags;
 	/* Max number of outstanding list operations */
 	u32 max_ops;
 	/* Max number of SGE in tag matching entry */
 	u32 max_sge;
-पूर्ण;
+};
 
-काष्ठा ib_cq_init_attr अणु
-	अचिन्हित पूर्णांक	cqe;
+struct ib_cq_init_attr {
+	unsigned int	cqe;
 	u32		comp_vector;
 	u32		flags;
-पूर्ण;
+};
 
-क्रमागत ib_cq_attr_mask अणु
+enum ib_cq_attr_mask {
 	IB_CQ_MODERATE = 1 << 0,
-पूर्ण;
+};
 
-काष्ठा ib_cq_caps अणु
+struct ib_cq_caps {
 	u16     max_cq_moderation_count;
 	u16     max_cq_moderation_period;
-पूर्ण;
+};
 
-काष्ठा ib_dm_mr_attr अणु
+struct ib_dm_mr_attr {
 	u64		length;
 	u64		offset;
 	u32		access_flags;
-पूर्ण;
+};
 
-काष्ठा ib_dm_alloc_attr अणु
+struct ib_dm_alloc_attr {
 	u64	length;
 	u32	alignment;
 	u32	flags;
-पूर्ण;
+};
 
-काष्ठा ib_device_attr अणु
+struct ib_device_attr {
 	u64			fw_ver;
 	__be64			sys_image_guid;
 	u64			max_mr_size;
 	u64			page_size_cap;
-	u32			venकरोr_id;
-	u32			venकरोr_part_id;
+	u32			vendor_id;
+	u32			vendor_part_id;
 	u32			hw_ver;
-	पूर्णांक			max_qp;
-	पूर्णांक			max_qp_wr;
+	int			max_qp;
+	int			max_qp_wr;
 	u64			device_cap_flags;
-	पूर्णांक			max_send_sge;
-	पूर्णांक			max_recv_sge;
-	पूर्णांक			max_sge_rd;
-	पूर्णांक			max_cq;
-	पूर्णांक			max_cqe;
-	पूर्णांक			max_mr;
-	पूर्णांक			max_pd;
-	पूर्णांक			max_qp_rd_atom;
-	पूर्णांक			max_ee_rd_atom;
-	पूर्णांक			max_res_rd_atom;
-	पूर्णांक			max_qp_init_rd_atom;
-	पूर्णांक			max_ee_init_rd_atom;
-	क्रमागत ib_atomic_cap	atomic_cap;
-	क्रमागत ib_atomic_cap	masked_atomic_cap;
-	पूर्णांक			max_ee;
-	पूर्णांक			max_rdd;
-	पूर्णांक			max_mw;
-	पूर्णांक			max_raw_ipv6_qp;
-	पूर्णांक			max_raw_ethy_qp;
-	पूर्णांक			max_mcast_grp;
-	पूर्णांक			max_mcast_qp_attach;
-	पूर्णांक			max_total_mcast_qp_attach;
-	पूर्णांक			max_ah;
-	पूर्णांक			max_srq;
-	पूर्णांक			max_srq_wr;
-	पूर्णांक			max_srq_sge;
-	अचिन्हित पूर्णांक		max_fast_reg_page_list_len;
-	अचिन्हित पूर्णांक		max_pi_fast_reg_page_list_len;
+	int			max_send_sge;
+	int			max_recv_sge;
+	int			max_sge_rd;
+	int			max_cq;
+	int			max_cqe;
+	int			max_mr;
+	int			max_pd;
+	int			max_qp_rd_atom;
+	int			max_ee_rd_atom;
+	int			max_res_rd_atom;
+	int			max_qp_init_rd_atom;
+	int			max_ee_init_rd_atom;
+	enum ib_atomic_cap	atomic_cap;
+	enum ib_atomic_cap	masked_atomic_cap;
+	int			max_ee;
+	int			max_rdd;
+	int			max_mw;
+	int			max_raw_ipv6_qp;
+	int			max_raw_ethy_qp;
+	int			max_mcast_grp;
+	int			max_mcast_qp_attach;
+	int			max_total_mcast_qp_attach;
+	int			max_ah;
+	int			max_srq;
+	int			max_srq_wr;
+	int			max_srq_sge;
+	unsigned int		max_fast_reg_page_list_len;
+	unsigned int		max_pi_fast_reg_page_list_len;
 	u16			max_pkeys;
 	u8			local_ca_ack_delay;
-	पूर्णांक			sig_prot_cap;
-	पूर्णांक			sig_guard_cap;
-	काष्ठा ib_odp_caps	odp_caps;
-	uपूर्णांक64_t		बारtamp_mask;
-	uपूर्णांक64_t		hca_core_घड़ी; /* in KHZ */
-	काष्ठा ib_rss_caps	rss_caps;
+	int			sig_prot_cap;
+	int			sig_guard_cap;
+	struct ib_odp_caps	odp_caps;
+	uint64_t		timestamp_mask;
+	uint64_t		hca_core_clock; /* in KHZ */
+	struct ib_rss_caps	rss_caps;
 	u32			max_wq_type_rq;
-	u32			raw_packet_caps; /* Use ib_raw_packet_caps क्रमागत */
-	काष्ठा ib_पंचांग_caps	पंचांग_caps;
-	काष्ठा ib_cq_caps       cq_caps;
+	u32			raw_packet_caps; /* Use ib_raw_packet_caps enum */
+	struct ib_tm_caps	tm_caps;
+	struct ib_cq_caps       cq_caps;
 	u64			max_dm_size;
-	/* Max entries क्रम sgl क्रम optimized perक्रमmance per READ */
+	/* Max entries for sgl for optimized performance per READ */
 	u32			max_sgl_rd;
-पूर्ण;
+};
 
-क्रमागत ib_mtu अणु
+enum ib_mtu {
 	IB_MTU_256  = 1,
 	IB_MTU_512  = 2,
 	IB_MTU_1024 = 3,
 	IB_MTU_2048 = 4,
 	IB_MTU_4096 = 5
-पूर्ण;
+};
 
-क्रमागत opa_mtu अणु
+enum opa_mtu {
 	OPA_MTU_8192 = 6,
 	OPA_MTU_10240 = 7
-पूर्ण;
+};
 
-अटल अंतरभूत पूर्णांक ib_mtu_क्रमागत_to_पूर्णांक(क्रमागत ib_mtu mtu)
-अणु
-	चयन (mtu) अणु
-	हाल IB_MTU_256:  वापस  256;
-	हाल IB_MTU_512:  वापस  512;
-	हाल IB_MTU_1024: वापस 1024;
-	हाल IB_MTU_2048: वापस 2048;
-	हाल IB_MTU_4096: वापस 4096;
-	शेष: 	  वापस -1;
-	पूर्ण
-पूर्ण
+static inline int ib_mtu_enum_to_int(enum ib_mtu mtu)
+{
+	switch (mtu) {
+	case IB_MTU_256:  return  256;
+	case IB_MTU_512:  return  512;
+	case IB_MTU_1024: return 1024;
+	case IB_MTU_2048: return 2048;
+	case IB_MTU_4096: return 4096;
+	default: 	  return -1;
+	}
+}
 
-अटल अंतरभूत क्रमागत ib_mtu ib_mtu_पूर्णांक_to_क्रमागत(पूर्णांक mtu)
-अणु
-	अगर (mtu >= 4096)
-		वापस IB_MTU_4096;
-	अन्यथा अगर (mtu >= 2048)
-		वापस IB_MTU_2048;
-	अन्यथा अगर (mtu >= 1024)
-		वापस IB_MTU_1024;
-	अन्यथा अगर (mtu >= 512)
-		वापस IB_MTU_512;
-	अन्यथा
-		वापस IB_MTU_256;
-पूर्ण
+static inline enum ib_mtu ib_mtu_int_to_enum(int mtu)
+{
+	if (mtu >= 4096)
+		return IB_MTU_4096;
+	else if (mtu >= 2048)
+		return IB_MTU_2048;
+	else if (mtu >= 1024)
+		return IB_MTU_1024;
+	else if (mtu >= 512)
+		return IB_MTU_512;
+	else
+		return IB_MTU_256;
+}
 
-अटल अंतरभूत पूर्णांक opa_mtu_क्रमागत_to_पूर्णांक(क्रमागत opa_mtu mtu)
-अणु
-	चयन (mtu) अणु
-	हाल OPA_MTU_8192:
-		वापस 8192;
-	हाल OPA_MTU_10240:
-		वापस 10240;
-	शेष:
-		वापस(ib_mtu_क्रमागत_to_पूर्णांक((क्रमागत ib_mtu)mtu));
-	पूर्ण
-पूर्ण
+static inline int opa_mtu_enum_to_int(enum opa_mtu mtu)
+{
+	switch (mtu) {
+	case OPA_MTU_8192:
+		return 8192;
+	case OPA_MTU_10240:
+		return 10240;
+	default:
+		return(ib_mtu_enum_to_int((enum ib_mtu)mtu));
+	}
+}
 
-अटल अंतरभूत क्रमागत opa_mtu opa_mtu_पूर्णांक_to_क्रमागत(पूर्णांक mtu)
-अणु
-	अगर (mtu >= 10240)
-		वापस OPA_MTU_10240;
-	अन्यथा अगर (mtu >= 8192)
-		वापस OPA_MTU_8192;
-	अन्यथा
-		वापस ((क्रमागत opa_mtu)ib_mtu_पूर्णांक_to_क्रमागत(mtu));
-पूर्ण
+static inline enum opa_mtu opa_mtu_int_to_enum(int mtu)
+{
+	if (mtu >= 10240)
+		return OPA_MTU_10240;
+	else if (mtu >= 8192)
+		return OPA_MTU_8192;
+	else
+		return ((enum opa_mtu)ib_mtu_int_to_enum(mtu));
+}
 
-क्रमागत ib_port_state अणु
+enum ib_port_state {
 	IB_PORT_NOP		= 0,
 	IB_PORT_DOWN		= 1,
 	IB_PORT_INIT		= 2,
 	IB_PORT_ARMED		= 3,
 	IB_PORT_ACTIVE		= 4,
 	IB_PORT_ACTIVE_DEFER	= 5
-पूर्ण;
+};
 
-क्रमागत ib_port_phys_state अणु
+enum ib_port_phys_state {
 	IB_PORT_PHYS_STATE_SLEEP = 1,
 	IB_PORT_PHYS_STATE_POLLING = 2,
 	IB_PORT_PHYS_STATE_DISABLED = 3,
@@ -511,29 +510,29 @@ rdma_gid_attr_network_type(स्थिर काष्ठा ib_gid_attr *attr)
 	IB_PORT_PHYS_STATE_LINK_UP = 5,
 	IB_PORT_PHYS_STATE_LINK_ERROR_RECOVERY = 6,
 	IB_PORT_PHYS_STATE_PHY_TEST = 7,
-पूर्ण;
+};
 
-क्रमागत ib_port_width अणु
+enum ib_port_width {
 	IB_WIDTH_1X	= 1,
 	IB_WIDTH_2X	= 16,
 	IB_WIDTH_4X	= 2,
 	IB_WIDTH_8X	= 4,
 	IB_WIDTH_12X	= 8
-पूर्ण;
+};
 
-अटल अंतरभूत पूर्णांक ib_width_क्रमागत_to_पूर्णांक(क्रमागत ib_port_width width)
-अणु
-	चयन (width) अणु
-	हाल IB_WIDTH_1X:  वापस  1;
-	हाल IB_WIDTH_2X:  वापस  2;
-	हाल IB_WIDTH_4X:  वापस  4;
-	हाल IB_WIDTH_8X:  वापस  8;
-	हाल IB_WIDTH_12X: वापस 12;
-	शेष: 	  वापस -1;
-	पूर्ण
-पूर्ण
+static inline int ib_width_enum_to_int(enum ib_port_width width)
+{
+	switch (width) {
+	case IB_WIDTH_1X:  return  1;
+	case IB_WIDTH_2X:  return  2;
+	case IB_WIDTH_4X:  return  4;
+	case IB_WIDTH_8X:  return  8;
+	case IB_WIDTH_12X: return 12;
+	default: 	  return -1;
+	}
+}
 
-क्रमागत ib_port_speed अणु
+enum ib_port_speed {
 	IB_SPEED_SDR	= 1,
 	IB_SPEED_DDR	= 2,
 	IB_SPEED_QDR	= 4,
@@ -542,125 +541,125 @@ rdma_gid_attr_network_type(स्थिर काष्ठा ib_gid_attr *attr)
 	IB_SPEED_EDR	= 32,
 	IB_SPEED_HDR	= 64,
 	IB_SPEED_NDR	= 128,
-पूर्ण;
+};
 
 /**
- * काष्ठा rdma_hw_stats
- * @lock - Mutex to protect parallel ग_लिखो access to lअगरespan and values
+ * struct rdma_hw_stats
+ * @lock - Mutex to protect parallel write access to lifespan and values
  *    of counters, which are 64bits and not guaranteeed to be written
- *    atomicaly on 32bits प्रणालीs.
- * @बारtamp - Used by the core code to track when the last update was
- * @lअगरespan - Used by the core code to determine how old the counters
- *   should be beक्रमe being updated again.  Stored in jअगरfies, शेषs
- *   to 10 milliseconds, drivers can override the शेष be specअगरying
+ *    atomicaly on 32bits systems.
+ * @timestamp - Used by the core code to track when the last update was
+ * @lifespan - Used by the core code to determine how old the counters
+ *   should be before being updated again.  Stored in jiffies, defaults
+ *   to 10 milliseconds, drivers can override the default be specifying
  *   their own value during their allocation routine.
- * @name - Array of poपूर्णांकers to अटल names used क्रम the counters in
+ * @name - Array of pointers to static names used for the counters in
  *   directory.
  * @num_counters - How many hardware counters there are.  If name is
- *   लघुer than this number, a kernel oops will result.  Driver authors
+ *   shorter than this number, a kernel oops will result.  Driver authors
  *   are encouraged to leave BUILD_BUG_ON(ARRAY_SIZE(@name) < num_counters)
  *   in their code to prevent this.
  * @value - Array of u64 counters that are accessed by the sysfs code and
  *   filled in by the drivers get_stats routine
  */
-काष्ठा rdma_hw_stats अणु
-	काष्ठा mutex	lock; /* Protect lअगरespan and values[] */
-	अचिन्हित दीर्घ	बारtamp;
-	अचिन्हित दीर्घ	lअगरespan;
-	स्थिर अक्षर * स्थिर *names;
-	पूर्णांक		num_counters;
+struct rdma_hw_stats {
+	struct mutex	lock; /* Protect lifespan and values[] */
+	unsigned long	timestamp;
+	unsigned long	lifespan;
+	const char * const *names;
+	int		num_counters;
 	u64		value[];
-पूर्ण;
+};
 
-#घोषणा RDMA_HW_STATS_DEFAULT_LIFESPAN 10
+#define RDMA_HW_STATS_DEFAULT_LIFESPAN 10
 /**
- * rdma_alloc_hw_stats_काष्ठा - Helper function to allocate dynamic काष्ठा
- *   क्रम drivers.
- * @names - Array of अटल स्थिर अक्षर *
+ * rdma_alloc_hw_stats_struct - Helper function to allocate dynamic struct
+ *   for drivers.
+ * @names - Array of static const char *
  * @num_counters - How many elements in array
- * @lअगरespan - How many milliseconds between updates
+ * @lifespan - How many milliseconds between updates
  */
-अटल अंतरभूत काष्ठा rdma_hw_stats *rdma_alloc_hw_stats_काष्ठा(
-		स्थिर अक्षर * स्थिर *names, पूर्णांक num_counters,
-		अचिन्हित दीर्घ lअगरespan)
-अणु
-	काष्ठा rdma_hw_stats *stats;
+static inline struct rdma_hw_stats *rdma_alloc_hw_stats_struct(
+		const char * const *names, int num_counters,
+		unsigned long lifespan)
+{
+	struct rdma_hw_stats *stats;
 
-	stats = kzalloc(माप(*stats) + num_counters * माप(u64),
+	stats = kzalloc(sizeof(*stats) + num_counters * sizeof(u64),
 			GFP_KERNEL);
-	अगर (!stats)
-		वापस शून्य;
+	if (!stats)
+		return NULL;
 	stats->names = names;
 	stats->num_counters = num_counters;
-	stats->lअगरespan = msecs_to_jअगरfies(lअगरespan);
+	stats->lifespan = msecs_to_jiffies(lifespan);
 
-	वापस stats;
-पूर्ण
+	return stats;
+}
 
 
-/* Define bits क्रम the various functionality this port needs to be supported by
+/* Define bits for the various functionality this port needs to be supported by
  * the core.
  */
 /* Management                           0x00000FFF */
-#घोषणा RDMA_CORE_CAP_IB_MAD            0x00000001
-#घोषणा RDMA_CORE_CAP_IB_SMI            0x00000002
-#घोषणा RDMA_CORE_CAP_IB_CM             0x00000004
-#घोषणा RDMA_CORE_CAP_IW_CM             0x00000008
-#घोषणा RDMA_CORE_CAP_IB_SA             0x00000010
-#घोषणा RDMA_CORE_CAP_OPA_MAD           0x00000020
+#define RDMA_CORE_CAP_IB_MAD            0x00000001
+#define RDMA_CORE_CAP_IB_SMI            0x00000002
+#define RDMA_CORE_CAP_IB_CM             0x00000004
+#define RDMA_CORE_CAP_IW_CM             0x00000008
+#define RDMA_CORE_CAP_IB_SA             0x00000010
+#define RDMA_CORE_CAP_OPA_MAD           0x00000020
 
-/* Address क्रमmat                       0x000FF000 */
-#घोषणा RDMA_CORE_CAP_AF_IB             0x00001000
-#घोषणा RDMA_CORE_CAP_ETH_AH            0x00002000
-#घोषणा RDMA_CORE_CAP_OPA_AH            0x00004000
-#घोषणा RDMA_CORE_CAP_IB_GRH_REQUIRED   0x00008000
+/* Address format                       0x000FF000 */
+#define RDMA_CORE_CAP_AF_IB             0x00001000
+#define RDMA_CORE_CAP_ETH_AH            0x00002000
+#define RDMA_CORE_CAP_OPA_AH            0x00004000
+#define RDMA_CORE_CAP_IB_GRH_REQUIRED   0x00008000
 
 /* Protocol                             0xFFF00000 */
-#घोषणा RDMA_CORE_CAP_PROT_IB           0x00100000
-#घोषणा RDMA_CORE_CAP_PROT_ROCE         0x00200000
-#घोषणा RDMA_CORE_CAP_PROT_IWARP        0x00400000
-#घोषणा RDMA_CORE_CAP_PROT_ROCE_UDP_ENCAP 0x00800000
-#घोषणा RDMA_CORE_CAP_PROT_RAW_PACKET   0x01000000
-#घोषणा RDMA_CORE_CAP_PROT_USNIC        0x02000000
+#define RDMA_CORE_CAP_PROT_IB           0x00100000
+#define RDMA_CORE_CAP_PROT_ROCE         0x00200000
+#define RDMA_CORE_CAP_PROT_IWARP        0x00400000
+#define RDMA_CORE_CAP_PROT_ROCE_UDP_ENCAP 0x00800000
+#define RDMA_CORE_CAP_PROT_RAW_PACKET   0x01000000
+#define RDMA_CORE_CAP_PROT_USNIC        0x02000000
 
-#घोषणा RDMA_CORE_PORT_IB_GRH_REQUIRED (RDMA_CORE_CAP_IB_GRH_REQUIRED \
+#define RDMA_CORE_PORT_IB_GRH_REQUIRED (RDMA_CORE_CAP_IB_GRH_REQUIRED \
 					| RDMA_CORE_CAP_PROT_ROCE     \
 					| RDMA_CORE_CAP_PROT_ROCE_UDP_ENCAP)
 
-#घोषणा RDMA_CORE_PORT_IBA_IB          (RDMA_CORE_CAP_PROT_IB  \
+#define RDMA_CORE_PORT_IBA_IB          (RDMA_CORE_CAP_PROT_IB  \
 					| RDMA_CORE_CAP_IB_MAD \
 					| RDMA_CORE_CAP_IB_SMI \
 					| RDMA_CORE_CAP_IB_CM  \
 					| RDMA_CORE_CAP_IB_SA  \
 					| RDMA_CORE_CAP_AF_IB)
-#घोषणा RDMA_CORE_PORT_IBA_ROCE        (RDMA_CORE_CAP_PROT_ROCE \
+#define RDMA_CORE_PORT_IBA_ROCE        (RDMA_CORE_CAP_PROT_ROCE \
 					| RDMA_CORE_CAP_IB_MAD  \
 					| RDMA_CORE_CAP_IB_CM   \
 					| RDMA_CORE_CAP_AF_IB   \
 					| RDMA_CORE_CAP_ETH_AH)
-#घोषणा RDMA_CORE_PORT_IBA_ROCE_UDP_ENCAP			\
+#define RDMA_CORE_PORT_IBA_ROCE_UDP_ENCAP			\
 					(RDMA_CORE_CAP_PROT_ROCE_UDP_ENCAP \
 					| RDMA_CORE_CAP_IB_MAD  \
 					| RDMA_CORE_CAP_IB_CM   \
 					| RDMA_CORE_CAP_AF_IB   \
 					| RDMA_CORE_CAP_ETH_AH)
-#घोषणा RDMA_CORE_PORT_IWARP           (RDMA_CORE_CAP_PROT_IWARP \
+#define RDMA_CORE_PORT_IWARP           (RDMA_CORE_CAP_PROT_IWARP \
 					| RDMA_CORE_CAP_IW_CM)
-#घोषणा RDMA_CORE_PORT_INTEL_OPA       (RDMA_CORE_PORT_IBA_IB  \
+#define RDMA_CORE_PORT_INTEL_OPA       (RDMA_CORE_PORT_IBA_IB  \
 					| RDMA_CORE_CAP_OPA_MAD)
 
-#घोषणा RDMA_CORE_PORT_RAW_PACKET	(RDMA_CORE_CAP_PROT_RAW_PACKET)
+#define RDMA_CORE_PORT_RAW_PACKET	(RDMA_CORE_CAP_PROT_RAW_PACKET)
 
-#घोषणा RDMA_CORE_PORT_USNIC		(RDMA_CORE_CAP_PROT_USNIC)
+#define RDMA_CORE_PORT_USNIC		(RDMA_CORE_CAP_PROT_USNIC)
 
-काष्ठा ib_port_attr अणु
+struct ib_port_attr {
 	u64			subnet_prefix;
-	क्रमागत ib_port_state	state;
-	क्रमागत ib_mtu		max_mtu;
-	क्रमागत ib_mtu		active_mtu;
+	enum ib_port_state	state;
+	enum ib_mtu		max_mtu;
+	enum ib_mtu		active_mtu;
 	u32                     phys_mtu;
-	पूर्णांक			gid_tbl_len;
-	अचिन्हित पूर्णांक		ip_gids:1;
+	int			gid_tbl_len;
+	unsigned int		ip_gids:1;
 	/* This is the value from PortInfo CapabilityMask, defined by IBA */
 	u32			port_cap_flags;
 	u32			max_msg_sz;
@@ -672,40 +671,40 @@ rdma_gid_attr_network_type(स्थिर काष्ठा ib_gid_attr *attr)
 	u8			lmc;
 	u8			max_vl_num;
 	u8			sm_sl;
-	u8			subnet_समयout;
+	u8			subnet_timeout;
 	u8			init_type_reply;
 	u8			active_width;
 	u16			active_speed;
 	u8                      phys_state;
 	u16			port_cap_flags2;
-पूर्ण;
+};
 
-क्रमागत ib_device_modअगरy_flags अणु
+enum ib_device_modify_flags {
 	IB_DEVICE_MODIFY_SYS_IMAGE_GUID	= 1 << 0,
 	IB_DEVICE_MODIFY_NODE_DESC	= 1 << 1
-पूर्ण;
+};
 
-#घोषणा IB_DEVICE_NODE_DESC_MAX 64
+#define IB_DEVICE_NODE_DESC_MAX 64
 
-काष्ठा ib_device_modअगरy अणु
+struct ib_device_modify {
 	u64	sys_image_guid;
-	अक्षर	node_desc[IB_DEVICE_NODE_DESC_MAX];
-पूर्ण;
+	char	node_desc[IB_DEVICE_NODE_DESC_MAX];
+};
 
-क्रमागत ib_port_modअगरy_flags अणु
+enum ib_port_modify_flags {
 	IB_PORT_SHUTDOWN		= 1,
 	IB_PORT_INIT_TYPE		= (1<<2),
 	IB_PORT_RESET_QKEY_CNTR		= (1<<3),
 	IB_PORT_OPA_MASK_CHG		= (1<<4)
-पूर्ण;
+};
 
-काष्ठा ib_port_modअगरy अणु
+struct ib_port_modify {
 	u32	set_port_cap_mask;
 	u32	clr_port_cap_mask;
 	u8	init_type;
-पूर्ण;
+};
 
-क्रमागत ib_event_type अणु
+enum ib_event_type {
 	IB_EVENT_CQ_ERR,
 	IB_EVENT_QP_FATAL,
 	IB_EVENT_QP_REQ_ERR,
@@ -726,78 +725,78 @@ rdma_gid_attr_network_type(स्थिर काष्ठा ib_gid_attr *attr)
 	IB_EVENT_CLIENT_REREGISTER,
 	IB_EVENT_GID_CHANGE,
 	IB_EVENT_WQ_FATAL,
-पूर्ण;
+};
 
-स्थिर अक्षर *__attribute_स्थिर__ ib_event_msg(क्रमागत ib_event_type event);
+const char *__attribute_const__ ib_event_msg(enum ib_event_type event);
 
-काष्ठा ib_event अणु
-	काष्ठा ib_device	*device;
-	जोड़ अणु
-		काष्ठा ib_cq	*cq;
-		काष्ठा ib_qp	*qp;
-		काष्ठा ib_srq	*srq;
-		काष्ठा ib_wq	*wq;
+struct ib_event {
+	struct ib_device	*device;
+	union {
+		struct ib_cq	*cq;
+		struct ib_qp	*qp;
+		struct ib_srq	*srq;
+		struct ib_wq	*wq;
 		u32		port_num;
-	पूर्ण element;
-	क्रमागत ib_event_type	event;
-पूर्ण;
+	} element;
+	enum ib_event_type	event;
+};
 
-काष्ठा ib_event_handler अणु
-	काष्ठा ib_device *device;
-	व्योम            (*handler)(काष्ठा ib_event_handler *, काष्ठा ib_event *);
-	काष्ठा list_head  list;
-पूर्ण;
+struct ib_event_handler {
+	struct ib_device *device;
+	void            (*handler)(struct ib_event_handler *, struct ib_event *);
+	struct list_head  list;
+};
 
-#घोषणा INIT_IB_EVENT_HANDLER(_ptr, _device, _handler)		\
-	करो अणु							\
+#define INIT_IB_EVENT_HANDLER(_ptr, _device, _handler)		\
+	do {							\
 		(_ptr)->device  = _device;			\
 		(_ptr)->handler = _handler;			\
 		INIT_LIST_HEAD(&(_ptr)->list);			\
-	पूर्ण जबतक (0)
+	} while (0)
 
-काष्ठा ib_global_route अणु
-	स्थिर काष्ठा ib_gid_attr *sgid_attr;
-	जोड़ ib_gid	dgid;
+struct ib_global_route {
+	const struct ib_gid_attr *sgid_attr;
+	union ib_gid	dgid;
 	u32		flow_label;
 	u8		sgid_index;
 	u8		hop_limit;
 	u8		traffic_class;
-पूर्ण;
+};
 
-काष्ठा ib_grh अणु
+struct ib_grh {
 	__be32		version_tclass_flow;
 	__be16		paylen;
 	u8		next_hdr;
 	u8		hop_limit;
-	जोड़ ib_gid	sgid;
-	जोड़ ib_gid	dgid;
-पूर्ण;
+	union ib_gid	sgid;
+	union ib_gid	dgid;
+};
 
-जोड़ rdma_network_hdr अणु
-	काष्ठा ib_grh ibgrh;
-	काष्ठा अणु
-		/* The IB spec states that अगर it's IPv4, the header
+union rdma_network_hdr {
+	struct ib_grh ibgrh;
+	struct {
+		/* The IB spec states that if it's IPv4, the header
 		 * is located in the last 20 bytes of the header.
 		 */
 		u8		reserved[20];
-		काष्ठा iphdr	roce4grh;
-	पूर्ण;
-पूर्ण;
+		struct iphdr	roce4grh;
+	};
+};
 
-#घोषणा IB_QPN_MASK		0xFFFFFF
+#define IB_QPN_MASK		0xFFFFFF
 
-क्रमागत अणु
+enum {
 	IB_MULTICAST_QPN = 0xffffff
-पूर्ण;
+};
 
-#घोषणा IB_LID_PERMISSIVE	cpu_to_be16(0xFFFF)
-#घोषणा IB_MULTICAST_LID_BASE	cpu_to_be16(0xC000)
+#define IB_LID_PERMISSIVE	cpu_to_be16(0xFFFF)
+#define IB_MULTICAST_LID_BASE	cpu_to_be16(0xC000)
 
-क्रमागत ib_ah_flags अणु
+enum ib_ah_flags {
 	IB_AH_GRH	= 1
-पूर्ण;
+};
 
-क्रमागत ib_rate अणु
+enum ib_rate {
 	IB_RATE_PORT_CURRENT = 0,
 	IB_RATE_2_5_GBPS = 2,
 	IB_RATE_5_GBPS   = 5,
@@ -820,117 +819,117 @@ rdma_gid_attr_network_type(स्थिर काष्ठा ib_gid_attr *attr)
 	IB_RATE_50_GBPS  = 20,
 	IB_RATE_400_GBPS = 21,
 	IB_RATE_600_GBPS = 22,
-पूर्ण;
+};
 
 /**
- * ib_rate_to_mult - Convert the IB rate क्रमागत to a multiple of the
+ * ib_rate_to_mult - Convert the IB rate enum to a multiple of the
  * base rate of 2.5 Gbit/sec.  For example, IB_RATE_5_GBPS will be
  * converted to 2, since 5 Gbit/sec is 2 * 2.5 Gbit/sec.
  * @rate: rate to convert.
  */
-__attribute_स्थिर__ पूर्णांक ib_rate_to_mult(क्रमागत ib_rate rate);
+__attribute_const__ int ib_rate_to_mult(enum ib_rate rate);
 
 /**
- * ib_rate_to_mbps - Convert the IB rate क्रमागत to Mbps.
+ * ib_rate_to_mbps - Convert the IB rate enum to Mbps.
  * For example, IB_RATE_2_5_GBPS will be converted to 2500.
  * @rate: rate to convert.
  */
-__attribute_स्थिर__ पूर्णांक ib_rate_to_mbps(क्रमागत ib_rate rate);
+__attribute_const__ int ib_rate_to_mbps(enum ib_rate rate);
 
 
 /**
- * क्रमागत ib_mr_type - memory region type
- * @IB_MR_TYPE_MEM_REG:       memory region that is used क्रम
+ * enum ib_mr_type - memory region type
+ * @IB_MR_TYPE_MEM_REG:       memory region that is used for
  *                            normal registration
  * @IB_MR_TYPE_SG_GAPS:       memory region that is capable to
- *                            रेजिस्टर any arbitrary sg lists (without
- *                            the normal mr स्थिरraपूर्णांकs - see
+ *                            register any arbitrary sg lists (without
+ *                            the normal mr constraints - see
  *                            ib_map_mr_sg)
- * @IB_MR_TYPE_DM:            memory region that is used क्रम device
+ * @IB_MR_TYPE_DM:            memory region that is used for device
  *                            memory registration
- * @IB_MR_TYPE_USER:          memory region that is used क्रम the user-space
+ * @IB_MR_TYPE_USER:          memory region that is used for the user-space
  *                            application
- * @IB_MR_TYPE_DMA:           memory region that is used क्रम DMA operations
+ * @IB_MR_TYPE_DMA:           memory region that is used for DMA operations
  *                            without address translations (VA=PA)
- * @IB_MR_TYPE_INTEGRITY:     memory region that is used क्रम
- *                            data पूर्णांकegrity operations
+ * @IB_MR_TYPE_INTEGRITY:     memory region that is used for
+ *                            data integrity operations
  */
-क्रमागत ib_mr_type अणु
+enum ib_mr_type {
 	IB_MR_TYPE_MEM_REG,
 	IB_MR_TYPE_SG_GAPS,
 	IB_MR_TYPE_DM,
 	IB_MR_TYPE_USER,
 	IB_MR_TYPE_DMA,
 	IB_MR_TYPE_INTEGRITY,
-पूर्ण;
+};
 
-क्रमागत ib_mr_status_check अणु
+enum ib_mr_status_check {
 	IB_MR_CHECK_SIG_STATUS = 1,
-पूर्ण;
+};
 
 /**
- * काष्ठा ib_mr_status - Memory region status container
+ * struct ib_mr_status - Memory region status container
  *
- * @fail_status: Biपंचांगask of MR checks status. For each
+ * @fail_status: Bitmask of MR checks status. For each
  *     failed check a corresponding status bit is set.
- * @sig_err: Additional info क्रम IB_MR_CEHCK_SIG_STATUS
+ * @sig_err: Additional info for IB_MR_CEHCK_SIG_STATUS
  *     failure.
  */
-काष्ठा ib_mr_status अणु
+struct ib_mr_status {
 	u32		    fail_status;
-	काष्ठा ib_sig_err   sig_err;
-पूर्ण;
+	struct ib_sig_err   sig_err;
+};
 
 /**
  * mult_to_ib_rate - Convert a multiple of 2.5 Gbit/sec to an IB rate
- * क्रमागत.
+ * enum.
  * @mult: multiple to convert.
  */
-__attribute_स्थिर__ क्रमागत ib_rate mult_to_ib_rate(पूर्णांक mult);
+__attribute_const__ enum ib_rate mult_to_ib_rate(int mult);
 
-काष्ठा rdma_ah_init_attr अणु
-	काष्ठा rdma_ah_attr *ah_attr;
+struct rdma_ah_init_attr {
+	struct rdma_ah_attr *ah_attr;
 	u32 flags;
-	काष्ठा net_device *xmit_slave;
-पूर्ण;
+	struct net_device *xmit_slave;
+};
 
-क्रमागत rdma_ah_attr_type अणु
+enum rdma_ah_attr_type {
 	RDMA_AH_ATTR_TYPE_UNDEFINED,
 	RDMA_AH_ATTR_TYPE_IB,
 	RDMA_AH_ATTR_TYPE_ROCE,
 	RDMA_AH_ATTR_TYPE_OPA,
-पूर्ण;
+};
 
-काष्ठा ib_ah_attr अणु
+struct ib_ah_attr {
 	u16			dlid;
 	u8			src_path_bits;
-पूर्ण;
+};
 
-काष्ठा roce_ah_attr अणु
+struct roce_ah_attr {
 	u8			dmac[ETH_ALEN];
-पूर्ण;
+};
 
-काष्ठा opa_ah_attr अणु
+struct opa_ah_attr {
 	u32			dlid;
 	u8			src_path_bits;
 	bool			make_grd;
-पूर्ण;
+};
 
-काष्ठा rdma_ah_attr अणु
-	काष्ठा ib_global_route	grh;
+struct rdma_ah_attr {
+	struct ib_global_route	grh;
 	u8			sl;
-	u8			अटल_rate;
+	u8			static_rate;
 	u32			port_num;
 	u8			ah_flags;
-	क्रमागत rdma_ah_attr_type type;
-	जोड़ अणु
-		काष्ठा ib_ah_attr ib;
-		काष्ठा roce_ah_attr roce;
-		काष्ठा opa_ah_attr opa;
-	पूर्ण;
-पूर्ण;
+	enum rdma_ah_attr_type type;
+	union {
+		struct ib_ah_attr ib;
+		struct roce_ah_attr roce;
+		struct opa_ah_attr opa;
+	};
+};
 
-क्रमागत ib_wc_status अणु
+enum ib_wc_status {
 	IB_WC_SUCCESS,
 	IB_WC_LOC_LEN_ERR,
 	IB_WC_LOC_QP_OP_ERR,
@@ -953,11 +952,11 @@ __attribute_स्थिर__ क्रमागत ib_rate mult_to_ib_rate(प�
 	IB_WC_FATAL_ERR,
 	IB_WC_RESP_TIMEOUT_ERR,
 	IB_WC_GENERAL_ERR
-पूर्ण;
+};
 
-स्थिर अक्षर *__attribute_स्थिर__ ib_wc_status_msg(क्रमागत ib_wc_status status);
+const char *__attribute_const__ ib_wc_status_msg(enum ib_wc_status status);
 
-क्रमागत ib_wc_opcode अणु
+enum ib_wc_opcode {
 	IB_WC_SEND = IB_UVERBS_WC_SEND,
 	IB_WC_RDMA_WRITE = IB_UVERBS_WC_RDMA_WRITE,
 	IB_WC_RDMA_READ = IB_UVERBS_WC_RDMA_READ,
@@ -970,14 +969,14 @@ __attribute_स्थिर__ क्रमागत ib_rate mult_to_ib_rate(प�
 	IB_WC_MASKED_COMP_SWAP,
 	IB_WC_MASKED_FETCH_ADD,
 /*
- * Set value of IB_WC_RECV so consumers can test अगर a completion is a
+ * Set value of IB_WC_RECV so consumers can test if a completion is a
  * receive by testing (opcode & IB_WC_RECV).
  */
 	IB_WC_RECV			= 1 << 7,
 	IB_WC_RECV_RDMA_WITH_IMM
-पूर्ण;
+};
 
-क्रमागत ib_wc_flags अणु
+enum ib_wc_flags {
 	IB_WC_GRH		= 1,
 	IB_WC_WITH_IMM		= (1<<1),
 	IB_WC_WITH_INVALIDATE	= (1<<2),
@@ -985,109 +984,109 @@ __attribute_स्थिर__ क्रमागत ib_rate mult_to_ib_rate(प�
 	IB_WC_WITH_SMAC		= (1<<4),
 	IB_WC_WITH_VLAN		= (1<<5),
 	IB_WC_WITH_NETWORK_HDR_TYPE	= (1<<6),
-पूर्ण;
+};
 
-काष्ठा ib_wc अणु
-	जोड़ अणु
+struct ib_wc {
+	union {
 		u64		wr_id;
-		काष्ठा ib_cqe	*wr_cqe;
-	पूर्ण;
-	क्रमागत ib_wc_status	status;
-	क्रमागत ib_wc_opcode	opcode;
-	u32			venकरोr_err;
+		struct ib_cqe	*wr_cqe;
+	};
+	enum ib_wc_status	status;
+	enum ib_wc_opcode	opcode;
+	u32			vendor_err;
 	u32			byte_len;
-	काष्ठा ib_qp	       *qp;
-	जोड़ अणु
+	struct ib_qp	       *qp;
+	union {
 		__be32		imm_data;
 		u32		invalidate_rkey;
-	पूर्ण ex;
+	} ex;
 	u32			src_qp;
 	u32			slid;
-	पूर्णांक			wc_flags;
+	int			wc_flags;
 	u16			pkey_index;
 	u8			sl;
 	u8			dlid_path_bits;
-	u32 port_num; /* valid only क्रम DR SMPs on चयनes */
+	u32 port_num; /* valid only for DR SMPs on switches */
 	u8			smac[ETH_ALEN];
 	u16			vlan_id;
 	u8			network_hdr_type;
-पूर्ण;
+};
 
-क्रमागत ib_cq_notअगरy_flags अणु
+enum ib_cq_notify_flags {
 	IB_CQ_SOLICITED			= 1 << 0,
 	IB_CQ_NEXT_COMP			= 1 << 1,
 	IB_CQ_SOLICITED_MASK		= IB_CQ_SOLICITED | IB_CQ_NEXT_COMP,
 	IB_CQ_REPORT_MISSED_EVENTS	= 1 << 2,
-पूर्ण;
+};
 
-क्रमागत ib_srq_type अणु
+enum ib_srq_type {
 	IB_SRQT_BASIC = IB_UVERBS_SRQT_BASIC,
 	IB_SRQT_XRC = IB_UVERBS_SRQT_XRC,
 	IB_SRQT_TM = IB_UVERBS_SRQT_TM,
-पूर्ण;
+};
 
-अटल अंतरभूत bool ib_srq_has_cq(क्रमागत ib_srq_type srq_type)
-अणु
-	वापस srq_type == IB_SRQT_XRC ||
+static inline bool ib_srq_has_cq(enum ib_srq_type srq_type)
+{
+	return srq_type == IB_SRQT_XRC ||
 	       srq_type == IB_SRQT_TM;
-पूर्ण
+}
 
-क्रमागत ib_srq_attr_mask अणु
+enum ib_srq_attr_mask {
 	IB_SRQ_MAX_WR	= 1 << 0,
 	IB_SRQ_LIMIT	= 1 << 1,
-पूर्ण;
+};
 
-काष्ठा ib_srq_attr अणु
+struct ib_srq_attr {
 	u32	max_wr;
 	u32	max_sge;
 	u32	srq_limit;
-पूर्ण;
+};
 
-काष्ठा ib_srq_init_attr अणु
-	व्योम		      (*event_handler)(काष्ठा ib_event *, व्योम *);
-	व्योम		       *srq_context;
-	काष्ठा ib_srq_attr	attr;
-	क्रमागत ib_srq_type	srq_type;
+struct ib_srq_init_attr {
+	void		      (*event_handler)(struct ib_event *, void *);
+	void		       *srq_context;
+	struct ib_srq_attr	attr;
+	enum ib_srq_type	srq_type;
 
-	काष्ठा अणु
-		काष्ठा ib_cq   *cq;
-		जोड़ अणु
-			काष्ठा अणु
-				काष्ठा ib_xrcd *xrcd;
-			पूर्ण xrc;
+	struct {
+		struct ib_cq   *cq;
+		union {
+			struct {
+				struct ib_xrcd *xrcd;
+			} xrc;
 
-			काष्ठा अणु
+			struct {
 				u32		max_num_tags;
-			पूर्ण tag_matching;
-		पूर्ण;
-	पूर्ण ext;
-पूर्ण;
+			} tag_matching;
+		};
+	} ext;
+};
 
-काष्ठा ib_qp_cap अणु
+struct ib_qp_cap {
 	u32	max_send_wr;
 	u32	max_recv_wr;
 	u32	max_send_sge;
 	u32	max_recv_sge;
-	u32	max_अंतरभूत_data;
+	u32	max_inline_data;
 
 	/*
-	 * Maximum number of rdma_rw_ctx काष्ठाures in flight at a समय.
+	 * Maximum number of rdma_rw_ctx structures in flight at a time.
 	 * ib_create_qp() will calculate the right amount of neededed WRs
 	 * and MRs based on this.
 	 */
 	u32	max_rdma_ctxs;
-पूर्ण;
+};
 
-क्रमागत ib_sig_type अणु
+enum ib_sig_type {
 	IB_SIGNAL_ALL_WR,
 	IB_SIGNAL_REQ_WR
-पूर्ण;
+};
 
-क्रमागत ib_qp_type अणु
+enum ib_qp_type {
 	/*
 	 * IB_QPT_SMI and IB_QPT_GSI have to be the first two entries
 	 * here (and in that order) since the MAD layer uses them as
-	 * indices पूर्णांकo a 2-entry table.
+	 * indices into a 2-entry table.
 	 */
 	IB_QPT_SMI,
 	IB_QPT_GSI,
@@ -1102,7 +1101,7 @@ __attribute_स्थिर__ क्रमागत ib_rate mult_to_ib_rate(प�
 	IB_QPT_XRC_TGT = IB_UVERBS_QPT_XRC_TGT,
 	IB_QPT_MAX,
 	IB_QPT_DRIVER = IB_UVERBS_QPT_DRIVER,
-	/* Reserve a range क्रम qp types पूर्णांकernal to the low level driver.
+	/* Reserve a range for qp types internal to the low level driver.
 	 * These qp types will not be visible at the IB core layer, so the
 	 * IB_QPT_MAX usages should not be affected in the core layer
 	 */
@@ -1116,9 +1115,9 @@ __attribute_स्थिर__ क्रमागत ib_rate mult_to_ib_rate(प�
 	IB_QPT_RESERVED8,
 	IB_QPT_RESERVED9,
 	IB_QPT_RESERVED10,
-पूर्ण;
+};
 
-क्रमागत ib_qp_create_flags अणु
+enum ib_qp_create_flags {
 	IB_QP_CREATE_IPOIB_UD_LSO		= 1 << 0,
 	IB_QP_CREATE_BLOCK_MULTICAST_LOOPBACK	=
 		IB_UVERBS_QP_CREATE_BLOCK_MULTICAST_LOOPBACK,
@@ -1135,46 +1134,46 @@ __attribute_स्थिर__ क्रमागत ib_rate mult_to_ib_rate(प�
 	IB_QP_CREATE_SOURCE_QPN			= 1 << 10,
 	IB_QP_CREATE_PCI_WRITE_END_PADDING	=
 		IB_UVERBS_QP_CREATE_PCI_WRITE_END_PADDING,
-	/* reserve bits 26-31 क्रम low level drivers' पूर्णांकernal use */
+	/* reserve bits 26-31 for low level drivers' internal use */
 	IB_QP_CREATE_RESERVED_START		= 1 << 26,
 	IB_QP_CREATE_RESERVED_END		= 1 << 31,
-पूर्ण;
+};
 
 /*
- * Note: users may not call ib_बंद_qp or ib_destroy_qp from the event_handler
+ * Note: users may not call ib_close_qp or ib_destroy_qp from the event_handler
  * callback to destroy the passed in QP.
  */
 
-काष्ठा ib_qp_init_attr अणु
+struct ib_qp_init_attr {
 	/* Consumer's event_handler callback must not block */
-	व्योम                  (*event_handler)(काष्ठा ib_event *, व्योम *);
+	void                  (*event_handler)(struct ib_event *, void *);
 
-	व्योम		       *qp_context;
-	काष्ठा ib_cq	       *send_cq;
-	काष्ठा ib_cq	       *recv_cq;
-	काष्ठा ib_srq	       *srq;
-	काष्ठा ib_xrcd	       *xrcd;     /* XRC TGT QPs only */
-	काष्ठा ib_qp_cap	cap;
-	क्रमागत ib_sig_type	sq_sig_type;
-	क्रमागत ib_qp_type		qp_type;
+	void		       *qp_context;
+	struct ib_cq	       *send_cq;
+	struct ib_cq	       *recv_cq;
+	struct ib_srq	       *srq;
+	struct ib_xrcd	       *xrcd;     /* XRC TGT QPs only */
+	struct ib_qp_cap	cap;
+	enum ib_sig_type	sq_sig_type;
+	enum ib_qp_type		qp_type;
 	u32			create_flags;
 
 	/*
-	 * Only needed क्रम special QP types, or when using the RW API.
+	 * Only needed for special QP types, or when using the RW API.
 	 */
 	u32			port_num;
-	काष्ठा ib_rwq_ind_table *rwq_ind_tbl;
+	struct ib_rwq_ind_table *rwq_ind_tbl;
 	u32			source_qpn;
-पूर्ण;
+};
 
-काष्ठा ib_qp_खोलो_attr अणु
-	व्योम                  (*event_handler)(काष्ठा ib_event *, व्योम *);
-	व्योम		       *qp_context;
+struct ib_qp_open_attr {
+	void                  (*event_handler)(struct ib_event *, void *);
+	void		       *qp_context;
 	u32			qp_num;
-	क्रमागत ib_qp_type		qp_type;
-पूर्ण;
+	enum ib_qp_type		qp_type;
+};
 
-क्रमागत ib_rnr_समयout अणु
+enum ib_rnr_timeout {
 	IB_RNR_TIMER_655_36 =  0,
 	IB_RNR_TIMER_000_01 =  1,
 	IB_RNR_TIMER_000_02 =  2,
@@ -1207,9 +1206,9 @@ __attribute_स्थिर__ क्रमागत ib_rate mult_to_ib_rate(प�
 	IB_RNR_TIMER_245_76 = 29,
 	IB_RNR_TIMER_327_68 = 30,
 	IB_RNR_TIMER_491_52 = 31
-पूर्ण;
+};
 
-क्रमागत ib_qp_attr_mask अणु
+enum ib_qp_attr_mask {
 	IB_QP_STATE			= 1,
 	IB_QP_CUR_STATE			= (1<<1),
 	IB_QP_EN_SQD_ASYNC_NOTIFY	= (1<<2),
@@ -1238,9 +1237,9 @@ __attribute_स्थिर__ क्रमागत ib_rate mult_to_ib_rate(प�
 	IB_QP_RATE_LIMIT		= (1<<25),
 
 	IB_QP_ATTR_STANDARD_BITS = GENMASK(20, 0),
-पूर्ण;
+};
 
-क्रमागत ib_qp_state अणु
+enum ib_qp_state {
 	IB_QPS_RESET,
 	IB_QPS_INIT,
 	IB_QPS_RTR,
@@ -1248,50 +1247,50 @@ __attribute_स्थिर__ क्रमागत ib_rate mult_to_ib_rate(प�
 	IB_QPS_SQD,
 	IB_QPS_SQE,
 	IB_QPS_ERR
-पूर्ण;
+};
 
-क्रमागत ib_mig_state अणु
+enum ib_mig_state {
 	IB_MIG_MIGRATED,
 	IB_MIG_REARM,
 	IB_MIG_ARMED
-पूर्ण;
+};
 
-क्रमागत ib_mw_type अणु
+enum ib_mw_type {
 	IB_MW_TYPE_1 = 1,
 	IB_MW_TYPE_2 = 2
-पूर्ण;
+};
 
-काष्ठा ib_qp_attr अणु
-	क्रमागत ib_qp_state	qp_state;
-	क्रमागत ib_qp_state	cur_qp_state;
-	क्रमागत ib_mtu		path_mtu;
-	क्रमागत ib_mig_state	path_mig_state;
+struct ib_qp_attr {
+	enum ib_qp_state	qp_state;
+	enum ib_qp_state	cur_qp_state;
+	enum ib_mtu		path_mtu;
+	enum ib_mig_state	path_mig_state;
 	u32			qkey;
 	u32			rq_psn;
 	u32			sq_psn;
 	u32			dest_qp_num;
-	पूर्णांक			qp_access_flags;
-	काष्ठा ib_qp_cap	cap;
-	काष्ठा rdma_ah_attr	ah_attr;
-	काष्ठा rdma_ah_attr	alt_ah_attr;
+	int			qp_access_flags;
+	struct ib_qp_cap	cap;
+	struct rdma_ah_attr	ah_attr;
+	struct rdma_ah_attr	alt_ah_attr;
 	u16			pkey_index;
 	u16			alt_pkey_index;
-	u8			en_sqd_async_notअगरy;
+	u8			en_sqd_async_notify;
 	u8			sq_draining;
 	u8			max_rd_atomic;
 	u8			max_dest_rd_atomic;
-	u8			min_rnr_समयr;
+	u8			min_rnr_timer;
 	u32			port_num;
-	u8			समयout;
+	u8			timeout;
 	u8			retry_cnt;
 	u8			rnr_retry;
 	u32			alt_port_num;
-	u8			alt_समयout;
+	u8			alt_timeout;
 	u32			rate_limit;
-	काष्ठा net_device	*xmit_slave;
-पूर्ण;
+	struct net_device	*xmit_slave;
+};
 
-क्रमागत ib_wr_opcode अणु
+enum ib_wr_opcode {
 	/* These are shared with userspace */
 	IB_WR_RDMA_WRITE = IB_UVERBS_WR_RDMA_WRITE,
 	IB_WR_RDMA_WRITE_WITH_IMM = IB_UVERBS_WR_RDMA_WRITE_WITH_IMM,
@@ -1314,7 +1313,7 @@ __attribute_स्थिर__ क्रमागत ib_rate mult_to_ib_rate(प�
 	IB_WR_REG_MR = 0x20,
 	IB_WR_REG_MR_INTEGRITY,
 
-	/* reserve values क्रम low level drivers' पूर्णांकernal use.
+	/* reserve values for low level drivers' internal use.
 	 * These values will not be used at all in the ib core layer.
 	 */
 	IB_WR_RESERVED1 = 0xf0,
@@ -1327,112 +1326,112 @@ __attribute_स्थिर__ क्रमागत ib_rate mult_to_ib_rate(प�
 	IB_WR_RESERVED8,
 	IB_WR_RESERVED9,
 	IB_WR_RESERVED10,
-पूर्ण;
+};
 
-क्रमागत ib_send_flags अणु
+enum ib_send_flags {
 	IB_SEND_FENCE		= 1,
 	IB_SEND_SIGNALED	= (1<<1),
 	IB_SEND_SOLICITED	= (1<<2),
 	IB_SEND_INLINE		= (1<<3),
 	IB_SEND_IP_CSUM		= (1<<4),
 
-	/* reserve bits 26-31 क्रम low level drivers' पूर्णांकernal use */
+	/* reserve bits 26-31 for low level drivers' internal use */
 	IB_SEND_RESERVED_START	= (1 << 26),
 	IB_SEND_RESERVED_END	= (1 << 31),
-पूर्ण;
+};
 
-काष्ठा ib_sge अणु
+struct ib_sge {
 	u64	addr;
 	u32	length;
 	u32	lkey;
-पूर्ण;
+};
 
-काष्ठा ib_cqe अणु
-	व्योम (*करोne)(काष्ठा ib_cq *cq, काष्ठा ib_wc *wc);
-पूर्ण;
+struct ib_cqe {
+	void (*done)(struct ib_cq *cq, struct ib_wc *wc);
+};
 
-काष्ठा ib_send_wr अणु
-	काष्ठा ib_send_wr      *next;
-	जोड़ अणु
+struct ib_send_wr {
+	struct ib_send_wr      *next;
+	union {
 		u64		wr_id;
-		काष्ठा ib_cqe	*wr_cqe;
-	पूर्ण;
-	काष्ठा ib_sge	       *sg_list;
-	पूर्णांक			num_sge;
-	क्रमागत ib_wr_opcode	opcode;
-	पूर्णांक			send_flags;
-	जोड़ अणु
+		struct ib_cqe	*wr_cqe;
+	};
+	struct ib_sge	       *sg_list;
+	int			num_sge;
+	enum ib_wr_opcode	opcode;
+	int			send_flags;
+	union {
 		__be32		imm_data;
 		u32		invalidate_rkey;
-	पूर्ण ex;
-पूर्ण;
+	} ex;
+};
 
-काष्ठा ib_rdma_wr अणु
-	काष्ठा ib_send_wr	wr;
+struct ib_rdma_wr {
+	struct ib_send_wr	wr;
 	u64			remote_addr;
 	u32			rkey;
-पूर्ण;
+};
 
-अटल अंतरभूत स्थिर काष्ठा ib_rdma_wr *rdma_wr(स्थिर काष्ठा ib_send_wr *wr)
-अणु
-	वापस container_of(wr, काष्ठा ib_rdma_wr, wr);
-पूर्ण
+static inline const struct ib_rdma_wr *rdma_wr(const struct ib_send_wr *wr)
+{
+	return container_of(wr, struct ib_rdma_wr, wr);
+}
 
-काष्ठा ib_atomic_wr अणु
-	काष्ठा ib_send_wr	wr;
+struct ib_atomic_wr {
+	struct ib_send_wr	wr;
 	u64			remote_addr;
 	u64			compare_add;
 	u64			swap;
 	u64			compare_add_mask;
 	u64			swap_mask;
 	u32			rkey;
-पूर्ण;
+};
 
-अटल अंतरभूत स्थिर काष्ठा ib_atomic_wr *atomic_wr(स्थिर काष्ठा ib_send_wr *wr)
-अणु
-	वापस container_of(wr, काष्ठा ib_atomic_wr, wr);
-पूर्ण
+static inline const struct ib_atomic_wr *atomic_wr(const struct ib_send_wr *wr)
+{
+	return container_of(wr, struct ib_atomic_wr, wr);
+}
 
-काष्ठा ib_ud_wr अणु
-	काष्ठा ib_send_wr	wr;
-	काष्ठा ib_ah		*ah;
-	व्योम			*header;
-	पूर्णांक			hlen;
-	पूर्णांक			mss;
+struct ib_ud_wr {
+	struct ib_send_wr	wr;
+	struct ib_ah		*ah;
+	void			*header;
+	int			hlen;
+	int			mss;
 	u32			remote_qpn;
 	u32			remote_qkey;
-	u16			pkey_index; /* valid क्रम GSI only */
-	u32			port_num; /* valid क्रम DR SMPs on चयन only */
-पूर्ण;
+	u16			pkey_index; /* valid for GSI only */
+	u32			port_num; /* valid for DR SMPs on switch only */
+};
 
-अटल अंतरभूत स्थिर काष्ठा ib_ud_wr *ud_wr(स्थिर काष्ठा ib_send_wr *wr)
-अणु
-	वापस container_of(wr, काष्ठा ib_ud_wr, wr);
-पूर्ण
+static inline const struct ib_ud_wr *ud_wr(const struct ib_send_wr *wr)
+{
+	return container_of(wr, struct ib_ud_wr, wr);
+}
 
-काष्ठा ib_reg_wr अणु
-	काष्ठा ib_send_wr	wr;
-	काष्ठा ib_mr		*mr;
+struct ib_reg_wr {
+	struct ib_send_wr	wr;
+	struct ib_mr		*mr;
 	u32			key;
-	पूर्णांक			access;
-पूर्ण;
+	int			access;
+};
 
-अटल अंतरभूत स्थिर काष्ठा ib_reg_wr *reg_wr(स्थिर काष्ठा ib_send_wr *wr)
-अणु
-	वापस container_of(wr, काष्ठा ib_reg_wr, wr);
-पूर्ण
+static inline const struct ib_reg_wr *reg_wr(const struct ib_send_wr *wr)
+{
+	return container_of(wr, struct ib_reg_wr, wr);
+}
 
-काष्ठा ib_recv_wr अणु
-	काष्ठा ib_recv_wr      *next;
-	जोड़ अणु
+struct ib_recv_wr {
+	struct ib_recv_wr      *next;
+	union {
 		u64		wr_id;
-		काष्ठा ib_cqe	*wr_cqe;
-	पूर्ण;
-	काष्ठा ib_sge	       *sg_list;
-	पूर्णांक			num_sge;
-पूर्ण;
+		struct ib_cqe	*wr_cqe;
+	};
+	struct ib_sge	       *sg_list;
+	int			num_sge;
+};
 
-क्रमागत ib_access_flags अणु
+enum ib_access_flags {
 	IB_ACCESS_LOCAL_WRITE = IB_UVERBS_ACCESS_LOCAL_WRITE,
 	IB_ACCESS_REMOTE_WRITE = IB_UVERBS_ACCESS_REMOTE_WRITE,
 	IB_ACCESS_REMOTE_READ = IB_UVERBS_ACCESS_REMOTE_READ,
@@ -1446,179 +1445,179 @@ __attribute_स्थिर__ क्रमागत ib_rate mult_to_ib_rate(प�
 	IB_ACCESS_OPTIONAL = IB_UVERBS_ACCESS_OPTIONAL_RANGE,
 	IB_ACCESS_SUPPORTED =
 		((IB_ACCESS_HUGETLB << 1) - 1) | IB_ACCESS_OPTIONAL,
-पूर्ण;
+};
 
 /*
- * XXX: these are apparently used क्रम ->rereg_user_mr, no idea why they
+ * XXX: these are apparently used for ->rereg_user_mr, no idea why they
  * are hidden here instead of a uapi header!
  */
-क्रमागत ib_mr_rereg_flags अणु
+enum ib_mr_rereg_flags {
 	IB_MR_REREG_TRANS	= 1,
 	IB_MR_REREG_PD		= (1<<1),
 	IB_MR_REREG_ACCESS	= (1<<2),
 	IB_MR_REREG_SUPPORTED	= ((IB_MR_REREG_ACCESS << 1) - 1)
-पूर्ण;
+};
 
-काष्ठा ib_umem;
+struct ib_umem;
 
-क्रमागत rdma_हटाओ_reason अणु
+enum rdma_remove_reason {
 	/*
 	 * Userspace requested uobject deletion or initial try
-	 * to हटाओ uobject via cleanup. Call could fail
+	 * to remove uobject via cleanup. Call could fail
 	 */
 	RDMA_REMOVE_DESTROY,
 	/* Context deletion. This call should delete the actual object itself */
 	RDMA_REMOVE_CLOSE,
 	/* Driver is being hot-unplugged. This call should delete the actual object itself */
 	RDMA_REMOVE_DRIVER_REMOVE,
-	/* uobj is being cleaned-up beक्रमe being committed */
+	/* uobj is being cleaned-up before being committed */
 	RDMA_REMOVE_ABORT,
 	/* The driver failed to destroy the uobject and is being disconnected */
 	RDMA_REMOVE_DRIVER_FAILURE,
-पूर्ण;
+};
 
-काष्ठा ib_rdmacg_object अणु
-#अगर_घोषित CONFIG_CGROUP_RDMA
-	काष्ठा rdma_cgroup	*cg;		/* owner rdma cgroup */
-#पूर्ण_अगर
-पूर्ण;
+struct ib_rdmacg_object {
+#ifdef CONFIG_CGROUP_RDMA
+	struct rdma_cgroup	*cg;		/* owner rdma cgroup */
+#endif
+};
 
-काष्ठा ib_ucontext अणु
-	काष्ठा ib_device       *device;
-	काष्ठा ib_uverbs_file  *ufile;
+struct ib_ucontext {
+	struct ib_device       *device;
+	struct ib_uverbs_file  *ufile;
 
-	काष्ठा ib_rdmacg_object	cg_obj;
+	struct ib_rdmacg_object	cg_obj;
 	/*
-	 * Implementation details of the RDMA core, करोn't use in drivers:
+	 * Implementation details of the RDMA core, don't use in drivers:
 	 */
-	काष्ठा rdma_restrack_entry res;
-	काष्ठा xarray mmap_xa;
-पूर्ण;
+	struct rdma_restrack_entry res;
+	struct xarray mmap_xa;
+};
 
-काष्ठा ib_uobject अणु
+struct ib_uobject {
 	u64			user_handle;	/* handle given to us by userspace */
 	/* ufile & ucontext owning this object */
-	काष्ठा ib_uverbs_file  *ufile;
+	struct ib_uverbs_file  *ufile;
 	/* FIXME, save memory: ufile->context == context */
-	काष्ठा ib_ucontext     *context;	/* associated user context */
-	व्योम		       *object;		/* containing object */
-	काष्ठा list_head	list;		/* link to context's list */
-	काष्ठा ib_rdmacg_object	cg_obj;		/* rdmacg object */
-	पूर्णांक			id;		/* index पूर्णांकo kernel idr */
-	काष्ठा kref		ref;
+	struct ib_ucontext     *context;	/* associated user context */
+	void		       *object;		/* containing object */
+	struct list_head	list;		/* link to context's list */
+	struct ib_rdmacg_object	cg_obj;		/* rdmacg object */
+	int			id;		/* index into kernel idr */
+	struct kref		ref;
 	atomic_t		usecnt;		/* protects exclusive access */
-	काष्ठा rcu_head		rcu;		/* kमुक्त_rcu() overhead */
+	struct rcu_head		rcu;		/* kfree_rcu() overhead */
 
-	स्थिर काष्ठा uverbs_api_object *uapi_object;
-पूर्ण;
+	const struct uverbs_api_object *uapi_object;
+};
 
-काष्ठा ib_udata अणु
-	स्थिर व्योम __user *inbuf;
-	व्योम __user *outbuf;
-	माप_प्रकार       inlen;
-	माप_प्रकार       outlen;
-पूर्ण;
+struct ib_udata {
+	const void __user *inbuf;
+	void __user *outbuf;
+	size_t       inlen;
+	size_t       outlen;
+};
 
-काष्ठा ib_pd अणु
+struct ib_pd {
 	u32			local_dma_lkey;
 	u32			flags;
-	काष्ठा ib_device       *device;
-	काष्ठा ib_uobject      *uobject;
+	struct ib_device       *device;
+	struct ib_uobject      *uobject;
 	atomic_t          	usecnt; /* count all resources */
 
 	u32			unsafe_global_rkey;
 
 	/*
-	 * Implementation details of the RDMA core, करोn't use in drivers:
+	 * Implementation details of the RDMA core, don't use in drivers:
 	 */
-	काष्ठा ib_mr	       *__पूर्णांकernal_mr;
-	काष्ठा rdma_restrack_entry res;
-पूर्ण;
+	struct ib_mr	       *__internal_mr;
+	struct rdma_restrack_entry res;
+};
 
-काष्ठा ib_xrcd अणु
-	काष्ठा ib_device       *device;
+struct ib_xrcd {
+	struct ib_device       *device;
 	atomic_t		usecnt; /* count all exposed resources */
-	काष्ठा inode	       *inode;
-	काष्ठा rw_semaphore	tgt_qps_rwsem;
-	काष्ठा xarray		tgt_qps;
-पूर्ण;
+	struct inode	       *inode;
+	struct rw_semaphore	tgt_qps_rwsem;
+	struct xarray		tgt_qps;
+};
 
-काष्ठा ib_ah अणु
-	काष्ठा ib_device	*device;
-	काष्ठा ib_pd		*pd;
-	काष्ठा ib_uobject	*uobject;
-	स्थिर काष्ठा ib_gid_attr *sgid_attr;
-	क्रमागत rdma_ah_attr_type	type;
-पूर्ण;
+struct ib_ah {
+	struct ib_device	*device;
+	struct ib_pd		*pd;
+	struct ib_uobject	*uobject;
+	const struct ib_gid_attr *sgid_attr;
+	enum rdma_ah_attr_type	type;
+};
 
-प्रकार व्योम (*ib_comp_handler)(काष्ठा ib_cq *cq, व्योम *cq_context);
+typedef void (*ib_comp_handler)(struct ib_cq *cq, void *cq_context);
 
-क्रमागत ib_poll_context अणु
+enum ib_poll_context {
 	IB_POLL_SOFTIRQ,	   /* poll from softirq context */
 	IB_POLL_WORKQUEUE,	   /* poll from workqueue */
 	IB_POLL_UNBOUND_WORKQUEUE, /* poll from unbound workqueue */
 	IB_POLL_LAST_POOL_TYPE = IB_POLL_UNBOUND_WORKQUEUE,
 
-	IB_POLL_सूचीECT,		   /* caller context, no hw completions */
-पूर्ण;
+	IB_POLL_DIRECT,		   /* caller context, no hw completions */
+};
 
-काष्ठा ib_cq अणु
-	काष्ठा ib_device       *device;
-	काष्ठा ib_ucq_object   *uobject;
+struct ib_cq {
+	struct ib_device       *device;
+	struct ib_ucq_object   *uobject;
 	ib_comp_handler   	comp_handler;
-	व्योम                  (*event_handler)(काष्ठा ib_event *, व्योम *);
-	व्योम                   *cq_context;
-	पूर्णांक               	cqe;
-	अचिन्हित पूर्णांक		cqe_used;
+	void                  (*event_handler)(struct ib_event *, void *);
+	void                   *cq_context;
+	int               	cqe;
+	unsigned int		cqe_used;
 	atomic_t          	usecnt; /* count number of work queues */
-	क्रमागत ib_poll_context	poll_ctx;
-	काष्ठा ib_wc		*wc;
-	काष्ठा list_head        pool_entry;
-	जोड़ अणु
-		काष्ठा irq_poll		iop;
-		काष्ठा work_काष्ठा	work;
-	पूर्ण;
-	काष्ठा workqueue_काष्ठा *comp_wq;
-	काष्ठा dim *dim;
+	enum ib_poll_context	poll_ctx;
+	struct ib_wc		*wc;
+	struct list_head        pool_entry;
+	union {
+		struct irq_poll		iop;
+		struct work_struct	work;
+	};
+	struct workqueue_struct *comp_wq;
+	struct dim *dim;
 
-	/* updated only by trace poपूर्णांकs */
-	kसमय_प्रकार बारtamp;
-	u8 पूर्णांकerrupt:1;
+	/* updated only by trace points */
+	ktime_t timestamp;
+	u8 interrupt:1;
 	u8 shared:1;
-	अचिन्हित पूर्णांक comp_vector;
+	unsigned int comp_vector;
 
 	/*
-	 * Implementation details of the RDMA core, करोn't use in drivers:
+	 * Implementation details of the RDMA core, don't use in drivers:
 	 */
-	काष्ठा rdma_restrack_entry res;
-पूर्ण;
+	struct rdma_restrack_entry res;
+};
 
-काष्ठा ib_srq अणु
-	काष्ठा ib_device       *device;
-	काष्ठा ib_pd	       *pd;
-	काष्ठा ib_usrq_object  *uobject;
-	व्योम		      (*event_handler)(काष्ठा ib_event *, व्योम *);
-	व्योम		       *srq_context;
-	क्रमागत ib_srq_type	srq_type;
+struct ib_srq {
+	struct ib_device       *device;
+	struct ib_pd	       *pd;
+	struct ib_usrq_object  *uobject;
+	void		      (*event_handler)(struct ib_event *, void *);
+	void		       *srq_context;
+	enum ib_srq_type	srq_type;
 	atomic_t		usecnt;
 
-	काष्ठा अणु
-		काष्ठा ib_cq   *cq;
-		जोड़ अणु
-			काष्ठा अणु
-				काष्ठा ib_xrcd *xrcd;
+	struct {
+		struct ib_cq   *cq;
+		union {
+			struct {
+				struct ib_xrcd *xrcd;
 				u32		srq_num;
-			पूर्ण xrc;
-		पूर्ण;
-	पूर्ण ext;
+			} xrc;
+		};
+	} ext;
 
 	/*
-	 * Implementation details of the RDMA core, करोn't use in drivers:
+	 * Implementation details of the RDMA core, don't use in drivers:
 	 */
-	काष्ठा rdma_restrack_entry res;
-पूर्ण;
+	struct rdma_restrack_entry res;
+};
 
-क्रमागत ib_raw_packet_caps अणु
+enum ib_raw_packet_caps {
 	/* Strip cvlan from incoming packet and report it in the matching work
 	 * completion is supported.
 	 */
@@ -1626,224 +1625,224 @@ __attribute_स्थिर__ क्रमागत ib_rate mult_to_ib_rate(प�
 	/* Scatter FCS field of an incoming packet to host memory is supported.
 	 */
 	IB_RAW_PACKET_CAP_SCATTER_FCS		= (1 << 1),
-	/* Checksum offloads are supported (क्रम both send and receive). */
+	/* Checksum offloads are supported (for both send and receive). */
 	IB_RAW_PACKET_CAP_IP_CSUM		= (1 << 2),
-	/* When a packet is received क्रम an RQ with no receive WQEs, the
+	/* When a packet is received for an RQ with no receive WQEs, the
 	 * packet processing is delayed.
 	 */
 	IB_RAW_PACKET_CAP_DELAY_DROP		= (1 << 3),
-पूर्ण;
+};
 
-क्रमागत ib_wq_type अणु
+enum ib_wq_type {
 	IB_WQT_RQ = IB_UVERBS_WQT_RQ,
-पूर्ण;
+};
 
-क्रमागत ib_wq_state अणु
+enum ib_wq_state {
 	IB_WQS_RESET,
 	IB_WQS_RDY,
 	IB_WQS_ERR
-पूर्ण;
+};
 
-काष्ठा ib_wq अणु
-	काष्ठा ib_device       *device;
-	काष्ठा ib_uwq_object   *uobject;
-	व्योम		    *wq_context;
-	व्योम		    (*event_handler)(काष्ठा ib_event *, व्योम *);
-	काष्ठा ib_pd	       *pd;
-	काष्ठा ib_cq	       *cq;
+struct ib_wq {
+	struct ib_device       *device;
+	struct ib_uwq_object   *uobject;
+	void		    *wq_context;
+	void		    (*event_handler)(struct ib_event *, void *);
+	struct ib_pd	       *pd;
+	struct ib_cq	       *cq;
 	u32		wq_num;
-	क्रमागत ib_wq_state       state;
-	क्रमागत ib_wq_type	wq_type;
+	enum ib_wq_state       state;
+	enum ib_wq_type	wq_type;
 	atomic_t		usecnt;
-पूर्ण;
+};
 
-क्रमागत ib_wq_flags अणु
+enum ib_wq_flags {
 	IB_WQ_FLAGS_CVLAN_STRIPPING	= IB_UVERBS_WQ_FLAGS_CVLAN_STRIPPING,
 	IB_WQ_FLAGS_SCATTER_FCS		= IB_UVERBS_WQ_FLAGS_SCATTER_FCS,
 	IB_WQ_FLAGS_DELAY_DROP		= IB_UVERBS_WQ_FLAGS_DELAY_DROP,
 	IB_WQ_FLAGS_PCI_WRITE_END_PADDING =
 				IB_UVERBS_WQ_FLAGS_PCI_WRITE_END_PADDING,
-पूर्ण;
+};
 
-काष्ठा ib_wq_init_attr अणु
-	व्योम		       *wq_context;
-	क्रमागत ib_wq_type	wq_type;
+struct ib_wq_init_attr {
+	void		       *wq_context;
+	enum ib_wq_type	wq_type;
 	u32		max_wr;
 	u32		max_sge;
-	काष्ठा	ib_cq	       *cq;
-	व्योम		    (*event_handler)(काष्ठा ib_event *, व्योम *);
-	u32		create_flags; /* Use क्रमागत ib_wq_flags */
-पूर्ण;
+	struct	ib_cq	       *cq;
+	void		    (*event_handler)(struct ib_event *, void *);
+	u32		create_flags; /* Use enum ib_wq_flags */
+};
 
-क्रमागत ib_wq_attr_mask अणु
+enum ib_wq_attr_mask {
 	IB_WQ_STATE		= 1 << 0,
 	IB_WQ_CUR_STATE		= 1 << 1,
 	IB_WQ_FLAGS		= 1 << 2,
-पूर्ण;
+};
 
-काष्ठा ib_wq_attr अणु
-	क्रमागत	ib_wq_state	wq_state;
-	क्रमागत	ib_wq_state	curr_wq_state;
-	u32			flags; /* Use क्रमागत ib_wq_flags */
-	u32			flags_mask; /* Use क्रमागत ib_wq_flags */
-पूर्ण;
+struct ib_wq_attr {
+	enum	ib_wq_state	wq_state;
+	enum	ib_wq_state	curr_wq_state;
+	u32			flags; /* Use enum ib_wq_flags */
+	u32			flags_mask; /* Use enum ib_wq_flags */
+};
 
-काष्ठा ib_rwq_ind_table अणु
-	काष्ठा ib_device	*device;
-	काष्ठा ib_uobject      *uobject;
+struct ib_rwq_ind_table {
+	struct ib_device	*device;
+	struct ib_uobject      *uobject;
 	atomic_t		usecnt;
 	u32		ind_tbl_num;
 	u32		log_ind_tbl_size;
-	काष्ठा ib_wq	**ind_tbl;
-पूर्ण;
+	struct ib_wq	**ind_tbl;
+};
 
-काष्ठा ib_rwq_ind_table_init_attr अणु
+struct ib_rwq_ind_table_init_attr {
 	u32		log_ind_tbl_size;
-	/* Each entry is a poपूर्णांकer to Receive Work Queue */
-	काष्ठा ib_wq	**ind_tbl;
-पूर्ण;
+	/* Each entry is a pointer to Receive Work Queue */
+	struct ib_wq	**ind_tbl;
+};
 
-क्रमागत port_pkey_state अणु
+enum port_pkey_state {
 	IB_PORT_PKEY_NOT_VALID = 0,
 	IB_PORT_PKEY_VALID = 1,
 	IB_PORT_PKEY_LISTED = 2,
-पूर्ण;
+};
 
-काष्ठा ib_qp_security;
+struct ib_qp_security;
 
-काष्ठा ib_port_pkey अणु
-	क्रमागत port_pkey_state	state;
+struct ib_port_pkey {
+	enum port_pkey_state	state;
 	u16			pkey_index;
 	u32			port_num;
-	काष्ठा list_head	qp_list;
-	काष्ठा list_head	to_error_list;
-	काष्ठा ib_qp_security  *sec;
-पूर्ण;
+	struct list_head	qp_list;
+	struct list_head	to_error_list;
+	struct ib_qp_security  *sec;
+};
 
-काष्ठा ib_ports_pkeys अणु
-	काष्ठा ib_port_pkey	मुख्य;
-	काष्ठा ib_port_pkey	alt;
-पूर्ण;
+struct ib_ports_pkeys {
+	struct ib_port_pkey	main;
+	struct ib_port_pkey	alt;
+};
 
-काष्ठा ib_qp_security अणु
-	काष्ठा ib_qp	       *qp;
-	काष्ठा ib_device       *dev;
+struct ib_qp_security {
+	struct ib_qp	       *qp;
+	struct ib_device       *dev;
 	/* Hold this mutex when changing port and pkey settings. */
-	काष्ठा mutex		mutex;
-	काष्ठा ib_ports_pkeys  *ports_pkeys;
-	/* A list of all खोलो shared QP handles.  Required to enक्रमce security
-	 * properly क्रम all users of a shared QP.
+	struct mutex		mutex;
+	struct ib_ports_pkeys  *ports_pkeys;
+	/* A list of all open shared QP handles.  Required to enforce security
+	 * properly for all users of a shared QP.
 	 */
-	काष्ठा list_head        shared_qp_list;
-	व्योम                   *security;
+	struct list_head        shared_qp_list;
+	void                   *security;
 	bool			destroying;
 	atomic_t		error_list_count;
-	काष्ठा completion	error_complete;
-	पूर्णांक			error_comps_pending;
-पूर्ण;
+	struct completion	error_complete;
+	int			error_comps_pending;
+};
 
 /*
- * @max_ग_लिखो_sge: Maximum SGE elements per RDMA WRITE request.
- * @max_पढ़ो_sge:  Maximum SGE elements per RDMA READ request.
+ * @max_write_sge: Maximum SGE elements per RDMA WRITE request.
+ * @max_read_sge:  Maximum SGE elements per RDMA READ request.
  */
-काष्ठा ib_qp अणु
-	काष्ठा ib_device       *device;
-	काष्ठा ib_pd	       *pd;
-	काष्ठा ib_cq	       *send_cq;
-	काष्ठा ib_cq	       *recv_cq;
+struct ib_qp {
+	struct ib_device       *device;
+	struct ib_pd	       *pd;
+	struct ib_cq	       *send_cq;
+	struct ib_cq	       *recv_cq;
 	spinlock_t		mr_lock;
-	पूर्णांक			mrs_used;
-	काष्ठा list_head	rdma_mrs;
-	काष्ठा list_head	sig_mrs;
-	काष्ठा ib_srq	       *srq;
-	काष्ठा ib_xrcd	       *xrcd; /* XRC TGT QPs only */
-	काष्ठा list_head	xrcd_list;
+	int			mrs_used;
+	struct list_head	rdma_mrs;
+	struct list_head	sig_mrs;
+	struct ib_srq	       *srq;
+	struct ib_xrcd	       *xrcd; /* XRC TGT QPs only */
+	struct list_head	xrcd_list;
 
-	/* count बार खोलोed, mcast attaches, flow attaches */
+	/* count times opened, mcast attaches, flow attaches */
 	atomic_t		usecnt;
-	काष्ठा list_head	खोलो_list;
-	काष्ठा ib_qp           *real_qp;
-	काष्ठा ib_uqp_object   *uobject;
-	व्योम                  (*event_handler)(काष्ठा ib_event *, व्योम *);
-	व्योम		       *qp_context;
+	struct list_head	open_list;
+	struct ib_qp           *real_qp;
+	struct ib_uqp_object   *uobject;
+	void                  (*event_handler)(struct ib_event *, void *);
+	void		       *qp_context;
 	/* sgid_attrs associated with the AV's */
-	स्थिर काष्ठा ib_gid_attr *av_sgid_attr;
-	स्थिर काष्ठा ib_gid_attr *alt_path_sgid_attr;
+	const struct ib_gid_attr *av_sgid_attr;
+	const struct ib_gid_attr *alt_path_sgid_attr;
 	u32			qp_num;
-	u32			max_ग_लिखो_sge;
-	u32			max_पढ़ो_sge;
-	क्रमागत ib_qp_type		qp_type;
-	काष्ठा ib_rwq_ind_table *rwq_ind_tbl;
-	काष्ठा ib_qp_security  *qp_sec;
+	u32			max_write_sge;
+	u32			max_read_sge;
+	enum ib_qp_type		qp_type;
+	struct ib_rwq_ind_table *rwq_ind_tbl;
+	struct ib_qp_security  *qp_sec;
 	u32			port;
 
-	bool			पूर्णांकegrity_en;
+	bool			integrity_en;
 	/*
-	 * Implementation details of the RDMA core, करोn't use in drivers:
+	 * Implementation details of the RDMA core, don't use in drivers:
 	 */
-	काष्ठा rdma_restrack_entry     res;
+	struct rdma_restrack_entry     res;
 
 	/* The counter the qp is bind to */
-	काष्ठा rdma_counter    *counter;
-पूर्ण;
+	struct rdma_counter    *counter;
+};
 
-काष्ठा ib_dm अणु
-	काष्ठा ib_device  *device;
+struct ib_dm {
+	struct ib_device  *device;
 	u32		   length;
 	u32		   flags;
-	काष्ठा ib_uobject *uobject;
+	struct ib_uobject *uobject;
 	atomic_t	   usecnt;
-पूर्ण;
+};
 
-काष्ठा ib_mr अणु
-	काष्ठा ib_device  *device;
-	काष्ठा ib_pd	  *pd;
+struct ib_mr {
+	struct ib_device  *device;
+	struct ib_pd	  *pd;
 	u32		   lkey;
 	u32		   rkey;
 	u64		   iova;
 	u64		   length;
-	अचिन्हित पूर्णांक	   page_size;
-	क्रमागत ib_mr_type	   type;
+	unsigned int	   page_size;
+	enum ib_mr_type	   type;
 	bool		   need_inval;
-	जोड़ अणु
-		काष्ठा ib_uobject	*uobject;	/* user */
-		काष्ठा list_head	qp_entry;	/* FR */
-	पूर्ण;
+	union {
+		struct ib_uobject	*uobject;	/* user */
+		struct list_head	qp_entry;	/* FR */
+	};
 
-	काष्ठा ib_dm      *dm;
-	काष्ठा ib_sig_attrs *sig_attrs; /* only क्रम IB_MR_TYPE_INTEGRITY MRs */
+	struct ib_dm      *dm;
+	struct ib_sig_attrs *sig_attrs; /* only for IB_MR_TYPE_INTEGRITY MRs */
 	/*
-	 * Implementation details of the RDMA core, करोn't use in drivers:
+	 * Implementation details of the RDMA core, don't use in drivers:
 	 */
-	काष्ठा rdma_restrack_entry res;
-पूर्ण;
+	struct rdma_restrack_entry res;
+};
 
-काष्ठा ib_mw अणु
-	काष्ठा ib_device	*device;
-	काष्ठा ib_pd		*pd;
-	काष्ठा ib_uobject	*uobject;
+struct ib_mw {
+	struct ib_device	*device;
+	struct ib_pd		*pd;
+	struct ib_uobject	*uobject;
 	u32			rkey;
-	क्रमागत ib_mw_type         type;
-पूर्ण;
+	enum ib_mw_type         type;
+};
 
 /* Supported steering options */
-क्रमागत ib_flow_attr_type अणु
-	/* steering according to rule specअगरications */
+enum ib_flow_attr_type {
+	/* steering according to rule specifications */
 	IB_FLOW_ATTR_NORMAL		= 0x0,
-	/* शेष unicast and multicast rule -
+	/* default unicast and multicast rule -
 	 * receive all Eth traffic which isn't steered to any QP
 	 */
 	IB_FLOW_ATTR_ALL_DEFAULT	= 0x1,
-	/* शेष multicast rule -
+	/* default multicast rule -
 	 * receive all Eth multicast traffic which isn't steered to any QP
 	 */
 	IB_FLOW_ATTR_MC_DEFAULT		= 0x2,
-	/* snअगरfer rule - receive all port traffic */
+	/* sniffer rule - receive all port traffic */
 	IB_FLOW_ATTR_SNIFFER		= 0x3
-पूर्ण;
+};
 
 /* Supported steering header types */
-क्रमागत ib_flow_spec_type अणु
+enum ib_flow_spec_type {
 	/* L2 headers*/
 	IB_FLOW_SPEC_ETH		= 0x20,
 	IB_FLOW_SPEC_IB			= 0x22,
@@ -1863,54 +1862,54 @@ __attribute_स्थिर__ क्रमागत ib_rate mult_to_ib_rate(प�
 	IB_FLOW_SPEC_ACTION_DROP        = 0x1001,
 	IB_FLOW_SPEC_ACTION_HANDLE	= 0x1002,
 	IB_FLOW_SPEC_ACTION_COUNT       = 0x1003,
-पूर्ण;
-#घोषणा IB_FLOW_SPEC_LAYER_MASK	0xF0
-#घोषणा IB_FLOW_SPEC_SUPPORT_LAYERS 10
+};
+#define IB_FLOW_SPEC_LAYER_MASK	0xF0
+#define IB_FLOW_SPEC_SUPPORT_LAYERS 10
 
-क्रमागत ib_flow_flags अणु
+enum ib_flow_flags {
 	IB_FLOW_ATTR_FLAGS_DONT_TRAP = 1UL << 1, /* Continue match, no steal */
 	IB_FLOW_ATTR_FLAGS_EGRESS = 1UL << 2, /* Egress flow */
 	IB_FLOW_ATTR_FLAGS_RESERVED  = 1UL << 3  /* Must be last */
-पूर्ण;
+};
 
-काष्ठा ib_flow_eth_filter अणु
+struct ib_flow_eth_filter {
 	u8	dst_mac[6];
 	u8	src_mac[6];
 	__be16	ether_type;
 	__be16	vlan_tag;
 	/* Must be last */
 	u8	real_sz[];
-पूर्ण;
+};
 
-काष्ठा ib_flow_spec_eth अणु
+struct ib_flow_spec_eth {
 	u32			  type;
 	u16			  size;
-	काष्ठा ib_flow_eth_filter val;
-	काष्ठा ib_flow_eth_filter mask;
-पूर्ण;
+	struct ib_flow_eth_filter val;
+	struct ib_flow_eth_filter mask;
+};
 
-काष्ठा ib_flow_ib_filter अणु
+struct ib_flow_ib_filter {
 	__be16 dlid;
 	__u8   sl;
 	/* Must be last */
 	u8	real_sz[];
-पूर्ण;
+};
 
-काष्ठा ib_flow_spec_ib अणु
+struct ib_flow_spec_ib {
 	u32			 type;
 	u16			 size;
-	काष्ठा ib_flow_ib_filter val;
-	काष्ठा ib_flow_ib_filter mask;
-पूर्ण;
+	struct ib_flow_ib_filter val;
+	struct ib_flow_ib_filter mask;
+};
 
 /* IPv4 header flags */
-क्रमागत ib_ipv4_flags अणु
+enum ib_ipv4_flags {
 	IB_IPV4_DONT_FRAG = 0x2, /* Don't enable packet fragmentation */
 	IB_IPV4_MORE_FRAG = 0X4  /* For All fragmented packets except the
 				    last have this flag set */
-पूर्ण;
+};
 
-काष्ठा ib_flow_ipv4_filter अणु
+struct ib_flow_ipv4_filter {
 	__be32	src_ip;
 	__be32	dst_ip;
 	u8	proto;
@@ -1919,16 +1918,16 @@ __attribute_स्थिर__ क्रमागत ib_rate mult_to_ib_rate(प�
 	u8	flags;
 	/* Must be last */
 	u8	real_sz[];
-पूर्ण;
+};
 
-काष्ठा ib_flow_spec_ipv4 अणु
+struct ib_flow_spec_ipv4 {
 	u32			   type;
 	u16			   size;
-	काष्ठा ib_flow_ipv4_filter val;
-	काष्ठा ib_flow_ipv4_filter mask;
-पूर्ण;
+	struct ib_flow_ipv4_filter val;
+	struct ib_flow_ipv4_filter mask;
+};
 
-काष्ठा ib_flow_ipv6_filter अणु
+struct ib_flow_ipv6_filter {
 	u8	src_ip[16];
 	u8	dst_ip[16];
 	__be32	flow_label;
@@ -1937,689 +1936,689 @@ __attribute_स्थिर__ क्रमागत ib_rate mult_to_ib_rate(प�
 	u8	hop_limit;
 	/* Must be last */
 	u8	real_sz[];
-पूर्ण;
+};
 
-काष्ठा ib_flow_spec_ipv6 अणु
+struct ib_flow_spec_ipv6 {
 	u32			   type;
 	u16			   size;
-	काष्ठा ib_flow_ipv6_filter val;
-	काष्ठा ib_flow_ipv6_filter mask;
-पूर्ण;
+	struct ib_flow_ipv6_filter val;
+	struct ib_flow_ipv6_filter mask;
+};
 
-काष्ठा ib_flow_tcp_udp_filter अणु
+struct ib_flow_tcp_udp_filter {
 	__be16	dst_port;
 	__be16	src_port;
 	/* Must be last */
 	u8	real_sz[];
-पूर्ण;
+};
 
-काष्ठा ib_flow_spec_tcp_udp अणु
+struct ib_flow_spec_tcp_udp {
 	u32			      type;
 	u16			      size;
-	काष्ठा ib_flow_tcp_udp_filter val;
-	काष्ठा ib_flow_tcp_udp_filter mask;
-पूर्ण;
+	struct ib_flow_tcp_udp_filter val;
+	struct ib_flow_tcp_udp_filter mask;
+};
 
-काष्ठा ib_flow_tunnel_filter अणु
+struct ib_flow_tunnel_filter {
 	__be32	tunnel_id;
 	u8	real_sz[];
-पूर्ण;
+};
 
 /* ib_flow_spec_tunnel describes the Vxlan tunnel
  * the tunnel_id from val has the vni value
  */
-काष्ठा ib_flow_spec_tunnel अणु
+struct ib_flow_spec_tunnel {
 	u32			      type;
 	u16			      size;
-	काष्ठा ib_flow_tunnel_filter  val;
-	काष्ठा ib_flow_tunnel_filter  mask;
-पूर्ण;
+	struct ib_flow_tunnel_filter  val;
+	struct ib_flow_tunnel_filter  mask;
+};
 
-काष्ठा ib_flow_esp_filter अणु
+struct ib_flow_esp_filter {
 	__be32	spi;
 	__be32  seq;
 	/* Must be last */
 	u8	real_sz[];
-पूर्ण;
+};
 
-काष्ठा ib_flow_spec_esp अणु
+struct ib_flow_spec_esp {
 	u32                           type;
 	u16			      size;
-	काष्ठा ib_flow_esp_filter     val;
-	काष्ठा ib_flow_esp_filter     mask;
-पूर्ण;
+	struct ib_flow_esp_filter     val;
+	struct ib_flow_esp_filter     mask;
+};
 
-काष्ठा ib_flow_gre_filter अणु
+struct ib_flow_gre_filter {
 	__be16 c_ks_res0_ver;
 	__be16 protocol;
 	__be32 key;
 	/* Must be last */
 	u8	real_sz[];
-पूर्ण;
+};
 
-काष्ठा ib_flow_spec_gre अणु
+struct ib_flow_spec_gre {
 	u32                           type;
 	u16			      size;
-	काष्ठा ib_flow_gre_filter     val;
-	काष्ठा ib_flow_gre_filter     mask;
-पूर्ण;
+	struct ib_flow_gre_filter     val;
+	struct ib_flow_gre_filter     mask;
+};
 
-काष्ठा ib_flow_mpls_filter अणु
+struct ib_flow_mpls_filter {
 	__be32 tag;
 	/* Must be last */
 	u8	real_sz[];
-पूर्ण;
+};
 
-काष्ठा ib_flow_spec_mpls अणु
+struct ib_flow_spec_mpls {
 	u32                           type;
 	u16			      size;
-	काष्ठा ib_flow_mpls_filter     val;
-	काष्ठा ib_flow_mpls_filter     mask;
-पूर्ण;
+	struct ib_flow_mpls_filter     val;
+	struct ib_flow_mpls_filter     mask;
+};
 
-काष्ठा ib_flow_spec_action_tag अणु
-	क्रमागत ib_flow_spec_type	      type;
+struct ib_flow_spec_action_tag {
+	enum ib_flow_spec_type	      type;
 	u16			      size;
 	u32                           tag_id;
-पूर्ण;
+};
 
-काष्ठा ib_flow_spec_action_drop अणु
-	क्रमागत ib_flow_spec_type	      type;
+struct ib_flow_spec_action_drop {
+	enum ib_flow_spec_type	      type;
 	u16			      size;
-पूर्ण;
+};
 
-काष्ठा ib_flow_spec_action_handle अणु
-	क्रमागत ib_flow_spec_type	      type;
+struct ib_flow_spec_action_handle {
+	enum ib_flow_spec_type	      type;
 	u16			      size;
-	काष्ठा ib_flow_action	     *act;
-पूर्ण;
+	struct ib_flow_action	     *act;
+};
 
-क्रमागत ib_counters_description अणु
+enum ib_counters_description {
 	IB_COUNTER_PACKETS,
 	IB_COUNTER_BYTES,
-पूर्ण;
+};
 
-काष्ठा ib_flow_spec_action_count अणु
-	क्रमागत ib_flow_spec_type type;
+struct ib_flow_spec_action_count {
+	enum ib_flow_spec_type type;
 	u16 size;
-	काष्ठा ib_counters *counters;
-पूर्ण;
+	struct ib_counters *counters;
+};
 
-जोड़ ib_flow_spec अणु
-	काष्ठा अणु
+union ib_flow_spec {
+	struct {
 		u32			type;
 		u16			size;
-	पूर्ण;
-	काष्ठा ib_flow_spec_eth		eth;
-	काष्ठा ib_flow_spec_ib		ib;
-	काष्ठा ib_flow_spec_ipv4        ipv4;
-	काष्ठा ib_flow_spec_tcp_udp	tcp_udp;
-	काष्ठा ib_flow_spec_ipv6        ipv6;
-	काष्ठा ib_flow_spec_tunnel      tunnel;
-	काष्ठा ib_flow_spec_esp		esp;
-	काष्ठा ib_flow_spec_gre		gre;
-	काष्ठा ib_flow_spec_mpls	mpls;
-	काष्ठा ib_flow_spec_action_tag  flow_tag;
-	काष्ठा ib_flow_spec_action_drop drop;
-	काष्ठा ib_flow_spec_action_handle action;
-	काष्ठा ib_flow_spec_action_count flow_count;
-पूर्ण;
+	};
+	struct ib_flow_spec_eth		eth;
+	struct ib_flow_spec_ib		ib;
+	struct ib_flow_spec_ipv4        ipv4;
+	struct ib_flow_spec_tcp_udp	tcp_udp;
+	struct ib_flow_spec_ipv6        ipv6;
+	struct ib_flow_spec_tunnel      tunnel;
+	struct ib_flow_spec_esp		esp;
+	struct ib_flow_spec_gre		gre;
+	struct ib_flow_spec_mpls	mpls;
+	struct ib_flow_spec_action_tag  flow_tag;
+	struct ib_flow_spec_action_drop drop;
+	struct ib_flow_spec_action_handle action;
+	struct ib_flow_spec_action_count flow_count;
+};
 
-काष्ठा ib_flow_attr अणु
-	क्रमागत ib_flow_attr_type type;
+struct ib_flow_attr {
+	enum ib_flow_attr_type type;
 	u16	     size;
 	u16	     priority;
 	u32	     flags;
 	u8	     num_of_specs;
 	u32	     port;
-	जोड़ ib_flow_spec flows[];
-पूर्ण;
+	union ib_flow_spec flows[];
+};
 
-काष्ठा ib_flow अणु
-	काष्ठा ib_qp		*qp;
-	काष्ठा ib_device	*device;
-	काष्ठा ib_uobject	*uobject;
-पूर्ण;
+struct ib_flow {
+	struct ib_qp		*qp;
+	struct ib_device	*device;
+	struct ib_uobject	*uobject;
+};
 
-क्रमागत ib_flow_action_type अणु
+enum ib_flow_action_type {
 	IB_FLOW_ACTION_UNSPECIFIED,
 	IB_FLOW_ACTION_ESP = 1,
-पूर्ण;
+};
 
-काष्ठा ib_flow_action_attrs_esp_keymats अणु
-	क्रमागत ib_uverbs_flow_action_esp_keymat			protocol;
-	जोड़ अणु
-		काष्ठा ib_uverbs_flow_action_esp_keymat_aes_gcm aes_gcm;
-	पूर्ण keymat;
-पूर्ण;
+struct ib_flow_action_attrs_esp_keymats {
+	enum ib_uverbs_flow_action_esp_keymat			protocol;
+	union {
+		struct ib_uverbs_flow_action_esp_keymat_aes_gcm aes_gcm;
+	} keymat;
+};
 
-काष्ठा ib_flow_action_attrs_esp_replays अणु
-	क्रमागत ib_uverbs_flow_action_esp_replay			protocol;
-	जोड़ अणु
-		काष्ठा ib_uverbs_flow_action_esp_replay_bmp	bmp;
-	पूर्ण replay;
-पूर्ण;
+struct ib_flow_action_attrs_esp_replays {
+	enum ib_uverbs_flow_action_esp_replay			protocol;
+	union {
+		struct ib_uverbs_flow_action_esp_replay_bmp	bmp;
+	} replay;
+};
 
-क्रमागत ib_flow_action_attrs_esp_flags अणु
-	/* All user-space flags at the top: Use क्रमागत ib_uverbs_flow_action_esp_flags
-	 * This is करोne in order to share the same flags between user-space and
+enum ib_flow_action_attrs_esp_flags {
+	/* All user-space flags at the top: Use enum ib_uverbs_flow_action_esp_flags
+	 * This is done in order to share the same flags between user-space and
 	 * kernel and spare an unnecessary translation.
 	 */
 
 	/* Kernel flags */
 	IB_FLOW_ACTION_ESP_FLAGS_ESN_TRIGGERED	= 1ULL << 32,
 	IB_FLOW_ACTION_ESP_FLAGS_MOD_ESP_ATTRS	= 1ULL << 33,
-पूर्ण;
+};
 
-काष्ठा ib_flow_spec_list अणु
-	काष्ठा ib_flow_spec_list	*next;
-	जोड़ ib_flow_spec		spec;
-पूर्ण;
+struct ib_flow_spec_list {
+	struct ib_flow_spec_list	*next;
+	union ib_flow_spec		spec;
+};
 
-काष्ठा ib_flow_action_attrs_esp अणु
-	काष्ठा ib_flow_action_attrs_esp_keymats		*keymat;
-	काष्ठा ib_flow_action_attrs_esp_replays		*replay;
-	काष्ठा ib_flow_spec_list			*encap;
-	/* Used only अगर IB_FLOW_ACTION_ESP_FLAGS_ESN_TRIGGERED is enabled.
+struct ib_flow_action_attrs_esp {
+	struct ib_flow_action_attrs_esp_keymats		*keymat;
+	struct ib_flow_action_attrs_esp_replays		*replay;
+	struct ib_flow_spec_list			*encap;
+	/* Used only if IB_FLOW_ACTION_ESP_FLAGS_ESN_TRIGGERED is enabled.
 	 * Value of 0 is a valid value.
 	 */
 	u32						esn;
 	u32						spi;
 	u32						seq;
 	u32						tfc_pad;
-	/* Use क्रमागत ib_flow_action_attrs_esp_flags */
+	/* Use enum ib_flow_action_attrs_esp_flags */
 	u64						flags;
 	u64						hard_limit_pkts;
-पूर्ण;
+};
 
-काष्ठा ib_flow_action अणु
-	काष्ठा ib_device		*device;
-	काष्ठा ib_uobject		*uobject;
-	क्रमागत ib_flow_action_type	type;
+struct ib_flow_action {
+	struct ib_device		*device;
+	struct ib_uobject		*uobject;
+	enum ib_flow_action_type	type;
 	atomic_t			usecnt;
-पूर्ण;
+};
 
-काष्ठा ib_mad;
-काष्ठा ib_grh;
+struct ib_mad;
+struct ib_grh;
 
-क्रमागत ib_process_mad_flags अणु
+enum ib_process_mad_flags {
 	IB_MAD_IGNORE_MKEY	= 1,
 	IB_MAD_IGNORE_BKEY	= 2,
 	IB_MAD_IGNORE_ALL	= IB_MAD_IGNORE_MKEY | IB_MAD_IGNORE_BKEY
-पूर्ण;
+};
 
-क्रमागत ib_mad_result अणु
+enum ib_mad_result {
 	IB_MAD_RESULT_FAILURE  = 0,      /* (!SUCCESS is the important flag) */
 	IB_MAD_RESULT_SUCCESS  = 1 << 0, /* MAD was successfully processed   */
 	IB_MAD_RESULT_REPLY    = 1 << 1, /* Reply packet needs to be sent    */
 	IB_MAD_RESULT_CONSUMED = 1 << 2  /* Packet consumed: stop processing */
-पूर्ण;
+};
 
-काष्ठा ib_port_cache अणु
+struct ib_port_cache {
 	u64		      subnet_prefix;
-	काष्ठा ib_pkey_cache  *pkey;
-	काष्ठा ib_gid_table   *gid;
+	struct ib_pkey_cache  *pkey;
+	struct ib_gid_table   *gid;
 	u8                     lmc;
-	क्रमागत ib_port_state     port_state;
-पूर्ण;
+	enum ib_port_state     port_state;
+};
 
-काष्ठा ib_port_immutable अणु
-	पूर्णांक                           pkey_tbl_len;
-	पूर्णांक                           gid_tbl_len;
+struct ib_port_immutable {
+	int                           pkey_tbl_len;
+	int                           gid_tbl_len;
 	u32                           core_cap_flags;
 	u32                           max_mad_size;
-पूर्ण;
+};
 
-काष्ठा ib_port_data अणु
-	काष्ठा ib_device *ib_dev;
+struct ib_port_data {
+	struct ib_device *ib_dev;
 
-	काष्ठा ib_port_immutable immutable;
+	struct ib_port_immutable immutable;
 
 	spinlock_t pkey_list_lock;
-	काष्ठा list_head pkey_list;
+	struct list_head pkey_list;
 
-	काष्ठा ib_port_cache cache;
+	struct ib_port_cache cache;
 
 	spinlock_t netdev_lock;
-	काष्ठा net_device __rcu *netdev;
-	काष्ठा hlist_node ndev_hash_link;
-	काष्ठा rdma_port_counter port_counter;
-	काष्ठा rdma_hw_stats *hw_stats;
-पूर्ण;
+	struct net_device __rcu *netdev;
+	struct hlist_node ndev_hash_link;
+	struct rdma_port_counter port_counter;
+	struct rdma_hw_stats *hw_stats;
+};
 
-/* rdma netdev type - specअगरies protocol type */
-क्रमागत rdma_netdev_t अणु
+/* rdma netdev type - specifies protocol type */
+enum rdma_netdev_t {
 	RDMA_NETDEV_OPA_VNIC,
 	RDMA_NETDEV_IPOIB,
-पूर्ण;
+};
 
 /**
- * काष्ठा rdma_netdev - rdma netdev
- * For हालs where netstack पूर्णांकerfacing is required.
+ * struct rdma_netdev - rdma netdev
+ * For cases where netstack interfacing is required.
  */
-काष्ठा rdma_netdev अणु
-	व्योम              *clnt_priv;
-	काष्ठा ib_device  *hca;
+struct rdma_netdev {
+	void              *clnt_priv;
+	struct ib_device  *hca;
 	u32		   port_num;
-	पूर्णांक                mtu;
+	int                mtu;
 
 	/*
-	 * cleanup function must be specअगरied.
-	 * FIXME: This is only used क्रम OPA_VNIC and that usage should be
-	 * हटाओd too.
+	 * cleanup function must be specified.
+	 * FIXME: This is only used for OPA_VNIC and that usage should be
+	 * removed too.
 	 */
-	व्योम (*मुक्त_rdma_netdev)(काष्ठा net_device *netdev);
+	void (*free_rdma_netdev)(struct net_device *netdev);
 
 	/* control functions */
-	व्योम (*set_id)(काष्ठा net_device *netdev, पूर्णांक id);
+	void (*set_id)(struct net_device *netdev, int id);
 	/* send packet */
-	पूर्णांक (*send)(काष्ठा net_device *dev, काष्ठा sk_buff *skb,
-		    काष्ठा ib_ah *address, u32 dqpn);
+	int (*send)(struct net_device *dev, struct sk_buff *skb,
+		    struct ib_ah *address, u32 dqpn);
 	/* multicast */
-	पूर्णांक (*attach_mcast)(काष्ठा net_device *dev, काष्ठा ib_device *hca,
-			    जोड़ ib_gid *gid, u16 mlid,
-			    पूर्णांक set_qkey, u32 qkey);
-	पूर्णांक (*detach_mcast)(काष्ठा net_device *dev, काष्ठा ib_device *hca,
-			    जोड़ ib_gid *gid, u16 mlid);
-	/* समयout */
-	व्योम (*tx_समयout)(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue);
-पूर्ण;
+	int (*attach_mcast)(struct net_device *dev, struct ib_device *hca,
+			    union ib_gid *gid, u16 mlid,
+			    int set_qkey, u32 qkey);
+	int (*detach_mcast)(struct net_device *dev, struct ib_device *hca,
+			    union ib_gid *gid, u16 mlid);
+	/* timeout */
+	void (*tx_timeout)(struct net_device *dev, unsigned int txqueue);
+};
 
-काष्ठा rdma_netdev_alloc_params अणु
-	माप_प्रकार माप_priv;
-	अचिन्हित पूर्णांक txqs;
-	अचिन्हित पूर्णांक rxqs;
-	व्योम *param;
+struct rdma_netdev_alloc_params {
+	size_t sizeof_priv;
+	unsigned int txqs;
+	unsigned int rxqs;
+	void *param;
 
-	पूर्णांक (*initialize_rdma_netdev)(काष्ठा ib_device *device, u32 port_num,
-				      काष्ठा net_device *netdev, व्योम *param);
-पूर्ण;
+	int (*initialize_rdma_netdev)(struct ib_device *device, u32 port_num,
+				      struct net_device *netdev, void *param);
+};
 
-काष्ठा ib_odp_counters अणु
+struct ib_odp_counters {
 	atomic64_t faults;
 	atomic64_t invalidations;
 	atomic64_t prefetch;
-पूर्ण;
+};
 
-काष्ठा ib_counters अणु
-	काष्ठा ib_device	*device;
-	काष्ठा ib_uobject	*uobject;
+struct ib_counters {
+	struct ib_device	*device;
+	struct ib_uobject	*uobject;
 	/* num of objects attached */
 	atomic_t	usecnt;
-पूर्ण;
+};
 
-काष्ठा ib_counters_पढ़ो_attr अणु
+struct ib_counters_read_attr {
 	u64	*counters_buff;
 	u32	ncounters;
-	u32	flags; /* use क्रमागत ib_पढ़ो_counters_flags */
-पूर्ण;
+	u32	flags; /* use enum ib_read_counters_flags */
+};
 
-काष्ठा uverbs_attr_bundle;
-काष्ठा iw_cm_id;
-काष्ठा iw_cm_conn_param;
+struct uverbs_attr_bundle;
+struct iw_cm_id;
+struct iw_cm_conn_param;
 
-#घोषणा INIT_RDMA_OBJ_SIZE(ib_काष्ठा, drv_काष्ठा, member)                      \
-	.size_##ib_काष्ठा =                                                    \
-		(माप(काष्ठा drv_काष्ठा) +                                   \
-		 BUILD_BUG_ON_ZERO(दुरत्व(काष्ठा drv_काष्ठा, member)) +      \
+#define INIT_RDMA_OBJ_SIZE(ib_struct, drv_struct, member)                      \
+	.size_##ib_struct =                                                    \
+		(sizeof(struct drv_struct) +                                   \
+		 BUILD_BUG_ON_ZERO(offsetof(struct drv_struct, member)) +      \
 		 BUILD_BUG_ON_ZERO(                                            \
-			 !__same_type(((काष्ठा drv_काष्ठा *)शून्य)->member,     \
-				      काष्ठा ib_काष्ठा)))
+			 !__same_type(((struct drv_struct *)NULL)->member,     \
+				      struct ib_struct)))
 
-#घोषणा rdma_zalloc_drv_obj_gfp(ib_dev, ib_type, gfp)                         \
-	((काष्ठा ib_type *)kzalloc(ib_dev->ops.size_##ib_type, gfp))
+#define rdma_zalloc_drv_obj_gfp(ib_dev, ib_type, gfp)                         \
+	((struct ib_type *)kzalloc(ib_dev->ops.size_##ib_type, gfp))
 
-#घोषणा rdma_zalloc_drv_obj(ib_dev, ib_type)                                   \
+#define rdma_zalloc_drv_obj(ib_dev, ib_type)                                   \
 	rdma_zalloc_drv_obj_gfp(ib_dev, ib_type, GFP_KERNEL)
 
-#घोषणा DECLARE_RDMA_OBJ_SIZE(ib_काष्ठा) माप_प्रकार size_##ib_काष्ठा
+#define DECLARE_RDMA_OBJ_SIZE(ib_struct) size_t size_##ib_struct
 
-काष्ठा rdma_user_mmap_entry अणु
-	काष्ठा kref ref;
-	काष्ठा ib_ucontext *ucontext;
-	अचिन्हित दीर्घ start_pgoff;
-	माप_प्रकार npages;
-	bool driver_हटाओd;
-पूर्ण;
+struct rdma_user_mmap_entry {
+	struct kref ref;
+	struct ib_ucontext *ucontext;
+	unsigned long start_pgoff;
+	size_t npages;
+	bool driver_removed;
+};
 
 /* Return the offset (in bytes) the user should pass to libc's mmap() */
-अटल अंतरभूत u64
-rdma_user_mmap_get_offset(स्थिर काष्ठा rdma_user_mmap_entry *entry)
-अणु
-	वापस (u64)entry->start_pgoff << PAGE_SHIFT;
-पूर्ण
+static inline u64
+rdma_user_mmap_get_offset(const struct rdma_user_mmap_entry *entry)
+{
+	return (u64)entry->start_pgoff << PAGE_SHIFT;
+}
 
 /**
- * काष्ठा ib_device_ops - InfiniBand device operations
- * This काष्ठाure defines all the InfiniBand device operations, providers will
+ * struct ib_device_ops - InfiniBand device operations
+ * This structure defines all the InfiniBand device operations, providers will
  * need to define the supported operations, otherwise they will be set to null.
  */
-काष्ठा ib_device_ops अणु
-	काष्ठा module *owner;
-	क्रमागत rdma_driver_id driver_id;
+struct ib_device_ops {
+	struct module *owner;
+	enum rdma_driver_id driver_id;
 	u32 uverbs_abi_ver;
-	अचिन्हित पूर्णांक uverbs_no_driver_id_binding:1;
+	unsigned int uverbs_no_driver_id_binding:1;
 
-	पूर्णांक (*post_send)(काष्ठा ib_qp *qp, स्थिर काष्ठा ib_send_wr *send_wr,
-			 स्थिर काष्ठा ib_send_wr **bad_send_wr);
-	पूर्णांक (*post_recv)(काष्ठा ib_qp *qp, स्थिर काष्ठा ib_recv_wr *recv_wr,
-			 स्थिर काष्ठा ib_recv_wr **bad_recv_wr);
-	व्योम (*drain_rq)(काष्ठा ib_qp *qp);
-	व्योम (*drain_sq)(काष्ठा ib_qp *qp);
-	पूर्णांक (*poll_cq)(काष्ठा ib_cq *cq, पूर्णांक num_entries, काष्ठा ib_wc *wc);
-	पूर्णांक (*peek_cq)(काष्ठा ib_cq *cq, पूर्णांक wc_cnt);
-	पूर्णांक (*req_notअगरy_cq)(काष्ठा ib_cq *cq, क्रमागत ib_cq_notअगरy_flags flags);
-	पूर्णांक (*post_srq_recv)(काष्ठा ib_srq *srq,
-			     स्थिर काष्ठा ib_recv_wr *recv_wr,
-			     स्थिर काष्ठा ib_recv_wr **bad_recv_wr);
-	पूर्णांक (*process_mad)(काष्ठा ib_device *device, पूर्णांक process_mad_flags,
-			   u32 port_num, स्थिर काष्ठा ib_wc *in_wc,
-			   स्थिर काष्ठा ib_grh *in_grh,
-			   स्थिर काष्ठा ib_mad *in_mad, काष्ठा ib_mad *out_mad,
-			   माप_प्रकार *out_mad_size, u16 *out_mad_pkey_index);
-	पूर्णांक (*query_device)(काष्ठा ib_device *device,
-			    काष्ठा ib_device_attr *device_attr,
-			    काष्ठा ib_udata *udata);
-	पूर्णांक (*modअगरy_device)(काष्ठा ib_device *device, पूर्णांक device_modअगरy_mask,
-			     काष्ठा ib_device_modअगरy *device_modअगरy);
-	व्योम (*get_dev_fw_str)(काष्ठा ib_device *device, अक्षर *str);
-	स्थिर काष्ठा cpumask *(*get_vector_affinity)(काष्ठा ib_device *ibdev,
-						     पूर्णांक comp_vector);
-	पूर्णांक (*query_port)(काष्ठा ib_device *device, u32 port_num,
-			  काष्ठा ib_port_attr *port_attr);
-	पूर्णांक (*modअगरy_port)(काष्ठा ib_device *device, u32 port_num,
-			   पूर्णांक port_modअगरy_mask,
-			   काष्ठा ib_port_modअगरy *port_modअगरy);
+	int (*post_send)(struct ib_qp *qp, const struct ib_send_wr *send_wr,
+			 const struct ib_send_wr **bad_send_wr);
+	int (*post_recv)(struct ib_qp *qp, const struct ib_recv_wr *recv_wr,
+			 const struct ib_recv_wr **bad_recv_wr);
+	void (*drain_rq)(struct ib_qp *qp);
+	void (*drain_sq)(struct ib_qp *qp);
+	int (*poll_cq)(struct ib_cq *cq, int num_entries, struct ib_wc *wc);
+	int (*peek_cq)(struct ib_cq *cq, int wc_cnt);
+	int (*req_notify_cq)(struct ib_cq *cq, enum ib_cq_notify_flags flags);
+	int (*post_srq_recv)(struct ib_srq *srq,
+			     const struct ib_recv_wr *recv_wr,
+			     const struct ib_recv_wr **bad_recv_wr);
+	int (*process_mad)(struct ib_device *device, int process_mad_flags,
+			   u32 port_num, const struct ib_wc *in_wc,
+			   const struct ib_grh *in_grh,
+			   const struct ib_mad *in_mad, struct ib_mad *out_mad,
+			   size_t *out_mad_size, u16 *out_mad_pkey_index);
+	int (*query_device)(struct ib_device *device,
+			    struct ib_device_attr *device_attr,
+			    struct ib_udata *udata);
+	int (*modify_device)(struct ib_device *device, int device_modify_mask,
+			     struct ib_device_modify *device_modify);
+	void (*get_dev_fw_str)(struct ib_device *device, char *str);
+	const struct cpumask *(*get_vector_affinity)(struct ib_device *ibdev,
+						     int comp_vector);
+	int (*query_port)(struct ib_device *device, u32 port_num,
+			  struct ib_port_attr *port_attr);
+	int (*modify_port)(struct ib_device *device, u32 port_num,
+			   int port_modify_mask,
+			   struct ib_port_modify *port_modify);
 	/**
 	 * The following mandatory functions are used only at device
 	 * registration.  Keep functions such as these at the end of this
-	 * काष्ठाure to aव्योम cache line misses when accessing काष्ठा ib_device
+	 * structure to avoid cache line misses when accessing struct ib_device
 	 * in fast paths.
 	 */
-	पूर्णांक (*get_port_immutable)(काष्ठा ib_device *device, u32 port_num,
-				  काष्ठा ib_port_immutable *immutable);
-	क्रमागत rdma_link_layer (*get_link_layer)(काष्ठा ib_device *device,
+	int (*get_port_immutable)(struct ib_device *device, u32 port_num,
+				  struct ib_port_immutable *immutable);
+	enum rdma_link_layer (*get_link_layer)(struct ib_device *device,
 					       u32 port_num);
 	/**
-	 * When calling get_netdev, the HW venकरोr's driver should वापस the
-	 * net device of device @device at port @port_num or शून्य अगर such
-	 * a net device करोesn't exist. The venकरोr driver should call dev_hold
-	 * on this net device. The HW venकरोr's device driver must guarantee
-	 * that this function वापसs शून्य beक्रमe the net device has finished
+	 * When calling get_netdev, the HW vendor's driver should return the
+	 * net device of device @device at port @port_num or NULL if such
+	 * a net device doesn't exist. The vendor driver should call dev_hold
+	 * on this net device. The HW vendor's device driver must guarantee
+	 * that this function returns NULL before the net device has finished
 	 * NETDEV_UNREGISTER state.
 	 */
-	काष्ठा net_device *(*get_netdev)(काष्ठा ib_device *device,
+	struct net_device *(*get_netdev)(struct ib_device *device,
 					 u32 port_num);
 	/**
 	 * rdma netdev operation
 	 *
 	 * Driver implementing alloc_rdma_netdev or rdma_netdev_get_params
-	 * must वापस -EOPNOTSUPP अगर it करोesn't support the specअगरied type.
+	 * must return -EOPNOTSUPP if it doesn't support the specified type.
 	 */
-	काष्ठा net_device *(*alloc_rdma_netdev)(
-		काष्ठा ib_device *device, u32 port_num, क्रमागत rdma_netdev_t type,
-		स्थिर अक्षर *name, अचिन्हित अक्षर name_assign_type,
-		व्योम (*setup)(काष्ठा net_device *));
+	struct net_device *(*alloc_rdma_netdev)(
+		struct ib_device *device, u32 port_num, enum rdma_netdev_t type,
+		const char *name, unsigned char name_assign_type,
+		void (*setup)(struct net_device *));
 
-	पूर्णांक (*rdma_netdev_get_params)(काष्ठा ib_device *device, u32 port_num,
-				      क्रमागत rdma_netdev_t type,
-				      काष्ठा rdma_netdev_alloc_params *params);
+	int (*rdma_netdev_get_params)(struct ib_device *device, u32 port_num,
+				      enum rdma_netdev_t type,
+				      struct rdma_netdev_alloc_params *params);
 	/**
-	 * query_gid should be वापस GID value क्रम @device, when @port_num
-	 * link layer is either IB or iWarp. It is no-op अगर @port_num port
+	 * query_gid should be return GID value for @device, when @port_num
+	 * link layer is either IB or iWarp. It is no-op if @port_num port
 	 * is RoCE link layer.
 	 */
-	पूर्णांक (*query_gid)(काष्ठा ib_device *device, u32 port_num, पूर्णांक index,
-			 जोड़ ib_gid *gid);
+	int (*query_gid)(struct ib_device *device, u32 port_num, int index,
+			 union ib_gid *gid);
 	/**
-	 * When calling add_gid, the HW venकरोr's driver should add the gid
+	 * When calling add_gid, the HW vendor's driver should add the gid
 	 * of device of port at gid index available at @attr. Meta-info of
-	 * that gid (क्रम example, the network device related to this gid) is
-	 * available at @attr. @context allows the HW venकरोr driver to store
-	 * extra inक्रमmation together with a GID entry. The HW venकरोr driver may
-	 * allocate memory to contain this inक्रमmation and store it in @context
+	 * that gid (for example, the network device related to this gid) is
+	 * available at @attr. @context allows the HW vendor driver to store
+	 * extra information together with a GID entry. The HW vendor driver may
+	 * allocate memory to contain this information and store it in @context
 	 * when a new GID entry is written to. Params are consistent until the
-	 * next call of add_gid or delete_gid. The function should वापस 0 on
+	 * next call of add_gid or delete_gid. The function should return 0 on
 	 * success or error otherwise. The function could be called
-	 * concurrently क्रम dअगरferent ports. This function is only called when
+	 * concurrently for different ports. This function is only called when
 	 * roce_gid_table is used.
 	 */
-	पूर्णांक (*add_gid)(स्थिर काष्ठा ib_gid_attr *attr, व्योम **context);
+	int (*add_gid)(const struct ib_gid_attr *attr, void **context);
 	/**
-	 * When calling del_gid, the HW venकरोr's driver should delete the
+	 * When calling del_gid, the HW vendor's driver should delete the
 	 * gid of device @device at gid index gid_index of port port_num
 	 * available in @attr.
-	 * Upon the deletion of a GID entry, the HW venकरोr must मुक्त any
+	 * Upon the deletion of a GID entry, the HW vendor must free any
 	 * allocated memory. The caller will clear @context afterwards.
 	 * This function is only called when roce_gid_table is used.
 	 */
-	पूर्णांक (*del_gid)(स्थिर काष्ठा ib_gid_attr *attr, व्योम **context);
-	पूर्णांक (*query_pkey)(काष्ठा ib_device *device, u32 port_num, u16 index,
+	int (*del_gid)(const struct ib_gid_attr *attr, void **context);
+	int (*query_pkey)(struct ib_device *device, u32 port_num, u16 index,
 			  u16 *pkey);
-	पूर्णांक (*alloc_ucontext)(काष्ठा ib_ucontext *context,
-			      काष्ठा ib_udata *udata);
-	व्योम (*dealloc_ucontext)(काष्ठा ib_ucontext *context);
-	पूर्णांक (*mmap)(काष्ठा ib_ucontext *context, काष्ठा vm_area_काष्ठा *vma);
+	int (*alloc_ucontext)(struct ib_ucontext *context,
+			      struct ib_udata *udata);
+	void (*dealloc_ucontext)(struct ib_ucontext *context);
+	int (*mmap)(struct ib_ucontext *context, struct vm_area_struct *vma);
 	/**
 	 * This will be called once refcount of an entry in mmap_xa reaches
-	 * zero. The type of the memory that was mapped may dअगरfer between
-	 * entries and is opaque to the rdma_user_mmap पूर्णांकerface.
-	 * Thereक्रमe needs to be implemented by the driver in mmap_मुक्त.
+	 * zero. The type of the memory that was mapped may differ between
+	 * entries and is opaque to the rdma_user_mmap interface.
+	 * Therefore needs to be implemented by the driver in mmap_free.
 	 */
-	व्योम (*mmap_मुक्त)(काष्ठा rdma_user_mmap_entry *entry);
-	व्योम (*disassociate_ucontext)(काष्ठा ib_ucontext *ibcontext);
-	पूर्णांक (*alloc_pd)(काष्ठा ib_pd *pd, काष्ठा ib_udata *udata);
-	पूर्णांक (*dealloc_pd)(काष्ठा ib_pd *pd, काष्ठा ib_udata *udata);
-	पूर्णांक (*create_ah)(काष्ठा ib_ah *ah, काष्ठा rdma_ah_init_attr *attr,
-			 काष्ठा ib_udata *udata);
-	पूर्णांक (*create_user_ah)(काष्ठा ib_ah *ah, काष्ठा rdma_ah_init_attr *attr,
-			      काष्ठा ib_udata *udata);
-	पूर्णांक (*modअगरy_ah)(काष्ठा ib_ah *ah, काष्ठा rdma_ah_attr *ah_attr);
-	पूर्णांक (*query_ah)(काष्ठा ib_ah *ah, काष्ठा rdma_ah_attr *ah_attr);
-	पूर्णांक (*destroy_ah)(काष्ठा ib_ah *ah, u32 flags);
-	पूर्णांक (*create_srq)(काष्ठा ib_srq *srq,
-			  काष्ठा ib_srq_init_attr *srq_init_attr,
-			  काष्ठा ib_udata *udata);
-	पूर्णांक (*modअगरy_srq)(काष्ठा ib_srq *srq, काष्ठा ib_srq_attr *srq_attr,
-			  क्रमागत ib_srq_attr_mask srq_attr_mask,
-			  काष्ठा ib_udata *udata);
-	पूर्णांक (*query_srq)(काष्ठा ib_srq *srq, काष्ठा ib_srq_attr *srq_attr);
-	पूर्णांक (*destroy_srq)(काष्ठा ib_srq *srq, काष्ठा ib_udata *udata);
-	काष्ठा ib_qp *(*create_qp)(काष्ठा ib_pd *pd,
-				   काष्ठा ib_qp_init_attr *qp_init_attr,
-				   काष्ठा ib_udata *udata);
-	पूर्णांक (*modअगरy_qp)(काष्ठा ib_qp *qp, काष्ठा ib_qp_attr *qp_attr,
-			 पूर्णांक qp_attr_mask, काष्ठा ib_udata *udata);
-	पूर्णांक (*query_qp)(काष्ठा ib_qp *qp, काष्ठा ib_qp_attr *qp_attr,
-			पूर्णांक qp_attr_mask, काष्ठा ib_qp_init_attr *qp_init_attr);
-	पूर्णांक (*destroy_qp)(काष्ठा ib_qp *qp, काष्ठा ib_udata *udata);
-	पूर्णांक (*create_cq)(काष्ठा ib_cq *cq, स्थिर काष्ठा ib_cq_init_attr *attr,
-			 काष्ठा ib_udata *udata);
-	पूर्णांक (*modअगरy_cq)(काष्ठा ib_cq *cq, u16 cq_count, u16 cq_period);
-	पूर्णांक (*destroy_cq)(काष्ठा ib_cq *cq, काष्ठा ib_udata *udata);
-	पूर्णांक (*resize_cq)(काष्ठा ib_cq *cq, पूर्णांक cqe, काष्ठा ib_udata *udata);
-	काष्ठा ib_mr *(*get_dma_mr)(काष्ठा ib_pd *pd, पूर्णांक mr_access_flags);
-	काष्ठा ib_mr *(*reg_user_mr)(काष्ठा ib_pd *pd, u64 start, u64 length,
-				     u64 virt_addr, पूर्णांक mr_access_flags,
-				     काष्ठा ib_udata *udata);
-	काष्ठा ib_mr *(*reg_user_mr_dmabuf)(काष्ठा ib_pd *pd, u64 offset,
-					    u64 length, u64 virt_addr, पूर्णांक fd,
-					    पूर्णांक mr_access_flags,
-					    काष्ठा ib_udata *udata);
-	काष्ठा ib_mr *(*rereg_user_mr)(काष्ठा ib_mr *mr, पूर्णांक flags, u64 start,
+	void (*mmap_free)(struct rdma_user_mmap_entry *entry);
+	void (*disassociate_ucontext)(struct ib_ucontext *ibcontext);
+	int (*alloc_pd)(struct ib_pd *pd, struct ib_udata *udata);
+	int (*dealloc_pd)(struct ib_pd *pd, struct ib_udata *udata);
+	int (*create_ah)(struct ib_ah *ah, struct rdma_ah_init_attr *attr,
+			 struct ib_udata *udata);
+	int (*create_user_ah)(struct ib_ah *ah, struct rdma_ah_init_attr *attr,
+			      struct ib_udata *udata);
+	int (*modify_ah)(struct ib_ah *ah, struct rdma_ah_attr *ah_attr);
+	int (*query_ah)(struct ib_ah *ah, struct rdma_ah_attr *ah_attr);
+	int (*destroy_ah)(struct ib_ah *ah, u32 flags);
+	int (*create_srq)(struct ib_srq *srq,
+			  struct ib_srq_init_attr *srq_init_attr,
+			  struct ib_udata *udata);
+	int (*modify_srq)(struct ib_srq *srq, struct ib_srq_attr *srq_attr,
+			  enum ib_srq_attr_mask srq_attr_mask,
+			  struct ib_udata *udata);
+	int (*query_srq)(struct ib_srq *srq, struct ib_srq_attr *srq_attr);
+	int (*destroy_srq)(struct ib_srq *srq, struct ib_udata *udata);
+	struct ib_qp *(*create_qp)(struct ib_pd *pd,
+				   struct ib_qp_init_attr *qp_init_attr,
+				   struct ib_udata *udata);
+	int (*modify_qp)(struct ib_qp *qp, struct ib_qp_attr *qp_attr,
+			 int qp_attr_mask, struct ib_udata *udata);
+	int (*query_qp)(struct ib_qp *qp, struct ib_qp_attr *qp_attr,
+			int qp_attr_mask, struct ib_qp_init_attr *qp_init_attr);
+	int (*destroy_qp)(struct ib_qp *qp, struct ib_udata *udata);
+	int (*create_cq)(struct ib_cq *cq, const struct ib_cq_init_attr *attr,
+			 struct ib_udata *udata);
+	int (*modify_cq)(struct ib_cq *cq, u16 cq_count, u16 cq_period);
+	int (*destroy_cq)(struct ib_cq *cq, struct ib_udata *udata);
+	int (*resize_cq)(struct ib_cq *cq, int cqe, struct ib_udata *udata);
+	struct ib_mr *(*get_dma_mr)(struct ib_pd *pd, int mr_access_flags);
+	struct ib_mr *(*reg_user_mr)(struct ib_pd *pd, u64 start, u64 length,
+				     u64 virt_addr, int mr_access_flags,
+				     struct ib_udata *udata);
+	struct ib_mr *(*reg_user_mr_dmabuf)(struct ib_pd *pd, u64 offset,
+					    u64 length, u64 virt_addr, int fd,
+					    int mr_access_flags,
+					    struct ib_udata *udata);
+	struct ib_mr *(*rereg_user_mr)(struct ib_mr *mr, int flags, u64 start,
 				       u64 length, u64 virt_addr,
-				       पूर्णांक mr_access_flags, काष्ठा ib_pd *pd,
-				       काष्ठा ib_udata *udata);
-	पूर्णांक (*dereg_mr)(काष्ठा ib_mr *mr, काष्ठा ib_udata *udata);
-	काष्ठा ib_mr *(*alloc_mr)(काष्ठा ib_pd *pd, क्रमागत ib_mr_type mr_type,
+				       int mr_access_flags, struct ib_pd *pd,
+				       struct ib_udata *udata);
+	int (*dereg_mr)(struct ib_mr *mr, struct ib_udata *udata);
+	struct ib_mr *(*alloc_mr)(struct ib_pd *pd, enum ib_mr_type mr_type,
 				  u32 max_num_sg);
-	काष्ठा ib_mr *(*alloc_mr_पूर्णांकegrity)(काष्ठा ib_pd *pd,
+	struct ib_mr *(*alloc_mr_integrity)(struct ib_pd *pd,
 					    u32 max_num_data_sg,
 					    u32 max_num_meta_sg);
-	पूर्णांक (*advise_mr)(काष्ठा ib_pd *pd,
-			 क्रमागत ib_uverbs_advise_mr_advice advice, u32 flags,
-			 काष्ठा ib_sge *sg_list, u32 num_sge,
-			 काष्ठा uverbs_attr_bundle *attrs);
-	पूर्णांक (*map_mr_sg)(काष्ठा ib_mr *mr, काष्ठा scatterlist *sg, पूर्णांक sg_nents,
-			 अचिन्हित पूर्णांक *sg_offset);
-	पूर्णांक (*check_mr_status)(काष्ठा ib_mr *mr, u32 check_mask,
-			       काष्ठा ib_mr_status *mr_status);
-	पूर्णांक (*alloc_mw)(काष्ठा ib_mw *mw, काष्ठा ib_udata *udata);
-	पूर्णांक (*dealloc_mw)(काष्ठा ib_mw *mw);
-	पूर्णांक (*attach_mcast)(काष्ठा ib_qp *qp, जोड़ ib_gid *gid, u16 lid);
-	पूर्णांक (*detach_mcast)(काष्ठा ib_qp *qp, जोड़ ib_gid *gid, u16 lid);
-	पूर्णांक (*alloc_xrcd)(काष्ठा ib_xrcd *xrcd, काष्ठा ib_udata *udata);
-	पूर्णांक (*dealloc_xrcd)(काष्ठा ib_xrcd *xrcd, काष्ठा ib_udata *udata);
-	काष्ठा ib_flow *(*create_flow)(काष्ठा ib_qp *qp,
-				       काष्ठा ib_flow_attr *flow_attr,
-				       काष्ठा ib_udata *udata);
-	पूर्णांक (*destroy_flow)(काष्ठा ib_flow *flow_id);
-	काष्ठा ib_flow_action *(*create_flow_action_esp)(
-		काष्ठा ib_device *device,
-		स्थिर काष्ठा ib_flow_action_attrs_esp *attr,
-		काष्ठा uverbs_attr_bundle *attrs);
-	पूर्णांक (*destroy_flow_action)(काष्ठा ib_flow_action *action);
-	पूर्णांक (*modअगरy_flow_action_esp)(
-		काष्ठा ib_flow_action *action,
-		स्थिर काष्ठा ib_flow_action_attrs_esp *attr,
-		काष्ठा uverbs_attr_bundle *attrs);
-	पूर्णांक (*set_vf_link_state)(काष्ठा ib_device *device, पूर्णांक vf, u32 port,
-				 पूर्णांक state);
-	पूर्णांक (*get_vf_config)(काष्ठा ib_device *device, पूर्णांक vf, u32 port,
-			     काष्ठा अगरla_vf_info *ivf);
-	पूर्णांक (*get_vf_stats)(काष्ठा ib_device *device, पूर्णांक vf, u32 port,
-			    काष्ठा अगरla_vf_stats *stats);
-	पूर्णांक (*get_vf_guid)(काष्ठा ib_device *device, पूर्णांक vf, u32 port,
-			    काष्ठा अगरla_vf_guid *node_guid,
-			    काष्ठा अगरla_vf_guid *port_guid);
-	पूर्णांक (*set_vf_guid)(काष्ठा ib_device *device, पूर्णांक vf, u32 port, u64 guid,
-			   पूर्णांक type);
-	काष्ठा ib_wq *(*create_wq)(काष्ठा ib_pd *pd,
-				   काष्ठा ib_wq_init_attr *init_attr,
-				   काष्ठा ib_udata *udata);
-	पूर्णांक (*destroy_wq)(काष्ठा ib_wq *wq, काष्ठा ib_udata *udata);
-	पूर्णांक (*modअगरy_wq)(काष्ठा ib_wq *wq, काष्ठा ib_wq_attr *attr,
-			 u32 wq_attr_mask, काष्ठा ib_udata *udata);
-	पूर्णांक (*create_rwq_ind_table)(काष्ठा ib_rwq_ind_table *ib_rwq_ind_table,
-				    काष्ठा ib_rwq_ind_table_init_attr *init_attr,
-				    काष्ठा ib_udata *udata);
-	पूर्णांक (*destroy_rwq_ind_table)(काष्ठा ib_rwq_ind_table *wq_ind_table);
-	काष्ठा ib_dm *(*alloc_dm)(काष्ठा ib_device *device,
-				  काष्ठा ib_ucontext *context,
-				  काष्ठा ib_dm_alloc_attr *attr,
-				  काष्ठा uverbs_attr_bundle *attrs);
-	पूर्णांक (*dealloc_dm)(काष्ठा ib_dm *dm, काष्ठा uverbs_attr_bundle *attrs);
-	काष्ठा ib_mr *(*reg_dm_mr)(काष्ठा ib_pd *pd, काष्ठा ib_dm *dm,
-				   काष्ठा ib_dm_mr_attr *attr,
-				   काष्ठा uverbs_attr_bundle *attrs);
-	पूर्णांक (*create_counters)(काष्ठा ib_counters *counters,
-			       काष्ठा uverbs_attr_bundle *attrs);
-	पूर्णांक (*destroy_counters)(काष्ठा ib_counters *counters);
-	पूर्णांक (*पढ़ो_counters)(काष्ठा ib_counters *counters,
-			     काष्ठा ib_counters_पढ़ो_attr *counters_पढ़ो_attr,
-			     काष्ठा uverbs_attr_bundle *attrs);
-	पूर्णांक (*map_mr_sg_pi)(काष्ठा ib_mr *mr, काष्ठा scatterlist *data_sg,
-			    पूर्णांक data_sg_nents, अचिन्हित पूर्णांक *data_sg_offset,
-			    काष्ठा scatterlist *meta_sg, पूर्णांक meta_sg_nents,
-			    अचिन्हित पूर्णांक *meta_sg_offset);
+	int (*advise_mr)(struct ib_pd *pd,
+			 enum ib_uverbs_advise_mr_advice advice, u32 flags,
+			 struct ib_sge *sg_list, u32 num_sge,
+			 struct uverbs_attr_bundle *attrs);
+	int (*map_mr_sg)(struct ib_mr *mr, struct scatterlist *sg, int sg_nents,
+			 unsigned int *sg_offset);
+	int (*check_mr_status)(struct ib_mr *mr, u32 check_mask,
+			       struct ib_mr_status *mr_status);
+	int (*alloc_mw)(struct ib_mw *mw, struct ib_udata *udata);
+	int (*dealloc_mw)(struct ib_mw *mw);
+	int (*attach_mcast)(struct ib_qp *qp, union ib_gid *gid, u16 lid);
+	int (*detach_mcast)(struct ib_qp *qp, union ib_gid *gid, u16 lid);
+	int (*alloc_xrcd)(struct ib_xrcd *xrcd, struct ib_udata *udata);
+	int (*dealloc_xrcd)(struct ib_xrcd *xrcd, struct ib_udata *udata);
+	struct ib_flow *(*create_flow)(struct ib_qp *qp,
+				       struct ib_flow_attr *flow_attr,
+				       struct ib_udata *udata);
+	int (*destroy_flow)(struct ib_flow *flow_id);
+	struct ib_flow_action *(*create_flow_action_esp)(
+		struct ib_device *device,
+		const struct ib_flow_action_attrs_esp *attr,
+		struct uverbs_attr_bundle *attrs);
+	int (*destroy_flow_action)(struct ib_flow_action *action);
+	int (*modify_flow_action_esp)(
+		struct ib_flow_action *action,
+		const struct ib_flow_action_attrs_esp *attr,
+		struct uverbs_attr_bundle *attrs);
+	int (*set_vf_link_state)(struct ib_device *device, int vf, u32 port,
+				 int state);
+	int (*get_vf_config)(struct ib_device *device, int vf, u32 port,
+			     struct ifla_vf_info *ivf);
+	int (*get_vf_stats)(struct ib_device *device, int vf, u32 port,
+			    struct ifla_vf_stats *stats);
+	int (*get_vf_guid)(struct ib_device *device, int vf, u32 port,
+			    struct ifla_vf_guid *node_guid,
+			    struct ifla_vf_guid *port_guid);
+	int (*set_vf_guid)(struct ib_device *device, int vf, u32 port, u64 guid,
+			   int type);
+	struct ib_wq *(*create_wq)(struct ib_pd *pd,
+				   struct ib_wq_init_attr *init_attr,
+				   struct ib_udata *udata);
+	int (*destroy_wq)(struct ib_wq *wq, struct ib_udata *udata);
+	int (*modify_wq)(struct ib_wq *wq, struct ib_wq_attr *attr,
+			 u32 wq_attr_mask, struct ib_udata *udata);
+	int (*create_rwq_ind_table)(struct ib_rwq_ind_table *ib_rwq_ind_table,
+				    struct ib_rwq_ind_table_init_attr *init_attr,
+				    struct ib_udata *udata);
+	int (*destroy_rwq_ind_table)(struct ib_rwq_ind_table *wq_ind_table);
+	struct ib_dm *(*alloc_dm)(struct ib_device *device,
+				  struct ib_ucontext *context,
+				  struct ib_dm_alloc_attr *attr,
+				  struct uverbs_attr_bundle *attrs);
+	int (*dealloc_dm)(struct ib_dm *dm, struct uverbs_attr_bundle *attrs);
+	struct ib_mr *(*reg_dm_mr)(struct ib_pd *pd, struct ib_dm *dm,
+				   struct ib_dm_mr_attr *attr,
+				   struct uverbs_attr_bundle *attrs);
+	int (*create_counters)(struct ib_counters *counters,
+			       struct uverbs_attr_bundle *attrs);
+	int (*destroy_counters)(struct ib_counters *counters);
+	int (*read_counters)(struct ib_counters *counters,
+			     struct ib_counters_read_attr *counters_read_attr,
+			     struct uverbs_attr_bundle *attrs);
+	int (*map_mr_sg_pi)(struct ib_mr *mr, struct scatterlist *data_sg,
+			    int data_sg_nents, unsigned int *data_sg_offset,
+			    struct scatterlist *meta_sg, int meta_sg_nents,
+			    unsigned int *meta_sg_offset);
 
 	/**
-	 * alloc_hw_stats - Allocate a काष्ठा rdma_hw_stats and fill in the
-	 *   driver initialized data.  The काष्ठा is kमुक्त()'ed by the sysfs
-	 *   core when the device is हटाओd.  A lअगरespan of -1 in the वापस
-	 *   काष्ठा tells the core to set a शेष lअगरespan.
+	 * alloc_hw_stats - Allocate a struct rdma_hw_stats and fill in the
+	 *   driver initialized data.  The struct is kfree()'ed by the sysfs
+	 *   core when the device is removed.  A lifespan of -1 in the return
+	 *   struct tells the core to set a default lifespan.
 	 */
-	काष्ठा rdma_hw_stats *(*alloc_hw_stats)(काष्ठा ib_device *device,
+	struct rdma_hw_stats *(*alloc_hw_stats)(struct ib_device *device,
 						u32 port_num);
 	/**
-	 * get_hw_stats - Fill in the counter value(s) in the stats काष्ठा.
+	 * get_hw_stats - Fill in the counter value(s) in the stats struct.
 	 * @index - The index in the value array we wish to have updated, or
-	 *   num_counters अगर we want all stats updated
+	 *   num_counters if we want all stats updated
 	 * Return codes -
 	 *   < 0 - Error, no counters updated
-	 *   index - Updated the single counter poपूर्णांकed to by index
-	 *   num_counters - Updated all counters (will reset the बारtamp
-	 *     and prevent further calls क्रम lअगरespan milliseconds)
+	 *   index - Updated the single counter pointed to by index
+	 *   num_counters - Updated all counters (will reset the timestamp
+	 *     and prevent further calls for lifespan milliseconds)
 	 * Drivers are allowed to update all counters in leiu of just the
 	 *   one given in index at their option
 	 */
-	पूर्णांक (*get_hw_stats)(काष्ठा ib_device *device,
-			    काष्ठा rdma_hw_stats *stats, u32 port, पूर्णांक index);
+	int (*get_hw_stats)(struct ib_device *device,
+			    struct rdma_hw_stats *stats, u32 port, int index);
 	/*
-	 * This function is called once क्रम each port when a ib device is
-	 * रेजिस्टरed.
+	 * This function is called once for each port when a ib device is
+	 * registered.
 	 */
-	पूर्णांक (*init_port)(काष्ठा ib_device *device, u32 port_num,
-			 काष्ठा kobject *port_sysfs);
+	int (*init_port)(struct ib_device *device, u32 port_num,
+			 struct kobject *port_sysfs);
 	/**
 	 * Allows rdma drivers to add their own restrack attributes.
 	 */
-	पूर्णांक (*fill_res_mr_entry)(काष्ठा sk_buff *msg, काष्ठा ib_mr *ibmr);
-	पूर्णांक (*fill_res_mr_entry_raw)(काष्ठा sk_buff *msg, काष्ठा ib_mr *ibmr);
-	पूर्णांक (*fill_res_cq_entry)(काष्ठा sk_buff *msg, काष्ठा ib_cq *ibcq);
-	पूर्णांक (*fill_res_cq_entry_raw)(काष्ठा sk_buff *msg, काष्ठा ib_cq *ibcq);
-	पूर्णांक (*fill_res_qp_entry)(काष्ठा sk_buff *msg, काष्ठा ib_qp *ibqp);
-	पूर्णांक (*fill_res_qp_entry_raw)(काष्ठा sk_buff *msg, काष्ठा ib_qp *ibqp);
-	पूर्णांक (*fill_res_cm_id_entry)(काष्ठा sk_buff *msg, काष्ठा rdma_cm_id *id);
+	int (*fill_res_mr_entry)(struct sk_buff *msg, struct ib_mr *ibmr);
+	int (*fill_res_mr_entry_raw)(struct sk_buff *msg, struct ib_mr *ibmr);
+	int (*fill_res_cq_entry)(struct sk_buff *msg, struct ib_cq *ibcq);
+	int (*fill_res_cq_entry_raw)(struct sk_buff *msg, struct ib_cq *ibcq);
+	int (*fill_res_qp_entry)(struct sk_buff *msg, struct ib_qp *ibqp);
+	int (*fill_res_qp_entry_raw)(struct sk_buff *msg, struct ib_qp *ibqp);
+	int (*fill_res_cm_id_entry)(struct sk_buff *msg, struct rdma_cm_id *id);
 
-	/* Device lअगरecycle callbacks */
+	/* Device lifecycle callbacks */
 	/*
-	 * Called after the device becomes रेजिस्टरed, beक्रमe clients are
+	 * Called after the device becomes registered, before clients are
 	 * attached
 	 */
-	पूर्णांक (*enable_driver)(काष्ठा ib_device *dev);
+	int (*enable_driver)(struct ib_device *dev);
 	/*
 	 * This is called as part of ib_dealloc_device().
 	 */
-	व्योम (*dealloc_driver)(काष्ठा ib_device *dev);
+	void (*dealloc_driver)(struct ib_device *dev);
 
 	/* iWarp CM callbacks */
-	व्योम (*iw_add_ref)(काष्ठा ib_qp *qp);
-	व्योम (*iw_rem_ref)(काष्ठा ib_qp *qp);
-	काष्ठा ib_qp *(*iw_get_qp)(काष्ठा ib_device *device, पूर्णांक qpn);
-	पूर्णांक (*iw_connect)(काष्ठा iw_cm_id *cm_id,
-			  काष्ठा iw_cm_conn_param *conn_param);
-	पूर्णांक (*iw_accept)(काष्ठा iw_cm_id *cm_id,
-			 काष्ठा iw_cm_conn_param *conn_param);
-	पूर्णांक (*iw_reject)(काष्ठा iw_cm_id *cm_id, स्थिर व्योम *pdata,
+	void (*iw_add_ref)(struct ib_qp *qp);
+	void (*iw_rem_ref)(struct ib_qp *qp);
+	struct ib_qp *(*iw_get_qp)(struct ib_device *device, int qpn);
+	int (*iw_connect)(struct iw_cm_id *cm_id,
+			  struct iw_cm_conn_param *conn_param);
+	int (*iw_accept)(struct iw_cm_id *cm_id,
+			 struct iw_cm_conn_param *conn_param);
+	int (*iw_reject)(struct iw_cm_id *cm_id, const void *pdata,
 			 u8 pdata_len);
-	पूर्णांक (*iw_create_listen)(काष्ठा iw_cm_id *cm_id, पूर्णांक backlog);
-	पूर्णांक (*iw_destroy_listen)(काष्ठा iw_cm_id *cm_id);
+	int (*iw_create_listen)(struct iw_cm_id *cm_id, int backlog);
+	int (*iw_destroy_listen)(struct iw_cm_id *cm_id);
 	/**
 	 * counter_bind_qp - Bind a QP to a counter.
 	 * @counter - The counter to be bound. If counter->id is zero then
 	 *   the driver needs to allocate a new counter and set counter->id
 	 */
-	पूर्णांक (*counter_bind_qp)(काष्ठा rdma_counter *counter, काष्ठा ib_qp *qp);
+	int (*counter_bind_qp)(struct rdma_counter *counter, struct ib_qp *qp);
 	/**
 	 * counter_unbind_qp - Unbind the qp from the dynamically-allocated
-	 *   counter and bind it onto the शेष one
+	 *   counter and bind it onto the default one
 	 */
-	पूर्णांक (*counter_unbind_qp)(काष्ठा ib_qp *qp);
+	int (*counter_unbind_qp)(struct ib_qp *qp);
 	/**
 	 * counter_dealloc -De-allocate the hw counter
 	 */
-	पूर्णांक (*counter_dealloc)(काष्ठा rdma_counter *counter);
+	int (*counter_dealloc)(struct rdma_counter *counter);
 	/**
-	 * counter_alloc_stats - Allocate a काष्ठा rdma_hw_stats and fill in
+	 * counter_alloc_stats - Allocate a struct rdma_hw_stats and fill in
 	 * the driver initialized data.
 	 */
-	काष्ठा rdma_hw_stats *(*counter_alloc_stats)(
-		काष्ठा rdma_counter *counter);
+	struct rdma_hw_stats *(*counter_alloc_stats)(
+		struct rdma_counter *counter);
 	/**
 	 * counter_update_stats - Query the stats value of this counter
 	 */
-	पूर्णांक (*counter_update_stats)(काष्ठा rdma_counter *counter);
+	int (*counter_update_stats)(struct rdma_counter *counter);
 
 	/**
 	 * Allows rdma drivers to add their own restrack attributes
 	 * dumped via 'rdma stat' iproute2 command.
 	 */
-	पूर्णांक (*fill_stat_mr_entry)(काष्ठा sk_buff *msg, काष्ठा ib_mr *ibmr);
+	int (*fill_stat_mr_entry)(struct sk_buff *msg, struct ib_mr *ibmr);
 
-	/* query driver क्रम its ucontext properties */
-	पूर्णांक (*query_ucontext)(काष्ठा ib_ucontext *context,
-			      काष्ठा uverbs_attr_bundle *attrs);
+	/* query driver for its ucontext properties */
+	int (*query_ucontext)(struct ib_ucontext *context,
+			      struct uverbs_attr_bundle *attrs);
 
 	DECLARE_RDMA_OBJ_SIZE(ib_ah);
 	DECLARE_RDMA_OBJ_SIZE(ib_counters);
@@ -2630,148 +2629,148 @@ rdma_user_mmap_get_offset(स्थिर काष्ठा rdma_user_mmap_entr
 	DECLARE_RDMA_OBJ_SIZE(ib_srq);
 	DECLARE_RDMA_OBJ_SIZE(ib_ucontext);
 	DECLARE_RDMA_OBJ_SIZE(ib_xrcd);
-पूर्ण;
+};
 
-काष्ठा ib_core_device अणु
-	/* device must be the first element in काष्ठाure until,
-	 * जोड़ of ib_core_device and device exists in ib_device.
+struct ib_core_device {
+	/* device must be the first element in structure until,
+	 * union of ib_core_device and device exists in ib_device.
 	 */
-	काष्ठा device dev;
+	struct device dev;
 	possible_net_t rdma_net;
-	काष्ठा kobject *ports_kobj;
-	काष्ठा list_head port_list;
-	काष्ठा ib_device *owner; /* reach back to owner ib_device */
-पूर्ण;
+	struct kobject *ports_kobj;
+	struct list_head port_list;
+	struct ib_device *owner; /* reach back to owner ib_device */
+};
 
-काष्ठा rdma_restrack_root;
-काष्ठा ib_device अणु
+struct rdma_restrack_root;
+struct ib_device {
 	/* Do not access @dma_device directly from ULP nor from HW drivers. */
-	काष्ठा device                *dma_device;
-	काष्ठा ib_device_ops	     ops;
-	अक्षर                          name[IB_DEVICE_NAME_MAX];
-	काष्ठा rcu_head rcu_head;
+	struct device                *dma_device;
+	struct ib_device_ops	     ops;
+	char                          name[IB_DEVICE_NAME_MAX];
+	struct rcu_head rcu_head;
 
-	काष्ठा list_head              event_handler_list;
+	struct list_head              event_handler_list;
 	/* Protects event_handler_list */
-	काष्ठा rw_semaphore event_handler_rwsem;
+	struct rw_semaphore event_handler_rwsem;
 
-	/* Protects QP's event_handler calls and खोलो_qp list */
-	spinlock_t qp_खोलो_list_lock;
+	/* Protects QP's event_handler calls and open_qp list */
+	spinlock_t qp_open_list_lock;
 
-	काष्ठा rw_semaphore	      client_data_rwsem;
-	काष्ठा xarray                 client_data;
-	काष्ठा mutex                  unregistration_lock;
+	struct rw_semaphore	      client_data_rwsem;
+	struct xarray                 client_data;
+	struct mutex                  unregistration_lock;
 
 	/* Synchronize GID, Pkey cache entries, subnet prefix, LMC */
 	rwlock_t cache_lock;
 	/**
 	 * port_data is indexed by port number
 	 */
-	काष्ठा ib_port_data *port_data;
+	struct ib_port_data *port_data;
 
-	पूर्णांक			      num_comp_vectors;
+	int			      num_comp_vectors;
 
-	जोड़ अणु
-		काष्ठा device		dev;
-		काष्ठा ib_core_device	coredev;
-	पूर्ण;
+	union {
+		struct device		dev;
+		struct ib_core_device	coredev;
+	};
 
-	/* First group क्रम device attributes,
-	 * Second group क्रम driver provided attributes (optional).
-	 * It is शून्य terminated array.
+	/* First group for device attributes,
+	 * Second group for driver provided attributes (optional).
+	 * It is NULL terminated array.
 	 */
-	स्थिर काष्ठा attribute_group	*groups[3];
+	const struct attribute_group	*groups[3];
 
 	u64			     uverbs_cmd_mask;
 
-	अक्षर			     node_desc[IB_DEVICE_NODE_DESC_MAX];
+	char			     node_desc[IB_DEVICE_NODE_DESC_MAX];
 	__be64			     node_guid;
 	u32			     local_dma_lkey;
-	u16                          is_चयन:1;
+	u16                          is_switch:1;
 	/* Indicates kernel verbs support, should not be used in drivers */
 	u16                          kverbs_provider:1;
 	/* CQ adaptive moderation (RDMA DIM) */
 	u16                          use_cq_dim:1;
 	u8                           node_type;
 	u32			     phys_port_cnt;
-	काष्ठा ib_device_attr        attrs;
-	काष्ठा attribute_group	     *hw_stats_ag;
-	काष्ठा rdma_hw_stats         *hw_stats;
+	struct ib_device_attr        attrs;
+	struct attribute_group	     *hw_stats_ag;
+	struct rdma_hw_stats         *hw_stats;
 
-#अगर_घोषित CONFIG_CGROUP_RDMA
-	काष्ठा rdmacg_device         cg_device;
-#पूर्ण_अगर
+#ifdef CONFIG_CGROUP_RDMA
+	struct rdmacg_device         cg_device;
+#endif
 
 	u32                          index;
 
 	spinlock_t                   cq_pools_lock;
-	काष्ठा list_head             cq_pools[IB_POLL_LAST_POOL_TYPE + 1];
+	struct list_head             cq_pools[IB_POLL_LAST_POOL_TYPE + 1];
 
-	काष्ठा rdma_restrack_root *res;
+	struct rdma_restrack_root *res;
 
-	स्थिर काष्ठा uapi_definition   *driver_def;
+	const struct uapi_definition   *driver_def;
 
 	/*
 	 * Positive refcount indicates that the device is currently
-	 * रेजिस्टरed and cannot be unरेजिस्टरed.
+	 * registered and cannot be unregistered.
 	 */
 	refcount_t refcount;
-	काष्ठा completion unreg_completion;
-	काष्ठा work_काष्ठा unregistration_work;
+	struct completion unreg_completion;
+	struct work_struct unregistration_work;
 
-	स्थिर काष्ठा rdma_link_ops *link_ops;
+	const struct rdma_link_ops *link_ops;
 
-	/* Protects compat_devs xarray modअगरications */
-	काष्ठा mutex compat_devs_mutex;
-	/* Maपूर्णांकains compat devices क्रम each net namespace */
-	काष्ठा xarray compat_devs;
+	/* Protects compat_devs xarray modifications */
+	struct mutex compat_devs_mutex;
+	/* Maintains compat devices for each net namespace */
+	struct xarray compat_devs;
 
 	/* Used by iWarp CM */
-	अक्षर iw_अगरname[IFNAMSIZ];
+	char iw_ifname[IFNAMSIZ];
 	u32 iw_driver_flags;
 	u32 lag_flags;
-पूर्ण;
+};
 
-काष्ठा ib_client_nl_info;
-काष्ठा ib_client अणु
-	स्थिर अक्षर *name;
-	पूर्णांक (*add)(काष्ठा ib_device *ibdev);
-	व्योम (*हटाओ)(काष्ठा ib_device *, व्योम *client_data);
-	व्योम (*नाम)(काष्ठा ib_device *dev, व्योम *client_data);
-	पूर्णांक (*get_nl_info)(काष्ठा ib_device *ibdev, व्योम *client_data,
-			   काष्ठा ib_client_nl_info *res);
-	पूर्णांक (*get_global_nl_info)(काष्ठा ib_client_nl_info *res);
+struct ib_client_nl_info;
+struct ib_client {
+	const char *name;
+	int (*add)(struct ib_device *ibdev);
+	void (*remove)(struct ib_device *, void *client_data);
+	void (*rename)(struct ib_device *dev, void *client_data);
+	int (*get_nl_info)(struct ib_device *ibdev, void *client_data,
+			   struct ib_client_nl_info *res);
+	int (*get_global_nl_info)(struct ib_client_nl_info *res);
 
-	/* Returns the net_dev beदीर्घing to this ib_client and matching the
+	/* Returns the net_dev belonging to this ib_client and matching the
 	 * given parameters.
-	 * @dev:	 An RDMA device that the net_dev use क्रम communication.
+	 * @dev:	 An RDMA device that the net_dev use for communication.
 	 * @port:	 A physical port number on the RDMA device.
-	 * @pkey:	 P_Key that the net_dev uses अगर applicable.
+	 * @pkey:	 P_Key that the net_dev uses if applicable.
 	 * @gid:	 A GID that the net_dev uses to communicate.
 	 * @addr:	 An IP address the net_dev is configured with.
 	 * @client_data: The device's client data set by ib_set_client_data().
 	 *
 	 * An ib_client that implements a net_dev on top of RDMA devices
 	 * (such as IP over IB) should implement this callback, allowing the
-	 * rdma_cm module to find the right net_dev क्रम a given request.
+	 * rdma_cm module to find the right net_dev for a given request.
 	 *
-	 * The caller is responsible क्रम calling dev_put on the वापसed
+	 * The caller is responsible for calling dev_put on the returned
 	 * netdev. */
-	काष्ठा net_device *(*get_net_dev_by_params)(
-			काष्ठा ib_device *dev,
+	struct net_device *(*get_net_dev_by_params)(
+			struct ib_device *dev,
 			u32 port,
 			u16 pkey,
-			स्थिर जोड़ ib_gid *gid,
-			स्थिर काष्ठा sockaddr *addr,
-			व्योम *client_data);
+			const union ib_gid *gid,
+			const struct sockaddr *addr,
+			void *client_data);
 
 	refcount_t uses;
-	काष्ठा completion uses_zero;
+	struct completion uses_zero;
 	u32 client_id;
 
 	/* kverbs are not required by the client */
 	u8 no_kverbs_req:1;
-पूर्ण;
+};
 
 /*
  * IB block DMA iterator
@@ -2779,55 +2778,55 @@ rdma_user_mmap_get_offset(स्थिर काष्ठा rdma_user_mmap_entr
  * Iterates the DMA-mapped SGL in contiguous memory blocks aligned
  * to a HW supported page size.
  */
-काष्ठा ib_block_iter अणु
-	/* पूर्णांकernal states */
-	काष्ठा scatterlist *__sg;	/* sg holding the current aligned block */
+struct ib_block_iter {
+	/* internal states */
+	struct scatterlist *__sg;	/* sg holding the current aligned block */
 	dma_addr_t __dma_addr;		/* unaligned DMA address of this block */
-	अचिन्हित पूर्णांक __sg_nents;	/* number of SG entries */
-	अचिन्हित पूर्णांक __sg_advance;	/* number of bytes to advance in sg in next step */
-	अचिन्हित पूर्णांक __pg_bit;		/* alignment of current block */
-पूर्ण;
+	unsigned int __sg_nents;	/* number of SG entries */
+	unsigned int __sg_advance;	/* number of bytes to advance in sg in next step */
+	unsigned int __pg_bit;		/* alignment of current block */
+};
 
-काष्ठा ib_device *_ib_alloc_device(माप_प्रकार size);
-#घोषणा ib_alloc_device(drv_काष्ठा, member)                                    \
-	container_of(_ib_alloc_device(माप(काष्ठा drv_काष्ठा) +              \
-				      BUILD_BUG_ON_ZERO(दुरत्व(              \
-					      काष्ठा drv_काष्ठा, member))),    \
-		     काष्ठा drv_काष्ठा, member)
+struct ib_device *_ib_alloc_device(size_t size);
+#define ib_alloc_device(drv_struct, member)                                    \
+	container_of(_ib_alloc_device(sizeof(struct drv_struct) +              \
+				      BUILD_BUG_ON_ZERO(offsetof(              \
+					      struct drv_struct, member))),    \
+		     struct drv_struct, member)
 
-व्योम ib_dealloc_device(काष्ठा ib_device *device);
+void ib_dealloc_device(struct ib_device *device);
 
-व्योम ib_get_device_fw_str(काष्ठा ib_device *device, अक्षर *str);
+void ib_get_device_fw_str(struct ib_device *device, char *str);
 
-पूर्णांक ib_रेजिस्टर_device(काष्ठा ib_device *device, स्थिर अक्षर *name,
-		       काष्ठा device *dma_device);
-व्योम ib_unरेजिस्टर_device(काष्ठा ib_device *device);
-व्योम ib_unरेजिस्टर_driver(क्रमागत rdma_driver_id driver_id);
-व्योम ib_unरेजिस्टर_device_and_put(काष्ठा ib_device *device);
-व्योम ib_unरेजिस्टर_device_queued(काष्ठा ib_device *ib_dev);
+int ib_register_device(struct ib_device *device, const char *name,
+		       struct device *dma_device);
+void ib_unregister_device(struct ib_device *device);
+void ib_unregister_driver(enum rdma_driver_id driver_id);
+void ib_unregister_device_and_put(struct ib_device *device);
+void ib_unregister_device_queued(struct ib_device *ib_dev);
 
-पूर्णांक ib_रेजिस्टर_client   (काष्ठा ib_client *client);
-व्योम ib_unरेजिस्टर_client(काष्ठा ib_client *client);
+int ib_register_client   (struct ib_client *client);
+void ib_unregister_client(struct ib_client *client);
 
-व्योम __rdma_block_iter_start(काष्ठा ib_block_iter *biter,
-			     काष्ठा scatterlist *sglist,
-			     अचिन्हित पूर्णांक nents,
-			     अचिन्हित दीर्घ pgsz);
-bool __rdma_block_iter_next(काष्ठा ib_block_iter *biter);
+void __rdma_block_iter_start(struct ib_block_iter *biter,
+			     struct scatterlist *sglist,
+			     unsigned int nents,
+			     unsigned long pgsz);
+bool __rdma_block_iter_next(struct ib_block_iter *biter);
 
 /**
  * rdma_block_iter_dma_address - get the aligned dma address of the current
  * block held by the block iterator.
  * @biter: block iterator holding the memory block
  */
-अटल अंतरभूत dma_addr_t
-rdma_block_iter_dma_address(काष्ठा ib_block_iter *biter)
-अणु
-	वापस biter->__dma_addr & ~(BIT_ULL(biter->__pg_bit) - 1);
-पूर्ण
+static inline dma_addr_t
+rdma_block_iter_dma_address(struct ib_block_iter *biter)
+{
+	return biter->__dma_addr & ~(BIT_ULL(biter->__pg_bit) - 1);
+}
 
 /**
- * rdma_क्रम_each_block - iterate over contiguous memory blocks of the sg list
+ * rdma_for_each_block - iterate over contiguous memory blocks of the sg list
  * @sglist: sglist to iterate over
  * @biter: block iterator holding the memory block
  * @nents: maximum number of sg entries to iterate over
@@ -2836,90 +2835,90 @@ rdma_block_iter_dma_address(काष्ठा ib_block_iter *biter)
  * Callers may use rdma_block_iter_dma_address() to get each
  * blocks aligned DMA address.
  */
-#घोषणा rdma_क्रम_each_block(sglist, biter, nents, pgsz)		\
-	क्रम (__rdma_block_iter_start(biter, sglist, nents,	\
+#define rdma_for_each_block(sglist, biter, nents, pgsz)		\
+	for (__rdma_block_iter_start(biter, sglist, nents,	\
 				     pgsz);			\
 	     __rdma_block_iter_next(biter);)
 
 /**
  * ib_get_client_data - Get IB client context
- * @device:Device to get context क्रम
- * @client:Client to get context क्रम
+ * @device:Device to get context for
+ * @client:Client to get context for
  *
- * ib_get_client_data() वापसs the client context data set with
- * ib_set_client_data(). This can only be called जबतक the client is
- * रेजिस्टरed to the device, once the ib_client हटाओ() callback वापसs this
+ * ib_get_client_data() returns the client context data set with
+ * ib_set_client_data(). This can only be called while the client is
+ * registered to the device, once the ib_client remove() callback returns this
  * cannot be called.
  */
-अटल अंतरभूत व्योम *ib_get_client_data(काष्ठा ib_device *device,
-				       काष्ठा ib_client *client)
-अणु
-	वापस xa_load(&device->client_data, client->client_id);
-पूर्ण
-व्योम  ib_set_client_data(काष्ठा ib_device *device, काष्ठा ib_client *client,
-			 व्योम *data);
-व्योम ib_set_device_ops(काष्ठा ib_device *device,
-		       स्थिर काष्ठा ib_device_ops *ops);
+static inline void *ib_get_client_data(struct ib_device *device,
+				       struct ib_client *client)
+{
+	return xa_load(&device->client_data, client->client_id);
+}
+void  ib_set_client_data(struct ib_device *device, struct ib_client *client,
+			 void *data);
+void ib_set_device_ops(struct ib_device *device,
+		       const struct ib_device_ops *ops);
 
-पूर्णांक rdma_user_mmap_io(काष्ठा ib_ucontext *ucontext, काष्ठा vm_area_काष्ठा *vma,
-		      अचिन्हित दीर्घ pfn, अचिन्हित दीर्घ size, pgprot_t prot,
-		      काष्ठा rdma_user_mmap_entry *entry);
-पूर्णांक rdma_user_mmap_entry_insert(काष्ठा ib_ucontext *ucontext,
-				काष्ठा rdma_user_mmap_entry *entry,
-				माप_प्रकार length);
-पूर्णांक rdma_user_mmap_entry_insert_range(काष्ठा ib_ucontext *ucontext,
-				      काष्ठा rdma_user_mmap_entry *entry,
-				      माप_प्रकार length, u32 min_pgoff,
+int rdma_user_mmap_io(struct ib_ucontext *ucontext, struct vm_area_struct *vma,
+		      unsigned long pfn, unsigned long size, pgprot_t prot,
+		      struct rdma_user_mmap_entry *entry);
+int rdma_user_mmap_entry_insert(struct ib_ucontext *ucontext,
+				struct rdma_user_mmap_entry *entry,
+				size_t length);
+int rdma_user_mmap_entry_insert_range(struct ib_ucontext *ucontext,
+				      struct rdma_user_mmap_entry *entry,
+				      size_t length, u32 min_pgoff,
 				      u32 max_pgoff);
 
-काष्ठा rdma_user_mmap_entry *
-rdma_user_mmap_entry_get_pgoff(काष्ठा ib_ucontext *ucontext,
-			       अचिन्हित दीर्घ pgoff);
-काष्ठा rdma_user_mmap_entry *
-rdma_user_mmap_entry_get(काष्ठा ib_ucontext *ucontext,
-			 काष्ठा vm_area_काष्ठा *vma);
-व्योम rdma_user_mmap_entry_put(काष्ठा rdma_user_mmap_entry *entry);
+struct rdma_user_mmap_entry *
+rdma_user_mmap_entry_get_pgoff(struct ib_ucontext *ucontext,
+			       unsigned long pgoff);
+struct rdma_user_mmap_entry *
+rdma_user_mmap_entry_get(struct ib_ucontext *ucontext,
+			 struct vm_area_struct *vma);
+void rdma_user_mmap_entry_put(struct rdma_user_mmap_entry *entry);
 
-व्योम rdma_user_mmap_entry_हटाओ(काष्ठा rdma_user_mmap_entry *entry);
+void rdma_user_mmap_entry_remove(struct rdma_user_mmap_entry *entry);
 
-अटल अंतरभूत पूर्णांक ib_copy_from_udata(व्योम *dest, काष्ठा ib_udata *udata, माप_प्रकार len)
-अणु
-	वापस copy_from_user(dest, udata->inbuf, len) ? -EFAULT : 0;
-पूर्ण
+static inline int ib_copy_from_udata(void *dest, struct ib_udata *udata, size_t len)
+{
+	return copy_from_user(dest, udata->inbuf, len) ? -EFAULT : 0;
+}
 
-अटल अंतरभूत पूर्णांक ib_copy_to_udata(काष्ठा ib_udata *udata, व्योम *src, माप_प्रकार len)
-अणु
-	वापस copy_to_user(udata->outbuf, src, len) ? -EFAULT : 0;
-पूर्ण
+static inline int ib_copy_to_udata(struct ib_udata *udata, void *src, size_t len)
+{
+	return copy_to_user(udata->outbuf, src, len) ? -EFAULT : 0;
+}
 
-अटल अंतरभूत bool ib_is_buffer_cleared(स्थिर व्योम __user *p,
-					माप_प्रकार len)
-अणु
+static inline bool ib_is_buffer_cleared(const void __user *p,
+					size_t len)
+{
 	bool ret;
 	u8 *buf;
 
-	अगर (len > अच_लघु_उच्च)
-		वापस false;
+	if (len > USHRT_MAX)
+		return false;
 
 	buf = memdup_user(p, len);
-	अगर (IS_ERR(buf))
-		वापस false;
+	if (IS_ERR(buf))
+		return false;
 
-	ret = !स_प्रथम_inv(buf, 0, len);
-	kमुक्त(buf);
-	वापस ret;
-पूर्ण
+	ret = !memchr_inv(buf, 0, len);
+	kfree(buf);
+	return ret;
+}
 
-अटल अंतरभूत bool ib_is_udata_cleared(काष्ठा ib_udata *udata,
-				       माप_प्रकार offset,
-				       माप_प्रकार len)
-अणु
-	वापस ib_is_buffer_cleared(udata->inbuf + offset, len);
-पूर्ण
+static inline bool ib_is_udata_cleared(struct ib_udata *udata,
+				       size_t offset,
+				       size_t len)
+{
+	return ib_is_buffer_cleared(udata->inbuf + offset, len);
+}
 
 /**
- * ib_modअगरy_qp_is_ok - Check that the supplied attribute mask
- * contains all required attributes and no attributes not allowed क्रम
+ * ib_modify_qp_is_ok - Check that the supplied attribute mask
+ * contains all required attributes and no attributes not allowed for
  * the given QP state transition.
  * @cur_state: Current QP state
  * @next_state: Next QP state
@@ -2927,190 +2926,190 @@ rdma_user_mmap_entry_get(काष्ठा ib_ucontext *ucontext,
  * @mask: Mask of supplied QP attributes
  *
  * This function is a helper function that a low-level driver's
- * modअगरy_qp method can use to validate the consumer's input.  It
+ * modify_qp method can use to validate the consumer's input.  It
  * checks that cur_state and next_state are valid QP states, that a
  * transition from cur_state to next_state is allowed by the IB spec,
- * and that the attribute mask supplied is allowed क्रम the transition.
+ * and that the attribute mask supplied is allowed for the transition.
  */
-bool ib_modअगरy_qp_is_ok(क्रमागत ib_qp_state cur_state, क्रमागत ib_qp_state next_state,
-			क्रमागत ib_qp_type type, क्रमागत ib_qp_attr_mask mask);
+bool ib_modify_qp_is_ok(enum ib_qp_state cur_state, enum ib_qp_state next_state,
+			enum ib_qp_type type, enum ib_qp_attr_mask mask);
 
-व्योम ib_रेजिस्टर_event_handler(काष्ठा ib_event_handler *event_handler);
-व्योम ib_unरेजिस्टर_event_handler(काष्ठा ib_event_handler *event_handler);
-व्योम ib_dispatch_event(स्थिर काष्ठा ib_event *event);
+void ib_register_event_handler(struct ib_event_handler *event_handler);
+void ib_unregister_event_handler(struct ib_event_handler *event_handler);
+void ib_dispatch_event(const struct ib_event *event);
 
-पूर्णांक ib_query_port(काष्ठा ib_device *device,
-		  u32 port_num, काष्ठा ib_port_attr *port_attr);
+int ib_query_port(struct ib_device *device,
+		  u32 port_num, struct ib_port_attr *port_attr);
 
-क्रमागत rdma_link_layer rdma_port_get_link_layer(काष्ठा ib_device *device,
+enum rdma_link_layer rdma_port_get_link_layer(struct ib_device *device,
 					       u32 port_num);
 
 /**
- * rdma_cap_ib_चयन - Check अगर the device is IB चयन
+ * rdma_cap_ib_switch - Check if the device is IB switch
  * @device: Device to check
  *
- * Device driver is responsible क्रम setting is_चयन bit on
- * in ib_device काष्ठाure at init समय.
+ * Device driver is responsible for setting is_switch bit on
+ * in ib_device structure at init time.
  *
- * Return: true अगर the device is IB चयन.
+ * Return: true if the device is IB switch.
  */
-अटल अंतरभूत bool rdma_cap_ib_चयन(स्थिर काष्ठा ib_device *device)
-अणु
-	वापस device->is_चयन;
-पूर्ण
+static inline bool rdma_cap_ib_switch(const struct ib_device *device)
+{
+	return device->is_switch;
+}
 
 /**
- * rdma_start_port - Return the first valid port number क्रम the device
- * specअगरied
+ * rdma_start_port - Return the first valid port number for the device
+ * specified
  *
  * @device: Device to be checked
  *
  * Return start port number
  */
-अटल अंतरभूत u32 rdma_start_port(स्थिर काष्ठा ib_device *device)
-अणु
-	वापस rdma_cap_ib_चयन(device) ? 0 : 1;
-पूर्ण
+static inline u32 rdma_start_port(const struct ib_device *device)
+{
+	return rdma_cap_ib_switch(device) ? 0 : 1;
+}
 
 /**
- * rdma_क्रम_each_port - Iterate over all valid port numbers of the IB device
- * @device - The काष्ठा ib_device * to iterate over
- * @iter - The अचिन्हित पूर्णांक to store the port number
+ * rdma_for_each_port - Iterate over all valid port numbers of the IB device
+ * @device - The struct ib_device * to iterate over
+ * @iter - The unsigned int to store the port number
  */
-#घोषणा rdma_क्रम_each_port(device, iter)                                       \
-	क्रम (iter = rdma_start_port(device +				       \
+#define rdma_for_each_port(device, iter)                                       \
+	for (iter = rdma_start_port(device +				       \
 				    BUILD_BUG_ON_ZERO(!__same_type(u32,	       \
 								   iter)));    \
 	     iter <= rdma_end_port(device); iter++)
 
 /**
- * rdma_end_port - Return the last valid port number क्रम the device
- * specअगरied
+ * rdma_end_port - Return the last valid port number for the device
+ * specified
  *
  * @device: Device to be checked
  *
  * Return last port number
  */
-अटल अंतरभूत u32 rdma_end_port(स्थिर काष्ठा ib_device *device)
-अणु
-	वापस rdma_cap_ib_चयन(device) ? 0 : device->phys_port_cnt;
-पूर्ण
+static inline u32 rdma_end_port(const struct ib_device *device)
+{
+	return rdma_cap_ib_switch(device) ? 0 : device->phys_port_cnt;
+}
 
-अटल अंतरभूत पूर्णांक rdma_is_port_valid(स्थिर काष्ठा ib_device *device,
-				     अचिन्हित पूर्णांक port)
-अणु
-	वापस (port >= rdma_start_port(device) &&
+static inline int rdma_is_port_valid(const struct ib_device *device,
+				     unsigned int port)
+{
+	return (port >= rdma_start_port(device) &&
 		port <= rdma_end_port(device));
-पूर्ण
+}
 
-अटल अंतरभूत bool rdma_is_grh_required(स्थिर काष्ठा ib_device *device,
+static inline bool rdma_is_grh_required(const struct ib_device *device,
 					u32 port_num)
-अणु
-	वापस device->port_data[port_num].immutable.core_cap_flags &
+{
+	return device->port_data[port_num].immutable.core_cap_flags &
 	       RDMA_CORE_PORT_IB_GRH_REQUIRED;
-पूर्ण
+}
 
-अटल अंतरभूत bool rdma_protocol_ib(स्थिर काष्ठा ib_device *device,
+static inline bool rdma_protocol_ib(const struct ib_device *device,
 				    u32 port_num)
-अणु
-	वापस device->port_data[port_num].immutable.core_cap_flags &
+{
+	return device->port_data[port_num].immutable.core_cap_flags &
 	       RDMA_CORE_CAP_PROT_IB;
-पूर्ण
+}
 
-अटल अंतरभूत bool rdma_protocol_roce(स्थिर काष्ठा ib_device *device,
+static inline bool rdma_protocol_roce(const struct ib_device *device,
 				      u32 port_num)
-अणु
-	वापस device->port_data[port_num].immutable.core_cap_flags &
+{
+	return device->port_data[port_num].immutable.core_cap_flags &
 	       (RDMA_CORE_CAP_PROT_ROCE | RDMA_CORE_CAP_PROT_ROCE_UDP_ENCAP);
-पूर्ण
+}
 
-अटल अंतरभूत bool rdma_protocol_roce_udp_encap(स्थिर काष्ठा ib_device *device,
+static inline bool rdma_protocol_roce_udp_encap(const struct ib_device *device,
 						u32 port_num)
-अणु
-	वापस device->port_data[port_num].immutable.core_cap_flags &
+{
+	return device->port_data[port_num].immutable.core_cap_flags &
 	       RDMA_CORE_CAP_PROT_ROCE_UDP_ENCAP;
-पूर्ण
+}
 
-अटल अंतरभूत bool rdma_protocol_roce_eth_encap(स्थिर काष्ठा ib_device *device,
+static inline bool rdma_protocol_roce_eth_encap(const struct ib_device *device,
 						u32 port_num)
-अणु
-	वापस device->port_data[port_num].immutable.core_cap_flags &
+{
+	return device->port_data[port_num].immutable.core_cap_flags &
 	       RDMA_CORE_CAP_PROT_ROCE;
-पूर्ण
+}
 
-अटल अंतरभूत bool rdma_protocol_iwarp(स्थिर काष्ठा ib_device *device,
+static inline bool rdma_protocol_iwarp(const struct ib_device *device,
 				       u32 port_num)
-अणु
-	वापस device->port_data[port_num].immutable.core_cap_flags &
+{
+	return device->port_data[port_num].immutable.core_cap_flags &
 	       RDMA_CORE_CAP_PROT_IWARP;
-पूर्ण
+}
 
-अटल अंतरभूत bool rdma_ib_or_roce(स्थिर काष्ठा ib_device *device,
+static inline bool rdma_ib_or_roce(const struct ib_device *device,
 				   u32 port_num)
-अणु
-	वापस rdma_protocol_ib(device, port_num) ||
+{
+	return rdma_protocol_ib(device, port_num) ||
 		rdma_protocol_roce(device, port_num);
-पूर्ण
+}
 
-अटल अंतरभूत bool rdma_protocol_raw_packet(स्थिर काष्ठा ib_device *device,
+static inline bool rdma_protocol_raw_packet(const struct ib_device *device,
 					    u32 port_num)
-अणु
-	वापस device->port_data[port_num].immutable.core_cap_flags &
+{
+	return device->port_data[port_num].immutable.core_cap_flags &
 	       RDMA_CORE_CAP_PROT_RAW_PACKET;
-पूर्ण
+}
 
-अटल अंतरभूत bool rdma_protocol_usnic(स्थिर काष्ठा ib_device *device,
+static inline bool rdma_protocol_usnic(const struct ib_device *device,
 				       u32 port_num)
-अणु
-	वापस device->port_data[port_num].immutable.core_cap_flags &
+{
+	return device->port_data[port_num].immutable.core_cap_flags &
 	       RDMA_CORE_CAP_PROT_USNIC;
-पूर्ण
+}
 
 /**
- * rdma_cap_ib_mad - Check अगर the port of a device supports Infiniband
+ * rdma_cap_ib_mad - Check if the port of a device supports Infiniband
  * Management Datagrams.
  * @device: Device to check
  * @port_num: Port number to check
  *
  * Management Datagrams (MAD) are a required part of the InfiniBand
- * specअगरication and are supported on all InfiniBand devices.  A slightly
- * extended version are also supported on OPA पूर्णांकerfaces.
+ * specification and are supported on all InfiniBand devices.  A slightly
+ * extended version are also supported on OPA interfaces.
  *
- * Return: true अगर the port supports sending/receiving of MAD packets.
+ * Return: true if the port supports sending/receiving of MAD packets.
  */
-अटल अंतरभूत bool rdma_cap_ib_mad(स्थिर काष्ठा ib_device *device, u32 port_num)
-अणु
-	वापस device->port_data[port_num].immutable.core_cap_flags &
+static inline bool rdma_cap_ib_mad(const struct ib_device *device, u32 port_num)
+{
+	return device->port_data[port_num].immutable.core_cap_flags &
 	       RDMA_CORE_CAP_IB_MAD;
-पूर्ण
+}
 
 /**
- * rdma_cap_opa_mad - Check अगर the port of device provides support क्रम OPA
+ * rdma_cap_opa_mad - Check if the port of device provides support for OPA
  * Management Datagrams.
  * @device: Device to check
  * @port_num: Port number to check
  *
  * Intel OmniPath devices extend and/or replace the InfiniBand Management
  * datagrams with their own versions.  These OPA MADs share many but not all of
- * the अक्षरacteristics of InfiniBand MADs.
+ * the characteristics of InfiniBand MADs.
  *
- * OPA MADs dअगरfer in the following ways:
+ * OPA MADs differ in the following ways:
  *
  *    1) MADs are variable size up to 2K
- *       IBTA defined MADs reमुख्य fixed at 256 bytes
+ *       IBTA defined MADs remain fixed at 256 bytes
  *    2) OPA SMPs must carry valid PKeys
- *    3) OPA SMP packets are a dअगरferent क्रमmat
+ *    3) OPA SMP packets are a different format
  *
- * Return: true अगर the port supports OPA MAD packet क्रमmats.
+ * Return: true if the port supports OPA MAD packet formats.
  */
-अटल अंतरभूत bool rdma_cap_opa_mad(काष्ठा ib_device *device, u32 port_num)
-अणु
-	वापस device->port_data[port_num].immutable.core_cap_flags &
+static inline bool rdma_cap_opa_mad(struct ib_device *device, u32 port_num)
+{
+	return device->port_data[port_num].immutable.core_cap_flags &
 		RDMA_CORE_CAP_OPA_MAD;
-पूर्ण
+}
 
 /**
- * rdma_cap_ib_smi - Check अगर the port of a device provides an Infiniband
+ * rdma_cap_ib_smi - Check if the port of a device provides an Infiniband
  * Subnet Management Agent (SMA) on the Subnet Management Interface (SMI).
  * @device: Device to check
  * @port_num: Port number to check
@@ -3118,25 +3117,25 @@ bool ib_modअगरy_qp_is_ok(क्रमागत ib_qp_state cur_state, क�
  * Each InfiniBand node is required to provide a Subnet Management Agent
  * that the subnet manager can access.  Prior to the fabric being fully
  * configured by the subnet manager, the SMA is accessed via a well known
- * पूर्णांकerface called the Subnet Management Interface (SMI).  This पूर्णांकerface
+ * interface called the Subnet Management Interface (SMI).  This interface
  * uses directed route packets to communicate with the SM to get around the
  * chicken and egg problem of the SM needing to know what's on the fabric
  * in order to configure the fabric, and needing to configure the fabric in
  * order to send packets to the devices on the fabric.  These directed
- * route packets करो not need the fabric fully configured in order to reach
+ * route packets do not need the fabric fully configured in order to reach
  * their destination.  The SMI is the only method allowed to send
  * directed route packets on an InfiniBand fabric.
  *
- * Return: true अगर the port provides an SMI.
+ * Return: true if the port provides an SMI.
  */
-अटल अंतरभूत bool rdma_cap_ib_smi(स्थिर काष्ठा ib_device *device, u32 port_num)
-अणु
-	वापस device->port_data[port_num].immutable.core_cap_flags &
+static inline bool rdma_cap_ib_smi(const struct ib_device *device, u32 port_num)
+{
+	return device->port_data[port_num].immutable.core_cap_flags &
 	       RDMA_CORE_CAP_IB_SMI;
-पूर्ण
+}
 
 /**
- * rdma_cap_ib_cm - Check अगर the port of device has the capability Infiniband
+ * rdma_cap_ib_cm - Check if the port of device has the capability Infiniband
  * Communication Manager.
  * @device: Device to check
  * @port_num: Port number to check
@@ -3144,38 +3143,38 @@ bool ib_modअगरy_qp_is_ok(क्रमागत ib_qp_state cur_state, क�
  * The InfiniBand Communication Manager is one of many pre-defined General
  * Service Agents (GSA) that are accessed via the General Service
  * Interface (GSI).  It's role is to facilitate establishment of connections
- * between nodes as well as other management related tasks क्रम established
+ * between nodes as well as other management related tasks for established
  * connections.
  *
- * Return: true अगर the port supports an IB CM (this करोes not guarantee that
+ * Return: true if the port supports an IB CM (this does not guarantee that
  * a CM is actually running however).
  */
-अटल अंतरभूत bool rdma_cap_ib_cm(स्थिर काष्ठा ib_device *device, u32 port_num)
-अणु
-	वापस device->port_data[port_num].immutable.core_cap_flags &
+static inline bool rdma_cap_ib_cm(const struct ib_device *device, u32 port_num)
+{
+	return device->port_data[port_num].immutable.core_cap_flags &
 	       RDMA_CORE_CAP_IB_CM;
-पूर्ण
+}
 
 /**
- * rdma_cap_iw_cm - Check अगर the port of device has the capability IWARP
+ * rdma_cap_iw_cm - Check if the port of device has the capability IWARP
  * Communication Manager.
  * @device: Device to check
  * @port_num: Port number to check
  *
- * Similar to above, but specअगरic to iWARP connections which have a dअगरferent
+ * Similar to above, but specific to iWARP connections which have a different
  * managment protocol than InfiniBand.
  *
- * Return: true अगर the port supports an iWARP CM (this करोes not guarantee that
+ * Return: true if the port supports an iWARP CM (this does not guarantee that
  * a CM is actually running however).
  */
-अटल अंतरभूत bool rdma_cap_iw_cm(स्थिर काष्ठा ib_device *device, u32 port_num)
-अणु
-	वापस device->port_data[port_num].immutable.core_cap_flags &
+static inline bool rdma_cap_iw_cm(const struct ib_device *device, u32 port_num)
+{
+	return device->port_data[port_num].immutable.core_cap_flags &
 	       RDMA_CORE_CAP_IW_CM;
-पूर्ण
+}
 
 /**
- * rdma_cap_ib_sa - Check अगर the port of device has the capability Infiniband
+ * rdma_cap_ib_sa - Check if the port of device has the capability Infiniband
  * Subnet Administration.
  * @device: Device to check
  * @port_num: Port number to check
@@ -3185,94 +3184,94 @@ bool ib_modअगरy_qp_is_ok(क्रमागत ib_qp_state cur_state, क�
  * fabrics, devices should resolve routes to other hosts by contacting the
  * SA to query the proper route.
  *
- * Return: true अगर the port should act as a client to the fabric Subnet
- * Administration पूर्णांकerface.  This करोes not imply that the SA service is
+ * Return: true if the port should act as a client to the fabric Subnet
+ * Administration interface.  This does not imply that the SA service is
  * running locally.
  */
-अटल अंतरभूत bool rdma_cap_ib_sa(स्थिर काष्ठा ib_device *device, u32 port_num)
-अणु
-	वापस device->port_data[port_num].immutable.core_cap_flags &
+static inline bool rdma_cap_ib_sa(const struct ib_device *device, u32 port_num)
+{
+	return device->port_data[port_num].immutable.core_cap_flags &
 	       RDMA_CORE_CAP_IB_SA;
-पूर्ण
+}
 
 /**
- * rdma_cap_ib_mcast - Check अगर the port of device has the capability Infiniband
+ * rdma_cap_ib_mcast - Check if the port of device has the capability Infiniband
  * Multicast.
  * @device: Device to check
  * @port_num: Port number to check
  *
  * InfiniBand multicast registration is more complex than normal IPv4 or
- * IPv6 multicast registration.  Each Host Channel Adapter must रेजिस्टर
+ * IPv6 multicast registration.  Each Host Channel Adapter must register
  * with the Subnet Manager when it wishes to join a multicast group.  It
- * should करो so only once regardless of how many queue pairs it subscribes
+ * should do so only once regardless of how many queue pairs it subscribes
  * to this group.  And it should leave the group only after all queue pairs
  * attached to the group have been detached.
  *
- * Return: true अगर the port must undertake the additional adminstrative
- * overhead of रेजिस्टरing/unरेजिस्टरing with the SM and tracking of the
+ * Return: true if the port must undertake the additional adminstrative
+ * overhead of registering/unregistering with the SM and tracking of the
  * total number of queue pairs attached to the multicast group.
  */
-अटल अंतरभूत bool rdma_cap_ib_mcast(स्थिर काष्ठा ib_device *device,
+static inline bool rdma_cap_ib_mcast(const struct ib_device *device,
 				     u32 port_num)
-अणु
-	वापस rdma_cap_ib_sa(device, port_num);
-पूर्ण
+{
+	return rdma_cap_ib_sa(device, port_num);
+}
 
 /**
- * rdma_cap_af_ib - Check अगर the port of device has the capability
+ * rdma_cap_af_ib - Check if the port of device has the capability
  * Native Infiniband Address.
  * @device: Device to check
  * @port_num: Port number to check
  *
- * InfiniBand addressing uses a port's GUID + Subnet Prefix to make a शेष
- * GID.  RoCE uses a dअगरferent mechanism, but still generates a GID via
- * a prescribed mechanism and port specअगरic data.
+ * InfiniBand addressing uses a port's GUID + Subnet Prefix to make a default
+ * GID.  RoCE uses a different mechanism, but still generates a GID via
+ * a prescribed mechanism and port specific data.
  *
- * Return: true अगर the port uses a GID address to identअगरy devices on the
+ * Return: true if the port uses a GID address to identify devices on the
  * network.
  */
-अटल अंतरभूत bool rdma_cap_af_ib(स्थिर काष्ठा ib_device *device, u32 port_num)
-अणु
-	वापस device->port_data[port_num].immutable.core_cap_flags &
+static inline bool rdma_cap_af_ib(const struct ib_device *device, u32 port_num)
+{
+	return device->port_data[port_num].immutable.core_cap_flags &
 	       RDMA_CORE_CAP_AF_IB;
-पूर्ण
+}
 
 /**
- * rdma_cap_eth_ah - Check अगर the port of device has the capability
+ * rdma_cap_eth_ah - Check if the port of device has the capability
  * Ethernet Address Handle.
  * @device: Device to check
  * @port_num: Port number to check
  *
  * RoCE is InfiniBand over Ethernet, and it uses a well defined technique
- * to fabricate GIDs over Ethernet/IP specअगरic addresses native to the
+ * to fabricate GIDs over Ethernet/IP specific addresses native to the
  * port.  Normally, packet headers are generated by the sending host
  * adapter, but when sending connectionless datagrams, we must manually
- * inject the proper headers क्रम the fabric we are communicating over.
+ * inject the proper headers for the fabric we are communicating over.
  *
- * Return: true अगर we are running as a RoCE port and must क्रमce the
+ * Return: true if we are running as a RoCE port and must force the
  * addition of a Global Route Header built from our Ethernet Address
- * Handle पूर्णांकo our header list क्रम connectionless packets.
+ * Handle into our header list for connectionless packets.
  */
-अटल अंतरभूत bool rdma_cap_eth_ah(स्थिर काष्ठा ib_device *device, u32 port_num)
-अणु
-	वापस device->port_data[port_num].immutable.core_cap_flags &
+static inline bool rdma_cap_eth_ah(const struct ib_device *device, u32 port_num)
+{
+	return device->port_data[port_num].immutable.core_cap_flags &
 	       RDMA_CORE_CAP_ETH_AH;
-पूर्ण
+}
 
 /**
- * rdma_cap_opa_ah - Check अगर the port of device supports
+ * rdma_cap_opa_ah - Check if the port of device supports
  * OPA Address handles
  * @device: Device to check
  * @port_num: Port number to check
  *
- * Return: true अगर we are running on an OPA device which supports
+ * Return: true if we are running on an OPA device which supports
  * the extended OPA addressing.
  */
-अटल अंतरभूत bool rdma_cap_opa_ah(काष्ठा ib_device *device, u32 port_num)
-अणु
-	वापस (device->port_data[port_num].immutable.core_cap_flags &
+static inline bool rdma_cap_opa_ah(struct ib_device *device, u32 port_num)
+{
+	return (device->port_data[port_num].immutable.core_cap_flags &
 		RDMA_CORE_CAP_OPA_AH) == RDMA_CORE_CAP_OPA_AH;
-पूर्ण
+}
 
 /**
  * rdma_max_mad_size - Return the max MAD size required by this RDMA Port.
@@ -3283,78 +3282,78 @@ bool ib_modअगरy_qp_is_ok(क्रमागत ib_qp_state cur_state, क�
  * This MAD size includes the MAD headers and MAD payload.  No other headers
  * are included.
  *
- * Return the max MAD size required by the Port.  Will वापस 0 अगर the port
- * करोes not support MADs
+ * Return the max MAD size required by the Port.  Will return 0 if the port
+ * does not support MADs
  */
-अटल अंतरभूत माप_प्रकार rdma_max_mad_size(स्थिर काष्ठा ib_device *device,
+static inline size_t rdma_max_mad_size(const struct ib_device *device,
 				       u32 port_num)
-अणु
-	वापस device->port_data[port_num].immutable.max_mad_size;
-पूर्ण
+{
+	return device->port_data[port_num].immutable.max_mad_size;
+}
 
 /**
- * rdma_cap_roce_gid_table - Check अगर the port of device uses roce_gid_table
+ * rdma_cap_roce_gid_table - Check if the port of device uses roce_gid_table
  * @device: Device to check
  * @port_num: Port number to check
  *
- * RoCE GID table mechanism manages the various GIDs क्रम a device.
+ * RoCE GID table mechanism manages the various GIDs for a device.
  *
- * NOTE: अगर allocating the port's GID table has failed, this call will still
- * वापस true, but any RoCE GID table API will fail.
+ * NOTE: if allocating the port's GID table has failed, this call will still
+ * return true, but any RoCE GID table API will fail.
  *
- * Return: true अगर the port uses RoCE GID table mechanism in order to manage
+ * Return: true if the port uses RoCE GID table mechanism in order to manage
  * its GIDs.
  */
-अटल अंतरभूत bool rdma_cap_roce_gid_table(स्थिर काष्ठा ib_device *device,
+static inline bool rdma_cap_roce_gid_table(const struct ib_device *device,
 					   u32 port_num)
-अणु
-	वापस rdma_protocol_roce(device, port_num) &&
+{
+	return rdma_protocol_roce(device, port_num) &&
 		device->ops.add_gid && device->ops.del_gid;
-पूर्ण
+}
 
 /*
- * Check अगर the device supports READ W/ INVALIDATE.
+ * Check if the device supports READ W/ INVALIDATE.
  */
-अटल अंतरभूत bool rdma_cap_पढ़ो_inv(काष्ठा ib_device *dev, u32 port_num)
-अणु
+static inline bool rdma_cap_read_inv(struct ib_device *dev, u32 port_num)
+{
 	/*
 	 * iWarp drivers must support READ W/ INVALIDATE.  No other protocol
-	 * has support क्रम it yet.
+	 * has support for it yet.
 	 */
-	वापस rdma_protocol_iwarp(dev, port_num);
-पूर्ण
+	return rdma_protocol_iwarp(dev, port_num);
+}
 
 /**
  * rdma_core_cap_opa_port - Return whether the RDMA Port is OPA or not.
  * @device: Device
  * @port_num: 1 based Port number
  *
- * Return true अगर port is an Intel OPA port , false अगर not
+ * Return true if port is an Intel OPA port , false if not
  */
-अटल अंतरभूत bool rdma_core_cap_opa_port(काष्ठा ib_device *device,
+static inline bool rdma_core_cap_opa_port(struct ib_device *device,
 					  u32 port_num)
-अणु
-	वापस (device->port_data[port_num].immutable.core_cap_flags &
+{
+	return (device->port_data[port_num].immutable.core_cap_flags &
 		RDMA_CORE_PORT_INTEL_OPA) == RDMA_CORE_PORT_INTEL_OPA;
-पूर्ण
+}
 
 /**
- * rdma_mtu_क्रमागत_to_पूर्णांक - Return the mtu of the port as an पूर्णांकeger value.
+ * rdma_mtu_enum_to_int - Return the mtu of the port as an integer value.
  * @device: Device
  * @port_num: Port number
- * @mtu: क्रमागत value of MTU
+ * @mtu: enum value of MTU
  *
- * Return the MTU size supported by the port as an पूर्णांकeger value. Will वापस
- * -1 अगर क्रमागत value of mtu is not supported.
+ * Return the MTU size supported by the port as an integer value. Will return
+ * -1 if enum value of mtu is not supported.
  */
-अटल अंतरभूत पूर्णांक rdma_mtu_क्रमागत_to_पूर्णांक(काष्ठा ib_device *device, u32 port,
-				       पूर्णांक mtu)
-अणु
-	अगर (rdma_core_cap_opa_port(device, port))
-		वापस opa_mtu_क्रमागत_to_पूर्णांक((क्रमागत opa_mtu)mtu);
-	अन्यथा
-		वापस ib_mtu_क्रमागत_to_पूर्णांक((क्रमागत ib_mtu)mtu);
-पूर्ण
+static inline int rdma_mtu_enum_to_int(struct ib_device *device, u32 port,
+				       int mtu)
+{
+	if (rdma_core_cap_opa_port(device, port))
+		return opa_mtu_enum_to_int((enum opa_mtu)mtu);
+	else
+		return ib_mtu_enum_to_int((enum ib_mtu)mtu);
+}
 
 /**
  * rdma_mtu_from_attr - Return the mtu of the port from the port attribute.
@@ -3362,123 +3361,123 @@ bool ib_modअगरy_qp_is_ok(क्रमागत ib_qp_state cur_state, क�
  * @port_num: Port number
  * @attr: port attribute
  *
- * Return the MTU size supported by the port as an पूर्णांकeger value.
+ * Return the MTU size supported by the port as an integer value.
  */
-अटल अंतरभूत पूर्णांक rdma_mtu_from_attr(काष्ठा ib_device *device, u32 port,
-				     काष्ठा ib_port_attr *attr)
-अणु
-	अगर (rdma_core_cap_opa_port(device, port))
-		वापस attr->phys_mtu;
-	अन्यथा
-		वापस ib_mtu_क्रमागत_to_पूर्णांक(attr->max_mtu);
-पूर्ण
+static inline int rdma_mtu_from_attr(struct ib_device *device, u32 port,
+				     struct ib_port_attr *attr)
+{
+	if (rdma_core_cap_opa_port(device, port))
+		return attr->phys_mtu;
+	else
+		return ib_mtu_enum_to_int(attr->max_mtu);
+}
 
-पूर्णांक ib_set_vf_link_state(काष्ठा ib_device *device, पूर्णांक vf, u32 port,
-			 पूर्णांक state);
-पूर्णांक ib_get_vf_config(काष्ठा ib_device *device, पूर्णांक vf, u32 port,
-		     काष्ठा अगरla_vf_info *info);
-पूर्णांक ib_get_vf_stats(काष्ठा ib_device *device, पूर्णांक vf, u32 port,
-		    काष्ठा अगरla_vf_stats *stats);
-पूर्णांक ib_get_vf_guid(काष्ठा ib_device *device, पूर्णांक vf, u32 port,
-		    काष्ठा अगरla_vf_guid *node_guid,
-		    काष्ठा अगरla_vf_guid *port_guid);
-पूर्णांक ib_set_vf_guid(काष्ठा ib_device *device, पूर्णांक vf, u32 port, u64 guid,
-		   पूर्णांक type);
+int ib_set_vf_link_state(struct ib_device *device, int vf, u32 port,
+			 int state);
+int ib_get_vf_config(struct ib_device *device, int vf, u32 port,
+		     struct ifla_vf_info *info);
+int ib_get_vf_stats(struct ib_device *device, int vf, u32 port,
+		    struct ifla_vf_stats *stats);
+int ib_get_vf_guid(struct ib_device *device, int vf, u32 port,
+		    struct ifla_vf_guid *node_guid,
+		    struct ifla_vf_guid *port_guid);
+int ib_set_vf_guid(struct ib_device *device, int vf, u32 port, u64 guid,
+		   int type);
 
-पूर्णांक ib_query_pkey(काष्ठा ib_device *device,
+int ib_query_pkey(struct ib_device *device,
 		  u32 port_num, u16 index, u16 *pkey);
 
-पूर्णांक ib_modअगरy_device(काष्ठा ib_device *device,
-		     पूर्णांक device_modअगरy_mask,
-		     काष्ठा ib_device_modअगरy *device_modअगरy);
+int ib_modify_device(struct ib_device *device,
+		     int device_modify_mask,
+		     struct ib_device_modify *device_modify);
 
-पूर्णांक ib_modअगरy_port(काष्ठा ib_device *device,
-		   u32 port_num, पूर्णांक port_modअगरy_mask,
-		   काष्ठा ib_port_modअगरy *port_modअगरy);
+int ib_modify_port(struct ib_device *device,
+		   u32 port_num, int port_modify_mask,
+		   struct ib_port_modify *port_modify);
 
-पूर्णांक ib_find_gid(काष्ठा ib_device *device, जोड़ ib_gid *gid,
+int ib_find_gid(struct ib_device *device, union ib_gid *gid,
 		u32 *port_num, u16 *index);
 
-पूर्णांक ib_find_pkey(काष्ठा ib_device *device,
+int ib_find_pkey(struct ib_device *device,
 		 u32 port_num, u16 pkey, u16 *index);
 
-क्रमागत ib_pd_flags अणु
+enum ib_pd_flags {
 	/*
-	 * Create a memory registration क्रम all memory in the प्रणाली and place
-	 * the rkey क्रम it पूर्णांकo pd->unsafe_global_rkey.  This can be used by
-	 * ULPs to aव्योम the overhead of dynamic MRs.
+	 * Create a memory registration for all memory in the system and place
+	 * the rkey for it into pd->unsafe_global_rkey.  This can be used by
+	 * ULPs to avoid the overhead of dynamic MRs.
 	 *
 	 * This flag is generally considered unsafe and must only be used in
 	 * extremly trusted environments.  Every use of it will log a warning
 	 * in the kernel log.
 	 */
 	IB_PD_UNSAFE_GLOBAL_RKEY	= 0x01,
-पूर्ण;
+};
 
-काष्ठा ib_pd *__ib_alloc_pd(काष्ठा ib_device *device, अचिन्हित पूर्णांक flags,
-		स्थिर अक्षर *caller);
+struct ib_pd *__ib_alloc_pd(struct ib_device *device, unsigned int flags,
+		const char *caller);
 
 /**
- * ib_alloc_pd - Allocates an unused protection करोमुख्य.
- * @device: The device on which to allocate the protection करोमुख्य.
- * @flags: protection करोमुख्य flags
+ * ib_alloc_pd - Allocates an unused protection domain.
+ * @device: The device on which to allocate the protection domain.
+ * @flags: protection domain flags
  *
- * A protection करोमुख्य object provides an association between QPs, shared
- * receive queues, address handles, memory regions, and memory winकरोws.
+ * A protection domain object provides an association between QPs, shared
+ * receive queues, address handles, memory regions, and memory windows.
  *
- * Every PD has a local_dma_lkey which can be used as the lkey value क्रम local
+ * Every PD has a local_dma_lkey which can be used as the lkey value for local
  * memory operations.
  */
-#घोषणा ib_alloc_pd(device, flags) \
+#define ib_alloc_pd(device, flags) \
 	__ib_alloc_pd((device), (flags), KBUILD_MODNAME)
 
-पूर्णांक ib_dealloc_pd_user(काष्ठा ib_pd *pd, काष्ठा ib_udata *udata);
+int ib_dealloc_pd_user(struct ib_pd *pd, struct ib_udata *udata);
 
 /**
  * ib_dealloc_pd - Deallocate kernel PD
- * @pd: The protection करोमुख्य
+ * @pd: The protection domain
  *
- * NOTE: क्रम user PD use ib_dealloc_pd_user with valid udata!
+ * NOTE: for user PD use ib_dealloc_pd_user with valid udata!
  */
-अटल अंतरभूत व्योम ib_dealloc_pd(काष्ठा ib_pd *pd)
-अणु
-	पूर्णांक ret = ib_dealloc_pd_user(pd, शून्य);
+static inline void ib_dealloc_pd(struct ib_pd *pd)
+{
+	int ret = ib_dealloc_pd_user(pd, NULL);
 
 	WARN_ONCE(ret, "Destroy of kernel PD shouldn't fail");
-पूर्ण
+}
 
-क्रमागत rdma_create_ah_flags अणु
+enum rdma_create_ah_flags {
 	/* In a sleepable context */
 	RDMA_CREATE_AH_SLEEPABLE = BIT(0),
-पूर्ण;
+};
 
 /**
- * rdma_create_ah - Creates an address handle क्रम the given address vector.
- * @pd: The protection करोमुख्य associated with the address handle.
+ * rdma_create_ah - Creates an address handle for the given address vector.
+ * @pd: The protection domain associated with the address handle.
  * @ah_attr: The attributes of the address vector.
- * @flags: Create address handle flags (see क्रमागत rdma_create_ah_flags).
+ * @flags: Create address handle flags (see enum rdma_create_ah_flags).
  *
  * The address handle is used to reference a local or global destination
  * in all UD QP post sends.
  */
-काष्ठा ib_ah *rdma_create_ah(काष्ठा ib_pd *pd, काष्ठा rdma_ah_attr *ah_attr,
+struct ib_ah *rdma_create_ah(struct ib_pd *pd, struct rdma_ah_attr *ah_attr,
 			     u32 flags);
 
 /**
- * rdma_create_user_ah - Creates an address handle क्रम the given address vector.
- * It resolves destination mac address क्रम ah attribute of RoCE type.
- * @pd: The protection करोमुख्य associated with the address handle.
+ * rdma_create_user_ah - Creates an address handle for the given address vector.
+ * It resolves destination mac address for ah attribute of RoCE type.
+ * @pd: The protection domain associated with the address handle.
  * @ah_attr: The attributes of the address vector.
- * @udata: poपूर्णांकer to user's input output buffer inक्रमmation need by
+ * @udata: pointer to user's input output buffer information need by
  *         provider driver.
  *
- * It वापसs 0 on success and वापसs appropriate error code on error.
+ * It returns 0 on success and returns appropriate error code on error.
  * The address handle is used to reference a local or global destination
  * in all UD QP post sends.
  */
-काष्ठा ib_ah *rdma_create_user_ah(काष्ठा ib_pd *pd,
-				  काष्ठा rdma_ah_attr *ah_attr,
-				  काष्ठा ib_udata *udata);
+struct ib_ah *rdma_create_user_ah(struct ib_pd *pd,
+				  struct rdma_ah_attr *ah_attr,
+				  struct ib_udata *udata);
 /**
  * ib_get_gids_from_rdma_hdr - Get sgid and dgid from GRH or IPv4 header
  *   work completion.
@@ -3487,15 +3486,15 @@ bool ib_modअगरy_qp_is_ok(क्रमागत ib_qp_state cur_state, क�
  * @sgid: place to store source gid
  * @dgid: place to store destination gid
  */
-पूर्णांक ib_get_gids_from_rdma_hdr(स्थिर जोड़ rdma_network_hdr *hdr,
-			      क्रमागत rdma_network_type net_type,
-			      जोड़ ib_gid *sgid, जोड़ ib_gid *dgid);
+int ib_get_gids_from_rdma_hdr(const union rdma_network_hdr *hdr,
+			      enum rdma_network_type net_type,
+			      union ib_gid *sgid, union ib_gid *dgid);
 
 /**
  * ib_get_rdma_header_version - Get the header version
  * @hdr: the L3 header to parse
  */
-पूर्णांक ib_get_rdma_header_version(स्थिर जोड़ rdma_network_hdr *hdr);
+int ib_get_rdma_header_version(const union rdma_network_hdr *hdr);
 
 /**
  * ib_init_ah_attr_from_wc - Initializes address handle attributes from a
@@ -3506,24 +3505,24 @@ bool ib_modअगरy_qp_is_ok(क्रमागत ib_qp_state cur_state, क�
  * @grh: References the received global route header.  This parameter is
  *   ignored unless the work completion indicates that the GRH is valid.
  * @ah_attr: Returned attributes that can be used when creating an address
- *   handle क्रम replying to the message.
- * When ib_init_ah_attr_from_wc() वापसs success,
- * (a) क्रम IB link layer it optionally contains a reference to SGID attribute
- * when GRH is present क्रम IB link layer.
- * (b) क्रम RoCE link layer it contains a reference to SGID attribute.
+ *   handle for replying to the message.
+ * When ib_init_ah_attr_from_wc() returns success,
+ * (a) for IB link layer it optionally contains a reference to SGID attribute
+ * when GRH is present for IB link layer.
+ * (b) for RoCE link layer it contains a reference to SGID attribute.
  * User must invoke rdma_cleanup_ah_attr_gid_attr() to release reference to SGID
  * attributes which are initialized using ib_init_ah_attr_from_wc().
  *
  */
-पूर्णांक ib_init_ah_attr_from_wc(काष्ठा ib_device *device, u32 port_num,
-			    स्थिर काष्ठा ib_wc *wc, स्थिर काष्ठा ib_grh *grh,
-			    काष्ठा rdma_ah_attr *ah_attr);
+int ib_init_ah_attr_from_wc(struct ib_device *device, u32 port_num,
+			    const struct ib_wc *wc, const struct ib_grh *grh,
+			    struct rdma_ah_attr *ah_attr);
 
 /**
  * ib_create_ah_from_wc - Creates an address handle associated with the
- *   sender of the specअगरied work completion.
- * @pd: The protection करोमुख्य associated with the address handle.
- * @wc: Work completion inक्रमmation associated with a received message.
+ *   sender of the specified work completion.
+ * @pd: The protection domain associated with the address handle.
+ * @wc: Work completion information associated with a received message.
  * @grh: References the received global route header.  This parameter is
  *   ignored unless the work completion indicates that the GRH is valid.
  * @port_num: The outbound port number to associate with the address.
@@ -3531,17 +3530,17 @@ bool ib_modअगरy_qp_is_ok(क्रमागत ib_qp_state cur_state, क�
  * The address handle is used to reference a local or global destination
  * in all UD QP post sends.
  */
-काष्ठा ib_ah *ib_create_ah_from_wc(काष्ठा ib_pd *pd, स्थिर काष्ठा ib_wc *wc,
-				   स्थिर काष्ठा ib_grh *grh, u32 port_num);
+struct ib_ah *ib_create_ah_from_wc(struct ib_pd *pd, const struct ib_wc *wc,
+				   const struct ib_grh *grh, u32 port_num);
 
 /**
- * rdma_modअगरy_ah - Modअगरies the address vector associated with an address
+ * rdma_modify_ah - Modifies the address vector associated with an address
  *   handle.
- * @ah: The address handle to modअगरy.
+ * @ah: The address handle to modify.
  * @ah_attr: The new address vector attributes to associate with the
  *   address handle.
  */
-पूर्णांक rdma_modअगरy_ah(काष्ठा ib_ah *ah, काष्ठा rdma_ah_attr *ah_attr);
+int rdma_modify_ah(struct ib_ah *ah, struct rdma_ah_attr *ah_attr);
 
 /**
  * rdma_query_ah - Queries the address vector associated with an address
@@ -3550,637 +3549,637 @@ bool ib_modअगरy_qp_is_ok(क्रमागत ib_qp_state cur_state, क�
  * @ah_attr: The address vector attributes associated with the address
  *   handle.
  */
-पूर्णांक rdma_query_ah(काष्ठा ib_ah *ah, काष्ठा rdma_ah_attr *ah_attr);
+int rdma_query_ah(struct ib_ah *ah, struct rdma_ah_attr *ah_attr);
 
-क्रमागत rdma_destroy_ah_flags अणु
+enum rdma_destroy_ah_flags {
 	/* In a sleepable context */
 	RDMA_DESTROY_AH_SLEEPABLE = BIT(0),
-पूर्ण;
+};
 
 /**
  * rdma_destroy_ah_user - Destroys an address handle.
  * @ah: The address handle to destroy.
- * @flags: Destroy address handle flags (see क्रमागत rdma_destroy_ah_flags).
- * @udata: Valid user data or शून्य क्रम kernel objects
+ * @flags: Destroy address handle flags (see enum rdma_destroy_ah_flags).
+ * @udata: Valid user data or NULL for kernel objects
  */
-पूर्णांक rdma_destroy_ah_user(काष्ठा ib_ah *ah, u32 flags, काष्ठा ib_udata *udata);
+int rdma_destroy_ah_user(struct ib_ah *ah, u32 flags, struct ib_udata *udata);
 
 /**
  * rdma_destroy_ah - Destroys an kernel address handle.
  * @ah: The address handle to destroy.
- * @flags: Destroy address handle flags (see क्रमागत rdma_destroy_ah_flags).
+ * @flags: Destroy address handle flags (see enum rdma_destroy_ah_flags).
  *
- * NOTE: क्रम user ah use rdma_destroy_ah_user with valid udata!
+ * NOTE: for user ah use rdma_destroy_ah_user with valid udata!
  */
-अटल अंतरभूत व्योम rdma_destroy_ah(काष्ठा ib_ah *ah, u32 flags)
-अणु
-	पूर्णांक ret = rdma_destroy_ah_user(ah, flags, शून्य);
+static inline void rdma_destroy_ah(struct ib_ah *ah, u32 flags)
+{
+	int ret = rdma_destroy_ah_user(ah, flags, NULL);
 
 	WARN_ONCE(ret, "Destroy of kernel AH shouldn't fail");
-पूर्ण
+}
 
-काष्ठा ib_srq *ib_create_srq_user(काष्ठा ib_pd *pd,
-				  काष्ठा ib_srq_init_attr *srq_init_attr,
-				  काष्ठा ib_usrq_object *uobject,
-				  काष्ठा ib_udata *udata);
-अटल अंतरभूत काष्ठा ib_srq *
-ib_create_srq(काष्ठा ib_pd *pd, काष्ठा ib_srq_init_attr *srq_init_attr)
-अणु
-	अगर (!pd->device->ops.create_srq)
-		वापस ERR_PTR(-EOPNOTSUPP);
+struct ib_srq *ib_create_srq_user(struct ib_pd *pd,
+				  struct ib_srq_init_attr *srq_init_attr,
+				  struct ib_usrq_object *uobject,
+				  struct ib_udata *udata);
+static inline struct ib_srq *
+ib_create_srq(struct ib_pd *pd, struct ib_srq_init_attr *srq_init_attr)
+{
+	if (!pd->device->ops.create_srq)
+		return ERR_PTR(-EOPNOTSUPP);
 
-	वापस ib_create_srq_user(pd, srq_init_attr, शून्य, शून्य);
-पूर्ण
+	return ib_create_srq_user(pd, srq_init_attr, NULL, NULL);
+}
 
 /**
- * ib_modअगरy_srq - Modअगरies the attributes क्रम the specअगरied SRQ.
- * @srq: The SRQ to modअगरy.
- * @srq_attr: On input, specअगरies the SRQ attributes to modअगरy.  On output,
- *   the current values of selected SRQ attributes are वापसed.
- * @srq_attr_mask: A bit-mask used to specअगरy which attributes of the SRQ
- *   are being modअगरied.
+ * ib_modify_srq - Modifies the attributes for the specified SRQ.
+ * @srq: The SRQ to modify.
+ * @srq_attr: On input, specifies the SRQ attributes to modify.  On output,
+ *   the current values of selected SRQ attributes are returned.
+ * @srq_attr_mask: A bit-mask used to specify which attributes of the SRQ
+ *   are being modified.
  *
  * The mask may contain IB_SRQ_MAX_WR to resize the SRQ and/or
- * IB_SRQ_LIMIT to set the SRQ's limit and request notअगरication when
+ * IB_SRQ_LIMIT to set the SRQ's limit and request notification when
  * the number of receives queued drops below the limit.
  */
-पूर्णांक ib_modअगरy_srq(काष्ठा ib_srq *srq,
-		  काष्ठा ib_srq_attr *srq_attr,
-		  क्रमागत ib_srq_attr_mask srq_attr_mask);
+int ib_modify_srq(struct ib_srq *srq,
+		  struct ib_srq_attr *srq_attr,
+		  enum ib_srq_attr_mask srq_attr_mask);
 
 /**
- * ib_query_srq - Returns the attribute list and current values क्रम the
- *   specअगरied SRQ.
+ * ib_query_srq - Returns the attribute list and current values for the
+ *   specified SRQ.
  * @srq: The SRQ to query.
- * @srq_attr: The attributes of the specअगरied SRQ.
+ * @srq_attr: The attributes of the specified SRQ.
  */
-पूर्णांक ib_query_srq(काष्ठा ib_srq *srq,
-		 काष्ठा ib_srq_attr *srq_attr);
+int ib_query_srq(struct ib_srq *srq,
+		 struct ib_srq_attr *srq_attr);
 
 /**
- * ib_destroy_srq_user - Destroys the specअगरied SRQ.
+ * ib_destroy_srq_user - Destroys the specified SRQ.
  * @srq: The SRQ to destroy.
- * @udata: Valid user data or शून्य क्रम kernel objects
+ * @udata: Valid user data or NULL for kernel objects
  */
-पूर्णांक ib_destroy_srq_user(काष्ठा ib_srq *srq, काष्ठा ib_udata *udata);
+int ib_destroy_srq_user(struct ib_srq *srq, struct ib_udata *udata);
 
 /**
- * ib_destroy_srq - Destroys the specअगरied kernel SRQ.
+ * ib_destroy_srq - Destroys the specified kernel SRQ.
  * @srq: The SRQ to destroy.
  *
- * NOTE: क्रम user srq use ib_destroy_srq_user with valid udata!
+ * NOTE: for user srq use ib_destroy_srq_user with valid udata!
  */
-अटल अंतरभूत व्योम ib_destroy_srq(काष्ठा ib_srq *srq)
-अणु
-	पूर्णांक ret = ib_destroy_srq_user(srq, शून्य);
+static inline void ib_destroy_srq(struct ib_srq *srq)
+{
+	int ret = ib_destroy_srq_user(srq, NULL);
 
 	WARN_ONCE(ret, "Destroy of kernel SRQ shouldn't fail");
-पूर्ण
+}
 
 /**
- * ib_post_srq_recv - Posts a list of work requests to the specअगरied SRQ.
+ * ib_post_srq_recv - Posts a list of work requests to the specified SRQ.
  * @srq: The SRQ to post the work request on.
  * @recv_wr: A list of work requests to post on the receive queue.
  * @bad_recv_wr: On an immediate failure, this parameter will reference
  *   the work request that failed to be posted on the QP.
  */
-अटल अंतरभूत पूर्णांक ib_post_srq_recv(काष्ठा ib_srq *srq,
-				   स्थिर काष्ठा ib_recv_wr *recv_wr,
-				   स्थिर काष्ठा ib_recv_wr **bad_recv_wr)
-अणु
-	स्थिर काष्ठा ib_recv_wr *dummy;
+static inline int ib_post_srq_recv(struct ib_srq *srq,
+				   const struct ib_recv_wr *recv_wr,
+				   const struct ib_recv_wr **bad_recv_wr)
+{
+	const struct ib_recv_wr *dummy;
 
-	वापस srq->device->ops.post_srq_recv(srq, recv_wr,
+	return srq->device->ops.post_srq_recv(srq, recv_wr,
 					      bad_recv_wr ? : &dummy);
-पूर्ण
+}
 
-काष्ठा ib_qp *ib_create_named_qp(काष्ठा ib_pd *pd,
-				 काष्ठा ib_qp_init_attr *qp_init_attr,
-				 स्थिर अक्षर *caller);
-अटल अंतरभूत काष्ठा ib_qp *ib_create_qp(काष्ठा ib_pd *pd,
-					 काष्ठा ib_qp_init_attr *init_attr)
-अणु
-	वापस ib_create_named_qp(pd, init_attr, KBUILD_MODNAME);
-पूर्ण
+struct ib_qp *ib_create_named_qp(struct ib_pd *pd,
+				 struct ib_qp_init_attr *qp_init_attr,
+				 const char *caller);
+static inline struct ib_qp *ib_create_qp(struct ib_pd *pd,
+					 struct ib_qp_init_attr *init_attr)
+{
+	return ib_create_named_qp(pd, init_attr, KBUILD_MODNAME);
+}
 
 /**
- * ib_modअगरy_qp_with_udata - Modअगरies the attributes क्रम the specअगरied QP.
- * @qp: The QP to modअगरy.
- * @attr: On input, specअगरies the QP attributes to modअगरy.  On output,
- *   the current values of selected QP attributes are वापसed.
- * @attr_mask: A bit-mask used to specअगरy which attributes of the QP
- *   are being modअगरied.
- * @udata: poपूर्णांकer to user's input output buffer inक्रमmation
- *   are being modअगरied.
- * It वापसs 0 on success and वापसs appropriate error code on error.
+ * ib_modify_qp_with_udata - Modifies the attributes for the specified QP.
+ * @qp: The QP to modify.
+ * @attr: On input, specifies the QP attributes to modify.  On output,
+ *   the current values of selected QP attributes are returned.
+ * @attr_mask: A bit-mask used to specify which attributes of the QP
+ *   are being modified.
+ * @udata: pointer to user's input output buffer information
+ *   are being modified.
+ * It returns 0 on success and returns appropriate error code on error.
  */
-पूर्णांक ib_modअगरy_qp_with_udata(काष्ठा ib_qp *qp,
-			    काष्ठा ib_qp_attr *attr,
-			    पूर्णांक attr_mask,
-			    काष्ठा ib_udata *udata);
+int ib_modify_qp_with_udata(struct ib_qp *qp,
+			    struct ib_qp_attr *attr,
+			    int attr_mask,
+			    struct ib_udata *udata);
 
 /**
- * ib_modअगरy_qp - Modअगरies the attributes क्रम the specअगरied QP and then
+ * ib_modify_qp - Modifies the attributes for the specified QP and then
  *   transitions the QP to the given state.
- * @qp: The QP to modअगरy.
- * @qp_attr: On input, specअगरies the QP attributes to modअगरy.  On output,
- *   the current values of selected QP attributes are वापसed.
- * @qp_attr_mask: A bit-mask used to specअगरy which attributes of the QP
- *   are being modअगरied.
+ * @qp: The QP to modify.
+ * @qp_attr: On input, specifies the QP attributes to modify.  On output,
+ *   the current values of selected QP attributes are returned.
+ * @qp_attr_mask: A bit-mask used to specify which attributes of the QP
+ *   are being modified.
  */
-पूर्णांक ib_modअगरy_qp(काष्ठा ib_qp *qp,
-		 काष्ठा ib_qp_attr *qp_attr,
-		 पूर्णांक qp_attr_mask);
+int ib_modify_qp(struct ib_qp *qp,
+		 struct ib_qp_attr *qp_attr,
+		 int qp_attr_mask);
 
 /**
- * ib_query_qp - Returns the attribute list and current values क्रम the
- *   specअगरied QP.
+ * ib_query_qp - Returns the attribute list and current values for the
+ *   specified QP.
  * @qp: The QP to query.
- * @qp_attr: The attributes of the specअगरied QP.
- * @qp_attr_mask: A bit-mask used to select specअगरic attributes to query.
+ * @qp_attr: The attributes of the specified QP.
+ * @qp_attr_mask: A bit-mask used to select specific attributes to query.
  * @qp_init_attr: Additional attributes of the selected QP.
  *
  * The qp_attr_mask may be used to limit the query to gathering only the
  * selected attributes.
  */
-पूर्णांक ib_query_qp(काष्ठा ib_qp *qp,
-		काष्ठा ib_qp_attr *qp_attr,
-		पूर्णांक qp_attr_mask,
-		काष्ठा ib_qp_init_attr *qp_init_attr);
+int ib_query_qp(struct ib_qp *qp,
+		struct ib_qp_attr *qp_attr,
+		int qp_attr_mask,
+		struct ib_qp_init_attr *qp_init_attr);
 
 /**
- * ib_destroy_qp - Destroys the specअगरied QP.
+ * ib_destroy_qp - Destroys the specified QP.
  * @qp: The QP to destroy.
- * @udata: Valid udata or शून्य क्रम kernel objects
+ * @udata: Valid udata or NULL for kernel objects
  */
-पूर्णांक ib_destroy_qp_user(काष्ठा ib_qp *qp, काष्ठा ib_udata *udata);
+int ib_destroy_qp_user(struct ib_qp *qp, struct ib_udata *udata);
 
 /**
- * ib_destroy_qp - Destroys the specअगरied kernel QP.
+ * ib_destroy_qp - Destroys the specified kernel QP.
  * @qp: The QP to destroy.
  *
- * NOTE: क्रम user qp use ib_destroy_qp_user with valid udata!
+ * NOTE: for user qp use ib_destroy_qp_user with valid udata!
  */
-अटल अंतरभूत पूर्णांक ib_destroy_qp(काष्ठा ib_qp *qp)
-अणु
-	वापस ib_destroy_qp_user(qp, शून्य);
-पूर्ण
+static inline int ib_destroy_qp(struct ib_qp *qp)
+{
+	return ib_destroy_qp_user(qp, NULL);
+}
 
 /**
- * ib_खोलो_qp - Obtain a reference to an existing sharable QP.
- * @xrcd - XRC करोमुख्य
- * @qp_खोलो_attr: Attributes identअगरying the QP to खोलो.
+ * ib_open_qp - Obtain a reference to an existing sharable QP.
+ * @xrcd - XRC domain
+ * @qp_open_attr: Attributes identifying the QP to open.
  *
  * Returns a reference to a sharable QP.
  */
-काष्ठा ib_qp *ib_खोलो_qp(काष्ठा ib_xrcd *xrcd,
-			 काष्ठा ib_qp_खोलो_attr *qp_खोलो_attr);
+struct ib_qp *ib_open_qp(struct ib_xrcd *xrcd,
+			 struct ib_qp_open_attr *qp_open_attr);
 
 /**
- * ib_बंद_qp - Release an बाह्यal reference to a QP.
+ * ib_close_qp - Release an external reference to a QP.
  * @qp: The QP handle to release
  *
- * The खोलोed QP handle is released by the caller.  The underlying
- * shared QP is not destroyed until all पूर्णांकernal references are released.
+ * The opened QP handle is released by the caller.  The underlying
+ * shared QP is not destroyed until all internal references are released.
  */
-पूर्णांक ib_बंद_qp(काष्ठा ib_qp *qp);
+int ib_close_qp(struct ib_qp *qp);
 
 /**
  * ib_post_send - Posts a list of work requests to the send queue of
- *   the specअगरied QP.
+ *   the specified QP.
  * @qp: The QP to post the work request on.
  * @send_wr: A list of work requests to post on the send queue.
  * @bad_send_wr: On an immediate failure, this parameter will reference
  *   the work request that failed to be posted on the QP.
  *
- * While IBA Vol. 1 section 11.4.1.1 specअगरies that अगर an immediate
- * error is वापसed, the QP state shall not be affected,
- * ib_post_send() will वापस an immediate error after queueing any
+ * While IBA Vol. 1 section 11.4.1.1 specifies that if an immediate
+ * error is returned, the QP state shall not be affected,
+ * ib_post_send() will return an immediate error after queueing any
  * earlier work requests in the list.
  */
-अटल अंतरभूत पूर्णांक ib_post_send(काष्ठा ib_qp *qp,
-			       स्थिर काष्ठा ib_send_wr *send_wr,
-			       स्थिर काष्ठा ib_send_wr **bad_send_wr)
-अणु
-	स्थिर काष्ठा ib_send_wr *dummy;
+static inline int ib_post_send(struct ib_qp *qp,
+			       const struct ib_send_wr *send_wr,
+			       const struct ib_send_wr **bad_send_wr)
+{
+	const struct ib_send_wr *dummy;
 
-	वापस qp->device->ops.post_send(qp, send_wr, bad_send_wr ? : &dummy);
-पूर्ण
+	return qp->device->ops.post_send(qp, send_wr, bad_send_wr ? : &dummy);
+}
 
 /**
  * ib_post_recv - Posts a list of work requests to the receive queue of
- *   the specअगरied QP.
+ *   the specified QP.
  * @qp: The QP to post the work request on.
  * @recv_wr: A list of work requests to post on the receive queue.
  * @bad_recv_wr: On an immediate failure, this parameter will reference
  *   the work request that failed to be posted on the QP.
  */
-अटल अंतरभूत पूर्णांक ib_post_recv(काष्ठा ib_qp *qp,
-			       स्थिर काष्ठा ib_recv_wr *recv_wr,
-			       स्थिर काष्ठा ib_recv_wr **bad_recv_wr)
-अणु
-	स्थिर काष्ठा ib_recv_wr *dummy;
+static inline int ib_post_recv(struct ib_qp *qp,
+			       const struct ib_recv_wr *recv_wr,
+			       const struct ib_recv_wr **bad_recv_wr)
+{
+	const struct ib_recv_wr *dummy;
 
-	वापस qp->device->ops.post_recv(qp, recv_wr, bad_recv_wr ? : &dummy);
-पूर्ण
+	return qp->device->ops.post_recv(qp, recv_wr, bad_recv_wr ? : &dummy);
+}
 
-काष्ठा ib_cq *__ib_alloc_cq(काष्ठा ib_device *dev, व्योम *निजी, पूर्णांक nr_cqe,
-			    पूर्णांक comp_vector, क्रमागत ib_poll_context poll_ctx,
-			    स्थिर अक्षर *caller);
-अटल अंतरभूत काष्ठा ib_cq *ib_alloc_cq(काष्ठा ib_device *dev, व्योम *निजी,
-					पूर्णांक nr_cqe, पूर्णांक comp_vector,
-					क्रमागत ib_poll_context poll_ctx)
-अणु
-	वापस __ib_alloc_cq(dev, निजी, nr_cqe, comp_vector, poll_ctx,
+struct ib_cq *__ib_alloc_cq(struct ib_device *dev, void *private, int nr_cqe,
+			    int comp_vector, enum ib_poll_context poll_ctx,
+			    const char *caller);
+static inline struct ib_cq *ib_alloc_cq(struct ib_device *dev, void *private,
+					int nr_cqe, int comp_vector,
+					enum ib_poll_context poll_ctx)
+{
+	return __ib_alloc_cq(dev, private, nr_cqe, comp_vector, poll_ctx,
 			     KBUILD_MODNAME);
-पूर्ण
+}
 
-काष्ठा ib_cq *__ib_alloc_cq_any(काष्ठा ib_device *dev, व्योम *निजी,
-				पूर्णांक nr_cqe, क्रमागत ib_poll_context poll_ctx,
-				स्थिर अक्षर *caller);
+struct ib_cq *__ib_alloc_cq_any(struct ib_device *dev, void *private,
+				int nr_cqe, enum ib_poll_context poll_ctx,
+				const char *caller);
 
 /**
  * ib_alloc_cq_any: Allocate kernel CQ
  * @dev: The IB device
- * @निजी: Private data attached to the CQE
+ * @private: Private data attached to the CQE
  * @nr_cqe: Number of CQEs in the CQ
- * @poll_ctx: Context used क्रम polling the CQ
+ * @poll_ctx: Context used for polling the CQ
  */
-अटल अंतरभूत काष्ठा ib_cq *ib_alloc_cq_any(काष्ठा ib_device *dev,
-					    व्योम *निजी, पूर्णांक nr_cqe,
-					    क्रमागत ib_poll_context poll_ctx)
-अणु
-	वापस __ib_alloc_cq_any(dev, निजी, nr_cqe, poll_ctx,
+static inline struct ib_cq *ib_alloc_cq_any(struct ib_device *dev,
+					    void *private, int nr_cqe,
+					    enum ib_poll_context poll_ctx)
+{
+	return __ib_alloc_cq_any(dev, private, nr_cqe, poll_ctx,
 				 KBUILD_MODNAME);
-पूर्ण
+}
 
-व्योम ib_मुक्त_cq(काष्ठा ib_cq *cq);
-पूर्णांक ib_process_cq_direct(काष्ठा ib_cq *cq, पूर्णांक budget);
+void ib_free_cq(struct ib_cq *cq);
+int ib_process_cq_direct(struct ib_cq *cq, int budget);
 
 /**
- * ib_create_cq - Creates a CQ on the specअगरied device.
+ * ib_create_cq - Creates a CQ on the specified device.
  * @device: The device on which to create the CQ.
- * @comp_handler: A user-specअगरied callback that is invoked when a
+ * @comp_handler: A user-specified callback that is invoked when a
  *   completion event occurs on the CQ.
- * @event_handler: A user-specअगरied callback that is invoked when an
+ * @event_handler: A user-specified callback that is invoked when an
  *   asynchronous event not associated with a completion occurs on the CQ.
- * @cq_context: Context associated with the CQ वापसed to the user via
+ * @cq_context: Context associated with the CQ returned to the user via
  *   the associated completion and event handlers.
  * @cq_attr: The attributes the CQ should be created upon.
  *
- * Users can examine the cq काष्ठाure to determine the actual CQ size.
+ * Users can examine the cq structure to determine the actual CQ size.
  */
-काष्ठा ib_cq *__ib_create_cq(काष्ठा ib_device *device,
+struct ib_cq *__ib_create_cq(struct ib_device *device,
 			     ib_comp_handler comp_handler,
-			     व्योम (*event_handler)(काष्ठा ib_event *, व्योम *),
-			     व्योम *cq_context,
-			     स्थिर काष्ठा ib_cq_init_attr *cq_attr,
-			     स्थिर अक्षर *caller);
-#घोषणा ib_create_cq(device, cmp_hndlr, evt_hndlr, cq_ctxt, cq_attr) \
+			     void (*event_handler)(struct ib_event *, void *),
+			     void *cq_context,
+			     const struct ib_cq_init_attr *cq_attr,
+			     const char *caller);
+#define ib_create_cq(device, cmp_hndlr, evt_hndlr, cq_ctxt, cq_attr) \
 	__ib_create_cq((device), (cmp_hndlr), (evt_hndlr), (cq_ctxt), (cq_attr), KBUILD_MODNAME)
 
 /**
- * ib_resize_cq - Modअगरies the capacity of the CQ.
+ * ib_resize_cq - Modifies the capacity of the CQ.
  * @cq: The CQ to resize.
  * @cqe: The minimum size of the CQ.
  *
- * Users can examine the cq काष्ठाure to determine the actual CQ size.
+ * Users can examine the cq structure to determine the actual CQ size.
  */
-पूर्णांक ib_resize_cq(काष्ठा ib_cq *cq, पूर्णांक cqe);
+int ib_resize_cq(struct ib_cq *cq, int cqe);
 
 /**
- * rdma_set_cq_moderation - Modअगरies moderation params of the CQ
- * @cq: The CQ to modअगरy.
+ * rdma_set_cq_moderation - Modifies moderation params of the CQ
+ * @cq: The CQ to modify.
  * @cq_count: number of CQEs that will trigger an event
- * @cq_period: max period of समय in usec beक्रमe triggering an event
+ * @cq_period: max period of time in usec before triggering an event
  *
  */
-पूर्णांक rdma_set_cq_moderation(काष्ठा ib_cq *cq, u16 cq_count, u16 cq_period);
+int rdma_set_cq_moderation(struct ib_cq *cq, u16 cq_count, u16 cq_period);
 
 /**
- * ib_destroy_cq_user - Destroys the specअगरied CQ.
+ * ib_destroy_cq_user - Destroys the specified CQ.
  * @cq: The CQ to destroy.
- * @udata: Valid user data or शून्य क्रम kernel objects
+ * @udata: Valid user data or NULL for kernel objects
  */
-पूर्णांक ib_destroy_cq_user(काष्ठा ib_cq *cq, काष्ठा ib_udata *udata);
+int ib_destroy_cq_user(struct ib_cq *cq, struct ib_udata *udata);
 
 /**
- * ib_destroy_cq - Destroys the specअगरied kernel CQ.
+ * ib_destroy_cq - Destroys the specified kernel CQ.
  * @cq: The CQ to destroy.
  *
- * NOTE: क्रम user cq use ib_destroy_cq_user with valid udata!
+ * NOTE: for user cq use ib_destroy_cq_user with valid udata!
  */
-अटल अंतरभूत व्योम ib_destroy_cq(काष्ठा ib_cq *cq)
-अणु
-	पूर्णांक ret = ib_destroy_cq_user(cq, शून्य);
+static inline void ib_destroy_cq(struct ib_cq *cq)
+{
+	int ret = ib_destroy_cq_user(cq, NULL);
 
 	WARN_ONCE(ret, "Destroy of kernel CQ shouldn't fail");
-पूर्ण
+}
 
 /**
- * ib_poll_cq - poll a CQ क्रम completion(s)
+ * ib_poll_cq - poll a CQ for completion(s)
  * @cq:the CQ being polled
- * @num_entries:maximum number of completions to वापस
- * @wc:array of at least @num_entries &काष्ठा ib_wc where completions
- *   will be वापसed
+ * @num_entries:maximum number of completions to return
+ * @wc:array of at least @num_entries &struct ib_wc where completions
+ *   will be returned
  *
- * Poll a CQ क्रम (possibly multiple) completions.  If the वापस value
- * is < 0, an error occurred.  If the वापस value is >= 0, it is the
- * number of completions वापसed.  If the वापस value is
+ * Poll a CQ for (possibly multiple) completions.  If the return value
+ * is < 0, an error occurred.  If the return value is >= 0, it is the
+ * number of completions returned.  If the return value is
  * non-negative and < num_entries, then the CQ was emptied.
  */
-अटल अंतरभूत पूर्णांक ib_poll_cq(काष्ठा ib_cq *cq, पूर्णांक num_entries,
-			     काष्ठा ib_wc *wc)
-अणु
-	वापस cq->device->ops.poll_cq(cq, num_entries, wc);
-पूर्ण
+static inline int ib_poll_cq(struct ib_cq *cq, int num_entries,
+			     struct ib_wc *wc)
+{
+	return cq->device->ops.poll_cq(cq, num_entries, wc);
+}
 
 /**
- * ib_req_notअगरy_cq - Request completion notअगरication on a CQ.
- * @cq: The CQ to generate an event क्रम.
+ * ib_req_notify_cq - Request completion notification on a CQ.
+ * @cq: The CQ to generate an event for.
  * @flags:
  *   Must contain exactly one of %IB_CQ_SOLICITED or %IB_CQ_NEXT_COMP
  *   to request an event on the next solicited event or next work
  *   completion at any type, respectively. %IB_CQ_REPORT_MISSED_EVENTS
- *   may also be |ed in to request a hपूर्णांक about missed events, as
+ *   may also be |ed in to request a hint about missed events, as
  *   described below.
  *
  * Return Value:
- *    < 0 means an error occurred जबतक requesting notअगरication
- *   == 0 means notअगरication was requested successfully, and अगर
+ *    < 0 means an error occurred while requesting notification
+ *   == 0 means notification was requested successfully, and if
  *        IB_CQ_REPORT_MISSED_EVENTS was passed in, then no events
- *        were missed and it is safe to रुको क्रम another event.  In
- *        this हाल is it guaranteed that any work completions added
+ *        were missed and it is safe to wait for another event.  In
+ *        this case is it guaranteed that any work completions added
  *        to the CQ since the last CQ poll will trigger a completion
- *        notअगरication event.
- *    > 0 is only वापसed अगर IB_CQ_REPORT_MISSED_EVENTS was passed
+ *        notification event.
+ *    > 0 is only returned if IB_CQ_REPORT_MISSED_EVENTS was passed
  *        in.  It means that the consumer must poll the CQ again to
- *        make sure it is empty to aव्योम missing an event because of a
- *        race between requesting notअगरication and an entry being
- *        added to the CQ.  This वापस value means it is possible
+ *        make sure it is empty to avoid missing an event because of a
+ *        race between requesting notification and an entry being
+ *        added to the CQ.  This return value means it is possible
  *        (but not guaranteed) that a work completion has been added
  *        to the CQ since the last poll without triggering a
- *        completion notअगरication event.
+ *        completion notification event.
  */
-अटल अंतरभूत पूर्णांक ib_req_notअगरy_cq(काष्ठा ib_cq *cq,
-				   क्रमागत ib_cq_notअगरy_flags flags)
-अणु
-	वापस cq->device->ops.req_notअगरy_cq(cq, flags);
-पूर्ण
+static inline int ib_req_notify_cq(struct ib_cq *cq,
+				   enum ib_cq_notify_flags flags)
+{
+	return cq->device->ops.req_notify_cq(cq, flags);
+}
 
-काष्ठा ib_cq *ib_cq_pool_get(काष्ठा ib_device *dev, अचिन्हित पूर्णांक nr_cqe,
-			     पूर्णांक comp_vector_hपूर्णांक,
-			     क्रमागत ib_poll_context poll_ctx);
+struct ib_cq *ib_cq_pool_get(struct ib_device *dev, unsigned int nr_cqe,
+			     int comp_vector_hint,
+			     enum ib_poll_context poll_ctx);
 
-व्योम ib_cq_pool_put(काष्ठा ib_cq *cq, अचिन्हित पूर्णांक nr_cqe);
+void ib_cq_pool_put(struct ib_cq *cq, unsigned int nr_cqe);
 
 /*
- * Drivers that करोn't need a DMA mapping at the RDMA layer, set dma_device to
- * शून्य. This causes the ib_dma* helpers to just stash the kernel भव
- * address पूर्णांकo the dma address.
+ * Drivers that don't need a DMA mapping at the RDMA layer, set dma_device to
+ * NULL. This causes the ib_dma* helpers to just stash the kernel virtual
+ * address into the dma address.
  */
-अटल अंतरभूत bool ib_uses_virt_dma(काष्ठा ib_device *dev)
-अणु
-	वापस IS_ENABLED(CONFIG_INFINIBAND_VIRT_DMA) && !dev->dma_device;
-पूर्ण
+static inline bool ib_uses_virt_dma(struct ib_device *dev)
+{
+	return IS_ENABLED(CONFIG_INFINIBAND_VIRT_DMA) && !dev->dma_device;
+}
 
 /**
- * ib_dma_mapping_error - check a DMA addr क्रम error
- * @dev: The device क्रम which the dma_addr was created
+ * ib_dma_mapping_error - check a DMA addr for error
+ * @dev: The device for which the dma_addr was created
  * @dma_addr: The DMA address to check
  */
-अटल अंतरभूत पूर्णांक ib_dma_mapping_error(काष्ठा ib_device *dev, u64 dma_addr)
-अणु
-	अगर (ib_uses_virt_dma(dev))
-		वापस 0;
-	वापस dma_mapping_error(dev->dma_device, dma_addr);
-पूर्ण
+static inline int ib_dma_mapping_error(struct ib_device *dev, u64 dma_addr)
+{
+	if (ib_uses_virt_dma(dev))
+		return 0;
+	return dma_mapping_error(dev->dma_device, dma_addr);
+}
 
 /**
- * ib_dma_map_single - Map a kernel भव address to DMA address
- * @dev: The device क्रम which the dma_addr is to be created
- * @cpu_addr: The kernel भव address
+ * ib_dma_map_single - Map a kernel virtual address to DMA address
+ * @dev: The device for which the dma_addr is to be created
+ * @cpu_addr: The kernel virtual address
  * @size: The size of the region in bytes
  * @direction: The direction of the DMA
  */
-अटल अंतरभूत u64 ib_dma_map_single(काष्ठा ib_device *dev,
-				    व्योम *cpu_addr, माप_प्रकार size,
-				    क्रमागत dma_data_direction direction)
-अणु
-	अगर (ib_uses_virt_dma(dev))
-		वापस (uपूर्णांकptr_t)cpu_addr;
-	वापस dma_map_single(dev->dma_device, cpu_addr, size, direction);
-पूर्ण
+static inline u64 ib_dma_map_single(struct ib_device *dev,
+				    void *cpu_addr, size_t size,
+				    enum dma_data_direction direction)
+{
+	if (ib_uses_virt_dma(dev))
+		return (uintptr_t)cpu_addr;
+	return dma_map_single(dev->dma_device, cpu_addr, size, direction);
+}
 
 /**
  * ib_dma_unmap_single - Destroy a mapping created by ib_dma_map_single()
- * @dev: The device क्रम which the DMA address was created
+ * @dev: The device for which the DMA address was created
  * @addr: The DMA address
  * @size: The size of the region in bytes
  * @direction: The direction of the DMA
  */
-अटल अंतरभूत व्योम ib_dma_unmap_single(काष्ठा ib_device *dev,
-				       u64 addr, माप_प्रकार size,
-				       क्रमागत dma_data_direction direction)
-अणु
-	अगर (!ib_uses_virt_dma(dev))
+static inline void ib_dma_unmap_single(struct ib_device *dev,
+				       u64 addr, size_t size,
+				       enum dma_data_direction direction)
+{
+	if (!ib_uses_virt_dma(dev))
 		dma_unmap_single(dev->dma_device, addr, size, direction);
-पूर्ण
+}
 
 /**
  * ib_dma_map_page - Map a physical page to DMA address
- * @dev: The device क्रम which the dma_addr is to be created
+ * @dev: The device for which the dma_addr is to be created
  * @page: The page to be mapped
  * @offset: The offset within the page
  * @size: The size of the region in bytes
  * @direction: The direction of the DMA
  */
-अटल अंतरभूत u64 ib_dma_map_page(काष्ठा ib_device *dev,
-				  काष्ठा page *page,
-				  अचिन्हित दीर्घ offset,
-				  माप_प्रकार size,
-					 क्रमागत dma_data_direction direction)
-अणु
-	अगर (ib_uses_virt_dma(dev))
-		वापस (uपूर्णांकptr_t)(page_address(page) + offset);
-	वापस dma_map_page(dev->dma_device, page, offset, size, direction);
-पूर्ण
+static inline u64 ib_dma_map_page(struct ib_device *dev,
+				  struct page *page,
+				  unsigned long offset,
+				  size_t size,
+					 enum dma_data_direction direction)
+{
+	if (ib_uses_virt_dma(dev))
+		return (uintptr_t)(page_address(page) + offset);
+	return dma_map_page(dev->dma_device, page, offset, size, direction);
+}
 
 /**
  * ib_dma_unmap_page - Destroy a mapping created by ib_dma_map_page()
- * @dev: The device क्रम which the DMA address was created
+ * @dev: The device for which the DMA address was created
  * @addr: The DMA address
  * @size: The size of the region in bytes
  * @direction: The direction of the DMA
  */
-अटल अंतरभूत व्योम ib_dma_unmap_page(काष्ठा ib_device *dev,
-				     u64 addr, माप_प्रकार size,
-				     क्रमागत dma_data_direction direction)
-अणु
-	अगर (!ib_uses_virt_dma(dev))
+static inline void ib_dma_unmap_page(struct ib_device *dev,
+				     u64 addr, size_t size,
+				     enum dma_data_direction direction)
+{
+	if (!ib_uses_virt_dma(dev))
 		dma_unmap_page(dev->dma_device, addr, size, direction);
-पूर्ण
+}
 
-पूर्णांक ib_dma_virt_map_sg(काष्ठा ib_device *dev, काष्ठा scatterlist *sg, पूर्णांक nents);
-अटल अंतरभूत पूर्णांक ib_dma_map_sg_attrs(काष्ठा ib_device *dev,
-				      काष्ठा scatterlist *sg, पूर्णांक nents,
-				      क्रमागत dma_data_direction direction,
-				      अचिन्हित दीर्घ dma_attrs)
-अणु
-	अगर (ib_uses_virt_dma(dev))
-		वापस ib_dma_virt_map_sg(dev, sg, nents);
-	वापस dma_map_sg_attrs(dev->dma_device, sg, nents, direction,
+int ib_dma_virt_map_sg(struct ib_device *dev, struct scatterlist *sg, int nents);
+static inline int ib_dma_map_sg_attrs(struct ib_device *dev,
+				      struct scatterlist *sg, int nents,
+				      enum dma_data_direction direction,
+				      unsigned long dma_attrs)
+{
+	if (ib_uses_virt_dma(dev))
+		return ib_dma_virt_map_sg(dev, sg, nents);
+	return dma_map_sg_attrs(dev->dma_device, sg, nents, direction,
 				dma_attrs);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ib_dma_unmap_sg_attrs(काष्ठा ib_device *dev,
-					 काष्ठा scatterlist *sg, पूर्णांक nents,
-					 क्रमागत dma_data_direction direction,
-					 अचिन्हित दीर्घ dma_attrs)
-अणु
-	अगर (!ib_uses_virt_dma(dev))
+static inline void ib_dma_unmap_sg_attrs(struct ib_device *dev,
+					 struct scatterlist *sg, int nents,
+					 enum dma_data_direction direction,
+					 unsigned long dma_attrs)
+{
+	if (!ib_uses_virt_dma(dev))
 		dma_unmap_sg_attrs(dev->dma_device, sg, nents, direction,
 				   dma_attrs);
-पूर्ण
+}
 
 /**
  * ib_dma_map_sg - Map a scatter/gather list to DMA addresses
- * @dev: The device क्रम which the DMA addresses are to be created
+ * @dev: The device for which the DMA addresses are to be created
  * @sg: The array of scatter/gather entries
  * @nents: The number of scatter/gather entries
  * @direction: The direction of the DMA
  */
-अटल अंतरभूत पूर्णांक ib_dma_map_sg(काष्ठा ib_device *dev,
-				काष्ठा scatterlist *sg, पूर्णांक nents,
-				क्रमागत dma_data_direction direction)
-अणु
-	वापस ib_dma_map_sg_attrs(dev, sg, nents, direction, 0);
-पूर्ण
+static inline int ib_dma_map_sg(struct ib_device *dev,
+				struct scatterlist *sg, int nents,
+				enum dma_data_direction direction)
+{
+	return ib_dma_map_sg_attrs(dev, sg, nents, direction, 0);
+}
 
 /**
  * ib_dma_unmap_sg - Unmap a scatter/gather list of DMA addresses
- * @dev: The device क्रम which the DMA addresses were created
+ * @dev: The device for which the DMA addresses were created
  * @sg: The array of scatter/gather entries
  * @nents: The number of scatter/gather entries
  * @direction: The direction of the DMA
  */
-अटल अंतरभूत व्योम ib_dma_unmap_sg(काष्ठा ib_device *dev,
-				   काष्ठा scatterlist *sg, पूर्णांक nents,
-				   क्रमागत dma_data_direction direction)
-अणु
+static inline void ib_dma_unmap_sg(struct ib_device *dev,
+				   struct scatterlist *sg, int nents,
+				   enum dma_data_direction direction)
+{
 	ib_dma_unmap_sg_attrs(dev, sg, nents, direction, 0);
-पूर्ण
+}
 
 /**
  * ib_dma_max_seg_size - Return the size limit of a single DMA transfer
  * @dev: The device to query
  *
- * The वापसed value represents a size in bytes.
+ * The returned value represents a size in bytes.
  */
-अटल अंतरभूत अचिन्हित पूर्णांक ib_dma_max_seg_size(काष्ठा ib_device *dev)
-अणु
-	अगर (ib_uses_virt_dma(dev))
-		वापस अच_पूर्णांक_उच्च;
-	वापस dma_get_max_seg_size(dev->dma_device);
-पूर्ण
+static inline unsigned int ib_dma_max_seg_size(struct ib_device *dev)
+{
+	if (ib_uses_virt_dma(dev))
+		return UINT_MAX;
+	return dma_get_max_seg_size(dev->dma_device);
+}
 
 /**
- * ib_dma_sync_single_क्रम_cpu - Prepare DMA region to be accessed by CPU
- * @dev: The device क्रम which the DMA address was created
+ * ib_dma_sync_single_for_cpu - Prepare DMA region to be accessed by CPU
+ * @dev: The device for which the DMA address was created
  * @addr: The DMA address
  * @size: The size of the region in bytes
  * @dir: The direction of the DMA
  */
-अटल अंतरभूत व्योम ib_dma_sync_single_क्रम_cpu(काष्ठा ib_device *dev,
+static inline void ib_dma_sync_single_for_cpu(struct ib_device *dev,
 					      u64 addr,
-					      माप_प्रकार size,
-					      क्रमागत dma_data_direction dir)
-अणु
-	अगर (!ib_uses_virt_dma(dev))
-		dma_sync_single_क्रम_cpu(dev->dma_device, addr, size, dir);
-पूर्ण
+					      size_t size,
+					      enum dma_data_direction dir)
+{
+	if (!ib_uses_virt_dma(dev))
+		dma_sync_single_for_cpu(dev->dma_device, addr, size, dir);
+}
 
 /**
- * ib_dma_sync_single_क्रम_device - Prepare DMA region to be accessed by device
- * @dev: The device क्रम which the DMA address was created
+ * ib_dma_sync_single_for_device - Prepare DMA region to be accessed by device
+ * @dev: The device for which the DMA address was created
  * @addr: The DMA address
  * @size: The size of the region in bytes
  * @dir: The direction of the DMA
  */
-अटल अंतरभूत व्योम ib_dma_sync_single_क्रम_device(काष्ठा ib_device *dev,
+static inline void ib_dma_sync_single_for_device(struct ib_device *dev,
 						 u64 addr,
-						 माप_प्रकार size,
-						 क्रमागत dma_data_direction dir)
-अणु
-	अगर (!ib_uses_virt_dma(dev))
-		dma_sync_single_क्रम_device(dev->dma_device, addr, size, dir);
-पूर्ण
+						 size_t size,
+						 enum dma_data_direction dir)
+{
+	if (!ib_uses_virt_dma(dev))
+		dma_sync_single_for_device(dev->dma_device, addr, size, dir);
+}
 
-/* ib_reg_user_mr - रेजिस्टर a memory region क्रम भव addresses from kernel
+/* ib_reg_user_mr - register a memory region for virtual addresses from kernel
  * space. This function should be called when 'current' is the owning MM.
  */
-काष्ठा ib_mr *ib_reg_user_mr(काष्ठा ib_pd *pd, u64 start, u64 length,
-			     u64 virt_addr, पूर्णांक mr_access_flags);
+struct ib_mr *ib_reg_user_mr(struct ib_pd *pd, u64 start, u64 length,
+			     u64 virt_addr, int mr_access_flags);
 
 /* ib_advise_mr -  give an advice about an address range in a memory region */
-पूर्णांक ib_advise_mr(काष्ठा ib_pd *pd, क्रमागत ib_uverbs_advise_mr_advice advice,
-		 u32 flags, काष्ठा ib_sge *sg_list, u32 num_sge);
+int ib_advise_mr(struct ib_pd *pd, enum ib_uverbs_advise_mr_advice advice,
+		 u32 flags, struct ib_sge *sg_list, u32 num_sge);
 /**
- * ib_dereg_mr_user - Deरेजिस्टरs a memory region and हटाओs it from the
+ * ib_dereg_mr_user - Deregisters a memory region and removes it from the
  *   HCA translation table.
- * @mr: The memory region to deरेजिस्टर.
- * @udata: Valid user data or शून्य क्रम kernel object
+ * @mr: The memory region to deregister.
+ * @udata: Valid user data or NULL for kernel object
  *
- * This function can fail, अगर the memory region has memory winकरोws bound to it.
+ * This function can fail, if the memory region has memory windows bound to it.
  */
-पूर्णांक ib_dereg_mr_user(काष्ठा ib_mr *mr, काष्ठा ib_udata *udata);
+int ib_dereg_mr_user(struct ib_mr *mr, struct ib_udata *udata);
 
 /**
- * ib_dereg_mr - Deरेजिस्टरs a kernel memory region and हटाओs it from the
+ * ib_dereg_mr - Deregisters a kernel memory region and removes it from the
  *   HCA translation table.
- * @mr: The memory region to deरेजिस्टर.
+ * @mr: The memory region to deregister.
  *
- * This function can fail, अगर the memory region has memory winकरोws bound to it.
+ * This function can fail, if the memory region has memory windows bound to it.
  *
- * NOTE: क्रम user mr use ib_dereg_mr_user with valid udata!
+ * NOTE: for user mr use ib_dereg_mr_user with valid udata!
  */
-अटल अंतरभूत पूर्णांक ib_dereg_mr(काष्ठा ib_mr *mr)
-अणु
-	वापस ib_dereg_mr_user(mr, शून्य);
-पूर्ण
+static inline int ib_dereg_mr(struct ib_mr *mr)
+{
+	return ib_dereg_mr_user(mr, NULL);
+}
 
-काष्ठा ib_mr *ib_alloc_mr(काष्ठा ib_pd *pd, क्रमागत ib_mr_type mr_type,
+struct ib_mr *ib_alloc_mr(struct ib_pd *pd, enum ib_mr_type mr_type,
 			  u32 max_num_sg);
 
-काष्ठा ib_mr *ib_alloc_mr_पूर्णांकegrity(काष्ठा ib_pd *pd,
+struct ib_mr *ib_alloc_mr_integrity(struct ib_pd *pd,
 				    u32 max_num_data_sg,
 				    u32 max_num_meta_sg);
 
 /**
  * ib_update_fast_reg_key - updates the key portion of the fast_reg MR
  *   R_Key and L_Key.
- * @mr - काष्ठा ib_mr poपूर्णांकer to be updated.
+ * @mr - struct ib_mr pointer to be updated.
  * @newkey - new key to be used.
  */
-अटल अंतरभूत व्योम ib_update_fast_reg_key(काष्ठा ib_mr *mr, u8 newkey)
-अणु
+static inline void ib_update_fast_reg_key(struct ib_mr *mr, u8 newkey)
+{
 	mr->lkey = (mr->lkey & 0xffffff00) | newkey;
 	mr->rkey = (mr->rkey & 0xffffff00) | newkey;
-पूर्ण
+}
 
 /**
  * ib_inc_rkey - increments the key portion of the given rkey. Can be used
- * क्रम calculating a new rkey क्रम type 2 memory winकरोws.
+ * for calculating a new rkey for type 2 memory windows.
  * @rkey - the rkey to increment.
  */
-अटल अंतरभूत u32 ib_inc_rkey(u32 rkey)
-अणु
-	स्थिर u32 mask = 0x000000ff;
-	वापस ((rkey + 1) & mask) | (rkey & ~mask);
-पूर्ण
+static inline u32 ib_inc_rkey(u32 rkey)
+{
+	const u32 mask = 0x000000ff;
+	return ((rkey + 1) & mask) | (rkey & ~mask);
+}
 
 /**
- * ib_attach_mcast - Attaches the specअगरied QP to a multicast group.
+ * ib_attach_mcast - Attaches the specified QP to a multicast group.
  * @qp: QP to attach to the multicast group.  The QP must be type
  *   IB_QPT_UD.
  * @gid: Multicast group GID.
@@ -4188,298 +4187,298 @@ ib_create_srq(काष्ठा ib_pd *pd, काष्ठा ib_srq_init_attr 
  *
  * In order to send and receive multicast packets, subnet
  * administration must have created the multicast group and configured
- * the fabric appropriately.  The port associated with the specअगरied
+ * the fabric appropriately.  The port associated with the specified
  * QP must also be a member of the multicast group.
  */
-पूर्णांक ib_attach_mcast(काष्ठा ib_qp *qp, जोड़ ib_gid *gid, u16 lid);
+int ib_attach_mcast(struct ib_qp *qp, union ib_gid *gid, u16 lid);
 
 /**
- * ib_detach_mcast - Detaches the specअगरied QP from a multicast group.
+ * ib_detach_mcast - Detaches the specified QP from a multicast group.
  * @qp: QP to detach from the multicast group.
  * @gid: Multicast group GID.
  * @lid: Multicast group LID in host byte order.
  */
-पूर्णांक ib_detach_mcast(काष्ठा ib_qp *qp, जोड़ ib_gid *gid, u16 lid);
+int ib_detach_mcast(struct ib_qp *qp, union ib_gid *gid, u16 lid);
 
-काष्ठा ib_xrcd *ib_alloc_xrcd_user(काष्ठा ib_device *device,
-				   काष्ठा inode *inode, काष्ठा ib_udata *udata);
-पूर्णांक ib_dealloc_xrcd_user(काष्ठा ib_xrcd *xrcd, काष्ठा ib_udata *udata);
+struct ib_xrcd *ib_alloc_xrcd_user(struct ib_device *device,
+				   struct inode *inode, struct ib_udata *udata);
+int ib_dealloc_xrcd_user(struct ib_xrcd *xrcd, struct ib_udata *udata);
 
-अटल अंतरभूत पूर्णांक ib_check_mr_access(काष्ठा ib_device *ib_dev,
-				     अचिन्हित पूर्णांक flags)
-अणु
+static inline int ib_check_mr_access(struct ib_device *ib_dev,
+				     unsigned int flags)
+{
 	/*
-	 * Local ग_लिखो permission is required अगर remote ग_लिखो or
+	 * Local write permission is required if remote write or
 	 * remote atomic permission is also requested.
 	 */
-	अगर (flags & (IB_ACCESS_REMOTE_ATOMIC | IB_ACCESS_REMOTE_WRITE) &&
+	if (flags & (IB_ACCESS_REMOTE_ATOMIC | IB_ACCESS_REMOTE_WRITE) &&
 	    !(flags & IB_ACCESS_LOCAL_WRITE))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (flags & ~IB_ACCESS_SUPPORTED)
-		वापस -EINVAL;
+	if (flags & ~IB_ACCESS_SUPPORTED)
+		return -EINVAL;
 
-	अगर (flags & IB_ACCESS_ON_DEMAND &&
+	if (flags & IB_ACCESS_ON_DEMAND &&
 	    !(ib_dev->attrs.device_cap_flags & IB_DEVICE_ON_DEMAND_PAGING))
-		वापस -EINVAL;
-	वापस 0;
-पूर्ण
+		return -EINVAL;
+	return 0;
+}
 
-अटल अंतरभूत bool ib_access_writable(पूर्णांक access_flags)
-अणु
+static inline bool ib_access_writable(int access_flags)
+{
 	/*
-	 * We have writable memory backing the MR अगर any of the following
+	 * We have writable memory backing the MR if any of the following
 	 * access flags are set.  "Local write" and "remote write" obviously
-	 * require ग_लिखो access.  "Remote atomic" can करो things like fetch and
-	 * add, which will modअगरy memory, and "MW bind" can change permissions
-	 * by binding a winकरोw.
+	 * require write access.  "Remote atomic" can do things like fetch and
+	 * add, which will modify memory, and "MW bind" can change permissions
+	 * by binding a window.
 	 */
-	वापस access_flags &
+	return access_flags &
 		(IB_ACCESS_LOCAL_WRITE   | IB_ACCESS_REMOTE_WRITE |
 		 IB_ACCESS_REMOTE_ATOMIC | IB_ACCESS_MW_BIND);
-पूर्ण
+}
 
 /**
  * ib_check_mr_status: lightweight check of MR status.
  *     This routine may provide status checks on a selected
- *     ib_mr. first use is क्रम signature status check.
+ *     ib_mr. first use is for signature status check.
  *
  * @mr: A memory region.
- * @check_mask: Biपंचांगask of which checks to perक्रमm from
- *     ib_mr_status_check क्रमागतeration.
+ * @check_mask: Bitmask of which checks to perform from
+ *     ib_mr_status_check enumeration.
  * @mr_status: The container of relevant status checks.
- *     failed checks will be indicated in the status biपंचांगask
+ *     failed checks will be indicated in the status bitmask
  *     and the relevant info shall be in the error item.
  */
-पूर्णांक ib_check_mr_status(काष्ठा ib_mr *mr, u32 check_mask,
-		       काष्ठा ib_mr_status *mr_status);
+int ib_check_mr_status(struct ib_mr *mr, u32 check_mask,
+		       struct ib_mr_status *mr_status);
 
 /**
  * ib_device_try_get: Hold a registration lock
  * device: The device to lock
  *
- * A device under an active registration lock cannot become unरेजिस्टरed. It
+ * A device under an active registration lock cannot become unregistered. It
  * is only possible to obtain a registration lock on a device that is fully
- * रेजिस्टरed, otherwise this function वापसs false.
+ * registered, otherwise this function returns false.
  *
- * The registration lock is only necessary क्रम actions which require the
- * device to still be रेजिस्टरed. Uses that only require the device poपूर्णांकer to
+ * The registration lock is only necessary for actions which require the
+ * device to still be registered. Uses that only require the device pointer to
  * be valid should use get_device(&ibdev->dev) to hold the memory.
  *
  */
-अटल अंतरभूत bool ib_device_try_get(काष्ठा ib_device *dev)
-अणु
-	वापस refcount_inc_not_zero(&dev->refcount);
-पूर्ण
+static inline bool ib_device_try_get(struct ib_device *dev)
+{
+	return refcount_inc_not_zero(&dev->refcount);
+}
 
-व्योम ib_device_put(काष्ठा ib_device *device);
-काष्ठा ib_device *ib_device_get_by_netdev(काष्ठा net_device *ndev,
-					  क्रमागत rdma_driver_id driver_id);
-काष्ठा ib_device *ib_device_get_by_name(स्थिर अक्षर *name,
-					क्रमागत rdma_driver_id driver_id);
-काष्ठा net_device *ib_get_net_dev_by_params(काष्ठा ib_device *dev, u32 port,
-					    u16 pkey, स्थिर जोड़ ib_gid *gid,
-					    स्थिर काष्ठा sockaddr *addr);
-पूर्णांक ib_device_set_netdev(काष्ठा ib_device *ib_dev, काष्ठा net_device *ndev,
-			 अचिन्हित पूर्णांक port);
-काष्ठा net_device *ib_device_netdev(काष्ठा ib_device *dev, u32 port);
+void ib_device_put(struct ib_device *device);
+struct ib_device *ib_device_get_by_netdev(struct net_device *ndev,
+					  enum rdma_driver_id driver_id);
+struct ib_device *ib_device_get_by_name(const char *name,
+					enum rdma_driver_id driver_id);
+struct net_device *ib_get_net_dev_by_params(struct ib_device *dev, u32 port,
+					    u16 pkey, const union ib_gid *gid,
+					    const struct sockaddr *addr);
+int ib_device_set_netdev(struct ib_device *ib_dev, struct net_device *ndev,
+			 unsigned int port);
+struct net_device *ib_device_netdev(struct ib_device *dev, u32 port);
 
-काष्ठा ib_wq *ib_create_wq(काष्ठा ib_pd *pd,
-			   काष्ठा ib_wq_init_attr *init_attr);
-पूर्णांक ib_destroy_wq_user(काष्ठा ib_wq *wq, काष्ठा ib_udata *udata);
-पूर्णांक ib_modअगरy_wq(काष्ठा ib_wq *wq, काष्ठा ib_wq_attr *attr,
+struct ib_wq *ib_create_wq(struct ib_pd *pd,
+			   struct ib_wq_init_attr *init_attr);
+int ib_destroy_wq_user(struct ib_wq *wq, struct ib_udata *udata);
+int ib_modify_wq(struct ib_wq *wq, struct ib_wq_attr *attr,
 		 u32 wq_attr_mask);
 
-पूर्णांक ib_map_mr_sg(काष्ठा ib_mr *mr, काष्ठा scatterlist *sg, पूर्णांक sg_nents,
-		 अचिन्हित पूर्णांक *sg_offset, अचिन्हित पूर्णांक page_size);
-पूर्णांक ib_map_mr_sg_pi(काष्ठा ib_mr *mr, काष्ठा scatterlist *data_sg,
-		    पूर्णांक data_sg_nents, अचिन्हित पूर्णांक *data_sg_offset,
-		    काष्ठा scatterlist *meta_sg, पूर्णांक meta_sg_nents,
-		    अचिन्हित पूर्णांक *meta_sg_offset, अचिन्हित पूर्णांक page_size);
+int ib_map_mr_sg(struct ib_mr *mr, struct scatterlist *sg, int sg_nents,
+		 unsigned int *sg_offset, unsigned int page_size);
+int ib_map_mr_sg_pi(struct ib_mr *mr, struct scatterlist *data_sg,
+		    int data_sg_nents, unsigned int *data_sg_offset,
+		    struct scatterlist *meta_sg, int meta_sg_nents,
+		    unsigned int *meta_sg_offset, unsigned int page_size);
 
-अटल अंतरभूत पूर्णांक
-ib_map_mr_sg_zbva(काष्ठा ib_mr *mr, काष्ठा scatterlist *sg, पूर्णांक sg_nents,
-		  अचिन्हित पूर्णांक *sg_offset, अचिन्हित पूर्णांक page_size)
-अणु
-	पूर्णांक n;
+static inline int
+ib_map_mr_sg_zbva(struct ib_mr *mr, struct scatterlist *sg, int sg_nents,
+		  unsigned int *sg_offset, unsigned int page_size)
+{
+	int n;
 
 	n = ib_map_mr_sg(mr, sg, sg_nents, sg_offset, page_size);
 	mr->iova = 0;
 
-	वापस n;
-पूर्ण
+	return n;
+}
 
-पूर्णांक ib_sg_to_pages(काष्ठा ib_mr *mr, काष्ठा scatterlist *sgl, पूर्णांक sg_nents,
-		अचिन्हित पूर्णांक *sg_offset, पूर्णांक (*set_page)(काष्ठा ib_mr *, u64));
+int ib_sg_to_pages(struct ib_mr *mr, struct scatterlist *sgl, int sg_nents,
+		unsigned int *sg_offset, int (*set_page)(struct ib_mr *, u64));
 
-व्योम ib_drain_rq(काष्ठा ib_qp *qp);
-व्योम ib_drain_sq(काष्ठा ib_qp *qp);
-व्योम ib_drain_qp(काष्ठा ib_qp *qp);
+void ib_drain_rq(struct ib_qp *qp);
+void ib_drain_sq(struct ib_qp *qp);
+void ib_drain_qp(struct ib_qp *qp);
 
-पूर्णांक ib_get_eth_speed(काष्ठा ib_device *dev, u32 port_num, u16 *speed,
+int ib_get_eth_speed(struct ib_device *dev, u32 port_num, u16 *speed,
 		     u8 *width);
 
-अटल अंतरभूत u8 *rdma_ah_retrieve_dmac(काष्ठा rdma_ah_attr *attr)
-अणु
-	अगर (attr->type == RDMA_AH_ATTR_TYPE_ROCE)
-		वापस attr->roce.dmac;
-	वापस शून्य;
-पूर्ण
+static inline u8 *rdma_ah_retrieve_dmac(struct rdma_ah_attr *attr)
+{
+	if (attr->type == RDMA_AH_ATTR_TYPE_ROCE)
+		return attr->roce.dmac;
+	return NULL;
+}
 
-अटल अंतरभूत व्योम rdma_ah_set_dlid(काष्ठा rdma_ah_attr *attr, u32 dlid)
-अणु
-	अगर (attr->type == RDMA_AH_ATTR_TYPE_IB)
+static inline void rdma_ah_set_dlid(struct rdma_ah_attr *attr, u32 dlid)
+{
+	if (attr->type == RDMA_AH_ATTR_TYPE_IB)
 		attr->ib.dlid = (u16)dlid;
-	अन्यथा अगर (attr->type == RDMA_AH_ATTR_TYPE_OPA)
+	else if (attr->type == RDMA_AH_ATTR_TYPE_OPA)
 		attr->opa.dlid = dlid;
-पूर्ण
+}
 
-अटल अंतरभूत u32 rdma_ah_get_dlid(स्थिर काष्ठा rdma_ah_attr *attr)
-अणु
-	अगर (attr->type == RDMA_AH_ATTR_TYPE_IB)
-		वापस attr->ib.dlid;
-	अन्यथा अगर (attr->type == RDMA_AH_ATTR_TYPE_OPA)
-		वापस attr->opa.dlid;
-	वापस 0;
-पूर्ण
+static inline u32 rdma_ah_get_dlid(const struct rdma_ah_attr *attr)
+{
+	if (attr->type == RDMA_AH_ATTR_TYPE_IB)
+		return attr->ib.dlid;
+	else if (attr->type == RDMA_AH_ATTR_TYPE_OPA)
+		return attr->opa.dlid;
+	return 0;
+}
 
-अटल अंतरभूत व्योम rdma_ah_set_sl(काष्ठा rdma_ah_attr *attr, u8 sl)
-अणु
+static inline void rdma_ah_set_sl(struct rdma_ah_attr *attr, u8 sl)
+{
 	attr->sl = sl;
-पूर्ण
+}
 
-अटल अंतरभूत u8 rdma_ah_get_sl(स्थिर काष्ठा rdma_ah_attr *attr)
-अणु
-	वापस attr->sl;
-पूर्ण
+static inline u8 rdma_ah_get_sl(const struct rdma_ah_attr *attr)
+{
+	return attr->sl;
+}
 
-अटल अंतरभूत व्योम rdma_ah_set_path_bits(काष्ठा rdma_ah_attr *attr,
+static inline void rdma_ah_set_path_bits(struct rdma_ah_attr *attr,
 					 u8 src_path_bits)
-अणु
-	अगर (attr->type == RDMA_AH_ATTR_TYPE_IB)
+{
+	if (attr->type == RDMA_AH_ATTR_TYPE_IB)
 		attr->ib.src_path_bits = src_path_bits;
-	अन्यथा अगर (attr->type == RDMA_AH_ATTR_TYPE_OPA)
+	else if (attr->type == RDMA_AH_ATTR_TYPE_OPA)
 		attr->opa.src_path_bits = src_path_bits;
-पूर्ण
+}
 
-अटल अंतरभूत u8 rdma_ah_get_path_bits(स्थिर काष्ठा rdma_ah_attr *attr)
-अणु
-	अगर (attr->type == RDMA_AH_ATTR_TYPE_IB)
-		वापस attr->ib.src_path_bits;
-	अन्यथा अगर (attr->type == RDMA_AH_ATTR_TYPE_OPA)
-		वापस attr->opa.src_path_bits;
-	वापस 0;
-पूर्ण
+static inline u8 rdma_ah_get_path_bits(const struct rdma_ah_attr *attr)
+{
+	if (attr->type == RDMA_AH_ATTR_TYPE_IB)
+		return attr->ib.src_path_bits;
+	else if (attr->type == RDMA_AH_ATTR_TYPE_OPA)
+		return attr->opa.src_path_bits;
+	return 0;
+}
 
-अटल अंतरभूत व्योम rdma_ah_set_make_grd(काष्ठा rdma_ah_attr *attr,
+static inline void rdma_ah_set_make_grd(struct rdma_ah_attr *attr,
 					bool make_grd)
-अणु
-	अगर (attr->type == RDMA_AH_ATTR_TYPE_OPA)
+{
+	if (attr->type == RDMA_AH_ATTR_TYPE_OPA)
 		attr->opa.make_grd = make_grd;
-पूर्ण
+}
 
-अटल अंतरभूत bool rdma_ah_get_make_grd(स्थिर काष्ठा rdma_ah_attr *attr)
-अणु
-	अगर (attr->type == RDMA_AH_ATTR_TYPE_OPA)
-		वापस attr->opa.make_grd;
-	वापस false;
-पूर्ण
+static inline bool rdma_ah_get_make_grd(const struct rdma_ah_attr *attr)
+{
+	if (attr->type == RDMA_AH_ATTR_TYPE_OPA)
+		return attr->opa.make_grd;
+	return false;
+}
 
-अटल अंतरभूत व्योम rdma_ah_set_port_num(काष्ठा rdma_ah_attr *attr, u32 port_num)
-अणु
+static inline void rdma_ah_set_port_num(struct rdma_ah_attr *attr, u32 port_num)
+{
 	attr->port_num = port_num;
-पूर्ण
+}
 
-अटल अंतरभूत u32 rdma_ah_get_port_num(स्थिर काष्ठा rdma_ah_attr *attr)
-अणु
-	वापस attr->port_num;
-पूर्ण
+static inline u32 rdma_ah_get_port_num(const struct rdma_ah_attr *attr)
+{
+	return attr->port_num;
+}
 
-अटल अंतरभूत व्योम rdma_ah_set_अटल_rate(काष्ठा rdma_ah_attr *attr,
-					   u8 अटल_rate)
-अणु
-	attr->अटल_rate = अटल_rate;
-पूर्ण
+static inline void rdma_ah_set_static_rate(struct rdma_ah_attr *attr,
+					   u8 static_rate)
+{
+	attr->static_rate = static_rate;
+}
 
-अटल अंतरभूत u8 rdma_ah_get_अटल_rate(स्थिर काष्ठा rdma_ah_attr *attr)
-अणु
-	वापस attr->अटल_rate;
-पूर्ण
+static inline u8 rdma_ah_get_static_rate(const struct rdma_ah_attr *attr)
+{
+	return attr->static_rate;
+}
 
-अटल अंतरभूत व्योम rdma_ah_set_ah_flags(काष्ठा rdma_ah_attr *attr,
-					क्रमागत ib_ah_flags flag)
-अणु
+static inline void rdma_ah_set_ah_flags(struct rdma_ah_attr *attr,
+					enum ib_ah_flags flag)
+{
 	attr->ah_flags = flag;
-पूर्ण
+}
 
-अटल अंतरभूत क्रमागत ib_ah_flags
-		rdma_ah_get_ah_flags(स्थिर काष्ठा rdma_ah_attr *attr)
-अणु
-	वापस attr->ah_flags;
-पूर्ण
+static inline enum ib_ah_flags
+		rdma_ah_get_ah_flags(const struct rdma_ah_attr *attr)
+{
+	return attr->ah_flags;
+}
 
-अटल अंतरभूत स्थिर काष्ठा ib_global_route
-		*rdma_ah_पढ़ो_grh(स्थिर काष्ठा rdma_ah_attr *attr)
-अणु
-	वापस &attr->grh;
-पूर्ण
+static inline const struct ib_global_route
+		*rdma_ah_read_grh(const struct rdma_ah_attr *attr)
+{
+	return &attr->grh;
+}
 
-/*To retrieve and modअगरy the grh */
-अटल अंतरभूत काष्ठा ib_global_route
-		*rdma_ah_retrieve_grh(काष्ठा rdma_ah_attr *attr)
-अणु
-	वापस &attr->grh;
-पूर्ण
+/*To retrieve and modify the grh */
+static inline struct ib_global_route
+		*rdma_ah_retrieve_grh(struct rdma_ah_attr *attr)
+{
+	return &attr->grh;
+}
 
-अटल अंतरभूत व्योम rdma_ah_set_dgid_raw(काष्ठा rdma_ah_attr *attr, व्योम *dgid)
-अणु
-	काष्ठा ib_global_route *grh = rdma_ah_retrieve_grh(attr);
+static inline void rdma_ah_set_dgid_raw(struct rdma_ah_attr *attr, void *dgid)
+{
+	struct ib_global_route *grh = rdma_ah_retrieve_grh(attr);
 
-	स_नकल(grh->dgid.raw, dgid, माप(grh->dgid));
-पूर्ण
+	memcpy(grh->dgid.raw, dgid, sizeof(grh->dgid));
+}
 
-अटल अंतरभूत व्योम rdma_ah_set_subnet_prefix(काष्ठा rdma_ah_attr *attr,
+static inline void rdma_ah_set_subnet_prefix(struct rdma_ah_attr *attr,
 					     __be64 prefix)
-अणु
-	काष्ठा ib_global_route *grh = rdma_ah_retrieve_grh(attr);
+{
+	struct ib_global_route *grh = rdma_ah_retrieve_grh(attr);
 
 	grh->dgid.global.subnet_prefix = prefix;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम rdma_ah_set_पूर्णांकerface_id(काष्ठा rdma_ah_attr *attr,
-					    __be64 अगर_id)
-अणु
-	काष्ठा ib_global_route *grh = rdma_ah_retrieve_grh(attr);
+static inline void rdma_ah_set_interface_id(struct rdma_ah_attr *attr,
+					    __be64 if_id)
+{
+	struct ib_global_route *grh = rdma_ah_retrieve_grh(attr);
 
-	grh->dgid.global.पूर्णांकerface_id = अगर_id;
-पूर्ण
+	grh->dgid.global.interface_id = if_id;
+}
 
-अटल अंतरभूत व्योम rdma_ah_set_grh(काष्ठा rdma_ah_attr *attr,
-				   जोड़ ib_gid *dgid, u32 flow_label,
+static inline void rdma_ah_set_grh(struct rdma_ah_attr *attr,
+				   union ib_gid *dgid, u32 flow_label,
 				   u8 sgid_index, u8 hop_limit,
 				   u8 traffic_class)
-अणु
-	काष्ठा ib_global_route *grh = rdma_ah_retrieve_grh(attr);
+{
+	struct ib_global_route *grh = rdma_ah_retrieve_grh(attr);
 
 	attr->ah_flags = IB_AH_GRH;
-	अगर (dgid)
+	if (dgid)
 		grh->dgid = *dgid;
 	grh->flow_label = flow_label;
 	grh->sgid_index = sgid_index;
 	grh->hop_limit = hop_limit;
 	grh->traffic_class = traffic_class;
-	grh->sgid_attr = शून्य;
-पूर्ण
+	grh->sgid_attr = NULL;
+}
 
-व्योम rdma_destroy_ah_attr(काष्ठा rdma_ah_attr *ah_attr);
-व्योम rdma_move_grh_sgid_attr(काष्ठा rdma_ah_attr *attr, जोड़ ib_gid *dgid,
+void rdma_destroy_ah_attr(struct rdma_ah_attr *ah_attr);
+void rdma_move_grh_sgid_attr(struct rdma_ah_attr *attr, union ib_gid *dgid,
 			     u32 flow_label, u8 hop_limit, u8 traffic_class,
-			     स्थिर काष्ठा ib_gid_attr *sgid_attr);
-व्योम rdma_copy_ah_attr(काष्ठा rdma_ah_attr *dest,
-		       स्थिर काष्ठा rdma_ah_attr *src);
-व्योम rdma_replace_ah_attr(काष्ठा rdma_ah_attr *old,
-			  स्थिर काष्ठा rdma_ah_attr *new);
-व्योम rdma_move_ah_attr(काष्ठा rdma_ah_attr *dest, काष्ठा rdma_ah_attr *src);
+			     const struct ib_gid_attr *sgid_attr);
+void rdma_copy_ah_attr(struct rdma_ah_attr *dest,
+		       const struct rdma_ah_attr *src);
+void rdma_replace_ah_attr(struct rdma_ah_attr *old,
+			  const struct rdma_ah_attr *new);
+void rdma_move_ah_attr(struct rdma_ah_attr *dest, struct rdma_ah_attr *src);
 
 /**
  * rdma_ah_find_type - Return address handle type.
@@ -4487,45 +4486,45 @@ ib_map_mr_sg_zbva(काष्ठा ib_mr *mr, काष्ठा scatterlist *
  * @dev: Device to be checked
  * @port_num: Port number
  */
-अटल अंतरभूत क्रमागत rdma_ah_attr_type rdma_ah_find_type(काष्ठा ib_device *dev,
+static inline enum rdma_ah_attr_type rdma_ah_find_type(struct ib_device *dev,
 						       u32 port_num)
-अणु
-	अगर (rdma_protocol_roce(dev, port_num))
-		वापस RDMA_AH_ATTR_TYPE_ROCE;
-	अगर (rdma_protocol_ib(dev, port_num)) अणु
-		अगर (rdma_cap_opa_ah(dev, port_num))
-			वापस RDMA_AH_ATTR_TYPE_OPA;
-		वापस RDMA_AH_ATTR_TYPE_IB;
-	पूर्ण
+{
+	if (rdma_protocol_roce(dev, port_num))
+		return RDMA_AH_ATTR_TYPE_ROCE;
+	if (rdma_protocol_ib(dev, port_num)) {
+		if (rdma_cap_opa_ah(dev, port_num))
+			return RDMA_AH_ATTR_TYPE_OPA;
+		return RDMA_AH_ATTR_TYPE_IB;
+	}
 
-	वापस RDMA_AH_ATTR_TYPE_UNDEFINED;
-पूर्ण
+	return RDMA_AH_ATTR_TYPE_UNDEFINED;
+}
 
 /**
  * ib_lid_cpu16 - Return lid in 16bit CPU encoding.
  *     In the current implementation the only way to get
- *     get the 32bit lid is from other sources क्रम OPA.
+ *     get the 32bit lid is from other sources for OPA.
  *     For IB, lids will always be 16bits so cast the
  *     value accordingly.
  *
  * @lid: A 32bit LID
  */
-अटल अंतरभूत u16 ib_lid_cpu16(u32 lid)
-अणु
+static inline u16 ib_lid_cpu16(u32 lid)
+{
 	WARN_ON_ONCE(lid & 0xFFFF0000);
-	वापस (u16)lid;
-पूर्ण
+	return (u16)lid;
+}
 
 /**
  * ib_lid_be16 - Return lid in 16bit BE encoding.
  *
  * @lid: A 32bit LID
  */
-अटल अंतरभूत __be16 ib_lid_be16(u32 lid)
-अणु
+static inline __be16 ib_lid_be16(u32 lid)
+{
 	WARN_ON_ONCE(lid & 0xFFFF0000);
-	वापस cpu_to_be16((u16)lid);
-पूर्ण
+	return cpu_to_be16((u16)lid);
+}
 
 /**
  * ib_get_vector_affinity - Get the affinity mappings of a given completion
@@ -4533,112 +4532,112 @@ ib_map_mr_sg_zbva(काष्ठा ib_mr *mr, काष्ठा scatterlist *
  * @device:         the rdma device
  * @comp_vector:    index of completion vector
  *
- * Returns शून्य on failure, otherwise a corresponding cpu map of the
- * completion vector (वापसs all-cpus map अगर the device driver करोesn't
+ * Returns NULL on failure, otherwise a corresponding cpu map of the
+ * completion vector (returns all-cpus map if the device driver doesn't
  * implement get_vector_affinity).
  */
-अटल अंतरभूत स्थिर काष्ठा cpumask *
-ib_get_vector_affinity(काष्ठा ib_device *device, पूर्णांक comp_vector)
-अणु
-	अगर (comp_vector < 0 || comp_vector >= device->num_comp_vectors ||
+static inline const struct cpumask *
+ib_get_vector_affinity(struct ib_device *device, int comp_vector)
+{
+	if (comp_vector < 0 || comp_vector >= device->num_comp_vectors ||
 	    !device->ops.get_vector_affinity)
-		वापस शून्य;
+		return NULL;
 
-	वापस device->ops.get_vector_affinity(device, comp_vector);
+	return device->ops.get_vector_affinity(device, comp_vector);
 
-पूर्ण
+}
 
 /**
- * rdma_roce_rescan_device - Rescan all of the network devices in the प्रणाली
+ * rdma_roce_rescan_device - Rescan all of the network devices in the system
  * and add their gids, as needed, to the relevant RoCE devices.
  *
  * @device:         the rdma device
  */
-व्योम rdma_roce_rescan_device(काष्ठा ib_device *ibdev);
+void rdma_roce_rescan_device(struct ib_device *ibdev);
 
-काष्ठा ib_ucontext *ib_uverbs_get_ucontext_file(काष्ठा ib_uverbs_file *ufile);
+struct ib_ucontext *ib_uverbs_get_ucontext_file(struct ib_uverbs_file *ufile);
 
-पूर्णांक uverbs_destroy_def_handler(काष्ठा uverbs_attr_bundle *attrs);
+int uverbs_destroy_def_handler(struct uverbs_attr_bundle *attrs);
 
-काष्ठा net_device *rdma_alloc_netdev(काष्ठा ib_device *device, u32 port_num,
-				     क्रमागत rdma_netdev_t type, स्थिर अक्षर *name,
-				     अचिन्हित अक्षर name_assign_type,
-				     व्योम (*setup)(काष्ठा net_device *));
+struct net_device *rdma_alloc_netdev(struct ib_device *device, u32 port_num,
+				     enum rdma_netdev_t type, const char *name,
+				     unsigned char name_assign_type,
+				     void (*setup)(struct net_device *));
 
-पूर्णांक rdma_init_netdev(काष्ठा ib_device *device, u32 port_num,
-		     क्रमागत rdma_netdev_t type, स्थिर अक्षर *name,
-		     अचिन्हित अक्षर name_assign_type,
-		     व्योम (*setup)(काष्ठा net_device *),
-		     काष्ठा net_device *netdev);
+int rdma_init_netdev(struct ib_device *device, u32 port_num,
+		     enum rdma_netdev_t type, const char *name,
+		     unsigned char name_assign_type,
+		     void (*setup)(struct net_device *),
+		     struct net_device *netdev);
 
 /**
  * rdma_set_device_sysfs_group - Set device attributes group to have
- *				 driver specअगरic sysfs entries at
- *				 क्रम infiniband class.
+ *				 driver specific sysfs entries at
+ *				 for infiniband class.
  *
- * @device:	device poपूर्णांकer क्रम which attributes to be created
- * @group:	Poपूर्णांकer to group which should be added when device
- *		is रेजिस्टरed with sysfs.
+ * @device:	device pointer for which attributes to be created
+ * @group:	Pointer to group which should be added when device
+ *		is registered with sysfs.
  * rdma_set_device_sysfs_group() allows existing drivers to expose one
  * group per device to have sysfs attributes.
  *
  * NOTE: New drivers should not make use of this API; instead new device
  * parameter should be exposed via netlink command. This API and mechanism
- * exist only क्रम existing drivers.
+ * exist only for existing drivers.
  */
-अटल अंतरभूत व्योम
-rdma_set_device_sysfs_group(काष्ठा ib_device *dev,
-			    स्थिर काष्ठा attribute_group *group)
-अणु
+static inline void
+rdma_set_device_sysfs_group(struct ib_device *dev,
+			    const struct attribute_group *group)
+{
 	dev->groups[1] = group;
-पूर्ण
+}
 
 /**
- * rdma_device_to_ibdev - Get ib_device poपूर्णांकer from device poपूर्णांकer
+ * rdma_device_to_ibdev - Get ib_device pointer from device pointer
  *
- * @device:	device poपूर्णांकer क्रम which ib_device poपूर्णांकer to retrieve
+ * @device:	device pointer for which ib_device pointer to retrieve
  *
- * rdma_device_to_ibdev() retrieves ib_device poपूर्णांकer from device.
+ * rdma_device_to_ibdev() retrieves ib_device pointer from device.
  *
  */
-अटल अंतरभूत काष्ठा ib_device *rdma_device_to_ibdev(काष्ठा device *device)
-अणु
-	काष्ठा ib_core_device *coredev =
-		container_of(device, काष्ठा ib_core_device, dev);
+static inline struct ib_device *rdma_device_to_ibdev(struct device *device)
+{
+	struct ib_core_device *coredev =
+		container_of(device, struct ib_core_device, dev);
 
-	वापस coredev->owner;
-पूर्ण
+	return coredev->owner;
+}
 
 /**
- * ibdev_to_node - वापस the NUMA node क्रम a given ib_device
- * @dev:	device to get the NUMA node क्रम.
+ * ibdev_to_node - return the NUMA node for a given ib_device
+ * @dev:	device to get the NUMA node for.
  */
-अटल अंतरभूत पूर्णांक ibdev_to_node(काष्ठा ib_device *ibdev)
-अणु
-	काष्ठा device *parent = ibdev->dev.parent;
+static inline int ibdev_to_node(struct ib_device *ibdev)
+{
+	struct device *parent = ibdev->dev.parent;
 
-	अगर (!parent)
-		वापस NUMA_NO_NODE;
-	वापस dev_to_node(parent);
-पूर्ण
+	if (!parent)
+		return NUMA_NO_NODE;
+	return dev_to_node(parent);
+}
 
 /**
  * rdma_device_to_drv_device - Helper macro to reach back to driver's
- *			       ib_device holder काष्ठाure from device poपूर्णांकer.
+ *			       ib_device holder structure from device pointer.
  *
- * NOTE: New drivers should not make use of this API; This API is only क्रम
+ * NOTE: New drivers should not make use of this API; This API is only for
  * existing drivers who have exposed sysfs entries using
  * rdma_set_device_sysfs_group().
  */
-#घोषणा rdma_device_to_drv_device(dev, drv_dev_काष्ठा, ibdev_member)           \
-	container_of(rdma_device_to_ibdev(dev), drv_dev_काष्ठा, ibdev_member)
+#define rdma_device_to_drv_device(dev, drv_dev_struct, ibdev_member)           \
+	container_of(rdma_device_to_ibdev(dev), drv_dev_struct, ibdev_member)
 
-bool rdma_dev_access_netns(स्थिर काष्ठा ib_device *device,
-			   स्थिर काष्ठा net *net);
+bool rdma_dev_access_netns(const struct ib_device *device,
+			   const struct net *net);
 
-#घोषणा IB_ROCE_UDP_ENCAP_VALID_PORT_MIN (0xC000)
-#घोषणा IB_ROCE_UDP_ENCAP_VALID_PORT_MAX (0xFFFF)
-#घोषणा IB_GRH_FLOWLABEL_MASK (0x000FFFFF)
+#define IB_ROCE_UDP_ENCAP_VALID_PORT_MIN (0xC000)
+#define IB_ROCE_UDP_ENCAP_VALID_PORT_MAX (0xFFFF)
+#define IB_GRH_FLOWLABEL_MASK (0x000FFFFF)
 
 /**
  * rdma_flow_label_to_udp_sport - generate a RoCE v2 UDP src port value based
@@ -4648,13 +4647,13 @@ bool rdma_dev_access_netns(स्थिर काष्ठा ib_device *device,
  * UDP src port 14 bit value. All RoCE V2 drivers should use this same
  * convention.
  */
-अटल अंतरभूत u16 rdma_flow_label_to_udp_sport(u32 fl)
-अणु
+static inline u16 rdma_flow_label_to_udp_sport(u32 fl)
+{
 	u32 fl_low = fl & 0x03fff, fl_high = fl & 0xFC000;
 
 	fl_low ^= fl_high >> 14;
-	वापस (u16)(fl_low | IB_ROCE_UDP_ENCAP_VALID_PORT_MIN);
-पूर्ण
+	return (u16)(fl_low | IB_ROCE_UDP_ENCAP_VALID_PORT_MIN);
+}
 
 /**
  * rdma_calc_flow_label - generate a RDMA symmetric flow label value based on
@@ -4665,22 +4664,22 @@ bool rdma_dev_access_netns(स्थिर काष्ठा ib_device *device,
  *
  * This function will create symmetric flow_label value based on the local
  * and remote qpn values. this will allow both the requester and responder
- * to calculate the same flow_label क्रम a given connection.
+ * to calculate the same flow_label for a given connection.
  *
- * This helper function should be used by driver in हाल the upper layer
+ * This helper function should be used by driver in case the upper layer
  * provide a zero flow_label value. This is to improve entropy of RDMA
  * traffic in the network.
  */
-अटल अंतरभूत u32 rdma_calc_flow_label(u32 lqpn, u32 rqpn)
-अणु
+static inline u32 rdma_calc_flow_label(u32 lqpn, u32 rqpn)
+{
 	u64 v = (u64)lqpn * rqpn;
 
 	v ^= v >> 20;
 	v ^= v >> 40;
 
-	वापस (u32)(v & IB_GRH_FLOWLABEL_MASK);
-पूर्ण
+	return (u32)(v & IB_GRH_FLOWLABEL_MASK);
+}
 
-स्थिर काष्ठा ib_port_immutable*
-ib_port_immutable_पढ़ो(काष्ठा ib_device *dev, अचिन्हित पूर्णांक port);
-#पूर्ण_अगर /* IB_VERBS_H */
+const struct ib_port_immutable*
+ib_port_immutable_read(struct ib_device *dev, unsigned int port);
+#endif /* IB_VERBS_H */

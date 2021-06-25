@@ -1,27 +1,26 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Intel(R) Trace Hub driver debugging
  *
  * Copyright (C) 2014-2015 Intel Corporation.
  */
 
-#अगर_अघोषित __INTEL_TH_DEBUG_H__
-#घोषणा __INTEL_TH_DEBUG_H__
+#ifndef __INTEL_TH_DEBUG_H__
+#define __INTEL_TH_DEBUG_H__
 
-#अगर_घोषित CONFIG_INTEL_TH_DEBUG
-बाह्य काष्ठा dentry *पूर्णांकel_th_dbg;
+#ifdef CONFIG_INTEL_TH_DEBUG
+extern struct dentry *intel_th_dbg;
 
-व्योम पूर्णांकel_th_debug_init(व्योम);
-व्योम पूर्णांकel_th_debug_करोne(व्योम);
-#अन्यथा
-अटल अंतरभूत व्योम पूर्णांकel_th_debug_init(व्योम)
-अणु
-पूर्ण
+void intel_th_debug_init(void);
+void intel_th_debug_done(void);
+#else
+static inline void intel_th_debug_init(void)
+{
+}
 
-अटल अंतरभूत व्योम पूर्णांकel_th_debug_करोne(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर
+static inline void intel_th_debug_done(void)
+{
+}
+#endif
 
-#पूर्ण_अगर /* __INTEL_TH_DEBUG_H__ */
+#endif /* __INTEL_TH_DEBUG_H__ */

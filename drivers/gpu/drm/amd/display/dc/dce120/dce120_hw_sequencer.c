@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,74 +23,74 @@
  *
  */
 
-#समावेश "dm_services.h"
-#समावेश "dc.h"
-#समावेश "core_types.h"
-#समावेश "dce120_hw_sequencer.h"
-#समावेश "dce/dce_hwseq.h"
+#include "dm_services.h"
+#include "dc.h"
+#include "core_types.h"
+#include "dce120_hw_sequencer.h"
+#include "dce/dce_hwseq.h"
 
-#समावेश "dce110/dce110_hw_sequencer.h"
+#include "dce110/dce110_hw_sequencer.h"
 
-#समावेश "dce/dce_12_0_offset.h"
-#समावेश "dce/dce_12_0_sh_mask.h"
-#समावेश "soc15_hw_ip.h"
-#समावेश "vega10_ip_offset.h"
-#समावेश "reg_helper.h"
+#include "dce/dce_12_0_offset.h"
+#include "dce/dce_12_0_sh_mask.h"
+#include "soc15_hw_ip.h"
+#include "vega10_ip_offset.h"
+#include "reg_helper.h"
 
-#घोषणा CTX \
+#define CTX \
 	hws->ctx
-#घोषणा REG(reg)\
+#define REG(reg)\
 	hws->regs->reg
 
-#अघोषित FN
-#घोषणा FN(reg_name, field_name) \
-	hws->shअगरts->field_name, hws->masks->field_name
+#undef FN
+#define FN(reg_name, field_name) \
+	hws->shifts->field_name, hws->masks->field_name
 
-काष्ठा dce120_hw_seq_reg_offsets अणु
-	uपूर्णांक32_t crtc;
-पूर्ण;
+struct dce120_hw_seq_reg_offsets {
+	uint32_t crtc;
+};
 
-#अगर 0
-अटल स्थिर काष्ठा dce120_hw_seq_reg_offsets reg_offsets[] = अणु
-अणु
+#if 0
+static const struct dce120_hw_seq_reg_offsets reg_offsets[] = {
+{
 	.crtc = (mmCRTC0_CRTC_GSL_CONTROL - mmCRTC0_CRTC_GSL_CONTROL),
-पूर्ण,
-अणु
+},
+{
 	.crtc = (mmCRTC1_CRTC_GSL_CONTROL - mmCRTC0_CRTC_GSL_CONTROL),
-पूर्ण,
-अणु
+},
+{
 	.crtc = (mmCRTC2_CRTC_GSL_CONTROL - mmCRTC0_CRTC_GSL_CONTROL),
-पूर्ण,
-अणु
+},
+{
 	.crtc = (mmCRTC3_CRTC_GSL_CONTROL - mmCRTC0_CRTC_GSL_CONTROL),
-पूर्ण,
-अणु
+},
+{
 	.crtc = (mmCRTC4_CRTC_GSL_CONTROL - mmCRTC0_CRTC_GSL_CONTROL),
-पूर्ण,
-अणु
+},
+{
 	.crtc = (mmCRTC5_CRTC_GSL_CONTROL - mmCRTC0_CRTC_GSL_CONTROL),
-पूर्ण
-पूर्ण;
+}
+};
 
-#घोषणा HW_REG_CRTC(reg, id)\
+#define HW_REG_CRTC(reg, id)\
 	(reg + reg_offsets[id].crtc)
 
-#घोषणा CNTL_ID(controller_id)\
+#define CNTL_ID(controller_id)\
 	controller_id
 /*******************************************************************************
  * Private definitions
  ******************************************************************************/
-अटल व्योम dce120_init_pte(काष्ठा dc_context *ctx, uपूर्णांक8_t controller_id)
-अणु
-	uपूर्णांक32_t addr;
-	uपूर्णांक32_t value = 0;
-	uपूर्णांक32_t chunk_पूर्णांक = 0;
-	uपूर्णांक32_t chunk_mul = 0;
+static void dce120_init_pte(struct dc_context *ctx, uint8_t controller_id)
+{
+	uint32_t addr;
+	uint32_t value = 0;
+	uint32_t chunk_int = 0;
+	uint32_t chunk_mul = 0;
 /*
 	addr = mmDCP0_DVMM_PTE_CONTROL + controller_id *
 			(mmDCP1_DVMM_PTE_CONTROL- mmDCP0_DVMM_PTE_CONTROL);
 
-	value = dm_पढ़ो_reg(ctx, addr);
+	value = dm_read_reg(ctx, addr);
 
 	set_reg_field_value(
 			value, 0, DCP, controller_id,
@@ -108,12 +107,12 @@
 			DVMM_PTE_CONTROL,
 			DVMM_PTE_BUFFER_MODE1);
 
-	dm_ग_लिखो_reg(ctx, addr, value);*/
+	dm_write_reg(ctx, addr, value);*/
 
 	addr = mmDVMM_PTE_REQ;
-	value = dm_पढ़ो_reg(ctx, addr);
+	value = dm_read_reg(ctx, addr);
 
-	chunk_पूर्णांक = get_reg_field_value(
+	chunk_int = get_reg_field_value(
 		value,
 		DVMM_PTE_REQ,
 		HFLIP_PTEREQ_PER_CHUNK_INT);
@@ -123,7 +122,7 @@
 		DVMM_PTE_REQ,
 		HFLIP_PTEREQ_PER_CHUNK_MULTIPLIER);
 
-	अगर (chunk_पूर्णांक != 0x4 || chunk_mul != 0x4) अणु
+	if (chunk_int != 0x4 || chunk_mul != 0x4) {
 
 		set_reg_field_value(
 			value,
@@ -143,65 +142,65 @@
 			DVMM_PTE_REQ,
 			HFLIP_PTEREQ_PER_CHUNK_MULTIPLIER);
 
-		dm_ग_लिखो_reg(ctx, addr, value);
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर
+		dm_write_reg(ctx, addr, value);
+	}
+}
+#endif
 
-अटल bool dce120_enable_display_घातer_gating(
-	काष्ठा dc *dc,
-	uपूर्णांक8_t controller_id,
-	काष्ठा dc_bios *dcb,
-	क्रमागत pipe_gating_control घातer_gating)
-अणु
-	/* disable क्रम bringup */
-#अगर 0
-	क्रमागत bp_result bp_result = BP_RESULT_OK;
-	क्रमागत bp_pipe_control_action cntl;
-	काष्ठा dc_context *ctx = dc->ctx;
+static bool dce120_enable_display_power_gating(
+	struct dc *dc,
+	uint8_t controller_id,
+	struct dc_bios *dcb,
+	enum pipe_gating_control power_gating)
+{
+	/* disable for bringup */
+#if 0
+	enum bp_result bp_result = BP_RESULT_OK;
+	enum bp_pipe_control_action cntl;
+	struct dc_context *ctx = dc->ctx;
 
-	अगर (IS_FPGA_MAXIMUS_DC(ctx->dce_environment))
-		वापस true;
+	if (IS_FPGA_MAXIMUS_DC(ctx->dce_environment))
+		return true;
 
-	अगर (घातer_gating == PIPE_GATING_CONTROL_INIT)
+	if (power_gating == PIPE_GATING_CONTROL_INIT)
 		cntl = ASIC_PIPE_INIT;
-	अन्यथा अगर (घातer_gating == PIPE_GATING_CONTROL_ENABLE)
+	else if (power_gating == PIPE_GATING_CONTROL_ENABLE)
 		cntl = ASIC_PIPE_ENABLE;
-	अन्यथा
+	else
 		cntl = ASIC_PIPE_DISABLE;
 
-	अगर (घातer_gating != PIPE_GATING_CONTROL_INIT || controller_id == 0) अणु
+	if (power_gating != PIPE_GATING_CONTROL_INIT || controller_id == 0) {
 
-		bp_result = dcb->funcs->enable_disp_घातer_gating(
+		bp_result = dcb->funcs->enable_disp_power_gating(
 						dcb, controller_id + 1, cntl);
 
 		/* Revert MASTER_UPDATE_MODE to 0 because bios sets it 2
-		 * by शेष when command table is called
+		 * by default when command table is called
 		 */
-		dm_ग_लिखो_reg(ctx,
+		dm_write_reg(ctx,
 			HW_REG_CRTC(mmCRTC0_CRTC_MASTER_UPDATE_MODE, controller_id),
 			0);
-	पूर्ण
+	}
 
-	अगर (घातer_gating != PIPE_GATING_CONTROL_ENABLE)
+	if (power_gating != PIPE_GATING_CONTROL_ENABLE)
 		dce120_init_pte(ctx, controller_id);
 
-	अगर (bp_result == BP_RESULT_OK)
-		वापस true;
-	अन्यथा
-		वापस false;
-#पूर्ण_अगर
-	वापस false;
-पूर्ण
+	if (bp_result == BP_RESULT_OK)
+		return true;
+	else
+		return false;
+#endif
+	return false;
+}
 
-अटल व्योम dce120_update_dchub(
-	काष्ठा dce_hwseq *hws,
-	काष्ठा dchub_init_data *dh_data)
-अणु
+static void dce120_update_dchub(
+	struct dce_hwseq *hws,
+	struct dchub_init_data *dh_data)
+{
 	/* TODO: port code from dal2 */
-	चयन (dh_data->fb_mode) अणु
-	हाल FRAME_BUFFER_MODE_ZFB_ONLY:
-		/*For ZFB हाल need to put DCHUB FB BASE and TOP upside करोwn to indicate ZFB mode*/
+	switch (dh_data->fb_mode) {
+	case FRAME_BUFFER_MODE_ZFB_ONLY:
+		/*For ZFB case need to put DCHUB FB BASE and TOP upside down to indicate ZFB mode*/
 		REG_UPDATE_2(DCHUB_FB_LOCATION,
 				FB_TOP, 0,
 				FB_BASE, 0x0FFFF);
@@ -214,9 +213,9 @@
 
 		REG_UPDATE(DCHUB_AGP_TOP,
 				AGP_TOP, (dh_data->zfb_mc_base_addr + dh_data->zfb_size_in_byte - 1) >> 22);
-		अवरोध;
-	हाल FRAME_BUFFER_MODE_MIXED_ZFB_AND_LOCAL:
-		/*Should not touch FB LOCATION (करोne by VBIOS on AsicInit table)*/
+		break;
+	case FRAME_BUFFER_MODE_MIXED_ZFB_AND_LOCAL:
+		/*Should not touch FB LOCATION (done by VBIOS on AsicInit table)*/
 		REG_UPDATE(DCHUB_AGP_BASE,
 				AGP_BASE, dh_data->zfb_phys_addr_base >> 22);
 
@@ -225,9 +224,9 @@
 
 		REG_UPDATE(DCHUB_AGP_TOP,
 				AGP_TOP, (dh_data->zfb_mc_base_addr + dh_data->zfb_size_in_byte - 1) >> 22);
-		अवरोध;
-	हाल FRAME_BUFFER_MODE_LOCAL_ONLY:
-		/*Should not touch FB LOCATION (करोne by VBIOS on AsicInit table)*/
+		break;
+	case FRAME_BUFFER_MODE_LOCAL_ONLY:
+		/*Should not touch FB LOCATION (done by VBIOS on AsicInit table)*/
 		REG_UPDATE(DCHUB_AGP_BASE,
 				AGP_BASE, 0);
 
@@ -236,37 +235,37 @@
 
 		REG_UPDATE(DCHUB_AGP_TOP,
 				AGP_TOP, 0);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
 	dh_data->dchub_initialzied = true;
 	dh_data->dchub_info_valid = false;
-पूर्ण
+}
 
 /**
- * dce121_xgmi_enabled() - Check अगर xGMI is enabled
+ * dce121_xgmi_enabled() - Check if xGMI is enabled
  * @hws: DCE hardware sequencer object
  *
- * Return true अगर xGMI is enabled. False otherwise.
+ * Return true if xGMI is enabled. False otherwise.
  */
-bool dce121_xgmi_enabled(काष्ठा dce_hwseq *hws)
-अणु
-	uपूर्णांक32_t pf_max_region;
+bool dce121_xgmi_enabled(struct dce_hwseq *hws)
+{
+	uint32_t pf_max_region;
 
 	REG_GET(MC_VM_XGMI_LFB_CNTL, PF_MAX_REGION, &pf_max_region);
 	/* PF_MAX_REGION == 0 means xgmi is disabled */
-	वापस !!pf_max_region;
-पूर्ण
+	return !!pf_max_region;
+}
 
-व्योम dce120_hw_sequencer_स्थिरruct(काष्ठा dc *dc)
-अणु
-	/* All रेजिस्टरs used by dce11.2 match those in dce11 in offset and
-	 * काष्ठाure
+void dce120_hw_sequencer_construct(struct dc *dc)
+{
+	/* All registers used by dce11.2 match those in dce11 in offset and
+	 * structure
 	 */
-	dce110_hw_sequencer_स्थिरruct(dc);
-	dc->hwseq->funcs.enable_display_घातer_gating = dce120_enable_display_घातer_gating;
+	dce110_hw_sequencer_construct(dc);
+	dc->hwseq->funcs.enable_display_power_gating = dce120_enable_display_power_gating;
 	dc->hwss.update_dchub = dce120_update_dchub;
-पूर्ण
+}
 

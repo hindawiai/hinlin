@@ -1,160 +1,159 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 
 /*
- * The Capture code क्रम Fujitsu M-5MOLS ISP
+ * The Capture code for Fujitsu M-5MOLS ISP
  *
  * Copyright (C) 2011 Samsung Electronics Co., Ltd.
  * Author: HeungJun Kim <riverful.kim@samsung.com>
  *
  * Copyright (C) 2009 Samsung Electronics Co., Ltd.
- * Author: Dongsoo Nathaniel Kim <करोngsoo45.kim@samsung.com>
+ * Author: Dongsoo Nathaniel Kim <dongsoo45.kim@samsung.com>
  */
 
-#समावेश <linux/i2c.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/videodev2.h>
-#समावेश <media/v4l2-ctrls.h>
-#समावेश <media/v4l2-device.h>
-#समावेश <media/v4l2-subdev.h>
-#समावेश <media/i2c/m5mols.h>
-#समावेश <media/drv-पूर्णांकf/exynos-fimc.h>
+#include <linux/i2c.h>
+#include <linux/slab.h>
+#include <linux/irq.h>
+#include <linux/interrupt.h>
+#include <linux/delay.h>
+#include <linux/gpio.h>
+#include <linux/regulator/consumer.h>
+#include <linux/videodev2.h>
+#include <media/v4l2-ctrls.h>
+#include <media/v4l2-device.h>
+#include <media/v4l2-subdev.h>
+#include <media/i2c/m5mols.h>
+#include <media/drv-intf/exynos-fimc.h>
 
-#समावेश "m5mols.h"
-#समावेश "m5mols_reg.h"
+#include "m5mols.h"
+#include "m5mols_reg.h"
 
 /**
- * m5mols_पढ़ो_rational - I2C पढ़ो of a rational number
- * @sd: sub-device, as poपूर्णांकed by काष्ठा v4l2_subdev
- * @addr_num: numerator रेजिस्टर
- * @addr_den: denominator रेजिस्टर
- * @val: place to store the भागision result
+ * m5mols_read_rational - I2C read of a rational number
+ * @sd: sub-device, as pointed by struct v4l2_subdev
+ * @addr_num: numerator register
+ * @addr_den: denominator register
+ * @val: place to store the division result
  *
- * Read numerator and denominator from रेजिस्टरs @addr_num and @addr_den
- * respectively and वापस the भागision result in @val.
+ * Read numerator and denominator from registers @addr_num and @addr_den
+ * respectively and return the division result in @val.
  */
-अटल पूर्णांक m5mols_पढ़ो_rational(काष्ठा v4l2_subdev *sd, u32 addr_num,
+static int m5mols_read_rational(struct v4l2_subdev *sd, u32 addr_num,
 				u32 addr_den, u32 *val)
-अणु
+{
 	u32 num, den;
 
-	पूर्णांक ret = m5mols_पढ़ो_u32(sd, addr_num, &num);
-	अगर (!ret)
-		ret = m5mols_पढ़ो_u32(sd, addr_den, &den);
-	अगर (ret)
-		वापस ret;
+	int ret = m5mols_read_u32(sd, addr_num, &num);
+	if (!ret)
+		ret = m5mols_read_u32(sd, addr_den, &den);
+	if (ret)
+		return ret;
 	*val = den == 0 ? 0 : num / den;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * m5mols_capture_info - Gather captured image inक्रमmation
- * @info: M-5MOLS driver data काष्ठाure
+ * m5mols_capture_info - Gather captured image information
+ * @info: M-5MOLS driver data structure
  *
- * For now it gathers only EXIF inक्रमmation and file size.
+ * For now it gathers only EXIF information and file size.
  */
-अटल पूर्णांक m5mols_capture_info(काष्ठा m5mols_info *info)
-अणु
-	काष्ठा m5mols_exअगर *exअगर = &info->cap.exअगर;
-	काष्ठा v4l2_subdev *sd = &info->sd;
-	पूर्णांक ret;
+static int m5mols_capture_info(struct m5mols_info *info)
+{
+	struct m5mols_exif *exif = &info->cap.exif;
+	struct v4l2_subdev *sd = &info->sd;
+	int ret;
 
-	ret = m5mols_पढ़ो_rational(sd, EXIF_INFO_EXPTIME_NU,
-				   EXIF_INFO_EXPTIME_DE, &exअगर->exposure_समय);
-	अगर (ret)
-		वापस ret;
-	ret = m5mols_पढ़ो_rational(sd, EXIF_INFO_TV_NU, EXIF_INFO_TV_DE,
-				   &exअगर->shutter_speed);
-	अगर (ret)
-		वापस ret;
-	ret = m5mols_पढ़ो_rational(sd, EXIF_INFO_AV_NU, EXIF_INFO_AV_DE,
-				   &exअगर->aperture);
-	अगर (ret)
-		वापस ret;
-	ret = m5mols_पढ़ो_rational(sd, EXIF_INFO_BV_NU, EXIF_INFO_BV_DE,
-				   &exअगर->brightness);
-	अगर (ret)
-		वापस ret;
-	ret = m5mols_पढ़ो_rational(sd, EXIF_INFO_EBV_NU, EXIF_INFO_EBV_DE,
-				   &exअगर->exposure_bias);
-	अगर (ret)
-		वापस ret;
+	ret = m5mols_read_rational(sd, EXIF_INFO_EXPTIME_NU,
+				   EXIF_INFO_EXPTIME_DE, &exif->exposure_time);
+	if (ret)
+		return ret;
+	ret = m5mols_read_rational(sd, EXIF_INFO_TV_NU, EXIF_INFO_TV_DE,
+				   &exif->shutter_speed);
+	if (ret)
+		return ret;
+	ret = m5mols_read_rational(sd, EXIF_INFO_AV_NU, EXIF_INFO_AV_DE,
+				   &exif->aperture);
+	if (ret)
+		return ret;
+	ret = m5mols_read_rational(sd, EXIF_INFO_BV_NU, EXIF_INFO_BV_DE,
+				   &exif->brightness);
+	if (ret)
+		return ret;
+	ret = m5mols_read_rational(sd, EXIF_INFO_EBV_NU, EXIF_INFO_EBV_DE,
+				   &exif->exposure_bias);
+	if (ret)
+		return ret;
 
-	ret = m5mols_पढ़ो_u16(sd, EXIF_INFO_ISO, &exअगर->iso_speed);
-	अगर (!ret)
-		ret = m5mols_पढ़ो_u16(sd, EXIF_INFO_FLASH, &exअगर->flash);
-	अगर (!ret)
-		ret = m5mols_पढ़ो_u16(sd, EXIF_INFO_SDR, &exअगर->sdr);
-	अगर (!ret)
-		ret = m5mols_पढ़ो_u16(sd, EXIF_INFO_QVAL, &exअगर->qval);
-	अगर (ret)
-		वापस ret;
+	ret = m5mols_read_u16(sd, EXIF_INFO_ISO, &exif->iso_speed);
+	if (!ret)
+		ret = m5mols_read_u16(sd, EXIF_INFO_FLASH, &exif->flash);
+	if (!ret)
+		ret = m5mols_read_u16(sd, EXIF_INFO_SDR, &exif->sdr);
+	if (!ret)
+		ret = m5mols_read_u16(sd, EXIF_INFO_QVAL, &exif->qval);
+	if (ret)
+		return ret;
 
-	अगर (!ret)
-		ret = m5mols_पढ़ो_u32(sd, CAPC_IMAGE_SIZE, &info->cap.मुख्य);
-	अगर (!ret)
-		ret = m5mols_पढ़ो_u32(sd, CAPC_THUMB_SIZE, &info->cap.thumb);
-	अगर (!ret)
-		info->cap.total = info->cap.मुख्य + info->cap.thumb;
+	if (!ret)
+		ret = m5mols_read_u32(sd, CAPC_IMAGE_SIZE, &info->cap.main);
+	if (!ret)
+		ret = m5mols_read_u32(sd, CAPC_THUMB_SIZE, &info->cap.thumb);
+	if (!ret)
+		info->cap.total = info->cap.main + info->cap.thumb;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक m5mols_start_capture(काष्ठा m5mols_info *info)
-अणु
-	अचिन्हित पूर्णांक framesize = info->cap.buf_size - M5MOLS_JPEG_TAGS_SIZE;
-	काष्ठा v4l2_subdev *sd = &info->sd;
-	पूर्णांक ret;
+int m5mols_start_capture(struct m5mols_info *info)
+{
+	unsigned int framesize = info->cap.buf_size - M5MOLS_JPEG_TAGS_SIZE;
+	struct v4l2_subdev *sd = &info->sd;
+	int ret;
 
 	/*
 	 * Synchronize the controls, set the capture frame resolution and color
-	 * क्रमmat. The frame capture is initiated during चयनing from Monitor
+	 * format. The frame capture is initiated during switching from Monitor
 	 * to Capture mode.
 	 */
 	ret = m5mols_set_mode(info, REG_MONITOR);
-	अगर (!ret)
+	if (!ret)
 		ret = m5mols_restore_controls(info);
-	अगर (!ret)
-		ret = m5mols_ग_लिखो(sd, CAPP_YUVOUT_MAIN, REG_JPEG);
-	अगर (!ret)
-		ret = m5mols_ग_लिखो(sd, CAPP_MAIN_IMAGE_SIZE, info->resolution);
-	अगर (!ret)
-		ret = m5mols_ग_लिखो(sd, CAPP_JPEG_SIZE_MAX, framesize);
-	अगर (!ret)
+	if (!ret)
+		ret = m5mols_write(sd, CAPP_YUVOUT_MAIN, REG_JPEG);
+	if (!ret)
+		ret = m5mols_write(sd, CAPP_MAIN_IMAGE_SIZE, info->resolution);
+	if (!ret)
+		ret = m5mols_write(sd, CAPP_JPEG_SIZE_MAX, framesize);
+	if (!ret)
 		ret = m5mols_set_mode(info, REG_CAPTURE);
-	अगर (!ret)
-		/* Wait until a frame is captured to ISP पूर्णांकernal memory */
-		ret = m5mols_रुको_पूर्णांकerrupt(sd, REG_INT_CAPTURE, 2000);
-	अगर (ret)
-		वापस ret;
+	if (!ret)
+		/* Wait until a frame is captured to ISP internal memory */
+		ret = m5mols_wait_interrupt(sd, REG_INT_CAPTURE, 2000);
+	if (ret)
+		return ret;
 
 	/*
 	 * Initiate the captured data transfer to a MIPI-CSI receiver.
 	 */
-	ret = m5mols_ग_लिखो(sd, CAPC_SEL_FRAME, 1);
-	अगर (!ret)
-		ret = m5mols_ग_लिखो(sd, CAPC_START, REG_CAP_START_MAIN);
-	अगर (!ret) अणु
+	ret = m5mols_write(sd, CAPC_SEL_FRAME, 1);
+	if (!ret)
+		ret = m5mols_write(sd, CAPC_START, REG_CAP_START_MAIN);
+	if (!ret) {
 		bool captured = false;
-		अचिन्हित पूर्णांक size;
+		unsigned int size;
 
-		/* Wait क्रम the capture completion पूर्णांकerrupt */
-		ret = m5mols_रुको_पूर्णांकerrupt(sd, REG_INT_CAPTURE, 2000);
-		अगर (!ret) अणु
+		/* Wait for the capture completion interrupt */
+		ret = m5mols_wait_interrupt(sd, REG_INT_CAPTURE, 2000);
+		if (!ret) {
 			captured = true;
 			ret = m5mols_capture_info(info);
-		पूर्ण
-		size = captured ? info->cap.मुख्य : 0;
+		}
+		size = captured ? info->cap.main : 0;
 		v4l2_dbg(1, m5mols_debug, sd, "%s: size: %d, thumb.: %d B\n",
 			 __func__, size, info->cap.thumb);
 
-		v4l2_subdev_notअगरy(sd, S5P_FIMC_TX_END_NOTIFY, &size);
-	पूर्ण
+		v4l2_subdev_notify(sd, S5P_FIMC_TX_END_NOTIFY, &size);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

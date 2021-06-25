@@ -1,16 +1,15 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * crc4.c - simple crc-4 calculations.
  */
 
-#समावेश <linux/crc4.h>
-#समावेश <linux/module.h>
+#include <linux/crc4.h>
+#include <linux/module.h>
 
-अटल स्थिर uपूर्णांक8_t crc4_tab[] = अणु
+static const uint8_t crc4_tab[] = {
 	0x0, 0x7, 0xe, 0x9, 0xb, 0xc, 0x5, 0x2,
 	0x1, 0x6, 0xf, 0x8, 0xa, 0xd, 0x4, 0x3,
-पूर्ण;
+};
 
 /**
  * crc4 - calculate the 4-bit crc of a value.
@@ -23,9 +22,9 @@
  * The @x value is treated as left-aligned, and bits above @bits are ignored
  * in the crc calculations.
  */
-uपूर्णांक8_t crc4(uपूर्णांक8_t c, uपूर्णांक64_t x, पूर्णांक bits)
-अणु
-	पूर्णांक i;
+uint8_t crc4(uint8_t c, uint64_t x, int bits)
+{
+	int i;
 
 	/* mask off anything above the top bit */
 	x &= (1ull << bits) - 1;
@@ -34,11 +33,11 @@ uपूर्णांक8_t crc4(uपूर्णांक8_t c, uपूर्�
 	bits = (bits + 3) & ~0x3;
 
 	/* Calculate crc4 over four-bit nibbles, starting at the MSbit */
-	क्रम (i = bits - 4; i >= 0; i -= 4)
+	for (i = bits - 4; i >= 0; i -= 4)
 		c = crc4_tab[c ^ ((x >> i) & 0xf)];
 
-	वापस c;
-पूर्ण
+	return c;
+}
 EXPORT_SYMBOL_GPL(crc4);
 
 MODULE_DESCRIPTION("CRC4 calculations");

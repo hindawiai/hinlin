@@ -1,362 +1,361 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  MQ Deadline i/o scheduler - adaptation of the legacy deadline scheduler,
- *  क्रम the blk-mq scheduling framework
+ *  for the blk-mq scheduling framework
  *
  *  Copyright (C) 2016 Jens Axboe <axboe@kernel.dk>
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/blk-mq.h>
-#समावेश <linux/elevator.h>
-#समावेश <linux/bपन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/init.h>
-#समावेश <linux/compiler.h>
-#समावेश <linux/rbtree.h>
-#समावेश <linux/sbiपंचांगap.h>
+#include <linux/kernel.h>
+#include <linux/fs.h>
+#include <linux/blkdev.h>
+#include <linux/blk-mq.h>
+#include <linux/elevator.h>
+#include <linux/bio.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/init.h>
+#include <linux/compiler.h>
+#include <linux/rbtree.h>
+#include <linux/sbitmap.h>
 
-#समावेश <trace/events/block.h>
+#include <trace/events/block.h>
 
-#समावेश "blk.h"
-#समावेश "blk-mq.h"
-#समावेश "blk-mq-debugfs.h"
-#समावेश "blk-mq-tag.h"
-#समावेश "blk-mq-sched.h"
+#include "blk.h"
+#include "blk-mq.h"
+#include "blk-mq-debugfs.h"
+#include "blk-mq-tag.h"
+#include "blk-mq-sched.h"
 
 /*
  * See Documentation/block/deadline-iosched.rst
  */
-अटल स्थिर पूर्णांक पढ़ो_expire = HZ / 2;  /* max समय beक्रमe a पढ़ो is submitted. */
-अटल स्थिर पूर्णांक ग_लिखो_expire = 5 * HZ; /* ditto क्रम ग_लिखोs, these limits are SOFT! */
-अटल स्थिर पूर्णांक ग_लिखोs_starved = 2;    /* max बार पढ़ोs can starve a ग_लिखो */
-अटल स्थिर पूर्णांक fअगरo_batch = 16;       /* # of sequential requests treated as one
+static const int read_expire = HZ / 2;  /* max time before a read is submitted. */
+static const int write_expire = 5 * HZ; /* ditto for writes, these limits are SOFT! */
+static const int writes_starved = 2;    /* max times reads can starve a write */
+static const int fifo_batch = 16;       /* # of sequential requests treated as one
 				     by the above parameters. For throughput. */
 
-काष्ठा deadline_data अणु
+struct deadline_data {
 	/*
-	 * run समय data
+	 * run time data
 	 */
 
 	/*
-	 * requests (deadline_rq s) are present on both sort_list and fअगरo_list
+	 * requests (deadline_rq s) are present on both sort_list and fifo_list
 	 */
-	काष्ठा rb_root sort_list[2];
-	काष्ठा list_head fअगरo_list[2];
+	struct rb_root sort_list[2];
+	struct list_head fifo_list[2];
 
 	/*
-	 * next in sort order. पढ़ो, ग_लिखो or both are शून्य
+	 * next in sort order. read, write or both are NULL
 	 */
-	काष्ठा request *next_rq[2];
-	अचिन्हित पूर्णांक batching;		/* number of sequential requests made */
-	अचिन्हित पूर्णांक starved;		/* बार पढ़ोs have starved ग_लिखोs */
+	struct request *next_rq[2];
+	unsigned int batching;		/* number of sequential requests made */
+	unsigned int starved;		/* times reads have starved writes */
 
 	/*
 	 * settings that change how the i/o scheduler behaves
 	 */
-	पूर्णांक fअगरo_expire[2];
-	पूर्णांक fअगरo_batch;
-	पूर्णांक ग_लिखोs_starved;
-	पूर्णांक front_merges;
+	int fifo_expire[2];
+	int fifo_batch;
+	int writes_starved;
+	int front_merges;
 
 	spinlock_t lock;
 	spinlock_t zone_lock;
-	काष्ठा list_head dispatch;
-पूर्ण;
+	struct list_head dispatch;
+};
 
-अटल अंतरभूत काष्ठा rb_root *
-deadline_rb_root(काष्ठा deadline_data *dd, काष्ठा request *rq)
-अणु
-	वापस &dd->sort_list[rq_data_dir(rq)];
-पूर्ण
+static inline struct rb_root *
+deadline_rb_root(struct deadline_data *dd, struct request *rq)
+{
+	return &dd->sort_list[rq_data_dir(rq)];
+}
 
 /*
  * get the request after `rq' in sector-sorted order
  */
-अटल अंतरभूत काष्ठा request *
-deadline_latter_request(काष्ठा request *rq)
-अणु
-	काष्ठा rb_node *node = rb_next(&rq->rb_node);
+static inline struct request *
+deadline_latter_request(struct request *rq)
+{
+	struct rb_node *node = rb_next(&rq->rb_node);
 
-	अगर (node)
-		वापस rb_entry_rq(node);
+	if (node)
+		return rb_entry_rq(node);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम
-deadline_add_rq_rb(काष्ठा deadline_data *dd, काष्ठा request *rq)
-अणु
-	काष्ठा rb_root *root = deadline_rb_root(dd, rq);
+static void
+deadline_add_rq_rb(struct deadline_data *dd, struct request *rq)
+{
+	struct rb_root *root = deadline_rb_root(dd, rq);
 
 	elv_rb_add(root, rq);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-deadline_del_rq_rb(काष्ठा deadline_data *dd, काष्ठा request *rq)
-अणु
-	स्थिर पूर्णांक data_dir = rq_data_dir(rq);
+static inline void
+deadline_del_rq_rb(struct deadline_data *dd, struct request *rq)
+{
+	const int data_dir = rq_data_dir(rq);
 
-	अगर (dd->next_rq[data_dir] == rq)
+	if (dd->next_rq[data_dir] == rq)
 		dd->next_rq[data_dir] = deadline_latter_request(rq);
 
 	elv_rb_del(deadline_rb_root(dd, rq), rq);
-पूर्ण
+}
 
 /*
- * हटाओ rq from rbtree and fअगरo.
+ * remove rq from rbtree and fifo.
  */
-अटल व्योम deadline_हटाओ_request(काष्ठा request_queue *q, काष्ठा request *rq)
-अणु
-	काष्ठा deadline_data *dd = q->elevator->elevator_data;
+static void deadline_remove_request(struct request_queue *q, struct request *rq)
+{
+	struct deadline_data *dd = q->elevator->elevator_data;
 
 	list_del_init(&rq->queuelist);
 
 	/*
-	 * We might not be on the rbtree, अगर we are करोing an insert merge
+	 * We might not be on the rbtree, if we are doing an insert merge
 	 */
-	अगर (!RB_EMPTY_NODE(&rq->rb_node))
+	if (!RB_EMPTY_NODE(&rq->rb_node))
 		deadline_del_rq_rb(dd, rq);
 
 	elv_rqhash_del(q, rq);
-	अगर (q->last_merge == rq)
-		q->last_merge = शून्य;
-पूर्ण
+	if (q->last_merge == rq)
+		q->last_merge = NULL;
+}
 
-अटल व्योम dd_request_merged(काष्ठा request_queue *q, काष्ठा request *req,
-			      क्रमागत elv_merge type)
-अणु
-	काष्ठा deadline_data *dd = q->elevator->elevator_data;
+static void dd_request_merged(struct request_queue *q, struct request *req,
+			      enum elv_merge type)
+{
+	struct deadline_data *dd = q->elevator->elevator_data;
 
 	/*
-	 * अगर the merge was a front merge, we need to reposition request
+	 * if the merge was a front merge, we need to reposition request
 	 */
-	अगर (type == ELEVATOR_FRONT_MERGE) अणु
+	if (type == ELEVATOR_FRONT_MERGE) {
 		elv_rb_del(deadline_rb_root(dd, req), req);
 		deadline_add_rq_rb(dd, req);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम dd_merged_requests(काष्ठा request_queue *q, काष्ठा request *req,
-			       काष्ठा request *next)
-अणु
+static void dd_merged_requests(struct request_queue *q, struct request *req,
+			       struct request *next)
+{
 	/*
-	 * अगर next expires beक्रमe rq, assign its expire समय to rq
-	 * and move पूर्णांकo next position (next will be deleted) in fअगरo
+	 * if next expires before rq, assign its expire time to rq
+	 * and move into next position (next will be deleted) in fifo
 	 */
-	अगर (!list_empty(&req->queuelist) && !list_empty(&next->queuelist)) अणु
-		अगर (समय_beक्रमe((अचिन्हित दीर्घ)next->fअगरo_समय,
-				(अचिन्हित दीर्घ)req->fअगरo_समय)) अणु
+	if (!list_empty(&req->queuelist) && !list_empty(&next->queuelist)) {
+		if (time_before((unsigned long)next->fifo_time,
+				(unsigned long)req->fifo_time)) {
 			list_move(&req->queuelist, &next->queuelist);
-			req->fअगरo_समय = next->fअगरo_समय;
-		पूर्ण
-	पूर्ण
+			req->fifo_time = next->fifo_time;
+		}
+	}
 
 	/*
-	 * समाप्त knowledge of next, this one is a goner
+	 * kill knowledge of next, this one is a goner
 	 */
-	deadline_हटाओ_request(q, next);
-पूर्ण
+	deadline_remove_request(q, next);
+}
 
 /*
  * move an entry to dispatch queue
  */
-अटल व्योम
-deadline_move_request(काष्ठा deadline_data *dd, काष्ठा request *rq)
-अणु
-	स्थिर पूर्णांक data_dir = rq_data_dir(rq);
+static void
+deadline_move_request(struct deadline_data *dd, struct request *rq)
+{
+	const int data_dir = rq_data_dir(rq);
 
-	dd->next_rq[READ] = शून्य;
-	dd->next_rq[WRITE] = शून्य;
+	dd->next_rq[READ] = NULL;
+	dd->next_rq[WRITE] = NULL;
 	dd->next_rq[data_dir] = deadline_latter_request(rq);
 
 	/*
-	 * take it off the sort and fअगरo list
+	 * take it off the sort and fifo list
 	 */
-	deadline_हटाओ_request(rq->q, rq);
-पूर्ण
+	deadline_remove_request(rq->q, rq);
+}
 
 /*
- * deadline_check_fअगरo वापसs 0 अगर there are no expired requests on the fअगरo,
- * 1 otherwise. Requires !list_empty(&dd->fअगरo_list[data_dir])
+ * deadline_check_fifo returns 0 if there are no expired requests on the fifo,
+ * 1 otherwise. Requires !list_empty(&dd->fifo_list[data_dir])
  */
-अटल अंतरभूत पूर्णांक deadline_check_fअगरo(काष्ठा deadline_data *dd, पूर्णांक ddir)
-अणु
-	काष्ठा request *rq = rq_entry_fअगरo(dd->fअगरo_list[ddir].next);
+static inline int deadline_check_fifo(struct deadline_data *dd, int ddir)
+{
+	struct request *rq = rq_entry_fifo(dd->fifo_list[ddir].next);
 
 	/*
 	 * rq is expired!
 	 */
-	अगर (समय_after_eq(jअगरfies, (अचिन्हित दीर्घ)rq->fअगरo_समय))
-		वापस 1;
+	if (time_after_eq(jiffies, (unsigned long)rq->fifo_time))
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * For the specअगरied data direction, वापस the next request to
+ * For the specified data direction, return the next request to
  * dispatch using arrival ordered lists.
  */
-अटल काष्ठा request *
-deadline_fअगरo_request(काष्ठा deadline_data *dd, पूर्णांक data_dir)
-अणु
-	काष्ठा request *rq;
-	अचिन्हित दीर्घ flags;
+static struct request *
+deadline_fifo_request(struct deadline_data *dd, int data_dir)
+{
+	struct request *rq;
+	unsigned long flags;
 
-	अगर (WARN_ON_ONCE(data_dir != READ && data_dir != WRITE))
-		वापस शून्य;
+	if (WARN_ON_ONCE(data_dir != READ && data_dir != WRITE))
+		return NULL;
 
-	अगर (list_empty(&dd->fअगरo_list[data_dir]))
-		वापस शून्य;
+	if (list_empty(&dd->fifo_list[data_dir]))
+		return NULL;
 
-	rq = rq_entry_fअगरo(dd->fअगरo_list[data_dir].next);
-	अगर (data_dir == READ || !blk_queue_is_zoned(rq->q))
-		वापस rq;
+	rq = rq_entry_fifo(dd->fifo_list[data_dir].next);
+	if (data_dir == READ || !blk_queue_is_zoned(rq->q))
+		return rq;
 
 	/*
-	 * Look क्रम a ग_लिखो request that can be dispatched, that is one with
+	 * Look for a write request that can be dispatched, that is one with
 	 * an unlocked target zone.
 	 */
 	spin_lock_irqsave(&dd->zone_lock, flags);
-	list_क्रम_each_entry(rq, &dd->fअगरo_list[WRITE], queuelist) अणु
-		अगर (blk_req_can_dispatch_to_zone(rq))
-			जाओ out;
-	पूर्ण
-	rq = शून्य;
+	list_for_each_entry(rq, &dd->fifo_list[WRITE], queuelist) {
+		if (blk_req_can_dispatch_to_zone(rq))
+			goto out;
+	}
+	rq = NULL;
 out:
 	spin_unlock_irqrestore(&dd->zone_lock, flags);
 
-	वापस rq;
-पूर्ण
+	return rq;
+}
 
 /*
- * For the specअगरied data direction, वापस the next request to
+ * For the specified data direction, return the next request to
  * dispatch using sector position sorted lists.
  */
-अटल काष्ठा request *
-deadline_next_request(काष्ठा deadline_data *dd, पूर्णांक data_dir)
-अणु
-	काष्ठा request *rq;
-	अचिन्हित दीर्घ flags;
+static struct request *
+deadline_next_request(struct deadline_data *dd, int data_dir)
+{
+	struct request *rq;
+	unsigned long flags;
 
-	अगर (WARN_ON_ONCE(data_dir != READ && data_dir != WRITE))
-		वापस शून्य;
+	if (WARN_ON_ONCE(data_dir != READ && data_dir != WRITE))
+		return NULL;
 
 	rq = dd->next_rq[data_dir];
-	अगर (!rq)
-		वापस शून्य;
+	if (!rq)
+		return NULL;
 
-	अगर (data_dir == READ || !blk_queue_is_zoned(rq->q))
-		वापस rq;
+	if (data_dir == READ || !blk_queue_is_zoned(rq->q))
+		return rq;
 
 	/*
-	 * Look क्रम a ग_लिखो request that can be dispatched, that is one with
+	 * Look for a write request that can be dispatched, that is one with
 	 * an unlocked target zone.
 	 */
 	spin_lock_irqsave(&dd->zone_lock, flags);
-	जबतक (rq) अणु
-		अगर (blk_req_can_dispatch_to_zone(rq))
-			अवरोध;
+	while (rq) {
+		if (blk_req_can_dispatch_to_zone(rq))
+			break;
 		rq = deadline_latter_request(rq);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&dd->zone_lock, flags);
 
-	वापस rq;
-पूर्ण
+	return rq;
+}
 
 /*
  * deadline_dispatch_requests selects the best request according to
- * पढ़ो/ग_लिखो expire, fअगरo_batch, etc
+ * read/write expire, fifo_batch, etc
  */
-अटल काष्ठा request *__dd_dispatch_request(काष्ठा deadline_data *dd)
-अणु
-	काष्ठा request *rq, *next_rq;
-	bool पढ़ोs, ग_लिखोs;
-	पूर्णांक data_dir;
+static struct request *__dd_dispatch_request(struct deadline_data *dd)
+{
+	struct request *rq, *next_rq;
+	bool reads, writes;
+	int data_dir;
 
-	अगर (!list_empty(&dd->dispatch)) अणु
-		rq = list_first_entry(&dd->dispatch, काष्ठा request, queuelist);
+	if (!list_empty(&dd->dispatch)) {
+		rq = list_first_entry(&dd->dispatch, struct request, queuelist);
 		list_del_init(&rq->queuelist);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	पढ़ोs = !list_empty(&dd->fअगरo_list[READ]);
-	ग_लिखोs = !list_empty(&dd->fअगरo_list[WRITE]);
+	reads = !list_empty(&dd->fifo_list[READ]);
+	writes = !list_empty(&dd->fifo_list[WRITE]);
 
 	/*
-	 * batches are currently पढ़ोs XOR ग_लिखोs
+	 * batches are currently reads XOR writes
 	 */
 	rq = deadline_next_request(dd, WRITE);
-	अगर (!rq)
+	if (!rq)
 		rq = deadline_next_request(dd, READ);
 
-	अगर (rq && dd->batching < dd->fअगरo_batch)
+	if (rq && dd->batching < dd->fifo_batch)
 		/* we have a next request are still entitled to batch */
-		जाओ dispatch_request;
+		goto dispatch_request;
 
 	/*
-	 * at this poपूर्णांक we are not running a batch. select the appropriate
-	 * data direction (पढ़ो / ग_लिखो)
+	 * at this point we are not running a batch. select the appropriate
+	 * data direction (read / write)
 	 */
 
-	अगर (पढ़ोs) अणु
+	if (reads) {
 		BUG_ON(RB_EMPTY_ROOT(&dd->sort_list[READ]));
 
-		अगर (deadline_fअगरo_request(dd, WRITE) &&
-		    (dd->starved++ >= dd->ग_लिखोs_starved))
-			जाओ dispatch_ग_लिखोs;
+		if (deadline_fifo_request(dd, WRITE) &&
+		    (dd->starved++ >= dd->writes_starved))
+			goto dispatch_writes;
 
 		data_dir = READ;
 
-		जाओ dispatch_find_request;
-	पूर्ण
+		goto dispatch_find_request;
+	}
 
 	/*
-	 * there are either no पढ़ोs or ग_लिखोs have been starved
+	 * there are either no reads or writes have been starved
 	 */
 
-	अगर (ग_लिखोs) अणु
-dispatch_ग_लिखोs:
+	if (writes) {
+dispatch_writes:
 		BUG_ON(RB_EMPTY_ROOT(&dd->sort_list[WRITE]));
 
 		dd->starved = 0;
 
 		data_dir = WRITE;
 
-		जाओ dispatch_find_request;
-	पूर्ण
+		goto dispatch_find_request;
+	}
 
-	वापस शून्य;
+	return NULL;
 
 dispatch_find_request:
 	/*
-	 * we are not running a batch, find best request क्रम selected data_dir
+	 * we are not running a batch, find best request for selected data_dir
 	 */
 	next_rq = deadline_next_request(dd, data_dir);
-	अगर (deadline_check_fअगरo(dd, data_dir) || !next_rq) अणु
+	if (deadline_check_fifo(dd, data_dir) || !next_rq) {
 		/*
 		 * A deadline has expired, the last request was in the other
 		 * direction, or we have run out of higher-sectored requests.
-		 * Start again from the request with the earliest expiry समय.
+		 * Start again from the request with the earliest expiry time.
 		 */
-		rq = deadline_fअगरo_request(dd, data_dir);
-	पूर्ण अन्यथा अणु
+		rq = deadline_fifo_request(dd, data_dir);
+	} else {
 		/*
 		 * The last req was the same dir and we have a next request in
-		 * sort order. No expired requests so जारी on from here.
+		 * sort order. No expired requests so continue on from here.
 		 */
 		rq = next_rq;
-	पूर्ण
+	}
 
 	/*
-	 * For a zoned block device, अगर we only have ग_लिखोs queued and none of
-	 * them can be dispatched, rq will be शून्य.
+	 * For a zoned block device, if we only have writes queued and none of
+	 * them can be dispatched, rq will be NULL.
 	 */
-	अगर (!rq)
-		वापस शून्य;
+	if (!rq)
+		return NULL;
 
 	dd->batching = 0;
 
@@ -366,450 +365,450 @@ dispatch_request:
 	 */
 	dd->batching++;
 	deadline_move_request(dd, rq);
-करोne:
+done:
 	/*
-	 * If the request needs its target zone locked, करो it.
+	 * If the request needs its target zone locked, do it.
 	 */
-	blk_req_zone_ग_लिखो_lock(rq);
+	blk_req_zone_write_lock(rq);
 	rq->rq_flags |= RQF_STARTED;
-	वापस rq;
-पूर्ण
+	return rq;
+}
 
 /*
- * One confusing aspect here is that we get called क्रम a specअगरic
- * hardware queue, but we may वापस a request that is क्रम a
- * dअगरferent hardware queue. This is because mq-deadline has shared
- * state क्रम all hardware queues, in terms of sorting, FIFOs, etc.
+ * One confusing aspect here is that we get called for a specific
+ * hardware queue, but we may return a request that is for a
+ * different hardware queue. This is because mq-deadline has shared
+ * state for all hardware queues, in terms of sorting, FIFOs, etc.
  */
-अटल काष्ठा request *dd_dispatch_request(काष्ठा blk_mq_hw_ctx *hctx)
-अणु
-	काष्ठा deadline_data *dd = hctx->queue->elevator->elevator_data;
-	काष्ठा request *rq;
+static struct request *dd_dispatch_request(struct blk_mq_hw_ctx *hctx)
+{
+	struct deadline_data *dd = hctx->queue->elevator->elevator_data;
+	struct request *rq;
 
 	spin_lock(&dd->lock);
 	rq = __dd_dispatch_request(dd);
 	spin_unlock(&dd->lock);
 
-	वापस rq;
-पूर्ण
+	return rq;
+}
 
-अटल व्योम dd_निकास_queue(काष्ठा elevator_queue *e)
-अणु
-	काष्ठा deadline_data *dd = e->elevator_data;
+static void dd_exit_queue(struct elevator_queue *e)
+{
+	struct deadline_data *dd = e->elevator_data;
 
-	BUG_ON(!list_empty(&dd->fअगरo_list[READ]));
-	BUG_ON(!list_empty(&dd->fअगरo_list[WRITE]));
+	BUG_ON(!list_empty(&dd->fifo_list[READ]));
+	BUG_ON(!list_empty(&dd->fifo_list[WRITE]));
 
-	kमुक्त(dd);
-पूर्ण
+	kfree(dd);
+}
 
 /*
- * initialize elevator निजी data (deadline_data).
+ * initialize elevator private data (deadline_data).
  */
-अटल पूर्णांक dd_init_queue(काष्ठा request_queue *q, काष्ठा elevator_type *e)
-अणु
-	काष्ठा deadline_data *dd;
-	काष्ठा elevator_queue *eq;
+static int dd_init_queue(struct request_queue *q, struct elevator_type *e)
+{
+	struct deadline_data *dd;
+	struct elevator_queue *eq;
 
 	eq = elevator_alloc(q, e);
-	अगर (!eq)
-		वापस -ENOMEM;
+	if (!eq)
+		return -ENOMEM;
 
-	dd = kzalloc_node(माप(*dd), GFP_KERNEL, q->node);
-	अगर (!dd) अणु
+	dd = kzalloc_node(sizeof(*dd), GFP_KERNEL, q->node);
+	if (!dd) {
 		kobject_put(&eq->kobj);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	eq->elevator_data = dd;
 
-	INIT_LIST_HEAD(&dd->fअगरo_list[READ]);
-	INIT_LIST_HEAD(&dd->fअगरo_list[WRITE]);
+	INIT_LIST_HEAD(&dd->fifo_list[READ]);
+	INIT_LIST_HEAD(&dd->fifo_list[WRITE]);
 	dd->sort_list[READ] = RB_ROOT;
 	dd->sort_list[WRITE] = RB_ROOT;
-	dd->fअगरo_expire[READ] = पढ़ो_expire;
-	dd->fअगरo_expire[WRITE] = ग_लिखो_expire;
-	dd->ग_लिखोs_starved = ग_लिखोs_starved;
+	dd->fifo_expire[READ] = read_expire;
+	dd->fifo_expire[WRITE] = write_expire;
+	dd->writes_starved = writes_starved;
 	dd->front_merges = 1;
-	dd->fअगरo_batch = fअगरo_batch;
+	dd->fifo_batch = fifo_batch;
 	spin_lock_init(&dd->lock);
 	spin_lock_init(&dd->zone_lock);
 	INIT_LIST_HEAD(&dd->dispatch);
 
 	q->elevator = eq;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dd_request_merge(काष्ठा request_queue *q, काष्ठा request **rq,
-			    काष्ठा bio *bio)
-अणु
-	काष्ठा deadline_data *dd = q->elevator->elevator_data;
+static int dd_request_merge(struct request_queue *q, struct request **rq,
+			    struct bio *bio)
+{
+	struct deadline_data *dd = q->elevator->elevator_data;
 	sector_t sector = bio_end_sector(bio);
-	काष्ठा request *__rq;
+	struct request *__rq;
 
-	अगर (!dd->front_merges)
-		वापस ELEVATOR_NO_MERGE;
+	if (!dd->front_merges)
+		return ELEVATOR_NO_MERGE;
 
 	__rq = elv_rb_find(&dd->sort_list[bio_data_dir(bio)], sector);
-	अगर (__rq) अणु
+	if (__rq) {
 		BUG_ON(sector != blk_rq_pos(__rq));
 
-		अगर (elv_bio_merge_ok(__rq, bio)) अणु
+		if (elv_bio_merge_ok(__rq, bio)) {
 			*rq = __rq;
-			वापस ELEVATOR_FRONT_MERGE;
-		पूर्ण
-	पूर्ण
+			return ELEVATOR_FRONT_MERGE;
+		}
+	}
 
-	वापस ELEVATOR_NO_MERGE;
-पूर्ण
+	return ELEVATOR_NO_MERGE;
+}
 
-अटल bool dd_bio_merge(काष्ठा request_queue *q, काष्ठा bio *bio,
-		अचिन्हित पूर्णांक nr_segs)
-अणु
-	काष्ठा deadline_data *dd = q->elevator->elevator_data;
-	काष्ठा request *मुक्त = शून्य;
+static bool dd_bio_merge(struct request_queue *q, struct bio *bio,
+		unsigned int nr_segs)
+{
+	struct deadline_data *dd = q->elevator->elevator_data;
+	struct request *free = NULL;
 	bool ret;
 
 	spin_lock(&dd->lock);
-	ret = blk_mq_sched_try_merge(q, bio, nr_segs, &मुक्त);
+	ret = blk_mq_sched_try_merge(q, bio, nr_segs, &free);
 	spin_unlock(&dd->lock);
 
-	अगर (मुक्त)
-		blk_mq_मुक्त_request(मुक्त);
+	if (free)
+		blk_mq_free_request(free);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * add rq to rbtree and fअगरo
+ * add rq to rbtree and fifo
  */
-अटल व्योम dd_insert_request(काष्ठा blk_mq_hw_ctx *hctx, काष्ठा request *rq,
+static void dd_insert_request(struct blk_mq_hw_ctx *hctx, struct request *rq,
 			      bool at_head)
-अणु
-	काष्ठा request_queue *q = hctx->queue;
-	काष्ठा deadline_data *dd = q->elevator->elevator_data;
-	स्थिर पूर्णांक data_dir = rq_data_dir(rq);
+{
+	struct request_queue *q = hctx->queue;
+	struct deadline_data *dd = q->elevator->elevator_data;
+	const int data_dir = rq_data_dir(rq);
 
 	/*
-	 * This may be a requeue of a ग_लिखो request that has locked its
-	 * target zone. If it is the हाल, this releases the zone lock.
+	 * This may be a requeue of a write request that has locked its
+	 * target zone. If it is the case, this releases the zone lock.
 	 */
-	blk_req_zone_ग_लिखो_unlock(rq);
+	blk_req_zone_write_unlock(rq);
 
-	अगर (blk_mq_sched_try_insert_merge(q, rq))
-		वापस;
+	if (blk_mq_sched_try_insert_merge(q, rq))
+		return;
 
 	trace_block_rq_insert(rq);
 
-	अगर (at_head) अणु
+	if (at_head) {
 		list_add(&rq->queuelist, &dd->dispatch);
-	पूर्ण अन्यथा अणु
+	} else {
 		deadline_add_rq_rb(dd, rq);
 
-		अगर (rq_mergeable(rq)) अणु
+		if (rq_mergeable(rq)) {
 			elv_rqhash_add(q, rq);
-			अगर (!q->last_merge)
+			if (!q->last_merge)
 				q->last_merge = rq;
-		पूर्ण
+		}
 
 		/*
-		 * set expire समय and add to fअगरo list
+		 * set expire time and add to fifo list
 		 */
-		rq->fअगरo_समय = jअगरfies + dd->fअगरo_expire[data_dir];
-		list_add_tail(&rq->queuelist, &dd->fअगरo_list[data_dir]);
-	पूर्ण
-पूर्ण
+		rq->fifo_time = jiffies + dd->fifo_expire[data_dir];
+		list_add_tail(&rq->queuelist, &dd->fifo_list[data_dir]);
+	}
+}
 
-अटल व्योम dd_insert_requests(काष्ठा blk_mq_hw_ctx *hctx,
-			       काष्ठा list_head *list, bool at_head)
-अणु
-	काष्ठा request_queue *q = hctx->queue;
-	काष्ठा deadline_data *dd = q->elevator->elevator_data;
+static void dd_insert_requests(struct blk_mq_hw_ctx *hctx,
+			       struct list_head *list, bool at_head)
+{
+	struct request_queue *q = hctx->queue;
+	struct deadline_data *dd = q->elevator->elevator_data;
 
 	spin_lock(&dd->lock);
-	जबतक (!list_empty(list)) अणु
-		काष्ठा request *rq;
+	while (!list_empty(list)) {
+		struct request *rq;
 
-		rq = list_first_entry(list, काष्ठा request, queuelist);
+		rq = list_first_entry(list, struct request, queuelist);
 		list_del_init(&rq->queuelist);
 		dd_insert_request(hctx, rq, at_head);
-	पूर्ण
+	}
 	spin_unlock(&dd->lock);
-पूर्ण
+}
 
 /*
- * Nothing to करो here. This is defined only to ensure that .finish_request
+ * Nothing to do here. This is defined only to ensure that .finish_request
  * method is called upon request completion.
  */
-अटल व्योम dd_prepare_request(काष्ठा request *rq)
-अणु
-पूर्ण
+static void dd_prepare_request(struct request *rq)
+{
+}
 
 /*
- * For zoned block devices, ग_लिखो unlock the target zone of
- * completed ग_लिखो requests. Do this जबतक holding the zone lock
- * spinlock so that the zone is never unlocked जबतक deadline_fअगरo_request()
- * or deadline_next_request() are executing. This function is called क्रम
+ * For zoned block devices, write unlock the target zone of
+ * completed write requests. Do this while holding the zone lock
+ * spinlock so that the zone is never unlocked while deadline_fifo_request()
+ * or deadline_next_request() are executing. This function is called for
  * all requests, whether or not these requests complete successfully.
  *
  * For a zoned block device, __dd_dispatch_request() may have stopped
- * dispatching requests अगर all the queued requests are ग_लिखो requests directed
- * at zones that are alपढ़ोy locked due to on-going ग_लिखो requests. To ensure
- * ग_लिखो request dispatch progress in this हाल, mark the queue as needing a
+ * dispatching requests if all the queued requests are write requests directed
+ * at zones that are already locked due to on-going write requests. To ensure
+ * write request dispatch progress in this case, mark the queue as needing a
  * restart to ensure that the queue is run again after completion of the
  * request and zones being unlocked.
  */
-अटल व्योम dd_finish_request(काष्ठा request *rq)
-अणु
-	काष्ठा request_queue *q = rq->q;
+static void dd_finish_request(struct request *rq)
+{
+	struct request_queue *q = rq->q;
 
-	अगर (blk_queue_is_zoned(q)) अणु
-		काष्ठा deadline_data *dd = q->elevator->elevator_data;
-		अचिन्हित दीर्घ flags;
+	if (blk_queue_is_zoned(q)) {
+		struct deadline_data *dd = q->elevator->elevator_data;
+		unsigned long flags;
 
 		spin_lock_irqsave(&dd->zone_lock, flags);
-		blk_req_zone_ग_लिखो_unlock(rq);
-		अगर (!list_empty(&dd->fअगरo_list[WRITE]))
+		blk_req_zone_write_unlock(rq);
+		if (!list_empty(&dd->fifo_list[WRITE]))
 			blk_mq_sched_mark_restart_hctx(rq->mq_hctx);
 		spin_unlock_irqrestore(&dd->zone_lock, flags);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल bool dd_has_work(काष्ठा blk_mq_hw_ctx *hctx)
-अणु
-	काष्ठा deadline_data *dd = hctx->queue->elevator->elevator_data;
+static bool dd_has_work(struct blk_mq_hw_ctx *hctx)
+{
+	struct deadline_data *dd = hctx->queue->elevator->elevator_data;
 
-	वापस !list_empty_careful(&dd->dispatch) ||
-		!list_empty_careful(&dd->fअगरo_list[0]) ||
-		!list_empty_careful(&dd->fअगरo_list[1]);
-पूर्ण
+	return !list_empty_careful(&dd->dispatch) ||
+		!list_empty_careful(&dd->fifo_list[0]) ||
+		!list_empty_careful(&dd->fifo_list[1]);
+}
 
 /*
  * sysfs parts below
  */
-अटल sमाप_प्रकार
-deadline_var_show(पूर्णांक var, अक्षर *page)
-अणु
-	वापस प्र_लिखो(page, "%d\n", var);
-पूर्ण
+static ssize_t
+deadline_var_show(int var, char *page)
+{
+	return sprintf(page, "%d\n", var);
+}
 
-अटल व्योम
-deadline_var_store(पूर्णांक *var, स्थिर अक्षर *page)
-अणु
-	अक्षर *p = (अक्षर *) page;
+static void
+deadline_var_store(int *var, const char *page)
+{
+	char *p = (char *) page;
 
-	*var = simple_म_से_दीर्घ(p, &p, 10);
-पूर्ण
+	*var = simple_strtol(p, &p, 10);
+}
 
-#घोषणा SHOW_FUNCTION(__FUNC, __VAR, __CONV)				\
-अटल sमाप_प्रकार __FUNC(काष्ठा elevator_queue *e, अक्षर *page)		\
-अणु									\
-	काष्ठा deadline_data *dd = e->elevator_data;			\
-	पूर्णांक __data = __VAR;						\
-	अगर (__CONV)							\
-		__data = jअगरfies_to_msecs(__data);			\
-	वापस deadline_var_show(__data, (page));			\
-पूर्ण
-SHOW_FUNCTION(deadline_पढ़ो_expire_show, dd->fअगरo_expire[READ], 1);
-SHOW_FUNCTION(deadline_ग_लिखो_expire_show, dd->fअगरo_expire[WRITE], 1);
-SHOW_FUNCTION(deadline_ग_लिखोs_starved_show, dd->ग_लिखोs_starved, 0);
+#define SHOW_FUNCTION(__FUNC, __VAR, __CONV)				\
+static ssize_t __FUNC(struct elevator_queue *e, char *page)		\
+{									\
+	struct deadline_data *dd = e->elevator_data;			\
+	int __data = __VAR;						\
+	if (__CONV)							\
+		__data = jiffies_to_msecs(__data);			\
+	return deadline_var_show(__data, (page));			\
+}
+SHOW_FUNCTION(deadline_read_expire_show, dd->fifo_expire[READ], 1);
+SHOW_FUNCTION(deadline_write_expire_show, dd->fifo_expire[WRITE], 1);
+SHOW_FUNCTION(deadline_writes_starved_show, dd->writes_starved, 0);
 SHOW_FUNCTION(deadline_front_merges_show, dd->front_merges, 0);
-SHOW_FUNCTION(deadline_fअगरo_batch_show, dd->fअगरo_batch, 0);
-#अघोषित SHOW_FUNCTION
+SHOW_FUNCTION(deadline_fifo_batch_show, dd->fifo_batch, 0);
+#undef SHOW_FUNCTION
 
-#घोषणा STORE_FUNCTION(__FUNC, __PTR, MIN, MAX, __CONV)			\
-अटल sमाप_प्रकार __FUNC(काष्ठा elevator_queue *e, स्थिर अक्षर *page, माप_प्रकार count)	\
-अणु									\
-	काष्ठा deadline_data *dd = e->elevator_data;			\
-	पूर्णांक __data;							\
+#define STORE_FUNCTION(__FUNC, __PTR, MIN, MAX, __CONV)			\
+static ssize_t __FUNC(struct elevator_queue *e, const char *page, size_t count)	\
+{									\
+	struct deadline_data *dd = e->elevator_data;			\
+	int __data;							\
 	deadline_var_store(&__data, (page));				\
-	अगर (__data < (MIN))						\
+	if (__data < (MIN))						\
 		__data = (MIN);						\
-	अन्यथा अगर (__data > (MAX))					\
+	else if (__data > (MAX))					\
 		__data = (MAX);						\
-	अगर (__CONV)							\
-		*(__PTR) = msecs_to_jअगरfies(__data);			\
-	अन्यथा								\
+	if (__CONV)							\
+		*(__PTR) = msecs_to_jiffies(__data);			\
+	else								\
 		*(__PTR) = __data;					\
-	वापस count;							\
-पूर्ण
-STORE_FUNCTION(deadline_पढ़ो_expire_store, &dd->fअगरo_expire[READ], 0, पूर्णांक_उच्च, 1);
-STORE_FUNCTION(deadline_ग_लिखो_expire_store, &dd->fअगरo_expire[WRITE], 0, पूर्णांक_उच्च, 1);
-STORE_FUNCTION(deadline_ग_लिखोs_starved_store, &dd->ग_लिखोs_starved, पूर्णांक_न्यून, पूर्णांक_उच्च, 0);
+	return count;							\
+}
+STORE_FUNCTION(deadline_read_expire_store, &dd->fifo_expire[READ], 0, INT_MAX, 1);
+STORE_FUNCTION(deadline_write_expire_store, &dd->fifo_expire[WRITE], 0, INT_MAX, 1);
+STORE_FUNCTION(deadline_writes_starved_store, &dd->writes_starved, INT_MIN, INT_MAX, 0);
 STORE_FUNCTION(deadline_front_merges_store, &dd->front_merges, 0, 1, 0);
-STORE_FUNCTION(deadline_fअगरo_batch_store, &dd->fअगरo_batch, 0, पूर्णांक_उच्च, 0);
-#अघोषित STORE_FUNCTION
+STORE_FUNCTION(deadline_fifo_batch_store, &dd->fifo_batch, 0, INT_MAX, 0);
+#undef STORE_FUNCTION
 
-#घोषणा DD_ATTR(name) \
+#define DD_ATTR(name) \
 	__ATTR(name, 0644, deadline_##name##_show, deadline_##name##_store)
 
-अटल काष्ठा elv_fs_entry deadline_attrs[] = अणु
-	DD_ATTR(पढ़ो_expire),
-	DD_ATTR(ग_लिखो_expire),
-	DD_ATTR(ग_लिखोs_starved),
+static struct elv_fs_entry deadline_attrs[] = {
+	DD_ATTR(read_expire),
+	DD_ATTR(write_expire),
+	DD_ATTR(writes_starved),
 	DD_ATTR(front_merges),
-	DD_ATTR(fअगरo_batch),
-	__ATTR_शून्य
-पूर्ण;
+	DD_ATTR(fifo_batch),
+	__ATTR_NULL
+};
 
-#अगर_घोषित CONFIG_BLK_DEBUG_FS
-#घोषणा DEADLINE_DEBUGFS_Dसूची_ATTRS(ddir, name)				\
-अटल व्योम *deadline_##name##_fअगरo_start(काष्ठा seq_file *m,		\
+#ifdef CONFIG_BLK_DEBUG_FS
+#define DEADLINE_DEBUGFS_DDIR_ATTRS(ddir, name)				\
+static void *deadline_##name##_fifo_start(struct seq_file *m,		\
 					  loff_t *pos)			\
 	__acquires(&dd->lock)						\
-अणु									\
-	काष्ठा request_queue *q = m->निजी;				\
-	काष्ठा deadline_data *dd = q->elevator->elevator_data;		\
+{									\
+	struct request_queue *q = m->private;				\
+	struct deadline_data *dd = q->elevator->elevator_data;		\
 									\
 	spin_lock(&dd->lock);						\
-	वापस seq_list_start(&dd->fअगरo_list[ddir], *pos);		\
-पूर्ण									\
+	return seq_list_start(&dd->fifo_list[ddir], *pos);		\
+}									\
 									\
-अटल व्योम *deadline_##name##_fअगरo_next(काष्ठा seq_file *m, व्योम *v,	\
+static void *deadline_##name##_fifo_next(struct seq_file *m, void *v,	\
 					 loff_t *pos)			\
-अणु									\
-	काष्ठा request_queue *q = m->निजी;				\
-	काष्ठा deadline_data *dd = q->elevator->elevator_data;		\
+{									\
+	struct request_queue *q = m->private;				\
+	struct deadline_data *dd = q->elevator->elevator_data;		\
 									\
-	वापस seq_list_next(v, &dd->fअगरo_list[ddir], pos);		\
-पूर्ण									\
+	return seq_list_next(v, &dd->fifo_list[ddir], pos);		\
+}									\
 									\
-अटल व्योम deadline_##name##_fअगरo_stop(काष्ठा seq_file *m, व्योम *v)	\
+static void deadline_##name##_fifo_stop(struct seq_file *m, void *v)	\
 	__releases(&dd->lock)						\
-अणु									\
-	काष्ठा request_queue *q = m->निजी;				\
-	काष्ठा deadline_data *dd = q->elevator->elevator_data;		\
+{									\
+	struct request_queue *q = m->private;				\
+	struct deadline_data *dd = q->elevator->elevator_data;		\
 									\
 	spin_unlock(&dd->lock);						\
-पूर्ण									\
+}									\
 									\
-अटल स्थिर काष्ठा seq_operations deadline_##name##_fअगरo_seq_ops = अणु	\
-	.start	= deadline_##name##_fअगरo_start,				\
-	.next	= deadline_##name##_fअगरo_next,				\
-	.stop	= deadline_##name##_fअगरo_stop,				\
+static const struct seq_operations deadline_##name##_fifo_seq_ops = {	\
+	.start	= deadline_##name##_fifo_start,				\
+	.next	= deadline_##name##_fifo_next,				\
+	.stop	= deadline_##name##_fifo_stop,				\
 	.show	= blk_mq_debugfs_rq_show,				\
-पूर्ण;									\
+};									\
 									\
-अटल पूर्णांक deadline_##name##_next_rq_show(व्योम *data,			\
-					  काष्ठा seq_file *m)		\
-अणु									\
-	काष्ठा request_queue *q = data;					\
-	काष्ठा deadline_data *dd = q->elevator->elevator_data;		\
-	काष्ठा request *rq = dd->next_rq[ddir];				\
+static int deadline_##name##_next_rq_show(void *data,			\
+					  struct seq_file *m)		\
+{									\
+	struct request_queue *q = data;					\
+	struct deadline_data *dd = q->elevator->elevator_data;		\
+	struct request *rq = dd->next_rq[ddir];				\
 									\
-	अगर (rq)								\
+	if (rq)								\
 		__blk_mq_debugfs_rq_show(m, rq);			\
-	वापस 0;							\
-पूर्ण
-DEADLINE_DEBUGFS_Dसूची_ATTRS(READ, पढ़ो)
-DEADLINE_DEBUGFS_Dसूची_ATTRS(WRITE, ग_लिखो)
-#अघोषित DEADLINE_DEBUGFS_Dसूची_ATTRS
+	return 0;							\
+}
+DEADLINE_DEBUGFS_DDIR_ATTRS(READ, read)
+DEADLINE_DEBUGFS_DDIR_ATTRS(WRITE, write)
+#undef DEADLINE_DEBUGFS_DDIR_ATTRS
 
-अटल पूर्णांक deadline_batching_show(व्योम *data, काष्ठा seq_file *m)
-अणु
-	काष्ठा request_queue *q = data;
-	काष्ठा deadline_data *dd = q->elevator->elevator_data;
+static int deadline_batching_show(void *data, struct seq_file *m)
+{
+	struct request_queue *q = data;
+	struct deadline_data *dd = q->elevator->elevator_data;
 
-	seq_म_लिखो(m, "%u\n", dd->batching);
-	वापस 0;
-पूर्ण
+	seq_printf(m, "%u\n", dd->batching);
+	return 0;
+}
 
-अटल पूर्णांक deadline_starved_show(व्योम *data, काष्ठा seq_file *m)
-अणु
-	काष्ठा request_queue *q = data;
-	काष्ठा deadline_data *dd = q->elevator->elevator_data;
+static int deadline_starved_show(void *data, struct seq_file *m)
+{
+	struct request_queue *q = data;
+	struct deadline_data *dd = q->elevator->elevator_data;
 
-	seq_म_लिखो(m, "%u\n", dd->starved);
-	वापस 0;
-पूर्ण
+	seq_printf(m, "%u\n", dd->starved);
+	return 0;
+}
 
-अटल व्योम *deadline_dispatch_start(काष्ठा seq_file *m, loff_t *pos)
+static void *deadline_dispatch_start(struct seq_file *m, loff_t *pos)
 	__acquires(&dd->lock)
-अणु
-	काष्ठा request_queue *q = m->निजी;
-	काष्ठा deadline_data *dd = q->elevator->elevator_data;
+{
+	struct request_queue *q = m->private;
+	struct deadline_data *dd = q->elevator->elevator_data;
 
 	spin_lock(&dd->lock);
-	वापस seq_list_start(&dd->dispatch, *pos);
-पूर्ण
+	return seq_list_start(&dd->dispatch, *pos);
+}
 
-अटल व्योम *deadline_dispatch_next(काष्ठा seq_file *m, व्योम *v, loff_t *pos)
-अणु
-	काष्ठा request_queue *q = m->निजी;
-	काष्ठा deadline_data *dd = q->elevator->elevator_data;
+static void *deadline_dispatch_next(struct seq_file *m, void *v, loff_t *pos)
+{
+	struct request_queue *q = m->private;
+	struct deadline_data *dd = q->elevator->elevator_data;
 
-	वापस seq_list_next(v, &dd->dispatch, pos);
-पूर्ण
+	return seq_list_next(v, &dd->dispatch, pos);
+}
 
-अटल व्योम deadline_dispatch_stop(काष्ठा seq_file *m, व्योम *v)
+static void deadline_dispatch_stop(struct seq_file *m, void *v)
 	__releases(&dd->lock)
-अणु
-	काष्ठा request_queue *q = m->निजी;
-	काष्ठा deadline_data *dd = q->elevator->elevator_data;
+{
+	struct request_queue *q = m->private;
+	struct deadline_data *dd = q->elevator->elevator_data;
 
 	spin_unlock(&dd->lock);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा seq_operations deadline_dispatch_seq_ops = अणु
+static const struct seq_operations deadline_dispatch_seq_ops = {
 	.start	= deadline_dispatch_start,
 	.next	= deadline_dispatch_next,
 	.stop	= deadline_dispatch_stop,
 	.show	= blk_mq_debugfs_rq_show,
-पूर्ण;
+};
 
-#घोषणा DEADLINE_QUEUE_Dसूची_ATTRS(name)						\
-	अणु#name "_fifo_list", 0400, .seq_ops = &deadline_##name##_fअगरo_seq_opsपूर्ण,	\
-	अणु#name "_next_rq", 0400, deadline_##name##_next_rq_showपूर्ण
-अटल स्थिर काष्ठा blk_mq_debugfs_attr deadline_queue_debugfs_attrs[] = अणु
-	DEADLINE_QUEUE_Dसूची_ATTRS(पढ़ो),
-	DEADLINE_QUEUE_Dसूची_ATTRS(ग_लिखो),
-	अणु"batching", 0400, deadline_batching_showपूर्ण,
-	अणु"starved", 0400, deadline_starved_showपूर्ण,
-	अणु"dispatch", 0400, .seq_ops = &deadline_dispatch_seq_opsपूर्ण,
-	अणुपूर्ण,
-पूर्ण;
-#अघोषित DEADLINE_QUEUE_Dसूची_ATTRS
-#पूर्ण_अगर
+#define DEADLINE_QUEUE_DDIR_ATTRS(name)						\
+	{#name "_fifo_list", 0400, .seq_ops = &deadline_##name##_fifo_seq_ops},	\
+	{#name "_next_rq", 0400, deadline_##name##_next_rq_show}
+static const struct blk_mq_debugfs_attr deadline_queue_debugfs_attrs[] = {
+	DEADLINE_QUEUE_DDIR_ATTRS(read),
+	DEADLINE_QUEUE_DDIR_ATTRS(write),
+	{"batching", 0400, deadline_batching_show},
+	{"starved", 0400, deadline_starved_show},
+	{"dispatch", 0400, .seq_ops = &deadline_dispatch_seq_ops},
+	{},
+};
+#undef DEADLINE_QUEUE_DDIR_ATTRS
+#endif
 
-अटल काष्ठा elevator_type mq_deadline = अणु
-	.ops = अणु
+static struct elevator_type mq_deadline = {
+	.ops = {
 		.insert_requests	= dd_insert_requests,
 		.dispatch_request	= dd_dispatch_request,
 		.prepare_request	= dd_prepare_request,
 		.finish_request		= dd_finish_request,
 		.next_request		= elv_rb_latter_request,
-		.क्रमmer_request		= elv_rb_क्रमmer_request,
+		.former_request		= elv_rb_former_request,
 		.bio_merge		= dd_bio_merge,
 		.request_merge		= dd_request_merge,
 		.requests_merged	= dd_merged_requests,
 		.request_merged		= dd_request_merged,
 		.has_work		= dd_has_work,
 		.init_sched		= dd_init_queue,
-		.निकास_sched		= dd_निकास_queue,
-	पूर्ण,
+		.exit_sched		= dd_exit_queue,
+	},
 
-#अगर_घोषित CONFIG_BLK_DEBUG_FS
+#ifdef CONFIG_BLK_DEBUG_FS
 	.queue_debugfs_attrs = deadline_queue_debugfs_attrs,
-#पूर्ण_अगर
+#endif
 	.elevator_attrs = deadline_attrs,
 	.elevator_name = "mq-deadline",
 	.elevator_alias = "deadline",
 	.elevator_features = ELEVATOR_F_ZBD_SEQ_WRITE,
 	.elevator_owner = THIS_MODULE,
-पूर्ण;
+};
 MODULE_ALIAS("mq-deadline-iosched");
 
-अटल पूर्णांक __init deadline_init(व्योम)
-अणु
-	वापस elv_रेजिस्टर(&mq_deadline);
-पूर्ण
+static int __init deadline_init(void)
+{
+	return elv_register(&mq_deadline);
+}
 
-अटल व्योम __निकास deadline_निकास(व्योम)
-अणु
-	elv_unरेजिस्टर(&mq_deadline);
-पूर्ण
+static void __exit deadline_exit(void)
+{
+	elv_unregister(&mq_deadline);
+}
 
 module_init(deadline_init);
-module_निकास(deadline_निकास);
+module_exit(deadline_exit);
 
 MODULE_AUTHOR("Jens Axboe");
 MODULE_LICENSE("GPL");

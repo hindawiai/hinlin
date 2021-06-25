@@ -1,104 +1,103 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2017 Broadcom
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of the GNU General Public License as
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
  * published by the Free Software Foundation version 2.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License क्रम more details.
+ * GNU General Public License for more details.
  */
 
 /*
  * Broadcom SBA RAID Driver
  *
  * The Broadcom stream buffer accelerator (SBA) provides offloading
- * capabilities क्रम RAID operations. The SBA offload engine is accessible
- * via Broadcom SoC specअगरic ring manager. Two or more offload engines
- * can share same Broadcom SoC specअगरic ring manager due to this Broadcom
- * SoC specअगरic ring manager driver is implemented as a mailbox controller
+ * capabilities for RAID operations. The SBA offload engine is accessible
+ * via Broadcom SoC specific ring manager. Two or more offload engines
+ * can share same Broadcom SoC specific ring manager due to this Broadcom
+ * SoC specific ring manager driver is implemented as a mailbox controller
  * driver and offload engine drivers are implemented as mallbox clients.
  *
- * Typically, Broadcom SoC specअगरic ring manager will implement larger
+ * Typically, Broadcom SoC specific ring manager will implement larger
  * number of hardware rings over one or more SBA hardware devices. By
- * design, the पूर्णांकernal buffer size of SBA hardware device is limited
- * but all offload operations supported by SBA can be broken करोwn पूर्णांकo
+ * design, the internal buffer size of SBA hardware device is limited
+ * but all offload operations supported by SBA can be broken down into
  * multiple small size requests and executed parallely on multiple SBA
- * hardware devices क्रम achieving high through-put.
+ * hardware devices for achieving high through-put.
  *
- * The Broadcom SBA RAID driver करोes not require any रेजिस्टर programming
+ * The Broadcom SBA RAID driver does not require any register programming
  * except submitting request to SBA hardware device via mailbox channels.
  * This driver implements a DMA device with one DMA channel using a single
- * mailbox channel provided by Broadcom SoC specअगरic ring manager driver.
+ * mailbox channel provided by Broadcom SoC specific ring manager driver.
  * For having more SBA DMA channels, we can create more SBA device nodes
- * in Broadcom SoC specअगरic DTS based on number of hardware rings supported
+ * in Broadcom SoC specific DTS based on number of hardware rings supported
  * by Broadcom SoC ring manager.
  */
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/list.h>
-#समावेश <linux/mailbox_client.h>
-#समावेश <linux/mailbox/brcm-message.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/raid/pq.h>
+#include <linux/bitops.h>
+#include <linux/debugfs.h>
+#include <linux/dma-mapping.h>
+#include <linux/dmaengine.h>
+#include <linux/list.h>
+#include <linux/mailbox_client.h>
+#include <linux/mailbox/brcm-message.h>
+#include <linux/module.h>
+#include <linux/of_device.h>
+#include <linux/slab.h>
+#include <linux/raid/pq.h>
 
-#समावेश "dmaengine.h"
+#include "dmaengine.h"
 
 /* ====== Driver macros and defines ===== */
 
-#घोषणा SBA_TYPE_SHIFT					48
-#घोषणा SBA_TYPE_MASK					GENMASK(1, 0)
-#घोषणा SBA_TYPE_A					0x0
-#घोषणा SBA_TYPE_B					0x2
-#घोषणा SBA_TYPE_C					0x3
-#घोषणा SBA_USER_DEF_SHIFT				32
-#घोषणा SBA_USER_DEF_MASK				GENMASK(15, 0)
-#घोषणा SBA_R_MDATA_SHIFT				24
-#घोषणा SBA_R_MDATA_MASK				GENMASK(7, 0)
-#घोषणा SBA_C_MDATA_MS_SHIFT				18
-#घोषणा SBA_C_MDATA_MS_MASK				GENMASK(1, 0)
-#घोषणा SBA_INT_SHIFT					17
-#घोषणा SBA_INT_MASK					BIT(0)
-#घोषणा SBA_RESP_SHIFT					16
-#घोषणा SBA_RESP_MASK					BIT(0)
-#घोषणा SBA_C_MDATA_SHIFT				8
-#घोषणा SBA_C_MDATA_MASK				GENMASK(7, 0)
-#घोषणा SBA_C_MDATA_BNUMx_SHIFT(__bnum)			(2 * (__bnum))
-#घोषणा SBA_C_MDATA_BNUMx_MASK				GENMASK(1, 0)
-#घोषणा SBA_C_MDATA_DNUM_SHIFT				5
-#घोषणा SBA_C_MDATA_DNUM_MASK				GENMASK(4, 0)
-#घोषणा SBA_C_MDATA_LS(__v)				((__v) & 0xff)
-#घोषणा SBA_C_MDATA_MS(__v)				(((__v) >> 8) & 0x3)
-#घोषणा SBA_CMD_SHIFT					0
-#घोषणा SBA_CMD_MASK					GENMASK(3, 0)
-#घोषणा SBA_CMD_ZERO_BUFFER				0x4
-#घोषणा SBA_CMD_ZERO_ALL_BUFFERS			0x8
-#घोषणा SBA_CMD_LOAD_BUFFER				0x9
-#घोषणा SBA_CMD_XOR					0xa
-#घोषणा SBA_CMD_GALOIS_XOR				0xb
-#घोषणा SBA_CMD_WRITE_BUFFER				0xc
-#घोषणा SBA_CMD_GALOIS					0xe
+#define SBA_TYPE_SHIFT					48
+#define SBA_TYPE_MASK					GENMASK(1, 0)
+#define SBA_TYPE_A					0x0
+#define SBA_TYPE_B					0x2
+#define SBA_TYPE_C					0x3
+#define SBA_USER_DEF_SHIFT				32
+#define SBA_USER_DEF_MASK				GENMASK(15, 0)
+#define SBA_R_MDATA_SHIFT				24
+#define SBA_R_MDATA_MASK				GENMASK(7, 0)
+#define SBA_C_MDATA_MS_SHIFT				18
+#define SBA_C_MDATA_MS_MASK				GENMASK(1, 0)
+#define SBA_INT_SHIFT					17
+#define SBA_INT_MASK					BIT(0)
+#define SBA_RESP_SHIFT					16
+#define SBA_RESP_MASK					BIT(0)
+#define SBA_C_MDATA_SHIFT				8
+#define SBA_C_MDATA_MASK				GENMASK(7, 0)
+#define SBA_C_MDATA_BNUMx_SHIFT(__bnum)			(2 * (__bnum))
+#define SBA_C_MDATA_BNUMx_MASK				GENMASK(1, 0)
+#define SBA_C_MDATA_DNUM_SHIFT				5
+#define SBA_C_MDATA_DNUM_MASK				GENMASK(4, 0)
+#define SBA_C_MDATA_LS(__v)				((__v) & 0xff)
+#define SBA_C_MDATA_MS(__v)				(((__v) >> 8) & 0x3)
+#define SBA_CMD_SHIFT					0
+#define SBA_CMD_MASK					GENMASK(3, 0)
+#define SBA_CMD_ZERO_BUFFER				0x4
+#define SBA_CMD_ZERO_ALL_BUFFERS			0x8
+#define SBA_CMD_LOAD_BUFFER				0x9
+#define SBA_CMD_XOR					0xa
+#define SBA_CMD_GALOIS_XOR				0xb
+#define SBA_CMD_WRITE_BUFFER				0xc
+#define SBA_CMD_GALOIS					0xe
 
-#घोषणा SBA_MAX_REQ_PER_MBOX_CHANNEL			8192
-#घोषणा SBA_MAX_MSG_SEND_PER_MBOX_CHANNEL		8
+#define SBA_MAX_REQ_PER_MBOX_CHANNEL			8192
+#define SBA_MAX_MSG_SEND_PER_MBOX_CHANNEL		8
 
 /* Driver helper macros */
-#घोषणा to_sba_request(tx)		\
-	container_of(tx, काष्ठा sba_request, tx)
-#घोषणा to_sba_device(dchan)		\
-	container_of(dchan, काष्ठा sba_device, dma_chan)
+#define to_sba_request(tx)		\
+	container_of(tx, struct sba_request, tx)
+#define to_sba_device(dchan)		\
+	container_of(dchan, struct sba_device, dma_chan)
 
-/* ===== Driver data काष्ठाures ===== */
+/* ===== Driver data structures ===== */
 
-क्रमागत sba_request_flags अणु
+enum sba_request_flags {
 	SBA_REQUEST_STATE_FREE		= 0x001,
 	SBA_REQUEST_STATE_ALLOCED	= 0x002,
 	SBA_REQUEST_STATE_PENDING	= 0x004,
@@ -106,34 +105,34 @@
 	SBA_REQUEST_STATE_ABORTED	= 0x010,
 	SBA_REQUEST_STATE_MASK		= 0x0ff,
 	SBA_REQUEST_FENCE		= 0x100,
-पूर्ण;
+};
 
-काष्ठा sba_request अणु
+struct sba_request {
 	/* Global state */
-	काष्ठा list_head node;
-	काष्ठा sba_device *sba;
+	struct list_head node;
+	struct sba_device *sba;
 	u32 flags;
 	/* Chained requests management */
-	काष्ठा sba_request *first;
-	काष्ठा list_head next;
+	struct sba_request *first;
+	struct list_head next;
 	atomic_t next_pending_count;
 	/* BRCM message data */
-	काष्ठा brcm_message msg;
-	काष्ठा dma_async_tx_descriptor tx;
+	struct brcm_message msg;
+	struct dma_async_tx_descriptor tx;
 	/* SBA commands */
-	काष्ठा brcm_sba_command cmds[];
-पूर्ण;
+	struct brcm_sba_command cmds[];
+};
 
-क्रमागत sba_version अणु
+enum sba_version {
 	SBA_VER_1 = 0,
 	SBA_VER_2
-पूर्ण;
+};
 
-काष्ठा sba_device अणु
+struct sba_device {
 	/* Underlying device */
-	काष्ठा device *dev;
+	struct device *dev;
 	/* DT configuration parameters */
-	क्रमागत sba_version ver;
+	enum sba_version ver;
 	/* Derived configuration parameters */
 	u32 max_req;
 	u32 hw_buf_size;
@@ -145,88 +144,88 @@
 	u32 max_resp_pool_size;
 	u32 max_cmds_pool_size;
 	/* Maibox client and Mailbox channels */
-	काष्ठा mbox_client client;
-	काष्ठा mbox_chan *mchan;
-	काष्ठा device *mbox_dev;
+	struct mbox_client client;
+	struct mbox_chan *mchan;
+	struct device *mbox_dev;
 	/* DMA device and DMA channel */
-	काष्ठा dma_device dma_dev;
-	काष्ठा dma_chan dma_chan;
+	struct dma_device dma_dev;
+	struct dma_chan dma_chan;
 	/* DMA channel resources */
-	व्योम *resp_base;
+	void *resp_base;
 	dma_addr_t resp_dma_base;
-	व्योम *cmds_base;
+	void *cmds_base;
 	dma_addr_t cmds_dma_base;
 	spinlock_t reqs_lock;
 	bool reqs_fence;
-	काष्ठा list_head reqs_alloc_list;
-	काष्ठा list_head reqs_pending_list;
-	काष्ठा list_head reqs_active_list;
-	काष्ठा list_head reqs_पातed_list;
-	काष्ठा list_head reqs_मुक्त_list;
+	struct list_head reqs_alloc_list;
+	struct list_head reqs_pending_list;
+	struct list_head reqs_active_list;
+	struct list_head reqs_aborted_list;
+	struct list_head reqs_free_list;
 	/* DebugFS directory entries */
-	काष्ठा dentry *root;
-पूर्ण;
+	struct dentry *root;
+};
 
 /* ====== Command helper routines ===== */
 
-अटल अंतरभूत u64 __pure sba_cmd_enc(u64 cmd, u32 val, u32 shअगरt, u32 mask)
-अणु
-	cmd &= ~((u64)mask << shअगरt);
-	cmd |= ((u64)(val & mask) << shअगरt);
-	वापस cmd;
-पूर्ण
+static inline u64 __pure sba_cmd_enc(u64 cmd, u32 val, u32 shift, u32 mask)
+{
+	cmd &= ~((u64)mask << shift);
+	cmd |= ((u64)(val & mask) << shift);
+	return cmd;
+}
 
-अटल अंतरभूत u32 __pure sba_cmd_load_c_mdata(u32 b0)
-अणु
-	वापस b0 & SBA_C_MDATA_BNUMx_MASK;
-पूर्ण
+static inline u32 __pure sba_cmd_load_c_mdata(u32 b0)
+{
+	return b0 & SBA_C_MDATA_BNUMx_MASK;
+}
 
-अटल अंतरभूत u32 __pure sba_cmd_ग_लिखो_c_mdata(u32 b0)
-अणु
-	वापस b0 & SBA_C_MDATA_BNUMx_MASK;
-पूर्ण
+static inline u32 __pure sba_cmd_write_c_mdata(u32 b0)
+{
+	return b0 & SBA_C_MDATA_BNUMx_MASK;
+}
 
-अटल अंतरभूत u32 __pure sba_cmd_xor_c_mdata(u32 b1, u32 b0)
-अणु
-	वापस (b0 & SBA_C_MDATA_BNUMx_MASK) |
+static inline u32 __pure sba_cmd_xor_c_mdata(u32 b1, u32 b0)
+{
+	return (b0 & SBA_C_MDATA_BNUMx_MASK) |
 	       ((b1 & SBA_C_MDATA_BNUMx_MASK) << SBA_C_MDATA_BNUMx_SHIFT(1));
-पूर्ण
+}
 
-अटल अंतरभूत u32 __pure sba_cmd_pq_c_mdata(u32 d, u32 b1, u32 b0)
-अणु
-	वापस (b0 & SBA_C_MDATA_BNUMx_MASK) |
+static inline u32 __pure sba_cmd_pq_c_mdata(u32 d, u32 b1, u32 b0)
+{
+	return (b0 & SBA_C_MDATA_BNUMx_MASK) |
 	       ((b1 & SBA_C_MDATA_BNUMx_MASK) << SBA_C_MDATA_BNUMx_SHIFT(1)) |
 	       ((d & SBA_C_MDATA_DNUM_MASK) << SBA_C_MDATA_DNUM_SHIFT);
-पूर्ण
+}
 
 /* ====== General helper routines ===== */
 
-अटल काष्ठा sba_request *sba_alloc_request(काष्ठा sba_device *sba)
-अणु
+static struct sba_request *sba_alloc_request(struct sba_device *sba)
+{
 	bool found = false;
-	अचिन्हित दीर्घ flags;
-	काष्ठा sba_request *req = शून्य;
+	unsigned long flags;
+	struct sba_request *req = NULL;
 
 	spin_lock_irqsave(&sba->reqs_lock, flags);
-	list_क्रम_each_entry(req, &sba->reqs_मुक्त_list, node) अणु
-		अगर (async_tx_test_ack(&req->tx)) अणु
+	list_for_each_entry(req, &sba->reqs_free_list, node) {
+		if (async_tx_test_ack(&req->tx)) {
 			list_move_tail(&req->node, &sba->reqs_alloc_list);
 			found = true;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	spin_unlock_irqrestore(&sba->reqs_lock, flags);
 
-	अगर (!found) अणु
+	if (!found) {
 		/*
-		 * We have no more मुक्त requests so, we peek
+		 * We have no more free requests so, we peek
 		 * mailbox channels hoping few active requests
 		 * would have completed which will create more
-		 * room क्रम new requests.
+		 * room for new requests.
 		 */
 		mbox_client_peek_data(sba->mchan);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	req->flags = SBA_REQUEST_STATE_ALLOCED;
 	req->first = req;
@@ -236,82 +235,82 @@
 	dma_async_tx_descriptor_init(&req->tx, &sba->dma_chan);
 	async_tx_ack(&req->tx);
 
-	वापस req;
-पूर्ण
+	return req;
+}
 
 /* Note: Must be called with sba->reqs_lock held */
-अटल व्योम _sba_pending_request(काष्ठा sba_device *sba,
-				 काष्ठा sba_request *req)
-अणु
-	lockdep_निश्चित_held(&sba->reqs_lock);
+static void _sba_pending_request(struct sba_device *sba,
+				 struct sba_request *req)
+{
+	lockdep_assert_held(&sba->reqs_lock);
 	req->flags &= ~SBA_REQUEST_STATE_MASK;
 	req->flags |= SBA_REQUEST_STATE_PENDING;
 	list_move_tail(&req->node, &sba->reqs_pending_list);
-	अगर (list_empty(&sba->reqs_active_list))
+	if (list_empty(&sba->reqs_active_list))
 		sba->reqs_fence = false;
-पूर्ण
+}
 
 /* Note: Must be called with sba->reqs_lock held */
-अटल bool _sba_active_request(काष्ठा sba_device *sba,
-				काष्ठा sba_request *req)
-अणु
-	lockdep_निश्चित_held(&sba->reqs_lock);
-	अगर (list_empty(&sba->reqs_active_list))
+static bool _sba_active_request(struct sba_device *sba,
+				struct sba_request *req)
+{
+	lockdep_assert_held(&sba->reqs_lock);
+	if (list_empty(&sba->reqs_active_list))
 		sba->reqs_fence = false;
-	अगर (sba->reqs_fence)
-		वापस false;
+	if (sba->reqs_fence)
+		return false;
 	req->flags &= ~SBA_REQUEST_STATE_MASK;
 	req->flags |= SBA_REQUEST_STATE_ACTIVE;
 	list_move_tail(&req->node, &sba->reqs_active_list);
-	अगर (req->flags & SBA_REQUEST_FENCE)
+	if (req->flags & SBA_REQUEST_FENCE)
 		sba->reqs_fence = true;
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /* Note: Must be called with sba->reqs_lock held */
-अटल व्योम _sba_पात_request(काष्ठा sba_device *sba,
-			       काष्ठा sba_request *req)
-अणु
-	lockdep_निश्चित_held(&sba->reqs_lock);
+static void _sba_abort_request(struct sba_device *sba,
+			       struct sba_request *req)
+{
+	lockdep_assert_held(&sba->reqs_lock);
 	req->flags &= ~SBA_REQUEST_STATE_MASK;
 	req->flags |= SBA_REQUEST_STATE_ABORTED;
-	list_move_tail(&req->node, &sba->reqs_पातed_list);
-	अगर (list_empty(&sba->reqs_active_list))
+	list_move_tail(&req->node, &sba->reqs_aborted_list);
+	if (list_empty(&sba->reqs_active_list))
 		sba->reqs_fence = false;
-पूर्ण
+}
 
 /* Note: Must be called with sba->reqs_lock held */
-अटल व्योम _sba_मुक्त_request(काष्ठा sba_device *sba,
-			      काष्ठा sba_request *req)
-अणु
-	lockdep_निश्चित_held(&sba->reqs_lock);
+static void _sba_free_request(struct sba_device *sba,
+			      struct sba_request *req)
+{
+	lockdep_assert_held(&sba->reqs_lock);
 	req->flags &= ~SBA_REQUEST_STATE_MASK;
 	req->flags |= SBA_REQUEST_STATE_FREE;
-	list_move_tail(&req->node, &sba->reqs_मुक्त_list);
-	अगर (list_empty(&sba->reqs_active_list))
+	list_move_tail(&req->node, &sba->reqs_free_list);
+	if (list_empty(&sba->reqs_active_list))
 		sba->reqs_fence = false;
-पूर्ण
+}
 
-अटल व्योम sba_मुक्त_chained_requests(काष्ठा sba_request *req)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा sba_request *nreq;
-	काष्ठा sba_device *sba = req->sba;
+static void sba_free_chained_requests(struct sba_request *req)
+{
+	unsigned long flags;
+	struct sba_request *nreq;
+	struct sba_device *sba = req->sba;
 
 	spin_lock_irqsave(&sba->reqs_lock, flags);
 
-	_sba_मुक्त_request(sba, req);
-	list_क्रम_each_entry(nreq, &req->next, next)
-		_sba_मुक्त_request(sba, nreq);
+	_sba_free_request(sba, req);
+	list_for_each_entry(nreq, &req->next, next)
+		_sba_free_request(sba, nreq);
 
 	spin_unlock_irqrestore(&sba->reqs_lock, flags);
-पूर्ण
+}
 
-अटल व्योम sba_chain_request(काष्ठा sba_request *first,
-			      काष्ठा sba_request *req)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा sba_device *sba = req->sba;
+static void sba_chain_request(struct sba_request *first,
+			      struct sba_request *req)
+{
+	unsigned long flags;
+	struct sba_device *sba = req->sba;
 
 	spin_lock_irqsave(&sba->reqs_lock, flags);
 
@@ -320,216 +319,216 @@
 	atomic_inc(&first->next_pending_count);
 
 	spin_unlock_irqrestore(&sba->reqs_lock, flags);
-पूर्ण
+}
 
-अटल व्योम sba_cleanup_nonpending_requests(काष्ठा sba_device *sba)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा sba_request *req, *req1;
+static void sba_cleanup_nonpending_requests(struct sba_device *sba)
+{
+	unsigned long flags;
+	struct sba_request *req, *req1;
 
 	spin_lock_irqsave(&sba->reqs_lock, flags);
 
 	/* Freeup all alloced request */
-	list_क्रम_each_entry_safe(req, req1, &sba->reqs_alloc_list, node)
-		_sba_मुक्त_request(sba, req);
+	list_for_each_entry_safe(req, req1, &sba->reqs_alloc_list, node)
+		_sba_free_request(sba, req);
 
-	/* Set all active requests as पातed */
-	list_क्रम_each_entry_safe(req, req1, &sba->reqs_active_list, node)
-		_sba_पात_request(sba, req);
+	/* Set all active requests as aborted */
+	list_for_each_entry_safe(req, req1, &sba->reqs_active_list, node)
+		_sba_abort_request(sba, req);
 
 	/*
-	 * Note: We expect that पातed request will be eventually
-	 * मुक्तd by sba_receive_message()
+	 * Note: We expect that aborted request will be eventually
+	 * freed by sba_receive_message()
 	 */
 
 	spin_unlock_irqrestore(&sba->reqs_lock, flags);
-पूर्ण
+}
 
-अटल व्योम sba_cleanup_pending_requests(काष्ठा sba_device *sba)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा sba_request *req, *req1;
+static void sba_cleanup_pending_requests(struct sba_device *sba)
+{
+	unsigned long flags;
+	struct sba_request *req, *req1;
 
 	spin_lock_irqsave(&sba->reqs_lock, flags);
 
 	/* Freeup all pending request */
-	list_क्रम_each_entry_safe(req, req1, &sba->reqs_pending_list, node)
-		_sba_मुक्त_request(sba, req);
+	list_for_each_entry_safe(req, req1, &sba->reqs_pending_list, node)
+		_sba_free_request(sba, req);
 
 	spin_unlock_irqrestore(&sba->reqs_lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक sba_send_mbox_request(काष्ठा sba_device *sba,
-				 काष्ठा sba_request *req)
-अणु
-	पूर्णांक ret = 0;
+static int sba_send_mbox_request(struct sba_device *sba,
+				 struct sba_request *req)
+{
+	int ret = 0;
 
-	/* Send message क्रम the request */
+	/* Send message for the request */
 	req->msg.error = 0;
 	ret = mbox_send_message(sba->mchan, &req->msg);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(sba->dev, "send message failed with error %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* Check error वापसed by mailbox controller */
+	/* Check error returned by mailbox controller */
 	ret = req->msg.error;
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(sba->dev, "message error %d", ret);
-	पूर्ण
+	}
 
-	/* Signal txकरोne क्रम mailbox channel */
-	mbox_client_txकरोne(sba->mchan, ret);
+	/* Signal txdone for mailbox channel */
+	mbox_client_txdone(sba->mchan, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Note: Must be called with sba->reqs_lock held */
-अटल व्योम _sba_process_pending_requests(काष्ठा sba_device *sba)
-अणु
-	पूर्णांक ret;
+static void _sba_process_pending_requests(struct sba_device *sba)
+{
+	int ret;
 	u32 count;
-	काष्ठा sba_request *req;
+	struct sba_request *req;
 
 	/* Process few pending requests */
 	count = SBA_MAX_MSG_SEND_PER_MBOX_CHANNEL;
-	जबतक (!list_empty(&sba->reqs_pending_list) && count) अणु
+	while (!list_empty(&sba->reqs_pending_list) && count) {
 		/* Get the first pending request */
 		req = list_first_entry(&sba->reqs_pending_list,
-				       काष्ठा sba_request, node);
+				       struct sba_request, node);
 
 		/* Try to make request active */
-		अगर (!_sba_active_request(sba, req))
-			अवरोध;
+		if (!_sba_active_request(sba, req))
+			break;
 
 		/* Send request to mailbox channel */
 		ret = sba_send_mbox_request(sba, req);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			_sba_pending_request(sba, req);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		count--;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम sba_process_received_request(काष्ठा sba_device *sba,
-					 काष्ठा sba_request *req)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा dma_async_tx_descriptor *tx;
-	काष्ठा sba_request *nreq, *first = req->first;
+static void sba_process_received_request(struct sba_device *sba,
+					 struct sba_request *req)
+{
+	unsigned long flags;
+	struct dma_async_tx_descriptor *tx;
+	struct sba_request *nreq, *first = req->first;
 
 	/* Process only after all chained requests are received */
-	अगर (!atomic_dec_वापस(&first->next_pending_count)) अणु
+	if (!atomic_dec_return(&first->next_pending_count)) {
 		tx = &first->tx;
 
 		WARN_ON(tx->cookie < 0);
-		अगर (tx->cookie > 0) अणु
+		if (tx->cookie > 0) {
 			spin_lock_irqsave(&sba->reqs_lock, flags);
 			dma_cookie_complete(tx);
 			spin_unlock_irqrestore(&sba->reqs_lock, flags);
-			dmaengine_desc_get_callback_invoke(tx, शून्य);
+			dmaengine_desc_get_callback_invoke(tx, NULL);
 			dma_descriptor_unmap(tx);
-			tx->callback = शून्य;
-			tx->callback_result = शून्य;
-		पूर्ण
+			tx->callback = NULL;
+			tx->callback_result = NULL;
+		}
 
 		dma_run_dependencies(tx);
 
 		spin_lock_irqsave(&sba->reqs_lock, flags);
 
 		/* Free all requests chained to first request */
-		list_क्रम_each_entry(nreq, &first->next, next)
-			_sba_मुक्त_request(sba, nreq);
+		list_for_each_entry(nreq, &first->next, next)
+			_sba_free_request(sba, nreq);
 		INIT_LIST_HEAD(&first->next);
 
 		/* Free the first request */
-		_sba_मुक्त_request(sba, first);
+		_sba_free_request(sba, first);
 
 		/* Process pending requests */
 		_sba_process_pending_requests(sba);
 
 		spin_unlock_irqrestore(&sba->reqs_lock, flags);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम sba_ग_लिखो_stats_in_seqfile(काष्ठा sba_device *sba,
-				       काष्ठा seq_file *file)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा sba_request *req;
-	u32 मुक्त_count = 0, alloced_count = 0;
-	u32 pending_count = 0, active_count = 0, पातed_count = 0;
+static void sba_write_stats_in_seqfile(struct sba_device *sba,
+				       struct seq_file *file)
+{
+	unsigned long flags;
+	struct sba_request *req;
+	u32 free_count = 0, alloced_count = 0;
+	u32 pending_count = 0, active_count = 0, aborted_count = 0;
 
 	spin_lock_irqsave(&sba->reqs_lock, flags);
 
-	list_क्रम_each_entry(req, &sba->reqs_मुक्त_list, node)
-		अगर (async_tx_test_ack(&req->tx))
-			मुक्त_count++;
+	list_for_each_entry(req, &sba->reqs_free_list, node)
+		if (async_tx_test_ack(&req->tx))
+			free_count++;
 
-	list_क्रम_each_entry(req, &sba->reqs_alloc_list, node)
+	list_for_each_entry(req, &sba->reqs_alloc_list, node)
 		alloced_count++;
 
-	list_क्रम_each_entry(req, &sba->reqs_pending_list, node)
+	list_for_each_entry(req, &sba->reqs_pending_list, node)
 		pending_count++;
 
-	list_क्रम_each_entry(req, &sba->reqs_active_list, node)
+	list_for_each_entry(req, &sba->reqs_active_list, node)
 		active_count++;
 
-	list_क्रम_each_entry(req, &sba->reqs_पातed_list, node)
-		पातed_count++;
+	list_for_each_entry(req, &sba->reqs_aborted_list, node)
+		aborted_count++;
 
 	spin_unlock_irqrestore(&sba->reqs_lock, flags);
 
-	seq_म_लिखो(file, "maximum requests   = %d\n", sba->max_req);
-	seq_म_लिखो(file, "free requests      = %d\n", मुक्त_count);
-	seq_म_लिखो(file, "alloced requests   = %d\n", alloced_count);
-	seq_म_लिखो(file, "pending requests   = %d\n", pending_count);
-	seq_म_लिखो(file, "active requests    = %d\n", active_count);
-	seq_म_लिखो(file, "aborted requests   = %d\n", पातed_count);
-पूर्ण
+	seq_printf(file, "maximum requests   = %d\n", sba->max_req);
+	seq_printf(file, "free requests      = %d\n", free_count);
+	seq_printf(file, "alloced requests   = %d\n", alloced_count);
+	seq_printf(file, "pending requests   = %d\n", pending_count);
+	seq_printf(file, "active requests    = %d\n", active_count);
+	seq_printf(file, "aborted requests   = %d\n", aborted_count);
+}
 
 /* ====== DMAENGINE callbacks ===== */
 
-अटल व्योम sba_मुक्त_chan_resources(काष्ठा dma_chan *dchan)
-अणु
+static void sba_free_chan_resources(struct dma_chan *dchan)
+{
 	/*
-	 * Channel resources are pre-alloced so we just मुक्त-up
+	 * Channel resources are pre-alloced so we just free-up
 	 * whatever we can so that we can re-use pre-alloced
-	 * channel resources next समय.
+	 * channel resources next time.
 	 */
 	sba_cleanup_nonpending_requests(to_sba_device(dchan));
-पूर्ण
+}
 
-अटल पूर्णांक sba_device_terminate_all(काष्ठा dma_chan *dchan)
-अणु
+static int sba_device_terminate_all(struct dma_chan *dchan)
+{
 	/* Cleanup all pending requests */
 	sba_cleanup_pending_requests(to_sba_device(dchan));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sba_issue_pending(काष्ठा dma_chan *dchan)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा sba_device *sba = to_sba_device(dchan);
+static void sba_issue_pending(struct dma_chan *dchan)
+{
+	unsigned long flags;
+	struct sba_device *sba = to_sba_device(dchan);
 
 	/* Process pending requests */
 	spin_lock_irqsave(&sba->reqs_lock, flags);
 	_sba_process_pending_requests(sba);
 	spin_unlock_irqrestore(&sba->reqs_lock, flags);
-पूर्ण
+}
 
-अटल dma_cookie_t sba_tx_submit(काष्ठा dma_async_tx_descriptor *tx)
-अणु
-	अचिन्हित दीर्घ flags;
+static dma_cookie_t sba_tx_submit(struct dma_async_tx_descriptor *tx)
+{
+	unsigned long flags;
 	dma_cookie_t cookie;
-	काष्ठा sba_device *sba;
-	काष्ठा sba_request *req, *nreq;
+	struct sba_device *sba;
+	struct sba_request *req, *nreq;
 
-	अगर (unlikely(!tx))
-		वापस -EINVAL;
+	if (unlikely(!tx))
+		return -EINVAL;
 
 	sba = to_sba_device(tx->chan);
 	req = to_sba_request(tx);
@@ -538,39 +537,39 @@
 	spin_lock_irqsave(&sba->reqs_lock, flags);
 	cookie = dma_cookie_assign(tx);
 	_sba_pending_request(sba, req);
-	list_क्रम_each_entry(nreq, &req->next, next)
+	list_for_each_entry(nreq, &req->next, next)
 		_sba_pending_request(sba, nreq);
 	spin_unlock_irqrestore(&sba->reqs_lock, flags);
 
-	वापस cookie;
-पूर्ण
+	return cookie;
+}
 
-अटल क्रमागत dma_status sba_tx_status(काष्ठा dma_chan *dchan,
+static enum dma_status sba_tx_status(struct dma_chan *dchan,
 				     dma_cookie_t cookie,
-				     काष्ठा dma_tx_state *txstate)
-अणु
-	क्रमागत dma_status ret;
-	काष्ठा sba_device *sba = to_sba_device(dchan);
+				     struct dma_tx_state *txstate)
+{
+	enum dma_status ret;
+	struct sba_device *sba = to_sba_device(dchan);
 
 	ret = dma_cookie_status(dchan, cookie, txstate);
-	अगर (ret == DMA_COMPLETE)
-		वापस ret;
+	if (ret == DMA_COMPLETE)
+		return ret;
 
 	mbox_client_peek_data(sba->mchan);
 
-	वापस dma_cookie_status(dchan, cookie, txstate);
-पूर्ण
+	return dma_cookie_status(dchan, cookie, txstate);
+}
 
-अटल व्योम sba_fillup_पूर्णांकerrupt_msg(काष्ठा sba_request *req,
-				     काष्ठा brcm_sba_command *cmds,
-				     काष्ठा brcm_message *msg)
-अणु
+static void sba_fillup_interrupt_msg(struct sba_request *req,
+				     struct brcm_sba_command *cmds,
+				     struct brcm_message *msg)
+{
 	u64 cmd;
 	u32 c_mdata;
 	dma_addr_t resp_dma = req->tx.phys;
-	काष्ठा brcm_sba_command *cmdsp = cmds;
+	struct brcm_sba_command *cmdsp = cmds;
 
-	/* Type-B command to load dummy data पूर्णांकo buf0 */
+	/* Type-B command to load dummy data into buf0 */
 	cmd = sba_cmd_enc(0x0, SBA_TYPE_B,
 			  SBA_TYPE_SHIFT, SBA_TYPE_MASK);
 	cmd = sba_cmd_enc(cmd, req->sba->hw_resp_size,
@@ -587,14 +586,14 @@
 	cmdsp->data_len = req->sba->hw_resp_size;
 	cmdsp++;
 
-	/* Type-A command to ग_लिखो buf0 to dummy location */
+	/* Type-A command to write buf0 to dummy location */
 	cmd = sba_cmd_enc(0x0, SBA_TYPE_A,
 			  SBA_TYPE_SHIFT, SBA_TYPE_MASK);
 	cmd = sba_cmd_enc(cmd, req->sba->hw_resp_size,
 			  SBA_USER_DEF_SHIFT, SBA_USER_DEF_MASK);
 	cmd = sba_cmd_enc(cmd, 0x1,
 			  SBA_RESP_SHIFT, SBA_RESP_MASK);
-	c_mdata = sba_cmd_ग_लिखो_c_mdata(0);
+	c_mdata = sba_cmd_write_c_mdata(0);
 	cmd = sba_cmd_enc(cmd, SBA_C_MDATA_LS(c_mdata),
 			  SBA_C_MDATA_SHIFT, SBA_C_MDATA_MASK);
 	cmd = sba_cmd_enc(cmd, SBA_CMD_WRITE_BUFFER,
@@ -602,11 +601,11 @@
 	cmdsp->cmd = cmd;
 	*cmdsp->cmd_dma = cpu_to_le64(cmd);
 	cmdsp->flags = BRCM_SBA_CMD_TYPE_A;
-	अगर (req->sba->hw_resp_size) अणु
+	if (req->sba->hw_resp_size) {
 		cmdsp->flags |= BRCM_SBA_CMD_HAS_RESP;
 		cmdsp->resp = resp_dma;
 		cmdsp->resp_len = req->sba->hw_resp_size;
-	पूर्ण
+	}
 	cmdsp->flags |= BRCM_SBA_CMD_HAS_OUTPUT;
 	cmdsp->data = resp_dma;
 	cmdsp->data_len = req->sba->hw_resp_size;
@@ -618,47 +617,47 @@
 	msg->sba.cmds_count = cmdsp - cmds;
 	msg->ctx = req;
 	msg->error = 0;
-पूर्ण
+}
 
-अटल काष्ठा dma_async_tx_descriptor *
-sba_prep_dma_पूर्णांकerrupt(काष्ठा dma_chan *dchan, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा sba_request *req = शून्य;
-	काष्ठा sba_device *sba = to_sba_device(dchan);
+static struct dma_async_tx_descriptor *
+sba_prep_dma_interrupt(struct dma_chan *dchan, unsigned long flags)
+{
+	struct sba_request *req = NULL;
+	struct sba_device *sba = to_sba_device(dchan);
 
 	/* Alloc new request */
 	req = sba_alloc_request(sba);
-	अगर (!req)
-		वापस शून्य;
+	if (!req)
+		return NULL;
 
 	/*
 	 * Force fence so that no requests are submitted
-	 * until DMA callback क्रम this request is invoked.
+	 * until DMA callback for this request is invoked.
 	 */
 	req->flags |= SBA_REQUEST_FENCE;
 
 	/* Fillup request message */
-	sba_fillup_पूर्णांकerrupt_msg(req, req->cmds, &req->msg);
+	sba_fillup_interrupt_msg(req, req->cmds, &req->msg);
 
 	/* Init async_tx descriptor */
 	req->tx.flags = flags;
 	req->tx.cookie = -EBUSY;
 
-	वापस &req->tx;
-पूर्ण
+	return &req->tx;
+}
 
-अटल व्योम sba_fillup_स_नकल_msg(काष्ठा sba_request *req,
-				  काष्ठा brcm_sba_command *cmds,
-				  काष्ठा brcm_message *msg,
-				  dma_addr_t msg_offset, माप_प्रकार msg_len,
+static void sba_fillup_memcpy_msg(struct sba_request *req,
+				  struct brcm_sba_command *cmds,
+				  struct brcm_message *msg,
+				  dma_addr_t msg_offset, size_t msg_len,
 				  dma_addr_t dst, dma_addr_t src)
-अणु
+{
 	u64 cmd;
 	u32 c_mdata;
 	dma_addr_t resp_dma = req->tx.phys;
-	काष्ठा brcm_sba_command *cmdsp = cmds;
+	struct brcm_sba_command *cmdsp = cmds;
 
-	/* Type-B command to load data पूर्णांकo buf0 */
+	/* Type-B command to load data into buf0 */
 	cmd = sba_cmd_enc(0x0, SBA_TYPE_B,
 			  SBA_TYPE_SHIFT, SBA_TYPE_MASK);
 	cmd = sba_cmd_enc(cmd, msg_len,
@@ -675,14 +674,14 @@ sba_prep_dma_पूर्णांकerrupt(काष्ठा dma_chan *dchan, 
 	cmdsp->data_len = msg_len;
 	cmdsp++;
 
-	/* Type-A command to ग_लिखो buf0 */
+	/* Type-A command to write buf0 */
 	cmd = sba_cmd_enc(0x0, SBA_TYPE_A,
 			  SBA_TYPE_SHIFT, SBA_TYPE_MASK);
 	cmd = sba_cmd_enc(cmd, msg_len,
 			  SBA_USER_DEF_SHIFT, SBA_USER_DEF_MASK);
 	cmd = sba_cmd_enc(cmd, 0x1,
 			  SBA_RESP_SHIFT, SBA_RESP_MASK);
-	c_mdata = sba_cmd_ग_लिखो_c_mdata(0);
+	c_mdata = sba_cmd_write_c_mdata(0);
 	cmd = sba_cmd_enc(cmd, SBA_C_MDATA_LS(c_mdata),
 			  SBA_C_MDATA_SHIFT, SBA_C_MDATA_MASK);
 	cmd = sba_cmd_enc(cmd, SBA_CMD_WRITE_BUFFER,
@@ -690,11 +689,11 @@ sba_prep_dma_पूर्णांकerrupt(काष्ठा dma_chan *dchan, 
 	cmdsp->cmd = cmd;
 	*cmdsp->cmd_dma = cpu_to_le64(cmd);
 	cmdsp->flags = BRCM_SBA_CMD_TYPE_A;
-	अगर (req->sba->hw_resp_size) अणु
+	if (req->sba->hw_resp_size) {
 		cmdsp->flags |= BRCM_SBA_CMD_HAS_RESP;
 		cmdsp->resp = resp_dma;
 		cmdsp->resp_len = req->sba->hw_resp_size;
-	पूर्ण
+	}
 	cmdsp->flags |= BRCM_SBA_CMD_HAS_OUTPUT;
 	cmdsp->data = dst + msg_offset;
 	cmdsp->data_len = msg_len;
@@ -706,79 +705,79 @@ sba_prep_dma_पूर्णांकerrupt(काष्ठा dma_chan *dchan, 
 	msg->sba.cmds_count = cmdsp - cmds;
 	msg->ctx = req;
 	msg->error = 0;
-पूर्ण
+}
 
-अटल काष्ठा sba_request *
-sba_prep_dma_स_नकल_req(काष्ठा sba_device *sba,
+static struct sba_request *
+sba_prep_dma_memcpy_req(struct sba_device *sba,
 			dma_addr_t off, dma_addr_t dst, dma_addr_t src,
-			माप_प्रकार len, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा sba_request *req = शून्य;
+			size_t len, unsigned long flags)
+{
+	struct sba_request *req = NULL;
 
 	/* Alloc new request */
 	req = sba_alloc_request(sba);
-	अगर (!req)
-		वापस शून्य;
-	अगर (flags & DMA_PREP_FENCE)
+	if (!req)
+		return NULL;
+	if (flags & DMA_PREP_FENCE)
 		req->flags |= SBA_REQUEST_FENCE;
 
 	/* Fillup request message */
-	sba_fillup_स_नकल_msg(req, req->cmds, &req->msg,
+	sba_fillup_memcpy_msg(req, req->cmds, &req->msg,
 			      off, len, dst, src);
 
 	/* Init async_tx descriptor */
 	req->tx.flags = flags;
 	req->tx.cookie = -EBUSY;
 
-	वापस req;
-पूर्ण
+	return req;
+}
 
-अटल काष्ठा dma_async_tx_descriptor *
-sba_prep_dma_स_नकल(काष्ठा dma_chan *dchan, dma_addr_t dst, dma_addr_t src,
-		    माप_प्रकार len, अचिन्हित दीर्घ flags)
-अणु
-	माप_प्रकार req_len;
+static struct dma_async_tx_descriptor *
+sba_prep_dma_memcpy(struct dma_chan *dchan, dma_addr_t dst, dma_addr_t src,
+		    size_t len, unsigned long flags)
+{
+	size_t req_len;
 	dma_addr_t off = 0;
-	काष्ठा sba_device *sba = to_sba_device(dchan);
-	काष्ठा sba_request *first = शून्य, *req;
+	struct sba_device *sba = to_sba_device(dchan);
+	struct sba_request *first = NULL, *req;
 
 	/* Create chained requests where each request is upto hw_buf_size */
-	जबतक (len) अणु
+	while (len) {
 		req_len = (len < sba->hw_buf_size) ? len : sba->hw_buf_size;
 
-		req = sba_prep_dma_स_नकल_req(sba, off, dst, src,
+		req = sba_prep_dma_memcpy_req(sba, off, dst, src,
 					      req_len, flags);
-		अगर (!req) अणु
-			अगर (first)
-				sba_मुक्त_chained_requests(first);
-			वापस शून्य;
-		पूर्ण
+		if (!req) {
+			if (first)
+				sba_free_chained_requests(first);
+			return NULL;
+		}
 
-		अगर (first)
+		if (first)
 			sba_chain_request(first, req);
-		अन्यथा
+		else
 			first = req;
 
 		off += req_len;
 		len -= req_len;
-	पूर्ण
+	}
 
-	वापस (first) ? &first->tx : शून्य;
-पूर्ण
+	return (first) ? &first->tx : NULL;
+}
 
-अटल व्योम sba_fillup_xor_msg(काष्ठा sba_request *req,
-				काष्ठा brcm_sba_command *cmds,
-				काष्ठा brcm_message *msg,
-				dma_addr_t msg_offset, माप_प्रकार msg_len,
+static void sba_fillup_xor_msg(struct sba_request *req,
+				struct brcm_sba_command *cmds,
+				struct brcm_message *msg,
+				dma_addr_t msg_offset, size_t msg_len,
 				dma_addr_t dst, dma_addr_t *src, u32 src_cnt)
-अणु
+{
 	u64 cmd;
 	u32 c_mdata;
-	अचिन्हित पूर्णांक i;
+	unsigned int i;
 	dma_addr_t resp_dma = req->tx.phys;
-	काष्ठा brcm_sba_command *cmdsp = cmds;
+	struct brcm_sba_command *cmdsp = cmds;
 
-	/* Type-B command to load data पूर्णांकo buf0 */
+	/* Type-B command to load data into buf0 */
 	cmd = sba_cmd_enc(0x0, SBA_TYPE_B,
 			  SBA_TYPE_SHIFT, SBA_TYPE_MASK);
 	cmd = sba_cmd_enc(cmd, msg_len,
@@ -796,7 +795,7 @@ sba_prep_dma_स_नकल(काष्ठा dma_chan *dchan, dma_addr_t dst, d
 	cmdsp++;
 
 	/* Type-B commands to xor data with buf0 and put it back in buf0 */
-	क्रम (i = 1; i < src_cnt; i++) अणु
+	for (i = 1; i < src_cnt; i++) {
 		cmd = sba_cmd_enc(0x0, SBA_TYPE_B,
 				  SBA_TYPE_SHIFT, SBA_TYPE_MASK);
 		cmd = sba_cmd_enc(cmd, msg_len,
@@ -812,16 +811,16 @@ sba_prep_dma_स_नकल(काष्ठा dma_chan *dchan, dma_addr_t dst, d
 		cmdsp->data = src[i] + msg_offset;
 		cmdsp->data_len = msg_len;
 		cmdsp++;
-	पूर्ण
+	}
 
-	/* Type-A command to ग_लिखो buf0 */
+	/* Type-A command to write buf0 */
 	cmd = sba_cmd_enc(0x0, SBA_TYPE_A,
 			  SBA_TYPE_SHIFT, SBA_TYPE_MASK);
 	cmd = sba_cmd_enc(cmd, msg_len,
 			  SBA_USER_DEF_SHIFT, SBA_USER_DEF_MASK);
 	cmd = sba_cmd_enc(cmd, 0x1,
 			  SBA_RESP_SHIFT, SBA_RESP_MASK);
-	c_mdata = sba_cmd_ग_लिखो_c_mdata(0);
+	c_mdata = sba_cmd_write_c_mdata(0);
 	cmd = sba_cmd_enc(cmd, SBA_C_MDATA_LS(c_mdata),
 			  SBA_C_MDATA_SHIFT, SBA_C_MDATA_MASK);
 	cmd = sba_cmd_enc(cmd, SBA_CMD_WRITE_BUFFER,
@@ -829,11 +828,11 @@ sba_prep_dma_स_नकल(काष्ठा dma_chan *dchan, dma_addr_t dst, d
 	cmdsp->cmd = cmd;
 	*cmdsp->cmd_dma = cpu_to_le64(cmd);
 	cmdsp->flags = BRCM_SBA_CMD_TYPE_A;
-	अगर (req->sba->hw_resp_size) अणु
+	if (req->sba->hw_resp_size) {
 		cmdsp->flags |= BRCM_SBA_CMD_HAS_RESP;
 		cmdsp->resp = resp_dma;
 		cmdsp->resp_len = req->sba->hw_resp_size;
-	पूर्ण
+	}
 	cmdsp->flags |= BRCM_SBA_CMD_HAS_OUTPUT;
 	cmdsp->data = dst + msg_offset;
 	cmdsp->data_len = msg_len;
@@ -845,20 +844,20 @@ sba_prep_dma_स_नकल(काष्ठा dma_chan *dchan, dma_addr_t dst, d
 	msg->sba.cmds_count = cmdsp - cmds;
 	msg->ctx = req;
 	msg->error = 0;
-पूर्ण
+}
 
-अटल काष्ठा sba_request *
-sba_prep_dma_xor_req(काष्ठा sba_device *sba,
+static struct sba_request *
+sba_prep_dma_xor_req(struct sba_device *sba,
 		     dma_addr_t off, dma_addr_t dst, dma_addr_t *src,
-		     u32 src_cnt, माप_प्रकार len, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा sba_request *req = शून्य;
+		     u32 src_cnt, size_t len, unsigned long flags)
+{
+	struct sba_request *req = NULL;
 
 	/* Alloc new request */
 	req = sba_alloc_request(sba);
-	अगर (!req)
-		वापस शून्य;
-	अगर (flags & DMA_PREP_FENCE)
+	if (!req)
+		return NULL;
+	if (flags & DMA_PREP_FENCE)
 		req->flags |= SBA_REQUEST_FENCE;
 
 	/* Fillup request message */
@@ -869,63 +868,63 @@ sba_prep_dma_xor_req(काष्ठा sba_device *sba,
 	req->tx.flags = flags;
 	req->tx.cookie = -EBUSY;
 
-	वापस req;
-पूर्ण
+	return req;
+}
 
-अटल काष्ठा dma_async_tx_descriptor *
-sba_prep_dma_xor(काष्ठा dma_chan *dchan, dma_addr_t dst, dma_addr_t *src,
-		 u32 src_cnt, माप_प्रकार len, अचिन्हित दीर्घ flags)
-अणु
-	माप_प्रकार req_len;
+static struct dma_async_tx_descriptor *
+sba_prep_dma_xor(struct dma_chan *dchan, dma_addr_t dst, dma_addr_t *src,
+		 u32 src_cnt, size_t len, unsigned long flags)
+{
+	size_t req_len;
 	dma_addr_t off = 0;
-	काष्ठा sba_device *sba = to_sba_device(dchan);
-	काष्ठा sba_request *first = शून्य, *req;
+	struct sba_device *sba = to_sba_device(dchan);
+	struct sba_request *first = NULL, *req;
 
 	/* Sanity checks */
-	अगर (unlikely(src_cnt > sba->max_xor_srcs))
-		वापस शून्य;
+	if (unlikely(src_cnt > sba->max_xor_srcs))
+		return NULL;
 
 	/* Create chained requests where each request is upto hw_buf_size */
-	जबतक (len) अणु
+	while (len) {
 		req_len = (len < sba->hw_buf_size) ? len : sba->hw_buf_size;
 
 		req = sba_prep_dma_xor_req(sba, off, dst, src, src_cnt,
 					   req_len, flags);
-		अगर (!req) अणु
-			अगर (first)
-				sba_मुक्त_chained_requests(first);
-			वापस शून्य;
-		पूर्ण
+		if (!req) {
+			if (first)
+				sba_free_chained_requests(first);
+			return NULL;
+		}
 
-		अगर (first)
+		if (first)
 			sba_chain_request(first, req);
-		अन्यथा
+		else
 			first = req;
 
 		off += req_len;
 		len -= req_len;
-	पूर्ण
+	}
 
-	वापस (first) ? &first->tx : शून्य;
-पूर्ण
+	return (first) ? &first->tx : NULL;
+}
 
-अटल व्योम sba_fillup_pq_msg(काष्ठा sba_request *req,
-				bool pq_जारी,
-				काष्ठा brcm_sba_command *cmds,
-				काष्ठा brcm_message *msg,
-				dma_addr_t msg_offset, माप_प्रकार msg_len,
+static void sba_fillup_pq_msg(struct sba_request *req,
+				bool pq_continue,
+				struct brcm_sba_command *cmds,
+				struct brcm_message *msg,
+				dma_addr_t msg_offset, size_t msg_len,
 				dma_addr_t *dst_p, dma_addr_t *dst_q,
-				स्थिर u8 *scf, dma_addr_t *src, u32 src_cnt)
-अणु
+				const u8 *scf, dma_addr_t *src, u32 src_cnt)
+{
 	u64 cmd;
 	u32 c_mdata;
-	अचिन्हित पूर्णांक i;
+	unsigned int i;
 	dma_addr_t resp_dma = req->tx.phys;
-	काष्ठा brcm_sba_command *cmdsp = cmds;
+	struct brcm_sba_command *cmdsp = cmds;
 
-	अगर (pq_जारी) अणु
-		/* Type-B command to load old P पूर्णांकo buf0 */
-		अगर (dst_p) अणु
+	if (pq_continue) {
+		/* Type-B command to load old P into buf0 */
+		if (dst_p) {
 			cmd = sba_cmd_enc(0x0, SBA_TYPE_B,
 				SBA_TYPE_SHIFT, SBA_TYPE_MASK);
 			cmd = sba_cmd_enc(cmd, msg_len,
@@ -941,10 +940,10 @@ sba_prep_dma_xor(काष्ठा dma_chan *dchan, dma_addr_t dst, dma_addr_t 
 			cmdsp->data = *dst_p + msg_offset;
 			cmdsp->data_len = msg_len;
 			cmdsp++;
-		पूर्ण
+		}
 
-		/* Type-B command to load old Q पूर्णांकo buf1 */
-		अगर (dst_q) अणु
+		/* Type-B command to load old Q into buf1 */
+		if (dst_q) {
 			cmd = sba_cmd_enc(0x0, SBA_TYPE_B,
 				SBA_TYPE_SHIFT, SBA_TYPE_MASK);
 			cmd = sba_cmd_enc(cmd, msg_len,
@@ -960,8 +959,8 @@ sba_prep_dma_xor(काष्ठा dma_chan *dchan, dma_addr_t dst, dma_addr_t 
 			cmdsp->data = *dst_q + msg_offset;
 			cmdsp->data_len = msg_len;
 			cmdsp++;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		/* Type-A command to zero all buffers */
 		cmd = sba_cmd_enc(0x0, SBA_TYPE_A,
 				  SBA_TYPE_SHIFT, SBA_TYPE_MASK);
@@ -973,10 +972,10 @@ sba_prep_dma_xor(काष्ठा dma_chan *dchan, dma_addr_t dst, dma_addr_t 
 		*cmdsp->cmd_dma = cpu_to_le64(cmd);
 		cmdsp->flags = BRCM_SBA_CMD_TYPE_A;
 		cmdsp++;
-	पूर्ण
+	}
 
-	/* Type-B commands क्रम generate P onto buf0 and Q onto buf1 */
-	क्रम (i = 0; i < src_cnt; i++) अणु
+	/* Type-B commands for generate P onto buf0 and Q onto buf1 */
+	for (i = 0; i < src_cnt; i++) {
 		cmd = sba_cmd_enc(0x0, SBA_TYPE_B,
 				  SBA_TYPE_SHIFT, SBA_TYPE_MASK);
 		cmd = sba_cmd_enc(cmd, msg_len,
@@ -994,17 +993,17 @@ sba_prep_dma_xor(काष्ठा dma_chan *dchan, dma_addr_t dst, dma_addr_t 
 		cmdsp->data = src[i] + msg_offset;
 		cmdsp->data_len = msg_len;
 		cmdsp++;
-	पूर्ण
+	}
 
-	/* Type-A command to ग_लिखो buf0 */
-	अगर (dst_p) अणु
+	/* Type-A command to write buf0 */
+	if (dst_p) {
 		cmd = sba_cmd_enc(0x0, SBA_TYPE_A,
 				  SBA_TYPE_SHIFT, SBA_TYPE_MASK);
 		cmd = sba_cmd_enc(cmd, msg_len,
 				  SBA_USER_DEF_SHIFT, SBA_USER_DEF_MASK);
 		cmd = sba_cmd_enc(cmd, 0x1,
 				  SBA_RESP_SHIFT, SBA_RESP_MASK);
-		c_mdata = sba_cmd_ग_लिखो_c_mdata(0);
+		c_mdata = sba_cmd_write_c_mdata(0);
 		cmd = sba_cmd_enc(cmd, SBA_C_MDATA_LS(c_mdata),
 				  SBA_C_MDATA_SHIFT, SBA_C_MDATA_MASK);
 		cmd = sba_cmd_enc(cmd, SBA_CMD_WRITE_BUFFER,
@@ -1012,26 +1011,26 @@ sba_prep_dma_xor(काष्ठा dma_chan *dchan, dma_addr_t dst, dma_addr_t 
 		cmdsp->cmd = cmd;
 		*cmdsp->cmd_dma = cpu_to_le64(cmd);
 		cmdsp->flags = BRCM_SBA_CMD_TYPE_A;
-		अगर (req->sba->hw_resp_size) अणु
+		if (req->sba->hw_resp_size) {
 			cmdsp->flags |= BRCM_SBA_CMD_HAS_RESP;
 			cmdsp->resp = resp_dma;
 			cmdsp->resp_len = req->sba->hw_resp_size;
-		पूर्ण
+		}
 		cmdsp->flags |= BRCM_SBA_CMD_HAS_OUTPUT;
 		cmdsp->data = *dst_p + msg_offset;
 		cmdsp->data_len = msg_len;
 		cmdsp++;
-	पूर्ण
+	}
 
-	/* Type-A command to ग_लिखो buf1 */
-	अगर (dst_q) अणु
+	/* Type-A command to write buf1 */
+	if (dst_q) {
 		cmd = sba_cmd_enc(0x0, SBA_TYPE_A,
 				  SBA_TYPE_SHIFT, SBA_TYPE_MASK);
 		cmd = sba_cmd_enc(cmd, msg_len,
 				  SBA_USER_DEF_SHIFT, SBA_USER_DEF_MASK);
 		cmd = sba_cmd_enc(cmd, 0x1,
 				  SBA_RESP_SHIFT, SBA_RESP_MASK);
-		c_mdata = sba_cmd_ग_लिखो_c_mdata(1);
+		c_mdata = sba_cmd_write_c_mdata(1);
 		cmd = sba_cmd_enc(cmd, SBA_C_MDATA_LS(c_mdata),
 				  SBA_C_MDATA_SHIFT, SBA_C_MDATA_MASK);
 		cmd = sba_cmd_enc(cmd, SBA_CMD_WRITE_BUFFER,
@@ -1039,16 +1038,16 @@ sba_prep_dma_xor(काष्ठा dma_chan *dchan, dma_addr_t dst, dma_addr_t 
 		cmdsp->cmd = cmd;
 		*cmdsp->cmd_dma = cpu_to_le64(cmd);
 		cmdsp->flags = BRCM_SBA_CMD_TYPE_A;
-		अगर (req->sba->hw_resp_size) अणु
+		if (req->sba->hw_resp_size) {
 			cmdsp->flags |= BRCM_SBA_CMD_HAS_RESP;
 			cmdsp->resp = resp_dma;
 			cmdsp->resp_len = req->sba->hw_resp_size;
-		पूर्ण
+		}
 		cmdsp->flags |= BRCM_SBA_CMD_HAS_OUTPUT;
 		cmdsp->data = *dst_q + msg_offset;
 		cmdsp->data_len = msg_len;
 		cmdsp++;
-	पूर्ण
+	}
 
 	/* Fillup brcm_message */
 	msg->type = BRCM_MESSAGE_SBA;
@@ -1056,24 +1055,24 @@ sba_prep_dma_xor(काष्ठा dma_chan *dchan, dma_addr_t dst, dma_addr_t 
 	msg->sba.cmds_count = cmdsp - cmds;
 	msg->ctx = req;
 	msg->error = 0;
-पूर्ण
+}
 
-अटल काष्ठा sba_request *
-sba_prep_dma_pq_req(काष्ठा sba_device *sba, dma_addr_t off,
+static struct sba_request *
+sba_prep_dma_pq_req(struct sba_device *sba, dma_addr_t off,
 		    dma_addr_t *dst_p, dma_addr_t *dst_q, dma_addr_t *src,
-		    u32 src_cnt, स्थिर u8 *scf, माप_प्रकार len, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा sba_request *req = शून्य;
+		    u32 src_cnt, const u8 *scf, size_t len, unsigned long flags)
+{
+	struct sba_request *req = NULL;
 
 	/* Alloc new request */
 	req = sba_alloc_request(sba);
-	अगर (!req)
-		वापस शून्य;
-	अगर (flags & DMA_PREP_FENCE)
+	if (!req)
+		return NULL;
+	if (flags & DMA_PREP_FENCE)
 		req->flags |= SBA_REQUEST_FENCE;
 
 	/* Fillup request messages */
-	sba_fillup_pq_msg(req, dmaf_जारी(flags),
+	sba_fillup_pq_msg(req, dmaf_continue(flags),
 			  req->cmds, &req->msg,
 			  off, len, dst_p, dst_q, scf, src, src_cnt);
 
@@ -1081,28 +1080,28 @@ sba_prep_dma_pq_req(काष्ठा sba_device *sba, dma_addr_t off,
 	req->tx.flags = flags;
 	req->tx.cookie = -EBUSY;
 
-	वापस req;
-पूर्ण
+	return req;
+}
 
-अटल व्योम sba_fillup_pq_single_msg(काष्ठा sba_request *req,
-				bool pq_जारी,
-				काष्ठा brcm_sba_command *cmds,
-				काष्ठा brcm_message *msg,
-				dma_addr_t msg_offset, माप_प्रकार msg_len,
+static void sba_fillup_pq_single_msg(struct sba_request *req,
+				bool pq_continue,
+				struct brcm_sba_command *cmds,
+				struct brcm_message *msg,
+				dma_addr_t msg_offset, size_t msg_len,
 				dma_addr_t *dst_p, dma_addr_t *dst_q,
 				dma_addr_t src, u8 scf)
-अणु
+{
 	u64 cmd;
 	u32 c_mdata;
 	u8 pos, dpos = raid6_gflog[scf];
 	dma_addr_t resp_dma = req->tx.phys;
-	काष्ठा brcm_sba_command *cmdsp = cmds;
+	struct brcm_sba_command *cmdsp = cmds;
 
-	अगर (!dst_p)
-		जाओ skip_p;
+	if (!dst_p)
+		goto skip_p;
 
-	अगर (pq_जारी) अणु
-		/* Type-B command to load old P पूर्णांकo buf0 */
+	if (pq_continue) {
+		/* Type-B command to load old P into buf0 */
 		cmd = sba_cmd_enc(0x0, SBA_TYPE_B,
 				  SBA_TYPE_SHIFT, SBA_TYPE_MASK);
 		cmd = sba_cmd_enc(cmd, msg_len,
@@ -1138,8 +1137,8 @@ sba_prep_dma_pq_req(काष्ठा sba_device *sba, dma_addr_t off,
 		cmdsp->data = src + msg_offset;
 		cmdsp->data_len = msg_len;
 		cmdsp++;
-	पूर्ण अन्यथा अणु
-		/* Type-B command to load old P पूर्णांकo buf0 */
+	} else {
+		/* Type-B command to load old P into buf0 */
 		cmd = sba_cmd_enc(0x0, SBA_TYPE_B,
 				  SBA_TYPE_SHIFT, SBA_TYPE_MASK);
 		cmd = sba_cmd_enc(cmd, msg_len,
@@ -1155,16 +1154,16 @@ sba_prep_dma_pq_req(काष्ठा sba_device *sba, dma_addr_t off,
 		cmdsp->data = src + msg_offset;
 		cmdsp->data_len = msg_len;
 		cmdsp++;
-	पूर्ण
+	}
 
-	/* Type-A command to ग_लिखो buf0 */
+	/* Type-A command to write buf0 */
 	cmd = sba_cmd_enc(0x0, SBA_TYPE_A,
 			  SBA_TYPE_SHIFT, SBA_TYPE_MASK);
 	cmd = sba_cmd_enc(cmd, msg_len,
 			  SBA_USER_DEF_SHIFT, SBA_USER_DEF_MASK);
 	cmd = sba_cmd_enc(cmd, 0x1,
 			  SBA_RESP_SHIFT, SBA_RESP_MASK);
-	c_mdata = sba_cmd_ग_लिखो_c_mdata(0);
+	c_mdata = sba_cmd_write_c_mdata(0);
 	cmd = sba_cmd_enc(cmd, SBA_C_MDATA_LS(c_mdata),
 			  SBA_C_MDATA_SHIFT, SBA_C_MDATA_MASK);
 	cmd = sba_cmd_enc(cmd, SBA_CMD_WRITE_BUFFER,
@@ -1172,19 +1171,19 @@ sba_prep_dma_pq_req(काष्ठा sba_device *sba, dma_addr_t off,
 	cmdsp->cmd = cmd;
 	*cmdsp->cmd_dma = cpu_to_le64(cmd);
 	cmdsp->flags = BRCM_SBA_CMD_TYPE_A;
-	अगर (req->sba->hw_resp_size) अणु
+	if (req->sba->hw_resp_size) {
 		cmdsp->flags |= BRCM_SBA_CMD_HAS_RESP;
 		cmdsp->resp = resp_dma;
 		cmdsp->resp_len = req->sba->hw_resp_size;
-	पूर्ण
+	}
 	cmdsp->flags |= BRCM_SBA_CMD_HAS_OUTPUT;
 	cmdsp->data = *dst_p + msg_offset;
 	cmdsp->data_len = msg_len;
 	cmdsp++;
 
 skip_p:
-	अगर (!dst_q)
-		जाओ skip_q;
+	if (!dst_q)
+		goto skip_q;
 
 	/* Type-A command to zero all buffers */
 	cmd = sba_cmd_enc(0x0, SBA_TYPE_A,
@@ -1198,14 +1197,14 @@ skip_p:
 	cmdsp->flags = BRCM_SBA_CMD_TYPE_A;
 	cmdsp++;
 
-	अगर (dpos == 255)
-		जाओ skip_q_computation;
+	if (dpos == 255)
+		goto skip_q_computation;
 	pos = (dpos < req->sba->max_pq_coefs) ?
 		dpos : (req->sba->max_pq_coefs - 1);
 
 	/*
 	 * Type-B command to generate initial Q from data
-	 * and store output पूर्णांकo buf0
+	 * and store output into buf0
 	 */
 	cmd = sba_cmd_enc(0x0, SBA_TYPE_B,
 			  SBA_TYPE_SHIFT, SBA_TYPE_MASK);
@@ -1228,7 +1227,7 @@ skip_p:
 	dpos -= pos;
 
 	/* Multiple Type-A command to generate final Q */
-	जबतक (dpos) अणु
+	while (dpos) {
 		pos = (dpos < req->sba->max_pq_coefs) ?
 			dpos : (req->sba->max_pq_coefs - 1);
 
@@ -1253,13 +1252,13 @@ skip_p:
 		cmdsp++;
 
 		dpos -= pos;
-	पूर्ण
+	}
 
 skip_q_computation:
-	अगर (pq_जारी) अणु
+	if (pq_continue) {
 		/*
 		 * Type-B command to XOR previous output with
-		 * buf0 and ग_लिखो it पूर्णांकo buf0
+		 * buf0 and write it into buf0
 		 */
 		cmd = sba_cmd_enc(0x0, SBA_TYPE_B,
 				  SBA_TYPE_SHIFT, SBA_TYPE_MASK);
@@ -1276,16 +1275,16 @@ skip_q_computation:
 		cmdsp->data = *dst_q + msg_offset;
 		cmdsp->data_len = msg_len;
 		cmdsp++;
-	पूर्ण
+	}
 
-	/* Type-A command to ग_लिखो buf0 */
+	/* Type-A command to write buf0 */
 	cmd = sba_cmd_enc(0x0, SBA_TYPE_A,
 			  SBA_TYPE_SHIFT, SBA_TYPE_MASK);
 	cmd = sba_cmd_enc(cmd, msg_len,
 			  SBA_USER_DEF_SHIFT, SBA_USER_DEF_MASK);
 	cmd = sba_cmd_enc(cmd, 0x1,
 			  SBA_RESP_SHIFT, SBA_RESP_MASK);
-	c_mdata = sba_cmd_ग_लिखो_c_mdata(0);
+	c_mdata = sba_cmd_write_c_mdata(0);
 	cmd = sba_cmd_enc(cmd, SBA_C_MDATA_LS(c_mdata),
 			  SBA_C_MDATA_SHIFT, SBA_C_MDATA_MASK);
 	cmd = sba_cmd_enc(cmd, SBA_CMD_WRITE_BUFFER,
@@ -1293,11 +1292,11 @@ skip_q_computation:
 	cmdsp->cmd = cmd;
 	*cmdsp->cmd_dma = cpu_to_le64(cmd);
 	cmdsp->flags = BRCM_SBA_CMD_TYPE_A;
-	अगर (req->sba->hw_resp_size) अणु
+	if (req->sba->hw_resp_size) {
 		cmdsp->flags |= BRCM_SBA_CMD_HAS_RESP;
 		cmdsp->resp = resp_dma;
 		cmdsp->resp_len = req->sba->hw_resp_size;
-	पूर्ण
+	}
 	cmdsp->flags |= BRCM_SBA_CMD_HAS_OUTPUT;
 	cmdsp->data = *dst_q + msg_offset;
 	cmdsp->data_len = msg_len;
@@ -1310,25 +1309,25 @@ skip_q:
 	msg->sba.cmds_count = cmdsp - cmds;
 	msg->ctx = req;
 	msg->error = 0;
-पूर्ण
+}
 
-अटल काष्ठा sba_request *
-sba_prep_dma_pq_single_req(काष्ठा sba_device *sba, dma_addr_t off,
+static struct sba_request *
+sba_prep_dma_pq_single_req(struct sba_device *sba, dma_addr_t off,
 			   dma_addr_t *dst_p, dma_addr_t *dst_q,
-			   dma_addr_t src, u8 scf, माप_प्रकार len,
-			   अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा sba_request *req = शून्य;
+			   dma_addr_t src, u8 scf, size_t len,
+			   unsigned long flags)
+{
+	struct sba_request *req = NULL;
 
 	/* Alloc new request */
 	req = sba_alloc_request(sba);
-	अगर (!req)
-		वापस शून्य;
-	अगर (flags & DMA_PREP_FENCE)
+	if (!req)
+		return NULL;
+	if (flags & DMA_PREP_FENCE)
 		req->flags |= SBA_REQUEST_FENCE;
 
 	/* Fillup request messages */
-	sba_fillup_pq_single_msg(req,  dmaf_जारी(flags),
+	sba_fillup_pq_single_msg(req,  dmaf_continue(flags),
 				 req->cmds, &req->msg, off, len,
 				 dst_p, dst_q, src, scf);
 
@@ -1336,223 +1335,223 @@ sba_prep_dma_pq_single_req(काष्ठा sba_device *sba, dma_addr_t off,
 	req->tx.flags = flags;
 	req->tx.cookie = -EBUSY;
 
-	वापस req;
-पूर्ण
+	return req;
+}
 
-अटल काष्ठा dma_async_tx_descriptor *
-sba_prep_dma_pq(काष्ठा dma_chan *dchan, dma_addr_t *dst, dma_addr_t *src,
-		u32 src_cnt, स्थिर u8 *scf, माप_प्रकार len, अचिन्हित दीर्घ flags)
-अणु
+static struct dma_async_tx_descriptor *
+sba_prep_dma_pq(struct dma_chan *dchan, dma_addr_t *dst, dma_addr_t *src,
+		u32 src_cnt, const u8 *scf, size_t len, unsigned long flags)
+{
 	u32 i, dst_q_index;
-	माप_प्रकार req_len;
+	size_t req_len;
 	bool slow = false;
 	dma_addr_t off = 0;
-	dma_addr_t *dst_p = शून्य, *dst_q = शून्य;
-	काष्ठा sba_device *sba = to_sba_device(dchan);
-	काष्ठा sba_request *first = शून्य, *req;
+	dma_addr_t *dst_p = NULL, *dst_q = NULL;
+	struct sba_device *sba = to_sba_device(dchan);
+	struct sba_request *first = NULL, *req;
 
 	/* Sanity checks */
-	अगर (unlikely(src_cnt > sba->max_pq_srcs))
-		वापस शून्य;
-	क्रम (i = 0; i < src_cnt; i++)
-		अगर (sba->max_pq_coefs <= raid6_gflog[scf[i]])
+	if (unlikely(src_cnt > sba->max_pq_srcs))
+		return NULL;
+	for (i = 0; i < src_cnt; i++)
+		if (sba->max_pq_coefs <= raid6_gflog[scf[i]])
 			slow = true;
 
 	/* Figure-out P and Q destination addresses */
-	अगर (!(flags & DMA_PREP_PQ_DISABLE_P))
+	if (!(flags & DMA_PREP_PQ_DISABLE_P))
 		dst_p = &dst[0];
-	अगर (!(flags & DMA_PREP_PQ_DISABLE_Q))
+	if (!(flags & DMA_PREP_PQ_DISABLE_Q))
 		dst_q = &dst[1];
 
 	/* Create chained requests where each request is upto hw_buf_size */
-	जबतक (len) अणु
+	while (len) {
 		req_len = (len < sba->hw_buf_size) ? len : sba->hw_buf_size;
 
-		अगर (slow) अणु
+		if (slow) {
 			dst_q_index = src_cnt;
 
-			अगर (dst_q) अणु
-				क्रम (i = 0; i < src_cnt; i++) अणु
-					अगर (*dst_q == src[i]) अणु
+			if (dst_q) {
+				for (i = 0; i < src_cnt; i++) {
+					if (*dst_q == src[i]) {
 						dst_q_index = i;
-						अवरोध;
-					पूर्ण
-				पूर्ण
-			पूर्ण
+						break;
+					}
+				}
+			}
 
-			अगर (dst_q_index < src_cnt) अणु
+			if (dst_q_index < src_cnt) {
 				i = dst_q_index;
 				req = sba_prep_dma_pq_single_req(sba,
 					off, dst_p, dst_q, src[i], scf[i],
 					req_len, flags | DMA_PREP_FENCE);
-				अगर (!req)
-					जाओ fail;
+				if (!req)
+					goto fail;
 
-				अगर (first)
+				if (first)
 					sba_chain_request(first, req);
-				अन्यथा
+				else
 					first = req;
 
 				flags |= DMA_PREP_CONTINUE;
-			पूर्ण
+			}
 
-			क्रम (i = 0; i < src_cnt; i++) अणु
-				अगर (dst_q_index == i)
-					जारी;
+			for (i = 0; i < src_cnt; i++) {
+				if (dst_q_index == i)
+					continue;
 
 				req = sba_prep_dma_pq_single_req(sba,
 					off, dst_p, dst_q, src[i], scf[i],
 					req_len, flags | DMA_PREP_FENCE);
-				अगर (!req)
-					जाओ fail;
+				if (!req)
+					goto fail;
 
-				अगर (first)
+				if (first)
 					sba_chain_request(first, req);
-				अन्यथा
+				else
 					first = req;
 
 				flags |= DMA_PREP_CONTINUE;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			req = sba_prep_dma_pq_req(sba, off,
 						  dst_p, dst_q, src, src_cnt,
 						  scf, req_len, flags);
-			अगर (!req)
-				जाओ fail;
+			if (!req)
+				goto fail;
 
-			अगर (first)
+			if (first)
 				sba_chain_request(first, req);
-			अन्यथा
+			else
 				first = req;
-		पूर्ण
+		}
 
 		off += req_len;
 		len -= req_len;
-	पूर्ण
+	}
 
-	वापस (first) ? &first->tx : शून्य;
+	return (first) ? &first->tx : NULL;
 
 fail:
-	अगर (first)
-		sba_मुक्त_chained_requests(first);
-	वापस शून्य;
-पूर्ण
+	if (first)
+		sba_free_chained_requests(first);
+	return NULL;
+}
 
 /* ====== Mailbox callbacks ===== */
 
-अटल व्योम sba_receive_message(काष्ठा mbox_client *cl, व्योम *msg)
-अणु
-	काष्ठा brcm_message *m = msg;
-	काष्ठा sba_request *req = m->ctx;
-	काष्ठा sba_device *sba = req->sba;
+static void sba_receive_message(struct mbox_client *cl, void *msg)
+{
+	struct brcm_message *m = msg;
+	struct sba_request *req = m->ctx;
+	struct sba_device *sba = req->sba;
 
-	/* Error count अगर message has error */
-	अगर (m->error < 0)
+	/* Error count if message has error */
+	if (m->error < 0)
 		dev_err(sba->dev, "%s got message with error %d",
 			dma_chan_name(&sba->dma_chan), m->error);
 
 	/* Process received request */
 	sba_process_received_request(sba, req);
-पूर्ण
+}
 
 /* ====== Debugfs callbacks ====== */
 
-अटल पूर्णांक sba_debugfs_stats_show(काष्ठा seq_file *file, व्योम *offset)
-अणु
-	काष्ठा sba_device *sba = dev_get_drvdata(file->निजी);
+static int sba_debugfs_stats_show(struct seq_file *file, void *offset)
+{
+	struct sba_device *sba = dev_get_drvdata(file->private);
 
 	/* Write stats in file */
-	sba_ग_लिखो_stats_in_seqfile(sba, file);
+	sba_write_stats_in_seqfile(sba, file);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* ====== Platक्रमm driver routines ===== */
+/* ====== Platform driver routines ===== */
 
-अटल पूर्णांक sba_pपुनः_स्मृति_channel_resources(काष्ठा sba_device *sba)
-अणु
-	पूर्णांक i, j, ret = 0;
-	काष्ठा sba_request *req = शून्य;
+static int sba_prealloc_channel_resources(struct sba_device *sba)
+{
+	int i, j, ret = 0;
+	struct sba_request *req = NULL;
 
 	sba->resp_base = dma_alloc_coherent(sba->mbox_dev,
 					    sba->max_resp_pool_size,
 					    &sba->resp_dma_base, GFP_KERNEL);
-	अगर (!sba->resp_base)
-		वापस -ENOMEM;
+	if (!sba->resp_base)
+		return -ENOMEM;
 
 	sba->cmds_base = dma_alloc_coherent(sba->mbox_dev,
 					    sba->max_cmds_pool_size,
 					    &sba->cmds_dma_base, GFP_KERNEL);
-	अगर (!sba->cmds_base) अणु
+	if (!sba->cmds_base) {
 		ret = -ENOMEM;
-		जाओ fail_मुक्त_resp_pool;
-	पूर्ण
+		goto fail_free_resp_pool;
+	}
 
 	spin_lock_init(&sba->reqs_lock);
 	sba->reqs_fence = false;
 	INIT_LIST_HEAD(&sba->reqs_alloc_list);
 	INIT_LIST_HEAD(&sba->reqs_pending_list);
 	INIT_LIST_HEAD(&sba->reqs_active_list);
-	INIT_LIST_HEAD(&sba->reqs_पातed_list);
-	INIT_LIST_HEAD(&sba->reqs_मुक्त_list);
+	INIT_LIST_HEAD(&sba->reqs_aborted_list);
+	INIT_LIST_HEAD(&sba->reqs_free_list);
 
-	क्रम (i = 0; i < sba->max_req; i++) अणु
+	for (i = 0; i < sba->max_req; i++) {
 		req = devm_kzalloc(sba->dev,
-				   काष्ठा_size(req, cmds, sba->max_cmd_per_req),
+				   struct_size(req, cmds, sba->max_cmd_per_req),
 				   GFP_KERNEL);
-		अगर (!req) अणु
+		if (!req) {
 			ret = -ENOMEM;
-			जाओ fail_मुक्त_cmds_pool;
-		पूर्ण
+			goto fail_free_cmds_pool;
+		}
 		INIT_LIST_HEAD(&req->node);
 		req->sba = sba;
 		req->flags = SBA_REQUEST_STATE_FREE;
 		INIT_LIST_HEAD(&req->next);
 		atomic_set(&req->next_pending_count, 0);
-		क्रम (j = 0; j < sba->max_cmd_per_req; j++) अणु
+		for (j = 0; j < sba->max_cmd_per_req; j++) {
 			req->cmds[j].cmd = 0;
 			req->cmds[j].cmd_dma = sba->cmds_base +
-				(i * sba->max_cmd_per_req + j) * माप(u64);
+				(i * sba->max_cmd_per_req + j) * sizeof(u64);
 			req->cmds[j].cmd_dma_addr = sba->cmds_dma_base +
-				(i * sba->max_cmd_per_req + j) * माप(u64);
+				(i * sba->max_cmd_per_req + j) * sizeof(u64);
 			req->cmds[j].flags = 0;
-		पूर्ण
-		स_रखो(&req->msg, 0, माप(req->msg));
+		}
+		memset(&req->msg, 0, sizeof(req->msg));
 		dma_async_tx_descriptor_init(&req->tx, &sba->dma_chan);
 		async_tx_ack(&req->tx);
 		req->tx.tx_submit = sba_tx_submit;
 		req->tx.phys = sba->resp_dma_base + i * sba->hw_resp_size;
-		list_add_tail(&req->node, &sba->reqs_मुक्त_list);
-	पूर्ण
+		list_add_tail(&req->node, &sba->reqs_free_list);
+	}
 
-	वापस 0;
+	return 0;
 
-fail_मुक्त_cmds_pool:
-	dma_मुक्त_coherent(sba->mbox_dev,
+fail_free_cmds_pool:
+	dma_free_coherent(sba->mbox_dev,
 			  sba->max_cmds_pool_size,
 			  sba->cmds_base, sba->cmds_dma_base);
-fail_मुक्त_resp_pool:
-	dma_मुक्त_coherent(sba->mbox_dev,
+fail_free_resp_pool:
+	dma_free_coherent(sba->mbox_dev,
 			  sba->max_resp_pool_size,
 			  sba->resp_base, sba->resp_dma_base);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम sba_मुक्तup_channel_resources(काष्ठा sba_device *sba)
-अणु
+static void sba_freeup_channel_resources(struct sba_device *sba)
+{
 	dmaengine_terminate_all(&sba->dma_chan);
-	dma_मुक्त_coherent(sba->mbox_dev, sba->max_cmds_pool_size,
+	dma_free_coherent(sba->mbox_dev, sba->max_cmds_pool_size,
 			  sba->cmds_base, sba->cmds_dma_base);
-	dma_मुक्त_coherent(sba->mbox_dev, sba->max_resp_pool_size,
+	dma_free_coherent(sba->mbox_dev, sba->max_resp_pool_size,
 			  sba->resp_base, sba->resp_dma_base);
-	sba->resp_base = शून्य;
+	sba->resp_base = NULL;
 	sba->resp_dma_base = 0;
-पूर्ण
+}
 
-अटल पूर्णांक sba_async_रेजिस्टर(काष्ठा sba_device *sba)
-अणु
-	पूर्णांक ret;
-	काष्ठा dma_device *dma_dev = &sba->dma_dev;
+static int sba_async_register(struct sba_device *sba)
+{
+	int ret;
+	struct dma_device *dma_dev = &sba->dma_dev;
 
 	/* Initialize DMA channel cookie */
 	sba->dma_chan.device = dma_dev;
@@ -1568,46 +1567,46 @@ fail_मुक्त_resp_pool:
 	/*
 	 * Set mailbox channel device as the base device of
 	 * our dma_device because the actual memory accesses
-	 * will be करोne by mailbox controller
+	 * will be done by mailbox controller
 	 */
 	dma_dev->dev = sba->mbox_dev;
 
 	/* Set base prep routines */
-	dma_dev->device_मुक्त_chan_resources = sba_मुक्त_chan_resources;
+	dma_dev->device_free_chan_resources = sba_free_chan_resources;
 	dma_dev->device_terminate_all = sba_device_terminate_all;
 	dma_dev->device_issue_pending = sba_issue_pending;
 	dma_dev->device_tx_status = sba_tx_status;
 
-	/* Set पूर्णांकerrupt routine */
-	अगर (dma_has_cap(DMA_INTERRUPT, dma_dev->cap_mask))
-		dma_dev->device_prep_dma_पूर्णांकerrupt = sba_prep_dma_पूर्णांकerrupt;
+	/* Set interrupt routine */
+	if (dma_has_cap(DMA_INTERRUPT, dma_dev->cap_mask))
+		dma_dev->device_prep_dma_interrupt = sba_prep_dma_interrupt;
 
-	/* Set स_नकल routine */
-	अगर (dma_has_cap(DMA_MEMCPY, dma_dev->cap_mask))
-		dma_dev->device_prep_dma_स_नकल = sba_prep_dma_स_नकल;
+	/* Set memcpy routine */
+	if (dma_has_cap(DMA_MEMCPY, dma_dev->cap_mask))
+		dma_dev->device_prep_dma_memcpy = sba_prep_dma_memcpy;
 
 	/* Set xor routine and capability */
-	अगर (dma_has_cap(DMA_XOR, dma_dev->cap_mask)) अणु
+	if (dma_has_cap(DMA_XOR, dma_dev->cap_mask)) {
 		dma_dev->device_prep_dma_xor = sba_prep_dma_xor;
 		dma_dev->max_xor = sba->max_xor_srcs;
-	पूर्ण
+	}
 
 	/* Set pq routine and capability */
-	अगर (dma_has_cap(DMA_PQ, dma_dev->cap_mask)) अणु
+	if (dma_has_cap(DMA_PQ, dma_dev->cap_mask)) {
 		dma_dev->device_prep_dma_pq = sba_prep_dma_pq;
 		dma_set_maxpq(dma_dev, sba->max_pq_srcs, 0);
-	पूर्ण
+	}
 
 	/* Initialize DMA device channel list */
 	INIT_LIST_HEAD(&dma_dev->channels);
 	list_add_tail(&sba->dma_chan.device_node, &dma_dev->channels);
 
 	/* Register with Linux async DMA framework*/
-	ret = dma_async_device_रेजिस्टर(dma_dev);
-	अगर (ret) अणु
+	ret = dma_async_device_register(dma_dev);
+	if (ret) {
 		dev_err(sba->dev, "async device register error %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	dev_info(sba->dev, "%s capabilities: %s%s%s%s\n",
 	dma_chan_name(&sba->dma_chan),
@@ -1616,106 +1615,106 @@ fail_मुक्त_resp_pool:
 	dma_has_cap(DMA_XOR, dma_dev->cap_mask) ? "xor " : "",
 	dma_has_cap(DMA_PQ, dma_dev->cap_mask) ? "pq " : "");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sba_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा sba_device *sba;
-	काष्ठा platक्रमm_device *mbox_pdev;
-	काष्ठा of_phandle_args args;
+static int sba_probe(struct platform_device *pdev)
+{
+	int ret = 0;
+	struct sba_device *sba;
+	struct platform_device *mbox_pdev;
+	struct of_phandle_args args;
 
-	/* Allocate मुख्य SBA काष्ठा */
-	sba = devm_kzalloc(&pdev->dev, माप(*sba), GFP_KERNEL);
-	अगर (!sba)
-		वापस -ENOMEM;
+	/* Allocate main SBA struct */
+	sba = devm_kzalloc(&pdev->dev, sizeof(*sba), GFP_KERNEL);
+	if (!sba)
+		return -ENOMEM;
 
 	sba->dev = &pdev->dev;
-	platक्रमm_set_drvdata(pdev, sba);
+	platform_set_drvdata(pdev, sba);
 
 	/* Number of mailbox channels should be atleast 1 */
 	ret = of_count_phandle_with_args(pdev->dev.of_node,
 					 "mboxes", "#mbox-cells");
-	अगर (ret <= 0)
-		वापस -ENODEV;
+	if (ret <= 0)
+		return -ENODEV;
 
 	/* Determine SBA version from DT compatible string */
-	अगर (of_device_is_compatible(sba->dev->of_node, "brcm,iproc-sba"))
+	if (of_device_is_compatible(sba->dev->of_node, "brcm,iproc-sba"))
 		sba->ver = SBA_VER_1;
-	अन्यथा अगर (of_device_is_compatible(sba->dev->of_node,
+	else if (of_device_is_compatible(sba->dev->of_node,
 					 "brcm,iproc-sba-v2"))
 		sba->ver = SBA_VER_2;
-	अन्यथा
-		वापस -ENODEV;
+	else
+		return -ENODEV;
 
 	/* Derived Configuration parameters */
-	चयन (sba->ver) अणु
-	हाल SBA_VER_1:
+	switch (sba->ver) {
+	case SBA_VER_1:
 		sba->hw_buf_size = 4096;
 		sba->hw_resp_size = 8;
 		sba->max_pq_coefs = 6;
 		sba->max_pq_srcs = 6;
-		अवरोध;
-	हाल SBA_VER_2:
+		break;
+	case SBA_VER_2:
 		sba->hw_buf_size = 4096;
 		sba->hw_resp_size = 8;
 		sba->max_pq_coefs = 30;
 		/*
 		 * We can support max_pq_srcs == max_pq_coefs because
 		 * we are limited by number of SBA commands that we can
-		 * fit in one message क्रम underlying ring manager HW.
+		 * fit in one message for underlying ring manager HW.
 		 */
 		sba->max_pq_srcs = 12;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 	sba->max_req = SBA_MAX_REQ_PER_MBOX_CHANNEL;
 	sba->max_cmd_per_req = sba->max_pq_srcs + 3;
 	sba->max_xor_srcs = sba->max_cmd_per_req - 1;
 	sba->max_resp_pool_size = sba->max_req * sba->hw_resp_size;
 	sba->max_cmds_pool_size = sba->max_req *
-				  sba->max_cmd_per_req * माप(u64);
+				  sba->max_cmd_per_req * sizeof(u64);
 
 	/* Setup mailbox client */
 	sba->client.dev			= &pdev->dev;
 	sba->client.rx_callback		= sba_receive_message;
 	sba->client.tx_block		= false;
-	sba->client.knows_txकरोne	= true;
+	sba->client.knows_txdone	= true;
 	sba->client.tx_tout		= 0;
 
 	/* Request mailbox channel */
 	sba->mchan = mbox_request_channel(&sba->client, 0);
-	अगर (IS_ERR(sba->mchan)) अणु
+	if (IS_ERR(sba->mchan)) {
 		ret = PTR_ERR(sba->mchan);
-		जाओ fail_मुक्त_mchan;
-	पूर्ण
+		goto fail_free_mchan;
+	}
 
 	/* Find-out underlying mailbox device */
 	ret = of_parse_phandle_with_args(pdev->dev.of_node,
 					 "mboxes", "#mbox-cells", 0, &args);
-	अगर (ret)
-		जाओ fail_मुक्त_mchan;
+	if (ret)
+		goto fail_free_mchan;
 	mbox_pdev = of_find_device_by_node(args.np);
 	of_node_put(args.np);
-	अगर (!mbox_pdev) अणु
+	if (!mbox_pdev) {
 		ret = -ENODEV;
-		जाओ fail_मुक्त_mchan;
-	पूर्ण
+		goto fail_free_mchan;
+	}
 	sba->mbox_dev = &mbox_pdev->dev;
 
-	/* Pपुनः_स्मृति channel resource */
-	ret = sba_pपुनः_स्मृति_channel_resources(sba);
-	अगर (ret)
-		जाओ fail_मुक्त_mchan;
+	/* Prealloc channel resource */
+	ret = sba_prealloc_channel_resources(sba);
+	if (ret)
+		goto fail_free_mchan;
 
 	/* Check availability of debugfs */
-	अगर (!debugfs_initialized())
-		जाओ skip_debugfs;
+	if (!debugfs_initialized())
+		goto skip_debugfs;
 
 	/* Create debugfs root entry */
-	sba->root = debugfs_create_dir(dev_name(sba->dev), शून्य);
+	sba->root = debugfs_create_dir(dev_name(sba->dev), NULL);
 
 	/* Create debugfs stats entry */
 	debugfs_create_devm_seqfile(sba->dev, "stats", sba->root,
@@ -1724,56 +1723,56 @@ fail_मुक्त_resp_pool:
 skip_debugfs:
 
 	/* Register DMA device with Linux async framework */
-	ret = sba_async_रेजिस्टर(sba);
-	अगर (ret)
-		जाओ fail_मुक्त_resources;
+	ret = sba_async_register(sba);
+	if (ret)
+		goto fail_free_resources;
 
-	/* Prपूर्णांक device info */
+	/* Print device info */
 	dev_info(sba->dev, "%s using SBAv%d mailbox channel from %s",
 		 dma_chan_name(&sba->dma_chan), sba->ver+1,
 		 dev_name(sba->mbox_dev));
 
-	वापस 0;
+	return 0;
 
-fail_मुक्त_resources:
-	debugfs_हटाओ_recursive(sba->root);
-	sba_मुक्तup_channel_resources(sba);
-fail_मुक्त_mchan:
-	mbox_मुक्त_channel(sba->mchan);
-	वापस ret;
-पूर्ण
+fail_free_resources:
+	debugfs_remove_recursive(sba->root);
+	sba_freeup_channel_resources(sba);
+fail_free_mchan:
+	mbox_free_channel(sba->mchan);
+	return ret;
+}
 
-अटल पूर्णांक sba_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sba_device *sba = platक्रमm_get_drvdata(pdev);
+static int sba_remove(struct platform_device *pdev)
+{
+	struct sba_device *sba = platform_get_drvdata(pdev);
 
-	dma_async_device_unरेजिस्टर(&sba->dma_dev);
+	dma_async_device_unregister(&sba->dma_dev);
 
-	debugfs_हटाओ_recursive(sba->root);
+	debugfs_remove_recursive(sba->root);
 
-	sba_मुक्तup_channel_resources(sba);
+	sba_freeup_channel_resources(sba);
 
-	mbox_मुक्त_channel(sba->mchan);
+	mbox_free_channel(sba->mchan);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id sba_of_match[] = अणु
-	अणु .compatible = "brcm,iproc-sba", पूर्ण,
-	अणु .compatible = "brcm,iproc-sba-v2", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id sba_of_match[] = {
+	{ .compatible = "brcm,iproc-sba", },
+	{ .compatible = "brcm,iproc-sba-v2", },
+	{},
+};
 MODULE_DEVICE_TABLE(of, sba_of_match);
 
-अटल काष्ठा platक्रमm_driver sba_driver = अणु
+static struct platform_driver sba_driver = {
 	.probe = sba_probe,
-	.हटाओ = sba_हटाओ,
-	.driver = अणु
+	.remove = sba_remove,
+	.driver = {
 		.name = "bcm-sba-raid",
 		.of_match_table = sba_of_match,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(sba_driver);
+	},
+};
+module_platform_driver(sba_driver);
 
 MODULE_DESCRIPTION("Broadcom SBA RAID driver");
 MODULE_AUTHOR("Anup Patel <anup.patel@broadcom.com>");

@@ -1,71 +1,70 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Device tables which are exported to userspace via
  * scripts/mod/file2alias.c.  You must keep that file in sync with this
  * header.
  */
 
-#अगर_अघोषित LINUX_MOD_DEVICETABLE_H
-#घोषणा LINUX_MOD_DEVICETABLE_H
+#ifndef LINUX_MOD_DEVICETABLE_H
+#define LINUX_MOD_DEVICETABLE_H
 
-#अगर_घोषित __KERNEL__
-#समावेश <linux/types.h>
-#समावेश <linux/uuid.h>
-प्रकार अचिन्हित दीर्घ kernel_uदीर्घ_t;
-#पूर्ण_अगर
+#ifdef __KERNEL__
+#include <linux/types.h>
+#include <linux/uuid.h>
+typedef unsigned long kernel_ulong_t;
+#endif
 
-#घोषणा PCI_ANY_ID (~0)
+#define PCI_ANY_ID (~0)
 
 /**
- * काष्ठा pci_device_id - PCI device ID काष्ठाure
- * @venकरोr:		Venकरोr ID to match (or PCI_ANY_ID)
+ * struct pci_device_id - PCI device ID structure
+ * @vendor:		Vendor ID to match (or PCI_ANY_ID)
  * @device:		Device ID to match (or PCI_ANY_ID)
- * @subvenकरोr:		Subप्रणाली venकरोr ID to match (or PCI_ANY_ID)
- * @subdevice:		Subप्रणाली device ID to match (or PCI_ANY_ID)
+ * @subvendor:		Subsystem vendor ID to match (or PCI_ANY_ID)
+ * @subdevice:		Subsystem device ID to match (or PCI_ANY_ID)
  * @class:		Device class, subclass, and "interface" to match.
  *			See Appendix D of the PCI Local Bus Spec or
- *			include/linux/pci_ids.h क्रम a full list of classes.
- *			Most drivers करो not need to specअगरy class/class_mask
- *			as venकरोr/device is normally sufficient.
+ *			include/linux/pci_ids.h for a full list of classes.
+ *			Most drivers do not need to specify class/class_mask
+ *			as vendor/device is normally sufficient.
  * @class_mask:		Limit which sub-fields of the class field are compared.
- *			See drivers/scsi/sym53c8xx_2/ क्रम example of usage.
- * @driver_data:	Data निजी to the driver.
- *			Most drivers करोn't need to use driver_data field.
+ *			See drivers/scsi/sym53c8xx_2/ for example of usage.
+ * @driver_data:	Data private to the driver.
+ *			Most drivers don't need to use driver_data field.
  *			Best practice is to use driver_data as an index
- *			पूर्णांकo a अटल list of equivalent device types,
- *			instead of using it as a poपूर्णांकer.
+ *			into a static list of equivalent device types,
+ *			instead of using it as a pointer.
  */
-काष्ठा pci_device_id अणु
-	__u32 venकरोr, device;		/* Venकरोr and device ID or PCI_ANY_ID*/
-	__u32 subvenकरोr, subdevice;	/* Subप्रणाली ID's or PCI_ANY_ID */
-	__u32 class, class_mask;	/* (class,subclass,prog-अगर) triplet */
-	kernel_uदीर्घ_t driver_data;	/* Data निजी to the driver */
-पूर्ण;
+struct pci_device_id {
+	__u32 vendor, device;		/* Vendor and device ID or PCI_ANY_ID*/
+	__u32 subvendor, subdevice;	/* Subsystem ID's or PCI_ANY_ID */
+	__u32 class, class_mask;	/* (class,subclass,prog-if) triplet */
+	kernel_ulong_t driver_data;	/* Data private to the driver */
+};
 
 
-#घोषणा IEEE1394_MATCH_VENDOR_ID	0x0001
-#घोषणा IEEE1394_MATCH_MODEL_ID		0x0002
-#घोषणा IEEE1394_MATCH_SPECIFIER_ID	0x0004
-#घोषणा IEEE1394_MATCH_VERSION		0x0008
+#define IEEE1394_MATCH_VENDOR_ID	0x0001
+#define IEEE1394_MATCH_MODEL_ID		0x0002
+#define IEEE1394_MATCH_SPECIFIER_ID	0x0004
+#define IEEE1394_MATCH_VERSION		0x0008
 
-काष्ठा ieee1394_device_id अणु
+struct ieee1394_device_id {
 	__u32 match_flags;
-	__u32 venकरोr_id;
+	__u32 vendor_id;
 	__u32 model_id;
-	__u32 specअगरier_id;
+	__u32 specifier_id;
 	__u32 version;
-	kernel_uदीर्घ_t driver_data;
-पूर्ण;
+	kernel_ulong_t driver_data;
+};
 
 
 /*
- * Device table entry क्रम "new style" table-driven USB drivers.
- * User mode code can पढ़ो these tables to choose which modules to load.
+ * Device table entry for "new style" table-driven USB drivers.
+ * User mode code can read these tables to choose which modules to load.
  * Declare the table as a MODULE_DEVICE_TABLE.
  *
- * A probe() parameter will poपूर्णांक to a matching entry from this table.
- * Use the driver_info field क्रम each match to hold inक्रमmation tied
+ * A probe() parameter will point to a matching entry from this table.
+ * Use the driver_info field for each match to hold information tied
  * to that match:  device quirks, etc.
  *
  * Terminate the driver's table with an all-zeroes entry.
@@ -73,107 +72,107 @@
  */
 
 /**
- * काष्ठा usb_device_id - identअगरies USB devices क्रम probing and hotplugging
+ * struct usb_device_id - identifies USB devices for probing and hotplugging
  * @match_flags: Bit mask controlling which of the other fields are used to
- *	match against new devices. Any field except क्रम driver_info may be
+ *	match against new devices. Any field except for driver_info may be
  *	used, although some only make sense in conjunction with other fields.
  *	This is usually set by a USB_DEVICE_*() macro, which sets all
- *	other fields in this काष्ठाure except क्रम driver_info.
- * @idVenकरोr: USB venकरोr ID क्रम a device; numbers are asचिन्हित
- *	by the USB क्रमum to its members.
- * @idProduct: Venकरोr-asचिन्हित product ID.
- * @bcdDevice_lo: Low end of range of venकरोr-asचिन्हित product version numbers.
- *	This is also used to identअगरy inभागidual product versions, क्रम
+ *	other fields in this structure except for driver_info.
+ * @idVendor: USB vendor ID for a device; numbers are assigned
+ *	by the USB forum to its members.
+ * @idProduct: Vendor-assigned product ID.
+ * @bcdDevice_lo: Low end of range of vendor-assigned product version numbers.
+ *	This is also used to identify individual product versions, for
  *	a range consisting of a single device.
  * @bcdDevice_hi: High end of version number range.  The range of product
  *	versions is inclusive.
- * @bDeviceClass: Class of device; numbers are asचिन्हित
- *	by the USB क्रमum.  Products may choose to implement classes,
- *	or be venकरोr-specअगरic.  Device classes specअगरy behavior of all
- *	the पूर्णांकerfaces on a device.
+ * @bDeviceClass: Class of device; numbers are assigned
+ *	by the USB forum.  Products may choose to implement classes,
+ *	or be vendor-specific.  Device classes specify behavior of all
+ *	the interfaces on a device.
  * @bDeviceSubClass: Subclass of device; associated with bDeviceClass.
  * @bDeviceProtocol: Protocol of device; associated with bDeviceClass.
- * @bInterfaceClass: Class of पूर्णांकerface; numbers are asचिन्हित
- *	by the USB क्रमum.  Products may choose to implement classes,
- *	or be venकरोr-specअगरic.  Interface classes specअगरy behavior only
- *	of a given पूर्णांकerface; other पूर्णांकerfaces may support other classes.
- * @bInterfaceSubClass: Subclass of पूर्णांकerface; associated with bInterfaceClass.
- * @bInterfaceProtocol: Protocol of पूर्णांकerface; associated with bInterfaceClass.
- * @bInterfaceNumber: Number of पूर्णांकerface; composite devices may use
- *	fixed पूर्णांकerface numbers to dअगरferentiate between venकरोr-specअगरic
- *	पूर्णांकerfaces.
- * @driver_info: Holds inक्रमmation used by the driver.  Usually it holds
- *	a poपूर्णांकer to a descriptor understood by the driver, or perhaps
+ * @bInterfaceClass: Class of interface; numbers are assigned
+ *	by the USB forum.  Products may choose to implement classes,
+ *	or be vendor-specific.  Interface classes specify behavior only
+ *	of a given interface; other interfaces may support other classes.
+ * @bInterfaceSubClass: Subclass of interface; associated with bInterfaceClass.
+ * @bInterfaceProtocol: Protocol of interface; associated with bInterfaceClass.
+ * @bInterfaceNumber: Number of interface; composite devices may use
+ *	fixed interface numbers to differentiate between vendor-specific
+ *	interfaces.
+ * @driver_info: Holds information used by the driver.  Usually it holds
+ *	a pointer to a descriptor understood by the driver, or perhaps
  *	device flags.
  *
- * In most हालs, drivers will create a table of device IDs by using
- * USB_DEVICE(), or similar macros deचिन्हित क्रम that purpose.
+ * In most cases, drivers will create a table of device IDs by using
+ * USB_DEVICE(), or similar macros designed for that purpose.
  * They will then export it to userspace using MODULE_DEVICE_TABLE(),
- * and provide it to the USB core through their usb_driver काष्ठाure.
+ * and provide it to the USB core through their usb_driver structure.
  *
- * See the usb_match_id() function क्रम inक्रमmation about how matches are
- * perक्रमmed.  Briefly, you will normally use one of several macros to help
- * स्थिरruct these entries.  Each entry you provide will either identअगरy
- * one or more specअगरic products, or will identअगरy a class of products
- * which have agreed to behave the same.  You should put the more specअगरic
+ * See the usb_match_id() function for information about how matches are
+ * performed.  Briefly, you will normally use one of several macros to help
+ * construct these entries.  Each entry you provide will either identify
+ * one or more specific products, or will identify a class of products
+ * which have agreed to behave the same.  You should put the more specific
  * matches towards the beginning of your table, so that driver_info can
- * record quirks of specअगरic products.
+ * record quirks of specific products.
  */
-काष्ठा usb_device_id अणु
+struct usb_device_id {
 	/* which fields to match against? */
 	__u16		match_flags;
 
-	/* Used क्रम product specअगरic matches; range is inclusive */
-	__u16		idVenकरोr;
+	/* Used for product specific matches; range is inclusive */
+	__u16		idVendor;
 	__u16		idProduct;
 	__u16		bcdDevice_lo;
 	__u16		bcdDevice_hi;
 
-	/* Used क्रम device class matches */
+	/* Used for device class matches */
 	__u8		bDeviceClass;
 	__u8		bDeviceSubClass;
 	__u8		bDeviceProtocol;
 
-	/* Used क्रम पूर्णांकerface class matches */
+	/* Used for interface class matches */
 	__u8		bInterfaceClass;
 	__u8		bInterfaceSubClass;
 	__u8		bInterfaceProtocol;
 
-	/* Used क्रम venकरोr-specअगरic पूर्णांकerface matches */
+	/* Used for vendor-specific interface matches */
 	__u8		bInterfaceNumber;
 
 	/* not matched against */
-	kernel_uदीर्घ_t	driver_info
-		__attribute__((aligned(माप(kernel_uदीर्घ_t))));
-पूर्ण;
+	kernel_ulong_t	driver_info
+		__attribute__((aligned(sizeof(kernel_ulong_t))));
+};
 
-/* Some useful macros to use to create काष्ठा usb_device_id */
-#घोषणा USB_DEVICE_ID_MATCH_VENDOR		0x0001
-#घोषणा USB_DEVICE_ID_MATCH_PRODUCT		0x0002
-#घोषणा USB_DEVICE_ID_MATCH_DEV_LO		0x0004
-#घोषणा USB_DEVICE_ID_MATCH_DEV_HI		0x0008
-#घोषणा USB_DEVICE_ID_MATCH_DEV_CLASS		0x0010
-#घोषणा USB_DEVICE_ID_MATCH_DEV_SUBCLASS	0x0020
-#घोषणा USB_DEVICE_ID_MATCH_DEV_PROTOCOL	0x0040
-#घोषणा USB_DEVICE_ID_MATCH_INT_CLASS		0x0080
-#घोषणा USB_DEVICE_ID_MATCH_INT_SUBCLASS	0x0100
-#घोषणा USB_DEVICE_ID_MATCH_INT_PROTOCOL	0x0200
-#घोषणा USB_DEVICE_ID_MATCH_INT_NUMBER		0x0400
+/* Some useful macros to use to create struct usb_device_id */
+#define USB_DEVICE_ID_MATCH_VENDOR		0x0001
+#define USB_DEVICE_ID_MATCH_PRODUCT		0x0002
+#define USB_DEVICE_ID_MATCH_DEV_LO		0x0004
+#define USB_DEVICE_ID_MATCH_DEV_HI		0x0008
+#define USB_DEVICE_ID_MATCH_DEV_CLASS		0x0010
+#define USB_DEVICE_ID_MATCH_DEV_SUBCLASS	0x0020
+#define USB_DEVICE_ID_MATCH_DEV_PROTOCOL	0x0040
+#define USB_DEVICE_ID_MATCH_INT_CLASS		0x0080
+#define USB_DEVICE_ID_MATCH_INT_SUBCLASS	0x0100
+#define USB_DEVICE_ID_MATCH_INT_PROTOCOL	0x0200
+#define USB_DEVICE_ID_MATCH_INT_NUMBER		0x0400
 
-#घोषणा HID_ANY_ID				(~0)
-#घोषणा HID_BUS_ANY				0xffff
-#घोषणा HID_GROUP_ANY				0x0000
+#define HID_ANY_ID				(~0)
+#define HID_BUS_ANY				0xffff
+#define HID_GROUP_ANY				0x0000
 
-काष्ठा hid_device_id अणु
+struct hid_device_id {
 	__u16 bus;
 	__u16 group;
-	__u32 venकरोr;
+	__u32 vendor;
 	__u32 product;
-	kernel_uदीर्घ_t driver_data;
-पूर्ण;
+	kernel_ulong_t driver_data;
+};
 
 /* s390 CCW devices */
-काष्ठा ccw_device_id अणु
+struct ccw_device_id {
 	__u16	match_flags;	/* which fields to match against */
 
 	__u16	cu_type;	/* control unit type     */
@@ -181,101 +180,101 @@
 	__u8	cu_model;	/* control unit model    */
 	__u8	dev_model;	/* device model          */
 
-	kernel_uदीर्घ_t driver_info;
-पूर्ण;
+	kernel_ulong_t driver_info;
+};
 
-#घोषणा CCW_DEVICE_ID_MATCH_CU_TYPE		0x01
-#घोषणा CCW_DEVICE_ID_MATCH_CU_MODEL		0x02
-#घोषणा CCW_DEVICE_ID_MATCH_DEVICE_TYPE		0x04
-#घोषणा CCW_DEVICE_ID_MATCH_DEVICE_MODEL	0x08
+#define CCW_DEVICE_ID_MATCH_CU_TYPE		0x01
+#define CCW_DEVICE_ID_MATCH_CU_MODEL		0x02
+#define CCW_DEVICE_ID_MATCH_DEVICE_TYPE		0x04
+#define CCW_DEVICE_ID_MATCH_DEVICE_MODEL	0x08
 
 /* s390 AP bus devices */
-काष्ठा ap_device_id अणु
+struct ap_device_id {
 	__u16 match_flags;	/* which fields to match against */
 	__u8 dev_type;		/* device type */
-	kernel_uदीर्घ_t driver_info;
-पूर्ण;
+	kernel_ulong_t driver_info;
+};
 
-#घोषणा AP_DEVICE_ID_MATCH_CARD_TYPE		0x01
-#घोषणा AP_DEVICE_ID_MATCH_QUEUE_TYPE		0x02
+#define AP_DEVICE_ID_MATCH_CARD_TYPE		0x01
+#define AP_DEVICE_ID_MATCH_QUEUE_TYPE		0x02
 
 /* s390 css bus devices (subchannels) */
-काष्ठा css_device_id अणु
+struct css_device_id {
 	__u8 match_flags;
 	__u8 type; /* subchannel type */
-	kernel_uदीर्घ_t driver_data;
-पूर्ण;
+	kernel_ulong_t driver_data;
+};
 
-#घोषणा ACPI_ID_LEN	9
+#define ACPI_ID_LEN	9
 
-काष्ठा acpi_device_id अणु
+struct acpi_device_id {
 	__u8 id[ACPI_ID_LEN];
-	kernel_uदीर्घ_t driver_data;
+	kernel_ulong_t driver_data;
 	__u32 cls;
 	__u32 cls_msk;
-पूर्ण;
+};
 
-#घोषणा PNP_ID_LEN	8
-#घोषणा PNP_MAX_DEVICES	8
+#define PNP_ID_LEN	8
+#define PNP_MAX_DEVICES	8
 
-काष्ठा pnp_device_id अणु
+struct pnp_device_id {
 	__u8 id[PNP_ID_LEN];
-	kernel_uदीर्घ_t driver_data;
-पूर्ण;
+	kernel_ulong_t driver_data;
+};
 
-काष्ठा pnp_card_device_id अणु
+struct pnp_card_device_id {
 	__u8 id[PNP_ID_LEN];
-	kernel_uदीर्घ_t driver_data;
-	काष्ठा अणु
+	kernel_ulong_t driver_data;
+	struct {
 		__u8 id[PNP_ID_LEN];
-	पूर्ण devs[PNP_MAX_DEVICES];
-पूर्ण;
+	} devs[PNP_MAX_DEVICES];
+};
 
 
-#घोषणा SERIO_ANY	0xff
+#define SERIO_ANY	0xff
 
-काष्ठा serio_device_id अणु
+struct serio_device_id {
 	__u8 type;
 	__u8 extra;
 	__u8 id;
 	__u8 proto;
-पूर्ण;
+};
 
-काष्ठा hda_device_id अणु
-	__u32 venकरोr_id;
+struct hda_device_id {
+	__u32 vendor_id;
 	__u32 rev_id;
 	__u8 api_version;
-	स्थिर अक्षर *name;
-	अचिन्हित दीर्घ driver_data;
-पूर्ण;
+	const char *name;
+	unsigned long driver_data;
+};
 
-काष्ठा sdw_device_id अणु
+struct sdw_device_id {
 	__u16 mfg_id;
 	__u16 part_id;
 	__u8  sdw_version;
 	__u8  class_id;
-	kernel_uदीर्घ_t driver_data;
-पूर्ण;
+	kernel_ulong_t driver_data;
+};
 
 /*
- * Struct used क्रम matching a device
+ * Struct used for matching a device
  */
-काष्ठा of_device_id अणु
-	अक्षर	name[32];
-	अक्षर	type[32];
-	अक्षर	compatible[128];
-	स्थिर व्योम *data;
-पूर्ण;
+struct of_device_id {
+	char	name[32];
+	char	type[32];
+	char	compatible[128];
+	const void *data;
+};
 
 /* VIO */
-काष्ठा vio_device_id अणु
-	अक्षर type[32];
-	अक्षर compat[32];
-पूर्ण;
+struct vio_device_id {
+	char type[32];
+	char compat[32];
+};
 
 /* PCMCIA */
 
-काष्ठा pcmcia_device_id अणु
+struct pcmcia_device_id {
 	__u16		match_flags;
 
 	__u16		manf_id;
@@ -283,254 +282,254 @@
 
 	__u8		func_id;
 
-	/* क्रम real multi-function devices */
+	/* for real multi-function devices */
 	__u8		function;
 
-	/* क्रम pseuकरो multi-function devices */
+	/* for pseudo multi-function devices */
 	__u8		device_no;
 
 	__u32		prod_id_hash[4];
 
 	/* not matched against in kernelspace */
-	स्थिर अक्षर *	prod_id[4];
+	const char *	prod_id[4];
 
 	/* not matched against */
-	kernel_uदीर्घ_t	driver_info;
-	अक्षर *		cisfile;
-पूर्ण;
+	kernel_ulong_t	driver_info;
+	char *		cisfile;
+};
 
-#घोषणा PCMCIA_DEV_ID_MATCH_MANF_ID	0x0001
-#घोषणा PCMCIA_DEV_ID_MATCH_CARD_ID	0x0002
-#घोषणा PCMCIA_DEV_ID_MATCH_FUNC_ID	0x0004
-#घोषणा PCMCIA_DEV_ID_MATCH_FUNCTION	0x0008
-#घोषणा PCMCIA_DEV_ID_MATCH_PROD_ID1	0x0010
-#घोषणा PCMCIA_DEV_ID_MATCH_PROD_ID2	0x0020
-#घोषणा PCMCIA_DEV_ID_MATCH_PROD_ID3	0x0040
-#घोषणा PCMCIA_DEV_ID_MATCH_PROD_ID4	0x0080
-#घोषणा PCMCIA_DEV_ID_MATCH_DEVICE_NO	0x0100
-#घोषणा PCMCIA_DEV_ID_MATCH_FAKE_CIS	0x0200
-#घोषणा PCMCIA_DEV_ID_MATCH_ANONYMOUS	0x0400
+#define PCMCIA_DEV_ID_MATCH_MANF_ID	0x0001
+#define PCMCIA_DEV_ID_MATCH_CARD_ID	0x0002
+#define PCMCIA_DEV_ID_MATCH_FUNC_ID	0x0004
+#define PCMCIA_DEV_ID_MATCH_FUNCTION	0x0008
+#define PCMCIA_DEV_ID_MATCH_PROD_ID1	0x0010
+#define PCMCIA_DEV_ID_MATCH_PROD_ID2	0x0020
+#define PCMCIA_DEV_ID_MATCH_PROD_ID3	0x0040
+#define PCMCIA_DEV_ID_MATCH_PROD_ID4	0x0080
+#define PCMCIA_DEV_ID_MATCH_DEVICE_NO	0x0100
+#define PCMCIA_DEV_ID_MATCH_FAKE_CIS	0x0200
+#define PCMCIA_DEV_ID_MATCH_ANONYMOUS	0x0400
 
 /* Input */
-#घोषणा INPUT_DEVICE_ID_EV_MAX		0x1f
-#घोषणा INPUT_DEVICE_ID_KEY_MIN_INTERESTING	0x71
-#घोषणा INPUT_DEVICE_ID_KEY_MAX		0x2ff
-#घोषणा INPUT_DEVICE_ID_REL_MAX		0x0f
-#घोषणा INPUT_DEVICE_ID_ABS_MAX		0x3f
-#घोषणा INPUT_DEVICE_ID_MSC_MAX		0x07
-#घोषणा INPUT_DEVICE_ID_LED_MAX		0x0f
-#घोषणा INPUT_DEVICE_ID_SND_MAX		0x07
-#घोषणा INPUT_DEVICE_ID_FF_MAX		0x7f
-#घोषणा INPUT_DEVICE_ID_SW_MAX		0x10
-#घोषणा INPUT_DEVICE_ID_PROP_MAX	0x1f
+#define INPUT_DEVICE_ID_EV_MAX		0x1f
+#define INPUT_DEVICE_ID_KEY_MIN_INTERESTING	0x71
+#define INPUT_DEVICE_ID_KEY_MAX		0x2ff
+#define INPUT_DEVICE_ID_REL_MAX		0x0f
+#define INPUT_DEVICE_ID_ABS_MAX		0x3f
+#define INPUT_DEVICE_ID_MSC_MAX		0x07
+#define INPUT_DEVICE_ID_LED_MAX		0x0f
+#define INPUT_DEVICE_ID_SND_MAX		0x07
+#define INPUT_DEVICE_ID_FF_MAX		0x7f
+#define INPUT_DEVICE_ID_SW_MAX		0x10
+#define INPUT_DEVICE_ID_PROP_MAX	0x1f
 
-#घोषणा INPUT_DEVICE_ID_MATCH_BUS	1
-#घोषणा INPUT_DEVICE_ID_MATCH_VENDOR	2
-#घोषणा INPUT_DEVICE_ID_MATCH_PRODUCT	4
-#घोषणा INPUT_DEVICE_ID_MATCH_VERSION	8
+#define INPUT_DEVICE_ID_MATCH_BUS	1
+#define INPUT_DEVICE_ID_MATCH_VENDOR	2
+#define INPUT_DEVICE_ID_MATCH_PRODUCT	4
+#define INPUT_DEVICE_ID_MATCH_VERSION	8
 
-#घोषणा INPUT_DEVICE_ID_MATCH_EVBIT	0x0010
-#घोषणा INPUT_DEVICE_ID_MATCH_KEYBIT	0x0020
-#घोषणा INPUT_DEVICE_ID_MATCH_RELBIT	0x0040
-#घोषणा INPUT_DEVICE_ID_MATCH_ABSBIT	0x0080
-#घोषणा INPUT_DEVICE_ID_MATCH_MSCIT	0x0100
-#घोषणा INPUT_DEVICE_ID_MATCH_LEDBIT	0x0200
-#घोषणा INPUT_DEVICE_ID_MATCH_SNDBIT	0x0400
-#घोषणा INPUT_DEVICE_ID_MATCH_FFBIT	0x0800
-#घोषणा INPUT_DEVICE_ID_MATCH_SWBIT	0x1000
-#घोषणा INPUT_DEVICE_ID_MATCH_PROPBIT	0x2000
+#define INPUT_DEVICE_ID_MATCH_EVBIT	0x0010
+#define INPUT_DEVICE_ID_MATCH_KEYBIT	0x0020
+#define INPUT_DEVICE_ID_MATCH_RELBIT	0x0040
+#define INPUT_DEVICE_ID_MATCH_ABSBIT	0x0080
+#define INPUT_DEVICE_ID_MATCH_MSCIT	0x0100
+#define INPUT_DEVICE_ID_MATCH_LEDBIT	0x0200
+#define INPUT_DEVICE_ID_MATCH_SNDBIT	0x0400
+#define INPUT_DEVICE_ID_MATCH_FFBIT	0x0800
+#define INPUT_DEVICE_ID_MATCH_SWBIT	0x1000
+#define INPUT_DEVICE_ID_MATCH_PROPBIT	0x2000
 
-काष्ठा input_device_id अणु
+struct input_device_id {
 
-	kernel_uदीर्घ_t flags;
+	kernel_ulong_t flags;
 
 	__u16 bustype;
-	__u16 venकरोr;
+	__u16 vendor;
 	__u16 product;
 	__u16 version;
 
-	kernel_uदीर्घ_t evbit[INPUT_DEVICE_ID_EV_MAX / BITS_PER_LONG + 1];
-	kernel_uदीर्घ_t keybit[INPUT_DEVICE_ID_KEY_MAX / BITS_PER_LONG + 1];
-	kernel_uदीर्घ_t relbit[INPUT_DEVICE_ID_REL_MAX / BITS_PER_LONG + 1];
-	kernel_uदीर्घ_t असलbit[INPUT_DEVICE_ID_ABS_MAX / BITS_PER_LONG + 1];
-	kernel_uदीर्घ_t mscbit[INPUT_DEVICE_ID_MSC_MAX / BITS_PER_LONG + 1];
-	kernel_uदीर्घ_t ledbit[INPUT_DEVICE_ID_LED_MAX / BITS_PER_LONG + 1];
-	kernel_uदीर्घ_t sndbit[INPUT_DEVICE_ID_SND_MAX / BITS_PER_LONG + 1];
-	kernel_uदीर्घ_t ffbit[INPUT_DEVICE_ID_FF_MAX / BITS_PER_LONG + 1];
-	kernel_uदीर्घ_t swbit[INPUT_DEVICE_ID_SW_MAX / BITS_PER_LONG + 1];
-	kernel_uदीर्घ_t propbit[INPUT_DEVICE_ID_PROP_MAX / BITS_PER_LONG + 1];
+	kernel_ulong_t evbit[INPUT_DEVICE_ID_EV_MAX / BITS_PER_LONG + 1];
+	kernel_ulong_t keybit[INPUT_DEVICE_ID_KEY_MAX / BITS_PER_LONG + 1];
+	kernel_ulong_t relbit[INPUT_DEVICE_ID_REL_MAX / BITS_PER_LONG + 1];
+	kernel_ulong_t absbit[INPUT_DEVICE_ID_ABS_MAX / BITS_PER_LONG + 1];
+	kernel_ulong_t mscbit[INPUT_DEVICE_ID_MSC_MAX / BITS_PER_LONG + 1];
+	kernel_ulong_t ledbit[INPUT_DEVICE_ID_LED_MAX / BITS_PER_LONG + 1];
+	kernel_ulong_t sndbit[INPUT_DEVICE_ID_SND_MAX / BITS_PER_LONG + 1];
+	kernel_ulong_t ffbit[INPUT_DEVICE_ID_FF_MAX / BITS_PER_LONG + 1];
+	kernel_ulong_t swbit[INPUT_DEVICE_ID_SW_MAX / BITS_PER_LONG + 1];
+	kernel_ulong_t propbit[INPUT_DEVICE_ID_PROP_MAX / BITS_PER_LONG + 1];
 
-	kernel_uदीर्घ_t driver_info;
-पूर्ण;
+	kernel_ulong_t driver_info;
+};
 
 /* EISA */
 
-#घोषणा EISA_SIG_LEN   8
+#define EISA_SIG_LEN   8
 
-/* The EISA signature, in ASCII क्रमm, null terminated */
-काष्ठा eisa_device_id अणु
-	अक्षर          sig[EISA_SIG_LEN];
-	kernel_uदीर्घ_t driver_data;
-पूर्ण;
+/* The EISA signature, in ASCII form, null terminated */
+struct eisa_device_id {
+	char          sig[EISA_SIG_LEN];
+	kernel_ulong_t driver_data;
+};
 
-#घोषणा EISA_DEVICE_MODALIAS_FMT "eisa:s%s"
+#define EISA_DEVICE_MODALIAS_FMT "eisa:s%s"
 
-काष्ठा parisc_device_id अणु
+struct parisc_device_id {
 	__u8	hw_type;	/* 5 bits used */
 	__u8	hversion_rev;	/* 4 bits */
 	__u16	hversion;	/* 12 bits */
 	__u32	sversion;	/* 20 bits */
-पूर्ण;
+};
 
-#घोषणा PA_HWTYPE_ANY_ID	0xff
-#घोषणा PA_HVERSION_REV_ANY_ID	0xff
-#घोषणा PA_HVERSION_ANY_ID	0xffff
-#घोषणा PA_SVERSION_ANY_ID	0xffffffff
+#define PA_HWTYPE_ANY_ID	0xff
+#define PA_HVERSION_REV_ANY_ID	0xff
+#define PA_HVERSION_ANY_ID	0xffff
+#define PA_SVERSION_ANY_ID	0xffffffff
 
 /* SDIO */
 
-#घोषणा SDIO_ANY_ID (~0)
+#define SDIO_ANY_ID (~0)
 
-काष्ठा sdio_device_id अणु
-	__u8	class;			/* Standard पूर्णांकerface or SDIO_ANY_ID */
-	__u16	venकरोr;			/* Venकरोr or SDIO_ANY_ID */
+struct sdio_device_id {
+	__u8	class;			/* Standard interface or SDIO_ANY_ID */
+	__u16	vendor;			/* Vendor or SDIO_ANY_ID */
 	__u16	device;			/* Device ID or SDIO_ANY_ID */
-	kernel_uदीर्घ_t driver_data;	/* Data निजी to the driver */
-पूर्ण;
+	kernel_ulong_t driver_data;	/* Data private to the driver */
+};
 
 /* SSB core, see drivers/ssb/ */
-काष्ठा ssb_device_id अणु
-	__u16	venकरोr;
+struct ssb_device_id {
+	__u16	vendor;
 	__u16	coreid;
 	__u8	revision;
 	__u8	__pad;
-पूर्ण __attribute__((packed, aligned(2)));
-#घोषणा SSB_DEVICE(_venकरोr, _coreid, _revision)  \
-	अणु .venकरोr = _venकरोr, .coreid = _coreid, .revision = _revision, पूर्ण
+} __attribute__((packed, aligned(2)));
+#define SSB_DEVICE(_vendor, _coreid, _revision)  \
+	{ .vendor = _vendor, .coreid = _coreid, .revision = _revision, }
 
-#घोषणा SSB_ANY_VENDOR		0xFFFF
-#घोषणा SSB_ANY_ID		0xFFFF
-#घोषणा SSB_ANY_REV		0xFF
+#define SSB_ANY_VENDOR		0xFFFF
+#define SSB_ANY_ID		0xFFFF
+#define SSB_ANY_REV		0xFF
 
-/* Broadcom's specअगरic AMBA core, see drivers/bcma/ */
-काष्ठा bcma_device_id अणु
+/* Broadcom's specific AMBA core, see drivers/bcma/ */
+struct bcma_device_id {
 	__u16	manuf;
 	__u16	id;
 	__u8	rev;
 	__u8	class;
-पूर्ण __attribute__((packed,aligned(2)));
-#घोषणा BCMA_CORE(_manuf, _id, _rev, _class)  \
-	अणु .manuf = _manuf, .id = _id, .rev = _rev, .class = _class, पूर्ण
+} __attribute__((packed,aligned(2)));
+#define BCMA_CORE(_manuf, _id, _rev, _class)  \
+	{ .manuf = _manuf, .id = _id, .rev = _rev, .class = _class, }
 
-#घोषणा BCMA_ANY_MANUF		0xFFFF
-#घोषणा BCMA_ANY_ID		0xFFFF
-#घोषणा BCMA_ANY_REV		0xFF
-#घोषणा BCMA_ANY_CLASS		0xFF
+#define BCMA_ANY_MANUF		0xFFFF
+#define BCMA_ANY_ID		0xFFFF
+#define BCMA_ANY_REV		0xFF
+#define BCMA_ANY_CLASS		0xFF
 
-काष्ठा virtio_device_id अणु
+struct virtio_device_id {
 	__u32 device;
-	__u32 venकरोr;
-पूर्ण;
-#घोषणा VIRTIO_DEV_ANY_ID	0xffffffff
+	__u32 vendor;
+};
+#define VIRTIO_DEV_ANY_ID	0xffffffff
 
 /*
  * For Hyper-V devices we use the device guid as the id.
  */
-काष्ठा hv_vmbus_device_id अणु
+struct hv_vmbus_device_id {
 	guid_t guid;
-	kernel_uदीर्घ_t driver_data;	/* Data निजी to the driver */
-पूर्ण;
+	kernel_ulong_t driver_data;	/* Data private to the driver */
+};
 
 /* rpmsg */
 
-#घोषणा RPMSG_NAME_SIZE			32
-#घोषणा RPMSG_DEVICE_MODALIAS_FMT	"rpmsg:%s"
+#define RPMSG_NAME_SIZE			32
+#define RPMSG_DEVICE_MODALIAS_FMT	"rpmsg:%s"
 
-काष्ठा rpmsg_device_id अणु
-	अक्षर name[RPMSG_NAME_SIZE];
-पूर्ण;
+struct rpmsg_device_id {
+	char name[RPMSG_NAME_SIZE];
+};
 
 /* i2c */
 
-#घोषणा I2C_NAME_SIZE	20
-#घोषणा I2C_MODULE_PREFIX "i2c:"
+#define I2C_NAME_SIZE	20
+#define I2C_MODULE_PREFIX "i2c:"
 
-काष्ठा i2c_device_id अणु
-	अक्षर name[I2C_NAME_SIZE];
-	kernel_uदीर्घ_t driver_data;	/* Data निजी to the driver */
-पूर्ण;
+struct i2c_device_id {
+	char name[I2C_NAME_SIZE];
+	kernel_ulong_t driver_data;	/* Data private to the driver */
+};
 
 /* pci_epf */
 
-#घोषणा PCI_EPF_NAME_SIZE	20
-#घोषणा PCI_EPF_MODULE_PREFIX	"pci_epf:"
+#define PCI_EPF_NAME_SIZE	20
+#define PCI_EPF_MODULE_PREFIX	"pci_epf:"
 
-काष्ठा pci_epf_device_id अणु
-	अक्षर name[PCI_EPF_NAME_SIZE];
-	kernel_uदीर्घ_t driver_data;
-पूर्ण;
+struct pci_epf_device_id {
+	char name[PCI_EPF_NAME_SIZE];
+	kernel_ulong_t driver_data;
+};
 
 /* i3c */
 
-#घोषणा I3C_MATCH_DCR			0x1
-#घोषणा I3C_MATCH_MANUF			0x2
-#घोषणा I3C_MATCH_PART			0x4
-#घोषणा I3C_MATCH_EXTRA_INFO		0x8
+#define I3C_MATCH_DCR			0x1
+#define I3C_MATCH_MANUF			0x2
+#define I3C_MATCH_PART			0x4
+#define I3C_MATCH_EXTRA_INFO		0x8
 
-काष्ठा i3c_device_id अणु
+struct i3c_device_id {
 	__u8 match_flags;
 	__u8 dcr;
 	__u16 manuf_id;
 	__u16 part_id;
 	__u16 extra_info;
 
-	स्थिर व्योम *data;
-पूर्ण;
+	const void *data;
+};
 
 /* spi */
 
-#घोषणा SPI_NAME_SIZE	32
-#घोषणा SPI_MODULE_PREFIX "spi:"
+#define SPI_NAME_SIZE	32
+#define SPI_MODULE_PREFIX "spi:"
 
-काष्ठा spi_device_id अणु
-	अक्षर name[SPI_NAME_SIZE];
-	kernel_uदीर्घ_t driver_data;	/* Data निजी to the driver */
-पूर्ण;
+struct spi_device_id {
+	char name[SPI_NAME_SIZE];
+	kernel_ulong_t driver_data;	/* Data private to the driver */
+};
 
 /* SLIMbus */
 
-#घोषणा SLIMBUS_NAME_SIZE	32
-#घोषणा SLIMBUS_MODULE_PREFIX	"slim:"
+#define SLIMBUS_NAME_SIZE	32
+#define SLIMBUS_MODULE_PREFIX	"slim:"
 
-काष्ठा slim_device_id अणु
+struct slim_device_id {
 	__u16 manf_id, prod_code;
 	__u16 dev_index, instance;
 
-	/* Data निजी to the driver */
-	kernel_uदीर्घ_t driver_data;
-पूर्ण;
+	/* Data private to the driver */
+	kernel_ulong_t driver_data;
+};
 
-#घोषणा APR_NAME_SIZE	32
-#घोषणा APR_MODULE_PREFIX "apr:"
+#define APR_NAME_SIZE	32
+#define APR_MODULE_PREFIX "apr:"
 
-काष्ठा apr_device_id अणु
-	अक्षर name[APR_NAME_SIZE];
-	__u32 करोमुख्य_id;
+struct apr_device_id {
+	char name[APR_NAME_SIZE];
+	__u32 domain_id;
 	__u32 svc_id;
 	__u32 svc_version;
-	kernel_uदीर्घ_t driver_data;	/* Data निजी to the driver */
-पूर्ण;
+	kernel_ulong_t driver_data;	/* Data private to the driver */
+};
 
-#घोषणा SPMI_NAME_SIZE	32
-#घोषणा SPMI_MODULE_PREFIX "spmi:"
+#define SPMI_NAME_SIZE	32
+#define SPMI_MODULE_PREFIX "spmi:"
 
-काष्ठा spmi_device_id अणु
-	अक्षर name[SPMI_NAME_SIZE];
-	kernel_uदीर्घ_t driver_data;	/* Data निजी to the driver */
-पूर्ण;
+struct spmi_device_id {
+	char name[SPMI_NAME_SIZE];
+	kernel_ulong_t driver_data;	/* Data private to the driver */
+};
 
 /* dmi */
-क्रमागत dmi_field अणु
+enum dmi_field {
 	DMI_NONE,
 	DMI_BIOS_VENDOR,
 	DMI_BIOS_VERSION,
@@ -555,45 +554,45 @@
 	DMI_CHASSIS_SERIAL,
 	DMI_CHASSIS_ASSET_TAG,
 	DMI_STRING_MAX,
-	DMI_OEM_STRING,	/* special हाल - will not be in dmi_ident */
-पूर्ण;
+	DMI_OEM_STRING,	/* special case - will not be in dmi_ident */
+};
 
-काष्ठा dmi_strmatch अणु
-	अचिन्हित अक्षर slot:7;
-	अचिन्हित अक्षर exact_match:1;
-	अक्षर substr[79];
-पूर्ण;
+struct dmi_strmatch {
+	unsigned char slot:7;
+	unsigned char exact_match:1;
+	char substr[79];
+};
 
-काष्ठा dmi_प्रणाली_id अणु
-	पूर्णांक (*callback)(स्थिर काष्ठा dmi_प्रणाली_id *);
-	स्थिर अक्षर *ident;
-	काष्ठा dmi_strmatch matches[4];
-	व्योम *driver_data;
-पूर्ण;
+struct dmi_system_id {
+	int (*callback)(const struct dmi_system_id *);
+	const char *ident;
+	struct dmi_strmatch matches[4];
+	void *driver_data;
+};
 /*
- * काष्ठा dmi_device_id appears during expansion of
- * "MODULE_DEVICE_TABLE(dmi, x)". Compiler करोesn't look inside it
- * but this is enough क्रम gcc 3.4.6 to error out:
+ * struct dmi_device_id appears during expansion of
+ * "MODULE_DEVICE_TABLE(dmi, x)". Compiler doesn't look inside it
+ * but this is enough for gcc 3.4.6 to error out:
  *	error: storage size of '__mod_dmi_device_table' isn't known
  */
-#घोषणा dmi_device_id dmi_प्रणाली_id
+#define dmi_device_id dmi_system_id
 
-#घोषणा DMI_MATCH(a, b)	अणु .slot = a, .substr = b पूर्ण
-#घोषणा DMI_EXACT_MATCH(a, b)	अणु .slot = a, .substr = b, .exact_match = 1 पूर्ण
+#define DMI_MATCH(a, b)	{ .slot = a, .substr = b }
+#define DMI_EXACT_MATCH(a, b)	{ .slot = a, .substr = b, .exact_match = 1 }
 
-#घोषणा PLATFORM_NAME_SIZE	20
-#घोषणा PLATFORM_MODULE_PREFIX	"platform:"
+#define PLATFORM_NAME_SIZE	20
+#define PLATFORM_MODULE_PREFIX	"platform:"
 
-काष्ठा platक्रमm_device_id अणु
-	अक्षर name[PLATFORM_NAME_SIZE];
-	kernel_uदीर्घ_t driver_data;
-पूर्ण;
+struct platform_device_id {
+	char name[PLATFORM_NAME_SIZE];
+	kernel_ulong_t driver_data;
+};
 
-#घोषणा MDIO_NAME_SIZE		32
-#घोषणा MDIO_MODULE_PREFIX	"mdio:"
+#define MDIO_NAME_SIZE		32
+#define MDIO_MODULE_PREFIX	"mdio:"
 
-#घोषणा MDIO_ID_FMT "%u%u%u%u%u%u%u%u%u%u%u%u%u%u%u%u%u%u%u%u%u%u%u%u%u%u%u%u%u%u%u%u"
-#घोषणा MDIO_ID_ARGS(_id) \
+#define MDIO_ID_FMT "%u%u%u%u%u%u%u%u%u%u%u%u%u%u%u%u%u%u%u%u%u%u%u%u%u%u%u%u%u%u%u%u"
+#define MDIO_ID_ARGS(_id) \
 	((_id)>>31) & 1, ((_id)>>30) & 1, ((_id)>>29) & 1, ((_id)>>28) & 1, \
 	((_id)>>27) & 1, ((_id)>>26) & 1, ((_id)>>25) & 1, ((_id)>>24) & 1, \
 	((_id)>>23) & 1, ((_id)>>22) & 1, ((_id)>>21) & 1, ((_id)>>20) & 1, \
@@ -604,289 +603,289 @@
 	((_id)>>3) & 1, ((_id)>>2) & 1, ((_id)>>1) & 1, (_id) & 1
 
 /**
- * काष्ठा mdio_device_id - identअगरies PHY devices on an MDIO/MII bus
+ * struct mdio_device_id - identifies PHY devices on an MDIO/MII bus
  * @phy_id: The result of
- *     (mdio_पढ़ो(&MII_PHYSID1) << 16 | mdio_पढ़ो(&MII_PHYSID2)) & @phy_id_mask
- *     क्रम this PHY type
- * @phy_id_mask: Defines the signअगरicant bits of @phy_id.  A value of 0
- *     is used to terminate an array of काष्ठा mdio_device_id.
+ *     (mdio_read(&MII_PHYSID1) << 16 | mdio_read(&MII_PHYSID2)) & @phy_id_mask
+ *     for this PHY type
+ * @phy_id_mask: Defines the significant bits of @phy_id.  A value of 0
+ *     is used to terminate an array of struct mdio_device_id.
  */
-काष्ठा mdio_device_id अणु
+struct mdio_device_id {
 	__u32 phy_id;
 	__u32 phy_id_mask;
-पूर्ण;
+};
 
-काष्ठा zorro_device_id अणु
+struct zorro_device_id {
 	__u32 id;			/* Device ID or ZORRO_WILDCARD */
-	kernel_uदीर्घ_t driver_data;	/* Data निजी to the driver */
-पूर्ण;
+	kernel_ulong_t driver_data;	/* Data private to the driver */
+};
 
-#घोषणा ZORRO_WILDCARD			(0xffffffff)	/* not official */
+#define ZORRO_WILDCARD			(0xffffffff)	/* not official */
 
-#घोषणा ZORRO_DEVICE_MODALIAS_FMT	"zorro:i%08X"
+#define ZORRO_DEVICE_MODALIAS_FMT	"zorro:i%08X"
 
-#घोषणा ISAPNP_ANY_ID		0xffff
-काष्ठा isapnp_device_id अणु
-	अचिन्हित लघु card_venकरोr, card_device;
-	अचिन्हित लघु venकरोr, function;
-	kernel_uदीर्घ_t driver_data;	/* data निजी to the driver */
-पूर्ण;
+#define ISAPNP_ANY_ID		0xffff
+struct isapnp_device_id {
+	unsigned short card_vendor, card_device;
+	unsigned short vendor, function;
+	kernel_ulong_t driver_data;	/* data private to the driver */
+};
 
 /**
- * काष्ठा amba_id - identअगरies a device on an AMBA bus
- * @id: The signअगरicant bits अगर the hardware device ID
- * @mask: Biपंचांगask specअगरying which bits of the id field are signअगरicant when
+ * struct amba_id - identifies a device on an AMBA bus
+ * @id: The significant bits if the hardware device ID
+ * @mask: Bitmask specifying which bits of the id field are significant when
  *	matching.  A driver binds to a device when ((hardware device ID) & mask)
  *	== id.
  * @data: Private data used by the driver.
  */
-काष्ठा amba_id अणु
-	अचिन्हित पूर्णांक		id;
-	अचिन्हित पूर्णांक		mask;
-	व्योम			*data;
-पूर्ण;
+struct amba_id {
+	unsigned int		id;
+	unsigned int		mask;
+	void			*data;
+};
 
 /**
- * काष्ठा mips_cdmm_device_id - identअगरies devices in MIPS CDMM bus
- * @type:	Device type identअगरier.
+ * struct mips_cdmm_device_id - identifies devices in MIPS CDMM bus
+ * @type:	Device type identifier.
  */
-काष्ठा mips_cdmm_device_id अणु
+struct mips_cdmm_device_id {
 	__u8	type;
-पूर्ण;
+};
 
 /*
- * Match x86 CPUs क्रम CPU specअगरic drivers.
- * See करोcumentation of "x86_match_cpu" क्रम details.
+ * Match x86 CPUs for CPU specific drivers.
+ * See documentation of "x86_match_cpu" for details.
  */
 
 /*
- * MODULE_DEVICE_TABLE expects this काष्ठा to be called x86cpu_device_id.
+ * MODULE_DEVICE_TABLE expects this struct to be called x86cpu_device_id.
  * Although gcc seems to ignore this error, clang fails without this define.
  */
-#घोषणा x86cpu_device_id x86_cpu_id
-काष्ठा x86_cpu_id अणु
-	__u16 venकरोr;
+#define x86cpu_device_id x86_cpu_id
+struct x86_cpu_id {
+	__u16 vendor;
 	__u16 family;
 	__u16 model;
 	__u16 steppings;
 	__u16 feature;	/* bit index */
-	kernel_uदीर्घ_t driver_data;
-पूर्ण;
+	kernel_ulong_t driver_data;
+};
 
-/* Wild cards क्रम x86_cpu_id::venकरोr, family, model and feature */
-#घोषणा X86_VENDOR_ANY 0xffff
-#घोषणा X86_FAMILY_ANY 0
-#घोषणा X86_MODEL_ANY  0
-#घोषणा X86_STEPPING_ANY 0
-#घोषणा X86_FEATURE_ANY 0	/* Same as FPU, you can't test क्रम that */
+/* Wild cards for x86_cpu_id::vendor, family, model and feature */
+#define X86_VENDOR_ANY 0xffff
+#define X86_FAMILY_ANY 0
+#define X86_MODEL_ANY  0
+#define X86_STEPPING_ANY 0
+#define X86_FEATURE_ANY 0	/* Same as FPU, you can't test for that */
 
 /*
- * Generic table type क्रम matching CPU features.
+ * Generic table type for matching CPU features.
  * @feature:	the bit number of the feature (0 - 65535)
  */
 
-काष्ठा cpu_feature अणु
+struct cpu_feature {
 	__u16	feature;
-पूर्ण;
+};
 
-#घोषणा IPACK_ANY_FORMAT 0xff
-#घोषणा IPACK_ANY_ID (~0)
-काष्ठा ipack_device_id अणु
-	__u8  क्रमmat;			/* Format version or IPACK_ANY_ID */
-	__u32 venकरोr;			/* Venकरोr ID or IPACK_ANY_ID */
+#define IPACK_ANY_FORMAT 0xff
+#define IPACK_ANY_ID (~0)
+struct ipack_device_id {
+	__u8  format;			/* Format version or IPACK_ANY_ID */
+	__u32 vendor;			/* Vendor ID or IPACK_ANY_ID */
 	__u32 device;			/* Device ID or IPACK_ANY_ID */
-पूर्ण;
+};
 
-#घोषणा MEI_CL_MODULE_PREFIX "mei:"
-#घोषणा MEI_CL_NAME_SIZE 32
-#घोषणा MEI_CL_VERSION_ANY 0xff
+#define MEI_CL_MODULE_PREFIX "mei:"
+#define MEI_CL_NAME_SIZE 32
+#define MEI_CL_VERSION_ANY 0xff
 
 /**
- * काष्ठा mei_cl_device_id - MEI client device identअगरier
+ * struct mei_cl_device_id - MEI client device identifier
  * @name: helper name
  * @uuid: client uuid
  * @version: client protocol version
- * @driver_info: inक्रमmation used by the driver.
+ * @driver_info: information used by the driver.
  *
- * identअगरies mei client device by uuid and name
+ * identifies mei client device by uuid and name
  */
-काष्ठा mei_cl_device_id अणु
-	अक्षर name[MEI_CL_NAME_SIZE];
+struct mei_cl_device_id {
+	char name[MEI_CL_NAME_SIZE];
 	uuid_le uuid;
 	__u8    version;
-	kernel_uदीर्घ_t driver_info;
-पूर्ण;
+	kernel_ulong_t driver_info;
+};
 
 /* RapidIO */
 
-#घोषणा RIO_ANY_ID	0xffff
+#define RIO_ANY_ID	0xffff
 
 /**
- * काष्ठा rio_device_id - RIO device identअगरier
+ * struct rio_device_id - RIO device identifier
  * @did: RapidIO device ID
- * @vid: RapidIO venकरोr ID
- * @यंत्र_did: RapidIO assembly device ID
- * @यंत्र_vid: RapidIO assembly venकरोr ID
+ * @vid: RapidIO vendor ID
+ * @asm_did: RapidIO assembly device ID
+ * @asm_vid: RapidIO assembly vendor ID
  *
- * Identअगरies a RapidIO device based on both the device/venकरोr IDs and
- * the assembly device/venकरोr IDs.
+ * Identifies a RapidIO device based on both the device/vendor IDs and
+ * the assembly device/vendor IDs.
  */
-काष्ठा rio_device_id अणु
+struct rio_device_id {
 	__u16 did, vid;
-	__u16 यंत्र_did, यंत्र_vid;
-पूर्ण;
+	__u16 asm_did, asm_vid;
+};
 
-काष्ठा mcb_device_id अणु
+struct mcb_device_id {
 	__u16 device;
-	kernel_uदीर्घ_t driver_data;
-पूर्ण;
+	kernel_ulong_t driver_data;
+};
 
-काष्ठा ulpi_device_id अणु
-	__u16 venकरोr;
+struct ulpi_device_id {
+	__u16 vendor;
 	__u16 product;
-	kernel_uदीर्घ_t driver_data;
-पूर्ण;
+	kernel_ulong_t driver_data;
+};
 
 /**
- * काष्ठा fsl_mc_device_id - MC object device identअगरier
- * @venकरोr: venकरोr ID
+ * struct fsl_mc_device_id - MC object device identifier
+ * @vendor: vendor ID
  * @obj_type: MC object type
  *
- * Type of entries in the "device Id" table क्रम MC object devices supported by
- * a MC object device driver. The last entry of the table has venकरोr set to 0x0
+ * Type of entries in the "device Id" table for MC object devices supported by
+ * a MC object device driver. The last entry of the table has vendor set to 0x0
  */
-काष्ठा fsl_mc_device_id अणु
-	__u16 venकरोr;
-	स्थिर अक्षर obj_type[16];
-पूर्ण;
+struct fsl_mc_device_id {
+	__u16 vendor;
+	const char obj_type[16];
+};
 
 /**
- * काष्ठा tb_service_id - Thunderbolt service identअगरiers
- * @match_flags: Flags used to match the काष्ठाure
+ * struct tb_service_id - Thunderbolt service identifiers
+ * @match_flags: Flags used to match the structure
  * @protocol_key: Protocol key the service supports
  * @protocol_id: Protocol id the service supports
  * @protocol_version: Version of the protocol
  * @protocol_revision: Revision of the protocol software
- * @driver_data: Driver specअगरic data
+ * @driver_data: Driver specific data
  *
- * Thunderbolt XDoमुख्य services are exposed as devices where each device
- * carries the protocol inक्रमmation the service supports. Thunderbolt
- * XDoमुख्य service drivers match against that inक्रमmation.
+ * Thunderbolt XDomain services are exposed as devices where each device
+ * carries the protocol information the service supports. Thunderbolt
+ * XDomain service drivers match against that information.
  */
-काष्ठा tb_service_id अणु
+struct tb_service_id {
 	__u32 match_flags;
-	अक्षर protocol_key[8 + 1];
+	char protocol_key[8 + 1];
 	__u32 protocol_id;
 	__u32 protocol_version;
 	__u32 protocol_revision;
-	kernel_uदीर्घ_t driver_data;
-पूर्ण;
+	kernel_ulong_t driver_data;
+};
 
-#घोषणा TBSVC_MATCH_PROTOCOL_KEY	0x0001
-#घोषणा TBSVC_MATCH_PROTOCOL_ID		0x0002
-#घोषणा TBSVC_MATCH_PROTOCOL_VERSION	0x0004
-#घोषणा TBSVC_MATCH_PROTOCOL_REVISION	0x0008
+#define TBSVC_MATCH_PROTOCOL_KEY	0x0001
+#define TBSVC_MATCH_PROTOCOL_ID		0x0002
+#define TBSVC_MATCH_PROTOCOL_VERSION	0x0004
+#define TBSVC_MATCH_PROTOCOL_REVISION	0x0008
 
 /* USB Type-C Alternate Modes */
 
-#घोषणा TYPEC_ANY_MODE	0x7
+#define TYPEC_ANY_MODE	0x7
 
 /**
- * काष्ठा typec_device_id - USB Type-C alternate mode identअगरiers
- * @svid: Standard or Venकरोr ID
+ * struct typec_device_id - USB Type-C alternate mode identifiers
+ * @svid: Standard or Vendor ID
  * @mode: Mode index
- * @driver_data: Driver specअगरic data
+ * @driver_data: Driver specific data
  */
-काष्ठा typec_device_id अणु
+struct typec_device_id {
 	__u16 svid;
 	__u8 mode;
-	kernel_uदीर्घ_t driver_data;
-पूर्ण;
+	kernel_ulong_t driver_data;
+};
 
 /**
- * काष्ठा tee_client_device_id - tee based device identअगरier
+ * struct tee_client_device_id - tee based device identifier
  * @uuid: For TEE based client devices we use the device uuid as
- *        the identअगरier.
+ *        the identifier.
  */
-काष्ठा tee_client_device_id अणु
+struct tee_client_device_id {
 	uuid_t uuid;
-पूर्ण;
+};
 
 /* WMI */
 
-#घोषणा WMI_MODULE_PREFIX	"wmi:"
+#define WMI_MODULE_PREFIX	"wmi:"
 
 /**
- * काष्ठा wmi_device_id - WMI device identअगरier
- * @guid_string: 36 अक्षर string of the क्रमm fa50ff2b-f2e8-45de-83fa-65417f2f49ba
- * @context: poपूर्णांकer to driver specअगरic data
+ * struct wmi_device_id - WMI device identifier
+ * @guid_string: 36 char string of the form fa50ff2b-f2e8-45de-83fa-65417f2f49ba
+ * @context: pointer to driver specific data
  */
-काष्ठा wmi_device_id अणु
-	स्थिर अक्षर guid_string[UUID_STRING_LEN+1];
-	स्थिर व्योम *context;
-पूर्ण;
+struct wmi_device_id {
+	const char guid_string[UUID_STRING_LEN+1];
+	const void *context;
+};
 
-#घोषणा MHI_DEVICE_MODALIAS_FMT "mhi:%s"
-#घोषणा MHI_NAME_SIZE 32
+#define MHI_DEVICE_MODALIAS_FMT "mhi:%s"
+#define MHI_NAME_SIZE 32
 
 /**
- * काष्ठा mhi_device_id - MHI device identअगरication
+ * struct mhi_device_id - MHI device identification
  * @chan: MHI channel name
  * @driver_data: driver data;
  */
-काष्ठा mhi_device_id अणु
-	स्थिर अक्षर chan[MHI_NAME_SIZE];
-	kernel_uदीर्घ_t driver_data;
-पूर्ण;
+struct mhi_device_id {
+	const char chan[MHI_NAME_SIZE];
+	kernel_ulong_t driver_data;
+};
 
-#घोषणा AUXILIARY_NAME_SIZE 32
-#घोषणा AUXILIARY_MODULE_PREFIX "auxiliary:"
+#define AUXILIARY_NAME_SIZE 32
+#define AUXILIARY_MODULE_PREFIX "auxiliary:"
 
-काष्ठा auxiliary_device_id अणु
-	अक्षर name[AUXILIARY_NAME_SIZE];
-	kernel_uदीर्घ_t driver_data;
-पूर्ण;
+struct auxiliary_device_id {
+	char name[AUXILIARY_NAME_SIZE];
+	kernel_ulong_t driver_data;
+};
 
 /* Surface System Aggregator Module */
 
-#घोषणा SSAM_MATCH_TARGET	0x1
-#घोषणा SSAM_MATCH_INSTANCE	0x2
-#घोषणा SSAM_MATCH_FUNCTION	0x4
+#define SSAM_MATCH_TARGET	0x1
+#define SSAM_MATCH_INSTANCE	0x2
+#define SSAM_MATCH_FUNCTION	0x4
 
-काष्ठा ssam_device_id अणु
+struct ssam_device_id {
 	__u8 match_flags;
 
-	__u8 करोमुख्य;
+	__u8 domain;
 	__u8 category;
 	__u8 target;
 	__u8 instance;
 	__u8 function;
 
-	kernel_uदीर्घ_t driver_data;
-पूर्ण;
+	kernel_ulong_t driver_data;
+};
 
 /*
  * DFL (Device Feature List)
  *
  * DFL defines a linked list of feature headers within the device MMIO space to
  * provide an extensible way of adding features. Software can walk through these
- * predefined data काष्ठाures to क्रमागतerate features. It is now used in the FPGA.
- * See Documentation/fpga/dfl.rst क्रम more inक्रमmation.
+ * predefined data structures to enumerate features. It is now used in the FPGA.
+ * See Documentation/fpga/dfl.rst for more information.
  *
- * The dfl bus type is पूर्णांकroduced to match the inभागidual feature devices (dfl
- * devices) क्रम specअगरic dfl drivers.
+ * The dfl bus type is introduced to match the individual feature devices (dfl
+ * devices) for specific dfl drivers.
  */
 
 /**
- * काष्ठा dfl_device_id -  dfl device identअगरier
- * @type: DFL FIU type of the device. See क्रमागत dfl_id_type.
- * @feature_id: feature identअगरier local to its DFL FIU type.
- * @driver_data: driver specअगरic data.
+ * struct dfl_device_id -  dfl device identifier
+ * @type: DFL FIU type of the device. See enum dfl_id_type.
+ * @feature_id: feature identifier local to its DFL FIU type.
+ * @driver_data: driver specific data.
  */
-काष्ठा dfl_device_id अणु
+struct dfl_device_id {
 	__u16 type;
 	__u16 feature_id;
-	kernel_uदीर्घ_t driver_data;
-पूर्ण;
+	kernel_ulong_t driver_data;
+};
 
-#पूर्ण_अगर /* LINUX_MOD_DEVICETABLE_H */
+#endif /* LINUX_MOD_DEVICETABLE_H */

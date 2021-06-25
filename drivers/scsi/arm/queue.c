@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  linux/drivers/acorn/scsi/queue.c: queue handling primitives
  *
@@ -7,112 +6,112 @@
  *
  *  Changelog:
  *   15-Sep-1997 RMK	Created.
- *   11-Oct-1997 RMK	Corrected problem with queue_हटाओ_exclude
- *			not updating पूर्णांकernal linked list properly
+ *   11-Oct-1997 RMK	Corrected problem with queue_remove_exclude
+ *			not updating internal linked list properly
  *			(was causing commands to go missing).
  *   30-Aug-2000 RMK	Use Linux list handling and spinlocks
  */
-#समावेश <linux/module.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/list.h>
-#समावेश <linux/init.h>
+#include <linux/module.h>
+#include <linux/blkdev.h>
+#include <linux/kernel.h>
+#include <linux/string.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/list.h>
+#include <linux/init.h>
 
-#समावेश "../scsi.h"
+#include "../scsi.h"
 
-#घोषणा DEBUG
+#define DEBUG
 
-प्रकार काष्ठा queue_entry अणु
-	काष्ठा list_head   list;
-	काष्ठा scsi_cmnd   *SCpnt;
-#अगर_घोषित DEBUG
-	अचिन्हित दीर्घ	   magic;
-#पूर्ण_अगर
-पूर्ण QE_t;
+typedef struct queue_entry {
+	struct list_head   list;
+	struct scsi_cmnd   *SCpnt;
+#ifdef DEBUG
+	unsigned long	   magic;
+#endif
+} QE_t;
 
-#अगर_घोषित DEBUG
-#घोषणा QUEUE_MAGIC_FREE	0xf7e1c9a3
-#घोषणा QUEUE_MAGIC_USED	0xf7e1cc33
+#ifdef DEBUG
+#define QUEUE_MAGIC_FREE	0xf7e1c9a3
+#define QUEUE_MAGIC_USED	0xf7e1cc33
 
-#घोषणा SET_MAGIC(q,m)	((q)->magic = (m))
-#घोषणा BAD_MAGIC(q,m)	((q)->magic != (m))
-#अन्यथा
-#घोषणा SET_MAGIC(q,m)	करो अणु पूर्ण जबतक (0)
-#घोषणा BAD_MAGIC(q,m)	(0)
-#पूर्ण_अगर
+#define SET_MAGIC(q,m)	((q)->magic = (m))
+#define BAD_MAGIC(q,m)	((q)->magic != (m))
+#else
+#define SET_MAGIC(q,m)	do { } while (0)
+#define BAD_MAGIC(q,m)	(0)
+#endif
 
-#समावेश "queue.h"
+#include "queue.h"
 
-#घोषणा NR_QE	32
+#define NR_QE	32
 
 /*
- * Function: व्योम queue_initialise (Queue_t *queue)
+ * Function: void queue_initialise (Queue_t *queue)
  * Purpose : initialise a queue
  * Params  : queue - queue to initialise
  */
-पूर्णांक queue_initialise (Queue_t *queue)
-अणु
-	अचिन्हित पूर्णांक nqueues = NR_QE;
+int queue_initialise (Queue_t *queue)
+{
+	unsigned int nqueues = NR_QE;
 	QE_t *q;
 
 	spin_lock_init(&queue->queue_lock);
 	INIT_LIST_HEAD(&queue->head);
-	INIT_LIST_HEAD(&queue->मुक्त);
+	INIT_LIST_HEAD(&queue->free);
 
 	/*
-	 * If lअगरe was easier, then SCpnt would have a
+	 * If life was easier, then SCpnt would have a
 	 * host-available list head, and we wouldn't
-	 * need to keep मुक्त lists or allocate this
+	 * need to keep free lists or allocate this
 	 * memory.
 	 */
-	queue->alloc = q = kदो_स्मृति_array(nqueues, माप(QE_t), GFP_KERNEL);
-	अगर (q) अणु
-		क्रम (; nqueues; q++, nqueues--) अणु
+	queue->alloc = q = kmalloc_array(nqueues, sizeof(QE_t), GFP_KERNEL);
+	if (q) {
+		for (; nqueues; q++, nqueues--) {
 			SET_MAGIC(q, QUEUE_MAGIC_FREE);
-			q->SCpnt = शून्य;
-			list_add(&q->list, &queue->मुक्त);
-		पूर्ण
-	पूर्ण
+			q->SCpnt = NULL;
+			list_add(&q->list, &queue->free);
+		}
+	}
 
-	वापस queue->alloc != शून्य;
-पूर्ण
+	return queue->alloc != NULL;
+}
 
 /*
- * Function: व्योम queue_मुक्त (Queue_t *queue)
- * Purpose : मुक्त a queue
- * Params  : queue - queue to मुक्त
+ * Function: void queue_free (Queue_t *queue)
+ * Purpose : free a queue
+ * Params  : queue - queue to free
  */
-व्योम queue_मुक्त (Queue_t *queue)
-अणु
-	अगर (!list_empty(&queue->head))
-		prपूर्णांकk(KERN_WARNING "freeing non-empty queue %p\n", queue);
-	kमुक्त(queue->alloc);
-पूर्ण
+void queue_free (Queue_t *queue)
+{
+	if (!list_empty(&queue->head))
+		printk(KERN_WARNING "freeing non-empty queue %p\n", queue);
+	kfree(queue->alloc);
+}
      
 
 /*
- * Function: पूर्णांक __queue_add(Queue_t *queue, काष्ठा scsi_cmnd *SCpnt, पूर्णांक head)
+ * Function: int __queue_add(Queue_t *queue, struct scsi_cmnd *SCpnt, int head)
  * Purpose : Add a new command onto a queue, adding REQUEST_SENSE to head.
  * Params  : queue - destination queue
  *	     SCpnt - command to add
  *	     head  - add command to head of queue
  * Returns : 0 on error, !0 on success
  */
-पूर्णांक __queue_add(Queue_t *queue, काष्ठा scsi_cmnd *SCpnt, पूर्णांक head)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा list_head *l;
+int __queue_add(Queue_t *queue, struct scsi_cmnd *SCpnt, int head)
+{
+	unsigned long flags;
+	struct list_head *l;
 	QE_t *q;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	spin_lock_irqsave(&queue->queue_lock, flags);
-	अगर (list_empty(&queue->मुक्त))
-		जाओ empty;
+	if (list_empty(&queue->free))
+		goto empty;
 
-	l = queue->मुक्त.next;
+	l = queue->free.next;
 	list_del(l);
 
 	q = list_entry(l, QE_t, list);
@@ -121,19 +120,19 @@
 	SET_MAGIC(q, QUEUE_MAGIC_USED);
 	q->SCpnt = SCpnt;
 
-	अगर (head)
+	if (head)
 		list_add(l, &queue->head);
-	अन्यथा
+	else
 		list_add_tail(l, &queue->head);
 
 	ret = 1;
 empty:
 	spin_unlock_irqrestore(&queue->queue_lock, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा scsi_cmnd *__queue_हटाओ(Queue_t *queue, काष्ठा list_head *ent)
-अणु
+static struct scsi_cmnd *__queue_remove(Queue_t *queue, struct list_head *ent)
+{
 	QE_t *q;
 
 	/*
@@ -144,171 +143,171 @@ empty:
 	BUG_ON(BAD_MAGIC(q, QUEUE_MAGIC_USED));
 
 	SET_MAGIC(q, QUEUE_MAGIC_FREE);
-	list_add(ent, &queue->मुक्त);
+	list_add(ent, &queue->free);
 
-	वापस q->SCpnt;
-पूर्ण
+	return q->SCpnt;
+}
 
 /*
- * Function: काष्ठा scsi_cmnd *queue_हटाओ_exclude (queue, exclude)
- * Purpose : हटाओ a SCSI command from a queue
- * Params  : queue   - queue to हटाओ command from
+ * Function: struct scsi_cmnd *queue_remove_exclude (queue, exclude)
+ * Purpose : remove a SCSI command from a queue
+ * Params  : queue   - queue to remove command from
  *	     exclude - bit array of target&lun which is busy
- * Returns : काष्ठा scsi_cmnd अगर successful (and a reference), or शून्य अगर no command available
+ * Returns : struct scsi_cmnd if successful (and a reference), or NULL if no command available
  */
-काष्ठा scsi_cmnd *queue_हटाओ_exclude(Queue_t *queue, अचिन्हित दीर्घ *exclude)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा list_head *l;
-	काष्ठा scsi_cmnd *SCpnt = शून्य;
+struct scsi_cmnd *queue_remove_exclude(Queue_t *queue, unsigned long *exclude)
+{
+	unsigned long flags;
+	struct list_head *l;
+	struct scsi_cmnd *SCpnt = NULL;
 
 	spin_lock_irqsave(&queue->queue_lock, flags);
-	list_क्रम_each(l, &queue->head) अणु
+	list_for_each(l, &queue->head) {
 		QE_t *q = list_entry(l, QE_t, list);
-		अगर (!test_bit(q->SCpnt->device->id * 8 +
-			      (u8)(q->SCpnt->device->lun & 0x7), exclude)) अणु
-			SCpnt = __queue_हटाओ(queue, l);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+		if (!test_bit(q->SCpnt->device->id * 8 +
+			      (u8)(q->SCpnt->device->lun & 0x7), exclude)) {
+			SCpnt = __queue_remove(queue, l);
+			break;
+		}
+	}
 	spin_unlock_irqrestore(&queue->queue_lock, flags);
 
-	वापस SCpnt;
-पूर्ण
+	return SCpnt;
+}
 
 /*
- * Function: काष्ठा scsi_cmnd *queue_हटाओ (queue)
- * Purpose : हटाओs first SCSI command from a queue
- * Params  : queue   - queue to हटाओ command from
- * Returns : काष्ठा scsi_cmnd अगर successful (and a reference), or शून्य अगर no command available
+ * Function: struct scsi_cmnd *queue_remove (queue)
+ * Purpose : removes first SCSI command from a queue
+ * Params  : queue   - queue to remove command from
+ * Returns : struct scsi_cmnd if successful (and a reference), or NULL if no command available
  */
-काष्ठा scsi_cmnd *queue_हटाओ(Queue_t *queue)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा scsi_cmnd *SCpnt = शून्य;
+struct scsi_cmnd *queue_remove(Queue_t *queue)
+{
+	unsigned long flags;
+	struct scsi_cmnd *SCpnt = NULL;
 
 	spin_lock_irqsave(&queue->queue_lock, flags);
-	अगर (!list_empty(&queue->head))
-		SCpnt = __queue_हटाओ(queue, queue->head.next);
+	if (!list_empty(&queue->head))
+		SCpnt = __queue_remove(queue, queue->head.next);
 	spin_unlock_irqrestore(&queue->queue_lock, flags);
 
-	वापस SCpnt;
-पूर्ण
+	return SCpnt;
+}
 
 /*
- * Function: काष्ठा scsi_cmnd *queue_हटाओ_tgtluntag (queue, target, lun, tag)
- * Purpose : हटाओ a SCSI command from the queue क्रम a specअगरied target/lun/tag
- * Params  : queue  - queue to हटाओ command from
+ * Function: struct scsi_cmnd *queue_remove_tgtluntag (queue, target, lun, tag)
+ * Purpose : remove a SCSI command from the queue for a specified target/lun/tag
+ * Params  : queue  - queue to remove command from
  *	     target - target that we want
  *	     lun    - lun on device
  *	     tag    - tag on device
- * Returns : काष्ठा scsi_cmnd अगर successful, or शून्य अगर no command satisfies requirements
+ * Returns : struct scsi_cmnd if successful, or NULL if no command satisfies requirements
  */
-काष्ठा scsi_cmnd *queue_हटाओ_tgtluntag(Queue_t *queue, पूर्णांक target, पूर्णांक lun,
-					 पूर्णांक tag)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा list_head *l;
-	काष्ठा scsi_cmnd *SCpnt = शून्य;
+struct scsi_cmnd *queue_remove_tgtluntag(Queue_t *queue, int target, int lun,
+					 int tag)
+{
+	unsigned long flags;
+	struct list_head *l;
+	struct scsi_cmnd *SCpnt = NULL;
 
 	spin_lock_irqsave(&queue->queue_lock, flags);
-	list_क्रम_each(l, &queue->head) अणु
+	list_for_each(l, &queue->head) {
 		QE_t *q = list_entry(l, QE_t, list);
-		अगर (q->SCpnt->device->id == target && q->SCpnt->device->lun == lun &&
-		    q->SCpnt->tag == tag) अणु
-			SCpnt = __queue_हटाओ(queue, l);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+		if (q->SCpnt->device->id == target && q->SCpnt->device->lun == lun &&
+		    q->SCpnt->tag == tag) {
+			SCpnt = __queue_remove(queue, l);
+			break;
+		}
+	}
 	spin_unlock_irqrestore(&queue->queue_lock, flags);
 
-	वापस SCpnt;
-पूर्ण
+	return SCpnt;
+}
 
 /*
- * Function: queue_हटाओ_all_target(queue, target)
- * Purpose : हटाओ all SCSI commands from the queue क्रम a specअगरied target
- * Params  : queue  - queue to हटाओ command from
+ * Function: queue_remove_all_target(queue, target)
+ * Purpose : remove all SCSI commands from the queue for a specified target
+ * Params  : queue  - queue to remove command from
  *           target - target device id
  * Returns : nothing
  */
-व्योम queue_हटाओ_all_target(Queue_t *queue, पूर्णांक target)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा list_head *l;
+void queue_remove_all_target(Queue_t *queue, int target)
+{
+	unsigned long flags;
+	struct list_head *l;
 
 	spin_lock_irqsave(&queue->queue_lock, flags);
-	list_क्रम_each(l, &queue->head) अणु
+	list_for_each(l, &queue->head) {
 		QE_t *q = list_entry(l, QE_t, list);
-		अगर (q->SCpnt->device->id == target)
-			__queue_हटाओ(queue, l);
-	पूर्ण
+		if (q->SCpnt->device->id == target)
+			__queue_remove(queue, l);
+	}
 	spin_unlock_irqrestore(&queue->queue_lock, flags);
-पूर्ण
+}
 
 /*
- * Function: पूर्णांक queue_probetgtlun (queue, target, lun)
- * Purpose : check to see अगर we have a command in the queue क्रम the specअगरied
+ * Function: int queue_probetgtlun (queue, target, lun)
+ * Purpose : check to see if we have a command in the queue for the specified
  *	     target/lun.
  * Params  : queue  - queue to look in
  *	     target - target we want to probe
  *	     lun    - lun on target
- * Returns : 0 अगर not found, != 0 अगर found
+ * Returns : 0 if not found, != 0 if found
  */
-पूर्णांक queue_probetgtlun (Queue_t *queue, पूर्णांक target, पूर्णांक lun)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा list_head *l;
-	पूर्णांक found = 0;
+int queue_probetgtlun (Queue_t *queue, int target, int lun)
+{
+	unsigned long flags;
+	struct list_head *l;
+	int found = 0;
 
 	spin_lock_irqsave(&queue->queue_lock, flags);
-	list_क्रम_each(l, &queue->head) अणु
+	list_for_each(l, &queue->head) {
 		QE_t *q = list_entry(l, QE_t, list);
-		अगर (q->SCpnt->device->id == target && q->SCpnt->device->lun == lun) अणु
+		if (q->SCpnt->device->id == target && q->SCpnt->device->lun == lun) {
 			found = 1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	spin_unlock_irqrestore(&queue->queue_lock, flags);
 
-	वापस found;
-पूर्ण
+	return found;
+}
 
 /*
- * Function: पूर्णांक queue_हटाओ_cmd(Queue_t *queue, काष्ठा scsi_cmnd *SCpnt)
- * Purpose : हटाओ a specअगरic command from the queues
+ * Function: int queue_remove_cmd(Queue_t *queue, struct scsi_cmnd *SCpnt)
+ * Purpose : remove a specific command from the queues
  * Params  : queue - queue to look in
  *	     SCpnt - command to find
- * Returns : 0 अगर not found
+ * Returns : 0 if not found
  */
-पूर्णांक queue_हटाओ_cmd(Queue_t *queue, काष्ठा scsi_cmnd *SCpnt)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा list_head *l;
-	पूर्णांक found = 0;
+int queue_remove_cmd(Queue_t *queue, struct scsi_cmnd *SCpnt)
+{
+	unsigned long flags;
+	struct list_head *l;
+	int found = 0;
 
 	spin_lock_irqsave(&queue->queue_lock, flags);
-	list_क्रम_each(l, &queue->head) अणु
+	list_for_each(l, &queue->head) {
 		QE_t *q = list_entry(l, QE_t, list);
-		अगर (q->SCpnt == SCpnt) अणु
-			__queue_हटाओ(queue, l);
+		if (q->SCpnt == SCpnt) {
+			__queue_remove(queue, l);
 			found = 1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	spin_unlock_irqrestore(&queue->queue_lock, flags);
 
-	वापस found;
-पूर्ण
+	return found;
+}
 
 EXPORT_SYMBOL(queue_initialise);
-EXPORT_SYMBOL(queue_मुक्त);
+EXPORT_SYMBOL(queue_free);
 EXPORT_SYMBOL(__queue_add);
-EXPORT_SYMBOL(queue_हटाओ);
-EXPORT_SYMBOL(queue_हटाओ_exclude);
-EXPORT_SYMBOL(queue_हटाओ_tgtluntag);
-EXPORT_SYMBOL(queue_हटाओ_cmd);
-EXPORT_SYMBOL(queue_हटाओ_all_target);
+EXPORT_SYMBOL(queue_remove);
+EXPORT_SYMBOL(queue_remove_exclude);
+EXPORT_SYMBOL(queue_remove_tgtluntag);
+EXPORT_SYMBOL(queue_remove_cmd);
+EXPORT_SYMBOL(queue_remove_all_target);
 EXPORT_SYMBOL(queue_probetgtlun);
 
 MODULE_AUTHOR("Russell King");

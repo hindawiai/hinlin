@@ -1,68 +1,67 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
 
-#अगर_अघोषित	__ODM_PRECOMP_H__
-#घोषणा __ODM_PRECOMP_H__
+#ifndef	__ODM_PRECOMP_H__
+#define __ODM_PRECOMP_H__
 
-#समावेश "odm_types.h"
+#include "odm_types.h"
 
-#घोषणा		TEST_FALG___		1
+#define		TEST_FALG___		1
 
 /* 2 Config Flags and Structs - defined by each ODM Type */
 
-#समावेश <osdep_service.h>
-#समावेश <drv_types.h>
-#समावेश <hal_पूर्णांकf.h>
-#समावेश <usb_ops_linux.h>
+#include <osdep_service.h>
+#include <drv_types.h>
+#include <hal_intf.h>
+#include <usb_ops_linux.h>
 
 /* 2 OutSrc Header Files */
 
-#समावेश "odm.h"
-#समावेश "odm_hwconfig.h"
-#समावेश "odm_debug.h"
-#समावेश "phydm_regdefine11n.h"
+#include "odm.h"
+#include "odm_hwconfig.h"
+#include "odm_debug.h"
+#include "phydm_regdefine11n.h"
 
-#समावेश "hal8188e_rate_adaptive.h" /* क्रम RA,Power training */
-#समावेश "rtl8188e_hal.h"
+#include "hal8188e_rate_adaptive.h" /* for RA,Power training */
+#include "rtl8188e_hal.h"
 
-#समावेश "phydm_reg.h"
+#include "phydm_reg.h"
 
-#समावेश "odm_rtl8188e.h"
+#include "odm_rtl8188e.h"
 
-व्योम odm_CmnInfoHook_Debug(काष्ठा odm_dm_काष्ठा *pDM_Odm);
-व्योम odm_CmnInfoInit_Debug(काष्ठा odm_dm_काष्ठा *pDM_Odm);
-व्योम odm_DIGInit(काष्ठा odm_dm_काष्ठा *pDM_Odm);
-व्योम odm_RateAdaptiveMaskInit(काष्ठा odm_dm_काष्ठा *pDM_Odm);
-व्योम odm_DynamicBBPowerSavingInit(काष्ठा odm_dm_काष्ठा *pDM_Odm);
-व्योम odm_DynamicTxPowerInit(काष्ठा odm_dm_काष्ठा *pDM_Odm);
-व्योम odm_TXPowerTrackingInit(काष्ठा odm_dm_काष्ठा *pDM_Odm);
-व्योम ODM_EdcaTurboInit(काष्ठा odm_dm_काष्ठा *pDM_Odm);
-व्योम odm_SwAntDivInit_NIC(काष्ठा odm_dm_काष्ठा *pDM_Odm);
-व्योम odm_CmnInfoUpdate_Debug(काष्ठा odm_dm_काष्ठा *pDM_Odm);
-व्योम odm_CommonInfoSelfUpdate(काष्ठा odm_dm_काष्ठा *pDM_Odm);
-व्योम odm_FalseAlarmCounterStatistics(काष्ठा odm_dm_काष्ठा *pDM_Odm);
-व्योम odm_DIG(काष्ठा odm_dm_काष्ठा *pDM_Odm);
-व्योम odm_CCKPacketDetectionThresh(काष्ठा odm_dm_काष्ठा *pDM_Odm);
-व्योम odm_RefreshRateAdaptiveMaskMP(काष्ठा odm_dm_काष्ठा *pDM_Odm);
-व्योम odm_DynamicBBPowerSaving(काष्ठा odm_dm_काष्ठा *pDM_Odm);
-व्योम odm_SwAntDivChkAntSwitch(काष्ठा odm_dm_काष्ठा *pDM_Odm, u8 Step);
-व्योम odm_EdcaTurboCheck(काष्ठा odm_dm_काष्ठा *pDM_Odm);
-व्योम odm_CommonInfoSelfInit(काष्ठा odm_dm_काष्ठा *pDM_Odm);
-व्योम odm_RSSIMonitorCheck(काष्ठा odm_dm_काष्ठा *pDM_Odm);
-व्योम odm_RefreshRateAdaptiveMask(काष्ठा odm_dm_काष्ठा *pDM_Odm);
-व्योम odm_1R_CCA(काष्ठा odm_dm_काष्ठा *pDM_Odm);
-व्योम odm_RefreshRateAdaptiveMaskCE(काष्ठा odm_dm_काष्ठा *pDM_Odm);
-व्योम odm_RefreshRateAdaptiveMaskAPADSL(काष्ठा odm_dm_काष्ठा *pDM_Odm);
-व्योम odm_DynamicTxPowerNIC(काष्ठा odm_dm_काष्ठा *pDM_Odm);
-व्योम odm_RSSIMonitorCheckCE(काष्ठा odm_dm_काष्ठा *pDM_Odm);
-व्योम odm_EdcaTurboCheckCE(काष्ठा odm_dm_काष्ठा *pDM_Odm);
-व्योम odm_SwAntDivChkAntSwitchCallback(व्योम *FunctionContext);
-व्योम odm_InitHybridAntDiv(काष्ठा odm_dm_काष्ठा *pDM_Odm);
-व्योम odm_HwAntDiv(काष्ठा odm_dm_काष्ठा *pDM_Odm);
+void odm_CmnInfoHook_Debug(struct odm_dm_struct *pDM_Odm);
+void odm_CmnInfoInit_Debug(struct odm_dm_struct *pDM_Odm);
+void odm_DIGInit(struct odm_dm_struct *pDM_Odm);
+void odm_RateAdaptiveMaskInit(struct odm_dm_struct *pDM_Odm);
+void odm_DynamicBBPowerSavingInit(struct odm_dm_struct *pDM_Odm);
+void odm_DynamicTxPowerInit(struct odm_dm_struct *pDM_Odm);
+void odm_TXPowerTrackingInit(struct odm_dm_struct *pDM_Odm);
+void ODM_EdcaTurboInit(struct odm_dm_struct *pDM_Odm);
+void odm_SwAntDivInit_NIC(struct odm_dm_struct *pDM_Odm);
+void odm_CmnInfoUpdate_Debug(struct odm_dm_struct *pDM_Odm);
+void odm_CommonInfoSelfUpdate(struct odm_dm_struct *pDM_Odm);
+void odm_FalseAlarmCounterStatistics(struct odm_dm_struct *pDM_Odm);
+void odm_DIG(struct odm_dm_struct *pDM_Odm);
+void odm_CCKPacketDetectionThresh(struct odm_dm_struct *pDM_Odm);
+void odm_RefreshRateAdaptiveMaskMP(struct odm_dm_struct *pDM_Odm);
+void odm_DynamicBBPowerSaving(struct odm_dm_struct *pDM_Odm);
+void odm_SwAntDivChkAntSwitch(struct odm_dm_struct *pDM_Odm, u8 Step);
+void odm_EdcaTurboCheck(struct odm_dm_struct *pDM_Odm);
+void odm_CommonInfoSelfInit(struct odm_dm_struct *pDM_Odm);
+void odm_RSSIMonitorCheck(struct odm_dm_struct *pDM_Odm);
+void odm_RefreshRateAdaptiveMask(struct odm_dm_struct *pDM_Odm);
+void odm_1R_CCA(struct odm_dm_struct *pDM_Odm);
+void odm_RefreshRateAdaptiveMaskCE(struct odm_dm_struct *pDM_Odm);
+void odm_RefreshRateAdaptiveMaskAPADSL(struct odm_dm_struct *pDM_Odm);
+void odm_DynamicTxPowerNIC(struct odm_dm_struct *pDM_Odm);
+void odm_RSSIMonitorCheckCE(struct odm_dm_struct *pDM_Odm);
+void odm_EdcaTurboCheckCE(struct odm_dm_struct *pDM_Odm);
+void odm_SwAntDivChkAntSwitchCallback(void *FunctionContext);
+void odm_InitHybridAntDiv(struct odm_dm_struct *pDM_Odm);
+void odm_HwAntDiv(struct odm_dm_struct *pDM_Odm);
 
-#पूर्ण_अगर	/*  __ODM_PRECOMP_H__ */
+#endif	/*  __ODM_PRECOMP_H__ */

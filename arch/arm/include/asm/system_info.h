@@ -1,31 +1,30 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_ARM_SYSTEM_INFO_H
-#घोषणा __ASM_ARM_SYSTEM_INFO_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_ARM_SYSTEM_INFO_H
+#define __ASM_ARM_SYSTEM_INFO_H
 
-#घोषणा CPU_ARCH_UNKNOWN	0
-#घोषणा CPU_ARCH_ARMv3		1
-#घोषणा CPU_ARCH_ARMv4		2
-#घोषणा CPU_ARCH_ARMv4T		3
-#घोषणा CPU_ARCH_ARMv5		4
-#घोषणा CPU_ARCH_ARMv5T		5
-#घोषणा CPU_ARCH_ARMv5TE	6
-#घोषणा CPU_ARCH_ARMv5TEJ	7
-#घोषणा CPU_ARCH_ARMv6		8
-#घोषणा CPU_ARCH_ARMv7		9
-#घोषणा CPU_ARCH_ARMv7M		10
+#define CPU_ARCH_UNKNOWN	0
+#define CPU_ARCH_ARMv3		1
+#define CPU_ARCH_ARMv4		2
+#define CPU_ARCH_ARMv4T		3
+#define CPU_ARCH_ARMv5		4
+#define CPU_ARCH_ARMv5T		5
+#define CPU_ARCH_ARMv5TE	6
+#define CPU_ARCH_ARMv5TEJ	7
+#define CPU_ARCH_ARMv6		8
+#define CPU_ARCH_ARMv7		9
+#define CPU_ARCH_ARMv7M		10
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-/* inक्रमmation about the प्रणाली we're running on */
-बाह्य अचिन्हित पूर्णांक प्रणाली_rev;
-बाह्य स्थिर अक्षर *प्रणाली_serial;
-बाह्य अचिन्हित पूर्णांक प्रणाली_serial_low;
-बाह्य अचिन्हित पूर्णांक प्रणाली_serial_high;
-बाह्य अचिन्हित पूर्णांक mem_fclk_21285;
+/* information about the system we're running on */
+extern unsigned int system_rev;
+extern const char *system_serial;
+extern unsigned int system_serial_low;
+extern unsigned int system_serial_high;
+extern unsigned int mem_fclk_21285;
 
-बाह्य पूर्णांक __pure cpu_architecture(व्योम);
+extern int __pure cpu_architecture(void);
 
-#पूर्ण_अगर /* !__ASSEMBLY__ */
+#endif /* !__ASSEMBLY__ */
 
-#पूर्ण_अगर /* __ASM_ARM_SYSTEM_INFO_H */
+#endif /* __ASM_ARM_SYSTEM_INFO_H */

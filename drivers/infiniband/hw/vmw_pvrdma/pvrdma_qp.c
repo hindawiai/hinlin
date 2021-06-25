@@ -1,41 +1,40 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2012-2016 VMware, Inc.  All rights reserved.
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of EITHER the GNU General Public License
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of EITHER the GNU General Public License
  * version 2 as published by the Free Software Foundation or the BSD
  * 2-Clause License. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; WITHOUT EVEN THE IMPLIED
  * WARRANTY OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License version 2 क्रम more details at
- * http://www.gnu.org/licenses/old-licenses/gpl-2.0.en.hपंचांगl.
+ * See the GNU General Public License version 2 for more details at
+ * http://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html.
  *
  * You should have received a copy of the GNU General Public License
- * aदीर्घ with this program available in the file COPYING in the मुख्य
+ * along with this program available in the file COPYING in the main
  * directory of this source tree.
  *
  * The BSD 2-Clause License
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
  * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- * COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT,
- * INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
  * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
@@ -44,72 +43,72 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#समावेश <यंत्र/page.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/रुको.h>
-#समावेश <rdma/ib_addr.h>
-#समावेश <rdma/ib_smi.h>
-#समावेश <rdma/ib_user_verbs.h>
+#include <asm/page.h>
+#include <linux/io.h>
+#include <linux/wait.h>
+#include <rdma/ib_addr.h>
+#include <rdma/ib_smi.h>
+#include <rdma/ib_user_verbs.h>
 
-#समावेश "pvrdma.h"
+#include "pvrdma.h"
 
-अटल व्योम __pvrdma_destroy_qp(काष्ठा pvrdma_dev *dev,
-				काष्ठा pvrdma_qp *qp);
+static void __pvrdma_destroy_qp(struct pvrdma_dev *dev,
+				struct pvrdma_qp *qp);
 
-अटल अंतरभूत व्योम get_cqs(काष्ठा pvrdma_qp *qp, काष्ठा pvrdma_cq **send_cq,
-			   काष्ठा pvrdma_cq **recv_cq)
-अणु
+static inline void get_cqs(struct pvrdma_qp *qp, struct pvrdma_cq **send_cq,
+			   struct pvrdma_cq **recv_cq)
+{
 	*send_cq = to_vcq(qp->ibqp.send_cq);
 	*recv_cq = to_vcq(qp->ibqp.recv_cq);
-पूर्ण
+}
 
-अटल व्योम pvrdma_lock_cqs(काष्ठा pvrdma_cq *scq, काष्ठा pvrdma_cq *rcq,
-			    अचिन्हित दीर्घ *scq_flags,
-			    अचिन्हित दीर्घ *rcq_flags)
+static void pvrdma_lock_cqs(struct pvrdma_cq *scq, struct pvrdma_cq *rcq,
+			    unsigned long *scq_flags,
+			    unsigned long *rcq_flags)
 	__acquires(scq->cq_lock) __acquires(rcq->cq_lock)
-अणु
-	अगर (scq == rcq) अणु
+{
+	if (scq == rcq) {
 		spin_lock_irqsave(&scq->cq_lock, *scq_flags);
 		__acquire(rcq->cq_lock);
-	पूर्ण अन्यथा अगर (scq->cq_handle < rcq->cq_handle) अणु
+	} else if (scq->cq_handle < rcq->cq_handle) {
 		spin_lock_irqsave(&scq->cq_lock, *scq_flags);
 		spin_lock_irqsave_nested(&rcq->cq_lock, *rcq_flags,
 					 SINGLE_DEPTH_NESTING);
-	पूर्ण अन्यथा अणु
+	} else {
 		spin_lock_irqsave(&rcq->cq_lock, *rcq_flags);
 		spin_lock_irqsave_nested(&scq->cq_lock, *scq_flags,
 					 SINGLE_DEPTH_NESTING);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम pvrdma_unlock_cqs(काष्ठा pvrdma_cq *scq, काष्ठा pvrdma_cq *rcq,
-			      अचिन्हित दीर्घ *scq_flags,
-			      अचिन्हित दीर्घ *rcq_flags)
+static void pvrdma_unlock_cqs(struct pvrdma_cq *scq, struct pvrdma_cq *rcq,
+			      unsigned long *scq_flags,
+			      unsigned long *rcq_flags)
 	__releases(scq->cq_lock) __releases(rcq->cq_lock)
-अणु
-	अगर (scq == rcq) अणु
+{
+	if (scq == rcq) {
 		__release(rcq->cq_lock);
 		spin_unlock_irqrestore(&scq->cq_lock, *scq_flags);
-	पूर्ण अन्यथा अगर (scq->cq_handle < rcq->cq_handle) अणु
+	} else if (scq->cq_handle < rcq->cq_handle) {
 		spin_unlock_irqrestore(&rcq->cq_lock, *rcq_flags);
 		spin_unlock_irqrestore(&scq->cq_lock, *scq_flags);
-	पूर्ण अन्यथा अणु
+	} else {
 		spin_unlock_irqrestore(&scq->cq_lock, *scq_flags);
 		spin_unlock_irqrestore(&rcq->cq_lock, *rcq_flags);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम pvrdma_reset_qp(काष्ठा pvrdma_qp *qp)
-अणु
-	काष्ठा pvrdma_cq *scq, *rcq;
-	अचिन्हित दीर्घ scq_flags, rcq_flags;
+static void pvrdma_reset_qp(struct pvrdma_qp *qp)
+{
+	struct pvrdma_cq *scq, *rcq;
+	unsigned long scq_flags, rcq_flags;
 
 	/* Clean up cqes */
 	get_cqs(qp, &scq, &rcq);
 	pvrdma_lock_cqs(scq, rcq, &scq_flags, &rcq_flags);
 
 	_pvrdma_flush_cqe(qp, scq);
-	अगर (scq != rcq)
+	if (scq != rcq)
 		_pvrdma_flush_cqe(qp, rcq);
 
 	pvrdma_unlock_cqs(scq, rcq, &scq_flags, &rcq_flags);
@@ -118,204 +117,204 @@
 	 * Reset queuepair. The checks are because usermode queuepairs won't
 	 * have kernel ringstates.
 	 */
-	अगर (qp->rq.ring) अणु
+	if (qp->rq.ring) {
 		atomic_set(&qp->rq.ring->cons_head, 0);
 		atomic_set(&qp->rq.ring->prod_tail, 0);
-	पूर्ण
-	अगर (qp->sq.ring) अणु
+	}
+	if (qp->sq.ring) {
 		atomic_set(&qp->sq.ring->cons_head, 0);
 		atomic_set(&qp->sq.ring->prod_tail, 0);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक pvrdma_set_rq_size(काष्ठा pvrdma_dev *dev,
-			      काष्ठा ib_qp_cap *req_cap,
-			      काष्ठा pvrdma_qp *qp)
-अणु
-	अगर (req_cap->max_recv_wr > dev->dsr->caps.max_qp_wr ||
-	    req_cap->max_recv_sge > dev->dsr->caps.max_sge) अणु
+static int pvrdma_set_rq_size(struct pvrdma_dev *dev,
+			      struct ib_qp_cap *req_cap,
+			      struct pvrdma_qp *qp)
+{
+	if (req_cap->max_recv_wr > dev->dsr->caps.max_qp_wr ||
+	    req_cap->max_recv_sge > dev->dsr->caps.max_sge) {
 		dev_warn(&dev->pdev->dev, "recv queue size invalid\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	qp->rq.wqe_cnt = roundup_घात_of_two(max(1U, req_cap->max_recv_wr));
-	qp->rq.max_sg = roundup_घात_of_two(max(1U, req_cap->max_recv_sge));
+	qp->rq.wqe_cnt = roundup_pow_of_two(max(1U, req_cap->max_recv_wr));
+	qp->rq.max_sg = roundup_pow_of_two(max(1U, req_cap->max_recv_sge));
 
 	/* Write back */
 	req_cap->max_recv_wr = qp->rq.wqe_cnt;
 	req_cap->max_recv_sge = qp->rq.max_sg;
 
-	qp->rq.wqe_size = roundup_घात_of_two(माप(काष्ठा pvrdma_rq_wqe_hdr) +
-					     माप(काष्ठा pvrdma_sge) *
+	qp->rq.wqe_size = roundup_pow_of_two(sizeof(struct pvrdma_rq_wqe_hdr) +
+					     sizeof(struct pvrdma_sge) *
 					     qp->rq.max_sg);
 	qp->npages_recv = (qp->rq.wqe_cnt * qp->rq.wqe_size + PAGE_SIZE - 1) /
 			  PAGE_SIZE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pvrdma_set_sq_size(काष्ठा pvrdma_dev *dev, काष्ठा ib_qp_cap *req_cap,
-			      काष्ठा pvrdma_qp *qp)
-अणु
-	अगर (req_cap->max_send_wr > dev->dsr->caps.max_qp_wr ||
-	    req_cap->max_send_sge > dev->dsr->caps.max_sge) अणु
+static int pvrdma_set_sq_size(struct pvrdma_dev *dev, struct ib_qp_cap *req_cap,
+			      struct pvrdma_qp *qp)
+{
+	if (req_cap->max_send_wr > dev->dsr->caps.max_qp_wr ||
+	    req_cap->max_send_sge > dev->dsr->caps.max_sge) {
 		dev_warn(&dev->pdev->dev, "send queue size invalid\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	qp->sq.wqe_cnt = roundup_घात_of_two(max(1U, req_cap->max_send_wr));
-	qp->sq.max_sg = roundup_घात_of_two(max(1U, req_cap->max_send_sge));
+	qp->sq.wqe_cnt = roundup_pow_of_two(max(1U, req_cap->max_send_wr));
+	qp->sq.max_sg = roundup_pow_of_two(max(1U, req_cap->max_send_sge));
 
 	/* Write back */
 	req_cap->max_send_wr = qp->sq.wqe_cnt;
 	req_cap->max_send_sge = qp->sq.max_sg;
 
-	qp->sq.wqe_size = roundup_घात_of_two(माप(काष्ठा pvrdma_sq_wqe_hdr) +
-					     माप(काष्ठा pvrdma_sge) *
+	qp->sq.wqe_size = roundup_pow_of_two(sizeof(struct pvrdma_sq_wqe_hdr) +
+					     sizeof(struct pvrdma_sge) *
 					     qp->sq.max_sg);
-	/* Note: one extra page क्रम the header. */
+	/* Note: one extra page for the header. */
 	qp->npages_send = PVRDMA_QP_NUM_HEADER_PAGES +
 			  (qp->sq.wqe_cnt * qp->sq.wqe_size + PAGE_SIZE - 1) /
 								PAGE_SIZE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * pvrdma_create_qp - create queue pair
- * @pd: protection करोमुख्य
+ * @pd: protection domain
  * @init_attr: queue pair attributes
  * @udata: user data
  *
- * @वापस: the ib_qp poपूर्णांकer on success, otherwise वापसs an त्रुटि_सं.
+ * @return: the ib_qp pointer on success, otherwise returns an errno.
  */
-काष्ठा ib_qp *pvrdma_create_qp(काष्ठा ib_pd *pd,
-			       काष्ठा ib_qp_init_attr *init_attr,
-			       काष्ठा ib_udata *udata)
-अणु
-	काष्ठा pvrdma_qp *qp = शून्य;
-	काष्ठा pvrdma_dev *dev = to_vdev(pd->device);
-	जोड़ pvrdma_cmd_req req;
-	जोड़ pvrdma_cmd_resp rsp;
-	काष्ठा pvrdma_cmd_create_qp *cmd = &req.create_qp;
-	काष्ठा pvrdma_cmd_create_qp_resp *resp = &rsp.create_qp_resp;
-	काष्ठा pvrdma_cmd_create_qp_resp_v2 *resp_v2 = &rsp.create_qp_resp_v2;
-	काष्ठा pvrdma_create_qp ucmd;
-	काष्ठा pvrdma_create_qp_resp qp_resp = अणुपूर्ण;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+struct ib_qp *pvrdma_create_qp(struct ib_pd *pd,
+			       struct ib_qp_init_attr *init_attr,
+			       struct ib_udata *udata)
+{
+	struct pvrdma_qp *qp = NULL;
+	struct pvrdma_dev *dev = to_vdev(pd->device);
+	union pvrdma_cmd_req req;
+	union pvrdma_cmd_resp rsp;
+	struct pvrdma_cmd_create_qp *cmd = &req.create_qp;
+	struct pvrdma_cmd_create_qp_resp *resp = &rsp.create_qp_resp;
+	struct pvrdma_cmd_create_qp_resp_v2 *resp_v2 = &rsp.create_qp_resp_v2;
+	struct pvrdma_create_qp ucmd;
+	struct pvrdma_create_qp_resp qp_resp = {};
+	unsigned long flags;
+	int ret;
 	bool is_srq = !!init_attr->srq;
 
-	अगर (init_attr->create_flags) अणु
+	if (init_attr->create_flags) {
 		dev_warn(&dev->pdev->dev,
 			 "invalid create queuepair flags %#x\n",
 			 init_attr->create_flags);
-		वापस ERR_PTR(-EOPNOTSUPP);
-	पूर्ण
+		return ERR_PTR(-EOPNOTSUPP);
+	}
 
-	अगर (init_attr->qp_type != IB_QPT_RC &&
+	if (init_attr->qp_type != IB_QPT_RC &&
 	    init_attr->qp_type != IB_QPT_UD &&
-	    init_attr->qp_type != IB_QPT_GSI) अणु
+	    init_attr->qp_type != IB_QPT_GSI) {
 		dev_warn(&dev->pdev->dev, "queuepair type %d not supported\n",
 			 init_attr->qp_type);
-		वापस ERR_PTR(-EOPNOTSUPP);
-	पूर्ण
+		return ERR_PTR(-EOPNOTSUPP);
+	}
 
-	अगर (is_srq && !dev->dsr->caps.max_srq) अणु
+	if (is_srq && !dev->dsr->caps.max_srq) {
 		dev_warn(&dev->pdev->dev,
 			 "SRQs not supported by device\n");
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	अगर (!atomic_add_unless(&dev->num_qps, 1, dev->dsr->caps.max_qp))
-		वापस ERR_PTR(-ENOMEM);
+	if (!atomic_add_unless(&dev->num_qps, 1, dev->dsr->caps.max_qp))
+		return ERR_PTR(-ENOMEM);
 
-	चयन (init_attr->qp_type) अणु
-	हाल IB_QPT_GSI:
-		अगर (init_attr->port_num == 0 ||
-		    init_attr->port_num > pd->device->phys_port_cnt) अणु
+	switch (init_attr->qp_type) {
+	case IB_QPT_GSI:
+		if (init_attr->port_num == 0 ||
+		    init_attr->port_num > pd->device->phys_port_cnt) {
 			dev_warn(&dev->pdev->dev, "invalid queuepair attrs\n");
 			ret = -EINVAL;
-			जाओ err_qp;
-		पूर्ण
+			goto err_qp;
+		}
 		fallthrough;
-	हाल IB_QPT_RC:
-	हाल IB_QPT_UD:
-		qp = kzalloc(माप(*qp), GFP_KERNEL);
-		अगर (!qp) अणु
+	case IB_QPT_RC:
+	case IB_QPT_UD:
+		qp = kzalloc(sizeof(*qp), GFP_KERNEL);
+		if (!qp) {
 			ret = -ENOMEM;
-			जाओ err_qp;
-		पूर्ण
+			goto err_qp;
+		}
 
 		spin_lock_init(&qp->sq.lock);
 		spin_lock_init(&qp->rq.lock);
 		mutex_init(&qp->mutex);
 		refcount_set(&qp->refcnt, 1);
-		init_completion(&qp->मुक्त);
+		init_completion(&qp->free);
 
 		qp->state = IB_QPS_RESET;
 		qp->is_kernel = !udata;
 
-		अगर (!qp->is_kernel) अणु
+		if (!qp->is_kernel) {
 			dev_dbg(&dev->pdev->dev,
 				"create queuepair from user space\n");
 
-			अगर (ib_copy_from_udata(&ucmd, udata, माप(ucmd))) अणु
+			if (ib_copy_from_udata(&ucmd, udata, sizeof(ucmd))) {
 				ret = -EFAULT;
-				जाओ err_qp;
-			पूर्ण
+				goto err_qp;
+			}
 
 			/* Userspace supports qpn and qp handles? */
-			अगर (dev->dsr_version >= PVRDMA_QPHANDLE_VERSION &&
-			    udata->outlen < माप(qp_resp)) अणु
+			if (dev->dsr_version >= PVRDMA_QPHANDLE_VERSION &&
+			    udata->outlen < sizeof(qp_resp)) {
 				dev_warn(&dev->pdev->dev,
 					 "create queuepair not supported\n");
 				ret = -EOPNOTSUPP;
-				जाओ err_qp;
-			पूर्ण
+				goto err_qp;
+			}
 
-			अगर (!is_srq) अणु
-				/* set qp->sq.wqe_cnt, shअगरt, buf_size.. */
+			if (!is_srq) {
+				/* set qp->sq.wqe_cnt, shift, buf_size.. */
 				qp->rumem =
 					ib_umem_get(pd->device, ucmd.rbuf_addr,
 						    ucmd.rbuf_size, 0);
-				अगर (IS_ERR(qp->rumem)) अणु
+				if (IS_ERR(qp->rumem)) {
 					ret = PTR_ERR(qp->rumem);
-					जाओ err_qp;
-				पूर्ण
-				qp->srq = शून्य;
-			पूर्ण अन्यथा अणु
-				qp->rumem = शून्य;
+					goto err_qp;
+				}
+				qp->srq = NULL;
+			} else {
+				qp->rumem = NULL;
 				qp->srq = to_vsrq(init_attr->srq);
-			पूर्ण
+			}
 
 			qp->sumem = ib_umem_get(pd->device, ucmd.sbuf_addr,
 						ucmd.sbuf_size, 0);
-			अगर (IS_ERR(qp->sumem)) अणु
-				अगर (!is_srq)
+			if (IS_ERR(qp->sumem)) {
+				if (!is_srq)
 					ib_umem_release(qp->rumem);
 				ret = PTR_ERR(qp->sumem);
-				जाओ err_qp;
-			पूर्ण
+				goto err_qp;
+			}
 
 			qp->npages_send =
 				ib_umem_num_dma_blocks(qp->sumem, PAGE_SIZE);
-			अगर (!is_srq)
+			if (!is_srq)
 				qp->npages_recv = ib_umem_num_dma_blocks(
 					qp->rumem, PAGE_SIZE);
-			अन्यथा
+			else
 				qp->npages_recv = 0;
 			qp->npages = qp->npages_send + qp->npages_recv;
-		पूर्ण अन्यथा अणु
+		} else {
 			ret = pvrdma_set_sq_size(to_vdev(pd->device),
 						 &init_attr->cap, qp);
-			अगर (ret)
-				जाओ err_qp;
+			if (ret)
+				goto err_qp;
 
 			ret = pvrdma_set_rq_size(to_vdev(pd->device),
 						 &init_attr->cap, qp);
-			अगर (ret)
-				जाओ err_qp;
+			if (ret)
+				goto err_qp;
 
 			qp->npages = qp->npages_send + qp->npages_recv;
 
@@ -324,57 +323,57 @@
 
 			/* Recv queue pages are after send pages. */
 			qp->rq.offset = qp->npages_send * PAGE_SIZE;
-		पूर्ण
+		}
 
-		अगर (qp->npages < 0 || qp->npages > PVRDMA_PAGE_सूची_MAX_PAGES) अणु
+		if (qp->npages < 0 || qp->npages > PVRDMA_PAGE_DIR_MAX_PAGES) {
 			dev_warn(&dev->pdev->dev,
 				 "overflow pages in queuepair\n");
 			ret = -EINVAL;
-			जाओ err_umem;
-		पूर्ण
+			goto err_umem;
+		}
 
 		ret = pvrdma_page_dir_init(dev, &qp->pdir, qp->npages,
 					   qp->is_kernel);
-		अगर (ret) अणु
+		if (ret) {
 			dev_warn(&dev->pdev->dev,
 				 "could not allocate page directory\n");
-			जाओ err_umem;
-		पूर्ण
+			goto err_umem;
+		}
 
-		अगर (!qp->is_kernel) अणु
+		if (!qp->is_kernel) {
 			pvrdma_page_dir_insert_umem(&qp->pdir, qp->sumem, 0);
-			अगर (!is_srq)
+			if (!is_srq)
 				pvrdma_page_dir_insert_umem(&qp->pdir,
 							    qp->rumem,
 							    qp->npages_send);
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Ring state is always the first page. */
 			qp->sq.ring = qp->pdir.pages[0];
-			qp->rq.ring = is_srq ? शून्य : &qp->sq.ring[1];
-		पूर्ण
-		अवरोध;
-	शेष:
+			qp->rq.ring = is_srq ? NULL : &qp->sq.ring[1];
+		}
+		break;
+	default:
 		ret = -EINVAL;
-		जाओ err_qp;
-	पूर्ण
+		goto err_qp;
+	}
 
 	/* Not supported */
-	init_attr->cap.max_अंतरभूत_data = 0;
+	init_attr->cap.max_inline_data = 0;
 
-	स_रखो(cmd, 0, माप(*cmd));
+	memset(cmd, 0, sizeof(*cmd));
 	cmd->hdr.cmd = PVRDMA_CMD_CREATE_QP;
 	cmd->pd_handle = to_vpd(pd)->pd_handle;
 	cmd->send_cq_handle = to_vcq(init_attr->send_cq)->cq_handle;
 	cmd->recv_cq_handle = to_vcq(init_attr->recv_cq)->cq_handle;
-	अगर (is_srq)
+	if (is_srq)
 		cmd->srq_handle = to_vsrq(init_attr->srq)->srq_handle;
-	अन्यथा
+	else
 		cmd->srq_handle = 0;
 	cmd->max_send_wr = init_attr->cap.max_send_wr;
 	cmd->max_recv_wr = init_attr->cap.max_recv_wr;
 	cmd->max_send_sge = init_attr->cap.max_send_sge;
 	cmd->max_recv_sge = init_attr->cap.max_recv_sge;
-	cmd->max_अंतरभूत_data = init_attr->cap.max_अंतरभूत_data;
+	cmd->max_inline_data = init_attr->cap.max_inline_data;
 	cmd->sq_sig_all = (init_attr->sq_sig_type == IB_SIGNAL_ALL_WR) ? 1 : 0;
 	cmd->qp_type = ib_qp_type_to_pvrdma(init_attr->qp_type);
 	cmd->is_srq = is_srq;
@@ -389,41 +388,41 @@
 		cmd->max_recv_sge);
 
 	ret = pvrdma_cmd_post(dev, &req, &rsp, PVRDMA_CMD_CREATE_QP_RESP);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_warn(&dev->pdev->dev,
 			 "could not create queuepair, error: %d\n", ret);
-		जाओ err_pdir;
-	पूर्ण
+		goto err_pdir;
+	}
 
-	/* max_send_wr/_recv_wr/_send_sge/_recv_sge/_अंतरभूत_data */
+	/* max_send_wr/_recv_wr/_send_sge/_recv_sge/_inline_data */
 	qp->port = init_attr->port_num;
 
-	अगर (dev->dsr_version >= PVRDMA_QPHANDLE_VERSION) अणु
+	if (dev->dsr_version >= PVRDMA_QPHANDLE_VERSION) {
 		qp->ibqp.qp_num = resp_v2->qpn;
 		qp->qp_handle = resp_v2->qp_handle;
-	पूर्ण अन्यथा अणु
+	} else {
 		qp->ibqp.qp_num = resp->qpn;
 		qp->qp_handle = resp->qpn;
-	पूर्ण
+	}
 
 	spin_lock_irqsave(&dev->qp_tbl_lock, flags);
 	dev->qp_tbl[qp->qp_handle % dev->dsr->caps.max_qp] = qp;
 	spin_unlock_irqrestore(&dev->qp_tbl_lock, flags);
 
-	अगर (udata) अणु
+	if (udata) {
 		qp_resp.qpn = qp->ibqp.qp_num;
 		qp_resp.qp_handle = qp->qp_handle;
 
-		अगर (ib_copy_to_udata(udata, &qp_resp,
-				     min(udata->outlen, माप(qp_resp)))) अणु
+		if (ib_copy_to_udata(udata, &qp_resp,
+				     min(udata->outlen, sizeof(qp_resp)))) {
 			dev_warn(&dev->pdev->dev,
 				 "failed to copy back udata\n");
 			__pvrdma_destroy_qp(dev, qp);
-			वापस ERR_PTR(-EINVAL);
-		पूर्ण
-	पूर्ण
+			return ERR_PTR(-EINVAL);
+		}
+	}
 
-	वापस &qp->ibqp;
+	return &qp->ibqp;
 
 err_pdir:
 	pvrdma_page_dir_cleanup(dev, &qp->pdir);
@@ -431,122 +430,122 @@ err_umem:
 	ib_umem_release(qp->rumem);
 	ib_umem_release(qp->sumem);
 err_qp:
-	kमुक्त(qp);
+	kfree(qp);
 	atomic_dec(&dev->num_qps);
 
-	वापस ERR_PTR(ret);
-पूर्ण
+	return ERR_PTR(ret);
+}
 
-अटल व्योम _pvrdma_मुक्त_qp(काष्ठा pvrdma_qp *qp)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा pvrdma_dev *dev = to_vdev(qp->ibqp.device);
+static void _pvrdma_free_qp(struct pvrdma_qp *qp)
+{
+	unsigned long flags;
+	struct pvrdma_dev *dev = to_vdev(qp->ibqp.device);
 
 	spin_lock_irqsave(&dev->qp_tbl_lock, flags);
-	dev->qp_tbl[qp->qp_handle] = शून्य;
+	dev->qp_tbl[qp->qp_handle] = NULL;
 	spin_unlock_irqrestore(&dev->qp_tbl_lock, flags);
 
-	अगर (refcount_dec_and_test(&qp->refcnt))
-		complete(&qp->मुक्त);
-	रुको_क्रम_completion(&qp->मुक्त);
+	if (refcount_dec_and_test(&qp->refcnt))
+		complete(&qp->free);
+	wait_for_completion(&qp->free);
 
 	ib_umem_release(qp->rumem);
 	ib_umem_release(qp->sumem);
 
 	pvrdma_page_dir_cleanup(dev, &qp->pdir);
 
-	kमुक्त(qp);
+	kfree(qp);
 
 	atomic_dec(&dev->num_qps);
-पूर्ण
+}
 
-अटल व्योम pvrdma_मुक्त_qp(काष्ठा pvrdma_qp *qp)
-अणु
-	काष्ठा pvrdma_cq *scq;
-	काष्ठा pvrdma_cq *rcq;
-	अचिन्हित दीर्घ scq_flags, rcq_flags;
+static void pvrdma_free_qp(struct pvrdma_qp *qp)
+{
+	struct pvrdma_cq *scq;
+	struct pvrdma_cq *rcq;
+	unsigned long scq_flags, rcq_flags;
 
-	/* In हाल cq is polling */
+	/* In case cq is polling */
 	get_cqs(qp, &scq, &rcq);
 	pvrdma_lock_cqs(scq, rcq, &scq_flags, &rcq_flags);
 
 	_pvrdma_flush_cqe(qp, scq);
-	अगर (scq != rcq)
+	if (scq != rcq)
 		_pvrdma_flush_cqe(qp, rcq);
 
 	/*
-	 * We're now unlocking the CQs beक्रमe clearing out the qp handle this
+	 * We're now unlocking the CQs before clearing out the qp handle this
 	 * should still be safe. We have destroyed the backend QP and flushed
-	 * the CQEs so there should be no other completions क्रम this QP.
+	 * the CQEs so there should be no other completions for this QP.
 	 */
 	pvrdma_unlock_cqs(scq, rcq, &scq_flags, &rcq_flags);
 
-	_pvrdma_मुक्त_qp(qp);
-पूर्ण
+	_pvrdma_free_qp(qp);
+}
 
-अटल अंतरभूत व्योम _pvrdma_destroy_qp_work(काष्ठा pvrdma_dev *dev,
+static inline void _pvrdma_destroy_qp_work(struct pvrdma_dev *dev,
 					   u32 qp_handle)
-अणु
-	जोड़ pvrdma_cmd_req req;
-	काष्ठा pvrdma_cmd_destroy_qp *cmd = &req.destroy_qp;
-	पूर्णांक ret;
+{
+	union pvrdma_cmd_req req;
+	struct pvrdma_cmd_destroy_qp *cmd = &req.destroy_qp;
+	int ret;
 
-	स_रखो(cmd, 0, माप(*cmd));
+	memset(cmd, 0, sizeof(*cmd));
 	cmd->hdr.cmd = PVRDMA_CMD_DESTROY_QP;
 	cmd->qp_handle = qp_handle;
 
-	ret = pvrdma_cmd_post(dev, &req, शून्य, 0);
-	अगर (ret < 0)
+	ret = pvrdma_cmd_post(dev, &req, NULL, 0);
+	if (ret < 0)
 		dev_warn(&dev->pdev->dev,
 			 "destroy queuepair failed, error: %d\n", ret);
-पूर्ण
+}
 
 /**
  * pvrdma_destroy_qp - destroy a queue pair
  * @qp: the queue pair to destroy
- * @udata: user data or null क्रम kernel object
+ * @udata: user data or null for kernel object
  *
- * @वापस: always 0.
+ * @return: always 0.
  */
-पूर्णांक pvrdma_destroy_qp(काष्ठा ib_qp *qp, काष्ठा ib_udata *udata)
-अणु
-	काष्ठा pvrdma_qp *vqp = to_vqp(qp);
+int pvrdma_destroy_qp(struct ib_qp *qp, struct ib_udata *udata)
+{
+	struct pvrdma_qp *vqp = to_vqp(qp);
 
 	_pvrdma_destroy_qp_work(to_vdev(qp->device), vqp->qp_handle);
-	pvrdma_मुक्त_qp(vqp);
+	pvrdma_free_qp(vqp);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __pvrdma_destroy_qp(काष्ठा pvrdma_dev *dev,
-				काष्ठा pvrdma_qp *qp)
-अणु
+static void __pvrdma_destroy_qp(struct pvrdma_dev *dev,
+				struct pvrdma_qp *qp)
+{
 	_pvrdma_destroy_qp_work(dev, qp->qp_handle);
-	_pvrdma_मुक्त_qp(qp);
-पूर्ण
+	_pvrdma_free_qp(qp);
+}
 
 /**
- * pvrdma_modअगरy_qp - modअगरy queue pair attributes
+ * pvrdma_modify_qp - modify queue pair attributes
  * @ibqp: the queue pair
  * @attr: the new queue pair's attributes
  * @attr_mask: attributes mask
  * @udata: user data
  *
- * @वापसs 0 on success, otherwise वापसs an त्रुटि_सं.
+ * @returns 0 on success, otherwise returns an errno.
  */
-पूर्णांक pvrdma_modअगरy_qp(काष्ठा ib_qp *ibqp, काष्ठा ib_qp_attr *attr,
-		     पूर्णांक attr_mask, काष्ठा ib_udata *udata)
-अणु
-	काष्ठा pvrdma_dev *dev = to_vdev(ibqp->device);
-	काष्ठा pvrdma_qp *qp = to_vqp(ibqp);
-	जोड़ pvrdma_cmd_req req;
-	जोड़ pvrdma_cmd_resp rsp;
-	काष्ठा pvrdma_cmd_modअगरy_qp *cmd = &req.modअगरy_qp;
-	क्रमागत ib_qp_state cur_state, next_state;
-	पूर्णांक ret;
+int pvrdma_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
+		     int attr_mask, struct ib_udata *udata)
+{
+	struct pvrdma_dev *dev = to_vdev(ibqp->device);
+	struct pvrdma_qp *qp = to_vqp(ibqp);
+	union pvrdma_cmd_req req;
+	union pvrdma_cmd_resp rsp;
+	struct pvrdma_cmd_modify_qp *cmd = &req.modify_qp;
+	enum ib_qp_state cur_state, next_state;
+	int ret;
 
-	अगर (attr_mask & ~IB_QP_ATTR_STANDARD_BITS)
-		वापस -EOPNOTSUPP;
+	if (attr_mask & ~IB_QP_ATTR_STANDARD_BITS)
+		return -EOPNOTSUPP;
 
 	/* Sanity checking. Should need lock here */
 	mutex_lock(&qp->mutex);
@@ -554,44 +553,44 @@ err_qp:
 		qp->state;
 	next_state = (attr_mask & IB_QP_STATE) ? attr->qp_state : cur_state;
 
-	अगर (!ib_modअगरy_qp_is_ok(cur_state, next_state, ibqp->qp_type,
-				attr_mask)) अणु
+	if (!ib_modify_qp_is_ok(cur_state, next_state, ibqp->qp_type,
+				attr_mask)) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (attr_mask & IB_QP_PORT) अणु
-		अगर (attr->port_num == 0 ||
-		    attr->port_num > ibqp->device->phys_port_cnt) अणु
+	if (attr_mask & IB_QP_PORT) {
+		if (attr->port_num == 0 ||
+		    attr->port_num > ibqp->device->phys_port_cnt) {
 			ret = -EINVAL;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	अगर (attr_mask & IB_QP_MIN_RNR_TIMER) अणु
-		अगर (attr->min_rnr_समयr > 31) अणु
+	if (attr_mask & IB_QP_MIN_RNR_TIMER) {
+		if (attr->min_rnr_timer > 31) {
 			ret = -EINVAL;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	अगर (attr_mask & IB_QP_PKEY_INDEX) अणु
-		अगर (attr->pkey_index >= dev->dsr->caps.max_pkeys) अणु
+	if (attr_mask & IB_QP_PKEY_INDEX) {
+		if (attr->pkey_index >= dev->dsr->caps.max_pkeys) {
 			ret = -EINVAL;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	अगर (attr_mask & IB_QP_QKEY)
+	if (attr_mask & IB_QP_QKEY)
 		qp->qkey = attr->qkey;
 
-	अगर (cur_state == next_state && cur_state == IB_QPS_RESET) अणु
+	if (cur_state == next_state && cur_state == IB_QPS_RESET) {
 		ret = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	qp->state = next_state;
-	स_रखो(cmd, 0, माप(*cmd));
+	memset(cmd, 0, sizeof(*cmd));
 	cmd->hdr.cmd = PVRDMA_CMD_MODIFY_QP;
 	cmd->qp_handle = qp->qp_handle;
 	cmd->attr_mask = ib_qp_attr_mask_to_pvrdma(attr_mask);
@@ -609,129 +608,129 @@ err_qp:
 		ib_access_flags_to_pvrdma(attr->qp_access_flags);
 	cmd->attrs.pkey_index = attr->pkey_index;
 	cmd->attrs.alt_pkey_index = attr->alt_pkey_index;
-	cmd->attrs.en_sqd_async_notअगरy = attr->en_sqd_async_notअगरy;
+	cmd->attrs.en_sqd_async_notify = attr->en_sqd_async_notify;
 	cmd->attrs.sq_draining = attr->sq_draining;
 	cmd->attrs.max_rd_atomic = attr->max_rd_atomic;
 	cmd->attrs.max_dest_rd_atomic = attr->max_dest_rd_atomic;
-	cmd->attrs.min_rnr_समयr = attr->min_rnr_समयr;
+	cmd->attrs.min_rnr_timer = attr->min_rnr_timer;
 	cmd->attrs.port_num = attr->port_num;
-	cmd->attrs.समयout = attr->समयout;
+	cmd->attrs.timeout = attr->timeout;
 	cmd->attrs.retry_cnt = attr->retry_cnt;
 	cmd->attrs.rnr_retry = attr->rnr_retry;
 	cmd->attrs.alt_port_num = attr->alt_port_num;
-	cmd->attrs.alt_समयout = attr->alt_समयout;
+	cmd->attrs.alt_timeout = attr->alt_timeout;
 	ib_qp_cap_to_pvrdma(&cmd->attrs.cap, &attr->cap);
 	rdma_ah_attr_to_pvrdma(&cmd->attrs.ah_attr, &attr->ah_attr);
 	rdma_ah_attr_to_pvrdma(&cmd->attrs.alt_ah_attr, &attr->alt_ah_attr);
 
 	ret = pvrdma_cmd_post(dev, &req, &rsp, PVRDMA_CMD_MODIFY_QP_RESP);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_warn(&dev->pdev->dev,
 			 "could not modify queuepair, error: %d\n", ret);
-	पूर्ण अन्यथा अगर (rsp.hdr.err > 0) अणु
+	} else if (rsp.hdr.err > 0) {
 		dev_warn(&dev->pdev->dev,
 			 "cannot modify queuepair, error: %d\n", rsp.hdr.err);
 		ret = -EINVAL;
-	पूर्ण
+	}
 
-	अगर (ret == 0 && next_state == IB_QPS_RESET)
+	if (ret == 0 && next_state == IB_QPS_RESET)
 		pvrdma_reset_qp(qp);
 
 out:
 	mutex_unlock(&qp->mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत व्योम *get_sq_wqe(काष्ठा pvrdma_qp *qp, अचिन्हित पूर्णांक n)
-अणु
-	वापस pvrdma_page_dir_get_ptr(&qp->pdir,
+static inline void *get_sq_wqe(struct pvrdma_qp *qp, unsigned int n)
+{
+	return pvrdma_page_dir_get_ptr(&qp->pdir,
 				       qp->sq.offset + n * qp->sq.wqe_size);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम *get_rq_wqe(काष्ठा pvrdma_qp *qp, अचिन्हित पूर्णांक n)
-अणु
-	वापस pvrdma_page_dir_get_ptr(&qp->pdir,
+static inline void *get_rq_wqe(struct pvrdma_qp *qp, unsigned int n)
+{
+	return pvrdma_page_dir_get_ptr(&qp->pdir,
 				       qp->rq.offset + n * qp->rq.wqe_size);
-पूर्ण
+}
 
-अटल पूर्णांक set_reg_seg(काष्ठा pvrdma_sq_wqe_hdr *wqe_hdr,
-		       स्थिर काष्ठा ib_reg_wr *wr)
-अणु
-	काष्ठा pvrdma_user_mr *mr = to_vmr(wr->mr);
+static int set_reg_seg(struct pvrdma_sq_wqe_hdr *wqe_hdr,
+		       const struct ib_reg_wr *wr)
+{
+	struct pvrdma_user_mr *mr = to_vmr(wr->mr);
 
-	wqe_hdr->wr.fast_reg.ioबहु_शुरू = mr->ibmr.iova;
+	wqe_hdr->wr.fast_reg.iova_start = mr->ibmr.iova;
 	wqe_hdr->wr.fast_reg.pl_pdir_dma = mr->pdir.dir_dma;
-	wqe_hdr->wr.fast_reg.page_shअगरt = mr->page_shअगरt;
+	wqe_hdr->wr.fast_reg.page_shift = mr->page_shift;
 	wqe_hdr->wr.fast_reg.page_list_len = mr->npages;
 	wqe_hdr->wr.fast_reg.length = mr->ibmr.length;
 	wqe_hdr->wr.fast_reg.access_flags = wr->access;
 	wqe_hdr->wr.fast_reg.rkey = wr->key;
 
-	वापस pvrdma_page_dir_insert_page_list(&mr->pdir, mr->pages,
+	return pvrdma_page_dir_insert_page_list(&mr->pdir, mr->pages,
 						mr->npages);
-पूर्ण
+}
 
 /**
  * pvrdma_post_send - post send work request entries on a QP
  * @ibqp: the QP
  * @wr: work request list to post
- * @bad_wr: the first bad WR वापसed
+ * @bad_wr: the first bad WR returned
  *
- * @वापस: 0 on success, otherwise त्रुटि_सं वापसed.
+ * @return: 0 on success, otherwise errno returned.
  */
-पूर्णांक pvrdma_post_send(काष्ठा ib_qp *ibqp, स्थिर काष्ठा ib_send_wr *wr,
-		     स्थिर काष्ठा ib_send_wr **bad_wr)
-अणु
-	काष्ठा pvrdma_qp *qp = to_vqp(ibqp);
-	काष्ठा pvrdma_dev *dev = to_vdev(ibqp->device);
-	अचिन्हित दीर्घ flags;
-	काष्ठा pvrdma_sq_wqe_hdr *wqe_hdr;
-	काष्ठा pvrdma_sge *sge;
-	पूर्णांक i, ret;
+int pvrdma_post_send(struct ib_qp *ibqp, const struct ib_send_wr *wr,
+		     const struct ib_send_wr **bad_wr)
+{
+	struct pvrdma_qp *qp = to_vqp(ibqp);
+	struct pvrdma_dev *dev = to_vdev(ibqp->device);
+	unsigned long flags;
+	struct pvrdma_sq_wqe_hdr *wqe_hdr;
+	struct pvrdma_sge *sge;
+	int i, ret;
 
 	/*
 	 * In states lower than RTS, we can fail immediately. In other states,
 	 * just post and let the device figure it out.
 	 */
-	अगर (qp->state < IB_QPS_RTS) अणु
+	if (qp->state < IB_QPS_RTS) {
 		*bad_wr = wr;
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	spin_lock_irqsave(&qp->sq.lock, flags);
 
-	जबतक (wr) अणु
-		अचिन्हित पूर्णांक tail = 0;
+	while (wr) {
+		unsigned int tail = 0;
 
-		अगर (unlikely(!pvrdma_idx_ring_has_space(
-				qp->sq.ring, qp->sq.wqe_cnt, &tail))) अणु
+		if (unlikely(!pvrdma_idx_ring_has_space(
+				qp->sq.ring, qp->sq.wqe_cnt, &tail))) {
 			dev_warn_ratelimited(&dev->pdev->dev,
 					     "send queue is full\n");
 			*bad_wr = wr;
 			ret = -ENOMEM;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अगर (unlikely(wr->num_sge > qp->sq.max_sg || wr->num_sge < 0)) अणु
+		if (unlikely(wr->num_sge > qp->sq.max_sg || wr->num_sge < 0)) {
 			dev_warn_ratelimited(&dev->pdev->dev,
 					     "send SGE overflow\n");
 			*bad_wr = wr;
 			ret = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अगर (unlikely(wr->opcode < 0)) अणु
+		if (unlikely(wr->opcode < 0)) {
 			dev_warn_ratelimited(&dev->pdev->dev,
 					     "invalid send opcode\n");
 			*bad_wr = wr;
 			ret = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		/*
 		 * Only support UD, RC.
-		 * Need to check opcode table क्रम thorough checking.
+		 * Need to check opcode table for thorough checking.
 		 * opcode		_UD	_UC	_RC
 		 * _SEND		x	x	x
 		 * _SEND_WITH_IMM	x	x	x
@@ -747,55 +746,55 @@ out:
 		 * _REG_MR				x
 		 *
 		 */
-		अगर (qp->ibqp.qp_type != IB_QPT_UD &&
+		if (qp->ibqp.qp_type != IB_QPT_UD &&
 		    qp->ibqp.qp_type != IB_QPT_RC &&
-			wr->opcode != IB_WR_SEND) अणु
+			wr->opcode != IB_WR_SEND) {
 			dev_warn_ratelimited(&dev->pdev->dev,
 					     "unsupported queuepair type\n");
 			*bad_wr = wr;
 			ret = -EINVAL;
-			जाओ out;
-		पूर्ण अन्यथा अगर (qp->ibqp.qp_type == IB_QPT_UD ||
-			   qp->ibqp.qp_type == IB_QPT_GSI) अणु
-			अगर (wr->opcode != IB_WR_SEND &&
-			    wr->opcode != IB_WR_SEND_WITH_IMM) अणु
+			goto out;
+		} else if (qp->ibqp.qp_type == IB_QPT_UD ||
+			   qp->ibqp.qp_type == IB_QPT_GSI) {
+			if (wr->opcode != IB_WR_SEND &&
+			    wr->opcode != IB_WR_SEND_WITH_IMM) {
 				dev_warn_ratelimited(&dev->pdev->dev,
 						     "invalid send opcode\n");
 				*bad_wr = wr;
 				ret = -EINVAL;
-				जाओ out;
-			पूर्ण
-		पूर्ण
+				goto out;
+			}
+		}
 
-		wqe_hdr = (काष्ठा pvrdma_sq_wqe_hdr *)get_sq_wqe(qp, tail);
-		स_रखो(wqe_hdr, 0, माप(*wqe_hdr));
+		wqe_hdr = (struct pvrdma_sq_wqe_hdr *)get_sq_wqe(qp, tail);
+		memset(wqe_hdr, 0, sizeof(*wqe_hdr));
 		wqe_hdr->wr_id = wr->wr_id;
 		wqe_hdr->num_sge = wr->num_sge;
 		wqe_hdr->opcode = ib_wr_opcode_to_pvrdma(wr->opcode);
 		wqe_hdr->send_flags = ib_send_flags_to_pvrdma(wr->send_flags);
-		अगर (wr->opcode == IB_WR_SEND_WITH_IMM ||
+		if (wr->opcode == IB_WR_SEND_WITH_IMM ||
 		    wr->opcode == IB_WR_RDMA_WRITE_WITH_IMM)
 			wqe_hdr->ex.imm_data = wr->ex.imm_data;
 
-		अगर (unlikely(wqe_hdr->opcode == PVRDMA_WR_ERROR)) अणु
+		if (unlikely(wqe_hdr->opcode == PVRDMA_WR_ERROR)) {
 			*bad_wr = wr;
 			ret = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		चयन (qp->ibqp.qp_type) अणु
-		हाल IB_QPT_GSI:
-		हाल IB_QPT_UD:
-			अगर (unlikely(!ud_wr(wr)->ah)) अणु
+		switch (qp->ibqp.qp_type) {
+		case IB_QPT_GSI:
+		case IB_QPT_UD:
+			if (unlikely(!ud_wr(wr)->ah)) {
 				dev_warn_ratelimited(&dev->pdev->dev,
 						     "invalid address handle\n");
 				*bad_wr = wr;
 				ret = -EINVAL;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
 			/*
-			 * Use qkey from qp context अगर high order bit set,
+			 * Use qkey from qp context if high order bit set,
 			 * otherwise from work request.
 			 */
 			wqe_hdr->wr.ud.remote_qpn = ud_wr(wr)->remote_qpn;
@@ -804,64 +803,64 @@ out:
 				qp->qkey : ud_wr(wr)->remote_qkey;
 			wqe_hdr->wr.ud.av = to_vah(ud_wr(wr)->ah)->av;
 
-			अवरोध;
-		हाल IB_QPT_RC:
-			चयन (wr->opcode) अणु
-			हाल IB_WR_RDMA_READ:
-			हाल IB_WR_RDMA_WRITE:
-			हाल IB_WR_RDMA_WRITE_WITH_IMM:
+			break;
+		case IB_QPT_RC:
+			switch (wr->opcode) {
+			case IB_WR_RDMA_READ:
+			case IB_WR_RDMA_WRITE:
+			case IB_WR_RDMA_WRITE_WITH_IMM:
 				wqe_hdr->wr.rdma.remote_addr =
 					rdma_wr(wr)->remote_addr;
 				wqe_hdr->wr.rdma.rkey = rdma_wr(wr)->rkey;
-				अवरोध;
-			हाल IB_WR_LOCAL_INV:
-			हाल IB_WR_SEND_WITH_INV:
+				break;
+			case IB_WR_LOCAL_INV:
+			case IB_WR_SEND_WITH_INV:
 				wqe_hdr->ex.invalidate_rkey =
 					wr->ex.invalidate_rkey;
-				अवरोध;
-			हाल IB_WR_ATOMIC_CMP_AND_SWP:
-			हाल IB_WR_ATOMIC_FETCH_AND_ADD:
+				break;
+			case IB_WR_ATOMIC_CMP_AND_SWP:
+			case IB_WR_ATOMIC_FETCH_AND_ADD:
 				wqe_hdr->wr.atomic.remote_addr =
 					atomic_wr(wr)->remote_addr;
 				wqe_hdr->wr.atomic.rkey = atomic_wr(wr)->rkey;
 				wqe_hdr->wr.atomic.compare_add =
 					atomic_wr(wr)->compare_add;
-				अगर (wr->opcode == IB_WR_ATOMIC_CMP_AND_SWP)
+				if (wr->opcode == IB_WR_ATOMIC_CMP_AND_SWP)
 					wqe_hdr->wr.atomic.swap =
 						atomic_wr(wr)->swap;
-				अवरोध;
-			हाल IB_WR_REG_MR:
+				break;
+			case IB_WR_REG_MR:
 				ret = set_reg_seg(wqe_hdr, reg_wr(wr));
-				अगर (ret < 0) अणु
+				if (ret < 0) {
 					dev_warn_ratelimited(&dev->pdev->dev,
 							     "Failed to set fast register work request\n");
 					*bad_wr = wr;
-					जाओ out;
-				पूर्ण
-				अवरोध;
-			शेष:
-				अवरोध;
-			पूर्ण
+					goto out;
+				}
+				break;
+			default:
+				break;
+			}
 
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dev_warn_ratelimited(&dev->pdev->dev,
 					     "invalid queuepair type\n");
 			ret = -EINVAL;
 			*bad_wr = wr;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		sge = (काष्ठा pvrdma_sge *)(wqe_hdr + 1);
-		क्रम (i = 0; i < wr->num_sge; i++) अणु
+		sge = (struct pvrdma_sge *)(wqe_hdr + 1);
+		for (i = 0; i < wr->num_sge; i++) {
 			/* Need to check wqe_size 0 or max size */
 			sge->addr = wr->sg_list[i].addr;
 			sge->length = wr->sg_list[i].length;
 			sge->lkey = wr->sg_list[i].lkey;
 			sge++;
-		पूर्ण
+		}
 
-		/* Make sure wqe is written beक्रमe index update */
+		/* Make sure wqe is written before index update */
 		smp_wmb();
 
 		/* Update shared sq ring */
@@ -869,90 +868,90 @@ out:
 				    qp->sq.wqe_cnt);
 
 		wr = wr->next;
-	पूर्ण
+	}
 
 	ret = 0;
 
 out:
 	spin_unlock_irqrestore(&qp->sq.lock, flags);
 
-	अगर (!ret)
-		pvrdma_ग_लिखो_uar_qp(dev, PVRDMA_UAR_QP_SEND | qp->qp_handle);
+	if (!ret)
+		pvrdma_write_uar_qp(dev, PVRDMA_UAR_QP_SEND | qp->qp_handle);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * pvrdma_post_recv - post receive work request entries on a QP
  * @ibqp: the QP
  * @wr: the work request list to post
- * @bad_wr: the first bad WR वापसed
+ * @bad_wr: the first bad WR returned
  *
- * @वापस: 0 on success, otherwise त्रुटि_सं वापसed.
+ * @return: 0 on success, otherwise errno returned.
  */
-पूर्णांक pvrdma_post_recv(काष्ठा ib_qp *ibqp, स्थिर काष्ठा ib_recv_wr *wr,
-		     स्थिर काष्ठा ib_recv_wr **bad_wr)
-अणु
-	काष्ठा pvrdma_dev *dev = to_vdev(ibqp->device);
-	अचिन्हित दीर्घ flags;
-	काष्ठा pvrdma_qp *qp = to_vqp(ibqp);
-	काष्ठा pvrdma_rq_wqe_hdr *wqe_hdr;
-	काष्ठा pvrdma_sge *sge;
-	पूर्णांक ret = 0;
-	पूर्णांक i;
+int pvrdma_post_recv(struct ib_qp *ibqp, const struct ib_recv_wr *wr,
+		     const struct ib_recv_wr **bad_wr)
+{
+	struct pvrdma_dev *dev = to_vdev(ibqp->device);
+	unsigned long flags;
+	struct pvrdma_qp *qp = to_vqp(ibqp);
+	struct pvrdma_rq_wqe_hdr *wqe_hdr;
+	struct pvrdma_sge *sge;
+	int ret = 0;
+	int i;
 
 	/*
 	 * In the RESET state, we can fail immediately. For other states,
 	 * just post and let the device figure it out.
 	 */
-	अगर (qp->state == IB_QPS_RESET) अणु
+	if (qp->state == IB_QPS_RESET) {
 		*bad_wr = wr;
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (qp->srq) अणु
+	if (qp->srq) {
 		dev_warn(&dev->pdev->dev, "QP associated with SRQ\n");
 		*bad_wr = wr;
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	spin_lock_irqsave(&qp->rq.lock, flags);
 
-	जबतक (wr) अणु
-		अचिन्हित पूर्णांक tail = 0;
+	while (wr) {
+		unsigned int tail = 0;
 
-		अगर (unlikely(wr->num_sge > qp->rq.max_sg ||
-			     wr->num_sge < 0)) अणु
+		if (unlikely(wr->num_sge > qp->rq.max_sg ||
+			     wr->num_sge < 0)) {
 			ret = -EINVAL;
 			*bad_wr = wr;
 			dev_warn_ratelimited(&dev->pdev->dev,
 					     "recv SGE overflow\n");
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अगर (unlikely(!pvrdma_idx_ring_has_space(
-				qp->rq.ring, qp->rq.wqe_cnt, &tail))) अणु
+		if (unlikely(!pvrdma_idx_ring_has_space(
+				qp->rq.ring, qp->rq.wqe_cnt, &tail))) {
 			ret = -ENOMEM;
 			*bad_wr = wr;
 			dev_warn_ratelimited(&dev->pdev->dev,
 					     "recv queue full\n");
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		wqe_hdr = (काष्ठा pvrdma_rq_wqe_hdr *)get_rq_wqe(qp, tail);
+		wqe_hdr = (struct pvrdma_rq_wqe_hdr *)get_rq_wqe(qp, tail);
 		wqe_hdr->wr_id = wr->wr_id;
 		wqe_hdr->num_sge = wr->num_sge;
 		wqe_hdr->total_len = 0;
 
-		sge = (काष्ठा pvrdma_sge *)(wqe_hdr + 1);
-		क्रम (i = 0; i < wr->num_sge; i++) अणु
+		sge = (struct pvrdma_sge *)(wqe_hdr + 1);
+		for (i = 0; i < wr->num_sge; i++) {
 			sge->addr = wr->sg_list[i].addr;
 			sge->length = wr->sg_list[i].length;
 			sge->lkey = wr->sg_list[i].lkey;
 			sge++;
-		पूर्ण
+		}
 
-		/* Make sure wqe is written beक्रमe index update */
+		/* Make sure wqe is written before index update */
 		smp_wmb();
 
 		/* Update shared rq ring */
@@ -960,19 +959,19 @@ out:
 				    qp->rq.wqe_cnt);
 
 		wr = wr->next;
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&qp->rq.lock, flags);
 
-	pvrdma_ग_लिखो_uar_qp(dev, PVRDMA_UAR_QP_RECV | qp->qp_handle);
+	pvrdma_write_uar_qp(dev, PVRDMA_UAR_QP_RECV | qp->qp_handle);
 
-	वापस ret;
+	return ret;
 
 out:
 	spin_unlock_irqrestore(&qp->rq.lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * pvrdma_query_qp - query a queue pair's attributes
@@ -981,37 +980,37 @@ out:
  * @attr_mask: attributes mask
  * @init_attr: initial queue pair attributes
  *
- * @वापसs 0 on success, otherwise वापसs an त्रुटि_सं.
+ * @returns 0 on success, otherwise returns an errno.
  */
-पूर्णांक pvrdma_query_qp(काष्ठा ib_qp *ibqp, काष्ठा ib_qp_attr *attr,
-		    पूर्णांक attr_mask, काष्ठा ib_qp_init_attr *init_attr)
-अणु
-	काष्ठा pvrdma_dev *dev = to_vdev(ibqp->device);
-	काष्ठा pvrdma_qp *qp = to_vqp(ibqp);
-	जोड़ pvrdma_cmd_req req;
-	जोड़ pvrdma_cmd_resp rsp;
-	काष्ठा pvrdma_cmd_query_qp *cmd = &req.query_qp;
-	काष्ठा pvrdma_cmd_query_qp_resp *resp = &rsp.query_qp_resp;
-	पूर्णांक ret = 0;
+int pvrdma_query_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
+		    int attr_mask, struct ib_qp_init_attr *init_attr)
+{
+	struct pvrdma_dev *dev = to_vdev(ibqp->device);
+	struct pvrdma_qp *qp = to_vqp(ibqp);
+	union pvrdma_cmd_req req;
+	union pvrdma_cmd_resp rsp;
+	struct pvrdma_cmd_query_qp *cmd = &req.query_qp;
+	struct pvrdma_cmd_query_qp_resp *resp = &rsp.query_qp_resp;
+	int ret = 0;
 
 	mutex_lock(&qp->mutex);
 
-	अगर (qp->state == IB_QPS_RESET) अणु
+	if (qp->state == IB_QPS_RESET) {
 		attr->qp_state = IB_QPS_RESET;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	स_रखो(cmd, 0, माप(*cmd));
+	memset(cmd, 0, sizeof(*cmd));
 	cmd->hdr.cmd = PVRDMA_CMD_QUERY_QP;
 	cmd->qp_handle = qp->qp_handle;
 	cmd->attr_mask = ib_qp_attr_mask_to_pvrdma(attr_mask);
 
 	ret = pvrdma_cmd_post(dev, &req, &rsp, PVRDMA_CMD_QUERY_QP_RESP);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_warn(&dev->pdev->dev,
 			 "could not query queuepair, error: %d\n", ret);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	attr->qp_state = pvrdma_qp_state_to_ib(resp->attrs.qp_state);
 	attr->cur_qp_state =
@@ -1027,17 +1026,17 @@ out:
 		pvrdma_access_flags_to_ib(resp->attrs.qp_access_flags);
 	attr->pkey_index = resp->attrs.pkey_index;
 	attr->alt_pkey_index = resp->attrs.alt_pkey_index;
-	attr->en_sqd_async_notअगरy = resp->attrs.en_sqd_async_notअगरy;
+	attr->en_sqd_async_notify = resp->attrs.en_sqd_async_notify;
 	attr->sq_draining = resp->attrs.sq_draining;
 	attr->max_rd_atomic = resp->attrs.max_rd_atomic;
 	attr->max_dest_rd_atomic = resp->attrs.max_dest_rd_atomic;
-	attr->min_rnr_समयr = resp->attrs.min_rnr_समयr;
+	attr->min_rnr_timer = resp->attrs.min_rnr_timer;
 	attr->port_num = resp->attrs.port_num;
-	attr->समयout = resp->attrs.समयout;
+	attr->timeout = resp->attrs.timeout;
 	attr->retry_cnt = resp->attrs.retry_cnt;
 	attr->rnr_retry = resp->attrs.rnr_retry;
 	attr->alt_port_num = resp->attrs.alt_port_num;
-	attr->alt_समयout = resp->attrs.alt_समयout;
+	attr->alt_timeout = resp->attrs.alt_timeout;
 	pvrdma_qp_cap_to_ib(&attr->cap, &resp->attrs.cap);
 	pvrdma_ah_attr_to_rdma(&attr->ah_attr, &resp->attrs.ah_attr);
 	pvrdma_ah_attr_to_rdma(&attr->alt_ah_attr, &resp->attrs.alt_ah_attr);
@@ -1054,7 +1053,7 @@ out:
 	init_attr->send_cq = qp->ibqp.send_cq;
 	init_attr->recv_cq = qp->ibqp.recv_cq;
 	init_attr->srq = qp->ibqp.srq;
-	init_attr->xrcd = शून्य;
+	init_attr->xrcd = NULL;
 	init_attr->cap = attr->cap;
 	init_attr->sq_sig_type = 0;
 	init_attr->qp_type = qp->ibqp.qp_type;
@@ -1062,5 +1061,5 @@ out:
 	init_attr->port_num = qp->port;
 
 	mutex_unlock(&qp->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}

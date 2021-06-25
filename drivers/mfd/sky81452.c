@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * sky81452.c	SKY81452 MFD driver
  *
@@ -7,81 +6,81 @@
  * Author : Gyungoh Yoo <jack.yoo@skyworksinc.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/err.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/mfd/core.h>
-#समावेश <linux/mfd/sky81452.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/err.h>
+#include <linux/slab.h>
+#include <linux/i2c.h>
+#include <linux/regmap.h>
+#include <linux/mfd/core.h>
+#include <linux/mfd/sky81452.h>
 
-अटल स्थिर काष्ठा regmap_config sky81452_config = अणु
+static const struct regmap_config sky81452_config = {
 	.reg_bits = 8,
 	.val_bits = 8,
-पूर्ण;
+};
 
-अटल पूर्णांक sky81452_probe(काष्ठा i2c_client *client,
-				स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा device *dev = &client->dev;
-	स्थिर काष्ठा sky81452_platक्रमm_data *pdata = dev_get_platdata(dev);
-	काष्ठा mfd_cell cells[2];
-	काष्ठा regmap *regmap;
-	पूर्णांक ret;
+static int sky81452_probe(struct i2c_client *client,
+				const struct i2c_device_id *id)
+{
+	struct device *dev = &client->dev;
+	const struct sky81452_platform_data *pdata = dev_get_platdata(dev);
+	struct mfd_cell cells[2];
+	struct regmap *regmap;
+	int ret;
 
-	अगर (!pdata) अणु
-		pdata = devm_kzalloc(dev, माप(*pdata), GFP_KERNEL);
-		अगर (!pdata)
-			वापस -ENOMEM;
-	पूर्ण
+	if (!pdata) {
+		pdata = devm_kzalloc(dev, sizeof(*pdata), GFP_KERNEL);
+		if (!pdata)
+			return -ENOMEM;
+	}
 
 	regmap = devm_regmap_init_i2c(client, &sky81452_config);
-	अगर (IS_ERR(regmap)) अणु
+	if (IS_ERR(regmap)) {
 		dev_err(dev, "failed to initialize.err=%ld\n", PTR_ERR(regmap));
-		वापस PTR_ERR(regmap);
-	पूर्ण
+		return PTR_ERR(regmap);
+	}
 
 	i2c_set_clientdata(client, regmap);
 
-	स_रखो(cells, 0, माप(cells));
+	memset(cells, 0, sizeof(cells));
 	cells[0].name = "sky81452-backlight";
 	cells[0].of_compatible = "skyworks,sky81452-backlight";
 	cells[1].name = "sky81452-regulator";
-	cells[1].platक्रमm_data = pdata->regulator_init_data;
-	cells[1].pdata_size = माप(*pdata->regulator_init_data);
+	cells[1].platform_data = pdata->regulator_init_data;
+	cells[1].pdata_size = sizeof(*pdata->regulator_init_data);
 
 	ret = devm_mfd_add_devices(dev, -1, cells, ARRAY_SIZE(cells),
-				   शून्य, 0, शून्य);
-	अगर (ret)
+				   NULL, 0, NULL);
+	if (ret)
 		dev_err(dev, "failed to add child devices. err=%d\n", ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा i2c_device_id sky81452_ids[] = अणु
-	अणु "sky81452" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id sky81452_ids[] = {
+	{ "sky81452" },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, sky81452_ids);
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id sky81452_of_match[] = अणु
-	अणु .compatible = "skyworks,sky81452", पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id sky81452_of_match[] = {
+	{ .compatible = "skyworks,sky81452", },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, sky81452_of_match);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा i2c_driver sky81452_driver = अणु
-	.driver = अणु
+static struct i2c_driver sky81452_driver = {
+	.driver = {
 		.name = "sky81452",
 		.of_match_table = of_match_ptr(sky81452_of_match),
-	पूर्ण,
+	},
 	.probe = sky81452_probe,
 	.id_table = sky81452_ids,
-पूर्ण;
+};
 
 module_i2c_driver(sky81452_driver);
 

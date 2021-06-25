@@ -1,48 +1,47 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0
+/* SPDX-License-Identifier: GPL-2.0
  *
  * Copyright (C) 2017, Intel Corporation. All rights reserved.
  */
 
-#अगर_अघोषित __LINUX_SND_SOC_ACPI_INTEL_MATCH_H
-#घोषणा __LINUX_SND_SOC_ACPI_INTEL_MATCH_H
+#ifndef __LINUX_SND_SOC_ACPI_INTEL_MATCH_H
+#define __LINUX_SND_SOC_ACPI_INTEL_MATCH_H
 
-#समावेश <linux/module.h>
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/acpi.h>
+#include <linux/module.h>
+#include <linux/stddef.h>
+#include <linux/acpi.h>
 
 /*
- * these tables are not स्थिरants, some fields can be used क्रम
+ * these tables are not constants, some fields can be used for
  * pdata or machine ops
  */
-बाह्य काष्ठा snd_soc_acpi_mach snd_soc_acpi_पूर्णांकel_haswell_machines[];
-बाह्य काष्ठा snd_soc_acpi_mach snd_soc_acpi_पूर्णांकel_broadwell_machines[];
-बाह्य काष्ठा snd_soc_acpi_mach snd_soc_acpi_पूर्णांकel_baytrail_machines[];
-बाह्य काष्ठा snd_soc_acpi_mach snd_soc_acpi_पूर्णांकel_cherrytrail_machines[];
-बाह्य काष्ठा snd_soc_acpi_mach snd_soc_acpi_पूर्णांकel_skl_machines[];
-बाह्य काष्ठा snd_soc_acpi_mach snd_soc_acpi_पूर्णांकel_kbl_machines[];
-बाह्य काष्ठा snd_soc_acpi_mach snd_soc_acpi_पूर्णांकel_bxt_machines[];
-बाह्य काष्ठा snd_soc_acpi_mach snd_soc_acpi_पूर्णांकel_glk_machines[];
-बाह्य काष्ठा snd_soc_acpi_mach snd_soc_acpi_पूर्णांकel_cnl_machines[];
-बाह्य काष्ठा snd_soc_acpi_mach snd_soc_acpi_पूर्णांकel_cfl_machines[];
-बाह्य काष्ठा snd_soc_acpi_mach snd_soc_acpi_पूर्णांकel_cml_machines[];
-बाह्य काष्ठा snd_soc_acpi_mach snd_soc_acpi_पूर्णांकel_icl_machines[];
-बाह्य काष्ठा snd_soc_acpi_mach snd_soc_acpi_पूर्णांकel_tgl_machines[];
-बाह्य काष्ठा snd_soc_acpi_mach snd_soc_acpi_पूर्णांकel_ehl_machines[];
-बाह्य काष्ठा snd_soc_acpi_mach snd_soc_acpi_पूर्णांकel_jsl_machines[];
-बाह्य काष्ठा snd_soc_acpi_mach snd_soc_acpi_पूर्णांकel_adl_machines[];
+extern struct snd_soc_acpi_mach snd_soc_acpi_intel_haswell_machines[];
+extern struct snd_soc_acpi_mach snd_soc_acpi_intel_broadwell_machines[];
+extern struct snd_soc_acpi_mach snd_soc_acpi_intel_baytrail_machines[];
+extern struct snd_soc_acpi_mach snd_soc_acpi_intel_cherrytrail_machines[];
+extern struct snd_soc_acpi_mach snd_soc_acpi_intel_skl_machines[];
+extern struct snd_soc_acpi_mach snd_soc_acpi_intel_kbl_machines[];
+extern struct snd_soc_acpi_mach snd_soc_acpi_intel_bxt_machines[];
+extern struct snd_soc_acpi_mach snd_soc_acpi_intel_glk_machines[];
+extern struct snd_soc_acpi_mach snd_soc_acpi_intel_cnl_machines[];
+extern struct snd_soc_acpi_mach snd_soc_acpi_intel_cfl_machines[];
+extern struct snd_soc_acpi_mach snd_soc_acpi_intel_cml_machines[];
+extern struct snd_soc_acpi_mach snd_soc_acpi_intel_icl_machines[];
+extern struct snd_soc_acpi_mach snd_soc_acpi_intel_tgl_machines[];
+extern struct snd_soc_acpi_mach snd_soc_acpi_intel_ehl_machines[];
+extern struct snd_soc_acpi_mach snd_soc_acpi_intel_jsl_machines[];
+extern struct snd_soc_acpi_mach snd_soc_acpi_intel_adl_machines[];
 
-बाह्य काष्ठा snd_soc_acpi_mach snd_soc_acpi_पूर्णांकel_cnl_sdw_machines[];
-बाह्य काष्ठा snd_soc_acpi_mach snd_soc_acpi_पूर्णांकel_cfl_sdw_machines[];
-बाह्य काष्ठा snd_soc_acpi_mach snd_soc_acpi_पूर्णांकel_cml_sdw_machines[];
-बाह्य काष्ठा snd_soc_acpi_mach snd_soc_acpi_पूर्णांकel_icl_sdw_machines[];
-बाह्य काष्ठा snd_soc_acpi_mach snd_soc_acpi_पूर्णांकel_tgl_sdw_machines[];
-बाह्य काष्ठा snd_soc_acpi_mach snd_soc_acpi_पूर्णांकel_adl_sdw_machines[];
+extern struct snd_soc_acpi_mach snd_soc_acpi_intel_cnl_sdw_machines[];
+extern struct snd_soc_acpi_mach snd_soc_acpi_intel_cfl_sdw_machines[];
+extern struct snd_soc_acpi_mach snd_soc_acpi_intel_cml_sdw_machines[];
+extern struct snd_soc_acpi_mach snd_soc_acpi_intel_icl_sdw_machines[];
+extern struct snd_soc_acpi_mach snd_soc_acpi_intel_tgl_sdw_machines[];
+extern struct snd_soc_acpi_mach snd_soc_acpi_intel_adl_sdw_machines[];
 
 /*
- * generic table used क्रम HDA codec-based platक्रमms, possibly with
- * additional ACPI-क्रमागतerated codecs
+ * generic table used for HDA codec-based platforms, possibly with
+ * additional ACPI-enumerated codecs
  */
-बाह्य काष्ठा snd_soc_acpi_mach snd_soc_acpi_पूर्णांकel_hda_machines[];
+extern struct snd_soc_acpi_mach snd_soc_acpi_intel_hda_machines[];
 
-#पूर्ण_अगर
+#endif

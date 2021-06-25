@@ -1,10 +1,9 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
-#अगर_अघोषित QLGE_DEVLINK_H
-#घोषणा QLGE_DEVLINK_H
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+#ifndef QLGE_DEVLINK_H
+#define QLGE_DEVLINK_H
 
-#समावेश <net/devlink.h>
+#include <net/devlink.h>
 
-दीर्घ qlge_health_create_reporters(काष्ठा qlge_adapter *priv);
+long qlge_health_create_reporters(struct qlge_adapter *priv);
 
-#पूर्ण_अगर /* QLGE_DEVLINK_H */
+#endif /* QLGE_DEVLINK_H */

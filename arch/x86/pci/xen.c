@@ -1,660 +1,659 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Xen PCI - handle PCI (INTx) and MSI infraकाष्ठाure calls क्रम PV, HVM and
- * initial करोमुख्य support. We also handle the DSDT _PRT callbacks क्रम GSI's
- * used in HVM and initial करोमुख्य mode (PV करोes not parse ACPI, so it has no
- * concept of GSIs). Under PV we hook under the pnbbios API क्रम IRQs and
- * 0xcf8 PCI configuration पढ़ो/ग_लिखो.
+ * Xen PCI - handle PCI (INTx) and MSI infrastructure calls for PV, HVM and
+ * initial domain support. We also handle the DSDT _PRT callbacks for GSI's
+ * used in HVM and initial domain mode (PV does not parse ACPI, so it has no
+ * concept of GSIs). Under PV we hook under the pnbbios API for IRQs and
+ * 0xcf8 PCI configuration read/write.
  *
  *   Author: Ryan Wilson <hap9@epoch.ncsc.mil>
  *           Konrad Rzeszutek Wilk <konrad.wilk@oracle.com>
  *           Stefano Stabellini <stefano.stabellini@eu.citrix.com>
  */
-#समावेश <linux/export.h>
-#समावेश <linux/init.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/acpi.h>
+#include <linux/export.h>
+#include <linux/init.h>
+#include <linux/pci.h>
+#include <linux/acpi.h>
 
-#समावेश <linux/पन.स>
-#समावेश <यंत्र/io_apic.h>
-#समावेश <यंत्र/pci_x86.h>
+#include <linux/io.h>
+#include <asm/io_apic.h>
+#include <asm/pci_x86.h>
 
-#समावेश <यंत्र/xen/hypervisor.h>
+#include <asm/xen/hypervisor.h>
 
-#समावेश <xen/features.h>
-#समावेश <xen/events.h>
-#समावेश <यंत्र/xen/pci.h>
-#समावेश <यंत्र/xen/cpuid.h>
-#समावेश <यंत्र/apic.h>
-#समावेश <यंत्र/acpi.h>
-#समावेश <यंत्र/i8259.h>
+#include <xen/features.h>
+#include <xen/events.h>
+#include <asm/xen/pci.h>
+#include <asm/xen/cpuid.h>
+#include <asm/apic.h>
+#include <asm/acpi.h>
+#include <asm/i8259.h>
 
-अटल पूर्णांक xen_pcअगरront_enable_irq(काष्ठा pci_dev *dev)
-अणु
-	पूर्णांक rc;
-	पूर्णांक share = 1;
-	पूर्णांक pirq;
+static int xen_pcifront_enable_irq(struct pci_dev *dev)
+{
+	int rc;
+	int share = 1;
+	int pirq;
 	u8 gsi;
 
-	rc = pci_पढ़ो_config_byte(dev, PCI_INTERRUPT_LINE, &gsi);
-	अगर (rc < 0) अणु
+	rc = pci_read_config_byte(dev, PCI_INTERRUPT_LINE, &gsi);
+	if (rc < 0) {
 		dev_warn(&dev->dev, "Xen PCI: failed to read interrupt line: %d\n",
 			 rc);
-		वापस rc;
-	पूर्ण
-	/* In PV DomU the Xen PCI backend माला_दो the PIRQ in the पूर्णांकerrupt line.*/
+		return rc;
+	}
+	/* In PV DomU the Xen PCI backend puts the PIRQ in the interrupt line.*/
 	pirq = gsi;
 
-	अगर (gsi < nr_legacy_irqs())
+	if (gsi < nr_legacy_irqs())
 		share = 0;
 
 	rc = xen_bind_pirq_gsi_to_irq(gsi, pirq, share, "pcifront");
-	अगर (rc < 0) अणु
+	if (rc < 0) {
 		dev_warn(&dev->dev, "Xen PCI: failed to bind GSI%d (PIRQ%d) to IRQ: %d\n",
 			 gsi, pirq, rc);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	dev->irq = rc;
 	dev_info(&dev->dev, "Xen PCI mapped GSI%d to IRQ%d\n", gsi, dev->irq);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_ACPI
-अटल पूर्णांक xen_रेजिस्टर_pirq(u32 gsi, पूर्णांक triggering, bool set_pirq)
-अणु
-	पूर्णांक rc, pirq = -1, irq;
-	काष्ठा physdev_map_pirq map_irq;
-	पूर्णांक shareable = 0;
-	अक्षर *name;
+#ifdef CONFIG_ACPI
+static int xen_register_pirq(u32 gsi, int triggering, bool set_pirq)
+{
+	int rc, pirq = -1, irq;
+	struct physdev_map_pirq map_irq;
+	int shareable = 0;
+	char *name;
 
 	irq = xen_irq_from_gsi(gsi);
-	अगर (irq > 0)
-		वापस irq;
+	if (irq > 0)
+		return irq;
 
-	अगर (set_pirq)
+	if (set_pirq)
 		pirq = gsi;
 
-	map_irq.करोmid = DOMID_SELF;
+	map_irq.domid = DOMID_SELF;
 	map_irq.type = MAP_PIRQ_TYPE_GSI;
 	map_irq.index = gsi;
 	map_irq.pirq = pirq;
 
 	rc = HYPERVISOR_physdev_op(PHYSDEVOP_map_pirq, &map_irq);
-	अगर (rc) अणु
-		prपूर्णांकk(KERN_WARNING "xen map irq failed %d\n", rc);
-		वापस -1;
-	पूर्ण
+	if (rc) {
+		printk(KERN_WARNING "xen map irq failed %d\n", rc);
+		return -1;
+	}
 
-	अगर (triggering == ACPI_EDGE_SENSITIVE) अणु
+	if (triggering == ACPI_EDGE_SENSITIVE) {
 		shareable = 0;
 		name = "ioapic-edge";
-	पूर्ण अन्यथा अणु
+	} else {
 		shareable = 1;
 		name = "ioapic-level";
-	पूर्ण
+	}
 
 	irq = xen_bind_pirq_gsi_to_irq(gsi, map_irq.pirq, shareable, name);
-	अगर (irq < 0)
-		जाओ out;
+	if (irq < 0)
+		goto out;
 
-	prपूर्णांकk(KERN_DEBUG "xen: --> pirq=%d -> irq=%d (gsi=%d)\n", map_irq.pirq, irq, gsi);
+	printk(KERN_DEBUG "xen: --> pirq=%d -> irq=%d (gsi=%d)\n", map_irq.pirq, irq, gsi);
 out:
-	वापस irq;
-पूर्ण
+	return irq;
+}
 
-अटल पूर्णांक acpi_रेजिस्टर_gsi_xen_hvm(काष्ठा device *dev, u32 gsi,
-				     पूर्णांक trigger, पूर्णांक polarity)
-अणु
-	अगर (!xen_hvm_करोमुख्य())
-		वापस -1;
+static int acpi_register_gsi_xen_hvm(struct device *dev, u32 gsi,
+				     int trigger, int polarity)
+{
+	if (!xen_hvm_domain())
+		return -1;
 
-	वापस xen_रेजिस्टर_pirq(gsi, trigger,
+	return xen_register_pirq(gsi, trigger,
 				 false /* no mapping of GSI to PIRQ */);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_XEN_DOM0
-अटल पूर्णांक xen_रेजिस्टर_gsi(u32 gsi, पूर्णांक triggering, पूर्णांक polarity)
-अणु
-	पूर्णांक rc, irq;
-	काष्ठा physdev_setup_gsi setup_gsi;
+#ifdef CONFIG_XEN_DOM0
+static int xen_register_gsi(u32 gsi, int triggering, int polarity)
+{
+	int rc, irq;
+	struct physdev_setup_gsi setup_gsi;
 
-	अगर (!xen_pv_करोमुख्य())
-		वापस -1;
+	if (!xen_pv_domain())
+		return -1;
 
-	prपूर्णांकk(KERN_DEBUG "xen: registering gsi %u triggering %d polarity %d\n",
+	printk(KERN_DEBUG "xen: registering gsi %u triggering %d polarity %d\n",
 			gsi, triggering, polarity);
 
-	irq = xen_रेजिस्टर_pirq(gsi, triggering, true);
+	irq = xen_register_pirq(gsi, triggering, true);
 
 	setup_gsi.gsi = gsi;
 	setup_gsi.triggering = (triggering == ACPI_EDGE_SENSITIVE ? 0 : 1);
 	setup_gsi.polarity = (polarity == ACPI_ACTIVE_HIGH ? 0 : 1);
 
 	rc = HYPERVISOR_physdev_op(PHYSDEVOP_setup_gsi, &setup_gsi);
-	अगर (rc == -EEXIST)
-		prपूर्णांकk(KERN_INFO "Already setup the GSI :%d\n", gsi);
-	अन्यथा अगर (rc) अणु
-		prपूर्णांकk(KERN_ERR "Failed to setup GSI :%d, err_code:%d\n",
+	if (rc == -EEXIST)
+		printk(KERN_INFO "Already setup the GSI :%d\n", gsi);
+	else if (rc) {
+		printk(KERN_ERR "Failed to setup GSI :%d, err_code:%d\n",
 				gsi, rc);
-	पूर्ण
+	}
 
-	वापस irq;
-पूर्ण
+	return irq;
+}
 
-अटल पूर्णांक acpi_रेजिस्टर_gsi_xen(काष्ठा device *dev, u32 gsi,
-				 पूर्णांक trigger, पूर्णांक polarity)
-अणु
-	वापस xen_रेजिस्टर_gsi(gsi, trigger, polarity);
-पूर्ण
-#पूर्ण_अगर
-#पूर्ण_अगर
+static int acpi_register_gsi_xen(struct device *dev, u32 gsi,
+				 int trigger, int polarity)
+{
+	return xen_register_gsi(gsi, trigger, polarity);
+}
+#endif
+#endif
 
-#अगर defined(CONFIG_PCI_MSI)
-#समावेश <linux/msi.h>
+#if defined(CONFIG_PCI_MSI)
+#include <linux/msi.h>
 
-काष्ठा xen_pci_frontend_ops *xen_pci_frontend;
+struct xen_pci_frontend_ops *xen_pci_frontend;
 EXPORT_SYMBOL_GPL(xen_pci_frontend);
 
-काष्ठा xen_msi_ops अणु
-	पूर्णांक (*setup_msi_irqs)(काष्ठा pci_dev *dev, पूर्णांक nvec, पूर्णांक type);
-	व्योम (*tearकरोwn_msi_irqs)(काष्ठा pci_dev *dev);
-पूर्ण;
+struct xen_msi_ops {
+	int (*setup_msi_irqs)(struct pci_dev *dev, int nvec, int type);
+	void (*teardown_msi_irqs)(struct pci_dev *dev);
+};
 
-अटल काष्ठा xen_msi_ops xen_msi_ops __ro_after_init;
+static struct xen_msi_ops xen_msi_ops __ro_after_init;
 
-अटल पूर्णांक xen_setup_msi_irqs(काष्ठा pci_dev *dev, पूर्णांक nvec, पूर्णांक type)
-अणु
-	पूर्णांक irq, ret, i;
-	काष्ठा msi_desc *msidesc;
-	पूर्णांक *v;
+static int xen_setup_msi_irqs(struct pci_dev *dev, int nvec, int type)
+{
+	int irq, ret, i;
+	struct msi_desc *msidesc;
+	int *v;
 
-	अगर (type == PCI_CAP_ID_MSI && nvec > 1)
-		वापस 1;
+	if (type == PCI_CAP_ID_MSI && nvec > 1)
+		return 1;
 
-	v = kसुस्मृति(max(1, nvec), माप(पूर्णांक), GFP_KERNEL);
-	अगर (!v)
-		वापस -ENOMEM;
+	v = kcalloc(max(1, nvec), sizeof(int), GFP_KERNEL);
+	if (!v)
+		return -ENOMEM;
 
-	अगर (type == PCI_CAP_ID_MSIX)
+	if (type == PCI_CAP_ID_MSIX)
 		ret = xen_pci_frontend_enable_msix(dev, v, nvec);
-	अन्यथा
+	else
 		ret = xen_pci_frontend_enable_msi(dev, v);
-	अगर (ret)
-		जाओ error;
+	if (ret)
+		goto error;
 	i = 0;
-	क्रम_each_pci_msi_entry(msidesc, dev) अणु
+	for_each_pci_msi_entry(msidesc, dev) {
 		irq = xen_bind_pirq_msi_to_irq(dev, msidesc, v[i],
 					       (type == PCI_CAP_ID_MSI) ? nvec : 1,
 					       (type == PCI_CAP_ID_MSIX) ?
 					       "pcifront-msi-x" :
 					       "pcifront-msi",
 						DOMID_SELF);
-		अगर (irq < 0) अणु
+		if (irq < 0) {
 			ret = irq;
-			जाओ मुक्त;
-		पूर्ण
+			goto free;
+		}
 		i++;
-	पूर्ण
-	kमुक्त(v);
-	वापस 0;
+	}
+	kfree(v);
+	return 0;
 
 error:
-	अगर (ret == -ENOSYS)
+	if (ret == -ENOSYS)
 		dev_err(&dev->dev, "Xen PCI frontend has not registered MSI/MSI-X support!\n");
-	अन्यथा अगर (ret)
+	else if (ret)
 		dev_err(&dev->dev, "Xen PCI frontend error: %d!\n", ret);
-मुक्त:
-	kमुक्त(v);
-	वापस ret;
-पूर्ण
+free:
+	kfree(v);
+	return ret;
+}
 
-अटल व्योम xen_msi_compose_msg(काष्ठा pci_dev *pdev, अचिन्हित पूर्णांक pirq,
-		काष्ठा msi_msg *msg)
-अणु
+static void xen_msi_compose_msg(struct pci_dev *pdev, unsigned int pirq,
+		struct msi_msg *msg)
+{
 	/*
-	 * We set vector == 0 to tell the hypervisor we करोn't care about
+	 * We set vector == 0 to tell the hypervisor we don't care about
 	 * it, but we want a pirq setup instead.  We use the dest_id fields
 	 * to pass the pirq that we want.
 	 */
-	स_रखो(msg, 0, माप(*msg));
+	memset(msg, 0, sizeof(*msg));
 	msg->address_hi = X86_MSI_BASE_ADDRESS_HIGH;
 	msg->arch_addr_hi.destid_8_31 = pirq >> 8;
 	msg->arch_addr_lo.destid_0_7 = pirq & 0xFF;
 	msg->arch_addr_lo.base_address = X86_MSI_BASE_ADDRESS_LOW;
 	msg->arch_data.delivery_mode = APIC_DELIVERY_MODE_EXTINT;
-पूर्ण
+}
 
-अटल पूर्णांक xen_hvm_setup_msi_irqs(काष्ठा pci_dev *dev, पूर्णांक nvec, पूर्णांक type)
-अणु
-	पूर्णांक irq, pirq;
-	काष्ठा msi_desc *msidesc;
-	काष्ठा msi_msg msg;
+static int xen_hvm_setup_msi_irqs(struct pci_dev *dev, int nvec, int type)
+{
+	int irq, pirq;
+	struct msi_desc *msidesc;
+	struct msi_msg msg;
 
-	अगर (type == PCI_CAP_ID_MSI && nvec > 1)
-		वापस 1;
+	if (type == PCI_CAP_ID_MSI && nvec > 1)
+		return 1;
 
-	क्रम_each_pci_msi_entry(msidesc, dev) अणु
+	for_each_pci_msi_entry(msidesc, dev) {
 		pirq = xen_allocate_pirq_msi(dev, msidesc);
-		अगर (pirq < 0) अणु
+		if (pirq < 0) {
 			irq = -ENODEV;
-			जाओ error;
-		पूर्ण
+			goto error;
+		}
 		xen_msi_compose_msg(dev, pirq, &msg);
-		__pci_ग_लिखो_msi_msg(msidesc, &msg);
+		__pci_write_msi_msg(msidesc, &msg);
 		dev_dbg(&dev->dev, "xen: msi bound to pirq=%d\n", pirq);
 		irq = xen_bind_pirq_msi_to_irq(dev, msidesc, pirq,
 					       (type == PCI_CAP_ID_MSI) ? nvec : 1,
 					       (type == PCI_CAP_ID_MSIX) ?
 					       "msi-x" : "msi",
 					       DOMID_SELF);
-		अगर (irq < 0)
-			जाओ error;
+		if (irq < 0)
+			goto error;
 		dev_dbg(&dev->dev,
 			"xen: msi --> pirq=%d --> irq=%d\n", pirq, irq);
-	पूर्ण
-	वापस 0;
+	}
+	return 0;
 
 error:
 	dev_err(&dev->dev, "Failed to create MSI%s! ret=%d!\n",
 		type == PCI_CAP_ID_MSI ? "" : "-X", irq);
-	वापस irq;
-पूर्ण
+	return irq;
+}
 
-#अगर_घोषित CONFIG_XEN_DOM0
-अटल bool __पढ़ो_mostly pci_seg_supported = true;
+#ifdef CONFIG_XEN_DOM0
+static bool __read_mostly pci_seg_supported = true;
 
-अटल पूर्णांक xen_initकरोm_setup_msi_irqs(काष्ठा pci_dev *dev, पूर्णांक nvec, पूर्णांक type)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा msi_desc *msidesc;
+static int xen_initdom_setup_msi_irqs(struct pci_dev *dev, int nvec, int type)
+{
+	int ret = 0;
+	struct msi_desc *msidesc;
 
-	क्रम_each_pci_msi_entry(msidesc, dev) अणु
-		काष्ठा physdev_map_pirq map_irq;
-		करोmid_t करोmid;
+	for_each_pci_msi_entry(msidesc, dev) {
+		struct physdev_map_pirq map_irq;
+		domid_t domid;
 
-		करोmid = ret = xen_find_device_करोमुख्य_owner(dev);
-		/* N.B. Casting पूर्णांक's -ENODEV to uपूर्णांक16_t results in 0xFFED,
-		 * hence check ret value क्रम < 0. */
-		अगर (ret < 0)
-			करोmid = DOMID_SELF;
+		domid = ret = xen_find_device_domain_owner(dev);
+		/* N.B. Casting int's -ENODEV to uint16_t results in 0xFFED,
+		 * hence check ret value for < 0. */
+		if (ret < 0)
+			domid = DOMID_SELF;
 
-		स_रखो(&map_irq, 0, माप(map_irq));
-		map_irq.करोmid = करोmid;
+		memset(&map_irq, 0, sizeof(map_irq));
+		map_irq.domid = domid;
 		map_irq.type = MAP_PIRQ_TYPE_MSI_SEG;
 		map_irq.index = -1;
 		map_irq.pirq = -1;
 		map_irq.bus = dev->bus->number |
-			      (pci_करोमुख्य_nr(dev->bus) << 16);
+			      (pci_domain_nr(dev->bus) << 16);
 		map_irq.devfn = dev->devfn;
 
-		अगर (type == PCI_CAP_ID_MSI && nvec > 1) अणु
+		if (type == PCI_CAP_ID_MSI && nvec > 1) {
 			map_irq.type = MAP_PIRQ_TYPE_MULTI_MSI;
 			map_irq.entry_nr = nvec;
-		पूर्ण अन्यथा अगर (type == PCI_CAP_ID_MSIX) अणु
-			पूर्णांक pos;
-			अचिन्हित दीर्घ flags;
+		} else if (type == PCI_CAP_ID_MSIX) {
+			int pos;
+			unsigned long flags;
 			u32 table_offset, bir;
 
 			pos = dev->msix_cap;
-			pci_पढ़ो_config_dword(dev, pos + PCI_MSIX_TABLE,
+			pci_read_config_dword(dev, pos + PCI_MSIX_TABLE,
 					      &table_offset);
 			bir = (u8)(table_offset & PCI_MSIX_TABLE_BIR);
 			flags = pci_resource_flags(dev, bir);
-			अगर (!flags || (flags & IORESOURCE_UNSET))
-				वापस -EINVAL;
+			if (!flags || (flags & IORESOURCE_UNSET))
+				return -EINVAL;
 
 			map_irq.table_base = pci_resource_start(dev, bir);
 			map_irq.entry_nr = msidesc->msi_attrib.entry_nr;
-		पूर्ण
+		}
 
 		ret = -EINVAL;
-		अगर (pci_seg_supported)
+		if (pci_seg_supported)
 			ret = HYPERVISOR_physdev_op(PHYSDEVOP_map_pirq,
 						    &map_irq);
-		अगर (type == PCI_CAP_ID_MSI && nvec > 1 && ret) अणु
+		if (type == PCI_CAP_ID_MSI && nvec > 1 && ret) {
 			/*
 			 * If MAP_PIRQ_TYPE_MULTI_MSI is not available
-			 * there's nothing अन्यथा we can करो in this हाल.
+			 * there's nothing else we can do in this case.
 			 * Just set ret > 0 so driver can retry with
 			 * single MSI.
 			 */
 			ret = 1;
-			जाओ out;
-		पूर्ण
-		अगर (ret == -EINVAL && !pci_करोमुख्य_nr(dev->bus)) अणु
+			goto out;
+		}
+		if (ret == -EINVAL && !pci_domain_nr(dev->bus)) {
 			map_irq.type = MAP_PIRQ_TYPE_MSI;
 			map_irq.index = -1;
 			map_irq.pirq = -1;
 			map_irq.bus = dev->bus->number;
 			ret = HYPERVISOR_physdev_op(PHYSDEVOP_map_pirq,
 						    &map_irq);
-			अगर (ret != -EINVAL)
+			if (ret != -EINVAL)
 				pci_seg_supported = false;
-		पूर्ण
-		अगर (ret) अणु
+		}
+		if (ret) {
 			dev_warn(&dev->dev, "xen map irq failed %d for %d domain\n",
-				 ret, करोmid);
-			जाओ out;
-		पूर्ण
+				 ret, domid);
+			goto out;
+		}
 
 		ret = xen_bind_pirq_msi_to_irq(dev, msidesc, map_irq.pirq,
 		                               (type == PCI_CAP_ID_MSI) ? nvec : 1,
 		                               (type == PCI_CAP_ID_MSIX) ? "msi-x" : "msi",
-		                               करोmid);
-		अगर (ret < 0)
-			जाओ out;
-	पूर्ण
+		                               domid);
+		if (ret < 0)
+			goto out;
+	}
 	ret = 0;
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम xen_initकरोm_restore_msi_irqs(काष्ठा pci_dev *dev)
-अणु
-	पूर्णांक ret = 0;
+static void xen_initdom_restore_msi_irqs(struct pci_dev *dev)
+{
+	int ret = 0;
 
-	अगर (pci_seg_supported) अणु
-		काष्ठा physdev_pci_device restore_ext;
+	if (pci_seg_supported) {
+		struct physdev_pci_device restore_ext;
 
-		restore_ext.seg = pci_करोमुख्य_nr(dev->bus);
+		restore_ext.seg = pci_domain_nr(dev->bus);
 		restore_ext.bus = dev->bus->number;
 		restore_ext.devfn = dev->devfn;
 		ret = HYPERVISOR_physdev_op(PHYSDEVOP_restore_msi_ext,
 					&restore_ext);
-		अगर (ret == -ENOSYS)
+		if (ret == -ENOSYS)
 			pci_seg_supported = false;
 		WARN(ret && ret != -ENOSYS, "restore_msi_ext -> %d\n", ret);
-	पूर्ण
-	अगर (!pci_seg_supported) अणु
-		काष्ठा physdev_restore_msi restore;
+	}
+	if (!pci_seg_supported) {
+		struct physdev_restore_msi restore;
 
 		restore.bus = dev->bus->number;
 		restore.devfn = dev->devfn;
 		ret = HYPERVISOR_physdev_op(PHYSDEVOP_restore_msi, &restore);
 		WARN(ret && ret != -ENOSYS, "restore_msi -> %d\n", ret);
-	पूर्ण
-पूर्ण
-#अन्यथा /* CONFIG_XEN_DOM0 */
-#घोषणा xen_initकरोm_setup_msi_irqs	शून्य
-#घोषणा xen_initकरोm_restore_msi_irqs	शून्य
-#पूर्ण_अगर /* !CONFIG_XEN_DOM0 */
+	}
+}
+#else /* CONFIG_XEN_DOM0 */
+#define xen_initdom_setup_msi_irqs	NULL
+#define xen_initdom_restore_msi_irqs	NULL
+#endif /* !CONFIG_XEN_DOM0 */
 
-अटल व्योम xen_tearकरोwn_msi_irqs(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा msi_desc *msidesc;
-	पूर्णांक i;
+static void xen_teardown_msi_irqs(struct pci_dev *dev)
+{
+	struct msi_desc *msidesc;
+	int i;
 
-	क्रम_each_pci_msi_entry(msidesc, dev) अणु
-		अगर (msidesc->irq) अणु
-			क्रम (i = 0; i < msidesc->nvec_used; i++)
+	for_each_pci_msi_entry(msidesc, dev) {
+		if (msidesc->irq) {
+			for (i = 0; i < msidesc->nvec_used; i++)
 				xen_destroy_irq(msidesc->irq + i);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम xen_pv_tearकरोwn_msi_irqs(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा msi_desc *msidesc = first_pci_msi_entry(dev);
+static void xen_pv_teardown_msi_irqs(struct pci_dev *dev)
+{
+	struct msi_desc *msidesc = first_pci_msi_entry(dev);
 
-	अगर (msidesc->msi_attrib.is_msix)
+	if (msidesc->msi_attrib.is_msix)
 		xen_pci_frontend_disable_msix(dev);
-	अन्यथा
+	else
 		xen_pci_frontend_disable_msi(dev);
 
-	xen_tearकरोwn_msi_irqs(dev);
-पूर्ण
+	xen_teardown_msi_irqs(dev);
+}
 
-अटल पूर्णांक xen_msi_करोमुख्य_alloc_irqs(काष्ठा irq_करोमुख्य *करोमुख्य,
-				     काष्ठा device *dev,  पूर्णांक nvec)
-अणु
-	पूर्णांक type;
+static int xen_msi_domain_alloc_irqs(struct irq_domain *domain,
+				     struct device *dev,  int nvec)
+{
+	int type;
 
-	अगर (WARN_ON_ONCE(!dev_is_pci(dev)))
-		वापस -EINVAL;
+	if (WARN_ON_ONCE(!dev_is_pci(dev)))
+		return -EINVAL;
 
-	अगर (first_msi_entry(dev)->msi_attrib.is_msix)
+	if (first_msi_entry(dev)->msi_attrib.is_msix)
 		type = PCI_CAP_ID_MSIX;
-	अन्यथा
+	else
 		type = PCI_CAP_ID_MSI;
 
-	वापस xen_msi_ops.setup_msi_irqs(to_pci_dev(dev), nvec, type);
-पूर्ण
+	return xen_msi_ops.setup_msi_irqs(to_pci_dev(dev), nvec, type);
+}
 
-अटल व्योम xen_msi_करोमुख्य_मुक्त_irqs(काष्ठा irq_करोमुख्य *करोमुख्य,
-				     काष्ठा device *dev)
-अणु
-	अगर (WARN_ON_ONCE(!dev_is_pci(dev)))
-		वापस;
+static void xen_msi_domain_free_irqs(struct irq_domain *domain,
+				     struct device *dev)
+{
+	if (WARN_ON_ONCE(!dev_is_pci(dev)))
+		return;
 
-	xen_msi_ops.tearकरोwn_msi_irqs(to_pci_dev(dev));
-पूर्ण
+	xen_msi_ops.teardown_msi_irqs(to_pci_dev(dev));
+}
 
-अटल काष्ठा msi_करोमुख्य_ops xen_pci_msi_करोमुख्य_ops = अणु
-	.करोमुख्य_alloc_irqs	= xen_msi_करोमुख्य_alloc_irqs,
-	.करोमुख्य_मुक्त_irqs	= xen_msi_करोमुख्य_मुक्त_irqs,
-पूर्ण;
+static struct msi_domain_ops xen_pci_msi_domain_ops = {
+	.domain_alloc_irqs	= xen_msi_domain_alloc_irqs,
+	.domain_free_irqs	= xen_msi_domain_free_irqs,
+};
 
-अटल काष्ठा msi_करोमुख्य_info xen_pci_msi_करोमुख्य_info = अणु
-	.ops			= &xen_pci_msi_करोमुख्य_ops,
-पूर्ण;
+static struct msi_domain_info xen_pci_msi_domain_info = {
+	.ops			= &xen_pci_msi_domain_ops,
+};
 
 /*
- * This irq करोमुख्य is a blatant violation of the irq करोमुख्य design, but
- * distangling XEN पूर्णांकo real irq करोमुख्यs is not a job क्रम mere mortals with
- * limited XENology. But it's the least dangerous way क्रम a mere mortal to
+ * This irq domain is a blatant violation of the irq domain design, but
+ * distangling XEN into real irq domains is not a job for mere mortals with
+ * limited XENology. But it's the least dangerous way for a mere mortal to
  * get rid of the arch_*_msi_irqs() hackery in order to store the irq
- * करोमुख्य poपूर्णांकer in काष्ठा device. This irq करोमुख्य wrappery allows to करो
- * that without अवरोधing XEN terminally.
+ * domain pointer in struct device. This irq domain wrappery allows to do
+ * that without breaking XEN terminally.
  */
-अटल __init काष्ठा irq_करोमुख्य *xen_create_pci_msi_करोमुख्य(व्योम)
-अणु
-	काष्ठा irq_करोमुख्य *d = शून्य;
-	काष्ठा fwnode_handle *fn;
+static __init struct irq_domain *xen_create_pci_msi_domain(void)
+{
+	struct irq_domain *d = NULL;
+	struct fwnode_handle *fn;
 
-	fn = irq_करोमुख्य_alloc_named_fwnode("XEN-MSI");
-	अगर (fn)
-		d = msi_create_irq_करोमुख्य(fn, &xen_pci_msi_करोमुख्य_info, शून्य);
+	fn = irq_domain_alloc_named_fwnode("XEN-MSI");
+	if (fn)
+		d = msi_create_irq_domain(fn, &xen_pci_msi_domain_info, NULL);
 
-	/* FIXME: No idea how to survive अगर this fails */
+	/* FIXME: No idea how to survive if this fails */
 	BUG_ON(!d);
 
-	वापस d;
-पूर्ण
+	return d;
+}
 
-अटल __init व्योम xen_setup_pci_msi(व्योम)
-अणु
-	अगर (xen_pv_करोमुख्य()) अणु
-		अगर (xen_initial_करोमुख्य()) अणु
-			xen_msi_ops.setup_msi_irqs = xen_initकरोm_setup_msi_irqs;
-			x86_msi.restore_msi_irqs = xen_initकरोm_restore_msi_irqs;
-		पूर्ण अन्यथा अणु
+static __init void xen_setup_pci_msi(void)
+{
+	if (xen_pv_domain()) {
+		if (xen_initial_domain()) {
+			xen_msi_ops.setup_msi_irqs = xen_initdom_setup_msi_irqs;
+			x86_msi.restore_msi_irqs = xen_initdom_restore_msi_irqs;
+		} else {
 			xen_msi_ops.setup_msi_irqs = xen_setup_msi_irqs;
-		पूर्ण
-		xen_msi_ops.tearकरोwn_msi_irqs = xen_pv_tearकरोwn_msi_irqs;
+		}
+		xen_msi_ops.teardown_msi_irqs = xen_pv_teardown_msi_irqs;
 		pci_msi_ignore_mask = 1;
-	पूर्ण अन्यथा अगर (xen_hvm_करोमुख्य()) अणु
+	} else if (xen_hvm_domain()) {
 		xen_msi_ops.setup_msi_irqs = xen_hvm_setup_msi_irqs;
-		xen_msi_ops.tearकरोwn_msi_irqs = xen_tearकरोwn_msi_irqs;
-	पूर्ण अन्यथा अणु
+		xen_msi_ops.teardown_msi_irqs = xen_teardown_msi_irqs;
+	} else {
 		WARN_ON_ONCE(1);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
-	 * Override the PCI/MSI irq करोमुख्य init function. No poपूर्णांक
-	 * in allocating the native करोमुख्य and never use it.
+	 * Override the PCI/MSI irq domain init function. No point
+	 * in allocating the native domain and never use it.
 	 */
-	x86_init.irqs.create_pci_msi_करोमुख्य = xen_create_pci_msi_करोमुख्य;
-पूर्ण
+	x86_init.irqs.create_pci_msi_domain = xen_create_pci_msi_domain;
+}
 
-#अन्यथा /* CONFIG_PCI_MSI */
-अटल अंतरभूत व्योम xen_setup_pci_msi(व्योम) अणु पूर्ण
-#पूर्ण_अगर /* CONFIG_PCI_MSI */
+#else /* CONFIG_PCI_MSI */
+static inline void xen_setup_pci_msi(void) { }
+#endif /* CONFIG_PCI_MSI */
 
-पूर्णांक __init pci_xen_init(व्योम)
-अणु
-	अगर (!xen_pv_करोमुख्य() || xen_initial_करोमुख्य())
-		वापस -ENODEV;
+int __init pci_xen_init(void)
+{
+	if (!xen_pv_domain() || xen_initial_domain())
+		return -ENODEV;
 
-	prपूर्णांकk(KERN_INFO "PCI: setting up Xen PCI frontend stub\n");
+	printk(KERN_INFO "PCI: setting up Xen PCI frontend stub\n");
 
 	pcibios_set_cache_line_size();
 
-	pcibios_enable_irq = xen_pcअगरront_enable_irq;
-	pcibios_disable_irq = शून्य;
+	pcibios_enable_irq = xen_pcifront_enable_irq;
+	pcibios_disable_irq = NULL;
 
 	/* Keep ACPI out of the picture */
 	acpi_noirq_set();
 
 	xen_setup_pci_msi();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PCI_MSI
-अटल व्योम __init xen_hvm_msi_init(व्योम)
-अणु
-	अगर (!disable_apic) अणु
+#ifdef CONFIG_PCI_MSI
+static void __init xen_hvm_msi_init(void)
+{
+	if (!disable_apic) {
 		/*
-		 * If hardware supports (x2)APIC भवization (as indicated
+		 * If hardware supports (x2)APIC virtualization (as indicated
 		 * by hypervisor's leaf 4) then we don't need to use pirqs/
-		 * event channels क्रम MSI handling and instead use regular
+		 * event channels for MSI handling and instead use regular
 		 * APIC processing
 		 */
-		uपूर्णांक32_t eax = cpuid_eax(xen_cpuid_base() + 4);
+		uint32_t eax = cpuid_eax(xen_cpuid_base() + 4);
 
-		अगर (((eax & XEN_HVM_CPUID_X2APIC_VIRT) && x2apic_mode) ||
+		if (((eax & XEN_HVM_CPUID_X2APIC_VIRT) && x2apic_mode) ||
 		    ((eax & XEN_HVM_CPUID_APIC_ACCESS_VIRT) && boot_cpu_has(X86_FEATURE_APIC)))
-			वापस;
-	पूर्ण
+			return;
+	}
 	xen_setup_pci_msi();
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-पूर्णांक __init pci_xen_hvm_init(व्योम)
-अणु
-	अगर (!xen_have_vector_callback || !xen_feature(XENFEAT_hvm_pirqs))
-		वापस 0;
+int __init pci_xen_hvm_init(void)
+{
+	if (!xen_have_vector_callback || !xen_feature(XENFEAT_hvm_pirqs))
+		return 0;
 
-#अगर_घोषित CONFIG_ACPI
+#ifdef CONFIG_ACPI
 	/*
-	 * We करोn't want to change the actual ACPI delivery model,
-	 * just how GSIs get रेजिस्टरed.
+	 * We don't want to change the actual ACPI delivery model,
+	 * just how GSIs get registered.
 	 */
-	__acpi_रेजिस्टर_gsi = acpi_रेजिस्टर_gsi_xen_hvm;
-	__acpi_unरेजिस्टर_gsi = शून्य;
-#पूर्ण_अगर
+	__acpi_register_gsi = acpi_register_gsi_xen_hvm;
+	__acpi_unregister_gsi = NULL;
+#endif
 
-#अगर_घोषित CONFIG_PCI_MSI
+#ifdef CONFIG_PCI_MSI
 	/*
-	 * We need to रुको until after x2apic is initialized
-	 * beक्रमe we can set MSI IRQ ops.
+	 * We need to wait until after x2apic is initialized
+	 * before we can set MSI IRQ ops.
 	 */
-	x86_platक्रमm.apic_post_init = xen_hvm_msi_init;
-#पूर्ण_अगर
-	वापस 0;
-पूर्ण
+	x86_platform.apic_post_init = xen_hvm_msi_init;
+#endif
+	return 0;
+}
 
-#अगर_घोषित CONFIG_XEN_DOM0
-पूर्णांक __init pci_xen_initial_करोमुख्य(व्योम)
-अणु
-	पूर्णांक irq;
+#ifdef CONFIG_XEN_DOM0
+int __init pci_xen_initial_domain(void)
+{
+	int irq;
 
 	xen_setup_pci_msi();
-	__acpi_रेजिस्टर_gsi = acpi_रेजिस्टर_gsi_xen;
-	__acpi_unरेजिस्टर_gsi = शून्य;
+	__acpi_register_gsi = acpi_register_gsi_xen;
+	__acpi_unregister_gsi = NULL;
 	/*
 	 * Pre-allocate the legacy IRQs.  Use NR_LEGACY_IRQS here
-	 * because we करोn't have a PIC and thus nr_legacy_irqs() is zero.
+	 * because we don't have a PIC and thus nr_legacy_irqs() is zero.
 	 */
-	क्रम (irq = 0; irq < NR_IRQS_LEGACY; irq++) अणु
-		पूर्णांक trigger, polarity;
+	for (irq = 0; irq < NR_IRQS_LEGACY; irq++) {
+		int trigger, polarity;
 
-		अगर (acpi_get_override_irq(irq, &trigger, &polarity) == -1)
-			जारी;
+		if (acpi_get_override_irq(irq, &trigger, &polarity) == -1)
+			continue;
 
-		xen_रेजिस्टर_pirq(irq,
+		xen_register_pirq(irq,
 			trigger ? ACPI_LEVEL_SENSITIVE : ACPI_EDGE_SENSITIVE,
 			true /* Map GSI to PIRQ */);
-	पूर्ण
-	अगर (0 == nr_ioapics) अणु
-		क्रम (irq = 0; irq < nr_legacy_irqs(); irq++)
+	}
+	if (0 == nr_ioapics) {
+		for (irq = 0; irq < nr_legacy_irqs(); irq++)
 			xen_bind_pirq_gsi_to_irq(irq, irq, 0, "xt-pic");
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-काष्ठा xen_device_करोमुख्य_owner अणु
-	करोmid_t करोमुख्य;
-	काष्ठा pci_dev *dev;
-	काष्ठा list_head list;
-पूर्ण;
+struct xen_device_domain_owner {
+	domid_t domain;
+	struct pci_dev *dev;
+	struct list_head list;
+};
 
-अटल DEFINE_SPINLOCK(dev_करोमुख्य_list_spinlock);
-अटल काष्ठा list_head dev_करोमुख्य_list = LIST_HEAD_INIT(dev_करोमुख्य_list);
+static DEFINE_SPINLOCK(dev_domain_list_spinlock);
+static struct list_head dev_domain_list = LIST_HEAD_INIT(dev_domain_list);
 
-अटल काष्ठा xen_device_करोमुख्य_owner *find_device(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा xen_device_करोमुख्य_owner *owner;
+static struct xen_device_domain_owner *find_device(struct pci_dev *dev)
+{
+	struct xen_device_domain_owner *owner;
 
-	list_क्रम_each_entry(owner, &dev_करोमुख्य_list, list) अणु
-		अगर (owner->dev == dev)
-			वापस owner;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	list_for_each_entry(owner, &dev_domain_list, list) {
+		if (owner->dev == dev)
+			return owner;
+	}
+	return NULL;
+}
 
-पूर्णांक xen_find_device_करोमुख्य_owner(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा xen_device_करोमुख्य_owner *owner;
-	पूर्णांक करोमुख्य = -ENODEV;
+int xen_find_device_domain_owner(struct pci_dev *dev)
+{
+	struct xen_device_domain_owner *owner;
+	int domain = -ENODEV;
 
-	spin_lock(&dev_करोमुख्य_list_spinlock);
+	spin_lock(&dev_domain_list_spinlock);
 	owner = find_device(dev);
-	अगर (owner)
-		करोमुख्य = owner->करोमुख्य;
-	spin_unlock(&dev_करोमुख्य_list_spinlock);
-	वापस करोमुख्य;
-पूर्ण
-EXPORT_SYMBOL_GPL(xen_find_device_करोमुख्य_owner);
+	if (owner)
+		domain = owner->domain;
+	spin_unlock(&dev_domain_list_spinlock);
+	return domain;
+}
+EXPORT_SYMBOL_GPL(xen_find_device_domain_owner);
 
-पूर्णांक xen_रेजिस्टर_device_करोमुख्य_owner(काष्ठा pci_dev *dev, uपूर्णांक16_t करोमुख्य)
-अणु
-	काष्ठा xen_device_करोमुख्य_owner *owner;
+int xen_register_device_domain_owner(struct pci_dev *dev, uint16_t domain)
+{
+	struct xen_device_domain_owner *owner;
 
-	owner = kzalloc(माप(काष्ठा xen_device_करोमुख्य_owner), GFP_KERNEL);
-	अगर (!owner)
-		वापस -ENODEV;
+	owner = kzalloc(sizeof(struct xen_device_domain_owner), GFP_KERNEL);
+	if (!owner)
+		return -ENODEV;
 
-	spin_lock(&dev_करोमुख्य_list_spinlock);
-	अगर (find_device(dev)) अणु
-		spin_unlock(&dev_करोमुख्य_list_spinlock);
-		kमुक्त(owner);
-		वापस -EEXIST;
-	पूर्ण
-	owner->करोमुख्य = करोमुख्य;
+	spin_lock(&dev_domain_list_spinlock);
+	if (find_device(dev)) {
+		spin_unlock(&dev_domain_list_spinlock);
+		kfree(owner);
+		return -EEXIST;
+	}
+	owner->domain = domain;
 	owner->dev = dev;
-	list_add_tail(&owner->list, &dev_करोमुख्य_list);
-	spin_unlock(&dev_करोमुख्य_list_spinlock);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(xen_रेजिस्टर_device_करोमुख्य_owner);
+	list_add_tail(&owner->list, &dev_domain_list);
+	spin_unlock(&dev_domain_list_spinlock);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(xen_register_device_domain_owner);
 
-पूर्णांक xen_unरेजिस्टर_device_करोमुख्य_owner(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा xen_device_करोमुख्य_owner *owner;
+int xen_unregister_device_domain_owner(struct pci_dev *dev)
+{
+	struct xen_device_domain_owner *owner;
 
-	spin_lock(&dev_करोमुख्य_list_spinlock);
+	spin_lock(&dev_domain_list_spinlock);
 	owner = find_device(dev);
-	अगर (!owner) अणु
-		spin_unlock(&dev_करोमुख्य_list_spinlock);
-		वापस -ENODEV;
-	पूर्ण
+	if (!owner) {
+		spin_unlock(&dev_domain_list_spinlock);
+		return -ENODEV;
+	}
 	list_del(&owner->list);
-	spin_unlock(&dev_करोमुख्य_list_spinlock);
-	kमुक्त(owner);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(xen_unरेजिस्टर_device_करोमुख्य_owner);
-#पूर्ण_अगर
+	spin_unlock(&dev_domain_list_spinlock);
+	kfree(owner);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(xen_unregister_device_domain_owner);
+#endif

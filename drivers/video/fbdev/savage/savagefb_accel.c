@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*-*- linux-c -*-
  *  linux/drivers/video/savage/savage_accel.c -- Hardware Acceleration
  *
@@ -6,75 +5,75 @@
  *      All Rights Reserved
  *
  *  This file is subject to the terms and conditions of the GNU General Public
- *  License. See the file COPYING in the मुख्य directory of this archive क्रम
+ *  License. See the file COPYING in the main directory of this archive for
  *  more details.
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/fb.h>
-#समावेश <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/string.h>
+#include <linux/fb.h>
+#include <linux/module.h>
 
-#समावेश "savagefb.h"
+#include "savagefb.h"
 
-अटल u32 savagefb_rop[] = अणु
+static u32 savagefb_rop[] = {
 	0xCC, /* ROP_COPY */
 	0x5A  /* ROP_XOR  */
-पूर्ण;
+};
 
-पूर्णांक savagefb_sync(काष्ठा fb_info *info)
-अणु
-	काष्ठा savagefb_par *par = info->par;
+int savagefb_sync(struct fb_info *info)
+{
+	struct savagefb_par *par = info->par;
 
 	par->SavageWaitIdle(par);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम savagefb_copyarea(काष्ठा fb_info *info, स्थिर काष्ठा fb_copyarea *region)
-अणु
-	काष्ठा savagefb_par *par = info->par;
-	पूर्णांक sx = region->sx, dx = region->dx;
-	पूर्णांक sy = region->sy, dy = region->dy;
-	पूर्णांक cmd;
+void savagefb_copyarea(struct fb_info *info, const struct fb_copyarea *region)
+{
+	struct savagefb_par *par = info->par;
+	int sx = region->sx, dx = region->dx;
+	int sy = region->sy, dy = region->dy;
+	int cmd;
 
-	अगर (!region->width || !region->height)
-		वापस;
+	if (!region->width || !region->height)
+		return;
 	par->bci_ptr = 0;
 	cmd = BCI_CMD_RECT | BCI_CMD_DEST_GBD | BCI_CMD_SRC_GBD;
 	BCI_CMD_SET_ROP(cmd, savagefb_rop[0]);
 
-	अगर (dx <= sx) अणु
+	if (dx <= sx) {
 		cmd |= BCI_CMD_RECT_XP;
-	पूर्ण अन्यथा अणु
+	} else {
 		sx += region->width - 1;
 		dx += region->width - 1;
-	पूर्ण
+	}
 
-	अगर (dy <= sy) अणु
+	if (dy <= sy) {
 		cmd |= BCI_CMD_RECT_YP;
-	पूर्ण अन्यथा अणु
+	} else {
 		sy += region->height - 1;
 		dy += region->height - 1;
-	पूर्ण
+	}
 
-	par->SavageWaitFअगरo(par,4);
+	par->SavageWaitFifo(par,4);
 	BCI_SEND(cmd);
 	BCI_SEND(BCI_X_Y(sx, sy));
 	BCI_SEND(BCI_X_Y(dx, dy));
 	BCI_SEND(BCI_W_H(region->width, region->height));
-पूर्ण
+}
 
-व्योम savagefb_fillrect(काष्ठा fb_info *info, स्थिर काष्ठा fb_fillrect *rect)
-अणु
-	काष्ठा savagefb_par *par = info->par;
-	पूर्णांक cmd, color;
+void savagefb_fillrect(struct fb_info *info, const struct fb_fillrect *rect)
+{
+	struct savagefb_par *par = info->par;
+	int cmd, color;
 
-	अगर (!rect->width || !rect->height)
-		वापस;
+	if (!rect->width || !rect->height)
+		return;
 
-	अगर (info->fix.visual == FB_VISUAL_PSEUDOCOLOR)
+	if (info->fix.visual == FB_VISUAL_PSEUDOCOLOR)
 		color = rect->color;
-	अन्यथा
-		color = ((u32 *)info->pseuकरो_palette)[rect->color];
+	else
+		color = ((u32 *)info->pseudo_palette)[rect->color];
 
 	cmd = BCI_CMD_RECT | BCI_CMD_RECT_XP | BCI_CMD_RECT_YP |
 	      BCI_CMD_DEST_GBD | BCI_CMD_SRC_SOLID |
@@ -83,35 +82,35 @@
 	par->bci_ptr = 0;
 	BCI_CMD_SET_ROP(cmd, savagefb_rop[rect->rop]);
 
-	par->SavageWaitFअगरo(par,4);
+	par->SavageWaitFifo(par,4);
 	BCI_SEND(cmd);
 	BCI_SEND(color);
 	BCI_SEND( BCI_X_Y(rect->dx, rect->dy) );
 	BCI_SEND( BCI_W_H(rect->width, rect->height) );
-पूर्ण
+}
 
-व्योम savagefb_imageblit(काष्ठा fb_info *info, स्थिर काष्ठा fb_image *image)
-अणु
-	काष्ठा savagefb_par *par = info->par;
-	पूर्णांक fg, bg, size, i, width;
-	पूर्णांक cmd;
+void savagefb_imageblit(struct fb_info *info, const struct fb_image *image)
+{
+	struct savagefb_par *par = info->par;
+	int fg, bg, size, i, width;
+	int cmd;
 	u32 *src = (u32 *) image->data;
 
-	अगर (!image->width || !image->height)
-		वापस;
+	if (!image->width || !image->height)
+		return;
 
-	अगर (image->depth != 1) अणु
+	if (image->depth != 1) {
 		cfb_imageblit(info, image);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (info->fix.visual == FB_VISUAL_PSEUDOCOLOR) अणु
+	if (info->fix.visual == FB_VISUAL_PSEUDOCOLOR) {
 		fg = image->fg_color;
 		bg = image->bg_color;
-	पूर्ण अन्यथा अणु
-		fg = ((u32 *)info->pseuकरो_palette)[image->fg_color];
-		bg = ((u32 *)info->pseuकरो_palette)[image->bg_color];
-	पूर्ण
+	} else {
+		fg = ((u32 *)info->pseudo_palette)[image->fg_color];
+		bg = ((u32 *)info->pseudo_palette)[image->bg_color];
+	}
 
 	cmd = BCI_CMD_RECT | BCI_CMD_RECT_XP | BCI_CMD_RECT_YP |
 	      BCI_CMD_CLIP_LR | BCI_CMD_DEST_GBD | BCI_CMD_SRC_MONO |
@@ -124,15 +123,15 @@
 	size = (width * image->height)/8;
 	size >>= 2;
 
-	par->SavageWaitFअगरo(par, size + 5);
+	par->SavageWaitFifo(par, size + 5);
 	BCI_SEND(cmd);
 	BCI_SEND(BCI_CLIP_LR(image->dx, image->dx + image->width - 1));
 	BCI_SEND(fg);
 	BCI_SEND(bg);
 	BCI_SEND(BCI_X_Y(image->dx, image->dy));
 	BCI_SEND(BCI_W_H(width, image->height));
-	क्रम (i = 0; i < size; i++)
+	for (i = 0; i < size; i++)
 		BCI_SEND(src[i]);
-पूर्ण
+}
 
 MODULE_LICENSE("GPL");

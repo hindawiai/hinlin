@@ -1,19 +1,18 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * NSC/Cyrix CPU indexed रेजिस्टर access. Must be अंतरभूतd instead of
+ * NSC/Cyrix CPU indexed register access. Must be inlined instead of
  * macros to ensure correct access ordering
  * Access order is always 0x22 (=offset), 0x23 (=value)
  */
 
-अटल अंतरभूत u8 getCx86(u8 reg)
-अणु
+static inline u8 getCx86(u8 reg)
+{
 	outb(reg, 0x22);
-	वापस inb(0x23);
-पूर्ण
+	return inb(0x23);
+}
 
-अटल अंतरभूत व्योम setCx86(u8 reg, u8 data)
-अणु
+static inline void setCx86(u8 reg, u8 data)
+{
 	outb(reg, 0x22);
 	outb(data, 0x23);
-पूर्ण
+}

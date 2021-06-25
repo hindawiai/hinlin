@@ -1,738 +1,737 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Debugfs पूर्णांकerface
+ * Debugfs interface
  *
  * Copyright (C) 2020, Intel Corporation
- * Authors: Gil Fine <gil.fine@पूर्णांकel.com>
- *	    Mika Westerberg <mika.westerberg@linux.पूर्णांकel.com>
+ * Authors: Gil Fine <gil.fine@intel.com>
+ *	    Mika Westerberg <mika.westerberg@linux.intel.com>
  */
 
-#समावेश <linux/debugfs.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/uaccess.h>
+#include <linux/debugfs.h>
+#include <linux/pm_runtime.h>
+#include <linux/uaccess.h>
 
-#समावेश "tb.h"
+#include "tb.h"
 
-#घोषणा PORT_CAP_PCIE_LEN	1
-#घोषणा PORT_CAP_POWER_LEN	2
-#घोषणा PORT_CAP_LANE_LEN	3
-#घोषणा PORT_CAP_USB3_LEN	5
-#घोषणा PORT_CAP_DP_LEN		8
-#घोषणा PORT_CAP_TMU_LEN	8
-#घोषणा PORT_CAP_BASIC_LEN	9
-#घोषणा PORT_CAP_USB4_LEN	20
+#define PORT_CAP_PCIE_LEN	1
+#define PORT_CAP_POWER_LEN	2
+#define PORT_CAP_LANE_LEN	3
+#define PORT_CAP_USB3_LEN	5
+#define PORT_CAP_DP_LEN		8
+#define PORT_CAP_TMU_LEN	8
+#define PORT_CAP_BASIC_LEN	9
+#define PORT_CAP_USB4_LEN	20
 
-#घोषणा SWITCH_CAP_TMU_LEN	26
-#घोषणा SWITCH_CAP_BASIC_LEN	27
+#define SWITCH_CAP_TMU_LEN	26
+#define SWITCH_CAP_BASIC_LEN	27
 
-#घोषणा PATH_LEN		2
+#define PATH_LEN		2
 
-#घोषणा COUNTER_SET_LEN		3
+#define COUNTER_SET_LEN		3
 
-#घोषणा DEBUGFS_ATTR(__space, __ग_लिखो)					\
-अटल पूर्णांक __space ## _खोलो(काष्ठा inode *inode, काष्ठा file *file)	\
-अणु									\
-	वापस single_खोलो(file, __space ## _show, inode->i_निजी);	\
-पूर्ण									\
+#define DEBUGFS_ATTR(__space, __write)					\
+static int __space ## _open(struct inode *inode, struct file *file)	\
+{									\
+	return single_open(file, __space ## _show, inode->i_private);	\
+}									\
 									\
-अटल स्थिर काष्ठा file_operations __space ## _fops = अणु		\
+static const struct file_operations __space ## _fops = {		\
 	.owner = THIS_MODULE,						\
-	.खोलो = __space ## _खोलो,					\
+	.open = __space ## _open,					\
 	.release = single_release,					\
-	.पढ़ो  = seq_पढ़ो,						\
-	.ग_लिखो = __ग_लिखो,						\
+	.read  = seq_read,						\
+	.write = __write,						\
 	.llseek = seq_lseek,						\
-पूर्ण
+}
 
-#घोषणा DEBUGFS_ATTR_RO(__space)					\
-	DEBUGFS_ATTR(__space, शून्य)
+#define DEBUGFS_ATTR_RO(__space)					\
+	DEBUGFS_ATTR(__space, NULL)
 
-#घोषणा DEBUGFS_ATTR_RW(__space)					\
-	DEBUGFS_ATTR(__space, __space ## _ग_लिखो)
+#define DEBUGFS_ATTR_RW(__space)					\
+	DEBUGFS_ATTR(__space, __space ## _write)
 
-अटल काष्ठा dentry *tb_debugfs_root;
+static struct dentry *tb_debugfs_root;
 
-अटल व्योम *validate_and_copy_from_user(स्थिर व्योम __user *user_buf,
-					 माप_प्रकार *count)
-अणु
-	माप_प्रकार nbytes;
-	व्योम *buf;
+static void *validate_and_copy_from_user(const void __user *user_buf,
+					 size_t *count)
+{
+	size_t nbytes;
+	void *buf;
 
-	अगर (!*count)
-		वापस ERR_PTR(-EINVAL);
+	if (!*count)
+		return ERR_PTR(-EINVAL);
 
-	अगर (!access_ok(user_buf, *count))
-		वापस ERR_PTR(-EFAULT);
+	if (!access_ok(user_buf, *count))
+		return ERR_PTR(-EFAULT);
 
-	buf = (व्योम *)get_zeroed_page(GFP_KERNEL);
-	अगर (!buf)
-		वापस ERR_PTR(-ENOMEM);
+	buf = (void *)get_zeroed_page(GFP_KERNEL);
+	if (!buf)
+		return ERR_PTR(-ENOMEM);
 
-	nbytes = min_t(माप_प्रकार, *count, PAGE_SIZE);
-	अगर (copy_from_user(buf, user_buf, nbytes)) अणु
-		मुक्त_page((अचिन्हित दीर्घ)buf);
-		वापस ERR_PTR(-EFAULT);
-	पूर्ण
+	nbytes = min_t(size_t, *count, PAGE_SIZE);
+	if (copy_from_user(buf, user_buf, nbytes)) {
+		free_page((unsigned long)buf);
+		return ERR_PTR(-EFAULT);
+	}
 
 	*count = nbytes;
-	वापस buf;
-पूर्ण
+	return buf;
+}
 
-अटल bool parse_line(अक्षर **line, u32 *offs, u32 *val, पूर्णांक लघु_fmt_len,
-		       पूर्णांक दीर्घ_fmt_len)
-अणु
-	अक्षर *token;
+static bool parse_line(char **line, u32 *offs, u32 *val, int short_fmt_len,
+		       int long_fmt_len)
+{
+	char *token;
 	u32 v[5];
-	पूर्णांक ret;
+	int ret;
 
 	token = strsep(line, "\n");
-	अगर (!token)
-		वापस false;
+	if (!token)
+		return false;
 
 	/*
 	 * For Adapter/Router configuration space:
-	 * Short क्रमmat is: offset value\न
+	 * Short format is: offset value\n
 	 *		    v[0]   v[1]
-	 * Long क्रमmat as produced from the पढ़ो side:
-	 * offset relative_offset cap_id vs_cap_id value\न
+	 * Long format as produced from the read side:
+	 * offset relative_offset cap_id vs_cap_id value\n
 	 * v[0]   v[1]            v[2]   v[3]      v[4]
 	 *
 	 * For Counter configuration space:
-	 * Short क्रमmat is: offset\न
+	 * Short format is: offset\n
 	 *		    v[0]
-	 * Long क्रमmat as produced from the पढ़ो side:
-	 * offset relative_offset counter_id value\न
+	 * Long format as produced from the read side:
+	 * offset relative_offset counter_id value\n
 	 * v[0]   v[1]            v[2]       v[3]
 	 */
-	ret = माला_पूछो(token, "%i %i %i %i %i", &v[0], &v[1], &v[2], &v[3], &v[4]);
-	/* In हाल of Counters, clear counter, "val" content is NA */
-	अगर (ret == लघु_fmt_len) अणु
+	ret = sscanf(token, "%i %i %i %i %i", &v[0], &v[1], &v[2], &v[3], &v[4]);
+	/* In case of Counters, clear counter, "val" content is NA */
+	if (ret == short_fmt_len) {
 		*offs = v[0];
-		*val = v[लघु_fmt_len - 1];
-		वापस true;
-	पूर्ण अन्यथा अगर (ret == दीर्घ_fmt_len) अणु
+		*val = v[short_fmt_len - 1];
+		return true;
+	} else if (ret == long_fmt_len) {
 		*offs = v[0];
-		*val = v[दीर्घ_fmt_len - 1];
-		वापस true;
-	पूर्ण
+		*val = v[long_fmt_len - 1];
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-#अगर IS_ENABLED(CONFIG_USB4_DEBUGFS_WRITE)
-अटल sमाप_प्रकार regs_ग_लिखो(काष्ठा tb_चयन *sw, काष्ठा tb_port *port,
-			  स्थिर अक्षर __user *user_buf, माप_प्रकार count,
+#if IS_ENABLED(CONFIG_USB4_DEBUGFS_WRITE)
+static ssize_t regs_write(struct tb_switch *sw, struct tb_port *port,
+			  const char __user *user_buf, size_t count,
 			  loff_t *ppos)
-अणु
-	काष्ठा tb *tb = sw->tb;
-	अक्षर *line, *buf;
+{
+	struct tb *tb = sw->tb;
+	char *line, *buf;
 	u32 val, offset;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	buf = validate_and_copy_from_user(user_buf, &count);
-	अगर (IS_ERR(buf))
-		वापस PTR_ERR(buf);
+	if (IS_ERR(buf))
+		return PTR_ERR(buf);
 
-	pm_runसमय_get_sync(&sw->dev);
+	pm_runtime_get_sync(&sw->dev);
 
-	अगर (mutex_lock_पूर्णांकerruptible(&tb->lock)) अणु
+	if (mutex_lock_interruptible(&tb->lock)) {
 		ret = -ERESTARTSYS;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* User did hardware changes behind the driver's back */
-	add_taपूर्णांक(TAINT_USER, LOCKDEP_STILL_OK);
+	add_taint(TAINT_USER, LOCKDEP_STILL_OK);
 
 	line = buf;
-	जबतक (parse_line(&line, &offset, &val, 2, 5)) अणु
-		अगर (port)
-			ret = tb_port_ग_लिखो(port, &val, TB_CFG_PORT, offset, 1);
-		अन्यथा
-			ret = tb_sw_ग_लिखो(sw, &val, TB_CFG_SWITCH, offset, 1);
-		अगर (ret)
-			अवरोध;
-	पूर्ण
+	while (parse_line(&line, &offset, &val, 2, 5)) {
+		if (port)
+			ret = tb_port_write(port, &val, TB_CFG_PORT, offset, 1);
+		else
+			ret = tb_sw_write(sw, &val, TB_CFG_SWITCH, offset, 1);
+		if (ret)
+			break;
+	}
 
 	mutex_unlock(&tb->lock);
 
 out:
-	pm_runसमय_mark_last_busy(&sw->dev);
-	pm_runसमय_put_स्वतःsuspend(&sw->dev);
-	मुक्त_page((अचिन्हित दीर्घ)buf);
+	pm_runtime_mark_last_busy(&sw->dev);
+	pm_runtime_put_autosuspend(&sw->dev);
+	free_page((unsigned long)buf);
 
-	वापस ret < 0 ? ret : count;
-पूर्ण
+	return ret < 0 ? ret : count;
+}
 
-अटल sमाप_प्रकार port_regs_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *user_buf,
-			       माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा seq_file *s = file->निजी_data;
-	काष्ठा tb_port *port = s->निजी;
+static ssize_t port_regs_write(struct file *file, const char __user *user_buf,
+			       size_t count, loff_t *ppos)
+{
+	struct seq_file *s = file->private_data;
+	struct tb_port *port = s->private;
 
-	वापस regs_ग_लिखो(port->sw, port, user_buf, count, ppos);
-पूर्ण
+	return regs_write(port->sw, port, user_buf, count, ppos);
+}
 
-अटल sमाप_प्रकार चयन_regs_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *user_buf,
-				 माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा seq_file *s = file->निजी_data;
-	काष्ठा tb_चयन *sw = s->निजी;
+static ssize_t switch_regs_write(struct file *file, const char __user *user_buf,
+				 size_t count, loff_t *ppos)
+{
+	struct seq_file *s = file->private_data;
+	struct tb_switch *sw = s->private;
 
-	वापस regs_ग_लिखो(sw, शून्य, user_buf, count, ppos);
-पूर्ण
-#घोषणा DEBUGFS_MODE		0600
-#अन्यथा
-#घोषणा port_regs_ग_लिखो		शून्य
-#घोषणा चयन_regs_ग_लिखो	शून्य
-#घोषणा DEBUGFS_MODE		0400
-#पूर्ण_अगर
+	return regs_write(sw, NULL, user_buf, count, ppos);
+}
+#define DEBUGFS_MODE		0600
+#else
+#define port_regs_write		NULL
+#define switch_regs_write	NULL
+#define DEBUGFS_MODE		0400
+#endif
 
-अटल पूर्णांक port_clear_all_counters(काष्ठा tb_port *port)
-अणु
+static int port_clear_all_counters(struct tb_port *port)
+{
 	u32 *buf;
-	पूर्णांक ret;
+	int ret;
 
-	buf = kसुस्मृति(COUNTER_SET_LEN * port->config.max_counters, माप(u32),
+	buf = kcalloc(COUNTER_SET_LEN * port->config.max_counters, sizeof(u32),
 		      GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	if (!buf)
+		return -ENOMEM;
 
-	ret = tb_port_ग_लिखो(port, buf, TB_CFG_COUNTERS, 0,
+	ret = tb_port_write(port, buf, TB_CFG_COUNTERS, 0,
 			    COUNTER_SET_LEN * port->config.max_counters);
-	kमुक्त(buf);
+	kfree(buf);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार counters_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *user_buf,
-			      माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा seq_file *s = file->निजी_data;
-	काष्ठा tb_port *port = s->निजी;
-	काष्ठा tb_चयन *sw = port->sw;
-	काष्ठा tb *tb = port->sw->tb;
-	अक्षर *buf;
-	पूर्णांक ret;
+static ssize_t counters_write(struct file *file, const char __user *user_buf,
+			      size_t count, loff_t *ppos)
+{
+	struct seq_file *s = file->private_data;
+	struct tb_port *port = s->private;
+	struct tb_switch *sw = port->sw;
+	struct tb *tb = port->sw->tb;
+	char *buf;
+	int ret;
 
 	buf = validate_and_copy_from_user(user_buf, &count);
-	अगर (IS_ERR(buf))
-		वापस PTR_ERR(buf);
+	if (IS_ERR(buf))
+		return PTR_ERR(buf);
 
-	pm_runसमय_get_sync(&sw->dev);
+	pm_runtime_get_sync(&sw->dev);
 
-	अगर (mutex_lock_पूर्णांकerruptible(&tb->lock)) अणु
+	if (mutex_lock_interruptible(&tb->lock)) {
 		ret = -ERESTARTSYS;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* If written delimiter only, clear all counters in one shot */
-	अगर (buf[0] == '\n') अणु
+	if (buf[0] == '\n') {
 		ret = port_clear_all_counters(port);
-	पूर्ण अन्यथा  अणु
-		अक्षर *line = buf;
+	} else  {
+		char *line = buf;
 		u32 val, offset;
 
 		ret = -EINVAL;
-		जबतक (parse_line(&line, &offset, &val, 1, 4)) अणु
-			ret = tb_port_ग_लिखो(port, &val, TB_CFG_COUNTERS,
+		while (parse_line(&line, &offset, &val, 1, 4)) {
+			ret = tb_port_write(port, &val, TB_CFG_COUNTERS,
 					    offset, 1);
-			अगर (ret)
-				अवरोध;
-		पूर्ण
-	पूर्ण
+			if (ret)
+				break;
+		}
+	}
 
 	mutex_unlock(&tb->lock);
 
 out:
-	pm_runसमय_mark_last_busy(&sw->dev);
-	pm_runसमय_put_स्वतःsuspend(&sw->dev);
-	मुक्त_page((अचिन्हित दीर्घ)buf);
+	pm_runtime_mark_last_busy(&sw->dev);
+	pm_runtime_put_autosuspend(&sw->dev);
+	free_page((unsigned long)buf);
 
-	वापस ret < 0 ? ret : count;
-पूर्ण
+	return ret < 0 ? ret : count;
+}
 
-अटल व्योम cap_show_by_dw(काष्ठा seq_file *s, काष्ठा tb_चयन *sw,
-			   काष्ठा tb_port *port, अचिन्हित पूर्णांक cap,
-			   अचिन्हित पूर्णांक offset, u8 cap_id, u8 vsec_id,
-			   पूर्णांक dwords)
-अणु
-	पूर्णांक i, ret;
+static void cap_show_by_dw(struct seq_file *s, struct tb_switch *sw,
+			   struct tb_port *port, unsigned int cap,
+			   unsigned int offset, u8 cap_id, u8 vsec_id,
+			   int dwords)
+{
+	int i, ret;
 	u32 data;
 
-	क्रम (i = 0; i < dwords; i++) अणु
-		अगर (port)
-			ret = tb_port_पढ़ो(port, &data, TB_CFG_PORT, cap + offset + i, 1);
-		अन्यथा
-			ret = tb_sw_पढ़ो(sw, &data, TB_CFG_SWITCH, cap + offset + i, 1);
-		अगर (ret) अणु
-			seq_म_लिखो(s, "0x%04x <not accessible>\n", cap + offset + i);
-			जारी;
-		पूर्ण
+	for (i = 0; i < dwords; i++) {
+		if (port)
+			ret = tb_port_read(port, &data, TB_CFG_PORT, cap + offset + i, 1);
+		else
+			ret = tb_sw_read(sw, &data, TB_CFG_SWITCH, cap + offset + i, 1);
+		if (ret) {
+			seq_printf(s, "0x%04x <not accessible>\n", cap + offset + i);
+			continue;
+		}
 
-		seq_म_लिखो(s, "0x%04x %4d 0x%02x 0x%02x 0x%08x\n", cap + offset + i,
+		seq_printf(s, "0x%04x %4d 0x%02x 0x%02x 0x%08x\n", cap + offset + i,
 			   offset + i, cap_id, vsec_id, data);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम cap_show(काष्ठा seq_file *s, काष्ठा tb_चयन *sw,
-		     काष्ठा tb_port *port, अचिन्हित पूर्णांक cap, u8 cap_id,
-		     u8 vsec_id, पूर्णांक length)
-अणु
-	पूर्णांक ret, offset = 0;
+static void cap_show(struct seq_file *s, struct tb_switch *sw,
+		     struct tb_port *port, unsigned int cap, u8 cap_id,
+		     u8 vsec_id, int length)
+{
+	int ret, offset = 0;
 
-	जबतक (length > 0) अणु
-		पूर्णांक i, dwords = min(length, TB_MAX_CONFIG_RW_LENGTH);
+	while (length > 0) {
+		int i, dwords = min(length, TB_MAX_CONFIG_RW_LENGTH);
 		u32 data[TB_MAX_CONFIG_RW_LENGTH];
 
-		अगर (port)
-			ret = tb_port_पढ़ो(port, data, TB_CFG_PORT, cap + offset,
+		if (port)
+			ret = tb_port_read(port, data, TB_CFG_PORT, cap + offset,
 					   dwords);
-		अन्यथा
-			ret = tb_sw_पढ़ो(sw, data, TB_CFG_SWITCH, cap + offset, dwords);
-		अगर (ret) अणु
+		else
+			ret = tb_sw_read(sw, data, TB_CFG_SWITCH, cap + offset, dwords);
+		if (ret) {
 			cap_show_by_dw(s, sw, port, cap, offset, cap_id, vsec_id, length);
-			वापस;
-		पूर्ण
+			return;
+		}
 
-		क्रम (i = 0; i < dwords; i++) अणु
-			seq_म_लिखो(s, "0x%04x %4d 0x%02x 0x%02x 0x%08x\n",
+		for (i = 0; i < dwords; i++) {
+			seq_printf(s, "0x%04x %4d 0x%02x 0x%02x 0x%08x\n",
 				   cap + offset + i, offset + i,
 				   cap_id, vsec_id, data[i]);
-		पूर्ण
+		}
 
 		length -= dwords;
 		offset += dwords;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम port_cap_show(काष्ठा tb_port *port, काष्ठा seq_file *s,
-			  अचिन्हित पूर्णांक cap)
-अणु
-	काष्ठा tb_cap_any header;
+static void port_cap_show(struct tb_port *port, struct seq_file *s,
+			  unsigned int cap)
+{
+	struct tb_cap_any header;
 	u8 vsec_id = 0;
-	माप_प्रकार length;
-	पूर्णांक ret;
+	size_t length;
+	int ret;
 
-	ret = tb_port_पढ़ो(port, &header, TB_CFG_PORT, cap, 1);
-	अगर (ret) अणु
-		seq_म_लिखो(s, "0x%04x <capability read failed>\n", cap);
-		वापस;
-	पूर्ण
+	ret = tb_port_read(port, &header, TB_CFG_PORT, cap, 1);
+	if (ret) {
+		seq_printf(s, "0x%04x <capability read failed>\n", cap);
+		return;
+	}
 
-	चयन (header.basic.cap) अणु
-	हाल TB_PORT_CAP_PHY:
+	switch (header.basic.cap) {
+	case TB_PORT_CAP_PHY:
 		length = PORT_CAP_LANE_LEN;
-		अवरोध;
+		break;
 
-	हाल TB_PORT_CAP_TIME1:
+	case TB_PORT_CAP_TIME1:
 		length = PORT_CAP_TMU_LEN;
-		अवरोध;
+		break;
 
-	हाल TB_PORT_CAP_POWER:
+	case TB_PORT_CAP_POWER:
 		length = PORT_CAP_POWER_LEN;
-		अवरोध;
+		break;
 
-	हाल TB_PORT_CAP_ADAP:
-		अगर (tb_port_is_pcie_करोwn(port) || tb_port_is_pcie_up(port)) अणु
+	case TB_PORT_CAP_ADAP:
+		if (tb_port_is_pcie_down(port) || tb_port_is_pcie_up(port)) {
 			length = PORT_CAP_PCIE_LEN;
-		पूर्ण अन्यथा अगर (tb_port_is_dpin(port) || tb_port_is_dpout(port)) अणु
+		} else if (tb_port_is_dpin(port) || tb_port_is_dpout(port)) {
 			length = PORT_CAP_DP_LEN;
-		पूर्ण अन्यथा अगर (tb_port_is_usb3_करोwn(port) ||
-			   tb_port_is_usb3_up(port)) अणु
+		} else if (tb_port_is_usb3_down(port) ||
+			   tb_port_is_usb3_up(port)) {
 			length = PORT_CAP_USB3_LEN;
-		पूर्ण अन्यथा अणु
-			seq_म_लिखो(s, "0x%04x <unsupported capability 0x%02x>\n",
+		} else {
+			seq_printf(s, "0x%04x <unsupported capability 0x%02x>\n",
 				   cap, header.basic.cap);
-			वापस;
-		पूर्ण
-		अवरोध;
+			return;
+		}
+		break;
 
-	हाल TB_PORT_CAP_VSE:
-		अगर (!header.extended_लघु.length) अणु
-			ret = tb_port_पढ़ो(port, (u32 *)&header + 1, TB_CFG_PORT,
+	case TB_PORT_CAP_VSE:
+		if (!header.extended_short.length) {
+			ret = tb_port_read(port, (u32 *)&header + 1, TB_CFG_PORT,
 					   cap + 1, 1);
-			अगर (ret) अणु
-				seq_म_लिखो(s, "0x%04x <capability read failed>\n",
+			if (ret) {
+				seq_printf(s, "0x%04x <capability read failed>\n",
 					   cap + 1);
-				वापस;
-			पूर्ण
-			length = header.extended_दीर्घ.length;
-			vsec_id = header.extended_लघु.vsec_id;
-		पूर्ण अन्यथा अणु
-			length = header.extended_लघु.length;
-			vsec_id = header.extended_लघु.vsec_id;
-		पूर्ण
-		अवरोध;
+				return;
+			}
+			length = header.extended_long.length;
+			vsec_id = header.extended_short.vsec_id;
+		} else {
+			length = header.extended_short.length;
+			vsec_id = header.extended_short.vsec_id;
+		}
+		break;
 
-	हाल TB_PORT_CAP_USB4:
+	case TB_PORT_CAP_USB4:
 		length = PORT_CAP_USB4_LEN;
-		अवरोध;
+		break;
 
-	शेष:
-		seq_म_लिखो(s, "0x%04x <unsupported capability 0x%02x>\n",
+	default:
+		seq_printf(s, "0x%04x <unsupported capability 0x%02x>\n",
 			   cap, header.basic.cap);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	cap_show(s, शून्य, port, cap, header.basic.cap, vsec_id, length);
-पूर्ण
+	cap_show(s, NULL, port, cap, header.basic.cap, vsec_id, length);
+}
 
-अटल व्योम port_caps_show(काष्ठा tb_port *port, काष्ठा seq_file *s)
-अणु
-	पूर्णांक cap;
+static void port_caps_show(struct tb_port *port, struct seq_file *s)
+{
+	int cap;
 
 	cap = tb_port_next_cap(port, 0);
-	जबतक (cap > 0) अणु
+	while (cap > 0) {
 		port_cap_show(port, s, cap);
 		cap = tb_port_next_cap(port, cap);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक port_basic_regs_show(काष्ठा tb_port *port, काष्ठा seq_file *s)
-अणु
+static int port_basic_regs_show(struct tb_port *port, struct seq_file *s)
+{
 	u32 data[PORT_CAP_BASIC_LEN];
-	पूर्णांक ret, i;
+	int ret, i;
 
-	ret = tb_port_पढ़ो(port, data, TB_CFG_PORT, 0, ARRAY_SIZE(data));
-	अगर (ret)
-		वापस ret;
+	ret = tb_port_read(port, data, TB_CFG_PORT, 0, ARRAY_SIZE(data));
+	if (ret)
+		return ret;
 
-	क्रम (i = 0; i < ARRAY_SIZE(data); i++)
-		seq_म_लिखो(s, "0x%04x %4d 0x00 0x00 0x%08x\n", i, i, data[i]);
+	for (i = 0; i < ARRAY_SIZE(data); i++)
+		seq_printf(s, "0x%04x %4d 0x00 0x00 0x%08x\n", i, i, data[i]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक port_regs_show(काष्ठा seq_file *s, व्योम *not_used)
-अणु
-	काष्ठा tb_port *port = s->निजी;
-	काष्ठा tb_चयन *sw = port->sw;
-	काष्ठा tb *tb = sw->tb;
-	पूर्णांक ret;
+static int port_regs_show(struct seq_file *s, void *not_used)
+{
+	struct tb_port *port = s->private;
+	struct tb_switch *sw = port->sw;
+	struct tb *tb = sw->tb;
+	int ret;
 
-	pm_runसमय_get_sync(&sw->dev);
+	pm_runtime_get_sync(&sw->dev);
 
-	अगर (mutex_lock_पूर्णांकerruptible(&tb->lock)) अणु
+	if (mutex_lock_interruptible(&tb->lock)) {
 		ret = -ERESTARTSYS;
-		जाओ out_rpm_put;
-	पूर्ण
+		goto out_rpm_put;
+	}
 
-	seq_माला_दो(s, "# offset relative_offset cap_id vs_cap_id value\n");
+	seq_puts(s, "# offset relative_offset cap_id vs_cap_id value\n");
 
 	ret = port_basic_regs_show(port, s);
-	अगर (ret)
-		जाओ out_unlock;
+	if (ret)
+		goto out_unlock;
 
 	port_caps_show(port, s);
 
 out_unlock:
 	mutex_unlock(&tb->lock);
 out_rpm_put:
-	pm_runसमय_mark_last_busy(&sw->dev);
-	pm_runसमय_put_स्वतःsuspend(&sw->dev);
+	pm_runtime_mark_last_busy(&sw->dev);
+	pm_runtime_put_autosuspend(&sw->dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 DEBUGFS_ATTR_RW(port_regs);
 
-अटल व्योम चयन_cap_show(काष्ठा tb_चयन *sw, काष्ठा seq_file *s,
-			    अचिन्हित पूर्णांक cap)
-अणु
-	काष्ठा tb_cap_any header;
-	पूर्णांक ret, length;
+static void switch_cap_show(struct tb_switch *sw, struct seq_file *s,
+			    unsigned int cap)
+{
+	struct tb_cap_any header;
+	int ret, length;
 	u8 vsec_id = 0;
 
-	ret = tb_sw_पढ़ो(sw, &header, TB_CFG_SWITCH, cap, 1);
-	अगर (ret) अणु
-		seq_म_लिखो(s, "0x%04x <capability read failed>\n", cap);
-		वापस;
-	पूर्ण
+	ret = tb_sw_read(sw, &header, TB_CFG_SWITCH, cap, 1);
+	if (ret) {
+		seq_printf(s, "0x%04x <capability read failed>\n", cap);
+		return;
+	}
 
-	अगर (header.basic.cap == TB_SWITCH_CAP_VSE) अणु
-		अगर (!header.extended_लघु.length) अणु
-			ret = tb_sw_पढ़ो(sw, (u32 *)&header + 1, TB_CFG_SWITCH,
+	if (header.basic.cap == TB_SWITCH_CAP_VSE) {
+		if (!header.extended_short.length) {
+			ret = tb_sw_read(sw, (u32 *)&header + 1, TB_CFG_SWITCH,
 					 cap + 1, 1);
-			अगर (ret) अणु
-				seq_म_लिखो(s, "0x%04x <capability read failed>\n",
+			if (ret) {
+				seq_printf(s, "0x%04x <capability read failed>\n",
 					   cap + 1);
-				वापस;
-			पूर्ण
-			length = header.extended_दीर्घ.length;
-		पूर्ण अन्यथा अणु
-			length = header.extended_लघु.length;
-		पूर्ण
-		vsec_id = header.extended_लघु.vsec_id;
-	पूर्ण अन्यथा अणु
-		अगर (header.basic.cap == TB_SWITCH_CAP_TMU) अणु
+				return;
+			}
+			length = header.extended_long.length;
+		} else {
+			length = header.extended_short.length;
+		}
+		vsec_id = header.extended_short.vsec_id;
+	} else {
+		if (header.basic.cap == TB_SWITCH_CAP_TMU) {
 			length = SWITCH_CAP_TMU_LEN;
-		पूर्ण अन्यथा  अणु
-			seq_म_लिखो(s, "0x%04x <unknown capability 0x%02x>\n",
+		} else  {
+			seq_printf(s, "0x%04x <unknown capability 0x%02x>\n",
 				   cap, header.basic.cap);
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 
-	cap_show(s, sw, शून्य, cap, header.basic.cap, vsec_id, length);
-पूर्ण
+	cap_show(s, sw, NULL, cap, header.basic.cap, vsec_id, length);
+}
 
-अटल व्योम चयन_caps_show(काष्ठा tb_चयन *sw, काष्ठा seq_file *s)
-अणु
-	पूर्णांक cap;
+static void switch_caps_show(struct tb_switch *sw, struct seq_file *s)
+{
+	int cap;
 
-	cap = tb_चयन_next_cap(sw, 0);
-	जबतक (cap > 0) अणु
-		चयन_cap_show(sw, s, cap);
-		cap = tb_चयन_next_cap(sw, cap);
-	पूर्ण
-पूर्ण
+	cap = tb_switch_next_cap(sw, 0);
+	while (cap > 0) {
+		switch_cap_show(sw, s, cap);
+		cap = tb_switch_next_cap(sw, cap);
+	}
+}
 
-अटल पूर्णांक चयन_basic_regs_show(काष्ठा tb_चयन *sw, काष्ठा seq_file *s)
-अणु
+static int switch_basic_regs_show(struct tb_switch *sw, struct seq_file *s)
+{
 	u32 data[SWITCH_CAP_BASIC_LEN];
-	माप_प्रकार dwords;
-	पूर्णांक ret, i;
+	size_t dwords;
+	int ret, i;
 
-	/* Only USB4 has the additional रेजिस्टरs */
-	अगर (tb_चयन_is_usb4(sw))
+	/* Only USB4 has the additional registers */
+	if (tb_switch_is_usb4(sw))
 		dwords = ARRAY_SIZE(data);
-	अन्यथा
+	else
 		dwords = 7;
 
-	ret = tb_sw_पढ़ो(sw, data, TB_CFG_SWITCH, 0, dwords);
-	अगर (ret)
-		वापस ret;
+	ret = tb_sw_read(sw, data, TB_CFG_SWITCH, 0, dwords);
+	if (ret)
+		return ret;
 
-	क्रम (i = 0; i < dwords; i++)
-		seq_म_लिखो(s, "0x%04x %4d 0x00 0x00 0x%08x\n", i, i, data[i]);
+	for (i = 0; i < dwords; i++)
+		seq_printf(s, "0x%04x %4d 0x00 0x00 0x%08x\n", i, i, data[i]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक चयन_regs_show(काष्ठा seq_file *s, व्योम *not_used)
-अणु
-	काष्ठा tb_चयन *sw = s->निजी;
-	काष्ठा tb *tb = sw->tb;
-	पूर्णांक ret;
+static int switch_regs_show(struct seq_file *s, void *not_used)
+{
+	struct tb_switch *sw = s->private;
+	struct tb *tb = sw->tb;
+	int ret;
 
-	pm_runसमय_get_sync(&sw->dev);
+	pm_runtime_get_sync(&sw->dev);
 
-	अगर (mutex_lock_पूर्णांकerruptible(&tb->lock)) अणु
+	if (mutex_lock_interruptible(&tb->lock)) {
 		ret = -ERESTARTSYS;
-		जाओ out_rpm_put;
-	पूर्ण
+		goto out_rpm_put;
+	}
 
-	seq_माला_दो(s, "# offset relative_offset cap_id vs_cap_id value\n");
+	seq_puts(s, "# offset relative_offset cap_id vs_cap_id value\n");
 
-	ret = चयन_basic_regs_show(sw, s);
-	अगर (ret)
-		जाओ out_unlock;
+	ret = switch_basic_regs_show(sw, s);
+	if (ret)
+		goto out_unlock;
 
-	चयन_caps_show(sw, s);
+	switch_caps_show(sw, s);
 
 out_unlock:
 	mutex_unlock(&tb->lock);
 out_rpm_put:
-	pm_runसमय_mark_last_busy(&sw->dev);
-	pm_runसमय_put_स्वतःsuspend(&sw->dev);
+	pm_runtime_mark_last_busy(&sw->dev);
+	pm_runtime_put_autosuspend(&sw->dev);
 
-	वापस ret;
-पूर्ण
-DEBUGFS_ATTR_RW(चयन_regs);
+	return ret;
+}
+DEBUGFS_ATTR_RW(switch_regs);
 
-अटल पूर्णांक path_show_one(काष्ठा tb_port *port, काष्ठा seq_file *s, पूर्णांक hopid)
-अणु
+static int path_show_one(struct tb_port *port, struct seq_file *s, int hopid)
+{
 	u32 data[PATH_LEN];
-	पूर्णांक ret, i;
+	int ret, i;
 
-	ret = tb_port_पढ़ो(port, data, TB_CFG_HOPS, hopid * PATH_LEN,
+	ret = tb_port_read(port, data, TB_CFG_HOPS, hopid * PATH_LEN,
 			   ARRAY_SIZE(data));
-	अगर (ret) अणु
-		seq_म_लिखो(s, "0x%04x <not accessible>\n", hopid * PATH_LEN);
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		seq_printf(s, "0x%04x <not accessible>\n", hopid * PATH_LEN);
+		return ret;
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(data); i++) अणु
-		seq_म_लिखो(s, "0x%04x %4d 0x%02x 0x%08x\n",
+	for (i = 0; i < ARRAY_SIZE(data); i++) {
+		seq_printf(s, "0x%04x %4d 0x%02x 0x%08x\n",
 			   hopid * PATH_LEN + i, i, hopid, data[i]);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक path_show(काष्ठा seq_file *s, व्योम *not_used)
-अणु
-	काष्ठा tb_port *port = s->निजी;
-	काष्ठा tb_चयन *sw = port->sw;
-	काष्ठा tb *tb = sw->tb;
-	पूर्णांक start, i, ret = 0;
+static int path_show(struct seq_file *s, void *not_used)
+{
+	struct tb_port *port = s->private;
+	struct tb_switch *sw = port->sw;
+	struct tb *tb = sw->tb;
+	int start, i, ret = 0;
 
-	pm_runसमय_get_sync(&sw->dev);
+	pm_runtime_get_sync(&sw->dev);
 
-	अगर (mutex_lock_पूर्णांकerruptible(&tb->lock)) अणु
+	if (mutex_lock_interruptible(&tb->lock)) {
 		ret = -ERESTARTSYS;
-		जाओ out_rpm_put;
-	पूर्ण
+		goto out_rpm_put;
+	}
 
-	seq_माला_दो(s, "# offset relative_offset in_hop_id value\n");
+	seq_puts(s, "# offset relative_offset in_hop_id value\n");
 
-	/* NHI and lane adapters have entry क्रम path 0 */
-	अगर (tb_port_is_null(port) || tb_port_is_nhi(port)) अणु
+	/* NHI and lane adapters have entry for path 0 */
+	if (tb_port_is_null(port) || tb_port_is_nhi(port)) {
 		ret = path_show_one(port, s, 0);
-		अगर (ret)
-			जाओ out_unlock;
-	पूर्ण
+		if (ret)
+			goto out_unlock;
+	}
 
 	start = tb_port_is_nhi(port) ? 1 : TB_PATH_MIN_HOPID;
 
-	क्रम (i = start; i <= port->config.max_in_hop_id; i++) अणु
+	for (i = start; i <= port->config.max_in_hop_id; i++) {
 		ret = path_show_one(port, s, i);
-		अगर (ret)
-			अवरोध;
-	पूर्ण
+		if (ret)
+			break;
+	}
 
 out_unlock:
 	mutex_unlock(&tb->lock);
 out_rpm_put:
-	pm_runसमय_mark_last_busy(&sw->dev);
-	pm_runसमय_put_स्वतःsuspend(&sw->dev);
+	pm_runtime_mark_last_busy(&sw->dev);
+	pm_runtime_put_autosuspend(&sw->dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 DEBUGFS_ATTR_RO(path);
 
-अटल पूर्णांक counter_set_regs_show(काष्ठा tb_port *port, काष्ठा seq_file *s,
-				 पूर्णांक counter)
-अणु
+static int counter_set_regs_show(struct tb_port *port, struct seq_file *s,
+				 int counter)
+{
 	u32 data[COUNTER_SET_LEN];
-	पूर्णांक ret, i;
+	int ret, i;
 
-	ret = tb_port_पढ़ो(port, data, TB_CFG_COUNTERS,
+	ret = tb_port_read(port, data, TB_CFG_COUNTERS,
 			   counter * COUNTER_SET_LEN, ARRAY_SIZE(data));
-	अगर (ret) अणु
-		seq_म_लिखो(s, "0x%04x <not accessible>\n",
+	if (ret) {
+		seq_printf(s, "0x%04x <not accessible>\n",
 			   counter * COUNTER_SET_LEN);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(data); i++) अणु
-		seq_म_लिखो(s, "0x%04x %4d 0x%02x 0x%08x\n",
+	for (i = 0; i < ARRAY_SIZE(data); i++) {
+		seq_printf(s, "0x%04x %4d 0x%02x 0x%08x\n",
 			   counter * COUNTER_SET_LEN + i, i, counter, data[i]);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक counters_show(काष्ठा seq_file *s, व्योम *not_used)
-अणु
-	काष्ठा tb_port *port = s->निजी;
-	काष्ठा tb_चयन *sw = port->sw;
-	काष्ठा tb *tb = sw->tb;
-	पूर्णांक i, ret = 0;
+static int counters_show(struct seq_file *s, void *not_used)
+{
+	struct tb_port *port = s->private;
+	struct tb_switch *sw = port->sw;
+	struct tb *tb = sw->tb;
+	int i, ret = 0;
 
-	pm_runसमय_get_sync(&sw->dev);
+	pm_runtime_get_sync(&sw->dev);
 
-	अगर (mutex_lock_पूर्णांकerruptible(&tb->lock)) अणु
+	if (mutex_lock_interruptible(&tb->lock)) {
 		ret = -ERESTARTSYS;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	seq_माला_दो(s, "# offset relative_offset counter_id value\n");
+	seq_puts(s, "# offset relative_offset counter_id value\n");
 
-	क्रम (i = 0; i < port->config.max_counters; i++) अणु
+	for (i = 0; i < port->config.max_counters; i++) {
 		ret = counter_set_regs_show(port, s, i);
-		अगर (ret)
-			अवरोध;
-	पूर्ण
+		if (ret)
+			break;
+	}
 
 	mutex_unlock(&tb->lock);
 
 out:
-	pm_runसमय_mark_last_busy(&sw->dev);
-	pm_runसमय_put_स्वतःsuspend(&sw->dev);
+	pm_runtime_mark_last_busy(&sw->dev);
+	pm_runtime_put_autosuspend(&sw->dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 DEBUGFS_ATTR_RW(counters);
 
 /**
- * tb_चयन_debugfs_init() - Add debugfs entries क्रम router
- * @sw: Poपूर्णांकer to the router
+ * tb_switch_debugfs_init() - Add debugfs entries for router
+ * @sw: Pointer to the router
  *
- * Adds debugfs directories and files क्रम given router.
+ * Adds debugfs directories and files for given router.
  */
-व्योम tb_चयन_debugfs_init(काष्ठा tb_चयन *sw)
-अणु
-	काष्ठा dentry *debugfs_dir;
-	काष्ठा tb_port *port;
+void tb_switch_debugfs_init(struct tb_switch *sw)
+{
+	struct dentry *debugfs_dir;
+	struct tb_port *port;
 
 	debugfs_dir = debugfs_create_dir(dev_name(&sw->dev), tb_debugfs_root);
 	sw->debugfs_dir = debugfs_dir;
 	debugfs_create_file("regs", DEBUGFS_MODE, debugfs_dir, sw,
-			    &चयन_regs_fops);
+			    &switch_regs_fops);
 
-	tb_चयन_क्रम_each_port(sw, port) अणु
-		काष्ठा dentry *debugfs_dir;
-		अक्षर dir_name[10];
+	tb_switch_for_each_port(sw, port) {
+		struct dentry *debugfs_dir;
+		char dir_name[10];
 
-		अगर (port->disabled)
-			जारी;
-		अगर (port->config.type == TB_TYPE_INACTIVE)
-			जारी;
+		if (port->disabled)
+			continue;
+		if (port->config.type == TB_TYPE_INACTIVE)
+			continue;
 
-		snम_लिखो(dir_name, माप(dir_name), "port%d", port->port);
+		snprintf(dir_name, sizeof(dir_name), "port%d", port->port);
 		debugfs_dir = debugfs_create_dir(dir_name, sw->debugfs_dir);
 		debugfs_create_file("regs", DEBUGFS_MODE, debugfs_dir,
 				    port, &port_regs_fops);
 		debugfs_create_file("path", 0400, debugfs_dir, port,
 				    &path_fops);
-		अगर (port->config.counters_support)
+		if (port->config.counters_support)
 			debugfs_create_file("counters", 0600, debugfs_dir, port,
 					    &counters_fops);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * tb_चयन_debugfs_हटाओ() - Remove all router debugfs entries
- * @sw: Poपूर्णांकer to the router
+ * tb_switch_debugfs_remove() - Remove all router debugfs entries
+ * @sw: Pointer to the router
  *
  * Removes all previously added debugfs entries under this router.
  */
-व्योम tb_चयन_debugfs_हटाओ(काष्ठा tb_चयन *sw)
-अणु
-	debugfs_हटाओ_recursive(sw->debugfs_dir);
-पूर्ण
+void tb_switch_debugfs_remove(struct tb_switch *sw)
+{
+	debugfs_remove_recursive(sw->debugfs_dir);
+}
 
 /**
- * tb_service_debugfs_init() - Add debugfs directory क्रम service
- * @svc: Thunderbolt service poपूर्णांकer
+ * tb_service_debugfs_init() - Add debugfs directory for service
+ * @svc: Thunderbolt service pointer
  *
- * Adds debugfs directory क्रम service.
+ * Adds debugfs directory for service.
  */
-व्योम tb_service_debugfs_init(काष्ठा tb_service *svc)
-अणु
+void tb_service_debugfs_init(struct tb_service *svc)
+{
 	svc->debugfs_dir = debugfs_create_dir(dev_name(&svc->dev),
 					      tb_debugfs_root);
-पूर्ण
+}
 
 /**
- * tb_service_debugfs_हटाओ() - Remove service debugfs directory
- * @svc: Thunderbolt service poपूर्णांकer
+ * tb_service_debugfs_remove() - Remove service debugfs directory
+ * @svc: Thunderbolt service pointer
  *
- * Removes the previously created debugfs directory क्रम @svc.
+ * Removes the previously created debugfs directory for @svc.
  */
-व्योम tb_service_debugfs_हटाओ(काष्ठा tb_service *svc)
-अणु
-	debugfs_हटाओ_recursive(svc->debugfs_dir);
-	svc->debugfs_dir = शून्य;
-पूर्ण
+void tb_service_debugfs_remove(struct tb_service *svc)
+{
+	debugfs_remove_recursive(svc->debugfs_dir);
+	svc->debugfs_dir = NULL;
+}
 
-व्योम tb_debugfs_init(व्योम)
-अणु
-	tb_debugfs_root = debugfs_create_dir("thunderbolt", शून्य);
-पूर्ण
+void tb_debugfs_init(void)
+{
+	tb_debugfs_root = debugfs_create_dir("thunderbolt", NULL);
+}
 
-व्योम tb_debugfs_निकास(व्योम)
-अणु
-	debugfs_हटाओ_recursive(tb_debugfs_root);
-पूर्ण
+void tb_debugfs_exit(void)
+{
+	debugfs_remove_recursive(tb_debugfs_root);
+}

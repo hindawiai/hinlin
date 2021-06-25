@@ -1,165 +1,164 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 1999-2002 Vojtech Pavlik
  */
-#अगर_अघोषित _SERIO_H
-#घोषणा _SERIO_H
+#ifndef _SERIO_H
+#define _SERIO_H
 
 
-#समावेश <linux/types.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/list.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/device.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <uapi/linux/serपन.स>
+#include <linux/types.h>
+#include <linux/interrupt.h>
+#include <linux/list.h>
+#include <linux/spinlock.h>
+#include <linux/mutex.h>
+#include <linux/device.h>
+#include <linux/mod_devicetable.h>
+#include <uapi/linux/serio.h>
 
-बाह्य काष्ठा bus_type serio_bus;
+extern struct bus_type serio_bus;
 
-काष्ठा serio अणु
-	व्योम *port_data;
+struct serio {
+	void *port_data;
 
-	अक्षर name[32];
-	अक्षर phys[32];
-	अक्षर firmware_id[128];
+	char name[32];
+	char phys[32];
+	char firmware_id[128];
 
 	bool manual_bind;
 
-	काष्ठा serio_device_id id;
+	struct serio_device_id id;
 
-	/* Protects critical sections from port's पूर्णांकerrupt handler */
+	/* Protects critical sections from port's interrupt handler */
 	spinlock_t lock;
 
-	पूर्णांक (*ग_लिखो)(काष्ठा serio *, अचिन्हित अक्षर);
-	पूर्णांक (*खोलो)(काष्ठा serio *);
-	व्योम (*बंद)(काष्ठा serio *);
-	पूर्णांक (*start)(काष्ठा serio *);
-	व्योम (*stop)(काष्ठा serio *);
+	int (*write)(struct serio *, unsigned char);
+	int (*open)(struct serio *);
+	void (*close)(struct serio *);
+	int (*start)(struct serio *);
+	void (*stop)(struct serio *);
 
-	काष्ठा serio *parent;
+	struct serio *parent;
 	/* Entry in parent->children list */
-	काष्ठा list_head child_node;
-	काष्ठा list_head children;
+	struct list_head child_node;
+	struct list_head children;
 	/* Level of nesting in serio hierarchy */
-	अचिन्हित पूर्णांक depth;
+	unsigned int depth;
 
 	/*
-	 * serio->drv is accessed from पूर्णांकerrupt handlers; when modअगरying
+	 * serio->drv is accessed from interrupt handlers; when modifying
 	 * caller should acquire serio->drv_mutex and serio->lock.
 	 */
-	काष्ठा serio_driver *drv;
+	struct serio_driver *drv;
 	/* Protects serio->drv so attributes can pin current driver */
-	काष्ठा mutex drv_mutex;
+	struct mutex drv_mutex;
 
-	काष्ठा device dev;
+	struct device dev;
 
-	काष्ठा list_head node;
+	struct list_head node;
 
 	/*
 	 * For use by PS/2 layer when several ports share hardware and
 	 * may get indigestion when exposed to concurrent access (i8042).
 	 */
-	काष्ठा mutex *ps2_cmd_mutex;
-पूर्ण;
-#घोषणा to_serio_port(d)	container_of(d, काष्ठा serio, dev)
+	struct mutex *ps2_cmd_mutex;
+};
+#define to_serio_port(d)	container_of(d, struct serio, dev)
 
-काष्ठा serio_driver अणु
-	स्थिर अक्षर *description;
+struct serio_driver {
+	const char *description;
 
-	स्थिर काष्ठा serio_device_id *id_table;
+	const struct serio_device_id *id_table;
 	bool manual_bind;
 
-	व्योम (*ग_लिखो_wakeup)(काष्ठा serio *);
-	irqवापस_t (*पूर्णांकerrupt)(काष्ठा serio *, अचिन्हित अक्षर, अचिन्हित पूर्णांक);
-	पूर्णांक  (*connect)(काष्ठा serio *, काष्ठा serio_driver *drv);
-	पूर्णांक  (*reconnect)(काष्ठा serio *);
-	पूर्णांक  (*fast_reconnect)(काष्ठा serio *);
-	व्योम (*disconnect)(काष्ठा serio *);
-	व्योम (*cleanup)(काष्ठा serio *);
+	void (*write_wakeup)(struct serio *);
+	irqreturn_t (*interrupt)(struct serio *, unsigned char, unsigned int);
+	int  (*connect)(struct serio *, struct serio_driver *drv);
+	int  (*reconnect)(struct serio *);
+	int  (*fast_reconnect)(struct serio *);
+	void (*disconnect)(struct serio *);
+	void (*cleanup)(struct serio *);
 
-	काष्ठा device_driver driver;
-पूर्ण;
-#घोषणा to_serio_driver(d)	container_of(d, काष्ठा serio_driver, driver)
+	struct device_driver driver;
+};
+#define to_serio_driver(d)	container_of(d, struct serio_driver, driver)
 
-पूर्णांक serio_खोलो(काष्ठा serio *serio, काष्ठा serio_driver *drv);
-व्योम serio_बंद(काष्ठा serio *serio);
-व्योम serio_rescan(काष्ठा serio *serio);
-व्योम serio_reconnect(काष्ठा serio *serio);
-irqवापस_t serio_पूर्णांकerrupt(काष्ठा serio *serio, अचिन्हित अक्षर data, अचिन्हित पूर्णांक flags);
+int serio_open(struct serio *serio, struct serio_driver *drv);
+void serio_close(struct serio *serio);
+void serio_rescan(struct serio *serio);
+void serio_reconnect(struct serio *serio);
+irqreturn_t serio_interrupt(struct serio *serio, unsigned char data, unsigned int flags);
 
-व्योम __serio_रेजिस्टर_port(काष्ठा serio *serio, काष्ठा module *owner);
+void __serio_register_port(struct serio *serio, struct module *owner);
 
-/* use a define to aव्योम include chaining to get THIS_MODULE */
-#घोषणा serio_रेजिस्टर_port(serio) \
-	__serio_रेजिस्टर_port(serio, THIS_MODULE)
+/* use a define to avoid include chaining to get THIS_MODULE */
+#define serio_register_port(serio) \
+	__serio_register_port(serio, THIS_MODULE)
 
-व्योम serio_unरेजिस्टर_port(काष्ठा serio *serio);
-व्योम serio_unरेजिस्टर_child_port(काष्ठा serio *serio);
+void serio_unregister_port(struct serio *serio);
+void serio_unregister_child_port(struct serio *serio);
 
-पूर्णांक __must_check __serio_रेजिस्टर_driver(काष्ठा serio_driver *drv,
-				काष्ठा module *owner, स्थिर अक्षर *mod_name);
+int __must_check __serio_register_driver(struct serio_driver *drv,
+				struct module *owner, const char *mod_name);
 
-/* use a define to aव्योम include chaining to get THIS_MODULE & मित्रs */
-#घोषणा serio_रेजिस्टर_driver(drv) \
-	__serio_रेजिस्टर_driver(drv, THIS_MODULE, KBUILD_MODNAME)
+/* use a define to avoid include chaining to get THIS_MODULE & friends */
+#define serio_register_driver(drv) \
+	__serio_register_driver(drv, THIS_MODULE, KBUILD_MODNAME)
 
-व्योम serio_unरेजिस्टर_driver(काष्ठा serio_driver *drv);
+void serio_unregister_driver(struct serio_driver *drv);
 
 /**
- * module_serio_driver() - Helper macro क्रम रेजिस्टरing a serio driver
- * @__serio_driver: serio_driver काष्ठा
+ * module_serio_driver() - Helper macro for registering a serio driver
+ * @__serio_driver: serio_driver struct
  *
- * Helper macro क्रम serio drivers which करो not करो anything special in
- * module init/निकास. This eliminates a lot of boilerplate. Each module
+ * Helper macro for serio drivers which do not do anything special in
+ * module init/exit. This eliminates a lot of boilerplate. Each module
  * may only use this macro once, and calling it replaces module_init()
- * and module_निकास().
+ * and module_exit().
  */
-#घोषणा module_serio_driver(__serio_driver) \
-	module_driver(__serio_driver, serio_रेजिस्टर_driver, \
-		       serio_unरेजिस्टर_driver)
+#define module_serio_driver(__serio_driver) \
+	module_driver(__serio_driver, serio_register_driver, \
+		       serio_unregister_driver)
 
-अटल अंतरभूत पूर्णांक serio_ग_लिखो(काष्ठा serio *serio, अचिन्हित अक्षर data)
-अणु
-	अगर (serio->ग_लिखो)
-		वापस serio->ग_लिखो(serio, data);
-	अन्यथा
-		वापस -1;
-पूर्ण
+static inline int serio_write(struct serio *serio, unsigned char data)
+{
+	if (serio->write)
+		return serio->write(serio, data);
+	else
+		return -1;
+}
 
-अटल अंतरभूत व्योम serio_drv_ग_लिखो_wakeup(काष्ठा serio *serio)
-अणु
-	अगर (serio->drv && serio->drv->ग_लिखो_wakeup)
-		serio->drv->ग_लिखो_wakeup(serio);
-पूर्ण
+static inline void serio_drv_write_wakeup(struct serio *serio)
+{
+	if (serio->drv && serio->drv->write_wakeup)
+		serio->drv->write_wakeup(serio);
+}
 
 /*
  * Use the following functions to manipulate serio's per-port
- * driver-specअगरic data.
+ * driver-specific data.
  */
-अटल अंतरभूत व्योम *serio_get_drvdata(काष्ठा serio *serio)
-अणु
-	वापस dev_get_drvdata(&serio->dev);
-पूर्ण
+static inline void *serio_get_drvdata(struct serio *serio)
+{
+	return dev_get_drvdata(&serio->dev);
+}
 
-अटल अंतरभूत व्योम serio_set_drvdata(काष्ठा serio *serio, व्योम *data)
-अणु
+static inline void serio_set_drvdata(struct serio *serio, void *data)
+{
 	dev_set_drvdata(&serio->dev, data);
-पूर्ण
+}
 
 /*
  * Use the following functions to protect critical sections in
- * driver code from port's पूर्णांकerrupt handler
+ * driver code from port's interrupt handler
  */
-अटल अंतरभूत व्योम serio_छोड़ो_rx(काष्ठा serio *serio)
-अणु
+static inline void serio_pause_rx(struct serio *serio)
+{
 	spin_lock_irq(&serio->lock);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम serio_जारी_rx(काष्ठा serio *serio)
-अणु
+static inline void serio_continue_rx(struct serio *serio)
+{
 	spin_unlock_irq(&serio->lock);
-पूर्ण
+}
 
-#पूर्ण_अगर
+#endif

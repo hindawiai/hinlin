@@ -1,40 +1,39 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
-#अगर_अघोषित __LINUX_INITRD_H
-#घोषणा __LINUX_INITRD_H
+#ifndef __LINUX_INITRD_H
+#define __LINUX_INITRD_H
 
-#घोषणा INITRD_MINOR 250 /* shouldn't collide with /dev/ram* too soon ... */
+#define INITRD_MINOR 250 /* shouldn't collide with /dev/ram* too soon ... */
 
 /* starting block # of image */
-बाह्य पूर्णांक rd_image_start;
+extern int rd_image_start;
 
 /* size of a single RAM disk */
-बाह्य अचिन्हित दीर्घ rd_size;
+extern unsigned long rd_size;
 
-/* 1 अगर it is not an error अगर initrd_start < memory_start */
-बाह्य पूर्णांक initrd_below_start_ok;
+/* 1 if it is not an error if initrd_start < memory_start */
+extern int initrd_below_start_ok;
 
-/* मुक्त_initrd_mem always माला_लो called with the next two as arguments.. */
-बाह्य अचिन्हित दीर्घ initrd_start, initrd_end;
-बाह्य व्योम मुक्त_initrd_mem(अचिन्हित दीर्घ, अचिन्हित दीर्घ);
+/* free_initrd_mem always gets called with the next two as arguments.. */
+extern unsigned long initrd_start, initrd_end;
+extern void free_initrd_mem(unsigned long, unsigned long);
 
-#अगर_घोषित CONFIG_BLK_DEV_INITRD
-बाह्य व्योम __init reserve_initrd_mem(व्योम);
-बाह्य व्योम रुको_क्रम_initramfs(व्योम);
-#अन्यथा
-अटल अंतरभूत व्योम __init reserve_initrd_mem(व्योम) अणुपूर्ण
-अटल अंतरभूत व्योम रुको_क्रम_initramfs(व्योम) अणुपूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_BLK_DEV_INITRD
+extern void __init reserve_initrd_mem(void);
+extern void wait_for_initramfs(void);
+#else
+static inline void __init reserve_initrd_mem(void) {}
+static inline void wait_for_initramfs(void) {}
+#endif
 
-बाह्य phys_addr_t phys_initrd_start;
-बाह्य अचिन्हित दीर्घ phys_initrd_size;
+extern phys_addr_t phys_initrd_start;
+extern unsigned long phys_initrd_size;
 
-बाह्य अचिन्हित पूर्णांक real_root_dev;
+extern unsigned int real_root_dev;
 
-बाह्य अक्षर __initramfs_start[];
-बाह्य अचिन्हित दीर्घ __initramfs_size;
+extern char __initramfs_start[];
+extern unsigned long __initramfs_size;
 
-व्योम console_on_rootfs(व्योम);
+void console_on_rootfs(void);
 
-#पूर्ण_अगर /* __LINUX_INITRD_H */
+#endif /* __LINUX_INITRD_H */

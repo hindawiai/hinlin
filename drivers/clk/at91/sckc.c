@@ -1,139 +1,138 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * drivers/clk/at91/sckc.c
  *
  *  Copyright (C) 2013 Boris BREZILLON <b.brezillon@overkiz.com>
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/clkdev.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/पन.स>
+#include <linux/clk-provider.h>
+#include <linux/clkdev.h>
+#include <linux/delay.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/io.h>
 
-#घोषणा SLOW_CLOCK_FREQ		32768
-#घोषणा SLOWCK_SW_CYCLES	5
-#घोषणा SLOWCK_SW_TIME_USEC	((SLOWCK_SW_CYCLES * USEC_PER_SEC) / \
+#define SLOW_CLOCK_FREQ		32768
+#define SLOWCK_SW_CYCLES	5
+#define SLOWCK_SW_TIME_USEC	((SLOWCK_SW_CYCLES * USEC_PER_SEC) / \
 				 SLOW_CLOCK_FREQ)
 
-#घोषणा	AT91_SCKC_CR			0x00
+#define	AT91_SCKC_CR			0x00
 
-काष्ठा clk_slow_bits अणु
+struct clk_slow_bits {
 	u32 cr_rcen;
 	u32 cr_osc32en;
 	u32 cr_osc32byp;
 	u32 cr_oscsel;
-पूर्ण;
+};
 
-काष्ठा clk_slow_osc अणु
-	काष्ठा clk_hw hw;
-	व्योम __iomem *sckcr;
-	स्थिर काष्ठा clk_slow_bits *bits;
-	अचिन्हित दीर्घ startup_usec;
-पूर्ण;
+struct clk_slow_osc {
+	struct clk_hw hw;
+	void __iomem *sckcr;
+	const struct clk_slow_bits *bits;
+	unsigned long startup_usec;
+};
 
-#घोषणा to_clk_slow_osc(hw) container_of(hw, काष्ठा clk_slow_osc, hw)
+#define to_clk_slow_osc(hw) container_of(hw, struct clk_slow_osc, hw)
 
-काष्ठा clk_sama5d4_slow_osc अणु
-	काष्ठा clk_hw hw;
-	व्योम __iomem *sckcr;
-	स्थिर काष्ठा clk_slow_bits *bits;
-	अचिन्हित दीर्घ startup_usec;
+struct clk_sama5d4_slow_osc {
+	struct clk_hw hw;
+	void __iomem *sckcr;
+	const struct clk_slow_bits *bits;
+	unsigned long startup_usec;
 	bool prepared;
-पूर्ण;
+};
 
-#घोषणा to_clk_sama5d4_slow_osc(hw) container_of(hw, काष्ठा clk_sama5d4_slow_osc, hw)
+#define to_clk_sama5d4_slow_osc(hw) container_of(hw, struct clk_sama5d4_slow_osc, hw)
 
-काष्ठा clk_slow_rc_osc अणु
-	काष्ठा clk_hw hw;
-	व्योम __iomem *sckcr;
-	स्थिर काष्ठा clk_slow_bits *bits;
-	अचिन्हित दीर्घ frequency;
-	अचिन्हित दीर्घ accuracy;
-	अचिन्हित दीर्घ startup_usec;
-पूर्ण;
+struct clk_slow_rc_osc {
+	struct clk_hw hw;
+	void __iomem *sckcr;
+	const struct clk_slow_bits *bits;
+	unsigned long frequency;
+	unsigned long accuracy;
+	unsigned long startup_usec;
+};
 
-#घोषणा to_clk_slow_rc_osc(hw) container_of(hw, काष्ठा clk_slow_rc_osc, hw)
+#define to_clk_slow_rc_osc(hw) container_of(hw, struct clk_slow_rc_osc, hw)
 
-काष्ठा clk_sam9x5_slow अणु
-	काष्ठा clk_hw hw;
-	व्योम __iomem *sckcr;
-	स्थिर काष्ठा clk_slow_bits *bits;
+struct clk_sam9x5_slow {
+	struct clk_hw hw;
+	void __iomem *sckcr;
+	const struct clk_slow_bits *bits;
 	u8 parent;
-पूर्ण;
+};
 
-#घोषणा to_clk_sam9x5_slow(hw) container_of(hw, काष्ठा clk_sam9x5_slow, hw)
+#define to_clk_sam9x5_slow(hw) container_of(hw, struct clk_sam9x5_slow, hw)
 
-अटल पूर्णांक clk_slow_osc_prepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_slow_osc *osc = to_clk_slow_osc(hw);
-	व्योम __iomem *sckcr = osc->sckcr;
-	u32 पंचांगp = पढ़ोl(sckcr);
+static int clk_slow_osc_prepare(struct clk_hw *hw)
+{
+	struct clk_slow_osc *osc = to_clk_slow_osc(hw);
+	void __iomem *sckcr = osc->sckcr;
+	u32 tmp = readl(sckcr);
 
-	अगर (पंचांगp & (osc->bits->cr_osc32byp | osc->bits->cr_osc32en))
-		वापस 0;
+	if (tmp & (osc->bits->cr_osc32byp | osc->bits->cr_osc32en))
+		return 0;
 
-	ग_लिखोl(पंचांगp | osc->bits->cr_osc32en, sckcr);
+	writel(tmp | osc->bits->cr_osc32en, sckcr);
 
-	अगर (प्रणाली_state < SYSTEM_RUNNING)
+	if (system_state < SYSTEM_RUNNING)
 		udelay(osc->startup_usec);
-	अन्यथा
+	else
 		usleep_range(osc->startup_usec, osc->startup_usec + 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम clk_slow_osc_unprepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_slow_osc *osc = to_clk_slow_osc(hw);
-	व्योम __iomem *sckcr = osc->sckcr;
-	u32 पंचांगp = पढ़ोl(sckcr);
+static void clk_slow_osc_unprepare(struct clk_hw *hw)
+{
+	struct clk_slow_osc *osc = to_clk_slow_osc(hw);
+	void __iomem *sckcr = osc->sckcr;
+	u32 tmp = readl(sckcr);
 
-	अगर (पंचांगp & osc->bits->cr_osc32byp)
-		वापस;
+	if (tmp & osc->bits->cr_osc32byp)
+		return;
 
-	ग_लिखोl(पंचांगp & ~osc->bits->cr_osc32en, sckcr);
-पूर्ण
+	writel(tmp & ~osc->bits->cr_osc32en, sckcr);
+}
 
-अटल पूर्णांक clk_slow_osc_is_prepared(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_slow_osc *osc = to_clk_slow_osc(hw);
-	व्योम __iomem *sckcr = osc->sckcr;
-	u32 पंचांगp = पढ़ोl(sckcr);
+static int clk_slow_osc_is_prepared(struct clk_hw *hw)
+{
+	struct clk_slow_osc *osc = to_clk_slow_osc(hw);
+	void __iomem *sckcr = osc->sckcr;
+	u32 tmp = readl(sckcr);
 
-	अगर (पंचांगp & osc->bits->cr_osc32byp)
-		वापस 1;
+	if (tmp & osc->bits->cr_osc32byp)
+		return 1;
 
-	वापस !!(पंचांगp & osc->bits->cr_osc32en);
-पूर्ण
+	return !!(tmp & osc->bits->cr_osc32en);
+}
 
-अटल स्थिर काष्ठा clk_ops slow_osc_ops = अणु
+static const struct clk_ops slow_osc_ops = {
 	.prepare = clk_slow_osc_prepare,
 	.unprepare = clk_slow_osc_unprepare,
 	.is_prepared = clk_slow_osc_is_prepared,
-पूर्ण;
+};
 
-अटल काष्ठा clk_hw * __init
-at91_clk_रेजिस्टर_slow_osc(व्योम __iomem *sckcr,
-			   स्थिर अक्षर *name,
-			   स्थिर अक्षर *parent_name,
-			   अचिन्हित दीर्घ startup,
+static struct clk_hw * __init
+at91_clk_register_slow_osc(void __iomem *sckcr,
+			   const char *name,
+			   const char *parent_name,
+			   unsigned long startup,
 			   bool bypass,
-			   स्थिर काष्ठा clk_slow_bits *bits)
-अणु
-	काष्ठा clk_slow_osc *osc;
-	काष्ठा clk_hw *hw;
-	काष्ठा clk_init_data init;
-	पूर्णांक ret;
+			   const struct clk_slow_bits *bits)
+{
+	struct clk_slow_osc *osc;
+	struct clk_hw *hw;
+	struct clk_init_data init;
+	int ret;
 
-	अगर (!sckcr || !name || !parent_name)
-		वापस ERR_PTR(-EINVAL);
+	if (!sckcr || !name || !parent_name)
+		return ERR_PTR(-EINVAL);
 
-	osc = kzalloc(माप(*osc), GFP_KERNEL);
-	अगर (!osc)
-		वापस ERR_PTR(-ENOMEM);
+	osc = kzalloc(sizeof(*osc), GFP_KERNEL);
+	if (!osc)
+		return ERR_PTR(-ENOMEM);
 
 	init.name = name;
 	init.ops = &slow_osc_ops;
@@ -146,105 +145,105 @@ at91_clk_रेजिस्टर_slow_osc(व्योम __iomem *sckcr,
 	osc->startup_usec = startup;
 	osc->bits = bits;
 
-	अगर (bypass)
-		ग_लिखोl((पढ़ोl(sckcr) & ~osc->bits->cr_osc32en) |
+	if (bypass)
+		writel((readl(sckcr) & ~osc->bits->cr_osc32en) |
 					osc->bits->cr_osc32byp, sckcr);
 
 	hw = &osc->hw;
-	ret = clk_hw_रेजिस्टर(शून्य, &osc->hw);
-	अगर (ret) अणु
-		kमुक्त(osc);
+	ret = clk_hw_register(NULL, &osc->hw);
+	if (ret) {
+		kfree(osc);
 		hw = ERR_PTR(ret);
-	पूर्ण
+	}
 
-	वापस hw;
-पूर्ण
+	return hw;
+}
 
-अटल व्योम at91_clk_unरेजिस्टर_slow_osc(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_slow_osc *osc = to_clk_slow_osc(hw);
+static void at91_clk_unregister_slow_osc(struct clk_hw *hw)
+{
+	struct clk_slow_osc *osc = to_clk_slow_osc(hw);
 
-	clk_hw_unरेजिस्टर(hw);
-	kमुक्त(osc);
-पूर्ण
+	clk_hw_unregister(hw);
+	kfree(osc);
+}
 
-अटल अचिन्हित दीर्घ clk_slow_rc_osc_recalc_rate(काष्ठा clk_hw *hw,
-						 अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा clk_slow_rc_osc *osc = to_clk_slow_rc_osc(hw);
+static unsigned long clk_slow_rc_osc_recalc_rate(struct clk_hw *hw,
+						 unsigned long parent_rate)
+{
+	struct clk_slow_rc_osc *osc = to_clk_slow_rc_osc(hw);
 
-	वापस osc->frequency;
-पूर्ण
+	return osc->frequency;
+}
 
-अटल अचिन्हित दीर्घ clk_slow_rc_osc_recalc_accuracy(काष्ठा clk_hw *hw,
-						     अचिन्हित दीर्घ parent_acc)
-अणु
-	काष्ठा clk_slow_rc_osc *osc = to_clk_slow_rc_osc(hw);
+static unsigned long clk_slow_rc_osc_recalc_accuracy(struct clk_hw *hw,
+						     unsigned long parent_acc)
+{
+	struct clk_slow_rc_osc *osc = to_clk_slow_rc_osc(hw);
 
-	वापस osc->accuracy;
-पूर्ण
+	return osc->accuracy;
+}
 
-अटल पूर्णांक clk_slow_rc_osc_prepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_slow_rc_osc *osc = to_clk_slow_rc_osc(hw);
-	व्योम __iomem *sckcr = osc->sckcr;
+static int clk_slow_rc_osc_prepare(struct clk_hw *hw)
+{
+	struct clk_slow_rc_osc *osc = to_clk_slow_rc_osc(hw);
+	void __iomem *sckcr = osc->sckcr;
 
-	ग_लिखोl(पढ़ोl(sckcr) | osc->bits->cr_rcen, sckcr);
+	writel(readl(sckcr) | osc->bits->cr_rcen, sckcr);
 
-	अगर (प्रणाली_state < SYSTEM_RUNNING)
+	if (system_state < SYSTEM_RUNNING)
 		udelay(osc->startup_usec);
-	अन्यथा
+	else
 		usleep_range(osc->startup_usec, osc->startup_usec + 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम clk_slow_rc_osc_unprepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_slow_rc_osc *osc = to_clk_slow_rc_osc(hw);
-	व्योम __iomem *sckcr = osc->sckcr;
+static void clk_slow_rc_osc_unprepare(struct clk_hw *hw)
+{
+	struct clk_slow_rc_osc *osc = to_clk_slow_rc_osc(hw);
+	void __iomem *sckcr = osc->sckcr;
 
-	ग_लिखोl(पढ़ोl(sckcr) & ~osc->bits->cr_rcen, sckcr);
-पूर्ण
+	writel(readl(sckcr) & ~osc->bits->cr_rcen, sckcr);
+}
 
-अटल पूर्णांक clk_slow_rc_osc_is_prepared(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_slow_rc_osc *osc = to_clk_slow_rc_osc(hw);
+static int clk_slow_rc_osc_is_prepared(struct clk_hw *hw)
+{
+	struct clk_slow_rc_osc *osc = to_clk_slow_rc_osc(hw);
 
-	वापस !!(पढ़ोl(osc->sckcr) & osc->bits->cr_rcen);
-पूर्ण
+	return !!(readl(osc->sckcr) & osc->bits->cr_rcen);
+}
 
-अटल स्थिर काष्ठा clk_ops slow_rc_osc_ops = अणु
+static const struct clk_ops slow_rc_osc_ops = {
 	.prepare = clk_slow_rc_osc_prepare,
 	.unprepare = clk_slow_rc_osc_unprepare,
 	.is_prepared = clk_slow_rc_osc_is_prepared,
 	.recalc_rate = clk_slow_rc_osc_recalc_rate,
 	.recalc_accuracy = clk_slow_rc_osc_recalc_accuracy,
-पूर्ण;
+};
 
-अटल काष्ठा clk_hw * __init
-at91_clk_रेजिस्टर_slow_rc_osc(व्योम __iomem *sckcr,
-			      स्थिर अक्षर *name,
-			      अचिन्हित दीर्घ frequency,
-			      अचिन्हित दीर्घ accuracy,
-			      अचिन्हित दीर्घ startup,
-			      स्थिर काष्ठा clk_slow_bits *bits)
-अणु
-	काष्ठा clk_slow_rc_osc *osc;
-	काष्ठा clk_hw *hw;
-	काष्ठा clk_init_data init;
-	पूर्णांक ret;
+static struct clk_hw * __init
+at91_clk_register_slow_rc_osc(void __iomem *sckcr,
+			      const char *name,
+			      unsigned long frequency,
+			      unsigned long accuracy,
+			      unsigned long startup,
+			      const struct clk_slow_bits *bits)
+{
+	struct clk_slow_rc_osc *osc;
+	struct clk_hw *hw;
+	struct clk_init_data init;
+	int ret;
 
-	अगर (!sckcr || !name)
-		वापस ERR_PTR(-EINVAL);
+	if (!sckcr || !name)
+		return ERR_PTR(-EINVAL);
 
-	osc = kzalloc(माप(*osc), GFP_KERNEL);
-	अगर (!osc)
-		वापस ERR_PTR(-ENOMEM);
+	osc = kzalloc(sizeof(*osc), GFP_KERNEL);
+	if (!osc)
+		return ERR_PTR(-ENOMEM);
 
 	init.name = name;
 	init.ops = &slow_rc_osc_ops;
-	init.parent_names = शून्य;
+	init.parent_names = NULL;
 	init.num_parents = 0;
 	init.flags = CLK_IGNORE_UNUSED;
 
@@ -256,83 +255,83 @@ at91_clk_रेजिस्टर_slow_rc_osc(व्योम __iomem *sckcr,
 	osc->startup_usec = startup;
 
 	hw = &osc->hw;
-	ret = clk_hw_रेजिस्टर(शून्य, &osc->hw);
-	अगर (ret) अणु
-		kमुक्त(osc);
+	ret = clk_hw_register(NULL, &osc->hw);
+	if (ret) {
+		kfree(osc);
 		hw = ERR_PTR(ret);
-	पूर्ण
+	}
 
-	वापस hw;
-पूर्ण
+	return hw;
+}
 
-अटल व्योम at91_clk_unरेजिस्टर_slow_rc_osc(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_slow_rc_osc *osc = to_clk_slow_rc_osc(hw);
+static void at91_clk_unregister_slow_rc_osc(struct clk_hw *hw)
+{
+	struct clk_slow_rc_osc *osc = to_clk_slow_rc_osc(hw);
 
-	clk_hw_unरेजिस्टर(hw);
-	kमुक्त(osc);
-पूर्ण
+	clk_hw_unregister(hw);
+	kfree(osc);
+}
 
-अटल पूर्णांक clk_sam9x5_slow_set_parent(काष्ठा clk_hw *hw, u8 index)
-अणु
-	काष्ठा clk_sam9x5_slow *slowck = to_clk_sam9x5_slow(hw);
-	व्योम __iomem *sckcr = slowck->sckcr;
-	u32 पंचांगp;
+static int clk_sam9x5_slow_set_parent(struct clk_hw *hw, u8 index)
+{
+	struct clk_sam9x5_slow *slowck = to_clk_sam9x5_slow(hw);
+	void __iomem *sckcr = slowck->sckcr;
+	u32 tmp;
 
-	अगर (index > 1)
-		वापस -EINVAL;
+	if (index > 1)
+		return -EINVAL;
 
-	पंचांगp = पढ़ोl(sckcr);
+	tmp = readl(sckcr);
 
-	अगर ((!index && !(पंचांगp & slowck->bits->cr_oscsel)) ||
-	    (index && (पंचांगp & slowck->bits->cr_oscsel)))
-		वापस 0;
+	if ((!index && !(tmp & slowck->bits->cr_oscsel)) ||
+	    (index && (tmp & slowck->bits->cr_oscsel)))
+		return 0;
 
-	अगर (index)
-		पंचांगp |= slowck->bits->cr_oscsel;
-	अन्यथा
-		पंचांगp &= ~slowck->bits->cr_oscsel;
+	if (index)
+		tmp |= slowck->bits->cr_oscsel;
+	else
+		tmp &= ~slowck->bits->cr_oscsel;
 
-	ग_लिखोl(पंचांगp, sckcr);
+	writel(tmp, sckcr);
 
-	अगर (प्रणाली_state < SYSTEM_RUNNING)
+	if (system_state < SYSTEM_RUNNING)
 		udelay(SLOWCK_SW_TIME_USEC);
-	अन्यथा
+	else
 		usleep_range(SLOWCK_SW_TIME_USEC, SLOWCK_SW_TIME_USEC + 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u8 clk_sam9x5_slow_get_parent(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_sam9x5_slow *slowck = to_clk_sam9x5_slow(hw);
+static u8 clk_sam9x5_slow_get_parent(struct clk_hw *hw)
+{
+	struct clk_sam9x5_slow *slowck = to_clk_sam9x5_slow(hw);
 
-	वापस !!(पढ़ोl(slowck->sckcr) & slowck->bits->cr_oscsel);
-पूर्ण
+	return !!(readl(slowck->sckcr) & slowck->bits->cr_oscsel);
+}
 
-अटल स्थिर काष्ठा clk_ops sam9x5_slow_ops = अणु
+static const struct clk_ops sam9x5_slow_ops = {
 	.set_parent = clk_sam9x5_slow_set_parent,
 	.get_parent = clk_sam9x5_slow_get_parent,
-पूर्ण;
+};
 
-अटल काष्ठा clk_hw * __init
-at91_clk_रेजिस्टर_sam9x5_slow(व्योम __iomem *sckcr,
-			      स्थिर अक्षर *name,
-			      स्थिर अक्षर **parent_names,
-			      पूर्णांक num_parents,
-			      स्थिर काष्ठा clk_slow_bits *bits)
-अणु
-	काष्ठा clk_sam9x5_slow *slowck;
-	काष्ठा clk_hw *hw;
-	काष्ठा clk_init_data init;
-	पूर्णांक ret;
+static struct clk_hw * __init
+at91_clk_register_sam9x5_slow(void __iomem *sckcr,
+			      const char *name,
+			      const char **parent_names,
+			      int num_parents,
+			      const struct clk_slow_bits *bits)
+{
+	struct clk_sam9x5_slow *slowck;
+	struct clk_hw *hw;
+	struct clk_init_data init;
+	int ret;
 
-	अगर (!sckcr || !name || !parent_names || !num_parents)
-		वापस ERR_PTR(-EINVAL);
+	if (!sckcr || !name || !parent_names || !num_parents)
+		return ERR_PTR(-EINVAL);
 
-	slowck = kzalloc(माप(*slowck), GFP_KERNEL);
-	अगर (!slowck)
-		वापस ERR_PTR(-ENOMEM);
+	slowck = kzalloc(sizeof(*slowck), GFP_KERNEL);
+	if (!slowck)
+		return ERR_PTR(-ENOMEM);
 
 	init.name = name;
 	init.ops = &sam9x5_slow_ops;
@@ -343,256 +342,256 @@ at91_clk_रेजिस्टर_sam9x5_slow(व्योम __iomem *sckcr,
 	slowck->hw.init = &init;
 	slowck->sckcr = sckcr;
 	slowck->bits = bits;
-	slowck->parent = !!(पढ़ोl(sckcr) & slowck->bits->cr_oscsel);
+	slowck->parent = !!(readl(sckcr) & slowck->bits->cr_oscsel);
 
 	hw = &slowck->hw;
-	ret = clk_hw_रेजिस्टर(शून्य, &slowck->hw);
-	अगर (ret) अणु
-		kमुक्त(slowck);
+	ret = clk_hw_register(NULL, &slowck->hw);
+	if (ret) {
+		kfree(slowck);
 		hw = ERR_PTR(ret);
-	पूर्ण
+	}
 
-	वापस hw;
-पूर्ण
+	return hw;
+}
 
-अटल व्योम at91_clk_unरेजिस्टर_sam9x5_slow(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_sam9x5_slow *slowck = to_clk_sam9x5_slow(hw);
+static void at91_clk_unregister_sam9x5_slow(struct clk_hw *hw)
+{
+	struct clk_sam9x5_slow *slowck = to_clk_sam9x5_slow(hw);
 
-	clk_hw_unरेजिस्टर(hw);
-	kमुक्त(slowck);
-पूर्ण
+	clk_hw_unregister(hw);
+	kfree(slowck);
+}
 
-अटल व्योम __init at91sam9x5_sckc_रेजिस्टर(काष्ठा device_node *np,
-					    अचिन्हित पूर्णांक rc_osc_startup_us,
-					    स्थिर काष्ठा clk_slow_bits *bits)
-अणु
-	स्थिर अक्षर *parent_names[2] = अणु "slow_rc_osc", "slow_osc" पूर्ण;
-	व्योम __iomem *regbase = of_iomap(np, 0);
-	काष्ठा device_node *child = शून्य;
-	स्थिर अक्षर *xtal_name;
-	काष्ठा clk_hw *slow_rc, *slow_osc, *slowck;
+static void __init at91sam9x5_sckc_register(struct device_node *np,
+					    unsigned int rc_osc_startup_us,
+					    const struct clk_slow_bits *bits)
+{
+	const char *parent_names[2] = { "slow_rc_osc", "slow_osc" };
+	void __iomem *regbase = of_iomap(np, 0);
+	struct device_node *child = NULL;
+	const char *xtal_name;
+	struct clk_hw *slow_rc, *slow_osc, *slowck;
 	bool bypass;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!regbase)
-		वापस;
+	if (!regbase)
+		return;
 
-	slow_rc = at91_clk_रेजिस्टर_slow_rc_osc(regbase, parent_names[0],
+	slow_rc = at91_clk_register_slow_rc_osc(regbase, parent_names[0],
 						32768, 50000000,
 						rc_osc_startup_us, bits);
-	अगर (IS_ERR(slow_rc))
-		वापस;
+	if (IS_ERR(slow_rc))
+		return;
 
 	xtal_name = of_clk_get_parent_name(np, 0);
-	अगर (!xtal_name) अणु
+	if (!xtal_name) {
 		/* DT backward compatibility */
 		child = of_get_compatible_child(np, "atmel,at91sam9x5-clk-slow-osc");
-		अगर (!child)
-			जाओ unरेजिस्टर_slow_rc;
+		if (!child)
+			goto unregister_slow_rc;
 
 		xtal_name = of_clk_get_parent_name(child, 0);
-		bypass = of_property_पढ़ो_bool(child, "atmel,osc-bypass");
+		bypass = of_property_read_bool(child, "atmel,osc-bypass");
 
 		child =  of_get_compatible_child(np, "atmel,at91sam9x5-clk-slow");
-	पूर्ण अन्यथा अणु
-		bypass = of_property_पढ़ो_bool(np, "atmel,osc-bypass");
-	पूर्ण
+	} else {
+		bypass = of_property_read_bool(np, "atmel,osc-bypass");
+	}
 
-	अगर (!xtal_name)
-		जाओ unरेजिस्टर_slow_rc;
+	if (!xtal_name)
+		goto unregister_slow_rc;
 
-	slow_osc = at91_clk_रेजिस्टर_slow_osc(regbase, parent_names[1],
+	slow_osc = at91_clk_register_slow_osc(regbase, parent_names[1],
 					      xtal_name, 1200000, bypass, bits);
-	अगर (IS_ERR(slow_osc))
-		जाओ unरेजिस्टर_slow_rc;
+	if (IS_ERR(slow_osc))
+		goto unregister_slow_rc;
 
-	slowck = at91_clk_रेजिस्टर_sam9x5_slow(regbase, "slowck", parent_names,
+	slowck = at91_clk_register_sam9x5_slow(regbase, "slowck", parent_names,
 					       2, bits);
-	अगर (IS_ERR(slowck))
-		जाओ unरेजिस्टर_slow_osc;
+	if (IS_ERR(slowck))
+		goto unregister_slow_osc;
 
 	/* DT backward compatibility */
-	अगर (child)
+	if (child)
 		ret = of_clk_add_hw_provider(child, of_clk_hw_simple_get,
 					     slowck);
-	अन्यथा
+	else
 		ret = of_clk_add_hw_provider(np, of_clk_hw_simple_get, slowck);
 
-	अगर (WARN_ON(ret))
-		जाओ unरेजिस्टर_slowck;
+	if (WARN_ON(ret))
+		goto unregister_slowck;
 
-	वापस;
+	return;
 
-unरेजिस्टर_slowck:
-	at91_clk_unरेजिस्टर_sam9x5_slow(slowck);
-unरेजिस्टर_slow_osc:
-	at91_clk_unरेजिस्टर_slow_osc(slow_osc);
-unरेजिस्टर_slow_rc:
-	at91_clk_unरेजिस्टर_slow_rc_osc(slow_rc);
-पूर्ण
+unregister_slowck:
+	at91_clk_unregister_sam9x5_slow(slowck);
+unregister_slow_osc:
+	at91_clk_unregister_slow_osc(slow_osc);
+unregister_slow_rc:
+	at91_clk_unregister_slow_rc_osc(slow_rc);
+}
 
-अटल स्थिर काष्ठा clk_slow_bits at91sam9x5_bits = अणु
+static const struct clk_slow_bits at91sam9x5_bits = {
 	.cr_rcen = BIT(0),
 	.cr_osc32en = BIT(1),
 	.cr_osc32byp = BIT(2),
 	.cr_oscsel = BIT(3),
-पूर्ण;
+};
 
-अटल व्योम __init of_at91sam9x5_sckc_setup(काष्ठा device_node *np)
-अणु
-	at91sam9x5_sckc_रेजिस्टर(np, 75, &at91sam9x5_bits);
-पूर्ण
+static void __init of_at91sam9x5_sckc_setup(struct device_node *np)
+{
+	at91sam9x5_sckc_register(np, 75, &at91sam9x5_bits);
+}
 CLK_OF_DECLARE(at91sam9x5_clk_sckc, "atmel,at91sam9x5-sckc",
 	       of_at91sam9x5_sckc_setup);
 
-अटल व्योम __init of_sama5d3_sckc_setup(काष्ठा device_node *np)
-अणु
-	at91sam9x5_sckc_रेजिस्टर(np, 500, &at91sam9x5_bits);
-पूर्ण
+static void __init of_sama5d3_sckc_setup(struct device_node *np)
+{
+	at91sam9x5_sckc_register(np, 500, &at91sam9x5_bits);
+}
 CLK_OF_DECLARE(sama5d3_clk_sckc, "atmel,sama5d3-sckc",
 	       of_sama5d3_sckc_setup);
 
-अटल स्थिर काष्ठा clk_slow_bits at91sam9x60_bits = अणु
+static const struct clk_slow_bits at91sam9x60_bits = {
 	.cr_osc32en = BIT(1),
 	.cr_osc32byp = BIT(2),
 	.cr_oscsel = BIT(24),
-पूर्ण;
+};
 
-अटल व्योम __init of_sam9x60_sckc_setup(काष्ठा device_node *np)
-अणु
-	व्योम __iomem *regbase = of_iomap(np, 0);
-	काष्ठा clk_hw_onecell_data *clk_data;
-	काष्ठा clk_hw *slow_rc, *slow_osc;
-	स्थिर अक्षर *xtal_name;
-	स्थिर अक्षर *parent_names[2] = अणु "slow_rc_osc", "slow_osc" पूर्ण;
+static void __init of_sam9x60_sckc_setup(struct device_node *np)
+{
+	void __iomem *regbase = of_iomap(np, 0);
+	struct clk_hw_onecell_data *clk_data;
+	struct clk_hw *slow_rc, *slow_osc;
+	const char *xtal_name;
+	const char *parent_names[2] = { "slow_rc_osc", "slow_osc" };
 	bool bypass;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!regbase)
-		वापस;
+	if (!regbase)
+		return;
 
-	slow_rc = clk_hw_रेजिस्टर_fixed_rate_with_accuracy(शून्य, parent_names[0],
-							   शून्य, 0, 32768,
+	slow_rc = clk_hw_register_fixed_rate_with_accuracy(NULL, parent_names[0],
+							   NULL, 0, 32768,
 							   93750000);
-	अगर (IS_ERR(slow_rc))
-		वापस;
+	if (IS_ERR(slow_rc))
+		return;
 
 	xtal_name = of_clk_get_parent_name(np, 0);
-	अगर (!xtal_name)
-		जाओ unरेजिस्टर_slow_rc;
+	if (!xtal_name)
+		goto unregister_slow_rc;
 
-	bypass = of_property_पढ़ो_bool(np, "atmel,osc-bypass");
-	slow_osc = at91_clk_रेजिस्टर_slow_osc(regbase, parent_names[1],
+	bypass = of_property_read_bool(np, "atmel,osc-bypass");
+	slow_osc = at91_clk_register_slow_osc(regbase, parent_names[1],
 					      xtal_name, 5000000, bypass,
 					      &at91sam9x60_bits);
-	अगर (IS_ERR(slow_osc))
-		जाओ unरेजिस्टर_slow_rc;
+	if (IS_ERR(slow_osc))
+		goto unregister_slow_rc;
 
-	clk_data = kzalloc(काष्ठा_size(clk_data, hws, 2), GFP_KERNEL);
-	अगर (!clk_data)
-		जाओ unरेजिस्टर_slow_osc;
+	clk_data = kzalloc(struct_size(clk_data, hws, 2), GFP_KERNEL);
+	if (!clk_data)
+		goto unregister_slow_osc;
 
 	/* MD_SLCK and TD_SLCK. */
 	clk_data->num = 2;
-	clk_data->hws[0] = clk_hw_रेजिस्टर_fixed_rate(शून्य, "md_slck",
+	clk_data->hws[0] = clk_hw_register_fixed_rate(NULL, "md_slck",
 						      parent_names[0],
 						      0, 32768);
-	अगर (IS_ERR(clk_data->hws[0]))
-		जाओ clk_data_मुक्त;
+	if (IS_ERR(clk_data->hws[0]))
+		goto clk_data_free;
 
-	clk_data->hws[1] = at91_clk_रेजिस्टर_sam9x5_slow(regbase, "td_slck",
+	clk_data->hws[1] = at91_clk_register_sam9x5_slow(regbase, "td_slck",
 							 parent_names, 2,
 							 &at91sam9x60_bits);
-	अगर (IS_ERR(clk_data->hws[1]))
-		जाओ unरेजिस्टर_md_slck;
+	if (IS_ERR(clk_data->hws[1]))
+		goto unregister_md_slck;
 
 	ret = of_clk_add_hw_provider(np, of_clk_hw_onecell_get, clk_data);
-	अगर (WARN_ON(ret))
-		जाओ unरेजिस्टर_td_slck;
+	if (WARN_ON(ret))
+		goto unregister_td_slck;
 
-	वापस;
+	return;
 
-unरेजिस्टर_td_slck:
-	at91_clk_unरेजिस्टर_sam9x5_slow(clk_data->hws[1]);
-unरेजिस्टर_md_slck:
-	clk_hw_unरेजिस्टर(clk_data->hws[0]);
-clk_data_मुक्त:
-	kमुक्त(clk_data);
-unरेजिस्टर_slow_osc:
-	at91_clk_unरेजिस्टर_slow_osc(slow_osc);
-unरेजिस्टर_slow_rc:
-	clk_hw_unरेजिस्टर(slow_rc);
-पूर्ण
+unregister_td_slck:
+	at91_clk_unregister_sam9x5_slow(clk_data->hws[1]);
+unregister_md_slck:
+	clk_hw_unregister(clk_data->hws[0]);
+clk_data_free:
+	kfree(clk_data);
+unregister_slow_osc:
+	at91_clk_unregister_slow_osc(slow_osc);
+unregister_slow_rc:
+	clk_hw_unregister(slow_rc);
+}
 CLK_OF_DECLARE(sam9x60_clk_sckc, "microchip,sam9x60-sckc",
 	       of_sam9x60_sckc_setup);
 
-अटल पूर्णांक clk_sama5d4_slow_osc_prepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_sama5d4_slow_osc *osc = to_clk_sama5d4_slow_osc(hw);
+static int clk_sama5d4_slow_osc_prepare(struct clk_hw *hw)
+{
+	struct clk_sama5d4_slow_osc *osc = to_clk_sama5d4_slow_osc(hw);
 
-	अगर (osc->prepared)
-		वापस 0;
+	if (osc->prepared)
+		return 0;
 
 	/*
-	 * Assume that अगर it has alपढ़ोy been selected (क्रम example by the
-	 * bootloader), enough समय has aपढ़ोy passed.
+	 * Assume that if it has already been selected (for example by the
+	 * bootloader), enough time has aready passed.
 	 */
-	अगर ((पढ़ोl(osc->sckcr) & osc->bits->cr_oscsel)) अणु
+	if ((readl(osc->sckcr) & osc->bits->cr_oscsel)) {
 		osc->prepared = true;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (प्रणाली_state < SYSTEM_RUNNING)
+	if (system_state < SYSTEM_RUNNING)
 		udelay(osc->startup_usec);
-	अन्यथा
+	else
 		usleep_range(osc->startup_usec, osc->startup_usec + 1);
 	osc->prepared = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक clk_sama5d4_slow_osc_is_prepared(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_sama5d4_slow_osc *osc = to_clk_sama5d4_slow_osc(hw);
+static int clk_sama5d4_slow_osc_is_prepared(struct clk_hw *hw)
+{
+	struct clk_sama5d4_slow_osc *osc = to_clk_sama5d4_slow_osc(hw);
 
-	वापस osc->prepared;
-पूर्ण
+	return osc->prepared;
+}
 
-अटल स्थिर काष्ठा clk_ops sama5d4_slow_osc_ops = अणु
+static const struct clk_ops sama5d4_slow_osc_ops = {
 	.prepare = clk_sama5d4_slow_osc_prepare,
 	.is_prepared = clk_sama5d4_slow_osc_is_prepared,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा clk_slow_bits at91sama5d4_bits = अणु
+static const struct clk_slow_bits at91sama5d4_bits = {
 	.cr_oscsel = BIT(3),
-पूर्ण;
+};
 
-अटल व्योम __init of_sama5d4_sckc_setup(काष्ठा device_node *np)
-अणु
-	व्योम __iomem *regbase = of_iomap(np, 0);
-	काष्ठा clk_hw *slow_rc, *slowck;
-	काष्ठा clk_sama5d4_slow_osc *osc;
-	काष्ठा clk_init_data init;
-	स्थिर अक्षर *xtal_name;
-	स्थिर अक्षर *parent_names[2] = अणु "slow_rc_osc", "slow_osc" पूर्ण;
-	पूर्णांक ret;
+static void __init of_sama5d4_sckc_setup(struct device_node *np)
+{
+	void __iomem *regbase = of_iomap(np, 0);
+	struct clk_hw *slow_rc, *slowck;
+	struct clk_sama5d4_slow_osc *osc;
+	struct clk_init_data init;
+	const char *xtal_name;
+	const char *parent_names[2] = { "slow_rc_osc", "slow_osc" };
+	int ret;
 
-	अगर (!regbase)
-		वापस;
+	if (!regbase)
+		return;
 
-	slow_rc = clk_hw_रेजिस्टर_fixed_rate_with_accuracy(शून्य,
+	slow_rc = clk_hw_register_fixed_rate_with_accuracy(NULL,
 							   parent_names[0],
-							   शून्य, 0, 32768,
+							   NULL, 0, 32768,
 							   250000000);
-	अगर (IS_ERR(slow_rc))
-		वापस;
+	if (IS_ERR(slow_rc))
+		return;
 
 	xtal_name = of_clk_get_parent_name(np, 0);
 
-	osc = kzalloc(माप(*osc), GFP_KERNEL);
-	अगर (!osc)
-		जाओ unरेजिस्टर_slow_rc;
+	osc = kzalloc(sizeof(*osc), GFP_KERNEL);
+	if (!osc)
+		goto unregister_slow_rc;
 
 	init.name = parent_names[1];
 	init.ops = &sama5d4_slow_osc_ops;
@@ -605,30 +604,30 @@ CLK_OF_DECLARE(sam9x60_clk_sckc, "microchip,sam9x60-sckc",
 	osc->startup_usec = 1200000;
 	osc->bits = &at91sama5d4_bits;
 
-	ret = clk_hw_रेजिस्टर(शून्य, &osc->hw);
-	अगर (ret)
-		जाओ मुक्त_slow_osc_data;
+	ret = clk_hw_register(NULL, &osc->hw);
+	if (ret)
+		goto free_slow_osc_data;
 
-	slowck = at91_clk_रेजिस्टर_sam9x5_slow(regbase, "slowck",
+	slowck = at91_clk_register_sam9x5_slow(regbase, "slowck",
 					       parent_names, 2,
 					       &at91sama5d4_bits);
-	अगर (IS_ERR(slowck))
-		जाओ unरेजिस्टर_slow_osc;
+	if (IS_ERR(slowck))
+		goto unregister_slow_osc;
 
 	ret = of_clk_add_hw_provider(np, of_clk_hw_simple_get, slowck);
-	अगर (WARN_ON(ret))
-		जाओ unरेजिस्टर_slowck;
+	if (WARN_ON(ret))
+		goto unregister_slowck;
 
-	वापस;
+	return;
 
-unरेजिस्टर_slowck:
-	at91_clk_unरेजिस्टर_sam9x5_slow(slowck);
-unरेजिस्टर_slow_osc:
-	clk_hw_unरेजिस्टर(&osc->hw);
-मुक्त_slow_osc_data:
-	kमुक्त(osc);
-unरेजिस्टर_slow_rc:
-	clk_hw_unरेजिस्टर(slow_rc);
-पूर्ण
+unregister_slowck:
+	at91_clk_unregister_sam9x5_slow(slowck);
+unregister_slow_osc:
+	clk_hw_unregister(&osc->hw);
+free_slow_osc_data:
+	kfree(osc);
+unregister_slow_rc:
+	clk_hw_unregister(slow_rc);
+}
 CLK_OF_DECLARE(sama5d4_clk_sckc, "atmel,sama5d4-sckc",
 	       of_sama5d4_sckc_setup);

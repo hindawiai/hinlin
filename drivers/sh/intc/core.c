@@ -1,11 +1,10 @@
-<शैली गुरु>
 /*
- * Shared पूर्णांकerrupt handling code क्रम IPR and INTC2 types of IRQs.
+ * Shared interrupt handling code for IPR and INTC2 types of IRQs.
  *
  * Copyright (C) 2007, 2008 Magnus Damm
  * Copyright (C) 2009 - 2012 Paul Mundt
  *
- * Based on पूर्णांकc2.c and ipr.c
+ * Based on intc2.c and ipr.c
  *
  * Copyright (C) 1999  Niibe Yutaka & Takeshi Yaegashi
  * Copyright (C) 2000  Kazumoto Kojima
@@ -14,100 +13,100 @@
  * Copyright (C) 2005, 2006  Paul Mundt
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  */
-#घोषणा pr_fmt(fmt) "intc: " fmt
+#define pr_fmt(fmt) "intc: " fmt
 
-#समावेश <linux/init.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/स्थिति.स>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/sh_पूर्णांकc.h>
-#समावेश <linux/irqकरोमुख्य.h>
-#समावेश <linux/device.h>
-#समावेश <linux/syscore_ops.h>
-#समावेश <linux/list.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/radix-tree.h>
-#समावेश <linux/export.h>
-#समावेश <linux/sort.h>
-#समावेश "internals.h"
+#include <linux/init.h>
+#include <linux/irq.h>
+#include <linux/io.h>
+#include <linux/slab.h>
+#include <linux/stat.h>
+#include <linux/interrupt.h>
+#include <linux/sh_intc.h>
+#include <linux/irqdomain.h>
+#include <linux/device.h>
+#include <linux/syscore_ops.h>
+#include <linux/list.h>
+#include <linux/spinlock.h>
+#include <linux/radix-tree.h>
+#include <linux/export.h>
+#include <linux/sort.h>
+#include "internals.h"
 
-LIST_HEAD(पूर्णांकc_list);
-DEFINE_RAW_SPINLOCK(पूर्णांकc_big_lock);
-अटल अचिन्हित पूर्णांक nr_पूर्णांकc_controllers;
+LIST_HEAD(intc_list);
+DEFINE_RAW_SPINLOCK(intc_big_lock);
+static unsigned int nr_intc_controllers;
 
 /*
  * Default priority level
- * - this needs to be at least 2 क्रम 5-bit priorities on 7780
+ * - this needs to be at least 2 for 5-bit priorities on 7780
  */
-अटल अचिन्हित पूर्णांक शेष_prio_level = 2;	/* 2 - 16 */
-अटल अचिन्हित पूर्णांक पूर्णांकc_prio_level[INTC_NR_IRQS];	/* क्रम now */
+static unsigned int default_prio_level = 2;	/* 2 - 16 */
+static unsigned int intc_prio_level[INTC_NR_IRQS];	/* for now */
 
-अचिन्हित पूर्णांक पूर्णांकc_get_dfl_prio_level(व्योम)
-अणु
-	वापस शेष_prio_level;
-पूर्ण
+unsigned int intc_get_dfl_prio_level(void)
+{
+	return default_prio_level;
+}
 
-अचिन्हित पूर्णांक पूर्णांकc_get_prio_level(अचिन्हित पूर्णांक irq)
-अणु
-	वापस पूर्णांकc_prio_level[irq];
-पूर्ण
+unsigned int intc_get_prio_level(unsigned int irq)
+{
+	return intc_prio_level[irq];
+}
 
-व्योम पूर्णांकc_set_prio_level(अचिन्हित पूर्णांक irq, अचिन्हित पूर्णांक level)
-अणु
-	अचिन्हित दीर्घ flags;
+void intc_set_prio_level(unsigned int irq, unsigned int level)
+{
+	unsigned long flags;
 
-	raw_spin_lock_irqsave(&पूर्णांकc_big_lock, flags);
-	पूर्णांकc_prio_level[irq] = level;
-	raw_spin_unlock_irqrestore(&पूर्णांकc_big_lock, flags);
-पूर्ण
+	raw_spin_lock_irqsave(&intc_big_lock, flags);
+	intc_prio_level[irq] = level;
+	raw_spin_unlock_irqrestore(&intc_big_lock, flags);
+}
 
-अटल व्योम पूर्णांकc_redirect_irq(काष्ठा irq_desc *desc)
-अणु
-	generic_handle_irq((अचिन्हित पूर्णांक)irq_desc_get_handler_data(desc));
-पूर्ण
+static void intc_redirect_irq(struct irq_desc *desc)
+{
+	generic_handle_irq((unsigned int)irq_desc_get_handler_data(desc));
+}
 
-अटल व्योम __init पूर्णांकc_रेजिस्टर_irq(काष्ठा पूर्णांकc_desc *desc,
-				     काष्ठा पूर्णांकc_desc_पूर्णांक *d,
-				     पूर्णांकc_क्रमागत क्रमागत_id,
-				     अचिन्हित पूर्णांक irq)
-अणु
-	काष्ठा पूर्णांकc_handle_पूर्णांक *hp;
-	काष्ठा irq_data *irq_data;
-	अचिन्हित पूर्णांक data[2], primary;
-	अचिन्हित दीर्घ flags;
+static void __init intc_register_irq(struct intc_desc *desc,
+				     struct intc_desc_int *d,
+				     intc_enum enum_id,
+				     unsigned int irq)
+{
+	struct intc_handle_int *hp;
+	struct irq_data *irq_data;
+	unsigned int data[2], primary;
+	unsigned long flags;
 
-	raw_spin_lock_irqsave(&पूर्णांकc_big_lock, flags);
-	radix_tree_insert(&d->tree, क्रमागत_id, पूर्णांकc_irq_xlate_get(irq));
-	raw_spin_unlock_irqrestore(&पूर्णांकc_big_lock, flags);
+	raw_spin_lock_irqsave(&intc_big_lock, flags);
+	radix_tree_insert(&d->tree, enum_id, intc_irq_xlate_get(irq));
+	raw_spin_unlock_irqrestore(&intc_big_lock, flags);
 
 	/*
-	 * Prefer single पूर्णांकerrupt source biपंचांगap over other combinations:
+	 * Prefer single interrupt source bitmap over other combinations:
 	 *
-	 * 1. biपंचांगap, single पूर्णांकerrupt source
-	 * 2. priority, single पूर्णांकerrupt source
-	 * 3. biपंचांगap, multiple पूर्णांकerrupt sources (groups)
-	 * 4. priority, multiple पूर्णांकerrupt sources (groups)
+	 * 1. bitmap, single interrupt source
+	 * 2. priority, single interrupt source
+	 * 3. bitmap, multiple interrupt sources (groups)
+	 * 4. priority, multiple interrupt sources (groups)
 	 */
-	data[0] = पूर्णांकc_get_mask_handle(desc, d, क्रमागत_id, 0);
-	data[1] = पूर्णांकc_get_prio_handle(desc, d, क्रमागत_id, 0);
+	data[0] = intc_get_mask_handle(desc, d, enum_id, 0);
+	data[1] = intc_get_prio_handle(desc, d, enum_id, 0);
 
 	primary = 0;
-	अगर (!data[0] && data[1])
+	if (!data[0] && data[1])
 		primary = 1;
 
-	अगर (!data[0] && !data[1])
+	if (!data[0] && !data[1])
 		pr_warn("missing unique irq mask for irq %d (vect 0x%04x)\n",
 			irq, irq2evt(irq));
 
-	data[0] = data[0] ? data[0] : पूर्णांकc_get_mask_handle(desc, d, क्रमागत_id, 1);
-	data[1] = data[1] ? data[1] : पूर्णांकc_get_prio_handle(desc, d, क्रमागत_id, 1);
+	data[0] = data[0] ? data[0] : intc_get_mask_handle(desc, d, enum_id, 1);
+	data[1] = data[1] ? data[1] : intc_get_prio_handle(desc, d, enum_id, 1);
 
-	अगर (!data[primary])
+	if (!data[primary])
 		primary ^= 1;
 
 	BUG_ON(!data[primary]); /* must have primary masking method */
@@ -117,386 +116,386 @@ DEFINE_RAW_SPINLOCK(पूर्णांकc_big_lock);
 	disable_irq_nosync(irq);
 	irq_set_chip_and_handler_name(irq, &d->chip, handle_level_irq,
 				      "level");
-	irq_set_chip_data(irq, (व्योम *)data[primary]);
+	irq_set_chip_data(irq, (void *)data[primary]);
 
 	/*
 	 * set priority level
 	 */
-	पूर्णांकc_set_prio_level(irq, पूर्णांकc_get_dfl_prio_level());
+	intc_set_prio_level(irq, intc_get_dfl_prio_level());
 
-	/* enable secondary masking method अगर present */
-	अगर (data[!primary])
-		_पूर्णांकc_enable(irq_data, data[!primary]);
+	/* enable secondary masking method if present */
+	if (data[!primary])
+		_intc_enable(irq_data, data[!primary]);
 
-	/* add irq to d->prio list अगर priority is available */
-	अगर (data[1]) अणु
+	/* add irq to d->prio list if priority is available */
+	if (data[1]) {
 		hp = d->prio + d->nr_prio;
 		hp->irq = irq;
 		hp->handle = data[1];
 
-		अगर (primary) अणु
+		if (primary) {
 			/*
-			 * only secondary priority should access रेजिस्टरs, so
-			 * set _INTC_FN(h) = REG_FN_ERR क्रम पूर्णांकc_set_priority()
+			 * only secondary priority should access registers, so
+			 * set _INTC_FN(h) = REG_FN_ERR for intc_set_priority()
 			 */
 			hp->handle &= ~_INTC_MK(0x0f, 0, 0, 0, 0, 0);
 			hp->handle |= _INTC_MK(REG_FN_ERR, 0, 0, 0, 0, 0);
-		पूर्ण
+		}
 		d->nr_prio++;
-	पूर्ण
+	}
 
-	/* add irq to d->sense list अगर sense is available */
-	data[0] = पूर्णांकc_get_sense_handle(desc, d, क्रमागत_id);
-	अगर (data[0]) अणु
+	/* add irq to d->sense list if sense is available */
+	data[0] = intc_get_sense_handle(desc, d, enum_id);
+	if (data[0]) {
 		(d->sense + d->nr_sense)->irq = irq;
 		(d->sense + d->nr_sense)->handle = data[0];
 		d->nr_sense++;
-	पूर्ण
+	}
 
-	/* irq should be disabled by शेष */
+	/* irq should be disabled by default */
 	d->chip.irq_mask(irq_data);
 
-	पूर्णांकc_set_ack_handle(irq, desc, d, क्रमागत_id);
-	पूर्णांकc_set_dist_handle(irq, desc, d, क्रमागत_id);
+	intc_set_ack_handle(irq, desc, d, enum_id);
+	intc_set_dist_handle(irq, desc, d, enum_id);
 
 	activate_irq(irq);
-पूर्ण
+}
 
-अटल अचिन्हित पूर्णांक __init save_reg(काष्ठा पूर्णांकc_desc_पूर्णांक *d,
-				    अचिन्हित पूर्णांक cnt,
-				    अचिन्हित दीर्घ value,
-				    अचिन्हित पूर्णांक smp)
-अणु
-	अगर (value) अणु
-		value = पूर्णांकc_phys_to_virt(d, value);
+static unsigned int __init save_reg(struct intc_desc_int *d,
+				    unsigned int cnt,
+				    unsigned long value,
+				    unsigned int smp)
+{
+	if (value) {
+		value = intc_phys_to_virt(d, value);
 
 		d->reg[cnt] = value;
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 		d->smp[cnt] = smp;
-#पूर्ण_अगर
-		वापस 1;
-	पूर्ण
+#endif
+		return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool __init पूर्णांकc_map(काष्ठा irq_करोमुख्य *करोमुख्य, पूर्णांक irq)
-अणु
-	अगर (!irq_to_desc(irq) && irq_alloc_desc_at(irq, NUMA_NO_NODE) != irq) अणु
+static bool __init intc_map(struct irq_domain *domain, int irq)
+{
+	if (!irq_to_desc(irq) && irq_alloc_desc_at(irq, NUMA_NO_NODE) != irq) {
 		pr_err("uname to allocate IRQ %d\n", irq);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	अगर (irq_करोमुख्य_associate(करोमुख्य, irq, irq)) अणु
+	if (irq_domain_associate(domain, irq, irq)) {
 		pr_err("domain association failure\n");
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-पूर्णांक __init रेजिस्टर_पूर्णांकc_controller(काष्ठा पूर्णांकc_desc *desc)
-अणु
-	अचिन्हित पूर्णांक i, k, smp;
-	काष्ठा पूर्णांकc_hw_desc *hw = &desc->hw;
-	काष्ठा पूर्णांकc_desc_पूर्णांक *d;
-	काष्ठा resource *res;
+int __init register_intc_controller(struct intc_desc *desc)
+{
+	unsigned int i, k, smp;
+	struct intc_hw_desc *hw = &desc->hw;
+	struct intc_desc_int *d;
+	struct resource *res;
 
 	pr_info("Registered controller '%s' with %u IRQs\n",
 		desc->name, hw->nr_vectors);
 
-	d = kzalloc(माप(*d), GFP_NOWAIT);
-	अगर (!d)
-		जाओ err0;
+	d = kzalloc(sizeof(*d), GFP_NOWAIT);
+	if (!d)
+		goto err0;
 
 	INIT_LIST_HEAD(&d->list);
-	list_add_tail(&d->list, &पूर्णांकc_list);
+	list_add_tail(&d->list, &intc_list);
 
 	raw_spin_lock_init(&d->lock);
 	INIT_RADIX_TREE(&d->tree, GFP_ATOMIC);
 
-	d->index = nr_पूर्णांकc_controllers;
+	d->index = nr_intc_controllers;
 
-	अगर (desc->num_resources) अणु
-		d->nr_winकरोws = desc->num_resources;
-		d->winकरोw = kसुस्मृति(d->nr_winकरोws, माप(*d->winकरोw),
+	if (desc->num_resources) {
+		d->nr_windows = desc->num_resources;
+		d->window = kcalloc(d->nr_windows, sizeof(*d->window),
 				    GFP_NOWAIT);
-		अगर (!d->winकरोw)
-			जाओ err1;
+		if (!d->window)
+			goto err1;
 
-		क्रम (k = 0; k < d->nr_winकरोws; k++) अणु
+		for (k = 0; k < d->nr_windows; k++) {
 			res = desc->resource + k;
 			WARN_ON(resource_type(res) != IORESOURCE_MEM);
-			d->winकरोw[k].phys = res->start;
-			d->winकरोw[k].size = resource_size(res);
-			d->winकरोw[k].virt = ioremap(res->start,
+			d->window[k].phys = res->start;
+			d->window[k].size = resource_size(res);
+			d->window[k].virt = ioremap(res->start,
 						    resource_size(res));
-			अगर (!d->winकरोw[k].virt)
-				जाओ err2;
-		पूर्ण
-	पूर्ण
+			if (!d->window[k].virt)
+				goto err2;
+		}
+	}
 
 	d->nr_reg = hw->mask_regs ? hw->nr_mask_regs * 2 : 0;
-#अगर_घोषित CONFIG_INTC_BALANCING
-	अगर (d->nr_reg)
+#ifdef CONFIG_INTC_BALANCING
+	if (d->nr_reg)
 		d->nr_reg += hw->nr_mask_regs;
-#पूर्ण_अगर
+#endif
 	d->nr_reg += hw->prio_regs ? hw->nr_prio_regs * 2 : 0;
 	d->nr_reg += hw->sense_regs ? hw->nr_sense_regs : 0;
 	d->nr_reg += hw->ack_regs ? hw->nr_ack_regs : 0;
 	d->nr_reg += hw->subgroups ? hw->nr_subgroups : 0;
 
-	d->reg = kसुस्मृति(d->nr_reg, माप(*d->reg), GFP_NOWAIT);
-	अगर (!d->reg)
-		जाओ err2;
+	d->reg = kcalloc(d->nr_reg, sizeof(*d->reg), GFP_NOWAIT);
+	if (!d->reg)
+		goto err2;
 
-#अगर_घोषित CONFIG_SMP
-	d->smp = kसुस्मृति(d->nr_reg, माप(*d->smp), GFP_NOWAIT);
-	अगर (!d->smp)
-		जाओ err3;
-#पूर्ण_अगर
+#ifdef CONFIG_SMP
+	d->smp = kcalloc(d->nr_reg, sizeof(*d->smp), GFP_NOWAIT);
+	if (!d->smp)
+		goto err3;
+#endif
 	k = 0;
 
-	अगर (hw->mask_regs) अणु
-		क्रम (i = 0; i < hw->nr_mask_regs; i++) अणु
+	if (hw->mask_regs) {
+		for (i = 0; i < hw->nr_mask_regs; i++) {
 			smp = IS_SMP(hw->mask_regs[i]);
 			k += save_reg(d, k, hw->mask_regs[i].set_reg, smp);
 			k += save_reg(d, k, hw->mask_regs[i].clr_reg, smp);
-#अगर_घोषित CONFIG_INTC_BALANCING
+#ifdef CONFIG_INTC_BALANCING
 			k += save_reg(d, k, hw->mask_regs[i].dist_reg, 0);
-#पूर्ण_अगर
-		पूर्ण
-	पूर्ण
+#endif
+		}
+	}
 
-	अगर (hw->prio_regs) अणु
-		d->prio = kसुस्मृति(hw->nr_vectors, माप(*d->prio),
+	if (hw->prio_regs) {
+		d->prio = kcalloc(hw->nr_vectors, sizeof(*d->prio),
 				  GFP_NOWAIT);
-		अगर (!d->prio)
-			जाओ err4;
+		if (!d->prio)
+			goto err4;
 
-		क्रम (i = 0; i < hw->nr_prio_regs; i++) अणु
+		for (i = 0; i < hw->nr_prio_regs; i++) {
 			smp = IS_SMP(hw->prio_regs[i]);
 			k += save_reg(d, k, hw->prio_regs[i].set_reg, smp);
 			k += save_reg(d, k, hw->prio_regs[i].clr_reg, smp);
-		पूर्ण
+		}
 
-		sort(d->prio, hw->nr_prio_regs, माप(*d->prio),
-		     पूर्णांकc_handle_पूर्णांक_cmp, शून्य);
-	पूर्ण
+		sort(d->prio, hw->nr_prio_regs, sizeof(*d->prio),
+		     intc_handle_int_cmp, NULL);
+	}
 
-	अगर (hw->sense_regs) अणु
-		d->sense = kसुस्मृति(hw->nr_vectors, माप(*d->sense),
+	if (hw->sense_regs) {
+		d->sense = kcalloc(hw->nr_vectors, sizeof(*d->sense),
 				   GFP_NOWAIT);
-		अगर (!d->sense)
-			जाओ err5;
+		if (!d->sense)
+			goto err5;
 
-		क्रम (i = 0; i < hw->nr_sense_regs; i++)
+		for (i = 0; i < hw->nr_sense_regs; i++)
 			k += save_reg(d, k, hw->sense_regs[i].reg, 0);
 
-		sort(d->sense, hw->nr_sense_regs, माप(*d->sense),
-		     पूर्णांकc_handle_पूर्णांक_cmp, शून्य);
-	पूर्ण
+		sort(d->sense, hw->nr_sense_regs, sizeof(*d->sense),
+		     intc_handle_int_cmp, NULL);
+	}
 
-	अगर (hw->subgroups)
-		क्रम (i = 0; i < hw->nr_subgroups; i++)
-			अगर (hw->subgroups[i].reg)
+	if (hw->subgroups)
+		for (i = 0; i < hw->nr_subgroups; i++)
+			if (hw->subgroups[i].reg)
 				k+= save_reg(d, k, hw->subgroups[i].reg, 0);
 
-	स_नकल(&d->chip, &पूर्णांकc_irq_chip, माप(काष्ठा irq_chip));
+	memcpy(&d->chip, &intc_irq_chip, sizeof(struct irq_chip));
 	d->chip.name = desc->name;
 
-	अगर (hw->ack_regs)
-		क्रम (i = 0; i < hw->nr_ack_regs; i++)
+	if (hw->ack_regs)
+		for (i = 0; i < hw->nr_ack_regs; i++)
 			k += save_reg(d, k, hw->ack_regs[i].set_reg, 0);
-	अन्यथा
+	else
 		d->chip.irq_mask_ack = d->chip.irq_disable;
 
-	/* disable bits matching क्रमce_disable beक्रमe रेजिस्टरing irqs */
-	अगर (desc->क्रमce_disable)
-		पूर्णांकc_enable_disable_क्रमागत(desc, d, desc->क्रमce_disable, 0);
+	/* disable bits matching force_disable before registering irqs */
+	if (desc->force_disable)
+		intc_enable_disable_enum(desc, d, desc->force_disable, 0);
 
-	/* disable bits matching क्रमce_enable beक्रमe रेजिस्टरing irqs */
-	अगर (desc->क्रमce_enable)
-		पूर्णांकc_enable_disable_क्रमागत(desc, d, desc->क्रमce_enable, 0);
+	/* disable bits matching force_enable before registering irqs */
+	if (desc->force_enable)
+		intc_enable_disable_enum(desc, d, desc->force_enable, 0);
 
 	BUG_ON(k > 256); /* _INTC_ADDR_E() and _INTC_ADDR_D() are 8 bits */
 
-	पूर्णांकc_irq_करोमुख्य_init(d, hw);
+	intc_irq_domain_init(d, hw);
 
-	/* रेजिस्टर the vectors one by one */
-	क्रम (i = 0; i < hw->nr_vectors; i++) अणु
-		काष्ठा पूर्णांकc_vect *vect = hw->vectors + i;
-		अचिन्हित पूर्णांक irq = evt2irq(vect->vect);
+	/* register the vectors one by one */
+	for (i = 0; i < hw->nr_vectors; i++) {
+		struct intc_vect *vect = hw->vectors + i;
+		unsigned int irq = evt2irq(vect->vect);
 
-		अगर (!vect->क्रमागत_id)
-			जारी;
+		if (!vect->enum_id)
+			continue;
 
-		अगर (!पूर्णांकc_map(d->करोमुख्य, irq))
-			जारी;
+		if (!intc_map(d->domain, irq))
+			continue;
 
-		पूर्णांकc_irq_xlate_set(irq, vect->क्रमागत_id, d);
-		पूर्णांकc_रेजिस्टर_irq(desc, d, vect->क्रमागत_id, irq);
+		intc_irq_xlate_set(irq, vect->enum_id, d);
+		intc_register_irq(desc, d, vect->enum_id, irq);
 
-		क्रम (k = i + 1; k < hw->nr_vectors; k++) अणु
-			काष्ठा पूर्णांकc_vect *vect2 = hw->vectors + k;
-			अचिन्हित पूर्णांक irq2 = evt2irq(vect2->vect);
+		for (k = i + 1; k < hw->nr_vectors; k++) {
+			struct intc_vect *vect2 = hw->vectors + k;
+			unsigned int irq2 = evt2irq(vect2->vect);
 
-			अगर (vect->क्रमागत_id != vect2->क्रमागत_id)
-				जारी;
+			if (vect->enum_id != vect2->enum_id)
+				continue;
 
 			/*
-			 * In the हाल of multi-evt handling and sparse
+			 * In the case of multi-evt handling and sparse
 			 * IRQ support, each vector still needs to have
 			 * its own backing irq_desc.
 			 */
-			अगर (!पूर्णांकc_map(d->करोमुख्य, irq2))
-				जारी;
+			if (!intc_map(d->domain, irq2))
+				continue;
 
-			vect2->क्रमागत_id = 0;
+			vect2->enum_id = 0;
 
-			/* redirect this पूर्णांकerrupts to the first one */
+			/* redirect this interrupts to the first one */
 			irq_set_chip(irq2, &dummy_irq_chip);
 			irq_set_chained_handler_and_data(irq2,
-							 पूर्णांकc_redirect_irq,
-							 (व्योम *)irq);
-		पूर्ण
-	पूर्ण
+							 intc_redirect_irq,
+							 (void *)irq);
+		}
+	}
 
-	पूर्णांकc_subgroup_init(desc, d);
+	intc_subgroup_init(desc, d);
 
-	/* enable bits matching क्रमce_enable after रेजिस्टरing irqs */
-	अगर (desc->क्रमce_enable)
-		पूर्णांकc_enable_disable_क्रमागत(desc, d, desc->क्रमce_enable, 1);
+	/* enable bits matching force_enable after registering irqs */
+	if (desc->force_enable)
+		intc_enable_disable_enum(desc, d, desc->force_enable, 1);
 
 	d->skip_suspend = desc->skip_syscore_suspend;
 
-	nr_पूर्णांकc_controllers++;
+	nr_intc_controllers++;
 
-	वापस 0;
+	return 0;
 err5:
-	kमुक्त(d->prio);
+	kfree(d->prio);
 err4:
-#अगर_घोषित CONFIG_SMP
-	kमुक्त(d->smp);
+#ifdef CONFIG_SMP
+	kfree(d->smp);
 err3:
-#पूर्ण_अगर
-	kमुक्त(d->reg);
+#endif
+	kfree(d->reg);
 err2:
-	क्रम (k = 0; k < d->nr_winकरोws; k++)
-		अगर (d->winकरोw[k].virt)
-			iounmap(d->winकरोw[k].virt);
+	for (k = 0; k < d->nr_windows; k++)
+		if (d->window[k].virt)
+			iounmap(d->window[k].virt);
 
-	kमुक्त(d->winकरोw);
+	kfree(d->window);
 err1:
-	kमुक्त(d);
+	kfree(d);
 err0:
 	pr_err("unable to allocate INTC memory\n");
 
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल पूर्णांक पूर्णांकc_suspend(व्योम)
-अणु
-	काष्ठा पूर्णांकc_desc_पूर्णांक *d;
+static int intc_suspend(void)
+{
+	struct intc_desc_int *d;
 
-	list_क्रम_each_entry(d, &पूर्णांकc_list, list) अणु
-		पूर्णांक irq;
+	list_for_each_entry(d, &intc_list, list) {
+		int irq;
 
-		अगर (d->skip_suspend)
-			जारी;
+		if (d->skip_suspend)
+			continue;
 
-		/* enable wakeup irqs beदीर्घing to this पूर्णांकc controller */
-		क्रम_each_active_irq(irq) अणु
-			काष्ठा irq_data *data;
-			काष्ठा irq_chip *chip;
+		/* enable wakeup irqs belonging to this intc controller */
+		for_each_active_irq(irq) {
+			struct irq_data *data;
+			struct irq_chip *chip;
 
 			data = irq_get_irq_data(irq);
 			chip = irq_data_get_irq_chip(data);
-			अगर (chip != &d->chip)
-				जारी;
-			अगर (irqd_is_wakeup_set(data))
+			if (chip != &d->chip)
+				continue;
+			if (irqd_is_wakeup_set(data))
 				chip->irq_enable(data);
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+	}
+	return 0;
+}
 
-अटल व्योम पूर्णांकc_resume(व्योम)
-अणु
-	काष्ठा पूर्णांकc_desc_पूर्णांक *d;
+static void intc_resume(void)
+{
+	struct intc_desc_int *d;
 
-	list_क्रम_each_entry(d, &पूर्णांकc_list, list) अणु
-		पूर्णांक irq;
+	list_for_each_entry(d, &intc_list, list) {
+		int irq;
 
-		अगर (d->skip_suspend)
-			जारी;
+		if (d->skip_suspend)
+			continue;
 
-		क्रम_each_active_irq(irq) अणु
-			काष्ठा irq_data *data;
-			काष्ठा irq_chip *chip;
+		for_each_active_irq(irq) {
+			struct irq_data *data;
+			struct irq_chip *chip;
 
 			data = irq_get_irq_data(irq);
 			chip = irq_data_get_irq_chip(data);
 			/*
-			 * This will catch the redirect and VIRQ हालs
+			 * This will catch the redirect and VIRQ cases
 			 * due to the dummy_irq_chip being inserted.
 			 */
-			अगर (chip != &d->chip)
-				जारी;
-			अगर (irqd_irq_disabled(data))
+			if (chip != &d->chip)
+				continue;
+			if (irqd_irq_disabled(data))
 				chip->irq_disable(data);
-			अन्यथा
+			else
 				chip->irq_enable(data);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-काष्ठा syscore_ops पूर्णांकc_syscore_ops = अणु
-	.suspend	= पूर्णांकc_suspend,
-	.resume		= पूर्णांकc_resume,
-पूर्ण;
+struct syscore_ops intc_syscore_ops = {
+	.suspend	= intc_suspend,
+	.resume		= intc_resume,
+};
 
-काष्ठा bus_type पूर्णांकc_subsys = अणु
+struct bus_type intc_subsys = {
 	.name		= "intc",
 	.dev_name	= "intc",
-पूर्ण;
+};
 
-अटल sमाप_प्रकार
-show_पूर्णांकc_name(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा पूर्णांकc_desc_पूर्णांक *d;
+static ssize_t
+show_intc_name(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct intc_desc_int *d;
 
-	d = container_of(dev, काष्ठा पूर्णांकc_desc_पूर्णांक, dev);
+	d = container_of(dev, struct intc_desc_int, dev);
 
-	वापस प्र_लिखो(buf, "%s\n", d->chip.name);
-पूर्ण
+	return sprintf(buf, "%s\n", d->chip.name);
+}
 
-अटल DEVICE_ATTR(name, S_IRUGO, show_पूर्णांकc_name, शून्य);
+static DEVICE_ATTR(name, S_IRUGO, show_intc_name, NULL);
 
-अटल पूर्णांक __init रेजिस्टर_पूर्णांकc_devs(व्योम)
-अणु
-	काष्ठा पूर्णांकc_desc_पूर्णांक *d;
-	पूर्णांक error;
+static int __init register_intc_devs(void)
+{
+	struct intc_desc_int *d;
+	int error;
 
-	रेजिस्टर_syscore_ops(&पूर्णांकc_syscore_ops);
+	register_syscore_ops(&intc_syscore_ops);
 
-	error = subsys_प्रणाली_रेजिस्टर(&पूर्णांकc_subsys, शून्य);
-	अगर (!error) अणु
-		list_क्रम_each_entry(d, &पूर्णांकc_list, list) अणु
+	error = subsys_system_register(&intc_subsys, NULL);
+	if (!error) {
+		list_for_each_entry(d, &intc_list, list) {
 			d->dev.id = d->index;
-			d->dev.bus = &पूर्णांकc_subsys;
-			error = device_रेजिस्टर(&d->dev);
-			अगर (error == 0)
+			d->dev.bus = &intc_subsys;
+			error = device_register(&d->dev);
+			if (error == 0)
 				error = device_create_file(&d->dev,
 							   &dev_attr_name);
-			अगर (error)
-				अवरोध;
-		पूर्ण
-	पूर्ण
+			if (error)
+				break;
+		}
+	}
 
-	अगर (error)
+	if (error)
 		pr_err("device registration error\n");
 
-	वापस error;
-पूर्ण
-device_initcall(रेजिस्टर_पूर्णांकc_devs);
+	return error;
+}
+device_initcall(register_intc_devs);

@@ -1,10 +1,9 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _GCD_H
-#घोषणा _GCD_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _GCD_H
+#define _GCD_H
 
-#समावेश <linux/compiler.h>
+#include <linux/compiler.h>
 
-अचिन्हित दीर्घ gcd(अचिन्हित दीर्घ a, अचिन्हित दीर्घ b) __attribute_स्थिर__;
+unsigned long gcd(unsigned long a, unsigned long b) __attribute_const__;
 
-#पूर्ण_अगर /* _GCD_H */
+#endif /* _GCD_H */

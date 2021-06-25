@@ -1,247 +1,246 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/अगर_tap.h>
-#समावेश <linux/अगर_vlan.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/nsproxy.h>
-#समावेश <linux/compat.h>
-#समावेश <linux/अगर_tun.h>
-#समावेश <linux/module.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/cache.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/types.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/cdev.h>
-#समावेश <linux/idr.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/uपन.स>
+// SPDX-License-Identifier: GPL-2.0-only
+#include <linux/etherdevice.h>
+#include <linux/if_tap.h>
+#include <linux/if_vlan.h>
+#include <linux/interrupt.h>
+#include <linux/nsproxy.h>
+#include <linux/compat.h>
+#include <linux/if_tun.h>
+#include <linux/module.h>
+#include <linux/skbuff.h>
+#include <linux/cache.h>
+#include <linux/sched/signal.h>
+#include <linux/types.h>
+#include <linux/slab.h>
+#include <linux/wait.h>
+#include <linux/cdev.h>
+#include <linux/idr.h>
+#include <linux/fs.h>
+#include <linux/uio.h>
 
-#समावेश <net/net_namespace.h>
-#समावेश <net/rtnetlink.h>
-#समावेश <net/sock.h>
-#समावेश <linux/virtio_net.h>
-#समावेश <linux/skb_array.h>
+#include <net/net_namespace.h>
+#include <net/rtnetlink.h>
+#include <net/sock.h>
+#include <linux/virtio_net.h>
+#include <linux/skb_array.h>
 
-#घोषणा TAP_IFFEATURES (IFF_VNET_HDR | IFF_MULTI_QUEUE)
+#define TAP_IFFEATURES (IFF_VNET_HDR | IFF_MULTI_QUEUE)
 
-#घोषणा TAP_VNET_LE 0x80000000
-#घोषणा TAP_VNET_BE 0x40000000
+#define TAP_VNET_LE 0x80000000
+#define TAP_VNET_BE 0x40000000
 
-#अगर_घोषित CONFIG_TUN_VNET_CROSS_LE
-अटल अंतरभूत bool tap_legacy_is_little_endian(काष्ठा tap_queue *q)
-अणु
-	वापस q->flags & TAP_VNET_BE ? false :
+#ifdef CONFIG_TUN_VNET_CROSS_LE
+static inline bool tap_legacy_is_little_endian(struct tap_queue *q)
+{
+	return q->flags & TAP_VNET_BE ? false :
 		virtio_legacy_is_little_endian();
-पूर्ण
+}
 
-अटल दीर्घ tap_get_vnet_be(काष्ठा tap_queue *q, पूर्णांक __user *sp)
-अणु
-	पूर्णांक s = !!(q->flags & TAP_VNET_BE);
+static long tap_get_vnet_be(struct tap_queue *q, int __user *sp)
+{
+	int s = !!(q->flags & TAP_VNET_BE);
 
-	अगर (put_user(s, sp))
-		वापस -EFAULT;
+	if (put_user(s, sp))
+		return -EFAULT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल दीर्घ tap_set_vnet_be(काष्ठा tap_queue *q, पूर्णांक __user *sp)
-अणु
-	पूर्णांक s;
+static long tap_set_vnet_be(struct tap_queue *q, int __user *sp)
+{
+	int s;
 
-	अगर (get_user(s, sp))
-		वापस -EFAULT;
+	if (get_user(s, sp))
+		return -EFAULT;
 
-	अगर (s)
+	if (s)
 		q->flags |= TAP_VNET_BE;
-	अन्यथा
+	else
 		q->flags &= ~TAP_VNET_BE;
 
-	वापस 0;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत bool tap_legacy_is_little_endian(काष्ठा tap_queue *q)
-अणु
-	वापस virtio_legacy_is_little_endian();
-पूर्ण
+	return 0;
+}
+#else
+static inline bool tap_legacy_is_little_endian(struct tap_queue *q)
+{
+	return virtio_legacy_is_little_endian();
+}
 
-अटल दीर्घ tap_get_vnet_be(काष्ठा tap_queue *q, पूर्णांक __user *argp)
-अणु
-	वापस -EINVAL;
-पूर्ण
+static long tap_get_vnet_be(struct tap_queue *q, int __user *argp)
+{
+	return -EINVAL;
+}
 
-अटल दीर्घ tap_set_vnet_be(काष्ठा tap_queue *q, पूर्णांक __user *argp)
-अणु
-	वापस -EINVAL;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_TUN_VNET_CROSS_LE */
+static long tap_set_vnet_be(struct tap_queue *q, int __user *argp)
+{
+	return -EINVAL;
+}
+#endif /* CONFIG_TUN_VNET_CROSS_LE */
 
-अटल अंतरभूत bool tap_is_little_endian(काष्ठा tap_queue *q)
-अणु
-	वापस q->flags & TAP_VNET_LE ||
+static inline bool tap_is_little_endian(struct tap_queue *q)
+{
+	return q->flags & TAP_VNET_LE ||
 		tap_legacy_is_little_endian(q);
-पूर्ण
+}
 
-अटल अंतरभूत u16 tap16_to_cpu(काष्ठा tap_queue *q, __virtio16 val)
-अणु
-	वापस __virtio16_to_cpu(tap_is_little_endian(q), val);
-पूर्ण
+static inline u16 tap16_to_cpu(struct tap_queue *q, __virtio16 val)
+{
+	return __virtio16_to_cpu(tap_is_little_endian(q), val);
+}
 
-अटल अंतरभूत __virtio16 cpu_to_tap16(काष्ठा tap_queue *q, u16 val)
-अणु
-	वापस __cpu_to_virtio16(tap_is_little_endian(q), val);
-पूर्ण
+static inline __virtio16 cpu_to_tap16(struct tap_queue *q, u16 val)
+{
+	return __cpu_to_virtio16(tap_is_little_endian(q), val);
+}
 
-अटल काष्ठा proto tap_proto = अणु
+static struct proto tap_proto = {
 	.name = "tap",
 	.owner = THIS_MODULE,
-	.obj_size = माप(काष्ठा tap_queue),
-पूर्ण;
+	.obj_size = sizeof(struct tap_queue),
+};
 
-#घोषणा TAP_NUM_DEVS (1U << MINORBITS)
+#define TAP_NUM_DEVS (1U << MINORBITS)
 
-अटल LIST_HEAD(major_list);
+static LIST_HEAD(major_list);
 
-काष्ठा major_info अणु
-	काष्ठा rcu_head rcu;
+struct major_info {
+	struct rcu_head rcu;
 	dev_t major;
-	काष्ठा idr minor_idr;
+	struct idr minor_idr;
 	spinlock_t minor_lock;
-	स्थिर अक्षर *device_name;
-	काष्ठा list_head next;
-पूर्ण;
+	const char *device_name;
+	struct list_head next;
+};
 
-#घोषणा GOODCOPY_LEN 128
+#define GOODCOPY_LEN 128
 
-अटल स्थिर काष्ठा proto_ops tap_socket_ops;
+static const struct proto_ops tap_socket_ops;
 
-#घोषणा RX_OFFLOADS (NETIF_F_GRO | NETIF_F_LRO)
-#घोषणा TAP_FEATURES (NETIF_F_GSO | NETIF_F_SG | NETIF_F_FRAGLIST)
+#define RX_OFFLOADS (NETIF_F_GRO | NETIF_F_LRO)
+#define TAP_FEATURES (NETIF_F_GSO | NETIF_F_SG | NETIF_F_FRAGLIST)
 
-अटल काष्ठा tap_dev *tap_dev_get_rcu(स्थिर काष्ठा net_device *dev)
-अणु
-	वापस rcu_dereference(dev->rx_handler_data);
-पूर्ण
+static struct tap_dev *tap_dev_get_rcu(const struct net_device *dev)
+{
+	return rcu_dereference(dev->rx_handler_data);
+}
 
 /*
  * RCU usage:
  * The tap_queue and the macvlan_dev are loosely coupled, the
- * poपूर्णांकers from one to the other can only be पढ़ो जबतक rcu_पढ़ो_lock
+ * pointers from one to the other can only be read while rcu_read_lock
  * or rtnl is held.
  *
  * Both the file and the macvlan_dev hold a reference on the tap_queue
  * through sock_hold(&q->sk). When the macvlan_dev goes away first,
- * q->vlan becomes inaccessible. When the files माला_लो बंदd,
+ * q->vlan becomes inaccessible. When the files gets closed,
  * tap_get_queue() fails.
  *
- * There may still be references to the काष्ठा sock inside of the
+ * There may still be references to the struct sock inside of the
  * queue from outbound SKBs, but these never reference back to the
- * file or the dev. The data काष्ठाure is मुक्तd through __sk_मुक्त
+ * file or the dev. The data structure is freed through __sk_free
  * when both our references and any pending SKBs are gone.
  */
 
-अटल पूर्णांक tap_enable_queue(काष्ठा tap_dev *tap, काष्ठा file *file,
-			    काष्ठा tap_queue *q)
-अणु
-	पूर्णांक err = -EINVAL;
+static int tap_enable_queue(struct tap_dev *tap, struct file *file,
+			    struct tap_queue *q)
+{
+	int err = -EINVAL;
 
 	ASSERT_RTNL();
 
-	अगर (q->enabled)
-		जाओ out;
+	if (q->enabled)
+		goto out;
 
 	err = 0;
-	rcu_assign_poपूर्णांकer(tap->taps[tap->numvtaps], q);
+	rcu_assign_pointer(tap->taps[tap->numvtaps], q);
 	q->queue_index = tap->numvtaps;
 	q->enabled = true;
 
 	tap->numvtaps++;
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /* Requires RTNL */
-अटल पूर्णांक tap_set_queue(काष्ठा tap_dev *tap, काष्ठा file *file,
-			 काष्ठा tap_queue *q)
-अणु
-	अगर (tap->numqueues == MAX_TAP_QUEUES)
-		वापस -EBUSY;
+static int tap_set_queue(struct tap_dev *tap, struct file *file,
+			 struct tap_queue *q)
+{
+	if (tap->numqueues == MAX_TAP_QUEUES)
+		return -EBUSY;
 
-	rcu_assign_poपूर्णांकer(q->tap, tap);
-	rcu_assign_poपूर्णांकer(tap->taps[tap->numvtaps], q);
+	rcu_assign_pointer(q->tap, tap);
+	rcu_assign_pointer(tap->taps[tap->numvtaps], q);
 	sock_hold(&q->sk);
 
 	q->file = file;
 	q->queue_index = tap->numvtaps;
 	q->enabled = true;
-	file->निजी_data = q;
+	file->private_data = q;
 	list_add_tail(&q->next, &tap->queue_list);
 
 	tap->numvtaps++;
 	tap->numqueues++;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tap_disable_queue(काष्ठा tap_queue *q)
-अणु
-	काष्ठा tap_dev *tap;
-	काष्ठा tap_queue *nq;
+static int tap_disable_queue(struct tap_queue *q)
+{
+	struct tap_dev *tap;
+	struct tap_queue *nq;
 
 	ASSERT_RTNL();
-	अगर (!q->enabled)
-		वापस -EINVAL;
+	if (!q->enabled)
+		return -EINVAL;
 
 	tap = rtnl_dereference(q->tap);
 
-	अगर (tap) अणु
-		पूर्णांक index = q->queue_index;
+	if (tap) {
+		int index = q->queue_index;
 		BUG_ON(index >= tap->numvtaps);
 		nq = rtnl_dereference(tap->taps[tap->numvtaps - 1]);
 		nq->queue_index = index;
 
-		rcu_assign_poपूर्णांकer(tap->taps[index], nq);
-		RCU_INIT_POINTER(tap->taps[tap->numvtaps - 1], शून्य);
+		rcu_assign_pointer(tap->taps[index], nq);
+		RCU_INIT_POINTER(tap->taps[tap->numvtaps - 1], NULL);
 		q->enabled = false;
 
 		tap->numvtaps--;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * The file owning the queue got बंदd, give up both
+ * The file owning the queue got closed, give up both
  * the reference that the files holds as well as the
- * one from the macvlan_dev अगर that still exists.
+ * one from the macvlan_dev if that still exists.
  *
- * Using the spinlock makes sure that we करोn't get
+ * Using the spinlock makes sure that we don't get
  * to the queue again after destroying it.
  */
-अटल व्योम tap_put_queue(काष्ठा tap_queue *q)
-अणु
-	काष्ठा tap_dev *tap;
+static void tap_put_queue(struct tap_queue *q)
+{
+	struct tap_dev *tap;
 
 	rtnl_lock();
 	tap = rtnl_dereference(q->tap);
 
-	अगर (tap) अणु
-		अगर (q->enabled)
+	if (tap) {
+		if (q->enabled)
 			BUG_ON(tap_disable_queue(q));
 
 		tap->numqueues--;
-		RCU_INIT_POINTER(q->tap, शून्य);
+		RCU_INIT_POINTER(q->tap, NULL);
 		sock_put(&q->sk);
 		list_del_init(&q->next);
-	पूर्ण
+	}
 
 	rtnl_unlock();
 
 	synchronize_rcu();
 	sock_put(&q->sk);
-पूर्ण
+}
 
 /*
  * Select a queue based on the rxq of the device on which this packet
@@ -250,403 +249,403 @@ out:
  * Cache vlan->numvtaps since it can become zero during the execution
  * of this function.
  */
-अटल काष्ठा tap_queue *tap_get_queue(काष्ठा tap_dev *tap,
-				       काष्ठा sk_buff *skb)
-अणु
-	काष्ठा tap_queue *queue = शून्य;
-	/* Access to taps array is रक्षित by rcu, but access to numvtaps
-	 * isn't. Below we use it to lookup a queue, but treat it as a hपूर्णांक
-	 * and validate that the result isn't शून्य - in हाल we are
+static struct tap_queue *tap_get_queue(struct tap_dev *tap,
+				       struct sk_buff *skb)
+{
+	struct tap_queue *queue = NULL;
+	/* Access to taps array is protected by rcu, but access to numvtaps
+	 * isn't. Below we use it to lookup a queue, but treat it as a hint
+	 * and validate that the result isn't NULL - in case we are
 	 * racing against queue removal.
 	 */
-	पूर्णांक numvtaps = READ_ONCE(tap->numvtaps);
+	int numvtaps = READ_ONCE(tap->numvtaps);
 	__u32 rxq;
 
-	अगर (!numvtaps)
-		जाओ out;
+	if (!numvtaps)
+		goto out;
 
-	अगर (numvtaps == 1)
-		जाओ single;
+	if (numvtaps == 1)
+		goto single;
 
-	/* Check अगर we can use flow to select a queue */
+	/* Check if we can use flow to select a queue */
 	rxq = skb_get_hash(skb);
-	अगर (rxq) अणु
+	if (rxq) {
 		queue = rcu_dereference(tap->taps[rxq % numvtaps]);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (likely(skb_rx_queue_recorded(skb))) अणु
+	if (likely(skb_rx_queue_recorded(skb))) {
 		rxq = skb_get_rx_queue(skb);
 
-		जबतक (unlikely(rxq >= numvtaps))
+		while (unlikely(rxq >= numvtaps))
 			rxq -= numvtaps;
 
 		queue = rcu_dereference(tap->taps[rxq]);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 single:
 	queue = rcu_dereference(tap->taps[0]);
 out:
-	वापस queue;
-पूर्ण
+	return queue;
+}
 
 /*
  * The net_device is going away, give up the reference
- * that it holds on all queues and safely set the poपूर्णांकer
- * from the queues to शून्य.
+ * that it holds on all queues and safely set the pointer
+ * from the queues to NULL.
  */
-व्योम tap_del_queues(काष्ठा tap_dev *tap)
-अणु
-	काष्ठा tap_queue *q, *पंचांगp;
+void tap_del_queues(struct tap_dev *tap)
+{
+	struct tap_queue *q, *tmp;
 
 	ASSERT_RTNL();
-	list_क्रम_each_entry_safe(q, पंचांगp, &tap->queue_list, next) अणु
+	list_for_each_entry_safe(q, tmp, &tap->queue_list, next) {
 		list_del_init(&q->next);
-		RCU_INIT_POINTER(q->tap, शून्य);
-		अगर (q->enabled)
+		RCU_INIT_POINTER(q->tap, NULL);
+		if (q->enabled)
 			tap->numvtaps--;
 		tap->numqueues--;
 		sock_put(&q->sk);
-	पूर्ण
+	}
 	BUG_ON(tap->numvtaps);
 	BUG_ON(tap->numqueues);
 	/* guarantee that any future tap_set_queue will fail */
 	tap->numvtaps = MAX_TAP_QUEUES;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(tap_del_queues);
 
-rx_handler_result_t tap_handle_frame(काष्ठा sk_buff **pskb)
-अणु
-	काष्ठा sk_buff *skb = *pskb;
-	काष्ठा net_device *dev = skb->dev;
-	काष्ठा tap_dev *tap;
-	काष्ठा tap_queue *q;
+rx_handler_result_t tap_handle_frame(struct sk_buff **pskb)
+{
+	struct sk_buff *skb = *pskb;
+	struct net_device *dev = skb->dev;
+	struct tap_dev *tap;
+	struct tap_queue *q;
 	netdev_features_t features = TAP_FEATURES;
 
 	tap = tap_dev_get_rcu(dev);
-	अगर (!tap)
-		वापस RX_HANDLER_PASS;
+	if (!tap)
+		return RX_HANDLER_PASS;
 
 	q = tap_get_queue(tap, skb);
-	अगर (!q)
-		वापस RX_HANDLER_PASS;
+	if (!q)
+		return RX_HANDLER_PASS;
 
 	skb_push(skb, ETH_HLEN);
 
-	/* Apply the क्रमward feature mask so that we perक्रमm segmentation
-	 * according to users wishes.  This only works अगर VNET_HDR is
+	/* Apply the forward feature mask so that we perform segmentation
+	 * according to users wishes.  This only works if VNET_HDR is
 	 * enabled.
 	 */
-	अगर (q->flags & IFF_VNET_HDR)
+	if (q->flags & IFF_VNET_HDR)
 		features |= tap->tap_features;
-	अगर (netअगर_needs_gso(skb, features)) अणु
-		काष्ठा sk_buff *segs = __skb_gso_segment(skb, features, false);
-		काष्ठा sk_buff *next;
+	if (netif_needs_gso(skb, features)) {
+		struct sk_buff *segs = __skb_gso_segment(skb, features, false);
+		struct sk_buff *next;
 
-		अगर (IS_ERR(segs))
-			जाओ drop;
+		if (IS_ERR(segs))
+			goto drop;
 
-		अगर (!segs) अणु
-			अगर (ptr_ring_produce(&q->ring, skb))
-				जाओ drop;
-			जाओ wake_up;
-		पूर्ण
+		if (!segs) {
+			if (ptr_ring_produce(&q->ring, skb))
+				goto drop;
+			goto wake_up;
+		}
 
 		consume_skb(skb);
-		skb_list_walk_safe(segs, skb, next) अणु
+		skb_list_walk_safe(segs, skb, next) {
 			skb_mark_not_on_list(skb);
-			अगर (ptr_ring_produce(&q->ring, skb)) अणु
-				kमुक्त_skb(skb);
-				kमुक्त_skb_list(next);
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			if (ptr_ring_produce(&q->ring, skb)) {
+				kfree_skb(skb);
+				kfree_skb_list(next);
+				break;
+			}
+		}
+	} else {
 		/* If we receive a partial checksum and the tap side
-		 * करोesn't support checksum offload, compute the checksum.
-		 * Note: it करोesn't matter which checksum feature to
+		 * doesn't support checksum offload, compute the checksum.
+		 * Note: it doesn't matter which checksum feature to
 		 *	  check, we either support them all or none.
 		 */
-		अगर (skb->ip_summed == CHECKSUM_PARTIAL &&
+		if (skb->ip_summed == CHECKSUM_PARTIAL &&
 		    !(features & NETIF_F_CSUM_MASK) &&
 		    skb_checksum_help(skb))
-			जाओ drop;
-		अगर (ptr_ring_produce(&q->ring, skb))
-			जाओ drop;
-	पूर्ण
+			goto drop;
+		if (ptr_ring_produce(&q->ring, skb))
+			goto drop;
+	}
 
 wake_up:
-	wake_up_पूर्णांकerruptible_poll(sk_sleep(&q->sk), EPOLLIN | EPOLLRDNORM | EPOLLRDBAND);
-	वापस RX_HANDLER_CONSUMED;
+	wake_up_interruptible_poll(sk_sleep(&q->sk), EPOLLIN | EPOLLRDNORM | EPOLLRDBAND);
+	return RX_HANDLER_CONSUMED;
 
 drop:
-	/* Count errors/drops only here, thus करोn't care about args. */
-	अगर (tap->count_rx_dropped)
+	/* Count errors/drops only here, thus don't care about args. */
+	if (tap->count_rx_dropped)
 		tap->count_rx_dropped(tap);
-	kमुक्त_skb(skb);
-	वापस RX_HANDLER_CONSUMED;
-पूर्ण
+	kfree_skb(skb);
+	return RX_HANDLER_CONSUMED;
+}
 EXPORT_SYMBOL_GPL(tap_handle_frame);
 
-अटल काष्ठा major_info *tap_get_major(पूर्णांक major)
-अणु
-	काष्ठा major_info *tap_major;
+static struct major_info *tap_get_major(int major)
+{
+	struct major_info *tap_major;
 
-	list_क्रम_each_entry_rcu(tap_major, &major_list, next) अणु
-		अगर (tap_major->major == major)
-			वापस tap_major;
-	पूर्ण
+	list_for_each_entry_rcu(tap_major, &major_list, next) {
+		if (tap_major->major == major)
+			return tap_major;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-पूर्णांक tap_get_minor(dev_t major, काष्ठा tap_dev *tap)
-अणु
-	पूर्णांक retval = -ENOMEM;
-	काष्ठा major_info *tap_major;
+int tap_get_minor(dev_t major, struct tap_dev *tap)
+{
+	int retval = -ENOMEM;
+	struct major_info *tap_major;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	tap_major = tap_get_major(MAJOR(major));
-	अगर (!tap_major) अणु
+	if (!tap_major) {
 		retval = -EINVAL;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	spin_lock(&tap_major->minor_lock);
 	retval = idr_alloc(&tap_major->minor_idr, tap, 1, TAP_NUM_DEVS, GFP_ATOMIC);
-	अगर (retval >= 0) अणु
+	if (retval >= 0) {
 		tap->minor = retval;
-	पूर्ण अन्यथा अगर (retval == -ENOSPC) अणु
+	} else if (retval == -ENOSPC) {
 		netdev_err(tap->dev, "Too many tap devices\n");
 		retval = -EINVAL;
-	पूर्ण
+	}
 	spin_unlock(&tap_major->minor_lock);
 
 unlock:
-	rcu_पढ़ो_unlock();
-	वापस retval < 0 ? retval : 0;
-पूर्ण
+	rcu_read_unlock();
+	return retval < 0 ? retval : 0;
+}
 EXPORT_SYMBOL_GPL(tap_get_minor);
 
-व्योम tap_मुक्त_minor(dev_t major, काष्ठा tap_dev *tap)
-अणु
-	काष्ठा major_info *tap_major;
+void tap_free_minor(dev_t major, struct tap_dev *tap)
+{
+	struct major_info *tap_major;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	tap_major = tap_get_major(MAJOR(major));
-	अगर (!tap_major) अणु
-		जाओ unlock;
-	पूर्ण
+	if (!tap_major) {
+		goto unlock;
+	}
 
 	spin_lock(&tap_major->minor_lock);
-	अगर (tap->minor) अणु
-		idr_हटाओ(&tap_major->minor_idr, tap->minor);
+	if (tap->minor) {
+		idr_remove(&tap_major->minor_idr, tap->minor);
 		tap->minor = 0;
-	पूर्ण
+	}
 	spin_unlock(&tap_major->minor_lock);
 
 unlock:
-	rcu_पढ़ो_unlock();
-पूर्ण
-EXPORT_SYMBOL_GPL(tap_मुक्त_minor);
+	rcu_read_unlock();
+}
+EXPORT_SYMBOL_GPL(tap_free_minor);
 
-अटल काष्ठा tap_dev *dev_get_by_tap_file(पूर्णांक major, पूर्णांक minor)
-अणु
-	काष्ठा net_device *dev = शून्य;
-	काष्ठा tap_dev *tap;
-	काष्ठा major_info *tap_major;
+static struct tap_dev *dev_get_by_tap_file(int major, int minor)
+{
+	struct net_device *dev = NULL;
+	struct tap_dev *tap;
+	struct major_info *tap_major;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	tap_major = tap_get_major(major);
-	अगर (!tap_major) अणु
-		tap = शून्य;
-		जाओ unlock;
-	पूर्ण
+	if (!tap_major) {
+		tap = NULL;
+		goto unlock;
+	}
 
 	spin_lock(&tap_major->minor_lock);
 	tap = idr_find(&tap_major->minor_idr, minor);
-	अगर (tap) अणु
+	if (tap) {
 		dev = tap->dev;
 		dev_hold(dev);
-	पूर्ण
+	}
 	spin_unlock(&tap_major->minor_lock);
 
 unlock:
-	rcu_पढ़ो_unlock();
-	वापस tap;
-पूर्ण
+	rcu_read_unlock();
+	return tap;
+}
 
-अटल व्योम tap_sock_ग_लिखो_space(काष्ठा sock *sk)
-अणु
-	रुको_queue_head_t *wqueue;
+static void tap_sock_write_space(struct sock *sk)
+{
+	wait_queue_head_t *wqueue;
 
-	अगर (!sock_ग_लिखोable(sk) ||
+	if (!sock_writeable(sk) ||
 	    !test_and_clear_bit(SOCKWQ_ASYNC_NOSPACE, &sk->sk_socket->flags))
-		वापस;
+		return;
 
 	wqueue = sk_sleep(sk);
-	अगर (wqueue && रुकोqueue_active(wqueue))
-		wake_up_पूर्णांकerruptible_poll(wqueue, EPOLLOUT | EPOLLWRNORM | EPOLLWRBAND);
-पूर्ण
+	if (wqueue && waitqueue_active(wqueue))
+		wake_up_interruptible_poll(wqueue, EPOLLOUT | EPOLLWRNORM | EPOLLWRBAND);
+}
 
-अटल व्योम tap_sock_deकाष्ठा(काष्ठा sock *sk)
-अणु
-	काष्ठा tap_queue *q = container_of(sk, काष्ठा tap_queue, sk);
+static void tap_sock_destruct(struct sock *sk)
+{
+	struct tap_queue *q = container_of(sk, struct tap_queue, sk);
 
 	ptr_ring_cleanup(&q->ring, __skb_array_destroy_skb);
-पूर्ण
+}
 
-अटल पूर्णांक tap_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा net *net = current->nsproxy->net_ns;
-	काष्ठा tap_dev *tap;
-	काष्ठा tap_queue *q;
-	पूर्णांक err = -ENODEV;
+static int tap_open(struct inode *inode, struct file *file)
+{
+	struct net *net = current->nsproxy->net_ns;
+	struct tap_dev *tap;
+	struct tap_queue *q;
+	int err = -ENODEV;
 
 	rtnl_lock();
 	tap = dev_get_by_tap_file(imajor(inode), iminor(inode));
-	अगर (!tap)
-		जाओ err;
+	if (!tap)
+		goto err;
 
 	err = -ENOMEM;
-	q = (काष्ठा tap_queue *)sk_alloc(net, AF_UNSPEC, GFP_KERNEL,
+	q = (struct tap_queue *)sk_alloc(net, AF_UNSPEC, GFP_KERNEL,
 					     &tap_proto, 0);
-	अगर (!q)
-		जाओ err;
-	अगर (ptr_ring_init(&q->ring, tap->dev->tx_queue_len, GFP_KERNEL)) अणु
-		sk_मुक्त(&q->sk);
-		जाओ err;
-	पूर्ण
+	if (!q)
+		goto err;
+	if (ptr_ring_init(&q->ring, tap->dev->tx_queue_len, GFP_KERNEL)) {
+		sk_free(&q->sk);
+		goto err;
+	}
 
-	init_रुकोqueue_head(&q->sock.wq.रुको);
+	init_waitqueue_head(&q->sock.wq.wait);
 	q->sock.type = SOCK_RAW;
 	q->sock.state = SS_CONNECTED;
 	q->sock.file = file;
 	q->sock.ops = &tap_socket_ops;
 	sock_init_data(&q->sock, &q->sk);
-	q->sk.sk_ग_लिखो_space = tap_sock_ग_लिखो_space;
-	q->sk.sk_deकाष्ठा = tap_sock_deकाष्ठा;
+	q->sk.sk_write_space = tap_sock_write_space;
+	q->sk.sk_destruct = tap_sock_destruct;
 	q->flags = IFF_VNET_HDR | IFF_NO_PI | IFF_TAP;
-	q->vnet_hdr_sz = माप(काष्ठा virtio_net_hdr);
+	q->vnet_hdr_sz = sizeof(struct virtio_net_hdr);
 
 	/*
 	 * so far only KVM virtio_net uses tap, enable zero copy between
 	 * guest kernel and host kernel when lower device supports zerocopy
 	 *
-	 * The macvlan supports zerocopy अगरf the lower device supports zero
-	 * copy so we करोn't have to look at the lower device directly.
+	 * The macvlan supports zerocopy iff the lower device supports zero
+	 * copy so we don't have to look at the lower device directly.
 	 */
-	अगर ((tap->dev->features & NETIF_F_HIGHDMA) && (tap->dev->features & NETIF_F_SG))
+	if ((tap->dev->features & NETIF_F_HIGHDMA) && (tap->dev->features & NETIF_F_SG))
 		sock_set_flag(&q->sk, SOCK_ZEROCOPY);
 
 	err = tap_set_queue(tap, file, q);
-	अगर (err) अणु
-		/* tap_sock_deकाष्ठा() will take care of मुक्तing ptr_ring */
-		जाओ err_put;
-	पूर्ण
+	if (err) {
+		/* tap_sock_destruct() will take care of freeing ptr_ring */
+		goto err_put;
+	}
 
 	dev_put(tap->dev);
 
 	rtnl_unlock();
-	वापस err;
+	return err;
 
 err_put:
 	sock_put(&q->sk);
 err:
-	अगर (tap)
+	if (tap)
 		dev_put(tap->dev);
 
 	rtnl_unlock();
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक tap_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा tap_queue *q = file->निजी_data;
+static int tap_release(struct inode *inode, struct file *file)
+{
+	struct tap_queue *q = file->private_data;
 	tap_put_queue(q);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल __poll_t tap_poll(काष्ठा file *file, poll_table *रुको)
-अणु
-	काष्ठा tap_queue *q = file->निजी_data;
+static __poll_t tap_poll(struct file *file, poll_table *wait)
+{
+	struct tap_queue *q = file->private_data;
 	__poll_t mask = EPOLLERR;
 
-	अगर (!q)
-		जाओ out;
+	if (!q)
+		goto out;
 
 	mask = 0;
-	poll_रुको(file, &q->sock.wq.रुको, रुको);
+	poll_wait(file, &q->sock.wq.wait, wait);
 
-	अगर (!ptr_ring_empty(&q->ring))
+	if (!ptr_ring_empty(&q->ring))
 		mask |= EPOLLIN | EPOLLRDNORM;
 
-	अगर (sock_ग_लिखोable(&q->sk) ||
+	if (sock_writeable(&q->sk) ||
 	    (!test_and_set_bit(SOCKWQ_ASYNC_NOSPACE, &q->sock.flags) &&
-	     sock_ग_लिखोable(&q->sk)))
+	     sock_writeable(&q->sk)))
 		mask |= EPOLLOUT | EPOLLWRNORM;
 
 out:
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
-अटल अंतरभूत काष्ठा sk_buff *tap_alloc_skb(काष्ठा sock *sk, माप_प्रकार prepad,
-					    माप_प्रकार len, माप_प्रकार linear,
-						पूर्णांक noblock, पूर्णांक *err)
-अणु
-	काष्ठा sk_buff *skb;
+static inline struct sk_buff *tap_alloc_skb(struct sock *sk, size_t prepad,
+					    size_t len, size_t linear,
+						int noblock, int *err)
+{
+	struct sk_buff *skb;
 
 	/* Under a page?  Don't bother with paged skb. */
-	अगर (prepad + len < PAGE_SIZE || !linear)
+	if (prepad + len < PAGE_SIZE || !linear)
 		linear = len;
 
 	skb = sock_alloc_send_pskb(sk, prepad + linear, len - linear, noblock,
 				   err, 0);
-	अगर (!skb)
-		वापस शून्य;
+	if (!skb)
+		return NULL;
 
 	skb_reserve(skb, prepad);
 	skb_put(skb, linear);
 	skb->data_len = len - linear;
 	skb->len += len - linear;
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
 /* Neighbour code has some assumptions on HH_DATA_MOD alignment */
-#घोषणा TAP_RESERVE HH_DATA_OFF(ETH_HLEN)
+#define TAP_RESERVE HH_DATA_OFF(ETH_HLEN)
 
 /* Get packet from user space buffer */
-अटल sमाप_प्रकार tap_get_user(काष्ठा tap_queue *q, व्योम *msg_control,
-			    काष्ठा iov_iter *from, पूर्णांक noblock)
-अणु
-	पूर्णांक good_linear = SKB_MAX_HEAD(TAP_RESERVE);
-	काष्ठा sk_buff *skb;
-	काष्ठा tap_dev *tap;
-	अचिन्हित दीर्घ total_len = iov_iter_count(from);
-	अचिन्हित दीर्घ len = total_len;
-	पूर्णांक err;
-	काष्ठा virtio_net_hdr vnet_hdr = अणु 0 पूर्ण;
-	पूर्णांक vnet_hdr_len = 0;
-	पूर्णांक copylen = 0;
-	पूर्णांक depth;
+static ssize_t tap_get_user(struct tap_queue *q, void *msg_control,
+			    struct iov_iter *from, int noblock)
+{
+	int good_linear = SKB_MAX_HEAD(TAP_RESERVE);
+	struct sk_buff *skb;
+	struct tap_dev *tap;
+	unsigned long total_len = iov_iter_count(from);
+	unsigned long len = total_len;
+	int err;
+	struct virtio_net_hdr vnet_hdr = { 0 };
+	int vnet_hdr_len = 0;
+	int copylen = 0;
+	int depth;
 	bool zerocopy = false;
-	माप_प्रकार linear;
+	size_t linear;
 
-	अगर (q->flags & IFF_VNET_HDR) अणु
+	if (q->flags & IFF_VNET_HDR) {
 		vnet_hdr_len = READ_ONCE(q->vnet_hdr_sz);
 
 		err = -EINVAL;
-		अगर (len < vnet_hdr_len)
-			जाओ err;
+		if (len < vnet_hdr_len)
+			goto err;
 		len -= vnet_hdr_len;
 
 		err = -EFAULT;
-		अगर (!copy_from_iter_full(&vnet_hdr, माप(vnet_hdr), from))
-			जाओ err;
-		iov_iter_advance(from, vnet_hdr_len - माप(vnet_hdr));
-		अगर ((vnet_hdr.flags & VIRTIO_NET_HDR_F_NEEDS_CSUM) &&
+		if (!copy_from_iter_full(&vnet_hdr, sizeof(vnet_hdr), from))
+			goto err;
+		iov_iter_advance(from, vnet_hdr_len - sizeof(vnet_hdr));
+		if ((vnet_hdr.flags & VIRTIO_NET_HDR_F_NEEDS_CSUM) &&
 		     tap16_to_cpu(q, vnet_hdr.csum_start) +
 		     tap16_to_cpu(q, vnet_hdr.csum_offset) + 2 >
 			     tap16_to_cpu(q, vnet_hdr.hdr_len))
@@ -654,500 +653,500 @@ out:
 				 tap16_to_cpu(q, vnet_hdr.csum_start) +
 				 tap16_to_cpu(q, vnet_hdr.csum_offset) + 2);
 		err = -EINVAL;
-		अगर (tap16_to_cpu(q, vnet_hdr.hdr_len) > len)
-			जाओ err;
-	पूर्ण
+		if (tap16_to_cpu(q, vnet_hdr.hdr_len) > len)
+			goto err;
+	}
 
 	err = -EINVAL;
-	अगर (unlikely(len < ETH_HLEN))
-		जाओ err;
+	if (unlikely(len < ETH_HLEN))
+		goto err;
 
-	अगर (msg_control && sock_flag(&q->sk, SOCK_ZEROCOPY)) अणु
-		काष्ठा iov_iter i;
+	if (msg_control && sock_flag(&q->sk, SOCK_ZEROCOPY)) {
+		struct iov_iter i;
 
 		copylen = vnet_hdr.hdr_len ?
 			tap16_to_cpu(q, vnet_hdr.hdr_len) : GOODCOPY_LEN;
-		अगर (copylen > good_linear)
+		if (copylen > good_linear)
 			copylen = good_linear;
-		अन्यथा अगर (copylen < ETH_HLEN)
+		else if (copylen < ETH_HLEN)
 			copylen = ETH_HLEN;
 		linear = copylen;
 		i = *from;
 		iov_iter_advance(&i, copylen);
-		अगर (iov_iter_npages(&i, पूर्णांक_उच्च) <= MAX_SKB_FRAGS)
+		if (iov_iter_npages(&i, INT_MAX) <= MAX_SKB_FRAGS)
 			zerocopy = true;
-	पूर्ण
+	}
 
-	अगर (!zerocopy) अणु
+	if (!zerocopy) {
 		copylen = len;
 		linear = tap16_to_cpu(q, vnet_hdr.hdr_len);
-		अगर (linear > good_linear)
+		if (linear > good_linear)
 			linear = good_linear;
-		अन्यथा अगर (linear < ETH_HLEN)
+		else if (linear < ETH_HLEN)
 			linear = ETH_HLEN;
-	पूर्ण
+	}
 
 	skb = tap_alloc_skb(&q->sk, TAP_RESERVE, copylen,
 			    linear, noblock, &err);
-	अगर (!skb)
-		जाओ err;
+	if (!skb)
+		goto err;
 
-	अगर (zerocopy)
+	if (zerocopy)
 		err = zerocopy_sg_from_iter(skb, from);
-	अन्यथा
+	else
 		err = skb_copy_datagram_from_iter(skb, 0, from, len);
 
-	अगर (err)
-		जाओ err_kमुक्त;
+	if (err)
+		goto err_kfree;
 
 	skb_set_network_header(skb, ETH_HLEN);
 	skb_reset_mac_header(skb);
 	skb->protocol = eth_hdr(skb)->h_proto;
 
-	अगर (vnet_hdr_len) अणु
+	if (vnet_hdr_len) {
 		err = virtio_net_hdr_to_skb(skb, &vnet_hdr,
 					    tap_is_little_endian(q));
-		अगर (err)
-			जाओ err_kमुक्त;
-	पूर्ण
+		if (err)
+			goto err_kfree;
+	}
 
 	skb_probe_transport_header(skb);
 
-	/* Move network header to the right position क्रम VLAN tagged packets */
-	अगर (eth_type_vlan(skb->protocol) &&
+	/* Move network header to the right position for VLAN tagged packets */
+	if (eth_type_vlan(skb->protocol) &&
 	    __vlan_get_protocol(skb, skb->protocol, &depth) != 0)
 		skb_set_network_header(skb, depth);
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	tap = rcu_dereference(q->tap);
-	/* copy skb_ubuf_info क्रम callback when skb has no error */
-	अगर (zerocopy) अणु
+	/* copy skb_ubuf_info for callback when skb has no error */
+	if (zerocopy) {
 		skb_zcopy_init(skb, msg_control);
-	पूर्ण अन्यथा अगर (msg_control) अणु
-		काष्ठा ubuf_info *uarg = msg_control;
-		uarg->callback(शून्य, uarg, false);
-	पूर्ण
+	} else if (msg_control) {
+		struct ubuf_info *uarg = msg_control;
+		uarg->callback(NULL, uarg, false);
+	}
 
-	अगर (tap) अणु
+	if (tap) {
 		skb->dev = tap->dev;
 		dev_queue_xmit(skb);
-	पूर्ण अन्यथा अणु
-		kमुक्त_skb(skb);
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	} else {
+		kfree_skb(skb);
+	}
+	rcu_read_unlock();
 
-	वापस total_len;
+	return total_len;
 
-err_kमुक्त:
-	kमुक्त_skb(skb);
+err_kfree:
+	kfree_skb(skb);
 
 err:
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	tap = rcu_dereference(q->tap);
-	अगर (tap && tap->count_tx_dropped)
+	if (tap && tap->count_tx_dropped)
 		tap->count_tx_dropped(tap);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल sमाप_प्रकार tap_ग_लिखो_iter(काष्ठा kiocb *iocb, काष्ठा iov_iter *from)
-अणु
-	काष्ठा file *file = iocb->ki_filp;
-	काष्ठा tap_queue *q = file->निजी_data;
+static ssize_t tap_write_iter(struct kiocb *iocb, struct iov_iter *from)
+{
+	struct file *file = iocb->ki_filp;
+	struct tap_queue *q = file->private_data;
 
-	वापस tap_get_user(q, शून्य, from, file->f_flags & O_NONBLOCK);
-पूर्ण
+	return tap_get_user(q, NULL, from, file->f_flags & O_NONBLOCK);
+}
 
 /* Put packet to the user space buffer */
-अटल sमाप_प्रकार tap_put_user(काष्ठा tap_queue *q,
-			    स्थिर काष्ठा sk_buff *skb,
-			    काष्ठा iov_iter *iter)
-अणु
-	पूर्णांक ret;
-	पूर्णांक vnet_hdr_len = 0;
-	पूर्णांक vlan_offset = 0;
-	पूर्णांक total;
+static ssize_t tap_put_user(struct tap_queue *q,
+			    const struct sk_buff *skb,
+			    struct iov_iter *iter)
+{
+	int ret;
+	int vnet_hdr_len = 0;
+	int vlan_offset = 0;
+	int total;
 
-	अगर (q->flags & IFF_VNET_HDR) अणु
-		पूर्णांक vlan_hlen = skb_vlan_tag_present(skb) ? VLAN_HLEN : 0;
-		काष्ठा virtio_net_hdr vnet_hdr;
+	if (q->flags & IFF_VNET_HDR) {
+		int vlan_hlen = skb_vlan_tag_present(skb) ? VLAN_HLEN : 0;
+		struct virtio_net_hdr vnet_hdr;
 
 		vnet_hdr_len = READ_ONCE(q->vnet_hdr_sz);
-		अगर (iov_iter_count(iter) < vnet_hdr_len)
-			वापस -EINVAL;
+		if (iov_iter_count(iter) < vnet_hdr_len)
+			return -EINVAL;
 
-		अगर (virtio_net_hdr_from_skb(skb, &vnet_hdr,
+		if (virtio_net_hdr_from_skb(skb, &vnet_hdr,
 					    tap_is_little_endian(q), true,
 					    vlan_hlen))
 			BUG();
 
-		अगर (copy_to_iter(&vnet_hdr, माप(vnet_hdr), iter) !=
-		    माप(vnet_hdr))
-			वापस -EFAULT;
+		if (copy_to_iter(&vnet_hdr, sizeof(vnet_hdr), iter) !=
+		    sizeof(vnet_hdr))
+			return -EFAULT;
 
-		iov_iter_advance(iter, vnet_hdr_len - माप(vnet_hdr));
-	पूर्ण
+		iov_iter_advance(iter, vnet_hdr_len - sizeof(vnet_hdr));
+	}
 	total = vnet_hdr_len;
 	total += skb->len;
 
-	अगर (skb_vlan_tag_present(skb)) अणु
-		काष्ठा अणु
+	if (skb_vlan_tag_present(skb)) {
+		struct {
 			__be16 h_vlan_proto;
 			__be16 h_vlan_TCI;
-		पूर्ण veth;
+		} veth;
 		veth.h_vlan_proto = skb->vlan_proto;
 		veth.h_vlan_TCI = htons(skb_vlan_tag_get(skb));
 
-		vlan_offset = दुरत्व(काष्ठा vlan_ethhdr, h_vlan_proto);
+		vlan_offset = offsetof(struct vlan_ethhdr, h_vlan_proto);
 		total += VLAN_HLEN;
 
 		ret = skb_copy_datagram_iter(skb, 0, iter, vlan_offset);
-		अगर (ret || !iov_iter_count(iter))
-			जाओ करोne;
+		if (ret || !iov_iter_count(iter))
+			goto done;
 
-		ret = copy_to_iter(&veth, माप(veth), iter);
-		अगर (ret != माप(veth) || !iov_iter_count(iter))
-			जाओ करोne;
-	पूर्ण
+		ret = copy_to_iter(&veth, sizeof(veth), iter);
+		if (ret != sizeof(veth) || !iov_iter_count(iter))
+			goto done;
+	}
 
 	ret = skb_copy_datagram_iter(skb, vlan_offset, iter,
 				     skb->len - vlan_offset);
 
-करोne:
-	वापस ret ? ret : total;
-पूर्ण
+done:
+	return ret ? ret : total;
+}
 
-अटल sमाप_प्रकार tap_करो_पढ़ो(काष्ठा tap_queue *q,
-			   काष्ठा iov_iter *to,
-			   पूर्णांक noblock, काष्ठा sk_buff *skb)
-अणु
-	DEFINE_WAIT(रुको);
-	sमाप_प्रकार ret = 0;
+static ssize_t tap_do_read(struct tap_queue *q,
+			   struct iov_iter *to,
+			   int noblock, struct sk_buff *skb)
+{
+	DEFINE_WAIT(wait);
+	ssize_t ret = 0;
 
-	अगर (!iov_iter_count(to)) अणु
-		kमुक्त_skb(skb);
-		वापस 0;
-	पूर्ण
+	if (!iov_iter_count(to)) {
+		kfree_skb(skb);
+		return 0;
+	}
 
-	अगर (skb)
-		जाओ put;
+	if (skb)
+		goto put;
 
-	जबतक (1) अणु
-		अगर (!noblock)
-			prepare_to_रुको(sk_sleep(&q->sk), &रुको,
+	while (1) {
+		if (!noblock)
+			prepare_to_wait(sk_sleep(&q->sk), &wait,
 					TASK_INTERRUPTIBLE);
 
 		/* Read frames from the queue */
 		skb = ptr_ring_consume(&q->ring);
-		अगर (skb)
-			अवरोध;
-		अगर (noblock) अणु
+		if (skb)
+			break;
+		if (noblock) {
 			ret = -EAGAIN;
-			अवरोध;
-		पूर्ण
-		अगर (संकेत_pending(current)) अणु
+			break;
+		}
+		if (signal_pending(current)) {
 			ret = -ERESTARTSYS;
-			अवरोध;
-		पूर्ण
-		/* Nothing to पढ़ो, let's sleep */
+			break;
+		}
+		/* Nothing to read, let's sleep */
 		schedule();
-	पूर्ण
-	अगर (!noblock)
-		finish_रुको(sk_sleep(&q->sk), &रुको);
+	}
+	if (!noblock)
+		finish_wait(sk_sleep(&q->sk), &wait);
 
 put:
-	अगर (skb) अणु
+	if (skb) {
 		ret = tap_put_user(q, skb, to);
-		अगर (unlikely(ret < 0))
-			kमुक्त_skb(skb);
-		अन्यथा
+		if (unlikely(ret < 0))
+			kfree_skb(skb);
+		else
 			consume_skb(skb);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल sमाप_प्रकार tap_पढ़ो_iter(काष्ठा kiocb *iocb, काष्ठा iov_iter *to)
-अणु
-	काष्ठा file *file = iocb->ki_filp;
-	काष्ठा tap_queue *q = file->निजी_data;
-	sमाप_प्रकार len = iov_iter_count(to), ret;
+static ssize_t tap_read_iter(struct kiocb *iocb, struct iov_iter *to)
+{
+	struct file *file = iocb->ki_filp;
+	struct tap_queue *q = file->private_data;
+	ssize_t len = iov_iter_count(to), ret;
 
-	ret = tap_करो_पढ़ो(q, to, file->f_flags & O_NONBLOCK, शून्य);
-	ret = min_t(sमाप_प्रकार, ret, len);
-	अगर (ret > 0)
+	ret = tap_do_read(q, to, file->f_flags & O_NONBLOCK, NULL);
+	ret = min_t(ssize_t, ret, len);
+	if (ret > 0)
 		iocb->ki_pos = ret;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा tap_dev *tap_get_tap_dev(काष्ठा tap_queue *q)
-अणु
-	काष्ठा tap_dev *tap;
+static struct tap_dev *tap_get_tap_dev(struct tap_queue *q)
+{
+	struct tap_dev *tap;
 
 	ASSERT_RTNL();
 	tap = rtnl_dereference(q->tap);
-	अगर (tap)
+	if (tap)
 		dev_hold(tap->dev);
 
-	वापस tap;
-पूर्ण
+	return tap;
+}
 
-अटल व्योम tap_put_tap_dev(काष्ठा tap_dev *tap)
-अणु
+static void tap_put_tap_dev(struct tap_dev *tap)
+{
 	dev_put(tap->dev);
-पूर्ण
+}
 
-अटल पूर्णांक tap_ioctl_set_queue(काष्ठा file *file, अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा tap_queue *q = file->निजी_data;
-	काष्ठा tap_dev *tap;
-	पूर्णांक ret;
+static int tap_ioctl_set_queue(struct file *file, unsigned int flags)
+{
+	struct tap_queue *q = file->private_data;
+	struct tap_dev *tap;
+	int ret;
 
 	tap = tap_get_tap_dev(q);
-	अगर (!tap)
-		वापस -EINVAL;
+	if (!tap)
+		return -EINVAL;
 
-	अगर (flags & IFF_ATTACH_QUEUE)
+	if (flags & IFF_ATTACH_QUEUE)
 		ret = tap_enable_queue(tap, file, q);
-	अन्यथा अगर (flags & IFF_DETACH_QUEUE)
+	else if (flags & IFF_DETACH_QUEUE)
 		ret = tap_disable_queue(q);
-	अन्यथा
+	else
 		ret = -EINVAL;
 
 	tap_put_tap_dev(tap);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक set_offload(काष्ठा tap_queue *q, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा tap_dev *tap;
+static int set_offload(struct tap_queue *q, unsigned long arg)
+{
+	struct tap_dev *tap;
 	netdev_features_t features;
 	netdev_features_t feature_mask = 0;
 
 	tap = rtnl_dereference(q->tap);
-	अगर (!tap)
-		वापस -ENOLINK;
+	if (!tap)
+		return -ENOLINK;
 
 	features = tap->dev->features;
 
-	अगर (arg & TUN_F_CSUM) अणु
+	if (arg & TUN_F_CSUM) {
 		feature_mask = NETIF_F_HW_CSUM;
 
-		अगर (arg & (TUN_F_TSO4 | TUN_F_TSO6)) अणु
-			अगर (arg & TUN_F_TSO_ECN)
+		if (arg & (TUN_F_TSO4 | TUN_F_TSO6)) {
+			if (arg & TUN_F_TSO_ECN)
 				feature_mask |= NETIF_F_TSO_ECN;
-			अगर (arg & TUN_F_TSO4)
+			if (arg & TUN_F_TSO4)
 				feature_mask |= NETIF_F_TSO;
-			अगर (arg & TUN_F_TSO6)
+			if (arg & TUN_F_TSO6)
 				feature_mask |= NETIF_F_TSO6;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* tun/tap driver inverts the usage क्रम TSO offloads, where
+	/* tun/tap driver inverts the usage for TSO offloads, where
 	 * setting the TSO bit means that the userspace wants to
 	 * accept TSO frames and turning it off means that user space
-	 * करोes not support TSO.
+	 * does not support TSO.
 	 * For tap, we have to invert it to mean the same thing.
 	 * When user space turns off TSO, we turn off GSO/LRO so that
 	 * user-space will not receive TSO frames.
 	 */
-	अगर (feature_mask & (NETIF_F_TSO | NETIF_F_TSO6))
+	if (feature_mask & (NETIF_F_TSO | NETIF_F_TSO6))
 		features |= RX_OFFLOADS;
-	अन्यथा
+	else
 		features &= ~RX_OFFLOADS;
 
 	/* tap_features are the same as features on tun/tap and
 	 * reflect user expectations.
 	 */
 	tap->tap_features = feature_mask;
-	अगर (tap->update_features)
+	if (tap->update_features)
 		tap->update_features(tap, features);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * provide compatibility with generic tun/tap पूर्णांकerface
+ * provide compatibility with generic tun/tap interface
  */
-अटल दीर्घ tap_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
-		      अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा tap_queue *q = file->निजी_data;
-	काष्ठा tap_dev *tap;
-	व्योम __user *argp = (व्योम __user *)arg;
-	काष्ठा अगरreq __user *अगरr = argp;
-	अचिन्हित पूर्णांक __user *up = argp;
-	अचिन्हित लघु u;
-	पूर्णांक __user *sp = argp;
-	काष्ठा sockaddr sa;
-	पूर्णांक s;
-	पूर्णांक ret;
+static long tap_ioctl(struct file *file, unsigned int cmd,
+		      unsigned long arg)
+{
+	struct tap_queue *q = file->private_data;
+	struct tap_dev *tap;
+	void __user *argp = (void __user *)arg;
+	struct ifreq __user *ifr = argp;
+	unsigned int __user *up = argp;
+	unsigned short u;
+	int __user *sp = argp;
+	struct sockaddr sa;
+	int s;
+	int ret;
 
-	चयन (cmd) अणु
-	हाल TUNSETIFF:
+	switch (cmd) {
+	case TUNSETIFF:
 		/* ignore the name, just look at flags */
-		अगर (get_user(u, &अगरr->अगरr_flags))
-			वापस -EFAULT;
+		if (get_user(u, &ifr->ifr_flags))
+			return -EFAULT;
 
 		ret = 0;
-		अगर ((u & ~TAP_IFFEATURES) != (IFF_NO_PI | IFF_TAP))
+		if ((u & ~TAP_IFFEATURES) != (IFF_NO_PI | IFF_TAP))
 			ret = -EINVAL;
-		अन्यथा
+		else
 			q->flags = (q->flags & ~TAP_IFFEATURES) | u;
 
-		वापस ret;
+		return ret;
 
-	हाल TUNGETIFF:
+	case TUNGETIFF:
 		rtnl_lock();
 		tap = tap_get_tap_dev(q);
-		अगर (!tap) अणु
+		if (!tap) {
 			rtnl_unlock();
-			वापस -ENOLINK;
-		पूर्ण
+			return -ENOLINK;
+		}
 
 		ret = 0;
 		u = q->flags;
-		अगर (copy_to_user(&अगरr->अगरr_name, tap->dev->name, IFNAMSIZ) ||
-		    put_user(u, &अगरr->अगरr_flags))
+		if (copy_to_user(&ifr->ifr_name, tap->dev->name, IFNAMSIZ) ||
+		    put_user(u, &ifr->ifr_flags))
 			ret = -EFAULT;
 		tap_put_tap_dev(tap);
 		rtnl_unlock();
-		वापस ret;
+		return ret;
 
-	हाल TUNSETQUEUE:
-		अगर (get_user(u, &अगरr->अगरr_flags))
-			वापस -EFAULT;
+	case TUNSETQUEUE:
+		if (get_user(u, &ifr->ifr_flags))
+			return -EFAULT;
 		rtnl_lock();
 		ret = tap_ioctl_set_queue(file, u);
 		rtnl_unlock();
-		वापस ret;
+		return ret;
 
-	हाल TUNGETFEATURES:
-		अगर (put_user(IFF_TAP | IFF_NO_PI | TAP_IFFEATURES, up))
-			वापस -EFAULT;
-		वापस 0;
+	case TUNGETFEATURES:
+		if (put_user(IFF_TAP | IFF_NO_PI | TAP_IFFEATURES, up))
+			return -EFAULT;
+		return 0;
 
-	हाल TUNSETSNDBUF:
-		अगर (get_user(s, sp))
-			वापस -EFAULT;
-		अगर (s <= 0)
-			वापस -EINVAL;
+	case TUNSETSNDBUF:
+		if (get_user(s, sp))
+			return -EFAULT;
+		if (s <= 0)
+			return -EINVAL;
 
 		q->sk.sk_sndbuf = s;
-		वापस 0;
+		return 0;
 
-	हाल TUNGETVNETHDRSZ:
+	case TUNGETVNETHDRSZ:
 		s = q->vnet_hdr_sz;
-		अगर (put_user(s, sp))
-			वापस -EFAULT;
-		वापस 0;
+		if (put_user(s, sp))
+			return -EFAULT;
+		return 0;
 
-	हाल TUNSETVNETHDRSZ:
-		अगर (get_user(s, sp))
-			वापस -EFAULT;
-		अगर (s < (पूर्णांक)माप(काष्ठा virtio_net_hdr))
-			वापस -EINVAL;
+	case TUNSETVNETHDRSZ:
+		if (get_user(s, sp))
+			return -EFAULT;
+		if (s < (int)sizeof(struct virtio_net_hdr))
+			return -EINVAL;
 
 		q->vnet_hdr_sz = s;
-		वापस 0;
+		return 0;
 
-	हाल TUNGETVNETLE:
+	case TUNGETVNETLE:
 		s = !!(q->flags & TAP_VNET_LE);
-		अगर (put_user(s, sp))
-			वापस -EFAULT;
-		वापस 0;
+		if (put_user(s, sp))
+			return -EFAULT;
+		return 0;
 
-	हाल TUNSETVNETLE:
-		अगर (get_user(s, sp))
-			वापस -EFAULT;
-		अगर (s)
+	case TUNSETVNETLE:
+		if (get_user(s, sp))
+			return -EFAULT;
+		if (s)
 			q->flags |= TAP_VNET_LE;
-		अन्यथा
+		else
 			q->flags &= ~TAP_VNET_LE;
-		वापस 0;
+		return 0;
 
-	हाल TUNGETVNETBE:
-		वापस tap_get_vnet_be(q, sp);
+	case TUNGETVNETBE:
+		return tap_get_vnet_be(q, sp);
 
-	हाल TUNSETVNETBE:
-		वापस tap_set_vnet_be(q, sp);
+	case TUNSETVNETBE:
+		return tap_set_vnet_be(q, sp);
 
-	हाल TUNSETOFFLOAD:
-		/* let the user check क्रम future flags */
-		अगर (arg & ~(TUN_F_CSUM | TUN_F_TSO4 | TUN_F_TSO6 |
+	case TUNSETOFFLOAD:
+		/* let the user check for future flags */
+		if (arg & ~(TUN_F_CSUM | TUN_F_TSO4 | TUN_F_TSO6 |
 			    TUN_F_TSO_ECN | TUN_F_UFO))
-			वापस -EINVAL;
+			return -EINVAL;
 
 		rtnl_lock();
 		ret = set_offload(q, arg);
 		rtnl_unlock();
-		वापस ret;
+		return ret;
 
-	हाल SIOCGIFHWADDR:
+	case SIOCGIFHWADDR:
 		rtnl_lock();
 		tap = tap_get_tap_dev(q);
-		अगर (!tap) अणु
+		if (!tap) {
 			rtnl_unlock();
-			वापस -ENOLINK;
-		पूर्ण
+			return -ENOLINK;
+		}
 		ret = 0;
 		dev_get_mac_address(&sa, dev_net(tap->dev), tap->dev->name);
-		अगर (copy_to_user(&अगरr->अगरr_name, tap->dev->name, IFNAMSIZ) ||
-		    copy_to_user(&अगरr->अगरr_hwaddr, &sa, माप(sa)))
+		if (copy_to_user(&ifr->ifr_name, tap->dev->name, IFNAMSIZ) ||
+		    copy_to_user(&ifr->ifr_hwaddr, &sa, sizeof(sa)))
 			ret = -EFAULT;
 		tap_put_tap_dev(tap);
 		rtnl_unlock();
-		वापस ret;
+		return ret;
 
-	हाल SIOCSIFHWADDR:
-		अगर (copy_from_user(&sa, &अगरr->अगरr_hwaddr, माप(sa)))
-			वापस -EFAULT;
+	case SIOCSIFHWADDR:
+		if (copy_from_user(&sa, &ifr->ifr_hwaddr, sizeof(sa)))
+			return -EFAULT;
 		rtnl_lock();
 		tap = tap_get_tap_dev(q);
-		अगर (!tap) अणु
+		if (!tap) {
 			rtnl_unlock();
-			वापस -ENOLINK;
-		पूर्ण
-		ret = dev_set_mac_address_user(tap->dev, &sa, शून्य);
+			return -ENOLINK;
+		}
+		ret = dev_set_mac_address_user(tap->dev, &sa, NULL);
 		tap_put_tap_dev(tap);
 		rtnl_unlock();
-		वापस ret;
+		return ret;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल स्थिर काष्ठा file_operations tap_fops = अणु
+static const struct file_operations tap_fops = {
 	.owner		= THIS_MODULE,
-	.खोलो		= tap_खोलो,
+	.open		= tap_open,
 	.release	= tap_release,
-	.पढ़ो_iter	= tap_पढ़ो_iter,
-	.ग_लिखो_iter	= tap_ग_लिखो_iter,
+	.read_iter	= tap_read_iter,
+	.write_iter	= tap_write_iter,
 	.poll		= tap_poll,
 	.llseek		= no_llseek,
 	.unlocked_ioctl	= tap_ioctl,
 	.compat_ioctl	= compat_ptr_ioctl,
-पूर्ण;
+};
 
-अटल पूर्णांक tap_get_user_xdp(काष्ठा tap_queue *q, काष्ठा xdp_buff *xdp)
-अणु
-	काष्ठा tun_xdp_hdr *hdr = xdp->data_hard_start;
-	काष्ठा virtio_net_hdr *gso = &hdr->gso;
-	पूर्णांक buflen = hdr->buflen;
-	पूर्णांक vnet_hdr_len = 0;
-	काष्ठा tap_dev *tap;
-	काष्ठा sk_buff *skb;
-	पूर्णांक err, depth;
+static int tap_get_user_xdp(struct tap_queue *q, struct xdp_buff *xdp)
+{
+	struct tun_xdp_hdr *hdr = xdp->data_hard_start;
+	struct virtio_net_hdr *gso = &hdr->gso;
+	int buflen = hdr->buflen;
+	int vnet_hdr_len = 0;
+	struct tap_dev *tap;
+	struct sk_buff *skb;
+	int err, depth;
 
-	अगर (q->flags & IFF_VNET_HDR)
+	if (q->flags & IFF_VNET_HDR)
 		vnet_hdr_len = READ_ONCE(q->vnet_hdr_sz);
 
 	skb = build_skb(xdp->data_hard_start, buflen);
-	अगर (!skb) अणु
+	if (!skb) {
 		err = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	skb_reserve(skb, xdp->data - xdp->data_hard_start);
 	skb_put(skb, xdp->data_end - xdp->data);
@@ -1156,153 +1155,153 @@ put:
 	skb_reset_mac_header(skb);
 	skb->protocol = eth_hdr(skb)->h_proto;
 
-	अगर (vnet_hdr_len) अणु
+	if (vnet_hdr_len) {
 		err = virtio_net_hdr_to_skb(skb, gso, tap_is_little_endian(q));
-		अगर (err)
-			जाओ err_kमुक्त;
-	पूर्ण
+		if (err)
+			goto err_kfree;
+	}
 
-	/* Move network header to the right position क्रम VLAN tagged packets */
-	अगर (eth_type_vlan(skb->protocol) &&
+	/* Move network header to the right position for VLAN tagged packets */
+	if (eth_type_vlan(skb->protocol) &&
 	    __vlan_get_protocol(skb, skb->protocol, &depth) != 0)
 		skb_set_network_header(skb, depth);
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	tap = rcu_dereference(q->tap);
-	अगर (tap) अणु
+	if (tap) {
 		skb->dev = tap->dev;
 		skb_probe_transport_header(skb);
 		dev_queue_xmit(skb);
-	पूर्ण अन्यथा अणु
-		kमुक्त_skb(skb);
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	} else {
+		kfree_skb(skb);
+	}
+	rcu_read_unlock();
 
-	वापस 0;
+	return 0;
 
-err_kमुक्त:
-	kमुक्त_skb(skb);
+err_kfree:
+	kfree_skb(skb);
 err:
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	tap = rcu_dereference(q->tap);
-	अगर (tap && tap->count_tx_dropped)
+	if (tap && tap->count_tx_dropped)
 		tap->count_tx_dropped(tap);
-	rcu_पढ़ो_unlock();
-	वापस err;
-पूर्ण
+	rcu_read_unlock();
+	return err;
+}
 
-अटल पूर्णांक tap_sendmsg(काष्ठा socket *sock, काष्ठा msghdr *m,
-		       माप_प्रकार total_len)
-अणु
-	काष्ठा tap_queue *q = container_of(sock, काष्ठा tap_queue, sock);
-	काष्ठा tun_msg_ctl *ctl = m->msg_control;
-	काष्ठा xdp_buff *xdp;
-	पूर्णांक i;
+static int tap_sendmsg(struct socket *sock, struct msghdr *m,
+		       size_t total_len)
+{
+	struct tap_queue *q = container_of(sock, struct tap_queue, sock);
+	struct tun_msg_ctl *ctl = m->msg_control;
+	struct xdp_buff *xdp;
+	int i;
 
-	अगर (ctl && (ctl->type == TUN_MSG_PTR)) अणु
-		क्रम (i = 0; i < ctl->num; i++) अणु
-			xdp = &((काष्ठा xdp_buff *)ctl->ptr)[i];
+	if (ctl && (ctl->type == TUN_MSG_PTR)) {
+		for (i = 0; i < ctl->num; i++) {
+			xdp = &((struct xdp_buff *)ctl->ptr)[i];
 			tap_get_user_xdp(q, xdp);
-		पूर्ण
-		वापस 0;
-	पूर्ण
+		}
+		return 0;
+	}
 
-	वापस tap_get_user(q, ctl ? ctl->ptr : शून्य, &m->msg_iter,
+	return tap_get_user(q, ctl ? ctl->ptr : NULL, &m->msg_iter,
 			    m->msg_flags & MSG_DONTWAIT);
-पूर्ण
+}
 
-अटल पूर्णांक tap_recvmsg(काष्ठा socket *sock, काष्ठा msghdr *m,
-		       माप_प्रकार total_len, पूर्णांक flags)
-अणु
-	काष्ठा tap_queue *q = container_of(sock, काष्ठा tap_queue, sock);
-	काष्ठा sk_buff *skb = m->msg_control;
-	पूर्णांक ret;
-	अगर (flags & ~(MSG_DONTWAIT|MSG_TRUNC)) अणु
-		kमुक्त_skb(skb);
-		वापस -EINVAL;
-	पूर्ण
-	ret = tap_करो_पढ़ो(q, &m->msg_iter, flags & MSG_DONTWAIT, skb);
-	अगर (ret > total_len) अणु
+static int tap_recvmsg(struct socket *sock, struct msghdr *m,
+		       size_t total_len, int flags)
+{
+	struct tap_queue *q = container_of(sock, struct tap_queue, sock);
+	struct sk_buff *skb = m->msg_control;
+	int ret;
+	if (flags & ~(MSG_DONTWAIT|MSG_TRUNC)) {
+		kfree_skb(skb);
+		return -EINVAL;
+	}
+	ret = tap_do_read(q, &m->msg_iter, flags & MSG_DONTWAIT, skb);
+	if (ret > total_len) {
 		m->msg_flags |= MSG_TRUNC;
 		ret = flags & MSG_TRUNC ? ret : total_len;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल पूर्णांक tap_peek_len(काष्ठा socket *sock)
-अणु
-	काष्ठा tap_queue *q = container_of(sock, काष्ठा tap_queue,
+static int tap_peek_len(struct socket *sock)
+{
+	struct tap_queue *q = container_of(sock, struct tap_queue,
 					       sock);
-	वापस PTR_RING_PEEK_CALL(&q->ring, __skb_array_len_with_tag);
-पूर्ण
+	return PTR_RING_PEEK_CALL(&q->ring, __skb_array_len_with_tag);
+}
 
-/* Ops काष्ठाure to mimic raw sockets with tun */
-अटल स्थिर काष्ठा proto_ops tap_socket_ops = अणु
+/* Ops structure to mimic raw sockets with tun */
+static const struct proto_ops tap_socket_ops = {
 	.sendmsg = tap_sendmsg,
 	.recvmsg = tap_recvmsg,
 	.peek_len = tap_peek_len,
-पूर्ण;
+};
 
 /* Get an underlying socket object from tun file.  Returns error unless file is
- * attached to a device.  The वापसed object works like a packet socket, it
- * can be used क्रम sock_sendmsg/sock_recvmsg.  The caller is responsible क्रम
- * holding a reference to the file क्रम as दीर्घ as the socket is in use. */
-काष्ठा socket *tap_get_socket(काष्ठा file *file)
-अणु
-	काष्ठा tap_queue *q;
-	अगर (file->f_op != &tap_fops)
-		वापस ERR_PTR(-EINVAL);
-	q = file->निजी_data;
-	अगर (!q)
-		वापस ERR_PTR(-EBADFD);
-	वापस &q->sock;
-पूर्ण
+ * attached to a device.  The returned object works like a packet socket, it
+ * can be used for sock_sendmsg/sock_recvmsg.  The caller is responsible for
+ * holding a reference to the file for as long as the socket is in use. */
+struct socket *tap_get_socket(struct file *file)
+{
+	struct tap_queue *q;
+	if (file->f_op != &tap_fops)
+		return ERR_PTR(-EINVAL);
+	q = file->private_data;
+	if (!q)
+		return ERR_PTR(-EBADFD);
+	return &q->sock;
+}
 EXPORT_SYMBOL_GPL(tap_get_socket);
 
-काष्ठा ptr_ring *tap_get_ptr_ring(काष्ठा file *file)
-अणु
-	काष्ठा tap_queue *q;
+struct ptr_ring *tap_get_ptr_ring(struct file *file)
+{
+	struct tap_queue *q;
 
-	अगर (file->f_op != &tap_fops)
-		वापस ERR_PTR(-EINVAL);
-	q = file->निजी_data;
-	अगर (!q)
-		वापस ERR_PTR(-EBADFD);
-	वापस &q->ring;
-पूर्ण
+	if (file->f_op != &tap_fops)
+		return ERR_PTR(-EINVAL);
+	q = file->private_data;
+	if (!q)
+		return ERR_PTR(-EBADFD);
+	return &q->ring;
+}
 EXPORT_SYMBOL_GPL(tap_get_ptr_ring);
 
-पूर्णांक tap_queue_resize(काष्ठा tap_dev *tap)
-अणु
-	काष्ठा net_device *dev = tap->dev;
-	काष्ठा tap_queue *q;
-	काष्ठा ptr_ring **rings;
-	पूर्णांक n = tap->numqueues;
-	पूर्णांक ret, i = 0;
+int tap_queue_resize(struct tap_dev *tap)
+{
+	struct net_device *dev = tap->dev;
+	struct tap_queue *q;
+	struct ptr_ring **rings;
+	int n = tap->numqueues;
+	int ret, i = 0;
 
-	rings = kदो_स्मृति_array(n, माप(*rings), GFP_KERNEL);
-	अगर (!rings)
-		वापस -ENOMEM;
+	rings = kmalloc_array(n, sizeof(*rings), GFP_KERNEL);
+	if (!rings)
+		return -ENOMEM;
 
-	list_क्रम_each_entry(q, &tap->queue_list, next)
+	list_for_each_entry(q, &tap->queue_list, next)
 		rings[i++] = &q->ring;
 
 	ret = ptr_ring_resize_multiple(rings, n,
 				       dev->tx_queue_len, GFP_KERNEL,
 				       __skb_array_destroy_skb);
 
-	kमुक्त(rings);
-	वापस ret;
-पूर्ण
+	kfree(rings);
+	return ret;
+}
 EXPORT_SYMBOL_GPL(tap_queue_resize);
 
-अटल पूर्णांक tap_list_add(dev_t major, स्थिर अक्षर *device_name)
-अणु
-	काष्ठा major_info *tap_major;
+static int tap_list_add(dev_t major, const char *device_name)
+{
+	struct major_info *tap_major;
 
-	tap_major = kzalloc(माप(*tap_major), GFP_ATOMIC);
-	अगर (!tap_major)
-		वापस -ENOMEM;
+	tap_major = kzalloc(sizeof(*tap_major), GFP_ATOMIC);
+	if (!tap_major)
+		return -ENOMEM;
 
 	tap_major->major = MAJOR(major);
 
@@ -1312,53 +1311,53 @@ EXPORT_SYMBOL_GPL(tap_queue_resize);
 	tap_major->device_name = device_name;
 
 	list_add_tail_rcu(&tap_major->next, &major_list);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक tap_create_cdev(काष्ठा cdev *tap_cdev, dev_t *tap_major,
-		    स्थिर अक्षर *device_name, काष्ठा module *module)
-अणु
-	पूर्णांक err;
+int tap_create_cdev(struct cdev *tap_cdev, dev_t *tap_major,
+		    const char *device_name, struct module *module)
+{
+	int err;
 
 	err = alloc_chrdev_region(tap_major, 0, TAP_NUM_DEVS, device_name);
-	अगर (err)
-		जाओ out1;
+	if (err)
+		goto out1;
 
 	cdev_init(tap_cdev, &tap_fops);
 	tap_cdev->owner = module;
 	err = cdev_add(tap_cdev, *tap_major, TAP_NUM_DEVS);
-	अगर (err)
-		जाओ out2;
+	if (err)
+		goto out2;
 
 	err =  tap_list_add(*tap_major, device_name);
-	अगर (err)
-		जाओ out3;
+	if (err)
+		goto out3;
 
-	वापस 0;
+	return 0;
 
 out3:
 	cdev_del(tap_cdev);
 out2:
-	unरेजिस्टर_chrdev_region(*tap_major, TAP_NUM_DEVS);
+	unregister_chrdev_region(*tap_major, TAP_NUM_DEVS);
 out1:
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL_GPL(tap_create_cdev);
 
-व्योम tap_destroy_cdev(dev_t major, काष्ठा cdev *tap_cdev)
-अणु
-	काष्ठा major_info *tap_major, *पंचांगp;
+void tap_destroy_cdev(dev_t major, struct cdev *tap_cdev)
+{
+	struct major_info *tap_major, *tmp;
 
 	cdev_del(tap_cdev);
-	unरेजिस्टर_chrdev_region(major, TAP_NUM_DEVS);
-	list_क्रम_each_entry_safe(tap_major, पंचांगp, &major_list, next) अणु
-		अगर (tap_major->major == MAJOR(major)) अणु
+	unregister_chrdev_region(major, TAP_NUM_DEVS);
+	list_for_each_entry_safe(tap_major, tmp, &major_list, next) {
+		if (tap_major->major == MAJOR(major)) {
 			idr_destroy(&tap_major->minor_idr);
 			list_del_rcu(&tap_major->next);
-			kमुक्त_rcu(tap_major, rcu);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			kfree_rcu(tap_major, rcu);
+		}
+	}
+}
 EXPORT_SYMBOL_GPL(tap_destroy_cdev);
 
 MODULE_AUTHOR("Arnd Bergmann <arnd@arndb.de>");

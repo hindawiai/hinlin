@@ -1,58 +1,57 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <elf.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <elf.h>
 
-पूर्णांक
-मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-	अचिन्हित अक्षर ei[EI_NIDENT];
-	जोड़ अणु लघु s; अक्षर c[2]; पूर्ण endian_test;
+int
+main(int argc, char **argv)
+{
+	unsigned char ei[EI_NIDENT];
+	union { short s; char c[2]; } endian_test;
 
-	अगर (ख_पढ़ो(ei, 1, EI_NIDENT, मानक_निवेश) != EI_NIDENT) अणु
-		ख_लिखो(मानक_त्रुटि, "Error: input truncated\n");
-		वापस 1;
-	पूर्ण
-	अगर (स_भेद(ei, ELFMAG, SELFMAG) != 0) अणु
-		ख_लिखो(मानक_त्रुटि, "Error: not ELF\n");
-		वापस 1;
-	पूर्ण
-	चयन (ei[EI_CLASS]) अणु
-	हाल ELFCLASS32:
-		म_लिखो("#define KERNEL_ELFCLASS ELFCLASS32\n");
-		अवरोध;
-	हाल ELFCLASS64:
-		म_लिखो("#define KERNEL_ELFCLASS ELFCLASS64\n");
-		अवरोध;
-	शेष:
-		निकास(1);
-	पूर्ण
-	चयन (ei[EI_DATA]) अणु
-	हाल ELFDATA2LSB:
-		म_लिखो("#define KERNEL_ELFDATA ELFDATA2LSB\n");
-		अवरोध;
-	हाल ELFDATA2MSB:
-		म_लिखो("#define KERNEL_ELFDATA ELFDATA2MSB\n");
-		अवरोध;
-	शेष:
-		निकास(1);
-	पूर्ण
+	if (fread(ei, 1, EI_NIDENT, stdin) != EI_NIDENT) {
+		fprintf(stderr, "Error: input truncated\n");
+		return 1;
+	}
+	if (memcmp(ei, ELFMAG, SELFMAG) != 0) {
+		fprintf(stderr, "Error: not ELF\n");
+		return 1;
+	}
+	switch (ei[EI_CLASS]) {
+	case ELFCLASS32:
+		printf("#define KERNEL_ELFCLASS ELFCLASS32\n");
+		break;
+	case ELFCLASS64:
+		printf("#define KERNEL_ELFCLASS ELFCLASS64\n");
+		break;
+	default:
+		exit(1);
+	}
+	switch (ei[EI_DATA]) {
+	case ELFDATA2LSB:
+		printf("#define KERNEL_ELFDATA ELFDATA2LSB\n");
+		break;
+	case ELFDATA2MSB:
+		printf("#define KERNEL_ELFDATA ELFDATA2MSB\n");
+		break;
+	default:
+		exit(1);
+	}
 
-	अगर (माप(अचिन्हित दीर्घ) == 4) अणु
-		म_लिखो("#define HOST_ELFCLASS ELFCLASS32\n");
-	पूर्ण अन्यथा अगर (माप(अचिन्हित दीर्घ) == 8) अणु
-		म_लिखो("#define HOST_ELFCLASS ELFCLASS64\n");
-	पूर्ण
+	if (sizeof(unsigned long) == 4) {
+		printf("#define HOST_ELFCLASS ELFCLASS32\n");
+	} else if (sizeof(unsigned long) == 8) {
+		printf("#define HOST_ELFCLASS ELFCLASS64\n");
+	}
 
 	endian_test.s = 0x0102;
-	अगर (स_भेद(endian_test.c, "\x01\x02", 2) == 0)
-		म_लिखो("#define HOST_ELFDATA ELFDATA2MSB\n");
-	अन्यथा अगर (स_भेद(endian_test.c, "\x02\x01", 2) == 0)
-		म_लिखो("#define HOST_ELFDATA ELFDATA2LSB\n");
-	अन्यथा
-		निकास(1);
+	if (memcmp(endian_test.c, "\x01\x02", 2) == 0)
+		printf("#define HOST_ELFDATA ELFDATA2MSB\n");
+	else if (memcmp(endian_test.c, "\x02\x01", 2) == 0)
+		printf("#define HOST_ELFDATA ELFDATA2LSB\n");
+	else
+		exit(1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

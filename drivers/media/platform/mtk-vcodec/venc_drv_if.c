@@ -1,67 +1,66 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2016 MediaTek Inc.
  * Author: Daniel Hsiao <daniel.hsiao@mediatek.com>
  *	Jungchang Tsao <jungchang.tsao@mediatek.com>
- *	Tअगरfany Lin <tअगरfany.lin@mediatek.com>
+ *	Tiffany Lin <tiffany.lin@mediatek.com>
  */
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
+#include <linux/interrupt.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
 
-#समावेश "venc_drv_base.h"
-#समावेश "venc_drv_if.h"
+#include "venc_drv_base.h"
+#include "venc_drv_if.h"
 
-#समावेश "mtk_vcodec_enc.h"
-#समावेश "mtk_vcodec_enc_pm.h"
+#include "mtk_vcodec_enc.h"
+#include "mtk_vcodec_enc_pm.h"
 
-पूर्णांक venc_अगर_init(काष्ठा mtk_vcodec_ctx *ctx, अचिन्हित पूर्णांक fourcc)
-अणु
-	पूर्णांक ret = 0;
+int venc_if_init(struct mtk_vcodec_ctx *ctx, unsigned int fourcc)
+{
+	int ret = 0;
 
-	चयन (fourcc) अणु
-	हाल V4L2_PIX_FMT_VP8:
-		ctx->enc_अगर = &venc_vp8_अगर;
-		अवरोध;
-	हाल V4L2_PIX_FMT_H264:
-		ctx->enc_अगर = &venc_h264_अगर;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-
-	mtk_venc_lock(ctx);
-	mtk_vcodec_enc_घड़ी_on(&ctx->dev->pm);
-	ret = ctx->enc_अगर->init(ctx);
-	mtk_vcodec_enc_घड़ी_off(&ctx->dev->pm);
-	mtk_venc_unlock(ctx);
-
-	वापस ret;
-पूर्ण
-
-पूर्णांक venc_अगर_set_param(काष्ठा mtk_vcodec_ctx *ctx,
-		क्रमागत venc_set_param_type type, काष्ठा venc_enc_param *in)
-अणु
-	पूर्णांक ret = 0;
+	switch (fourcc) {
+	case V4L2_PIX_FMT_VP8:
+		ctx->enc_if = &venc_vp8_if;
+		break;
+	case V4L2_PIX_FMT_H264:
+		ctx->enc_if = &venc_h264_if;
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	mtk_venc_lock(ctx);
-	mtk_vcodec_enc_घड़ी_on(&ctx->dev->pm);
-	ret = ctx->enc_अगर->set_param(ctx->drv_handle, type, in);
-	mtk_vcodec_enc_घड़ी_off(&ctx->dev->pm);
+	mtk_vcodec_enc_clock_on(&ctx->dev->pm);
+	ret = ctx->enc_if->init(ctx);
+	mtk_vcodec_enc_clock_off(&ctx->dev->pm);
 	mtk_venc_unlock(ctx);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक venc_अगर_encode(काष्ठा mtk_vcodec_ctx *ctx,
-		   क्रमागत venc_start_opt opt, काष्ठा venc_frm_buf *frm_buf,
-		   काष्ठा mtk_vcodec_mem *bs_buf,
-		   काष्ठा venc_करोne_result *result)
-अणु
-	पूर्णांक ret = 0;
-	अचिन्हित दीर्घ flags;
+int venc_if_set_param(struct mtk_vcodec_ctx *ctx,
+		enum venc_set_param_type type, struct venc_enc_param *in)
+{
+	int ret = 0;
+
+	mtk_venc_lock(ctx);
+	mtk_vcodec_enc_clock_on(&ctx->dev->pm);
+	ret = ctx->enc_if->set_param(ctx->drv_handle, type, in);
+	mtk_vcodec_enc_clock_off(&ctx->dev->pm);
+	mtk_venc_unlock(ctx);
+
+	return ret;
+}
+
+int venc_if_encode(struct mtk_vcodec_ctx *ctx,
+		   enum venc_start_opt opt, struct venc_frm_buf *frm_buf,
+		   struct mtk_vcodec_mem *bs_buf,
+		   struct venc_done_result *result)
+{
+	int ret = 0;
+	unsigned long flags;
 
 	mtk_venc_lock(ctx);
 
@@ -69,33 +68,33 @@
 	ctx->dev->curr_ctx = ctx;
 	spin_unlock_irqrestore(&ctx->dev->irqlock, flags);
 
-	mtk_vcodec_enc_घड़ी_on(&ctx->dev->pm);
-	ret = ctx->enc_अगर->encode(ctx->drv_handle, opt, frm_buf,
+	mtk_vcodec_enc_clock_on(&ctx->dev->pm);
+	ret = ctx->enc_if->encode(ctx->drv_handle, opt, frm_buf,
 				  bs_buf, result);
-	mtk_vcodec_enc_घड़ी_off(&ctx->dev->pm);
+	mtk_vcodec_enc_clock_off(&ctx->dev->pm);
 
 	spin_lock_irqsave(&ctx->dev->irqlock, flags);
-	ctx->dev->curr_ctx = शून्य;
+	ctx->dev->curr_ctx = NULL;
 	spin_unlock_irqrestore(&ctx->dev->irqlock, flags);
 
 	mtk_venc_unlock(ctx);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक venc_अगर_deinit(काष्ठा mtk_vcodec_ctx *ctx)
-अणु
-	पूर्णांक ret = 0;
+int venc_if_deinit(struct mtk_vcodec_ctx *ctx)
+{
+	int ret = 0;
 
-	अगर (!ctx->drv_handle)
-		वापस 0;
+	if (!ctx->drv_handle)
+		return 0;
 
 	mtk_venc_lock(ctx);
-	mtk_vcodec_enc_घड़ी_on(&ctx->dev->pm);
-	ret = ctx->enc_अगर->deinit(ctx->drv_handle);
-	mtk_vcodec_enc_घड़ी_off(&ctx->dev->pm);
+	mtk_vcodec_enc_clock_on(&ctx->dev->pm);
+	ret = ctx->enc_if->deinit(ctx->drv_handle);
+	mtk_vcodec_enc_clock_off(&ctx->dev->pm);
 	mtk_venc_unlock(ctx);
 
-	ctx->drv_handle = शून्य;
+	ctx->drv_handle = NULL;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

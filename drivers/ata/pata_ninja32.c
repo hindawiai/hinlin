@@ -1,25 +1,24 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * pata_ninja32.c 	- Ninja32 PATA क्रम new ATA layer
+ * pata_ninja32.c 	- Ninja32 PATA for new ATA layer
  *			  (C) 2007 Red Hat Inc
  *
- * Note: The controller like many controllers has shared timings क्रम
+ * Note: The controller like many controllers has shared timings for
  * PIO and DMA. We thus flip to the DMA timings in dma_start and flip back
- * in the dma_stop function. Thus we actually करोn't need a set_dmamode
+ * in the dma_stop function. Thus we actually don't need a set_dmamode
  * method as the PIO method is always called and will set the right PIO
  * timing parameters.
  *
  * The Ninja32 Cardbus is not a generic SFF controller. Instead it is
  * laid out as follows off BAR 0. This is based upon Mark Lord's delkin
- * driver and the extensive analysis करोne by the BSD developers, notably
+ * driver and the extensive analysis done by the BSD developers, notably
  * ITOH Yasufumi.
  *
  *	Base + 0x00 IRQ Status
  *	Base + 0x01 IRQ control
  *	Base + 0x02 Chipset control
  *	Base + 0x03 Unknown
- *	Base + 0x04 VDMA and reset control + रुको bits
+ *	Base + 0x04 VDMA and reset control + wait bits
  *	Base + 0x08 BMIMBA
  *	Base + 0x0C DMA Length
  *	Base + 0x10 Taskfile
@@ -27,113 +26,113 @@
  *	Base + 0x1C
  *	Base + 0x1D Bus master control
  *		bit 0 = enable
- *		bit 1 = 0 ग_लिखो/1 पढ़ो
+ *		bit 1 = 0 write/1 read
  *		bit 2 = 1 sgtable
  *		bit 3 = go
- *		bit 4-6 रुको bits
- *		bit 7 = करोne
+ *		bit 4-6 wait bits
+ *		bit 7 = done
  *	Base + 0x1E AltStatus
- *	Base + 0x1F timing रेजिस्टर
+ *	Base + 0x1F timing register
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/delay.h>
-#समावेश <scsi/scsi_host.h>
-#समावेश <linux/libata.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/blkdev.h>
+#include <linux/delay.h>
+#include <scsi/scsi_host.h>
+#include <linux/libata.h>
 
-#घोषणा DRV_NAME "pata_ninja32"
-#घोषणा DRV_VERSION "0.1.5"
+#define DRV_NAME "pata_ninja32"
+#define DRV_VERSION "0.1.5"
 
 
 /**
  *	ninja32_set_piomode	-	set initial PIO mode data
- *	@ap: ATA पूर्णांकerface
+ *	@ap: ATA interface
  *	@adev: ATA device
  *
- *	Called to करो the PIO mode setup. Our timing रेजिस्टरs are shared
- *	but we want to set the PIO timing by शेष.
+ *	Called to do the PIO mode setup. Our timing registers are shared
+ *	but we want to set the PIO timing by default.
  */
 
-अटल व्योम ninja32_set_piomode(काष्ठा ata_port *ap, काष्ठा ata_device *adev)
-अणु
-	अटल u16 pio_timing[5] = अणु
+static void ninja32_set_piomode(struct ata_port *ap, struct ata_device *adev)
+{
+	static u16 pio_timing[5] = {
 		0xd6, 0x85, 0x44, 0x33, 0x13
-	पूर्ण;
-	ioग_लिखो8(pio_timing[adev->pio_mode - XFER_PIO_0],
+	};
+	iowrite8(pio_timing[adev->pio_mode - XFER_PIO_0],
 		 ap->ioaddr.bmdma_addr + 0x1f);
-	ap->निजी_data = adev;
-पूर्ण
+	ap->private_data = adev;
+}
 
 
-अटल व्योम ninja32_dev_select(काष्ठा ata_port *ap, अचिन्हित पूर्णांक device)
-अणु
-	काष्ठा ata_device *adev = &ap->link.device[device];
-	अगर (ap->निजी_data != adev) अणु
-		ioग_लिखो8(0xd6, ap->ioaddr.bmdma_addr + 0x1f);
+static void ninja32_dev_select(struct ata_port *ap, unsigned int device)
+{
+	struct ata_device *adev = &ap->link.device[device];
+	if (ap->private_data != adev) {
+		iowrite8(0xd6, ap->ioaddr.bmdma_addr + 0x1f);
 		ata_sff_dev_select(ap, device);
 		ninja32_set_piomode(ap, adev);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल काष्ठा scsi_host_ढाँचा ninja32_sht = अणु
+static struct scsi_host_template ninja32_sht = {
 	ATA_BMDMA_SHT(DRV_NAME),
-पूर्ण;
+};
 
-अटल काष्ठा ata_port_operations ninja32_port_ops = अणु
+static struct ata_port_operations ninja32_port_ops = {
 	.inherits	= &ata_bmdma_port_ops,
 	.sff_dev_select = ninja32_dev_select,
 	.cable_detect	= ata_cable_40wire,
 	.set_piomode	= ninja32_set_piomode,
 	.sff_data_xfer	= ata_sff_data_xfer32
-पूर्ण;
+};
 
-अटल व्योम ninja32_program(व्योम __iomem *base)
-अणु
-	ioग_लिखो8(0x05, base + 0x01);	/* Enable पूर्णांकerrupt lines */
-	ioग_लिखो8(0xBE, base + 0x02);	/* Burst, ?? setup */
-	ioग_लिखो8(0x01, base + 0x03);	/* Unknown */
-	ioग_लिखो8(0x20, base + 0x04);	/* WAIT0 */
-	ioग_लिखो8(0x8f, base + 0x05);	/* Unknown */
-	ioग_लिखो8(0xa4, base + 0x1c);	/* Unknown */
-	ioग_लिखो8(0x83, base + 0x1d);	/* BMDMA control: WAIT0 */
-पूर्ण
+static void ninja32_program(void __iomem *base)
+{
+	iowrite8(0x05, base + 0x01);	/* Enable interrupt lines */
+	iowrite8(0xBE, base + 0x02);	/* Burst, ?? setup */
+	iowrite8(0x01, base + 0x03);	/* Unknown */
+	iowrite8(0x20, base + 0x04);	/* WAIT0 */
+	iowrite8(0x8f, base + 0x05);	/* Unknown */
+	iowrite8(0xa4, base + 0x1c);	/* Unknown */
+	iowrite8(0x83, base + 0x1d);	/* BMDMA control: WAIT0 */
+}
 
-अटल पूर्णांक ninja32_init_one(काष्ठा pci_dev *dev, स्थिर काष्ठा pci_device_id *id)
-अणु
-	काष्ठा ata_host *host;
-	काष्ठा ata_port *ap;
-	व्योम __iomem *base;
-	पूर्णांक rc;
+static int ninja32_init_one(struct pci_dev *dev, const struct pci_device_id *id)
+{
+	struct ata_host *host;
+	struct ata_port *ap;
+	void __iomem *base;
+	int rc;
 
 	host = ata_host_alloc(&dev->dev, 1);
-	अगर (!host)
-		वापस -ENOMEM;
+	if (!host)
+		return -ENOMEM;
 	ap = host->ports[0];
 
 	/* Set up the PCI device */
 	rc = pcim_enable_device(dev);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 	rc = pcim_iomap_regions(dev, 1 << 0, DRV_NAME);
-	अगर (rc == -EBUSY)
+	if (rc == -EBUSY)
 		pcim_pin_device(dev);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	host->iomap = pcim_iomap_table(dev);
 	rc = dma_set_mask_and_coherent(&dev->dev, ATA_DMA_MASK);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 	pci_set_master(dev);
 
-	/* Set up the रेजिस्टर mappings. We use the I/O mapping as only the
+	/* Set up the register mappings. We use the I/O mapping as only the
 	   older chips also have MMIO on BAR 1 */
 	base = host->iomap[0];
-	अगर (!base)
-		वापस -ENOMEM;
+	if (!base)
+		return -ENOMEM;
 	ap->ops = &ninja32_port_ops;
 	ap->pio_mask = ATA_PIO4;
 	ap->flags |= ATA_FLAG_SLAVE_POSS;
@@ -146,46 +145,46 @@
 	ap->pflags |= ATA_PFLAG_PIO32 | ATA_PFLAG_PIO32CHANGE;
 
 	ninja32_program(base);
-	/* FIXME: Should we disable them at हटाओ ? */
-	वापस ata_host_activate(host, dev->irq, ata_bmdma_पूर्णांकerrupt,
+	/* FIXME: Should we disable them at remove ? */
+	return ata_host_activate(host, dev->irq, ata_bmdma_interrupt,
 				 IRQF_SHARED, &ninja32_sht);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक ninja32_reinit_one(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा ata_host *host = pci_get_drvdata(pdev);
-	पूर्णांक rc;
+#ifdef CONFIG_PM_SLEEP
+static int ninja32_reinit_one(struct pci_dev *pdev)
+{
+	struct ata_host *host = pci_get_drvdata(pdev);
+	int rc;
 
-	rc = ata_pci_device_करो_resume(pdev);
-	अगर (rc)
-		वापस rc;
+	rc = ata_pci_device_do_resume(pdev);
+	if (rc)
+		return rc;
 	ninja32_program(host->iomap[0]);
 	ata_host_resume(host);
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल स्थिर काष्ठा pci_device_id ninja32[] = अणु
-	अणु 0x10FC, 0x0003, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु 0x1145, 0x8008, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु 0x1145, 0xf008, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु 0x1145, 0xf021, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु 0x1145, 0xf024, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु 0x1145, 0xf02C, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct pci_device_id ninja32[] = {
+	{ 0x10FC, 0x0003, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ 0x1145, 0x8008, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ 0x1145, 0xf008, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ 0x1145, 0xf021, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ 0x1145, 0xf024, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ 0x1145, 0xf02C, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ },
+};
 
-अटल काष्ठा pci_driver ninja32_pci_driver = अणु
+static struct pci_driver ninja32_pci_driver = {
 	.name 		= DRV_NAME,
 	.id_table	= ninja32,
 	.probe 		= ninja32_init_one,
-	.हटाओ		= ata_pci_हटाओ_one,
-#अगर_घोषित CONFIG_PM_SLEEP
+	.remove		= ata_pci_remove_one,
+#ifdef CONFIG_PM_SLEEP
 	.suspend	= ata_pci_device_suspend,
 	.resume		= ninja32_reinit_one,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
 module_pci_driver(ninja32_pci_driver);
 

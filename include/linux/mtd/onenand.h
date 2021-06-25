@@ -1,141 +1,140 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  *  linux/include/linux/mtd/onenand.h
  *
- *  Copyright तऊ 2005-2009 Samsung Electronics
+ *  Copyright © 2005-2009 Samsung Electronics
  *  Kyungmin Park <kyungmin.park@samsung.com>
  */
 
-#अगर_अघोषित __LINUX_MTD_ONEन_अंकD_H
-#घोषणा __LINUX_MTD_ONEन_अंकD_H
+#ifndef __LINUX_MTD_ONENAND_H
+#define __LINUX_MTD_ONENAND_H
 
-#समावेश <linux/spinlock.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/mtd/flashchip.h>
-#समावेश <linux/mtd/onenand_regs.h>
-#समावेश <linux/mtd/bbm.h>
+#include <linux/spinlock.h>
+#include <linux/completion.h>
+#include <linux/mtd/flashchip.h>
+#include <linux/mtd/onenand_regs.h>
+#include <linux/mtd/bbm.h>
 
-#घोषणा MAX_DIES		2
-#घोषणा MAX_BUFFERRAM		2
+#define MAX_DIES		2
+#define MAX_BUFFERRAM		2
 
-/* Scan and identअगरy a Oneन_अंकD device */
-बाह्य पूर्णांक onenand_scan(काष्ठा mtd_info *mtd, पूर्णांक max_chips);
-/* Free resources held by the Oneन_अंकD device */
-बाह्य व्योम onenand_release(काष्ठा mtd_info *mtd);
+/* Scan and identify a OneNAND device */
+extern int onenand_scan(struct mtd_info *mtd, int max_chips);
+/* Free resources held by the OneNAND device */
+extern void onenand_release(struct mtd_info *mtd);
 
 /**
- * काष्ठा onenand_bufferram - Oneन_अंकD BufferRAM Data
+ * struct onenand_bufferram - OneNAND BufferRAM Data
  * @blockpage:		block & page address in BufferRAM
  */
-काष्ठा onenand_bufferram अणु
-	पूर्णांक	blockpage;
-पूर्ण;
+struct onenand_bufferram {
+	int	blockpage;
+};
 
 /**
- * काष्ठा onenand_chip - Oneन_अंकD Private Flash Chip Data
- * @base:		[BOARDSPECIFIC] address to access Oneन_अंकD
- * @dies:		[INTERN][FLEX-ONEन_अंकD] number of dies on chip
- * @boundary:		[INTERN][FLEX-ONEन_अंकD] Boundary of the dies
- * @diesize:		[INTERN][FLEX-ONEन_अंकD] Size of the dies
- * @chipsize:		[INTERN] the size of one chip क्रम multichip arrays
- *			FIXME For Flex-Oneन_अंकD, chipsize holds maximum possible
+ * struct onenand_chip - OneNAND Private Flash Chip Data
+ * @base:		[BOARDSPECIFIC] address to access OneNAND
+ * @dies:		[INTERN][FLEX-ONENAND] number of dies on chip
+ * @boundary:		[INTERN][FLEX-ONENAND] Boundary of the dies
+ * @diesize:		[INTERN][FLEX-ONENAND] Size of the dies
+ * @chipsize:		[INTERN] the size of one chip for multichip arrays
+ *			FIXME For Flex-OneNAND, chipsize holds maximum possible
  *			device size ie when all blocks are considered MLC
  * @device_id:		[INTERN] device ID
- * @density_mask:	chip density, used क्रम DDP devices
+ * @density_mask:	chip density, used for DDP devices
  * @verstion_id:	[INTERN] version ID
  * @options:		[BOARDSPECIFIC] various chip options. They can
- *			partly be set to inक्रमm onenand_scan about
- * @erase_shअगरt:	[INTERN] number of address bits in a block
- * @page_shअगरt:		[INTERN] number of address bits in a page
+ *			partly be set to inform onenand_scan about
+ * @erase_shift:	[INTERN] number of address bits in a block
+ * @page_shift:		[INTERN] number of address bits in a page
  * @page_mask:		[INTERN] a page per block mask
- * @ग_लिखोsize:		[INTERN] a real page size
+ * @writesize:		[INTERN] a real page size
  * @bufferram_index:	[INTERN] BufferRAM index
  * @bufferram:		[INTERN] BufferRAM info
- * @पढ़ोw:		[REPLACEABLE] hardware specअगरic function क्रम पढ़ो लघु
- * @ग_लिखोw:		[REPLACEABLE] hardware specअगरic function क्रम ग_लिखो लघु
- * @command:		[REPLACEABLE] hardware specअगरic function क्रम writing
+ * @readw:		[REPLACEABLE] hardware specific function for read short
+ * @writew:		[REPLACEABLE] hardware specific function for write short
+ * @command:		[REPLACEABLE] hardware specific function for writing
  *			commands to the chip
- * @रुको:		[REPLACEABLE] hardware specअगरic function क्रम रुको on पढ़ोy
- * @bbt_रुको:		[REPLACEABLE] hardware specअगरic function क्रम bbt रुको on पढ़ोy
- * @unlock_all:		[REPLACEABLE] hardware specअगरic function क्रम unlock all
- * @पढ़ो_bufferram:	[REPLACEABLE] hardware specअगरic function क्रम BufferRAM Area
- * @ग_लिखो_bufferram:	[REPLACEABLE] hardware specअगरic function क्रम BufferRAM Area
- * @पढ़ो_word:		[REPLACEABLE] hardware specअगरic function क्रम पढ़ो
- *			रेजिस्टर of Oneन_अंकD
- * @ग_लिखो_word:		[REPLACEABLE] hardware specअगरic function क्रम ग_लिखो
- *			रेजिस्टर of Oneन_अंकD
- * @mmcontrol:		sync burst पढ़ो function
- * @chip_probe:		[REPLACEABLE] hardware specअगरic function क्रम chip probe
+ * @wait:		[REPLACEABLE] hardware specific function for wait on ready
+ * @bbt_wait:		[REPLACEABLE] hardware specific function for bbt wait on ready
+ * @unlock_all:		[REPLACEABLE] hardware specific function for unlock all
+ * @read_bufferram:	[REPLACEABLE] hardware specific function for BufferRAM Area
+ * @write_bufferram:	[REPLACEABLE] hardware specific function for BufferRAM Area
+ * @read_word:		[REPLACEABLE] hardware specific function for read
+ *			register of OneNAND
+ * @write_word:		[REPLACEABLE] hardware specific function for write
+ *			register of OneNAND
+ * @mmcontrol:		sync burst read function
+ * @chip_probe:		[REPLACEABLE] hardware specific function for chip probe
  * @block_markbad:	function to mark a block as bad
- * @scan_bbt:		[REPLACEALBE] hardware specअगरic function क्रम scanning
+ * @scan_bbt:		[REPLACEALBE] hardware specific function for scanning
  *			Bad block Table
  * @chip_lock:		[INTERN] spinlock used to protect access to this
- *			काष्ठाure and the chip
- * @wq:			[INTERN] रुको queue to sleep on अगर a Oneन_अंकD
+ *			structure and the chip
+ * @wq:			[INTERN] wait queue to sleep on if a OneNAND
  *			operation is in progress
- * @state:		[INTERN] the current state of the Oneन_अंकD device
- * @page_buf:		[INTERN] page मुख्य data buffer
+ * @state:		[INTERN] the current state of the OneNAND device
+ * @page_buf:		[INTERN] page main data buffer
  * @oob_buf:		[INTERN] page oob data buffer
  * @subpagesize:	[INTERN] holds the subpagesize
- * @bbm:		[REPLACEABLE] poपूर्णांकer to Bad Block Management
- * @priv:		[OPTIONAL] poपूर्णांकer to निजी chip date
+ * @bbm:		[REPLACEABLE] pointer to Bad Block Management
+ * @priv:		[OPTIONAL] pointer to private chip date
  */
-काष्ठा onenand_chip अणु
-	व्योम __iomem		*base;
-	अचिन्हित		dies;
-	अचिन्हित		boundary[MAX_DIES];
+struct onenand_chip {
+	void __iomem		*base;
+	unsigned		dies;
+	unsigned		boundary[MAX_DIES];
 	loff_t			diesize[MAX_DIES];
-	अचिन्हित पूर्णांक		chipsize;
-	अचिन्हित पूर्णांक		device_id;
-	अचिन्हित पूर्णांक		version_id;
-	अचिन्हित पूर्णांक		technology;
-	अचिन्हित पूर्णांक		density_mask;
-	अचिन्हित पूर्णांक		options;
-	अचिन्हित पूर्णांक		badblockpos;
+	unsigned int		chipsize;
+	unsigned int		device_id;
+	unsigned int		version_id;
+	unsigned int		technology;
+	unsigned int		density_mask;
+	unsigned int		options;
+	unsigned int		badblockpos;
 
-	अचिन्हित पूर्णांक		erase_shअगरt;
-	अचिन्हित पूर्णांक		page_shअगरt;
-	अचिन्हित पूर्णांक		page_mask;
-	अचिन्हित पूर्णांक		ग_लिखोsize;
+	unsigned int		erase_shift;
+	unsigned int		page_shift;
+	unsigned int		page_mask;
+	unsigned int		writesize;
 
-	अचिन्हित पूर्णांक		bufferram_index;
-	काष्ठा onenand_bufferram	bufferram[MAX_BUFFERRAM];
+	unsigned int		bufferram_index;
+	struct onenand_bufferram	bufferram[MAX_BUFFERRAM];
 
-	पूर्णांक (*command)(काष्ठा mtd_info *mtd, पूर्णांक cmd, loff_t address, माप_प्रकार len);
-	पूर्णांक (*रुको)(काष्ठा mtd_info *mtd, पूर्णांक state);
-	पूर्णांक (*bbt_रुको)(काष्ठा mtd_info *mtd, पूर्णांक state);
-	व्योम (*unlock_all)(काष्ठा mtd_info *mtd);
-	पूर्णांक (*पढ़ो_bufferram)(काष्ठा mtd_info *mtd, पूर्णांक area,
-			अचिन्हित अक्षर *buffer, पूर्णांक offset, माप_प्रकार count);
-	पूर्णांक (*ग_लिखो_bufferram)(काष्ठा mtd_info *mtd, पूर्णांक area,
-			स्थिर अचिन्हित अक्षर *buffer, पूर्णांक offset, माप_प्रकार count);
-	अचिन्हित लघु (*पढ़ो_word)(व्योम __iomem *addr);
-	व्योम (*ग_लिखो_word)(अचिन्हित लघु value, व्योम __iomem *addr);
-	व्योम (*mmcontrol)(काष्ठा mtd_info *mtd, पूर्णांक sync_पढ़ो);
-	पूर्णांक (*chip_probe)(काष्ठा mtd_info *mtd);
-	पूर्णांक (*block_markbad)(काष्ठा mtd_info *mtd, loff_t ofs);
-	पूर्णांक (*scan_bbt)(काष्ठा mtd_info *mtd);
-	पूर्णांक (*enable)(काष्ठा mtd_info *mtd);
-	पूर्णांक (*disable)(काष्ठा mtd_info *mtd);
+	int (*command)(struct mtd_info *mtd, int cmd, loff_t address, size_t len);
+	int (*wait)(struct mtd_info *mtd, int state);
+	int (*bbt_wait)(struct mtd_info *mtd, int state);
+	void (*unlock_all)(struct mtd_info *mtd);
+	int (*read_bufferram)(struct mtd_info *mtd, int area,
+			unsigned char *buffer, int offset, size_t count);
+	int (*write_bufferram)(struct mtd_info *mtd, int area,
+			const unsigned char *buffer, int offset, size_t count);
+	unsigned short (*read_word)(void __iomem *addr);
+	void (*write_word)(unsigned short value, void __iomem *addr);
+	void (*mmcontrol)(struct mtd_info *mtd, int sync_read);
+	int (*chip_probe)(struct mtd_info *mtd);
+	int (*block_markbad)(struct mtd_info *mtd, loff_t ofs);
+	int (*scan_bbt)(struct mtd_info *mtd);
+	int (*enable)(struct mtd_info *mtd);
+	int (*disable)(struct mtd_info *mtd);
 
-	काष्ठा completion	complete;
-	पूर्णांक			irq;
+	struct completion	complete;
+	int			irq;
 
 	spinlock_t		chip_lock;
-	रुको_queue_head_t	wq;
+	wait_queue_head_t	wq;
 	flstate_t		state;
-	अचिन्हित अक्षर		*page_buf;
-	अचिन्हित अक्षर		*oob_buf;
-#अगर_घोषित CONFIG_MTD_ONEन_अंकD_VERIFY_WRITE
-	अचिन्हित अक्षर		*verअगरy_buf;
-#पूर्ण_अगर
+	unsigned char		*page_buf;
+	unsigned char		*oob_buf;
+#ifdef CONFIG_MTD_ONENAND_VERIFY_WRITE
+	unsigned char		*verify_buf;
+#endif
 
-	पूर्णांक			subpagesize;
+	int			subpagesize;
 
-	व्योम			*bbm;
+	void			*bbm;
 
-	व्योम			*priv;
+	void			*priv;
 
 	/*
 	 * Shows that the current operation is composed
@@ -143,99 +142,99 @@
 	 * Such command status OnGo bit is checked at the end of
 	 * sequence.
 	 */
-	अचिन्हित पूर्णांक		ongoing;
-पूर्ण;
+	unsigned int		ongoing;
+};
 
 /*
  * Helper macros
  */
-#घोषणा ONEन_अंकD_PAGES_PER_BLOCK        (1<<6)
+#define ONENAND_PAGES_PER_BLOCK        (1<<6)
 
-#घोषणा ONEन_अंकD_CURRENT_BUFFERRAM(this)		(this->bufferram_index)
-#घोषणा ONEन_अंकD_NEXT_BUFFERRAM(this)		(this->bufferram_index ^ 1)
-#घोषणा ONEन_अंकD_SET_NEXT_BUFFERRAM(this)	(this->bufferram_index ^= 1)
-#घोषणा ONEन_अंकD_SET_PREV_BUFFERRAM(this)	(this->bufferram_index ^= 1)
-#घोषणा ONEन_अंकD_SET_BUFFERRAM0(this)		(this->bufferram_index = 0)
-#घोषणा ONEन_अंकD_SET_BUFFERRAM1(this)		(this->bufferram_index = 1)
+#define ONENAND_CURRENT_BUFFERRAM(this)		(this->bufferram_index)
+#define ONENAND_NEXT_BUFFERRAM(this)		(this->bufferram_index ^ 1)
+#define ONENAND_SET_NEXT_BUFFERRAM(this)	(this->bufferram_index ^= 1)
+#define ONENAND_SET_PREV_BUFFERRAM(this)	(this->bufferram_index ^= 1)
+#define ONENAND_SET_BUFFERRAM0(this)		(this->bufferram_index = 0)
+#define ONENAND_SET_BUFFERRAM1(this)		(this->bufferram_index = 1)
 
-#घोषणा FLEXONEन_अंकD(this)						\
-	(this->device_id & DEVICE_IS_FLEXONEन_अंकD)
-#घोषणा ONEन_अंकD_GET_SYS_CFG1(this)					\
-	(this->पढ़ो_word(this->base + ONEन_अंकD_REG_SYS_CFG1))
-#घोषणा ONEन_अंकD_SET_SYS_CFG1(v, this)					\
-	(this->ग_लिखो_word(v, this->base + ONEन_अंकD_REG_SYS_CFG1))
+#define FLEXONENAND(this)						\
+	(this->device_id & DEVICE_IS_FLEXONENAND)
+#define ONENAND_GET_SYS_CFG1(this)					\
+	(this->read_word(this->base + ONENAND_REG_SYS_CFG1))
+#define ONENAND_SET_SYS_CFG1(v, this)					\
+	(this->write_word(v, this->base + ONENAND_REG_SYS_CFG1))
 
-#घोषणा ONEन_अंकD_IS_DDP(this)						\
-	(this->device_id & ONEन_अंकD_DEVICE_IS_DDP)
+#define ONENAND_IS_DDP(this)						\
+	(this->device_id & ONENAND_DEVICE_IS_DDP)
 
-#घोषणा ONEन_अंकD_IS_MLC(this)						\
-	(this->technology & ONEन_अंकD_TECHNOLOGY_IS_MLC)
+#define ONENAND_IS_MLC(this)						\
+	(this->technology & ONENAND_TECHNOLOGY_IS_MLC)
 
-#अगर_घोषित CONFIG_MTD_ONEन_अंकD_2X_PROGRAM
-#घोषणा ONEन_अंकD_IS_2PLANE(this)						\
-	(this->options & ONEन_अंकD_HAS_2PLANE)
-#अन्यथा
-#घोषणा ONEन_अंकD_IS_2PLANE(this)			(0)
-#पूर्ण_अगर
+#ifdef CONFIG_MTD_ONENAND_2X_PROGRAM
+#define ONENAND_IS_2PLANE(this)						\
+	(this->options & ONENAND_HAS_2PLANE)
+#else
+#define ONENAND_IS_2PLANE(this)			(0)
+#endif
 
-#घोषणा ONEन_अंकD_IS_CACHE_PROGRAM(this)					\
-	(this->options & ONEन_अंकD_HAS_CACHE_PROGRAM)
+#define ONENAND_IS_CACHE_PROGRAM(this)					\
+	(this->options & ONENAND_HAS_CACHE_PROGRAM)
 
-#घोषणा ONEन_अंकD_IS_NOP_1(this)						\
-	(this->options & ONEन_अंकD_HAS_NOP_1)
+#define ONENAND_IS_NOP_1(this)						\
+	(this->options & ONENAND_HAS_NOP_1)
 
-/* Check byte access in Oneन_अंकD */
-#घोषणा ONEन_अंकD_CHECK_BYTE_ACCESS(addr)		(addr & 0x1)
+/* Check byte access in OneNAND */
+#define ONENAND_CHECK_BYTE_ACCESS(addr)		(addr & 0x1)
 
-#घोषणा ONEन_अंकD_BADBLOCK_POS		0
+#define ONENAND_BADBLOCK_POS		0
 
 /*
  * Options bits
  */
-#घोषणा ONEन_अंकD_HAS_CONT_LOCK		(0x0001)
-#घोषणा ONEन_अंकD_HAS_UNLOCK_ALL		(0x0002)
-#घोषणा ONEन_अंकD_HAS_2PLANE		(0x0004)
-#घोषणा ONEन_अंकD_HAS_4KB_PAGE		(0x0008)
-#घोषणा ONEन_अंकD_HAS_CACHE_PROGRAM	(0x0010)
-#घोषणा ONEन_अंकD_HAS_NOP_1		(0x0020)
-#घोषणा ONEन_अंकD_SKIP_UNLOCK_CHECK	(0x0100)
-#घोषणा ONEन_अंकD_PAGEBUF_ALLOC		(0x1000)
-#घोषणा ONEन_अंकD_OOBBUF_ALLOC		(0x2000)
-#घोषणा ONEन_अंकD_SKIP_INITIAL_UNLOCKING	(0x4000)
+#define ONENAND_HAS_CONT_LOCK		(0x0001)
+#define ONENAND_HAS_UNLOCK_ALL		(0x0002)
+#define ONENAND_HAS_2PLANE		(0x0004)
+#define ONENAND_HAS_4KB_PAGE		(0x0008)
+#define ONENAND_HAS_CACHE_PROGRAM	(0x0010)
+#define ONENAND_HAS_NOP_1		(0x0020)
+#define ONENAND_SKIP_UNLOCK_CHECK	(0x0100)
+#define ONENAND_PAGEBUF_ALLOC		(0x1000)
+#define ONENAND_OOBBUF_ALLOC		(0x2000)
+#define ONENAND_SKIP_INITIAL_UNLOCKING	(0x4000)
 
-#घोषणा ONEन_अंकD_IS_4KB_PAGE(this)					\
-	(this->options & ONEन_अंकD_HAS_4KB_PAGE)
+#define ONENAND_IS_4KB_PAGE(this)					\
+	(this->options & ONENAND_HAS_4KB_PAGE)
 
 /*
- * Oneन_अंकD Flash Manufacturer ID Codes
+ * OneNAND Flash Manufacturer ID Codes
  */
-#घोषणा ONEन_अंकD_MFR_SAMSUNG	0xec
-#घोषणा ONEन_अंकD_MFR_NUMONYX	0x20
+#define ONENAND_MFR_SAMSUNG	0xec
+#define ONENAND_MFR_NUMONYX	0x20
 
 /**
- * काष्ठा onenand_manufacturers - न_अंकD Flash Manufacturer ID Structure
+ * struct onenand_manufacturers - NAND Flash Manufacturer ID Structure
  * @name:	Manufacturer name
  * @id:		manufacturer ID code of device.
 */
-काष्ठा onenand_manufacturers अणु
-        पूर्णांक id;
-        अक्षर *name;
-पूर्ण;
+struct onenand_manufacturers {
+        int id;
+        char *name;
+};
 
-पूर्णांक onenand_bbt_पढ़ो_oob(काष्ठा mtd_info *mtd, loff_t from,
-			 काष्ठा mtd_oob_ops *ops);
-अचिन्हित onenand_block(काष्ठा onenand_chip *this, loff_t addr);
-loff_t onenand_addr(काष्ठा onenand_chip *this, पूर्णांक block);
-पूर्णांक flexonenand_region(काष्ठा mtd_info *mtd, loff_t addr);
+int onenand_bbt_read_oob(struct mtd_info *mtd, loff_t from,
+			 struct mtd_oob_ops *ops);
+unsigned onenand_block(struct onenand_chip *this, loff_t addr);
+loff_t onenand_addr(struct onenand_chip *this, int block);
+int flexonenand_region(struct mtd_info *mtd, loff_t addr);
 
-काष्ठा mtd_partition;
+struct mtd_partition;
 
-काष्ठा onenand_platक्रमm_data अणु
-	व्योम		(*mmcontrol)(काष्ठा mtd_info *mtd, पूर्णांक sync_पढ़ो);
-	पूर्णांक		(*पढ़ो_bufferram)(काष्ठा mtd_info *mtd, पूर्णांक area,
-			अचिन्हित अक्षर *buffer, पूर्णांक offset, माप_प्रकार count);
-	काष्ठा mtd_partition *parts;
-	अचिन्हित पूर्णांक	nr_parts;
-पूर्ण;
+struct onenand_platform_data {
+	void		(*mmcontrol)(struct mtd_info *mtd, int sync_read);
+	int		(*read_bufferram)(struct mtd_info *mtd, int area,
+			unsigned char *buffer, int offset, size_t count);
+	struct mtd_partition *parts;
+	unsigned int	nr_parts;
+};
 
-#पूर्ण_अगर	/* __LINUX_MTD_ONEन_अंकD_H */
+#endif	/* __LINUX_MTD_ONENAND_H */

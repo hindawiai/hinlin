@@ -1,10 +1,9 @@
-<शैली गुरु>
 /*
- * Driver क्रम GE FPGA based GPIO
+ * Driver for GE FPGA based GPIO
  *
  * Author: Martyn Welch <martyn.welch@ge.com>
  *
- * 2008 (c) GE Intelligent Platक्रमms Embedded Systems, Inc.
+ * 2008 (c) GE Intelligent Platforms Embedded Systems, Inc.
  *
  * This file is licensed under the terms of the GNU General Public License
  * version 2.  This program is licensed "as is" without any warranty of any
@@ -13,97 +12,97 @@
 
 /* TODO
  *
- * Configuration of output modes (totem-pole/खोलो-drain)
- * Interrupt configuration - पूर्णांकerrupts are always generated the FPGA relies on
- * the I/O पूर्णांकerrupt controllers mask to stop them propergating
+ * Configuration of output modes (totem-pole/open-drain)
+ * Interrupt configuration - interrupts are always generated the FPGA relies on
+ * the I/O interrupt controllers mask to stop them propergating
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/module.h>
-#समावेश <linux/gpio/driver.h>
+#include <linux/kernel.h>
+#include <linux/io.h>
+#include <linux/slab.h>
+#include <linux/of_device.h>
+#include <linux/of_address.h>
+#include <linux/module.h>
+#include <linux/gpio/driver.h>
 
-#घोषणा GEF_GPIO_सूचीECT		0x00
-#घोषणा GEF_GPIO_IN		0x04
-#घोषणा GEF_GPIO_OUT		0x08
-#घोषणा GEF_GPIO_TRIG		0x0C
-#घोषणा GEF_GPIO_POLAR_A	0x10
-#घोषणा GEF_GPIO_POLAR_B	0x14
-#घोषणा GEF_GPIO_INT_STAT	0x18
-#घोषणा GEF_GPIO_OVERRUN	0x1C
-#घोषणा GEF_GPIO_MODE		0x20
+#define GEF_GPIO_DIRECT		0x00
+#define GEF_GPIO_IN		0x04
+#define GEF_GPIO_OUT		0x08
+#define GEF_GPIO_TRIG		0x0C
+#define GEF_GPIO_POLAR_A	0x10
+#define GEF_GPIO_POLAR_B	0x14
+#define GEF_GPIO_INT_STAT	0x18
+#define GEF_GPIO_OVERRUN	0x1C
+#define GEF_GPIO_MODE		0x20
 
-अटल स्थिर काष्ठा of_device_id gef_gpio_ids[] = अणु
-	अणु
+static const struct of_device_id gef_gpio_ids[] = {
+	{
 		.compatible	= "gef,sbc610-gpio",
-		.data		= (व्योम *)19,
-	पूर्ण, अणु
+		.data		= (void *)19,
+	}, {
 		.compatible	= "gef,sbc310-gpio",
-		.data		= (व्योम *)6,
-	पूर्ण, अणु
+		.data		= (void *)6,
+	}, {
 		.compatible	= "ge,imp3a-gpio",
-		.data		= (व्योम *)16,
-	पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+		.data		= (void *)16,
+	},
+	{ }
+};
 MODULE_DEVICE_TABLE(of, gef_gpio_ids);
 
-अटल पूर्णांक __init gef_gpio_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा gpio_chip *gc;
-	व्योम __iomem *regs;
-	पूर्णांक ret;
+static int __init gef_gpio_probe(struct platform_device *pdev)
+{
+	struct gpio_chip *gc;
+	void __iomem *regs;
+	int ret;
 
-	gc = devm_kzalloc(&pdev->dev, माप(*gc), GFP_KERNEL);
-	अगर (!gc)
-		वापस -ENOMEM;
+	gc = devm_kzalloc(&pdev->dev, sizeof(*gc), GFP_KERNEL);
+	if (!gc)
+		return -ENOMEM;
 
 	regs = of_iomap(pdev->dev.of_node, 0);
-	अगर (!regs)
-		वापस -ENOMEM;
+	if (!regs)
+		return -ENOMEM;
 
 	ret = bgpio_init(gc, &pdev->dev, 4, regs + GEF_GPIO_IN,
-			 regs + GEF_GPIO_OUT, शून्य, शून्य,
-			 regs + GEF_GPIO_सूचीECT, BGPIOF_BIG_ENDIAN_BYTE_ORDER);
-	अगर (ret) अणु
+			 regs + GEF_GPIO_OUT, NULL, NULL,
+			 regs + GEF_GPIO_DIRECT, BGPIOF_BIG_ENDIAN_BYTE_ORDER);
+	if (ret) {
 		dev_err(&pdev->dev, "bgpio_init failed\n");
-		जाओ err0;
-	पूर्ण
+		goto err0;
+	}
 
-	/* Setup poपूर्णांकers to chip functions */
-	gc->label = devm_kaप्र_लिखो(&pdev->dev, GFP_KERNEL, "%pOF", pdev->dev.of_node);
-	अगर (!gc->label) अणु
+	/* Setup pointers to chip functions */
+	gc->label = devm_kasprintf(&pdev->dev, GFP_KERNEL, "%pOF", pdev->dev.of_node);
+	if (!gc->label) {
 		ret = -ENOMEM;
-		जाओ err0;
-	पूर्ण
+		goto err0;
+	}
 
 	gc->base = -1;
-	gc->ngpio = (u16)(uपूर्णांकptr_t)of_device_get_match_data(&pdev->dev);
+	gc->ngpio = (u16)(uintptr_t)of_device_get_match_data(&pdev->dev);
 	gc->of_gpio_n_cells = 2;
 	gc->of_node = pdev->dev.of_node;
 
 	/* This function adds a memory mapped GPIO chip */
-	ret = devm_gpiochip_add_data(&pdev->dev, gc, शून्य);
-	अगर (ret)
-		जाओ err0;
+	ret = devm_gpiochip_add_data(&pdev->dev, gc, NULL);
+	if (ret)
+		goto err0;
 
-	वापस 0;
+	return 0;
 err0:
 	iounmap(regs);
 	pr_err("%pOF: GPIO chip registration failed\n", pdev->dev.of_node);
-	वापस ret;
-पूर्ण;
+	return ret;
+};
 
-अटल काष्ठा platक्रमm_driver gef_gpio_driver = अणु
-	.driver = अणु
+static struct platform_driver gef_gpio_driver = {
+	.driver = {
 		.name		= "gef-gpio",
 		.of_match_table	= gef_gpio_ids,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver_probe(gef_gpio_driver, gef_gpio_probe);
+	},
+};
+module_platform_driver_probe(gef_gpio_driver, gef_gpio_probe);
 
 MODULE_DESCRIPTION("GE I/O FPGA GPIO driver");
 MODULE_AUTHOR("Martyn Welch <martyn.welch@ge.com");

@@ -1,251 +1,250 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
- * Module Name: exप्रणाली - Interface to OS services
+ * Module Name: exsystem - Interface to OS services
  *
  * Copyright (C) 2000 - 2021, Intel Corp.
  *
  *****************************************************************************/
 
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
-#समावेश "acinterp.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
+#include "acinterp.h"
 
-#घोषणा _COMPONENT          ACPI_EXECUTER
+#define _COMPONENT          ACPI_EXECUTER
 ACPI_MODULE_NAME("exsystem")
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ex_प्रणाली_रुको_semaphore
+ * FUNCTION:    acpi_ex_system_wait_semaphore
  *
- * PARAMETERS:  semaphore       - Semaphore to रुको on
- *              समयout         - Max समय to रुको
+ * PARAMETERS:  semaphore       - Semaphore to wait on
+ *              timeout         - Max time to wait
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Implements a semaphore रुको with a check to see अगर the
+ * DESCRIPTION: Implements a semaphore wait with a check to see if the
  *              semaphore is available immediately. If it is not, the
- *              पूर्णांकerpreter is released beक्रमe रुकोing.
+ *              interpreter is released before waiting.
  *
  ******************************************************************************/
-acpi_status acpi_ex_प्रणाली_रुको_semaphore(acpi_semaphore semaphore, u16 समयout)
-अणु
+acpi_status acpi_ex_system_wait_semaphore(acpi_semaphore semaphore, u16 timeout)
+{
 	acpi_status status;
 
-	ACPI_FUNCTION_TRACE(ex_प्रणाली_रुको_semaphore);
+	ACPI_FUNCTION_TRACE(ex_system_wait_semaphore);
 
-	status = acpi_os_रुको_semaphore(semaphore, 1, ACPI_DO_NOT_WAIT);
-	अगर (ACPI_SUCCESS(status)) अणु
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+	status = acpi_os_wait_semaphore(semaphore, 1, ACPI_DO_NOT_WAIT);
+	if (ACPI_SUCCESS(status)) {
+		return_ACPI_STATUS(status);
+	}
 
-	अगर (status == AE_TIME) अणु
+	if (status == AE_TIME) {
 
-		/* We must रुको, so unlock the पूर्णांकerpreter */
+		/* We must wait, so unlock the interpreter */
 
-		acpi_ex_निकास_पूर्णांकerpreter();
-		status = acpi_os_रुको_semaphore(semaphore, 1, समयout);
+		acpi_ex_exit_interpreter();
+		status = acpi_os_wait_semaphore(semaphore, 1, timeout);
 
 		ACPI_DEBUG_PRINT((ACPI_DB_EXEC,
 				  "*** Thread awake after blocking, %s\n",
-				  acpi_क्रमmat_exception(status)));
+				  acpi_format_exception(status)));
 
-		/* Reacquire the पूर्णांकerpreter */
+		/* Reacquire the interpreter */
 
-		acpi_ex_enter_पूर्णांकerpreter();
-	पूर्ण
+		acpi_ex_enter_interpreter();
+	}
 
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	return_ACPI_STATUS(status);
+}
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ex_प्रणाली_रुको_mutex
+ * FUNCTION:    acpi_ex_system_wait_mutex
  *
- * PARAMETERS:  mutex           - Mutex to रुको on
- *              समयout         - Max समय to रुको
+ * PARAMETERS:  mutex           - Mutex to wait on
+ *              timeout         - Max time to wait
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Implements a mutex रुको with a check to see अगर the
+ * DESCRIPTION: Implements a mutex wait with a check to see if the
  *              mutex is available immediately. If it is not, the
- *              पूर्णांकerpreter is released beक्रमe रुकोing.
+ *              interpreter is released before waiting.
  *
  ******************************************************************************/
 
-acpi_status acpi_ex_प्रणाली_रुको_mutex(acpi_mutex mutex, u16 समयout)
-अणु
+acpi_status acpi_ex_system_wait_mutex(acpi_mutex mutex, u16 timeout)
+{
 	acpi_status status;
 
-	ACPI_FUNCTION_TRACE(ex_प्रणाली_रुको_mutex);
+	ACPI_FUNCTION_TRACE(ex_system_wait_mutex);
 
 	status = acpi_os_acquire_mutex(mutex, ACPI_DO_NOT_WAIT);
-	अगर (ACPI_SUCCESS(status)) अणु
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+	if (ACPI_SUCCESS(status)) {
+		return_ACPI_STATUS(status);
+	}
 
-	अगर (status == AE_TIME) अणु
+	if (status == AE_TIME) {
 
-		/* We must रुको, so unlock the पूर्णांकerpreter */
+		/* We must wait, so unlock the interpreter */
 
-		acpi_ex_निकास_पूर्णांकerpreter();
-		status = acpi_os_acquire_mutex(mutex, समयout);
+		acpi_ex_exit_interpreter();
+		status = acpi_os_acquire_mutex(mutex, timeout);
 
 		ACPI_DEBUG_PRINT((ACPI_DB_EXEC,
 				  "*** Thread awake after blocking, %s\n",
-				  acpi_क्रमmat_exception(status)));
+				  acpi_format_exception(status)));
 
-		/* Reacquire the पूर्णांकerpreter */
+		/* Reacquire the interpreter */
 
-		acpi_ex_enter_पूर्णांकerpreter();
-	पूर्ण
+		acpi_ex_enter_interpreter();
+	}
 
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	return_ACPI_STATUS(status);
+}
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ex_प्रणाली_करो_stall
+ * FUNCTION:    acpi_ex_system_do_stall
  *
- * PARAMETERS:  how_दीर्घ        - The amount of समय to stall,
+ * PARAMETERS:  how_long        - The amount of time to stall,
  *                                in microseconds
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Suspend running thपढ़ो क्रम specअगरied amount of समय.
- *              Note: ACPI specअगरication requires that Stall() करोes not
- *              relinquish the processor, and delays दीर्घer than 100 usec
+ * DESCRIPTION: Suspend running thread for specified amount of time.
+ *              Note: ACPI specification requires that Stall() does not
+ *              relinquish the processor, and delays longer than 100 usec
  *              should use Sleep() instead. We allow stalls up to 255 usec
- *              क्रम compatibility with other पूर्णांकerpreters and existing BIOSs.
+ *              for compatibility with other interpreters and existing BIOSs.
  *
  ******************************************************************************/
 
-acpi_status acpi_ex_प्रणाली_करो_stall(u32 how_दीर्घ)
-अणु
+acpi_status acpi_ex_system_do_stall(u32 how_long)
+{
 	acpi_status status = AE_OK;
 
 	ACPI_FUNCTION_ENTRY();
 
-	अगर (how_दीर्घ > 255) अणु	/* 255 microseconds */
+	if (how_long > 255) {	/* 255 microseconds */
 		/*
 		 * Longer than 255 usec, this is an error
 		 *
-		 * (ACPI specअगरies 100 usec as max, but this gives some slack in
+		 * (ACPI specifies 100 usec as max, but this gives some slack in
 		 * order to support existing BIOSs)
 		 */
 		ACPI_ERROR((AE_INFO,
-			    "Time parameter is too large (%u)", how_दीर्घ));
+			    "Time parameter is too large (%u)", how_long));
 		status = AE_AML_OPERAND_VALUE;
-	पूर्ण अन्यथा अणु
-		acpi_os_stall(how_दीर्घ);
-	पूर्ण
+	} else {
+		acpi_os_stall(how_long);
+	}
 
-	वापस (status);
-पूर्ण
+	return (status);
+}
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ex_प्रणाली_करो_sleep
+ * FUNCTION:    acpi_ex_system_do_sleep
  *
- * PARAMETERS:  how_दीर्घ        - The amount of समय to sleep,
+ * PARAMETERS:  how_long        - The amount of time to sleep,
  *                                in milliseconds
  *
  * RETURN:      None
  *
- * DESCRIPTION: Sleep the running thपढ़ो क्रम specअगरied amount of समय.
+ * DESCRIPTION: Sleep the running thread for specified amount of time.
  *
  ******************************************************************************/
 
-acpi_status acpi_ex_प्रणाली_करो_sleep(u64 how_दीर्घ)
-अणु
+acpi_status acpi_ex_system_do_sleep(u64 how_long)
+{
 	ACPI_FUNCTION_ENTRY();
 
-	/* Since this thपढ़ो will sleep, we must release the पूर्णांकerpreter */
+	/* Since this thread will sleep, we must release the interpreter */
 
-	acpi_ex_निकास_पूर्णांकerpreter();
+	acpi_ex_exit_interpreter();
 
 	/*
 	 * For compatibility with other ACPI implementations and to prevent
-	 * accidental deep sleeps, limit the sleep समय to something reasonable.
+	 * accidental deep sleeps, limit the sleep time to something reasonable.
 	 */
-	अगर (how_दीर्घ > ACPI_MAX_SLEEP) अणु
-		how_दीर्घ = ACPI_MAX_SLEEP;
-	पूर्ण
+	if (how_long > ACPI_MAX_SLEEP) {
+		how_long = ACPI_MAX_SLEEP;
+	}
 
-	acpi_os_sleep(how_दीर्घ);
+	acpi_os_sleep(how_long);
 
-	/* And now we must get the पूर्णांकerpreter again */
+	/* And now we must get the interpreter again */
 
-	acpi_ex_enter_पूर्णांकerpreter();
-	वापस (AE_OK);
-पूर्ण
+	acpi_ex_enter_interpreter();
+	return (AE_OK);
+}
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ex_प्रणाली_संकेत_event
+ * FUNCTION:    acpi_ex_system_signal_event
  *
- * PARAMETERS:  obj_desc        - The object descriptor क्रम this op
+ * PARAMETERS:  obj_desc        - The object descriptor for this op
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Provides an access poपूर्णांक to perक्रमm synchronization operations
+ * DESCRIPTION: Provides an access point to perform synchronization operations
  *              within the AML.
  *
  ******************************************************************************/
 
-acpi_status acpi_ex_प्रणाली_संकेत_event(जोड़ acpi_opeअक्रम_object * obj_desc)
-अणु
+acpi_status acpi_ex_system_signal_event(union acpi_operand_object * obj_desc)
+{
 	acpi_status status = AE_OK;
 
-	ACPI_FUNCTION_TRACE(ex_प्रणाली_संकेत_event);
+	ACPI_FUNCTION_TRACE(ex_system_signal_event);
 
-	अगर (obj_desc) अणु
+	if (obj_desc) {
 		status =
-		    acpi_os_संकेत_semaphore(obj_desc->event.os_semaphore, 1);
-	पूर्ण
+		    acpi_os_signal_semaphore(obj_desc->event.os_semaphore, 1);
+	}
 
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	return_ACPI_STATUS(status);
+}
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ex_प्रणाली_रुको_event
+ * FUNCTION:    acpi_ex_system_wait_event
  *
- * PARAMETERS:  समय_desc       - The 'time to delay' object descriptor
- *              obj_desc        - The object descriptor क्रम this op
+ * PARAMETERS:  time_desc       - The 'time to delay' object descriptor
+ *              obj_desc        - The object descriptor for this op
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Provides an access poपूर्णांक to perक्रमm synchronization operations
- *              within the AML. This operation is a request to रुको क्रम an
+ * DESCRIPTION: Provides an access point to perform synchronization operations
+ *              within the AML. This operation is a request to wait for an
  *              event.
  *
  ******************************************************************************/
 
 acpi_status
-acpi_ex_प्रणाली_रुको_event(जोड़ acpi_opeअक्रम_object *समय_desc,
-			  जोड़ acpi_opeअक्रम_object *obj_desc)
-अणु
+acpi_ex_system_wait_event(union acpi_operand_object *time_desc,
+			  union acpi_operand_object *obj_desc)
+{
 	acpi_status status = AE_OK;
 
-	ACPI_FUNCTION_TRACE(ex_प्रणाली_रुको_event);
+	ACPI_FUNCTION_TRACE(ex_system_wait_event);
 
-	अगर (obj_desc) अणु
+	if (obj_desc) {
 		status =
-		    acpi_ex_प्रणाली_रुको_semaphore(obj_desc->event.os_semaphore,
-						  (u16) समय_desc->पूर्णांकeger.
+		    acpi_ex_system_wait_semaphore(obj_desc->event.os_semaphore,
+						  (u16) time_desc->integer.
 						  value);
-	पूर्ण
+	}
 
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	return_ACPI_STATUS(status);
+}
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ex_प्रणाली_reset_event
+ * FUNCTION:    acpi_ex_system_reset_event
  *
- * PARAMETERS:  obj_desc        - The object descriptor क्रम this op
+ * PARAMETERS:  obj_desc        - The object descriptor for this op
  *
  * RETURN:      Status
  *
@@ -253,8 +252,8 @@ acpi_ex_प्रणाली_रुको_event(जोड़ acpi_opeअक्�
  *
  ******************************************************************************/
 
-acpi_status acpi_ex_प्रणाली_reset_event(जोड़ acpi_opeअक्रम_object *obj_desc)
-अणु
+acpi_status acpi_ex_system_reset_event(union acpi_operand_object *obj_desc)
+{
 	acpi_status status = AE_OK;
 	acpi_semaphore temp_semaphore;
 
@@ -266,10 +265,10 @@ acpi_status acpi_ex_प्रणाली_reset_event(जोड़ acpi_opeअ�
 	 */
 	status =
 	    acpi_os_create_semaphore(ACPI_NO_UNIT_LIMIT, 0, &temp_semaphore);
-	अगर (ACPI_SUCCESS(status)) अणु
-		(व्योम)acpi_os_delete_semaphore(obj_desc->event.os_semaphore);
+	if (ACPI_SUCCESS(status)) {
+		(void)acpi_os_delete_semaphore(obj_desc->event.os_semaphore);
 		obj_desc->event.os_semaphore = temp_semaphore;
-	पूर्ण
+	}
 
-	वापस (status);
-पूर्ण
+	return (status);
+}

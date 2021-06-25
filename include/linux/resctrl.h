@@ -1,17 +1,16 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _RESCTRL_H
-#घोषणा _RESCTRL_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _RESCTRL_H
+#define _RESCTRL_H
 
-#समावेश <linux/pid.h>
+#include <linux/pid.h>
 
-#अगर_घोषित CONFIG_PROC_CPU_RESCTRL
+#ifdef CONFIG_PROC_CPU_RESCTRL
 
-पूर्णांक proc_resctrl_show(काष्ठा seq_file *m,
-		      काष्ठा pid_namespace *ns,
-		      काष्ठा pid *pid,
-		      काष्ठा task_काष्ठा *tsk);
+int proc_resctrl_show(struct seq_file *m,
+		      struct pid_namespace *ns,
+		      struct pid *pid,
+		      struct task_struct *tsk);
 
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर /* _RESCTRL_H */
+#endif /* _RESCTRL_H */

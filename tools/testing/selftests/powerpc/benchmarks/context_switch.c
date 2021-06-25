@@ -1,509 +1,508 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Context चयन microbenchmark.
+ * Context switch microbenchmark.
  *
- * Copyright (C) 2015 Anton Blanअक्षरd <anton@au.ibm.com>, IBM
+ * Copyright (C) 2015 Anton Blanchard <anton@au.ibm.com>, IBM
  */
 
-#घोषणा _GNU_SOURCE
-#समावेश <त्रुटिसं.स>
-#समावेश <sched.h>
-#समावेश <माला.स>
-#समावेश <मानकपन.स>
-#समावेश <unistd.h>
-#समावेश <मानककोष.स>
-#समावेश <getopt.h>
-#समावेश <संकेत.स>
-#समावेश <निश्चित.स>
-#समावेश <pthपढ़ो.h>
-#समावेश <सीमा.स>
-#समावेश <sys/समय.स>
-#समावेश <sys/syscall.h>
-#समावेश <sys/sysinfo.h>
-#समावेश <sys/types.h>
-#समावेश <sys/shm.h>
-#समावेश <linux/futex.h>
-#अगर_घोषित __घातerpc__
-#समावेश <altivec.h>
-#पूर्ण_अगर
-#समावेश "utils.h"
+#define _GNU_SOURCE
+#include <errno.h>
+#include <sched.h>
+#include <string.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <getopt.h>
+#include <signal.h>
+#include <assert.h>
+#include <pthread.h>
+#include <limits.h>
+#include <sys/time.h>
+#include <sys/syscall.h>
+#include <sys/sysinfo.h>
+#include <sys/types.h>
+#include <sys/shm.h>
+#include <linux/futex.h>
+#ifdef __powerpc__
+#include <altivec.h>
+#endif
+#include "utils.h"
 
-अटल अचिन्हित पूर्णांक समयout = 30;
+static unsigned int timeout = 30;
 
-अटल पूर्णांक touch_vdso;
-काष्ठा समयval tv;
+static int touch_vdso;
+struct timeval tv;
 
-अटल पूर्णांक touch_fp = 1;
-द्विगुन fp;
+static int touch_fp = 1;
+double fp;
 
-अटल पूर्णांक touch_vector = 1;
-vector पूर्णांक a, b, c;
+static int touch_vector = 1;
+vector int a, b, c;
 
-#अगर_घोषित __घातerpc__
-अटल पूर्णांक touch_altivec = 1;
+#ifdef __powerpc__
+static int touch_altivec = 1;
 
 /*
- * Note: LTO (Link Time Optimisation) करोesn't play well with this function
- * attribute. Be very careful enabling LTO क्रम this test.
+ * Note: LTO (Link Time Optimisation) doesn't play well with this function
+ * attribute. Be very careful enabling LTO for this test.
  */
-अटल व्योम __attribute__((__target__("no-vsx"))) altivec_touch_fn(व्योम)
-अणु
+static void __attribute__((__target__("no-vsx"))) altivec_touch_fn(void)
+{
 	c = a + b;
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-अटल व्योम touch(व्योम)
-अणु
-	अगर (touch_vdso)
-		समय_लोofday(&tv, शून्य);
+static void touch(void)
+{
+	if (touch_vdso)
+		gettimeofday(&tv, NULL);
 
-	अगर (touch_fp)
+	if (touch_fp)
 		fp += 0.1;
 
-#अगर_घोषित __घातerpc__
-	अगर (touch_altivec)
+#ifdef __powerpc__
+	if (touch_altivec)
 		altivec_touch_fn();
-#पूर्ण_अगर
+#endif
 
-	अगर (touch_vector)
+	if (touch_vector)
 		c = a + b;
 
-	यंत्र अस्थिर("# %0 %1 %2": : "r"(&tv), "r"(&fp), "r"(&c));
-पूर्ण
+	asm volatile("# %0 %1 %2": : "r"(&tv), "r"(&fp), "r"(&c));
+}
 
-अटल व्योम start_thपढ़ो_on(व्योम *(*fn)(व्योम *), व्योम *arg, अचिन्हित दीर्घ cpu)
-अणु
-	पूर्णांक rc;
-	pthपढ़ो_t tid;
+static void start_thread_on(void *(*fn)(void *), void *arg, unsigned long cpu)
+{
+	int rc;
+	pthread_t tid;
 	cpu_set_t cpuset;
-	pthपढ़ो_attr_t attr;
+	pthread_attr_t attr;
 
 	CPU_ZERO(&cpuset);
 	CPU_SET(cpu, &cpuset);
 
-	rc = pthपढ़ो_attr_init(&attr);
-	अगर (rc) अणु
-		त्रुटि_सं = rc;
-		लिखो_त्रुटि("pthread_attr_init");
-		निकास(1);
-	पूर्ण
+	rc = pthread_attr_init(&attr);
+	if (rc) {
+		errno = rc;
+		perror("pthread_attr_init");
+		exit(1);
+	}
 
-	rc = pthपढ़ो_attr_setaffinity_np(&attr, माप(cpu_set_t), &cpuset);
-	अगर (rc)	अणु
-		त्रुटि_सं = rc;
-		लिखो_त्रुटि("pthread_attr_setaffinity_np");
-		निकास(1);
-	पूर्ण
+	rc = pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpuset);
+	if (rc)	{
+		errno = rc;
+		perror("pthread_attr_setaffinity_np");
+		exit(1);
+	}
 
-	rc = pthपढ़ो_create(&tid, &attr, fn, arg);
-	अगर (rc) अणु
-		त्रुटि_सं = rc;
-		लिखो_त्रुटि("pthread_create");
-		निकास(1);
-	पूर्ण
-पूर्ण
+	rc = pthread_create(&tid, &attr, fn, arg);
+	if (rc) {
+		errno = rc;
+		perror("pthread_create");
+		exit(1);
+	}
+}
 
-अटल व्योम start_process_on(व्योम *(*fn)(व्योम *), व्योम *arg, अचिन्हित दीर्घ cpu)
-अणु
-	पूर्णांक pid, ncpus;
+static void start_process_on(void *(*fn)(void *), void *arg, unsigned long cpu)
+{
+	int pid, ncpus;
 	cpu_set_t *cpuset;
-	माप_प्रकार size;
+	size_t size;
 
-	pid = विभाजन();
-	अगर (pid == -1) अणु
-		लिखो_त्रुटि("fork");
-		निकास(1);
-	पूर्ण
+	pid = fork();
+	if (pid == -1) {
+		perror("fork");
+		exit(1);
+	}
 
-	अगर (pid)
-		वापस;
+	if (pid)
+		return;
 
 	ncpus = get_nprocs();
 	size = CPU_ALLOC_SIZE(ncpus);
 	cpuset = CPU_ALLOC(ncpus);
-	अगर (!cpuset) अणु
-		लिखो_त्रुटि("malloc");
-		निकास(1);
-	पूर्ण
+	if (!cpuset) {
+		perror("malloc");
+		exit(1);
+	}
 	CPU_ZERO_S(size, cpuset);
 	CPU_SET_S(cpu, size, cpuset);
 
-	अगर (sched_setaffinity(0, size, cpuset)) अणु
-		लिखो_त्रुटि("sched_setaffinity");
+	if (sched_setaffinity(0, size, cpuset)) {
+		perror("sched_setaffinity");
 		CPU_FREE(cpuset);
-		निकास(1);
-	पूर्ण
+		exit(1);
+	}
 
 	CPU_FREE(cpuset);
 	fn(arg);
 
-	निकास(0);
-पूर्ण
+	exit(0);
+}
 
-अटल अचिन्हित दीर्घ iterations;
-अटल अचिन्हित दीर्घ iterations_prev;
+static unsigned long iterations;
+static unsigned long iterations_prev;
 
-अटल व्योम sigalrm_handler(पूर्णांक junk)
-अणु
-	अचिन्हित दीर्घ i = iterations;
+static void sigalrm_handler(int junk)
+{
+	unsigned long i = iterations;
 
-	म_लिखो("%ld\n", i - iterations_prev);
+	printf("%ld\n", i - iterations_prev);
 	iterations_prev = i;
 
-	अगर (--समयout == 0)
-		समाप्त(0, SIGUSR1);
+	if (--timeout == 0)
+		kill(0, SIGUSR1);
 
 	alarm(1);
-पूर्ण
+}
 
-अटल व्योम sigusr1_handler(पूर्णांक junk)
-अणु
-	निकास(0);
-पूर्ण
+static void sigusr1_handler(int junk)
+{
+	exit(0);
+}
 
-काष्ठा actions अणु
-	व्योम (*setup)(पूर्णांक, पूर्णांक);
-	व्योम *(*thपढ़ो1)(व्योम *);
-	व्योम *(*thपढ़ो2)(व्योम *);
-पूर्ण;
+struct actions {
+	void (*setup)(int, int);
+	void *(*thread1)(void *);
+	void *(*thread2)(void *);
+};
 
-#घोषणा READ 0
-#घोषणा WRITE 1
+#define READ 0
+#define WRITE 1
 
-अटल पूर्णांक pipe_fd1[2];
-अटल पूर्णांक pipe_fd2[2];
+static int pipe_fd1[2];
+static int pipe_fd2[2];
 
-अटल व्योम pipe_setup(पूर्णांक cpu1, पूर्णांक cpu2)
-अणु
-	अगर (pipe(pipe_fd1) || pipe(pipe_fd2))
-		निकास(1);
-पूर्ण
+static void pipe_setup(int cpu1, int cpu2)
+{
+	if (pipe(pipe_fd1) || pipe(pipe_fd2))
+		exit(1);
+}
 
-अटल व्योम *pipe_thपढ़ो1(व्योम *arg)
-अणु
-	संकेत(SIGALRM, sigalrm_handler);
+static void *pipe_thread1(void *arg)
+{
+	signal(SIGALRM, sigalrm_handler);
 	alarm(1);
 
-	जबतक (1) अणु
-		निश्चित(पढ़ो(pipe_fd1[READ], &c, 1) == 1);
+	while (1) {
+		assert(read(pipe_fd1[READ], &c, 1) == 1);
 		touch();
 
-		निश्चित(ग_लिखो(pipe_fd2[WRITE], &c, 1) == 1);
+		assert(write(pipe_fd2[WRITE], &c, 1) == 1);
 		touch();
 
 		iterations += 2;
-	पूर्ण
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम *pipe_thपढ़ो2(व्योम *arg)
-अणु
-	जबतक (1) अणु
-		निश्चित(ग_लिखो(pipe_fd1[WRITE], &c, 1) == 1);
+static void *pipe_thread2(void *arg)
+{
+	while (1) {
+		assert(write(pipe_fd1[WRITE], &c, 1) == 1);
 		touch();
 
-		निश्चित(पढ़ो(pipe_fd2[READ], &c, 1) == 1);
+		assert(read(pipe_fd2[READ], &c, 1) == 1);
 		touch();
-	पूर्ण
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा actions pipe_actions = अणु
+static struct actions pipe_actions = {
 	.setup = pipe_setup,
-	.thपढ़ो1 = pipe_thपढ़ो1,
-	.thपढ़ो2 = pipe_thपढ़ो2,
-पूर्ण;
+	.thread1 = pipe_thread1,
+	.thread2 = pipe_thread2,
+};
 
-अटल व्योम yield_setup(पूर्णांक cpu1, पूर्णांक cpu2)
-अणु
-	अगर (cpu1 != cpu2) अणु
-		ख_लिखो(मानक_त्रुटि, "Both threads must be on the same CPU for yield test\n");
-		निकास(1);
-	पूर्ण
-पूर्ण
+static void yield_setup(int cpu1, int cpu2)
+{
+	if (cpu1 != cpu2) {
+		fprintf(stderr, "Both threads must be on the same CPU for yield test\n");
+		exit(1);
+	}
+}
 
-अटल व्योम *yield_thपढ़ो1(व्योम *arg)
-अणु
-	संकेत(SIGALRM, sigalrm_handler);
+static void *yield_thread1(void *arg)
+{
+	signal(SIGALRM, sigalrm_handler);
 	alarm(1);
 
-	जबतक (1) अणु
+	while (1) {
 		sched_yield();
 		touch();
 
 		iterations += 2;
-	पूर्ण
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम *yield_thपढ़ो2(व्योम *arg)
-अणु
-	जबतक (1) अणु
+static void *yield_thread2(void *arg)
+{
+	while (1) {
 		sched_yield();
 		touch();
-	पूर्ण
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा actions yield_actions = अणु
+static struct actions yield_actions = {
 	.setup = yield_setup,
-	.thपढ़ो1 = yield_thपढ़ो1,
-	.thपढ़ो2 = yield_thपढ़ो2,
-पूर्ण;
+	.thread1 = yield_thread1,
+	.thread2 = yield_thread2,
+};
 
-अटल दीर्घ sys_futex(व्योम *addr1, पूर्णांक op, पूर्णांक val1, काष्ठा बारpec *समयout,
-		      व्योम *addr2, पूर्णांक val3)
-अणु
-	वापस syscall(SYS_futex, addr1, op, val1, समयout, addr2, val3);
-पूर्ण
+static long sys_futex(void *addr1, int op, int val1, struct timespec *timeout,
+		      void *addr2, int val3)
+{
+	return syscall(SYS_futex, addr1, op, val1, timeout, addr2, val3);
+}
 
-अटल अचिन्हित दीर्घ cmpxchg(अचिन्हित दीर्घ *p, अचिन्हित दीर्घ expected,
-			     अचिन्हित दीर्घ desired)
-अणु
-	अचिन्हित दीर्घ exp = expected;
+static unsigned long cmpxchg(unsigned long *p, unsigned long expected,
+			     unsigned long desired)
+{
+	unsigned long exp = expected;
 
 	__atomic_compare_exchange_n(p, &exp, desired, 0,
 				    __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
-	वापस exp;
-पूर्ण
+	return exp;
+}
 
-अटल अचिन्हित दीर्घ xchg(अचिन्हित दीर्घ *p, अचिन्हित दीर्घ val)
-अणु
-	वापस __atomic_exchange_n(p, val, __ATOMIC_SEQ_CST);
-पूर्ण
+static unsigned long xchg(unsigned long *p, unsigned long val)
+{
+	return __atomic_exchange_n(p, val, __ATOMIC_SEQ_CST);
+}
 
-अटल पूर्णांक processes;
+static int processes;
 
-अटल पूर्णांक mutex_lock(अचिन्हित दीर्घ *m)
-अणु
-	पूर्णांक c;
-	पूर्णांक flags = FUTEX_WAIT;
-	अगर (!processes)
+static int mutex_lock(unsigned long *m)
+{
+	int c;
+	int flags = FUTEX_WAIT;
+	if (!processes)
 		flags |= FUTEX_PRIVATE_FLAG;
 
 	c = cmpxchg(m, 0, 1);
-	अगर (!c)
-		वापस 0;
+	if (!c)
+		return 0;
 
-	अगर (c == 1)
+	if (c == 1)
 		c = xchg(m, 2);
 
-	जबतक (c) अणु
-		sys_futex(m, flags, 2, शून्य, शून्य, 0);
+	while (c) {
+		sys_futex(m, flags, 2, NULL, NULL, 0);
 		c = xchg(m, 2);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mutex_unlock(अचिन्हित दीर्घ *m)
-अणु
-	पूर्णांक flags = FUTEX_WAKE;
-	अगर (!processes)
+static int mutex_unlock(unsigned long *m)
+{
+	int flags = FUTEX_WAKE;
+	if (!processes)
 		flags |= FUTEX_PRIVATE_FLAG;
 
-	अगर (*m == 2)
+	if (*m == 2)
 		*m = 0;
-	अन्यथा अगर (xchg(m, 0) == 1)
-		वापस 0;
+	else if (xchg(m, 0) == 1)
+		return 0;
 
-	sys_futex(m, flags, 1, शून्य, शून्य, 0);
+	sys_futex(m, flags, 1, NULL, NULL, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित दीर्घ *m1, *m2;
+static unsigned long *m1, *m2;
 
-अटल व्योम futex_setup(पूर्णांक cpu1, पूर्णांक cpu2)
-अणु
-	अगर (!processes) अणु
-		अटल अचिन्हित दीर्घ _m1, _m2;
+static void futex_setup(int cpu1, int cpu2)
+{
+	if (!processes) {
+		static unsigned long _m1, _m2;
 		m1 = &_m1;
 		m2 = &_m2;
-	पूर्ण अन्यथा अणु
-		पूर्णांक shmid;
-		व्योम *shmaddr;
+	} else {
+		int shmid;
+		void *shmaddr;
 
 		shmid = shmget(IPC_PRIVATE, getpagesize(), SHM_R | SHM_W);
-		अगर (shmid < 0) अणु
-			लिखो_त्रुटि("shmget");
-			निकास(1);
-		पूर्ण
+		if (shmid < 0) {
+			perror("shmget");
+			exit(1);
+		}
 
-		shmaddr = shmat(shmid, शून्य, 0);
-		अगर (shmaddr == (अक्षर *)-1) अणु
-			लिखो_त्रुटि("shmat");
-			shmctl(shmid, IPC_RMID, शून्य);
-			निकास(1);
-		पूर्ण
+		shmaddr = shmat(shmid, NULL, 0);
+		if (shmaddr == (char *)-1) {
+			perror("shmat");
+			shmctl(shmid, IPC_RMID, NULL);
+			exit(1);
+		}
 
-		shmctl(shmid, IPC_RMID, शून्य);
+		shmctl(shmid, IPC_RMID, NULL);
 
 		m1 = shmaddr;
-		m2 = shmaddr + माप(*m1);
-	पूर्ण
+		m2 = shmaddr + sizeof(*m1);
+	}
 
 	*m1 = 0;
 	*m2 = 0;
 
 	mutex_lock(m1);
 	mutex_lock(m2);
-पूर्ण
+}
 
-अटल व्योम *futex_thपढ़ो1(व्योम *arg)
-अणु
-	संकेत(SIGALRM, sigalrm_handler);
+static void *futex_thread1(void *arg)
+{
+	signal(SIGALRM, sigalrm_handler);
 	alarm(1);
 
-	जबतक (1) अणु
+	while (1) {
 		mutex_lock(m2);
 		mutex_unlock(m1);
 
 		iterations += 2;
-	पूर्ण
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम *futex_thपढ़ो2(व्योम *arg)
-अणु
-	जबतक (1) अणु
+static void *futex_thread2(void *arg)
+{
+	while (1) {
 		mutex_unlock(m2);
 		mutex_lock(m1);
-	पूर्ण
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा actions futex_actions = अणु
+static struct actions futex_actions = {
 	.setup = futex_setup,
-	.thपढ़ो1 = futex_thपढ़ो1,
-	.thपढ़ो2 = futex_thपढ़ो2,
-पूर्ण;
+	.thread1 = futex_thread1,
+	.thread2 = futex_thread2,
+};
 
-अटल काष्ठा option options[] = अणु
-	अणु "test", required_argument, 0, 't' पूर्ण,
-	अणु "process", no_argument, &processes, 1 पूर्ण,
-	अणु "timeout", required_argument, 0, 's' पूर्ण,
-	अणु "vdso", no_argument, &touch_vdso, 1 पूर्ण,
-	अणु "no-fp", no_argument, &touch_fp, 0 पूर्ण,
-#अगर_घोषित __घातerpc__
-	अणु "no-altivec", no_argument, &touch_altivec, 0 पूर्ण,
-#पूर्ण_अगर
-	अणु "no-vector", no_argument, &touch_vector, 0 पूर्ण,
-	अणु 0, पूर्ण,
-पूर्ण;
+static struct option options[] = {
+	{ "test", required_argument, 0, 't' },
+	{ "process", no_argument, &processes, 1 },
+	{ "timeout", required_argument, 0, 's' },
+	{ "vdso", no_argument, &touch_vdso, 1 },
+	{ "no-fp", no_argument, &touch_fp, 0 },
+#ifdef __powerpc__
+	{ "no-altivec", no_argument, &touch_altivec, 0 },
+#endif
+	{ "no-vector", no_argument, &touch_vector, 0 },
+	{ 0, },
+};
 
-अटल व्योम usage(व्योम)
-अणु
-	ख_लिखो(मानक_त्रुटि, "Usage: context_switch2 <options> CPU1 CPU2\n\n");
-	ख_लिखो(मानक_त्रुटि, "\t\t--test=X\tpipe, futex or yield (default)\n");
-	ख_लिखो(मानक_त्रुटि, "\t\t--process\tUse processes (default threads)\n");
-	ख_लिखो(मानक_त्रुटि, "\t\t--timeout=X\tDuration in seconds to run (default 30)\n");
-	ख_लिखो(मानक_त्रुटि, "\t\t--vdso\t\ttouch VDSO\n");
-	ख_लिखो(मानक_त्रुटि, "\t\t--no-fp\t\tDon't touch FP\n");
-#अगर_घोषित __घातerpc__
-	ख_लिखो(मानक_त्रुटि, "\t\t--no-altivec\tDon't touch altivec\n");
-#पूर्ण_अगर
-	ख_लिखो(मानक_त्रुटि, "\t\t--no-vector\tDon't touch vector\n");
-पूर्ण
+static void usage(void)
+{
+	fprintf(stderr, "Usage: context_switch2 <options> CPU1 CPU2\n\n");
+	fprintf(stderr, "\t\t--test=X\tpipe, futex or yield (default)\n");
+	fprintf(stderr, "\t\t--process\tUse processes (default threads)\n");
+	fprintf(stderr, "\t\t--timeout=X\tDuration in seconds to run (default 30)\n");
+	fprintf(stderr, "\t\t--vdso\t\ttouch VDSO\n");
+	fprintf(stderr, "\t\t--no-fp\t\tDon't touch FP\n");
+#ifdef __powerpc__
+	fprintf(stderr, "\t\t--no-altivec\tDon't touch altivec\n");
+#endif
+	fprintf(stderr, "\t\t--no-vector\tDon't touch vector\n");
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
-	चिन्हित अक्षर c;
-	काष्ठा actions *actions = &yield_actions;
-	पूर्णांक cpu1;
-	पूर्णांक cpu2;
-	अटल व्योम (*start_fn)(व्योम *(*fn)(व्योम *), व्योम *arg, अचिन्हित दीर्घ cpu);
+int main(int argc, char *argv[])
+{
+	signed char c;
+	struct actions *actions = &yield_actions;
+	int cpu1;
+	int cpu2;
+	static void (*start_fn)(void *(*fn)(void *), void *arg, unsigned long cpu);
 
-	जबतक (1) अणु
-		पूर्णांक option_index = 0;
+	while (1) {
+		int option_index = 0;
 
-		c = getopt_दीर्घ(argc, argv, "", options, &option_index);
+		c = getopt_long(argc, argv, "", options, &option_index);
 
-		अगर (c == -1)
-			अवरोध;
+		if (c == -1)
+			break;
 
-		चयन (c) अणु
-		हाल 0:
-			अगर (options[option_index].flag != 0)
-				अवरोध;
+		switch (c) {
+		case 0:
+			if (options[option_index].flag != 0)
+				break;
 
 			usage();
-			निकास(1);
-			अवरोध;
+			exit(1);
+			break;
 
-		हाल 't':
-			अगर (!म_भेद(optarg, "pipe")) अणु
+		case 't':
+			if (!strcmp(optarg, "pipe")) {
 				actions = &pipe_actions;
-			पूर्ण अन्यथा अगर (!म_भेद(optarg, "yield")) अणु
+			} else if (!strcmp(optarg, "yield")) {
 				actions = &yield_actions;
-			पूर्ण अन्यथा अगर (!म_भेद(optarg, "futex")) अणु
+			} else if (!strcmp(optarg, "futex")) {
 				actions = &futex_actions;
-			पूर्ण अन्यथा अणु
+			} else {
 				usage();
-				निकास(1);
-			पूर्ण
-			अवरोध;
+				exit(1);
+			}
+			break;
 
-		हाल 's':
-			समयout = म_से_प(optarg);
-			अवरोध;
+		case 's':
+			timeout = atoi(optarg);
+			break;
 
-		शेष:
+		default:
 			usage();
-			निकास(1);
-		पूर्ण
-	पूर्ण
+			exit(1);
+		}
+	}
 
-	अगर (processes)
+	if (processes)
 		start_fn = start_process_on;
-	अन्यथा
-		start_fn = start_thपढ़ो_on;
+	else
+		start_fn = start_thread_on;
 
-	अगर (((argc - optind) != 2)) अणु
+	if (((argc - optind) != 2)) {
 		cpu1 = cpu2 = pick_online_cpu();
-	पूर्ण अन्यथा अणु
-		cpu1 = म_से_प(argv[optind++]);
-		cpu2 = म_से_प(argv[optind++]);
-	पूर्ण
+	} else {
+		cpu1 = atoi(argv[optind++]);
+		cpu2 = atoi(argv[optind++]);
+	}
 
-	म_लिखो("Using %s with ", processes ? "processes" : "threads");
+	printf("Using %s with ", processes ? "processes" : "threads");
 
-	अगर (actions == &pipe_actions)
-		म_लिखो("pipe");
-	अन्यथा अगर (actions == &yield_actions)
-		म_लिखो("yield");
-	अन्यथा
-		म_लिखो("futex");
+	if (actions == &pipe_actions)
+		printf("pipe");
+	else if (actions == &yield_actions)
+		printf("yield");
+	else
+		printf("futex");
 
-	अगर (!have_hwcap(PPC_FEATURE_HAS_ALTIVEC))
+	if (!have_hwcap(PPC_FEATURE_HAS_ALTIVEC))
 		touch_altivec = 0;
 
-	अगर (!have_hwcap(PPC_FEATURE_HAS_VSX))
+	if (!have_hwcap(PPC_FEATURE_HAS_VSX))
 		touch_vector = 0;
 
-	म_लिखो(" on cpus %d/%d touching FP:%s altivec:%s vector:%s vdso:%s\n",
+	printf(" on cpus %d/%d touching FP:%s altivec:%s vector:%s vdso:%s\n",
 	       cpu1, cpu2, touch_fp ?  "yes" : "no", touch_altivec ? "yes" : "no",
 	       touch_vector ? "yes" : "no", touch_vdso ? "yes" : "no");
 
-	/* Create a new process group so we can संकेत everyone क्रम निकास */
+	/* Create a new process group so we can signal everyone for exit */
 	setpgid(getpid(), getpid());
 
-	संकेत(SIGUSR1, sigusr1_handler);
+	signal(SIGUSR1, sigusr1_handler);
 
 	actions->setup(cpu1, cpu2);
 
-	start_fn(actions->thपढ़ो1, शून्य, cpu1);
-	start_fn(actions->thपढ़ो2, शून्य, cpu2);
+	start_fn(actions->thread1, NULL, cpu1);
+	start_fn(actions->thread2, NULL, cpu2);
 
-	जबतक (1)
+	while (1)
 		sleep(3600);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

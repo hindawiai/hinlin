@@ -1,85 +1,84 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
-/* Local endpoपूर्णांक object management
+// SPDX-License-Identifier: GPL-2.0-or-later
+/* Local endpoint object management
  *
  * Copyright (C) 2016 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/net.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/udp.h>
-#समावेश <linux/ip.h>
-#समावेश <linux/hashtable.h>
-#समावेश <net/sock.h>
-#समावेश <net/udp.h>
-#समावेश <net/udp_tunnel.h>
-#समावेश <net/af_rxrpc.h>
-#समावेश "ar-internal.h"
+#include <linux/module.h>
+#include <linux/net.h>
+#include <linux/skbuff.h>
+#include <linux/slab.h>
+#include <linux/udp.h>
+#include <linux/ip.h>
+#include <linux/hashtable.h>
+#include <net/sock.h>
+#include <net/udp.h>
+#include <net/udp_tunnel.h>
+#include <net/af_rxrpc.h>
+#include "ar-internal.h"
 
-अटल व्योम rxrpc_local_processor(काष्ठा work_काष्ठा *);
-अटल व्योम rxrpc_local_rcu(काष्ठा rcu_head *);
+static void rxrpc_local_processor(struct work_struct *);
+static void rxrpc_local_rcu(struct rcu_head *);
 
 /*
  * Compare a local to an address.  Return -ve, 0 or +ve to indicate less than,
  * same or greater than.
  *
- * We explicitly करोn't compare the RxRPC service ID as we want to reject
- * conflicting uses by dअगरfering services.  Further, we करोn't want to share
- * addresses with dअगरferent options (IPv6), so we करोn't compare those bits
+ * We explicitly don't compare the RxRPC service ID as we want to reject
+ * conflicting uses by differing services.  Further, we don't want to share
+ * addresses with different options (IPv6), so we don't compare those bits
  * either.
  */
-अटल दीर्घ rxrpc_local_cmp_key(स्थिर काष्ठा rxrpc_local *local,
-				स्थिर काष्ठा sockaddr_rxrpc *srx)
-अणु
-	दीर्घ dअगरf;
+static long rxrpc_local_cmp_key(const struct rxrpc_local *local,
+				const struct sockaddr_rxrpc *srx)
+{
+	long diff;
 
-	dअगरf = ((local->srx.transport_type - srx->transport_type) ?:
+	diff = ((local->srx.transport_type - srx->transport_type) ?:
 		(local->srx.transport_len - srx->transport_len) ?:
 		(local->srx.transport.family - srx->transport.family));
-	अगर (dअगरf != 0)
-		वापस dअगरf;
+	if (diff != 0)
+		return diff;
 
-	चयन (srx->transport.family) अणु
-	हाल AF_INET:
+	switch (srx->transport.family) {
+	case AF_INET:
 		/* If the choice of UDP port is left up to the transport, then
-		 * the endpoपूर्णांक record करोesn't match.
+		 * the endpoint record doesn't match.
 		 */
-		वापस ((u16 __क्रमce)local->srx.transport.sin.sin_port -
-			(u16 __क्रमce)srx->transport.sin.sin_port) ?:
-			स_भेद(&local->srx.transport.sin.sin_addr,
+		return ((u16 __force)local->srx.transport.sin.sin_port -
+			(u16 __force)srx->transport.sin.sin_port) ?:
+			memcmp(&local->srx.transport.sin.sin_addr,
 			       &srx->transport.sin.sin_addr,
-			       माप(काष्ठा in_addr));
-#अगर_घोषित CONFIG_AF_RXRPC_IPV6
-	हाल AF_INET6:
+			       sizeof(struct in_addr));
+#ifdef CONFIG_AF_RXRPC_IPV6
+	case AF_INET6:
 		/* If the choice of UDP6 port is left up to the transport, then
-		 * the endpoपूर्णांक record करोesn't match.
+		 * the endpoint record doesn't match.
 		 */
-		वापस ((u16 __क्रमce)local->srx.transport.sin6.sin6_port -
-			(u16 __क्रमce)srx->transport.sin6.sin6_port) ?:
-			स_भेद(&local->srx.transport.sin6.sin6_addr,
+		return ((u16 __force)local->srx.transport.sin6.sin6_port -
+			(u16 __force)srx->transport.sin6.sin6_port) ?:
+			memcmp(&local->srx.transport.sin6.sin6_addr,
 			       &srx->transport.sin6.sin6_addr,
-			       माप(काष्ठा in6_addr));
-#पूर्ण_अगर
-	शेष:
+			       sizeof(struct in6_addr));
+#endif
+	default:
 		BUG();
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Allocate a new local endpoपूर्णांक.
+ * Allocate a new local endpoint.
  */
-अटल काष्ठा rxrpc_local *rxrpc_alloc_local(काष्ठा rxrpc_net *rxnet,
-					     स्थिर काष्ठा sockaddr_rxrpc *srx)
-अणु
-	काष्ठा rxrpc_local *local;
+static struct rxrpc_local *rxrpc_alloc_local(struct rxrpc_net *rxnet,
+					     const struct sockaddr_rxrpc *srx)
+{
+	struct rxrpc_local *local;
 
-	local = kzalloc(माप(काष्ठा rxrpc_local), GFP_KERNEL);
-	अगर (local) अणु
+	local = kzalloc(sizeof(struct rxrpc_local), GFP_KERNEL);
+	if (local) {
 		atomic_set(&local->usage, 1);
 		atomic_set(&local->active_users, 1);
 		local->rxnet = rxnet;
@@ -92,46 +91,46 @@
 		spin_lock_init(&local->client_bundles_lock);
 		spin_lock_init(&local->lock);
 		rwlock_init(&local->services_lock);
-		local->debug_id = atomic_inc_वापस(&rxrpc_debug_id);
-		स_नकल(&local->srx, srx, माप(*srx));
+		local->debug_id = atomic_inc_return(&rxrpc_debug_id);
+		memcpy(&local->srx, srx, sizeof(*srx));
 		local->srx.srx_service = 0;
-		trace_rxrpc_local(local->debug_id, rxrpc_local_new, 1, शून्य);
-	पूर्ण
+		trace_rxrpc_local(local->debug_id, rxrpc_local_new, 1, NULL);
+	}
 
 	_leave(" = %p", local);
-	वापस local;
-पूर्ण
+	return local;
+}
 
 /*
  * create the local socket
  * - must be called with rxrpc_local_mutex locked
  */
-अटल पूर्णांक rxrpc_खोलो_socket(काष्ठा rxrpc_local *local, काष्ठा net *net)
-अणु
-	काष्ठा udp_tunnel_sock_cfg tuncfg = अणुशून्यपूर्ण;
-	काष्ठा sockaddr_rxrpc *srx = &local->srx;
-	काष्ठा udp_port_cfg udp_conf = अणु0पूर्ण;
-	काष्ठा sock *usk;
-	पूर्णांक ret;
+static int rxrpc_open_socket(struct rxrpc_local *local, struct net *net)
+{
+	struct udp_tunnel_sock_cfg tuncfg = {NULL};
+	struct sockaddr_rxrpc *srx = &local->srx;
+	struct udp_port_cfg udp_conf = {0};
+	struct sock *usk;
+	int ret;
 
 	_enter("%p{%d,%d}",
 	       local, srx->transport_type, srx->transport.family);
 
 	udp_conf.family = srx->transport.family;
-	अगर (udp_conf.family == AF_INET) अणु
+	if (udp_conf.family == AF_INET) {
 		udp_conf.local_ip = srx->transport.sin.sin_addr;
 		udp_conf.local_udp_port = srx->transport.sin.sin_port;
-#अगर IS_ENABLED(CONFIG_AF_RXRPC_IPV6)
-	पूर्ण अन्यथा अणु
+#if IS_ENABLED(CONFIG_AF_RXRPC_IPV6)
+	} else {
 		udp_conf.local_ip6 = srx->transport.sin6.sin6_addr;
 		udp_conf.local_udp_port = srx->transport.sin6.sin6_port;
-#पूर्ण_अगर
-	पूर्ण
+#endif
+	}
 	ret = udp_sock_create(net, &udp_conf, &local->socket);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		_leave(" = %d [socket]", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	tuncfg.encap_type = UDP_ENCAP_RXRPC;
 	tuncfg.encap_rcv = rxrpc_input_packet;
@@ -142,95 +141,95 @@
 	usk = local->socket->sk;
 	usk->sk_error_report = rxrpc_error_report;
 
-	चयन (srx->transport.family) अणु
-	हाल AF_INET6:
+	switch (srx->transport.family) {
+	case AF_INET6:
 		/* we want to receive ICMPv6 errors */
 		ip6_sock_set_recverr(usk);
 
-		/* Fall through and set IPv4 options too otherwise we करोn't get
+		/* Fall through and set IPv4 options too otherwise we don't get
 		 * errors from IPv4 packets sent through the IPv6 socket.
 		 */
 		fallthrough;
-	हाल AF_INET:
+	case AF_INET:
 		/* we want to receive ICMP errors */
 		ip_sock_set_recverr(usk);
 
-		/* we want to set the करोn't fragment bit */
+		/* we want to set the don't fragment bit */
 		ip_sock_set_mtu_discover(usk, IP_PMTUDISC_DO);
 
-		/* We want receive बारtamps. */
-		sock_enable_बारtamps(usk);
-		अवरोध;
+		/* We want receive timestamps. */
+		sock_enable_timestamps(usk);
+		break;
 
-	शेष:
+	default:
 		BUG();
-	पूर्ण
+	}
 
 	_leave(" = 0");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Look up or create a new local endpoपूर्णांक using the specअगरied local address.
+ * Look up or create a new local endpoint using the specified local address.
  */
-काष्ठा rxrpc_local *rxrpc_lookup_local(काष्ठा net *net,
-				       स्थिर काष्ठा sockaddr_rxrpc *srx)
-अणु
-	काष्ठा rxrpc_local *local;
-	काष्ठा rxrpc_net *rxnet = rxrpc_net(net);
-	काष्ठा list_head *cursor;
-	स्थिर अक्षर *age;
-	दीर्घ dअगरf;
-	पूर्णांक ret;
+struct rxrpc_local *rxrpc_lookup_local(struct net *net,
+				       const struct sockaddr_rxrpc *srx)
+{
+	struct rxrpc_local *local;
+	struct rxrpc_net *rxnet = rxrpc_net(net);
+	struct list_head *cursor;
+	const char *age;
+	long diff;
+	int ret;
 
 	_enter("{%d,%d,%pISp}",
 	       srx->transport_type, srx->transport.family, &srx->transport);
 
 	mutex_lock(&rxnet->local_mutex);
 
-	क्रम (cursor = rxnet->local_endpoपूर्णांकs.next;
-	     cursor != &rxnet->local_endpoपूर्णांकs;
-	     cursor = cursor->next) अणु
-		local = list_entry(cursor, काष्ठा rxrpc_local, link);
+	for (cursor = rxnet->local_endpoints.next;
+	     cursor != &rxnet->local_endpoints;
+	     cursor = cursor->next) {
+		local = list_entry(cursor, struct rxrpc_local, link);
 
-		dअगरf = rxrpc_local_cmp_key(local, srx);
-		अगर (dअगरf < 0)
-			जारी;
-		अगर (dअगरf > 0)
-			अवरोध;
+		diff = rxrpc_local_cmp_key(local, srx);
+		if (diff < 0)
+			continue;
+		if (diff > 0)
+			break;
 
 		/* Services aren't allowed to share transport sockets, so
 		 * reject that here.  It is possible that the object is dying -
 		 * but it may also still have the local transport address that
 		 * we want bound.
 		 */
-		अगर (srx->srx_service) अणु
-			local = शून्य;
-			जाओ addr_in_use;
-		पूर्ण
+		if (srx->srx_service) {
+			local = NULL;
+			goto addr_in_use;
+		}
 
 		/* Found a match.  We replace a dying object.  Attempting to
-		 * bind the transport socket may still fail अगर we're attempting
+		 * bind the transport socket may still fail if we're attempting
 		 * to use a local address that the dying object is still using.
 		 */
-		अगर (!rxrpc_use_local(local))
-			अवरोध;
+		if (!rxrpc_use_local(local))
+			break;
 
 		age = "old";
-		जाओ found;
-	पूर्ण
+		goto found;
+	}
 
 	local = rxrpc_alloc_local(rxnet, srx);
-	अगर (!local)
-		जाओ nomem;
+	if (!local)
+		goto nomem;
 
-	ret = rxrpc_खोलो_socket(local, net);
-	अगर (ret < 0)
-		जाओ sock_error;
+	ret = rxrpc_open_socket(local, net);
+	if (ret < 0)
+		goto sock_error;
 
-	अगर (cursor != &rxnet->local_endpoपूर्णांकs)
+	if (cursor != &rxnet->local_endpoints)
 		list_replace_init(cursor, &local->link);
-	अन्यथा
+	else
 		list_add_tail(&local->link, cursor);
 	age = "new";
 
@@ -241,131 +240,131 @@ found:
 	     age, local->debug_id, &local->srx.transport);
 
 	_leave(" = %p", local);
-	वापस local;
+	return local;
 
 nomem:
 	ret = -ENOMEM;
 sock_error:
 	mutex_unlock(&rxnet->local_mutex);
-	अगर (local)
+	if (local)
 		call_rcu(&local->rcu, rxrpc_local_rcu);
 	_leave(" = %d", ret);
-	वापस ERR_PTR(ret);
+	return ERR_PTR(ret);
 
 addr_in_use:
 	mutex_unlock(&rxnet->local_mutex);
 	_leave(" = -EADDRINUSE");
-	वापस ERR_PTR(-EADDRINUSE);
-पूर्ण
+	return ERR_PTR(-EADDRINUSE);
+}
 
 /*
- * Get a ref on a local endpoपूर्णांक.
+ * Get a ref on a local endpoint.
  */
-काष्ठा rxrpc_local *rxrpc_get_local(काष्ठा rxrpc_local *local)
-अणु
-	स्थिर व्योम *here = __builtin_वापस_address(0);
-	पूर्णांक n;
+struct rxrpc_local *rxrpc_get_local(struct rxrpc_local *local)
+{
+	const void *here = __builtin_return_address(0);
+	int n;
 
-	n = atomic_inc_वापस(&local->usage);
+	n = atomic_inc_return(&local->usage);
 	trace_rxrpc_local(local->debug_id, rxrpc_local_got, n, here);
-	वापस local;
-पूर्ण
+	return local;
+}
 
 /*
- * Get a ref on a local endpoपूर्णांक unless its usage has alपढ़ोy reached 0.
+ * Get a ref on a local endpoint unless its usage has already reached 0.
  */
-काष्ठा rxrpc_local *rxrpc_get_local_maybe(काष्ठा rxrpc_local *local)
-अणु
-	स्थिर व्योम *here = __builtin_वापस_address(0);
+struct rxrpc_local *rxrpc_get_local_maybe(struct rxrpc_local *local)
+{
+	const void *here = __builtin_return_address(0);
 
-	अगर (local) अणु
-		पूर्णांक n = atomic_fetch_add_unless(&local->usage, 1, 0);
-		अगर (n > 0)
+	if (local) {
+		int n = atomic_fetch_add_unless(&local->usage, 1, 0);
+		if (n > 0)
 			trace_rxrpc_local(local->debug_id, rxrpc_local_got,
 					  n + 1, here);
-		अन्यथा
-			local = शून्य;
-	पूर्ण
-	वापस local;
-पूर्ण
+		else
+			local = NULL;
+	}
+	return local;
+}
 
 /*
- * Queue a local endpoपूर्णांक and pass the caller's reference to the work item.
+ * Queue a local endpoint and pass the caller's reference to the work item.
  */
-व्योम rxrpc_queue_local(काष्ठा rxrpc_local *local)
-अणु
-	स्थिर व्योम *here = __builtin_वापस_address(0);
-	अचिन्हित पूर्णांक debug_id = local->debug_id;
-	पूर्णांक n = atomic_पढ़ो(&local->usage);
+void rxrpc_queue_local(struct rxrpc_local *local)
+{
+	const void *here = __builtin_return_address(0);
+	unsigned int debug_id = local->debug_id;
+	int n = atomic_read(&local->usage);
 
-	अगर (rxrpc_queue_work(&local->processor))
+	if (rxrpc_queue_work(&local->processor))
 		trace_rxrpc_local(debug_id, rxrpc_local_queued, n, here);
-	अन्यथा
+	else
 		rxrpc_put_local(local);
-पूर्ण
+}
 
 /*
- * Drop a ref on a local endpoपूर्णांक.
+ * Drop a ref on a local endpoint.
  */
-व्योम rxrpc_put_local(काष्ठा rxrpc_local *local)
-अणु
-	स्थिर व्योम *here = __builtin_वापस_address(0);
-	अचिन्हित पूर्णांक debug_id;
-	पूर्णांक n;
+void rxrpc_put_local(struct rxrpc_local *local)
+{
+	const void *here = __builtin_return_address(0);
+	unsigned int debug_id;
+	int n;
 
-	अगर (local) अणु
+	if (local) {
 		debug_id = local->debug_id;
 
-		n = atomic_dec_वापस(&local->usage);
+		n = atomic_dec_return(&local->usage);
 		trace_rxrpc_local(debug_id, rxrpc_local_put, n, here);
 
-		अगर (n == 0)
+		if (n == 0)
 			call_rcu(&local->rcu, rxrpc_local_rcu);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Start using a local endpoपूर्णांक.
+ * Start using a local endpoint.
  */
-काष्ठा rxrpc_local *rxrpc_use_local(काष्ठा rxrpc_local *local)
-अणु
+struct rxrpc_local *rxrpc_use_local(struct rxrpc_local *local)
+{
 	local = rxrpc_get_local_maybe(local);
-	अगर (!local)
-		वापस शून्य;
+	if (!local)
+		return NULL;
 
-	अगर (!__rxrpc_use_local(local)) अणु
+	if (!__rxrpc_use_local(local)) {
 		rxrpc_put_local(local);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	वापस local;
-पूर्ण
+	return local;
+}
 
 /*
- * Cease using a local endpoपूर्णांक.  Once the number of active users reaches 0, we
+ * Cease using a local endpoint.  Once the number of active users reaches 0, we
  * start the closure of the transport in the work processor.
  */
-व्योम rxrpc_unuse_local(काष्ठा rxrpc_local *local)
-अणु
-	अगर (local) अणु
-		अगर (__rxrpc_unuse_local(local)) अणु
+void rxrpc_unuse_local(struct rxrpc_local *local)
+{
+	if (local) {
+		if (__rxrpc_unuse_local(local)) {
 			rxrpc_get_local(local);
 			rxrpc_queue_local(local);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*
- * Destroy a local endpoपूर्णांक's socket and then hand the record to RCU to dispose
+ * Destroy a local endpoint's socket and then hand the record to RCU to dispose
  * of.
  *
- * Closing the socket cannot be करोne from bottom half context or RCU callback
+ * Closing the socket cannot be done from bottom half context or RCU callback
  * context because it might sleep.
  */
-अटल व्योम rxrpc_local_destroyer(काष्ठा rxrpc_local *local)
-अणु
-	काष्ठा socket *socket = local->socket;
-	काष्ठा rxrpc_net *rxnet = local->rxnet;
+static void rxrpc_local_destroyer(struct rxrpc_local *local)
+{
+	struct socket *socket = local->socket;
+	struct rxrpc_net *rxnet = local->rxnet;
 
 	_enter("%d", local->debug_id);
 
@@ -379,90 +378,90 @@ addr_in_use:
 	rxrpc_service_connection_reaper(&rxnet->service_conn_reaper);
 	ASSERT(!local->service);
 
-	अगर (socket) अणु
-		local->socket = शून्य;
-		kernel_sock_shutकरोwn(socket, SHUT_RDWR);
-		socket->sk->sk_user_data = शून्य;
+	if (socket) {
+		local->socket = NULL;
+		kernel_sock_shutdown(socket, SHUT_RDWR);
+		socket->sk->sk_user_data = NULL;
 		sock_release(socket);
-	पूर्ण
+	}
 
-	/* At this poपूर्णांक, there should be no more packets coming in to the
-	 * local endpoपूर्णांक.
+	/* At this point, there should be no more packets coming in to the
+	 * local endpoint.
 	 */
 	rxrpc_purge_queue(&local->reject_queue);
 	rxrpc_purge_queue(&local->event_queue);
-पूर्ण
+}
 
 /*
- * Process events on an endpoपूर्णांक.  The work item carries a ref which
+ * Process events on an endpoint.  The work item carries a ref which
  * we must release.
  */
-अटल व्योम rxrpc_local_processor(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा rxrpc_local *local =
-		container_of(work, काष्ठा rxrpc_local, processor);
+static void rxrpc_local_processor(struct work_struct *work)
+{
+	struct rxrpc_local *local =
+		container_of(work, struct rxrpc_local, processor);
 	bool again;
 
 	trace_rxrpc_local(local->debug_id, rxrpc_local_processing,
-			  atomic_पढ़ो(&local->usage), शून्य);
+			  atomic_read(&local->usage), NULL);
 
-	करो अणु
+	do {
 		again = false;
-		अगर (!__rxrpc_use_local(local)) अणु
+		if (!__rxrpc_use_local(local)) {
 			rxrpc_local_destroyer(local);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (!skb_queue_empty(&local->reject_queue)) अणु
+		if (!skb_queue_empty(&local->reject_queue)) {
 			rxrpc_reject_packets(local);
 			again = true;
-		पूर्ण
+		}
 
-		अगर (!skb_queue_empty(&local->event_queue)) अणु
+		if (!skb_queue_empty(&local->event_queue)) {
 			rxrpc_process_local_events(local);
 			again = true;
-		पूर्ण
+		}
 
 		__rxrpc_unuse_local(local);
-	पूर्ण जबतक (again);
+	} while (again);
 
 	rxrpc_put_local(local);
-पूर्ण
+}
 
 /*
- * Destroy a local endpoपूर्णांक after the RCU grace period expires.
+ * Destroy a local endpoint after the RCU grace period expires.
  */
-अटल व्योम rxrpc_local_rcu(काष्ठा rcu_head *rcu)
-अणु
-	काष्ठा rxrpc_local *local = container_of(rcu, काष्ठा rxrpc_local, rcu);
+static void rxrpc_local_rcu(struct rcu_head *rcu)
+{
+	struct rxrpc_local *local = container_of(rcu, struct rxrpc_local, rcu);
 
 	_enter("%d", local->debug_id);
 
 	ASSERT(!work_pending(&local->processor));
 
 	_net("DESTROY LOCAL %d", local->debug_id);
-	kमुक्त(local);
+	kfree(local);
 	_leave("");
-पूर्ण
+}
 
 /*
- * Verअगरy the local endpoपूर्णांक list is empty by this poपूर्णांक.
+ * Verify the local endpoint list is empty by this point.
  */
-व्योम rxrpc_destroy_all_locals(काष्ठा rxrpc_net *rxnet)
-अणु
-	काष्ठा rxrpc_local *local;
+void rxrpc_destroy_all_locals(struct rxrpc_net *rxnet)
+{
+	struct rxrpc_local *local;
 
 	_enter("");
 
 	flush_workqueue(rxrpc_workqueue);
 
-	अगर (!list_empty(&rxnet->local_endpoपूर्णांकs)) अणु
+	if (!list_empty(&rxnet->local_endpoints)) {
 		mutex_lock(&rxnet->local_mutex);
-		list_क्रम_each_entry(local, &rxnet->local_endpoपूर्णांकs, link) अणु
+		list_for_each_entry(local, &rxnet->local_endpoints, link) {
 			pr_err("AF_RXRPC: Leaked local %p {%d}\n",
-			       local, atomic_पढ़ो(&local->usage));
-		पूर्ण
+			       local, atomic_read(&local->usage));
+		}
 		mutex_unlock(&rxnet->local_mutex);
 		BUG();
-	पूर्ण
-पूर्ण
+	}
+}

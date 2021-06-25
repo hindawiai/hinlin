@@ -1,105 +1,104 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
    drbd_state.c
 
    This file is part of DRBD by Philipp Reisner and Lars Ellenberg.
 
-   Copyright (C) 2001-2008, LINBIT Inक्रमmation Technologies GmbH.
+   Copyright (C) 2001-2008, LINBIT Information Technologies GmbH.
    Copyright (C) 1999-2008, Philipp Reisner <philipp.reisner@linbit.com>.
    Copyright (C) 2002-2008, Lars Ellenberg <lars.ellenberg@linbit.com>.
 
    Thanks to Carter Burden, Bart Grantham and Gennadiy Nerubayev
-   from Logicworks, Inc. क्रम making SDP replication support possible.
+   from Logicworks, Inc. for making SDP replication support possible.
 
  */
 
-#समावेश <linux/drbd_सीमा.स>
-#समावेश "drbd_int.h"
-#समावेश "drbd_protocol.h"
-#समावेश "drbd_req.h"
-#समावेश "drbd_state_change.h"
+#include <linux/drbd_limits.h>
+#include "drbd_int.h"
+#include "drbd_protocol.h"
+#include "drbd_req.h"
+#include "drbd_state_change.h"
 
-काष्ठा after_state_chg_work अणु
-	काष्ठा drbd_work w;
-	काष्ठा drbd_device *device;
-	जोड़ drbd_state os;
-	जोड़ drbd_state ns;
-	क्रमागत chg_state_flags flags;
-	काष्ठा completion *करोne;
-	काष्ठा drbd_state_change *state_change;
-पूर्ण;
+struct after_state_chg_work {
+	struct drbd_work w;
+	struct drbd_device *device;
+	union drbd_state os;
+	union drbd_state ns;
+	enum chg_state_flags flags;
+	struct completion *done;
+	struct drbd_state_change *state_change;
+};
 
-क्रमागत sanitize_state_warnings अणु
+enum sanitize_state_warnings {
 	NO_WARNING,
 	ABORTED_ONLINE_VERIFY,
 	ABORTED_RESYNC,
 	CONNECTION_LOST_NEGOTIATING,
 	IMPLICITLY_UPGRADED_DISK,
 	IMPLICITLY_UPGRADED_PDSK,
-पूर्ण;
+};
 
-अटल व्योम count_objects(काष्ठा drbd_resource *resource,
-			  अचिन्हित पूर्णांक *n_devices,
-			  अचिन्हित पूर्णांक *n_connections)
-अणु
-	काष्ठा drbd_device *device;
-	काष्ठा drbd_connection *connection;
-	पूर्णांक vnr;
+static void count_objects(struct drbd_resource *resource,
+			  unsigned int *n_devices,
+			  unsigned int *n_connections)
+{
+	struct drbd_device *device;
+	struct drbd_connection *connection;
+	int vnr;
 
 	*n_devices = 0;
 	*n_connections = 0;
 
-	idr_क्रम_each_entry(&resource->devices, device, vnr)
+	idr_for_each_entry(&resource->devices, device, vnr)
 		(*n_devices)++;
-	क्रम_each_connection(connection, resource)
+	for_each_connection(connection, resource)
 		(*n_connections)++;
-पूर्ण
+}
 
-अटल काष्ठा drbd_state_change *alloc_state_change(अचिन्हित पूर्णांक n_devices, अचिन्हित पूर्णांक n_connections, gfp_t gfp)
-अणु
-	काष्ठा drbd_state_change *state_change;
-	अचिन्हित पूर्णांक size, n;
+static struct drbd_state_change *alloc_state_change(unsigned int n_devices, unsigned int n_connections, gfp_t gfp)
+{
+	struct drbd_state_change *state_change;
+	unsigned int size, n;
 
-	size = माप(काष्ठा drbd_state_change) +
-	       n_devices * माप(काष्ठा drbd_device_state_change) +
-	       n_connections * माप(काष्ठा drbd_connection_state_change) +
-	       n_devices * n_connections * माप(काष्ठा drbd_peer_device_state_change);
-	state_change = kदो_स्मृति(size, gfp);
-	अगर (!state_change)
-		वापस शून्य;
+	size = sizeof(struct drbd_state_change) +
+	       n_devices * sizeof(struct drbd_device_state_change) +
+	       n_connections * sizeof(struct drbd_connection_state_change) +
+	       n_devices * n_connections * sizeof(struct drbd_peer_device_state_change);
+	state_change = kmalloc(size, gfp);
+	if (!state_change)
+		return NULL;
 	state_change->n_devices = n_devices;
 	state_change->n_connections = n_connections;
-	state_change->devices = (व्योम *)(state_change + 1);
-	state_change->connections = (व्योम *)&state_change->devices[n_devices];
-	state_change->peer_devices = (व्योम *)&state_change->connections[n_connections];
-	state_change->resource->resource = शून्य;
-	क्रम (n = 0; n < n_devices; n++)
-		state_change->devices[n].device = शून्य;
-	क्रम (n = 0; n < n_connections; n++)
-		state_change->connections[n].connection = शून्य;
-	वापस state_change;
-पूर्ण
+	state_change->devices = (void *)(state_change + 1);
+	state_change->connections = (void *)&state_change->devices[n_devices];
+	state_change->peer_devices = (void *)&state_change->connections[n_connections];
+	state_change->resource->resource = NULL;
+	for (n = 0; n < n_devices; n++)
+		state_change->devices[n].device = NULL;
+	for (n = 0; n < n_connections; n++)
+		state_change->connections[n].connection = NULL;
+	return state_change;
+}
 
-काष्ठा drbd_state_change *remember_old_state(काष्ठा drbd_resource *resource, gfp_t gfp)
-अणु
-	काष्ठा drbd_state_change *state_change;
-	काष्ठा drbd_device *device;
-	अचिन्हित पूर्णांक n_devices;
-	काष्ठा drbd_connection *connection;
-	अचिन्हित पूर्णांक n_connections;
-	पूर्णांक vnr;
+struct drbd_state_change *remember_old_state(struct drbd_resource *resource, gfp_t gfp)
+{
+	struct drbd_state_change *state_change;
+	struct drbd_device *device;
+	unsigned int n_devices;
+	struct drbd_connection *connection;
+	unsigned int n_connections;
+	int vnr;
 
-	काष्ठा drbd_device_state_change *device_state_change;
-	काष्ठा drbd_peer_device_state_change *peer_device_state_change;
-	काष्ठा drbd_connection_state_change *connection_state_change;
+	struct drbd_device_state_change *device_state_change;
+	struct drbd_peer_device_state_change *peer_device_state_change;
+	struct drbd_connection_state_change *connection_state_change;
 
 	/* Caller holds req_lock spinlock.
 	 * No state, no device IDR, no connections lists can change. */
 	count_objects(resource, &n_devices, &n_connections);
 	state_change = alloc_state_change(n_devices, n_connections, gfp);
-	अगर (!state_change)
-		वापस शून्य;
+	if (!state_change)
+		return NULL;
 
 	kref_get(&resource->kref);
 	state_change->resource->resource = resource;
@@ -110,7 +109,7 @@
 	state_change->resource->susp_fen[OLD] = resource->susp_fen;
 
 	connection_state_change = state_change->connections;
-	क्रम_each_connection(connection, resource) अणु
+	for_each_connection(connection, resource) {
 		kref_get(&connection->kref);
 		connection_state_change->connection = connection;
 		connection_state_change->cstate[OLD] =
@@ -118,26 +117,26 @@
 		connection_state_change->peer_role[OLD] =
 			conn_highest_peer(connection);
 		connection_state_change++;
-	पूर्ण
+	}
 
 	device_state_change = state_change->devices;
 	peer_device_state_change = state_change->peer_devices;
-	idr_क्रम_each_entry(&resource->devices, device, vnr) अणु
+	idr_for_each_entry(&resource->devices, device, vnr) {
 		kref_get(&device->kref);
 		device_state_change->device = device;
 		device_state_change->disk_state[OLD] = device->state.disk;
 
-		/* The peer_devices क्रम each device have to be क्रमागतerated in
-		   the order of the connections. We may not use क्रम_each_peer_device() here. */
-		क्रम_each_connection(connection, resource) अणु
-			काष्ठा drbd_peer_device *peer_device;
+		/* The peer_devices for each device have to be enumerated in
+		   the order of the connections. We may not use for_each_peer_device() here. */
+		for_each_connection(connection, resource) {
+			struct drbd_peer_device *peer_device;
 
 			peer_device = conn_peer_device(connection, device->vnr);
 			peer_device_state_change->peer_device = peer_device;
 			peer_device_state_change->disk_state[OLD] =
 				device->state.pdsk;
 			peer_device_state_change->repl_state[OLD] =
-				max_t(क्रमागत drbd_conns,
+				max_t(enum drbd_conns,
 				      C_WF_REPORT_PARAMS, device->state.conn);
 			peer_device_state_change->resync_susp_user[OLD] =
 				device->state.user_isp;
@@ -146,21 +145,21 @@
 			peer_device_state_change->resync_susp_dependency[OLD] =
 				device->state.aftr_isp;
 			peer_device_state_change++;
-		पूर्ण
+		}
 		device_state_change++;
-	पूर्ण
+	}
 
-	वापस state_change;
-पूर्ण
+	return state_change;
+}
 
-अटल व्योम remember_new_state(काष्ठा drbd_state_change *state_change)
-अणु
-	काष्ठा drbd_resource_state_change *resource_state_change;
-	काष्ठा drbd_resource *resource;
-	अचिन्हित पूर्णांक n;
+static void remember_new_state(struct drbd_state_change *state_change)
+{
+	struct drbd_resource_state_change *resource_state_change;
+	struct drbd_resource *resource;
+	unsigned int n;
 
-	अगर (!state_change)
-		वापस;
+	if (!state_change)
+		return;
 
 	resource_state_change = &state_change->resource[0];
 	resource = resource_state_change->resource;
@@ -171,50 +170,50 @@
 	resource_state_change->susp_nod[NEW] = resource->susp_nod;
 	resource_state_change->susp_fen[NEW] = resource->susp_fen;
 
-	क्रम (n = 0; n < state_change->n_devices; n++) अणु
-		काष्ठा drbd_device_state_change *device_state_change =
+	for (n = 0; n < state_change->n_devices; n++) {
+		struct drbd_device_state_change *device_state_change =
 			&state_change->devices[n];
-		काष्ठा drbd_device *device = device_state_change->device;
+		struct drbd_device *device = device_state_change->device;
 
 		device_state_change->disk_state[NEW] = device->state.disk;
-	पूर्ण
+	}
 
-	क्रम (n = 0; n < state_change->n_connections; n++) अणु
-		काष्ठा drbd_connection_state_change *connection_state_change =
+	for (n = 0; n < state_change->n_connections; n++) {
+		struct drbd_connection_state_change *connection_state_change =
 			&state_change->connections[n];
-		काष्ठा drbd_connection *connection =
+		struct drbd_connection *connection =
 			connection_state_change->connection;
 
 		connection_state_change->cstate[NEW] = connection->cstate;
 		connection_state_change->peer_role[NEW] =
 			conn_highest_peer(connection);
-	पूर्ण
+	}
 
-	क्रम (n = 0; n < state_change->n_devices * state_change->n_connections; n++) अणु
-		काष्ठा drbd_peer_device_state_change *peer_device_state_change =
+	for (n = 0; n < state_change->n_devices * state_change->n_connections; n++) {
+		struct drbd_peer_device_state_change *peer_device_state_change =
 			&state_change->peer_devices[n];
-		काष्ठा drbd_device *device =
+		struct drbd_device *device =
 			peer_device_state_change->peer_device->device;
-		जोड़ drbd_dev_state state = device->state;
+		union drbd_dev_state state = device->state;
 
 		peer_device_state_change->disk_state[NEW] = state.pdsk;
 		peer_device_state_change->repl_state[NEW] =
-			max_t(क्रमागत drbd_conns, C_WF_REPORT_PARAMS, state.conn);
+			max_t(enum drbd_conns, C_WF_REPORT_PARAMS, state.conn);
 		peer_device_state_change->resync_susp_user[NEW] =
 			state.user_isp;
 		peer_device_state_change->resync_susp_peer[NEW] =
 			state.peer_isp;
 		peer_device_state_change->resync_susp_dependency[NEW] =
 			state.aftr_isp;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम copy_old_to_new_state_change(काष्ठा drbd_state_change *state_change)
-अणु
-	काष्ठा drbd_resource_state_change *resource_state_change = &state_change->resource[0];
-	अचिन्हित पूर्णांक n_device, n_connection, n_peer_device, n_peer_devices;
+void copy_old_to_new_state_change(struct drbd_state_change *state_change)
+{
+	struct drbd_resource_state_change *resource_state_change = &state_change->resource[0];
+	unsigned int n_device, n_connection, n_peer_device, n_peer_devices;
 
-#घोषणा OLD_TO_NEW(x) \
+#define OLD_TO_NEW(x) \
 	(x[NEW] = x[OLD])
 
 	OLD_TO_NEW(resource_state_change->role);
@@ -222,24 +221,24 @@
 	OLD_TO_NEW(resource_state_change->susp_nod);
 	OLD_TO_NEW(resource_state_change->susp_fen);
 
-	क्रम (n_connection = 0; n_connection < state_change->n_connections; n_connection++) अणु
-		काष्ठा drbd_connection_state_change *connection_state_change =
+	for (n_connection = 0; n_connection < state_change->n_connections; n_connection++) {
+		struct drbd_connection_state_change *connection_state_change =
 				&state_change->connections[n_connection];
 
 		OLD_TO_NEW(connection_state_change->peer_role);
 		OLD_TO_NEW(connection_state_change->cstate);
-	पूर्ण
+	}
 
-	क्रम (n_device = 0; n_device < state_change->n_devices; n_device++) अणु
-		काष्ठा drbd_device_state_change *device_state_change =
+	for (n_device = 0; n_device < state_change->n_devices; n_device++) {
+		struct drbd_device_state_change *device_state_change =
 			&state_change->devices[n_device];
 
 		OLD_TO_NEW(device_state_change->disk_state);
-	पूर्ण
+	}
 
 	n_peer_devices = state_change->n_devices * state_change->n_connections;
-	क्रम (n_peer_device = 0; n_peer_device < n_peer_devices; n_peer_device++) अणु
-		काष्ठा drbd_peer_device_state_change *p =
+	for (n_peer_device = 0; n_peer_device < n_peer_devices; n_peer_device++) {
+		struct drbd_peer_device_state_change *p =
 			&state_change->peer_devices[n_peer_device];
 
 		OLD_TO_NEW(p->disk_state);
@@ -247,228 +246,228 @@
 		OLD_TO_NEW(p->resync_susp_user);
 		OLD_TO_NEW(p->resync_susp_peer);
 		OLD_TO_NEW(p->resync_susp_dependency);
-	पूर्ण
+	}
 
-#अघोषित OLD_TO_NEW
-पूर्ण
+#undef OLD_TO_NEW
+}
 
-व्योम क्रमget_state_change(काष्ठा drbd_state_change *state_change)
-अणु
-	अचिन्हित पूर्णांक n;
+void forget_state_change(struct drbd_state_change *state_change)
+{
+	unsigned int n;
 
-	अगर (!state_change)
-		वापस;
+	if (!state_change)
+		return;
 
-	अगर (state_change->resource->resource)
+	if (state_change->resource->resource)
 		kref_put(&state_change->resource->resource->kref, drbd_destroy_resource);
-	क्रम (n = 0; n < state_change->n_devices; n++) अणु
-		काष्ठा drbd_device *device = state_change->devices[n].device;
+	for (n = 0; n < state_change->n_devices; n++) {
+		struct drbd_device *device = state_change->devices[n].device;
 
-		अगर (device)
+		if (device)
 			kref_put(&device->kref, drbd_destroy_device);
-	पूर्ण
-	क्रम (n = 0; n < state_change->n_connections; n++) अणु
-		काष्ठा drbd_connection *connection =
+	}
+	for (n = 0; n < state_change->n_connections; n++) {
+		struct drbd_connection *connection =
 			state_change->connections[n].connection;
 
-		अगर (connection)
+		if (connection)
 			kref_put(&connection->kref, drbd_destroy_connection);
-	पूर्ण
-	kमुक्त(state_change);
-पूर्ण
+	}
+	kfree(state_change);
+}
 
-अटल पूर्णांक w_after_state_ch(काष्ठा drbd_work *w, पूर्णांक unused);
-अटल व्योम after_state_ch(काष्ठा drbd_device *device, जोड़ drbd_state os,
-			   जोड़ drbd_state ns, क्रमागत chg_state_flags flags,
-			   काष्ठा drbd_state_change *);
-अटल क्रमागत drbd_state_rv is_valid_state(काष्ठा drbd_device *, जोड़ drbd_state);
-अटल क्रमागत drbd_state_rv is_valid_soft_transition(जोड़ drbd_state, जोड़ drbd_state, काष्ठा drbd_connection *);
-अटल क्रमागत drbd_state_rv is_valid_transition(जोड़ drbd_state os, जोड़ drbd_state ns);
-अटल जोड़ drbd_state sanitize_state(काष्ठा drbd_device *device, जोड़ drbd_state os,
-				       जोड़ drbd_state ns, क्रमागत sanitize_state_warnings *warn);
+static int w_after_state_ch(struct drbd_work *w, int unused);
+static void after_state_ch(struct drbd_device *device, union drbd_state os,
+			   union drbd_state ns, enum chg_state_flags flags,
+			   struct drbd_state_change *);
+static enum drbd_state_rv is_valid_state(struct drbd_device *, union drbd_state);
+static enum drbd_state_rv is_valid_soft_transition(union drbd_state, union drbd_state, struct drbd_connection *);
+static enum drbd_state_rv is_valid_transition(union drbd_state os, union drbd_state ns);
+static union drbd_state sanitize_state(struct drbd_device *device, union drbd_state os,
+				       union drbd_state ns, enum sanitize_state_warnings *warn);
 
-अटल अंतरभूत bool is_susp(जोड़ drbd_state s)
-अणु
-        वापस s.susp || s.susp_nod || s.susp_fen;
-पूर्ण
+static inline bool is_susp(union drbd_state s)
+{
+        return s.susp || s.susp_nod || s.susp_fen;
+}
 
-bool conn_all_vols_unconf(काष्ठा drbd_connection *connection)
-अणु
-	काष्ठा drbd_peer_device *peer_device;
+bool conn_all_vols_unconf(struct drbd_connection *connection)
+{
+	struct drbd_peer_device *peer_device;
 	bool rv = true;
-	पूर्णांक vnr;
+	int vnr;
 
-	rcu_पढ़ो_lock();
-	idr_क्रम_each_entry(&connection->peer_devices, peer_device, vnr) अणु
-		काष्ठा drbd_device *device = peer_device->device;
-		अगर (device->state.disk != D_DISKLESS ||
+	rcu_read_lock();
+	idr_for_each_entry(&connection->peer_devices, peer_device, vnr) {
+		struct drbd_device *device = peer_device->device;
+		if (device->state.disk != D_DISKLESS ||
 		    device->state.conn != C_STANDALONE ||
-		    device->state.role != R_SECONDARY) अणु
+		    device->state.role != R_SECONDARY) {
 			rv = false;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	rcu_पढ़ो_unlock();
+			break;
+		}
+	}
+	rcu_read_unlock();
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-/* Unक्रमtunately the states where not correctly ordered, when
-   they where defined. thereक्रमe can not use max_t() here. */
-अटल क्रमागत drbd_role max_role(क्रमागत drbd_role role1, क्रमागत drbd_role role2)
-अणु
-	अगर (role1 == R_PRIMARY || role2 == R_PRIMARY)
-		वापस R_PRIMARY;
-	अगर (role1 == R_SECONDARY || role2 == R_SECONDARY)
-		वापस R_SECONDARY;
-	वापस R_UNKNOWN;
-पूर्ण
+/* Unfortunately the states where not correctly ordered, when
+   they where defined. therefore can not use max_t() here. */
+static enum drbd_role max_role(enum drbd_role role1, enum drbd_role role2)
+{
+	if (role1 == R_PRIMARY || role2 == R_PRIMARY)
+		return R_PRIMARY;
+	if (role1 == R_SECONDARY || role2 == R_SECONDARY)
+		return R_SECONDARY;
+	return R_UNKNOWN;
+}
 
-अटल क्रमागत drbd_role min_role(क्रमागत drbd_role role1, क्रमागत drbd_role role2)
-अणु
-	अगर (role1 == R_UNKNOWN || role2 == R_UNKNOWN)
-		वापस R_UNKNOWN;
-	अगर (role1 == R_SECONDARY || role2 == R_SECONDARY)
-		वापस R_SECONDARY;
-	वापस R_PRIMARY;
-पूर्ण
+static enum drbd_role min_role(enum drbd_role role1, enum drbd_role role2)
+{
+	if (role1 == R_UNKNOWN || role2 == R_UNKNOWN)
+		return R_UNKNOWN;
+	if (role1 == R_SECONDARY || role2 == R_SECONDARY)
+		return R_SECONDARY;
+	return R_PRIMARY;
+}
 
-क्रमागत drbd_role conn_highest_role(काष्ठा drbd_connection *connection)
-अणु
-	क्रमागत drbd_role role = R_SECONDARY;
-	काष्ठा drbd_peer_device *peer_device;
-	पूर्णांक vnr;
+enum drbd_role conn_highest_role(struct drbd_connection *connection)
+{
+	enum drbd_role role = R_SECONDARY;
+	struct drbd_peer_device *peer_device;
+	int vnr;
 
-	rcu_पढ़ो_lock();
-	idr_क्रम_each_entry(&connection->peer_devices, peer_device, vnr) अणु
-		काष्ठा drbd_device *device = peer_device->device;
+	rcu_read_lock();
+	idr_for_each_entry(&connection->peer_devices, peer_device, vnr) {
+		struct drbd_device *device = peer_device->device;
 		role = max_role(role, device->state.role);
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	}
+	rcu_read_unlock();
 
-	वापस role;
-पूर्ण
+	return role;
+}
 
-क्रमागत drbd_role conn_highest_peer(काष्ठा drbd_connection *connection)
-अणु
-	क्रमागत drbd_role peer = R_UNKNOWN;
-	काष्ठा drbd_peer_device *peer_device;
-	पूर्णांक vnr;
+enum drbd_role conn_highest_peer(struct drbd_connection *connection)
+{
+	enum drbd_role peer = R_UNKNOWN;
+	struct drbd_peer_device *peer_device;
+	int vnr;
 
-	rcu_पढ़ो_lock();
-	idr_क्रम_each_entry(&connection->peer_devices, peer_device, vnr) अणु
-		काष्ठा drbd_device *device = peer_device->device;
+	rcu_read_lock();
+	idr_for_each_entry(&connection->peer_devices, peer_device, vnr) {
+		struct drbd_device *device = peer_device->device;
 		peer = max_role(peer, device->state.peer);
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	}
+	rcu_read_unlock();
 
-	वापस peer;
-पूर्ण
+	return peer;
+}
 
-क्रमागत drbd_disk_state conn_highest_disk(काष्ठा drbd_connection *connection)
-अणु
-	क्रमागत drbd_disk_state disk_state = D_DISKLESS;
-	काष्ठा drbd_peer_device *peer_device;
-	पूर्णांक vnr;
+enum drbd_disk_state conn_highest_disk(struct drbd_connection *connection)
+{
+	enum drbd_disk_state disk_state = D_DISKLESS;
+	struct drbd_peer_device *peer_device;
+	int vnr;
 
-	rcu_पढ़ो_lock();
-	idr_क्रम_each_entry(&connection->peer_devices, peer_device, vnr) अणु
-		काष्ठा drbd_device *device = peer_device->device;
-		disk_state = max_t(क्रमागत drbd_disk_state, disk_state, device->state.disk);
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	rcu_read_lock();
+	idr_for_each_entry(&connection->peer_devices, peer_device, vnr) {
+		struct drbd_device *device = peer_device->device;
+		disk_state = max_t(enum drbd_disk_state, disk_state, device->state.disk);
+	}
+	rcu_read_unlock();
 
-	वापस disk_state;
-पूर्ण
+	return disk_state;
+}
 
-क्रमागत drbd_disk_state conn_lowest_disk(काष्ठा drbd_connection *connection)
-अणु
-	क्रमागत drbd_disk_state disk_state = D_MASK;
-	काष्ठा drbd_peer_device *peer_device;
-	पूर्णांक vnr;
+enum drbd_disk_state conn_lowest_disk(struct drbd_connection *connection)
+{
+	enum drbd_disk_state disk_state = D_MASK;
+	struct drbd_peer_device *peer_device;
+	int vnr;
 
-	rcu_पढ़ो_lock();
-	idr_क्रम_each_entry(&connection->peer_devices, peer_device, vnr) अणु
-		काष्ठा drbd_device *device = peer_device->device;
-		disk_state = min_t(क्रमागत drbd_disk_state, disk_state, device->state.disk);
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	rcu_read_lock();
+	idr_for_each_entry(&connection->peer_devices, peer_device, vnr) {
+		struct drbd_device *device = peer_device->device;
+		disk_state = min_t(enum drbd_disk_state, disk_state, device->state.disk);
+	}
+	rcu_read_unlock();
 
-	वापस disk_state;
-पूर्ण
+	return disk_state;
+}
 
-क्रमागत drbd_disk_state conn_highest_pdsk(काष्ठा drbd_connection *connection)
-अणु
-	क्रमागत drbd_disk_state disk_state = D_DISKLESS;
-	काष्ठा drbd_peer_device *peer_device;
-	पूर्णांक vnr;
+enum drbd_disk_state conn_highest_pdsk(struct drbd_connection *connection)
+{
+	enum drbd_disk_state disk_state = D_DISKLESS;
+	struct drbd_peer_device *peer_device;
+	int vnr;
 
-	rcu_पढ़ो_lock();
-	idr_क्रम_each_entry(&connection->peer_devices, peer_device, vnr) अणु
-		काष्ठा drbd_device *device = peer_device->device;
-		disk_state = max_t(क्रमागत drbd_disk_state, disk_state, device->state.pdsk);
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	rcu_read_lock();
+	idr_for_each_entry(&connection->peer_devices, peer_device, vnr) {
+		struct drbd_device *device = peer_device->device;
+		disk_state = max_t(enum drbd_disk_state, disk_state, device->state.pdsk);
+	}
+	rcu_read_unlock();
 
-	वापस disk_state;
-पूर्ण
+	return disk_state;
+}
 
-क्रमागत drbd_conns conn_lowest_conn(काष्ठा drbd_connection *connection)
-अणु
-	क्रमागत drbd_conns conn = C_MASK;
-	काष्ठा drbd_peer_device *peer_device;
-	पूर्णांक vnr;
+enum drbd_conns conn_lowest_conn(struct drbd_connection *connection)
+{
+	enum drbd_conns conn = C_MASK;
+	struct drbd_peer_device *peer_device;
+	int vnr;
 
-	rcu_पढ़ो_lock();
-	idr_क्रम_each_entry(&connection->peer_devices, peer_device, vnr) अणु
-		काष्ठा drbd_device *device = peer_device->device;
-		conn = min_t(क्रमागत drbd_conns, conn, device->state.conn);
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	rcu_read_lock();
+	idr_for_each_entry(&connection->peer_devices, peer_device, vnr) {
+		struct drbd_device *device = peer_device->device;
+		conn = min_t(enum drbd_conns, conn, device->state.conn);
+	}
+	rcu_read_unlock();
 
-	वापस conn;
-पूर्ण
+	return conn;
+}
 
-अटल bool no_peer_wf_report_params(काष्ठा drbd_connection *connection)
-अणु
-	काष्ठा drbd_peer_device *peer_device;
-	पूर्णांक vnr;
+static bool no_peer_wf_report_params(struct drbd_connection *connection)
+{
+	struct drbd_peer_device *peer_device;
+	int vnr;
 	bool rv = true;
 
-	rcu_पढ़ो_lock();
-	idr_क्रम_each_entry(&connection->peer_devices, peer_device, vnr)
-		अगर (peer_device->device->state.conn == C_WF_REPORT_PARAMS) अणु
+	rcu_read_lock();
+	idr_for_each_entry(&connection->peer_devices, peer_device, vnr)
+		if (peer_device->device->state.conn == C_WF_REPORT_PARAMS) {
 			rv = false;
-			अवरोध;
-		पूर्ण
-	rcu_पढ़ो_unlock();
+			break;
+		}
+	rcu_read_unlock();
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-अटल व्योम wake_up_all_devices(काष्ठा drbd_connection *connection)
-अणु
-	काष्ठा drbd_peer_device *peer_device;
-	पूर्णांक vnr;
+static void wake_up_all_devices(struct drbd_connection *connection)
+{
+	struct drbd_peer_device *peer_device;
+	int vnr;
 
-	rcu_पढ़ो_lock();
-	idr_क्रम_each_entry(&connection->peer_devices, peer_device, vnr)
-		wake_up(&peer_device->device->state_रुको);
-	rcu_पढ़ो_unlock();
+	rcu_read_lock();
+	idr_for_each_entry(&connection->peer_devices, peer_device, vnr)
+		wake_up(&peer_device->device->state_wait);
+	rcu_read_unlock();
 
-पूर्ण
+}
 
 
 /**
- * cl_wide_st_chg() - true अगर the state change is a cluster wide one
+ * cl_wide_st_chg() - true if the state change is a cluster wide one
  * @device:	DRBD device.
  * @os:		old (current) state.
  * @ns:		new (wanted) state.
  */
-अटल पूर्णांक cl_wide_st_chg(काष्ठा drbd_device *device,
-			  जोड़ drbd_state os, जोड़ drbd_state ns)
-अणु
-	वापस (os.conn >= C_CONNECTED && ns.conn >= C_CONNECTED &&
+static int cl_wide_st_chg(struct drbd_device *device,
+			  union drbd_state os, union drbd_state ns)
+{
+	return (os.conn >= C_CONNECTED && ns.conn >= C_CONNECTED &&
 		 ((os.role != R_PRIMARY && ns.role == R_PRIMARY) ||
 		  (os.conn != C_STARTING_SYNC_T && ns.conn == C_STARTING_SYNC_T) ||
 		  (os.conn != C_STARTING_SYNC_S && ns.conn == C_STARTING_SYNC_S) ||
@@ -476,82 +475,82 @@ bool conn_all_vols_unconf(काष्ठा drbd_connection *connection)
 		(os.conn >= C_CONNECTED && ns.conn == C_DISCONNECTING) ||
 		(os.conn == C_CONNECTED && ns.conn == C_VERIFY_S) ||
 		(os.conn == C_CONNECTED && ns.conn == C_WF_REPORT_PARAMS);
-पूर्ण
+}
 
-अटल जोड़ drbd_state
-apply_mask_val(जोड़ drbd_state os, जोड़ drbd_state mask, जोड़ drbd_state val)
-अणु
-	जोड़ drbd_state ns;
+static union drbd_state
+apply_mask_val(union drbd_state os, union drbd_state mask, union drbd_state val)
+{
+	union drbd_state ns;
 	ns.i = (os.i & ~mask.i) | val.i;
-	वापस ns;
-पूर्ण
+	return ns;
+}
 
-क्रमागत drbd_state_rv
-drbd_change_state(काष्ठा drbd_device *device, क्रमागत chg_state_flags f,
-		  जोड़ drbd_state mask, जोड़ drbd_state val)
-अणु
-	अचिन्हित दीर्घ flags;
-	जोड़ drbd_state ns;
-	क्रमागत drbd_state_rv rv;
+enum drbd_state_rv
+drbd_change_state(struct drbd_device *device, enum chg_state_flags f,
+		  union drbd_state mask, union drbd_state val)
+{
+	unsigned long flags;
+	union drbd_state ns;
+	enum drbd_state_rv rv;
 
 	spin_lock_irqsave(&device->resource->req_lock, flags);
-	ns = apply_mask_val(drbd_पढ़ो_state(device), mask, val);
-	rv = _drbd_set_state(device, ns, f, शून्य);
+	ns = apply_mask_val(drbd_read_state(device), mask, val);
+	rv = _drbd_set_state(device, ns, f, NULL);
 	spin_unlock_irqrestore(&device->resource->req_lock, flags);
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
 /**
- * drbd_क्रमce_state() - Impose a change which happens outside our control on our state
+ * drbd_force_state() - Impose a change which happens outside our control on our state
  * @device:	DRBD device.
  * @mask:	mask of state bits to change.
  * @val:	value of new state bits.
  */
-व्योम drbd_क्रमce_state(काष्ठा drbd_device *device,
-	जोड़ drbd_state mask, जोड़ drbd_state val)
-अणु
+void drbd_force_state(struct drbd_device *device,
+	union drbd_state mask, union drbd_state val)
+{
 	drbd_change_state(device, CS_HARD, mask, val);
-पूर्ण
+}
 
-अटल क्रमागत drbd_state_rv
-_req_st_cond(काष्ठा drbd_device *device, जोड़ drbd_state mask,
-	     जोड़ drbd_state val)
-अणु
-	जोड़ drbd_state os, ns;
-	अचिन्हित दीर्घ flags;
-	क्रमागत drbd_state_rv rv;
+static enum drbd_state_rv
+_req_st_cond(struct drbd_device *device, union drbd_state mask,
+	     union drbd_state val)
+{
+	union drbd_state os, ns;
+	unsigned long flags;
+	enum drbd_state_rv rv;
 
-	अगर (test_and_clear_bit(CL_ST_CHG_SUCCESS, &device->flags))
-		वापस SS_CW_SUCCESS;
+	if (test_and_clear_bit(CL_ST_CHG_SUCCESS, &device->flags))
+		return SS_CW_SUCCESS;
 
-	अगर (test_and_clear_bit(CL_ST_CHG_FAIL, &device->flags))
-		वापस SS_CW_FAILED_BY_PEER;
+	if (test_and_clear_bit(CL_ST_CHG_FAIL, &device->flags))
+		return SS_CW_FAILED_BY_PEER;
 
 	spin_lock_irqsave(&device->resource->req_lock, flags);
-	os = drbd_पढ़ो_state(device);
-	ns = sanitize_state(device, os, apply_mask_val(os, mask, val), शून्य);
+	os = drbd_read_state(device);
+	ns = sanitize_state(device, os, apply_mask_val(os, mask, val), NULL);
 	rv = is_valid_transition(os, ns);
-	अगर (rv >= SS_SUCCESS)
-		rv = SS_UNKNOWN_ERROR;  /* cont रुकोing, otherwise fail. */
+	if (rv >= SS_SUCCESS)
+		rv = SS_UNKNOWN_ERROR;  /* cont waiting, otherwise fail. */
 
-	अगर (!cl_wide_st_chg(device, os, ns))
+	if (!cl_wide_st_chg(device, os, ns))
 		rv = SS_CW_NO_NEED;
-	अगर (rv == SS_UNKNOWN_ERROR) अणु
+	if (rv == SS_UNKNOWN_ERROR) {
 		rv = is_valid_state(device, ns);
-		अगर (rv >= SS_SUCCESS) अणु
+		if (rv >= SS_SUCCESS) {
 			rv = is_valid_soft_transition(os, ns, first_peer_device(device)->connection);
-			अगर (rv >= SS_SUCCESS)
-				rv = SS_UNKNOWN_ERROR; /* cont रुकोing, otherwise fail. */
-		पूर्ण
-	पूर्ण
+			if (rv >= SS_SUCCESS)
+				rv = SS_UNKNOWN_ERROR; /* cont waiting, otherwise fail. */
+		}
+	}
 	spin_unlock_irqrestore(&device->resource->req_lock, flags);
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
 /**
- * drbd_req_state() - Perक्रमm an eventually cluster wide state change
+ * drbd_req_state() - Perform an eventually cluster wide state change
  * @device:	DRBD device.
  * @mask:	mask of state bits to change.
  * @val:	value of new state bits.
@@ -560,81 +559,81 @@ _req_st_cond(काष्ठा drbd_device *device, जोड़ drbd_state mas
  * Should not be called directly, use drbd_request_state() or
  * _drbd_request_state().
  */
-अटल क्रमागत drbd_state_rv
-drbd_req_state(काष्ठा drbd_device *device, जोड़ drbd_state mask,
-	       जोड़ drbd_state val, क्रमागत chg_state_flags f)
-अणु
-	काष्ठा completion करोne;
-	अचिन्हित दीर्घ flags;
-	जोड़ drbd_state os, ns;
-	क्रमागत drbd_state_rv rv;
-	व्योम *buffer = शून्य;
+static enum drbd_state_rv
+drbd_req_state(struct drbd_device *device, union drbd_state mask,
+	       union drbd_state val, enum chg_state_flags f)
+{
+	struct completion done;
+	unsigned long flags;
+	union drbd_state os, ns;
+	enum drbd_state_rv rv;
+	void *buffer = NULL;
 
-	init_completion(&करोne);
+	init_completion(&done);
 
-	अगर (f & CS_SERIALIZE)
+	if (f & CS_SERIALIZE)
 		mutex_lock(device->state_mutex);
-	अगर (f & CS_INHIBIT_MD_IO)
+	if (f & CS_INHIBIT_MD_IO)
 		buffer = drbd_md_get_buffer(device, __func__);
 
 	spin_lock_irqsave(&device->resource->req_lock, flags);
-	os = drbd_पढ़ो_state(device);
-	ns = sanitize_state(device, os, apply_mask_val(os, mask, val), शून्य);
+	os = drbd_read_state(device);
+	ns = sanitize_state(device, os, apply_mask_val(os, mask, val), NULL);
 	rv = is_valid_transition(os, ns);
-	अगर (rv < SS_SUCCESS) अणु
+	if (rv < SS_SUCCESS) {
 		spin_unlock_irqrestore(&device->resource->req_lock, flags);
-		जाओ पात;
-	पूर्ण
+		goto abort;
+	}
 
-	अगर (cl_wide_st_chg(device, os, ns)) अणु
+	if (cl_wide_st_chg(device, os, ns)) {
 		rv = is_valid_state(device, ns);
-		अगर (rv == SS_SUCCESS)
+		if (rv == SS_SUCCESS)
 			rv = is_valid_soft_transition(os, ns, first_peer_device(device)->connection);
 		spin_unlock_irqrestore(&device->resource->req_lock, flags);
 
-		अगर (rv < SS_SUCCESS) अणु
-			अगर (f & CS_VERBOSE)
-				prपूर्णांक_st_err(device, os, ns, rv);
-			जाओ पात;
-		पूर्ण
+		if (rv < SS_SUCCESS) {
+			if (f & CS_VERBOSE)
+				print_st_err(device, os, ns, rv);
+			goto abort;
+		}
 
-		अगर (drbd_send_state_req(first_peer_device(device), mask, val)) अणु
+		if (drbd_send_state_req(first_peer_device(device), mask, val)) {
 			rv = SS_CW_FAILED_BY_PEER;
-			अगर (f & CS_VERBOSE)
-				prपूर्णांक_st_err(device, os, ns, rv);
-			जाओ पात;
-		पूर्ण
+			if (f & CS_VERBOSE)
+				print_st_err(device, os, ns, rv);
+			goto abort;
+		}
 
-		रुको_event(device->state_रुको,
+		wait_event(device->state_wait,
 			(rv = _req_st_cond(device, mask, val)));
 
-		अगर (rv < SS_SUCCESS) अणु
-			अगर (f & CS_VERBOSE)
-				prपूर्णांक_st_err(device, os, ns, rv);
-			जाओ पात;
-		पूर्ण
+		if (rv < SS_SUCCESS) {
+			if (f & CS_VERBOSE)
+				print_st_err(device, os, ns, rv);
+			goto abort;
+		}
 		spin_lock_irqsave(&device->resource->req_lock, flags);
-		ns = apply_mask_val(drbd_पढ़ो_state(device), mask, val);
-		rv = _drbd_set_state(device, ns, f, &करोne);
-	पूर्ण अन्यथा अणु
-		rv = _drbd_set_state(device, ns, f, &करोne);
-	पूर्ण
+		ns = apply_mask_val(drbd_read_state(device), mask, val);
+		rv = _drbd_set_state(device, ns, f, &done);
+	} else {
+		rv = _drbd_set_state(device, ns, f, &done);
+	}
 
 	spin_unlock_irqrestore(&device->resource->req_lock, flags);
 
-	अगर (f & CS_WAIT_COMPLETE && rv == SS_SUCCESS) अणु
+	if (f & CS_WAIT_COMPLETE && rv == SS_SUCCESS) {
 		D_ASSERT(device, current != first_peer_device(device)->connection->worker.task);
-		रुको_क्रम_completion(&करोne);
-	पूर्ण
+		wait_for_completion(&done);
+	}
 
-पात:
-	अगर (buffer)
+abort:
+	if (buffer)
 		drbd_md_put_buffer(device);
-	अगर (f & CS_SERIALIZE)
+	if (f & CS_SERIALIZE)
 		mutex_unlock(device->state_mutex);
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
 /**
  * _drbd_request_state() - Request a state change (with flags)
@@ -646,75 +645,75 @@ drbd_req_state(काष्ठा drbd_device *device, जोड़ drbd_state m
  * Cousin of drbd_request_state(), useful with the CS_WAIT_COMPLETE
  * flag, or when logging of failed state change requests is not desired.
  */
-क्रमागत drbd_state_rv
-_drbd_request_state(काष्ठा drbd_device *device, जोड़ drbd_state mask,
-		    जोड़ drbd_state val, क्रमागत chg_state_flags f)
-अणु
-	क्रमागत drbd_state_rv rv;
+enum drbd_state_rv
+_drbd_request_state(struct drbd_device *device, union drbd_state mask,
+		    union drbd_state val, enum chg_state_flags f)
+{
+	enum drbd_state_rv rv;
 
-	रुको_event(device->state_रुको,
+	wait_event(device->state_wait,
 		   (rv = drbd_req_state(device, mask, val, f)) != SS_IN_TRANSIENT_STATE);
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
 /*
- * We grab drbd_md_get_buffer(), because we करोn't want to "fail" the disk जबतक
- * there is IO in-flight: the transition पूर्णांकo D_FAILED क्रम detach purposes
- * may get misपूर्णांकerpreted as actual IO error in a confused endio function.
+ * We grab drbd_md_get_buffer(), because we don't want to "fail" the disk while
+ * there is IO in-flight: the transition into D_FAILED for detach purposes
+ * may get misinterpreted as actual IO error in a confused endio function.
  *
- * We wrap it all पूर्णांकo रुको_event(), to retry in हाल the drbd_req_state()
- * वापसs SS_IN_TRANSIENT_STATE.
+ * We wrap it all into wait_event(), to retry in case the drbd_req_state()
+ * returns SS_IN_TRANSIENT_STATE.
  *
- * To aव्योम potential deadlock with e.g. the receiver thपढ़ो trying to grab
- * drbd_md_get_buffer() जबतक trying to get out of the "transient state", we
- * need to grab and release the meta data buffer inside of that रुको_event loop.
+ * To avoid potential deadlock with e.g. the receiver thread trying to grab
+ * drbd_md_get_buffer() while trying to get out of the "transient state", we
+ * need to grab and release the meta data buffer inside of that wait_event loop.
  */
-अटल क्रमागत drbd_state_rv
-request_detach(काष्ठा drbd_device *device)
-अणु
-	वापस drbd_req_state(device, NS(disk, D_FAILED),
+static enum drbd_state_rv
+request_detach(struct drbd_device *device)
+{
+	return drbd_req_state(device, NS(disk, D_FAILED),
 			CS_VERBOSE | CS_ORDERED | CS_INHIBIT_MD_IO);
-पूर्ण
+}
 
-पूर्णांक drbd_request_detach_पूर्णांकerruptible(काष्ठा drbd_device *device)
-अणु
-	पूर्णांक ret, rv;
+int drbd_request_detach_interruptible(struct drbd_device *device)
+{
+	int ret, rv;
 
 	drbd_suspend_io(device); /* so no-one is stuck in drbd_al_begin_io */
-	रुको_event_पूर्णांकerruptible(device->state_रुको,
+	wait_event_interruptible(device->state_wait,
 		(rv = request_detach(device)) != SS_IN_TRANSIENT_STATE);
 	drbd_resume_io(device);
 
-	ret = रुको_event_पूर्णांकerruptible(device->misc_रुको,
+	ret = wait_event_interruptible(device->misc_wait,
 			device->state.disk != D_FAILED);
 
-	अगर (rv == SS_IS_DISKLESS)
+	if (rv == SS_IS_DISKLESS)
 		rv = SS_NOTHING_TO_DO;
-	अगर (ret)
+	if (ret)
 		rv = ERR_INTR;
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-क्रमागत drbd_state_rv
-_drbd_request_state_holding_state_mutex(काष्ठा drbd_device *device, जोड़ drbd_state mask,
-		    जोड़ drbd_state val, क्रमागत chg_state_flags f)
-अणु
-	क्रमागत drbd_state_rv rv;
+enum drbd_state_rv
+_drbd_request_state_holding_state_mutex(struct drbd_device *device, union drbd_state mask,
+		    union drbd_state val, enum chg_state_flags f)
+{
+	enum drbd_state_rv rv;
 
 	BUG_ON(f & CS_SERIALIZE);
 
-	रुको_event_cmd(device->state_रुको,
+	wait_event_cmd(device->state_wait,
 		       (rv = drbd_req_state(device, mask, val, f)) != SS_IN_TRANSIENT_STATE,
 		       mutex_unlock(device->state_mutex),
 		       mutex_lock(device->state_mutex));
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-अटल व्योम prपूर्णांक_st(काष्ठा drbd_device *device, स्थिर अक्षर *name, जोड़ drbd_state ns)
-अणु
+static void print_st(struct drbd_device *device, const char *name, union drbd_state ns)
+{
 	drbd_err(device, " %s = { cs:%s ro:%s/%s ds:%s/%s %c%c%c%c%c%c }\n",
 	    name,
 	    drbd_conn_str(ns.conn),
@@ -729,213 +728,213 @@ _drbd_request_state_holding_state_mutex(काष्ठा drbd_device *device, 
 	    ns.susp_fen ? 'F' : '-',
 	    ns.susp_nod ? 'N' : '-'
 	    );
-पूर्ण
+}
 
-व्योम prपूर्णांक_st_err(काष्ठा drbd_device *device, जोड़ drbd_state os,
-	          जोड़ drbd_state ns, क्रमागत drbd_state_rv err)
-अणु
-	अगर (err == SS_IN_TRANSIENT_STATE)
-		वापस;
+void print_st_err(struct drbd_device *device, union drbd_state os,
+	          union drbd_state ns, enum drbd_state_rv err)
+{
+	if (err == SS_IN_TRANSIENT_STATE)
+		return;
 	drbd_err(device, "State change failed: %s\n", drbd_set_st_err_str(err));
-	prपूर्णांक_st(device, " state", os);
-	prपूर्णांक_st(device, "wanted", ns);
-पूर्ण
+	print_st(device, " state", os);
+	print_st(device, "wanted", ns);
+}
 
-अटल दीर्घ prपूर्णांक_state_change(अक्षर *pb, जोड़ drbd_state os, जोड़ drbd_state ns,
-			       क्रमागत chg_state_flags flags)
-अणु
-	अक्षर *pbp;
+static long print_state_change(char *pb, union drbd_state os, union drbd_state ns,
+			       enum chg_state_flags flags)
+{
+	char *pbp;
 	pbp = pb;
 	*pbp = 0;
 
-	अगर (ns.role != os.role && flags & CS_DC_ROLE)
-		pbp += प्र_लिखो(pbp, "role( %s -> %s ) ",
+	if (ns.role != os.role && flags & CS_DC_ROLE)
+		pbp += sprintf(pbp, "role( %s -> %s ) ",
 			       drbd_role_str(os.role),
 			       drbd_role_str(ns.role));
-	अगर (ns.peer != os.peer && flags & CS_DC_PEER)
-		pbp += प्र_लिखो(pbp, "peer( %s -> %s ) ",
+	if (ns.peer != os.peer && flags & CS_DC_PEER)
+		pbp += sprintf(pbp, "peer( %s -> %s ) ",
 			       drbd_role_str(os.peer),
 			       drbd_role_str(ns.peer));
-	अगर (ns.conn != os.conn && flags & CS_DC_CONN)
-		pbp += प्र_लिखो(pbp, "conn( %s -> %s ) ",
+	if (ns.conn != os.conn && flags & CS_DC_CONN)
+		pbp += sprintf(pbp, "conn( %s -> %s ) ",
 			       drbd_conn_str(os.conn),
 			       drbd_conn_str(ns.conn));
-	अगर (ns.disk != os.disk && flags & CS_DC_DISK)
-		pbp += प्र_लिखो(pbp, "disk( %s -> %s ) ",
+	if (ns.disk != os.disk && flags & CS_DC_DISK)
+		pbp += sprintf(pbp, "disk( %s -> %s ) ",
 			       drbd_disk_str(os.disk),
 			       drbd_disk_str(ns.disk));
-	अगर (ns.pdsk != os.pdsk && flags & CS_DC_PDSK)
-		pbp += प्र_लिखो(pbp, "pdsk( %s -> %s ) ",
+	if (ns.pdsk != os.pdsk && flags & CS_DC_PDSK)
+		pbp += sprintf(pbp, "pdsk( %s -> %s ) ",
 			       drbd_disk_str(os.pdsk),
 			       drbd_disk_str(ns.pdsk));
 
-	वापस pbp - pb;
-पूर्ण
+	return pbp - pb;
+}
 
-अटल व्योम drbd_pr_state_change(काष्ठा drbd_device *device, जोड़ drbd_state os, जोड़ drbd_state ns,
-				 क्रमागत chg_state_flags flags)
-अणु
-	अक्षर pb[300];
-	अक्षर *pbp = pb;
+static void drbd_pr_state_change(struct drbd_device *device, union drbd_state os, union drbd_state ns,
+				 enum chg_state_flags flags)
+{
+	char pb[300];
+	char *pbp = pb;
 
-	pbp += prपूर्णांक_state_change(pbp, os, ns, flags ^ CS_DC_MASK);
+	pbp += print_state_change(pbp, os, ns, flags ^ CS_DC_MASK);
 
-	अगर (ns.aftr_isp != os.aftr_isp)
-		pbp += प्र_लिखो(pbp, "aftr_isp( %d -> %d ) ",
+	if (ns.aftr_isp != os.aftr_isp)
+		pbp += sprintf(pbp, "aftr_isp( %d -> %d ) ",
 			       os.aftr_isp,
 			       ns.aftr_isp);
-	अगर (ns.peer_isp != os.peer_isp)
-		pbp += प्र_लिखो(pbp, "peer_isp( %d -> %d ) ",
+	if (ns.peer_isp != os.peer_isp)
+		pbp += sprintf(pbp, "peer_isp( %d -> %d ) ",
 			       os.peer_isp,
 			       ns.peer_isp);
-	अगर (ns.user_isp != os.user_isp)
-		pbp += प्र_लिखो(pbp, "user_isp( %d -> %d ) ",
+	if (ns.user_isp != os.user_isp)
+		pbp += sprintf(pbp, "user_isp( %d -> %d ) ",
 			       os.user_isp,
 			       ns.user_isp);
 
-	अगर (pbp != pb)
+	if (pbp != pb)
 		drbd_info(device, "%s\n", pb);
-पूर्ण
+}
 
-अटल व्योम conn_pr_state_change(काष्ठा drbd_connection *connection, जोड़ drbd_state os, जोड़ drbd_state ns,
-				 क्रमागत chg_state_flags flags)
-अणु
-	अक्षर pb[300];
-	अक्षर *pbp = pb;
+static void conn_pr_state_change(struct drbd_connection *connection, union drbd_state os, union drbd_state ns,
+				 enum chg_state_flags flags)
+{
+	char pb[300];
+	char *pbp = pb;
 
-	pbp += prपूर्णांक_state_change(pbp, os, ns, flags);
+	pbp += print_state_change(pbp, os, ns, flags);
 
-	अगर (is_susp(ns) != is_susp(os) && flags & CS_DC_SUSP)
-		pbp += प्र_लिखो(pbp, "susp( %d -> %d ) ",
+	if (is_susp(ns) != is_susp(os) && flags & CS_DC_SUSP)
+		pbp += sprintf(pbp, "susp( %d -> %d ) ",
 			       is_susp(os),
 			       is_susp(ns));
 
-	अगर (pbp != pb)
+	if (pbp != pb)
 		drbd_info(connection, "%s\n", pb);
-पूर्ण
+}
 
 
 /**
- * is_valid_state() - Returns an SS_ error code अगर ns is not valid
+ * is_valid_state() - Returns an SS_ error code if ns is not valid
  * @device:	DRBD device.
  * @ns:		State to consider.
  */
-अटल क्रमागत drbd_state_rv
-is_valid_state(काष्ठा drbd_device *device, जोड़ drbd_state ns)
-अणु
+static enum drbd_state_rv
+is_valid_state(struct drbd_device *device, union drbd_state ns)
+{
 	/* See drbd_state_sw_errors in drbd_strings.c */
 
-	क्रमागत drbd_fencing_p fp;
-	क्रमागत drbd_state_rv rv = SS_SUCCESS;
-	काष्ठा net_conf *nc;
+	enum drbd_fencing_p fp;
+	enum drbd_state_rv rv = SS_SUCCESS;
+	struct net_conf *nc;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	fp = FP_DONT_CARE;
-	अगर (get_ldev(device)) अणु
+	if (get_ldev(device)) {
 		fp = rcu_dereference(device->ldev->disk_conf)->fencing;
 		put_ldev(device);
-	पूर्ण
+	}
 
 	nc = rcu_dereference(first_peer_device(device)->connection->net_conf);
-	अगर (nc) अणु
-		अगर (!nc->two_primaries && ns.role == R_PRIMARY) अणु
-			अगर (ns.peer == R_PRIMARY)
+	if (nc) {
+		if (!nc->two_primaries && ns.role == R_PRIMARY) {
+			if (ns.peer == R_PRIMARY)
 				rv = SS_TWO_PRIMARIES;
-			अन्यथा अगर (conn_highest_peer(first_peer_device(device)->connection) == R_PRIMARY)
+			else if (conn_highest_peer(first_peer_device(device)->connection) == R_PRIMARY)
 				rv = SS_O_VOL_PEER_PRI;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (rv <= 0)
-		जाओ out; /* alपढ़ोy found a reason to पात */
-	अन्यथा अगर (ns.role == R_SECONDARY && device->खोलो_cnt)
+	if (rv <= 0)
+		goto out; /* already found a reason to abort */
+	else if (ns.role == R_SECONDARY && device->open_cnt)
 		rv = SS_DEVICE_IN_USE;
 
-	अन्यथा अगर (ns.role == R_PRIMARY && ns.conn < C_CONNECTED && ns.disk < D_UP_TO_DATE)
+	else if (ns.role == R_PRIMARY && ns.conn < C_CONNECTED && ns.disk < D_UP_TO_DATE)
 		rv = SS_NO_UP_TO_DATE_DISK;
 
-	अन्यथा अगर (fp >= FP_RESOURCE &&
+	else if (fp >= FP_RESOURCE &&
 		 ns.role == R_PRIMARY && ns.conn < C_CONNECTED && ns.pdsk >= D_UNKNOWN)
 		rv = SS_PRIMARY_NOP;
 
-	अन्यथा अगर (ns.role == R_PRIMARY && ns.disk <= D_INCONSISTENT && ns.pdsk <= D_INCONSISTENT)
+	else if (ns.role == R_PRIMARY && ns.disk <= D_INCONSISTENT && ns.pdsk <= D_INCONSISTENT)
 		rv = SS_NO_UP_TO_DATE_DISK;
 
-	अन्यथा अगर (ns.conn > C_CONNECTED && ns.disk < D_INCONSISTENT)
+	else if (ns.conn > C_CONNECTED && ns.disk < D_INCONSISTENT)
 		rv = SS_NO_LOCAL_DISK;
 
-	अन्यथा अगर (ns.conn > C_CONNECTED && ns.pdsk < D_INCONSISTENT)
+	else if (ns.conn > C_CONNECTED && ns.pdsk < D_INCONSISTENT)
 		rv = SS_NO_REMOTE_DISK;
 
-	अन्यथा अगर (ns.conn > C_CONNECTED && ns.disk < D_UP_TO_DATE && ns.pdsk < D_UP_TO_DATE)
+	else if (ns.conn > C_CONNECTED && ns.disk < D_UP_TO_DATE && ns.pdsk < D_UP_TO_DATE)
 		rv = SS_NO_UP_TO_DATE_DISK;
 
-	अन्यथा अगर ((ns.conn == C_CONNECTED ||
+	else if ((ns.conn == C_CONNECTED ||
 		  ns.conn == C_WF_BITMAP_S ||
 		  ns.conn == C_SYNC_SOURCE ||
 		  ns.conn == C_PAUSED_SYNC_S) &&
 		  ns.disk == D_OUTDATED)
 		rv = SS_CONNECTED_OUTDATES;
 
-	अन्यथा अगर ((ns.conn == C_VERIFY_S || ns.conn == C_VERIFY_T) &&
-		 (nc->verअगरy_alg[0] == 0))
+	else if ((ns.conn == C_VERIFY_S || ns.conn == C_VERIFY_T) &&
+		 (nc->verify_alg[0] == 0))
 		rv = SS_NO_VERIFY_ALG;
 
-	अन्यथा अगर ((ns.conn == C_VERIFY_S || ns.conn == C_VERIFY_T) &&
+	else if ((ns.conn == C_VERIFY_S || ns.conn == C_VERIFY_T) &&
 		  first_peer_device(device)->connection->agreed_pro_version < 88)
 		rv = SS_NOT_SUPPORTED;
 
-	अन्यथा अगर (ns.role == R_PRIMARY && ns.disk < D_UP_TO_DATE && ns.pdsk < D_UP_TO_DATE)
+	else if (ns.role == R_PRIMARY && ns.disk < D_UP_TO_DATE && ns.pdsk < D_UP_TO_DATE)
 		rv = SS_NO_UP_TO_DATE_DISK;
 
-	अन्यथा अगर ((ns.conn == C_STARTING_SYNC_S || ns.conn == C_STARTING_SYNC_T) &&
+	else if ((ns.conn == C_STARTING_SYNC_S || ns.conn == C_STARTING_SYNC_T) &&
                  ns.pdsk == D_UNKNOWN)
 		rv = SS_NEED_CONNECTION;
 
-	अन्यथा अगर (ns.conn >= C_CONNECTED && ns.pdsk == D_UNKNOWN)
+	else if (ns.conn >= C_CONNECTED && ns.pdsk == D_UNKNOWN)
 		rv = SS_CONNECTED_OUTDATES;
 
 out:
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
 /**
- * is_valid_soft_transition() - Returns an SS_ error code अगर the state transition is not possible
+ * is_valid_soft_transition() - Returns an SS_ error code if the state transition is not possible
  * This function limits state transitions that may be declined by DRBD. I.e.
  * user requests (aka soft transitions).
  * @os:		old state.
  * @ns:		new state.
  * @connection:  DRBD connection.
  */
-अटल क्रमागत drbd_state_rv
-is_valid_soft_transition(जोड़ drbd_state os, जोड़ drbd_state ns, काष्ठा drbd_connection *connection)
-अणु
-	क्रमागत drbd_state_rv rv = SS_SUCCESS;
+static enum drbd_state_rv
+is_valid_soft_transition(union drbd_state os, union drbd_state ns, struct drbd_connection *connection)
+{
+	enum drbd_state_rv rv = SS_SUCCESS;
 
-	अगर ((ns.conn == C_STARTING_SYNC_T || ns.conn == C_STARTING_SYNC_S) &&
+	if ((ns.conn == C_STARTING_SYNC_T || ns.conn == C_STARTING_SYNC_S) &&
 	    os.conn > C_CONNECTED)
 		rv = SS_RESYNC_RUNNING;
 
-	अगर (ns.conn == C_DISCONNECTING && os.conn == C_STANDALONE)
+	if (ns.conn == C_DISCONNECTING && os.conn == C_STANDALONE)
 		rv = SS_ALREADY_STANDALONE;
 
-	अगर (ns.disk > D_ATTACHING && os.disk == D_DISKLESS)
+	if (ns.disk > D_ATTACHING && os.disk == D_DISKLESS)
 		rv = SS_IS_DISKLESS;
 
-	अगर (ns.conn == C_WF_CONNECTION && os.conn < C_UNCONNECTED)
+	if (ns.conn == C_WF_CONNECTION && os.conn < C_UNCONNECTED)
 		rv = SS_NO_NET_CONFIG;
 
-	अगर (ns.disk == D_OUTDATED && os.disk < D_OUTDATED && os.disk != D_ATTACHING)
+	if (ns.disk == D_OUTDATED && os.disk < D_OUTDATED && os.disk != D_ATTACHING)
 		rv = SS_LOWER_THAN_OUTDATED;
 
-	अगर (ns.conn == C_DISCONNECTING && os.conn == C_UNCONNECTED)
+	if (ns.conn == C_DISCONNECTING && os.conn == C_UNCONNECTED)
 		rv = SS_IN_TRANSIENT_STATE;
 
 	/* While establishing a connection only allow cstate to change.
-	   Delay/refuse role changes, detach attach etc... (they करो not touch cstate) */
-	अगर (test_bit(STATE_SENT, &connection->flags) &&
+	   Delay/refuse role changes, detach attach etc... (they do not touch cstate) */
+	if (test_bit(STATE_SENT, &connection->flags) &&
 	    !((ns.conn == C_WF_REPORT_PARAMS && os.conn == C_WF_CONNECTION) ||
 	      (ns.conn >= C_CONNECTED && os.conn == C_WF_REPORT_PARAMS)))
 		rv = SS_IN_TRANSIENT_STATE;
@@ -943,391 +942,391 @@ is_valid_soft_transition(जोड़ drbd_state os, जोड़ drbd_state ns,
 	/* Do not promote during resync handshake triggered by "force primary".
 	 * This is a hack. It should really be rejected by the peer during the
 	 * cluster wide state change request. */
-	अगर (os.role != R_PRIMARY && ns.role == R_PRIMARY
+	if (os.role != R_PRIMARY && ns.role == R_PRIMARY
 		&& ns.pdsk == D_UP_TO_DATE
 		&& ns.disk != D_UP_TO_DATE && ns.disk != D_DISKLESS
 		&& (ns.conn <= C_WF_SYNC_UUID || ns.conn != os.conn))
 			rv = SS_IN_TRANSIENT_STATE;
 
-	अगर ((ns.conn == C_VERIFY_S || ns.conn == C_VERIFY_T) && os.conn < C_CONNECTED)
+	if ((ns.conn == C_VERIFY_S || ns.conn == C_VERIFY_T) && os.conn < C_CONNECTED)
 		rv = SS_NEED_CONNECTION;
 
-	अगर ((ns.conn == C_VERIFY_S || ns.conn == C_VERIFY_T) &&
+	if ((ns.conn == C_VERIFY_S || ns.conn == C_VERIFY_T) &&
 	    ns.conn != os.conn && os.conn > C_CONNECTED)
 		rv = SS_RESYNC_RUNNING;
 
-	अगर ((ns.conn == C_STARTING_SYNC_S || ns.conn == C_STARTING_SYNC_T) &&
+	if ((ns.conn == C_STARTING_SYNC_S || ns.conn == C_STARTING_SYNC_T) &&
 	    os.conn < C_CONNECTED)
 		rv = SS_NEED_CONNECTION;
 
-	अगर ((ns.conn == C_SYNC_TARGET || ns.conn == C_SYNC_SOURCE)
+	if ((ns.conn == C_SYNC_TARGET || ns.conn == C_SYNC_SOURCE)
 	    && os.conn < C_WF_REPORT_PARAMS)
 		rv = SS_NEED_CONNECTION; /* No NetworkFailure -> SyncTarget etc... */
 
-	अगर (ns.conn == C_DISCONNECTING && ns.pdsk == D_OUTDATED &&
+	if (ns.conn == C_DISCONNECTING && ns.pdsk == D_OUTDATED &&
 	    os.conn < C_CONNECTED && os.pdsk > D_OUTDATED)
 		rv = SS_OUTDATE_WO_CONN;
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-अटल क्रमागत drbd_state_rv
-is_valid_conn_transition(क्रमागत drbd_conns oc, क्रमागत drbd_conns nc)
-अणु
-	/* no change -> nothing to करो, at least क्रम the connection part */
-	अगर (oc == nc)
-		वापस SS_NOTHING_TO_DO;
+static enum drbd_state_rv
+is_valid_conn_transition(enum drbd_conns oc, enum drbd_conns nc)
+{
+	/* no change -> nothing to do, at least for the connection part */
+	if (oc == nc)
+		return SS_NOTHING_TO_DO;
 
-	/* disconnect of an unconfigured connection करोes not make sense */
-	अगर (oc == C_STANDALONE && nc == C_DISCONNECTING)
-		वापस SS_ALREADY_STANDALONE;
+	/* disconnect of an unconfigured connection does not make sense */
+	if (oc == C_STANDALONE && nc == C_DISCONNECTING)
+		return SS_ALREADY_STANDALONE;
 
 	/* from C_STANDALONE, we start with C_UNCONNECTED */
-	अगर (oc == C_STANDALONE && nc != C_UNCONNECTED)
-		वापस SS_NEED_CONNECTION;
+	if (oc == C_STANDALONE && nc != C_UNCONNECTED)
+		return SS_NEED_CONNECTION;
 
 	/* When establishing a connection we need to go through WF_REPORT_PARAMS!
-	   Necessary to करो the right thing upon invalidate-remote on a disconnected resource */
-	अगर (oc < C_WF_REPORT_PARAMS && nc >= C_CONNECTED)
-		वापस SS_NEED_CONNECTION;
+	   Necessary to do the right thing upon invalidate-remote on a disconnected resource */
+	if (oc < C_WF_REPORT_PARAMS && nc >= C_CONNECTED)
+		return SS_NEED_CONNECTION;
 
 	/* After a network error only C_UNCONNECTED or C_DISCONNECTING may follow. */
-	अगर (oc >= C_TIMEOUT && oc <= C_TEAR_DOWN && nc != C_UNCONNECTED && nc != C_DISCONNECTING)
-		वापस SS_IN_TRANSIENT_STATE;
+	if (oc >= C_TIMEOUT && oc <= C_TEAR_DOWN && nc != C_UNCONNECTED && nc != C_DISCONNECTING)
+		return SS_IN_TRANSIENT_STATE;
 
 	/* After C_DISCONNECTING only C_STANDALONE may follow */
-	अगर (oc == C_DISCONNECTING && nc != C_STANDALONE)
-		वापस SS_IN_TRANSIENT_STATE;
+	if (oc == C_DISCONNECTING && nc != C_STANDALONE)
+		return SS_IN_TRANSIENT_STATE;
 
-	वापस SS_SUCCESS;
-पूर्ण
+	return SS_SUCCESS;
+}
 
 
 /**
- * is_valid_transition() - Returns an SS_ error code अगर the state transition is not possible
+ * is_valid_transition() - Returns an SS_ error code if the state transition is not possible
  * This limits hard state transitions. Hard state transitions are facts there are
- * imposed on DRBD by the environment. E.g. disk broke or network broke करोwn.
- * But those hard state transitions are still not allowed to करो everything.
+ * imposed on DRBD by the environment. E.g. disk broke or network broke down.
+ * But those hard state transitions are still not allowed to do everything.
  * @ns:		new state.
  * @os:		old state.
  */
-अटल क्रमागत drbd_state_rv
-is_valid_transition(जोड़ drbd_state os, जोड़ drbd_state ns)
-अणु
-	क्रमागत drbd_state_rv rv;
+static enum drbd_state_rv
+is_valid_transition(union drbd_state os, union drbd_state ns)
+{
+	enum drbd_state_rv rv;
 
 	rv = is_valid_conn_transition(os.conn, ns.conn);
 
-	/* we cannot fail (again) अगर we alपढ़ोy detached */
-	अगर (ns.disk == D_FAILED && os.disk == D_DISKLESS)
+	/* we cannot fail (again) if we already detached */
+	if (ns.disk == D_FAILED && os.disk == D_DISKLESS)
 		rv = SS_IS_DISKLESS;
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-अटल व्योम prपूर्णांक_sanitize_warnings(काष्ठा drbd_device *device, क्रमागत sanitize_state_warnings warn)
-अणु
-	अटल स्थिर अक्षर *msg_table[] = अणु
+static void print_sanitize_warnings(struct drbd_device *device, enum sanitize_state_warnings warn)
+{
+	static const char *msg_table[] = {
 		[NO_WARNING] = "",
 		[ABORTED_ONLINE_VERIFY] = "Online-verify aborted.",
 		[ABORTED_RESYNC] = "Resync aborted.",
 		[CONNECTION_LOST_NEGOTIATING] = "Connection lost while negotiating, no data!",
 		[IMPLICITLY_UPGRADED_DISK] = "Implicitly upgraded disk",
 		[IMPLICITLY_UPGRADED_PDSK] = "Implicitly upgraded pdsk",
-	पूर्ण;
+	};
 
-	अगर (warn != NO_WARNING)
+	if (warn != NO_WARNING)
 		drbd_warn(device, "%s\n", msg_table[warn]);
-पूर्ण
+}
 
 /**
  * sanitize_state() - Resolves implicitly necessary additional changes to a state transition
  * @device:	DRBD device.
  * @os:		old state.
  * @ns:		new state.
- * @warn:	placeholder क्रम वापसed state warning.
+ * @warn:	placeholder for returned state warning.
  *
  * When we loose connection, we have to set the state of the peers disk (pdsk)
- * to D_UNKNOWN. This rule and many more aदीर्घ those lines are in this function.
+ * to D_UNKNOWN. This rule and many more along those lines are in this function.
  */
-अटल जोड़ drbd_state sanitize_state(काष्ठा drbd_device *device, जोड़ drbd_state os,
-				       जोड़ drbd_state ns, क्रमागत sanitize_state_warnings *warn)
-अणु
-	क्रमागत drbd_fencing_p fp;
-	क्रमागत drbd_disk_state disk_min, disk_max, pdsk_min, pdsk_max;
+static union drbd_state sanitize_state(struct drbd_device *device, union drbd_state os,
+				       union drbd_state ns, enum sanitize_state_warnings *warn)
+{
+	enum drbd_fencing_p fp;
+	enum drbd_disk_state disk_min, disk_max, pdsk_min, pdsk_max;
 
-	अगर (warn)
+	if (warn)
 		*warn = NO_WARNING;
 
 	fp = FP_DONT_CARE;
-	अगर (get_ldev(device)) अणु
-		rcu_पढ़ो_lock();
+	if (get_ldev(device)) {
+		rcu_read_lock();
 		fp = rcu_dereference(device->ldev->disk_conf)->fencing;
-		rcu_पढ़ो_unlock();
+		rcu_read_unlock();
 		put_ldev(device);
-	पूर्ण
+	}
 
 	/* Implications from connection to peer and peer_isp */
-	अगर (ns.conn < C_CONNECTED) अणु
+	if (ns.conn < C_CONNECTED) {
 		ns.peer_isp = 0;
 		ns.peer = R_UNKNOWN;
-		अगर (ns.pdsk > D_UNKNOWN || ns.pdsk < D_INCONSISTENT)
+		if (ns.pdsk > D_UNKNOWN || ns.pdsk < D_INCONSISTENT)
 			ns.pdsk = D_UNKNOWN;
-	पूर्ण
+	}
 
 	/* Clear the aftr_isp when becoming unconfigured */
-	अगर (ns.conn == C_STANDALONE && ns.disk == D_DISKLESS && ns.role == R_SECONDARY)
+	if (ns.conn == C_STANDALONE && ns.disk == D_DISKLESS && ns.role == R_SECONDARY)
 		ns.aftr_isp = 0;
 
 	/* An implication of the disk states onto the connection state */
-	/* Abort resync अगर a disk fails/detaches */
-	अगर (ns.conn > C_CONNECTED && (ns.disk <= D_FAILED || ns.pdsk <= D_FAILED)) अणु
-		अगर (warn)
+	/* Abort resync if a disk fails/detaches */
+	if (ns.conn > C_CONNECTED && (ns.disk <= D_FAILED || ns.pdsk <= D_FAILED)) {
+		if (warn)
 			*warn = ns.conn == C_VERIFY_S || ns.conn == C_VERIFY_T ?
 				ABORTED_ONLINE_VERIFY : ABORTED_RESYNC;
 		ns.conn = C_CONNECTED;
-	पूर्ण
+	}
 
-	/* Connection अवरोधs करोwn beक्रमe we finished "Negotiating" */
-	अगर (ns.conn < C_CONNECTED && ns.disk == D_NEGOTIATING &&
-	    get_ldev_अगर_state(device, D_NEGOTIATING)) अणु
-		अगर (device->ed_uuid == device->ldev->md.uuid[UI_CURRENT]) अणु
-			ns.disk = device->new_state_पंचांगp.disk;
-			ns.pdsk = device->new_state_पंचांगp.pdsk;
-		पूर्ण अन्यथा अणु
-			अगर (warn)
+	/* Connection breaks down before we finished "Negotiating" */
+	if (ns.conn < C_CONNECTED && ns.disk == D_NEGOTIATING &&
+	    get_ldev_if_state(device, D_NEGOTIATING)) {
+		if (device->ed_uuid == device->ldev->md.uuid[UI_CURRENT]) {
+			ns.disk = device->new_state_tmp.disk;
+			ns.pdsk = device->new_state_tmp.pdsk;
+		} else {
+			if (warn)
 				*warn = CONNECTION_LOST_NEGOTIATING;
 			ns.disk = D_DISKLESS;
 			ns.pdsk = D_UNKNOWN;
-		पूर्ण
+		}
 		put_ldev(device);
-	पूर्ण
+	}
 
 	/* D_CONSISTENT and D_OUTDATED vanish when we get connected */
-	अगर (ns.conn >= C_CONNECTED && ns.conn < C_AHEAD) अणु
-		अगर (ns.disk == D_CONSISTENT || ns.disk == D_OUTDATED)
+	if (ns.conn >= C_CONNECTED && ns.conn < C_AHEAD) {
+		if (ns.disk == D_CONSISTENT || ns.disk == D_OUTDATED)
 			ns.disk = D_UP_TO_DATE;
-		अगर (ns.pdsk == D_CONSISTENT || ns.pdsk == D_OUTDATED)
+		if (ns.pdsk == D_CONSISTENT || ns.pdsk == D_OUTDATED)
 			ns.pdsk = D_UP_TO_DATE;
-	पूर्ण
+	}
 
 	/* Implications of the connection state on the disk states */
 	disk_min = D_DISKLESS;
 	disk_max = D_UP_TO_DATE;
 	pdsk_min = D_INCONSISTENT;
 	pdsk_max = D_UNKNOWN;
-	चयन ((क्रमागत drbd_conns)ns.conn) अणु
-	हाल C_WF_BITMAP_T:
-	हाल C_PAUSED_SYNC_T:
-	हाल C_STARTING_SYNC_T:
-	हाल C_WF_SYNC_UUID:
-	हाल C_BEHIND:
+	switch ((enum drbd_conns)ns.conn) {
+	case C_WF_BITMAP_T:
+	case C_PAUSED_SYNC_T:
+	case C_STARTING_SYNC_T:
+	case C_WF_SYNC_UUID:
+	case C_BEHIND:
 		disk_min = D_INCONSISTENT;
 		disk_max = D_OUTDATED;
 		pdsk_min = D_UP_TO_DATE;
 		pdsk_max = D_UP_TO_DATE;
-		अवरोध;
-	हाल C_VERIFY_S:
-	हाल C_VERIFY_T:
+		break;
+	case C_VERIFY_S:
+	case C_VERIFY_T:
 		disk_min = D_UP_TO_DATE;
 		disk_max = D_UP_TO_DATE;
 		pdsk_min = D_UP_TO_DATE;
 		pdsk_max = D_UP_TO_DATE;
-		अवरोध;
-	हाल C_CONNECTED:
+		break;
+	case C_CONNECTED:
 		disk_min = D_DISKLESS;
 		disk_max = D_UP_TO_DATE;
 		pdsk_min = D_DISKLESS;
 		pdsk_max = D_UP_TO_DATE;
-		अवरोध;
-	हाल C_WF_BITMAP_S:
-	हाल C_PAUSED_SYNC_S:
-	हाल C_STARTING_SYNC_S:
-	हाल C_AHEAD:
+		break;
+	case C_WF_BITMAP_S:
+	case C_PAUSED_SYNC_S:
+	case C_STARTING_SYNC_S:
+	case C_AHEAD:
 		disk_min = D_UP_TO_DATE;
 		disk_max = D_UP_TO_DATE;
 		pdsk_min = D_INCONSISTENT;
 		pdsk_max = D_CONSISTENT; /* D_OUTDATED would be nice. But explicit outdate necessary*/
-		अवरोध;
-	हाल C_SYNC_TARGET:
+		break;
+	case C_SYNC_TARGET:
 		disk_min = D_INCONSISTENT;
 		disk_max = D_INCONSISTENT;
 		pdsk_min = D_UP_TO_DATE;
 		pdsk_max = D_UP_TO_DATE;
-		अवरोध;
-	हाल C_SYNC_SOURCE:
+		break;
+	case C_SYNC_SOURCE:
 		disk_min = D_UP_TO_DATE;
 		disk_max = D_UP_TO_DATE;
 		pdsk_min = D_INCONSISTENT;
 		pdsk_max = D_INCONSISTENT;
-		अवरोध;
-	हाल C_STANDALONE:
-	हाल C_DISCONNECTING:
-	हाल C_UNCONNECTED:
-	हाल C_TIMEOUT:
-	हाल C_BROKEN_PIPE:
-	हाल C_NETWORK_FAILURE:
-	हाल C_PROTOCOL_ERROR:
-	हाल C_TEAR_DOWN:
-	हाल C_WF_CONNECTION:
-	हाल C_WF_REPORT_PARAMS:
-	हाल C_MASK:
-		अवरोध;
-	पूर्ण
-	अगर (ns.disk > disk_max)
+		break;
+	case C_STANDALONE:
+	case C_DISCONNECTING:
+	case C_UNCONNECTED:
+	case C_TIMEOUT:
+	case C_BROKEN_PIPE:
+	case C_NETWORK_FAILURE:
+	case C_PROTOCOL_ERROR:
+	case C_TEAR_DOWN:
+	case C_WF_CONNECTION:
+	case C_WF_REPORT_PARAMS:
+	case C_MASK:
+		break;
+	}
+	if (ns.disk > disk_max)
 		ns.disk = disk_max;
 
-	अगर (ns.disk < disk_min) अणु
-		अगर (warn)
+	if (ns.disk < disk_min) {
+		if (warn)
 			*warn = IMPLICITLY_UPGRADED_DISK;
 		ns.disk = disk_min;
-	पूर्ण
-	अगर (ns.pdsk > pdsk_max)
+	}
+	if (ns.pdsk > pdsk_max)
 		ns.pdsk = pdsk_max;
 
-	अगर (ns.pdsk < pdsk_min) अणु
-		अगर (warn)
+	if (ns.pdsk < pdsk_min) {
+		if (warn)
 			*warn = IMPLICITLY_UPGRADED_PDSK;
 		ns.pdsk = pdsk_min;
-	पूर्ण
+	}
 
-	अगर (fp == FP_STONITH &&
+	if (fp == FP_STONITH &&
 	    (ns.role == R_PRIMARY && ns.conn < C_CONNECTED && ns.pdsk > D_OUTDATED) &&
 	    !(os.role == R_PRIMARY && os.conn < C_CONNECTED && os.pdsk > D_OUTDATED))
-		ns.susp_fen = 1; /* Suspend IO जबतक fence-peer handler runs (peer lost) */
+		ns.susp_fen = 1; /* Suspend IO while fence-peer handler runs (peer lost) */
 
-	अगर (device->resource->res_opts.on_no_data == OND_SUSPEND_IO &&
+	if (device->resource->res_opts.on_no_data == OND_SUSPEND_IO &&
 	    (ns.role == R_PRIMARY && ns.disk < D_UP_TO_DATE && ns.pdsk < D_UP_TO_DATE) &&
 	    !(os.role == R_PRIMARY && os.disk < D_UP_TO_DATE && os.pdsk < D_UP_TO_DATE))
-		ns.susp_nod = 1; /* Suspend IO जबतक no data available (no accessible data available) */
+		ns.susp_nod = 1; /* Suspend IO while no data available (no accessible data available) */
 
-	अगर (ns.aftr_isp || ns.peer_isp || ns.user_isp) अणु
-		अगर (ns.conn == C_SYNC_SOURCE)
+	if (ns.aftr_isp || ns.peer_isp || ns.user_isp) {
+		if (ns.conn == C_SYNC_SOURCE)
 			ns.conn = C_PAUSED_SYNC_S;
-		अगर (ns.conn == C_SYNC_TARGET)
+		if (ns.conn == C_SYNC_TARGET)
 			ns.conn = C_PAUSED_SYNC_T;
-	पूर्ण अन्यथा अणु
-		अगर (ns.conn == C_PAUSED_SYNC_S)
+	} else {
+		if (ns.conn == C_PAUSED_SYNC_S)
 			ns.conn = C_SYNC_SOURCE;
-		अगर (ns.conn == C_PAUSED_SYNC_T)
+		if (ns.conn == C_PAUSED_SYNC_T)
 			ns.conn = C_SYNC_TARGET;
-	पूर्ण
+	}
 
-	वापस ns;
-पूर्ण
+	return ns;
+}
 
-व्योम drbd_resume_al(काष्ठा drbd_device *device)
-अणु
-	अगर (test_and_clear_bit(AL_SUSPENDED, &device->flags))
+void drbd_resume_al(struct drbd_device *device)
+{
+	if (test_and_clear_bit(AL_SUSPENDED, &device->flags))
 		drbd_info(device, "Resumed AL updates\n");
-पूर्ण
+}
 
-/* helper क्रम _drbd_set_state */
-अटल व्योम set_ov_position(काष्ठा drbd_device *device, क्रमागत drbd_conns cs)
-अणु
-	अगर (first_peer_device(device)->connection->agreed_pro_version < 90)
+/* helper for _drbd_set_state */
+static void set_ov_position(struct drbd_device *device, enum drbd_conns cs)
+{
+	if (first_peer_device(device)->connection->agreed_pro_version < 90)
 		device->ov_start_sector = 0;
 	device->rs_total = drbd_bm_bits(device);
 	device->ov_position = 0;
-	अगर (cs == C_VERIFY_T) अणु
-		/* starting online verअगरy from an arbitrary position
-		 * करोes not fit well पूर्णांकo the existing protocol.
-		 * on C_VERIFY_T, we initialize ov_left and मित्रs
+	if (cs == C_VERIFY_T) {
+		/* starting online verify from an arbitrary position
+		 * does not fit well into the existing protocol.
+		 * on C_VERIFY_T, we initialize ov_left and friends
 		 * implicitly in receive_DataRequest once the
 		 * first P_OV_REQUEST is received */
 		device->ov_start_sector = ~(sector_t)0;
-	पूर्ण अन्यथा अणु
-		अचिन्हित दीर्घ bit = BM_SECT_TO_BIT(device->ov_start_sector);
-		अगर (bit >= device->rs_total) अणु
+	} else {
+		unsigned long bit = BM_SECT_TO_BIT(device->ov_start_sector);
+		if (bit >= device->rs_total) {
 			device->ov_start_sector =
 				BM_BIT_TO_SECT(device->rs_total - 1);
 			device->rs_total = 1;
-		पूर्ण अन्यथा
+		} else
 			device->rs_total -= bit;
 		device->ov_position = device->ov_start_sector;
-	पूर्ण
+	}
 	device->ov_left = device->rs_total;
-पूर्ण
+}
 
 /**
  * _drbd_set_state() - Set a new DRBD state
  * @device:	DRBD device.
  * @ns:		new state.
  * @flags:	Flags
- * @करोne:	Optional completion, that will get completed after the after_state_ch() finished
+ * @done:	Optional completion, that will get completed after the after_state_ch() finished
  *
  * Caller needs to hold req_lock. Do not call directly.
  */
-क्रमागत drbd_state_rv
-_drbd_set_state(काष्ठा drbd_device *device, जोड़ drbd_state ns,
-	        क्रमागत chg_state_flags flags, काष्ठा completion *करोne)
-अणु
-	काष्ठा drbd_peer_device *peer_device = first_peer_device(device);
-	काष्ठा drbd_connection *connection = peer_device ? peer_device->connection : शून्य;
-	जोड़ drbd_state os;
-	क्रमागत drbd_state_rv rv = SS_SUCCESS;
-	क्रमागत sanitize_state_warnings ssw;
-	काष्ठा after_state_chg_work *ascw;
-	काष्ठा drbd_state_change *state_change;
+enum drbd_state_rv
+_drbd_set_state(struct drbd_device *device, union drbd_state ns,
+	        enum chg_state_flags flags, struct completion *done)
+{
+	struct drbd_peer_device *peer_device = first_peer_device(device);
+	struct drbd_connection *connection = peer_device ? peer_device->connection : NULL;
+	union drbd_state os;
+	enum drbd_state_rv rv = SS_SUCCESS;
+	enum sanitize_state_warnings ssw;
+	struct after_state_chg_work *ascw;
+	struct drbd_state_change *state_change;
 
-	os = drbd_पढ़ो_state(device);
+	os = drbd_read_state(device);
 
 	ns = sanitize_state(device, os, ns, &ssw);
-	अगर (ns.i == os.i)
-		वापस SS_NOTHING_TO_DO;
+	if (ns.i == os.i)
+		return SS_NOTHING_TO_DO;
 
 	rv = is_valid_transition(os, ns);
-	अगर (rv < SS_SUCCESS)
-		वापस rv;
+	if (rv < SS_SUCCESS)
+		return rv;
 
-	अगर (!(flags & CS_HARD)) अणु
+	if (!(flags & CS_HARD)) {
 		/*  pre-state-change checks ; only look at ns  */
 		/* See drbd_state_sw_errors in drbd_strings.c */
 
 		rv = is_valid_state(device, ns);
-		अगर (rv < SS_SUCCESS) अणु
+		if (rv < SS_SUCCESS) {
 			/* If the old state was illegal as well, then let
 			   this happen...*/
 
-			अगर (is_valid_state(device, os) == rv)
+			if (is_valid_state(device, os) == rv)
 				rv = is_valid_soft_transition(os, ns, connection);
-		पूर्ण अन्यथा
+		} else
 			rv = is_valid_soft_transition(os, ns, connection);
-	पूर्ण
+	}
 
-	अगर (rv < SS_SUCCESS) अणु
-		अगर (flags & CS_VERBOSE)
-			prपूर्णांक_st_err(device, os, ns, rv);
-		वापस rv;
-	पूर्ण
+	if (rv < SS_SUCCESS) {
+		if (flags & CS_VERBOSE)
+			print_st_err(device, os, ns, rv);
+		return rv;
+	}
 
-	prपूर्णांक_sanitize_warnings(device, ssw);
+	print_sanitize_warnings(device, ssw);
 
 	drbd_pr_state_change(device, os, ns, flags);
 
 	/* Display changes to the susp* flags that where caused by the call to
-	   sanitize_state(). Only display it here अगर we where not called from
+	   sanitize_state(). Only display it here if we where not called from
 	   _conn_request_state() */
-	अगर (!(flags & CS_DC_SUSP))
+	if (!(flags & CS_DC_SUSP))
 		conn_pr_state_change(connection, os, ns,
 				     (flags & ~CS_DC_MASK) | CS_DC_SUSP);
 
-	/* अगर we are going -> D_FAILED or D_DISKLESS, grab one extra reference
+	/* if we are going -> D_FAILED or D_DISKLESS, grab one extra reference
 	 * on the ldev here, to be sure the transition -> D_DISKLESS resp.
-	 * drbd_ldev_destroy() won't happen beक्रमe our corresponding
+	 * drbd_ldev_destroy() won't happen before our corresponding
 	 * after_state_ch works run, where we put_ldev again. */
-	अगर ((os.disk != D_FAILED && ns.disk == D_FAILED) ||
+	if ((os.disk != D_FAILED && ns.disk == D_FAILED) ||
 	    (os.disk != D_DISKLESS && ns.disk == D_DISKLESS))
 		atomic_inc(&device->local_cnt);
 
-	अगर (!is_sync_state(os.conn) && is_sync_state(ns.conn))
+	if (!is_sync_state(os.conn) && is_sync_state(ns.conn))
 		clear_bit(RS_DONE, &device->flags);
 
-	/* FIXME: Have any flags been set earlier in this function alपढ़ोy? */
+	/* FIXME: Have any flags been set earlier in this function already? */
 	state_change = remember_old_state(device->resource, GFP_ATOMIC);
 
-	/* changes to local_cnt and device flags should be visible beक्रमe
-	 * changes to state, which again should be visible beक्रमe anything अन्यथा
+	/* changes to local_cnt and device flags should be visible before
+	 * changes to state, which again should be visible before anything else
 	 * depending on that change happens. */
 	smp_wmb();
 	device->state.i = ns.i;
@@ -1339,54 +1338,54 @@ _drbd_set_state(काष्ठा drbd_device *device, जोड़ drbd_state 
 	remember_new_state(state_change);
 
 	/* put replicated vs not-replicated requests in seperate epochs */
-	अगर (drbd_should_करो_remote((जोड़ drbd_dev_state)os.i) !=
-	    drbd_should_करो_remote((जोड़ drbd_dev_state)ns.i))
+	if (drbd_should_do_remote((union drbd_dev_state)os.i) !=
+	    drbd_should_do_remote((union drbd_dev_state)ns.i))
 		start_new_tl_epoch(connection);
 
-	अगर (os.disk == D_ATTACHING && ns.disk >= D_NEGOTIATING)
-		drbd_prपूर्णांक_uuids(device, "attached to UUIDs");
+	if (os.disk == D_ATTACHING && ns.disk >= D_NEGOTIATING)
+		drbd_print_uuids(device, "attached to UUIDs");
 
 	/* Wake up role changes, that were delayed because of connection establishing */
-	अगर (os.conn == C_WF_REPORT_PARAMS && ns.conn != C_WF_REPORT_PARAMS &&
-	    no_peer_wf_report_params(connection)) अणु
+	if (os.conn == C_WF_REPORT_PARAMS && ns.conn != C_WF_REPORT_PARAMS &&
+	    no_peer_wf_report_params(connection)) {
 		clear_bit(STATE_SENT, &connection->flags);
 		wake_up_all_devices(connection);
-	पूर्ण
+	}
 
-	wake_up(&device->misc_रुको);
-	wake_up(&device->state_रुको);
-	wake_up(&connection->ping_रुको);
+	wake_up(&device->misc_wait);
+	wake_up(&device->state_wait);
+	wake_up(&connection->ping_wait);
 
-	/* Aborted verअगरy run, or we reached the stop sector.
+	/* Aborted verify run, or we reached the stop sector.
 	 * Log the last position, unless end-of-device. */
-	अगर ((os.conn == C_VERIFY_S || os.conn == C_VERIFY_T) &&
-	    ns.conn <= C_CONNECTED) अणु
+	if ((os.conn == C_VERIFY_S || os.conn == C_VERIFY_T) &&
+	    ns.conn <= C_CONNECTED) {
 		device->ov_start_sector =
 			BM_BIT_TO_SECT(drbd_bm_bits(device) - device->ov_left);
-		अगर (device->ov_left)
+		if (device->ov_left)
 			drbd_info(device, "Online Verify reached sector %llu\n",
-				(अचिन्हित दीर्घ दीर्घ)device->ov_start_sector);
-	पूर्ण
+				(unsigned long long)device->ov_start_sector);
+	}
 
-	अगर ((os.conn == C_PAUSED_SYNC_T || os.conn == C_PAUSED_SYNC_S) &&
-	    (ns.conn == C_SYNC_TARGET  || ns.conn == C_SYNC_SOURCE)) अणु
+	if ((os.conn == C_PAUSED_SYNC_T || os.conn == C_PAUSED_SYNC_S) &&
+	    (ns.conn == C_SYNC_TARGET  || ns.conn == C_SYNC_SOURCE)) {
 		drbd_info(device, "Syncer continues.\n");
-		device->rs_छोड़ोd += (दीर्घ)jअगरfies
-				  -(दीर्घ)device->rs_mark_समय[device->rs_last_mark];
-		अगर (ns.conn == C_SYNC_TARGET)
-			mod_समयr(&device->resync_समयr, jअगरfies);
-	पूर्ण
+		device->rs_paused += (long)jiffies
+				  -(long)device->rs_mark_time[device->rs_last_mark];
+		if (ns.conn == C_SYNC_TARGET)
+			mod_timer(&device->resync_timer, jiffies);
+	}
 
-	अगर ((os.conn == C_SYNC_TARGET  || os.conn == C_SYNC_SOURCE) &&
-	    (ns.conn == C_PAUSED_SYNC_T || ns.conn == C_PAUSED_SYNC_S)) अणु
+	if ((os.conn == C_SYNC_TARGET  || os.conn == C_SYNC_SOURCE) &&
+	    (ns.conn == C_PAUSED_SYNC_T || ns.conn == C_PAUSED_SYNC_S)) {
 		drbd_info(device, "Resync suspended\n");
-		device->rs_mark_समय[device->rs_last_mark] = jअगरfies;
-	पूर्ण
+		device->rs_mark_time[device->rs_last_mark] = jiffies;
+	}
 
-	अगर (os.conn == C_CONNECTED &&
-	    (ns.conn == C_VERIFY_S || ns.conn == C_VERIFY_T)) अणु
-		अचिन्हित दीर्घ now = jअगरfies;
-		पूर्णांक i;
+	if (os.conn == C_CONNECTED &&
+	    (ns.conn == C_VERIFY_S || ns.conn == C_VERIFY_T)) {
+		unsigned long now = jiffies;
+		int i;
 
 		set_ov_position(device, ns.conn);
 		device->rs_start = now;
@@ -1394,139 +1393,139 @@ _drbd_set_state(काष्ठा drbd_device *device, जोड़ drbd_state 
 		device->ov_last_oos_size = 0;
 		device->ov_last_oos_start = 0;
 
-		क्रम (i = 0; i < DRBD_SYNC_MARKS; i++) अणु
+		for (i = 0; i < DRBD_SYNC_MARKS; i++) {
 			device->rs_mark_left[i] = device->ov_left;
-			device->rs_mark_समय[i] = now;
-		पूर्ण
+			device->rs_mark_time[i] = now;
+		}
 
 		drbd_rs_controller_reset(device);
 
-		अगर (ns.conn == C_VERIFY_S) अणु
+		if (ns.conn == C_VERIFY_S) {
 			drbd_info(device, "Starting Online Verify from sector %llu\n",
-					(अचिन्हित दीर्घ दीर्घ)device->ov_position);
-			mod_समयr(&device->resync_समयr, jअगरfies);
-		पूर्ण
-	पूर्ण
+					(unsigned long long)device->ov_position);
+			mod_timer(&device->resync_timer, jiffies);
+		}
+	}
 
-	अगर (get_ldev(device)) अणु
+	if (get_ldev(device)) {
 		u32 mdf = device->ldev->md.flags & ~(MDF_CONSISTENT|MDF_PRIMARY_IND|
 						 MDF_CONNECTED_IND|MDF_WAS_UP_TO_DATE|
 						 MDF_PEER_OUT_DATED|MDF_CRASHED_PRIMARY);
 
 		mdf &= ~MDF_AL_CLEAN;
-		अगर (test_bit(CRASHED_PRIMARY, &device->flags))
+		if (test_bit(CRASHED_PRIMARY, &device->flags))
 			mdf |= MDF_CRASHED_PRIMARY;
-		अगर (device->state.role == R_PRIMARY ||
+		if (device->state.role == R_PRIMARY ||
 		    (device->state.pdsk < D_INCONSISTENT && device->state.peer == R_PRIMARY))
 			mdf |= MDF_PRIMARY_IND;
-		अगर (device->state.conn > C_WF_REPORT_PARAMS)
+		if (device->state.conn > C_WF_REPORT_PARAMS)
 			mdf |= MDF_CONNECTED_IND;
-		अगर (device->state.disk > D_INCONSISTENT)
+		if (device->state.disk > D_INCONSISTENT)
 			mdf |= MDF_CONSISTENT;
-		अगर (device->state.disk > D_OUTDATED)
+		if (device->state.disk > D_OUTDATED)
 			mdf |= MDF_WAS_UP_TO_DATE;
-		अगर (device->state.pdsk <= D_OUTDATED && device->state.pdsk >= D_INCONSISTENT)
+		if (device->state.pdsk <= D_OUTDATED && device->state.pdsk >= D_INCONSISTENT)
 			mdf |= MDF_PEER_OUT_DATED;
-		अगर (mdf != device->ldev->md.flags) अणु
+		if (mdf != device->ldev->md.flags) {
 			device->ldev->md.flags = mdf;
 			drbd_md_mark_dirty(device);
-		पूर्ण
-		अगर (os.disk < D_CONSISTENT && ns.disk >= D_CONSISTENT)
+		}
+		if (os.disk < D_CONSISTENT && ns.disk >= D_CONSISTENT)
 			drbd_set_ed_uuid(device, device->ldev->md.uuid[UI_CURRENT]);
 		put_ldev(device);
-	पूर्ण
+	}
 
-	/* Peer was क्रमced D_UP_TO_DATE & R_PRIMARY, consider to resync */
-	अगर (os.disk == D_INCONSISTENT && os.pdsk == D_INCONSISTENT &&
+	/* Peer was forced D_UP_TO_DATE & R_PRIMARY, consider to resync */
+	if (os.disk == D_INCONSISTENT && os.pdsk == D_INCONSISTENT &&
 	    os.peer == R_SECONDARY && ns.peer == R_PRIMARY)
 		set_bit(CONSIDER_RESYNC, &device->flags);
 
 	/* Receiver should clean up itself */
-	अगर (os.conn != C_DISCONNECTING && ns.conn == C_DISCONNECTING)
-		drbd_thपढ़ो_stop_noरुको(&connection->receiver);
+	if (os.conn != C_DISCONNECTING && ns.conn == C_DISCONNECTING)
+		drbd_thread_stop_nowait(&connection->receiver);
 
 	/* Now the receiver finished cleaning up itself, it should die */
-	अगर (os.conn != C_STANDALONE && ns.conn == C_STANDALONE)
-		drbd_thपढ़ो_stop_noरुको(&connection->receiver);
+	if (os.conn != C_STANDALONE && ns.conn == C_STANDALONE)
+		drbd_thread_stop_nowait(&connection->receiver);
 
 	/* Upon network failure, we need to restart the receiver. */
-	अगर (os.conn > C_WF_CONNECTION &&
+	if (os.conn > C_WF_CONNECTION &&
 	    ns.conn <= C_TEAR_DOWN && ns.conn >= C_TIMEOUT)
-		drbd_thपढ़ो_restart_noरुको(&connection->receiver);
+		drbd_thread_restart_nowait(&connection->receiver);
 
-	/* Resume AL writing अगर we get a connection */
-	अगर (os.conn < C_CONNECTED && ns.conn >= C_CONNECTED) अणु
+	/* Resume AL writing if we get a connection */
+	if (os.conn < C_CONNECTED && ns.conn >= C_CONNECTED) {
 		drbd_resume_al(device);
 		connection->connect_cnt++;
-	पूर्ण
+	}
 
-	/* remember last attach समय so request_समयr_fn() won't
-	 * समाप्त newly established sessions जबतक we are still trying to thaw
+	/* remember last attach time so request_timer_fn() won't
+	 * kill newly established sessions while we are still trying to thaw
 	 * previously frozen IO */
-	अगर ((os.disk == D_ATTACHING || os.disk == D_NEGOTIATING) &&
+	if ((os.disk == D_ATTACHING || os.disk == D_NEGOTIATING) &&
 	    ns.disk > D_NEGOTIATING)
-		device->last_reattach_jअगर = jअगरfies;
+		device->last_reattach_jif = jiffies;
 
-	ascw = kदो_स्मृति(माप(*ascw), GFP_ATOMIC);
-	अगर (ascw) अणु
+	ascw = kmalloc(sizeof(*ascw), GFP_ATOMIC);
+	if (ascw) {
 		ascw->os = os;
 		ascw->ns = ns;
 		ascw->flags = flags;
 		ascw->w.cb = w_after_state_ch;
 		ascw->device = device;
-		ascw->करोne = करोne;
+		ascw->done = done;
 		ascw->state_change = state_change;
 		drbd_queue_work(&connection->sender_work,
 				&ascw->w);
-	पूर्ण अन्यथा अणु
+	} else {
 		drbd_err(device, "Could not kmalloc an ascw\n");
-	पूर्ण
+	}
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-अटल पूर्णांक w_after_state_ch(काष्ठा drbd_work *w, पूर्णांक unused)
-अणु
-	काष्ठा after_state_chg_work *ascw =
-		container_of(w, काष्ठा after_state_chg_work, w);
-	काष्ठा drbd_device *device = ascw->device;
+static int w_after_state_ch(struct drbd_work *w, int unused)
+{
+	struct after_state_chg_work *ascw =
+		container_of(w, struct after_state_chg_work, w);
+	struct drbd_device *device = ascw->device;
 
 	after_state_ch(device, ascw->os, ascw->ns, ascw->flags, ascw->state_change);
-	क्रमget_state_change(ascw->state_change);
-	अगर (ascw->flags & CS_WAIT_COMPLETE)
-		complete(ascw->करोne);
-	kमुक्त(ascw);
+	forget_state_change(ascw->state_change);
+	if (ascw->flags & CS_WAIT_COMPLETE)
+		complete(ascw->done);
+	kfree(ascw);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम abw_start_sync(काष्ठा drbd_device *device, पूर्णांक rv)
-अणु
-	अगर (rv) अणु
+static void abw_start_sync(struct drbd_device *device, int rv)
+{
+	if (rv) {
 		drbd_err(device, "Writing the bitmap failed not starting resync.\n");
 		_drbd_request_state(device, NS(conn, C_CONNECTED), CS_VERBOSE);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	चयन (device->state.conn) अणु
-	हाल C_STARTING_SYNC_T:
+	switch (device->state.conn) {
+	case C_STARTING_SYNC_T:
 		_drbd_request_state(device, NS(conn, C_WF_SYNC_UUID), CS_VERBOSE);
-		अवरोध;
-	हाल C_STARTING_SYNC_S:
+		break;
+	case C_STARTING_SYNC_S:
 		drbd_start_resync(device, C_SYNC_SOURCE);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-पूर्णांक drbd_biपंचांगap_io_from_worker(काष्ठा drbd_device *device,
-		पूर्णांक (*io_fn)(काष्ठा drbd_device *),
-		अक्षर *why, क्रमागत bm_flag flags)
-अणु
-	पूर्णांक rv;
+int drbd_bitmap_io_from_worker(struct drbd_device *device,
+		int (*io_fn)(struct drbd_device *),
+		char *why, enum bm_flag flags)
+{
+	int rv;
 
 	D_ASSERT(device, current == first_peer_device(device)->connection->worker.task);
 
-	/* खोलो coded non-blocking drbd_suspend_io(device); */
+	/* open coded non-blocking drbd_suspend_io(device); */
 	atomic_inc(&device->suspend_cnt);
 
 	drbd_bm_lock(device, why, flags);
@@ -1535,90 +1534,90 @@ _drbd_set_state(काष्ठा drbd_device *device, जोड़ drbd_state 
 
 	drbd_resume_io(device);
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-व्योम notअगरy_resource_state_change(काष्ठा sk_buff *skb,
-				  अचिन्हित पूर्णांक seq,
-				  काष्ठा drbd_resource_state_change *resource_state_change,
-				  क्रमागत drbd_notअगरication_type type)
-अणु
-	काष्ठा drbd_resource *resource = resource_state_change->resource;
-	काष्ठा resource_info resource_info = अणु
+void notify_resource_state_change(struct sk_buff *skb,
+				  unsigned int seq,
+				  struct drbd_resource_state_change *resource_state_change,
+				  enum drbd_notification_type type)
+{
+	struct drbd_resource *resource = resource_state_change->resource;
+	struct resource_info resource_info = {
 		.res_role = resource_state_change->role[NEW],
 		.res_susp = resource_state_change->susp[NEW],
 		.res_susp_nod = resource_state_change->susp_nod[NEW],
 		.res_susp_fen = resource_state_change->susp_fen[NEW],
-	पूर्ण;
+	};
 
-	notअगरy_resource_state(skb, seq, resource, &resource_info, type);
-पूर्ण
+	notify_resource_state(skb, seq, resource, &resource_info, type);
+}
 
-व्योम notअगरy_connection_state_change(काष्ठा sk_buff *skb,
-				    अचिन्हित पूर्णांक seq,
-				    काष्ठा drbd_connection_state_change *connection_state_change,
-				    क्रमागत drbd_notअगरication_type type)
-अणु
-	काष्ठा drbd_connection *connection = connection_state_change->connection;
-	काष्ठा connection_info connection_info = अणु
+void notify_connection_state_change(struct sk_buff *skb,
+				    unsigned int seq,
+				    struct drbd_connection_state_change *connection_state_change,
+				    enum drbd_notification_type type)
+{
+	struct drbd_connection *connection = connection_state_change->connection;
+	struct connection_info connection_info = {
 		.conn_connection_state = connection_state_change->cstate[NEW],
 		.conn_role = connection_state_change->peer_role[NEW],
-	पूर्ण;
+	};
 
-	notअगरy_connection_state(skb, seq, connection, &connection_info, type);
-पूर्ण
+	notify_connection_state(skb, seq, connection, &connection_info, type);
+}
 
-व्योम notअगरy_device_state_change(काष्ठा sk_buff *skb,
-				अचिन्हित पूर्णांक seq,
-				काष्ठा drbd_device_state_change *device_state_change,
-				क्रमागत drbd_notअगरication_type type)
-अणु
-	काष्ठा drbd_device *device = device_state_change->device;
-	काष्ठा device_info device_info = अणु
+void notify_device_state_change(struct sk_buff *skb,
+				unsigned int seq,
+				struct drbd_device_state_change *device_state_change,
+				enum drbd_notification_type type)
+{
+	struct drbd_device *device = device_state_change->device;
+	struct device_info device_info = {
 		.dev_disk_state = device_state_change->disk_state[NEW],
-	पूर्ण;
+	};
 
-	notअगरy_device_state(skb, seq, device, &device_info, type);
-पूर्ण
+	notify_device_state(skb, seq, device, &device_info, type);
+}
 
-व्योम notअगरy_peer_device_state_change(काष्ठा sk_buff *skb,
-				     अचिन्हित पूर्णांक seq,
-				     काष्ठा drbd_peer_device_state_change *p,
-				     क्रमागत drbd_notअगरication_type type)
-अणु
-	काष्ठा drbd_peer_device *peer_device = p->peer_device;
-	काष्ठा peer_device_info peer_device_info = अणु
+void notify_peer_device_state_change(struct sk_buff *skb,
+				     unsigned int seq,
+				     struct drbd_peer_device_state_change *p,
+				     enum drbd_notification_type type)
+{
+	struct drbd_peer_device *peer_device = p->peer_device;
+	struct peer_device_info peer_device_info = {
 		.peer_repl_state = p->repl_state[NEW],
 		.peer_disk_state = p->disk_state[NEW],
 		.peer_resync_susp_user = p->resync_susp_user[NEW],
 		.peer_resync_susp_peer = p->resync_susp_peer[NEW],
 		.peer_resync_susp_dependency = p->resync_susp_dependency[NEW],
-	पूर्ण;
+	};
 
-	notअगरy_peer_device_state(skb, seq, peer_device, &peer_device_info, type);
-पूर्ण
+	notify_peer_device_state(skb, seq, peer_device, &peer_device_info, type);
+}
 
-अटल व्योम broadcast_state_change(काष्ठा drbd_state_change *state_change)
-अणु
-	काष्ठा drbd_resource_state_change *resource_state_change = &state_change->resource[0];
+static void broadcast_state_change(struct drbd_state_change *state_change)
+{
+	struct drbd_resource_state_change *resource_state_change = &state_change->resource[0];
 	bool resource_state_has_changed;
-	अचिन्हित पूर्णांक n_device, n_connection, n_peer_device, n_peer_devices;
-	व्योम (*last_func)(काष्ठा sk_buff *, अचिन्हित पूर्णांक, व्योम *,
-			  क्रमागत drbd_notअगरication_type) = शून्य;
-	व्योम *last_arg = शून्य;
+	unsigned int n_device, n_connection, n_peer_device, n_peer_devices;
+	void (*last_func)(struct sk_buff *, unsigned int, void *,
+			  enum drbd_notification_type) = NULL;
+	void *last_arg = NULL;
 
-#घोषणा HAS_CHANGED(state) ((state)[OLD] != (state)[NEW])
-#घोषणा FINAL_STATE_CHANGE(type) \
-	(अणु अगर (last_func) \
-		last_func(शून्य, 0, last_arg, type); \
-	पूर्ण)
-#घोषणा REMEMBER_STATE_CHANGE(func, arg, type) \
-	(अणु FINAL_STATE_CHANGE(type | NOTIFY_CONTINUES); \
+#define HAS_CHANGED(state) ((state)[OLD] != (state)[NEW])
+#define FINAL_STATE_CHANGE(type) \
+	({ if (last_func) \
+		last_func(NULL, 0, last_arg, type); \
+	})
+#define REMEMBER_STATE_CHANGE(func, arg, type) \
+	({ FINAL_STATE_CHANGE(type | NOTIFY_CONTINUES); \
 	   last_func = (typeof(last_func))func; \
 	   last_arg = arg; \
-	 पूर्ण)
+	 })
 
-	mutex_lock(&notअगरication_mutex);
+	mutex_lock(&notification_mutex);
 
 	resource_state_has_changed =
 	    HAS_CHANGED(resource_state_change->role) ||
@@ -1626,57 +1625,57 @@ _drbd_set_state(काष्ठा drbd_device *device, जोड़ drbd_state 
 	    HAS_CHANGED(resource_state_change->susp_nod) ||
 	    HAS_CHANGED(resource_state_change->susp_fen);
 
-	अगर (resource_state_has_changed)
-		REMEMBER_STATE_CHANGE(notअगरy_resource_state_change,
+	if (resource_state_has_changed)
+		REMEMBER_STATE_CHANGE(notify_resource_state_change,
 				      resource_state_change, NOTIFY_CHANGE);
 
-	क्रम (n_connection = 0; n_connection < state_change->n_connections; n_connection++) अणु
-		काष्ठा drbd_connection_state_change *connection_state_change =
+	for (n_connection = 0; n_connection < state_change->n_connections; n_connection++) {
+		struct drbd_connection_state_change *connection_state_change =
 				&state_change->connections[n_connection];
 
-		अगर (HAS_CHANGED(connection_state_change->peer_role) ||
+		if (HAS_CHANGED(connection_state_change->peer_role) ||
 		    HAS_CHANGED(connection_state_change->cstate))
-			REMEMBER_STATE_CHANGE(notअगरy_connection_state_change,
+			REMEMBER_STATE_CHANGE(notify_connection_state_change,
 					      connection_state_change, NOTIFY_CHANGE);
-	पूर्ण
+	}
 
-	क्रम (n_device = 0; n_device < state_change->n_devices; n_device++) अणु
-		काष्ठा drbd_device_state_change *device_state_change =
+	for (n_device = 0; n_device < state_change->n_devices; n_device++) {
+		struct drbd_device_state_change *device_state_change =
 			&state_change->devices[n_device];
 
-		अगर (HAS_CHANGED(device_state_change->disk_state))
-			REMEMBER_STATE_CHANGE(notअगरy_device_state_change,
+		if (HAS_CHANGED(device_state_change->disk_state))
+			REMEMBER_STATE_CHANGE(notify_device_state_change,
 					      device_state_change, NOTIFY_CHANGE);
-	पूर्ण
+	}
 
 	n_peer_devices = state_change->n_devices * state_change->n_connections;
-	क्रम (n_peer_device = 0; n_peer_device < n_peer_devices; n_peer_device++) अणु
-		काष्ठा drbd_peer_device_state_change *p =
+	for (n_peer_device = 0; n_peer_device < n_peer_devices; n_peer_device++) {
+		struct drbd_peer_device_state_change *p =
 			&state_change->peer_devices[n_peer_device];
 
-		अगर (HAS_CHANGED(p->disk_state) ||
+		if (HAS_CHANGED(p->disk_state) ||
 		    HAS_CHANGED(p->repl_state) ||
 		    HAS_CHANGED(p->resync_susp_user) ||
 		    HAS_CHANGED(p->resync_susp_peer) ||
 		    HAS_CHANGED(p->resync_susp_dependency))
-			REMEMBER_STATE_CHANGE(notअगरy_peer_device_state_change,
+			REMEMBER_STATE_CHANGE(notify_peer_device_state_change,
 					      p, NOTIFY_CHANGE);
-	पूर्ण
+	}
 
 	FINAL_STATE_CHANGE(NOTIFY_CHANGE);
-	mutex_unlock(&notअगरication_mutex);
+	mutex_unlock(&notification_mutex);
 
-#अघोषित HAS_CHANGED
-#अघोषित FINAL_STATE_CHANGE
-#अघोषित REMEMBER_STATE_CHANGE
-पूर्ण
+#undef HAS_CHANGED
+#undef FINAL_STATE_CHANGE
+#undef REMEMBER_STATE_CHANGE
+}
 
 /* takes old and new peer disk state */
-अटल bool lost_contact_to_peer_data(क्रमागत drbd_disk_state os, क्रमागत drbd_disk_state ns)
-अणु
-	अगर ((os >= D_INCONSISTENT && os != D_UNKNOWN && os != D_OUTDATED)
+static bool lost_contact_to_peer_data(enum drbd_disk_state os, enum drbd_disk_state ns)
+{
+	if ((os >= D_INCONSISTENT && os != D_UNKNOWN && os != D_OUTDATED)
 	&&  (ns < D_INCONSISTENT || ns == D_UNKNOWN || ns == D_OUTDATED))
-		वापस true;
+		return true;
 
 	/* Scenario, starting with normal operation
 	 * Connected Primary/Secondary UpToDate/UpToDate
@@ -1684,29 +1683,29 @@ _drbd_set_state(काष्ठा drbd_device *device, जोड़ drbd_state 
 	 * ...
 	 * Connected Primary/Secondary UpToDate/Diskless (resumed; needs to bump uuid!)
 	 */
-	अगर (os == D_UNKNOWN
+	if (os == D_UNKNOWN
 	&&  (ns == D_DISKLESS || ns == D_FAILED || ns == D_OUTDATED))
-		वापस true;
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /**
- * after_state_ch() - Perक्रमm after state change actions that may sleep
+ * after_state_ch() - Perform after state change actions that may sleep
  * @device:	DRBD device.
  * @os:		old state.
  * @ns:		new state.
  * @flags:	Flags
  * @state_change: state change to broadcast
  */
-अटल व्योम after_state_ch(काष्ठा drbd_device *device, जोड़ drbd_state os,
-			   जोड़ drbd_state ns, क्रमागत chg_state_flags flags,
-			   काष्ठा drbd_state_change *state_change)
-अणु
-	काष्ठा drbd_resource *resource = device->resource;
-	काष्ठा drbd_peer_device *peer_device = first_peer_device(device);
-	काष्ठा drbd_connection *connection = peer_device ? peer_device->connection : शून्य;
-	काष्ठा sib_info sib;
+static void after_state_ch(struct drbd_device *device, union drbd_state os,
+			   union drbd_state ns, enum chg_state_flags flags,
+			   struct drbd_state_change *state_change)
+{
+	struct drbd_resource *resource = device->resource;
+	struct drbd_peer_device *peer_device = first_peer_device(device);
+	struct drbd_connection *connection = peer_device ? peer_device->connection : NULL;
+	struct sib_info sib;
 
 	broadcast_state_change(state_change);
 
@@ -1714,85 +1713,85 @@ _drbd_set_state(काष्ठा drbd_device *device, जोड़ drbd_state 
 	sib.os = os;
 	sib.ns = ns;
 
-	अगर ((os.disk != D_UP_TO_DATE || os.pdsk != D_UP_TO_DATE)
-	&&  (ns.disk == D_UP_TO_DATE && ns.pdsk == D_UP_TO_DATE)) अणु
+	if ((os.disk != D_UP_TO_DATE || os.pdsk != D_UP_TO_DATE)
+	&&  (ns.disk == D_UP_TO_DATE && ns.pdsk == D_UP_TO_DATE)) {
 		clear_bit(CRASHED_PRIMARY, &device->flags);
-		अगर (device->p_uuid)
+		if (device->p_uuid)
 			device->p_uuid[UI_FLAGS] &= ~((u64)2);
-	पूर्ण
+	}
 
-	/* Inक्रमm userspace about the change... */
+	/* Inform userspace about the change... */
 	drbd_bcast_event(device, &sib);
 
-	अगर (!(os.role == R_PRIMARY && os.disk < D_UP_TO_DATE && os.pdsk < D_UP_TO_DATE) &&
+	if (!(os.role == R_PRIMARY && os.disk < D_UP_TO_DATE && os.pdsk < D_UP_TO_DATE) &&
 	    (ns.role == R_PRIMARY && ns.disk < D_UP_TO_DATE && ns.pdsk < D_UP_TO_DATE))
 		drbd_khelper(device, "pri-on-incon-degr");
 
-	/* Here we have the actions that are perक्रमmed after a
+	/* Here we have the actions that are performed after a
 	   state change. This function might sleep */
 
-	अगर (ns.susp_nod) अणु
-		क्रमागत drbd_req_event what = NOTHING;
+	if (ns.susp_nod) {
+		enum drbd_req_event what = NOTHING;
 
 		spin_lock_irq(&device->resource->req_lock);
-		अगर (os.conn < C_CONNECTED && conn_lowest_conn(connection) >= C_CONNECTED)
+		if (os.conn < C_CONNECTED && conn_lowest_conn(connection) >= C_CONNECTED)
 			what = RESEND;
 
-		अगर ((os.disk == D_ATTACHING || os.disk == D_NEGOTIATING) &&
+		if ((os.disk == D_ATTACHING || os.disk == D_NEGOTIATING) &&
 		    conn_lowest_disk(connection) == D_UP_TO_DATE)
 			what = RESTART_FROZEN_DISK_IO;
 
-		अगर (resource->susp_nod && what != NOTHING) अणु
+		if (resource->susp_nod && what != NOTHING) {
 			_tl_restart(connection, what);
 			_conn_request_state(connection,
-					    (जोड़ drbd_state) अणु अणु .susp_nod = 1 पूर्ण पूर्ण,
-					    (जोड़ drbd_state) अणु अणु .susp_nod = 0 पूर्ण पूर्ण,
+					    (union drbd_state) { { .susp_nod = 1 } },
+					    (union drbd_state) { { .susp_nod = 0 } },
 					    CS_VERBOSE);
-		पूर्ण
+		}
 		spin_unlock_irq(&device->resource->req_lock);
-	पूर्ण
+	}
 
-	अगर (ns.susp_fen) अणु
+	if (ns.susp_fen) {
 		spin_lock_irq(&device->resource->req_lock);
-		अगर (resource->susp_fen && conn_lowest_conn(connection) >= C_CONNECTED) अणु
-			/* हाल2: The connection was established again: */
-			काष्ठा drbd_peer_device *peer_device;
-			पूर्णांक vnr;
+		if (resource->susp_fen && conn_lowest_conn(connection) >= C_CONNECTED) {
+			/* case2: The connection was established again: */
+			struct drbd_peer_device *peer_device;
+			int vnr;
 
-			rcu_पढ़ो_lock();
-			idr_क्रम_each_entry(&connection->peer_devices, peer_device, vnr)
+			rcu_read_lock();
+			idr_for_each_entry(&connection->peer_devices, peer_device, vnr)
 				clear_bit(NEW_CUR_UUID, &peer_device->device->flags);
-			rcu_पढ़ो_unlock();
+			rcu_read_unlock();
 
-			/* We should actively create a new uuid, _beक्रमe_
-			 * we resume/resent, अगर the peer is diskless
+			/* We should actively create a new uuid, _before_
+			 * we resume/resent, if the peer is diskless
 			 * (recovery from a multiple error scenario).
 			 * Currently, this happens with a slight delay
 			 * below when checking lost_contact_to_peer_data() ...
 			 */
 			_tl_restart(connection, RESEND);
 			_conn_request_state(connection,
-					    (जोड़ drbd_state) अणु अणु .susp_fen = 1 पूर्ण पूर्ण,
-					    (जोड़ drbd_state) अणु अणु .susp_fen = 0 पूर्ण पूर्ण,
+					    (union drbd_state) { { .susp_fen = 1 } },
+					    (union drbd_state) { { .susp_fen = 0 } },
 					    CS_VERBOSE);
-		पूर्ण
+		}
 		spin_unlock_irq(&device->resource->req_lock);
-	पूर्ण
+	}
 
 	/* Became sync source.  With protocol >= 96, we still need to send out
-	 * the sync uuid now. Need to करो that beक्रमe any drbd_send_state, or
-	 * the other side may go "paused sync" beक्रमe receiving the sync uuids,
+	 * the sync uuid now. Need to do that before any drbd_send_state, or
+	 * the other side may go "paused sync" before receiving the sync uuids,
 	 * which is unexpected. */
-	अगर ((os.conn != C_SYNC_SOURCE && os.conn != C_PAUSED_SYNC_S) &&
+	if ((os.conn != C_SYNC_SOURCE && os.conn != C_PAUSED_SYNC_S) &&
 	    (ns.conn == C_SYNC_SOURCE || ns.conn == C_PAUSED_SYNC_S) &&
-	    connection->agreed_pro_version >= 96 && get_ldev(device)) अणु
+	    connection->agreed_pro_version >= 96 && get_ldev(device)) {
 		drbd_gen_and_send_sync_uuid(peer_device);
 		put_ldev(device);
-	पूर्ण
+	}
 
-	/* Do not change the order of the अगर above and the two below... */
-	अगर (os.pdsk == D_DISKLESS &&
-	    ns.pdsk > D_DISKLESS && ns.pdsk != D_UNKNOWN) अणु      /* attach on the peer */
+	/* Do not change the order of the if above and the two below... */
+	if (os.pdsk == D_DISKLESS &&
+	    ns.pdsk > D_DISKLESS && ns.pdsk != D_UNKNOWN) {      /* attach on the peer */
 		/* we probably will start a resync soon.
 		 * make sure those things are properly reset. */
 		device->rs_total = 0;
@@ -1802,459 +1801,459 @@ _drbd_set_state(काष्ठा drbd_device *device, जोड़ drbd_state 
 
 		drbd_send_uuids(peer_device);
 		drbd_send_state(peer_device, ns);
-	पूर्ण
-	/* No poपूर्णांक in queuing send_biपंचांगap अगर we करोn't have a connection
+	}
+	/* No point in queuing send_bitmap if we don't have a connection
 	 * anymore, so check also the _current_ state, not only the new state
-	 * at the समय this work was queued. */
-	अगर (os.conn != C_WF_BITMAP_S && ns.conn == C_WF_BITMAP_S &&
+	 * at the time this work was queued. */
+	if (os.conn != C_WF_BITMAP_S && ns.conn == C_WF_BITMAP_S &&
 	    device->state.conn == C_WF_BITMAP_S)
-		drbd_queue_biपंचांगap_io(device, &drbd_send_biपंचांगap, शून्य,
+		drbd_queue_bitmap_io(device, &drbd_send_bitmap, NULL,
 				"send_bitmap (WFBitMapS)",
 				BM_LOCKED_TEST_ALLOWED);
 
 	/* Lost contact to peer's copy of the data */
-	अगर (lost_contact_to_peer_data(os.pdsk, ns.pdsk)) अणु
-		अगर (get_ldev(device)) अणु
-			अगर ((ns.role == R_PRIMARY || ns.peer == R_PRIMARY) &&
-			    device->ldev->md.uuid[UI_BITMAP] == 0 && ns.disk >= D_UP_TO_DATE) अणु
-				अगर (drbd_suspended(device)) अणु
+	if (lost_contact_to_peer_data(os.pdsk, ns.pdsk)) {
+		if (get_ldev(device)) {
+			if ((ns.role == R_PRIMARY || ns.peer == R_PRIMARY) &&
+			    device->ldev->md.uuid[UI_BITMAP] == 0 && ns.disk >= D_UP_TO_DATE) {
+				if (drbd_suspended(device)) {
 					set_bit(NEW_CUR_UUID, &device->flags);
-				पूर्ण अन्यथा अणु
+				} else {
 					drbd_uuid_new_current(device);
 					drbd_send_uuids(peer_device);
-				पूर्ण
-			पूर्ण
+				}
+			}
 			put_ldev(device);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (ns.pdsk < D_INCONSISTENT && get_ldev(device)) अणु
-		अगर (os.peer != R_PRIMARY && ns.peer == R_PRIMARY &&
-		    device->ldev->md.uuid[UI_BITMAP] == 0 && ns.disk >= D_UP_TO_DATE) अणु
+	if (ns.pdsk < D_INCONSISTENT && get_ldev(device)) {
+		if (os.peer != R_PRIMARY && ns.peer == R_PRIMARY &&
+		    device->ldev->md.uuid[UI_BITMAP] == 0 && ns.disk >= D_UP_TO_DATE) {
 			drbd_uuid_new_current(device);
 			drbd_send_uuids(peer_device);
-		पूर्ण
+		}
 		/* D_DISKLESS Peer becomes secondary */
-		अगर (os.peer == R_PRIMARY && ns.peer == R_SECONDARY)
+		if (os.peer == R_PRIMARY && ns.peer == R_SECONDARY)
 			/* We may still be Primary ourselves.
-			 * No harm करोne अगर the biपंचांगap still changes,
+			 * No harm done if the bitmap still changes,
 			 * redirtied pages will follow later. */
-			drbd_biपंचांगap_io_from_worker(device, &drbd_bm_ग_लिखो,
+			drbd_bitmap_io_from_worker(device, &drbd_bm_write,
 				"demote diskless peer", BM_LOCKED_SET_ALLOWED);
 		put_ldev(device);
-	पूर्ण
+	}
 
 	/* Write out all changed bits on demote.
 	 * Though, no need to da that just yet
-	 * अगर there is a resync going on still */
-	अगर (os.role == R_PRIMARY && ns.role == R_SECONDARY &&
-		device->state.conn <= C_CONNECTED && get_ldev(device)) अणु
-		/* No changes to the biपंचांगap expected this समय, so निश्चित that,
-		 * even though no harm was करोne अगर it did change. */
-		drbd_biपंचांगap_io_from_worker(device, &drbd_bm_ग_लिखो,
+	 * if there is a resync going on still */
+	if (os.role == R_PRIMARY && ns.role == R_SECONDARY &&
+		device->state.conn <= C_CONNECTED && get_ldev(device)) {
+		/* No changes to the bitmap expected this time, so assert that,
+		 * even though no harm was done if it did change. */
+		drbd_bitmap_io_from_worker(device, &drbd_bm_write,
 				"demote", BM_LOCKED_TEST_ALLOWED);
 		put_ldev(device);
-	पूर्ण
+	}
 
 	/* Last part of the attaching process ... */
-	अगर (ns.conn >= C_CONNECTED &&
-	    os.disk == D_ATTACHING && ns.disk == D_NEGOTIATING) अणु
+	if (ns.conn >= C_CONNECTED &&
+	    os.disk == D_ATTACHING && ns.disk == D_NEGOTIATING) {
 		drbd_send_sizes(peer_device, 0, 0);  /* to start sync... */
 		drbd_send_uuids(peer_device);
 		drbd_send_state(peer_device, ns);
-	पूर्ण
+	}
 
-	/* We want to छोड़ो/जारी resync, tell peer. */
-	अगर (ns.conn >= C_CONNECTED &&
+	/* We want to pause/continue resync, tell peer. */
+	if (ns.conn >= C_CONNECTED &&
 	     ((os.aftr_isp != ns.aftr_isp) ||
 	      (os.user_isp != ns.user_isp)))
 		drbd_send_state(peer_device, ns);
 
-	/* In हाल one of the isp bits got set, suspend other devices. */
-	अगर ((!os.aftr_isp && !os.peer_isp && !os.user_isp) &&
+	/* In case one of the isp bits got set, suspend other devices. */
+	if ((!os.aftr_isp && !os.peer_isp && !os.user_isp) &&
 	    (ns.aftr_isp || ns.peer_isp || ns.user_isp))
 		suspend_other_sg(device);
 
-	/* Make sure the peer माला_लो inक्रमmed about eventual state
-	   changes (ISP bits) जबतक we were in WFReportParams. */
-	अगर (os.conn == C_WF_REPORT_PARAMS && ns.conn >= C_CONNECTED)
+	/* Make sure the peer gets informed about eventual state
+	   changes (ISP bits) while we were in WFReportParams. */
+	if (os.conn == C_WF_REPORT_PARAMS && ns.conn >= C_CONNECTED)
 		drbd_send_state(peer_device, ns);
 
-	अगर (os.conn != C_AHEAD && ns.conn == C_AHEAD)
+	if (os.conn != C_AHEAD && ns.conn == C_AHEAD)
 		drbd_send_state(peer_device, ns);
 
 	/* We are in the progress to start a full sync... */
-	अगर ((os.conn != C_STARTING_SYNC_T && ns.conn == C_STARTING_SYNC_T) ||
+	if ((os.conn != C_STARTING_SYNC_T && ns.conn == C_STARTING_SYNC_T) ||
 	    (os.conn != C_STARTING_SYNC_S && ns.conn == C_STARTING_SYNC_S))
-		/* no other biपंचांगap changes expected during this phase */
-		drbd_queue_biपंचांगap_io(device,
-			&drbd_bmio_set_n_ग_लिखो, &abw_start_sync,
+		/* no other bitmap changes expected during this phase */
+		drbd_queue_bitmap_io(device,
+			&drbd_bmio_set_n_write, &abw_start_sync,
 			"set_n_write from StartingSync", BM_LOCKED_TEST_ALLOWED);
 
 	/* first half of local IO error, failure to attach,
 	 * or administrative detach */
-	अगर (os.disk != D_FAILED && ns.disk == D_FAILED) अणु
-		क्रमागत drbd_io_error_p eh = EP_PASS_ON;
-		पूर्णांक was_io_error = 0;
+	if (os.disk != D_FAILED && ns.disk == D_FAILED) {
+		enum drbd_io_error_p eh = EP_PASS_ON;
+		int was_io_error = 0;
 		/* corresponding get_ldev was in _drbd_set_state, to serialize
 		 * our cleanup here with the transition to D_DISKLESS.
 		 * But is is still not save to dreference ldev here, since
-		 * we might come from an failed Attach beक्रमe ldev was set. */
-		अगर (device->ldev) अणु
-			rcu_पढ़ो_lock();
+		 * we might come from an failed Attach before ldev was set. */
+		if (device->ldev) {
+			rcu_read_lock();
 			eh = rcu_dereference(device->ldev->disk_conf)->on_io_error;
-			rcu_पढ़ो_unlock();
+			rcu_read_unlock();
 
 			was_io_error = test_and_clear_bit(WAS_IO_ERROR, &device->flags);
 
-			/* Intentionally call this handler first, beक्रमe drbd_send_state().
+			/* Intentionally call this handler first, before drbd_send_state().
 			 * See: 2932204 drbd: call local-io-error handler early
 			 * People may chose to hard-reset the box from this handler.
-			 * It is useful अगर this looks like a "regular node crash". */
-			अगर (was_io_error && eh == EP_CALL_HELPER)
+			 * It is useful if this looks like a "regular node crash". */
+			if (was_io_error && eh == EP_CALL_HELPER)
 				drbd_khelper(device, "local-io-error");
 
 			/* Immediately allow completion of all application IO,
-			 * that रुकोs क्रम completion from the local disk,
-			 * अगर this was a क्रमce-detach due to disk_समयout
-			 * or administrator request (drbdsetup detach --क्रमce).
-			 * Do NOT पात otherwise.
+			 * that waits for completion from the local disk,
+			 * if this was a force-detach due to disk_timeout
+			 * or administrator request (drbdsetup detach --force).
+			 * Do NOT abort otherwise.
 			 * Aborting local requests may cause serious problems,
-			 * अगर requests are completed to upper layers alपढ़ोy,
-			 * and then later the alपढ़ोy submitted local bio completes.
-			 * This can cause DMA पूर्णांकo क्रमmer bio pages that meanजबतक
-			 * have been re-used क्रम other things.
-			 * So पातing local requests may cause crashes,
+			 * if requests are completed to upper layers already,
+			 * and then later the already submitted local bio completes.
+			 * This can cause DMA into former bio pages that meanwhile
+			 * have been re-used for other things.
+			 * So aborting local requests may cause crashes,
 			 * or even worse, silent data corruption.
 			 */
-			अगर (test_and_clear_bit(FORCE_DETACH, &device->flags))
-				tl_पात_disk_io(device);
+			if (test_and_clear_bit(FORCE_DETACH, &device->flags))
+				tl_abort_disk_io(device);
 
 			/* current state still has to be D_FAILED,
 			 * there is only one way out: to D_DISKLESS,
 			 * and that may only happen after our put_ldev below. */
-			अगर (device->state.disk != D_FAILED)
+			if (device->state.disk != D_FAILED)
 				drbd_err(device,
 					"ASSERT FAILED: disk is %s during detach\n",
 					drbd_disk_str(device->state.disk));
 
-			अगर (ns.conn >= C_CONNECTED)
+			if (ns.conn >= C_CONNECTED)
 				drbd_send_state(peer_device, ns);
 
 			drbd_rs_cancel_all(device);
 
-			/* In हाल we want to get something to stable storage still,
+			/* In case we want to get something to stable storage still,
 			 * this may be the last chance.
 			 * Following put_ldev may transition to D_DISKLESS. */
 			drbd_md_sync(device);
-		पूर्ण
+		}
 		put_ldev(device);
-	पूर्ण
+	}
 
 	/* second half of local IO error, failure to attach,
 	 * or administrative detach,
 	 * after local_cnt references have reached zero again */
-	अगर (os.disk != D_DISKLESS && ns.disk == D_DISKLESS) अणु
+	if (os.disk != D_DISKLESS && ns.disk == D_DISKLESS) {
 		/* We must still be diskless,
 		 * re-attach has to be serialized with this! */
-		अगर (device->state.disk != D_DISKLESS)
+		if (device->state.disk != D_DISKLESS)
 			drbd_err(device,
 				 "ASSERT FAILED: disk is %s while going diskless\n",
 				 drbd_disk_str(device->state.disk));
 
-		अगर (ns.conn >= C_CONNECTED)
+		if (ns.conn >= C_CONNECTED)
 			drbd_send_state(peer_device, ns);
 		/* corresponding get_ldev in __drbd_set_state
 		 * this may finally trigger drbd_ldev_destroy. */
 		put_ldev(device);
-	पूर्ण
+	}
 
-	/* Notअगरy peer that I had a local IO error, and did not detached.. */
-	अगर (os.disk == D_UP_TO_DATE && ns.disk == D_INCONSISTENT && ns.conn >= C_CONNECTED)
+	/* Notify peer that I had a local IO error, and did not detached.. */
+	if (os.disk == D_UP_TO_DATE && ns.disk == D_INCONSISTENT && ns.conn >= C_CONNECTED)
 		drbd_send_state(peer_device, ns);
 
-	/* Disks got bigger जबतक they were detached */
-	अगर (ns.disk > D_NEGOTIATING && ns.pdsk > D_NEGOTIATING &&
-	    test_and_clear_bit(RESYNC_AFTER_NEG, &device->flags)) अणु
-		अगर (ns.conn == C_CONNECTED)
+	/* Disks got bigger while they were detached */
+	if (ns.disk > D_NEGOTIATING && ns.pdsk > D_NEGOTIATING &&
+	    test_and_clear_bit(RESYNC_AFTER_NEG, &device->flags)) {
+		if (ns.conn == C_CONNECTED)
 			resync_after_online_grow(device);
-	पूर्ण
+	}
 
-	/* A resync finished or पातed, wake छोड़ोd devices... */
-	अगर ((os.conn > C_CONNECTED && ns.conn <= C_CONNECTED) ||
+	/* A resync finished or aborted, wake paused devices... */
+	if ((os.conn > C_CONNECTED && ns.conn <= C_CONNECTED) ||
 	    (os.peer_isp && !ns.peer_isp) ||
 	    (os.user_isp && !ns.user_isp))
 		resume_next_sg(device);
 
-	/* sync target करोne with resync.  Explicitly notअगरy peer, even though
-	 * it should (at least क्रम non-empty resyncs) alपढ़ोy know itself. */
-	अगर (os.disk < D_UP_TO_DATE && os.conn >= C_SYNC_SOURCE && ns.conn == C_CONNECTED)
+	/* sync target done with resync.  Explicitly notify peer, even though
+	 * it should (at least for non-empty resyncs) already know itself. */
+	if (os.disk < D_UP_TO_DATE && os.conn >= C_SYNC_SOURCE && ns.conn == C_CONNECTED)
 		drbd_send_state(peer_device, ns);
 
-	/* Verअगरy finished, or reached stop sector.  Peer did not know about
+	/* Verify finished, or reached stop sector.  Peer did not know about
 	 * the stop sector, and we may even have changed the stop sector during
-	 * verअगरy to पूर्णांकerrupt/stop early.  Send the new state. */
-	अगर (os.conn == C_VERIFY_S && ns.conn == C_CONNECTED
-	&& verअगरy_can_करो_stop_sector(device))
+	 * verify to interrupt/stop early.  Send the new state. */
+	if (os.conn == C_VERIFY_S && ns.conn == C_CONNECTED
+	&& verify_can_do_stop_sector(device))
 		drbd_send_state(peer_device, ns);
 
-	/* This triggers biपंचांगap ग_लिखोout of potentially still unwritten pages
-	 * अगर the resync finished cleanly, or पातed because of peer disk
+	/* This triggers bitmap writeout of potentially still unwritten pages
+	 * if the resync finished cleanly, or aborted because of peer disk
 	 * failure, or on transition from resync back to AHEAD/BEHIND.
 	 *
 	 * Connection loss is handled in drbd_disconnected() by the receiver.
 	 *
-	 * For resync पातed because of local disk failure, we cannot करो
-	 * any biपंचांगap ग_लिखोout anymore.
+	 * For resync aborted because of local disk failure, we cannot do
+	 * any bitmap writeout anymore.
 	 *
-	 * No harm करोne अगर some bits change during this phase.
+	 * No harm done if some bits change during this phase.
 	 */
-	अगर ((os.conn > C_CONNECTED && os.conn < C_AHEAD) &&
-	    (ns.conn == C_CONNECTED || ns.conn >= C_AHEAD) && get_ldev(device)) अणु
-		drbd_queue_biपंचांगap_io(device, &drbd_bm_ग_लिखो_copy_pages, शून्य,
+	if ((os.conn > C_CONNECTED && os.conn < C_AHEAD) &&
+	    (ns.conn == C_CONNECTED || ns.conn >= C_AHEAD) && get_ldev(device)) {
+		drbd_queue_bitmap_io(device, &drbd_bm_write_copy_pages, NULL,
 			"write from resync_finished", BM_LOCKED_CHANGE_ALLOWED);
 		put_ldev(device);
-	पूर्ण
+	}
 
-	अगर (ns.disk == D_DISKLESS &&
+	if (ns.disk == D_DISKLESS &&
 	    ns.conn == C_STANDALONE &&
-	    ns.role == R_SECONDARY) अणु
-		अगर (os.aftr_isp != ns.aftr_isp)
+	    ns.role == R_SECONDARY) {
+		if (os.aftr_isp != ns.aftr_isp)
 			resume_next_sg(device);
-	पूर्ण
+	}
 
 	drbd_md_sync(device);
-पूर्ण
+}
 
-काष्ठा after_conn_state_chg_work अणु
-	काष्ठा drbd_work w;
-	क्रमागत drbd_conns oc;
-	जोड़ drbd_state ns_min;
-	जोड़ drbd_state ns_max; /* new, max state, over all devices */
-	क्रमागत chg_state_flags flags;
-	काष्ठा drbd_connection *connection;
-	काष्ठा drbd_state_change *state_change;
-पूर्ण;
+struct after_conn_state_chg_work {
+	struct drbd_work w;
+	enum drbd_conns oc;
+	union drbd_state ns_min;
+	union drbd_state ns_max; /* new, max state, over all devices */
+	enum chg_state_flags flags;
+	struct drbd_connection *connection;
+	struct drbd_state_change *state_change;
+};
 
-अटल पूर्णांक w_after_conn_state_ch(काष्ठा drbd_work *w, पूर्णांक unused)
-अणु
-	काष्ठा after_conn_state_chg_work *acscw =
-		container_of(w, काष्ठा after_conn_state_chg_work, w);
-	काष्ठा drbd_connection *connection = acscw->connection;
-	क्रमागत drbd_conns oc = acscw->oc;
-	जोड़ drbd_state ns_max = acscw->ns_max;
-	काष्ठा drbd_peer_device *peer_device;
-	पूर्णांक vnr;
+static int w_after_conn_state_ch(struct drbd_work *w, int unused)
+{
+	struct after_conn_state_chg_work *acscw =
+		container_of(w, struct after_conn_state_chg_work, w);
+	struct drbd_connection *connection = acscw->connection;
+	enum drbd_conns oc = acscw->oc;
+	union drbd_state ns_max = acscw->ns_max;
+	struct drbd_peer_device *peer_device;
+	int vnr;
 
 	broadcast_state_change(acscw->state_change);
-	क्रमget_state_change(acscw->state_change);
-	kमुक्त(acscw);
+	forget_state_change(acscw->state_change);
+	kfree(acscw);
 
 	/* Upon network configuration, we need to start the receiver */
-	अगर (oc == C_STANDALONE && ns_max.conn == C_UNCONNECTED)
-		drbd_thपढ़ो_start(&connection->receiver);
+	if (oc == C_STANDALONE && ns_max.conn == C_UNCONNECTED)
+		drbd_thread_start(&connection->receiver);
 
-	अगर (oc == C_DISCONNECTING && ns_max.conn == C_STANDALONE) अणु
-		काष्ठा net_conf *old_conf;
+	if (oc == C_DISCONNECTING && ns_max.conn == C_STANDALONE) {
+		struct net_conf *old_conf;
 
-		mutex_lock(&notअगरication_mutex);
-		idr_क्रम_each_entry(&connection->peer_devices, peer_device, vnr)
-			notअगरy_peer_device_state(शून्य, 0, peer_device, शून्य,
+		mutex_lock(&notification_mutex);
+		idr_for_each_entry(&connection->peer_devices, peer_device, vnr)
+			notify_peer_device_state(NULL, 0, peer_device, NULL,
 						 NOTIFY_DESTROY | NOTIFY_CONTINUES);
-		notअगरy_connection_state(शून्य, 0, connection, शून्य, NOTIFY_DESTROY);
-		mutex_unlock(&notअगरication_mutex);
+		notify_connection_state(NULL, 0, connection, NULL, NOTIFY_DESTROY);
+		mutex_unlock(&notification_mutex);
 
 		mutex_lock(&connection->resource->conf_update);
 		old_conf = connection->net_conf;
 		connection->my_addr_len = 0;
 		connection->peer_addr_len = 0;
-		RCU_INIT_POINTER(connection->net_conf, शून्य);
-		conn_मुक्त_crypto(connection);
+		RCU_INIT_POINTER(connection->net_conf, NULL);
+		conn_free_crypto(connection);
 		mutex_unlock(&connection->resource->conf_update);
 
 		synchronize_rcu();
-		kमुक्त(old_conf);
-	पूर्ण
+		kfree(old_conf);
+	}
 
-	अगर (ns_max.susp_fen) अणु
-		/* हाल1: The outdate peer handler is successful: */
-		अगर (ns_max.pdsk <= D_OUTDATED) अणु
-			rcu_पढ़ो_lock();
-			idr_क्रम_each_entry(&connection->peer_devices, peer_device, vnr) अणु
-				काष्ठा drbd_device *device = peer_device->device;
-				अगर (test_bit(NEW_CUR_UUID, &device->flags)) अणु
+	if (ns_max.susp_fen) {
+		/* case1: The outdate peer handler is successful: */
+		if (ns_max.pdsk <= D_OUTDATED) {
+			rcu_read_lock();
+			idr_for_each_entry(&connection->peer_devices, peer_device, vnr) {
+				struct drbd_device *device = peer_device->device;
+				if (test_bit(NEW_CUR_UUID, &device->flags)) {
 					drbd_uuid_new_current(device);
 					clear_bit(NEW_CUR_UUID, &device->flags);
-				पूर्ण
-			पूर्ण
-			rcu_पढ़ो_unlock();
+				}
+			}
+			rcu_read_unlock();
 			spin_lock_irq(&connection->resource->req_lock);
 			_tl_restart(connection, CONNECTION_LOST_WHILE_PENDING);
 			_conn_request_state(connection,
-					    (जोड़ drbd_state) अणु अणु .susp_fen = 1 पूर्ण पूर्ण,
-					    (जोड़ drbd_state) अणु अणु .susp_fen = 0 पूर्ण पूर्ण,
+					    (union drbd_state) { { .susp_fen = 1 } },
+					    (union drbd_state) { { .susp_fen = 0 } },
 					    CS_VERBOSE);
 			spin_unlock_irq(&connection->resource->req_lock);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	conn_md_sync(connection);
 	kref_put(&connection->kref, drbd_destroy_connection);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम conn_old_common_state(काष्ठा drbd_connection *connection, जोड़ drbd_state *pcs, क्रमागत chg_state_flags *pf)
-अणु
-	क्रमागत chg_state_flags flags = ~0;
-	काष्ठा drbd_peer_device *peer_device;
-	पूर्णांक vnr, first_vol = 1;
-	जोड़ drbd_dev_state os, cs = अणु
-		अणु .role = R_SECONDARY,
+static void conn_old_common_state(struct drbd_connection *connection, union drbd_state *pcs, enum chg_state_flags *pf)
+{
+	enum chg_state_flags flags = ~0;
+	struct drbd_peer_device *peer_device;
+	int vnr, first_vol = 1;
+	union drbd_dev_state os, cs = {
+		{ .role = R_SECONDARY,
 		  .peer = R_UNKNOWN,
 		  .conn = connection->cstate,
 		  .disk = D_DISKLESS,
 		  .pdsk = D_UNKNOWN,
-		पूर्ण पूर्ण;
+		} };
 
-	rcu_पढ़ो_lock();
-	idr_क्रम_each_entry(&connection->peer_devices, peer_device, vnr) अणु
-		काष्ठा drbd_device *device = peer_device->device;
+	rcu_read_lock();
+	idr_for_each_entry(&connection->peer_devices, peer_device, vnr) {
+		struct drbd_device *device = peer_device->device;
 		os = device->state;
 
-		अगर (first_vol) अणु
+		if (first_vol) {
 			cs = os;
 			first_vol = 0;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (cs.role != os.role)
+		if (cs.role != os.role)
 			flags &= ~CS_DC_ROLE;
 
-		अगर (cs.peer != os.peer)
+		if (cs.peer != os.peer)
 			flags &= ~CS_DC_PEER;
 
-		अगर (cs.conn != os.conn)
+		if (cs.conn != os.conn)
 			flags &= ~CS_DC_CONN;
 
-		अगर (cs.disk != os.disk)
+		if (cs.disk != os.disk)
 			flags &= ~CS_DC_DISK;
 
-		अगर (cs.pdsk != os.pdsk)
+		if (cs.pdsk != os.pdsk)
 			flags &= ~CS_DC_PDSK;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	}
+	rcu_read_unlock();
 
 	*pf |= CS_DC_MASK;
 	*pf &= flags;
 	(*pcs).i = cs.i;
-पूर्ण
+}
 
-अटल क्रमागत drbd_state_rv
-conn_is_valid_transition(काष्ठा drbd_connection *connection, जोड़ drbd_state mask, जोड़ drbd_state val,
-			 क्रमागत chg_state_flags flags)
-अणु
-	क्रमागत drbd_state_rv rv = SS_SUCCESS;
-	जोड़ drbd_state ns, os;
-	काष्ठा drbd_peer_device *peer_device;
-	पूर्णांक vnr;
+static enum drbd_state_rv
+conn_is_valid_transition(struct drbd_connection *connection, union drbd_state mask, union drbd_state val,
+			 enum chg_state_flags flags)
+{
+	enum drbd_state_rv rv = SS_SUCCESS;
+	union drbd_state ns, os;
+	struct drbd_peer_device *peer_device;
+	int vnr;
 
-	rcu_पढ़ो_lock();
-	idr_क्रम_each_entry(&connection->peer_devices, peer_device, vnr) अणु
-		काष्ठा drbd_device *device = peer_device->device;
-		os = drbd_पढ़ो_state(device);
-		ns = sanitize_state(device, os, apply_mask_val(os, mask, val), शून्य);
+	rcu_read_lock();
+	idr_for_each_entry(&connection->peer_devices, peer_device, vnr) {
+		struct drbd_device *device = peer_device->device;
+		os = drbd_read_state(device);
+		ns = sanitize_state(device, os, apply_mask_val(os, mask, val), NULL);
 
-		अगर (flags & CS_IGN_OUTD_FAIL && ns.disk == D_OUTDATED && os.disk < D_OUTDATED)
+		if (flags & CS_IGN_OUTD_FAIL && ns.disk == D_OUTDATED && os.disk < D_OUTDATED)
 			ns.disk = os.disk;
 
-		अगर (ns.i == os.i)
-			जारी;
+		if (ns.i == os.i)
+			continue;
 
 		rv = is_valid_transition(os, ns);
 
-		अगर (rv >= SS_SUCCESS && !(flags & CS_HARD)) अणु
+		if (rv >= SS_SUCCESS && !(flags & CS_HARD)) {
 			rv = is_valid_state(device, ns);
-			अगर (rv < SS_SUCCESS) अणु
-				अगर (is_valid_state(device, os) == rv)
+			if (rv < SS_SUCCESS) {
+				if (is_valid_state(device, os) == rv)
 					rv = is_valid_soft_transition(os, ns, connection);
-			पूर्ण अन्यथा
+			} else
 				rv = is_valid_soft_transition(os, ns, connection);
-		पूर्ण
+		}
 
-		अगर (rv < SS_SUCCESS) अणु
-			अगर (flags & CS_VERBOSE)
-				prपूर्णांक_st_err(device, os, ns, rv);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	rcu_पढ़ो_unlock();
+		if (rv < SS_SUCCESS) {
+			if (flags & CS_VERBOSE)
+				print_st_err(device, os, ns, rv);
+			break;
+		}
+	}
+	rcu_read_unlock();
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-अटल व्योम
-conn_set_state(काष्ठा drbd_connection *connection, जोड़ drbd_state mask, जोड़ drbd_state val,
-	       जोड़ drbd_state *pns_min, जोड़ drbd_state *pns_max, क्रमागत chg_state_flags flags)
-अणु
-	जोड़ drbd_state ns, os, ns_max = अणु पूर्ण;
-	जोड़ drbd_state ns_min = अणु
-		अणु .role = R_MASK,
+static void
+conn_set_state(struct drbd_connection *connection, union drbd_state mask, union drbd_state val,
+	       union drbd_state *pns_min, union drbd_state *pns_max, enum chg_state_flags flags)
+{
+	union drbd_state ns, os, ns_max = { };
+	union drbd_state ns_min = {
+		{ .role = R_MASK,
 		  .peer = R_MASK,
 		  .conn = val.conn,
 		  .disk = D_MASK,
 		  .pdsk = D_MASK
-		पूर्ण पूर्ण;
-	काष्ठा drbd_peer_device *peer_device;
-	क्रमागत drbd_state_rv rv;
-	पूर्णांक vnr, number_of_volumes = 0;
+		} };
+	struct drbd_peer_device *peer_device;
+	enum drbd_state_rv rv;
+	int vnr, number_of_volumes = 0;
 
-	अगर (mask.conn == C_MASK) अणु
-		/* remember last connect समय so request_समयr_fn() won't
-		 * समाप्त newly established sessions जबतक we are still trying to thaw
+	if (mask.conn == C_MASK) {
+		/* remember last connect time so request_timer_fn() won't
+		 * kill newly established sessions while we are still trying to thaw
 		 * previously frozen IO */
-		अगर (connection->cstate != C_WF_REPORT_PARAMS && val.conn == C_WF_REPORT_PARAMS)
-			connection->last_reconnect_jअगर = jअगरfies;
+		if (connection->cstate != C_WF_REPORT_PARAMS && val.conn == C_WF_REPORT_PARAMS)
+			connection->last_reconnect_jif = jiffies;
 
 		connection->cstate = val.conn;
-	पूर्ण
+	}
 
-	rcu_पढ़ो_lock();
-	idr_क्रम_each_entry(&connection->peer_devices, peer_device, vnr) अणु
-		काष्ठा drbd_device *device = peer_device->device;
+	rcu_read_lock();
+	idr_for_each_entry(&connection->peer_devices, peer_device, vnr) {
+		struct drbd_device *device = peer_device->device;
 		number_of_volumes++;
-		os = drbd_पढ़ो_state(device);
+		os = drbd_read_state(device);
 		ns = apply_mask_val(os, mask, val);
-		ns = sanitize_state(device, os, ns, शून्य);
+		ns = sanitize_state(device, os, ns, NULL);
 
-		अगर (flags & CS_IGN_OUTD_FAIL && ns.disk == D_OUTDATED && os.disk < D_OUTDATED)
+		if (flags & CS_IGN_OUTD_FAIL && ns.disk == D_OUTDATED && os.disk < D_OUTDATED)
 			ns.disk = os.disk;
 
-		rv = _drbd_set_state(device, ns, flags, शून्य);
+		rv = _drbd_set_state(device, ns, flags, NULL);
 		BUG_ON(rv < SS_SUCCESS);
 		ns.i = device->state.i;
 		ns_max.role = max_role(ns.role, ns_max.role);
 		ns_max.peer = max_role(ns.peer, ns_max.peer);
-		ns_max.conn = max_t(क्रमागत drbd_conns, ns.conn, ns_max.conn);
-		ns_max.disk = max_t(क्रमागत drbd_disk_state, ns.disk, ns_max.disk);
-		ns_max.pdsk = max_t(क्रमागत drbd_disk_state, ns.pdsk, ns_max.pdsk);
+		ns_max.conn = max_t(enum drbd_conns, ns.conn, ns_max.conn);
+		ns_max.disk = max_t(enum drbd_disk_state, ns.disk, ns_max.disk);
+		ns_max.pdsk = max_t(enum drbd_disk_state, ns.pdsk, ns_max.pdsk);
 
 		ns_min.role = min_role(ns.role, ns_min.role);
 		ns_min.peer = min_role(ns.peer, ns_min.peer);
-		ns_min.conn = min_t(क्रमागत drbd_conns, ns.conn, ns_min.conn);
-		ns_min.disk = min_t(क्रमागत drbd_disk_state, ns.disk, ns_min.disk);
-		ns_min.pdsk = min_t(क्रमागत drbd_disk_state, ns.pdsk, ns_min.pdsk);
-	पूर्ण
-	rcu_पढ़ो_unlock();
+		ns_min.conn = min_t(enum drbd_conns, ns.conn, ns_min.conn);
+		ns_min.disk = min_t(enum drbd_disk_state, ns.disk, ns_min.disk);
+		ns_min.pdsk = min_t(enum drbd_disk_state, ns.pdsk, ns_min.pdsk);
+	}
+	rcu_read_unlock();
 
-	अगर (number_of_volumes == 0) अणु
-		ns_min = ns_max = (जोड़ drbd_state) अणु अणु
+	if (number_of_volumes == 0) {
+		ns_min = ns_max = (union drbd_state) { {
 				.role = R_SECONDARY,
 				.peer = R_UNKNOWN,
 				.conn = val.conn,
 				.disk = D_DISKLESS,
 				.pdsk = D_UNKNOWN
-			पूर्ण पूर्ण;
-	पूर्ण
+			} };
+	}
 
 	ns_min.susp = ns_max.susp = connection->resource->susp;
 	ns_min.susp_nod = ns_max.susp_nod = connection->resource->susp_nod;
@@ -2262,49 +2261,49 @@ conn_set_state(काष्ठा drbd_connection *connection, जोड़ drbd
 
 	*pns_min = ns_min;
 	*pns_max = ns_max;
-पूर्ण
+}
 
-अटल क्रमागत drbd_state_rv
-_conn_rq_cond(काष्ठा drbd_connection *connection, जोड़ drbd_state mask, जोड़ drbd_state val)
-अणु
-	क्रमागत drbd_state_rv err, rv = SS_UNKNOWN_ERROR; /* जारी रुकोing */;
+static enum drbd_state_rv
+_conn_rq_cond(struct drbd_connection *connection, union drbd_state mask, union drbd_state val)
+{
+	enum drbd_state_rv err, rv = SS_UNKNOWN_ERROR; /* continue waiting */;
 
-	अगर (test_and_clear_bit(CONN_WD_ST_CHG_OKAY, &connection->flags))
+	if (test_and_clear_bit(CONN_WD_ST_CHG_OKAY, &connection->flags))
 		rv = SS_CW_SUCCESS;
 
-	अगर (test_and_clear_bit(CONN_WD_ST_CHG_FAIL, &connection->flags))
+	if (test_and_clear_bit(CONN_WD_ST_CHG_FAIL, &connection->flags))
 		rv = SS_CW_FAILED_BY_PEER;
 
 	err = conn_is_valid_transition(connection, mask, val, 0);
-	अगर (err == SS_SUCCESS && connection->cstate == C_WF_REPORT_PARAMS)
-		वापस rv;
+	if (err == SS_SUCCESS && connection->cstate == C_WF_REPORT_PARAMS)
+		return rv;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-क्रमागत drbd_state_rv
-_conn_request_state(काष्ठा drbd_connection *connection, जोड़ drbd_state mask, जोड़ drbd_state val,
-		    क्रमागत chg_state_flags flags)
-अणु
-	क्रमागत drbd_state_rv rv = SS_SUCCESS;
-	काष्ठा after_conn_state_chg_work *acscw;
-	क्रमागत drbd_conns oc = connection->cstate;
-	जोड़ drbd_state ns_max, ns_min, os;
+enum drbd_state_rv
+_conn_request_state(struct drbd_connection *connection, union drbd_state mask, union drbd_state val,
+		    enum chg_state_flags flags)
+{
+	enum drbd_state_rv rv = SS_SUCCESS;
+	struct after_conn_state_chg_work *acscw;
+	enum drbd_conns oc = connection->cstate;
+	union drbd_state ns_max, ns_min, os;
 	bool have_mutex = false;
-	काष्ठा drbd_state_change *state_change;
+	struct drbd_state_change *state_change;
 
-	अगर (mask.conn) अणु
+	if (mask.conn) {
 		rv = is_valid_conn_transition(oc, val.conn);
-		अगर (rv < SS_SUCCESS)
-			जाओ पात;
-	पूर्ण
+		if (rv < SS_SUCCESS)
+			goto abort;
+	}
 
 	rv = conn_is_valid_transition(connection, mask, val, flags);
-	अगर (rv < SS_SUCCESS)
-		जाओ पात;
+	if (rv < SS_SUCCESS)
+		goto abort;
 
-	अगर (oc == C_WF_REPORT_PARAMS && val.conn == C_DISCONNECTING &&
-	    !(flags & (CS_LOCAL_ONLY | CS_HARD))) अणु
+	if (oc == C_WF_REPORT_PARAMS && val.conn == C_DISCONNECTING &&
+	    !(flags & (CS_LOCAL_ONLY | CS_HARD))) {
 
 		/* This will be a cluster-wide state change.
 		 * Need to give up the spinlock, grab the mutex,
@@ -2314,28 +2313,28 @@ _conn_request_state(काष्ठा drbd_connection *connection, जोड़
 		have_mutex = true;
 
 		set_bit(CONN_WD_ST_CHG_REQ, &connection->flags);
-		अगर (conn_send_state_req(connection, mask, val)) अणु
+		if (conn_send_state_req(connection, mask, val)) {
 			/* sending failed. */
 			clear_bit(CONN_WD_ST_CHG_REQ, &connection->flags);
 			rv = SS_CW_FAILED_BY_PEER;
 			/* need to re-aquire the spin lock, though */
-			जाओ पात_unlocked;
-		पूर्ण
+			goto abort_unlocked;
+		}
 
-		अगर (val.conn == C_DISCONNECTING)
+		if (val.conn == C_DISCONNECTING)
 			set_bit(DISCONNECT_SENT, &connection->flags);
 
 		/* ... and re-aquire the spinlock.
-		 * If _conn_rq_cond() वापसed >= SS_SUCCESS, we must call
+		 * If _conn_rq_cond() returned >= SS_SUCCESS, we must call
 		 * conn_set_state() within the same spinlock. */
 		spin_lock_irq(&connection->resource->req_lock);
-		रुको_event_lock_irq(connection->ping_रुको,
+		wait_event_lock_irq(connection->ping_wait,
 				(rv = _conn_rq_cond(connection, mask, val)),
 				connection->resource->req_lock);
 		clear_bit(CONN_WD_ST_CHG_REQ, &connection->flags);
-		अगर (rv < SS_SUCCESS)
-			जाओ पात;
-	पूर्ण
+		if (rv < SS_SUCCESS)
+			goto abort;
+	}
 
 	state_change = remember_old_state(connection->resource, GFP_ATOMIC);
 	conn_old_common_state(connection, &os, &flags);
@@ -2344,8 +2343,8 @@ _conn_request_state(काष्ठा drbd_connection *connection, जोड़
 	conn_pr_state_change(connection, os, ns_max, flags);
 	remember_new_state(state_change);
 
-	acscw = kदो_स्मृति(माप(*acscw), GFP_ATOMIC);
-	अगर (acscw) अणु
+	acscw = kmalloc(sizeof(*acscw), GFP_ATOMIC);
+	if (acscw) {
 		acscw->oc = os.conn;
 		acscw->ns_min = ns_min;
 		acscw->ns_max = ns_max;
@@ -2355,36 +2354,36 @@ _conn_request_state(काष्ठा drbd_connection *connection, जोड़
 		acscw->connection = connection;
 		acscw->state_change = state_change;
 		drbd_queue_work(&connection->sender_work, &acscw->w);
-	पूर्ण अन्यथा अणु
+	} else {
 		drbd_err(connection, "Could not kmalloc an acscw\n");
-	पूर्ण
+	}
 
- पात:
-	अगर (have_mutex) अणु
+ abort:
+	if (have_mutex) {
 		/* mutex_unlock() "... must not be used in interrupt context.",
 		 * so give up the spinlock, then re-aquire it */
 		spin_unlock_irq(&connection->resource->req_lock);
- पात_unlocked:
+ abort_unlocked:
 		mutex_unlock(&connection->cstate_mutex);
 		spin_lock_irq(&connection->resource->req_lock);
-	पूर्ण
-	अगर (rv < SS_SUCCESS && flags & CS_VERBOSE) अणु
+	}
+	if (rv < SS_SUCCESS && flags & CS_VERBOSE) {
 		drbd_err(connection, "State change failed: %s\n", drbd_set_st_err_str(rv));
 		drbd_err(connection, " mask = 0x%x val = 0x%x\n", mask.i, val.i);
 		drbd_err(connection, " old_conn:%s wanted_conn:%s\n", drbd_conn_str(oc), drbd_conn_str(val.conn));
-	पूर्ण
-	वापस rv;
-पूर्ण
+	}
+	return rv;
+}
 
-क्रमागत drbd_state_rv
-conn_request_state(काष्ठा drbd_connection *connection, जोड़ drbd_state mask, जोड़ drbd_state val,
-		   क्रमागत chg_state_flags flags)
-अणु
-	क्रमागत drbd_state_rv rv;
+enum drbd_state_rv
+conn_request_state(struct drbd_connection *connection, union drbd_state mask, union drbd_state val,
+		   enum chg_state_flags flags)
+{
+	enum drbd_state_rv rv;
 
 	spin_lock_irq(&connection->resource->req_lock);
 	rv = _conn_request_state(connection, mask, val, flags);
 	spin_unlock_irq(&connection->resource->req_lock);
 
-	वापस rv;
-पूर्ण
+	return rv;
+}

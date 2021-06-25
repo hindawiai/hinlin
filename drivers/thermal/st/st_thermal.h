@@ -1,21 +1,20 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * ST Thermal Sensor Driver क्रम STi series of SoCs
+ * ST Thermal Sensor Driver for STi series of SoCs
  * Author: Ajit Pal Singh <ajitpal.singh@st.com>
  *
  * Copyright (C) 2003-2014 STMicroelectronics (R&D) Limited
  */
 
-#अगर_अघोषित __STI_THERMAL_SYSCFG_H
-#घोषणा __STI_THERMAL_SYSCFG_H
+#ifndef __STI_THERMAL_SYSCFG_H
+#define __STI_THERMAL_SYSCFG_H
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/thermal.h>
+#include <linux/interrupt.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
+#include <linux/thermal.h>
 
-क्रमागत st_thermal_regfield_ids अणु
+enum st_thermal_regfield_ids {
 	INT_THRESH_HI = 0, /* Top two regfield IDs are mutually exclusive */
 	TEMP_PWR = 0,
 	DCORRECT,
@@ -24,78 +23,78 @@
 	INT_ENABLE,
 
 	MAX_REGFIELDS
-पूर्ण;
+};
 
-/* Thermal sensor घातer states */
-क्रमागत st_thermal_घातer_state अणु
+/* Thermal sensor power states */
+enum st_thermal_power_state {
 	POWER_OFF = 0,
 	POWER_ON
-पूर्ण;
+};
 
-काष्ठा st_thermal_sensor;
+struct st_thermal_sensor;
 
 /**
- * Description of निजी thermal sensor ops.
+ * Description of private thermal sensor ops.
  *
- * @घातer_ctrl:		Function क्रम घातering on/off a sensor. Clock to the
+ * @power_ctrl:		Function for powering on/off a sensor. Clock to the
  *			sensor is also controlled from this function.
- * @alloc_regfields: 	Allocate regmap रेजिस्टर fields, specअगरic to a sensor.
- * @करो_memmap_regmap: 	Memory map the thermal रेजिस्टर space and init regmap
+ * @alloc_regfields: 	Allocate regmap register fields, specific to a sensor.
+ * @do_memmap_regmap: 	Memory map the thermal register space and init regmap
  *			instance or find regmap instance.
- * @रेजिस्टर_irq: 	Register an पूर्णांकerrupt handler क्रम a sensor.
+ * @register_irq: 	Register an interrupt handler for a sensor.
  */
-काष्ठा st_thermal_sensor_ops अणु
-	पूर्णांक (*घातer_ctrl)(काष्ठा st_thermal_sensor *, क्रमागत st_thermal_घातer_state);
-	पूर्णांक (*alloc_regfields)(काष्ठा st_thermal_sensor *);
-	पूर्णांक (*regmap_init)(काष्ठा st_thermal_sensor *);
-	पूर्णांक (*रेजिस्टर_enable_irq)(काष्ठा st_thermal_sensor *);
-	पूर्णांक (*enable_irq)(काष्ठा st_thermal_sensor *);
-पूर्ण;
+struct st_thermal_sensor_ops {
+	int (*power_ctrl)(struct st_thermal_sensor *, enum st_thermal_power_state);
+	int (*alloc_regfields)(struct st_thermal_sensor *);
+	int (*regmap_init)(struct st_thermal_sensor *);
+	int (*register_enable_irq)(struct st_thermal_sensor *);
+	int (*enable_irq)(struct st_thermal_sensor *);
+};
 
 /**
  * Description of thermal driver compatible data.
  *
- * @reg_fields:		Poपूर्णांकer to the regfields array क्रम a sensor.
- * @sys_compat:		Poपूर्णांकer to the syscon node compatible string.
- * @ops: 		Poपूर्णांकer to निजी thermal ops क्रम a sensor.
+ * @reg_fields:		Pointer to the regfields array for a sensor.
+ * @sys_compat:		Pointer to the syscon node compatible string.
+ * @ops: 		Pointer to private thermal ops for a sensor.
  * @calibration_val: 	Default calibration value to be written to the DCORRECT
- *			रेजिस्टर field क्रम a sensor.
- * @temp_adjust_val: 	Value to be added/subtracted from the data पढ़ो from
+ *			register field for a sensor.
+ * @temp_adjust_val: 	Value to be added/subtracted from the data read from
  *			the sensor. If value needs to be added please provide a
- *			positive value and अगर it is to be subtracted please
+ *			positive value and if it is to be subtracted please
  * 			provide a negative value.
- * @crit_temp: 		The temperature beyond which the SoC should be shutकरोwn
+ * @crit_temp: 		The temperature beyond which the SoC should be shutdown
  * 			to prevent damage.
  */
-काष्ठा st_thermal_compat_data अणु
-	अक्षर *sys_compat;
-	स्थिर काष्ठा reg_field *reg_fields;
-	स्थिर काष्ठा st_thermal_sensor_ops *ops;
-	अचिन्हित पूर्णांक calibration_val;
-	पूर्णांक temp_adjust_val;
-	पूर्णांक crit_temp;
-पूर्ण;
+struct st_thermal_compat_data {
+	char *sys_compat;
+	const struct reg_field *reg_fields;
+	const struct st_thermal_sensor_ops *ops;
+	unsigned int calibration_val;
+	int temp_adjust_val;
+	int crit_temp;
+};
 
-काष्ठा st_thermal_sensor अणु
-	काष्ठा device *dev;
-	काष्ठा thermal_zone_device *thermal_dev;
-	स्थिर काष्ठा st_thermal_sensor_ops *ops;
-	स्थिर काष्ठा st_thermal_compat_data *cdata;
-	काष्ठा clk *clk;
-	काष्ठा regmap *regmap;
-	काष्ठा regmap_field *pwr;
-	काष्ठा regmap_field *dcorrect;
-	काष्ठा regmap_field *overflow;
-	काष्ठा regmap_field *temp_data;
-	काष्ठा regmap_field *पूर्णांक_thresh_hi;
-	काष्ठा regmap_field *पूर्णांक_enable;
-	पूर्णांक irq;
-	व्योम __iomem *mmio_base;
-पूर्ण;
+struct st_thermal_sensor {
+	struct device *dev;
+	struct thermal_zone_device *thermal_dev;
+	const struct st_thermal_sensor_ops *ops;
+	const struct st_thermal_compat_data *cdata;
+	struct clk *clk;
+	struct regmap *regmap;
+	struct regmap_field *pwr;
+	struct regmap_field *dcorrect;
+	struct regmap_field *overflow;
+	struct regmap_field *temp_data;
+	struct regmap_field *int_thresh_hi;
+	struct regmap_field *int_enable;
+	int irq;
+	void __iomem *mmio_base;
+};
 
-बाह्य पूर्णांक st_thermal_रेजिस्टर(काष्ठा platक्रमm_device *pdev,
-			       स्थिर काष्ठा of_device_id *st_thermal_of_match);
-बाह्य पूर्णांक st_thermal_unरेजिस्टर(काष्ठा platक्रमm_device *pdev);
-बाह्य स्थिर काष्ठा dev_pm_ops st_thermal_pm_ops;
+extern int st_thermal_register(struct platform_device *pdev,
+			       const struct of_device_id *st_thermal_of_match);
+extern int st_thermal_unregister(struct platform_device *pdev);
+extern const struct dev_pm_ops st_thermal_pm_ops;
 
-#पूर्ण_अगर /* __STI_RESET_SYSCFG_H */
+#endif /* __STI_RESET_SYSCFG_H */

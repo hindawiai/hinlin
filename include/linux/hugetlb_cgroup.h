@@ -1,9 +1,8 @@
-<शैली गुरु>
 /*
  * Copyright IBM Corporation, 2012
  * Author Aneesh Kumar K.V <aneesh.kumar@linux.vnet.ibm.com>
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms of version 2.1 of the GNU Lesser General Public License
  * as published by the Free Software Foundation.
  *
@@ -13,252 +12,252 @@
  *
  */
 
-#अगर_अघोषित _LINUX_HUGETLB_CGROUP_H
-#घोषणा _LINUX_HUGETLB_CGROUP_H
+#ifndef _LINUX_HUGETLB_CGROUP_H
+#define _LINUX_HUGETLB_CGROUP_H
 
-#समावेश <linux/mmdebug.h>
+#include <linux/mmdebug.h>
 
-काष्ठा hugetlb_cgroup;
-काष्ठा resv_map;
-काष्ठा file_region;
+struct hugetlb_cgroup;
+struct resv_map;
+struct file_region;
 
 /*
  * Minimum page order trackable by hugetlb cgroup.
- * At least 4 pages are necessary क्रम all the tracking inक्रमmation.
+ * At least 4 pages are necessary for all the tracking information.
  * The second tail page (hpage[2]) is the fault usage cgroup.
  * The third tail page (hpage[3]) is the reservation usage cgroup.
  */
-#घोषणा HUGETLB_CGROUP_MIN_ORDER	2
+#define HUGETLB_CGROUP_MIN_ORDER	2
 
-#अगर_घोषित CONFIG_CGROUP_HUGETLB
-क्रमागत hugetlb_memory_event अणु
+#ifdef CONFIG_CGROUP_HUGETLB
+enum hugetlb_memory_event {
 	HUGETLB_MAX,
 	HUGETLB_NR_MEMORY_EVENTS,
-पूर्ण;
+};
 
-काष्ठा hugetlb_cgroup अणु
-	काष्ठा cgroup_subsys_state css;
-
-	/*
-	 * the counter to account क्रम hugepages from hugetlb.
-	 */
-	काष्ठा page_counter hugepage[HUGE_MAX_HSTATE];
+struct hugetlb_cgroup {
+	struct cgroup_subsys_state css;
 
 	/*
-	 * the counter to account क्रम hugepage reservations from hugetlb.
+	 * the counter to account for hugepages from hugetlb.
 	 */
-	काष्ठा page_counter rsvd_hugepage[HUGE_MAX_HSTATE];
+	struct page_counter hugepage[HUGE_MAX_HSTATE];
 
-	atomic_दीर्घ_t events[HUGE_MAX_HSTATE][HUGETLB_NR_MEMORY_EVENTS];
-	atomic_दीर्घ_t events_local[HUGE_MAX_HSTATE][HUGETLB_NR_MEMORY_EVENTS];
+	/*
+	 * the counter to account for hugepage reservations from hugetlb.
+	 */
+	struct page_counter rsvd_hugepage[HUGE_MAX_HSTATE];
 
-	/* Handle क्रम "hugetlb.events" */
-	काष्ठा cgroup_file events_file[HUGE_MAX_HSTATE];
+	atomic_long_t events[HUGE_MAX_HSTATE][HUGETLB_NR_MEMORY_EVENTS];
+	atomic_long_t events_local[HUGE_MAX_HSTATE][HUGETLB_NR_MEMORY_EVENTS];
 
-	/* Handle क्रम "hugetlb.events.local" */
-	काष्ठा cgroup_file events_local_file[HUGE_MAX_HSTATE];
-पूर्ण;
+	/* Handle for "hugetlb.events" */
+	struct cgroup_file events_file[HUGE_MAX_HSTATE];
 
-अटल अंतरभूत काष्ठा hugetlb_cgroup *
-__hugetlb_cgroup_from_page(काष्ठा page *page, bool rsvd)
-अणु
+	/* Handle for "hugetlb.events.local" */
+	struct cgroup_file events_local_file[HUGE_MAX_HSTATE];
+};
+
+static inline struct hugetlb_cgroup *
+__hugetlb_cgroup_from_page(struct page *page, bool rsvd)
+{
 	VM_BUG_ON_PAGE(!PageHuge(page), page);
 
-	अगर (compound_order(page) < HUGETLB_CGROUP_MIN_ORDER)
-		वापस शून्य;
-	अगर (rsvd)
-		वापस (काष्ठा hugetlb_cgroup *)page[3].निजी;
-	अन्यथा
-		वापस (काष्ठा hugetlb_cgroup *)page[2].निजी;
-पूर्ण
+	if (compound_order(page) < HUGETLB_CGROUP_MIN_ORDER)
+		return NULL;
+	if (rsvd)
+		return (struct hugetlb_cgroup *)page[3].private;
+	else
+		return (struct hugetlb_cgroup *)page[2].private;
+}
 
-अटल अंतरभूत काष्ठा hugetlb_cgroup *hugetlb_cgroup_from_page(काष्ठा page *page)
-अणु
-	वापस __hugetlb_cgroup_from_page(page, false);
-पूर्ण
+static inline struct hugetlb_cgroup *hugetlb_cgroup_from_page(struct page *page)
+{
+	return __hugetlb_cgroup_from_page(page, false);
+}
 
-अटल अंतरभूत काष्ठा hugetlb_cgroup *
-hugetlb_cgroup_from_page_rsvd(काष्ठा page *page)
-अणु
-	वापस __hugetlb_cgroup_from_page(page, true);
-पूर्ण
+static inline struct hugetlb_cgroup *
+hugetlb_cgroup_from_page_rsvd(struct page *page)
+{
+	return __hugetlb_cgroup_from_page(page, true);
+}
 
-अटल अंतरभूत पूर्णांक __set_hugetlb_cgroup(काष्ठा page *page,
-				       काष्ठा hugetlb_cgroup *h_cg, bool rsvd)
-अणु
+static inline int __set_hugetlb_cgroup(struct page *page,
+				       struct hugetlb_cgroup *h_cg, bool rsvd)
+{
 	VM_BUG_ON_PAGE(!PageHuge(page), page);
 
-	अगर (compound_order(page) < HUGETLB_CGROUP_MIN_ORDER)
-		वापस -1;
-	अगर (rsvd)
-		page[3].निजी = (अचिन्हित दीर्घ)h_cg;
-	अन्यथा
-		page[2].निजी = (अचिन्हित दीर्घ)h_cg;
-	वापस 0;
-पूर्ण
+	if (compound_order(page) < HUGETLB_CGROUP_MIN_ORDER)
+		return -1;
+	if (rsvd)
+		page[3].private = (unsigned long)h_cg;
+	else
+		page[2].private = (unsigned long)h_cg;
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक set_hugetlb_cgroup(काष्ठा page *page,
-				     काष्ठा hugetlb_cgroup *h_cg)
-अणु
-	वापस __set_hugetlb_cgroup(page, h_cg, false);
-पूर्ण
+static inline int set_hugetlb_cgroup(struct page *page,
+				     struct hugetlb_cgroup *h_cg)
+{
+	return __set_hugetlb_cgroup(page, h_cg, false);
+}
 
-अटल अंतरभूत पूर्णांक set_hugetlb_cgroup_rsvd(काष्ठा page *page,
-					  काष्ठा hugetlb_cgroup *h_cg)
-अणु
-	वापस __set_hugetlb_cgroup(page, h_cg, true);
-पूर्ण
+static inline int set_hugetlb_cgroup_rsvd(struct page *page,
+					  struct hugetlb_cgroup *h_cg)
+{
+	return __set_hugetlb_cgroup(page, h_cg, true);
+}
 
-अटल अंतरभूत bool hugetlb_cgroup_disabled(व्योम)
-अणु
-	वापस !cgroup_subsys_enabled(hugetlb_cgrp_subsys);
-पूर्ण
+static inline bool hugetlb_cgroup_disabled(void)
+{
+	return !cgroup_subsys_enabled(hugetlb_cgrp_subsys);
+}
 
-अटल अंतरभूत व्योम hugetlb_cgroup_put_rsvd_cgroup(काष्ठा hugetlb_cgroup *h_cg)
-अणु
+static inline void hugetlb_cgroup_put_rsvd_cgroup(struct hugetlb_cgroup *h_cg)
+{
 	css_put(&h_cg->css);
-पूर्ण
+}
 
-बाह्य पूर्णांक hugetlb_cgroup_अक्षरge_cgroup(पूर्णांक idx, अचिन्हित दीर्घ nr_pages,
-					काष्ठा hugetlb_cgroup **ptr);
-बाह्य पूर्णांक hugetlb_cgroup_अक्षरge_cgroup_rsvd(पूर्णांक idx, अचिन्हित दीर्घ nr_pages,
-					     काष्ठा hugetlb_cgroup **ptr);
-बाह्य व्योम hugetlb_cgroup_commit_अक्षरge(पूर्णांक idx, अचिन्हित दीर्घ nr_pages,
-					 काष्ठा hugetlb_cgroup *h_cg,
-					 काष्ठा page *page);
-बाह्य व्योम hugetlb_cgroup_commit_अक्षरge_rsvd(पूर्णांक idx, अचिन्हित दीर्घ nr_pages,
-					      काष्ठा hugetlb_cgroup *h_cg,
-					      काष्ठा page *page);
-बाह्य व्योम hugetlb_cgroup_unअक्षरge_page(पूर्णांक idx, अचिन्हित दीर्घ nr_pages,
-					 काष्ठा page *page);
-बाह्य व्योम hugetlb_cgroup_unअक्षरge_page_rsvd(पूर्णांक idx, अचिन्हित दीर्घ nr_pages,
-					      काष्ठा page *page);
+extern int hugetlb_cgroup_charge_cgroup(int idx, unsigned long nr_pages,
+					struct hugetlb_cgroup **ptr);
+extern int hugetlb_cgroup_charge_cgroup_rsvd(int idx, unsigned long nr_pages,
+					     struct hugetlb_cgroup **ptr);
+extern void hugetlb_cgroup_commit_charge(int idx, unsigned long nr_pages,
+					 struct hugetlb_cgroup *h_cg,
+					 struct page *page);
+extern void hugetlb_cgroup_commit_charge_rsvd(int idx, unsigned long nr_pages,
+					      struct hugetlb_cgroup *h_cg,
+					      struct page *page);
+extern void hugetlb_cgroup_uncharge_page(int idx, unsigned long nr_pages,
+					 struct page *page);
+extern void hugetlb_cgroup_uncharge_page_rsvd(int idx, unsigned long nr_pages,
+					      struct page *page);
 
-बाह्य व्योम hugetlb_cgroup_unअक्षरge_cgroup(पूर्णांक idx, अचिन्हित दीर्घ nr_pages,
-					   काष्ठा hugetlb_cgroup *h_cg);
-बाह्य व्योम hugetlb_cgroup_unअक्षरge_cgroup_rsvd(पूर्णांक idx, अचिन्हित दीर्घ nr_pages,
-						काष्ठा hugetlb_cgroup *h_cg);
-बाह्य व्योम hugetlb_cgroup_unअक्षरge_counter(काष्ठा resv_map *resv,
-					    अचिन्हित दीर्घ start,
-					    अचिन्हित दीर्घ end);
+extern void hugetlb_cgroup_uncharge_cgroup(int idx, unsigned long nr_pages,
+					   struct hugetlb_cgroup *h_cg);
+extern void hugetlb_cgroup_uncharge_cgroup_rsvd(int idx, unsigned long nr_pages,
+						struct hugetlb_cgroup *h_cg);
+extern void hugetlb_cgroup_uncharge_counter(struct resv_map *resv,
+					    unsigned long start,
+					    unsigned long end);
 
-बाह्य व्योम hugetlb_cgroup_unअक्षरge_file_region(काष्ठा resv_map *resv,
-						काष्ठा file_region *rg,
-						अचिन्हित दीर्घ nr_pages,
+extern void hugetlb_cgroup_uncharge_file_region(struct resv_map *resv,
+						struct file_region *rg,
+						unsigned long nr_pages,
 						bool region_del);
 
-बाह्य व्योम hugetlb_cgroup_file_init(व्योम) __init;
-बाह्य व्योम hugetlb_cgroup_migrate(काष्ठा page *oldhpage,
-				   काष्ठा page *newhpage);
+extern void hugetlb_cgroup_file_init(void) __init;
+extern void hugetlb_cgroup_migrate(struct page *oldhpage,
+				   struct page *newhpage);
 
-#अन्यथा
-अटल अंतरभूत व्योम hugetlb_cgroup_unअक्षरge_file_region(काष्ठा resv_map *resv,
-						       काष्ठा file_region *rg,
-						       अचिन्हित दीर्घ nr_pages,
+#else
+static inline void hugetlb_cgroup_uncharge_file_region(struct resv_map *resv,
+						       struct file_region *rg,
+						       unsigned long nr_pages,
 						       bool region_del)
-अणु
-पूर्ण
+{
+}
 
-अटल अंतरभूत काष्ठा hugetlb_cgroup *hugetlb_cgroup_from_page(काष्ठा page *page)
-अणु
-	वापस शून्य;
-पूर्ण
+static inline struct hugetlb_cgroup *hugetlb_cgroup_from_page(struct page *page)
+{
+	return NULL;
+}
 
-अटल अंतरभूत काष्ठा hugetlb_cgroup *
-hugetlb_cgroup_from_page_resv(काष्ठा page *page)
-अणु
-	वापस शून्य;
-पूर्ण
+static inline struct hugetlb_cgroup *
+hugetlb_cgroup_from_page_resv(struct page *page)
+{
+	return NULL;
+}
 
-अटल अंतरभूत काष्ठा hugetlb_cgroup *
-hugetlb_cgroup_from_page_rsvd(काष्ठा page *page)
-अणु
-	वापस शून्य;
-पूर्ण
+static inline struct hugetlb_cgroup *
+hugetlb_cgroup_from_page_rsvd(struct page *page)
+{
+	return NULL;
+}
 
-अटल अंतरभूत पूर्णांक set_hugetlb_cgroup(काष्ठा page *page,
-				     काष्ठा hugetlb_cgroup *h_cg)
-अणु
-	वापस 0;
-पूर्ण
+static inline int set_hugetlb_cgroup(struct page *page,
+				     struct hugetlb_cgroup *h_cg)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक set_hugetlb_cgroup_rsvd(काष्ठा page *page,
-					  काष्ठा hugetlb_cgroup *h_cg)
-अणु
-	वापस 0;
-पूर्ण
+static inline int set_hugetlb_cgroup_rsvd(struct page *page,
+					  struct hugetlb_cgroup *h_cg)
+{
+	return 0;
+}
 
-अटल अंतरभूत bool hugetlb_cgroup_disabled(व्योम)
-अणु
-	वापस true;
-पूर्ण
+static inline bool hugetlb_cgroup_disabled(void)
+{
+	return true;
+}
 
-अटल अंतरभूत व्योम hugetlb_cgroup_put_rsvd_cgroup(काष्ठा hugetlb_cgroup *h_cg)
-अणु
-पूर्ण
+static inline void hugetlb_cgroup_put_rsvd_cgroup(struct hugetlb_cgroup *h_cg)
+{
+}
 
-अटल अंतरभूत पूर्णांक hugetlb_cgroup_अक्षरge_cgroup(पूर्णांक idx, अचिन्हित दीर्घ nr_pages,
-					       काष्ठा hugetlb_cgroup **ptr)
-अणु
-	वापस 0;
-पूर्ण
+static inline int hugetlb_cgroup_charge_cgroup(int idx, unsigned long nr_pages,
+					       struct hugetlb_cgroup **ptr)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक hugetlb_cgroup_अक्षरge_cgroup_rsvd(पूर्णांक idx,
-						    अचिन्हित दीर्घ nr_pages,
-						    काष्ठा hugetlb_cgroup **ptr)
-अणु
-	वापस 0;
-पूर्ण
+static inline int hugetlb_cgroup_charge_cgroup_rsvd(int idx,
+						    unsigned long nr_pages,
+						    struct hugetlb_cgroup **ptr)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम hugetlb_cgroup_commit_अक्षरge(पूर्णांक idx, अचिन्हित दीर्घ nr_pages,
-						काष्ठा hugetlb_cgroup *h_cg,
-						काष्ठा page *page)
-अणु
-पूर्ण
+static inline void hugetlb_cgroup_commit_charge(int idx, unsigned long nr_pages,
+						struct hugetlb_cgroup *h_cg,
+						struct page *page)
+{
+}
 
-अटल अंतरभूत व्योम
-hugetlb_cgroup_commit_अक्षरge_rsvd(पूर्णांक idx, अचिन्हित दीर्घ nr_pages,
-				  काष्ठा hugetlb_cgroup *h_cg,
-				  काष्ठा page *page)
-अणु
-पूर्ण
+static inline void
+hugetlb_cgroup_commit_charge_rsvd(int idx, unsigned long nr_pages,
+				  struct hugetlb_cgroup *h_cg,
+				  struct page *page)
+{
+}
 
-अटल अंतरभूत व्योम hugetlb_cgroup_unअक्षरge_page(पूर्णांक idx, अचिन्हित दीर्घ nr_pages,
-						काष्ठा page *page)
-अणु
-पूर्ण
+static inline void hugetlb_cgroup_uncharge_page(int idx, unsigned long nr_pages,
+						struct page *page)
+{
+}
 
-अटल अंतरभूत व्योम hugetlb_cgroup_unअक्षरge_page_rsvd(पूर्णांक idx,
-						     अचिन्हित दीर्घ nr_pages,
-						     काष्ठा page *page)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम hugetlb_cgroup_unअक्षरge_cgroup(पूर्णांक idx,
-						  अचिन्हित दीर्घ nr_pages,
-						  काष्ठा hugetlb_cgroup *h_cg)
-अणु
-पूर्ण
+static inline void hugetlb_cgroup_uncharge_page_rsvd(int idx,
+						     unsigned long nr_pages,
+						     struct page *page)
+{
+}
+static inline void hugetlb_cgroup_uncharge_cgroup(int idx,
+						  unsigned long nr_pages,
+						  struct hugetlb_cgroup *h_cg)
+{
+}
 
-अटल अंतरभूत व्योम
-hugetlb_cgroup_unअक्षरge_cgroup_rsvd(पूर्णांक idx, अचिन्हित दीर्घ nr_pages,
-				    काष्ठा hugetlb_cgroup *h_cg)
-अणु
-पूर्ण
+static inline void
+hugetlb_cgroup_uncharge_cgroup_rsvd(int idx, unsigned long nr_pages,
+				    struct hugetlb_cgroup *h_cg)
+{
+}
 
-अटल अंतरभूत व्योम hugetlb_cgroup_unअक्षरge_counter(काष्ठा resv_map *resv,
-						   अचिन्हित दीर्घ start,
-						   अचिन्हित दीर्घ end)
-अणु
-पूर्ण
+static inline void hugetlb_cgroup_uncharge_counter(struct resv_map *resv,
+						   unsigned long start,
+						   unsigned long end)
+{
+}
 
-अटल अंतरभूत व्योम hugetlb_cgroup_file_init(व्योम)
-अणु
-पूर्ण
+static inline void hugetlb_cgroup_file_init(void)
+{
+}
 
-अटल अंतरभूत व्योम hugetlb_cgroup_migrate(काष्ठा page *oldhpage,
-					  काष्ठा page *newhpage)
-अणु
-पूर्ण
+static inline void hugetlb_cgroup_migrate(struct page *oldhpage,
+					  struct page *newhpage)
+{
+}
 
-#पूर्ण_अगर  /* CONFIG_MEM_RES_CTLR_HUGETLB */
-#पूर्ण_अगर
+#endif  /* CONFIG_MEM_RES_CTLR_HUGETLB */
+#endif

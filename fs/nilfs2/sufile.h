@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * sufile.h - NILFS segment usage file.
  *
@@ -8,115 +7,115 @@
  * Written by Koji Sato.
  */
 
-#अगर_अघोषित _NILFS_SUखाता_H
-#घोषणा _NILFS_SUखाता_H
+#ifndef _NILFS_SUFILE_H
+#define _NILFS_SUFILE_H
 
-#समावेश <linux/fs.h>
-#समावेश <linux/buffer_head.h>
-#समावेश "mdt.h"
+#include <linux/fs.h>
+#include <linux/buffer_head.h>
+#include "mdt.h"
 
 
-अटल अंतरभूत अचिन्हित दीर्घ nilfs_sufile_get_nsegments(काष्ठा inode *sufile)
-अणु
-	वापस ((काष्ठा the_nilfs *)sufile->i_sb->s_fs_info)->ns_nsegments;
-पूर्ण
+static inline unsigned long nilfs_sufile_get_nsegments(struct inode *sufile)
+{
+	return ((struct the_nilfs *)sufile->i_sb->s_fs_info)->ns_nsegments;
+}
 
-अचिन्हित दीर्घ nilfs_sufile_get_ncleansegs(काष्ठा inode *sufile);
+unsigned long nilfs_sufile_get_ncleansegs(struct inode *sufile);
 
-पूर्णांक nilfs_sufile_set_alloc_range(काष्ठा inode *sufile, __u64 start, __u64 end);
-पूर्णांक nilfs_sufile_alloc(काष्ठा inode *, __u64 *);
-पूर्णांक nilfs_sufile_mark_dirty(काष्ठा inode *sufile, __u64 segnum);
-पूर्णांक nilfs_sufile_set_segment_usage(काष्ठा inode *sufile, __u64 segnum,
-				   अचिन्हित दीर्घ nblocks, समय64_t modसमय);
-पूर्णांक nilfs_sufile_get_stat(काष्ठा inode *, काष्ठा nilfs_sustat *);
-sमाप_प्रकार nilfs_sufile_get_suinfo(काष्ठा inode *, __u64, व्योम *, अचिन्हित पूर्णांक,
-				माप_प्रकार);
-sमाप_प्रकार nilfs_sufile_set_suinfo(काष्ठा inode *, व्योम *, अचिन्हित पूर्णांक, माप_प्रकार);
+int nilfs_sufile_set_alloc_range(struct inode *sufile, __u64 start, __u64 end);
+int nilfs_sufile_alloc(struct inode *, __u64 *);
+int nilfs_sufile_mark_dirty(struct inode *sufile, __u64 segnum);
+int nilfs_sufile_set_segment_usage(struct inode *sufile, __u64 segnum,
+				   unsigned long nblocks, time64_t modtime);
+int nilfs_sufile_get_stat(struct inode *, struct nilfs_sustat *);
+ssize_t nilfs_sufile_get_suinfo(struct inode *, __u64, void *, unsigned int,
+				size_t);
+ssize_t nilfs_sufile_set_suinfo(struct inode *, void *, unsigned int, size_t);
 
-पूर्णांक nilfs_sufile_updatev(काष्ठा inode *, __u64 *, माप_प्रकार, पूर्णांक, माप_प्रकार *,
-			 व्योम (*करोfunc)(काष्ठा inode *, __u64,
-					काष्ठा buffer_head *,
-					काष्ठा buffer_head *));
-पूर्णांक nilfs_sufile_update(काष्ठा inode *, __u64, पूर्णांक,
-			व्योम (*करोfunc)(काष्ठा inode *, __u64,
-				       काष्ठा buffer_head *,
-				       काष्ठा buffer_head *));
-व्योम nilfs_sufile_करो_scrap(काष्ठा inode *, __u64, काष्ठा buffer_head *,
-			   काष्ठा buffer_head *);
-व्योम nilfs_sufile_करो_मुक्त(काष्ठा inode *, __u64, काष्ठा buffer_head *,
-			  काष्ठा buffer_head *);
-व्योम nilfs_sufile_करो_cancel_मुक्त(काष्ठा inode *, __u64, काष्ठा buffer_head *,
-				 काष्ठा buffer_head *);
-व्योम nilfs_sufile_करो_set_error(काष्ठा inode *, __u64, काष्ठा buffer_head *,
-			       काष्ठा buffer_head *);
+int nilfs_sufile_updatev(struct inode *, __u64 *, size_t, int, size_t *,
+			 void (*dofunc)(struct inode *, __u64,
+					struct buffer_head *,
+					struct buffer_head *));
+int nilfs_sufile_update(struct inode *, __u64, int,
+			void (*dofunc)(struct inode *, __u64,
+				       struct buffer_head *,
+				       struct buffer_head *));
+void nilfs_sufile_do_scrap(struct inode *, __u64, struct buffer_head *,
+			   struct buffer_head *);
+void nilfs_sufile_do_free(struct inode *, __u64, struct buffer_head *,
+			  struct buffer_head *);
+void nilfs_sufile_do_cancel_free(struct inode *, __u64, struct buffer_head *,
+				 struct buffer_head *);
+void nilfs_sufile_do_set_error(struct inode *, __u64, struct buffer_head *,
+			       struct buffer_head *);
 
-पूर्णांक nilfs_sufile_resize(काष्ठा inode *sufile, __u64 newnsegs);
-पूर्णांक nilfs_sufile_पढ़ो(काष्ठा super_block *sb, माप_प्रकार susize,
-		      काष्ठा nilfs_inode *raw_inode, काष्ठा inode **inodep);
-पूर्णांक nilfs_sufile_trim_fs(काष्ठा inode *sufile, काष्ठा fstrim_range *range);
+int nilfs_sufile_resize(struct inode *sufile, __u64 newnsegs);
+int nilfs_sufile_read(struct super_block *sb, size_t susize,
+		      struct nilfs_inode *raw_inode, struct inode **inodep);
+int nilfs_sufile_trim_fs(struct inode *sufile, struct fstrim_range *range);
 
 /**
  * nilfs_sufile_scrap - make a segment garbage
  * @sufile: inode of segment usage file
- * @segnum: segment number to be मुक्तd
+ * @segnum: segment number to be freed
  */
-अटल अंतरभूत पूर्णांक nilfs_sufile_scrap(काष्ठा inode *sufile, __u64 segnum)
-अणु
-	वापस nilfs_sufile_update(sufile, segnum, 1, nilfs_sufile_करो_scrap);
-पूर्ण
+static inline int nilfs_sufile_scrap(struct inode *sufile, __u64 segnum)
+{
+	return nilfs_sufile_update(sufile, segnum, 1, nilfs_sufile_do_scrap);
+}
 
 /**
- * nilfs_sufile_मुक्त - मुक्त segment
+ * nilfs_sufile_free - free segment
  * @sufile: inode of segment usage file
- * @segnum: segment number to be मुक्तd
+ * @segnum: segment number to be freed
  */
-अटल अंतरभूत पूर्णांक nilfs_sufile_मुक्त(काष्ठा inode *sufile, __u64 segnum)
-अणु
-	वापस nilfs_sufile_update(sufile, segnum, 0, nilfs_sufile_करो_मुक्त);
-पूर्ण
+static inline int nilfs_sufile_free(struct inode *sufile, __u64 segnum)
+{
+	return nilfs_sufile_update(sufile, segnum, 0, nilfs_sufile_do_free);
+}
 
 /**
- * nilfs_sufile_मुक्तv - मुक्त segments
- * @sufile: inode of segment usage file
- * @segnumv: array of segment numbers
- * @nsegs: size of @segnumv array
- * @nकरोne: place to store the number of मुक्तd segments
- */
-अटल अंतरभूत पूर्णांक nilfs_sufile_मुक्तv(काष्ठा inode *sufile, __u64 *segnumv,
-				     माप_प्रकार nsegs, माप_प्रकार *nकरोne)
-अणु
-	वापस nilfs_sufile_updatev(sufile, segnumv, nsegs, 0, nकरोne,
-				    nilfs_sufile_करो_मुक्त);
-पूर्ण
-
-/**
- * nilfs_sufile_cancel_मुक्तv - पुनः_स्मृतिate मुक्तing segments
+ * nilfs_sufile_freev - free segments
  * @sufile: inode of segment usage file
  * @segnumv: array of segment numbers
  * @nsegs: size of @segnumv array
- * @nकरोne: place to store the number of cancelled segments
+ * @ndone: place to store the number of freed segments
+ */
+static inline int nilfs_sufile_freev(struct inode *sufile, __u64 *segnumv,
+				     size_t nsegs, size_t *ndone)
+{
+	return nilfs_sufile_updatev(sufile, segnumv, nsegs, 0, ndone,
+				    nilfs_sufile_do_free);
+}
+
+/**
+ * nilfs_sufile_cancel_freev - reallocate freeing segments
+ * @sufile: inode of segment usage file
+ * @segnumv: array of segment numbers
+ * @nsegs: size of @segnumv array
+ * @ndone: place to store the number of cancelled segments
  *
- * Return Value: On success, 0 is वापसed. On error, a negative error codes
- * is वापसed.
+ * Return Value: On success, 0 is returned. On error, a negative error codes
+ * is returned.
  */
-अटल अंतरभूत पूर्णांक nilfs_sufile_cancel_मुक्तv(काष्ठा inode *sufile,
-					    __u64 *segnumv, माप_प्रकार nsegs,
-					    माप_प्रकार *nकरोne)
-अणु
-	वापस nilfs_sufile_updatev(sufile, segnumv, nsegs, 0, nकरोne,
-				    nilfs_sufile_करो_cancel_मुक्त);
-पूर्ण
+static inline int nilfs_sufile_cancel_freev(struct inode *sufile,
+					    __u64 *segnumv, size_t nsegs,
+					    size_t *ndone)
+{
+	return nilfs_sufile_updatev(sufile, segnumv, nsegs, 0, ndone,
+				    nilfs_sufile_do_cancel_free);
+}
 
 /**
  * nilfs_sufile_set_error - mark a segment as erroneous
  * @sufile: inode of segment usage file
  * @segnum: segment number
  *
- * Description: nilfs_sufile_set_error() marks the segment specअगरied by
+ * Description: nilfs_sufile_set_error() marks the segment specified by
  * @segnum as erroneous. The error segment will never be used again.
  *
- * Return Value: On success, 0 is वापसed. On error, one of the following
- * negative error codes is वापसed.
+ * Return Value: On success, 0 is returned. On error, one of the following
+ * negative error codes is returned.
  *
  * %-EIO - I/O error.
  *
@@ -124,10 +123,10 @@ sमाप_प्रकार nilfs_sufile_set_suinfo(काष्ठा inode *
  *
  * %-EINVAL - Invalid segment usage number.
  */
-अटल अंतरभूत पूर्णांक nilfs_sufile_set_error(काष्ठा inode *sufile, __u64 segnum)
-अणु
-	वापस nilfs_sufile_update(sufile, segnum, 0,
-				   nilfs_sufile_करो_set_error);
-पूर्ण
+static inline int nilfs_sufile_set_error(struct inode *sufile, __u64 segnum)
+{
+	return nilfs_sufile_update(sufile, segnum, 0,
+				   nilfs_sufile_do_set_error);
+}
 
-#पूर्ण_अगर	/* _NILFS_SUखाता_H */
+#endif	/* _NILFS_SUFILE_H */

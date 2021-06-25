@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2011 Patrick McHardy <kaber@trash.net>
  *
@@ -7,24 +6,24 @@
  * funded by Astaro.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/netfilter.h>
-#समावेश <linux/netfilter_ipv6.h>
-#समावेश <linux/netfilter_ipv6/ip6_tables.h>
-#समावेश <linux/ipv6.h>
-#समावेश <net/ipv6.h>
+#include <linux/module.h>
+#include <linux/netfilter.h>
+#include <linux/netfilter_ipv6.h>
+#include <linux/netfilter_ipv6/ip6_tables.h>
+#include <linux/ipv6.h>
+#include <net/ipv6.h>
 
-#समावेश <net/netfilter/nf_nat.h>
+#include <net/netfilter/nf_nat.h>
 
-काष्ठा ip6table_nat_pernet अणु
-	काष्ठा nf_hook_ops *nf_nat_ops;
-पूर्ण;
+struct ip6table_nat_pernet {
+	struct nf_hook_ops *nf_nat_ops;
+};
 
-अटल पूर्णांक __net_init ip6table_nat_table_init(काष्ठा net *net);
+static int __net_init ip6table_nat_table_init(struct net *net);
 
-अटल अचिन्हित पूर्णांक ip6table_nat_net_id __पढ़ो_mostly;
+static unsigned int ip6table_nat_net_id __read_mostly;
 
-अटल स्थिर काष्ठा xt_table nf_nat_ipv6_table = अणु
+static const struct xt_table nf_nat_ipv6_table = {
 	.name		= "nat",
 	.valid_hooks	= (1 << NF_INET_PRE_ROUTING) |
 			  (1 << NF_INET_POST_ROUTING) |
@@ -33,148 +32,148 @@
 	.me		= THIS_MODULE,
 	.af		= NFPROTO_IPV6,
 	.table_init	= ip6table_nat_table_init,
-पूर्ण;
+};
 
-अटल अचिन्हित पूर्णांक ip6table_nat_करो_chain(व्योम *priv,
-					  काष्ठा sk_buff *skb,
-					  स्थिर काष्ठा nf_hook_state *state)
-अणु
-	वापस ip6t_करो_table(skb, state, priv);
-पूर्ण
+static unsigned int ip6table_nat_do_chain(void *priv,
+					  struct sk_buff *skb,
+					  const struct nf_hook_state *state)
+{
+	return ip6t_do_table(skb, state, priv);
+}
 
-अटल स्थिर काष्ठा nf_hook_ops nf_nat_ipv6_ops[] = अणु
-	अणु
-		.hook		= ip6table_nat_करो_chain,
+static const struct nf_hook_ops nf_nat_ipv6_ops[] = {
+	{
+		.hook		= ip6table_nat_do_chain,
 		.pf		= NFPROTO_IPV6,
 		.hooknum	= NF_INET_PRE_ROUTING,
 		.priority	= NF_IP6_PRI_NAT_DST,
-	पूर्ण,
-	अणु
-		.hook		= ip6table_nat_करो_chain,
+	},
+	{
+		.hook		= ip6table_nat_do_chain,
 		.pf		= NFPROTO_IPV6,
 		.hooknum	= NF_INET_POST_ROUTING,
 		.priority	= NF_IP6_PRI_NAT_SRC,
-	पूर्ण,
-	अणु
-		.hook		= ip6table_nat_करो_chain,
+	},
+	{
+		.hook		= ip6table_nat_do_chain,
 		.pf		= NFPROTO_IPV6,
 		.hooknum	= NF_INET_LOCAL_OUT,
 		.priority	= NF_IP6_PRI_NAT_DST,
-	पूर्ण,
-	अणु
-		.hook		= ip6table_nat_करो_chain,
+	},
+	{
+		.hook		= ip6table_nat_do_chain,
 		.pf		= NFPROTO_IPV6,
 		.hooknum	= NF_INET_LOCAL_IN,
 		.priority	= NF_IP6_PRI_NAT_SRC,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक ip6t_nat_रेजिस्टर_lookups(काष्ठा net *net)
-अणु
-	काष्ठा ip6table_nat_pernet *xt_nat_net;
-	काष्ठा nf_hook_ops *ops;
-	काष्ठा xt_table *table;
-	पूर्णांक i, ret;
+static int ip6t_nat_register_lookups(struct net *net)
+{
+	struct ip6table_nat_pernet *xt_nat_net;
+	struct nf_hook_ops *ops;
+	struct xt_table *table;
+	int i, ret;
 
 	table = xt_find_table(net, NFPROTO_IPV6, "nat");
-	अगर (WARN_ON_ONCE(!table))
-		वापस -ENOENT;
+	if (WARN_ON_ONCE(!table))
+		return -ENOENT;
 
 	xt_nat_net = net_generic(net, ip6table_nat_net_id);
-	ops = kmemdup(nf_nat_ipv6_ops, माप(nf_nat_ipv6_ops), GFP_KERNEL);
-	अगर (!ops)
-		वापस -ENOMEM;
+	ops = kmemdup(nf_nat_ipv6_ops, sizeof(nf_nat_ipv6_ops), GFP_KERNEL);
+	if (!ops)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < ARRAY_SIZE(nf_nat_ipv6_ops); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(nf_nat_ipv6_ops); i++) {
 		ops[i].priv = table;
-		ret = nf_nat_ipv6_रेजिस्टर_fn(net, &ops[i]);
-		अगर (ret) अणु
-			जबतक (i)
-				nf_nat_ipv6_unरेजिस्टर_fn(net, &ops[--i]);
+		ret = nf_nat_ipv6_register_fn(net, &ops[i]);
+		if (ret) {
+			while (i)
+				nf_nat_ipv6_unregister_fn(net, &ops[--i]);
 
-			kमुक्त(ops);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			kfree(ops);
+			return ret;
+		}
+	}
 
 	xt_nat_net->nf_nat_ops = ops;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ip6t_nat_unरेजिस्टर_lookups(काष्ठा net *net)
-अणु
-	काष्ठा ip6table_nat_pernet *xt_nat_net = net_generic(net, ip6table_nat_net_id);
-	काष्ठा nf_hook_ops *ops = xt_nat_net->nf_nat_ops;
-	पूर्णांक i;
+static void ip6t_nat_unregister_lookups(struct net *net)
+{
+	struct ip6table_nat_pernet *xt_nat_net = net_generic(net, ip6table_nat_net_id);
+	struct nf_hook_ops *ops = xt_nat_net->nf_nat_ops;
+	int i;
 
-	अगर (!ops)
-		वापस;
+	if (!ops)
+		return;
 
-	क्रम (i = 0; i < ARRAY_SIZE(nf_nat_ipv6_ops); i++)
-		nf_nat_ipv6_unरेजिस्टर_fn(net, &ops[i]);
+	for (i = 0; i < ARRAY_SIZE(nf_nat_ipv6_ops); i++)
+		nf_nat_ipv6_unregister_fn(net, &ops[i]);
 
-	kमुक्त(ops);
-पूर्ण
+	kfree(ops);
+}
 
-अटल पूर्णांक __net_init ip6table_nat_table_init(काष्ठा net *net)
-अणु
-	काष्ठा ip6t_replace *repl;
-	पूर्णांक ret;
+static int __net_init ip6table_nat_table_init(struct net *net)
+{
+	struct ip6t_replace *repl;
+	int ret;
 
 	repl = ip6t_alloc_initial_table(&nf_nat_ipv6_table);
-	अगर (repl == शून्य)
-		वापस -ENOMEM;
-	ret = ip6t_रेजिस्टर_table(net, &nf_nat_ipv6_table, repl,
-				  शून्य);
-	अगर (ret < 0) अणु
-		kमुक्त(repl);
-		वापस ret;
-	पूर्ण
+	if (repl == NULL)
+		return -ENOMEM;
+	ret = ip6t_register_table(net, &nf_nat_ipv6_table, repl,
+				  NULL);
+	if (ret < 0) {
+		kfree(repl);
+		return ret;
+	}
 
-	ret = ip6t_nat_रेजिस्टर_lookups(net);
-	अगर (ret < 0)
-		ip6t_unरेजिस्टर_table_निकास(net, "nat");
+	ret = ip6t_nat_register_lookups(net);
+	if (ret < 0)
+		ip6t_unregister_table_exit(net, "nat");
 
-	kमुक्त(repl);
-	वापस ret;
-पूर्ण
+	kfree(repl);
+	return ret;
+}
 
-अटल व्योम __net_निकास ip6table_nat_net_pre_निकास(काष्ठा net *net)
-अणु
-	ip6t_nat_unरेजिस्टर_lookups(net);
-पूर्ण
+static void __net_exit ip6table_nat_net_pre_exit(struct net *net)
+{
+	ip6t_nat_unregister_lookups(net);
+}
 
-अटल व्योम __net_निकास ip6table_nat_net_निकास(काष्ठा net *net)
-अणु
-	ip6t_unरेजिस्टर_table_निकास(net, "nat");
-पूर्ण
+static void __net_exit ip6table_nat_net_exit(struct net *net)
+{
+	ip6t_unregister_table_exit(net, "nat");
+}
 
-अटल काष्ठा pernet_operations ip6table_nat_net_ops = अणु
-	.pre_निकास = ip6table_nat_net_pre_निकास,
-	.निकास	= ip6table_nat_net_निकास,
+static struct pernet_operations ip6table_nat_net_ops = {
+	.pre_exit = ip6table_nat_net_pre_exit,
+	.exit	= ip6table_nat_net_exit,
 	.id	= &ip6table_nat_net_id,
-	.size	= माप(काष्ठा ip6table_nat_pernet),
-पूर्ण;
+	.size	= sizeof(struct ip6table_nat_pernet),
+};
 
-अटल पूर्णांक __init ip6table_nat_init(व्योम)
-अणु
-	पूर्णांक ret = रेजिस्टर_pernet_subsys(&ip6table_nat_net_ops);
+static int __init ip6table_nat_init(void)
+{
+	int ret = register_pernet_subsys(&ip6table_nat_net_ops);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = ip6table_nat_table_init(&init_net);
-	अगर (ret)
-		unरेजिस्टर_pernet_subsys(&ip6table_nat_net_ops);
-	वापस ret;
-पूर्ण
+	if (ret)
+		unregister_pernet_subsys(&ip6table_nat_net_ops);
+	return ret;
+}
 
-अटल व्योम __निकास ip6table_nat_निकास(व्योम)
-अणु
-	unरेजिस्टर_pernet_subsys(&ip6table_nat_net_ops);
-पूर्ण
+static void __exit ip6table_nat_exit(void)
+{
+	unregister_pernet_subsys(&ip6table_nat_net_ops);
+}
 
 module_init(ip6table_nat_init);
-module_निकास(ip6table_nat_निकास);
+module_exit(ip6table_nat_exit);
 
 MODULE_LICENSE("GPL");

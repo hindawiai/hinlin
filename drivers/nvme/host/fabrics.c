@@ -1,53 +1,52 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * NVMe over Fabrics common host code.
  * Copyright (c) 2015-2016 HGST, a Western Digital Company.
  */
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-#समावेश <linux/init.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/parser.h>
-#समावेश <linux/seq_file.h>
-#समावेश "nvme.h"
-#समावेश "fabrics.h"
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/init.h>
+#include <linux/miscdevice.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/parser.h>
+#include <linux/seq_file.h>
+#include "nvme.h"
+#include "fabrics.h"
 
-अटल LIST_HEAD(nvmf_transports);
-अटल DECLARE_RWSEM(nvmf_transports_rwsem);
+static LIST_HEAD(nvmf_transports);
+static DECLARE_RWSEM(nvmf_transports_rwsem);
 
-अटल LIST_HEAD(nvmf_hosts);
-अटल DEFINE_MUTEX(nvmf_hosts_mutex);
+static LIST_HEAD(nvmf_hosts);
+static DEFINE_MUTEX(nvmf_hosts_mutex);
 
-अटल काष्ठा nvmf_host *nvmf_शेष_host;
+static struct nvmf_host *nvmf_default_host;
 
-अटल काष्ठा nvmf_host *__nvmf_host_find(स्थिर अक्षर *hostnqn)
-अणु
-	काष्ठा nvmf_host *host;
+static struct nvmf_host *__nvmf_host_find(const char *hostnqn)
+{
+	struct nvmf_host *host;
 
-	list_क्रम_each_entry(host, &nvmf_hosts, list) अणु
-		अगर (!म_भेद(host->nqn, hostnqn))
-			वापस host;
-	पूर्ण
+	list_for_each_entry(host, &nvmf_hosts, list) {
+		if (!strcmp(host->nqn, hostnqn))
+			return host;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा nvmf_host *nvmf_host_add(स्थिर अक्षर *hostnqn)
-अणु
-	काष्ठा nvmf_host *host;
+static struct nvmf_host *nvmf_host_add(const char *hostnqn)
+{
+	struct nvmf_host *host;
 
 	mutex_lock(&nvmf_hosts_mutex);
 	host = __nvmf_host_find(hostnqn);
-	अगर (host) अणु
+	if (host) {
 		kref_get(&host->ref);
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	host = kदो_स्मृति(माप(*host), GFP_KERNEL);
-	अगर (!host)
-		जाओ out_unlock;
+	host = kmalloc(sizeof(*host), GFP_KERNEL);
+	if (!host)
+		goto out_unlock;
 
 	kref_init(&host->ref);
 	strlcpy(host->nqn, hostnqn, NVMF_NQN_SIZE);
@@ -55,45 +54,45 @@
 	list_add_tail(&host->list, &nvmf_hosts);
 out_unlock:
 	mutex_unlock(&nvmf_hosts_mutex);
-	वापस host;
-पूर्ण
+	return host;
+}
 
-अटल काष्ठा nvmf_host *nvmf_host_शेष(व्योम)
-अणु
-	काष्ठा nvmf_host *host;
+static struct nvmf_host *nvmf_host_default(void)
+{
+	struct nvmf_host *host;
 
-	host = kदो_स्मृति(माप(*host), GFP_KERNEL);
-	अगर (!host)
-		वापस शून्य;
+	host = kmalloc(sizeof(*host), GFP_KERNEL);
+	if (!host)
+		return NULL;
 
 	kref_init(&host->ref);
 	uuid_gen(&host->id);
-	snम_लिखो(host->nqn, NVMF_NQN_SIZE,
+	snprintf(host->nqn, NVMF_NQN_SIZE,
 		"nqn.2014-08.org.nvmexpress:uuid:%pUb", &host->id);
 
 	mutex_lock(&nvmf_hosts_mutex);
 	list_add_tail(&host->list, &nvmf_hosts);
 	mutex_unlock(&nvmf_hosts_mutex);
 
-	वापस host;
-पूर्ण
+	return host;
+}
 
-अटल व्योम nvmf_host_destroy(काष्ठा kref *ref)
-अणु
-	काष्ठा nvmf_host *host = container_of(ref, काष्ठा nvmf_host, ref);
+static void nvmf_host_destroy(struct kref *ref)
+{
+	struct nvmf_host *host = container_of(ref, struct nvmf_host, ref);
 
 	mutex_lock(&nvmf_hosts_mutex);
 	list_del(&host->list);
 	mutex_unlock(&nvmf_hosts_mutex);
 
-	kमुक्त(host);
-पूर्ण
+	kfree(host);
+}
 
-अटल व्योम nvmf_host_put(काष्ठा nvmf_host *host)
-अणु
-	अगर (host)
+static void nvmf_host_put(struct nvmf_host *host)
+{
+	if (host)
 		kref_put(&host->ref, nvmf_host_destroy);
-पूर्ण
+}
 
 /**
  * nvmf_get_address() -  Get address/port
@@ -101,167 +100,167 @@ out_unlock:
  * @buf:	OUTPUT parameter that will contain the address/port
  * @size:	buffer size
  */
-पूर्णांक nvmf_get_address(काष्ठा nvme_ctrl *ctrl, अक्षर *buf, पूर्णांक size)
-अणु
-	पूर्णांक len = 0;
+int nvmf_get_address(struct nvme_ctrl *ctrl, char *buf, int size)
+{
+	int len = 0;
 
-	अगर (ctrl->opts->mask & NVMF_OPT_TRADDR)
-		len += scnम_लिखो(buf, size, "traddr=%s", ctrl->opts->traddr);
-	अगर (ctrl->opts->mask & NVMF_OPT_TRSVCID)
-		len += scnम_लिखो(buf + len, size - len, "%strsvcid=%s",
+	if (ctrl->opts->mask & NVMF_OPT_TRADDR)
+		len += scnprintf(buf, size, "traddr=%s", ctrl->opts->traddr);
+	if (ctrl->opts->mask & NVMF_OPT_TRSVCID)
+		len += scnprintf(buf + len, size - len, "%strsvcid=%s",
 				(len) ? "," : "", ctrl->opts->trsvcid);
-	अगर (ctrl->opts->mask & NVMF_OPT_HOST_TRADDR)
-		len += scnम_लिखो(buf + len, size - len, "%shost_traddr=%s",
+	if (ctrl->opts->mask & NVMF_OPT_HOST_TRADDR)
+		len += scnprintf(buf + len, size - len, "%shost_traddr=%s",
 				(len) ? "," : "", ctrl->opts->host_traddr);
-	len += scnम_लिखो(buf + len, size - len, "\n");
+	len += scnprintf(buf + len, size - len, "\n");
 
-	वापस len;
-पूर्ण
+	return len;
+}
 EXPORT_SYMBOL_GPL(nvmf_get_address);
 
 /**
- * nvmf_reg_पढ़ो32() -  NVMe Fabrics "Property Get" API function.
- * @ctrl:	Host NVMe controller instance मुख्यtaining the admin
- *		queue used to submit the property पढ़ो command to
- *		the allocated NVMe controller resource on the target प्रणाली.
+ * nvmf_reg_read32() -  NVMe Fabrics "Property Get" API function.
+ * @ctrl:	Host NVMe controller instance maintaining the admin
+ *		queue used to submit the property read command to
+ *		the allocated NVMe controller resource on the target system.
  * @off:	Starting offset value of the targeted property
- *		रेजिस्टर (see the fabrics section of the NVMe standard).
+ *		register (see the fabrics section of the NVMe standard).
  * @val:	OUTPUT parameter that will contain the value of
- *		the property after a successful पढ़ो.
+ *		the property after a successful read.
  *
- * Used by the host प्रणाली to retrieve a 32-bit capsule property value
- * from an NVMe controller on the target प्रणाली.
+ * Used by the host system to retrieve a 32-bit capsule property value
+ * from an NVMe controller on the target system.
  *
  * ("Capsule property" is an "PCIe register concept" applied to the
  * NVMe fabrics space.)
  *
  * Return:
- *	0: successful पढ़ो
+ *	0: successful read
  *	> 0: NVMe error status code
- *	< 0: Linux त्रुटि_सं error code
+ *	< 0: Linux errno error code
  */
-पूर्णांक nvmf_reg_पढ़ो32(काष्ठा nvme_ctrl *ctrl, u32 off, u32 *val)
-अणु
-	काष्ठा nvme_command cmd;
-	जोड़ nvme_result res;
-	पूर्णांक ret;
+int nvmf_reg_read32(struct nvme_ctrl *ctrl, u32 off, u32 *val)
+{
+	struct nvme_command cmd;
+	union nvme_result res;
+	int ret;
 
-	स_रखो(&cmd, 0, माप(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.prop_get.opcode = nvme_fabrics_command;
 	cmd.prop_get.fctype = nvme_fabrics_type_property_get;
 	cmd.prop_get.offset = cpu_to_le32(off);
 
-	ret = __nvme_submit_sync_cmd(ctrl->fabrics_q, &cmd, &res, शून्य, 0, 0,
+	ret = __nvme_submit_sync_cmd(ctrl->fabrics_q, &cmd, &res, NULL, 0, 0,
 			NVME_QID_ANY, 0, 0, false);
 
-	अगर (ret >= 0)
+	if (ret >= 0)
 		*val = le64_to_cpu(res.u64);
-	अगर (unlikely(ret != 0))
+	if (unlikely(ret != 0))
 		dev_err(ctrl->device,
 			"Property Get error: %d, offset %#x\n",
 			ret > 0 ? ret & ~NVME_SC_DNR : ret, off);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(nvmf_reg_पढ़ो32);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(nvmf_reg_read32);
 
 /**
- * nvmf_reg_पढ़ो64() -  NVMe Fabrics "Property Get" API function.
- * @ctrl:	Host NVMe controller instance मुख्यtaining the admin
- *		queue used to submit the property पढ़ो command to
- *		the allocated controller resource on the target प्रणाली.
+ * nvmf_reg_read64() -  NVMe Fabrics "Property Get" API function.
+ * @ctrl:	Host NVMe controller instance maintaining the admin
+ *		queue used to submit the property read command to
+ *		the allocated controller resource on the target system.
  * @off:	Starting offset value of the targeted property
- *		रेजिस्टर (see the fabrics section of the NVMe standard).
+ *		register (see the fabrics section of the NVMe standard).
  * @val:	OUTPUT parameter that will contain the value of
- *		the property after a successful पढ़ो.
+ *		the property after a successful read.
  *
- * Used by the host प्रणाली to retrieve a 64-bit capsule property value
- * from an NVMe controller on the target प्रणाली.
+ * Used by the host system to retrieve a 64-bit capsule property value
+ * from an NVMe controller on the target system.
  *
  * ("Capsule property" is an "PCIe register concept" applied to the
  * NVMe fabrics space.)
  *
  * Return:
- *	0: successful पढ़ो
+ *	0: successful read
  *	> 0: NVMe error status code
- *	< 0: Linux त्रुटि_सं error code
+ *	< 0: Linux errno error code
  */
-पूर्णांक nvmf_reg_पढ़ो64(काष्ठा nvme_ctrl *ctrl, u32 off, u64 *val)
-अणु
-	काष्ठा nvme_command cmd;
-	जोड़ nvme_result res;
-	पूर्णांक ret;
+int nvmf_reg_read64(struct nvme_ctrl *ctrl, u32 off, u64 *val)
+{
+	struct nvme_command cmd;
+	union nvme_result res;
+	int ret;
 
-	स_रखो(&cmd, 0, माप(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.prop_get.opcode = nvme_fabrics_command;
 	cmd.prop_get.fctype = nvme_fabrics_type_property_get;
 	cmd.prop_get.attrib = 1;
 	cmd.prop_get.offset = cpu_to_le32(off);
 
-	ret = __nvme_submit_sync_cmd(ctrl->fabrics_q, &cmd, &res, शून्य, 0, 0,
+	ret = __nvme_submit_sync_cmd(ctrl->fabrics_q, &cmd, &res, NULL, 0, 0,
 			NVME_QID_ANY, 0, 0, false);
 
-	अगर (ret >= 0)
+	if (ret >= 0)
 		*val = le64_to_cpu(res.u64);
-	अगर (unlikely(ret != 0))
+	if (unlikely(ret != 0))
 		dev_err(ctrl->device,
 			"Property Get error: %d, offset %#x\n",
 			ret > 0 ? ret & ~NVME_SC_DNR : ret, off);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(nvmf_reg_पढ़ो64);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(nvmf_reg_read64);
 
 /**
- * nvmf_reg_ग_लिखो32() -  NVMe Fabrics "Property Write" API function.
- * @ctrl:	Host NVMe controller instance मुख्यtaining the admin
- *		queue used to submit the property पढ़ो command to
- *		the allocated NVMe controller resource on the target प्रणाली.
+ * nvmf_reg_write32() -  NVMe Fabrics "Property Write" API function.
+ * @ctrl:	Host NVMe controller instance maintaining the admin
+ *		queue used to submit the property read command to
+ *		the allocated NVMe controller resource on the target system.
  * @off:	Starting offset value of the targeted property
- *		रेजिस्टर (see the fabrics section of the NVMe standard).
+ *		register (see the fabrics section of the NVMe standard).
  * @val:	Input parameter that contains the value to be
  *		written to the property.
  *
- * Used by the NVMe host प्रणाली to ग_लिखो a 32-bit capsule property value
- * to an NVMe controller on the target प्रणाली.
+ * Used by the NVMe host system to write a 32-bit capsule property value
+ * to an NVMe controller on the target system.
  *
  * ("Capsule property" is an "PCIe register concept" applied to the
  * NVMe fabrics space.)
  *
  * Return:
- *	0: successful ग_लिखो
+ *	0: successful write
  *	> 0: NVMe error status code
- *	< 0: Linux त्रुटि_सं error code
+ *	< 0: Linux errno error code
  */
-पूर्णांक nvmf_reg_ग_लिखो32(काष्ठा nvme_ctrl *ctrl, u32 off, u32 val)
-अणु
-	काष्ठा nvme_command cmd;
-	पूर्णांक ret;
+int nvmf_reg_write32(struct nvme_ctrl *ctrl, u32 off, u32 val)
+{
+	struct nvme_command cmd;
+	int ret;
 
-	स_रखो(&cmd, 0, माप(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.prop_set.opcode = nvme_fabrics_command;
 	cmd.prop_set.fctype = nvme_fabrics_type_property_set;
 	cmd.prop_set.attrib = 0;
 	cmd.prop_set.offset = cpu_to_le32(off);
 	cmd.prop_set.value = cpu_to_le64(val);
 
-	ret = __nvme_submit_sync_cmd(ctrl->fabrics_q, &cmd, शून्य, शून्य, 0, 0,
+	ret = __nvme_submit_sync_cmd(ctrl->fabrics_q, &cmd, NULL, NULL, 0, 0,
 			NVME_QID_ANY, 0, 0, false);
-	अगर (unlikely(ret))
+	if (unlikely(ret))
 		dev_err(ctrl->device,
 			"Property Set error: %d, offset %#x\n",
 			ret > 0 ? ret & ~NVME_SC_DNR : ret, off);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(nvmf_reg_ग_लिखो32);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(nvmf_reg_write32);
 
 /**
- * nvmf_log_connect_error() - Error-parsing-diagnostic prपूर्णांक
- * out function क्रम connect() errors.
+ * nvmf_log_connect_error() - Error-parsing-diagnostic print
+ * out function for connect() errors.
  *
- * @ctrl: the specअगरic /dev/nvmeX device that had the error.
+ * @ctrl: the specific /dev/nvmeX device that had the error.
  *
- * @errval: Error code to be decoded in a more human-मित्रly
- *	    prपूर्णांकout.
+ * @errval: Error code to be decoded in a more human-friendly
+ *	    printout.
  *
  * @offset: For use with the NVMe error code NVME_SC_CONNECT_INVALID_PARAM.
  *
@@ -269,911 +268,911 @@ EXPORT_SYMBOL_GPL(nvmf_reg_ग_लिखो32);
  *
  * @data: This is the "Data" portion of a submission capsule.
  */
-अटल व्योम nvmf_log_connect_error(काष्ठा nvme_ctrl *ctrl,
-		पूर्णांक errval, पूर्णांक offset, काष्ठा nvme_command *cmd,
-		काष्ठा nvmf_connect_data *data)
-अणु
-	पूर्णांक err_sctype = errval & (~NVME_SC_DNR);
+static void nvmf_log_connect_error(struct nvme_ctrl *ctrl,
+		int errval, int offset, struct nvme_command *cmd,
+		struct nvmf_connect_data *data)
+{
+	int err_sctype = errval & (~NVME_SC_DNR);
 
-	चयन (err_sctype) अणु
+	switch (err_sctype) {
 
-	हाल (NVME_SC_CONNECT_INVALID_PARAM):
-		अगर (offset >> 16) अणु
-			अक्षर *inv_data = "Connect Invalid Data Parameter";
+	case (NVME_SC_CONNECT_INVALID_PARAM):
+		if (offset >> 16) {
+			char *inv_data = "Connect Invalid Data Parameter";
 
-			चयन (offset & 0xffff) अणु
-			हाल (दुरत्व(काष्ठा nvmf_connect_data, cntlid)):
+			switch (offset & 0xffff) {
+			case (offsetof(struct nvmf_connect_data, cntlid)):
 				dev_err(ctrl->device,
 					"%s, cntlid: %d\n",
 					inv_data, data->cntlid);
-				अवरोध;
-			हाल (दुरत्व(काष्ठा nvmf_connect_data, hostnqn)):
+				break;
+			case (offsetof(struct nvmf_connect_data, hostnqn)):
 				dev_err(ctrl->device,
 					"%s, hostnqn \"%s\"\n",
 					inv_data, data->hostnqn);
-				अवरोध;
-			हाल (दुरत्व(काष्ठा nvmf_connect_data, subsysnqn)):
+				break;
+			case (offsetof(struct nvmf_connect_data, subsysnqn)):
 				dev_err(ctrl->device,
 					"%s, subsysnqn \"%s\"\n",
 					inv_data, data->subsysnqn);
-				अवरोध;
-			शेष:
+				break;
+			default:
 				dev_err(ctrl->device,
 					"%s, starting byte offset: %d\n",
 				       inv_data, offset & 0xffff);
-				अवरोध;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अक्षर *inv_sqe = "Connect Invalid SQE Parameter";
+				break;
+			}
+		} else {
+			char *inv_sqe = "Connect Invalid SQE Parameter";
 
-			चयन (offset) अणु
-			हाल (दुरत्व(काष्ठा nvmf_connect_command, qid)):
+			switch (offset) {
+			case (offsetof(struct nvmf_connect_command, qid)):
 				dev_err(ctrl->device,
 				       "%s, qid %d\n",
 					inv_sqe, cmd->connect.qid);
-				अवरोध;
-			शेष:
+				break;
+			default:
 				dev_err(ctrl->device,
 					"%s, starting byte offset: %d\n",
 					inv_sqe, offset);
-			पूर्ण
-		पूर्ण
-		अवरोध;
+			}
+		}
+		break;
 
-	हाल NVME_SC_CONNECT_INVALID_HOST:
+	case NVME_SC_CONNECT_INVALID_HOST:
 		dev_err(ctrl->device,
 			"Connect for subsystem %s is not allowed, hostnqn: %s\n",
 			data->subsysnqn, data->hostnqn);
-		अवरोध;
+		break;
 
-	हाल NVME_SC_CONNECT_CTRL_BUSY:
+	case NVME_SC_CONNECT_CTRL_BUSY:
 		dev_err(ctrl->device,
 			"Connect command failed: controller is busy or not available\n");
-		अवरोध;
+		break;
 
-	हाल NVME_SC_CONNECT_FORMAT:
+	case NVME_SC_CONNECT_FORMAT:
 		dev_err(ctrl->device,
 			"Connect incompatible format: %d",
 			cmd->connect.recfmt);
-		अवरोध;
+		break;
 
-	हाल NVME_SC_HOST_PATH_ERROR:
+	case NVME_SC_HOST_PATH_ERROR:
 		dev_err(ctrl->device,
 			"Connect command failed: host path error\n");
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		dev_err(ctrl->device,
 			"Connect command failed, error wo/DNR bit: %d\n",
 			err_sctype);
-		अवरोध;
-	पूर्ण /* चयन (err_sctype) */
-पूर्ण
+		break;
+	} /* switch (err_sctype) */
+}
 
 /**
  * nvmf_connect_admin_queue() - NVMe Fabrics Admin Queue "Connect"
  *				API function.
  * @ctrl:	Host nvme controller instance used to request
  *              a new NVMe controller allocation on the target
- *              प्रणाली and  establish an NVMe Admin connection to
+ *              system and  establish an NVMe Admin connection to
  *              that controller.
  *
  * This function enables an NVMe host device to request a new allocation of
- * an NVMe controller resource on a target प्रणाली as well establish a
+ * an NVMe controller resource on a target system as well establish a
  * fabrics-protocol connection of the NVMe Admin queue between the
- * host प्रणाली device and the allocated NVMe controller on the
- * target प्रणाली via a NVMe Fabrics "Connect" command.
+ * host system device and the allocated NVMe controller on the
+ * target system via a NVMe Fabrics "Connect" command.
  *
  * Return:
  *	0: success
  *	> 0: NVMe error status code
- *	< 0: Linux त्रुटि_सं error code
+ *	< 0: Linux errno error code
  *
  */
-पूर्णांक nvmf_connect_admin_queue(काष्ठा nvme_ctrl *ctrl)
-अणु
-	काष्ठा nvme_command cmd;
-	जोड़ nvme_result res;
-	काष्ठा nvmf_connect_data *data;
-	पूर्णांक ret;
+int nvmf_connect_admin_queue(struct nvme_ctrl *ctrl)
+{
+	struct nvme_command cmd;
+	union nvme_result res;
+	struct nvmf_connect_data *data;
+	int ret;
 
-	स_रखो(&cmd, 0, माप(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.connect.opcode = nvme_fabrics_command;
 	cmd.connect.fctype = nvme_fabrics_type_connect;
 	cmd.connect.qid = 0;
 	cmd.connect.sqsize = cpu_to_le16(NVME_AQ_DEPTH - 1);
 
 	/*
-	 * Set keep-alive समयout in seconds granularity (ms * 1000)
+	 * Set keep-alive timeout in seconds granularity (ms * 1000)
 	 */
 	cmd.connect.kato = cpu_to_le32(ctrl->kato * 1000);
 
-	अगर (ctrl->opts->disable_sqflow)
+	if (ctrl->opts->disable_sqflow)
 		cmd.connect.cattr |= NVME_CONNECT_DISABLE_SQFLOW;
 
-	data = kzalloc(माप(*data), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = kzalloc(sizeof(*data), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
 	uuid_copy(&data->hostid, &ctrl->opts->host->id);
 	data->cntlid = cpu_to_le16(0xffff);
-	म_नकलन(data->subsysnqn, ctrl->opts->subsysnqn, NVMF_NQN_SIZE);
-	म_नकलन(data->hostnqn, ctrl->opts->host->nqn, NVMF_NQN_SIZE);
+	strncpy(data->subsysnqn, ctrl->opts->subsysnqn, NVMF_NQN_SIZE);
+	strncpy(data->hostnqn, ctrl->opts->host->nqn, NVMF_NQN_SIZE);
 
 	ret = __nvme_submit_sync_cmd(ctrl->fabrics_q, &cmd, &res,
-			data, माप(*data), 0, NVME_QID_ANY, 1,
+			data, sizeof(*data), 0, NVME_QID_ANY, 1,
 			BLK_MQ_REQ_RESERVED | BLK_MQ_REQ_NOWAIT, false);
-	अगर (ret) अणु
+	if (ret) {
 		nvmf_log_connect_error(ctrl, ret, le32_to_cpu(res.u32),
 				       &cmd, data);
-		जाओ out_मुक्त_data;
-	पूर्ण
+		goto out_free_data;
+	}
 
 	ctrl->cntlid = le16_to_cpu(res.u16);
 
-out_मुक्त_data:
-	kमुक्त(data);
-	वापस ret;
-पूर्ण
+out_free_data:
+	kfree(data);
+	return ret;
+}
 EXPORT_SYMBOL_GPL(nvmf_connect_admin_queue);
 
 /**
  * nvmf_connect_io_queue() - NVMe Fabrics I/O Queue "Connect"
  *			     API function.
  * @ctrl:	Host nvme controller instance used to establish an
- *		NVMe I/O queue connection to the alपढ़ोy allocated NVMe
- *		controller on the target प्रणाली.
- * @qid:	NVMe I/O queue number क्रम the new I/O connection between
+ *		NVMe I/O queue connection to the already allocated NVMe
+ *		controller on the target system.
+ * @qid:	NVMe I/O queue number for the new I/O connection between
  *		host and target (note qid == 0 is illegal as this is
  *		the Admin queue, per NVMe standard).
- * @poll:	Whether or not to poll क्रम the completion of the connect cmd.
+ * @poll:	Whether or not to poll for the completion of the connect cmd.
  *
  * This function issues a fabrics-protocol connection
  * of a NVMe I/O queue (via NVMe Fabrics "Connect" command)
- * between the host प्रणाली device and the allocated NVMe controller
- * on the target प्रणाली.
+ * between the host system device and the allocated NVMe controller
+ * on the target system.
  *
  * Return:
  *	0: success
  *	> 0: NVMe error status code
- *	< 0: Linux त्रुटि_सं error code
+ *	< 0: Linux errno error code
  */
-पूर्णांक nvmf_connect_io_queue(काष्ठा nvme_ctrl *ctrl, u16 qid, bool poll)
-अणु
-	काष्ठा nvme_command cmd;
-	काष्ठा nvmf_connect_data *data;
-	जोड़ nvme_result res;
-	पूर्णांक ret;
+int nvmf_connect_io_queue(struct nvme_ctrl *ctrl, u16 qid, bool poll)
+{
+	struct nvme_command cmd;
+	struct nvmf_connect_data *data;
+	union nvme_result res;
+	int ret;
 
-	स_रखो(&cmd, 0, माप(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.connect.opcode = nvme_fabrics_command;
 	cmd.connect.fctype = nvme_fabrics_type_connect;
 	cmd.connect.qid = cpu_to_le16(qid);
 	cmd.connect.sqsize = cpu_to_le16(ctrl->sqsize);
 
-	अगर (ctrl->opts->disable_sqflow)
+	if (ctrl->opts->disable_sqflow)
 		cmd.connect.cattr |= NVME_CONNECT_DISABLE_SQFLOW;
 
-	data = kzalloc(माप(*data), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = kzalloc(sizeof(*data), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
 	uuid_copy(&data->hostid, &ctrl->opts->host->id);
 	data->cntlid = cpu_to_le16(ctrl->cntlid);
-	म_नकलन(data->subsysnqn, ctrl->opts->subsysnqn, NVMF_NQN_SIZE);
-	म_नकलन(data->hostnqn, ctrl->opts->host->nqn, NVMF_NQN_SIZE);
+	strncpy(data->subsysnqn, ctrl->opts->subsysnqn, NVMF_NQN_SIZE);
+	strncpy(data->hostnqn, ctrl->opts->host->nqn, NVMF_NQN_SIZE);
 
 	ret = __nvme_submit_sync_cmd(ctrl->connect_q, &cmd, &res,
-			data, माप(*data), 0, qid, 1,
+			data, sizeof(*data), 0, qid, 1,
 			BLK_MQ_REQ_RESERVED | BLK_MQ_REQ_NOWAIT, poll);
-	अगर (ret) अणु
+	if (ret) {
 		nvmf_log_connect_error(ctrl, ret, le32_to_cpu(res.u32),
 				       &cmd, data);
-	पूर्ण
-	kमुक्त(data);
-	वापस ret;
-पूर्ण
+	}
+	kfree(data);
+	return ret;
+}
 EXPORT_SYMBOL_GPL(nvmf_connect_io_queue);
 
-bool nvmf_should_reconnect(काष्ठा nvme_ctrl *ctrl)
-अणु
-	अगर (ctrl->opts->max_reconnects == -1 ||
+bool nvmf_should_reconnect(struct nvme_ctrl *ctrl)
+{
+	if (ctrl->opts->max_reconnects == -1 ||
 	    ctrl->nr_reconnects < ctrl->opts->max_reconnects)
-		वापस true;
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 EXPORT_SYMBOL_GPL(nvmf_should_reconnect);
 
 /**
- * nvmf_रेजिस्टर_transport() - NVMe Fabrics Library registration function.
- * @ops:	Transport ops instance to be रेजिस्टरed to the
+ * nvmf_register_transport() - NVMe Fabrics Library registration function.
+ * @ops:	Transport ops instance to be registered to the
  *		common fabrics library.
  *
- * API function that रेजिस्टरs the type of specअगरic transport fabric
+ * API function that registers the type of specific transport fabric
  * being implemented to the common NVMe fabrics library. Part of
  * the overall init sequence of starting up a fabrics driver.
  */
-पूर्णांक nvmf_रेजिस्टर_transport(काष्ठा nvmf_transport_ops *ops)
-अणु
-	अगर (!ops->create_ctrl)
-		वापस -EINVAL;
+int nvmf_register_transport(struct nvmf_transport_ops *ops)
+{
+	if (!ops->create_ctrl)
+		return -EINVAL;
 
-	करोwn_ग_लिखो(&nvmf_transports_rwsem);
+	down_write(&nvmf_transports_rwsem);
 	list_add_tail(&ops->entry, &nvmf_transports);
-	up_ग_लिखो(&nvmf_transports_rwsem);
+	up_write(&nvmf_transports_rwsem);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(nvmf_रेजिस्टर_transport);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(nvmf_register_transport);
 
 /**
- * nvmf_unरेजिस्टर_transport() - NVMe Fabrics Library unregistration function.
- * @ops:	Transport ops instance to be unरेजिस्टरed from the
+ * nvmf_unregister_transport() - NVMe Fabrics Library unregistration function.
+ * @ops:	Transport ops instance to be unregistered from the
  *		common fabrics library.
  *
- * Fabrics API function that unरेजिस्टरs the type of specअगरic transport
+ * Fabrics API function that unregisters the type of specific transport
  * fabric being implemented from the common NVMe fabrics library.
- * Part of the overall निकास sequence of unloading the implemented driver.
+ * Part of the overall exit sequence of unloading the implemented driver.
  */
-व्योम nvmf_unरेजिस्टर_transport(काष्ठा nvmf_transport_ops *ops)
-अणु
-	करोwn_ग_लिखो(&nvmf_transports_rwsem);
+void nvmf_unregister_transport(struct nvmf_transport_ops *ops)
+{
+	down_write(&nvmf_transports_rwsem);
 	list_del(&ops->entry);
-	up_ग_लिखो(&nvmf_transports_rwsem);
-पूर्ण
-EXPORT_SYMBOL_GPL(nvmf_unरेजिस्टर_transport);
+	up_write(&nvmf_transports_rwsem);
+}
+EXPORT_SYMBOL_GPL(nvmf_unregister_transport);
 
-अटल काष्ठा nvmf_transport_ops *nvmf_lookup_transport(
-		काष्ठा nvmf_ctrl_options *opts)
-अणु
-	काष्ठा nvmf_transport_ops *ops;
+static struct nvmf_transport_ops *nvmf_lookup_transport(
+		struct nvmf_ctrl_options *opts)
+{
+	struct nvmf_transport_ops *ops;
 
-	lockdep_निश्चित_held(&nvmf_transports_rwsem);
+	lockdep_assert_held(&nvmf_transports_rwsem);
 
-	list_क्रम_each_entry(ops, &nvmf_transports, entry) अणु
-		अगर (म_भेद(ops->name, opts->transport) == 0)
-			वापस ops;
-	पूर्ण
+	list_for_each_entry(ops, &nvmf_transports, entry) {
+		if (strcmp(ops->name, opts->transport) == 0)
+			return ops;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल स्थिर match_table_t opt_tokens = अणु
-	अणु NVMF_OPT_TRANSPORT,		"transport=%s"		पूर्ण,
-	अणु NVMF_OPT_TRADDR,		"traddr=%s"		पूर्ण,
-	अणु NVMF_OPT_TRSVCID,		"trsvcid=%s"		पूर्ण,
-	अणु NVMF_OPT_NQN,			"nqn=%s"		पूर्ण,
-	अणु NVMF_OPT_QUEUE_SIZE,		"queue_size=%d"		पूर्ण,
-	अणु NVMF_OPT_NR_IO_QUEUES,	"nr_io_queues=%d"	पूर्ण,
-	अणु NVMF_OPT_RECONNECT_DELAY,	"reconnect_delay=%d"	पूर्ण,
-	अणु NVMF_OPT_CTRL_LOSS_TMO,	"ctrl_loss_tmo=%d"	पूर्ण,
-	अणु NVMF_OPT_KATO,		"keep_alive_tmo=%d"	पूर्ण,
-	अणु NVMF_OPT_HOSTNQN,		"hostnqn=%s"		पूर्ण,
-	अणु NVMF_OPT_HOST_TRADDR,		"host_traddr=%s"	पूर्ण,
-	अणु NVMF_OPT_HOST_ID,		"hostid=%s"		पूर्ण,
-	अणु NVMF_OPT_DUP_CONNECT,		"duplicate_connect"	पूर्ण,
-	अणु NVMF_OPT_DISABLE_SQFLOW,	"disable_sqflow"	पूर्ण,
-	अणु NVMF_OPT_HDR_DIGEST,		"hdr_digest"		पूर्ण,
-	अणु NVMF_OPT_DATA_DIGEST,		"data_digest"		पूर्ण,
-	अणु NVMF_OPT_NR_WRITE_QUEUES,	"nr_write_queues=%d"	पूर्ण,
-	अणु NVMF_OPT_NR_POLL_QUEUES,	"nr_poll_queues=%d"	पूर्ण,
-	अणु NVMF_OPT_TOS,			"tos=%d"		पूर्ण,
-	अणु NVMF_OPT_FAIL_FAST_TMO,	"fast_io_fail_tmo=%d"	पूर्ण,
-	अणु NVMF_OPT_ERR,			शून्य			पूर्ण
-पूर्ण;
+static const match_table_t opt_tokens = {
+	{ NVMF_OPT_TRANSPORT,		"transport=%s"		},
+	{ NVMF_OPT_TRADDR,		"traddr=%s"		},
+	{ NVMF_OPT_TRSVCID,		"trsvcid=%s"		},
+	{ NVMF_OPT_NQN,			"nqn=%s"		},
+	{ NVMF_OPT_QUEUE_SIZE,		"queue_size=%d"		},
+	{ NVMF_OPT_NR_IO_QUEUES,	"nr_io_queues=%d"	},
+	{ NVMF_OPT_RECONNECT_DELAY,	"reconnect_delay=%d"	},
+	{ NVMF_OPT_CTRL_LOSS_TMO,	"ctrl_loss_tmo=%d"	},
+	{ NVMF_OPT_KATO,		"keep_alive_tmo=%d"	},
+	{ NVMF_OPT_HOSTNQN,		"hostnqn=%s"		},
+	{ NVMF_OPT_HOST_TRADDR,		"host_traddr=%s"	},
+	{ NVMF_OPT_HOST_ID,		"hostid=%s"		},
+	{ NVMF_OPT_DUP_CONNECT,		"duplicate_connect"	},
+	{ NVMF_OPT_DISABLE_SQFLOW,	"disable_sqflow"	},
+	{ NVMF_OPT_HDR_DIGEST,		"hdr_digest"		},
+	{ NVMF_OPT_DATA_DIGEST,		"data_digest"		},
+	{ NVMF_OPT_NR_WRITE_QUEUES,	"nr_write_queues=%d"	},
+	{ NVMF_OPT_NR_POLL_QUEUES,	"nr_poll_queues=%d"	},
+	{ NVMF_OPT_TOS,			"tos=%d"		},
+	{ NVMF_OPT_FAIL_FAST_TMO,	"fast_io_fail_tmo=%d"	},
+	{ NVMF_OPT_ERR,			NULL			}
+};
 
-अटल पूर्णांक nvmf_parse_options(काष्ठा nvmf_ctrl_options *opts,
-		स्थिर अक्षर *buf)
-अणु
+static int nvmf_parse_options(struct nvmf_ctrl_options *opts,
+		const char *buf)
+{
 	substring_t args[MAX_OPT_ARGS];
-	अक्षर *options, *o, *p;
-	पूर्णांक token, ret = 0;
-	माप_प्रकार nqnlen  = 0;
-	पूर्णांक ctrl_loss_पंचांगo = NVMF_DEF_CTRL_LOSS_TMO;
+	char *options, *o, *p;
+	int token, ret = 0;
+	size_t nqnlen  = 0;
+	int ctrl_loss_tmo = NVMF_DEF_CTRL_LOSS_TMO;
 	uuid_t hostid;
 
-	/* Set शेषs */
+	/* Set defaults */
 	opts->queue_size = NVMF_DEF_QUEUE_SIZE;
 	opts->nr_io_queues = num_online_cpus();
 	opts->reconnect_delay = NVMF_DEF_RECONNECT_DELAY;
 	opts->kato = 0;
 	opts->duplicate_connect = false;
-	opts->fast_io_fail_पंचांगo = NVMF_DEF_FAIL_FAST_TMO;
+	opts->fast_io_fail_tmo = NVMF_DEF_FAIL_FAST_TMO;
 	opts->hdr_digest = false;
 	opts->data_digest = false;
-	opts->tos = -1; /* < 0 == use transport शेष */
+	opts->tos = -1; /* < 0 == use transport default */
 
 	options = o = kstrdup(buf, GFP_KERNEL);
-	अगर (!options)
-		वापस -ENOMEM;
+	if (!options)
+		return -ENOMEM;
 
 	uuid_gen(&hostid);
 
-	जबतक ((p = strsep(&o, ",\n")) != शून्य) अणु
-		अगर (!*p)
-			जारी;
+	while ((p = strsep(&o, ",\n")) != NULL) {
+		if (!*p)
+			continue;
 
 		token = match_token(p, opt_tokens, args);
 		opts->mask |= token;
-		चयन (token) अणु
-		हाल NVMF_OPT_TRANSPORT:
+		switch (token) {
+		case NVMF_OPT_TRANSPORT:
 			p = match_strdup(args);
-			अगर (!p) अणु
+			if (!p) {
 				ret = -ENOMEM;
-				जाओ out;
-			पूर्ण
-			kमुक्त(opts->transport);
+				goto out;
+			}
+			kfree(opts->transport);
 			opts->transport = p;
-			अवरोध;
-		हाल NVMF_OPT_NQN:
+			break;
+		case NVMF_OPT_NQN:
 			p = match_strdup(args);
-			अगर (!p) अणु
+			if (!p) {
 				ret = -ENOMEM;
-				जाओ out;
-			पूर्ण
-			kमुक्त(opts->subsysnqn);
+				goto out;
+			}
+			kfree(opts->subsysnqn);
 			opts->subsysnqn = p;
-			nqnlen = म_माप(opts->subsysnqn);
-			अगर (nqnlen >= NVMF_NQN_SIZE) अणु
+			nqnlen = strlen(opts->subsysnqn);
+			if (nqnlen >= NVMF_NQN_SIZE) {
 				pr_err("%s needs to be < %d bytes\n",
 					opts->subsysnqn, NVMF_NQN_SIZE);
 				ret = -EINVAL;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			opts->discovery_nqn =
-				!(म_भेद(opts->subsysnqn,
+				!(strcmp(opts->subsysnqn,
 					 NVME_DISC_SUBSYS_NAME));
-			अवरोध;
-		हाल NVMF_OPT_TRADDR:
+			break;
+		case NVMF_OPT_TRADDR:
 			p = match_strdup(args);
-			अगर (!p) अणु
+			if (!p) {
 				ret = -ENOMEM;
-				जाओ out;
-			पूर्ण
-			kमुक्त(opts->traddr);
+				goto out;
+			}
+			kfree(opts->traddr);
 			opts->traddr = p;
-			अवरोध;
-		हाल NVMF_OPT_TRSVCID:
+			break;
+		case NVMF_OPT_TRSVCID:
 			p = match_strdup(args);
-			अगर (!p) अणु
+			if (!p) {
 				ret = -ENOMEM;
-				जाओ out;
-			पूर्ण
-			kमुक्त(opts->trsvcid);
+				goto out;
+			}
+			kfree(opts->trsvcid);
 			opts->trsvcid = p;
-			अवरोध;
-		हाल NVMF_OPT_QUEUE_SIZE:
-			अगर (match_पूर्णांक(args, &token)) अणु
+			break;
+		case NVMF_OPT_QUEUE_SIZE:
+			if (match_int(args, &token)) {
 				ret = -EINVAL;
-				जाओ out;
-			पूर्ण
-			अगर (token < NVMF_MIN_QUEUE_SIZE ||
-			    token > NVMF_MAX_QUEUE_SIZE) अणु
+				goto out;
+			}
+			if (token < NVMF_MIN_QUEUE_SIZE ||
+			    token > NVMF_MAX_QUEUE_SIZE) {
 				pr_err("Invalid queue_size %d\n", token);
 				ret = -EINVAL;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			opts->queue_size = token;
-			अवरोध;
-		हाल NVMF_OPT_NR_IO_QUEUES:
-			अगर (match_पूर्णांक(args, &token)) अणु
+			break;
+		case NVMF_OPT_NR_IO_QUEUES:
+			if (match_int(args, &token)) {
 				ret = -EINVAL;
-				जाओ out;
-			पूर्ण
-			अगर (token <= 0) अणु
+				goto out;
+			}
+			if (token <= 0) {
 				pr_err("Invalid number of IOQs %d\n", token);
 				ret = -EINVAL;
-				जाओ out;
-			पूर्ण
-			अगर (opts->discovery_nqn) अणु
+				goto out;
+			}
+			if (opts->discovery_nqn) {
 				pr_debug("Ignoring nr_io_queues value for discovery controller\n");
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			opts->nr_io_queues = min_t(अचिन्हित पूर्णांक,
+			opts->nr_io_queues = min_t(unsigned int,
 					num_online_cpus(), token);
-			अवरोध;
-		हाल NVMF_OPT_KATO:
-			अगर (match_पूर्णांक(args, &token)) अणु
+			break;
+		case NVMF_OPT_KATO:
+			if (match_int(args, &token)) {
 				ret = -EINVAL;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
-			अगर (token < 0) अणु
+			if (token < 0) {
 				pr_err("Invalid keep_alive_tmo %d\n", token);
 				ret = -EINVAL;
-				जाओ out;
-			पूर्ण अन्यथा अगर (token == 0 && !opts->discovery_nqn) अणु
-				/* Allowed क्रम debug */
+				goto out;
+			} else if (token == 0 && !opts->discovery_nqn) {
+				/* Allowed for debug */
 				pr_warn("keep_alive_tmo 0 won't execute keep alives!!!\n");
-			पूर्ण
+			}
 			opts->kato = token;
-			अवरोध;
-		हाल NVMF_OPT_CTRL_LOSS_TMO:
-			अगर (match_पूर्णांक(args, &token)) अणु
+			break;
+		case NVMF_OPT_CTRL_LOSS_TMO:
+			if (match_int(args, &token)) {
 				ret = -EINVAL;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
-			अगर (token < 0)
+			if (token < 0)
 				pr_warn("ctrl_loss_tmo < 0 will reconnect forever\n");
-			ctrl_loss_पंचांगo = token;
-			अवरोध;
-		हाल NVMF_OPT_FAIL_FAST_TMO:
-			अगर (match_पूर्णांक(args, &token)) अणु
+			ctrl_loss_tmo = token;
+			break;
+		case NVMF_OPT_FAIL_FAST_TMO:
+			if (match_int(args, &token)) {
 				ret = -EINVAL;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
-			अगर (token >= 0)
+			if (token >= 0)
 				pr_warn("I/O fail on reconnect controller after %d sec\n",
 					token);
-			opts->fast_io_fail_पंचांगo = token;
-			अवरोध;
-		हाल NVMF_OPT_HOSTNQN:
-			अगर (opts->host) अणु
+			opts->fast_io_fail_tmo = token;
+			break;
+		case NVMF_OPT_HOSTNQN:
+			if (opts->host) {
 				pr_err("hostnqn already user-assigned: %s\n",
 				       opts->host->nqn);
 				ret = -EADDRINUSE;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			p = match_strdup(args);
-			अगर (!p) अणु
+			if (!p) {
 				ret = -ENOMEM;
-				जाओ out;
-			पूर्ण
-			nqnlen = म_माप(p);
-			अगर (nqnlen >= NVMF_NQN_SIZE) अणु
+				goto out;
+			}
+			nqnlen = strlen(p);
+			if (nqnlen >= NVMF_NQN_SIZE) {
 				pr_err("%s needs to be < %d bytes\n",
 					p, NVMF_NQN_SIZE);
-				kमुक्त(p);
+				kfree(p);
 				ret = -EINVAL;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			nvmf_host_put(opts->host);
 			opts->host = nvmf_host_add(p);
-			kमुक्त(p);
-			अगर (!opts->host) अणु
+			kfree(p);
+			if (!opts->host) {
 				ret = -ENOMEM;
-				जाओ out;
-			पूर्ण
-			अवरोध;
-		हाल NVMF_OPT_RECONNECT_DELAY:
-			अगर (match_पूर्णांक(args, &token)) अणु
+				goto out;
+			}
+			break;
+		case NVMF_OPT_RECONNECT_DELAY:
+			if (match_int(args, &token)) {
 				ret = -EINVAL;
-				जाओ out;
-			पूर्ण
-			अगर (token <= 0) अणु
+				goto out;
+			}
+			if (token <= 0) {
 				pr_err("Invalid reconnect_delay %d\n", token);
 				ret = -EINVAL;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			opts->reconnect_delay = token;
-			अवरोध;
-		हाल NVMF_OPT_HOST_TRADDR:
+			break;
+		case NVMF_OPT_HOST_TRADDR:
 			p = match_strdup(args);
-			अगर (!p) अणु
+			if (!p) {
 				ret = -ENOMEM;
-				जाओ out;
-			पूर्ण
-			kमुक्त(opts->host_traddr);
+				goto out;
+			}
+			kfree(opts->host_traddr);
 			opts->host_traddr = p;
-			अवरोध;
-		हाल NVMF_OPT_HOST_ID:
+			break;
+		case NVMF_OPT_HOST_ID:
 			p = match_strdup(args);
-			अगर (!p) अणु
+			if (!p) {
 				ret = -ENOMEM;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			ret = uuid_parse(p, &hostid);
-			अगर (ret) अणु
+			if (ret) {
 				pr_err("Invalid hostid %s\n", p);
 				ret = -EINVAL;
-				kमुक्त(p);
-				जाओ out;
-			पूर्ण
-			kमुक्त(p);
-			अवरोध;
-		हाल NVMF_OPT_DUP_CONNECT:
+				kfree(p);
+				goto out;
+			}
+			kfree(p);
+			break;
+		case NVMF_OPT_DUP_CONNECT:
 			opts->duplicate_connect = true;
-			अवरोध;
-		हाल NVMF_OPT_DISABLE_SQFLOW:
+			break;
+		case NVMF_OPT_DISABLE_SQFLOW:
 			opts->disable_sqflow = true;
-			अवरोध;
-		हाल NVMF_OPT_HDR_DIGEST:
+			break;
+		case NVMF_OPT_HDR_DIGEST:
 			opts->hdr_digest = true;
-			अवरोध;
-		हाल NVMF_OPT_DATA_DIGEST:
+			break;
+		case NVMF_OPT_DATA_DIGEST:
 			opts->data_digest = true;
-			अवरोध;
-		हाल NVMF_OPT_NR_WRITE_QUEUES:
-			अगर (match_पूर्णांक(args, &token)) अणु
+			break;
+		case NVMF_OPT_NR_WRITE_QUEUES:
+			if (match_int(args, &token)) {
 				ret = -EINVAL;
-				जाओ out;
-			पूर्ण
-			अगर (token <= 0) अणु
+				goto out;
+			}
+			if (token <= 0) {
 				pr_err("Invalid nr_write_queues %d\n", token);
 				ret = -EINVAL;
-				जाओ out;
-			पूर्ण
-			opts->nr_ग_लिखो_queues = token;
-			अवरोध;
-		हाल NVMF_OPT_NR_POLL_QUEUES:
-			अगर (match_पूर्णांक(args, &token)) अणु
+				goto out;
+			}
+			opts->nr_write_queues = token;
+			break;
+		case NVMF_OPT_NR_POLL_QUEUES:
+			if (match_int(args, &token)) {
 				ret = -EINVAL;
-				जाओ out;
-			पूर्ण
-			अगर (token <= 0) अणु
+				goto out;
+			}
+			if (token <= 0) {
 				pr_err("Invalid nr_poll_queues %d\n", token);
 				ret = -EINVAL;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			opts->nr_poll_queues = token;
-			अवरोध;
-		हाल NVMF_OPT_TOS:
-			अगर (match_पूर्णांक(args, &token)) अणु
+			break;
+		case NVMF_OPT_TOS:
+			if (match_int(args, &token)) {
 				ret = -EINVAL;
-				जाओ out;
-			पूर्ण
-			अगर (token < 0) अणु
+				goto out;
+			}
+			if (token < 0) {
 				pr_err("Invalid type of service %d\n", token);
 				ret = -EINVAL;
-				जाओ out;
-			पूर्ण
-			अगर (token > 255) अणु
+				goto out;
+			}
+			if (token > 255) {
 				pr_warn("Clamping type of service to 255\n");
 				token = 255;
-			पूर्ण
+			}
 			opts->tos = token;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			pr_warn("unknown parameter or missing value '%s' in ctrl creation request\n",
 				p);
 			ret = -EINVAL;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	अगर (opts->discovery_nqn) अणु
+	if (opts->discovery_nqn) {
 		opts->nr_io_queues = 0;
-		opts->nr_ग_लिखो_queues = 0;
+		opts->nr_write_queues = 0;
 		opts->nr_poll_queues = 0;
 		opts->duplicate_connect = true;
-	पूर्ण अन्यथा अणु
-		अगर (!opts->kato)
+	} else {
+		if (!opts->kato)
 			opts->kato = NVME_DEFAULT_KATO;
-	पूर्ण
-	अगर (ctrl_loss_पंचांगo < 0) अणु
+	}
+	if (ctrl_loss_tmo < 0) {
 		opts->max_reconnects = -1;
-	पूर्ण अन्यथा अणु
-		opts->max_reconnects = DIV_ROUND_UP(ctrl_loss_पंचांगo,
+	} else {
+		opts->max_reconnects = DIV_ROUND_UP(ctrl_loss_tmo,
 						opts->reconnect_delay);
-		अगर (ctrl_loss_पंचांगo < opts->fast_io_fail_पंचांगo)
+		if (ctrl_loss_tmo < opts->fast_io_fail_tmo)
 			pr_warn("failfast tmo (%d) larger than controller loss tmo (%d)\n",
-				opts->fast_io_fail_पंचांगo, ctrl_loss_पंचांगo);
-	पूर्ण
+				opts->fast_io_fail_tmo, ctrl_loss_tmo);
+	}
 
-	अगर (!opts->host) अणु
-		kref_get(&nvmf_शेष_host->ref);
-		opts->host = nvmf_शेष_host;
-	पूर्ण
+	if (!opts->host) {
+		kref_get(&nvmf_default_host->ref);
+		opts->host = nvmf_default_host;
+	}
 
 	uuid_copy(&opts->host->id, &hostid);
 
 out:
-	kमुक्त(options);
-	वापस ret;
-पूर्ण
+	kfree(options);
+	return ret;
+}
 
-अटल पूर्णांक nvmf_check_required_opts(काष्ठा nvmf_ctrl_options *opts,
-		अचिन्हित पूर्णांक required_opts)
-अणु
-	अगर ((opts->mask & required_opts) != required_opts) अणु
-		पूर्णांक i;
+static int nvmf_check_required_opts(struct nvmf_ctrl_options *opts,
+		unsigned int required_opts)
+{
+	if ((opts->mask & required_opts) != required_opts) {
+		int i;
 
-		क्रम (i = 0; i < ARRAY_SIZE(opt_tokens); i++) अणु
-			अगर ((opt_tokens[i].token & required_opts) &&
-			    !(opt_tokens[i].token & opts->mask)) अणु
+		for (i = 0; i < ARRAY_SIZE(opt_tokens); i++) {
+			if ((opt_tokens[i].token & required_opts) &&
+			    !(opt_tokens[i].token & opts->mask)) {
 				pr_warn("missing parameter '%s'\n",
 					opt_tokens[i].pattern);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-bool nvmf_ip_options_match(काष्ठा nvme_ctrl *ctrl,
-		काष्ठा nvmf_ctrl_options *opts)
-अणु
-	अगर (!nvmf_ctlr_matches_baseopts(ctrl, opts) ||
-	    म_भेद(opts->traddr, ctrl->opts->traddr) ||
-	    म_भेद(opts->trsvcid, ctrl->opts->trsvcid))
-		वापस false;
+bool nvmf_ip_options_match(struct nvme_ctrl *ctrl,
+		struct nvmf_ctrl_options *opts)
+{
+	if (!nvmf_ctlr_matches_baseopts(ctrl, opts) ||
+	    strcmp(opts->traddr, ctrl->opts->traddr) ||
+	    strcmp(opts->trsvcid, ctrl->opts->trsvcid))
+		return false;
 
 	/*
-	 * Checking the local address is rough. In most हालs, none is specअगरied
+	 * Checking the local address is rough. In most cases, none is specified
 	 * and the host port is selected by the stack.
 	 *
-	 * Assume no match अगर:
-	 * -  local address is specअगरied and address is not the same
-	 * -  local address is not specअगरied but remote is, or vice versa
-	 *    (admin using specअगरic host_traddr when it matters).
+	 * Assume no match if:
+	 * -  local address is specified and address is not the same
+	 * -  local address is not specified but remote is, or vice versa
+	 *    (admin using specific host_traddr when it matters).
 	 */
-	अगर ((opts->mask & NVMF_OPT_HOST_TRADDR) &&
-	    (ctrl->opts->mask & NVMF_OPT_HOST_TRADDR)) अणु
-		अगर (म_भेद(opts->host_traddr, ctrl->opts->host_traddr))
-			वापस false;
-	पूर्ण अन्यथा अगर ((opts->mask & NVMF_OPT_HOST_TRADDR) ||
-		   (ctrl->opts->mask & NVMF_OPT_HOST_TRADDR)) अणु
-		वापस false;
-	पूर्ण
+	if ((opts->mask & NVMF_OPT_HOST_TRADDR) &&
+	    (ctrl->opts->mask & NVMF_OPT_HOST_TRADDR)) {
+		if (strcmp(opts->host_traddr, ctrl->opts->host_traddr))
+			return false;
+	} else if ((opts->mask & NVMF_OPT_HOST_TRADDR) ||
+		   (ctrl->opts->mask & NVMF_OPT_HOST_TRADDR)) {
+		return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 EXPORT_SYMBOL_GPL(nvmf_ip_options_match);
 
-अटल पूर्णांक nvmf_check_allowed_opts(काष्ठा nvmf_ctrl_options *opts,
-		अचिन्हित पूर्णांक allowed_opts)
-अणु
-	अगर (opts->mask & ~allowed_opts) अणु
-		पूर्णांक i;
+static int nvmf_check_allowed_opts(struct nvmf_ctrl_options *opts,
+		unsigned int allowed_opts)
+{
+	if (opts->mask & ~allowed_opts) {
+		int i;
 
-		क्रम (i = 0; i < ARRAY_SIZE(opt_tokens); i++) अणु
-			अगर ((opt_tokens[i].token & opts->mask) &&
-			    (opt_tokens[i].token & ~allowed_opts)) अणु
+		for (i = 0; i < ARRAY_SIZE(opt_tokens); i++) {
+			if ((opt_tokens[i].token & opts->mask) &&
+			    (opt_tokens[i].token & ~allowed_opts)) {
 				pr_warn("invalid parameter '%s'\n",
 					opt_tokens[i].pattern);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम nvmf_मुक्त_options(काष्ठा nvmf_ctrl_options *opts)
-अणु
+void nvmf_free_options(struct nvmf_ctrl_options *opts)
+{
 	nvmf_host_put(opts->host);
-	kमुक्त(opts->transport);
-	kमुक्त(opts->traddr);
-	kमुक्त(opts->trsvcid);
-	kमुक्त(opts->subsysnqn);
-	kमुक्त(opts->host_traddr);
-	kमुक्त(opts);
-पूर्ण
-EXPORT_SYMBOL_GPL(nvmf_मुक्त_options);
+	kfree(opts->transport);
+	kfree(opts->traddr);
+	kfree(opts->trsvcid);
+	kfree(opts->subsysnqn);
+	kfree(opts->host_traddr);
+	kfree(opts);
+}
+EXPORT_SYMBOL_GPL(nvmf_free_options);
 
-#घोषणा NVMF_REQUIRED_OPTS	(NVMF_OPT_TRANSPORT | NVMF_OPT_NQN)
-#घोषणा NVMF_ALLOWED_OPTS	(NVMF_OPT_QUEUE_SIZE | NVMF_OPT_NR_IO_QUEUES | \
+#define NVMF_REQUIRED_OPTS	(NVMF_OPT_TRANSPORT | NVMF_OPT_NQN)
+#define NVMF_ALLOWED_OPTS	(NVMF_OPT_QUEUE_SIZE | NVMF_OPT_NR_IO_QUEUES | \
 				 NVMF_OPT_KATO | NVMF_OPT_HOSTNQN | \
 				 NVMF_OPT_HOST_ID | NVMF_OPT_DUP_CONNECT |\
 				 NVMF_OPT_DISABLE_SQFLOW |\
 				 NVMF_OPT_FAIL_FAST_TMO)
 
-अटल काष्ठा nvme_ctrl *
-nvmf_create_ctrl(काष्ठा device *dev, स्थिर अक्षर *buf)
-अणु
-	काष्ठा nvmf_ctrl_options *opts;
-	काष्ठा nvmf_transport_ops *ops;
-	काष्ठा nvme_ctrl *ctrl;
-	पूर्णांक ret;
+static struct nvme_ctrl *
+nvmf_create_ctrl(struct device *dev, const char *buf)
+{
+	struct nvmf_ctrl_options *opts;
+	struct nvmf_transport_ops *ops;
+	struct nvme_ctrl *ctrl;
+	int ret;
 
-	opts = kzalloc(माप(*opts), GFP_KERNEL);
-	अगर (!opts)
-		वापस ERR_PTR(-ENOMEM);
+	opts = kzalloc(sizeof(*opts), GFP_KERNEL);
+	if (!opts)
+		return ERR_PTR(-ENOMEM);
 
 	ret = nvmf_parse_options(opts, buf);
-	अगर (ret)
-		जाओ out_मुक्त_opts;
+	if (ret)
+		goto out_free_opts;
 
 
 	request_module("nvme-%s", opts->transport);
 
 	/*
-	 * Check the generic options first as we need a valid transport क्रम
+	 * Check the generic options first as we need a valid transport for
 	 * the lookup below.  Then clear the generic flags so that transport
-	 * drivers करोn't have to care about them.
+	 * drivers don't have to care about them.
 	 */
 	ret = nvmf_check_required_opts(opts, NVMF_REQUIRED_OPTS);
-	अगर (ret)
-		जाओ out_मुक्त_opts;
+	if (ret)
+		goto out_free_opts;
 	opts->mask &= ~NVMF_REQUIRED_OPTS;
 
-	करोwn_पढ़ो(&nvmf_transports_rwsem);
+	down_read(&nvmf_transports_rwsem);
 	ops = nvmf_lookup_transport(opts);
-	अगर (!ops) अणु
+	if (!ops) {
 		pr_info("no handler found for transport %s.\n",
 			opts->transport);
 		ret = -EINVAL;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	अगर (!try_module_get(ops->module)) अणु
+	if (!try_module_get(ops->module)) {
 		ret = -EBUSY;
-		जाओ out_unlock;
-	पूर्ण
-	up_पढ़ो(&nvmf_transports_rwsem);
+		goto out_unlock;
+	}
+	up_read(&nvmf_transports_rwsem);
 
 	ret = nvmf_check_required_opts(opts, ops->required_opts);
-	अगर (ret)
-		जाओ out_module_put;
+	if (ret)
+		goto out_module_put;
 	ret = nvmf_check_allowed_opts(opts, NVMF_ALLOWED_OPTS |
 				ops->allowed_opts | ops->required_opts);
-	अगर (ret)
-		जाओ out_module_put;
+	if (ret)
+		goto out_module_put;
 
 	ctrl = ops->create_ctrl(dev, opts);
-	अगर (IS_ERR(ctrl)) अणु
+	if (IS_ERR(ctrl)) {
 		ret = PTR_ERR(ctrl);
-		जाओ out_module_put;
-	पूर्ण
+		goto out_module_put;
+	}
 
 	module_put(ops->module);
-	वापस ctrl;
+	return ctrl;
 
 out_module_put:
 	module_put(ops->module);
-	जाओ out_मुक्त_opts;
+	goto out_free_opts;
 out_unlock:
-	up_पढ़ो(&nvmf_transports_rwsem);
-out_मुक्त_opts:
-	nvmf_मुक्त_options(opts);
-	वापस ERR_PTR(ret);
-पूर्ण
+	up_read(&nvmf_transports_rwsem);
+out_free_opts:
+	nvmf_free_options(opts);
+	return ERR_PTR(ret);
+}
 
-अटल काष्ठा class *nvmf_class;
-अटल काष्ठा device *nvmf_device;
-अटल DEFINE_MUTEX(nvmf_dev_mutex);
+static struct class *nvmf_class;
+static struct device *nvmf_device;
+static DEFINE_MUTEX(nvmf_dev_mutex);
 
-अटल sमाप_प्रकार nvmf_dev_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *ubuf,
-		माप_प्रकार count, loff_t *pos)
-अणु
-	काष्ठा seq_file *seq_file = file->निजी_data;
-	काष्ठा nvme_ctrl *ctrl;
-	स्थिर अक्षर *buf;
-	पूर्णांक ret = 0;
+static ssize_t nvmf_dev_write(struct file *file, const char __user *ubuf,
+		size_t count, loff_t *pos)
+{
+	struct seq_file *seq_file = file->private_data;
+	struct nvme_ctrl *ctrl;
+	const char *buf;
+	int ret = 0;
 
-	अगर (count > PAGE_SIZE)
-		वापस -ENOMEM;
+	if (count > PAGE_SIZE)
+		return -ENOMEM;
 
 	buf = memdup_user_nul(ubuf, count);
-	अगर (IS_ERR(buf))
-		वापस PTR_ERR(buf);
+	if (IS_ERR(buf))
+		return PTR_ERR(buf);
 
 	mutex_lock(&nvmf_dev_mutex);
-	अगर (seq_file->निजी) अणु
+	if (seq_file->private) {
 		ret = -EINVAL;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	ctrl = nvmf_create_ctrl(nvmf_device, buf);
-	अगर (IS_ERR(ctrl)) अणु
+	if (IS_ERR(ctrl)) {
 		ret = PTR_ERR(ctrl);
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	seq_file->निजी = ctrl;
+	seq_file->private = ctrl;
 
 out_unlock:
 	mutex_unlock(&nvmf_dev_mutex);
-	kमुक्त(buf);
-	वापस ret ? ret : count;
-पूर्ण
+	kfree(buf);
+	return ret ? ret : count;
+}
 
-अटल पूर्णांक nvmf_dev_show(काष्ठा seq_file *seq_file, व्योम *निजी)
-अणु
-	काष्ठा nvme_ctrl *ctrl;
-	पूर्णांक ret = 0;
+static int nvmf_dev_show(struct seq_file *seq_file, void *private)
+{
+	struct nvme_ctrl *ctrl;
+	int ret = 0;
 
 	mutex_lock(&nvmf_dev_mutex);
-	ctrl = seq_file->निजी;
-	अगर (!ctrl) अणु
+	ctrl = seq_file->private;
+	if (!ctrl) {
 		ret = -EINVAL;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	seq_म_लिखो(seq_file, "instance=%d,cntlid=%d\n",
+	seq_printf(seq_file, "instance=%d,cntlid=%d\n",
 			ctrl->instance, ctrl->cntlid);
 
 out_unlock:
 	mutex_unlock(&nvmf_dev_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक nvmf_dev_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
+static int nvmf_dev_open(struct inode *inode, struct file *file)
+{
 	/*
-	 * The miscdevice code initializes file->निजी_data, but करोesn't
+	 * The miscdevice code initializes file->private_data, but doesn't
 	 * make use of it later.
 	 */
-	file->निजी_data = शून्य;
-	वापस single_खोलो(file, nvmf_dev_show, शून्य);
-पूर्ण
+	file->private_data = NULL;
+	return single_open(file, nvmf_dev_show, NULL);
+}
 
-अटल पूर्णांक nvmf_dev_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा seq_file *seq_file = file->निजी_data;
-	काष्ठा nvme_ctrl *ctrl = seq_file->निजी;
+static int nvmf_dev_release(struct inode *inode, struct file *file)
+{
+	struct seq_file *seq_file = file->private_data;
+	struct nvme_ctrl *ctrl = seq_file->private;
 
-	अगर (ctrl)
+	if (ctrl)
 		nvme_put_ctrl(ctrl);
-	वापस single_release(inode, file);
-पूर्ण
+	return single_release(inode, file);
+}
 
-अटल स्थिर काष्ठा file_operations nvmf_dev_fops = अणु
+static const struct file_operations nvmf_dev_fops = {
 	.owner		= THIS_MODULE,
-	.ग_लिखो		= nvmf_dev_ग_लिखो,
-	.पढ़ो		= seq_पढ़ो,
-	.खोलो		= nvmf_dev_खोलो,
+	.write		= nvmf_dev_write,
+	.read		= seq_read,
+	.open		= nvmf_dev_open,
 	.release	= nvmf_dev_release,
-पूर्ण;
+};
 
-अटल काष्ठा miscdevice nvmf_misc = अणु
+static struct miscdevice nvmf_misc = {
 	.minor		= MISC_DYNAMIC_MINOR,
 	.name           = "nvme-fabrics",
 	.fops		= &nvmf_dev_fops,
-पूर्ण;
+};
 
-अटल पूर्णांक __init nvmf_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init nvmf_init(void)
+{
+	int ret;
 
-	nvmf_शेष_host = nvmf_host_शेष();
-	अगर (!nvmf_शेष_host)
-		वापस -ENOMEM;
+	nvmf_default_host = nvmf_host_default();
+	if (!nvmf_default_host)
+		return -ENOMEM;
 
 	nvmf_class = class_create(THIS_MODULE, "nvme-fabrics");
-	अगर (IS_ERR(nvmf_class)) अणु
+	if (IS_ERR(nvmf_class)) {
 		pr_err("couldn't register class nvme-fabrics\n");
 		ret = PTR_ERR(nvmf_class);
-		जाओ out_मुक्त_host;
-	पूर्ण
+		goto out_free_host;
+	}
 
 	nvmf_device =
-		device_create(nvmf_class, शून्य, MKDEV(0, 0), शून्य, "ctl");
-	अगर (IS_ERR(nvmf_device)) अणु
+		device_create(nvmf_class, NULL, MKDEV(0, 0), NULL, "ctl");
+	if (IS_ERR(nvmf_device)) {
 		pr_err("couldn't create nvme-fabris device!\n");
 		ret = PTR_ERR(nvmf_device);
-		जाओ out_destroy_class;
-	पूर्ण
+		goto out_destroy_class;
+	}
 
-	ret = misc_रेजिस्टर(&nvmf_misc);
-	अगर (ret) अणु
+	ret = misc_register(&nvmf_misc);
+	if (ret) {
 		pr_err("couldn't register misc device: %d\n", ret);
-		जाओ out_destroy_device;
-	पूर्ण
+		goto out_destroy_device;
+	}
 
-	वापस 0;
+	return 0;
 
 out_destroy_device:
 	device_destroy(nvmf_class, MKDEV(0, 0));
 out_destroy_class:
 	class_destroy(nvmf_class);
-out_मुक्त_host:
-	nvmf_host_put(nvmf_शेष_host);
-	वापस ret;
-पूर्ण
+out_free_host:
+	nvmf_host_put(nvmf_default_host);
+	return ret;
+}
 
-अटल व्योम __निकास nvmf_निकास(व्योम)
-अणु
-	misc_deरेजिस्टर(&nvmf_misc);
+static void __exit nvmf_exit(void)
+{
+	misc_deregister(&nvmf_misc);
 	device_destroy(nvmf_class, MKDEV(0, 0));
 	class_destroy(nvmf_class);
-	nvmf_host_put(nvmf_शेष_host);
+	nvmf_host_put(nvmf_default_host);
 
-	BUILD_BUG_ON(माप(काष्ठा nvmf_common_command) != 64);
-	BUILD_BUG_ON(माप(काष्ठा nvmf_connect_command) != 64);
-	BUILD_BUG_ON(माप(काष्ठा nvmf_property_get_command) != 64);
-	BUILD_BUG_ON(माप(काष्ठा nvmf_property_set_command) != 64);
-	BUILD_BUG_ON(माप(काष्ठा nvmf_connect_data) != 1024);
-पूर्ण
+	BUILD_BUG_ON(sizeof(struct nvmf_common_command) != 64);
+	BUILD_BUG_ON(sizeof(struct nvmf_connect_command) != 64);
+	BUILD_BUG_ON(sizeof(struct nvmf_property_get_command) != 64);
+	BUILD_BUG_ON(sizeof(struct nvmf_property_set_command) != 64);
+	BUILD_BUG_ON(sizeof(struct nvmf_connect_data) != 1024);
+}
 
 MODULE_LICENSE("GPL v2");
 
 module_init(nvmf_init);
-module_निकास(nvmf_निकास);
+module_exit(nvmf_exit);

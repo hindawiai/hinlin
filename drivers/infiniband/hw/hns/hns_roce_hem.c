@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2016 Hisilicon Limited.
  * Copyright (c) 2007, 2008 Mellanox Technologies. All rights reserved.
@@ -6,20 +5,20 @@
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -32,197 +31,197 @@
  * SOFTWARE.
  */
 
-#समावेश <linux/platक्रमm_device.h>
-#समावेश "hns_roce_device.h"
-#समावेश "hns_roce_hem.h"
-#समावेश "hns_roce_common.h"
+#include <linux/platform_device.h>
+#include "hns_roce_device.h"
+#include "hns_roce_hem.h"
+#include "hns_roce_common.h"
 
-#घोषणा DMA_ADDR_T_SHIFT		12
-#घोषणा BT_BA_SHIFT			32
+#define DMA_ADDR_T_SHIFT		12
+#define BT_BA_SHIFT			32
 
-#घोषणा HEM_INDEX_BUF			BIT(0)
-#घोषणा HEM_INDEX_L0			BIT(1)
-#घोषणा HEM_INDEX_L1			BIT(2)
-काष्ठा hns_roce_hem_index अणु
+#define HEM_INDEX_BUF			BIT(0)
+#define HEM_INDEX_L0			BIT(1)
+#define HEM_INDEX_L1			BIT(2)
+struct hns_roce_hem_index {
 	u64 buf;
 	u64 l0;
 	u64 l1;
 	u32 inited; /* indicate which index is available */
-पूर्ण;
+};
 
-bool hns_roce_check_whether_mhop(काष्ठा hns_roce_dev *hr_dev, u32 type)
-अणु
-	पूर्णांक hop_num = 0;
+bool hns_roce_check_whether_mhop(struct hns_roce_dev *hr_dev, u32 type)
+{
+	int hop_num = 0;
 
-	चयन (type) अणु
-	हाल HEM_TYPE_QPC:
+	switch (type) {
+	case HEM_TYPE_QPC:
 		hop_num = hr_dev->caps.qpc_hop_num;
-		अवरोध;
-	हाल HEM_TYPE_MTPT:
+		break;
+	case HEM_TYPE_MTPT:
 		hop_num = hr_dev->caps.mpt_hop_num;
-		अवरोध;
-	हाल HEM_TYPE_CQC:
+		break;
+	case HEM_TYPE_CQC:
 		hop_num = hr_dev->caps.cqc_hop_num;
-		अवरोध;
-	हाल HEM_TYPE_SRQC:
+		break;
+	case HEM_TYPE_SRQC:
 		hop_num = hr_dev->caps.srqc_hop_num;
-		अवरोध;
-	हाल HEM_TYPE_SCCC:
+		break;
+	case HEM_TYPE_SCCC:
 		hop_num = hr_dev->caps.sccc_hop_num;
-		अवरोध;
-	हाल HEM_TYPE_QPC_TIMER:
-		hop_num = hr_dev->caps.qpc_समयr_hop_num;
-		अवरोध;
-	हाल HEM_TYPE_CQC_TIMER:
-		hop_num = hr_dev->caps.cqc_समयr_hop_num;
-		अवरोध;
-	हाल HEM_TYPE_GMV:
+		break;
+	case HEM_TYPE_QPC_TIMER:
+		hop_num = hr_dev->caps.qpc_timer_hop_num;
+		break;
+	case HEM_TYPE_CQC_TIMER:
+		hop_num = hr_dev->caps.cqc_timer_hop_num;
+		break;
+	case HEM_TYPE_GMV:
 		hop_num = hr_dev->caps.gmv_hop_num;
-		अवरोध;
-	शेष:
-		वापस false;
-	पूर्ण
+		break;
+	default:
+		return false;
+	}
 
-	वापस hop_num ? true : false;
-पूर्ण
+	return hop_num ? true : false;
+}
 
-अटल bool hns_roce_check_hem_null(काष्ठा hns_roce_hem **hem, u64 hem_idx,
+static bool hns_roce_check_hem_null(struct hns_roce_hem **hem, u64 hem_idx,
 				    u32 bt_chunk_num, u64 hem_max_num)
-अणु
-	u64 start_idx = round_करोwn(hem_idx, bt_chunk_num);
+{
+	u64 start_idx = round_down(hem_idx, bt_chunk_num);
 	u64 check_max_num = start_idx + bt_chunk_num;
 	u64 i;
 
-	क्रम (i = start_idx; (i < check_max_num) && (i < hem_max_num); i++)
-		अगर (i != hem_idx && hem[i])
-			वापस false;
+	for (i = start_idx; (i < check_max_num) && (i < hem_max_num); i++)
+		if (i != hem_idx && hem[i])
+			return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool hns_roce_check_bt_null(u64 **bt, u64 ba_idx, u32 bt_chunk_num)
-अणु
-	u64 start_idx = round_करोwn(ba_idx, bt_chunk_num);
-	पूर्णांक i;
+static bool hns_roce_check_bt_null(u64 **bt, u64 ba_idx, u32 bt_chunk_num)
+{
+	u64 start_idx = round_down(ba_idx, bt_chunk_num);
+	int i;
 
-	क्रम (i = 0; i < bt_chunk_num; i++)
-		अगर (i != ba_idx && bt[start_idx + i])
-			वापस false;
+	for (i = 0; i < bt_chunk_num; i++)
+		if (i != ba_idx && bt[start_idx + i])
+			return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक hns_roce_get_bt_num(u32 table_type, u32 hop_num)
-अणु
-	अगर (check_whether_bt_num_3(table_type, hop_num))
-		वापस 3;
-	अन्यथा अगर (check_whether_bt_num_2(table_type, hop_num))
-		वापस 2;
-	अन्यथा अगर (check_whether_bt_num_1(table_type, hop_num))
-		वापस 1;
-	अन्यथा
-		वापस 0;
-पूर्ण
+static int hns_roce_get_bt_num(u32 table_type, u32 hop_num)
+{
+	if (check_whether_bt_num_3(table_type, hop_num))
+		return 3;
+	else if (check_whether_bt_num_2(table_type, hop_num))
+		return 2;
+	else if (check_whether_bt_num_1(table_type, hop_num))
+		return 1;
+	else
+		return 0;
+}
 
-अटल पूर्णांक get_hem_table_config(काष्ठा hns_roce_dev *hr_dev,
-				काष्ठा hns_roce_hem_mhop *mhop,
+static int get_hem_table_config(struct hns_roce_dev *hr_dev,
+				struct hns_roce_hem_mhop *mhop,
 				u32 type)
-अणु
-	काष्ठा device *dev = hr_dev->dev;
+{
+	struct device *dev = hr_dev->dev;
 
-	चयन (type) अणु
-	हाल HEM_TYPE_QPC:
+	switch (type) {
+	case HEM_TYPE_QPC:
 		mhop->buf_chunk_size = 1 << (hr_dev->caps.qpc_buf_pg_sz
 					     + PAGE_SHIFT);
 		mhop->bt_chunk_size = 1 << (hr_dev->caps.qpc_ba_pg_sz
 					     + PAGE_SHIFT);
 		mhop->ba_l0_num = hr_dev->caps.qpc_bt_num;
 		mhop->hop_num = hr_dev->caps.qpc_hop_num;
-		अवरोध;
-	हाल HEM_TYPE_MTPT:
+		break;
+	case HEM_TYPE_MTPT:
 		mhop->buf_chunk_size = 1 << (hr_dev->caps.mpt_buf_pg_sz
 					     + PAGE_SHIFT);
 		mhop->bt_chunk_size = 1 << (hr_dev->caps.mpt_ba_pg_sz
 					     + PAGE_SHIFT);
 		mhop->ba_l0_num = hr_dev->caps.mpt_bt_num;
 		mhop->hop_num = hr_dev->caps.mpt_hop_num;
-		अवरोध;
-	हाल HEM_TYPE_CQC:
+		break;
+	case HEM_TYPE_CQC:
 		mhop->buf_chunk_size = 1 << (hr_dev->caps.cqc_buf_pg_sz
 					     + PAGE_SHIFT);
 		mhop->bt_chunk_size = 1 << (hr_dev->caps.cqc_ba_pg_sz
 					    + PAGE_SHIFT);
 		mhop->ba_l0_num = hr_dev->caps.cqc_bt_num;
 		mhop->hop_num = hr_dev->caps.cqc_hop_num;
-		अवरोध;
-	हाल HEM_TYPE_SCCC:
+		break;
+	case HEM_TYPE_SCCC:
 		mhop->buf_chunk_size = 1 << (hr_dev->caps.sccc_buf_pg_sz
 					     + PAGE_SHIFT);
 		mhop->bt_chunk_size = 1 << (hr_dev->caps.sccc_ba_pg_sz
 					    + PAGE_SHIFT);
 		mhop->ba_l0_num = hr_dev->caps.sccc_bt_num;
 		mhop->hop_num = hr_dev->caps.sccc_hop_num;
-		अवरोध;
-	हाल HEM_TYPE_QPC_TIMER:
-		mhop->buf_chunk_size = 1 << (hr_dev->caps.qpc_समयr_buf_pg_sz
+		break;
+	case HEM_TYPE_QPC_TIMER:
+		mhop->buf_chunk_size = 1 << (hr_dev->caps.qpc_timer_buf_pg_sz
 					     + PAGE_SHIFT);
-		mhop->bt_chunk_size = 1 << (hr_dev->caps.qpc_समयr_ba_pg_sz
+		mhop->bt_chunk_size = 1 << (hr_dev->caps.qpc_timer_ba_pg_sz
 					    + PAGE_SHIFT);
-		mhop->ba_l0_num = hr_dev->caps.qpc_समयr_bt_num;
-		mhop->hop_num = hr_dev->caps.qpc_समयr_hop_num;
-		अवरोध;
-	हाल HEM_TYPE_CQC_TIMER:
-		mhop->buf_chunk_size = 1 << (hr_dev->caps.cqc_समयr_buf_pg_sz
+		mhop->ba_l0_num = hr_dev->caps.qpc_timer_bt_num;
+		mhop->hop_num = hr_dev->caps.qpc_timer_hop_num;
+		break;
+	case HEM_TYPE_CQC_TIMER:
+		mhop->buf_chunk_size = 1 << (hr_dev->caps.cqc_timer_buf_pg_sz
 					     + PAGE_SHIFT);
-		mhop->bt_chunk_size = 1 << (hr_dev->caps.cqc_समयr_ba_pg_sz
+		mhop->bt_chunk_size = 1 << (hr_dev->caps.cqc_timer_ba_pg_sz
 					    + PAGE_SHIFT);
-		mhop->ba_l0_num = hr_dev->caps.cqc_समयr_bt_num;
-		mhop->hop_num = hr_dev->caps.cqc_समयr_hop_num;
-		अवरोध;
-	हाल HEM_TYPE_SRQC:
+		mhop->ba_l0_num = hr_dev->caps.cqc_timer_bt_num;
+		mhop->hop_num = hr_dev->caps.cqc_timer_hop_num;
+		break;
+	case HEM_TYPE_SRQC:
 		mhop->buf_chunk_size = 1 << (hr_dev->caps.srqc_buf_pg_sz
 					     + PAGE_SHIFT);
 		mhop->bt_chunk_size = 1 << (hr_dev->caps.srqc_ba_pg_sz
 					     + PAGE_SHIFT);
 		mhop->ba_l0_num = hr_dev->caps.srqc_bt_num;
 		mhop->hop_num = hr_dev->caps.srqc_hop_num;
-		अवरोध;
-	हाल HEM_TYPE_GMV:
+		break;
+	case HEM_TYPE_GMV:
 		mhop->buf_chunk_size = 1 << (hr_dev->caps.gmv_buf_pg_sz +
 					     PAGE_SHIFT);
 		mhop->bt_chunk_size = 1 << (hr_dev->caps.gmv_ba_pg_sz +
 					    PAGE_SHIFT);
 		mhop->ba_l0_num = hr_dev->caps.gmv_bt_num;
 		mhop->hop_num = hr_dev->caps.gmv_hop_num;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(dev, "table %u not support multi-hop addressing!\n",
 			type);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hns_roce_calc_hem_mhop(काष्ठा hns_roce_dev *hr_dev,
-			   काष्ठा hns_roce_hem_table *table, अचिन्हित दीर्घ *obj,
-			   काष्ठा hns_roce_hem_mhop *mhop)
-अणु
-	काष्ठा device *dev = hr_dev->dev;
+int hns_roce_calc_hem_mhop(struct hns_roce_dev *hr_dev,
+			   struct hns_roce_hem_table *table, unsigned long *obj,
+			   struct hns_roce_hem_mhop *mhop)
+{
+	struct device *dev = hr_dev->dev;
 	u32 chunk_ba_num;
 	u32 chunk_size;
 	u32 table_idx;
 	u32 bt_num;
 
-	अगर (get_hem_table_config(hr_dev, mhop, table->type))
-		वापस -EINVAL;
+	if (get_hem_table_config(hr_dev, mhop, table->type))
+		return -EINVAL;
 
-	अगर (!obj)
-		वापस 0;
+	if (!obj)
+		return 0;
 
 	/*
-	 * QPC/MTPT/CQC/SRQC/SCCC alloc hem क्रम buffer pages.
-	 * MTT/CQE alloc hem क्रम bt pages.
+	 * QPC/MTPT/CQC/SRQC/SCCC alloc hem for buffer pages.
+	 * MTT/CQE alloc hem for bt pages.
 	 */
 	bt_num = hns_roce_get_bt_num(table->type, mhop->hop_num);
 	chunk_ba_num = mhop->bt_chunk_size / BA_BYTE_LEN;
@@ -230,79 +229,79 @@ bool hns_roce_check_whether_mhop(काष्ठा hns_roce_dev *hr_dev, u32 ty
 			      mhop->bt_chunk_size;
 	table_idx = (*obj & (table->num_obj - 1)) /
 		     (chunk_size / table->obj_size);
-	चयन (bt_num) अणु
-	हाल 3:
+	switch (bt_num) {
+	case 3:
 		mhop->l2_idx = table_idx & (chunk_ba_num - 1);
 		mhop->l1_idx = table_idx / chunk_ba_num & (chunk_ba_num - 1);
 		mhop->l0_idx = (table_idx / chunk_ba_num) / chunk_ba_num;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		mhop->l1_idx = table_idx & (chunk_ba_num - 1);
 		mhop->l0_idx = table_idx / chunk_ba_num;
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		mhop->l0_idx = table_idx;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(dev, "table %u not support hop_num = %u!\n",
 			table->type, mhop->hop_num);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (mhop->l0_idx >= mhop->ba_l0_num)
+		return -EINVAL;
+	}
+	if (mhop->l0_idx >= mhop->ba_l0_num)
 		mhop->l0_idx %= mhop->ba_l0_num;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा hns_roce_hem *hns_roce_alloc_hem(काष्ठा hns_roce_dev *hr_dev,
-					       पूर्णांक npages,
-					       अचिन्हित दीर्घ hem_alloc_size,
+static struct hns_roce_hem *hns_roce_alloc_hem(struct hns_roce_dev *hr_dev,
+					       int npages,
+					       unsigned long hem_alloc_size,
 					       gfp_t gfp_mask)
-अणु
-	काष्ठा hns_roce_hem_chunk *chunk = शून्य;
-	काष्ठा hns_roce_hem *hem;
-	काष्ठा scatterlist *mem;
-	पूर्णांक order;
-	व्योम *buf;
+{
+	struct hns_roce_hem_chunk *chunk = NULL;
+	struct hns_roce_hem *hem;
+	struct scatterlist *mem;
+	int order;
+	void *buf;
 
 	WARN_ON(gfp_mask & __GFP_HIGHMEM);
 
-	hem = kदो_स्मृति(माप(*hem),
+	hem = kmalloc(sizeof(*hem),
 		      gfp_mask & ~(__GFP_HIGHMEM | __GFP_NOWARN));
-	अगर (!hem)
-		वापस शून्य;
+	if (!hem)
+		return NULL;
 
 	hem->refcount = 0;
 	INIT_LIST_HEAD(&hem->chunk_list);
 
 	order = get_order(hem_alloc_size);
 
-	जबतक (npages > 0) अणु
-		अगर (!chunk) अणु
-			chunk = kदो_स्मृति(माप(*chunk),
+	while (npages > 0) {
+		if (!chunk) {
+			chunk = kmalloc(sizeof(*chunk),
 				gfp_mask & ~(__GFP_HIGHMEM | __GFP_NOWARN));
-			अगर (!chunk)
-				जाओ fail;
+			if (!chunk)
+				goto fail;
 
 			sg_init_table(chunk->mem, HNS_ROCE_HEM_CHUNK_LEN);
 			chunk->npages = 0;
 			chunk->nsg = 0;
-			स_रखो(chunk->buf, 0, माप(chunk->buf));
+			memset(chunk->buf, 0, sizeof(chunk->buf));
 			list_add_tail(&chunk->list, &hem->chunk_list);
-		पूर्ण
+		}
 
-		जबतक (1 << order > npages)
+		while (1 << order > npages)
 			--order;
 
 		/*
-		 * Alloc memory one समय. If failed, करोn't alloc small block
-		 * memory, directly वापस fail.
+		 * Alloc memory one time. If failed, don't alloc small block
+		 * memory, directly return fail.
 		 */
 		mem = &chunk->mem[chunk->npages];
 		buf = dma_alloc_coherent(hr_dev->dev, PAGE_SIZE << order,
 				&sg_dma_address(mem), gfp_mask);
-		अगर (!buf)
-			जाओ fail;
+		if (!buf)
+			goto fail;
 
 		chunk->buf[chunk->npages] = buf;
 		sg_dma_len(mem) = PAGE_SIZE << order;
@@ -310,65 +309,65 @@ bool hns_roce_check_whether_mhop(काष्ठा hns_roce_dev *hr_dev, u32 ty
 		++chunk->npages;
 		++chunk->nsg;
 		npages -= 1 << order;
-	पूर्ण
+	}
 
-	वापस hem;
+	return hem;
 
 fail:
-	hns_roce_मुक्त_hem(hr_dev, hem);
-	वापस शून्य;
-पूर्ण
+	hns_roce_free_hem(hr_dev, hem);
+	return NULL;
+}
 
-व्योम hns_roce_मुक्त_hem(काष्ठा hns_roce_dev *hr_dev, काष्ठा hns_roce_hem *hem)
-अणु
-	काष्ठा hns_roce_hem_chunk *chunk, *पंचांगp;
-	पूर्णांक i;
+void hns_roce_free_hem(struct hns_roce_dev *hr_dev, struct hns_roce_hem *hem)
+{
+	struct hns_roce_hem_chunk *chunk, *tmp;
+	int i;
 
-	अगर (!hem)
-		वापस;
+	if (!hem)
+		return;
 
-	list_क्रम_each_entry_safe(chunk, पंचांगp, &hem->chunk_list, list) अणु
-		क्रम (i = 0; i < chunk->npages; ++i)
-			dma_मुक्त_coherent(hr_dev->dev,
+	list_for_each_entry_safe(chunk, tmp, &hem->chunk_list, list) {
+		for (i = 0; i < chunk->npages; ++i)
+			dma_free_coherent(hr_dev->dev,
 				   sg_dma_len(&chunk->mem[i]),
 				   chunk->buf[i],
 				   sg_dma_address(&chunk->mem[i]));
-		kमुक्त(chunk);
-	पूर्ण
+		kfree(chunk);
+	}
 
-	kमुक्त(hem);
-पूर्ण
+	kfree(hem);
+}
 
-अटल पूर्णांक hns_roce_set_hem(काष्ठा hns_roce_dev *hr_dev,
-			    काष्ठा hns_roce_hem_table *table, अचिन्हित दीर्घ obj)
-अणु
+static int hns_roce_set_hem(struct hns_roce_dev *hr_dev,
+			    struct hns_roce_hem_table *table, unsigned long obj)
+{
 	spinlock_t *lock = &hr_dev->bt_cmd_lock;
-	काष्ठा device *dev = hr_dev->dev;
-	काष्ठा hns_roce_hem_iter iter;
-	व्योम __iomem *bt_cmd;
+	struct device *dev = hr_dev->dev;
+	struct hns_roce_hem_iter iter;
+	void __iomem *bt_cmd;
 	__le32 bt_cmd_val[2];
 	__le32 bt_cmd_h = 0;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 	__le32 bt_cmd_l;
-	पूर्णांक ret = 0;
+	int ret = 0;
 	u64 bt_ba;
-	दीर्घ end;
+	long end;
 
 	/* Find the HEM(Hardware Entry Memory) entry */
-	अचिन्हित दीर्घ i = (obj & (table->num_obj - 1)) /
+	unsigned long i = (obj & (table->num_obj - 1)) /
 			  (table->table_chunk_size / table->obj_size);
 
-	चयन (table->type) अणु
-	हाल HEM_TYPE_QPC:
-	हाल HEM_TYPE_MTPT:
-	हाल HEM_TYPE_CQC:
-	हाल HEM_TYPE_SRQC:
+	switch (table->type) {
+	case HEM_TYPE_QPC:
+	case HEM_TYPE_MTPT:
+	case HEM_TYPE_CQC:
+	case HEM_TYPE_SRQC:
 		roce_set_field(bt_cmd_h, ROCEE_BT_CMD_H_ROCEE_BT_CMD_MDF_M,
 			ROCEE_BT_CMD_H_ROCEE_BT_CMD_MDF_S, table->type);
-		अवरोध;
-	शेष:
-		वापस ret;
-	पूर्ण
+		break;
+	default:
+		return ret;
+	}
 
 	roce_set_field(bt_cmd_h, ROCEE_BT_CMD_H_ROCEE_BT_CMD_IN_MDF_M,
 		       ROCEE_BT_CMD_H_ROCEE_BT_CMD_IN_MDF_S, obj);
@@ -376,8 +375,8 @@ fail:
 	roce_set_bit(bt_cmd_h, ROCEE_BT_CMD_H_ROCEE_BT_CMD_HW_SYNS_S, 1);
 
 	/* Currently iter only a chunk */
-	क्रम (hns_roce_hem_first(table->hem[i], &iter);
-	     !hns_roce_hem_last(&iter); hns_roce_hem_next(&iter)) अणु
+	for (hns_roce_hem_first(table->hem[i], &iter);
+	     !hns_roce_hem_last(&iter); hns_roce_hem_next(&iter)) {
 		bt_ba = hns_roce_hem_addr(&iter) >> DMA_ADDR_T_SHIFT;
 
 		spin_lock_irqsave(lock, flags);
@@ -385,19 +384,19 @@ fail:
 		bt_cmd = hr_dev->reg_base + ROCEE_BT_CMD_H_REG;
 
 		end = HW_SYNC_TIMEOUT_MSECS;
-		जबतक (end > 0) अणु
-			अगर (!(पढ़ोl(bt_cmd) >> BT_CMD_SYNC_SHIFT))
-				अवरोध;
+		while (end > 0) {
+			if (!(readl(bt_cmd) >> BT_CMD_SYNC_SHIFT))
+				break;
 
 			mdelay(HW_SYNC_SLEEP_TIME_INTERVAL);
 			end -= HW_SYNC_SLEEP_TIME_INTERVAL;
-		पूर्ण
+		}
 
-		अगर (end <= 0) अणु
+		if (end <= 0) {
 			dev_err(dev, "Write bt_cmd err,hw_sync is not zero.\n");
 			spin_unlock_irqrestore(lock, flags);
-			वापस -EBUSY;
-		पूर्ण
+			return -EBUSY;
+		}
 
 		bt_cmd_l = cpu_to_le32(bt_ba);
 		roce_set_field(bt_cmd_h, ROCEE_BT_CMD_H_ROCEE_BT_CMD_BA_H_M,
@@ -406,493 +405,493 @@ fail:
 
 		bt_cmd_val[0] = bt_cmd_l;
 		bt_cmd_val[1] = bt_cmd_h;
-		hns_roce_ग_लिखो64_k(bt_cmd_val,
+		hns_roce_write64_k(bt_cmd_val,
 				   hr_dev->reg_base + ROCEE_BT_CMD_L_REG);
 		spin_unlock_irqrestore(lock, flags);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक calc_hem_config(काष्ठा hns_roce_dev *hr_dev,
-			   काष्ठा hns_roce_hem_table *table, अचिन्हित दीर्घ obj,
-			   काष्ठा hns_roce_hem_mhop *mhop,
-			   काष्ठा hns_roce_hem_index *index)
-अणु
-	काष्ठा ib_device *ibdev = &hr_dev->ib_dev;
-	अचिन्हित दीर्घ mhop_obj = obj;
+static int calc_hem_config(struct hns_roce_dev *hr_dev,
+			   struct hns_roce_hem_table *table, unsigned long obj,
+			   struct hns_roce_hem_mhop *mhop,
+			   struct hns_roce_hem_index *index)
+{
+	struct ib_device *ibdev = &hr_dev->ib_dev;
+	unsigned long mhop_obj = obj;
 	u32 l0_idx, l1_idx, l2_idx;
 	u32 chunk_ba_num;
 	u32 bt_num;
-	पूर्णांक ret;
+	int ret;
 
 	ret = hns_roce_calc_hem_mhop(hr_dev, table, &mhop_obj, mhop);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	l0_idx = mhop->l0_idx;
 	l1_idx = mhop->l1_idx;
 	l2_idx = mhop->l2_idx;
 	chunk_ba_num = mhop->bt_chunk_size / BA_BYTE_LEN;
 	bt_num = hns_roce_get_bt_num(table->type, mhop->hop_num);
-	चयन (bt_num) अणु
-	हाल 3:
+	switch (bt_num) {
+	case 3:
 		index->l1 = l0_idx * chunk_ba_num + l1_idx;
 		index->l0 = l0_idx;
 		index->buf = l0_idx * chunk_ba_num * chunk_ba_num +
 			     l1_idx * chunk_ba_num + l2_idx;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		index->l0 = l0_idx;
 		index->buf = l0_idx * chunk_ba_num + l1_idx;
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		index->buf = l0_idx;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ibdev_err(ibdev, "table %u not support mhop.hop_num = %u!\n",
 			  table->type, mhop->hop_num);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (unlikely(index->buf >= table->num_hem)) अणु
+	if (unlikely(index->buf >= table->num_hem)) {
 		ibdev_err(ibdev, "table %u exceed hem limt idx %llu, max %lu!\n",
 			  table->type, index->buf, table->num_hem);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम मुक्त_mhop_hem(काष्ठा hns_roce_dev *hr_dev,
-			  काष्ठा hns_roce_hem_table *table,
-			  काष्ठा hns_roce_hem_mhop *mhop,
-			  काष्ठा hns_roce_hem_index *index)
-अणु
+static void free_mhop_hem(struct hns_roce_dev *hr_dev,
+			  struct hns_roce_hem_table *table,
+			  struct hns_roce_hem_mhop *mhop,
+			  struct hns_roce_hem_index *index)
+{
 	u32 bt_size = mhop->bt_chunk_size;
-	काष्ठा device *dev = hr_dev->dev;
+	struct device *dev = hr_dev->dev;
 
-	अगर (index->inited & HEM_INDEX_BUF) अणु
-		hns_roce_मुक्त_hem(hr_dev, table->hem[index->buf]);
-		table->hem[index->buf] = शून्य;
-	पूर्ण
+	if (index->inited & HEM_INDEX_BUF) {
+		hns_roce_free_hem(hr_dev, table->hem[index->buf]);
+		table->hem[index->buf] = NULL;
+	}
 
-	अगर (index->inited & HEM_INDEX_L1) अणु
-		dma_मुक्त_coherent(dev, bt_size, table->bt_l1[index->l1],
+	if (index->inited & HEM_INDEX_L1) {
+		dma_free_coherent(dev, bt_size, table->bt_l1[index->l1],
 				  table->bt_l1_dma_addr[index->l1]);
-		table->bt_l1[index->l1] = शून्य;
-	पूर्ण
+		table->bt_l1[index->l1] = NULL;
+	}
 
-	अगर (index->inited & HEM_INDEX_L0) अणु
-		dma_मुक्त_coherent(dev, bt_size, table->bt_l0[index->l0],
+	if (index->inited & HEM_INDEX_L0) {
+		dma_free_coherent(dev, bt_size, table->bt_l0[index->l0],
 				  table->bt_l0_dma_addr[index->l0]);
-		table->bt_l0[index->l0] = शून्य;
-	पूर्ण
-पूर्ण
+		table->bt_l0[index->l0] = NULL;
+	}
+}
 
-अटल पूर्णांक alloc_mhop_hem(काष्ठा hns_roce_dev *hr_dev,
-			  काष्ठा hns_roce_hem_table *table,
-			  काष्ठा hns_roce_hem_mhop *mhop,
-			  काष्ठा hns_roce_hem_index *index)
-अणु
+static int alloc_mhop_hem(struct hns_roce_dev *hr_dev,
+			  struct hns_roce_hem_table *table,
+			  struct hns_roce_hem_mhop *mhop,
+			  struct hns_roce_hem_index *index)
+{
 	u32 bt_size = mhop->bt_chunk_size;
-	काष्ठा device *dev = hr_dev->dev;
-	काष्ठा hns_roce_hem_iter iter;
+	struct device *dev = hr_dev->dev;
+	struct hns_roce_hem_iter iter;
 	gfp_t flag;
 	u64 bt_ba;
 	u32 size;
-	पूर्णांक ret;
+	int ret;
 
 	/* alloc L1 BA's chunk */
-	अगर ((check_whether_bt_num_3(table->type, mhop->hop_num) ||
+	if ((check_whether_bt_num_3(table->type, mhop->hop_num) ||
 	     check_whether_bt_num_2(table->type, mhop->hop_num)) &&
-	     !table->bt_l0[index->l0]) अणु
+	     !table->bt_l0[index->l0]) {
 		table->bt_l0[index->l0] = dma_alloc_coherent(dev, bt_size,
 					    &table->bt_l0_dma_addr[index->l0],
 					    GFP_KERNEL);
-		अगर (!table->bt_l0[index->l0]) अणु
+		if (!table->bt_l0[index->l0]) {
 			ret = -ENOMEM;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		index->inited |= HEM_INDEX_L0;
-	पूर्ण
+	}
 
 	/* alloc L2 BA's chunk */
-	अगर (check_whether_bt_num_3(table->type, mhop->hop_num) &&
-	    !table->bt_l1[index->l1])  अणु
+	if (check_whether_bt_num_3(table->type, mhop->hop_num) &&
+	    !table->bt_l1[index->l1])  {
 		table->bt_l1[index->l1] = dma_alloc_coherent(dev, bt_size,
 					    &table->bt_l1_dma_addr[index->l1],
 					    GFP_KERNEL);
-		अगर (!table->bt_l1[index->l1]) अणु
+		if (!table->bt_l1[index->l1]) {
 			ret = -ENOMEM;
-			जाओ err_alloc_hem;
-		पूर्ण
+			goto err_alloc_hem;
+		}
 		index->inited |= HEM_INDEX_L1;
 		*(table->bt_l0[index->l0] + mhop->l1_idx) =
 					       table->bt_l1_dma_addr[index->l1];
-	पूर्ण
+	}
 
 	/*
-	 * alloc buffer space chunk क्रम QPC/MTPT/CQC/SRQC/SCCC.
-	 * alloc bt space chunk क्रम MTT/CQE.
+	 * alloc buffer space chunk for QPC/MTPT/CQC/SRQC/SCCC.
+	 * alloc bt space chunk for MTT/CQE.
 	 */
 	size = table->type < HEM_TYPE_MTT ? mhop->buf_chunk_size : bt_size;
 	flag = (table->lowmem ? GFP_KERNEL : GFP_HIGHUSER) | __GFP_NOWARN;
 	table->hem[index->buf] = hns_roce_alloc_hem(hr_dev, size >> PAGE_SHIFT,
 						    size, flag);
-	अगर (!table->hem[index->buf]) अणु
+	if (!table->hem[index->buf]) {
 		ret = -ENOMEM;
-		जाओ err_alloc_hem;
-	पूर्ण
+		goto err_alloc_hem;
+	}
 
 	index->inited |= HEM_INDEX_BUF;
 	hns_roce_hem_first(table->hem[index->buf], &iter);
 	bt_ba = hns_roce_hem_addr(&iter);
-	अगर (table->type < HEM_TYPE_MTT) अणु
-		अगर (mhop->hop_num == 2)
+	if (table->type < HEM_TYPE_MTT) {
+		if (mhop->hop_num == 2)
 			*(table->bt_l1[index->l1] + mhop->l2_idx) = bt_ba;
-		अन्यथा अगर (mhop->hop_num == 1)
+		else if (mhop->hop_num == 1)
 			*(table->bt_l0[index->l0] + mhop->l1_idx) = bt_ba;
-	पूर्ण अन्यथा अगर (mhop->hop_num == 2) अणु
+	} else if (mhop->hop_num == 2) {
 		*(table->bt_l0[index->l0] + mhop->l1_idx) = bt_ba;
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 err_alloc_hem:
-	मुक्त_mhop_hem(hr_dev, table, mhop, index);
+	free_mhop_hem(hr_dev, table, mhop, index);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक set_mhop_hem(काष्ठा hns_roce_dev *hr_dev,
-			काष्ठा hns_roce_hem_table *table, अचिन्हित दीर्घ obj,
-			काष्ठा hns_roce_hem_mhop *mhop,
-			काष्ठा hns_roce_hem_index *index)
-अणु
-	काष्ठा ib_device *ibdev = &hr_dev->ib_dev;
-	पूर्णांक step_idx;
-	पूर्णांक ret = 0;
+static int set_mhop_hem(struct hns_roce_dev *hr_dev,
+			struct hns_roce_hem_table *table, unsigned long obj,
+			struct hns_roce_hem_mhop *mhop,
+			struct hns_roce_hem_index *index)
+{
+	struct ib_device *ibdev = &hr_dev->ib_dev;
+	int step_idx;
+	int ret = 0;
 
-	अगर (index->inited & HEM_INDEX_L0) अणु
+	if (index->inited & HEM_INDEX_L0) {
 		ret = hr_dev->hw->set_hem(hr_dev, table, obj, 0);
-		अगर (ret) अणु
+		if (ret) {
 			ibdev_err(ibdev, "set HEM step 0 failed!\n");
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	अगर (index->inited & HEM_INDEX_L1) अणु
+	if (index->inited & HEM_INDEX_L1) {
 		ret = hr_dev->hw->set_hem(hr_dev, table, obj, 1);
-		अगर (ret) अणु
+		if (ret) {
 			ibdev_err(ibdev, "set HEM step 1 failed!\n");
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	अगर (index->inited & HEM_INDEX_BUF) अणु
-		अगर (mhop->hop_num == HNS_ROCE_HOP_NUM_0)
+	if (index->inited & HEM_INDEX_BUF) {
+		if (mhop->hop_num == HNS_ROCE_HOP_NUM_0)
 			step_idx = 0;
-		अन्यथा
+		else
 			step_idx = mhop->hop_num;
 		ret = hr_dev->hw->set_hem(hr_dev, table, obj, step_idx);
-		अगर (ret)
+		if (ret)
 			ibdev_err(ibdev, "set HEM step last failed!\n");
-	पूर्ण
+	}
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक hns_roce_table_mhop_get(काष्ठा hns_roce_dev *hr_dev,
-				   काष्ठा hns_roce_hem_table *table,
-				   अचिन्हित दीर्घ obj)
-अणु
-	काष्ठा ib_device *ibdev = &hr_dev->ib_dev;
-	काष्ठा hns_roce_hem_index index = अणुपूर्ण;
-	काष्ठा hns_roce_hem_mhop mhop = अणुपूर्ण;
-	पूर्णांक ret;
+static int hns_roce_table_mhop_get(struct hns_roce_dev *hr_dev,
+				   struct hns_roce_hem_table *table,
+				   unsigned long obj)
+{
+	struct ib_device *ibdev = &hr_dev->ib_dev;
+	struct hns_roce_hem_index index = {};
+	struct hns_roce_hem_mhop mhop = {};
+	int ret;
 
 	ret = calc_hem_config(hr_dev, table, obj, &mhop, &index);
-	अगर (ret) अणु
+	if (ret) {
 		ibdev_err(ibdev, "calc hem config failed!\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	mutex_lock(&table->mutex);
-	अगर (table->hem[index.buf]) अणु
+	if (table->hem[index.buf]) {
 		++table->hem[index.buf]->refcount;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = alloc_mhop_hem(hr_dev, table, &mhop, &index);
-	अगर (ret) अणु
+	if (ret) {
 		ibdev_err(ibdev, "alloc mhop hem failed!\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* set HEM base address to hardware */
-	अगर (table->type < HEM_TYPE_MTT) अणु
+	if (table->type < HEM_TYPE_MTT) {
 		ret = set_mhop_hem(hr_dev, table, obj, &mhop, &index);
-		अगर (ret) अणु
+		if (ret) {
 			ibdev_err(ibdev, "set HEM address to HW failed!\n");
-			जाओ err_alloc;
-		पूर्ण
-	पूर्ण
+			goto err_alloc;
+		}
+	}
 
 	++table->hem[index.buf]->refcount;
-	जाओ out;
+	goto out;
 
 err_alloc:
-	मुक्त_mhop_hem(hr_dev, table, &mhop, &index);
+	free_mhop_hem(hr_dev, table, &mhop, &index);
 out:
 	mutex_unlock(&table->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक hns_roce_table_get(काष्ठा hns_roce_dev *hr_dev,
-		       काष्ठा hns_roce_hem_table *table, अचिन्हित दीर्घ obj)
-अणु
-	काष्ठा device *dev = hr_dev->dev;
-	अचिन्हित दीर्घ i;
-	पूर्णांक ret = 0;
+int hns_roce_table_get(struct hns_roce_dev *hr_dev,
+		       struct hns_roce_hem_table *table, unsigned long obj)
+{
+	struct device *dev = hr_dev->dev;
+	unsigned long i;
+	int ret = 0;
 
-	अगर (hns_roce_check_whether_mhop(hr_dev, table->type))
-		वापस hns_roce_table_mhop_get(hr_dev, table, obj);
+	if (hns_roce_check_whether_mhop(hr_dev, table->type))
+		return hns_roce_table_mhop_get(hr_dev, table, obj);
 
 	i = (obj & (table->num_obj - 1)) / (table->table_chunk_size /
 	     table->obj_size);
 
 	mutex_lock(&table->mutex);
 
-	अगर (table->hem[i]) अणु
+	if (table->hem[i]) {
 		++table->hem[i]->refcount;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	table->hem[i] = hns_roce_alloc_hem(hr_dev,
 				       table->table_chunk_size >> PAGE_SHIFT,
 				       table->table_chunk_size,
 				       (table->lowmem ? GFP_KERNEL :
 					GFP_HIGHUSER) | __GFP_NOWARN);
-	अगर (!table->hem[i]) अणु
+	if (!table->hem[i]) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* Set HEM base address(128K/page, pa) to Hardware */
-	अगर (hns_roce_set_hem(hr_dev, table, obj)) अणु
-		hns_roce_मुक्त_hem(hr_dev, table->hem[i]);
-		table->hem[i] = शून्य;
+	if (hns_roce_set_hem(hr_dev, table, obj)) {
+		hns_roce_free_hem(hr_dev, table->hem[i]);
+		table->hem[i] = NULL;
 		ret = -ENODEV;
 		dev_err(dev, "set HEM base address to HW failed.\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	++table->hem[i]->refcount;
 out:
 	mutex_unlock(&table->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम clear_mhop_hem(काष्ठा hns_roce_dev *hr_dev,
-			   काष्ठा hns_roce_hem_table *table, अचिन्हित दीर्घ obj,
-			   काष्ठा hns_roce_hem_mhop *mhop,
-			   काष्ठा hns_roce_hem_index *index)
-अणु
-	काष्ठा ib_device *ibdev = &hr_dev->ib_dev;
+static void clear_mhop_hem(struct hns_roce_dev *hr_dev,
+			   struct hns_roce_hem_table *table, unsigned long obj,
+			   struct hns_roce_hem_mhop *mhop,
+			   struct hns_roce_hem_index *index)
+{
+	struct ib_device *ibdev = &hr_dev->ib_dev;
 	u32 hop_num = mhop->hop_num;
 	u32 chunk_ba_num;
-	पूर्णांक step_idx;
+	int step_idx;
 
 	index->inited = HEM_INDEX_BUF;
 	chunk_ba_num = mhop->bt_chunk_size / BA_BYTE_LEN;
-	अगर (check_whether_bt_num_2(table->type, hop_num)) अणु
-		अगर (hns_roce_check_hem_null(table->hem, index->buf,
+	if (check_whether_bt_num_2(table->type, hop_num)) {
+		if (hns_roce_check_hem_null(table->hem, index->buf,
 					    chunk_ba_num, table->num_hem))
 			index->inited |= HEM_INDEX_L0;
-	पूर्ण अन्यथा अगर (check_whether_bt_num_3(table->type, hop_num)) अणु
-		अगर (hns_roce_check_hem_null(table->hem, index->buf,
-					    chunk_ba_num, table->num_hem)) अणु
+	} else if (check_whether_bt_num_3(table->type, hop_num)) {
+		if (hns_roce_check_hem_null(table->hem, index->buf,
+					    chunk_ba_num, table->num_hem)) {
 			index->inited |= HEM_INDEX_L1;
-			अगर (hns_roce_check_bt_null(table->bt_l1, index->l1,
+			if (hns_roce_check_bt_null(table->bt_l1, index->l1,
 						   chunk_ba_num))
 				index->inited |= HEM_INDEX_L0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (table->type < HEM_TYPE_MTT) अणु
-		अगर (hop_num == HNS_ROCE_HOP_NUM_0)
+	if (table->type < HEM_TYPE_MTT) {
+		if (hop_num == HNS_ROCE_HOP_NUM_0)
 			step_idx = 0;
-		अन्यथा
+		else
 			step_idx = hop_num;
 
-		अगर (hr_dev->hw->clear_hem(hr_dev, table, obj, step_idx))
+		if (hr_dev->hw->clear_hem(hr_dev, table, obj, step_idx))
 			ibdev_warn(ibdev, "failed to clear hop%u HEM.\n", hop_num);
 
-		अगर (index->inited & HEM_INDEX_L1)
-			अगर (hr_dev->hw->clear_hem(hr_dev, table, obj, 1))
+		if (index->inited & HEM_INDEX_L1)
+			if (hr_dev->hw->clear_hem(hr_dev, table, obj, 1))
 				ibdev_warn(ibdev, "failed to clear HEM step 1.\n");
 
-		अगर (index->inited & HEM_INDEX_L0)
-			अगर (hr_dev->hw->clear_hem(hr_dev, table, obj, 0))
+		if (index->inited & HEM_INDEX_L0)
+			if (hr_dev->hw->clear_hem(hr_dev, table, obj, 0))
 				ibdev_warn(ibdev, "failed to clear HEM step 0.\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम hns_roce_table_mhop_put(काष्ठा hns_roce_dev *hr_dev,
-				    काष्ठा hns_roce_hem_table *table,
-				    अचिन्हित दीर्घ obj,
-				    पूर्णांक check_refcount)
-अणु
-	काष्ठा ib_device *ibdev = &hr_dev->ib_dev;
-	काष्ठा hns_roce_hem_index index = अणुपूर्ण;
-	काष्ठा hns_roce_hem_mhop mhop = अणुपूर्ण;
-	पूर्णांक ret;
+static void hns_roce_table_mhop_put(struct hns_roce_dev *hr_dev,
+				    struct hns_roce_hem_table *table,
+				    unsigned long obj,
+				    int check_refcount)
+{
+	struct ib_device *ibdev = &hr_dev->ib_dev;
+	struct hns_roce_hem_index index = {};
+	struct hns_roce_hem_mhop mhop = {};
+	int ret;
 
 	ret = calc_hem_config(hr_dev, table, obj, &mhop, &index);
-	अगर (ret) अणु
+	if (ret) {
 		ibdev_err(ibdev, "calc hem config failed!\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	mutex_lock(&table->mutex);
-	अगर (check_refcount && (--table->hem[index.buf]->refcount > 0)) अणु
+	if (check_refcount && (--table->hem[index.buf]->refcount > 0)) {
 		mutex_unlock(&table->mutex);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	clear_mhop_hem(hr_dev, table, obj, &mhop, &index);
-	मुक्त_mhop_hem(hr_dev, table, &mhop, &index);
+	free_mhop_hem(hr_dev, table, &mhop, &index);
 
 	mutex_unlock(&table->mutex);
-पूर्ण
+}
 
-व्योम hns_roce_table_put(काष्ठा hns_roce_dev *hr_dev,
-			काष्ठा hns_roce_hem_table *table, अचिन्हित दीर्घ obj)
-अणु
-	काष्ठा device *dev = hr_dev->dev;
-	अचिन्हित दीर्घ i;
+void hns_roce_table_put(struct hns_roce_dev *hr_dev,
+			struct hns_roce_hem_table *table, unsigned long obj)
+{
+	struct device *dev = hr_dev->dev;
+	unsigned long i;
 
-	अगर (hns_roce_check_whether_mhop(hr_dev, table->type)) अणु
+	if (hns_roce_check_whether_mhop(hr_dev, table->type)) {
 		hns_roce_table_mhop_put(hr_dev, table, obj, 1);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	i = (obj & (table->num_obj - 1)) /
 	    (table->table_chunk_size / table->obj_size);
 
 	mutex_lock(&table->mutex);
 
-	अगर (--table->hem[i]->refcount == 0) अणु
+	if (--table->hem[i]->refcount == 0) {
 		/* Clear HEM base address */
-		अगर (hr_dev->hw->clear_hem(hr_dev, table, obj, 0))
+		if (hr_dev->hw->clear_hem(hr_dev, table, obj, 0))
 			dev_warn(dev, "Clear HEM base address failed.\n");
 
-		hns_roce_मुक्त_hem(hr_dev, table->hem[i]);
-		table->hem[i] = शून्य;
-	पूर्ण
+		hns_roce_free_hem(hr_dev, table->hem[i]);
+		table->hem[i] = NULL;
+	}
 
 	mutex_unlock(&table->mutex);
-पूर्ण
+}
 
-व्योम *hns_roce_table_find(काष्ठा hns_roce_dev *hr_dev,
-			  काष्ठा hns_roce_hem_table *table,
-			  अचिन्हित दीर्घ obj, dma_addr_t *dma_handle)
-अणु
-	काष्ठा hns_roce_hem_chunk *chunk;
-	काष्ठा hns_roce_hem_mhop mhop;
-	काष्ठा hns_roce_hem *hem;
-	अचिन्हित दीर्घ mhop_obj = obj;
-	अचिन्हित दीर्घ obj_per_chunk;
-	अचिन्हित दीर्घ idx_offset;
-	पूर्णांक offset, dma_offset;
-	व्योम *addr = शून्य;
+void *hns_roce_table_find(struct hns_roce_dev *hr_dev,
+			  struct hns_roce_hem_table *table,
+			  unsigned long obj, dma_addr_t *dma_handle)
+{
+	struct hns_roce_hem_chunk *chunk;
+	struct hns_roce_hem_mhop mhop;
+	struct hns_roce_hem *hem;
+	unsigned long mhop_obj = obj;
+	unsigned long obj_per_chunk;
+	unsigned long idx_offset;
+	int offset, dma_offset;
+	void *addr = NULL;
 	u32 hem_idx = 0;
-	पूर्णांक length;
-	पूर्णांक i, j;
+	int length;
+	int i, j;
 
-	अगर (!table->lowmem)
-		वापस शून्य;
+	if (!table->lowmem)
+		return NULL;
 
 	mutex_lock(&table->mutex);
 
-	अगर (!hns_roce_check_whether_mhop(hr_dev, table->type)) अणु
+	if (!hns_roce_check_whether_mhop(hr_dev, table->type)) {
 		obj_per_chunk = table->table_chunk_size / table->obj_size;
 		hem = table->hem[(obj & (table->num_obj - 1)) / obj_per_chunk];
 		idx_offset = (obj & (table->num_obj - 1)) % obj_per_chunk;
 		dma_offset = offset = idx_offset * table->obj_size;
-	पूर्ण अन्यथा अणु
+	} else {
 		u32 seg_size = 64; /* 8 bytes per BA and 8 BA per segment */
 
-		अगर (hns_roce_calc_hem_mhop(hr_dev, table, &mhop_obj, &mhop))
-			जाओ out;
+		if (hns_roce_calc_hem_mhop(hr_dev, table, &mhop_obj, &mhop))
+			goto out;
 		/* mtt mhop */
 		i = mhop.l0_idx;
 		j = mhop.l1_idx;
-		अगर (mhop.hop_num == 2)
+		if (mhop.hop_num == 2)
 			hem_idx = i * (mhop.bt_chunk_size / BA_BYTE_LEN) + j;
-		अन्यथा अगर (mhop.hop_num == 1 ||
+		else if (mhop.hop_num == 1 ||
 			 mhop.hop_num == HNS_ROCE_HOP_NUM_0)
 			hem_idx = i;
 
 		hem = table->hem[hem_idx];
 		dma_offset = offset = (obj & (table->num_obj - 1)) * seg_size %
 				       mhop.bt_chunk_size;
-		अगर (mhop.hop_num == 2)
+		if (mhop.hop_num == 2)
 			dma_offset = offset = 0;
-	पूर्ण
+	}
 
-	अगर (!hem)
-		जाओ out;
+	if (!hem)
+		goto out;
 
-	list_क्रम_each_entry(chunk, &hem->chunk_list, list) अणु
-		क्रम (i = 0; i < chunk->npages; ++i) अणु
+	list_for_each_entry(chunk, &hem->chunk_list, list) {
+		for (i = 0; i < chunk->npages; ++i) {
 			length = sg_dma_len(&chunk->mem[i]);
-			अगर (dma_handle && dma_offset >= 0) अणु
-				अगर (length > (u32)dma_offset)
+			if (dma_handle && dma_offset >= 0) {
+				if (length > (u32)dma_offset)
 					*dma_handle = sg_dma_address(
 						&chunk->mem[i]) + dma_offset;
 				dma_offset -= length;
-			पूर्ण
+			}
 
-			अगर (length > (u32)offset) अणु
+			if (length > (u32)offset) {
 				addr = chunk->buf[i] + offset;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			offset -= length;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 out:
 	mutex_unlock(&table->mutex);
-	वापस addr;
-पूर्ण
+	return addr;
+}
 
-पूर्णांक hns_roce_init_hem_table(काष्ठा hns_roce_dev *hr_dev,
-			    काष्ठा hns_roce_hem_table *table, u32 type,
-			    अचिन्हित दीर्घ obj_size, अचिन्हित दीर्घ nobj,
-			    पूर्णांक use_lowmem)
-अणु
-	अचिन्हित दीर्घ obj_per_chunk;
-	अचिन्हित दीर्घ num_hem;
+int hns_roce_init_hem_table(struct hns_roce_dev *hr_dev,
+			    struct hns_roce_hem_table *table, u32 type,
+			    unsigned long obj_size, unsigned long nobj,
+			    int use_lowmem)
+{
+	unsigned long obj_per_chunk;
+	unsigned long num_hem;
 
-	अगर (!hns_roce_check_whether_mhop(hr_dev, type)) अणु
+	if (!hns_roce_check_whether_mhop(hr_dev, type)) {
 		table->table_chunk_size = hr_dev->caps.chunk_sz;
 		obj_per_chunk = table->table_chunk_size / obj_size;
 		num_hem = (nobj + obj_per_chunk - 1) / obj_per_chunk;
 
-		table->hem = kसुस्मृति(num_hem, माप(*table->hem), GFP_KERNEL);
-		अगर (!table->hem)
-			वापस -ENOMEM;
-	पूर्ण अन्यथा अणु
-		काष्ठा hns_roce_hem_mhop mhop = अणुपूर्ण;
-		अचिन्हित दीर्घ buf_chunk_size;
-		अचिन्हित दीर्घ bt_chunk_size;
-		अचिन्हित दीर्घ bt_chunk_num;
-		अचिन्हित दीर्घ num_bt_l0;
+		table->hem = kcalloc(num_hem, sizeof(*table->hem), GFP_KERNEL);
+		if (!table->hem)
+			return -ENOMEM;
+	} else {
+		struct hns_roce_hem_mhop mhop = {};
+		unsigned long buf_chunk_size;
+		unsigned long bt_chunk_size;
+		unsigned long bt_chunk_num;
+		unsigned long num_bt_l0;
 		u32 hop_num;
 
-		अगर (get_hem_table_config(hr_dev, &mhop, type))
-			वापस -EINVAL;
+		if (get_hem_table_config(hr_dev, &mhop, type))
+			return -EINVAL;
 
 		buf_chunk_size = mhop.buf_chunk_size;
 		bt_chunk_size = mhop.bt_chunk_size;
@@ -902,47 +901,47 @@ out:
 		obj_per_chunk = buf_chunk_size / obj_size;
 		num_hem = (nobj + obj_per_chunk - 1) / obj_per_chunk;
 		bt_chunk_num = bt_chunk_size / BA_BYTE_LEN;
-		अगर (type >= HEM_TYPE_MTT)
+		if (type >= HEM_TYPE_MTT)
 			num_bt_l0 = bt_chunk_num;
 
-		table->hem = kसुस्मृति(num_hem, माप(*table->hem),
+		table->hem = kcalloc(num_hem, sizeof(*table->hem),
 					 GFP_KERNEL);
-		अगर (!table->hem)
-			जाओ err_kसुस्मृति_hem_buf;
+		if (!table->hem)
+			goto err_kcalloc_hem_buf;
 
-		अगर (check_whether_bt_num_3(type, hop_num)) अणु
-			अचिन्हित दीर्घ num_bt_l1;
+		if (check_whether_bt_num_3(type, hop_num)) {
+			unsigned long num_bt_l1;
 
 			num_bt_l1 = (num_hem + bt_chunk_num - 1) /
 					     bt_chunk_num;
-			table->bt_l1 = kसुस्मृति(num_bt_l1,
-					       माप(*table->bt_l1),
+			table->bt_l1 = kcalloc(num_bt_l1,
+					       sizeof(*table->bt_l1),
 					       GFP_KERNEL);
-			अगर (!table->bt_l1)
-				जाओ err_kसुस्मृति_bt_l1;
+			if (!table->bt_l1)
+				goto err_kcalloc_bt_l1;
 
-			table->bt_l1_dma_addr = kसुस्मृति(num_bt_l1,
-						 माप(*table->bt_l1_dma_addr),
+			table->bt_l1_dma_addr = kcalloc(num_bt_l1,
+						 sizeof(*table->bt_l1_dma_addr),
 						 GFP_KERNEL);
 
-			अगर (!table->bt_l1_dma_addr)
-				जाओ err_kसुस्मृति_l1_dma;
-		पूर्ण
+			if (!table->bt_l1_dma_addr)
+				goto err_kcalloc_l1_dma;
+		}
 
-		अगर (check_whether_bt_num_2(type, hop_num) ||
-			check_whether_bt_num_3(type, hop_num)) अणु
-			table->bt_l0 = kसुस्मृति(num_bt_l0, माप(*table->bt_l0),
+		if (check_whether_bt_num_2(type, hop_num) ||
+			check_whether_bt_num_3(type, hop_num)) {
+			table->bt_l0 = kcalloc(num_bt_l0, sizeof(*table->bt_l0),
 					       GFP_KERNEL);
-			अगर (!table->bt_l0)
-				जाओ err_kसुस्मृति_bt_l0;
+			if (!table->bt_l0)
+				goto err_kcalloc_bt_l0;
 
-			table->bt_l0_dma_addr = kसुस्मृति(num_bt_l0,
-						 माप(*table->bt_l0_dma_addr),
+			table->bt_l0_dma_addr = kcalloc(num_bt_l0,
+						 sizeof(*table->bt_l0_dma_addr),
 						 GFP_KERNEL);
-			अगर (!table->bt_l0_dma_addr)
-				जाओ err_kसुस्मृति_l0_dma;
-		पूर्ण
-	पूर्ण
+			if (!table->bt_l0_dma_addr)
+				goto err_kcalloc_l0_dma;
+		}
+	}
 
 	table->type = type;
 	table->num_hem = num_hem;
@@ -951,138 +950,138 @@ out:
 	table->lowmem = use_lowmem;
 	mutex_init(&table->mutex);
 
-	वापस 0;
+	return 0;
 
-err_kसुस्मृति_l0_dma:
-	kमुक्त(table->bt_l0);
-	table->bt_l0 = शून्य;
+err_kcalloc_l0_dma:
+	kfree(table->bt_l0);
+	table->bt_l0 = NULL;
 
-err_kसुस्मृति_bt_l0:
-	kमुक्त(table->bt_l1_dma_addr);
-	table->bt_l1_dma_addr = शून्य;
+err_kcalloc_bt_l0:
+	kfree(table->bt_l1_dma_addr);
+	table->bt_l1_dma_addr = NULL;
 
-err_kसुस्मृति_l1_dma:
-	kमुक्त(table->bt_l1);
-	table->bt_l1 = शून्य;
+err_kcalloc_l1_dma:
+	kfree(table->bt_l1);
+	table->bt_l1 = NULL;
 
-err_kसुस्मृति_bt_l1:
-	kमुक्त(table->hem);
-	table->hem = शून्य;
+err_kcalloc_bt_l1:
+	kfree(table->hem);
+	table->hem = NULL;
 
-err_kसुस्मृति_hem_buf:
-	वापस -ENOMEM;
-पूर्ण
+err_kcalloc_hem_buf:
+	return -ENOMEM;
+}
 
-अटल व्योम hns_roce_cleanup_mhop_hem_table(काष्ठा hns_roce_dev *hr_dev,
-					    काष्ठा hns_roce_hem_table *table)
-अणु
-	काष्ठा hns_roce_hem_mhop mhop;
+static void hns_roce_cleanup_mhop_hem_table(struct hns_roce_dev *hr_dev,
+					    struct hns_roce_hem_table *table)
+{
+	struct hns_roce_hem_mhop mhop;
 	u32 buf_chunk_size;
 	u64 obj;
-	पूर्णांक i;
+	int i;
 
-	अगर (hns_roce_calc_hem_mhop(hr_dev, table, शून्य, &mhop))
-		वापस;
+	if (hns_roce_calc_hem_mhop(hr_dev, table, NULL, &mhop))
+		return;
 	buf_chunk_size = table->type < HEM_TYPE_MTT ? mhop.buf_chunk_size :
 					mhop.bt_chunk_size;
 
-	क्रम (i = 0; i < table->num_hem; ++i) अणु
+	for (i = 0; i < table->num_hem; ++i) {
 		obj = i * buf_chunk_size / table->obj_size;
-		अगर (table->hem[i])
+		if (table->hem[i])
 			hns_roce_table_mhop_put(hr_dev, table, obj, 0);
-	पूर्ण
+	}
 
-	kमुक्त(table->hem);
-	table->hem = शून्य;
-	kमुक्त(table->bt_l1);
-	table->bt_l1 = शून्य;
-	kमुक्त(table->bt_l1_dma_addr);
-	table->bt_l1_dma_addr = शून्य;
-	kमुक्त(table->bt_l0);
-	table->bt_l0 = शून्य;
-	kमुक्त(table->bt_l0_dma_addr);
-	table->bt_l0_dma_addr = शून्य;
-पूर्ण
+	kfree(table->hem);
+	table->hem = NULL;
+	kfree(table->bt_l1);
+	table->bt_l1 = NULL;
+	kfree(table->bt_l1_dma_addr);
+	table->bt_l1_dma_addr = NULL;
+	kfree(table->bt_l0);
+	table->bt_l0 = NULL;
+	kfree(table->bt_l0_dma_addr);
+	table->bt_l0_dma_addr = NULL;
+}
 
-व्योम hns_roce_cleanup_hem_table(काष्ठा hns_roce_dev *hr_dev,
-				काष्ठा hns_roce_hem_table *table)
-अणु
-	काष्ठा device *dev = hr_dev->dev;
-	अचिन्हित दीर्घ i;
+void hns_roce_cleanup_hem_table(struct hns_roce_dev *hr_dev,
+				struct hns_roce_hem_table *table)
+{
+	struct device *dev = hr_dev->dev;
+	unsigned long i;
 
-	अगर (hns_roce_check_whether_mhop(hr_dev, table->type)) अणु
+	if (hns_roce_check_whether_mhop(hr_dev, table->type)) {
 		hns_roce_cleanup_mhop_hem_table(hr_dev, table);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	क्रम (i = 0; i < table->num_hem; ++i)
-		अगर (table->hem[i]) अणु
-			अगर (hr_dev->hw->clear_hem(hr_dev, table,
+	for (i = 0; i < table->num_hem; ++i)
+		if (table->hem[i]) {
+			if (hr_dev->hw->clear_hem(hr_dev, table,
 			    i * table->table_chunk_size / table->obj_size, 0))
 				dev_err(dev, "Clear HEM base address failed.\n");
 
-			hns_roce_मुक्त_hem(hr_dev, table->hem[i]);
-		पूर्ण
+			hns_roce_free_hem(hr_dev, table->hem[i]);
+		}
 
-	kमुक्त(table->hem);
-पूर्ण
+	kfree(table->hem);
+}
 
-व्योम hns_roce_cleanup_hem(काष्ठा hns_roce_dev *hr_dev)
-अणु
-	अगर (hr_dev->caps.flags & HNS_ROCE_CAP_FLAG_SRQ)
+void hns_roce_cleanup_hem(struct hns_roce_dev *hr_dev)
+{
+	if (hr_dev->caps.flags & HNS_ROCE_CAP_FLAG_SRQ)
 		hns_roce_cleanup_hem_table(hr_dev,
 					   &hr_dev->srq_table.table);
 	hns_roce_cleanup_hem_table(hr_dev, &hr_dev->cq_table.table);
-	अगर (hr_dev->caps.qpc_समयr_entry_sz)
+	if (hr_dev->caps.qpc_timer_entry_sz)
 		hns_roce_cleanup_hem_table(hr_dev,
-					   &hr_dev->qpc_समयr_table);
-	अगर (hr_dev->caps.cqc_समयr_entry_sz)
+					   &hr_dev->qpc_timer_table);
+	if (hr_dev->caps.cqc_timer_entry_sz)
 		hns_roce_cleanup_hem_table(hr_dev,
-					   &hr_dev->cqc_समयr_table);
-	अगर (hr_dev->caps.flags & HNS_ROCE_CAP_FLAG_QP_FLOW_CTRL)
+					   &hr_dev->cqc_timer_table);
+	if (hr_dev->caps.flags & HNS_ROCE_CAP_FLAG_QP_FLOW_CTRL)
 		hns_roce_cleanup_hem_table(hr_dev,
 					   &hr_dev->qp_table.sccc_table);
-	अगर (hr_dev->caps.trrl_entry_sz)
+	if (hr_dev->caps.trrl_entry_sz)
 		hns_roce_cleanup_hem_table(hr_dev,
 					   &hr_dev->qp_table.trrl_table);
 
-	अगर (hr_dev->caps.gmv_entry_sz)
+	if (hr_dev->caps.gmv_entry_sz)
 		hns_roce_cleanup_hem_table(hr_dev, &hr_dev->gmv_table);
 
 	hns_roce_cleanup_hem_table(hr_dev, &hr_dev->qp_table.irrl_table);
 	hns_roce_cleanup_hem_table(hr_dev, &hr_dev->qp_table.qp_table);
 	hns_roce_cleanup_hem_table(hr_dev, &hr_dev->mr_table.mtpt_table);
-पूर्ण
+}
 
-काष्ठा roce_hem_item अणु
-	काष्ठा list_head list; /* link all hems in the same bt level */
-	काष्ठा list_head sibling; /* link all hems in last hop क्रम mtt */
-	व्योम *addr;
+struct roce_hem_item {
+	struct list_head list; /* link all hems in the same bt level */
+	struct list_head sibling; /* link all hems in last hop for mtt */
+	void *addr;
 	dma_addr_t dma_addr;
-	माप_प्रकार count; /* max ba numbers */
-	पूर्णांक start; /* start buf offset in this hem */
-	पूर्णांक end; /* end buf offset in this hem */
-पूर्ण;
+	size_t count; /* max ba numbers */
+	int start; /* start buf offset in this hem */
+	int end; /* end buf offset in this hem */
+};
 
-अटल काष्ठा roce_hem_item *hem_list_alloc_item(काष्ठा hns_roce_dev *hr_dev,
-						   पूर्णांक start, पूर्णांक end,
-						   पूर्णांक count, bool exist_bt,
-						   पूर्णांक bt_level)
-अणु
-	काष्ठा roce_hem_item *hem;
+static struct roce_hem_item *hem_list_alloc_item(struct hns_roce_dev *hr_dev,
+						   int start, int end,
+						   int count, bool exist_bt,
+						   int bt_level)
+{
+	struct roce_hem_item *hem;
 
-	hem = kzalloc(माप(*hem), GFP_KERNEL);
-	अगर (!hem)
-		वापस शून्य;
+	hem = kzalloc(sizeof(*hem), GFP_KERNEL);
+	if (!hem)
+		return NULL;
 
-	अगर (exist_bt) अणु
+	if (exist_bt) {
 		hem->addr = dma_alloc_coherent(hr_dev->dev, count * BA_BYTE_LEN,
 					       &hem->dma_addr, GFP_KERNEL);
-		अगर (!hem->addr) अणु
-			kमुक्त(hem);
-			वापस शून्य;
-		पूर्ण
-	पूर्ण
+		if (!hem->addr) {
+			kfree(hem);
+			return NULL;
+		}
+	}
 
 	hem->count = count;
 	hem->start = start;
@@ -1090,68 +1089,68 @@ err_kसुस्मृति_hem_buf:
 	INIT_LIST_HEAD(&hem->list);
 	INIT_LIST_HEAD(&hem->sibling);
 
-	वापस hem;
-पूर्ण
+	return hem;
+}
 
-अटल व्योम hem_list_मुक्त_item(काष्ठा hns_roce_dev *hr_dev,
-			       काष्ठा roce_hem_item *hem, bool exist_bt)
-अणु
-	अगर (exist_bt)
-		dma_मुक्त_coherent(hr_dev->dev, hem->count * BA_BYTE_LEN,
+static void hem_list_free_item(struct hns_roce_dev *hr_dev,
+			       struct roce_hem_item *hem, bool exist_bt)
+{
+	if (exist_bt)
+		dma_free_coherent(hr_dev->dev, hem->count * BA_BYTE_LEN,
 				  hem->addr, hem->dma_addr);
-	kमुक्त(hem);
-पूर्ण
+	kfree(hem);
+}
 
-अटल व्योम hem_list_मुक्त_all(काष्ठा hns_roce_dev *hr_dev,
-			      काष्ठा list_head *head, bool exist_bt)
-अणु
-	काष्ठा roce_hem_item *hem, *temp_hem;
+static void hem_list_free_all(struct hns_roce_dev *hr_dev,
+			      struct list_head *head, bool exist_bt)
+{
+	struct roce_hem_item *hem, *temp_hem;
 
-	list_क्रम_each_entry_safe(hem, temp_hem, head, list) अणु
+	list_for_each_entry_safe(hem, temp_hem, head, list) {
 		list_del(&hem->list);
-		hem_list_मुक्त_item(hr_dev, hem, exist_bt);
-	पूर्ण
-पूर्ण
+		hem_list_free_item(hr_dev, hem, exist_bt);
+	}
+}
 
-अटल व्योम hem_list_link_bt(काष्ठा hns_roce_dev *hr_dev, व्योम *base_addr,
+static void hem_list_link_bt(struct hns_roce_dev *hr_dev, void *base_addr,
 			     u64 table_addr)
-अणु
+{
 	*(u64 *)(base_addr) = table_addr;
-पूर्ण
+}
 
 /* assign L0 table address to hem from root bt */
-अटल व्योम hem_list_assign_bt(काष्ठा hns_roce_dev *hr_dev,
-			       काष्ठा roce_hem_item *hem, व्योम *cpu_addr,
+static void hem_list_assign_bt(struct hns_roce_dev *hr_dev,
+			       struct roce_hem_item *hem, void *cpu_addr,
 			       u64 phy_addr)
-अणु
+{
 	hem->addr = cpu_addr;
 	hem->dma_addr = (dma_addr_t)phy_addr;
-पूर्ण
+}
 
-अटल अंतरभूत bool hem_list_page_is_in_range(काष्ठा roce_hem_item *hem,
-					     पूर्णांक offset)
-अणु
-	वापस (hem->start <= offset && offset <= hem->end);
-पूर्ण
+static inline bool hem_list_page_is_in_range(struct roce_hem_item *hem,
+					     int offset)
+{
+	return (hem->start <= offset && offset <= hem->end);
+}
 
-अटल काष्ठा roce_hem_item *hem_list_search_item(काष्ठा list_head *ba_list,
-						    पूर्णांक page_offset)
-अणु
-	काष्ठा roce_hem_item *hem, *temp_hem;
-	काष्ठा roce_hem_item *found = शून्य;
+static struct roce_hem_item *hem_list_search_item(struct list_head *ba_list,
+						    int page_offset)
+{
+	struct roce_hem_item *hem, *temp_hem;
+	struct roce_hem_item *found = NULL;
 
-	list_क्रम_each_entry_safe(hem, temp_hem, ba_list, list) अणु
-		अगर (hem_list_page_is_in_range(hem, page_offset)) अणु
+	list_for_each_entry_safe(hem, temp_hem, ba_list, list) {
+		if (hem_list_page_is_in_range(hem, page_offset)) {
 			found = hem;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस found;
-पूर्ण
+	return found;
+}
 
-अटल bool hem_list_is_bottom_bt(पूर्णांक hopnum, पूर्णांक bt_level)
-अणु
+static bool hem_list_is_bottom_bt(int hopnum, int bt_level)
+{
 	/*
 	 * hopnum    base address table levels
 	 * 0		L0(buf)
@@ -1159,8 +1158,8 @@ err_kसुस्मृति_hem_buf:
 	 * 2		L0 -> L1 -> buf
 	 * 3		L0 -> L1 -> L2 -> buf
 	 */
-	वापस bt_level >= (hopnum ? hopnum - 1 : hopnum);
-पूर्ण
+	return bt_level >= (hopnum ? hopnum - 1 : hopnum);
+}
 
 /**
  * calc base address entries num
@@ -1168,14 +1167,14 @@ err_kसुस्मृति_hem_buf:
  * @bt_level: base address table level
  * @unit: ba entries per bt page
  */
-अटल u32 hem_list_calc_ba_range(पूर्णांक hopnum, पूर्णांक bt_level, पूर्णांक unit)
-अणु
+static u32 hem_list_calc_ba_range(int hopnum, int bt_level, int unit)
+{
 	u32 step;
-	पूर्णांक max;
-	पूर्णांक i;
+	int max;
+	int i;
 
-	अगर (hopnum <= bt_level)
-		वापस 0;
+	if (hopnum <= bt_level)
+		return 0;
 	/*
 	 * hopnum  bt_level   range
 	 * 1	      0       unit
@@ -1189,11 +1188,11 @@ err_kसुस्मृति_hem_buf:
 	 */
 	step = 1;
 	max = hopnum - bt_level;
-	क्रम (i = 0; i < max; i++)
+	for (i = 0; i < max; i++)
 		step = step * unit;
 
-	वापस step;
-पूर्ण
+	return step;
+}
 
 /**
  * calc the root ba entries which could cover all regions
@@ -1201,321 +1200,321 @@ err_kसुस्मृति_hem_buf:
  * @region_cnt: array size of @regions
  * @unit: ba entries per bt page
  */
-पूर्णांक hns_roce_hem_list_calc_root_ba(स्थिर काष्ठा hns_roce_buf_region *regions,
-				   पूर्णांक region_cnt, पूर्णांक unit)
-अणु
-	काष्ठा hns_roce_buf_region *r;
-	पूर्णांक total = 0;
-	पूर्णांक step;
-	पूर्णांक i;
+int hns_roce_hem_list_calc_root_ba(const struct hns_roce_buf_region *regions,
+				   int region_cnt, int unit)
+{
+	struct hns_roce_buf_region *r;
+	int total = 0;
+	int step;
+	int i;
 
-	क्रम (i = 0; i < region_cnt; i++) अणु
-		r = (काष्ठा hns_roce_buf_region *)&regions[i];
-		अगर (r->hopnum > 1) अणु
+	for (i = 0; i < region_cnt; i++) {
+		r = (struct hns_roce_buf_region *)&regions[i];
+		if (r->hopnum > 1) {
 			step = hem_list_calc_ba_range(r->hopnum, 1, unit);
-			अगर (step > 0)
+			if (step > 0)
 				total += (r->count + step - 1) / step;
-		पूर्ण अन्यथा अणु
+		} else {
 			total += r->count;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस total;
-पूर्ण
+	return total;
+}
 
-अटल पूर्णांक hem_list_alloc_mid_bt(काष्ठा hns_roce_dev *hr_dev,
-				 स्थिर काष्ठा hns_roce_buf_region *r, पूर्णांक unit,
-				 पूर्णांक offset, काष्ठा list_head *mid_bt,
-				 काष्ठा list_head *bपंचांग_bt)
-अणु
-	काष्ठा roce_hem_item *hem_ptrs[HNS_ROCE_MAX_BT_LEVEL] = अणु शून्य पूर्ण;
-	काष्ठा list_head temp_list[HNS_ROCE_MAX_BT_LEVEL];
-	काष्ठा roce_hem_item *cur, *pre;
-	स्थिर पूर्णांक hopnum = r->hopnum;
-	पूर्णांक start_aligned;
-	पूर्णांक distance;
-	पूर्णांक ret = 0;
-	पूर्णांक max_ofs;
-	पूर्णांक level;
+static int hem_list_alloc_mid_bt(struct hns_roce_dev *hr_dev,
+				 const struct hns_roce_buf_region *r, int unit,
+				 int offset, struct list_head *mid_bt,
+				 struct list_head *btm_bt)
+{
+	struct roce_hem_item *hem_ptrs[HNS_ROCE_MAX_BT_LEVEL] = { NULL };
+	struct list_head temp_list[HNS_ROCE_MAX_BT_LEVEL];
+	struct roce_hem_item *cur, *pre;
+	const int hopnum = r->hopnum;
+	int start_aligned;
+	int distance;
+	int ret = 0;
+	int max_ofs;
+	int level;
 	u32 step;
-	पूर्णांक end;
+	int end;
 
-	अगर (hopnum <= 1)
-		वापस 0;
+	if (hopnum <= 1)
+		return 0;
 
-	अगर (hopnum > HNS_ROCE_MAX_BT_LEVEL) अणु
+	if (hopnum > HNS_ROCE_MAX_BT_LEVEL) {
 		dev_err(hr_dev->dev, "invalid hopnum %d!\n", hopnum);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (offset < r->offset) अणु
+	if (offset < r->offset) {
 		dev_err(hr_dev->dev, "invalid offset %d, min %u!\n",
 			offset, r->offset);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	distance = offset - r->offset;
 	max_ofs = r->offset + r->count - 1;
-	क्रम (level = 0; level < hopnum; level++)
+	for (level = 0; level < hopnum; level++)
 		INIT_LIST_HEAD(&temp_list[level]);
 
 	/* config L1 bt to last bt and link them to corresponding parent */
-	क्रम (level = 1; level < hopnum; level++) अणु
+	for (level = 1; level < hopnum; level++) {
 		cur = hem_list_search_item(&mid_bt[level], offset);
-		अगर (cur) अणु
+		if (cur) {
 			hem_ptrs[level] = cur;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		step = hem_list_calc_ba_range(hopnum, level, unit);
-		अगर (step < 1) अणु
+		if (step < 1) {
 			ret = -EINVAL;
-			जाओ err_निकास;
-		पूर्ण
+			goto err_exit;
+		}
 
 		start_aligned = (distance / step) * step + r->offset;
-		end = min_t(पूर्णांक, start_aligned + step - 1, max_ofs);
+		end = min_t(int, start_aligned + step - 1, max_ofs);
 		cur = hem_list_alloc_item(hr_dev, start_aligned, end, unit,
 					  true, level);
-		अगर (!cur) अणु
+		if (!cur) {
 			ret = -ENOMEM;
-			जाओ err_निकास;
-		पूर्ण
+			goto err_exit;
+		}
 		hem_ptrs[level] = cur;
 		list_add(&cur->list, &temp_list[level]);
-		अगर (hem_list_is_bottom_bt(hopnum, level))
+		if (hem_list_is_bottom_bt(hopnum, level))
 			list_add(&cur->sibling, &temp_list[0]);
 
 		/* link bt to parent bt */
-		अगर (level > 1) अणु
+		if (level > 1) {
 			pre = hem_ptrs[level - 1];
 			step = (cur->start - pre->start) / step * BA_BYTE_LEN;
 			hem_list_link_bt(hr_dev, pre->addr + step,
 					 cur->dma_addr);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	list_splice(&temp_list[0], bपंचांग_bt);
-	क्रम (level = 1; level < hopnum; level++)
+	list_splice(&temp_list[0], btm_bt);
+	for (level = 1; level < hopnum; level++)
 		list_splice(&temp_list[level], &mid_bt[level]);
 
-	वापस 0;
+	return 0;
 
-err_निकास:
-	क्रम (level = 1; level < hopnum; level++)
-		hem_list_मुक्त_all(hr_dev, &temp_list[level], true);
+err_exit:
+	for (level = 1; level < hopnum; level++)
+		hem_list_free_all(hr_dev, &temp_list[level], true);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक hem_list_alloc_root_bt(काष्ठा hns_roce_dev *hr_dev,
-				  काष्ठा hns_roce_hem_list *hem_list, पूर्णांक unit,
-				  स्थिर काष्ठा hns_roce_buf_region *regions,
-				  पूर्णांक region_cnt)
-अणु
-	काष्ठा list_head temp_list[HNS_ROCE_MAX_BT_REGION];
-	काष्ठा roce_hem_item *hem, *temp_hem, *root_hem;
-	स्थिर काष्ठा hns_roce_buf_region *r;
-	काष्ठा list_head temp_root;
-	काष्ठा list_head temp_bपंचांग;
-	व्योम *cpu_base;
+static int hem_list_alloc_root_bt(struct hns_roce_dev *hr_dev,
+				  struct hns_roce_hem_list *hem_list, int unit,
+				  const struct hns_roce_buf_region *regions,
+				  int region_cnt)
+{
+	struct list_head temp_list[HNS_ROCE_MAX_BT_REGION];
+	struct roce_hem_item *hem, *temp_hem, *root_hem;
+	const struct hns_roce_buf_region *r;
+	struct list_head temp_root;
+	struct list_head temp_btm;
+	void *cpu_base;
 	u64 phy_base;
-	पूर्णांक ret = 0;
-	पूर्णांक ba_num;
-	पूर्णांक offset;
-	पूर्णांक total;
-	पूर्णांक step;
-	पूर्णांक i;
+	int ret = 0;
+	int ba_num;
+	int offset;
+	int total;
+	int step;
+	int i;
 
 	r = &regions[0];
 	root_hem = hem_list_search_item(&hem_list->root_bt, r->offset);
-	अगर (root_hem)
-		वापस 0;
+	if (root_hem)
+		return 0;
 
 	ba_num = hns_roce_hem_list_calc_root_ba(regions, region_cnt, unit);
-	अगर (ba_num < 1)
-		वापस -ENOMEM;
+	if (ba_num < 1)
+		return -ENOMEM;
 
-	अगर (ba_num > unit)
-		वापस -ENOBUFS;
+	if (ba_num > unit)
+		return -ENOBUFS;
 
-	ba_num = min_t(पूर्णांक, ba_num, unit);
+	ba_num = min_t(int, ba_num, unit);
 	INIT_LIST_HEAD(&temp_root);
 	offset = r->offset;
 	/* indicate to last region */
 	r = &regions[region_cnt - 1];
 	root_hem = hem_list_alloc_item(hr_dev, offset, r->offset + r->count - 1,
 				       ba_num, true, 0);
-	अगर (!root_hem)
-		वापस -ENOMEM;
+	if (!root_hem)
+		return -ENOMEM;
 	list_add(&root_hem->list, &temp_root);
 
 	hem_list->root_ba = root_hem->dma_addr;
 
-	INIT_LIST_HEAD(&temp_bपंचांग);
-	क्रम (i = 0; i < region_cnt; i++)
+	INIT_LIST_HEAD(&temp_btm);
+	for (i = 0; i < region_cnt; i++)
 		INIT_LIST_HEAD(&temp_list[i]);
 
 	total = 0;
-	क्रम (i = 0; i < region_cnt && total < ba_num; i++) अणु
+	for (i = 0; i < region_cnt && total < ba_num; i++) {
 		r = &regions[i];
-		अगर (!r->count)
-			जारी;
+		if (!r->count)
+			continue;
 
 		/* all regions's mid[x][0] shared the root_bt's trunk */
 		cpu_base = root_hem->addr + total * BA_BYTE_LEN;
 		phy_base = root_hem->dma_addr + total * BA_BYTE_LEN;
 
-		/* अगर hopnum is 0 or 1, cut a new fake hem from the root bt
+		/* if hopnum is 0 or 1, cut a new fake hem from the root bt
 		 * which's address share to all regions.
 		 */
-		अगर (hem_list_is_bottom_bt(r->hopnum, 0)) अणु
+		if (hem_list_is_bottom_bt(r->hopnum, 0)) {
 			hem = hem_list_alloc_item(hr_dev, r->offset,
 						  r->offset + r->count - 1,
 						  r->count, false, 0);
-			अगर (!hem) अणु
+			if (!hem) {
 				ret = -ENOMEM;
-				जाओ err_निकास;
-			पूर्ण
+				goto err_exit;
+			}
 			hem_list_assign_bt(hr_dev, hem, cpu_base, phy_base);
 			list_add(&hem->list, &temp_list[i]);
-			list_add(&hem->sibling, &temp_bपंचांग);
+			list_add(&hem->sibling, &temp_btm);
 			total += r->count;
-		पूर्ण अन्यथा अणु
+		} else {
 			step = hem_list_calc_ba_range(r->hopnum, 1, unit);
-			अगर (step < 1) अणु
+			if (step < 1) {
 				ret = -EINVAL;
-				जाओ err_निकास;
-			पूर्ण
-			/* अगर exist mid bt, link L1 to L0 */
-			list_क्रम_each_entry_safe(hem, temp_hem,
-					  &hem_list->mid_bt[i][1], list) अणु
+				goto err_exit;
+			}
+			/* if exist mid bt, link L1 to L0 */
+			list_for_each_entry_safe(hem, temp_hem,
+					  &hem_list->mid_bt[i][1], list) {
 				offset = (hem->start - r->offset) / step *
 					  BA_BYTE_LEN;
 				hem_list_link_bt(hr_dev, cpu_base + offset,
 						 hem->dma_addr);
 				total++;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	list_splice(&temp_bपंचांग, &hem_list->bपंचांग_bt);
+	list_splice(&temp_btm, &hem_list->btm_bt);
 	list_splice(&temp_root, &hem_list->root_bt);
-	क्रम (i = 0; i < region_cnt; i++)
+	for (i = 0; i < region_cnt; i++)
 		list_splice(&temp_list[i], &hem_list->mid_bt[i][0]);
 
-	वापस 0;
+	return 0;
 
-err_निकास:
-	क्रम (i = 0; i < region_cnt; i++)
-		hem_list_मुक्त_all(hr_dev, &temp_list[i], false);
+err_exit:
+	for (i = 0; i < region_cnt; i++)
+		hem_list_free_all(hr_dev, &temp_list[i], false);
 
-	hem_list_मुक्त_all(hr_dev, &temp_root, true);
+	hem_list_free_all(hr_dev, &temp_root, true);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* स्थिरruct the base address table and link them by address hop config */
-पूर्णांक hns_roce_hem_list_request(काष्ठा hns_roce_dev *hr_dev,
-			      काष्ठा hns_roce_hem_list *hem_list,
-			      स्थिर काष्ठा hns_roce_buf_region *regions,
-			      पूर्णांक region_cnt, अचिन्हित पूर्णांक bt_pg_shअगरt)
-अणु
-	स्थिर काष्ठा hns_roce_buf_region *r;
-	पूर्णांक ofs, end;
-	पूर्णांक unit;
-	पूर्णांक ret;
-	पूर्णांक i;
+/* construct the base address table and link them by address hop config */
+int hns_roce_hem_list_request(struct hns_roce_dev *hr_dev,
+			      struct hns_roce_hem_list *hem_list,
+			      const struct hns_roce_buf_region *regions,
+			      int region_cnt, unsigned int bt_pg_shift)
+{
+	const struct hns_roce_buf_region *r;
+	int ofs, end;
+	int unit;
+	int ret;
+	int i;
 
-	अगर (region_cnt > HNS_ROCE_MAX_BT_REGION) अणु
+	if (region_cnt > HNS_ROCE_MAX_BT_REGION) {
 		dev_err(hr_dev->dev, "invalid region region_cnt %d!\n",
 			region_cnt);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	unit = (1 << bt_pg_shअगरt) / BA_BYTE_LEN;
-	क्रम (i = 0; i < region_cnt; i++) अणु
+	unit = (1 << bt_pg_shift) / BA_BYTE_LEN;
+	for (i = 0; i < region_cnt; i++) {
 		r = &regions[i];
-		अगर (!r->count)
-			जारी;
+		if (!r->count)
+			continue;
 
 		end = r->offset + r->count;
-		क्रम (ofs = r->offset; ofs < end; ofs += unit) अणु
+		for (ofs = r->offset; ofs < end; ofs += unit) {
 			ret = hem_list_alloc_mid_bt(hr_dev, r, unit, ofs,
 						    hem_list->mid_bt[i],
-						    &hem_list->bपंचांग_bt);
-			अगर (ret) अणु
+						    &hem_list->btm_bt);
+			if (ret) {
 				dev_err(hr_dev->dev,
 					"alloc hem trunk fail ret=%d!\n", ret);
-				जाओ err_alloc;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto err_alloc;
+			}
+		}
+	}
 
 	ret = hem_list_alloc_root_bt(hr_dev, hem_list, unit, regions,
 				     region_cnt);
-	अगर (ret)
+	if (ret)
 		dev_err(hr_dev->dev, "alloc hem root fail ret=%d!\n", ret);
-	अन्यथा
-		वापस 0;
+	else
+		return 0;
 
 err_alloc:
 	hns_roce_hem_list_release(hr_dev, hem_list);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम hns_roce_hem_list_release(काष्ठा hns_roce_dev *hr_dev,
-			       काष्ठा hns_roce_hem_list *hem_list)
-अणु
-	पूर्णांक i, j;
+void hns_roce_hem_list_release(struct hns_roce_dev *hr_dev,
+			       struct hns_roce_hem_list *hem_list)
+{
+	int i, j;
 
-	क्रम (i = 0; i < HNS_ROCE_MAX_BT_REGION; i++)
-		क्रम (j = 0; j < HNS_ROCE_MAX_BT_LEVEL; j++)
-			hem_list_मुक्त_all(hr_dev, &hem_list->mid_bt[i][j],
+	for (i = 0; i < HNS_ROCE_MAX_BT_REGION; i++)
+		for (j = 0; j < HNS_ROCE_MAX_BT_LEVEL; j++)
+			hem_list_free_all(hr_dev, &hem_list->mid_bt[i][j],
 					  j != 0);
 
-	hem_list_मुक्त_all(hr_dev, &hem_list->root_bt, true);
-	INIT_LIST_HEAD(&hem_list->bपंचांग_bt);
+	hem_list_free_all(hr_dev, &hem_list->root_bt, true);
+	INIT_LIST_HEAD(&hem_list->btm_bt);
 	hem_list->root_ba = 0;
-पूर्ण
+}
 
-व्योम hns_roce_hem_list_init(काष्ठा hns_roce_hem_list *hem_list)
-अणु
-	पूर्णांक i, j;
+void hns_roce_hem_list_init(struct hns_roce_hem_list *hem_list)
+{
+	int i, j;
 
 	INIT_LIST_HEAD(&hem_list->root_bt);
-	INIT_LIST_HEAD(&hem_list->bपंचांग_bt);
-	क्रम (i = 0; i < HNS_ROCE_MAX_BT_REGION; i++)
-		क्रम (j = 0; j < HNS_ROCE_MAX_BT_LEVEL; j++)
+	INIT_LIST_HEAD(&hem_list->btm_bt);
+	for (i = 0; i < HNS_ROCE_MAX_BT_REGION; i++)
+		for (j = 0; j < HNS_ROCE_MAX_BT_LEVEL; j++)
 			INIT_LIST_HEAD(&hem_list->mid_bt[i][j]);
-पूर्ण
+}
 
-व्योम *hns_roce_hem_list_find_mtt(काष्ठा hns_roce_dev *hr_dev,
-				 काष्ठा hns_roce_hem_list *hem_list,
-				 पूर्णांक offset, पूर्णांक *mtt_cnt, u64 *phy_addr)
-अणु
-	काष्ठा list_head *head = &hem_list->bपंचांग_bt;
-	काष्ठा roce_hem_item *hem, *temp_hem;
-	व्योम *cpu_base = शून्य;
+void *hns_roce_hem_list_find_mtt(struct hns_roce_dev *hr_dev,
+				 struct hns_roce_hem_list *hem_list,
+				 int offset, int *mtt_cnt, u64 *phy_addr)
+{
+	struct list_head *head = &hem_list->btm_bt;
+	struct roce_hem_item *hem, *temp_hem;
+	void *cpu_base = NULL;
 	u64 phy_base = 0;
-	पूर्णांक nr = 0;
+	int nr = 0;
 
-	list_क्रम_each_entry_safe(hem, temp_hem, head, sibling) अणु
-		अगर (hem_list_page_is_in_range(hem, offset)) अणु
+	list_for_each_entry_safe(hem, temp_hem, head, sibling) {
+		if (hem_list_page_is_in_range(hem, offset)) {
 			nr = offset - hem->start;
 			cpu_base = hem->addr + nr * BA_BYTE_LEN;
 			phy_base = hem->dma_addr + nr * BA_BYTE_LEN;
 			nr = hem->end + 1 - offset;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (mtt_cnt)
+	if (mtt_cnt)
 		*mtt_cnt = nr;
 
-	अगर (phy_addr)
+	if (phy_addr)
 		*phy_addr = phy_base;
 
-	वापस cpu_base;
-पूर्ण
+	return cpu_base;
+}

@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- * Driver क्रम the Cirrus PD6729 PCI-PCMCIA bridge.
+ * Driver for the Cirrus PD6729 PCI-PCMCIA bridge.
  *
  * Based on the i82092.c driver.
  *
@@ -8,63 +7,63 @@
  * the GNU General Public License, incorporated herein by reference.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/init.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/device.h>
-#समावेश <linux/पन.स>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/pci.h>
+#include <linux/init.h>
+#include <linux/workqueue.h>
+#include <linux/interrupt.h>
+#include <linux/device.h>
+#include <linux/io.h>
 
-#समावेश <pcmcia/ss.h>
+#include <pcmcia/ss.h>
 
 
-#समावेश "pd6729.h"
-#समावेश "i82365.h"
-#समावेश "cirrus.h"
+#include "pd6729.h"
+#include "i82365.h"
+#include "cirrus.h"
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Driver for the Cirrus PD6729 PCI-PCMCIA bridge");
 MODULE_AUTHOR("Jun Komuro <komurojun-mbn@nifty.com>");
 
-#घोषणा MAX_SOCKETS 2
+#define MAX_SOCKETS 2
 
 /*
  * simple helper functions
- * External घड़ी समय, in nanoseconds.  120 ns = 8.33 MHz
+ * External clock time, in nanoseconds.  120 ns = 8.33 MHz
  */
-#घोषणा to_cycles(ns)	((ns)/120)
+#define to_cycles(ns)	((ns)/120)
 
-#अगर_अघोषित NO_IRQ
-#घोषणा NO_IRQ	((अचिन्हित पूर्णांक)(0))
-#पूर्ण_अगर
+#ifndef NO_IRQ
+#define NO_IRQ	((unsigned int)(0))
+#endif
 
 /*
  * PARAMETERS
  *  irq_mode=n
- *     Specअगरies the पूर्णांकerrupt delivery mode.  The शेष (1) is to use PCI
- *     पूर्णांकerrupts; a value of 0 selects ISA पूर्णांकerrupts. This must be set क्रम
- *     correct operation of PCI card पढ़ोers.
+ *     Specifies the interrupt delivery mode.  The default (1) is to use PCI
+ *     interrupts; a value of 0 selects ISA interrupts. This must be set for
+ *     correct operation of PCI card readers.
  */
 
-अटल पूर्णांक irq_mode = 1; /* 0 = ISA पूर्णांकerrupt, 1 = PCI पूर्णांकerrupt */
+static int irq_mode = 1; /* 0 = ISA interrupt, 1 = PCI interrupt */
 
-module_param(irq_mode, पूर्णांक, 0444);
+module_param(irq_mode, int, 0444);
 MODULE_PARM_DESC(irq_mode,
 		"interrupt delivery mode. 0 = ISA, 1 = PCI. default is 1");
 
-अटल DEFINE_SPINLOCK(port_lock);
+static DEFINE_SPINLOCK(port_lock);
 
-/* basic value पढ़ो/ग_लिखो functions */
+/* basic value read/write functions */
 
-अटल अचिन्हित अक्षर indirect_पढ़ो(काष्ठा pd6729_socket *socket,
-				   अचिन्हित लघु reg)
-अणु
-	अचिन्हित दीर्घ port;
-	अचिन्हित अक्षर val;
-	अचिन्हित दीर्घ flags;
+static unsigned char indirect_read(struct pd6729_socket *socket,
+				   unsigned short reg)
+{
+	unsigned long port;
+	unsigned char val;
+	unsigned long flags;
 
 	spin_lock_irqsave(&port_lock, flags);
 	reg += socket->number * 0x40;
@@ -73,34 +72,34 @@ MODULE_PARM_DESC(irq_mode,
 	val = inb(port + 1);
 	spin_unlock_irqrestore(&port_lock, flags);
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल अचिन्हित लघु indirect_पढ़ो16(काष्ठा pd6729_socket *socket,
-				      अचिन्हित लघु reg)
-अणु
-	अचिन्हित दीर्घ port;
-	अचिन्हित लघु पंचांगp;
-	अचिन्हित दीर्घ flags;
+static unsigned short indirect_read16(struct pd6729_socket *socket,
+				      unsigned short reg)
+{
+	unsigned long port;
+	unsigned short tmp;
+	unsigned long flags;
 
 	spin_lock_irqsave(&port_lock, flags);
 	reg  = reg + socket->number * 0x40;
 	port = socket->io_base;
 	outb(reg, port);
-	पंचांगp = inb(port + 1);
+	tmp = inb(port + 1);
 	reg++;
 	outb(reg, port);
-	पंचांगp = पंचांगp | (inb(port + 1) << 8);
+	tmp = tmp | (inb(port + 1) << 8);
 	spin_unlock_irqrestore(&port_lock, flags);
 
-	वापस पंचांगp;
-पूर्ण
+	return tmp;
+}
 
-अटल व्योम indirect_ग_लिखो(काष्ठा pd6729_socket *socket, अचिन्हित लघु reg,
-			   अचिन्हित अक्षर value)
-अणु
-	अचिन्हित दीर्घ port;
-	अचिन्हित दीर्घ flags;
+static void indirect_write(struct pd6729_socket *socket, unsigned short reg,
+			   unsigned char value)
+{
+	unsigned long port;
+	unsigned long flags;
 
 	spin_lock_irqsave(&port_lock, flags);
 	reg = reg + socket->number * 0x40;
@@ -108,14 +107,14 @@ MODULE_PARM_DESC(irq_mode,
 	outb(reg, port);
 	outb(value, port + 1);
 	spin_unlock_irqrestore(&port_lock, flags);
-पूर्ण
+}
 
-अटल व्योम indirect_setbit(काष्ठा pd6729_socket *socket, अचिन्हित लघु reg,
-			    अचिन्हित अक्षर mask)
-अणु
-	अचिन्हित दीर्घ port;
-	अचिन्हित अक्षर val;
-	अचिन्हित दीर्घ flags;
+static void indirect_setbit(struct pd6729_socket *socket, unsigned short reg,
+			    unsigned char mask)
+{
+	unsigned long port;
+	unsigned char val;
+	unsigned long flags;
 
 	spin_lock_irqsave(&port_lock, flags);
 	reg = reg + socket->number * 0x40;
@@ -126,14 +125,14 @@ MODULE_PARM_DESC(irq_mode,
 	outb(reg, port);
 	outb(val, port + 1);
 	spin_unlock_irqrestore(&port_lock, flags);
-पूर्ण
+}
 
-अटल व्योम indirect_resetbit(काष्ठा pd6729_socket *socket, अचिन्हित लघु reg,
-			      अचिन्हित अक्षर mask)
-अणु
-	अचिन्हित दीर्घ port;
-	अचिन्हित अक्षर val;
-	अचिन्हित दीर्घ flags;
+static void indirect_resetbit(struct pd6729_socket *socket, unsigned short reg,
+			      unsigned char mask)
+{
+	unsigned long port;
+	unsigned char val;
+	unsigned long flags;
 
 	spin_lock_irqsave(&port_lock, flags);
 	reg = reg + socket->number * 0x40;
@@ -144,14 +143,14 @@ MODULE_PARM_DESC(irq_mode,
 	outb(reg, port);
 	outb(val, port + 1);
 	spin_unlock_irqrestore(&port_lock, flags);
-पूर्ण
+}
 
-अटल व्योम indirect_ग_लिखो16(काष्ठा pd6729_socket *socket, अचिन्हित लघु reg,
-			     अचिन्हित लघु value)
-अणु
-	अचिन्हित दीर्घ port;
-	अचिन्हित अक्षर val;
-	अचिन्हित दीर्घ flags;
+static void indirect_write16(struct pd6729_socket *socket, unsigned short reg,
+			     unsigned short value)
+{
+	unsigned long port;
+	unsigned char val;
+	unsigned long flags;
 
 	spin_lock_irqsave(&port_lock, flags);
 	reg = reg + socket->number * 0x40;
@@ -167,519 +166,519 @@ MODULE_PARM_DESC(irq_mode,
 	val = value >> 8;
 	outb(val, port + 1);
 	spin_unlock_irqrestore(&port_lock, flags);
-पूर्ण
+}
 
 /* Interrupt handler functionality */
 
-अटल irqवापस_t pd6729_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev)
-अणु
-	काष्ठा pd6729_socket *socket = (काष्ठा pd6729_socket *)dev;
-	पूर्णांक i;
-	पूर्णांक loopcount = 0;
-	पूर्णांक handled = 0;
-	अचिन्हित पूर्णांक events, active = 0;
+static irqreturn_t pd6729_interrupt(int irq, void *dev)
+{
+	struct pd6729_socket *socket = (struct pd6729_socket *)dev;
+	int i;
+	int loopcount = 0;
+	int handled = 0;
+	unsigned int events, active = 0;
 
-	जबतक (1) अणु
+	while (1) {
 		loopcount++;
-		अगर (loopcount > 20) अणु
-			prपूर्णांकk(KERN_ERR "pd6729: infinite eventloop "
+		if (loopcount > 20) {
+			printk(KERN_ERR "pd6729: infinite eventloop "
 			       "in interrupt\n");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		active = 0;
 
-		क्रम (i = 0; i < MAX_SOCKETS; i++) अणु
-			अचिन्हित पूर्णांक csc;
+		for (i = 0; i < MAX_SOCKETS; i++) {
+			unsigned int csc;
 
-			/* card status change रेजिस्टर */
-			csc = indirect_पढ़ो(&socket[i], I365_CSC);
-			अगर (csc == 0)  /* no events on this socket */
-				जारी;
+			/* card status change register */
+			csc = indirect_read(&socket[i], I365_CSC);
+			if (csc == 0)  /* no events on this socket */
+				continue;
 
 			handled = 1;
 			events = 0;
 
-			अगर (csc & I365_CSC_DETECT) अणु
+			if (csc & I365_CSC_DETECT) {
 				events |= SS_DETECT;
 				dev_vdbg(&socket[i].socket.dev,
 					"Card detected in socket %i!\n", i);
-			पूर्ण
+			}
 
-			अगर (indirect_पढ़ो(&socket[i], I365_INTCTL)
-						& I365_PC_IOCARD) अणु
+			if (indirect_read(&socket[i], I365_INTCTL)
+						& I365_PC_IOCARD) {
 				/* For IO/CARDS, bit 0 means "read the card" */
 				events |= (csc & I365_CSC_STSCHG)
 						? SS_STSCHG : 0;
-			पूर्ण अन्यथा अणु
-				/* Check क्रम battery/पढ़ोy events */
+			} else {
+				/* Check for battery/ready events */
 				events |= (csc & I365_CSC_BVD1)
 						? SS_BATDEAD : 0;
 				events |= (csc & I365_CSC_BVD2)
 						? SS_BATWARN : 0;
 				events |= (csc & I365_CSC_READY)
 						? SS_READY : 0;
-			पूर्ण
+			}
 
-			अगर (events)
+			if (events)
 				pcmcia_parse_events(&socket[i].socket, events);
 
 			active |= events;
-		पूर्ण
+		}
 
-		अगर (active == 0) /* no more events to handle */
-			अवरोध;
-	पूर्ण
-	वापस IRQ_RETVAL(handled);
-पूर्ण
+		if (active == 0) /* no more events to handle */
+			break;
+	}
+	return IRQ_RETVAL(handled);
+}
 
 /* socket functions */
 
-अटल व्योम pd6729_पूर्णांकerrupt_wrapper(काष्ठा समयr_list *t)
-अणु
-	काष्ठा pd6729_socket *socket = from_समयr(socket, t, poll_समयr);
+static void pd6729_interrupt_wrapper(struct timer_list *t)
+{
+	struct pd6729_socket *socket = from_timer(socket, t, poll_timer);
 
-	pd6729_पूर्णांकerrupt(0, (व्योम *)socket);
-	mod_समयr(&socket->poll_समयr, jअगरfies + HZ);
-पूर्ण
+	pd6729_interrupt(0, (void *)socket);
+	mod_timer(&socket->poll_timer, jiffies + HZ);
+}
 
-अटल पूर्णांक pd6729_get_status(काष्ठा pcmcia_socket *sock, u_पूर्णांक *value)
-अणु
-	काष्ठा pd6729_socket *socket
-			= container_of(sock, काष्ठा pd6729_socket, socket);
-	अचिन्हित पूर्णांक status;
-	अचिन्हित पूर्णांक data;
-	काष्ठा pd6729_socket *t;
+static int pd6729_get_status(struct pcmcia_socket *sock, u_int *value)
+{
+	struct pd6729_socket *socket
+			= container_of(sock, struct pd6729_socket, socket);
+	unsigned int status;
+	unsigned int data;
+	struct pd6729_socket *t;
 
 	/* Interface Status Register */
-	status = indirect_पढ़ो(socket, I365_STATUS);
+	status = indirect_read(socket, I365_STATUS);
 	*value = 0;
 
-	अगर ((status & I365_CS_DETECT) == I365_CS_DETECT)
+	if ((status & I365_CS_DETECT) == I365_CS_DETECT)
 		*value |= SS_DETECT;
 
 	/*
-	 * IO cards have a dअगरferent meaning of bits 0,1
+	 * IO cards have a different meaning of bits 0,1
 	 * Also notice the inverse-logic on the bits
 	 */
-	अगर (indirect_पढ़ो(socket, I365_INTCTL) & I365_PC_IOCARD) अणु
+	if (indirect_read(socket, I365_INTCTL) & I365_PC_IOCARD) {
 		/* IO card */
-		अगर (!(status & I365_CS_STSCHG))
+		if (!(status & I365_CS_STSCHG))
 			*value |= SS_STSCHG;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* non I/O card */
-		अगर (!(status & I365_CS_BVD1))
+		if (!(status & I365_CS_BVD1))
 			*value |= SS_BATDEAD;
-		अगर (!(status & I365_CS_BVD2))
+		if (!(status & I365_CS_BVD2))
 			*value |= SS_BATWARN;
-	पूर्ण
+	}
 
-	अगर (status & I365_CS_WRPROT)
-		*value |= SS_WRPROT;	/* card is ग_लिखो रक्षित */
+	if (status & I365_CS_WRPROT)
+		*value |= SS_WRPROT;	/* card is write protected */
 
-	अगर (status & I365_CS_READY)
+	if (status & I365_CS_READY)
 		*value |= SS_READY;	/* card is not busy */
 
-	अगर (status & I365_CS_POWERON)
-		*value |= SS_POWERON;	/* घातer is applied to the card */
+	if (status & I365_CS_POWERON)
+		*value |= SS_POWERON;	/* power is applied to the card */
 
 	t = (socket->number) ? socket : socket + 1;
-	indirect_ग_लिखो(t, PD67_EXT_INDEX, PD67_EXTERN_DATA);
-	data = indirect_पढ़ो16(t, PD67_EXT_DATA);
+	indirect_write(t, PD67_EXT_INDEX, PD67_EXTERN_DATA);
+	data = indirect_read16(t, PD67_EXT_DATA);
 	*value |= (data & PD67_EXD_VS1(socket->number)) ? 0 : SS_3VCARD;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक pd6729_set_socket(काष्ठा pcmcia_socket *sock, socket_state_t *state)
-अणु
-	काष्ठा pd6729_socket *socket
-			= container_of(sock, काष्ठा pd6729_socket, socket);
-	अचिन्हित अक्षर reg, data;
+static int pd6729_set_socket(struct pcmcia_socket *sock, socket_state_t *state)
+{
+	struct pd6729_socket *socket
+			= container_of(sock, struct pd6729_socket, socket);
+	unsigned char reg, data;
 
 	/* First, set the global controller options */
-	indirect_ग_लिखो(socket, I365_GBLCTL, 0x00);
-	indirect_ग_लिखो(socket, I365_GENCTL, 0x00);
+	indirect_write(socket, I365_GBLCTL, 0x00);
+	indirect_write(socket, I365_GENCTL, 0x00);
 
-	/* Values क्रम the IGENC रेजिस्टर */
+	/* Values for the IGENC register */
 	socket->card_irq = state->io_irq;
 
 	reg = 0;
 	/* The reset bit has "inverse" logic */
-	अगर (!(state->flags & SS_RESET))
+	if (!(state->flags & SS_RESET))
 		reg |= I365_PC_RESET;
-	अगर (state->flags & SS_IOCARD)
+	if (state->flags & SS_IOCARD)
 		reg |= I365_PC_IOCARD;
 
 	/* IGENC, Interrupt and General Control Register */
-	indirect_ग_लिखो(socket, I365_INTCTL, reg);
+	indirect_write(socket, I365_INTCTL, reg);
 
-	/* Power रेजिस्टरs */
+	/* Power registers */
 
-	reg = I365_PWR_NORESET; /* शेष: disable resetdrv on resume */
+	reg = I365_PWR_NORESET; /* default: disable resetdrv on resume */
 
-	अगर (state->flags & SS_PWR_AUTO) अणु
+	if (state->flags & SS_PWR_AUTO) {
 		dev_dbg(&sock->dev, "Auto power\n");
-		reg |= I365_PWR_AUTO;	/* स्वतःmatic घातer mngmnt */
-	पूर्ण
-	अगर (state->flags & SS_OUTPUT_ENA) अणु
+		reg |= I365_PWR_AUTO;	/* automatic power mngmnt */
+	}
+	if (state->flags & SS_OUTPUT_ENA) {
 		dev_dbg(&sock->dev, "Power Enabled\n");
-		reg |= I365_PWR_OUT;	/* enable घातer */
-	पूर्ण
+		reg |= I365_PWR_OUT;	/* enable power */
+	}
 
-	चयन (state->Vcc) अणु
-	हाल 0:
-		अवरोध;
-	हाल 33:
+	switch (state->Vcc) {
+	case 0:
+		break;
+	case 33:
 		dev_dbg(&sock->dev,
 			"setting voltage to Vcc to 3.3V on socket %i\n",
 			socket->number);
 		reg |= I365_VCC_5V;
 		indirect_setbit(socket, PD67_MISC_CTL_1, PD67_MC1_VCC_3V);
-		अवरोध;
-	हाल 50:
+		break;
+	case 50:
 		dev_dbg(&sock->dev,
 			"setting voltage to Vcc to 5V on socket %i\n",
 			socket->number);
 		reg |= I365_VCC_5V;
 		indirect_resetbit(socket, PD67_MISC_CTL_1, PD67_MC1_VCC_3V);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_dbg(&sock->dev,
 			"pd6729_set_socket called with invalid VCC power "
 			"value: %i\n", state->Vcc);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	चयन (state->Vpp) अणु
-	हाल 0:
+	switch (state->Vpp) {
+	case 0:
 		dev_dbg(&sock->dev, "not setting Vpp on socket %i\n",
 			socket->number);
-		अवरोध;
-	हाल 33:
-	हाल 50:
+		break;
+	case 33:
+	case 50:
 		dev_dbg(&sock->dev, "setting Vpp to Vcc for socket %i\n",
 			socket->number);
 		reg |= I365_VPP1_5V;
-		अवरोध;
-	हाल 120:
+		break;
+	case 120:
 		dev_dbg(&sock->dev, "setting Vpp to 12.0\n");
 		reg |= I365_VPP1_12V;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_dbg(&sock->dev, "pd6729: pd6729_set_socket called with "
 			"invalid VPP power value: %i\n", state->Vpp);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* only ग_लिखो अगर changed */
-	अगर (reg != indirect_पढ़ो(socket, I365_POWER))
-		indirect_ग_लिखो(socket, I365_POWER, reg);
+	/* only write if changed */
+	if (reg != indirect_read(socket, I365_POWER))
+		indirect_write(socket, I365_POWER, reg);
 
-	अगर (irq_mode == 1) अणु
-		/* all पूर्णांकerrupts are to be करोne as PCI पूर्णांकerrupts */
+	if (irq_mode == 1) {
+		/* all interrupts are to be done as PCI interrupts */
 		data = PD67_EC1_INV_MGMT_IRQ | PD67_EC1_INV_CARD_IRQ;
-	पूर्ण अन्यथा
+	} else
 		data = 0;
 
-	indirect_ग_लिखो(socket, PD67_EXT_INDEX, PD67_EXT_CTL_1);
-	indirect_ग_लिखो(socket, PD67_EXT_DATA, data);
+	indirect_write(socket, PD67_EXT_INDEX, PD67_EXT_CTL_1);
+	indirect_write(socket, PD67_EXT_DATA, data);
 
-	/* Enable specअगरic पूर्णांकerrupt events */
+	/* Enable specific interrupt events */
 
 	reg = 0x00;
-	अगर (state->csc_mask & SS_DETECT)
+	if (state->csc_mask & SS_DETECT)
 		reg |= I365_CSC_DETECT;
 
-	अगर (state->flags & SS_IOCARD) अणु
-		अगर (state->csc_mask & SS_STSCHG)
+	if (state->flags & SS_IOCARD) {
+		if (state->csc_mask & SS_STSCHG)
 			reg |= I365_CSC_STSCHG;
-	पूर्ण अन्यथा अणु
-		अगर (state->csc_mask & SS_BATDEAD)
+	} else {
+		if (state->csc_mask & SS_BATDEAD)
 			reg |= I365_CSC_BVD1;
-		अगर (state->csc_mask & SS_BATWARN)
+		if (state->csc_mask & SS_BATWARN)
 			reg |= I365_CSC_BVD2;
-		अगर (state->csc_mask & SS_READY)
+		if (state->csc_mask & SS_READY)
 			reg |= I365_CSC_READY;
-	पूर्ण
-	अगर (irq_mode == 1)
+	}
+	if (irq_mode == 1)
 		reg |= 0x30;	/* management IRQ: PCI INTA# = "irq 3" */
-	indirect_ग_लिखो(socket, I365_CSCINT, reg);
+	indirect_write(socket, I365_CSCINT, reg);
 
-	reg = indirect_पढ़ो(socket, I365_INTCTL);
-	अगर (irq_mode == 1)
+	reg = indirect_read(socket, I365_INTCTL);
+	if (irq_mode == 1)
 		reg |= 0x03;	/* card IRQ: PCI INTA# = "irq 3" */
-	अन्यथा
+	else
 		reg |= socket->card_irq;
-	indirect_ग_लिखो(socket, I365_INTCTL, reg);
+	indirect_write(socket, I365_INTCTL, reg);
 
-	/* now clear the (probably bogus) pending stuff by करोing a dummy पढ़ो */
-	(व्योम)indirect_पढ़ो(socket, I365_CSC);
+	/* now clear the (probably bogus) pending stuff by doing a dummy read */
+	(void)indirect_read(socket, I365_CSC);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pd6729_set_io_map(काष्ठा pcmcia_socket *sock,
-			     काष्ठा pccard_io_map *io)
-अणु
-	काष्ठा pd6729_socket *socket
-			= container_of(sock, काष्ठा pd6729_socket, socket);
-	अचिन्हित अक्षर map, ioctl;
+static int pd6729_set_io_map(struct pcmcia_socket *sock,
+			     struct pccard_io_map *io)
+{
+	struct pd6729_socket *socket
+			= container_of(sock, struct pd6729_socket, socket);
+	unsigned char map, ioctl;
 
 	map = io->map;
 
 	/* Check error conditions */
-	अगर (map > 1) अणु
+	if (map > 1) {
 		dev_dbg(&sock->dev, "pd6729_set_io_map with invalid map\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Turn off the winकरोw beक्रमe changing anything */
-	अगर (indirect_पढ़ो(socket, I365_ADDRWIN) & I365_ENA_IO(map))
+	/* Turn off the window before changing anything */
+	if (indirect_read(socket, I365_ADDRWIN) & I365_ENA_IO(map))
 		indirect_resetbit(socket, I365_ADDRWIN, I365_ENA_IO(map));
 
 	/* dev_dbg(&sock->dev, "set_io_map: Setting range to %x - %x\n",
 	   io->start, io->stop);*/
 
-	/* ग_लिखो the new values */
-	indirect_ग_लिखो16(socket, I365_IO(map)+I365_W_START, io->start);
-	indirect_ग_लिखो16(socket, I365_IO(map)+I365_W_STOP, io->stop);
+	/* write the new values */
+	indirect_write16(socket, I365_IO(map)+I365_W_START, io->start);
+	indirect_write16(socket, I365_IO(map)+I365_W_STOP, io->stop);
 
-	ioctl = indirect_पढ़ो(socket, I365_IOCTL) & ~I365_IOCTL_MASK(map);
+	ioctl = indirect_read(socket, I365_IOCTL) & ~I365_IOCTL_MASK(map);
 
-	अगर (io->flags & MAP_0WS)
+	if (io->flags & MAP_0WS)
 		ioctl |= I365_IOCTL_0WS(map);
-	अगर (io->flags & MAP_16BIT)
+	if (io->flags & MAP_16BIT)
 		ioctl |= I365_IOCTL_16BIT(map);
-	अगर (io->flags & MAP_AUTOSZ)
+	if (io->flags & MAP_AUTOSZ)
 		ioctl |= I365_IOCTL_IOCS16(map);
 
-	indirect_ग_लिखो(socket, I365_IOCTL, ioctl);
+	indirect_write(socket, I365_IOCTL, ioctl);
 
-	/* Turn the winकरोw back on अगर needed */
-	अगर (io->flags & MAP_ACTIVE)
+	/* Turn the window back on if needed */
+	if (io->flags & MAP_ACTIVE)
 		indirect_setbit(socket, I365_ADDRWIN, I365_ENA_IO(map));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pd6729_set_mem_map(काष्ठा pcmcia_socket *sock,
-			      काष्ठा pccard_mem_map *mem)
-अणु
-	काष्ठा pd6729_socket *socket
-			 = container_of(sock, काष्ठा pd6729_socket, socket);
-	अचिन्हित लघु base, i;
-	अचिन्हित अक्षर map;
+static int pd6729_set_mem_map(struct pcmcia_socket *sock,
+			      struct pccard_mem_map *mem)
+{
+	struct pd6729_socket *socket
+			 = container_of(sock, struct pd6729_socket, socket);
+	unsigned short base, i;
+	unsigned char map;
 
 	map = mem->map;
-	अगर (map > 4) अणु
+	if (map > 4) {
 		dev_warn(&sock->dev, "invalid map requested\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर ((mem->res->start > mem->res->end) || (mem->speed > 1000)) अणु
+	if ((mem->res->start > mem->res->end) || (mem->speed > 1000)) {
 		dev_warn(&sock->dev, "invalid invalid address / speed\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Turn off the winकरोw beक्रमe changing anything */
-	अगर (indirect_पढ़ो(socket, I365_ADDRWIN) & I365_ENA_MEM(map))
+	/* Turn off the window before changing anything */
+	if (indirect_read(socket, I365_ADDRWIN) & I365_ENA_MEM(map))
 		indirect_resetbit(socket, I365_ADDRWIN, I365_ENA_MEM(map));
 
-	/* ग_लिखो the start address */
+	/* write the start address */
 	base = I365_MEM(map);
 	i = (mem->res->start >> 12) & 0x0fff;
-	अगर (mem->flags & MAP_16BIT)
+	if (mem->flags & MAP_16BIT)
 		i |= I365_MEM_16BIT;
-	अगर (mem->flags & MAP_0WS)
+	if (mem->flags & MAP_0WS)
 		i |= I365_MEM_0WS;
-	indirect_ग_लिखो16(socket, base + I365_W_START, i);
+	indirect_write16(socket, base + I365_W_START, i);
 
-	/* ग_लिखो the stop address */
+	/* write the stop address */
 
 	i = (mem->res->end >> 12) & 0x0fff;
-	चयन (to_cycles(mem->speed)) अणु
-	हाल 0:
-		अवरोध;
-	हाल 1:
+	switch (to_cycles(mem->speed)) {
+	case 0:
+		break;
+	case 1:
 		i |= I365_MEM_WS0;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		i |= I365_MEM_WS1;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		i |= I365_MEM_WS1 | I365_MEM_WS0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	indirect_ग_लिखो16(socket, base + I365_W_STOP, i);
+	indirect_write16(socket, base + I365_W_STOP, i);
 
 	/* Take care of high byte */
-	indirect_ग_लिखो(socket, PD67_EXT_INDEX, PD67_MEM_PAGE(map));
-	indirect_ग_लिखो(socket, PD67_EXT_DATA, mem->res->start >> 24);
+	indirect_write(socket, PD67_EXT_INDEX, PD67_MEM_PAGE(map));
+	indirect_write(socket, PD67_EXT_DATA, mem->res->start >> 24);
 
 	/* card start */
 
 	i = ((mem->card_start - mem->res->start) >> 12) & 0x3fff;
-	अगर (mem->flags & MAP_WRPROT)
+	if (mem->flags & MAP_WRPROT)
 		i |= I365_MEM_WRPROT;
-	अगर (mem->flags & MAP_ATTRIB) अणु
+	if (mem->flags & MAP_ATTRIB) {
 		/* dev_dbg(&sock->dev, "requesting attribute memory for "
 		   "socket %i\n", socket->number);*/
 		i |= I365_MEM_REG;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* dev_dbg(&sock->dev, "requesting normal memory for "
 		   "socket %i\n", socket->number);*/
-	पूर्ण
-	indirect_ग_लिखो16(socket, base + I365_W_OFF, i);
+	}
+	indirect_write16(socket, base + I365_W_OFF, i);
 
-	/* Enable the winकरोw अगर necessary */
-	अगर (mem->flags & MAP_ACTIVE)
+	/* Enable the window if necessary */
+	if (mem->flags & MAP_ACTIVE)
 		indirect_setbit(socket, I365_ADDRWIN, I365_ENA_MEM(map));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pd6729_init(काष्ठा pcmcia_socket *sock)
-अणु
-	पूर्णांक i;
-	काष्ठा resource res = अणु .end = 0x0fff पूर्ण;
-	pccard_io_map io = अणु 0, 0, 0, 0, 1 पूर्ण;
-	pccard_mem_map mem = अणु .res = &res, पूर्ण;
+static int pd6729_init(struct pcmcia_socket *sock)
+{
+	int i;
+	struct resource res = { .end = 0x0fff };
+	pccard_io_map io = { 0, 0, 0, 0, 1 };
+	pccard_mem_map mem = { .res = &res, };
 
 	pd6729_set_socket(sock, &dead_socket);
-	क्रम (i = 0; i < 2; i++) अणु
+	for (i = 0; i < 2; i++) {
 		io.map = i;
 		pd6729_set_io_map(sock, &io);
-	पूर्ण
-	क्रम (i = 0; i < 5; i++) अणु
+	}
+	for (i = 0; i < 5; i++) {
 		mem.map = i;
 		pd6729_set_mem_map(sock, &mem);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-/* the pccard काष्ठाure and its functions */
-अटल काष्ठा pccard_operations pd6729_operations = अणु
+/* the pccard structure and its functions */
+static struct pccard_operations pd6729_operations = {
 	.init			= pd6729_init,
 	.get_status		= pd6729_get_status,
 	.set_socket		= pd6729_set_socket,
 	.set_io_map		= pd6729_set_io_map,
 	.set_mem_map		= pd6729_set_mem_map,
-पूर्ण;
+};
 
-अटल irqवापस_t pd6729_test(पूर्णांक irq, व्योम *dev)
-अणु
+static irqreturn_t pd6729_test(int irq, void *dev)
+{
 	pr_devel("-> hit on irq %d\n", irq);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक pd6729_check_irq(पूर्णांक irq)
-अणु
-	पूर्णांक ret;
+static int pd6729_check_irq(int irq)
+{
+	int ret;
 
 	ret = request_irq(irq, pd6729_test, IRQF_PROBE_SHARED, "x",
 			  pd6729_test);
-	अगर (ret)
-		वापस -1;
+	if (ret)
+		return -1;
 
-	मुक्त_irq(irq, pd6729_test);
-	वापस 0;
-पूर्ण
+	free_irq(irq, pd6729_test);
+	return 0;
+}
 
-अटल u_पूर्णांक pd6729_isa_scan(व्योम)
-अणु
-	u_पूर्णांक mask0, mask = 0;
-	पूर्णांक i;
+static u_int pd6729_isa_scan(void)
+{
+	u_int mask0, mask = 0;
+	int i;
 
-	अगर (irq_mode == 1) अणु
-		prपूर्णांकk(KERN_INFO "pd6729: PCI card interrupts, "
+	if (irq_mode == 1) {
+		printk(KERN_INFO "pd6729: PCI card interrupts, "
 		       "PCI status changes\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	mask0 = PD67_MASK;
 
-	/* just find पूर्णांकerrupts that aren't in use */
-	क्रम (i = 0; i < 16; i++)
-		अगर ((mask0 & (1 << i)) && (pd6729_check_irq(i) == 0))
+	/* just find interrupts that aren't in use */
+	for (i = 0; i < 16; i++)
+		if ((mask0 & (1 << i)) && (pd6729_check_irq(i) == 0))
 			mask |= (1 << i);
 
-	prपूर्णांकk(KERN_INFO "pd6729: ISA irqs = ");
-	क्रम (i = 0; i < 16; i++)
-		अगर (mask & (1<<i))
-			prपूर्णांकk("%s%d", ((mask & ((1<<i)-1)) ? "," : ""), i);
+	printk(KERN_INFO "pd6729: ISA irqs = ");
+	for (i = 0; i < 16; i++)
+		if (mask & (1<<i))
+			printk("%s%d", ((mask & ((1<<i)-1)) ? "," : ""), i);
 
-	अगर (mask == 0)
-		prपूर्णांकk("none!");
-	अन्यथा
-		prपूर्णांकk("  polling status changes.\n");
+	if (mask == 0)
+		printk("none!");
+	else
+		printk("  polling status changes.\n");
 
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
-अटल पूर्णांक pd6729_pci_probe(काष्ठा pci_dev *dev,
-				      स्थिर काष्ठा pci_device_id *id)
-अणु
-	पूर्णांक i, j, ret;
-	u_पूर्णांक mask;
-	अक्षर configbyte;
-	काष्ठा pd6729_socket *socket;
+static int pd6729_pci_probe(struct pci_dev *dev,
+				      const struct pci_device_id *id)
+{
+	int i, j, ret;
+	u_int mask;
+	char configbyte;
+	struct pd6729_socket *socket;
 
-	socket = kसुस्मृति(MAX_SOCKETS, माप(काष्ठा pd6729_socket),
+	socket = kcalloc(MAX_SOCKETS, sizeof(struct pd6729_socket),
 			 GFP_KERNEL);
-	अगर (!socket) अणु
+	if (!socket) {
 		dev_warn(&dev->dev, "failed to kzalloc socket.\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	ret = pci_enable_device(dev);
-	अगर (ret) अणु
+	if (ret) {
 		dev_warn(&dev->dev, "failed to enable pci_device.\n");
-		जाओ err_out_मुक्त_mem;
-	पूर्ण
+		goto err_out_free_mem;
+	}
 
-	अगर (!pci_resource_start(dev, 0)) अणु
+	if (!pci_resource_start(dev, 0)) {
 		dev_warn(&dev->dev, "refusing to load the driver as the "
 			"io_base is NULL.\n");
 		ret = -ENOMEM;
-		जाओ err_out_disable;
-	पूर्ण
+		goto err_out_disable;
+	}
 
 	dev_info(&dev->dev, "Cirrus PD6729 PCI to PCMCIA Bridge at 0x%llx "
 		"on irq %d\n",
-		(अचिन्हित दीर्घ दीर्घ)pci_resource_start(dev, 0), dev->irq);
+		(unsigned long long)pci_resource_start(dev, 0), dev->irq);
 	/*
 	 * Since we have no memory BARs some firmware may not
 	 * have had PCI_COMMAND_MEMORY enabled, yet the device needs it.
 	 */
-	pci_पढ़ो_config_byte(dev, PCI_COMMAND, &configbyte);
-	अगर (!(configbyte & PCI_COMMAND_MEMORY)) अणु
+	pci_read_config_byte(dev, PCI_COMMAND, &configbyte);
+	if (!(configbyte & PCI_COMMAND_MEMORY)) {
 		dev_dbg(&dev->dev, "pd6729: Enabling PCI_COMMAND_MEMORY.\n");
 		configbyte |= PCI_COMMAND_MEMORY;
-		pci_ग_लिखो_config_byte(dev, PCI_COMMAND, configbyte);
-	पूर्ण
+		pci_write_config_byte(dev, PCI_COMMAND, configbyte);
+	}
 
 	ret = pci_request_regions(dev, "pd6729");
-	अगर (ret) अणु
+	if (ret) {
 		dev_warn(&dev->dev, "pci request region failed.\n");
-		जाओ err_out_disable;
-	पूर्ण
+		goto err_out_disable;
+	}
 
-	अगर (dev->irq == NO_IRQ)
-		irq_mode = 0;	/* fall back to ISA पूर्णांकerrupt mode */
+	if (dev->irq == NO_IRQ)
+		irq_mode = 0;	/* fall back to ISA interrupt mode */
 
 	mask = pd6729_isa_scan();
-	अगर (irq_mode == 0 && mask == 0) अणु
+	if (irq_mode == 0 && mask == 0) {
 		dev_warn(&dev->dev, "no ISA interrupt is available.\n");
 		ret = -ENODEV;
-		जाओ err_out_मुक्त_res;
-	पूर्ण
+		goto err_out_free_res;
+	}
 
-	क्रम (i = 0; i < MAX_SOCKETS; i++) अणु
+	for (i = 0; i < MAX_SOCKETS; i++) {
 		socket[i].io_base = pci_resource_start(dev, 0);
 		socket[i].socket.features |= SS_CAP_PAGE_REGS | SS_CAP_PCCARD;
 		socket[i].socket.map_size = 0x1000;
@@ -691,88 +690,88 @@ MODULE_PARM_DESC(irq_mode,
 		socket[i].number = i;
 
 		socket[i].socket.ops = &pd6729_operations;
-		socket[i].socket.resource_ops = &pccard_nonअटल_ops;
+		socket[i].socket.resource_ops = &pccard_nonstatic_ops;
 		socket[i].socket.dev.parent = &dev->dev;
 		socket[i].socket.driver_data = &socket[i];
-	पूर्ण
+	}
 
 	pci_set_drvdata(dev, socket);
-	अगर (irq_mode == 1) अणु
-		/* Register the पूर्णांकerrupt handler */
-		ret = request_irq(dev->irq, pd6729_पूर्णांकerrupt, IRQF_SHARED,
+	if (irq_mode == 1) {
+		/* Register the interrupt handler */
+		ret = request_irq(dev->irq, pd6729_interrupt, IRQF_SHARED,
 				  "pd6729", socket);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&dev->dev, "Failed to register irq %d\n",
 				dev->irq);
-			जाओ err_out_मुक्त_res;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			goto err_out_free_res;
+		}
+	} else {
 		/* poll Card status change */
-		समयr_setup(&socket->poll_समयr, pd6729_पूर्णांकerrupt_wrapper, 0);
-		mod_समयr(&socket->poll_समयr, jअगरfies + HZ);
-	पूर्ण
+		timer_setup(&socket->poll_timer, pd6729_interrupt_wrapper, 0);
+		mod_timer(&socket->poll_timer, jiffies + HZ);
+	}
 
-	क्रम (i = 0; i < MAX_SOCKETS; i++) अणु
-		ret = pcmcia_रेजिस्टर_socket(&socket[i].socket);
-		अगर (ret) अणु
+	for (i = 0; i < MAX_SOCKETS; i++) {
+		ret = pcmcia_register_socket(&socket[i].socket);
+		if (ret) {
 			dev_warn(&dev->dev, "pcmcia_register_socket failed.\n");
-			क्रम (j = 0; j < i ; j++)
-				pcmcia_unरेजिस्टर_socket(&socket[j].socket);
-			जाओ err_out_मुक्त_res2;
-		पूर्ण
-	पूर्ण
+			for (j = 0; j < i ; j++)
+				pcmcia_unregister_socket(&socket[j].socket);
+			goto err_out_free_res2;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
-err_out_मुक्त_res2:
-	अगर (irq_mode == 1)
-		मुक्त_irq(dev->irq, socket);
-	अन्यथा
-		del_समयr_sync(&socket->poll_समयr);
-err_out_मुक्त_res:
+err_out_free_res2:
+	if (irq_mode == 1)
+		free_irq(dev->irq, socket);
+	else
+		del_timer_sync(&socket->poll_timer);
+err_out_free_res:
 	pci_release_regions(dev);
 err_out_disable:
 	pci_disable_device(dev);
 
-err_out_मुक्त_mem:
-	kमुक्त(socket);
-	वापस ret;
-पूर्ण
+err_out_free_mem:
+	kfree(socket);
+	return ret;
+}
 
-अटल व्योम pd6729_pci_हटाओ(काष्ठा pci_dev *dev)
-अणु
-	पूर्णांक i;
-	काष्ठा pd6729_socket *socket = pci_get_drvdata(dev);
+static void pd6729_pci_remove(struct pci_dev *dev)
+{
+	int i;
+	struct pd6729_socket *socket = pci_get_drvdata(dev);
 
-	क्रम (i = 0; i < MAX_SOCKETS; i++) अणु
-		/* Turn off all पूर्णांकerrupt sources */
-		indirect_ग_लिखो(&socket[i], I365_CSCINT, 0);
-		indirect_ग_लिखो(&socket[i], I365_INTCTL, 0);
+	for (i = 0; i < MAX_SOCKETS; i++) {
+		/* Turn off all interrupt sources */
+		indirect_write(&socket[i], I365_CSCINT, 0);
+		indirect_write(&socket[i], I365_INTCTL, 0);
 
-		pcmcia_unरेजिस्टर_socket(&socket[i].socket);
-	पूर्ण
+		pcmcia_unregister_socket(&socket[i].socket);
+	}
 
-	अगर (irq_mode == 1)
-		मुक्त_irq(dev->irq, socket);
-	अन्यथा
-		del_समयr_sync(&socket->poll_समयr);
+	if (irq_mode == 1)
+		free_irq(dev->irq, socket);
+	else
+		del_timer_sync(&socket->poll_timer);
 	pci_release_regions(dev);
 	pci_disable_device(dev);
 
-	kमुक्त(socket);
-पूर्ण
+	kfree(socket);
+}
 
-अटल स्थिर काष्ठा pci_device_id pd6729_pci_ids[] = अणु
-	अणु PCI_DEVICE(PCI_VENDOR_ID_CIRRUS, PCI_DEVICE_ID_CIRRUS_6729) पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct pci_device_id pd6729_pci_ids[] = {
+	{ PCI_DEVICE(PCI_VENDOR_ID_CIRRUS, PCI_DEVICE_ID_CIRRUS_6729) },
+	{ }
+};
 MODULE_DEVICE_TABLE(pci, pd6729_pci_ids);
 
-अटल काष्ठा pci_driver pd6729_pci_driver = अणु
+static struct pci_driver pd6729_pci_driver = {
 	.name		= "pd6729",
 	.id_table	= pd6729_pci_ids,
 	.probe		= pd6729_pci_probe,
-	.हटाओ		= pd6729_pci_हटाओ,
-पूर्ण;
+	.remove		= pd6729_pci_remove,
+};
 
 module_pci_driver(pd6729_pci_driver);

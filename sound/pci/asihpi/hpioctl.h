@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*******************************************************************************
 
     AudioScience HPI driver
@@ -9,20 +8,20 @@
 Linux HPI ioctl, and shared module init functions
 *******************************************************************************/
 
-पूर्णांक asihpi_adapter_probe(काष्ठा pci_dev *pci_dev,
-			 स्थिर काष्ठा pci_device_id *pci_id);
-व्योम asihpi_adapter_हटाओ(काष्ठा pci_dev *pci_dev);
-व्योम __init asihpi_init(व्योम);
-व्योम __निकास asihpi_निकास(व्योम);
+int asihpi_adapter_probe(struct pci_dev *pci_dev,
+			 const struct pci_device_id *pci_id);
+void asihpi_adapter_remove(struct pci_dev *pci_dev);
+void __init asihpi_init(void);
+void __exit asihpi_exit(void);
 
-पूर्णांक asihpi_hpi_release(काष्ठा file *file);
+int asihpi_hpi_release(struct file *file);
 
-दीर्घ asihpi_hpi_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg);
+long asihpi_hpi_ioctl(struct file *file, unsigned int cmd, unsigned long arg);
 
-/* This is called from hpअगरunc.c functions, called by ALSA
- * (or other kernel process) In this हाल there is no file descriptor
- * available क्रम the message cache code
+/* This is called from hpifunc.c functions, called by ALSA
+ * (or other kernel process) In this case there is no file descriptor
+ * available for the message cache code
  */
-व्योम hpi_send_recv(काष्ठा hpi_message *phm, काष्ठा hpi_response *phr);
+void hpi_send_recv(struct hpi_message *phm, struct hpi_response *phr);
 
-#घोषणा HOWNER_KERNEL ((व्योम *)-1)
+#define HOWNER_KERNEL ((void *)-1)

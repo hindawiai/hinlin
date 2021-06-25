@@ -1,193 +1,192 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/ide.h>
+#include <linux/kernel.h>
+#include <linux/gfp.h>
+#include <linux/ide.h>
 
 DEFINE_MUTEX(ide_setting_mtx);
 
 ide_devset_get(io_32bit, io_32bit);
 
-अटल पूर्णांक set_io_32bit(ide_drive_t *drive, पूर्णांक arg)
-अणु
-	अगर (drive->dev_flags & IDE_DFLAG_NO_IO_32BIT)
-		वापस -EPERM;
+static int set_io_32bit(ide_drive_t *drive, int arg)
+{
+	if (drive->dev_flags & IDE_DFLAG_NO_IO_32BIT)
+		return -EPERM;
 
-	अगर (arg < 0 || arg > 1 + (SUPPORT_VLB_SYNC << 1))
-		वापस -EINVAL;
+	if (arg < 0 || arg > 1 + (SUPPORT_VLB_SYNC << 1))
+		return -EINVAL;
 
 	drive->io_32bit = arg;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 ide_devset_get_flag(ksettings, IDE_DFLAG_KEEP_SETTINGS);
 
-अटल पूर्णांक set_ksettings(ide_drive_t *drive, पूर्णांक arg)
-अणु
-	अगर (arg < 0 || arg > 1)
-		वापस -EINVAL;
+static int set_ksettings(ide_drive_t *drive, int arg)
+{
+	if (arg < 0 || arg > 1)
+		return -EINVAL;
 
-	अगर (arg)
+	if (arg)
 		drive->dev_flags |= IDE_DFLAG_KEEP_SETTINGS;
-	अन्यथा
+	else
 		drive->dev_flags &= ~IDE_DFLAG_KEEP_SETTINGS;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 ide_devset_get_flag(using_dma, IDE_DFLAG_USING_DMA);
 
-अटल पूर्णांक set_using_dma(ide_drive_t *drive, पूर्णांक arg)
-अणु
-#अगर_घोषित CONFIG_BLK_DEV_IDEDMA
-	पूर्णांक err = -EPERM;
+static int set_using_dma(ide_drive_t *drive, int arg)
+{
+#ifdef CONFIG_BLK_DEV_IDEDMA
+	int err = -EPERM;
 
-	अगर (arg < 0 || arg > 1)
-		वापस -EINVAL;
+	if (arg < 0 || arg > 1)
+		return -EINVAL;
 
-	अगर (ata_id_has_dma(drive->id) == 0)
-		जाओ out;
+	if (ata_id_has_dma(drive->id) == 0)
+		goto out;
 
-	अगर (drive->hwअगर->dma_ops == शून्य)
-		जाओ out;
+	if (drive->hwif->dma_ops == NULL)
+		goto out;
 
 	err = 0;
 
-	अगर (arg) अणु
-		अगर (ide_set_dma(drive))
+	if (arg) {
+		if (ide_set_dma(drive))
 			err = -EIO;
-	पूर्ण अन्यथा
+	} else
 		ide_dma_off(drive);
 
 out:
-	वापस err;
-#अन्यथा
-	अगर (arg < 0 || arg > 1)
-		वापस -EINVAL;
+	return err;
+#else
+	if (arg < 0 || arg > 1)
+		return -EINVAL;
 
-	वापस -EPERM;
-#पूर्ण_अगर
-पूर्ण
+	return -EPERM;
+#endif
+}
 
 /*
  * handle HDIO_SET_PIO_MODE ioctl abusers here, eventually it will go away
  */
-अटल पूर्णांक set_pio_mode_abuse(ide_hwअगर_t *hwअगर, u8 req_pio)
-अणु
-	चयन (req_pio) अणु
-	हाल 202:
-	हाल 201:
-	हाल 200:
-	हाल 102:
-	हाल 101:
-	हाल 100:
-		वापस (hwअगर->host_flags & IDE_HFLAG_ABUSE_DMA_MODES) ? 1 : 0;
-	हाल 9:
-	हाल 8:
-		वापस (hwअगर->host_flags & IDE_HFLAG_ABUSE_PREFETCH) ? 1 : 0;
-	हाल 7:
-	हाल 6:
-		वापस (hwअगर->host_flags & IDE_HFLAG_ABUSE_FAST_DEVSEL) ? 1 : 0;
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+static int set_pio_mode_abuse(ide_hwif_t *hwif, u8 req_pio)
+{
+	switch (req_pio) {
+	case 202:
+	case 201:
+	case 200:
+	case 102:
+	case 101:
+	case 100:
+		return (hwif->host_flags & IDE_HFLAG_ABUSE_DMA_MODES) ? 1 : 0;
+	case 9:
+	case 8:
+		return (hwif->host_flags & IDE_HFLAG_ABUSE_PREFETCH) ? 1 : 0;
+	case 7:
+	case 6:
+		return (hwif->host_flags & IDE_HFLAG_ABUSE_FAST_DEVSEL) ? 1 : 0;
+	default:
+		return 0;
+	}
+}
 
-अटल पूर्णांक set_pio_mode(ide_drive_t *drive, पूर्णांक arg)
-अणु
-	ide_hwअगर_t *hwअगर = drive->hwअगर;
-	स्थिर काष्ठा ide_port_ops *port_ops = hwअगर->port_ops;
+static int set_pio_mode(ide_drive_t *drive, int arg)
+{
+	ide_hwif_t *hwif = drive->hwif;
+	const struct ide_port_ops *port_ops = hwif->port_ops;
 
-	अगर (arg < 0 || arg > 255)
-		वापस -EINVAL;
+	if (arg < 0 || arg > 255)
+		return -EINVAL;
 
-	अगर (port_ops == शून्य || port_ops->set_pio_mode == शून्य ||
-	    (hwअगर->host_flags & IDE_HFLAG_NO_SET_MODE))
-		वापस -ENOSYS;
+	if (port_ops == NULL || port_ops->set_pio_mode == NULL ||
+	    (hwif->host_flags & IDE_HFLAG_NO_SET_MODE))
+		return -ENOSYS;
 
-	अगर (set_pio_mode_abuse(drive->hwअगर, arg)) अणु
+	if (set_pio_mode_abuse(drive->hwif, arg)) {
 		drive->pio_mode = arg + XFER_PIO_0;
 
-		अगर (arg == 8 || arg == 9) अणु
-			अचिन्हित दीर्घ flags;
+		if (arg == 8 || arg == 9) {
+			unsigned long flags;
 
-			/* take lock क्रम IDE_DFLAG_[NO_]UNMASK/[NO_]IO_32BIT */
-			spin_lock_irqsave(&hwअगर->lock, flags);
-			port_ops->set_pio_mode(hwअगर, drive);
-			spin_unlock_irqrestore(&hwअगर->lock, flags);
-		पूर्ण अन्यथा
-			port_ops->set_pio_mode(hwअगर, drive);
-	पूर्ण अन्यथा अणु
-		पूर्णांक keep_dma = !!(drive->dev_flags & IDE_DFLAG_USING_DMA);
+			/* take lock for IDE_DFLAG_[NO_]UNMASK/[NO_]IO_32BIT */
+			spin_lock_irqsave(&hwif->lock, flags);
+			port_ops->set_pio_mode(hwif, drive);
+			spin_unlock_irqrestore(&hwif->lock, flags);
+		} else
+			port_ops->set_pio_mode(hwif, drive);
+	} else {
+		int keep_dma = !!(drive->dev_flags & IDE_DFLAG_USING_DMA);
 
 		ide_set_pio(drive, arg);
 
-		अगर (hwअगर->host_flags & IDE_HFLAG_SET_PIO_MODE_KEEP_DMA) अणु
-			अगर (keep_dma)
+		if (hwif->host_flags & IDE_HFLAG_SET_PIO_MODE_KEEP_DMA) {
+			if (keep_dma)
 				ide_dma_on(drive);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 ide_devset_get_flag(unmaskirq, IDE_DFLAG_UNMASK);
 
-अटल पूर्णांक set_unmaskirq(ide_drive_t *drive, पूर्णांक arg)
-अणु
-	अगर (drive->dev_flags & IDE_DFLAG_NO_UNMASK)
-		वापस -EPERM;
+static int set_unmaskirq(ide_drive_t *drive, int arg)
+{
+	if (drive->dev_flags & IDE_DFLAG_NO_UNMASK)
+		return -EPERM;
 
-	अगर (arg < 0 || arg > 1)
-		वापस -EINVAL;
+	if (arg < 0 || arg > 1)
+		return -EINVAL;
 
-	अगर (arg)
+	if (arg)
 		drive->dev_flags |= IDE_DFLAG_UNMASK;
-	अन्यथा
+	else
 		drive->dev_flags &= ~IDE_DFLAG_UNMASK;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 ide_ext_devset_rw_sync(io_32bit, io_32bit);
 ide_ext_devset_rw_sync(keepsettings, ksettings);
 ide_ext_devset_rw_sync(unmaskirq, unmaskirq);
 ide_ext_devset_rw_sync(using_dma, using_dma);
-__IDE_DEVSET(pio_mode, DS_SYNC, शून्य, set_pio_mode);
+__IDE_DEVSET(pio_mode, DS_SYNC, NULL, set_pio_mode);
 
-पूर्णांक ide_devset_execute(ide_drive_t *drive, स्थिर काष्ठा ide_devset *setting,
-		       पूर्णांक arg)
-अणु
-	काष्ठा request_queue *q = drive->queue;
-	काष्ठा request *rq;
-	पूर्णांक ret = 0;
+int ide_devset_execute(ide_drive_t *drive, const struct ide_devset *setting,
+		       int arg)
+{
+	struct request_queue *q = drive->queue;
+	struct request *rq;
+	int ret = 0;
 
-	अगर (!(setting->flags & DS_SYNC))
-		वापस setting->set(drive, arg);
+	if (!(setting->flags & DS_SYNC))
+		return setting->set(drive, arg);
 
 	rq = blk_get_request(q, REQ_OP_DRV_IN, 0);
 	ide_req(rq)->type = ATA_PRIV_MISC;
 	scsi_req(rq)->cmd_len = 5;
 	scsi_req(rq)->cmd[0] = REQ_DEVSET_EXEC;
-	*(पूर्णांक *)&scsi_req(rq)->cmd[1] = arg;
+	*(int *)&scsi_req(rq)->cmd[1] = arg;
 	ide_req(rq)->special = setting->set;
 
-	blk_execute_rq(शून्य, rq, 0);
+	blk_execute_rq(NULL, rq, 0);
 	ret = scsi_req(rq)->result;
 	blk_put_request(rq);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-ide_startstop_t ide_करो_devset(ide_drive_t *drive, काष्ठा request *rq)
-अणु
-	पूर्णांक err, (*setfunc)(ide_drive_t *, पूर्णांक) = ide_req(rq)->special;
+ide_startstop_t ide_do_devset(ide_drive_t *drive, struct request *rq)
+{
+	int err, (*setfunc)(ide_drive_t *, int) = ide_req(rq)->special;
 
-	err = setfunc(drive, *(पूर्णांक *)&scsi_req(rq)->cmd[1]);
-	अगर (err)
+	err = setfunc(drive, *(int *)&scsi_req(rq)->cmd[1]);
+	if (err)
 		scsi_req(rq)->result = err;
 	ide_complete_rq(drive, 0, blk_rq_bytes(rq));
-	वापस ide_stopped;
-पूर्ण
+	return ide_stopped;
+}

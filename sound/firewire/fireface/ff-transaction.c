@@ -1,105 +1,104 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * ff-transaction.c - a part of driver क्रम RME Fireface series
+ * ff-transaction.c - a part of driver for RME Fireface series
  *
  * Copyright (c) 2015-2017 Takashi Sakamoto
  */
 
-#समावेश "ff.h"
+#include "ff.h"
 
-अटल व्योम finish_transmit_midi_msg(काष्ठा snd_ff *ff, अचिन्हित पूर्णांक port,
-				     पूर्णांक rcode)
-अणु
-	काष्ठा snd_rawmidi_substream *substream =
+static void finish_transmit_midi_msg(struct snd_ff *ff, unsigned int port,
+				     int rcode)
+{
+	struct snd_rawmidi_substream *substream =
 				READ_ONCE(ff->rx_midi_substreams[port]);
 
-	अगर (rcode_is_permanent_error(rcode)) अणु
+	if (rcode_is_permanent_error(rcode)) {
 		ff->rx_midi_error[port] = true;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (rcode != RCODE_COMPLETE) अणु
+	if (rcode != RCODE_COMPLETE) {
 		/* Transfer the message again, immediately. */
-		ff->next_kसमय[port] = 0;
+		ff->next_ktime[port] = 0;
 		schedule_work(&ff->rx_midi_work[port]);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	snd_rawmidi_transmit_ack(substream, ff->rx_bytes[port]);
 	ff->rx_bytes[port] = 0;
 
-	अगर (!snd_rawmidi_transmit_empty(substream))
+	if (!snd_rawmidi_transmit_empty(substream))
 		schedule_work(&ff->rx_midi_work[port]);
-पूर्ण
+}
 
-अटल व्योम finish_transmit_midi0_msg(काष्ठा fw_card *card, पूर्णांक rcode,
-				      व्योम *data, माप_प्रकार length,
-				      व्योम *callback_data)
-अणु
-	काष्ठा snd_ff *ff =
-		container_of(callback_data, काष्ठा snd_ff, transactions[0]);
+static void finish_transmit_midi0_msg(struct fw_card *card, int rcode,
+				      void *data, size_t length,
+				      void *callback_data)
+{
+	struct snd_ff *ff =
+		container_of(callback_data, struct snd_ff, transactions[0]);
 	finish_transmit_midi_msg(ff, 0, rcode);
-पूर्ण
+}
 
-अटल व्योम finish_transmit_midi1_msg(काष्ठा fw_card *card, पूर्णांक rcode,
-				      व्योम *data, माप_प्रकार length,
-				      व्योम *callback_data)
-अणु
-	काष्ठा snd_ff *ff =
-		container_of(callback_data, काष्ठा snd_ff, transactions[1]);
+static void finish_transmit_midi1_msg(struct fw_card *card, int rcode,
+				      void *data, size_t length,
+				      void *callback_data)
+{
+	struct snd_ff *ff =
+		container_of(callback_data, struct snd_ff, transactions[1]);
 	finish_transmit_midi_msg(ff, 1, rcode);
-पूर्ण
+}
 
-अटल व्योम transmit_midi_msg(काष्ठा snd_ff *ff, अचिन्हित पूर्णांक port)
-अणु
-	काष्ठा snd_rawmidi_substream *substream =
+static void transmit_midi_msg(struct snd_ff *ff, unsigned int port)
+{
+	struct snd_rawmidi_substream *substream =
 			READ_ONCE(ff->rx_midi_substreams[port]);
-	पूर्णांक quad_count;
+	int quad_count;
 
-	काष्ठा fw_device *fw_dev = fw_parent_device(ff->unit);
-	अचिन्हित दीर्घ दीर्घ addr;
-	पूर्णांक generation;
+	struct fw_device *fw_dev = fw_parent_device(ff->unit);
+	unsigned long long addr;
+	int generation;
 	fw_transaction_callback_t callback;
-	पूर्णांक tcode;
+	int tcode;
 
-	अगर (substream == शून्य || snd_rawmidi_transmit_empty(substream))
-		वापस;
+	if (substream == NULL || snd_rawmidi_transmit_empty(substream))
+		return;
 
-	अगर (ff->rx_bytes[port] > 0 || ff->rx_midi_error[port])
-		वापस;
+	if (ff->rx_bytes[port] > 0 || ff->rx_midi_error[port])
+		return;
 
 	/* Do it in next chance. */
-	अगर (kसमय_after(ff->next_kसमय[port], kसमय_get())) अणु
+	if (ktime_after(ff->next_ktime[port], ktime_get())) {
 		schedule_work(&ff->rx_midi_work[port]);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	quad_count = ff->spec->protocol->fill_midi_msg(ff, substream, port);
-	अगर (quad_count <= 0)
-		वापस;
+	if (quad_count <= 0)
+		return;
 
-	अगर (port == 0) अणु
+	if (port == 0) {
 		addr = ff->spec->midi_rx_addrs[0];
 		callback = finish_transmit_midi0_msg;
-	पूर्ण अन्यथा अणु
+	} else {
 		addr = ff->spec->midi_rx_addrs[1];
 		callback = finish_transmit_midi1_msg;
-	पूर्ण
+	}
 
-	/* Set पूर्णांकerval to next transaction. */
-	ff->next_kसमय[port] = kसमय_add_ns(kसमय_get(),
+	/* Set interval to next transaction. */
+	ff->next_ktime[port] = ktime_add_ns(ktime_get(),
 			ff->rx_bytes[port] * 8 * (NSEC_PER_SEC / 31250));
 
-	अगर (quad_count == 1)
+	if (quad_count == 1)
 		tcode = TCODE_WRITE_QUADLET_REQUEST;
-	अन्यथा
+	else
 		tcode = TCODE_WRITE_BLOCK_REQUEST;
 
 	/*
 	 * In Linux FireWire core, when generation is updated with memory
-	 * barrier, node id has alपढ़ोy been updated. In this module, After
-	 * this smp_rmb(), load/store inकाष्ठाions to memory are completed.
+	 * barrier, node id has already been updated. In this module, After
+	 * this smp_rmb(), load/store instructions to memory are completed.
 	 * Thus, both of generation and node id are available with recent
 	 * values. This is a light-serialization solution to handle bus reset
 	 * events on IEEE 1394 bus.
@@ -110,41 +109,41 @@
 			fw_dev->node_id, generation, fw_dev->max_speed,
 			addr, &ff->msg_buf[port], quad_count * 4,
 			callback, &ff->transactions[port]);
-पूर्ण
+}
 
-अटल व्योम transmit_midi0_msg(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा snd_ff *ff = container_of(work, काष्ठा snd_ff, rx_midi_work[0]);
+static void transmit_midi0_msg(struct work_struct *work)
+{
+	struct snd_ff *ff = container_of(work, struct snd_ff, rx_midi_work[0]);
 
 	transmit_midi_msg(ff, 0);
-पूर्ण
+}
 
-अटल व्योम transmit_midi1_msg(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा snd_ff *ff = container_of(work, काष्ठा snd_ff, rx_midi_work[1]);
+static void transmit_midi1_msg(struct work_struct *work)
+{
+	struct snd_ff *ff = container_of(work, struct snd_ff, rx_midi_work[1]);
 
 	transmit_midi_msg(ff, 1);
-पूर्ण
+}
 
-अटल व्योम handle_midi_msg(काष्ठा fw_card *card, काष्ठा fw_request *request,
-			    पूर्णांक tcode, पूर्णांक destination, पूर्णांक source,
-			    पूर्णांक generation, अचिन्हित दीर्घ दीर्घ offset,
-			    व्योम *data, माप_प्रकार length, व्योम *callback_data)
-अणु
-	काष्ठा snd_ff *ff = callback_data;
+static void handle_midi_msg(struct fw_card *card, struct fw_request *request,
+			    int tcode, int destination, int source,
+			    int generation, unsigned long long offset,
+			    void *data, size_t length, void *callback_data)
+{
+	struct snd_ff *ff = callback_data;
 	__le32 *buf = data;
 
 	fw_send_response(card, request, RCODE_COMPLETE);
 
 	offset -= ff->async_handler.offset;
-	ff->spec->protocol->handle_midi_msg(ff, (अचिन्हित पूर्णांक)offset, buf,
+	ff->spec->protocol->handle_midi_msg(ff, (unsigned int)offset, buf,
 					    length);
-पूर्ण
+}
 
-अटल पूर्णांक allocate_own_address(काष्ठा snd_ff *ff, पूर्णांक i)
-अणु
-	काष्ठा fw_address_region midi_msg_region;
-	पूर्णांक err;
+static int allocate_own_address(struct snd_ff *ff, int i)
+{
+	struct fw_address_region midi_msg_region;
+	int err;
 
 	ff->async_handler.length = ff->spec->midi_addr_range;
 	ff->async_handler.address_callback = handle_midi_msg;
@@ -154,80 +153,80 @@
 	midi_msg_region.end = midi_msg_region.start + ff->async_handler.length;
 
 	err = fw_core_add_address_handler(&ff->async_handler, &midi_msg_region);
-	अगर (err >= 0) अणु
-		/* Controllers are allowed to रेजिस्टर this region. */
-		अगर (ff->async_handler.offset & 0x0000ffffffff) अणु
-			fw_core_हटाओ_address_handler(&ff->async_handler);
+	if (err >= 0) {
+		/* Controllers are allowed to register this region. */
+		if (ff->async_handler.offset & 0x0000ffffffff) {
+			fw_core_remove_address_handler(&ff->async_handler);
 			err = -EAGAIN;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-// Controllers are allowed to रेजिस्टर higher 4 bytes of destination address to
-// receive asynchronous transactions क्रम MIDI messages, जबतक the way to
-// रेजिस्टर lower 4 bytes of address is dअगरferent depending on protocols. For
+// Controllers are allowed to register higher 4 bytes of destination address to
+// receive asynchronous transactions for MIDI messages, while the way to
+// register lower 4 bytes of address is different depending on protocols. For
 // details, please refer to comments in protocol implementations.
 //
-// This driver expects userspace applications to configure रेजिस्टरs क्रम the
-// lower address because in most हालs such रेजिस्टरs has the other settings.
-पूर्णांक snd_ff_transaction_reरेजिस्टर(काष्ठा snd_ff *ff)
-अणु
-	काष्ठा fw_card *fw_card = fw_parent_device(ff->unit)->card;
+// This driver expects userspace applications to configure registers for the
+// lower address because in most cases such registers has the other settings.
+int snd_ff_transaction_reregister(struct snd_ff *ff)
+{
+	struct fw_card *fw_card = fw_parent_device(ff->unit)->card;
 	u32 addr;
 	__le32 reg;
 
 	/*
-	 * Controllers are allowed to रेजिस्टर its node ID and upper 2 byte of
+	 * Controllers are allowed to register its node ID and upper 2 byte of
 	 * local address to listen asynchronous transactions.
 	 */
 	addr = (fw_card->node_id << 16) | (ff->async_handler.offset >> 32);
 	reg = cpu_to_le32(addr);
-	वापस snd_fw_transaction(ff->unit, TCODE_WRITE_QUADLET_REQUEST,
+	return snd_fw_transaction(ff->unit, TCODE_WRITE_QUADLET_REQUEST,
 				  ff->spec->midi_high_addr,
-				  &reg, माप(reg), 0);
-पूर्ण
+				  &reg, sizeof(reg), 0);
+}
 
-पूर्णांक snd_ff_transaction_रेजिस्टर(काष्ठा snd_ff *ff)
-अणु
-	पूर्णांक i, err;
+int snd_ff_transaction_register(struct snd_ff *ff)
+{
+	int i, err;
 
 	/*
 	 * Allocate in Memory Space of IEC 13213, but lower 4 byte in LSB should
-	 * be zero due to device specअगरication.
+	 * be zero due to device specification.
 	 */
-	क्रम (i = 0; i < 0xffff; i++) अणु
+	for (i = 0; i < 0xffff; i++) {
 		err = allocate_own_address(ff, i);
-		अगर (err != -EBUSY && err != -EAGAIN)
-			अवरोध;
-	पूर्ण
-	अगर (err < 0)
-		वापस err;
+		if (err != -EBUSY && err != -EAGAIN)
+			break;
+	}
+	if (err < 0)
+		return err;
 
-	err = snd_ff_transaction_reरेजिस्टर(ff);
-	अगर (err < 0)
-		वापस err;
+	err = snd_ff_transaction_reregister(ff);
+	if (err < 0)
+		return err;
 
 	INIT_WORK(&ff->rx_midi_work[0], transmit_midi0_msg);
 	INIT_WORK(&ff->rx_midi_work[1], transmit_midi1_msg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम snd_ff_transaction_unरेजिस्टर(काष्ठा snd_ff *ff)
-अणु
+void snd_ff_transaction_unregister(struct snd_ff *ff)
+{
 	__le32 reg;
 
-	अगर (ff->async_handler.callback_data == शून्य)
-		वापस;
-	ff->async_handler.callback_data = शून्य;
+	if (ff->async_handler.callback_data == NULL)
+		return;
+	ff->async_handler.callback_data = NULL;
 
 	/* Release higher 4 bytes of address. */
 	reg = cpu_to_le32(0x00000000);
 	snd_fw_transaction(ff->unit, TCODE_WRITE_QUADLET_REQUEST,
 			   ff->spec->midi_high_addr,
-			   &reg, माप(reg), 0);
+			   &reg, sizeof(reg), 0);
 
-	fw_core_हटाओ_address_handler(&ff->async_handler);
-पूर्ण
+	fw_core_remove_address_handler(&ff->async_handler);
+}

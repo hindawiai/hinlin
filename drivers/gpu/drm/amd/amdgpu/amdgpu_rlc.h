@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,13 +21,13 @@
  *
  */
 
-#अगर_अघोषित __AMDGPU_RLC_H__
-#घोषणा __AMDGPU_RLC_H__
+#ifndef __AMDGPU_RLC_H__
+#define __AMDGPU_RLC_H__
 
-#समावेश "clearstate_defs.h"
+#include "clearstate_defs.h"
 
 /* firmware ID used in rlc toc */
-प्रकार क्रमागत _FIRMWARE_ID_ अणु
+typedef enum _FIRMWARE_ID_ {
 	FIRMWARE_ID_INVALID					= 0,
 	FIRMWARE_ID_RLC_G_UCODE					= 1,
 	FIRMWARE_ID_RLC_TOC					= 2,
@@ -68,113 +67,113 @@
 	FIRMWARE_ID_RLCP_CAM                                    = 36,
 	FIRMWARE_ID_RLC_SPP_CAM_EXT                             = 37,
 	FIRMWARE_ID_MAX                                         = 38,
-पूर्ण FIRMWARE_ID;
+} FIRMWARE_ID;
 
-प्रकार काष्ठा _RLC_TABLE_OF_CONTENT अणु
-	जोड़ अणु
-		अचिन्हित पूर्णांक	DW0;
-		काष्ठा अणु
-			अचिन्हित पूर्णांक	offset		: 25;
-			अचिन्हित पूर्णांक	id		: 7;
-		पूर्ण;
-	पूर्ण;
+typedef struct _RLC_TABLE_OF_CONTENT {
+	union {
+		unsigned int	DW0;
+		struct {
+			unsigned int	offset		: 25;
+			unsigned int	id		: 7;
+		};
+	};
 
-	जोड़ अणु
-		अचिन्हित पूर्णांक	DW1;
-		काष्ठा अणु
-			अचिन्हित पूर्णांक	load_at_boot		: 1;
-			अचिन्हित पूर्णांक	load_at_vddgfx		: 1;
-			अचिन्हित पूर्णांक	load_at_reset		: 1;
-			अचिन्हित पूर्णांक	memory_destination	: 2;
-			अचिन्हित पूर्णांक	vfflr_image_code	: 4;
-			अचिन्हित पूर्णांक	load_mode_direct	: 1;
-			अचिन्हित पूर्णांक	save_क्रम_vddgfx		: 1;
-			अचिन्हित पूर्णांक	save_क्रम_vfflr		: 1;
-			अचिन्हित पूर्णांक	reserved		: 1;
-			अचिन्हित पूर्णांक	चिन्हित_source		: 1;
-			अचिन्हित पूर्णांक	size			: 18;
-		पूर्ण;
-	पूर्ण;
+	union {
+		unsigned int	DW1;
+		struct {
+			unsigned int	load_at_boot		: 1;
+			unsigned int	load_at_vddgfx		: 1;
+			unsigned int	load_at_reset		: 1;
+			unsigned int	memory_destination	: 2;
+			unsigned int	vfflr_image_code	: 4;
+			unsigned int	load_mode_direct	: 1;
+			unsigned int	save_for_vddgfx		: 1;
+			unsigned int	save_for_vfflr		: 1;
+			unsigned int	reserved		: 1;
+			unsigned int	signed_source		: 1;
+			unsigned int	size			: 18;
+		};
+	};
 
-	जोड़ अणु
-		अचिन्हित पूर्णांक	DW2;
-		काष्ठा अणु
-			अचिन्हित पूर्णांक	indirect_addr_reg	: 16;
-			अचिन्हित पूर्णांक	index			: 16;
-		पूर्ण;
-	पूर्ण;
+	union {
+		unsigned int	DW2;
+		struct {
+			unsigned int	indirect_addr_reg	: 16;
+			unsigned int	index			: 16;
+		};
+	};
 
-	जोड़ अणु
-		अचिन्हित पूर्णांक	DW3;
-		काष्ठा अणु
-			अचिन्हित पूर्णांक	indirect_data_reg	: 16;
-			अचिन्हित पूर्णांक	indirect_start_offset	: 16;
-		पूर्ण;
-	पूर्ण;
-पूर्ण RLC_TABLE_OF_CONTENT;
+	union {
+		unsigned int	DW3;
+		struct {
+			unsigned int	indirect_data_reg	: 16;
+			unsigned int	indirect_start_offset	: 16;
+		};
+	};
+} RLC_TABLE_OF_CONTENT;
 
-#घोषणा RLC_TOC_MAX_SIZE		64
+#define RLC_TOC_MAX_SIZE		64
 
-काष्ठा amdgpu_rlc_funcs अणु
-	bool (*is_rlc_enabled)(काष्ठा amdgpu_device *adev);
-	व्योम (*set_safe_mode)(काष्ठा amdgpu_device *adev);
-	व्योम (*unset_safe_mode)(काष्ठा amdgpu_device *adev);
-	पूर्णांक  (*init)(काष्ठा amdgpu_device *adev);
-	u32  (*get_csb_size)(काष्ठा amdgpu_device *adev);
-	व्योम (*get_csb_buffer)(काष्ठा amdgpu_device *adev, अस्थिर u32 *buffer);
-	पूर्णांक  (*get_cp_table_num)(काष्ठा amdgpu_device *adev);
-	पूर्णांक  (*resume)(काष्ठा amdgpu_device *adev);
-	व्योम (*stop)(काष्ठा amdgpu_device *adev);
-	व्योम (*reset)(काष्ठा amdgpu_device *adev);
-	व्योम (*start)(काष्ठा amdgpu_device *adev);
-	व्योम (*update_spm_vmid)(काष्ठा amdgpu_device *adev, अचिन्हित vmid);
-	व्योम (*rlcg_wreg)(काष्ठा amdgpu_device *adev, u32 offset, u32 v, u32 flag);
-	u32 (*rlcg_rreg)(काष्ठा amdgpu_device *adev, u32 offset, u32 flag);
-	bool (*is_rlcg_access_range)(काष्ठा amdgpu_device *adev, uपूर्णांक32_t reg);
-पूर्ण;
+struct amdgpu_rlc_funcs {
+	bool (*is_rlc_enabled)(struct amdgpu_device *adev);
+	void (*set_safe_mode)(struct amdgpu_device *adev);
+	void (*unset_safe_mode)(struct amdgpu_device *adev);
+	int  (*init)(struct amdgpu_device *adev);
+	u32  (*get_csb_size)(struct amdgpu_device *adev);
+	void (*get_csb_buffer)(struct amdgpu_device *adev, volatile u32 *buffer);
+	int  (*get_cp_table_num)(struct amdgpu_device *adev);
+	int  (*resume)(struct amdgpu_device *adev);
+	void (*stop)(struct amdgpu_device *adev);
+	void (*reset)(struct amdgpu_device *adev);
+	void (*start)(struct amdgpu_device *adev);
+	void (*update_spm_vmid)(struct amdgpu_device *adev, unsigned vmid);
+	void (*rlcg_wreg)(struct amdgpu_device *adev, u32 offset, u32 v, u32 flag);
+	u32 (*rlcg_rreg)(struct amdgpu_device *adev, u32 offset, u32 flag);
+	bool (*is_rlcg_access_range)(struct amdgpu_device *adev, uint32_t reg);
+};
 
-काष्ठा amdgpu_rlc अणु
-	/* क्रम घातer gating */
-	काष्ठा amdgpu_bo        *save_restore_obj;
-	uपूर्णांक64_t                save_restore_gpu_addr;
-	अस्थिर uपूर्णांक32_t       *sr_ptr;
-	स्थिर u32               *reg_list;
+struct amdgpu_rlc {
+	/* for power gating */
+	struct amdgpu_bo        *save_restore_obj;
+	uint64_t                save_restore_gpu_addr;
+	volatile uint32_t       *sr_ptr;
+	const u32               *reg_list;
 	u32                     reg_list_size;
-	/* क्रम clear state */
-	काष्ठा amdgpu_bo        *clear_state_obj;
-	uपूर्णांक64_t                clear_state_gpu_addr;
-	अस्थिर uपूर्णांक32_t       *cs_ptr;
-	स्थिर काष्ठा cs_section_def   *cs_data;
+	/* for clear state */
+	struct amdgpu_bo        *clear_state_obj;
+	uint64_t                clear_state_gpu_addr;
+	volatile uint32_t       *cs_ptr;
+	const struct cs_section_def   *cs_data;
 	u32                     clear_state_size;
-	/* क्रम cp tables */
-	काष्ठा amdgpu_bo        *cp_table_obj;
-	uपूर्णांक64_t                cp_table_gpu_addr;
-	अस्थिर uपूर्णांक32_t       *cp_table_ptr;
+	/* for cp tables */
+	struct amdgpu_bo        *cp_table_obj;
+	uint64_t                cp_table_gpu_addr;
+	volatile uint32_t       *cp_table_ptr;
 	u32                     cp_table_size;
 
-	/* safe mode क्रम updating CG/PG state */
+	/* safe mode for updating CG/PG state */
 	bool in_safe_mode;
-	स्थिर काष्ठा amdgpu_rlc_funcs *funcs;
+	const struct amdgpu_rlc_funcs *funcs;
 
-	/* क्रम firmware data */
+	/* for firmware data */
 	u32 save_and_restore_offset;
 	u32 clear_state_descriptor_offset;
 	u32 avail_scratch_ram_locations;
 	u32 reg_restore_list_size;
-	u32 reg_list_क्रमmat_start;
-	u32 reg_list_क्रमmat_separate_start;
+	u32 reg_list_format_start;
+	u32 reg_list_format_separate_start;
 	u32 starting_offsets_start;
-	u32 reg_list_क्रमmat_size_bytes;
+	u32 reg_list_format_size_bytes;
 	u32 reg_list_size_bytes;
-	u32 reg_list_क्रमmat_direct_reg_list_length;
+	u32 reg_list_format_direct_reg_list_length;
 	u32 save_restore_list_cntl_size_bytes;
 	u32 save_restore_list_gpm_size_bytes;
 	u32 save_restore_list_srm_size_bytes;
 	u32 rlc_iram_ucode_size_bytes;
 	u32 rlc_dram_ucode_size_bytes;
 
-	u32 *रेजिस्टर_list_क्रमmat;
-	u32 *रेजिस्टर_restore;
+	u32 *register_list_format;
+	u32 *register_restore;
 	u8 *save_restore_list_cntl;
 	u8 *save_restore_list_gpm;
 	u8 *save_restore_list_srm;
@@ -183,23 +182,23 @@
 
 	bool is_rlc_v2_1;
 
-	/* क्रम rlc स्वतःload */
-	काष्ठा amdgpu_bo	*rlc_स्वतःload_bo;
-	u64			rlc_स्वतःload_gpu_addr;
-	व्योम			*rlc_स्वतःload_ptr;
+	/* for rlc autoload */
+	struct amdgpu_bo	*rlc_autoload_bo;
+	u64			rlc_autoload_gpu_addr;
+	void			*rlc_autoload_ptr;
 
 	/* rlc toc buffer */
-	काष्ठा amdgpu_bo	*rlc_toc_bo;
-	uपूर्णांक64_t		rlc_toc_gpu_addr;
-	व्योम			*rlc_toc_buf;
-पूर्ण;
+	struct amdgpu_bo	*rlc_toc_bo;
+	uint64_t		rlc_toc_gpu_addr;
+	void			*rlc_toc_buf;
+};
 
-व्योम amdgpu_gfx_rlc_enter_safe_mode(काष्ठा amdgpu_device *adev);
-व्योम amdgpu_gfx_rlc_निकास_safe_mode(काष्ठा amdgpu_device *adev);
-पूर्णांक amdgpu_gfx_rlc_init_sr(काष्ठा amdgpu_device *adev, u32 dws);
-पूर्णांक amdgpu_gfx_rlc_init_csb(काष्ठा amdgpu_device *adev);
-पूर्णांक amdgpu_gfx_rlc_init_cpt(काष्ठा amdgpu_device *adev);
-व्योम amdgpu_gfx_rlc_setup_cp_table(काष्ठा amdgpu_device *adev);
-व्योम amdgpu_gfx_rlc_fini(काष्ठा amdgpu_device *adev);
+void amdgpu_gfx_rlc_enter_safe_mode(struct amdgpu_device *adev);
+void amdgpu_gfx_rlc_exit_safe_mode(struct amdgpu_device *adev);
+int amdgpu_gfx_rlc_init_sr(struct amdgpu_device *adev, u32 dws);
+int amdgpu_gfx_rlc_init_csb(struct amdgpu_device *adev);
+int amdgpu_gfx_rlc_init_cpt(struct amdgpu_device *adev);
+void amdgpu_gfx_rlc_setup_cp_table(struct amdgpu_device *adev);
+void amdgpu_gfx_rlc_fini(struct amdgpu_device *adev);
 
-#पूर्ण_अगर
+#endif

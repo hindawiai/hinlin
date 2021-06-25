@@ -1,42 +1,41 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
 /*
- * Test module क्रम stress and analyze perक्रमmance of vदो_स्मृति allocator.
+ * Test module for stress and analyze performance of vmalloc allocator.
  * (C) 2018 Uladzislau Rezki (Sony) <urezki@gmail.com>
  */
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/rwsem.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/rcupdate.h>
-#समावेश <linux/slab.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/vmalloc.h>
+#include <linux/random.h>
+#include <linux/kthread.h>
+#include <linux/moduleparam.h>
+#include <linux/completion.h>
+#include <linux/delay.h>
+#include <linux/rwsem.h>
+#include <linux/mm.h>
+#include <linux/rcupdate.h>
+#include <linux/slab.h>
 
-#घोषणा __param(type, name, init, msg)		\
-	अटल type name = init;				\
+#define __param(type, name, init, msg)		\
+	static type name = init;				\
 	module_param(name, type, 0444);			\
 	MODULE_PARM_DESC(name, msg)				\
 
-__param(पूर्णांक, nr_thपढ़ोs, 0,
+__param(int, nr_threads, 0,
 	"Number of workers to perform tests(min: 1 max: USHRT_MAX)");
 
 __param(bool, sequential_test_order, false,
 	"Use sequential stress tests order");
 
-__param(पूर्णांक, test_repeat_count, 1,
+__param(int, test_repeat_count, 1,
 	"Set test repeat counter");
 
-__param(पूर्णांक, test_loop_count, 1000000,
+__param(int, test_loop_count, 1000000,
 	"Set test loop counter");
 
-__param(पूर्णांक, run_test_mask, पूर्णांक_उच्च,
+__param(int, run_test_mask, INT_MAX,
 	"Set tests specified in the mask.\n\n"
 		"\t\tid: 1,    name: fix_size_alloc_test\n"
 		"\t\tid: 2,    name: full_fit_alloc_test\n"
@@ -48,39 +47,39 @@ __param(पूर्णांक, run_test_mask, पूर्णांक_उच
 		"\t\tid: 128,  name: pcpu_alloc_test\n"
 		"\t\tid: 256,  name: kvfree_rcu_1_arg_vmalloc_test\n"
 		"\t\tid: 512,  name: kvfree_rcu_2_arg_vmalloc_test\n"
-		/* Add a new test हाल description here. */
+		/* Add a new test case description here. */
 );
 
 /*
- * Read ग_लिखो semaphore क्रम synchronization of setup
- * phase that is करोne in मुख्य thपढ़ो and workers.
+ * Read write semaphore for synchronization of setup
+ * phase that is done in main thread and workers.
  */
-अटल DECLARE_RWSEM(prepare_क्रम_test_rwsem);
+static DECLARE_RWSEM(prepare_for_test_rwsem);
 
 /*
- * Completion tracking क्रम worker thपढ़ोs.
+ * Completion tracking for worker threads.
  */
-अटल DECLARE_COMPLETION(test_all_करोne_comp);
-अटल atomic_t test_n_unकरोne = ATOMIC_INIT(0);
+static DECLARE_COMPLETION(test_all_done_comp);
+static atomic_t test_n_undone = ATOMIC_INIT(0);
 
-अटल अंतरभूत व्योम
-test_report_one_करोne(व्योम)
-अणु
-	अगर (atomic_dec_and_test(&test_n_unकरोne))
-		complete(&test_all_करोne_comp);
-पूर्ण
+static inline void
+test_report_one_done(void)
+{
+	if (atomic_dec_and_test(&test_n_undone))
+		complete(&test_all_done_comp);
+}
 
-अटल पूर्णांक अक्रमom_size_align_alloc_test(व्योम)
-अणु
-	अचिन्हित दीर्घ size, align, rnd;
-	व्योम *ptr;
-	पूर्णांक i;
+static int random_size_align_alloc_test(void)
+{
+	unsigned long size, align, rnd;
+	void *ptr;
+	int i;
 
-	क्रम (i = 0; i < test_loop_count; i++) अणु
-		get_अक्रमom_bytes(&rnd, माप(rnd));
+	for (i = 0; i < test_loop_count; i++) {
+		get_random_bytes(&rnd, sizeof(rnd));
 
 		/*
-		 * Maximum 1024 pages, अगर PAGE_SIZE is 4096.
+		 * Maximum 1024 pages, if PAGE_SIZE is 4096.
 		 */
 		align = 1 << (rnd % 23);
 
@@ -89,312 +88,312 @@ test_report_one_करोne(व्योम)
 		 */
 		size = ((rnd % 10) + 1) * PAGE_SIZE;
 
-		ptr = __vदो_स्मृति_node(size, align, GFP_KERNEL | __GFP_ZERO, 0,
-				__builtin_वापस_address(0));
-		अगर (!ptr)
-			वापस -1;
+		ptr = __vmalloc_node(size, align, GFP_KERNEL | __GFP_ZERO, 0,
+				__builtin_return_address(0));
+		if (!ptr)
+			return -1;
 
-		vमुक्त(ptr);
-	पूर्ण
+		vfree(ptr);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * This test हाल is supposed to be failed.
+ * This test case is supposed to be failed.
  */
-अटल पूर्णांक align_shअगरt_alloc_test(व्योम)
-अणु
-	अचिन्हित दीर्घ align;
-	व्योम *ptr;
-	पूर्णांक i;
+static int align_shift_alloc_test(void)
+{
+	unsigned long align;
+	void *ptr;
+	int i;
 
-	क्रम (i = 0; i < BITS_PER_LONG; i++) अणु
-		align = ((अचिन्हित दीर्घ) 1) << i;
+	for (i = 0; i < BITS_PER_LONG; i++) {
+		align = ((unsigned long) 1) << i;
 
-		ptr = __vदो_स्मृति_node(PAGE_SIZE, align, GFP_KERNEL|__GFP_ZERO, 0,
-				__builtin_वापस_address(0));
-		अगर (!ptr)
-			वापस -1;
+		ptr = __vmalloc_node(PAGE_SIZE, align, GFP_KERNEL|__GFP_ZERO, 0,
+				__builtin_return_address(0));
+		if (!ptr)
+			return -1;
 
-		vमुक्त(ptr);
-	पूर्ण
+		vfree(ptr);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fix_align_alloc_test(व्योम)
-अणु
-	व्योम *ptr;
-	पूर्णांक i;
+static int fix_align_alloc_test(void)
+{
+	void *ptr;
+	int i;
 
-	क्रम (i = 0; i < test_loop_count; i++) अणु
-		ptr = __vदो_स्मृति_node(5 * PAGE_SIZE, THREAD_ALIGN << 1,
+	for (i = 0; i < test_loop_count; i++) {
+		ptr = __vmalloc_node(5 * PAGE_SIZE, THREAD_ALIGN << 1,
 				GFP_KERNEL | __GFP_ZERO, 0,
-				__builtin_वापस_address(0));
-		अगर (!ptr)
-			वापस -1;
+				__builtin_return_address(0));
+		if (!ptr)
+			return -1;
 
-		vमुक्त(ptr);
-	पूर्ण
+		vfree(ptr);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक अक्रमom_size_alloc_test(व्योम)
-अणु
-	अचिन्हित पूर्णांक n;
-	व्योम *p;
-	पूर्णांक i;
+static int random_size_alloc_test(void)
+{
+	unsigned int n;
+	void *p;
+	int i;
 
-	क्रम (i = 0; i < test_loop_count; i++) अणु
-		get_अक्रमom_bytes(&n, माप(i));
+	for (i = 0; i < test_loop_count; i++) {
+		get_random_bytes(&n, sizeof(i));
 		n = (n % 100) + 1;
 
-		p = vदो_स्मृति(n * PAGE_SIZE);
+		p = vmalloc(n * PAGE_SIZE);
 
-		अगर (!p)
-			वापस -1;
+		if (!p)
+			return -1;
 
 		*((__u8 *)p) = 1;
-		vमुक्त(p);
-	पूर्ण
+		vfree(p);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक दीर्घ_busy_list_alloc_test(व्योम)
-अणु
-	व्योम *ptr_1, *ptr_2;
-	व्योम **ptr;
-	पूर्णांक rv = -1;
-	पूर्णांक i;
+static int long_busy_list_alloc_test(void)
+{
+	void *ptr_1, *ptr_2;
+	void **ptr;
+	int rv = -1;
+	int i;
 
-	ptr = vदो_स्मृति(माप(व्योम *) * 15000);
-	अगर (!ptr)
-		वापस rv;
+	ptr = vmalloc(sizeof(void *) * 15000);
+	if (!ptr)
+		return rv;
 
-	क्रम (i = 0; i < 15000; i++)
-		ptr[i] = vदो_स्मृति(1 * PAGE_SIZE);
+	for (i = 0; i < 15000; i++)
+		ptr[i] = vmalloc(1 * PAGE_SIZE);
 
-	क्रम (i = 0; i < test_loop_count; i++) अणु
-		ptr_1 = vदो_स्मृति(100 * PAGE_SIZE);
-		अगर (!ptr_1)
-			जाओ leave;
+	for (i = 0; i < test_loop_count; i++) {
+		ptr_1 = vmalloc(100 * PAGE_SIZE);
+		if (!ptr_1)
+			goto leave;
 
-		ptr_2 = vदो_स्मृति(1 * PAGE_SIZE);
-		अगर (!ptr_2) अणु
-			vमुक्त(ptr_1);
-			जाओ leave;
-		पूर्ण
+		ptr_2 = vmalloc(1 * PAGE_SIZE);
+		if (!ptr_2) {
+			vfree(ptr_1);
+			goto leave;
+		}
 
 		*((__u8 *)ptr_1) = 0;
 		*((__u8 *)ptr_2) = 1;
 
-		vमुक्त(ptr_1);
-		vमुक्त(ptr_2);
-	पूर्ण
+		vfree(ptr_1);
+		vfree(ptr_2);
+	}
 
 	/*  Success */
 	rv = 0;
 
 leave:
-	क्रम (i = 0; i < 15000; i++)
-		vमुक्त(ptr[i]);
+	for (i = 0; i < 15000; i++)
+		vfree(ptr[i]);
 
-	vमुक्त(ptr);
-	वापस rv;
-पूर्ण
+	vfree(ptr);
+	return rv;
+}
 
-अटल पूर्णांक full_fit_alloc_test(व्योम)
-अणु
-	व्योम **ptr, **junk_ptr, *पंचांगp;
-	पूर्णांक junk_length;
-	पूर्णांक rv = -1;
-	पूर्णांक i;
+static int full_fit_alloc_test(void)
+{
+	void **ptr, **junk_ptr, *tmp;
+	int junk_length;
+	int rv = -1;
+	int i;
 
 	junk_length = fls(num_online_cpus());
 	junk_length *= (32 * 1024 * 1024 / PAGE_SIZE);
 
-	ptr = vदो_स्मृति(माप(व्योम *) * junk_length);
-	अगर (!ptr)
-		वापस rv;
+	ptr = vmalloc(sizeof(void *) * junk_length);
+	if (!ptr)
+		return rv;
 
-	junk_ptr = vदो_स्मृति(माप(व्योम *) * junk_length);
-	अगर (!junk_ptr) अणु
-		vमुक्त(ptr);
-		वापस rv;
-	पूर्ण
+	junk_ptr = vmalloc(sizeof(void *) * junk_length);
+	if (!junk_ptr) {
+		vfree(ptr);
+		return rv;
+	}
 
-	क्रम (i = 0; i < junk_length; i++) अणु
-		ptr[i] = vदो_स्मृति(1 * PAGE_SIZE);
-		junk_ptr[i] = vदो_स्मृति(1 * PAGE_SIZE);
-	पूर्ण
+	for (i = 0; i < junk_length; i++) {
+		ptr[i] = vmalloc(1 * PAGE_SIZE);
+		junk_ptr[i] = vmalloc(1 * PAGE_SIZE);
+	}
 
-	क्रम (i = 0; i < junk_length; i++)
-		vमुक्त(junk_ptr[i]);
+	for (i = 0; i < junk_length; i++)
+		vfree(junk_ptr[i]);
 
-	क्रम (i = 0; i < test_loop_count; i++) अणु
-		पंचांगp = vदो_स्मृति(1 * PAGE_SIZE);
+	for (i = 0; i < test_loop_count; i++) {
+		tmp = vmalloc(1 * PAGE_SIZE);
 
-		अगर (!पंचांगp)
-			जाओ error;
+		if (!tmp)
+			goto error;
 
-		*((__u8 *)पंचांगp) = 1;
-		vमुक्त(पंचांगp);
-	पूर्ण
+		*((__u8 *)tmp) = 1;
+		vfree(tmp);
+	}
 
 	/* Success */
 	rv = 0;
 
 error:
-	क्रम (i = 0; i < junk_length; i++)
-		vमुक्त(ptr[i]);
+	for (i = 0; i < junk_length; i++)
+		vfree(ptr[i]);
 
-	vमुक्त(ptr);
-	vमुक्त(junk_ptr);
+	vfree(ptr);
+	vfree(junk_ptr);
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-अटल पूर्णांक fix_size_alloc_test(व्योम)
-अणु
-	व्योम *ptr;
-	पूर्णांक i;
+static int fix_size_alloc_test(void)
+{
+	void *ptr;
+	int i;
 
-	क्रम (i = 0; i < test_loop_count; i++) अणु
-		ptr = vदो_स्मृति(3 * PAGE_SIZE);
+	for (i = 0; i < test_loop_count; i++) {
+		ptr = vmalloc(3 * PAGE_SIZE);
 
-		अगर (!ptr)
-			वापस -1;
+		if (!ptr)
+			return -1;
 
 		*((__u8 *)ptr) = 0;
 
-		vमुक्त(ptr);
-	पूर्ण
+		vfree(ptr);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-pcpu_alloc_test(व्योम)
-अणु
-	पूर्णांक rv = 0;
-#अगर_अघोषित CONFIG_NEED_PER_CPU_KM
-	व्योम __percpu **pcpu;
-	माप_प्रकार size, align;
-	पूर्णांक i;
+static int
+pcpu_alloc_test(void)
+{
+	int rv = 0;
+#ifndef CONFIG_NEED_PER_CPU_KM
+	void __percpu **pcpu;
+	size_t size, align;
+	int i;
 
-	pcpu = vदो_स्मृति(माप(व्योम __percpu *) * 35000);
-	अगर (!pcpu)
-		वापस -1;
+	pcpu = vmalloc(sizeof(void __percpu *) * 35000);
+	if (!pcpu)
+		return -1;
 
-	क्रम (i = 0; i < 35000; i++) अणु
-		अचिन्हित पूर्णांक r;
+	for (i = 0; i < 35000; i++) {
+		unsigned int r;
 
-		get_अक्रमom_bytes(&r, माप(i));
+		get_random_bytes(&r, sizeof(i));
 		size = (r % (PAGE_SIZE / 4)) + 1;
 
 		/*
 		 * Maximum PAGE_SIZE
 		 */
-		get_अक्रमom_bytes(&r, माप(i));
+		get_random_bytes(&r, sizeof(i));
 		align = 1 << ((i % 11) + 1);
 
 		pcpu[i] = __alloc_percpu(size, align);
-		अगर (!pcpu[i])
+		if (!pcpu[i])
 			rv = -1;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < 35000; i++)
-		मुक्त_percpu(pcpu[i]);
+	for (i = 0; i < 35000; i++)
+		free_percpu(pcpu[i]);
 
-	vमुक्त(pcpu);
-#पूर्ण_अगर
-	वापस rv;
-पूर्ण
+	vfree(pcpu);
+#endif
+	return rv;
+}
 
-काष्ठा test_kvमुक्त_rcu अणु
-	काष्ठा rcu_head rcu;
-	अचिन्हित अक्षर array[20];
-पूर्ण;
+struct test_kvfree_rcu {
+	struct rcu_head rcu;
+	unsigned char array[20];
+};
 
-अटल पूर्णांक
-kvमुक्त_rcu_1_arg_vदो_स्मृति_test(व्योम)
-अणु
-	काष्ठा test_kvमुक्त_rcu *p;
-	पूर्णांक i;
+static int
+kvfree_rcu_1_arg_vmalloc_test(void)
+{
+	struct test_kvfree_rcu *p;
+	int i;
 
-	क्रम (i = 0; i < test_loop_count; i++) अणु
-		p = vदो_स्मृति(1 * PAGE_SIZE);
-		अगर (!p)
-			वापस -1;
-
-		p->array[0] = 'a';
-		kvमुक्त_rcu(p);
-	पूर्ण
-
-	वापस 0;
-पूर्ण
-
-अटल पूर्णांक
-kvमुक्त_rcu_2_arg_vदो_स्मृति_test(व्योम)
-अणु
-	काष्ठा test_kvमुक्त_rcu *p;
-	पूर्णांक i;
-
-	क्रम (i = 0; i < test_loop_count; i++) अणु
-		p = vदो_स्मृति(1 * PAGE_SIZE);
-		अगर (!p)
-			वापस -1;
+	for (i = 0; i < test_loop_count; i++) {
+		p = vmalloc(1 * PAGE_SIZE);
+		if (!p)
+			return -1;
 
 		p->array[0] = 'a';
-		kvमुक्त_rcu(p, rcu);
-	पूर्ण
+		kvfree_rcu(p);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा test_हाल_desc अणु
-	स्थिर अक्षर *test_name;
-	पूर्णांक (*test_func)(व्योम);
-पूर्ण;
+static int
+kvfree_rcu_2_arg_vmalloc_test(void)
+{
+	struct test_kvfree_rcu *p;
+	int i;
 
-अटल काष्ठा test_हाल_desc test_हाल_array[] = अणु
-	अणु "fix_size_alloc_test", fix_size_alloc_test पूर्ण,
-	अणु "full_fit_alloc_test", full_fit_alloc_test पूर्ण,
-	अणु "long_busy_list_alloc_test", दीर्घ_busy_list_alloc_test पूर्ण,
-	अणु "random_size_alloc_test", अक्रमom_size_alloc_test पूर्ण,
-	अणु "fix_align_alloc_test", fix_align_alloc_test पूर्ण,
-	अणु "random_size_align_alloc_test", अक्रमom_size_align_alloc_test पूर्ण,
-	अणु "align_shift_alloc_test", align_shअगरt_alloc_test पूर्ण,
-	अणु "pcpu_alloc_test", pcpu_alloc_test पूर्ण,
-	अणु "kvfree_rcu_1_arg_vmalloc_test", kvमुक्त_rcu_1_arg_vदो_स्मृति_test पूर्ण,
-	अणु "kvfree_rcu_2_arg_vmalloc_test", kvमुक्त_rcu_2_arg_vदो_स्मृति_test पूर्ण,
-	/* Add a new test हाल here. */
-पूर्ण;
+	for (i = 0; i < test_loop_count; i++) {
+		p = vmalloc(1 * PAGE_SIZE);
+		if (!p)
+			return -1;
 
-काष्ठा test_हाल_data अणु
-	पूर्णांक test_failed;
-	पूर्णांक test_passed;
-	u64 समय;
-पूर्ण;
+		p->array[0] = 'a';
+		kvfree_rcu(p, rcu);
+	}
 
-अटल काष्ठा test_driver अणु
-	काष्ठा task_काष्ठा *task;
-	काष्ठा test_हाल_data data[ARRAY_SIZE(test_हाल_array)];
+	return 0;
+}
 
-	अचिन्हित दीर्घ start;
-	अचिन्हित दीर्घ stop;
-पूर्ण *tdriver;
+struct test_case_desc {
+	const char *test_name;
+	int (*test_func)(void);
+};
 
-अटल व्योम shuffle_array(पूर्णांक *arr, पूर्णांक n)
-अणु
-	अचिन्हित पूर्णांक rnd;
-	पूर्णांक i, j, x;
+static struct test_case_desc test_case_array[] = {
+	{ "fix_size_alloc_test", fix_size_alloc_test },
+	{ "full_fit_alloc_test", full_fit_alloc_test },
+	{ "long_busy_list_alloc_test", long_busy_list_alloc_test },
+	{ "random_size_alloc_test", random_size_alloc_test },
+	{ "fix_align_alloc_test", fix_align_alloc_test },
+	{ "random_size_align_alloc_test", random_size_align_alloc_test },
+	{ "align_shift_alloc_test", align_shift_alloc_test },
+	{ "pcpu_alloc_test", pcpu_alloc_test },
+	{ "kvfree_rcu_1_arg_vmalloc_test", kvfree_rcu_1_arg_vmalloc_test },
+	{ "kvfree_rcu_2_arg_vmalloc_test", kvfree_rcu_2_arg_vmalloc_test },
+	/* Add a new test case here. */
+};
 
-	क्रम (i = n - 1; i > 0; i--)  अणु
-		get_अक्रमom_bytes(&rnd, माप(rnd));
+struct test_case_data {
+	int test_failed;
+	int test_passed;
+	u64 time;
+};
+
+static struct test_driver {
+	struct task_struct *task;
+	struct test_case_data data[ARRAY_SIZE(test_case_array)];
+
+	unsigned long start;
+	unsigned long stop;
+} *tdriver;
+
+static void shuffle_array(int *arr, int n)
+{
+	unsigned int rnd;
+	int i, j, x;
+
+	for (i = n - 1; i > 0; i--)  {
+		get_random_bytes(&rnd, sizeof(rnd));
 
 		/* Cut the range. */
 		j = rnd % i;
@@ -403,174 +402,174 @@ kvमुक्त_rcu_2_arg_vदो_स्मृति_test(व्योम)
 		x = arr[i];
 		arr[i] = arr[j];
 		arr[j] = x;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक test_func(व्योम *निजी)
-अणु
-	काष्ठा test_driver *t = निजी;
-	पूर्णांक अक्रमom_array[ARRAY_SIZE(test_हाल_array)];
-	पूर्णांक index, i, j;
-	kसमय_प्रकार kt;
+static int test_func(void *private)
+{
+	struct test_driver *t = private;
+	int random_array[ARRAY_SIZE(test_case_array)];
+	int index, i, j;
+	ktime_t kt;
 	u64 delta;
 
-	क्रम (i = 0; i < ARRAY_SIZE(test_हाल_array); i++)
-		अक्रमom_array[i] = i;
+	for (i = 0; i < ARRAY_SIZE(test_case_array); i++)
+		random_array[i] = i;
 
-	अगर (!sequential_test_order)
-		shuffle_array(अक्रमom_array, ARRAY_SIZE(test_हाल_array));
+	if (!sequential_test_order)
+		shuffle_array(random_array, ARRAY_SIZE(test_case_array));
 
 	/*
-	 * Block until initialization is करोne.
+	 * Block until initialization is done.
 	 */
-	करोwn_पढ़ो(&prepare_क्रम_test_rwsem);
+	down_read(&prepare_for_test_rwsem);
 
 	t->start = get_cycles();
-	क्रम (i = 0; i < ARRAY_SIZE(test_हाल_array); i++) अणु
-		index = अक्रमom_array[i];
+	for (i = 0; i < ARRAY_SIZE(test_case_array); i++) {
+		index = random_array[i];
 
 		/*
-		 * Skip tests अगर run_test_mask has been specअगरied.
+		 * Skip tests if run_test_mask has been specified.
 		 */
-		अगर (!((run_test_mask & (1 << index)) >> index))
-			जारी;
+		if (!((run_test_mask & (1 << index)) >> index))
+			continue;
 
-		kt = kसमय_get();
-		क्रम (j = 0; j < test_repeat_count; j++) अणु
-			अगर (!test_हाल_array[index].test_func())
+		kt = ktime_get();
+		for (j = 0; j < test_repeat_count; j++) {
+			if (!test_case_array[index].test_func())
 				t->data[index].test_passed++;
-			अन्यथा
+			else
 				t->data[index].test_failed++;
-		पूर्ण
+		}
 
 		/*
-		 * Take an average समय that test took.
+		 * Take an average time that test took.
 		 */
-		delta = (u64) kसमय_us_delta(kसमय_get(), kt);
-		करो_भाग(delta, (u32) test_repeat_count);
+		delta = (u64) ktime_us_delta(ktime_get(), kt);
+		do_div(delta, (u32) test_repeat_count);
 
-		t->data[index].समय = delta;
-	पूर्ण
+		t->data[index].time = delta;
+	}
 	t->stop = get_cycles();
 
-	up_पढ़ो(&prepare_क्रम_test_rwsem);
-	test_report_one_करोne();
+	up_read(&prepare_for_test_rwsem);
+	test_report_one_done();
 
 	/*
-	 * Wait क्रम the kthपढ़ो_stop() call.
+	 * Wait for the kthread_stop() call.
 	 */
-	जबतक (!kthपढ़ो_should_stop())
+	while (!kthread_should_stop())
 		msleep(10);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-init_test_configurtion(व्योम)
-अणु
+static int
+init_test_configurtion(void)
+{
 	/*
 	 * A maximum number of workers is defined as hard-coded
-	 * value and set to अच_लघु_उच्च. We add such gap just in
-	 * हाल and क्रम potential heavy stressing.
+	 * value and set to USHRT_MAX. We add such gap just in
+	 * case and for potential heavy stressing.
 	 */
-	nr_thपढ़ोs = clamp(nr_thपढ़ोs, 1, (पूर्णांक) अच_लघु_उच्च);
+	nr_threads = clamp(nr_threads, 1, (int) USHRT_MAX);
 
-	/* Allocate the space क्रम test instances. */
-	tdriver = kvसुस्मृति(nr_thपढ़ोs, माप(*tdriver), GFP_KERNEL);
-	अगर (tdriver == शून्य)
-		वापस -1;
+	/* Allocate the space for test instances. */
+	tdriver = kvcalloc(nr_threads, sizeof(*tdriver), GFP_KERNEL);
+	if (tdriver == NULL)
+		return -1;
 
-	अगर (test_repeat_count <= 0)
+	if (test_repeat_count <= 0)
 		test_repeat_count = 1;
 
-	अगर (test_loop_count <= 0)
+	if (test_loop_count <= 0)
 		test_loop_count = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम करो_concurrent_test(व्योम)
-अणु
-	पूर्णांक i, ret;
+static void do_concurrent_test(void)
+{
+	int i, ret;
 
 	/*
 	 * Set some basic configurations plus sanity check.
 	 */
 	ret = init_test_configurtion();
-	अगर (ret < 0)
-		वापस;
+	if (ret < 0)
+		return;
 
 	/*
 	 * Put on hold all workers.
 	 */
-	करोwn_ग_लिखो(&prepare_क्रम_test_rwsem);
+	down_write(&prepare_for_test_rwsem);
 
-	क्रम (i = 0; i < nr_thपढ़ोs; i++) अणु
-		काष्ठा test_driver *t = &tdriver[i];
+	for (i = 0; i < nr_threads; i++) {
+		struct test_driver *t = &tdriver[i];
 
-		t->task = kthपढ़ो_run(test_func, t, "vmalloc_test/%d", i);
+		t->task = kthread_run(test_func, t, "vmalloc_test/%d", i);
 
-		अगर (!IS_ERR(t->task))
+		if (!IS_ERR(t->task))
 			/* Success. */
-			atomic_inc(&test_n_unकरोne);
-		अन्यथा
+			atomic_inc(&test_n_undone);
+		else
 			pr_err("Failed to start %d kthread\n", i);
-	पूर्ण
+	}
 
 	/*
-	 * Now let the workers करो their job.
+	 * Now let the workers do their job.
 	 */
-	up_ग_लिखो(&prepare_क्रम_test_rwsem);
+	up_write(&prepare_for_test_rwsem);
 
 	/*
-	 * Sleep quiet until all workers are करोne with 1 second
-	 * पूर्णांकerval. Since the test can take a lot of समय we
-	 * can run पूर्णांकo a stack trace of the hung task. That is
-	 * why we go with completion_समयout and HZ value.
+	 * Sleep quiet until all workers are done with 1 second
+	 * interval. Since the test can take a lot of time we
+	 * can run into a stack trace of the hung task. That is
+	 * why we go with completion_timeout and HZ value.
 	 */
-	करो अणु
-		ret = रुको_क्रम_completion_समयout(&test_all_करोne_comp, HZ);
-	पूर्ण जबतक (!ret);
+	do {
+		ret = wait_for_completion_timeout(&test_all_done_comp, HZ);
+	} while (!ret);
 
-	क्रम (i = 0; i < nr_thपढ़ोs; i++) अणु
-		काष्ठा test_driver *t = &tdriver[i];
-		पूर्णांक j;
+	for (i = 0; i < nr_threads; i++) {
+		struct test_driver *t = &tdriver[i];
+		int j;
 
-		अगर (!IS_ERR(t->task))
-			kthपढ़ो_stop(t->task);
+		if (!IS_ERR(t->task))
+			kthread_stop(t->task);
 
-		क्रम (j = 0; j < ARRAY_SIZE(test_हाल_array); j++) अणु
-			अगर (!((run_test_mask & (1 << j)) >> j))
-				जारी;
+		for (j = 0; j < ARRAY_SIZE(test_case_array); j++) {
+			if (!((run_test_mask & (1 << j)) >> j))
+				continue;
 
 			pr_info(
 				"Summary: %s passed: %d failed: %d repeat: %d loops: %d avg: %llu usec\n",
-				test_हाल_array[j].test_name,
+				test_case_array[j].test_name,
 				t->data[j].test_passed,
 				t->data[j].test_failed,
 				test_repeat_count, test_loop_count,
-				t->data[j].समय);
-		पूर्ण
+				t->data[j].time);
+		}
 
 		pr_info("All test took worker%d=%lu cycles\n",
 			i, t->stop - t->start);
-	पूर्ण
+	}
 
-	kvमुक्त(tdriver);
-पूर्ण
+	kvfree(tdriver);
+}
 
-अटल पूर्णांक vदो_स्मृति_test_init(व्योम)
-अणु
-	करो_concurrent_test();
-	वापस -EAGAIN; /* Fail will directly unload the module */
-पूर्ण
+static int vmalloc_test_init(void)
+{
+	do_concurrent_test();
+	return -EAGAIN; /* Fail will directly unload the module */
+}
 
-अटल व्योम vदो_स्मृति_test_निकास(व्योम)
-अणु
-पूर्ण
+static void vmalloc_test_exit(void)
+{
+}
 
-module_init(vदो_स्मृति_test_init)
-module_निकास(vदो_स्मृति_test_निकास)
+module_init(vmalloc_test_init)
+module_exit(vmalloc_test_exit)
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Uladzislau Rezki");

@@ -1,72 +1,71 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *   USB Audio Driver क्रम ALSA
+ *   USB Audio Driver for ALSA
  *
- *   Quirks and venकरोr-specअगरic extensions क्रम mixer पूर्णांकerfaces
+ *   Quirks and vendor-specific extensions for mixer interfaces
  *
  *   Copyright (c) 2002 by Takashi Iwai <tiwai@suse.de>
  *
  *   Many codes borrowed from audio.c by
  *	    Alan Cox (alan@lxorguk.ukuu.org.uk)
- *	    Thomas Sailer (sailer@अगरe.ee.ethz.ch)
+ *	    Thomas Sailer (sailer@ife.ee.ethz.ch)
  *
  *   Audio Advantage Micro II support added by:
  *	    Przemek Rudy (prudy1@o2.pl)
  */
 
-#समावेश <linux/hid.h>
-#समावेश <linux/init.h>
-#समावेश <linux/math64.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/usb/audपन.स>
+#include <linux/hid.h>
+#include <linux/init.h>
+#include <linux/math64.h>
+#include <linux/slab.h>
+#include <linux/usb.h>
+#include <linux/usb/audio.h>
 
-#समावेश <sound/asoundef.h>
-#समावेश <sound/core.h>
-#समावेश <sound/control.h>
-#समावेश <sound/hwdep.h>
-#समावेश <sound/info.h>
-#समावेश <sound/tlv.h>
+#include <sound/asoundef.h>
+#include <sound/core.h>
+#include <sound/control.h>
+#include <sound/hwdep.h>
+#include <sound/info.h>
+#include <sound/tlv.h>
 
-#समावेश "usbaudio.h"
-#समावेश "mixer.h"
-#समावेश "mixer_quirks.h"
-#समावेश "mixer_scarlett.h"
-#समावेश "mixer_scarlett_gen2.h"
-#समावेश "mixer_us16x08.h"
-#समावेश "mixer_s1810c.h"
-#समावेश "helper.h"
+#include "usbaudio.h"
+#include "mixer.h"
+#include "mixer_quirks.h"
+#include "mixer_scarlett.h"
+#include "mixer_scarlett_gen2.h"
+#include "mixer_us16x08.h"
+#include "mixer_s1810c.h"
+#include "helper.h"
 
-काष्ठा std_mono_table अणु
-	अचिन्हित पूर्णांक unitid, control, cmask;
-	पूर्णांक val_type;
-	स्थिर अक्षर *name;
+struct std_mono_table {
+	unsigned int unitid, control, cmask;
+	int val_type;
+	const char *name;
 	snd_kcontrol_tlv_rw_t *tlv_callback;
-पूर्ण;
+};
 
-/* This function allows क्रम the creation of standard UAC controls.
- * See the quirks क्रम M-Audio FTUs or Ebox-44.
- * If you करोn't want to set a TLV callback pass शून्य.
+/* This function allows for the creation of standard UAC controls.
+ * See the quirks for M-Audio FTUs or Ebox-44.
+ * If you don't want to set a TLV callback pass NULL.
  *
- * Since there करोesn't seem to be a devices that needs a multichannel
- * version, we keep it mono क्रम simplicity.
+ * Since there doesn't seem to be a devices that needs a multichannel
+ * version, we keep it mono for simplicity.
  */
-अटल पूर्णांक snd_create_std_mono_ctl_offset(काष्ठा usb_mixer_पूर्णांकerface *mixer,
-				अचिन्हित पूर्णांक unitid,
-				अचिन्हित पूर्णांक control,
-				अचिन्हित पूर्णांक cmask,
-				पूर्णांक val_type,
-				अचिन्हित पूर्णांक idx_off,
-				स्थिर अक्षर *name,
+static int snd_create_std_mono_ctl_offset(struct usb_mixer_interface *mixer,
+				unsigned int unitid,
+				unsigned int control,
+				unsigned int cmask,
+				int val_type,
+				unsigned int idx_off,
+				const char *name,
 				snd_kcontrol_tlv_rw_t *tlv_callback)
-अणु
-	काष्ठा usb_mixer_elem_info *cval;
-	काष्ठा snd_kcontrol *kctl;
+{
+	struct usb_mixer_elem_info *cval;
+	struct snd_kcontrol *kctl;
 
-	cval = kzalloc(माप(*cval), GFP_KERNEL);
-	अगर (!cval)
-		वापस -ENOMEM;
+	cval = kzalloc(sizeof(*cval), GFP_KERNEL);
+	if (!cval)
+		return -ENOMEM;
 
 	snd_usb_mixer_elem_init_std(&cval->head, mixer, unitid);
 	cval->val_type = val_type;
@@ -75,8 +74,8 @@
 	cval->cmask = cmask;
 	cval->idx_off = idx_off;
 
-	/* get_min_max() is called only क्रम पूर्णांकeger volumes later,
-	 * so provide a लघु-cut क्रम booleans */
+	/* get_min_max() is called only for integer volumes later,
+	 * so provide a short-cut for booleans */
 	cval->min = 0;
 	cval->max = 1;
 	cval->res = 0;
@@ -85,93 +84,93 @@
 
 	/* Create control */
 	kctl = snd_ctl_new1(snd_usb_feature_unit_ctl, cval);
-	अगर (!kctl) अणु
-		kमुक्त(cval);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!kctl) {
+		kfree(cval);
+		return -ENOMEM;
+	}
 
 	/* Set name */
-	snम_लिखो(kctl->id.name, माप(kctl->id.name), name);
-	kctl->निजी_मुक्त = snd_usb_mixer_elem_मुक्त;
+	snprintf(kctl->id.name, sizeof(kctl->id.name), name);
+	kctl->private_free = snd_usb_mixer_elem_free;
 
 	/* set TLV */
-	अगर (tlv_callback) अणु
+	if (tlv_callback) {
 		kctl->tlv.c = tlv_callback;
 		kctl->vd[0].access |=
 			SNDRV_CTL_ELEM_ACCESS_TLV_READ |
 			SNDRV_CTL_ELEM_ACCESS_TLV_CALLBACK;
-	पूर्ण
+	}
 	/* Add control to mixer */
-	वापस snd_usb_mixer_add_control(&cval->head, kctl);
-पूर्ण
+	return snd_usb_mixer_add_control(&cval->head, kctl);
+}
 
-अटल पूर्णांक snd_create_std_mono_ctl(काष्ठा usb_mixer_पूर्णांकerface *mixer,
-				अचिन्हित पूर्णांक unitid,
-				अचिन्हित पूर्णांक control,
-				अचिन्हित पूर्णांक cmask,
-				पूर्णांक val_type,
-				स्थिर अक्षर *name,
+static int snd_create_std_mono_ctl(struct usb_mixer_interface *mixer,
+				unsigned int unitid,
+				unsigned int control,
+				unsigned int cmask,
+				int val_type,
+				const char *name,
 				snd_kcontrol_tlv_rw_t *tlv_callback)
-अणु
-	वापस snd_create_std_mono_ctl_offset(mixer, unitid, control, cmask,
+{
+	return snd_create_std_mono_ctl_offset(mixer, unitid, control, cmask,
 		val_type, 0 /* Offset */, name, tlv_callback);
-पूर्ण
+}
 
 /*
  * Create a set of standard UAC controls from a table
  */
-अटल पूर्णांक snd_create_std_mono_table(काष्ठा usb_mixer_पूर्णांकerface *mixer,
-				     स्थिर काष्ठा std_mono_table *t)
-अणु
-	पूर्णांक err;
+static int snd_create_std_mono_table(struct usb_mixer_interface *mixer,
+				     const struct std_mono_table *t)
+{
+	int err;
 
-	जबतक (t->name != शून्य) अणु
+	while (t->name != NULL) {
 		err = snd_create_std_mono_ctl(mixer, t->unitid, t->control,
 				t->cmask, t->val_type, t->name, t->tlv_callback);
-		अगर (err < 0)
-			वापस err;
+		if (err < 0)
+			return err;
 		t++;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक add_single_ctl_with_resume(काष्ठा usb_mixer_पूर्णांकerface *mixer,
-				      पूर्णांक id,
+static int add_single_ctl_with_resume(struct usb_mixer_interface *mixer,
+				      int id,
 				      usb_mixer_elem_resume_func_t resume,
-				      स्थिर काष्ठा snd_kcontrol_new *knew,
-				      काष्ठा usb_mixer_elem_list **listp)
-अणु
-	काष्ठा usb_mixer_elem_list *list;
-	काष्ठा snd_kcontrol *kctl;
+				      const struct snd_kcontrol_new *knew,
+				      struct usb_mixer_elem_list **listp)
+{
+	struct usb_mixer_elem_list *list;
+	struct snd_kcontrol *kctl;
 
-	list = kzalloc(माप(*list), GFP_KERNEL);
-	अगर (!list)
-		वापस -ENOMEM;
-	अगर (listp)
+	list = kzalloc(sizeof(*list), GFP_KERNEL);
+	if (!list)
+		return -ENOMEM;
+	if (listp)
 		*listp = list;
 	list->mixer = mixer;
 	list->id = id;
 	list->reset_resume = resume;
 	kctl = snd_ctl_new1(knew, list);
-	अगर (!kctl) अणु
-		kमुक्त(list);
-		वापस -ENOMEM;
-	पूर्ण
-	kctl->निजी_मुक्त = snd_usb_mixer_elem_मुक्त;
-	/* करोn't use snd_usb_mixer_add_control() here, this is a special list element */
-	वापस snd_usb_mixer_add_list(list, kctl, false);
-पूर्ण
+	if (!kctl) {
+		kfree(list);
+		return -ENOMEM;
+	}
+	kctl->private_free = snd_usb_mixer_elem_free;
+	/* don't use snd_usb_mixer_add_control() here, this is a special list element */
+	return snd_usb_mixer_add_list(list, kctl, false);
+}
 
 /*
  * Sound Blaster remote control configuration
  *
- * क्रमmat of remote control data:
+ * format of remote control data:
  * Extigy:       xx 00
  * Audigy 2 NX:  06 80 xx 00 00 00
  * Live! 24-bit: 06 80 xx yy 22 83
  */
-अटल स्थिर काष्ठा rc_config अणु
+static const struct rc_config {
 	u32 usb_id;
 	u8  offset;
 	u8  length;
@@ -179,104 +178,104 @@
 	u8  min_packet_length; /* minimum accepted length of the URB result */
 	u8  mute_mixer_id;
 	u32 mute_code;
-पूर्ण rc_configs[] = अणु
-	अणु USB_ID(0x041e, 0x3000), 0, 1, 2, 1,  18, 0x0013 पूर्ण, /* Extigy       */
-	अणु USB_ID(0x041e, 0x3020), 2, 1, 6, 6,  18, 0x0013 पूर्ण, /* Audigy 2 NX  */
-	अणु USB_ID(0x041e, 0x3040), 2, 2, 6, 6,  2,  0x6e91 पूर्ण, /* Live! 24-bit */
-	अणु USB_ID(0x041e, 0x3042), 0, 1, 1, 1,  1,  0x000d पूर्ण, /* Usb X-Fi S51 */
-	अणु USB_ID(0x041e, 0x30df), 0, 1, 1, 1,  1,  0x000d पूर्ण, /* Usb X-Fi S51 Pro */
-	अणु USB_ID(0x041e, 0x3237), 0, 1, 1, 1,  1,  0x000d पूर्ण, /* Usb X-Fi S51 Pro */
-	अणु USB_ID(0x041e, 0x3263), 0, 1, 1, 1,  1,  0x000d पूर्ण, /* Usb X-Fi S51 Pro */
-	अणु USB_ID(0x041e, 0x3048), 2, 2, 6, 6,  2,  0x6e91 पूर्ण, /* Toshiba SB0500 */
-पूर्ण;
+} rc_configs[] = {
+	{ USB_ID(0x041e, 0x3000), 0, 1, 2, 1,  18, 0x0013 }, /* Extigy       */
+	{ USB_ID(0x041e, 0x3020), 2, 1, 6, 6,  18, 0x0013 }, /* Audigy 2 NX  */
+	{ USB_ID(0x041e, 0x3040), 2, 2, 6, 6,  2,  0x6e91 }, /* Live! 24-bit */
+	{ USB_ID(0x041e, 0x3042), 0, 1, 1, 1,  1,  0x000d }, /* Usb X-Fi S51 */
+	{ USB_ID(0x041e, 0x30df), 0, 1, 1, 1,  1,  0x000d }, /* Usb X-Fi S51 Pro */
+	{ USB_ID(0x041e, 0x3237), 0, 1, 1, 1,  1,  0x000d }, /* Usb X-Fi S51 Pro */
+	{ USB_ID(0x041e, 0x3263), 0, 1, 1, 1,  1,  0x000d }, /* Usb X-Fi S51 Pro */
+	{ USB_ID(0x041e, 0x3048), 2, 2, 6, 6,  2,  0x6e91 }, /* Toshiba SB0500 */
+};
 
-अटल व्योम snd_usb_soundblaster_remote_complete(काष्ठा urb *urb)
-अणु
-	काष्ठा usb_mixer_पूर्णांकerface *mixer = urb->context;
-	स्थिर काष्ठा rc_config *rc = mixer->rc_cfg;
+static void snd_usb_soundblaster_remote_complete(struct urb *urb)
+{
+	struct usb_mixer_interface *mixer = urb->context;
+	const struct rc_config *rc = mixer->rc_cfg;
 	u32 code;
 
-	अगर (urb->status < 0 || urb->actual_length < rc->min_packet_length)
-		वापस;
+	if (urb->status < 0 || urb->actual_length < rc->min_packet_length)
+		return;
 
 	code = mixer->rc_buffer[rc->offset];
-	अगर (rc->length == 2)
+	if (rc->length == 2)
 		code |= mixer->rc_buffer[rc->offset + 1] << 8;
 
 	/* the Mute button actually changes the mixer control */
-	अगर (code == rc->mute_code)
-		snd_usb_mixer_notअगरy_id(mixer, rc->mute_mixer_id);
+	if (code == rc->mute_code)
+		snd_usb_mixer_notify_id(mixer, rc->mute_mixer_id);
 	mixer->rc_code = code;
 	wmb();
-	wake_up(&mixer->rc_रुकोq);
-पूर्ण
+	wake_up(&mixer->rc_waitq);
+}
 
-अटल दीर्घ snd_usb_sbrc_hwdep_पढ़ो(काष्ठा snd_hwdep *hw, अक्षर __user *buf,
-				     दीर्घ count, loff_t *offset)
-अणु
-	काष्ठा usb_mixer_पूर्णांकerface *mixer = hw->निजी_data;
-	पूर्णांक err;
+static long snd_usb_sbrc_hwdep_read(struct snd_hwdep *hw, char __user *buf,
+				     long count, loff_t *offset)
+{
+	struct usb_mixer_interface *mixer = hw->private_data;
+	int err;
 	u32 rc_code;
 
-	अगर (count != 1 && count != 4)
-		वापस -EINVAL;
-	err = रुको_event_पूर्णांकerruptible(mixer->rc_रुकोq,
+	if (count != 1 && count != 4)
+		return -EINVAL;
+	err = wait_event_interruptible(mixer->rc_waitq,
 				       (rc_code = xchg(&mixer->rc_code, 0)) != 0);
-	अगर (err == 0) अणु
-		अगर (count == 1)
+	if (err == 0) {
+		if (count == 1)
 			err = put_user(rc_code, buf);
-		अन्यथा
+		else
 			err = put_user(rc_code, (u32 __user *)buf);
-	पूर्ण
-	वापस err < 0 ? err : count;
-पूर्ण
+	}
+	return err < 0 ? err : count;
+}
 
-अटल __poll_t snd_usb_sbrc_hwdep_poll(काष्ठा snd_hwdep *hw, काष्ठा file *file,
-					    poll_table *रुको)
-अणु
-	काष्ठा usb_mixer_पूर्णांकerface *mixer = hw->निजी_data;
+static __poll_t snd_usb_sbrc_hwdep_poll(struct snd_hwdep *hw, struct file *file,
+					    poll_table *wait)
+{
+	struct usb_mixer_interface *mixer = hw->private_data;
 
-	poll_रुको(file, &mixer->rc_रुकोq, रुको);
-	वापस mixer->rc_code ? EPOLLIN | EPOLLRDNORM : 0;
-पूर्ण
+	poll_wait(file, &mixer->rc_waitq, wait);
+	return mixer->rc_code ? EPOLLIN | EPOLLRDNORM : 0;
+}
 
-अटल पूर्णांक snd_usb_soundblaster_remote_init(काष्ठा usb_mixer_पूर्णांकerface *mixer)
-अणु
-	काष्ठा snd_hwdep *hwdep;
-	पूर्णांक err, len, i;
+static int snd_usb_soundblaster_remote_init(struct usb_mixer_interface *mixer)
+{
+	struct snd_hwdep *hwdep;
+	int err, len, i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(rc_configs); ++i)
-		अगर (rc_configs[i].usb_id == mixer->chip->usb_id)
-			अवरोध;
-	अगर (i >= ARRAY_SIZE(rc_configs))
-		वापस 0;
+	for (i = 0; i < ARRAY_SIZE(rc_configs); ++i)
+		if (rc_configs[i].usb_id == mixer->chip->usb_id)
+			break;
+	if (i >= ARRAY_SIZE(rc_configs))
+		return 0;
 	mixer->rc_cfg = &rc_configs[i];
 
 	len = mixer->rc_cfg->packet_length;
 
-	init_रुकोqueue_head(&mixer->rc_रुकोq);
+	init_waitqueue_head(&mixer->rc_waitq);
 	err = snd_hwdep_new(mixer->chip->card, "SB remote control", 0, &hwdep);
-	अगर (err < 0)
-		वापस err;
-	snम_लिखो(hwdep->name, माप(hwdep->name),
-		 "%s remote control", mixer->chip->card->लघुname);
-	hwdep->अगरace = SNDRV_HWDEP_IFACE_SB_RC;
-	hwdep->निजी_data = mixer;
-	hwdep->ops.पढ़ो = snd_usb_sbrc_hwdep_पढ़ो;
+	if (err < 0)
+		return err;
+	snprintf(hwdep->name, sizeof(hwdep->name),
+		 "%s remote control", mixer->chip->card->shortname);
+	hwdep->iface = SNDRV_HWDEP_IFACE_SB_RC;
+	hwdep->private_data = mixer;
+	hwdep->ops.read = snd_usb_sbrc_hwdep_read;
 	hwdep->ops.poll = snd_usb_sbrc_hwdep_poll;
 	hwdep->exclusive = 1;
 
 	mixer->rc_urb = usb_alloc_urb(0, GFP_KERNEL);
-	अगर (!mixer->rc_urb)
-		वापस -ENOMEM;
-	mixer->rc_setup_packet = kदो_स्मृति(माप(*mixer->rc_setup_packet), GFP_KERNEL);
-	अगर (!mixer->rc_setup_packet) अणु
-		usb_मुक्त_urb(mixer->rc_urb);
-		mixer->rc_urb = शून्य;
-		वापस -ENOMEM;
-	पूर्ण
+	if (!mixer->rc_urb)
+		return -ENOMEM;
+	mixer->rc_setup_packet = kmalloc(sizeof(*mixer->rc_setup_packet), GFP_KERNEL);
+	if (!mixer->rc_setup_packet) {
+		usb_free_urb(mixer->rc_urb);
+		mixer->rc_urb = NULL;
+		return -ENOMEM;
+	}
 	mixer->rc_setup_packet->bRequestType =
-		USB_सूची_IN | USB_TYPE_CLASS | USB_RECIP_INTERFACE;
+		USB_DIR_IN | USB_TYPE_CLASS | USB_RECIP_INTERFACE;
 	mixer->rc_setup_packet->bRequest = UAC_GET_MEM;
 	mixer->rc_setup_packet->wValue = cpu_to_le16(0);
 	mixer->rc_setup_packet->wIndex = cpu_to_le16(0);
@@ -285,1056 +284,1056 @@
 			     usb_rcvctrlpipe(mixer->chip->dev, 0),
 			     (u8*)mixer->rc_setup_packet, mixer->rc_buffer, len,
 			     snd_usb_soundblaster_remote_complete, mixer);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा snd_audigy2nx_led_info		snd_ctl_boolean_mono_info
+#define snd_audigy2nx_led_info		snd_ctl_boolean_mono_info
 
-अटल पूर्णांक snd_audigy2nx_led_get(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	ucontrol->value.पूर्णांकeger.value[0] = kcontrol->निजी_value >> 8;
-	वापस 0;
-पूर्ण
+static int snd_audigy2nx_led_get(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
+{
+	ucontrol->value.integer.value[0] = kcontrol->private_value >> 8;
+	return 0;
+}
 
-अटल पूर्णांक snd_audigy2nx_led_update(काष्ठा usb_mixer_पूर्णांकerface *mixer,
-				    पूर्णांक value, पूर्णांक index)
-अणु
-	काष्ठा snd_usb_audio *chip = mixer->chip;
-	पूर्णांक err;
+static int snd_audigy2nx_led_update(struct usb_mixer_interface *mixer,
+				    int value, int index)
+{
+	struct snd_usb_audio *chip = mixer->chip;
+	int err;
 
-	err = snd_usb_lock_shutकरोwn(chip);
-	अगर (err < 0)
-		वापस err;
+	err = snd_usb_lock_shutdown(chip);
+	if (err < 0)
+		return err;
 
-	अगर (chip->usb_id == USB_ID(0x041e, 0x3042))
+	if (chip->usb_id == USB_ID(0x041e, 0x3042))
 		err = snd_usb_ctl_msg(chip->dev,
 			      usb_sndctrlpipe(chip->dev, 0), 0x24,
-			      USB_सूची_OUT | USB_TYPE_VENDOR | USB_RECIP_OTHER,
-			      !value, 0, शून्य, 0);
+			      USB_DIR_OUT | USB_TYPE_VENDOR | USB_RECIP_OTHER,
+			      !value, 0, NULL, 0);
 	/* USB X-Fi S51 Pro */
-	अगर (chip->usb_id == USB_ID(0x041e, 0x30df))
+	if (chip->usb_id == USB_ID(0x041e, 0x30df))
 		err = snd_usb_ctl_msg(chip->dev,
 			      usb_sndctrlpipe(chip->dev, 0), 0x24,
-			      USB_सूची_OUT | USB_TYPE_VENDOR | USB_RECIP_OTHER,
-			      !value, 0, शून्य, 0);
-	अन्यथा
+			      USB_DIR_OUT | USB_TYPE_VENDOR | USB_RECIP_OTHER,
+			      !value, 0, NULL, 0);
+	else
 		err = snd_usb_ctl_msg(chip->dev,
 			      usb_sndctrlpipe(chip->dev, 0), 0x24,
-			      USB_सूची_OUT | USB_TYPE_VENDOR | USB_RECIP_OTHER,
-			      value, index + 2, शून्य, 0);
-	snd_usb_unlock_shutकरोwn(chip);
-	वापस err;
-पूर्ण
+			      USB_DIR_OUT | USB_TYPE_VENDOR | USB_RECIP_OTHER,
+			      value, index + 2, NULL, 0);
+	snd_usb_unlock_shutdown(chip);
+	return err;
+}
 
-अटल पूर्णांक snd_audigy2nx_led_put(काष्ठा snd_kcontrol *kcontrol,
-				 काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा usb_mixer_elem_list *list = snd_kcontrol_chip(kcontrol);
-	काष्ठा usb_mixer_पूर्णांकerface *mixer = list->mixer;
-	पूर्णांक index = kcontrol->निजी_value & 0xff;
-	अचिन्हित पूर्णांक value = ucontrol->value.पूर्णांकeger.value[0];
-	पूर्णांक old_value = kcontrol->निजी_value >> 8;
-	पूर्णांक err;
+static int snd_audigy2nx_led_put(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_value *ucontrol)
+{
+	struct usb_mixer_elem_list *list = snd_kcontrol_chip(kcontrol);
+	struct usb_mixer_interface *mixer = list->mixer;
+	int index = kcontrol->private_value & 0xff;
+	unsigned int value = ucontrol->value.integer.value[0];
+	int old_value = kcontrol->private_value >> 8;
+	int err;
 
-	अगर (value > 1)
-		वापस -EINVAL;
-	अगर (value == old_value)
-		वापस 0;
-	kcontrol->निजी_value = (value << 8) | index;
+	if (value > 1)
+		return -EINVAL;
+	if (value == old_value)
+		return 0;
+	kcontrol->private_value = (value << 8) | index;
 	err = snd_audigy2nx_led_update(mixer, value, index);
-	वापस err < 0 ? err : 1;
-पूर्ण
+	return err < 0 ? err : 1;
+}
 
-अटल पूर्णांक snd_audigy2nx_led_resume(काष्ठा usb_mixer_elem_list *list)
-अणु
-	पूर्णांक priv_value = list->kctl->निजी_value;
+static int snd_audigy2nx_led_resume(struct usb_mixer_elem_list *list)
+{
+	int priv_value = list->kctl->private_value;
 
-	वापस snd_audigy2nx_led_update(list->mixer, priv_value >> 8,
+	return snd_audigy2nx_led_update(list->mixer, priv_value >> 8,
 					priv_value & 0xff);
-पूर्ण
+}
 
-/* name and निजी_value are set dynamically */
-अटल स्थिर काष्ठा snd_kcontrol_new snd_audigy2nx_control = अणु
-	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+/* name and private_value are set dynamically */
+static const struct snd_kcontrol_new snd_audigy2nx_control = {
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 	.info = snd_audigy2nx_led_info,
 	.get = snd_audigy2nx_led_get,
 	.put = snd_audigy2nx_led_put,
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर snd_audigy2nx_led_names[] = अणु
+static const char * const snd_audigy2nx_led_names[] = {
 	"CMSS LED Switch",
 	"Power LED Switch",
 	"Dolby Digital LED Switch",
-पूर्ण;
+};
 
-अटल पूर्णांक snd_audigy2nx_controls_create(काष्ठा usb_mixer_पूर्णांकerface *mixer)
-अणु
-	पूर्णांक i, err;
+static int snd_audigy2nx_controls_create(struct usb_mixer_interface *mixer)
+{
+	int i, err;
 
-	क्रम (i = 0; i < ARRAY_SIZE(snd_audigy2nx_led_names); ++i) अणु
-		काष्ठा snd_kcontrol_new knew;
+	for (i = 0; i < ARRAY_SIZE(snd_audigy2nx_led_names); ++i) {
+		struct snd_kcontrol_new knew;
 
-		/* USB X-Fi S51 करोesn't have a CMSS LED */
-		अगर ((mixer->chip->usb_id == USB_ID(0x041e, 0x3042)) && i == 0)
-			जारी;
-		/* USB X-Fi S51 Pro करोesn't have one either */
-		अगर ((mixer->chip->usb_id == USB_ID(0x041e, 0x30df)) && i == 0)
-			जारी;
-		अगर (i > 1 && /* Live24ext has 2 LEDs only */
+		/* USB X-Fi S51 doesn't have a CMSS LED */
+		if ((mixer->chip->usb_id == USB_ID(0x041e, 0x3042)) && i == 0)
+			continue;
+		/* USB X-Fi S51 Pro doesn't have one either */
+		if ((mixer->chip->usb_id == USB_ID(0x041e, 0x30df)) && i == 0)
+			continue;
+		if (i > 1 && /* Live24ext has 2 LEDs only */
 			(mixer->chip->usb_id == USB_ID(0x041e, 0x3040) ||
 			 mixer->chip->usb_id == USB_ID(0x041e, 0x3042) ||
 			 mixer->chip->usb_id == USB_ID(0x041e, 0x30df) ||
 			 mixer->chip->usb_id == USB_ID(0x041e, 0x3048)))
-			अवरोध; 
+			break; 
 
 		knew = snd_audigy2nx_control;
 		knew.name = snd_audigy2nx_led_names[i];
-		knew.निजी_value = (1 << 8) | i; /* LED on as शेष */
+		knew.private_value = (1 << 8) | i; /* LED on as default */
 		err = add_single_ctl_with_resume(mixer, 0,
 						 snd_audigy2nx_led_resume,
-						 &knew, शून्य);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
-	वापस 0;
-पूर्ण
+						 &knew, NULL);
+		if (err < 0)
+			return err;
+	}
+	return 0;
+}
 
-अटल व्योम snd_audigy2nx_proc_पढ़ो(काष्ठा snd_info_entry *entry,
-				    काष्ठा snd_info_buffer *buffer)
-अणु
-	अटल स्थिर काष्ठा sb_jack अणु
-		पूर्णांक unitid;
-		स्थिर अक्षर *name;
-	पूर्ण  jacks_audigy2nx[] = अणु
-		अणु4,  "dig in "पूर्ण,
-		अणु7,  "line in"पूर्ण,
-		अणु19, "spk out"पूर्ण,
-		अणु20, "hph out"पूर्ण,
-		अणु-1, शून्यपूर्ण
-	पूर्ण, jacks_live24ext[] = अणु
-		अणु4,  "line in"पूर्ण, /* &1=Line, &2=Mic*/
-		अणु3,  "hph out"पूर्ण, /* headphones */
-		अणु0,  "RC     "पूर्ण, /* last command, 6 bytes see rc_config above */
-		अणु-1, शून्यपूर्ण
-	पूर्ण;
-	स्थिर काष्ठा sb_jack *jacks;
-	काष्ठा usb_mixer_पूर्णांकerface *mixer = entry->निजी_data;
-	पूर्णांक i, err;
+static void snd_audigy2nx_proc_read(struct snd_info_entry *entry,
+				    struct snd_info_buffer *buffer)
+{
+	static const struct sb_jack {
+		int unitid;
+		const char *name;
+	}  jacks_audigy2nx[] = {
+		{4,  "dig in "},
+		{7,  "line in"},
+		{19, "spk out"},
+		{20, "hph out"},
+		{-1, NULL}
+	}, jacks_live24ext[] = {
+		{4,  "line in"}, /* &1=Line, &2=Mic*/
+		{3,  "hph out"}, /* headphones */
+		{0,  "RC     "}, /* last command, 6 bytes see rc_config above */
+		{-1, NULL}
+	};
+	const struct sb_jack *jacks;
+	struct usb_mixer_interface *mixer = entry->private_data;
+	int i, err;
 	u8 buf[3];
 
-	snd_iम_लिखो(buffer, "%s jacks\n\n", mixer->chip->card->लघुname);
-	अगर (mixer->chip->usb_id == USB_ID(0x041e, 0x3020))
+	snd_iprintf(buffer, "%s jacks\n\n", mixer->chip->card->shortname);
+	if (mixer->chip->usb_id == USB_ID(0x041e, 0x3020))
 		jacks = jacks_audigy2nx;
-	अन्यथा अगर (mixer->chip->usb_id == USB_ID(0x041e, 0x3040) ||
+	else if (mixer->chip->usb_id == USB_ID(0x041e, 0x3040) ||
 		 mixer->chip->usb_id == USB_ID(0x041e, 0x3048))
 		jacks = jacks_live24ext;
-	अन्यथा
-		वापस;
+	else
+		return;
 
-	क्रम (i = 0; jacks[i].name; ++i) अणु
-		snd_iम_लिखो(buffer, "%s: ", jacks[i].name);
-		err = snd_usb_lock_shutकरोwn(mixer->chip);
-		अगर (err < 0)
-			वापस;
+	for (i = 0; jacks[i].name; ++i) {
+		snd_iprintf(buffer, "%s: ", jacks[i].name);
+		err = snd_usb_lock_shutdown(mixer->chip);
+		if (err < 0)
+			return;
 		err = snd_usb_ctl_msg(mixer->chip->dev,
 				      usb_rcvctrlpipe(mixer->chip->dev, 0),
-				      UAC_GET_MEM, USB_सूची_IN | USB_TYPE_CLASS |
+				      UAC_GET_MEM, USB_DIR_IN | USB_TYPE_CLASS |
 				      USB_RECIP_INTERFACE, 0,
 				      jacks[i].unitid << 8, buf, 3);
-		snd_usb_unlock_shutकरोwn(mixer->chip);
-		अगर (err == 3 && (buf[0] == 3 || buf[0] == 6))
-			snd_iम_लिखो(buffer, "%02x %02x\n", buf[1], buf[2]);
-		अन्यथा
-			snd_iम_लिखो(buffer, "?\n");
-	पूर्ण
-पूर्ण
+		snd_usb_unlock_shutdown(mixer->chip);
+		if (err == 3 && (buf[0] == 3 || buf[0] == 6))
+			snd_iprintf(buffer, "%02x %02x\n", buf[1], buf[2]);
+		else
+			snd_iprintf(buffer, "?\n");
+	}
+}
 
 /* EMU0204 */
-अटल पूर्णांक snd_emu0204_ch_चयन_info(काष्ठा snd_kcontrol *kcontrol,
-				      काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	अटल स्थिर अक्षर * स्थिर texts[2] = अणु"1/2", "3/4"पूर्ण;
+static int snd_emu0204_ch_switch_info(struct snd_kcontrol *kcontrol,
+				      struct snd_ctl_elem_info *uinfo)
+{
+	static const char * const texts[2] = {"1/2", "3/4"};
 
-	वापस snd_ctl_क्रमागत_info(uinfo, 1, ARRAY_SIZE(texts), texts);
-पूर्ण
+	return snd_ctl_enum_info(uinfo, 1, ARRAY_SIZE(texts), texts);
+}
 
-अटल पूर्णांक snd_emu0204_ch_चयन_get(काष्ठा snd_kcontrol *kcontrol,
-				     काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	ucontrol->value.क्रमागतerated.item[0] = kcontrol->निजी_value;
-	वापस 0;
-पूर्ण
+static int snd_emu0204_ch_switch_get(struct snd_kcontrol *kcontrol,
+				     struct snd_ctl_elem_value *ucontrol)
+{
+	ucontrol->value.enumerated.item[0] = kcontrol->private_value;
+	return 0;
+}
 
-अटल पूर्णांक snd_emu0204_ch_चयन_update(काष्ठा usb_mixer_पूर्णांकerface *mixer,
-					पूर्णांक value)
-अणु
-	काष्ठा snd_usb_audio *chip = mixer->chip;
-	पूर्णांक err;
-	अचिन्हित अक्षर buf[2];
+static int snd_emu0204_ch_switch_update(struct usb_mixer_interface *mixer,
+					int value)
+{
+	struct snd_usb_audio *chip = mixer->chip;
+	int err;
+	unsigned char buf[2];
 
-	err = snd_usb_lock_shutकरोwn(chip);
-	अगर (err < 0)
-		वापस err;
+	err = snd_usb_lock_shutdown(chip);
+	if (err < 0)
+		return err;
 
 	buf[0] = 0x01;
 	buf[1] = value ? 0x02 : 0x01;
 	err = snd_usb_ctl_msg(chip->dev,
 		      usb_sndctrlpipe(chip->dev, 0), UAC_SET_CUR,
-		      USB_RECIP_INTERFACE | USB_TYPE_CLASS | USB_सूची_OUT,
+		      USB_RECIP_INTERFACE | USB_TYPE_CLASS | USB_DIR_OUT,
 		      0x0400, 0x0e00, buf, 2);
-	snd_usb_unlock_shutकरोwn(chip);
-	वापस err;
-पूर्ण
+	snd_usb_unlock_shutdown(chip);
+	return err;
+}
 
-अटल पूर्णांक snd_emu0204_ch_चयन_put(काष्ठा snd_kcontrol *kcontrol,
-				     काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा usb_mixer_elem_list *list = snd_kcontrol_chip(kcontrol);
-	काष्ठा usb_mixer_पूर्णांकerface *mixer = list->mixer;
-	अचिन्हित पूर्णांक value = ucontrol->value.क्रमागतerated.item[0];
-	पूर्णांक err;
+static int snd_emu0204_ch_switch_put(struct snd_kcontrol *kcontrol,
+				     struct snd_ctl_elem_value *ucontrol)
+{
+	struct usb_mixer_elem_list *list = snd_kcontrol_chip(kcontrol);
+	struct usb_mixer_interface *mixer = list->mixer;
+	unsigned int value = ucontrol->value.enumerated.item[0];
+	int err;
 
-	अगर (value > 1)
-		वापस -EINVAL;
+	if (value > 1)
+		return -EINVAL;
 
-	अगर (value == kcontrol->निजी_value)
-		वापस 0;
+	if (value == kcontrol->private_value)
+		return 0;
 
-	kcontrol->निजी_value = value;
-	err = snd_emu0204_ch_चयन_update(mixer, value);
-	वापस err < 0 ? err : 1;
-पूर्ण
+	kcontrol->private_value = value;
+	err = snd_emu0204_ch_switch_update(mixer, value);
+	return err < 0 ? err : 1;
+}
 
-अटल पूर्णांक snd_emu0204_ch_चयन_resume(काष्ठा usb_mixer_elem_list *list)
-अणु
-	वापस snd_emu0204_ch_चयन_update(list->mixer,
-					    list->kctl->निजी_value);
-पूर्ण
+static int snd_emu0204_ch_switch_resume(struct usb_mixer_elem_list *list)
+{
+	return snd_emu0204_ch_switch_update(list->mixer,
+					    list->kctl->private_value);
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_emu0204_control = अणु
-	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+static const struct snd_kcontrol_new snd_emu0204_control = {
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name = "Front Jack Channels",
-	.info = snd_emu0204_ch_चयन_info,
-	.get = snd_emu0204_ch_चयन_get,
-	.put = snd_emu0204_ch_चयन_put,
-	.निजी_value = 0,
-पूर्ण;
+	.info = snd_emu0204_ch_switch_info,
+	.get = snd_emu0204_ch_switch_get,
+	.put = snd_emu0204_ch_switch_put,
+	.private_value = 0,
+};
 
-अटल पूर्णांक snd_emu0204_controls_create(काष्ठा usb_mixer_पूर्णांकerface *mixer)
-अणु
-	वापस add_single_ctl_with_resume(mixer, 0,
-					  snd_emu0204_ch_चयन_resume,
-					  &snd_emu0204_control, शून्य);
-पूर्ण
+static int snd_emu0204_controls_create(struct usb_mixer_interface *mixer)
+{
+	return add_single_ctl_with_resume(mixer, 0,
+					  snd_emu0204_ch_switch_resume,
+					  &snd_emu0204_control, NULL);
+}
 
 /* ASUS Xonar U1 / U3 controls */
 
-अटल पूर्णांक snd_xonar_u1_चयन_get(काष्ठा snd_kcontrol *kcontrol,
-				   काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	ucontrol->value.पूर्णांकeger.value[0] = !!(kcontrol->निजी_value & 0x02);
-	वापस 0;
-पूर्ण
+static int snd_xonar_u1_switch_get(struct snd_kcontrol *kcontrol,
+				   struct snd_ctl_elem_value *ucontrol)
+{
+	ucontrol->value.integer.value[0] = !!(kcontrol->private_value & 0x02);
+	return 0;
+}
 
-अटल पूर्णांक snd_xonar_u1_चयन_update(काष्ठा usb_mixer_पूर्णांकerface *mixer,
-				      अचिन्हित अक्षर status)
-अणु
-	काष्ठा snd_usb_audio *chip = mixer->chip;
-	पूर्णांक err;
+static int snd_xonar_u1_switch_update(struct usb_mixer_interface *mixer,
+				      unsigned char status)
+{
+	struct snd_usb_audio *chip = mixer->chip;
+	int err;
 
-	err = snd_usb_lock_shutकरोwn(chip);
-	अगर (err < 0)
-		वापस err;
+	err = snd_usb_lock_shutdown(chip);
+	if (err < 0)
+		return err;
 	err = snd_usb_ctl_msg(chip->dev,
 			      usb_sndctrlpipe(chip->dev, 0), 0x08,
-			      USB_सूची_OUT | USB_TYPE_VENDOR | USB_RECIP_OTHER,
+			      USB_DIR_OUT | USB_TYPE_VENDOR | USB_RECIP_OTHER,
 			      50, 0, &status, 1);
-	snd_usb_unlock_shutकरोwn(chip);
-	वापस err;
-पूर्ण
+	snd_usb_unlock_shutdown(chip);
+	return err;
+}
 
-अटल पूर्णांक snd_xonar_u1_चयन_put(काष्ठा snd_kcontrol *kcontrol,
-				   काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा usb_mixer_elem_list *list = snd_kcontrol_chip(kcontrol);
+static int snd_xonar_u1_switch_put(struct snd_kcontrol *kcontrol,
+				   struct snd_ctl_elem_value *ucontrol)
+{
+	struct usb_mixer_elem_list *list = snd_kcontrol_chip(kcontrol);
 	u8 old_status, new_status;
-	पूर्णांक err;
+	int err;
 
-	old_status = kcontrol->निजी_value;
-	अगर (ucontrol->value.पूर्णांकeger.value[0])
+	old_status = kcontrol->private_value;
+	if (ucontrol->value.integer.value[0])
 		new_status = old_status | 0x02;
-	अन्यथा
+	else
 		new_status = old_status & ~0x02;
-	अगर (new_status == old_status)
-		वापस 0;
+	if (new_status == old_status)
+		return 0;
 
-	kcontrol->निजी_value = new_status;
-	err = snd_xonar_u1_चयन_update(list->mixer, new_status);
-	वापस err < 0 ? err : 1;
-पूर्ण
+	kcontrol->private_value = new_status;
+	err = snd_xonar_u1_switch_update(list->mixer, new_status);
+	return err < 0 ? err : 1;
+}
 
-अटल पूर्णांक snd_xonar_u1_चयन_resume(काष्ठा usb_mixer_elem_list *list)
-अणु
-	वापस snd_xonar_u1_चयन_update(list->mixer,
-					  list->kctl->निजी_value);
-पूर्ण
+static int snd_xonar_u1_switch_resume(struct usb_mixer_elem_list *list)
+{
+	return snd_xonar_u1_switch_update(list->mixer,
+					  list->kctl->private_value);
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_xonar_u1_output_चयन = अणु
-	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+static const struct snd_kcontrol_new snd_xonar_u1_output_switch = {
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name = "Digital Playback Switch",
 	.info = snd_ctl_boolean_mono_info,
-	.get = snd_xonar_u1_चयन_get,
-	.put = snd_xonar_u1_चयन_put,
-	.निजी_value = 0x05,
-पूर्ण;
+	.get = snd_xonar_u1_switch_get,
+	.put = snd_xonar_u1_switch_put,
+	.private_value = 0x05,
+};
 
-अटल पूर्णांक snd_xonar_u1_controls_create(काष्ठा usb_mixer_पूर्णांकerface *mixer)
-अणु
-	वापस add_single_ctl_with_resume(mixer, 0,
-					  snd_xonar_u1_चयन_resume,
-					  &snd_xonar_u1_output_चयन, शून्य);
-पूर्ण
+static int snd_xonar_u1_controls_create(struct usb_mixer_interface *mixer)
+{
+	return add_single_ctl_with_resume(mixer, 0,
+					  snd_xonar_u1_switch_resume,
+					  &snd_xonar_u1_output_switch, NULL);
+}
 
-/* Digidesign Mbox 1 घड़ी source चयन (पूर्णांकernal/spdअगर) */
+/* Digidesign Mbox 1 clock source switch (internal/spdif) */
 
-अटल पूर्णांक snd_mbox1_चयन_get(काष्ठा snd_kcontrol *kctl,
-				काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	ucontrol->value.क्रमागतerated.item[0] = kctl->निजी_value;
-	वापस 0;
-पूर्ण
+static int snd_mbox1_switch_get(struct snd_kcontrol *kctl,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	ucontrol->value.enumerated.item[0] = kctl->private_value;
+	return 0;
+}
 
-अटल पूर्णांक snd_mbox1_चयन_update(काष्ठा usb_mixer_पूर्णांकerface *mixer, पूर्णांक val)
-अणु
-	काष्ठा snd_usb_audio *chip = mixer->chip;
-	पूर्णांक err;
-	अचिन्हित अक्षर buff[3];
+static int snd_mbox1_switch_update(struct usb_mixer_interface *mixer, int val)
+{
+	struct snd_usb_audio *chip = mixer->chip;
+	int err;
+	unsigned char buff[3];
 
-	err = snd_usb_lock_shutकरोwn(chip);
-	अगर (err < 0)
-		वापस err;
+	err = snd_usb_lock_shutdown(chip);
+	if (err < 0)
+		return err;
 
-	/* Prepare क्रम magic command to toggle घड़ी source */
+	/* Prepare for magic command to toggle clock source */
 	err = snd_usb_ctl_msg(chip->dev,
 				usb_rcvctrlpipe(chip->dev, 0), 0x81,
-				USB_सूची_IN |
+				USB_DIR_IN |
 				USB_TYPE_CLASS |
 				USB_RECIP_INTERFACE, 0x00, 0x500, buff, 1);
-	अगर (err < 0)
-		जाओ err;
+	if (err < 0)
+		goto err;
 	err = snd_usb_ctl_msg(chip->dev,
 				usb_rcvctrlpipe(chip->dev, 0), 0x81,
-				USB_सूची_IN |
+				USB_DIR_IN |
 				USB_TYPE_CLASS |
 				USB_RECIP_ENDPOINT, 0x100, 0x81, buff, 3);
-	अगर (err < 0)
-		जाओ err;
+	if (err < 0)
+		goto err;
 
 	/* 2 possibilities:	Internal    -> send sample rate
 	 *			S/PDIF sync -> send zeroes
 	 * NB: Sample rate locked to 48kHz on purpose to
 	 *     prevent user from resetting the sample rate
-	 *     जबतक S/PDIF sync is enabled and confusing
+	 *     while S/PDIF sync is enabled and confusing
 	 *     this configuration.
 	 */
-	अगर (val == 0) अणु
+	if (val == 0) {
 		buff[0] = 0x80;
 		buff[1] = 0xbb;
 		buff[2] = 0x00;
-	पूर्ण अन्यथा अणु
+	} else {
 		buff[0] = buff[1] = buff[2] = 0x00;
-	पूर्ण
+	}
 
-	/* Send the magic command to toggle the घड़ी source */
+	/* Send the magic command to toggle the clock source */
 	err = snd_usb_ctl_msg(chip->dev,
 				usb_sndctrlpipe(chip->dev, 0), 0x1,
 				USB_TYPE_CLASS |
 				USB_RECIP_ENDPOINT, 0x100, 0x81, buff, 3);
-	अगर (err < 0)
-		जाओ err;
+	if (err < 0)
+		goto err;
 	err = snd_usb_ctl_msg(chip->dev,
 				usb_rcvctrlpipe(chip->dev, 0), 0x81,
-				USB_सूची_IN |
+				USB_DIR_IN |
 				USB_TYPE_CLASS |
 				USB_RECIP_ENDPOINT, 0x100, 0x81, buff, 3);
-	अगर (err < 0)
-		जाओ err;
+	if (err < 0)
+		goto err;
 	err = snd_usb_ctl_msg(chip->dev,
 				usb_rcvctrlpipe(chip->dev, 0), 0x81,
-				USB_सूची_IN |
+				USB_DIR_IN |
 				USB_TYPE_CLASS |
 				USB_RECIP_ENDPOINT, 0x100, 0x2, buff, 3);
-	अगर (err < 0)
-		जाओ err;
+	if (err < 0)
+		goto err;
 
 err:
-	snd_usb_unlock_shutकरोwn(chip);
-	वापस err;
-पूर्ण
+	snd_usb_unlock_shutdown(chip);
+	return err;
+}
 
-अटल पूर्णांक snd_mbox1_चयन_put(काष्ठा snd_kcontrol *kctl,
-				काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा usb_mixer_elem_list *list = snd_kcontrol_chip(kctl);
-	काष्ठा usb_mixer_पूर्णांकerface *mixer = list->mixer;
-	पूर्णांक err;
+static int snd_mbox1_switch_put(struct snd_kcontrol *kctl,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct usb_mixer_elem_list *list = snd_kcontrol_chip(kctl);
+	struct usb_mixer_interface *mixer = list->mixer;
+	int err;
 	bool cur_val, new_val;
 
-	cur_val = kctl->निजी_value;
-	new_val = ucontrol->value.क्रमागतerated.item[0];
-	अगर (cur_val == new_val)
-		वापस 0;
+	cur_val = kctl->private_value;
+	new_val = ucontrol->value.enumerated.item[0];
+	if (cur_val == new_val)
+		return 0;
 
-	kctl->निजी_value = new_val;
-	err = snd_mbox1_चयन_update(mixer, new_val);
-	वापस err < 0 ? err : 1;
-पूर्ण
+	kctl->private_value = new_val;
+	err = snd_mbox1_switch_update(mixer, new_val);
+	return err < 0 ? err : 1;
+}
 
-अटल पूर्णांक snd_mbox1_चयन_info(काष्ठा snd_kcontrol *kcontrol,
-				 काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	अटल स्थिर अक्षर *स्थिर texts[2] = अणु
+static int snd_mbox1_switch_info(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_info *uinfo)
+{
+	static const char *const texts[2] = {
 		"Internal",
 		"S/PDIF"
-	पूर्ण;
+	};
 
-	वापस snd_ctl_क्रमागत_info(uinfo, 1, ARRAY_SIZE(texts), texts);
-पूर्ण
+	return snd_ctl_enum_info(uinfo, 1, ARRAY_SIZE(texts), texts);
+}
 
-अटल पूर्णांक snd_mbox1_चयन_resume(काष्ठा usb_mixer_elem_list *list)
-अणु
-	वापस snd_mbox1_चयन_update(list->mixer, list->kctl->निजी_value);
-पूर्ण
+static int snd_mbox1_switch_resume(struct usb_mixer_elem_list *list)
+{
+	return snd_mbox1_switch_update(list->mixer, list->kctl->private_value);
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_mbox1_चयन = अणु
-	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+static const struct snd_kcontrol_new snd_mbox1_switch = {
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name = "Clock Source",
 	.index = 0,
 	.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
-	.info = snd_mbox1_चयन_info,
-	.get = snd_mbox1_चयन_get,
-	.put = snd_mbox1_चयन_put,
-	.निजी_value = 0
-पूर्ण;
+	.info = snd_mbox1_switch_info,
+	.get = snd_mbox1_switch_get,
+	.put = snd_mbox1_switch_put,
+	.private_value = 0
+};
 
-अटल पूर्णांक snd_mbox1_create_sync_चयन(काष्ठा usb_mixer_पूर्णांकerface *mixer)
-अणु
-	वापस add_single_ctl_with_resume(mixer, 0,
-					  snd_mbox1_चयन_resume,
-					  &snd_mbox1_चयन, शून्य);
-पूर्ण
+static int snd_mbox1_create_sync_switch(struct usb_mixer_interface *mixer)
+{
+	return add_single_ctl_with_resume(mixer, 0,
+					  snd_mbox1_switch_resume,
+					  &snd_mbox1_switch, NULL);
+}
 
 /* Native Instruments device quirks */
 
-#घोषणा _MAKE_NI_CONTROL(bRequest,wIndex) ((bRequest) << 16 | (wIndex))
+#define _MAKE_NI_CONTROL(bRequest,wIndex) ((bRequest) << 16 | (wIndex))
 
-अटल पूर्णांक snd_ni_control_init_val(काष्ठा usb_mixer_पूर्णांकerface *mixer,
-				   काष्ठा snd_kcontrol *kctl)
-अणु
-	काष्ठा usb_device *dev = mixer->chip->dev;
-	अचिन्हित पूर्णांक pval = kctl->निजी_value;
+static int snd_ni_control_init_val(struct usb_mixer_interface *mixer,
+				   struct snd_kcontrol *kctl)
+{
+	struct usb_device *dev = mixer->chip->dev;
+	unsigned int pval = kctl->private_value;
 	u8 value;
-	पूर्णांक err;
+	int err;
 
 	err = snd_usb_ctl_msg(dev, usb_rcvctrlpipe(dev, 0),
 			      (pval >> 16) & 0xff,
-			      USB_TYPE_VENDOR | USB_RECIP_DEVICE | USB_सूची_IN,
+			      USB_TYPE_VENDOR | USB_RECIP_DEVICE | USB_DIR_IN,
 			      0, pval & 0xffff, &value, 1);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		dev_err(&dev->dev,
 			"unable to issue vendor read request (ret = %d)", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	kctl->निजी_value |= ((अचिन्हित पूर्णांक)value << 24);
-	वापस 0;
-पूर्ण
+	kctl->private_value |= ((unsigned int)value << 24);
+	return 0;
+}
 
-अटल पूर्णांक snd_nativeinstruments_control_get(काष्ठा snd_kcontrol *kcontrol,
-					     काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	ucontrol->value.पूर्णांकeger.value[0] = kcontrol->निजी_value >> 24;
-	वापस 0;
-पूर्ण
+static int snd_nativeinstruments_control_get(struct snd_kcontrol *kcontrol,
+					     struct snd_ctl_elem_value *ucontrol)
+{
+	ucontrol->value.integer.value[0] = kcontrol->private_value >> 24;
+	return 0;
+}
 
-अटल पूर्णांक snd_ni_update_cur_val(काष्ठा usb_mixer_elem_list *list)
-अणु
-	काष्ठा snd_usb_audio *chip = list->mixer->chip;
-	अचिन्हित पूर्णांक pval = list->kctl->निजी_value;
-	पूर्णांक err;
+static int snd_ni_update_cur_val(struct usb_mixer_elem_list *list)
+{
+	struct snd_usb_audio *chip = list->mixer->chip;
+	unsigned int pval = list->kctl->private_value;
+	int err;
 
-	err = snd_usb_lock_shutकरोwn(chip);
-	अगर (err < 0)
-		वापस err;
+	err = snd_usb_lock_shutdown(chip);
+	if (err < 0)
+		return err;
 	err = usb_control_msg(chip->dev, usb_sndctrlpipe(chip->dev, 0),
 			      (pval >> 16) & 0xff,
-			      USB_TYPE_VENDOR | USB_RECIP_DEVICE | USB_सूची_OUT,
-			      pval >> 24, pval & 0xffff, शून्य, 0, 1000);
-	snd_usb_unlock_shutकरोwn(chip);
-	वापस err;
-पूर्ण
+			      USB_TYPE_VENDOR | USB_RECIP_DEVICE | USB_DIR_OUT,
+			      pval >> 24, pval & 0xffff, NULL, 0, 1000);
+	snd_usb_unlock_shutdown(chip);
+	return err;
+}
 
-अटल पूर्णांक snd_nativeinstruments_control_put(काष्ठा snd_kcontrol *kcontrol,
-					     काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा usb_mixer_elem_list *list = snd_kcontrol_chip(kcontrol);
-	u8 oldval = (kcontrol->निजी_value >> 24) & 0xff;
-	u8 newval = ucontrol->value.पूर्णांकeger.value[0];
-	पूर्णांक err;
+static int snd_nativeinstruments_control_put(struct snd_kcontrol *kcontrol,
+					     struct snd_ctl_elem_value *ucontrol)
+{
+	struct usb_mixer_elem_list *list = snd_kcontrol_chip(kcontrol);
+	u8 oldval = (kcontrol->private_value >> 24) & 0xff;
+	u8 newval = ucontrol->value.integer.value[0];
+	int err;
 
-	अगर (oldval == newval)
-		वापस 0;
+	if (oldval == newval)
+		return 0;
 
-	kcontrol->निजी_value &= ~(0xff << 24);
-	kcontrol->निजी_value |= (अचिन्हित पूर्णांक)newval << 24;
+	kcontrol->private_value &= ~(0xff << 24);
+	kcontrol->private_value |= (unsigned int)newval << 24;
 	err = snd_ni_update_cur_val(list);
-	वापस err < 0 ? err : 1;
-पूर्ण
+	return err < 0 ? err : 1;
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_nativeinstruments_ta6_mixers[] = अणु
-	अणु
+static const struct snd_kcontrol_new snd_nativeinstruments_ta6_mixers[] = {
+	{
 		.name = "Direct Thru Channel A",
-		.निजी_value = _MAKE_NI_CONTROL(0x01, 0x03),
-	पूर्ण,
-	अणु
+		.private_value = _MAKE_NI_CONTROL(0x01, 0x03),
+	},
+	{
 		.name = "Direct Thru Channel B",
-		.निजी_value = _MAKE_NI_CONTROL(0x01, 0x05),
-	पूर्ण,
-	अणु
+		.private_value = _MAKE_NI_CONTROL(0x01, 0x05),
+	},
+	{
 		.name = "Phono Input Channel A",
-		.निजी_value = _MAKE_NI_CONTROL(0x02, 0x03),
-	पूर्ण,
-	अणु
+		.private_value = _MAKE_NI_CONTROL(0x02, 0x03),
+	},
+	{
 		.name = "Phono Input Channel B",
-		.निजी_value = _MAKE_NI_CONTROL(0x02, 0x05),
-	पूर्ण,
-पूर्ण;
+		.private_value = _MAKE_NI_CONTROL(0x02, 0x05),
+	},
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_nativeinstruments_ta10_mixers[] = अणु
-	अणु
+static const struct snd_kcontrol_new snd_nativeinstruments_ta10_mixers[] = {
+	{
 		.name = "Direct Thru Channel A",
-		.निजी_value = _MAKE_NI_CONTROL(0x01, 0x03),
-	पूर्ण,
-	अणु
+		.private_value = _MAKE_NI_CONTROL(0x01, 0x03),
+	},
+	{
 		.name = "Direct Thru Channel B",
-		.निजी_value = _MAKE_NI_CONTROL(0x01, 0x05),
-	पूर्ण,
-	अणु
+		.private_value = _MAKE_NI_CONTROL(0x01, 0x05),
+	},
+	{
 		.name = "Direct Thru Channel C",
-		.निजी_value = _MAKE_NI_CONTROL(0x01, 0x07),
-	पूर्ण,
-	अणु
+		.private_value = _MAKE_NI_CONTROL(0x01, 0x07),
+	},
+	{
 		.name = "Direct Thru Channel D",
-		.निजी_value = _MAKE_NI_CONTROL(0x01, 0x09),
-	पूर्ण,
-	अणु
+		.private_value = _MAKE_NI_CONTROL(0x01, 0x09),
+	},
+	{
 		.name = "Phono Input Channel A",
-		.निजी_value = _MAKE_NI_CONTROL(0x02, 0x03),
-	पूर्ण,
-	अणु
+		.private_value = _MAKE_NI_CONTROL(0x02, 0x03),
+	},
+	{
 		.name = "Phono Input Channel B",
-		.निजी_value = _MAKE_NI_CONTROL(0x02, 0x05),
-	पूर्ण,
-	अणु
+		.private_value = _MAKE_NI_CONTROL(0x02, 0x05),
+	},
+	{
 		.name = "Phono Input Channel C",
-		.निजी_value = _MAKE_NI_CONTROL(0x02, 0x07),
-	पूर्ण,
-	अणु
+		.private_value = _MAKE_NI_CONTROL(0x02, 0x07),
+	},
+	{
 		.name = "Phono Input Channel D",
-		.निजी_value = _MAKE_NI_CONTROL(0x02, 0x09),
-	पूर्ण,
-पूर्ण;
+		.private_value = _MAKE_NI_CONTROL(0x02, 0x09),
+	},
+};
 
-अटल पूर्णांक snd_nativeinstruments_create_mixer(काष्ठा usb_mixer_पूर्णांकerface *mixer,
-					      स्थिर काष्ठा snd_kcontrol_new *kc,
-					      अचिन्हित पूर्णांक count)
-अणु
-	पूर्णांक i, err = 0;
-	काष्ठा snd_kcontrol_new ढाँचा = अणु
-		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+static int snd_nativeinstruments_create_mixer(struct usb_mixer_interface *mixer,
+					      const struct snd_kcontrol_new *kc,
+					      unsigned int count)
+{
+	int i, err = 0;
+	struct snd_kcontrol_new template = {
+		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
 		.get = snd_nativeinstruments_control_get,
 		.put = snd_nativeinstruments_control_put,
 		.info = snd_ctl_boolean_mono_info,
-	पूर्ण;
+	};
 
-	क्रम (i = 0; i < count; i++) अणु
-		काष्ठा usb_mixer_elem_list *list;
+	for (i = 0; i < count; i++) {
+		struct usb_mixer_elem_list *list;
 
-		ढाँचा.name = kc[i].name;
-		ढाँचा.निजी_value = kc[i].निजी_value;
+		template.name = kc[i].name;
+		template.private_value = kc[i].private_value;
 
 		err = add_single_ctl_with_resume(mixer, 0,
 						 snd_ni_update_cur_val,
-						 &ढाँचा, &list);
-		अगर (err < 0)
-			अवरोध;
+						 &template, &list);
+		if (err < 0)
+			break;
 		snd_ni_control_init_val(mixer, list->kctl);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /* M-Audio FastTrack Ultra quirks */
-/* FTU Effect चयन (also used by C400/C600) */
-अटल पूर्णांक snd_ftu_eff_चयन_info(काष्ठा snd_kcontrol *kcontrol,
-					काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	अटल स्थिर अक्षर *स्थिर texts[8] = अणु
+/* FTU Effect switch (also used by C400/C600) */
+static int snd_ftu_eff_switch_info(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_info *uinfo)
+{
+	static const char *const texts[8] = {
 		"Room 1", "Room 2", "Room 3", "Hall 1",
 		"Hall 2", "Plate", "Delay", "Echo"
-	पूर्ण;
+	};
 
-	वापस snd_ctl_क्रमागत_info(uinfo, 1, ARRAY_SIZE(texts), texts);
-पूर्ण
+	return snd_ctl_enum_info(uinfo, 1, ARRAY_SIZE(texts), texts);
+}
 
-अटल पूर्णांक snd_ftu_eff_चयन_init(काष्ठा usb_mixer_पूर्णांकerface *mixer,
-				   काष्ठा snd_kcontrol *kctl)
-अणु
-	काष्ठा usb_device *dev = mixer->chip->dev;
-	अचिन्हित पूर्णांक pval = kctl->निजी_value;
-	पूर्णांक err;
-	अचिन्हित अक्षर value[2];
+static int snd_ftu_eff_switch_init(struct usb_mixer_interface *mixer,
+				   struct snd_kcontrol *kctl)
+{
+	struct usb_device *dev = mixer->chip->dev;
+	unsigned int pval = kctl->private_value;
+	int err;
+	unsigned char value[2];
 
 	value[0] = 0x00;
 	value[1] = 0x00;
 
 	err = snd_usb_ctl_msg(dev, usb_rcvctrlpipe(dev, 0), UAC_GET_CUR,
-			      USB_RECIP_INTERFACE | USB_TYPE_CLASS | USB_सूची_IN,
+			      USB_RECIP_INTERFACE | USB_TYPE_CLASS | USB_DIR_IN,
 			      pval & 0xff00,
-			      snd_usb_ctrl_पूर्णांकf(mixer->chip) | ((pval & 0xff) << 8),
+			      snd_usb_ctrl_intf(mixer->chip) | ((pval & 0xff) << 8),
 			      value, 2);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	kctl->निजी_value |= (अचिन्हित पूर्णांक)value[0] << 24;
-	वापस 0;
-पूर्ण
+	kctl->private_value |= (unsigned int)value[0] << 24;
+	return 0;
+}
 
-अटल पूर्णांक snd_ftu_eff_चयन_get(काष्ठा snd_kcontrol *kctl,
-					काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	ucontrol->value.क्रमागतerated.item[0] = kctl->निजी_value >> 24;
-	वापस 0;
-पूर्ण
+static int snd_ftu_eff_switch_get(struct snd_kcontrol *kctl,
+					struct snd_ctl_elem_value *ucontrol)
+{
+	ucontrol->value.enumerated.item[0] = kctl->private_value >> 24;
+	return 0;
+}
 
-अटल पूर्णांक snd_ftu_eff_चयन_update(काष्ठा usb_mixer_elem_list *list)
-अणु
-	काष्ठा snd_usb_audio *chip = list->mixer->chip;
-	अचिन्हित पूर्णांक pval = list->kctl->निजी_value;
-	अचिन्हित अक्षर value[2];
-	पूर्णांक err;
+static int snd_ftu_eff_switch_update(struct usb_mixer_elem_list *list)
+{
+	struct snd_usb_audio *chip = list->mixer->chip;
+	unsigned int pval = list->kctl->private_value;
+	unsigned char value[2];
+	int err;
 
 	value[0] = pval >> 24;
 	value[1] = 0;
 
-	err = snd_usb_lock_shutकरोwn(chip);
-	अगर (err < 0)
-		वापस err;
+	err = snd_usb_lock_shutdown(chip);
+	if (err < 0)
+		return err;
 	err = snd_usb_ctl_msg(chip->dev,
 			      usb_sndctrlpipe(chip->dev, 0),
 			      UAC_SET_CUR,
-			      USB_RECIP_INTERFACE | USB_TYPE_CLASS | USB_सूची_OUT,
+			      USB_RECIP_INTERFACE | USB_TYPE_CLASS | USB_DIR_OUT,
 			      pval & 0xff00,
-			      snd_usb_ctrl_पूर्णांकf(chip) | ((pval & 0xff) << 8),
+			      snd_usb_ctrl_intf(chip) | ((pval & 0xff) << 8),
 			      value, 2);
-	snd_usb_unlock_shutकरोwn(chip);
-	वापस err;
-पूर्ण
+	snd_usb_unlock_shutdown(chip);
+	return err;
+}
 
-अटल पूर्णांक snd_ftu_eff_चयन_put(काष्ठा snd_kcontrol *kctl,
-					काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा usb_mixer_elem_list *list = snd_kcontrol_chip(kctl);
-	अचिन्हित पूर्णांक pval = list->kctl->निजी_value;
-	पूर्णांक cur_val, err, new_val;
+static int snd_ftu_eff_switch_put(struct snd_kcontrol *kctl,
+					struct snd_ctl_elem_value *ucontrol)
+{
+	struct usb_mixer_elem_list *list = snd_kcontrol_chip(kctl);
+	unsigned int pval = list->kctl->private_value;
+	int cur_val, err, new_val;
 
 	cur_val = pval >> 24;
-	new_val = ucontrol->value.क्रमागतerated.item[0];
-	अगर (cur_val == new_val)
-		वापस 0;
+	new_val = ucontrol->value.enumerated.item[0];
+	if (cur_val == new_val)
+		return 0;
 
-	kctl->निजी_value &= ~(0xff << 24);
-	kctl->निजी_value |= new_val << 24;
-	err = snd_ftu_eff_चयन_update(list);
-	वापस err < 0 ? err : 1;
-पूर्ण
+	kctl->private_value &= ~(0xff << 24);
+	kctl->private_value |= new_val << 24;
+	err = snd_ftu_eff_switch_update(list);
+	return err < 0 ? err : 1;
+}
 
-अटल पूर्णांक snd_ftu_create_effect_चयन(काष्ठा usb_mixer_पूर्णांकerface *mixer,
-	पूर्णांक validx, पूर्णांक bUnitID)
-अणु
-	अटल काष्ठा snd_kcontrol_new ढाँचा = अणु
-		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+static int snd_ftu_create_effect_switch(struct usb_mixer_interface *mixer,
+	int validx, int bUnitID)
+{
+	static struct snd_kcontrol_new template = {
+		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name = "Effect Program Switch",
 		.index = 0,
 		.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
-		.info = snd_ftu_eff_चयन_info,
-		.get = snd_ftu_eff_चयन_get,
-		.put = snd_ftu_eff_चयन_put
-	पूर्ण;
-	काष्ठा usb_mixer_elem_list *list;
-	पूर्णांक err;
+		.info = snd_ftu_eff_switch_info,
+		.get = snd_ftu_eff_switch_get,
+		.put = snd_ftu_eff_switch_put
+	};
+	struct usb_mixer_elem_list *list;
+	int err;
 
 	err = add_single_ctl_with_resume(mixer, bUnitID,
-					 snd_ftu_eff_चयन_update,
-					 &ढाँचा, &list);
-	अगर (err < 0)
-		वापस err;
-	list->kctl->निजी_value = (validx << 8) | bUnitID;
-	snd_ftu_eff_चयन_init(mixer, list->kctl);
-	वापस 0;
-पूर्ण
+					 snd_ftu_eff_switch_update,
+					 &template, &list);
+	if (err < 0)
+		return err;
+	list->kctl->private_value = (validx << 8) | bUnitID;
+	snd_ftu_eff_switch_init(mixer, list->kctl);
+	return 0;
+}
 
-/* Create volume controls क्रम FTU devices*/
-अटल पूर्णांक snd_ftu_create_volume_ctls(काष्ठा usb_mixer_पूर्णांकerface *mixer)
-अणु
-	अक्षर name[64];
-	अचिन्हित पूर्णांक control, cmask;
-	पूर्णांक in, out, err;
+/* Create volume controls for FTU devices*/
+static int snd_ftu_create_volume_ctls(struct usb_mixer_interface *mixer)
+{
+	char name[64];
+	unsigned int control, cmask;
+	int in, out, err;
 
-	स्थिर अचिन्हित पूर्णांक id = 5;
-	स्थिर पूर्णांक val_type = USB_MIXER_S16;
+	const unsigned int id = 5;
+	const int val_type = USB_MIXER_S16;
 
-	क्रम (out = 0; out < 8; out++) अणु
+	for (out = 0; out < 8; out++) {
 		control = out + 1;
-		क्रम (in = 0; in < 8; in++) अणु
+		for (in = 0; in < 8; in++) {
 			cmask = 1 << in;
-			snम_लिखो(name, माप(name),
+			snprintf(name, sizeof(name),
 				"AIn%d - Out%d Capture Volume",
 				in  + 1, out + 1);
 			err = snd_create_std_mono_ctl(mixer, id, control,
 							cmask, val_type, name,
 							&snd_usb_mixer_vol_tlv);
-			अगर (err < 0)
-				वापस err;
-		पूर्ण
-		क्रम (in = 8; in < 16; in++) अणु
+			if (err < 0)
+				return err;
+		}
+		for (in = 8; in < 16; in++) {
 			cmask = 1 << in;
-			snम_लिखो(name, माप(name),
+			snprintf(name, sizeof(name),
 				"DIn%d - Out%d Playback Volume",
 				in - 7, out + 1);
 			err = snd_create_std_mono_ctl(mixer, id, control,
 							cmask, val_type, name,
 							&snd_usb_mixer_vol_tlv);
-			अगर (err < 0)
-				वापस err;
-		पूर्ण
-	पूर्ण
+			if (err < 0)
+				return err;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* This control needs a volume quirk, see mixer.c */
-अटल पूर्णांक snd_ftu_create_effect_volume_ctl(काष्ठा usb_mixer_पूर्णांकerface *mixer)
-अणु
-	अटल स्थिर अक्षर name[] = "Effect Volume";
-	स्थिर अचिन्हित पूर्णांक id = 6;
-	स्थिर पूर्णांक val_type = USB_MIXER_U8;
-	स्थिर अचिन्हित पूर्णांक control = 2;
-	स्थिर अचिन्हित पूर्णांक cmask = 0;
+static int snd_ftu_create_effect_volume_ctl(struct usb_mixer_interface *mixer)
+{
+	static const char name[] = "Effect Volume";
+	const unsigned int id = 6;
+	const int val_type = USB_MIXER_U8;
+	const unsigned int control = 2;
+	const unsigned int cmask = 0;
 
-	वापस snd_create_std_mono_ctl(mixer, id, control, cmask, val_type,
+	return snd_create_std_mono_ctl(mixer, id, control, cmask, val_type,
 					name, snd_usb_mixer_vol_tlv);
-पूर्ण
+}
 
 /* This control needs a volume quirk, see mixer.c */
-अटल पूर्णांक snd_ftu_create_effect_duration_ctl(काष्ठा usb_mixer_पूर्णांकerface *mixer)
-अणु
-	अटल स्थिर अक्षर name[] = "Effect Duration";
-	स्थिर अचिन्हित पूर्णांक id = 6;
-	स्थिर पूर्णांक val_type = USB_MIXER_S16;
-	स्थिर अचिन्हित पूर्णांक control = 3;
-	स्थिर अचिन्हित पूर्णांक cmask = 0;
+static int snd_ftu_create_effect_duration_ctl(struct usb_mixer_interface *mixer)
+{
+	static const char name[] = "Effect Duration";
+	const unsigned int id = 6;
+	const int val_type = USB_MIXER_S16;
+	const unsigned int control = 3;
+	const unsigned int cmask = 0;
 
-	वापस snd_create_std_mono_ctl(mixer, id, control, cmask, val_type,
+	return snd_create_std_mono_ctl(mixer, id, control, cmask, val_type,
 					name, snd_usb_mixer_vol_tlv);
-पूर्ण
+}
 
 /* This control needs a volume quirk, see mixer.c */
-अटल पूर्णांक snd_ftu_create_effect_feedback_ctl(काष्ठा usb_mixer_पूर्णांकerface *mixer)
-अणु
-	अटल स्थिर अक्षर name[] = "Effect Feedback Volume";
-	स्थिर अचिन्हित पूर्णांक id = 6;
-	स्थिर पूर्णांक val_type = USB_MIXER_U8;
-	स्थिर अचिन्हित पूर्णांक control = 4;
-	स्थिर अचिन्हित पूर्णांक cmask = 0;
+static int snd_ftu_create_effect_feedback_ctl(struct usb_mixer_interface *mixer)
+{
+	static const char name[] = "Effect Feedback Volume";
+	const unsigned int id = 6;
+	const int val_type = USB_MIXER_U8;
+	const unsigned int control = 4;
+	const unsigned int cmask = 0;
 
-	वापस snd_create_std_mono_ctl(mixer, id, control, cmask, val_type,
-					name, शून्य);
-पूर्ण
+	return snd_create_std_mono_ctl(mixer, id, control, cmask, val_type,
+					name, NULL);
+}
 
-अटल पूर्णांक snd_ftu_create_effect_वापस_ctls(काष्ठा usb_mixer_पूर्णांकerface *mixer)
-अणु
-	अचिन्हित पूर्णांक cmask;
-	पूर्णांक err, ch;
-	अक्षर name[48];
+static int snd_ftu_create_effect_return_ctls(struct usb_mixer_interface *mixer)
+{
+	unsigned int cmask;
+	int err, ch;
+	char name[48];
 
-	स्थिर अचिन्हित पूर्णांक id = 7;
-	स्थिर पूर्णांक val_type = USB_MIXER_S16;
-	स्थिर अचिन्हित पूर्णांक control = 7;
+	const unsigned int id = 7;
+	const int val_type = USB_MIXER_S16;
+	const unsigned int control = 7;
 
-	क्रम (ch = 0; ch < 4; ++ch) अणु
+	for (ch = 0; ch < 4; ++ch) {
 		cmask = 1 << ch;
-		snम_लिखो(name, माप(name),
+		snprintf(name, sizeof(name),
 			"Effect Return %d Volume", ch + 1);
 		err = snd_create_std_mono_ctl(mixer, id, control,
 						cmask, val_type, name,
 						snd_usb_mixer_vol_tlv);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+		if (err < 0)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_ftu_create_effect_send_ctls(काष्ठा usb_mixer_पूर्णांकerface *mixer)
-अणु
-	अचिन्हित पूर्णांक  cmask;
-	पूर्णांक err, ch;
-	अक्षर name[48];
+static int snd_ftu_create_effect_send_ctls(struct usb_mixer_interface *mixer)
+{
+	unsigned int  cmask;
+	int err, ch;
+	char name[48];
 
-	स्थिर अचिन्हित पूर्णांक id = 5;
-	स्थिर पूर्णांक val_type = USB_MIXER_S16;
-	स्थिर अचिन्हित पूर्णांक control = 9;
+	const unsigned int id = 5;
+	const int val_type = USB_MIXER_S16;
+	const unsigned int control = 9;
 
-	क्रम (ch = 0; ch < 8; ++ch) अणु
+	for (ch = 0; ch < 8; ++ch) {
 		cmask = 1 << ch;
-		snम_लिखो(name, माप(name),
+		snprintf(name, sizeof(name),
 			"Effect Send AIn%d Volume", ch + 1);
 		err = snd_create_std_mono_ctl(mixer, id, control, cmask,
 						val_type, name,
 						snd_usb_mixer_vol_tlv);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
-	क्रम (ch = 8; ch < 16; ++ch) अणु
+		if (err < 0)
+			return err;
+	}
+	for (ch = 8; ch < 16; ++ch) {
 		cmask = 1 << ch;
-		snम_लिखो(name, माप(name),
+		snprintf(name, sizeof(name),
 			"Effect Send DIn%d Volume", ch - 7);
 		err = snd_create_std_mono_ctl(mixer, id, control, cmask,
 						val_type, name,
 						snd_usb_mixer_vol_tlv);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (err < 0)
+			return err;
+	}
+	return 0;
+}
 
-अटल पूर्णांक snd_ftu_create_mixer(काष्ठा usb_mixer_पूर्णांकerface *mixer)
-अणु
-	पूर्णांक err;
+static int snd_ftu_create_mixer(struct usb_mixer_interface *mixer)
+{
+	int err;
 
 	err = snd_ftu_create_volume_ctls(mixer);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	err = snd_ftu_create_effect_चयन(mixer, 1, 6);
-	अगर (err < 0)
-		वापस err;
+	err = snd_ftu_create_effect_switch(mixer, 1, 6);
+	if (err < 0)
+		return err;
 
 	err = snd_ftu_create_effect_volume_ctl(mixer);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	err = snd_ftu_create_effect_duration_ctl(mixer);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	err = snd_ftu_create_effect_feedback_ctl(mixer);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	err = snd_ftu_create_effect_वापस_ctls(mixer);
-	अगर (err < 0)
-		वापस err;
+	err = snd_ftu_create_effect_return_ctls(mixer);
+	if (err < 0)
+		return err;
 
 	err = snd_ftu_create_effect_send_ctls(mixer);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम snd_emuusb_set_samplerate(काष्ठा snd_usb_audio *chip,
-			       अचिन्हित अक्षर samplerate_id)
-अणु
-	काष्ठा usb_mixer_पूर्णांकerface *mixer;
-	काष्ठा usb_mixer_elem_info *cval;
-	पूर्णांक unitid = 12; /* SampleRate ExtensionUnit ID */
+void snd_emuusb_set_samplerate(struct snd_usb_audio *chip,
+			       unsigned char samplerate_id)
+{
+	struct usb_mixer_interface *mixer;
+	struct usb_mixer_elem_info *cval;
+	int unitid = 12; /* SampleRate ExtensionUnit ID */
 
-	list_क्रम_each_entry(mixer, &chip->mixer_list, list) अणु
-		अगर (mixer->id_elems[unitid]) अणु
+	list_for_each_entry(mixer, &chip->mixer_list, list) {
+		if (mixer->id_elems[unitid]) {
 			cval = mixer_elem_list_to_info(mixer->id_elems[unitid]);
 			snd_usb_mixer_set_ctl_value(cval, UAC_SET_CUR,
 						    cval->control << 8,
 						    samplerate_id);
-			snd_usb_mixer_notअगरy_id(mixer, unitid);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			snd_usb_mixer_notify_id(mixer, unitid);
+			break;
+		}
+	}
+}
 
 /* M-Audio Fast Track C400/C600 */
 /* C400/C600 volume controls, this control needs a volume quirk, see mixer.c */
-अटल पूर्णांक snd_c400_create_vol_ctls(काष्ठा usb_mixer_पूर्णांकerface *mixer)
-अणु
-	अक्षर name[64];
-	अचिन्हित पूर्णांक cmask, offset;
-	पूर्णांक out, chan, err;
-	पूर्णांक num_outs = 0;
-	पूर्णांक num_ins = 0;
+static int snd_c400_create_vol_ctls(struct usb_mixer_interface *mixer)
+{
+	char name[64];
+	unsigned int cmask, offset;
+	int out, chan, err;
+	int num_outs = 0;
+	int num_ins = 0;
 
-	स्थिर अचिन्हित पूर्णांक id = 0x40;
-	स्थिर पूर्णांक val_type = USB_MIXER_S16;
-	स्थिर पूर्णांक control = 1;
+	const unsigned int id = 0x40;
+	const int val_type = USB_MIXER_S16;
+	const int control = 1;
 
-	चयन (mixer->chip->usb_id) अणु
-	हाल USB_ID(0x0763, 0x2030):
+	switch (mixer->chip->usb_id) {
+	case USB_ID(0x0763, 0x2030):
 		num_outs = 6;
 		num_ins = 4;
-		अवरोध;
-	हाल USB_ID(0x0763, 0x2031):
+		break;
+	case USB_ID(0x0763, 0x2031):
 		num_outs = 8;
 		num_ins = 6;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	क्रम (chan = 0; chan < num_outs + num_ins; chan++) अणु
-		क्रम (out = 0; out < num_outs; out++) अणु
-			अगर (chan < num_outs) अणु
-				snम_लिखो(name, माप(name),
+	for (chan = 0; chan < num_outs + num_ins; chan++) {
+		for (out = 0; out < num_outs; out++) {
+			if (chan < num_outs) {
+				snprintf(name, sizeof(name),
 					"PCM%d-Out%d Playback Volume",
 					chan + 1, out + 1);
-			पूर्ण अन्यथा अणु
-				snम_लिखो(name, माप(name),
+			} else {
+				snprintf(name, sizeof(name),
 					"In%d-Out%d Playback Volume",
 					chan - num_outs + 1, out + 1);
-			पूर्ण
+			}
 
 			cmask = (out == 0) ? 0 : 1 << (out - 1);
 			offset = chan * num_outs;
 			err = snd_create_std_mono_ctl_offset(mixer, id, control,
 						cmask, val_type, offset, name,
 						&snd_usb_mixer_vol_tlv);
-			अगर (err < 0)
-				वापस err;
-		पूर्ण
-	पूर्ण
+			if (err < 0)
+				return err;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* This control needs a volume quirk, see mixer.c */
-अटल पूर्णांक snd_c400_create_effect_volume_ctl(काष्ठा usb_mixer_पूर्णांकerface *mixer)
-अणु
-	अटल स्थिर अक्षर name[] = "Effect Volume";
-	स्थिर अचिन्हित पूर्णांक id = 0x43;
-	स्थिर पूर्णांक val_type = USB_MIXER_U8;
-	स्थिर अचिन्हित पूर्णांक control = 3;
-	स्थिर अचिन्हित पूर्णांक cmask = 0;
+static int snd_c400_create_effect_volume_ctl(struct usb_mixer_interface *mixer)
+{
+	static const char name[] = "Effect Volume";
+	const unsigned int id = 0x43;
+	const int val_type = USB_MIXER_U8;
+	const unsigned int control = 3;
+	const unsigned int cmask = 0;
 
-	वापस snd_create_std_mono_ctl(mixer, id, control, cmask, val_type,
+	return snd_create_std_mono_ctl(mixer, id, control, cmask, val_type,
 					name, snd_usb_mixer_vol_tlv);
-पूर्ण
+}
 
 /* This control needs a volume quirk, see mixer.c */
-अटल पूर्णांक snd_c400_create_effect_duration_ctl(काष्ठा usb_mixer_पूर्णांकerface *mixer)
-अणु
-	अटल स्थिर अक्षर name[] = "Effect Duration";
-	स्थिर अचिन्हित पूर्णांक id = 0x43;
-	स्थिर पूर्णांक val_type = USB_MIXER_S16;
-	स्थिर अचिन्हित पूर्णांक control = 4;
-	स्थिर अचिन्हित पूर्णांक cmask = 0;
+static int snd_c400_create_effect_duration_ctl(struct usb_mixer_interface *mixer)
+{
+	static const char name[] = "Effect Duration";
+	const unsigned int id = 0x43;
+	const int val_type = USB_MIXER_S16;
+	const unsigned int control = 4;
+	const unsigned int cmask = 0;
 
-	वापस snd_create_std_mono_ctl(mixer, id, control, cmask, val_type,
+	return snd_create_std_mono_ctl(mixer, id, control, cmask, val_type,
 					name, snd_usb_mixer_vol_tlv);
-पूर्ण
+}
 
 /* This control needs a volume quirk, see mixer.c */
-अटल पूर्णांक snd_c400_create_effect_feedback_ctl(काष्ठा usb_mixer_पूर्णांकerface *mixer)
-अणु
-	अटल स्थिर अक्षर name[] = "Effect Feedback Volume";
-	स्थिर अचिन्हित पूर्णांक id = 0x43;
-	स्थिर पूर्णांक val_type = USB_MIXER_U8;
-	स्थिर अचिन्हित पूर्णांक control = 5;
-	स्थिर अचिन्हित पूर्णांक cmask = 0;
+static int snd_c400_create_effect_feedback_ctl(struct usb_mixer_interface *mixer)
+{
+	static const char name[] = "Effect Feedback Volume";
+	const unsigned int id = 0x43;
+	const int val_type = USB_MIXER_U8;
+	const unsigned int control = 5;
+	const unsigned int cmask = 0;
 
-	वापस snd_create_std_mono_ctl(mixer, id, control, cmask, val_type,
-					name, शून्य);
-पूर्ण
+	return snd_create_std_mono_ctl(mixer, id, control, cmask, val_type,
+					name, NULL);
+}
 
-अटल पूर्णांक snd_c400_create_effect_vol_ctls(काष्ठा usb_mixer_पूर्णांकerface *mixer)
-अणु
-	अक्षर name[64];
-	अचिन्हित पूर्णांक cmask;
-	पूर्णांक chan, err;
-	पूर्णांक num_outs = 0;
-	पूर्णांक num_ins = 0;
+static int snd_c400_create_effect_vol_ctls(struct usb_mixer_interface *mixer)
+{
+	char name[64];
+	unsigned int cmask;
+	int chan, err;
+	int num_outs = 0;
+	int num_ins = 0;
 
-	स्थिर अचिन्हित पूर्णांक id = 0x42;
-	स्थिर पूर्णांक val_type = USB_MIXER_S16;
-	स्थिर पूर्णांक control = 1;
+	const unsigned int id = 0x42;
+	const int val_type = USB_MIXER_S16;
+	const int control = 1;
 
-	चयन (mixer->chip->usb_id) अणु
-	हाल USB_ID(0x0763, 0x2030):
+	switch (mixer->chip->usb_id) {
+	case USB_ID(0x0763, 0x2030):
 		num_outs = 6;
 		num_ins = 4;
-		अवरोध;
-	हाल USB_ID(0x0763, 0x2031):
+		break;
+	case USB_ID(0x0763, 0x2031):
 		num_outs = 8;
 		num_ins = 6;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	क्रम (chan = 0; chan < num_outs + num_ins; chan++) अणु
-		अगर (chan < num_outs) अणु
-			snम_लिखो(name, माप(name),
+	for (chan = 0; chan < num_outs + num_ins; chan++) {
+		if (chan < num_outs) {
+			snprintf(name, sizeof(name),
 				"Effect Send DOut%d",
 				chan + 1);
-		पूर्ण अन्यथा अणु
-			snम_लिखो(name, माप(name),
+		} else {
+			snprintf(name, sizeof(name),
 				"Effect Send AIn%d",
 				chan - num_outs + 1);
-		पूर्ण
+		}
 
 		cmask = (chan == 0) ? 0 : 1 << (chan - 1);
 		err = snd_create_std_mono_ctl(mixer, id, control,
 						cmask, val_type, name,
 						&snd_usb_mixer_vol_tlv);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+		if (err < 0)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_c400_create_effect_ret_vol_ctls(काष्ठा usb_mixer_पूर्णांकerface *mixer)
-अणु
-	अक्षर name[64];
-	अचिन्हित पूर्णांक cmask;
-	पूर्णांक chan, err;
-	पूर्णांक num_outs = 0;
-	पूर्णांक offset = 0;
+static int snd_c400_create_effect_ret_vol_ctls(struct usb_mixer_interface *mixer)
+{
+	char name[64];
+	unsigned int cmask;
+	int chan, err;
+	int num_outs = 0;
+	int offset = 0;
 
-	स्थिर अचिन्हित पूर्णांक id = 0x40;
-	स्थिर पूर्णांक val_type = USB_MIXER_S16;
-	स्थिर पूर्णांक control = 1;
+	const unsigned int id = 0x40;
+	const int val_type = USB_MIXER_S16;
+	const int control = 1;
 
-	चयन (mixer->chip->usb_id) अणु
-	हाल USB_ID(0x0763, 0x2030):
+	switch (mixer->chip->usb_id) {
+	case USB_ID(0x0763, 0x2030):
 		num_outs = 6;
 		offset = 0x3c;
-		/* अणु 0x3c, 0x43, 0x3e, 0x45, 0x40, 0x47 पूर्ण */
-		अवरोध;
-	हाल USB_ID(0x0763, 0x2031):
+		/* { 0x3c, 0x43, 0x3e, 0x45, 0x40, 0x47 } */
+		break;
+	case USB_ID(0x0763, 0x2031):
 		num_outs = 8;
 		offset = 0x70;
-		/* अणु 0x70, 0x79, 0x72, 0x7b, 0x74, 0x7d, 0x76, 0x7f पूर्ण */
-		अवरोध;
-	पूर्ण
+		/* { 0x70, 0x79, 0x72, 0x7b, 0x74, 0x7d, 0x76, 0x7f } */
+		break;
+	}
 
-	क्रम (chan = 0; chan < num_outs; chan++) अणु
-		snम_लिखो(name, माप(name),
+	for (chan = 0; chan < num_outs; chan++) {
+		snprintf(name, sizeof(name),
 			"Effect Return %d",
 			chan + 1);
 
@@ -1343,196 +1342,196 @@ err:
 		err = snd_create_std_mono_ctl_offset(mixer, id, control,
 						cmask, val_type, offset, name,
 						&snd_usb_mixer_vol_tlv);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+		if (err < 0)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_c400_create_mixer(काष्ठा usb_mixer_पूर्णांकerface *mixer)
-अणु
-	पूर्णांक err;
+static int snd_c400_create_mixer(struct usb_mixer_interface *mixer)
+{
+	int err;
 
 	err = snd_c400_create_vol_ctls(mixer);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	err = snd_c400_create_effect_vol_ctls(mixer);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	err = snd_c400_create_effect_ret_vol_ctls(mixer);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	err = snd_ftu_create_effect_चयन(mixer, 2, 0x43);
-	अगर (err < 0)
-		वापस err;
+	err = snd_ftu_create_effect_switch(mixer, 2, 0x43);
+	if (err < 0)
+		return err;
 
 	err = snd_c400_create_effect_volume_ctl(mixer);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	err = snd_c400_create_effect_duration_ctl(mixer);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	err = snd_c400_create_effect_feedback_ctl(mixer);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * The mixer units क्रम Ebox-44 are corrupt, and even where they
+ * The mixer units for Ebox-44 are corrupt, and even where they
  * are valid they presents mono controls as L and R channels of
  * stereo. So we provide a good mixer here.
  */
-अटल स्थिर काष्ठा std_mono_table ebox44_table[] = अणु
-	अणु
+static const struct std_mono_table ebox44_table[] = {
+	{
 		.unitid = 4,
 		.control = 1,
 		.cmask = 0x0,
 		.val_type = USB_MIXER_INV_BOOLEAN,
 		.name = "Headphone Playback Switch"
-	पूर्ण,
-	अणु
+	},
+	{
 		.unitid = 4,
 		.control = 2,
 		.cmask = 0x1,
 		.val_type = USB_MIXER_S16,
 		.name = "Headphone A Mix Playback Volume"
-	पूर्ण,
-	अणु
+	},
+	{
 		.unitid = 4,
 		.control = 2,
 		.cmask = 0x2,
 		.val_type = USB_MIXER_S16,
 		.name = "Headphone B Mix Playback Volume"
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.unitid = 7,
 		.control = 1,
 		.cmask = 0x0,
 		.val_type = USB_MIXER_INV_BOOLEAN,
 		.name = "Output Playback Switch"
-	पूर्ण,
-	अणु
+	},
+	{
 		.unitid = 7,
 		.control = 2,
 		.cmask = 0x1,
 		.val_type = USB_MIXER_S16,
 		.name = "Output A Playback Volume"
-	पूर्ण,
-	अणु
+	},
+	{
 		.unitid = 7,
 		.control = 2,
 		.cmask = 0x2,
 		.val_type = USB_MIXER_S16,
 		.name = "Output B Playback Volume"
-	पूर्ण,
+	},
 
-	अणु
+	{
 		.unitid = 10,
 		.control = 1,
 		.cmask = 0x0,
 		.val_type = USB_MIXER_INV_BOOLEAN,
 		.name = "Input Capture Switch"
-	पूर्ण,
-	अणु
+	},
+	{
 		.unitid = 10,
 		.control = 2,
 		.cmask = 0x1,
 		.val_type = USB_MIXER_S16,
 		.name = "Input A Capture Volume"
-	पूर्ण,
-	अणु
+	},
+	{
 		.unitid = 10,
 		.control = 2,
 		.cmask = 0x2,
 		.val_type = USB_MIXER_S16,
 		.name = "Input B Capture Volume"
-	पूर्ण,
+	},
 
-	अणुपूर्ण
-पूर्ण;
+	{}
+};
 
 /* Audio Advantage Micro II findings:
  *
- * Mapping spdअगर AES bits to venकरोr रेजिस्टर.bit:
- * AES0: [0 0 0 0 2.3 2.2 2.1 2.0] - शेष 0x00
- * AES1: [3.3 3.2.3.1.3.0 2.7 2.6 2.5 2.4] - शेष: 0x01
+ * Mapping spdif AES bits to vendor register.bit:
+ * AES0: [0 0 0 0 2.3 2.2 2.1 2.0] - default 0x00
+ * AES1: [3.3 3.2.3.1.3.0 2.7 2.6 2.5 2.4] - default: 0x01
  * AES2: [0 0 0 0 0 0 0 0]
  * AES3: [0 0 0 0 0 0 x 0] - 'x' bit is set basing on standard usb request
- *                           (UAC_EP_CS_ATTR_SAMPLE_RATE) क्रम Audio Devices
+ *                           (UAC_EP_CS_ATTR_SAMPLE_RATE) for Audio Devices
  *
- * घातer on values:
+ * power on values:
  * r2: 0x10
- * r3: 0x20 (b7 is zeroed just beक्रमe playback (except IEC61937) and set
+ * r3: 0x20 (b7 is zeroed just before playback (except IEC61937) and set
  *           just after it to 0xa0, presumably it disables/mutes some analog
  *           parts when there is no audio.)
  * r9: 0x28
  *
  * Optical transmitter on/off:
- * venकरोr रेजिस्टर.bit: 9.1
- * 0 - on (0x28 रेजिस्टर value)
- * 1 - off (0x2a रेजिस्टर value)
+ * vendor register.bit: 9.1
+ * 0 - on (0x28 register value)
+ * 1 - off (0x2a register value)
  *
  */
-अटल पूर्णांक snd_microii_spdअगर_info(काष्ठा snd_kcontrol *kcontrol,
-	काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int snd_microii_spdif_info(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_IEC958;
 	uinfo->count = 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_microii_spdअगर_शेष_get(काष्ठा snd_kcontrol *kcontrol,
-	काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा usb_mixer_elem_list *list = snd_kcontrol_chip(kcontrol);
-	काष्ठा snd_usb_audio *chip = list->mixer->chip;
-	पूर्णांक err;
-	काष्ठा usb_पूर्णांकerface *अगरace;
-	काष्ठा usb_host_पूर्णांकerface *alts;
-	अचिन्हित पूर्णांक ep;
-	अचिन्हित अक्षर data[3];
-	पूर्णांक rate;
+static int snd_microii_spdif_default_get(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	struct usb_mixer_elem_list *list = snd_kcontrol_chip(kcontrol);
+	struct snd_usb_audio *chip = list->mixer->chip;
+	int err;
+	struct usb_interface *iface;
+	struct usb_host_interface *alts;
+	unsigned int ep;
+	unsigned char data[3];
+	int rate;
 
-	err = snd_usb_lock_shutकरोwn(chip);
-	अगर (err < 0)
-		वापस err;
+	err = snd_usb_lock_shutdown(chip);
+	if (err < 0)
+		return err;
 
-	ucontrol->value.iec958.status[0] = kcontrol->निजी_value & 0xff;
-	ucontrol->value.iec958.status[1] = (kcontrol->निजी_value >> 8) & 0xff;
+	ucontrol->value.iec958.status[0] = kcontrol->private_value & 0xff;
+	ucontrol->value.iec958.status[1] = (kcontrol->private_value >> 8) & 0xff;
 	ucontrol->value.iec958.status[2] = 0x00;
 
-	/* use known values क्रम that card: पूर्णांकerface#1 altsetting#1 */
-	अगरace = usb_अगरnum_to_अगर(chip->dev, 1);
-	अगर (!अगरace || अगरace->num_altsetting < 2) अणु
+	/* use known values for that card: interface#1 altsetting#1 */
+	iface = usb_ifnum_to_if(chip->dev, 1);
+	if (!iface || iface->num_altsetting < 2) {
 		err = -EINVAL;
-		जाओ end;
-	पूर्ण
-	alts = &अगरace->altsetting[1];
-	अगर (get_अगरace_desc(alts)->bNumEndpoपूर्णांकs < 1) अणु
+		goto end;
+	}
+	alts = &iface->altsetting[1];
+	if (get_iface_desc(alts)->bNumEndpoints < 1) {
 		err = -EINVAL;
-		जाओ end;
-	पूर्ण
-	ep = get_endpoपूर्णांक(alts, 0)->bEndpoपूर्णांकAddress;
+		goto end;
+	}
+	ep = get_endpoint(alts, 0)->bEndpointAddress;
 
 	err = snd_usb_ctl_msg(chip->dev,
 			usb_rcvctrlpipe(chip->dev, 0),
 			UAC_GET_CUR,
-			USB_TYPE_CLASS | USB_RECIP_ENDPOINT | USB_सूची_IN,
+			USB_TYPE_CLASS | USB_RECIP_ENDPOINT | USB_DIR_IN,
 			UAC_EP_CS_ATTR_SAMPLE_RATE << 8,
 			ep,
 			data,
-			माप(data));
-	अगर (err < 0)
-		जाओ end;
+			sizeof(data));
+	if (err < 0)
+		goto end;
 
 	rate = data[0] | (data[1] << 8) | (data[2] << 16);
 	ucontrol->value.iec958.status[3] = (rate == 48000) ?
@@ -1540,59 +1539,59 @@ err:
 
 	err = 0;
  end:
-	snd_usb_unlock_shutकरोwn(chip);
-	वापस err;
-पूर्ण
+	snd_usb_unlock_shutdown(chip);
+	return err;
+}
 
-अटल पूर्णांक snd_microii_spdअगर_शेष_update(काष्ठा usb_mixer_elem_list *list)
-अणु
-	काष्ठा snd_usb_audio *chip = list->mixer->chip;
-	अचिन्हित पूर्णांक pval = list->kctl->निजी_value;
+static int snd_microii_spdif_default_update(struct usb_mixer_elem_list *list)
+{
+	struct snd_usb_audio *chip = list->mixer->chip;
+	unsigned int pval = list->kctl->private_value;
 	u8 reg;
-	पूर्णांक err;
+	int err;
 
-	err = snd_usb_lock_shutकरोwn(chip);
-	अगर (err < 0)
-		वापस err;
+	err = snd_usb_lock_shutdown(chip);
+	if (err < 0)
+		return err;
 
 	reg = ((pval >> 4) & 0xf0) | (pval & 0x0f);
 	err = snd_usb_ctl_msg(chip->dev,
 			usb_sndctrlpipe(chip->dev, 0),
 			UAC_SET_CUR,
-			USB_सूची_OUT | USB_TYPE_VENDOR | USB_RECIP_OTHER,
+			USB_DIR_OUT | USB_TYPE_VENDOR | USB_RECIP_OTHER,
 			reg,
 			2,
-			शून्य,
+			NULL,
 			0);
-	अगर (err < 0)
-		जाओ end;
+	if (err < 0)
+		goto end;
 
 	reg = (pval & IEC958_AES0_NONAUDIO) ? 0xa0 : 0x20;
 	reg |= (pval >> 12) & 0x0f;
 	err = snd_usb_ctl_msg(chip->dev,
 			usb_sndctrlpipe(chip->dev, 0),
 			UAC_SET_CUR,
-			USB_सूची_OUT | USB_TYPE_VENDOR | USB_RECIP_OTHER,
+			USB_DIR_OUT | USB_TYPE_VENDOR | USB_RECIP_OTHER,
 			reg,
 			3,
-			शून्य,
+			NULL,
 			0);
-	अगर (err < 0)
-		जाओ end;
+	if (err < 0)
+		goto end;
 
  end:
-	snd_usb_unlock_shutकरोwn(chip);
-	वापस err;
-पूर्ण
+	snd_usb_unlock_shutdown(chip);
+	return err;
+}
 
-अटल पूर्णांक snd_microii_spdअगर_शेष_put(काष्ठा snd_kcontrol *kcontrol,
-	काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा usb_mixer_elem_list *list = snd_kcontrol_chip(kcontrol);
-	अचिन्हित पूर्णांक pval, pval_old;
-	पूर्णांक err;
+static int snd_microii_spdif_default_put(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	struct usb_mixer_elem_list *list = snd_kcontrol_chip(kcontrol);
+	unsigned int pval, pval_old;
+	int err;
 
-	pval = pval_old = kcontrol->निजी_value;
+	pval = pval_old = kcontrol->private_value;
 	pval &= 0xfffff0f0;
 	pval |= (ucontrol->value.iec958.status[1] & 0x0f) << 8;
 	pval |= (ucontrol->value.iec958.status[0] & 0x0f);
@@ -1600,791 +1599,791 @@ err:
 	pval &= 0xffff0fff;
 	pval |= (ucontrol->value.iec958.status[1] & 0xf0) << 8;
 
-	/* The frequency bits in AES3 cannot be set via रेजिस्टर access. */
+	/* The frequency bits in AES3 cannot be set via register access. */
 
 	/* Silently ignore any bits from the request that cannot be set. */
 
-	अगर (pval == pval_old)
-		वापस 0;
+	if (pval == pval_old)
+		return 0;
 
-	kcontrol->निजी_value = pval;
-	err = snd_microii_spdअगर_शेष_update(list);
-	वापस err < 0 ? err : 1;
-पूर्ण
+	kcontrol->private_value = pval;
+	err = snd_microii_spdif_default_update(list);
+	return err < 0 ? err : 1;
+}
 
-अटल पूर्णांक snd_microii_spdअगर_mask_get(काष्ठा snd_kcontrol *kcontrol,
-	काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
+static int snd_microii_spdif_mask_get(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
 	ucontrol->value.iec958.status[0] = 0x0f;
 	ucontrol->value.iec958.status[1] = 0xff;
 	ucontrol->value.iec958.status[2] = 0x00;
 	ucontrol->value.iec958.status[3] = 0x00;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_microii_spdअगर_चयन_get(काष्ठा snd_kcontrol *kcontrol,
-	काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	ucontrol->value.पूर्णांकeger.value[0] = !(kcontrol->निजी_value & 0x02);
+static int snd_microii_spdif_switch_get(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	ucontrol->value.integer.value[0] = !(kcontrol->private_value & 0x02);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_microii_spdअगर_चयन_update(काष्ठा usb_mixer_elem_list *list)
-अणु
-	काष्ठा snd_usb_audio *chip = list->mixer->chip;
-	u8 reg = list->kctl->निजी_value;
-	पूर्णांक err;
+static int snd_microii_spdif_switch_update(struct usb_mixer_elem_list *list)
+{
+	struct snd_usb_audio *chip = list->mixer->chip;
+	u8 reg = list->kctl->private_value;
+	int err;
 
-	err = snd_usb_lock_shutकरोwn(chip);
-	अगर (err < 0)
-		वापस err;
+	err = snd_usb_lock_shutdown(chip);
+	if (err < 0)
+		return err;
 
 	err = snd_usb_ctl_msg(chip->dev,
 			usb_sndctrlpipe(chip->dev, 0),
 			UAC_SET_CUR,
-			USB_सूची_OUT | USB_TYPE_VENDOR | USB_RECIP_OTHER,
+			USB_DIR_OUT | USB_TYPE_VENDOR | USB_RECIP_OTHER,
 			reg,
 			9,
-			शून्य,
+			NULL,
 			0);
 
-	snd_usb_unlock_shutकरोwn(chip);
-	वापस err;
-पूर्ण
+	snd_usb_unlock_shutdown(chip);
+	return err;
+}
 
-अटल पूर्णांक snd_microii_spdअगर_चयन_put(काष्ठा snd_kcontrol *kcontrol,
-	काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा usb_mixer_elem_list *list = snd_kcontrol_chip(kcontrol);
+static int snd_microii_spdif_switch_put(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	struct usb_mixer_elem_list *list = snd_kcontrol_chip(kcontrol);
 	u8 reg;
-	पूर्णांक err;
+	int err;
 
-	reg = ucontrol->value.पूर्णांकeger.value[0] ? 0x28 : 0x2a;
-	अगर (reg != list->kctl->निजी_value)
-		वापस 0;
+	reg = ucontrol->value.integer.value[0] ? 0x28 : 0x2a;
+	if (reg != list->kctl->private_value)
+		return 0;
 
-	kcontrol->निजी_value = reg;
-	err = snd_microii_spdअगर_चयन_update(list);
-	वापस err < 0 ? err : 1;
-पूर्ण
+	kcontrol->private_value = reg;
+	err = snd_microii_spdif_switch_update(list);
+	return err < 0 ? err : 1;
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_microii_mixer_spdअगर[] = अणु
-	अणु
-		.अगरace =    SNDRV_CTL_ELEM_IFACE_PCM,
+static const struct snd_kcontrol_new snd_microii_mixer_spdif[] = {
+	{
+		.iface =    SNDRV_CTL_ELEM_IFACE_PCM,
 		.name =     SNDRV_CTL_NAME_IEC958("", PLAYBACK, DEFAULT),
-		.info =     snd_microii_spdअगर_info,
-		.get =      snd_microii_spdअगर_शेष_get,
-		.put =      snd_microii_spdअगर_शेष_put,
-		.निजी_value = 0x00000100UL,/* reset value */
-	पूर्ण,
-	अणु
+		.info =     snd_microii_spdif_info,
+		.get =      snd_microii_spdif_default_get,
+		.put =      snd_microii_spdif_default_put,
+		.private_value = 0x00000100UL,/* reset value */
+	},
+	{
 		.access =   SNDRV_CTL_ELEM_ACCESS_READ,
-		.अगरace =    SNDRV_CTL_ELEM_IFACE_PCM,
+		.iface =    SNDRV_CTL_ELEM_IFACE_PCM,
 		.name =     SNDRV_CTL_NAME_IEC958("", PLAYBACK, MASK),
-		.info =     snd_microii_spdअगर_info,
-		.get =      snd_microii_spdअगर_mask_get,
-	पूर्ण,
-	अणु
-		.अगरace =    SNDRV_CTL_ELEM_IFACE_MIXER,
+		.info =     snd_microii_spdif_info,
+		.get =      snd_microii_spdif_mask_get,
+	},
+	{
+		.iface =    SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name =     SNDRV_CTL_NAME_IEC958("", PLAYBACK, SWITCH),
 		.info =     snd_ctl_boolean_mono_info,
-		.get =      snd_microii_spdअगर_चयन_get,
-		.put =      snd_microii_spdअगर_चयन_put,
-		.निजी_value = 0x00000028UL,/* reset value */
-	पूर्ण
-पूर्ण;
+		.get =      snd_microii_spdif_switch_get,
+		.put =      snd_microii_spdif_switch_put,
+		.private_value = 0x00000028UL,/* reset value */
+	}
+};
 
-अटल पूर्णांक snd_microii_controls_create(काष्ठा usb_mixer_पूर्णांकerface *mixer)
-अणु
-	पूर्णांक err, i;
-	अटल स्थिर usb_mixer_elem_resume_func_t resume_funcs[] = अणु
-		snd_microii_spdअगर_शेष_update,
-		शून्य,
-		snd_microii_spdअगर_चयन_update
-	पूर्ण;
+static int snd_microii_controls_create(struct usb_mixer_interface *mixer)
+{
+	int err, i;
+	static const usb_mixer_elem_resume_func_t resume_funcs[] = {
+		snd_microii_spdif_default_update,
+		NULL,
+		snd_microii_spdif_switch_update
+	};
 
-	क्रम (i = 0; i < ARRAY_SIZE(snd_microii_mixer_spdअगर); ++i) अणु
+	for (i = 0; i < ARRAY_SIZE(snd_microii_mixer_spdif); ++i) {
 		err = add_single_ctl_with_resume(mixer, 0,
 						 resume_funcs[i],
-						 &snd_microii_mixer_spdअगर[i],
-						 शून्य);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+						 &snd_microii_mixer_spdif[i],
+						 NULL);
+		if (err < 0)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Creative Sound Blaster E1 */
 
-अटल पूर्णांक snd_soundblaster_e1_चयन_get(काष्ठा snd_kcontrol *kcontrol,
-					  काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	ucontrol->value.पूर्णांकeger.value[0] = kcontrol->निजी_value;
-	वापस 0;
-पूर्ण
+static int snd_soundblaster_e1_switch_get(struct snd_kcontrol *kcontrol,
+					  struct snd_ctl_elem_value *ucontrol)
+{
+	ucontrol->value.integer.value[0] = kcontrol->private_value;
+	return 0;
+}
 
-अटल पूर्णांक snd_soundblaster_e1_चयन_update(काष्ठा usb_mixer_पूर्णांकerface *mixer,
-					     अचिन्हित अक्षर state)
-अणु
-	काष्ठा snd_usb_audio *chip = mixer->chip;
-	पूर्णांक err;
-	अचिन्हित अक्षर buff[2];
+static int snd_soundblaster_e1_switch_update(struct usb_mixer_interface *mixer,
+					     unsigned char state)
+{
+	struct snd_usb_audio *chip = mixer->chip;
+	int err;
+	unsigned char buff[2];
 
 	buff[0] = 0x02;
 	buff[1] = state ? 0x02 : 0x00;
 
-	err = snd_usb_lock_shutकरोwn(chip);
-	अगर (err < 0)
-		वापस err;
+	err = snd_usb_lock_shutdown(chip);
+	if (err < 0)
+		return err;
 	err = snd_usb_ctl_msg(chip->dev,
 			usb_sndctrlpipe(chip->dev, 0), HID_REQ_SET_REPORT,
-			USB_TYPE_CLASS | USB_RECIP_INTERFACE | USB_सूची_OUT,
+			USB_TYPE_CLASS | USB_RECIP_INTERFACE | USB_DIR_OUT,
 			0x0202, 3, buff, 2);
-	snd_usb_unlock_shutकरोwn(chip);
-	वापस err;
-पूर्ण
+	snd_usb_unlock_shutdown(chip);
+	return err;
+}
 
-अटल पूर्णांक snd_soundblaster_e1_चयन_put(काष्ठा snd_kcontrol *kcontrol,
-					  काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा usb_mixer_elem_list *list = snd_kcontrol_chip(kcontrol);
-	अचिन्हित अक्षर value = !!ucontrol->value.पूर्णांकeger.value[0];
-	पूर्णांक err;
+static int snd_soundblaster_e1_switch_put(struct snd_kcontrol *kcontrol,
+					  struct snd_ctl_elem_value *ucontrol)
+{
+	struct usb_mixer_elem_list *list = snd_kcontrol_chip(kcontrol);
+	unsigned char value = !!ucontrol->value.integer.value[0];
+	int err;
 
-	अगर (kcontrol->निजी_value == value)
-		वापस 0;
-	kcontrol->निजी_value = value;
-	err = snd_soundblaster_e1_चयन_update(list->mixer, value);
-	वापस err < 0 ? err : 1;
-पूर्ण
+	if (kcontrol->private_value == value)
+		return 0;
+	kcontrol->private_value = value;
+	err = snd_soundblaster_e1_switch_update(list->mixer, value);
+	return err < 0 ? err : 1;
+}
 
-अटल पूर्णांक snd_soundblaster_e1_चयन_resume(काष्ठा usb_mixer_elem_list *list)
-अणु
-	वापस snd_soundblaster_e1_चयन_update(list->mixer,
-						 list->kctl->निजी_value);
-पूर्ण
+static int snd_soundblaster_e1_switch_resume(struct usb_mixer_elem_list *list)
+{
+	return snd_soundblaster_e1_switch_update(list->mixer,
+						 list->kctl->private_value);
+}
 
-अटल पूर्णांक snd_soundblaster_e1_चयन_info(काष्ठा snd_kcontrol *kcontrol,
-					   काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	अटल स्थिर अक्षर *स्थिर texts[2] = अणु
+static int snd_soundblaster_e1_switch_info(struct snd_kcontrol *kcontrol,
+					   struct snd_ctl_elem_info *uinfo)
+{
+	static const char *const texts[2] = {
 		"Mic", "Aux"
-	पूर्ण;
+	};
 
-	वापस snd_ctl_क्रमागत_info(uinfo, 1, ARRAY_SIZE(texts), texts);
-पूर्ण
+	return snd_ctl_enum_info(uinfo, 1, ARRAY_SIZE(texts), texts);
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_soundblaster_e1_input_चयन = अणु
-	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+static const struct snd_kcontrol_new snd_soundblaster_e1_input_switch = {
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name = "Input Source",
-	.info = snd_soundblaster_e1_चयन_info,
-	.get = snd_soundblaster_e1_चयन_get,
-	.put = snd_soundblaster_e1_चयन_put,
-	.निजी_value = 0,
-पूर्ण;
+	.info = snd_soundblaster_e1_switch_info,
+	.get = snd_soundblaster_e1_switch_get,
+	.put = snd_soundblaster_e1_switch_put,
+	.private_value = 0,
+};
 
-अटल पूर्णांक snd_soundblaster_e1_चयन_create(काष्ठा usb_mixer_पूर्णांकerface *mixer)
-अणु
-	वापस add_single_ctl_with_resume(mixer, 0,
-					  snd_soundblaster_e1_चयन_resume,
-					  &snd_soundblaster_e1_input_चयन,
-					  शून्य);
-पूर्ण
+static int snd_soundblaster_e1_switch_create(struct usb_mixer_interface *mixer)
+{
+	return add_single_ctl_with_resume(mixer, 0,
+					  snd_soundblaster_e1_switch_resume,
+					  &snd_soundblaster_e1_input_switch,
+					  NULL);
+}
 
-अटल व्योम dell_करोck_init_vol(काष्ठा snd_usb_audio *chip, पूर्णांक ch, पूर्णांक id)
-अणु
+static void dell_dock_init_vol(struct snd_usb_audio *chip, int ch, int id)
+{
 	u16 buf = 0;
 
 	snd_usb_ctl_msg(chip->dev, usb_sndctrlpipe(chip->dev, 0), UAC_SET_CUR,
-			USB_RECIP_INTERFACE | USB_TYPE_CLASS | USB_सूची_OUT,
-			ch, snd_usb_ctrl_पूर्णांकf(chip) | (id << 8),
+			USB_RECIP_INTERFACE | USB_TYPE_CLASS | USB_DIR_OUT,
+			ch, snd_usb_ctrl_intf(chip) | (id << 8),
 			&buf, 2);
-पूर्ण
+}
 
-अटल पूर्णांक dell_करोck_mixer_init(काष्ठा usb_mixer_पूर्णांकerface *mixer)
-अणु
+static int dell_dock_mixer_init(struct usb_mixer_interface *mixer)
+{
 	/* fix to 0dB playback volumes */
-	dell_करोck_init_vol(mixer->chip, 1, 16);
-	dell_करोck_init_vol(mixer->chip, 2, 16);
-	dell_करोck_init_vol(mixer->chip, 1, 19);
-	dell_करोck_init_vol(mixer->chip, 2, 19);
-	वापस 0;
-पूर्ण
+	dell_dock_init_vol(mixer->chip, 1, 16);
+	dell_dock_init_vol(mixer->chip, 2, 16);
+	dell_dock_init_vol(mixer->chip, 1, 19);
+	dell_dock_init_vol(mixer->chip, 2, 19);
+	return 0;
+}
 
 /* RME Class Compliant device quirks */
 
-#घोषणा SND_RME_GET_STATUS1			23
-#घोषणा SND_RME_GET_CURRENT_FREQ		17
-#घोषणा SND_RME_CLK_SYSTEM_SHIFT		16
-#घोषणा SND_RME_CLK_SYSTEM_MASK			0x1f
-#घोषणा SND_RME_CLK_AES_SHIFT			8
-#घोषणा SND_RME_CLK_SPDIF_SHIFT			12
-#घोषणा SND_RME_CLK_AES_SPDIF_MASK		0xf
-#घोषणा SND_RME_CLK_SYNC_SHIFT			6
-#घोषणा SND_RME_CLK_SYNC_MASK			0x3
-#घोषणा SND_RME_CLK_FREQMUL_SHIFT		18
-#घोषणा SND_RME_CLK_FREQMUL_MASK		0x7
-#घोषणा SND_RME_CLK_SYSTEM(x) \
+#define SND_RME_GET_STATUS1			23
+#define SND_RME_GET_CURRENT_FREQ		17
+#define SND_RME_CLK_SYSTEM_SHIFT		16
+#define SND_RME_CLK_SYSTEM_MASK			0x1f
+#define SND_RME_CLK_AES_SHIFT			8
+#define SND_RME_CLK_SPDIF_SHIFT			12
+#define SND_RME_CLK_AES_SPDIF_MASK		0xf
+#define SND_RME_CLK_SYNC_SHIFT			6
+#define SND_RME_CLK_SYNC_MASK			0x3
+#define SND_RME_CLK_FREQMUL_SHIFT		18
+#define SND_RME_CLK_FREQMUL_MASK		0x7
+#define SND_RME_CLK_SYSTEM(x) \
 	((x >> SND_RME_CLK_SYSTEM_SHIFT) & SND_RME_CLK_SYSTEM_MASK)
-#घोषणा SND_RME_CLK_AES(x) \
+#define SND_RME_CLK_AES(x) \
 	((x >> SND_RME_CLK_AES_SHIFT) & SND_RME_CLK_AES_SPDIF_MASK)
-#घोषणा SND_RME_CLK_SPDIF(x) \
+#define SND_RME_CLK_SPDIF(x) \
 	((x >> SND_RME_CLK_SPDIF_SHIFT) & SND_RME_CLK_AES_SPDIF_MASK)
-#घोषणा SND_RME_CLK_SYNC(x) \
+#define SND_RME_CLK_SYNC(x) \
 	((x >> SND_RME_CLK_SYNC_SHIFT) & SND_RME_CLK_SYNC_MASK)
-#घोषणा SND_RME_CLK_FREQMUL(x) \
+#define SND_RME_CLK_FREQMUL(x) \
 	((x >> SND_RME_CLK_FREQMUL_SHIFT) & SND_RME_CLK_FREQMUL_MASK)
-#घोषणा SND_RME_CLK_AES_LOCK			0x1
-#घोषणा SND_RME_CLK_AES_SYNC			0x4
-#घोषणा SND_RME_CLK_SPDIF_LOCK			0x2
-#घोषणा SND_RME_CLK_SPDIF_SYNC			0x8
-#घोषणा SND_RME_SPDIF_IF_SHIFT			4
-#घोषणा SND_RME_SPDIF_FORMAT_SHIFT		5
-#घोषणा SND_RME_BINARY_MASK			0x1
-#घोषणा SND_RME_SPDIF_IF(x) \
+#define SND_RME_CLK_AES_LOCK			0x1
+#define SND_RME_CLK_AES_SYNC			0x4
+#define SND_RME_CLK_SPDIF_LOCK			0x2
+#define SND_RME_CLK_SPDIF_SYNC			0x8
+#define SND_RME_SPDIF_IF_SHIFT			4
+#define SND_RME_SPDIF_FORMAT_SHIFT		5
+#define SND_RME_BINARY_MASK			0x1
+#define SND_RME_SPDIF_IF(x) \
 	((x >> SND_RME_SPDIF_IF_SHIFT) & SND_RME_BINARY_MASK)
-#घोषणा SND_RME_SPDIF_FORMAT(x) \
+#define SND_RME_SPDIF_FORMAT(x) \
 	((x >> SND_RME_SPDIF_FORMAT_SHIFT) & SND_RME_BINARY_MASK)
 
-अटल स्थिर u32 snd_rme_rate_table[] = अणु
+static const u32 snd_rme_rate_table[] = {
 	32000, 44100, 48000, 50000,
 	64000, 88200, 96000, 100000,
 	128000, 176400, 192000, 200000,
 	256000,	352800, 384000, 400000,
 	512000, 705600, 768000, 800000
-पूर्ण;
-/* maximum number of items क्रम AES and S/PDIF rates क्रम above table */
-#घोषणा SND_RME_RATE_IDX_AES_SPDIF_NUM		12
+};
+/* maximum number of items for AES and S/PDIF rates for above table */
+#define SND_RME_RATE_IDX_AES_SPDIF_NUM		12
 
-क्रमागत snd_rme_करोमुख्य अणु
+enum snd_rme_domain {
 	SND_RME_DOMAIN_SYSTEM,
 	SND_RME_DOMAIN_AES,
 	SND_RME_DOMAIN_SPDIF
-पूर्ण;
+};
 
-क्रमागत snd_rme_घड़ी_status अणु
+enum snd_rme_clock_status {
 	SND_RME_CLOCK_NOLOCK,
 	SND_RME_CLOCK_LOCK,
 	SND_RME_CLOCK_SYNC
-पूर्ण;
+};
 
-अटल पूर्णांक snd_rme_पढ़ो_value(काष्ठा snd_usb_audio *chip,
-			      अचिन्हित पूर्णांक item,
+static int snd_rme_read_value(struct snd_usb_audio *chip,
+			      unsigned int item,
 			      u32 *value)
-अणु
-	काष्ठा usb_device *dev = chip->dev;
-	पूर्णांक err;
+{
+	struct usb_device *dev = chip->dev;
+	int err;
 
 	err = snd_usb_ctl_msg(dev, usb_rcvctrlpipe(dev, 0),
 			      item,
-			      USB_सूची_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
+			      USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
 			      0, 0,
-			      value, माप(*value));
-	अगर (err < 0)
+			      value, sizeof(*value));
+	if (err < 0)
 		dev_err(&dev->dev,
 			"unable to issue vendor read request %d (ret = %d)",
 			item, err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक snd_rme_get_status1(काष्ठा snd_kcontrol *kcontrol,
+static int snd_rme_get_status1(struct snd_kcontrol *kcontrol,
 			       u32 *status1)
-अणु
-	काष्ठा usb_mixer_elem_list *list = snd_kcontrol_chip(kcontrol);
-	काष्ठा snd_usb_audio *chip = list->mixer->chip;
-	पूर्णांक err;
+{
+	struct usb_mixer_elem_list *list = snd_kcontrol_chip(kcontrol);
+	struct snd_usb_audio *chip = list->mixer->chip;
+	int err;
 
-	err = snd_usb_lock_shutकरोwn(chip);
-	अगर (err < 0)
-		वापस err;
-	err = snd_rme_पढ़ो_value(chip, SND_RME_GET_STATUS1, status1);
-	snd_usb_unlock_shutकरोwn(chip);
-	वापस err;
-पूर्ण
+	err = snd_usb_lock_shutdown(chip);
+	if (err < 0)
+		return err;
+	err = snd_rme_read_value(chip, SND_RME_GET_STATUS1, status1);
+	snd_usb_unlock_shutdown(chip);
+	return err;
+}
 
-अटल पूर्णांक snd_rme_rate_get(काष्ठा snd_kcontrol *kcontrol,
-			    काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
+static int snd_rme_rate_get(struct snd_kcontrol *kcontrol,
+			    struct snd_ctl_elem_value *ucontrol)
+{
 	u32 status1;
 	u32 rate = 0;
-	पूर्णांक idx;
-	पूर्णांक err;
+	int idx;
+	int err;
 
 	err = snd_rme_get_status1(kcontrol, &status1);
-	अगर (err < 0)
-		वापस err;
-	चयन (kcontrol->निजी_value) अणु
-	हाल SND_RME_DOMAIN_SYSTEM:
+	if (err < 0)
+		return err;
+	switch (kcontrol->private_value) {
+	case SND_RME_DOMAIN_SYSTEM:
 		idx = SND_RME_CLK_SYSTEM(status1);
-		अगर (idx < ARRAY_SIZE(snd_rme_rate_table))
+		if (idx < ARRAY_SIZE(snd_rme_rate_table))
 			rate = snd_rme_rate_table[idx];
-		अवरोध;
-	हाल SND_RME_DOMAIN_AES:
+		break;
+	case SND_RME_DOMAIN_AES:
 		idx = SND_RME_CLK_AES(status1);
-		अगर (idx < SND_RME_RATE_IDX_AES_SPDIF_NUM)
+		if (idx < SND_RME_RATE_IDX_AES_SPDIF_NUM)
 			rate = snd_rme_rate_table[idx];
-		अवरोध;
-	हाल SND_RME_DOMAIN_SPDIF:
+		break;
+	case SND_RME_DOMAIN_SPDIF:
 		idx = SND_RME_CLK_SPDIF(status1);
-		अगर (idx < SND_RME_RATE_IDX_AES_SPDIF_NUM)
+		if (idx < SND_RME_RATE_IDX_AES_SPDIF_NUM)
 			rate = snd_rme_rate_table[idx];
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	ucontrol->value.पूर्णांकeger.value[0] = rate;
-	वापस 0;
-पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
+	ucontrol->value.integer.value[0] = rate;
+	return 0;
+}
 
-अटल पूर्णांक snd_rme_sync_state_get(काष्ठा snd_kcontrol *kcontrol,
-				  काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
+static int snd_rme_sync_state_get(struct snd_kcontrol *kcontrol,
+				  struct snd_ctl_elem_value *ucontrol)
+{
 	u32 status1;
-	पूर्णांक idx = SND_RME_CLOCK_NOLOCK;
-	पूर्णांक err;
+	int idx = SND_RME_CLOCK_NOLOCK;
+	int err;
 
 	err = snd_rme_get_status1(kcontrol, &status1);
-	अगर (err < 0)
-		वापस err;
-	चयन (kcontrol->निजी_value) अणु
-	हाल SND_RME_DOMAIN_AES:  /* AES */
-		अगर (status1 & SND_RME_CLK_AES_SYNC)
+	if (err < 0)
+		return err;
+	switch (kcontrol->private_value) {
+	case SND_RME_DOMAIN_AES:  /* AES */
+		if (status1 & SND_RME_CLK_AES_SYNC)
 			idx = SND_RME_CLOCK_SYNC;
-		अन्यथा अगर (status1 & SND_RME_CLK_AES_LOCK)
+		else if (status1 & SND_RME_CLK_AES_LOCK)
 			idx = SND_RME_CLOCK_LOCK;
-		अवरोध;
-	हाल SND_RME_DOMAIN_SPDIF:  /* SPDIF */
-		अगर (status1 & SND_RME_CLK_SPDIF_SYNC)
+		break;
+	case SND_RME_DOMAIN_SPDIF:  /* SPDIF */
+		if (status1 & SND_RME_CLK_SPDIF_SYNC)
 			idx = SND_RME_CLOCK_SYNC;
-		अन्यथा अगर (status1 & SND_RME_CLK_SPDIF_LOCK)
+		else if (status1 & SND_RME_CLK_SPDIF_LOCK)
 			idx = SND_RME_CLOCK_LOCK;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	ucontrol->value.क्रमागतerated.item[0] = idx;
-	वापस 0;
-पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
+	ucontrol->value.enumerated.item[0] = idx;
+	return 0;
+}
 
-अटल पूर्णांक snd_rme_spdअगर_अगर_get(काष्ठा snd_kcontrol *kcontrol,
-				काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
+static int snd_rme_spdif_if_get(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
 	u32 status1;
-	पूर्णांक err;
+	int err;
 
 	err = snd_rme_get_status1(kcontrol, &status1);
-	अगर (err < 0)
-		वापस err;
-	ucontrol->value.क्रमागतerated.item[0] = SND_RME_SPDIF_IF(status1);
-	वापस 0;
-पूर्ण
+	if (err < 0)
+		return err;
+	ucontrol->value.enumerated.item[0] = SND_RME_SPDIF_IF(status1);
+	return 0;
+}
 
-अटल पूर्णांक snd_rme_spdअगर_क्रमmat_get(काष्ठा snd_kcontrol *kcontrol,
-				    काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
+static int snd_rme_spdif_format_get(struct snd_kcontrol *kcontrol,
+				    struct snd_ctl_elem_value *ucontrol)
+{
 	u32 status1;
-	पूर्णांक err;
+	int err;
 
 	err = snd_rme_get_status1(kcontrol, &status1);
-	अगर (err < 0)
-		वापस err;
-	ucontrol->value.क्रमागतerated.item[0] = SND_RME_SPDIF_FORMAT(status1);
-	वापस 0;
-पूर्ण
+	if (err < 0)
+		return err;
+	ucontrol->value.enumerated.item[0] = SND_RME_SPDIF_FORMAT(status1);
+	return 0;
+}
 
-अटल पूर्णांक snd_rme_sync_source_get(काष्ठा snd_kcontrol *kcontrol,
-				   काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
+static int snd_rme_sync_source_get(struct snd_kcontrol *kcontrol,
+				   struct snd_ctl_elem_value *ucontrol)
+{
 	u32 status1;
-	पूर्णांक err;
+	int err;
 
 	err = snd_rme_get_status1(kcontrol, &status1);
-	अगर (err < 0)
-		वापस err;
-	ucontrol->value.क्रमागतerated.item[0] = SND_RME_CLK_SYNC(status1);
-	वापस 0;
-पूर्ण
+	if (err < 0)
+		return err;
+	ucontrol->value.enumerated.item[0] = SND_RME_CLK_SYNC(status1);
+	return 0;
+}
 
-अटल पूर्णांक snd_rme_current_freq_get(काष्ठा snd_kcontrol *kcontrol,
-				    काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा usb_mixer_elem_list *list = snd_kcontrol_chip(kcontrol);
-	काष्ठा snd_usb_audio *chip = list->mixer->chip;
+static int snd_rme_current_freq_get(struct snd_kcontrol *kcontrol,
+				    struct snd_ctl_elem_value *ucontrol)
+{
+	struct usb_mixer_elem_list *list = snd_kcontrol_chip(kcontrol);
+	struct snd_usb_audio *chip = list->mixer->chip;
 	u32 status1;
-	स्थिर u64 num = 104857600000000ULL;
+	const u64 num = 104857600000000ULL;
 	u32 den;
-	अचिन्हित पूर्णांक freq;
-	पूर्णांक err;
+	unsigned int freq;
+	int err;
 
-	err = snd_usb_lock_shutकरोwn(chip);
-	अगर (err < 0)
-		वापस err;
-	err = snd_rme_पढ़ो_value(chip, SND_RME_GET_STATUS1, &status1);
-	अगर (err < 0)
-		जाओ end;
-	err = snd_rme_पढ़ो_value(chip, SND_RME_GET_CURRENT_FREQ, &den);
-	अगर (err < 0)
-		जाओ end;
-	freq = (den == 0) ? 0 : भाग64_u64(num, den);
+	err = snd_usb_lock_shutdown(chip);
+	if (err < 0)
+		return err;
+	err = snd_rme_read_value(chip, SND_RME_GET_STATUS1, &status1);
+	if (err < 0)
+		goto end;
+	err = snd_rme_read_value(chip, SND_RME_GET_CURRENT_FREQ, &den);
+	if (err < 0)
+		goto end;
+	freq = (den == 0) ? 0 : div64_u64(num, den);
 	freq <<= SND_RME_CLK_FREQMUL(status1);
-	ucontrol->value.पूर्णांकeger.value[0] = freq;
+	ucontrol->value.integer.value[0] = freq;
 
 end:
-	snd_usb_unlock_shutकरोwn(chip);
-	वापस err;
-पूर्ण
+	snd_usb_unlock_shutdown(chip);
+	return err;
+}
 
-अटल पूर्णांक snd_rme_rate_info(काष्ठा snd_kcontrol *kcontrol,
-			     काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int snd_rme_rate_info(struct snd_kcontrol *kcontrol,
+			     struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 1;
-	चयन (kcontrol->निजी_value) अणु
-	हाल SND_RME_DOMAIN_SYSTEM:
-		uinfo->value.पूर्णांकeger.min = 32000;
-		uinfo->value.पूर्णांकeger.max = 800000;
-		अवरोध;
-	हाल SND_RME_DOMAIN_AES:
-	हाल SND_RME_DOMAIN_SPDIF:
-	शेष:
-		uinfo->value.पूर्णांकeger.min = 0;
-		uinfo->value.पूर्णांकeger.max = 200000;
-	पूर्ण
-	uinfo->value.पूर्णांकeger.step = 0;
-	वापस 0;
-पूर्ण
+	switch (kcontrol->private_value) {
+	case SND_RME_DOMAIN_SYSTEM:
+		uinfo->value.integer.min = 32000;
+		uinfo->value.integer.max = 800000;
+		break;
+	case SND_RME_DOMAIN_AES:
+	case SND_RME_DOMAIN_SPDIF:
+	default:
+		uinfo->value.integer.min = 0;
+		uinfo->value.integer.max = 200000;
+	}
+	uinfo->value.integer.step = 0;
+	return 0;
+}
 
-अटल पूर्णांक snd_rme_sync_state_info(काष्ठा snd_kcontrol *kcontrol,
-				   काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	अटल स्थिर अक्षर *स्थिर sync_states[] = अणु
+static int snd_rme_sync_state_info(struct snd_kcontrol *kcontrol,
+				   struct snd_ctl_elem_info *uinfo)
+{
+	static const char *const sync_states[] = {
 		"No Lock", "Lock", "Sync"
-	पूर्ण;
+	};
 
-	वापस snd_ctl_क्रमागत_info(uinfo, 1,
+	return snd_ctl_enum_info(uinfo, 1,
 				 ARRAY_SIZE(sync_states), sync_states);
-पूर्ण
+}
 
-अटल पूर्णांक snd_rme_spdअगर_अगर_info(काष्ठा snd_kcontrol *kcontrol,
-				 काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	अटल स्थिर अक्षर *स्थिर spdअगर_अगर[] = अणु
+static int snd_rme_spdif_if_info(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_info *uinfo)
+{
+	static const char *const spdif_if[] = {
 		"Coaxial", "Optical"
-	पूर्ण;
+	};
 
-	वापस snd_ctl_क्रमागत_info(uinfo, 1,
-				 ARRAY_SIZE(spdअगर_अगर), spdअगर_अगर);
-पूर्ण
+	return snd_ctl_enum_info(uinfo, 1,
+				 ARRAY_SIZE(spdif_if), spdif_if);
+}
 
-अटल पूर्णांक snd_rme_spdअगर_क्रमmat_info(काष्ठा snd_kcontrol *kcontrol,
-				     काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	अटल स्थिर अक्षर *स्थिर optical_type[] = अणु
+static int snd_rme_spdif_format_info(struct snd_kcontrol *kcontrol,
+				     struct snd_ctl_elem_info *uinfo)
+{
+	static const char *const optical_type[] = {
 		"Consumer", "Professional"
-	पूर्ण;
+	};
 
-	वापस snd_ctl_क्रमागत_info(uinfo, 1,
+	return snd_ctl_enum_info(uinfo, 1,
 				 ARRAY_SIZE(optical_type), optical_type);
-पूर्ण
+}
 
-अटल पूर्णांक snd_rme_sync_source_info(काष्ठा snd_kcontrol *kcontrol,
-				    काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	अटल स्थिर अक्षर *स्थिर sync_sources[] = अणु
+static int snd_rme_sync_source_info(struct snd_kcontrol *kcontrol,
+				    struct snd_ctl_elem_info *uinfo)
+{
+	static const char *const sync_sources[] = {
 		"Internal", "AES", "SPDIF", "Internal"
-	पूर्ण;
+	};
 
-	वापस snd_ctl_क्रमागत_info(uinfo, 1,
+	return snd_ctl_enum_info(uinfo, 1,
 				 ARRAY_SIZE(sync_sources), sync_sources);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_rme_controls[] = अणु
-	अणु
-		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+static const struct snd_kcontrol_new snd_rme_controls[] = {
+	{
+		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name = "AES Rate",
 		.access = SNDRV_CTL_ELEM_ACCESS_READ | SNDRV_CTL_ELEM_ACCESS_VOLATILE,
 		.info = snd_rme_rate_info,
 		.get = snd_rme_rate_get,
-		.निजी_value = SND_RME_DOMAIN_AES
-	पूर्ण,
-	अणु
-		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+		.private_value = SND_RME_DOMAIN_AES
+	},
+	{
+		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name = "AES Sync",
 		.access = SNDRV_CTL_ELEM_ACCESS_READ | SNDRV_CTL_ELEM_ACCESS_VOLATILE,
 		.info = snd_rme_sync_state_info,
 		.get = snd_rme_sync_state_get,
-		.निजी_value = SND_RME_DOMAIN_AES
-	पूर्ण,
-	अणु
-		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+		.private_value = SND_RME_DOMAIN_AES
+	},
+	{
+		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name = "SPDIF Rate",
 		.access = SNDRV_CTL_ELEM_ACCESS_READ | SNDRV_CTL_ELEM_ACCESS_VOLATILE,
 		.info = snd_rme_rate_info,
 		.get = snd_rme_rate_get,
-		.निजी_value = SND_RME_DOMAIN_SPDIF
-	पूर्ण,
-	अणु
-		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+		.private_value = SND_RME_DOMAIN_SPDIF
+	},
+	{
+		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name = "SPDIF Sync",
 		.access = SNDRV_CTL_ELEM_ACCESS_READ | SNDRV_CTL_ELEM_ACCESS_VOLATILE,
 		.info = snd_rme_sync_state_info,
 		.get = snd_rme_sync_state_get,
-		.निजी_value = SND_RME_DOMAIN_SPDIF
-	पूर्ण,
-	अणु
-		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+		.private_value = SND_RME_DOMAIN_SPDIF
+	},
+	{
+		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name = "SPDIF Interface",
 		.access = SNDRV_CTL_ELEM_ACCESS_READ | SNDRV_CTL_ELEM_ACCESS_VOLATILE,
-		.info = snd_rme_spdअगर_अगर_info,
-		.get = snd_rme_spdअगर_अगर_get,
-	पूर्ण,
-	अणु
-		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+		.info = snd_rme_spdif_if_info,
+		.get = snd_rme_spdif_if_get,
+	},
+	{
+		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name = "SPDIF Format",
 		.access = SNDRV_CTL_ELEM_ACCESS_READ | SNDRV_CTL_ELEM_ACCESS_VOLATILE,
-		.info = snd_rme_spdअगर_क्रमmat_info,
-		.get = snd_rme_spdअगर_क्रमmat_get,
-	पूर्ण,
-	अणु
-		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+		.info = snd_rme_spdif_format_info,
+		.get = snd_rme_spdif_format_get,
+	},
+	{
+		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name = "Sync Source",
 		.access = SNDRV_CTL_ELEM_ACCESS_READ | SNDRV_CTL_ELEM_ACCESS_VOLATILE,
 		.info = snd_rme_sync_source_info,
 		.get = snd_rme_sync_source_get
-	पूर्ण,
-	अणु
-		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+	},
+	{
+		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name = "System Rate",
 		.access = SNDRV_CTL_ELEM_ACCESS_READ | SNDRV_CTL_ELEM_ACCESS_VOLATILE,
 		.info = snd_rme_rate_info,
 		.get = snd_rme_rate_get,
-		.निजी_value = SND_RME_DOMAIN_SYSTEM
-	पूर्ण,
-	अणु
-		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+		.private_value = SND_RME_DOMAIN_SYSTEM
+	},
+	{
+		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name = "Current Frequency",
 		.access = SNDRV_CTL_ELEM_ACCESS_READ | SNDRV_CTL_ELEM_ACCESS_VOLATILE,
 		.info = snd_rme_rate_info,
 		.get = snd_rme_current_freq_get
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल पूर्णांक snd_rme_controls_create(काष्ठा usb_mixer_पूर्णांकerface *mixer)
-अणु
-	पूर्णांक err, i;
+static int snd_rme_controls_create(struct usb_mixer_interface *mixer)
+{
+	int err, i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(snd_rme_controls); ++i) अणु
+	for (i = 0; i < ARRAY_SIZE(snd_rme_controls); ++i) {
 		err = add_single_ctl_with_resume(mixer, 0,
-						 शून्य,
+						 NULL,
 						 &snd_rme_controls[i],
-						 शून्य);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+						 NULL);
+		if (err < 0)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * RME Babyface Pro (FS)
  *
  * These devices exposes a couple of DSP functions via request to EP0.
- * Switches are available via control रेजिस्टरs, जबतक routing is controlled
- * by controlling the volume on each possible crossing poपूर्णांक.
+ * Switches are available via control registers, while routing is controlled
+ * by controlling the volume on each possible crossing point.
  * Volume control is linear, from -inf (dec. 0) to +6dB (dec. 65536) with
  * 0dB being at dec. 32768.
  */
-क्रमागत अणु
+enum {
 	SND_BBFPRO_CTL_REG1 = 0,
 	SND_BBFPRO_CTL_REG2
-पूर्ण;
+};
 
-#घोषणा SND_BBFPRO_CTL_REG_MASK 1
-#घोषणा SND_BBFPRO_CTL_IDX_MASK 0xff
-#घोषणा SND_BBFPRO_CTL_IDX_SHIFT 1
-#घोषणा SND_BBFPRO_CTL_VAL_MASK 1
-#घोषणा SND_BBFPRO_CTL_VAL_SHIFT 9
-#घोषणा SND_BBFPRO_CTL_REG1_CLK_MASTER 0
-#घोषणा SND_BBFPRO_CTL_REG1_CLK_OPTICAL 1
-#घोषणा SND_BBFPRO_CTL_REG1_SPDIF_PRO 7
-#घोषणा SND_BBFPRO_CTL_REG1_SPDIF_EMPH 8
-#घोषणा SND_BBFPRO_CTL_REG1_SPDIF_OPTICAL 10
-#घोषणा SND_BBFPRO_CTL_REG2_48V_AN1 0
-#घोषणा SND_BBFPRO_CTL_REG2_48V_AN2 1
-#घोषणा SND_BBFPRO_CTL_REG2_SENS_IN3 2
-#घोषणा SND_BBFPRO_CTL_REG2_SENS_IN4 3
-#घोषणा SND_BBFPRO_CTL_REG2_PAD_AN1 4
-#घोषणा SND_BBFPRO_CTL_REG2_PAD_AN2 5
+#define SND_BBFPRO_CTL_REG_MASK 1
+#define SND_BBFPRO_CTL_IDX_MASK 0xff
+#define SND_BBFPRO_CTL_IDX_SHIFT 1
+#define SND_BBFPRO_CTL_VAL_MASK 1
+#define SND_BBFPRO_CTL_VAL_SHIFT 9
+#define SND_BBFPRO_CTL_REG1_CLK_MASTER 0
+#define SND_BBFPRO_CTL_REG1_CLK_OPTICAL 1
+#define SND_BBFPRO_CTL_REG1_SPDIF_PRO 7
+#define SND_BBFPRO_CTL_REG1_SPDIF_EMPH 8
+#define SND_BBFPRO_CTL_REG1_SPDIF_OPTICAL 10
+#define SND_BBFPRO_CTL_REG2_48V_AN1 0
+#define SND_BBFPRO_CTL_REG2_48V_AN2 1
+#define SND_BBFPRO_CTL_REG2_SENS_IN3 2
+#define SND_BBFPRO_CTL_REG2_SENS_IN4 3
+#define SND_BBFPRO_CTL_REG2_PAD_AN1 4
+#define SND_BBFPRO_CTL_REG2_PAD_AN2 5
 
-#घोषणा SND_BBFPRO_MIXER_IDX_MASK 0x1ff
-#घोषणा SND_BBFPRO_MIXER_VAL_MASK 0x3ffff
-#घोषणा SND_BBFPRO_MIXER_VAL_SHIFT 9
-#घोषणा SND_BBFPRO_MIXER_VAL_MIN 0 // -inf
-#घोषणा SND_BBFPRO_MIXER_VAL_MAX 65536 // +6dB
+#define SND_BBFPRO_MIXER_IDX_MASK 0x1ff
+#define SND_BBFPRO_MIXER_VAL_MASK 0x3ffff
+#define SND_BBFPRO_MIXER_VAL_SHIFT 9
+#define SND_BBFPRO_MIXER_VAL_MIN 0 // -inf
+#define SND_BBFPRO_MIXER_VAL_MAX 65536 // +6dB
 
-#घोषणा SND_BBFPRO_USBREQ_CTL_REG1 0x10
-#घोषणा SND_BBFPRO_USBREQ_CTL_REG2 0x17
-#घोषणा SND_BBFPRO_USBREQ_MIXER 0x12
+#define SND_BBFPRO_USBREQ_CTL_REG1 0x10
+#define SND_BBFPRO_USBREQ_CTL_REG2 0x17
+#define SND_BBFPRO_USBREQ_MIXER 0x12
 
-अटल पूर्णांक snd_bbfpro_ctl_update(काष्ठा usb_mixer_पूर्णांकerface *mixer, u8 reg,
+static int snd_bbfpro_ctl_update(struct usb_mixer_interface *mixer, u8 reg,
 				 u8 index, u8 value)
-अणु
-	पूर्णांक err;
+{
+	int err;
 	u16 usb_req, usb_idx, usb_val;
-	काष्ठा snd_usb_audio *chip = mixer->chip;
+	struct snd_usb_audio *chip = mixer->chip;
 
-	err = snd_usb_lock_shutकरोwn(chip);
-	अगर (err < 0)
-		वापस err;
+	err = snd_usb_lock_shutdown(chip);
+	if (err < 0)
+		return err;
 
-	अगर (reg == SND_BBFPRO_CTL_REG1) अणु
+	if (reg == SND_BBFPRO_CTL_REG1) {
 		usb_req = SND_BBFPRO_USBREQ_CTL_REG1;
-		अगर (index == SND_BBFPRO_CTL_REG1_CLK_OPTICAL) अणु
+		if (index == SND_BBFPRO_CTL_REG1_CLK_OPTICAL) {
 			usb_idx = 3;
 			usb_val = value ? 3 : 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			usb_idx = 1 << index;
 			usb_val = value ? usb_idx : 0;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		usb_req = SND_BBFPRO_USBREQ_CTL_REG2;
 		usb_idx = 1 << index;
 		usb_val = value ? usb_idx : 0;
-	पूर्ण
+	}
 
 	err = snd_usb_ctl_msg(chip->dev,
 			      usb_sndctrlpipe(chip->dev, 0), usb_req,
-			      USB_सूची_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
-			      usb_val, usb_idx, शून्य, 0);
+			      USB_DIR_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
+			      usb_val, usb_idx, NULL, 0);
 
-	snd_usb_unlock_shutकरोwn(chip);
-	वापस err;
-पूर्ण
+	snd_usb_unlock_shutdown(chip);
+	return err;
+}
 
-अटल पूर्णांक snd_bbfpro_ctl_get(काष्ठा snd_kcontrol *kcontrol,
-			      काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
+static int snd_bbfpro_ctl_get(struct snd_kcontrol *kcontrol,
+			      struct snd_ctl_elem_value *ucontrol)
+{
 	u8 reg, idx, val;
-	पूर्णांक pv;
+	int pv;
 
-	pv = kcontrol->निजी_value;
+	pv = kcontrol->private_value;
 	reg = pv & SND_BBFPRO_CTL_REG_MASK;
 	idx = (pv >> SND_BBFPRO_CTL_IDX_SHIFT) & SND_BBFPRO_CTL_IDX_MASK;
-	val = kcontrol->निजी_value >> SND_BBFPRO_CTL_VAL_SHIFT;
+	val = kcontrol->private_value >> SND_BBFPRO_CTL_VAL_SHIFT;
 
-	अगर ((reg == SND_BBFPRO_CTL_REG1 &&
+	if ((reg == SND_BBFPRO_CTL_REG1 &&
 	     idx == SND_BBFPRO_CTL_REG1_CLK_OPTICAL) ||
 	    (reg == SND_BBFPRO_CTL_REG2 &&
 	    (idx == SND_BBFPRO_CTL_REG2_SENS_IN3 ||
-	     idx == SND_BBFPRO_CTL_REG2_SENS_IN4))) अणु
-		ucontrol->value.क्रमागतerated.item[0] = val;
-	पूर्ण अन्यथा अणु
-		ucontrol->value.पूर्णांकeger.value[0] = val;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	     idx == SND_BBFPRO_CTL_REG2_SENS_IN4))) {
+		ucontrol->value.enumerated.item[0] = val;
+	} else {
+		ucontrol->value.integer.value[0] = val;
+	}
+	return 0;
+}
 
-अटल पूर्णांक snd_bbfpro_ctl_info(काष्ठा snd_kcontrol *kcontrol,
-			       काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int snd_bbfpro_ctl_info(struct snd_kcontrol *kcontrol,
+			       struct snd_ctl_elem_info *uinfo)
+{
 	u8 reg, idx;
-	पूर्णांक pv;
+	int pv;
 
-	pv = kcontrol->निजी_value;
+	pv = kcontrol->private_value;
 	reg = pv & SND_BBFPRO_CTL_REG_MASK;
 	idx = (pv >> SND_BBFPRO_CTL_IDX_SHIFT) & SND_BBFPRO_CTL_IDX_MASK;
 
-	अगर (reg == SND_BBFPRO_CTL_REG1 &&
-	    idx == SND_BBFPRO_CTL_REG1_CLK_OPTICAL) अणु
-		अटल स्थिर अक्षर * स्थिर texts[2] = अणु
+	if (reg == SND_BBFPRO_CTL_REG1 &&
+	    idx == SND_BBFPRO_CTL_REG1_CLK_OPTICAL) {
+		static const char * const texts[2] = {
 			"AutoSync",
 			"Internal"
-		पूर्ण;
-		वापस snd_ctl_क्रमागत_info(uinfo, 1, 2, texts);
-	पूर्ण अन्यथा अगर (reg == SND_BBFPRO_CTL_REG2 &&
+		};
+		return snd_ctl_enum_info(uinfo, 1, 2, texts);
+	} else if (reg == SND_BBFPRO_CTL_REG2 &&
 		   (idx == SND_BBFPRO_CTL_REG2_SENS_IN3 ||
-		    idx == SND_BBFPRO_CTL_REG2_SENS_IN4)) अणु
-		अटल स्थिर अक्षर * स्थिर texts[2] = अणु
+		    idx == SND_BBFPRO_CTL_REG2_SENS_IN4)) {
+		static const char * const texts[2] = {
 			"-10dBV",
 			"+4dBu"
-		पूर्ण;
-		वापस snd_ctl_क्रमागत_info(uinfo, 1, 2, texts);
-	पूर्ण
+		};
+		return snd_ctl_enum_info(uinfo, 1, 2, texts);
+	}
 
 	uinfo->count = 1;
-	uinfo->value.पूर्णांकeger.min = 0;
-	uinfo->value.पूर्णांकeger.max = 1;
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = 1;
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_BOOLEAN;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_bbfpro_ctl_put(काष्ठा snd_kcontrol *kcontrol,
-			      काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	पूर्णांक err;
+static int snd_bbfpro_ctl_put(struct snd_kcontrol *kcontrol,
+			      struct snd_ctl_elem_value *ucontrol)
+{
+	int err;
 	u8 reg, idx;
-	पूर्णांक old_value, pv, val;
+	int old_value, pv, val;
 
-	काष्ठा usb_mixer_elem_list *list = snd_kcontrol_chip(kcontrol);
-	काष्ठा usb_mixer_पूर्णांकerface *mixer = list->mixer;
+	struct usb_mixer_elem_list *list = snd_kcontrol_chip(kcontrol);
+	struct usb_mixer_interface *mixer = list->mixer;
 
-	pv = kcontrol->निजी_value;
+	pv = kcontrol->private_value;
 	reg = pv & SND_BBFPRO_CTL_REG_MASK;
 	idx = (pv >> SND_BBFPRO_CTL_IDX_SHIFT) & SND_BBFPRO_CTL_IDX_MASK;
 	old_value = (pv >> SND_BBFPRO_CTL_VAL_SHIFT) & SND_BBFPRO_CTL_VAL_MASK;
 
-	अगर ((reg == SND_BBFPRO_CTL_REG1 &&
+	if ((reg == SND_BBFPRO_CTL_REG1 &&
 	     idx == SND_BBFPRO_CTL_REG1_CLK_OPTICAL) ||
 	    (reg == SND_BBFPRO_CTL_REG2 &&
 	    (idx == SND_BBFPRO_CTL_REG2_SENS_IN3 ||
-	     idx == SND_BBFPRO_CTL_REG2_SENS_IN4))) अणु
-		val = ucontrol->value.क्रमागतerated.item[0];
-	पूर्ण अन्यथा अणु
-		val = ucontrol->value.पूर्णांकeger.value[0];
-	पूर्ण
+	     idx == SND_BBFPRO_CTL_REG2_SENS_IN4))) {
+		val = ucontrol->value.enumerated.item[0];
+	} else {
+		val = ucontrol->value.integer.value[0];
+	}
 
-	अगर (val > 1)
-		वापस -EINVAL;
+	if (val > 1)
+		return -EINVAL;
 
-	अगर (val == old_value)
-		वापस 0;
+	if (val == old_value)
+		return 0;
 
-	kcontrol->निजी_value = reg
+	kcontrol->private_value = reg
 		| ((idx & SND_BBFPRO_CTL_IDX_MASK) << SND_BBFPRO_CTL_IDX_SHIFT)
 		| ((val & SND_BBFPRO_CTL_VAL_MASK) << SND_BBFPRO_CTL_VAL_SHIFT);
 
 	err = snd_bbfpro_ctl_update(mixer, reg, idx, val);
-	वापस err < 0 ? err : 1;
-पूर्ण
+	return err < 0 ? err : 1;
+}
 
-अटल पूर्णांक snd_bbfpro_ctl_resume(काष्ठा usb_mixer_elem_list *list)
-अणु
+static int snd_bbfpro_ctl_resume(struct usb_mixer_elem_list *list)
+{
 	u8 reg, idx;
-	पूर्णांक value, pv;
+	int value, pv;
 
-	pv = list->kctl->निजी_value;
+	pv = list->kctl->private_value;
 	reg = pv & SND_BBFPRO_CTL_REG_MASK;
 	idx = (pv >> SND_BBFPRO_CTL_IDX_SHIFT) & SND_BBFPRO_CTL_IDX_MASK;
 	value = (pv >> SND_BBFPRO_CTL_VAL_SHIFT) & SND_BBFPRO_CTL_VAL_MASK;
 
-	वापस snd_bbfpro_ctl_update(list->mixer, reg, idx, value);
-पूर्ण
+	return snd_bbfpro_ctl_update(list->mixer, reg, idx, value);
+}
 
-अटल पूर्णांक snd_bbfpro_vol_update(काष्ठा usb_mixer_पूर्णांकerface *mixer, u16 index,
+static int snd_bbfpro_vol_update(struct usb_mixer_interface *mixer, u16 index,
 				 u32 value)
-अणु
-	काष्ठा snd_usb_audio *chip = mixer->chip;
-	पूर्णांक err;
+{
+	struct snd_usb_audio *chip = mixer->chip;
+	int err;
 	u16 idx;
 	u16 usb_idx, usb_val;
 	u32 v;
 
-	err = snd_usb_lock_shutकरोwn(chip);
-	अगर (err < 0)
-		वापस err;
+	err = snd_usb_lock_shutdown(chip);
+	if (err < 0)
+		return err;
 
 	idx = index & SND_BBFPRO_MIXER_IDX_MASK;
 	// 18 bit linear volume, split so 2 bits end up in index.
@@ -2395,386 +2394,386 @@ end:
 	err = snd_usb_ctl_msg(chip->dev,
 			      usb_sndctrlpipe(chip->dev, 0),
 			      SND_BBFPRO_USBREQ_MIXER,
-			      USB_सूची_OUT | USB_TYPE_VENDOR |
+			      USB_DIR_OUT | USB_TYPE_VENDOR |
 			      USB_RECIP_DEVICE,
-			      usb_val, usb_idx, शून्य, 0);
+			      usb_val, usb_idx, NULL, 0);
 
-	snd_usb_unlock_shutकरोwn(chip);
-	वापस err;
-पूर्ण
+	snd_usb_unlock_shutdown(chip);
+	return err;
+}
 
-अटल पूर्णांक snd_bbfpro_vol_get(काष्ठा snd_kcontrol *kcontrol,
-			      काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	ucontrol->value.पूर्णांकeger.value[0] =
-		kcontrol->निजी_value >> SND_BBFPRO_MIXER_VAL_SHIFT;
-	वापस 0;
-पूर्ण
+static int snd_bbfpro_vol_get(struct snd_kcontrol *kcontrol,
+			      struct snd_ctl_elem_value *ucontrol)
+{
+	ucontrol->value.integer.value[0] =
+		kcontrol->private_value >> SND_BBFPRO_MIXER_VAL_SHIFT;
+	return 0;
+}
 
-अटल पूर्णांक snd_bbfpro_vol_info(काष्ठा snd_kcontrol *kcontrol,
-			       काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int snd_bbfpro_vol_info(struct snd_kcontrol *kcontrol,
+			       struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 1;
-	uinfo->value.पूर्णांकeger.min = SND_BBFPRO_MIXER_VAL_MIN;
-	uinfo->value.पूर्णांकeger.max = SND_BBFPRO_MIXER_VAL_MAX;
-	वापस 0;
-पूर्ण
+	uinfo->value.integer.min = SND_BBFPRO_MIXER_VAL_MIN;
+	uinfo->value.integer.max = SND_BBFPRO_MIXER_VAL_MAX;
+	return 0;
+}
 
-अटल पूर्णांक snd_bbfpro_vol_put(काष्ठा snd_kcontrol *kcontrol,
-			      काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	पूर्णांक err;
+static int snd_bbfpro_vol_put(struct snd_kcontrol *kcontrol,
+			      struct snd_ctl_elem_value *ucontrol)
+{
+	int err;
 	u16 idx;
 	u32 new_val, old_value, uvalue;
-	काष्ठा usb_mixer_elem_list *list = snd_kcontrol_chip(kcontrol);
-	काष्ठा usb_mixer_पूर्णांकerface *mixer = list->mixer;
+	struct usb_mixer_elem_list *list = snd_kcontrol_chip(kcontrol);
+	struct usb_mixer_interface *mixer = list->mixer;
 
-	uvalue = ucontrol->value.पूर्णांकeger.value[0];
-	idx = kcontrol->निजी_value & SND_BBFPRO_MIXER_IDX_MASK;
-	old_value = kcontrol->निजी_value >> SND_BBFPRO_MIXER_VAL_SHIFT;
+	uvalue = ucontrol->value.integer.value[0];
+	idx = kcontrol->private_value & SND_BBFPRO_MIXER_IDX_MASK;
+	old_value = kcontrol->private_value >> SND_BBFPRO_MIXER_VAL_SHIFT;
 
-	अगर (uvalue > SND_BBFPRO_MIXER_VAL_MAX)
-		वापस -EINVAL;
+	if (uvalue > SND_BBFPRO_MIXER_VAL_MAX)
+		return -EINVAL;
 
-	अगर (uvalue == old_value)
-		वापस 0;
+	if (uvalue == old_value)
+		return 0;
 
 	new_val = uvalue & SND_BBFPRO_MIXER_VAL_MASK;
 
-	kcontrol->निजी_value = idx
+	kcontrol->private_value = idx
 		| (new_val << SND_BBFPRO_MIXER_VAL_SHIFT);
 
 	err = snd_bbfpro_vol_update(mixer, idx, new_val);
-	वापस err < 0 ? err : 1;
-पूर्ण
+	return err < 0 ? err : 1;
+}
 
-अटल पूर्णांक snd_bbfpro_vol_resume(काष्ठा usb_mixer_elem_list *list)
-अणु
-	पूर्णांक pv = list->kctl->निजी_value;
+static int snd_bbfpro_vol_resume(struct usb_mixer_elem_list *list)
+{
+	int pv = list->kctl->private_value;
 	u16 idx = pv & SND_BBFPRO_MIXER_IDX_MASK;
 	u32 val = (pv >> SND_BBFPRO_MIXER_VAL_SHIFT)
 		& SND_BBFPRO_MIXER_VAL_MASK;
-	वापस snd_bbfpro_vol_update(list->mixer, idx, val);
-पूर्ण
+	return snd_bbfpro_vol_update(list->mixer, idx, val);
+}
 
 // Predfine elements
-अटल स्थिर काष्ठा snd_kcontrol_new snd_bbfpro_ctl_control = अणु
-	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+static const struct snd_kcontrol_new snd_bbfpro_ctl_control = {
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 	.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
 	.index = 0,
 	.info = snd_bbfpro_ctl_info,
 	.get = snd_bbfpro_ctl_get,
 	.put = snd_bbfpro_ctl_put
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_bbfpro_vol_control = अणु
-	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+static const struct snd_kcontrol_new snd_bbfpro_vol_control = {
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 	.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
 	.index = 0,
 	.info = snd_bbfpro_vol_info,
 	.get = snd_bbfpro_vol_get,
 	.put = snd_bbfpro_vol_put
-पूर्ण;
+};
 
-अटल पूर्णांक snd_bbfpro_ctl_add(काष्ठा usb_mixer_पूर्णांकerface *mixer, u8 reg,
-			      u8 index, अक्षर *name)
-अणु
-	काष्ठा snd_kcontrol_new knew = snd_bbfpro_ctl_control;
+static int snd_bbfpro_ctl_add(struct usb_mixer_interface *mixer, u8 reg,
+			      u8 index, char *name)
+{
+	struct snd_kcontrol_new knew = snd_bbfpro_ctl_control;
 
 	knew.name = name;
-	knew.निजी_value = (reg & SND_BBFPRO_CTL_REG_MASK)
+	knew.private_value = (reg & SND_BBFPRO_CTL_REG_MASK)
 		| ((index & SND_BBFPRO_CTL_IDX_MASK)
 			<< SND_BBFPRO_CTL_IDX_SHIFT);
 
-	वापस add_single_ctl_with_resume(mixer, 0, snd_bbfpro_ctl_resume,
-		&knew, शून्य);
-पूर्ण
+	return add_single_ctl_with_resume(mixer, 0, snd_bbfpro_ctl_resume,
+		&knew, NULL);
+}
 
-अटल पूर्णांक snd_bbfpro_vol_add(काष्ठा usb_mixer_पूर्णांकerface *mixer, u16 index,
-			      अक्षर *name)
-अणु
-	काष्ठा snd_kcontrol_new knew = snd_bbfpro_vol_control;
+static int snd_bbfpro_vol_add(struct usb_mixer_interface *mixer, u16 index,
+			      char *name)
+{
+	struct snd_kcontrol_new knew = snd_bbfpro_vol_control;
 
 	knew.name = name;
-	knew.निजी_value = index & SND_BBFPRO_MIXER_IDX_MASK;
+	knew.private_value = index & SND_BBFPRO_MIXER_IDX_MASK;
 
-	वापस add_single_ctl_with_resume(mixer, 0, snd_bbfpro_vol_resume,
-		&knew, शून्य);
-पूर्ण
+	return add_single_ctl_with_resume(mixer, 0, snd_bbfpro_vol_resume,
+		&knew, NULL);
+}
 
-अटल पूर्णांक snd_bbfpro_controls_create(काष्ठा usb_mixer_पूर्णांकerface *mixer)
-अणु
-	पूर्णांक err, i, o;
-	अक्षर name[48];
+static int snd_bbfpro_controls_create(struct usb_mixer_interface *mixer)
+{
+	int err, i, o;
+	char name[48];
 
-	अटल स्थिर अक्षर * स्थिर input[] = अणु
+	static const char * const input[] = {
 		"AN1", "AN2", "IN3", "IN4", "AS1", "AS2", "ADAT3",
-		"ADAT4", "ADAT5", "ADAT6", "ADAT7", "ADAT8"पूर्ण;
+		"ADAT4", "ADAT5", "ADAT6", "ADAT7", "ADAT8"};
 
-	अटल स्थिर अक्षर * स्थिर output[] = अणु
+	static const char * const output[] = {
 		"AN1", "AN2", "PH3", "PH4", "AS1", "AS2", "ADAT3", "ADAT4",
-		"ADAT5", "ADAT6", "ADAT7", "ADAT8"पूर्ण;
+		"ADAT5", "ADAT6", "ADAT7", "ADAT8"};
 
-	क्रम (o = 0 ; o < 12 ; ++o) अणु
-		क्रम (i = 0 ; i < 12 ; ++i) अणु
+	for (o = 0 ; o < 12 ; ++o) {
+		for (i = 0 ; i < 12 ; ++i) {
 			// Line routing
-			snम_लिखो(name, माप(name),
+			snprintf(name, sizeof(name),
 				 "%s-%s-%s Playback Volume",
 				 (i < 2 ? "Mic" : "Line"),
 				 input[i], output[o]);
 			err = snd_bbfpro_vol_add(mixer, (26 * o + i), name);
-			अगर (err < 0)
-				वापस err;
+			if (err < 0)
+				return err;
 
 			// PCM routing... yes, it is output remapping
-			snम_लिखो(name, माप(name),
+			snprintf(name, sizeof(name),
 				 "PCM-%s-%s Playback Volume",
 				 output[i], output[o]);
 			err = snd_bbfpro_vol_add(mixer, (26 * o + 12 + i),
 						 name);
-			अगर (err < 0)
-				वापस err;
-		पूर्ण
-	पूर्ण
+			if (err < 0)
+				return err;
+		}
+	}
 
 	// Control Reg 1
 	err = snd_bbfpro_ctl_add(mixer, SND_BBFPRO_CTL_REG1,
 				 SND_BBFPRO_CTL_REG1_CLK_OPTICAL,
 				 "Sample Clock Source");
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	err = snd_bbfpro_ctl_add(mixer, SND_BBFPRO_CTL_REG1,
 				 SND_BBFPRO_CTL_REG1_SPDIF_PRO,
 				 "IEC958 Pro Mask");
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	err = snd_bbfpro_ctl_add(mixer, SND_BBFPRO_CTL_REG1,
 				 SND_BBFPRO_CTL_REG1_SPDIF_EMPH,
 				 "IEC958 Emphasis");
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	err = snd_bbfpro_ctl_add(mixer, SND_BBFPRO_CTL_REG1,
 				 SND_BBFPRO_CTL_REG1_SPDIF_OPTICAL,
 				 "IEC958 Switch");
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	// Control Reg 2
 	err = snd_bbfpro_ctl_add(mixer, SND_BBFPRO_CTL_REG2,
 				 SND_BBFPRO_CTL_REG2_48V_AN1,
 				 "Mic-AN1 48V");
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	err = snd_bbfpro_ctl_add(mixer, SND_BBFPRO_CTL_REG2,
 				 SND_BBFPRO_CTL_REG2_48V_AN2,
 				 "Mic-AN2 48V");
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	err = snd_bbfpro_ctl_add(mixer, SND_BBFPRO_CTL_REG2,
 				 SND_BBFPRO_CTL_REG2_SENS_IN3,
 				 "Line-IN3 Sens.");
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	err = snd_bbfpro_ctl_add(mixer, SND_BBFPRO_CTL_REG2,
 				 SND_BBFPRO_CTL_REG2_SENS_IN4,
 				 "Line-IN4 Sens.");
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	err = snd_bbfpro_ctl_add(mixer, SND_BBFPRO_CTL_REG2,
 				 SND_BBFPRO_CTL_REG2_PAD_AN1,
 				 "Mic-AN1 PAD");
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	err = snd_bbfpro_ctl_add(mixer, SND_BBFPRO_CTL_REG2,
 				 SND_BBFPRO_CTL_REG2_PAD_AN2,
 				 "Mic-AN2 PAD");
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Pioneer DJ DJM Mixers
  *
- * These devices generally have options क्रम soft-चयनing the playback and
- * capture sources in addition to the recording level. Although dअगरferent
- * devices have dअगरferent configurations, there seems to be canonical values
- * क्रम specअगरic capture/playback types:  See the definitions of these below.
+ * These devices generally have options for soft-switching the playback and
+ * capture sources in addition to the recording level. Although different
+ * devices have different configurations, there seems to be canonical values
+ * for specific capture/playback types:  See the definitions of these below.
  *
  * The wValue is masked with the stereo channel number. e.g. Setting Ch2 to
  * capture phono would be 0x0203. Capture, playback and capture level have
- * dअगरferent wIndexes.
+ * different wIndexes.
  */
 
 // Capture types
-#घोषणा SND_DJM_CAP_LINE	0x00
-#घोषणा SND_DJM_CAP_CDLINE	0x01
-#घोषणा SND_DJM_CAP_DIGITAL	0x02
-#घोषणा SND_DJM_CAP_PHONO	0x03
-#घोषणा SND_DJM_CAP_PFADER	0x06
-#घोषणा SND_DJM_CAP_XFADERA	0x07
-#घोषणा SND_DJM_CAP_XFADERB	0x08
-#घोषणा SND_DJM_CAP_MIC		0x09
-#घोषणा SND_DJM_CAP_AUX		0x0d
-#घोषणा SND_DJM_CAP_RECOUT	0x0a
-#घोषणा SND_DJM_CAP_NONE	0x0f
-#घोषणा SND_DJM_CAP_CH1PFADER	0x11
-#घोषणा SND_DJM_CAP_CH2PFADER	0x12
-#घोषणा SND_DJM_CAP_CH3PFADER	0x13
-#घोषणा SND_DJM_CAP_CH4PFADER	0x14
+#define SND_DJM_CAP_LINE	0x00
+#define SND_DJM_CAP_CDLINE	0x01
+#define SND_DJM_CAP_DIGITAL	0x02
+#define SND_DJM_CAP_PHONO	0x03
+#define SND_DJM_CAP_PFADER	0x06
+#define SND_DJM_CAP_XFADERA	0x07
+#define SND_DJM_CAP_XFADERB	0x08
+#define SND_DJM_CAP_MIC		0x09
+#define SND_DJM_CAP_AUX		0x0d
+#define SND_DJM_CAP_RECOUT	0x0a
+#define SND_DJM_CAP_NONE	0x0f
+#define SND_DJM_CAP_CH1PFADER	0x11
+#define SND_DJM_CAP_CH2PFADER	0x12
+#define SND_DJM_CAP_CH3PFADER	0x13
+#define SND_DJM_CAP_CH4PFADER	0x14
 
 // Playback types
-#घोषणा SND_DJM_PB_CH1		0x00
-#घोषणा SND_DJM_PB_CH2		0x01
-#घोषणा SND_DJM_PB_AUX		0x04
+#define SND_DJM_PB_CH1		0x00
+#define SND_DJM_PB_CH2		0x01
+#define SND_DJM_PB_AUX		0x04
 
-#घोषणा SND_DJM_WINDEX_CAP	0x8002
-#घोषणा SND_DJM_WINDEX_CAPLVL	0x8003
-#घोषणा SND_DJM_WINDEX_PB	0x8016
+#define SND_DJM_WINDEX_CAP	0x8002
+#define SND_DJM_WINDEX_CAPLVL	0x8003
+#define SND_DJM_WINDEX_PB	0x8016
 
-// kcontrol->निजी_value layout
-#घोषणा SND_DJM_VALUE_MASK	0x0000ffff
-#घोषणा SND_DJM_GROUP_MASK	0x00ff0000
-#घोषणा SND_DJM_DEVICE_MASK	0xff000000
-#घोषणा SND_DJM_GROUP_SHIFT	16
-#घोषणा SND_DJM_DEVICE_SHIFT	24
+// kcontrol->private_value layout
+#define SND_DJM_VALUE_MASK	0x0000ffff
+#define SND_DJM_GROUP_MASK	0x00ff0000
+#define SND_DJM_DEVICE_MASK	0xff000000
+#define SND_DJM_GROUP_SHIFT	16
+#define SND_DJM_DEVICE_SHIFT	24
 
 // device table index
-// used क्रम the snd_djm_devices table, so please update accordingly
-#घोषणा SND_DJM_250MK2_IDX	0x0
-#घोषणा SND_DJM_750_IDX		0x1
-#घोषणा SND_DJM_850_IDX		0x2
-#घोषणा SND_DJM_900NXS2_IDX	0x3
+// used for the snd_djm_devices table, so please update accordingly
+#define SND_DJM_250MK2_IDX	0x0
+#define SND_DJM_750_IDX		0x1
+#define SND_DJM_850_IDX		0x2
+#define SND_DJM_900NXS2_IDX	0x3
 
 
-#घोषणा SND_DJM_CTL(_name, suffix, _शेष_value, _windex) अणु \
+#define SND_DJM_CTL(_name, suffix, _default_value, _windex) { \
 	.name = _name, \
 	.options = snd_djm_opts_##suffix, \
 	.noptions = ARRAY_SIZE(snd_djm_opts_##suffix), \
-	.शेष_value = _शेष_value, \
-	.wIndex = _windex पूर्ण
+	.default_value = _default_value, \
+	.wIndex = _windex }
 
-#घोषणा SND_DJM_DEVICE(suffix) अणु \
+#define SND_DJM_DEVICE(suffix) { \
 	.controls = snd_djm_ctls_##suffix, \
-	.ncontrols = ARRAY_SIZE(snd_djm_ctls_##suffix) पूर्ण
+	.ncontrols = ARRAY_SIZE(snd_djm_ctls_##suffix) }
 
 
-काष्ठा snd_djm_device अणु
-	स्थिर अक्षर *name;
-	स्थिर काष्ठा snd_djm_ctl *controls;
-	माप_प्रकार ncontrols;
-पूर्ण;
+struct snd_djm_device {
+	const char *name;
+	const struct snd_djm_ctl *controls;
+	size_t ncontrols;
+};
 
-काष्ठा snd_djm_ctl अणु
-	स्थिर अक्षर *name;
-	स्थिर u16 *options;
-	माप_प्रकार noptions;
-	u16 शेष_value;
+struct snd_djm_ctl {
+	const char *name;
+	const u16 *options;
+	size_t noptions;
+	u16 default_value;
 	u16 wIndex;
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *snd_djm_get_label_caplevel(u16 wvalue)
-अणु
-	चयन (wvalue) अणु
-	हाल 0x0000:	वापस "-19dB";
-	हाल 0x0100:	वापस "-15dB";
-	हाल 0x0200:	वापस "-10dB";
-	हाल 0x0300:	वापस "-5dB";
-	शेष:	वापस शून्य;
-	पूर्ण
-पूर्ण;
+static const char *snd_djm_get_label_caplevel(u16 wvalue)
+{
+	switch (wvalue) {
+	case 0x0000:	return "-19dB";
+	case 0x0100:	return "-15dB";
+	case 0x0200:	return "-10dB";
+	case 0x0300:	return "-5dB";
+	default:	return NULL;
+	}
+};
 
-अटल स्थिर अक्षर *snd_djm_get_label_cap_common(u16 wvalue)
-अणु
-	चयन (wvalue & 0x00ff) अणु
-	हाल SND_DJM_CAP_LINE:		वापस "Control Tone LINE";
-	हाल SND_DJM_CAP_CDLINE:	वापस "Control Tone CD/LINE";
-	हाल SND_DJM_CAP_DIGITAL:	वापस "Control Tone DIGITAL";
-	हाल SND_DJM_CAP_PHONO:		वापस "Control Tone PHONO";
-	हाल SND_DJM_CAP_PFADER:	वापस "Post Fader";
-	हाल SND_DJM_CAP_XFADERA:	वापस "Cross Fader A";
-	हाल SND_DJM_CAP_XFADERB:	वापस "Cross Fader B";
-	हाल SND_DJM_CAP_MIC:		वापस "Mic";
-	हाल SND_DJM_CAP_RECOUT:	वापस "Rec Out";
-	हाल SND_DJM_CAP_AUX:		वापस "Aux";
-	हाल SND_DJM_CAP_NONE:		वापस "None";
-	हाल SND_DJM_CAP_CH1PFADER:	वापस "Post Fader Ch1";
-	हाल SND_DJM_CAP_CH2PFADER:	वापस "Post Fader Ch2";
-	हाल SND_DJM_CAP_CH3PFADER:	वापस "Post Fader Ch3";
-	हाल SND_DJM_CAP_CH4PFADER:	वापस "Post Fader Ch4";
-	शेष:			वापस शून्य;
-	पूर्ण
-पूर्ण;
+static const char *snd_djm_get_label_cap_common(u16 wvalue)
+{
+	switch (wvalue & 0x00ff) {
+	case SND_DJM_CAP_LINE:		return "Control Tone LINE";
+	case SND_DJM_CAP_CDLINE:	return "Control Tone CD/LINE";
+	case SND_DJM_CAP_DIGITAL:	return "Control Tone DIGITAL";
+	case SND_DJM_CAP_PHONO:		return "Control Tone PHONO";
+	case SND_DJM_CAP_PFADER:	return "Post Fader";
+	case SND_DJM_CAP_XFADERA:	return "Cross Fader A";
+	case SND_DJM_CAP_XFADERB:	return "Cross Fader B";
+	case SND_DJM_CAP_MIC:		return "Mic";
+	case SND_DJM_CAP_RECOUT:	return "Rec Out";
+	case SND_DJM_CAP_AUX:		return "Aux";
+	case SND_DJM_CAP_NONE:		return "None";
+	case SND_DJM_CAP_CH1PFADER:	return "Post Fader Ch1";
+	case SND_DJM_CAP_CH2PFADER:	return "Post Fader Ch2";
+	case SND_DJM_CAP_CH3PFADER:	return "Post Fader Ch3";
+	case SND_DJM_CAP_CH4PFADER:	return "Post Fader Ch4";
+	default:			return NULL;
+	}
+};
 
-// The DJM-850 has dअगरferent values क्रम CD/LINE and LINE capture
+// The DJM-850 has different values for CD/LINE and LINE capture
 // control options than the other DJM declared in this file.
-अटल स्थिर अक्षर *snd_djm_get_label_cap_850(u16 wvalue)
-अणु
-	चयन (wvalue & 0x00ff) अणु
-	हाल 0x00:		वापस "Control Tone CD/LINE";
-	हाल 0x01:		वापस "Control Tone LINE";
-	शेष:		वापस snd_djm_get_label_cap_common(wvalue);
-	पूर्ण
-पूर्ण;
+static const char *snd_djm_get_label_cap_850(u16 wvalue)
+{
+	switch (wvalue & 0x00ff) {
+	case 0x00:		return "Control Tone CD/LINE";
+	case 0x01:		return "Control Tone LINE";
+	default:		return snd_djm_get_label_cap_common(wvalue);
+	}
+};
 
-अटल स्थिर अक्षर *snd_djm_get_label_cap(u8 device_idx, u16 wvalue)
-अणु
-	चयन (device_idx) अणु
-	हाल SND_DJM_850_IDX:		वापस snd_djm_get_label_cap_850(wvalue);
-	शेष:			वापस snd_djm_get_label_cap_common(wvalue);
-	पूर्ण
-पूर्ण;
+static const char *snd_djm_get_label_cap(u8 device_idx, u16 wvalue)
+{
+	switch (device_idx) {
+	case SND_DJM_850_IDX:		return snd_djm_get_label_cap_850(wvalue);
+	default:			return snd_djm_get_label_cap_common(wvalue);
+	}
+};
 
-अटल स्थिर अक्षर *snd_djm_get_label_pb(u16 wvalue)
-अणु
-	चयन (wvalue & 0x00ff) अणु
-	हाल SND_DJM_PB_CH1:	वापस "Ch1";
-	हाल SND_DJM_PB_CH2:	वापस "Ch2";
-	हाल SND_DJM_PB_AUX:	वापस "Aux";
-	शेष:		वापस शून्य;
-	पूर्ण
-पूर्ण;
+static const char *snd_djm_get_label_pb(u16 wvalue)
+{
+	switch (wvalue & 0x00ff) {
+	case SND_DJM_PB_CH1:	return "Ch1";
+	case SND_DJM_PB_CH2:	return "Ch2";
+	case SND_DJM_PB_AUX:	return "Aux";
+	default:		return NULL;
+	}
+};
 
-अटल स्थिर अक्षर *snd_djm_get_label(u8 device_idx, u16 wvalue, u16 windex)
-अणु
-	चयन (windex) अणु
-	हाल SND_DJM_WINDEX_CAPLVL:	वापस snd_djm_get_label_caplevel(wvalue);
-	हाल SND_DJM_WINDEX_CAP:	वापस snd_djm_get_label_cap(device_idx, wvalue);
-	हाल SND_DJM_WINDEX_PB:		वापस snd_djm_get_label_pb(wvalue);
-	शेष:			वापस शून्य;
-	पूर्ण
-पूर्ण;
+static const char *snd_djm_get_label(u8 device_idx, u16 wvalue, u16 windex)
+{
+	switch (windex) {
+	case SND_DJM_WINDEX_CAPLVL:	return snd_djm_get_label_caplevel(wvalue);
+	case SND_DJM_WINDEX_CAP:	return snd_djm_get_label_cap(device_idx, wvalue);
+	case SND_DJM_WINDEX_PB:		return snd_djm_get_label_pb(wvalue);
+	default:			return NULL;
+	}
+};
 
 // common DJM capture level option values
-अटल स्थिर u16 snd_djm_opts_cap_level[] = अणु
-	0x0000, 0x0100, 0x0200, 0x0300 पूर्ण;
+static const u16 snd_djm_opts_cap_level[] = {
+	0x0000, 0x0100, 0x0200, 0x0300 };
 
 
 // DJM-250MK2
-अटल स्थिर u16 snd_djm_opts_250mk2_cap1[] = अणु
-	0x0103, 0x0100, 0x0106, 0x0107, 0x0108, 0x0109, 0x010d, 0x010a पूर्ण;
+static const u16 snd_djm_opts_250mk2_cap1[] = {
+	0x0103, 0x0100, 0x0106, 0x0107, 0x0108, 0x0109, 0x010d, 0x010a };
 
-अटल स्थिर u16 snd_djm_opts_250mk2_cap2[] = अणु
-	0x0203, 0x0200, 0x0206, 0x0207, 0x0208, 0x0209, 0x020d, 0x020a पूर्ण;
+static const u16 snd_djm_opts_250mk2_cap2[] = {
+	0x0203, 0x0200, 0x0206, 0x0207, 0x0208, 0x0209, 0x020d, 0x020a };
 
-अटल स्थिर u16 snd_djm_opts_250mk2_cap3[] = अणु
-	0x030a, 0x0311, 0x0312, 0x0307, 0x0308, 0x0309, 0x030d पूर्ण;
+static const u16 snd_djm_opts_250mk2_cap3[] = {
+	0x030a, 0x0311, 0x0312, 0x0307, 0x0308, 0x0309, 0x030d };
 
-अटल स्थिर u16 snd_djm_opts_250mk2_pb1[] = अणु 0x0100, 0x0101, 0x0104 पूर्ण;
-अटल स्थिर u16 snd_djm_opts_250mk2_pb2[] = अणु 0x0200, 0x0201, 0x0204 पूर्ण;
-अटल स्थिर u16 snd_djm_opts_250mk2_pb3[] = अणु 0x0300, 0x0301, 0x0304 पूर्ण;
+static const u16 snd_djm_opts_250mk2_pb1[] = { 0x0100, 0x0101, 0x0104 };
+static const u16 snd_djm_opts_250mk2_pb2[] = { 0x0200, 0x0201, 0x0204 };
+static const u16 snd_djm_opts_250mk2_pb3[] = { 0x0300, 0x0301, 0x0304 };
 
-अटल स्थिर काष्ठा snd_djm_ctl snd_djm_ctls_250mk2[] = अणु
+static const struct snd_djm_ctl snd_djm_ctls_250mk2[] = {
 	SND_DJM_CTL("Capture Level", cap_level, 0, SND_DJM_WINDEX_CAPLVL),
 	SND_DJM_CTL("Ch1 Input",   250mk2_cap1, 2, SND_DJM_WINDEX_CAP),
 	SND_DJM_CTL("Ch2 Input",   250mk2_cap2, 2, SND_DJM_WINDEX_CAP),
@@ -2782,370 +2781,370 @@ end:
 	SND_DJM_CTL("Ch1 Output",   250mk2_pb1, 0, SND_DJM_WINDEX_PB),
 	SND_DJM_CTL("Ch2 Output",   250mk2_pb2, 1, SND_DJM_WINDEX_PB),
 	SND_DJM_CTL("Ch3 Output",   250mk2_pb3, 2, SND_DJM_WINDEX_PB)
-पूर्ण;
+};
 
 
 // DJM-750
-अटल स्थिर u16 snd_djm_opts_750_cap1[] = अणु
-	0x0101, 0x0103, 0x0106, 0x0107, 0x0108, 0x0109, 0x010a, 0x010f पूर्ण;
-अटल स्थिर u16 snd_djm_opts_750_cap2[] = अणु
-	0x0200, 0x0201, 0x0206, 0x0207, 0x0208, 0x0209, 0x020a, 0x020f पूर्ण;
-अटल स्थिर u16 snd_djm_opts_750_cap3[] = अणु
-	0x0300, 0x0301, 0x0306, 0x0307, 0x0308, 0x0309, 0x030a, 0x030f पूर्ण;
-अटल स्थिर u16 snd_djm_opts_750_cap4[] = अणु
-	0x0401, 0x0403, 0x0406, 0x0407, 0x0408, 0x0409, 0x040a, 0x040f पूर्ण;
+static const u16 snd_djm_opts_750_cap1[] = {
+	0x0101, 0x0103, 0x0106, 0x0107, 0x0108, 0x0109, 0x010a, 0x010f };
+static const u16 snd_djm_opts_750_cap2[] = {
+	0x0200, 0x0201, 0x0206, 0x0207, 0x0208, 0x0209, 0x020a, 0x020f };
+static const u16 snd_djm_opts_750_cap3[] = {
+	0x0300, 0x0301, 0x0306, 0x0307, 0x0308, 0x0309, 0x030a, 0x030f };
+static const u16 snd_djm_opts_750_cap4[] = {
+	0x0401, 0x0403, 0x0406, 0x0407, 0x0408, 0x0409, 0x040a, 0x040f };
 
-अटल स्थिर काष्ठा snd_djm_ctl snd_djm_ctls_750[] = अणु
+static const struct snd_djm_ctl snd_djm_ctls_750[] = {
 	SND_DJM_CTL("Capture Level", cap_level, 0, SND_DJM_WINDEX_CAPLVL),
 	SND_DJM_CTL("Ch1 Input",   750_cap1, 2, SND_DJM_WINDEX_CAP),
 	SND_DJM_CTL("Ch2 Input",   750_cap2, 2, SND_DJM_WINDEX_CAP),
 	SND_DJM_CTL("Ch3 Input",   750_cap3, 0, SND_DJM_WINDEX_CAP),
 	SND_DJM_CTL("Ch4 Input",   750_cap4, 0, SND_DJM_WINDEX_CAP)
-पूर्ण;
+};
 
 
 // DJM-850
-अटल स्थिर u16 snd_djm_opts_850_cap1[] = अणु
-	0x0100, 0x0103, 0x0106, 0x0107, 0x0108, 0x0109, 0x010a, 0x010f पूर्ण;
-अटल स्थिर u16 snd_djm_opts_850_cap2[] = अणु
-	0x0200, 0x0201, 0x0206, 0x0207, 0x0208, 0x0209, 0x020a, 0x020f पूर्ण;
-अटल स्थिर u16 snd_djm_opts_850_cap3[] = अणु
-	0x0300, 0x0301, 0x0306, 0x0307, 0x0308, 0x0309, 0x030a, 0x030f पूर्ण;
-अटल स्थिर u16 snd_djm_opts_850_cap4[] = अणु
-	0x0400, 0x0403, 0x0406, 0x0407, 0x0408, 0x0409, 0x040a, 0x040f पूर्ण;
+static const u16 snd_djm_opts_850_cap1[] = {
+	0x0100, 0x0103, 0x0106, 0x0107, 0x0108, 0x0109, 0x010a, 0x010f };
+static const u16 snd_djm_opts_850_cap2[] = {
+	0x0200, 0x0201, 0x0206, 0x0207, 0x0208, 0x0209, 0x020a, 0x020f };
+static const u16 snd_djm_opts_850_cap3[] = {
+	0x0300, 0x0301, 0x0306, 0x0307, 0x0308, 0x0309, 0x030a, 0x030f };
+static const u16 snd_djm_opts_850_cap4[] = {
+	0x0400, 0x0403, 0x0406, 0x0407, 0x0408, 0x0409, 0x040a, 0x040f };
 
-अटल स्थिर काष्ठा snd_djm_ctl snd_djm_ctls_850[] = अणु
+static const struct snd_djm_ctl snd_djm_ctls_850[] = {
 	SND_DJM_CTL("Capture Level", cap_level, 0, SND_DJM_WINDEX_CAPLVL),
 	SND_DJM_CTL("Ch1 Input",   850_cap1, 1, SND_DJM_WINDEX_CAP),
 	SND_DJM_CTL("Ch2 Input",   850_cap2, 0, SND_DJM_WINDEX_CAP),
 	SND_DJM_CTL("Ch3 Input",   850_cap3, 0, SND_DJM_WINDEX_CAP),
 	SND_DJM_CTL("Ch4 Input",   850_cap4, 1, SND_DJM_WINDEX_CAP)
-पूर्ण;
+};
 
 
 // DJM-900NXS2
-अटल स्थिर u16 snd_djm_opts_900nxs2_cap1[] = अणु
-	0x0100, 0x0102, 0x0103, 0x0106, 0x0107, 0x0108, 0x0109, 0x010a पूर्ण;
-अटल स्थिर u16 snd_djm_opts_900nxs2_cap2[] = अणु
-	0x0200, 0x0202, 0x0203, 0x0206, 0x0207, 0x0208, 0x0209, 0x020a पूर्ण;
-अटल स्थिर u16 snd_djm_opts_900nxs2_cap3[] = अणु
-	0x0300, 0x0302, 0x0303, 0x0306, 0x0307, 0x0308, 0x0309, 0x030a पूर्ण;
-अटल स्थिर u16 snd_djm_opts_900nxs2_cap4[] = अणु
-	0x0400, 0x0402, 0x0403, 0x0406, 0x0407, 0x0408, 0x0409, 0x040a पूर्ण;
-अटल स्थिर u16 snd_djm_opts_900nxs2_cap5[] = अणु
-	0x0507, 0x0508, 0x0509, 0x050a, 0x0511, 0x0512, 0x0513, 0x0514 पूर्ण;
+static const u16 snd_djm_opts_900nxs2_cap1[] = {
+	0x0100, 0x0102, 0x0103, 0x0106, 0x0107, 0x0108, 0x0109, 0x010a };
+static const u16 snd_djm_opts_900nxs2_cap2[] = {
+	0x0200, 0x0202, 0x0203, 0x0206, 0x0207, 0x0208, 0x0209, 0x020a };
+static const u16 snd_djm_opts_900nxs2_cap3[] = {
+	0x0300, 0x0302, 0x0303, 0x0306, 0x0307, 0x0308, 0x0309, 0x030a };
+static const u16 snd_djm_opts_900nxs2_cap4[] = {
+	0x0400, 0x0402, 0x0403, 0x0406, 0x0407, 0x0408, 0x0409, 0x040a };
+static const u16 snd_djm_opts_900nxs2_cap5[] = {
+	0x0507, 0x0508, 0x0509, 0x050a, 0x0511, 0x0512, 0x0513, 0x0514 };
 
-अटल स्थिर काष्ठा snd_djm_ctl snd_djm_ctls_900nxs2[] = अणु
+static const struct snd_djm_ctl snd_djm_ctls_900nxs2[] = {
 	SND_DJM_CTL("Capture Level", cap_level, 0, SND_DJM_WINDEX_CAPLVL),
 	SND_DJM_CTL("Ch1 Input",   900nxs2_cap1, 2, SND_DJM_WINDEX_CAP),
 	SND_DJM_CTL("Ch2 Input",   900nxs2_cap2, 2, SND_DJM_WINDEX_CAP),
 	SND_DJM_CTL("Ch3 Input",   900nxs2_cap3, 2, SND_DJM_WINDEX_CAP),
 	SND_DJM_CTL("Ch4 Input",   900nxs2_cap4, 2, SND_DJM_WINDEX_CAP),
 	SND_DJM_CTL("Ch5 Input",   900nxs2_cap5, 3, SND_DJM_WINDEX_CAP)
-पूर्ण;
+};
 
 
-अटल स्थिर काष्ठा snd_djm_device snd_djm_devices[] = अणु
+static const struct snd_djm_device snd_djm_devices[] = {
 	SND_DJM_DEVICE(250mk2),
 	SND_DJM_DEVICE(750),
 	SND_DJM_DEVICE(850),
 	SND_DJM_DEVICE(900nxs2)
-पूर्ण;
+};
 
 
-अटल पूर्णांक snd_djm_controls_info(काष्ठा snd_kcontrol *kctl,
-				काष्ठा snd_ctl_elem_info *info)
-अणु
-	अचिन्हित दीर्घ निजी_value = kctl->निजी_value;
-	u8 device_idx = (निजी_value & SND_DJM_DEVICE_MASK) >> SND_DJM_DEVICE_SHIFT;
-	u8 ctl_idx = (निजी_value & SND_DJM_GROUP_MASK) >> SND_DJM_GROUP_SHIFT;
-	स्थिर काष्ठा snd_djm_device *device = &snd_djm_devices[device_idx];
-	स्थिर अक्षर *name;
-	स्थिर काष्ठा snd_djm_ctl *ctl;
-	माप_प्रकार noptions;
+static int snd_djm_controls_info(struct snd_kcontrol *kctl,
+				struct snd_ctl_elem_info *info)
+{
+	unsigned long private_value = kctl->private_value;
+	u8 device_idx = (private_value & SND_DJM_DEVICE_MASK) >> SND_DJM_DEVICE_SHIFT;
+	u8 ctl_idx = (private_value & SND_DJM_GROUP_MASK) >> SND_DJM_GROUP_SHIFT;
+	const struct snd_djm_device *device = &snd_djm_devices[device_idx];
+	const char *name;
+	const struct snd_djm_ctl *ctl;
+	size_t noptions;
 
-	अगर (ctl_idx >= device->ncontrols)
-		वापस -EINVAL;
+	if (ctl_idx >= device->ncontrols)
+		return -EINVAL;
 
 	ctl = &device->controls[ctl_idx];
 	noptions = ctl->noptions;
-	अगर (info->value.क्रमागतerated.item >= noptions)
-		info->value.क्रमागतerated.item = noptions - 1;
+	if (info->value.enumerated.item >= noptions)
+		info->value.enumerated.item = noptions - 1;
 
 	name = snd_djm_get_label(device_idx,
-				ctl->options[info->value.क्रमागतerated.item],
+				ctl->options[info->value.enumerated.item],
 				ctl->wIndex);
-	अगर (!name)
-		वापस -EINVAL;
+	if (!name)
+		return -EINVAL;
 
-	strscpy(info->value.क्रमागतerated.name, name, माप(info->value.क्रमागतerated.name));
+	strscpy(info->value.enumerated.name, name, sizeof(info->value.enumerated.name));
 	info->type = SNDRV_CTL_ELEM_TYPE_ENUMERATED;
 	info->count = 1;
-	info->value.क्रमागतerated.items = noptions;
-	वापस 0;
-पूर्ण
+	info->value.enumerated.items = noptions;
+	return 0;
+}
 
-अटल पूर्णांक snd_djm_controls_update(काष्ठा usb_mixer_पूर्णांकerface *mixer,
+static int snd_djm_controls_update(struct usb_mixer_interface *mixer,
 				u8 device_idx, u8 group, u16 value)
-अणु
-	पूर्णांक err;
-	स्थिर काष्ठा snd_djm_device *device = &snd_djm_devices[device_idx];
+{
+	int err;
+	const struct snd_djm_device *device = &snd_djm_devices[device_idx];
 
-	अगर ((group >= device->ncontrols) || value >= device->controls[group].noptions)
-		वापस -EINVAL;
+	if ((group >= device->ncontrols) || value >= device->controls[group].noptions)
+		return -EINVAL;
 
-	err = snd_usb_lock_shutकरोwn(mixer->chip);
-	अगर (err)
-		वापस err;
+	err = snd_usb_lock_shutdown(mixer->chip);
+	if (err)
+		return err;
 
 	err = snd_usb_ctl_msg(
 		mixer->chip->dev, usb_sndctrlpipe(mixer->chip->dev, 0),
 		USB_REQ_SET_FEATURE,
-		USB_सूची_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
+		USB_DIR_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
 		device->controls[group].options[value],
 		device->controls[group].wIndex,
-		शून्य, 0);
+		NULL, 0);
 
-	snd_usb_unlock_shutकरोwn(mixer->chip);
-	वापस err;
-पूर्ण
+	snd_usb_unlock_shutdown(mixer->chip);
+	return err;
+}
 
-अटल पूर्णांक snd_djm_controls_get(काष्ठा snd_kcontrol *kctl,
-				काष्ठा snd_ctl_elem_value *elem)
-अणु
-	elem->value.क्रमागतerated.item[0] = kctl->निजी_value & SND_DJM_VALUE_MASK;
-	वापस 0;
-पूर्ण
+static int snd_djm_controls_get(struct snd_kcontrol *kctl,
+				struct snd_ctl_elem_value *elem)
+{
+	elem->value.enumerated.item[0] = kctl->private_value & SND_DJM_VALUE_MASK;
+	return 0;
+}
 
-अटल पूर्णांक snd_djm_controls_put(काष्ठा snd_kcontrol *kctl, काष्ठा snd_ctl_elem_value *elem)
-अणु
-	काष्ठा usb_mixer_elem_list *list = snd_kcontrol_chip(kctl);
-	काष्ठा usb_mixer_पूर्णांकerface *mixer = list->mixer;
-	अचिन्हित दीर्घ निजी_value = kctl->निजी_value;
+static int snd_djm_controls_put(struct snd_kcontrol *kctl, struct snd_ctl_elem_value *elem)
+{
+	struct usb_mixer_elem_list *list = snd_kcontrol_chip(kctl);
+	struct usb_mixer_interface *mixer = list->mixer;
+	unsigned long private_value = kctl->private_value;
 
-	u8 device = (निजी_value & SND_DJM_DEVICE_MASK) >> SND_DJM_DEVICE_SHIFT;
-	u8 group = (निजी_value & SND_DJM_GROUP_MASK) >> SND_DJM_GROUP_SHIFT;
-	u16 value = elem->value.क्रमागतerated.item[0];
+	u8 device = (private_value & SND_DJM_DEVICE_MASK) >> SND_DJM_DEVICE_SHIFT;
+	u8 group = (private_value & SND_DJM_GROUP_MASK) >> SND_DJM_GROUP_SHIFT;
+	u16 value = elem->value.enumerated.item[0];
 
-	kctl->निजी_value = (((अचिन्हित दीर्घ)device << SND_DJM_DEVICE_SHIFT) |
+	kctl->private_value = (((unsigned long)device << SND_DJM_DEVICE_SHIFT) |
 			      (group << SND_DJM_GROUP_SHIFT) |
 			      value);
 
-	वापस snd_djm_controls_update(mixer, device, group, value);
-पूर्ण
+	return snd_djm_controls_update(mixer, device, group, value);
+}
 
-अटल पूर्णांक snd_djm_controls_resume(काष्ठा usb_mixer_elem_list *list)
-अणु
-	अचिन्हित दीर्घ निजी_value = list->kctl->निजी_value;
-	u8 device = (निजी_value & SND_DJM_DEVICE_MASK) >> SND_DJM_DEVICE_SHIFT;
-	u8 group = (निजी_value & SND_DJM_GROUP_MASK) >> SND_DJM_GROUP_SHIFT;
-	u16 value = (निजी_value & SND_DJM_VALUE_MASK);
+static int snd_djm_controls_resume(struct usb_mixer_elem_list *list)
+{
+	unsigned long private_value = list->kctl->private_value;
+	u8 device = (private_value & SND_DJM_DEVICE_MASK) >> SND_DJM_DEVICE_SHIFT;
+	u8 group = (private_value & SND_DJM_GROUP_MASK) >> SND_DJM_GROUP_SHIFT;
+	u16 value = (private_value & SND_DJM_VALUE_MASK);
 
-	वापस snd_djm_controls_update(list->mixer, device, group, value);
-पूर्ण
+	return snd_djm_controls_update(list->mixer, device, group, value);
+}
 
-अटल पूर्णांक snd_djm_controls_create(काष्ठा usb_mixer_पूर्णांकerface *mixer,
-		स्थिर u8 device_idx)
-अणु
-	पूर्णांक err, i;
+static int snd_djm_controls_create(struct usb_mixer_interface *mixer,
+		const u8 device_idx)
+{
+	int err, i;
 	u16 value;
 
-	स्थिर काष्ठा snd_djm_device *device = &snd_djm_devices[device_idx];
+	const struct snd_djm_device *device = &snd_djm_devices[device_idx];
 
-	काष्ठा snd_kcontrol_new knew = अणु
-		.अगरace  = SNDRV_CTL_ELEM_IFACE_MIXER,
+	struct snd_kcontrol_new knew = {
+		.iface  = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
 		.index = 0,
 		.info = snd_djm_controls_info,
 		.get  = snd_djm_controls_get,
 		.put  = snd_djm_controls_put
-	पूर्ण;
+	};
 
-	क्रम (i = 0; i < device->ncontrols; i++) अणु
-		value = device->controls[i].शेष_value;
+	for (i = 0; i < device->ncontrols; i++) {
+		value = device->controls[i].default_value;
 		knew.name = device->controls[i].name;
-		knew.निजी_value = (
-			((अचिन्हित दीर्घ)device_idx << SND_DJM_DEVICE_SHIFT) |
+		knew.private_value = (
+			((unsigned long)device_idx << SND_DJM_DEVICE_SHIFT) |
 			(i << SND_DJM_GROUP_SHIFT) |
 			value);
 		err = snd_djm_controls_update(mixer, device_idx, i, value);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 		err = add_single_ctl_with_resume(mixer, 0, snd_djm_controls_resume,
-						 &knew, शून्य);
-		अगर (err)
-			वापस err;
-	पूर्ण
-	वापस 0;
-पूर्ण
+						 &knew, NULL);
+		if (err)
+			return err;
+	}
+	return 0;
+}
 
-पूर्णांक snd_usb_mixer_apply_create_quirk(काष्ठा usb_mixer_पूर्णांकerface *mixer)
-अणु
-	पूर्णांक err = 0;
+int snd_usb_mixer_apply_create_quirk(struct usb_mixer_interface *mixer)
+{
+	int err = 0;
 
 	err = snd_usb_soundblaster_remote_init(mixer);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	चयन (mixer->chip->usb_id) अणु
+	switch (mixer->chip->usb_id) {
 	/* Tascam US-16x08 */
-	हाल USB_ID(0x0644, 0x8047):
+	case USB_ID(0x0644, 0x8047):
 		err = snd_us16x08_controls_create(mixer);
-		अवरोध;
-	हाल USB_ID(0x041e, 0x3020):
-	हाल USB_ID(0x041e, 0x3040):
-	हाल USB_ID(0x041e, 0x3042):
-	हाल USB_ID(0x041e, 0x30df):
-	हाल USB_ID(0x041e, 0x3048):
+		break;
+	case USB_ID(0x041e, 0x3020):
+	case USB_ID(0x041e, 0x3040):
+	case USB_ID(0x041e, 0x3042):
+	case USB_ID(0x041e, 0x30df):
+	case USB_ID(0x041e, 0x3048):
 		err = snd_audigy2nx_controls_create(mixer);
-		अगर (err < 0)
-			अवरोध;
+		if (err < 0)
+			break;
 		snd_card_ro_proc_new(mixer->chip->card, "audigy2nx",
-				     mixer, snd_audigy2nx_proc_पढ़ो);
-		अवरोध;
+				     mixer, snd_audigy2nx_proc_read);
+		break;
 
 	/* EMU0204 */
-	हाल USB_ID(0x041e, 0x3f19):
+	case USB_ID(0x041e, 0x3f19):
 		err = snd_emu0204_controls_create(mixer);
-		अवरोध;
+		break;
 
-	हाल USB_ID(0x0763, 0x2030): /* M-Audio Fast Track C400 */
-	हाल USB_ID(0x0763, 0x2031): /* M-Audio Fast Track C400 */
+	case USB_ID(0x0763, 0x2030): /* M-Audio Fast Track C400 */
+	case USB_ID(0x0763, 0x2031): /* M-Audio Fast Track C400 */
 		err = snd_c400_create_mixer(mixer);
-		अवरोध;
+		break;
 
-	हाल USB_ID(0x0763, 0x2080): /* M-Audio Fast Track Ultra */
-	हाल USB_ID(0x0763, 0x2081): /* M-Audio Fast Track Ultra 8R */
+	case USB_ID(0x0763, 0x2080): /* M-Audio Fast Track Ultra */
+	case USB_ID(0x0763, 0x2081): /* M-Audio Fast Track Ultra 8R */
 		err = snd_ftu_create_mixer(mixer);
-		अवरोध;
+		break;
 
-	हाल USB_ID(0x0b05, 0x1739): /* ASUS Xonar U1 */
-	हाल USB_ID(0x0b05, 0x1743): /* ASUS Xonar U1 (2) */
-	हाल USB_ID(0x0b05, 0x17a0): /* ASUS Xonar U3 */
+	case USB_ID(0x0b05, 0x1739): /* ASUS Xonar U1 */
+	case USB_ID(0x0b05, 0x1743): /* ASUS Xonar U1 (2) */
+	case USB_ID(0x0b05, 0x17a0): /* ASUS Xonar U3 */
 		err = snd_xonar_u1_controls_create(mixer);
-		अवरोध;
+		break;
 
-	हाल USB_ID(0x0d8c, 0x0103): /* Audio Advantage Micro II */
+	case USB_ID(0x0d8c, 0x0103): /* Audio Advantage Micro II */
 		err = snd_microii_controls_create(mixer);
-		अवरोध;
+		break;
 
-	हाल USB_ID(0x0dba, 0x1000): /* Digidesign Mbox 1 */
-		err = snd_mbox1_create_sync_चयन(mixer);
-		अवरोध;
+	case USB_ID(0x0dba, 0x1000): /* Digidesign Mbox 1 */
+		err = snd_mbox1_create_sync_switch(mixer);
+		break;
 
-	हाल USB_ID(0x17cc, 0x1011): /* Traktor Audio 6 */
+	case USB_ID(0x17cc, 0x1011): /* Traktor Audio 6 */
 		err = snd_nativeinstruments_create_mixer(mixer,
 				snd_nativeinstruments_ta6_mixers,
 				ARRAY_SIZE(snd_nativeinstruments_ta6_mixers));
-		अवरोध;
+		break;
 
-	हाल USB_ID(0x17cc, 0x1021): /* Traktor Audio 10 */
+	case USB_ID(0x17cc, 0x1021): /* Traktor Audio 10 */
 		err = snd_nativeinstruments_create_mixer(mixer,
 				snd_nativeinstruments_ta10_mixers,
 				ARRAY_SIZE(snd_nativeinstruments_ta10_mixers));
-		अवरोध;
+		break;
 
-	हाल USB_ID(0x200c, 0x1018): /* Electrix Ebox-44 */
+	case USB_ID(0x200c, 0x1018): /* Electrix Ebox-44 */
 		/* detection is disabled in mixer_maps.c */
 		err = snd_create_std_mono_table(mixer, ebox44_table);
-		अवरोध;
+		break;
 
-	हाल USB_ID(0x1235, 0x8012): /* Focusrite Scarlett 6i6 */
-	हाल USB_ID(0x1235, 0x8002): /* Focusrite Scarlett 8i6 */
-	हाल USB_ID(0x1235, 0x8004): /* Focusrite Scarlett 18i6 */
-	हाल USB_ID(0x1235, 0x8014): /* Focusrite Scarlett 18i8 */
-	हाल USB_ID(0x1235, 0x800c): /* Focusrite Scarlett 18i20 */
+	case USB_ID(0x1235, 0x8012): /* Focusrite Scarlett 6i6 */
+	case USB_ID(0x1235, 0x8002): /* Focusrite Scarlett 8i6 */
+	case USB_ID(0x1235, 0x8004): /* Focusrite Scarlett 18i6 */
+	case USB_ID(0x1235, 0x8014): /* Focusrite Scarlett 18i8 */
+	case USB_ID(0x1235, 0x800c): /* Focusrite Scarlett 18i20 */
 		err = snd_scarlett_controls_create(mixer);
-		अवरोध;
+		break;
 
-	हाल USB_ID(0x1235, 0x8203): /* Focusrite Scarlett 6i6 2nd Gen */
-	हाल USB_ID(0x1235, 0x8204): /* Focusrite Scarlett 18i8 2nd Gen */
-	हाल USB_ID(0x1235, 0x8201): /* Focusrite Scarlett 18i20 2nd Gen */
+	case USB_ID(0x1235, 0x8203): /* Focusrite Scarlett 6i6 2nd Gen */
+	case USB_ID(0x1235, 0x8204): /* Focusrite Scarlett 18i8 2nd Gen */
+	case USB_ID(0x1235, 0x8201): /* Focusrite Scarlett 18i20 2nd Gen */
 		err = snd_scarlett_gen2_init(mixer);
-		अवरोध;
+		break;
 
-	हाल USB_ID(0x041e, 0x323b): /* Creative Sound Blaster E1 */
-		err = snd_soundblaster_e1_चयन_create(mixer);
-		अवरोध;
-	हाल USB_ID(0x0bda, 0x4014): /* Dell WD15 करोck */
-		err = dell_करोck_mixer_init(mixer);
-		अवरोध;
+	case USB_ID(0x041e, 0x323b): /* Creative Sound Blaster E1 */
+		err = snd_soundblaster_e1_switch_create(mixer);
+		break;
+	case USB_ID(0x0bda, 0x4014): /* Dell WD15 dock */
+		err = dell_dock_mixer_init(mixer);
+		break;
 
-	हाल USB_ID(0x2a39, 0x3fd2): /* RME ADI-2 Pro */
-	हाल USB_ID(0x2a39, 0x3fd3): /* RME ADI-2 DAC */
-	हाल USB_ID(0x2a39, 0x3fd4): /* RME */
+	case USB_ID(0x2a39, 0x3fd2): /* RME ADI-2 Pro */
+	case USB_ID(0x2a39, 0x3fd3): /* RME ADI-2 DAC */
+	case USB_ID(0x2a39, 0x3fd4): /* RME */
 		err = snd_rme_controls_create(mixer);
-		अवरोध;
+		break;
 
-	हाल USB_ID(0x0194f, 0x010c): /* Presonus Studio 1810c */
+	case USB_ID(0x0194f, 0x010c): /* Presonus Studio 1810c */
 		err = snd_sc1810_init_mixer(mixer);
-		अवरोध;
-	हाल USB_ID(0x2a39, 0x3fb0): /* RME Babyface Pro FS */
+		break;
+	case USB_ID(0x2a39, 0x3fb0): /* RME Babyface Pro FS */
 		err = snd_bbfpro_controls_create(mixer);
-		अवरोध;
-	हाल USB_ID(0x2b73, 0x0017): /* Pioneer DJ DJM-250MK2 */
+		break;
+	case USB_ID(0x2b73, 0x0017): /* Pioneer DJ DJM-250MK2 */
 		err = snd_djm_controls_create(mixer, SND_DJM_250MK2_IDX);
-		अवरोध;
-	हाल USB_ID(0x08e4, 0x017f): /* Pioneer DJ DJM-750 */
+		break;
+	case USB_ID(0x08e4, 0x017f): /* Pioneer DJ DJM-750 */
 		err = snd_djm_controls_create(mixer, SND_DJM_750_IDX);
-		अवरोध;
-	हाल USB_ID(0x08e4, 0x0163): /* Pioneer DJ DJM-850 */
+		break;
+	case USB_ID(0x08e4, 0x0163): /* Pioneer DJ DJM-850 */
 		err = snd_djm_controls_create(mixer, SND_DJM_850_IDX);
-		अवरोध;
-	हाल USB_ID(0x2b73, 0x000a): /* Pioneer DJ DJM-900NXS2 */
+		break;
+	case USB_ID(0x2b73, 0x000a): /* Pioneer DJ DJM-900NXS2 */
 		err = snd_djm_controls_create(mixer, SND_DJM_900NXS2_IDX);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-#अगर_घोषित CONFIG_PM
-व्योम snd_usb_mixer_resume_quirk(काष्ठा usb_mixer_पूर्णांकerface *mixer)
-अणु
-	चयन (mixer->chip->usb_id) अणु
-	हाल USB_ID(0x0bda, 0x4014): /* Dell WD15 करोck */
-		dell_करोck_mixer_init(mixer);
-		अवरोध;
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_PM
+void snd_usb_mixer_resume_quirk(struct usb_mixer_interface *mixer)
+{
+	switch (mixer->chip->usb_id) {
+	case USB_ID(0x0bda, 0x4014): /* Dell WD15 dock */
+		dell_dock_mixer_init(mixer);
+		break;
+	}
+}
+#endif
 
-व्योम snd_usb_mixer_rc_memory_change(काष्ठा usb_mixer_पूर्णांकerface *mixer,
-				    पूर्णांक unitid)
-अणु
-	अगर (!mixer->rc_cfg)
-		वापस;
-	/* unit ids specअगरic to Extigy/Audigy 2 NX: */
-	चयन (unitid) अणु
-	हाल 0: /* remote control */
+void snd_usb_mixer_rc_memory_change(struct usb_mixer_interface *mixer,
+				    int unitid)
+{
+	if (!mixer->rc_cfg)
+		return;
+	/* unit ids specific to Extigy/Audigy 2 NX: */
+	switch (unitid) {
+	case 0: /* remote control */
 		mixer->rc_urb->dev = mixer->chip->dev;
 		usb_submit_urb(mixer->rc_urb, GFP_ATOMIC);
-		अवरोध;
-	हाल 4: /* digital in jack */
-	हाल 7: /* line in jacks */
-	हाल 19: /* speaker out jacks */
-	हाल 20: /* headphones out jack */
-		अवरोध;
+		break;
+	case 4: /* digital in jack */
+	case 7: /* line in jacks */
+	case 19: /* speaker out jacks */
+	case 20: /* headphones out jack */
+		break;
 	/* live24ext: 4 = line-in jack */
-	हाल 3:	/* hp-out jack (may actuate Mute) */
-		अगर (mixer->chip->usb_id == USB_ID(0x041e, 0x3040) ||
+	case 3:	/* hp-out jack (may actuate Mute) */
+		if (mixer->chip->usb_id == USB_ID(0x041e, 0x3040) ||
 		    mixer->chip->usb_id == USB_ID(0x041e, 0x3048))
-			snd_usb_mixer_notअगरy_id(mixer, mixer->rc_cfg->mute_mixer_id);
-		अवरोध;
-	शेष:
+			snd_usb_mixer_notify_id(mixer, mixer->rc_cfg->mute_mixer_id);
+		break;
+	default:
 		usb_audio_dbg(mixer->chip, "memory change in unknown unit %d\n", unitid);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम snd_dragonfly_quirk_db_scale(काष्ठा usb_mixer_पूर्णांकerface *mixer,
-					 काष्ठा usb_mixer_elem_info *cval,
-					 काष्ठा snd_kcontrol *kctl)
-अणु
+static void snd_dragonfly_quirk_db_scale(struct usb_mixer_interface *mixer,
+					 struct usb_mixer_elem_info *cval,
+					 struct snd_kcontrol *kctl)
+{
 	/* Approximation using 10 ranges based on output measurement on hw v1.2.
-	 * This seems बंद to the cubic mapping e.g. alsamixer uses. */
-	अटल स्थिर DECLARE_TLV_DB_RANGE(scale,
+	 * This seems close to the cubic mapping e.g. alsamixer uses. */
+	static const DECLARE_TLV_DB_RANGE(scale,
 		 0,  1, TLV_DB_MINMAX_ITEM(-5300, -4970),
 		 2,  5, TLV_DB_MINMAX_ITEM(-4710, -4160),
 		 6,  7, TLV_DB_MINMAX_ITEM(-3884, -3710),
@@ -3158,36 +3157,36 @@ end:
 		41, 50, TLV_DB_MINMAX_ITEM(-441, 0),
 	);
 
-	अगर (cval->min == 0 && cval->max == 50) अणु
+	if (cval->min == 0 && cval->max == 50) {
 		usb_audio_info(mixer->chip, "applying DragonFly dB scale quirk (0-50 variant)\n");
 		kctl->tlv.p = scale;
 		kctl->vd[0].access |= SNDRV_CTL_ELEM_ACCESS_TLV_READ;
 		kctl->vd[0].access &= ~SNDRV_CTL_ELEM_ACCESS_TLV_CALLBACK;
 
-	पूर्ण अन्यथा अगर (cval->min == 0 && cval->max <= 1000) अणु
+	} else if (cval->min == 0 && cval->max <= 1000) {
 		/* Some other clearly broken DragonFly variant.
 		 * At least a 0..53 variant (hw v1.0) exists.
 		 */
 		usb_audio_info(mixer->chip, "ignoring too narrow dB range on a DragonFly device");
 		kctl->vd[0].access &= ~SNDRV_CTL_ELEM_ACCESS_TLV_CALLBACK;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम snd_usb_mixer_fu_apply_quirk(काष्ठा usb_mixer_पूर्णांकerface *mixer,
-				  काष्ठा usb_mixer_elem_info *cval, पूर्णांक unitid,
-				  काष्ठा snd_kcontrol *kctl)
-अणु
-	चयन (mixer->chip->usb_id) अणु
-	हाल USB_ID(0x21b4, 0x0081): /* AudioQuest DragonFly */
-		अगर (unitid == 7 && cval->control == UAC_FU_VOLUME)
+void snd_usb_mixer_fu_apply_quirk(struct usb_mixer_interface *mixer,
+				  struct usb_mixer_elem_info *cval, int unitid,
+				  struct snd_kcontrol *kctl)
+{
+	switch (mixer->chip->usb_id) {
+	case USB_ID(0x21b4, 0x0081): /* AudioQuest DragonFly */
+		if (unitid == 7 && cval->control == UAC_FU_VOLUME)
 			snd_dragonfly_quirk_db_scale(mixer, cval, kctl);
-		अवरोध;
+		break;
 	/* lowest playback value is muted on C-Media devices */
-	हाल USB_ID(0x0d8c, 0x000c):
-	हाल USB_ID(0x0d8c, 0x0014):
-		अगर (म_माला(kctl->id.name, "Playback"))
+	case USB_ID(0x0d8c, 0x000c):
+	case USB_ID(0x0d8c, 0x0014):
+		if (strstr(kctl->id.name, "Playback"))
 			cval->min_mute = 1;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 

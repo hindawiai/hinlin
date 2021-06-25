@@ -1,12 +1,11 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __SAMPLE_RAW_H
-#घोषणा __SAMPLE_RAW_H 1
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __SAMPLE_RAW_H
+#define __SAMPLE_RAW_H 1
 
-काष्ठा evlist;
-जोड़ perf_event;
-काष्ठा perf_sample;
+struct evlist;
+union perf_event;
+struct perf_sample;
 
-व्योम evlist__s390_sample_raw(काष्ठा evlist *evlist, जोड़ perf_event *event, काष्ठा perf_sample *sample);
-व्योम evlist__init_trace_event_sample_raw(काष्ठा evlist *evlist);
-#पूर्ण_अगर /* __PERF_EVLIST_H */
+void evlist__s390_sample_raw(struct evlist *evlist, union perf_event *event, struct perf_sample *sample);
+void evlist__init_trace_event_sample_raw(struct evlist *evlist);
+#endif /* __PERF_EVLIST_H */

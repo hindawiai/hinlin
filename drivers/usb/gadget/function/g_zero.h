@@ -1,74 +1,73 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * This header declares the utility functions used by "Gadget Zero", plus
- * पूर्णांकerfaces to its two single-configuration function drivers.
+ * interfaces to its two single-configuration function drivers.
  */
 
-#अगर_अघोषित __G_ZERO_H
-#घोषणा __G_ZERO_H
+#ifndef __G_ZERO_H
+#define __G_ZERO_H
 
-#घोषणा GZERO_BULK_BUFLEN	4096
-#घोषणा GZERO_QLEN		32
-#घोषणा GZERO_ISOC_INTERVAL	4
-#घोषणा GZERO_ISOC_MAXPACKET	1024
-#घोषणा GZERO_SS_BULK_QLEN	1
-#घोषणा GZERO_SS_ISO_QLEN	8
+#define GZERO_BULK_BUFLEN	4096
+#define GZERO_QLEN		32
+#define GZERO_ISOC_INTERVAL	4
+#define GZERO_ISOC_MAXPACKET	1024
+#define GZERO_SS_BULK_QLEN	1
+#define GZERO_SS_ISO_QLEN	8
 
-काष्ठा usb_zero_options अणु
-	अचिन्हित pattern;
-	अचिन्हित isoc_पूर्णांकerval;
-	अचिन्हित isoc_maxpacket;
-	अचिन्हित isoc_mult;
-	अचिन्हित isoc_maxburst;
-	अचिन्हित bulk_buflen;
-	अचिन्हित qlen;
-	अचिन्हित ss_bulk_qlen;
-	अचिन्हित ss_iso_qlen;
-पूर्ण;
+struct usb_zero_options {
+	unsigned pattern;
+	unsigned isoc_interval;
+	unsigned isoc_maxpacket;
+	unsigned isoc_mult;
+	unsigned isoc_maxburst;
+	unsigned bulk_buflen;
+	unsigned qlen;
+	unsigned ss_bulk_qlen;
+	unsigned ss_iso_qlen;
+};
 
-काष्ठा f_ss_opts अणु
-	काष्ठा usb_function_instance func_inst;
-	अचिन्हित pattern;
-	अचिन्हित isoc_पूर्णांकerval;
-	अचिन्हित isoc_maxpacket;
-	अचिन्हित isoc_mult;
-	अचिन्हित isoc_maxburst;
-	अचिन्हित bulk_buflen;
-	अचिन्हित bulk_qlen;
-	अचिन्हित iso_qlen;
-
-	/*
-	 * Read/ग_लिखो access to configfs attributes is handled by configfs.
-	 *
-	 * This is to protect the data from concurrent access by पढ़ो/ग_लिखो
-	 * and create symlink/हटाओ symlink.
-	 */
-	काष्ठा mutex			lock;
-	पूर्णांक				refcnt;
-पूर्ण;
-
-काष्ठा f_lb_opts अणु
-	काष्ठा usb_function_instance func_inst;
-	अचिन्हित bulk_buflen;
-	अचिन्हित qlen;
+struct f_ss_opts {
+	struct usb_function_instance func_inst;
+	unsigned pattern;
+	unsigned isoc_interval;
+	unsigned isoc_maxpacket;
+	unsigned isoc_mult;
+	unsigned isoc_maxburst;
+	unsigned bulk_buflen;
+	unsigned bulk_qlen;
+	unsigned iso_qlen;
 
 	/*
-	 * Read/ग_लिखो access to configfs attributes is handled by configfs.
+	 * Read/write access to configfs attributes is handled by configfs.
 	 *
-	 * This is to protect the data from concurrent access by पढ़ो/ग_लिखो
-	 * and create symlink/हटाओ symlink.
+	 * This is to protect the data from concurrent access by read/write
+	 * and create symlink/remove symlink.
 	 */
-	काष्ठा mutex			lock;
-	पूर्णांक				refcnt;
-पूर्ण;
+	struct mutex			lock;
+	int				refcnt;
+};
 
-व्योम lb_modनिकास(व्योम);
-पूर्णांक lb_modinit(व्योम);
+struct f_lb_opts {
+	struct usb_function_instance func_inst;
+	unsigned bulk_buflen;
+	unsigned qlen;
+
+	/*
+	 * Read/write access to configfs attributes is handled by configfs.
+	 *
+	 * This is to protect the data from concurrent access by read/write
+	 * and create symlink/remove symlink.
+	 */
+	struct mutex			lock;
+	int				refcnt;
+};
+
+void lb_modexit(void);
+int lb_modinit(void);
 
 /* common utilities */
-व्योम disable_endpoपूर्णांकs(काष्ठा usb_composite_dev *cdev,
-		काष्ठा usb_ep *in, काष्ठा usb_ep *out,
-		काष्ठा usb_ep *iso_in, काष्ठा usb_ep *iso_out);
+void disable_endpoints(struct usb_composite_dev *cdev,
+		struct usb_ep *in, struct usb_ep *out,
+		struct usb_ep *iso_in, struct usb_ep *iso_out);
 
-#पूर्ण_अगर /* __G_ZERO_H */
+#endif /* __G_ZERO_H */

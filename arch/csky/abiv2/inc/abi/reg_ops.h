@@ -1,17 +1,16 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
-#अगर_अघोषित __ABI_REG_OPS_H
-#घोषणा __ABI_REG_OPS_H
-#समावेश <यंत्र/reg_ops.h>
+#ifndef __ABI_REG_OPS_H
+#define __ABI_REG_OPS_H
+#include <asm/reg_ops.h>
 
-अटल अंतरभूत अचिन्हित पूर्णांक mfcr_hपूर्णांक(व्योम)
-अणु
-	वापस mfcr("cr31");
-पूर्ण
+static inline unsigned int mfcr_hint(void)
+{
+	return mfcr("cr31");
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक mfcr_ccr2(व्योम)
-अणु
-	वापस mfcr("cr23");
-पूर्ण
-#पूर्ण_अगर /* __ABI_REG_OPS_H */
+static inline unsigned int mfcr_ccr2(void)
+{
+	return mfcr("cr23");
+}
+#endif /* __ABI_REG_OPS_H */

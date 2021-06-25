@@ -1,73 +1,72 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Support क्रम Intel Camera Imaging ISP subप्रणाली.
+ * Support for Intel Camera Imaging ISP subsystem.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
 
-#अगर_अघोषित __IA_CSS_BNR2_2_TYPES_H
-#घोषणा __IA_CSS_BNR2_2_TYPES_H
+#ifndef __IA_CSS_BNR2_2_TYPES_H
+#define __IA_CSS_BNR2_2_TYPES_H
 
 /* @file
-* CSS-API header file क्रम Bayer Noise Reduction parameters.
+* CSS-API header file for Bayer Noise Reduction parameters.
 */
 
-#समावेश "type_support.h" /* पूर्णांक32_t */
+#include "type_support.h" /* int32_t */
 
 /* Bayer Noise Reduction 2.2 configuration
  *
- * \मrief BNR2_2 खुला parameters.
- * \details Struct with all parameters क्रम the BNR2.2 kernel that can be set
+ * \brief BNR2_2 public parameters.
+ * \details Struct with all parameters for the BNR2.2 kernel that can be set
  * from the CSS API.
  *
  * ISP2.6.1: BNR2.2 is used.
  */
-काष्ठा ia_css_bnr2_2_config अणु
-	/**@अणु*/
-	/* Directional variance gain क्रम R/G/B components in dark region */
+struct ia_css_bnr2_2_config {
+	/**@{*/
+	/* Directional variance gain for R/G/B components in dark region */
 	s32 d_var_gain_r;
 	s32 d_var_gain_g;
 	s32 d_var_gain_b;
-	/**@पूर्ण*/
-	/**@अणु*/
+	/**@}*/
+	/**@{*/
 	/* Slope of Directional variance gain between dark and bright region */
 	s32 d_var_gain_slope_r;
 	s32 d_var_gain_slope_g;
 	s32 d_var_gain_slope_b;
-	/**@पूर्ण*/
-	/**@अणु*/
-	/* Non-Directional variance gain क्रम R/G/B components in dark region */
+	/**@}*/
+	/**@{*/
+	/* Non-Directional variance gain for R/G/B components in dark region */
 	s32 n_var_gain_r;
 	s32 n_var_gain_g;
 	s32 n_var_gain_b;
-	/**@पूर्ण*/
-	/**@अणु*/
+	/**@}*/
+	/**@{*/
 	/* Slope of Non-Directional variance gain between dark and bright region */
 	s32 n_var_gain_slope_r;
 	s32 n_var_gain_slope_g;
 	s32 n_var_gain_slope_b;
-	/**@पूर्ण*/
+	/**@}*/
 
-	s32 dir_thres;		/** Threshold क्रम directional filtering */
-	s32 dir_thres_w;		/** Threshold width क्रम directional filtering */
+	s32 dir_thres;		/** Threshold for directional filtering */
+	s32 dir_thres_w;		/** Threshold width for directional filtering */
 	s32 var_offset_coef;	/** Variance offset coefficient */
-	s32 dir_gain;		/** Gain क्रम directional coefficient */
-	s32 detail_gain;		/** Gain क्रम low contrast texture control */
-	s32 detail_gain_भागisor;	/** Gain भागisor क्रम low contrast texture control */
-	s32 detail_level_offset;	/** Bias value क्रम low contrast texture control */
-	s32 d_var_th_min;		/** Minimum clipping value क्रम directional variance*/
-	s32 d_var_th_max;		/** Maximum clipping value क्रम diretional variance*/
-	s32 n_var_th_min;		/** Minimum clipping value क्रम non-directional variance*/
-	s32 n_var_th_max;		/** Maximum clipping value क्रम non-directional variance*/
-पूर्ण;
+	s32 dir_gain;		/** Gain for directional coefficient */
+	s32 detail_gain;		/** Gain for low contrast texture control */
+	s32 detail_gain_divisor;	/** Gain divisor for low contrast texture control */
+	s32 detail_level_offset;	/** Bias value for low contrast texture control */
+	s32 d_var_th_min;		/** Minimum clipping value for directional variance*/
+	s32 d_var_th_max;		/** Maximum clipping value for diretional variance*/
+	s32 n_var_th_min;		/** Minimum clipping value for non-directional variance*/
+	s32 n_var_th_max;		/** Maximum clipping value for non-directional variance*/
+};
 
-#पूर्ण_अगर /* __IA_CSS_BNR2_2_TYPES_H */
+#endif /* __IA_CSS_BNR2_2_TYPES_H */

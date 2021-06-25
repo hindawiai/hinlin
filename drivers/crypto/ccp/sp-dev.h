@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * AMD Secure Processor driver
  *
@@ -10,159 +9,159 @@
  * Author: Brijesh Singh <brijesh.singh@amd.com>
  */
 
-#अगर_अघोषित __SP_DEV_H__
-#घोषणा __SP_DEV_H__
+#ifndef __SP_DEV_H__
+#define __SP_DEV_H__
 
-#समावेश <linux/device.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/list.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/dmapool.h>
-#समावेश <linux/hw_अक्रमom.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irqवापस.h>
+#include <linux/device.h>
+#include <linux/spinlock.h>
+#include <linux/mutex.h>
+#include <linux/list.h>
+#include <linux/wait.h>
+#include <linux/dmapool.h>
+#include <linux/hw_random.h>
+#include <linux/bitops.h>
+#include <linux/interrupt.h>
+#include <linux/irqreturn.h>
 
-#घोषणा SP_MAX_NAME_LEN		32
+#define SP_MAX_NAME_LEN		32
 
-#घोषणा CACHE_NONE			0x00
-#घोषणा CACHE_WB_NO_ALLOC		0xb7
+#define CACHE_NONE			0x00
+#define CACHE_WB_NO_ALLOC		0xb7
 
 /* Structure to hold CCP device data */
-काष्ठा ccp_device;
-काष्ठा ccp_vdata अणु
-	स्थिर अचिन्हित पूर्णांक version;
-	स्थिर अचिन्हित पूर्णांक dma_chan_attr;
-	व्योम (*setup)(काष्ठा ccp_device *);
-	स्थिर काष्ठा ccp_actions *perक्रमm;
-	स्थिर अचिन्हित पूर्णांक offset;
-	स्थिर अचिन्हित पूर्णांक rsamax;
-पूर्ण;
+struct ccp_device;
+struct ccp_vdata {
+	const unsigned int version;
+	const unsigned int dma_chan_attr;
+	void (*setup)(struct ccp_device *);
+	const struct ccp_actions *perform;
+	const unsigned int offset;
+	const unsigned int rsamax;
+};
 
-काष्ठा sev_vdata अणु
-	स्थिर अचिन्हित पूर्णांक cmdresp_reg;
-	स्थिर अचिन्हित पूर्णांक cmdbuff_addr_lo_reg;
-	स्थिर अचिन्हित पूर्णांक cmdbuff_addr_hi_reg;
-पूर्ण;
+struct sev_vdata {
+	const unsigned int cmdresp_reg;
+	const unsigned int cmdbuff_addr_lo_reg;
+	const unsigned int cmdbuff_addr_hi_reg;
+};
 
-काष्ठा tee_vdata अणु
-	स्थिर अचिन्हित पूर्णांक cmdresp_reg;
-	स्थिर अचिन्हित पूर्णांक cmdbuff_addr_lo_reg;
-	स्थिर अचिन्हित पूर्णांक cmdbuff_addr_hi_reg;
-	स्थिर अचिन्हित पूर्णांक ring_wptr_reg;
-	स्थिर अचिन्हित पूर्णांक ring_rptr_reg;
-पूर्ण;
+struct tee_vdata {
+	const unsigned int cmdresp_reg;
+	const unsigned int cmdbuff_addr_lo_reg;
+	const unsigned int cmdbuff_addr_hi_reg;
+	const unsigned int ring_wptr_reg;
+	const unsigned int ring_rptr_reg;
+};
 
-काष्ठा psp_vdata अणु
-	स्थिर काष्ठा sev_vdata *sev;
-	स्थिर काष्ठा tee_vdata *tee;
-	स्थिर अचिन्हित पूर्णांक feature_reg;
-	स्थिर अचिन्हित पूर्णांक पूर्णांकen_reg;
-	स्थिर अचिन्हित पूर्णांक पूर्णांकsts_reg;
-पूर्ण;
+struct psp_vdata {
+	const struct sev_vdata *sev;
+	const struct tee_vdata *tee;
+	const unsigned int feature_reg;
+	const unsigned int inten_reg;
+	const unsigned int intsts_reg;
+};
 
 /* Structure to hold SP device data */
-काष्ठा sp_dev_vdata अणु
-	स्थिर अचिन्हित पूर्णांक bar;
+struct sp_dev_vdata {
+	const unsigned int bar;
 
-	स्थिर काष्ठा ccp_vdata *ccp_vdata;
-	स्थिर काष्ठा psp_vdata *psp_vdata;
-पूर्ण;
+	const struct ccp_vdata *ccp_vdata;
+	const struct psp_vdata *psp_vdata;
+};
 
-काष्ठा sp_device अणु
-	काष्ठा list_head entry;
+struct sp_device {
+	struct list_head entry;
 
-	काष्ठा device *dev;
+	struct device *dev;
 
-	काष्ठा sp_dev_vdata *dev_vdata;
-	अचिन्हित पूर्णांक ord;
-	अक्षर name[SP_MAX_NAME_LEN];
+	struct sp_dev_vdata *dev_vdata;
+	unsigned int ord;
+	char name[SP_MAX_NAME_LEN];
 
-	/* Bus specअगरic device inक्रमmation */
-	व्योम *dev_specअगरic;
+	/* Bus specific device information */
+	void *dev_specific;
 
-	/* I/O area used क्रम device communication. */
-	व्योम __iomem *io_map;
+	/* I/O area used for device communication. */
+	void __iomem *io_map;
 
 	/* DMA caching attribute support */
-	अचिन्हित पूर्णांक axcache;
+	unsigned int axcache;
 
 	/* get and set master device */
-	काष्ठा sp_device*(*get_psp_master_device)(व्योम);
-	व्योम (*set_psp_master_device)(काष्ठा sp_device *);
-	व्योम (*clear_psp_master_device)(काष्ठा sp_device *);
+	struct sp_device*(*get_psp_master_device)(void);
+	void (*set_psp_master_device)(struct sp_device *);
+	void (*clear_psp_master_device)(struct sp_device *);
 
-	bool irq_रेजिस्टरed;
+	bool irq_registered;
 	bool use_tasklet;
 
-	अचिन्हित पूर्णांक ccp_irq;
+	unsigned int ccp_irq;
 	irq_handler_t ccp_irq_handler;
-	व्योम *ccp_irq_data;
+	void *ccp_irq_data;
 
-	अचिन्हित पूर्णांक psp_irq;
+	unsigned int psp_irq;
 	irq_handler_t psp_irq_handler;
-	व्योम *psp_irq_data;
+	void *psp_irq_data;
 
-	व्योम *ccp_data;
-	व्योम *psp_data;
-पूर्ण;
+	void *ccp_data;
+	void *psp_data;
+};
 
-पूर्णांक sp_pci_init(व्योम);
-व्योम sp_pci_निकास(व्योम);
+int sp_pci_init(void);
+void sp_pci_exit(void);
 
-पूर्णांक sp_platक्रमm_init(व्योम);
-व्योम sp_platक्रमm_निकास(व्योम);
+int sp_platform_init(void);
+void sp_platform_exit(void);
 
-काष्ठा sp_device *sp_alloc_काष्ठा(काष्ठा device *dev);
+struct sp_device *sp_alloc_struct(struct device *dev);
 
-पूर्णांक sp_init(काष्ठा sp_device *sp);
-व्योम sp_destroy(काष्ठा sp_device *sp);
-काष्ठा sp_device *sp_get_master(व्योम);
+int sp_init(struct sp_device *sp);
+void sp_destroy(struct sp_device *sp);
+struct sp_device *sp_get_master(void);
 
-पूर्णांक sp_suspend(काष्ठा sp_device *sp);
-पूर्णांक sp_resume(काष्ठा sp_device *sp);
-पूर्णांक sp_request_ccp_irq(काष्ठा sp_device *sp, irq_handler_t handler,
-		       स्थिर अक्षर *name, व्योम *data);
-व्योम sp_मुक्त_ccp_irq(काष्ठा sp_device *sp, व्योम *data);
-पूर्णांक sp_request_psp_irq(काष्ठा sp_device *sp, irq_handler_t handler,
-		       स्थिर अक्षर *name, व्योम *data);
-व्योम sp_मुक्त_psp_irq(काष्ठा sp_device *sp, व्योम *data);
-काष्ठा sp_device *sp_get_psp_master_device(व्योम);
+int sp_suspend(struct sp_device *sp);
+int sp_resume(struct sp_device *sp);
+int sp_request_ccp_irq(struct sp_device *sp, irq_handler_t handler,
+		       const char *name, void *data);
+void sp_free_ccp_irq(struct sp_device *sp, void *data);
+int sp_request_psp_irq(struct sp_device *sp, irq_handler_t handler,
+		       const char *name, void *data);
+void sp_free_psp_irq(struct sp_device *sp, void *data);
+struct sp_device *sp_get_psp_master_device(void);
 
-#अगर_घोषित CONFIG_CRYPTO_DEV_SP_CCP
+#ifdef CONFIG_CRYPTO_DEV_SP_CCP
 
-पूर्णांक ccp_dev_init(काष्ठा sp_device *sp);
-व्योम ccp_dev_destroy(काष्ठा sp_device *sp);
+int ccp_dev_init(struct sp_device *sp);
+void ccp_dev_destroy(struct sp_device *sp);
 
-व्योम ccp_dev_suspend(काष्ठा sp_device *sp);
-व्योम ccp_dev_resume(काष्ठा sp_device *sp);
+void ccp_dev_suspend(struct sp_device *sp);
+void ccp_dev_resume(struct sp_device *sp);
 
-#अन्यथा	/* !CONFIG_CRYPTO_DEV_SP_CCP */
+#else	/* !CONFIG_CRYPTO_DEV_SP_CCP */
 
-अटल अंतरभूत पूर्णांक ccp_dev_init(काष्ठा sp_device *sp)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत व्योम ccp_dev_destroy(काष्ठा sp_device *sp) अणु पूर्ण
-अटल अंतरभूत व्योम ccp_dev_suspend(काष्ठा sp_device *sp) अणु पूर्ण
-अटल अंतरभूत व्योम ccp_dev_resume(काष्ठा sp_device *sp) अणु पूर्ण
-#पूर्ण_अगर	/* CONFIG_CRYPTO_DEV_SP_CCP */
+static inline int ccp_dev_init(struct sp_device *sp)
+{
+	return 0;
+}
+static inline void ccp_dev_destroy(struct sp_device *sp) { }
+static inline void ccp_dev_suspend(struct sp_device *sp) { }
+static inline void ccp_dev_resume(struct sp_device *sp) { }
+#endif	/* CONFIG_CRYPTO_DEV_SP_CCP */
 
-#अगर_घोषित CONFIG_CRYPTO_DEV_SP_PSP
+#ifdef CONFIG_CRYPTO_DEV_SP_PSP
 
-पूर्णांक psp_dev_init(काष्ठा sp_device *sp);
-व्योम psp_pci_init(व्योम);
-व्योम psp_dev_destroy(काष्ठा sp_device *sp);
-व्योम psp_pci_निकास(व्योम);
+int psp_dev_init(struct sp_device *sp);
+void psp_pci_init(void);
+void psp_dev_destroy(struct sp_device *sp);
+void psp_pci_exit(void);
 
-#अन्यथा /* !CONFIG_CRYPTO_DEV_SP_PSP */
+#else /* !CONFIG_CRYPTO_DEV_SP_PSP */
 
-अटल अंतरभूत पूर्णांक psp_dev_init(काष्ठा sp_device *sp) अणु वापस 0; पूर्ण
-अटल अंतरभूत व्योम psp_pci_init(व्योम) अणु पूर्ण
-अटल अंतरभूत व्योम psp_dev_destroy(काष्ठा sp_device *sp) अणु पूर्ण
-अटल अंतरभूत व्योम psp_pci_निकास(व्योम) अणु पूर्ण
+static inline int psp_dev_init(struct sp_device *sp) { return 0; }
+static inline void psp_pci_init(void) { }
+static inline void psp_dev_destroy(struct sp_device *sp) { }
+static inline void psp_pci_exit(void) { }
 
-#पूर्ण_अगर /* CONFIG_CRYPTO_DEV_SP_PSP */
+#endif /* CONFIG_CRYPTO_DEV_SP_PSP */
 
-#पूर्ण_अगर
+#endif

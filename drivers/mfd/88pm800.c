@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- * Base driver क्रम Marvell 88PM800
+ * Base driver for Marvell 88PM800
  *
  * Copyright (C) 2012 Marvell International Ltd.
  * Haojian Zhuang <haojian.zhuang@marvell.com>
@@ -8,88 +7,88 @@
  * Qiao Zhou <zhouqiao@marvell.com>
  *
  * This file is subject to the terms and conditions of the GNU General
- * Public License. See the file "COPYING" in the मुख्य directory of this
- * archive क्रम more details.
+ * Public License. See the file "COPYING" in the main directory of this
+ * archive for more details.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License क्रम more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/err.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/mfd/core.h>
-#समावेश <linux/mfd/88pm80x.h>
-#समावेश <linux/slab.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/err.h>
+#include <linux/i2c.h>
+#include <linux/mfd/core.h>
+#include <linux/mfd/88pm80x.h>
+#include <linux/slab.h>
 
 /* Interrupt Registers */
-#घोषणा PM800_INT_STATUS1		(0x05)
-#घोषणा PM800_ONKEY_INT_STS1		(1 << 0)
-#घोषणा PM800_EXTON_INT_STS1		(1 << 1)
-#घोषणा PM800_CHG_INT_STS1			(1 << 2)
-#घोषणा PM800_BAT_INT_STS1			(1 << 3)
-#घोषणा PM800_RTC_INT_STS1			(1 << 4)
-#घोषणा PM800_CLASSD_OC_INT_STS1	(1 << 5)
+#define PM800_INT_STATUS1		(0x05)
+#define PM800_ONKEY_INT_STS1		(1 << 0)
+#define PM800_EXTON_INT_STS1		(1 << 1)
+#define PM800_CHG_INT_STS1			(1 << 2)
+#define PM800_BAT_INT_STS1			(1 << 3)
+#define PM800_RTC_INT_STS1			(1 << 4)
+#define PM800_CLASSD_OC_INT_STS1	(1 << 5)
 
-#घोषणा PM800_INT_STATUS2		(0x06)
-#घोषणा PM800_VBAT_INT_STS2		(1 << 0)
-#घोषणा PM800_VSYS_INT_STS2		(1 << 1)
-#घोषणा PM800_VCHG_INT_STS2		(1 << 2)
-#घोषणा PM800_TINT_INT_STS2		(1 << 3)
-#घोषणा PM800_GPADC0_INT_STS2	(1 << 4)
-#घोषणा PM800_TBAT_INT_STS2		(1 << 5)
-#घोषणा PM800_GPADC2_INT_STS2	(1 << 6)
-#घोषणा PM800_GPADC3_INT_STS2	(1 << 7)
+#define PM800_INT_STATUS2		(0x06)
+#define PM800_VBAT_INT_STS2		(1 << 0)
+#define PM800_VSYS_INT_STS2		(1 << 1)
+#define PM800_VCHG_INT_STS2		(1 << 2)
+#define PM800_TINT_INT_STS2		(1 << 3)
+#define PM800_GPADC0_INT_STS2	(1 << 4)
+#define PM800_TBAT_INT_STS2		(1 << 5)
+#define PM800_GPADC2_INT_STS2	(1 << 6)
+#define PM800_GPADC3_INT_STS2	(1 << 7)
 
-#घोषणा PM800_INT_STATUS3		(0x07)
+#define PM800_INT_STATUS3		(0x07)
 
-#घोषणा PM800_INT_STATUS4		(0x08)
-#घोषणा PM800_GPIO0_INT_STS4		(1 << 0)
-#घोषणा PM800_GPIO1_INT_STS4		(1 << 1)
-#घोषणा PM800_GPIO2_INT_STS4		(1 << 2)
-#घोषणा PM800_GPIO3_INT_STS4		(1 << 3)
-#घोषणा PM800_GPIO4_INT_STS4		(1 << 4)
+#define PM800_INT_STATUS4		(0x08)
+#define PM800_GPIO0_INT_STS4		(1 << 0)
+#define PM800_GPIO1_INT_STS4		(1 << 1)
+#define PM800_GPIO2_INT_STS4		(1 << 2)
+#define PM800_GPIO3_INT_STS4		(1 << 3)
+#define PM800_GPIO4_INT_STS4		(1 << 4)
 
-#घोषणा PM800_INT_ENA_1		(0x09)
-#घोषणा PM800_ONKEY_INT_ENA1		(1 << 0)
-#घोषणा PM800_EXTON_INT_ENA1		(1 << 1)
-#घोषणा PM800_CHG_INT_ENA1			(1 << 2)
-#घोषणा PM800_BAT_INT_ENA1			(1 << 3)
-#घोषणा PM800_RTC_INT_ENA1			(1 << 4)
-#घोषणा PM800_CLASSD_OC_INT_ENA1	(1 << 5)
+#define PM800_INT_ENA_1		(0x09)
+#define PM800_ONKEY_INT_ENA1		(1 << 0)
+#define PM800_EXTON_INT_ENA1		(1 << 1)
+#define PM800_CHG_INT_ENA1			(1 << 2)
+#define PM800_BAT_INT_ENA1			(1 << 3)
+#define PM800_RTC_INT_ENA1			(1 << 4)
+#define PM800_CLASSD_OC_INT_ENA1	(1 << 5)
 
-#घोषणा PM800_INT_ENA_2		(0x0A)
-#घोषणा PM800_VBAT_INT_ENA2		(1 << 0)
-#घोषणा PM800_VSYS_INT_ENA2		(1 << 1)
-#घोषणा PM800_VCHG_INT_ENA2		(1 << 2)
-#घोषणा PM800_TINT_INT_ENA2		(1 << 3)
+#define PM800_INT_ENA_2		(0x0A)
+#define PM800_VBAT_INT_ENA2		(1 << 0)
+#define PM800_VSYS_INT_ENA2		(1 << 1)
+#define PM800_VCHG_INT_ENA2		(1 << 2)
+#define PM800_TINT_INT_ENA2		(1 << 3)
 
-#घोषणा PM800_INT_ENA_3		(0x0B)
-#घोषणा PM800_GPADC0_INT_ENA3		(1 << 0)
-#घोषणा PM800_GPADC1_INT_ENA3		(1 << 1)
-#घोषणा PM800_GPADC2_INT_ENA3		(1 << 2)
-#घोषणा PM800_GPADC3_INT_ENA3		(1 << 3)
-#घोषणा PM800_GPADC4_INT_ENA3		(1 << 4)
+#define PM800_INT_ENA_3		(0x0B)
+#define PM800_GPADC0_INT_ENA3		(1 << 0)
+#define PM800_GPADC1_INT_ENA3		(1 << 1)
+#define PM800_GPADC2_INT_ENA3		(1 << 2)
+#define PM800_GPADC3_INT_ENA3		(1 << 3)
+#define PM800_GPADC4_INT_ENA3		(1 << 4)
 
-#घोषणा PM800_INT_ENA_4		(0x0C)
-#घोषणा PM800_GPIO0_INT_ENA4		(1 << 0)
-#घोषणा PM800_GPIO1_INT_ENA4		(1 << 1)
-#घोषणा PM800_GPIO2_INT_ENA4		(1 << 2)
-#घोषणा PM800_GPIO3_INT_ENA4		(1 << 3)
-#घोषणा PM800_GPIO4_INT_ENA4		(1 << 4)
+#define PM800_INT_ENA_4		(0x0C)
+#define PM800_GPIO0_INT_ENA4		(1 << 0)
+#define PM800_GPIO1_INT_ENA4		(1 << 1)
+#define PM800_GPIO2_INT_ENA4		(1 << 2)
+#define PM800_GPIO3_INT_ENA4		(1 << 3)
+#define PM800_GPIO4_INT_ENA4		(1 << 4)
 
 /* number of INT_ENA & INT_STATUS regs */
-#घोषणा PM800_INT_REG_NUM			(4)
+#define PM800_INT_REG_NUM			(4)
 
 /* Interrupt Number in 88PM800 */
-क्रमागत अणु
+enum {
 	PM800_IRQ_ONKEY,	/*EN1b0 *//*0 */
 	PM800_IRQ_EXTON,	/*EN1b1 */
 	PM800_IRQ_CHG,		/*EN1b2 */
@@ -111,153 +110,153 @@
 	PM800_IRQ_GPIO3,	/*EN4b3 */
 	PM800_IRQ_GPIO4,	/*EN4b4 *//*19 */
 	PM800_MAX_IRQ,
-पूर्ण;
+};
 
-/* PM800: generation identअगरication number */
-#घोषणा PM800_CHIP_GEN_ID_NUM	0x3
+/* PM800: generation identification number */
+#define PM800_CHIP_GEN_ID_NUM	0x3
 
-अटल स्थिर काष्ठा i2c_device_id pm80x_id_table[] = अणु
-	अणु"88PM800", 0पूर्ण,
-	अणुपूर्ण /* शून्य terminated */
-पूर्ण;
+static const struct i2c_device_id pm80x_id_table[] = {
+	{"88PM800", 0},
+	{} /* NULL terminated */
+};
 MODULE_DEVICE_TABLE(i2c, pm80x_id_table);
 
-अटल स्थिर काष्ठा resource rtc_resources[] = अणु
-	अणु
+static const struct resource rtc_resources[] = {
+	{
 	 .name = "88pm80x-rtc",
 	 .start = PM800_IRQ_RTC,
 	 .end = PM800_IRQ_RTC,
 	 .flags = IORESOURCE_IRQ,
-	 पूर्ण,
-पूर्ण;
+	 },
+};
 
-अटल काष्ठा mfd_cell rtc_devs[] = अणु
-	अणु
+static struct mfd_cell rtc_devs[] = {
+	{
 	 .name = "88pm80x-rtc",
 	 .num_resources = ARRAY_SIZE(rtc_resources),
 	 .resources = &rtc_resources[0],
 	 .id = -1,
-	 पूर्ण,
-पूर्ण;
+	 },
+};
 
-अटल काष्ठा resource onkey_resources[] = अणु
-	अणु
+static struct resource onkey_resources[] = {
+	{
 	 .name = "88pm80x-onkey",
 	 .start = PM800_IRQ_ONKEY,
 	 .end = PM800_IRQ_ONKEY,
 	 .flags = IORESOURCE_IRQ,
-	 पूर्ण,
-पूर्ण;
+	 },
+};
 
-अटल स्थिर काष्ठा mfd_cell onkey_devs[] = अणु
-	अणु
+static const struct mfd_cell onkey_devs[] = {
+	{
 	 .name = "88pm80x-onkey",
 	 .num_resources = 1,
 	 .resources = &onkey_resources[0],
 	 .id = -1,
-	 पूर्ण,
-पूर्ण;
+	 },
+};
 
-अटल स्थिर काष्ठा mfd_cell regulator_devs[] = अणु
-	अणु
+static const struct mfd_cell regulator_devs[] = {
+	{
 	 .name = "88pm80x-regulator",
 	 .id = -1,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा regmap_irq pm800_irqs[] = अणु
+static const struct regmap_irq pm800_irqs[] = {
 	/* INT0 */
-	[PM800_IRQ_ONKEY] = अणु
+	[PM800_IRQ_ONKEY] = {
 		.mask = PM800_ONKEY_INT_ENA1,
-	पूर्ण,
-	[PM800_IRQ_EXTON] = अणु
+	},
+	[PM800_IRQ_EXTON] = {
 		.mask = PM800_EXTON_INT_ENA1,
-	पूर्ण,
-	[PM800_IRQ_CHG] = अणु
+	},
+	[PM800_IRQ_CHG] = {
 		.mask = PM800_CHG_INT_ENA1,
-	पूर्ण,
-	[PM800_IRQ_BAT] = अणु
+	},
+	[PM800_IRQ_BAT] = {
 		.mask = PM800_BAT_INT_ENA1,
-	पूर्ण,
-	[PM800_IRQ_RTC] = अणु
+	},
+	[PM800_IRQ_RTC] = {
 		.mask = PM800_RTC_INT_ENA1,
-	पूर्ण,
-	[PM800_IRQ_CLASSD] = अणु
+	},
+	[PM800_IRQ_CLASSD] = {
 		.mask = PM800_CLASSD_OC_INT_ENA1,
-	पूर्ण,
+	},
 	/* INT1 */
-	[PM800_IRQ_VBAT] = अणु
+	[PM800_IRQ_VBAT] = {
 		.reg_offset = 1,
 		.mask = PM800_VBAT_INT_ENA2,
-	पूर्ण,
-	[PM800_IRQ_VSYS] = अणु
+	},
+	[PM800_IRQ_VSYS] = {
 		.reg_offset = 1,
 		.mask = PM800_VSYS_INT_ENA2,
-	पूर्ण,
-	[PM800_IRQ_VCHG] = अणु
+	},
+	[PM800_IRQ_VCHG] = {
 		.reg_offset = 1,
 		.mask = PM800_VCHG_INT_ENA2,
-	पूर्ण,
-	[PM800_IRQ_TINT] = अणु
+	},
+	[PM800_IRQ_TINT] = {
 		.reg_offset = 1,
 		.mask = PM800_TINT_INT_ENA2,
-	पूर्ण,
+	},
 	/* INT2 */
-	[PM800_IRQ_GPADC0] = अणु
+	[PM800_IRQ_GPADC0] = {
 		.reg_offset = 2,
 		.mask = PM800_GPADC0_INT_ENA3,
-	पूर्ण,
-	[PM800_IRQ_GPADC1] = अणु
+	},
+	[PM800_IRQ_GPADC1] = {
 		.reg_offset = 2,
 		.mask = PM800_GPADC1_INT_ENA3,
-	पूर्ण,
-	[PM800_IRQ_GPADC2] = अणु
+	},
+	[PM800_IRQ_GPADC2] = {
 		.reg_offset = 2,
 		.mask = PM800_GPADC2_INT_ENA3,
-	पूर्ण,
-	[PM800_IRQ_GPADC3] = अणु
+	},
+	[PM800_IRQ_GPADC3] = {
 		.reg_offset = 2,
 		.mask = PM800_GPADC3_INT_ENA3,
-	पूर्ण,
-	[PM800_IRQ_GPADC4] = अणु
+	},
+	[PM800_IRQ_GPADC4] = {
 		.reg_offset = 2,
 		.mask = PM800_GPADC4_INT_ENA3,
-	पूर्ण,
+	},
 	/* INT3 */
-	[PM800_IRQ_GPIO0] = अणु
+	[PM800_IRQ_GPIO0] = {
 		.reg_offset = 3,
 		.mask = PM800_GPIO0_INT_ENA4,
-	पूर्ण,
-	[PM800_IRQ_GPIO1] = अणु
+	},
+	[PM800_IRQ_GPIO1] = {
 		.reg_offset = 3,
 		.mask = PM800_GPIO1_INT_ENA4,
-	पूर्ण,
-	[PM800_IRQ_GPIO2] = अणु
+	},
+	[PM800_IRQ_GPIO2] = {
 		.reg_offset = 3,
 		.mask = PM800_GPIO2_INT_ENA4,
-	पूर्ण,
-	[PM800_IRQ_GPIO3] = अणु
+	},
+	[PM800_IRQ_GPIO3] = {
 		.reg_offset = 3,
 		.mask = PM800_GPIO3_INT_ENA4,
-	पूर्ण,
-	[PM800_IRQ_GPIO4] = अणु
+	},
+	[PM800_IRQ_GPIO4] = {
 		.reg_offset = 3,
 		.mask = PM800_GPIO4_INT_ENA4,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक device_gpadc_init(काष्ठा pm80x_chip *chip,
-				       काष्ठा pm80x_platक्रमm_data *pdata)
-अणु
-	काष्ठा pm80x_subchip *subchip = chip->subchip;
-	काष्ठा regmap *map = subchip->regmap_gpadc;
-	पूर्णांक data = 0, mask = 0, ret = 0;
+static int device_gpadc_init(struct pm80x_chip *chip,
+				       struct pm80x_platform_data *pdata)
+{
+	struct pm80x_subchip *subchip = chip->subchip;
+	struct regmap *map = subchip->regmap_gpadc;
+	int data = 0, mask = 0, ret = 0;
 
-	अगर (!map) अणु
+	if (!map) {
 		dev_warn(chip->dev,
 			 "Warning: gpadc regmap is not available!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	/*
 	 * initialize GPADC without activating it turn on GPADC
 	 * measurments
@@ -266,118 +265,118 @@ MODULE_DEVICE_TABLE(i2c, pm80x_id_table);
 				 PM800_GPADC_MISC_CONFIG2,
 				 PM800_GPADC_MISC_GPFSM_EN,
 				 PM800_GPADC_MISC_GPFSM_EN);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 	/*
-	 * This function configures the ADC as requires क्रम
-	 * CP implementation.CP करोes not "own" the ADC configuration
-	 * रेजिस्टरs and relies on AP.
-	 * Reason: enable स्वतःmatic ADC measurements needed
-	 * क्रम CP to get VBAT and RF temperature पढ़ोings.
+	 * This function configures the ADC as requires for
+	 * CP implementation.CP does not "own" the ADC configuration
+	 * registers and relies on AP.
+	 * Reason: enable automatic ADC measurements needed
+	 * for CP to get VBAT and RF temperature readings.
 	 */
 	ret = regmap_update_bits(map, PM800_GPADC_MEAS_EN1,
 				 PM800_MEAS_EN1_VBAT, PM800_MEAS_EN1_VBAT);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 	ret = regmap_update_bits(map, PM800_GPADC_MEAS_EN2,
 				 (PM800_MEAS_EN2_RFTMP | PM800_MEAS_GP0_EN),
 				 (PM800_MEAS_EN2_RFTMP | PM800_MEAS_GP0_EN));
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
 	/*
 	 * the defult of PM800 is GPADC operates at 100Ks/s rate
 	 * and Number of GPADC slots with active current bias prior
-	 * to GPADC sampling = 1 slot क्रम all GPADCs set क्रम
+	 * to GPADC sampling = 1 slot for all GPADCs set for
 	 * Temprature mesurmants
 	 */
 	mask = (PM800_GPADC_GP_BIAS_EN0 | PM800_GPADC_GP_BIAS_EN1 |
 		PM800_GPADC_GP_BIAS_EN2 | PM800_GPADC_GP_BIAS_EN3);
 
-	अगर (pdata && (pdata->batt_det == 0))
+	if (pdata && (pdata->batt_det == 0))
 		data = (PM800_GPADC_GP_BIAS_EN0 | PM800_GPADC_GP_BIAS_EN1 |
 			PM800_GPADC_GP_BIAS_EN2 | PM800_GPADC_GP_BIAS_EN3);
-	अन्यथा
+	else
 		data = (PM800_GPADC_GP_BIAS_EN0 | PM800_GPADC_GP_BIAS_EN2 |
 			PM800_GPADC_GP_BIAS_EN3);
 
 	ret = regmap_update_bits(map, PM800_GP_BIAS_ENA1, mask, data);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
 	dev_info(chip->dev, "pm800 device_gpadc_init: Done\n");
-	वापस 0;
+	return 0;
 
 out:
 	dev_info(chip->dev, "pm800 device_gpadc_init: Failed!\n");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक device_onkey_init(काष्ठा pm80x_chip *chip,
-				काष्ठा pm80x_platक्रमm_data *pdata)
-अणु
-	पूर्णांक ret;
+static int device_onkey_init(struct pm80x_chip *chip,
+				struct pm80x_platform_data *pdata)
+{
+	int ret;
 
 	ret = mfd_add_devices(chip->dev, 0, &onkey_devs[0],
 			      ARRAY_SIZE(onkey_devs), &onkey_resources[0], 0,
-			      शून्य);
-	अगर (ret) अणु
+			      NULL);
+	if (ret) {
 		dev_err(chip->dev, "Failed to add onkey subdev\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक device_rtc_init(काष्ठा pm80x_chip *chip,
-				काष्ठा pm80x_platक्रमm_data *pdata)
-अणु
-	पूर्णांक ret;
+static int device_rtc_init(struct pm80x_chip *chip,
+				struct pm80x_platform_data *pdata)
+{
+	int ret;
 
-	अगर (pdata) अणु
-		rtc_devs[0].platक्रमm_data = pdata->rtc;
+	if (pdata) {
+		rtc_devs[0].platform_data = pdata->rtc;
 		rtc_devs[0].pdata_size =
-				pdata->rtc ? माप(काष्ठा pm80x_rtc_pdata) : 0;
-	पूर्ण
+				pdata->rtc ? sizeof(struct pm80x_rtc_pdata) : 0;
+	}
 	ret = mfd_add_devices(chip->dev, 0, &rtc_devs[0],
-			      ARRAY_SIZE(rtc_devs), शून्य, 0, शून्य);
-	अगर (ret) अणु
+			      ARRAY_SIZE(rtc_devs), NULL, 0, NULL);
+	if (ret) {
 		dev_err(chip->dev, "Failed to add rtc subdev\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक device_regulator_init(काष्ठा pm80x_chip *chip,
-					   काष्ठा pm80x_platक्रमm_data *pdata)
-अणु
-	पूर्णांक ret;
+static int device_regulator_init(struct pm80x_chip *chip,
+					   struct pm80x_platform_data *pdata)
+{
+	int ret;
 
 	ret = mfd_add_devices(chip->dev, 0, &regulator_devs[0],
-			      ARRAY_SIZE(regulator_devs), शून्य, 0, शून्य);
-	अगर (ret) अणु
+			      ARRAY_SIZE(regulator_devs), NULL, 0, NULL);
+	if (ret) {
 		dev_err(chip->dev, "Failed to add regulator subdev\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक device_irq_init_800(काष्ठा pm80x_chip *chip)
-अणु
-	काष्ठा regmap *map = chip->regmap;
-	अचिन्हित दीर्घ flags = IRQF_ONESHOT;
-	पूर्णांक data, mask, ret = -EINVAL;
+static int device_irq_init_800(struct pm80x_chip *chip)
+{
+	struct regmap *map = chip->regmap;
+	unsigned long flags = IRQF_ONESHOT;
+	int data, mask, ret = -EINVAL;
 
-	अगर (!map || !chip->irq) अणु
+	if (!map || !chip->irq) {
 		dev_err(chip->dev, "incorrect parameters\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
-	 * irq_mode defines the way of clearing पूर्णांकerrupt. it's पढ़ो-clear by
-	 * शेष.
+	 * irq_mode defines the way of clearing interrupt. it's read-clear by
+	 * default.
 	 */
 	mask =
 	    PM800_WAKEUP2_INV_INT | PM800_WAKEUP2_INT_CLEAR |
@@ -386,23 +385,23 @@ out:
 	data = PM800_WAKEUP2_INT_CLEAR;
 	ret = regmap_update_bits(map, PM800_WAKEUP2, mask, data);
 
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
 	ret =
 	    regmap_add_irq_chip(chip->regmap, chip->irq, flags, -1,
 				chip->regmap_irq_chip, &chip->irq_data);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम device_irq_निकास_800(काष्ठा pm80x_chip *chip)
-अणु
+static void device_irq_exit_800(struct pm80x_chip *chip)
+{
 	regmap_del_irq_chip(chip->irq, chip->irq_data);
-पूर्ण
+}
 
-अटल काष्ठा regmap_irq_chip pm800_irq_chip = अणु
+static struct regmap_irq_chip pm800_irq_chip = {
 	.name = "88pm800",
 	.irqs = pm800_irqs,
 	.num_irqs = ARRAY_SIZE(pm800_irqs),
@@ -412,222 +411,222 @@ out:
 	.mask_base = PM800_INT_ENA_1,
 	.ack_base = PM800_INT_STATUS1,
 	.mask_invert = 1,
-पूर्ण;
+};
 
-अटल पूर्णांक pm800_pages_init(काष्ठा pm80x_chip *chip)
-अणु
-	काष्ठा pm80x_subchip *subchip;
-	काष्ठा i2c_client *client = chip->client;
+static int pm800_pages_init(struct pm80x_chip *chip)
+{
+	struct pm80x_subchip *subchip;
+	struct i2c_client *client = chip->client;
 
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	subchip = chip->subchip;
-	अगर (!subchip || !subchip->घातer_page_addr || !subchip->gpadc_page_addr)
-		वापस -ENODEV;
+	if (!subchip || !subchip->power_page_addr || !subchip->gpadc_page_addr)
+		return -ENODEV;
 
-	/* PM800 block घातer page */
-	subchip->घातer_page = i2c_new_dummy_device(client->adapter,
-					    subchip->घातer_page_addr);
-	अगर (IS_ERR(subchip->घातer_page)) अणु
-		ret = PTR_ERR(subchip->घातer_page);
-		जाओ out;
-	पूर्ण
+	/* PM800 block power page */
+	subchip->power_page = i2c_new_dummy_device(client->adapter,
+					    subchip->power_page_addr);
+	if (IS_ERR(subchip->power_page)) {
+		ret = PTR_ERR(subchip->power_page);
+		goto out;
+	}
 
-	subchip->regmap_घातer = devm_regmap_init_i2c(subchip->घातer_page,
+	subchip->regmap_power = devm_regmap_init_i2c(subchip->power_page,
 						     &pm80x_regmap_config);
-	अगर (IS_ERR(subchip->regmap_घातer)) अणु
-		ret = PTR_ERR(subchip->regmap_घातer);
+	if (IS_ERR(subchip->regmap_power)) {
+		ret = PTR_ERR(subchip->regmap_power);
 		dev_err(chip->dev,
 			"Failed to allocate regmap_power: %d\n", ret);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	i2c_set_clientdata(subchip->घातer_page, chip);
+	i2c_set_clientdata(subchip->power_page, chip);
 
 	/* PM800 block GPADC */
 	subchip->gpadc_page = i2c_new_dummy_device(client->adapter,
 					    subchip->gpadc_page_addr);
-	अगर (IS_ERR(subchip->gpadc_page)) अणु
+	if (IS_ERR(subchip->gpadc_page)) {
 		ret = PTR_ERR(subchip->gpadc_page);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	subchip->regmap_gpadc = devm_regmap_init_i2c(subchip->gpadc_page,
 						     &pm80x_regmap_config);
-	अगर (IS_ERR(subchip->regmap_gpadc)) अणु
+	if (IS_ERR(subchip->regmap_gpadc)) {
 		ret = PTR_ERR(subchip->regmap_gpadc);
 		dev_err(chip->dev,
 			"Failed to allocate regmap_gpadc: %d\n", ret);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	i2c_set_clientdata(subchip->gpadc_page, chip);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम pm800_pages_निकास(काष्ठा pm80x_chip *chip)
-अणु
-	काष्ठा pm80x_subchip *subchip;
+static void pm800_pages_exit(struct pm80x_chip *chip)
+{
+	struct pm80x_subchip *subchip;
 
 	subchip = chip->subchip;
 
-	अगर (subchip && subchip->घातer_page)
-		i2c_unरेजिस्टर_device(subchip->घातer_page);
+	if (subchip && subchip->power_page)
+		i2c_unregister_device(subchip->power_page);
 
-	अगर (subchip && subchip->gpadc_page)
-		i2c_unरेजिस्टर_device(subchip->gpadc_page);
-पूर्ण
+	if (subchip && subchip->gpadc_page)
+		i2c_unregister_device(subchip->gpadc_page);
+}
 
-अटल पूर्णांक device_800_init(काष्ठा pm80x_chip *chip,
-				     काष्ठा pm80x_platक्रमm_data *pdata)
-अणु
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक val;
+static int device_800_init(struct pm80x_chip *chip,
+				     struct pm80x_platform_data *pdata)
+{
+	int ret;
+	unsigned int val;
 
 	/*
 	 * alarm wake up bit will be clear in device_irq_init(),
-	 * पढ़ो beक्रमe that
+	 * read before that
 	 */
-	ret = regmap_पढ़ो(chip->regmap, PM800_RTC_CONTROL, &val);
-	अगर (ret < 0) अणु
+	ret = regmap_read(chip->regmap, PM800_RTC_CONTROL, &val);
+	if (ret < 0) {
 		dev_err(chip->dev, "Failed to read RTC register: %d\n", ret);
-		जाओ out;
-	पूर्ण
-	अगर (val & PM800_ALARM_WAKEUP) अणु
-		अगर (pdata && pdata->rtc)
+		goto out;
+	}
+	if (val & PM800_ALARM_WAKEUP) {
+		if (pdata && pdata->rtc)
 			pdata->rtc->rtc_wakeup = 1;
-	पूर्ण
+	}
 
 	ret = device_gpadc_init(chip, pdata);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(chip->dev, "[%s]Failed to init gpadc\n", __func__);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	chip->regmap_irq_chip = &pm800_irq_chip;
 
 	ret = device_irq_init_800(chip);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(chip->dev, "[%s]Failed to init pm800 irq\n", __func__);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = device_onkey_init(chip, pdata);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(chip->dev, "Failed to add onkey subdev\n");
-		जाओ out_dev;
-	पूर्ण
+		goto out_dev;
+	}
 
 	ret = device_rtc_init(chip, pdata);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(chip->dev, "Failed to add rtc subdev\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = device_regulator_init(chip, pdata);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(chip->dev, "Failed to add regulators subdev\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	वापस 0;
+	return 0;
 out_dev:
-	mfd_हटाओ_devices(chip->dev);
-	device_irq_निकास_800(chip);
+	mfd_remove_devices(chip->dev);
+	device_irq_exit_800(chip);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक pm800_probe(काष्ठा i2c_client *client,
-				 स्थिर काष्ठा i2c_device_id *id)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा pm80x_chip *chip;
-	काष्ठा pm80x_platक्रमm_data *pdata = dev_get_platdata(&client->dev);
-	काष्ठा pm80x_subchip *subchip;
+static int pm800_probe(struct i2c_client *client,
+				 const struct i2c_device_id *id)
+{
+	int ret = 0;
+	struct pm80x_chip *chip;
+	struct pm80x_platform_data *pdata = dev_get_platdata(&client->dev);
+	struct pm80x_subchip *subchip;
 
 	ret = pm80x_init(client);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&client->dev, "pm800_init fail\n");
-		जाओ out_init;
-	पूर्ण
+		goto out_init;
+	}
 
 	chip = i2c_get_clientdata(client);
 
-	/* init subchip क्रम PM800 */
+	/* init subchip for PM800 */
 	subchip =
-	    devm_kzalloc(&client->dev, माप(काष्ठा pm80x_subchip),
+	    devm_kzalloc(&client->dev, sizeof(struct pm80x_subchip),
 			 GFP_KERNEL);
-	अगर (!subchip) अणु
+	if (!subchip) {
 		ret = -ENOMEM;
-		जाओ err_subchip_alloc;
-	पूर्ण
+		goto err_subchip_alloc;
+	}
 
-	/* pm800 has 2 addtional pages to support घातer and gpadc. */
-	subchip->घातer_page_addr = client->addr + 1;
+	/* pm800 has 2 addtional pages to support power and gpadc. */
+	subchip->power_page_addr = client->addr + 1;
 	subchip->gpadc_page_addr = client->addr + 2;
 	chip->subchip = subchip;
 
 	ret = pm800_pages_init(chip);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&client->dev, "pm800_pages_init failed!\n");
-		जाओ err_device_init;
-	पूर्ण
+		goto err_device_init;
+	}
 
 	ret = device_800_init(chip, pdata);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(chip->dev, "Failed to initialize 88pm800 devices\n");
-		जाओ err_device_init;
-	पूर्ण
+		goto err_device_init;
+	}
 
-	अगर (pdata && pdata->plat_config)
+	if (pdata && pdata->plat_config)
 		pdata->plat_config(chip, pdata);
 
-	वापस 0;
+	return 0;
 
 err_device_init:
-	pm800_pages_निकास(chip);
+	pm800_pages_exit(chip);
 err_subchip_alloc:
 	pm80x_deinit();
 out_init:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक pm800_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा pm80x_chip *chip = i2c_get_clientdata(client);
+static int pm800_remove(struct i2c_client *client)
+{
+	struct pm80x_chip *chip = i2c_get_clientdata(client);
 
-	mfd_हटाओ_devices(chip->dev);
-	device_irq_निकास_800(chip);
+	mfd_remove_devices(chip->dev);
+	device_irq_exit_800(chip);
 
-	pm800_pages_निकास(chip);
+	pm800_pages_exit(chip);
 	pm80x_deinit();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा i2c_driver pm800_driver = अणु
-	.driver = अणु
+static struct i2c_driver pm800_driver = {
+	.driver = {
 		.name = "88PM800",
 		.pm = &pm80x_pm_ops,
-		पूर्ण,
+		},
 	.probe = pm800_probe,
-	.हटाओ = pm800_हटाओ,
+	.remove = pm800_remove,
 	.id_table = pm80x_id_table,
-पूर्ण;
+};
 
-अटल पूर्णांक __init pm800_i2c_init(व्योम)
-अणु
-	वापस i2c_add_driver(&pm800_driver);
-पूर्ण
+static int __init pm800_i2c_init(void)
+{
+	return i2c_add_driver(&pm800_driver);
+}
 subsys_initcall(pm800_i2c_init);
 
-अटल व्योम __निकास pm800_i2c_निकास(व्योम)
-अणु
+static void __exit pm800_i2c_exit(void)
+{
 	i2c_del_driver(&pm800_driver);
-पूर्ण
-module_निकास(pm800_i2c_निकास);
+}
+module_exit(pm800_i2c_exit);
 
 MODULE_DESCRIPTION("PMIC Driver for Marvell 88PM800");
 MODULE_AUTHOR("Qiao Zhou <zhouqiao@marvell.com>");

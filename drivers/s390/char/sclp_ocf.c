@@ -1,153 +1,152 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- *    SCLP OCF communication parameters sysfs पूर्णांकerface
+ *    SCLP OCF communication parameters sysfs interface
  *
  *    Copyright IBM Corp. 2011
  *    Author(s): Martin Schwidefsky <schwidefsky@de.ibm.com>
  */
 
-#घोषणा KMSG_COMPONENT "sclp_ocf"
-#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#define KMSG_COMPONENT "sclp_ocf"
+#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/स्थिति.स>
-#समावेश <linux/device.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/kmod.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/err.h>
-#समावेश <यंत्र/ebcdic.h>
-#समावेश <यंत्र/sclp.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/stat.h>
+#include <linux/device.h>
+#include <linux/string.h>
+#include <linux/ctype.h>
+#include <linux/kmod.h>
+#include <linux/timer.h>
+#include <linux/err.h>
+#include <asm/ebcdic.h>
+#include <asm/sclp.h>
 
-#समावेश "sclp.h"
+#include "sclp.h"
 
-#घोषणा OCF_LENGTH_HMC_NETWORK 8UL
-#घोषणा OCF_LENGTH_CPC_NAME 8UL
+#define OCF_LENGTH_HMC_NETWORK 8UL
+#define OCF_LENGTH_CPC_NAME 8UL
 
-अटल अक्षर hmc_network[OCF_LENGTH_HMC_NETWORK + 1];
-अटल अक्षर cpc_name[OCF_LENGTH_CPC_NAME]; /* in EBCDIC */
+static char hmc_network[OCF_LENGTH_HMC_NETWORK + 1];
+static char cpc_name[OCF_LENGTH_CPC_NAME]; /* in EBCDIC */
 
-अटल DEFINE_SPINLOCK(sclp_ocf_lock);
-अटल काष्ठा work_काष्ठा sclp_ocf_change_work;
+static DEFINE_SPINLOCK(sclp_ocf_lock);
+static struct work_struct sclp_ocf_change_work;
 
-अटल काष्ठा kset *ocf_kset;
+static struct kset *ocf_kset;
 
-अटल व्योम sclp_ocf_change_notअगरy(काष्ठा work_काष्ठा *work)
-अणु
+static void sclp_ocf_change_notify(struct work_struct *work)
+{
 	kobject_uevent(&ocf_kset->kobj, KOBJ_CHANGE);
-पूर्ण
+}
 
-/* Handler क्रम OCF event. Look क्रम the CPC image name. */
-अटल व्योम sclp_ocf_handler(काष्ठा evbuf_header *evbuf)
-अणु
-	काष्ठा gds_vector *v;
-	काष्ठा gds_subvector *sv, *netid, *cpc;
-	माप_प्रकार size;
+/* Handler for OCF event. Look for the CPC image name. */
+static void sclp_ocf_handler(struct evbuf_header *evbuf)
+{
+	struct gds_vector *v;
+	struct gds_subvector *sv, *netid, *cpc;
+	size_t size;
 
 	/* Find the 0x9f00 block. */
-	v = sclp_find_gds_vector(evbuf + 1, (व्योम *) evbuf + evbuf->length,
+	v = sclp_find_gds_vector(evbuf + 1, (void *) evbuf + evbuf->length,
 				 0x9f00);
-	अगर (!v)
-		वापस;
+	if (!v)
+		return;
 	/* Find the 0x9f22 block inside the 0x9f00 block. */
-	v = sclp_find_gds_vector(v + 1, (व्योम *) v + v->length, 0x9f22);
-	अगर (!v)
-		वापस;
+	v = sclp_find_gds_vector(v + 1, (void *) v + v->length, 0x9f22);
+	if (!v)
+		return;
 	/* Find the 0x81 block inside the 0x9f22 block. */
-	sv = sclp_find_gds_subvector(v + 1, (व्योम *) v + v->length, 0x81);
-	अगर (!sv)
-		वापस;
+	sv = sclp_find_gds_subvector(v + 1, (void *) v + v->length, 0x81);
+	if (!sv)
+		return;
 	/* Find the 0x01 block inside the 0x81 block. */
-	netid = sclp_find_gds_subvector(sv + 1, (व्योम *) sv + sv->length, 1);
+	netid = sclp_find_gds_subvector(sv + 1, (void *) sv + sv->length, 1);
 	/* Find the 0x02 block inside the 0x81 block. */
-	cpc = sclp_find_gds_subvector(sv + 1, (व्योम *) sv + sv->length, 2);
+	cpc = sclp_find_gds_subvector(sv + 1, (void *) sv + sv->length, 2);
 	/* Copy network name and cpc name. */
 	spin_lock(&sclp_ocf_lock);
-	अगर (netid) अणु
-		size = min(OCF_LENGTH_HMC_NETWORK, (माप_प्रकार) netid->length);
-		स_नकल(hmc_network, netid + 1, size);
+	if (netid) {
+		size = min(OCF_LENGTH_HMC_NETWORK, (size_t) netid->length);
+		memcpy(hmc_network, netid + 1, size);
 		EBCASC(hmc_network, size);
 		hmc_network[size] = 0;
-	पूर्ण
-	अगर (cpc) अणु
-		size = min(OCF_LENGTH_CPC_NAME, (माप_प्रकार) cpc->length);
-		स_रखो(cpc_name, 0, OCF_LENGTH_CPC_NAME);
-		स_नकल(cpc_name, cpc + 1, size);
-	पूर्ण
+	}
+	if (cpc) {
+		size = min(OCF_LENGTH_CPC_NAME, (size_t) cpc->length);
+		memset(cpc_name, 0, OCF_LENGTH_CPC_NAME);
+		memcpy(cpc_name, cpc + 1, size);
+	}
 	spin_unlock(&sclp_ocf_lock);
 	schedule_work(&sclp_ocf_change_work);
-पूर्ण
+}
 
-अटल काष्ठा sclp_रेजिस्टर sclp_ocf_event = अणु
+static struct sclp_register sclp_ocf_event = {
 	.receive_mask = EVTYP_OCF_MASK,
 	.receiver_fn = sclp_ocf_handler,
-पूर्ण;
+};
 
-व्योम sclp_ocf_cpc_name_copy(अक्षर *dst)
-अणु
+void sclp_ocf_cpc_name_copy(char *dst)
+{
 	spin_lock_irq(&sclp_ocf_lock);
-	स_नकल(dst, cpc_name, OCF_LENGTH_CPC_NAME);
+	memcpy(dst, cpc_name, OCF_LENGTH_CPC_NAME);
 	spin_unlock_irq(&sclp_ocf_lock);
-पूर्ण
+}
 EXPORT_SYMBOL(sclp_ocf_cpc_name_copy);
 
-अटल sमाप_प्रकार cpc_name_show(काष्ठा kobject *kobj,
-			     काष्ठा kobj_attribute *attr, अक्षर *page)
-अणु
-	अक्षर name[OCF_LENGTH_CPC_NAME + 1];
+static ssize_t cpc_name_show(struct kobject *kobj,
+			     struct kobj_attribute *attr, char *page)
+{
+	char name[OCF_LENGTH_CPC_NAME + 1];
 
 	sclp_ocf_cpc_name_copy(name);
 	name[OCF_LENGTH_CPC_NAME] = 0;
 	EBCASC(name, OCF_LENGTH_CPC_NAME);
-	वापस snम_लिखो(page, PAGE_SIZE, "%s\n", name);
-पूर्ण
+	return snprintf(page, PAGE_SIZE, "%s\n", name);
+}
 
-अटल काष्ठा kobj_attribute cpc_name_attr =
-	__ATTR(cpc_name, 0444, cpc_name_show, शून्य);
+static struct kobj_attribute cpc_name_attr =
+	__ATTR(cpc_name, 0444, cpc_name_show, NULL);
 
-अटल sमाप_प्रकार hmc_network_show(काष्ठा kobject *kobj,
-				काष्ठा kobj_attribute *attr, अक्षर *page)
-अणु
-	पूर्णांक rc;
+static ssize_t hmc_network_show(struct kobject *kobj,
+				struct kobj_attribute *attr, char *page)
+{
+	int rc;
 
 	spin_lock_irq(&sclp_ocf_lock);
-	rc = snम_लिखो(page, PAGE_SIZE, "%s\n", hmc_network);
+	rc = snprintf(page, PAGE_SIZE, "%s\n", hmc_network);
 	spin_unlock_irq(&sclp_ocf_lock);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल काष्ठा kobj_attribute hmc_network_attr =
-	__ATTR(hmc_network, 0444, hmc_network_show, शून्य);
+static struct kobj_attribute hmc_network_attr =
+	__ATTR(hmc_network, 0444, hmc_network_show, NULL);
 
-अटल काष्ठा attribute *ocf_attrs[] = अणु
+static struct attribute *ocf_attrs[] = {
 	&cpc_name_attr.attr,
 	&hmc_network_attr.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group ocf_attr_group = अणु
+static const struct attribute_group ocf_attr_group = {
 	.attrs = ocf_attrs,
-पूर्ण;
+};
 
-अटल पूर्णांक __init ocf_init(व्योम)
-अणु
-	पूर्णांक rc;
+static int __init ocf_init(void)
+{
+	int rc;
 
-	INIT_WORK(&sclp_ocf_change_work, sclp_ocf_change_notअगरy);
-	ocf_kset = kset_create_and_add("ocf", शून्य, firmware_kobj);
-	अगर (!ocf_kset)
-		वापस -ENOMEM;
+	INIT_WORK(&sclp_ocf_change_work, sclp_ocf_change_notify);
+	ocf_kset = kset_create_and_add("ocf", NULL, firmware_kobj);
+	if (!ocf_kset)
+		return -ENOMEM;
 
 	rc = sysfs_create_group(&ocf_kset->kobj, &ocf_attr_group);
-	अगर (rc) अणु
-		kset_unरेजिस्टर(ocf_kset);
-		वापस rc;
-	पूर्ण
+	if (rc) {
+		kset_unregister(ocf_kset);
+		return rc;
+	}
 
-	वापस sclp_रेजिस्टर(&sclp_ocf_event);
-पूर्ण
+	return sclp_register(&sclp_ocf_event);
+}
 
 device_initcall(ocf_init);

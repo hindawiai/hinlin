@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2012-2016, The Linux Foundation. All rights reserved.
  * Copyright (C) 2017 Linaro Ltd.
  */
-#अगर_अघोषित __VENUS_VDEC_H__
-#घोषणा __VENUS_VDEC_H__
+#ifndef __VENUS_VDEC_H__
+#define __VENUS_VDEC_H__
 
-काष्ठा venus_inst;
+struct venus_inst;
 
-पूर्णांक vdec_ctrl_init(काष्ठा venus_inst *inst);
-व्योम vdec_ctrl_deinit(काष्ठा venus_inst *inst);
+int vdec_ctrl_init(struct venus_inst *inst);
+void vdec_ctrl_deinit(struct venus_inst *inst);
 
-#पूर्ण_अगर
+#endif

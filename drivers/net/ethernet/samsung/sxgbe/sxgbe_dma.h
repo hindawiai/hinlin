@@ -1,48 +1,47 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
-/* 10G controller driver क्रम Samsung SoCs
+/* SPDX-License-Identifier: GPL-2.0-only */
+/* 10G controller driver for Samsung SoCs
  *
  * Copyright (C) 2013 Samsung Electronics Co., Ltd.
  *		http://www.samsung.com
  *
  * Author: Siva Reddy Kallam <siva.kallam@samsung.com>
  */
-#अगर_अघोषित __SXGBE_DMA_H__
-#घोषणा __SXGBE_DMA_H__
+#ifndef __SXGBE_DMA_H__
+#define __SXGBE_DMA_H__
 
-/* क्रमward declaration */
-काष्ठा sxgbe_extra_stats;
+/* forward declaration */
+struct sxgbe_extra_stats;
 
-#घोषणा SXGBE_DMA_BLENMAP_LSHIFT	1
-#घोषणा SXGBE_DMA_TXPBL_LSHIFT		16
-#घोषणा SXGBE_DMA_RXPBL_LSHIFT		16
-#घोषणा DEFAULT_DMA_PBL			8
+#define SXGBE_DMA_BLENMAP_LSHIFT	1
+#define SXGBE_DMA_TXPBL_LSHIFT		16
+#define SXGBE_DMA_RXPBL_LSHIFT		16
+#define DEFAULT_DMA_PBL			8
 
-काष्ठा sxgbe_dma_ops अणु
+struct sxgbe_dma_ops {
 	/* DMA core initialization */
-	पूर्णांक (*init)(व्योम __iomem *ioaddr, पूर्णांक fix_burst, पूर्णांक burst_map);
-	व्योम (*cha_init)(व्योम __iomem *ioaddr, पूर्णांक cha_num, पूर्णांक fix_burst,
-			 पूर्णांक pbl, dma_addr_t dma_tx, dma_addr_t dma_rx,
-			 पूर्णांक t_rzie, पूर्णांक r_rsize);
-	व्योम (*enable_dma_transmission)(व्योम __iomem *ioaddr, पूर्णांक dma_cnum);
-	व्योम (*enable_dma_irq)(व्योम __iomem *ioaddr, पूर्णांक dma_cnum);
-	व्योम (*disable_dma_irq)(व्योम __iomem *ioaddr, पूर्णांक dma_cnum);
-	व्योम (*start_tx)(व्योम __iomem *ioaddr, पूर्णांक tchannels);
-	व्योम (*start_tx_queue)(व्योम __iomem *ioaddr, पूर्णांक dma_cnum);
-	व्योम (*stop_tx)(व्योम __iomem *ioaddr, पूर्णांक tchannels);
-	व्योम (*stop_tx_queue)(व्योम __iomem *ioaddr, पूर्णांक dma_cnum);
-	व्योम (*start_rx)(व्योम __iomem *ioaddr, पूर्णांक rchannels);
-	व्योम (*stop_rx)(व्योम __iomem *ioaddr, पूर्णांक rchannels);
-	पूर्णांक (*tx_dma_पूर्णांक_status)(व्योम __iomem *ioaddr, पूर्णांक channel_no,
-				 काष्ठा sxgbe_extra_stats *x);
-	पूर्णांक (*rx_dma_पूर्णांक_status)(व्योम __iomem *ioaddr, पूर्णांक channel_no,
-				 काष्ठा sxgbe_extra_stats *x);
-	/* Program the HW RX Watchकरोg */
-	व्योम (*rx_watchकरोg)(व्योम __iomem *ioaddr, u32 riwt);
-	/* Enable TSO क्रम each DMA channel */
-	व्योम (*enable_tso)(व्योम __iomem *ioaddr, u8 chan_num);
-पूर्ण;
+	int (*init)(void __iomem *ioaddr, int fix_burst, int burst_map);
+	void (*cha_init)(void __iomem *ioaddr, int cha_num, int fix_burst,
+			 int pbl, dma_addr_t dma_tx, dma_addr_t dma_rx,
+			 int t_rzie, int r_rsize);
+	void (*enable_dma_transmission)(void __iomem *ioaddr, int dma_cnum);
+	void (*enable_dma_irq)(void __iomem *ioaddr, int dma_cnum);
+	void (*disable_dma_irq)(void __iomem *ioaddr, int dma_cnum);
+	void (*start_tx)(void __iomem *ioaddr, int tchannels);
+	void (*start_tx_queue)(void __iomem *ioaddr, int dma_cnum);
+	void (*stop_tx)(void __iomem *ioaddr, int tchannels);
+	void (*stop_tx_queue)(void __iomem *ioaddr, int dma_cnum);
+	void (*start_rx)(void __iomem *ioaddr, int rchannels);
+	void (*stop_rx)(void __iomem *ioaddr, int rchannels);
+	int (*tx_dma_int_status)(void __iomem *ioaddr, int channel_no,
+				 struct sxgbe_extra_stats *x);
+	int (*rx_dma_int_status)(void __iomem *ioaddr, int channel_no,
+				 struct sxgbe_extra_stats *x);
+	/* Program the HW RX Watchdog */
+	void (*rx_watchdog)(void __iomem *ioaddr, u32 riwt);
+	/* Enable TSO for each DMA channel */
+	void (*enable_tso)(void __iomem *ioaddr, u8 chan_num);
+};
 
-स्थिर काष्ठा sxgbe_dma_ops *sxgbe_get_dma_ops(व्योम);
+const struct sxgbe_dma_ops *sxgbe_get_dma_ops(void);
 
-#पूर्ण_अगर /* __SXGBE_CORE_H__ */
+#endif /* __SXGBE_CORE_H__ */

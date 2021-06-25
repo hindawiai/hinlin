@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2007 Cisco Systems, Inc. All rights reserved.
  * Copyright (c) 2007, 2008 Mellanox Technologies. All rights reserved.
@@ -6,20 +5,20 @@
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -32,297 +31,297 @@
  * SOFTWARE.
  */
 
-#समावेश <linux/slab.h>
-#समावेश <rdma/ib_user_verbs.h>
+#include <linux/slab.h>
+#include <rdma/ib_user_verbs.h>
 
-#समावेश "mlx4_ib.h"
+#include "mlx4_ib.h"
 
-अटल u32 convert_access(पूर्णांक acc)
-अणु
-	वापस (acc & IB_ACCESS_REMOTE_ATOMIC ? MLX4_PERM_ATOMIC       : 0) |
+static u32 convert_access(int acc)
+{
+	return (acc & IB_ACCESS_REMOTE_ATOMIC ? MLX4_PERM_ATOMIC       : 0) |
 	       (acc & IB_ACCESS_REMOTE_WRITE  ? MLX4_PERM_REMOTE_WRITE : 0) |
 	       (acc & IB_ACCESS_REMOTE_READ   ? MLX4_PERM_REMOTE_READ  : 0) |
 	       (acc & IB_ACCESS_LOCAL_WRITE   ? MLX4_PERM_LOCAL_WRITE  : 0) |
 	       (acc & IB_ACCESS_MW_BIND	      ? MLX4_PERM_BIND_MW      : 0) |
 	       MLX4_PERM_LOCAL_READ;
-पूर्ण
+}
 
-अटल क्रमागत mlx4_mw_type to_mlx4_type(क्रमागत ib_mw_type type)
-अणु
-	चयन (type) अणु
-	हाल IB_MW_TYPE_1:	वापस MLX4_MW_TYPE_1;
-	हाल IB_MW_TYPE_2:	वापस MLX4_MW_TYPE_2;
-	शेष:		वापस -1;
-	पूर्ण
-पूर्ण
+static enum mlx4_mw_type to_mlx4_type(enum ib_mw_type type)
+{
+	switch (type) {
+	case IB_MW_TYPE_1:	return MLX4_MW_TYPE_1;
+	case IB_MW_TYPE_2:	return MLX4_MW_TYPE_2;
+	default:		return -1;
+	}
+}
 
-काष्ठा ib_mr *mlx4_ib_get_dma_mr(काष्ठा ib_pd *pd, पूर्णांक acc)
-अणु
-	काष्ठा mlx4_ib_mr *mr;
-	पूर्णांक err;
+struct ib_mr *mlx4_ib_get_dma_mr(struct ib_pd *pd, int acc)
+{
+	struct mlx4_ib_mr *mr;
+	int err;
 
-	mr = kzalloc(माप(*mr), GFP_KERNEL);
-	अगर (!mr)
-		वापस ERR_PTR(-ENOMEM);
+	mr = kzalloc(sizeof(*mr), GFP_KERNEL);
+	if (!mr)
+		return ERR_PTR(-ENOMEM);
 
 	err = mlx4_mr_alloc(to_mdev(pd->device)->dev, to_mpd(pd)->pdn, 0,
 			    ~0ull, convert_access(acc), 0, 0, &mr->mmr);
-	अगर (err)
-		जाओ err_मुक्त;
+	if (err)
+		goto err_free;
 
 	err = mlx4_mr_enable(to_mdev(pd->device)->dev, &mr->mmr);
-	अगर (err)
-		जाओ err_mr;
+	if (err)
+		goto err_mr;
 
 	mr->ibmr.rkey = mr->ibmr.lkey = mr->mmr.key;
-	mr->umem = शून्य;
+	mr->umem = NULL;
 
-	वापस &mr->ibmr;
+	return &mr->ibmr;
 
 err_mr:
-	(व्योम) mlx4_mr_मुक्त(to_mdev(pd->device)->dev, &mr->mmr);
+	(void) mlx4_mr_free(to_mdev(pd->device)->dev, &mr->mmr);
 
-err_मुक्त:
-	kमुक्त(mr);
+err_free:
+	kfree(mr);
 
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 
-क्रमागत अणु
+enum {
 	MLX4_MAX_MTT_SHIFT = 31
-पूर्ण;
+};
 
-अटल पूर्णांक mlx4_ib_umem_ग_लिखो_mtt_block(काष्ठा mlx4_ib_dev *dev,
-					काष्ठा mlx4_mtt *mtt,
-					u64 mtt_size, u64 mtt_shअगरt, u64 len,
+static int mlx4_ib_umem_write_mtt_block(struct mlx4_ib_dev *dev,
+					struct mlx4_mtt *mtt,
+					u64 mtt_size, u64 mtt_shift, u64 len,
 					u64 cur_start_addr, u64 *pages,
-					पूर्णांक *start_index, पूर्णांक *npages)
-अणु
+					int *start_index, int *npages)
+{
 	u64 cur_end_addr = cur_start_addr + len;
 	u64 cur_end_addr_aligned = 0;
 	u64 mtt_entries;
-	पूर्णांक err = 0;
-	पूर्णांक k;
+	int err = 0;
+	int k;
 
 	len += (cur_start_addr & (mtt_size - 1ULL));
 	cur_end_addr_aligned = round_up(cur_end_addr, mtt_size);
 	len += (cur_end_addr_aligned - cur_end_addr);
-	अगर (len & (mtt_size - 1ULL)) अणु
+	if (len & (mtt_size - 1ULL)) {
 		pr_warn("write_block: len %llx is not aligned to mtt_size %llx\n",
 			len, mtt_size);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	mtt_entries = (len >> mtt_shअगरt);
+	mtt_entries = (len >> mtt_shift);
 
 	/*
 	 * Align the MTT start address to the mtt_size.
-	 * Required to handle हालs when the MR starts in the middle of an MTT
+	 * Required to handle cases when the MR starts in the middle of an MTT
 	 * record. Was not required in old code since the physical addresses
-	 * provided by the dma subप्रणाली were page aligned, which was also the
+	 * provided by the dma subsystem were page aligned, which was also the
 	 * MTT size.
 	 */
-	cur_start_addr = round_करोwn(cur_start_addr, mtt_size);
+	cur_start_addr = round_down(cur_start_addr, mtt_size);
 	/* A new block is started ... */
-	क्रम (k = 0; k < mtt_entries; ++k) अणु
+	for (k = 0; k < mtt_entries; ++k) {
 		pages[*npages] = cur_start_addr + (mtt_size * k);
 		(*npages)++;
 		/*
-		 * Be मित्रly to mlx4_ग_लिखो_mtt() and pass it chunks of
+		 * Be friendly to mlx4_write_mtt() and pass it chunks of
 		 * appropriate size.
 		 */
-		अगर (*npages == PAGE_SIZE / माप(u64)) अणु
-			err = mlx4_ग_लिखो_mtt(dev->dev, mtt, *start_index,
+		if (*npages == PAGE_SIZE / sizeof(u64)) {
+			err = mlx4_write_mtt(dev->dev, mtt, *start_index,
 					     *npages, pages);
-			अगर (err)
-				वापस err;
+			if (err)
+				return err;
 
 			(*start_index) += *npages;
 			*npages = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत u64 alignment_of(u64 ptr)
-अणु
-	वापस ilog2(ptr & (~(ptr - 1)));
-पूर्ण
+static inline u64 alignment_of(u64 ptr)
+{
+	return ilog2(ptr & (~(ptr - 1)));
+}
 
-अटल पूर्णांक mlx4_ib_umem_calc_block_mtt(u64 next_block_start,
+static int mlx4_ib_umem_calc_block_mtt(u64 next_block_start,
 				       u64 current_block_end,
-				       u64 block_shअगरt)
-अणु
+				       u64 block_shift)
+{
 	/* Check whether the alignment of the new block is aligned as well as
 	 * the previous block.
 	 * Block address must start with zeros till size of entity_size.
 	 */
-	अगर ((next_block_start & ((1ULL << block_shअगरt) - 1ULL)) != 0)
+	if ((next_block_start & ((1ULL << block_shift) - 1ULL)) != 0)
 		/*
 		 * It is not as well aligned as the previous block-reduce the
 		 * mtt size accordingly. Here we take the last right bit which
 		 * is 1.
 		 */
-		block_shअगरt = alignment_of(next_block_start);
+		block_shift = alignment_of(next_block_start);
 
 	/*
 	 * Check whether the alignment of the end of previous block - is it
 	 * aligned as well as the start of the block
 	 */
-	अगर (((current_block_end) & ((1ULL << block_shअगरt) - 1ULL)) != 0)
+	if (((current_block_end) & ((1ULL << block_shift) - 1ULL)) != 0)
 		/*
 		 * It is not as well aligned as the start of the block -
 		 * reduce the mtt size accordingly.
 		 */
-		block_shअगरt = alignment_of(current_block_end);
+		block_shift = alignment_of(current_block_end);
 
-	वापस block_shअगरt;
-पूर्ण
+	return block_shift;
+}
 
-पूर्णांक mlx4_ib_umem_ग_लिखो_mtt(काष्ठा mlx4_ib_dev *dev, काष्ठा mlx4_mtt *mtt,
-			   काष्ठा ib_umem *umem)
-अणु
+int mlx4_ib_umem_write_mtt(struct mlx4_ib_dev *dev, struct mlx4_mtt *mtt,
+			   struct ib_umem *umem)
+{
 	u64 *pages;
 	u64 len = 0;
-	पूर्णांक err = 0;
+	int err = 0;
 	u64 mtt_size;
 	u64 cur_start_addr = 0;
-	u64 mtt_shअगरt;
-	पूर्णांक start_index = 0;
-	पूर्णांक npages = 0;
-	काष्ठा scatterlist *sg;
-	पूर्णांक i;
+	u64 mtt_shift;
+	int start_index = 0;
+	int npages = 0;
+	struct scatterlist *sg;
+	int i;
 
-	pages = (u64 *) __get_मुक्त_page(GFP_KERNEL);
-	अगर (!pages)
-		वापस -ENOMEM;
+	pages = (u64 *) __get_free_page(GFP_KERNEL);
+	if (!pages)
+		return -ENOMEM;
 
-	mtt_shअगरt = mtt->page_shअगरt;
-	mtt_size = 1ULL << mtt_shअगरt;
+	mtt_shift = mtt->page_shift;
+	mtt_size = 1ULL << mtt_shift;
 
-	क्रम_each_sg(umem->sg_head.sgl, sg, umem->nmap, i) अणु
-		अगर (cur_start_addr + len == sg_dma_address(sg)) अणु
+	for_each_sg(umem->sg_head.sgl, sg, umem->nmap, i) {
+		if (cur_start_addr + len == sg_dma_address(sg)) {
 			/* still the same block */
 			len += sg_dma_len(sg);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		/*
 		 * A new block is started ...
-		 * If len is malaligned, ग_लिखो an extra mtt entry to cover the
-		 * misaligned area (round up the भागision)
+		 * If len is malaligned, write an extra mtt entry to cover the
+		 * misaligned area (round up the division)
 		 */
-		err = mlx4_ib_umem_ग_लिखो_mtt_block(dev, mtt, mtt_size,
-						   mtt_shअगरt, len,
+		err = mlx4_ib_umem_write_mtt_block(dev, mtt, mtt_size,
+						   mtt_shift, len,
 						   cur_start_addr,
 						   pages, &start_index,
 						   &npages);
-		अगर (err)
-			जाओ out;
+		if (err)
+			goto out;
 
 		cur_start_addr = sg_dma_address(sg);
 		len = sg_dma_len(sg);
-	पूर्ण
+	}
 
 	/* Handle the last block */
-	अगर (len > 0) अणु
+	if (len > 0) {
 		/*
-		 * If len is malaligned, ग_लिखो an extra mtt entry to cover
-		 * the misaligned area (round up the भागision)
+		 * If len is malaligned, write an extra mtt entry to cover
+		 * the misaligned area (round up the division)
 		 */
-		err = mlx4_ib_umem_ग_लिखो_mtt_block(dev, mtt, mtt_size,
-						   mtt_shअगरt, len,
+		err = mlx4_ib_umem_write_mtt_block(dev, mtt, mtt_size,
+						   mtt_shift, len,
 						   cur_start_addr, pages,
 						   &start_index, &npages);
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		if (err)
+			goto out;
+	}
 
-	अगर (npages)
-		err = mlx4_ग_लिखो_mtt(dev->dev, mtt, start_index, npages, pages);
+	if (npages)
+		err = mlx4_write_mtt(dev->dev, mtt, start_index, npages, pages);
 
 out:
-	मुक्त_page((अचिन्हित दीर्घ) pages);
-	वापस err;
-पूर्ण
+	free_page((unsigned long) pages);
+	return err;
+}
 
 /*
  * Calculate optimal mtt size based on contiguous pages.
- * Function will वापस also the number of pages that are not aligned to the
+ * Function will return also the number of pages that are not aligned to the
  * calculated mtt_size to be added to total number of pages. For that we should
- * check the first chunk length & last chunk length and अगर not aligned to
+ * check the first chunk length & last chunk length and if not aligned to
  * mtt_size we should increment the non_aligned_pages number. All chunks in the
- * middle alपढ़ोy handled as part of mtt shअगरt calculation क्रम both their start
+ * middle already handled as part of mtt shift calculation for both their start
  * & end addresses.
  */
-पूर्णांक mlx4_ib_umem_calc_optimal_mtt_size(काष्ठा ib_umem *umem, u64 start_va,
-				       पूर्णांक *num_of_mtts)
-अणु
-	u64 block_shअगरt = MLX4_MAX_MTT_SHIFT;
-	u64 min_shअगरt = PAGE_SHIFT;
+int mlx4_ib_umem_calc_optimal_mtt_size(struct ib_umem *umem, u64 start_va,
+				       int *num_of_mtts)
+{
+	u64 block_shift = MLX4_MAX_MTT_SHIFT;
+	u64 min_shift = PAGE_SHIFT;
 	u64 last_block_aligned_end = 0;
 	u64 current_block_start = 0;
 	u64 first_block_start = 0;
 	u64 current_block_len = 0;
 	u64 last_block_end = 0;
-	काष्ठा scatterlist *sg;
+	struct scatterlist *sg;
 	u64 current_block_end;
 	u64 misalignment_bits;
 	u64 next_block_start;
 	u64 total_len = 0;
-	पूर्णांक i;
+	int i;
 
 	*num_of_mtts = ib_umem_num_dma_blocks(umem, PAGE_SIZE);
 
-	क्रम_each_sg(umem->sg_head.sgl, sg, umem->nmap, i) अणु
+	for_each_sg(umem->sg_head.sgl, sg, umem->nmap, i) {
 		/*
 		 * Initialization - save the first chunk start as the
 		 * current_block_start - block means contiguous pages.
 		 */
-		अगर (current_block_len == 0 && current_block_start == 0) अणु
+		if (current_block_len == 0 && current_block_start == 0) {
 			current_block_start = sg_dma_address(sg);
 			first_block_start = current_block_start;
 			/*
-			 * Find the bits that are dअगरferent between the physical
-			 * address and the भव address क्रम the start of the
+			 * Find the bits that are different between the physical
+			 * address and the virtual address for the start of the
 			 * MR.
 			 * umem_get aligned the start_va to a page boundary.
-			 * Thereक्रमe, we need to align the start va to the same
+			 * Therefore, we need to align the start va to the same
 			 * boundary.
-			 * misalignment_bits is needed to handle the  हाल of a
-			 * single memory region. In this हाल, the rest of the
+			 * misalignment_bits is needed to handle the  case of a
+			 * single memory region. In this case, the rest of the
 			 * logic will not reduce the block size.  If we use a
 			 * block size which is bigger than the alignment of the
-			 * misalignment bits, we might use the भव page
+			 * misalignment bits, we might use the virtual page
 			 * number instead of the physical page number, resulting
 			 * in access to the wrong data.
 			 */
 			misalignment_bits =
 				(start_va & (~(((u64)(PAGE_SIZE)) - 1ULL))) ^
 				current_block_start;
-			block_shअगरt = min(alignment_of(misalignment_bits),
-					  block_shअगरt);
-		पूर्ण
+			block_shift = min(alignment_of(misalignment_bits),
+					  block_shift);
+		}
 
 		/*
-		 * Go over the scatter entries and check अगर they जारी the
+		 * Go over the scatter entries and check if they continue the
 		 * previous scatter entry.
 		 */
 		next_block_start = sg_dma_address(sg);
 		current_block_end = current_block_start	+ current_block_len;
 		/* If we have a split (non-contig.) between two blocks */
-		अगर (current_block_end != next_block_start) अणु
-			block_shअगरt = mlx4_ib_umem_calc_block_mtt
+		if (current_block_end != next_block_start) {
+			block_shift = mlx4_ib_umem_calc_block_mtt
 					(next_block_start,
 					 current_block_end,
-					 block_shअगरt);
+					 block_shift);
 
 			/*
-			 * If we reached the minimum shअगरt क्रम 4k page we stop
+			 * If we reached the minimum shift for 4k page we stop
 			 * the loop.
 			 */
-			अगर (block_shअगरt <= min_shअगरt)
-				जाओ end;
+			if (block_shift <= min_shift)
+				goto end;
 
 			/*
 			 * If not saved yet we are in first block - we save the
@@ -334,386 +333,386 @@ out:
 			/* Start a new block */
 			current_block_start = next_block_start;
 			current_block_len = sg_dma_len(sg);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		/* The scatter entry is another part of the current block,
 		 * increase the block size.
 		 * An entry in the scatter can be larger than 4k (page) as of
 		 * dma mapping which merge some blocks together.
 		 */
 		current_block_len += sg_dma_len(sg);
-	पूर्ण
+	}
 
-	/* Account क्रम the last block in the total len */
+	/* Account for the last block in the total len */
 	total_len += current_block_len;
 	/* Add to the first block the misalignment that it suffers from. */
-	total_len += (first_block_start & ((1ULL << block_shअगरt) - 1ULL));
+	total_len += (first_block_start & ((1ULL << block_shift) - 1ULL));
 	last_block_end = current_block_start + current_block_len;
-	last_block_aligned_end = round_up(last_block_end, 1ULL << block_shअगरt);
+	last_block_aligned_end = round_up(last_block_end, 1ULL << block_shift);
 	total_len += (last_block_aligned_end - last_block_end);
 
-	अगर (total_len & ((1ULL << block_shअगरt) - 1ULL))
+	if (total_len & ((1ULL << block_shift) - 1ULL))
 		pr_warn("misaligned total length detected (%llu, %llu)!",
-			total_len, block_shअगरt);
+			total_len, block_shift);
 
-	*num_of_mtts = total_len >> block_shअगरt;
+	*num_of_mtts = total_len >> block_shift;
 end:
-	अगर (block_shअगरt < min_shअगरt) अणु
+	if (block_shift < min_shift) {
 		/*
-		 * If shअगरt is less than the min we set a warning and वापस the
-		 * min shअगरt.
+		 * If shift is less than the min we set a warning and return the
+		 * min shift.
 		 */
-		pr_warn("umem_calc_optimal_mtt_size - unexpected shift %lld\n", block_shअगरt);
+		pr_warn("umem_calc_optimal_mtt_size - unexpected shift %lld\n", block_shift);
 
-		block_shअगरt = min_shअगरt;
-	पूर्ण
-	वापस block_shअगरt;
-पूर्ण
+		block_shift = min_shift;
+	}
+	return block_shift;
+}
 
-अटल काष्ठा ib_umem *mlx4_get_umem_mr(काष्ठा ib_device *device, u64 start,
-					u64 length, पूर्णांक access_flags)
-अणु
+static struct ib_umem *mlx4_get_umem_mr(struct ib_device *device, u64 start,
+					u64 length, int access_flags)
+{
 	/*
-	 * Force रेजिस्टरing the memory as writable अगर the underlying pages
+	 * Force registering the memory as writable if the underlying pages
 	 * are writable.  This is so rereg can change the access permissions
-	 * from पढ़ोable to writable without having to run through ib_umem_get
+	 * from readable to writable without having to run through ib_umem_get
 	 * again
 	 */
-	अगर (!ib_access_writable(access_flags)) अणु
-		अचिन्हित दीर्घ untagged_start = untagged_addr(start);
-		काष्ठा vm_area_काष्ठा *vma;
+	if (!ib_access_writable(access_flags)) {
+		unsigned long untagged_start = untagged_addr(start);
+		struct vm_area_struct *vma;
 
-		mmap_पढ़ो_lock(current->mm);
+		mmap_read_lock(current->mm);
 		/*
 		 * FIXME: Ideally this would iterate over all the vmas that
-		 * cover the memory, but क्रम now it requires a single vma to
+		 * cover the memory, but for now it requires a single vma to
 		 * entirely cover the MR to support RO mappings.
 		 */
 		vma = find_vma(current->mm, untagged_start);
-		अगर (vma && vma->vm_end >= untagged_start + length &&
-		    vma->vm_start <= untagged_start) अणु
-			अगर (vma->vm_flags & VM_WRITE)
+		if (vma && vma->vm_end >= untagged_start + length &&
+		    vma->vm_start <= untagged_start) {
+			if (vma->vm_flags & VM_WRITE)
 				access_flags |= IB_ACCESS_LOCAL_WRITE;
-		पूर्ण अन्यथा अणु
+		} else {
 			access_flags |= IB_ACCESS_LOCAL_WRITE;
-		पूर्ण
+		}
 
-		mmap_पढ़ो_unlock(current->mm);
-	पूर्ण
+		mmap_read_unlock(current->mm);
+	}
 
-	वापस ib_umem_get(device, start, length, access_flags);
-पूर्ण
+	return ib_umem_get(device, start, length, access_flags);
+}
 
-काष्ठा ib_mr *mlx4_ib_reg_user_mr(काष्ठा ib_pd *pd, u64 start, u64 length,
-				  u64 virt_addr, पूर्णांक access_flags,
-				  काष्ठा ib_udata *udata)
-अणु
-	काष्ठा mlx4_ib_dev *dev = to_mdev(pd->device);
-	काष्ठा mlx4_ib_mr *mr;
-	पूर्णांक shअगरt;
-	पूर्णांक err;
-	पूर्णांक n;
+struct ib_mr *mlx4_ib_reg_user_mr(struct ib_pd *pd, u64 start, u64 length,
+				  u64 virt_addr, int access_flags,
+				  struct ib_udata *udata)
+{
+	struct mlx4_ib_dev *dev = to_mdev(pd->device);
+	struct mlx4_ib_mr *mr;
+	int shift;
+	int err;
+	int n;
 
-	mr = kzalloc(माप(*mr), GFP_KERNEL);
-	अगर (!mr)
-		वापस ERR_PTR(-ENOMEM);
+	mr = kzalloc(sizeof(*mr), GFP_KERNEL);
+	if (!mr)
+		return ERR_PTR(-ENOMEM);
 
 	mr->umem = mlx4_get_umem_mr(pd->device, start, length, access_flags);
-	अगर (IS_ERR(mr->umem)) अणु
+	if (IS_ERR(mr->umem)) {
 		err = PTR_ERR(mr->umem);
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
-	shअगरt = mlx4_ib_umem_calc_optimal_mtt_size(mr->umem, start, &n);
+	shift = mlx4_ib_umem_calc_optimal_mtt_size(mr->umem, start, &n);
 
 	err = mlx4_mr_alloc(dev->dev, to_mpd(pd)->pdn, virt_addr, length,
-			    convert_access(access_flags), n, shअगरt, &mr->mmr);
-	अगर (err)
-		जाओ err_umem;
+			    convert_access(access_flags), n, shift, &mr->mmr);
+	if (err)
+		goto err_umem;
 
-	err = mlx4_ib_umem_ग_लिखो_mtt(dev, &mr->mmr.mtt, mr->umem);
-	अगर (err)
-		जाओ err_mr;
+	err = mlx4_ib_umem_write_mtt(dev, &mr->mmr.mtt, mr->umem);
+	if (err)
+		goto err_mr;
 
 	err = mlx4_mr_enable(dev->dev, &mr->mmr);
-	अगर (err)
-		जाओ err_mr;
+	if (err)
+		goto err_mr;
 
 	mr->ibmr.rkey = mr->ibmr.lkey = mr->mmr.key;
 	mr->ibmr.length = length;
-	mr->ibmr.page_size = 1U << shअगरt;
+	mr->ibmr.page_size = 1U << shift;
 
-	वापस &mr->ibmr;
+	return &mr->ibmr;
 
 err_mr:
-	(व्योम) mlx4_mr_मुक्त(to_mdev(pd->device)->dev, &mr->mmr);
+	(void) mlx4_mr_free(to_mdev(pd->device)->dev, &mr->mmr);
 
 err_umem:
 	ib_umem_release(mr->umem);
 
-err_मुक्त:
-	kमुक्त(mr);
+err_free:
+	kfree(mr);
 
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 
-काष्ठा ib_mr *mlx4_ib_rereg_user_mr(काष्ठा ib_mr *mr, पूर्णांक flags, u64 start,
+struct ib_mr *mlx4_ib_rereg_user_mr(struct ib_mr *mr, int flags, u64 start,
 				    u64 length, u64 virt_addr,
-				    पूर्णांक mr_access_flags, काष्ठा ib_pd *pd,
-				    काष्ठा ib_udata *udata)
-अणु
-	काष्ठा mlx4_ib_dev *dev = to_mdev(mr->device);
-	काष्ठा mlx4_ib_mr *mmr = to_mmr(mr);
-	काष्ठा mlx4_mpt_entry *mpt_entry;
-	काष्ठा mlx4_mpt_entry **pmpt_entry = &mpt_entry;
-	पूर्णांक err;
+				    int mr_access_flags, struct ib_pd *pd,
+				    struct ib_udata *udata)
+{
+	struct mlx4_ib_dev *dev = to_mdev(mr->device);
+	struct mlx4_ib_mr *mmr = to_mmr(mr);
+	struct mlx4_mpt_entry *mpt_entry;
+	struct mlx4_mpt_entry **pmpt_entry = &mpt_entry;
+	int err;
 
 	/* Since we synchronize this call and mlx4_ib_dereg_mr via uverbs,
 	 * we assume that the calls can't run concurrently. Otherwise, a
 	 * race exists.
 	 */
 	err =  mlx4_mr_hw_get_mpt(dev->dev, &mmr->mmr, &pmpt_entry);
-	अगर (err)
-		वापस ERR_PTR(err);
+	if (err)
+		return ERR_PTR(err);
 
-	अगर (flags & IB_MR_REREG_PD) अणु
+	if (flags & IB_MR_REREG_PD) {
 		err = mlx4_mr_hw_change_pd(dev->dev, *pmpt_entry,
 					   to_mpd(pd)->pdn);
 
-		अगर (err)
-			जाओ release_mpt_entry;
-	पूर्ण
+		if (err)
+			goto release_mpt_entry;
+	}
 
-	अगर (flags & IB_MR_REREG_ACCESS) अणु
-		अगर (ib_access_writable(mr_access_flags) &&
-		    !mmr->umem->writable) अणु
+	if (flags & IB_MR_REREG_ACCESS) {
+		if (ib_access_writable(mr_access_flags) &&
+		    !mmr->umem->writable) {
 			err = -EPERM;
-			जाओ release_mpt_entry;
-		पूर्ण
+			goto release_mpt_entry;
+		}
 
 		err = mlx4_mr_hw_change_access(dev->dev, *pmpt_entry,
 					       convert_access(mr_access_flags));
 
-		अगर (err)
-			जाओ release_mpt_entry;
-	पूर्ण
+		if (err)
+			goto release_mpt_entry;
+	}
 
-	अगर (flags & IB_MR_REREG_TRANS) अणु
-		पूर्णांक shअगरt;
-		पूर्णांक n;
+	if (flags & IB_MR_REREG_TRANS) {
+		int shift;
+		int n;
 
 		mlx4_mr_rereg_mem_cleanup(dev->dev, &mmr->mmr);
 		ib_umem_release(mmr->umem);
 		mmr->umem = mlx4_get_umem_mr(mr->device, start, length,
 					     mr_access_flags);
-		अगर (IS_ERR(mmr->umem)) अणु
+		if (IS_ERR(mmr->umem)) {
 			err = PTR_ERR(mmr->umem);
-			/* Prevent mlx4_ib_dereg_mr from मुक्त'ing invalid poपूर्णांकer */
-			mmr->umem = शून्य;
-			जाओ release_mpt_entry;
-		पूर्ण
+			/* Prevent mlx4_ib_dereg_mr from free'ing invalid pointer */
+			mmr->umem = NULL;
+			goto release_mpt_entry;
+		}
 		n = ib_umem_num_dma_blocks(mmr->umem, PAGE_SIZE);
-		shअगरt = PAGE_SHIFT;
+		shift = PAGE_SHIFT;
 
-		err = mlx4_mr_rereg_mem_ग_लिखो(dev->dev, &mmr->mmr,
-					      virt_addr, length, n, shअगरt,
+		err = mlx4_mr_rereg_mem_write(dev->dev, &mmr->mmr,
+					      virt_addr, length, n, shift,
 					      *pmpt_entry);
-		अगर (err) अणु
+		if (err) {
 			ib_umem_release(mmr->umem);
-			जाओ release_mpt_entry;
-		पूर्ण
+			goto release_mpt_entry;
+		}
 		mmr->mmr.iova       = virt_addr;
 		mmr->mmr.size       = length;
 
-		err = mlx4_ib_umem_ग_लिखो_mtt(dev, &mmr->mmr.mtt, mmr->umem);
-		अगर (err) अणु
+		err = mlx4_ib_umem_write_mtt(dev, &mmr->mmr.mtt, mmr->umem);
+		if (err) {
 			mlx4_mr_rereg_mem_cleanup(dev->dev, &mmr->mmr);
 			ib_umem_release(mmr->umem);
-			जाओ release_mpt_entry;
-		पूर्ण
-	पूर्ण
+			goto release_mpt_entry;
+		}
+	}
 
 	/* If we couldn't transfer the MR to the HCA, just remember to
-	 * वापस a failure. But dereg_mr will मुक्त the resources.
+	 * return a failure. But dereg_mr will free the resources.
 	 */
-	err = mlx4_mr_hw_ग_लिखो_mpt(dev->dev, &mmr->mmr, pmpt_entry);
-	अगर (!err && flags & IB_MR_REREG_ACCESS)
+	err = mlx4_mr_hw_write_mpt(dev->dev, &mmr->mmr, pmpt_entry);
+	if (!err && flags & IB_MR_REREG_ACCESS)
 		mmr->mmr.access = mr_access_flags;
 
 release_mpt_entry:
 	mlx4_mr_hw_put_mpt(dev->dev, pmpt_entry);
-	अगर (err)
-		वापस ERR_PTR(err);
-	वापस शून्य;
-पूर्ण
+	if (err)
+		return ERR_PTR(err);
+	return NULL;
+}
 
-अटल पूर्णांक
-mlx4_alloc_priv_pages(काष्ठा ib_device *device,
-		      काष्ठा mlx4_ib_mr *mr,
-		      पूर्णांक max_pages)
-अणु
-	पूर्णांक ret;
+static int
+mlx4_alloc_priv_pages(struct ib_device *device,
+		      struct mlx4_ib_mr *mr,
+		      int max_pages)
+{
+	int ret;
 
 	/* Ensure that size is aligned to DMA cacheline
 	 * requirements.
 	 * max_pages is limited to MLX4_MAX_FAST_REG_PAGES
 	 * so page_map_size will never cross PAGE_SIZE.
 	 */
-	mr->page_map_size = roundup(max_pages * माप(u64),
+	mr->page_map_size = roundup(max_pages * sizeof(u64),
 				    MLX4_MR_PAGES_ALIGN);
 
 	/* Prevent cross page boundary allocation. */
 	mr->pages = (__be64 *)get_zeroed_page(GFP_KERNEL);
-	अगर (!mr->pages)
-		वापस -ENOMEM;
+	if (!mr->pages)
+		return -ENOMEM;
 
 	mr->page_map = dma_map_single(device->dev.parent, mr->pages,
 				      mr->page_map_size, DMA_TO_DEVICE);
 
-	अगर (dma_mapping_error(device->dev.parent, mr->page_map)) अणु
+	if (dma_mapping_error(device->dev.parent, mr->page_map)) {
 		ret = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	वापस 0;
+	return 0;
 
 err:
-	मुक्त_page((अचिन्हित दीर्घ)mr->pages);
-	वापस ret;
-पूर्ण
+	free_page((unsigned long)mr->pages);
+	return ret;
+}
 
-अटल व्योम
-mlx4_मुक्त_priv_pages(काष्ठा mlx4_ib_mr *mr)
-अणु
-	अगर (mr->pages) अणु
-		काष्ठा ib_device *device = mr->ibmr.device;
+static void
+mlx4_free_priv_pages(struct mlx4_ib_mr *mr)
+{
+	if (mr->pages) {
+		struct ib_device *device = mr->ibmr.device;
 
 		dma_unmap_single(device->dev.parent, mr->page_map,
 				 mr->page_map_size, DMA_TO_DEVICE);
-		मुक्त_page((अचिन्हित दीर्घ)mr->pages);
-		mr->pages = शून्य;
-	पूर्ण
-पूर्ण
+		free_page((unsigned long)mr->pages);
+		mr->pages = NULL;
+	}
+}
 
-पूर्णांक mlx4_ib_dereg_mr(काष्ठा ib_mr *ibmr, काष्ठा ib_udata *udata)
-अणु
-	काष्ठा mlx4_ib_mr *mr = to_mmr(ibmr);
-	पूर्णांक ret;
+int mlx4_ib_dereg_mr(struct ib_mr *ibmr, struct ib_udata *udata)
+{
+	struct mlx4_ib_mr *mr = to_mmr(ibmr);
+	int ret;
 
-	mlx4_मुक्त_priv_pages(mr);
+	mlx4_free_priv_pages(mr);
 
-	ret = mlx4_mr_मुक्त(to_mdev(ibmr->device)->dev, &mr->mmr);
-	अगर (ret)
-		वापस ret;
-	अगर (mr->umem)
+	ret = mlx4_mr_free(to_mdev(ibmr->device)->dev, &mr->mmr);
+	if (ret)
+		return ret;
+	if (mr->umem)
 		ib_umem_release(mr->umem);
-	kमुक्त(mr);
+	kfree(mr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mlx4_ib_alloc_mw(काष्ठा ib_mw *ibmw, काष्ठा ib_udata *udata)
-अणु
-	काष्ठा mlx4_ib_dev *dev = to_mdev(ibmw->device);
-	काष्ठा mlx4_ib_mw *mw = to_mmw(ibmw);
-	पूर्णांक err;
+int mlx4_ib_alloc_mw(struct ib_mw *ibmw, struct ib_udata *udata)
+{
+	struct mlx4_ib_dev *dev = to_mdev(ibmw->device);
+	struct mlx4_ib_mw *mw = to_mmw(ibmw);
+	int err;
 
 	err = mlx4_mw_alloc(dev->dev, to_mpd(ibmw->pd)->pdn,
 			    to_mlx4_type(ibmw->type), &mw->mmw);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = mlx4_mw_enable(dev->dev, &mw->mmw);
-	अगर (err)
-		जाओ err_mw;
+	if (err)
+		goto err_mw;
 
 	ibmw->rkey = mw->mmw.key;
-	वापस 0;
+	return 0;
 
 err_mw:
-	mlx4_mw_मुक्त(dev->dev, &mw->mmw);
-	वापस err;
-पूर्ण
+	mlx4_mw_free(dev->dev, &mw->mmw);
+	return err;
+}
 
-पूर्णांक mlx4_ib_dealloc_mw(काष्ठा ib_mw *ibmw)
-अणु
-	काष्ठा mlx4_ib_mw *mw = to_mmw(ibmw);
+int mlx4_ib_dealloc_mw(struct ib_mw *ibmw)
+{
+	struct mlx4_ib_mw *mw = to_mmw(ibmw);
 
-	mlx4_mw_मुक्त(to_mdev(ibmw->device)->dev, &mw->mmw);
-	वापस 0;
-पूर्ण
+	mlx4_mw_free(to_mdev(ibmw->device)->dev, &mw->mmw);
+	return 0;
+}
 
-काष्ठा ib_mr *mlx4_ib_alloc_mr(काष्ठा ib_pd *pd, क्रमागत ib_mr_type mr_type,
+struct ib_mr *mlx4_ib_alloc_mr(struct ib_pd *pd, enum ib_mr_type mr_type,
 			       u32 max_num_sg)
-अणु
-	काष्ठा mlx4_ib_dev *dev = to_mdev(pd->device);
-	काष्ठा mlx4_ib_mr *mr;
-	पूर्णांक err;
+{
+	struct mlx4_ib_dev *dev = to_mdev(pd->device);
+	struct mlx4_ib_mr *mr;
+	int err;
 
-	अगर (mr_type != IB_MR_TYPE_MEM_REG ||
+	if (mr_type != IB_MR_TYPE_MEM_REG ||
 	    max_num_sg > MLX4_MAX_FAST_REG_PAGES)
-		वापस ERR_PTR(-EINVAL);
+		return ERR_PTR(-EINVAL);
 
-	mr = kzalloc(माप(*mr), GFP_KERNEL);
-	अगर (!mr)
-		वापस ERR_PTR(-ENOMEM);
+	mr = kzalloc(sizeof(*mr), GFP_KERNEL);
+	if (!mr)
+		return ERR_PTR(-ENOMEM);
 
 	err = mlx4_mr_alloc(dev->dev, to_mpd(pd)->pdn, 0, 0, 0,
 			    max_num_sg, 0, &mr->mmr);
-	अगर (err)
-		जाओ err_मुक्त;
+	if (err)
+		goto err_free;
 
 	err = mlx4_alloc_priv_pages(pd->device, mr, max_num_sg);
-	अगर (err)
-		जाओ err_मुक्त_mr;
+	if (err)
+		goto err_free_mr;
 
 	mr->max_pages = max_num_sg;
 	err = mlx4_mr_enable(dev->dev, &mr->mmr);
-	अगर (err)
-		जाओ err_मुक्त_pl;
+	if (err)
+		goto err_free_pl;
 
 	mr->ibmr.rkey = mr->ibmr.lkey = mr->mmr.key;
-	mr->umem = शून्य;
+	mr->umem = NULL;
 
-	वापस &mr->ibmr;
+	return &mr->ibmr;
 
-err_मुक्त_pl:
+err_free_pl:
 	mr->ibmr.device = pd->device;
-	mlx4_मुक्त_priv_pages(mr);
-err_मुक्त_mr:
-	(व्योम) mlx4_mr_मुक्त(dev->dev, &mr->mmr);
-err_मुक्त:
-	kमुक्त(mr);
-	वापस ERR_PTR(err);
-पूर्ण
+	mlx4_free_priv_pages(mr);
+err_free_mr:
+	(void) mlx4_mr_free(dev->dev, &mr->mmr);
+err_free:
+	kfree(mr);
+	return ERR_PTR(err);
+}
 
-अटल पूर्णांक mlx4_set_page(काष्ठा ib_mr *ibmr, u64 addr)
-अणु
-	काष्ठा mlx4_ib_mr *mr = to_mmr(ibmr);
+static int mlx4_set_page(struct ib_mr *ibmr, u64 addr)
+{
+	struct mlx4_ib_mr *mr = to_mmr(ibmr);
 
-	अगर (unlikely(mr->npages == mr->max_pages))
-		वापस -ENOMEM;
+	if (unlikely(mr->npages == mr->max_pages))
+		return -ENOMEM;
 
 	mr->pages[mr->npages++] = cpu_to_be64(addr | MLX4_MTT_FLAG_PRESENT);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mlx4_ib_map_mr_sg(काष्ठा ib_mr *ibmr, काष्ठा scatterlist *sg, पूर्णांक sg_nents,
-		      अचिन्हित पूर्णांक *sg_offset)
-अणु
-	काष्ठा mlx4_ib_mr *mr = to_mmr(ibmr);
-	पूर्णांक rc;
+int mlx4_ib_map_mr_sg(struct ib_mr *ibmr, struct scatterlist *sg, int sg_nents,
+		      unsigned int *sg_offset)
+{
+	struct mlx4_ib_mr *mr = to_mmr(ibmr);
+	int rc;
 
 	mr->npages = 0;
 
-	ib_dma_sync_single_क्रम_cpu(ibmr->device, mr->page_map,
+	ib_dma_sync_single_for_cpu(ibmr->device, mr->page_map,
 				   mr->page_map_size, DMA_TO_DEVICE);
 
 	rc = ib_sg_to_pages(ibmr, sg, sg_nents, sg_offset, mlx4_set_page);
 
-	ib_dma_sync_single_क्रम_device(ibmr->device, mr->page_map,
+	ib_dma_sync_single_for_device(ibmr->device, mr->page_map,
 				      mr->page_map_size, DMA_TO_DEVICE);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}

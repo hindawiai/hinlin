@@ -1,189 +1,188 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *	X.25 Packet Layer release 002
  *
- *	This is ALPHA test software. This code may अवरोध your machine, अक्रमomly fail to work with new
+ *	This is ALPHA test software. This code may break your machine, randomly fail to work with new
  *	releases, misbehave and/or generally screw up. It might even work.
  *
  *	This code REQUIRES 2.1.15 or higher
  *
  *	History
  *	X.25 001	Jonathan Naylor	Started coding.
- *      2000-09-04	Henner Eisen	Prevent मुक्तing a dangling skb.
+ *      2000-09-04	Henner Eisen	Prevent freeing a dangling skb.
  */
 
-#घोषणा pr_fmt(fmt) "X25: " fmt
+#define pr_fmt(fmt) "X25: " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/slab.h>
-#समावेश <net/sock.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <net/x25.h>
-#समावेश <net/x25device.h>
+#include <linux/kernel.h>
+#include <linux/netdevice.h>
+#include <linux/skbuff.h>
+#include <linux/slab.h>
+#include <net/sock.h>
+#include <linux/if_arp.h>
+#include <net/x25.h>
+#include <net/x25device.h>
 
-अटल पूर्णांक x25_receive_data(काष्ठा sk_buff *skb, काष्ठा x25_neigh *nb)
-अणु
-	काष्ठा sock *sk;
-	अचिन्हित लघु frametype;
-	अचिन्हित पूर्णांक lci;
+static int x25_receive_data(struct sk_buff *skb, struct x25_neigh *nb)
+{
+	struct sock *sk;
+	unsigned short frametype;
+	unsigned int lci;
 
-	अगर (!pskb_may_pull(skb, X25_STD_MIN_LEN))
-		वापस 0;
+	if (!pskb_may_pull(skb, X25_STD_MIN_LEN))
+		return 0;
 
 	frametype = skb->data[2];
 	lci = ((skb->data[0] << 8) & 0xF00) + ((skb->data[1] << 0) & 0x0FF);
 
 	/*
-	 *	LCI of zero is always क्रम us, and its always a link control
+	 *	LCI of zero is always for us, and its always a link control
 	 *	frame.
 	 */
-	अगर (lci == 0) अणु
+	if (lci == 0) {
 		x25_link_control(skb, nb, frametype);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/*
 	 *	Find an existing socket.
 	 */
-	अगर ((sk = x25_find_socket(lci, nb)) != शून्य) अणु
-		पूर्णांक queued = 1;
+	if ((sk = x25_find_socket(lci, nb)) != NULL) {
+		int queued = 1;
 
 		skb_reset_transport_header(skb);
 		bh_lock_sock(sk);
-		अगर (!sock_owned_by_user(sk)) अणु
+		if (!sock_owned_by_user(sk)) {
 			queued = x25_process_rx_frame(sk, skb);
-		पूर्ण अन्यथा अणु
+		} else {
 			queued = !sk_add_backlog(sk, skb, READ_ONCE(sk->sk_rcvbuf));
-		पूर्ण
+		}
 		bh_unlock_sock(sk);
 		sock_put(sk);
-		वापस queued;
-	पूर्ण
+		return queued;
+	}
 
 	/*
-	 *	Is is a Call Request ? अगर so process it.
+	 *	Is is a Call Request ? if so process it.
 	 */
-	अगर (frametype == X25_CALL_REQUEST)
-		वापस x25_rx_call_request(skb, nb, lci);
+	if (frametype == X25_CALL_REQUEST)
+		return x25_rx_call_request(skb, nb, lci);
 
 	/*
 	 * 	Its not a Call Request, nor is it a control frame.
-	 *	Can we क्रमward it?
+	 *	Can we forward it?
 	 */
 
-	अगर (x25_क्रमward_data(lci, nb, skb)) अणु
-		अगर (frametype == X25_CLEAR_CONFIRMATION) अणु
-			x25_clear_क्रमward_by_lci(lci);
-		पूर्ण
-		kमुक्त_skb(skb);
-		वापस 1;
-	पूर्ण
+	if (x25_forward_data(lci, nb, skb)) {
+		if (frametype == X25_CLEAR_CONFIRMATION) {
+			x25_clear_forward_by_lci(lci);
+		}
+		kfree_skb(skb);
+		return 1;
+	}
 
 /*
 	x25_transmit_clear_request(nb, lci, 0x0D);
 */
 
-	अगर (frametype != X25_CLEAR_CONFIRMATION)
+	if (frametype != X25_CLEAR_CONFIRMATION)
 		pr_debug("x25_receive_data(): unknown frame type %2x\n",frametype);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक x25_lapb_receive_frame(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
-			   काष्ठा packet_type *ptype, काष्ठा net_device *orig_dev)
-अणु
-	काष्ठा sk_buff *nskb;
-	काष्ठा x25_neigh *nb;
+int x25_lapb_receive_frame(struct sk_buff *skb, struct net_device *dev,
+			   struct packet_type *ptype, struct net_device *orig_dev)
+{
+	struct sk_buff *nskb;
+	struct x25_neigh *nb;
 
-	अगर (!net_eq(dev_net(dev), &init_net))
-		जाओ drop;
+	if (!net_eq(dev_net(dev), &init_net))
+		goto drop;
 
 	nskb = skb_copy(skb, GFP_ATOMIC);
-	अगर (!nskb)
-		जाओ drop;
-	kमुक्त_skb(skb);
+	if (!nskb)
+		goto drop;
+	kfree_skb(skb);
 	skb = nskb;
 
 	/*
 	 * Packet received from unrecognised device, throw it away.
 	 */
 	nb = x25_get_neigh(dev);
-	अगर (!nb) अणु
+	if (!nb) {
 		pr_debug("unknown neighbour - %s\n", dev->name);
-		जाओ drop;
-	पूर्ण
+		goto drop;
+	}
 
-	अगर (!pskb_may_pull(skb, 1)) अणु
+	if (!pskb_may_pull(skb, 1)) {
 		x25_neigh_put(nb);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	चयन (skb->data[0]) अणु
+	switch (skb->data[0]) {
 
-	हाल X25_IFACE_DATA:
+	case X25_IFACE_DATA:
 		skb_pull(skb, 1);
-		अगर (x25_receive_data(skb, nb)) अणु
+		if (x25_receive_data(skb, nb)) {
 			x25_neigh_put(nb);
-			जाओ out;
-		पूर्ण
-		अवरोध;
+			goto out;
+		}
+		break;
 
-	हाल X25_IFACE_CONNECT:
+	case X25_IFACE_CONNECT:
 		x25_link_established(nb);
-		अवरोध;
+		break;
 
-	हाल X25_IFACE_DISCONNECT:
+	case X25_IFACE_DISCONNECT:
 		x25_link_terminated(nb);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	x25_neigh_put(nb);
 drop:
-	kमुक्त_skb(skb);
+	kfree_skb(skb);
 out:
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम x25_establish_link(काष्ठा x25_neigh *nb)
-अणु
-	काष्ठा sk_buff *skb;
-	अचिन्हित अक्षर *ptr;
+void x25_establish_link(struct x25_neigh *nb)
+{
+	struct sk_buff *skb;
+	unsigned char *ptr;
 
-	चयन (nb->dev->type) अणु
-	हाल ARPHRD_X25:
-		अगर ((skb = alloc_skb(1, GFP_ATOMIC)) == शून्य) अणु
+	switch (nb->dev->type) {
+	case ARPHRD_X25:
+		if ((skb = alloc_skb(1, GFP_ATOMIC)) == NULL) {
 			pr_err("x25_dev: out of memory\n");
-			वापस;
-		पूर्ण
+			return;
+		}
 		ptr  = skb_put(skb, 1);
 		*ptr = X25_IFACE_CONNECT;
-		अवरोध;
+		break;
 
-	शेष:
-		वापस;
-	पूर्ण
+	default:
+		return;
+	}
 
 	skb->protocol = htons(ETH_P_X25);
 	skb->dev      = nb->dev;
 
 	dev_queue_xmit(skb);
-पूर्ण
+}
 
-व्योम x25_terminate_link(काष्ठा x25_neigh *nb)
-अणु
-	काष्ठा sk_buff *skb;
-	अचिन्हित अक्षर *ptr;
+void x25_terminate_link(struct x25_neigh *nb)
+{
+	struct sk_buff *skb;
+	unsigned char *ptr;
 
-	अगर (nb->dev->type != ARPHRD_X25)
-		वापस;
+	if (nb->dev->type != ARPHRD_X25)
+		return;
 
 	skb = alloc_skb(1, GFP_ATOMIC);
-	अगर (!skb) अणु
+	if (!skb) {
 		pr_err("x25_dev: out of memory\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	ptr  = skb_put(skb, 1);
 	*ptr = X25_IFACE_DISCONNECT;
@@ -191,27 +190,27 @@ out:
 	skb->protocol = htons(ETH_P_X25);
 	skb->dev      = nb->dev;
 	dev_queue_xmit(skb);
-पूर्ण
+}
 
-व्योम x25_send_frame(काष्ठा sk_buff *skb, काष्ठा x25_neigh *nb)
-अणु
-	अचिन्हित अक्षर *dptr;
+void x25_send_frame(struct sk_buff *skb, struct x25_neigh *nb)
+{
+	unsigned char *dptr;
 
 	skb_reset_network_header(skb);
 
-	चयन (nb->dev->type) अणु
-	हाल ARPHRD_X25:
+	switch (nb->dev->type) {
+	case ARPHRD_X25:
 		dptr  = skb_push(skb, 1);
 		*dptr = X25_IFACE_DATA;
-		अवरोध;
+		break;
 
-	शेष:
-		kमुक्त_skb(skb);
-		वापस;
-	पूर्ण
+	default:
+		kfree_skb(skb);
+		return;
+	}
 
 	skb->protocol = htons(ETH_P_X25);
 	skb->dev      = nb->dev;
 
 	dev_queue_xmit(skb);
-पूर्ण
+}

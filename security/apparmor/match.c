@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * AppArmor security module
  *
@@ -9,426 +8,426 @@
  * Copyright 2009-2012 Canonical Ltd.
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/err.h>
-#समावेश <linux/kref.h>
+#include <linux/errno.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/slab.h>
+#include <linux/vmalloc.h>
+#include <linux/err.h>
+#include <linux/kref.h>
 
-#समावेश "include/lib.h"
-#समावेश "include/match.h"
+#include "include/lib.h"
+#include "include/match.h"
 
-#घोषणा base_idx(X) ((X) & 0xffffff)
+#define base_idx(X) ((X) & 0xffffff)
 
-अटल अक्षर nulldfa_src[] = अणु
-	#समावेश "nulldfa.in"
-पूर्ण;
-काष्ठा aa_dfa *nulldfa;
+static char nulldfa_src[] = {
+	#include "nulldfa.in"
+};
+struct aa_dfa *nulldfa;
 
-अटल अक्षर stacksplitdfa_src[] = अणु
-	#समावेश "stacksplitdfa.in"
-पूर्ण;
-काष्ठा aa_dfa *stacksplitdfa;
+static char stacksplitdfa_src[] = {
+	#include "stacksplitdfa.in"
+};
+struct aa_dfa *stacksplitdfa;
 
-पूर्णांक aa_setup_dfa_engine(व्योम)
-अणु
-	पूर्णांक error;
+int aa_setup_dfa_engine(void)
+{
+	int error;
 
-	nulldfa = aa_dfa_unpack(nulldfa_src, माप(nulldfa_src),
+	nulldfa = aa_dfa_unpack(nulldfa_src, sizeof(nulldfa_src),
 				TO_ACCEPT1_FLAG(YYTD_DATA32) |
 				TO_ACCEPT2_FLAG(YYTD_DATA32));
-	अगर (IS_ERR(nulldfa)) अणु
+	if (IS_ERR(nulldfa)) {
 		error = PTR_ERR(nulldfa);
-		nulldfa = शून्य;
-		वापस error;
-	पूर्ण
+		nulldfa = NULL;
+		return error;
+	}
 
 	stacksplitdfa = aa_dfa_unpack(stacksplitdfa_src,
-				      माप(stacksplitdfa_src),
+				      sizeof(stacksplitdfa_src),
 				      TO_ACCEPT1_FLAG(YYTD_DATA32) |
 				      TO_ACCEPT2_FLAG(YYTD_DATA32));
-	अगर (IS_ERR(stacksplitdfa)) अणु
+	if (IS_ERR(stacksplitdfa)) {
 		aa_put_dfa(nulldfa);
-		nulldfa = शून्य;
+		nulldfa = NULL;
 		error = PTR_ERR(stacksplitdfa);
-		stacksplitdfa = शून्य;
-		वापस error;
-	पूर्ण
+		stacksplitdfa = NULL;
+		return error;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम aa_tearकरोwn_dfa_engine(व्योम)
-अणु
+void aa_teardown_dfa_engine(void)
+{
 	aa_put_dfa(stacksplitdfa);
 	aa_put_dfa(nulldfa);
-पूर्ण
+}
 
 /**
- * unpack_table - unpack a dfa table (one of accept, शेष, base, next check)
- * @blob: data to unpack (NOT शून्य)
+ * unpack_table - unpack a dfa table (one of accept, default, base, next check)
+ * @blob: data to unpack (NOT NULL)
  * @bsize: size of blob
  *
- * Returns: poपूर्णांकer to table अन्यथा शून्य on failure
+ * Returns: pointer to table else NULL on failure
  *
- * NOTE: must be मुक्तd by kvमुक्त (not kमुक्त)
+ * NOTE: must be freed by kvfree (not kfree)
  */
-अटल काष्ठा table_header *unpack_table(अक्षर *blob, माप_प्रकार bsize)
-अणु
-	काष्ठा table_header *table = शून्य;
-	काष्ठा table_header th;
-	माप_प्रकार tsize;
+static struct table_header *unpack_table(char *blob, size_t bsize)
+{
+	struct table_header *table = NULL;
+	struct table_header th;
+	size_t tsize;
 
-	अगर (bsize < माप(काष्ठा table_header))
-		जाओ out;
+	if (bsize < sizeof(struct table_header))
+		goto out;
 
-	/* loaded td_id's start at 1, subtract 1 now to aव्योम करोing
-	 * it every समय we use td_id as an index
+	/* loaded td_id's start at 1, subtract 1 now to avoid doing
+	 * it every time we use td_id as an index
 	 */
 	th.td_id = be16_to_cpu(*(__be16 *) (blob)) - 1;
-	अगर (th.td_id > YYTD_ID_MAX)
-		जाओ out;
+	if (th.td_id > YYTD_ID_MAX)
+		goto out;
 	th.td_flags = be16_to_cpu(*(__be16 *) (blob + 2));
 	th.td_lolen = be32_to_cpu(*(__be32 *) (blob + 8));
-	blob += माप(काष्ठा table_header);
+	blob += sizeof(struct table_header);
 
-	अगर (!(th.td_flags == YYTD_DATA16 || th.td_flags == YYTD_DATA32 ||
+	if (!(th.td_flags == YYTD_DATA16 || th.td_flags == YYTD_DATA32 ||
 	      th.td_flags == YYTD_DATA8))
-		जाओ out;
+		goto out;
 
-	/* अगर we have a table it must have some entries */
-	अगर (th.td_lolen == 0)
-		जाओ out;
+	/* if we have a table it must have some entries */
+	if (th.td_lolen == 0)
+		goto out;
 	tsize = table_size(th.td_lolen, th.td_flags);
-	अगर (bsize < tsize)
-		जाओ out;
+	if (bsize < tsize)
+		goto out;
 
 	table = kvzalloc(tsize, GFP_KERNEL);
-	अगर (table) अणु
+	if (table) {
 		table->td_id = th.td_id;
 		table->td_flags = th.td_flags;
 		table->td_lolen = th.td_lolen;
-		अगर (th.td_flags == YYTD_DATA8)
+		if (th.td_flags == YYTD_DATA8)
 			UNPACK_ARRAY(table->td_data, blob, th.td_lolen,
 				     u8, u8, byte_to_byte);
-		अन्यथा अगर (th.td_flags == YYTD_DATA16)
+		else if (th.td_flags == YYTD_DATA16)
 			UNPACK_ARRAY(table->td_data, blob, th.td_lolen,
 				     u16, __be16, be16_to_cpu);
-		अन्यथा अगर (th.td_flags == YYTD_DATA32)
+		else if (th.td_flags == YYTD_DATA32)
 			UNPACK_ARRAY(table->td_data, blob, th.td_lolen,
 				     u32, __be32, be32_to_cpu);
-		अन्यथा
-			जाओ fail;
-		/* अगर table was vदो_स्मृतिed make sure the page tables are synced
-		 * beक्रमe it is used, as it goes live to all cpus.
+		else
+			goto fail;
+		/* if table was vmalloced make sure the page tables are synced
+		 * before it is used, as it goes live to all cpus.
 		 */
-		अगर (is_vदो_स्मृति_addr(table))
+		if (is_vmalloc_addr(table))
 			vm_unmap_aliases();
-	पूर्ण
+	}
 
 out:
-	वापस table;
+	return table;
 fail:
-	kvमुक्त(table);
-	वापस शून्य;
-पूर्ण
+	kvfree(table);
+	return NULL;
+}
 
 /**
- * verअगरy_table_headers - verअगरy that the tables headers are as expected
- * @tables - array of dfa tables to check (NOT शून्य)
+ * verify_table_headers - verify that the tables headers are as expected
+ * @tables - array of dfa tables to check (NOT NULL)
  * @flags: flags controlling what type of accept table are acceptable
  *
- * Assumes dfa has gone through the first pass verअगरication करोne by unpacking
- * NOTE: this करोes not valid accept table values
+ * Assumes dfa has gone through the first pass verification done by unpacking
+ * NOTE: this does not valid accept table values
  *
- * Returns: %0 अन्यथा error code on failure to verअगरy
+ * Returns: %0 else error code on failure to verify
  */
-अटल पूर्णांक verअगरy_table_headers(काष्ठा table_header **tables, पूर्णांक flags)
-अणु
-	माप_प्रकार state_count, trans_count;
-	पूर्णांक error = -EPROTO;
+static int verify_table_headers(struct table_header **tables, int flags)
+{
+	size_t state_count, trans_count;
+	int error = -EPROTO;
 
 	/* check that required tables exist */
-	अगर (!(tables[YYTD_ID_DEF] && tables[YYTD_ID_BASE] &&
+	if (!(tables[YYTD_ID_DEF] && tables[YYTD_ID_BASE] &&
 	      tables[YYTD_ID_NXT] && tables[YYTD_ID_CHK]))
-		जाओ out;
+		goto out;
 
-	/* accept.size == शेष.size == base.size */
+	/* accept.size == default.size == base.size */
 	state_count = tables[YYTD_ID_BASE]->td_lolen;
-	अगर (ACCEPT1_FLAGS(flags)) अणु
-		अगर (!tables[YYTD_ID_ACCEPT])
-			जाओ out;
-		अगर (state_count != tables[YYTD_ID_ACCEPT]->td_lolen)
-			जाओ out;
-	पूर्ण
-	अगर (ACCEPT2_FLAGS(flags)) अणु
-		अगर (!tables[YYTD_ID_ACCEPT2])
-			जाओ out;
-		अगर (state_count != tables[YYTD_ID_ACCEPT2]->td_lolen)
-			जाओ out;
-	पूर्ण
-	अगर (state_count != tables[YYTD_ID_DEF]->td_lolen)
-		जाओ out;
+	if (ACCEPT1_FLAGS(flags)) {
+		if (!tables[YYTD_ID_ACCEPT])
+			goto out;
+		if (state_count != tables[YYTD_ID_ACCEPT]->td_lolen)
+			goto out;
+	}
+	if (ACCEPT2_FLAGS(flags)) {
+		if (!tables[YYTD_ID_ACCEPT2])
+			goto out;
+		if (state_count != tables[YYTD_ID_ACCEPT2]->td_lolen)
+			goto out;
+	}
+	if (state_count != tables[YYTD_ID_DEF]->td_lolen)
+		goto out;
 
 	/* next.size == chk.size */
 	trans_count = tables[YYTD_ID_NXT]->td_lolen;
-	अगर (trans_count != tables[YYTD_ID_CHK]->td_lolen)
-		जाओ out;
+	if (trans_count != tables[YYTD_ID_CHK]->td_lolen)
+		goto out;
 
-	/* अगर equivalence classes then its table size must be 256 */
-	अगर (tables[YYTD_ID_EC] && tables[YYTD_ID_EC]->td_lolen != 256)
-		जाओ out;
+	/* if equivalence classes then its table size must be 256 */
+	if (tables[YYTD_ID_EC] && tables[YYTD_ID_EC]->td_lolen != 256)
+		goto out;
 
 	error = 0;
 out:
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /**
- * verअगरy_dfa - verअगरy that transitions and states in the tables are in bounds.
- * @dfa: dfa to test  (NOT शून्य)
+ * verify_dfa - verify that transitions and states in the tables are in bounds.
+ * @dfa: dfa to test  (NOT NULL)
  *
- * Assumes dfa has gone through the first pass verअगरication करोne by unpacking
- * NOTE: this करोes not valid accept table values
+ * Assumes dfa has gone through the first pass verification done by unpacking
+ * NOTE: this does not valid accept table values
  *
- * Returns: %0 अन्यथा error code on failure to verअगरy
+ * Returns: %0 else error code on failure to verify
  */
-अटल पूर्णांक verअगरy_dfa(काष्ठा aa_dfa *dfa)
-अणु
-	माप_प्रकार i, state_count, trans_count;
-	पूर्णांक error = -EPROTO;
+static int verify_dfa(struct aa_dfa *dfa)
+{
+	size_t i, state_count, trans_count;
+	int error = -EPROTO;
 
 	state_count = dfa->tables[YYTD_ID_BASE]->td_lolen;
 	trans_count = dfa->tables[YYTD_ID_NXT]->td_lolen;
-	अगर (state_count == 0)
-		जाओ out;
-	क्रम (i = 0; i < state_count; i++) अणु
-		अगर (!(BASE_TABLE(dfa)[i] & MATCH_FLAG_DIFF_ENCODE) &&
+	if (state_count == 0)
+		goto out;
+	for (i = 0; i < state_count; i++) {
+		if (!(BASE_TABLE(dfa)[i] & MATCH_FLAG_DIFF_ENCODE) &&
 		    (DEFAULT_TABLE(dfa)[i] >= state_count))
-			जाओ out;
-		अगर (BASE_TABLE(dfa)[i] & MATCH_FLAGS_INVALID) अणु
+			goto out;
+		if (BASE_TABLE(dfa)[i] & MATCH_FLAGS_INVALID) {
 			pr_err("AppArmor DFA state with invalid match flags");
-			जाओ out;
-		पूर्ण
-		अगर ((BASE_TABLE(dfa)[i] & MATCH_FLAG_DIFF_ENCODE)) अणु
-			अगर (!(dfa->flags & YYTH_FLAG_DIFF_ENCODE)) अणु
+			goto out;
+		}
+		if ((BASE_TABLE(dfa)[i] & MATCH_FLAG_DIFF_ENCODE)) {
+			if (!(dfa->flags & YYTH_FLAG_DIFF_ENCODE)) {
 				pr_err("AppArmor DFA diff encoded transition state without header flag");
-				जाओ out;
-			पूर्ण
-		पूर्ण
-		अगर ((BASE_TABLE(dfa)[i] & MATCH_FLAG_OOB_TRANSITION)) अणु
-			अगर (base_idx(BASE_TABLE(dfa)[i]) < dfa->max_oob) अणु
+				goto out;
+			}
+		}
+		if ((BASE_TABLE(dfa)[i] & MATCH_FLAG_OOB_TRANSITION)) {
+			if (base_idx(BASE_TABLE(dfa)[i]) < dfa->max_oob) {
 				pr_err("AppArmor DFA out of bad transition out of range");
-				जाओ out;
-			पूर्ण
-			अगर (!(dfa->flags & YYTH_FLAG_OOB_TRANS)) अणु
+				goto out;
+			}
+			if (!(dfa->flags & YYTH_FLAG_OOB_TRANS)) {
 				pr_err("AppArmor DFA out of bad transition state without header flag");
-				जाओ out;
-			पूर्ण
-		पूर्ण
-		अगर (base_idx(BASE_TABLE(dfa)[i]) + 255 >= trans_count) अणु
+				goto out;
+			}
+		}
+		if (base_idx(BASE_TABLE(dfa)[i]) + 255 >= trans_count) {
 			pr_err("AppArmor DFA next/check upper bounds error\n");
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	क्रम (i = 0; i < trans_count; i++) अणु
-		अगर (NEXT_TABLE(dfa)[i] >= state_count)
-			जाओ out;
-		अगर (CHECK_TABLE(dfa)[i] >= state_count)
-			जाओ out;
-	पूर्ण
+	for (i = 0; i < trans_count; i++) {
+		if (NEXT_TABLE(dfa)[i] >= state_count)
+			goto out;
+		if (CHECK_TABLE(dfa)[i] >= state_count)
+			goto out;
+	}
 
-	/* Now that all the other tables are verअगरied, verअगरy dअगरfencoding */
-	क्रम (i = 0; i < state_count; i++) अणु
-		माप_प्रकार j, k;
+	/* Now that all the other tables are verified, verify diffencoding */
+	for (i = 0; i < state_count; i++) {
+		size_t j, k;
 
-		क्रम (j = i;
+		for (j = i;
 		     (BASE_TABLE(dfa)[j] & MATCH_FLAG_DIFF_ENCODE) &&
 		     !(BASE_TABLE(dfa)[j] & MARK_DIFF_ENCODE);
-		     j = k) अणु
+		     j = k) {
 			k = DEFAULT_TABLE(dfa)[j];
-			अगर (j == k)
-				जाओ out;
-			अगर (k < j)
-				अवरोध;		/* alपढ़ोy verअगरied */
+			if (j == k)
+				goto out;
+			if (k < j)
+				break;		/* already verified */
 			BASE_TABLE(dfa)[j] |= MARK_DIFF_ENCODE;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	error = 0;
 
 out:
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /**
- * dfa_मुक्त - मुक्त a dfa allocated by aa_dfa_unpack
- * @dfa: the dfa to मुक्त  (MAYBE शून्य)
+ * dfa_free - free a dfa allocated by aa_dfa_unpack
+ * @dfa: the dfa to free  (MAYBE NULL)
  *
  * Requires: reference count to dfa == 0
  */
-अटल व्योम dfa_मुक्त(काष्ठा aa_dfa *dfa)
-अणु
-	अगर (dfa) अणु
-		पूर्णांक i;
+static void dfa_free(struct aa_dfa *dfa)
+{
+	if (dfa) {
+		int i;
 
-		क्रम (i = 0; i < ARRAY_SIZE(dfa->tables); i++) अणु
-			kvमुक्त(dfa->tables[i]);
-			dfa->tables[i] = शून्य;
-		पूर्ण
-		kमुक्त(dfa);
-	पूर्ण
-पूर्ण
+		for (i = 0; i < ARRAY_SIZE(dfa->tables); i++) {
+			kvfree(dfa->tables[i]);
+			dfa->tables[i] = NULL;
+		}
+		kfree(dfa);
+	}
+}
 
 /**
- * aa_dfa_मुक्त_kref - मुक्त aa_dfa by kref (called by aa_put_dfa)
- * @kr: kref callback क्रम मुक्तing of a dfa  (NOT शून्य)
+ * aa_dfa_free_kref - free aa_dfa by kref (called by aa_put_dfa)
+ * @kr: kref callback for freeing of a dfa  (NOT NULL)
  */
-व्योम aa_dfa_मुक्त_kref(काष्ठा kref *kref)
-अणु
-	काष्ठा aa_dfa *dfa = container_of(kref, काष्ठा aa_dfa, count);
-	dfa_मुक्त(dfa);
-पूर्ण
+void aa_dfa_free_kref(struct kref *kref)
+{
+	struct aa_dfa *dfa = container_of(kref, struct aa_dfa, count);
+	dfa_free(dfa);
+}
 
 /**
  * aa_dfa_unpack - unpack the binary tables of a serialized dfa
- * @blob: aligned serialized stream of data to unpack  (NOT शून्य)
+ * @blob: aligned serialized stream of data to unpack  (NOT NULL)
  * @size: size of data to unpack
  * @flags: flags controlling what type of accept tables are acceptable
  *
- * Unpack a dfa that has been serialized.  To find inक्रमmation on the dfa
- * क्रमmat look in Documentation/admin-guide/LSM/apparmor.rst
+ * Unpack a dfa that has been serialized.  To find information on the dfa
+ * format look in Documentation/admin-guide/LSM/apparmor.rst
  * Assumes the dfa @blob stream has been aligned on a 8 byte boundary
  *
- * Returns: an unpacked dfa पढ़ोy क्रम matching or ERR_PTR on failure
+ * Returns: an unpacked dfa ready for matching or ERR_PTR on failure
  */
-काष्ठा aa_dfa *aa_dfa_unpack(व्योम *blob, माप_प्रकार size, पूर्णांक flags)
-अणु
-	पूर्णांक hsize;
-	पूर्णांक error = -ENOMEM;
-	अक्षर *data = blob;
-	काष्ठा table_header *table = शून्य;
-	काष्ठा aa_dfa *dfa = kzalloc(माप(काष्ठा aa_dfa), GFP_KERNEL);
-	अगर (!dfa)
-		जाओ fail;
+struct aa_dfa *aa_dfa_unpack(void *blob, size_t size, int flags)
+{
+	int hsize;
+	int error = -ENOMEM;
+	char *data = blob;
+	struct table_header *table = NULL;
+	struct aa_dfa *dfa = kzalloc(sizeof(struct aa_dfa), GFP_KERNEL);
+	if (!dfa)
+		goto fail;
 
 	kref_init(&dfa->count);
 
 	error = -EPROTO;
 
 	/* get dfa table set header */
-	अगर (size < माप(काष्ठा table_set_header))
-		जाओ fail;
+	if (size < sizeof(struct table_set_header))
+		goto fail;
 
-	अगर (ntohl(*(__be32 *) data) != YYTH_MAGIC)
-		जाओ fail;
+	if (ntohl(*(__be32 *) data) != YYTH_MAGIC)
+		goto fail;
 
 	hsize = ntohl(*(__be32 *) (data + 4));
-	अगर (size < hsize)
-		जाओ fail;
+	if (size < hsize)
+		goto fail;
 
 	dfa->flags = ntohs(*(__be16 *) (data + 12));
-	अगर (dfa->flags & ~(YYTH_FLAGS))
-		जाओ fail;
+	if (dfa->flags & ~(YYTH_FLAGS))
+		goto fail;
 
 	/*
-	 * TODO: needed क्रम dfa to support more than 1 oob
-	 * अगर (dfa->flags & YYTH_FLAGS_OOB_TRANS) अणु
-	 *	अगर (hsize < 16 + 4)
-	 *		जाओ fail;
+	 * TODO: needed for dfa to support more than 1 oob
+	 * if (dfa->flags & YYTH_FLAGS_OOB_TRANS) {
+	 *	if (hsize < 16 + 4)
+	 *		goto fail;
 	 *	dfa->max_oob = ntol(*(__be32 *) (data + 16));
-	 *	अगर (dfa->max <= MAX_OOB_SUPPORTED) अणु
+	 *	if (dfa->max <= MAX_OOB_SUPPORTED) {
 	 *		pr_err("AppArmor DFA OOB greater than supported\n");
-	 *		जाओ fail;
-	 *	पूर्ण
-	 * पूर्ण
+	 *		goto fail;
+	 *	}
+	 * }
 	 */
 	dfa->max_oob = 1;
 
 	data += hsize;
 	size -= hsize;
 
-	जबतक (size > 0) अणु
+	while (size > 0) {
 		table = unpack_table(data, size);
-		अगर (!table)
-			जाओ fail;
+		if (!table)
+			goto fail;
 
-		चयन (table->td_id) अणु
-		हाल YYTD_ID_ACCEPT:
-			अगर (!(table->td_flags & ACCEPT1_FLAGS(flags)))
-				जाओ fail;
-			अवरोध;
-		हाल YYTD_ID_ACCEPT2:
-			अगर (!(table->td_flags & ACCEPT2_FLAGS(flags)))
-				जाओ fail;
-			अवरोध;
-		हाल YYTD_ID_BASE:
-			अगर (table->td_flags != YYTD_DATA32)
-				जाओ fail;
-			अवरोध;
-		हाल YYTD_ID_DEF:
-		हाल YYTD_ID_NXT:
-		हाल YYTD_ID_CHK:
-			अगर (table->td_flags != YYTD_DATA16)
-				जाओ fail;
-			अवरोध;
-		हाल YYTD_ID_EC:
-			अगर (table->td_flags != YYTD_DATA8)
-				जाओ fail;
-			अवरोध;
-		शेष:
-			जाओ fail;
-		पूर्ण
-		/* check क्रम duplicate table entry */
-		अगर (dfa->tables[table->td_id])
-			जाओ fail;
+		switch (table->td_id) {
+		case YYTD_ID_ACCEPT:
+			if (!(table->td_flags & ACCEPT1_FLAGS(flags)))
+				goto fail;
+			break;
+		case YYTD_ID_ACCEPT2:
+			if (!(table->td_flags & ACCEPT2_FLAGS(flags)))
+				goto fail;
+			break;
+		case YYTD_ID_BASE:
+			if (table->td_flags != YYTD_DATA32)
+				goto fail;
+			break;
+		case YYTD_ID_DEF:
+		case YYTD_ID_NXT:
+		case YYTD_ID_CHK:
+			if (table->td_flags != YYTD_DATA16)
+				goto fail;
+			break;
+		case YYTD_ID_EC:
+			if (table->td_flags != YYTD_DATA8)
+				goto fail;
+			break;
+		default:
+			goto fail;
+		}
+		/* check for duplicate table entry */
+		if (dfa->tables[table->td_id])
+			goto fail;
 		dfa->tables[table->td_id] = table;
 		data += table_size(table->td_lolen, table->td_flags);
 		size -= table_size(table->td_lolen, table->td_flags);
-		table = शून्य;
-	पूर्ण
-	error = verअगरy_table_headers(dfa->tables, flags);
-	अगर (error)
-		जाओ fail;
+		table = NULL;
+	}
+	error = verify_table_headers(dfa->tables, flags);
+	if (error)
+		goto fail;
 
-	अगर (flags & DFA_FLAG_VERIFY_STATES) अणु
-		error = verअगरy_dfa(dfa);
-		अगर (error)
-			जाओ fail;
-	पूर्ण
+	if (flags & DFA_FLAG_VERIFY_STATES) {
+		error = verify_dfa(dfa);
+		if (error)
+			goto fail;
+	}
 
-	वापस dfa;
+	return dfa;
 
 fail:
-	kvमुक्त(table);
-	dfa_मुक्त(dfa);
-	वापस ERR_PTR(error);
-पूर्ण
+	kvfree(table);
+	dfa_free(dfa);
+	return ERR_PTR(error);
+}
 
-#घोषणा match_अक्षर(state, def, base, next, check, C)	\
-करो अणु							\
+#define match_char(state, def, base, next, check, C)	\
+do {							\
 	u32 b = (base)[(state)];			\
-	अचिन्हित पूर्णांक pos = base_idx(b) + (C);		\
-	अगर ((check)[pos] != (state)) अणु			\
+	unsigned int pos = base_idx(b) + (C);		\
+	if ((check)[pos] != (state)) {			\
 		(state) = (def)[(state)];		\
-		अगर (b & MATCH_FLAG_DIFF_ENCODE)		\
-			जारी;			\
-		अवरोध;					\
-	पूर्ण						\
+		if (b & MATCH_FLAG_DIFF_ENCODE)		\
+			continue;			\
+		break;					\
+	}						\
 	(state) = (next)[pos];				\
-	अवरोध;						\
-पूर्ण जबतक (1)
+	break;						\
+} while (1)
 
 /**
  * aa_dfa_match_len - traverse @dfa to find state @str stops at
- * @dfa: the dfa to match @str against  (NOT शून्य)
+ * @dfa: the dfa to match @str against  (NOT NULL)
  * @start: the state of the dfa to start matching in
- * @str: the string of bytes to match against the dfa  (NOT शून्य)
+ * @str: the string of bytes to match against the dfa  (NOT NULL)
  * @len: length of the string of bytes to match
  *
- * aa_dfa_match_len will match @str against the dfa and वापस the state it
+ * aa_dfa_match_len will match @str against the dfa and return the state it
  * finished matching in. The final state can be used to look up the accepting
  * label, or as the start state of a continuing match.
  *
@@ -437,187 +436,187 @@ fail:
  *
  * Returns: final state reached after input is consumed
  */
-अचिन्हित पूर्णांक aa_dfa_match_len(काष्ठा aa_dfa *dfa, अचिन्हित पूर्णांक start,
-			      स्थिर अक्षर *str, पूर्णांक len)
-अणु
+unsigned int aa_dfa_match_len(struct aa_dfa *dfa, unsigned int start,
+			      const char *str, int len)
+{
 	u16 *def = DEFAULT_TABLE(dfa);
 	u32 *base = BASE_TABLE(dfa);
 	u16 *next = NEXT_TABLE(dfa);
 	u16 *check = CHECK_TABLE(dfa);
-	अचिन्हित पूर्णांक state = start;
+	unsigned int state = start;
 
-	अगर (state == 0)
-		वापस 0;
+	if (state == 0)
+		return 0;
 
-	/* current state is <state>, matching अक्षरacter *str */
-	अगर (dfa->tables[YYTD_ID_EC]) अणु
+	/* current state is <state>, matching character *str */
+	if (dfa->tables[YYTD_ID_EC]) {
 		/* Equivalence class table defined */
 		u8 *equiv = EQUIV_TABLE(dfa);
-		क्रम (; len; len--)
-			match_अक्षर(state, def, base, next, check,
+		for (; len; len--)
+			match_char(state, def, base, next, check,
 				   equiv[(u8) *str++]);
-	पूर्ण अन्यथा अणु
-		/* शेष is direct to next state */
-		क्रम (; len; len--)
-			match_अक्षर(state, def, base, next, check, (u8) *str++);
-	पूर्ण
+	} else {
+		/* default is direct to next state */
+		for (; len; len--)
+			match_char(state, def, base, next, check, (u8) *str++);
+	}
 
-	वापस state;
-पूर्ण
+	return state;
+}
 
 /**
  * aa_dfa_match - traverse @dfa to find state @str stops at
- * @dfa: the dfa to match @str against  (NOT शून्य)
+ * @dfa: the dfa to match @str against  (NOT NULL)
  * @start: the state of the dfa to start matching in
- * @str: the null terminated string of bytes to match against the dfa (NOT शून्य)
+ * @str: the null terminated string of bytes to match against the dfa (NOT NULL)
  *
- * aa_dfa_match will match @str against the dfa and वापस the state it
+ * aa_dfa_match will match @str against the dfa and return the state it
  * finished matching in. The final state can be used to look up the accepting
  * label, or as the start state of a continuing match.
  *
  * Returns: final state reached after input is consumed
  */
-अचिन्हित पूर्णांक aa_dfa_match(काष्ठा aa_dfa *dfa, अचिन्हित पूर्णांक start,
-			  स्थिर अक्षर *str)
-अणु
+unsigned int aa_dfa_match(struct aa_dfa *dfa, unsigned int start,
+			  const char *str)
+{
 	u16 *def = DEFAULT_TABLE(dfa);
 	u32 *base = BASE_TABLE(dfa);
 	u16 *next = NEXT_TABLE(dfa);
 	u16 *check = CHECK_TABLE(dfa);
-	अचिन्हित पूर्णांक state = start;
+	unsigned int state = start;
 
-	अगर (state == 0)
-		वापस 0;
+	if (state == 0)
+		return 0;
 
-	/* current state is <state>, matching अक्षरacter *str */
-	अगर (dfa->tables[YYTD_ID_EC]) अणु
+	/* current state is <state>, matching character *str */
+	if (dfa->tables[YYTD_ID_EC]) {
 		/* Equivalence class table defined */
 		u8 *equiv = EQUIV_TABLE(dfa);
-		/* शेष is direct to next state */
-		जबतक (*str)
-			match_अक्षर(state, def, base, next, check,
+		/* default is direct to next state */
+		while (*str)
+			match_char(state, def, base, next, check,
 				   equiv[(u8) *str++]);
-	पूर्ण अन्यथा अणु
-		/* शेष is direct to next state */
-		जबतक (*str)
-			match_अक्षर(state, def, base, next, check, (u8) *str++);
-	पूर्ण
+	} else {
+		/* default is direct to next state */
+		while (*str)
+			match_char(state, def, base, next, check, (u8) *str++);
+	}
 
-	वापस state;
-पूर्ण
+	return state;
+}
 
 /**
- * aa_dfa_next - step one अक्षरacter to the next state in the dfa
- * @dfa: the dfa to traverse (NOT शून्य)
+ * aa_dfa_next - step one character to the next state in the dfa
+ * @dfa: the dfa to traverse (NOT NULL)
  * @state: the state to start in
- * @c: the input अक्षरacter to transition on
+ * @c: the input character to transition on
  *
- * aa_dfa_match will step through the dfa by one input अक्षरacter @c
+ * aa_dfa_match will step through the dfa by one input character @c
  *
  * Returns: state reach after input @c
  */
-अचिन्हित पूर्णांक aa_dfa_next(काष्ठा aa_dfa *dfa, अचिन्हित पूर्णांक state,
-			  स्थिर अक्षर c)
-अणु
+unsigned int aa_dfa_next(struct aa_dfa *dfa, unsigned int state,
+			  const char c)
+{
 	u16 *def = DEFAULT_TABLE(dfa);
 	u32 *base = BASE_TABLE(dfa);
 	u16 *next = NEXT_TABLE(dfa);
 	u16 *check = CHECK_TABLE(dfa);
 
-	/* current state is <state>, matching अक्षरacter *str */
-	अगर (dfa->tables[YYTD_ID_EC]) अणु
+	/* current state is <state>, matching character *str */
+	if (dfa->tables[YYTD_ID_EC]) {
 		/* Equivalence class table defined */
 		u8 *equiv = EQUIV_TABLE(dfa);
-		match_अक्षर(state, def, base, next, check, equiv[(u8) c]);
-	पूर्ण अन्यथा
-		match_अक्षर(state, def, base, next, check, (u8) c);
+		match_char(state, def, base, next, check, equiv[(u8) c]);
+	} else
+		match_char(state, def, base, next, check, (u8) c);
 
-	वापस state;
-पूर्ण
+	return state;
+}
 
-अचिन्हित पूर्णांक aa_dfa_outofband_transition(काष्ठा aa_dfa *dfa, अचिन्हित पूर्णांक state)
-अणु
+unsigned int aa_dfa_outofband_transition(struct aa_dfa *dfa, unsigned int state)
+{
 	u16 *def = DEFAULT_TABLE(dfa);
 	u32 *base = BASE_TABLE(dfa);
 	u16 *next = NEXT_TABLE(dfa);
 	u16 *check = CHECK_TABLE(dfa);
 	u32 b = (base)[(state)];
 
-	अगर (!(b & MATCH_FLAG_OOB_TRANSITION))
-		वापस DFA_NOMATCH;
+	if (!(b & MATCH_FLAG_OOB_TRANSITION))
+		return DFA_NOMATCH;
 
-	/* No Equivalence class remapping क्रम outofband transitions */
-	match_अक्षर(state, def, base, next, check, -1);
+	/* No Equivalence class remapping for outofband transitions */
+	match_char(state, def, base, next, check, -1);
 
-	वापस state;
-पूर्ण
+	return state;
+}
 
 /**
  * aa_dfa_match_until - traverse @dfa until accept state or end of input
- * @dfa: the dfa to match @str against  (NOT शून्य)
+ * @dfa: the dfa to match @str against  (NOT NULL)
  * @start: the state of the dfa to start matching in
- * @str: the null terminated string of bytes to match against the dfa (NOT शून्य)
- * @retpos: first अक्षरacter in str after match OR end of string
+ * @str: the null terminated string of bytes to match against the dfa (NOT NULL)
+ * @retpos: first character in str after match OR end of string
  *
- * aa_dfa_match will match @str against the dfa and वापस the state it
+ * aa_dfa_match will match @str against the dfa and return the state it
  * finished matching in. The final state can be used to look up the accepting
  * label, or as the start state of a continuing match.
  *
  * Returns: final state reached after input is consumed
  */
-अचिन्हित पूर्णांक aa_dfa_match_until(काष्ठा aa_dfa *dfa, अचिन्हित पूर्णांक start,
-				स्थिर अक्षर *str, स्थिर अक्षर **retpos)
-अणु
+unsigned int aa_dfa_match_until(struct aa_dfa *dfa, unsigned int start,
+				const char *str, const char **retpos)
+{
 	u16 *def = DEFAULT_TABLE(dfa);
 	u32 *base = BASE_TABLE(dfa);
 	u16 *next = NEXT_TABLE(dfa);
 	u16 *check = CHECK_TABLE(dfa);
 	u32 *accept = ACCEPT_TABLE(dfa);
-	अचिन्हित पूर्णांक state = start, pos;
+	unsigned int state = start, pos;
 
-	अगर (state == 0)
-		वापस 0;
+	if (state == 0)
+		return 0;
 
-	/* current state is <state>, matching अक्षरacter *str */
-	अगर (dfa->tables[YYTD_ID_EC]) अणु
+	/* current state is <state>, matching character *str */
+	if (dfa->tables[YYTD_ID_EC]) {
 		/* Equivalence class table defined */
 		u8 *equiv = EQUIV_TABLE(dfa);
-		/* शेष is direct to next state */
-		जबतक (*str) अणु
+		/* default is direct to next state */
+		while (*str) {
 			pos = base_idx(base[state]) + equiv[(u8) *str++];
-			अगर (check[pos] == state)
+			if (check[pos] == state)
 				state = next[pos];
-			अन्यथा
+			else
 				state = def[state];
-			अगर (accept[state])
-				अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		/* शेष is direct to next state */
-		जबतक (*str) अणु
+			if (accept[state])
+				break;
+		}
+	} else {
+		/* default is direct to next state */
+		while (*str) {
 			pos = base_idx(base[state]) + (u8) *str++;
-			अगर (check[pos] == state)
+			if (check[pos] == state)
 				state = next[pos];
-			अन्यथा
+			else
 				state = def[state];
-			अगर (accept[state])
-				अवरोध;
-		पूर्ण
-	पूर्ण
+			if (accept[state])
+				break;
+		}
+	}
 
 	*retpos = str;
-	वापस state;
-पूर्ण
+	return state;
+}
 
 /**
  * aa_dfa_matchn_until - traverse @dfa until accept or @n bytes consumed
- * @dfa: the dfa to match @str against  (NOT शून्य)
+ * @dfa: the dfa to match @str against  (NOT NULL)
  * @start: the state of the dfa to start matching in
- * @str: the string of bytes to match against the dfa  (NOT शून्य)
+ * @str: the string of bytes to match against the dfa  (NOT NULL)
  * @n: length of the string of bytes to match
- * @retpos: first अक्षरacter in str after match OR str + n
+ * @retpos: first character in str after match OR str + n
  *
- * aa_dfa_match_len will match @str against the dfa and वापस the state it
+ * aa_dfa_match_len will match @str against the dfa and return the state it
  * finished matching in. The final state can be used to look up the accepting
  * label, or as the start state of a continuing match.
  *
@@ -626,90 +625,90 @@ fail:
  *
  * Returns: final state reached after input is consumed
  */
-अचिन्हित पूर्णांक aa_dfa_matchn_until(काष्ठा aa_dfa *dfa, अचिन्हित पूर्णांक start,
-				 स्थिर अक्षर *str, पूर्णांक n, स्थिर अक्षर **retpos)
-अणु
+unsigned int aa_dfa_matchn_until(struct aa_dfa *dfa, unsigned int start,
+				 const char *str, int n, const char **retpos)
+{
 	u16 *def = DEFAULT_TABLE(dfa);
 	u32 *base = BASE_TABLE(dfa);
 	u16 *next = NEXT_TABLE(dfa);
 	u16 *check = CHECK_TABLE(dfa);
 	u32 *accept = ACCEPT_TABLE(dfa);
-	अचिन्हित पूर्णांक state = start, pos;
+	unsigned int state = start, pos;
 
-	*retpos = शून्य;
-	अगर (state == 0)
-		वापस 0;
+	*retpos = NULL;
+	if (state == 0)
+		return 0;
 
-	/* current state is <state>, matching अक्षरacter *str */
-	अगर (dfa->tables[YYTD_ID_EC]) अणु
+	/* current state is <state>, matching character *str */
+	if (dfa->tables[YYTD_ID_EC]) {
 		/* Equivalence class table defined */
 		u8 *equiv = EQUIV_TABLE(dfa);
-		/* शेष is direct to next state */
-		क्रम (; n; n--) अणु
+		/* default is direct to next state */
+		for (; n; n--) {
 			pos = base_idx(base[state]) + equiv[(u8) *str++];
-			अगर (check[pos] == state)
+			if (check[pos] == state)
 				state = next[pos];
-			अन्यथा
+			else
 				state = def[state];
-			अगर (accept[state])
-				अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		/* शेष is direct to next state */
-		क्रम (; n; n--) अणु
+			if (accept[state])
+				break;
+		}
+	} else {
+		/* default is direct to next state */
+		for (; n; n--) {
 			pos = base_idx(base[state]) + (u8) *str++;
-			अगर (check[pos] == state)
+			if (check[pos] == state)
 				state = next[pos];
-			अन्यथा
+			else
 				state = def[state];
-			अगर (accept[state])
-				अवरोध;
-		पूर्ण
-	पूर्ण
+			if (accept[state])
+				break;
+		}
+	}
 
 	*retpos = str;
-	वापस state;
-पूर्ण
+	return state;
+}
 
-#घोषणा inc_wb_pos(wb)						\
-करो अणु								\
+#define inc_wb_pos(wb)						\
+do {								\
 	wb->pos = (wb->pos + 1) & (WB_HISTORY_SIZE - 1);		\
 	wb->len = (wb->len + 1) & (WB_HISTORY_SIZE - 1);		\
-पूर्ण जबतक (0)
+} while (0)
 
-/* For DFAs that करोn't support extended tagging of states */
-अटल bool is_loop(काष्ठा match_workbuf *wb, अचिन्हित पूर्णांक state,
-		    अचिन्हित पूर्णांक *adjust)
-अणु
-	अचिन्हित पूर्णांक pos = wb->pos;
-	अचिन्हित पूर्णांक i;
+/* For DFAs that don't support extended tagging of states */
+static bool is_loop(struct match_workbuf *wb, unsigned int state,
+		    unsigned int *adjust)
+{
+	unsigned int pos = wb->pos;
+	unsigned int i;
 
-	अगर (wb->history[pos] < state)
-		वापस false;
+	if (wb->history[pos] < state)
+		return false;
 
-	क्रम (i = 0; i <= wb->len; i++) अणु
-		अगर (wb->history[pos] == state) अणु
+	for (i = 0; i <= wb->len; i++) {
+		if (wb->history[pos] == state) {
 			*adjust = i;
-			वापस true;
-		पूर्ण
-		अगर (pos == 0)
+			return true;
+		}
+		if (pos == 0)
 			pos = WB_HISTORY_SIZE;
 		pos--;
-	पूर्ण
+	}
 
 	*adjust = i;
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल अचिन्हित पूर्णांक lefपंचांगatch_fb(काष्ठा aa_dfa *dfa, अचिन्हित पूर्णांक start,
-				 स्थिर अक्षर *str, काष्ठा match_workbuf *wb,
-				 अचिन्हित पूर्णांक *count)
-अणु
+static unsigned int leftmatch_fb(struct aa_dfa *dfa, unsigned int start,
+				 const char *str, struct match_workbuf *wb,
+				 unsigned int *count)
+{
 	u16 *def = DEFAULT_TABLE(dfa);
 	u32 *base = BASE_TABLE(dfa);
 	u16 *next = NEXT_TABLE(dfa);
 	u16 *check = CHECK_TABLE(dfa);
-	अचिन्हित पूर्णांक state = start, pos;
+	unsigned int state = start, pos;
 
 	AA_BUG(!dfa);
 	AA_BUG(!str);
@@ -717,77 +716,77 @@ fail:
 	AA_BUG(!count);
 
 	*count = 0;
-	अगर (state == 0)
-		वापस 0;
+	if (state == 0)
+		return 0;
 
-	/* current state is <state>, matching अक्षरacter *str */
-	अगर (dfa->tables[YYTD_ID_EC]) अणु
+	/* current state is <state>, matching character *str */
+	if (dfa->tables[YYTD_ID_EC]) {
 		/* Equivalence class table defined */
 		u8 *equiv = EQUIV_TABLE(dfa);
-		/* शेष is direct to next state */
-		जबतक (*str) अणु
-			अचिन्हित पूर्णांक adjust;
+		/* default is direct to next state */
+		while (*str) {
+			unsigned int adjust;
 
 			wb->history[wb->pos] = state;
 			pos = base_idx(base[state]) + equiv[(u8) *str++];
-			अगर (check[pos] == state)
+			if (check[pos] == state)
 				state = next[pos];
-			अन्यथा
+			else
 				state = def[state];
-			अगर (is_loop(wb, state, &adjust)) अणु
+			if (is_loop(wb, state, &adjust)) {
 				state = aa_dfa_match(dfa, state, str);
 				*count -= adjust;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			inc_wb_pos(wb);
 			(*count)++;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		/* शेष is direct to next state */
-		जबतक (*str) अणु
-			अचिन्हित पूर्णांक adjust;
+		}
+	} else {
+		/* default is direct to next state */
+		while (*str) {
+			unsigned int adjust;
 
 			wb->history[wb->pos] = state;
 			pos = base_idx(base[state]) + (u8) *str++;
-			अगर (check[pos] == state)
+			if (check[pos] == state)
 				state = next[pos];
-			अन्यथा
+			else
 				state = def[state];
-			अगर (is_loop(wb, state, &adjust)) अणु
+			if (is_loop(wb, state, &adjust)) {
 				state = aa_dfa_match(dfa, state, str);
 				*count -= adjust;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			inc_wb_pos(wb);
 			(*count)++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 out:
-	अगर (!state)
+	if (!state)
 		*count = 0;
-	वापस state;
-पूर्ण
+	return state;
+}
 
 /**
- * aa_dfa_lefपंचांगatch - traverse @dfa to find state @str stops at
- * @dfa: the dfa to match @str against  (NOT शून्य)
+ * aa_dfa_leftmatch - traverse @dfa to find state @str stops at
+ * @dfa: the dfa to match @str against  (NOT NULL)
  * @start: the state of the dfa to start matching in
- * @str: the null terminated string of bytes to match against the dfa (NOT शून्य)
- * @count: current count of दीर्घest left.
+ * @str: the null terminated string of bytes to match against the dfa (NOT NULL)
+ * @count: current count of longest left.
  *
- * aa_dfa_match will match @str against the dfa and वापस the state it
+ * aa_dfa_match will match @str against the dfa and return the state it
  * finished matching in. The final state can be used to look up the accepting
  * label, or as the start state of a continuing match.
  *
  * Returns: final state reached after input is consumed
  */
-अचिन्हित पूर्णांक aa_dfa_lefपंचांगatch(काष्ठा aa_dfa *dfa, अचिन्हित पूर्णांक start,
-			      स्थिर अक्षर *str, अचिन्हित पूर्णांक *count)
-अणु
+unsigned int aa_dfa_leftmatch(struct aa_dfa *dfa, unsigned int start,
+			      const char *str, unsigned int *count)
+{
 	DEFINE_MATCH_WB(wb);
 
-	/* TODO: match क्रम extended state dfas */
+	/* TODO: match for extended state dfas */
 
-	वापस lefपंचांगatch_fb(dfa, start, str, &wb, count);
-पूर्ण
+	return leftmatch_fb(dfa, start, str, &wb, count);
+}

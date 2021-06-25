@@ -1,57 +1,56 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* Shared Memory Communications Direct over ISM devices (SMC-D)
  *
- * SMC-D ISM device काष्ठाure definitions.
+ * SMC-D ISM device structure definitions.
  *
  * Copyright IBM Corp. 2018
  */
 
-#अगर_अघोषित SMCD_ISM_H
-#घोषणा SMCD_ISM_H
+#ifndef SMCD_ISM_H
+#define SMCD_ISM_H
 
-#समावेश <linux/uपन.स>
-#समावेश <linux/types.h>
-#समावेश <linux/mutex.h>
+#include <linux/uio.h>
+#include <linux/types.h>
+#include <linux/mutex.h>
 
-#समावेश "smc.h"
+#include "smc.h"
 
-काष्ठा smcd_dev_list अणु	/* List of SMCD devices */
-	काष्ठा list_head list;
-	काष्ठा mutex mutex;	/* Protects list of devices */
-पूर्ण;
+struct smcd_dev_list {	/* List of SMCD devices */
+	struct list_head list;
+	struct mutex mutex;	/* Protects list of devices */
+};
 
-बाह्य काष्ठा smcd_dev_list	smcd_dev_list;	/* list of smcd devices */
+extern struct smcd_dev_list	smcd_dev_list;	/* list of smcd devices */
 
-काष्ठा smc_ism_vlanid अणु			/* VLAN id set on ISM device */
-	काष्ठा list_head list;
-	अचिन्हित लघु vlanid;		/* Vlan id */
+struct smc_ism_vlanid {			/* VLAN id set on ISM device */
+	struct list_head list;
+	unsigned short vlanid;		/* Vlan id */
 	refcount_t refcnt;		/* Reference count */
-पूर्ण;
+};
 
-काष्ठा smc_ism_position अणु	/* ISM device position to ग_लिखो to */
+struct smc_ism_position {	/* ISM device position to write to */
 	u64 token;		/* Token of DMB */
-	u32 offset;		/* Offset पूर्णांकo DMBE */
+	u32 offset;		/* Offset into DMBE */
 	u8 index;		/* Index of DMBE */
-	u8 संकेत;		/* Generate पूर्णांकerrupt on owner side */
-पूर्ण;
+	u8 signal;		/* Generate interrupt on owner side */
+};
 
-काष्ठा smcd_dev;
+struct smcd_dev;
 
-पूर्णांक smc_ism_cantalk(u64 peer_gid, अचिन्हित लघु vlan_id, काष्ठा smcd_dev *dev);
-व्योम smc_ism_set_conn(काष्ठा smc_connection *conn);
-व्योम smc_ism_unset_conn(काष्ठा smc_connection *conn);
-पूर्णांक smc_ism_get_vlan(काष्ठा smcd_dev *dev, अचिन्हित लघु vlan_id);
-पूर्णांक smc_ism_put_vlan(काष्ठा smcd_dev *dev, अचिन्हित लघु vlan_id);
-पूर्णांक smc_ism_रेजिस्टर_dmb(काष्ठा smc_link_group *lgr, पूर्णांक buf_size,
-			 काष्ठा smc_buf_desc *dmb_desc);
-पूर्णांक smc_ism_unरेजिस्टर_dmb(काष्ठा smcd_dev *dev, काष्ठा smc_buf_desc *dmb_desc);
-पूर्णांक smc_ism_ग_लिखो(काष्ठा smcd_dev *dev, स्थिर काष्ठा smc_ism_position *pos,
-		  व्योम *data, माप_प्रकार len);
-पूर्णांक smc_ism_संकेत_shutकरोwn(काष्ठा smc_link_group *lgr);
-व्योम smc_ism_get_प्रणाली_eid(काष्ठा smcd_dev *dev, u8 **eid);
-u16 smc_ism_get_chid(काष्ठा smcd_dev *dev);
-bool smc_ism_is_v2_capable(व्योम);
-व्योम smc_ism_init(व्योम);
-पूर्णांक smcd_nl_get_device(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb);
-#पूर्ण_अगर
+int smc_ism_cantalk(u64 peer_gid, unsigned short vlan_id, struct smcd_dev *dev);
+void smc_ism_set_conn(struct smc_connection *conn);
+void smc_ism_unset_conn(struct smc_connection *conn);
+int smc_ism_get_vlan(struct smcd_dev *dev, unsigned short vlan_id);
+int smc_ism_put_vlan(struct smcd_dev *dev, unsigned short vlan_id);
+int smc_ism_register_dmb(struct smc_link_group *lgr, int buf_size,
+			 struct smc_buf_desc *dmb_desc);
+int smc_ism_unregister_dmb(struct smcd_dev *dev, struct smc_buf_desc *dmb_desc);
+int smc_ism_write(struct smcd_dev *dev, const struct smc_ism_position *pos,
+		  void *data, size_t len);
+int smc_ism_signal_shutdown(struct smc_link_group *lgr);
+void smc_ism_get_system_eid(struct smcd_dev *dev, u8 **eid);
+u16 smc_ism_get_chid(struct smcd_dev *dev);
+bool smc_ism_is_v2_capable(void);
+void smc_ism_init(void);
+int smcd_nl_get_device(struct sk_buff *skb, struct netlink_callback *cb);
+#endif

@@ -1,184 +1,183 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright 2015 Maxime Ripard
  *
- * Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
+ * Maxime Ripard <maxime.ripard@free-electrons.com>
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/reset-controller.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
+#include <linux/clk-provider.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/of_address.h>
+#include <linux/reset-controller.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
 
-काष्ठा sun4i_a10_display_clk_data अणु
-	bool	has_भाग;
+struct sun4i_a10_display_clk_data {
+	bool	has_div;
 	u8	num_rst;
 	u8	parents;
 
 	u8	offset_en;
-	u8	offset_भाग;
+	u8	offset_div;
 	u8	offset_mux;
 	u8	offset_rst;
 
-	u8	width_भाग;
+	u8	width_div;
 	u8	width_mux;
 
 	u32	flags;
-पूर्ण;
+};
 
-काष्ठा reset_data अणु
-	व्योम __iomem			*reg;
+struct reset_data {
+	void __iomem			*reg;
 	spinlock_t			*lock;
-	काष्ठा reset_controller_dev	rcdev;
+	struct reset_controller_dev	rcdev;
 	u8				offset;
-पूर्ण;
+};
 
-अटल DEFINE_SPINLOCK(sun4i_a10_display_lock);
+static DEFINE_SPINLOCK(sun4i_a10_display_lock);
 
-अटल अंतरभूत काष्ठा reset_data *rcdev_to_reset_data(काष्ठा reset_controller_dev *rcdev)
-अणु
-	वापस container_of(rcdev, काष्ठा reset_data, rcdev);
-पूर्ण;
+static inline struct reset_data *rcdev_to_reset_data(struct reset_controller_dev *rcdev)
+{
+	return container_of(rcdev, struct reset_data, rcdev);
+};
 
-अटल पूर्णांक sun4i_a10_display_निश्चित(काष्ठा reset_controller_dev *rcdev,
-				    अचिन्हित दीर्घ id)
-अणु
-	काष्ठा reset_data *data = rcdev_to_reset_data(rcdev);
-	अचिन्हित दीर्घ flags;
+static int sun4i_a10_display_assert(struct reset_controller_dev *rcdev,
+				    unsigned long id)
+{
+	struct reset_data *data = rcdev_to_reset_data(rcdev);
+	unsigned long flags;
 	u32 reg;
 
 	spin_lock_irqsave(data->lock, flags);
 
-	reg = पढ़ोl(data->reg);
-	ग_लिखोl(reg & ~BIT(data->offset + id), data->reg);
+	reg = readl(data->reg);
+	writel(reg & ~BIT(data->offset + id), data->reg);
 
 	spin_unlock_irqrestore(data->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sun4i_a10_display_deनिश्चित(काष्ठा reset_controller_dev *rcdev,
-				      अचिन्हित दीर्घ id)
-अणु
-	काष्ठा reset_data *data = rcdev_to_reset_data(rcdev);
-	अचिन्हित दीर्घ flags;
+static int sun4i_a10_display_deassert(struct reset_controller_dev *rcdev,
+				      unsigned long id)
+{
+	struct reset_data *data = rcdev_to_reset_data(rcdev);
+	unsigned long flags;
 	u32 reg;
 
 	spin_lock_irqsave(data->lock, flags);
 
-	reg = पढ़ोl(data->reg);
-	ग_लिखोl(reg | BIT(data->offset + id), data->reg);
+	reg = readl(data->reg);
+	writel(reg | BIT(data->offset + id), data->reg);
 
 	spin_unlock_irqrestore(data->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sun4i_a10_display_status(काष्ठा reset_controller_dev *rcdev,
-				    अचिन्हित दीर्घ id)
-अणु
-	काष्ठा reset_data *data = rcdev_to_reset_data(rcdev);
+static int sun4i_a10_display_status(struct reset_controller_dev *rcdev,
+				    unsigned long id)
+{
+	struct reset_data *data = rcdev_to_reset_data(rcdev);
 
-	वापस !(पढ़ोl(data->reg) & BIT(data->offset + id));
-पूर्ण
+	return !(readl(data->reg) & BIT(data->offset + id));
+}
 
-अटल स्थिर काष्ठा reset_control_ops sun4i_a10_display_reset_ops = अणु
-	.निश्चित		= sun4i_a10_display_निश्चित,
-	.deनिश्चित	= sun4i_a10_display_deनिश्चित,
+static const struct reset_control_ops sun4i_a10_display_reset_ops = {
+	.assert		= sun4i_a10_display_assert,
+	.deassert	= sun4i_a10_display_deassert,
 	.status		= sun4i_a10_display_status,
-पूर्ण;
+};
 
-अटल पूर्णांक sun4i_a10_display_reset_xlate(काष्ठा reset_controller_dev *rcdev,
-					 स्थिर काष्ठा of_phandle_args *spec)
-अणु
-	/* We only have a single reset संकेत */
-	वापस 0;
-पूर्ण
+static int sun4i_a10_display_reset_xlate(struct reset_controller_dev *rcdev,
+					 const struct of_phandle_args *spec)
+{
+	/* We only have a single reset signal */
+	return 0;
+}
 
-अटल व्योम __init sun4i_a10_display_init(काष्ठा device_node *node,
-					  स्थिर काष्ठा sun4i_a10_display_clk_data *data)
-अणु
-	स्थिर अक्षर *parents[4];
-	स्थिर अक्षर *clk_name = node->name;
-	काष्ठा reset_data *reset_data;
-	काष्ठा clk_भागider *भाग = शून्य;
-	काष्ठा clk_gate *gate;
-	काष्ठा resource res;
-	काष्ठा clk_mux *mux;
-	व्योम __iomem *reg;
-	काष्ठा clk *clk;
-	पूर्णांक ret;
+static void __init sun4i_a10_display_init(struct device_node *node,
+					  const struct sun4i_a10_display_clk_data *data)
+{
+	const char *parents[4];
+	const char *clk_name = node->name;
+	struct reset_data *reset_data;
+	struct clk_divider *div = NULL;
+	struct clk_gate *gate;
+	struct resource res;
+	struct clk_mux *mux;
+	void __iomem *reg;
+	struct clk *clk;
+	int ret;
 
-	of_property_पढ़ो_string(node, "clock-output-names", &clk_name);
+	of_property_read_string(node, "clock-output-names", &clk_name);
 
 	reg = of_io_request_and_map(node, 0, of_node_full_name(node));
-	अगर (IS_ERR(reg)) अणु
+	if (IS_ERR(reg)) {
 		pr_err("%s: Could not map the clock registers\n", clk_name);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	ret = of_clk_parent_fill(node, parents, data->parents);
-	अगर (ret != data->parents) अणु
+	if (ret != data->parents) {
 		pr_err("%s: Could not retrieve the parents\n", clk_name);
-		जाओ unmap;
-	पूर्ण
+		goto unmap;
+	}
 
-	mux = kzalloc(माप(*mux), GFP_KERNEL);
-	अगर (!mux)
-		जाओ unmap;
+	mux = kzalloc(sizeof(*mux), GFP_KERNEL);
+	if (!mux)
+		goto unmap;
 
 	mux->reg = reg;
-	mux->shअगरt = data->offset_mux;
+	mux->shift = data->offset_mux;
 	mux->mask = (1 << data->width_mux) - 1;
 	mux->lock = &sun4i_a10_display_lock;
 
-	gate = kzalloc(माप(*gate), GFP_KERNEL);
-	अगर (!gate)
-		जाओ मुक्त_mux;
+	gate = kzalloc(sizeof(*gate), GFP_KERNEL);
+	if (!gate)
+		goto free_mux;
 
 	gate->reg = reg;
 	gate->bit_idx = data->offset_en;
 	gate->lock = &sun4i_a10_display_lock;
 
-	अगर (data->has_भाग) अणु
-		भाग = kzalloc(माप(*भाग), GFP_KERNEL);
-		अगर (!भाग)
-			जाओ मुक्त_gate;
+	if (data->has_div) {
+		div = kzalloc(sizeof(*div), GFP_KERNEL);
+		if (!div)
+			goto free_gate;
 
-		भाग->reg = reg;
-		भाग->shअगरt = data->offset_भाग;
-		भाग->width = data->width_भाग;
-		भाग->lock = &sun4i_a10_display_lock;
-	पूर्ण
+		div->reg = reg;
+		div->shift = data->offset_div;
+		div->width = data->width_div;
+		div->lock = &sun4i_a10_display_lock;
+	}
 
-	clk = clk_रेजिस्टर_composite(शून्य, clk_name,
+	clk = clk_register_composite(NULL, clk_name,
 				     parents, data->parents,
 				     &mux->hw, &clk_mux_ops,
-				     data->has_भाग ? &भाग->hw : शून्य,
-				     data->has_भाग ? &clk_भागider_ops : शून्य,
+				     data->has_div ? &div->hw : NULL,
+				     data->has_div ? &clk_divider_ops : NULL,
 				     &gate->hw, &clk_gate_ops,
 				     data->flags);
-	अगर (IS_ERR(clk)) अणु
+	if (IS_ERR(clk)) {
 		pr_err("%s: Couldn't register the clock\n", clk_name);
-		जाओ मुक्त_भाग;
-	पूर्ण
+		goto free_div;
+	}
 
 	ret = of_clk_add_provider(node, of_clk_src_simple_get, clk);
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("%s: Couldn't register DT provider\n", clk_name);
-		जाओ मुक्त_clk;
-	पूर्ण
+		goto free_clk;
+	}
 
-	अगर (!data->num_rst)
-		वापस;
+	if (!data->num_rst)
+		return;
 
-	reset_data = kzalloc(माप(*reset_data), GFP_KERNEL);
-	अगर (!reset_data)
-		जाओ मुक्त_of_clk;
+	reset_data = kzalloc(sizeof(*reset_data), GFP_KERNEL);
+	if (!reset_data)
+		goto free_of_clk;
 
 	reset_data->reg = reg;
 	reset_data->offset = data->offset_rst;
@@ -187,40 +186,40 @@
 	reset_data->rcdev.ops = &sun4i_a10_display_reset_ops;
 	reset_data->rcdev.of_node = node;
 
-	अगर (data->num_rst == 1) अणु
+	if (data->num_rst == 1) {
 		reset_data->rcdev.of_reset_n_cells = 0;
 		reset_data->rcdev.of_xlate = &sun4i_a10_display_reset_xlate;
-	पूर्ण अन्यथा अणु
+	} else {
 		reset_data->rcdev.of_reset_n_cells = 1;
-	पूर्ण
+	}
 
-	अगर (reset_controller_रेजिस्टर(&reset_data->rcdev)) अणु
+	if (reset_controller_register(&reset_data->rcdev)) {
 		pr_err("%s: Couldn't register the reset controller\n",
 		       clk_name);
-		जाओ मुक्त_reset;
-	पूर्ण
+		goto free_reset;
+	}
 
-	वापस;
+	return;
 
-मुक्त_reset:
-	kमुक्त(reset_data);
-मुक्त_of_clk:
+free_reset:
+	kfree(reset_data);
+free_of_clk:
 	of_clk_del_provider(node);
-मुक्त_clk:
-	clk_unरेजिस्टर_composite(clk);
-मुक्त_भाग:
-	kमुक्त(भाग);
-मुक्त_gate:
-	kमुक्त(gate);
-मुक्त_mux:
-	kमुक्त(mux);
+free_clk:
+	clk_unregister_composite(clk);
+free_div:
+	kfree(div);
+free_gate:
+	kfree(gate);
+free_mux:
+	kfree(mux);
 unmap:
 	iounmap(reg);
 	of_address_to_resource(node, 0, &res);
 	release_mem_region(res.start, resource_size(&res));
-पूर्ण
+}
 
-अटल स्थिर काष्ठा sun4i_a10_display_clk_data sun4i_a10_tcon_ch0_data __initस्थिर = अणु
+static const struct sun4i_a10_display_clk_data sun4i_a10_tcon_ch0_data __initconst = {
 	.num_rst	= 2,
 	.parents	= 4,
 	.offset_en	= 31,
@@ -228,30 +227,30 @@ unmap:
 	.offset_mux	= 24,
 	.width_mux	= 2,
 	.flags		= CLK_SET_RATE_PARENT,
-पूर्ण;
+};
 
-अटल व्योम __init sun4i_a10_tcon_ch0_setup(काष्ठा device_node *node)
-अणु
+static void __init sun4i_a10_tcon_ch0_setup(struct device_node *node)
+{
 	sun4i_a10_display_init(node, &sun4i_a10_tcon_ch0_data);
-पूर्ण
+}
 CLK_OF_DECLARE(sun4i_a10_tcon_ch0, "allwinner,sun4i-a10-tcon-ch0-clk",
 	       sun4i_a10_tcon_ch0_setup);
 
-अटल स्थिर काष्ठा sun4i_a10_display_clk_data sun4i_a10_display_data __initस्थिर = अणु
-	.has_भाग	= true,
+static const struct sun4i_a10_display_clk_data sun4i_a10_display_data __initconst = {
+	.has_div	= true,
 	.num_rst	= 1,
 	.parents	= 3,
 	.offset_en	= 31,
 	.offset_rst	= 30,
 	.offset_mux	= 24,
-	.offset_भाग	= 0,
+	.offset_div	= 0,
 	.width_mux	= 2,
-	.width_भाग	= 4,
-पूर्ण;
+	.width_div	= 4,
+};
 
-अटल व्योम __init sun4i_a10_display_setup(काष्ठा device_node *node)
-अणु
+static void __init sun4i_a10_display_setup(struct device_node *node)
+{
 	sun4i_a10_display_init(node, &sun4i_a10_display_data);
-पूर्ण
+}
 CLK_OF_DECLARE(sun4i_a10_display, "allwinner,sun4i-a10-display-clk",
 	       sun4i_a10_display_setup);

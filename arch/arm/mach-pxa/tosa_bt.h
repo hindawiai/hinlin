@@ -1,19 +1,18 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Tosa bluetooth built-in chip control.
  *
- * Later it may be shared with some other platक्रमms.
+ * Later it may be shared with some other platforms.
  *
  * Copyright (c) 2008 Dmitry Baryshkov
  */
-#अगर_अघोषित TOSA_BT_H
-#घोषणा TOSA_BT_H
+#ifndef TOSA_BT_H
+#define TOSA_BT_H
 
-काष्ठा tosa_bt_data अणु
-	पूर्णांक gpio_pwr;
-	पूर्णांक gpio_reset;
-पूर्ण;
+struct tosa_bt_data {
+	int gpio_pwr;
+	int gpio_reset;
+};
 
-#पूर्ण_अगर
+#endif
 

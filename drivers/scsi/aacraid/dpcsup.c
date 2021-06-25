@@ -1,11 +1,10 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *	Adaptec AAC series RAID controller driver
  *	(c) Copyright 2001 Red Hat Inc.
  *
  * based on the old aacraid driver that is..
- * Adaptec aacraid device driver क्रम Linux.
+ * Adaptec aacraid device driver for Linux.
  *
  * Copyright (c) 2000-2010 Adaptec, Inc.
  *               2010-2015 PMC-Sierra, Inc. (aacraid@pmc-sierra.com)
@@ -14,109 +13,109 @@
  * Module Name:
  *  dpcsup.c
  *
- * Abstract: All DPC processing routines क्रम the cyclone board occur here.
+ * Abstract: All DPC processing routines for the cyclone board occur here.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/types.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/blkdev.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/types.h>
+#include <linux/spinlock.h>
+#include <linux/slab.h>
+#include <linux/completion.h>
+#include <linux/blkdev.h>
 
-#समावेश "aacraid.h"
+#include "aacraid.h"
 
 /**
  *	aac_response_normal	-	Handle command replies
- *	@q: Queue to पढ़ो from
+ *	@q: Queue to read from
  *
- *	This DPC routine will be run when the adapter पूर्णांकerrupts us to let us
+ *	This DPC routine will be run when the adapter interrupts us to let us
  *	know there is a response on our normal priority queue. We will pull off
- *	all QE there are and wake up all the रुकोers beक्रमe निकासing. We will
- *	take a spinlock out on the queue beक्रमe operating on it.
+ *	all QE there are and wake up all the waiters before exiting. We will
+ *	take a spinlock out on the queue before operating on it.
  */
 
-अचिन्हित पूर्णांक aac_response_normal(काष्ठा aac_queue * q)
-अणु
-	काष्ठा aac_dev * dev = q->dev;
-	काष्ठा aac_entry *entry;
-	काष्ठा hw_fib * hwfib;
-	काष्ठा fib * fib;
-	पूर्णांक consumed = 0;
-	अचिन्हित दीर्घ flags, mflags;
+unsigned int aac_response_normal(struct aac_queue * q)
+{
+	struct aac_dev * dev = q->dev;
+	struct aac_entry *entry;
+	struct hw_fib * hwfib;
+	struct fib * fib;
+	int consumed = 0;
+	unsigned long flags, mflags;
 
 	spin_lock_irqsave(q->lock, flags);
 	/*
 	 *	Keep pulling response QEs off the response queue and waking
-	 *	up the रुकोers until there are no more QEs. We then वापस
-	 *	back to the प्रणाली. If no response was requested we just
-	 *	deallocate the Fib here and जारी.
+	 *	up the waiters until there are no more QEs. We then return
+	 *	back to the system. If no response was requested we just
+	 *	deallocate the Fib here and continue.
 	 */
-	जबतक(aac_consumer_get(dev, q, &entry))
-	अणु
-		पूर्णांक fast;
+	while(aac_consumer_get(dev, q, &entry))
+	{
+		int fast;
 		u32 index = le32_to_cpu(entry->addr);
 		fast = index & 0x01;
 		fib = &dev->fibs[index >> 2];
 		hwfib = fib->hw_fib_va;
 		
-		aac_consumer_मुक्त(dev, q, HostNormRespQueue);
+		aac_consumer_free(dev, q, HostNormRespQueue);
 		/*
 		 *	Remove this fib from the Outstanding I/O queue.
-		 *	But only अगर it has not alपढ़ोy been समयd out.
+		 *	But only if it has not already been timed out.
 		 *
-		 *	If the fib has been समयd out alपढ़ोy, then just 
-		 *	जारी. The caller has alपढ़ोy been notअगरied that
-		 *	the fib समयd out.
+		 *	If the fib has been timed out already, then just 
+		 *	continue. The caller has already been notified that
+		 *	the fib timed out.
 		 */
 		atomic_dec(&dev->queues->queue[AdapNormCmdQueue].numpending);
 
-		अगर (unlikely(fib->flags & FIB_CONTEXT_FLAG_TIMED_OUT)) अणु
+		if (unlikely(fib->flags & FIB_CONTEXT_FLAG_TIMED_OUT)) {
 			spin_unlock_irqrestore(q->lock, flags);
 			aac_fib_complete(fib);
-			aac_fib_मुक्त(fib);
+			aac_fib_free(fib);
 			spin_lock_irqsave(q->lock, flags);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		spin_unlock_irqrestore(q->lock, flags);
 
-		अगर (fast) अणु
+		if (fast) {
 			/*
 			 *	Doctor the fib
 			 */
 			*(__le32 *)hwfib->data = cpu_to_le32(ST_OK);
 			hwfib->header.XferState |= cpu_to_le32(AdapterProcessed);
 			fib->flags |= FIB_CONTEXT_FLAG_FASTRESP;
-		पूर्ण
+		}
 
 		FIB_COUNTER_INCREMENT(aac_config.FibRecved);
 
-		अगर (hwfib->header.Command == cpu_to_le16(NuFileSystem))
-		अणु
+		if (hwfib->header.Command == cpu_to_le16(NuFileSystem))
+		{
 			__le32 *pstatus = (__le32 *)hwfib->data;
-			अगर (*pstatus & cpu_to_le32(0xffff0000))
+			if (*pstatus & cpu_to_le32(0xffff0000))
 				*pstatus = cpu_to_le32(ST_OK);
-		पूर्ण
-		अगर (hwfib->header.XferState & cpu_to_le32(NoResponseExpected | Async)) 
-		अणु
-			अगर (hwfib->header.XferState & cpu_to_le32(NoResponseExpected)) अणु
+		}
+		if (hwfib->header.XferState & cpu_to_le32(NoResponseExpected | Async)) 
+		{
+			if (hwfib->header.XferState & cpu_to_le32(NoResponseExpected)) {
 				FIB_COUNTER_INCREMENT(aac_config.NoResponseRecved);
-			पूर्ण अन्यथा अणु
+			} else {
 				FIB_COUNTER_INCREMENT(aac_config.AsyncRecved);
-			पूर्ण
+			}
 			/*
 			 *	NOTE:  we cannot touch the fib after this
 			 *	    call, because it may have been deallocated.
 			 */
 			fib->callback(fib->callback_data, fib);
-		पूर्ण अन्यथा अणु
-			अचिन्हित दीर्घ flagv;
+		} else {
+			unsigned long flagv;
 			spin_lock_irqsave(&fib->event_lock, flagv);
-			अगर (!fib->करोne) अणु
-				fib->करोne = 1;
-				complete(&fib->event_रुको);
-			पूर्ण
+			if (!fib->done) {
+				fib->done = 1;
+				complete(&fib->event_wait);
+			}
 			spin_unlock_irqrestore(&fib->event_lock, flagv);
 
 			spin_lock_irqsave(&dev->manage_lock, mflags);
@@ -124,254 +123,254 @@
 			spin_unlock_irqrestore(&dev->manage_lock, mflags);
 
 			FIB_COUNTER_INCREMENT(aac_config.NormalRecved);
-			अगर (fib->करोne == 2) अणु
+			if (fib->done == 2) {
 				spin_lock_irqsave(&fib->event_lock, flagv);
-				fib->करोne = 0;
+				fib->done = 0;
 				spin_unlock_irqrestore(&fib->event_lock, flagv);
 				aac_fib_complete(fib);
-				aac_fib_मुक्त(fib);
-			पूर्ण
-		पूर्ण
+				aac_fib_free(fib);
+			}
+		}
 		consumed++;
 		spin_lock_irqsave(q->lock, flags);
-	पूर्ण
+	}
 
-	अगर (consumed > aac_config.peak_fibs)
+	if (consumed > aac_config.peak_fibs)
 		aac_config.peak_fibs = consumed;
-	अगर (consumed == 0) 
+	if (consumed == 0) 
 		aac_config.zero_fibs++;
 
 	spin_unlock_irqrestore(q->lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /**
  *	aac_command_normal	-	handle commands
  *	@q: queue to process
  *
- *	This DPC routine will be queued when the adapter पूर्णांकerrupts us to 
+ *	This DPC routine will be queued when the adapter interrupts us to 
  *	let us know there is a command on our normal priority queue. We will 
- *	pull off all QE there are and wake up all the रुकोers beक्रमe निकासing.
- *	We will take a spinlock out on the queue beक्रमe operating on it.
+ *	pull off all QE there are and wake up all the waiters before exiting.
+ *	We will take a spinlock out on the queue before operating on it.
  */
  
-अचिन्हित पूर्णांक aac_command_normal(काष्ठा aac_queue *q)
-अणु
-	काष्ठा aac_dev * dev = q->dev;
-	काष्ठा aac_entry *entry;
-	अचिन्हित दीर्घ flags;
+unsigned int aac_command_normal(struct aac_queue *q)
+{
+	struct aac_dev * dev = q->dev;
+	struct aac_entry *entry;
+	unsigned long flags;
 
 	spin_lock_irqsave(q->lock, flags);
 
 	/*
 	 *	Keep pulling response QEs off the response queue and waking
-	 *	up the रुकोers until there are no more QEs. We then वापस
-	 *	back to the प्रणाली.
+	 *	up the waiters until there are no more QEs. We then return
+	 *	back to the system.
 	 */
-	जबतक(aac_consumer_get(dev, q, &entry))
-	अणु
-		काष्ठा fib fibctx;
-		काष्ठा hw_fib * hw_fib;
+	while(aac_consumer_get(dev, q, &entry))
+	{
+		struct fib fibctx;
+		struct hw_fib * hw_fib;
 		u32 index;
-		काष्ठा fib *fib = &fibctx;
+		struct fib *fib = &fibctx;
 		
-		index = le32_to_cpu(entry->addr) / माप(काष्ठा hw_fib);
-		hw_fib = &dev->aअगर_base_va[index];
+		index = le32_to_cpu(entry->addr) / sizeof(struct hw_fib);
+		hw_fib = &dev->aif_base_va[index];
 		
 		/*
 		 *	Allocate a FIB at all costs. For non queued stuff
 		 *	we can just use the stack so we are happy. We need
 		 *	a fib object in order to manage the linked lists
 		 */
-		अगर (dev->aअगर_thपढ़ो)
-			अगर((fib = kदो_स्मृति(माप(काष्ठा fib), GFP_ATOMIC)) == शून्य)
+		if (dev->aif_thread)
+			if((fib = kmalloc(sizeof(struct fib), GFP_ATOMIC)) == NULL)
 				fib = &fibctx;
 		
-		स_रखो(fib, 0, माप(काष्ठा fib));
+		memset(fib, 0, sizeof(struct fib));
 		INIT_LIST_HEAD(&fib->fiblink);
 		fib->type = FSAFS_NTC_FIB_CONTEXT;
-		fib->size = माप(काष्ठा fib);
+		fib->size = sizeof(struct fib);
 		fib->hw_fib_va = hw_fib;
 		fib->data = hw_fib->data;
 		fib->dev = dev;
 		
 				
-		अगर (dev->aअगर_thपढ़ो && fib != &fibctx) अणु
+		if (dev->aif_thread && fib != &fibctx) {
 		        list_add_tail(&fib->fiblink, &q->cmdq);
-	 	        aac_consumer_मुक्त(dev, q, HostNormCmdQueue);
-		        wake_up_पूर्णांकerruptible(&q->cmdपढ़ोy);
-		पूर्ण अन्यथा अणु
-	 	        aac_consumer_मुक्त(dev, q, HostNormCmdQueue);
+	 	        aac_consumer_free(dev, q, HostNormCmdQueue);
+		        wake_up_interruptible(&q->cmdready);
+		} else {
+	 	        aac_consumer_free(dev, q, HostNormCmdQueue);
 			spin_unlock_irqrestore(q->lock, flags);
 			/*
 			 *	Set the status of this FIB
 			 */
 			*(__le32 *)hw_fib->data = cpu_to_le32(ST_OK);
-			aac_fib_adapter_complete(fib, माप(u32));
+			aac_fib_adapter_complete(fib, sizeof(u32));
 			spin_lock_irqsave(q->lock, flags);
-		पूर्ण		
-	पूर्ण
+		}		
+	}
 	spin_unlock_irqrestore(q->lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  *
- * aac_aअगर_callback
+ * aac_aif_callback
  * @context: the context set in the fib - here it is scsi cmd
- * @fibptr: poपूर्णांकer to the fib
+ * @fibptr: pointer to the fib
  *
  * Handles the AIFs - new method (SRC)
  *
  */
 
-अटल व्योम aac_aअगर_callback(व्योम *context, काष्ठा fib * fibptr)
-अणु
-	काष्ठा fib *fibctx;
-	काष्ठा aac_dev *dev;
-	काष्ठा aac_aअगरcmd *cmd;
+static void aac_aif_callback(void *context, struct fib * fibptr)
+{
+	struct fib *fibctx;
+	struct aac_dev *dev;
+	struct aac_aifcmd *cmd;
 
-	fibctx = (काष्ठा fib *)context;
-	BUG_ON(fibptr == शून्य);
+	fibctx = (struct fib *)context;
+	BUG_ON(fibptr == NULL);
 	dev = fibptr->dev;
 
-	अगर ((fibptr->hw_fib_va->header.XferState &
-	    cpu_to_le32(NoMoreAअगरDataAvailable)) ||
-		dev->sa_firmware) अणु
+	if ((fibptr->hw_fib_va->header.XferState &
+	    cpu_to_le32(NoMoreAifDataAvailable)) ||
+		dev->sa_firmware) {
 		aac_fib_complete(fibptr);
-		aac_fib_मुक्त(fibptr);
-		वापस;
-	पूर्ण
+		aac_fib_free(fibptr);
+		return;
+	}
 
-	aac_पूर्णांकr_normal(dev, 0, 1, 0, fibptr->hw_fib_va);
+	aac_intr_normal(dev, 0, 1, 0, fibptr->hw_fib_va);
 
 	aac_fib_init(fibctx);
-	cmd = (काष्ठा aac_aअगरcmd *) fib_data(fibctx);
-	cmd->command = cpu_to_le32(AअगरReqEvent);
+	cmd = (struct aac_aifcmd *) fib_data(fibctx);
+	cmd->command = cpu_to_le32(AifReqEvent);
 
-	aac_fib_send(AअगरRequest,
+	aac_fib_send(AifRequest,
 		fibctx,
-		माप(काष्ठा hw_fib)-माप(काष्ठा aac_fibhdr),
+		sizeof(struct hw_fib)-sizeof(struct aac_fibhdr),
 		FsaNormal,
 		0, 1,
-		(fib_callback)aac_aअगर_callback, fibctx);
-पूर्ण
+		(fib_callback)aac_aif_callback, fibctx);
+}
 
 
 /*
- *	aac_पूर्णांकr_normal	-	Handle command replies
+ *	aac_intr_normal	-	Handle command replies
  *	@dev: Device
  *	@index: completion reference
  *
- *	This DPC routine will be run when the adapter पूर्णांकerrupts us to let us
+ *	This DPC routine will be run when the adapter interrupts us to let us
  *	know there is a response on our normal priority queue. We will pull off
- *	all QE there are and wake up all the रुकोers beक्रमe निकासing.
+ *	all QE there are and wake up all the waiters before exiting.
  */
-अचिन्हित पूर्णांक aac_पूर्णांकr_normal(काष्ठा aac_dev *dev, u32 index, पूर्णांक isAअगर,
-	पूर्णांक isFastResponse, काष्ठा hw_fib *aअगर_fib)
-अणु
-	अचिन्हित दीर्घ mflags;
-	dprपूर्णांकk((KERN_INFO "aac_intr_normal(%p,%x)\n", dev, index));
-	अगर (isAअगर == 1) अणु	/* AIF - common */
-		काष्ठा hw_fib * hw_fib;
-		काष्ठा fib * fib;
-		काष्ठा aac_queue *q = &dev->queues->queue[HostNormCmdQueue];
-		अचिन्हित दीर्घ flags;
+unsigned int aac_intr_normal(struct aac_dev *dev, u32 index, int isAif,
+	int isFastResponse, struct hw_fib *aif_fib)
+{
+	unsigned long mflags;
+	dprintk((KERN_INFO "aac_intr_normal(%p,%x)\n", dev, index));
+	if (isAif == 1) {	/* AIF - common */
+		struct hw_fib * hw_fib;
+		struct fib * fib;
+		struct aac_queue *q = &dev->queues->queue[HostNormCmdQueue];
+		unsigned long flags;
 
 		/*
 		 *	Allocate a FIB. For non queued stuff we can just use
 		 * the stack so we are happy. We need a fib object in order to
 		 * manage the linked lists.
 		 */
-		अगर ((!dev->aअगर_thपढ़ो)
-		 || (!(fib = kzalloc(माप(काष्ठा fib),GFP_ATOMIC))))
-			वापस 1;
-		अगर (!(hw_fib = kzalloc(माप(काष्ठा hw_fib),GFP_ATOMIC))) अणु
-			kमुक्त (fib);
-			वापस 1;
-		पूर्ण
-		अगर (dev->sa_firmware) अणु
+		if ((!dev->aif_thread)
+		 || (!(fib = kzalloc(sizeof(struct fib),GFP_ATOMIC))))
+			return 1;
+		if (!(hw_fib = kzalloc(sizeof(struct hw_fib),GFP_ATOMIC))) {
+			kfree (fib);
+			return 1;
+		}
+		if (dev->sa_firmware) {
 			fib->hbacmd_size = index;	/* store event type */
-		पूर्ण अन्यथा अगर (aअगर_fib != शून्य) अणु
-			स_नकल(hw_fib, aअगर_fib, माप(काष्ठा hw_fib));
-		पूर्ण अन्यथा अणु
-			स_नकल(hw_fib, (काष्ठा hw_fib *)
-				(((uपूर्णांकptr_t)(dev->regs.sa)) + index),
-				माप(काष्ठा hw_fib));
-		पूर्ण
+		} else if (aif_fib != NULL) {
+			memcpy(hw_fib, aif_fib, sizeof(struct hw_fib));
+		} else {
+			memcpy(hw_fib, (struct hw_fib *)
+				(((uintptr_t)(dev->regs.sa)) + index),
+				sizeof(struct hw_fib));
+		}
 		INIT_LIST_HEAD(&fib->fiblink);
 		fib->type = FSAFS_NTC_FIB_CONTEXT;
-		fib->size = माप(काष्ठा fib);
+		fib->size = sizeof(struct fib);
 		fib->hw_fib_va = hw_fib;
 		fib->data = hw_fib->data;
 		fib->dev = dev;
 	
 		spin_lock_irqsave(q->lock, flags);
 		list_add_tail(&fib->fiblink, &q->cmdq);
-	        wake_up_पूर्णांकerruptible(&q->cmdपढ़ोy);
+	        wake_up_interruptible(&q->cmdready);
 		spin_unlock_irqrestore(q->lock, flags);
-		वापस 1;
-	पूर्ण अन्यथा अगर (isAअगर == 2) अणु	/* AIF - new (SRC) */
-		काष्ठा fib *fibctx;
-		काष्ठा aac_aअगरcmd *cmd;
+		return 1;
+	} else if (isAif == 2) {	/* AIF - new (SRC) */
+		struct fib *fibctx;
+		struct aac_aifcmd *cmd;
 
 		fibctx = aac_fib_alloc(dev);
-		अगर (!fibctx)
-			वापस 1;
+		if (!fibctx)
+			return 1;
 		aac_fib_init(fibctx);
 
-		cmd = (काष्ठा aac_aअगरcmd *) fib_data(fibctx);
-		cmd->command = cpu_to_le32(AअगरReqEvent);
+		cmd = (struct aac_aifcmd *) fib_data(fibctx);
+		cmd->command = cpu_to_le32(AifReqEvent);
 
-		वापस aac_fib_send(AअगरRequest,
+		return aac_fib_send(AifRequest,
 			fibctx,
-			माप(काष्ठा hw_fib)-माप(काष्ठा aac_fibhdr),
+			sizeof(struct hw_fib)-sizeof(struct aac_fibhdr),
 			FsaNormal,
 			0, 1,
-			(fib_callback)aac_aअगर_callback, fibctx);
-	पूर्ण अन्यथा अणु
-		काष्ठा fib *fib = &dev->fibs[index];
-		पूर्णांक start_callback = 0;
+			(fib_callback)aac_aif_callback, fibctx);
+	} else {
+		struct fib *fib = &dev->fibs[index];
+		int start_callback = 0;
 
 		/*
 		 *	Remove this fib from the Outstanding I/O queue.
-		 *	But only अगर it has not alपढ़ोy been समयd out.
+		 *	But only if it has not already been timed out.
 		 *
-		 *	If the fib has been समयd out alपढ़ोy, then just 
-		 *	जारी. The caller has alपढ़ोy been notअगरied that
-		 *	the fib समयd out.
+		 *	If the fib has been timed out already, then just 
+		 *	continue. The caller has already been notified that
+		 *	the fib timed out.
 		 */
 		atomic_dec(&dev->queues->queue[AdapNormCmdQueue].numpending);
 
-		अगर (unlikely(fib->flags & FIB_CONTEXT_FLAG_TIMED_OUT)) अणु
+		if (unlikely(fib->flags & FIB_CONTEXT_FLAG_TIMED_OUT)) {
 			aac_fib_complete(fib);
-			aac_fib_मुक्त(fib);
-			वापस 0;
-		पूर्ण
+			aac_fib_free(fib);
+			return 0;
+		}
 
 		FIB_COUNTER_INCREMENT(aac_config.FibRecved);
 
-		अगर (fib->flags & FIB_CONTEXT_FLAG_NATIVE_HBA) अणु
+		if (fib->flags & FIB_CONTEXT_FLAG_NATIVE_HBA) {
 
-			अगर (isFastResponse)
+			if (isFastResponse)
 				fib->flags |= FIB_CONTEXT_FLAG_FASTRESP;
 
-			अगर (fib->callback) अणु
+			if (fib->callback) {
 				start_callback = 1;
-			पूर्ण अन्यथा अणु
-				अचिन्हित दीर्घ flagv;
-				पूर्णांक completed = 0;
+			} else {
+				unsigned long flagv;
+				int completed = 0;
 
-				dprपूर्णांकk((KERN_INFO "event_wait up\n"));
+				dprintk((KERN_INFO "event_wait up\n"));
 				spin_lock_irqsave(&fib->event_lock, flagv);
-				अगर (fib->करोne == 2) अणु
-					fib->करोne = 1;
+				if (fib->done == 2) {
+					fib->done = 1;
 					completed = 1;
-				पूर्ण अन्यथा अणु
-					fib->करोne = 1;
-					complete(&fib->event_रुको);
-				पूर्ण
+				} else {
+					fib->done = 1;
+					complete(&fib->event_wait);
+				}
 				spin_unlock_irqrestore(&fib->event_lock, flagv);
 
 				spin_lock_irqsave(&dev->manage_lock, mflags);
@@ -380,51 +379,51 @@
 					mflags);
 
 				FIB_COUNTER_INCREMENT(aac_config.NativeRecved);
-				अगर (completed)
+				if (completed)
 					aac_fib_complete(fib);
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			काष्ठा hw_fib *hwfib = fib->hw_fib_va;
+			}
+		} else {
+			struct hw_fib *hwfib = fib->hw_fib_va;
 
-			अगर (isFastResponse) अणु
+			if (isFastResponse) {
 				/* Doctor the fib */
 				*(__le32 *)hwfib->data = cpu_to_le32(ST_OK);
 				hwfib->header.XferState |=
 					cpu_to_le32(AdapterProcessed);
 				fib->flags |= FIB_CONTEXT_FLAG_FASTRESP;
-			पूर्ण
+			}
 
-			अगर (hwfib->header.Command ==
-				cpu_to_le16(NuFileSystem)) अणु
+			if (hwfib->header.Command ==
+				cpu_to_le16(NuFileSystem)) {
 				__le32 *pstatus = (__le32 *)hwfib->data;
 
-				अगर (*pstatus & cpu_to_le32(0xffff0000))
+				if (*pstatus & cpu_to_le32(0xffff0000))
 					*pstatus = cpu_to_le32(ST_OK);
-			पूर्ण
-			अगर (hwfib->header.XferState &
-				cpu_to_le32(NoResponseExpected | Async)) अणु
-				अगर (hwfib->header.XferState & cpu_to_le32(
-					NoResponseExpected)) अणु
+			}
+			if (hwfib->header.XferState &
+				cpu_to_le32(NoResponseExpected | Async)) {
+				if (hwfib->header.XferState & cpu_to_le32(
+					NoResponseExpected)) {
 					FIB_COUNTER_INCREMENT(
 						aac_config.NoResponseRecved);
-				पूर्ण अन्यथा अणु
+				} else {
 					FIB_COUNTER_INCREMENT(
 						aac_config.AsyncRecved);
-				पूर्ण
+				}
 				start_callback = 1;
-			पूर्ण अन्यथा अणु
-				अचिन्हित दीर्घ flagv;
-				पूर्णांक completed = 0;
+			} else {
+				unsigned long flagv;
+				int completed = 0;
 
-				dprपूर्णांकk((KERN_INFO "event_wait up\n"));
+				dprintk((KERN_INFO "event_wait up\n"));
 				spin_lock_irqsave(&fib->event_lock, flagv);
-				अगर (fib->करोne == 2) अणु
-					fib->करोne = 1;
+				if (fib->done == 2) {
+					fib->done = 1;
 					completed = 1;
-				पूर्ण अन्यथा अणु
-					fib->करोne = 1;
-					complete(&fib->event_रुको);
-				पूर्ण
+				} else {
+					fib->done = 1;
+					complete(&fib->event_wait);
+				}
 				spin_unlock_irqrestore(&fib->event_lock, flagv);
 
 				spin_lock_irqsave(&dev->manage_lock, mflags);
@@ -433,25 +432,25 @@
 					mflags);
 
 				FIB_COUNTER_INCREMENT(aac_config.NormalRecved);
-				अगर (completed)
+				if (completed)
 					aac_fib_complete(fib);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 
-		अगर (start_callback) अणु
+		if (start_callback) {
 			/*
 			 * NOTE:  we cannot touch the fib after this
 			 *  call, because it may have been deallocated.
 			 */
-			अगर (likely(fib->callback && fib->callback_data)) अणु
+			if (likely(fib->callback && fib->callback_data)) {
 				fib->callback(fib->callback_data, fib);
-			पूर्ण अन्यथा अणु
+			} else {
 				aac_fib_complete(fib);
-				aac_fib_मुक्त(fib);
-			पूर्ण
+				aac_fib_free(fib);
+			}
 
-		पूर्ण
-		वापस 0;
-	पूर्ण
-पूर्ण
+		}
+		return 0;
+	}
+}

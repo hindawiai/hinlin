@@ -1,18 +1,17 @@
-<शैली गुरु>
-/* valid adjसमयx test
+/* valid adjtimex test
  *              by: John Stultz <john.stultz@linaro.org>
  *              (C) Copyright Linaro 2015
  *              Licensed under the GPLv2
  *
- *  This test validates adjसमयx पूर्णांकerface with valid
+ *  This test validates adjtimex interface with valid
  *  and invalid test data.
  *
- *  Usage: valid-adjसमयx
+ *  Usage: valid-adjtimex
  *
  *  To build:
- *	$ gcc valid-adjसमयx.c -o valid-adjसमयx -lrt
+ *	$ gcc valid-adjtimex.c -o valid-adjtimex -lrt
  *
- *   This program is मुक्त software: you can redistribute it and/or modअगरy
+ *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
  *   the Free Software Foundation, either version 2 of the License, or
  *   (at your option) any later version.
@@ -20,50 +19,50 @@
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License क्रम more details.
+ *   GNU General Public License for more details.
  */
 
 
 
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <समय.स>
-#समावेश <sys/समय.स>
-#समावेश <sys/समयx.h>
-#समावेश <माला.स>
-#समावेश <संकेत.स>
-#समावेश <unistd.h>
-#समावेश "../kselftest.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <sys/time.h>
+#include <sys/timex.h>
+#include <string.h>
+#include <signal.h>
+#include <unistd.h>
+#include "../kselftest.h"
 
-#घोषणा NSEC_PER_SEC 1000000000LL
-#घोषणा USEC_PER_SEC 1000000LL
+#define NSEC_PER_SEC 1000000000LL
+#define USEC_PER_SEC 1000000LL
 
-#घोषणा ADJ_SETOFFSET 0x0100
+#define ADJ_SETOFFSET 0x0100
 
-#समावेश <sys/syscall.h>
-अटल पूर्णांक घड़ी_adjसमय(घड़ीid_t id, काष्ठा समयx *tx)
-अणु
-	वापस syscall(__NR_घड़ी_adjसमय, id, tx);
-पूर्ण
+#include <sys/syscall.h>
+static int clock_adjtime(clockid_t id, struct timex *tx)
+{
+	return syscall(__NR_clock_adjtime, id, tx);
+}
 
 
-/* clear NTP समय_status & समय_state */
-पूर्णांक clear_समय_state(व्योम)
-अणु
-	काष्ठा समयx tx;
-	पूर्णांक ret;
+/* clear NTP time_status & time_state */
+int clear_time_state(void)
+{
+	struct timex tx;
+	int ret;
 
 	tx.modes = ADJ_STATUS;
 	tx.status = 0;
-	ret = adjसमयx(&tx);
-	वापस ret;
-पूर्ण
+	ret = adjtimex(&tx);
+	return ret;
+}
 
-#घोषणा NUM_FREQ_VALID 32
-#घोषणा NUM_FREQ_OUTOFRANGE 4
-#घोषणा NUM_FREQ_INVALID 2
+#define NUM_FREQ_VALID 32
+#define NUM_FREQ_OUTOFRANGE 4
+#define NUM_FREQ_INVALID 2
 
-दीर्घ valid_freq[NUM_FREQ_VALID] = अणु
+long valid_freq[NUM_FREQ_VALID] = {
 	-499<<16,
 	-450<<16,
 	-400<<16,
@@ -95,237 +94,237 @@
 	400<<16,
 	450<<16,
 	499<<16,
-पूर्ण;
+};
 
-दीर्घ outofrange_freq[NUM_FREQ_OUTOFRANGE] = अणु
+long outofrange_freq[NUM_FREQ_OUTOFRANGE] = {
 	-1000<<16,
 	-550<<16,
 	550<<16,
 	1000<<16,
-पूर्ण;
+};
 
-#घोषणा दीर्घ_उच्च (~0UL>>1)
-#घोषणा दीर्घ_न्यून (-दीर्घ_उच्च - 1)
+#define LONG_MAX (~0UL>>1)
+#define LONG_MIN (-LONG_MAX - 1)
 
-दीर्घ invalid_freq[NUM_FREQ_INVALID] = अणु
-	दीर्घ_उच्च,
-	दीर्घ_न्यून,
-पूर्ण;
+long invalid_freq[NUM_FREQ_INVALID] = {
+	LONG_MAX,
+	LONG_MIN,
+};
 
-पूर्णांक validate_freq(व्योम)
-अणु
-	काष्ठा समयx tx;
-	पूर्णांक ret, pass = 0;
-	पूर्णांक i;
+int validate_freq(void)
+{
+	struct timex tx;
+	int ret, pass = 0;
+	int i;
 
-	clear_समय_state();
+	clear_time_state();
 
-	स_रखो(&tx, 0, माप(काष्ठा समयx));
+	memset(&tx, 0, sizeof(struct timex));
 	/* Set the leap second insert flag */
 
-	म_लिखो("Testing ADJ_FREQ... ");
-	ख_साफ(मानक_निकास);
-	क्रम (i = 0; i < NUM_FREQ_VALID; i++) अणु
+	printf("Testing ADJ_FREQ... ");
+	fflush(stdout);
+	for (i = 0; i < NUM_FREQ_VALID; i++) {
 		tx.modes = ADJ_FREQUENCY;
 		tx.freq = valid_freq[i];
 
-		ret = adjसमयx(&tx);
-		अगर (ret < 0) अणु
-			म_लिखो("[FAIL]\n");
-			म_लिखो("Error: adjtimex(ADJ_FREQ, %ld - %ld ppm\n",
+		ret = adjtimex(&tx);
+		if (ret < 0) {
+			printf("[FAIL]\n");
+			printf("Error: adjtimex(ADJ_FREQ, %ld - %ld ppm\n",
 				valid_freq[i], valid_freq[i]>>16);
 			pass = -1;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		tx.modes = 0;
-		ret = adjसमयx(&tx);
-		अगर (tx.freq != valid_freq[i]) अणु
-			म_लिखो("Warning: freq value %ld not what we set it (%ld)!\n",
+		ret = adjtimex(&tx);
+		if (tx.freq != valid_freq[i]) {
+			printf("Warning: freq value %ld not what we set it (%ld)!\n",
 					tx.freq, valid_freq[i]);
-		पूर्ण
-	पूर्ण
-	क्रम (i = 0; i < NUM_FREQ_OUTOFRANGE; i++) अणु
+		}
+	}
+	for (i = 0; i < NUM_FREQ_OUTOFRANGE; i++) {
 		tx.modes = ADJ_FREQUENCY;
 		tx.freq = outofrange_freq[i];
 
-		ret = adjसमयx(&tx);
-		अगर (ret < 0) अणु
-			म_लिखो("[FAIL]\n");
-			म_लिखो("Error: adjtimex(ADJ_FREQ, %ld - %ld ppm\n",
+		ret = adjtimex(&tx);
+		if (ret < 0) {
+			printf("[FAIL]\n");
+			printf("Error: adjtimex(ADJ_FREQ, %ld - %ld ppm\n",
 				outofrange_freq[i], outofrange_freq[i]>>16);
 			pass = -1;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		tx.modes = 0;
-		ret = adjसमयx(&tx);
-		अगर (tx.freq == outofrange_freq[i]) अणु
-			म_लिखो("[FAIL]\n");
-			म_लिखो("ERROR: out of range value %ld actually set!\n",
+		ret = adjtimex(&tx);
+		if (tx.freq == outofrange_freq[i]) {
+			printf("[FAIL]\n");
+			printf("ERROR: out of range value %ld actually set!\n",
 					tx.freq);
 			pass = -1;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 
-	अगर (माप(दीर्घ) == 8) अणु /* this हाल only applies to 64bit प्रणालीs */
-		क्रम (i = 0; i < NUM_FREQ_INVALID; i++) अणु
+	if (sizeof(long) == 8) { /* this case only applies to 64bit systems */
+		for (i = 0; i < NUM_FREQ_INVALID; i++) {
 			tx.modes = ADJ_FREQUENCY;
 			tx.freq = invalid_freq[i];
-			ret = adjसमयx(&tx);
-			अगर (ret >= 0) अणु
-				म_लिखो("[FAIL]\n");
-				म_लिखो("Error: No failure on invalid ADJ_FREQUENCY %ld\n",
+			ret = adjtimex(&tx);
+			if (ret >= 0) {
+				printf("[FAIL]\n");
+				printf("Error: No failure on invalid ADJ_FREQUENCY %ld\n",
 					invalid_freq[i]);
 				pass = -1;
-				जाओ out;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto out;
+			}
+		}
+	}
 
-	म_लिखो("[OK]\n");
+	printf("[OK]\n");
 out:
 	/* reset freq to zero */
 	tx.modes = ADJ_FREQUENCY;
 	tx.freq = 0;
-	ret = adjसमयx(&tx);
+	ret = adjtimex(&tx);
 
-	वापस pass;
-पूर्ण
+	return pass;
+}
 
 
-पूर्णांक set_offset(दीर्घ दीर्घ offset, पूर्णांक use_nano)
-अणु
-	काष्ठा समयx पंचांगx = अणुपूर्ण;
-	पूर्णांक ret;
+int set_offset(long long offset, int use_nano)
+{
+	struct timex tmx = {};
+	int ret;
 
-	पंचांगx.modes = ADJ_SETOFFSET;
-	अगर (use_nano) अणु
-		पंचांगx.modes |= ADJ_न_अंकO;
+	tmx.modes = ADJ_SETOFFSET;
+	if (use_nano) {
+		tmx.modes |= ADJ_NANO;
 
-		पंचांगx.समय.tv_sec = offset / NSEC_PER_SEC;
-		पंचांगx.समय.tv_usec = offset % NSEC_PER_SEC;
+		tmx.time.tv_sec = offset / NSEC_PER_SEC;
+		tmx.time.tv_usec = offset % NSEC_PER_SEC;
 
-		अगर (offset < 0 && पंचांगx.समय.tv_usec) अणु
-			पंचांगx.समय.tv_sec -= 1;
-			पंचांगx.समय.tv_usec += NSEC_PER_SEC;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		पंचांगx.समय.tv_sec = offset / USEC_PER_SEC;
-		पंचांगx.समय.tv_usec = offset % USEC_PER_SEC;
+		if (offset < 0 && tmx.time.tv_usec) {
+			tmx.time.tv_sec -= 1;
+			tmx.time.tv_usec += NSEC_PER_SEC;
+		}
+	} else {
+		tmx.time.tv_sec = offset / USEC_PER_SEC;
+		tmx.time.tv_usec = offset % USEC_PER_SEC;
 
-		अगर (offset < 0 && पंचांगx.समय.tv_usec) अणु
-			पंचांगx.समय.tv_sec -= 1;
-			पंचांगx.समय.tv_usec += USEC_PER_SEC;
-		पूर्ण
-	पूर्ण
+		if (offset < 0 && tmx.time.tv_usec) {
+			tmx.time.tv_sec -= 1;
+			tmx.time.tv_usec += USEC_PER_SEC;
+		}
+	}
 
-	ret = घड़ी_adjसमय(CLOCK_REALTIME, &पंचांगx);
-	अगर (ret < 0) अणु
-		म_लिखो("(sec: %ld  usec: %ld) ", पंचांगx.समय.tv_sec, पंचांगx.समय.tv_usec);
-		म_लिखो("[FAIL]\n");
-		वापस -1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	ret = clock_adjtime(CLOCK_REALTIME, &tmx);
+	if (ret < 0) {
+		printf("(sec: %ld  usec: %ld) ", tmx.time.tv_sec, tmx.time.tv_usec);
+		printf("[FAIL]\n");
+		return -1;
+	}
+	return 0;
+}
 
-पूर्णांक set_bad_offset(दीर्घ sec, दीर्घ usec, पूर्णांक use_nano)
-अणु
-	काष्ठा समयx पंचांगx = अणुपूर्ण;
-	पूर्णांक ret;
+int set_bad_offset(long sec, long usec, int use_nano)
+{
+	struct timex tmx = {};
+	int ret;
 
-	पंचांगx.modes = ADJ_SETOFFSET;
-	अगर (use_nano)
-		पंचांगx.modes |= ADJ_न_अंकO;
+	tmx.modes = ADJ_SETOFFSET;
+	if (use_nano)
+		tmx.modes |= ADJ_NANO;
 
-	पंचांगx.समय.tv_sec = sec;
-	पंचांगx.समय.tv_usec = usec;
-	ret = घड़ी_adjसमय(CLOCK_REALTIME, &पंचांगx);
-	अगर (ret >= 0) अणु
-		म_लिखो("Invalid (sec: %ld  usec: %ld) did not fail! ", पंचांगx.समय.tv_sec, पंचांगx.समय.tv_usec);
-		म_लिखो("[FAIL]\n");
-		वापस -1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	tmx.time.tv_sec = sec;
+	tmx.time.tv_usec = usec;
+	ret = clock_adjtime(CLOCK_REALTIME, &tmx);
+	if (ret >= 0) {
+		printf("Invalid (sec: %ld  usec: %ld) did not fail! ", tmx.time.tv_sec, tmx.time.tv_usec);
+		printf("[FAIL]\n");
+		return -1;
+	}
+	return 0;
+}
 
-पूर्णांक validate_set_offset(व्योम)
-अणु
-	म_लिखो("Testing ADJ_SETOFFSET... ");
-	ख_साफ(मानक_निकास);
+int validate_set_offset(void)
+{
+	printf("Testing ADJ_SETOFFSET... ");
+	fflush(stdout);
 
 	/* Test valid values */
-	अगर (set_offset(NSEC_PER_SEC - 1, 1))
-		वापस -1;
+	if (set_offset(NSEC_PER_SEC - 1, 1))
+		return -1;
 
-	अगर (set_offset(-NSEC_PER_SEC + 1, 1))
-		वापस -1;
+	if (set_offset(-NSEC_PER_SEC + 1, 1))
+		return -1;
 
-	अगर (set_offset(-NSEC_PER_SEC - 1, 1))
-		वापस -1;
+	if (set_offset(-NSEC_PER_SEC - 1, 1))
+		return -1;
 
-	अगर (set_offset(5 * NSEC_PER_SEC, 1))
-		वापस -1;
+	if (set_offset(5 * NSEC_PER_SEC, 1))
+		return -1;
 
-	अगर (set_offset(-5 * NSEC_PER_SEC, 1))
-		वापस -1;
+	if (set_offset(-5 * NSEC_PER_SEC, 1))
+		return -1;
 
-	अगर (set_offset(5 * NSEC_PER_SEC + NSEC_PER_SEC / 2, 1))
-		वापस -1;
+	if (set_offset(5 * NSEC_PER_SEC + NSEC_PER_SEC / 2, 1))
+		return -1;
 
-	अगर (set_offset(-5 * NSEC_PER_SEC - NSEC_PER_SEC / 2, 1))
-		वापस -1;
+	if (set_offset(-5 * NSEC_PER_SEC - NSEC_PER_SEC / 2, 1))
+		return -1;
 
-	अगर (set_offset(USEC_PER_SEC - 1, 0))
-		वापस -1;
+	if (set_offset(USEC_PER_SEC - 1, 0))
+		return -1;
 
-	अगर (set_offset(-USEC_PER_SEC + 1, 0))
-		वापस -1;
+	if (set_offset(-USEC_PER_SEC + 1, 0))
+		return -1;
 
-	अगर (set_offset(-USEC_PER_SEC - 1, 0))
-		वापस -1;
+	if (set_offset(-USEC_PER_SEC - 1, 0))
+		return -1;
 
-	अगर (set_offset(5 * USEC_PER_SEC, 0))
-		वापस -1;
+	if (set_offset(5 * USEC_PER_SEC, 0))
+		return -1;
 
-	अगर (set_offset(-5 * USEC_PER_SEC, 0))
-		वापस -1;
+	if (set_offset(-5 * USEC_PER_SEC, 0))
+		return -1;
 
-	अगर (set_offset(5 * USEC_PER_SEC + USEC_PER_SEC / 2, 0))
-		वापस -1;
+	if (set_offset(5 * USEC_PER_SEC + USEC_PER_SEC / 2, 0))
+		return -1;
 
-	अगर (set_offset(-5 * USEC_PER_SEC - USEC_PER_SEC / 2, 0))
-		वापस -1;
+	if (set_offset(-5 * USEC_PER_SEC - USEC_PER_SEC / 2, 0))
+		return -1;
 
 	/* Test invalid values */
-	अगर (set_bad_offset(0, -1, 1))
-		वापस -1;
-	अगर (set_bad_offset(0, -1, 0))
-		वापस -1;
-	अगर (set_bad_offset(0, 2 * NSEC_PER_SEC, 1))
-		वापस -1;
-	अगर (set_bad_offset(0, 2 * USEC_PER_SEC, 0))
-		वापस -1;
-	अगर (set_bad_offset(0, NSEC_PER_SEC, 1))
-		वापस -1;
-	अगर (set_bad_offset(0, USEC_PER_SEC, 0))
-		वापस -1;
-	अगर (set_bad_offset(0, -NSEC_PER_SEC, 1))
-		वापस -1;
-	अगर (set_bad_offset(0, -USEC_PER_SEC, 0))
-		वापस -1;
+	if (set_bad_offset(0, -1, 1))
+		return -1;
+	if (set_bad_offset(0, -1, 0))
+		return -1;
+	if (set_bad_offset(0, 2 * NSEC_PER_SEC, 1))
+		return -1;
+	if (set_bad_offset(0, 2 * USEC_PER_SEC, 0))
+		return -1;
+	if (set_bad_offset(0, NSEC_PER_SEC, 1))
+		return -1;
+	if (set_bad_offset(0, USEC_PER_SEC, 0))
+		return -1;
+	if (set_bad_offset(0, -NSEC_PER_SEC, 1))
+		return -1;
+	if (set_bad_offset(0, -USEC_PER_SEC, 0))
+		return -1;
 
-	म_लिखो("[OK]\n");
-	वापस 0;
-पूर्ण
+	printf("[OK]\n");
+	return 0;
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-	अगर (validate_freq())
-		वापस ksft_निकास_fail();
+int main(int argc, char **argv)
+{
+	if (validate_freq())
+		return ksft_exit_fail();
 
-	अगर (validate_set_offset())
-		वापस ksft_निकास_fail();
+	if (validate_set_offset())
+		return ksft_exit_fail();
 
-	वापस ksft_निकास_pass();
-पूर्ण
+	return ksft_exit_pass();
+}

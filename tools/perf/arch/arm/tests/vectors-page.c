@@ -1,25 +1,24 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <मानकपन.स>
-#समावेश <माला.स>
-#समावेश <linux/compiler.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <stdio.h>
+#include <string.h>
+#include <linux/compiler.h>
 
-#समावेश "debug.h"
-#समावेश "tests/tests.h"
-#समावेश "util/find-map.c"
+#include "debug.h"
+#include "tests/tests.h"
+#include "util/find-map.c"
 
-#घोषणा VECTORS__MAP_NAME "[vectors]"
+#define VECTORS__MAP_NAME "[vectors]"
 
-पूर्णांक test__vectors_page(काष्ठा test *test __maybe_unused,
-		       पूर्णांक subtest __maybe_unused)
-अणु
-	व्योम *start, *end;
+int test__vectors_page(struct test *test __maybe_unused,
+		       int subtest __maybe_unused)
+{
+	void *start, *end;
 
-	अगर (find_map(&start, &end, VECTORS__MAP_NAME)) अणु
+	if (find_map(&start, &end, VECTORS__MAP_NAME)) {
 		pr_err("%s not found, is CONFIG_KUSER_HELPERS enabled?\n",
 		       VECTORS__MAP_NAME);
-		वापस TEST_FAIL;
-	पूर्ण
+		return TEST_FAIL;
+	}
 
-	वापस TEST_OK;
-पूर्ण
+	return TEST_OK;
+}

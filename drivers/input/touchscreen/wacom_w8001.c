@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Wacom W8001 penabled serial touchscreen driver
  *
@@ -7,57 +6,57 @@
  * Copyright (c) 2010 - 2011 Ping Cheng, Wacom. <pingc@wacom.com>
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License. See the file COPYING in the मुख्य directory of this archive क्रम
+ * License. See the file COPYING in the main directory of this archive for
  * more details.
  *
  * Layout based on Elo serial touchscreen driver by Vojtech Pavlik
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/input/mt.h>
-#समावेश <linux/serपन.स>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/delay.h>
+#include <linux/errno.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/input/mt.h>
+#include <linux/serio.h>
+#include <linux/ctype.h>
+#include <linux/delay.h>
 
-#घोषणा DRIVER_DESC	"Wacom W8001 serial touchscreen driver"
+#define DRIVER_DESC	"Wacom W8001 serial touchscreen driver"
 
 MODULE_AUTHOR("Jaya Kumar <jayakumar.lkml@gmail.com>");
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_LICENSE("GPL");
 
-#घोषणा W8001_MAX_PHYS		42
+#define W8001_MAX_PHYS		42
 
-#घोषणा W8001_MAX_LENGTH	13
-#घोषणा W8001_LEAD_MASK		0x80
-#घोषणा W8001_LEAD_BYTE		0x80
-#घोषणा W8001_TAB_MASK		0x40
-#घोषणा W8001_TAB_BYTE		0x40
+#define W8001_MAX_LENGTH	13
+#define W8001_LEAD_MASK		0x80
+#define W8001_LEAD_BYTE		0x80
+#define W8001_TAB_MASK		0x40
+#define W8001_TAB_BYTE		0x40
 /* set in first byte of touch data packets */
-#घोषणा W8001_TOUCH_MASK	(0x10 | W8001_LEAD_MASK)
-#घोषणा W8001_TOUCH_BYTE	(0x10 | W8001_LEAD_BYTE)
+#define W8001_TOUCH_MASK	(0x10 | W8001_LEAD_MASK)
+#define W8001_TOUCH_BYTE	(0x10 | W8001_LEAD_BYTE)
 
-#घोषणा W8001_QUERY_PACKET	0x20
+#define W8001_QUERY_PACKET	0x20
 
-#घोषणा W8001_CMD_STOP		'0'
-#घोषणा W8001_CMD_START		'1'
-#घोषणा W8001_CMD_QUERY		'*'
-#घोषणा W8001_CMD_TOUCHQUERY	'%'
+#define W8001_CMD_STOP		'0'
+#define W8001_CMD_START		'1'
+#define W8001_CMD_QUERY		'*'
+#define W8001_CMD_TOUCHQUERY	'%'
 
 /* length of data packets in bytes, depends on device. */
-#घोषणा W8001_PKTLEN_TOUCH93	5
-#घोषणा W8001_PKTLEN_TOUCH9A	7
-#घोषणा W8001_PKTLEN_TPCPEN	9
-#घोषणा W8001_PKTLEN_TPCCTL	11	/* control packet */
-#घोषणा W8001_PKTLEN_TOUCH2FG	13
+#define W8001_PKTLEN_TOUCH93	5
+#define W8001_PKTLEN_TOUCH9A	7
+#define W8001_PKTLEN_TPCPEN	9
+#define W8001_PKTLEN_TPCCTL	11	/* control packet */
+#define W8001_PKTLEN_TOUCH2FG	13
 
-/* resolution in poपूर्णांकs/mm */
-#घोषणा W8001_PEN_RESOLUTION    100
-#घोषणा W8001_TOUCH_RESOLUTION  10
+/* resolution in points/mm */
+#define W8001_PEN_RESOLUTION    100
+#define W8001_TOUCH_RESOLUTION  10
 
-काष्ठा w8001_coord अणु
+struct w8001_coord {
 	u8 rdy;
 	u8 tsw;
 	u8 f1;
@@ -67,47 +66,47 @@ MODULE_LICENSE("GPL");
 	u16 pen_pressure;
 	u8 tilt_x;
 	u8 tilt_y;
-पूर्ण;
+};
 
 /* touch query reply packet */
-काष्ठा w8001_touch_query अणु
+struct w8001_touch_query {
 	u16 x;
 	u16 y;
 	u8 panel_res;
 	u8 capacity_res;
 	u8 sensor_id;
-पूर्ण;
+};
 
 /*
  * Per-touchscreen data.
  */
 
-काष्ठा w8001 अणु
-	काष्ठा input_dev *pen_dev;
-	काष्ठा input_dev *touch_dev;
-	काष्ठा serio *serio;
-	काष्ठा completion cmd_करोne;
-	पूर्णांक id;
-	पूर्णांक idx;
-	अचिन्हित अक्षर response_type;
-	अचिन्हित अक्षर response[W8001_MAX_LENGTH];
-	अचिन्हित अक्षर data[W8001_MAX_LENGTH];
-	अक्षर phys[W8001_MAX_PHYS];
-	पूर्णांक type;
-	अचिन्हित पूर्णांक pktlen;
+struct w8001 {
+	struct input_dev *pen_dev;
+	struct input_dev *touch_dev;
+	struct serio *serio;
+	struct completion cmd_done;
+	int id;
+	int idx;
+	unsigned char response_type;
+	unsigned char response[W8001_MAX_LENGTH];
+	unsigned char data[W8001_MAX_LENGTH];
+	char phys[W8001_MAX_PHYS];
+	int type;
+	unsigned int pktlen;
 	u16 max_touch_x;
 	u16 max_touch_y;
 	u16 max_pen_x;
 	u16 max_pen_y;
-	अक्षर pen_name[64];
-	अक्षर touch_name[64];
-	पूर्णांक खोलो_count;
-	काष्ठा mutex mutex;
-पूर्ण;
+	char pen_name[64];
+	char touch_name[64];
+	int open_count;
+	struct mutex mutex;
+};
 
-अटल व्योम parse_pen_data(u8 *data, काष्ठा w8001_coord *coord)
-अणु
-	स_रखो(coord, 0, माप(*coord));
+static void parse_pen_data(u8 *data, struct w8001_coord *coord)
+{
+	memset(coord, 0, sizeof(*coord));
 
 	coord->rdy = data[0] & 0x20;
 	coord->tsw = data[0] & 0x01;
@@ -127,39 +126,39 @@ MODULE_LICENSE("GPL");
 
 	coord->tilt_x = data[7] & 0x7F;
 	coord->tilt_y = data[8] & 0x7F;
-पूर्ण
+}
 
-अटल व्योम parse_single_touch(u8 *data, काष्ठा w8001_coord *coord)
-अणु
+static void parse_single_touch(u8 *data, struct w8001_coord *coord)
+{
 	coord->x = (data[1] << 7) | data[2];
 	coord->y = (data[3] << 7) | data[4];
 	coord->tsw = data[0] & 0x01;
-पूर्ण
+}
 
-अटल व्योम scale_touch_coordinates(काष्ठा w8001 *w8001,
-				    अचिन्हित पूर्णांक *x, अचिन्हित पूर्णांक *y)
-अणु
-	अगर (w8001->max_pen_x && w8001->max_touch_x)
+static void scale_touch_coordinates(struct w8001 *w8001,
+				    unsigned int *x, unsigned int *y)
+{
+	if (w8001->max_pen_x && w8001->max_touch_x)
 		*x = *x * w8001->max_pen_x / w8001->max_touch_x;
 
-	अगर (w8001->max_pen_y && w8001->max_touch_y)
+	if (w8001->max_pen_y && w8001->max_touch_y)
 		*y = *y * w8001->max_pen_y / w8001->max_touch_y;
-पूर्ण
+}
 
-अटल व्योम parse_multi_touch(काष्ठा w8001 *w8001)
-अणु
-	काष्ठा input_dev *dev = w8001->touch_dev;
-	अचिन्हित अक्षर *data = w8001->data;
-	अचिन्हित पूर्णांक x, y;
-	पूर्णांक i;
-	पूर्णांक count = 0;
+static void parse_multi_touch(struct w8001 *w8001)
+{
+	struct input_dev *dev = w8001->touch_dev;
+	unsigned char *data = w8001->data;
+	unsigned int x, y;
+	int i;
+	int count = 0;
 
-	क्रम (i = 0; i < 2; i++) अणु
+	for (i = 0; i < 2; i++) {
 		bool touch = data[0] & (1 << i);
 
 		input_mt_slot(dev, i);
 		input_mt_report_slot_state(dev, MT_TOOL_FINGER, touch);
-		अगर (touch) अणु
+		if (touch) {
 			x = (data[6 * i + 1] << 7) | data[6 * i + 2];
 			y = (data[6 * i + 3] << 7) | data[6 * i + 4];
 			/* data[5,6] and [11,12] is finger capacity */
@@ -167,28 +166,28 @@ MODULE_LICENSE("GPL");
 			/* scale to pen maximum */
 			scale_touch_coordinates(w8001, &x, &y);
 
-			input_report_असल(dev, ABS_MT_POSITION_X, x);
-			input_report_असल(dev, ABS_MT_POSITION_Y, y);
+			input_report_abs(dev, ABS_MT_POSITION_X, x);
+			input_report_abs(dev, ABS_MT_POSITION_Y, y);
 			count++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* emulate single touch events when stylus is out of proximity.
 	 * This is to make single touch backward support consistent
 	 * across all Wacom single touch devices.
 	 */
-	अगर (w8001->type != BTN_TOOL_PEN &&
-			    w8001->type != BTN_TOOL_RUBBER) अणु
+	if (w8001->type != BTN_TOOL_PEN &&
+			    w8001->type != BTN_TOOL_RUBBER) {
 		w8001->type = count == 1 ? BTN_TOOL_FINGER : KEY_RESERVED;
-		input_mt_report_poपूर्णांकer_emulation(dev, true);
-	पूर्ण
+		input_mt_report_pointer_emulation(dev, true);
+	}
 
 	input_sync(dev);
-पूर्ण
+}
 
-अटल व्योम parse_touchquery(u8 *data, काष्ठा w8001_touch_query *query)
-अणु
-	स_रखो(query, 0, माप(*query));
+static void parse_touchquery(u8 *data, struct w8001_touch_query *query)
+{
+	memset(query, 0, sizeof(*query));
 
 	query->panel_res = data[1];
 	query->sensor_id = data[2] & 0x7;
@@ -202,235 +201,235 @@ MODULE_LICENSE("GPL");
 	query->y |= data[6] << 2;
 	query->y |= (data[2] >> 3) & 0x3;
 
-	/* Early days' single-finger touch models need the following शेषs */
-	अगर (!query->x && !query->y) अणु
+	/* Early days' single-finger touch models need the following defaults */
+	if (!query->x && !query->y) {
 		query->x = 1024;
 		query->y = 1024;
-		अगर (query->panel_res)
+		if (query->panel_res)
 			query->x = query->y = (1 << query->panel_res);
 		query->panel_res = W8001_TOUCH_RESOLUTION;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम report_pen_events(काष्ठा w8001 *w8001, काष्ठा w8001_coord *coord)
-अणु
-	काष्ठा input_dev *dev = w8001->pen_dev;
+static void report_pen_events(struct w8001 *w8001, struct w8001_coord *coord)
+{
+	struct input_dev *dev = w8001->pen_dev;
 
 	/*
-	 * We have 1 bit क्रम proximity (rdy) and 3 bits क्रम tip, side,
+	 * We have 1 bit for proximity (rdy) and 3 bits for tip, side,
 	 * side2/eraser. If rdy && f2 are set, this can be either pen + side2,
 	 * or eraser. Assume:
-	 * - अगर dev is alपढ़ोy in proximity and f2 is toggled ै pen + side2
-	 * - अगर dev comes पूर्णांकo proximity with f2 set ै eraser
-	 * If f2 disappears after assuming eraser, fake proximity out क्रम
-	 * eraser and in क्रम pen.
+	 * - if dev is already in proximity and f2 is toggled → pen + side2
+	 * - if dev comes into proximity with f2 set → eraser
+	 * If f2 disappears after assuming eraser, fake proximity out for
+	 * eraser and in for pen.
 	 */
 
-	चयन (w8001->type) अणु
-	हाल BTN_TOOL_RUBBER:
-		अगर (!coord->f2) अणु
-			input_report_असल(dev, ABS_PRESSURE, 0);
+	switch (w8001->type) {
+	case BTN_TOOL_RUBBER:
+		if (!coord->f2) {
+			input_report_abs(dev, ABS_PRESSURE, 0);
 			input_report_key(dev, BTN_TOUCH, 0);
 			input_report_key(dev, BTN_STYLUS, 0);
 			input_report_key(dev, BTN_STYLUS2, 0);
 			input_report_key(dev, BTN_TOOL_RUBBER, 0);
 			input_sync(dev);
 			w8001->type = BTN_TOOL_PEN;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल BTN_TOOL_FINGER:
-	हाल KEY_RESERVED:
+	case BTN_TOOL_FINGER:
+	case KEY_RESERVED:
 		w8001->type = coord->f2 ? BTN_TOOL_RUBBER : BTN_TOOL_PEN;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		input_report_key(dev, BTN_STYLUS2, coord->f2);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	input_report_असल(dev, ABS_X, coord->x);
-	input_report_असल(dev, ABS_Y, coord->y);
-	input_report_असल(dev, ABS_PRESSURE, coord->pen_pressure);
+	input_report_abs(dev, ABS_X, coord->x);
+	input_report_abs(dev, ABS_Y, coord->y);
+	input_report_abs(dev, ABS_PRESSURE, coord->pen_pressure);
 	input_report_key(dev, BTN_TOUCH, coord->tsw);
 	input_report_key(dev, BTN_STYLUS, coord->f1);
 	input_report_key(dev, w8001->type, coord->rdy);
 	input_sync(dev);
 
-	अगर (!coord->rdy)
+	if (!coord->rdy)
 		w8001->type = KEY_RESERVED;
-पूर्ण
+}
 
-अटल व्योम report_single_touch(काष्ठा w8001 *w8001, काष्ठा w8001_coord *coord)
-अणु
-	काष्ठा input_dev *dev = w8001->touch_dev;
-	अचिन्हित पूर्णांक x = coord->x;
-	अचिन्हित पूर्णांक y = coord->y;
+static void report_single_touch(struct w8001 *w8001, struct w8001_coord *coord)
+{
+	struct input_dev *dev = w8001->touch_dev;
+	unsigned int x = coord->x;
+	unsigned int y = coord->y;
 
 	/* scale to pen maximum */
 	scale_touch_coordinates(w8001, &x, &y);
 
-	input_report_असल(dev, ABS_X, x);
-	input_report_असल(dev, ABS_Y, y);
+	input_report_abs(dev, ABS_X, x);
+	input_report_abs(dev, ABS_Y, y);
 	input_report_key(dev, BTN_TOUCH, coord->tsw);
 
 	input_sync(dev);
 
 	w8001->type = coord->tsw ? BTN_TOOL_FINGER : KEY_RESERVED;
-पूर्ण
+}
 
-अटल irqवापस_t w8001_पूर्णांकerrupt(काष्ठा serio *serio,
-				   अचिन्हित अक्षर data, अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा w8001 *w8001 = serio_get_drvdata(serio);
-	काष्ठा w8001_coord coord;
-	अचिन्हित अक्षर पंचांगp;
+static irqreturn_t w8001_interrupt(struct serio *serio,
+				   unsigned char data, unsigned int flags)
+{
+	struct w8001 *w8001 = serio_get_drvdata(serio);
+	struct w8001_coord coord;
+	unsigned char tmp;
 
 	w8001->data[w8001->idx] = data;
-	चयन (w8001->idx++) अणु
-	हाल 0:
-		अगर ((data & W8001_LEAD_MASK) != W8001_LEAD_BYTE) अणु
+	switch (w8001->idx++) {
+	case 0:
+		if ((data & W8001_LEAD_MASK) != W8001_LEAD_BYTE) {
 			pr_debug("w8001: unsynchronized data: 0x%02x\n", data);
 			w8001->idx = 0;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल W8001_PKTLEN_TOUCH93 - 1:
-	हाल W8001_PKTLEN_TOUCH9A - 1:
-		पंचांगp = w8001->data[0] & W8001_TOUCH_BYTE;
-		अगर (पंचांगp != W8001_TOUCH_BYTE)
-			अवरोध;
+	case W8001_PKTLEN_TOUCH93 - 1:
+	case W8001_PKTLEN_TOUCH9A - 1:
+		tmp = w8001->data[0] & W8001_TOUCH_BYTE;
+		if (tmp != W8001_TOUCH_BYTE)
+			break;
 
-		अगर (w8001->pktlen == w8001->idx) अणु
+		if (w8001->pktlen == w8001->idx) {
 			w8001->idx = 0;
-			अगर (w8001->type != BTN_TOOL_PEN &&
-			    w8001->type != BTN_TOOL_RUBBER) अणु
+			if (w8001->type != BTN_TOOL_PEN &&
+			    w8001->type != BTN_TOOL_RUBBER) {
 				parse_single_touch(w8001->data, &coord);
 				report_single_touch(w8001, &coord);
-			पूर्ण
-		पूर्ण
-		अवरोध;
+			}
+		}
+		break;
 
 	/* Pen coordinates packet */
-	हाल W8001_PKTLEN_TPCPEN - 1:
-		पंचांगp = w8001->data[0] & W8001_TAB_MASK;
-		अगर (unlikely(पंचांगp == W8001_TAB_BYTE))
-			अवरोध;
+	case W8001_PKTLEN_TPCPEN - 1:
+		tmp = w8001->data[0] & W8001_TAB_MASK;
+		if (unlikely(tmp == W8001_TAB_BYTE))
+			break;
 
-		पंचांगp = w8001->data[0] & W8001_TOUCH_BYTE;
-		अगर (पंचांगp == W8001_TOUCH_BYTE)
-			अवरोध;
+		tmp = w8001->data[0] & W8001_TOUCH_BYTE;
+		if (tmp == W8001_TOUCH_BYTE)
+			break;
 
 		w8001->idx = 0;
 		parse_pen_data(w8001->data, &coord);
 		report_pen_events(w8001, &coord);
-		अवरोध;
+		break;
 
 	/* control packet */
-	हाल W8001_PKTLEN_TPCCTL - 1:
-		पंचांगp = w8001->data[0] & W8001_TOUCH_MASK;
-		अगर (पंचांगp == W8001_TOUCH_BYTE)
-			अवरोध;
+	case W8001_PKTLEN_TPCCTL - 1:
+		tmp = w8001->data[0] & W8001_TOUCH_MASK;
+		if (tmp == W8001_TOUCH_BYTE)
+			break;
 
 		w8001->idx = 0;
-		स_नकल(w8001->response, w8001->data, W8001_MAX_LENGTH);
+		memcpy(w8001->response, w8001->data, W8001_MAX_LENGTH);
 		w8001->response_type = W8001_QUERY_PACKET;
-		complete(&w8001->cmd_करोne);
-		अवरोध;
+		complete(&w8001->cmd_done);
+		break;
 
 	/* 2 finger touch packet */
-	हाल W8001_PKTLEN_TOUCH2FG - 1:
+	case W8001_PKTLEN_TOUCH2FG - 1:
 		w8001->idx = 0;
 		parse_multi_touch(w8001);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		/*
-		 * ThinkPad X60 Tablet PC (pen only device) someबार
+		 * ThinkPad X60 Tablet PC (pen only device) sometimes
 		 * sends invalid data packets that are larger than
 		 * W8001_PKTLEN_TPCPEN. Let's start over again.
 		 */
-		अगर (!w8001->touch_dev && w8001->idx > W8001_PKTLEN_TPCPEN - 1)
+		if (!w8001->touch_dev && w8001->idx > W8001_PKTLEN_TPCPEN - 1)
 			w8001->idx = 0;
-	पूर्ण
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक w8001_command(काष्ठा w8001 *w8001, अचिन्हित अक्षर command,
-			 bool रुको_response)
-अणु
-	पूर्णांक rc;
+static int w8001_command(struct w8001 *w8001, unsigned char command,
+			 bool wait_response)
+{
+	int rc;
 
 	w8001->response_type = 0;
-	init_completion(&w8001->cmd_करोne);
+	init_completion(&w8001->cmd_done);
 
-	rc = serio_ग_लिखो(w8001->serio, command);
-	अगर (rc == 0 && रुको_response) अणु
+	rc = serio_write(w8001->serio, command);
+	if (rc == 0 && wait_response) {
 
-		रुको_क्रम_completion_समयout(&w8001->cmd_करोne, HZ);
-		अगर (w8001->response_type != W8001_QUERY_PACKET)
+		wait_for_completion_timeout(&w8001->cmd_done, HZ);
+		if (w8001->response_type != W8001_QUERY_PACKET)
 			rc = -EIO;
-	पूर्ण
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक w8001_खोलो(काष्ठा input_dev *dev)
-अणु
-	काष्ठा w8001 *w8001 = input_get_drvdata(dev);
-	पूर्णांक err;
+static int w8001_open(struct input_dev *dev)
+{
+	struct w8001 *w8001 = input_get_drvdata(dev);
+	int err;
 
-	err = mutex_lock_पूर्णांकerruptible(&w8001->mutex);
-	अगर (err)
-		वापस err;
+	err = mutex_lock_interruptible(&w8001->mutex);
+	if (err)
+		return err;
 
-	अगर (w8001->खोलो_count++ == 0) अणु
+	if (w8001->open_count++ == 0) {
 		err = w8001_command(w8001, W8001_CMD_START, false);
-		अगर (err)
-			w8001->खोलो_count--;
-	पूर्ण
+		if (err)
+			w8001->open_count--;
+	}
 
 	mutex_unlock(&w8001->mutex);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम w8001_बंद(काष्ठा input_dev *dev)
-अणु
-	काष्ठा w8001 *w8001 = input_get_drvdata(dev);
+static void w8001_close(struct input_dev *dev)
+{
+	struct w8001 *w8001 = input_get_drvdata(dev);
 
 	mutex_lock(&w8001->mutex);
 
-	अगर (--w8001->खोलो_count == 0)
+	if (--w8001->open_count == 0)
 		w8001_command(w8001, W8001_CMD_STOP, false);
 
 	mutex_unlock(&w8001->mutex);
-पूर्ण
+}
 
-अटल पूर्णांक w8001_detect(काष्ठा w8001 *w8001)
-अणु
-	पूर्णांक error;
+static int w8001_detect(struct w8001 *w8001)
+{
+	int error;
 
 	error = w8001_command(w8001, W8001_CMD_STOP, false);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	msleep(250);	/* रुको 250ms beक्रमe querying the device */
+	msleep(250);	/* wait 250ms before querying the device */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक w8001_setup_pen(काष्ठा w8001 *w8001, अक्षर *basename,
-			   माप_प्रकार basename_sz)
-अणु
-	काष्ठा input_dev *dev = w8001->pen_dev;
-	काष्ठा w8001_coord coord;
-	पूर्णांक error;
+static int w8001_setup_pen(struct w8001 *w8001, char *basename,
+			   size_t basename_sz)
+{
+	struct input_dev *dev = w8001->pen_dev;
+	struct w8001_coord coord;
+	int error;
 
 	/* penabled? */
 	error = w8001_command(w8001, W8001_CMD_QUERY, true);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	__set_bit(EV_KEY, dev->evbit);
 	__set_bit(EV_ABS, dev->evbit);
@@ -439,272 +438,272 @@ MODULE_LICENSE("GPL");
 	__set_bit(BTN_TOOL_RUBBER, dev->keybit);
 	__set_bit(BTN_STYLUS, dev->keybit);
 	__set_bit(BTN_STYLUS2, dev->keybit);
-	__set_bit(INPUT_PROP_सूचीECT, dev->propbit);
+	__set_bit(INPUT_PROP_DIRECT, dev->propbit);
 
 	parse_pen_data(w8001->response, &coord);
 	w8001->max_pen_x = coord.x;
 	w8001->max_pen_y = coord.y;
 
-	input_set_असल_params(dev, ABS_X, 0, coord.x, 0, 0);
-	input_set_असल_params(dev, ABS_Y, 0, coord.y, 0, 0);
-	input_असल_set_res(dev, ABS_X, W8001_PEN_RESOLUTION);
-	input_असल_set_res(dev, ABS_Y, W8001_PEN_RESOLUTION);
-	input_set_असल_params(dev, ABS_PRESSURE, 0, coord.pen_pressure, 0, 0);
-	अगर (coord.tilt_x && coord.tilt_y) अणु
-		input_set_असल_params(dev, ABS_TILT_X, 0, coord.tilt_x, 0, 0);
-		input_set_असल_params(dev, ABS_TILT_Y, 0, coord.tilt_y, 0, 0);
-	पूर्ण
+	input_set_abs_params(dev, ABS_X, 0, coord.x, 0, 0);
+	input_set_abs_params(dev, ABS_Y, 0, coord.y, 0, 0);
+	input_abs_set_res(dev, ABS_X, W8001_PEN_RESOLUTION);
+	input_abs_set_res(dev, ABS_Y, W8001_PEN_RESOLUTION);
+	input_set_abs_params(dev, ABS_PRESSURE, 0, coord.pen_pressure, 0, 0);
+	if (coord.tilt_x && coord.tilt_y) {
+		input_set_abs_params(dev, ABS_TILT_X, 0, coord.tilt_x, 0, 0);
+		input_set_abs_params(dev, ABS_TILT_Y, 0, coord.tilt_y, 0, 0);
+	}
 
 	w8001->id = 0x90;
 	strlcat(basename, " Penabled", basename_sz);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक w8001_setup_touch(काष्ठा w8001 *w8001, अक्षर *basename,
-			     माप_प्रकार basename_sz)
-अणु
-	काष्ठा input_dev *dev = w8001->touch_dev;
-	काष्ठा w8001_touch_query touch;
-	पूर्णांक error;
+static int w8001_setup_touch(struct w8001 *w8001, char *basename,
+			     size_t basename_sz)
+{
+	struct input_dev *dev = w8001->touch_dev;
+	struct w8001_touch_query touch;
+	int error;
 
 
 	/* Touch enabled? */
 	error = w8001_command(w8001, W8001_CMD_TOUCHQUERY, true);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 	/*
 	 * Some non-touch devices may reply to the touch query. But their
 	 * second byte is empty, which indicates touch is not supported.
 	 */
-	अगर (!w8001->response[1])
-		वापस -ENXIO;
+	if (!w8001->response[1])
+		return -ENXIO;
 
 	__set_bit(EV_KEY, dev->evbit);
 	__set_bit(EV_ABS, dev->evbit);
 	__set_bit(BTN_TOUCH, dev->keybit);
-	__set_bit(INPUT_PROP_सूचीECT, dev->propbit);
+	__set_bit(INPUT_PROP_DIRECT, dev->propbit);
 
 	parse_touchquery(w8001->response, &touch);
 	w8001->max_touch_x = touch.x;
 	w8001->max_touch_y = touch.y;
 
-	अगर (w8001->max_pen_x && w8001->max_pen_y) अणु
-		/* अगर pen is supported scale to pen maximum */
+	if (w8001->max_pen_x && w8001->max_pen_y) {
+		/* if pen is supported scale to pen maximum */
 		touch.x = w8001->max_pen_x;
 		touch.y = w8001->max_pen_y;
 		touch.panel_res = W8001_PEN_RESOLUTION;
-	पूर्ण
+	}
 
-	input_set_असल_params(dev, ABS_X, 0, touch.x, 0, 0);
-	input_set_असल_params(dev, ABS_Y, 0, touch.y, 0, 0);
-	input_असल_set_res(dev, ABS_X, touch.panel_res);
-	input_असल_set_res(dev, ABS_Y, touch.panel_res);
+	input_set_abs_params(dev, ABS_X, 0, touch.x, 0, 0);
+	input_set_abs_params(dev, ABS_Y, 0, touch.y, 0, 0);
+	input_abs_set_res(dev, ABS_X, touch.panel_res);
+	input_abs_set_res(dev, ABS_Y, touch.panel_res);
 
-	चयन (touch.sensor_id) अणु
-	हाल 0:
-	हाल 2:
+	switch (touch.sensor_id) {
+	case 0:
+	case 2:
 		w8001->pktlen = W8001_PKTLEN_TOUCH93;
 		w8001->id = 0x93;
 		strlcat(basename, " 1FG", basename_sz);
-		अवरोध;
+		break;
 
-	हाल 1:
-	हाल 3:
-	हाल 4:
+	case 1:
+	case 3:
+	case 4:
 		w8001->pktlen = W8001_PKTLEN_TOUCH9A;
 		strlcat(basename, " 1FG", basename_sz);
 		w8001->id = 0x9a;
-		अवरोध;
+		break;
 
-	हाल 5:
+	case 5:
 		w8001->pktlen = W8001_PKTLEN_TOUCH2FG;
 
 		__set_bit(BTN_TOOL_DOUBLETAP, dev->keybit);
 		error = input_mt_init_slots(dev, 2, 0);
-		अगर (error) अणु
+		if (error) {
 			dev_err(&w8001->serio->dev,
 				"failed to initialize MT slots: %d\n", error);
-			वापस error;
-		पूर्ण
+			return error;
+		}
 
-		input_set_असल_params(dev, ABS_MT_POSITION_X,
+		input_set_abs_params(dev, ABS_MT_POSITION_X,
 					0, touch.x, 0, 0);
-		input_set_असल_params(dev, ABS_MT_POSITION_Y,
+		input_set_abs_params(dev, ABS_MT_POSITION_Y,
 					0, touch.y, 0, 0);
-		input_set_असल_params(dev, ABS_MT_TOOL_TYPE,
+		input_set_abs_params(dev, ABS_MT_TOOL_TYPE,
 					0, MT_TOOL_MAX, 0, 0);
-		input_असल_set_res(dev, ABS_MT_POSITION_X, touch.panel_res);
-		input_असल_set_res(dev, ABS_MT_POSITION_Y, touch.panel_res);
+		input_abs_set_res(dev, ABS_MT_POSITION_X, touch.panel_res);
+		input_abs_set_res(dev, ABS_MT_POSITION_Y, touch.panel_res);
 
 		strlcat(basename, " 2FG", basename_sz);
-		अगर (w8001->max_pen_x && w8001->max_pen_y)
+		if (w8001->max_pen_x && w8001->max_pen_y)
 			w8001->id = 0xE3;
-		अन्यथा
+		else
 			w8001->id = 0xE2;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	strlcat(basename, " Touchscreen", basename_sz);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम w8001_set_devdata(काष्ठा input_dev *dev, काष्ठा w8001 *w8001,
-			      काष्ठा serio *serio)
-अणु
+static void w8001_set_devdata(struct input_dev *dev, struct w8001 *w8001,
+			      struct serio *serio)
+{
 	dev->phys = w8001->phys;
 	dev->id.bustype = BUS_RS232;
 	dev->id.product = w8001->id;
-	dev->id.venकरोr = 0x056a;
+	dev->id.vendor = 0x056a;
 	dev->id.version = 0x0100;
-	dev->खोलो = w8001_खोलो;
-	dev->बंद = w8001_बंद;
+	dev->open = w8001_open;
+	dev->close = w8001_close;
 
 	dev->dev.parent = &serio->dev;
 
 	input_set_drvdata(dev, w8001);
-पूर्ण
+}
 
 /*
  * w8001_disconnect() is the opposite of w8001_connect()
  */
 
-अटल व्योम w8001_disconnect(काष्ठा serio *serio)
-अणु
-	काष्ठा w8001 *w8001 = serio_get_drvdata(serio);
+static void w8001_disconnect(struct serio *serio)
+{
+	struct w8001 *w8001 = serio_get_drvdata(serio);
 
-	serio_बंद(serio);
+	serio_close(serio);
 
-	अगर (w8001->pen_dev)
-		input_unरेजिस्टर_device(w8001->pen_dev);
-	अगर (w8001->touch_dev)
-		input_unरेजिस्टर_device(w8001->touch_dev);
-	kमुक्त(w8001);
+	if (w8001->pen_dev)
+		input_unregister_device(w8001->pen_dev);
+	if (w8001->touch_dev)
+		input_unregister_device(w8001->touch_dev);
+	kfree(w8001);
 
-	serio_set_drvdata(serio, शून्य);
-पूर्ण
+	serio_set_drvdata(serio, NULL);
+}
 
 /*
  * w8001_connect() is the routine that is called when someone adds a
- * new serio device that supports the w8001 protocol and रेजिस्टरs it as
+ * new serio device that supports the w8001 protocol and registers it as
  * an input device.
  */
 
-अटल पूर्णांक w8001_connect(काष्ठा serio *serio, काष्ठा serio_driver *drv)
-अणु
-	काष्ठा w8001 *w8001;
-	काष्ठा input_dev *input_dev_pen;
-	काष्ठा input_dev *input_dev_touch;
-	अक्षर basename[64];
-	पूर्णांक err, err_pen, err_touch;
+static int w8001_connect(struct serio *serio, struct serio_driver *drv)
+{
+	struct w8001 *w8001;
+	struct input_dev *input_dev_pen;
+	struct input_dev *input_dev_touch;
+	char basename[64];
+	int err, err_pen, err_touch;
 
-	w8001 = kzalloc(माप(काष्ठा w8001), GFP_KERNEL);
+	w8001 = kzalloc(sizeof(struct w8001), GFP_KERNEL);
 	input_dev_pen = input_allocate_device();
 	input_dev_touch = input_allocate_device();
-	अगर (!w8001 || !input_dev_pen || !input_dev_touch) अणु
+	if (!w8001 || !input_dev_pen || !input_dev_touch) {
 		err = -ENOMEM;
-		जाओ fail1;
-	पूर्ण
+		goto fail1;
+	}
 
 	w8001->serio = serio;
 	w8001->pen_dev = input_dev_pen;
 	w8001->touch_dev = input_dev_touch;
 	mutex_init(&w8001->mutex);
-	init_completion(&w8001->cmd_करोne);
-	snम_लिखो(w8001->phys, माप(w8001->phys), "%s/input0", serio->phys);
+	init_completion(&w8001->cmd_done);
+	snprintf(w8001->phys, sizeof(w8001->phys), "%s/input0", serio->phys);
 
 	serio_set_drvdata(serio, w8001);
-	err = serio_खोलो(serio, drv);
-	अगर (err)
-		जाओ fail2;
+	err = serio_open(serio, drv);
+	if (err)
+		goto fail2;
 
 	err = w8001_detect(w8001);
-	अगर (err)
-		जाओ fail3;
+	if (err)
+		goto fail3;
 
 	/* For backwards-compatibility we compose the basename based on
 	 * capabilities and then just append the tool type
 	 */
-	strlcpy(basename, "Wacom Serial", माप(basename));
+	strlcpy(basename, "Wacom Serial", sizeof(basename));
 
-	err_pen = w8001_setup_pen(w8001, basename, माप(basename));
-	err_touch = w8001_setup_touch(w8001, basename, माप(basename));
-	अगर (err_pen && err_touch) अणु
+	err_pen = w8001_setup_pen(w8001, basename, sizeof(basename));
+	err_touch = w8001_setup_touch(w8001, basename, sizeof(basename));
+	if (err_pen && err_touch) {
 		err = -ENXIO;
-		जाओ fail3;
-	पूर्ण
+		goto fail3;
+	}
 
-	अगर (!err_pen) अणु
-		strlcpy(w8001->pen_name, basename, माप(w8001->pen_name));
-		strlcat(w8001->pen_name, " Pen", माप(w8001->pen_name));
+	if (!err_pen) {
+		strlcpy(w8001->pen_name, basename, sizeof(w8001->pen_name));
+		strlcat(w8001->pen_name, " Pen", sizeof(w8001->pen_name));
 		input_dev_pen->name = w8001->pen_name;
 
 		w8001_set_devdata(input_dev_pen, w8001, serio);
 
-		err = input_रेजिस्टर_device(w8001->pen_dev);
-		अगर (err)
-			जाओ fail3;
-	पूर्ण अन्यथा अणु
-		input_मुक्त_device(input_dev_pen);
-		input_dev_pen = शून्य;
-		w8001->pen_dev = शून्य;
-	पूर्ण
+		err = input_register_device(w8001->pen_dev);
+		if (err)
+			goto fail3;
+	} else {
+		input_free_device(input_dev_pen);
+		input_dev_pen = NULL;
+		w8001->pen_dev = NULL;
+	}
 
-	अगर (!err_touch) अणु
-		strlcpy(w8001->touch_name, basename, माप(w8001->touch_name));
+	if (!err_touch) {
+		strlcpy(w8001->touch_name, basename, sizeof(w8001->touch_name));
 		strlcat(w8001->touch_name, " Finger",
-			माप(w8001->touch_name));
+			sizeof(w8001->touch_name));
 		input_dev_touch->name = w8001->touch_name;
 
 		w8001_set_devdata(input_dev_touch, w8001, serio);
 
-		err = input_रेजिस्टर_device(w8001->touch_dev);
-		अगर (err)
-			जाओ fail4;
-	पूर्ण अन्यथा अणु
-		input_मुक्त_device(input_dev_touch);
-		input_dev_touch = शून्य;
-		w8001->touch_dev = शून्य;
-	पूर्ण
+		err = input_register_device(w8001->touch_dev);
+		if (err)
+			goto fail4;
+	} else {
+		input_free_device(input_dev_touch);
+		input_dev_touch = NULL;
+		w8001->touch_dev = NULL;
+	}
 
-	वापस 0;
+	return 0;
 
 fail4:
-	अगर (w8001->pen_dev)
-		input_unरेजिस्टर_device(w8001->pen_dev);
+	if (w8001->pen_dev)
+		input_unregister_device(w8001->pen_dev);
 fail3:
-	serio_बंद(serio);
+	serio_close(serio);
 fail2:
-	serio_set_drvdata(serio, शून्य);
+	serio_set_drvdata(serio, NULL);
 fail1:
-	input_मुक्त_device(input_dev_pen);
-	input_मुक्त_device(input_dev_touch);
-	kमुक्त(w8001);
-	वापस err;
-पूर्ण
+	input_free_device(input_dev_pen);
+	input_free_device(input_dev_touch);
+	kfree(w8001);
+	return err;
+}
 
-अटल स्थिर काष्ठा serio_device_id w8001_serio_ids[] = अणु
-	अणु
+static const struct serio_device_id w8001_serio_ids[] = {
+	{
 		.type	= SERIO_RS232,
 		.proto	= SERIO_W8001,
 		.id	= SERIO_ANY,
 		.extra	= SERIO_ANY,
-	पूर्ण,
-	अणु 0 पूर्ण
-पूर्ण;
+	},
+	{ 0 }
+};
 
 MODULE_DEVICE_TABLE(serio, w8001_serio_ids);
 
-अटल काष्ठा serio_driver w8001_drv = अणु
-	.driver		= अणु
+static struct serio_driver w8001_drv = {
+	.driver		= {
 		.name	= "w8001",
-	पूर्ण,
+	},
 	.description	= DRIVER_DESC,
 	.id_table	= w8001_serio_ids,
-	.पूर्णांकerrupt	= w8001_पूर्णांकerrupt,
+	.interrupt	= w8001_interrupt,
 	.connect	= w8001_connect,
 	.disconnect	= w8001_disconnect,
-पूर्ण;
+};
 
 module_serio_driver(w8001_drv);

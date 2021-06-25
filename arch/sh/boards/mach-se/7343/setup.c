@@ -1,183 +1,182 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/init.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/mtd/physmap.h>
-#समावेश <linux/serial_8250.h>
-#समावेश <linux/serial_reg.h>
-#समावेश <linux/usb/isp116x.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/irqकरोमुख्य.h>
-#समावेश <यंत्र/machvec.h>
-#समावेश <mach-se/mach/se7343.h>
-#समावेश <यंत्र/heartbeat.h>
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/पन.स>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/init.h>
+#include <linux/platform_device.h>
+#include <linux/mtd/physmap.h>
+#include <linux/serial_8250.h>
+#include <linux/serial_reg.h>
+#include <linux/usb/isp116x.h>
+#include <linux/delay.h>
+#include <linux/irqdomain.h>
+#include <asm/machvec.h>
+#include <mach-se/mach/se7343.h>
+#include <asm/heartbeat.h>
+#include <asm/irq.h>
+#include <asm/io.h>
 
-अटल काष्ठा resource heartbeat_resource = अणु
+static struct resource heartbeat_resource = {
 	.start	= PA_LED,
 	.end	= PA_LED,
 	.flags	= IORESOURCE_MEM | IORESOURCE_MEM_16BIT,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device heartbeat_device = अणु
+static struct platform_device heartbeat_device = {
 	.name		= "heartbeat",
 	.id		= -1,
 	.num_resources	= 1,
 	.resource	= &heartbeat_resource,
-पूर्ण;
+};
 
-अटल काष्ठा mtd_partition nor_flash_partitions[] = अणु
-	अणु
+static struct mtd_partition nor_flash_partitions[] = {
+	{
 		.name		= "loader",
 		.offset		= 0x00000000,
 		.size		= 128 * 1024,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name		= "rootfs",
 		.offset		= MTDPART_OFS_APPEND,
 		.size		= 31 * 1024 * 1024,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name		= "data",
 		.offset		= MTDPART_OFS_APPEND,
 		.size		= MTDPART_SIZ_FULL,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा physmap_flash_data nor_flash_data = अणु
+static struct physmap_flash_data nor_flash_data = {
 	.width		= 2,
 	.parts		= nor_flash_partitions,
 	.nr_parts	= ARRAY_SIZE(nor_flash_partitions),
-पूर्ण;
+};
 
-अटल काष्ठा resource nor_flash_resources[] = अणु
-	[0]	= अणु
+static struct resource nor_flash_resources[] = {
+	[0]	= {
 		.start	= 0x00000000,
 		.end	= 0x01ffffff,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल काष्ठा platक्रमm_device nor_flash_device = अणु
+static struct platform_device nor_flash_device = {
 	.name		= "physmap-flash",
-	.dev		= अणु
-		.platक्रमm_data	= &nor_flash_data,
-	पूर्ण,
+	.dev		= {
+		.platform_data	= &nor_flash_data,
+	},
 	.num_resources	= ARRAY_SIZE(nor_flash_resources),
 	.resource	= nor_flash_resources,
-पूर्ण;
+};
 
-#घोषणा ST16C2550C_FLAGS (UPF_BOOT_AUTOCONF | UPF_IOREMAP)
+#define ST16C2550C_FLAGS (UPF_BOOT_AUTOCONF | UPF_IOREMAP)
 
-अटल काष्ठा plat_serial8250_port serial_platक्रमm_data[] = अणु
-	[0] = अणु
+static struct plat_serial8250_port serial_platform_data[] = {
+	[0] = {
 		.iotype		= UPIO_MEM,
 		.mapbase	= 0x16000000,
-		.regshअगरt	= 1,
+		.regshift	= 1,
 		.flags		= ST16C2550C_FLAGS,
 		.uartclk	= 7372800,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.iotype		= UPIO_MEM,
 		.mapbase	= 0x17000000,
-		.regshअगरt	= 1,
+		.regshift	= 1,
 		.flags		= ST16C2550C_FLAGS,
 		.uartclk	= 7372800,
-	पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+	},
+	{ },
+};
 
-अटल काष्ठा platक्रमm_device uart_device = अणु
+static struct platform_device uart_device = {
 	.name			= "serial8250",
 	.id			= PLAT8250_DEV_PLATFORM,
-	.dev			= अणु
-		.platक्रमm_data	= serial_platक्रमm_data,
-	पूर्ण,
-पूर्ण;
+	.dev			= {
+		.platform_data	= serial_platform_data,
+	},
+};
 
-अटल व्योम isp116x_delay(काष्ठा device *dev, पूर्णांक delay)
-अणु
+static void isp116x_delay(struct device *dev, int delay)
+{
 	ndelay(delay);
-पूर्ण
+}
 
-अटल काष्ठा resource usb_resources[] = अणु
-	[0] = अणु
+static struct resource usb_resources[] = {
+	[0] = {
 		.start  = 0x11800000,
 		.end    = 0x11800001,
 		.flags  = IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.start  = 0x11800002,
 		.end    = 0x11800003,
 		.flags  = IORESOURCE_MEM,
-	पूर्ण,
-	[2] = अणु
+	},
+	[2] = {
 		/* Filled in later */
 		.flags  = IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा isp116x_platक्रमm_data usb_platक्रमm_data = अणु
+static struct isp116x_platform_data usb_platform_data = {
 	.sel15Kres		= 1,
 	.oc_enable		= 1,
-	.पूर्णांक_act_high		= 0,
-	.पूर्णांक_edge_triggered	= 0,
+	.int_act_high		= 0,
+	.int_edge_triggered	= 0,
 	.remote_wakeup_enable	= 0,
 	.delay			= isp116x_delay,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device usb_device = अणु
+static struct platform_device usb_device = {
 	.name			= "isp116x-hcd",
 	.id			= -1,
 	.num_resources		= ARRAY_SIZE(usb_resources),
 	.resource		= usb_resources,
-	.dev			= अणु
-		.platक्रमm_data	= &usb_platक्रमm_data,
-	पूर्ण,
+	.dev			= {
+		.platform_data	= &usb_platform_data,
+	},
 
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device *sh7343se_platक्रमm_devices[] __initdata = अणु
+static struct platform_device *sh7343se_platform_devices[] __initdata = {
 	&heartbeat_device,
 	&nor_flash_device,
 	&uart_device,
 	&usb_device,
-पूर्ण;
+};
 
-अटल पूर्णांक __init sh7343se_devices_setup(व्योम)
-अणु
+static int __init sh7343se_devices_setup(void)
+{
 	/* Wire-up dynamic vectors */
-	serial_platक्रमm_data[0].irq = irq_find_mapping(se7343_irq_करोमुख्य,
+	serial_platform_data[0].irq = irq_find_mapping(se7343_irq_domain,
 						       SE7343_FPGA_IRQ_UARTA);
-	serial_platक्रमm_data[1].irq = irq_find_mapping(se7343_irq_करोमुख्य,
+	serial_platform_data[1].irq = irq_find_mapping(se7343_irq_domain,
 						       SE7343_FPGA_IRQ_UARTB);
 	usb_resources[2].start = usb_resources[2].end =
-		irq_find_mapping(se7343_irq_करोमुख्य, SE7343_FPGA_IRQ_USB);
+		irq_find_mapping(se7343_irq_domain, SE7343_FPGA_IRQ_USB);
 
-	वापस platक्रमm_add_devices(sh7343se_platक्रमm_devices,
-				    ARRAY_SIZE(sh7343se_platक्रमm_devices));
-पूर्ण
+	return platform_add_devices(sh7343se_platform_devices,
+				    ARRAY_SIZE(sh7343se_platform_devices));
+}
 device_initcall(sh7343se_devices_setup);
 
 /*
  * Initialize the board
  */
-अटल व्योम __init sh7343se_setup(अक्षर **cmdline_p)
-अणु
-	__raw_ग_लिखोw(0xf900, FPGA_OUT);	/* FPGA */
+static void __init sh7343se_setup(char **cmdline_p)
+{
+	__raw_writew(0xf900, FPGA_OUT);	/* FPGA */
 
-	__raw_ग_लिखोw(0x0002, PORT_PECR);	/* PORT E 1 = IRQ5 */
-	__raw_ग_लिखोw(0x0020, PORT_PSELD);
+	__raw_writew(0x0002, PORT_PECR);	/* PORT E 1 = IRQ5 */
+	__raw_writew(0x0020, PORT_PSELD);
 
-	prपूर्णांकk(KERN_INFO "MS7343CP01 Setup...done\n");
-पूर्ण
+	printk(KERN_INFO "MS7343CP01 Setup...done\n");
+}
 
 /*
  * The Machine Vector
  */
-अटल काष्ठा sh_machine_vector mv_7343se __iniपंचांगv = अणु
+static struct sh_machine_vector mv_7343se __initmv = {
 	.mv_name = "SolutionEngine 7343",
 	.mv_setup = sh7343se_setup,
 	.mv_init_irq = init_7343se_IRQ,
-पूर्ण;
+};

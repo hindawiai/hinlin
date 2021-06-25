@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  linux/drivers/mtd/maps/pci.c
  *
@@ -9,159 +8,159 @@
  *  - Intel IQ80310 ATU.
  *  - Intel EBSA285 (blank rom programming mode). Tested working 27/09/2001
  */
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/slab.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/pci.h>
+#include <linux/slab.h>
 
-#समावेश <linux/mtd/mtd.h>
-#समावेश <linux/mtd/map.h>
-#समावेश <linux/mtd/partitions.h>
+#include <linux/mtd/mtd.h>
+#include <linux/mtd/map.h>
+#include <linux/mtd/partitions.h>
 
-काष्ठा map_pci_info;
+struct map_pci_info;
 
-काष्ठा mtd_pci_info अणु
-	पूर्णांक  (*init)(काष्ठा pci_dev *dev, काष्ठा map_pci_info *map);
-	व्योम (*निकास)(काष्ठा pci_dev *dev, काष्ठा map_pci_info *map);
-	अचिन्हित दीर्घ (*translate)(काष्ठा map_pci_info *map, अचिन्हित दीर्घ ofs);
-	स्थिर अक्षर *map_name;
-पूर्ण;
+struct mtd_pci_info {
+	int  (*init)(struct pci_dev *dev, struct map_pci_info *map);
+	void (*exit)(struct pci_dev *dev, struct map_pci_info *map);
+	unsigned long (*translate)(struct map_pci_info *map, unsigned long ofs);
+	const char *map_name;
+};
 
-काष्ठा map_pci_info अणु
-	काष्ठा map_info map;
-	व्योम __iomem *base;
-	व्योम (*निकास)(काष्ठा pci_dev *dev, काष्ठा map_pci_info *map);
-	अचिन्हित दीर्घ (*translate)(काष्ठा map_pci_info *map, अचिन्हित दीर्घ ofs);
-	काष्ठा pci_dev *dev;
-पूर्ण;
+struct map_pci_info {
+	struct map_info map;
+	void __iomem *base;
+	void (*exit)(struct pci_dev *dev, struct map_pci_info *map);
+	unsigned long (*translate)(struct map_pci_info *map, unsigned long ofs);
+	struct pci_dev *dev;
+};
 
-अटल map_word mtd_pci_पढ़ो8(काष्ठा map_info *_map, अचिन्हित दीर्घ ofs)
-अणु
-	काष्ठा map_pci_info *map = (काष्ठा map_pci_info *)_map;
+static map_word mtd_pci_read8(struct map_info *_map, unsigned long ofs)
+{
+	struct map_pci_info *map = (struct map_pci_info *)_map;
 	map_word val;
-	val.x[0]= पढ़ोb(map->base + map->translate(map, ofs));
-	वापस val;
-पूर्ण
+	val.x[0]= readb(map->base + map->translate(map, ofs));
+	return val;
+}
 
-अटल map_word mtd_pci_पढ़ो32(काष्ठा map_info *_map, अचिन्हित दीर्घ ofs)
-अणु
-	काष्ठा map_pci_info *map = (काष्ठा map_pci_info *)_map;
+static map_word mtd_pci_read32(struct map_info *_map, unsigned long ofs)
+{
+	struct map_pci_info *map = (struct map_pci_info *)_map;
 	map_word val;
-	val.x[0] = पढ़ोl(map->base + map->translate(map, ofs));
-	वापस val;
-पूर्ण
+	val.x[0] = readl(map->base + map->translate(map, ofs));
+	return val;
+}
 
-अटल व्योम mtd_pci_copyfrom(काष्ठा map_info *_map, व्योम *to, अचिन्हित दीर्घ from, sमाप_प्रकार len)
-अणु
-	काष्ठा map_pci_info *map = (काष्ठा map_pci_info *)_map;
-	स_नकल_fromio(to, map->base + map->translate(map, from), len);
-पूर्ण
+static void mtd_pci_copyfrom(struct map_info *_map, void *to, unsigned long from, ssize_t len)
+{
+	struct map_pci_info *map = (struct map_pci_info *)_map;
+	memcpy_fromio(to, map->base + map->translate(map, from), len);
+}
 
-अटल व्योम mtd_pci_ग_लिखो8(काष्ठा map_info *_map, map_word val, अचिन्हित दीर्घ ofs)
-अणु
-	काष्ठा map_pci_info *map = (काष्ठा map_pci_info *)_map;
-	ग_लिखोb(val.x[0], map->base + map->translate(map, ofs));
-पूर्ण
+static void mtd_pci_write8(struct map_info *_map, map_word val, unsigned long ofs)
+{
+	struct map_pci_info *map = (struct map_pci_info *)_map;
+	writeb(val.x[0], map->base + map->translate(map, ofs));
+}
 
-अटल व्योम mtd_pci_ग_लिखो32(काष्ठा map_info *_map, map_word val, अचिन्हित दीर्घ ofs)
-अणु
-	काष्ठा map_pci_info *map = (काष्ठा map_pci_info *)_map;
-	ग_लिखोl(val.x[0], map->base + map->translate(map, ofs));
-पूर्ण
+static void mtd_pci_write32(struct map_info *_map, map_word val, unsigned long ofs)
+{
+	struct map_pci_info *map = (struct map_pci_info *)_map;
+	writel(val.x[0], map->base + map->translate(map, ofs));
+}
 
-अटल व्योम mtd_pci_copyto(काष्ठा map_info *_map, अचिन्हित दीर्घ to, स्थिर व्योम *from, sमाप_प्रकार len)
-अणु
-	काष्ठा map_pci_info *map = (काष्ठा map_pci_info *)_map;
-	स_नकल_toio(map->base + map->translate(map, to), from, len);
-पूर्ण
+static void mtd_pci_copyto(struct map_info *_map, unsigned long to, const void *from, ssize_t len)
+{
+	struct map_pci_info *map = (struct map_pci_info *)_map;
+	memcpy_toio(map->base + map->translate(map, to), from, len);
+}
 
-अटल स्थिर काष्ठा map_info mtd_pci_map = अणु
+static const struct map_info mtd_pci_map = {
 	.phys =		NO_XIP,
 	.copy_from =	mtd_pci_copyfrom,
 	.copy_to =	mtd_pci_copyto,
-पूर्ण;
+};
 
 /*
  * Intel IOP80310 Flash driver
  */
 
-अटल पूर्णांक
-पूर्णांकel_iq80310_init(काष्ठा pci_dev *dev, काष्ठा map_pci_info *map)
-अणु
+static int
+intel_iq80310_init(struct pci_dev *dev, struct map_pci_info *map)
+{
 	u32 win_base;
 
 	map->map.bankwidth = 1;
-	map->map.पढ़ो = mtd_pci_पढ़ो8;
-	map->map.ग_लिखो = mtd_pci_ग_लिखो8;
+	map->map.read = mtd_pci_read8;
+	map->map.write = mtd_pci_write8;
 
 	map->map.size     = 0x00800000;
 	map->base         = ioremap(pci_resource_start(dev, 0),
 					    pci_resource_len(dev, 0));
 
-	अगर (!map->base)
-		वापस -ENOMEM;
+	if (!map->base)
+		return -ENOMEM;
 
 	/*
-	 * We want to base the memory winकरोw at Xscale
+	 * We want to base the memory window at Xscale
 	 * bus address 0, not 0x1000.
 	 */
-	pci_पढ़ो_config_dword(dev, 0x44, &win_base);
-	pci_ग_लिखो_config_dword(dev, 0x44, 0);
+	pci_read_config_dword(dev, 0x44, &win_base);
+	pci_write_config_dword(dev, 0x44, 0);
 
 	map->map.map_priv_2 = win_base;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-पूर्णांकel_iq80310_निकास(काष्ठा pci_dev *dev, काष्ठा map_pci_info *map)
-अणु
-	अगर (map->base)
+static void
+intel_iq80310_exit(struct pci_dev *dev, struct map_pci_info *map)
+{
+	if (map->base)
 		iounmap(map->base);
-	pci_ग_लिखो_config_dword(dev, 0x44, map->map.map_priv_2);
-पूर्ण
+	pci_write_config_dword(dev, 0x44, map->map.map_priv_2);
+}
 
-अटल अचिन्हित दीर्घ
-पूर्णांकel_iq80310_translate(काष्ठा map_pci_info *map, अचिन्हित दीर्घ ofs)
-अणु
-	अचिन्हित दीर्घ page_addr = ofs & 0x00400000;
+static unsigned long
+intel_iq80310_translate(struct map_pci_info *map, unsigned long ofs)
+{
+	unsigned long page_addr = ofs & 0x00400000;
 
 	/*
-	 * This mundges the flash location so we aव्योम
-	 * the first 80 bytes (they appear to पढ़ो nonsense).
+	 * This mundges the flash location so we avoid
+	 * the first 80 bytes (they appear to read nonsense).
 	 */
-	अगर (page_addr) अणु
-		ग_लिखोl(0x00000008, map->base + 0x1558);
-		ग_लिखोl(0x00000000, map->base + 0x1550);
-	पूर्ण अन्यथा अणु
-		ग_लिखोl(0x00000007, map->base + 0x1558);
-		ग_लिखोl(0x00800000, map->base + 0x1550);
+	if (page_addr) {
+		writel(0x00000008, map->base + 0x1558);
+		writel(0x00000000, map->base + 0x1550);
+	} else {
+		writel(0x00000007, map->base + 0x1558);
+		writel(0x00800000, map->base + 0x1550);
 		ofs += 0x00800000;
-	पूर्ण
+	}
 
-	वापस ofs;
-पूर्ण
+	return ofs;
+}
 
-अटल काष्ठा mtd_pci_info पूर्णांकel_iq80310_info = अणु
-	.init =		पूर्णांकel_iq80310_init,
-	.निकास =		पूर्णांकel_iq80310_निकास,
-	.translate =	पूर्णांकel_iq80310_translate,
+static struct mtd_pci_info intel_iq80310_info = {
+	.init =		intel_iq80310_init,
+	.exit =		intel_iq80310_exit,
+	.translate =	intel_iq80310_translate,
 	.map_name =	"cfi_probe",
-पूर्ण;
+};
 
 /*
  * Intel DC21285 driver
  */
 
-अटल पूर्णांक
-पूर्णांकel_dc21285_init(काष्ठा pci_dev *dev, काष्ठा map_pci_info *map)
-अणु
-	अचिन्हित दीर्घ base, len;
+static int
+intel_dc21285_init(struct pci_dev *dev, struct map_pci_info *map)
+{
+	unsigned long base, len;
 
 	base = pci_resource_start(dev, PCI_ROM_RESOURCE);
 	len  = pci_resource_len(dev, PCI_ROM_RESOURCE);
 
-	अगर (!len || !base) अणु
+	if (!len || !base) {
 		/*
 		 * No ROM resource
 		 */
@@ -172,156 +171,156 @@
 		 * We need to re-allocate PCI BAR2 address range to the
 		 * PCI ROM BAR, and disable PCI BAR2.
 		 */
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
-		 * Hmm, अगर an address was allocated to the ROM resource, but
-		 * not enabled, should we be allocating a new resource क्रम it
+		 * Hmm, if an address was allocated to the ROM resource, but
+		 * not enabled, should we be allocating a new resource for it
 		 * or simply enabling it?
 		 */
 		pci_enable_rom(dev);
-		prपूर्णांकk("%s: enabling expansion ROM\n", pci_name(dev));
-	पूर्ण
+		printk("%s: enabling expansion ROM\n", pci_name(dev));
+	}
 
-	अगर (!len || !base)
-		वापस -ENXIO;
+	if (!len || !base)
+		return -ENXIO;
 
 	map->map.bankwidth = 4;
-	map->map.पढ़ो = mtd_pci_पढ़ो32;
-	map->map.ग_लिखो = mtd_pci_ग_लिखो32;
+	map->map.read = mtd_pci_read32;
+	map->map.write = mtd_pci_write32;
 	map->map.size     = len;
 	map->base         = ioremap(base, len);
 
-	अगर (!map->base)
-		वापस -ENOMEM;
+	if (!map->base)
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-पूर्णांकel_dc21285_निकास(काष्ठा pci_dev *dev, काष्ठा map_pci_info *map)
-अणु
-	अगर (map->base)
+static void
+intel_dc21285_exit(struct pci_dev *dev, struct map_pci_info *map)
+{
+	if (map->base)
 		iounmap(map->base);
 
 	/*
-	 * We need to unकरो the PCI BAR2/PCI ROM BAR address alteration.
+	 * We need to undo the PCI BAR2/PCI ROM BAR address alteration.
 	 */
 	pci_disable_rom(dev);
-पूर्ण
+}
 
-अटल अचिन्हित दीर्घ
-पूर्णांकel_dc21285_translate(काष्ठा map_pci_info *map, अचिन्हित दीर्घ ofs)
-अणु
-	वापस ofs & 0x00ffffc0 ? ofs : (ofs ^ (1 << 5));
-पूर्ण
+static unsigned long
+intel_dc21285_translate(struct map_pci_info *map, unsigned long ofs)
+{
+	return ofs & 0x00ffffc0 ? ofs : (ofs ^ (1 << 5));
+}
 
-अटल काष्ठा mtd_pci_info पूर्णांकel_dc21285_info = अणु
-	.init =		पूर्णांकel_dc21285_init,
-	.निकास =		पूर्णांकel_dc21285_निकास,
-	.translate =	पूर्णांकel_dc21285_translate,
+static struct mtd_pci_info intel_dc21285_info = {
+	.init =		intel_dc21285_init,
+	.exit =		intel_dc21285_exit,
+	.translate =	intel_dc21285_translate,
 	.map_name =	"jedec_probe",
-पूर्ण;
+};
 
 /*
  * PCI device ID table
  */
 
-अटल स्थिर काष्ठा pci_device_id mtd_pci_ids[] = अणु
-	अणु
-		.venकरोr =	PCI_VENDOR_ID_INTEL,
+static const struct pci_device_id mtd_pci_ids[] = {
+	{
+		.vendor =	PCI_VENDOR_ID_INTEL,
 		.device =	0x530d,
-		.subvenकरोr =	PCI_ANY_ID,
+		.subvendor =	PCI_ANY_ID,
 		.subdevice =	PCI_ANY_ID,
 		.class =	PCI_CLASS_MEMORY_OTHER << 8,
 		.class_mask =	0xffff00,
-		.driver_data =	(अचिन्हित दीर्घ)&पूर्णांकel_iq80310_info,
-	पूर्ण,
-	अणु
-		.venकरोr =	PCI_VENDOR_ID_DEC,
+		.driver_data =	(unsigned long)&intel_iq80310_info,
+	},
+	{
+		.vendor =	PCI_VENDOR_ID_DEC,
 		.device =	PCI_DEVICE_ID_DEC_21285,
-		.subvenकरोr =	0,	/* DC21285 शेषs to 0 on reset */
-		.subdevice =	0,	/* DC21285 शेषs to 0 on reset */
-		.driver_data =	(अचिन्हित दीर्घ)&पूर्णांकel_dc21285_info,
-	पूर्ण,
-	अणु 0, पूर्ण
-पूर्ण;
+		.subvendor =	0,	/* DC21285 defaults to 0 on reset */
+		.subdevice =	0,	/* DC21285 defaults to 0 on reset */
+		.driver_data =	(unsigned long)&intel_dc21285_info,
+	},
+	{ 0, }
+};
 
 /*
  * Generic code follows.
  */
 
-अटल पूर्णांक mtd_pci_probe(काष्ठा pci_dev *dev, स्थिर काष्ठा pci_device_id *id)
-अणु
-	काष्ठा mtd_pci_info *info = (काष्ठा mtd_pci_info *)id->driver_data;
-	काष्ठा map_pci_info *map = शून्य;
-	काष्ठा mtd_info *mtd = शून्य;
-	पूर्णांक err;
+static int mtd_pci_probe(struct pci_dev *dev, const struct pci_device_id *id)
+{
+	struct mtd_pci_info *info = (struct mtd_pci_info *)id->driver_data;
+	struct map_pci_info *map = NULL;
+	struct mtd_info *mtd = NULL;
+	int err;
 
 	err = pci_enable_device(dev);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	err = pci_request_regions(dev, "pci mtd");
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
-	map = kदो_स्मृति(माप(*map), GFP_KERNEL);
+	map = kmalloc(sizeof(*map), GFP_KERNEL);
 	err = -ENOMEM;
-	अगर (!map)
-		जाओ release;
+	if (!map)
+		goto release;
 
 	map->map       = mtd_pci_map;
 	map->map.name  = pci_name(dev);
 	map->dev       = dev;
-	map->निकास      = info->निकास;
+	map->exit      = info->exit;
 	map->translate = info->translate;
 
 	err = info->init(dev, map);
-	अगर (err)
-		जाओ release;
+	if (err)
+		goto release;
 
-	mtd = करो_map_probe(info->map_name, &map->map);
+	mtd = do_map_probe(info->map_name, &map->map);
 	err = -ENODEV;
-	अगर (!mtd)
-		जाओ release;
+	if (!mtd)
+		goto release;
 
 	mtd->owner = THIS_MODULE;
-	mtd_device_रेजिस्टर(mtd, शून्य, 0);
+	mtd_device_register(mtd, NULL, 0);
 
 	pci_set_drvdata(dev, mtd);
 
-	वापस 0;
+	return 0;
 
 release:
-	अगर (map) अणु
-		map->निकास(dev, map);
-		kमुक्त(map);
-	पूर्ण
+	if (map) {
+		map->exit(dev, map);
+		kfree(map);
+	}
 
 	pci_release_regions(dev);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम mtd_pci_हटाओ(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा mtd_info *mtd = pci_get_drvdata(dev);
-	काष्ठा map_pci_info *map = mtd->priv;
+static void mtd_pci_remove(struct pci_dev *dev)
+{
+	struct mtd_info *mtd = pci_get_drvdata(dev);
+	struct map_pci_info *map = mtd->priv;
 
-	mtd_device_unरेजिस्टर(mtd);
+	mtd_device_unregister(mtd);
 	map_destroy(mtd);
-	map->निकास(dev, map);
-	kमुक्त(map);
+	map->exit(dev, map);
+	kfree(map);
 
 	pci_release_regions(dev);
-पूर्ण
+}
 
-अटल काष्ठा pci_driver mtd_pci_driver = अणु
+static struct pci_driver mtd_pci_driver = {
 	.name =		"MTD PCI",
 	.probe =	mtd_pci_probe,
-	.हटाओ =	mtd_pci_हटाओ,
+	.remove =	mtd_pci_remove,
 	.id_table =	mtd_pci_ids,
-पूर्ण;
+};
 
 module_pci_driver(mtd_pci_driver);
 

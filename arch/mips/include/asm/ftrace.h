@@ -1,28 +1,27 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive क्रम
+ * License.  See the file "COPYING" in the main directory of this archive for
  * more details.
  *
  * Copyright (C) 2009 DSLab, Lanzhou University, China
  * Author: Wu Zhangjin <wuzhangjin@gmail.com>
  */
 
-#अगर_अघोषित _ASM_MIPS_FTRACE_H
-#घोषणा _ASM_MIPS_FTRACE_H
+#ifndef _ASM_MIPS_FTRACE_H
+#define _ASM_MIPS_FTRACE_H
 
-#अगर_घोषित CONFIG_FUNCTION_TRACER
+#ifdef CONFIG_FUNCTION_TRACER
 
-#घोषणा MCOUNT_ADDR ((अचिन्हित दीर्घ)(_mcount))
-#घोषणा MCOUNT_INSN_SIZE 4		/* माप mcount call */
+#define MCOUNT_ADDR ((unsigned long)(_mcount))
+#define MCOUNT_INSN_SIZE 4		/* sizeof mcount call */
 
-#अगर_अघोषित __ASSEMBLY__
-बाह्य व्योम _mcount(व्योम);
-#घोषणा mcount _mcount
+#ifndef __ASSEMBLY__
+extern void _mcount(void);
+#define mcount _mcount
 
-#घोषणा safe_load(load, src, dst, error)		\
-करो अणु							\
-	यंत्र अस्थिर (					\
+#define safe_load(load, src, dst, error)		\
+do {							\
+	asm volatile (					\
 		"1: " load " %[tmp_dst], 0(%[tmp_src])\n"	\
 		"   li %[tmp_err], 0\n"			\
 		"2: .insn\n"				\
@@ -36,15 +35,15 @@
 		STR(PTR) "\t1b, 3b\n\t"			\
 		".previous\n"				\
 							\
-		: [पंचांगp_dst] "=&r" (dst), [पंचांगp_err] "=r" (error)\
-		: [पंचांगp_src] "r" (src)			\
+		: [tmp_dst] "=&r" (dst), [tmp_err] "=r" (error)\
+		: [tmp_src] "r" (src)			\
 		: "memory"				\
 	);						\
-पूर्ण जबतक (0)
+} while (0)
 
-#घोषणा safe_store(store, src, dst, error)	\
-करो अणु						\
-	यंत्र अस्थिर (				\
+#define safe_store(store, src, dst, error)	\
+do {						\
+	asm volatile (				\
 		"1: " store " %[tmp_src], 0(%[tmp_dst])\n"\
 		"   li %[tmp_err], 0\n"		\
 		"2: .insn\n"			\
@@ -58,34 +57,34 @@
 		STR(PTR) "\t1b, 3b\n\t"		\
 		".previous\n"			\
 						\
-		: [पंचांगp_err] "=r" (error)	\
-		: [पंचांगp_dst] "r" (dst), [पंचांगp_src] "r" (src)\
+		: [tmp_err] "=r" (error)	\
+		: [tmp_dst] "r" (dst), [tmp_src] "r" (src)\
 		: "memory"			\
 	);					\
-पूर्ण जबतक (0)
+} while (0)
 
-#घोषणा safe_load_code(dst, src, error) \
+#define safe_load_code(dst, src, error) \
 	safe_load(STR(lw), src, dst, error)
-#घोषणा safe_store_code(src, dst, error) \
+#define safe_store_code(src, dst, error) \
 	safe_store(STR(sw), src, dst, error)
 
-#घोषणा safe_load_stack(dst, src, error) \
+#define safe_load_stack(dst, src, error) \
 	safe_load(STR(PTR_L), src, dst, error)
 
-#घोषणा safe_store_stack(src, dst, error) \
+#define safe_store_stack(src, dst, error) \
 	safe_store(STR(PTR_S), src, dst, error)
 
 
-#अगर_घोषित CONFIG_DYNAMIC_FTRACE
-अटल अंतरभूत अचिन्हित दीर्घ ftrace_call_adjust(अचिन्हित दीर्घ addr)
-अणु
-	वापस addr;
-पूर्ण
+#ifdef CONFIG_DYNAMIC_FTRACE
+static inline unsigned long ftrace_call_adjust(unsigned long addr)
+{
+	return addr;
+}
 
-काष्ठा dyn_arch_ftrace अणु
-पूर्ण;
+struct dyn_arch_ftrace {
+};
 
-#पूर्ण_अगर /*  CONFIG_DYNAMIC_FTRACE */
-#पूर्ण_अगर /* __ASSEMBLY__ */
-#पूर्ण_अगर /* CONFIG_FUNCTION_TRACER */
-#पूर्ण_अगर /* _ASM_MIPS_FTRACE_H */
+#endif /*  CONFIG_DYNAMIC_FTRACE */
+#endif /* __ASSEMBLY__ */
+#endif /* CONFIG_FUNCTION_TRACER */
+#endif /* _ASM_MIPS_FTRACE_H */

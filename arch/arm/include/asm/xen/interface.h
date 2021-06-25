@@ -1,2 +1,1 @@
-<शैली गुरु>
-#समावेश <xen/arm/पूर्णांकerface.h>
+#include <xen/arm/interface.h>

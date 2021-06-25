@@ -1,22 +1,21 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _S390_VTIME_H
-#घोषणा _S390_VTIME_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _S390_VTIME_H
+#define _S390_VTIME_H
 
-#घोषणा __ARCH_HAS_VTIME_TASK_SWITCH
+#define __ARCH_HAS_VTIME_TASK_SWITCH
 
-अटल अंतरभूत व्योम update_समयr_sys(व्योम)
-अणु
-	S390_lowcore.प्रणाली_समयr += S390_lowcore.last_update_समयr - S390_lowcore.निकास_समयr;
-	S390_lowcore.user_समयr += S390_lowcore.निकास_समयr - S390_lowcore.sys_enter_समयr;
-	S390_lowcore.last_update_समयr = S390_lowcore.sys_enter_समयr;
-पूर्ण
+static inline void update_timer_sys(void)
+{
+	S390_lowcore.system_timer += S390_lowcore.last_update_timer - S390_lowcore.exit_timer;
+	S390_lowcore.user_timer += S390_lowcore.exit_timer - S390_lowcore.sys_enter_timer;
+	S390_lowcore.last_update_timer = S390_lowcore.sys_enter_timer;
+}
 
-अटल अंतरभूत व्योम update_समयr_mcck(व्योम)
-अणु
-	S390_lowcore.प्रणाली_समयr += S390_lowcore.last_update_समयr - S390_lowcore.निकास_समयr;
-	S390_lowcore.user_समयr += S390_lowcore.निकास_समयr - S390_lowcore.mcck_enter_समयr;
-	S390_lowcore.last_update_समयr = S390_lowcore.mcck_enter_समयr;
-पूर्ण
+static inline void update_timer_mcck(void)
+{
+	S390_lowcore.system_timer += S390_lowcore.last_update_timer - S390_lowcore.exit_timer;
+	S390_lowcore.user_timer += S390_lowcore.exit_timer - S390_lowcore.mcck_enter_timer;
+	S390_lowcore.last_update_timer = S390_lowcore.mcck_enter_timer;
+}
 
-#पूर्ण_अगर /* _S390_VTIME_H */
+#endif /* _S390_VTIME_H */

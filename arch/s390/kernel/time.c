@@ -1,11 +1,10 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- *    Time of day based समयr functions.
+ *    Time of day based timer functions.
  *
  *  S390 version
  *    Copyright IBM Corp. 1999, 2008
- *    Author(s): Harपंचांगut Penner (hp@de.ibm.com),
+ *    Author(s): Hartmut Penner (hp@de.ibm.com),
  *               Martin Schwidefsky (schwidefsky@de.ibm.com),
  *               Denis Joseph Barrow (djbarrow@de.ibm.com,barrow_dj@yahoo.com)
  *
@@ -13,473 +12,473 @@
  *    Copyright (C) 1991, 1992, 1995  Linus Torvalds
  */
 
-#घोषणा KMSG_COMPONENT "time"
-#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#define KMSG_COMPONENT "time"
+#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#समावेश <linux/kernel_स्थिति.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/export.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/घड़ी.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/param.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/mm.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/stop_machine.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/device.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/init.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/types.h>
-#समावेश <linux/profile.h>
-#समावेश <linux/समयx.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/समयkeeper_पूर्णांकernal.h>
-#समावेश <linux/घड़ीchips.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/kprobes.h>
-#समावेश <linux/uaccess.h>
-#समावेश <vdso/vsyscall.h>
-#समावेश <vdso/घड़ीsource.h>
-#समावेश <vdso/helpers.h>
-#समावेश <यंत्र/facility.h>
-#समावेश <यंत्र/delay.h>
-#समावेश <यंत्र/भाग64.h>
-#समावेश <यंत्र/vdso.h>
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/irq_regs.h>
-#समावेश <यंत्र/vसमयr.h>
-#समावेश <यंत्र/stp.h>
-#समावेश <यंत्र/cपन.स>
-#समावेश "entry.h"
+#include <linux/kernel_stat.h>
+#include <linux/errno.h>
+#include <linux/export.h>
+#include <linux/sched.h>
+#include <linux/sched/clock.h>
+#include <linux/kernel.h>
+#include <linux/param.h>
+#include <linux/string.h>
+#include <linux/mm.h>
+#include <linux/interrupt.h>
+#include <linux/cpu.h>
+#include <linux/stop_machine.h>
+#include <linux/time.h>
+#include <linux/device.h>
+#include <linux/delay.h>
+#include <linux/init.h>
+#include <linux/smp.h>
+#include <linux/types.h>
+#include <linux/profile.h>
+#include <linux/timex.h>
+#include <linux/notifier.h>
+#include <linux/timekeeper_internal.h>
+#include <linux/clockchips.h>
+#include <linux/gfp.h>
+#include <linux/kprobes.h>
+#include <linux/uaccess.h>
+#include <vdso/vsyscall.h>
+#include <vdso/clocksource.h>
+#include <vdso/helpers.h>
+#include <asm/facility.h>
+#include <asm/delay.h>
+#include <asm/div64.h>
+#include <asm/vdso.h>
+#include <asm/irq.h>
+#include <asm/irq_regs.h>
+#include <asm/vtimer.h>
+#include <asm/stp.h>
+#include <asm/cio.h>
+#include "entry.h"
 
-जोड़ tod_घड़ी tod_घड़ी_base __section(".data");
-EXPORT_SYMBOL_GPL(tod_घड़ी_base);
+union tod_clock tod_clock_base __section(".data");
+EXPORT_SYMBOL_GPL(tod_clock_base);
 
-u64 घड़ी_comparator_max = -1ULL;
-EXPORT_SYMBOL_GPL(घड़ी_comparator_max);
+u64 clock_comparator_max = -1ULL;
+EXPORT_SYMBOL_GPL(clock_comparator_max);
 
-अटल DEFINE_PER_CPU(काष्ठा घड़ी_event_device, comparators);
+static DEFINE_PER_CPU(struct clock_event_device, comparators);
 
-ATOMIC_NOTIFIER_HEAD(s390_epoch_delta_notअगरier);
-EXPORT_SYMBOL(s390_epoch_delta_notअगरier);
+ATOMIC_NOTIFIER_HEAD(s390_epoch_delta_notifier);
+EXPORT_SYMBOL(s390_epoch_delta_notifier);
 
-अचिन्हित अक्षर ptff_function_mask[16];
+unsigned char ptff_function_mask[16];
 
-अटल अचिन्हित दीर्घ lpar_offset;
-अटल अचिन्हित दीर्घ initial_leap_seconds;
-अटल अचिन्हित दीर्घ tod_steering_end;
-अटल दीर्घ tod_steering_delta;
+static unsigned long lpar_offset;
+static unsigned long initial_leap_seconds;
+static unsigned long tod_steering_end;
+static long tod_steering_delta;
 
 /*
- * Get समय offsets with PTFF
+ * Get time offsets with PTFF
  */
-व्योम __init समय_early_init(व्योम)
-अणु
-	काष्ठा ptff_qto qto;
-	काष्ठा ptff_qui qui;
-	पूर्णांक cs;
+void __init time_early_init(void)
+{
+	struct ptff_qto qto;
+	struct ptff_qui qui;
+	int cs;
 
 	/* Initialize TOD steering parameters */
-	tod_steering_end = tod_घड़ी_base.tod;
-	क्रम (cs = 0; cs < CS_BASES; cs++)
+	tod_steering_end = tod_clock_base.tod;
+	for (cs = 0; cs < CS_BASES; cs++)
 		vdso_data[cs].arch_data.tod_steering_end = tod_steering_end;
 
-	अगर (!test_facility(28))
-		वापस;
+	if (!test_facility(28))
+		return;
 
-	ptff(&ptff_function_mask, माप(ptff_function_mask), PTFF_QAF);
+	ptff(&ptff_function_mask, sizeof(ptff_function_mask), PTFF_QAF);
 
 	/* get LPAR offset */
-	अगर (ptff_query(PTFF_QTO) && ptff(&qto, माप(qto), PTFF_QTO) == 0)
-		lpar_offset = qto.tod_epoch_dअगरference;
+	if (ptff_query(PTFF_QTO) && ptff(&qto, sizeof(qto), PTFF_QTO) == 0)
+		lpar_offset = qto.tod_epoch_difference;
 
 	/* get initial leap seconds */
-	अगर (ptff_query(PTFF_QUI) && ptff(&qui, माप(qui), PTFF_QUI) == 0)
-		initial_leap_seconds = (अचिन्हित दीर्घ)
-			((दीर्घ) qui.old_leap * 4096000000L);
-पूर्ण
+	if (ptff_query(PTFF_QUI) && ptff(&qui, sizeof(qui), PTFF_QUI) == 0)
+		initial_leap_seconds = (unsigned long)
+			((long) qui.old_leap * 4096000000L);
+}
 
 /*
- * Scheduler घड़ी - वापसs current समय in nanosec units.
+ * Scheduler clock - returns current time in nanosec units.
  */
-अचिन्हित दीर्घ दीर्घ notrace sched_घड़ी(व्योम)
-अणु
-	वापस tod_to_ns(get_tod_घड़ी_monotonic());
-पूर्ण
-NOKPROBE_SYMBOL(sched_घड़ी);
+unsigned long long notrace sched_clock(void)
+{
+	return tod_to_ns(get_tod_clock_monotonic());
+}
+NOKPROBE_SYMBOL(sched_clock);
 
-अटल व्योम ext_to_बारpec64(जोड़ tod_घड़ी *clk, काष्ठा बारpec64 *xt)
-अणु
-	अचिन्हित दीर्घ rem, sec, nsec;
+static void ext_to_timespec64(union tod_clock *clk, struct timespec64 *xt)
+{
+	unsigned long rem, sec, nsec;
 
 	sec = clk->us;
-	rem = करो_भाग(sec, 1000000);
+	rem = do_div(sec, 1000000);
 	nsec = ((clk->sus + (rem << 12)) * 125) >> 9;
 	xt->tv_sec = sec;
 	xt->tv_nsec = nsec;
-पूर्ण
+}
 
-व्योम घड़ी_comparator_work(व्योम)
-अणु
-	काष्ठा घड़ी_event_device *cd;
+void clock_comparator_work(void)
+{
+	struct clock_event_device *cd;
 
-	S390_lowcore.घड़ी_comparator = घड़ी_comparator_max;
+	S390_lowcore.clock_comparator = clock_comparator_max;
 	cd = this_cpu_ptr(&comparators);
 	cd->event_handler(cd);
-पूर्ण
+}
 
-अटल पूर्णांक s390_next_event(अचिन्हित दीर्घ delta,
-			   काष्ठा घड़ी_event_device *evt)
-अणु
-	S390_lowcore.घड़ी_comparator = get_tod_घड़ी() + delta;
-	set_घड़ी_comparator(S390_lowcore.घड़ी_comparator);
-	वापस 0;
-पूर्ण
+static int s390_next_event(unsigned long delta,
+			   struct clock_event_device *evt)
+{
+	S390_lowcore.clock_comparator = get_tod_clock() + delta;
+	set_clock_comparator(S390_lowcore.clock_comparator);
+	return 0;
+}
 
 /*
- * Set up lowcore and control रेजिस्टर of the current cpu to
- * enable TOD घड़ी and घड़ी comparator पूर्णांकerrupts.
+ * Set up lowcore and control register of the current cpu to
+ * enable TOD clock and clock comparator interrupts.
  */
-व्योम init_cpu_समयr(व्योम)
-अणु
-	काष्ठा घड़ी_event_device *cd;
-	पूर्णांक cpu;
+void init_cpu_timer(void)
+{
+	struct clock_event_device *cd;
+	int cpu;
 
-	S390_lowcore.घड़ी_comparator = घड़ी_comparator_max;
-	set_घड़ी_comparator(S390_lowcore.घड़ी_comparator);
+	S390_lowcore.clock_comparator = clock_comparator_max;
+	set_clock_comparator(S390_lowcore.clock_comparator);
 
 	cpu = smp_processor_id();
 	cd = &per_cpu(comparators, cpu);
 	cd->name		= "comparator";
 	cd->features		= CLOCK_EVT_FEAT_ONESHOT;
 	cd->mult		= 16777;
-	cd->shअगरt		= 12;
+	cd->shift		= 12;
 	cd->min_delta_ns	= 1;
 	cd->min_delta_ticks	= 1;
-	cd->max_delta_ns	= दीर्घ_उच्च;
-	cd->max_delta_ticks	= अच_दीर्घ_उच्च;
+	cd->max_delta_ns	= LONG_MAX;
+	cd->max_delta_ticks	= ULONG_MAX;
 	cd->rating		= 400;
 	cd->cpumask		= cpumask_of(cpu);
 	cd->set_next_event	= s390_next_event;
 
-	घड़ीevents_रेजिस्टर_device(cd);
+	clockevents_register_device(cd);
 
-	/* Enable घड़ी comparator समयr पूर्णांकerrupt. */
+	/* Enable clock comparator timer interrupt. */
 	__ctl_set_bit(0,11);
 
-	/* Always allow the timing alert बाह्यal पूर्णांकerrupt. */
+	/* Always allow the timing alert external interrupt. */
 	__ctl_set_bit(0, 4);
-पूर्ण
+}
 
-अटल व्योम घड़ी_comparator_पूर्णांकerrupt(काष्ठा ext_code ext_code,
-				       अचिन्हित पूर्णांक param32,
-				       अचिन्हित दीर्घ param64)
-अणु
+static void clock_comparator_interrupt(struct ext_code ext_code,
+				       unsigned int param32,
+				       unsigned long param64)
+{
 	inc_irq_stat(IRQEXT_CLK);
-	अगर (S390_lowcore.घड़ी_comparator == घड़ी_comparator_max)
-		set_घड़ी_comparator(S390_lowcore.घड़ी_comparator);
-पूर्ण
+	if (S390_lowcore.clock_comparator == clock_comparator_max)
+		set_clock_comparator(S390_lowcore.clock_comparator);
+}
 
-अटल व्योम stp_timing_alert(काष्ठा stp_irq_parm *);
+static void stp_timing_alert(struct stp_irq_parm *);
 
-अटल व्योम timing_alert_पूर्णांकerrupt(काष्ठा ext_code ext_code,
-				   अचिन्हित पूर्णांक param32, अचिन्हित दीर्घ param64)
-अणु
+static void timing_alert_interrupt(struct ext_code ext_code,
+				   unsigned int param32, unsigned long param64)
+{
 	inc_irq_stat(IRQEXT_TLA);
-	अगर (param32 & 0x00038000)
-		stp_timing_alert((काष्ठा stp_irq_parm *) &param32);
-पूर्ण
+	if (param32 & 0x00038000)
+		stp_timing_alert((struct stp_irq_parm *) &param32);
+}
 
-अटल व्योम stp_reset(व्योम);
+static void stp_reset(void);
 
-व्योम पढ़ो_persistent_घड़ी64(काष्ठा बारpec64 *ts)
-अणु
-	जोड़ tod_घड़ी clk;
+void read_persistent_clock64(struct timespec64 *ts)
+{
+	union tod_clock clk;
 	u64 delta;
 
 	delta = initial_leap_seconds + TOD_UNIX_EPOCH;
-	store_tod_घड़ी_ext(&clk);
+	store_tod_clock_ext(&clk);
 	clk.eitod -= delta;
-	ext_to_बारpec64(&clk, ts);
-पूर्ण
+	ext_to_timespec64(&clk, ts);
+}
 
-व्योम __init पढ़ो_persistent_wall_and_boot_offset(काष्ठा बारpec64 *wall_समय,
-						 काष्ठा बारpec64 *boot_offset)
-अणु
-	काष्ठा बारpec64 boot_समय;
-	जोड़ tod_घड़ी clk;
+void __init read_persistent_wall_and_boot_offset(struct timespec64 *wall_time,
+						 struct timespec64 *boot_offset)
+{
+	struct timespec64 boot_time;
+	union tod_clock clk;
 	u64 delta;
 
 	delta = initial_leap_seconds + TOD_UNIX_EPOCH;
-	clk = tod_घड़ी_base;
+	clk = tod_clock_base;
 	clk.eitod -= delta;
-	ext_to_बारpec64(&clk, &boot_समय);
+	ext_to_timespec64(&clk, &boot_time);
 
-	पढ़ो_persistent_घड़ी64(wall_समय);
-	*boot_offset = बारpec64_sub(*wall_समय, boot_समय);
-पूर्ण
+	read_persistent_clock64(wall_time);
+	*boot_offset = timespec64_sub(*wall_time, boot_time);
+}
 
-अटल u64 पढ़ो_tod_घड़ी(काष्ठा घड़ीsource *cs)
-अणु
-	अचिन्हित दीर्घ now, adj;
+static u64 read_tod_clock(struct clocksource *cs)
+{
+	unsigned long now, adj;
 
 	preempt_disable(); /* protect from changes to steering parameters */
-	now = get_tod_घड़ी();
+	now = get_tod_clock();
 	adj = tod_steering_end - now;
-	अगर (unlikely((s64) adj > 0))
+	if (unlikely((s64) adj > 0))
 		/*
 		 * manually steer by 1 cycle every 2^16 cycles. This
-		 * corresponds to shअगरting the tod delta by 15. 1s is
-		 * thereक्रमe steered in ~9h. The adjust will decrease
-		 * over समय, until it finally reaches 0.
+		 * corresponds to shifting the tod delta by 15. 1s is
+		 * therefore steered in ~9h. The adjust will decrease
+		 * over time, until it finally reaches 0.
 		 */
 		now += (tod_steering_delta < 0) ? (adj >> 15) : -(adj >> 15);
 	preempt_enable();
-	वापस now;
-पूर्ण
+	return now;
+}
 
-अटल काष्ठा घड़ीsource घड़ीsource_tod = अणु
+static struct clocksource clocksource_tod = {
 	.name		= "tod",
 	.rating		= 400,
-	.पढ़ो		= पढ़ो_tod_घड़ी,
+	.read		= read_tod_clock,
 	.mask		= CLOCKSOURCE_MASK(64),
 	.mult		= 1000,
-	.shअगरt		= 12,
+	.shift		= 12,
 	.flags		= CLOCK_SOURCE_IS_CONTINUOUS,
-	.vdso_घड़ी_mode = VDSO_CLOCKMODE_TOD,
-पूर्ण;
+	.vdso_clock_mode = VDSO_CLOCKMODE_TOD,
+};
 
-काष्ठा घड़ीsource * __init घड़ीsource_शेष_घड़ी(व्योम)
-अणु
-	वापस &घड़ीsource_tod;
-पूर्ण
+struct clocksource * __init clocksource_default_clock(void)
+{
+	return &clocksource_tod;
+}
 
 /*
- * Initialize the TOD घड़ी and the CPU समयr of
+ * Initialize the TOD clock and the CPU timer of
  * the boot cpu.
  */
-व्योम __init समय_init(व्योम)
-अणु
-	/* Reset समय synchronization पूर्णांकerfaces. */
+void __init time_init(void)
+{
+	/* Reset time synchronization interfaces. */
 	stp_reset();
 
-	/* request the घड़ी comparator बाह्यal पूर्णांकerrupt */
-	अगर (रेजिस्टर_बाह्यal_irq(EXT_IRQ_CLK_COMP, घड़ी_comparator_पूर्णांकerrupt))
+	/* request the clock comparator external interrupt */
+	if (register_external_irq(EXT_IRQ_CLK_COMP, clock_comparator_interrupt))
 		panic("Couldn't request external interrupt 0x1004");
 
-	/* request the timing alert बाह्यal पूर्णांकerrupt */
-	अगर (रेजिस्टर_बाह्यal_irq(EXT_IRQ_TIMING_ALERT, timing_alert_पूर्णांकerrupt))
+	/* request the timing alert external interrupt */
+	if (register_external_irq(EXT_IRQ_TIMING_ALERT, timing_alert_interrupt))
 		panic("Couldn't request external interrupt 0x1406");
 
-	अगर (__घड़ीsource_रेजिस्टर(&घड़ीsource_tod) != 0)
+	if (__clocksource_register(&clocksource_tod) != 0)
 		panic("Could not register TOD clock source");
 
-	/* Enable TOD घड़ी पूर्णांकerrupts on the boot cpu. */
-	init_cpu_समयr();
+	/* Enable TOD clock interrupts on the boot cpu. */
+	init_cpu_timer();
 
-	/* Enable cpu समयr पूर्णांकerrupts on the boot cpu. */
-	vसमय_init();
-पूर्ण
+	/* Enable cpu timer interrupts on the boot cpu. */
+	vtime_init();
+}
 
-अटल DEFINE_PER_CPU(atomic_t, घड़ी_sync_word);
-अटल DEFINE_MUTEX(stp_mutex);
-अटल अचिन्हित दीर्घ घड़ी_sync_flags;
+static DEFINE_PER_CPU(atomic_t, clock_sync_word);
+static DEFINE_MUTEX(stp_mutex);
+static unsigned long clock_sync_flags;
 
-#घोषणा CLOCK_SYNC_HAS_STP		0
-#घोषणा CLOCK_SYNC_STP			1
-#घोषणा CLOCK_SYNC_STPINFO_VALID	2
+#define CLOCK_SYNC_HAS_STP		0
+#define CLOCK_SYNC_STP			1
+#define CLOCK_SYNC_STPINFO_VALID	2
 
 /*
- * The get_घड़ी function क्रम the physical घड़ी. It will get the current
- * TOD घड़ी, subtract the LPAR offset and ग_लिखो the result to *घड़ी.
- * The function वापसs 0 अगर the घड़ी is in sync with the बाह्यal समय
- * source. If the घड़ी mode is local it will वापस -EOPNOTSUPP and
- * -EAGAIN अगर the घड़ी is not in sync with the बाह्यal reference.
+ * The get_clock function for the physical clock. It will get the current
+ * TOD clock, subtract the LPAR offset and write the result to *clock.
+ * The function returns 0 if the clock is in sync with the external time
+ * source. If the clock mode is local it will return -EOPNOTSUPP and
+ * -EAGAIN if the clock is not in sync with the external reference.
  */
-पूर्णांक get_phys_घड़ी(अचिन्हित दीर्घ *घड़ी)
-अणु
+int get_phys_clock(unsigned long *clock)
+{
 	atomic_t *sw_ptr;
-	अचिन्हित पूर्णांक sw0, sw1;
+	unsigned int sw0, sw1;
 
-	sw_ptr = &get_cpu_var(घड़ी_sync_word);
-	sw0 = atomic_पढ़ो(sw_ptr);
-	*घड़ी = get_tod_घड़ी() - lpar_offset;
-	sw1 = atomic_पढ़ो(sw_ptr);
-	put_cpu_var(घड़ी_sync_word);
-	अगर (sw0 == sw1 && (sw0 & 0x80000000U))
-		/* Success: समय is in sync. */
-		वापस 0;
-	अगर (!test_bit(CLOCK_SYNC_HAS_STP, &घड़ी_sync_flags))
-		वापस -EOPNOTSUPP;
-	अगर (!test_bit(CLOCK_SYNC_STP, &घड़ी_sync_flags))
-		वापस -EACCES;
-	वापस -EAGAIN;
-पूर्ण
-EXPORT_SYMBOL(get_phys_घड़ी);
+	sw_ptr = &get_cpu_var(clock_sync_word);
+	sw0 = atomic_read(sw_ptr);
+	*clock = get_tod_clock() - lpar_offset;
+	sw1 = atomic_read(sw_ptr);
+	put_cpu_var(clock_sync_word);
+	if (sw0 == sw1 && (sw0 & 0x80000000U))
+		/* Success: time is in sync. */
+		return 0;
+	if (!test_bit(CLOCK_SYNC_HAS_STP, &clock_sync_flags))
+		return -EOPNOTSUPP;
+	if (!test_bit(CLOCK_SYNC_STP, &clock_sync_flags))
+		return -EACCES;
+	return -EAGAIN;
+}
+EXPORT_SYMBOL(get_phys_clock);
 
 /*
- * Make get_phys_घड़ी() वापस -EAGAIN.
+ * Make get_phys_clock() return -EAGAIN.
  */
-अटल व्योम disable_sync_घड़ी(व्योम *dummy)
-अणु
-	atomic_t *sw_ptr = this_cpu_ptr(&घड़ी_sync_word);
+static void disable_sync_clock(void *dummy)
+{
+	atomic_t *sw_ptr = this_cpu_ptr(&clock_sync_word);
 	/*
-	 * Clear the in-sync bit 2^31. All get_phys_घड़ी calls will
+	 * Clear the in-sync bit 2^31. All get_phys_clock calls will
 	 * fail until the sync bit is turned back on. In addition
-	 * increase the "sequence" counter to aव्योम the race of an
-	 * stp event and the complete recovery against get_phys_घड़ी.
+	 * increase the "sequence" counter to avoid the race of an
+	 * stp event and the complete recovery against get_phys_clock.
 	 */
 	atomic_andnot(0x80000000, sw_ptr);
 	atomic_inc(sw_ptr);
-पूर्ण
+}
 
 /*
- * Make get_phys_घड़ी() वापस 0 again.
- * Needs to be called from a context disabled क्रम preemption.
+ * Make get_phys_clock() return 0 again.
+ * Needs to be called from a context disabled for preemption.
  */
-अटल व्योम enable_sync_घड़ी(व्योम)
-अणु
-	atomic_t *sw_ptr = this_cpu_ptr(&घड़ी_sync_word);
+static void enable_sync_clock(void)
+{
+	atomic_t *sw_ptr = this_cpu_ptr(&clock_sync_word);
 	atomic_or(0x80000000, sw_ptr);
-पूर्ण
+}
 
 /*
- * Function to check अगर the घड़ी is in sync.
+ * Function to check if the clock is in sync.
  */
-अटल अंतरभूत पूर्णांक check_sync_घड़ी(व्योम)
-अणु
+static inline int check_sync_clock(void)
+{
 	atomic_t *sw_ptr;
-	पूर्णांक rc;
+	int rc;
 
-	sw_ptr = &get_cpu_var(घड़ी_sync_word);
-	rc = (atomic_पढ़ो(sw_ptr) & 0x80000000U) != 0;
-	put_cpu_var(घड़ी_sync_word);
-	वापस rc;
-पूर्ण
+	sw_ptr = &get_cpu_var(clock_sync_word);
+	rc = (atomic_read(sw_ptr) & 0x80000000U) != 0;
+	put_cpu_var(clock_sync_word);
+	return rc;
+}
 
 /*
- * Apply घड़ी delta to the global data काष्ठाures.
- * This is called once on the CPU that perक्रमmed the घड़ी sync.
+ * Apply clock delta to the global data structures.
+ * This is called once on the CPU that performed the clock sync.
  */
-अटल व्योम घड़ी_sync_global(अचिन्हित दीर्घ delta)
-अणु
-	अचिन्हित दीर्घ now, adj;
-	काष्ठा ptff_qto qto;
-	पूर्णांक cs;
+static void clock_sync_global(unsigned long delta)
+{
+	unsigned long now, adj;
+	struct ptff_qto qto;
+	int cs;
 
-	/* Fixup the monotonic sched घड़ी. */
-	tod_घड़ी_base.eitod += delta;
+	/* Fixup the monotonic sched clock. */
+	tod_clock_base.eitod += delta;
 	/* Adjust TOD steering parameters. */
-	now = get_tod_घड़ी();
+	now = get_tod_clock();
 	adj = tod_steering_end - now;
-	अगर (unlikely((s64) adj >= 0))
-		/* Calculate how much of the old adjusपंचांगent is left. */
+	if (unlikely((s64) adj >= 0))
+		/* Calculate how much of the old adjustment is left. */
 		tod_steering_delta = (tod_steering_delta < 0) ?
 			-(adj >> 15) : (adj >> 15);
 	tod_steering_delta += delta;
-	अगर ((असल(tod_steering_delta) >> 48) != 0)
+	if ((abs(tod_steering_delta) >> 48) != 0)
 		panic("TOD clock sync offset %li is too large to drift\n",
 		      tod_steering_delta);
-	tod_steering_end = now + (असल(tod_steering_delta) << 15);
-	क्रम (cs = 0; cs < CS_BASES; cs++) अणु
+	tod_steering_end = now + (abs(tod_steering_delta) << 15);
+	for (cs = 0; cs < CS_BASES; cs++) {
 		vdso_data[cs].arch_data.tod_steering_end = tod_steering_end;
 		vdso_data[cs].arch_data.tod_steering_delta = tod_steering_delta;
-	पूर्ण
+	}
 
 	/* Update LPAR offset. */
-	अगर (ptff_query(PTFF_QTO) && ptff(&qto, माप(qto), PTFF_QTO) == 0)
-		lpar_offset = qto.tod_epoch_dअगरference;
-	/* Call the TOD घड़ी change notअगरier. */
-	atomic_notअगरier_call_chain(&s390_epoch_delta_notअगरier, 0, &delta);
-पूर्ण
+	if (ptff_query(PTFF_QTO) && ptff(&qto, sizeof(qto), PTFF_QTO) == 0)
+		lpar_offset = qto.tod_epoch_difference;
+	/* Call the TOD clock change notifier. */
+	atomic_notifier_call_chain(&s390_epoch_delta_notifier, 0, &delta);
+}
 
 /*
- * Apply घड़ी delta to the per-CPU data काष्ठाures of this CPU.
- * This is called क्रम each online CPU after the call to घड़ी_sync_global.
+ * Apply clock delta to the per-CPU data structures of this CPU.
+ * This is called for each online CPU after the call to clock_sync_global.
  */
-अटल व्योम घड़ी_sync_local(अचिन्हित दीर्घ delta)
-अणु
-	/* Add the delta to the घड़ी comparator. */
-	अगर (S390_lowcore.घड़ी_comparator != घड़ी_comparator_max) अणु
-		S390_lowcore.घड़ी_comparator += delta;
-		set_घड़ी_comparator(S390_lowcore.घड़ी_comparator);
-	पूर्ण
-	/* Adjust the last_update_घड़ी समय-stamp. */
-	S390_lowcore.last_update_घड़ी += delta;
-पूर्ण
+static void clock_sync_local(unsigned long delta)
+{
+	/* Add the delta to the clock comparator. */
+	if (S390_lowcore.clock_comparator != clock_comparator_max) {
+		S390_lowcore.clock_comparator += delta;
+		set_clock_comparator(S390_lowcore.clock_comparator);
+	}
+	/* Adjust the last_update_clock time-stamp. */
+	S390_lowcore.last_update_clock += delta;
+}
 
-/* Single thपढ़ोed workqueue used क्रम stp sync events */
-अटल काष्ठा workqueue_काष्ठा *समय_sync_wq;
+/* Single threaded workqueue used for stp sync events */
+static struct workqueue_struct *time_sync_wq;
 
-अटल व्योम __init समय_init_wq(व्योम)
-अणु
-	अगर (समय_sync_wq)
-		वापस;
-	समय_sync_wq = create_singlethपढ़ो_workqueue("timesync");
-पूर्ण
+static void __init time_init_wq(void)
+{
+	if (time_sync_wq)
+		return;
+	time_sync_wq = create_singlethread_workqueue("timesync");
+}
 
-काष्ठा घड़ी_sync_data अणु
+struct clock_sync_data {
 	atomic_t cpus;
-	पूर्णांक in_sync;
-	अचिन्हित दीर्घ घड़ी_delta;
-पूर्ण;
+	int in_sync;
+	unsigned long clock_delta;
+};
 
 /*
  * Server Time Protocol (STP) code.
  */
-अटल bool stp_online;
-अटल काष्ठा stp_sstpi stp_info;
-अटल व्योम *stp_page;
+static bool stp_online;
+static struct stp_sstpi stp_info;
+static void *stp_page;
 
-अटल व्योम stp_work_fn(काष्ठा work_काष्ठा *work);
-अटल DECLARE_WORK(stp_work, stp_work_fn);
-अटल काष्ठा समयr_list stp_समयr;
+static void stp_work_fn(struct work_struct *work);
+static DECLARE_WORK(stp_work, stp_work_fn);
+static struct timer_list stp_timer;
 
-अटल पूर्णांक __init early_parse_stp(अक्षर *p)
-अणु
-	वापस kstrtobool(p, &stp_online);
-पूर्ण
+static int __init early_parse_stp(char *p)
+{
+	return kstrtobool(p, &stp_online);
+}
 early_param("stp", early_parse_stp);
 
 /*
  * Reset STP attachment.
  */
-अटल व्योम __init stp_reset(व्योम)
-अणु
-	पूर्णांक rc;
+static void __init stp_reset(void)
+{
+	int rc;
 
-	stp_page = (व्योम *) get_zeroed_page(GFP_ATOMIC);
-	rc = chsc_sstpc(stp_page, STP_OP_CTRL, 0x0000, शून्य);
-	अगर (rc == 0)
-		set_bit(CLOCK_SYNC_HAS_STP, &घड़ी_sync_flags);
-	अन्यथा अगर (stp_online) अणु
+	stp_page = (void *) get_zeroed_page(GFP_ATOMIC);
+	rc = chsc_sstpc(stp_page, STP_OP_CTRL, 0x0000, NULL);
+	if (rc == 0)
+		set_bit(CLOCK_SYNC_HAS_STP, &clock_sync_flags);
+	else if (stp_online) {
 		pr_warn("The real or virtual hardware system does not provide an STP interface\n");
-		मुक्त_page((अचिन्हित दीर्घ) stp_page);
-		stp_page = शून्य;
+		free_page((unsigned long) stp_page);
+		stp_page = NULL;
 		stp_online = false;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम stp_समयout(काष्ठा समयr_list *unused)
-अणु
-	queue_work(समय_sync_wq, &stp_work);
-पूर्ण
+static void stp_timeout(struct timer_list *unused)
+{
+	queue_work(time_sync_wq, &stp_work);
+}
 
-अटल पूर्णांक __init stp_init(व्योम)
-अणु
-	अगर (!test_bit(CLOCK_SYNC_HAS_STP, &घड़ी_sync_flags))
-		वापस 0;
-	समयr_setup(&stp_समयr, stp_समयout, 0);
-	समय_init_wq();
-	अगर (!stp_online)
-		वापस 0;
-	queue_work(समय_sync_wq, &stp_work);
-	वापस 0;
-पूर्ण
+static int __init stp_init(void)
+{
+	if (!test_bit(CLOCK_SYNC_HAS_STP, &clock_sync_flags))
+		return 0;
+	timer_setup(&stp_timer, stp_timeout, 0);
+	time_init_wq();
+	if (!stp_online)
+		return 0;
+	queue_work(time_sync_wq, &stp_work);
+	return 0;
+}
 
 arch_initcall(stp_init);
 
@@ -487,438 +486,438 @@ arch_initcall(stp_init);
  * STP timing alert. There are three causes:
  * 1) timing status change
  * 2) link availability change
- * 3) समय control parameter change
- * In all three हालs we are only पूर्णांकerested in the घड़ी source state.
- * If a STP घड़ी source is now available use it.
+ * 3) time control parameter change
+ * In all three cases we are only interested in the clock source state.
+ * If a STP clock source is now available use it.
  */
-अटल व्योम stp_timing_alert(काष्ठा stp_irq_parm *पूर्णांकparm)
-अणु
-	अगर (पूर्णांकparm->tsc || पूर्णांकparm->lac || पूर्णांकparm->tcpc)
-		queue_work(समय_sync_wq, &stp_work);
-पूर्ण
+static void stp_timing_alert(struct stp_irq_parm *intparm)
+{
+	if (intparm->tsc || intparm->lac || intparm->tcpc)
+		queue_work(time_sync_wq, &stp_work);
+}
 
 /*
  * STP sync check machine check. This is called when the timing state
  * changes from the synchronized state to the unsynchronized state.
- * After a STP sync check the घड़ी is not in sync. The machine check
- * is broadcasted to all cpus at the same समय.
+ * After a STP sync check the clock is not in sync. The machine check
+ * is broadcasted to all cpus at the same time.
  */
-पूर्णांक stp_sync_check(व्योम)
-अणु
-	disable_sync_घड़ी(शून्य);
-	वापस 1;
-पूर्ण
+int stp_sync_check(void)
+{
+	disable_sync_clock(NULL);
+	return 1;
+}
 
 /*
  * STP island condition machine check. This is called when an attached
  * server  attempts to communicate over an STP link and the servers
  * have matching CTN ids and have a valid stratum-1 configuration
- * but the configurations करो not match.
+ * but the configurations do not match.
  */
-पूर्णांक stp_island_check(व्योम)
-अणु
-	disable_sync_घड़ी(शून्य);
-	वापस 1;
-पूर्ण
+int stp_island_check(void)
+{
+	disable_sync_clock(NULL);
+	return 1;
+}
 
-व्योम stp_queue_work(व्योम)
-अणु
-	queue_work(समय_sync_wq, &stp_work);
-पूर्ण
+void stp_queue_work(void)
+{
+	queue_work(time_sync_wq, &stp_work);
+}
 
-अटल पूर्णांक __store_stpinfo(व्योम)
-अणु
-	पूर्णांक rc = chsc_sstpi(stp_page, &stp_info, माप(काष्ठा stp_sstpi));
+static int __store_stpinfo(void)
+{
+	int rc = chsc_sstpi(stp_page, &stp_info, sizeof(struct stp_sstpi));
 
-	अगर (rc)
-		clear_bit(CLOCK_SYNC_STPINFO_VALID, &घड़ी_sync_flags);
-	अन्यथा
-		set_bit(CLOCK_SYNC_STPINFO_VALID, &घड़ी_sync_flags);
-	वापस rc;
-पूर्ण
+	if (rc)
+		clear_bit(CLOCK_SYNC_STPINFO_VALID, &clock_sync_flags);
+	else
+		set_bit(CLOCK_SYNC_STPINFO_VALID, &clock_sync_flags);
+	return rc;
+}
 
-अटल पूर्णांक stpinfo_valid(व्योम)
-अणु
-	वापस stp_online && test_bit(CLOCK_SYNC_STPINFO_VALID, &घड़ी_sync_flags);
-पूर्ण
+static int stpinfo_valid(void)
+{
+	return stp_online && test_bit(CLOCK_SYNC_STPINFO_VALID, &clock_sync_flags);
+}
 
-अटल पूर्णांक stp_sync_घड़ी(व्योम *data)
-अणु
-	काष्ठा घड़ी_sync_data *sync = data;
-	u64 घड़ी_delta, flags;
-	अटल पूर्णांक first;
-	पूर्णांक rc;
+static int stp_sync_clock(void *data)
+{
+	struct clock_sync_data *sync = data;
+	u64 clock_delta, flags;
+	static int first;
+	int rc;
 
-	enable_sync_घड़ी();
-	अगर (xchg(&first, 1) == 0) अणु
+	enable_sync_clock();
+	if (xchg(&first, 1) == 0) {
 		/* Wait until all other cpus entered the sync function. */
-		जबतक (atomic_पढ़ो(&sync->cpus) != 0)
+		while (atomic_read(&sync->cpus) != 0)
 			cpu_relax();
 		rc = 0;
-		अगर (stp_info.toकरोff[0] || stp_info.toकरोff[1] ||
-		    stp_info.toकरोff[2] || stp_info.toकरोff[3] ||
-		    stp_info.पंचांगd != 2) अणु
+		if (stp_info.todoff[0] || stp_info.todoff[1] ||
+		    stp_info.todoff[2] || stp_info.todoff[3] ||
+		    stp_info.tmd != 2) {
 			flags = vdso_update_begin();
 			rc = chsc_sstpc(stp_page, STP_OP_SYNC, 0,
-					&घड़ी_delta);
-			अगर (rc == 0) अणु
-				sync->घड़ी_delta = घड़ी_delta;
-				घड़ी_sync_global(घड़ी_delta);
+					&clock_delta);
+			if (rc == 0) {
+				sync->clock_delta = clock_delta;
+				clock_sync_global(clock_delta);
 				rc = __store_stpinfo();
-				अगर (rc == 0 && stp_info.पंचांगd != 2)
+				if (rc == 0 && stp_info.tmd != 2)
 					rc = -EAGAIN;
-			पूर्ण
+			}
 			vdso_update_end(flags);
-		पूर्ण
+		}
 		sync->in_sync = rc ? -EAGAIN : 1;
 		xchg(&first, 0);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Slave */
 		atomic_dec(&sync->cpus);
-		/* Wait क्रम in_sync to be set. */
-		जबतक (READ_ONCE(sync->in_sync) == 0)
+		/* Wait for in_sync to be set. */
+		while (READ_ONCE(sync->in_sync) == 0)
 			__udelay(1);
-	पूर्ण
-	अगर (sync->in_sync != 1)
+	}
+	if (sync->in_sync != 1)
 		/* Didn't work. Clear per-cpu in sync bit again. */
-		disable_sync_घड़ी(शून्य);
-	/* Apply घड़ी delta to per-CPU fields of this CPU. */
-	घड़ी_sync_local(sync->घड़ी_delta);
+		disable_sync_clock(NULL);
+	/* Apply clock delta to per-CPU fields of this CPU. */
+	clock_sync_local(sync->clock_delta);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक stp_clear_leap(व्योम)
-अणु
-	काष्ठा __kernel_समयx txc;
-	पूर्णांक ret;
+static int stp_clear_leap(void)
+{
+	struct __kernel_timex txc;
+	int ret;
 
-	स_रखो(&txc, 0, माप(txc));
+	memset(&txc, 0, sizeof(txc));
 
-	ret = करो_adjसमयx(&txc);
-	अगर (ret < 0)
-		वापस ret;
+	ret = do_adjtimex(&txc);
+	if (ret < 0)
+		return ret;
 
 	txc.modes = ADJ_STATUS;
 	txc.status &= ~(STA_INS|STA_DEL);
-	वापस करो_adjसमयx(&txc);
-पूर्ण
+	return do_adjtimex(&txc);
+}
 
-अटल व्योम stp_check_leap(व्योम)
-अणु
-	काष्ठा stp_stzi stzi;
-	काष्ठा stp_lsoib *lsoib = &stzi.lsoib;
-	काष्ठा __kernel_समयx txc;
-	पूर्णांक64_t समयdअगरf;
-	पूर्णांक leapdअगरf, ret;
+static void stp_check_leap(void)
+{
+	struct stp_stzi stzi;
+	struct stp_lsoib *lsoib = &stzi.lsoib;
+	struct __kernel_timex txc;
+	int64_t timediff;
+	int leapdiff, ret;
 
-	अगर (!stp_info.lu || !check_sync_घड़ी()) अणु
+	if (!stp_info.lu || !check_sync_clock()) {
 		/*
-		 * Either a scheduled leap second was हटाओd by the चालक,
-		 * or STP is out of sync. In both हालs, clear the leap second
+		 * Either a scheduled leap second was removed by the operator,
+		 * or STP is out of sync. In both cases, clear the leap second
 		 * kernel flags.
 		 */
-		अगर (stp_clear_leap() < 0)
+		if (stp_clear_leap() < 0)
 			pr_err("failed to clear leap second flags\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (chsc_stzi(stp_page, &stzi, माप(stzi))) अणु
+	if (chsc_stzi(stp_page, &stzi, sizeof(stzi))) {
 		pr_err("stzi failed\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	समयdअगरf = tod_to_ns(lsoib->nlsout - get_tod_घड़ी()) / NSEC_PER_SEC;
-	leapdअगरf = lsoib->nlso - lsoib->also;
+	timediff = tod_to_ns(lsoib->nlsout - get_tod_clock()) / NSEC_PER_SEC;
+	leapdiff = lsoib->nlso - lsoib->also;
 
-	अगर (leapdअगरf != 1 && leapdअगरf != -1) अणु
-		pr_err("Cannot schedule %d leap seconds\n", leapdअगरf);
-		वापस;
-	पूर्ण
+	if (leapdiff != 1 && leapdiff != -1) {
+		pr_err("Cannot schedule %d leap seconds\n", leapdiff);
+		return;
+	}
 
-	अगर (समयdअगरf < 0) अणु
-		अगर (stp_clear_leap() < 0)
+	if (timediff < 0) {
+		if (stp_clear_leap() < 0)
 			pr_err("failed to clear leap second flags\n");
-	पूर्ण अन्यथा अगर (समयdअगरf < 7200) अणु
-		स_रखो(&txc, 0, माप(txc));
-		ret = करो_adjसमयx(&txc);
-		अगर (ret < 0)
-			वापस;
+	} else if (timediff < 7200) {
+		memset(&txc, 0, sizeof(txc));
+		ret = do_adjtimex(&txc);
+		if (ret < 0)
+			return;
 
 		txc.modes = ADJ_STATUS;
-		अगर (leapdअगरf > 0)
+		if (leapdiff > 0)
 			txc.status |= STA_INS;
-		अन्यथा
+		else
 			txc.status |= STA_DEL;
-		ret = करो_adjसमयx(&txc);
-		अगर (ret < 0)
+		ret = do_adjtimex(&txc);
+		if (ret < 0)
 			pr_err("failed to set leap second flags\n");
 		/* arm Timer to clear leap second flags */
-		mod_समयr(&stp_समयr, jअगरfies + msecs_to_jअगरfies(14400 * MSEC_PER_SEC));
-	पूर्ण अन्यथा अणु
-		/* The day the leap second is scheduled क्रम hasn't been reached. Retry
+		mod_timer(&stp_timer, jiffies + msecs_to_jiffies(14400 * MSEC_PER_SEC));
+	} else {
+		/* The day the leap second is scheduled for hasn't been reached. Retry
 		 * in one hour.
 		 */
-		mod_समयr(&stp_समयr, jअगरfies + msecs_to_jअगरfies(3600 * MSEC_PER_SEC));
-	पूर्ण
-पूर्ण
+		mod_timer(&stp_timer, jiffies + msecs_to_jiffies(3600 * MSEC_PER_SEC));
+	}
+}
 
 /*
- * STP work. Check क्रम the STP state and take over the घड़ी
- * synchronization अगर the STP घड़ी source is usable.
+ * STP work. Check for the STP state and take over the clock
+ * synchronization if the STP clock source is usable.
  */
-अटल व्योम stp_work_fn(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा घड़ी_sync_data stp_sync;
-	पूर्णांक rc;
+static void stp_work_fn(struct work_struct *work)
+{
+	struct clock_sync_data stp_sync;
+	int rc;
 
 	/* prevent multiple execution. */
 	mutex_lock(&stp_mutex);
 
-	अगर (!stp_online) अणु
-		chsc_sstpc(stp_page, STP_OP_CTRL, 0x0000, शून्य);
-		del_समयr_sync(&stp_समयr);
-		जाओ out_unlock;
-	पूर्ण
+	if (!stp_online) {
+		chsc_sstpc(stp_page, STP_OP_CTRL, 0x0000, NULL);
+		del_timer_sync(&stp_timer);
+		goto out_unlock;
+	}
 
-	rc = chsc_sstpc(stp_page, STP_OP_CTRL, 0xf0e0, शून्य);
-	अगर (rc)
-		जाओ out_unlock;
+	rc = chsc_sstpc(stp_page, STP_OP_CTRL, 0xf0e0, NULL);
+	if (rc)
+		goto out_unlock;
 
 	rc = __store_stpinfo();
-	अगर (rc || stp_info.c == 0)
-		जाओ out_unlock;
+	if (rc || stp_info.c == 0)
+		goto out_unlock;
 
-	/* Skip synchronization अगर the घड़ी is alपढ़ोy in sync. */
-	अगर (!check_sync_घड़ी()) अणु
-		स_रखो(&stp_sync, 0, माप(stp_sync));
-		cpus_पढ़ो_lock();
+	/* Skip synchronization if the clock is already in sync. */
+	if (!check_sync_clock()) {
+		memset(&stp_sync, 0, sizeof(stp_sync));
+		cpus_read_lock();
 		atomic_set(&stp_sync.cpus, num_online_cpus() - 1);
-		stop_machine_cpuslocked(stp_sync_घड़ी, &stp_sync, cpu_online_mask);
-		cpus_पढ़ो_unlock();
-	पूर्ण
+		stop_machine_cpuslocked(stp_sync_clock, &stp_sync, cpu_online_mask);
+		cpus_read_unlock();
+	}
 
-	अगर (!check_sync_घड़ी())
+	if (!check_sync_clock())
 		/*
-		 * There is a usable घड़ी but the synchonization failed.
+		 * There is a usable clock but the synchonization failed.
 		 * Retry after a second.
 		 */
-		mod_समयr(&stp_समयr, jअगरfies + msecs_to_jअगरfies(MSEC_PER_SEC));
-	अन्यथा अगर (stp_info.lu)
+		mod_timer(&stp_timer, jiffies + msecs_to_jiffies(MSEC_PER_SEC));
+	else if (stp_info.lu)
 		stp_check_leap();
 
 out_unlock:
 	mutex_unlock(&stp_mutex);
-पूर्ण
+}
 
 /*
- * STP subsys sysfs पूर्णांकerface functions
+ * STP subsys sysfs interface functions
  */
-अटल काष्ठा bus_type stp_subsys = अणु
+static struct bus_type stp_subsys = {
 	.name		= "stp",
 	.dev_name	= "stp",
-पूर्ण;
+};
 
-अटल sमाप_प्रकार ctn_id_show(काष्ठा device *dev,
-				काष्ठा device_attribute *attr,
-				अक्षर *buf)
-अणु
-	sमाप_प्रकार ret = -ENODATA;
+static ssize_t ctn_id_show(struct device *dev,
+				struct device_attribute *attr,
+				char *buf)
+{
+	ssize_t ret = -ENODATA;
 
 	mutex_lock(&stp_mutex);
-	अगर (stpinfo_valid())
-		ret = प्र_लिखो(buf, "%016lx\n",
-			      *(अचिन्हित दीर्घ *) stp_info.ctnid);
+	if (stpinfo_valid())
+		ret = sprintf(buf, "%016lx\n",
+			      *(unsigned long *) stp_info.ctnid);
 	mutex_unlock(&stp_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल DEVICE_ATTR_RO(ctn_id);
+static DEVICE_ATTR_RO(ctn_id);
 
-अटल sमाप_प्रकार ctn_type_show(काष्ठा device *dev,
-				काष्ठा device_attribute *attr,
-				अक्षर *buf)
-अणु
-	sमाप_प्रकार ret = -ENODATA;
+static ssize_t ctn_type_show(struct device *dev,
+				struct device_attribute *attr,
+				char *buf)
+{
+	ssize_t ret = -ENODATA;
 
 	mutex_lock(&stp_mutex);
-	अगर (stpinfo_valid())
-		ret = प्र_लिखो(buf, "%i\n", stp_info.ctn);
+	if (stpinfo_valid())
+		ret = sprintf(buf, "%i\n", stp_info.ctn);
 	mutex_unlock(&stp_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल DEVICE_ATTR_RO(ctn_type);
+static DEVICE_ATTR_RO(ctn_type);
 
-अटल sमाप_प्रकार dst_offset_show(काष्ठा device *dev,
-				   काष्ठा device_attribute *attr,
-				   अक्षर *buf)
-अणु
-	sमाप_प्रकार ret = -ENODATA;
+static ssize_t dst_offset_show(struct device *dev,
+				   struct device_attribute *attr,
+				   char *buf)
+{
+	ssize_t ret = -ENODATA;
 
 	mutex_lock(&stp_mutex);
-	अगर (stpinfo_valid() && (stp_info.vbits & 0x2000))
-		ret = प्र_लिखो(buf, "%i\n", (पूर्णांक)(s16) stp_info.dsto);
+	if (stpinfo_valid() && (stp_info.vbits & 0x2000))
+		ret = sprintf(buf, "%i\n", (int)(s16) stp_info.dsto);
 	mutex_unlock(&stp_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल DEVICE_ATTR_RO(dst_offset);
+static DEVICE_ATTR_RO(dst_offset);
 
-अटल sमाप_प्रकार leap_seconds_show(काष्ठा device *dev,
-					काष्ठा device_attribute *attr,
-					अक्षर *buf)
-अणु
-	sमाप_प्रकार ret = -ENODATA;
+static ssize_t leap_seconds_show(struct device *dev,
+					struct device_attribute *attr,
+					char *buf)
+{
+	ssize_t ret = -ENODATA;
 
 	mutex_lock(&stp_mutex);
-	अगर (stpinfo_valid() && (stp_info.vbits & 0x8000))
-		ret = प्र_लिखो(buf, "%i\n", (पूर्णांक)(s16) stp_info.leaps);
+	if (stpinfo_valid() && (stp_info.vbits & 0x8000))
+		ret = sprintf(buf, "%i\n", (int)(s16) stp_info.leaps);
 	mutex_unlock(&stp_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल DEVICE_ATTR_RO(leap_seconds);
+static DEVICE_ATTR_RO(leap_seconds);
 
-अटल sमाप_प्रकार leap_seconds_scheduled_show(काष्ठा device *dev,
-						काष्ठा device_attribute *attr,
-						अक्षर *buf)
-अणु
-	काष्ठा stp_stzi stzi;
-	sमाप_प्रकार ret;
+static ssize_t leap_seconds_scheduled_show(struct device *dev,
+						struct device_attribute *attr,
+						char *buf)
+{
+	struct stp_stzi stzi;
+	ssize_t ret;
 
 	mutex_lock(&stp_mutex);
-	अगर (!stpinfo_valid() || !(stp_info.vbits & 0x8000) || !stp_info.lu) अणु
+	if (!stpinfo_valid() || !(stp_info.vbits & 0x8000) || !stp_info.lu) {
 		mutex_unlock(&stp_mutex);
-		वापस -ENODATA;
-	पूर्ण
+		return -ENODATA;
+	}
 
-	ret = chsc_stzi(stp_page, &stzi, माप(stzi));
+	ret = chsc_stzi(stp_page, &stzi, sizeof(stzi));
 	mutex_unlock(&stp_mutex);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (!stzi.lsoib.p)
-		वापस प्र_लिखो(buf, "0,0\n");
+	if (!stzi.lsoib.p)
+		return sprintf(buf, "0,0\n");
 
-	वापस प्र_लिखो(buf, "%lu,%d\n",
+	return sprintf(buf, "%lu,%d\n",
 		       tod_to_ns(stzi.lsoib.nlsout - TOD_UNIX_EPOCH) / NSEC_PER_SEC,
 		       stzi.lsoib.nlso - stzi.lsoib.also);
-पूर्ण
+}
 
-अटल DEVICE_ATTR_RO(leap_seconds_scheduled);
+static DEVICE_ATTR_RO(leap_seconds_scheduled);
 
-अटल sमाप_प्रकार stratum_show(काष्ठा device *dev,
-				काष्ठा device_attribute *attr,
-				अक्षर *buf)
-अणु
-	sमाप_प्रकार ret = -ENODATA;
-
-	mutex_lock(&stp_mutex);
-	अगर (stpinfo_valid())
-		ret = प्र_लिखो(buf, "%i\n", (पूर्णांक)(s16) stp_info.stratum);
-	mutex_unlock(&stp_mutex);
-	वापस ret;
-पूर्ण
-
-अटल DEVICE_ATTR_RO(stratum);
-
-अटल sमाप_प्रकार समय_offset_show(काष्ठा device *dev,
-				काष्ठा device_attribute *attr,
-				अक्षर *buf)
-अणु
-	sमाप_प्रकार ret = -ENODATA;
+static ssize_t stratum_show(struct device *dev,
+				struct device_attribute *attr,
+				char *buf)
+{
+	ssize_t ret = -ENODATA;
 
 	mutex_lock(&stp_mutex);
-	अगर (stpinfo_valid() && (stp_info.vbits & 0x0800))
-		ret = प्र_लिखो(buf, "%i\n", (पूर्णांक) stp_info.tto);
+	if (stpinfo_valid())
+		ret = sprintf(buf, "%i\n", (int)(s16) stp_info.stratum);
 	mutex_unlock(&stp_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल DEVICE_ATTR_RO(समय_offset);
+static DEVICE_ATTR_RO(stratum);
 
-अटल sमाप_प्रकार समय_zone_offset_show(काष्ठा device *dev,
-				काष्ठा device_attribute *attr,
-				अक्षर *buf)
-अणु
-	sमाप_प्रकार ret = -ENODATA;
+static ssize_t time_offset_show(struct device *dev,
+				struct device_attribute *attr,
+				char *buf)
+{
+	ssize_t ret = -ENODATA;
 
 	mutex_lock(&stp_mutex);
-	अगर (stpinfo_valid() && (stp_info.vbits & 0x4000))
-		ret = प्र_लिखो(buf, "%i\n", (पूर्णांक)(s16) stp_info.tzo);
+	if (stpinfo_valid() && (stp_info.vbits & 0x0800))
+		ret = sprintf(buf, "%i\n", (int) stp_info.tto);
 	mutex_unlock(&stp_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल DEVICE_ATTR_RO(समय_zone_offset);
+static DEVICE_ATTR_RO(time_offset);
 
-अटल sमाप_प्रकार timing_mode_show(काष्ठा device *dev,
-				काष्ठा device_attribute *attr,
-				अक्षर *buf)
-अणु
-	sमाप_प्रकार ret = -ENODATA;
+static ssize_t time_zone_offset_show(struct device *dev,
+				struct device_attribute *attr,
+				char *buf)
+{
+	ssize_t ret = -ENODATA;
 
 	mutex_lock(&stp_mutex);
-	अगर (stpinfo_valid())
-		ret = प्र_लिखो(buf, "%i\n", stp_info.पंचांगd);
+	if (stpinfo_valid() && (stp_info.vbits & 0x4000))
+		ret = sprintf(buf, "%i\n", (int)(s16) stp_info.tzo);
 	mutex_unlock(&stp_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल DEVICE_ATTR_RO(timing_mode);
+static DEVICE_ATTR_RO(time_zone_offset);
 
-अटल sमाप_प्रकार timing_state_show(काष्ठा device *dev,
-				काष्ठा device_attribute *attr,
-				अक्षर *buf)
-अणु
-	sमाप_प्रकार ret = -ENODATA;
+static ssize_t timing_mode_show(struct device *dev,
+				struct device_attribute *attr,
+				char *buf)
+{
+	ssize_t ret = -ENODATA;
 
 	mutex_lock(&stp_mutex);
-	अगर (stpinfo_valid())
-		ret = प्र_लिखो(buf, "%i\n", stp_info.tst);
+	if (stpinfo_valid())
+		ret = sprintf(buf, "%i\n", stp_info.tmd);
 	mutex_unlock(&stp_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल DEVICE_ATTR_RO(timing_state);
+static DEVICE_ATTR_RO(timing_mode);
 
-अटल sमाप_प्रकार online_show(काष्ठा device *dev,
-				काष्ठा device_attribute *attr,
-				अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%i\n", stp_online);
-पूर्ण
+static ssize_t timing_state_show(struct device *dev,
+				struct device_attribute *attr,
+				char *buf)
+{
+	ssize_t ret = -ENODATA;
 
-अटल sमाप_प्रकार online_store(काष्ठा device *dev,
-				काष्ठा device_attribute *attr,
-				स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	अचिन्हित पूर्णांक value;
+	mutex_lock(&stp_mutex);
+	if (stpinfo_valid())
+		ret = sprintf(buf, "%i\n", stp_info.tst);
+	mutex_unlock(&stp_mutex);
+	return ret;
+}
 
-	value = simple_म_से_अदीर्घ(buf, शून्य, 0);
-	अगर (value != 0 && value != 1)
-		वापस -EINVAL;
-	अगर (!test_bit(CLOCK_SYNC_HAS_STP, &घड़ी_sync_flags))
-		वापस -EOPNOTSUPP;
+static DEVICE_ATTR_RO(timing_state);
+
+static ssize_t online_show(struct device *dev,
+				struct device_attribute *attr,
+				char *buf)
+{
+	return sprintf(buf, "%i\n", stp_online);
+}
+
+static ssize_t online_store(struct device *dev,
+				struct device_attribute *attr,
+				const char *buf, size_t count)
+{
+	unsigned int value;
+
+	value = simple_strtoul(buf, NULL, 0);
+	if (value != 0 && value != 1)
+		return -EINVAL;
+	if (!test_bit(CLOCK_SYNC_HAS_STP, &clock_sync_flags))
+		return -EOPNOTSUPP;
 	mutex_lock(&stp_mutex);
 	stp_online = value;
-	अगर (stp_online)
-		set_bit(CLOCK_SYNC_STP, &घड़ी_sync_flags);
-	अन्यथा
-		clear_bit(CLOCK_SYNC_STP, &घड़ी_sync_flags);
-	queue_work(समय_sync_wq, &stp_work);
+	if (stp_online)
+		set_bit(CLOCK_SYNC_STP, &clock_sync_flags);
+	else
+		clear_bit(CLOCK_SYNC_STP, &clock_sync_flags);
+	queue_work(time_sync_wq, &stp_work);
 	mutex_unlock(&stp_mutex);
-	वापस count;
-पूर्ण
+	return count;
+}
 
 /*
  * Can't use DEVICE_ATTR because the attribute should be named
- * stp/online but dev_attr_online alपढ़ोy exists in this file ..
+ * stp/online but dev_attr_online already exists in this file ..
  */
-अटल DEVICE_ATTR_RW(online);
+static DEVICE_ATTR_RW(online);
 
-अटल काष्ठा attribute *stp_dev_attrs[] = अणु
+static struct attribute *stp_dev_attrs[] = {
 	&dev_attr_ctn_id.attr,
 	&dev_attr_ctn_type.attr,
 	&dev_attr_dst_offset.attr,
@@ -926,17 +925,17 @@ out_unlock:
 	&dev_attr_online.attr,
 	&dev_attr_leap_seconds_scheduled.attr,
 	&dev_attr_stratum.attr,
-	&dev_attr_समय_offset.attr,
-	&dev_attr_समय_zone_offset.attr,
+	&dev_attr_time_offset.attr,
+	&dev_attr_time_zone_offset.attr,
 	&dev_attr_timing_mode.attr,
 	&dev_attr_timing_state.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 ATTRIBUTE_GROUPS(stp_dev);
 
-अटल पूर्णांक __init stp_init_sysfs(व्योम)
-अणु
-	वापस subsys_प्रणाली_रेजिस्टर(&stp_subsys, stp_dev_groups);
-पूर्ण
+static int __init stp_init_sysfs(void)
+{
+	return subsys_system_register(&stp_subsys, stp_dev_groups);
+}
 
 device_initcall(stp_init_sysfs);

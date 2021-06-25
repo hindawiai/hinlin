@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *
  *	(c) Copyright 1998 Alan Cox <alan@lxorguk.ukuu.org.uk>
@@ -10,19 +9,19 @@
  *
  *	ChangeLog:
  *
- *	Asynchronous mode dropped क्रम 2.2. For 2.5 we will attempt the
- *	unअगरication of all the Z85x30 asynchronous drivers क्रम real.
+ *	Asynchronous mode dropped for 2.2. For 2.5 we will attempt the
+ *	unification of all the Z85x30 asynchronous drivers for real.
  *
- *	DMA now uses get_मुक्त_page as kदो_स्मृति buffers may span a 64K 
+ *	DMA now uses get_free_page as kmalloc buffers may span a 64K 
  *	boundary.
  *
- *	Modअगरied क्रम SMP safety and SMP locking by Alan Cox
+ *	Modified for SMP safety and SMP locking by Alan Cox
  *					<alan@lxorguk.ukuu.org.uk>
  *
- *	Perक्रमmance
+ *	Performance
  *
  *	Z85230:
- *	Non DMA you want a 486DX50 or better to करो 64Kbits. 9600 baud
+ *	Non DMA you want a 486DX50 or better to do 64Kbits. 9600 baud
  *	X.25 is not unrealistic on all machines. DMA mode can in theory
  *	handle T1/E1 quite nicely. In practice the limit seems to be about
  *	512Kbit->1Mbit depending on motherboard.
@@ -34,191 +33,191 @@
  *	Synchronous mode without DMA is unlikely to pass about 2400 baud.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/net.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/hdlc.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/init.h>
-#समावेश <linux/gfp.h>
-#समावेश <यंत्र/dma.h>
-#समावेश <यंत्र/पन.स>
-#घोषणा RT_LOCK
-#घोषणा RT_UNLOCK
-#समावेश <linux/spinlock.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/net.h>
+#include <linux/skbuff.h>
+#include <linux/netdevice.h>
+#include <linux/if_arp.h>
+#include <linux/delay.h>
+#include <linux/hdlc.h>
+#include <linux/ioport.h>
+#include <linux/init.h>
+#include <linux/gfp.h>
+#include <asm/dma.h>
+#include <asm/io.h>
+#define RT_LOCK
+#define RT_UNLOCK
+#include <linux/spinlock.h>
 
-#समावेश "z85230.h"
+#include "z85230.h"
 
 
 /**
- *	z8530_पढ़ो_port - Architecture specअगरic पूर्णांकerface function
- *	@p: port to पढ़ो
+ *	z8530_read_port - Architecture specific interface function
+ *	@p: port to read
  *
  *	Provided port access methods. The Comtrol SV11 requires no delays
  *	between accesses and uses PC I/O. Some drivers may need a 5uS delay
  *	
- *	In the दीर्घer term this should become an architecture specअगरic
- *	section so that this can become a generic driver पूर्णांकerface क्रम all
- *	platक्रमms. For now we only handle PC I/O ports with or without the
- *	dपढ़ो 5uS sanity delay.
+ *	In the longer term this should become an architecture specific
+ *	section so that this can become a generic driver interface for all
+ *	platforms. For now we only handle PC I/O ports with or without the
+ *	dread 5uS sanity delay.
  *
- *	The caller must hold sufficient locks to aव्योम violating the horrible
+ *	The caller must hold sufficient locks to avoid violating the horrible
  *	5uS delay rule.
  */
 
-अटल अंतरभूत पूर्णांक z8530_पढ़ो_port(अचिन्हित दीर्घ p)
-अणु
+static inline int z8530_read_port(unsigned long p)
+{
 	u8 r=inb(Z8530_PORT_OF(p));
-	अगर(p&Z8530_PORT_SLEEP)	/* gcc should figure this out efficiently ! */
+	if(p&Z8530_PORT_SLEEP)	/* gcc should figure this out efficiently ! */
 		udelay(5);
-	वापस r;
-पूर्ण
+	return r;
+}
 
 /**
- *	z8530_ग_लिखो_port - Architecture specअगरic पूर्णांकerface function
- *	@p: port to ग_लिखो
- *	@d: value to ग_लिखो
+ *	z8530_write_port - Architecture specific interface function
+ *	@p: port to write
+ *	@d: value to write
  *
- *	Write a value to a port with delays अगर need be. Note that the
- *	caller must hold locks to aव्योम पढ़ो/ग_लिखोs from other contexts
+ *	Write a value to a port with delays if need be. Note that the
+ *	caller must hold locks to avoid read/writes from other contexts
  *	violating the 5uS rule
  *
- *	In the दीर्घer term this should become an architecture specअगरic
- *	section so that this can become a generic driver पूर्णांकerface क्रम all
- *	platक्रमms. For now we only handle PC I/O ports with or without the
- *	dपढ़ो 5uS sanity delay.
+ *	In the longer term this should become an architecture specific
+ *	section so that this can become a generic driver interface for all
+ *	platforms. For now we only handle PC I/O ports with or without the
+ *	dread 5uS sanity delay.
  */
 
 
-अटल अंतरभूत व्योम z8530_ग_लिखो_port(अचिन्हित दीर्घ p, u8 d)
-अणु
+static inline void z8530_write_port(unsigned long p, u8 d)
+{
 	outb(d,Z8530_PORT_OF(p));
-	अगर(p&Z8530_PORT_SLEEP)
+	if(p&Z8530_PORT_SLEEP)
 		udelay(5);
-पूर्ण
+}
 
 
 
-अटल व्योम z8530_rx_करोne(काष्ठा z8530_channel *c);
-अटल व्योम z8530_tx_करोne(काष्ठा z8530_channel *c);
+static void z8530_rx_done(struct z8530_channel *c);
+static void z8530_tx_done(struct z8530_channel *c);
 
 
 /**
- *	पढ़ो_zsreg - Read a रेजिस्टर from a Z85230 
- *	@c: Z8530 channel to पढ़ो from (2 per chip)
- *	@reg: Register to पढ़ो
+ *	read_zsreg - Read a register from a Z85230 
+ *	@c: Z8530 channel to read from (2 per chip)
+ *	@reg: Register to read
  *	FIXME: Use a spinlock.
  *	
- *	Most of the Z8530 रेजिस्टरs are indexed off the control रेजिस्टरs.
- *	A पढ़ो is करोne by writing to the control रेजिस्टर and पढ़ोing the
- *	रेजिस्टर back.  The caller must hold the lock
+ *	Most of the Z8530 registers are indexed off the control registers.
+ *	A read is done by writing to the control register and reading the
+ *	register back.  The caller must hold the lock
  */
  
-अटल अंतरभूत u8 पढ़ो_zsreg(काष्ठा z8530_channel *c, u8 reg)
-अणु
-	अगर(reg)
-		z8530_ग_लिखो_port(c->ctrlio, reg);
-	वापस z8530_पढ़ो_port(c->ctrlio);
-पूर्ण
+static inline u8 read_zsreg(struct z8530_channel *c, u8 reg)
+{
+	if(reg)
+		z8530_write_port(c->ctrlio, reg);
+	return z8530_read_port(c->ctrlio);
+}
 
 /**
- *	पढ़ो_zsdata - Read the data port of a Z8530 channel
- *	@c: The Z8530 channel to पढ़ो the data port from
+ *	read_zsdata - Read the data port of a Z8530 channel
+ *	@c: The Z8530 channel to read the data port from
  *
  *	The data port provides fast access to some things. We still
  *	have all the 5uS delays to worry about.
  */
 
-अटल अंतरभूत u8 पढ़ो_zsdata(काष्ठा z8530_channel *c)
-अणु
+static inline u8 read_zsdata(struct z8530_channel *c)
+{
 	u8 r;
-	r=z8530_पढ़ो_port(c->dataio);
-	वापस r;
-पूर्ण
+	r=z8530_read_port(c->dataio);
+	return r;
+}
 
 /**
- *	ग_लिखो_zsreg - Write to a Z8530 channel रेजिस्टर
+ *	write_zsreg - Write to a Z8530 channel register
  *	@c: The Z8530 channel
  *	@reg: Register number
- *	@val: Value to ग_लिखो
+ *	@val: Value to write
  *
- *	Write a value to an indexed रेजिस्टर. The caller must hold the lock
- *	to honour the irritating delay rules. We know about रेजिस्टर 0
+ *	Write a value to an indexed register. The caller must hold the lock
+ *	to honour the irritating delay rules. We know about register 0
  *	being fast to access.
  *
  *      Assumes c->lock is held.
  */
-अटल अंतरभूत व्योम ग_लिखो_zsreg(काष्ठा z8530_channel *c, u8 reg, u8 val)
-अणु
-	अगर(reg)
-		z8530_ग_लिखो_port(c->ctrlio, reg);
-	z8530_ग_लिखो_port(c->ctrlio, val);
+static inline void write_zsreg(struct z8530_channel *c, u8 reg, u8 val)
+{
+	if(reg)
+		z8530_write_port(c->ctrlio, reg);
+	z8530_write_port(c->ctrlio, val);
 
-पूर्ण
-
-/**
- *	ग_लिखो_zsctrl - Write to a Z8530 control रेजिस्टर
- *	@c: The Z8530 channel
- *	@val: Value to ग_लिखो
- *
- *	Write directly to the control रेजिस्टर on the Z8530
- */
-
-अटल अंतरभूत व्योम ग_लिखो_zsctrl(काष्ठा z8530_channel *c, u8 val)
-अणु
-	z8530_ग_लिखो_port(c->ctrlio, val);
-पूर्ण
+}
 
 /**
- *	ग_लिखो_zsdata - Write to a Z8530 control रेजिस्टर
+ *	write_zsctrl - Write to a Z8530 control register
  *	@c: The Z8530 channel
- *	@val: Value to ग_लिखो
+ *	@val: Value to write
  *
- *	Write directly to the data रेजिस्टर on the Z8530
+ *	Write directly to the control register on the Z8530
+ */
+
+static inline void write_zsctrl(struct z8530_channel *c, u8 val)
+{
+	z8530_write_port(c->ctrlio, val);
+}
+
+/**
+ *	write_zsdata - Write to a Z8530 control register
+ *	@c: The Z8530 channel
+ *	@val: Value to write
+ *
+ *	Write directly to the data register on the Z8530
  */
 
 
-अटल अंतरभूत व्योम ग_लिखो_zsdata(काष्ठा z8530_channel *c, u8 val)
-अणु
-	z8530_ग_लिखो_port(c->dataio, val);
-पूर्ण
+static inline void write_zsdata(struct z8530_channel *c, u8 val)
+{
+	z8530_write_port(c->dataio, val);
+}
 
 /*
- *	Register loading parameters क्रम a dead port
+ *	Register loading parameters for a dead port
  */
  
 u8 z8530_dead_port[]=
-अणु
+{
 	255
-पूर्ण;
+};
 
 EXPORT_SYMBOL(z8530_dead_port);
 
 /*
- *	Register loading parameters क्रम currently supported circuit types
+ *	Register loading parameters for currently supported circuit types
  */
 
 
 /*
- *	Data घड़ीed by telco end. This is the correct data क्रम the UK
+ *	Data clocked by telco end. This is the correct data for the UK
  *	"kilostream" service, and most other similar services.
  */
  
 u8 z8530_hdlc_kilostream[]=
-अणु
+{
 	4,	SYNC_ENAB|SDLC|X1CLK,
 	2,	0,	/* No vector */
 	1,	0,
 	3,	ENT_HM|RxCRC_ENAB|Rx8,
 	5,	TxCRC_ENAB|RTS|TxENAB|Tx8|DTR,
-	9,	0,		/* Disable पूर्णांकerrupts */
+	9,	0,		/* Disable interrupts */
 	6,	0xFF,
 	7,	FLAG,
 	10,	ABUNDER|NRZ|CRCPS,/*MARKIDLE ??*/
@@ -228,22 +227,22 @@ u8 z8530_hdlc_kilostream[]=
 	1,	EXT_INT_ENAB|TxINT_ENAB|INT_ALL_Rx,
 	9,	NV|MIE|NORESET,
 	255
-पूर्ण;
+};
 
 EXPORT_SYMBOL(z8530_hdlc_kilostream);
 
 /*
- *	As above but क्रम enhanced chips.
+ *	As above but for enhanced chips.
  */
  
 u8 z8530_hdlc_kilostream_85230[]=
-अणु
+{
 	4,	SYNC_ENAB|SDLC|X1CLK,
 	2,	0,	/* No vector */
 	1,	0,
 	3,	ENT_HM|RxCRC_ENAB|Rx8,
 	5,	TxCRC_ENAB|RTS|TxENAB|Tx8|DTR,
-	9,	0,		/* Disable पूर्णांकerrupts */
+	9,	0,		/* Disable interrupts */
 	6,	0xFF,
 	7,	FLAG,
 	10,	ABUNDER|NRZ|CRCPS,	/* MARKIDLE?? */
@@ -255,36 +254,36 @@ u8 z8530_hdlc_kilostream_85230[]=
 	23,	3,		/* Extended mode AUTO TX and EOM*/
 	
 	255
-पूर्ण;
+};
 
 EXPORT_SYMBOL(z8530_hdlc_kilostream_85230);
 
 /**
- *	z8530_flush_fअगरo - Flush on chip RX FIFO
+ *	z8530_flush_fifo - Flush on chip RX FIFO
  *	@c: Channel to flush
  *
- *	Flush the receive FIFO. There is no specअगरic option क्रम this, we 
- *	blindly पढ़ो bytes and discard them. Reading when there is no data
+ *	Flush the receive FIFO. There is no specific option for this, we 
+ *	blindly read bytes and discard them. Reading when there is no data
  *	is harmless. The 8530 has a 4 byte FIFO, the 85230 has 8 bytes.
  *	
- *	All locking is handled क्रम the caller. On वापस data may still be
- *	present अगर it arrived during the flush.
+ *	All locking is handled for the caller. On return data may still be
+ *	present if it arrived during the flush.
  */
  
-अटल व्योम z8530_flush_fअगरo(काष्ठा z8530_channel *c)
-अणु
-	पढ़ो_zsreg(c, R1);
-	पढ़ो_zsreg(c, R1);
-	पढ़ो_zsreg(c, R1);
-	पढ़ो_zsreg(c, R1);
-	अगर(c->dev->type==Z85230)
-	अणु
-		पढ़ो_zsreg(c, R1);
-		पढ़ो_zsreg(c, R1);
-		पढ़ो_zsreg(c, R1);
-		पढ़ो_zsreg(c, R1);
-	पूर्ण
-पूर्ण	
+static void z8530_flush_fifo(struct z8530_channel *c)
+{
+	read_zsreg(c, R1);
+	read_zsreg(c, R1);
+	read_zsreg(c, R1);
+	read_zsreg(c, R1);
+	if(c->dev->type==Z85230)
+	{
+		read_zsreg(c, R1);
+		read_zsreg(c, R1);
+		read_zsreg(c, R1);
+		read_zsreg(c, R1);
+	}
+}	
 
 /**
  *	z8530_rtsdtr - Control the outgoing DTS/RTS line
@@ -293,147 +292,147 @@ EXPORT_SYMBOL(z8530_hdlc_kilostream_85230);
  *
  *	Sets or clears DTR/RTS on the requested line. All locking is handled
  *	by the caller. For now we assume all boards use the actual RTS/DTR
- *	on the chip. Apparently one or two करोn't. We'll scream about them
+ *	on the chip. Apparently one or two don't. We'll scream about them
  *	later.
  */
 
-अटल व्योम z8530_rtsdtr(काष्ठा z8530_channel *c, पूर्णांक set)
-अणु
-	अगर (set)
+static void z8530_rtsdtr(struct z8530_channel *c, int set)
+{
+	if (set)
 		c->regs[5] |= (RTS | DTR);
-	अन्यथा
+	else
 		c->regs[5] &= ~(RTS | DTR);
-	ग_लिखो_zsreg(c, R5, c->regs[5]);
-पूर्ण
+	write_zsreg(c, R5, c->regs[5]);
+}
 
 /**
  *	z8530_rx - Handle a PIO receive event
  *	@c: Z8530 channel to process
  *
- *	Receive handler क्रम receiving in PIO mode. This is much like the 
+ *	Receive handler for receiving in PIO mode. This is much like the 
  *	async one but not quite the same or as complex
  *
- *	Note: Its पूर्णांकended that this handler can easily be separated from
- *	the मुख्य code to run realसमय. That'll be needed क्रम some machines
- *	(eg to ever घड़ी 64kbits on a sparc ;)).
+ *	Note: Its intended that this handler can easily be separated from
+ *	the main code to run realtime. That'll be needed for some machines
+ *	(eg to ever clock 64kbits on a sparc ;)).
  *
- *	The RT_LOCK macros करोn't करो anything now. Keep the code covered
- *	by them as लघु as possible in all circumstances - घड़ीs cost
- *	baud. The पूर्णांकerrupt handler is assumed to be atomic w.r.t. to
- *	other code - this is true in the RT हाल too.
+ *	The RT_LOCK macros don't do anything now. Keep the code covered
+ *	by them as short as possible in all circumstances - clocks cost
+ *	baud. The interrupt handler is assumed to be atomic w.r.t. to
+ *	other code - this is true in the RT case too.
  *
- *	We only cover the sync हालs क्रम this. If you want 2Mbit async
- *	करो it yourself but consider medical assistance first. This non DMA 
+ *	We only cover the sync cases for this. If you want 2Mbit async
+ *	do it yourself but consider medical assistance first. This non DMA 
  *	synchronous mode is portable code. The DMA mode assumes PCI like 
  *	ISA DMA
  *
  *	Called with the device lock held
  */
  
-अटल व्योम z8530_rx(काष्ठा z8530_channel *c)
-अणु
+static void z8530_rx(struct z8530_channel *c)
+{
 	u8 ch,stat;
 
-	जबतक(1)
-	अणु
+	while(1)
+	{
 		/* FIFO empty ? */
-		अगर(!(पढ़ो_zsreg(c, R0)&1))
-			अवरोध;
-		ch=पढ़ो_zsdata(c);
-		stat=पढ़ो_zsreg(c, R1);
+		if(!(read_zsreg(c, R0)&1))
+			break;
+		ch=read_zsdata(c);
+		stat=read_zsreg(c, R1);
 	
 		/*
 		 *	Overrun ?
 		 */
-		अगर(c->count < c->max)
-		अणु
+		if(c->count < c->max)
+		{
 			*c->dptr++=ch;
 			c->count++;
-		पूर्ण
+		}
 
-		अगर(stat&END_FR)
-		अणु
+		if(stat&END_FR)
+		{
 		
 			/*
 			 *	Error ?
 			 */
-			अगर(stat&(Rx_OVR|CRC_ERR))
-			अणु
-				/* Rewind the buffer and वापस */
-				अगर(c->skb)
+			if(stat&(Rx_OVR|CRC_ERR))
+			{
+				/* Rewind the buffer and return */
+				if(c->skb)
 					c->dptr=c->skb->data;
 				c->count=0;
-				अगर(stat&Rx_OVR)
-				अणु
+				if(stat&Rx_OVR)
+				{
 					pr_warn("%s: overrun\n", c->dev->name);
 					c->rx_overrun++;
-				पूर्ण
-				अगर(stat&CRC_ERR)
-				अणु
+				}
+				if(stat&CRC_ERR)
+				{
 					c->rx_crc_err++;
-					/* prपूर्णांकk("crc error\n"); */
-				पूर्ण
+					/* printk("crc error\n"); */
+				}
 				/* Shove the frame upstream */
-			पूर्ण
-			अन्यथा
-			अणु
+			}
+			else
+			{
 				/*
-				 *	Drop the lock क्रम RX processing, or
+				 *	Drop the lock for RX processing, or
 		 		 *	there are deadlocks
 		 		 */
-				z8530_rx_करोne(c);
-				ग_लिखो_zsctrl(c, RES_Rx_CRC);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				z8530_rx_done(c);
+				write_zsctrl(c, RES_Rx_CRC);
+			}
+		}
+	}
 	/*
 	 *	Clear irq
 	 */
-	ग_लिखो_zsctrl(c, ERR_RES);
-	ग_लिखो_zsctrl(c, RES_H_IUS);
-पूर्ण
+	write_zsctrl(c, ERR_RES);
+	write_zsctrl(c, RES_H_IUS);
+}
 
 
 /**
  *	z8530_tx - Handle a PIO transmit event
  *	@c: Z8530 channel to process
  *
- *	Z8530 transmit पूर्णांकerrupt handler क्रम the PIO mode. The basic
+ *	Z8530 transmit interrupt handler for the PIO mode. The basic
  *	idea is to attempt to keep the FIFO fed. We fill as many bytes
  *	in as possible, its quite possible that we won't keep up with the
  *	data rate otherwise.
  */
  
-अटल व्योम z8530_tx(काष्ठा z8530_channel *c)
-अणु
-	जबतक(c->txcount) अणु
+static void z8530_tx(struct z8530_channel *c)
+{
+	while(c->txcount) {
 		/* FIFO full ? */
-		अगर(!(पढ़ो_zsreg(c, R0)&4))
-			वापस;
+		if(!(read_zsreg(c, R0)&4))
+			return;
 		c->txcount--;
 		/*
 		 *	Shovel out the byte
 		 */
-		ग_लिखो_zsreg(c, R8, *c->tx_ptr++);
-		ग_लिखो_zsctrl(c, RES_H_IUS);
+		write_zsreg(c, R8, *c->tx_ptr++);
+		write_zsctrl(c, RES_H_IUS);
 		/* We are about to underflow */
-		अगर(c->txcount==0)
-		अणु
-			ग_लिखो_zsctrl(c, RES_EOM_L);
-			ग_लिखो_zsreg(c, R10, c->regs[10]&~ABUNDER);
-		पूर्ण
-	पूर्ण
+		if(c->txcount==0)
+		{
+			write_zsctrl(c, RES_EOM_L);
+			write_zsreg(c, R10, c->regs[10]&~ABUNDER);
+		}
+	}
 
 	
 	/*
 	 *	End of frame TX - fire another one
 	 */
 	 
-	ग_लिखो_zsctrl(c, RES_Tx_P);
+	write_zsctrl(c, RES_Tx_P);
 
-	z8530_tx_करोne(c);	 
-	ग_लिखो_zsctrl(c, RES_H_IUS);
-पूर्ण
+	z8530_tx_done(c);	 
+	write_zsctrl(c, RES_H_IUS);
+}
 
 /**
  *	z8530_status - Handle a PIO status exception
@@ -442,50 +441,50 @@ EXPORT_SYMBOL(z8530_hdlc_kilostream_85230);
  *	A status event occurred in PIO synchronous mode. There are several
  *	reasons the chip will bother us here. A transmit underrun means we
  *	failed to feed the chip fast enough and just broke a packet. A DCD
- *	change is a line up or करोwn.
+ *	change is a line up or down.
  */
 
-अटल व्योम z8530_status(काष्ठा z8530_channel *chan)
-अणु
+static void z8530_status(struct z8530_channel *chan)
+{
 	u8 status, altered;
 
-	status = पढ़ो_zsreg(chan, R0);
+	status = read_zsreg(chan, R0);
 	altered = chan->status ^ status;
 
 	chan->status = status;
 
-	अगर (status & TxEOM) अणु
-/*		prपूर्णांकk("%s: Tx underrun.\n", chan->dev->name); */
-		chan->netdevice->stats.tx_fअगरo_errors++;
-		ग_लिखो_zsctrl(chan, ERR_RES);
-		z8530_tx_करोne(chan);
-	पूर्ण
+	if (status & TxEOM) {
+/*		printk("%s: Tx underrun.\n", chan->dev->name); */
+		chan->netdevice->stats.tx_fifo_errors++;
+		write_zsctrl(chan, ERR_RES);
+		z8530_tx_done(chan);
+	}
 
-	अगर (altered & chan->dcdcheck)
-	अणु
-		अगर (status & chan->dcdcheck) अणु
+	if (altered & chan->dcdcheck)
+	{
+		if (status & chan->dcdcheck) {
 			pr_info("%s: DCD raised\n", chan->dev->name);
-			ग_लिखो_zsreg(chan, R3, chan->regs[3] | RxENABLE);
-			अगर (chan->netdevice)
-				netअगर_carrier_on(chan->netdevice);
-		पूर्ण अन्यथा अणु
+			write_zsreg(chan, R3, chan->regs[3] | RxENABLE);
+			if (chan->netdevice)
+				netif_carrier_on(chan->netdevice);
+		} else {
 			pr_info("%s: DCD lost\n", chan->dev->name);
-			ग_लिखो_zsreg(chan, R3, chan->regs[3] & ~RxENABLE);
-			z8530_flush_fअगरo(chan);
-			अगर (chan->netdevice)
-				netअगर_carrier_off(chan->netdevice);
-		पूर्ण
+			write_zsreg(chan, R3, chan->regs[3] & ~RxENABLE);
+			z8530_flush_fifo(chan);
+			if (chan->netdevice)
+				netif_carrier_off(chan->netdevice);
+		}
 
-	पूर्ण
-	ग_लिखो_zsctrl(chan, RES_EXT_INT);
-	ग_लिखो_zsctrl(chan, RES_H_IUS);
-पूर्ण
+	}
+	write_zsctrl(chan, RES_EXT_INT);
+	write_zsctrl(chan, RES_H_IUS);
+}
 
-काष्ठा z8530_irqhandler z8530_sync = अणु
+struct z8530_irqhandler z8530_sync = {
 	.rx = z8530_rx,
 	.tx = z8530_tx,
 	.status = z8530_status,
-पूर्ण;
+};
 
 EXPORT_SYMBOL(z8530_sync);
 
@@ -493,375 +492,375 @@ EXPORT_SYMBOL(z8530_sync);
  *	z8530_dma_rx - Handle a DMA RX event
  *	@chan: Channel to handle
  *
- *	Non bus mastering DMA पूर्णांकerfaces क्रम the Z8x30 devices. This
- *	is really pretty PC specअगरic. The DMA mode means that most receive
- *	events are handled by the DMA hardware. We get a kick here only अगर
+ *	Non bus mastering DMA interfaces for the Z8x30 devices. This
+ *	is really pretty PC specific. The DMA mode means that most receive
+ *	events are handled by the DMA hardware. We get a kick here only if
  *	a frame ended.
  */
  
-अटल व्योम z8530_dma_rx(काष्ठा z8530_channel *chan)
-अणु
-	अगर(chan->rxdma_on)
-	अणु
+static void z8530_dma_rx(struct z8530_channel *chan)
+{
+	if(chan->rxdma_on)
+	{
 		/* Special condition check only */
 		u8 status;
 	
-		पढ़ो_zsreg(chan, R7);
-		पढ़ो_zsreg(chan, R6);
+		read_zsreg(chan, R7);
+		read_zsreg(chan, R6);
 		
-		status=पढ़ो_zsreg(chan, R1);
+		status=read_zsreg(chan, R1);
 	
-		अगर(status&END_FR)
-		अणु
-			z8530_rx_करोne(chan);	/* Fire up the next one */
-		पूर्ण		
-		ग_लिखो_zsctrl(chan, ERR_RES);
-		ग_लिखो_zsctrl(chan, RES_H_IUS);
-	पूर्ण
-	अन्यथा
-	अणु
+		if(status&END_FR)
+		{
+			z8530_rx_done(chan);	/* Fire up the next one */
+		}		
+		write_zsctrl(chan, ERR_RES);
+		write_zsctrl(chan, RES_H_IUS);
+	}
+	else
+	{
 		/* DMA is off right now, drain the slow way */
 		z8530_rx(chan);
-	पूर्ण	
-पूर्ण
+	}	
+}
 
 /**
  *	z8530_dma_tx - Handle a DMA TX event
  *	@chan:	The Z8530 channel to handle
  *
- *	We have received an पूर्णांकerrupt जबतक करोing DMA transmissions. It
- *	shouldn't happen. Scream loudly अगर it करोes.
+ *	We have received an interrupt while doing DMA transmissions. It
+ *	shouldn't happen. Scream loudly if it does.
  */
  
-अटल व्योम z8530_dma_tx(काष्ठा z8530_channel *chan)
-अणु
-	अगर(!chan->dma_tx)
-	अणु
+static void z8530_dma_tx(struct z8530_channel *chan)
+{
+	if(!chan->dma_tx)
+	{
 		pr_warn("Hey who turned the DMA off?\n");
 		z8530_tx(chan);
-		वापस;
-	पूर्ण
+		return;
+	}
 	/* This shouldn't occur in DMA mode */
 	pr_err("DMA tx - bogus event!\n");
 	z8530_tx(chan);
-पूर्ण
+}
 
 /**
  *	z8530_dma_status - Handle a DMA status exception
  *	@chan: Z8530 channel to process
  *	
- *	A status event occurred on the Z8530. We receive these क्रम two reasons
- *	when in DMA mode. Firstly अगर we finished a packet transfer we get one
+ *	A status event occurred on the Z8530. We receive these for two reasons
+ *	when in DMA mode. Firstly if we finished a packet transfer we get one
  *	and kick the next packet out. Secondly we may see a DCD change.
  *
  */
  
-अटल व्योम z8530_dma_status(काष्ठा z8530_channel *chan)
-अणु
+static void z8530_dma_status(struct z8530_channel *chan)
+{
 	u8 status, altered;
 
-	status=पढ़ो_zsreg(chan, R0);
+	status=read_zsreg(chan, R0);
 	altered=chan->status^status;
 	
 	chan->status=status;
 
 
-	अगर(chan->dma_tx)
-	अणु
-		अगर(status&TxEOM)
-		अणु
-			अचिन्हित दीर्घ flags;
+	if(chan->dma_tx)
+	{
+		if(status&TxEOM)
+		{
+			unsigned long flags;
 	
 			flags=claim_dma_lock();
 			disable_dma(chan->txdma);
 			clear_dma_ff(chan->txdma);	
 			chan->txdma_on=0;
 			release_dma_lock(flags);
-			z8530_tx_करोne(chan);
-		पूर्ण
-	पूर्ण
+			z8530_tx_done(chan);
+		}
+	}
 
-	अगर (altered & chan->dcdcheck)
-	अणु
-		अगर (status & chan->dcdcheck) अणु
+	if (altered & chan->dcdcheck)
+	{
+		if (status & chan->dcdcheck) {
 			pr_info("%s: DCD raised\n", chan->dev->name);
-			ग_लिखो_zsreg(chan, R3, chan->regs[3] | RxENABLE);
-			अगर (chan->netdevice)
-				netअगर_carrier_on(chan->netdevice);
-		पूर्ण अन्यथा अणु
+			write_zsreg(chan, R3, chan->regs[3] | RxENABLE);
+			if (chan->netdevice)
+				netif_carrier_on(chan->netdevice);
+		} else {
 			pr_info("%s: DCD lost\n", chan->dev->name);
-			ग_लिखो_zsreg(chan, R3, chan->regs[3] & ~RxENABLE);
-			z8530_flush_fअगरo(chan);
-			अगर (chan->netdevice)
-				netअगर_carrier_off(chan->netdevice);
-		पूर्ण
-	पूर्ण
+			write_zsreg(chan, R3, chan->regs[3] & ~RxENABLE);
+			z8530_flush_fifo(chan);
+			if (chan->netdevice)
+				netif_carrier_off(chan->netdevice);
+		}
+	}
 
-	ग_लिखो_zsctrl(chan, RES_EXT_INT);
-	ग_लिखो_zsctrl(chan, RES_H_IUS);
-पूर्ण
+	write_zsctrl(chan, RES_EXT_INT);
+	write_zsctrl(chan, RES_H_IUS);
+}
 
-अटल काष्ठा z8530_irqhandler z8530_dma_sync = अणु
+static struct z8530_irqhandler z8530_dma_sync = {
 	.rx = z8530_dma_rx,
 	.tx = z8530_dma_tx,
 	.status = z8530_dma_status,
-पूर्ण;
+};
 
-अटल काष्ठा z8530_irqhandler z8530_txdma_sync = अणु
+static struct z8530_irqhandler z8530_txdma_sync = {
 	.rx = z8530_rx,
 	.tx = z8530_dma_tx,
 	.status = z8530_dma_status,
-पूर्ण;
+};
 
 /**
  *	z8530_rx_clear - Handle RX events from a stopped chip
  *	@c: Z8530 channel to shut up
  *
- *	Receive पूर्णांकerrupt vectors क्रम a Z8530 that is in 'parked' mode.
- *	For machines with PCI Z85x30 cards, or level triggered पूर्णांकerrupts
- *	(eg the MacII) we must clear the पूर्णांकerrupt cause or die.
+ *	Receive interrupt vectors for a Z8530 that is in 'parked' mode.
+ *	For machines with PCI Z85x30 cards, or level triggered interrupts
+ *	(eg the MacII) we must clear the interrupt cause or die.
  */
 
 
-अटल व्योम z8530_rx_clear(काष्ठा z8530_channel *c)
-अणु
+static void z8530_rx_clear(struct z8530_channel *c)
+{
 	/*
 	 *	Data and status bytes
 	 */
 	u8 stat;
 
-	पढ़ो_zsdata(c);
-	stat=पढ़ो_zsreg(c, R1);
+	read_zsdata(c);
+	stat=read_zsreg(c, R1);
 	
-	अगर(stat&END_FR)
-		ग_लिखो_zsctrl(c, RES_Rx_CRC);
+	if(stat&END_FR)
+		write_zsctrl(c, RES_Rx_CRC);
 	/*
 	 *	Clear irq
 	 */
-	ग_लिखो_zsctrl(c, ERR_RES);
-	ग_लिखो_zsctrl(c, RES_H_IUS);
-पूर्ण
+	write_zsctrl(c, ERR_RES);
+	write_zsctrl(c, RES_H_IUS);
+}
 
 /**
  *	z8530_tx_clear - Handle TX events from a stopped chip
  *	@c: Z8530 channel to shut up
  *
- *	Transmit पूर्णांकerrupt vectors क्रम a Z8530 that is in 'parked' mode.
- *	For machines with PCI Z85x30 cards, or level triggered पूर्णांकerrupts
- *	(eg the MacII) we must clear the पूर्णांकerrupt cause or die.
+ *	Transmit interrupt vectors for a Z8530 that is in 'parked' mode.
+ *	For machines with PCI Z85x30 cards, or level triggered interrupts
+ *	(eg the MacII) we must clear the interrupt cause or die.
  */
 
-अटल व्योम z8530_tx_clear(काष्ठा z8530_channel *c)
-अणु
-	ग_लिखो_zsctrl(c, RES_Tx_P);
-	ग_लिखो_zsctrl(c, RES_H_IUS);
-पूर्ण
+static void z8530_tx_clear(struct z8530_channel *c)
+{
+	write_zsctrl(c, RES_Tx_P);
+	write_zsctrl(c, RES_H_IUS);
+}
 
 /**
  *	z8530_status_clear - Handle status events from a stopped chip
  *	@chan: Z8530 channel to shut up
  *
- *	Status पूर्णांकerrupt vectors क्रम a Z8530 that is in 'parked' mode.
- *	For machines with PCI Z85x30 cards, or level triggered पूर्णांकerrupts
- *	(eg the MacII) we must clear the पूर्णांकerrupt cause or die.
+ *	Status interrupt vectors for a Z8530 that is in 'parked' mode.
+ *	For machines with PCI Z85x30 cards, or level triggered interrupts
+ *	(eg the MacII) we must clear the interrupt cause or die.
  */
 
-अटल व्योम z8530_status_clear(काष्ठा z8530_channel *chan)
-अणु
-	u8 status=पढ़ो_zsreg(chan, R0);
-	अगर(status&TxEOM)
-		ग_लिखो_zsctrl(chan, ERR_RES);
-	ग_लिखो_zsctrl(chan, RES_EXT_INT);
-	ग_लिखो_zsctrl(chan, RES_H_IUS);
-पूर्ण
+static void z8530_status_clear(struct z8530_channel *chan)
+{
+	u8 status=read_zsreg(chan, R0);
+	if(status&TxEOM)
+		write_zsctrl(chan, ERR_RES);
+	write_zsctrl(chan, RES_EXT_INT);
+	write_zsctrl(chan, RES_H_IUS);
+}
 
-काष्ठा z8530_irqhandler z8530_nop = अणु
+struct z8530_irqhandler z8530_nop = {
 	.rx = z8530_rx_clear,
 	.tx = z8530_tx_clear,
 	.status = z8530_status_clear,
-पूर्ण;
+};
 
 
 EXPORT_SYMBOL(z8530_nop);
 
 /**
- *	z8530_पूर्णांकerrupt - Handle an पूर्णांकerrupt from a Z8530
+ *	z8530_interrupt - Handle an interrupt from a Z8530
  *	@irq: 	Interrupt number
- *	@dev_id: The Z8530 device that is पूर्णांकerrupting.
+ *	@dev_id: The Z8530 device that is interrupting.
  *
- *	A Z85[2]30 device has stuck its hand in the air क्रम attention.
- *	We scan both the channels on the chip क्रम events and then call
- *	the channel specअगरic call backs क्रम each channel that has events.
+ *	A Z85[2]30 device has stuck its hand in the air for attention.
+ *	We scan both the channels on the chip for events and then call
+ *	the channel specific call backs for each channel that has events.
  *	We have to use callback functions because the two channels can be
- *	in dअगरferent modes.
+ *	in different modes.
  *
- *	Locking is करोne क्रम the handlers. Note that locking is करोne
+ *	Locking is done for the handlers. Note that locking is done
  *	at the chip level (the 5uS delay issue is per chip not per
- *	channel). c->lock क्रम both channels poपूर्णांकs to dev->lock
+ *	channel). c->lock for both channels points to dev->lock
  */
 
-irqवापस_t z8530_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा z8530_dev *dev=dev_id;
-	u8 पूर्णांकr;
-	अटल अस्थिर पूर्णांक locker=0;
-	पूर्णांक work=0;
-	काष्ठा z8530_irqhandler *irqs;
+irqreturn_t z8530_interrupt(int irq, void *dev_id)
+{
+	struct z8530_dev *dev=dev_id;
+	u8 intr;
+	static volatile int locker=0;
+	int work=0;
+	struct z8530_irqhandler *irqs;
 	
-	अगर(locker)
-	अणु
+	if(locker)
+	{
 		pr_err("IRQ re-enter\n");
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 	locker=1;
 
 	spin_lock(&dev->lock);
 
-	जबतक(++work<5000)
-	अणु
+	while(++work<5000)
+	{
 
-		पूर्णांकr = पढ़ो_zsreg(&dev->chanA, R3);
-		अगर(!(पूर्णांकr & (CHARxIP|CHATxIP|CHAEXT|CHBRxIP|CHBTxIP|CHBEXT)))
-			अवरोध;
+		intr = read_zsreg(&dev->chanA, R3);
+		if(!(intr & (CHARxIP|CHATxIP|CHAEXT|CHBRxIP|CHBTxIP|CHBEXT)))
+			break;
 	
-		/* This holds the IRQ status. On the 8530 you must पढ़ो it from chan 
+		/* This holds the IRQ status. On the 8530 you must read it from chan 
 		   A even though it applies to the whole chip */
 		
 		/* Now walk the chip and see what it is wanting - it may be
-		   an IRQ क्रम someone अन्यथा remember */
+		   an IRQ for someone else remember */
 		   
 		irqs=dev->chanA.irqs;
 
-		अगर(पूर्णांकr & (CHARxIP|CHATxIP|CHAEXT))
-		अणु
-			अगर(पूर्णांकr&CHARxIP)
+		if(intr & (CHARxIP|CHATxIP|CHAEXT))
+		{
+			if(intr&CHARxIP)
 				irqs->rx(&dev->chanA);
-			अगर(पूर्णांकr&CHATxIP)
+			if(intr&CHATxIP)
 				irqs->tx(&dev->chanA);
-			अगर(पूर्णांकr&CHAEXT)
+			if(intr&CHAEXT)
 				irqs->status(&dev->chanA);
-		पूर्ण
+		}
 
 		irqs=dev->chanB.irqs;
 
-		अगर(पूर्णांकr & (CHBRxIP|CHBTxIP|CHBEXT))
-		अणु
-			अगर(पूर्णांकr&CHBRxIP)
+		if(intr & (CHBRxIP|CHBTxIP|CHBEXT))
+		{
+			if(intr&CHBRxIP)
 				irqs->rx(&dev->chanB);
-			अगर(पूर्णांकr&CHBTxIP)
+			if(intr&CHBTxIP)
 				irqs->tx(&dev->chanB);
-			अगर(पूर्णांकr&CHBEXT)
+			if(intr&CHBEXT)
 				irqs->status(&dev->chanB);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock(&dev->lock);
-	अगर(work==5000)
+	if(work==5000)
 		pr_err("%s: interrupt jammed - abort(0x%X)!\n",
-		       dev->name, पूर्णांकr);
-	/* Ok all करोne */
+		       dev->name, intr);
+	/* Ok all done */
 	locker=0;
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-EXPORT_SYMBOL(z8530_पूर्णांकerrupt);
+EXPORT_SYMBOL(z8530_interrupt);
 
-अटल स्थिर u8 reg_init[16]=
-अणु
+static const u8 reg_init[16]=
+{
 	0,0,0,0,
 	0,0,0,0,
 	0,0,0,0,
 	0x55,0,0,0
-पूर्ण;
+};
 
 
 /**
- *	z8530_sync_खोलो - Open a Z8530 channel क्रम PIO
- *	@dev:	The network पूर्णांकerface we are using
- *	@c:	The Z8530 channel to खोलो in synchronous PIO mode
+ *	z8530_sync_open - Open a Z8530 channel for PIO
+ *	@dev:	The network interface we are using
+ *	@c:	The Z8530 channel to open in synchronous PIO mode
  *
- *	Switch a Z8530 पूर्णांकo synchronous mode without DMA assist. We
- *	उठाओ the RTS/DTR and commence network operation.
+ *	Switch a Z8530 into synchronous mode without DMA assist. We
+ *	raise the RTS/DTR and commence network operation.
  */
  
-पूर्णांक z8530_sync_खोलो(काष्ठा net_device *dev, काष्ठा z8530_channel *c)
-अणु
-	अचिन्हित दीर्घ flags;
+int z8530_sync_open(struct net_device *dev, struct z8530_channel *c)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(c->lock, flags);
 
 	c->sync = 1;
 	c->mtu = dev->mtu+64;
 	c->count = 0;
-	c->skb = शून्य;
-	c->skb2 = शून्य;
+	c->skb = NULL;
+	c->skb2 = NULL;
 	c->irqs = &z8530_sync;
 
-	/* This loads the द्विगुन buffer up */
-	z8530_rx_करोne(c);	/* Load the frame ring */
-	z8530_rx_करोne(c);	/* Load the backup frame */
+	/* This loads the double buffer up */
+	z8530_rx_done(c);	/* Load the frame ring */
+	z8530_rx_done(c);	/* Load the backup frame */
 	z8530_rtsdtr(c,1);
 	c->dma_tx = 0;
 	c->regs[R1]|=TxINT_ENAB;
-	ग_लिखो_zsreg(c, R1, c->regs[R1]);
-	ग_लिखो_zsreg(c, R3, c->regs[R3]|RxENABLE);
+	write_zsreg(c, R1, c->regs[R1]);
+	write_zsreg(c, R3, c->regs[R3]|RxENABLE);
 
 	spin_unlock_irqrestore(c->lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-EXPORT_SYMBOL(z8530_sync_खोलो);
+EXPORT_SYMBOL(z8530_sync_open);
 
 /**
- *	z8530_sync_बंद - Close a PIO Z8530 channel
- *	@dev: Network device to बंद
+ *	z8530_sync_close - Close a PIO Z8530 channel
+ *	@dev: Network device to close
  *	@c: Z8530 channel to disassociate and move to idle
  *
- *	Close करोwn a Z8530 पूर्णांकerface and चयन its पूर्णांकerrupt handlers
+ *	Close down a Z8530 interface and switch its interrupt handlers
  *	to discard future events.
  */
  
-पूर्णांक z8530_sync_बंद(काष्ठा net_device *dev, काष्ठा z8530_channel *c)
-अणु
+int z8530_sync_close(struct net_device *dev, struct z8530_channel *c)
+{
 	u8 chk;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 	
 	spin_lock_irqsave(c->lock, flags);
 	c->irqs = &z8530_nop;
 	c->max = 0;
 	c->sync = 0;
 	
-	chk=पढ़ो_zsreg(c,R0);
-	ग_लिखो_zsreg(c, R3, c->regs[R3]);
+	chk=read_zsreg(c,R0);
+	write_zsreg(c, R3, c->regs[R3]);
 	z8530_rtsdtr(c,0);
 
 	spin_unlock_irqrestore(c->lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-EXPORT_SYMBOL(z8530_sync_बंद);
+EXPORT_SYMBOL(z8530_sync_close);
 
 /**
- *	z8530_sync_dma_खोलो - Open a Z8530 क्रम DMA I/O
+ *	z8530_sync_dma_open - Open a Z8530 for DMA I/O
  *	@dev: The network device to attach
  *	@c: The Z8530 channel to configure in sync DMA mode.
  *
- *	Set up a Z85x30 device क्रम synchronous DMA in both directions. Two
- *	ISA DMA channels must be available क्रम this to work. We assume ISA
+ *	Set up a Z85x30 device for synchronous DMA in both directions. Two
+ *	ISA DMA channels must be available for this to work. We assume ISA
  *	DMA driven I/O and PC limits on access.
  */
  
-पूर्णांक z8530_sync_dma_खोलो(काष्ठा net_device *dev, काष्ठा z8530_channel *c)
-अणु
-	अचिन्हित दीर्घ cflags, dflags;
+int z8530_sync_dma_open(struct net_device *dev, struct z8530_channel *c)
+{
+	unsigned long cflags, dflags;
 	
 	c->sync = 1;
 	c->mtu = dev->mtu+64;
 	c->count = 0;
-	c->skb = शून्य;
-	c->skb2 = शून्य;
+	c->skb = NULL;
+	c->skb2 = NULL;
 	/*
-	 *	Load the DMA पूर्णांकerfaces up
+	 *	Load the DMA interfaces up
 	 */
 	c->rxdma_on = 0;
 	c->txdma_on = 0;
@@ -872,27 +871,27 @@ EXPORT_SYMBOL(z8530_sync_बंद);
 	 *	should be fine.
 	 */
 	 
-	अगर(c->mtu  > PAGE_SIZE/2)
-		वापस -EMSGSIZE;
+	if(c->mtu  > PAGE_SIZE/2)
+		return -EMSGSIZE;
 	 
-	c->rx_buf[0]=(व्योम *)get_zeroed_page(GFP_KERNEL|GFP_DMA);
-	अगर(c->rx_buf[0]==शून्य)
-		वापस -ENOBUFS;
+	c->rx_buf[0]=(void *)get_zeroed_page(GFP_KERNEL|GFP_DMA);
+	if(c->rx_buf[0]==NULL)
+		return -ENOBUFS;
 	c->rx_buf[1]=c->rx_buf[0]+PAGE_SIZE/2;
 	
-	c->tx_dma_buf[0]=(व्योम *)get_zeroed_page(GFP_KERNEL|GFP_DMA);
-	अगर(c->tx_dma_buf[0]==शून्य)
-	अणु
-		मुक्त_page((अचिन्हित दीर्घ)c->rx_buf[0]);
-		c->rx_buf[0]=शून्य;
-		वापस -ENOBUFS;
-	पूर्ण
+	c->tx_dma_buf[0]=(void *)get_zeroed_page(GFP_KERNEL|GFP_DMA);
+	if(c->tx_dma_buf[0]==NULL)
+	{
+		free_page((unsigned long)c->rx_buf[0]);
+		c->rx_buf[0]=NULL;
+		return -ENOBUFS;
+	}
 	c->tx_dma_buf[1]=c->tx_dma_buf[0]+PAGE_SIZE/2;
 
 	c->tx_dma_used=0;
 	c->dma_tx = 1;
 	c->dma_num=0;
-	c->dma_पढ़ोy=1;
+	c->dma_ready=1;
 	
 	/*
 	 *	Enable DMA control mode
@@ -901,14 +900,14 @@ EXPORT_SYMBOL(z8530_sync_बंद);
 	spin_lock_irqsave(c->lock, cflags);
 	 
 	/*
-	 *	TX DMA via सूची/REQ
+	 *	TX DMA via DIR/REQ
 	 */
 	 
 	c->regs[R14]|= DTRREQ;
-	ग_लिखो_zsreg(c, R14, c->regs[R14]);     
+	write_zsreg(c, R14, c->regs[R14]);     
 
 	c->regs[R1]&= ~TxINT_ENAB;
-	ग_लिखो_zsreg(c, R1, c->regs[R1]);
+	write_zsreg(c, R1, c->regs[R1]);
 	
 	/*
 	 *	RX DMA via W/Req
@@ -918,12 +917,12 @@ EXPORT_SYMBOL(z8530_sync_बंद);
 	c->regs[R1]|= WT_RDY_RT;
 	c->regs[R1]|= INT_ERR_Rx;
 	c->regs[R1]&= ~TxINT_ENAB;
-	ग_लिखो_zsreg(c, R1, c->regs[R1]);
+	write_zsreg(c, R1, c->regs[R1]);
 	c->regs[R1]|= WT_RDY_ENAB;
-	ग_लिखो_zsreg(c, R1, c->regs[R1]);            
+	write_zsreg(c, R1, c->regs[R1]);            
 	
 	/*
-	 *	DMA पूर्णांकerrupts
+	 *	DMA interrupts
 	 */
 	 
 	/*
@@ -947,7 +946,7 @@ EXPORT_SYMBOL(z8530_sync_बंद);
 	release_dma_lock(dflags);
 	
 	/*
-	 *	Select the DMA पूर्णांकerrupt handlers
+	 *	Select the DMA interrupt handlers
 	 */
 
 	c->rxdma_on = 1;
@@ -956,28 +955,28 @@ EXPORT_SYMBOL(z8530_sync_बंद);
 	 
 	c->irqs = &z8530_dma_sync;
 	z8530_rtsdtr(c,1);
-	ग_लिखो_zsreg(c, R3, c->regs[R3]|RxENABLE);
+	write_zsreg(c, R3, c->regs[R3]|RxENABLE);
 
 	spin_unlock_irqrestore(c->lock, cflags);
 	
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-EXPORT_SYMBOL(z8530_sync_dma_खोलो);
+EXPORT_SYMBOL(z8530_sync_dma_open);
 
 /**
- *	z8530_sync_dma_बंद - Close करोwn DMA I/O
+ *	z8530_sync_dma_close - Close down DMA I/O
  *	@dev: Network device to detach
- *	@c: Z8530 channel to move पूर्णांकo discard mode
+ *	@c: Z8530 channel to move into discard mode
  *
- *	Shut करोwn a DMA mode synchronous पूर्णांकerface. Halt the DMA, and
- *	मुक्त the buffers.
+ *	Shut down a DMA mode synchronous interface. Halt the DMA, and
+ *	free the buffers.
  */
  
-पूर्णांक z8530_sync_dma_बंद(काष्ठा net_device *dev, काष्ठा z8530_channel *c)
-अणु
+int z8530_sync_dma_close(struct net_device *dev, struct z8530_channel *c)
+{
 	u8 chk;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 	
 	c->irqs = &z8530_nop;
 	c->max = 0;
@@ -1007,54 +1006,54 @@ EXPORT_SYMBOL(z8530_sync_dma_खोलो);
 	 */
 	 
 	c->regs[R1]&= ~WT_RDY_ENAB;
-	ग_लिखो_zsreg(c, R1, c->regs[R1]);            
+	write_zsreg(c, R1, c->regs[R1]);            
 	c->regs[R1]&= ~(WT_RDY_RT|WT_FN_RDYFN|INT_ERR_Rx);
 	c->regs[R1]|= INT_ALL_Rx;
-	ग_लिखो_zsreg(c, R1, c->regs[R1]);
+	write_zsreg(c, R1, c->regs[R1]);
 	c->regs[R14]&= ~DTRREQ;
-	ग_लिखो_zsreg(c, R14, c->regs[R14]);   
+	write_zsreg(c, R14, c->regs[R14]);   
 	
-	अगर(c->rx_buf[0])
-	अणु
-		मुक्त_page((अचिन्हित दीर्घ)c->rx_buf[0]);
-		c->rx_buf[0]=शून्य;
-	पूर्ण
-	अगर(c->tx_dma_buf[0])
-	अणु
-		मुक्त_page((अचिन्हित  दीर्घ)c->tx_dma_buf[0]);
-		c->tx_dma_buf[0]=शून्य;
-	पूर्ण
-	chk=पढ़ो_zsreg(c,R0);
-	ग_लिखो_zsreg(c, R3, c->regs[R3]);
+	if(c->rx_buf[0])
+	{
+		free_page((unsigned long)c->rx_buf[0]);
+		c->rx_buf[0]=NULL;
+	}
+	if(c->tx_dma_buf[0])
+	{
+		free_page((unsigned  long)c->tx_dma_buf[0]);
+		c->tx_dma_buf[0]=NULL;
+	}
+	chk=read_zsreg(c,R0);
+	write_zsreg(c, R3, c->regs[R3]);
 	z8530_rtsdtr(c,0);
 
 	spin_unlock_irqrestore(c->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-EXPORT_SYMBOL(z8530_sync_dma_बंद);
+EXPORT_SYMBOL(z8530_sync_dma_close);
 
 /**
- *	z8530_sync_txdma_खोलो - Open a Z8530 क्रम TX driven DMA
+ *	z8530_sync_txdma_open - Open a Z8530 for TX driven DMA
  *	@dev: The network device to attach
  *	@c: The Z8530 channel to configure in sync DMA mode.
  *
- *	Set up a Z85x30 device क्रम synchronous DMA transmission. One
- *	ISA DMA channel must be available क्रम this to work. The receive
+ *	Set up a Z85x30 device for synchronous DMA transmission. One
+ *	ISA DMA channel must be available for this to work. The receive
  *	side is run in PIO mode, but then it has the bigger FIFO.
  */
 
-पूर्णांक z8530_sync_txdma_खोलो(काष्ठा net_device *dev, काष्ठा z8530_channel *c)
-अणु
-	अचिन्हित दीर्घ cflags, dflags;
+int z8530_sync_txdma_open(struct net_device *dev, struct z8530_channel *c)
+{
+	unsigned long cflags, dflags;
 
-	prपूर्णांकk("Opening sync interface for TX-DMA\n");
+	printk("Opening sync interface for TX-DMA\n");
 	c->sync = 1;
 	c->mtu = dev->mtu+64;
 	c->count = 0;
-	c->skb = शून्य;
-	c->skb2 = शून्य;
+	c->skb = NULL;
+	c->skb2 = NULL;
 	
 	/*
 	 *	Allocate the DMA flip buffers. Limit by page size.
@@ -1062,12 +1061,12 @@ EXPORT_SYMBOL(z8530_sync_dma_बंद);
 	 *	should be fine.
 	 */
 	 
-	अगर(c->mtu  > PAGE_SIZE/2)
-		वापस -EMSGSIZE;
+	if(c->mtu  > PAGE_SIZE/2)
+		return -EMSGSIZE;
 	 
-	c->tx_dma_buf[0]=(व्योम *)get_zeroed_page(GFP_KERNEL|GFP_DMA);
-	अगर(c->tx_dma_buf[0]==शून्य)
-		वापस -ENOBUFS;
+	c->tx_dma_buf[0]=(void *)get_zeroed_page(GFP_KERNEL|GFP_DMA);
+	if(c->tx_dma_buf[0]==NULL)
+		return -ENOBUFS;
 
 	c->tx_dma_buf[1] = c->tx_dma_buf[0] + PAGE_SIZE/2;
 
@@ -1078,11 +1077,11 @@ EXPORT_SYMBOL(z8530_sync_dma_बंद);
 	 *	Load the PIO receive ring
 	 */
 
-	z8530_rx_करोne(c);
-	z8530_rx_करोne(c);
+	z8530_rx_done(c);
+	z8530_rx_done(c);
 
  	/*
-	 *	Load the DMA पूर्णांकerfaces up
+	 *	Load the DMA interfaces up
 	 */
 
 	c->rxdma_on = 0;
@@ -1090,7 +1089,7 @@ EXPORT_SYMBOL(z8530_sync_dma_बंद);
 	
 	c->tx_dma_used=0;
 	c->dma_num=0;
-	c->dma_पढ़ोy=1;
+	c->dma_ready=1;
 	c->dma_tx = 1;
 
  	/*
@@ -1098,13 +1097,13 @@ EXPORT_SYMBOL(z8530_sync_dma_बंद);
 	 */
 
  	/*
-	 *	TX DMA via सूची/REQ
+	 *	TX DMA via DIR/REQ
  	 */
 	c->regs[R14]|= DTRREQ;
-	ग_लिखो_zsreg(c, R14, c->regs[R14]);     
+	write_zsreg(c, R14, c->regs[R14]);     
 	
 	c->regs[R1]&= ~TxINT_ENAB;
-	ग_लिखो_zsreg(c, R1, c->regs[R1]);
+	write_zsreg(c, R1, c->regs[R1]);
 	
 	/*
 	 *	Set up the DMA configuration
@@ -1120,7 +1119,7 @@ EXPORT_SYMBOL(z8530_sync_dma_बंद);
 	release_dma_lock(dflags);
 	
 	/*
-	 *	Select the DMA पूर्णांकerrupt handlers
+	 *	Select the DMA interrupt handlers
 	 */
 
 	c->rxdma_on = 0;
@@ -1129,26 +1128,26 @@ EXPORT_SYMBOL(z8530_sync_dma_बंद);
 	 
 	c->irqs = &z8530_txdma_sync;
 	z8530_rtsdtr(c,1);
-	ग_लिखो_zsreg(c, R3, c->regs[R3]|RxENABLE);
+	write_zsreg(c, R3, c->regs[R3]|RxENABLE);
 	spin_unlock_irqrestore(c->lock, cflags);
 	
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-EXPORT_SYMBOL(z8530_sync_txdma_खोलो);
+EXPORT_SYMBOL(z8530_sync_txdma_open);
 
 /**
- *	z8530_sync_txdma_बंद - Close करोwn a TX driven DMA channel
+ *	z8530_sync_txdma_close - Close down a TX driven DMA channel
  *	@dev: Network device to detach
- *	@c: Z8530 channel to move पूर्णांकo discard mode
+ *	@c: Z8530 channel to move into discard mode
  *
- *	Shut करोwn a DMA/PIO split mode synchronous पूर्णांकerface. Halt the DMA, 
- *	and  मुक्त the buffers.
+ *	Shut down a DMA/PIO split mode synchronous interface. Halt the DMA, 
+ *	and  free the buffers.
  */
 
-पूर्णांक z8530_sync_txdma_बंद(काष्ठा net_device *dev, काष्ठा z8530_channel *c)
-अणु
-	अचिन्हित दीर्घ dflags, cflags;
+int z8530_sync_txdma_close(struct net_device *dev, struct z8530_channel *c)
+{
+	unsigned long dflags, cflags;
 	u8 chk;
 
 	
@@ -1176,61 +1175,61 @@ EXPORT_SYMBOL(z8530_sync_txdma_खोलो);
 	 */
 	 
 	c->regs[R1]&= ~WT_RDY_ENAB;
-	ग_लिखो_zsreg(c, R1, c->regs[R1]);            
+	write_zsreg(c, R1, c->regs[R1]);            
 	c->regs[R1]&= ~(WT_RDY_RT|WT_FN_RDYFN|INT_ERR_Rx);
 	c->regs[R1]|= INT_ALL_Rx;
-	ग_लिखो_zsreg(c, R1, c->regs[R1]);
+	write_zsreg(c, R1, c->regs[R1]);
 	c->regs[R14]&= ~DTRREQ;
-	ग_लिखो_zsreg(c, R14, c->regs[R14]);   
+	write_zsreg(c, R14, c->regs[R14]);   
 	
-	अगर(c->tx_dma_buf[0])
-	अणु
-		मुक्त_page((अचिन्हित दीर्घ)c->tx_dma_buf[0]);
-		c->tx_dma_buf[0]=शून्य;
-	पूर्ण
-	chk=पढ़ो_zsreg(c,R0);
-	ग_लिखो_zsreg(c, R3, c->regs[R3]);
+	if(c->tx_dma_buf[0])
+	{
+		free_page((unsigned long)c->tx_dma_buf[0]);
+		c->tx_dma_buf[0]=NULL;
+	}
+	chk=read_zsreg(c,R0);
+	write_zsreg(c, R3, c->regs[R3]);
 	z8530_rtsdtr(c,0);
 
 	spin_unlock_irqrestore(c->lock, cflags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-EXPORT_SYMBOL(z8530_sync_txdma_बंद);
+EXPORT_SYMBOL(z8530_sync_txdma_close);
 
 
 /*
- *	Name strings क्रम Z8530 chips. SGI claim to have a 130, Zilog deny
+ *	Name strings for Z8530 chips. SGI claim to have a 130, Zilog deny
  *	it exists...
  */
  
-अटल स्थिर अक्षर *z8530_type_name[]=अणु
+static const char *z8530_type_name[]={
 	"Z8530",
 	"Z85C30",
 	"Z85230"
-पूर्ण;
+};
 
 /**
- *	z8530_describe - Unअगरormly describe a Z8530 port
+ *	z8530_describe - Uniformly describe a Z8530 port
  *	@dev: Z8530 device to describe
  *	@mapping: string holding mapping type (eg "I/O" or "Mem")
  *	@io: the port value in question
  *
- *	Describe a Z8530 in a standard क्रमmat. We must pass the I/O as
- *	the port offset isn't predictable. The मुख्य reason क्रम this function
- *	is to try and get a common क्रमmat of report.
+ *	Describe a Z8530 in a standard format. We must pass the I/O as
+ *	the port offset isn't predictable. The main reason for this function
+ *	is to try and get a common format of report.
  */
 
-व्योम z8530_describe(काष्ठा z8530_dev *dev, अक्षर *mapping, अचिन्हित दीर्घ io)
-अणु
+void z8530_describe(struct z8530_dev *dev, char *mapping, unsigned long io)
+{
 	pr_info("%s: %s found at %s 0x%lX, IRQ %d\n",
 		dev->name, 
 		z8530_type_name[dev->type],
 		mapping,
 		Z8530_PORT_OF(io),
 		dev->irq);
-पूर्ण
+}
 
 EXPORT_SYMBOL(z8530_describe);
 
@@ -1238,25 +1237,25 @@ EXPORT_SYMBOL(z8530_describe);
  *	Locked operation part of the z8530 init code
  */
  
-अटल अंतरभूत पूर्णांक करो_z8530_init(काष्ठा z8530_dev *dev)
-अणु
-	/* NOP the पूर्णांकerrupt handlers first - we might get a
-	   भग्नing IRQ transition when we reset the chip */
+static inline int do_z8530_init(struct z8530_dev *dev)
+{
+	/* NOP the interrupt handlers first - we might get a
+	   floating IRQ transition when we reset the chip */
 	dev->chanA.irqs=&z8530_nop;
 	dev->chanB.irqs=&z8530_nop;
 	dev->chanA.dcdcheck=DCD;
 	dev->chanB.dcdcheck=DCD;
 
 	/* Reset the chip */
-	ग_लिखो_zsreg(&dev->chanA, R9, 0xC0);
+	write_zsreg(&dev->chanA, R9, 0xC0);
 	udelay(200);
 	/* Now check its valid */
-	ग_लिखो_zsreg(&dev->chanA, R12, 0xAA);
-	अगर(पढ़ो_zsreg(&dev->chanA, R12)!=0xAA)
-		वापस -ENODEV;
-	ग_लिखो_zsreg(&dev->chanA, R12, 0x55);
-	अगर(पढ़ो_zsreg(&dev->chanA, R12)!=0x55)
-		वापस -ENODEV;
+	write_zsreg(&dev->chanA, R12, 0xAA);
+	if(read_zsreg(&dev->chanA, R12)!=0xAA)
+		return -ENODEV;
+	write_zsreg(&dev->chanA, R12, 0x55);
+	if(read_zsreg(&dev->chanA, R12)!=0x55)
+		return -ENODEV;
 		
 	dev->type=Z8530;
 	
@@ -1264,63 +1263,63 @@ EXPORT_SYMBOL(z8530_describe);
 	 *	See the application note.
 	 */
 	 
-	ग_लिखो_zsreg(&dev->chanA, R15, 0x01);
+	write_zsreg(&dev->chanA, R15, 0x01);
 	
 	/*
 	 *	If we can set the low bit of R15 then
 	 *	the chip is enhanced.
 	 */
 	 
-	अगर(पढ़ो_zsreg(&dev->chanA, R15)==0x01)
-	अणु
+	if(read_zsreg(&dev->chanA, R15)==0x01)
+	{
 		/* This C30 versus 230 detect is from Klaus Kudielka's dmascc */
-		/* Put a अक्षर in the fअगरo */
-		ग_लिखो_zsreg(&dev->chanA, R8, 0);
-		अगर(पढ़ो_zsreg(&dev->chanA, R0)&Tx_BUF_EMP)
+		/* Put a char in the fifo */
+		write_zsreg(&dev->chanA, R8, 0);
+		if(read_zsreg(&dev->chanA, R0)&Tx_BUF_EMP)
 			dev->type = Z85230;	/* Has a FIFO */
-		अन्यथा
+		else
 			dev->type = Z85C30;	/* Z85C30, 1 byte FIFO */
-	पूर्ण
+	}
 		
 	/*
-	 *	The code assumes R7' and मित्रs are
-	 *	off. Use ग_लिखो_zsext() क्रम these and keep
+	 *	The code assumes R7' and friends are
+	 *	off. Use write_zsext() for these and keep
 	 *	this bit clear.
 	 */
 	 
-	ग_लिखो_zsreg(&dev->chanA, R15, 0);
+	write_zsreg(&dev->chanA, R15, 0);
 		
 	/*
-	 *	At this poपूर्णांक it looks like the chip is behaving
+	 *	At this point it looks like the chip is behaving
 	 */
 	 
-	स_नकल(dev->chanA.regs, reg_init, 16);
-	स_नकल(dev->chanB.regs, reg_init ,16);
+	memcpy(dev->chanA.regs, reg_init, 16);
+	memcpy(dev->chanB.regs, reg_init ,16);
 	
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  *	z8530_init - Initialise a Z8530 device
  *	@dev: Z8530 device to initialise.
  *
  *	Configure up a Z8530/Z85C30 or Z85230 chip. We check the device
- *	is present, identअगरy the type and then program it to hopefully
+ *	is present, identify the type and then program it to hopefully
  *	keep quite and behave. This matters a lot, a Z8530 in the wrong
- *	state will someबार get पूर्णांकo stupid modes generating 10Khz
- *	पूर्णांकerrupt streams and the like.
+ *	state will sometimes get into stupid modes generating 10Khz
+ *	interrupt streams and the like.
  *
- *	We set the पूर्णांकerrupt handler up to discard any events, in हाल
+ *	We set the interrupt handler up to discard any events, in case
  *	we get them during reset or setp.
  *
- *	Return 0 क्रम success, or a negative value indicating the problem
- *	in त्रुटि_सं क्रमm.
+ *	Return 0 for success, or a negative value indicating the problem
+ *	in errno form.
  */
 
-पूर्णांक z8530_init(काष्ठा z8530_dev *dev)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+int z8530_init(struct z8530_dev *dev)
+{
+	unsigned long flags;
+	int ret;
 
 	/* Set up the chip level lock */
 	spin_lock_init(&dev->lock);
@@ -1328,84 +1327,84 @@ EXPORT_SYMBOL(z8530_describe);
 	dev->chanB.lock = &dev->lock;
 
 	spin_lock_irqsave(&dev->lock, flags);
-	ret = करो_z8530_init(dev);
+	ret = do_z8530_init(dev);
 	spin_unlock_irqrestore(&dev->lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
 EXPORT_SYMBOL(z8530_init);
 
 /**
- *	z8530_shutकरोwn - Shutकरोwn a Z8530 device
- *	@dev: The Z8530 chip to shutकरोwn
+ *	z8530_shutdown - Shutdown a Z8530 device
+ *	@dev: The Z8530 chip to shutdown
  *
- *	We set the पूर्णांकerrupt handlers to silence any पूर्णांकerrupts. We then 
- *	reset the chip and रुको 100uS to be sure the reset completed. Just
- *	in हाल the caller then tries to करो stuff.
+ *	We set the interrupt handlers to silence any interrupts. We then 
+ *	reset the chip and wait 100uS to be sure the reset completed. Just
+ *	in case the caller then tries to do stuff.
  *
  *	This is called without the lock held
  */
  
-पूर्णांक z8530_shutकरोwn(काष्ठा z8530_dev *dev)
-अणु
-	अचिन्हित दीर्घ flags;
+int z8530_shutdown(struct z8530_dev *dev)
+{
+	unsigned long flags;
 	/* Reset the chip */
 
 	spin_lock_irqsave(&dev->lock, flags);
 	dev->chanA.irqs=&z8530_nop;
 	dev->chanB.irqs=&z8530_nop;
-	ग_लिखो_zsreg(&dev->chanA, R9, 0xC0);
+	write_zsreg(&dev->chanA, R9, 0xC0);
 	/* We must lock the udelay, the chip is offlimits here */
 	udelay(100);
 	spin_unlock_irqrestore(&dev->lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-EXPORT_SYMBOL(z8530_shutकरोwn);
+EXPORT_SYMBOL(z8530_shutdown);
 
 /**
  *	z8530_channel_load - Load channel data
  *	@c: Z8530 channel to configure
- *	@rtable: table of रेजिस्टर, value pairs
+ *	@rtable: table of register, value pairs
  *	FIXME: ioctl to allow user uploaded tables
  *
- *	Load a Z8530 channel up from the प्रणाली data. We use +16 to 
- *	indicate the "prime" रेजिस्टरs. The value 255 terminates the
+ *	Load a Z8530 channel up from the system data. We use +16 to 
+ *	indicate the "prime" registers. The value 255 terminates the
  *	table.
  */
 
-पूर्णांक z8530_channel_load(काष्ठा z8530_channel *c, u8 *rtable)
-अणु
-	अचिन्हित दीर्घ flags;
+int z8530_channel_load(struct z8530_channel *c, u8 *rtable)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(c->lock, flags);
 
-	जबतक(*rtable!=255)
-	अणु
-		पूर्णांक reg=*rtable++;
-		अगर(reg>0x0F)
-			ग_लिखो_zsreg(c, R15, c->regs[15]|1);
-		ग_लिखो_zsreg(c, reg&0x0F, *rtable);
-		अगर(reg>0x0F)
-			ग_लिखो_zsreg(c, R15, c->regs[15]&~1);
+	while(*rtable!=255)
+	{
+		int reg=*rtable++;
+		if(reg>0x0F)
+			write_zsreg(c, R15, c->regs[15]|1);
+		write_zsreg(c, reg&0x0F, *rtable);
+		if(reg>0x0F)
+			write_zsreg(c, R15, c->regs[15]&~1);
 		c->regs[reg]=*rtable++;
-	पूर्ण
+	}
 	c->rx_function=z8530_null_rx;
-	c->skb=शून्य;
-	c->tx_skb=शून्य;
-	c->tx_next_skb=शून्य;
+	c->skb=NULL;
+	c->tx_skb=NULL;
+	c->tx_next_skb=NULL;
 	c->mtu=1500;
 	c->max=0;
 	c->count=0;
-	c->status=पढ़ो_zsreg(c, R0);
+	c->status=read_zsreg(c, R0);
 	c->sync=1;
-	ग_लिखो_zsreg(c, R3, c->regs[R3]|RxENABLE);
+	write_zsreg(c, R3, c->regs[R3]|RxENABLE);
 
 	spin_unlock_irqrestore(c->lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 EXPORT_SYMBOL(z8530_channel_load);
 
@@ -1418,52 +1417,52 @@ EXPORT_SYMBOL(z8530_channel_load);
  *	and no buffer is being transmitted we commence the next buffer. If
  *	nothing is queued we idle the sync. 
  *
- *	Note: We are handling this code path in the पूर्णांकerrupt path, keep it
+ *	Note: We are handling this code path in the interrupt path, keep it
  *	fast or bad things will happen.
  *
  *	Called with the lock held.
  */
 
-अटल व्योम z8530_tx_begin(काष्ठा z8530_channel *c)
-अणु
-	अचिन्हित दीर्घ flags;
-	अगर(c->tx_skb)
-		वापस;
+static void z8530_tx_begin(struct z8530_channel *c)
+{
+	unsigned long flags;
+	if(c->tx_skb)
+		return;
 		
 	c->tx_skb=c->tx_next_skb;
-	c->tx_next_skb=शून्य;
+	c->tx_next_skb=NULL;
 	c->tx_ptr=c->tx_next_ptr;
 	
-	अगर(c->tx_skb==शून्य)
-	अणु
+	if(c->tx_skb==NULL)
+	{
 		/* Idle on */
-		अगर(c->dma_tx)
-		अणु
+		if(c->dma_tx)
+		{
 			flags=claim_dma_lock();
 			disable_dma(c->txdma);
 			/*
-			 *	Check अगर we crapped out.
+			 *	Check if we crapped out.
 			 */
-			अगर (get_dma_residue(c->txdma))
-			अणु
+			if (get_dma_residue(c->txdma))
+			{
 				c->netdevice->stats.tx_dropped++;
-				c->netdevice->stats.tx_fअगरo_errors++;
-			पूर्ण
+				c->netdevice->stats.tx_fifo_errors++;
+			}
 			release_dma_lock(flags);
-		पूर्ण
+		}
 		c->txcount=0;
-	पूर्ण
-	अन्यथा
-	अणु
+	}
+	else
+	{
 		c->txcount=c->tx_skb->len;
 		
 		
-		अगर(c->dma_tx)
-		अणु
+		if(c->dma_tx)
+		{
 			/*
-			 *	FIXME. DMA is broken क्रम the original 8530,
+			 *	FIXME. DMA is broken for the original 8530,
 			 *	on the older parts we need to set a flag and
-			 *	रुको क्रम a further TX पूर्णांकerrupt to fire this
+			 *	wait for a further TX interrupt to fire this
 			 *	stage off	
 			 */
 			 
@@ -1475,116 +1474,116 @@ EXPORT_SYMBOL(z8530_channel_load);
 			 *	and must be issued when idling.
 			 */
 			 
-			अगर(c->dev->type!=Z85230)
-			अणु
-				ग_लिखो_zsctrl(c, RES_Tx_CRC);
-				ग_लिखो_zsctrl(c, RES_EOM_L);
-			पूर्ण	
-			ग_लिखो_zsreg(c, R10, c->regs[10]&~ABUNDER);
+			if(c->dev->type!=Z85230)
+			{
+				write_zsctrl(c, RES_Tx_CRC);
+				write_zsctrl(c, RES_EOM_L);
+			}	
+			write_zsreg(c, R10, c->regs[10]&~ABUNDER);
 			clear_dma_ff(c->txdma);
 			set_dma_addr(c->txdma, virt_to_bus(c->tx_ptr));
 			set_dma_count(c->txdma, c->txcount);
 			enable_dma(c->txdma);
 			release_dma_lock(flags);
-			ग_लिखो_zsctrl(c, RES_EOM_L);
-			ग_लिखो_zsreg(c, R5, c->regs[R5]|TxENAB);
-		पूर्ण
-		अन्यथा
-		अणु
+			write_zsctrl(c, RES_EOM_L);
+			write_zsreg(c, R5, c->regs[R5]|TxENAB);
+		}
+		else
+		{
 
 			/* ABUNDER off */
-			ग_लिखो_zsreg(c, R10, c->regs[10]);
-			ग_लिखो_zsctrl(c, RES_Tx_CRC);
+			write_zsreg(c, R10, c->regs[10]);
+			write_zsctrl(c, RES_Tx_CRC);
 	
-			जबतक(c->txcount && (पढ़ो_zsreg(c,R0)&Tx_BUF_EMP))
-			अणु		
-				ग_लिखो_zsreg(c, R8, *c->tx_ptr++);
+			while(c->txcount && (read_zsreg(c,R0)&Tx_BUF_EMP))
+			{		
+				write_zsreg(c, R8, *c->tx_ptr++);
 				c->txcount--;
-			पूर्ण
+			}
 
-		पूर्ण
-	पूर्ण
+		}
+	}
 	/*
-	 *	Since we emptied tx_skb we can ask क्रम more
+	 *	Since we emptied tx_skb we can ask for more
 	 */
-	netअगर_wake_queue(c->netdevice);
-पूर्ण
+	netif_wake_queue(c->netdevice);
+}
 
 /**
- *	z8530_tx_करोne - TX complete callback
+ *	z8530_tx_done - TX complete callback
  *	@c: The channel that completed a transmit.
  *
  *	This is called when we complete a packet send. We wake the queue,
- *	start the next packet going and then मुक्त the buffer of the existing
+ *	start the next packet going and then free the buffer of the existing
  *	packet. This code is fairly timing sensitive.
  *
- *	Called with the रेजिस्टर lock held.
+ *	Called with the register lock held.
  */
 
-अटल व्योम z8530_tx_करोne(काष्ठा z8530_channel *c)
-अणु
-	काष्ठा sk_buff *skb;
+static void z8530_tx_done(struct z8530_channel *c)
+{
+	struct sk_buff *skb;
 
 	/* Actually this can happen.*/
-	अगर (c->tx_skb == शून्य)
-		वापस;
+	if (c->tx_skb == NULL)
+		return;
 
 	skb = c->tx_skb;
-	c->tx_skb = शून्य;
+	c->tx_skb = NULL;
 	z8530_tx_begin(c);
 	c->netdevice->stats.tx_packets++;
 	c->netdevice->stats.tx_bytes += skb->len;
 	dev_consume_skb_irq(skb);
-पूर्ण
+}
 
 /**
  *	z8530_null_rx - Discard a packet
  *	@c: The channel the packet arrived on
  *	@skb: The buffer
  *
- *	We poपूर्णांक the receive handler at this function when idle. Instead
+ *	We point the receive handler at this function when idle. Instead
  *	of processing the frames we get to throw them away.
  */
  
-व्योम z8530_null_rx(काष्ठा z8530_channel *c, काष्ठा sk_buff *skb)
-अणु
-	dev_kमुक्त_skb_any(skb);
-पूर्ण
+void z8530_null_rx(struct z8530_channel *c, struct sk_buff *skb)
+{
+	dev_kfree_skb_any(skb);
+}
 
 EXPORT_SYMBOL(z8530_null_rx);
 
 /**
- *	z8530_rx_करोne - Receive completion callback
+ *	z8530_rx_done - Receive completion callback
  *	@c: The channel that completed a receive
  *
- *	A new packet is complete. Our goal here is to get back पूर्णांकo receive
+ *	A new packet is complete. Our goal here is to get back into receive
  *	mode as fast as possible. On the Z85230 we could change to using
  *	ESCC mode, but on the older chips we have no choice. We flip to the
  *	new buffer immediately in DMA mode so that the DMA of the next
- *	frame can occur जबतक we are copying the previous buffer to an sk_buff
+ *	frame can occur while we are copying the previous buffer to an sk_buff
  *
  *	Called with the lock held
  */
  
-अटल व्योम z8530_rx_करोne(काष्ठा z8530_channel *c)
-अणु
-	काष्ठा sk_buff *skb;
-	पूर्णांक ct;
+static void z8530_rx_done(struct z8530_channel *c)
+{
+	struct sk_buff *skb;
+	int ct;
 	
 	/*
 	 *	Is our receive engine in DMA mode
 	 */
 	 
-	अगर(c->rxdma_on)
-	अणु
+	if(c->rxdma_on)
+	{
 		/*
-		 *	Save the पढ़ोy state and the buffer currently
+		 *	Save the ready state and the buffer currently
 		 *	being used as the DMA target
 		 */
 		 
-		पूर्णांक पढ़ोy=c->dma_पढ़ोy;
-		अचिन्हित अक्षर *rxb=c->rx_buf[c->dma_num];
-		अचिन्हित दीर्घ flags;
+		int ready=c->dma_ready;
+		unsigned char *rxb=c->rx_buf[c->dma_num];
+		unsigned long flags;
 		
 		/*
 		 *	Complete this DMA. Necessary to find the length
@@ -1596,17 +1595,17 @@ EXPORT_SYMBOL(z8530_null_rx);
 		clear_dma_ff(c->rxdma);
 		c->rxdma_on=0;
 		ct=c->mtu-get_dma_residue(c->rxdma);
-		अगर(ct<0)
+		if(ct<0)
 			ct=2;	/* Shit happens.. */
-		c->dma_पढ़ोy=0;
+		c->dma_ready=0;
 		
 		/*
-		 *	Normal हाल: the other slot is मुक्त, start the next DMA
-		 *	पूर्णांकo it immediately.
+		 *	Normal case: the other slot is free, start the next DMA
+		 *	into it immediately.
 		 */
 		 
-		अगर(पढ़ोy)
-		अणु
+		if(ready)
+		{
 			c->dma_num^=1;
 			set_dma_mode(c->rxdma, DMA_MODE_READ|0x10);
 			set_dma_addr(c->rxdma, virt_to_bus(c->rx_buf[c->dma_num]));
@@ -1615,48 +1614,48 @@ EXPORT_SYMBOL(z8530_null_rx);
 			enable_dma(c->rxdma);
 			/* Stop any frames that we missed the head of 
 			   from passing */
-			ग_लिखो_zsreg(c, R0, RES_Rx_CRC);
-		पूर्ण
-		अन्यथा
-			/* Can't occur as we करोnt reenable the DMA irq until
-			   after the flip is करोne */
+			write_zsreg(c, R0, RES_Rx_CRC);
+		}
+		else
+			/* Can't occur as we dont reenable the DMA irq until
+			   after the flip is done */
 			netdev_warn(c->netdevice, "DMA flip overrun!\n");
 
 		release_dma_lock(flags);
 
 		/*
-		 *	Shove the old buffer पूर्णांकo an sk_buff. We can't DMA
-		 *	directly पूर्णांकo one on a PC - it might be above the 16Mb
-		 *	boundary. Optimisation - we could check to see अगर we
-		 *	can aव्योम the copy. Optimisation 2 - make the स_नकल
+		 *	Shove the old buffer into an sk_buff. We can't DMA
+		 *	directly into one on a PC - it might be above the 16Mb
+		 *	boundary. Optimisation - we could check to see if we
+		 *	can avoid the copy. Optimisation 2 - make the memcpy
 		 *	a copychecksum.
 		 */
 
 		skb = dev_alloc_skb(ct);
-		अगर (skb == शून्य) अणु
+		if (skb == NULL) {
 			c->netdevice->stats.rx_dropped++;
 			netdev_warn(c->netdevice, "Memory squeeze\n");
-		पूर्ण अन्यथा अणु
+		} else {
 			skb_put(skb, ct);
 			skb_copy_to_linear_data(skb, rxb, ct);
 			c->netdevice->stats.rx_packets++;
 			c->netdevice->stats.rx_bytes += ct;
-		पूर्ण
-		c->dma_पढ़ोy = 1;
-	पूर्ण अन्यथा अणु
+		}
+		c->dma_ready = 1;
+	} else {
 		RT_LOCK;
 		skb = c->skb;
 
 		/*
-		 *	The game we play क्रम non DMA is similar. We want to
-		 *	get the controller set up क्रम the next packet as fast
+		 *	The game we play for non DMA is similar. We want to
+		 *	get the controller set up for the next packet as fast
 		 *	as possible. We potentially only have one byte + the
-		 *	fअगरo length क्रम this. Thus we want to flip to the new
+		 *	fifo length for this. Thus we want to flip to the new
 		 *	buffer and then mess around copying and allocating
-		 *	things. For the current हाल it करोesn't matter but
-		 *	अगर you build a प्रणाली where the sync irq isn't blocked
+		 *	things. For the current case it doesn't matter but
+		 *	if you build a system where the sync irq isn't blocked
 		 *	by the kernel IRQ disable then you need only block the
-		 *	sync IRQ क्रम the RT_LOCK area.
+		 *	sync IRQ for the RT_LOCK area.
 		 *
 		 */
 		ct=c->count;
@@ -1664,73 +1663,73 @@ EXPORT_SYMBOL(z8530_null_rx);
 		c->skb = c->skb2;
 		c->count = 0;
 		c->max = c->mtu;
-		अगर (c->skb) अणु
+		if (c->skb) {
 			c->dptr = c->skb->data;
 			c->max = c->mtu;
-		पूर्ण अन्यथा अणु
+		} else {
 			c->count = 0;
 			c->max = 0;
-		पूर्ण
+		}
 		RT_UNLOCK;
 
 		c->skb2 = dev_alloc_skb(c->mtu);
-		अगर (c->skb2 == शून्य)
+		if (c->skb2 == NULL)
 			netdev_warn(c->netdevice, "memory squeeze\n");
-		अन्यथा
+		else
 			skb_put(c->skb2, c->mtu);
 		c->netdevice->stats.rx_packets++;
 		c->netdevice->stats.rx_bytes += ct;
-	पूर्ण
+	}
 	/*
 	 *	If we received a frame we must now process it.
 	 */
-	अगर (skb) अणु
+	if (skb) {
 		skb_trim(skb, ct);
 		c->rx_function(c, skb);
-	पूर्ण अन्यथा अणु
+	} else {
 		c->netdevice->stats.rx_dropped++;
 		netdev_err(c->netdevice, "Lost a frame\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  *	spans_boundary - Check a packet can be ISA DMA'd
  *	@skb: The buffer to check
  *
- *	Returns true अगर the buffer cross a DMA boundary on a PC. The poor
+ *	Returns true if the buffer cross a DMA boundary on a PC. The poor
  *	thing can only DMA within a 64K block not across the edges of it.
  */
 
-अटल अंतरभूत पूर्णांक spans_boundary(काष्ठा sk_buff *skb)
-अणु
-	अचिन्हित दीर्घ a=(अचिन्हित दीर्घ)skb->data;
+static inline int spans_boundary(struct sk_buff *skb)
+{
+	unsigned long a=(unsigned long)skb->data;
 	a^=(a+skb->len);
-	अगर(a&0x00010000)	/* If the 64K bit is dअगरferent.. */
-		वापस 1;
-	वापस 0;
-पूर्ण
+	if(a&0x00010000)	/* If the 64K bit is different.. */
+		return 1;
+	return 0;
+}
 
 /**
  *	z8530_queue_xmit - Queue a packet
  *	@c: The channel to use
- *	@skb: The packet to kick करोwn the channel
+ *	@skb: The packet to kick down the channel
  *
- *	Queue a packet क्रम transmission. Because we have rather
- *	hard to hit पूर्णांकerrupt latencies क्रम the Z85230 per packet 
- *	even in DMA mode we करो the flip to DMA buffer अगर needed here
+ *	Queue a packet for transmission. Because we have rather
+ *	hard to hit interrupt latencies for the Z85230 per packet 
+ *	even in DMA mode we do the flip to DMA buffer if needed here
  *	not in the IRQ.
  *
  *	Called from the network code. The lock is not held at this 
- *	poपूर्णांक.
+ *	point.
  */
 
-netdev_tx_t z8530_queue_xmit(काष्ठा z8530_channel *c, काष्ठा sk_buff *skb)
-अणु
-	अचिन्हित दीर्घ flags;
+netdev_tx_t z8530_queue_xmit(struct z8530_channel *c, struct sk_buff *skb)
+{
+	unsigned long flags;
 	
-	netअगर_stop_queue(c->netdevice);
-	अगर(c->tx_next_skb)
-		वापस NETDEV_TX_BUSY;
+	netif_stop_queue(c->netdevice);
+	if(c->tx_next_skb)
+		return NETDEV_TX_BUSY;
 
 	
 	/* PC SPECIFIC - DMA limits */
@@ -1740,20 +1739,20 @@ netdev_tx_t z8530_queue_xmit(काष्ठा z8530_channel *c, काष्�
 	 *	limit, then copy to the flip buffer
 	 */
 	 
-	अगर(c->dma_tx && ((अचिन्हित दीर्घ)(virt_to_bus(skb->data+skb->len))>=16*1024*1024 || spans_boundary(skb)))
-	अणु
+	if(c->dma_tx && ((unsigned long)(virt_to_bus(skb->data+skb->len))>=16*1024*1024 || spans_boundary(skb)))
+	{
 		/* 
 		 *	Send the flip buffer, and flip the flippy bit.
-		 *	We करोn't care which is used when just so दीर्घ as
+		 *	We don't care which is used when just so long as
 		 *	we never use the same buffer twice in a row. Since
-		 *	only one buffer can be going out at a समय the other
+		 *	only one buffer can be going out at a time the other
 		 *	has to be safe.
 		 */
 		c->tx_next_ptr=c->tx_dma_buf[c->tx_dma_used];
 		c->tx_dma_used^=1;	/* Flip temp buffer */
 		skb_copy_from_linear_data(skb, c->tx_next_ptr, skb->len);
-	पूर्ण
-	अन्यथा
+	}
+	else
 		c->tx_next_ptr=skb->data;	
 	RT_LOCK;
 	c->tx_next_skb=skb;
@@ -1763,28 +1762,28 @@ netdev_tx_t z8530_queue_xmit(काष्ठा z8530_channel *c, काष्�
 	z8530_tx_begin(c);
 	spin_unlock_irqrestore(c->lock, flags);
 	
-	वापस NETDEV_TX_OK;
-पूर्ण
+	return NETDEV_TX_OK;
+}
 
 EXPORT_SYMBOL(z8530_queue_xmit);
 
 /*
  *	Module support
  */
-अटल स्थिर अक्षर banner[] __initस्थिर =
+static const char banner[] __initconst =
 	KERN_INFO "Generic Z85C30/Z85230 interface driver v0.02\n";
 
-अटल पूर्णांक __init z85230_init_driver(व्योम)
-अणु
-	prपूर्णांकk(banner);
-	वापस 0;
-पूर्ण
+static int __init z85230_init_driver(void)
+{
+	printk(banner);
+	return 0;
+}
 module_init(z85230_init_driver);
 
-अटल व्योम __निकास z85230_cleanup_driver(व्योम)
-अणु
-पूर्ण
-module_निकास(z85230_cleanup_driver);
+static void __exit z85230_cleanup_driver(void)
+{
+}
+module_exit(z85230_cleanup_driver);
 
 MODULE_AUTHOR("Red Hat Inc.");
 MODULE_DESCRIPTION("Z85x30 synchronous driver core");

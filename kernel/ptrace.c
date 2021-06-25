@@ -1,133 +1,132 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * linux/kernel/ptrace.c
  *
  * (C) Copyright 1999 Linus Torvalds
  *
- * Common पूर्णांकerfaces क्रम "ptrace()" which we करो not want
+ * Common interfaces for "ptrace()" which we do not want
  * to continually duplicate across every architecture.
  */
 
-#समावेश <linux/capability.h>
-#समावेश <linux/export.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/mm.h>
-#समावेश <linux/sched/coredump.h>
-#समावेश <linux/sched/task.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/mm.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/security.h>
-#समावेश <linux/संकेत.स>
-#समावेश <linux/uपन.स>
-#समावेश <linux/audit.h>
-#समावेश <linux/pid_namespace.h>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/regset.h>
-#समावेश <linux/hw_अवरोधpoपूर्णांक.h>
-#समावेश <linux/cn_proc.h>
-#समावेश <linux/compat.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/minmax.h>
+#include <linux/capability.h>
+#include <linux/export.h>
+#include <linux/sched.h>
+#include <linux/sched/mm.h>
+#include <linux/sched/coredump.h>
+#include <linux/sched/task.h>
+#include <linux/errno.h>
+#include <linux/mm.h>
+#include <linux/highmem.h>
+#include <linux/pagemap.h>
+#include <linux/ptrace.h>
+#include <linux/security.h>
+#include <linux/signal.h>
+#include <linux/uio.h>
+#include <linux/audit.h>
+#include <linux/pid_namespace.h>
+#include <linux/syscalls.h>
+#include <linux/uaccess.h>
+#include <linux/regset.h>
+#include <linux/hw_breakpoint.h>
+#include <linux/cn_proc.h>
+#include <linux/compat.h>
+#include <linux/sched/signal.h>
+#include <linux/minmax.h>
 
-#समावेश <यंत्र/syscall.h>	/* क्रम syscall_get_* */
+#include <asm/syscall.h>	/* for syscall_get_* */
 
 /*
  * Access another process' address space via ptrace.
  * Source/target buffer must be kernel space,
  * Do not walk the page table directly, use get_user_pages
  */
-पूर्णांक ptrace_access_vm(काष्ठा task_काष्ठा *tsk, अचिन्हित दीर्घ addr,
-		     व्योम *buf, पूर्णांक len, अचिन्हित पूर्णांक gup_flags)
-अणु
-	काष्ठा mm_काष्ठा *mm;
-	पूर्णांक ret;
+int ptrace_access_vm(struct task_struct *tsk, unsigned long addr,
+		     void *buf, int len, unsigned int gup_flags)
+{
+	struct mm_struct *mm;
+	int ret;
 
 	mm = get_task_mm(tsk);
-	अगर (!mm)
-		वापस 0;
+	if (!mm)
+		return 0;
 
-	अगर (!tsk->ptrace ||
+	if (!tsk->ptrace ||
 	    (current != tsk->parent) ||
 	    ((get_dumpable(mm) != SUID_DUMP_USER) &&
-	     !ptracer_capable(tsk, mm->user_ns))) अणु
+	     !ptracer_capable(tsk, mm->user_ns))) {
 		mmput(mm);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	ret = __access_remote_vm(mm, addr, buf, len, gup_flags);
 	mmput(mm);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
-व्योम __ptrace_link(काष्ठा task_काष्ठा *child, काष्ठा task_काष्ठा *new_parent,
-		   स्थिर काष्ठा cred *ptracer_cred)
-अणु
+void __ptrace_link(struct task_struct *child, struct task_struct *new_parent,
+		   const struct cred *ptracer_cred)
+{
 	BUG_ON(!list_empty(&child->ptrace_entry));
 	list_add(&child->ptrace_entry, &new_parent->ptraced);
 	child->parent = new_parent;
 	child->ptracer_cred = get_cred(ptracer_cred);
-पूर्ण
+}
 
 /*
  * ptrace a task: make the debugger its new parent and
  * move it to the ptrace list.
  *
- * Must be called with the tasklist lock ग_लिखो-held.
+ * Must be called with the tasklist lock write-held.
  */
-अटल व्योम ptrace_link(काष्ठा task_काष्ठा *child, काष्ठा task_काष्ठा *new_parent)
-अणु
+static void ptrace_link(struct task_struct *child, struct task_struct *new_parent)
+{
 	__ptrace_link(child, new_parent, current_cred());
-पूर्ण
+}
 
 /**
  * __ptrace_unlink - unlink ptracee and restore its execution state
  * @child: ptracee to be unlinked
  *
  * Remove @child from the ptrace list, move it back to the original parent,
- * and restore the execution state so that it conक्रमms to the group stop
+ * and restore the execution state so that it conforms to the group stop
  * state.
  *
  * Unlinking can happen via two paths - explicit PTRACE_DETACH or ptracer
- * निकासing.  For PTRACE_DETACH, unless the ptracee has been समाप्तed between
+ * exiting.  For PTRACE_DETACH, unless the ptracee has been killed between
  * ptrace_check_attach() and here, it's guaranteed to be in TASK_TRACED.
- * If the ptracer is निकासing, the ptracee can be in any state.
+ * If the ptracer is exiting, the ptracee can be in any state.
  *
- * After detach, the ptracee should be in a state which conक्रमms to the
+ * After detach, the ptracee should be in a state which conforms to the
  * group stop.  If the group is stopped or in the process of stopping, the
- * ptracee should be put पूर्णांकo TASK_STOPPED; otherwise, it should be woken
+ * ptracee should be put into TASK_STOPPED; otherwise, it should be woken
  * up from TASK_TRACED.
  *
  * If the ptracee is in TASK_TRACED and needs to be moved to TASK_STOPPED,
  * it goes through TRACED -> RUNNING -> STOPPED transition which is similar
- * to but in the opposite direction of what happens जबतक attaching to a
- * stopped task.  However, in this direction, the पूर्णांकermediate RUNNING
- * state is not hidden even from the current ptracer and अगर it immediately
- * re-attaches and perक्रमms a WNOHANG रुको(2), it may fail.
+ * to but in the opposite direction of what happens while attaching to a
+ * stopped task.  However, in this direction, the intermediate RUNNING
+ * state is not hidden even from the current ptracer and if it immediately
+ * re-attaches and performs a WNOHANG wait(2), it may fail.
  *
  * CONTEXT:
- * ग_लिखो_lock_irq(tasklist_lock)
+ * write_lock_irq(tasklist_lock)
  */
-व्योम __ptrace_unlink(काष्ठा task_काष्ठा *child)
-अणु
-	स्थिर काष्ठा cred *old_cred;
+void __ptrace_unlink(struct task_struct *child)
+{
+	const struct cred *old_cred;
 	BUG_ON(!child->ptrace);
 
 	clear_task_syscall_work(child, SYSCALL_TRACE);
-#अगर defined(CONFIG_GENERIC_ENTRY) || defined(TIF_SYSCALL_EMU)
+#if defined(CONFIG_GENERIC_ENTRY) || defined(TIF_SYSCALL_EMU)
 	clear_task_syscall_work(child, SYSCALL_EMU);
-#पूर्ण_अगर
+#endif
 
 	child->parent = child->real_parent;
 	list_del_init(&child->ptrace_entry);
 	old_cred = child->ptracer_cred;
-	child->ptracer_cred = शून्य;
+	child->ptracer_cred = NULL;
 	put_cred(old_cred);
 
 	spin_lock(&child->sighand->siglock);
@@ -140,978 +139,978 @@
 	task_clear_jobctl_trapping(child);
 
 	/*
-	 * Reinstate JOBCTL_STOP_PENDING अगर group stop is in effect and
+	 * Reinstate JOBCTL_STOP_PENDING if group stop is in effect and
 	 * @child isn't dead.
 	 */
-	अगर (!(child->flags & PF_EXITING) &&
-	    (child->संकेत->flags & SIGNAL_STOP_STOPPED ||
-	     child->संकेत->group_stop_count)) अणु
+	if (!(child->flags & PF_EXITING) &&
+	    (child->signal->flags & SIGNAL_STOP_STOPPED ||
+	     child->signal->group_stop_count)) {
 		child->jobctl |= JOBCTL_STOP_PENDING;
 
 		/*
-		 * This is only possible अगर this thपढ़ो was cloned by the
-		 * traced task running in the stopped group, set the संकेत
-		 * क्रम the future reports.
+		 * This is only possible if this thread was cloned by the
+		 * traced task running in the stopped group, set the signal
+		 * for the future reports.
 		 * FIXME: we should change ptrace_init_task() to handle this
-		 * हाल.
+		 * case.
 		 */
-		अगर (!(child->jobctl & JOBCTL_STOP_SIGMASK))
+		if (!(child->jobctl & JOBCTL_STOP_SIGMASK))
 			child->jobctl |= SIGSTOP;
-	पूर्ण
+	}
 
 	/*
 	 * If transition to TASK_STOPPED is pending or in TASK_TRACED, kick
-	 * @child in the butt.  Note that @resume should be used अगरf @child
+	 * @child in the butt.  Note that @resume should be used iff @child
 	 * is in TASK_TRACED; otherwise, we might unduly disrupt
 	 * TASK_KILLABLE sleeps.
 	 */
-	अगर (child->jobctl & JOBCTL_STOP_PENDING || task_is_traced(child))
-		ptrace_संकेत_wake_up(child, true);
+	if (child->jobctl & JOBCTL_STOP_PENDING || task_is_traced(child))
+		ptrace_signal_wake_up(child, true);
 
 	spin_unlock(&child->sighand->siglock);
-पूर्ण
+}
 
-अटल bool looks_like_a_spurious_pid(काष्ठा task_काष्ठा *task)
-अणु
-	अगर (task->निकास_code != ((PTRACE_EVENT_EXEC << 8) | SIGTRAP))
-		वापस false;
+static bool looks_like_a_spurious_pid(struct task_struct *task)
+{
+	if (task->exit_code != ((PTRACE_EVENT_EXEC << 8) | SIGTRAP))
+		return false;
 
-	अगर (task_pid_vnr(task) == task->ptrace_message)
-		वापस false;
+	if (task_pid_vnr(task) == task->ptrace_message)
+		return false;
 	/*
 	 * The tracee changed its pid but the PTRACE_EVENT_EXEC event
-	 * was not रुको()'ed, most probably debugger tarमाला_लो the old
-	 * leader which was destroyed in de_thपढ़ो().
+	 * was not wait()'ed, most probably debugger targets the old
+	 * leader which was destroyed in de_thread().
 	 */
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /* Ensure that nothing can wake it up, even SIGKILL */
-अटल bool ptrace_मुक्तze_traced(काष्ठा task_काष्ठा *task)
-अणु
+static bool ptrace_freeze_traced(struct task_struct *task)
+{
 	bool ret = false;
 
 	/* Lockless, nobody but us can set this flag */
-	अगर (task->jobctl & JOBCTL_LISTENING)
-		वापस ret;
+	if (task->jobctl & JOBCTL_LISTENING)
+		return ret;
 
 	spin_lock_irq(&task->sighand->siglock);
-	अगर (task_is_traced(task) && !looks_like_a_spurious_pid(task) &&
-	    !__fatal_संकेत_pending(task)) अणु
+	if (task_is_traced(task) && !looks_like_a_spurious_pid(task) &&
+	    !__fatal_signal_pending(task)) {
 		task->state = __TASK_TRACED;
 		ret = true;
-	पूर्ण
+	}
 	spin_unlock_irq(&task->sighand->siglock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ptrace_unमुक्तze_traced(काष्ठा task_काष्ठा *task)
-अणु
-	अगर (task->state != __TASK_TRACED)
-		वापस;
+static void ptrace_unfreeze_traced(struct task_struct *task)
+{
+	if (task->state != __TASK_TRACED)
+		return;
 
 	WARN_ON(!task->ptrace || task->parent != current);
 
 	/*
-	 * PTRACE_LISTEN can allow ptrace_trap_notअगरy to wake us up remotely.
-	 * Recheck state under the lock to बंद this race.
+	 * PTRACE_LISTEN can allow ptrace_trap_notify to wake us up remotely.
+	 * Recheck state under the lock to close this race.
 	 */
 	spin_lock_irq(&task->sighand->siglock);
-	अगर (task->state == __TASK_TRACED) अणु
-		अगर (__fatal_संकेत_pending(task))
+	if (task->state == __TASK_TRACED) {
+		if (__fatal_signal_pending(task))
 			wake_up_state(task, __TASK_TRACED);
-		अन्यथा
+		else
 			task->state = TASK_TRACED;
-	पूर्ण
+	}
 	spin_unlock_irq(&task->sighand->siglock);
-पूर्ण
+}
 
 /**
- * ptrace_check_attach - check whether ptracee is पढ़ोy क्रम ptrace operation
- * @child: ptracee to check क्रम
- * @ignore_state: करोn't check whether @child is currently %TASK_TRACED
+ * ptrace_check_attach - check whether ptracee is ready for ptrace operation
+ * @child: ptracee to check for
+ * @ignore_state: don't check whether @child is currently %TASK_TRACED
  *
- * Check whether @child is being ptraced by %current and पढ़ोy क्रम further
+ * Check whether @child is being ptraced by %current and ready for further
  * ptrace operations.  If @ignore_state is %false, @child also should be in
- * %TASK_TRACED state and on वापस the child is guaranteed to be traced
+ * %TASK_TRACED state and on return the child is guaranteed to be traced
  * and not executing.  If @ignore_state is %true, @child can be in any
  * state.
  *
  * CONTEXT:
- * Grअसल and releases tasklist_lock and @child->sighand->siglock.
+ * Grabs and releases tasklist_lock and @child->sighand->siglock.
  *
  * RETURNS:
- * 0 on success, -ESRCH अगर %child is not पढ़ोy.
+ * 0 on success, -ESRCH if %child is not ready.
  */
-अटल पूर्णांक ptrace_check_attach(काष्ठा task_काष्ठा *child, bool ignore_state)
-अणु
-	पूर्णांक ret = -ESRCH;
+static int ptrace_check_attach(struct task_struct *child, bool ignore_state)
+{
+	int ret = -ESRCH;
 
 	/*
-	 * We take the पढ़ो lock around करोing both checks to बंद a
-	 * possible race where someone अन्यथा was tracing our child and
+	 * We take the read lock around doing both checks to close a
+	 * possible race where someone else was tracing our child and
 	 * detached between these two checks.  After this locked check,
 	 * we are sure that this is our traced child and that can only
 	 * be changed by us so it's not changing right after this.
 	 */
-	पढ़ो_lock(&tasklist_lock);
-	अगर (child->ptrace && child->parent == current) अणु
+	read_lock(&tasklist_lock);
+	if (child->ptrace && child->parent == current) {
 		WARN_ON(child->state == __TASK_TRACED);
 		/*
-		 * child->sighand can't be शून्य, release_task()
-		 * करोes ptrace_unlink() beक्रमe __निकास_संकेत().
+		 * child->sighand can't be NULL, release_task()
+		 * does ptrace_unlink() before __exit_signal().
 		 */
-		अगर (ignore_state || ptrace_मुक्तze_traced(child))
+		if (ignore_state || ptrace_freeze_traced(child))
 			ret = 0;
-	पूर्ण
-	पढ़ो_unlock(&tasklist_lock);
+	}
+	read_unlock(&tasklist_lock);
 
-	अगर (!ret && !ignore_state) अणु
-		अगर (!रुको_task_inactive(child, __TASK_TRACED)) अणु
+	if (!ret && !ignore_state) {
+		if (!wait_task_inactive(child, __TASK_TRACED)) {
 			/*
-			 * This can only happen अगर may_ptrace_stop() fails and
+			 * This can only happen if may_ptrace_stop() fails and
 			 * ptrace_stop() changes ->state back to TASK_RUNNING,
 			 * so we should not worry about leaking __TASK_TRACED.
 			 */
 			WARN_ON(child->state == __TASK_TRACED);
 			ret = -ESRCH;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल bool ptrace_has_cap(काष्ठा user_namespace *ns, अचिन्हित पूर्णांक mode)
-अणु
-	अगर (mode & PTRACE_MODE_NOAUDIT)
-		वापस ns_capable_noaudit(ns, CAP_SYS_PTRACE);
-	वापस ns_capable(ns, CAP_SYS_PTRACE);
-पूर्ण
+static bool ptrace_has_cap(struct user_namespace *ns, unsigned int mode)
+{
+	if (mode & PTRACE_MODE_NOAUDIT)
+		return ns_capable_noaudit(ns, CAP_SYS_PTRACE);
+	return ns_capable(ns, CAP_SYS_PTRACE);
+}
 
-/* Returns 0 on success, -त्रुटि_सं on denial. */
-अटल पूर्णांक __ptrace_may_access(काष्ठा task_काष्ठा *task, अचिन्हित पूर्णांक mode)
-अणु
-	स्थिर काष्ठा cred *cred = current_cred(), *tcred;
-	काष्ठा mm_काष्ठा *mm;
+/* Returns 0 on success, -errno on denial. */
+static int __ptrace_may_access(struct task_struct *task, unsigned int mode)
+{
+	const struct cred *cred = current_cred(), *tcred;
+	struct mm_struct *mm;
 	kuid_t caller_uid;
 	kgid_t caller_gid;
 
-	अगर (!(mode & PTRACE_MODE_FSCREDS) == !(mode & PTRACE_MODE_REALCREDS)) अणु
+	if (!(mode & PTRACE_MODE_FSCREDS) == !(mode & PTRACE_MODE_REALCREDS)) {
 		WARN(1, "denying ptrace access check without PTRACE_MODE_*CREDS\n");
-		वापस -EPERM;
-	पूर्ण
+		return -EPERM;
+	}
 
 	/* May we inspect the given task?
-	 * This check is used both क्रम attaching with ptrace
-	 * and क्रम allowing access to sensitive inक्रमmation in /proc.
+	 * This check is used both for attaching with ptrace
+	 * and for allowing access to sensitive information in /proc.
 	 *
-	 * ptrace_attach denies several हालs that /proc allows
+	 * ptrace_attach denies several cases that /proc allows
 	 * because setting up the necessary parent/child relationship
-	 * or halting the specअगरied task is impossible.
+	 * or halting the specified task is impossible.
 	 */
 
-	/* Don't let security modules deny पूर्णांकrospection */
-	अगर (same_thपढ़ो_group(task, current))
-		वापस 0;
-	rcu_पढ़ो_lock();
-	अगर (mode & PTRACE_MODE_FSCREDS) अणु
+	/* Don't let security modules deny introspection */
+	if (same_thread_group(task, current))
+		return 0;
+	rcu_read_lock();
+	if (mode & PTRACE_MODE_FSCREDS) {
 		caller_uid = cred->fsuid;
 		caller_gid = cred->fsgid;
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
 		 * Using the euid would make more sense here, but something
 		 * in userland might rely on the old behavior, and this
 		 * shouldn't be a security problem since
 		 * PTRACE_MODE_REALCREDS implies that the caller explicitly
 		 * used a syscall that requests access to another process
-		 * (and not a fileप्रणाली syscall to procfs).
+		 * (and not a filesystem syscall to procfs).
 		 */
 		caller_uid = cred->uid;
 		caller_gid = cred->gid;
-	पूर्ण
+	}
 	tcred = __task_cred(task);
-	अगर (uid_eq(caller_uid, tcred->euid) &&
+	if (uid_eq(caller_uid, tcred->euid) &&
 	    uid_eq(caller_uid, tcred->suid) &&
 	    uid_eq(caller_uid, tcred->uid)  &&
 	    gid_eq(caller_gid, tcred->egid) &&
 	    gid_eq(caller_gid, tcred->sgid) &&
 	    gid_eq(caller_gid, tcred->gid))
-		जाओ ok;
-	अगर (ptrace_has_cap(tcred->user_ns, mode))
-		जाओ ok;
-	rcu_पढ़ो_unlock();
-	वापस -EPERM;
+		goto ok;
+	if (ptrace_has_cap(tcred->user_ns, mode))
+		goto ok;
+	rcu_read_unlock();
+	return -EPERM;
 ok:
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 	/*
 	 * If a task drops privileges and becomes nondumpable (through a syscall
-	 * like setresuid()) जबतक we are trying to access it, we must ensure
-	 * that the dumpability is पढ़ो after the credentials; otherwise,
+	 * like setresuid()) while we are trying to access it, we must ensure
+	 * that the dumpability is read after the credentials; otherwise,
 	 * we may be able to attach to a task that we shouldn't be able to
-	 * attach to (as अगर the task had dropped privileges without becoming
+	 * attach to (as if the task had dropped privileges without becoming
 	 * nondumpable).
-	 * Pairs with a ग_लिखो barrier in commit_creds().
+	 * Pairs with a write barrier in commit_creds().
 	 */
 	smp_rmb();
 	mm = task->mm;
-	अगर (mm &&
+	if (mm &&
 	    ((get_dumpable(mm) != SUID_DUMP_USER) &&
 	     !ptrace_has_cap(mm->user_ns, mode)))
-	    वापस -EPERM;
+	    return -EPERM;
 
-	वापस security_ptrace_access_check(task, mode);
-पूर्ण
+	return security_ptrace_access_check(task, mode);
+}
 
-bool ptrace_may_access(काष्ठा task_काष्ठा *task, अचिन्हित पूर्णांक mode)
-अणु
-	पूर्णांक err;
+bool ptrace_may_access(struct task_struct *task, unsigned int mode)
+{
+	int err;
 	task_lock(task);
 	err = __ptrace_may_access(task, mode);
 	task_unlock(task);
-	वापस !err;
-पूर्ण
+	return !err;
+}
 
-अटल पूर्णांक ptrace_attach(काष्ठा task_काष्ठा *task, दीर्घ request,
-			 अचिन्हित दीर्घ addr,
-			 अचिन्हित दीर्घ flags)
-अणु
+static int ptrace_attach(struct task_struct *task, long request,
+			 unsigned long addr,
+			 unsigned long flags)
+{
 	bool seize = (request == PTRACE_SEIZE);
-	पूर्णांक retval;
+	int retval;
 
 	retval = -EIO;
-	अगर (seize) अणु
-		अगर (addr != 0)
-			जाओ out;
-		अगर (flags & ~(अचिन्हित दीर्घ)PTRACE_O_MASK)
-			जाओ out;
+	if (seize) {
+		if (addr != 0)
+			goto out;
+		if (flags & ~(unsigned long)PTRACE_O_MASK)
+			goto out;
 		flags = PT_PTRACED | PT_SEIZED | (flags << PT_OPT_FLAG_SHIFT);
-	पूर्ण अन्यथा अणु
+	} else {
 		flags = PT_PTRACED;
-	पूर्ण
+	}
 
 	audit_ptrace(task);
 
 	retval = -EPERM;
-	अगर (unlikely(task->flags & PF_KTHREAD))
-		जाओ out;
-	अगर (same_thपढ़ो_group(task, current))
-		जाओ out;
+	if (unlikely(task->flags & PF_KTHREAD))
+		goto out;
+	if (same_thread_group(task, current))
+		goto out;
 
 	/*
-	 * Protect exec's credential calculations against our पूर्णांकerference;
-	 * SUID, SGID and LSM creds get determined dअगरferently
+	 * Protect exec's credential calculations against our interference;
+	 * SUID, SGID and LSM creds get determined differently
 	 * under ptrace.
 	 */
 	retval = -ERESTARTNOINTR;
-	अगर (mutex_lock_पूर्णांकerruptible(&task->संकेत->cred_guard_mutex))
-		जाओ out;
+	if (mutex_lock_interruptible(&task->signal->cred_guard_mutex))
+		goto out;
 
 	task_lock(task);
 	retval = __ptrace_may_access(task, PTRACE_MODE_ATTACH_REALCREDS);
 	task_unlock(task);
-	अगर (retval)
-		जाओ unlock_creds;
+	if (retval)
+		goto unlock_creds;
 
-	ग_लिखो_lock_irq(&tasklist_lock);
+	write_lock_irq(&tasklist_lock);
 	retval = -EPERM;
-	अगर (unlikely(task->निकास_state))
-		जाओ unlock_tasklist;
-	अगर (task->ptrace)
-		जाओ unlock_tasklist;
+	if (unlikely(task->exit_state))
+		goto unlock_tasklist;
+	if (task->ptrace)
+		goto unlock_tasklist;
 
-	अगर (seize)
+	if (seize)
 		flags |= PT_SEIZED;
 	task->ptrace = flags;
 
 	ptrace_link(task, current);
 
-	/* SEIZE करोesn't trap tracee on attach */
-	अगर (!seize)
+	/* SEIZE doesn't trap tracee on attach */
+	if (!seize)
 		send_sig_info(SIGSTOP, SEND_SIG_PRIV, task);
 
 	spin_lock(&task->sighand->siglock);
 
 	/*
-	 * If the task is alपढ़ोy STOPPED, set JOBCTL_TRAP_STOP and
+	 * If the task is already STOPPED, set JOBCTL_TRAP_STOP and
 	 * TRAPPING, and kick it so that it transits to TRACED.  TRAPPING
-	 * will be cleared अगर the child completes the transition or any
-	 * event which clears the group stop states happens.  We'll रुको
-	 * क्रम the transition to complete beक्रमe वापसing from this
+	 * will be cleared if the child completes the transition or any
+	 * event which clears the group stop states happens.  We'll wait
+	 * for the transition to complete before returning from this
 	 * function.
 	 *
 	 * This hides STOPPED -> RUNNING -> TRACED transition from the
-	 * attaching thपढ़ो but a dअगरferent thपढ़ो in the same group can
-	 * still observe the transient RUNNING state.  IOW, अगर another
-	 * thपढ़ो's WNOHANG रुको(2) on the stopped tracee races against
-	 * ATTACH, the रुको(2) may fail due to the transient RUNNING.
+	 * attaching thread but a different thread in the same group can
+	 * still observe the transient RUNNING state.  IOW, if another
+	 * thread's WNOHANG wait(2) on the stopped tracee races against
+	 * ATTACH, the wait(2) may fail due to the transient RUNNING.
 	 *
 	 * The following task_is_stopped() test is safe as both transitions
-	 * in and out of STOPPED are रक्षित by siglock.
+	 * in and out of STOPPED are protected by siglock.
 	 */
-	अगर (task_is_stopped(task) &&
+	if (task_is_stopped(task) &&
 	    task_set_jobctl_pending(task, JOBCTL_TRAP_STOP | JOBCTL_TRAPPING))
-		संकेत_wake_up_state(task, __TASK_STOPPED);
+		signal_wake_up_state(task, __TASK_STOPPED);
 
 	spin_unlock(&task->sighand->siglock);
 
 	retval = 0;
 unlock_tasklist:
-	ग_लिखो_unlock_irq(&tasklist_lock);
+	write_unlock_irq(&tasklist_lock);
 unlock_creds:
-	mutex_unlock(&task->संकेत->cred_guard_mutex);
+	mutex_unlock(&task->signal->cred_guard_mutex);
 out:
-	अगर (!retval) अणु
+	if (!retval) {
 		/*
-		 * We करो not bother to change retval or clear JOBCTL_TRAPPING
-		 * अगर रुको_on_bit() was पूर्णांकerrupted by SIGKILL. The tracer will
-		 * not वापस to user-mode, it will निकास and clear this bit in
-		 * __ptrace_unlink() अगर it wasn't alपढ़ोy cleared by the tracee;
+		 * We do not bother to change retval or clear JOBCTL_TRAPPING
+		 * if wait_on_bit() was interrupted by SIGKILL. The tracer will
+		 * not return to user-mode, it will exit and clear this bit in
+		 * __ptrace_unlink() if it wasn't already cleared by the tracee;
 		 * and until then nobody can ptrace this task.
 		 */
-		रुको_on_bit(&task->jobctl, JOBCTL_TRAPPING_BIT, TASK_KILLABLE);
+		wait_on_bit(&task->jobctl, JOBCTL_TRAPPING_BIT, TASK_KILLABLE);
 		proc_ptrace_connector(task, PTRACE_ATTACH);
-	पूर्ण
+	}
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 /**
- * ptrace_traceme  --  helper क्रम PTRACE_TRACEME
+ * ptrace_traceme  --  helper for PTRACE_TRACEME
  *
- * Perक्रमms checks and sets PT_PTRACED.
- * Should be used by all ptrace implementations क्रम PTRACE_TRACEME.
+ * Performs checks and sets PT_PTRACED.
+ * Should be used by all ptrace implementations for PTRACE_TRACEME.
  */
-अटल पूर्णांक ptrace_traceme(व्योम)
-अणु
-	पूर्णांक ret = -EPERM;
+static int ptrace_traceme(void)
+{
+	int ret = -EPERM;
 
-	ग_लिखो_lock_irq(&tasklist_lock);
-	/* Are we alपढ़ोy being traced? */
-	अगर (!current->ptrace) अणु
+	write_lock_irq(&tasklist_lock);
+	/* Are we already being traced? */
+	if (!current->ptrace) {
 		ret = security_ptrace_traceme(current->parent);
 		/*
 		 * Check PF_EXITING to ensure ->real_parent has not passed
-		 * निकास_ptrace(). Otherwise we करोn't report the error but
-		 * pretend ->real_parent untraces us right after वापस.
+		 * exit_ptrace(). Otherwise we don't report the error but
+		 * pretend ->real_parent untraces us right after return.
 		 */
-		अगर (!ret && !(current->real_parent->flags & PF_EXITING)) अणु
+		if (!ret && !(current->real_parent->flags & PF_EXITING)) {
 			current->ptrace = PT_PTRACED;
 			ptrace_link(current, current->real_parent);
-		पूर्ण
-	पूर्ण
-	ग_लिखो_unlock_irq(&tasklist_lock);
+		}
+	}
+	write_unlock_irq(&tasklist_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Called with irqs disabled, वापसs true अगर childs should reap themselves.
+ * Called with irqs disabled, returns true if childs should reap themselves.
  */
-अटल पूर्णांक ignoring_children(काष्ठा sighand_काष्ठा *sigh)
-अणु
-	पूर्णांक ret;
+static int ignoring_children(struct sighand_struct *sigh)
+{
+	int ret;
 	spin_lock(&sigh->siglock);
-	ret = (sigh->action[SIGCHLD-1].sa.sa_handler == संक_छोड़ो) ||
+	ret = (sigh->action[SIGCHLD-1].sa.sa_handler == SIG_IGN) ||
 	      (sigh->action[SIGCHLD-1].sa.sa_flags & SA_NOCLDWAIT);
 	spin_unlock(&sigh->siglock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Called with tasklist_lock held क्रम writing.
- * Unlink a traced task, and clean it up अगर it was a traced zombie.
- * Return true अगर it needs to be reaped with release_task().
- * (We can't call release_task() here because we alपढ़ोy hold tasklist_lock.)
+ * Called with tasklist_lock held for writing.
+ * Unlink a traced task, and clean it up if it was a traced zombie.
+ * Return true if it needs to be reaped with release_task().
+ * (We can't call release_task() here because we already hold tasklist_lock.)
  *
- * If it's a zombie, our attachedness prevented normal parent notअगरication
- * or self-reaping.  Do notअगरication now अगर it would have happened earlier.
- * If it should reap itself, वापस true.
+ * If it's a zombie, our attachedness prevented normal parent notification
+ * or self-reaping.  Do notification now if it would have happened earlier.
+ * If it should reap itself, return true.
  *
- * If it's our own child, there is no notअगरication to करो. But अगर our normal
+ * If it's our own child, there is no notification to do. But if our normal
  * children self-reap, then this child was prevented by ptrace and we must
- * reap it now, in that हाल we must also wake up sub-thपढ़ोs sleeping in
- * करो_रुको().
+ * reap it now, in that case we must also wake up sub-threads sleeping in
+ * do_wait().
  */
-अटल bool __ptrace_detach(काष्ठा task_काष्ठा *tracer, काष्ठा task_काष्ठा *p)
-अणु
+static bool __ptrace_detach(struct task_struct *tracer, struct task_struct *p)
+{
 	bool dead;
 
 	__ptrace_unlink(p);
 
-	अगर (p->निकास_state != EXIT_ZOMBIE)
-		वापस false;
+	if (p->exit_state != EXIT_ZOMBIE)
+		return false;
 
-	dead = !thपढ़ो_group_leader(p);
+	dead = !thread_group_leader(p);
 
-	अगर (!dead && thपढ़ो_group_empty(p)) अणु
-		अगर (!same_thपढ़ो_group(p->real_parent, tracer))
-			dead = करो_notअगरy_parent(p, p->निकास_संकेत);
-		अन्यथा अगर (ignoring_children(tracer->sighand)) अणु
+	if (!dead && thread_group_empty(p)) {
+		if (!same_thread_group(p->real_parent, tracer))
+			dead = do_notify_parent(p, p->exit_signal);
+		else if (ignoring_children(tracer->sighand)) {
 			__wake_up_parent(p, tracer);
 			dead = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	/* Mark it as in the process of being reaped. */
-	अगर (dead)
-		p->निकास_state = EXIT_DEAD;
-	वापस dead;
-पूर्ण
+	if (dead)
+		p->exit_state = EXIT_DEAD;
+	return dead;
+}
 
-अटल पूर्णांक ptrace_detach(काष्ठा task_काष्ठा *child, अचिन्हित पूर्णांक data)
-अणु
-	अगर (!valid_संकेत(data))
-		वापस -EIO;
+static int ptrace_detach(struct task_struct *child, unsigned int data)
+{
+	if (!valid_signal(data))
+		return -EIO;
 
-	/* Architecture-specअगरic hardware disable .. */
+	/* Architecture-specific hardware disable .. */
 	ptrace_disable(child);
 
-	ग_लिखो_lock_irq(&tasklist_lock);
+	write_lock_irq(&tasklist_lock);
 	/*
-	 * We rely on ptrace_मुक्तze_traced(). It can't be समाप्तed and
-	 * untraced by another thपढ़ो, it can't be a zombie.
+	 * We rely on ptrace_freeze_traced(). It can't be killed and
+	 * untraced by another thread, it can't be a zombie.
 	 */
-	WARN_ON(!child->ptrace || child->निकास_state);
+	WARN_ON(!child->ptrace || child->exit_state);
 	/*
-	 * tasklist_lock aव्योमs the race with रुको_task_stopped(), see
+	 * tasklist_lock avoids the race with wait_task_stopped(), see
 	 * the comment in ptrace_resume().
 	 */
-	child->निकास_code = data;
+	child->exit_code = data;
 	__ptrace_detach(current, child);
-	ग_लिखो_unlock_irq(&tasklist_lock);
+	write_unlock_irq(&tasklist_lock);
 
 	proc_ptrace_connector(child, PTRACE_DETACH);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Detach all tasks we were using ptrace on. Called with tasklist held
- * क्रम writing.
+ * for writing.
  */
-व्योम निकास_ptrace(काष्ठा task_काष्ठा *tracer, काष्ठा list_head *dead)
-अणु
-	काष्ठा task_काष्ठा *p, *n;
+void exit_ptrace(struct task_struct *tracer, struct list_head *dead)
+{
+	struct task_struct *p, *n;
 
-	list_क्रम_each_entry_safe(p, n, &tracer->ptraced, ptrace_entry) अणु
-		अगर (unlikely(p->ptrace & PT_EXITKILL))
+	list_for_each_entry_safe(p, n, &tracer->ptraced, ptrace_entry) {
+		if (unlikely(p->ptrace & PT_EXITKILL))
 			send_sig_info(SIGKILL, SEND_SIG_PRIV, p);
 
-		अगर (__ptrace_detach(tracer, p))
+		if (__ptrace_detach(tracer, p))
 			list_add(&p->ptrace_entry, dead);
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक ptrace_पढ़ोdata(काष्ठा task_काष्ठा *tsk, अचिन्हित दीर्घ src, अक्षर __user *dst, पूर्णांक len)
-अणु
-	पूर्णांक copied = 0;
+int ptrace_readdata(struct task_struct *tsk, unsigned long src, char __user *dst, int len)
+{
+	int copied = 0;
 
-	जबतक (len > 0) अणु
-		अक्षर buf[128];
-		पूर्णांक this_len, retval;
+	while (len > 0) {
+		char buf[128];
+		int this_len, retval;
 
-		this_len = (len > माप(buf)) ? माप(buf) : len;
+		this_len = (len > sizeof(buf)) ? sizeof(buf) : len;
 		retval = ptrace_access_vm(tsk, src, buf, this_len, FOLL_FORCE);
 
-		अगर (!retval) अणु
-			अगर (copied)
-				अवरोध;
-			वापस -EIO;
-		पूर्ण
-		अगर (copy_to_user(dst, buf, retval))
-			वापस -EFAULT;
+		if (!retval) {
+			if (copied)
+				break;
+			return -EIO;
+		}
+		if (copy_to_user(dst, buf, retval))
+			return -EFAULT;
 		copied += retval;
 		src += retval;
 		dst += retval;
 		len -= retval;
-	पूर्ण
-	वापस copied;
-पूर्ण
+	}
+	return copied;
+}
 
-पूर्णांक ptrace_ग_लिखोdata(काष्ठा task_काष्ठा *tsk, अक्षर __user *src, अचिन्हित दीर्घ dst, पूर्णांक len)
-अणु
-	पूर्णांक copied = 0;
+int ptrace_writedata(struct task_struct *tsk, char __user *src, unsigned long dst, int len)
+{
+	int copied = 0;
 
-	जबतक (len > 0) अणु
-		अक्षर buf[128];
-		पूर्णांक this_len, retval;
+	while (len > 0) {
+		char buf[128];
+		int this_len, retval;
 
-		this_len = (len > माप(buf)) ? माप(buf) : len;
-		अगर (copy_from_user(buf, src, this_len))
-			वापस -EFAULT;
+		this_len = (len > sizeof(buf)) ? sizeof(buf) : len;
+		if (copy_from_user(buf, src, this_len))
+			return -EFAULT;
 		retval = ptrace_access_vm(tsk, dst, buf, this_len,
 				FOLL_FORCE | FOLL_WRITE);
-		अगर (!retval) अणु
-			अगर (copied)
-				अवरोध;
-			वापस -EIO;
-		पूर्ण
+		if (!retval) {
+			if (copied)
+				break;
+			return -EIO;
+		}
 		copied += retval;
 		src += retval;
 		dst += retval;
 		len -= retval;
-	पूर्ण
-	वापस copied;
-पूर्ण
+	}
+	return copied;
+}
 
-अटल पूर्णांक ptrace_setoptions(काष्ठा task_काष्ठा *child, अचिन्हित दीर्घ data)
-अणु
-	अचिन्हित flags;
+static int ptrace_setoptions(struct task_struct *child, unsigned long data)
+{
+	unsigned flags;
 
-	अगर (data & ~(अचिन्हित दीर्घ)PTRACE_O_MASK)
-		वापस -EINVAL;
+	if (data & ~(unsigned long)PTRACE_O_MASK)
+		return -EINVAL;
 
-	अगर (unlikely(data & PTRACE_O_SUSPEND_SECCOMP)) अणु
-		अगर (!IS_ENABLED(CONFIG_CHECKPOINT_RESTORE) ||
+	if (unlikely(data & PTRACE_O_SUSPEND_SECCOMP)) {
+		if (!IS_ENABLED(CONFIG_CHECKPOINT_RESTORE) ||
 		    !IS_ENABLED(CONFIG_SECCOMP))
-			वापस -EINVAL;
+			return -EINVAL;
 
-		अगर (!capable(CAP_SYS_ADMIN))
-			वापस -EPERM;
+		if (!capable(CAP_SYS_ADMIN))
+			return -EPERM;
 
-		अगर (seccomp_mode(&current->seccomp) != SECCOMP_MODE_DISABLED ||
+		if (seccomp_mode(&current->seccomp) != SECCOMP_MODE_DISABLED ||
 		    current->ptrace & PT_SUSPEND_SECCOMP)
-			वापस -EPERM;
-	पूर्ण
+			return -EPERM;
+	}
 
-	/* Aव्योम पूर्णांकermediate state when all opts are cleared */
+	/* Avoid intermediate state when all opts are cleared */
 	flags = child->ptrace;
 	flags &= ~(PTRACE_O_MASK << PT_OPT_FLAG_SHIFT);
 	flags |= (data << PT_OPT_FLAG_SHIFT);
 	child->ptrace = flags;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ptrace_माला_लोiginfo(काष्ठा task_काष्ठा *child, kernel_siginfo_t *info)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक error = -ESRCH;
+static int ptrace_getsiginfo(struct task_struct *child, kernel_siginfo_t *info)
+{
+	unsigned long flags;
+	int error = -ESRCH;
 
-	अगर (lock_task_sighand(child, &flags)) अणु
+	if (lock_task_sighand(child, &flags)) {
 		error = -EINVAL;
-		अगर (likely(child->last_siginfo != शून्य)) अणु
+		if (likely(child->last_siginfo != NULL)) {
 			copy_siginfo(info, child->last_siginfo);
 			error = 0;
-		पूर्ण
+		}
 		unlock_task_sighand(child, &flags);
-	पूर्ण
-	वापस error;
-पूर्ण
+	}
+	return error;
+}
 
-अटल पूर्णांक ptrace_setsiginfo(काष्ठा task_काष्ठा *child, स्थिर kernel_siginfo_t *info)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक error = -ESRCH;
+static int ptrace_setsiginfo(struct task_struct *child, const kernel_siginfo_t *info)
+{
+	unsigned long flags;
+	int error = -ESRCH;
 
-	अगर (lock_task_sighand(child, &flags)) अणु
+	if (lock_task_sighand(child, &flags)) {
 		error = -EINVAL;
-		अगर (likely(child->last_siginfo != शून्य)) अणु
+		if (likely(child->last_siginfo != NULL)) {
 			copy_siginfo(child->last_siginfo, info);
 			error = 0;
-		पूर्ण
+		}
 		unlock_task_sighand(child, &flags);
-	पूर्ण
-	वापस error;
-पूर्ण
+	}
+	return error;
+}
 
-अटल पूर्णांक ptrace_peek_siginfo(काष्ठा task_काष्ठा *child,
-				अचिन्हित दीर्घ addr,
-				अचिन्हित दीर्घ data)
-अणु
-	काष्ठा ptrace_peeksiginfo_args arg;
-	काष्ठा संक_बाकी *pending;
-	काष्ठा sigqueue *q;
-	पूर्णांक ret, i;
+static int ptrace_peek_siginfo(struct task_struct *child,
+				unsigned long addr,
+				unsigned long data)
+{
+	struct ptrace_peeksiginfo_args arg;
+	struct sigpending *pending;
+	struct sigqueue *q;
+	int ret, i;
 
-	ret = copy_from_user(&arg, (व्योम __user *) addr,
-				माप(काष्ठा ptrace_peeksiginfo_args));
-	अगर (ret)
-		वापस -EFAULT;
+	ret = copy_from_user(&arg, (void __user *) addr,
+				sizeof(struct ptrace_peeksiginfo_args));
+	if (ret)
+		return -EFAULT;
 
-	अगर (arg.flags & ~PTRACE_PEEKSIGINFO_SHARED)
-		वापस -EINVAL; /* unknown flags */
+	if (arg.flags & ~PTRACE_PEEKSIGINFO_SHARED)
+		return -EINVAL; /* unknown flags */
 
-	अगर (arg.nr < 0)
-		वापस -EINVAL;
+	if (arg.nr < 0)
+		return -EINVAL;
 
-	/* Ensure arg.off fits in an अचिन्हित दीर्घ */
-	अगर (arg.off > अच_दीर्घ_उच्च)
-		वापस 0;
+	/* Ensure arg.off fits in an unsigned long */
+	if (arg.off > ULONG_MAX)
+		return 0;
 
-	अगर (arg.flags & PTRACE_PEEKSIGINFO_SHARED)
-		pending = &child->संकेत->shared_pending;
-	अन्यथा
+	if (arg.flags & PTRACE_PEEKSIGINFO_SHARED)
+		pending = &child->signal->shared_pending;
+	else
 		pending = &child->pending;
 
-	क्रम (i = 0; i < arg.nr; ) अणु
+	for (i = 0; i < arg.nr; ) {
 		kernel_siginfo_t info;
-		अचिन्हित दीर्घ off = arg.off + i;
+		unsigned long off = arg.off + i;
 		bool found = false;
 
 		spin_lock_irq(&child->sighand->siglock);
-		list_क्रम_each_entry(q, &pending->list, list) अणु
-			अगर (!off--) अणु
+		list_for_each_entry(q, &pending->list, list) {
+			if (!off--) {
 				found = true;
 				copy_siginfo(&info, &q->info);
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 		spin_unlock_irq(&child->sighand->siglock);
 
-		अगर (!found) /* beyond the end of the list */
-			अवरोध;
+		if (!found) /* beyond the end of the list */
+			break;
 
-#अगर_घोषित CONFIG_COMPAT
-		अगर (unlikely(in_compat_syscall())) अणु
+#ifdef CONFIG_COMPAT
+		if (unlikely(in_compat_syscall())) {
 			compat_siginfo_t __user *uinfo = compat_ptr(data);
 
-			अगर (copy_siginfo_to_user32(uinfo, &info)) अणु
+			if (copy_siginfo_to_user32(uinfo, &info)) {
 				ret = -EFAULT;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-		पूर्ण अन्यथा
-#पूर्ण_अगर
-		अणु
+		} else
+#endif
+		{
 			siginfo_t __user *uinfo = (siginfo_t __user *) data;
 
-			अगर (copy_siginfo_to_user(uinfo, &info)) अणु
+			if (copy_siginfo_to_user(uinfo, &info)) {
 				ret = -EFAULT;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
-		data += माप(siginfo_t);
+		data += sizeof(siginfo_t);
 		i++;
 
-		अगर (संकेत_pending(current))
-			अवरोध;
+		if (signal_pending(current))
+			break;
 
 		cond_resched();
-	पूर्ण
+	}
 
-	अगर (i > 0)
-		वापस i;
+	if (i > 0)
+		return i;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर_घोषित CONFIG_RSEQ
-अटल दीर्घ ptrace_get_rseq_configuration(काष्ठा task_काष्ठा *task,
-					  अचिन्हित दीर्घ size, व्योम __user *data)
-अणु
-	काष्ठा ptrace_rseq_configuration conf = अणु
-		.rseq_abi_poपूर्णांकer = (u64)(uपूर्णांकptr_t)task->rseq,
-		.rseq_abi_size = माप(*task->rseq),
+#ifdef CONFIG_RSEQ
+static long ptrace_get_rseq_configuration(struct task_struct *task,
+					  unsigned long size, void __user *data)
+{
+	struct ptrace_rseq_configuration conf = {
+		.rseq_abi_pointer = (u64)(uintptr_t)task->rseq,
+		.rseq_abi_size = sizeof(*task->rseq),
 		.signature = task->rseq_sig,
 		.flags = 0,
-	पूर्ण;
+	};
 
-	size = min_t(अचिन्हित दीर्घ, size, माप(conf));
-	अगर (copy_to_user(data, &conf, size))
-		वापस -EFAULT;
-	वापस माप(conf);
-पूर्ण
-#पूर्ण_अगर
+	size = min_t(unsigned long, size, sizeof(conf));
+	if (copy_to_user(data, &conf, size))
+		return -EFAULT;
+	return sizeof(conf);
+}
+#endif
 
-#अगर_घोषित PTRACE_SINGLESTEP
-#घोषणा is_singlestep(request)		((request) == PTRACE_SINGLESTEP)
-#अन्यथा
-#घोषणा is_singlestep(request)		0
-#पूर्ण_अगर
+#ifdef PTRACE_SINGLESTEP
+#define is_singlestep(request)		((request) == PTRACE_SINGLESTEP)
+#else
+#define is_singlestep(request)		0
+#endif
 
-#अगर_घोषित PTRACE_SINGLEBLOCK
-#घोषणा is_singleblock(request)		((request) == PTRACE_SINGLEBLOCK)
-#अन्यथा
-#घोषणा is_singleblock(request)		0
-#पूर्ण_अगर
+#ifdef PTRACE_SINGLEBLOCK
+#define is_singleblock(request)		((request) == PTRACE_SINGLEBLOCK)
+#else
+#define is_singleblock(request)		0
+#endif
 
-#अगर_घोषित PTRACE_SYSEMU
-#घोषणा is_sysemu_singlestep(request)	((request) == PTRACE_SYSEMU_SINGLESTEP)
-#अन्यथा
-#घोषणा is_sysemu_singlestep(request)	0
-#पूर्ण_अगर
+#ifdef PTRACE_SYSEMU
+#define is_sysemu_singlestep(request)	((request) == PTRACE_SYSEMU_SINGLESTEP)
+#else
+#define is_sysemu_singlestep(request)	0
+#endif
 
-अटल पूर्णांक ptrace_resume(काष्ठा task_काष्ठा *child, दीर्घ request,
-			 अचिन्हित दीर्घ data)
-अणु
+static int ptrace_resume(struct task_struct *child, long request,
+			 unsigned long data)
+{
 	bool need_siglock;
 
-	अगर (!valid_संकेत(data))
-		वापस -EIO;
+	if (!valid_signal(data))
+		return -EIO;
 
-	अगर (request == PTRACE_SYSCALL)
+	if (request == PTRACE_SYSCALL)
 		set_task_syscall_work(child, SYSCALL_TRACE);
-	अन्यथा
+	else
 		clear_task_syscall_work(child, SYSCALL_TRACE);
 
-#अगर defined(CONFIG_GENERIC_ENTRY) || defined(TIF_SYSCALL_EMU)
-	अगर (request == PTRACE_SYSEMU || request == PTRACE_SYSEMU_SINGLESTEP)
+#if defined(CONFIG_GENERIC_ENTRY) || defined(TIF_SYSCALL_EMU)
+	if (request == PTRACE_SYSEMU || request == PTRACE_SYSEMU_SINGLESTEP)
 		set_task_syscall_work(child, SYSCALL_EMU);
-	अन्यथा
+	else
 		clear_task_syscall_work(child, SYSCALL_EMU);
-#पूर्ण_अगर
+#endif
 
-	अगर (is_singleblock(request)) अणु
-		अगर (unlikely(!arch_has_block_step()))
-			वापस -EIO;
+	if (is_singleblock(request)) {
+		if (unlikely(!arch_has_block_step()))
+			return -EIO;
 		user_enable_block_step(child);
-	पूर्ण अन्यथा अगर (is_singlestep(request) || is_sysemu_singlestep(request)) अणु
-		अगर (unlikely(!arch_has_single_step()))
-			वापस -EIO;
+	} else if (is_singlestep(request) || is_sysemu_singlestep(request)) {
+		if (unlikely(!arch_has_single_step()))
+			return -EIO;
 		user_enable_single_step(child);
-	पूर्ण अन्यथा अणु
+	} else {
 		user_disable_single_step(child);
-	पूर्ण
+	}
 
 	/*
-	 * Change ->निकास_code and ->state under siglock to aव्योम the race
-	 * with रुको_task_stopped() in between; a non-zero ->निकास_code will
+	 * Change ->exit_code and ->state under siglock to avoid the race
+	 * with wait_task_stopped() in between; a non-zero ->exit_code will
 	 * wrongly look like another report from tracee.
 	 *
-	 * Note that we need siglock even अगर ->निकास_code == data and/or this
+	 * Note that we need siglock even if ->exit_code == data and/or this
 	 * status was not reported yet, the new status must not be cleared by
-	 * रुको_task_stopped() after resume.
+	 * wait_task_stopped() after resume.
 	 *
-	 * If data == 0 we करो not care अगर रुको_task_stopped() reports the old
+	 * If data == 0 we do not care if wait_task_stopped() reports the old
 	 * status and clears the code too; this can't race with the tracee, it
 	 * takes siglock after resume.
 	 */
-	need_siglock = data && !thपढ़ो_group_empty(current);
-	अगर (need_siglock)
+	need_siglock = data && !thread_group_empty(current);
+	if (need_siglock)
 		spin_lock_irq(&child->sighand->siglock);
-	child->निकास_code = data;
+	child->exit_code = data;
 	wake_up_state(child, __TASK_TRACED);
-	अगर (need_siglock)
+	if (need_siglock)
 		spin_unlock_irq(&child->sighand->siglock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_HAVE_ARCH_TRACEHOOK
+#ifdef CONFIG_HAVE_ARCH_TRACEHOOK
 
-अटल स्थिर काष्ठा user_regset *
-find_regset(स्थिर काष्ठा user_regset_view *view, अचिन्हित पूर्णांक type)
-अणु
-	स्थिर काष्ठा user_regset *regset;
-	पूर्णांक n;
+static const struct user_regset *
+find_regset(const struct user_regset_view *view, unsigned int type)
+{
+	const struct user_regset *regset;
+	int n;
 
-	क्रम (n = 0; n < view->n; ++n) अणु
+	for (n = 0; n < view->n; ++n) {
 		regset = view->regsets + n;
-		अगर (regset->core_note_type == type)
-			वापस regset;
-	पूर्ण
+		if (regset->core_note_type == type)
+			return regset;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक ptrace_regset(काष्ठा task_काष्ठा *task, पूर्णांक req, अचिन्हित पूर्णांक type,
-			 काष्ठा iovec *kiov)
-अणु
-	स्थिर काष्ठा user_regset_view *view = task_user_regset_view(task);
-	स्थिर काष्ठा user_regset *regset = find_regset(view, type);
-	पूर्णांक regset_no;
+static int ptrace_regset(struct task_struct *task, int req, unsigned int type,
+			 struct iovec *kiov)
+{
+	const struct user_regset_view *view = task_user_regset_view(task);
+	const struct user_regset *regset = find_regset(view, type);
+	int regset_no;
 
-	अगर (!regset || (kiov->iov_len % regset->size) != 0)
-		वापस -EINVAL;
+	if (!regset || (kiov->iov_len % regset->size) != 0)
+		return -EINVAL;
 
 	regset_no = regset - view->regsets;
 	kiov->iov_len = min(kiov->iov_len,
-			    (__kernel_माप_प्रकार) (regset->n * regset->size));
+			    (__kernel_size_t) (regset->n * regset->size));
 
-	अगर (req == PTRACE_GETREGSET)
-		वापस copy_regset_to_user(task, view, regset_no, 0,
+	if (req == PTRACE_GETREGSET)
+		return copy_regset_to_user(task, view, regset_no, 0,
 					   kiov->iov_len, kiov->iov_base);
-	अन्यथा
-		वापस copy_regset_from_user(task, view, regset_no, 0,
+	else
+		return copy_regset_from_user(task, view, regset_no, 0,
 					     kiov->iov_len, kiov->iov_base);
-पूर्ण
+}
 
 /*
  * This is declared in linux/regset.h and defined in machine-dependent
  * code.  We put the export here, near the primary machine-neutral use,
- * to ensure no machine क्रममाला_लो it.
+ * to ensure no machine forgets it.
  */
 EXPORT_SYMBOL_GPL(task_user_regset_view);
 
-अटल अचिन्हित दीर्घ
-ptrace_get_syscall_info_entry(काष्ठा task_काष्ठा *child, काष्ठा pt_regs *regs,
-			      काष्ठा ptrace_syscall_info *info)
-अणु
-	अचिन्हित दीर्घ args[ARRAY_SIZE(info->entry.args)];
-	पूर्णांक i;
+static unsigned long
+ptrace_get_syscall_info_entry(struct task_struct *child, struct pt_regs *regs,
+			      struct ptrace_syscall_info *info)
+{
+	unsigned long args[ARRAY_SIZE(info->entry.args)];
+	int i;
 
 	info->op = PTRACE_SYSCALL_INFO_ENTRY;
 	info->entry.nr = syscall_get_nr(child, regs);
 	syscall_get_arguments(child, regs, args);
-	क्रम (i = 0; i < ARRAY_SIZE(args); i++)
+	for (i = 0; i < ARRAY_SIZE(args); i++)
 		info->entry.args[i] = args[i];
 
-	/* args is the last field in काष्ठा ptrace_syscall_info.entry */
-	वापस दुरत्वend(काष्ठा ptrace_syscall_info, entry.args);
-पूर्ण
+	/* args is the last field in struct ptrace_syscall_info.entry */
+	return offsetofend(struct ptrace_syscall_info, entry.args);
+}
 
-अटल अचिन्हित दीर्घ
-ptrace_get_syscall_info_seccomp(काष्ठा task_काष्ठा *child, काष्ठा pt_regs *regs,
-				काष्ठा ptrace_syscall_info *info)
-अणु
+static unsigned long
+ptrace_get_syscall_info_seccomp(struct task_struct *child, struct pt_regs *regs,
+				struct ptrace_syscall_info *info)
+{
 	/*
-	 * As काष्ठा ptrace_syscall_info.entry is currently a subset
-	 * of काष्ठा ptrace_syscall_info.seccomp, it makes sense to
+	 * As struct ptrace_syscall_info.entry is currently a subset
+	 * of struct ptrace_syscall_info.seccomp, it makes sense to
 	 * initialize that subset using ptrace_get_syscall_info_entry().
-	 * This can be reconsidered in the future अगर these काष्ठाures
-	 * भागerge signअगरicantly enough.
+	 * This can be reconsidered in the future if these structures
+	 * diverge significantly enough.
 	 */
 	ptrace_get_syscall_info_entry(child, regs, info);
 	info->op = PTRACE_SYSCALL_INFO_SECCOMP;
 	info->seccomp.ret_data = child->ptrace_message;
 
-	/* ret_data is the last field in काष्ठा ptrace_syscall_info.seccomp */
-	वापस दुरत्वend(काष्ठा ptrace_syscall_info, seccomp.ret_data);
-पूर्ण
+	/* ret_data is the last field in struct ptrace_syscall_info.seccomp */
+	return offsetofend(struct ptrace_syscall_info, seccomp.ret_data);
+}
 
-अटल अचिन्हित दीर्घ
-ptrace_get_syscall_info_निकास(काष्ठा task_काष्ठा *child, काष्ठा pt_regs *regs,
-			     काष्ठा ptrace_syscall_info *info)
-अणु
+static unsigned long
+ptrace_get_syscall_info_exit(struct task_struct *child, struct pt_regs *regs,
+			     struct ptrace_syscall_info *info)
+{
 	info->op = PTRACE_SYSCALL_INFO_EXIT;
-	info->निकास.rval = syscall_get_error(child, regs);
-	info->निकास.is_error = !!info->निकास.rval;
-	अगर (!info->निकास.is_error)
-		info->निकास.rval = syscall_get_वापस_value(child, regs);
+	info->exit.rval = syscall_get_error(child, regs);
+	info->exit.is_error = !!info->exit.rval;
+	if (!info->exit.is_error)
+		info->exit.rval = syscall_get_return_value(child, regs);
 
-	/* is_error is the last field in काष्ठा ptrace_syscall_info.निकास */
-	वापस दुरत्वend(काष्ठा ptrace_syscall_info, निकास.is_error);
-पूर्ण
+	/* is_error is the last field in struct ptrace_syscall_info.exit */
+	return offsetofend(struct ptrace_syscall_info, exit.is_error);
+}
 
-अटल पूर्णांक
-ptrace_get_syscall_info(काष्ठा task_काष्ठा *child, अचिन्हित दीर्घ user_size,
-			व्योम __user *datavp)
-अणु
-	काष्ठा pt_regs *regs = task_pt_regs(child);
-	काष्ठा ptrace_syscall_info info = अणु
+static int
+ptrace_get_syscall_info(struct task_struct *child, unsigned long user_size,
+			void __user *datavp)
+{
+	struct pt_regs *regs = task_pt_regs(child);
+	struct ptrace_syscall_info info = {
 		.op = PTRACE_SYSCALL_INFO_NONE,
 		.arch = syscall_get_arch(child),
-		.inकाष्ठाion_poपूर्णांकer = inकाष्ठाion_poपूर्णांकer(regs),
-		.stack_poपूर्णांकer = user_stack_poपूर्णांकer(regs),
-	पूर्ण;
-	अचिन्हित दीर्घ actual_size = दुरत्व(काष्ठा ptrace_syscall_info, entry);
-	अचिन्हित दीर्घ ग_लिखो_size;
+		.instruction_pointer = instruction_pointer(regs),
+		.stack_pointer = user_stack_pointer(regs),
+	};
+	unsigned long actual_size = offsetof(struct ptrace_syscall_info, entry);
+	unsigned long write_size;
 
 	/*
-	 * This करोes not need lock_task_sighand() to access
-	 * child->last_siginfo because ptrace_मुक्तze_traced()
+	 * This does not need lock_task_sighand() to access
+	 * child->last_siginfo because ptrace_freeze_traced()
 	 * called earlier by ptrace_check_attach() ensures that
 	 * the tracee cannot go away and clear its last_siginfo.
 	 */
-	चयन (child->last_siginfo ? child->last_siginfo->si_code : 0) अणु
-	हाल SIGTRAP | 0x80:
-		चयन (child->ptrace_message) अणु
-		हाल PTRACE_EVENTMSG_SYSCALL_ENTRY:
+	switch (child->last_siginfo ? child->last_siginfo->si_code : 0) {
+	case SIGTRAP | 0x80:
+		switch (child->ptrace_message) {
+		case PTRACE_EVENTMSG_SYSCALL_ENTRY:
 			actual_size = ptrace_get_syscall_info_entry(child, regs,
 								    &info);
-			अवरोध;
-		हाल PTRACE_EVENTMSG_SYSCALL_EXIT:
-			actual_size = ptrace_get_syscall_info_निकास(child, regs,
+			break;
+		case PTRACE_EVENTMSG_SYSCALL_EXIT:
+			actual_size = ptrace_get_syscall_info_exit(child, regs,
 								   &info);
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल SIGTRAP | (PTRACE_EVENT_SECCOMP << 8):
+			break;
+		}
+		break;
+	case SIGTRAP | (PTRACE_EVENT_SECCOMP << 8):
 		actual_size = ptrace_get_syscall_info_seccomp(child, regs,
 							      &info);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	ग_लिखो_size = min(actual_size, user_size);
-	वापस copy_to_user(datavp, &info, ग_लिखो_size) ? -EFAULT : actual_size;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_HAVE_ARCH_TRACEHOOK */
+	write_size = min(actual_size, user_size);
+	return copy_to_user(datavp, &info, write_size) ? -EFAULT : actual_size;
+}
+#endif /* CONFIG_HAVE_ARCH_TRACEHOOK */
 
-पूर्णांक ptrace_request(काष्ठा task_काष्ठा *child, दीर्घ request,
-		   अचिन्हित दीर्घ addr, अचिन्हित दीर्घ data)
-अणु
+int ptrace_request(struct task_struct *child, long request,
+		   unsigned long addr, unsigned long data)
+{
 	bool seized = child->ptrace & PT_SEIZED;
-	पूर्णांक ret = -EIO;
+	int ret = -EIO;
 	kernel_siginfo_t siginfo, *si;
-	व्योम __user *datavp = (व्योम __user *) data;
-	अचिन्हित दीर्घ __user *datalp = datavp;
-	अचिन्हित दीर्घ flags;
+	void __user *datavp = (void __user *) data;
+	unsigned long __user *datalp = datavp;
+	unsigned long flags;
 
-	चयन (request) अणु
-	हाल PTRACE_PEEKTEXT:
-	हाल PTRACE_PEEKDATA:
-		वापस generic_ptrace_peekdata(child, addr, data);
-	हाल PTRACE_POKETEXT:
-	हाल PTRACE_POKEDATA:
-		वापस generic_ptrace_pokedata(child, addr, data);
+	switch (request) {
+	case PTRACE_PEEKTEXT:
+	case PTRACE_PEEKDATA:
+		return generic_ptrace_peekdata(child, addr, data);
+	case PTRACE_POKETEXT:
+	case PTRACE_POKEDATA:
+		return generic_ptrace_pokedata(child, addr, data);
 
-#अगर_घोषित PTRACE_OLDSETOPTIONS
-	हाल PTRACE_OLDSETOPTIONS:
-#पूर्ण_अगर
-	हाल PTRACE_SETOPTIONS:
+#ifdef PTRACE_OLDSETOPTIONS
+	case PTRACE_OLDSETOPTIONS:
+#endif
+	case PTRACE_SETOPTIONS:
 		ret = ptrace_setoptions(child, data);
-		अवरोध;
-	हाल PTRACE_GETEVENTMSG:
+		break;
+	case PTRACE_GETEVENTMSG:
 		ret = put_user(child->ptrace_message, datalp);
-		अवरोध;
+		break;
 
-	हाल PTRACE_PEEKSIGINFO:
+	case PTRACE_PEEKSIGINFO:
 		ret = ptrace_peek_siginfo(child, addr, data);
-		अवरोध;
+		break;
 
-	हाल PTRACE_GETSIGINFO:
-		ret = ptrace_माला_लोiginfo(child, &siginfo);
-		अगर (!ret)
+	case PTRACE_GETSIGINFO:
+		ret = ptrace_getsiginfo(child, &siginfo);
+		if (!ret)
 			ret = copy_siginfo_to_user(datavp, &siginfo);
-		अवरोध;
+		break;
 
-	हाल PTRACE_SETSIGINFO:
+	case PTRACE_SETSIGINFO:
 		ret = copy_siginfo_from_user(&siginfo, datavp);
-		अगर (!ret)
+		if (!ret)
 			ret = ptrace_setsiginfo(child, &siginfo);
-		अवरोध;
+		break;
 
-	हाल PTRACE_GETSIGMASK: अणु
+	case PTRACE_GETSIGMASK: {
 		sigset_t *mask;
 
-		अगर (addr != माप(sigset_t)) अणु
+		if (addr != sizeof(sigset_t)) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (test_tsk_restore_sigmask(child))
+		if (test_tsk_restore_sigmask(child))
 			mask = &child->saved_sigmask;
-		अन्यथा
+		else
 			mask = &child->blocked;
 
-		अगर (copy_to_user(datavp, mask, माप(sigset_t)))
+		if (copy_to_user(datavp, mask, sizeof(sigset_t)))
 			ret = -EFAULT;
-		अन्यथा
+		else
 			ret = 0;
 
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	हाल PTRACE_SETSIGMASK: अणु
+	case PTRACE_SETSIGMASK: {
 		sigset_t new_set;
 
-		अगर (addr != माप(sigset_t)) अणु
+		if (addr != sizeof(sigset_t)) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (copy_from_user(&new_set, datavp, माप(sigset_t))) अणु
+		if (copy_from_user(&new_set, datavp, sizeof(sigset_t))) {
 			ret = -EFAULT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		sigdअन्यथापंचांगask(&new_set, sigmask(SIGKILL)|sigmask(SIGSTOP));
+		sigdelsetmask(&new_set, sigmask(SIGKILL)|sigmask(SIGSTOP));
 
 		/*
-		 * Every thपढ़ो करोes recalc_संक_बाकी() after resume, so
-		 * retarget_shared_pending() and recalc_संक_बाकी() are not
+		 * Every thread does recalc_sigpending() after resume, so
+		 * retarget_shared_pending() and recalc_sigpending() are not
 		 * called here.
 		 */
 		spin_lock_irq(&child->sighand->siglock);
@@ -1121,346 +1120,346 @@ ptrace_get_syscall_info(काष्ठा task_काष्ठा *child, अ�
 		clear_tsk_restore_sigmask(child);
 
 		ret = 0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	हाल PTRACE_INTERRUPT:
+	case PTRACE_INTERRUPT:
 		/*
-		 * Stop tracee without any side-effect on संकेत or job
+		 * Stop tracee without any side-effect on signal or job
 		 * control.  At least one trap is guaranteed to happen
-		 * after this request.  If @child is alपढ़ोy trapped, the
+		 * after this request.  If @child is already trapped, the
 		 * current trap is not disturbed and another trap will
 		 * happen after the current trap is ended with PTRACE_CONT.
 		 *
 		 * The actual trap might not be PTRACE_EVENT_STOP trap but
 		 * the pending condition is cleared regardless.
 		 */
-		अगर (unlikely(!seized || !lock_task_sighand(child, &flags)))
-			अवरोध;
+		if (unlikely(!seized || !lock_task_sighand(child, &flags)))
+			break;
 
 		/*
-		 * INTERRUPT करोesn't disturb existing trap sans one
-		 * exception.  If ptracer issued LISTEN क्रम the current
+		 * INTERRUPT doesn't disturb existing trap sans one
+		 * exception.  If ptracer issued LISTEN for the current
 		 * STOP, this INTERRUPT should clear LISTEN and re-trap
-		 * tracee पूर्णांकo STOP.
+		 * tracee into STOP.
 		 */
-		अगर (likely(task_set_jobctl_pending(child, JOBCTL_TRAP_STOP)))
-			ptrace_संकेत_wake_up(child, child->jobctl & JOBCTL_LISTENING);
+		if (likely(task_set_jobctl_pending(child, JOBCTL_TRAP_STOP)))
+			ptrace_signal_wake_up(child, child->jobctl & JOBCTL_LISTENING);
 
 		unlock_task_sighand(child, &flags);
 		ret = 0;
-		अवरोध;
+		break;
 
-	हाल PTRACE_LISTEN:
+	case PTRACE_LISTEN:
 		/*
-		 * Listen क्रम events.  Tracee must be in STOP.  It's not
+		 * Listen for events.  Tracee must be in STOP.  It's not
 		 * resumed per-se but is not considered to be in TRACED by
-		 * रुको(2) or ptrace(2).  If an async event (e.g. group
+		 * wait(2) or ptrace(2).  If an async event (e.g. group
 		 * stop state change) happens, tracee will enter STOP trap
 		 * again.  Alternatively, ptracer can issue INTERRUPT to
-		 * finish listening and re-trap tracee पूर्णांकo STOP.
+		 * finish listening and re-trap tracee into STOP.
 		 */
-		अगर (unlikely(!seized || !lock_task_sighand(child, &flags)))
-			अवरोध;
+		if (unlikely(!seized || !lock_task_sighand(child, &flags)))
+			break;
 
 		si = child->last_siginfo;
-		अगर (likely(si && (si->si_code >> 8) == PTRACE_EVENT_STOP)) अणु
+		if (likely(si && (si->si_code >> 8) == PTRACE_EVENT_STOP)) {
 			child->jobctl |= JOBCTL_LISTENING;
 			/*
 			 * If NOTIFY is set, it means event happened between
 			 * start of this trap and now.  Trigger re-trap.
 			 */
-			अगर (child->jobctl & JOBCTL_TRAP_NOTIFY)
-				ptrace_संकेत_wake_up(child, true);
+			if (child->jobctl & JOBCTL_TRAP_NOTIFY)
+				ptrace_signal_wake_up(child, true);
 			ret = 0;
-		पूर्ण
+		}
 		unlock_task_sighand(child, &flags);
-		अवरोध;
+		break;
 
-	हाल PTRACE_DETACH:	 /* detach a process that was attached. */
+	case PTRACE_DETACH:	 /* detach a process that was attached. */
 		ret = ptrace_detach(child, data);
-		अवरोध;
+		break;
 
-#अगर_घोषित CONFIG_BINFMT_ELF_FDPIC
-	हाल PTRACE_GETFDPIC: अणु
-		काष्ठा mm_काष्ठा *mm = get_task_mm(child);
-		अचिन्हित दीर्घ पंचांगp = 0;
+#ifdef CONFIG_BINFMT_ELF_FDPIC
+	case PTRACE_GETFDPIC: {
+		struct mm_struct *mm = get_task_mm(child);
+		unsigned long tmp = 0;
 
 		ret = -ESRCH;
-		अगर (!mm)
-			अवरोध;
+		if (!mm)
+			break;
 
-		चयन (addr) अणु
-		हाल PTRACE_GETFDPIC_EXEC:
-			पंचांगp = mm->context.exec_fdpic_loadmap;
-			अवरोध;
-		हाल PTRACE_GETFDPIC_INTERP:
-			पंचांगp = mm->context.पूर्णांकerp_fdpic_loadmap;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
+		switch (addr) {
+		case PTRACE_GETFDPIC_EXEC:
+			tmp = mm->context.exec_fdpic_loadmap;
+			break;
+		case PTRACE_GETFDPIC_INTERP:
+			tmp = mm->context.interp_fdpic_loadmap;
+			break;
+		default:
+			break;
+		}
 		mmput(mm);
 
-		ret = put_user(पंचांगp, datalp);
-		अवरोध;
-	पूर्ण
-#पूर्ण_अगर
+		ret = put_user(tmp, datalp);
+		break;
+	}
+#endif
 
-#अगर_घोषित PTRACE_SINGLESTEP
-	हाल PTRACE_SINGLESTEP:
-#पूर्ण_अगर
-#अगर_घोषित PTRACE_SINGLEBLOCK
-	हाल PTRACE_SINGLEBLOCK:
-#पूर्ण_अगर
-#अगर_घोषित PTRACE_SYSEMU
-	हाल PTRACE_SYSEMU:
-	हाल PTRACE_SYSEMU_SINGLESTEP:
-#पूर्ण_अगर
-	हाल PTRACE_SYSCALL:
-	हाल PTRACE_CONT:
-		वापस ptrace_resume(child, request, data);
+#ifdef PTRACE_SINGLESTEP
+	case PTRACE_SINGLESTEP:
+#endif
+#ifdef PTRACE_SINGLEBLOCK
+	case PTRACE_SINGLEBLOCK:
+#endif
+#ifdef PTRACE_SYSEMU
+	case PTRACE_SYSEMU:
+	case PTRACE_SYSEMU_SINGLESTEP:
+#endif
+	case PTRACE_SYSCALL:
+	case PTRACE_CONT:
+		return ptrace_resume(child, request, data);
 
-	हाल PTRACE_KILL:
-		अगर (child->निकास_state)	/* alपढ़ोy dead */
-			वापस 0;
-		वापस ptrace_resume(child, request, SIGKILL);
+	case PTRACE_KILL:
+		if (child->exit_state)	/* already dead */
+			return 0;
+		return ptrace_resume(child, request, SIGKILL);
 
-#अगर_घोषित CONFIG_HAVE_ARCH_TRACEHOOK
-	हाल PTRACE_GETREGSET:
-	हाल PTRACE_SETREGSET: अणु
-		काष्ठा iovec kiov;
-		काष्ठा iovec __user *uiov = datavp;
+#ifdef CONFIG_HAVE_ARCH_TRACEHOOK
+	case PTRACE_GETREGSET:
+	case PTRACE_SETREGSET: {
+		struct iovec kiov;
+		struct iovec __user *uiov = datavp;
 
-		अगर (!access_ok(uiov, माप(*uiov)))
-			वापस -EFAULT;
+		if (!access_ok(uiov, sizeof(*uiov)))
+			return -EFAULT;
 
-		अगर (__get_user(kiov.iov_base, &uiov->iov_base) ||
+		if (__get_user(kiov.iov_base, &uiov->iov_base) ||
 		    __get_user(kiov.iov_len, &uiov->iov_len))
-			वापस -EFAULT;
+			return -EFAULT;
 
 		ret = ptrace_regset(child, request, addr, &kiov);
-		अगर (!ret)
+		if (!ret)
 			ret = __put_user(kiov.iov_len, &uiov->iov_len);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	हाल PTRACE_GET_SYSCALL_INFO:
+	case PTRACE_GET_SYSCALL_INFO:
 		ret = ptrace_get_syscall_info(child, addr, datavp);
-		अवरोध;
-#पूर्ण_अगर
+		break;
+#endif
 
-	हाल PTRACE_SECCOMP_GET_FILTER:
+	case PTRACE_SECCOMP_GET_FILTER:
 		ret = seccomp_get_filter(child, addr, datavp);
-		अवरोध;
+		break;
 
-	हाल PTRACE_SECCOMP_GET_METADATA:
+	case PTRACE_SECCOMP_GET_METADATA:
 		ret = seccomp_get_metadata(child, addr, datavp);
-		अवरोध;
+		break;
 
-#अगर_घोषित CONFIG_RSEQ
-	हाल PTRACE_GET_RSEQ_CONFIGURATION:
+#ifdef CONFIG_RSEQ
+	case PTRACE_GET_RSEQ_CONFIGURATION:
 		ret = ptrace_get_rseq_configuration(child, addr, datavp);
-		अवरोध;
-#पूर्ण_अगर
+		break;
+#endif
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर_अघोषित arch_ptrace_attach
-#घोषणा arch_ptrace_attach(child)	करो अणु पूर्ण जबतक (0)
-#पूर्ण_अगर
+#ifndef arch_ptrace_attach
+#define arch_ptrace_attach(child)	do { } while (0)
+#endif
 
-SYSCALL_DEFINE4(ptrace, दीर्घ, request, दीर्घ, pid, अचिन्हित दीर्घ, addr,
-		अचिन्हित दीर्घ, data)
-अणु
-	काष्ठा task_काष्ठा *child;
-	दीर्घ ret;
+SYSCALL_DEFINE4(ptrace, long, request, long, pid, unsigned long, addr,
+		unsigned long, data)
+{
+	struct task_struct *child;
+	long ret;
 
-	अगर (request == PTRACE_TRACEME) अणु
+	if (request == PTRACE_TRACEME) {
 		ret = ptrace_traceme();
-		अगर (!ret)
+		if (!ret)
 			arch_ptrace_attach(current);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	child = find_get_task_by_vpid(pid);
-	अगर (!child) अणु
+	if (!child) {
 		ret = -ESRCH;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (request == PTRACE_ATTACH || request == PTRACE_SEIZE) अणु
+	if (request == PTRACE_ATTACH || request == PTRACE_SEIZE) {
 		ret = ptrace_attach(child, request, addr, data);
 		/*
-		 * Some architectures need to करो book-keeping after
+		 * Some architectures need to do book-keeping after
 		 * a ptrace attach.
 		 */
-		अगर (!ret)
+		if (!ret)
 			arch_ptrace_attach(child);
-		जाओ out_put_task_काष्ठा;
-	पूर्ण
+		goto out_put_task_struct;
+	}
 
 	ret = ptrace_check_attach(child, request == PTRACE_KILL ||
 				  request == PTRACE_INTERRUPT);
-	अगर (ret < 0)
-		जाओ out_put_task_काष्ठा;
+	if (ret < 0)
+		goto out_put_task_struct;
 
 	ret = arch_ptrace(child, request, addr, data);
-	अगर (ret || request != PTRACE_DETACH)
-		ptrace_unमुक्तze_traced(child);
+	if (ret || request != PTRACE_DETACH)
+		ptrace_unfreeze_traced(child);
 
- out_put_task_काष्ठा:
-	put_task_काष्ठा(child);
+ out_put_task_struct:
+	put_task_struct(child);
  out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक generic_ptrace_peekdata(काष्ठा task_काष्ठा *tsk, अचिन्हित दीर्घ addr,
-			    अचिन्हित दीर्घ data)
-अणु
-	अचिन्हित दीर्घ पंचांगp;
-	पूर्णांक copied;
+int generic_ptrace_peekdata(struct task_struct *tsk, unsigned long addr,
+			    unsigned long data)
+{
+	unsigned long tmp;
+	int copied;
 
-	copied = ptrace_access_vm(tsk, addr, &पंचांगp, माप(पंचांगp), FOLL_FORCE);
-	अगर (copied != माप(पंचांगp))
-		वापस -EIO;
-	वापस put_user(पंचांगp, (अचिन्हित दीर्घ __user *)data);
-पूर्ण
+	copied = ptrace_access_vm(tsk, addr, &tmp, sizeof(tmp), FOLL_FORCE);
+	if (copied != sizeof(tmp))
+		return -EIO;
+	return put_user(tmp, (unsigned long __user *)data);
+}
 
-पूर्णांक generic_ptrace_pokedata(काष्ठा task_काष्ठा *tsk, अचिन्हित दीर्घ addr,
-			    अचिन्हित दीर्घ data)
-अणु
-	पूर्णांक copied;
+int generic_ptrace_pokedata(struct task_struct *tsk, unsigned long addr,
+			    unsigned long data)
+{
+	int copied;
 
-	copied = ptrace_access_vm(tsk, addr, &data, माप(data),
+	copied = ptrace_access_vm(tsk, addr, &data, sizeof(data),
 			FOLL_FORCE | FOLL_WRITE);
-	वापस (copied == माप(data)) ? 0 : -EIO;
-पूर्ण
+	return (copied == sizeof(data)) ? 0 : -EIO;
+}
 
-#अगर defined CONFIG_COMPAT
+#if defined CONFIG_COMPAT
 
-पूर्णांक compat_ptrace_request(काष्ठा task_काष्ठा *child, compat_दीर्घ_t request,
-			  compat_uदीर्घ_t addr, compat_uदीर्घ_t data)
-अणु
-	compat_uदीर्घ_t __user *datap = compat_ptr(data);
-	compat_uदीर्घ_t word;
+int compat_ptrace_request(struct task_struct *child, compat_long_t request,
+			  compat_ulong_t addr, compat_ulong_t data)
+{
+	compat_ulong_t __user *datap = compat_ptr(data);
+	compat_ulong_t word;
 	kernel_siginfo_t siginfo;
-	पूर्णांक ret;
+	int ret;
 
-	चयन (request) अणु
-	हाल PTRACE_PEEKTEXT:
-	हाल PTRACE_PEEKDATA:
-		ret = ptrace_access_vm(child, addr, &word, माप(word),
+	switch (request) {
+	case PTRACE_PEEKTEXT:
+	case PTRACE_PEEKDATA:
+		ret = ptrace_access_vm(child, addr, &word, sizeof(word),
 				FOLL_FORCE);
-		अगर (ret != माप(word))
+		if (ret != sizeof(word))
 			ret = -EIO;
-		अन्यथा
+		else
 			ret = put_user(word, datap);
-		अवरोध;
+		break;
 
-	हाल PTRACE_POKETEXT:
-	हाल PTRACE_POKEDATA:
-		ret = ptrace_access_vm(child, addr, &data, माप(data),
+	case PTRACE_POKETEXT:
+	case PTRACE_POKEDATA:
+		ret = ptrace_access_vm(child, addr, &data, sizeof(data),
 				FOLL_FORCE | FOLL_WRITE);
-		ret = (ret != माप(data) ? -EIO : 0);
-		अवरोध;
+		ret = (ret != sizeof(data) ? -EIO : 0);
+		break;
 
-	हाल PTRACE_GETEVENTMSG:
-		ret = put_user((compat_uदीर्घ_t) child->ptrace_message, datap);
-		अवरोध;
+	case PTRACE_GETEVENTMSG:
+		ret = put_user((compat_ulong_t) child->ptrace_message, datap);
+		break;
 
-	हाल PTRACE_GETSIGINFO:
-		ret = ptrace_माला_लोiginfo(child, &siginfo);
-		अगर (!ret)
+	case PTRACE_GETSIGINFO:
+		ret = ptrace_getsiginfo(child, &siginfo);
+		if (!ret)
 			ret = copy_siginfo_to_user32(
-				(काष्ठा compat_siginfo __user *) datap,
+				(struct compat_siginfo __user *) datap,
 				&siginfo);
-		अवरोध;
+		break;
 
-	हाल PTRACE_SETSIGINFO:
+	case PTRACE_SETSIGINFO:
 		ret = copy_siginfo_from_user32(
-			&siginfo, (काष्ठा compat_siginfo __user *) datap);
-		अगर (!ret)
+			&siginfo, (struct compat_siginfo __user *) datap);
+		if (!ret)
 			ret = ptrace_setsiginfo(child, &siginfo);
-		अवरोध;
-#अगर_घोषित CONFIG_HAVE_ARCH_TRACEHOOK
-	हाल PTRACE_GETREGSET:
-	हाल PTRACE_SETREGSET:
-	अणु
-		काष्ठा iovec kiov;
-		काष्ठा compat_iovec __user *uiov =
-			(काष्ठा compat_iovec __user *) datap;
+		break;
+#ifdef CONFIG_HAVE_ARCH_TRACEHOOK
+	case PTRACE_GETREGSET:
+	case PTRACE_SETREGSET:
+	{
+		struct iovec kiov;
+		struct compat_iovec __user *uiov =
+			(struct compat_iovec __user *) datap;
 		compat_uptr_t ptr;
-		compat_माप_प्रकार len;
+		compat_size_t len;
 
-		अगर (!access_ok(uiov, माप(*uiov)))
-			वापस -EFAULT;
+		if (!access_ok(uiov, sizeof(*uiov)))
+			return -EFAULT;
 
-		अगर (__get_user(ptr, &uiov->iov_base) ||
+		if (__get_user(ptr, &uiov->iov_base) ||
 		    __get_user(len, &uiov->iov_len))
-			वापस -EFAULT;
+			return -EFAULT;
 
 		kiov.iov_base = compat_ptr(ptr);
 		kiov.iov_len = len;
 
 		ret = ptrace_regset(child, request, addr, &kiov);
-		अगर (!ret)
+		if (!ret)
 			ret = __put_user(kiov.iov_len, &uiov->iov_len);
-		अवरोध;
-	पूर्ण
-#पूर्ण_अगर
+		break;
+	}
+#endif
 
-	शेष:
+	default:
 		ret = ptrace_request(child, request, addr, data);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-COMPAT_SYSCALL_DEFINE4(ptrace, compat_दीर्घ_t, request, compat_दीर्घ_t, pid,
-		       compat_दीर्घ_t, addr, compat_दीर्घ_t, data)
-अणु
-	काष्ठा task_काष्ठा *child;
-	दीर्घ ret;
+COMPAT_SYSCALL_DEFINE4(ptrace, compat_long_t, request, compat_long_t, pid,
+		       compat_long_t, addr, compat_long_t, data)
+{
+	struct task_struct *child;
+	long ret;
 
-	अगर (request == PTRACE_TRACEME) अणु
+	if (request == PTRACE_TRACEME) {
 		ret = ptrace_traceme();
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	child = find_get_task_by_vpid(pid);
-	अगर (!child) अणु
+	if (!child) {
 		ret = -ESRCH;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (request == PTRACE_ATTACH || request == PTRACE_SEIZE) अणु
+	if (request == PTRACE_ATTACH || request == PTRACE_SEIZE) {
 		ret = ptrace_attach(child, request, addr, data);
 		/*
-		 * Some architectures need to करो book-keeping after
+		 * Some architectures need to do book-keeping after
 		 * a ptrace attach.
 		 */
-		अगर (!ret)
+		if (!ret)
 			arch_ptrace_attach(child);
-		जाओ out_put_task_काष्ठा;
-	पूर्ण
+		goto out_put_task_struct;
+	}
 
 	ret = ptrace_check_attach(child, request == PTRACE_KILL ||
 				  request == PTRACE_INTERRUPT);
-	अगर (!ret) अणु
+	if (!ret) {
 		ret = compat_arch_ptrace(child, request, addr, data);
-		अगर (ret || request != PTRACE_DETACH)
-			ptrace_unमुक्तze_traced(child);
-	पूर्ण
+		if (ret || request != PTRACE_DETACH)
+			ptrace_unfreeze_traced(child);
+	}
 
- out_put_task_काष्ठा:
-	put_task_काष्ठा(child);
+ out_put_task_struct:
+	put_task_struct(child);
  out:
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर	/* CONFIG_COMPAT */
+	return ret;
+}
+#endif	/* CONFIG_COMPAT */

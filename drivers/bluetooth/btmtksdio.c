@@ -1,97 +1,96 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2019 MediaTek Inc.
 
 /*
- * Bluetooth support क्रम MediaTek SDIO devices
+ * Bluetooth support for MediaTek SDIO devices
  *
- * This file is written based on btsdio.c and bपंचांगtkuart.c.
+ * This file is written based on btsdio.c and btmtkuart.c.
  *
  * Author: Sean Wang <sean.wang@mediatek.com>
  *
  */
 
-#समावेश <यंत्र/unaligned.h>
-#समावेश <linux/atomic.h>
-#समावेश <linux/firmware.h>
-#समावेश <linux/init.h>
-#समावेश <linux/iopoll.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/skbuff.h>
+#include <asm/unaligned.h>
+#include <linux/atomic.h>
+#include <linux/firmware.h>
+#include <linux/init.h>
+#include <linux/iopoll.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/pm_runtime.h>
+#include <linux/skbuff.h>
 
-#समावेश <linux/mmc/host.h>
-#समावेश <linux/mmc/sdio_ids.h>
-#समावेश <linux/mmc/sdio_func.h>
+#include <linux/mmc/host.h>
+#include <linux/mmc/sdio_ids.h>
+#include <linux/mmc/sdio_func.h>
 
-#समावेश <net/bluetooth/bluetooth.h>
-#समावेश <net/bluetooth/hci_core.h>
+#include <net/bluetooth/bluetooth.h>
+#include <net/bluetooth/hci_core.h>
 
-#समावेश "h4_recv.h"
+#include "h4_recv.h"
 
-#घोषणा VERSION "0.1"
+#define VERSION "0.1"
 
-#घोषणा FIRMWARE_MT7663		"mediatek/mt7663pr2h.bin"
-#घोषणा FIRMWARE_MT7668		"mediatek/mt7668pr2h.bin"
+#define FIRMWARE_MT7663		"mediatek/mt7663pr2h.bin"
+#define FIRMWARE_MT7668		"mediatek/mt7668pr2h.bin"
 
-#घोषणा MTKBTSDIO_AUTOSUSPEND_DELAY	8000
+#define MTKBTSDIO_AUTOSUSPEND_DELAY	8000
 
-अटल bool enable_स्वतःsuspend;
+static bool enable_autosuspend;
 
-काष्ठा bपंचांगtksdio_data अणु
-	स्थिर अक्षर *fwname;
-पूर्ण;
+struct btmtksdio_data {
+	const char *fwname;
+};
 
-अटल स्थिर काष्ठा bपंचांगtksdio_data mt7663_data = अणु
+static const struct btmtksdio_data mt7663_data = {
 	.fwname = FIRMWARE_MT7663,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा bपंचांगtksdio_data mt7668_data = अणु
+static const struct btmtksdio_data mt7668_data = {
 	.fwname = FIRMWARE_MT7668,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा sdio_device_id bपंचांगtksdio_table[] = अणु
-	अणुSDIO_DEVICE(SDIO_VENDOR_ID_MEDIATEK, SDIO_DEVICE_ID_MEDIATEK_MT7663),
-	 .driver_data = (kernel_uदीर्घ_t)&mt7663_data पूर्ण,
-	अणुSDIO_DEVICE(SDIO_VENDOR_ID_MEDIATEK, SDIO_DEVICE_ID_MEDIATEK_MT7668),
-	 .driver_data = (kernel_uदीर्घ_t)&mt7668_data पूर्ण,
-	अणु पूर्ण	/* Terminating entry */
-पूर्ण;
-MODULE_DEVICE_TABLE(sdio, bपंचांगtksdio_table);
+static const struct sdio_device_id btmtksdio_table[] = {
+	{SDIO_DEVICE(SDIO_VENDOR_ID_MEDIATEK, SDIO_DEVICE_ID_MEDIATEK_MT7663),
+	 .driver_data = (kernel_ulong_t)&mt7663_data },
+	{SDIO_DEVICE(SDIO_VENDOR_ID_MEDIATEK, SDIO_DEVICE_ID_MEDIATEK_MT7668),
+	 .driver_data = (kernel_ulong_t)&mt7668_data },
+	{ }	/* Terminating entry */
+};
+MODULE_DEVICE_TABLE(sdio, btmtksdio_table);
 
-#घोषणा MTK_REG_CHLPCR		0x4	/* W1S */
-#घोषणा C_INT_EN_SET		BIT(0)
-#घोषणा C_INT_EN_CLR		BIT(1)
-#घोषणा C_FW_OWN_REQ_SET	BIT(8)  /* For ग_लिखो */
-#घोषणा C_COM_DRV_OWN		BIT(8)  /* For पढ़ो */
-#घोषणा C_FW_OWN_REQ_CLR	BIT(9)
+#define MTK_REG_CHLPCR		0x4	/* W1S */
+#define C_INT_EN_SET		BIT(0)
+#define C_INT_EN_CLR		BIT(1)
+#define C_FW_OWN_REQ_SET	BIT(8)  /* For write */
+#define C_COM_DRV_OWN		BIT(8)  /* For read */
+#define C_FW_OWN_REQ_CLR	BIT(9)
 
-#घोषणा MTK_REG_CSDIOCSR	0x8
-#घोषणा SDIO_RE_INIT_EN		BIT(0)
-#घोषणा SDIO_INT_CTL		BIT(2)
+#define MTK_REG_CSDIOCSR	0x8
+#define SDIO_RE_INIT_EN		BIT(0)
+#define SDIO_INT_CTL		BIT(2)
 
-#घोषणा MTK_REG_CHCR		0xc
-#घोषणा C_INT_CLR_CTRL		BIT(1)
+#define MTK_REG_CHCR		0xc
+#define C_INT_CLR_CTRL		BIT(1)
 
 /* CHISR have the same bits field definition with CHIER */
-#घोषणा MTK_REG_CHISR		0x10
-#घोषणा MTK_REG_CHIER		0x14
-#घोषणा FW_OWN_BACK_INT		BIT(0)
-#घोषणा RX_DONE_INT		BIT(1)
-#घोषणा TX_EMPTY		BIT(2)
-#घोषणा TX_FIFO_OVERFLOW	BIT(8)
-#घोषणा RX_PKT_LEN		GENMASK(31, 16)
+#define MTK_REG_CHISR		0x10
+#define MTK_REG_CHIER		0x14
+#define FW_OWN_BACK_INT		BIT(0)
+#define RX_DONE_INT		BIT(1)
+#define TX_EMPTY		BIT(2)
+#define TX_FIFO_OVERFLOW	BIT(8)
+#define RX_PKT_LEN		GENMASK(31, 16)
 
-#घोषणा MTK_REG_CTDR		0x18
+#define MTK_REG_CTDR		0x18
 
-#घोषणा MTK_REG_CRDR		0x1c
+#define MTK_REG_CRDR		0x1c
 
-#घोषणा MTK_SDIO_BLOCK_SIZE	256
+#define MTK_SDIO_BLOCK_SIZE	256
 
-#घोषणा BTMTKSDIO_TX_WAIT_VND_EVT	1
+#define BTMTKSDIO_TX_WAIT_VND_EVT	1
 
-क्रमागत अणु
+enum {
 	MTK_WMT_PATCH_DWNLD = 0x1,
 	MTK_WMT_TEST = 0x2,
 	MTK_WMT_WAKEUP = 0x3,
@@ -99,368 +98,368 @@ MODULE_DEVICE_TABLE(sdio, bपंचांगtksdio_table);
 	MTK_WMT_FUNC_CTRL = 0x6,
 	MTK_WMT_RST = 0x7,
 	MTK_WMT_SEMAPHORE = 0x17,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	BTMTK_WMT_INVALID,
 	BTMTK_WMT_PATCH_UNDONE,
 	BTMTK_WMT_PATCH_DONE,
 	BTMTK_WMT_ON_UNDONE,
 	BTMTK_WMT_ON_DONE,
 	BTMTK_WMT_ON_PROGRESS,
-पूर्ण;
+};
 
-काष्ठा mtkbtsdio_hdr अणु
+struct mtkbtsdio_hdr {
 	__le16	len;
 	__le16	reserved;
 	u8	bt_type;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा mtk_wmt_hdr अणु
+struct mtk_wmt_hdr {
 	u8	dir;
 	u8	op;
 	__le16	dlen;
 	u8	flag;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा mtk_hci_wmt_cmd अणु
-	काष्ठा mtk_wmt_hdr hdr;
+struct mtk_hci_wmt_cmd {
+	struct mtk_wmt_hdr hdr;
 	u8 data[256];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा bपंचांगtk_hci_wmt_evt अणु
-	काष्ठा hci_event_hdr hhdr;
-	काष्ठा mtk_wmt_hdr whdr;
-पूर्ण __packed;
+struct btmtk_hci_wmt_evt {
+	struct hci_event_hdr hhdr;
+	struct mtk_wmt_hdr whdr;
+} __packed;
 
-काष्ठा bपंचांगtk_hci_wmt_evt_funcc अणु
-	काष्ठा bपंचांगtk_hci_wmt_evt hwhdr;
+struct btmtk_hci_wmt_evt_funcc {
+	struct btmtk_hci_wmt_evt hwhdr;
 	__be16 status;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा bपंचांगtk_tci_sleep अणु
+struct btmtk_tci_sleep {
 	u8 mode;
 	__le16 duration;
 	__le16 host_duration;
 	u8 host_wakeup_pin;
-	u8 समय_compensation;
-पूर्ण __packed;
+	u8 time_compensation;
+} __packed;
 
-काष्ठा bपंचांगtk_hci_wmt_params अणु
+struct btmtk_hci_wmt_params {
 	u8 op;
 	u8 flag;
 	u16 dlen;
-	स्थिर व्योम *data;
+	const void *data;
 	u32 *status;
-पूर्ण;
+};
 
-काष्ठा bपंचांगtksdio_dev अणु
-	काष्ठा hci_dev *hdev;
-	काष्ठा sdio_func *func;
-	काष्ठा device *dev;
+struct btmtksdio_dev {
+	struct hci_dev *hdev;
+	struct sdio_func *func;
+	struct device *dev;
 
-	काष्ठा work_काष्ठा tx_work;
-	अचिन्हित दीर्घ tx_state;
-	काष्ठा sk_buff_head txq;
+	struct work_struct tx_work;
+	unsigned long tx_state;
+	struct sk_buff_head txq;
 
-	काष्ठा sk_buff *evt_skb;
+	struct sk_buff *evt_skb;
 
-	स्थिर काष्ठा bपंचांगtksdio_data *data;
-पूर्ण;
+	const struct btmtksdio_data *data;
+};
 
-अटल पूर्णांक mtk_hci_wmt_sync(काष्ठा hci_dev *hdev,
-			    काष्ठा bपंचांगtk_hci_wmt_params *wmt_params)
-अणु
-	काष्ठा bपंचांगtksdio_dev *bdev = hci_get_drvdata(hdev);
-	काष्ठा bपंचांगtk_hci_wmt_evt_funcc *wmt_evt_funcc;
+static int mtk_hci_wmt_sync(struct hci_dev *hdev,
+			    struct btmtk_hci_wmt_params *wmt_params)
+{
+	struct btmtksdio_dev *bdev = hci_get_drvdata(hdev);
+	struct btmtk_hci_wmt_evt_funcc *wmt_evt_funcc;
 	u32 hlen, status = BTMTK_WMT_INVALID;
-	काष्ठा bपंचांगtk_hci_wmt_evt *wmt_evt;
-	काष्ठा mtk_hci_wmt_cmd wc;
-	काष्ठा mtk_wmt_hdr *hdr;
-	पूर्णांक err;
+	struct btmtk_hci_wmt_evt *wmt_evt;
+	struct mtk_hci_wmt_cmd wc;
+	struct mtk_wmt_hdr *hdr;
+	int err;
 
-	hlen = माप(*hdr) + wmt_params->dlen;
-	अगर (hlen > 255)
-		वापस -EINVAL;
+	hlen = sizeof(*hdr) + wmt_params->dlen;
+	if (hlen > 255)
+		return -EINVAL;
 
-	hdr = (काष्ठा mtk_wmt_hdr *)&wc;
+	hdr = (struct mtk_wmt_hdr *)&wc;
 	hdr->dir = 1;
 	hdr->op = wmt_params->op;
 	hdr->dlen = cpu_to_le16(wmt_params->dlen + 1);
 	hdr->flag = wmt_params->flag;
-	स_नकल(wc.data, wmt_params->data, wmt_params->dlen);
+	memcpy(wc.data, wmt_params->data, wmt_params->dlen);
 
 	set_bit(BTMTKSDIO_TX_WAIT_VND_EVT, &bdev->tx_state);
 
 	err = __hci_cmd_send(hdev, 0xfc6f, hlen, &wc);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		clear_bit(BTMTKSDIO_TX_WAIT_VND_EVT, &bdev->tx_state);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	/* The venकरोr specअगरic WMT commands are all answered by a venकरोr
-	 * specअगरic event and will not have the Command Status or Command
+	/* The vendor specific WMT commands are all answered by a vendor
+	 * specific event and will not have the Command Status or Command
 	 * Complete as with usual HCI command flow control.
 	 *
-	 * After sending the command, रुको क्रम BTMTKSDIO_TX_WAIT_VND_EVT
-	 * state to be cleared. The driver specअगरic event receive routine
+	 * After sending the command, wait for BTMTKSDIO_TX_WAIT_VND_EVT
+	 * state to be cleared. The driver specific event receive routine
 	 * will clear that state and with that indicate completion of the
 	 * WMT command.
 	 */
-	err = रुको_on_bit_समयout(&bdev->tx_state, BTMTKSDIO_TX_WAIT_VND_EVT,
+	err = wait_on_bit_timeout(&bdev->tx_state, BTMTKSDIO_TX_WAIT_VND_EVT,
 				  TASK_INTERRUPTIBLE, HCI_INIT_TIMEOUT);
-	अगर (err == -EINTR) अणु
+	if (err == -EINTR) {
 		bt_dev_err(hdev, "Execution of wmt command interrupted");
 		clear_bit(BTMTKSDIO_TX_WAIT_VND_EVT, &bdev->tx_state);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (err) अणु
+	if (err) {
 		bt_dev_err(hdev, "Execution of wmt command timed out");
 		clear_bit(BTMTKSDIO_TX_WAIT_VND_EVT, &bdev->tx_state);
-		वापस -ETIMEDOUT;
-	पूर्ण
+		return -ETIMEDOUT;
+	}
 
-	/* Parse and handle the वापस WMT event */
-	wmt_evt = (काष्ठा bपंचांगtk_hci_wmt_evt *)bdev->evt_skb->data;
-	अगर (wmt_evt->whdr.op != hdr->op) अणु
+	/* Parse and handle the return WMT event */
+	wmt_evt = (struct btmtk_hci_wmt_evt *)bdev->evt_skb->data;
+	if (wmt_evt->whdr.op != hdr->op) {
 		bt_dev_err(hdev, "Wrong op received %d expected %d",
 			   wmt_evt->whdr.op, hdr->op);
 		err = -EIO;
-		जाओ err_मुक्त_skb;
-	पूर्ण
+		goto err_free_skb;
+	}
 
-	चयन (wmt_evt->whdr.op) अणु
-	हाल MTK_WMT_SEMAPHORE:
-		अगर (wmt_evt->whdr.flag == 2)
+	switch (wmt_evt->whdr.op) {
+	case MTK_WMT_SEMAPHORE:
+		if (wmt_evt->whdr.flag == 2)
 			status = BTMTK_WMT_PATCH_UNDONE;
-		अन्यथा
+		else
 			status = BTMTK_WMT_PATCH_DONE;
-		अवरोध;
-	हाल MTK_WMT_FUNC_CTRL:
-		wmt_evt_funcc = (काष्ठा bपंचांगtk_hci_wmt_evt_funcc *)wmt_evt;
-		अगर (be16_to_cpu(wmt_evt_funcc->status) == 0x404)
+		break;
+	case MTK_WMT_FUNC_CTRL:
+		wmt_evt_funcc = (struct btmtk_hci_wmt_evt_funcc *)wmt_evt;
+		if (be16_to_cpu(wmt_evt_funcc->status) == 0x404)
 			status = BTMTK_WMT_ON_DONE;
-		अन्यथा अगर (be16_to_cpu(wmt_evt_funcc->status) == 0x420)
+		else if (be16_to_cpu(wmt_evt_funcc->status) == 0x420)
 			status = BTMTK_WMT_ON_PROGRESS;
-		अन्यथा
+		else
 			status = BTMTK_WMT_ON_UNDONE;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (wmt_params->status)
+	if (wmt_params->status)
 		*wmt_params->status = status;
 
-err_मुक्त_skb:
-	kमुक्त_skb(bdev->evt_skb);
-	bdev->evt_skb = शून्य;
+err_free_skb:
+	kfree_skb(bdev->evt_skb);
+	bdev->evt_skb = NULL;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक bपंचांगtksdio_tx_packet(काष्ठा bपंचांगtksdio_dev *bdev,
-			       काष्ठा sk_buff *skb)
-अणु
-	काष्ठा mtkbtsdio_hdr *sdio_hdr;
-	पूर्णांक err;
+static int btmtksdio_tx_packet(struct btmtksdio_dev *bdev,
+			       struct sk_buff *skb)
+{
+	struct mtkbtsdio_hdr *sdio_hdr;
+	int err;
 
-	/* Make sure that there are enough rooms क्रम SDIO header */
-	अगर (unlikely(skb_headroom(skb) < माप(*sdio_hdr))) अणु
-		err = pskb_expand_head(skb, माप(*sdio_hdr), 0,
+	/* Make sure that there are enough rooms for SDIO header */
+	if (unlikely(skb_headroom(skb) < sizeof(*sdio_hdr))) {
+		err = pskb_expand_head(skb, sizeof(*sdio_hdr), 0,
 				       GFP_ATOMIC);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+		if (err < 0)
+			return err;
+	}
 
-	/* Prepend MediaTek SDIO Specअगरic Header */
-	skb_push(skb, माप(*sdio_hdr));
+	/* Prepend MediaTek SDIO Specific Header */
+	skb_push(skb, sizeof(*sdio_hdr));
 
-	sdio_hdr = (व्योम *)skb->data;
+	sdio_hdr = (void *)skb->data;
 	sdio_hdr->len = cpu_to_le16(skb->len);
 	sdio_hdr->reserved = cpu_to_le16(0);
 	sdio_hdr->bt_type = hci_skb_pkt_type(skb);
 
-	err = sdio_ग_लिखोsb(bdev->func, MTK_REG_CTDR, skb->data,
+	err = sdio_writesb(bdev->func, MTK_REG_CTDR, skb->data,
 			   round_up(skb->len, MTK_SDIO_BLOCK_SIZE));
-	अगर (err < 0)
-		जाओ err_skb_pull;
+	if (err < 0)
+		goto err_skb_pull;
 
 	bdev->hdev->stat.byte_tx += skb->len;
 
-	kमुक्त_skb(skb);
+	kfree_skb(skb);
 
-	वापस 0;
+	return 0;
 
 err_skb_pull:
-	skb_pull(skb, माप(*sdio_hdr));
+	skb_pull(skb, sizeof(*sdio_hdr));
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल u32 bपंचांगtksdio_drv_own_query(काष्ठा bपंचांगtksdio_dev *bdev)
-अणु
-	वापस sdio_पढ़ोl(bdev->func, MTK_REG_CHLPCR, शून्य);
-पूर्ण
+static u32 btmtksdio_drv_own_query(struct btmtksdio_dev *bdev)
+{
+	return sdio_readl(bdev->func, MTK_REG_CHLPCR, NULL);
+}
 
-अटल व्योम bपंचांगtksdio_tx_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा bपंचांगtksdio_dev *bdev = container_of(work, काष्ठा bपंचांगtksdio_dev,
+static void btmtksdio_tx_work(struct work_struct *work)
+{
+	struct btmtksdio_dev *bdev = container_of(work, struct btmtksdio_dev,
 						  tx_work);
-	काष्ठा sk_buff *skb;
-	पूर्णांक err;
+	struct sk_buff *skb;
+	int err;
 
-	pm_runसमय_get_sync(bdev->dev);
+	pm_runtime_get_sync(bdev->dev);
 
 	sdio_claim_host(bdev->func);
 
-	जबतक ((skb = skb_dequeue(&bdev->txq))) अणु
-		err = bपंचांगtksdio_tx_packet(bdev, skb);
-		अगर (err < 0) अणु
+	while ((skb = skb_dequeue(&bdev->txq))) {
+		err = btmtksdio_tx_packet(bdev, skb);
+		if (err < 0) {
 			bdev->hdev->stat.err_tx++;
 			skb_queue_head(&bdev->txq, skb);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	sdio_release_host(bdev->func);
 
-	pm_runसमय_mark_last_busy(bdev->dev);
-	pm_runसमय_put_स्वतःsuspend(bdev->dev);
-पूर्ण
+	pm_runtime_mark_last_busy(bdev->dev);
+	pm_runtime_put_autosuspend(bdev->dev);
+}
 
-अटल पूर्णांक bपंचांगtksdio_recv_event(काष्ठा hci_dev *hdev, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा bपंचांगtksdio_dev *bdev = hci_get_drvdata(hdev);
-	काष्ठा hci_event_hdr *hdr = (व्योम *)skb->data;
-	पूर्णांक err;
+static int btmtksdio_recv_event(struct hci_dev *hdev, struct sk_buff *skb)
+{
+	struct btmtksdio_dev *bdev = hci_get_drvdata(hdev);
+	struct hci_event_hdr *hdr = (void *)skb->data;
+	int err;
 
-	/* Fix up the venकरोr event id with 0xff क्रम venकरोr specअगरic instead
+	/* Fix up the vendor event id with 0xff for vendor specific instead
 	 * of 0xe4 so that event send via monitoring socket can be parsed
 	 * properly.
 	 */
-	अगर (hdr->evt == 0xe4)
+	if (hdr->evt == 0xe4)
 		hdr->evt = HCI_EV_VENDOR;
 
-	/* When someone रुकोs क्रम the WMT event, the skb is being cloned
+	/* When someone waits for the WMT event, the skb is being cloned
 	 * and being processed the events from there then.
 	 */
-	अगर (test_bit(BTMTKSDIO_TX_WAIT_VND_EVT, &bdev->tx_state)) अणु
+	if (test_bit(BTMTKSDIO_TX_WAIT_VND_EVT, &bdev->tx_state)) {
 		bdev->evt_skb = skb_clone(skb, GFP_KERNEL);
-		अगर (!bdev->evt_skb) अणु
+		if (!bdev->evt_skb) {
 			err = -ENOMEM;
-			जाओ err_out;
-		पूर्ण
-	पूर्ण
+			goto err_out;
+		}
+	}
 
 	err = hci_recv_frame(hdev, skb);
-	अगर (err < 0)
-		जाओ err_मुक्त_skb;
+	if (err < 0)
+		goto err_free_skb;
 
-	अगर (hdr->evt == HCI_EV_VENDOR) अणु
-		अगर (test_and_clear_bit(BTMTKSDIO_TX_WAIT_VND_EVT,
-				       &bdev->tx_state)) अणु
+	if (hdr->evt == HCI_EV_VENDOR) {
+		if (test_and_clear_bit(BTMTKSDIO_TX_WAIT_VND_EVT,
+				       &bdev->tx_state)) {
 			/* Barrier to sync with other CPUs */
 			smp_mb__after_atomic();
 			wake_up_bit(&bdev->tx_state, BTMTKSDIO_TX_WAIT_VND_EVT);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
+	return 0;
 
-err_मुक्त_skb:
-	kमुक्त_skb(bdev->evt_skb);
-	bdev->evt_skb = शून्य;
+err_free_skb:
+	kfree_skb(bdev->evt_skb);
+	bdev->evt_skb = NULL;
 
 err_out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल स्थिर काष्ठा h4_recv_pkt mtk_recv_pkts[] = अणु
-	अणु H4_RECV_ACL,      .recv = hci_recv_frame पूर्ण,
-	अणु H4_RECV_SCO,      .recv = hci_recv_frame पूर्ण,
-	अणु H4_RECV_EVENT,    .recv = bपंचांगtksdio_recv_event पूर्ण,
-पूर्ण;
+static const struct h4_recv_pkt mtk_recv_pkts[] = {
+	{ H4_RECV_ACL,      .recv = hci_recv_frame },
+	{ H4_RECV_SCO,      .recv = hci_recv_frame },
+	{ H4_RECV_EVENT,    .recv = btmtksdio_recv_event },
+};
 
-अटल पूर्णांक bपंचांगtksdio_rx_packet(काष्ठा bपंचांगtksdio_dev *bdev, u16 rx_size)
-अणु
-	स्थिर काष्ठा h4_recv_pkt *pkts = mtk_recv_pkts;
-	पूर्णांक pkts_count = ARRAY_SIZE(mtk_recv_pkts);
-	काष्ठा mtkbtsdio_hdr *sdio_hdr;
-	पूर्णांक err, i, pad_size;
-	काष्ठा sk_buff *skb;
+static int btmtksdio_rx_packet(struct btmtksdio_dev *bdev, u16 rx_size)
+{
+	const struct h4_recv_pkt *pkts = mtk_recv_pkts;
+	int pkts_count = ARRAY_SIZE(mtk_recv_pkts);
+	struct mtkbtsdio_hdr *sdio_hdr;
+	int err, i, pad_size;
+	struct sk_buff *skb;
 	u16 dlen;
 
-	अगर (rx_size < माप(*sdio_hdr))
-		वापस -EILSEQ;
+	if (rx_size < sizeof(*sdio_hdr))
+		return -EILSEQ;
 
 	/* A SDIO packet is exactly containing a Bluetooth packet */
 	skb = bt_skb_alloc(rx_size, GFP_KERNEL);
-	अगर (!skb)
-		वापस -ENOMEM;
+	if (!skb)
+		return -ENOMEM;
 
 	skb_put(skb, rx_size);
 
-	err = sdio_पढ़ोsb(bdev->func, skb->data, MTK_REG_CRDR, rx_size);
-	अगर (err < 0)
-		जाओ err_kमुक्त_skb;
+	err = sdio_readsb(bdev->func, skb->data, MTK_REG_CRDR, rx_size);
+	if (err < 0)
+		goto err_kfree_skb;
 
-	sdio_hdr = (व्योम *)skb->data;
+	sdio_hdr = (void *)skb->data;
 
-	/* We assume the शेष error as -EILSEQ simply to make the error path
+	/* We assume the default error as -EILSEQ simply to make the error path
 	 * be cleaner.
 	 */
 	err = -EILSEQ;
 
-	अगर (rx_size != le16_to_cpu(sdio_hdr->len)) अणु
+	if (rx_size != le16_to_cpu(sdio_hdr->len)) {
 		bt_dev_err(bdev->hdev, "Rx size in sdio header is mismatched ");
-		जाओ err_kमुक्त_skb;
-	पूर्ण
+		goto err_kfree_skb;
+	}
 
 	hci_skb_pkt_type(skb) = sdio_hdr->bt_type;
 
 	/* Remove MediaTek SDIO header */
-	skb_pull(skb, माप(*sdio_hdr));
+	skb_pull(skb, sizeof(*sdio_hdr));
 
-	/* We have to dig पूर्णांकo the packet to get payload size and then know how
-	 * many padding bytes at the tail, these padding bytes should be हटाओd
-	 * beक्रमe the packet is indicated to the core layer.
+	/* We have to dig into the packet to get payload size and then know how
+	 * many padding bytes at the tail, these padding bytes should be removed
+	 * before the packet is indicated to the core layer.
 	 */
-	क्रम (i = 0; i < pkts_count; i++) अणु
-		अगर (sdio_hdr->bt_type == (&pkts[i])->type)
-			अवरोध;
-	पूर्ण
+	for (i = 0; i < pkts_count; i++) {
+		if (sdio_hdr->bt_type == (&pkts[i])->type)
+			break;
+	}
 
-	अगर (i >= pkts_count) अणु
+	if (i >= pkts_count) {
 		bt_dev_err(bdev->hdev, "Invalid bt type 0x%02x",
 			   sdio_hdr->bt_type);
-		जाओ err_kमुक्त_skb;
-	पूर्ण
+		goto err_kfree_skb;
+	}
 
-	/* Reमुख्यing bytes cannot hold a header*/
-	अगर (skb->len < (&pkts[i])->hlen) अणु
+	/* Remaining bytes cannot hold a header*/
+	if (skb->len < (&pkts[i])->hlen) {
 		bt_dev_err(bdev->hdev, "The size of bt header is mismatched");
-		जाओ err_kमुक्त_skb;
-	पूर्ण
+		goto err_kfree_skb;
+	}
 
-	चयन ((&pkts[i])->lsize) अणु
-	हाल 1:
+	switch ((&pkts[i])->lsize) {
+	case 1:
 		dlen = skb->data[(&pkts[i])->loff];
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		dlen = get_unaligned_le16(skb->data +
 						  (&pkts[i])->loff);
-		अवरोध;
-	शेष:
-		जाओ err_kमुक्त_skb;
-	पूर्ण
+		break;
+	default:
+		goto err_kfree_skb;
+	}
 
 	pad_size = skb->len - (&pkts[i])->hlen -  dlen;
 
-	/* Reमुख्यing bytes cannot hold a payload */
-	अगर (pad_size < 0) अणु
+	/* Remaining bytes cannot hold a payload */
+	if (pad_size < 0) {
 		bt_dev_err(bdev->hdev, "The size of bt payload is mismatched");
-		जाओ err_kमुक्त_skb;
-	पूर्ण
+		goto err_kfree_skb;
+	}
 
 	/* Remove padding bytes */
 	skb_trim(skb, skb->len - pad_size);
@@ -470,141 +469,141 @@ err_out:
 
 	bdev->hdev->stat.byte_rx += rx_size;
 
-	वापस 0;
+	return 0;
 
-err_kमुक्त_skb:
-	kमुक्त_skb(skb);
+err_kfree_skb:
+	kfree_skb(skb);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम bपंचांगtksdio_पूर्णांकerrupt(काष्ठा sdio_func *func)
-अणु
-	काष्ठा bपंचांगtksdio_dev *bdev = sdio_get_drvdata(func);
-	u32 पूर्णांक_status;
+static void btmtksdio_interrupt(struct sdio_func *func)
+{
+	struct btmtksdio_dev *bdev = sdio_get_drvdata(func);
+	u32 int_status;
 	u16 rx_size;
 
-	/* It is required that the host माला_लो ownership from the device beक्रमe
-	 * accessing any रेजिस्टर, however, अगर SDIO host is not being released,
-	 * a potential deadlock probably happens in a circular रुको between SDIO
-	 * IRQ work and PM runसमय work. So, we have to explicitly release SDIO
-	 * host here and claim again after the PM runसमय work is all करोne.
+	/* It is required that the host gets ownership from the device before
+	 * accessing any register, however, if SDIO host is not being released,
+	 * a potential deadlock probably happens in a circular wait between SDIO
+	 * IRQ work and PM runtime work. So, we have to explicitly release SDIO
+	 * host here and claim again after the PM runtime work is all done.
 	 */
 	sdio_release_host(bdev->func);
 
-	pm_runसमय_get_sync(bdev->dev);
+	pm_runtime_get_sync(bdev->dev);
 
 	sdio_claim_host(bdev->func);
 
-	/* Disable पूर्णांकerrupt */
-	sdio_ग_लिखोl(func, C_INT_EN_CLR, MTK_REG_CHLPCR, शून्य);
+	/* Disable interrupt */
+	sdio_writel(func, C_INT_EN_CLR, MTK_REG_CHLPCR, NULL);
 
-	पूर्णांक_status = sdio_पढ़ोl(func, MTK_REG_CHISR, शून्य);
+	int_status = sdio_readl(func, MTK_REG_CHISR, NULL);
 
-	/* Ack an पूर्णांकerrupt as soon as possible beक्रमe any operation on
+	/* Ack an interrupt as soon as possible before any operation on
 	 * hardware.
 	 *
-	 * Note that we करोn't ack any status during operations to aव्योम race
+	 * Note that we don't ack any status during operations to avoid race
 	 * condition between the host and the device such as it's possible to
-	 * mistakenly ack RX_DONE क्रम the next packet and then cause पूर्णांकerrupts
-	 * not be उठाओd again but there is still pending data in the hardware
+	 * mistakenly ack RX_DONE for the next packet and then cause interrupts
+	 * not be raised again but there is still pending data in the hardware
 	 * FIFO.
 	 */
-	sdio_ग_लिखोl(func, पूर्णांक_status, MTK_REG_CHISR, शून्य);
+	sdio_writel(func, int_status, MTK_REG_CHISR, NULL);
 
-	अगर (unlikely(!पूर्णांक_status))
+	if (unlikely(!int_status))
 		bt_dev_err(bdev->hdev, "CHISR is 0");
 
-	अगर (पूर्णांक_status & FW_OWN_BACK_INT)
+	if (int_status & FW_OWN_BACK_INT)
 		bt_dev_dbg(bdev->hdev, "Get fw own back");
 
-	अगर (पूर्णांक_status & TX_EMPTY)
+	if (int_status & TX_EMPTY)
 		schedule_work(&bdev->tx_work);
-	अन्यथा अगर (unlikely(पूर्णांक_status & TX_FIFO_OVERFLOW))
+	else if (unlikely(int_status & TX_FIFO_OVERFLOW))
 		bt_dev_warn(bdev->hdev, "Tx fifo overflow");
 
-	अगर (पूर्णांक_status & RX_DONE_INT) अणु
-		rx_size = (पूर्णांक_status & RX_PKT_LEN) >> 16;
+	if (int_status & RX_DONE_INT) {
+		rx_size = (int_status & RX_PKT_LEN) >> 16;
 
-		अगर (bपंचांगtksdio_rx_packet(bdev, rx_size) < 0)
+		if (btmtksdio_rx_packet(bdev, rx_size) < 0)
 			bdev->hdev->stat.err_rx++;
-	पूर्ण
+	}
 
-	/* Enable पूर्णांकerrupt */
-	sdio_ग_लिखोl(func, C_INT_EN_SET, MTK_REG_CHLPCR, शून्य);
+	/* Enable interrupt */
+	sdio_writel(func, C_INT_EN_SET, MTK_REG_CHLPCR, NULL);
 
-	pm_runसमय_mark_last_busy(bdev->dev);
-	pm_runसमय_put_स्वतःsuspend(bdev->dev);
-पूर्ण
+	pm_runtime_mark_last_busy(bdev->dev);
+	pm_runtime_put_autosuspend(bdev->dev);
+}
 
-अटल पूर्णांक bपंचांगtksdio_खोलो(काष्ठा hci_dev *hdev)
-अणु
-	काष्ठा bपंचांगtksdio_dev *bdev = hci_get_drvdata(hdev);
-	पूर्णांक err;
+static int btmtksdio_open(struct hci_dev *hdev)
+{
+	struct btmtksdio_dev *bdev = hci_get_drvdata(hdev);
+	int err;
 	u32 status;
 
 	sdio_claim_host(bdev->func);
 
 	err = sdio_enable_func(bdev->func);
-	अगर (err < 0)
-		जाओ err_release_host;
+	if (err < 0)
+		goto err_release_host;
 
 	/* Get ownership from the device */
-	sdio_ग_लिखोl(bdev->func, C_FW_OWN_REQ_CLR, MTK_REG_CHLPCR, &err);
-	अगर (err < 0)
-		जाओ err_disable_func;
+	sdio_writel(bdev->func, C_FW_OWN_REQ_CLR, MTK_REG_CHLPCR, &err);
+	if (err < 0)
+		goto err_disable_func;
 
-	err = पढ़ोx_poll_समयout(bपंचांगtksdio_drv_own_query, bdev, status,
+	err = readx_poll_timeout(btmtksdio_drv_own_query, bdev, status,
 				 status & C_COM_DRV_OWN, 2000, 1000000);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		bt_dev_err(bdev->hdev, "Cannot get ownership from device");
-		जाओ err_disable_func;
-	पूर्ण
+		goto err_disable_func;
+	}
 
-	/* Disable पूर्णांकerrupt & mask out all पूर्णांकerrupt sources */
-	sdio_ग_लिखोl(bdev->func, C_INT_EN_CLR, MTK_REG_CHLPCR, &err);
-	अगर (err < 0)
-		जाओ err_disable_func;
+	/* Disable interrupt & mask out all interrupt sources */
+	sdio_writel(bdev->func, C_INT_EN_CLR, MTK_REG_CHLPCR, &err);
+	if (err < 0)
+		goto err_disable_func;
 
-	sdio_ग_लिखोl(bdev->func, 0, MTK_REG_CHIER, &err);
-	अगर (err < 0)
-		जाओ err_disable_func;
+	sdio_writel(bdev->func, 0, MTK_REG_CHIER, &err);
+	if (err < 0)
+		goto err_disable_func;
 
-	err = sdio_claim_irq(bdev->func, bपंचांगtksdio_पूर्णांकerrupt);
-	अगर (err < 0)
-		जाओ err_disable_func;
+	err = sdio_claim_irq(bdev->func, btmtksdio_interrupt);
+	if (err < 0)
+		goto err_disable_func;
 
 	err = sdio_set_block_size(bdev->func, MTK_SDIO_BLOCK_SIZE);
-	अगर (err < 0)
-		जाओ err_release_irq;
+	if (err < 0)
+		goto err_release_irq;
 
 	/* SDIO CMD 5 allows the SDIO device back to idle state an
-	 * synchronous पूर्णांकerrupt is supported in SDIO 4-bit mode
+	 * synchronous interrupt is supported in SDIO 4-bit mode
 	 */
-	sdio_ग_लिखोl(bdev->func, SDIO_INT_CTL | SDIO_RE_INIT_EN,
+	sdio_writel(bdev->func, SDIO_INT_CTL | SDIO_RE_INIT_EN,
 		    MTK_REG_CSDIOCSR, &err);
-	अगर (err < 0)
-		जाओ err_release_irq;
+	if (err < 0)
+		goto err_release_irq;
 
-	/* Setup ग_लिखो-1-clear क्रम CHISR रेजिस्टर */
-	sdio_ग_लिखोl(bdev->func, C_INT_CLR_CTRL, MTK_REG_CHCR, &err);
-	अगर (err < 0)
-		जाओ err_release_irq;
+	/* Setup write-1-clear for CHISR register */
+	sdio_writel(bdev->func, C_INT_CLR_CTRL, MTK_REG_CHCR, &err);
+	if (err < 0)
+		goto err_release_irq;
 
-	/* Setup पूर्णांकerrupt sources */
-	sdio_ग_लिखोl(bdev->func, RX_DONE_INT | TX_EMPTY | TX_FIFO_OVERFLOW,
+	/* Setup interrupt sources */
+	sdio_writel(bdev->func, RX_DONE_INT | TX_EMPTY | TX_FIFO_OVERFLOW,
 		    MTK_REG_CHIER, &err);
-	अगर (err < 0)
-		जाओ err_release_irq;
+	if (err < 0)
+		goto err_release_irq;
 
-	/* Enable पूर्णांकerrupt */
-	sdio_ग_लिखोl(bdev->func, C_INT_EN_SET, MTK_REG_CHLPCR, &err);
-	अगर (err < 0)
-		जाओ err_release_irq;
+	/* Enable interrupt */
+	sdio_writel(bdev->func, C_INT_EN_SET, MTK_REG_CHLPCR, &err);
+	if (err < 0)
+		goto err_release_irq;
 
 	sdio_release_host(bdev->func);
 
-	वापस 0;
+	return 0;
 
 err_release_irq:
 	sdio_release_irq(bdev->func);
@@ -615,122 +614,122 @@ err_disable_func:
 err_release_host:
 	sdio_release_host(bdev->func);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक bपंचांगtksdio_बंद(काष्ठा hci_dev *hdev)
-अणु
-	काष्ठा bपंचांगtksdio_dev *bdev = hci_get_drvdata(hdev);
+static int btmtksdio_close(struct hci_dev *hdev)
+{
+	struct btmtksdio_dev *bdev = hci_get_drvdata(hdev);
 	u32 status;
-	पूर्णांक err;
+	int err;
 
 	sdio_claim_host(bdev->func);
 
-	/* Disable पूर्णांकerrupt */
-	sdio_ग_लिखोl(bdev->func, C_INT_EN_CLR, MTK_REG_CHLPCR, शून्य);
+	/* Disable interrupt */
+	sdio_writel(bdev->func, C_INT_EN_CLR, MTK_REG_CHLPCR, NULL);
 
 	sdio_release_irq(bdev->func);
 
 	/* Return ownership to the device */
-	sdio_ग_लिखोl(bdev->func, C_FW_OWN_REQ_SET, MTK_REG_CHLPCR, शून्य);
+	sdio_writel(bdev->func, C_FW_OWN_REQ_SET, MTK_REG_CHLPCR, NULL);
 
-	err = पढ़ोx_poll_समयout(bपंचांगtksdio_drv_own_query, bdev, status,
+	err = readx_poll_timeout(btmtksdio_drv_own_query, bdev, status,
 				 !(status & C_COM_DRV_OWN), 2000, 1000000);
-	अगर (err < 0)
+	if (err < 0)
 		bt_dev_err(bdev->hdev, "Cannot return ownership to device");
 
 	sdio_disable_func(bdev->func);
 
 	sdio_release_host(bdev->func);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bपंचांगtksdio_flush(काष्ठा hci_dev *hdev)
-अणु
-	काष्ठा bपंचांगtksdio_dev *bdev = hci_get_drvdata(hdev);
+static int btmtksdio_flush(struct hci_dev *hdev)
+{
+	struct btmtksdio_dev *bdev = hci_get_drvdata(hdev);
 
 	skb_queue_purge(&bdev->txq);
 
 	cancel_work_sync(&bdev->tx_work);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bपंचांगtksdio_func_query(काष्ठा hci_dev *hdev)
-अणु
-	काष्ठा bपंचांगtk_hci_wmt_params wmt_params;
-	पूर्णांक status, err;
+static int btmtksdio_func_query(struct hci_dev *hdev)
+{
+	struct btmtk_hci_wmt_params wmt_params;
+	int status, err;
 	u8 param = 0;
 
 	/* Query whether the function is enabled */
 	wmt_params.op = MTK_WMT_FUNC_CTRL;
 	wmt_params.flag = 4;
-	wmt_params.dlen = माप(param);
+	wmt_params.dlen = sizeof(param);
 	wmt_params.data = &param;
 	wmt_params.status = &status;
 
 	err = mtk_hci_wmt_sync(hdev, &wmt_params);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		bt_dev_err(hdev, "Failed to query function status (%d)", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक mtk_setup_firmware(काष्ठा hci_dev *hdev, स्थिर अक्षर *fwname)
-अणु
-	काष्ठा bपंचांगtk_hci_wmt_params wmt_params;
-	स्थिर काष्ठा firmware *fw;
-	स्थिर u8 *fw_ptr;
-	माप_प्रकार fw_size;
-	पूर्णांक err, dlen;
+static int mtk_setup_firmware(struct hci_dev *hdev, const char *fwname)
+{
+	struct btmtk_hci_wmt_params wmt_params;
+	const struct firmware *fw;
+	const u8 *fw_ptr;
+	size_t fw_size;
+	int err, dlen;
 	u8 flag, param;
 
 	err = request_firmware(&fw, fwname, &hdev->dev);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		bt_dev_err(hdev, "Failed to load firmware file (%d)", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	/* Power on data RAM the firmware relies on. */
 	param = 1;
 	wmt_params.op = MTK_WMT_FUNC_CTRL;
 	wmt_params.flag = 3;
-	wmt_params.dlen = माप(param);
+	wmt_params.dlen = sizeof(param);
 	wmt_params.data = &param;
-	wmt_params.status = शून्य;
+	wmt_params.status = NULL;
 
 	err = mtk_hci_wmt_sync(hdev, &wmt_params);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		bt_dev_err(hdev, "Failed to power on data RAM (%d)", err);
-		जाओ मुक्त_fw;
-	पूर्ण
+		goto free_fw;
+	}
 
 	fw_ptr = fw->data;
 	fw_size = fw->size;
 
 	/* The size of patch header is 30 bytes, should be skip */
-	अगर (fw_size < 30) अणु
+	if (fw_size < 30) {
 		err = -EINVAL;
-		जाओ मुक्त_fw;
-	पूर्ण
+		goto free_fw;
+	}
 
 	fw_size -= 30;
 	fw_ptr += 30;
 	flag = 1;
 
 	wmt_params.op = MTK_WMT_PATCH_DWNLD;
-	wmt_params.status = शून्य;
+	wmt_params.status = NULL;
 
-	जबतक (fw_size > 0) अणु
-		dlen = min_t(पूर्णांक, 250, fw_size);
+	while (fw_size > 0) {
+		dlen = min_t(int, 250, fw_size);
 
 		/* Tell device the position in sequence */
-		अगर (fw_size - dlen <= 0)
+		if (fw_size - dlen <= 0)
 			flag = 3;
-		अन्यथा अगर (fw_size < fw->size - 30)
+		else if (fw_size < fw->size - 30)
 			flag = 2;
 
 		wmt_params.flag = flag;
@@ -738,376 +737,376 @@ err_release_host:
 		wmt_params.data = fw_ptr;
 
 		err = mtk_hci_wmt_sync(hdev, &wmt_params);
-		अगर (err < 0) अणु
+		if (err < 0) {
 			bt_dev_err(hdev, "Failed to send wmt patch dwnld (%d)",
 				   err);
-			जाओ मुक्त_fw;
-		पूर्ण
+			goto free_fw;
+		}
 
 		fw_size -= dlen;
 		fw_ptr += dlen;
-	पूर्ण
+	}
 
 	wmt_params.op = MTK_WMT_RST;
 	wmt_params.flag = 4;
 	wmt_params.dlen = 0;
-	wmt_params.data = शून्य;
-	wmt_params.status = शून्य;
+	wmt_params.data = NULL;
+	wmt_params.status = NULL;
 
 	/* Activate funciton the firmware providing to */
 	err = mtk_hci_wmt_sync(hdev, &wmt_params);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		bt_dev_err(hdev, "Failed to send wmt rst (%d)", err);
-		जाओ मुक्त_fw;
-	पूर्ण
+		goto free_fw;
+	}
 
-	/* Wait a few moments क्रम firmware activation करोne */
+	/* Wait a few moments for firmware activation done */
 	usleep_range(10000, 12000);
 
-मुक्त_fw:
+free_fw:
 	release_firmware(fw);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक bपंचांगtksdio_setup(काष्ठा hci_dev *hdev)
-अणु
-	काष्ठा bपंचांगtksdio_dev *bdev = hci_get_drvdata(hdev);
-	काष्ठा bपंचांगtk_hci_wmt_params wmt_params;
-	kसमय_प्रकार callसमय, delta, retसमय;
-	काष्ठा bपंचांगtk_tci_sleep tci_sleep;
-	अचिन्हित दीर्घ दीर्घ duration;
-	काष्ठा sk_buff *skb;
-	पूर्णांक err, status;
+static int btmtksdio_setup(struct hci_dev *hdev)
+{
+	struct btmtksdio_dev *bdev = hci_get_drvdata(hdev);
+	struct btmtk_hci_wmt_params wmt_params;
+	ktime_t calltime, delta, rettime;
+	struct btmtk_tci_sleep tci_sleep;
+	unsigned long long duration;
+	struct sk_buff *skb;
+	int err, status;
 	u8 param = 0x1;
 
-	callसमय = kसमय_get();
+	calltime = ktime_get();
 
-	/* Query whether the firmware is alपढ़ोy करोwnload */
+	/* Query whether the firmware is already download */
 	wmt_params.op = MTK_WMT_SEMAPHORE;
 	wmt_params.flag = 1;
 	wmt_params.dlen = 0;
-	wmt_params.data = शून्य;
+	wmt_params.data = NULL;
 	wmt_params.status = &status;
 
 	err = mtk_hci_wmt_sync(hdev, &wmt_params);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		bt_dev_err(hdev, "Failed to query firmware status (%d)", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (status == BTMTK_WMT_PATCH_DONE) अणु
+	if (status == BTMTK_WMT_PATCH_DONE) {
 		bt_dev_info(hdev, "Firmware already downloaded");
-		जाओ ignore_setup_fw;
-	पूर्ण
+		goto ignore_setup_fw;
+	}
 
 	/* Setup a firmware which the device definitely requires */
 	err = mtk_setup_firmware(hdev, bdev->data->fwname);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 ignore_setup_fw:
-	/* Query whether the device is alपढ़ोy enabled */
-	err = पढ़ोx_poll_समयout(bपंचांगtksdio_func_query, hdev, status,
+	/* Query whether the device is already enabled */
+	err = readx_poll_timeout(btmtksdio_func_query, hdev, status,
 				 status < 0 || status != BTMTK_WMT_ON_PROGRESS,
 				 2000, 5000000);
 	/* -ETIMEDOUT happens */
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	/* The other errors happen in btusb_mtk_func_query */
-	अगर (status < 0)
-		वापस status;
+	if (status < 0)
+		return status;
 
-	अगर (status == BTMTK_WMT_ON_DONE) अणु
+	if (status == BTMTK_WMT_ON_DONE) {
 		bt_dev_info(hdev, "function already on");
-		जाओ ignore_func_on;
-	पूर्ण
+		goto ignore_func_on;
+	}
 
 	/* Enable Bluetooth protocol */
 	wmt_params.op = MTK_WMT_FUNC_CTRL;
 	wmt_params.flag = 0;
-	wmt_params.dlen = माप(param);
+	wmt_params.dlen = sizeof(param);
 	wmt_params.data = &param;
-	wmt_params.status = शून्य;
+	wmt_params.status = NULL;
 
 	err = mtk_hci_wmt_sync(hdev, &wmt_params);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		bt_dev_err(hdev, "Failed to send wmt func ctrl (%d)", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 ignore_func_on:
-	/* Apply the low घातer environment setup */
+	/* Apply the low power environment setup */
 	tci_sleep.mode = 0x5;
 	tci_sleep.duration = cpu_to_le16(0x640);
 	tci_sleep.host_duration = cpu_to_le16(0x640);
 	tci_sleep.host_wakeup_pin = 0;
-	tci_sleep.समय_compensation = 0;
+	tci_sleep.time_compensation = 0;
 
-	skb = __hci_cmd_sync(hdev, 0xfc7a, माप(tci_sleep), &tci_sleep,
+	skb = __hci_cmd_sync(hdev, 0xfc7a, sizeof(tci_sleep), &tci_sleep,
 			     HCI_INIT_TIMEOUT);
-	अगर (IS_ERR(skb)) अणु
+	if (IS_ERR(skb)) {
 		err = PTR_ERR(skb);
 		bt_dev_err(hdev, "Failed to apply low power setting (%d)", err);
-		वापस err;
-	पूर्ण
-	kमुक्त_skb(skb);
+		return err;
+	}
+	kfree_skb(skb);
 
-	retसमय = kसमय_get();
-	delta = kसमय_sub(retसमय, callसमय);
-	duration = (अचिन्हित दीर्घ दीर्घ)kसमय_प्रकारo_ns(delta) >> 10;
+	rettime = ktime_get();
+	delta = ktime_sub(rettime, calltime);
+	duration = (unsigned long long)ktime_to_ns(delta) >> 10;
 
-	pm_runसमय_set_स्वतःsuspend_delay(bdev->dev,
+	pm_runtime_set_autosuspend_delay(bdev->dev,
 					 MTKBTSDIO_AUTOSUSPEND_DELAY);
-	pm_runसमय_use_स्वतःsuspend(bdev->dev);
+	pm_runtime_use_autosuspend(bdev->dev);
 
-	err = pm_runसमय_set_active(bdev->dev);
-	अगर (err < 0)
-		वापस err;
+	err = pm_runtime_set_active(bdev->dev);
+	if (err < 0)
+		return err;
 
-	/* Default क्रमbid runसमय स्वतः suspend, that can be allowed by
-	 * enable_स्वतःsuspend flag or the PM runसमय entry under sysfs.
+	/* Default forbid runtime auto suspend, that can be allowed by
+	 * enable_autosuspend flag or the PM runtime entry under sysfs.
 	 */
-	pm_runसमय_क्रमbid(bdev->dev);
-	pm_runसमय_enable(bdev->dev);
+	pm_runtime_forbid(bdev->dev);
+	pm_runtime_enable(bdev->dev);
 
-	अगर (enable_स्वतःsuspend)
-		pm_runसमय_allow(bdev->dev);
+	if (enable_autosuspend)
+		pm_runtime_allow(bdev->dev);
 
 	bt_dev_info(hdev, "Device setup in %llu usecs", duration);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bपंचांगtksdio_shutकरोwn(काष्ठा hci_dev *hdev)
-अणु
-	काष्ठा bपंचांगtksdio_dev *bdev = hci_get_drvdata(hdev);
-	काष्ठा bपंचांगtk_hci_wmt_params wmt_params;
+static int btmtksdio_shutdown(struct hci_dev *hdev)
+{
+	struct btmtksdio_dev *bdev = hci_get_drvdata(hdev);
+	struct btmtk_hci_wmt_params wmt_params;
 	u8 param = 0x0;
-	पूर्णांक err;
+	int err;
 
 	/* Get back the state to be consistent with the state
-	 * in bपंचांगtksdio_setup.
+	 * in btmtksdio_setup.
 	 */
-	pm_runसमय_get_sync(bdev->dev);
+	pm_runtime_get_sync(bdev->dev);
 
 	/* Disable the device */
 	wmt_params.op = MTK_WMT_FUNC_CTRL;
 	wmt_params.flag = 0;
-	wmt_params.dlen = माप(param);
+	wmt_params.dlen = sizeof(param);
 	wmt_params.data = &param;
-	wmt_params.status = शून्य;
+	wmt_params.status = NULL;
 
 	err = mtk_hci_wmt_sync(hdev, &wmt_params);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		bt_dev_err(hdev, "Failed to send wmt func ctrl (%d)", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	pm_runसमय_put_noidle(bdev->dev);
-	pm_runसमय_disable(bdev->dev);
+	pm_runtime_put_noidle(bdev->dev);
+	pm_runtime_disable(bdev->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bपंचांगtksdio_send_frame(काष्ठा hci_dev *hdev, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा bपंचांगtksdio_dev *bdev = hci_get_drvdata(hdev);
+static int btmtksdio_send_frame(struct hci_dev *hdev, struct sk_buff *skb)
+{
+	struct btmtksdio_dev *bdev = hci_get_drvdata(hdev);
 
-	चयन (hci_skb_pkt_type(skb)) अणु
-	हाल HCI_COMMAND_PKT:
+	switch (hci_skb_pkt_type(skb)) {
+	case HCI_COMMAND_PKT:
 		hdev->stat.cmd_tx++;
-		अवरोध;
+		break;
 
-	हाल HCI_ACLDATA_PKT:
+	case HCI_ACLDATA_PKT:
 		hdev->stat.acl_tx++;
-		अवरोध;
+		break;
 
-	हाल HCI_SCODATA_PKT:
+	case HCI_SCODATA_PKT:
 		hdev->stat.sco_tx++;
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -EILSEQ;
-	पूर्ण
+	default:
+		return -EILSEQ;
+	}
 
 	skb_queue_tail(&bdev->txq, skb);
 
 	schedule_work(&bdev->tx_work);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bपंचांगtksdio_probe(काष्ठा sdio_func *func,
-			   स्थिर काष्ठा sdio_device_id *id)
-अणु
-	काष्ठा bपंचांगtksdio_dev *bdev;
-	काष्ठा hci_dev *hdev;
-	पूर्णांक err;
+static int btmtksdio_probe(struct sdio_func *func,
+			   const struct sdio_device_id *id)
+{
+	struct btmtksdio_dev *bdev;
+	struct hci_dev *hdev;
+	int err;
 
-	bdev = devm_kzalloc(&func->dev, माप(*bdev), GFP_KERNEL);
-	अगर (!bdev)
-		वापस -ENOMEM;
+	bdev = devm_kzalloc(&func->dev, sizeof(*bdev), GFP_KERNEL);
+	if (!bdev)
+		return -ENOMEM;
 
-	bdev->data = (व्योम *)id->driver_data;
-	अगर (!bdev->data)
-		वापस -ENODEV;
+	bdev->data = (void *)id->driver_data;
+	if (!bdev->data)
+		return -ENODEV;
 
 	bdev->dev = &func->dev;
 	bdev->func = func;
 
-	INIT_WORK(&bdev->tx_work, bपंचांगtksdio_tx_work);
+	INIT_WORK(&bdev->tx_work, btmtksdio_tx_work);
 	skb_queue_head_init(&bdev->txq);
 
-	/* Initialize and रेजिस्टर HCI device */
+	/* Initialize and register HCI device */
 	hdev = hci_alloc_dev();
-	अगर (!hdev) अणु
+	if (!hdev) {
 		dev_err(&func->dev, "Can't allocate HCI device\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	bdev->hdev = hdev;
 
 	hdev->bus = HCI_SDIO;
 	hci_set_drvdata(hdev, bdev);
 
-	hdev->खोलो     = bपंचांगtksdio_खोलो;
-	hdev->बंद    = bपंचांगtksdio_बंद;
-	hdev->flush    = bपंचांगtksdio_flush;
-	hdev->setup    = bपंचांगtksdio_setup;
-	hdev->shutकरोwn = bपंचांगtksdio_shutकरोwn;
-	hdev->send     = bपंचांगtksdio_send_frame;
+	hdev->open     = btmtksdio_open;
+	hdev->close    = btmtksdio_close;
+	hdev->flush    = btmtksdio_flush;
+	hdev->setup    = btmtksdio_setup;
+	hdev->shutdown = btmtksdio_shutdown;
+	hdev->send     = btmtksdio_send_frame;
 	SET_HCIDEV_DEV(hdev, &func->dev);
 
 	hdev->manufacturer = 70;
 	set_bit(HCI_QUIRK_NON_PERSISTENT_SETUP, &hdev->quirks);
 
-	err = hci_रेजिस्टर_dev(hdev);
-	अगर (err < 0) अणु
+	err = hci_register_dev(hdev);
+	if (err < 0) {
 		dev_err(&func->dev, "Can't register HCI device\n");
-		hci_मुक्त_dev(hdev);
-		वापस err;
-	पूर्ण
+		hci_free_dev(hdev);
+		return err;
+	}
 
 	sdio_set_drvdata(func, bdev);
 
-	/* pm_runसमय_enable would be करोne after the firmware is being
-	 * करोwnloaded because the core layer probably alपढ़ोy enables
-	 * runसमय PM क्रम this func such as the हाल host->caps &
+	/* pm_runtime_enable would be done after the firmware is being
+	 * downloaded because the core layer probably already enables
+	 * runtime PM for this func such as the case host->caps &
 	 * MMC_CAP_POWER_OFF_CARD.
 	 */
-	अगर (pm_runसमय_enabled(bdev->dev))
-		pm_runसमय_disable(bdev->dev);
+	if (pm_runtime_enabled(bdev->dev))
+		pm_runtime_disable(bdev->dev);
 
 	/* As explaination in drivers/mmc/core/sdio_bus.c tells us:
 	 * Unbound SDIO functions are always suspended.
 	 * During probe, the function is set active and the usage count
-	 * is incremented.  If the driver supports runसमय PM,
-	 * it should call pm_runसमय_put_noidle() in its probe routine and
-	 * pm_runसमय_get_noresume() in its हटाओ routine.
+	 * is incremented.  If the driver supports runtime PM,
+	 * it should call pm_runtime_put_noidle() in its probe routine and
+	 * pm_runtime_get_noresume() in its remove routine.
 	 *
-	 * So, put a pm_runसमय_put_noidle here !
+	 * So, put a pm_runtime_put_noidle here !
 	 */
-	pm_runसमय_put_noidle(bdev->dev);
+	pm_runtime_put_noidle(bdev->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम bपंचांगtksdio_हटाओ(काष्ठा sdio_func *func)
-अणु
-	काष्ठा bपंचांगtksdio_dev *bdev = sdio_get_drvdata(func);
-	काष्ठा hci_dev *hdev;
+static void btmtksdio_remove(struct sdio_func *func)
+{
+	struct btmtksdio_dev *bdev = sdio_get_drvdata(func);
+	struct hci_dev *hdev;
 
-	अगर (!bdev)
-		वापस;
+	if (!bdev)
+		return;
 
-	/* Be consistent the state in bपंचांगtksdio_probe */
-	pm_runसमय_get_noresume(bdev->dev);
+	/* Be consistent the state in btmtksdio_probe */
+	pm_runtime_get_noresume(bdev->dev);
 
 	hdev = bdev->hdev;
 
-	sdio_set_drvdata(func, शून्य);
-	hci_unरेजिस्टर_dev(hdev);
-	hci_मुक्त_dev(hdev);
-पूर्ण
+	sdio_set_drvdata(func, NULL);
+	hci_unregister_dev(hdev);
+	hci_free_dev(hdev);
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक bपंचांगtksdio_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा sdio_func *func = dev_to_sdio_func(dev);
-	काष्ठा bपंचांगtksdio_dev *bdev;
+#ifdef CONFIG_PM
+static int btmtksdio_runtime_suspend(struct device *dev)
+{
+	struct sdio_func *func = dev_to_sdio_func(dev);
+	struct btmtksdio_dev *bdev;
 	u32 status;
-	पूर्णांक err;
+	int err;
 
 	bdev = sdio_get_drvdata(func);
-	अगर (!bdev)
-		वापस 0;
+	if (!bdev)
+		return 0;
 
 	sdio_claim_host(bdev->func);
 
-	sdio_ग_लिखोl(bdev->func, C_FW_OWN_REQ_SET, MTK_REG_CHLPCR, &err);
-	अगर (err < 0)
-		जाओ out;
+	sdio_writel(bdev->func, C_FW_OWN_REQ_SET, MTK_REG_CHLPCR, &err);
+	if (err < 0)
+		goto out;
 
-	err = पढ़ोx_poll_समयout(bपंचांगtksdio_drv_own_query, bdev, status,
+	err = readx_poll_timeout(btmtksdio_drv_own_query, bdev, status,
 				 !(status & C_COM_DRV_OWN), 2000, 1000000);
 out:
 	bt_dev_info(bdev->hdev, "status (%d) return ownership to device", err);
 
 	sdio_release_host(bdev->func);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक bपंचांगtksdio_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा sdio_func *func = dev_to_sdio_func(dev);
-	काष्ठा bपंचांगtksdio_dev *bdev;
+static int btmtksdio_runtime_resume(struct device *dev)
+{
+	struct sdio_func *func = dev_to_sdio_func(dev);
+	struct btmtksdio_dev *bdev;
 	u32 status;
-	पूर्णांक err;
+	int err;
 
 	bdev = sdio_get_drvdata(func);
-	अगर (!bdev)
-		वापस 0;
+	if (!bdev)
+		return 0;
 
 	sdio_claim_host(bdev->func);
 
-	sdio_ग_लिखोl(bdev->func, C_FW_OWN_REQ_CLR, MTK_REG_CHLPCR, &err);
-	अगर (err < 0)
-		जाओ out;
+	sdio_writel(bdev->func, C_FW_OWN_REQ_CLR, MTK_REG_CHLPCR, &err);
+	if (err < 0)
+		goto out;
 
-	err = पढ़ोx_poll_समयout(bपंचांगtksdio_drv_own_query, bdev, status,
+	err = readx_poll_timeout(btmtksdio_drv_own_query, bdev, status,
 				 status & C_COM_DRV_OWN, 2000, 1000000);
 out:
 	bt_dev_info(bdev->hdev, "status (%d) get ownership from device", err);
 
 	sdio_release_host(bdev->func);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल UNIVERSAL_DEV_PM_OPS(bपंचांगtksdio_pm_ops, bपंचांगtksdio_runसमय_suspend,
-			    bपंचांगtksdio_runसमय_resume, शून्य);
-#घोषणा BTMTKSDIO_PM_OPS (&bपंचांगtksdio_pm_ops)
-#अन्यथा	/* CONFIG_PM */
-#घोषणा BTMTKSDIO_PM_OPS शून्य
-#पूर्ण_अगर	/* CONFIG_PM */
+static UNIVERSAL_DEV_PM_OPS(btmtksdio_pm_ops, btmtksdio_runtime_suspend,
+			    btmtksdio_runtime_resume, NULL);
+#define BTMTKSDIO_PM_OPS (&btmtksdio_pm_ops)
+#else	/* CONFIG_PM */
+#define BTMTKSDIO_PM_OPS NULL
+#endif	/* CONFIG_PM */
 
-अटल काष्ठा sdio_driver bपंचांगtksdio_driver = अणु
+static struct sdio_driver btmtksdio_driver = {
 	.name		= "btmtksdio",
-	.probe		= bपंचांगtksdio_probe,
-	.हटाओ		= bपंचांगtksdio_हटाओ,
-	.id_table	= bपंचांगtksdio_table,
-	.drv = अणु
+	.probe		= btmtksdio_probe,
+	.remove		= btmtksdio_remove,
+	.id_table	= btmtksdio_table,
+	.drv = {
 		.owner = THIS_MODULE,
 		.pm = BTMTKSDIO_PM_OPS,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-module_sdio_driver(bपंचांगtksdio_driver);
+module_sdio_driver(btmtksdio_driver);
 
-module_param(enable_स्वतःsuspend, bool, 0644);
-MODULE_PARM_DESC(enable_स्वतःsuspend, "Enable autosuspend by default");
+module_param(enable_autosuspend, bool, 0644);
+MODULE_PARM_DESC(enable_autosuspend, "Enable autosuspend by default");
 
 MODULE_AUTHOR("Sean Wang <sean.wang@mediatek.com>");
 MODULE_DESCRIPTION("MediaTek Bluetooth SDIO driver ver " VERSION);

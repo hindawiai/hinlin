@@ -1,134 +1,133 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Provide a शेष dump_stack() function क्रम architectures
- * which करोn't implement their own.
+ * Provide a default dump_stack() function for architectures
+ * which don't implement their own.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/export.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/debug.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/atomic.h>
-#समावेश <linux/kexec.h>
-#समावेश <linux/utsname.h>
-#समावेश <linux/stop_machine.h>
+#include <linux/kernel.h>
+#include <linux/export.h>
+#include <linux/sched.h>
+#include <linux/sched/debug.h>
+#include <linux/smp.h>
+#include <linux/atomic.h>
+#include <linux/kexec.h>
+#include <linux/utsname.h>
+#include <linux/stop_machine.h>
 
-अटल अक्षर dump_stack_arch_desc_str[128];
+static char dump_stack_arch_desc_str[128];
 
 /**
- * dump_stack_set_arch_desc - set arch-specअगरic str to show with task dumps
- * @fmt: म_लिखो-style क्रमmat string
- * @...: arguments क्रम the क्रमmat string
+ * dump_stack_set_arch_desc - set arch-specific str to show with task dumps
+ * @fmt: printf-style format string
+ * @...: arguments for the format string
  *
- * The configured string will be prपूर्णांकed right after utsname during task
- * dumps.  Usually used to add arch-specअगरic प्रणाली identअगरiers.  If an
+ * The configured string will be printed right after utsname during task
+ * dumps.  Usually used to add arch-specific system identifiers.  If an
  * arch wants to make use of such an ID string, it should initialize this
  * as soon as possible during boot.
  */
-व्योम __init dump_stack_set_arch_desc(स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची args;
+void __init dump_stack_set_arch_desc(const char *fmt, ...)
+{
+	va_list args;
 
-	बहु_शुरू(args, fmt);
-	vsnम_लिखो(dump_stack_arch_desc_str, माप(dump_stack_arch_desc_str),
+	va_start(args, fmt);
+	vsnprintf(dump_stack_arch_desc_str, sizeof(dump_stack_arch_desc_str),
 		  fmt, args);
-	बहु_पूर्ण(args);
-पूर्ण
+	va_end(args);
+}
 
 /**
- * dump_stack_prपूर्णांक_info - prपूर्णांक generic debug info क्रम dump_stack()
+ * dump_stack_print_info - print generic debug info for dump_stack()
  * @log_lvl: log level
  *
- * Arch-specअगरic dump_stack() implementations can use this function to
- * prपूर्णांक out the same debug inक्रमmation as the generic dump_stack().
+ * Arch-specific dump_stack() implementations can use this function to
+ * print out the same debug information as the generic dump_stack().
  */
-व्योम dump_stack_prपूर्णांक_info(स्थिर अक्षर *log_lvl)
-अणु
-	prपूर्णांकk("%sCPU: %d PID: %d Comm: %.20s %s%s %s %.*s\n",
+void dump_stack_print_info(const char *log_lvl)
+{
+	printk("%sCPU: %d PID: %d Comm: %.20s %s%s %s %.*s\n",
 	       log_lvl, raw_smp_processor_id(), current->pid, current->comm,
 	       kexec_crash_loaded() ? "Kdump: loaded " : "",
-	       prपूर्णांक_taपूर्णांकed(),
+	       print_tainted(),
 	       init_utsname()->release,
-	       (पूर्णांक)म_खोज(init_utsname()->version, " "),
+	       (int)strcspn(init_utsname()->version, " "),
 	       init_utsname()->version);
 
-	अगर (dump_stack_arch_desc_str[0] != '\0')
-		prपूर्णांकk("%sHardware name: %s\n",
+	if (dump_stack_arch_desc_str[0] != '\0')
+		printk("%sHardware name: %s\n",
 		       log_lvl, dump_stack_arch_desc_str);
 
-	prपूर्णांक_worker_info(log_lvl, current);
-	prपूर्णांक_stop_info(log_lvl, current);
-पूर्ण
+	print_worker_info(log_lvl, current);
+	print_stop_info(log_lvl, current);
+}
 
 /**
- * show_regs_prपूर्णांक_info - prपूर्णांक generic debug info क्रम show_regs()
+ * show_regs_print_info - print generic debug info for show_regs()
  * @log_lvl: log level
  *
- * show_regs() implementations can use this function to prपूर्णांक out generic
- * debug inक्रमmation.
+ * show_regs() implementations can use this function to print out generic
+ * debug information.
  */
-व्योम show_regs_prपूर्णांक_info(स्थिर अक्षर *log_lvl)
-अणु
-	dump_stack_prपूर्णांक_info(log_lvl);
-पूर्ण
+void show_regs_print_info(const char *log_lvl)
+{
+	dump_stack_print_info(log_lvl);
+}
 
-अटल व्योम __dump_stack(व्योम)
-अणु
-	dump_stack_prपूर्णांक_info(KERN_DEFAULT);
-	show_stack(शून्य, शून्य, KERN_DEFAULT);
-पूर्ण
+static void __dump_stack(void)
+{
+	dump_stack_print_info(KERN_DEFAULT);
+	show_stack(NULL, NULL, KERN_DEFAULT);
+}
 
 /**
- * dump_stack - dump the current task inक्रमmation and its stack trace
+ * dump_stack - dump the current task information and its stack trace
  *
  * Architectures can override this implementation by implementing its own.
  */
-#अगर_घोषित CONFIG_SMP
-अटल atomic_t dump_lock = ATOMIC_INIT(-1);
+#ifdef CONFIG_SMP
+static atomic_t dump_lock = ATOMIC_INIT(-1);
 
-यंत्रlinkage __visible व्योम dump_stack(व्योम)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक was_locked;
-	पूर्णांक old;
-	पूर्णांक cpu;
+asmlinkage __visible void dump_stack(void)
+{
+	unsigned long flags;
+	int was_locked;
+	int old;
+	int cpu;
 
 	/*
-	 * Permit this cpu to perक्रमm nested stack dumps जबतक serialising
+	 * Permit this cpu to perform nested stack dumps while serialising
 	 * against other CPUs
 	 */
 retry:
 	local_irq_save(flags);
 	cpu = smp_processor_id();
 	old = atomic_cmpxchg(&dump_lock, -1, cpu);
-	अगर (old == -1) अणु
+	if (old == -1) {
 		was_locked = 0;
-	पूर्ण अन्यथा अगर (old == cpu) अणु
+	} else if (old == cpu) {
 		was_locked = 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		local_irq_restore(flags);
 		/*
-		 * Wait क्रम the lock to release beक्रमe jumping to
+		 * Wait for the lock to release before jumping to
 		 * atomic_cmpxchg() in order to mitigate the thundering herd
 		 * problem.
 		 */
-		करो अणु cpu_relax(); पूर्ण जबतक (atomic_पढ़ो(&dump_lock) != -1);
-		जाओ retry;
-	पूर्ण
+		do { cpu_relax(); } while (atomic_read(&dump_lock) != -1);
+		goto retry;
+	}
 
 	__dump_stack();
 
-	अगर (!was_locked)
+	if (!was_locked)
 		atomic_set(&dump_lock, -1);
 
 	local_irq_restore(flags);
-पूर्ण
-#अन्यथा
-यंत्रlinkage __visible व्योम dump_stack(व्योम)
-अणु
+}
+#else
+asmlinkage __visible void dump_stack(void)
+{
 	__dump_stack();
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 EXPORT_SYMBOL(dump_stack);

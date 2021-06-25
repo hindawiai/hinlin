@@ -1,123 +1,122 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * POWER Data Stream Control Register (DSCR)
  *
  * This header file contains helper functions and macros
- * required क्रम all the DSCR related test हालs.
+ * required for all the DSCR related test cases.
  *
- * Copyright 2012, Anton Blanअक्षरd, IBM Corporation.
+ * Copyright 2012, Anton Blanchard, IBM Corporation.
  * Copyright 2015, Anshuman Khandual, IBM Corporation.
  */
-#अगर_अघोषित _SELFTESTS_POWERPC_DSCR_DSCR_H
-#घोषणा _SELFTESTS_POWERPC_DSCR_DSCR_H
+#ifndef _SELFTESTS_POWERPC_DSCR_DSCR_H
+#define _SELFTESTS_POWERPC_DSCR_DSCR_H
 
-#समावेश <unistd.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <fcntl.h>
-#समावेश <dirent.h>
-#समावेश <pthपढ़ो.h>
-#समावेश <sched.h>
-#समावेश <sys/types.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <sys/रुको.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <fcntl.h>
+#include <dirent.h>
+#include <pthread.h>
+#include <sched.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
 
-#समावेश "utils.h"
+#include "utils.h"
 
-#घोषणा THREADS		100	/* Max thपढ़ोs */
-#घोषणा COUNT		100	/* Max iterations */
-#घोषणा DSCR_MAX	16	/* Max DSCR value */
-#घोषणा LEN_MAX		100	/* Max name length */
+#define THREADS		100	/* Max threads */
+#define COUNT		100	/* Max iterations */
+#define DSCR_MAX	16	/* Max DSCR value */
+#define LEN_MAX		100	/* Max name length */
 
-#घोषणा DSCR_DEFAULT	"/sys/devices/system/cpu/dscr_default"
-#घोषणा CPU_PATH	"/sys/devices/system/cpu/"
+#define DSCR_DEFAULT	"/sys/devices/system/cpu/dscr_default"
+#define CPU_PATH	"/sys/devices/system/cpu/"
 
-#घोषणा rmb()  यंत्र अस्थिर("lwsync":::"memory")
-#घोषणा wmb()  यंत्र अस्थिर("lwsync":::"memory")
+#define rmb()  asm volatile("lwsync":::"memory")
+#define wmb()  asm volatile("lwsync":::"memory")
 
-#घोषणा READ_ONCE(x) (*(अस्थिर typeof(x) *)&(x))
+#define READ_ONCE(x) (*(volatile typeof(x) *)&(x))
 
 /* Prilvilege state DSCR access */
-अंतरभूत अचिन्हित दीर्घ get_dscr(व्योम)
-अणु
-	अचिन्हित दीर्घ ret;
+inline unsigned long get_dscr(void)
+{
+	unsigned long ret;
 
-	यंत्र अस्थिर("mfspr %0,%1" : "=r" (ret) : "i" (SPRN_DSCR_PRIV));
+	asm volatile("mfspr %0,%1" : "=r" (ret) : "i" (SPRN_DSCR_PRIV));
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अंतरभूत व्योम set_dscr(अचिन्हित दीर्घ val)
-अणु
-	यंत्र अस्थिर("mtspr %1,%0" : : "r" (val), "i" (SPRN_DSCR_PRIV));
-पूर्ण
+inline void set_dscr(unsigned long val)
+{
+	asm volatile("mtspr %1,%0" : : "r" (val), "i" (SPRN_DSCR_PRIV));
+}
 
 /* Problem state DSCR access */
-अंतरभूत अचिन्हित दीर्घ get_dscr_usr(व्योम)
-अणु
-	अचिन्हित दीर्घ ret;
+inline unsigned long get_dscr_usr(void)
+{
+	unsigned long ret;
 
-	यंत्र अस्थिर("mfspr %0,%1" : "=r" (ret) : "i" (SPRN_DSCR));
+	asm volatile("mfspr %0,%1" : "=r" (ret) : "i" (SPRN_DSCR));
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अंतरभूत व्योम set_dscr_usr(अचिन्हित दीर्घ val)
-अणु
-	यंत्र अस्थिर("mtspr %1,%0" : : "r" (val), "i" (SPRN_DSCR));
-पूर्ण
+inline void set_dscr_usr(unsigned long val)
+{
+	asm volatile("mtspr %1,%0" : : "r" (val), "i" (SPRN_DSCR));
+}
 
 /* Default DSCR access */
-अचिन्हित दीर्घ get_शेष_dscr(व्योम)
-अणु
-	पूर्णांक fd = -1, ret;
-	अक्षर buf[16];
-	अचिन्हित दीर्घ val;
+unsigned long get_default_dscr(void)
+{
+	int fd = -1, ret;
+	char buf[16];
+	unsigned long val;
 
-	अगर (fd == -1) अणु
-		fd = खोलो(DSCR_DEFAULT, O_RDONLY);
-		अगर (fd == -1) अणु
-			लिखो_त्रुटि("open() failed");
-			निकास(1);
-		पूर्ण
-	पूर्ण
-	स_रखो(buf, 0, माप(buf));
-	lseek(fd, 0, शुरू_से);
-	ret = पढ़ो(fd, buf, माप(buf));
-	अगर (ret == -1) अणु
-		लिखो_त्रुटि("read() failed");
-		निकास(1);
-	पूर्ण
-	माला_पूछो(buf, "%lx", &val);
-	बंद(fd);
-	वापस val;
-पूर्ण
+	if (fd == -1) {
+		fd = open(DSCR_DEFAULT, O_RDONLY);
+		if (fd == -1) {
+			perror("open() failed");
+			exit(1);
+		}
+	}
+	memset(buf, 0, sizeof(buf));
+	lseek(fd, 0, SEEK_SET);
+	ret = read(fd, buf, sizeof(buf));
+	if (ret == -1) {
+		perror("read() failed");
+		exit(1);
+	}
+	sscanf(buf, "%lx", &val);
+	close(fd);
+	return val;
+}
 
-व्योम set_शेष_dscr(अचिन्हित दीर्घ val)
-अणु
-	पूर्णांक fd = -1, ret;
-	अक्षर buf[16];
+void set_default_dscr(unsigned long val)
+{
+	int fd = -1, ret;
+	char buf[16];
 
-	अगर (fd == -1) अणु
-		fd = खोलो(DSCR_DEFAULT, O_RDWR);
-		अगर (fd == -1) अणु
-			लिखो_त्रुटि("open() failed");
-			निकास(1);
-		पूर्ण
-	पूर्ण
-	प्र_लिखो(buf, "%lx\n", val);
-	ret = ग_लिखो(fd, buf, म_माप(buf));
-	अगर (ret == -1) अणु
-		लिखो_त्रुटि("write() failed");
-		निकास(1);
-	पूर्ण
-	बंद(fd);
-पूर्ण
+	if (fd == -1) {
+		fd = open(DSCR_DEFAULT, O_RDWR);
+		if (fd == -1) {
+			perror("open() failed");
+			exit(1);
+		}
+	}
+	sprintf(buf, "%lx\n", val);
+	ret = write(fd, buf, strlen(buf));
+	if (ret == -1) {
+		perror("write() failed");
+		exit(1);
+	}
+	close(fd);
+}
 
-द्विगुन unअगरorm_deviate(पूर्णांक seed)
-अणु
-	वापस seed * (1.0 / (अक्रम_उच्च + 1.0));
-पूर्ण
-#पूर्ण_अगर	/* _SELFTESTS_POWERPC_DSCR_DSCR_H */
+double uniform_deviate(int seed)
+{
+	return seed * (1.0 / (RAND_MAX + 1.0));
+}
+#endif	/* _SELFTESTS_POWERPC_DSCR_DSCR_H */

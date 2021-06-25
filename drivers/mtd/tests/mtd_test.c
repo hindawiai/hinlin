@@ -1,110 +1,109 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#घोषणा pr_fmt(fmt) "mtd_test: " fmt
+// SPDX-License-Identifier: GPL-2.0
+#define pr_fmt(fmt) "mtd_test: " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/prपूर्णांकk.h>
+#include <linux/module.h>
+#include <linux/sched.h>
+#include <linux/printk.h>
 
-#समावेश "mtd_test.h"
+#include "mtd_test.h"
 
-पूर्णांक mtdtest_erase_eraseblock(काष्ठा mtd_info *mtd, अचिन्हित पूर्णांक ebnum)
-अणु
-	पूर्णांक err;
-	काष्ठा erase_info ei;
+int mtdtest_erase_eraseblock(struct mtd_info *mtd, unsigned int ebnum)
+{
+	int err;
+	struct erase_info ei;
 	loff_t addr = (loff_t)ebnum * mtd->erasesize;
 
-	स_रखो(&ei, 0, माप(काष्ठा erase_info));
+	memset(&ei, 0, sizeof(struct erase_info));
 	ei.addr = addr;
 	ei.len  = mtd->erasesize;
 
 	err = mtd_erase(mtd, &ei);
-	अगर (err) अणु
+	if (err) {
 		pr_info("error %d while erasing EB %d\n", err, ebnum);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक is_block_bad(काष्ठा mtd_info *mtd, अचिन्हित पूर्णांक ebnum)
-अणु
-	पूर्णांक ret;
+static int is_block_bad(struct mtd_info *mtd, unsigned int ebnum)
+{
+	int ret;
 	loff_t addr = (loff_t)ebnum * mtd->erasesize;
 
 	ret = mtd_block_isbad(mtd, addr);
-	अगर (ret)
+	if (ret)
 		pr_info("block %d is bad\n", ebnum);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक mtdtest_scan_क्रम_bad_eraseblocks(काष्ठा mtd_info *mtd, अचिन्हित अक्षर *bbt,
-					अचिन्हित पूर्णांक eb, पूर्णांक ebcnt)
-अणु
-	पूर्णांक i, bad = 0;
+int mtdtest_scan_for_bad_eraseblocks(struct mtd_info *mtd, unsigned char *bbt,
+					unsigned int eb, int ebcnt)
+{
+	int i, bad = 0;
 
-	अगर (!mtd_can_have_bb(mtd))
-		वापस 0;
+	if (!mtd_can_have_bb(mtd))
+		return 0;
 
 	pr_info("scanning for bad eraseblocks\n");
-	क्रम (i = 0; i < ebcnt; ++i) अणु
+	for (i = 0; i < ebcnt; ++i) {
 		bbt[i] = is_block_bad(mtd, eb + i) ? 1 : 0;
-		अगर (bbt[i])
+		if (bbt[i])
 			bad += 1;
 		cond_resched();
-	पूर्ण
+	}
 	pr_info("scanned %d eraseblocks, %d are bad\n", i, bad);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mtdtest_erase_good_eraseblocks(काष्ठा mtd_info *mtd, अचिन्हित अक्षर *bbt,
-				अचिन्हित पूर्णांक eb, पूर्णांक ebcnt)
-अणु
-	पूर्णांक err;
-	अचिन्हित पूर्णांक i;
+int mtdtest_erase_good_eraseblocks(struct mtd_info *mtd, unsigned char *bbt,
+				unsigned int eb, int ebcnt)
+{
+	int err;
+	unsigned int i;
 
-	क्रम (i = 0; i < ebcnt; ++i) अणु
-		अगर (bbt[i])
-			जारी;
+	for (i = 0; i < ebcnt; ++i) {
+		if (bbt[i])
+			continue;
 		err = mtdtest_erase_eraseblock(mtd, eb + i);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 		cond_resched();
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mtdtest_पढ़ो(काष्ठा mtd_info *mtd, loff_t addr, माप_प्रकार size, व्योम *buf)
-अणु
-	माप_प्रकार पढ़ो;
-	पूर्णांक err;
+int mtdtest_read(struct mtd_info *mtd, loff_t addr, size_t size, void *buf)
+{
+	size_t read;
+	int err;
 
-	err = mtd_पढ़ो(mtd, addr, size, &पढ़ो, buf);
+	err = mtd_read(mtd, addr, size, &read, buf);
 	/* Ignore corrected ECC errors */
-	अगर (mtd_is_bitflip(err))
+	if (mtd_is_bitflip(err))
 		err = 0;
-	अगर (!err && पढ़ो != size)
+	if (!err && read != size)
 		err = -EIO;
-	अगर (err)
+	if (err)
 		pr_err("error: read failed at %#llx\n", addr);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक mtdtest_ग_लिखो(काष्ठा mtd_info *mtd, loff_t addr, माप_प्रकार size,
-		स्थिर व्योम *buf)
-अणु
-	माप_प्रकार written;
-	पूर्णांक err;
+int mtdtest_write(struct mtd_info *mtd, loff_t addr, size_t size,
+		const void *buf)
+{
+	size_t written;
+	int err;
 
-	err = mtd_ग_लिखो(mtd, addr, size, &written, buf);
-	अगर (!err && written != size)
+	err = mtd_write(mtd, addr, size, &written, buf);
+	if (!err && written != size)
 		err = -EIO;
-	अगर (err)
+	if (err)
 		pr_err("error: write failed at %#llx\n", addr);
 
-	वापस err;
-पूर्ण
+	return err;
+}

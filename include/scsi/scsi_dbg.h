@@ -1,88 +1,87 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _SCSI_SCSI_DBG_H
-#घोषणा _SCSI_SCSI_DBG_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _SCSI_SCSI_DBG_H
+#define _SCSI_SCSI_DBG_H
 
-काष्ठा scsi_cmnd;
-काष्ठा scsi_device;
-काष्ठा scsi_sense_hdr;
+struct scsi_cmnd;
+struct scsi_device;
+struct scsi_sense_hdr;
 
-बाह्य व्योम scsi_prपूर्णांक_command(काष्ठा scsi_cmnd *);
-बाह्य माप_प्रकार __scsi_क्रमmat_command(अक्षर *, माप_प्रकार,
-				   स्थिर अचिन्हित अक्षर *, माप_प्रकार);
-बाह्य व्योम scsi_prपूर्णांक_sense_hdr(स्थिर काष्ठा scsi_device *, स्थिर अक्षर *,
-				 स्थिर काष्ठा scsi_sense_hdr *);
-बाह्य व्योम scsi_prपूर्णांक_sense(स्थिर काष्ठा scsi_cmnd *);
-बाह्य व्योम __scsi_prपूर्णांक_sense(स्थिर काष्ठा scsi_device *, स्थिर अक्षर *name,
-			       स्थिर अचिन्हित अक्षर *sense_buffer,
-			       पूर्णांक sense_len);
-बाह्य व्योम scsi_prपूर्णांक_result(स्थिर काष्ठा scsi_cmnd *, स्थिर अक्षर *, पूर्णांक);
+extern void scsi_print_command(struct scsi_cmnd *);
+extern size_t __scsi_format_command(char *, size_t,
+				   const unsigned char *, size_t);
+extern void scsi_print_sense_hdr(const struct scsi_device *, const char *,
+				 const struct scsi_sense_hdr *);
+extern void scsi_print_sense(const struct scsi_cmnd *);
+extern void __scsi_print_sense(const struct scsi_device *, const char *name,
+			       const unsigned char *sense_buffer,
+			       int sense_len);
+extern void scsi_print_result(const struct scsi_cmnd *, const char *, int);
 
-#अगर_घोषित CONFIG_SCSI_CONSTANTS
-बाह्य bool scsi_opcode_sa_name(पूर्णांक, पूर्णांक, स्थिर अक्षर **, स्थिर अक्षर **);
-बाह्य स्थिर अक्षर *scsi_sense_key_string(अचिन्हित अक्षर);
-बाह्य स्थिर अक्षर *scsi_extd_sense_क्रमmat(अचिन्हित अक्षर, अचिन्हित अक्षर,
-					  स्थिर अक्षर **);
-बाह्य स्थिर अक्षर *scsi_mlवापस_string(पूर्णांक);
-बाह्य स्थिर अक्षर *scsi_hostbyte_string(पूर्णांक);
-बाह्य स्थिर अक्षर *scsi_driverbyte_string(पूर्णांक);
-#अन्यथा
-अटल अंतरभूत bool
-scsi_opcode_sa_name(पूर्णांक cmd, पूर्णांक sa,
-		    स्थिर अक्षर **cdb_name, स्थिर अक्षर **sa_name)
-अणु
-	*cdb_name = शून्य;
-	चयन (cmd) अणु
-	हाल VARIABLE_LENGTH_CMD:
-	हाल MAINTEन_अंकCE_IN:
-	हाल MAINTEन_अंकCE_OUT:
-	हाल PERSISTENT_RESERVE_IN:
-	हाल PERSISTENT_RESERVE_OUT:
-	हाल SERVICE_ACTION_IN_12:
-	हाल SERVICE_ACTION_OUT_12:
-	हाल SERVICE_ACTION_BIसूचीECTIONAL:
-	हाल SERVICE_ACTION_IN_16:
-	हाल SERVICE_ACTION_OUT_16:
-	हाल EXTENDED_COPY:
-	हाल RECEIVE_COPY_RESULTS:
-		*sa_name = शून्य;
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+#ifdef CONFIG_SCSI_CONSTANTS
+extern bool scsi_opcode_sa_name(int, int, const char **, const char **);
+extern const char *scsi_sense_key_string(unsigned char);
+extern const char *scsi_extd_sense_format(unsigned char, unsigned char,
+					  const char **);
+extern const char *scsi_mlreturn_string(int);
+extern const char *scsi_hostbyte_string(int);
+extern const char *scsi_driverbyte_string(int);
+#else
+static inline bool
+scsi_opcode_sa_name(int cmd, int sa,
+		    const char **cdb_name, const char **sa_name)
+{
+	*cdb_name = NULL;
+	switch (cmd) {
+	case VARIABLE_LENGTH_CMD:
+	case MAINTENANCE_IN:
+	case MAINTENANCE_OUT:
+	case PERSISTENT_RESERVE_IN:
+	case PERSISTENT_RESERVE_OUT:
+	case SERVICE_ACTION_IN_12:
+	case SERVICE_ACTION_OUT_12:
+	case SERVICE_ACTION_BIDIRECTIONAL:
+	case SERVICE_ACTION_IN_16:
+	case SERVICE_ACTION_OUT_16:
+	case EXTENDED_COPY:
+	case RECEIVE_COPY_RESULTS:
+		*sa_name = NULL;
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल अंतरभूत स्थिर अक्षर *
-scsi_sense_key_string(अचिन्हित अक्षर key)
-अणु
-	वापस शून्य;
-पूर्ण
+static inline const char *
+scsi_sense_key_string(unsigned char key)
+{
+	return NULL;
+}
 
-अटल अंतरभूत स्थिर अक्षर *
-scsi_extd_sense_क्रमmat(अचिन्हित अक्षर asc, अचिन्हित अक्षर ascq, स्थिर अक्षर **fmt)
-अणु
-	*fmt = शून्य;
-	वापस शून्य;
-पूर्ण
+static inline const char *
+scsi_extd_sense_format(unsigned char asc, unsigned char ascq, const char **fmt)
+{
+	*fmt = NULL;
+	return NULL;
+}
 
-अटल अंतरभूत स्थिर अक्षर *
-scsi_mlवापस_string(पूर्णांक result)
-अणु
-	वापस शून्य;
-पूर्ण
+static inline const char *
+scsi_mlreturn_string(int result)
+{
+	return NULL;
+}
 
-अटल अंतरभूत स्थिर अक्षर *
-scsi_hostbyte_string(पूर्णांक result)
-अणु
-	वापस शून्य;
-पूर्ण
+static inline const char *
+scsi_hostbyte_string(int result)
+{
+	return NULL;
+}
 
-अटल अंतरभूत स्थिर अक्षर *
-scsi_driverbyte_string(पूर्णांक result)
-अणु
-	वापस शून्य;
-पूर्ण
+static inline const char *
+scsi_driverbyte_string(int result)
+{
+	return NULL;
+}
 
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर /* _SCSI_SCSI_DBG_H */
+#endif /* _SCSI_SCSI_DBG_H */

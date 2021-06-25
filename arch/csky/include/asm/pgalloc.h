@@ -1,77 +1,76 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
-#अगर_अघोषित __ASM_CSKY_PGALLOC_H
-#घोषणा __ASM_CSKY_PGALLOC_H
+#ifndef __ASM_CSKY_PGALLOC_H
+#define __ASM_CSKY_PGALLOC_H
 
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/mm.h>
-#समावेश <linux/sched.h>
+#include <linux/highmem.h>
+#include <linux/mm.h>
+#include <linux/sched.h>
 
-#घोषणा __HAVE_ARCH_PTE_ALLOC_ONE_KERNEL
-#समावेश <यंत्र-generic/pgभाग.स>
+#define __HAVE_ARCH_PTE_ALLOC_ONE_KERNEL
+#include <asm-generic/pgalloc.h>
 
-अटल अंतरभूत व्योम pmd_populate_kernel(काष्ठा mm_काष्ठा *mm, pmd_t *pmd,
+static inline void pmd_populate_kernel(struct mm_struct *mm, pmd_t *pmd,
 					pte_t *pte)
-अणु
+{
 	set_pmd(pmd, __pmd(__pa(pte)));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम pmd_populate(काष्ठा mm_काष्ठा *mm, pmd_t *pmd,
+static inline void pmd_populate(struct mm_struct *mm, pmd_t *pmd,
 					pgtable_t pte)
-अणु
+{
 	set_pmd(pmd, __pmd(__pa(page_address(pte))));
-पूर्ण
+}
 
-#घोषणा pmd_pgtable(pmd) pmd_page(pmd)
+#define pmd_pgtable(pmd) pmd_page(pmd)
 
-बाह्य व्योम pgd_init(अचिन्हित दीर्घ *p);
+extern void pgd_init(unsigned long *p);
 
-अटल अंतरभूत pte_t *pte_alloc_one_kernel(काष्ठा mm_काष्ठा *mm)
-अणु
+static inline pte_t *pte_alloc_one_kernel(struct mm_struct *mm)
+{
 	pte_t *pte;
-	अचिन्हित दीर्घ i;
+	unsigned long i;
 
-	pte = (pte_t *) __get_मुक्त_page(GFP_KERNEL);
-	अगर (!pte)
-		वापस शून्य;
+	pte = (pte_t *) __get_free_page(GFP_KERNEL);
+	if (!pte)
+		return NULL;
 
-	क्रम (i = 0; i < PAGE_SIZE/माप(pte_t); i++)
+	for (i = 0; i < PAGE_SIZE/sizeof(pte_t); i++)
 		(pte + i)->pte_low = _PAGE_GLOBAL;
 
-	वापस pte;
-पूर्ण
+	return pte;
+}
 
-अटल अंतरभूत pgd_t *pgd_alloc(काष्ठा mm_काष्ठा *mm)
-अणु
+static inline pgd_t *pgd_alloc(struct mm_struct *mm)
+{
 	pgd_t *ret;
 	pgd_t *init;
 
-	ret = (pgd_t *) __get_मुक्त_pages(GFP_KERNEL, PGD_ORDER);
-	अगर (ret) अणु
+	ret = (pgd_t *) __get_free_pages(GFP_KERNEL, PGD_ORDER);
+	if (ret) {
 		init = pgd_offset(&init_mm, 0UL);
-		pgd_init((अचिन्हित दीर्घ *)ret);
-		स_नकल(ret + USER_PTRS_PER_PGD, init + USER_PTRS_PER_PGD,
-			(PTRS_PER_PGD - USER_PTRS_PER_PGD) * माप(pgd_t));
+		pgd_init((unsigned long *)ret);
+		memcpy(ret + USER_PTRS_PER_PGD, init + USER_PTRS_PER_PGD,
+			(PTRS_PER_PGD - USER_PTRS_PER_PGD) * sizeof(pgd_t));
 		/* prevent out of order excute */
 		smp_mb();
-#अगर_घोषित CONFIG_CPU_NEED_TLBSYNC
-		dcache_wb_range((अचिन्हित पूर्णांक)ret,
-				(अचिन्हित पूर्णांक)(ret + PTRS_PER_PGD));
-#पूर्ण_अगर
-	पूर्ण
+#ifdef CONFIG_CPU_NEED_TLBSYNC
+		dcache_wb_range((unsigned int)ret,
+				(unsigned int)(ret + PTRS_PER_PGD));
+#endif
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#घोषणा __pte_मुक्त_tlb(tlb, pte, address)		\
-करो अणु							\
+#define __pte_free_tlb(tlb, pte, address)		\
+do {							\
 	pgtable_pte_page_dtor(pte);			\
-	tlb_हटाओ_page(tlb, pte);			\
-पूर्ण जबतक (0)
+	tlb_remove_page(tlb, pte);			\
+} while (0)
 
-बाह्य व्योम pagetable_init(व्योम);
-बाह्य व्योम mmu_init(अचिन्हित दीर्घ min_pfn, अचिन्हित दीर्घ max_pfn);
-बाह्य व्योम pre_trap_init(व्योम);
+extern void pagetable_init(void);
+extern void mmu_init(unsigned long min_pfn, unsigned long max_pfn);
+extern void pre_trap_init(void);
 
-#पूर्ण_अगर /* __ASM_CSKY_PGALLOC_H */
+#endif /* __ASM_CSKY_PGALLOC_H */

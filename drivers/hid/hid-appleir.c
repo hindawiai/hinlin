@@ -1,33 +1,32 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * HID driver क्रम the apple ir device
+ * HID driver for the apple ir device
  *
  * Original driver written by James McKenzie
- * Ported to recent 2.6 kernel versions by Greg Kroah-Harपंचांगan <gregkh@suse.de>
+ * Ported to recent 2.6 kernel versions by Greg Kroah-Hartman <gregkh@suse.de>
  * Updated to support newer remotes by Bastien Nocera <hadess@hadess.net>
- * Ported to HID subप्रणाली by Benjamin Tissoires <benjamin.tissoires@gmail.com>
+ * Ported to HID subsystem by Benjamin Tissoires <benjamin.tissoires@gmail.com>
  *
  * Copyright (C) 2006 James McKenzie
- * Copyright (C) 2008 Greg Kroah-Harपंचांगan <greg@kroah.com>
+ * Copyright (C) 2008 Greg Kroah-Hartman <greg@kroah.com>
  * Copyright (C) 2008 Novell Inc.
  * Copyright (C) 2010, 2012 Bastien Nocera <hadess@hadess.net>
  * Copyright (C) 2013 Benjamin Tissoires <benjamin.tissoires@gmail.com>
  * Copyright (C) 2013 Red Hat Inc. All Rights Reserved
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/hid.h>
-#समावेश <linux/module.h>
-#समावेश "hid-ids.h"
+#include <linux/device.h>
+#include <linux/hid.h>
+#include <linux/module.h>
+#include "hid-ids.h"
 
 MODULE_AUTHOR("James McKenzie");
 MODULE_AUTHOR("Benjamin Tissoires <benjamin.tissoires@redhat.com>");
 MODULE_DESCRIPTION("HID Apple IR remote controls");
 MODULE_LICENSE("GPL");
 
-#घोषणा KEY_MASK		0x0F
-#घोषणा TWO_PACKETS_MASK	0x40
+#define KEY_MASK		0x0F
+#define TWO_PACKETS_MASK	0x40
 
 /*
  * James McKenzie has two devices both of which report the following
@@ -37,7 +36,7 @@ MODULE_LICENSE("GPL");
  * 25 87 ee 83 06	>>
  * 25 87 ee 83 05	>"
  * 25 87 ee 83 03	menu
- * 26 00 00 00 00	क्रम key repeat
+ * 26 00 00 00 00	for key repeat
  */
 
 /*
@@ -48,23 +47,23 @@ MODULE_LICENSE("GPL");
  * 25 87 ee ca 07	>>
  * 25 87 ee ca 04	>"
  * 25 87 ee ca 02	menu
- * 26 00 00 00 00       क्रम key repeat
+ * 26 00 00 00 00       for key repeat
  *
- * He also observes the following event someबार
- * sent after a key is release, which I पूर्णांकerpret
+ * He also observes the following event sometimes
+ * sent after a key is release, which I interpret
  * as a flat battery message
  * 25 87 e0 ca 06	flat battery
  */
 
 /*
- * Alexandre Karpenko reports the following responses क्रम Device ID 0x8242
+ * Alexandre Karpenko reports the following responses for Device ID 0x8242
  * 25 87 ee 47 0b	+
  * 25 87 ee 47 0d	-
  * 25 87 ee 47 08	<<
  * 25 87 ee 47 07	>>
  * 25 87 ee 47 04	>"
  * 25 87 ee 47 02	menu
- * 26 87 ee 47 **	क्रम key repeat (** is the code of the key being held)
+ * 26 87 ee 47 **	for key repeat (** is the code of the key being held)
  */
 
 /*
@@ -85,7 +84,7 @@ MODULE_LICENSE("GPL");
  * 25 87 ee a3 04	gives you the middle button
  */
 
-अटल स्थिर अचिन्हित लघु appleir_key_table[] = अणु
+static const unsigned short appleir_key_table[] = {
 	KEY_RESERVED,
 	KEY_MENU,
 	KEY_PLAYPAUSE,
@@ -103,20 +102,20 @@ MODULE_LICENSE("GPL");
 	KEY_ENTER,
 	KEY_PLAYPAUSE,
 	KEY_RESERVED,
-पूर्ण;
+};
 
-काष्ठा appleir अणु
-	काष्ठा input_dev *input_dev;
-	काष्ठा hid_device *hid;
-	अचिन्हित लघु keymap[ARRAY_SIZE(appleir_key_table)];
-	काष्ठा समयr_list key_up_समयr;	/* समयr क्रम key up */
+struct appleir {
+	struct input_dev *input_dev;
+	struct hid_device *hid;
+	unsigned short keymap[ARRAY_SIZE(appleir_key_table)];
+	struct timer_list key_up_timer;	/* timer for key up */
 	spinlock_t lock;		/* protects .current_key */
-	पूर्णांक current_key;		/* the currently pressed key */
-	पूर्णांक prev_key_idx;		/* key index in a 2 packets message */
-पूर्ण;
+	int current_key;		/* the currently pressed key */
+	int prev_key_idx;		/* key index in a 2 packets message */
+};
 
-अटल पूर्णांक get_key(पूर्णांक data)
-अणु
+static int get_key(int data)
+{
 	/*
 	 * The key is coded accross bits 2..9:
 	 *
@@ -138,208 +137,208 @@ MODULE_LICENSE("GPL");
 	 * 0x5e or 0x5f (   >"   )	key: 15		-> KEY_PLAYPAUSE
 	 *
 	 * Packets starting with 0x5 are part of a two-packets message,
-	 * we notअगरy the caller by sending a negative value.
+	 * we notify the caller by sending a negative value.
 	 */
-	पूर्णांक key = (data >> 1) & KEY_MASK;
+	int key = (data >> 1) & KEY_MASK;
 
-	अगर ((data & TWO_PACKETS_MASK))
+	if ((data & TWO_PACKETS_MASK))
 		/* Part of a 2 packets-command */
 		key = -key;
 
-	वापस key;
-पूर्ण
+	return key;
+}
 
-अटल व्योम key_up(काष्ठा hid_device *hid, काष्ठा appleir *appleir, पूर्णांक key)
-अणु
+static void key_up(struct hid_device *hid, struct appleir *appleir, int key)
+{
 	input_report_key(appleir->input_dev, key, 0);
 	input_sync(appleir->input_dev);
-पूर्ण
+}
 
-अटल व्योम key_करोwn(काष्ठा hid_device *hid, काष्ठा appleir *appleir, पूर्णांक key)
-अणु
+static void key_down(struct hid_device *hid, struct appleir *appleir, int key)
+{
 	input_report_key(appleir->input_dev, key, 1);
 	input_sync(appleir->input_dev);
-पूर्ण
+}
 
-अटल व्योम battery_flat(काष्ठा appleir *appleir)
-अणु
+static void battery_flat(struct appleir *appleir)
+{
 	dev_err(&appleir->input_dev->dev, "possible flat battery?\n");
-पूर्ण
+}
 
-अटल व्योम key_up_tick(काष्ठा समयr_list *t)
-अणु
-	काष्ठा appleir *appleir = from_समयr(appleir, t, key_up_समयr);
-	काष्ठा hid_device *hid = appleir->hid;
-	अचिन्हित दीर्घ flags;
+static void key_up_tick(struct timer_list *t)
+{
+	struct appleir *appleir = from_timer(appleir, t, key_up_timer);
+	struct hid_device *hid = appleir->hid;
+	unsigned long flags;
 
 	spin_lock_irqsave(&appleir->lock, flags);
-	अगर (appleir->current_key) अणु
+	if (appleir->current_key) {
 		key_up(hid, appleir, appleir->current_key);
 		appleir->current_key = 0;
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&appleir->lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक appleir_raw_event(काष्ठा hid_device *hid, काष्ठा hid_report *report,
-	 u8 *data, पूर्णांक len)
-अणु
-	काष्ठा appleir *appleir = hid_get_drvdata(hid);
-	अटल स्थिर u8 keyकरोwn[] = अणु 0x25, 0x87, 0xee पूर्ण;
-	अटल स्थिर u8 keyrepeat[] = अणु 0x26, पूर्ण;
-	अटल स्थिर u8 flatbattery[] = अणु 0x25, 0x87, 0xe0 पूर्ण;
-	अचिन्हित दीर्घ flags;
+static int appleir_raw_event(struct hid_device *hid, struct hid_report *report,
+	 u8 *data, int len)
+{
+	struct appleir *appleir = hid_get_drvdata(hid);
+	static const u8 keydown[] = { 0x25, 0x87, 0xee };
+	static const u8 keyrepeat[] = { 0x26, };
+	static const u8 flatbattery[] = { 0x25, 0x87, 0xe0 };
+	unsigned long flags;
 
-	अगर (len != 5)
-		जाओ out;
+	if (len != 5)
+		goto out;
 
-	अगर (!स_भेद(data, keyकरोwn, माप(keyकरोwn))) अणु
-		पूर्णांक index;
+	if (!memcmp(data, keydown, sizeof(keydown))) {
+		int index;
 
 		spin_lock_irqsave(&appleir->lock, flags);
 		/*
-		 * If we alपढ़ोy have a key करोwn, take it up beक्रमe marking
-		 * this one करोwn
+		 * If we already have a key down, take it up before marking
+		 * this one down
 		 */
-		अगर (appleir->current_key)
+		if (appleir->current_key)
 			key_up(hid, appleir, appleir->current_key);
 
 		/* Handle dual packet commands */
-		अगर (appleir->prev_key_idx > 0)
+		if (appleir->prev_key_idx > 0)
 			index = appleir->prev_key_idx;
-		अन्यथा
+		else
 			index = get_key(data[4]);
 
-		अगर (index >= 0) अणु
+		if (index >= 0) {
 			appleir->current_key = appleir->keymap[index];
 
-			key_करोwn(hid, appleir, appleir->current_key);
+			key_down(hid, appleir, appleir->current_key);
 			/*
-			 * Remote करोesn't करो key up, either pull them up, in
-			 * the test above, or here set a समयr which pulls
+			 * Remote doesn't do key up, either pull them up, in
+			 * the test above, or here set a timer which pulls
 			 * them up after 1/8 s
 			 */
-			mod_समयr(&appleir->key_up_समयr, jअगरfies + HZ / 8);
+			mod_timer(&appleir->key_up_timer, jiffies + HZ / 8);
 			appleir->prev_key_idx = 0;
-		पूर्ण अन्यथा
-			/* Remember key क्रम next packet */
+		} else
+			/* Remember key for next packet */
 			appleir->prev_key_idx = -index;
 		spin_unlock_irqrestore(&appleir->lock, flags);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	appleir->prev_key_idx = 0;
 
-	अगर (!स_भेद(data, keyrepeat, माप(keyrepeat))) अणु
-		key_करोwn(hid, appleir, appleir->current_key);
+	if (!memcmp(data, keyrepeat, sizeof(keyrepeat))) {
+		key_down(hid, appleir, appleir->current_key);
 		/*
-		 * Remote करोesn't करो key up, either pull them up, in the test
-		 * above, or here set a समयr which pulls them up after 1/8 s
+		 * Remote doesn't do key up, either pull them up, in the test
+		 * above, or here set a timer which pulls them up after 1/8 s
 		 */
-		mod_समयr(&appleir->key_up_समयr, jअगरfies + HZ / 8);
-		जाओ out;
-	पूर्ण
+		mod_timer(&appleir->key_up_timer, jiffies + HZ / 8);
+		goto out;
+	}
 
-	अगर (!स_भेद(data, flatbattery, माप(flatbattery))) अणु
+	if (!memcmp(data, flatbattery, sizeof(flatbattery))) {
 		battery_flat(appleir);
 		/* Fall through */
-	पूर्ण
+	}
 
 out:
 	/* let hidraw and hiddev handle the report */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक appleir_input_configured(काष्ठा hid_device *hid,
-		काष्ठा hid_input *hidinput)
-अणु
-	काष्ठा input_dev *input_dev = hidinput->input;
-	काष्ठा appleir *appleir = hid_get_drvdata(hid);
-	पूर्णांक i;
+static int appleir_input_configured(struct hid_device *hid,
+		struct hid_input *hidinput)
+{
+	struct input_dev *input_dev = hidinput->input;
+	struct appleir *appleir = hid_get_drvdata(hid);
+	int i;
 
 	appleir->input_dev = input_dev;
 
 	input_dev->keycode = appleir->keymap;
-	input_dev->keycodesize = माप(अचिन्हित लघु);
+	input_dev->keycodesize = sizeof(unsigned short);
 	input_dev->keycodemax = ARRAY_SIZE(appleir->keymap);
 
 	input_dev->evbit[0] = BIT(EV_KEY) | BIT(EV_REP);
 
-	स_नकल(appleir->keymap, appleir_key_table, माप(appleir->keymap));
-	क्रम (i = 0; i < ARRAY_SIZE(appleir_key_table); i++)
+	memcpy(appleir->keymap, appleir_key_table, sizeof(appleir->keymap));
+	for (i = 0; i < ARRAY_SIZE(appleir_key_table); i++)
 		set_bit(appleir->keymap[i], input_dev->keybit);
 	clear_bit(KEY_RESERVED, input_dev->keybit);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक appleir_input_mapping(काष्ठा hid_device *hid,
-		काष्ठा hid_input *hi, काष्ठा hid_field *field,
-		काष्ठा hid_usage *usage, अचिन्हित दीर्घ **bit, पूर्णांक *max)
-अणु
-	वापस -1;
-पूर्ण
+static int appleir_input_mapping(struct hid_device *hid,
+		struct hid_input *hi, struct hid_field *field,
+		struct hid_usage *usage, unsigned long **bit, int *max)
+{
+	return -1;
+}
 
-अटल पूर्णांक appleir_probe(काष्ठा hid_device *hid, स्थिर काष्ठा hid_device_id *id)
-अणु
-	पूर्णांक ret;
-	काष्ठा appleir *appleir;
+static int appleir_probe(struct hid_device *hid, const struct hid_device_id *id)
+{
+	int ret;
+	struct appleir *appleir;
 
-	appleir = devm_kzalloc(&hid->dev, माप(काष्ठा appleir), GFP_KERNEL);
-	अगर (!appleir)
-		वापस -ENOMEM;
+	appleir = devm_kzalloc(&hid->dev, sizeof(struct appleir), GFP_KERNEL);
+	if (!appleir)
+		return -ENOMEM;
 
 	appleir->hid = hid;
 
-	/* क्रमce input as some remotes bypass the input registration */
+	/* force input as some remotes bypass the input registration */
 	hid->quirks |= HID_QUIRK_HIDINPUT_FORCE;
 
 	spin_lock_init(&appleir->lock);
-	समयr_setup(&appleir->key_up_समयr, key_up_tick, 0);
+	timer_setup(&appleir->key_up_timer, key_up_tick, 0);
 
 	hid_set_drvdata(hid, appleir);
 
 	ret = hid_parse(hid);
-	अगर (ret) अणु
+	if (ret) {
 		hid_err(hid, "parse failed\n");
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	ret = hid_hw_start(hid, HID_CONNECT_DEFAULT | HID_CONNECT_HIDDEV_FORCE);
-	अगर (ret) अणु
+	if (ret) {
 		hid_err(hid, "hw start failed\n");
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	वापस 0;
+	return 0;
 fail:
-	devm_kमुक्त(&hid->dev, appleir);
-	वापस ret;
-पूर्ण
+	devm_kfree(&hid->dev, appleir);
+	return ret;
+}
 
-अटल व्योम appleir_हटाओ(काष्ठा hid_device *hid)
-अणु
-	काष्ठा appleir *appleir = hid_get_drvdata(hid);
+static void appleir_remove(struct hid_device *hid)
+{
+	struct appleir *appleir = hid_get_drvdata(hid);
 	hid_hw_stop(hid);
-	del_समयr_sync(&appleir->key_up_समयr);
-पूर्ण
+	del_timer_sync(&appleir->key_up_timer);
+}
 
-अटल स्थिर काष्ठा hid_device_id appleir_devices[] = अणु
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_APPLE, USB_DEVICE_ID_APPLE_IRCONTROL) पूर्ण,
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_APPLE, USB_DEVICE_ID_APPLE_IRCONTROL2) पूर्ण,
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_APPLE, USB_DEVICE_ID_APPLE_IRCONTROL3) पूर्ण,
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_APPLE, USB_DEVICE_ID_APPLE_IRCONTROL4) पूर्ण,
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_APPLE, USB_DEVICE_ID_APPLE_IRCONTROL5) पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct hid_device_id appleir_devices[] = {
+	{ HID_USB_DEVICE(USB_VENDOR_ID_APPLE, USB_DEVICE_ID_APPLE_IRCONTROL) },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_APPLE, USB_DEVICE_ID_APPLE_IRCONTROL2) },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_APPLE, USB_DEVICE_ID_APPLE_IRCONTROL3) },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_APPLE, USB_DEVICE_ID_APPLE_IRCONTROL4) },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_APPLE, USB_DEVICE_ID_APPLE_IRCONTROL5) },
+	{ }
+};
 MODULE_DEVICE_TABLE(hid, appleir_devices);
 
-अटल काष्ठा hid_driver appleir_driver = अणु
+static struct hid_driver appleir_driver = {
 	.name = "appleir",
 	.id_table = appleir_devices,
 	.raw_event = appleir_raw_event,
 	.input_configured = appleir_input_configured,
 	.probe = appleir_probe,
-	.हटाओ = appleir_हटाओ,
+	.remove = appleir_remove,
 	.input_mapping = appleir_input_mapping,
-पूर्ण;
+};
 module_hid_driver(appleir_driver);

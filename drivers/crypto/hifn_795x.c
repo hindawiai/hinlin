@@ -1,719 +1,718 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * 2007+ Copyright (c) Evgeniy Polyakov <johnpol@2ka.mipt.ru>
  * All rights reserved.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/crypto.h>
-#समावेश <linux/hw_अक्रमom.h>
-#समावेश <linux/kसमय.स>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/mod_devicetable.h>
+#include <linux/interrupt.h>
+#include <linux/pci.h>
+#include <linux/slab.h>
+#include <linux/delay.h>
+#include <linux/mm.h>
+#include <linux/dma-mapping.h>
+#include <linux/scatterlist.h>
+#include <linux/highmem.h>
+#include <linux/crypto.h>
+#include <linux/hw_random.h>
+#include <linux/ktime.h>
 
-#समावेश <crypto/algapi.h>
-#समावेश <crypto/पूर्णांकernal/des.h>
-#समावेश <crypto/पूर्णांकernal/skcipher.h>
+#include <crypto/algapi.h>
+#include <crypto/internal/des.h>
+#include <crypto/internal/skcipher.h>
 
-अटल अक्षर hअगरn_pll_ref[माप("extNNN")] = "ext";
-module_param_string(hअगरn_pll_ref, hअगरn_pll_ref, माप(hअगरn_pll_ref), 0444);
-MODULE_PARM_DESC(hअगरn_pll_ref,
+static char hifn_pll_ref[sizeof("extNNN")] = "ext";
+module_param_string(hifn_pll_ref, hifn_pll_ref, sizeof(hifn_pll_ref), 0444);
+MODULE_PARM_DESC(hifn_pll_ref,
 		 "PLL reference clock (pci[freq] or ext[freq], default ext)");
 
-अटल atomic_t hअगरn_dev_number;
+static atomic_t hifn_dev_number;
 
-#घोषणा ACRYPTO_OP_DECRYPT	0
-#घोषणा ACRYPTO_OP_ENCRYPT	1
-#घोषणा ACRYPTO_OP_HMAC		2
-#घोषणा ACRYPTO_OP_RNG		3
+#define ACRYPTO_OP_DECRYPT	0
+#define ACRYPTO_OP_ENCRYPT	1
+#define ACRYPTO_OP_HMAC		2
+#define ACRYPTO_OP_RNG		3
 
-#घोषणा ACRYPTO_MODE_ECB		0
-#घोषणा ACRYPTO_MODE_CBC		1
-#घोषणा ACRYPTO_MODE_CFB		2
-#घोषणा ACRYPTO_MODE_OFB		3
+#define ACRYPTO_MODE_ECB		0
+#define ACRYPTO_MODE_CBC		1
+#define ACRYPTO_MODE_CFB		2
+#define ACRYPTO_MODE_OFB		3
 
-#घोषणा ACRYPTO_TYPE_AES_128	0
-#घोषणा ACRYPTO_TYPE_AES_192	1
-#घोषणा ACRYPTO_TYPE_AES_256	2
-#घोषणा ACRYPTO_TYPE_3DES	3
-#घोषणा ACRYPTO_TYPE_DES	4
+#define ACRYPTO_TYPE_AES_128	0
+#define ACRYPTO_TYPE_AES_192	1
+#define ACRYPTO_TYPE_AES_256	2
+#define ACRYPTO_TYPE_3DES	3
+#define ACRYPTO_TYPE_DES	4
 
-#घोषणा PCI_VENDOR_ID_HIFN		0x13A3
-#घोषणा PCI_DEVICE_ID_HIFN_7955		0x0020
-#घोषणा	PCI_DEVICE_ID_HIFN_7956		0x001d
+#define PCI_VENDOR_ID_HIFN		0x13A3
+#define PCI_DEVICE_ID_HIFN_7955		0x0020
+#define	PCI_DEVICE_ID_HIFN_7956		0x001d
 
 /* I/O region sizes */
 
-#घोषणा HIFN_BAR0_SIZE			0x1000
-#घोषणा HIFN_BAR1_SIZE			0x2000
-#घोषणा HIFN_BAR2_SIZE			0x8000
+#define HIFN_BAR0_SIZE			0x1000
+#define HIFN_BAR1_SIZE			0x2000
+#define HIFN_BAR2_SIZE			0x8000
 
 /* DMA registres */
 
-#घोषणा HIFN_DMA_CRA			0x0C	/* DMA Command Ring Address */
-#घोषणा HIFN_DMA_SDRA			0x1C	/* DMA Source Data Ring Address */
-#घोषणा HIFN_DMA_RRA			0x2C	/* DMA Result Ring Address */
-#घोषणा HIFN_DMA_DDRA			0x3C	/* DMA Destination Data Ring Address */
-#घोषणा HIFN_DMA_STCTL			0x40	/* DMA Status and Control */
-#घोषणा HIFN_DMA_INTREN			0x44	/* DMA Interrupt Enable */
-#घोषणा HIFN_DMA_CFG1			0x48	/* DMA Configuration #1 */
-#घोषणा HIFN_DMA_CFG2			0x6C	/* DMA Configuration #2 */
-#घोषणा HIFN_CHIP_ID			0x98	/* Chip ID */
+#define HIFN_DMA_CRA			0x0C	/* DMA Command Ring Address */
+#define HIFN_DMA_SDRA			0x1C	/* DMA Source Data Ring Address */
+#define HIFN_DMA_RRA			0x2C	/* DMA Result Ring Address */
+#define HIFN_DMA_DDRA			0x3C	/* DMA Destination Data Ring Address */
+#define HIFN_DMA_STCTL			0x40	/* DMA Status and Control */
+#define HIFN_DMA_INTREN			0x44	/* DMA Interrupt Enable */
+#define HIFN_DMA_CFG1			0x48	/* DMA Configuration #1 */
+#define HIFN_DMA_CFG2			0x6C	/* DMA Configuration #2 */
+#define HIFN_CHIP_ID			0x98	/* Chip ID */
 
 /*
  * Processing Unit Registers (offset from BASEREG0)
  */
-#घोषणा	HIFN_0_PUDATA		0x00	/* Processing Unit Data */
-#घोषणा	HIFN_0_PUCTRL		0x04	/* Processing Unit Control */
-#घोषणा	HIFN_0_PUISR		0x08	/* Processing Unit Interrupt Status */
-#घोषणा	HIFN_0_PUCNFG		0x0c	/* Processing Unit Configuration */
-#घोषणा	HIFN_0_PUIER		0x10	/* Processing Unit Interrupt Enable */
-#घोषणा	HIFN_0_PUSTAT		0x14	/* Processing Unit Status/Chip ID */
-#घोषणा	HIFN_0_FIFOSTAT		0x18	/* FIFO Status */
-#घोषणा	HIFN_0_FIFOCNFG		0x1c	/* FIFO Configuration */
-#घोषणा	HIFN_0_SPACESIZE	0x20	/* Register space size */
+#define	HIFN_0_PUDATA		0x00	/* Processing Unit Data */
+#define	HIFN_0_PUCTRL		0x04	/* Processing Unit Control */
+#define	HIFN_0_PUISR		0x08	/* Processing Unit Interrupt Status */
+#define	HIFN_0_PUCNFG		0x0c	/* Processing Unit Configuration */
+#define	HIFN_0_PUIER		0x10	/* Processing Unit Interrupt Enable */
+#define	HIFN_0_PUSTAT		0x14	/* Processing Unit Status/Chip ID */
+#define	HIFN_0_FIFOSTAT		0x18	/* FIFO Status */
+#define	HIFN_0_FIFOCNFG		0x1c	/* FIFO Configuration */
+#define	HIFN_0_SPACESIZE	0x20	/* Register space size */
 
 /* Processing Unit Control Register (HIFN_0_PUCTRL) */
-#घोषणा	HIFN_PUCTRL_CLRSRCFIFO	0x0010	/* clear source fअगरo */
-#घोषणा	HIFN_PUCTRL_STOP	0x0008	/* stop pu */
-#घोषणा	HIFN_PUCTRL_LOCKRAM	0x0004	/* lock ram */
-#घोषणा	HIFN_PUCTRL_DMAENA	0x0002	/* enable dma */
-#घोषणा	HIFN_PUCTRL_RESET	0x0001	/* Reset processing unit */
+#define	HIFN_PUCTRL_CLRSRCFIFO	0x0010	/* clear source fifo */
+#define	HIFN_PUCTRL_STOP	0x0008	/* stop pu */
+#define	HIFN_PUCTRL_LOCKRAM	0x0004	/* lock ram */
+#define	HIFN_PUCTRL_DMAENA	0x0002	/* enable dma */
+#define	HIFN_PUCTRL_RESET	0x0001	/* Reset processing unit */
 
 /* Processing Unit Interrupt Status Register (HIFN_0_PUISR) */
-#घोषणा	HIFN_PUISR_CMDINVAL	0x8000	/* Invalid command पूर्णांकerrupt */
-#घोषणा	HIFN_PUISR_DATAERR	0x4000	/* Data error पूर्णांकerrupt */
-#घोषणा	HIFN_PUISR_SRCFIFO	0x2000	/* Source FIFO पढ़ोy पूर्णांकerrupt */
-#घोषणा	HIFN_PUISR_DSTFIFO	0x1000	/* Destination FIFO पढ़ोy पूर्णांकerrupt */
-#घोषणा	HIFN_PUISR_DSTOVER	0x0200	/* Destination overrun पूर्णांकerrupt */
-#घोषणा	HIFN_PUISR_SRCCMD	0x0080	/* Source command पूर्णांकerrupt */
-#घोषणा	HIFN_PUISR_SRCCTX	0x0040	/* Source context पूर्णांकerrupt */
-#घोषणा	HIFN_PUISR_SRCDATA	0x0020	/* Source data पूर्णांकerrupt */
-#घोषणा	HIFN_PUISR_DSTDATA	0x0010	/* Destination data पूर्णांकerrupt */
-#घोषणा	HIFN_PUISR_DSTRESULT	0x0004	/* Destination result पूर्णांकerrupt */
+#define	HIFN_PUISR_CMDINVAL	0x8000	/* Invalid command interrupt */
+#define	HIFN_PUISR_DATAERR	0x4000	/* Data error interrupt */
+#define	HIFN_PUISR_SRCFIFO	0x2000	/* Source FIFO ready interrupt */
+#define	HIFN_PUISR_DSTFIFO	0x1000	/* Destination FIFO ready interrupt */
+#define	HIFN_PUISR_DSTOVER	0x0200	/* Destination overrun interrupt */
+#define	HIFN_PUISR_SRCCMD	0x0080	/* Source command interrupt */
+#define	HIFN_PUISR_SRCCTX	0x0040	/* Source context interrupt */
+#define	HIFN_PUISR_SRCDATA	0x0020	/* Source data interrupt */
+#define	HIFN_PUISR_DSTDATA	0x0010	/* Destination data interrupt */
+#define	HIFN_PUISR_DSTRESULT	0x0004	/* Destination result interrupt */
 
 /* Processing Unit Configuration Register (HIFN_0_PUCNFG) */
-#घोषणा	HIFN_PUCNFG_DRAMMASK	0xe000	/* DRAM size mask */
-#घोषणा	HIFN_PUCNFG_DSZ_256K	0x0000	/* 256k dram */
-#घोषणा	HIFN_PUCNFG_DSZ_512K	0x2000	/* 512k dram */
-#घोषणा	HIFN_PUCNFG_DSZ_1M	0x4000	/* 1m dram */
-#घोषणा	HIFN_PUCNFG_DSZ_2M	0x6000	/* 2m dram */
-#घोषणा	HIFN_PUCNFG_DSZ_4M	0x8000	/* 4m dram */
-#घोषणा	HIFN_PUCNFG_DSZ_8M	0xa000	/* 8m dram */
-#घोषणा	HIFN_PUNCFG_DSZ_16M	0xc000	/* 16m dram */
-#घोषणा	HIFN_PUCNFG_DSZ_32M	0xe000	/* 32m dram */
-#घोषणा	HIFN_PUCNFG_DRAMREFRESH	0x1800	/* DRAM refresh rate mask */
-#घोषणा	HIFN_PUCNFG_DRFR_512	0x0000	/* 512 भागisor of ECLK */
-#घोषणा	HIFN_PUCNFG_DRFR_256	0x0800	/* 256 भागisor of ECLK */
-#घोषणा	HIFN_PUCNFG_DRFR_128	0x1000	/* 128 भागisor of ECLK */
-#घोषणा	HIFN_PUCNFG_TCALLPHASES	0x0200	/* your guess is as good as mine... */
-#घोषणा	HIFN_PUCNFG_TCDRVTOTEM	0x0100	/* your guess is as good as mine... */
-#घोषणा	HIFN_PUCNFG_BIGENDIAN	0x0080	/* DMA big endian mode */
-#घोषणा	HIFN_PUCNFG_BUS32	0x0040	/* Bus width 32bits */
-#घोषणा	HIFN_PUCNFG_BUS16	0x0000	/* Bus width 16 bits */
-#घोषणा	HIFN_PUCNFG_CHIPID	0x0020	/* Allow chipid from PUSTAT */
-#घोषणा	HIFN_PUCNFG_DRAM	0x0010	/* Context RAM is DRAM */
-#घोषणा	HIFN_PUCNFG_SRAM	0x0000	/* Context RAM is SRAM */
-#घोषणा	HIFN_PUCNFG_COMPSING	0x0004	/* Enable single compression context */
-#घोषणा	HIFN_PUCNFG_ENCCNFG	0x0002	/* Encryption configuration */
+#define	HIFN_PUCNFG_DRAMMASK	0xe000	/* DRAM size mask */
+#define	HIFN_PUCNFG_DSZ_256K	0x0000	/* 256k dram */
+#define	HIFN_PUCNFG_DSZ_512K	0x2000	/* 512k dram */
+#define	HIFN_PUCNFG_DSZ_1M	0x4000	/* 1m dram */
+#define	HIFN_PUCNFG_DSZ_2M	0x6000	/* 2m dram */
+#define	HIFN_PUCNFG_DSZ_4M	0x8000	/* 4m dram */
+#define	HIFN_PUCNFG_DSZ_8M	0xa000	/* 8m dram */
+#define	HIFN_PUNCFG_DSZ_16M	0xc000	/* 16m dram */
+#define	HIFN_PUCNFG_DSZ_32M	0xe000	/* 32m dram */
+#define	HIFN_PUCNFG_DRAMREFRESH	0x1800	/* DRAM refresh rate mask */
+#define	HIFN_PUCNFG_DRFR_512	0x0000	/* 512 divisor of ECLK */
+#define	HIFN_PUCNFG_DRFR_256	0x0800	/* 256 divisor of ECLK */
+#define	HIFN_PUCNFG_DRFR_128	0x1000	/* 128 divisor of ECLK */
+#define	HIFN_PUCNFG_TCALLPHASES	0x0200	/* your guess is as good as mine... */
+#define	HIFN_PUCNFG_TCDRVTOTEM	0x0100	/* your guess is as good as mine... */
+#define	HIFN_PUCNFG_BIGENDIAN	0x0080	/* DMA big endian mode */
+#define	HIFN_PUCNFG_BUS32	0x0040	/* Bus width 32bits */
+#define	HIFN_PUCNFG_BUS16	0x0000	/* Bus width 16 bits */
+#define	HIFN_PUCNFG_CHIPID	0x0020	/* Allow chipid from PUSTAT */
+#define	HIFN_PUCNFG_DRAM	0x0010	/* Context RAM is DRAM */
+#define	HIFN_PUCNFG_SRAM	0x0000	/* Context RAM is SRAM */
+#define	HIFN_PUCNFG_COMPSING	0x0004	/* Enable single compression context */
+#define	HIFN_PUCNFG_ENCCNFG	0x0002	/* Encryption configuration */
 
 /* Processing Unit Interrupt Enable Register (HIFN_0_PUIER) */
-#घोषणा	HIFN_PUIER_CMDINVAL	0x8000	/* Invalid command पूर्णांकerrupt */
-#घोषणा	HIFN_PUIER_DATAERR	0x4000	/* Data error पूर्णांकerrupt */
-#घोषणा	HIFN_PUIER_SRCFIFO	0x2000	/* Source FIFO पढ़ोy पूर्णांकerrupt */
-#घोषणा	HIFN_PUIER_DSTFIFO	0x1000	/* Destination FIFO पढ़ोy पूर्णांकerrupt */
-#घोषणा	HIFN_PUIER_DSTOVER	0x0200	/* Destination overrun पूर्णांकerrupt */
-#घोषणा	HIFN_PUIER_SRCCMD	0x0080	/* Source command पूर्णांकerrupt */
-#घोषणा	HIFN_PUIER_SRCCTX	0x0040	/* Source context पूर्णांकerrupt */
-#घोषणा	HIFN_PUIER_SRCDATA	0x0020	/* Source data पूर्णांकerrupt */
-#घोषणा	HIFN_PUIER_DSTDATA	0x0010	/* Destination data पूर्णांकerrupt */
-#घोषणा	HIFN_PUIER_DSTRESULT	0x0004	/* Destination result पूर्णांकerrupt */
+#define	HIFN_PUIER_CMDINVAL	0x8000	/* Invalid command interrupt */
+#define	HIFN_PUIER_DATAERR	0x4000	/* Data error interrupt */
+#define	HIFN_PUIER_SRCFIFO	0x2000	/* Source FIFO ready interrupt */
+#define	HIFN_PUIER_DSTFIFO	0x1000	/* Destination FIFO ready interrupt */
+#define	HIFN_PUIER_DSTOVER	0x0200	/* Destination overrun interrupt */
+#define	HIFN_PUIER_SRCCMD	0x0080	/* Source command interrupt */
+#define	HIFN_PUIER_SRCCTX	0x0040	/* Source context interrupt */
+#define	HIFN_PUIER_SRCDATA	0x0020	/* Source data interrupt */
+#define	HIFN_PUIER_DSTDATA	0x0010	/* Destination data interrupt */
+#define	HIFN_PUIER_DSTRESULT	0x0004	/* Destination result interrupt */
 
 /* Processing Unit Status Register/Chip ID (HIFN_0_PUSTAT) */
-#घोषणा	HIFN_PUSTAT_CMDINVAL	0x8000	/* Invalid command पूर्णांकerrupt */
-#घोषणा	HIFN_PUSTAT_DATAERR	0x4000	/* Data error पूर्णांकerrupt */
-#घोषणा	HIFN_PUSTAT_SRCFIFO	0x2000	/* Source FIFO पढ़ोy पूर्णांकerrupt */
-#घोषणा	HIFN_PUSTAT_DSTFIFO	0x1000	/* Destination FIFO पढ़ोy पूर्णांकerrupt */
-#घोषणा	HIFN_PUSTAT_DSTOVER	0x0200	/* Destination overrun पूर्णांकerrupt */
-#घोषणा	HIFN_PUSTAT_SRCCMD	0x0080	/* Source command पूर्णांकerrupt */
-#घोषणा	HIFN_PUSTAT_SRCCTX	0x0040	/* Source context पूर्णांकerrupt */
-#घोषणा	HIFN_PUSTAT_SRCDATA	0x0020	/* Source data पूर्णांकerrupt */
-#घोषणा	HIFN_PUSTAT_DSTDATA	0x0010	/* Destination data पूर्णांकerrupt */
-#घोषणा	HIFN_PUSTAT_DSTRESULT	0x0004	/* Destination result पूर्णांकerrupt */
-#घोषणा	HIFN_PUSTAT_CHIPREV	0x00ff	/* Chip revision mask */
-#घोषणा	HIFN_PUSTAT_CHIPENA	0xff00	/* Chip enabled mask */
-#घोषणा	HIFN_PUSTAT_ENA_2	0x1100	/* Level 2 enabled */
-#घोषणा	HIFN_PUSTAT_ENA_1	0x1000	/* Level 1 enabled */
-#घोषणा	HIFN_PUSTAT_ENA_0	0x3000	/* Level 0 enabled */
-#घोषणा	HIFN_PUSTAT_REV_2	0x0020	/* 7751 PT6/2 */
-#घोषणा	HIFN_PUSTAT_REV_3	0x0030	/* 7751 PT6/3 */
+#define	HIFN_PUSTAT_CMDINVAL	0x8000	/* Invalid command interrupt */
+#define	HIFN_PUSTAT_DATAERR	0x4000	/* Data error interrupt */
+#define	HIFN_PUSTAT_SRCFIFO	0x2000	/* Source FIFO ready interrupt */
+#define	HIFN_PUSTAT_DSTFIFO	0x1000	/* Destination FIFO ready interrupt */
+#define	HIFN_PUSTAT_DSTOVER	0x0200	/* Destination overrun interrupt */
+#define	HIFN_PUSTAT_SRCCMD	0x0080	/* Source command interrupt */
+#define	HIFN_PUSTAT_SRCCTX	0x0040	/* Source context interrupt */
+#define	HIFN_PUSTAT_SRCDATA	0x0020	/* Source data interrupt */
+#define	HIFN_PUSTAT_DSTDATA	0x0010	/* Destination data interrupt */
+#define	HIFN_PUSTAT_DSTRESULT	0x0004	/* Destination result interrupt */
+#define	HIFN_PUSTAT_CHIPREV	0x00ff	/* Chip revision mask */
+#define	HIFN_PUSTAT_CHIPENA	0xff00	/* Chip enabled mask */
+#define	HIFN_PUSTAT_ENA_2	0x1100	/* Level 2 enabled */
+#define	HIFN_PUSTAT_ENA_1	0x1000	/* Level 1 enabled */
+#define	HIFN_PUSTAT_ENA_0	0x3000	/* Level 0 enabled */
+#define	HIFN_PUSTAT_REV_2	0x0020	/* 7751 PT6/2 */
+#define	HIFN_PUSTAT_REV_3	0x0030	/* 7751 PT6/3 */
 
 /* FIFO Status Register (HIFN_0_FIFOSTAT) */
-#घोषणा	HIFN_FIFOSTAT_SRC	0x7f00	/* Source FIFO available */
-#घोषणा	HIFN_FIFOSTAT_DST	0x007f	/* Destination FIFO available */
+#define	HIFN_FIFOSTAT_SRC	0x7f00	/* Source FIFO available */
+#define	HIFN_FIFOSTAT_DST	0x007f	/* Destination FIFO available */
 
 /* FIFO Configuration Register (HIFN_0_FIFOCNFG) */
-#घोषणा	HIFN_FIFOCNFG_THRESHOLD	0x0400	/* must be written as 1 */
+#define	HIFN_FIFOCNFG_THRESHOLD	0x0400	/* must be written as 1 */
 
 /*
  * DMA Interface Registers (offset from BASEREG1)
  */
-#घोषणा	HIFN_1_DMA_CRAR		0x0c	/* DMA Command Ring Address */
-#घोषणा	HIFN_1_DMA_SRAR		0x1c	/* DMA Source Ring Address */
-#घोषणा	HIFN_1_DMA_RRAR		0x2c	/* DMA Result Ring Address */
-#घोषणा	HIFN_1_DMA_DRAR		0x3c	/* DMA Destination Ring Address */
-#घोषणा	HIFN_1_DMA_CSR		0x40	/* DMA Status and Control */
-#घोषणा	HIFN_1_DMA_IER		0x44	/* DMA Interrupt Enable */
-#घोषणा	HIFN_1_DMA_CNFG		0x48	/* DMA Configuration */
-#घोषणा	HIFN_1_PLL		0x4c	/* 795x: PLL config */
-#घोषणा	HIFN_1_7811_RNGENA	0x60	/* 7811: rng enable */
-#घोषणा	HIFN_1_7811_RNGCFG	0x64	/* 7811: rng config */
-#घोषणा	HIFN_1_7811_RNGDAT	0x68	/* 7811: rng data */
-#घोषणा	HIFN_1_7811_RNGSTS	0x6c	/* 7811: rng status */
-#घोषणा	HIFN_1_7811_MIPSRST	0x94	/* 7811: MIPS reset */
-#घोषणा	HIFN_1_REVID		0x98	/* Revision ID */
-#घोषणा	HIFN_1_UNLOCK_SECRET1	0xf4
-#घोषणा	HIFN_1_UNLOCK_SECRET2	0xfc
-#घोषणा	HIFN_1_PUB_RESET	0x204	/* Public/RNG Reset */
-#घोषणा	HIFN_1_PUB_BASE		0x300	/* Public Base Address */
-#घोषणा	HIFN_1_PUB_OPLEN	0x304	/* Public Opeअक्रम Length */
-#घोषणा	HIFN_1_PUB_OP		0x308	/* Public Opeअक्रम */
-#घोषणा	HIFN_1_PUB_STATUS	0x30c	/* Public Status */
-#घोषणा	HIFN_1_PUB_IEN		0x310	/* Public Interrupt enable */
-#घोषणा	HIFN_1_RNG_CONFIG	0x314	/* RNG config */
-#घोषणा	HIFN_1_RNG_DATA		0x318	/* RNG data */
-#घोषणा	HIFN_1_PUB_MEM		0x400	/* start of Public key memory */
-#घोषणा	HIFN_1_PUB_MEMEND	0xbff	/* end of Public key memory */
+#define	HIFN_1_DMA_CRAR		0x0c	/* DMA Command Ring Address */
+#define	HIFN_1_DMA_SRAR		0x1c	/* DMA Source Ring Address */
+#define	HIFN_1_DMA_RRAR		0x2c	/* DMA Result Ring Address */
+#define	HIFN_1_DMA_DRAR		0x3c	/* DMA Destination Ring Address */
+#define	HIFN_1_DMA_CSR		0x40	/* DMA Status and Control */
+#define	HIFN_1_DMA_IER		0x44	/* DMA Interrupt Enable */
+#define	HIFN_1_DMA_CNFG		0x48	/* DMA Configuration */
+#define	HIFN_1_PLL		0x4c	/* 795x: PLL config */
+#define	HIFN_1_7811_RNGENA	0x60	/* 7811: rng enable */
+#define	HIFN_1_7811_RNGCFG	0x64	/* 7811: rng config */
+#define	HIFN_1_7811_RNGDAT	0x68	/* 7811: rng data */
+#define	HIFN_1_7811_RNGSTS	0x6c	/* 7811: rng status */
+#define	HIFN_1_7811_MIPSRST	0x94	/* 7811: MIPS reset */
+#define	HIFN_1_REVID		0x98	/* Revision ID */
+#define	HIFN_1_UNLOCK_SECRET1	0xf4
+#define	HIFN_1_UNLOCK_SECRET2	0xfc
+#define	HIFN_1_PUB_RESET	0x204	/* Public/RNG Reset */
+#define	HIFN_1_PUB_BASE		0x300	/* Public Base Address */
+#define	HIFN_1_PUB_OPLEN	0x304	/* Public Operand Length */
+#define	HIFN_1_PUB_OP		0x308	/* Public Operand */
+#define	HIFN_1_PUB_STATUS	0x30c	/* Public Status */
+#define	HIFN_1_PUB_IEN		0x310	/* Public Interrupt enable */
+#define	HIFN_1_RNG_CONFIG	0x314	/* RNG config */
+#define	HIFN_1_RNG_DATA		0x318	/* RNG data */
+#define	HIFN_1_PUB_MEM		0x400	/* start of Public key memory */
+#define	HIFN_1_PUB_MEMEND	0xbff	/* end of Public key memory */
 
 /* DMA Status and Control Register (HIFN_1_DMA_CSR) */
-#घोषणा	HIFN_DMACSR_D_CTRLMASK	0xc0000000	/* Destinition Ring Control */
-#घोषणा	HIFN_DMACSR_D_CTRL_NOP	0x00000000	/* Dest. Control: no-op */
-#घोषणा	HIFN_DMACSR_D_CTRL_DIS	0x40000000	/* Dest. Control: disable */
-#घोषणा	HIFN_DMACSR_D_CTRL_ENA	0x80000000	/* Dest. Control: enable */
-#घोषणा	HIFN_DMACSR_D_ABORT	0x20000000	/* Destinition Ring PCIAbort */
-#घोषणा	HIFN_DMACSR_D_DONE	0x10000000	/* Destinition Ring Done */
-#घोषणा	HIFN_DMACSR_D_LAST	0x08000000	/* Destinition Ring Last */
-#घोषणा	HIFN_DMACSR_D_WAIT	0x04000000	/* Destinition Ring Waiting */
-#घोषणा	HIFN_DMACSR_D_OVER	0x02000000	/* Destinition Ring Overflow */
-#घोषणा	HIFN_DMACSR_R_CTRL	0x00c00000	/* Result Ring Control */
-#घोषणा	HIFN_DMACSR_R_CTRL_NOP	0x00000000	/* Result Control: no-op */
-#घोषणा	HIFN_DMACSR_R_CTRL_DIS	0x00400000	/* Result Control: disable */
-#घोषणा	HIFN_DMACSR_R_CTRL_ENA	0x00800000	/* Result Control: enable */
-#घोषणा	HIFN_DMACSR_R_ABORT	0x00200000	/* Result Ring PCI Abort */
-#घोषणा	HIFN_DMACSR_R_DONE	0x00100000	/* Result Ring Done */
-#घोषणा	HIFN_DMACSR_R_LAST	0x00080000	/* Result Ring Last */
-#घोषणा	HIFN_DMACSR_R_WAIT	0x00040000	/* Result Ring Waiting */
-#घोषणा	HIFN_DMACSR_R_OVER	0x00020000	/* Result Ring Overflow */
-#घोषणा	HIFN_DMACSR_S_CTRL	0x0000c000	/* Source Ring Control */
-#घोषणा	HIFN_DMACSR_S_CTRL_NOP	0x00000000	/* Source Control: no-op */
-#घोषणा	HIFN_DMACSR_S_CTRL_DIS	0x00004000	/* Source Control: disable */
-#घोषणा	HIFN_DMACSR_S_CTRL_ENA	0x00008000	/* Source Control: enable */
-#घोषणा	HIFN_DMACSR_S_ABORT	0x00002000	/* Source Ring PCI Abort */
-#घोषणा	HIFN_DMACSR_S_DONE	0x00001000	/* Source Ring Done */
-#घोषणा	HIFN_DMACSR_S_LAST	0x00000800	/* Source Ring Last */
-#घोषणा	HIFN_DMACSR_S_WAIT	0x00000400	/* Source Ring Waiting */
-#घोषणा	HIFN_DMACSR_ILLW	0x00000200	/* Illegal ग_लिखो (7811 only) */
-#घोषणा	HIFN_DMACSR_ILLR	0x00000100	/* Illegal पढ़ो (7811 only) */
-#घोषणा	HIFN_DMACSR_C_CTRL	0x000000c0	/* Command Ring Control */
-#घोषणा	HIFN_DMACSR_C_CTRL_NOP	0x00000000	/* Command Control: no-op */
-#घोषणा	HIFN_DMACSR_C_CTRL_DIS	0x00000040	/* Command Control: disable */
-#घोषणा	HIFN_DMACSR_C_CTRL_ENA	0x00000080	/* Command Control: enable */
-#घोषणा	HIFN_DMACSR_C_ABORT	0x00000020	/* Command Ring PCI Abort */
-#घोषणा	HIFN_DMACSR_C_DONE	0x00000010	/* Command Ring Done */
-#घोषणा	HIFN_DMACSR_C_LAST	0x00000008	/* Command Ring Last */
-#घोषणा	HIFN_DMACSR_C_WAIT	0x00000004	/* Command Ring Waiting */
-#घोषणा	HIFN_DMACSR_PUBDONE	0x00000002	/* Public op करोne (7951 only) */
-#घोषणा	HIFN_DMACSR_ENGINE	0x00000001	/* Command Ring Engine IRQ */
+#define	HIFN_DMACSR_D_CTRLMASK	0xc0000000	/* Destinition Ring Control */
+#define	HIFN_DMACSR_D_CTRL_NOP	0x00000000	/* Dest. Control: no-op */
+#define	HIFN_DMACSR_D_CTRL_DIS	0x40000000	/* Dest. Control: disable */
+#define	HIFN_DMACSR_D_CTRL_ENA	0x80000000	/* Dest. Control: enable */
+#define	HIFN_DMACSR_D_ABORT	0x20000000	/* Destinition Ring PCIAbort */
+#define	HIFN_DMACSR_D_DONE	0x10000000	/* Destinition Ring Done */
+#define	HIFN_DMACSR_D_LAST	0x08000000	/* Destinition Ring Last */
+#define	HIFN_DMACSR_D_WAIT	0x04000000	/* Destinition Ring Waiting */
+#define	HIFN_DMACSR_D_OVER	0x02000000	/* Destinition Ring Overflow */
+#define	HIFN_DMACSR_R_CTRL	0x00c00000	/* Result Ring Control */
+#define	HIFN_DMACSR_R_CTRL_NOP	0x00000000	/* Result Control: no-op */
+#define	HIFN_DMACSR_R_CTRL_DIS	0x00400000	/* Result Control: disable */
+#define	HIFN_DMACSR_R_CTRL_ENA	0x00800000	/* Result Control: enable */
+#define	HIFN_DMACSR_R_ABORT	0x00200000	/* Result Ring PCI Abort */
+#define	HIFN_DMACSR_R_DONE	0x00100000	/* Result Ring Done */
+#define	HIFN_DMACSR_R_LAST	0x00080000	/* Result Ring Last */
+#define	HIFN_DMACSR_R_WAIT	0x00040000	/* Result Ring Waiting */
+#define	HIFN_DMACSR_R_OVER	0x00020000	/* Result Ring Overflow */
+#define	HIFN_DMACSR_S_CTRL	0x0000c000	/* Source Ring Control */
+#define	HIFN_DMACSR_S_CTRL_NOP	0x00000000	/* Source Control: no-op */
+#define	HIFN_DMACSR_S_CTRL_DIS	0x00004000	/* Source Control: disable */
+#define	HIFN_DMACSR_S_CTRL_ENA	0x00008000	/* Source Control: enable */
+#define	HIFN_DMACSR_S_ABORT	0x00002000	/* Source Ring PCI Abort */
+#define	HIFN_DMACSR_S_DONE	0x00001000	/* Source Ring Done */
+#define	HIFN_DMACSR_S_LAST	0x00000800	/* Source Ring Last */
+#define	HIFN_DMACSR_S_WAIT	0x00000400	/* Source Ring Waiting */
+#define	HIFN_DMACSR_ILLW	0x00000200	/* Illegal write (7811 only) */
+#define	HIFN_DMACSR_ILLR	0x00000100	/* Illegal read (7811 only) */
+#define	HIFN_DMACSR_C_CTRL	0x000000c0	/* Command Ring Control */
+#define	HIFN_DMACSR_C_CTRL_NOP	0x00000000	/* Command Control: no-op */
+#define	HIFN_DMACSR_C_CTRL_DIS	0x00000040	/* Command Control: disable */
+#define	HIFN_DMACSR_C_CTRL_ENA	0x00000080	/* Command Control: enable */
+#define	HIFN_DMACSR_C_ABORT	0x00000020	/* Command Ring PCI Abort */
+#define	HIFN_DMACSR_C_DONE	0x00000010	/* Command Ring Done */
+#define	HIFN_DMACSR_C_LAST	0x00000008	/* Command Ring Last */
+#define	HIFN_DMACSR_C_WAIT	0x00000004	/* Command Ring Waiting */
+#define	HIFN_DMACSR_PUBDONE	0x00000002	/* Public op done (7951 only) */
+#define	HIFN_DMACSR_ENGINE	0x00000001	/* Command Ring Engine IRQ */
 
 /* DMA Interrupt Enable Register (HIFN_1_DMA_IER) */
-#घोषणा	HIFN_DMAIER_D_ABORT	0x20000000	/* Destination Ring PCIAbort */
-#घोषणा	HIFN_DMAIER_D_DONE	0x10000000	/* Destination Ring Done */
-#घोषणा	HIFN_DMAIER_D_LAST	0x08000000	/* Destination Ring Last */
-#घोषणा	HIFN_DMAIER_D_WAIT	0x04000000	/* Destination Ring Waiting */
-#घोषणा	HIFN_DMAIER_D_OVER	0x02000000	/* Destination Ring Overflow */
-#घोषणा	HIFN_DMAIER_R_ABORT	0x00200000	/* Result Ring PCI Abort */
-#घोषणा	HIFN_DMAIER_R_DONE	0x00100000	/* Result Ring Done */
-#घोषणा	HIFN_DMAIER_R_LAST	0x00080000	/* Result Ring Last */
-#घोषणा	HIFN_DMAIER_R_WAIT	0x00040000	/* Result Ring Waiting */
-#घोषणा	HIFN_DMAIER_R_OVER	0x00020000	/* Result Ring Overflow */
-#घोषणा	HIFN_DMAIER_S_ABORT	0x00002000	/* Source Ring PCI Abort */
-#घोषणा	HIFN_DMAIER_S_DONE	0x00001000	/* Source Ring Done */
-#घोषणा	HIFN_DMAIER_S_LAST	0x00000800	/* Source Ring Last */
-#घोषणा	HIFN_DMAIER_S_WAIT	0x00000400	/* Source Ring Waiting */
-#घोषणा	HIFN_DMAIER_ILLW	0x00000200	/* Illegal ग_लिखो (7811 only) */
-#घोषणा	HIFN_DMAIER_ILLR	0x00000100	/* Illegal पढ़ो (7811 only) */
-#घोषणा	HIFN_DMAIER_C_ABORT	0x00000020	/* Command Ring PCI Abort */
-#घोषणा	HIFN_DMAIER_C_DONE	0x00000010	/* Command Ring Done */
-#घोषणा	HIFN_DMAIER_C_LAST	0x00000008	/* Command Ring Last */
-#घोषणा	HIFN_DMAIER_C_WAIT	0x00000004	/* Command Ring Waiting */
-#घोषणा	HIFN_DMAIER_PUBDONE	0x00000002	/* खुला op करोne (7951 only) */
-#घोषणा	HIFN_DMAIER_ENGINE	0x00000001	/* Engine IRQ */
+#define	HIFN_DMAIER_D_ABORT	0x20000000	/* Destination Ring PCIAbort */
+#define	HIFN_DMAIER_D_DONE	0x10000000	/* Destination Ring Done */
+#define	HIFN_DMAIER_D_LAST	0x08000000	/* Destination Ring Last */
+#define	HIFN_DMAIER_D_WAIT	0x04000000	/* Destination Ring Waiting */
+#define	HIFN_DMAIER_D_OVER	0x02000000	/* Destination Ring Overflow */
+#define	HIFN_DMAIER_R_ABORT	0x00200000	/* Result Ring PCI Abort */
+#define	HIFN_DMAIER_R_DONE	0x00100000	/* Result Ring Done */
+#define	HIFN_DMAIER_R_LAST	0x00080000	/* Result Ring Last */
+#define	HIFN_DMAIER_R_WAIT	0x00040000	/* Result Ring Waiting */
+#define	HIFN_DMAIER_R_OVER	0x00020000	/* Result Ring Overflow */
+#define	HIFN_DMAIER_S_ABORT	0x00002000	/* Source Ring PCI Abort */
+#define	HIFN_DMAIER_S_DONE	0x00001000	/* Source Ring Done */
+#define	HIFN_DMAIER_S_LAST	0x00000800	/* Source Ring Last */
+#define	HIFN_DMAIER_S_WAIT	0x00000400	/* Source Ring Waiting */
+#define	HIFN_DMAIER_ILLW	0x00000200	/* Illegal write (7811 only) */
+#define	HIFN_DMAIER_ILLR	0x00000100	/* Illegal read (7811 only) */
+#define	HIFN_DMAIER_C_ABORT	0x00000020	/* Command Ring PCI Abort */
+#define	HIFN_DMAIER_C_DONE	0x00000010	/* Command Ring Done */
+#define	HIFN_DMAIER_C_LAST	0x00000008	/* Command Ring Last */
+#define	HIFN_DMAIER_C_WAIT	0x00000004	/* Command Ring Waiting */
+#define	HIFN_DMAIER_PUBDONE	0x00000002	/* public op done (7951 only) */
+#define	HIFN_DMAIER_ENGINE	0x00000001	/* Engine IRQ */
 
 /* DMA Configuration Register (HIFN_1_DMA_CNFG) */
-#घोषणा	HIFN_DMACNFG_BIGENDIAN	0x10000000	/* big endian mode */
-#घोषणा	HIFN_DMACNFG_POLLFREQ	0x00ff0000	/* Poll frequency mask */
-#घोषणा	HIFN_DMACNFG_UNLOCK	0x00000800
-#घोषणा	HIFN_DMACNFG_POLLINVAL	0x00000700	/* Invalid Poll Scalar */
-#घोषणा	HIFN_DMACNFG_LAST	0x00000010	/* Host control LAST bit */
-#घोषणा	HIFN_DMACNFG_MODE	0x00000004	/* DMA mode */
-#घोषणा	HIFN_DMACNFG_DMARESET	0x00000002	/* DMA Reset # */
-#घोषणा	HIFN_DMACNFG_MSTRESET	0x00000001	/* Master Reset # */
+#define	HIFN_DMACNFG_BIGENDIAN	0x10000000	/* big endian mode */
+#define	HIFN_DMACNFG_POLLFREQ	0x00ff0000	/* Poll frequency mask */
+#define	HIFN_DMACNFG_UNLOCK	0x00000800
+#define	HIFN_DMACNFG_POLLINVAL	0x00000700	/* Invalid Poll Scalar */
+#define	HIFN_DMACNFG_LAST	0x00000010	/* Host control LAST bit */
+#define	HIFN_DMACNFG_MODE	0x00000004	/* DMA mode */
+#define	HIFN_DMACNFG_DMARESET	0x00000002	/* DMA Reset # */
+#define	HIFN_DMACNFG_MSTRESET	0x00000001	/* Master Reset # */
 
-/* PLL configuration रेजिस्टर */
-#घोषणा HIFN_PLL_REF_CLK_HBI	0x00000000	/* HBI reference घड़ी */
-#घोषणा HIFN_PLL_REF_CLK_PLL	0x00000001	/* PLL reference घड़ी */
-#घोषणा HIFN_PLL_BP		0x00000002	/* Reference घड़ी bypass */
-#घोषणा HIFN_PLL_PK_CLK_HBI	0x00000000	/* PK engine HBI घड़ी */
-#घोषणा HIFN_PLL_PK_CLK_PLL	0x00000008	/* PK engine PLL घड़ी */
-#घोषणा HIFN_PLL_PE_CLK_HBI	0x00000000	/* PE engine HBI घड़ी */
-#घोषणा HIFN_PLL_PE_CLK_PLL	0x00000010	/* PE engine PLL घड़ी */
-#घोषणा HIFN_PLL_RESERVED_1	0x00000400	/* Reserved bit, must be 1 */
-#घोषणा HIFN_PLL_ND_SHIFT	11		/* Clock multiplier shअगरt */
-#घोषणा HIFN_PLL_ND_MULT_2	0x00000000	/* PLL घड़ी multiplier 2 */
-#घोषणा HIFN_PLL_ND_MULT_4	0x00000800	/* PLL घड़ी multiplier 4 */
-#घोषणा HIFN_PLL_ND_MULT_6	0x00001000	/* PLL घड़ी multiplier 6 */
-#घोषणा HIFN_PLL_ND_MULT_8	0x00001800	/* PLL घड़ी multiplier 8 */
-#घोषणा HIFN_PLL_ND_MULT_10	0x00002000	/* PLL घड़ी multiplier 10 */
-#घोषणा HIFN_PLL_ND_MULT_12	0x00002800	/* PLL घड़ी multiplier 12 */
-#घोषणा HIFN_PLL_IS_1_8		0x00000000	/* अक्षरge pump (mult. 1-8) */
-#घोषणा HIFN_PLL_IS_9_12	0x00010000	/* अक्षरge pump (mult. 9-12) */
+/* PLL configuration register */
+#define HIFN_PLL_REF_CLK_HBI	0x00000000	/* HBI reference clock */
+#define HIFN_PLL_REF_CLK_PLL	0x00000001	/* PLL reference clock */
+#define HIFN_PLL_BP		0x00000002	/* Reference clock bypass */
+#define HIFN_PLL_PK_CLK_HBI	0x00000000	/* PK engine HBI clock */
+#define HIFN_PLL_PK_CLK_PLL	0x00000008	/* PK engine PLL clock */
+#define HIFN_PLL_PE_CLK_HBI	0x00000000	/* PE engine HBI clock */
+#define HIFN_PLL_PE_CLK_PLL	0x00000010	/* PE engine PLL clock */
+#define HIFN_PLL_RESERVED_1	0x00000400	/* Reserved bit, must be 1 */
+#define HIFN_PLL_ND_SHIFT	11		/* Clock multiplier shift */
+#define HIFN_PLL_ND_MULT_2	0x00000000	/* PLL clock multiplier 2 */
+#define HIFN_PLL_ND_MULT_4	0x00000800	/* PLL clock multiplier 4 */
+#define HIFN_PLL_ND_MULT_6	0x00001000	/* PLL clock multiplier 6 */
+#define HIFN_PLL_ND_MULT_8	0x00001800	/* PLL clock multiplier 8 */
+#define HIFN_PLL_ND_MULT_10	0x00002000	/* PLL clock multiplier 10 */
+#define HIFN_PLL_ND_MULT_12	0x00002800	/* PLL clock multiplier 12 */
+#define HIFN_PLL_IS_1_8		0x00000000	/* charge pump (mult. 1-8) */
+#define HIFN_PLL_IS_9_12	0x00010000	/* charge pump (mult. 9-12) */
 
-#घोषणा HIFN_PLL_FCK_MAX	266		/* Maximum PLL frequency */
+#define HIFN_PLL_FCK_MAX	266		/* Maximum PLL frequency */
 
-/* Public key reset रेजिस्टर (HIFN_1_PUB_RESET) */
-#घोषणा	HIFN_PUBRST_RESET	0x00000001	/* reset खुला/rng unit */
+/* Public key reset register (HIFN_1_PUB_RESET) */
+#define	HIFN_PUBRST_RESET	0x00000001	/* reset public/rng unit */
 
-/* Public base address रेजिस्टर (HIFN_1_PUB_BASE) */
-#घोषणा	HIFN_PUBBASE_ADDR	0x00003fff	/* base address */
+/* Public base address register (HIFN_1_PUB_BASE) */
+#define	HIFN_PUBBASE_ADDR	0x00003fff	/* base address */
 
-/* Public opeअक्रम length रेजिस्टर (HIFN_1_PUB_OPLEN) */
-#घोषणा	HIFN_PUBOPLEN_MOD_M	0x0000007f	/* modulus length mask */
-#घोषणा	HIFN_PUBOPLEN_MOD_S	0		/* modulus length shअगरt */
-#घोषणा	HIFN_PUBOPLEN_EXP_M	0x0003ff80	/* exponent length mask */
-#घोषणा	HIFN_PUBOPLEN_EXP_S	7		/* exponent length shअगरt */
-#घोषणा	HIFN_PUBOPLEN_RED_M	0x003c0000	/* reducend length mask */
-#घोषणा	HIFN_PUBOPLEN_RED_S	18		/* reducend length shअगरt */
+/* Public operand length register (HIFN_1_PUB_OPLEN) */
+#define	HIFN_PUBOPLEN_MOD_M	0x0000007f	/* modulus length mask */
+#define	HIFN_PUBOPLEN_MOD_S	0		/* modulus length shift */
+#define	HIFN_PUBOPLEN_EXP_M	0x0003ff80	/* exponent length mask */
+#define	HIFN_PUBOPLEN_EXP_S	7		/* exponent length shift */
+#define	HIFN_PUBOPLEN_RED_M	0x003c0000	/* reducend length mask */
+#define	HIFN_PUBOPLEN_RED_S	18		/* reducend length shift */
 
-/* Public operation रेजिस्टर (HIFN_1_PUB_OP) */
-#घोषणा	HIFN_PUBOP_AOFFSET_M	0x0000007f	/* A offset mask */
-#घोषणा	HIFN_PUBOP_AOFFSET_S	0		/* A offset shअगरt */
-#घोषणा	HIFN_PUBOP_BOFFSET_M	0x00000f80	/* B offset mask */
-#घोषणा	HIFN_PUBOP_BOFFSET_S	7		/* B offset shअगरt */
-#घोषणा	HIFN_PUBOP_MOFFSET_M	0x0003f000	/* M offset mask */
-#घोषणा	HIFN_PUBOP_MOFFSET_S	12		/* M offset shअगरt */
-#घोषणा	HIFN_PUBOP_OP_MASK	0x003c0000	/* Opcode: */
-#घोषणा	HIFN_PUBOP_OP_NOP	0x00000000	/*  NOP */
-#घोषणा	HIFN_PUBOP_OP_ADD	0x00040000	/*  ADD */
-#घोषणा	HIFN_PUBOP_OP_ADDC	0x00080000	/*  ADD w/carry */
-#घोषणा	HIFN_PUBOP_OP_SUB	0x000c0000	/*  SUB */
-#घोषणा	HIFN_PUBOP_OP_SUBC	0x00100000	/*  SUB w/carry */
-#घोषणा	HIFN_PUBOP_OP_MODADD	0x00140000	/*  Modular ADD */
-#घोषणा	HIFN_PUBOP_OP_MODSUB	0x00180000	/*  Modular SUB */
-#घोषणा	HIFN_PUBOP_OP_INCA	0x001c0000	/*  INC A */
-#घोषणा	HIFN_PUBOP_OP_DECA	0x00200000	/*  DEC A */
-#घोषणा	HIFN_PUBOP_OP_MULT	0x00240000	/*  MULT */
-#घोषणा	HIFN_PUBOP_OP_MODMULT	0x00280000	/*  Modular MULT */
-#घोषणा	HIFN_PUBOP_OP_MODRED	0x002c0000	/*  Modular RED */
-#घोषणा	HIFN_PUBOP_OP_MODEXP	0x00300000	/*  Modular EXP */
+/* Public operation register (HIFN_1_PUB_OP) */
+#define	HIFN_PUBOP_AOFFSET_M	0x0000007f	/* A offset mask */
+#define	HIFN_PUBOP_AOFFSET_S	0		/* A offset shift */
+#define	HIFN_PUBOP_BOFFSET_M	0x00000f80	/* B offset mask */
+#define	HIFN_PUBOP_BOFFSET_S	7		/* B offset shift */
+#define	HIFN_PUBOP_MOFFSET_M	0x0003f000	/* M offset mask */
+#define	HIFN_PUBOP_MOFFSET_S	12		/* M offset shift */
+#define	HIFN_PUBOP_OP_MASK	0x003c0000	/* Opcode: */
+#define	HIFN_PUBOP_OP_NOP	0x00000000	/*  NOP */
+#define	HIFN_PUBOP_OP_ADD	0x00040000	/*  ADD */
+#define	HIFN_PUBOP_OP_ADDC	0x00080000	/*  ADD w/carry */
+#define	HIFN_PUBOP_OP_SUB	0x000c0000	/*  SUB */
+#define	HIFN_PUBOP_OP_SUBC	0x00100000	/*  SUB w/carry */
+#define	HIFN_PUBOP_OP_MODADD	0x00140000	/*  Modular ADD */
+#define	HIFN_PUBOP_OP_MODSUB	0x00180000	/*  Modular SUB */
+#define	HIFN_PUBOP_OP_INCA	0x001c0000	/*  INC A */
+#define	HIFN_PUBOP_OP_DECA	0x00200000	/*  DEC A */
+#define	HIFN_PUBOP_OP_MULT	0x00240000	/*  MULT */
+#define	HIFN_PUBOP_OP_MODMULT	0x00280000	/*  Modular MULT */
+#define	HIFN_PUBOP_OP_MODRED	0x002c0000	/*  Modular RED */
+#define	HIFN_PUBOP_OP_MODEXP	0x00300000	/*  Modular EXP */
 
-/* Public status रेजिस्टर (HIFN_1_PUB_STATUS) */
-#घोषणा	HIFN_PUBSTS_DONE	0x00000001	/* operation करोne */
-#घोषणा	HIFN_PUBSTS_CARRY	0x00000002	/* carry */
+/* Public status register (HIFN_1_PUB_STATUS) */
+#define	HIFN_PUBSTS_DONE	0x00000001	/* operation done */
+#define	HIFN_PUBSTS_CARRY	0x00000002	/* carry */
 
-/* Public पूर्णांकerrupt enable रेजिस्टर (HIFN_1_PUB_IEN) */
-#घोषणा	HIFN_PUBIEN_DONE	0x00000001	/* operation करोne पूर्णांकerrupt */
+/* Public interrupt enable register (HIFN_1_PUB_IEN) */
+#define	HIFN_PUBIEN_DONE	0x00000001	/* operation done interrupt */
 
-/* Ranकरोm number generator config रेजिस्टर (HIFN_1_RNG_CONFIG) */
-#घोषणा	HIFN_RNGCFG_ENA		0x00000001	/* enable rng */
+/* Random number generator config register (HIFN_1_RNG_CONFIG) */
+#define	HIFN_RNGCFG_ENA		0x00000001	/* enable rng */
 
-#घोषणा HIFN_NAMESIZE			32
-#घोषणा HIFN_MAX_RESULT_ORDER		5
+#define HIFN_NAMESIZE			32
+#define HIFN_MAX_RESULT_ORDER		5
 
-#घोषणा	HIFN_D_CMD_RSIZE		(24 * 1)
-#घोषणा	HIFN_D_SRC_RSIZE		(80 * 1)
-#घोषणा	HIFN_D_DST_RSIZE		(80 * 1)
-#घोषणा	HIFN_D_RES_RSIZE		(24 * 1)
+#define	HIFN_D_CMD_RSIZE		(24 * 1)
+#define	HIFN_D_SRC_RSIZE		(80 * 1)
+#define	HIFN_D_DST_RSIZE		(80 * 1)
+#define	HIFN_D_RES_RSIZE		(24 * 1)
 
-#घोषणा HIFN_D_DST_DALIGN		4
+#define HIFN_D_DST_DALIGN		4
 
-#घोषणा HIFN_QUEUE_LENGTH		(HIFN_D_CMD_RSIZE - 1)
+#define HIFN_QUEUE_LENGTH		(HIFN_D_CMD_RSIZE - 1)
 
-#घोषणा AES_MIN_KEY_SIZE		16
-#घोषणा AES_MAX_KEY_SIZE		32
+#define AES_MIN_KEY_SIZE		16
+#define AES_MAX_KEY_SIZE		32
 
-#घोषणा HIFN_DES_KEY_LENGTH		8
-#घोषणा HIFN_3DES_KEY_LENGTH		24
-#घोषणा HIFN_MAX_CRYPT_KEY_LENGTH	AES_MAX_KEY_SIZE
-#घोषणा HIFN_IV_LENGTH			8
-#घोषणा HIFN_AES_IV_LENGTH		16
-#घोषणा	HIFN_MAX_IV_LENGTH		HIFN_AES_IV_LENGTH
+#define HIFN_DES_KEY_LENGTH		8
+#define HIFN_3DES_KEY_LENGTH		24
+#define HIFN_MAX_CRYPT_KEY_LENGTH	AES_MAX_KEY_SIZE
+#define HIFN_IV_LENGTH			8
+#define HIFN_AES_IV_LENGTH		16
+#define	HIFN_MAX_IV_LENGTH		HIFN_AES_IV_LENGTH
 
-#घोषणा HIFN_MAC_KEY_LENGTH		64
-#घोषणा HIFN_MD5_LENGTH			16
-#घोषणा HIFN_SHA1_LENGTH		20
-#घोषणा HIFN_MAC_TRUNC_LENGTH		12
+#define HIFN_MAC_KEY_LENGTH		64
+#define HIFN_MD5_LENGTH			16
+#define HIFN_SHA1_LENGTH		20
+#define HIFN_MAC_TRUNC_LENGTH		12
 
-#घोषणा	HIFN_MAX_COMMAND		(8 + 8 + 8 + 64 + 260)
-#घोषणा	HIFN_MAX_RESULT			(8 + 4 + 4 + 20 + 4)
-#घोषणा HIFN_USED_RESULT		12
+#define	HIFN_MAX_COMMAND		(8 + 8 + 8 + 64 + 260)
+#define	HIFN_MAX_RESULT			(8 + 4 + 4 + 20 + 4)
+#define HIFN_USED_RESULT		12
 
-काष्ठा hअगरn_desc अणु
-	अस्थिर __le32		l;
-	अस्थिर __le32		p;
-पूर्ण;
+struct hifn_desc {
+	volatile __le32		l;
+	volatile __le32		p;
+};
 
-काष्ठा hअगरn_dma अणु
-	काष्ठा hअगरn_desc	cmdr[HIFN_D_CMD_RSIZE + 1];
-	काष्ठा hअगरn_desc	srcr[HIFN_D_SRC_RSIZE + 1];
-	काष्ठा hअगरn_desc	dstr[HIFN_D_DST_RSIZE + 1];
-	काष्ठा hअगरn_desc	resr[HIFN_D_RES_RSIZE + 1];
+struct hifn_dma {
+	struct hifn_desc	cmdr[HIFN_D_CMD_RSIZE + 1];
+	struct hifn_desc	srcr[HIFN_D_SRC_RSIZE + 1];
+	struct hifn_desc	dstr[HIFN_D_DST_RSIZE + 1];
+	struct hifn_desc	resr[HIFN_D_RES_RSIZE + 1];
 
 	u8			command_bufs[HIFN_D_CMD_RSIZE][HIFN_MAX_COMMAND];
 	u8			result_bufs[HIFN_D_CMD_RSIZE][HIFN_MAX_RESULT];
 
 	/*
-	 *  Our current positions क्रम insertion and removal from the descriptor
+	 *  Our current positions for insertion and removal from the descriptor
 	 *  rings.
 	 */
-	अस्थिर पूर्णांक		cmdi, srci, dsti, resi;
-	अस्थिर पूर्णांक		cmdu, srcu, dstu, resu;
-	पूर्णांक			cmdk, srck, dstk, resk;
-पूर्ण;
+	volatile int		cmdi, srci, dsti, resi;
+	volatile int		cmdu, srcu, dstu, resu;
+	int			cmdk, srck, dstk, resk;
+};
 
-#घोषणा HIFN_FLAG_CMD_BUSY	(1 << 0)
-#घोषणा HIFN_FLAG_SRC_BUSY	(1 << 1)
-#घोषणा HIFN_FLAG_DST_BUSY	(1 << 2)
-#घोषणा HIFN_FLAG_RES_BUSY	(1 << 3)
-#घोषणा HIFN_FLAG_OLD_KEY	(1 << 4)
+#define HIFN_FLAG_CMD_BUSY	(1 << 0)
+#define HIFN_FLAG_SRC_BUSY	(1 << 1)
+#define HIFN_FLAG_DST_BUSY	(1 << 2)
+#define HIFN_FLAG_RES_BUSY	(1 << 3)
+#define HIFN_FLAG_OLD_KEY	(1 << 4)
 
-#घोषणा HIFN_DEFAULT_ACTIVE_NUM	5
+#define HIFN_DEFAULT_ACTIVE_NUM	5
 
-काष्ठा hअगरn_device अणु
-	अक्षर			name[HIFN_NAMESIZE];
+struct hifn_device {
+	char			name[HIFN_NAMESIZE];
 
-	पूर्णांक			irq;
+	int			irq;
 
-	काष्ठा pci_dev		*pdev;
-	व्योम __iomem		*bar[3];
+	struct pci_dev		*pdev;
+	void __iomem		*bar[3];
 
-	व्योम			*desc_virt;
+	void			*desc_virt;
 	dma_addr_t		desc_dma;
 
 	u32			dmareg;
 
-	व्योम			*sa[HIFN_D_RES_RSIZE];
+	void			*sa[HIFN_D_RES_RSIZE];
 
 	spinlock_t		lock;
 
 	u32			flags;
-	पूर्णांक			active, started;
-	काष्ठा delayed_work	work;
-	अचिन्हित दीर्घ		reset;
-	अचिन्हित दीर्घ		success;
-	अचिन्हित दीर्घ		prev_success;
+	int			active, started;
+	struct delayed_work	work;
+	unsigned long		reset;
+	unsigned long		success;
+	unsigned long		prev_success;
 
 	u8			snum;
 
-	काष्ठा tasklet_काष्ठा	tasklet;
+	struct tasklet_struct	tasklet;
 
-	काष्ठा crypto_queue	queue;
-	काष्ठा list_head	alg_list;
+	struct crypto_queue	queue;
+	struct list_head	alg_list;
 
-	अचिन्हित पूर्णांक		pk_clk_freq;
+	unsigned int		pk_clk_freq;
 
-#अगर_घोषित CONFIG_CRYPTO_DEV_HIFN_795X_RNG
-	अचिन्हित पूर्णांक		rng_रुको_समय;
-	kसमय_प्रकार			rngसमय;
-	काष्ठा hwrng		rng;
-#पूर्ण_अगर
-पूर्ण;
+#ifdef CONFIG_CRYPTO_DEV_HIFN_795X_RNG
+	unsigned int		rng_wait_time;
+	ktime_t			rngtime;
+	struct hwrng		rng;
+#endif
+};
 
-#घोषणा	HIFN_D_LENGTH			0x0000ffff
-#घोषणा	HIFN_D_NOINVALID		0x01000000
-#घोषणा	HIFN_D_MASKDONEIRQ		0x02000000
-#घोषणा	HIFN_D_DESTOVER			0x04000000
-#घोषणा	HIFN_D_OVER			0x08000000
-#घोषणा	HIFN_D_LAST			0x20000000
-#घोषणा	HIFN_D_JUMP			0x40000000
-#घोषणा	HIFN_D_VALID			0x80000000
+#define	HIFN_D_LENGTH			0x0000ffff
+#define	HIFN_D_NOINVALID		0x01000000
+#define	HIFN_D_MASKDONEIRQ		0x02000000
+#define	HIFN_D_DESTOVER			0x04000000
+#define	HIFN_D_OVER			0x08000000
+#define	HIFN_D_LAST			0x20000000
+#define	HIFN_D_JUMP			0x40000000
+#define	HIFN_D_VALID			0x80000000
 
-काष्ठा hअगरn_base_command अणु
-	अस्थिर __le16		masks;
-	अस्थिर __le16		session_num;
-	अस्थिर __le16		total_source_count;
-	अस्थिर __le16		total_dest_count;
-पूर्ण;
+struct hifn_base_command {
+	volatile __le16		masks;
+	volatile __le16		session_num;
+	volatile __le16		total_source_count;
+	volatile __le16		total_dest_count;
+};
 
-#घोषणा	HIFN_BASE_CMD_COMP		0x0100	/* enable compression engine */
-#घोषणा	HIFN_BASE_CMD_PAD		0x0200	/* enable padding engine */
-#घोषणा	HIFN_BASE_CMD_MAC		0x0400	/* enable MAC engine */
-#घोषणा	HIFN_BASE_CMD_CRYPT		0x0800	/* enable crypt engine */
-#घोषणा	HIFN_BASE_CMD_DECODE		0x2000
-#घोषणा	HIFN_BASE_CMD_SRCLEN_M		0xc000
-#घोषणा	HIFN_BASE_CMD_SRCLEN_S		14
-#घोषणा	HIFN_BASE_CMD_DSTLEN_M		0x3000
-#घोषणा	HIFN_BASE_CMD_DSTLEN_S		12
-#घोषणा	HIFN_BASE_CMD_LENMASK_HI	0x30000
-#घोषणा	HIFN_BASE_CMD_LENMASK_LO	0x0ffff
-
-/*
- * Structure to help build up the command data काष्ठाure.
- */
-काष्ठा hअगरn_crypt_command अणु
-	अस्थिर __le16		masks;
-	अस्थिर __le16		header_skip;
-	अस्थिर __le16		source_count;
-	अस्थिर __le16		reserved;
-पूर्ण;
-
-#घोषणा	HIFN_CRYPT_CMD_ALG_MASK		0x0003		/* algorithm: */
-#घोषणा	HIFN_CRYPT_CMD_ALG_DES		0x0000		/*   DES */
-#घोषणा	HIFN_CRYPT_CMD_ALG_3DES		0x0001		/*   3DES */
-#घोषणा	HIFN_CRYPT_CMD_ALG_RC4		0x0002		/*   RC4 */
-#घोषणा	HIFN_CRYPT_CMD_ALG_AES		0x0003		/*   AES */
-#घोषणा	HIFN_CRYPT_CMD_MODE_MASK	0x0018		/* Encrypt mode: */
-#घोषणा	HIFN_CRYPT_CMD_MODE_ECB		0x0000		/*   ECB */
-#घोषणा	HIFN_CRYPT_CMD_MODE_CBC		0x0008		/*   CBC */
-#घोषणा	HIFN_CRYPT_CMD_MODE_CFB		0x0010		/*   CFB */
-#घोषणा	HIFN_CRYPT_CMD_MODE_OFB		0x0018		/*   OFB */
-#घोषणा	HIFN_CRYPT_CMD_CLR_CTX		0x0040		/* clear context */
-#घोषणा	HIFN_CRYPT_CMD_KSZ_MASK		0x0600		/* AES key size: */
-#घोषणा	HIFN_CRYPT_CMD_KSZ_128		0x0000		/*  128 bit */
-#घोषणा	HIFN_CRYPT_CMD_KSZ_192		0x0200		/*  192 bit */
-#घोषणा	HIFN_CRYPT_CMD_KSZ_256		0x0400		/*  256 bit */
-#घोषणा	HIFN_CRYPT_CMD_NEW_KEY		0x0800		/* expect new key */
-#घोषणा	HIFN_CRYPT_CMD_NEW_IV		0x1000		/* expect new iv */
-#घोषणा	HIFN_CRYPT_CMD_SRCLEN_M		0xc000
-#घोषणा	HIFN_CRYPT_CMD_SRCLEN_S		14
+#define	HIFN_BASE_CMD_COMP		0x0100	/* enable compression engine */
+#define	HIFN_BASE_CMD_PAD		0x0200	/* enable padding engine */
+#define	HIFN_BASE_CMD_MAC		0x0400	/* enable MAC engine */
+#define	HIFN_BASE_CMD_CRYPT		0x0800	/* enable crypt engine */
+#define	HIFN_BASE_CMD_DECODE		0x2000
+#define	HIFN_BASE_CMD_SRCLEN_M		0xc000
+#define	HIFN_BASE_CMD_SRCLEN_S		14
+#define	HIFN_BASE_CMD_DSTLEN_M		0x3000
+#define	HIFN_BASE_CMD_DSTLEN_S		12
+#define	HIFN_BASE_CMD_LENMASK_HI	0x30000
+#define	HIFN_BASE_CMD_LENMASK_LO	0x0ffff
 
 /*
- * Structure to help build up the command data काष्ठाure.
+ * Structure to help build up the command data structure.
  */
-काष्ठा hअगरn_mac_command अणु
-	अस्थिर __le16	masks;
-	अस्थिर __le16	header_skip;
-	अस्थिर __le16	source_count;
-	अस्थिर __le16	reserved;
-पूर्ण;
+struct hifn_crypt_command {
+	volatile __le16		masks;
+	volatile __le16		header_skip;
+	volatile __le16		source_count;
+	volatile __le16		reserved;
+};
 
-#घोषणा	HIFN_MAC_CMD_ALG_MASK		0x0001
-#घोषणा	HIFN_MAC_CMD_ALG_SHA1		0x0000
-#घोषणा	HIFN_MAC_CMD_ALG_MD5		0x0001
-#घोषणा	HIFN_MAC_CMD_MODE_MASK		0x000c
-#घोषणा	HIFN_MAC_CMD_MODE_HMAC		0x0000
-#घोषणा	HIFN_MAC_CMD_MODE_SSL_MAC	0x0004
-#घोषणा	HIFN_MAC_CMD_MODE_HASH		0x0008
-#घोषणा	HIFN_MAC_CMD_MODE_FULL		0x0004
-#घोषणा	HIFN_MAC_CMD_TRUNC		0x0010
-#घोषणा	HIFN_MAC_CMD_RESULT		0x0020
-#घोषणा	HIFN_MAC_CMD_APPEND		0x0040
-#घोषणा	HIFN_MAC_CMD_SRCLEN_M		0xc000
-#घोषणा	HIFN_MAC_CMD_SRCLEN_S		14
+#define	HIFN_CRYPT_CMD_ALG_MASK		0x0003		/* algorithm: */
+#define	HIFN_CRYPT_CMD_ALG_DES		0x0000		/*   DES */
+#define	HIFN_CRYPT_CMD_ALG_3DES		0x0001		/*   3DES */
+#define	HIFN_CRYPT_CMD_ALG_RC4		0x0002		/*   RC4 */
+#define	HIFN_CRYPT_CMD_ALG_AES		0x0003		/*   AES */
+#define	HIFN_CRYPT_CMD_MODE_MASK	0x0018		/* Encrypt mode: */
+#define	HIFN_CRYPT_CMD_MODE_ECB		0x0000		/*   ECB */
+#define	HIFN_CRYPT_CMD_MODE_CBC		0x0008		/*   CBC */
+#define	HIFN_CRYPT_CMD_MODE_CFB		0x0010		/*   CFB */
+#define	HIFN_CRYPT_CMD_MODE_OFB		0x0018		/*   OFB */
+#define	HIFN_CRYPT_CMD_CLR_CTX		0x0040		/* clear context */
+#define	HIFN_CRYPT_CMD_KSZ_MASK		0x0600		/* AES key size: */
+#define	HIFN_CRYPT_CMD_KSZ_128		0x0000		/*  128 bit */
+#define	HIFN_CRYPT_CMD_KSZ_192		0x0200		/*  192 bit */
+#define	HIFN_CRYPT_CMD_KSZ_256		0x0400		/*  256 bit */
+#define	HIFN_CRYPT_CMD_NEW_KEY		0x0800		/* expect new key */
+#define	HIFN_CRYPT_CMD_NEW_IV		0x1000		/* expect new iv */
+#define	HIFN_CRYPT_CMD_SRCLEN_M		0xc000
+#define	HIFN_CRYPT_CMD_SRCLEN_S		14
+
+/*
+ * Structure to help build up the command data structure.
+ */
+struct hifn_mac_command {
+	volatile __le16	masks;
+	volatile __le16	header_skip;
+	volatile __le16	source_count;
+	volatile __le16	reserved;
+};
+
+#define	HIFN_MAC_CMD_ALG_MASK		0x0001
+#define	HIFN_MAC_CMD_ALG_SHA1		0x0000
+#define	HIFN_MAC_CMD_ALG_MD5		0x0001
+#define	HIFN_MAC_CMD_MODE_MASK		0x000c
+#define	HIFN_MAC_CMD_MODE_HMAC		0x0000
+#define	HIFN_MAC_CMD_MODE_SSL_MAC	0x0004
+#define	HIFN_MAC_CMD_MODE_HASH		0x0008
+#define	HIFN_MAC_CMD_MODE_FULL		0x0004
+#define	HIFN_MAC_CMD_TRUNC		0x0010
+#define	HIFN_MAC_CMD_RESULT		0x0020
+#define	HIFN_MAC_CMD_APPEND		0x0040
+#define	HIFN_MAC_CMD_SRCLEN_M		0xc000
+#define	HIFN_MAC_CMD_SRCLEN_S		14
 
 /*
  * MAC POS IPsec initiates authentication after encryption on encodes
- * and beक्रमe decryption on decodes.
+ * and before decryption on decodes.
  */
-#घोषणा	HIFN_MAC_CMD_POS_IPSEC		0x0200
-#घोषणा	HIFN_MAC_CMD_NEW_KEY		0x0800
+#define	HIFN_MAC_CMD_POS_IPSEC		0x0200
+#define	HIFN_MAC_CMD_NEW_KEY		0x0800
 
-काष्ठा hअगरn_comp_command अणु
-	अस्थिर __le16		masks;
-	अस्थिर __le16		header_skip;
-	अस्थिर __le16		source_count;
-	अस्थिर __le16		reserved;
-पूर्ण;
+struct hifn_comp_command {
+	volatile __le16		masks;
+	volatile __le16		header_skip;
+	volatile __le16		source_count;
+	volatile __le16		reserved;
+};
 
-#घोषणा	HIFN_COMP_CMD_SRCLEN_M		0xc000
-#घोषणा	HIFN_COMP_CMD_SRCLEN_S		14
-#घोषणा	HIFN_COMP_CMD_ONE		0x0100	/* must be one */
-#घोषणा	HIFN_COMP_CMD_CLEARHIST		0x0010	/* clear history */
-#घोषणा	HIFN_COMP_CMD_UPDATEHIST	0x0008	/* update history */
-#घोषणा	HIFN_COMP_CMD_LZS_STRIP0	0x0004	/* LZS: strip zero */
-#घोषणा	HIFN_COMP_CMD_MPPC_RESTART	0x0004	/* MPPC: restart */
-#घोषणा	HIFN_COMP_CMD_ALG_MASK		0x0001	/* compression mode: */
-#घोषणा	HIFN_COMP_CMD_ALG_MPPC		0x0001	/*   MPPC */
-#घोषणा	HIFN_COMP_CMD_ALG_LZS		0x0000	/*   LZS */
+#define	HIFN_COMP_CMD_SRCLEN_M		0xc000
+#define	HIFN_COMP_CMD_SRCLEN_S		14
+#define	HIFN_COMP_CMD_ONE		0x0100	/* must be one */
+#define	HIFN_COMP_CMD_CLEARHIST		0x0010	/* clear history */
+#define	HIFN_COMP_CMD_UPDATEHIST	0x0008	/* update history */
+#define	HIFN_COMP_CMD_LZS_STRIP0	0x0004	/* LZS: strip zero */
+#define	HIFN_COMP_CMD_MPPC_RESTART	0x0004	/* MPPC: restart */
+#define	HIFN_COMP_CMD_ALG_MASK		0x0001	/* compression mode: */
+#define	HIFN_COMP_CMD_ALG_MPPC		0x0001	/*   MPPC */
+#define	HIFN_COMP_CMD_ALG_LZS		0x0000	/*   LZS */
 
-काष्ठा hअगरn_base_result अणु
-	अस्थिर __le16		flags;
-	अस्थिर __le16		session;
-	अस्थिर __le16		src_cnt;		/* 15:0 of source count */
-	अस्थिर __le16		dst_cnt;		/* 15:0 of dest count */
-पूर्ण;
+struct hifn_base_result {
+	volatile __le16		flags;
+	volatile __le16		session;
+	volatile __le16		src_cnt;		/* 15:0 of source count */
+	volatile __le16		dst_cnt;		/* 15:0 of dest count */
+};
 
-#घोषणा	HIFN_BASE_RES_DSTOVERRUN	0x0200	/* destination overrun */
-#घोषणा	HIFN_BASE_RES_SRCLEN_M		0xc000	/* 17:16 of source count */
-#घोषणा	HIFN_BASE_RES_SRCLEN_S		14
-#घोषणा	HIFN_BASE_RES_DSTLEN_M		0x3000	/* 17:16 of dest count */
-#घोषणा	HIFN_BASE_RES_DSTLEN_S		12
+#define	HIFN_BASE_RES_DSTOVERRUN	0x0200	/* destination overrun */
+#define	HIFN_BASE_RES_SRCLEN_M		0xc000	/* 17:16 of source count */
+#define	HIFN_BASE_RES_SRCLEN_S		14
+#define	HIFN_BASE_RES_DSTLEN_M		0x3000	/* 17:16 of dest count */
+#define	HIFN_BASE_RES_DSTLEN_S		12
 
-काष्ठा hअगरn_comp_result अणु
-	अस्थिर __le16		flags;
-	अस्थिर __le16		crc;
-पूर्ण;
+struct hifn_comp_result {
+	volatile __le16		flags;
+	volatile __le16		crc;
+};
 
-#घोषणा	HIFN_COMP_RES_LCB_M		0xff00	/* दीर्घitudinal check byte */
-#घोषणा	HIFN_COMP_RES_LCB_S		8
-#घोषणा	HIFN_COMP_RES_RESTART		0x0004	/* MPPC: restart */
-#घोषणा	HIFN_COMP_RES_ENDMARKER		0x0002	/* LZS: end marker seen */
-#घोषणा	HIFN_COMP_RES_SRC_NOTZERO	0x0001	/* source expired */
+#define	HIFN_COMP_RES_LCB_M		0xff00	/* longitudinal check byte */
+#define	HIFN_COMP_RES_LCB_S		8
+#define	HIFN_COMP_RES_RESTART		0x0004	/* MPPC: restart */
+#define	HIFN_COMP_RES_ENDMARKER		0x0002	/* LZS: end marker seen */
+#define	HIFN_COMP_RES_SRC_NOTZERO	0x0001	/* source expired */
 
-काष्ठा hअगरn_mac_result अणु
-	अस्थिर __le16		flags;
-	अस्थिर __le16		reserved;
+struct hifn_mac_result {
+	volatile __le16		flags;
+	volatile __le16		reserved;
 	/* followed by 0, 6, 8, or 10 u16's of the MAC, then crypt */
-पूर्ण;
+};
 
-#घोषणा	HIFN_MAC_RES_MISCOMPARE		0x0002	/* compare failed */
-#घोषणा	HIFN_MAC_RES_SRC_NOTZERO	0x0001	/* source expired */
+#define	HIFN_MAC_RES_MISCOMPARE		0x0002	/* compare failed */
+#define	HIFN_MAC_RES_SRC_NOTZERO	0x0001	/* source expired */
 
-काष्ठा hअगरn_crypt_result अणु
-	अस्थिर __le16		flags;
-	अस्थिर __le16		reserved;
-पूर्ण;
+struct hifn_crypt_result {
+	volatile __le16		flags;
+	volatile __le16		reserved;
+};
 
-#घोषणा	HIFN_CRYPT_RES_SRC_NOTZERO	0x0001	/* source expired */
+#define	HIFN_CRYPT_RES_SRC_NOTZERO	0x0001	/* source expired */
 
-#अगर_अघोषित HIFN_POLL_FREQUENCY
-#घोषणा	HIFN_POLL_FREQUENCY	0x1
-#पूर्ण_अगर
+#ifndef HIFN_POLL_FREQUENCY
+#define	HIFN_POLL_FREQUENCY	0x1
+#endif
 
-#अगर_अघोषित HIFN_POLL_SCALAR
-#घोषणा	HIFN_POLL_SCALAR	0x0
-#पूर्ण_अगर
+#ifndef HIFN_POLL_SCALAR
+#define	HIFN_POLL_SCALAR	0x0
+#endif
 
-#घोषणा	HIFN_MAX_SEGLEN		0xffff		/* maximum dma segment len */
-#घोषणा	HIFN_MAX_DMALEN		0x3ffff		/* maximum dma length */
+#define	HIFN_MAX_SEGLEN		0xffff		/* maximum dma segment len */
+#define	HIFN_MAX_DMALEN		0x3ffff		/* maximum dma length */
 
-काष्ठा hअगरn_crypto_alg अणु
-	काष्ठा list_head	entry;
-	काष्ठा skcipher_alg	alg;
-	काष्ठा hअगरn_device	*dev;
-पूर्ण;
+struct hifn_crypto_alg {
+	struct list_head	entry;
+	struct skcipher_alg	alg;
+	struct hifn_device	*dev;
+};
 
-#घोषणा ASYNC_SCATTERLIST_CACHE	16
+#define ASYNC_SCATTERLIST_CACHE	16
 
-#घोषणा ASYNC_FLAGS_MISALIGNED	(1 << 0)
+#define ASYNC_FLAGS_MISALIGNED	(1 << 0)
 
-काष्ठा hअगरn_cipher_walk अणु
-	काष्ठा scatterlist	cache[ASYNC_SCATTERLIST_CACHE];
+struct hifn_cipher_walk {
+	struct scatterlist	cache[ASYNC_SCATTERLIST_CACHE];
 	u32			flags;
-	पूर्णांक			num;
-पूर्ण;
+	int			num;
+};
 
-काष्ठा hअगरn_context अणु
+struct hifn_context {
 	u8			key[HIFN_MAX_CRYPT_KEY_LENGTH];
-	काष्ठा hअगरn_device	*dev;
-	अचिन्हित पूर्णांक		keysize;
-पूर्ण;
+	struct hifn_device	*dev;
+	unsigned int		keysize;
+};
 
-काष्ठा hअगरn_request_context अणु
+struct hifn_request_context {
 	u8			*iv;
-	अचिन्हित पूर्णांक		ivsize;
+	unsigned int		ivsize;
 	u8			op, type, mode, unused;
-	काष्ठा hअगरn_cipher_walk	walk;
-पूर्ण;
+	struct hifn_cipher_walk	walk;
+};
 
-#घोषणा crypto_alg_to_hअगरn(a)	container_of(a, काष्ठा hअगरn_crypto_alg, alg)
+#define crypto_alg_to_hifn(a)	container_of(a, struct hifn_crypto_alg, alg)
 
-अटल अंतरभूत u32 hअगरn_पढ़ो_0(काष्ठा hअगरn_device *dev, u32 reg)
-अणु
-	वापस पढ़ोl(dev->bar[0] + reg);
-पूर्ण
+static inline u32 hifn_read_0(struct hifn_device *dev, u32 reg)
+{
+	return readl(dev->bar[0] + reg);
+}
 
-अटल अंतरभूत u32 hअगरn_पढ़ो_1(काष्ठा hअगरn_device *dev, u32 reg)
-अणु
-	वापस पढ़ोl(dev->bar[1] + reg);
-पूर्ण
+static inline u32 hifn_read_1(struct hifn_device *dev, u32 reg)
+{
+	return readl(dev->bar[1] + reg);
+}
 
-अटल अंतरभूत व्योम hअगरn_ग_लिखो_0(काष्ठा hअगरn_device *dev, u32 reg, u32 val)
-अणु
-	ग_लिखोl((__क्रमce u32)cpu_to_le32(val), dev->bar[0] + reg);
-पूर्ण
+static inline void hifn_write_0(struct hifn_device *dev, u32 reg, u32 val)
+{
+	writel((__force u32)cpu_to_le32(val), dev->bar[0] + reg);
+}
 
-अटल अंतरभूत व्योम hअगरn_ग_लिखो_1(काष्ठा hअगरn_device *dev, u32 reg, u32 val)
-अणु
-	ग_लिखोl((__क्रमce u32)cpu_to_le32(val), dev->bar[1] + reg);
-पूर्ण
+static inline void hifn_write_1(struct hifn_device *dev, u32 reg, u32 val)
+{
+	writel((__force u32)cpu_to_le32(val), dev->bar[1] + reg);
+}
 
-अटल व्योम hअगरn_रुको_puc(काष्ठा hअगरn_device *dev)
-अणु
-	पूर्णांक i;
+static void hifn_wait_puc(struct hifn_device *dev)
+{
+	int i;
 	u32 ret;
 
-	क्रम (i = 10000; i > 0; --i) अणु
-		ret = hअगरn_पढ़ो_0(dev, HIFN_0_PUCTRL);
-		अगर (!(ret & HIFN_PUCTRL_RESET))
-			अवरोध;
+	for (i = 10000; i > 0; --i) {
+		ret = hifn_read_0(dev, HIFN_0_PUCTRL);
+		if (!(ret & HIFN_PUCTRL_RESET))
+			break;
 
 		udelay(1);
-	पूर्ण
+	}
 
-	अगर (!i)
+	if (!i)
 		dev_err(&dev->pdev->dev, "Failed to reset PUC unit.\n");
-पूर्ण
+}
 
-अटल व्योम hअगरn_reset_puc(काष्ठा hअगरn_device *dev)
-अणु
-	hअगरn_ग_लिखो_0(dev, HIFN_0_PUCTRL, HIFN_PUCTRL_DMAENA);
-	hअगरn_रुको_puc(dev);
-पूर्ण
+static void hifn_reset_puc(struct hifn_device *dev)
+{
+	hifn_write_0(dev, HIFN_0_PUCTRL, HIFN_PUCTRL_DMAENA);
+	hifn_wait_puc(dev);
+}
 
-अटल व्योम hअगरn_stop_device(काष्ठा hअगरn_device *dev)
-अणु
-	hअगरn_ग_लिखो_1(dev, HIFN_1_DMA_CSR,
+static void hifn_stop_device(struct hifn_device *dev)
+{
+	hifn_write_1(dev, HIFN_1_DMA_CSR,
 		HIFN_DMACSR_D_CTRL_DIS | HIFN_DMACSR_R_CTRL_DIS |
 		HIFN_DMACSR_S_CTRL_DIS | HIFN_DMACSR_C_CTRL_DIS);
-	hअगरn_ग_लिखो_0(dev, HIFN_0_PUIER, 0);
-	hअगरn_ग_लिखो_1(dev, HIFN_1_DMA_IER, 0);
-पूर्ण
+	hifn_write_0(dev, HIFN_0_PUIER, 0);
+	hifn_write_1(dev, HIFN_1_DMA_IER, 0);
+}
 
-अटल व्योम hअगरn_reset_dma(काष्ठा hअगरn_device *dev, पूर्णांक full)
-अणु
-	hअगरn_stop_device(dev);
+static void hifn_reset_dma(struct hifn_device *dev, int full)
+{
+	hifn_stop_device(dev);
 
 	/*
 	 * Setting poll frequency and others to 0.
 	 */
-	hअगरn_ग_लिखो_1(dev, HIFN_1_DMA_CNFG, HIFN_DMACNFG_MSTRESET |
+	hifn_write_1(dev, HIFN_1_DMA_CNFG, HIFN_DMACNFG_MSTRESET |
 			HIFN_DMACNFG_DMARESET | HIFN_DMACNFG_MODE);
 	mdelay(1);
 
 	/*
 	 * Reset DMA.
 	 */
-	अगर (full) अणु
-		hअगरn_ग_लिखो_1(dev, HIFN_1_DMA_CNFG, HIFN_DMACNFG_MODE);
+	if (full) {
+		hifn_write_1(dev, HIFN_1_DMA_CNFG, HIFN_DMACNFG_MODE);
 		mdelay(1);
-	पूर्ण अन्यथा अणु
-		hअगरn_ग_लिखो_1(dev, HIFN_1_DMA_CNFG, HIFN_DMACNFG_MODE |
+	} else {
+		hifn_write_1(dev, HIFN_1_DMA_CNFG, HIFN_DMACNFG_MODE |
 				HIFN_DMACNFG_MSTRESET);
-		hअगरn_reset_puc(dev);
-	पूर्ण
+		hifn_reset_puc(dev);
+	}
 
-	hअगरn_ग_लिखो_1(dev, HIFN_1_DMA_CNFG, HIFN_DMACNFG_MSTRESET |
+	hifn_write_1(dev, HIFN_1_DMA_CNFG, HIFN_DMACNFG_MSTRESET |
 			HIFN_DMACNFG_DMARESET | HIFN_DMACNFG_MODE);
 
-	hअगरn_reset_puc(dev);
-पूर्ण
+	hifn_reset_puc(dev);
+}
 
-अटल u32 hअगरn_next_signature(u32 a, u_पूर्णांक cnt)
-अणु
-	पूर्णांक i;
+static u32 hifn_next_signature(u32 a, u_int cnt)
+{
+	int i;
 	u32 v;
 
-	क्रम (i = 0; i < cnt; i++) अणु
+	for (i = 0; i < cnt; i++) {
 		/* get the parity */
 		v = a & 0x80080125;
 		v ^= v >> 16;
@@ -723,276 +722,276 @@ MODULE_PARM_DESC(hअगरn_pll_ref,
 		v ^= v >> 1;
 
 		a = (v & 1) ^ (a << 1);
-	पूर्ण
+	}
 
-	वापस a;
-पूर्ण
+	return a;
+}
 
-अटल काष्ठा pci2id अणु
-	u_लघु		pci_venकरोr;
-	u_लघु		pci_prod;
-	अक्षर		card_id[13];
-पूर्ण pci2id[] = अणु
-	अणु
+static struct pci2id {
+	u_short		pci_vendor;
+	u_short		pci_prod;
+	char		card_id[13];
+} pci2id[] = {
+	{
 		PCI_VENDOR_ID_HIFN,
 		PCI_DEVICE_ID_HIFN_7955,
-		अणु 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00 पूर्ण
-	पूर्ण,
-	अणु
+		{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		  0x00, 0x00, 0x00, 0x00, 0x00 }
+	},
+	{
 		PCI_VENDOR_ID_HIFN,
 		PCI_DEVICE_ID_HIFN_7956,
-		अणु 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00 पूर्ण
-	पूर्ण
-पूर्ण;
+		{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		  0x00, 0x00, 0x00, 0x00, 0x00 }
+	}
+};
 
-#अगर_घोषित CONFIG_CRYPTO_DEV_HIFN_795X_RNG
-अटल पूर्णांक hअगरn_rng_data_present(काष्ठा hwrng *rng, पूर्णांक रुको)
-अणु
-	काष्ठा hअगरn_device *dev = (काष्ठा hअगरn_device *)rng->priv;
+#ifdef CONFIG_CRYPTO_DEV_HIFN_795X_RNG
+static int hifn_rng_data_present(struct hwrng *rng, int wait)
+{
+	struct hifn_device *dev = (struct hifn_device *)rng->priv;
 	s64 nsec;
 
-	nsec = kसमय_प्रकारo_ns(kसमय_sub(kसमय_get(), dev->rngसमय));
-	nsec -= dev->rng_रुको_समय;
-	अगर (nsec <= 0)
-		वापस 1;
-	अगर (!रुको)
-		वापस 0;
+	nsec = ktime_to_ns(ktime_sub(ktime_get(), dev->rngtime));
+	nsec -= dev->rng_wait_time;
+	if (nsec <= 0)
+		return 1;
+	if (!wait)
+		return 0;
 	ndelay(nsec);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक hअगरn_rng_data_पढ़ो(काष्ठा hwrng *rng, u32 *data)
-अणु
-	काष्ठा hअगरn_device *dev = (काष्ठा hअगरn_device *)rng->priv;
+static int hifn_rng_data_read(struct hwrng *rng, u32 *data)
+{
+	struct hifn_device *dev = (struct hifn_device *)rng->priv;
 
-	*data = hअगरn_पढ़ो_1(dev, HIFN_1_RNG_DATA);
-	dev->rngसमय = kसमय_get();
-	वापस 4;
-पूर्ण
+	*data = hifn_read_1(dev, HIFN_1_RNG_DATA);
+	dev->rngtime = ktime_get();
+	return 4;
+}
 
-अटल पूर्णांक hअगरn_रेजिस्टर_rng(काष्ठा hअगरn_device *dev)
-अणु
+static int hifn_register_rng(struct hifn_device *dev)
+{
 	/*
-	 * We must रुको at least 256 Pk_clk cycles between two पढ़ोs of the rng.
+	 * We must wait at least 256 Pk_clk cycles between two reads of the rng.
 	 */
-	dev->rng_रुको_समय	= DIV_ROUND_UP_ULL(NSEC_PER_SEC,
+	dev->rng_wait_time	= DIV_ROUND_UP_ULL(NSEC_PER_SEC,
 						   dev->pk_clk_freq) * 256;
 
 	dev->rng.name		= dev->name;
-	dev->rng.data_present	= hअगरn_rng_data_present;
-	dev->rng.data_पढ़ो	= hअगरn_rng_data_पढ़ो;
-	dev->rng.priv		= (अचिन्हित दीर्घ)dev;
+	dev->rng.data_present	= hifn_rng_data_present;
+	dev->rng.data_read	= hifn_rng_data_read;
+	dev->rng.priv		= (unsigned long)dev;
 
-	वापस hwrng_रेजिस्टर(&dev->rng);
-पूर्ण
+	return hwrng_register(&dev->rng);
+}
 
-अटल व्योम hअगरn_unरेजिस्टर_rng(काष्ठा hअगरn_device *dev)
-अणु
-	hwrng_unरेजिस्टर(&dev->rng);
-पूर्ण
-#अन्यथा
-#घोषणा hअगरn_रेजिस्टर_rng(dev)		0
-#घोषणा hअगरn_unरेजिस्टर_rng(dev)
-#पूर्ण_अगर
+static void hifn_unregister_rng(struct hifn_device *dev)
+{
+	hwrng_unregister(&dev->rng);
+}
+#else
+#define hifn_register_rng(dev)		0
+#define hifn_unregister_rng(dev)
+#endif
 
-अटल पूर्णांक hअगरn_init_pubrng(काष्ठा hअगरn_device *dev)
-अणु
-	पूर्णांक i;
+static int hifn_init_pubrng(struct hifn_device *dev)
+{
+	int i;
 
-	hअगरn_ग_लिखो_1(dev, HIFN_1_PUB_RESET, hअगरn_पढ़ो_1(dev, HIFN_1_PUB_RESET) |
+	hifn_write_1(dev, HIFN_1_PUB_RESET, hifn_read_1(dev, HIFN_1_PUB_RESET) |
 			HIFN_PUBRST_RESET);
 
-	क्रम (i = 100; i > 0; --i) अणु
+	for (i = 100; i > 0; --i) {
 		mdelay(1);
 
-		अगर ((hअगरn_पढ़ो_1(dev, HIFN_1_PUB_RESET) & HIFN_PUBRST_RESET) == 0)
-			अवरोध;
-	पूर्ण
+		if ((hifn_read_1(dev, HIFN_1_PUB_RESET) & HIFN_PUBRST_RESET) == 0)
+			break;
+	}
 
-	अगर (!i) अणु
+	if (!i) {
 		dev_err(&dev->pdev->dev, "Failed to initialise public key engine.\n");
-	पूर्ण अन्यथा अणु
-		hअगरn_ग_लिखो_1(dev, HIFN_1_PUB_IEN, HIFN_PUBIEN_DONE);
+	} else {
+		hifn_write_1(dev, HIFN_1_PUB_IEN, HIFN_PUBIEN_DONE);
 		dev->dmareg |= HIFN_DMAIER_PUBDONE;
-		hअगरn_ग_लिखो_1(dev, HIFN_1_DMA_IER, dev->dmareg);
+		hifn_write_1(dev, HIFN_1_DMA_IER, dev->dmareg);
 
 		dev_dbg(&dev->pdev->dev, "Public key engine has been successfully initialised.\n");
-	पूर्ण
+	}
 
 	/* Enable RNG engine. */
 
-	hअगरn_ग_लिखो_1(dev, HIFN_1_RNG_CONFIG,
-			hअगरn_पढ़ो_1(dev, HIFN_1_RNG_CONFIG) | HIFN_RNGCFG_ENA);
+	hifn_write_1(dev, HIFN_1_RNG_CONFIG,
+			hifn_read_1(dev, HIFN_1_RNG_CONFIG) | HIFN_RNGCFG_ENA);
 	dev_dbg(&dev->pdev->dev, "RNG engine has been successfully initialised.\n");
 
-#अगर_घोषित CONFIG_CRYPTO_DEV_HIFN_795X_RNG
+#ifdef CONFIG_CRYPTO_DEV_HIFN_795X_RNG
 	/* First value must be discarded */
-	hअगरn_पढ़ो_1(dev, HIFN_1_RNG_DATA);
-	dev->rngसमय = kसमय_get();
-#पूर्ण_अगर
-	वापस 0;
-पूर्ण
+	hifn_read_1(dev, HIFN_1_RNG_DATA);
+	dev->rngtime = ktime_get();
+#endif
+	return 0;
+}
 
-अटल पूर्णांक hअगरn_enable_crypto(काष्ठा hअगरn_device *dev)
-अणु
+static int hifn_enable_crypto(struct hifn_device *dev)
+{
 	u32 dmacfg, addr;
-	अक्षर *offtbl = शून्य;
-	पूर्णांक i;
+	char *offtbl = NULL;
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(pci2id); i++) अणु
-		अगर (pci2id[i].pci_venकरोr == dev->pdev->venकरोr &&
-				pci2id[i].pci_prod == dev->pdev->device) अणु
+	for (i = 0; i < ARRAY_SIZE(pci2id); i++) {
+		if (pci2id[i].pci_vendor == dev->pdev->vendor &&
+				pci2id[i].pci_prod == dev->pdev->device) {
 			offtbl = pci2id[i].card_id;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (!offtbl) अणु
+	if (!offtbl) {
 		dev_err(&dev->pdev->dev, "Unknown card!\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	dmacfg = hअगरn_पढ़ो_1(dev, HIFN_1_DMA_CNFG);
+	dmacfg = hifn_read_1(dev, HIFN_1_DMA_CNFG);
 
-	hअगरn_ग_लिखो_1(dev, HIFN_1_DMA_CNFG,
+	hifn_write_1(dev, HIFN_1_DMA_CNFG,
 			HIFN_DMACNFG_UNLOCK | HIFN_DMACNFG_MSTRESET |
 			HIFN_DMACNFG_DMARESET | HIFN_DMACNFG_MODE);
 	mdelay(1);
-	addr = hअगरn_पढ़ो_1(dev, HIFN_1_UNLOCK_SECRET1);
+	addr = hifn_read_1(dev, HIFN_1_UNLOCK_SECRET1);
 	mdelay(1);
-	hअगरn_ग_लिखो_1(dev, HIFN_1_UNLOCK_SECRET2, 0);
+	hifn_write_1(dev, HIFN_1_UNLOCK_SECRET2, 0);
 	mdelay(1);
 
-	क्रम (i = 0; i < 12; ++i) अणु
-		addr = hअगरn_next_signature(addr, offtbl[i] + 0x101);
-		hअगरn_ग_लिखो_1(dev, HIFN_1_UNLOCK_SECRET2, addr);
+	for (i = 0; i < 12; ++i) {
+		addr = hifn_next_signature(addr, offtbl[i] + 0x101);
+		hifn_write_1(dev, HIFN_1_UNLOCK_SECRET2, addr);
 
 		mdelay(1);
-	पूर्ण
-	hअगरn_ग_लिखो_1(dev, HIFN_1_DMA_CNFG, dmacfg);
+	}
+	hifn_write_1(dev, HIFN_1_DMA_CNFG, dmacfg);
 
 	dev_dbg(&dev->pdev->dev, "%s %s.\n", dev->name, pci_name(dev->pdev));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम hअगरn_init_dma(काष्ठा hअगरn_device *dev)
-अणु
-	काष्ठा hअगरn_dma *dma = (काष्ठा hअगरn_dma *)dev->desc_virt;
+static void hifn_init_dma(struct hifn_device *dev)
+{
+	struct hifn_dma *dma = (struct hifn_dma *)dev->desc_virt;
 	u32 dptr = dev->desc_dma;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < HIFN_D_CMD_RSIZE; ++i)
+	for (i = 0; i < HIFN_D_CMD_RSIZE; ++i)
 		dma->cmdr[i].p = __cpu_to_le32(dptr +
-				दुरत्व(काष्ठा hअगरn_dma, command_bufs[i][0]));
-	क्रम (i = 0; i < HIFN_D_RES_RSIZE; ++i)
+				offsetof(struct hifn_dma, command_bufs[i][0]));
+	for (i = 0; i < HIFN_D_RES_RSIZE; ++i)
 		dma->resr[i].p = __cpu_to_le32(dptr +
-				दुरत्व(काष्ठा hअगरn_dma, result_bufs[i][0]));
+				offsetof(struct hifn_dma, result_bufs[i][0]));
 
 	/* Setup LAST descriptors. */
 	dma->cmdr[HIFN_D_CMD_RSIZE].p = __cpu_to_le32(dptr +
-			दुरत्व(काष्ठा hअगरn_dma, cmdr[0]));
+			offsetof(struct hifn_dma, cmdr[0]));
 	dma->srcr[HIFN_D_SRC_RSIZE].p = __cpu_to_le32(dptr +
-			दुरत्व(काष्ठा hअगरn_dma, srcr[0]));
+			offsetof(struct hifn_dma, srcr[0]));
 	dma->dstr[HIFN_D_DST_RSIZE].p = __cpu_to_le32(dptr +
-			दुरत्व(काष्ठा hअगरn_dma, dstr[0]));
+			offsetof(struct hifn_dma, dstr[0]));
 	dma->resr[HIFN_D_RES_RSIZE].p = __cpu_to_le32(dptr +
-			दुरत्व(काष्ठा hअगरn_dma, resr[0]));
+			offsetof(struct hifn_dma, resr[0]));
 
 	dma->cmdu = dma->srcu = dma->dstu = dma->resu = 0;
 	dma->cmdi = dma->srci = dma->dsti = dma->resi = 0;
 	dma->cmdk = dma->srck = dma->dstk = dma->resk = 0;
-पूर्ण
+}
 
 /*
- * Initialize the PLL. We need to know the frequency of the reference घड़ी
+ * Initialize the PLL. We need to know the frequency of the reference clock
  * to calculate the optimal multiplier. For PCI we assume 66MHz, since that
- * allows us to operate without the risk of overघड़ीing the chip. If it
+ * allows us to operate without the risk of overclocking the chip. If it
  * actually uses 33MHz, the chip will operate at half the speed, this can be
- * overridden by specअगरying the frequency as module parameter (pci33).
+ * overridden by specifying the frequency as module parameter (pci33).
  *
- * Unक्रमtunately the PCI घड़ी is not very suitable since the HIFN needs a
- * stable घड़ी and the PCI घड़ी frequency may vary, so the शेष is the
- * बाह्यal घड़ी. There is no way to find out its frequency, we शेष to
+ * Unfortunately the PCI clock is not very suitable since the HIFN needs a
+ * stable clock and the PCI clock frequency may vary, so the default is the
+ * external clock. There is no way to find out its frequency, we default to
  * 66MHz since according to Mike Ham of HiFn, almost every board in existence
- * has an बाह्यal crystal populated at 66MHz.
+ * has an external crystal populated at 66MHz.
  */
-अटल व्योम hअगरn_init_pll(काष्ठा hअगरn_device *dev)
-अणु
-	अचिन्हित पूर्णांक freq, m;
+static void hifn_init_pll(struct hifn_device *dev)
+{
+	unsigned int freq, m;
 	u32 pllcfg;
 
 	pllcfg = HIFN_1_PLL | HIFN_PLL_RESERVED_1;
 
-	अगर (म_भेदन(hअगरn_pll_ref, "ext", 3) == 0)
+	if (strncmp(hifn_pll_ref, "ext", 3) == 0)
 		pllcfg |= HIFN_PLL_REF_CLK_PLL;
-	अन्यथा
+	else
 		pllcfg |= HIFN_PLL_REF_CLK_HBI;
 
-	अगर (hअगरn_pll_ref[3] != '\0')
-		freq = simple_म_से_अदीर्घ(hअगरn_pll_ref + 3, शून्य, 10);
-	अन्यथा अणु
+	if (hifn_pll_ref[3] != '\0')
+		freq = simple_strtoul(hifn_pll_ref + 3, NULL, 10);
+	else {
 		freq = 66;
 		dev_info(&dev->pdev->dev, "assuming %uMHz clock speed, override with hifn_pll_ref=%.3s<frequency>\n",
-			 freq, hअगरn_pll_ref);
-	पूर्ण
+			 freq, hifn_pll_ref);
+	}
 
 	m = HIFN_PLL_FCK_MAX / freq;
 
 	pllcfg |= (m / 2 - 1) << HIFN_PLL_ND_SHIFT;
-	अगर (m <= 8)
+	if (m <= 8)
 		pllcfg |= HIFN_PLL_IS_1_8;
-	अन्यथा
+	else
 		pllcfg |= HIFN_PLL_IS_9_12;
 
-	/* Select घड़ी source and enable घड़ी bypass */
-	hअगरn_ग_लिखो_1(dev, HIFN_1_PLL, pllcfg |
+	/* Select clock source and enable clock bypass */
+	hifn_write_1(dev, HIFN_1_PLL, pllcfg |
 		     HIFN_PLL_PK_CLK_HBI | HIFN_PLL_PE_CLK_HBI | HIFN_PLL_BP);
 
-	/* Let the chip lock to the input घड़ी */
+	/* Let the chip lock to the input clock */
 	mdelay(10);
 
-	/* Disable घड़ी bypass */
-	hअगरn_ग_लिखो_1(dev, HIFN_1_PLL, pllcfg |
+	/* Disable clock bypass */
+	hifn_write_1(dev, HIFN_1_PLL, pllcfg |
 		     HIFN_PLL_PK_CLK_HBI | HIFN_PLL_PE_CLK_HBI);
 
 	/* Switch the engines to the PLL */
-	hअगरn_ग_लिखो_1(dev, HIFN_1_PLL, pllcfg |
+	hifn_write_1(dev, HIFN_1_PLL, pllcfg |
 		     HIFN_PLL_PK_CLK_PLL | HIFN_PLL_PE_CLK_PLL);
 
 	/*
 	 * The Fpk_clk runs at half the total speed. Its frequency is needed to
-	 * calculate the minimum समय between two पढ़ोs of the rng. Since 33MHz
+	 * calculate the minimum time between two reads of the rng. Since 33MHz
 	 * is actually 33.333... we overestimate the frequency here, resulting
-	 * in slightly larger पूर्णांकervals.
+	 * in slightly larger intervals.
 	 */
 	dev->pk_clk_freq = 1000000 * (freq + 1) * m / 2;
-पूर्ण
+}
 
-अटल व्योम hअगरn_init_रेजिस्टरs(काष्ठा hअगरn_device *dev)
-अणु
+static void hifn_init_registers(struct hifn_device *dev)
+{
 	u32 dptr = dev->desc_dma;
 
 	/* Initialization magic... */
-	hअगरn_ग_लिखो_0(dev, HIFN_0_PUCTRL, HIFN_PUCTRL_DMAENA);
-	hअगरn_ग_लिखो_0(dev, HIFN_0_FIFOCNFG, HIFN_FIFOCNFG_THRESHOLD);
-	hअगरn_ग_लिखो_0(dev, HIFN_0_PUIER, HIFN_PUIER_DSTOVER);
+	hifn_write_0(dev, HIFN_0_PUCTRL, HIFN_PUCTRL_DMAENA);
+	hifn_write_0(dev, HIFN_0_FIFOCNFG, HIFN_FIFOCNFG_THRESHOLD);
+	hifn_write_0(dev, HIFN_0_PUIER, HIFN_PUIER_DSTOVER);
 
-	/* ग_लिखो all 4 ring address रेजिस्टरs */
-	hअगरn_ग_लिखो_1(dev, HIFN_1_DMA_CRAR, dptr +
-				दुरत्व(काष्ठा hअगरn_dma, cmdr[0]));
-	hअगरn_ग_लिखो_1(dev, HIFN_1_DMA_SRAR, dptr +
-				दुरत्व(काष्ठा hअगरn_dma, srcr[0]));
-	hअगरn_ग_लिखो_1(dev, HIFN_1_DMA_DRAR, dptr +
-				दुरत्व(काष्ठा hअगरn_dma, dstr[0]));
-	hअगरn_ग_लिखो_1(dev, HIFN_1_DMA_RRAR, dptr +
-				दुरत्व(काष्ठा hअगरn_dma, resr[0]));
+	/* write all 4 ring address registers */
+	hifn_write_1(dev, HIFN_1_DMA_CRAR, dptr +
+				offsetof(struct hifn_dma, cmdr[0]));
+	hifn_write_1(dev, HIFN_1_DMA_SRAR, dptr +
+				offsetof(struct hifn_dma, srcr[0]));
+	hifn_write_1(dev, HIFN_1_DMA_DRAR, dptr +
+				offsetof(struct hifn_dma, dstr[0]));
+	hifn_write_1(dev, HIFN_1_DMA_RRAR, dptr +
+				offsetof(struct hifn_dma, resr[0]));
 
 	mdelay(2);
-#अगर 0
-	hअगरn_ग_लिखो_1(dev, HIFN_1_DMA_CSR,
+#if 0
+	hifn_write_1(dev, HIFN_1_DMA_CSR,
 	    HIFN_DMACSR_D_CTRL_DIS | HIFN_DMACSR_R_CTRL_DIS |
 	    HIFN_DMACSR_S_CTRL_DIS | HIFN_DMACSR_C_CTRL_DIS |
 	    HIFN_DMACSR_D_ABORT | HIFN_DMACSR_D_DONE | HIFN_DMACSR_D_LAST |
@@ -1005,8 +1004,8 @@ MODULE_PARM_DESC(hअगरn_pll_ref,
 	    HIFN_DMACSR_C_WAIT |
 	    HIFN_DMACSR_ENGINE |
 	    HIFN_DMACSR_PUBDONE);
-#अन्यथा
-	hअगरn_ग_लिखो_1(dev, HIFN_1_DMA_CSR,
+#else
+	hifn_write_1(dev, HIFN_1_DMA_CSR,
 	    HIFN_DMACSR_C_CTRL_ENA | HIFN_DMACSR_S_CTRL_ENA |
 	    HIFN_DMACSR_D_CTRL_ENA | HIFN_DMACSR_R_CTRL_ENA |
 	    HIFN_DMACSR_D_ABORT | HIFN_DMACSR_D_DONE | HIFN_DMACSR_D_LAST |
@@ -1019,8 +1018,8 @@ MODULE_PARM_DESC(hअगरn_pll_ref,
 	    HIFN_DMACSR_C_WAIT |
 	    HIFN_DMACSR_ENGINE |
 	    HIFN_DMACSR_PUBDONE);
-#पूर्ण_अगर
-	hअगरn_पढ़ो_1(dev, HIFN_1_DMA_CSR);
+#endif
+	hifn_read_1(dev, HIFN_1_DMA_CSR);
 
 	dev->dmareg |= HIFN_DMAIER_R_DONE | HIFN_DMAIER_C_ABORT |
 	    HIFN_DMAIER_D_OVER | HIFN_DMAIER_R_OVER |
@@ -1028,32 +1027,32 @@ MODULE_PARM_DESC(hअगरn_pll_ref,
 	    HIFN_DMAIER_ENGINE;
 	dev->dmareg &= ~HIFN_DMAIER_C_WAIT;
 
-	hअगरn_ग_लिखो_1(dev, HIFN_1_DMA_IER, dev->dmareg);
-	hअगरn_पढ़ो_1(dev, HIFN_1_DMA_IER);
-#अगर 0
-	hअगरn_ग_लिखो_0(dev, HIFN_0_PUCNFG, HIFN_PUCNFG_ENCCNFG |
+	hifn_write_1(dev, HIFN_1_DMA_IER, dev->dmareg);
+	hifn_read_1(dev, HIFN_1_DMA_IER);
+#if 0
+	hifn_write_0(dev, HIFN_0_PUCNFG, HIFN_PUCNFG_ENCCNFG |
 		    HIFN_PUCNFG_DRFR_128 | HIFN_PUCNFG_TCALLPHASES |
 		    HIFN_PUCNFG_TCDRVTOTEM | HIFN_PUCNFG_BUS32 |
 		    HIFN_PUCNFG_DRAM);
-#अन्यथा
-	hअगरn_ग_लिखो_0(dev, HIFN_0_PUCNFG, 0x10342);
-#पूर्ण_अगर
-	hअगरn_init_pll(dev);
+#else
+	hifn_write_0(dev, HIFN_0_PUCNFG, 0x10342);
+#endif
+	hifn_init_pll(dev);
 
-	hअगरn_ग_लिखो_0(dev, HIFN_0_PUISR, HIFN_PUISR_DSTOVER);
-	hअगरn_ग_लिखो_1(dev, HIFN_1_DMA_CNFG, HIFN_DMACNFG_MSTRESET |
+	hifn_write_0(dev, HIFN_0_PUISR, HIFN_PUISR_DSTOVER);
+	hifn_write_1(dev, HIFN_1_DMA_CNFG, HIFN_DMACNFG_MSTRESET |
 	    HIFN_DMACNFG_DMARESET | HIFN_DMACNFG_MODE | HIFN_DMACNFG_LAST |
 	    ((HIFN_POLL_FREQUENCY << 16 ) & HIFN_DMACNFG_POLLFREQ) |
 	    ((HIFN_POLL_SCALAR << 8) & HIFN_DMACNFG_POLLINVAL));
-पूर्ण
+}
 
-अटल पूर्णांक hअगरn_setup_base_command(काष्ठा hअगरn_device *dev, u8 *buf,
-		अचिन्हित dlen, अचिन्हित slen, u16 mask, u8 snum)
-अणु
-	काष्ठा hअगरn_base_command *base_cmd;
+static int hifn_setup_base_command(struct hifn_device *dev, u8 *buf,
+		unsigned dlen, unsigned slen, u16 mask, u8 snum)
+{
+	struct hifn_base_command *base_cmd;
 	u8 *buf_pos = buf;
 
-	base_cmd = (काष्ठा hअगरn_base_command *)buf_pos;
+	base_cmd = (struct hifn_base_command *)buf_pos;
 	base_cmd->masks = __cpu_to_le16(mask);
 	base_cmd->total_source_count =
 		__cpu_to_le16(slen & HIFN_BASE_CMD_LENMASK_LO);
@@ -1066,19 +1065,19 @@ MODULE_PARM_DESC(hअगरn_pll_ref,
 	    ((slen << HIFN_BASE_CMD_SRCLEN_S) & HIFN_BASE_CMD_SRCLEN_M) |
 	    ((dlen << HIFN_BASE_CMD_DSTLEN_S) & HIFN_BASE_CMD_DSTLEN_M));
 
-	वापस माप(काष्ठा hअगरn_base_command);
-पूर्ण
+	return sizeof(struct hifn_base_command);
+}
 
-अटल पूर्णांक hअगरn_setup_crypto_command(काष्ठा hअगरn_device *dev,
-		u8 *buf, अचिन्हित dlen, अचिन्हित slen,
-		u8 *key, पूर्णांक keylen, u8 *iv, पूर्णांक ivsize, u16 mode)
-अणु
-	काष्ठा hअगरn_dma *dma = (काष्ठा hअगरn_dma *)dev->desc_virt;
-	काष्ठा hअगरn_crypt_command *cry_cmd;
+static int hifn_setup_crypto_command(struct hifn_device *dev,
+		u8 *buf, unsigned dlen, unsigned slen,
+		u8 *key, int keylen, u8 *iv, int ivsize, u16 mode)
+{
+	struct hifn_dma *dma = (struct hifn_dma *)dev->desc_virt;
+	struct hifn_crypt_command *cry_cmd;
 	u8 *buf_pos = buf;
 	u16 cmd_len;
 
-	cry_cmd = (काष्ठा hअगरn_crypt_command *)buf_pos;
+	cry_cmd = (struct hifn_crypt_command *)buf_pos;
 
 	cry_cmd->source_count = __cpu_to_le16(dlen & 0xffff);
 	dlen >>= 16;
@@ -1088,34 +1087,34 @@ MODULE_PARM_DESC(hअगरn_pll_ref,
 	cry_cmd->header_skip = 0;
 	cry_cmd->reserved = 0;
 
-	buf_pos += माप(काष्ठा hअगरn_crypt_command);
+	buf_pos += sizeof(struct hifn_crypt_command);
 
 	dma->cmdu++;
-	अगर (dma->cmdu > 1) अणु
+	if (dma->cmdu > 1) {
 		dev->dmareg |= HIFN_DMAIER_C_WAIT;
-		hअगरn_ग_लिखो_1(dev, HIFN_1_DMA_IER, dev->dmareg);
-	पूर्ण
+		hifn_write_1(dev, HIFN_1_DMA_IER, dev->dmareg);
+	}
 
-	अगर (keylen) अणु
-		स_नकल(buf_pos, key, keylen);
+	if (keylen) {
+		memcpy(buf_pos, key, keylen);
 		buf_pos += keylen;
-	पूर्ण
-	अगर (ivsize) अणु
-		स_नकल(buf_pos, iv, ivsize);
+	}
+	if (ivsize) {
+		memcpy(buf_pos, iv, ivsize);
 		buf_pos += ivsize;
-	पूर्ण
+	}
 
 	cmd_len = buf_pos - buf;
 
-	वापस cmd_len;
-पूर्ण
+	return cmd_len;
+}
 
-अटल पूर्णांक hअगरn_setup_cmd_desc(काष्ठा hअगरn_device *dev,
-		काष्ठा hअगरn_context *ctx, काष्ठा hअगरn_request_context *rctx,
-		व्योम *priv, अचिन्हित पूर्णांक nbytes)
-अणु
-	काष्ठा hअगरn_dma *dma = (काष्ठा hअगरn_dma *)dev->desc_virt;
-	पूर्णांक cmd_len, sa_idx;
+static int hifn_setup_cmd_desc(struct hifn_device *dev,
+		struct hifn_context *ctx, struct hifn_request_context *rctx,
+		void *priv, unsigned int nbytes)
+{
+	struct hifn_dma *dma = (struct hifn_dma *)dev->desc_virt;
+	int cmd_len, sa_idx;
 	u8 *buf, *buf_pos;
 	u16 mask;
 
@@ -1123,85 +1122,85 @@ MODULE_PARM_DESC(hअगरn_pll_ref,
 	buf_pos = buf = dma->command_bufs[dma->cmdi];
 
 	mask = 0;
-	चयन (rctx->op) अणु
-	हाल ACRYPTO_OP_DECRYPT:
+	switch (rctx->op) {
+	case ACRYPTO_OP_DECRYPT:
 		mask = HIFN_BASE_CMD_CRYPT | HIFN_BASE_CMD_DECODE;
-		अवरोध;
-	हाल ACRYPTO_OP_ENCRYPT:
+		break;
+	case ACRYPTO_OP_ENCRYPT:
 		mask = HIFN_BASE_CMD_CRYPT;
-		अवरोध;
-	हाल ACRYPTO_OP_HMAC:
+		break;
+	case ACRYPTO_OP_HMAC:
 		mask = HIFN_BASE_CMD_MAC;
-		अवरोध;
-	शेष:
-		जाओ err_out;
-	पूर्ण
+		break;
+	default:
+		goto err_out;
+	}
 
-	buf_pos += hअगरn_setup_base_command(dev, buf_pos, nbytes,
+	buf_pos += hifn_setup_base_command(dev, buf_pos, nbytes,
 			nbytes, mask, dev->snum);
 
-	अगर (rctx->op == ACRYPTO_OP_ENCRYPT || rctx->op == ACRYPTO_OP_DECRYPT) अणु
+	if (rctx->op == ACRYPTO_OP_ENCRYPT || rctx->op == ACRYPTO_OP_DECRYPT) {
 		u16 md = 0;
 
-		अगर (ctx->keysize)
+		if (ctx->keysize)
 			md |= HIFN_CRYPT_CMD_NEW_KEY;
-		अगर (rctx->iv && rctx->mode != ACRYPTO_MODE_ECB)
+		if (rctx->iv && rctx->mode != ACRYPTO_MODE_ECB)
 			md |= HIFN_CRYPT_CMD_NEW_IV;
 
-		चयन (rctx->mode) अणु
-		हाल ACRYPTO_MODE_ECB:
+		switch (rctx->mode) {
+		case ACRYPTO_MODE_ECB:
 			md |= HIFN_CRYPT_CMD_MODE_ECB;
-			अवरोध;
-		हाल ACRYPTO_MODE_CBC:
+			break;
+		case ACRYPTO_MODE_CBC:
 			md |= HIFN_CRYPT_CMD_MODE_CBC;
-			अवरोध;
-		हाल ACRYPTO_MODE_CFB:
+			break;
+		case ACRYPTO_MODE_CFB:
 			md |= HIFN_CRYPT_CMD_MODE_CFB;
-			अवरोध;
-		हाल ACRYPTO_MODE_OFB:
+			break;
+		case ACRYPTO_MODE_OFB:
 			md |= HIFN_CRYPT_CMD_MODE_OFB;
-			अवरोध;
-		शेष:
-			जाओ err_out;
-		पूर्ण
+			break;
+		default:
+			goto err_out;
+		}
 
-		चयन (rctx->type) अणु
-		हाल ACRYPTO_TYPE_AES_128:
-			अगर (ctx->keysize != 16)
-				जाओ err_out;
+		switch (rctx->type) {
+		case ACRYPTO_TYPE_AES_128:
+			if (ctx->keysize != 16)
+				goto err_out;
 			md |= HIFN_CRYPT_CMD_KSZ_128 |
 				HIFN_CRYPT_CMD_ALG_AES;
-			अवरोध;
-		हाल ACRYPTO_TYPE_AES_192:
-			अगर (ctx->keysize != 24)
-				जाओ err_out;
+			break;
+		case ACRYPTO_TYPE_AES_192:
+			if (ctx->keysize != 24)
+				goto err_out;
 			md |= HIFN_CRYPT_CMD_KSZ_192 |
 				HIFN_CRYPT_CMD_ALG_AES;
-			अवरोध;
-		हाल ACRYPTO_TYPE_AES_256:
-			अगर (ctx->keysize != 32)
-				जाओ err_out;
+			break;
+		case ACRYPTO_TYPE_AES_256:
+			if (ctx->keysize != 32)
+				goto err_out;
 			md |= HIFN_CRYPT_CMD_KSZ_256 |
 				HIFN_CRYPT_CMD_ALG_AES;
-			अवरोध;
-		हाल ACRYPTO_TYPE_3DES:
-			अगर (ctx->keysize != 24)
-				जाओ err_out;
+			break;
+		case ACRYPTO_TYPE_3DES:
+			if (ctx->keysize != 24)
+				goto err_out;
 			md |= HIFN_CRYPT_CMD_ALG_3DES;
-			अवरोध;
-		हाल ACRYPTO_TYPE_DES:
-			अगर (ctx->keysize != 8)
-				जाओ err_out;
+			break;
+		case ACRYPTO_TYPE_DES:
+			if (ctx->keysize != 8)
+				goto err_out;
 			md |= HIFN_CRYPT_CMD_ALG_DES;
-			अवरोध;
-		शेष:
-			जाओ err_out;
-		पूर्ण
+			break;
+		default:
+			goto err_out;
+		}
 
-		buf_pos += hअगरn_setup_crypto_command(dev, buf_pos,
+		buf_pos += hifn_setup_crypto_command(dev, buf_pos,
 				nbytes, nbytes, ctx->key, ctx->keysize,
 				rctx->iv, rctx->ivsize, md);
-	पूर्ण
+	}
 
 	dev->sa[sa_idx] = priv;
 	dev->started++;
@@ -1210,30 +1209,30 @@ MODULE_PARM_DESC(hअगरn_pll_ref,
 	dma->cmdr[dma->cmdi].l = __cpu_to_le32(cmd_len | HIFN_D_VALID |
 			HIFN_D_LAST | HIFN_D_MASKDONEIRQ);
 
-	अगर (++dma->cmdi == HIFN_D_CMD_RSIZE) अणु
+	if (++dma->cmdi == HIFN_D_CMD_RSIZE) {
 		dma->cmdr[dma->cmdi].l = __cpu_to_le32(
 			HIFN_D_VALID | HIFN_D_LAST |
 			HIFN_D_MASKDONEIRQ | HIFN_D_JUMP);
 		dma->cmdi = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		dma->cmdr[dma->cmdi - 1].l |= __cpu_to_le32(HIFN_D_VALID);
-	पूर्ण
+	}
 
-	अगर (!(dev->flags & HIFN_FLAG_CMD_BUSY)) अणु
-		hअगरn_ग_लिखो_1(dev, HIFN_1_DMA_CSR, HIFN_DMACSR_C_CTRL_ENA);
+	if (!(dev->flags & HIFN_FLAG_CMD_BUSY)) {
+		hifn_write_1(dev, HIFN_1_DMA_CSR, HIFN_DMACSR_C_CTRL_ENA);
 		dev->flags |= HIFN_FLAG_CMD_BUSY;
-	पूर्ण
-	वापस 0;
+	}
+	return 0;
 
 err_out:
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक hअगरn_setup_src_desc(काष्ठा hअगरn_device *dev, काष्ठा page *page,
-		अचिन्हित पूर्णांक offset, अचिन्हित पूर्णांक size, पूर्णांक last)
-अणु
-	काष्ठा hअगरn_dma *dma = (काष्ठा hअगरn_dma *)dev->desc_virt;
-	पूर्णांक idx;
+static int hifn_setup_src_desc(struct hifn_device *dev, struct page *page,
+		unsigned int offset, unsigned int size, int last)
+{
+	struct hifn_dma *dma = (struct hifn_dma *)dev->desc_virt;
+	int idx;
 	dma_addr_t addr;
 
 	addr = dma_map_page(&dev->pdev->dev, page, offset, size,
@@ -1245,27 +1244,27 @@ err_out:
 	dma->srcr[idx].l = __cpu_to_le32(size | HIFN_D_VALID |
 			HIFN_D_MASKDONEIRQ | (last ? HIFN_D_LAST : 0));
 
-	अगर (++idx == HIFN_D_SRC_RSIZE) अणु
+	if (++idx == HIFN_D_SRC_RSIZE) {
 		dma->srcr[idx].l = __cpu_to_le32(HIFN_D_VALID |
 				HIFN_D_JUMP | HIFN_D_MASKDONEIRQ |
 				(last ? HIFN_D_LAST : 0));
 		idx = 0;
-	पूर्ण
+	}
 
 	dma->srci = idx;
 	dma->srcu++;
 
-	अगर (!(dev->flags & HIFN_FLAG_SRC_BUSY)) अणु
-		hअगरn_ग_लिखो_1(dev, HIFN_1_DMA_CSR, HIFN_DMACSR_S_CTRL_ENA);
+	if (!(dev->flags & HIFN_FLAG_SRC_BUSY)) {
+		hifn_write_1(dev, HIFN_1_DMA_CSR, HIFN_DMACSR_S_CTRL_ENA);
 		dev->flags |= HIFN_FLAG_SRC_BUSY;
-	पूर्ण
+	}
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल व्योम hअगरn_setup_res_desc(काष्ठा hअगरn_device *dev)
-अणु
-	काष्ठा hअगरn_dma *dma = (काष्ठा hअगरn_dma *)dev->desc_virt;
+static void hifn_setup_res_desc(struct hifn_device *dev)
+{
+	struct hifn_dma *dma = (struct hifn_dma *)dev->desc_virt;
 
 	dma->resr[dma->resi].l = __cpu_to_le32(HIFN_USED_RESULT |
 			HIFN_D_VALID | HIFN_D_LAST);
@@ -1274,25 +1273,25 @@ err_out:
 	 *					HIFN_D_LAST);
 	 */
 
-	अगर (++dma->resi == HIFN_D_RES_RSIZE) अणु
+	if (++dma->resi == HIFN_D_RES_RSIZE) {
 		dma->resr[HIFN_D_RES_RSIZE].l = __cpu_to_le32(HIFN_D_VALID |
 				HIFN_D_JUMP | HIFN_D_MASKDONEIRQ | HIFN_D_LAST);
 		dma->resi = 0;
-	पूर्ण
+	}
 
 	dma->resu++;
 
-	अगर (!(dev->flags & HIFN_FLAG_RES_BUSY)) अणु
-		hअगरn_ग_लिखो_1(dev, HIFN_1_DMA_CSR, HIFN_DMACSR_R_CTRL_ENA);
+	if (!(dev->flags & HIFN_FLAG_RES_BUSY)) {
+		hifn_write_1(dev, HIFN_1_DMA_CSR, HIFN_DMACSR_R_CTRL_ENA);
 		dev->flags |= HIFN_FLAG_RES_BUSY;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम hअगरn_setup_dst_desc(काष्ठा hअगरn_device *dev, काष्ठा page *page,
-		अचिन्हित offset, अचिन्हित size, पूर्णांक last)
-अणु
-	काष्ठा hअगरn_dma *dma = (काष्ठा hअगरn_dma *)dev->desc_virt;
-	पूर्णांक idx;
+static void hifn_setup_dst_desc(struct hifn_device *dev, struct page *page,
+		unsigned offset, unsigned size, int last)
+{
+	struct hifn_dma *dma = (struct hifn_dma *)dev->desc_virt;
+	int idx;
 	dma_addr_t addr;
 
 	addr = dma_map_page(&dev->pdev->dev, page, offset, size,
@@ -1303,121 +1302,121 @@ err_out:
 	dma->dstr[idx].l = __cpu_to_le32(size |	HIFN_D_VALID |
 			HIFN_D_MASKDONEIRQ | (last ? HIFN_D_LAST : 0));
 
-	अगर (++idx == HIFN_D_DST_RSIZE) अणु
+	if (++idx == HIFN_D_DST_RSIZE) {
 		dma->dstr[idx].l = __cpu_to_le32(HIFN_D_VALID |
 				HIFN_D_JUMP | HIFN_D_MASKDONEIRQ |
 				(last ? HIFN_D_LAST : 0));
 		idx = 0;
-	पूर्ण
+	}
 	dma->dsti = idx;
 	dma->dstu++;
 
-	अगर (!(dev->flags & HIFN_FLAG_DST_BUSY)) अणु
-		hअगरn_ग_लिखो_1(dev, HIFN_1_DMA_CSR, HIFN_DMACSR_D_CTRL_ENA);
+	if (!(dev->flags & HIFN_FLAG_DST_BUSY)) {
+		hifn_write_1(dev, HIFN_1_DMA_CSR, HIFN_DMACSR_D_CTRL_ENA);
 		dev->flags |= HIFN_FLAG_DST_BUSY;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक hअगरn_setup_dma(काष्ठा hअगरn_device *dev,
-		काष्ठा hअगरn_context *ctx, काष्ठा hअगरn_request_context *rctx,
-		काष्ठा scatterlist *src, काष्ठा scatterlist *dst,
-		अचिन्हित पूर्णांक nbytes, व्योम *priv)
-अणु
-	काष्ठा scatterlist *t;
-	काष्ठा page *spage, *dpage;
-	अचिन्हित पूर्णांक soff, करोff;
-	अचिन्हित पूर्णांक n, len;
+static int hifn_setup_dma(struct hifn_device *dev,
+		struct hifn_context *ctx, struct hifn_request_context *rctx,
+		struct scatterlist *src, struct scatterlist *dst,
+		unsigned int nbytes, void *priv)
+{
+	struct scatterlist *t;
+	struct page *spage, *dpage;
+	unsigned int soff, doff;
+	unsigned int n, len;
 
 	n = nbytes;
-	जबतक (n) अणु
+	while (n) {
 		spage = sg_page(src);
 		soff = src->offset;
 		len = min(src->length, n);
 
-		hअगरn_setup_src_desc(dev, spage, soff, len, n - len == 0);
+		hifn_setup_src_desc(dev, spage, soff, len, n - len == 0);
 
 		src++;
 		n -= len;
-	पूर्ण
+	}
 
 	t = &rctx->walk.cache[0];
 	n = nbytes;
-	जबतक (n) अणु
-		अगर (t->length && rctx->walk.flags & ASYNC_FLAGS_MISALIGNED) अणु
+	while (n) {
+		if (t->length && rctx->walk.flags & ASYNC_FLAGS_MISALIGNED) {
 			BUG_ON(!sg_page(t));
 			dpage = sg_page(t);
-			करोff = 0;
+			doff = 0;
 			len = t->length;
-		पूर्ण अन्यथा अणु
+		} else {
 			BUG_ON(!sg_page(dst));
 			dpage = sg_page(dst);
-			करोff = dst->offset;
+			doff = dst->offset;
 			len = dst->length;
-		पूर्ण
+		}
 		len = min(len, n);
 
-		hअगरn_setup_dst_desc(dev, dpage, करोff, len, n - len == 0);
+		hifn_setup_dst_desc(dev, dpage, doff, len, n - len == 0);
 
 		dst++;
 		t++;
 		n -= len;
-	पूर्ण
+	}
 
-	hअगरn_setup_cmd_desc(dev, ctx, rctx, priv, nbytes);
-	hअगरn_setup_res_desc(dev);
-	वापस 0;
-पूर्ण
+	hifn_setup_cmd_desc(dev, ctx, rctx, priv, nbytes);
+	hifn_setup_res_desc(dev);
+	return 0;
+}
 
-अटल पूर्णांक hअगरn_cipher_walk_init(काष्ठा hअगरn_cipher_walk *w,
-		पूर्णांक num, gfp_t gfp_flags)
-अणु
-	पूर्णांक i;
+static int hifn_cipher_walk_init(struct hifn_cipher_walk *w,
+		int num, gfp_t gfp_flags)
+{
+	int i;
 
 	num = min(ASYNC_SCATTERLIST_CACHE, num);
 	sg_init_table(w->cache, num);
 
 	w->num = 0;
-	क्रम (i = 0; i < num; ++i) अणु
-		काष्ठा page *page = alloc_page(gfp_flags);
-		काष्ठा scatterlist *s;
+	for (i = 0; i < num; ++i) {
+		struct page *page = alloc_page(gfp_flags);
+		struct scatterlist *s;
 
-		अगर (!page)
-			अवरोध;
+		if (!page)
+			break;
 
 		s = &w->cache[i];
 
 		sg_set_page(s, page, PAGE_SIZE, 0);
 		w->num++;
-	पूर्ण
+	}
 
-	वापस i;
-पूर्ण
+	return i;
+}
 
-अटल व्योम hअगरn_cipher_walk_निकास(काष्ठा hअगरn_cipher_walk *w)
-अणु
-	पूर्णांक i;
+static void hifn_cipher_walk_exit(struct hifn_cipher_walk *w)
+{
+	int i;
 
-	क्रम (i = 0; i < w->num; ++i) अणु
-		काष्ठा scatterlist *s = &w->cache[i];
+	for (i = 0; i < w->num; ++i) {
+		struct scatterlist *s = &w->cache[i];
 
-		__मुक्त_page(sg_page(s));
+		__free_page(sg_page(s));
 
 		s->length = 0;
-	पूर्ण
+	}
 
 	w->num = 0;
-पूर्ण
+}
 
-अटल पूर्णांक skcipher_add(अचिन्हित पूर्णांक *drestp, काष्ठा scatterlist *dst,
-		अचिन्हित पूर्णांक size, अचिन्हित पूर्णांक *nbytesp)
-अणु
-	अचिन्हित पूर्णांक copy, drest = *drestp, nbytes = *nbytesp;
-	पूर्णांक idx = 0;
+static int skcipher_add(unsigned int *drestp, struct scatterlist *dst,
+		unsigned int size, unsigned int *nbytesp)
+{
+	unsigned int copy, drest = *drestp, nbytes = *nbytesp;
+	int idx = 0;
 
-	अगर (drest < size || size > nbytes)
-		वापस -EINVAL;
+	if (drest < size || size > nbytes)
+		return -EINVAL;
 
-	जबतक (size) अणु
+	while (size) {
 		copy = min3(drest, size, dst->length);
 
 		size -= copy;
@@ -1429,65 +1428,65 @@ err_out:
 
 		dst++;
 		idx++;
-	पूर्ण
+	}
 
 	*nbytesp = nbytes;
 	*drestp = drest;
 
-	वापस idx;
-पूर्ण
+	return idx;
+}
 
-अटल पूर्णांक hअगरn_cipher_walk(काष्ठा skcipher_request *req,
-		काष्ठा hअगरn_cipher_walk *w)
-अणु
-	काष्ठा scatterlist *dst, *t;
-	अचिन्हित पूर्णांक nbytes = req->cryptlen, offset, copy, dअगरf;
-	पूर्णांक idx, tidx, err;
+static int hifn_cipher_walk(struct skcipher_request *req,
+		struct hifn_cipher_walk *w)
+{
+	struct scatterlist *dst, *t;
+	unsigned int nbytes = req->cryptlen, offset, copy, diff;
+	int idx, tidx, err;
 
 	tidx = idx = 0;
 	offset = 0;
-	जबतक (nbytes) अणु
-		अगर (idx >= w->num && (w->flags & ASYNC_FLAGS_MISALIGNED))
-			वापस -EINVAL;
+	while (nbytes) {
+		if (idx >= w->num && (w->flags & ASYNC_FLAGS_MISALIGNED))
+			return -EINVAL;
 
 		dst = &req->dst[idx];
 
 		pr_debug("\n%s: dlen: %u, doff: %u, offset: %u, nbytes: %u.\n",
 			 __func__, dst->length, dst->offset, offset, nbytes);
 
-		अगर (!IS_ALIGNED(dst->offset, HIFN_D_DST_DALIGN) ||
+		if (!IS_ALIGNED(dst->offset, HIFN_D_DST_DALIGN) ||
 		    !IS_ALIGNED(dst->length, HIFN_D_DST_DALIGN) ||
-		    offset) अणु
-			अचिन्हित slen = min(dst->length - offset, nbytes);
-			अचिन्हित dlen = PAGE_SIZE;
+		    offset) {
+			unsigned slen = min(dst->length - offset, nbytes);
+			unsigned dlen = PAGE_SIZE;
 
 			t = &w->cache[idx];
 
 			err = skcipher_add(&dlen, dst, slen, &nbytes);
-			अगर (err < 0)
-				वापस err;
+			if (err < 0)
+				return err;
 
 			idx += err;
 
 			copy = slen & ~(HIFN_D_DST_DALIGN - 1);
-			dअगरf = slen & (HIFN_D_DST_DALIGN - 1);
+			diff = slen & (HIFN_D_DST_DALIGN - 1);
 
-			अगर (dlen < nbytes) अणु
+			if (dlen < nbytes) {
 				/*
-				 * Destination page करोes not have enough space
+				 * Destination page does not have enough space
 				 * to put there additional blocksized chunk,
 				 * so we mark that page as containing only
 				 * blocksize aligned chunks:
 				 *	t->length = (slen & ~(HIFN_D_DST_DALIGN - 1));
 				 * and increase number of bytes to be processed
 				 * in next chunk:
-				 *	nbytes += dअगरf;
+				 *	nbytes += diff;
 				 */
-				nbytes += dअगरf;
+				nbytes += diff;
 
 				/*
 				 * Temporary of course...
-				 * Kick author अगर you will catch this one.
+				 * Kick author if you will catch this one.
 				 */
 				pr_err("%s: dlen: %u, nbytes: %u, slen: %u, offset: %u.\n",
 				       __func__, dlen, nbytes, slen, offset);
@@ -1497,138 +1496,138 @@ err_out:
 				       "knows how did you use crypto code.\n"
 				       "Thank you.\n",	__func__);
 				BUG();
-			पूर्ण अन्यथा अणु
-				copy += dअगरf + nbytes;
+			} else {
+				copy += diff + nbytes;
 
 				dst = &req->dst[idx];
 
 				err = skcipher_add(&dlen, dst, nbytes, &nbytes);
-				अगर (err < 0)
-					वापस err;
+				if (err < 0)
+					return err;
 
 				idx += err;
-			पूर्ण
+			}
 
 			t->length = copy;
 			t->offset = offset;
-		पूर्ण अन्यथा अणु
+		} else {
 			nbytes -= min(dst->length, nbytes);
 			idx++;
-		पूर्ण
+		}
 
 		tidx++;
-	पूर्ण
+	}
 
-	वापस tidx;
-पूर्ण
+	return tidx;
+}
 
-अटल पूर्णांक hअगरn_setup_session(काष्ठा skcipher_request *req)
-अणु
-	काष्ठा hअगरn_context *ctx = crypto_tfm_ctx(req->base.tfm);
-	काष्ठा hअगरn_request_context *rctx = skcipher_request_ctx(req);
-	काष्ठा hअगरn_device *dev = ctx->dev;
-	अचिन्हित दीर्घ dlen, flags;
-	अचिन्हित पूर्णांक nbytes = req->cryptlen, idx = 0;
-	पूर्णांक err = -EINVAL, sg_num;
-	काष्ठा scatterlist *dst;
+static int hifn_setup_session(struct skcipher_request *req)
+{
+	struct hifn_context *ctx = crypto_tfm_ctx(req->base.tfm);
+	struct hifn_request_context *rctx = skcipher_request_ctx(req);
+	struct hifn_device *dev = ctx->dev;
+	unsigned long dlen, flags;
+	unsigned int nbytes = req->cryptlen, idx = 0;
+	int err = -EINVAL, sg_num;
+	struct scatterlist *dst;
 
-	अगर (rctx->iv && !rctx->ivsize && rctx->mode != ACRYPTO_MODE_ECB)
-		जाओ err_out_निकास;
+	if (rctx->iv && !rctx->ivsize && rctx->mode != ACRYPTO_MODE_ECB)
+		goto err_out_exit;
 
 	rctx->walk.flags = 0;
 
-	जबतक (nbytes) अणु
+	while (nbytes) {
 		dst = &req->dst[idx];
 		dlen = min(dst->length, nbytes);
 
-		अगर (!IS_ALIGNED(dst->offset, HIFN_D_DST_DALIGN) ||
+		if (!IS_ALIGNED(dst->offset, HIFN_D_DST_DALIGN) ||
 		    !IS_ALIGNED(dlen, HIFN_D_DST_DALIGN))
 			rctx->walk.flags |= ASYNC_FLAGS_MISALIGNED;
 
 		nbytes -= dlen;
 		idx++;
-	पूर्ण
+	}
 
-	अगर (rctx->walk.flags & ASYNC_FLAGS_MISALIGNED) अणु
-		err = hअगरn_cipher_walk_init(&rctx->walk, idx, GFP_ATOMIC);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+	if (rctx->walk.flags & ASYNC_FLAGS_MISALIGNED) {
+		err = hifn_cipher_walk_init(&rctx->walk, idx, GFP_ATOMIC);
+		if (err < 0)
+			return err;
+	}
 
-	sg_num = hअगरn_cipher_walk(req, &rctx->walk);
-	अगर (sg_num < 0) अणु
+	sg_num = hifn_cipher_walk(req, &rctx->walk);
+	if (sg_num < 0) {
 		err = sg_num;
-		जाओ err_out_निकास;
-	पूर्ण
+		goto err_out_exit;
+	}
 
 	spin_lock_irqsave(&dev->lock, flags);
-	अगर (dev->started + sg_num > HIFN_QUEUE_LENGTH) अणु
+	if (dev->started + sg_num > HIFN_QUEUE_LENGTH) {
 		err = -EAGAIN;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
-	err = hअगरn_setup_dma(dev, ctx, rctx, req->src, req->dst, req->cryptlen, req);
-	अगर (err)
-		जाओ err_out;
+	err = hifn_setup_dma(dev, ctx, rctx, req->src, req->dst, req->cryptlen, req);
+	if (err)
+		goto err_out;
 
 	dev->snum++;
 
 	dev->active = HIFN_DEFAULT_ACTIVE_NUM;
 	spin_unlock_irqrestore(&dev->lock, flags);
 
-	वापस 0;
+	return 0;
 
 err_out:
 	spin_unlock_irqrestore(&dev->lock, flags);
-err_out_निकास:
-	अगर (err) अणु
+err_out_exit:
+	if (err) {
 		dev_info(&dev->pdev->dev, "iv: %p [%d], key: %p [%d], mode: %u, op: %u, "
 			 "type: %u, err: %d.\n",
 			 rctx->iv, rctx->ivsize,
 			 ctx->key, ctx->keysize,
 			 rctx->mode, rctx->op, rctx->type, err);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक hअगरn_start_device(काष्ठा hअगरn_device *dev)
-अणु
-	पूर्णांक err;
+static int hifn_start_device(struct hifn_device *dev)
+{
+	int err;
 
 	dev->started = dev->active = 0;
-	hअगरn_reset_dma(dev, 1);
+	hifn_reset_dma(dev, 1);
 
-	err = hअगरn_enable_crypto(dev);
-	अगर (err)
-		वापस err;
+	err = hifn_enable_crypto(dev);
+	if (err)
+		return err;
 
-	hअगरn_reset_puc(dev);
+	hifn_reset_puc(dev);
 
-	hअगरn_init_dma(dev);
+	hifn_init_dma(dev);
 
-	hअगरn_init_रेजिस्टरs(dev);
+	hifn_init_registers(dev);
 
-	hअगरn_init_pubrng(dev);
+	hifn_init_pubrng(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक skcipher_get(व्योम *saddr, अचिन्हित पूर्णांक *srestp, अचिन्हित पूर्णांक offset,
-		काष्ठा scatterlist *dst, अचिन्हित पूर्णांक size, अचिन्हित पूर्णांक *nbytesp)
-अणु
-	अचिन्हित पूर्णांक srest = *srestp, nbytes = *nbytesp, copy;
-	व्योम *daddr;
-	पूर्णांक idx = 0;
+static int skcipher_get(void *saddr, unsigned int *srestp, unsigned int offset,
+		struct scatterlist *dst, unsigned int size, unsigned int *nbytesp)
+{
+	unsigned int srest = *srestp, nbytes = *nbytesp, copy;
+	void *daddr;
+	int idx = 0;
 
-	अगर (srest < size || size > nbytes)
-		वापस -EINVAL;
+	if (srest < size || size > nbytes)
+		return -EINVAL;
 
-	जबतक (size) अणु
+	while (size) {
 		copy = min3(srest, dst->length, size);
 
 		daddr = kmap_atomic(sg_page(dst));
-		स_नकल(daddr + dst->offset + offset, saddr, copy);
+		memcpy(daddr + dst->offset + offset, saddr, copy);
 		kunmap_atomic(daddr);
 
 		nbytes -= copy;
@@ -1642,39 +1641,39 @@ err_out_निकास:
 
 		dst++;
 		idx++;
-	पूर्ण
+	}
 
 	*nbytesp = nbytes;
 	*srestp = srest;
 
-	वापस idx;
-पूर्ण
+	return idx;
+}
 
-अटल अंतरभूत व्योम hअगरn_complete_sa(काष्ठा hअगरn_device *dev, पूर्णांक i)
-अणु
-	अचिन्हित दीर्घ flags;
+static inline void hifn_complete_sa(struct hifn_device *dev, int i)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&dev->lock, flags);
-	dev->sa[i] = शून्य;
+	dev->sa[i] = NULL;
 	dev->started--;
-	अगर (dev->started < 0)
+	if (dev->started < 0)
 		dev_info(&dev->pdev->dev, "%s: started: %d.\n", __func__,
 			 dev->started);
 	spin_unlock_irqrestore(&dev->lock, flags);
 	BUG_ON(dev->started < 0);
-पूर्ण
+}
 
-अटल व्योम hअगरn_process_पढ़ोy(काष्ठा skcipher_request *req, पूर्णांक error)
-अणु
-	काष्ठा hअगरn_request_context *rctx = skcipher_request_ctx(req);
+static void hifn_process_ready(struct skcipher_request *req, int error)
+{
+	struct hifn_request_context *rctx = skcipher_request_ctx(req);
 
-	अगर (rctx->walk.flags & ASYNC_FLAGS_MISALIGNED) अणु
-		अचिन्हित पूर्णांक nbytes = req->cryptlen;
-		पूर्णांक idx = 0, err;
-		काष्ठा scatterlist *dst, *t;
-		व्योम *saddr;
+	if (rctx->walk.flags & ASYNC_FLAGS_MISALIGNED) {
+		unsigned int nbytes = req->cryptlen;
+		int idx = 0, err;
+		struct scatterlist *dst, *t;
+		void *saddr;
 
-		जबतक (nbytes) अणु
+		while (nbytes) {
 			t = &rctx->walk.cache[idx];
 			dst = &req->dst[idx];
 
@@ -1684,35 +1683,35 @@ err_out_निकास:
 				__func__, sg_page(t), t->length,
 				sg_page(dst), dst->length, nbytes);
 
-			अगर (!t->length) अणु
+			if (!t->length) {
 				nbytes -= min(dst->length, nbytes);
 				idx++;
-				जारी;
-			पूर्ण
+				continue;
+			}
 
 			saddr = kmap_atomic(sg_page(t));
 
 			err = skcipher_get(saddr, &t->length, t->offset,
 					dst, nbytes, &nbytes);
-			अगर (err < 0) अणु
+			if (err < 0) {
 				kunmap_atomic(saddr);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 			idx += err;
 			kunmap_atomic(saddr);
-		पूर्ण
+		}
 
-		hअगरn_cipher_walk_निकास(&rctx->walk);
-	पूर्ण
+		hifn_cipher_walk_exit(&rctx->walk);
+	}
 
 	req->base.complete(&req->base, error);
-पूर्ण
+}
 
-अटल व्योम hअगरn_clear_rings(काष्ठा hअगरn_device *dev, पूर्णांक error)
-अणु
-	काष्ठा hअगरn_dma *dma = (काष्ठा hअगरn_dma *)dev->desc_virt;
-	पूर्णांक i, u;
+static void hifn_clear_rings(struct hifn_device *dev, int error)
+{
+	struct hifn_dma *dma = (struct hifn_dma *)dev->desc_virt;
+	int i, u;
 
 	dev_dbg(&dev->pdev->dev, "ring cleanup 1: i: %d.%d.%d.%d, u: %d.%d.%d.%d, "
 			"k: %d.%d.%d.%d.\n",
@@ -1721,51 +1720,51 @@ err_out_निकास:
 			dma->cmdk, dma->srck, dma->dstk, dma->resk);
 
 	i = dma->resk; u = dma->resu;
-	जबतक (u != 0) अणु
-		अगर (dma->resr[i].l & __cpu_to_le32(HIFN_D_VALID))
-			अवरोध;
+	while (u != 0) {
+		if (dma->resr[i].l & __cpu_to_le32(HIFN_D_VALID))
+			break;
 
-		अगर (dev->sa[i]) अणु
+		if (dev->sa[i]) {
 			dev->success++;
 			dev->reset = 0;
-			hअगरn_process_पढ़ोy(dev->sa[i], error);
-			hअगरn_complete_sa(dev, i);
-		पूर्ण
+			hifn_process_ready(dev->sa[i], error);
+			hifn_complete_sa(dev, i);
+		}
 
-		अगर (++i == HIFN_D_RES_RSIZE)
+		if (++i == HIFN_D_RES_RSIZE)
 			i = 0;
 		u--;
-	पूर्ण
+	}
 	dma->resk = i; dma->resu = u;
 
 	i = dma->srck; u = dma->srcu;
-	जबतक (u != 0) अणु
-		अगर (dma->srcr[i].l & __cpu_to_le32(HIFN_D_VALID))
-			अवरोध;
-		अगर (++i == HIFN_D_SRC_RSIZE)
+	while (u != 0) {
+		if (dma->srcr[i].l & __cpu_to_le32(HIFN_D_VALID))
+			break;
+		if (++i == HIFN_D_SRC_RSIZE)
 			i = 0;
 		u--;
-	पूर्ण
+	}
 	dma->srck = i; dma->srcu = u;
 
 	i = dma->cmdk; u = dma->cmdu;
-	जबतक (u != 0) अणु
-		अगर (dma->cmdr[i].l & __cpu_to_le32(HIFN_D_VALID))
-			अवरोध;
-		अगर (++i == HIFN_D_CMD_RSIZE)
+	while (u != 0) {
+		if (dma->cmdr[i].l & __cpu_to_le32(HIFN_D_VALID))
+			break;
+		if (++i == HIFN_D_CMD_RSIZE)
 			i = 0;
 		u--;
-	पूर्ण
+	}
 	dma->cmdk = i; dma->cmdu = u;
 
 	i = dma->dstk; u = dma->dstu;
-	जबतक (u != 0) अणु
-		अगर (dma->dstr[i].l & __cpu_to_le32(HIFN_D_VALID))
-			अवरोध;
-		अगर (++i == HIFN_D_DST_RSIZE)
+	while (u != 0) {
+		if (dma->dstr[i].l & __cpu_to_le32(HIFN_D_VALID))
+			break;
+		if (++i == HIFN_D_DST_RSIZE)
 			i = 0;
 		u--;
-	पूर्ण
+	}
 	dma->dstk = i; dma->dstu = u;
 
 	dev_dbg(&dev->pdev->dev, "ring cleanup 2: i: %d.%d.%d.%d, u: %d.%d.%d.%d, "
@@ -1773,50 +1772,50 @@ err_out_निकास:
 			dma->cmdi, dma->srci, dma->dsti, dma->resi,
 			dma->cmdu, dma->srcu, dma->dstu, dma->resu,
 			dma->cmdk, dma->srck, dma->dstk, dma->resk);
-पूर्ण
+}
 
-अटल व्योम hअगरn_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा delayed_work *dw = to_delayed_work(work);
-	काष्ठा hअगरn_device *dev = container_of(dw, काष्ठा hअगरn_device, work);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक reset = 0;
+static void hifn_work(struct work_struct *work)
+{
+	struct delayed_work *dw = to_delayed_work(work);
+	struct hifn_device *dev = container_of(dw, struct hifn_device, work);
+	unsigned long flags;
+	int reset = 0;
 	u32 r = 0;
 
 	spin_lock_irqsave(&dev->lock, flags);
-	अगर (dev->active == 0) अणु
-		काष्ठा hअगरn_dma *dma = (काष्ठा hअगरn_dma *)dev->desc_virt;
+	if (dev->active == 0) {
+		struct hifn_dma *dma = (struct hifn_dma *)dev->desc_virt;
 
-		अगर (dma->cmdu == 0 && (dev->flags & HIFN_FLAG_CMD_BUSY)) अणु
+		if (dma->cmdu == 0 && (dev->flags & HIFN_FLAG_CMD_BUSY)) {
 			dev->flags &= ~HIFN_FLAG_CMD_BUSY;
 			r |= HIFN_DMACSR_C_CTRL_DIS;
-		पूर्ण
-		अगर (dma->srcu == 0 && (dev->flags & HIFN_FLAG_SRC_BUSY)) अणु
+		}
+		if (dma->srcu == 0 && (dev->flags & HIFN_FLAG_SRC_BUSY)) {
 			dev->flags &= ~HIFN_FLAG_SRC_BUSY;
 			r |= HIFN_DMACSR_S_CTRL_DIS;
-		पूर्ण
-		अगर (dma->dstu == 0 && (dev->flags & HIFN_FLAG_DST_BUSY)) अणु
+		}
+		if (dma->dstu == 0 && (dev->flags & HIFN_FLAG_DST_BUSY)) {
 			dev->flags &= ~HIFN_FLAG_DST_BUSY;
 			r |= HIFN_DMACSR_D_CTRL_DIS;
-		पूर्ण
-		अगर (dma->resu == 0 && (dev->flags & HIFN_FLAG_RES_BUSY)) अणु
+		}
+		if (dma->resu == 0 && (dev->flags & HIFN_FLAG_RES_BUSY)) {
 			dev->flags &= ~HIFN_FLAG_RES_BUSY;
 			r |= HIFN_DMACSR_R_CTRL_DIS;
-		पूर्ण
-		अगर (r)
-			hअगरn_ग_लिखो_1(dev, HIFN_1_DMA_CSR, r);
-	पूर्ण अन्यथा
+		}
+		if (r)
+			hifn_write_1(dev, HIFN_1_DMA_CSR, r);
+	} else
 		dev->active--;
 
-	अगर ((dev->prev_success == dev->success) && dev->started)
+	if ((dev->prev_success == dev->success) && dev->started)
 		reset = 1;
 	dev->prev_success = dev->success;
 	spin_unlock_irqrestore(&dev->lock, flags);
 
-	अगर (reset) अणु
-		अगर (++dev->reset >= 5) अणु
-			पूर्णांक i;
-			काष्ठा hअगरn_dma *dma = (काष्ठा hअगरn_dma *)dev->desc_virt;
+	if (reset) {
+		if (++dev->reset >= 5) {
+			int i;
+			struct hifn_dma *dma = (struct hifn_dma *)dev->desc_virt;
 
 			dev_info(&dev->pdev->dev,
 				 "r: %08x, active: %d, started: %d, "
@@ -1826,34 +1825,34 @@ err_out_निकास:
 				 reset);
 
 			dev_info(&dev->pdev->dev, "%s: res: ", __func__);
-			क्रम (i = 0; i < HIFN_D_RES_RSIZE; ++i) अणु
+			for (i = 0; i < HIFN_D_RES_RSIZE; ++i) {
 				pr_info("%x.%p ", dma->resr[i].l, dev->sa[i]);
-				अगर (dev->sa[i]) अणु
-					hअगरn_process_पढ़ोy(dev->sa[i], -ENODEV);
-					hअगरn_complete_sa(dev, i);
-				पूर्ण
-			पूर्ण
+				if (dev->sa[i]) {
+					hifn_process_ready(dev->sa[i], -ENODEV);
+					hifn_complete_sa(dev, i);
+				}
+			}
 			pr_info("\n");
 
-			hअगरn_reset_dma(dev, 1);
-			hअगरn_stop_device(dev);
-			hअगरn_start_device(dev);
+			hifn_reset_dma(dev, 1);
+			hifn_stop_device(dev);
+			hifn_start_device(dev);
 			dev->reset = 0;
-		पूर्ण
+		}
 
 		tasklet_schedule(&dev->tasklet);
-	पूर्ण
+	}
 
 	schedule_delayed_work(&dev->work, HZ);
-पूर्ण
+}
 
-अटल irqवापस_t hअगरn_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा hअगरn_device *dev = (काष्ठा hअगरn_device *)data;
-	काष्ठा hअगरn_dma *dma = (काष्ठा hअगरn_dma *)dev->desc_virt;
+static irqreturn_t hifn_interrupt(int irq, void *data)
+{
+	struct hifn_device *dev = (struct hifn_device *)data;
+	struct hifn_dma *dma = (struct hifn_dma *)dev->desc_virt;
 	u32 dmacsr, restart;
 
-	dmacsr = hअगरn_पढ़ो_1(dev, HIFN_1_DMA_CSR);
+	dmacsr = hifn_read_1(dev, HIFN_1_DMA_CSR);
 
 	dev_dbg(&dev->pdev->dev, "1 dmacsr: %08x, dmareg: %08x, res: %08x [%d], "
 			"i: %d.%d.%d.%d, u: %d.%d.%d.%d.\n",
@@ -1861,167 +1860,167 @@ err_out_निकास:
 		dma->cmdi, dma->srci, dma->dsti, dma->resi,
 		dma->cmdu, dma->srcu, dma->dstu, dma->resu);
 
-	अगर ((dmacsr & dev->dmareg) == 0)
-		वापस IRQ_NONE;
+	if ((dmacsr & dev->dmareg) == 0)
+		return IRQ_NONE;
 
-	hअगरn_ग_लिखो_1(dev, HIFN_1_DMA_CSR, dmacsr & dev->dmareg);
+	hifn_write_1(dev, HIFN_1_DMA_CSR, dmacsr & dev->dmareg);
 
-	अगर (dmacsr & HIFN_DMACSR_ENGINE)
-		hअगरn_ग_लिखो_0(dev, HIFN_0_PUISR, hअगरn_पढ़ो_0(dev, HIFN_0_PUISR));
-	अगर (dmacsr & HIFN_DMACSR_PUBDONE)
-		hअगरn_ग_लिखो_1(dev, HIFN_1_PUB_STATUS,
-			hअगरn_पढ़ो_1(dev, HIFN_1_PUB_STATUS) | HIFN_PUBSTS_DONE);
+	if (dmacsr & HIFN_DMACSR_ENGINE)
+		hifn_write_0(dev, HIFN_0_PUISR, hifn_read_0(dev, HIFN_0_PUISR));
+	if (dmacsr & HIFN_DMACSR_PUBDONE)
+		hifn_write_1(dev, HIFN_1_PUB_STATUS,
+			hifn_read_1(dev, HIFN_1_PUB_STATUS) | HIFN_PUBSTS_DONE);
 
 	restart = dmacsr & (HIFN_DMACSR_R_OVER | HIFN_DMACSR_D_OVER);
-	अगर (restart) अणु
-		u32 puisr = hअगरn_पढ़ो_0(dev, HIFN_0_PUISR);
+	if (restart) {
+		u32 puisr = hifn_read_0(dev, HIFN_0_PUISR);
 
 		dev_warn(&dev->pdev->dev, "overflow: r: %d, d: %d, puisr: %08x, d: %u.\n",
 			 !!(dmacsr & HIFN_DMACSR_R_OVER),
 			 !!(dmacsr & HIFN_DMACSR_D_OVER),
 			puisr, !!(puisr & HIFN_PUISR_DSTOVER));
-		अगर (!!(puisr & HIFN_PUISR_DSTOVER))
-			hअगरn_ग_लिखो_0(dev, HIFN_0_PUISR, HIFN_PUISR_DSTOVER);
-		hअगरn_ग_लिखो_1(dev, HIFN_1_DMA_CSR, dmacsr & (HIFN_DMACSR_R_OVER |
+		if (!!(puisr & HIFN_PUISR_DSTOVER))
+			hifn_write_0(dev, HIFN_0_PUISR, HIFN_PUISR_DSTOVER);
+		hifn_write_1(dev, HIFN_1_DMA_CSR, dmacsr & (HIFN_DMACSR_R_OVER |
 					HIFN_DMACSR_D_OVER));
-	पूर्ण
+	}
 
 	restart = dmacsr & (HIFN_DMACSR_C_ABORT | HIFN_DMACSR_S_ABORT |
 			HIFN_DMACSR_D_ABORT | HIFN_DMACSR_R_ABORT);
-	अगर (restart) अणु
+	if (restart) {
 		dev_warn(&dev->pdev->dev, "abort: c: %d, s: %d, d: %d, r: %d.\n",
 			 !!(dmacsr & HIFN_DMACSR_C_ABORT),
 			 !!(dmacsr & HIFN_DMACSR_S_ABORT),
 			 !!(dmacsr & HIFN_DMACSR_D_ABORT),
 			 !!(dmacsr & HIFN_DMACSR_R_ABORT));
-		hअगरn_reset_dma(dev, 1);
-		hअगरn_init_dma(dev);
-		hअगरn_init_रेजिस्टरs(dev);
-	पूर्ण
+		hifn_reset_dma(dev, 1);
+		hifn_init_dma(dev);
+		hifn_init_registers(dev);
+	}
 
-	अगर ((dmacsr & HIFN_DMACSR_C_WAIT) && (dma->cmdu == 0)) अणु
+	if ((dmacsr & HIFN_DMACSR_C_WAIT) && (dma->cmdu == 0)) {
 		dev_dbg(&dev->pdev->dev, "wait on command.\n");
 		dev->dmareg &= ~(HIFN_DMAIER_C_WAIT);
-		hअगरn_ग_लिखो_1(dev, HIFN_1_DMA_IER, dev->dmareg);
-	पूर्ण
+		hifn_write_1(dev, HIFN_1_DMA_IER, dev->dmareg);
+	}
 
 	tasklet_schedule(&dev->tasklet);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम hअगरn_flush(काष्ठा hअगरn_device *dev)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा crypto_async_request *async_req;
-	काष्ठा skcipher_request *req;
-	काष्ठा hअगरn_dma *dma = (काष्ठा hअगरn_dma *)dev->desc_virt;
-	पूर्णांक i;
+static void hifn_flush(struct hifn_device *dev)
+{
+	unsigned long flags;
+	struct crypto_async_request *async_req;
+	struct skcipher_request *req;
+	struct hifn_dma *dma = (struct hifn_dma *)dev->desc_virt;
+	int i;
 
-	क्रम (i = 0; i < HIFN_D_RES_RSIZE; ++i) अणु
-		काष्ठा hअगरn_desc *d = &dma->resr[i];
+	for (i = 0; i < HIFN_D_RES_RSIZE; ++i) {
+		struct hifn_desc *d = &dma->resr[i];
 
-		अगर (dev->sa[i]) अणु
-			hअगरn_process_पढ़ोy(dev->sa[i],
+		if (dev->sa[i]) {
+			hifn_process_ready(dev->sa[i],
 				(d->l & __cpu_to_le32(HIFN_D_VALID)) ? -ENODEV : 0);
-			hअगरn_complete_sa(dev, i);
-		पूर्ण
-	पूर्ण
+			hifn_complete_sa(dev, i);
+		}
+	}
 
 	spin_lock_irqsave(&dev->lock, flags);
-	जबतक ((async_req = crypto_dequeue_request(&dev->queue))) अणु
+	while ((async_req = crypto_dequeue_request(&dev->queue))) {
 		req = skcipher_request_cast(async_req);
 		spin_unlock_irqrestore(&dev->lock, flags);
 
-		hअगरn_process_पढ़ोy(req, -ENODEV);
+		hifn_process_ready(req, -ENODEV);
 
 		spin_lock_irqsave(&dev->lock, flags);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&dev->lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक hअगरn_setkey(काष्ठा crypto_skcipher *cipher, स्थिर u8 *key,
-		अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा hअगरn_context *ctx = crypto_skcipher_ctx(cipher);
-	काष्ठा hअगरn_device *dev = ctx->dev;
-	पूर्णांक err;
+static int hifn_setkey(struct crypto_skcipher *cipher, const u8 *key,
+		unsigned int len)
+{
+	struct hifn_context *ctx = crypto_skcipher_ctx(cipher);
+	struct hifn_device *dev = ctx->dev;
+	int err;
 
-	err = verअगरy_skcipher_des_key(cipher, key);
-	अगर (err)
-		वापस err;
-
-	dev->flags &= ~HIFN_FLAG_OLD_KEY;
-
-	स_नकल(ctx->key, key, len);
-	ctx->keysize = len;
-
-	वापस 0;
-पूर्ण
-
-अटल पूर्णांक hअगरn_des3_setkey(काष्ठा crypto_skcipher *cipher, स्थिर u8 *key,
-			    अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा hअगरn_context *ctx = crypto_skcipher_ctx(cipher);
-	काष्ठा hअगरn_device *dev = ctx->dev;
-	पूर्णांक err;
-
-	err = verअगरy_skcipher_des3_key(cipher, key);
-	अगर (err)
-		वापस err;
+	err = verify_skcipher_des_key(cipher, key);
+	if (err)
+		return err;
 
 	dev->flags &= ~HIFN_FLAG_OLD_KEY;
 
-	स_नकल(ctx->key, key, len);
+	memcpy(ctx->key, key, len);
 	ctx->keysize = len;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hअगरn_handle_req(काष्ठा skcipher_request *req)
-अणु
-	काष्ठा hअगरn_context *ctx = crypto_tfm_ctx(req->base.tfm);
-	काष्ठा hअगरn_device *dev = ctx->dev;
-	पूर्णांक err = -EAGAIN;
+static int hifn_des3_setkey(struct crypto_skcipher *cipher, const u8 *key,
+			    unsigned int len)
+{
+	struct hifn_context *ctx = crypto_skcipher_ctx(cipher);
+	struct hifn_device *dev = ctx->dev;
+	int err;
 
-	अगर (dev->started + DIV_ROUND_UP(req->cryptlen, PAGE_SIZE) <= HIFN_QUEUE_LENGTH)
-		err = hअगरn_setup_session(req);
+	err = verify_skcipher_des3_key(cipher, key);
+	if (err)
+		return err;
 
-	अगर (err == -EAGAIN) अणु
-		अचिन्हित दीर्घ flags;
+	dev->flags &= ~HIFN_FLAG_OLD_KEY;
+
+	memcpy(ctx->key, key, len);
+	ctx->keysize = len;
+
+	return 0;
+}
+
+static int hifn_handle_req(struct skcipher_request *req)
+{
+	struct hifn_context *ctx = crypto_tfm_ctx(req->base.tfm);
+	struct hifn_device *dev = ctx->dev;
+	int err = -EAGAIN;
+
+	if (dev->started + DIV_ROUND_UP(req->cryptlen, PAGE_SIZE) <= HIFN_QUEUE_LENGTH)
+		err = hifn_setup_session(req);
+
+	if (err == -EAGAIN) {
+		unsigned long flags;
 
 		spin_lock_irqsave(&dev->lock, flags);
 		err = crypto_enqueue_request(&dev->queue, &req->base);
 		spin_unlock_irqrestore(&dev->lock, flags);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक hअगरn_setup_crypto_req(काष्ठा skcipher_request *req, u8 op,
+static int hifn_setup_crypto_req(struct skcipher_request *req, u8 op,
 		u8 type, u8 mode)
-अणु
-	काष्ठा hअगरn_context *ctx = crypto_tfm_ctx(req->base.tfm);
-	काष्ठा hअगरn_request_context *rctx = skcipher_request_ctx(req);
-	अचिन्हित ivsize;
+{
+	struct hifn_context *ctx = crypto_tfm_ctx(req->base.tfm);
+	struct hifn_request_context *rctx = skcipher_request_ctx(req);
+	unsigned ivsize;
 
 	ivsize = crypto_skcipher_ivsize(crypto_skcipher_reqtfm(req));
 
-	अगर (req->iv && mode != ACRYPTO_MODE_ECB) अणु
-		अगर (type == ACRYPTO_TYPE_AES_128)
+	if (req->iv && mode != ACRYPTO_MODE_ECB) {
+		if (type == ACRYPTO_TYPE_AES_128)
 			ivsize = HIFN_AES_IV_LENGTH;
-		अन्यथा अगर (type == ACRYPTO_TYPE_DES)
+		else if (type == ACRYPTO_TYPE_DES)
 			ivsize = HIFN_DES_KEY_LENGTH;
-		अन्यथा अगर (type == ACRYPTO_TYPE_3DES)
+		else if (type == ACRYPTO_TYPE_3DES)
 			ivsize = HIFN_3DES_KEY_LENGTH;
-	पूर्ण
+	}
 
-	अगर (ctx->keysize != 16 && type == ACRYPTO_TYPE_AES_128) अणु
-		अगर (ctx->keysize == 24)
+	if (ctx->keysize != 16 && type == ACRYPTO_TYPE_AES_128) {
+		if (ctx->keysize == 24)
 			type = ACRYPTO_TYPE_AES_192;
-		अन्यथा अगर (ctx->keysize == 32)
+		else if (ctx->keysize == 32)
 			type = ACRYPTO_TYPE_AES_256;
-	पूर्ण
+	}
 
 	rctx->op = op;
 	rctx->mode = mode;
@@ -2030,378 +2029,378 @@ err_out_निकास:
 	rctx->ivsize = ivsize;
 
 	/*
-	 * HEAVY TODO: needs to kick Herbert XU to ग_लिखो करोcumentation.
-	 * HEAVY TODO: needs to kick Herbert XU to ग_लिखो करोcumentation.
-	 * HEAVY TODO: needs to kick Herbert XU to ग_लिखो करोcumentation.
+	 * HEAVY TODO: needs to kick Herbert XU to write documentation.
+	 * HEAVY TODO: needs to kick Herbert XU to write documentation.
+	 * HEAVY TODO: needs to kick Herbert XU to write documentation.
 	 */
 
-	वापस hअगरn_handle_req(req);
-पूर्ण
+	return hifn_handle_req(req);
+}
 
-अटल पूर्णांक hअगरn_process_queue(काष्ठा hअगरn_device *dev)
-अणु
-	काष्ठा crypto_async_request *async_req, *backlog;
-	काष्ठा skcipher_request *req;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक err = 0;
+static int hifn_process_queue(struct hifn_device *dev)
+{
+	struct crypto_async_request *async_req, *backlog;
+	struct skcipher_request *req;
+	unsigned long flags;
+	int err = 0;
 
-	जबतक (dev->started < HIFN_QUEUE_LENGTH) अणु
+	while (dev->started < HIFN_QUEUE_LENGTH) {
 		spin_lock_irqsave(&dev->lock, flags);
 		backlog = crypto_get_backlog(&dev->queue);
 		async_req = crypto_dequeue_request(&dev->queue);
 		spin_unlock_irqrestore(&dev->lock, flags);
 
-		अगर (!async_req)
-			अवरोध;
+		if (!async_req)
+			break;
 
-		अगर (backlog)
+		if (backlog)
 			backlog->complete(backlog, -EINPROGRESS);
 
 		req = skcipher_request_cast(async_req);
 
-		err = hअगरn_handle_req(req);
-		अगर (err)
-			अवरोध;
-	पूर्ण
+		err = hifn_handle_req(req);
+		if (err)
+			break;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक hअगरn_setup_crypto(काष्ठा skcipher_request *req, u8 op,
+static int hifn_setup_crypto(struct skcipher_request *req, u8 op,
 		u8 type, u8 mode)
-अणु
-	पूर्णांक err;
-	काष्ठा hअगरn_context *ctx = crypto_tfm_ctx(req->base.tfm);
-	काष्ठा hअगरn_device *dev = ctx->dev;
+{
+	int err;
+	struct hifn_context *ctx = crypto_tfm_ctx(req->base.tfm);
+	struct hifn_device *dev = ctx->dev;
 
-	err = hअगरn_setup_crypto_req(req, op, type, mode);
-	अगर (err)
-		वापस err;
+	err = hifn_setup_crypto_req(req, op, type, mode);
+	if (err)
+		return err;
 
-	अगर (dev->started < HIFN_QUEUE_LENGTH &&	dev->queue.qlen)
-		hअगरn_process_queue(dev);
+	if (dev->started < HIFN_QUEUE_LENGTH &&	dev->queue.qlen)
+		hifn_process_queue(dev);
 
-	वापस -EINPROGRESS;
-पूर्ण
+	return -EINPROGRESS;
+}
 
 /*
  * AES ecryption functions.
  */
-अटल अंतरभूत पूर्णांक hअगरn_encrypt_aes_ecb(काष्ठा skcipher_request *req)
-अणु
-	वापस hअगरn_setup_crypto(req, ACRYPTO_OP_ENCRYPT,
+static inline int hifn_encrypt_aes_ecb(struct skcipher_request *req)
+{
+	return hifn_setup_crypto(req, ACRYPTO_OP_ENCRYPT,
 			ACRYPTO_TYPE_AES_128, ACRYPTO_MODE_ECB);
-पूर्ण
-अटल अंतरभूत पूर्णांक hअगरn_encrypt_aes_cbc(काष्ठा skcipher_request *req)
-अणु
-	वापस hअगरn_setup_crypto(req, ACRYPTO_OP_ENCRYPT,
+}
+static inline int hifn_encrypt_aes_cbc(struct skcipher_request *req)
+{
+	return hifn_setup_crypto(req, ACRYPTO_OP_ENCRYPT,
 			ACRYPTO_TYPE_AES_128, ACRYPTO_MODE_CBC);
-पूर्ण
-अटल अंतरभूत पूर्णांक hअगरn_encrypt_aes_cfb(काष्ठा skcipher_request *req)
-अणु
-	वापस hअगरn_setup_crypto(req, ACRYPTO_OP_ENCRYPT,
+}
+static inline int hifn_encrypt_aes_cfb(struct skcipher_request *req)
+{
+	return hifn_setup_crypto(req, ACRYPTO_OP_ENCRYPT,
 			ACRYPTO_TYPE_AES_128, ACRYPTO_MODE_CFB);
-पूर्ण
-अटल अंतरभूत पूर्णांक hअगरn_encrypt_aes_ofb(काष्ठा skcipher_request *req)
-अणु
-	वापस hअगरn_setup_crypto(req, ACRYPTO_OP_ENCRYPT,
+}
+static inline int hifn_encrypt_aes_ofb(struct skcipher_request *req)
+{
+	return hifn_setup_crypto(req, ACRYPTO_OP_ENCRYPT,
 			ACRYPTO_TYPE_AES_128, ACRYPTO_MODE_OFB);
-पूर्ण
+}
 
 /*
  * AES decryption functions.
  */
-अटल अंतरभूत पूर्णांक hअगरn_decrypt_aes_ecb(काष्ठा skcipher_request *req)
-अणु
-	वापस hअगरn_setup_crypto(req, ACRYPTO_OP_DECRYPT,
+static inline int hifn_decrypt_aes_ecb(struct skcipher_request *req)
+{
+	return hifn_setup_crypto(req, ACRYPTO_OP_DECRYPT,
 			ACRYPTO_TYPE_AES_128, ACRYPTO_MODE_ECB);
-पूर्ण
-अटल अंतरभूत पूर्णांक hअगरn_decrypt_aes_cbc(काष्ठा skcipher_request *req)
-अणु
-	वापस hअगरn_setup_crypto(req, ACRYPTO_OP_DECRYPT,
+}
+static inline int hifn_decrypt_aes_cbc(struct skcipher_request *req)
+{
+	return hifn_setup_crypto(req, ACRYPTO_OP_DECRYPT,
 			ACRYPTO_TYPE_AES_128, ACRYPTO_MODE_CBC);
-पूर्ण
-अटल अंतरभूत पूर्णांक hअगरn_decrypt_aes_cfb(काष्ठा skcipher_request *req)
-अणु
-	वापस hअगरn_setup_crypto(req, ACRYPTO_OP_DECRYPT,
+}
+static inline int hifn_decrypt_aes_cfb(struct skcipher_request *req)
+{
+	return hifn_setup_crypto(req, ACRYPTO_OP_DECRYPT,
 			ACRYPTO_TYPE_AES_128, ACRYPTO_MODE_CFB);
-पूर्ण
-अटल अंतरभूत पूर्णांक hअगरn_decrypt_aes_ofb(काष्ठा skcipher_request *req)
-अणु
-	वापस hअगरn_setup_crypto(req, ACRYPTO_OP_DECRYPT,
+}
+static inline int hifn_decrypt_aes_ofb(struct skcipher_request *req)
+{
+	return hifn_setup_crypto(req, ACRYPTO_OP_DECRYPT,
 			ACRYPTO_TYPE_AES_128, ACRYPTO_MODE_OFB);
-पूर्ण
+}
 
 /*
  * DES ecryption functions.
  */
-अटल अंतरभूत पूर्णांक hअगरn_encrypt_des_ecb(काष्ठा skcipher_request *req)
-अणु
-	वापस hअगरn_setup_crypto(req, ACRYPTO_OP_ENCRYPT,
+static inline int hifn_encrypt_des_ecb(struct skcipher_request *req)
+{
+	return hifn_setup_crypto(req, ACRYPTO_OP_ENCRYPT,
 			ACRYPTO_TYPE_DES, ACRYPTO_MODE_ECB);
-पूर्ण
-अटल अंतरभूत पूर्णांक hअगरn_encrypt_des_cbc(काष्ठा skcipher_request *req)
-अणु
-	वापस hअगरn_setup_crypto(req, ACRYPTO_OP_ENCRYPT,
+}
+static inline int hifn_encrypt_des_cbc(struct skcipher_request *req)
+{
+	return hifn_setup_crypto(req, ACRYPTO_OP_ENCRYPT,
 			ACRYPTO_TYPE_DES, ACRYPTO_MODE_CBC);
-पूर्ण
-अटल अंतरभूत पूर्णांक hअगरn_encrypt_des_cfb(काष्ठा skcipher_request *req)
-अणु
-	वापस hअगरn_setup_crypto(req, ACRYPTO_OP_ENCRYPT,
+}
+static inline int hifn_encrypt_des_cfb(struct skcipher_request *req)
+{
+	return hifn_setup_crypto(req, ACRYPTO_OP_ENCRYPT,
 			ACRYPTO_TYPE_DES, ACRYPTO_MODE_CFB);
-पूर्ण
-अटल अंतरभूत पूर्णांक hअगरn_encrypt_des_ofb(काष्ठा skcipher_request *req)
-अणु
-	वापस hअगरn_setup_crypto(req, ACRYPTO_OP_ENCRYPT,
+}
+static inline int hifn_encrypt_des_ofb(struct skcipher_request *req)
+{
+	return hifn_setup_crypto(req, ACRYPTO_OP_ENCRYPT,
 			ACRYPTO_TYPE_DES, ACRYPTO_MODE_OFB);
-पूर्ण
+}
 
 /*
  * DES decryption functions.
  */
-अटल अंतरभूत पूर्णांक hअगरn_decrypt_des_ecb(काष्ठा skcipher_request *req)
-अणु
-	वापस hअगरn_setup_crypto(req, ACRYPTO_OP_DECRYPT,
+static inline int hifn_decrypt_des_ecb(struct skcipher_request *req)
+{
+	return hifn_setup_crypto(req, ACRYPTO_OP_DECRYPT,
 			ACRYPTO_TYPE_DES, ACRYPTO_MODE_ECB);
-पूर्ण
-अटल अंतरभूत पूर्णांक hअगरn_decrypt_des_cbc(काष्ठा skcipher_request *req)
-अणु
-	वापस hअगरn_setup_crypto(req, ACRYPTO_OP_DECRYPT,
+}
+static inline int hifn_decrypt_des_cbc(struct skcipher_request *req)
+{
+	return hifn_setup_crypto(req, ACRYPTO_OP_DECRYPT,
 			ACRYPTO_TYPE_DES, ACRYPTO_MODE_CBC);
-पूर्ण
-अटल अंतरभूत पूर्णांक hअगरn_decrypt_des_cfb(काष्ठा skcipher_request *req)
-अणु
-	वापस hअगरn_setup_crypto(req, ACRYPTO_OP_DECRYPT,
+}
+static inline int hifn_decrypt_des_cfb(struct skcipher_request *req)
+{
+	return hifn_setup_crypto(req, ACRYPTO_OP_DECRYPT,
 			ACRYPTO_TYPE_DES, ACRYPTO_MODE_CFB);
-पूर्ण
-अटल अंतरभूत पूर्णांक hअगरn_decrypt_des_ofb(काष्ठा skcipher_request *req)
-अणु
-	वापस hअगरn_setup_crypto(req, ACRYPTO_OP_DECRYPT,
+}
+static inline int hifn_decrypt_des_ofb(struct skcipher_request *req)
+{
+	return hifn_setup_crypto(req, ACRYPTO_OP_DECRYPT,
 			ACRYPTO_TYPE_DES, ACRYPTO_MODE_OFB);
-पूर्ण
+}
 
 /*
  * 3DES ecryption functions.
  */
-अटल अंतरभूत पूर्णांक hअगरn_encrypt_3des_ecb(काष्ठा skcipher_request *req)
-अणु
-	वापस hअगरn_setup_crypto(req, ACRYPTO_OP_ENCRYPT,
+static inline int hifn_encrypt_3des_ecb(struct skcipher_request *req)
+{
+	return hifn_setup_crypto(req, ACRYPTO_OP_ENCRYPT,
 			ACRYPTO_TYPE_3DES, ACRYPTO_MODE_ECB);
-पूर्ण
-अटल अंतरभूत पूर्णांक hअगरn_encrypt_3des_cbc(काष्ठा skcipher_request *req)
-अणु
-	वापस hअगरn_setup_crypto(req, ACRYPTO_OP_ENCRYPT,
+}
+static inline int hifn_encrypt_3des_cbc(struct skcipher_request *req)
+{
+	return hifn_setup_crypto(req, ACRYPTO_OP_ENCRYPT,
 			ACRYPTO_TYPE_3DES, ACRYPTO_MODE_CBC);
-पूर्ण
-अटल अंतरभूत पूर्णांक hअगरn_encrypt_3des_cfb(काष्ठा skcipher_request *req)
-अणु
-	वापस hअगरn_setup_crypto(req, ACRYPTO_OP_ENCRYPT,
+}
+static inline int hifn_encrypt_3des_cfb(struct skcipher_request *req)
+{
+	return hifn_setup_crypto(req, ACRYPTO_OP_ENCRYPT,
 			ACRYPTO_TYPE_3DES, ACRYPTO_MODE_CFB);
-पूर्ण
-अटल अंतरभूत पूर्णांक hअगरn_encrypt_3des_ofb(काष्ठा skcipher_request *req)
-अणु
-	वापस hअगरn_setup_crypto(req, ACRYPTO_OP_ENCRYPT,
+}
+static inline int hifn_encrypt_3des_ofb(struct skcipher_request *req)
+{
+	return hifn_setup_crypto(req, ACRYPTO_OP_ENCRYPT,
 			ACRYPTO_TYPE_3DES, ACRYPTO_MODE_OFB);
-पूर्ण
+}
 
 /* 3DES decryption functions. */
-अटल अंतरभूत पूर्णांक hअगरn_decrypt_3des_ecb(काष्ठा skcipher_request *req)
-अणु
-	वापस hअगरn_setup_crypto(req, ACRYPTO_OP_DECRYPT,
+static inline int hifn_decrypt_3des_ecb(struct skcipher_request *req)
+{
+	return hifn_setup_crypto(req, ACRYPTO_OP_DECRYPT,
 			ACRYPTO_TYPE_3DES, ACRYPTO_MODE_ECB);
-पूर्ण
-अटल अंतरभूत पूर्णांक hअगरn_decrypt_3des_cbc(काष्ठा skcipher_request *req)
-अणु
-	वापस hअगरn_setup_crypto(req, ACRYPTO_OP_DECRYPT,
+}
+static inline int hifn_decrypt_3des_cbc(struct skcipher_request *req)
+{
+	return hifn_setup_crypto(req, ACRYPTO_OP_DECRYPT,
 			ACRYPTO_TYPE_3DES, ACRYPTO_MODE_CBC);
-पूर्ण
-अटल अंतरभूत पूर्णांक hअगरn_decrypt_3des_cfb(काष्ठा skcipher_request *req)
-अणु
-	वापस hअगरn_setup_crypto(req, ACRYPTO_OP_DECRYPT,
+}
+static inline int hifn_decrypt_3des_cfb(struct skcipher_request *req)
+{
+	return hifn_setup_crypto(req, ACRYPTO_OP_DECRYPT,
 			ACRYPTO_TYPE_3DES, ACRYPTO_MODE_CFB);
-पूर्ण
-अटल अंतरभूत पूर्णांक hअगरn_decrypt_3des_ofb(काष्ठा skcipher_request *req)
-अणु
-	वापस hअगरn_setup_crypto(req, ACRYPTO_OP_DECRYPT,
+}
+static inline int hifn_decrypt_3des_ofb(struct skcipher_request *req)
+{
+	return hifn_setup_crypto(req, ACRYPTO_OP_DECRYPT,
 			ACRYPTO_TYPE_3DES, ACRYPTO_MODE_OFB);
-पूर्ण
+}
 
-काष्ठा hअगरn_alg_ढाँचा अणु
-	अक्षर name[CRYPTO_MAX_ALG_NAME];
-	अक्षर drv_name[CRYPTO_MAX_ALG_NAME];
-	अचिन्हित पूर्णांक bsize;
-	काष्ठा skcipher_alg skcipher;
-पूर्ण;
+struct hifn_alg_template {
+	char name[CRYPTO_MAX_ALG_NAME];
+	char drv_name[CRYPTO_MAX_ALG_NAME];
+	unsigned int bsize;
+	struct skcipher_alg skcipher;
+};
 
-अटल स्थिर काष्ठा hअगरn_alg_ढाँचा hअगरn_alg_ढाँचाs[] = अणु
+static const struct hifn_alg_template hifn_alg_templates[] = {
 	/*
 	 * 3DES ECB, CBC, CFB and OFB modes.
 	 */
-	अणु
+	{
 		.name = "cfb(des3_ede)", .drv_name = "cfb-3des", .bsize = 8,
-		.skcipher = अणु
+		.skcipher = {
 			.min_keysize	=	HIFN_3DES_KEY_LENGTH,
 			.max_keysize	=	HIFN_3DES_KEY_LENGTH,
-			.setkey		=	hअगरn_des3_setkey,
-			.encrypt	=	hअगरn_encrypt_3des_cfb,
-			.decrypt	=	hअगरn_decrypt_3des_cfb,
-		पूर्ण,
-	पूर्ण,
-	अणु
+			.setkey		=	hifn_des3_setkey,
+			.encrypt	=	hifn_encrypt_3des_cfb,
+			.decrypt	=	hifn_decrypt_3des_cfb,
+		},
+	},
+	{
 		.name = "ofb(des3_ede)", .drv_name = "ofb-3des", .bsize = 8,
-		.skcipher = अणु
+		.skcipher = {
 			.min_keysize	=	HIFN_3DES_KEY_LENGTH,
 			.max_keysize	=	HIFN_3DES_KEY_LENGTH,
-			.setkey		=	hअगरn_des3_setkey,
-			.encrypt	=	hअगरn_encrypt_3des_ofb,
-			.decrypt	=	hअगरn_decrypt_3des_ofb,
-		पूर्ण,
-	पूर्ण,
-	अणु
+			.setkey		=	hifn_des3_setkey,
+			.encrypt	=	hifn_encrypt_3des_ofb,
+			.decrypt	=	hifn_decrypt_3des_ofb,
+		},
+	},
+	{
 		.name = "cbc(des3_ede)", .drv_name = "cbc-3des", .bsize = 8,
-		.skcipher = अणु
+		.skcipher = {
 			.ivsize		=	HIFN_IV_LENGTH,
 			.min_keysize	=	HIFN_3DES_KEY_LENGTH,
 			.max_keysize	=	HIFN_3DES_KEY_LENGTH,
-			.setkey		=	hअगरn_des3_setkey,
-			.encrypt	=	hअगरn_encrypt_3des_cbc,
-			.decrypt	=	hअगरn_decrypt_3des_cbc,
-		पूर्ण,
-	पूर्ण,
-	अणु
+			.setkey		=	hifn_des3_setkey,
+			.encrypt	=	hifn_encrypt_3des_cbc,
+			.decrypt	=	hifn_decrypt_3des_cbc,
+		},
+	},
+	{
 		.name = "ecb(des3_ede)", .drv_name = "ecb-3des", .bsize = 8,
-		.skcipher = अणु
+		.skcipher = {
 			.min_keysize	=	HIFN_3DES_KEY_LENGTH,
 			.max_keysize	=	HIFN_3DES_KEY_LENGTH,
-			.setkey		=	hअगरn_des3_setkey,
-			.encrypt	=	hअगरn_encrypt_3des_ecb,
-			.decrypt	=	hअगरn_decrypt_3des_ecb,
-		पूर्ण,
-	पूर्ण,
+			.setkey		=	hifn_des3_setkey,
+			.encrypt	=	hifn_encrypt_3des_ecb,
+			.decrypt	=	hifn_decrypt_3des_ecb,
+		},
+	},
 
 	/*
 	 * DES ECB, CBC, CFB and OFB modes.
 	 */
-	अणु
+	{
 		.name = "cfb(des)", .drv_name = "cfb-des", .bsize = 8,
-		.skcipher = अणु
+		.skcipher = {
 			.min_keysize	=	HIFN_DES_KEY_LENGTH,
 			.max_keysize	=	HIFN_DES_KEY_LENGTH,
-			.setkey		=	hअगरn_setkey,
-			.encrypt	=	hअगरn_encrypt_des_cfb,
-			.decrypt	=	hअगरn_decrypt_des_cfb,
-		पूर्ण,
-	पूर्ण,
-	अणु
+			.setkey		=	hifn_setkey,
+			.encrypt	=	hifn_encrypt_des_cfb,
+			.decrypt	=	hifn_decrypt_des_cfb,
+		},
+	},
+	{
 		.name = "ofb(des)", .drv_name = "ofb-des", .bsize = 8,
-		.skcipher = अणु
+		.skcipher = {
 			.min_keysize	=	HIFN_DES_KEY_LENGTH,
 			.max_keysize	=	HIFN_DES_KEY_LENGTH,
-			.setkey		=	hअगरn_setkey,
-			.encrypt	=	hअगरn_encrypt_des_ofb,
-			.decrypt	=	hअगरn_decrypt_des_ofb,
-		पूर्ण,
-	पूर्ण,
-	अणु
+			.setkey		=	hifn_setkey,
+			.encrypt	=	hifn_encrypt_des_ofb,
+			.decrypt	=	hifn_decrypt_des_ofb,
+		},
+	},
+	{
 		.name = "cbc(des)", .drv_name = "cbc-des", .bsize = 8,
-		.skcipher = अणु
+		.skcipher = {
 			.ivsize		=	HIFN_IV_LENGTH,
 			.min_keysize	=	HIFN_DES_KEY_LENGTH,
 			.max_keysize	=	HIFN_DES_KEY_LENGTH,
-			.setkey		=	hअगरn_setkey,
-			.encrypt	=	hअगरn_encrypt_des_cbc,
-			.decrypt	=	hअगरn_decrypt_des_cbc,
-		पूर्ण,
-	पूर्ण,
-	अणु
+			.setkey		=	hifn_setkey,
+			.encrypt	=	hifn_encrypt_des_cbc,
+			.decrypt	=	hifn_decrypt_des_cbc,
+		},
+	},
+	{
 		.name = "ecb(des)", .drv_name = "ecb-des", .bsize = 8,
-		.skcipher = अणु
+		.skcipher = {
 			.min_keysize	=	HIFN_DES_KEY_LENGTH,
 			.max_keysize	=	HIFN_DES_KEY_LENGTH,
-			.setkey		=	hअगरn_setkey,
-			.encrypt	=	hअगरn_encrypt_des_ecb,
-			.decrypt	=	hअगरn_decrypt_des_ecb,
-		पूर्ण,
-	पूर्ण,
+			.setkey		=	hifn_setkey,
+			.encrypt	=	hifn_encrypt_des_ecb,
+			.decrypt	=	hifn_decrypt_des_ecb,
+		},
+	},
 
 	/*
 	 * AES ECB, CBC, CFB and OFB modes.
 	 */
-	अणु
+	{
 		.name = "ecb(aes)", .drv_name = "ecb-aes", .bsize = 16,
-		.skcipher = अणु
+		.skcipher = {
 			.min_keysize	=	AES_MIN_KEY_SIZE,
 			.max_keysize	=	AES_MAX_KEY_SIZE,
-			.setkey		=	hअगरn_setkey,
-			.encrypt	=	hअगरn_encrypt_aes_ecb,
-			.decrypt	=	hअगरn_decrypt_aes_ecb,
-		पूर्ण,
-	पूर्ण,
-	अणु
+			.setkey		=	hifn_setkey,
+			.encrypt	=	hifn_encrypt_aes_ecb,
+			.decrypt	=	hifn_decrypt_aes_ecb,
+		},
+	},
+	{
 		.name = "cbc(aes)", .drv_name = "cbc-aes", .bsize = 16,
-		.skcipher = अणु
+		.skcipher = {
 			.ivsize		=	HIFN_AES_IV_LENGTH,
 			.min_keysize	=	AES_MIN_KEY_SIZE,
 			.max_keysize	=	AES_MAX_KEY_SIZE,
-			.setkey		=	hअगरn_setkey,
-			.encrypt	=	hअगरn_encrypt_aes_cbc,
-			.decrypt	=	hअगरn_decrypt_aes_cbc,
-		पूर्ण,
-	पूर्ण,
-	अणु
+			.setkey		=	hifn_setkey,
+			.encrypt	=	hifn_encrypt_aes_cbc,
+			.decrypt	=	hifn_decrypt_aes_cbc,
+		},
+	},
+	{
 		.name = "cfb(aes)", .drv_name = "cfb-aes", .bsize = 16,
-		.skcipher = अणु
+		.skcipher = {
 			.min_keysize	=	AES_MIN_KEY_SIZE,
 			.max_keysize	=	AES_MAX_KEY_SIZE,
-			.setkey		=	hअगरn_setkey,
-			.encrypt	=	hअगरn_encrypt_aes_cfb,
-			.decrypt	=	hअगरn_decrypt_aes_cfb,
-		पूर्ण,
-	पूर्ण,
-	अणु
+			.setkey		=	hifn_setkey,
+			.encrypt	=	hifn_encrypt_aes_cfb,
+			.decrypt	=	hifn_decrypt_aes_cfb,
+		},
+	},
+	{
 		.name = "ofb(aes)", .drv_name = "ofb-aes", .bsize = 16,
-		.skcipher = अणु
+		.skcipher = {
 			.min_keysize	=	AES_MIN_KEY_SIZE,
 			.max_keysize	=	AES_MAX_KEY_SIZE,
-			.setkey		=	hअगरn_setkey,
-			.encrypt	=	hअगरn_encrypt_aes_ofb,
-			.decrypt	=	hअगरn_decrypt_aes_ofb,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+			.setkey		=	hifn_setkey,
+			.encrypt	=	hifn_encrypt_aes_ofb,
+			.decrypt	=	hifn_decrypt_aes_ofb,
+		},
+	},
+};
 
-अटल पूर्णांक hअगरn_init_tfm(काष्ठा crypto_skcipher *tfm)
-अणु
-	काष्ठा skcipher_alg *alg = crypto_skcipher_alg(tfm);
-	काष्ठा hअगरn_crypto_alg *ha = crypto_alg_to_hअगरn(alg);
-	काष्ठा hअगरn_context *ctx = crypto_skcipher_ctx(tfm);
+static int hifn_init_tfm(struct crypto_skcipher *tfm)
+{
+	struct skcipher_alg *alg = crypto_skcipher_alg(tfm);
+	struct hifn_crypto_alg *ha = crypto_alg_to_hifn(alg);
+	struct hifn_context *ctx = crypto_skcipher_ctx(tfm);
 
 	ctx->dev = ha->dev;
-	crypto_skcipher_set_reqsize(tfm, माप(काष्ठा hअगरn_request_context));
+	crypto_skcipher_set_reqsize(tfm, sizeof(struct hifn_request_context));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hअगरn_alg_alloc(काष्ठा hअगरn_device *dev, स्थिर काष्ठा hअगरn_alg_ढाँचा *t)
-अणु
-	काष्ठा hअगरn_crypto_alg *alg;
-	पूर्णांक err;
+static int hifn_alg_alloc(struct hifn_device *dev, const struct hifn_alg_template *t)
+{
+	struct hifn_crypto_alg *alg;
+	int err;
 
-	alg = kzalloc(माप(*alg), GFP_KERNEL);
-	अगर (!alg)
-		वापस -ENOMEM;
+	alg = kzalloc(sizeof(*alg), GFP_KERNEL);
+	if (!alg)
+		return -ENOMEM;
 
 	alg->alg = t->skcipher;
-	alg->alg.init = hअगरn_init_tfm;
+	alg->alg.init = hifn_init_tfm;
 
-	snम_लिखो(alg->alg.base.cra_name, CRYPTO_MAX_ALG_NAME, "%s", t->name);
-	snम_लिखो(alg->alg.base.cra_driver_name, CRYPTO_MAX_ALG_NAME, "%s-%s",
+	snprintf(alg->alg.base.cra_name, CRYPTO_MAX_ALG_NAME, "%s", t->name);
+	snprintf(alg->alg.base.cra_driver_name, CRYPTO_MAX_ALG_NAME, "%s-%s",
 		 t->drv_name, dev->name);
 
 	alg->alg.base.cra_priority = 300;
 	alg->alg.base.cra_flags = CRYPTO_ALG_KERN_DRIVER_ONLY | CRYPTO_ALG_ASYNC;
 	alg->alg.base.cra_blocksize = t->bsize;
-	alg->alg.base.cra_ctxsize = माप(काष्ठा hअगरn_context);
+	alg->alg.base.cra_ctxsize = sizeof(struct hifn_context);
 	alg->alg.base.cra_alignmask = 0;
 	alg->alg.base.cra_module = THIS_MODULE;
 
@@ -2409,286 +2408,286 @@ err_out_निकास:
 
 	list_add_tail(&alg->entry, &dev->alg_list);
 
-	err = crypto_रेजिस्टर_skcipher(&alg->alg);
-	अगर (err) अणु
+	err = crypto_register_skcipher(&alg->alg);
+	if (err) {
 		list_del(&alg->entry);
-		kमुक्त(alg);
-	पूर्ण
+		kfree(alg);
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम hअगरn_unरेजिस्टर_alg(काष्ठा hअगरn_device *dev)
-अणु
-	काष्ठा hअगरn_crypto_alg *a, *n;
+static void hifn_unregister_alg(struct hifn_device *dev)
+{
+	struct hifn_crypto_alg *a, *n;
 
-	list_क्रम_each_entry_safe(a, n, &dev->alg_list, entry) अणु
+	list_for_each_entry_safe(a, n, &dev->alg_list, entry) {
 		list_del(&a->entry);
-		crypto_unरेजिस्टर_skcipher(&a->alg);
-		kमुक्त(a);
-	पूर्ण
-पूर्ण
+		crypto_unregister_skcipher(&a->alg);
+		kfree(a);
+	}
+}
 
-अटल पूर्णांक hअगरn_रेजिस्टर_alg(काष्ठा hअगरn_device *dev)
-अणु
-	पूर्णांक i, err;
+static int hifn_register_alg(struct hifn_device *dev)
+{
+	int i, err;
 
-	क्रम (i = 0; i < ARRAY_SIZE(hअगरn_alg_ढाँचाs); ++i) अणु
-		err = hअगरn_alg_alloc(dev, &hअगरn_alg_ढाँचाs[i]);
-		अगर (err)
-			जाओ err_out_निकास;
-	पूर्ण
+	for (i = 0; i < ARRAY_SIZE(hifn_alg_templates); ++i) {
+		err = hifn_alg_alloc(dev, &hifn_alg_templates[i]);
+		if (err)
+			goto err_out_exit;
+	}
 
-	वापस 0;
+	return 0;
 
-err_out_निकास:
-	hअगरn_unरेजिस्टर_alg(dev);
-	वापस err;
-पूर्ण
+err_out_exit:
+	hifn_unregister_alg(dev);
+	return err;
+}
 
-अटल व्योम hअगरn_tasklet_callback(अचिन्हित दीर्घ data)
-अणु
-	काष्ठा hअगरn_device *dev = (काष्ठा hअगरn_device *)data;
+static void hifn_tasklet_callback(unsigned long data)
+{
+	struct hifn_device *dev = (struct hifn_device *)data;
 
 	/*
 	 * This is ok to call this without lock being held,
-	 * althogh it modअगरies some parameters used in parallel,
+	 * althogh it modifies some parameters used in parallel,
 	 * (like dev->success), but they are used in process
-	 * context or update is atomic (like setting dev->sa[i] to शून्य).
+	 * context or update is atomic (like setting dev->sa[i] to NULL).
 	 */
-	hअगरn_clear_rings(dev, 0);
+	hifn_clear_rings(dev, 0);
 
-	अगर (dev->started < HIFN_QUEUE_LENGTH &&	dev->queue.qlen)
-		hअगरn_process_queue(dev);
-पूर्ण
+	if (dev->started < HIFN_QUEUE_LENGTH &&	dev->queue.qlen)
+		hifn_process_queue(dev);
+}
 
-अटल पूर्णांक hअगरn_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *id)
-अणु
-	पूर्णांक err, i;
-	काष्ठा hअगरn_device *dev;
-	अक्षर name[8];
+static int hifn_probe(struct pci_dev *pdev, const struct pci_device_id *id)
+{
+	int err, i;
+	struct hifn_device *dev;
+	char name[8];
 
 	err = pci_enable_device(pdev);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 	pci_set_master(pdev);
 
 	err = dma_set_mask(&pdev->dev, DMA_BIT_MASK(32));
-	अगर (err)
-		जाओ err_out_disable_pci_device;
+	if (err)
+		goto err_out_disable_pci_device;
 
-	snम_लिखो(name, माप(name), "hifn%d",
-			atomic_inc_वापस(&hअगरn_dev_number) - 1);
+	snprintf(name, sizeof(name), "hifn%d",
+			atomic_inc_return(&hifn_dev_number) - 1);
 
 	err = pci_request_regions(pdev, name);
-	अगर (err)
-		जाओ err_out_disable_pci_device;
+	if (err)
+		goto err_out_disable_pci_device;
 
-	अगर (pci_resource_len(pdev, 0) < HIFN_BAR0_SIZE ||
+	if (pci_resource_len(pdev, 0) < HIFN_BAR0_SIZE ||
 	    pci_resource_len(pdev, 1) < HIFN_BAR1_SIZE ||
-	    pci_resource_len(pdev, 2) < HIFN_BAR2_SIZE) अणु
+	    pci_resource_len(pdev, 2) < HIFN_BAR2_SIZE) {
 		dev_err(&pdev->dev, "Broken hardware - I/O regions are too small.\n");
 		err = -ENODEV;
-		जाओ err_out_मुक्त_regions;
-	पूर्ण
+		goto err_out_free_regions;
+	}
 
-	dev = kzalloc(माप(काष्ठा hअगरn_device) + माप(काष्ठा crypto_alg),
+	dev = kzalloc(sizeof(struct hifn_device) + sizeof(struct crypto_alg),
 			GFP_KERNEL);
-	अगर (!dev) अणु
+	if (!dev) {
 		err = -ENOMEM;
-		जाओ err_out_मुक्त_regions;
-	पूर्ण
+		goto err_out_free_regions;
+	}
 
 	INIT_LIST_HEAD(&dev->alg_list);
 
-	snम_लिखो(dev->name, माप(dev->name), "%s", name);
+	snprintf(dev->name, sizeof(dev->name), "%s", name);
 	spin_lock_init(&dev->lock);
 
-	क्रम (i = 0; i < 3; ++i) अणु
-		अचिन्हित दीर्घ addr, size;
+	for (i = 0; i < 3; ++i) {
+		unsigned long addr, size;
 
 		addr = pci_resource_start(pdev, i);
 		size = pci_resource_len(pdev, i);
 
 		dev->bar[i] = ioremap(addr, size);
-		अगर (!dev->bar[i]) अणु
+		if (!dev->bar[i]) {
 			err = -ENOMEM;
-			जाओ err_out_unmap_bars;
-		पूर्ण
-	पूर्ण
+			goto err_out_unmap_bars;
+		}
+	}
 
 	dev->desc_virt = dma_alloc_coherent(&pdev->dev,
-					    माप(काष्ठा hअगरn_dma),
+					    sizeof(struct hifn_dma),
 					    &dev->desc_dma, GFP_KERNEL);
-	अगर (!dev->desc_virt) अणु
+	if (!dev->desc_virt) {
 		dev_err(&pdev->dev, "Failed to allocate descriptor rings.\n");
 		err = -ENOMEM;
-		जाओ err_out_unmap_bars;
-	पूर्ण
+		goto err_out_unmap_bars;
+	}
 
 	dev->pdev = pdev;
 	dev->irq = pdev->irq;
 
-	क्रम (i = 0; i < HIFN_D_RES_RSIZE; ++i)
-		dev->sa[i] = शून्य;
+	for (i = 0; i < HIFN_D_RES_RSIZE; ++i)
+		dev->sa[i] = NULL;
 
 	pci_set_drvdata(pdev, dev);
 
-	tasklet_init(&dev->tasklet, hअगरn_tasklet_callback, (अचिन्हित दीर्घ)dev);
+	tasklet_init(&dev->tasklet, hifn_tasklet_callback, (unsigned long)dev);
 
 	crypto_init_queue(&dev->queue, 1);
 
-	err = request_irq(dev->irq, hअगरn_पूर्णांकerrupt, IRQF_SHARED, dev->name, dev);
-	अगर (err) अणु
+	err = request_irq(dev->irq, hifn_interrupt, IRQF_SHARED, dev->name, dev);
+	if (err) {
 		dev_err(&pdev->dev, "Failed to request IRQ%d: err: %d.\n",
 			dev->irq, err);
 		dev->irq = 0;
-		जाओ err_out_मुक्त_desc;
-	पूर्ण
+		goto err_out_free_desc;
+	}
 
-	err = hअगरn_start_device(dev);
-	अगर (err)
-		जाओ err_out_मुक्त_irq;
+	err = hifn_start_device(dev);
+	if (err)
+		goto err_out_free_irq;
 
-	err = hअगरn_रेजिस्टर_rng(dev);
-	अगर (err)
-		जाओ err_out_stop_device;
+	err = hifn_register_rng(dev);
+	if (err)
+		goto err_out_stop_device;
 
-	err = hअगरn_रेजिस्टर_alg(dev);
-	अगर (err)
-		जाओ err_out_unरेजिस्टर_rng;
+	err = hifn_register_alg(dev);
+	if (err)
+		goto err_out_unregister_rng;
 
-	INIT_DELAYED_WORK(&dev->work, hअगरn_work);
+	INIT_DELAYED_WORK(&dev->work, hifn_work);
 	schedule_delayed_work(&dev->work, HZ);
 
 	dev_dbg(&pdev->dev, "HIFN crypto accelerator card at %s has been "
 		"successfully registered as %s.\n",
 		pci_name(pdev), dev->name);
 
-	वापस 0;
+	return 0;
 
-err_out_unरेजिस्टर_rng:
-	hअगरn_unरेजिस्टर_rng(dev);
+err_out_unregister_rng:
+	hifn_unregister_rng(dev);
 err_out_stop_device:
-	hअगरn_reset_dma(dev, 1);
-	hअगरn_stop_device(dev);
-err_out_मुक्त_irq:
-	मुक्त_irq(dev->irq, dev);
-	tasklet_समाप्त(&dev->tasklet);
-err_out_मुक्त_desc:
-	dma_मुक्त_coherent(&pdev->dev, माप(काष्ठा hअगरn_dma), dev->desc_virt,
+	hifn_reset_dma(dev, 1);
+	hifn_stop_device(dev);
+err_out_free_irq:
+	free_irq(dev->irq, dev);
+	tasklet_kill(&dev->tasklet);
+err_out_free_desc:
+	dma_free_coherent(&pdev->dev, sizeof(struct hifn_dma), dev->desc_virt,
 			  dev->desc_dma);
 
 err_out_unmap_bars:
-	क्रम (i = 0; i < 3; ++i)
-		अगर (dev->bar[i])
+	for (i = 0; i < 3; ++i)
+		if (dev->bar[i])
 			iounmap(dev->bar[i]);
-	kमुक्त(dev);
+	kfree(dev);
 
-err_out_मुक्त_regions:
+err_out_free_regions:
 	pci_release_regions(pdev);
 
 err_out_disable_pci_device:
 	pci_disable_device(pdev);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम hअगरn_हटाओ(काष्ठा pci_dev *pdev)
-अणु
-	पूर्णांक i;
-	काष्ठा hअगरn_device *dev;
+static void hifn_remove(struct pci_dev *pdev)
+{
+	int i;
+	struct hifn_device *dev;
 
 	dev = pci_get_drvdata(pdev);
 
-	अगर (dev) अणु
+	if (dev) {
 		cancel_delayed_work_sync(&dev->work);
 
-		hअगरn_unरेजिस्टर_rng(dev);
-		hअगरn_unरेजिस्टर_alg(dev);
-		hअगरn_reset_dma(dev, 1);
-		hअगरn_stop_device(dev);
+		hifn_unregister_rng(dev);
+		hifn_unregister_alg(dev);
+		hifn_reset_dma(dev, 1);
+		hifn_stop_device(dev);
 
-		मुक्त_irq(dev->irq, dev);
-		tasklet_समाप्त(&dev->tasklet);
+		free_irq(dev->irq, dev);
+		tasklet_kill(&dev->tasklet);
 
-		hअगरn_flush(dev);
+		hifn_flush(dev);
 
-		dma_मुक्त_coherent(&pdev->dev, माप(काष्ठा hअगरn_dma),
+		dma_free_coherent(&pdev->dev, sizeof(struct hifn_dma),
 				  dev->desc_virt, dev->desc_dma);
-		क्रम (i = 0; i < 3; ++i)
-			अगर (dev->bar[i])
+		for (i = 0; i < 3; ++i)
+			if (dev->bar[i])
 				iounmap(dev->bar[i]);
 
-		kमुक्त(dev);
-	पूर्ण
+		kfree(dev);
+	}
 
 	pci_release_regions(pdev);
 	pci_disable_device(pdev);
-पूर्ण
+}
 
-अटल काष्ठा pci_device_id hअगरn_pci_tbl[] = अणु
-	अणु PCI_DEVICE(PCI_VENDOR_ID_HIFN, PCI_DEVICE_ID_HIFN_7955) पूर्ण,
-	अणु PCI_DEVICE(PCI_VENDOR_ID_HIFN, PCI_DEVICE_ID_HIFN_7956) पूर्ण,
-	अणु 0 पूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(pci, hअगरn_pci_tbl);
+static struct pci_device_id hifn_pci_tbl[] = {
+	{ PCI_DEVICE(PCI_VENDOR_ID_HIFN, PCI_DEVICE_ID_HIFN_7955) },
+	{ PCI_DEVICE(PCI_VENDOR_ID_HIFN, PCI_DEVICE_ID_HIFN_7956) },
+	{ 0 }
+};
+MODULE_DEVICE_TABLE(pci, hifn_pci_tbl);
 
-अटल काष्ठा pci_driver hअगरn_pci_driver = अणु
+static struct pci_driver hifn_pci_driver = {
 	.name     = "hifn795x",
-	.id_table = hअगरn_pci_tbl,
-	.probe    = hअगरn_probe,
-	.हटाओ   = hअगरn_हटाओ,
-पूर्ण;
+	.id_table = hifn_pci_tbl,
+	.probe    = hifn_probe,
+	.remove   = hifn_remove,
+};
 
-अटल पूर्णांक __init hअगरn_init(व्योम)
-अणु
-	अचिन्हित पूर्णांक freq;
-	पूर्णांक err;
+static int __init hifn_init(void)
+{
+	unsigned int freq;
+	int err;
 
-	अगर (म_भेदन(hअगरn_pll_ref, "ext", 3) &&
-	    म_भेदन(hअगरn_pll_ref, "pci", 3)) अणु
+	if (strncmp(hifn_pll_ref, "ext", 3) &&
+	    strncmp(hifn_pll_ref, "pci", 3)) {
 		pr_err("hifn795x: invalid hifn_pll_ref clock, must be pci or ext");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
-	 * For the 7955/7956 the reference घड़ी frequency must be in the
+	 * For the 7955/7956 the reference clock frequency must be in the
 	 * range of 20MHz-100MHz. For the 7954 the upper bound is 66.67MHz,
 	 * but this chip is currently not supported.
 	 */
-	अगर (hअगरn_pll_ref[3] != '\0') अणु
-		freq = simple_म_से_अदीर्घ(hअगरn_pll_ref + 3, शून्य, 10);
-		अगर (freq < 20 || freq > 100) अणु
+	if (hifn_pll_ref[3] != '\0') {
+		freq = simple_strtoul(hifn_pll_ref + 3, NULL, 10);
+		if (freq < 20 || freq > 100) {
 			pr_err("hifn795x: invalid hifn_pll_ref frequency, must"
 			       "be in the range of 20-100");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	err = pci_रेजिस्टर_driver(&hअगरn_pci_driver);
-	अगर (err < 0) अणु
+	err = pci_register_driver(&hifn_pci_driver);
+	if (err < 0) {
 		pr_err("Failed to register PCI driver for %s device.\n",
-		       hअगरn_pci_driver.name);
-		वापस -ENODEV;
-	पूर्ण
+		       hifn_pci_driver.name);
+		return -ENODEV;
+	}
 
 	pr_info("Driver for HIFN 795x crypto accelerator chip "
 		"has been successfully registered.\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास hअगरn_fini(व्योम)
-अणु
-	pci_unरेजिस्टर_driver(&hअगरn_pci_driver);
+static void __exit hifn_fini(void)
+{
+	pci_unregister_driver(&hifn_pci_driver);
 
 	pr_info("Driver for HIFN 795x crypto accelerator chip "
 		"has been successfully unregistered.\n");
-पूर्ण
+}
 
-module_init(hअगरn_init);
-module_निकास(hअगरn_fini);
+module_init(hifn_init);
+module_exit(hifn_fini);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Evgeniy Polyakov <johnpol@2ka.mipt.ru>");

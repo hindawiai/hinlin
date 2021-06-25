@@ -1,43 +1,42 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: MIT
+// SPDX-License-Identifier: MIT
 /*
- * Copyright तऊ 2020 Intel Corporation
+ * Copyright © 2020 Intel Corporation
  */
 
-#समावेश <drm/drm_prपूर्णांक.h>
+#include <drm/drm_print.h>
 
-#समावेश "gt/debugfs_gt.h"
-#समावेश "intel_guc.h"
-#समावेश "intel_guc_debugfs.h"
-#समावेश "intel_guc_log_debugfs.h"
+#include "gt/debugfs_gt.h"
+#include "intel_guc.h"
+#include "intel_guc_debugfs.h"
+#include "intel_guc_log_debugfs.h"
 
-अटल पूर्णांक guc_info_show(काष्ठा seq_file *m, व्योम *data)
-अणु
-	काष्ठा पूर्णांकel_guc *guc = m->निजी;
-	काष्ठा drm_prपूर्णांकer p = drm_seq_file_prपूर्णांकer(m);
+static int guc_info_show(struct seq_file *m, void *data)
+{
+	struct intel_guc *guc = m->private;
+	struct drm_printer p = drm_seq_file_printer(m);
 
-	अगर (!पूर्णांकel_guc_is_supported(guc))
-		वापस -ENODEV;
+	if (!intel_guc_is_supported(guc))
+		return -ENODEV;
 
-	पूर्णांकel_guc_load_status(guc, &p);
-	drm_माला_दो(&p, "\n");
-	पूर्णांकel_guc_log_info(&guc->log, &p);
+	intel_guc_load_status(guc, &p);
+	drm_puts(&p, "\n");
+	intel_guc_log_info(&guc->log, &p);
 
 	/* Add more as required ... */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 DEFINE_GT_DEBUGFS_ATTRIBUTE(guc_info);
 
-व्योम पूर्णांकel_guc_debugfs_रेजिस्टर(काष्ठा पूर्णांकel_guc *guc, काष्ठा dentry *root)
-अणु
-	अटल स्थिर काष्ठा debugfs_gt_file files[] = अणु
-		अणु "guc_info", &guc_info_fops, शून्य पूर्ण,
-	पूर्ण;
+void intel_guc_debugfs_register(struct intel_guc *guc, struct dentry *root)
+{
+	static const struct debugfs_gt_file files[] = {
+		{ "guc_info", &guc_info_fops, NULL },
+	};
 
-	अगर (!पूर्णांकel_guc_is_supported(guc))
-		वापस;
+	if (!intel_guc_is_supported(guc))
+		return;
 
-	पूर्णांकel_gt_debugfs_रेजिस्टर_files(root, files, ARRAY_SIZE(files), guc);
-	पूर्णांकel_guc_log_debugfs_रेजिस्टर(&guc->log, root);
-पूर्ण
+	intel_gt_debugfs_register_files(root, files, ARRAY_SIZE(files), guc);
+	intel_guc_log_debugfs_register(&guc->log, root);
+}

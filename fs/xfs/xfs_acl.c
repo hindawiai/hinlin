@@ -1,62 +1,61 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2008, Christoph Hellwig
  * All Rights Reserved.
  */
-#समावेश "xfs.h"
-#समावेश "xfs_shared.h"
-#समावेश "xfs_format.h"
-#समावेश "xfs_log_format.h"
-#समावेश "xfs_trans_resv.h"
-#समावेश "xfs_mount.h"
-#समावेश "xfs_inode.h"
-#समावेश "xfs_attr.h"
-#समावेश "xfs_trace.h"
-#समावेश "xfs_error.h"
-#समावेश "xfs_acl.h"
-#समावेश "xfs_da_format.h"
-#समावेश "xfs_da_btree.h"
-#समावेश "xfs_trans.h"
+#include "xfs.h"
+#include "xfs_shared.h"
+#include "xfs_format.h"
+#include "xfs_log_format.h"
+#include "xfs_trans_resv.h"
+#include "xfs_mount.h"
+#include "xfs_inode.h"
+#include "xfs_attr.h"
+#include "xfs_trace.h"
+#include "xfs_error.h"
+#include "xfs_acl.h"
+#include "xfs_da_format.h"
+#include "xfs_da_btree.h"
+#include "xfs_trans.h"
 
-#समावेश <linux/posix_acl_xattr.h>
+#include <linux/posix_acl_xattr.h>
 
 /*
  * Locking scheme:
- *  - all ACL updates are रक्षित by inode->i_mutex, which is taken beक्रमe
- *    calling पूर्णांकo this file.
+ *  - all ACL updates are protected by inode->i_mutex, which is taken before
+ *    calling into this file.
  */
 
-STATIC काष्ठा posix_acl *
+STATIC struct posix_acl *
 xfs_acl_from_disk(
-	काष्ठा xfs_mount	*mp,
-	स्थिर काष्ठा xfs_acl	*aclp,
-	पूर्णांक			len,
-	पूर्णांक			max_entries)
-अणु
-	काष्ठा posix_acl_entry *acl_e;
-	काष्ठा posix_acl *acl;
-	स्थिर काष्ठा xfs_acl_entry *ace;
-	अचिन्हित पूर्णांक count, i;
+	struct xfs_mount	*mp,
+	const struct xfs_acl	*aclp,
+	int			len,
+	int			max_entries)
+{
+	struct posix_acl_entry *acl_e;
+	struct posix_acl *acl;
+	const struct xfs_acl_entry *ace;
+	unsigned int count, i;
 
-	अगर (len < माप(*aclp)) अणु
+	if (len < sizeof(*aclp)) {
 		XFS_CORRUPTION_ERROR(__func__, XFS_ERRLEVEL_LOW, mp, aclp,
 				len);
-		वापस ERR_PTR(-EFSCORRUPTED);
-	पूर्ण
+		return ERR_PTR(-EFSCORRUPTED);
+	}
 
 	count = be32_to_cpu(aclp->acl_cnt);
-	अगर (count > max_entries || XFS_ACL_SIZE(count) != len) अणु
+	if (count > max_entries || XFS_ACL_SIZE(count) != len) {
 		XFS_CORRUPTION_ERROR(__func__, XFS_ERRLEVEL_LOW, mp, aclp,
 				len);
-		वापस ERR_PTR(-EFSCORRUPTED);
-	पूर्ण
+		return ERR_PTR(-EFSCORRUPTED);
+	}
 
 	acl = posix_acl_alloc(count, GFP_KERNEL);
-	अगर (!acl)
-		वापस ERR_PTR(-ENOMEM);
+	if (!acl)
+		return ERR_PTR(-ENOMEM);
 
-	क्रम (i = 0; i < count; i++) अणु
+	for (i = 0; i < count; i++) {
 		acl_e = &acl->a_entries[i];
 		ace = &aclp->acl_entry[i];
 
@@ -64,226 +63,226 @@ xfs_acl_from_disk(
 		 * The tag is 32 bits on disk and 16 bits in core.
 		 *
 		 * Because every access to it goes through the core
-		 * क्रमmat first this is not a problem.
+		 * format first this is not a problem.
 		 */
 		acl_e->e_tag = be32_to_cpu(ace->ae_tag);
 		acl_e->e_perm = be16_to_cpu(ace->ae_perm);
 
-		चयन (acl_e->e_tag) अणु
-		हाल ACL_USER:
+		switch (acl_e->e_tag) {
+		case ACL_USER:
 			acl_e->e_uid = make_kuid(&init_user_ns,
 						 be32_to_cpu(ace->ae_id));
-			अवरोध;
-		हाल ACL_GROUP:
+			break;
+		case ACL_GROUP:
 			acl_e->e_gid = make_kgid(&init_user_ns,
 						 be32_to_cpu(ace->ae_id));
-			अवरोध;
-		हाल ACL_USER_OBJ:
-		हाल ACL_GROUP_OBJ:
-		हाल ACL_MASK:
-		हाल ACL_OTHER:
-			अवरोध;
-		शेष:
-			जाओ fail;
-		पूर्ण
-	पूर्ण
-	वापस acl;
+			break;
+		case ACL_USER_OBJ:
+		case ACL_GROUP_OBJ:
+		case ACL_MASK:
+		case ACL_OTHER:
+			break;
+		default:
+			goto fail;
+		}
+	}
+	return acl;
 
 fail:
 	posix_acl_release(acl);
-	वापस ERR_PTR(-EINVAL);
-पूर्ण
+	return ERR_PTR(-EINVAL);
+}
 
-STATIC व्योम
-xfs_acl_to_disk(काष्ठा xfs_acl *aclp, स्थिर काष्ठा posix_acl *acl)
-अणु
-	स्थिर काष्ठा posix_acl_entry *acl_e;
-	काष्ठा xfs_acl_entry *ace;
-	पूर्णांक i;
+STATIC void
+xfs_acl_to_disk(struct xfs_acl *aclp, const struct posix_acl *acl)
+{
+	const struct posix_acl_entry *acl_e;
+	struct xfs_acl_entry *ace;
+	int i;
 
 	aclp->acl_cnt = cpu_to_be32(acl->a_count);
-	क्रम (i = 0; i < acl->a_count; i++) अणु
+	for (i = 0; i < acl->a_count; i++) {
 		ace = &aclp->acl_entry[i];
 		acl_e = &acl->a_entries[i];
 
 		ace->ae_tag = cpu_to_be32(acl_e->e_tag);
-		चयन (acl_e->e_tag) अणु
-		हाल ACL_USER:
+		switch (acl_e->e_tag) {
+		case ACL_USER:
 			ace->ae_id = cpu_to_be32(
 					from_kuid(&init_user_ns, acl_e->e_uid));
-			अवरोध;
-		हाल ACL_GROUP:
+			break;
+		case ACL_GROUP:
 			ace->ae_id = cpu_to_be32(
 					from_kgid(&init_user_ns, acl_e->e_gid));
-			अवरोध;
-		शेष:
+			break;
+		default:
 			ace->ae_id = cpu_to_be32(ACL_UNDEFINED_ID);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		ace->ae_perm = cpu_to_be16(acl_e->e_perm);
-	पूर्ण
-पूर्ण
+	}
+}
 
-काष्ठा posix_acl *
-xfs_get_acl(काष्ठा inode *inode, पूर्णांक type)
-अणु
-	काष्ठा xfs_inode	*ip = XFS_I(inode);
-	काष्ठा xfs_mount	*mp = ip->i_mount;
-	काष्ठा posix_acl	*acl = शून्य;
-	काष्ठा xfs_da_args	args = अणु
+struct posix_acl *
+xfs_get_acl(struct inode *inode, int type)
+{
+	struct xfs_inode	*ip = XFS_I(inode);
+	struct xfs_mount	*mp = ip->i_mount;
+	struct posix_acl	*acl = NULL;
+	struct xfs_da_args	args = {
 		.dp		= ip,
 		.attr_filter	= XFS_ATTR_ROOT,
 		.valuelen	= XFS_ACL_MAX_SIZE(mp),
-	पूर्ण;
-	पूर्णांक			error;
+	};
+	int			error;
 
 	trace_xfs_get_acl(ip);
 
-	चयन (type) अणु
-	हाल ACL_TYPE_ACCESS:
-		args.name = SGI_ACL_खाता;
-		अवरोध;
-	हाल ACL_TYPE_DEFAULT:
+	switch (type) {
+	case ACL_TYPE_ACCESS:
+		args.name = SGI_ACL_FILE;
+		break;
+	case ACL_TYPE_DEFAULT:
 		args.name = SGI_ACL_DEFAULT;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		BUG();
-	पूर्ण
-	args.namelen = म_माप(args.name);
+	}
+	args.namelen = strlen(args.name);
 
 	/*
-	 * If the attribute करोesn't exist make sure we have a negative cache
-	 * entry, क्रम any other error assume it is transient.
+	 * If the attribute doesn't exist make sure we have a negative cache
+	 * entry, for any other error assume it is transient.
 	 */
 	error = xfs_attr_get(&args);
-	अगर (!error) अणु
+	if (!error) {
 		acl = xfs_acl_from_disk(mp, args.value, args.valuelen,
 					XFS_ACL_MAX_ENTRIES(mp));
-	पूर्ण अन्यथा अगर (error != -ENOATTR) अणु
+	} else if (error != -ENOATTR) {
 		acl = ERR_PTR(error);
-	पूर्ण
+	}
 
-	kmem_मुक्त(args.value);
-	वापस acl;
-पूर्ण
+	kmem_free(args.value);
+	return acl;
+}
 
-पूर्णांक
-__xfs_set_acl(काष्ठा inode *inode, काष्ठा posix_acl *acl, पूर्णांक type)
-अणु
-	काष्ठा xfs_inode	*ip = XFS_I(inode);
-	काष्ठा xfs_da_args	args = अणु
+int
+__xfs_set_acl(struct inode *inode, struct posix_acl *acl, int type)
+{
+	struct xfs_inode	*ip = XFS_I(inode);
+	struct xfs_da_args	args = {
 		.dp		= ip,
 		.attr_filter	= XFS_ATTR_ROOT,
-	पूर्ण;
-	पूर्णांक			error;
+	};
+	int			error;
 
-	चयन (type) अणु
-	हाल ACL_TYPE_ACCESS:
-		args.name = SGI_ACL_खाता;
-		अवरोध;
-	हाल ACL_TYPE_DEFAULT:
-		अगर (!S_ISसूची(inode->i_mode))
-			वापस acl ? -EACCES : 0;
+	switch (type) {
+	case ACL_TYPE_ACCESS:
+		args.name = SGI_ACL_FILE;
+		break;
+	case ACL_TYPE_DEFAULT:
+		if (!S_ISDIR(inode->i_mode))
+			return acl ? -EACCES : 0;
 		args.name = SGI_ACL_DEFAULT;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	args.namelen = म_माप(args.name);
+		break;
+	default:
+		return -EINVAL;
+	}
+	args.namelen = strlen(args.name);
 
-	अगर (acl) अणु
+	if (acl) {
 		args.valuelen = XFS_ACL_SIZE(acl->a_count);
 		args.value = kvzalloc(args.valuelen, GFP_KERNEL);
-		अगर (!args.value)
-			वापस -ENOMEM;
+		if (!args.value)
+			return -ENOMEM;
 		xfs_acl_to_disk(args.value, acl);
-	पूर्ण
+	}
 
 	error = xfs_attr_set(&args);
-	kmem_मुक्त(args.value);
+	kmem_free(args.value);
 
 	/*
 	 * If the attribute didn't exist to start with that's fine.
 	 */
-	अगर (!acl && error == -ENOATTR)
+	if (!acl && error == -ENOATTR)
 		error = 0;
-	अगर (!error)
+	if (!error)
 		set_cached_acl(inode, type, acl);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक
+static int
 xfs_acl_set_mode(
-	काष्ठा inode		*inode,
+	struct inode		*inode,
 	umode_t			mode)
-अणु
-	काष्ठा xfs_inode	*ip = XFS_I(inode);
-	काष्ठा xfs_mount	*mp = ip->i_mount;
-	काष्ठा xfs_trans	*tp;
-	पूर्णांक			error;
+{
+	struct xfs_inode	*ip = XFS_I(inode);
+	struct xfs_mount	*mp = ip->i_mount;
+	struct xfs_trans	*tp;
+	int			error;
 
 	error = xfs_trans_alloc(mp, &M_RES(mp)->tr_ichange, 0, 0, 0, &tp);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	xfs_ilock(ip, XFS_ILOCK_EXCL);
 	xfs_trans_ijoin(tp, ip, XFS_ILOCK_EXCL);
 	inode->i_mode = mode;
-	inode->i_स_समय = current_समय(inode);
+	inode->i_ctime = current_time(inode);
 	xfs_trans_log_inode(tp, ip, XFS_ILOG_CORE);
 
-	अगर (mp->m_flags & XFS_MOUNT_WSYNC)
+	if (mp->m_flags & XFS_MOUNT_WSYNC)
 		xfs_trans_set_sync(tp);
-	वापस xfs_trans_commit(tp);
-पूर्ण
+	return xfs_trans_commit(tp);
+}
 
-पूर्णांक
-xfs_set_acl(काष्ठा user_namespace *mnt_userns, काष्ठा inode *inode,
-	    काष्ठा posix_acl *acl, पूर्णांक type)
-अणु
+int
+xfs_set_acl(struct user_namespace *mnt_userns, struct inode *inode,
+	    struct posix_acl *acl, int type)
+{
 	umode_t mode;
 	bool set_mode = false;
-	पूर्णांक error = 0;
+	int error = 0;
 
-	अगर (!acl)
-		जाओ set_acl;
+	if (!acl)
+		goto set_acl;
 
 	error = -E2BIG;
-	अगर (acl->a_count > XFS_ACL_MAX_ENTRIES(XFS_M(inode->i_sb)))
-		वापस error;
+	if (acl->a_count > XFS_ACL_MAX_ENTRIES(XFS_M(inode->i_sb)))
+		return error;
 
-	अगर (type == ACL_TYPE_ACCESS) अणु
+	if (type == ACL_TYPE_ACCESS) {
 		error = posix_acl_update_mode(mnt_userns, inode, &mode, &acl);
-		अगर (error)
-			वापस error;
+		if (error)
+			return error;
 		set_mode = true;
-	पूर्ण
+	}
 
  set_acl:
 	/*
 	 * We set the mode after successfully updating the ACL xattr because the
-	 * xattr update can fail at ENOSPC and we करोn't want to change the mode
-	 * अगर the ACL update hasn't been applied.
+	 * xattr update can fail at ENOSPC and we don't want to change the mode
+	 * if the ACL update hasn't been applied.
 	 */
 	error =  __xfs_set_acl(inode, acl, type);
-	अगर (!error && set_mode && mode != inode->i_mode)
+	if (!error && set_mode && mode != inode->i_mode)
 		error = xfs_acl_set_mode(inode, mode);
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
- * Invalidate any cached ACLs अगर the user has bypassed the ACL पूर्णांकerface.
- * We करोn't validate the content whatsoever so it is caller responsibility to
- * provide data in valid क्रमmat and ensure i_mode is consistent.
+ * Invalidate any cached ACLs if the user has bypassed the ACL interface.
+ * We don't validate the content whatsoever so it is caller responsibility to
+ * provide data in valid format and ensure i_mode is consistent.
  */
-व्योम
-xfs_क्रमget_acl(
-	काष्ठा inode		*inode,
-	स्थिर अक्षर		*name)
-अणु
-	अगर (!म_भेद(name, SGI_ACL_खाता))
-		क्रमget_cached_acl(inode, ACL_TYPE_ACCESS);
-	अन्यथा अगर (!म_भेद(name, SGI_ACL_DEFAULT))
-		क्रमget_cached_acl(inode, ACL_TYPE_DEFAULT);
-पूर्ण
+void
+xfs_forget_acl(
+	struct inode		*inode,
+	const char		*name)
+{
+	if (!strcmp(name, SGI_ACL_FILE))
+		forget_cached_acl(inode, ACL_TYPE_ACCESS);
+	else if (!strcmp(name, SGI_ACL_DEFAULT))
+		forget_cached_acl(inode, ACL_TYPE_DEFAULT);
+}

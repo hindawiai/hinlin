@@ -1,139 +1,138 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2012 Regents of the University of Calअगरornia
+ * Copyright (C) 2012 Regents of the University of California
  * Copyright (C) 2017-2018 SiFive
  * Copyright (C) 2020 Western Digital Corporation or its affiliates.
  */
 
-#घोषणा pr_fmt(fmt) "riscv-intc: " fmt
-#समावेश <linux/atomic.h>
-#समावेश <linux/bits.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/irqchip.h>
-#समावेश <linux/irqकरोमुख्य.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/smp.h>
+#define pr_fmt(fmt) "riscv-intc: " fmt
+#include <linux/atomic.h>
+#include <linux/bits.h>
+#include <linux/cpu.h>
+#include <linux/irq.h>
+#include <linux/irqchip.h>
+#include <linux/irqdomain.h>
+#include <linux/interrupt.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/smp.h>
 
-अटल काष्ठा irq_करोमुख्य *पूर्णांकc_करोमुख्य;
+static struct irq_domain *intc_domain;
 
-अटल यंत्रlinkage व्योम riscv_पूर्णांकc_irq(काष्ठा pt_regs *regs)
-अणु
-	अचिन्हित दीर्घ cause = regs->cause & ~CAUSE_IRQ_FLAG;
+static asmlinkage void riscv_intc_irq(struct pt_regs *regs)
+{
+	unsigned long cause = regs->cause & ~CAUSE_IRQ_FLAG;
 
-	अगर (unlikely(cause >= BITS_PER_LONG))
+	if (unlikely(cause >= BITS_PER_LONG))
 		panic("unexpected interrupt cause");
 
-	चयन (cause) अणु
-#अगर_घोषित CONFIG_SMP
-	हाल RV_IRQ_SOFT:
+	switch (cause) {
+#ifdef CONFIG_SMP
+	case RV_IRQ_SOFT:
 		/*
-		 * We only use software पूर्णांकerrupts to pass IPIs, so अगर a
-		 * non-SMP प्रणाली माला_लो one, then we करोn't know what to करो.
+		 * We only use software interrupts to pass IPIs, so if a
+		 * non-SMP system gets one, then we don't know what to do.
 		 */
 		handle_IPI(regs);
-		अवरोध;
-#पूर्ण_अगर
-	शेष:
-		handle_करोमुख्य_irq(पूर्णांकc_करोमुख्य, cause, regs);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+#endif
+	default:
+		handle_domain_irq(intc_domain, cause, regs);
+		break;
+	}
+}
 
 /*
- * On RISC-V प्रणालीs local पूर्णांकerrupts are masked or unmasked by writing
+ * On RISC-V systems local interrupts are masked or unmasked by writing
  * the SIE (Supervisor Interrupt Enable) CSR.  As CSRs can only be written
  * on the local hart, these functions can only be called on the hart that
  * corresponds to the IRQ chip.
  */
 
-अटल व्योम riscv_पूर्णांकc_irq_mask(काष्ठा irq_data *d)
-अणु
+static void riscv_intc_irq_mask(struct irq_data *d)
+{
 	csr_clear(CSR_IE, BIT(d->hwirq));
-पूर्ण
+}
 
-अटल व्योम riscv_पूर्णांकc_irq_unmask(काष्ठा irq_data *d)
-अणु
+static void riscv_intc_irq_unmask(struct irq_data *d)
+{
 	csr_set(CSR_IE, BIT(d->hwirq));
-पूर्ण
+}
 
-अटल पूर्णांक riscv_पूर्णांकc_cpu_starting(अचिन्हित पूर्णांक cpu)
-अणु
+static int riscv_intc_cpu_starting(unsigned int cpu)
+{
 	csr_set(CSR_IE, BIT(RV_IRQ_SOFT));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक riscv_पूर्णांकc_cpu_dying(अचिन्हित पूर्णांक cpu)
-अणु
+static int riscv_intc_cpu_dying(unsigned int cpu)
+{
 	csr_clear(CSR_IE, BIT(RV_IRQ_SOFT));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा irq_chip riscv_पूर्णांकc_chip = अणु
+static struct irq_chip riscv_intc_chip = {
 	.name = "RISC-V INTC",
-	.irq_mask = riscv_पूर्णांकc_irq_mask,
-	.irq_unmask = riscv_पूर्णांकc_irq_unmask,
-पूर्ण;
+	.irq_mask = riscv_intc_irq_mask,
+	.irq_unmask = riscv_intc_irq_unmask,
+};
 
-अटल पूर्णांक riscv_पूर्णांकc_करोमुख्य_map(काष्ठा irq_करोमुख्य *d, अचिन्हित पूर्णांक irq,
+static int riscv_intc_domain_map(struct irq_domain *d, unsigned int irq,
 				 irq_hw_number_t hwirq)
-अणु
+{
 	irq_set_percpu_devid(irq);
-	irq_करोमुख्य_set_info(d, irq, hwirq, &riscv_पूर्णांकc_chip, d->host_data,
-			    handle_percpu_devid_irq, शून्य, शून्य);
+	irq_domain_set_info(d, irq, hwirq, &riscv_intc_chip, d->host_data,
+			    handle_percpu_devid_irq, NULL, NULL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा irq_करोमुख्य_ops riscv_पूर्णांकc_करोमुख्य_ops = अणु
-	.map	= riscv_पूर्णांकc_करोमुख्य_map,
-	.xlate	= irq_करोमुख्य_xlate_onecell,
-पूर्ण;
+static const struct irq_domain_ops riscv_intc_domain_ops = {
+	.map	= riscv_intc_domain_map,
+	.xlate	= irq_domain_xlate_onecell,
+};
 
-अटल पूर्णांक __init riscv_पूर्णांकc_init(काष्ठा device_node *node,
-				  काष्ठा device_node *parent)
-अणु
-	पूर्णांक rc, hartid;
+static int __init riscv_intc_init(struct device_node *node,
+				  struct device_node *parent)
+{
+	int rc, hartid;
 
 	hartid = riscv_of_parent_hartid(node);
-	अगर (hartid < 0) अणु
+	if (hartid < 0) {
 		pr_warn("unable to find hart id for %pOF\n", node);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/*
 	 * The DT will have one INTC DT node under each CPU (or HART)
-	 * DT node so riscv_पूर्णांकc_init() function will be called once
-	 * क्रम each INTC DT node. We only need to करो INTC initialization
-	 * क्रम the INTC DT node beदीर्घing to boot CPU (or boot HART).
+	 * DT node so riscv_intc_init() function will be called once
+	 * for each INTC DT node. We only need to do INTC initialization
+	 * for the INTC DT node belonging to boot CPU (or boot HART).
 	 */
-	अगर (riscv_hartid_to_cpuid(hartid) != smp_processor_id())
-		वापस 0;
+	if (riscv_hartid_to_cpuid(hartid) != smp_processor_id())
+		return 0;
 
-	पूर्णांकc_करोमुख्य = irq_करोमुख्य_add_linear(node, BITS_PER_LONG,
-					    &riscv_पूर्णांकc_करोमुख्य_ops, शून्य);
-	अगर (!पूर्णांकc_करोमुख्य) अणु
+	intc_domain = irq_domain_add_linear(node, BITS_PER_LONG,
+					    &riscv_intc_domain_ops, NULL);
+	if (!intc_domain) {
 		pr_err("unable to add IRQ domain\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
-	rc = set_handle_irq(&riscv_पूर्णांकc_irq);
-	अगर (rc) अणु
+	rc = set_handle_irq(&riscv_intc_irq);
+	if (rc) {
 		pr_err("failed to set irq handler\n");
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	cpuhp_setup_state(CPUHP_AP_IRQ_RISCV_STARTING,
 			  "irqchip/riscv/intc:starting",
-			  riscv_पूर्णांकc_cpu_starting,
-			  riscv_पूर्णांकc_cpu_dying);
+			  riscv_intc_cpu_starting,
+			  riscv_intc_cpu_dying);
 
 	pr_info("%d local interrupts mapped\n", BITS_PER_LONG);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-IRQCHIP_DECLARE(riscv, "riscv,cpu-intc", riscv_पूर्णांकc_init);
+IRQCHIP_DECLARE(riscv, "riscv,cpu-intc", riscv_intc_init);

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /* Real Time Clock Driver Test
  *	by: Benjamin Gaignard (benjamin.gaignard@linaro.org)
  *
@@ -7,72 +6,72 @@
  *	gcc rtctest_setdate.c -o rtctest_setdate
  */
 
-#समावेश <मानकपन.स>
-#समावेश <linux/rtc.h>
-#समावेश <sys/ioctl.h>
-#समावेश <sys/समय.स>
-#समावेश <sys/types.h>
-#समावेश <fcntl.h>
-#समावेश <unistd.h>
-#समावेश <मानककोष.स>
-#समावेश <त्रुटिसं.स>
+#include <stdio.h>
+#include <linux/rtc.h>
+#include <sys/ioctl.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <errno.h>
 
-अटल स्थिर अक्षर शेष_समय[] = "00:00:00";
+static const char default_time[] = "00:00:00";
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-	पूर्णांक fd, retval;
-	काष्ठा rtc_समय new, current;
-	स्थिर अक्षर *rtc, *date;
-	स्थिर अक्षर *समय = शेष_समय;
+int main(int argc, char **argv)
+{
+	int fd, retval;
+	struct rtc_time new, current;
+	const char *rtc, *date;
+	const char *time = default_time;
 
-	चयन (argc) अणु
-	हाल 4:
-		समय = argv[3];
+	switch (argc) {
+	case 4:
+		time = argv[3];
 		/* FALLTHROUGH */
-	हाल 3:
+	case 3:
 		date = argv[2];
 		rtc = argv[1];
-		अवरोध;
-	शेष:
-		ख_लिखो(मानक_त्रुटि, "usage: rtctest_setdate <rtcdev> <DD-MM-YYYY> [HH:MM:SS]\n");
-		वापस 1;
-	पूर्ण
+		break;
+	default:
+		fprintf(stderr, "usage: rtctest_setdate <rtcdev> <DD-MM-YYYY> [HH:MM:SS]\n");
+		return 1;
+	}
 
-	fd = खोलो(rtc, O_RDONLY);
-	अगर (fd == -1) अणु
-		लिखो_त्रुटि(rtc);
-		निकास(त्रुटि_सं);
-	पूर्ण
+	fd = open(rtc, O_RDONLY);
+	if (fd == -1) {
+		perror(rtc);
+		exit(errno);
+	}
 
-	माला_पूछो(date, "%d-%d-%d", &new.पंचांग_mday, &new.पंचांग_mon, &new.पंचांग_year);
-	new.पंचांग_mon -= 1;
-	new.पंचांग_year -= 1900;
-	माला_पूछो(समय, "%d:%d:%d", &new.पंचांग_hour, &new.पंचांग_min, &new.पंचांग_sec);
+	sscanf(date, "%d-%d-%d", &new.tm_mday, &new.tm_mon, &new.tm_year);
+	new.tm_mon -= 1;
+	new.tm_year -= 1900;
+	sscanf(time, "%d:%d:%d", &new.tm_hour, &new.tm_min, &new.tm_sec);
 
-	ख_लिखो(मानक_त्रुटि, "Test will set RTC date/time to %d-%d-%d, %02d:%02d:%02d.\n",
-		new.पंचांग_mday, new.पंचांग_mon + 1, new.पंचांग_year + 1900,
-		new.पंचांग_hour, new.पंचांग_min, new.पंचांग_sec);
+	fprintf(stderr, "Test will set RTC date/time to %d-%d-%d, %02d:%02d:%02d.\n",
+		new.tm_mday, new.tm_mon + 1, new.tm_year + 1900,
+		new.tm_hour, new.tm_min, new.tm_sec);
 
 	/* Write the new date in RTC */
 	retval = ioctl(fd, RTC_SET_TIME, &new);
-	अगर (retval == -1) अणु
-		लिखो_त्रुटि("RTC_SET_TIME ioctl");
-		बंद(fd);
-		निकास(त्रुटि_सं);
-	पूर्ण
+	if (retval == -1) {
+		perror("RTC_SET_TIME ioctl");
+		close(fd);
+		exit(errno);
+	}
 
 	/* Read back */
 	retval = ioctl(fd, RTC_RD_TIME, &current);
-	अगर (retval == -1) अणु
-		लिखो_त्रुटि("RTC_RD_TIME ioctl");
-		निकास(त्रुटि_सं);
-	पूर्ण
+	if (retval == -1) {
+		perror("RTC_RD_TIME ioctl");
+		exit(errno);
+	}
 
-	ख_लिखो(मानक_त्रुटि, "\n\nCurrent RTC date/time is %d-%d-%d, %02d:%02d:%02d.\n",
-		current.पंचांग_mday, current.पंचांग_mon + 1, current.पंचांग_year + 1900,
-		current.पंचांग_hour, current.पंचांग_min, current.पंचांग_sec);
+	fprintf(stderr, "\n\nCurrent RTC date/time is %d-%d-%d, %02d:%02d:%02d.\n",
+		current.tm_mday, current.tm_mon + 1, current.tm_year + 1900,
+		current.tm_hour, current.tm_min, current.tm_sec);
 
-	बंद(fd);
-	वापस 0;
-पूर्ण
+	close(fd);
+	return 0;
+}

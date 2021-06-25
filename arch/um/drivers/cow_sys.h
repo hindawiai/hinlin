@@ -1,42 +1,41 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __COW_SYS_H__
-#घोषणा __COW_SYS_H__
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __COW_SYS_H__
+#define __COW_SYS_H__
 
-#समावेश <kern_util.h>
-#समावेश <os.h>
-#समावेश <um_दो_स्मृति.h>
+#include <kern_util.h>
+#include <os.h>
+#include <um_malloc.h>
 
-अटल अंतरभूत व्योम *cow_दो_स्मृति(पूर्णांक size)
-अणु
-	वापस uml_kदो_स्मृति(size, UM_GFP_KERNEL);
-पूर्ण
+static inline void *cow_malloc(int size)
+{
+	return uml_kmalloc(size, UM_GFP_KERNEL);
+}
 
-अटल अंतरभूत व्योम cow_मुक्त(व्योम *ptr)
-अणु
-	kमुक्त(ptr);
-पूर्ण
+static inline void cow_free(void *ptr)
+{
+	kfree(ptr);
+}
 
-#घोषणा cow_म_लिखो prपूर्णांकk
+#define cow_printf printk
 
-अटल अंतरभूत अक्षर *cow_strdup(अक्षर *str)
-अणु
-	वापस uml_strdup(str);
-पूर्ण
+static inline char *cow_strdup(char *str)
+{
+	return uml_strdup(str);
+}
 
-अटल अंतरभूत पूर्णांक cow_seek_file(पूर्णांक fd, __u64 offset)
-अणु
-	वापस os_seek_file(fd, offset);
-पूर्ण
+static inline int cow_seek_file(int fd, __u64 offset)
+{
+	return os_seek_file(fd, offset);
+}
 
-अटल अंतरभूत पूर्णांक cow_file_size(अक्षर *file, अचिन्हित दीर्घ दीर्घ *size_out)
-अणु
-	वापस os_file_size(file, size_out);
-पूर्ण
+static inline int cow_file_size(char *file, unsigned long long *size_out)
+{
+	return os_file_size(file, size_out);
+}
 
-अटल अंतरभूत पूर्णांक cow_ग_लिखो_file(पूर्णांक fd, व्योम *buf, पूर्णांक size)
-अणु
-	वापस os_ग_लिखो_file(fd, buf, size);
-पूर्ण
+static inline int cow_write_file(int fd, void *buf, int size)
+{
+	return os_write_file(fd, buf, size);
+}
 
-#पूर्ण_अगर
+#endif
